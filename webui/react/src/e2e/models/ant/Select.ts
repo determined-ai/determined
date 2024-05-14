@@ -13,12 +13,22 @@ export class Select extends BaseComponent {
     selector: '.ant-select-dropdown .rc-virtual-list-holder-inner',
   });
 
+  readonly arrow = new BaseComponent({
+    parent: this,
+    selector: '.ant-select-arrow',
+  });
+
+  readonly selectionItem = new BaseComponent({
+    parent: this,
+    selector: '.ant-select-selection-item',
+  });
+
   readonly #selectionOverflow = new BaseComponent({
     parent: this,
     selector: '.ant-select-selection-overflow',
   });
 
-  readonly selectedMenuOptions = new selectionItem({
+  readonly selectedOverflowItems = new selectionOverflowItem({
     parent: this.#selectionOverflow,
   });
 
@@ -26,15 +36,23 @@ export class Select extends BaseComponent {
    * Returns a representation of a select item with the specified title.
    * @param {string} title - the title of the select item
    */
-  selectedMenuOption(title: string): selectionItem {
-    return new selectionItem({
+  selectedMenuOverflowItem(title: string): selectionOverflowItem {
+    return new selectionOverflowItem({
       attachment: `[title="${title}"]`,
       parent: this.#selectionOverflow,
     });
   }
 
-  async getSelectedMenuOptionTitles(): Promise<string[]> {
-    return await this.selectedMenuOptions.pwLocator.allTextContents();
+  async getSelectedMenuOverflowItemTitles(): Promise<string[]> {
+    return await this.selectedOverflowItems.pwLocator.allTextContents();
+  }
+
+  async openMenu(): Promise<void> {
+    if (await this._menu.pwLocator.isVisible()) {
+      return;
+    }
+    await this.arrow.pwLocator.click();
+    await this._menu.pwLocator.waitFor();
   }
 
   /**
@@ -43,7 +61,7 @@ export class Select extends BaseComponent {
    */
   menuItem(title: string): BaseComponent {
     return new BaseComponent({
-      parent: this,
+      parent: this._menu,
       selector: `div.ant-select-item[title$="${title}"]`,
     });
   }
@@ -55,13 +73,18 @@ export class Select extends BaseComponent {
    */
   nthMenuItem(n: number): BaseComponent {
     return new BaseComponent({
-      parent: this,
+      parent: this._menu,
       selector: `div.ant-select-item:nth-of-type(${n})`,
     });
   }
+
+  async selectMenuOption(title: string): Promise<void> {
+    await this.openMenu();
+    await this.menuItem(title).pwLocator.click();
+  }
 }
 
-class selectionItem extends NamedComponent {
+class selectionOverflowItem extends NamedComponent {
   defaultSelector = '.ant-select-selection-overflow-item ant-select-selection-item';
 
   readonly removeButton = new BaseComponent({

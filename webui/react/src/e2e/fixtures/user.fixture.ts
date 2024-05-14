@@ -202,7 +202,7 @@ export class UserFixture {
     await this.userManagementPage.actions.status.pwLocator.click();
     // deactivate
     await this.userManagementPage.changeUserStatusModal.pwLocator.waitFor();
-    await this.userManagementPage.changeUserStatusModal.status.pwLocator.click();
+    await this.userManagementPage.changeUserStatusModal.status.openMenu();
     await this.userManagementPage.changeUserStatusModal.status.deactivate.pwLocator.click();
     await this.userManagementPage.changeUserStatusModal.footer.submit.pwLocator.click();
     for (const id of ids) {
