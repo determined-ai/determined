@@ -8,6 +8,7 @@ class GlobalStorage {
     this.storage = storage;
     this.keys = {
       authToken: 'auth-token',
+      landingRedirect: 'landing-redirect',
       serverAddress: 'server-address',
     };
   }
@@ -20,6 +21,10 @@ class GlobalStorage {
     return this.storage.get<string>(this.keys.serverAddress) || '';
   }
 
+  get landingRedirect() {
+    return this.storage.get<string>(this.keys.landingRedirect) || '';
+  }
+
   set authToken(token: string) {
     this.storage.set(this.keys.authToken, token);
   }
@@ -28,12 +33,20 @@ class GlobalStorage {
     this.storage.set(this.keys.serverAddress, address);
   }
 
+  set landingRedirect(address: string) {
+    this.storage.set(this.keys.landingRedirect, address);
+  }
+
   removeAuthToken() {
     this.storage.remove(this.keys.authToken);
   }
 
   removeServerAddress() {
     this.storage.remove(this.keys.serverAddress);
+  }
+
+  removeLandingRedirect() {
+    this.storage.remove(this.keys.landingRedirect);
   }
 }
 

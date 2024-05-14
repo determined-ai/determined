@@ -24,6 +24,7 @@ import determinedStore from 'stores/determinedInfo';
 import { RecordKey } from 'types';
 import { locationToPath, routeToReactUrl } from 'utils/routes';
 import { capitalize } from 'utils/string';
+import { globalStorage } from 'globalStorage';
 
 import css from './SignIn.module.scss';
 
@@ -37,6 +38,9 @@ const SignIn: React.FC = () => {
   const location = useLocation();
   const isAuthChecked = useObservable(authStore.isChecked);
   const isAuthenticated = useObservable(authStore.isAuthenticated);
+  if (location.state != null) {
+    globalStorage.landingRedirect = locationToPath(location.state) || '';
+  }
   const info = useObservable(determinedStore.info);
   const [canceler] = useState(new AbortController());
   const { rbacEnabled } = useObservable(determinedStore.info);
@@ -76,8 +80,10 @@ const SignIn: React.FC = () => {
 
       // Reroute the authenticated user to the app.
       if (!queries.has('redirect')) {
+        const path = globalStorage.landingRedirect || null;
+        globalStorage.removeLandingRedirect();
         routeToReactUrl(
-          locationToPath(location.state) ||
+          path ||
             (rbacEnabled ? rbacDefaultRoute.path : defaultRoute.path),
         );
       } else {
