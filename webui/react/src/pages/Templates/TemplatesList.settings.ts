@@ -3,6 +3,7 @@ import { array, boolean, literal, number, string, undefined as undefinedType, un
 import { InteractiveTableSettings } from 'components/Table/InteractiveTable';
 import { MINIMUM_PAGE_SIZE } from 'components/Table/Table';
 import { SettingsConfig } from 'hooks/useSettings';
+import { V1GetTemplatesRequestSortBy } from 'services/api-ts-sdk';
 
 export type TemplateColumnName = 'action' | 'name' | 'workspace';
 
@@ -18,6 +19,7 @@ export interface Settings extends InteractiveTableSettings {
   columns: TemplateColumnName[];
   workspace?: number[];
   name?: string;
+  sortKey: string;
 }
 
 const config = (id: string): SettingsConfig<Settings> => ({
@@ -40,9 +42,9 @@ const config = (id: string): SettingsConfig<Settings> => ({
       type: boolean,
     },
     sortKey: {
-      defaultValue: '',
+      defaultValue: V1GetTemplatesRequestSortBy.UNSPECIFIED,
       storageKey: 'sortKey',
-      type: union([undefinedType, string, number, boolean]),
+      type: string,
     },
     tableLimit: {
       defaultValue: MINIMUM_PAGE_SIZE,
