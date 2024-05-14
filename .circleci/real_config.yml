@@ -4648,25 +4648,6 @@ workflows:
               num-machines: [2]
               max-slots-per-pod: [4]
 
-      # Legacy tf 2.4 tests.
-      - test-e2e-gke:
-          name: test-e2e-gke-single-gpu-tfonly
-          context:
-            - gcp-ci
-            - determined-ee
-          filters:
-            branches:
-              only: main
-          requires:
-            - package-and-push-system-dev-ee
-          matrix:
-            parameters:
-              cluster-id-prefix: ["e2e-gpu-tfonly"]
-              mark: ["e2e_gpu and tensorflow2"]
-              parallelism: [1]
-              environment-image:
-                - determinedai/environments:cuda-11.1-pytorch-1.9-tf-2.4-gpu-0.19.10
-
       - test-e2e-gke:
           name: test-e2e-gke-single-cpu
           context:
@@ -4882,24 +4863,6 @@ workflows:
               gpus-per-machine: [4]
               num-machines: [2]
               max-slots-per-pod: [4]
-
-      # Requestable legacy tf 2.4 tests.
-      - test-e2e-gke:
-          name: test-e2e-gke-single-gpu-tfonly
-          context:
-            - gcp-ci
-            - determined-ee
-          filters: *upstream-feature-branch
-          requires:
-            - request-k8-tests
-            - package-and-push-system-dev-ee
-          matrix:
-            parameters:
-              cluster-id-prefix: ["e2e-gpu-tfonly"]
-              mark: ["e2e_gpu and tensorflow2"]
-              parallelism: [1]
-              environment-image:
-                - determinedai/environments:cuda-11.1-pytorch-1.9-tf-2.4-gpu-0.19.10
 
       # K8s CPU tests
       - request-k8-tests-cpu:
