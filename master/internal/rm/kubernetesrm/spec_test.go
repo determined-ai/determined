@@ -233,7 +233,10 @@ func TestValidatePodLabelValues(t *testing.T) {
 		{"invalid chars", "letters contain *@ other chars -=%", "letters_contain____other_chars"},
 		{"invalid leading chars", "-%4-simpleCharacters0", "4-simpleCharacters0"},
 		{"invalid trailing chars", "simple-Characters4%-.#", "simple-Characters4"},
-		{"invalid too many chars", "simpleCharactersGoesOnForWayTooLong36384042444648505254565860-_AndThenSome", "simpleCharactersGoesOnForWayTooLong36384042444648505254565860"},
+		{
+			"invalid too many chars", "simpleCharactersGoesOnForWayTooLong36384042444648505254565860-_AndThenSome",
+			"simpleCharactersGoesOnForWayTooLong36384042444648505254565860",
+		},
 		{"invalid email-style input", "name@domain.com", "name_domain.com"},
 		{"invalid chars only", "-.*$%#$...", ""},
 	}
