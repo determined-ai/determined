@@ -310,7 +310,7 @@ Fully Sharded Data Parallelism (FSDP)
 
 To use FSDP, use the PyTorch FSDP package as usual along with the Core API. ``PytorchTrial`` API
 does not support FSDP. To find out more about the PyTorch FSDP package, visit `PyTorch tutorials
-<https://pytorch.org/tutorials/>`__ > Getting Started with Fully Sharded Data Parallel(FSDP).
+<https://pytorch.org/tutorials/>`__ > Getting Started with Fully Sharded Data Parallel (FSDP).
 
 ***********
  Profiling
