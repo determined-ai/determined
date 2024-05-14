@@ -61,6 +61,10 @@ export class Dropdown extends BaseComponent {
   /**
    * Returns a representation of a dropdown menu item. Since order is not
    * guaranteed, make sure to verify the contents of the menu item.
+   *
+   * It's better to prefer the menuItem method and to fall back on this.
+   * For example, there are some dropdowns which populate with dynamic data. Or
+   * maybe we could enter some sort of search filter and select the first item.
    * @param {number} n - the number of the menu item
    */
   nthMenuItem(n: number): BaseComponent {

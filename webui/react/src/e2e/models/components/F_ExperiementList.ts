@@ -33,6 +33,7 @@ class ExperimentRow extends Row<ExperimentRow, ExperimentHeadRow> {
     this.columnPositions.set('ID', 50);
   }
   readonly experimentActionDropdown = new ExperimentActionDropdown({
+    // without bind, we fail on `this.parentTable`
     openMethod: this.rightClick.bind(this),
     root: this.root,
   });
