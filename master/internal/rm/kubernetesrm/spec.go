@@ -351,13 +351,17 @@ func (p *pod) createPriorityClass(name string, priority int32) error {
 	return err
 }
 
-const maxChars int = 63
-const fmtAlphaNumeric string = "A-Za-z0-9"
-const fmtAllowedChars string = fmtAlphaNumeric + `\.\-_`
+const (
+	maxChars        int    = 63
+	fmtAlphaNumeric string = "A-Za-z0-9"
+	fmtAllowedChars string = fmtAlphaNumeric + `\.\-_`
+)
 
-var regDisallowedSpecialChars = regexp.MustCompile("[^" + fmtAllowedChars + "]")
-var regLeadingNonAlphaNumeric = regexp.MustCompile("^[^" + fmtAlphaNumeric + "]+")
-var regTrailingNonAlphaNumeric = regexp.MustCompile("[^" + fmtAlphaNumeric + "]+$")
+var (
+	regDisallowedSpecialChars  = regexp.MustCompile("[^" + fmtAllowedChars + "]")
+	regLeadingNonAlphaNumeric  = regexp.MustCompile("^[^" + fmtAlphaNumeric + "]+")
+	regTrailingNonAlphaNumeric = regexp.MustCompile("[^" + fmtAlphaNumeric + "]+$")
+)
 
 func validatePodLabelValue(value string) string {
 	errs := validation.IsValidLabelValue(value)

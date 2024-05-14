@@ -245,7 +245,6 @@ func TestValidatePodLabelValues(t *testing.T) {
 			assert.Equal(t, tt.output, testOutput, tt.name+" failed")
 		})
 	}
-
 }
 
 func TestDeterminedLabels(t *testing.T) {
