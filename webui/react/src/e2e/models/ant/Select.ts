@@ -18,6 +18,11 @@ export class Select extends BaseComponent {
     selector: '.ant-select-arrow',
   });
 
+  readonly search = new BaseComponent({
+    parent: this,
+    selector: '.ant-select-selection-search input',
+  });
+
   readonly selectionItem = new BaseComponent({
     parent: this,
     selector: '.ant-select-selection-item',
@@ -43,10 +48,16 @@ export class Select extends BaseComponent {
     });
   }
 
+  /**
+   * Shortcut to get all selected items.
+   */
   async getSelectedMenuOverflowItemTitles(): Promise<string[]> {
     return await this.selectedOverflowItems.pwLocator.allTextContents();
   }
 
+  /**
+   * Shortcut open the menu for the select element.
+   */
   async openMenu(): Promise<void> {
     if (await this._menu.pwLocator.isVisible()) {
       return;
@@ -78,12 +89,23 @@ export class Select extends BaseComponent {
     });
   }
 
+  /**
+   * Selects a menu item with the specified title.
+   * @param {string} title - title of the item to select
+   */
   async selectMenuOption(title: string): Promise<void> {
     await this.openMenu();
     await this.menuItem(title).pwLocator.click();
   }
 }
 
+/**
+ * Returns a representation of the Selection Overflow Item component from Ant.
+ * This constructor represents the contents in antd/es/select/index.d.ts.
+ * @param {object} obj
+ * @param {implementsGetLocator} obj.parent - The parent used to locate this selectionOverflowItem
+ * @param {string} obj.selector - Used instead of `defaultSelector`
+ */
 class selectionOverflowItem extends NamedComponent {
   defaultSelector = '.ant-select-selection-overflow-item ant-select-selection-item';
 

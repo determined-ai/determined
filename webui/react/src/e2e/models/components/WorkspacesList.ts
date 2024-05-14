@@ -5,7 +5,7 @@ import { WorkspaceActionDropdown } from './WorkspaceActionDropdown';
 
 /**
  * Returns a representation of the Workspaces Page component.
- * This constructor represents the contents in src/components/Page.tsx.
+ * This constructor represents the contents in src/components/WorkspacesList.tsx.
  * @param {object} obj
  * @param {implementsGetLocator} obj.parent - The parent used to locate this Page
  * @param {string} [obj.selector] - Used instead of `defaultSelector`
@@ -24,6 +24,13 @@ export class WorkspacesList extends NamedComponent {
   };
 }
 
+/**
+ * Returns the representation of a Card.
+ * This constructor is a base class for any component in src/components/WorkspacesList.tsx.
+ * @param {object} obj
+ * @param {CanBeParent} obj.parent - The parent used to locate this Card
+ * @param {string} obj.selector - Used as a selector uesd to locate this object
+ */
 class WorkspaceCard extends Card {
   readonly actionMenu = new WorkspaceActionDropdown({
     childNode: new BaseComponent({

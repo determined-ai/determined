@@ -21,7 +21,12 @@ type DropdownArgs = DropdownArgsWithoutChildNode | DropdownArgsWithChildNode;
  * Returns a representation of the Dropdown component from Ant.
  * Until the dropdown component supports test ids, this model will match any open dropdown.
  * This constructor represents the contents in antd/es/dropdown/index.d.ts.
- * @param {BasePage} root - root of the page
+ *
+ * The dropdown can be opened by calling the open method. By default, the open method clicks on the child node. Sometimes you might even need to provide both optional arguments, like when a child node is present but impossible to click on due to canvas behavior.
+ * @param {object} obj
+ * @param {BasePage} obj.root - root of the page
+ * @param {ComponentBasics} [obj.childNode] - optional if `openMethod` is present. It's the element we click on to open the dropdown.
+ * @param {Function} [obj.openMethod] - optional if `childNode` is present. It's the method to open the dropdown.
  */
 export class Dropdown extends BaseComponent {
   readonly childNode: ComponentBasics | undefined;
