@@ -1,4 +1,3 @@
-import { BaseComponent } from 'e2e/models/BaseComponent';
 import { Modal } from 'e2e/models/hew/Modal';
 import { Select } from 'e2e/models/hew/Select';
 
@@ -17,12 +16,6 @@ export class ChangeUserStatusModal extends Modal {
 }
 
 class StatusSelect extends Select {
-  readonly activate = new BaseComponent({
-    parent: this._menu,
-    selector: Select.selectorTemplate('Activate'),
-  });
-  readonly deactivate = new BaseComponent({
-    parent: this._menu,
-    selector: Select.selectorTemplate('Deactivate'),
-  });
+  readonly activate = this.menuItem('Activate');
+  readonly deactivate = this.menuItem('Deactivate');
 }
