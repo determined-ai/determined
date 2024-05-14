@@ -75,9 +75,10 @@ func (em TestMsgTypeB) DeleteMsg() DeleteMsg {
 }
 
 type TestEvent struct {
-	Type   string
-	UserID int
-	Seq    int64
+	Type      string
+	UserID    int
+	BeforeSeq int64
+	AfterSeq  int64
 }
 
 func alwaysTrue[T Msg](msg T) bool {
@@ -101,9 +102,9 @@ func trueAtNs[T Msg](filterCallCount []int) func(T) bool {
 	}
 }
 
-func falseBySeq[T Msg](seqs []int64) func(T) bool {
+func falseAtAndAfterSeq[T Msg](seq int64) func(T) bool {
 	return func(msg T) bool {
-		return !slices.Contains(seqs, msg.SeqNum())
+		return msg.SeqNum() < seq
 	}
 }
 
@@ -925,61 +926,85 @@ func helper(streamer *Streamer, testEvents []TestEvent, orderedUserIDs []int) {
 
 	var events []Event[TestMsgTypeA]
 	var seqs []int64
-	userToFalloutSeqs := make(map[int][]int64)
+	userToFalloutSeq := make(map[int]int64)
 
 	for _, testEvent := range testEvents {
 		var event Event[TestMsgTypeA]
 		switch testEvent.Type {
 		case "update":
 			event = Event[TestMsgTypeA]{After: &TestMsgTypeA{
-				Seq: int64(testEvent.Seq),
+				Seq: int64(testEvent.AfterSeq),
 				ID:  0,
 			}}
 		case "fallout":
 			event = Event[TestMsgTypeA]{
 				Before: &TestMsgTypeA{
-					Seq: int64(testEvent.Seq - 1),
+					Seq: int64(testEvent.AfterSeq - 1),
 					ID:  0,
 				},
 				After: &TestMsgTypeA{
-					Seq: int64(testEvent.Seq),
+					Seq: int64(testEvent.AfterSeq),
 					ID:  0,
 				}}
-			userToFalloutSeqs[testEvent.UserID] = append(userToFalloutSeqs[testEvent.UserID], int64(testEvent.Seq))
+			userToFalloutSeq[testEvent.UserID] = int64(testEvent.AfterSeq)
 		case "delete":
 			event = Event[TestMsgTypeA]{Before: &TestMsgTypeA{
-				Seq: int64(testEvent.Seq),
+				Seq: int64(testEvent.BeforeSeq),
 				ID:  0,
 			}}
 		}
 		events = append(events, event)
 	}
 	fmt.Printf("events: %+v\n", events)
-	fmt.Printf("userToFalloutSeqs: %+v\n", userToFalloutSeqs)
+	fmt.Printf("userToFalloutSeq: %+v\n", userToFalloutSeq)
+
+	// Setting fallout seq for users do not have a fallout event.
+	for _, userID := range orderedUserIDs {
+		if _, ok := userToFalloutSeq[userID]; !ok {
+			fmt.Printf("userID: %+v, do not have a fallout event\n", userID)
+			userToFalloutSeq[userID] = int64(len(testEvents) + 1)
+		}
+	}
+	fmt.Printf("userToFalloutSeq: %+v\n", userToFalloutSeq)
 
 	entityDeleted := false
 	for _, userID := range orderedUserIDs {
+		fmt.Printf("userID: %+v\n", userID)
 		numOfEvents := len(testEvents)
+
+		hasFellout := false
+		index := 0
 		for range numOfEvents {
-			testEvent := testEvents[0]
-			// if len(testEvents) > 1 {
-			testEvents = testEvents[1:]
-			// }
+			testEvent := testEvents[index]
 
-			switch testEvent.Type {
-			case "update":
-				seqs = append(seqs, testEvent.Seq)
+			if testEvent.Type == "update" && !hasFellout {
+				seqs = append(seqs, testEvent.AfterSeq)
+				testEvents = append(testEvents[:index], testEvents[index+1:]...)
+				fmt.Printf("update, Add seq: %+v, hasFellout: %v\n", testEvent.AfterSeq, hasFellout)
 
-			case "fallout":
+			} else if testEvent.Type == "fallout" && !hasFellout {
 				if userID != testEvent.UserID {
-					seqs = append(seqs, testEvent.Seq)
+					if !slices.Contains(seqs, testEvent.AfterSeq) {
+						fmt.Printf("fall out add seq: %+v, hasFellout: %v\n", testEvent.AfterSeq, hasFellout)
+						// testEvents = testEvents[index+1:]
+						seqs = append(seqs, testEvent.AfterSeq)
+					}
+					index += 1
 				} else {
-					testEvents = append(testEvents, testEvent)
+					// testEvents = append(testEvents, testEvent)
+					hasFellout = true
+
+					fmt.Printf("fallout seq: %+v, hasFellout: %v\n", testEvent.AfterSeq, hasFellout)
+					// This entity has fell out. The remaining events are not relavent to the
+					// user.
+					// TODO: this is not true when we have tests with fallin events.
+					break
 				}
 
-			case "delete":
+			} else if testEvent.Type == "delete" {
 				entityDeleted = true
-
+				testEvents = append(testEvents[:index], testEvents[index+1:]...)
+				break
 			}
 		}
 		if entityDeleted {
@@ -996,22 +1021,22 @@ func helper(streamer *Streamer, testEvents []TestEvent, orderedUserIDs []int) {
 			ID:  ID,
 		}, nil
 	}
-	Subscriber1 := NewSubscription[TestMsgTypeA](streamer, publisher, falseBySeq[TestMsgTypeA](userToFalloutSeqs[1]), alwaysTrue[TestMsgTypeA], hydrator)
-	Subscriber2 := NewSubscription[TestMsgTypeA](streamer, publisher, falseBySeq[TestMsgTypeA](userToFalloutSeqs[2]), alwaysTrue[TestMsgTypeA], hydrator)
+	Subscriber1 := NewSubscription[TestMsgTypeA](streamer, publisher, falseAtAndAfterSeq[TestMsgTypeA](userToFalloutSeq[1]), alwaysTrue[TestMsgTypeA], hydrator)
+	Subscriber2 := NewSubscription[TestMsgTypeA](streamer, publisher, falseAtAndAfterSeq[TestMsgTypeA](userToFalloutSeq[2]), alwaysTrue[TestMsgTypeA], hydrator)
 	Subscriber1.Register()
 	Subscriber2.Register()
 
 	publisher.Broadcast(events)
 }
 
-// target_seq: 4
+// num_of_events: 4
 // 1. update on id 0(1), subscriber1 fallout on id 0(2), subscriber2 fallout on id 0(3), delete id 0(4)
 // 2. update on id 0(1), subscriber2 fallout on id 0(2), subscriber1 fallout on id 0(3), delete id 0(4)
 // 3. subscriber1 fallout on id 0(1), update on id 0(2), subscriber2 fallout on id 0(3), delete id 0(4)
 // 4. subscriber1 fallout on id 0(1), subscriber2 fallout on id 0(2), update on id 0(3), delete id 0(4)
 // 5. subscriber2 fallout on id 0(1), update on id 0(2), subscriber1 fallout on id 0(3), delete id 0(4)
 // 6. subscriber2 fallout on id 0(1), subscriber1 fallout on id 0(2), update on id 0(3), delete id 0(4)
-// target_seq: 3
+// num_of_events: 3
 // 7. update on id 0(1), subscriber1 fallout on id 0(2), subscriber2 fallout on id 0(3)
 // 8. update on id 0(1), subscriber1 fallout on id 0(2), delete id 0(3)
 // 9. update on id 0(1), subscriber2 fallout on id 0(2), subscriber1 fallout on id 0(3)
@@ -1024,7 +1049,7 @@ func helper(streamer *Streamer, testEvents []TestEvent, orderedUserIDs []int) {
 // 16. subscriber2 fallout on id 0(1), update on id 0(2), delete id 0(3)
 // 17. subscriber2 fallout on id 0(1), subscriber1 fallout on id 0(2), update on id 0(3)
 // 18. subscriber2 fallout on id 0(1), subscriber1 fallout on id 0(2), delete id 0(3)
-// target_seq: 2
+// num_of_events: 2
 // 19. update on id 0(1), subscriber1 fallout on id 0(2)
 // 20. update on id 0(1), subscriber2 fallout on id 0(2)
 // 21. update on id 0(1), delete id 0(2)
@@ -1034,22 +1059,22 @@ func helper(streamer *Streamer, testEvents []TestEvent, orderedUserIDs []int) {
 // 25. subscriber2 fallout on id 0(1), update on id 0(2)
 // 26. subscriber2 fallout on id 0(1), subscriber1 fallout on id 0(2)
 // 27. subscriber2 fallout on id 0(1), delete id 0(2)
-// target_seq: 1
+// num_of_events: 1
 // 28. update on id 0(1)
 // 29. subscriber1 fallout on id 0(1)
 // 30. subscriber2 fallout on id 0(1)
-// 31. delete id 0
-func TestTwoSubscribers(t *testing.T) {
+// 31. delete id 0(1)
+func TestTwoSubscribers1(t *testing.T) {
 	streamer := NewStreamer(prepareNothing)
 
 	// update on id 0(1), subscriber1 fallout on id 0(2), subscriber2 fallout on id 0(3), delete id 0(4). It has duplicate delete events.
 	helper(
 		streamer,
 		[]TestEvent{
-			{Type: "update", Seq: 1},
-			{Type: "fallout", UserID: 1, Seq: 2},
-			{Type: "fallout", UserID: 2, Seq: 3},
-			{Type: "delete"}},
+			{Type: "update", AfterSeq: 1},
+			{Type: "fallout", UserID: 1, AfterSeq: 2},
+			{Type: "fallout", UserID: 2, AfterSeq: 3},
+			{Type: "delete", BeforeSeq: 3}},
 		[]int{1, 2},
 	)
 
@@ -1065,11 +1090,11 @@ func TestTwoSubscribers(t *testing.T) {
 
 	upsertMsg, ok = streamer.Msgs[2].(UpsertMsg)
 	require.True(t, ok, "message was not an upsert type")
-	require.Equal(t, 3, int(upsertMsg.Msg.SeqNum()), "Sequence number incorrect")
+	require.Equal(t, 1, int(upsertMsg.Msg.SeqNum()), "Sequence number incorrect")
 
-	deleteMsg, ok = streamer.Msgs[3].(DeleteMsg)
-	require.True(t, ok, "message was not an delete type")
-	require.Equal(t, "0", deleteMsg.Deleted)
+	upsertMsg, ok = streamer.Msgs[3].(UpsertMsg)
+	require.True(t, ok, "message was not an upsert type")
+	require.Equal(t, 2, int(upsertMsg.Msg.SeqNum()), "Sequence number incorrect")
 
 	deleteMsg, ok = streamer.Msgs[4].(DeleteMsg)
 	require.True(t, ok, "message was not an delete type")
@@ -1083,14 +1108,14 @@ func TestTwoSubscribers2(t *testing.T) {
 	helper(
 		streamer,
 		[]TestEvent{
-			{Type: "update", Seq: 1},
-			{Type: "fallout", UserID: 2, Seq: 2},
-			{Type: "fallout", UserID: 1, Seq: 3},
-			{Type: "delete"}},
+			{Type: "update", AfterSeq: 1},
+			{Type: "fallout", UserID: 2, AfterSeq: 2},
+			{Type: "fallout", UserID: 1, AfterSeq: 3},
+			{Type: "delete", BeforeSeq: 3}},
 		[]int{1, 2},
 	)
 
-	require.Equal(t, 5, len(streamer.Msgs), "streamer.Msgs length incorrect")
+	require.Equal(t, 4, len(streamer.Msgs), "streamer.Msgs length incorrect")
 
 	upsertMsg, ok := streamer.Msgs[0].(UpsertMsg)
 	require.True(t, ok, "message was not an upsert type")
@@ -1105,10 +1130,6 @@ func TestTwoSubscribers2(t *testing.T) {
 	require.Equal(t, "0", deleteMsg.Deleted)
 
 	deleteMsg, ok = streamer.Msgs[3].(DeleteMsg)
-	require.True(t, ok, "message was not an delete type")
-	require.Equal(t, "0", deleteMsg.Deleted)
-
-	deleteMsg, ok = streamer.Msgs[4].(DeleteMsg)
 	require.True(t, ok, "message was not an delete type")
 	require.Equal(t, "0", deleteMsg.Deleted)
 }
@@ -1120,14 +1141,14 @@ func TestTwoSubscribers3(t *testing.T) {
 	helper(
 		streamer,
 		[]TestEvent{
-			{Type: "fallout", UserID: 1, Seq: 1},
-			{Type: "update", Seq: 2},
-			{Type: "fallout", UserID: 2, Seq: 3},
-			{Type: "delete"}},
+			{Type: "fallout", UserID: 1, AfterSeq: 1},
+			{Type: "update", AfterSeq: 2},
+			{Type: "fallout", UserID: 2, AfterSeq: 3},
+			{Type: "delete", BeforeSeq: 3}},
 		[]int{1, 2},
 	)
 
-	require.Equal(t, 5, len(streamer.Msgs), "streamer.Msgs length incorrect")
+	require.Equal(t, 4, len(streamer.Msgs), "streamer.Msgs length incorrect")
 
 	deleteMsg, ok := streamer.Msgs[0].(DeleteMsg)
 	require.True(t, ok, "message was not an delete type")
@@ -1135,17 +1156,13 @@ func TestTwoSubscribers3(t *testing.T) {
 
 	upsertMsg, ok := streamer.Msgs[1].(UpsertMsg)
 	require.True(t, ok, "message was not an upsert type")
-	require.Equal(t, 2, int(upsertMsg.Msg.SeqNum()), "Sequence number incorrect")
+	require.Equal(t, 1, int(upsertMsg.Msg.SeqNum()), "Sequence number incorrect")
 
 	upsertMsg, ok = streamer.Msgs[2].(UpsertMsg)
 	require.True(t, ok, "message was not an upsert type")
-	require.Equal(t, 3, int(upsertMsg.Msg.SeqNum()), "Sequence number incorrect")
+	require.Equal(t, 2, int(upsertMsg.Msg.SeqNum()), "Sequence number incorrect")
 
 	deleteMsg, ok = streamer.Msgs[3].(DeleteMsg)
-	require.True(t, ok, "message was not an delete type")
-	require.Equal(t, "0", deleteMsg.Deleted)
-
-	deleteMsg, ok = streamer.Msgs[4].(DeleteMsg)
 	require.True(t, ok, "message was not an delete type")
 	require.Equal(t, "0", deleteMsg.Deleted)
 }
@@ -1157,14 +1174,14 @@ func TestTwoSubscribers4(t *testing.T) {
 	helper(
 		streamer,
 		[]TestEvent{
-			{Type: "fallout", UserID: 1, Seq: 1},
-			{Type: "fallout", UserID: 2, Seq: 2},
-			{Type: "update", Seq: 3},
-			{Type: "delete"}},
+			{Type: "fallout", UserID: 1, AfterSeq: 1},
+			{Type: "fallout", UserID: 2, AfterSeq: 2},
+			{Type: "update", AfterSeq: 3},
+			{Type: "delete", BeforeSeq: 3}},
 		[]int{1, 2},
 	)
 
-	require.Equal(t, 5, len(streamer.Msgs), "streamer.Msgs length incorrect")
+	require.Equal(t, 3, len(streamer.Msgs), "streamer.Msgs length incorrect")
 
 	deleteMsg, ok := streamer.Msgs[0].(DeleteMsg)
 	require.True(t, ok, "message was not an delete type")
@@ -1172,17 +1189,9 @@ func TestTwoSubscribers4(t *testing.T) {
 
 	upsertMsg, ok := streamer.Msgs[1].(UpsertMsg)
 	require.True(t, ok, "message was not an upsert type")
-	require.Equal(t, 2, int(upsertMsg.Msg.SeqNum()), "Sequence number incorrect")
+	require.Equal(t, 1, int(upsertMsg.Msg.SeqNum()), "Sequence number incorrect")
 
-	upsertMsg, ok = streamer.Msgs[2].(UpsertMsg)
-	require.True(t, ok, "message was not an upsert type")
-	require.Equal(t, 3, int(upsertMsg.Msg.SeqNum()), "Sequence number incorrect")
-
-	deleteMsg, ok = streamer.Msgs[3].(DeleteMsg)
-	require.True(t, ok, "message was not an delete type")
-	require.Equal(t, "0", deleteMsg.Deleted)
-
-	deleteMsg, ok = streamer.Msgs[4].(DeleteMsg)
+	deleteMsg, ok = streamer.Msgs[2].(DeleteMsg)
 	require.True(t, ok, "message was not an delete type")
 	require.Equal(t, "0", deleteMsg.Deleted)
 }
@@ -1194,14 +1203,14 @@ func TestTwoSubscribers5(t *testing.T) {
 	helper(
 		streamer,
 		[]TestEvent{
-			{Type: "fallout", UserID: 2, Seq: 1},
-			{Type: "update", Seq: 2},
-			{Type: "fallout", UserID: 1, Seq: 3},
-			{Type: "delete"}},
+			{Type: "fallout", UserID: 2, AfterSeq: 1},
+			{Type: "update", AfterSeq: 2},
+			{Type: "fallout", UserID: 1, AfterSeq: 3},
+			{Type: "delete", BeforeSeq: 3}},
 		[]int{1, 2},
 	)
 
-	require.Equal(t, 5, len(streamer.Msgs), "streamer.Msgs length incorrect")
+	require.Equal(t, 4, len(streamer.Msgs), "streamer.Msgs length incorrect")
 
 	upsertMsg, ok := streamer.Msgs[0].(UpsertMsg)
 	require.True(t, ok, "message was not an upsert type")
@@ -1218,10 +1227,6 @@ func TestTwoSubscribers5(t *testing.T) {
 	deleteMsg, ok = streamer.Msgs[3].(DeleteMsg)
 	require.True(t, ok, "message was not an delete type")
 	require.Equal(t, "0", deleteMsg.Deleted)
-
-	deleteMsg, ok = streamer.Msgs[4].(DeleteMsg)
-	require.True(t, ok, "message was not an delete type")
-	require.Equal(t, "0", deleteMsg.Deleted)
 }
 
 func TestTwoSubscribers6(t *testing.T) {
@@ -1231,82 +1236,14 @@ func TestTwoSubscribers6(t *testing.T) {
 	helper(
 		streamer,
 		[]TestEvent{
-			{Type: "fallout", UserID: 2, Seq: 1},
-			{Type: "fallout", UserID: 1, Seq: 2},
-			{Type: "update", Seq: 3},
-			{Type: "delete"}},
+			{Type: "fallout", UserID: 2, AfterSeq: 1},
+			{Type: "fallout", UserID: 1, AfterSeq: 2},
+			{Type: "update", AfterSeq: 3},
+			{Type: "delete", BeforeSeq: 3}},
 		[]int{1, 2},
 	)
 
-	require.Equal(t, 5, len(streamer.Msgs), "streamer.Msgs length incorrect")
-
-	upsertMsg, ok := streamer.Msgs[0].(UpsertMsg)
-	require.True(t, ok, "message was not an upsert type")
-	require.Equal(t, 1, int(upsertMsg.Msg.SeqNum()), "Sequence number incorrect")
-
-	deleteMsg, ok := streamer.Msgs[1].(DeleteMsg)
-	require.True(t, ok, "message was not an delete type")
-	require.Equal(t, "0", deleteMsg.Deleted)
-
-	upsertMsg, ok = streamer.Msgs[2].(UpsertMsg)
-	require.True(t, ok, "message was not an upsert type")
-	require.Equal(t, 3, int(upsertMsg.Msg.SeqNum()), "Sequence number incorrect")
-
-	deleteMsg, ok = streamer.Msgs[3].(DeleteMsg)
-	require.True(t, ok, "message was not an delete type")
-	require.Equal(t, "0", deleteMsg.Deleted)
-
-	deleteMsg, ok = streamer.Msgs[4].(DeleteMsg)
-	require.True(t, ok, "message was not an delete type")
-	require.Equal(t, "0", deleteMsg.Deleted)
-}
-
-func TestTwoSubscribers7(t *testing.T) {
-	streamer := NewStreamer(prepareNothing)
-
-	// 7. update on id 0(1), subscriber1 fallout on id 0(2), subscriber2 fallout on id 0(3)
-	helper(
-		streamer,
-		[]TestEvent{
-			{Type: "update", Seq: 1},
-			{Type: "fallout", UserID: 1, Seq: 2},
-			{Type: "fallout", UserID: 2, Seq: 3}},
-		[]int{1, 2},
-	)
-
-	require.Equal(t, 4, len(streamer.Msgs), "streamer.Msgs length incorrect")
-
-	upsertMsg, ok := streamer.Msgs[0].(UpsertMsg)
-	require.True(t, ok, "message was not an upsert type")
-	require.Equal(t, 1, int(upsertMsg.Msg.SeqNum()), "Sequence number incorrect")
-
-	deleteMsg, ok := streamer.Msgs[1].(DeleteMsg)
-	require.True(t, ok, "message was not an delete type")
-	require.Equal(t, "0", deleteMsg.Deleted)
-
-	upsertMsg, ok = streamer.Msgs[2].(UpsertMsg)
-	require.True(t, ok, "message was not an upsert type")
-	require.Equal(t, 3, int(upsertMsg.Msg.SeqNum()), "Sequence number incorrect")
-
-	deleteMsg, ok = streamer.Msgs[3].(DeleteMsg)
-	require.True(t, ok, "message was not an delete type")
-	require.Equal(t, "0", deleteMsg.Deleted)
-}
-
-func TestTwoSubscribers8(t *testing.T) {
-	streamer := NewStreamer(prepareNothing)
-
-	// 8. update on id 0(1), subscriber1 fallout on id 0(2), delete id 0(3)
-	helper(
-		streamer,
-		[]TestEvent{
-			{Type: "update", Seq: 1},
-			{Type: "fallout", UserID: 1, Seq: 2},
-			{Type: "delete"}},
-		[]int{1, 2},
-	)
-
-	require.Equal(t, 4, len(streamer.Msgs), "streamer.Msgs length incorrect")
+	require.Equal(t, 3, len(streamer.Msgs), "streamer.Msgs length incorrect")
 
 	upsertMsg, ok := streamer.Msgs[0].(UpsertMsg)
 	require.True(t, ok, "message was not an upsert type")
@@ -1319,8 +1256,76 @@ func TestTwoSubscribers8(t *testing.T) {
 	deleteMsg, ok = streamer.Msgs[2].(DeleteMsg)
 	require.True(t, ok, "message was not an delete type")
 	require.Equal(t, "0", deleteMsg.Deleted)
+}
 
-	deleteMsg, ok = streamer.Msgs[3].(DeleteMsg)
+func TestTwoSubscribers7(t *testing.T) {
+	streamer := NewStreamer(prepareNothing)
+
+	// 7. update on id 0(1), subscriber1 fallout on id 0(2), subscriber2 fallout on id 0(3)
+	helper(
+		streamer,
+		[]TestEvent{
+			{Type: "update", AfterSeq: 1},
+			{Type: "fallout", UserID: 1, AfterSeq: 2},
+			{Type: "fallout", UserID: 2, AfterSeq: 3}},
+		[]int{1, 2},
+	)
+
+	require.Equal(t, 5, len(streamer.Msgs), "streamer.Msgs length incorrect")
+
+	upsertMsg, ok := streamer.Msgs[0].(UpsertMsg)
+	require.True(t, ok, "message was not an upsert type")
+	require.Equal(t, 1, int(upsertMsg.Msg.SeqNum()), "Sequence number incorrect")
+
+	deleteMsg, ok := streamer.Msgs[1].(DeleteMsg)
+	require.True(t, ok, "message was not an delete type")
+	require.Equal(t, "0", deleteMsg.Deleted)
+
+	upsertMsg, ok = streamer.Msgs[2].(UpsertMsg)
+	require.True(t, ok, "message was not an upsert type")
+	require.Equal(t, 1, int(upsertMsg.Msg.SeqNum()), "Sequence number incorrect")
+
+	upsertMsg, ok = streamer.Msgs[3].(UpsertMsg)
+	require.True(t, ok, "message was not an upsert type")
+	require.Equal(t, 2, int(upsertMsg.Msg.SeqNum()), "Sequence number incorrect")
+
+	deleteMsg, ok = streamer.Msgs[4].(DeleteMsg)
+	require.True(t, ok, "message was not an delete type")
+	require.Equal(t, "0", deleteMsg.Deleted)
+}
+
+func TestTwoSubscribers8(t *testing.T) {
+	streamer := NewStreamer(prepareNothing)
+
+	// 8. update on id 0(1), subscriber1 fallout on id 0(2), delete id 0(3)
+	helper(
+		streamer,
+		[]TestEvent{
+			{Type: "update", AfterSeq: 1},
+			{Type: "fallout", UserID: 1, AfterSeq: 2},
+			{Type: "delete", BeforeSeq: 2}},
+		[]int{1, 2},
+	)
+
+	require.Equal(t, 5, len(streamer.Msgs), "streamer.Msgs length incorrect")
+
+	upsertMsg, ok := streamer.Msgs[0].(UpsertMsg)
+	require.True(t, ok, "message was not an upsert type")
+	require.Equal(t, 1, int(upsertMsg.Msg.SeqNum()), "Sequence number incorrect")
+
+	deleteMsg, ok := streamer.Msgs[1].(DeleteMsg)
+	require.True(t, ok, "message was not an delete type")
+	require.Equal(t, "0", deleteMsg.Deleted)
+
+	upsertMsg, ok = streamer.Msgs[2].(UpsertMsg)
+	require.True(t, ok, "message was not an upsert type")
+	require.Equal(t, 1, int(upsertMsg.Msg.SeqNum()), "Sequence number incorrect")
+
+	upsertMsg, ok = streamer.Msgs[3].(UpsertMsg)
+	require.True(t, ok, "message was not an upsert type")
+	require.Equal(t, 2, int(upsertMsg.Msg.SeqNum()), "Sequence number incorrect")
+
+	deleteMsg, ok = streamer.Msgs[4].(DeleteMsg)
 	require.True(t, ok, "message was not an delete type")
 	require.Equal(t, "0", deleteMsg.Deleted)
 }
@@ -1332,13 +1337,13 @@ func TestTwoSubscribers9(t *testing.T) {
 	helper(
 		streamer,
 		[]TestEvent{
-			{Type: "update", Seq: 1},
-			{Type: "fallout", UserID: 2, Seq: 2},
-			{Type: "fallout", UserID: 1, Seq: 3}},
+			{Type: "update", AfterSeq: 1},
+			{Type: "fallout", UserID: 2, AfterSeq: 2},
+			{Type: "fallout", UserID: 1, AfterSeq: 3}},
 		[]int{1, 2},
 	)
 
-	require.Equal(t, 5, len(streamer.Msgs), "streamer.Msgs length incorrect")
+	require.Equal(t, 4, len(streamer.Msgs), "streamer.Msgs length incorrect")
 
 	upsertMsg, ok := streamer.Msgs[0].(UpsertMsg)
 	require.True(t, ok, "message was not an upsert type")
@@ -1355,10 +1360,6 @@ func TestTwoSubscribers9(t *testing.T) {
 	deleteMsg, ok = streamer.Msgs[3].(DeleteMsg)
 	require.True(t, ok, "message was not an delete type")
 	require.Equal(t, "0", deleteMsg.Deleted)
-
-	upsertMsg, ok = streamer.Msgs[4].(UpsertMsg)
-	require.True(t, ok, "message was not an upsert type")
-	require.Equal(t, 3, int(upsertMsg.Msg.SeqNum()), "Sequence number incorrect")
 }
 
 func TestTwoSubscribers10(t *testing.T) {
@@ -1368,9 +1369,9 @@ func TestTwoSubscribers10(t *testing.T) {
 	helper(
 		streamer,
 		[]TestEvent{
-			{Type: "update", Seq: 1},
-			{Type: "fallout", UserID: 2, Seq: 2},
-			{Type: "delete"}},
+			{Type: "update", AfterSeq: 1},
+			{Type: "fallout", UserID: 2, AfterSeq: 2},
+			{Type: "delete", BeforeSeq: 2}},
 		[]int{1, 2},
 	)
 
@@ -1400,9 +1401,9 @@ func TestTwoSubscribers11(t *testing.T) {
 	helper(
 		streamer,
 		[]TestEvent{
-			{Type: "fallout", UserID: 1, Seq: 1},
-			{Type: "update", Seq: 2},
-			{Type: "fallout", UserID: 2, Seq: 3}},
+			{Type: "fallout", UserID: 1, AfterSeq: 1},
+			{Type: "update", AfterSeq: 2},
+			{Type: "fallout", UserID: 2, AfterSeq: 3}},
 		[]int{1, 2},
 	)
 
@@ -1414,11 +1415,11 @@ func TestTwoSubscribers11(t *testing.T) {
 
 	upsertMsg, ok := streamer.Msgs[1].(UpsertMsg)
 	require.True(t, ok, "message was not an upsert type")
-	require.Equal(t, 2, int(upsertMsg.Msg.SeqNum()), "Sequence number incorrect")
+	require.Equal(t, 1, int(upsertMsg.Msg.SeqNum()), "Sequence number incorrect")
 
 	upsertMsg, ok = streamer.Msgs[2].(UpsertMsg)
 	require.True(t, ok, "message was not an upsert type")
-	require.Equal(t, 3, int(upsertMsg.Msg.SeqNum()), "Sequence number incorrect")
+	require.Equal(t, 2, int(upsertMsg.Msg.SeqNum()), "Sequence number incorrect")
 
 	deleteMsg, ok = streamer.Msgs[3].(DeleteMsg)
 	require.True(t, ok, "message was not an delete type")
@@ -1432,9 +1433,9 @@ func TestTwoSubscribers12(t *testing.T) {
 	helper(
 		streamer,
 		[]TestEvent{
-			{Type: "fallout", UserID: 1, Seq: 1},
-			{Type: "update", Seq: 2},
-			{Type: "fallout", UserID: 2, Seq: 3}},
+			{Type: "fallout", UserID: 1, AfterSeq: 1},
+			{Type: "update", AfterSeq: 2},
+			{Type: "fallout", UserID: 2, AfterSeq: 3}},
 		[]int{1, 2},
 	)
 
@@ -1446,11 +1447,11 @@ func TestTwoSubscribers12(t *testing.T) {
 
 	upsertMsg, ok := streamer.Msgs[1].(UpsertMsg)
 	require.True(t, ok, "message was not an upsert type")
-	require.Equal(t, 2, int(upsertMsg.Msg.SeqNum()), "Sequence number incorrect")
+	require.Equal(t, 1, int(upsertMsg.Msg.SeqNum()), "Sequence number incorrect")
 
 	upsertMsg, ok = streamer.Msgs[2].(UpsertMsg)
 	require.True(t, ok, "message was not an upsert type")
-	require.Equal(t, 3, int(upsertMsg.Msg.SeqNum()), "Sequence number incorrect")
+	require.Equal(t, 2, int(upsertMsg.Msg.SeqNum()), "Sequence number incorrect")
 
 	deleteMsg, ok = streamer.Msgs[3].(DeleteMsg)
 	require.True(t, ok, "message was not an delete type")
@@ -1464,14 +1465,14 @@ func TestTwoSubscribers13(t *testing.T) {
 	helper(
 		streamer,
 		[]TestEvent{
-			{Type: "fallout", UserID: 1, Seq: 1},
-			{Type: "fallout", UserID: 2, Seq: 2},
-			{Type: "update", Seq: 3},
+			{Type: "fallout", UserID: 1, AfterSeq: 1},
+			{Type: "fallout", UserID: 2, AfterSeq: 2},
+			{Type: "update", AfterSeq: 3},
 		},
 		[]int{1, 2},
 	)
 
-	require.Equal(t, 4, len(streamer.Msgs), "streamer.Msgs length incorrect")
+	require.Equal(t, 3, len(streamer.Msgs), "streamer.Msgs length incorrect")
 
 	deleteMsg, ok := streamer.Msgs[0].(DeleteMsg)
 	require.True(t, ok, "message was not an delete type")
@@ -1479,15 +1480,11 @@ func TestTwoSubscribers13(t *testing.T) {
 
 	upsertMsg, ok := streamer.Msgs[1].(UpsertMsg)
 	require.True(t, ok, "message was not an upsert type")
-	require.Equal(t, 2, int(upsertMsg.Msg.SeqNum()), "Sequence number incorrect")
+	require.Equal(t, 1, int(upsertMsg.Msg.SeqNum()), "Sequence number incorrect")
 
-	upsertMsg, ok = streamer.Msgs[2].(UpsertMsg)
-	require.True(t, ok, "message was not an upsert type")
-	require.Equal(t, 3, int(upsertMsg.Msg.SeqNum()), "Sequence number incorrect")
-
-	upsertMsg, ok = streamer.Msgs[3].(UpsertMsg)
-	require.True(t, ok, "message was not an upsert type")
-	require.Equal(t, 3, int(upsertMsg.Msg.SeqNum()), "Sequence number incorrect")
+	deleteMsg, ok = streamer.Msgs[2].(DeleteMsg)
+	require.True(t, ok, "message was not an delete type")
+	require.Equal(t, "0", deleteMsg.Deleted)
 }
 
 func TestTwoSubscribers14(t *testing.T) {
@@ -1497,14 +1494,14 @@ func TestTwoSubscribers14(t *testing.T) {
 	helper(
 		streamer,
 		[]TestEvent{
-			{Type: "fallout", UserID: 1, Seq: 1},
-			{Type: "fallout", UserID: 2, Seq: 2},
-			{Type: "delete"},
+			{Type: "fallout", UserID: 1, AfterSeq: 1},
+			{Type: "fallout", UserID: 2, AfterSeq: 2},
+			{Type: "delete", BeforeSeq: 2},
 		},
 		[]int{1, 2},
 	)
 
-	require.Equal(t, 4, len(streamer.Msgs), "streamer.Msgs length incorrect")
+	require.Equal(t, 3, len(streamer.Msgs), "streamer.Msgs length incorrect")
 
 	deleteMsg, ok := streamer.Msgs[0].(DeleteMsg)
 	require.True(t, ok, "message was not an delete type")
@@ -1512,13 +1509,9 @@ func TestTwoSubscribers14(t *testing.T) {
 
 	upsertMsg, ok := streamer.Msgs[1].(UpsertMsg)
 	require.True(t, ok, "message was not an upsert type")
-	require.Equal(t, 2, int(upsertMsg.Msg.SeqNum()), "Sequence number incorrect")
+	require.Equal(t, 1, int(upsertMsg.Msg.SeqNum()), "Sequence number incorrect")
 
 	deleteMsg, ok = streamer.Msgs[2].(DeleteMsg)
-	require.True(t, ok, "message was not an delete type")
-	require.Equal(t, "0", deleteMsg.Deleted)
-
-	deleteMsg, ok = streamer.Msgs[3].(DeleteMsg)
 	require.True(t, ok, "message was not an delete type")
 	require.Equal(t, "0", deleteMsg.Deleted)
 }
@@ -1530,14 +1523,14 @@ func TestTwoSubscribers15(t *testing.T) {
 	helper(
 		streamer,
 		[]TestEvent{
-			{Type: "fallout", UserID: 2, Seq: 1},
-			{Type: "update", Seq: 2},
-			{Type: "fallout", UserID: 1, Seq: 3},
+			{Type: "fallout", UserID: 2, AfterSeq: 1},
+			{Type: "update", AfterSeq: 2},
+			{Type: "fallout", UserID: 1, AfterSeq: 3},
 		},
 		[]int{1, 2},
 	)
 
-	require.Equal(t, 5, len(streamer.Msgs), "streamer.Msgs length incorrect")
+	require.Equal(t, 4, len(streamer.Msgs), "streamer.Msgs length incorrect")
 
 	upsertMsg, ok := streamer.Msgs[0].(UpsertMsg)
 	require.True(t, ok, "message was not an upsert type")
@@ -1551,13 +1544,10 @@ func TestTwoSubscribers15(t *testing.T) {
 	require.True(t, ok, "message was not an delete type")
 	require.Equal(t, "0", deleteMsg.Deleted)
 
-	upsertMsg, ok = streamer.Msgs[3].(UpsertMsg)
-	require.True(t, ok, "message was not an upsert type")
-	require.Equal(t, 2, int(upsertMsg.Msg.SeqNum()), "Sequence number incorrect")
+	deleteMsg, ok = streamer.Msgs[3].(DeleteMsg)
+	require.True(t, ok, "message was not an delete type")
+	require.Equal(t, "0", deleteMsg.Deleted)
 
-	upsertMsg, ok = streamer.Msgs[4].(UpsertMsg)
-	require.True(t, ok, "message was not an upsert type")
-	require.Equal(t, 3, int(upsertMsg.Msg.SeqNum()), "Sequence number incorrect")
 }
 
 func TestTwoSubscribers16(t *testing.T) {
@@ -1567,9 +1557,9 @@ func TestTwoSubscribers16(t *testing.T) {
 	helper(
 		streamer,
 		[]TestEvent{
-			{Type: "fallout", UserID: 2, Seq: 1},
-			{Type: "update", Seq: 2},
-			{Type: "delete"},
+			{Type: "fallout", UserID: 2, AfterSeq: 1},
+			{Type: "update", AfterSeq: 2},
+			{Type: "delete", BeforeSeq: 2},
 		},
 		[]int{1, 2},
 	)
@@ -1600,9 +1590,66 @@ func TestTwoSubscribers17(t *testing.T) {
 	helper(
 		streamer,
 		[]TestEvent{
-			{Type: "fallout", UserID: 2, Seq: 1},
-			{Type: "fallout", UserID: 1, Seq: 2},
-			{Type: "update", Seq: 3},
+			{Type: "fallout", UserID: 2, AfterSeq: 1},
+			{Type: "fallout", UserID: 1, AfterSeq: 2},
+			{Type: "update", AfterSeq: 3},
+		},
+		[]int{1, 2},
+	)
+
+	require.Equal(t, 3, len(streamer.Msgs), "streamer.Msgs length incorrect")
+
+	upsertMsg, ok := streamer.Msgs[0].(UpsertMsg)
+	require.True(t, ok, "message was not an upsert type")
+	require.Equal(t, 1, int(upsertMsg.Msg.SeqNum()), "Sequence number incorrect")
+
+	deleteMsg, ok := streamer.Msgs[1].(DeleteMsg)
+	require.True(t, ok, "message was not an delete type")
+	require.Equal(t, "0", deleteMsg.Deleted)
+
+	deleteMsg, ok = streamer.Msgs[2].(DeleteMsg)
+	require.True(t, ok, "message was not an delete type")
+	require.Equal(t, "0", deleteMsg.Deleted)
+}
+
+func TestTwoSubscribers18(t *testing.T) {
+	streamer := NewStreamer(prepareNothing)
+
+	// 18. subscriber2 fallout on id 0(1), subscriber1 fallout on id 0(2), delete id 0(3)
+	helper(
+		streamer,
+		[]TestEvent{
+			{Type: "fallout", UserID: 1, AfterSeq: 1},
+			{Type: "fallout", UserID: 2, AfterSeq: 2},
+			{Type: "delete", BeforeSeq: 2},
+		},
+		[]int{1, 2},
+	)
+
+	require.Equal(t, 3, len(streamer.Msgs), "streamer.Msgs length incorrect")
+
+	deleteMsg, ok := streamer.Msgs[0].(DeleteMsg)
+	require.True(t, ok, "message was not an delete type")
+	require.Equal(t, "0", deleteMsg.Deleted)
+
+	upsertMsg, ok := streamer.Msgs[1].(UpsertMsg)
+	require.True(t, ok, "message was not an upsert type")
+	require.Equal(t, 1, int(upsertMsg.Msg.SeqNum()), "Sequence number incorrect")
+
+	deleteMsg, ok = streamer.Msgs[2].(DeleteMsg)
+	require.True(t, ok, "message was not an delete type")
+	require.Equal(t, "0", deleteMsg.Deleted)
+}
+
+func TestTwoSubscribers19(t *testing.T) {
+	streamer := NewStreamer(prepareNothing)
+
+	// 19. update on id 0(1), subscriber1 fallout on id 0(2)
+	helper(
+		streamer,
+		[]TestEvent{
+			{Type: "update", AfterSeq: 1},
+			{Type: "fallout", UserID: 1, AfterSeq: 2},
 		},
 		[]int{1, 2},
 	)
@@ -1619,28 +1666,111 @@ func TestTwoSubscribers17(t *testing.T) {
 
 	upsertMsg, ok = streamer.Msgs[2].(UpsertMsg)
 	require.True(t, ok, "message was not an upsert type")
-	require.Equal(t, 3, int(upsertMsg.Msg.SeqNum()), "Sequence number incorrect")
+	require.Equal(t, 1, int(upsertMsg.Msg.SeqNum()), "Sequence number incorrect")
 
 	upsertMsg, ok = streamer.Msgs[3].(UpsertMsg)
 	require.True(t, ok, "message was not an upsert type")
-	require.Equal(t, 3, int(upsertMsg.Msg.SeqNum()), "Sequence number incorrect")
+	require.Equal(t, 2, int(upsertMsg.Msg.SeqNum()), "Sequence number incorrect")
 }
 
-func TestTwoSubscribers18(t *testing.T) {
+func TestTwoSubscribers20(t *testing.T) {
 	streamer := NewStreamer(prepareNothing)
 
-	// 18. subscriber2 fallout on id 0(1), subscriber1 fallout on id 0(2), delete id 0(3)
+	// 20. update on id 0(1), subscriber2 fallout on id 0(2)
 	helper(
 		streamer,
 		[]TestEvent{
-			{Type: "fallout", UserID: 1, Seq: 1},
-			{Type: "fallout", UserID: 2, Seq: 2},
-			{Type: "delete"},
+			{Type: "update", AfterSeq: 1},
+			{Type: "fallout", UserID: 2, AfterSeq: 2},
 		},
 		[]int{1, 2},
 	)
 
-	require.Equal(t, 4, len(streamer.Msgs), "streamer.Msgs length incorrect")
+	require.Equal(t, 3, len(streamer.Msgs), "streamer.Msgs length incorrect")
+
+	upsertMsg, ok := streamer.Msgs[0].(UpsertMsg)
+	require.True(t, ok, "message was not an upsert type")
+	require.Equal(t, 1, int(upsertMsg.Msg.SeqNum()), "Sequence number incorrect")
+
+	upsertMsg, ok = streamer.Msgs[1].(UpsertMsg)
+	require.True(t, ok, "message was not an upsert type")
+	require.Equal(t, 2, int(upsertMsg.Msg.SeqNum()), "Sequence number incorrect")
+
+	deleteMsg, ok := streamer.Msgs[2].(DeleteMsg)
+	require.True(t, ok, "message was not an delete type")
+	require.Equal(t, "0", deleteMsg.Deleted)
+}
+
+func TestTwoSubscribers21(t *testing.T) {
+	streamer := NewStreamer(prepareNothing)
+
+	// 21. update on id 0(1), delete id 0(2)
+	helper(
+		streamer,
+		[]TestEvent{
+			{Type: "update", AfterSeq: 1},
+			{Type: "delete", BeforeSeq: 1},
+		},
+		[]int{1, 2},
+	)
+
+	require.Equal(t, 3, len(streamer.Msgs), "streamer.Msgs length incorrect")
+
+	upsertMsg, ok := streamer.Msgs[0].(UpsertMsg)
+	require.True(t, ok, "message was not an upsert type")
+	require.Equal(t, 1, int(upsertMsg.Msg.SeqNum()), "Sequence number incorrect")
+
+	deleteMsg, ok := streamer.Msgs[1].(DeleteMsg)
+	require.True(t, ok, "message was not an delete type")
+	require.Equal(t, "0", deleteMsg.Deleted)
+
+	deleteMsg, ok = streamer.Msgs[2].(DeleteMsg)
+	require.True(t, ok, "message was not an delete type")
+	require.Equal(t, "0", deleteMsg.Deleted)
+}
+
+func TestTwoSubscribers22(t *testing.T) {
+	streamer := NewStreamer(prepareNothing)
+
+	// 22. subscriber1 fallout on id 0(1), update on id 0(2)
+	helper(
+		streamer,
+		[]TestEvent{
+			{Type: "fallout", UserID: 1, AfterSeq: 1},
+			{Type: "update", AfterSeq: 2},
+		},
+		[]int{1, 2},
+	)
+
+	require.Equal(t, 3, len(streamer.Msgs), "streamer.Msgs length incorrect")
+
+	deleteMsg, ok := streamer.Msgs[0].(DeleteMsg)
+	require.True(t, ok, "message was not an delete type")
+	require.Equal(t, "0", deleteMsg.Deleted)
+
+	upsertMsg, ok := streamer.Msgs[1].(UpsertMsg)
+	require.True(t, ok, "message was not an upsert type")
+	require.Equal(t, 1, int(upsertMsg.Msg.SeqNum()), "Sequence number incorrect")
+
+	upsertMsg, ok = streamer.Msgs[2].(UpsertMsg)
+	require.True(t, ok, "message was not an upsert type")
+	require.Equal(t, 2, int(upsertMsg.Msg.SeqNum()), "Sequence number incorrect")
+}
+
+func TestTwoSubscribers23(t *testing.T) {
+	streamer := NewStreamer(prepareNothing)
+
+	// 23. subscriber1 fallout on id 0(1), subscriber2 fallout on id 0(2)
+	helper(
+		streamer,
+		[]TestEvent{
+			{Type: "fallout", UserID: 1, AfterSeq: 1},
+			{Type: "fallout", UserID: 2, AfterSeq: 2},
+		},
+		[]int{1, 2},
+	)
+
+	require.Equal(t, 3, len(streamer.Msgs), "streamer.Msgs length incorrect")
 
 	deleteMsg, ok := streamer.Msgs[0].(DeleteMsg)
 	require.True(t, ok, "message was not an delete type")
@@ -1653,8 +1783,258 @@ func TestTwoSubscribers18(t *testing.T) {
 	deleteMsg, ok = streamer.Msgs[2].(DeleteMsg)
 	require.True(t, ok, "message was not an delete type")
 	require.Equal(t, "0", deleteMsg.Deleted)
+}
 
-	deleteMsg, ok = streamer.Msgs[3].(DeleteMsg)
+func TestTwoSubscribers24(t *testing.T) {
+	streamer := NewStreamer(prepareNothing)
+
+	// 24. subscriber1 fallout on id 0(1), delete id 0(2)
+	helper(
+		streamer,
+		[]TestEvent{
+			{Type: "fallout", UserID: 1, AfterSeq: 1},
+			{Type: "delete", BeforeSeq: 2},
+		},
+		[]int{1, 2},
+	)
+
+	require.Equal(t, 3, len(streamer.Msgs), "streamer.Msgs length incorrect")
+
+	deleteMsg, ok := streamer.Msgs[0].(DeleteMsg)
 	require.True(t, ok, "message was not an delete type")
 	require.Equal(t, "0", deleteMsg.Deleted)
+
+	upsertMsg, ok := streamer.Msgs[1].(UpsertMsg)
+	require.True(t, ok, "message was not an upsert type")
+	require.Equal(t, 1, int(upsertMsg.Msg.SeqNum()), "Sequence number incorrect")
+
+	deleteMsg, ok = streamer.Msgs[2].(DeleteMsg)
+	require.True(t, ok, "message was not an delete type")
+	require.Equal(t, "0", deleteMsg.Deleted)
+}
+
+func TestTwoSubscribers25(t *testing.T) {
+	streamer := NewStreamer(prepareNothing)
+
+	// 25. subscriber2 fallout on id 0(1), update on id 0(2)
+	helper(
+		streamer,
+		[]TestEvent{
+			{Type: "fallout", UserID: 1, AfterSeq: 1},
+			{Type: "update", AfterSeq: 2},
+		},
+		[]int{1, 2},
+	)
+
+	require.Equal(t, 3, len(streamer.Msgs), "streamer.Msgs length incorrect")
+
+	deleteMsg, ok := streamer.Msgs[0].(DeleteMsg)
+	require.True(t, ok, "message was not an delete type")
+	require.Equal(t, "0", deleteMsg.Deleted)
+
+	upsertMsg, ok := streamer.Msgs[1].(UpsertMsg)
+	require.True(t, ok, "message was not an upsert type")
+	require.Equal(t, 1, int(upsertMsg.Msg.SeqNum()), "Sequence number incorrect")
+
+	upsertMsg, ok = streamer.Msgs[2].(UpsertMsg)
+	require.True(t, ok, "message was not an upsert type")
+	require.Equal(t, 2, int(upsertMsg.Msg.SeqNum()), "Sequence number incorrect")
+}
+func TestTwoSubscribers26(t *testing.T) {
+	streamer := NewStreamer(prepareNothing)
+
+	// 26. subscriber2 fallout on id 0(1), subscriber1 fallout on id 0(2)
+	helper(
+		streamer,
+		[]TestEvent{
+			{Type: "fallout", UserID: 2, AfterSeq: 1},
+			{Type: "fallout", UserID: 1, AfterSeq: 2},
+		},
+		[]int{1, 2},
+	)
+
+	require.Equal(t, 3, len(streamer.Msgs), "streamer.Msgs length incorrect")
+
+	upsertMsg, ok := streamer.Msgs[0].(UpsertMsg)
+	require.True(t, ok, "message was not an upsert type")
+	require.Equal(t, 1, int(upsertMsg.Msg.SeqNum()), "Sequence number incorrect")
+
+	deleteMsg, ok := streamer.Msgs[1].(DeleteMsg)
+	require.True(t, ok, "message was not an delete type")
+	require.Equal(t, "0", deleteMsg.Deleted)
+
+	deleteMsg, ok = streamer.Msgs[2].(DeleteMsg)
+	require.True(t, ok, "message was not an delete type")
+	require.Equal(t, "0", deleteMsg.Deleted)
+}
+func TestTwoSubscribers27(t *testing.T) {
+	streamer := NewStreamer(prepareNothing)
+
+	// 27. subscriber2 fallout on id 0(1), delete id 0(2)
+	helper(
+		streamer,
+		[]TestEvent{
+			{Type: "fallout", UserID: 2, AfterSeq: 1},
+			{Type: "delete", BeforeSeq: 1},
+		},
+		[]int{1, 2},
+	)
+
+	require.Equal(t, 3, len(streamer.Msgs), "streamer.Msgs length incorrect")
+
+	upsertMsg, ok := streamer.Msgs[0].(UpsertMsg)
+	require.True(t, ok, "message was not an upsert type")
+	require.Equal(t, 1, int(upsertMsg.Msg.SeqNum()), "Sequence number incorrect")
+
+	deleteMsg, ok := streamer.Msgs[1].(DeleteMsg)
+	require.True(t, ok, "message was not an delete type")
+	require.Equal(t, "0", deleteMsg.Deleted)
+
+	deleteMsg, ok = streamer.Msgs[2].(DeleteMsg)
+	require.True(t, ok, "message was not an delete type")
+	require.Equal(t, "0", deleteMsg.Deleted)
+}
+func TestTwoSubscribers28(t *testing.T) {
+	streamer := NewStreamer(prepareNothing)
+
+	// 28. update on id 0(1)
+	helper(
+		streamer,
+		[]TestEvent{
+			{Type: "update", AfterSeq: 1},
+		},
+		[]int{1, 2},
+	)
+
+	require.Equal(t, 2, len(streamer.Msgs), "streamer.Msgs length incorrect")
+
+	upsertMsg, ok := streamer.Msgs[0].(UpsertMsg)
+	require.True(t, ok, "message was not an upsert type")
+	require.Equal(t, 1, int(upsertMsg.Msg.SeqNum()), "Sequence number incorrect")
+
+	upsertMsg, ok = streamer.Msgs[1].(UpsertMsg)
+	require.True(t, ok, "message was not an upsert type")
+	require.Equal(t, 1, int(upsertMsg.Msg.SeqNum()), "Sequence number incorrect")
+}
+
+func TestTwoSubscribers29(t *testing.T) {
+	streamer := NewStreamer(prepareNothing)
+
+	// 29. subscriber1 fallout on id 0(1)
+	helper(
+		streamer,
+		[]TestEvent{
+			{Type: "fallout", UserID: 1, AfterSeq: 1},
+		},
+		[]int{1, 2},
+	)
+
+	require.Equal(t, 2, len(streamer.Msgs), "streamer.Msgs length incorrect")
+
+	deleteMsg, ok := streamer.Msgs[0].(DeleteMsg)
+	require.True(t, ok, "message was not an delete type")
+	require.Equal(t, "0", deleteMsg.Deleted)
+
+	upsertMsg, ok := streamer.Msgs[1].(UpsertMsg)
+	require.True(t, ok, "message was not an upsert type")
+	require.Equal(t, 1, int(upsertMsg.Msg.SeqNum()), "Sequence number incorrect")
+}
+
+func TestTwoSubscribers30(t *testing.T) {
+	streamer := NewStreamer(prepareNothing)
+
+	// 30. subscriber2 fallout on id 0(1)
+	helper(
+		streamer,
+		[]TestEvent{
+			{Type: "fallout", UserID: 2, AfterSeq: 1},
+		},
+		[]int{1, 2},
+	)
+
+	require.Equal(t, 2, len(streamer.Msgs), "streamer.Msgs length incorrect")
+
+	upsertMsg, ok := streamer.Msgs[0].(UpsertMsg)
+	require.True(t, ok, "message was not an upsert type")
+	require.Equal(t, 1, int(upsertMsg.Msg.SeqNum()), "Sequence number incorrect")
+
+	deleteMsg, ok := streamer.Msgs[1].(DeleteMsg)
+	require.True(t, ok, "message was not an delete type")
+	require.Equal(t, "0", deleteMsg.Deleted)
+}
+
+func TestTwoSubscribers31(t *testing.T) {
+	streamer := NewStreamer(prepareNothing)
+
+	// 31. delete id 0(1)
+	helper(
+		streamer,
+		[]TestEvent{
+			{Type: "delete", BeforeSeq: 0},
+		},
+		[]int{1, 2},
+	)
+
+	require.Equal(t, 2, len(streamer.Msgs), "streamer.Msgs length incorrect")
+
+	deleteMsg, ok := streamer.Msgs[0].(DeleteMsg)
+	require.True(t, ok, "message was not an delete type")
+	require.Equal(t, "0", deleteMsg.Deleted)
+
+	deleteMsg, ok = streamer.Msgs[1].(DeleteMsg)
+	require.True(t, ok, "message was not an delete type")
+	require.Equal(t, "0", deleteMsg.Deleted)
+}
+
+func TestTwoSubscribers(t *testing.T) {
+	type testCase struct {
+		description  string
+		dBEvents     []TestEvent
+		outGoingMsgs []any
+	}
+
+	tcs := []testCase{
+		{
+			description: "update on id 0(1), subscriber1 fallout on id 0(2), subscriber2 fallout on id 0(3), delete id 0(4)",
+			dBEvents: []TestEvent{
+				{Type: "update", AfterSeq: 1},
+				{Type: "fallout", UserID: 1, AfterSeq: 2},
+				{Type: "fallout", UserID: 2, AfterSeq: 3},
+				{Type: "delete", BeforeSeq: 3},
+			},
+			outGoingMsgs: []any{
+				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
+				DeleteMsg{Deleted: "0"},
+				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
+				UpsertMsg{Msg: TestMsgTypeA{2, 0}},
+				DeleteMsg{Deleted: "0"},
+			},
+		},
+	}
+	streamer := NewStreamer(prepareNothing)
+
+	for _, tc := range tcs {
+		t.Run(tc.description, func(t *testing.T) {
+			helper(
+				streamer,
+				tc.dBEvents,
+				[]int{1, 2},
+			)
+
+			require.Equal(t, len(tc.outGoingMsgs), len(streamer.Msgs), "streamer.Msgs length incorrect")
+
+			for i, o := range tc.outGoingMsgs {
+				switch o.(type) {
+				case UpsertMsg:
+					upsertMsg, ok := streamer.Msgs[i].(UpsertMsg)
+					require.True(t, ok, "message was not an upsert type")
+					require.Equal(t, o.(UpsertMsg).Msg.SeqNum(), upsertMsg.Msg.SeqNum(), "Sequence number incorrect")
+				case DeleteMsg:
+					deleteMsg, ok := streamer.Msgs[i].(DeleteMsg)
+					require.True(t, ok, "message was not an delete type")
+					require.Equal(t, "0", deleteMsg.Deleted)
+				}
+			}
+		})
+	}
 }
