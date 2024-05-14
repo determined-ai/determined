@@ -36,12 +36,12 @@ const FilterForm = ({ formStore, columns, onHidePopOver }: Props): JSX.Element =
   };
 
   return (
-    <div className={css.base}>
+    <div className={css.base} data-test-component="FilterForm">
       {Loadable.match(loadableData, {
         Failed: () => null, // TODO inform user if data fails to load
         Loaded: (data) => (
           <>
-            <div className={css.header}>
+            <div className={css.header} data-test="header">
               <div>Show experiments…</div>
               <Toggle
                 checked={data.showArchived}
@@ -64,12 +64,14 @@ const FilterForm = ({ formStore, columns, onHidePopOver }: Props): JSX.Element =
             <div className={css.buttonContainer}>
               <div className={css.addButtonContainer}>
                 <Button
+                  data-test="addCondition"
                   disabled={isButtonDisabled}
                   type="text"
                   onClick={() => onAddItem(FormKind.Field)}>
                   + Add condition
                 </Button>
                 <Button
+                  data-test="addConditionGroup"
                   disabled={isButtonDisabled}
                   type="text"
                   onClick={() => onAddItem(FormKind.Group)}>
@@ -77,6 +79,7 @@ const FilterForm = ({ formStore, columns, onHidePopOver }: Props): JSX.Element =
                 </Button>
               </div>
               <Button
+                data-test="clearFilters"
                 type="text"
                 onClick={() => {
                   formStore.removeChild(data.filterGroup.id);

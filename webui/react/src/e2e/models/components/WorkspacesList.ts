@@ -11,7 +11,7 @@ import { WorkspaceActionDropdown } from './WorkspaceActionDropdown';
  * @param {string} [obj.selector] - Used instead of `defaultSelector`
  */
 export class WorkspacesList extends NamedComponent {
-  override defaultSelector: string = '[id=workspaces]';
+  readonly defaultSelector: string = '[id=workspaces]';
   readonly newWorkspaceButton = new BaseComponent({
     parent: this,
     selector: '[data-testid="newWorkspace"]',
