@@ -163,12 +163,6 @@ var defaultRunsTableColumns = []*projectv1.ProjectColumn{
 	},
 }
 
-var (
-	numberType = "number"
-	stringType = "string"
-	boolType   = "boolean"
-)
-
 func (a *apiServer) GetProjectByID(
 	ctx context.Context, id int32, curUser model.User,
 ) (*projectv1.Project, error) {
@@ -505,6 +499,7 @@ func (a *apiServer) getProjectRunColumnsByID(
 		MetricType string
 	}{}
 
+	// Get summary metrics only if project is not empty.
 	if len(hyperparameters) > 0 {
 		runsQuery := db.Bun().NewSelect().Distinct().Table("runs").
 			ColumnExpr("jsonb_object_keys(summary_metrics) as json_path").
@@ -558,21 +553,10 @@ func (a *apiServer) getProjectRunColumnsByID(
 		}
 	}
 	for _, hparam := range hyperparameters {
-		var columnType projectv1.ColumnType
-		switch {
-		case hparam.Type == numberType:
-			columnType = projectv1.ColumnType_COLUMN_TYPE_NUMBER
-		case hparam.Type == stringType:
-			columnType = projectv1.ColumnType_COLUMN_TYPE_TEXT
-		case hparam.Type == boolType:
-			columnType = projectv1.ColumnType_COLUMN_TYPE_TEXT
-		default:
-			columnType = projectv1.ColumnType_COLUMN_TYPE_UNSPECIFIED
-		}
 		columns = append(columns, &projectv1.ProjectColumn{
 			Column:   fmt.Sprintf("hp.%s", hparam.Hparam),
 			Location: projectv1.LocationType_LOCATION_TYPE_RUN_HYPERPARAMETERS,
-			Type:     columnType,
+			Type:     parseMetricsType(hparam.Type),
 		})
 	}
 
@@ -737,7 +721,7 @@ func (a *apiServer) getProjectNumericMetricsRange(
 		if r.SummaryMetrics != nil {
 			for metricsGroup, metrics := range r.SummaryMetrics {
 				for name, value := range metrics {
-					if value.Type != numberType {
+					if value.Type != "number" {
 						continue
 					}
 
