@@ -203,7 +203,6 @@ func (p *Publisher[T]) hydrateMsg(rawMsg T, idToEventCache map[int]EntityCache, 
 	}
 
 	upsertMsg := entityMsg.UpsertMsg()
-	fmt.Println("reach before filters")
 	entityCache.Seq = upsertMsg.Msg.SeqNum()
 	entityCache.UpsertCache = sub.Streamer.PrepareFn(upsertMsg)
 	// check filter again in case project move workspace that would be a fall out
@@ -249,7 +248,7 @@ func (p *Publisher[T]) Broadcast(events []Event[T]) {
 				case ev.After != nil && sub.filter(*ev.After) && sub.permissionFilter(*ev.After):
 					rawMsg := *ev.After
 					entityCache, ok := idToEventCache[rawMsg.GetID()]
-					fmt.Printf("events idx: %v, entityCache: %+v, ok: %v\n", i, entityCache, ok)
+					fmt.Printf("events idx: %v, entityCache: %+v, ok: %v, filter: %v\n", i, entityCache, ok, sub.filter(*ev.After))
 					if entityCache, ok := idToEventCache[rawMsg.GetID()]; ok {
 						// update, insert, or fallin: send the record to the client.
 						cachedSeq := entityCache.Seq
@@ -283,30 +282,17 @@ func (p *Publisher[T]) Broadcast(events []Event[T]) {
 					(!sub.filter(*ev.After) || !sub.permissionFilter(*ev.After)):
 					// fallout: tell the client the record is deleted.
 					fmt.Println("fallout")
-					beforeMsg := *ev.Before
 					afterMsg := *ev.After
 
 					if entityCache, ok := idToEventCache[afterMsg.GetID()]; ok {
-						cachedSeq := entityCache.Seq
-						fmt.Printf("cached Seq: %+v, afterMsg Seq: %v\n", cachedSeq, afterMsg.SeqNum())
-						if cachedSeq == afterMsg.SeqNum() {
-							if entityCache.DeleteCache == nil {
-								entityCache.DeleteCache = sub.Streamer.PrepareFn(beforeMsg.DeleteMsg())
-							}
-							msg = entityCache.DeleteCache
-						} else if cachedSeq > afterMsg.SeqNum() || cachedSeq == -1 {
-							continue
-						} else {
-							entityCache.Seq = afterMsg.SeqNum()
-							if entityCache.DeleteCache == nil {
-								entityCache.DeleteCache = sub.Streamer.PrepareFn(beforeMsg.DeleteMsg())
-							}
-							msg = entityCache.DeleteCache
+						if entityCache.DeleteCache == nil {
+							entityCache.DeleteCache = sub.Streamer.PrepareFn(afterMsg.DeleteMsg())
 						}
+						msg = entityCache.DeleteCache
+						idToEventCache[afterMsg.GetID()] = entityCache
 					} else {
-						entityCache := EntityCache{}
-						entityCache.Seq = afterMsg.SeqNum()
-						entityCache.DeleteCache = sub.Streamer.PrepareFn(beforeMsg.DeleteMsg())
+						entityCache = EntityCache{}
+						entityCache.DeleteCache = sub.Streamer.PrepareFn(afterMsg.DeleteMsg())
 						msg = entityCache.DeleteCache
 						idToEventCache[afterMsg.GetID()] = entityCache
 					}
@@ -315,6 +301,7 @@ func (p *Publisher[T]) Broadcast(events []Event[T]) {
 					// deletion: tell the client the record is deleted.
 					beforeMsg := *ev.Before
 					fmt.Println("delete msg")
+
 					if entityCache, ok := idToEventCache[beforeMsg.GetID()]; ok {
 						if entityCache.DeleteCache == nil {
 							entityCache.DeleteCache = sub.Streamer.PrepareFn(beforeMsg.DeleteMsg())
@@ -323,7 +310,7 @@ func (p *Publisher[T]) Broadcast(events []Event[T]) {
 						msg = entityCache.DeleteCache
 						idToEventCache[beforeMsg.GetID()] = entityCache
 					} else {
-						entityCache := EntityCache{}
+						entityCache = EntityCache{}
 						entityCache.Seq = -1
 						entityCache.DeleteCache = sub.Streamer.PrepareFn(beforeMsg.DeleteMsg())
 						msg = entityCache.DeleteCache
@@ -331,8 +318,8 @@ func (p *Publisher[T]) Broadcast(events []Event[T]) {
 					}
 
 				default:
-					fmt.Printf("it's a malformed message %v\n", ev)
-					log.Debugf("unable to this event %v\n", ev)
+					fmt.Printf("This message is not relavent to the subscriber. Ignore it.\n")
+					log.Tracef("This message is not relavent to the subscriber. Ignore it.\n")
 					continue
 				}
 				// is this the first match for this Subscription during this Broadcast?
