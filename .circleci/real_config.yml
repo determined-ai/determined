@@ -650,8 +650,11 @@ commands:
           command: |
             pytest -vv -s \
             -m <<parameters.mark>> \
+            --junitxml=/tmp/test-results/det-deploy-tests.xml \
             --no-compare-stats \
             --det-version="<<parameters.det-version>>"
+      - store_test_results:
+        path: /tmp/test-results/
 
   deploy-aws-cluster:
     parameters:
@@ -2473,13 +2476,15 @@ jobs:
           determined: true
           extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
           executor: <<pipeline.parameters.docker-image>>
-      - run: COVERAGE_FILE=$PWD/test-unit-storage-pycov coverage run -m pytest -v --durations=0 --require-secrets -m cloud harness/tests
+      - run: COVERAGE_FILE=$PWD/test-unit-storage-pycov coverage run -m pytest -v --durations=0 --junitxml=/tmp/test-results/test-unit-storage.xml --require-secrets -m cloud harness/tests
       - run: coverage xml -i --data-file=./test-unit-storage-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
       - persist_to_workspace:
           root: .
           paths:
             - test-unit-storage-pycov
+      - store_test_results:
+          path: /tmp/test-results
 
   test-unit-model-hub:
     docker:
@@ -2555,7 +2560,9 @@ jobs:
       - run: pip install -r harness/tests/requirements/requirements-cli.txt
       - run: pip freeze --all
       - python-report
-      - run: pytest harness/tests/cli
+      - run: pytest --junitxml=/tmp/test-results/test-unit-storage.xml harness/tests/cli
+      - store_test_results:
+          path: /tmp/test-results
 
   test-e2e-slurm-disabled:
     parameters:
