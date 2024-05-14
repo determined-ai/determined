@@ -401,7 +401,6 @@ interface Props {
 export const CompareHyperparametersWithMocks: React.FC<Props> = ({ empty }: Props): JSX.Element => {
   return (
     <CompareHyperparameters
-      // @ts-expect-error Mock data does not need type checking
       metricData={METRIC_DATA}
       projectId={1}
       // @ts-expect-error Mock data does not need type checking
