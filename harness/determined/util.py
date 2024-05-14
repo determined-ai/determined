@@ -243,7 +243,12 @@ def json_encode(obj: Any, indent: Optional[str] = None, sort_keys: bool = False)
             return obj.__json__()
         raise TypeError("Unserializable object {} of type {}".format(obj, type(obj)))
 
-    return json.dumps(jsonable(obj), indent=indent, sort_keys=sort_keys)
+    json_obj = jsonable(obj)
+    try:
+        return json.dumps(json_obj, indent=indent, sort_keys=sort_keys)
+    except TypeError as e:
+        logger.error(f"Error serializing {json_obj}")
+        raise e
 
 
 def write_user_code(path: pathlib.Path, on_cluster: bool) -> None:
