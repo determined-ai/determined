@@ -368,7 +368,7 @@ class _GPU(_MetricGroupCollector):
                 uuid = pynvml.nvmlDeviceGetUUID(handle)
                 pynvml.nvmlDeviceGetMemoryInfo(handle)
                 pynvml.nvmlDeviceGetUtilizationRates(handle)
-                self._pynvml_device_handles[uuid] = handle
+                self._pynvml_device_handles[str(uuid)] = handle
         except pynvml.NVMLError as ne:
             self._pynvml_device_handles = {}
             logging.info(f"Error accessing NVML {ne}. GPU metrics will not be collected.")
@@ -381,7 +381,7 @@ class _GPU(_MetricGroupCollector):
             free_memory = pynvml.nvmlDeviceGetMemoryInfo(handle).free
             metrics.update(
                 {
-                    str(uuid): {
+                    uuid: {
                         "gpu_util": gpu_util,
                         "gpu_free_memory": free_memory,
                     }
