@@ -163,7 +163,7 @@ func ModelVersionCollectStartupMsgs(
 	}
 	missing, appeared, err := processQuery(ctx, createQuery, spec.Since, known, "m")
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("processing known: %s", err.Error())
 	}
 
 	// step 2: hydrate appeared IDs into full ModelVersionMsgs
@@ -264,7 +264,7 @@ func ModelVersionMakePermissionFilter(ctx context.Context, user model.User) (fun
 	}
 }
 
-// ModelMakeHydrator returns a function that gets all the properties of a project by
+// ModelMakeHydrator returns a function that gets properties of a model version by
 // its id.
 func ModelVersionMakeHydrator() func(int) (*ModelVersionMsg, error) {
 	return func(ID int) (*ModelVersionMsg, error) {
