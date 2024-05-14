@@ -76,9 +76,15 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
   const filteredColumns = useMemo(() => {
     const regex = new RegExp(searchString, 'i');
     const locations = ensureArray(tab);
-    return totalColumns.filter(
-      (col) => locations.includes(col.location) && regex.test(col.displayName || col.column),
-    );
+    return totalColumns
+      .filter(
+        (col) => locations.includes(col.location) && regex.test(col.displayName || col.column),
+      )
+      .sort(
+        (a, b) =>
+          locations.findIndex((l) => l === a.location) -
+          locations.findIndex((l) => l === b.location),
+      );
   }, [searchString, totalColumns, tab]);
 
   const allFilteredColumnsChecked = useMemo(() => {
