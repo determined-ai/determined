@@ -28,6 +28,7 @@ type PopoverArgs = PopoverArgsWithoutChildNode | PopoverArgsWithChildNode;
  * @param {Function} [obj.openMethod] - optional if `childNode` is present. It's the method to open the dropdown.
  */
 export class Popover extends BaseComponent {
+  readonly openMethod: () => Promise<void>;
   readonly childNode: ComponentBasics | undefined;
   constructor({ root, childNode, openMethod }: PopoverArgs) {
     super({
@@ -37,17 +38,24 @@ export class Popover extends BaseComponent {
     if (childNode !== undefined) {
       this.childNode = childNode;
     }
-    if (openMethod !== undefined) {
-      this.open = openMethod;
-    }
+    this.openMethod =
+      openMethod ||
+      (async () => {
+        if (this.childNode === undefined) {
+          // We should never be able to throw this error. In the constructor, we
+          // either provide a childNode or replace this method.
+          throw new Error('This popover does not have a child node to click on.');
+        }
+        await this.childNode.pwLocator.click();
+      });
   }
 
-  async open(): Promise<void> {
-    if (this.childNode === undefined) {
-      // We should never be able to throw this error. In the constructor, we
-      // either provide a childNode or replace this method.
-      throw new Error('This dropdown does not have a child node to click on.');
-    }
-    await this.childNode.pwLocator.click();
+  /**
+   * Opens the popover.
+   * @returns {Promise<this>} - the popover for further actions
+   */
+  async open(): Promise<this> {
+    await this.openMethod();
+    return this;
   }
 }

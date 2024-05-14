@@ -38,8 +38,7 @@ test.describe('User Management', () => {
 
   test('Navigate to User Management', async ({ page }) => {
     const userManagementPage = new UserManagement(page);
-    await userManagementPage.nav.sidebar.headerDropdown.open();
-    await userManagementPage.nav.sidebar.headerDropdown.admin.pwLocator.click();
+    await (await userManagementPage.nav.sidebar.headerDropdown.open()).admin.pwLocator.click();
     await expect(page).toHaveTitle(userManagementPage.title);
     await expect(page).toHaveURL(userManagementPage.url);
   });
@@ -288,18 +287,8 @@ test.describe('User Management', () => {
           },
         ]) {
           await test.step(`Compare table rows with pagination: ${name}`, async () => {
-            await expect(
-              repeatWithFallback(
-                async () => {
-                  await pagination.perPage.openMenu();
-                  await paginationOption.pwLocator.click();
-                },
-                async () => {
-                  // BUG [ET-233]
-                  await userManagementPage.goto();
-                },
-              ),
-            ).toPass({ timeout: 25_000 });
+            await pagination.perPage.openMenu();
+            await paginationOption.pwLocator.click();
             await expect(userManagementPage.skeletonTable.pwLocator).not.toBeVisible();
             const matches = (await pagination.perPage.selectionItem.pwLocator.innerText()).match(
               /(\d+) \/ page/,

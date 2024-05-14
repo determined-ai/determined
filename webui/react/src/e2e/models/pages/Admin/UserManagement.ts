@@ -43,7 +43,7 @@ export class UserManagement extends AdminPage {
     parent: this.#actionRow,
     selector: '[data-testid="addUser"]',
   });
-  readonly actions = new actionDropdownMenu({
+  readonly actions = new ActionDropdownMenu({
     childNode: new BaseComponent({
       parent: this.#actionRow,
       selector: '[data-testid="actions"]',
@@ -208,7 +208,7 @@ class UserActionDropdown extends DropdownMenu {
  * @param {CanBeParent} obj.parent - The parent used to locate this ActionDropdownMenu
  * @param {string} obj.selector - Used as a selector uesd to locate this object
  */
-class actionDropdownMenu extends DropdownMenu {
+class ActionDropdownMenu extends DropdownMenu {
   readonly status = this.menuItem('change-status');
   readonly roles = this.menuItem('set-roles');
   readonly groups = this.menuItem('add-to-groups');

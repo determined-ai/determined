@@ -13,11 +13,6 @@ export class Select extends BaseComponent {
     selector: '.ant-select-dropdown .rc-virtual-list-holder-inner',
   });
 
-  readonly arrow = new BaseComponent({
-    parent: this,
-    selector: '.ant-select-arrow',
-  });
-
   readonly search = new BaseComponent({
     parent: this,
     selector: '.ant-select-selection-search input',
@@ -58,12 +53,13 @@ export class Select extends BaseComponent {
   /**
    * Shortcut open the menu for the select element.
    */
-  async openMenu(): Promise<void> {
+  async openMenu(): Promise<Select> {
     if (await this._menu.pwLocator.isVisible()) {
-      return;
+      return this;
     }
-    await this.arrow.pwLocator.click();
+    await this.pwLocator.click();
     await this._menu.pwLocator.waitFor();
+    return this;
   }
 
   /**
