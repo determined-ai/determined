@@ -114,14 +114,19 @@ func (k *kubernetesResourcePool) UpdatePodStatus(msg sproto.UpdatePodStatus) {
 
 	id, ok := k.containerIDtoAllocationID[msg.ContainerID]
 	if !ok {
+		k.syslog.Infof("123")
 		return
 	}
 
 	for it := k.reqList.Iterator(); it.Next(); {
 		req := it.Value()
 		if req.AllocationID == id {
+			k.syslog.Infof("ABC: %v/%v", req.State, msg.State)
+
 			req.State = msg.State
 			if sproto.ScheduledStates[req.State] {
+				k.syslog.Infof("234")
+
 				k.allocationIDToRunningPods[id]++
 			}
 		}
