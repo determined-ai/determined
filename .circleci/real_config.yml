@@ -4617,6 +4617,7 @@ workflows:
           context:
             - gcp-ci
             - determined-ee
+            - gcp-ci-cluster-default-user-credentials
           filters:
             branches:
               only: main
@@ -4633,6 +4634,7 @@ workflows:
           context:
             - gcp-ci
             - determined-ee
+            - gcp-ci-cluster-default-user-credentials
           filters:
             branches:
               only: main
@@ -4654,6 +4656,7 @@ workflows:
           context:
             - gcp-ci
             - determined-ee
+            - gcp-ci-cluster-default-user-credentials
           filters:
             branches:
               only: main
@@ -4672,6 +4675,7 @@ workflows:
           context:
             - gcp-ci
             - determined-ee
+            - gcp-ci-cluster-default-user-credentials
           filters:
             branches:
               only: main
@@ -4694,6 +4698,7 @@ workflows:
           context:
             - gcp-ci
             - determined-ee
+            - gcp-ci-cluster-default-user-credentials
           filters:
             branches:
               only: main
@@ -4854,6 +4859,7 @@ workflows:
           context:
             - gcp-ci
             - determined-ee
+            - gcp-ci-cluster-default-user-credentials
           filters: *upstream-feature-branch
           requires:
             - request-k8-tests
@@ -4869,6 +4875,7 @@ workflows:
           context:
             - gcp-ci
             - determined-ee
+            - gcp-ci-cluster-default-user-credentials
           filters: *upstream-feature-branch
           requires:
             - request-k8-tests
@@ -4889,6 +4896,7 @@ workflows:
           context:
             - gcp-ci
             - determined-ee
+            - gcp-ci-cluster-default-user-credentials
           filters: *upstream-feature-branch
           requires:
             - request-k8-tests
@@ -4911,6 +4919,7 @@ workflows:
           context:
             - gcp-ci
             - determined-ee
+            - gcp-ci-cluster-default-user-credentials
           filters: *upstream-feature-branch
           requires:
             - request-k8-tests-cpu
@@ -4932,6 +4941,7 @@ workflows:
           context:
             - gcp-ci
             - determined-ee
+            - gcp-ci-cluster-default-user-credentials
           filters: *upstream-feature-branch
           requires:
             - request-k8-tests-cpu
