@@ -65,6 +65,7 @@ import {
   DEFAULT_SELECTION,
   SelectionType as SelectionState,
 } from 'pages/F_ExpList/F_ExperimentList.settings';
+import FlatRunActionButton from 'pages/FlatRuns/FlatRunActionButton';
 import { paths } from 'routes/utils';
 import { getProjectColumns, getProjectNumericMetricsRange, searchRuns } from 'services/api';
 import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
@@ -209,6 +210,10 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
     }
   }, [projectId]);
 
+  const selectedRunIdSet = useMemo(() => {
+    return new Set(settings.selection.type === 'ONLY_IN' ? settings.selection.selections : []);
+  }, [settings.selection]);
+
   const columnsIfLoaded = useMemo(
     () => (isLoadingSettings ? [] : settings.columns),
     [isLoadingSettings, settings.columns],
@@ -228,19 +233,17 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
     if (isLoadingSettings) {
       return [selectedArray, selectedMap];
     }
-    const selectedIdSet = new Set(
-      settings.selection.type === 'ONLY_IN' ? settings.selection.selections : [],
-    );
+
     runs.forEach((r, index) => {
       Loadable.forEach(r, (run) => {
-        if (selectedIdSet.has(run.id)) {
+        if (selectedRunIdSet.has(run.id)) {
           selectedMap.set(run.id, { index, run });
           selectedArray.push(run);
         }
       });
     });
     return [selectedArray, selectedMap];
-  }, [isLoadingSettings, settings.selection, runs]);
+  }, [isLoadingSettings, runs, selectedRunIdSet]);
 
   const selection = useMemo<GridSelection>(() => {
     let rows = CompactSelection.empty();
@@ -252,6 +255,13 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
       rows,
     };
   }, [loadedSelectedRunIds]);
+
+  const selectedRuns: FlatRun[] = useMemo(() => {
+    const selected = runs.flatMap((run) => {
+      return run.isLoaded && selectedRunIdSet.has(run.data.id) ? [run.data] : [];
+    });
+    return selected;
+  }, [runs, selectedRunIdSet]);
 
   const handleIsOpenFilterChange = useCallback((newOpen: boolean) => {
     setIsOpenFilter(newOpen);
@@ -975,6 +985,11 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
             <OptionsMenu
               rowHeight={globalSettings.rowHeight}
               onRowHeightChange={onRowHeightChange}
+            />
+            <FlatRunActionButton
+              isMobile={isMobile}
+              project={project}
+              selectedRuns={selectedRuns}
             />
           </Row>
         </Column>
