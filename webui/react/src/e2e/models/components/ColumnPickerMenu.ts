@@ -1,5 +1,6 @@
-import { BaseComponent, NamedComponent } from 'e2e/models/BaseComponent';
-import { Dropdown } from 'e2e/models/hew/Dropdown';
+import { BaseComponent, CanBeParent, NamedComponent } from 'e2e/models/BaseComponent';
+import { BasePage } from 'e2e/models/BasePage';
+import { DropdownContent } from 'e2e/models/hew/Dropdown';
 import { Message } from 'e2e/models/hew/Message';
 import { Pivot } from 'e2e/models/hew/Pivot';
 
@@ -10,25 +11,20 @@ import { Pivot } from 'e2e/models/hew/Pivot';
  * @param {CanBeParent} obj.parent - The parent used to locate this ColumnPickerMenu
  * @param {string} obj.selector - Used instead of `defaultSelector`
  */
-export class ColumnPickerMenu extends NamedComponent {
-  readonly defaultSelector = '[data-test-component="columnPickerMenu"]';
-  readonly dropdown = new Dropdown({
-    parent: this._parent,
-    selector: 'button' + this.defaultSelector,
-  });
-  readonly pivot = new Pivot({ parent: this.dropdown });
-  readonly generalTab = new BaseComponent({
-    parent: this.pivot.tablist,
-    selector: Pivot.selectorTemplateTabs('LOCATION_TYPE_EXPERIMENT'),
-  });
-  readonly metricsTab = new BaseComponent({
-    parent: this.pivot.tablist,
-    selector: Pivot.selectorTemplateTabs('LOCATION_TYPE_VALIDATIONS'),
-  });
-  readonly hyperparameterTab = new BaseComponent({
-    parent: this.pivot.tablist,
-    selector: Pivot.selectorTemplateTabs('LOCATION_TYPE_HYPERPARAMETERS'),
-  });
+export class ColumnPickerMenu extends DropdownContent {
+  constructor({ parent, root }: { parent: CanBeParent; root: BasePage }) {
+    super({
+      childNode: new BaseComponent({
+        parent,
+        selector: '[data-test-component="columnPickerMenu"]',
+      }),
+      root,
+    });
+  }
+  readonly pivot = new Pivot({ parent: this });
+  readonly generalTab = this.pivot.tab('LOCATION_TYPE_EXPERIMENT');
+  readonly metricsTab = this.pivot.tab('LOCATION_TYPE_VALIDATIONS');
+  readonly hyperparameterTab = this.pivot.tab('LOCATION_TYPE_HYPERPARAMETERS');
   readonly columnPickerTab = new ColumnPickerTab({ parent: this.pivot.tabContent });
 }
 

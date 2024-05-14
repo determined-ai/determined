@@ -22,9 +22,6 @@ export class ConjunctionContainer extends NamedComponent {
 }
 
 class ConjunctionSelect extends Select {
-  readonly and = new BaseComponent({
-    parent: this._menu,
-    selector: Select.selectorTemplate('and'),
-  });
-  readonly or = new BaseComponent({ parent: this._menu, selector: Select.selectorTemplate('or') });
+  readonly and = this.menuItem('and');
+  readonly or = this.menuItem('or');
 }

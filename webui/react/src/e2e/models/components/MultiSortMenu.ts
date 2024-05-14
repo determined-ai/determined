@@ -1,5 +1,6 @@
-import { BaseComponent, NamedComponent } from 'e2e/models/BaseComponent';
-import { Dropdown } from 'e2e/models/hew/Dropdown';
+import { BaseComponent, CanBeParent, NamedComponent } from 'e2e/models/BaseComponent';
+import { BasePage } from 'e2e/models/BasePage';
+import { DropdownContent } from 'e2e/models/hew/Dropdown';
 import { Select } from 'e2e/models/hew/Select';
 
 /**
@@ -9,13 +10,14 @@ import { Select } from 'e2e/models/hew/Select';
  * @param {CanBeParent} obj.parent - The parent used to locate this MultiSortMenu
  * @param {string} obj.selector - Used instead of `defaultSelector`
  */
-export class MultiSortMenu extends NamedComponent {
-  readonly defaultSelector = '[data-test-component="multiSortMenu"]';
-  readonly dropdown = new Dropdown({
-    parent: this._parent,
-    selector: 'button' + this.defaultSelector,
-  });
-  readonly multiSort = new MultiSort({ parent: this.dropdown });
+export class MultiSortMenu extends DropdownContent {
+  constructor({ parent, root }: { parent: CanBeParent; root: BasePage }) {
+    super({
+      childNode: new BaseComponent({ parent, selector: '[data-test-component="multiSortMenu"]' }),
+      root,
+    });
+  }
+  readonly multiSort = new MultiSort({ parent: this });
 }
 
 class MultiSort extends NamedComponent {

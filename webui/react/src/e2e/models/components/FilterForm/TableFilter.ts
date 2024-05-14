@@ -1,6 +1,7 @@
-import { NamedComponent } from 'e2e/models/BaseComponent';
+import { BaseComponent, CanBeParent } from 'e2e/models/BaseComponent';
+import { BasePage } from 'e2e/models/BasePage';
 import { FilterForm } from 'e2e/models/components/FilterForm/components/FilterForm';
-import { Dropdown } from 'e2e/models/hew/Dropdown';
+import { DropdownContent } from 'e2e/models/hew/Dropdown';
 
 /**
  * Returns a representation of the TableFilter component.
@@ -9,11 +10,12 @@ import { Dropdown } from 'e2e/models/hew/Dropdown';
  * @param {CanBeParent} obj.parent - The parent used to locate this TableFilter
  * @param {string} obj.selector - Used instead of `defaultSelector`
  */
-export class TableFilter extends NamedComponent {
-  readonly defaultSelector = '[data-test-component="tableFilter"]';
-  readonly dropdown = new Dropdown({
-    parent: this._parent,
-    selector: 'button' + this.defaultSelector,
-  });
-  readonly filterForm = new FilterForm({ parent: this.dropdown });
+export class TableFilter extends DropdownContent {
+  constructor({ parent, root }: { parent: CanBeParent; root: BasePage }) {
+    super({
+      childNode: new BaseComponent({ parent, selector: '[data-test-component="tableFilter"]' }),
+      root,
+    });
+  }
+  readonly filterForm = new FilterForm({ parent: this });
 }

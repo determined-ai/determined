@@ -1,7 +1,7 @@
 import { BaseComponent, NamedComponent } from 'e2e/models/BaseComponent';
 import { ConjunctionContainer } from 'e2e/models/components/FilterForm/components/ConjunctionContainer';
 import { FilterField } from 'e2e/models/components/FilterForm/components/FilterField';
-import { Dropdown } from 'e2e/models/hew/Dropdown';
+import { DropdownMenu } from 'e2e/models/hew/Dropdown';
 
 /**
  * Returns a representation of the FilterGroup component.
@@ -15,6 +15,12 @@ export class FilterGroup extends NamedComponent {
 
   #childrenSelector = '[data-test="children"]';
   #notNestedSelector = `:not(${this.#childrenSelector} *)`;
+
+  /**
+   * Ensures that the selector is not nested within the children selector.
+   * @param selector the selector to use in the template
+   * @returns the same selector with the not nested selector appended
+   */
   private selectorTemplate = (selector: string) => `${selector}${this.#notNestedSelector}`;
   readonly conjunctionContainer = new ConjunctionContainer({ parent: this });
   readonly groupCard = new BaseComponent({
@@ -30,8 +36,11 @@ export class FilterGroup extends NamedComponent {
     selector: this.selectorTemplate('[data-test="explanation"]'),
   });
   readonly addDropdown = new AddDropdown({
-    parent: this.header,
-    selector: this.selectorTemplate('[data-test="add"]'),
+    childNode: new BaseComponent({
+      parent: this.header,
+      selector: this.selectorTemplate('[data-test="add"]'),
+    }),
+    root: this.root,
   });
   readonly remove = new BaseComponent({
     parent: this.header,
@@ -55,13 +64,7 @@ export class FilterGroup extends NamedComponent {
   });
 }
 
-class AddDropdown extends Dropdown {
-  readonly addCondition = new BaseComponent({
-    parent: this._menu,
-    selector: Dropdown.selectorTemplate('field'),
-  });
-  readonly addConditionGroup = new BaseComponent({
-    parent: this._menu,
-    selector: Dropdown.selectorTemplate('group'),
-  });
+class AddDropdown extends DropdownMenu {
+  readonly addCondition = this.menuItem('field');
+  readonly addConditionGroup = this.menuItem('group');
 }
