@@ -93,11 +93,13 @@ describe('ColumnPickerMenu', () => {
       const locationForTab = _.findKey(locationLabelMap, (v) => v === tabName);
       const columnsForLocation = projectColumns.filter((c) => c.location === locationForTab);
       const column = columnsForLocation[0];
-      expect(await screen.findByText(column.displayName)).toBeInTheDocument();
+      const displayName = column.displayName.length ? column.displayName : column.column;
+      expect(await screen.findByText(displayName)).toBeInTheDocument();
     };
-    Array.from(tabs).forEach((tabName: string) => {
-      testTab(tabName);
-    });
+    Array.from(tabs).reduce(async (previousPromise, nextTab) => {
+      await previousPromise;
+      return testTab(nextTab);
+    }, Promise.resolve());
   });
 
   it('should show all', async () => {
