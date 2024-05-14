@@ -23,13 +23,14 @@ import CompareParallelCoordinates from './CompareParallelCoordinates';
 import CompareScatterPlots from './CompareScatterPlots';
 import css from './HpParallelCoordinates.module.scss';
 
-export const NO_DATA_MESSAGE = 'No data available.';
 interface Props {
   projectId: number;
   selectedExperiments: ExperimentWithTrial[];
   trials: TrialItem[];
   metricData: TrialMetricData;
 }
+
+export const NO_DATA_MESSAGE = 'No data available.';
 
 const CompareHyperparameters: React.FC<Props> = ({
   selectedExperiments,
