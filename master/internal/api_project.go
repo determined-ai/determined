@@ -527,7 +527,6 @@ func (a *apiServer) getProjectRunColumnsByID(
 
 	for _, stats := range summaryMetrics {
 		// If there are multiple metrics with the same group and name, report one unspecified column.
-
 		columnType := parseMetricsType(stats.MetricType)
 
 		columnPrefix := stats.JSONPath
