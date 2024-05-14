@@ -385,45 +385,33 @@ func (a *apiServer) MoveRuns(
 				failedExpMoveIds = append(failedExpMoveIds, res.ID)
 			}
 		}
-		tx, err := db.Bun().BeginTx(ctx, nil)
+		err = db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+			var acceptedIDs []int32
+			if _, err = tx.NewUpdate().Table("runs").
+				Set("project_id = ?", req.DestinationProjectId).
+				Where("runs.id IN (?)", bun.In(validIDs)).
+				Where("runs.experiment_id NOT IN (?)", bun.In(failedExpMoveIds)).
+				Returning("runs.id").
+				Model(&acceptedIDs).
+				Exec(ctx); err != nil {
+				return fmt.Errorf("updating run's project IDs: %w", err)
+			}
+
+			for _, acceptID := range acceptedIDs {
+				results = append(results, &apiv1.RunActionResult{
+					Error: "",
+					Id:    acceptID,
+				})
+			}
+
+			if err = db.AddProjectHparams(ctx, tx, int(req.DestinationProjectId), acceptedIDs); err != nil {
+				return err
+			}
+			return db.RemoveOutdatedProjectHparams(ctx, tx, int(req.SourceProjectId))
+		})
 		if err != nil {
 			return nil, err
 		}
-		defer func() {
-			txErr := tx.Rollback()
-			if txErr != nil && txErr != sql.ErrTxDone {
-				log.WithError(txErr).Error("error rolling back transaction in MoveRuns")
-			}
-		}()
-		var acceptedIDs []int32
-		if _, err = tx.NewUpdate().Table("runs").
-			Set("project_id = ?", req.DestinationProjectId).
-			Where("runs.id IN (?)", bun.In(validIDs)).
-			Where("runs.experiment_id NOT IN (?)", bun.In(failedExpMoveIds)).
-			Returning("runs.id").
-			Model(&acceptedIDs).
-			Exec(ctx); err != nil {
-			return nil, fmt.Errorf("updating run's project IDs: %w", err)
-		}
-
-		for _, acceptID := range acceptedIDs {
-			results = append(results, &apiv1.RunActionResult{
-				Error: "",
-				Id:    acceptID,
-			})
-		}
-
-		if err = db.AddProjectHparams(ctx, tx, int(req.DestinationProjectId), acceptedIDs); err != nil {
-			return nil, err
-		}
-		if err = db.RemoveOutdatedProjectHparams(ctx, tx, int(req.SourceProjectId)); err != nil {
-			return nil, err
-		}
-
-		if err = tx.Commit(); err != nil {
-			return nil, err
-		}
-
 		var failedRunIDs []int32
 		if err = db.Bun().NewSelect().Table("runs").
 			Where("runs.id IN (?)", bun.In(validIDs)).
