@@ -12,20 +12,14 @@ interface Action<T> {
 
 interface Props<T> {
   actions?: Action<T>[];
-  ids?: string[];
   onAction?: (action: T) => void;
   onClear?: () => void;
   selectedRowCount?: number;
 }
 
-const defaultProps = {
-  ids: [],
-  selectedRowCount: 0,
-};
-
 function TableBatch<T extends string>({
   actions,
-  selectedRowCount,
+  selectedRowCount = 0,
   onAction,
   onClear,
 }: Props<T>): React.ReactElement {
@@ -77,7 +71,5 @@ function TableBatch<T extends string>({
     </div>
   );
 }
-
-TableBatch.defaultProps = defaultProps;
 
 export default TableBatch;
