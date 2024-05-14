@@ -381,7 +381,7 @@ class _GPU(_MetricGroupCollector):
             free_memory = pynvml.nvmlDeviceGetMemoryInfo(handle).free
             metrics.update(
                 {
-                    uuid: {
+                    str(uuid): {
                         "gpu_util": gpu_util,
                         "gpu_free_memory": free_memory,
                     }

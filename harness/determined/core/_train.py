@@ -88,10 +88,6 @@ class TrainContext:
             serializable_metrics = self._get_serializable_metrics(metrics)
             reportable_metrics = {k: metrics[k] for k in serializable_metrics}
 
-        print("METRICS")
-        print(metrics)
-        print("BATCH METRICS")
-        print(batch_metrics)
         self._metrics.report(
             group=group,
             steps_completed=steps_completed,
