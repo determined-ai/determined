@@ -378,13 +378,13 @@ func validatePodLabelValue(value string) string {
 
 	// 2. truncate to 63 characters
 	if len(fixedValue) > maxChars {
-		fixedValue = string(fixedValue[:maxChars])
+		fixedValue = fixedValue[:maxChars]
 	}
 
 	// 3. strip ending non-alphanumeric characters
 	fixedValue = regTrailingNonAlphaNumeric.ReplaceAllString(fixedValue, "")
 
-	log.Warnf(
+	log.Debugf(
 		"conform to Kubernetes pod label value standards: reformatting %s to %s",
 		value, fixedValue,
 	)

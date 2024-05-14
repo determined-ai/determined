@@ -5,7 +5,6 @@ import (
 	"testing"
 	"unicode"
 
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -242,7 +241,7 @@ func TestValidatePodLabelValues(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.input, func(t *testing.T) {
 			testOutput := validatePodLabelValue(tt.input)
-			assert.Equal(t, tt.output, testOutput, tt.name+" failed")
+			require.Equal(t, tt.output, testOutput, tt.name+" failed")
 		})
 	}
 }
