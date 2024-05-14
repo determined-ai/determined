@@ -1,7 +1,6 @@
 package stream
 
 import (
-	"fmt"
 	"slices"
 	"strconv"
 	"testing"
@@ -89,15 +88,6 @@ func trueAfterN[T Msg](n int) func(T) bool {
 	return func(T) bool {
 		msgCount++
 		return msgCount > n
-	}
-}
-
-func trueAtNs[T Msg](filterCallCount []int) func(T) bool {
-	var msgCount int
-	return func(T) bool {
-		msgCount++
-		// fmt.Printf("permission filter: %+v\n", msgCount)
-		return slices.Contains(filterCallCount, msgCount)
 	}
 }
 
@@ -989,8 +979,6 @@ func setup(testEvents []TestEvent, testSubscribers []TestSubscriber) {
 					index += 1
 				} else {
 					hasFellout = true
-
-					fmt.Printf("fallout seq: %+v, hasFellout: %v\n", testEvent.AfterSeq, hasFellout)
 					// This entity has fell out. The remaining events are not relavent to the
 					// user.
 					// TODO: this is not true when we have tests with fallin events.
@@ -1032,7 +1020,7 @@ func TestTwoSubscribers(t *testing.T) {
 	type testCase struct {
 		description  string
 		dBEvents     []TestEvent
-		outGoingMsgs []any
+		outGoingMsgs []interface{}
 	}
 
 	tcs := []testCase{
@@ -1044,7 +1032,7 @@ func TestTwoSubscribers(t *testing.T) {
 				{Type: "fallout", UserID: 2, AfterSeq: 3},
 				{Type: "delete", BeforeSeq: 3},
 			},
-			outGoingMsgs: []any{
+			outGoingMsgs: []interface{}{
 				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
 				DeleteMsg{Deleted: "0"},
 				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
@@ -1060,7 +1048,7 @@ func TestTwoSubscribers(t *testing.T) {
 				{Type: "fallout", UserID: 1, AfterSeq: 3},
 				{Type: "delete", BeforeSeq: 3},
 			},
-			outGoingMsgs: []any{
+			outGoingMsgs: []interface{}{
 				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
 				UpsertMsg{Msg: TestMsgTypeA{2, 0}},
 				DeleteMsg{Deleted: "0"},
@@ -1075,7 +1063,7 @@ func TestTwoSubscribers(t *testing.T) {
 				{Type: "fallout", UserID: 2, AfterSeq: 3},
 				{Type: "delete", BeforeSeq: 3},
 			},
-			outGoingMsgs: []any{
+			outGoingMsgs: []interface{}{
 				DeleteMsg{Deleted: "0"},
 				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
 				UpsertMsg{Msg: TestMsgTypeA{2, 0}},
@@ -1090,7 +1078,7 @@ func TestTwoSubscribers(t *testing.T) {
 				{Type: "update", AfterSeq: 3},
 				{Type: "delete", BeforeSeq: 3},
 			},
-			outGoingMsgs: []any{
+			outGoingMsgs: []interface{}{
 				DeleteMsg{Deleted: "0"},
 				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
 				DeleteMsg{Deleted: "0"},
@@ -1104,7 +1092,7 @@ func TestTwoSubscribers(t *testing.T) {
 				{Type: "fallout", UserID: 1, AfterSeq: 3},
 				{Type: "delete", BeforeSeq: 3},
 			},
-			outGoingMsgs: []any{
+			outGoingMsgs: []interface{}{
 				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
 				UpsertMsg{Msg: TestMsgTypeA{2, 0}},
 				DeleteMsg{Deleted: "0"},
@@ -1119,7 +1107,7 @@ func TestTwoSubscribers(t *testing.T) {
 				{Type: "update", AfterSeq: 3},
 				{Type: "delete", BeforeSeq: 3},
 			},
-			outGoingMsgs: []any{
+			outGoingMsgs: []interface{}{
 				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
 				DeleteMsg{Deleted: "0"},
 				DeleteMsg{Deleted: "0"},
@@ -1132,7 +1120,7 @@ func TestTwoSubscribers(t *testing.T) {
 				{Type: "fallout", UserID: 1, AfterSeq: 2},
 				{Type: "fallout", UserID: 2, AfterSeq: 3},
 			},
-			outGoingMsgs: []any{
+			outGoingMsgs: []interface{}{
 				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
 				DeleteMsg{Deleted: "0"},
 				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
@@ -1147,7 +1135,7 @@ func TestTwoSubscribers(t *testing.T) {
 				{Type: "fallout", UserID: 1, AfterSeq: 2},
 				{Type: "delete", BeforeSeq: 2},
 			},
-			outGoingMsgs: []any{
+			outGoingMsgs: []interface{}{
 				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
 				DeleteMsg{Deleted: "0"},
 				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
@@ -1162,7 +1150,7 @@ func TestTwoSubscribers(t *testing.T) {
 				{Type: "fallout", UserID: 2, AfterSeq: 2},
 				{Type: "fallout", UserID: 1, AfterSeq: 3},
 			},
-			outGoingMsgs: []any{
+			outGoingMsgs: []interface{}{
 				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
 				UpsertMsg{Msg: TestMsgTypeA{2, 0}},
 				DeleteMsg{Deleted: "0"},
@@ -1176,7 +1164,7 @@ func TestTwoSubscribers(t *testing.T) {
 				{Type: "fallout", UserID: 2, AfterSeq: 2},
 				{Type: "delete", BeforeSeq: 2},
 			},
-			outGoingMsgs: []any{
+			outGoingMsgs: []interface{}{
 				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
 				UpsertMsg{Msg: TestMsgTypeA{2, 0}},
 				DeleteMsg{Deleted: "0"},
@@ -1190,7 +1178,7 @@ func TestTwoSubscribers(t *testing.T) {
 				{Type: "update", AfterSeq: 2},
 				{Type: "fallout", UserID: 2, AfterSeq: 3},
 			},
-			outGoingMsgs: []any{
+			outGoingMsgs: []interface{}{
 				DeleteMsg{Deleted: "0"},
 				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
 				UpsertMsg{Msg: TestMsgTypeA{2, 0}},
@@ -1204,7 +1192,7 @@ func TestTwoSubscribers(t *testing.T) {
 				{Type: "update", AfterSeq: 2},
 				{Type: "fallout", UserID: 2, AfterSeq: 3},
 			},
-			outGoingMsgs: []any{
+			outGoingMsgs: []interface{}{
 				DeleteMsg{Deleted: "0"},
 				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
 				UpsertMsg{Msg: TestMsgTypeA{2, 0}},
@@ -1218,7 +1206,7 @@ func TestTwoSubscribers(t *testing.T) {
 				{Type: "fallout", UserID: 2, AfterSeq: 2},
 				{Type: "update", AfterSeq: 3},
 			},
-			outGoingMsgs: []any{
+			outGoingMsgs: []interface{}{
 				DeleteMsg{Deleted: "0"},
 				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
 				DeleteMsg{Deleted: "0"},
@@ -1231,7 +1219,7 @@ func TestTwoSubscribers(t *testing.T) {
 				{Type: "fallout", UserID: 2, AfterSeq: 2},
 				{Type: "delete", BeforeSeq: 2},
 			},
-			outGoingMsgs: []any{
+			outGoingMsgs: []interface{}{
 				DeleteMsg{Deleted: "0"},
 				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
 				DeleteMsg{Deleted: "0"},
@@ -1244,7 +1232,7 @@ func TestTwoSubscribers(t *testing.T) {
 				{Type: "update", AfterSeq: 2},
 				{Type: "fallout", UserID: 1, AfterSeq: 3},
 			},
-			outGoingMsgs: []any{
+			outGoingMsgs: []interface{}{
 				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
 				UpsertMsg{Msg: TestMsgTypeA{2, 0}},
 				DeleteMsg{Deleted: "0"},
@@ -1258,7 +1246,7 @@ func TestTwoSubscribers(t *testing.T) {
 				{Type: "update", AfterSeq: 2},
 				{Type: "delete", BeforeSeq: 2},
 			},
-			outGoingMsgs: []any{
+			outGoingMsgs: []interface{}{
 				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
 				UpsertMsg{Msg: TestMsgTypeA{2, 0}},
 				DeleteMsg{Deleted: "0"},
@@ -1272,7 +1260,7 @@ func TestTwoSubscribers(t *testing.T) {
 				{Type: "fallout", UserID: 1, AfterSeq: 2},
 				{Type: "update", AfterSeq: 3},
 			},
-			outGoingMsgs: []any{
+			outGoingMsgs: []interface{}{
 				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
 				DeleteMsg{Deleted: "0"},
 				DeleteMsg{Deleted: "0"},
@@ -1285,7 +1273,7 @@ func TestTwoSubscribers(t *testing.T) {
 				{Type: "fallout", UserID: 2, AfterSeq: 2},
 				{Type: "delete", BeforeSeq: 2},
 			},
-			outGoingMsgs: []any{
+			outGoingMsgs: []interface{}{
 				DeleteMsg{Deleted: "0"},
 				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
 				DeleteMsg{Deleted: "0"},
@@ -1297,7 +1285,7 @@ func TestTwoSubscribers(t *testing.T) {
 				{Type: "update", AfterSeq: 1},
 				{Type: "fallout", UserID: 1, AfterSeq: 2},
 			},
-			outGoingMsgs: []any{
+			outGoingMsgs: []interface{}{
 				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
 				DeleteMsg{Deleted: "0"},
 				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
@@ -1310,7 +1298,7 @@ func TestTwoSubscribers(t *testing.T) {
 				{Type: "update", AfterSeq: 1},
 				{Type: "fallout", UserID: 2, AfterSeq: 2},
 			},
-			outGoingMsgs: []any{
+			outGoingMsgs: []interface{}{
 				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
 				UpsertMsg{Msg: TestMsgTypeA{2, 0}},
 				DeleteMsg{Deleted: "0"},
@@ -1322,7 +1310,7 @@ func TestTwoSubscribers(t *testing.T) {
 				{Type: "update", AfterSeq: 1},
 				{Type: "delete", BeforeSeq: 1},
 			},
-			outGoingMsgs: []any{
+			outGoingMsgs: []interface{}{
 				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
 				DeleteMsg{Deleted: "0"},
 				DeleteMsg{Deleted: "0"},
@@ -1334,7 +1322,7 @@ func TestTwoSubscribers(t *testing.T) {
 				{Type: "fallout", UserID: 1, AfterSeq: 1},
 				{Type: "update", AfterSeq: 2},
 			},
-			outGoingMsgs: []any{
+			outGoingMsgs: []interface{}{
 				DeleteMsg{Deleted: "0"},
 				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
 				UpsertMsg{Msg: TestMsgTypeA{2, 0}},
@@ -1346,7 +1334,7 @@ func TestTwoSubscribers(t *testing.T) {
 				{Type: "fallout", UserID: 1, AfterSeq: 1},
 				{Type: "fallout", UserID: 2, AfterSeq: 2},
 			},
-			outGoingMsgs: []any{
+			outGoingMsgs: []interface{}{
 				DeleteMsg{Deleted: "0"},
 				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
 				DeleteMsg{Deleted: "0"},
@@ -1358,7 +1346,7 @@ func TestTwoSubscribers(t *testing.T) {
 				{Type: "fallout", UserID: 1, AfterSeq: 1},
 				{Type: "delete", BeforeSeq: 2},
 			},
-			outGoingMsgs: []any{
+			outGoingMsgs: []interface{}{
 				DeleteMsg{Deleted: "0"},
 				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
 				DeleteMsg{Deleted: "0"},
@@ -1370,7 +1358,7 @@ func TestTwoSubscribers(t *testing.T) {
 				{Type: "fallout", UserID: 1, AfterSeq: 1},
 				{Type: "update", AfterSeq: 2},
 			},
-			outGoingMsgs: []any{
+			outGoingMsgs: []interface{}{
 				DeleteMsg{Deleted: "0"},
 				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
 				UpsertMsg{Msg: TestMsgTypeA{2, 0}},
@@ -1382,7 +1370,7 @@ func TestTwoSubscribers(t *testing.T) {
 				{Type: "fallout", UserID: 2, AfterSeq: 1},
 				{Type: "fallout", UserID: 1, AfterSeq: 2},
 			},
-			outGoingMsgs: []any{
+			outGoingMsgs: []interface{}{
 				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
 				DeleteMsg{Deleted: "0"},
 				DeleteMsg{Deleted: "0"},
@@ -1394,7 +1382,7 @@ func TestTwoSubscribers(t *testing.T) {
 				{Type: "fallout", UserID: 2, AfterSeq: 1},
 				{Type: "delete", BeforeSeq: 1},
 			},
-			outGoingMsgs: []any{
+			outGoingMsgs: []interface{}{
 				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
 				DeleteMsg{Deleted: "0"},
 				DeleteMsg{Deleted: "0"},
@@ -1405,7 +1393,7 @@ func TestTwoSubscribers(t *testing.T) {
 			dBEvents: []TestEvent{
 				{Type: "update", AfterSeq: 1},
 			},
-			outGoingMsgs: []any{
+			outGoingMsgs: []interface{}{
 				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
 				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
 			},
@@ -1415,7 +1403,7 @@ func TestTwoSubscribers(t *testing.T) {
 			dBEvents: []TestEvent{
 				{Type: "fallout", UserID: 1, AfterSeq: 1},
 			},
-			outGoingMsgs: []any{
+			outGoingMsgs: []interface{}{
 				DeleteMsg{Deleted: "0"},
 				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
 			},
@@ -1425,7 +1413,7 @@ func TestTwoSubscribers(t *testing.T) {
 			dBEvents: []TestEvent{
 				{Type: "fallout", UserID: 2, AfterSeq: 1},
 			},
-			outGoingMsgs: []any{
+			outGoingMsgs: []interface{}{
 				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
 				DeleteMsg{Deleted: "0"},
 			},
@@ -1435,7 +1423,7 @@ func TestTwoSubscribers(t *testing.T) {
 			dBEvents: []TestEvent{
 				{Type: "delete", BeforeSeq: 0},
 			},
-			outGoingMsgs: []any{
+			outGoingMsgs: []interface{}{
 				DeleteMsg{Deleted: "0"},
 				DeleteMsg{Deleted: "0"},
 			},
@@ -1450,7 +1438,7 @@ func TestTwoSubscribers(t *testing.T) {
 				testSubscribers,
 			)
 
-			var streamerMsgs []any
+			var streamerMsgs []interface{}
 			for _, ts := range testSubscribers {
 				streamerMsgs = append(streamerMsgs, ts.Streamer.Msgs...)
 			}

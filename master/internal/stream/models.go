@@ -157,7 +157,7 @@ func ModelCollectStartupMsgs(
 	}
 	missing, appeared, err := processQuery(ctx, createQuery, spec.Since, known, "m")
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("processing known: %s", err.Error())
 	}
 
 	// step 2: hydrate appeared IDs into full ModelMsgs
@@ -252,7 +252,7 @@ func ModelMakePermissionFilter(ctx context.Context, user model.User) (func(*Mode
 	}
 }
 
-// ModelMakeHydrator returns a function that gets all the properties of a project by
+// ModelMakeHydrator returns a function that gets properties of a model by
 // its id.
 func ModelMakeHydrator() func(int) (*ModelMsg, error) {
 	return func(ID int) (*ModelMsg, error) {

@@ -239,7 +239,7 @@ func ProjectMakePermissionFilter(ctx context.Context, user model.User) (func(*Pr
 	}
 }
 
-// ProjectMakeHydrator returns a function that gets all the properties of a project by
+// ProjectMakeHydrator returns a function that gets properties of a project by
 // its id.
 func ProjectMakeHydrator() func(int) (*ProjectMsg, error) {
 	return func(ID int) (*ProjectMsg, error) {

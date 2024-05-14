@@ -25,7 +25,7 @@ type Event[T Msg] struct {
 	After  *T `json:"after"`
 }
 
-type EntityCache struct {
+type EventCache struct {
 	Seq         int64
 	UpsertCache interface{}
 	DeleteCache interface{}
@@ -191,48 +191,49 @@ func (p *Publisher[T]) CloseAllStreamers() {
 	p.Subscriptions = nil
 }
 
-// hydrateMsg goes into the DB by the ID from rawMsg and grabs the fields(hydrated message) that we care about.
-// Here are the different scenarios of an ID in this function:
-// 1. It checks if the ID has been deleted.
-// 2. It checks if the ID has the same Seq as the rawMsg.
-// 3. It checks if the ID has a Seq greater than the rawMsg.
-// 4. It checks if the ID is now considered as a fallout event for the subscriber and still has the same Seq as the rawMsg.
-// 5. It checks if the ID is now considered as a fallout event for the subscriber and has a Seq greater than the rawMsg.
-// The function returns hydrated message scenarios 2 and 4.
-func (p *Publisher[T]) hydrateMsg(rawMsg T, idToEventCache map[int]EntityCache, sub *Subscription[T], ev Event[T]) interface{} {
-	var hydratedMsg interface{}
-	entityCache := EntityCache{}
+// hydrateMsg queries the DB by the ID from rawMsg of a upsert or fallin event
+// and grabs the fields(hydrated message) that we care about.
+// Here are the different scenarios of an event in this function:
+// 1. It checks if the event has been deleted.
+// 2. It checks if the event still has the same Seq as the rawMsg.
+// 3. It checks if the event has a Seq greater than the rawMsg.
+// 4. It checks if the event is now considered as a fallout event for the subscriber and still has the same Seq as the rawMsg.
+// 5. It checks if the event is now considered as a fallout event for the subscriber and has a Seq greater than the rawMsg.
+// The function returns an upsert message scenarios 2 and a delete message in scenario 4.
+func (p *Publisher[T]) hydrateMsg(rawMsg T, idToEventCache map[int]EventCache, sub *Subscription[T], ev Event[T]) interface{} {
+	var msg interface{}
+	eventCache := EventCache{}
 
-	entityMsg, err := sub.hydrator(rawMsg.GetID())
+	hydratedMsg, err := sub.hydrator(rawMsg.GetID())
 	if err != nil && errors.Cause(err) == sql.ErrNoRows {
 		// This id has a delete event later
-		entityCache.Seq = -1
-		entityCache.DeleteCache = sub.Streamer.PrepareFn(entityMsg.DeleteMsg())
-		idToEventCache[rawMsg.GetID()] = entityCache
+		eventCache.Seq = -1
+		eventCache.DeleteCache = sub.Streamer.PrepareFn(hydratedMsg.DeleteMsg())
+		idToEventCache[rawMsg.GetID()] = eventCache
 		return nil
 	} else if err != nil {
 		log.Debugf("failed to hydrate message: %s", err.Error())
 		return nil
 	}
 
-	upsertMsg := entityMsg.UpsertMsg()
-	entityCache.Seq = upsertMsg.Msg.SeqNum()
-	entityCache.UpsertCache = sub.Streamer.PrepareFn(upsertMsg)
-	// check filter again in case project move workspace that would be a fall out
+	upsertMsg := hydratedMsg.UpsertMsg()
+	eventCache.Seq = upsertMsg.Msg.SeqNum()
+	eventCache.UpsertCache = sub.Streamer.PrepareFn(upsertMsg)
+	// check filter again to see if the original event has become a fallout event.
 	if sub.filter(upsertMsg.Msg.(T)) && sub.permissionFilter(upsertMsg.Msg.(T)) {
-		if entityCache.Seq == rawMsg.SeqNum() {
-			hydratedMsg = entityCache.UpsertCache
+		if eventCache.Seq == rawMsg.SeqNum() {
+			msg = eventCache.UpsertCache
 		}
 	} else {
-		// This id fall out
-		entityCache.DeleteCache = sub.Streamer.PrepareFn(entityMsg.DeleteMsg())
-		if entityCache.Seq == rawMsg.SeqNum() {
-			hydratedMsg = entityCache.DeleteCache
+		// It's a fallout event.
+		eventCache.DeleteCache = sub.Streamer.PrepareFn(hydratedMsg.DeleteMsg())
+		if eventCache.Seq == rawMsg.SeqNum() {
+			msg = eventCache.DeleteCache
 		}
 	}
-	idToEventCache[rawMsg.GetID()] = entityCache
+	idToEventCache[rawMsg.GetID()] = eventCache
 
-	return hydratedMsg
+	return msg
 }
 
 // Broadcast receives a list of events, determines if they are
@@ -245,27 +246,27 @@ func (p *Publisher[T]) Broadcast(events []Event[T]) {
 	// start with a fresh wakeupid
 	p.WakeupID++
 	wakeupID := p.WakeupID
-	idToEventCache := map[int]EntityCache{}
+	idToEventCache := map[int]EventCache{}
 
 	// check each event against each subscription
 	for _, sub := range p.Subscriptions {
 		func() {
 			for _, ev := range events {
-				var msg any
+				var msg interface{}
 				switch {
 				case ev.After != nil && sub.filter(*ev.After) && sub.permissionFilter(*ev.After):
 					// update, insert, or fallin: send the record to the client.
 					rawMsg := *ev.After
 
-					if entityCache, ok := idToEventCache[rawMsg.GetID()]; ok {
-						cachedSeq := entityCache.Seq
+					if eventCache, ok := idToEventCache[rawMsg.GetID()]; ok {
+						cachedSeq := eventCache.Seq
 						if cachedSeq > rawMsg.SeqNum() || cachedSeq == -1 {
 							// ignore this message
 							continue
-						} else if cachedSeq == rawMsg.SeqNum() && entityCache.UpsertCache != nil {
-							// entityCache.UpsertCache can be nil if the previous event is a fallout.
+						} else if cachedSeq == rawMsg.SeqNum() && eventCache.UpsertCache != nil {
+							// eventCache.UpsertCache can be nil if the previous event is a fallout.
 							// It doesn't have UpsertCache.
-							msg = entityCache.UpsertCache
+							msg = eventCache.UpsertCache
 						} else {
 							msg = p.hydrateMsg(rawMsg, idToEventCache, sub, ev)
 							if msg == nil {
@@ -284,40 +285,40 @@ func (p *Publisher[T]) Broadcast(events []Event[T]) {
 					// fallout: tell the client the record is deleted.
 					afterMsg := *ev.After
 
-					if entityCache, ok := idToEventCache[afterMsg.GetID()]; ok {
-						if entityCache.DeleteCache == nil {
-							entityCache.DeleteCache = sub.Streamer.PrepareFn(afterMsg.DeleteMsg())
+					if eventCache, ok := idToEventCache[afterMsg.GetID()]; ok {
+						if eventCache.DeleteCache == nil {
+							eventCache.DeleteCache = sub.Streamer.PrepareFn(afterMsg.DeleteMsg())
 						}
-						msg = entityCache.DeleteCache
-						idToEventCache[afterMsg.GetID()] = entityCache
+						msg = eventCache.DeleteCache
+						idToEventCache[afterMsg.GetID()] = eventCache
 					} else {
-						entityCache = EntityCache{}
-						entityCache.DeleteCache = sub.Streamer.PrepareFn(afterMsg.DeleteMsg())
-						msg = entityCache.DeleteCache
-						idToEventCache[afterMsg.GetID()] = entityCache
+						eventCache = EventCache{}
+						eventCache.DeleteCache = sub.Streamer.PrepareFn(afterMsg.DeleteMsg())
+						msg = eventCache.DeleteCache
+						idToEventCache[afterMsg.GetID()] = eventCache
 					}
 
 				case ev.Before != nil && sub.filter(*ev.Before) && sub.permissionFilter(*ev.Before):
 					// deletion: tell the client the record is deleted.
 					beforeMsg := *ev.Before
 
-					if entityCache, ok := idToEventCache[beforeMsg.GetID()]; ok {
-						if entityCache.DeleteCache == nil {
-							entityCache.DeleteCache = sub.Streamer.PrepareFn(beforeMsg.DeleteMsg())
+					if eventCache, ok := idToEventCache[beforeMsg.GetID()]; ok {
+						if eventCache.DeleteCache == nil {
+							eventCache.DeleteCache = sub.Streamer.PrepareFn(beforeMsg.DeleteMsg())
 						}
-						entityCache.Seq = -1
-						msg = entityCache.DeleteCache
-						idToEventCache[beforeMsg.GetID()] = entityCache
+						eventCache.Seq = -1
+						msg = eventCache.DeleteCache
+						idToEventCache[beforeMsg.GetID()] = eventCache
 					} else {
-						entityCache = EntityCache{}
-						entityCache.Seq = -1
-						entityCache.DeleteCache = sub.Streamer.PrepareFn(beforeMsg.DeleteMsg())
-						msg = entityCache.DeleteCache
-						idToEventCache[beforeMsg.GetID()] = entityCache
+						eventCache = EventCache{}
+						eventCache.Seq = -1
+						eventCache.DeleteCache = sub.Streamer.PrepareFn(beforeMsg.DeleteMsg())
+						msg = eventCache.DeleteCache
+						idToEventCache[beforeMsg.GetID()] = eventCache
 					}
 
 				default:
-					log.Tracef("This message is not relavent to the subscriber. Ignore it.\n")
+					// ignore this message
 					continue
 				}
 				// is this the first match for this Subscription during this Broadcast?
