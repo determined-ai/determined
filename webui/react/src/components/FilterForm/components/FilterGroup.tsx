@@ -123,7 +123,6 @@ const FilterGroup = ({
     <div
       className={`${css.base} ${level === 0 ? css.baseRoot : ''}`}
       data-test-component="FilterGroup"
-      data-test-id={level}
       ref={(node) => drop(node)}>
       {level > 0 && (
         <ConjunctionContainer
