@@ -654,7 +654,7 @@ commands:
             --no-compare-stats \
             --det-version="<<parameters.det-version>>"
       - store_test_results:
-        path: /tmp/test-results/
+          path: /tmp/test-results/
 
   deploy-aws-cluster:
     parameters:
