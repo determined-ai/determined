@@ -5,6 +5,7 @@ import (
 	"testing"
 	"unicode"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -221,6 +222,32 @@ func TestAllPrintableCharactersInEnv(t *testing.T) {
 	require.Contains(t, actual, k8sV1.EnvVar{Name: "func", Value: "f(x)=x"})
 }
 
+func TestValidatePodLabelValues(t *testing.T) {
+	tests := []struct {
+		name   string
+		input  string
+		output string
+	}{
+		{"valid all alpha", "simpleCharacters", "simpleCharacters"},
+		{"valid all alphanumeric", "simple4Characters", "simple4Characters"},
+		{"valid contains non-alphanumeric", "simple-Characters.With_Other", "simple-Characters.With_Other"},
+		{"invalid chars", "letters contain *@ other chars -=%", "letters_contain____other_chars"},
+		{"invalid leading chars", "-%4-simpleCharacters0", "4-simpleCharacters0"},
+		{"invalid trailing chars", "simple-Characters4%-.#", "simple-Characters4"},
+		{"invalid too many chars", "simpleCharactersGoesOnForWayTooLong36384042444648505254565860-_AndThenSome", "simpleCharactersGoesOnForWayTooLong36384042444648505254565860"},
+		{"invalid email-style input", "name@domain.com", "name_domain.com"},
+		{"invalid chars only", "-.*$%#$...", ""},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			testOutput := validatePodLabelValue(tt.input)
+			assert.Equal(t, tt.output, testOutput, tt.name+" failed")
+		})
+	}
+
+}
+
 func TestDeterminedLabels(t *testing.T) {
 	// fill out task spec
 	taskSpec := tasks.TaskSpec{
@@ -246,10 +273,13 @@ func TestDeterminedLabels(t *testing.T) {
 
 	// define expectations
 	expectedLabels := map[string]string{
-		determinedLabel:  taskSpec.AllocationID,
-		taskTypeLabel:    string(taskSpec.TaskType),
-		taskIDLabel:      taskSpec.TaskID,
-		containerIDLabel: taskSpec.ContainerID,
+		determinedLabel:   taskSpec.AllocationID,
+		userLabel:         taskSpec.Owner.Username,
+		workspaceLabel:    taskSpec.Workspace,
+		resourcePoolLabel: p.req.ResourcePool,
+		taskTypeLabel:     string(taskSpec.TaskType),
+		taskIDLabel:       taskSpec.TaskID,
+		containerIDLabel:  taskSpec.ContainerID,
 	}
 	for k, v := range taskSpec.ExtraPodLabels {
 		expectedLabels[labelPrefix+k] = v

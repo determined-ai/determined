@@ -6,6 +6,7 @@ import (
 	"math"
 	"path"
 	"reflect"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -30,6 +31,7 @@ import (
 	schedulingV1 "k8s.io/api/scheduling/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/validation"
 )
 
 const (
@@ -349,6 +351,43 @@ func (p *pod) createPriorityClass(name string, priority int32) error {
 	return err
 }
 
+const maxChars int = 63
+const fmtAlphaNumeric string = "A-Za-z0-9"
+const fmtAllowedChars string = fmtAlphaNumeric + `\.\-_`
+
+var regDisallowedSpecialChars = regexp.MustCompile("[^" + fmtAllowedChars + "]")
+var regLeadingNonAlphaNumeric = regexp.MustCompile("^[^" + fmtAlphaNumeric + "]+")
+var regTrailingNonAlphaNumeric = regexp.MustCompile("[^" + fmtAlphaNumeric + "]+$")
+
+func validatePodLabelValue(value string) string {
+	errs := validation.IsValidLabelValue(value)
+	if len(errs) == 0 {
+		return value
+	}
+
+	// label value is not valid; attempt to fix it
+	// 0. convert dis-allowed special characters to underscore
+	fixedValue := regDisallowedSpecialChars.ReplaceAllString(value, "_")
+
+	// 1. strip leading non-alphanumeric characters
+	fixedValue = regLeadingNonAlphaNumeric.ReplaceAllString(fixedValue, "")
+
+	// 2. truncate to 63 characters
+	if len(fixedValue) > maxChars {
+		fixedValue = string(fixedValue[:maxChars])
+	}
+
+	// 3. strip ending non-alphanumeric characters
+	fixedValue = regTrailingNonAlphaNumeric.ReplaceAllString(fixedValue, "")
+
+	log.Warnf(
+		"conform to Kubernetes pod label value standards: reformatting %s to %s",
+		value, fixedValue,
+	)
+
+	return fixedValue
+}
+
 func (p *pod) configurePodSpec(
 	volumes []k8sV1.Volume,
 	determinedInitContainers k8sV1.Container,
@@ -368,6 +407,12 @@ func (p *pod) configurePodSpec(
 	if podSpec.ObjectMeta.Labels == nil {
 		podSpec.ObjectMeta.Labels = make(map[string]string)
 	}
+	if p.submissionInfo.taskSpec.Owner != nil {
+		// Owner label will disappear if Owner is somehow nil.
+		podSpec.ObjectMeta.Labels[userLabel] = validatePodLabelValue(p.submissionInfo.taskSpec.Owner.Username)
+	}
+	podSpec.ObjectMeta.Labels[workspaceLabel] = validatePodLabelValue(p.submissionInfo.taskSpec.Workspace)
+	podSpec.ObjectMeta.Labels[resourcePoolLabel] = validatePodLabelValue(p.req.ResourcePool)
 	podSpec.ObjectMeta.Labels[taskTypeLabel] = string(p.submissionInfo.taskSpec.TaskType)
 	podSpec.ObjectMeta.Labels[taskIDLabel] = p.submissionInfo.taskSpec.TaskID
 	podSpec.ObjectMeta.Labels[containerIDLabel] = p.submissionInfo.taskSpec.ContainerID
@@ -375,7 +420,7 @@ func (p *pod) configurePodSpec(
 
 	// If map is not populated, labels will be missing and observability will be impacted.
 	for k, v := range p.submissionInfo.taskSpec.ExtraPodLabels {
-		podSpec.ObjectMeta.Labels[labelPrefix+k] = v
+		podSpec.ObjectMeta.Labels[labelPrefix+k] = validatePodLabelValue(v)
 	}
 
 	p.modifyPodSpec(podSpec, scheduler)
