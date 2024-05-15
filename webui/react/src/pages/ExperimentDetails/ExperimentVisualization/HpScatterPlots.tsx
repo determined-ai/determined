@@ -269,7 +269,7 @@ const ScatterPlots: React.FC<Props> = ({
           {chartProps ? (
             <Grid
               border={true}
-              minItemWidth={resize.width > 320 ? 350 : 270}
+              minItemWidth={resize.width > 320 ? 350 : 290}
               mode={GridMode.AutoFill}>
               {selectedHParams.map((hParam) => (
                 <div key={hParam} onClick={() => handleChartClick(hParam)}>

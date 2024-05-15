@@ -390,7 +390,7 @@ const HpHeatMaps: React.FC<Props> = ({
               <div className={css.charts}>
                 <Grid
                   border={true}
-                  minItemWidth={resize.width > 320 ? 350 : 270}
+                  minItemWidth={resize.width > 320 ? 350 : 290}
                   mode={!isListView ? selectedHParams.length : GridMode.AutoFill}>
                   {selectedHParams.map((hParam1) =>
                     selectedHParams.map((hParam2) => {

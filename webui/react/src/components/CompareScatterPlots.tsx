@@ -226,7 +226,7 @@ const CompareScatterPlots: React.FC<Props> = ({
           <div data-testid={COMPARE_SCATTER_PLOTS}>
             <Grid
               border={true}
-              minItemWidth={resize.width > 320 ? 350 : 270}
+              minItemWidth={resize.width > 320 ? 350 : 290}
               mode={GridMode.AutoFill}>
               {selectedHParams.map((hParam) => (
                 <div key={hParam} onClick={() => handleChartClick(hParam)}>
