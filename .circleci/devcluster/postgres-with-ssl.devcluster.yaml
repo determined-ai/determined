@@ -1,5 +1,4 @@
 stages:
-  qwewqwq
   # Use a custom Docker stage rather than the normal DB one because the latter currently doesn't
   # support mounting an extra volume or specifying the initdb args variable that we need.
   - custom_docker:
