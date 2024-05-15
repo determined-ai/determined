@@ -13,8 +13,8 @@ import { DropdownMenu } from 'e2e/models/hew/Dropdown';
 export class FilterGroup extends NamedComponent {
   readonly defaultSelector = '[data-test-component="FilterGroup"]';
 
-  #childrenSelector = '[data-test="children"]';
-  #notNestedSelector = `:not(${this.#childrenSelector} *)`;
+  readonly #childrenSelector = '[data-test="children"]';
+  readonly #notNestedSelector = `:not(${this.#childrenSelector} *)`;
 
   /**
    * Ensures that the selector is not nested within the children selector.
