@@ -77,12 +77,13 @@ func GetClusterMessage(ctx context.Context, db *bun.DB) (model.ClusterMessage, e
 const ClusterMessageMaxLength = 250
 
 // SetClusterMessage sets the cluster-wide message. Any existing message will be expired because
-// only one cluster message is allowed at any time.
+// only one cluster message is allowed at any time. Messages may be at most ClusterMessageMaxLength
+// characters long.
 // Stuff to test:
 // - Max length of ClusterMessageMaxLength
 func SetClusterMessage(ctx context.Context, db *bun.DB, msg model.ClusterMessage) error {
 	if msgLen := utf8.RuneCountInString(msg.Message); msgLen > ClusterMessageMaxLength {
-		return errors.Wrapf(ErrInvalidInput,
+		return fmt.Errorf("", ErrInvalidInput,
 			"message must be at most %d characters; got %d", ClusterMessageMaxLength, msgLen)
 	}
 
