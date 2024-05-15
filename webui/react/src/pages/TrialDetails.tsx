@@ -6,7 +6,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate, useParams } from 'react-router-dom';
 
 import Page from 'components/Page';
-import RemainingRetentionDaysLabelComponent from 'components/RemainingRetentionDaysLabelComponent';
+import RemainingRetentionDaysLabel from 'components/RemainingRetentionDaysLabelComponent';
 import RoutePagination from 'components/RoutePagination';
 import TrialLogPreview from 'components/TrialLogPreview';
 import { terminalRunStates } from 'constants/states';
@@ -171,7 +171,11 @@ const TrialDetailsComp: React.FC = () => {
       {
         children: <TrialDetailsLogs experiment={experiment} trial={trial} />,
         key: TabType.Logs,
-        label: RemainingRetentionDaysLabelComponent({ remainingLogDays }),
+        label: (
+          <RemainingRetentionDaysLabel
+            remainingLogDays={Loadable.getOrElse(undefined, remainingLogDays)}
+          />
+        ),
       },
     ];
 

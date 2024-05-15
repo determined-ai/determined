@@ -11,7 +11,7 @@ import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { unstable_useBlocker, useLocation, useNavigate, useParams } from 'react-router-dom';
 
 import HyperparameterSearchModalComponent from 'components/HyperparameterSearchModal';
-import RemainingRetentionDaysLabelComponent from 'components/RemainingRetentionDaysLabelComponent';
+import RemainingRetentionDaysLabel from 'components/RemainingRetentionDaysLabelComponent';
 import TrialLogPreview from 'components/TrialLogPreview';
 import { UNMANAGED_MESSAGE } from 'constant';
 import { terminalRunStates } from 'constants/states';
@@ -188,10 +188,8 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
   }, [basePath, navigate, tab, tabKey]);
 
   useEffect(() => {
-    if (trialDetails && terminalRunStates.has(trialDetails.state)) {
-      stopPolling();
-    }
-  }, [trialDetails, stopPolling]);
+    stopPolling();
+  }, [stopPolling]);
 
   useEffect(() => {
     if (wontHaveTrials || trialId !== undefined) stopPollingFirstTrialId();
@@ -331,7 +329,11 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
           <TrialDetailsLogs experiment={experiment} trial={trialDetails as TrialDetails} />
         ),
         key: TabType.Logs,
-        label: RemainingRetentionDaysLabelComponent({ remainingLogDays }),
+        label: (
+          <RemainingRetentionDaysLabel
+            remainingLogDays={Loadable.getOrElse(undefined, remainingLogDays)}
+          />
+        ),
       });
     }
 

@@ -9,12 +9,6 @@ import { ExperimentBase, TrialDetails } from 'types';
 import TrialInfoBox from './TrialInfoBox';
 
 vi.useFakeTimers();
-
-vi.mock('routes/utils', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('routes/utils')>()),
-  serverAddress: () => 'http://localhost',
-}));
-
 const setup = (trial: TrialDetails, experiment: ExperimentBase) => {
   const view = render(
     <UIProvider theme={DefaultTheme.Light}>
@@ -218,20 +212,20 @@ describe('Trial Info Box', () => {
   describe('should show log retention days box', () => {
     it('should show Log Retention box with "-" for days', async () => {
       setup(mockTrial1, mockExperiment);
-      await screen.findByText('Log Retention Days');
-      await screen.findByText('-');
+      expect(await screen.findByText('Log Retention Days')).toBeVisible();
+      expect(await screen.findByText('-')).toBeVisible();
     });
 
     it('should show Log Retention box with given number of days', async () => {
       setup(mockTrial2, mockExperiment);
-      await screen.findByText('Log Retention Days');
-      await screen.findByText(`${mockTrial2.logRetentionDays} days`);
+      expect(await screen.findByText('Log Retention Days')).toBeVisible();
+      expect(await screen.findByText(`${mockTrial2.logRetentionDays} days`)).toBeVisible();
     });
 
     it('should show Log Retention box with "Forever" for days', async () => {
       setup(mockTrial3, mockExperiment);
-      await screen.findByText('Log Retention Days');
-      await screen.findByText('Forever');
+      expect(await screen.findByText('Log Retention Days')).toBeVisible();
+      expect(await screen.findByText('Forever')).toBeVisible();
     });
   });
 });
