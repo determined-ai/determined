@@ -273,7 +273,7 @@ Health Status
 =============
 
 Determined master reports a metric, ``determined_healthy``, with value of ``1`` when major
-dependencies are reachable, and ``0`` otherwise. Visit :ref:_prometheus-grafana-alerts` for
+dependencies are reachable, and ``0`` otherwise. Visit :ref:_prometheus-grafana-alerts for
 information on how to set up alerts.
 
 Viewing Metrics
@@ -281,7 +281,10 @@ Viewing Metrics
 
 The Determined Master labels the pods it creates with specific state values. These pod labels can be
 accessed via the ``kube_pod_labels`` metric from kube-state-metrics. Label names will be formatted
-as ``label_determined_ai_<label_name>``, e.g. ``label_determined_ai_container_id``.
+as ``label_determined_ai_<label_name>``, e.g. ``label_determined_ai_container_id``. Kubernetes
+limits characters allowed in pod labels to alphanumeric characters, underscores, hyphens, and dots.
+Other characters in Determined resource names will be converted to an underscore, ```_``, before
+being added as a pod label.
 
 +-----------------------------+---------------------------------------------------+
 | Label Key                   | Label Value                                       |
