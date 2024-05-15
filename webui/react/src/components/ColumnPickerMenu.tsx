@@ -179,9 +179,15 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
     ({ index, style }: { index: number; style: React.CSSProperties }) => {
       const col = filteredColumns[index];
       return (
-        <div className={css.rows} key={col.column} style={style}>
+        <div
+          className={css.rows}
+          data-test="row"
+          data-test-id={col.column}
+          key={col.column}
+          style={style}>
           <Checkbox
             checked={checkedColumn.has(col.column)}
+            data-test="checkbox"
             id={col.column}
             onChange={handleColumnChange}>
             {col.displayName || col.column}
@@ -193,16 +199,17 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
   );
 
   return (
-    <div>
+    <div data-test-component="columnPickerTab">
       <Input
         allowClear
         autoFocus
+        data-test="search"
         placeholder="Search"
         value={searchString}
         onChange={handleSearch}
       />
       {totalColumns.length !== 0 ? (
-        <div className={css.columns}>
+        <div className={css.columns} data-test="columns">
           {filteredColumns.length > 0 ? (
             <List height={360} itemCount={filteredColumns.length} itemSize={30} width="100%">
               {rows}
@@ -216,10 +223,10 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
       )}
       {!settings.compare && (
         <div className={css.actionRow}>
-          <Button type="text" onClick={handleShowHideAll}>
+          <Button data-test="showAll" type="text" onClick={handleShowHideAll}>
             {allFilteredColumnsChecked ? 'Hide' : 'Show'} all
           </Button>
-          <Button type="text" onClick={handleShowSuggested}>
+          <Button data-test="reset" type="text" onClick={handleShowSuggested}>
             Reset
           </Button>
         </div>

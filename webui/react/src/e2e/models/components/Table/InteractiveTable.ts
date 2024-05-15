@@ -1,6 +1,6 @@
+import { Pagination } from 'e2e/models/ant/Pagination';
 import { BaseComponent, NamedComponent, NamedComponentArgs } from 'e2e/models/BaseComponent';
 import { SkeletonTable } from 'e2e/models/components/Table/SkeletonTable';
-import { Pagination } from 'e2e/models/hew/Pagination';
 
 type RowClass<RowType> = new (args: NamedComponentArgs) => RowType;
 type HeadRowClass<HeadRowType> = new (args: NamedComponentArgs) => HeadRowType;
