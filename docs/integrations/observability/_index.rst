@@ -283,7 +283,7 @@ The Determined Master labels the pods it creates with specific state values. The
 accessed via the ``kube_pod_labels`` metric from kube-state-metrics. Label names will be formatted
 as ``label_determined_ai_<label_name>``, e.g. ``label_determined_ai_container_id``. Kubernetes
 limits characters allowed in pod labels to alphanumeric characters, underscores, hyphens, and dots.
-Other characters in Determined resource names will be converted to an underscore, ```_``, before
+Other characters in Determined resource names will be converted to an underscore, ``_``, before
 being added as a pod label.
 
 +-----------------------------+---------------------------------------------------+
