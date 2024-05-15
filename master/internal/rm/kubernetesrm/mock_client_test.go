@@ -14,10 +14,12 @@ import (
 
 	batchV1 "k8s.io/api/batch/v1"
 	k8sV1 "k8s.io/api/core/v1"
+	policyv1 "k8s.io/api/policy/v1"
 	"k8s.io/api/policy/v1beta1"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/watch"
+	corev1 "k8s.io/client-go/applyconfigurations/core/v1"
 	"k8s.io/client-go/rest"
 )
 
@@ -95,6 +97,12 @@ func (m *mockConfigMapInterface) Watch(
 func (m *mockConfigMapInterface) Patch(
 	ctx context.Context, name string, pt types.PatchType, data []byte, opts metaV1.PatchOptions,
 	subresources ...string,
+) (result *k8sV1.ConfigMap, err error) {
+	panic("implement me")
+}
+
+func (m *mockConfigMapInterface) Apply(
+	ctx context.Context, configMap *corev1.ConfigMapApplyConfiguration, opts metaV1.ApplyOptions,
 ) (result *k8sV1.ConfigMap, err error) {
 	panic("implement me")
 }
@@ -189,16 +197,22 @@ func (m *mockPodInterface) Patch(
 	panic("implement me")
 }
 
-func (m *mockPodInterface) GetEphemeralContainers(
-	ctx context.Context, podName string, options metaV1.GetOptions,
-) (*k8sV1.EphemeralContainers, error) {
+func (m *mockPodInterface) Apply(
+	ctx context.Context, pod *corev1.PodApplyConfiguration, opts metaV1.ApplyOptions,
+) (result *k8sV1.Pod, err error) {
+	panic("implement me")
+}
+
+func (m *mockPodInterface) ApplyStatus(
+	ctx context.Context, pod *corev1.PodApplyConfiguration, opts metaV1.ApplyOptions,
+) (result *k8sV1.Pod, err error) {
 	panic("implement me")
 }
 
 func (m *mockPodInterface) UpdateEphemeralContainers(
-	ctx context.Context, podName string, ephemeralContainers *k8sV1.EphemeralContainers,
+	ctx context.Context, podName string, ephemeralContainers *k8sV1.Pod,
 	opts metaV1.UpdateOptions,
-) (*k8sV1.EphemeralContainers, error) {
+) (*k8sV1.Pod, error) {
 	panic("implement me")
 }
 
@@ -207,6 +221,14 @@ func (m *mockPodInterface) Bind(context.Context, *k8sV1.Binding, metaV1.CreateOp
 }
 
 func (m *mockPodInterface) Evict(ctx context.Context, eviction *v1beta1.Eviction) error {
+	panic("implement me")
+}
+
+func (m *mockPodInterface) EvictV1(ctx context.Context, eviction *policyv1.Eviction) error {
+	panic("implement me")
+}
+
+func (m *mockPodInterface) EvictV1beta1(ctx context.Context, eviction *v1beta1.Eviction) error {
 	panic("implement me")
 }
 

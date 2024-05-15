@@ -10,6 +10,7 @@ import (
 	"github.com/sirupsen/logrus"
 	k8sV1 "k8s.io/api/core/v1"
 	typedV1 "k8s.io/client-go/kubernetes/typed/core/v1"
+	alphaGateway "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned/typed/apis/v1alpha2"
 
 	"github.com/determined-ai/determined/master/pkg/set"
 )
@@ -24,13 +25,18 @@ type (
 	createKubernetesResources struct {
 		jobSpec       *batchV1.Job
 		configMapSpec *k8sV1.ConfigMap
+
+		gatewayProxyResources []gatewayProxyResource
 	}
 
 	deleteKubernetesResources struct {
-		namespace     string
-		jobName       string
-		configMapName string
-		podName       string
+		namespace          string
+		jobName            string
+		podName            string
+		configMapName      string
+		serviceNames       []string
+		tcpRouteNames      []string
+		gatewayPortsToFree []int
 	}
 )
 
@@ -108,7 +114,11 @@ type requestQueue struct {
 	jobInterfaces       map[string]typedBatchV1.JobInterface
 	podInterfaces       map[string]typedV1.PodInterface
 	configMapInterfaces map[string]typedV1.ConfigMapInterface
-	failures            chan<- resourcesRequestFailure
+	serviceInterfaces   map[string]typedV1.ServiceInterface
+	tcpRouteInterfaces  map[string]alphaGateway.TCPRouteInterface
+	gatewayService      *gatewayService
+
+	failures chan<- resourcesRequestFailure
 
 	mu         sync.Mutex
 	workerChan chan interface{}
@@ -128,13 +138,20 @@ func startRequestQueue(
 	jobInterfaces map[string]typedBatchV1.JobInterface,
 	podInterfaces map[string]typedV1.PodInterface,
 	configMapInterfaces map[string]typedV1.ConfigMapInterface,
+	serviceInterfaces map[string]typedV1.ServiceInterface,
+	gatewayService *gatewayService,
+	tcpRouteInterfaces map[string]alphaGateway.TCPRouteInterface,
 	failures chan<- resourcesRequestFailure,
 ) *requestQueue {
 	r := &requestQueue{
 		jobInterfaces:       jobInterfaces,
 		podInterfaces:       podInterfaces,
 		configMapInterfaces: configMapInterfaces,
-		failures:            failures,
+		serviceInterfaces:   serviceInterfaces,
+		gatewayService:      gatewayService,
+		tcpRouteInterfaces:  tcpRouteInterfaces,
+
+		failures: failures,
 
 		workerChan: make(chan interface{}),
 
@@ -156,6 +173,9 @@ func (r *requestQueue) startWorkers() {
 			r.jobInterfaces,
 			r.podInterfaces,
 			r.configMapInterfaces,
+			r.serviceInterfaces,
+			r.gatewayService,
+			r.tcpRouteInterfaces,
 			strconv.Itoa(i),
 			r.workerChan,
 			r.workerReady,
@@ -181,8 +201,8 @@ func keyForDelete(msg deleteKubernetesResources) requestID {
 	if msg.podName != "" {
 		return requestID(msg.namespace + "/" + msg.podName)
 	}
-	if msg.configMapName != "" {
-		return requestID(msg.namespace + "/" + msg.configMapName)
+	if msg.configMapName != nil {
+		return requestID(msg.namespace + "/" + *msg.configMapName)
 	}
 	panic("invalid deleteKubernetesResources message")
 }
@@ -190,11 +210,12 @@ func keyForDelete(msg deleteKubernetesResources) requestID {
 func (r *requestQueue) createKubernetesResources(
 	jobSpec *batchV1.Job,
 	configMapSpec *k8sV1.ConfigMap,
+	gatewayProxyResources []gatewayProxyResource,
 ) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	msg := createKubernetesResources{jobSpec, configMapSpec}
+	msg := createKubernetesResources{jobSpec, configMapSpec, gatewayProxyResources}
 	ref := keyForCreate(msg)
 
 	if _, requestAlreadyExists := r.pendingResourceCreations[ref]; requestAlreadyExists {
@@ -212,27 +233,21 @@ func (r *requestQueue) createKubernetesResources(
 	}
 }
 
-func (r *requestQueue) deleteKubernetesResources(
-	namespace string,
-	jobName string,
-	configMapName string,
-	podName string,
-) {
+func (r *requestQueue) deleteKubernetesResources(msg deleteKubernetesResources) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	msg := deleteKubernetesResources{
-		namespace:     namespace,
-		jobName:       jobName,
-		configMapName: configMapName,
-		podName:       podName,
-	}
 	ref := keyForDelete(msg)
 
 	// If the request has not been processed yet, cancel it and inform the handler.
 	if _, creationPending := r.pendingResourceCreations[ref]; creationPending {
 		r.pendingResourceCreations[ref].createResources = nil
 		delete(r.pendingResourceCreations, ref)
+
+		podName := ""
+		if msg.podName != nil {
+			podName = *msg.podName
+		}
 		r.failures <- resourceCreationCancelled{
 			jobName: jobName,
 		}

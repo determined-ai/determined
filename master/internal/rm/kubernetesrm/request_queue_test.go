@@ -9,6 +9,7 @@ import (
 
 	petName "github.com/dustinkirkland/golang-petname"
 	"github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/mock"
 	"gotest.tools/assert"
 
 	batchV1 "k8s.io/api/batch/v1"
@@ -16,6 +17,12 @@ import (
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	typedBatchV1 "k8s.io/client-go/kubernetes/typed/batch/v1"
 	typedV1 "k8s.io/client-go/kubernetes/typed/core/v1"
+	gatewayTyped "sigs.k8s.io/gateway-api/apis/v1"
+	alphaGatewayTyped "sigs.k8s.io/gateway-api/apis/v1alpha2"
+	alphaGateway "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned/typed/apis/v1alpha2"
+
+	"github.com/determined-ai/determined/master/internal/mocks"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 )
 
 type mockJob struct {
@@ -63,11 +70,15 @@ func (m *mockJob) create() {
 		Name:      m.name,
 		Namespace: "default",
 	}}
-	m.requestQueue.createKubernetesResources(&jobSpec, &cmSpec)
+	m.requestQueue.createKubernetesResources(&podSpec, &cmSpec, nil)
 }
 
-func (m *mockJob) delete() {
-	m.requestQueue.deleteKubernetesResources("default", m.name, m.name, "")
+func (m *mockPod) delete() {
+	m.requestQueue.deleteKubernetesResources(deleteKubernetesResources{
+		namespace:     "default",
+		podName:       &m.name,
+		configMapName: &m.name,
+	})
 }
 
 func getNumberOfActiveJobs(jobInterface typedBatchV1.JobInterface) int {
@@ -113,7 +124,7 @@ func TestRequestQueueCreatingManyPod(t *testing.T) {
 		map[string]typedBatchV1.JobInterface{"default": jobInterface},
 		map[string]typedV1.PodInterface{"default": podInterface},
 		map[string]typedV1.ConfigMapInterface{"default": configMapInterface},
-		failures,
+		nil, nil, nil, failures,
 	)
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -139,7 +150,7 @@ func TestRequestQueueCreatingAndDeletingManyPod(t *testing.T) {
 		map[string]typedBatchV1.JobInterface{"default": jobInterface},
 		map[string]typedV1.PodInterface{"default": podInterface},
 		map[string]typedV1.ConfigMapInterface{"default": configMapInterface},
-		failures,
+		nil, nil, nil, failures,
 	)
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -167,7 +178,7 @@ func TestRequestQueueCreatingThenDeletingManyPods(t *testing.T) {
 		map[string]typedBatchV1.JobInterface{"default": jobInterface},
 		map[string]typedV1.PodInterface{"default": podInterface},
 		map[string]typedV1.ConfigMapInterface{"default": configMapInterface},
-		failures,
+		nil, nil, nil, failures,
 	)
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -202,7 +213,7 @@ func TestRequestQueueCreatingAndDeletingManyPodWithDelay(t *testing.T) {
 		map[string]typedBatchV1.JobInterface{"default": jobInterface},
 		map[string]typedV1.PodInterface{"default": podInterface},
 		map[string]typedV1.ConfigMapInterface{"default": configMapInterface},
-		failures,
+		nil, nil, nil, failures,
 	)
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -233,7 +244,7 @@ func TestRequestQueueCreationCancelled(t *testing.T) {
 		map[string]typedBatchV1.JobInterface{"default": jobInterface},
 		map[string]typedV1.PodInterface{"default": podInterface},
 		map[string]typedV1.ConfigMapInterface{"default": configMapInterface},
-		failures,
+		nil, nil, nil, failures,
 	)
 
 	for i := 0; i < numKubernetesWorkers; i++ {
@@ -274,7 +285,7 @@ func TestRequestQueueCreationFailed(t *testing.T) {
 		map[string]typedBatchV1.JobInterface{"default": jobInterface},
 		map[string]typedV1.PodInterface{"default": podInterface},
 		map[string]typedV1.ConfigMapInterface{"default": configMapInterface},
-		failures,
+		nil, nil, nil, failures,
 	)
 
 	var wg sync.WaitGroup
@@ -312,7 +323,7 @@ func TestRequestQueueDeletionFailed(t *testing.T) {
 		map[string]typedBatchV1.JobInterface{"default": jobInterface},
 		map[string]typedV1.PodInterface{"default": podInterface},
 		map[string]typedV1.ConfigMapInterface{"default": configMapInterface},
-		failures,
+		nil, nil, nil, failures,
 	)
 
 	var wg sync.WaitGroup
@@ -342,4 +353,126 @@ func TestRequestQueueDeletionFailed(t *testing.T) {
 	pod.delete()
 	wg.Wait()
 	assert.Equal(t, deleteFailed, true)
+}
+
+func TestReceiveCreateKubernetesResources(t *testing.T) {
+	podInterface := &mocks.PodInterface{}
+	configMapInterface := &mocks.ConfigMapInterface{}
+	serviceInterface := &mocks.ServiceInterface{}
+	tcpInterface := &mocks.TCPRouteInterface{}
+	gatewayInterface := &mocks.GatewayInterface{}
+
+	w := &requestProcessingWorker{
+		syslog:              logrus.New().WithField("test", "test"),
+		podInterfaces:       map[string]typedV1.PodInterface{"": podInterface},
+		configMapInterfaces: map[string]typedV1.ConfigMapInterface{"": configMapInterface},
+		serviceInterfaces:   map[string]typedV1.ServiceInterface{"": serviceInterface},
+		tcpRouteInterfaces:  map[string]alphaGateway.TCPRouteInterface{"": tcpInterface},
+		gatewayService: &gatewayService{
+			gatewayInterface: gatewayInterface,
+			gatewayName:      "gatewayname",
+		},
+	}
+
+	createReq := createKubernetesResources{
+		podSpec:       &k8sV1.Pod{},
+		configMapSpec: &k8sV1.ConfigMap{},
+		gatewayProxyResources: []gatewayProxyResource{
+			{
+				serviceSpec:     &k8sV1.Service{},
+				tcpRouteSpec:    &alphaGatewayTyped.TCPRoute{},
+				gatewayListener: gatewayTyped.Listener{},
+			},
+		},
+	}
+
+	gateway := &gatewayTyped.Gateway{}
+	expectedUpdatedGateway := &gatewayTyped.Gateway{
+		Spec: gatewayTyped.GatewaySpec{
+			Listeners: []gatewayTyped.Listener{
+				{
+					Port: 0,
+				},
+			},
+		},
+	}
+
+	podInterface.On("Create", mock.Anything, createReq.podSpec, metaV1.CreateOptions{}).
+		Return(createReq.podSpec, nil)
+	configMapInterface.On("Create", mock.Anything, createReq.configMapSpec, metaV1.CreateOptions{}).
+		Return(createReq.configMapSpec, nil)
+	serviceInterface.On("Create", mock.Anything, createReq.gatewayProxyResources[0].serviceSpec,
+		metaV1.CreateOptions{}).Return(createReq.gatewayProxyResources[0].serviceSpec, nil)
+	tcpInterface.On("Create", mock.Anything, createReq.gatewayProxyResources[0].tcpRouteSpec,
+		metaV1.CreateOptions{}).Return(createReq.gatewayProxyResources[0].tcpRouteSpec, nil)
+
+	gatewayInterface.On("Get", mock.Anything, "gatewayname", metaV1.GetOptions{}).
+		Return(gateway, nil)
+	gatewayInterface.On("Update", mock.Anything, expectedUpdatedGateway, metaV1.UpdateOptions{}).
+		Return(nil, nil)
+
+	w.receiveCreateKubernetesResources(createReq)
+
+	podInterface.AssertExpectations(t)
+	configMapInterface.AssertExpectations(t)
+	serviceInterface.AssertExpectations(t)
+	tcpInterface.AssertExpectations(t)
+	gatewayInterface.AssertExpectations(t)
+}
+
+func TestReceiveDeleteKubernetesResources(t *testing.T) {
+	podInterface := &mocks.PodInterface{}
+	configMapInterface := &mocks.ConfigMapInterface{}
+	serviceInterface := &mocks.ServiceInterface{}
+	tcpInterface := &mocks.TCPRouteInterface{}
+	gatewayInterface := &mocks.GatewayInterface{}
+
+	w := &requestProcessingWorker{
+		syslog:              logrus.New().WithField("test", "test"),
+		podInterfaces:       map[string]typedV1.PodInterface{"": podInterface},
+		configMapInterfaces: map[string]typedV1.ConfigMapInterface{"": configMapInterface},
+		serviceInterfaces:   map[string]typedV1.ServiceInterface{"": serviceInterface},
+		tcpRouteInterfaces:  map[string]alphaGateway.TCPRouteInterface{"": tcpInterface},
+		gatewayService: &gatewayService{
+			gatewayInterface: gatewayInterface,
+			gatewayName:      "gatewayname",
+		},
+	}
+
+	deleteReq := deleteKubernetesResources{
+		podName:            ptrs.Ptr("podName"),
+		configMapName:      ptrs.Ptr("configMapName"),
+		serviceNames:       []string{"serviceName"},
+		tcpRouteNames:      []string{"tcpRouteName"},
+		gatewayPortsToFree: []int{1},
+	}
+
+	gateway := &gatewayTyped.Gateway{
+		Spec: gatewayTyped.GatewaySpec{
+			Listeners: []gatewayTyped.Listener{
+				{
+					Port: 1,
+				},
+			},
+		},
+	}
+	expectedUpdatedGateway := &gatewayTyped.Gateway{}
+
+	podInterface.On("Delete", mock.Anything, "podName", mock.Anything).Return(nil)
+	configMapInterface.On("Delete", mock.Anything, "configMapName", mock.Anything).Return(nil)
+	serviceInterface.On("Delete", mock.Anything, "serviceName", mock.Anything).Return(nil)
+	tcpInterface.On("Delete", mock.Anything, "tcpRouteName", mock.Anything).Return(nil)
+
+	gatewayInterface.On("Get", mock.Anything, "gatewayname", metaV1.GetOptions{}).
+		Return(gateway, nil)
+	gatewayInterface.On("Update", mock.Anything, expectedUpdatedGateway, metaV1.UpdateOptions{}).
+		Return(nil, nil)
+
+	w.receiveDeleteKubernetesResources(deleteReq)
+
+	podInterface.AssertExpectations(t)
+	configMapInterface.AssertExpectations(t)
+	serviceInterface.AssertExpectations(t)
+	tcpInterface.AssertExpectations(t)
+	gatewayInterface.AssertExpectations(t)
 }

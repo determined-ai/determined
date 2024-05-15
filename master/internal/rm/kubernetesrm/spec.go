@@ -15,6 +15,11 @@ import (
 	"github.com/determined-ai/determined/master/internal/config"
 
 	"github.com/docker/docker/api/types/mount"
+<<<<<<< HEAD
+=======
+	petName "github.com/dustinkirkland/golang-petname"
+	"github.com/google/uuid"
+>>>>>>> chore: initial proxy support for external to k8s masters [RM-266] (#9347)
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
@@ -32,7 +37,12 @@ import (
 	schedulingV1 "k8s.io/api/scheduling/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+<<<<<<< HEAD
 	"k8s.io/apimachinery/pkg/util/validation"
+=======
+	gatewayTyped "sigs.k8s.io/gateway-api/apis/v1"
+	alphaGatewayTyped "sigs.k8s.io/gateway-api/apis/v1alpha2"
+>>>>>>> chore: initial proxy support for external to k8s masters [RM-266] (#9347)
 )
 
 const (
@@ -147,8 +157,109 @@ func (j *job) configureEnvVars(
 	return envVars, nil
 }
 
+<<<<<<< HEAD
 func (j *job) configureConfigMapSpec(
 	taskSpec *tasks.TaskSpec,
+=======
+func (p *pod) configureProxyResources() []gatewayProxyResource {
+	if p.exposeProxyConfig == nil {
+		return nil
+	}
+
+	var resources []gatewayProxyResource
+	// TODO(RM-275/gateways) think about experiments, should they proxy every pod, or only rank 0?
+	for i, proxyPort := range p.req.ProxyPorts {
+		// TODO(RM-276/gateways) use something more reasonable for the name.
+		// Podname is too long currently. There is like a 63 characeter limit for DNS.
+		// We should really be under this for everything even if not required (like it is for
+		// service and TCPRoute). Bradley is changing this but hopefully we land before him.
+		tooLong := fmt.Sprintf("porti%d-%s-%s",
+			i, p.submissionInfo.taskSpec.Description, uuid.New().String())
+		sharedName := tooLong[:min(63, len(tooLong)-1)]
+
+		allocLabels := map[string]string{
+			determinedLabel: p.submissionInfo.taskSpec.AllocationID,
+		}
+
+		serviceSpec := &k8sV1.Service{
+			ObjectMeta: metaV1.ObjectMeta{
+				Name:      sharedName,
+				Namespace: p.namespace,
+				Labels:    allocLabels,
+			},
+			Spec: k8sV1.ServiceSpec{
+				Ports: []k8sV1.ServicePort{
+					{
+						Protocol: k8sV1.ProtocolTCP,
+						Port:     int32(proxyPort.Port),
+					},
+				},
+				Selector: allocLabels,
+				Type:     k8sV1.ServiceTypeClusterIP,
+			},
+		}
+
+		sectionName := fmt.Sprintf("proxyport%d", proxyPort.Port)
+		tcpRouteSpec := &alphaGatewayTyped.TCPRoute{
+			ObjectMeta: metaV1.ObjectMeta{
+				Name:      sharedName,
+				Namespace: p.namespace,
+				Labels:    allocLabels,
+			},
+			Spec: alphaGatewayTyped.TCPRouteSpec{
+				CommonRouteSpec: alphaGatewayTyped.CommonRouteSpec{
+					ParentRefs: []alphaGatewayTyped.ParentReference{
+						{
+							Namespace:   ptrs.Ptr(alphaGatewayTyped.Namespace(p.exposeProxyConfig.GatewayNamespace)),
+							Name:        alphaGatewayTyped.ObjectName(p.exposeProxyConfig.GatewayName),
+							Port:        ptrs.Ptr(alphaGatewayTyped.PortNumber(proxyPort.Port)),
+							SectionName: ptrs.Ptr(alphaGatewayTyped.SectionName(sectionName)),
+						},
+					},
+				},
+				Rules: []alphaGatewayTyped.TCPRouteRule{
+					{
+						BackendRefs: []alphaGatewayTyped.BackendRef{
+							{
+								BackendObjectReference: alphaGatewayTyped.BackendObjectReference{
+									Name: alphaGatewayTyped.ObjectName(serviceSpec.Name),
+									Kind: ptrs.Ptr(alphaGatewayTyped.Kind("Service")),
+									Port: ptrs.Ptr(alphaGatewayTyped.PortNumber(proxyPort.Port)),
+								},
+							},
+						},
+					},
+				},
+			},
+		}
+
+		// TODO(RM-271/gateways) we make an assumption ports are unique, they aren't but kinda are.
+		// Maybe the easiest thing to do would be to have Kubernetes have its own port registry
+		// and then translate our port to the task port in the service with `TargetPort/Port`.
+		// Better yet maybe ask the gateway_service.go for a free port.
+		gatewayListener := gatewayTyped.Listener{
+			Name:     gatewayTyped.SectionName(sectionName),
+			Port:     gatewayTyped.PortNumber(proxyPort.Port),
+			Protocol: "TCP",
+			AllowedRoutes: &gatewayTyped.AllowedRoutes{
+				Namespaces: &gatewayTyped.RouteNamespaces{
+					From: ptrs.Ptr(gatewayTyped.NamespacesFromAll),
+				},
+			},
+		}
+
+		resources = append(resources, gatewayProxyResource{
+			serviceSpec:     serviceSpec,
+			tcpRouteSpec:    tcpRouteSpec,
+			gatewayListener: gatewayListener,
+		})
+	}
+
+	return resources
+}
+
+func (p *pod) configureConfigMapSpec(
+>>>>>>> chore: initial proxy support for external to k8s masters [RM-266] (#9347)
 	runArchives []cproto.RunArchive,
 ) (*k8sV1.ConfigMap, error) {
 	configMapData := make(map[string][]byte, len(runArchives))
@@ -607,7 +718,13 @@ func (j *job) createSpec(scheduler string, taskSpec *tasks.TaskSpec) (*batchV1.J
 		return nil, nil, err
 	}
 
+<<<<<<< HEAD
 	rootVolumes, rootVolumeMounts, err := handleRootArchiveFiles(rootArchives, configMapSpec)
+=======
+	p.gatewayProxyResources = p.configureProxyResources()
+
+	rootVolumes, rootVolumeMounts, err := handleRootArchiveFiles(rootArchives, p.configMap)
+>>>>>>> chore: initial proxy support for external to k8s masters [RM-266] (#9347)
 	if err != nil {
 		return nil, nil, err
 	}

@@ -59,6 +59,7 @@ def _ray_job_submit(exp_path: pathlib.Path, port: int = 8265) -> None:
 
 @pytest.mark.e2e_cpu
 @pytest.mark.timeout(600)
+@pytest.mark.e2e_multi_k8s
 def test_experiment_proxy_ray_tunnel() -> None:
     sess = api_utils.user_session()
     exp_path = conf.EXAMPLES_PATH / "features" / "ports"

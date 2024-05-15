@@ -26,6 +26,7 @@ def test_basic_notebook_start_and_kill() -> None:
 
 
 @pytest.mark.e2e_cpu
+@pytest.mark.e2e_multi_k8s
 def test_notebook_proxy() -> None:
     session = api_utils.user_session()
 
