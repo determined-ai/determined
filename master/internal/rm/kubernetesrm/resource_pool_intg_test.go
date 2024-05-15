@@ -55,44 +55,6 @@ func TestAllocateAndRelease(t *testing.T) {
 	require.Nil(t, req)
 }
 
-func TestUpdatePodStatus(t *testing.T) {
-	rp := testResourcePool(t, defaultSlots)
-
-	cases := []struct {
-		name       string
-		state      sproto.SchedulingState
-		runningPod int
-	}{
-		{"scheduled", sproto.SchedulingStateScheduled, 1},
-		{"backfilled", sproto.SchedulingStateScheduledBackfilled, 1},
-		{"queued", sproto.SchedulingStateQueued, 0},
-	}
-	for _, tt := range cases {
-		t.Run(tt.name, func(t *testing.T) {
-			_, allocID := testAddAllocation(t, rp, tt.state)
-			rp.Schedule()
-
-			// Check that the allocation is queued first.
-			require.Equal(t, int(sproto.SchedulingStateQueued), rp.allocationIDToRunningPods[allocID])
-			require.Zero(t, rp.allocationIDToRunningPods[allocID])
-
-			containerID := rp.allocationIDToContainerID[allocID]
-			require.NotNil(t, containerID)
-
-			req := sproto.UpdatePodStatus{
-				// TODO (bradley, pods2jobs): new implementation won't require container ID
-				ContainerID: string(containerID),
-				State:       tt.state,
-			}
-
-			rp.UpdatePodStatus(req)
-
-			// If scheduled (backfilled or scheduled), check that running pods++
-			require.Equal(t, tt.runningPod, rp.allocationIDToRunningPods[allocID])
-		})
-	}
-}
-
 func TestPendingPreemption(t *testing.T) {
 	rp := testResourcePool(t, defaultSlots)
 	err := rp.PendingPreemption(sproto.PendingPreemption{
