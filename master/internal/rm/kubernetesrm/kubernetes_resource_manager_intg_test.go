@@ -560,6 +560,59 @@ func TestAssignResourcesTime(t *testing.T) {
 	require.False(t, resourcesAllocated.JobSubmissionTime.IsZero())
 }
 
+func TestAssignResources(t *testing.T) {
+	taskList := tasklist.New()
+	groups := make(map[model.JobID]*tasklist.Group)
+	allocateReq := sproto.AllocateRequest{
+		JobID:             model.JobID("test-job"),
+		JobSubmissionTime: time.Now(),
+		SlotsNeeded:       2,
+	}
+	groups[allocateReq.JobID] = &tasklist.Group{
+		JobID: allocateReq.JobID,
+	}
+	mockPods := createMockPodsService(make(map[string]*k8sV1.Node), device.CUDA, true)
+	poolRef := &kubernetesResourcePool{
+		poolConfig:                &config.ResourcePoolConfig{PoolName: "pool"},
+		podsService:               mockPods,
+		reqList:                   taskList,
+		groups:                    groups,
+		allocationIDToContainerID: map[model.AllocationID]cproto.ID{},
+		containerIDtoAllocationID: map[string]model.AllocationID{},
+		jobIDToAllocationID:       map[model.JobID]model.AllocationID{},
+		allocationIDToJobID:       map[model.AllocationID]model.JobID{},
+		slotsUsedPerGroup:         map[*tasklist.Group]int{},
+		allocationIDToRunningPods: map[model.AllocationID]int{},
+		syslog:                    logrus.WithField("component", "k8s-rp"),
+	}
+
+	cases := []struct {
+		name           string
+		slotsRequested int
+		maxSlotsPerPod int
+		expPodSlots    []int
+	}{
+		{"slots < max_slots_per_pod", 1, 2, []int{1}},
+		{"slots multiple of max_slots_per_pod", 6, 2, []int{2, 2, 2}},
+		{"invalid slots request", 3, 2, []int{}},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			allocateReq.SlotsNeeded = c.slotsRequested
+			poolRef.maxSlotsPerPod = c.maxSlotsPerPod
+			poolRef.assignResources(&allocateReq)
+			resourcesAllocated := poolRef.reqList.Allocation(allocateReq.AllocationID)
+
+			podSlotsAllocated := []int{}
+			for k, v := range resourcesAllocated.Resources {
+				podSlotsAllocated = append(podSlotsAllocated, v.Summary().Slots())
+				delete(resourcesAllocated.Resources, k)
+			}
+			require.Equal(t, c.expPodSlots, podSlotsAllocated)
+		})
+	}
+}
+
 func TestGetResourcePools(t *testing.T) {
 	expectedName := "testname"
 	expectedMetadata := map[string]string{"x": "y*y"}
@@ -733,6 +786,55 @@ func TestROCmJobsService(t *testing.T) {
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) { require.Panics(t, test.testFunc) })
+	}
+}
+
+func TestValidateResources(t *testing.T) {
+	resourcePool := &kubernetesResourcePool{
+		poolConfig:     &config.ResourcePoolConfig{PoolName: "test-pool"},
+		maxSlotsPerPod: 4,
+	}
+	kubernetesRM := &ResourceManager{
+		pools: map[string]*kubernetesResourcePool{
+			"test-pool": resourcePool,
+		},
+	}
+
+	cases := []struct {
+		name            string
+		validateRequest sproto.ValidateResourcesRequest
+		valid           bool
+	}{
+		{"single node, valid", sproto.ValidateResourcesRequest{
+			IsSingleNode: true,
+			Slots:        3,
+			ResourcePool: "test-pool",
+		}, true},
+		{"single node invalid, slots < max_slots_per_pod", sproto.ValidateResourcesRequest{
+			IsSingleNode: true,
+			Slots:        5,
+			ResourcePool: "test-pool",
+		}, false},
+		{"non-single node valid", sproto.ValidateResourcesRequest{
+			IsSingleNode: false,
+			Slots:        8,
+			ResourcePool: "test-pool",
+		}, true},
+		{"non-single node invalid, slots not divisible by max_slots_per_pod ", sproto.ValidateResourcesRequest{
+			IsSingleNode: false,
+			Slots:        7,
+			ResourcePool: "test-pool",
+		}, false},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			_, err := kubernetesRM.ValidateResources(c.validateRequest)
+			if c.valid {
+				require.NoError(t, err)
+			} else {
+				require.ErrorContains(t, err, "invalid resource request")
+			}
+		})
 	}
 }
 
