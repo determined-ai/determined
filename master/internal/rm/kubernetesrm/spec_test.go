@@ -243,14 +243,15 @@ func TestValidatePodLabelValues(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.input, func(t *testing.T) {
-			testOutput := validatePodLabelValue(tt.input)
+			testOutput, err := validatePodLabelValue(tt.input)
+			require.NoError(t, err)
 			require.Equal(t, tt.output, testOutput, tt.name+" failed")
 		})
 	}
 }
 
 func TestDeterminedLabels(t *testing.T) {
-	// fill out task spec
+	// Fill out task spec.
 	taskSpec := tasks.TaskSpec{
 		Owner:       createUser(),
 		Workspace:   "test-workspace",
@@ -272,7 +273,7 @@ func TestDeterminedLabels(t *testing.T) {
 		},
 	}
 
-	// define expectations
+	// Define expectations.
 	expectedLabels := map[string]string{
 		determinedLabel:   taskSpec.AllocationID,
 		userLabel:         taskSpec.Owner.Username,
@@ -289,7 +290,7 @@ func TestDeterminedLabels(t *testing.T) {
 	spec := p.configurePodSpec(make([]k8sV1.Volume, 1), k8sV1.Container{},
 		k8sV1.Container{}, make([]k8sV1.Container, 1), &k8sV1.Pod{}, "scheduler")
 
-	// confirm pod spec has required labels
+	// Confirm pod spec has required labels.
 	require.NotNil(t, spec)
 	require.Equal(t, expectedLabels, spec.ObjectMeta.Labels)
 }
