@@ -4,7 +4,7 @@ checkpoint_storage:
   host_path: /tmp
   storage_path: determined-integration-checkpoints
 hyperparameters:
-  training_batch_seconds: 1
+  training_batch_seconds: 99999
   unique_id:
       type:  categorical
       vals:
