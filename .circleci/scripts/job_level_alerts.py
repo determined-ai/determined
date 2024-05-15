@@ -41,7 +41,7 @@ def send_alerts_for_failed_jobs(sent_alerts: Set[str]) -> bool:
             continue
 
         workflow_id = w["id"]
-        if not workflows_are_running and w["status"] in ["running", "failing"]:
+        if not workflows_are_running and w["stopped_at"] is None:
             print(f"waiting for at least workflow {w['name']} to finish")
             workflows_are_running = True
 
