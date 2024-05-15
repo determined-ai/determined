@@ -12,7 +12,7 @@ Playwright has [a writeup](https://playwright.dev/docs/pom) on how page models a
 
 ### What playwright POM is missing
 
-The playwright API approach still loosely defines each component. Relying on text can be volitile, so it would be better to use accessibility or `data-testid`. Playwright POM also serves as an API rather than a **model**.
+The playwright API approach still loosely defines each component. Relying on text can be volitile, so it would be better to use accessibility or `data-test`. Playwright POM also serves as an API rather than a **model**.
 
 Our page models are meant to implement the precise structure of a page. This allows us to be specific in which components we represent. For exmaple, a login page might have different sign in boxes for straightforward authetication and for SSO. Or maybe a dashboard page has several tables. When we test for "a username input" or "the first row of the table", these models will provide a uniform, specific mechanism to clearly state which component we're using.
 
@@ -65,15 +65,15 @@ export class DeterminedAuth extends NamedComponent({ defaultselector: `div[data-
   readonly #form = new BaseComponent({ parent: this, selector: `form` });
   readonly username = new BaseComponent({
     parent: this.#form,
-    selector: `input[data-testid="username"]`,
+    selector: `input[data-test="username"]`,
   });
   readonly password = new BaseComponent({
     parent: this.#form,
-    selector: `input[data-testid="password"]`,
+    selector: `input[data-test="password"]`,
   });
   readonly submit = new BaseComponent({
     parent: this.#form,
-    selector: `button[data-testid="submit"]`,
+    selector: `button[data-test="submit"]`,
   });
   ...
 }
@@ -84,27 +84,28 @@ export class DeterminedAuth extends NamedComponent({ defaultselector: `div[data-
 `NamedComponent`s will have a `static defaultSelector` to use if a selector isn't provided. Since this property is static, we can use it to create elements with more details. Here's an example using an imaginary `DeterminedTable` component:
 
 ```js
-  readonly userTable = new DeterminedTable({ parent: this, selector: DeterminedTable.defaultSelector + "[data-testid='userTable']" });
-  readonly roleTable = new DeterminedTable({ parent: this, selector: DeterminedTable.defaultSelector + "[data-testid='roleTable']" });
+  readonly userTable = new DeterminedTable({ parent: this, selector: DeterminedTable.defaultSelector + "[data-test='userTable']" });
+  readonly roleTable = new DeterminedTable({ parent: this, selector: DeterminedTable.defaultSelector + "[data-test='roleTable']" });
 ```
 
 ## Practices around test hooks
 
 When creating page models, you'll most likely want to author test hooks into the `src` model.
 
-| Test Hook                            | Usage                                                                |
-| ------------------------------------ | -------------------------------------------------------------------- |
-| `data-test-component='my-component'` | Belongs at the top level element wrapping the component              |
-| `data-testid='my-componentid'`       | Attributed to any _instances_ of components or any intrinsic element |
+| Test Hook                            | Usage                                                                                                                              |
+| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
+| `data-test-component='my-component'` | Belongs at the top level element wrapping the component                                                                            |
+| `data-test='component'`              | Attributed to any _instances_ of components or any intrinsic element                                                               |
+| `data-test-id='dynamic'`             | Test Hook for dynamic data. Consider having many `data-test='row'`s and needing to differentiate them in some way other than order |
 
 Looking back to the exmaple with the imaginary `DeterminedTable`, we want to enable this pattern:
 
 ```js
   // DeterminedTable.defaultSelector = '[data-test-component="DetTable"]'
-  readonly userTable = new DeterminedTable({ parent: this, selector: DeterminedTable.defaultSelector + '[data-testid="userTable"]' });
-  readonly roleTable = new DeterminedTable({ parent: this, selector: DeterminedTable.defaultSelector + '[data-testid="roleTable"]' });
+  readonly userTable = new DeterminedTable({ parent: this, selector: DeterminedTable.defaultSelector + '[data-test="userTable"]' });
+  readonly roleTable = new DeterminedTable({ parent: this, selector: DeterminedTable.defaultSelector + '[data-test="roleTable"]' });
 ```
 
-The component `DeterminedTable` would have `data-test-component="DetTable"` as a top level attribute, and instances would each get their own `data-testid`. This way, the static attribute and the instance attribute don't conflict with each other.
+The component `DeterminedTable` would have `data-test-component="DetTable"` as a top level attribute, and instances would each get their own `data-test`. This way, the static attribute and the instance attribute don't conflict with each other.
 
-Not every component needs a data-testid, but, in general, more is better. It's better to select for _"a duck named Hoffman"_ rather than "a duck" or "Hoffman".
+Not every component needs a data-test, but, in general, more is better. It's better to select for _"a duck named Hoffman"_ rather than "a duck" or "Hoffman".

@@ -13,9 +13,18 @@ interface Props {
 const ConjunctionContainer = ({ index, conjunction, onClick }: Props): JSX.Element => {
   return (
     <>
-      {index === 0 && <div className={css.operator}>Where</div>}
+      {index === 0 && (
+        <div className={css.operator} data-test="where">
+          Where
+        </div>
+      )}
       {index === 1 && (
-        <Select searchable={false} value={conjunction} width={'100%'} onChange={onClick}>
+        <Select
+          data-test="conjunction"
+          searchable={false}
+          value={conjunction}
+          width={'100%'}
+          onChange={onClick}>
           {Object.values(Conjunction).map((c) => (
             <Option key={c} value={c}>
               {c}
@@ -23,7 +32,11 @@ const ConjunctionContainer = ({ index, conjunction, onClick }: Props): JSX.Eleme
           ))}
         </Select>
       )}
-      {index > 1 && <div className={css.operator}>{conjunction}</div>}
+      {index > 1 && (
+        <div className={css.operator} data-test="conjunctionContinued">
+          {conjunction}
+        </div>
+      )}
     </>
   );
 };

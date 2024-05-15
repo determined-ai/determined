@@ -254,7 +254,7 @@ test.describe('User Management', () => {
         });
       });
 
-      test('Users table count matches admin page users tab', async ({ page }) => {
+      test('Users table count matches users tab count', async ({ page }) => {
         test.setTimeout(120_000);
         const userManagementPage = new UserManagement(page);
         const getExpectedRowCount = async (): Promise<number> => {
