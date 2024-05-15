@@ -1,4 +1,4 @@
-import { BaseComponent, NamedComponent } from 'e2e/models/BaseComponent';
+import { BaseComponent, NamedComponent, NamedComponentArgs } from 'e2e/models/BaseComponent';
 import { ConjunctionContainer } from 'e2e/models/components/FilterForm/components/ConjunctionContainer';
 import { FilterField } from 'e2e/models/components/FilterForm/components/FilterField';
 import { DropdownMenu } from 'e2e/models/hew/Dropdown';
@@ -9,9 +9,22 @@ import { DropdownMenu } from 'e2e/models/hew/Dropdown';
  * @param {object} obj
  * @param {CanBeParent} obj.parent - The parent used to locate this FilterGroup
  * @param {string} obj.selector - Used instead of `defaultSelector`
+ * @param {number} [level] - Level of the FilterGroup. Max depth is 2.
  */
 export class FilterGroup extends NamedComponent {
   readonly defaultSelector = '[data-test-component="FilterGroup"]';
+  constructor(args: NamedComponentArgs & { level?: number }) {
+    super(args);
+    const level = args.level || 0;
+    if (level < 2) {
+      // UI supports up to 2 levels of nesting
+      this.filterGroups = new FilterGroup({
+        attachment: this.#notNestedSelector,
+        level: level + 1,
+        parent: this.children,
+      });
+    }
+  }
 
   readonly #childrenSelector = '[data-test="children"]';
   readonly #notNestedSelector = `:not(${this.#childrenSelector} *)`;
@@ -54,10 +67,7 @@ export class FilterGroup extends NamedComponent {
     parent: this.groupCard,
     selector: this.#childrenSelector,
   });
-  readonly filterGroups = new FilterGroup({
-    attachment: this.#notNestedSelector,
-    parent: this.children,
-  });
+  readonly filterGroups: FilterGroup | undefined;
   readonly filterFields = new FilterField({
     attachment: this.#notNestedSelector,
     parent: this.children,
