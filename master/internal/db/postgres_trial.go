@@ -51,7 +51,7 @@ func AddTrial(ctx context.Context, trial *model.Trial, taskID model.TaskID) erro
 			return fmt.Errorf("inserting trial task id relationship: %w", err)
 		}
 
-		hparams, err := AddRunHParams(run.ID, run.HParams, "")
+		hparams, projHparams, err := BuildRunHParams(run.ID, run.ProjectID, run.HParams, "")
 		if err != nil {
 			return fmt.Errorf("getting run hyperparameters: %w", err)
 		}
@@ -62,11 +62,6 @@ func AddTrial(ctx context.Context, trial *model.Trial, taskID model.TaskID) erro
 			}
 		}
 
-		// Update Hparms for project hparam table
-		projHparams, err := BuildProjectHparams(run.ProjectID, run.HParams, "")
-		if err != nil {
-			return fmt.Errorf("getting project hyperparameters: %w", err)
-		}
 		if len(projHparams) > 0 {
 			if err := tx.NewInsert().Model(&projHparams).
 				On("CONFLICT (project_id, hparam, type) DO NOTHING").Scan(ctx); err != nil {
@@ -124,73 +119,51 @@ func RemoveOutdatedProjectHparams(ctx context.Context, tx bun.Tx, projectID int)
 	return nil
 }
 
-// BuildProjectHparams returns the run hyperparams in the form necessary for the project_hparams table.
-func BuildProjectHparams(projectID int, hparams map[string]any,
+// BuildRunHParams builds hyperparameters objects to add into the `run_hparams` & `project_hparams` table.
+func BuildRunHParams(runID int, projectID int, hparams map[string]any,
 	parentName string,
-) ([]model.ProjectHparam, error) {
-	hparamsModel := []model.ProjectHparam{}
-	for hpName, v := range hparams {
-		hp := model.ProjectHparam{
-			ProjectID: projectID,
-			HParam:    parentName + hpName,
-		}
-		switch val := v.(type) {
-		case float64:
-		case int:
-			hp.Type = MetricTypeNumber
-		case string:
-			hp.Type = MetricTypeString
-		case bool:
-			hp.Type = MetricTypeBool
-		case map[string]any:
-			nestedHParams, err := BuildProjectHparams(projectID, v.(map[string]any), hpName+".")
-			if err != nil {
-				return hparamsModel, fmt.Errorf("failed to get nested hyperperameters for %s", hpName)
-			}
-			hparamsModel = append(hparamsModel, nestedHParams...)
-			continue
-		default:
-			return hparamsModel, fmt.Errorf("cannot assign hyperparameter %s, received type %T", hpName, val)
-		}
-		hparamsModel = append(hparamsModel, hp)
-	}
-	return hparamsModel, nil
-}
-
-// AddRunHParams adds hyperparameters for a run into the `run_hparams` table.
-func AddRunHParams(runID int, hparams map[string]any,
-	parentName string,
-) ([]model.RunHparam, error) {
+) ([]model.RunHparam, []model.ProjectHparam, error) {
 	hparamsModel := []model.RunHparam{}
+	projHparamsModel := []model.ProjectHparam{}
 	for hpName, v := range hparams {
 		hp := model.RunHparam{
 			RunID:  runID,
 			HParam: parentName + hpName,
 		}
+		projHp := model.ProjectHparam{
+			ProjectID: projectID,
+			HParam:    parentName + hpName,
+		}
 		switch val := v.(type) {
 		case float64:
 			hp.NumberVal = &val
+			projHp.Type = MetricTypeNumber
 		case int:
 			conv := float64(val)
 			hp.NumberVal = &conv
+			projHp.Type = MetricTypeNumber
 		case string:
 			hp.TextVal = &val
+			projHp.Type = MetricTypeString
 		case bool:
 			hp.BoolVal = &val
+			projHp.Type = MetricTypeBool
 		case map[string]any:
-			nestedHParams, err := AddRunHParams(runID, v.(map[string]any), hpName+".")
+			nestedHParams, nestedProjHparams, err := BuildRunHParams(runID, projectID, v.(map[string]any), hpName+".")
 			if err != nil {
-				return hparamsModel, fmt.Errorf("failed to get nested hyperperameters for %s", hpName)
+				return hparamsModel, projHparamsModel, fmt.Errorf("failed to get nested hyperperameters for %s", hpName)
 			}
 			hparamsModel = append(hparamsModel, nestedHParams...)
+			projHparamsModel = append(projHparamsModel, nestedProjHparams...)
 			continue
 		default:
-			return hparamsModel, fmt.Errorf("cannot assign hyperparameter %s, received type %T", hpName, val)
+			return hparamsModel, projHparamsModel, fmt.Errorf("cannot assign hyperparameter %s, received type %T", hpName, val)
 		}
 		hparamsModel = append(hparamsModel, hp)
+		projHparamsModel = append(projHparamsModel, projHp)
 	}
 
-	return hparamsModel, nil
+	return hparamsModel, projHparamsModel, nil
 }
 
 // UpsertTrialByExternalIDTx UPSERTs the trial with respect to the external_trial_id.
