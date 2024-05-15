@@ -26,7 +26,7 @@ export class F_ExperiementList extends BaseReactFragment {
   readonly pagination = new Pagination({ parent: this });
 }
 
-class ExperimentHeadRow extends HeadRow {}
+class ExperimentHeadRow extends HeadRow<ExperimentRow, ExperimentHeadRow> {}
 class ExperimentRow extends Row<ExperimentRow, ExperimentHeadRow> {
   constructor(args: RowArgs<ExperimentRow, ExperimentHeadRow>) {
     super(args);
