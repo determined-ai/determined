@@ -67,7 +67,7 @@ export const OptionsMenu: React.FC<OptionProps> = ({ rowHeight, onRowHeightChang
   );
   return (
     <Dropdown menu={dropdownItems} selectedKeys={[`rowHeight-${rowHeight}`]}>
-      <Button icon={icon} tooltip="Options" />
+      <Button data-test-component="OptionsMenu" icon={icon} tooltip="Options" />
     </Dropdown>
   );
 };

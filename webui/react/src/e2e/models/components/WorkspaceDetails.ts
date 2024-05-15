@@ -8,5 +8,5 @@ import { NamedComponent } from 'e2e/models/BaseComponent';
  * @param {string} [obj.selector] - Used instead of `defaultSelector`
  */
 export class WorkspaceDetails extends NamedComponent {
-  override defaultSelector: string = '[id=workspaceDetails]';
+  readonly defaultSelector: string = '[id=workspaceDetails]';
 }

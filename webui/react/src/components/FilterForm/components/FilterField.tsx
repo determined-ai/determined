@@ -187,9 +187,10 @@ const FilterField = ({
           formStore.setFieldConjunction(parentId, (value?.toString() ?? 'and') as Conjunction);
         }}
       />
-      <div className={css.fieldCard} ref={preview}>
+      <div className={css.fieldCard} data-test="fieldCard" ref={preview}>
         <Select
           autoFocus
+          data-test="columnName"
           dropdownMatchSelectWidth={300}
           options={columns.map((col, idx) => ({
             key: `${col.column} ${idx}`,
@@ -201,6 +202,7 @@ const FilterField = ({
           onChange={onChangeColumnName}
         />
         <Select
+          data-test="operator"
           options={(isSpecialColumn
             ? [Operator.Eq, Operator.NotEq] // just Eq and NotEq for Special column
             : AvailableOperators[currentColumn?.type ?? V1ColumnType.UNSPECIFIED]
@@ -223,6 +225,7 @@ const FilterField = ({
         {isSpecialColumn ? (
           <div onKeyDownCapture={captureEnterKeyDown}>
             <Select
+              data-test="special"
               options={getSpecialOptions(field.columnName as SpecialColumnNames)}
               value={fieldValue ?? undefined}
               width={'100%'}
@@ -238,6 +241,7 @@ const FilterField = ({
             {(currentColumn?.type === V1ColumnType.TEXT ||
               currentColumn?.type === V1ColumnType.UNSPECIFIED) && (
               <Input
+                data-test="text"
                 disabled={
                   field.operator === Operator.IsEmpty || field.operator === Operator.NotEmpty
                 }
@@ -252,6 +256,7 @@ const FilterField = ({
             {currentColumn?.type === V1ColumnType.NUMBER && (
               <InputNumber
                 className={css.fullWidth}
+                data-test="number"
                 value={fieldValue != null ? Number(fieldValue) : undefined}
                 onChange={(val) => {
                   const value = val != null ? Number(val) : null;
@@ -279,11 +284,12 @@ const FilterField = ({
           </>
         )}
         <Button
+          data-test="remove"
           icon={<Icon name="close" size="tiny" title="Close Field" />}
           type="text"
           onClick={() => formStore.removeChild(field.id)}
         />
-        <Button type="text">
+        <Button data-test="move" type="text">
           <div ref={drag}>
             <Icon name="holder" size="small" title="Move field" />
           </div>

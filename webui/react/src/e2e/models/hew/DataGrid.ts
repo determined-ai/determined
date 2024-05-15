@@ -1,7 +1,7 @@
 import { expect, Locator } from '@playwright/test';
 
 import { BaseComponent, NamedComponent, NamedComponentArgs } from 'e2e/models/BaseComponent';
-import { Dropdown } from 'e2e/models/hew/Dropdown';
+import { DropdownMenu } from 'e2e/models/hew/Dropdown';
 
 type RowClass<RowType extends Row<RowType, HeadRowType>, HeadRowType extends HeadRow> = new (
   args: RowArgs<RowType, HeadRowType>,
@@ -34,7 +34,7 @@ export class DataGrid<
   RowType extends Row<RowType, HeadRowType>,
   HeadRowType extends HeadRow,
 > extends NamedComponent {
-  readonly defaultSelector: string = '[class^="DataGrid_base"]';
+  readonly defaultSelector = '[class^="DataGrid_base"]';
   constructor(args: TableArgs<RowType, HeadRowType>) {
     super(args);
     this.#rowType = args.rowType;
@@ -229,6 +229,16 @@ export class Row<
   }
 
   /**
+   * Right clicks the row
+   */
+  async rightClick(): Promise<void> {
+    await this.parentTable.pwLocator.click({
+      button: 'right',
+      position: { x: 5, y: this.getY(await this.getIndex()) },
+    });
+  }
+
+  /**
    * Returns a cell from an index. Start counting at 0.
    */
   getCellByIndex(n: number): BaseComponent {
@@ -268,9 +278,14 @@ export class HeadRow extends NamedComponent {
   }
 
   readonly selectDropdown = new HeaderDropdown({
-    parent: this,
-    selector: `[${this.#columnIndexAttribute}="1"]`,
+    childNode: new BaseComponent({
+      parent: this,
+      selector: `[${this.#columnIndexAttribute}="1"]`,
+    }),
+    openMethod: this.clickSelectDropdown.bind(this),
+    root: this.root,
   });
+
   #columnDefs = new Map<string, number>();
 
   get columnDefs(): Map<string, number> {
@@ -329,26 +344,18 @@ export class HeadRow extends NamedComponent {
 
 /**
  * Returns the representation of the grid's Header Dropdown.
- * This constructor represents the HeaderDropdown in hew/src/kit/DataGrid.tsx.
+ * Until the dropdown component supports test ids, this model will match any open dropdown.
+ * This constructor represents the contents in hew/src/kit/DataGrid.tsx.
+ *
+ * The dropdown can be opened by calling the open method.
  * @param {object} obj
- * @param {CanBeParent} obj.parent - The parent used to locate this HeadRow
- * @param {string} obj.selector - Used as a selector uesd to locate this object
+ * @param {BasePage} obj.root - root of the page
+ * @param {ComponentBasics} [obj.childNode] - optional if `openMethod` is present. It's the element we click on to open the dropdown.
+ * @param {Function} [obj.openMethod] - optional if `childNode` is present. It's the method to open the dropdown.
  */
-class HeaderDropdown extends Dropdown {
-  readonly select5 = new BaseComponent({
-    parent: this._menu,
-    selector: Dropdown.selectorTemplate('select-5'),
-  });
-  readonly select10 = new BaseComponent({
-    parent: this._menu,
-    selector: Dropdown.selectorTemplate('select-10'),
-  });
-  readonly select25 = new BaseComponent({
-    parent: this._menu,
-    selector: Dropdown.selectorTemplate('select-25'),
-  });
-  readonly selectAll = new BaseComponent({
-    parent: this._menu,
-    selector: Dropdown.selectorTemplate('select-all'),
-  });
+class HeaderDropdown extends DropdownMenu {
+  readonly select5 = this.menuItem('select-5');
+  readonly select10 = this.menuItem('select-10');
+  readonly select25 = this.menuItem('select-25');
+  readonly selectAll = this.menuItem('select-all');
 }
