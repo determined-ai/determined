@@ -214,6 +214,42 @@ resource_manager:
     cpu: -10`, nil, "Check Failed! 1 errors found:\n\terror found at root.ResourceConfig." +
 			"RootManagerInternal.KubernetesRM: slot_resource_requests.cpu " +
 			"must be > 0: -10 is not greater than 0"},
+
+		{"k8s missing gateway_name", `
+resource_manager:
+  type: kubernetes
+  max_slots_per_pod: 1
+  name: a
+  expose_proxies_externally:
+    gateway_namespace: test
+    gateway_address: abc
+  `, nil, "Check Failed! 1 errors found:\n\terror found at root.ResourceConfig." +
+			"RootManagerInternal.KubernetesRM: expose_proxies_externally.gateway_name " +
+			"is required with expose_proxies_externally:  must be non-empty"},
+
+		{"k8s missing gateway_namespace", `
+resource_manager:
+  type: kubernetes
+  max_slots_per_pod: 1
+  name: a
+  expose_proxies_externally:
+    gateway_name: test
+    gateway_address: abc
+  `, nil, "Check Failed! 1 errors found:\n\terror found at root.ResourceConfig." +
+			"RootManagerInternal.KubernetesRM: expose_proxies_externally.gateway_namespace " +
+			"is required with expose_proxies_externally:  must be non-empty"},
+
+		{"k8s missing gateway_address", `
+resource_manager:
+  type: kubernetes
+  max_slots_per_pod: 1
+  name: a
+  expose_proxies_externally:
+    gateway_name: test
+    gateway_namespace: abc
+  `, nil, "Check Failed! 1 errors found:\n\terror found at root.ResourceConfig." +
+			"RootManagerInternal.KubernetesRM: expose_proxies_externally.gateway_address " +
+			"is required with expose_proxies_externally:  must be non-empty"},
 	}
 
 	RegisterAuthZType("basic")
