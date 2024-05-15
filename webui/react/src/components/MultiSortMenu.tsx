@@ -57,6 +57,9 @@ export const optionsByColumnType = {
   ],
 };
 
+export const ADD_SORT_TEXT = 'Add sort';
+export const SORT_MENU_TITLE = 'Sort by';
+
 const SortArrow = ({ direction = 'asc' }: { direction: DirectionType }) => (
   <svg
     className={css.sortIcon + ' ' + (css[`sortIcon--${direction}`] || '')}
@@ -208,7 +211,7 @@ const MultiSort: React.FC<MultiSortProps> = ({ sorts, columns, onChange }) => {
 
   return (
     <div className={css.base}>
-      <div>Sort by</div>
+      <div>{SORT_MENU_TITLE}</div>
       <div className={css.rows}>
         {sorts.map((sort, idx) => {
           const seenColumns = sorts.slice(0, idx).map((s) => s.column);
@@ -228,7 +231,7 @@ const MultiSort: React.FC<MultiSortProps> = ({ sorts, columns, onChange }) => {
       </div>
       <div className={css.actions}>
         <Button icon={<Icon decorative name="add" size="tiny" />} type="text" onClick={addRow}>
-          Add sort
+          {ADD_SORT_TEXT}
         </Button>
         <Button type="text" onClick={clearAll}>
           Reset
