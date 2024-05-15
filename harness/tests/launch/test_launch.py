@@ -21,7 +21,7 @@ def do_test_launch(config: Dict[str, Any], cmd: List[str], mock_popen: mock.Magi
 def test_launch_trial() -> None:
     entrypoint = "model_def:TrialClass"
     config = {"entrypoint": entrypoint}
-    cmd = ["python3", "-m", "determined.launch.horovod", "--autohorovod", "--trial", entrypoint]
+    cmd = ["python3", "-m", "determined.launch.torch_distributed", "--", "--trial", entrypoint]
     do_test_launch(config, cmd)
 
 

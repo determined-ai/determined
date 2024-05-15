@@ -43,10 +43,7 @@ import {
   SpecialColumnNames,
 } from 'components/FilterForm/components/type';
 import { EMPTY_SORT, sortMenuItemsForColumn } from 'components/MultiSortMenu';
-import {
-  RowHeight,
-  // TableViewMode
-} from 'components/OptionsMenu';
+import { RowHeight } from 'components/OptionsMenu';
 import { DataGridGlobalSettings, settingsConfigGlobal } from 'components/OptionsMenu.settings';
 import TableActionBar from 'components/TableActionBar';
 import useUI from 'components/ThemeProvider';
@@ -567,15 +564,6 @@ const Searches: React.FC<Props> = ({ project }) => {
     };
   }, [handleSelectionChange]);
 
-  // const handleTableViewModeChange = useCallback(
-  //   (mode: TableViewMode) => {
-  //     // Reset page index when table view mode changes.
-  //     resetPagination();
-  //     updateGlobalSettings({ tableViewMode: mode });
-  //   },
-  //   [resetPagination, updateGlobalSettings],
-  // );
-
   const onPageChange = useCallback(
     (cPage: number, cPageSize: number) => {
       updateSettings({ pageLimit: cPageSize });
@@ -846,14 +834,12 @@ const Searches: React.FC<Props> = ({ project }) => {
         rowHeight={globalSettings.rowHeight}
         selectedExperimentIds={allSelectedExperimentIds}
         sorts={sorts}
-        // tableViewMode={globalSettings.tableViewMode}
         total={total}
         onActionComplete={handleActionComplete}
         onActionSuccess={handleActionSuccess}
         onIsOpenFilterChange={handleIsOpenFilterChange}
         onRowHeightChange={handleRowHeightChange}
         onSortChange={handleSortChange}
-        // onTableViewModeChange={handleTableViewModeChange}
         onVisibleColumnChange={handleColumnsOrderChange}
       />
       <div className={css.content} ref={contentRef}>

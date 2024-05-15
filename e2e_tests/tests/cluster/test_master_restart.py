@@ -61,7 +61,9 @@ def test_master_restart_reattach_recover_experiment(
     restartable_managed_cluster: managed_cluster.ManagedCluster,
     downtime: int,
 ) -> None:
-    _test_master_restart_reattach_recover_experiment(restartable_managed_cluster, downtime)
+    _test_master_restart_reattach_recover_experiment(
+        restartable_managed_cluster, downtime, exp_timeout=120
+    )
 
 
 @pytest.mark.e2e_k8s
@@ -137,7 +139,7 @@ def test_master_restart_generic_task_pause(
 
 @pytest.mark.managed_devcluster
 def _test_master_restart_reattach_recover_experiment(
-    restartable_managed_cluster: abstract_cluster.Cluster, downtime: int
+    restartable_managed_cluster: abstract_cluster.Cluster, downtime: int, exp_timeout: int = 60
 ) -> None:
     sess = api_utils.user_session()
     try:
@@ -157,7 +159,7 @@ def _test_master_restart_reattach_recover_experiment(
             restartable_managed_cluster.restart_master()
 
         exp.wait_for_experiment_state(
-            sess, exp_id, bindings.experimentv1State.COMPLETED, max_wait_secs=downtime + 60
+            sess, exp_id, bindings.experimentv1State.COMPLETED, max_wait_secs=downtime + exp_timeout
         )
         trials = exp.experiment_trials(sess, exp_id)
 

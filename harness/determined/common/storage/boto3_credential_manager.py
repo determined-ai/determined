@@ -45,13 +45,13 @@ class RefreshableSharedCredentials(credentials.Credentials):  # type: ignore
         self._load_and_set_credentials()
 
     def _load_and_set_credentials(self) -> None:
-        credentials = self._credentials_provider.load()
+        creds = self._credentials_provider.load()
         self._last_loaded = self._credentials_modified_time()
-        self.access_key = credentials.access_key
-        self.secret_key = credentials.secret_key
-        self.token = credentials.token
+        self.access_key = creds.access_key
+        self.secret_key = creds.secret_key
+        self.token = creds.token
         self._frozen_credentials = credentials.ReadOnlyCredentials(
-            credentials.access_key, credentials.secret_key, credentials.token
+            creds.access_key, creds.secret_key, creds.token
         )
 
     def _credentials_file(self) -> Any:

@@ -2,7 +2,7 @@ import * as t from 'io-ts';
 
 import { SettingsConfig } from 'hooks/useSettings';
 
-import { ioRowHeight, ioTableViewMode, RowHeight, TableViewMode } from './OptionsMenu';
+import { ioRowHeight, RowHeight } from './OptionsMenu';
 
 export const rowHeightMap: Record<RowHeight, number> = {
   [RowHeight.EXTRA_TALL]: 44,
@@ -13,14 +13,12 @@ export const rowHeightMap: Record<RowHeight, number> = {
 
 export interface DataGridGlobalSettings {
   rowHeight: RowHeight;
-  tableViewMode: TableViewMode;
 }
 
 export const dataGridGlobalSettingsConfig = t.intersection([
   t.type({}),
   t.partial({
     rowHeight: ioRowHeight,
-    tableViewMode: ioTableViewMode,
   }),
 ]);
 
@@ -38,12 +36,6 @@ export const settingsConfigGlobal: SettingsConfig<DataGridGlobalSettings> = {
       skipUrlEncoding: true,
       storageKey: 'rowHeight',
       type: ioRowHeight,
-    },
-    tableViewMode: {
-      defaultValue: 'scroll',
-      skipUrlEncoding: true,
-      storageKey: 'tableViewMode',
-      type: ioTableViewMode,
     },
   },
   storagePath: dataGridGlobalSettingsPath,
