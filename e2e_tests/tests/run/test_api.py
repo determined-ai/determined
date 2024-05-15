@@ -144,8 +144,8 @@ def test_run_kill_filter() -> None:
     searchResp = bindings.get_SearchRuns(sess, filter=runFilter)
 
     # validate response
-    assert len(killResp.results) > 0
     assert len(searchResp.runs) > 0
+    assert len(killResp.results) > 0
     assert len(killResp.results) == len(searchResp.runs)
     for res in killResp.results:
         assert res.error == ""
