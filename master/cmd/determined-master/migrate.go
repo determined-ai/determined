@@ -52,7 +52,7 @@ func runMigrate(cmd *cobra.Command, args []string) error {
 		}
 	}()
 
-	if _, err = database.Migrate(config.DB.Migrations, args); err != nil {
+	if _, err = database.Migrate(config.DB.Migrations, config.DB.ViewsAndTriggers, args); err != nil {
 		return errors.Wrap(err, "running migrations")
 	}
 

@@ -72,7 +72,7 @@ workloads AS (
     FULL JOIN validations_vt v ON false
 ),
 page_info AS (
-  SELECT public.page_info((SELECT COUNT(*) AS count FROM workloads), $2 :: int, $3 :: int) AS page_info
+  SELECT page_info((SELECT COUNT(*) AS count FROM workloads), $2 :: int, $3 :: int) AS page_info
 )
 SELECT (
   SELECT jsonb_agg(w) FROM (SELECT validation, training, checkpoint FROM workloads

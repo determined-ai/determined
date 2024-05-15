@@ -75,7 +75,7 @@ best_checkpoint AS (
     c.resources,
     'STATE_' || c.state AS state
   FROM (
-    -- Using `public.checkpoints_view` directly results in performance regressions
+    -- Using `checkpoints_view` directly results in performance regressions
     -- identical to those described below.
     SELECT c.*,
       ROW_NUMBER() OVER(
