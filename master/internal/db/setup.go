@@ -90,7 +90,7 @@ func Setup(opts *config.DBConfig) (db *PgDB, isNew bool, err error) {
 		return db, false, err
 	}
 
-	isNew, err = db.Migrate(opts.Migrations, opts.DatabaseCode, []string{"up"})
+	isNew, err = db.Migrate(opts.Migrations, opts.ViewsAndTriggers, []string{"up"})
 	if err != nil {
 		return nil, false, fmt.Errorf("error running migrations: %s", err)
 	}

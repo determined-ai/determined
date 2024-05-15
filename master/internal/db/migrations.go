@@ -143,12 +143,12 @@ func (db *PgDB) readDBCodeAndCheckIfDifferent(dbCodeDir string) (map[string]stri
 	hash := sha256.Sum256([]byte(allCode))
 	ourHash := hex.EncodeToString(hash[:])
 
-	// Check if the db_code_hash table exists. If it doesn't return that we need to create db code.
+	// Check if the views_and_triggers_hash table exists. If it doesn't return that we need to create db code.
 	var tableExists bool
 	if err = db.sql.QueryRow(
-		"SELECT EXISTS(SELECT 1 FROM information_schema.tables WHERE table_name = 'db_code_hash')").
+		"SELECT EXISTS(SELECT 1 FROM information_schema.tables WHERE table_name = 'views_and_triggers_hash')").
 		Scan(&tableExists); err != nil {
-		return nil, false, fmt.Errorf("checking db_code_hash exists: %w", err)
+		return nil, false, fmt.Errorf("checking views_and_triggers_hash exists: %w", err)
 	}
 	if !tableExists {
 		return fileNamesToSQL, true, nil
@@ -156,15 +156,15 @@ func (db *PgDB) readDBCodeAndCheckIfDifferent(dbCodeDir string) (map[string]stri
 
 	// Check if our hashes match. If they do we can just return we don't need to do anything.
 	var databaseHash string
-	if err := db.sql.QueryRow("SELECT hash FROM db_code_hash").Scan(&databaseHash); err != nil {
-		return nil, false, fmt.Errorf("getting hash from db_code_hash: %w", err)
+	if err := db.sql.QueryRow("SELECT hash FROM views_and_triggers_hash").Scan(&databaseHash); err != nil {
+		return nil, false, fmt.Errorf("getting hash from views_and_triggers_hash: %w", err)
 	}
 	if databaseHash == ourHash {
 		return fileNamesToSQL, false, nil
 	}
 
-	// Update our hash and return we need to create db code.
-	if _, err := db.sql.Exec("UPDATE db_code_hash SET hash = $1", ourHash); err != nil {
+	// Update our hash and return we need to create views and triggers.
+	if _, err := db.sql.Exec("UPDATE views_and_triggers_hash SET hash = $1", ourHash); err != nil {
 		return nil, false, fmt.Errorf("updating our database hash: %w", err)
 	}
 	return fileNamesToSQL, false, nil
@@ -198,6 +198,9 @@ CREATE SCHEMA determined_code;`); err != nil {
 	return nil
 }
 
+// This is set in an init in postgres_test_utils.go behind the intg feature flag.
+// For normal usages this won't build. For tests we need to serialize access to
+// run migrations.
 var testOnlyDBLock func(sql *sqlx.DB) (unlock func())
 
 // Migrate runs the migrations from the specified directory URL.
