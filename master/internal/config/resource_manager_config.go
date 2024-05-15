@@ -171,8 +171,21 @@ type KubernetesResourceManagerConfig struct {
 	DefaultComputeResourcePool string `json:"default_compute_resource_pool"`
 	NoDefaultResourcePools     bool   `json:"no_default_resource_pools"`
 
+	ExposeProxiesExternally *ExposeProxiesExternallyConfig `json:"expose_proxies_externally"`
+
 	Name     string            `json:"name"`
 	Metadata map[string]string `json:"metadata"`
+}
+
+// ExposeProxiesExternallyConfig is config for exposing Kubernetes proxies externally on a service.
+// Useful for multirm when we can only be running in a single cluster.
+type ExposeProxiesExternallyConfig struct {
+	GatewayName      string `json:"gateway_name"`
+	GatewayNamespace string `json:"gateway_namespace"`
+	// TODO(RM-267/gateways) should this be a service name or an ip?
+	// Also is address the right term? Do we refer to hostnames / addresses as address or ip?
+	// A load balancer would need a static ip for address to make sense. Is this ok?
+	GatewayAddress string `json:"gateway_address"`
 }
 
 var defaultKubernetesResourceManagerConfig = KubernetesResourceManagerConfig{
@@ -226,11 +239,24 @@ func (k KubernetesResourceManagerConfig) Validate() []error {
 			k.SlotResourceRequests.CPU, float32(0), "slot_resource_requests.cpu must be > 0")
 	}
 
-	return []error{
+	checks := []error{
 		checkSlotType,
 		checkCPUResource,
 		check.NotEmpty(k.Name, "name is required"),
 	}
+
+	if p := k.ExposeProxiesExternally; p != nil {
+		checks = append(checks,
+			check.NotEmpty(p.GatewayName,
+				"expose_proxies_externally.gateway_name is required with expose_proxies_externally"),
+			check.NotEmpty(p.GatewayNamespace,
+				"expose_proxies_externally.gateway_namespace is required with expose_proxies_externally"),
+			check.NotEmpty(p.GatewayAddress,
+				"expose_proxies_externally.gateway_address is required with expose_proxies_externally"),
+		)
+	}
+
+	return checks
 }
 
 // PodSlotResourceRequests contains the per-slot container requests.
