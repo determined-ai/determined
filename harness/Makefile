@@ -39,7 +39,6 @@ test-cpu:
 .PHONY: test-gpu-tf
 test-gpu-tf:
 	mkdir -p $(TEST_RESULTS_DIR)
-	# Since integration tests are image-specific, they must be excluded and run separately.
 	coverage run -m pytest -v --runslow --durations=0 -m "gpu" --junitxml=$(TEST_RESULTS_DIR)/test-gpu.xml tests/experiment/keras
 
 .PHONY: test-gpu-deepspeed
