@@ -14,12 +14,12 @@ MAX_TASK_SCHEDULED_SECS = 30
 MAX_TRIAL_BUILD_SECS = 90
 
 
-DEFAULT_TF2_CPU_IMAGE = "determinedai/tensorflow-ngc-dev:8b3bea3"
-DEFAULT_TF2_GPU_IMAGE = "determinedai/tensorflow-ngc-dev:8b3bea3"
-DEFAULT_PT_CPU_IMAGE = "determinedai/pytorch-tensorflow-cpu-dev:8b3bea3"
-DEFAULT_PT_GPU_IMAGE = "determinedai/pytorch-tensorflow-cuda-dev:8b3bea3"
-DEFAULT_PT2_CPU_IMAGE = "determinedai/pytorch-ngc-dev:8b3bea3"
-DEFAULT_PT2_GPU_IMAGE = "determinedai/pytorch-ngc-dev:8b3bea3"
+DEFAULT_TF2_CPU_IMAGE = "determinedai/tensorflow-ngc-dev:e960eae"
+DEFAULT_TF2_GPU_IMAGE = "determinedai/tensorflow-ngc-dev:e960eae"
+DEFAULT_PT_CPU_IMAGE = "determinedai/pytorch-tensorflow-cpu-dev:e960eae"
+DEFAULT_PT_GPU_IMAGE = "determinedai/pytorch-tensorflow-cuda-dev:e960eae"
+DEFAULT_PT2_CPU_IMAGE = "determinedai/pytorch-ngc-dev:e960eae"
+DEFAULT_PT2_GPU_IMAGE = "determinedai/pytorch-ngc-dev:e960eae"
 
 TF2_CPU_IMAGE = DEFAULT_TF2_CPU_IMAGE
 TF2_GPU_IMAGE = DEFAULT_TF2_GPU_IMAGE

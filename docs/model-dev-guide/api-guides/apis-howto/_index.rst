@@ -75,7 +75,7 @@ Determined supports both TensorFlow 1 and 2. The version of TensorFlow that is u
 experiment is controlled by the container image that has been configured for that experiment.
 Determined provides prebuilt Docker images that include TensorFlow 2+, 1.15, and 2.8, respectively:
 
--  ``determinedai/tensorflow-ngc-dev:8b3bea3``
+-  ``determinedai/tensorflow-ngc-dev:e960eae``
 -  ``determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-0.21.2``
 -  ``determinedai/environments:cuda-11.2-tf-2.8-gpu-0.29.1``
 
