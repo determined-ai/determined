@@ -293,7 +293,13 @@ func (m *Master) parseCreateExperiment(ctx context.Context, req *apiv1.CreateExp
 	}
 	workspaceID := resolveWorkspaceID(workspaceModel)
 	isSingleNode := resources.IsSingleNode() != nil && *resources.IsSingleNode()
-	poolName, _, err := m.ResolveResources(resources.ResourcePool(), resources.SlotsPerTrial(), workspaceID, isSingleNode)
+	isUnmanaged := req.Unmanaged != nil && *req.Unmanaged
+	slotsPerTrial := resources.SlotsPerTrial()
+	if isUnmanaged {
+		slotsPerTrial = 0
+	}
+
+	poolName, _, err := m.ResolveResources(resources.ResourcePool(), slotsPerTrial, workspaceID, isSingleNode)
 	if err != nil {
 		return nil, nil, config, nil, nil, errors.Wrapf(err, "invalid resource configuration")
 	}
@@ -375,7 +381,7 @@ func (m *Master) parseCreateExperiment(ctx context.Context, req *apiv1.CreateExp
 
 	dbExp, err := model.NewExperiment(
 		config, req.Config, parentID, false,
-		int(p.Id), req.Unmanaged != nil && *req.Unmanaged,
+		int(p.Id), isUnmanaged,
 	)
 	if err != nil {
 		return nil, nil, config, nil, nil, err
