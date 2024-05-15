@@ -3,13 +3,13 @@ package internal
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 	"time"
-	"unicode/utf8"
 
 	structpb "github.com/golang/protobuf/ptypes/struct"
-	"github.com/pkg/errors"
-	"github.com/uptrace/bun"
+	pkgerrors "github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -28,9 +28,6 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/logv1"
 )
-
-// ClusterMessageMaxLength caps the length of a cluster-wide message.
-const ClusterMessageMaxLength = 250
 
 var masterLogsBatchMissWaitTime = time.Second
 
@@ -64,28 +61,14 @@ func (a *apiServer) GetMaster(
 		ClusterMessage:        nil,
 	}
 
-	var msg model.ClusterMessage
-	err := db.Bun().NewRaw(`
-		WITH newest_message AS (
-			SELECT message, start_time, end_time, created_time
-			FROM cluster_messages
-			ORDER BY created_time DESC
-			LIMIT 1
-		)
-
-		SELECT
-			message, start_time,
-			end_time, created_time
-		FROM newest_message
-		WHERE
-			start_time < NOW()
-			AND (end_time IS NULL OR end_time > NOW())
-	`).Scan(ctx, &msg)
-	if err != nil && err != sql.ErrNoRows {
-		return nil, errors.Wrap(err, "error fetching cluster-wide messages")
-	} else if err != sql.ErrNoRows {
+	msg, err := db.GetActiveClusterMessage(ctx, db.Bun())
+	if err != nil && err != db.ErrNotFound {
 		masterResp.ClusterMessage = msg.ToProto()
+	} else if err != nil {
+		logrus.WithError(err).Error("error fetching cluster-wide messages")
+		return nil, status.Error(codes.Internal, "error fetching cluster-wide messages; check logs for details")
 	}
+
 	sso.AddProviderInfoToMasterResponse(a.m.config, masterResp)
 
 	return masterResp, nil
@@ -119,7 +102,7 @@ func (a *apiServer) GetMasterConfig(
 
 	config, err := a.m.config.Printable()
 	if err != nil {
-		return nil, errors.Wrap(err, "error parsing master config")
+		return nil, pkgerrors.Wrap(err, "error parsing master config")
 	}
 	configStruct := &structpb.Struct{}
 	err = protojson.Unmarshal(config, configStruct)
@@ -251,7 +234,7 @@ func (a *apiServer) ResourceAllocationRaw(
 	if err := a.m.db.QueryProto(
 		"get_raw_allocation", &resp.ResourceEntries, start.UTC(), end.UTC(),
 	); err != nil {
-		return nil, errors.Wrap(err, "error fetching raw allocation data")
+		return nil, pkgerrors.Wrap(err, "error fetching raw allocation data")
 	}
 
 	return resp, nil
@@ -288,30 +271,17 @@ func (a *apiServer) GetClusterMessage(
 		return nil, permErr
 	}
 
-	var msgResponse apiv1.GetClusterMessageResponse
-
-	var msg model.ClusterMessage
-	err = db.Bun().NewRaw(`
-		WITH newest_message AS (
-			SELECT message, start_time, end_time, created_time
-			FROM cluster_messages
-			ORDER BY created_time DESC
-			LIMIT 1
-		)
-
-		SELECT
-			message, start_time,
-			end_time, created_time
-		FROM newest_message
-		WHERE (end_time IS NULL OR end_time > NOW())
-	`).Scan(ctx, &msg)
-	if err != nil && err != sql.ErrNoRows {
-		return nil, errors.Wrap(err, "error fetching cluster-wide messages")
-	} else if err != sql.ErrNoRows {
-		msgResponse.ClusterMessage = msg.ToProto()
+	msg, err := db.GetClusterMessage(ctx, db.Bun())
+	if err == db.ErrNotFound {
+		return nil, status.Error(codes.NotFound, "no cluster message active")
+	} else if err != nil {
+		logrus.WithError(err).Error("error looking up cluster message")
+		return nil, status.Error(codes.Internal, "error looking up cluster message; check logs for details")
 	}
 
-	return &msgResponse, nil
+	return &apiv1.GetClusterMessageResponse{
+		ClusterMessage: msg.ToProto(),
+	}, nil
 }
 
 func (a *apiServer) SetClusterMessage(
@@ -330,10 +300,6 @@ func (a *apiServer) SetClusterMessage(
 		return nil, permErr
 	}
 
-	if msgLen := utf8.RuneCountInString(req.Message); msgLen > ClusterMessageMaxLength {
-		return nil, status.Errorf(codes.InvalidArgument,
-			"message must be at most %d characters; got %d", ClusterMessageMaxLength, msgLen)
-	}
 	if req.EndTime != nil && req.Duration != nil {
 		return nil,
 			status.Errorf(codes.InvalidArgument, "EndTime and Duration are mutually exclusive")
@@ -350,12 +316,6 @@ func (a *apiServer) SetClusterMessage(
 			Time:  req.EndTime.AsTime(),
 			Valid: true,
 		}
-		if mm.EndTime.Time.Before(mm.StartTime) {
-			return nil, status.Error(codes.InvalidArgument, "end time must be after start time")
-		}
-		if mm.EndTime.Time.Before(time.Now()) {
-			return nil, status.Error(codes.InvalidArgument, "end time must be after current time")
-		}
 	}
 
 	if req.Duration != nil {
@@ -371,27 +331,12 @@ func (a *apiServer) SetClusterMessage(
 		}
 	}
 
-	err = db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		_, err = tx.NewUpdate().
-			Table("cluster_messages").
-			Set("end_time = NOW()").
-			Where("end_time >= NOW() OR end_time IS NULL").
-			Exec(ctx)
-		if err != nil {
-			return errors.Wrap(err, "error clearing previous cluster-wide messages")
-		}
-
-		_, err = tx.NewInsert().
-			Model(&mm).
-			ExcludeColumn("created_time").
-			Exec(ctx)
-		if err != nil {
-			return errors.Wrap(err, "error setting the cluster-wide message")
-		}
-		return nil
-	})
-	if err != nil {
-		return nil, err
+	err = db.SetClusterMessage(ctx, db.Bun(), mm)
+	if errors.Is(err, db.ErrInvalidInput) {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	} else if err != nil {
+		logrus.WithError(err).Error("error setting cluster message")
+		return nil, status.Error(codes.Internal, "error setting cluster message; check logs for details")
 	}
 
 	return &apiv1.SetClusterMessageResponse{}, nil
@@ -413,13 +358,10 @@ func (a *apiServer) DeleteClusterMessage(
 		return nil, permErr
 	}
 
-	_, err = db.Bun().NewUpdate().
-		Table("cluster_messages").
-		Set("end_time = NOW()").
-		Where("end_time >= NOW() OR end_time IS NULL").
-		Exec(ctx)
+	err = db.ClearClusterMessage(ctx, db.Bun())
 	if err != nil {
-		return nil, errors.Wrap(err, "error clearing the cluster message")
+		logrus.WithError(err).Error("error clearing the cluster message")
+		return nil, status.Error(codes.Internal, "error clearing the cluster message; check logs for details")
 	}
 
 	return &apiv1.DeleteClusterMessageResponse{}, nil
