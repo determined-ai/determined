@@ -15,6 +15,7 @@ import Page from 'components/Page';
 import PageMessage from 'components/PageMessage';
 import useUI from 'components/ThemeProvider';
 import { handleRelayState, samlUrl } from 'ee/SamlAuth';
+import { globalStorage } from 'globalStorage';
 import useAuthCheck from 'hooks/useAuthCheck';
 import usePolling from 'hooks/usePolling';
 import { defaultRoute, rbacDefaultRoute } from 'routes';
@@ -24,7 +25,6 @@ import determinedStore from 'stores/determinedInfo';
 import { RecordKey } from 'types';
 import { locationToPath, routeToReactUrl } from 'utils/routes';
 import { capitalize } from 'utils/string';
-import { globalStorage } from 'globalStorage';
 
 import css from './SignIn.module.scss';
 
@@ -38,9 +38,6 @@ const SignIn: React.FC = () => {
   const location = useLocation();
   const isAuthChecked = useObservable(authStore.isChecked);
   const isAuthenticated = useObservable(authStore.isAuthenticated);
-  if (location.state != null) {
-    globalStorage.landingRedirect = locationToPath(location.state) || '';
-  }
   const info = useObservable(determinedStore.info);
   const [canceler] = useState(new AbortController());
   const { rbacEnabled } = useObservable(determinedStore.info);
@@ -66,6 +63,10 @@ const SignIn: React.FC = () => {
    * the user to the most recent requested page.
    */
   useEffect(() => {
+    if (location.state != null) {
+      globalStorage.landingRedirect = locationToPath(location.state) || '';
+    }
+
     if (isAuthenticated) {
       // Stop the spinner, prepping for user redirect.
       uiActions.hideSpinner();
@@ -82,10 +83,7 @@ const SignIn: React.FC = () => {
       if (!queries.has('redirect')) {
         const path = globalStorage.landingRedirect || null;
         globalStorage.removeLandingRedirect();
-        routeToReactUrl(
-          path ||
-            (rbacEnabled ? rbacDefaultRoute.path : defaultRoute.path),
-        );
+        routeToReactUrl(path || (rbacEnabled ? rbacDefaultRoute.path : defaultRoute.path));
       } else {
         routeAll(queries.get('redirect') || '');
       }
