@@ -76,12 +76,14 @@ func TestUpdatePodStatus(t *testing.T) {
 			require.Equal(t, int(sproto.SchedulingStateQueued), rp.allocationIDToRunningPods[allocID])
 			require.Zero(t, rp.allocationIDToRunningPods[allocID])
 
+			containerID := rp.allocationIDToContainerID[allocID]
+			require.NotNil(t, containerID)
+
 			req := sproto.UpdatePodStatus{
-				ContainerID: "bogus",
+				// TODO (bradley, pods2jobs): new implementation won't require container ID
+				ContainerID: string(containerID),
 				State:       tt.state,
 			}
-			// TODO (bradley, pods2jobs): new implementation won't require container ID
-			req.ContainerID = string(rp.allocationIDToContainerID[allocID])
 
 			rp.UpdatePodStatus(req)
 
