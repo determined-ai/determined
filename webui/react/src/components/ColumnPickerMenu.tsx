@@ -21,7 +21,7 @@ const BANNED_COLUMNS: Set<string> = new Set([]);
 const removeBannedColumns = (columns: ProjectColumn[]) =>
   columns.filter((col) => !BANNED_COLUMNS.has(col.column));
 
-export const locationLabelMap = {
+export const LOCATION_LABEL_MAP = {
   [V1LocationType.EXPERIMENT]: 'General',
   [V1LocationType.VALIDATIONS]: 'Metrics',
   [V1LocationType.TRAINING]: 'Metrics',
@@ -267,7 +267,7 @@ const ColumnPickerMenu: React.FC<ColumnMenuProps> = ({
                   ),
                   forceRender: true,
                   key: canonicalTab,
-                  label: locationLabelMap[canonicalTab as keyof typeof locationLabelMap],
+                  label: LOCATION_LABEL_MAP[canonicalTab as keyof typeof LOCATION_LABEL_MAP],
                 };
               })}
             />

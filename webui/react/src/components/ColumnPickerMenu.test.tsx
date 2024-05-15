@@ -5,9 +5,8 @@ import { Loaded } from 'hew/utils/loadable';
 import _ from 'lodash';
 
 import { V1LocationType } from 'services/api-ts-sdk';
-import { ProjectColumn } from 'types';
 
-import ColumnPickerMenu, { locationLabelMap } from './ColumnPickerMenu';
+import ColumnPickerMenu, { LOCATION_LABEL_MAP } from './ColumnPickerMenu';
 import { initialVisibleColumns, projectColumns } from './ColumnPickerMenu.test.mock';
 import { ThemeProvider } from './ThemeProvider';
 
@@ -29,7 +28,7 @@ const setup = (initCols?: string[]) => {
           defaultVisibleColumns={initialVisibleColumns}
           initialVisibleColumns={initCols ?? initialVisibleColumns}
           pinnedColumnsCount={PINNED_COLUMNS_COUNT}
-          projectColumns={Loaded(projectColumns as ProjectColumn[])}
+          projectColumns={Loaded(projectColumns)}
           projectId={1}
           tabs={locations}
           onVisibleColumnChange={onVisibleColumnChange}
@@ -87,19 +86,18 @@ describe('ColumnPickerMenu', () => {
   it('should switch tabs and display correct columns', async () => {
     const { user } = setup();
     await user.click(await screen.findByRole('button'));
-    const tabs = new Set<string>(Object.values(locationLabelMap));
+    const tabs = new Set<string>(Object.values(LOCATION_LABEL_MAP));
     const testTab = async (tabName: string) => {
       await user.click(await screen.findByText(tabName));
-      const locationForTab = _.findKey(locationLabelMap, (v) => v === tabName);
+      const locationForTab = _.findKey(LOCATION_LABEL_MAP, (v) => v === tabName);
       const columnsForLocation = projectColumns.filter((c) => c.location === locationForTab);
       const column = columnsForLocation[0];
-      const displayName = column.displayName.length ? column.displayName : column.column;
+      const displayName = column.displayName?.length ? column.displayName : column.column;
       expect(await screen.findByText(displayName)).toBeInTheDocument();
     };
-    Array.from(tabs).reduce(async (previousPromise, nextTab) => {
-      await previousPromise;
-      return testTab(nextTab);
-    }, Promise.resolve());
+    for (const tab of Array.from(tabs)) {
+      await testTab(tab);
+    }
   });
 
   it('should show all', async () => {

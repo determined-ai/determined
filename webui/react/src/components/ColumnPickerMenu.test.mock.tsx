@@ -1,4 +1,6 @@
-export const projectColumns = [
+import { ProjectColumn } from 'types';
+
+export const projectColumns: ProjectColumn[] = [
   {
     column: 'id',
     displayName: 'ID',
