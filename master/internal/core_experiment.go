@@ -293,7 +293,7 @@ func (m *Master) parseCreateExperiment(ctx context.Context, req *apiv1.CreateExp
 	}
 	workspaceID := resolveWorkspaceID(workspaceModel)
 	isSingleNode := resources.IsSingleNode() != nil && *resources.IsSingleNode()
-	isUnmanaged := req.Unmanaged != nil && *req.Unmanaged
+	isUnmanaged := req.GetUnmanaged()
 	slotsPerTrial := resources.SlotsPerTrial()
 	if isUnmanaged {
 		slotsPerTrial = 0
