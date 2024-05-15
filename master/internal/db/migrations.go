@@ -187,8 +187,6 @@ func (db *PgDB) addDBCode(fileNamesToSQL map[string]string) error {
 }
 
 func (db *PgDB) dropDBCode() error {
-	// SET search_path since the ALTER DATABASE ... SET SEARCH_PATH won't apply to this connection
-	// since it was created after the migration ran.
 	if _, err := db.sql.Exec(`
 DROP SCHEMA IF EXISTS determined_code CASCADE;
 CREATE SCHEMA determined_code;`); err != nil {

@@ -993,7 +993,8 @@ func TestExperimentTotalStepTime(t *testing.T) {
 	ctx := context.Background()
 
 	require.NoError(t, etc.SetRootPath(RootFromDB))
-	db := MustResolveTestPostgres(t)
+	db, cleanup := MustResolveTestPostgres(t)
+	defer cleanup()
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 
 	t.Run("invalid experiment, return 0.0, no error", func(t *testing.T) {
@@ -1056,7 +1057,8 @@ func TestExperimentNumSteps(t *testing.T) {
 	ctx := context.Background()
 
 	require.NoError(t, etc.SetRootPath(RootFromDB))
-	db := MustResolveTestPostgres(t)
+	db, cleanup := MustResolveTestPostgres(t)
+	defer cleanup()
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 
 	t.Run("invalid experiment, return 0, no error", func(t *testing.T) {
