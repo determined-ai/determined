@@ -20,6 +20,8 @@ def send_alert(job_name: str, pipeline_number: str, workflow_id: str, job_number
     slack_message = f"{job_name} failed on main, {job_url}"
     print(f"sending slack message: {slack_message}")
 
+    return
+
     r = requests.post(
         os.environ["SLACK_WEBHOOK"],
         headers={"Content-Type": "application/json"},
@@ -41,6 +43,7 @@ def send_alerts_for_failed_jobs(sent_alerts: Set[str]) -> bool:
             continue
 
         workflow_id = w["id"]
+        print(workflow_id, w["status"])
         if not workflows_are_running and w["status"] == "running":
             print(f"waiting for at least workflow {w['name']} to finish")
             workflows_are_running = True
