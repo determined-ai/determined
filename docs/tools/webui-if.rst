@@ -168,3 +168,44 @@ You can start :ref:`notebooks` from the WebUI.
 ***********************
 
 You can launch TensorBoard from the WebUI. To learn how, visit :ref:`tensorboards`.
+
+**********************************
+ Displaying a Maintenance Message
+**********************************
+
+Administrators can create a maintenance message to alert users about scheduled maintenance.
+
+**Prerequisites**
+
+Install the :ref:`CLI <cli-ug>`.
+
+**Steps**
+
+-  Prepare the maintenance message command. Use the following command template to create a
+   maintenance message.
+
+   -  Replace "Your maintenance message here" with your actual maintenance message.
+   -  Replace "2024-05-14T10:00:00Z" and "2024-05-14T12:00:00Z" with the actual start and end times
+      for the maintenance period.
+
+   .. code:: bash
+
+      python your_script.py set-cluster-message -m "Cluster will be under maintenance from 10 AM to 12 PM." --start "2024-05-14T10:00:00Z" --end "2024-05-14T12:00:00Z"
+
+-  Set the maintenance message by executing the following command:
+
+   .. code:: bash
+
+      python your_script.py set-cluster-message -m "Cluster will be under maintenance from 10 AM to 12 PM." --start "2024-05-14T10:00:00Z" --end "2024-05-14T12:00:00Z"
+
+-  Verify the message with the following command:
+
+   .. code:: bash
+
+      python your_script.py get-cluster-message
+
+-  Clear the message using the following command:
+
+   .. code:: bash
+
+      python your_script.py clear-cluster-message
