@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -15,6 +16,9 @@ import (
 	"github.com/determined-ai/determined/master/pkg/tasks"
 
 	k8sV1 "k8s.io/api/core/v1"
+	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	gatewayTyped "sigs.k8s.io/gateway-api/apis/v1"
+	alphaGatewayTyped "sigs.k8s.io/gateway-api/apis/v1alpha2"
 )
 
 func TestGetDetContainerSecurityContext(t *testing.T) {
@@ -59,6 +63,110 @@ func TestGetDetContainerSecurityContext(t *testing.T) {
 	require.Nil(t, secContext.RunAsUser)
 	require.Nil(t, secContext.RunAsGroup)
 	require.Equal(t, expectedCaps, secContext.Capabilities.Add)
+}
+
+func TestConfigureProxyResources(t *testing.T) {
+	longDesc := ""
+	for i := 0; i < 100; i++ {
+		longDesc += "a"
+	}
+
+	p := &pod{
+		namespace: "podnamespace",
+		submissionInfo: &podSubmissionInfo{
+			taskSpec: tasks.TaskSpec{
+				AllocationID: "allocID",
+				Description:  longDesc,
+			},
+		},
+	}
+	require.Len(t, p.configureProxyResources(), 0)
+
+	expectedName := "porti0-" + longDesc
+	expectedName = expectedName[:63]
+	p.req = &sproto.AllocateRequest{
+		ProxyPorts: []*sproto.ProxyPortConfig{
+			{
+				ServiceID: "test_unused",
+				Port:      12345,
+				ProxyTCP:  false, // We still want a TCP proxy.
+			},
+		},
+	}
+	p.exposeProxyConfig = &config.ExposeProxiesExternallyConfig{
+		GatewayName:      "gatewayname",
+		GatewayNamespace: "gatewaynamespace",
+	}
+
+	svc := &k8sV1.Service{
+		ObjectMeta: metaV1.ObjectMeta{
+			Name:      expectedName,
+			Namespace: "podnamespace",
+			Labels:    map[string]string{determinedLabel: "allocID"},
+		},
+		Spec: k8sV1.ServiceSpec{
+			Ports: []k8sV1.ServicePort{
+				{
+					Protocol: k8sV1.ProtocolTCP,
+					Port:     12345,
+				},
+			},
+			Selector: map[string]string{determinedLabel: "allocID"},
+			Type:     k8sV1.ServiceTypeClusterIP,
+		},
+	}
+
+	tcp := &alphaGatewayTyped.TCPRoute{
+		ObjectMeta: metaV1.ObjectMeta{
+			Name:      expectedName,
+			Namespace: "podnamespace",
+			Labels:    map[string]string{determinedLabel: "allocID"},
+		},
+		Spec: alphaGatewayTyped.TCPRouteSpec{
+			CommonRouteSpec: alphaGatewayTyped.CommonRouteSpec{
+				ParentRefs: []alphaGatewayTyped.ParentReference{
+					{
+						Namespace:   ptrs.Ptr(alphaGatewayTyped.Namespace("gatewaynamespace")),
+						Name:        alphaGatewayTyped.ObjectName("gatewayname"),
+						Port:        ptrs.Ptr(alphaGatewayTyped.PortNumber(12345)),
+						SectionName: ptrs.Ptr(alphaGatewayTyped.SectionName("proxyport12345")),
+					},
+				},
+			},
+			Rules: []alphaGatewayTyped.TCPRouteRule{
+				{
+					BackendRefs: []alphaGatewayTyped.BackendRef{
+						{
+							BackendObjectReference: alphaGatewayTyped.BackendObjectReference{
+								Name: alphaGatewayTyped.ObjectName(expectedName),
+								Kind: ptrs.Ptr(alphaGatewayTyped.Kind("Service")),
+								Port: ptrs.Ptr(alphaGatewayTyped.PortNumber(12345)),
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	listener := gatewayTyped.Listener{
+		Name:     "proxyport12345",
+		Port:     12345,
+		Protocol: "TCP",
+		AllowedRoutes: &gatewayTyped.AllowedRoutes{
+			Namespaces: &gatewayTyped.RouteNamespaces{
+				From: ptrs.Ptr(gatewayTyped.NamespacesFromAll),
+			},
+		},
+	}
+
+	require.Equal(t, []gatewayProxyResource{
+		{
+			serviceSpec:     svc,
+			tcpRouteSpec:    tcp,
+			gatewayListener: listener,
+		},
+	}, p.configureProxyResources())
 }
 
 func TestAddNodeDisabledAffinityToPodSpec(t *testing.T) {

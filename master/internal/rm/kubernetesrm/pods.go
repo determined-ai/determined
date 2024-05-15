@@ -26,6 +26,8 @@ import (
 	"k8s.io/client-go/rest"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
+	gateway "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned/typed/apis/v1"
+	alphaGateway "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned/typed/apis/v1alpha2"
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
@@ -84,7 +86,8 @@ type pods struct {
 	resourcePoolConfigs   []config.ResourcePoolConfig
 	baseContainerDefaults *model.TaskContainerDefaultsConfig
 
-	kubeconfigPath string
+	kubeconfigPath    string
+	exposeProxyConfig *config.ExposeProxiesExternallyConfig
 
 	clientSet        k8sClient.Interface
 	detMasterIP      string
@@ -104,8 +107,12 @@ type pods struct {
 
 	currentNodes map[string]*k8sV1.Node
 
+	gatewayService *gatewayService
+
 	podInterfaces       map[string]typedV1.PodInterface
 	configMapInterfaces map[string]typedV1.ConfigMapInterface
+	serviceInterfaces   map[string]typedV1.ServiceInterface
+	tcpRouteInterfaces  map[string]alphaGateway.TCPRouteInterface
 
 	// TODO(RM-236) make one cache and make this code more straightforward.
 	summarizeCacheLock sync.RWMutex
@@ -169,6 +176,7 @@ func newPodsService(
 	detMasterPort int32,
 	kubeconfigPath string,
 	podStatusUpdateCallback podStatusUpdateCallback,
+	exposeProxyConfig *config.ExposeProxiesExternallyConfig,
 ) *pods {
 	loggingTLSConfig := masterTLSConfig
 	if loggingConfig.ElasticLoggingConfig != nil {
@@ -200,10 +208,13 @@ func newPodsService(
 		nodeToSystemResourceRequests: make(map[string]int64),
 		podInterfaces:                make(map[string]typedV1.PodInterface),
 		configMapInterfaces:          make(map[string]typedV1.ConfigMapInterface),
+		serviceInterfaces:            make(map[string]typedV1.ServiceInterface),
+		tcpRouteInterfaces:           make(map[string]alphaGateway.TCPRouteInterface),
 		syslog:                       logrus.WithField("namespace", namespace),
 		podStatusUpdateCallback:      podStatusUpdateCallback,
 
-		kubeconfigPath: kubeconfigPath,
+		kubeconfigPath:    kubeconfigPath,
+		exposeProxyConfig: exposeProxyConfig,
 	}
 
 	if err := p.startClientSet(); err != nil {
@@ -399,9 +410,32 @@ func (p *pods) startClientSet() error {
 		return errors.Wrap(err, "failed to initialize kubernetes clientSet")
 	}
 
-	for _, ns := range append(maps.Keys(p.namespaceToPoolName), p.namespace) {
+	namespaces := append(maps.Keys(p.namespaceToPoolName), p.namespace)
+	for _, ns := range namespaces {
 		p.podInterfaces[ns] = p.clientSet.CoreV1().Pods(ns)
 		p.configMapInterfaces[ns] = p.clientSet.CoreV1().ConfigMaps(ns)
+	}
+
+	if exposeConfig := p.exposeProxyConfig; exposeConfig != nil {
+		// Using the CoreV1 RESTClient for gateway resources will cause "resource not found" errors.
+		alphaGatewayClientSet, err := alphaGateway.NewForConfig(config)
+		if err != nil {
+			return fmt.Errorf("creating Kubernetes gateway clientSet: %w", err)
+		}
+		for _, ns := range namespaces {
+			p.serviceInterfaces[ns] = p.clientSet.CoreV1().Services(ns)
+			p.tcpRouteInterfaces[ns] = alphaGatewayClientSet.TCPRoutes(ns)
+		}
+
+		// Don't think you can use the alphaGateway clientSet, because you can't.
+		gatewayClientSet, err := gateway.NewForConfig(config)
+		if err != nil {
+			return fmt.Errorf("creating Kubernetes gateway clientSet: %w", err)
+		}
+		p.gatewayService = &gatewayService{
+			gatewayInterface: gatewayClientSet.Gateways(exposeConfig.GatewayNamespace),
+			gatewayName:      exposeConfig.GatewayName,
+		}
 	}
 
 	p.syslog.Infof("kubernetes clientSet initialized")
@@ -443,6 +477,7 @@ func (p *pods) getSystemResourceRequests() error {
 }
 
 func (p *pods) reattachAllocationPods(msg reattachAllocationPods) ([]reattachPodResponse, error) {
+	// TODO(RM-270/gateways) make reattach works for gateways.
 	listOptions := metaV1.ListOptions{
 		LabelSelector: fmt.Sprintf("%s=%s", determinedLabel, msg.allocationID),
 	}
@@ -597,6 +632,7 @@ func (p *pods) reattachPod(
 		p.slotType,
 		p.slotResourceRequests,
 		p.scheduler,
+		p.exposeProxyConfig,
 	)
 
 	newPodHandler.restore = true
@@ -617,7 +653,7 @@ func (p *pods) reattachPod(
 
 	var started *sproto.ResourcesStarted
 	if newPodHandler.container.State == cproto.Running {
-		started = ptrs.Ptr(getResourcesStartedForPod(pod, newPodHandler.ports))
+		started = ptrs.Ptr(getResourcesStartedForPod(pod, newPodHandler.ports, p.exposeProxyConfig))
 	}
 
 	newPodHandler.pod = pod
@@ -666,12 +702,20 @@ func (p *pods) deleteKubernetesResources(
 	pods *k8sV1.PodList, configMaps *k8sV1.ConfigMapList,
 ) {
 	for _, pod := range pods.Items {
-		p.resourceRequestQueue.deleteKubernetesResources(pod.Namespace, pod.Name, "")
+		p.resourceRequestQueue.deleteKubernetesResources(deleteKubernetesResources{
+			namespace: pod.Namespace,
+			podName:   &pod.Name,
+		})
 	}
 
 	for _, configMap := range configMaps.Items {
-		p.resourceRequestQueue.deleteKubernetesResources(configMap.Namespace, "", configMap.Name)
+		p.resourceRequestQueue.deleteKubernetesResources(deleteKubernetesResources{
+			namespace:     configMap.Namespace,
+			configMapName: &configMap.Name,
+		})
 	}
+
+	// TODO(RM-270/gateways) include services / TCPRoutes and so on so restore can cleanup.
 }
 
 func (p *pods) deleteDoomedKubernetesResources() error {
@@ -830,7 +874,13 @@ func (p *pods) startPreemptionListeners() error {
 
 func (p *pods) startResourceRequestQueue() {
 	failures := make(chan resourcesRequestFailure, 16)
-	p.resourceRequestQueue = startRequestQueue(p.podInterfaces, p.configMapInterfaces, failures)
+	p.resourceRequestQueue = startRequestQueue(
+		p.podInterfaces,
+		p.configMapInterfaces,
+		p.serviceInterfaces,
+		p.gatewayService,
+		p.tcpRouteInterfaces,
+		failures)
 	p.wg.Go(func(ctx context.Context) {
 		for {
 			select {
@@ -888,6 +938,7 @@ func (p *pods) receiveStartTaskPod(msg StartTaskPod) error {
 		p.slotType,
 		p.slotResourceRequests,
 		p.scheduler,
+		p.exposeProxyConfig,
 	)
 
 	if _, alreadyExists := p.podNameToPodHandler[newPodHandler.podName]; alreadyExists {
