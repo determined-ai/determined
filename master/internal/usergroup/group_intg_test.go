@@ -20,10 +20,13 @@ import (
 
 func TestUserGroups(t *testing.T) {
 	ctx := context.Background()
-	pgDB := db.MustResolveTestPostgres(t)
+	pgDB, close := db.MustResolveTestPostgres(t)
 	db.MustMigrateTestPostgres(t, pgDB, pathToMigrations)
 
-	t.Cleanup(func() { cleanUp(ctx, t) })
+	t.Cleanup(func() {
+		cleanUp(ctx, t)
+		close()
+	})
 	setUp(ctx, t, pgDB)
 
 	t.Run("group creation", func(t *testing.T) {
@@ -396,8 +399,8 @@ var (
 	}
 	testGroups = []model.Group{testGroup, testGroupStatic}
 	testUser   = model.User{
-		ID:       1217651234,
-		Username: fmt.Sprintf("IntegrationTest%d", 1217651234),
+		ID:       1217651235,
+		Username: fmt.Sprintf("IntegrationTest%d", 1217651235),
 		Admin:    false,
 		Active:   false,
 	}
