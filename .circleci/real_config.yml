@@ -4048,7 +4048,7 @@ workflows:
           filters:
             branches:
               only:
-                - main
+                - alert_failing_state
 
   test-go:
     <<: *do-not-run-on-manual-trigger
