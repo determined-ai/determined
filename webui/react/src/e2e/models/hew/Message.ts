@@ -8,7 +8,7 @@ import { BaseComponent, NamedComponent } from 'e2e/models/BaseComponent';
  * @param {string} obj.selector - Used instead of `defaultSelector`
  */
 export class Message extends NamedComponent {
-  override defaultSelector: string = '[class^="Message_base"]';
+  readonly defaultSelector = '[class^="Message_base"]';
 
   readonly icon = new BaseComponent({
     parent: this,

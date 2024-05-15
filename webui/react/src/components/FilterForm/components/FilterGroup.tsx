@@ -120,7 +120,10 @@ const FilterGroup = ({
   }
 
   return (
-    <div className={`${css.base} ${level === 0 ? css.baseRoot : ''}`} ref={(node) => drop(node)}>
+    <div
+      className={`${css.base} ${level === 0 ? css.baseRoot : ''}`}
+      data-test-component="FilterGroup"
+      ref={(node) => drop(node)}>
       {level > 0 && (
         <ConjunctionContainer
           conjunction={conjunction}
@@ -130,11 +133,14 @@ const FilterGroup = ({
           }}
         />
       )}
-      <div className={`${css.groupCard} ${css[`level${level}`]}`} ref={preview}>
-        <div className={css.header}>
+      <div
+        className={`${css.groupCard} ${css[`level${level}`]}`}
+        data-test="groupCard"
+        ref={preview}>
+        <div className={css.header} data-test="header">
           {level > 0 && (
             <>
-              <div>
+              <div data-test="explanation">
                 {group.conjunction === Conjunction.And ? (
                   <div>All of the following are true...</div>
                 ) : (
@@ -145,20 +151,29 @@ const FilterGroup = ({
                 disabled={group.children.length > ITEM_LIMIT}
                 menu={menuItems}
                 onClick={onItemClick}>
-                <Button icon={<Icon name="add" size="tiny" title="Add field" />} type="text" />
+                <Button
+                  data-test="add"
+                  icon={<Icon name="add" size="tiny" title="Add field" />}
+                  type="text"
+                />
               </Dropdown>
               <Button
+                data-test="remove"
                 icon={<Icon name="close" size="tiny" title="Close Group" />}
                 type="text"
                 onClick={() => formStore.removeChild(group.id)}
               />
               <div ref={drag}>
-                <Button icon={<Icon name="holder" size="small" title="Move group" />} type="text" />
+                <Button
+                  data-test="move"
+                  icon={<Icon name="holder" size="small" title="Move group" />}
+                  type="text"
+                />
               </div>
             </>
           )}
         </div>
-        <div className={css.children}>
+        <div className={css.children} data-test="children">
           {group.children.map((child, i) => {
             if (child.kind === FormKind.Group) {
               return (

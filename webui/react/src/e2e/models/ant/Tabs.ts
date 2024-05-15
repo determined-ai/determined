@@ -9,17 +9,20 @@ import { BaseComponent, NamedComponent } from 'e2e/models/BaseComponent';
  */
 export class Tabs extends NamedComponent {
   readonly defaultSelector = 'div.ant-tabs';
-
-  /**
-   * Returns a templated selector for children components.
-   * @param {string} id - tab id
-   */
-  static selectorTemplateTabs(id: string): string {
-    return `div.ant-tabs-tab-btn[id$="${id}"]`;
-  }
   readonly tablist = new BaseComponent({ parent: this, selector: '.ant-tabs-nav' });
   readonly tabContent = new BaseComponent({
     parent: this,
     selector: '.ant-tabs-content-holder',
   });
+
+  /**
+   * Returns a representation of a tab item with the specified id.
+   * @param {string} id - the id of the menu item
+   */
+  tab(id: string): BaseComponent {
+    return new BaseComponent({
+      parent: this.tablist,
+      selector: `div.ant-tabs-tab-btn[id$="${id}"]`,
+    });
+  }
 }

@@ -34,7 +34,7 @@ export class DataGrid<
   RowType extends Row<RowType, HeadRowType>,
   HeadRowType extends HeadRow,
 > extends NamedComponent {
-  readonly defaultSelector: string = '[class^="DataGrid_base"]';
+  readonly defaultSelector = '[class^="DataGrid_base"]';
   constructor(args: TableArgs<RowType, HeadRowType>) {
     super(args);
     this.#rowType = args.rowType;
