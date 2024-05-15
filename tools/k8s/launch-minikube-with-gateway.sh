@@ -1,5 +1,11 @@
 #!/bin/bash
-minikube start --profile $1
+if [ -z "$1" ]; then
+    echo "Usage: $0 <minikube_profile>"
+    exit 1
+fi
+
+minikube_profile=$1
+minikube start --profile $minikube_profile
 
 kubectl apply -f https://projectcontour.io/quickstart/contour-gateway-provisioner.yaml
 
@@ -28,7 +34,7 @@ spec:
 EOF
 
 # Either like have a smaller subnet so we don't conflict. Or like don't start it for the second one.
-nohup minikube --profile $1 tunnel & # TODO won't work for users with sudo passwords.
+nohup minikube --profile $minikube_profile tunnel & # TODO won't work for users with sudo passwords.
 
 for ((i = 0; i < 60; i++)); do
     export GATEWAY_IP=$(kubectl -n projectcontour get svc envoy-contour -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')

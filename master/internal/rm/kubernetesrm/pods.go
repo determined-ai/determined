@@ -417,8 +417,7 @@ func (p *pods) startClientSet() error {
 	}
 
 	if exposeConfig := p.exposeProxyConfig; exposeConfig != nil {
-		// Don't think you can be clever and use the clientSet's RESTClient.
-		// gateway.New(p.clientSet.CoreV1().RESTClient()) // Will cause "resource not found" errors.
+		// Using the CoreV1 RESTClient for gateway resources will cause "resource not found" errors.
 		alphaGatewayClientSet, err := alphaGateway.NewForConfig(config)
 		if err != nil {
 			return fmt.Errorf("creating Kubernetes gateway clientSet: %w", err)
