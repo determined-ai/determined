@@ -40,7 +40,10 @@ if sudo -n true 2>/dev/null; then
     # Either like have a smaller subnet so we don't conflict. Or like don't start it for the second one.
     nohup minikube --profile $minikube_profile tunnel & # TODO won't work for users with sudo passwords.
 else
-    echo "sudo password is required to start the tunnel."
+    echo "sudoless password is required to start the tunnel."
+    if ! [ -t 1 ]; then # non-interactive shell
+        exit 1
+    fi
     echo "Please run the following command separately to start the tunnel:"
     echo "minikube --profile $minikube_profile tunnel"
     read -p "Press [Enter] once the tunnel has started..."
