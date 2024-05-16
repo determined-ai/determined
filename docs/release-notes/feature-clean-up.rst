@@ -10,7 +10,7 @@ Agent Resource Manager:
 
 -  Container Runtimes: We will limit support to Docker for Agent Resource Managers.
 
--  Job Scheduling: Switching to `priority` for the default scheduler. Support for round-robin and
+-  Job Scheduling: Switching to ``priority`` for the default scheduler. Support for round-robin and
    fair share schedulers is discontinued. We recommend using the priority scheduler, as it meets
    most scheduling needs and simplifies configuration. Moving a job will require adjusting its
    priority; jobs cannot be shifted within the same priority group.
