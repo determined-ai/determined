@@ -2699,7 +2699,7 @@ jobs:
           name: Wait for VM creation
           command: |
             sleep 5
-            for i in {1..220}; do
+            for i in {1..500}; do
               ELAPSED_TIME=$((i * 5))
               echo "Waiting for VM creation [${ELAPSED_TIME}s]..."
               if grep -q "^Running cluster..." output.log; then
