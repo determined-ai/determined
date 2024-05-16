@@ -1074,13 +1074,28 @@ func (m *Master) buildRM(
 		config := rmConfigs[0]
 		switch {
 		case config.ResourceManager.AgentRM != nil:
-			return agentrm.New(db, echo, config, opts, cert)
+			agentRM, err := agentrm.New(db, echo, config, opts, cert)
+			if err != nil {
+				return nil, err
+			}
+			m.allRms[config.ResourceManager.KubernetesRM.ClusterName] = agentRM
+			return agentRM, nil
 		case config.ResourceManager.KubernetesRM != nil:
-			return kubernetesrm.New(db, config, tcd, opts, cert)
+			kubernetesRM, err := kubernetesrm.New(db, config, tcd, opts, cert)
+			if err != nil {
+				return nil, err
+			}
+			m.allRms[config.ResourceManager.KubernetesRM.ClusterName] = kubernetesRM
+			return kubernetesRM, nil
 		case config.ResourceManager.DispatcherRM != nil,
 			config.ResourceManager.PbsRM != nil:
 			license.RequireLicense("dispatcher resource manager")
-			return dispatcherrm.New(db, echo, config, opts, cert)
+			dispatcherRM, err := dispatcherrm.New(db, echo, config, opts, cert)
+			if err != nil {
+				return nil, err
+			}
+			m.allRms[config.ResourceManager.KubernetesRM.ClusterName] = dispatcherRM
+			return dispatcherRM, nil
 		default:
 			return nil, fmt.Errorf("no expected resource manager config is defined")
 		}
@@ -1100,7 +1115,7 @@ func (m *Master) buildRM(
 		case c.AgentRM != nil:
 			rmClusterName := c.AgentRM.ClusterName
 			if len(rmClusterName) == 0 {
-				return nil, fmt.Errorf("resource manager %s must have a cluster name: %w", c.Name())
+				return nil, fmt.Errorf("resource manager %s must have a cluster name", c.Name())
 			}
 			clusterNames[rmClusterName] = 0
 			agentRM, err := agentrm.New(db, echo, cfg, opts, cert)
@@ -1112,7 +1127,7 @@ func (m *Master) buildRM(
 		case c.KubernetesRM != nil:
 			rmClusterName := c.KubernetesRM.ClusterName
 			if len(rmClusterName) == 0 {
-				return nil, fmt.Errorf("resource manager %s must have a cluster name: %w", c.Name())
+				return nil, fmt.Errorf("resource manager %s must have a cluster name", c.Name())
 			}
 			clusterNames[rmClusterName] = 0
 			k8sRM, err := kubernetesrm.New(db, cfg, tcd, opts, cert)

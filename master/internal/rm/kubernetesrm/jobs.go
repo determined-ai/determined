@@ -532,6 +532,12 @@ func (j *jobsService) ReattachJob(msg reattachJobRequest) (reattachJobResponse, 
 	return j.reattachJob(msg)
 }
 
+func (j *jobsService) VerifyNamespaceExists(namespaceName string) error {
+	j.mu.Lock()
+	defer j.mu.Unlock()
+	return j.verifyNamespaceExists(namespaceName)
+}
+
 type reattachJobRequest struct {
 	req          *sproto.AllocateRequest
 	numPods      int
@@ -1815,6 +1821,15 @@ func (j *jobsService) listConfigMapsInAllNamespaces(
 	}
 
 	return res, nil
+}
+
+func (j *jobsService) verifyNamespaceExists(namespaceName string) error {
+	_, err := j.clientSet.CoreV1().Namespaces().Get(context.Background(), namespaceName,
+		metaV1.GetOptions{})
+	if err != nil {
+		return fmt.Errorf("error finding namespace %s: %w", namespaceName, err)
+	}
+	return nil
 }
 
 func extractTCDs(resourcePoolConfigs []config.ResourcePoolConfig,

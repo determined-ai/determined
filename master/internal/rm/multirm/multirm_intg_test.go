@@ -718,6 +718,6 @@ func mockRM(poolName rm.ResourcePoolName) *mocks.ResourceManager {
 	mockRM.On("GetSlot", mock.Anything).Return(&apiv1.GetSlotResponse{}, nil)
 	mockRM.On("EnableSlot", mock.Anything).Return(&apiv1.EnableSlotResponse{}, nil)
 	mockRM.On("DisableSlot", mock.Anything).Return(&apiv1.DisableSlotResponse{}, nil)
-
+	mockRM.On("VerifyNamespaceExists", mock.Anything).Return(nil)
 	return &mockRM
 }

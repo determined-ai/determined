@@ -5,8 +5,10 @@ package internal
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"testing"
 
 	"google.golang.org/grpc/codes"
@@ -26,6 +28,8 @@ import (
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/mocks"
+	"github.com/determined-ai/determined/master/internal/rm"
+	"github.com/determined-ai/determined/master/internal/rm/multirm"
 	"github.com/determined-ai/determined/master/internal/workspace"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -43,87 +47,309 @@ func newProtoStruct(t *testing.T, in map[string]any) *structpb.Struct {
 
 func TestPostWorkspace(t *testing.T) {
 	api, curUser, ctx := setupAPITest(t, nil)
+	cluster1 := "k8sCluster1"
+	namespaceName := "validNamespaceName"
+	badClusterName := "nonExistentCluster"
 
-	// Name min error.
-	_, err := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: ""})
-	require.Error(t, err)
-
-	// Name max error.
-	_, err = api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: string(make([]byte, 81))})
-	require.Error(t, err)
-
-	// Invalid configs.
-	_, err = api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{
-		Name: uuid.New().String(),
-		CheckpointStorageConfig: newProtoStruct(t, map[string]any{
-			"type": "s3",
-		}),
-	})
-	require.Error(t, err)
-
-	_, err = api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{
-		Name: uuid.New().String(),
-		CheckpointStorageConfig: newProtoStruct(t, map[string]any{
-			"type":   "s3",
-			"bucket": "bucketbucket",
-			"prefix": "./../.",
-		}),
-	})
-	require.Error(t, err)
-
-	// Valid workspace.
-	workspaceName := uuid.New().String()
-	// TODO PostWorkspace should returned pinnedAt.
-	resp, err := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{
-		Name: workspaceName,
-		CheckpointStorageConfig: newProtoStruct(t, map[string]any{
-			"type":       "s3",
-			"bucket":     "bucketofrain",
-			"secret_key": "thisisasecret",
-		}),
-		DefaultComputePool: "testRP",
-		DefaultAuxPool:     "testRP",
-	})
-	require.NoError(t, err)
-
-	// Workspace returned correctly?
-	expected := &workspacev1.Workspace{
-		Id:             resp.Workspace.Id,
-		Name:           workspaceName,
-		Archived:       false,
-		Username:       curUser.Username,
-		Immutable:      false,
-		NumProjects:    0,
-		Pinned:         true,
-		UserId:         int32(curUser.ID),
-		NumExperiments: 0,
-		State:          workspacev1.WorkspaceState_WORKSPACE_STATE_UNSPECIFIED,
-		ErrorMessage:   "",
-		AgentUserGroup: nil,
-		CheckpointStorageConfig: newProtoStruct(t, map[string]any{
-			"type":                 "s3",
-			"bucket":               "bucketofrain",
-			"secret_key":           "********",
-			"access_key":           nil,
-			"endpoint_url":         nil,
-			"prefix":               nil,
-			"save_experiment_best": nil,
-			"save_trial_best":      nil,
-			"save_trial_latest":    nil,
-		}),
-		DefaultComputePool: "testRP",
-		DefaultAuxPool:     "testRP",
+	errorCases := []struct {
+		name        string
+		req         *apiv1.PostWorkspaceRequest
+		setupMockRM func(*mocks.ResourceManager)
+		multiRM     bool
+	}{
+		{
+			"Min-error",
+			&apiv1.PostWorkspaceRequest{Name: ""},
+			func(*mocks.ResourceManager) {},
+			false,
+		},
+		{
+			"Max-error",
+			&apiv1.PostWorkspaceRequest{Name: string(make([]byte, 81))},
+			func(*mocks.ResourceManager) {},
+			false,
+		},
+		{
+			"Invalid-config-no-bucket-given",
+			&apiv1.PostWorkspaceRequest{
+				Name: uuid.NewString(),
+				CheckpointStorageConfig: newProtoStruct(t, map[string]any{
+					"type": "s3",
+				}),
+			}, func(*mocks.ResourceManager) {},
+			false,
+		},
+		{
+			"Invalid-config-bad-prefix",
+			&apiv1.PostWorkspaceRequest{
+				Name: uuid.NewString(),
+				CheckpointStorageConfig: newProtoStruct(t, map[string]any{
+					"type":   "s3",
+					"bucket": "bucketbucket",
+					"prefix": "./../.",
+				}),
+			},
+			func(*mocks.ResourceManager) {},
+			false,
+		},
+		{
+			"cluster-name-no-namespace-name-multiRM",
+			&apiv1.PostWorkspaceRequest{
+				Name:        uuid.NewString(),
+				ClusterName: &cluster1,
+			},
+			func(*mocks.ResourceManager) {},
+			true,
+		},
+		{
+			"namespace-name-no-cluster-name-multiRM",
+			&apiv1.PostWorkspaceRequest{
+				Name:          uuid.NewString(),
+				NamespaceName: &namespaceName,
+			},
+			func(mockRM *mocks.ResourceManager) {
+				mockRM.On("RMType").Return(rm.TypeMultiRMRouter).Once()
+			},
+			true,
+		},
+		{
+			"invalid-cluster-name-valid-namespace-name-multiRM",
+			&apiv1.PostWorkspaceRequest{
+				Name:          uuid.NewString(),
+				ClusterName:   &badClusterName,
+				NamespaceName: &namespaceName,
+			},
+			func(*mocks.ResourceManager) {},
+			true,
+		},
+		{
+			"invalid-namespace-name-valid-cluster-name-multiRM",
+			&apiv1.PostWorkspaceRequest{
+				Name:          uuid.NewString(),
+				ClusterName:   &cluster1,
+				NamespaceName: &namespaceName,
+			},
+			func(mockRM *mocks.ResourceManager) {
+				mockRM.On("VerifyNamespaceExists", namespaceName, &cluster1).
+					Return(fmt.Errorf("Invalid namespace name")).
+					Once()
+			},
+			true,
+		},
+		{
+			"cluster-name-no-namespace-name-kubernetesRM",
+			&apiv1.PostWorkspaceRequest{
+				Name:        uuid.NewString(),
+				ClusterName: &cluster1,
+			},
+			func(*mocks.ResourceManager) {},
+			false,
+		},
+		{
+			"namespace-name-no-cluster-name-kubernetesRM",
+			&apiv1.PostWorkspaceRequest{
+				Name:        uuid.NewString(),
+				ClusterName: &badClusterName,
+			},
+			func(mockRM *mocks.ResourceManager) {
+				mockRM.On("RMType").Return(rm.TypeKubernetesRM).Once()
+			},
+			false,
+		},
+		{
+			"invalid-namespace-name-valid-cluster-name-kubernetesRM",
+			&apiv1.PostWorkspaceRequest{
+				Name:          uuid.NewString(),
+				ClusterName:   &cluster1,
+				NamespaceName: &namespaceName,
+			},
+			func(mockRM *mocks.ResourceManager) {
+				mockRM.On("VerifyNamespaceExists", namespaceName, &cluster1).
+					Return(fmt.Errorf("Invalid namespace name")).
+					Once()
+			},
+			false,
+		},
 	}
-	proto.Equal(expected, resp.Workspace)
-	require.Equal(t, expected, resp.Workspace)
 
-	// Workspace persisted correctly?
-	getWorkResp, err := api.GetWorkspace(ctx, &apiv1.GetWorkspaceRequest{Id: resp.Workspace.Id})
-	require.NoError(t, err)
-	require.NotNil(t, getWorkResp.Workspace.PinnedAt)
-	getWorkResp.Workspace.PinnedAt = nil // Can't check timestamp exactly.
-	proto.Equal(expected, getWorkResp.Workspace)
-	require.Equal(t, expected, getWorkResp.Workspace)
+	for _, test := range errorCases {
+		t.Run(test.name, func(t *testing.T) {
+			mockRM := MockRM()
+			test.setupMockRM(mockRM)
+			setMasterRms(api, mockRM, cluster1, test.multiRM)
+
+			_, err := api.PostWorkspace(ctx, test.req)
+			require.Error(t, err, "Test %s failed", test.name)
+		})
+	}
+
+	type SuccessCase struct {
+		name         string
+		req          *apiv1.PostWorkspaceRequest
+		setupMockRM  func(*mocks.ResourceManager)
+		multiRM      bool
+		expectedWksp *workspacev1.Workspace
+		expectedWsNs *model.WorkspaceNamespace
+	}
+
+	successCases := []SuccessCase{
+		// TODO PostWorkspace should returned pinnedAt.
+		{
+			name: "valid-workspace",
+			req: &apiv1.PostWorkspaceRequest{
+				Name: uuid.NewString(),
+				CheckpointStorageConfig: newProtoStruct(t, map[string]any{
+					"type":       "s3",
+					"bucket":     "bucketofrain",
+					"secret_key": "thisisasecret",
+				}),
+				DefaultComputePool: "testRP",
+				DefaultAuxPool:     "testRP",
+			},
+			setupMockRM: func(*mocks.ResourceManager) {},
+			multiRM:     false,
+			expectedWksp: &workspacev1.Workspace{
+				Archived:       false,
+				Username:       curUser.Username,
+				Immutable:      false,
+				NumProjects:    0,
+				Pinned:         true,
+				UserId:         int32(curUser.ID),
+				NumExperiments: 0,
+				State:          workspacev1.WorkspaceState_WORKSPACE_STATE_UNSPECIFIED,
+				ErrorMessage:   "",
+				AgentUserGroup: nil,
+				CheckpointStorageConfig: newProtoStruct(t, map[string]any{
+					"type":                 "s3",
+					"bucket":               "bucketofrain",
+					"secret_key":           "********",
+					"access_key":           nil,
+					"endpoint_url":         nil,
+					"prefix":               nil,
+					"save_experiment_best": nil,
+					"save_trial_best":      nil,
+					"save_trial_latest":    nil,
+				}),
+				DefaultComputePool: "testRP",
+				DefaultAuxPool:     "testRP",
+			},
+			expectedWsNs: nil,
+		},
+		{
+			name: "valid-cluster-name-valid-namespace-name-multiRM",
+			req: &apiv1.PostWorkspaceRequest{
+				Name:          uuid.NewString(),
+				ClusterName:   &cluster1,
+				NamespaceName: &namespaceName,
+			},
+			setupMockRM: func(mockRM *mocks.ResourceManager) {
+				mockRM.On("VerifyNamespaceExists", namespaceName, &cluster1).Return(nil).Once()
+			},
+			multiRM: true,
+			expectedWksp: &workspacev1.Workspace{
+				Username: curUser.Username,
+				Pinned:   true,
+				UserId:   int32(curUser.ID),
+			},
+			expectedWsNs: &model.WorkspaceNamespace{
+				NamespaceName: namespaceName,
+				ClusterName:   cluster1,
+			},
+		},
+		{
+			name: "valid-cluster-name-valid-namespace-name-kubernetesRM",
+			req: &apiv1.PostWorkspaceRequest{
+				Name:          uuid.NewString(),
+				ClusterName:   &cluster1,
+				NamespaceName: &namespaceName,
+			},
+			setupMockRM: func(mockRM *mocks.ResourceManager) {
+				mockRM.On("VerifyNamespaceExists", namespaceName, &cluster1).Return(nil).Once()
+			},
+			multiRM: false,
+			expectedWksp: &workspacev1.Workspace{
+				Username: curUser.Username,
+				Pinned:   true,
+				UserId:   int32(curUser.ID),
+			},
+			expectedWsNs: &model.WorkspaceNamespace{
+				NamespaceName: namespaceName,
+				ClusterName:   cluster1,
+			},
+		},
+		{
+			name: "valid-namespace-name-no-cluster-name-kubernetesRM",
+			req: &apiv1.PostWorkspaceRequest{
+				Name:          uuid.NewString(),
+				NamespaceName: &namespaceName,
+			},
+			setupMockRM: func(mockRM *mocks.ResourceManager) {
+				mockRM.On("RMType").Return(rm.TypeKubernetesRM).Once()
+				mockRM.On("VerifyNamespaceExists", namespaceName, (*string)(nil)).Return(nil).Once()
+			},
+			multiRM: false,
+			expectedWksp: &workspacev1.Workspace{
+				Username: curUser.Username,
+				Pinned:   true,
+				UserId:   int32(curUser.ID),
+			},
+			expectedWsNs: &model.WorkspaceNamespace{
+				NamespaceName: namespaceName,
+			},
+		},
+	}
+
+	for _, test := range successCases {
+		t.Run(test.name, func(t *testing.T) {
+			mockRM := MockRM()
+			test.setupMockRM(mockRM)
+			setMasterRms(api, mockRM, cluster1, test.multiRM)
+
+			resp, err := api.PostWorkspace(ctx, test.req)
+			require.NoError(t, err, "Test %s failed", test.name)
+
+			// Workspace returned correctly?
+			test.expectedWksp.Id = resp.Workspace.Id
+			test.expectedWksp.Name = test.req.Name
+
+			proto.Equal(test.expectedWksp, resp.Workspace)
+			require.Equal(t, test.expectedWksp, resp.Workspace)
+
+			if test.expectedWsNs != nil {
+				test.expectedWsNs.WorkspaceID = int(resp.Workspace.Id)
+				var wsns model.WorkspaceNamespace
+
+				// Workspace-namespace binding successful?
+				err = db.Bun().NewSelect().Model(&model.WorkspaceNamespace{}).
+					Where("workspace_id = ?", resp.Workspace.Id).
+					Where("namespace_name LIKE ?", test.req.NamespaceName).
+					Scan(ctx, &wsns)
+				require.NoError(t, err)
+				require.Equal(t, *test.expectedWsNs, wsns)
+
+				// Workspace persisted correctly?
+				getWorkResp, err := api.GetWorkspace(ctx, &apiv1.GetWorkspaceRequest{Id: resp.Workspace.Id})
+				require.NoError(t, err)
+				require.NotNil(t, getWorkResp.Workspace.PinnedAt)
+				getWorkResp.Workspace.PinnedAt = nil // Can't check timestamp exactly.
+				require.Equal(t, test.expectedWksp, getWorkResp.Workspace)
+			}
+		})
+	}
+}
+
+func setMasterRms(api *apiServer, mockRM *mocks.ResourceManager, mockRMName string, multiRM bool) {
+	api.m.rm = mockRM
+	api.m.allRms = map[string]rm.ResourceManager{
+		mockRMName: mockRM,
+	}
+	if multiRM {
+		mockRM2 := MockRM()
+		cluster2 := "k8sCluster2"
+		api.m.allRms[cluster2] = mockRM2
+		multiRMRouter := multirm.New(mockRMName, api.m.allRms)
+		api.m.rm = multiRMRouter
+	}
 }
 
 func TestGetWorkspaces(t *testing.T) {
@@ -545,6 +771,17 @@ func TestAuthzWorkspaceGetThenActionRoutes(t *testing.T) {
 			})
 			return err
 		}},
+		{"CanAddWorkspaceNamespaceBindings", func(id int) error {
+			namespaceName := "validNamespace"
+			clusterName := "validclusterName"
+			api.m.allRms = map[string]rm.ResourceManager{clusterName: api.m.rm}
+			_, err := api.AddWorkspaceNamespaceBinding(ctx, &apiv1.AddWorkspaceNamespaceBindingRequest{
+				Id:            int32(id),
+				NamespaceName: &namespaceName,
+				ClusterName:   &clusterName,
+			})
+			return err
+		}},
 	}
 
 	for _, curCase := range cases {
@@ -603,17 +840,33 @@ func TestWorkspaceHasModels(t *testing.T) {
 }
 
 func TestDeleteWorkspace(t *testing.T) {
+	mockRM := MockRM()
+	mockRM.On("RMType").Return(rm.TypeKubernetesRM).Once()
 	// set up api server
-	api, _, ctx := setupAPITest(t, nil)
+	api, _, ctx := setupAPITest(t, nil, mockRM)
 
 	// set up command service - required for successful DeleteWorkspaceRequest calls
 	cs, err := command.NewService(api.m.db, api.m.rm)
 	require.NoError(t, err)
 	command.SetDefaultService(cs)
-
-	// create workspace
+	// create workspace with namespace binding
 	workspaceName := uuid.New().String()
-	resp, err := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: workspaceName})
+	namespaceName := "validName"
+	mockRM.On("VerifyNamespaceExists", namespaceName, (*string)(nil)).Return(nil).Once()
+	resp, err := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{
+		Name:          workspaceName,
+		NamespaceName: &namespaceName,
+	})
+	require.NoError(t, err)
+
+	var wsns model.WorkspaceNamespace
+
+	findWsNsQuery := db.Bun().NewSelect().Model(&model.WorkspaceNamespace{}).
+		Where("workspace_id = ?", resp.Workspace.Id).
+		Where("namespace_name LIKE ?", namespaceName)
+
+	// Verify existence of workspace-namespace binding.
+	err = findWsNsQuery.Scan(ctx, &wsns)
 	require.NoError(t, err)
 
 	// delete workspace without models
@@ -621,6 +874,11 @@ func TestDeleteWorkspace(t *testing.T) {
 		Id: resp.Workspace.Id,
 	})
 	require.NoError(t, err)
+
+	// Verify workspace-namespace bindings are removed.
+	err = findWsNsQuery.Scan(ctx, &wsns)
+	require.Error(t, err)
+	require.Equal(t, err, sql.ErrNoRows)
 
 	// create another workspace, and add a model
 	workspaceName = uuid.New().String()
@@ -634,4 +892,524 @@ func TestDeleteWorkspace(t *testing.T) {
 		Id: resp.Workspace.Id,
 	})
 	require.Error(t, err)
+}
+
+func TestAddWorkspaceNamespaceBindings(t *testing.T) {
+	namespaceName := "validNamespaceName"
+	badNamespaceName := "invalidNamespaceName"
+	cluster1 := "validcluster1"
+	cluster2 := "validcluster2"
+	badClusterName := "nonexistentCluster"
+
+	mockRM := MockRM()
+	api, _, ctx := setupAPITest(t, nil, mockRM)
+	resp, err := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: uuid.NewString()})
+	require.NoError(t, err)
+	wkspID := resp.Workspace.Id
+
+	// Error Cases
+	type ErrorCases struct {
+		name        string
+		req         *apiv1.AddWorkspaceNamespaceBindingRequest
+		setupMockRM func(*mocks.ResourceManager)
+		multiRM     bool
+	}
+
+	errorCases := []ErrorCases{
+		{
+			name: "invalid-wksp-id",
+			req: &apiv1.AddWorkspaceNamespaceBindingRequest{
+				Id: -1,
+			},
+			setupMockRM: func(*mocks.ResourceManager) {},
+			multiRM:     false,
+		},
+		{
+			name: "invalid-namespace-name-valid-cluster-name-multiRM",
+			req: &apiv1.AddWorkspaceNamespaceBindingRequest{
+				Id:            wkspID,
+				NamespaceName: &badNamespaceName,
+				ClusterName:   &cluster1,
+			},
+			setupMockRM: func(mockRM *mocks.ResourceManager) {
+				mockRM.On("VerifyNamespaceExists", badNamespaceName, &cluster1).
+					Return(fmt.Errorf("namespace does not exist")).Once()
+			},
+			multiRM: true,
+		},
+		{
+			name: "invalid-cluster-name-valid-namespace-name-multiRM",
+			req: &apiv1.AddWorkspaceNamespaceBindingRequest{
+				Id:            wkspID,
+				NamespaceName: &namespaceName,
+				ClusterName:   &badClusterName,
+			},
+			setupMockRM: func(mockRM *mocks.ResourceManager) {},
+			multiRM:     true,
+		},
+		{
+			name: "no-cluster-name-valid-namespace-name-multiRM",
+			req: &apiv1.AddWorkspaceNamespaceBindingRequest{
+				Id:            wkspID,
+				NamespaceName: &namespaceName,
+			},
+			setupMockRM: func(mockRM *mocks.ResourceManager) {
+				mockRM.On("RMType").Return(rm.TypeMultiRMRouter).Once()
+			},
+			multiRM: true,
+		},
+		{
+			name: "no-namespace-name-valid-cluster-name-multiRM",
+			req: &apiv1.AddWorkspaceNamespaceBindingRequest{
+				Id:          wkspID,
+				ClusterName: &cluster1,
+			},
+			setupMockRM: func(mockRM *mocks.ResourceManager) {},
+			multiRM:     true,
+		},
+		{
+			name: "invalid-namespace-name-valid-cluster-name-kubernetesRM",
+			req: &apiv1.AddWorkspaceNamespaceBindingRequest{
+				Id:            wkspID,
+				ClusterName:   &cluster1,
+				NamespaceName: &badNamespaceName,
+			},
+			setupMockRM: func(mockRM *mocks.ResourceManager) {
+				mockRM.On("VerifyNamespaceExists", badNamespaceName, &cluster1).
+					Return(fmt.Errorf("Namespace does not exist")).Once()
+			},
+			multiRM: false,
+		},
+		{
+			name: "invalid-namespace-name-no-cluster-name-kubernetesRM",
+			req: &apiv1.AddWorkspaceNamespaceBindingRequest{
+				Id:            wkspID,
+				NamespaceName: &badNamespaceName,
+			},
+			setupMockRM: func(mockRM *mocks.ResourceManager) {
+				mockRM.On("RMType").Return(rm.TypeKubernetesRM).Once()
+				mockRM.On("VerifyNamespaceExists", badNamespaceName, (*string)(nil)).
+					Return(fmt.Errorf("namespace does not exist")).Once()
+			},
+			multiRM: false,
+		},
+		{
+			name: "invalid-cluster-name-valid-namespace-name-kubernetesRM",
+			req: &apiv1.AddWorkspaceNamespaceBindingRequest{
+				Id:            wkspID,
+				ClusterName:   &badClusterName,
+				NamespaceName: &namespaceName,
+			},
+			setupMockRM: func(mockRM *mocks.ResourceManager) {},
+			multiRM:     false,
+		},
+		{
+			name: "no-namespace-name-valid-cluster-name-kubernetesRM",
+			req: &apiv1.AddWorkspaceNamespaceBindingRequest{
+				Id:          wkspID,
+				ClusterName: &cluster1,
+			},
+			setupMockRM: func(mockRM *mocks.ResourceManager) {},
+			multiRM:     false,
+		},
+	}
+
+	for _, test := range errorCases {
+		t.Run(test.name, func(t *testing.T) {
+			mockRM := MockRM()
+			test.setupMockRM(mockRM)
+			setMasterRms(api, mockRM, cluster1, test.multiRM)
+			_, err := api.AddWorkspaceNamespaceBinding(ctx, test.req)
+			require.Error(t, err)
+		})
+	}
+
+	namespace1 := "validnamespace1"
+	namespace2 := "validnamespace2"
+	newNamespace1Name := "validnamespace3"
+
+	// Setup MultiRM.
+	mockRM1 := MockRM()
+	mockRM2 := MockRM()
+	api.m.allRms = map[string]rm.ResourceManager{
+		cluster1: mockRM1,
+		cluster2: mockRM2,
+	}
+	api.m.rm = multirm.New(cluster1, api.m.allRms)
+
+	// Create a workspace-namespace binding for the initially unbound workspace.
+	mockRM1.On("VerifyNamespaceExists", namespace1, &cluster1).Return(nil).Once()
+	respWsNs, err := api.AddWorkspaceNamespaceBinding(
+		ctx,
+		&apiv1.AddWorkspaceNamespaceBindingRequest{
+			Id:            wkspID,
+			NamespaceName: &namespace1,
+			ClusterName:   &cluster1,
+		},
+	)
+	require.NoError(t, err)
+
+	expectedWorkspaceNamespaceBinding := &workspacev1.WorkspaceNamespace{
+		WorkspaceId:   wkspID,
+		NamespaceName: namespace1,
+		ClusterName:   cluster1,
+	}
+
+	// Correct workspace-namespace binding returned?
+	proto.Equal(expectedWorkspaceNamespaceBinding, respWsNs.WorkspaceNamespace)
+	require.Equal(t, expectedWorkspaceNamespaceBinding, respWsNs.WorkspaceNamespace)
+
+	getBindingsForWkspQuery := db.Bun().NewSelect().
+		Model(&model.WorkspaceNamespace{}).
+		Where("workspace_id = ?", wkspID)
+
+	// Workspace-namespace binding exists in the database?
+	numBindings, err := getBindingsForWkspQuery.Count(ctx)
+	require.NoError(t, err)
+	require.Equal(t, 1, numBindings)
+
+	// Create an additional workspace-namespace binding for a different cluster.
+	mockRM2.On("VerifyNamespaceExists", namespace2, &cluster2).Return(nil).Once()
+	respWsNs, err = api.AddWorkspaceNamespaceBinding(ctx, &apiv1.AddWorkspaceNamespaceBindingRequest{
+		Id:            wkspID,
+		NamespaceName: &namespace2,
+		ClusterName:   &cluster2,
+	})
+	require.NoError(t, err)
+
+	// Correct workspace-namespace binding returned?
+	expectedWorkspaceNamespaceBinding = &workspacev1.WorkspaceNamespace{
+		WorkspaceId:   wkspID,
+		NamespaceName: namespace2,
+		ClusterName:   cluster2,
+	}
+
+	proto.Equal(expectedWorkspaceNamespaceBinding, respWsNs.WorkspaceNamespace)
+	require.Equal(t, expectedWorkspaceNamespaceBinding, respWsNs.WorkspaceNamespace)
+
+	// Correct number of Workspace-namespace bindings in the database?
+	numBindings, err = getBindingsForWkspQuery.Count(ctx)
+	require.NoError(t, err)
+	require.Equal(t, 2, numBindings)
+
+	// Change the namespace name of the first workspace-namespace binding and verify no error.
+	mockRM1.On("VerifyNamespaceExists", newNamespace1Name, &cluster1).Return(nil).Once()
+	respWsNs, err = api.AddWorkspaceNamespaceBinding(ctx, &apiv1.AddWorkspaceNamespaceBindingRequest{
+		Id:            wkspID,
+		NamespaceName: &newNamespace1Name,
+		ClusterName:   &cluster1,
+	})
+	require.NoError(t, err)
+
+	// Workspace-namespace binding changed successfully?
+	expectedWorkspaceNamespaceBinding = &workspacev1.WorkspaceNamespace{
+		WorkspaceId:   wkspID,
+		NamespaceName: newNamespace1Name,
+		ClusterName:   cluster1,
+	}
+	proto.Equal(expectedWorkspaceNamespaceBinding,
+		respWsNs.WorkspaceNamespace)
+	require.Equal(t, expectedWorkspaceNamespaceBinding, respWsNs.WorkspaceNamespace)
+
+	// Correct number of workspace-namespace bindings in the database?
+	numBindings, err = getBindingsForWkspQuery.Count(ctx)
+	require.NoError(t, err)
+	require.Equal(t, 2, numBindings)
+
+	// Set workspace-namespace binding to itself (effectively leaving the binding the same).
+	mockRM2.On("VerifyNamespaceExists", namespace2, &cluster2).Return(nil).Once()
+	respWsNs, err = api.AddWorkspaceNamespaceBinding(ctx, &apiv1.AddWorkspaceNamespaceBindingRequest{
+		Id:            wkspID,
+		NamespaceName: &namespace2,
+		ClusterName:   &cluster2,
+	})
+	require.NoError(t, err)
+
+	// Workspace-namespace binding lefr unchanged?
+	expectedWorkspaceNamespaceBinding = &workspacev1.WorkspaceNamespace{
+		WorkspaceId:   wkspID,
+		NamespaceName: namespace2,
+		ClusterName:   cluster2,
+	}
+	require.NoError(t, err)
+	proto.Equal(expectedWorkspaceNamespaceBinding,
+		respWsNs.WorkspaceNamespace)
+	require.Equal(t, expectedWorkspaceNamespaceBinding, respWsNs.WorkspaceNamespace)
+
+	// Correct number of workspace-namespace bindings in the database?
+	numBindings, err = getBindingsForWkspQuery.Count(ctx)
+	require.NoError(t, err)
+	require.Equal(t, 2, numBindings)
+
+	// Correct number of workspace-namespace bindings for each cluster?
+	numBindings, err = db.Bun().NewSelect().
+		Model(&model.WorkspaceNamespace{}).
+		Where("workspace_id = ?", wkspID).
+		Where("cluster_name LIKE ?", cluster1).
+		Count(ctx)
+	require.NoError(t, err)
+	require.Equal(t, 1, numBindings)
+
+	numBindings, err = db.Bun().NewSelect().
+		Model(&model.WorkspaceNamespace{}).
+		Where("workspace_id = ?", wkspID).
+		Where("cluster_name LIKE ?", cluster2).
+		Count(ctx)
+	require.NoError(t, err)
+	require.Equal(t, 1, numBindings)
+
+	// Setup KubernetesRM.
+	api.m.rm = mockRM1
+	delete(api.m.allRms, cluster2)
+
+	mockRM1.On("RMType").Return(rm.TypeKubernetesRM).Times(3)
+	mockRM1.On("VerifyNamespaceExists", namespace1, (*string)(nil)).Return(nil)
+
+	// Create workspace with namespace-binding.
+	resp, err = api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{
+		Name:          uuid.NewString(),
+		NamespaceName: &namespace1,
+	})
+	require.NoError(t, err)
+	wkspID = resp.Workspace.Id
+
+	getBindingsForWkspQuery = db.Bun().NewSelect().
+		Model(&model.WorkspaceNamespace{}).
+		Where("workspace_id = ?", wkspID)
+
+	// Correct number of workspace-namespace bindings exist in the database?
+	numBindings, err = getBindingsForWkspQuery.Count(ctx)
+	require.NoError(t, err)
+	require.Equal(t, 1, numBindings)
+
+	// Modify workspace-namespace binding for workspace
+	mockRM1.On("VerifyNamespaceExists", newNamespace1Name, (*string)(nil)).Return(nil).Once()
+	respWsNs, err = api.AddWorkspaceNamespaceBinding(ctx, &apiv1.AddWorkspaceNamespaceBindingRequest{
+		Id:            wkspID,
+		NamespaceName: &newNamespace1Name,
+	})
+	require.NoError(t, err)
+
+	// Workspace-namespace binding modified correctly?
+	expectedWorkspaceNamespaceBinding = &workspacev1.WorkspaceNamespace{
+		WorkspaceId:   wkspID,
+		NamespaceName: newNamespace1Name,
+	}
+	proto.Equal(expectedWorkspaceNamespaceBinding,
+		respWsNs.WorkspaceNamespace)
+	require.Equal(t, expectedWorkspaceNamespaceBinding, respWsNs.WorkspaceNamespace)
+
+	// Correct number of workspace-namespace bindings in the database?
+	numBindings, err = getBindingsForWkspQuery.Count(ctx)
+	require.NoError(t, err)
+	require.Equal(t, 1, numBindings)
+
+	// Set workspace-namespace binding to itself (effectively leaving the binding the same).
+	mockRM1.On("VerifyNamespaceExists", newNamespace1Name, (*string)(nil)).Return(nil).Once()
+	respWsNs, err = api.AddWorkspaceNamespaceBinding(ctx, &apiv1.AddWorkspaceNamespaceBindingRequest{
+		Id:            wkspID,
+		NamespaceName: &newNamespace1Name,
+	})
+	require.NoError(t, err)
+
+	// Workspace-namespace binding left unchanged?
+	expectedWorkspaceNamespaceBinding = &workspacev1.WorkspaceNamespace{
+		WorkspaceId:   wkspID,
+		NamespaceName: newNamespace1Name,
+	}
+	proto.Equal(expectedWorkspaceNamespaceBinding, respWsNs.WorkspaceNamespace)
+	require.Equal(t, expectedWorkspaceNamespaceBinding, respWsNs.WorkspaceNamespace)
+
+	// Correct number of workspace-namespace bindings in the database?
+	numBindings, err = getBindingsForWkspQuery.Count(ctx)
+	require.NoError(t, err)
+	require.Equal(t, 1, numBindings)
+}
+
+func TestListWorkspaceNamespaceBindings(t *testing.T) {
+	mockRM := MockRM()
+	api, _, ctx := setupAPITest(t, nil, mockRM)
+
+	resp, err := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{
+		Name: uuid.NewString(),
+	})
+	require.NoError(t, err)
+	wkspID := resp.Workspace.Id
+
+	// Setup Kubernetes RM.
+	allRms := map[string]rm.ResourceManager{"": mockRM}
+	api.m.allRms = allRms
+
+	// Test list bindings with single RM default namespace (not explicitly added in the database).
+	wsNsResp, err := api.ListWorkspaceNamespaceBindings(
+		ctx,
+		&apiv1.ListWorkspaceNamespaceBindingsRequest{Id: wkspID},
+	)
+	require.NoError(t, err)
+	require.Equal(t, 1, len(wsNsResp.NamespaceBindings))
+
+	expectedWsNsBinding := &workspacev1.WorkspaceNamespace{
+		WorkspaceId:   wkspID,
+		NamespaceName: defaultKubernetesNamespace,
+		ClusterName:   "",
+	}
+	proto.Equal(expectedWsNsBinding, wsNsResp.NamespaceBindings[0])
+	require.Equal(t, expectedWsNsBinding, wsNsResp.NamespaceBindings[0])
+
+	// Test list bindings with namespace and no cluster name (Kubernetes RM).
+	namespace1Name := "namespace1"
+	mockRM.On("VerifyNamespaceExists", namespace1Name, (*string)(nil)).Return(nil).Once()
+	mockRM.On("RMType").Return(rm.TypeKubernetesRM).Once()
+
+	_, err = api.AddWorkspaceNamespaceBinding(ctx, &apiv1.AddWorkspaceNamespaceBindingRequest{
+		Id:            wkspID,
+		NamespaceName: &namespace1Name,
+	},
+	)
+	require.NoError(t, err)
+
+	wsNsResp, err = api.ListWorkspaceNamespaceBindings(ctx,
+		&apiv1.ListWorkspaceNamespaceBindingsRequest{Id: wkspID},
+	)
+	require.NoError(t, err)
+	require.Equal(t, 1, len(wsNsResp.NamespaceBindings))
+
+	emptyClusterName := ""
+	expectedWsNsBinding = &workspacev1.WorkspaceNamespace{
+		WorkspaceId:   wkspID,
+		NamespaceName: namespace1Name,
+		ClusterName:   emptyClusterName,
+	}
+	proto.Equal(expectedWsNsBinding, wsNsResp.NamespaceBindings[0])
+	require.Equal(t, expectedWsNsBinding, wsNsResp.NamespaceBindings[0])
+
+	// Give Kubernetes RM a cluster name. A binding including the new RM's default namespace
+	// and cluster name should be added to the list. The previously added binding should still be
+	// listed with its binding labeled "stale".
+	delete(api.m.allRms, emptyClusterName)
+	cluster1Name := "cluster1"
+	api.m.allRms[cluster1Name] = mockRM
+
+	staleBindings := map[string]int{emptyClusterName + staleLabel: 1}
+
+	wsNsResp, err = api.ListWorkspaceNamespaceBindings(ctx,
+		&apiv1.ListWorkspaceNamespaceBindingsRequest{Id: wkspID},
+	)
+	require.NoError(t, err)
+	require.Equal(t, 2, len(wsNsResp.NamespaceBindings))
+
+	expectedBindings := map[string]*workspacev1.WorkspaceNamespace{
+		emptyClusterName + staleLabel: {
+			WorkspaceId:   wkspID,
+			NamespaceName: namespace1Name,
+			ClusterName:   emptyClusterName + staleLabel,
+		},
+		cluster1Name: {
+			WorkspaceId:   wkspID,
+			NamespaceName: defaultKubernetesNamespace,
+			ClusterName:   cluster1Name,
+		},
+	}
+
+	for i, binding := range wsNsResp.NamespaceBindings {
+		require.Contains(t, expectedBindings, binding.ClusterName)
+		expectedWsNsBinding = expectedBindings[binding.ClusterName]
+		require.Equal(t, expectedWsNsBinding, wsNsResp.NamespaceBindings[i])
+	}
+
+	// Setup MultiRM
+
+	// Add more resource manageers which each have a stored workspace-namespace binding.
+	numRms := 5
+	for i := 2; i <= numRms; i++ {
+		mockRM := MockRM()
+		clusterName := "cluster" + strconv.Itoa(i)
+		namespaceName := "namespace" + strconv.Itoa(i)
+		mockRM.On("VerifyNamespaceExists", namespaceName, &clusterName).Return(nil).Once()
+		allRms[clusterName] = mockRM
+	}
+	api.m.allRms = allRms
+	multRMRouter := multirm.New(cluster1Name, api.m.allRms)
+	api.m.rm = multRMRouter
+
+	for i := 2; i <= numRms; i++ {
+		clusterName := "cluster" + strconv.Itoa(i)
+		namespaceName := "namespace" + strconv.Itoa(i)
+		_, err = api.AddWorkspaceNamespaceBinding(
+			ctx,
+			&apiv1.AddWorkspaceNamespaceBindingRequest{
+				Id:            wkspID,
+				NamespaceName: &namespaceName,
+				ClusterName:   &clusterName,
+			},
+		)
+		require.NoError(t, err)
+
+		expectedBindings[clusterName] = &workspacev1.WorkspaceNamespace{
+			WorkspaceId:   wkspID,
+			NamespaceName: namespaceName,
+			ClusterName:   clusterName,
+		}
+	}
+
+	// Are all workspace-namespacebindings correctly listed for each respective cluster?
+	wsNsResp, err = api.ListWorkspaceNamespaceBindings(
+		ctx,
+		&apiv1.ListWorkspaceNamespaceBindingsRequest{Id: wkspID},
+	)
+	require.NoError(t, err)
+	require.Equal(t, numRms+len(staleBindings), len(wsNsResp.NamespaceBindings))
+
+	for _, binding := range wsNsResp.NamespaceBindings {
+		expectedBinding := expectedBindings[binding.ClusterName]
+		require.Equal(t, expectedBinding, binding)
+	}
+
+	// Remove two of the additional resource managers.
+	for i := 2; i <= 3; i++ {
+		clusterName := "cluster" + strconv.Itoa(i)
+		delete(api.m.allRms, clusterName)
+		binding, ok := expectedBindings[clusterName]
+		require.True(t, ok)
+		delete(expectedBindings, clusterName)
+		binding.ClusterName += staleLabel
+		expectedBindings[binding.ClusterName] = binding
+		staleBindings[clusterName] = 1
+	}
+
+	// Are the removed resource managers' workspace-namespace bindings labeled as stale?
+	wsNsResp, err = api.ListWorkspaceNamespaceBindings(
+		ctx,
+		&apiv1.ListWorkspaceNamespaceBindingsRequest{Id: wkspID},
+	)
+	require.NoError(t, err)
+	require.Equal(t, len(api.m.allRms)+len(staleBindings), len(wsNsResp.NamespaceBindings))
+
+	for _, binding := range wsNsResp.NamespaceBindings {
+		expectedBinding := expectedBindings[binding.ClusterName]
+		require.Equal(t, expectedBinding, binding)
+	}
+
+	// Remove the stale bindings.
+	_, err = db.Bun().NewDelete().Model(&model.WorkspaceNamespace{}).
+		Where("workspace_id = ?", wkspID).
+		Where("cluster_name LIKE ?", emptyClusterName).
+		WhereOr("cluster_name LIKE ?", "cluster2").
+		WhereOr("cluster_name LIKE ?", "cluster3").
+		Exec(ctx)
+	require.NoError(t, err)
+
+	// Stale bindings no longer listed?
+	wsNsResp, err = api.ListWorkspaceNamespaceBindings(
+		ctx,
+		&apiv1.ListWorkspaceNamespaceBindingsRequest{Id: wkspID},
+	)
+	require.NoError(t, err)
+	require.Equal(t, 3, len(wsNsResp.NamespaceBindings))
+	require.NoError(t, err)
+
+	for _, binding := range wsNsResp.NamespaceBindings {
+		expectedBinding := expectedBindings[binding.ClusterName]
+		require.Equal(t, expectedBinding, binding)
+	}
 }

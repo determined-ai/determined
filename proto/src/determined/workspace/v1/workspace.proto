@@ -97,16 +97,15 @@ message PatchWorkspace {
   string default_aux_pool = 15 [deprecated = true];
   // Name of the default aux pool can be optional.
   optional string default_aux_resource_pool = 17;
-  // Namespaces to which the workspace is bound.
-  optional string namespace_bindings = 18;
 }
 
-// WorkspaceNamespaceBinding represents workspace-namespace binding for a given cluster.
-message WorkspaceNamespaceBinding {
+// WorkspaceNamespace represents a workspace-namespace binding for a given
+// cluster.
+message WorkspaceNamespace {
   // The id of the workspace.
-  int32 id = 1;
+  int32 workspace_id = 2;
   // The namespace name.
-  string namespace_name = 2;
+  string namespace_name = 3;
   // User cluster name.
-  string cluster_name = 3;
+  string cluster_name = 4;
 }

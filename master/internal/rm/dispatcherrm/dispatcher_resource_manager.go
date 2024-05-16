@@ -203,6 +203,11 @@ func New(
 	return m, nil
 }
 
+// RMType is the type of resource manager that allocates resources for the corresponding cluster.
+func (m *DispatcherResourceManager) RMType() rm.ResourceManagerType {
+	return rm.TypeDispatcherRM
+}
+
 // Allocate adds a task to the queue to be allocated.
 func (m *DispatcherResourceManager) Allocate(msg sproto.AllocateRequest) (*sproto.ResourcesSubscription, error) {
 	m.mu.Lock()
@@ -668,7 +673,8 @@ func (*DispatcherResourceManager) GetSlots(*apiv1.GetSlotsRequest) (*apiv1.GetSl
 	return nil, rmerrors.ErrNotSupported
 }
 
-func (*DispatcherResourceManager) CreateNamespace(bool, string, string) error {
+// VerifyNamespaceExists is unsupported.
+func (*DispatcherResourceManager) VerifyNamespaceExists(string, *string) error {
 	return rmerrors.ErrNotSupported
 }
 

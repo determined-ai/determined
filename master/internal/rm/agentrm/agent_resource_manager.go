@@ -106,6 +106,11 @@ func newAgentResourceManager(
 	return a, nil
 }
 
+// RMType is the type of resource manager that allocates resources for the corresponding cluster.
+func (a *ResourceManager) RMType() rm.ResourceManagerType {
+	return rm.TypeAgentRM
+}
+
 // Allocate implements rm.ResourceManager.
 func (a *ResourceManager) Allocate(msg sproto.AllocateRequest) (*sproto.ResourcesSubscription, error) {
 	// this code exists to handle the case where an experiment does not have
@@ -577,9 +582,10 @@ func (a *ResourceManager) ValidateResourcePool(name rm.ResourcePoolName) error {
 	return nil
 }
 
-func (a *ResourceManager) CreateNamespace(autoCreateNamespace bool, namespaceName,
-	clusterName string) error {
-	return fmt.Errorf("Cannot create namespace with resource manager type AgentRM.", rmerrors.ErrNotSupported)
+// VerifyNamespaceExists is not supported.
+func (a *ResourceManager) VerifyNamespaceExists(namespaceName string, clusterName *string) error {
+	return fmt.Errorf("cannot verify namespace existence with resource manager type AgentRM: %w",
+		rmerrors.ErrNotSupported)
 }
 
 func (a *ResourceManager) createResourcePool(

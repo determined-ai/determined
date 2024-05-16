@@ -106,19 +106,18 @@ type WorkspacePin struct {
 	UserID        UserID `bun:"user_id"`
 }
 
-// WorkspaceNamesapce is the bun model of a namespace.
+// WorkspaceNamespace is the bun model of a workspace-namespace binding.
 type WorkspaceNamespace struct {
-	bun.BaseModel `bun:"table:workspace_namespace"`
-	ID            int    `bun:"id,pk,autoincrement"`
+	bun.BaseModel `bun:"table:workspace_namespace_bindings"`
+	WorkspaceID   int    `bun:"workspace_id"`
 	NamespaceName string `bun:"namespace_name"`
 	ClusterName   string `bun:"cluster_name"`
-	WorkspaceID   int    `bun:"workspace_id"`
 }
 
 // ToProto converts a WorkspaceNamespaceBinding to its protobuf representation.
-func (wn WorkspaceNamespace) ToProto() *workspacev1.WorkspaceNamespaceBinding {
-	return &workspacev1.WorkspaceNamespaceBinding{
-		Id:            int32(wn.ID),
+func (wn WorkspaceNamespace) ToProto() *workspacev1.WorkspaceNamespace {
+	return &workspacev1.WorkspaceNamespace{
+		WorkspaceId:   int32(wn.WorkspaceID),
 		NamespaceName: wn.NamespaceName,
 		ClusterName:   wn.ClusterName,
 	}

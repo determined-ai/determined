@@ -20,7 +20,7 @@ WORKSPACE_HEADERS = [
     "Agent Group",
     "Default Compute Pool",
     "Default Aux Pool",
-    "Namespace Bindings" 
+    "Namespace Bindings",
 ]
 
 workspace_arg: cli.Arg = cli.Arg("-w", "--workspace-name", type=str, help="workspace name")
@@ -147,40 +147,41 @@ def list_pools(args: argparse.Namespace) -> None:
         as_csv=False,
     )
 
+
 def list_workspace_namespace_bindings(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     w = api.workspace_by_name(sess, args.workspace_name)
     resp = bindings.get_ListWorkspaceNamespaceBindings(sess, id=w.id)
-    if len(resp.workspaceNamespaceBindings) > 0:
+    if resp.namespaceBindings:
         cluster_namespaces = []
-        for binding in resp.workspaceNamespaceBindings:
+        for binding in resp.namespaceBindings:
             cluster_namespaces.append([binding.clusterName, binding.namespaceName])
         render.tabulate_or_csv(
-        headers=["Cluster", "Namespace"],
-        values=cluster_namespaces,
-        as_csv=False,
-)
+            headers=["Cluster", "Namespace"],
+            values=cluster_namespaces,
+            as_csv=False,
+        )
     else:
         print("No workspace-namespace bindings for workspace " + args.workspace_name)
+    return None
 
-   
 
-def add_workspace_namespace_binding(args: argparse.Namespace):
+def add_workspace_namespace_binding(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     w = api.workspace_by_name(sess, args.workspace_name)
-    content= bindings.v1ModifyWorkspaceNamespaceBindingRequest(
+    content = bindings.v1AddWorkspaceNamespaceBindingRequest(
         id=w.id,
         clusterName=args.cluster_name,
         namespaceName=args.namespace_name,
     )
     workspace_name = str(args.workspace_name)
-    
-    n = bindings.post_ModifyWorkspaceNamespaceBinding(
-        sess, 
-        body=content,
-        id=w.id).name
 
-    print("Workspace " + workspace_name + " is bound to " + n)
+    wsns = bindings.post_AddWorkspaceNamespaceBinding(sess, body=content, id=w.id)
+
+    if args.cluster_name:
+        cluster_details = "for cluster " + wsns.cluster_name + "."
+    print("Workspace", workspace_name, "is bound to namespace", wsns.namespace_name,
+          cluster_details)
     return None
 
 
@@ -213,15 +214,8 @@ def create_workspace(args: argparse.Namespace) -> None:
     checkpoint_storage = _parse_checkpoint_storage_args(args)
 
     if args.cluster_name and not args.namespace:
-        raise api.errors.BadRequestException(
-            "must provide --namespace NAMESPACE"
-        )
+        raise api.errors.BadRequestException("must provide --namespace NAMESPACE")
 
-    if args.namespace and not args.cluster_name:
-        raise api.errors.BadRequestException(
-            "must specify --cluster-name CLUSTER_NAME"
-        )
-    
     sess = cli.setup_session(args)
     content = bindings.v1PostWorkspaceRequest(
         name=args.name,
@@ -238,6 +232,9 @@ def create_workspace(args: argparse.Namespace) -> None:
         render.print_json(w.to_json())
     else:
         render_workspaces([w])
+
+    if args.namespace:
+        print("Workspace", w.name, "is bound to namespace", args.namespace)
 
 
 def describe_workspace(args: argparse.Namespace) -> None:
@@ -434,11 +431,20 @@ args_description = [
                     *CHECKPOINT_STORAGE_WORKSPACE_ARGS,
                     *DEFAULT_POOL_ARGS,
                     cli.Arg("--json", action="store_true", help="print as JSON"),
-                    cli.Arg("--cluster-name", type=str, help="cluster within which we create the \
-                        workspace-namespace binding"),
+                    cli.Arg(
+                        "--cluster-name",
+                        type=str,
+                        help="cluster within which we create the \
+                        workspace-namespace binding",
+                    ),
                     cli.Group(
-                         cli.Arg("-n", "--namespace", type=str, help="existing namespace to which \
-                            the workspace is bound"),
+                        cli.Arg(
+                            "-n",
+                            "--namespace",
+                            type=str,
+                            help="existing namespace to which \
+                            the workspace is bound",
+                        ),
                     ),
                 ],
             ),
@@ -489,10 +495,18 @@ args_description = [
                         "add workspace-namespace binding",
                         [
                             cli.Arg("workspace_name", type=str, help="name of the workspace"),
-                            cli.Arg("cluster_name", type=str, help="cluster within which we create \
-                                the workspace-namespace binding"),
-                            cli.Arg("--namespace_name", type=str, help="existing namespace to which \
-                                the workspace is bound."),
+                            cli.Arg(
+                                "namespace_name",
+                                type=str,
+                                help="existing namespace to which \
+                                the workspace is bound.",
+                            ),
+                            cli.Arg(
+                                "--cluster_name",
+                                type=str,
+                                help="cluster within which we create \
+                                the workspace-namespace binding",
+                            ),
                         ],
                     ),
                     cli.Cmd(

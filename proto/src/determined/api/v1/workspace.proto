@@ -215,7 +215,7 @@ message DeleteWorkspaceResponse {
 }
 
 // Request for modifying a namespace binding to a workspace.
-message ModifyWorkspaceNamespaceBindingRequest {
+message AddWorkspaceNamespaceBindingRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "id" ] }
   };
@@ -223,19 +223,19 @@ message ModifyWorkspaceNamespaceBindingRequest {
   // The unique id of the workspace.
   int32 id = 1;
   // Optional name of the cluster containing the namespace.
-  string cluster_name = 2;
+  optional string cluster_name = 2;
   // Optional name of the namespace to which we bind the workspace.
   optional string namespace_name = 3;
 }
 
 // Response for modify a namespace binding to a workspace.
-message ModifyWorkspaceNamespaceBindingResponse {
+message AddWorkspaceNamespaceBindingResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "name" ] }
+    json_schema: { required: [ "workspace_namespace" ] }
   };
 
-  // The updated workspace.
-  string name = 1;
+  // The added workspace-namespace binding.
+  determined.workspace.v1.WorkspaceNamespace workspace_namespace = 1;
 }
 
 // Request for listing namespaces bound to a workspace.
@@ -251,7 +251,12 @@ message ListWorkspaceNamespaceBindingsRequest {
 // Response for listing namespaces bound to a workspace.
 message ListWorkspaceNamespaceBindingsResponse {
   // List of namespaces bound to the workspace.
-  repeated determined.workspace.v1.WorkspaceNamespaceBinding workspace_namespace_bindings = 1;
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "namespace_bindings" ] }
+  };
+
+  // List of workspace-namespace bindings for a given workspace.
+  repeated determined.workspace.v1.WorkspaceNamespace namespace_bindings = 1;
 }
 
 // Request for archiving a workspace.

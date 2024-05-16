@@ -37,6 +37,11 @@ func New(defaultRMName string, rms map[string]rm.ResourceManager) *MultiRMRouter
 	}
 }
 
+// RMType is the type of resource manager that allocates resources for the corresponding cluster.
+func (m *MultiRMRouter) RMType() rm.ResourceManagerType {
+	return rm.TypeMultiRMRouter
+}
+
 // GetAllocationSummaries returns the allocation summaries for all resource pools across all resource managers.
 func (m *MultiRMRouter) GetAllocationSummaries() (
 	map[model.AllocationID]sproto.AllocationSummary,
@@ -381,15 +386,20 @@ func (m *MultiRMRouter) DisableSlot(req *apiv1.DisableSlotRequest) (*apiv1.Disab
 	return m.rms[resolvedRMName].DisableSlot(req)
 }
 
-func (m *MultiRMRouter) CreateNamespace(autoCreateNamespace bool, namespaceName string,
-	clusterName string) error {
-	rm, err := m.getRM(clusterName)
-	if err != nil {
-		return fmt.Errorf("Error getting resource manager for cluster %s: %w", clusterName, err)
+// VerifyNamespaceExists verifies the existence of a Kubernetes namespace within a given cluster.
+func (m *MultiRMRouter) VerifyNamespaceExists(namespaceName string,
+	clusterName *string,
+) error {
+	if clusterName == nil {
+		return fmt.Errorf("must specify cluster name when using multiRM")
 	}
-	err = rm.CreateNamespace(autoCreateNamespace, namespaceName, clusterName)
+	rm, err := m.getRM(*clusterName)
 	if err != nil {
-		return fmt.Errorf("Error creating namespace %s: %w", namespaceName, err)
+		return fmt.Errorf("error getting resource manager for cluster %p: %w", clusterName, err)
+	}
+	err = rm.VerifyNamespaceExists(namespaceName, clusterName)
+	if err != nil {
+		return fmt.Errorf("error verifying namespace existence %s: %w", namespaceName, err)
 	}
 
 	return nil
@@ -418,18 +428,14 @@ func (m *MultiRMRouter) getRMName(rpName rm.ResourcePoolName) (string, error) {
 }
 
 func (m *MultiRMRouter) getRM(name string) (rm.ResourceManager, error) {
-	// If not given RM name, route to default RM.
-	for rmName, r := range m.rms {
-		if rmName == name {
-			return r, nil
-
-		} else if rmName == m.defaultRMName && name == "" {
-			m.syslog.Tracef("no name, routing to default resource manager")
-			return r, nil
-
-		}
+	if name == "" {
+		return m.rms[m.defaultRMName], nil
 	}
-	return nil, fmt.Errorf("No resource manager of the specified name")
+	resourceManager, ok := m.rms[name]
+	if !ok {
+		return nil, fmt.Errorf("no resource manager of the specified name")
+	}
+	return resourceManager, nil
 }
 
 func fanOutRMCall[TReturn any](m *MultiRMRouter, f func(rm.ResourceManager) (TReturn, error)) ([]TReturn, error) {

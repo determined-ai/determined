@@ -158,9 +158,9 @@ func (a *WorkspaceAuthZBasic) CanCreateWorkspaceWithCheckpointStorageConfig(
 	return nil
 }
 
-// CanModifyWorkspaceNamespaceBinding retruns a nil error.
-func (a *WorkspaceAuthZBasic) CanModifyWorkspaceNamespaceBindings(
-	ctx context.Context, curUser model.User,
+// CanAddWorkspaceNamespaceBindings retruns a nil error.
+func (a *WorkspaceAuthZBasic) CanAddWorkspaceNamespaceBindings(
+	ctx context.Context, curUser model.User, workspaceID int32,
 ) error {
 	return nil
 }

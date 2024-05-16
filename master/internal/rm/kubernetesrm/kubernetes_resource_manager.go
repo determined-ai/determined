@@ -134,6 +134,11 @@ func New(
 	return k, nil
 }
 
+// RMType is the type of resource manager that allocates resources for the corresponding cluster.
+func (k *ResourceManager) RMType() rm.ResourceManagerType {
+	return rm.TypeKubernetesRM
+}
+
 // Allocate implements rm.ResourceManager.
 func (k *ResourceManager) Allocate(msg sproto.AllocateRequest) (*sproto.ResourcesSubscription, error) {
 	// This code exists to handle the case where an experiment does not have
@@ -383,16 +388,15 @@ func (k *ResourceManager) ValidateResources(
 	return nil, nil
 }
 
-// CreateNamespace implements rm.ResourceManager.
-func (k *ResourceManager) CreateNamespace(autoCreateNamespace bool, namespaceName string,
-	clusterName string) error {
+// VerifyNamespaceExists implements rm.ResourceManager.
+func (k *ResourceManager) VerifyNamespaceExists(namespaceName string, clusterName *string) error {
 	configClusterName := rm.ClusterName(k.config.ClusterName)
-	if configClusterName != rm.ClusterName(clusterName) {
+	if clusterName != nil && configClusterName != rm.ClusterName(*clusterName) {
 		return nil
 	}
-	err := k.podsService.CreateNamespace(autoCreateNamespace, namespaceName)
+	err := k.jobsService.VerifyNamespaceExists(namespaceName)
 	if err != nil {
-		return fmt.Errorf("error creating namespace %s: %w", namespaceName, err)
+		return fmt.Errorf("error verifying namespace existence %s: %w", namespaceName, err)
 	}
 	return nil
 }
