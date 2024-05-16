@@ -78,13 +78,13 @@ const ClusterMessageMaxLength = 250
 
 // SetClusterMessage sets the cluster-wide message. Any existing message will be expired because
 // only one cluster message is allowed at any time. Messages may be at most ClusterMessageMaxLength
-// characters long.
+// characters long. Returns a wrapped ErrInvalidInput when input is invalid.
 // Stuff to test:
 // - Max length of ClusterMessageMaxLength
 func SetClusterMessage(ctx context.Context, db *bun.DB, msg model.ClusterMessage) error {
 	if msgLen := utf8.RuneCountInString(msg.Message); msgLen > ClusterMessageMaxLength {
-		return fmt.Errorf("", ErrInvalidInput,
-			"message must be at most %d characters; got %d", ClusterMessageMaxLength, msgLen)
+		return fmt.Errorf("%w: message must be at most %d characters; got %d",
+			ErrInvalidInput, ClusterMessageMaxLength, msgLen)
 	}
 
 	if msg.EndTime.Time.Before(msg.StartTime) {
@@ -102,7 +102,7 @@ func SetClusterMessage(ctx context.Context, db *bun.DB, msg model.ClusterMessage
 			Where("end_time >= NOW() OR end_time IS NULL").
 			Exec(ctx)
 		if err != nil {
-			return errors.Wrap(err, "error clearing previous cluster-wide messages") // TODO: remove pkg/errors
+			return fmt.Errorf("%w: %s", err, "error clearing previous cluster-wide messages")
 		}
 
 		_, err = tx.NewInsert().
@@ -110,7 +110,7 @@ func SetClusterMessage(ctx context.Context, db *bun.DB, msg model.ClusterMessage
 			ExcludeColumn("created_time").
 			Exec(ctx)
 		if err != nil {
-			return errors.Wrap(err, "error setting the cluster-wide message") // TODO: remove pkg/errors
+			return fmt.Errorf("%w: %s", err, "error setting the cluster-wide message")
 		}
 		return nil
 	})
