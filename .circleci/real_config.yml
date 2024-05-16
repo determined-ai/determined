@@ -2706,7 +2706,7 @@ jobs:
                 echo "VM creation has finished."
                 break
               fi
-              if [[ $i -eq 220 ]]; then
+              if [[ $i -eq 500 ]]; then
                 echo "Timeout waiting for VM creation."
                 exit 1
               fi
