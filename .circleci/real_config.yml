@@ -4128,10 +4128,6 @@ workflows:
           requires:
             - build-react-oss
             - build-docs
-          filters:
-            branches:
-              only:
-                - main
 
       - upload-docs-search-index:
           requires:
