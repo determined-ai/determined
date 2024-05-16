@@ -4107,6 +4107,7 @@ workflows:
           context:
             - playwright
             - github-read
+            - dev-ci-cluster-default-user-credentials
           filters: *any-upstream
       - build-docs:
           requires:
@@ -4195,6 +4196,7 @@ workflows:
           context:
             - playwright
             - github-read
+            - dev-ci-cluster-default-user-credentials
           filters: *any-upstream
       - build-docs:
           requires:
