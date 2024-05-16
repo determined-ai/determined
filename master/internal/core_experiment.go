@@ -293,29 +293,28 @@ func (m *Master) parseCreateExperiment(ctx context.Context, req *apiv1.CreateExp
 	}
 	workspaceID := resolveWorkspaceID(workspaceModel)
 	isSingleNode := resources.IsSingleNode() != nil && *resources.IsSingleNode()
-	isUnmanaged := req.GetUnmanaged()
-	slotsPerTrial := resources.SlotsPerTrial()
-	if isUnmanaged {
-		slotsPerTrial = 0
+
+	taskSpec := *m.taskSpec
+	if !req.GetUnmanaged() {
+		poolName, _, err := m.ResolveResources(resources.ResourcePool(), resources.SlotsPerTrial(), workspaceID, isSingleNode)
+		if err != nil {
+			return nil, nil, config, nil, nil, errors.Wrapf(err, "invalid resource configuration")
+		}
+		taskContainerDefaults, err := m.rm.TaskContainerDefaults(
+			poolName,
+			m.config.TaskContainerDefaults,
+		)
+		if err != nil {
+			return nil, nil, config, nil, nil, errors.Wrapf(err, "error getting TaskContainerDefaults")
+		}
+		taskSpec.TaskContainerDefaults = taskContainerDefaults
+		taskSpec.TaskContainerDefaults.MergeIntoExpConfig(&config)
+
+		if defaulted.RawEntrypoint == nil {
+			return nil, nil, config, nil, nil, errors.New("managed experiments require entrypoint")
+		}
 	}
 
-	poolName, _, err := m.ResolveResources(resources.ResourcePool(), slotsPerTrial, workspaceID, isSingleNode)
-	if err != nil {
-		return nil, nil, config, nil, nil, errors.Wrapf(err, "invalid resource configuration")
-	}
-	taskContainerDefaults, err := m.rm.TaskContainerDefaults(
-		poolName,
-		m.config.TaskContainerDefaults,
-	)
-	if err != nil {
-		return nil, nil, config, nil, nil, errors.Wrapf(err, "error getting TaskContainerDefaults")
-	}
-	taskSpec := *m.taskSpec
-	taskSpec.TaskContainerDefaults = taskContainerDefaults
-	taskSpec.TaskContainerDefaults.MergeIntoExpConfig(&config)
-	if defaulted.RawEntrypoint == nil && (req.Unmanaged == nil || !*req.Unmanaged) {
-		return nil, nil, config, nil, nil, errors.New("managed experiments require entrypoint")
-	}
 	// Merge log retention into the taskSpec.
 	if config.RawRetentionPolicy != nil {
 		taskSpec.LogRetentionDays = config.RawRetentionPolicy.RawLogRetentionDays
@@ -381,7 +380,7 @@ func (m *Master) parseCreateExperiment(ctx context.Context, req *apiv1.CreateExp
 
 	dbExp, err := model.NewExperiment(
 		config, req.Config, parentID, false,
-		int(p.Id), isUnmanaged,
+		int(p.Id), req.GetUnmanaged(),
 	)
 	if err != nil {
 		return nil, nil, config, nil, nil, err
