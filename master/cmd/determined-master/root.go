@@ -70,7 +70,6 @@ func runRoot() error {
 // global logging state based on those options.
 func initializeConfig() error {
 	// Fetch an initial config to get the config file path and read its settings into Viper.
-	log.Warn("initialize config?")
 	initialConfig, err := getConfig(v.AllSettings())
 	if err != nil {
 		return err
@@ -175,7 +174,6 @@ func getConfig(configMap map[string]interface{}) (*config.Config, error) {
 		return nil, errors.Wrap(err, "cannot unmarshal configuration")
 	}
 
-	log.Warn("root resolve")
 	if err := config.Resolve(); err != nil {
 		return nil, err
 	}
@@ -195,14 +193,15 @@ func applyBackwardsCompatibility(configMap map[string]interface{}) (map[string]i
 	vProvisioner, provisionerExisted := configMap["provisioner"]
 
 	// Ensure we use either the old schema or the new one.
-	// an old scheduler is cached somewhere???
-	if (rmExisted || rpsExisted) && (schedulerExisted || provisionerExisted) {
+	oldRMConfig := schedulerExisted || provisionerExisted
+	newRMConfig := rmExisted || rpsExisted
+	if newRMConfig && oldRMConfig {
 		return nil, errors.New(
 			"cannot use the old and the new configuration schema at the same time",
 		)
 	}
-	//if (rmExisted || rpsExisted) && !(schedulerExisted || provisionerExisted) {
-	if rmExisted || rpsExisted {
+	// Use configMap if RMs are not defined at all, or if they are defined using the new schema.
+	if !oldRMConfig {
 		return configMap, nil
 	}
 
@@ -269,7 +268,6 @@ func applyBackwardsCompatibility(configMap map[string]interface{}) (map[string]i
 			newRM["default_gpu_resource_pool"] = defaultVal
 		}
 	}
-	log.Warn("using new scheduler")
 	newRM["scheduler"] = newScheduler
 	configMap["resource_manager"] = newRM
 
