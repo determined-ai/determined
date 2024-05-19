@@ -3,26 +3,24 @@ import { expect } from '@playwright/test';
 import { BaseComponent, NamedComponent, NamedComponentArgs } from 'e2e/models/BaseComponent';
 import { DropdownMenu } from 'e2e/models/hew/Dropdown';
 
-type RowClass<
-  RowType extends Row<RowType, HeadRowType>,
-  HeadRowType extends HeadRow<RowType, HeadRowType>,
-> = new (args: RowArgs<RowType, HeadRowType>) => RowType;
-type HeadRowClass<
-  RowType extends Row<RowType, HeadRowType>,
-  HeadRowType extends HeadRow<RowType, HeadRowType>,
-> = new (args: HeadRowArgs<RowType, HeadRowType>) => HeadRowType;
+type RowClass<RowType extends Row<HeadRowType>, HeadRowType extends HeadRow<RowType>> = new (
+  args: RowArgs<RowType, HeadRowType>,
+) => RowType;
+type HeadRowClass<RowType extends Row<HeadRowType>, HeadRowType extends HeadRow<RowType>> = new (
+  args: HeadRowArgs<RowType, HeadRowType>,
+) => HeadRowType;
 
 export type RowArgs<
-  RowType extends Row<RowType, HeadRowType>,
-  HeadRowType extends HeadRow<RowType, HeadRowType>,
+  RowType extends Row<HeadRowType>,
+  HeadRowType extends HeadRow<RowType>,
 > = NamedComponentArgs & { parentTable: DataGrid<RowType, HeadRowType> };
 export type HeadRowArgs<
-  RowType extends Row<RowType, HeadRowType>,
-  HeadRowType extends HeadRow<RowType, HeadRowType>,
+  RowType extends Row<HeadRowType>,
+  HeadRowType extends HeadRow<RowType>,
 > = NamedComponentArgs & { parentTable: DataGrid<RowType, HeadRowType> };
 export type TableArgs<
-  RowType extends Row<RowType, HeadRowType>,
-  HeadRowType extends HeadRow<RowType, HeadRowType>,
+  RowType extends Row<HeadRowType>,
+  HeadRowType extends HeadRow<RowType>,
 > = NamedComponentArgs & {
   rowType: RowClass<RowType, HeadRowType>;
   headRowType: HeadRowClass<RowType, HeadRowType>;
@@ -38,8 +36,8 @@ export type TableArgs<
  * @param {HeadRowType} [obj.headRowType] - Value of the HeadRowType used to instanciate the head row
  */
 export class DataGrid<
-  RowType extends Row<RowType, HeadRowType>,
-  HeadRowType extends HeadRow<RowType, HeadRowType>,
+  RowType extends Row<HeadRowType>,
+  HeadRowType extends HeadRow<RowType>,
 > extends NamedComponent {
   readonly defaultSelector = '[class^="DataGrid_base"]';
   constructor(args: TableArgs<RowType, HeadRowType>) {
@@ -268,17 +266,14 @@ export class DataGrid<
  * @param {string} obj.selector - Used as a selector uesd to locate this object
  * @param {DataGrid<RowType, HeadRowType>} [obj.parentTable] - Reference to the original table
  */
-export class Row<
-  RowType extends Row<RowType, HeadRowType>,
-  HeadRowType extends HeadRow<RowType, HeadRowType>,
-> extends NamedComponent {
+export class Row<HeadRowType extends HeadRow<Row<HeadRowType>>> extends NamedComponent {
   readonly defaultSelector = 'tr';
   readonly indexAttribute = 'aria-rowindex';
-  constructor(args: RowArgs<RowType, HeadRowType>) {
+  constructor(args: RowArgs<Row<HeadRowType>, HeadRowType>) {
     super(args);
     this.parentTable = args.parentTable;
   }
-  parentTable: DataGrid<RowType, HeadRowType>;
+  parentTable: DataGrid<Row<HeadRowType>, HeadRowType>;
 
   protected columnPositions: Map<string, number> = new Map<string, number>([['Select', 5]]);
 
@@ -370,14 +365,11 @@ export class Row<
  * @param {CanBeParent} obj.parent - The parent used to locate this HeadRow
  * @param {string} obj.selector - Used as a selector uesd to locate this object
  */
-export class HeadRow<
-  RowType extends Row<RowType, HeadRowType>,
-  HeadRowType extends HeadRow<RowType, HeadRowType>,
-> extends NamedComponent {
+export class HeadRow<RowType extends Row<HeadRow<RowType>>> extends NamedComponent {
   readonly columnIndexAttribute = 'aria-colindex';
   readonly defaultSelector = 'tr';
-  readonly parentTable: DataGrid<RowType, HeadRowType>;
-  constructor(args: HeadRowArgs<RowType, HeadRowType>) {
+  readonly parentTable: DataGrid<RowType, HeadRow<RowType>>;
+  constructor(args: HeadRowArgs<RowType, HeadRow<RowType>>) {
     super(args);
     this.parentTable = args.parentTable;
   }
