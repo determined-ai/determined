@@ -87,11 +87,11 @@ func SetClusterMessage(ctx context.Context, db *bun.DB, msg model.ClusterMessage
 			ErrInvalidInput, ClusterMessageMaxLength, msgLen)
 	}
 
-	if msg.EndTime.Time.Before(msg.StartTime) {
+	if msg.EndTime.Valid && msg.EndTime.Time.Before(msg.StartTime) {
 		return fmt.Errorf("%w, %s", ErrInvalidInput, "end time must be after start time")
 	}
 
-	if msg.EndTime.Time.Before(time.Now()) {
+	if msg.EndTime.Valid && msg.EndTime.Time.Before(time.Now()) {
 		return fmt.Errorf("%w, %s", ErrInvalidInput, "end time must be after current time")
 	}
 

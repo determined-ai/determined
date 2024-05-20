@@ -5,8 +5,10 @@ package db
 
 import (
 	"context"
+	"database/sql"
 	"testing"
 	"time"
+	"unicode/utf8"
 
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
@@ -42,7 +44,7 @@ func TestGetActiveClusterMessage(t *testing.T) {
 	}()
 
 	// test no messages returns not found
-	msg, err := GetActiveClusterMessage(ctx, bunDB)
+	_, err := GetActiveClusterMessage(ctx, bunDB)
 	require.True(t, errors.Is(err, ErrNotFound))
 
 	// test get active cluster message - infinite expiration
@@ -51,7 +53,7 @@ func TestGetActiveClusterMessage(t *testing.T) {
 	_, err = bunDB.NewInsert().Model(&values).Table(tableKey).Exec(ctx)
 	require.NoError(t, err)
 
-	msg, err = GetActiveClusterMessage(ctx, bunDB)
+	msg, err := GetActiveClusterMessage(ctx, bunDB)
 	require.NoError(t, err)
 	require.Equal(t, content, msg.Message)
 
@@ -98,7 +100,7 @@ func TestGetClusterMessage(t *testing.T) {
 	}()
 
 	// test no messages returns not found
-	msg, err := GetClusterMessage(ctx, bunDB)
+	_, err := GetClusterMessage(ctx, bunDB)
 	require.True(t, errors.Is(err, ErrNotFound), "expected err not found, but got:", err)
 
 	// test get cluster message - infinite expiration
@@ -149,9 +151,9 @@ func TestSetClusterMessage(t *testing.T) {
 	}()
 
 	// test get cluster message - infinite expiration
-	content := "test msg"
 	msg := model.ClusterMessage{
-		Message: content,
+		Message:   content,
+		CreatedBy: 1,
 	}
 
 	err := SetClusterMessage(ctx, bunDB, msg)
@@ -163,19 +165,42 @@ func TestSetClusterMessage(t *testing.T) {
 
 	// test cluster message > 250 runes
 	// TODO (eliu): fix borked test
-	//content = ""
-	//for x := 0; x < 251; x++ {
-	//	content += "a"
-	//}
-	//require.Equal(t, 251, utf8.RuneCountInString(msg.Message))
-	//
-	//msg = model.ClusterMessage{
-	//	Message: content,
-	//}
-	//err = SetClusterMessage(ctx, bunDB, msg)
-	//require.True(t, errors.Is(err, ErrInvalidInput))
+	runeContent := ""
+	for x := 0; x < 251; x++ {
+		runeContent += "a"
+	}
+	require.Equal(t, 251, utf8.RuneCountInString(runeContent))
+
+	msg = model.ClusterMessage{
+		Message: runeContent,
+	}
+	err = SetClusterMessage(ctx, bunDB, msg)
+	require.True(t, errors.Is(err, ErrInvalidInput))
 
 	// test expiration time before start time
+	msg = model.ClusterMessage{
+		Message:   content,
+		CreatedBy: 1,
+		EndTime: sql.NullTime{
+			Time:  time.Now().Add(time.Duration(1) * time.Minute),
+			Valid: true,
+		},
+		StartTime: time.Now().Add(time.Duration(1) * time.Hour),
+	}
+
+	err = SetClusterMessage(ctx, bunDB, msg)
+	require.True(t, errors.Is(err, ErrInvalidInput))
 
 	// test expiration time before now
+	msg = model.ClusterMessage{
+		Message:   content,
+		CreatedBy: 1,
+		EndTime: sql.NullTime{
+			Time:  time.Now().Add(time.Duration(-1) * time.Hour),
+			Valid: true,
+		},
+	}
+
+	err = SetClusterMessage(ctx, bunDB, msg)
+	require.True(t, errors.Is(err, ErrInvalidInput))
 }
