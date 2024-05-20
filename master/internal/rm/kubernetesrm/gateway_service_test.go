@@ -14,10 +14,10 @@ import (
 
 func TestGatewayServiceAddListeners(t *testing.T) {
 	gatewayMock := &mocks.GatewayInterface{}
-	g := gatewayService{
-		gatewayInterface: gatewayMock,
-		gatewayName:      "gatewayname",
-	}
+	g, err := newGatewayService(
+		gatewayMock, "gatewayname",
+	)
+	require.NoError(t, err)
 
 	toReturn := &gatewayTyped.Gateway{
 		Spec: gatewayTyped.GatewaySpec{
@@ -61,10 +61,10 @@ func TestGatewayServiceAddListeners(t *testing.T) {
 
 func TestGatewayServiceFreePorts(t *testing.T) {
 	gatewayMock := &mocks.GatewayInterface{}
-	g := gatewayService{
-		gatewayInterface: gatewayMock,
-		gatewayName:      "gatewayname",
-	}
+	g, err := newGatewayService(
+		gatewayMock, "gatewayname",
+	)
+	require.NoError(t, err)
 
 	toReturn := &gatewayTyped.Gateway{
 		Spec: gatewayTyped.GatewaySpec{

@@ -432,10 +432,11 @@ func (p *pods) startClientSet() error {
 		if err != nil {
 			return fmt.Errorf("creating Kubernetes gateway clientSet: %w", err)
 		}
-		p.gatewayService = &gatewayService{
-			gatewayInterface: gatewayClientSet.Gateways(exposeConfig.GatewayNamespace),
-			gatewayName:      exposeConfig.GatewayName,
+		gwService, err := newGatewayService(gatewayClientSet.Gateways(exposeConfig.GatewayNamespace), exposeConfig.GatewayName)
+		if err != nil {
+			return fmt.Errorf("creating gateway service: %w", err)
 		}
+		p.gatewayService = gwService
 	}
 
 	p.syslog.Infof("kubernetes clientSet initialized")

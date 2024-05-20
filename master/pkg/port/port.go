@@ -14,6 +14,7 @@ type Range struct {
 	usedPorts map[int]bool
 }
 
+// Validates the structure.
 func (p *Range) validate() error {
 	// TODO: min range.
 	if p.Start < 0 || p.End < 0 {
@@ -124,6 +125,7 @@ func NewRange(start, end int, usedPorts []int) (*Range, error) {
 	r := &Range{
 		Start:     start,
 		End:       end,
+		mu:        sync.Mutex{},
 		usedPorts: ports,
 	}
 	if err := r.validate(); err != nil {

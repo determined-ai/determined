@@ -10,6 +10,7 @@ import (
 	petName "github.com/dustinkirkland/golang-petname"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 	"gotest.tools/assert"
 
 	k8sV1 "k8s.io/api/core/v1"
@@ -376,16 +377,17 @@ func TestReceiveCreateKubernetesResources(t *testing.T) {
 	tcpInterface := &mocks.TCPRouteInterface{}
 	gatewayInterface := &mocks.GatewayInterface{}
 
+	gatewayService, err := &gatewayService(
+		gatewayInterface, "gatewayname")
+	require.NoError(t, err)
+
 	w := &requestProcessingWorker{
 		syslog:              logrus.New().WithField("test", "test"),
 		podInterfaces:       map[string]typedV1.PodInterface{"": podInterface},
 		configMapInterfaces: map[string]typedV1.ConfigMapInterface{"": configMapInterface},
 		serviceInterfaces:   map[string]typedV1.ServiceInterface{"": serviceInterface},
 		tcpRouteInterfaces:  map[string]alphaGateway.TCPRouteInterface{"": tcpInterface},
-		gatewayService: &gatewayService{
-			gatewayInterface: gatewayInterface,
-			gatewayName:      "gatewayname",
-		},
+		gatewayService:      gatewayService,
 	}
 
 	createReq := createKubernetesResources{
@@ -440,6 +442,9 @@ func TestReceiveDeleteKubernetesResources(t *testing.T) {
 	serviceInterface := &mocks.ServiceInterface{}
 	tcpInterface := &mocks.TCPRouteInterface{}
 	gatewayInterface := &mocks.GatewayInterface{}
+	gatewayService, err := &gatewayService(
+		gatewayInterface, "gatewayname")
+	require.NoError(t, err)
 
 	w := &requestProcessingWorker{
 		syslog:              logrus.New().WithField("test", "test"),
@@ -447,10 +452,7 @@ func TestReceiveDeleteKubernetesResources(t *testing.T) {
 		configMapInterfaces: map[string]typedV1.ConfigMapInterface{"": configMapInterface},
 		serviceInterfaces:   map[string]typedV1.ServiceInterface{"": serviceInterface},
 		tcpRouteInterfaces:  map[string]alphaGateway.TCPRouteInterface{"": tcpInterface},
-		gatewayService: &gatewayService{
-			gatewayInterface: gatewayInterface,
-			gatewayName:      "gatewayname",
-		},
+		gatewayService:      gatewayService,
 	}
 
 	deleteReq := deleteKubernetesResources{
