@@ -24,10 +24,14 @@ type gatewayService struct {
 }
 
 func newGatewayService(gatewayInterface gateway.GatewayInterface, gatewayName string) (*gatewayService, error) {
+	// TODO: make port range configurable by user. We currently assume we own the controller and
+	// the service.
+	// DOCS: note this limit on number of active proxied tasks.
 	portRange, err := port.NewRange(1024, 65535, make([]int, 0))
 	if err != nil {
 		return nil, fmt.Errorf("creating port range: %w", err)
 	}
+	// TODO: run an update to read in the used ports? not necessary.
 	return &gatewayService{
 		gatewayInterface: gatewayInterface,
 		gatewayName:      gatewayName,
@@ -87,6 +91,14 @@ func (g *gatewayService) updateGateway(update func(*gatewayTyped.Gateway)) error
 	if err != nil {
 		return fmt.Errorf("getting gateway with name '%s': %w", g.gatewayName, err)
 	}
+
+	// CHAT: We could run into issues with multi-tenant gateways.
+	// also probably don't need this on every update?
+	usedPorts := make([]int, 0, len(gateway.Spec.Listeners))
+	for _, listener := range gateway.Spec.Listeners {
+		usedPorts = append(usedPorts, int(listener.Port))
+	}
+	g.portRange.LoadInUsedPorts(usedPorts)
 
 	update(gateway)
 
