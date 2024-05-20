@@ -1,2 +1,12 @@
+[build-system]
+# Minimum requirements for the build system to execute.
+requires = ["setuptools>=64", "wheel", "setuptools_scm>=8"]
+build-backend = "setuptools.build_meta"
+
+[project]
+dynamic = ["version"]
+
 [tool.black]
 line-length = 100
+
+[tool.setuptools_scm]
