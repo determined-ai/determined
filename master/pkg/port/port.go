@@ -51,17 +51,26 @@ func (p *Range) nextAvailablePort() (int, error) {
 	return 0, errors.Errorf("no available ports in the range")
 }
 
-func (p *Range) getAndMarkUsed() (int, error) {
+// Allocates and marks the specified number of ports as used.
+func (p *Range) getAndMarkUsed(count int) ([]int, error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
-	for port := p.Start; port <= p.End; port++ {
+	allocatedPorts := []int{}
+	for port := p.Start; port <= p.End && len(allocatedPorts) < count; port++ {
 		if !p.usedPorts[port] {
 			p.usedPorts[port] = true
-			return port, nil
+			allocatedPorts = append(allocatedPorts, port)
 		}
 	}
-	return 0, errors.Errorf("no available ports in the range")
+	if len(allocatedPorts) < count {
+		// Free the allocated ports if we couldn't allocate enough
+		for _, port := range allocatedPorts {
+			delete(p.usedPorts, port)
+		}
+		return nil, errors.Errorf("not enough available ports in the range")
+	}
+	return allocatedPorts, nil
 }
 
 // Marks a port as used.
