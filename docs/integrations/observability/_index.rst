@@ -24,7 +24,7 @@ installation on Kubernetes.
 Create a Namespace
 ==================
 
--  Run the following command to create namespace called ``det-monitoring``:
+-  Run the following command to create a namespace called ``det-monitoring``:
 
    .. code:: bash
 
@@ -162,8 +162,11 @@ can visit the `Kube Prometheus stack documentation
      --set grafana.adminPassword=testPassword \
      --values grafana-prom-values.yaml
 
-Monitoring Dashboard Setup
-==========================
+Set Up a Monitoring Dashboard
+=============================
+
+This section guides you through the process of setting up monitoring dashboards for your Determined
+installation on Kubernetes.
 
 -  Add an API monitoring dashboard.
 
