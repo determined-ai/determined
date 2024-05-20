@@ -234,7 +234,14 @@ func (p *pod) podStatusUpdate(updatedPod *k8sV1.Pod) (cproto.State, error) {
 	case cproto.Running:
 		p.syslog.Infof("transitioning pod state from %s to %s", p.container.State, containerState)
 		p.container = p.container.Transition(cproto.Running)
-		p.informTaskResourcesStarted(getResourcesStartedForPod(p.pod, p.ports, p.exposeProxyConfig))
+		ports := p.ports
+		if p.exposeProxyConfig != nil {
+			ports = []int{}
+			for _, g := range p.gatewayProxyResources {
+				ports = append(ports, int(g.gatewayListener.Port))
+			}
+		}
+		p.informTaskResourcesStarted(getResourcesStartedForPod(p.pod, ports, p.exposeProxyConfig))
 		err := p.startPodLogStreamer()
 		if err != nil {
 			return p.container.State, err
@@ -587,20 +594,19 @@ func getResourcesStartedForPod(
 	pod *k8sV1.Pod, ports []int, exposeProxyConfig *config.ExposeProxiesExternallyConfig,
 ) sproto.ResourcesStarted {
 	addresses := []cproto.Address{}
-	for _, port := range ports {
-		address := cproto.Address{
-			ContainerIP:   pod.Status.PodIP,
-			ContainerPort: port,
-			HostIP:        pod.Status.PodIP,
-			HostPort:      port,
-		}
-		// TODO(RM-271/gateways) overwrite the port too if we do a translation of port
-		// to task container in the service layer.
-		if exposeProxy := exposeProxyConfig; exposeProxy != nil {
-			address.ContainerIP = exposeProxy.GatewayAddress
-			address.HostIP = exposeProxy.GatewayAddress
-		}
 
+	baseAddress := cproto.Address{
+		ContainerIP: pod.Status.PodIP,
+		HostIP:      pod.Status.PodIP,
+	}
+	if exposeProxyConfig != nil {
+		baseAddress.ContainerIP = exposeProxyConfig.GatewayAddress
+		baseAddress.HostIP = exposeProxyConfig.GatewayAddress
+	}
+	for _, port := range ports {
+		address := baseAddress
+		address.ContainerPort = port
+		address.HostPort = port
 		addresses = append(addresses, address)
 	}
 

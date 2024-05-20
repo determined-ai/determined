@@ -36,7 +36,7 @@ func newGatewayService(gatewayInterface gateway.GatewayInterface, gatewayName st
 }
 
 func (g *gatewayService) addListeners(listeners []gatewayTyped.Listener) error {
-	for i, listener := range listeners {
+	for i := range listeners {
 		// PERF: we could do bulk allocation an releases for lower lock contention.
 		ports, err := g.portRange.GetAndMarkUsed(1)
 		if err != nil {

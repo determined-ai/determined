@@ -15,6 +15,7 @@ type Range struct {
 }
 
 func (p *Range) validate() error {
+	// TODO: min range.
 	if p.Start < 0 || p.End < 0 {
 		return errors.Errorf("port range start and end must be positive")
 	}
