@@ -1,4 +1,7 @@
 #!/bin/bash
+
+set -e
+
 if [ -z "$1" ]; then
     echo "Usage: $0 <minikube_profile>"
     exit 1
@@ -33,8 +36,15 @@ spec:
           from: All
 EOF
 
-# Either like have a smaller subnet so we don't conflict. Or like don't start it for the second one.
-nohup minikube --profile $minikube_profile tunnel & # TODO won't work for users with sudo passwords.
+if sudo -n true 2>/dev/null; then
+    # Either like have a smaller subnet so we don't conflict. Or like don't start it for the second one.
+    nohup minikube --profile $minikube_profile tunnel & # TODO won't work for users with sudo passwords.
+else
+    echo "sudo password is required to start the tunnel."
+    echo "Please run the following command separately to start the tunnel:"
+    echo "minikube --profile $minikube_profile tunnel"
+    read -p "Press [Enter] once the tunnel has started..."
+fi
 
 for ((i = 0; i < 60; i++)); do
     export GATEWAY_IP=$(kubectl -n projectcontour get svc envoy-contour -o=jsonpath='{.status.loadBalancer.ingress[0].ip}')
