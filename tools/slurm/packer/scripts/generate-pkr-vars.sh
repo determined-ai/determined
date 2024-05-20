@@ -45,7 +45,7 @@ fi
 
 WORKLOAD_MANAGER="slurm"
 SOURCE_IMAGE_PROJECT_ID="schedmd-slurm-public"
-SOURCE_IMAGE_FAMILY="slurm-gcp-6-1-ubuntu-2004-lts"
+SOURCE_IMAGE_FAMILY="slurm-gcp-6-3-ubuntu-2004-lts"
 
 # Only one argument (predefined) will ever be passed in so this should be okay
 if [[ $1 == "pbs" ]]; then
