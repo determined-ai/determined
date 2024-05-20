@@ -1,4 +1,4 @@
-CREATE FUNCTION determined_code.stream_model_change() RETURNS trigger
+CREATE FUNCTION stream_model_change() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 BEGIN
@@ -18,7 +18,7 @@ CREATE TRIGGER stream_model_trigger_d BEFORE DELETE ON models FOR EACH ROW EXECU
 CREATE TRIGGER stream_model_trigger_iu AFTER INSERT OR UPDATE OF name, description, creation_time, last_updated_time, metadata, labels, user_id, archived, notes, workspace_id ON models FOR EACH ROW EXECUTE PROCEDURE stream_model_change();
 
 
-CREATE FUNCTION determined_code.stream_model_notify(before jsonb, after jsonb) RETURNS integer
+CREATE FUNCTION stream_model_notify(before jsonb, after jsonb) RETURNS integer
     LANGUAGE plpgsql
     AS $$
 DECLARE
@@ -39,7 +39,7 @@ return 0;
 END;
 $$;
 
-CREATE FUNCTION determined_code.stream_model_seq_modify() RETURNS trigger
+CREATE FUNCTION stream_model_seq_modify() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 BEGIN
@@ -50,7 +50,7 @@ $$;
 CREATE TRIGGER stream_model_trigger_seq BEFORE INSERT OR UPDATE OF name, description, creation_time, last_updated_time, metadata, labels, user_id, archived, notes, workspace_id ON models FOR EACH ROW EXECUTE PROCEDURE stream_model_seq_modify();
 
 
-CREATE FUNCTION determined_code.stream_model_version_change() RETURNS trigger
+CREATE FUNCTION stream_model_version_change() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 DECLARE
@@ -76,7 +76,7 @@ CREATE TRIGGER stream_model_version_trigger_d BEFORE DELETE ON model_versions FO
 CREATE TRIGGER stream_model_version_trigger_iu AFTER INSERT OR UPDATE OF name, version, checkpoint_uuid, last_updated_time, metadata, labels, user_id, model_id, notes, comment ON model_versions FOR EACH ROW EXECUTE PROCEDURE stream_model_version_change();
 
 
-CREATE FUNCTION determined_code.stream_model_version_change_by_model() RETURNS trigger
+CREATE FUNCTION stream_model_version_change_by_model() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 DECLARE
@@ -93,7 +93,7 @@ END;
 $$;
 CREATE TRIGGER stream_model_version_trigger_by_model_iu BEFORE UPDATE OF workspace_id ON models FOR EACH ROW EXECUTE PROCEDURE stream_model_version_change_by_model();
 
-CREATE FUNCTION determined_code.stream_model_version_notify(before jsonb, after jsonb) RETURNS integer
+CREATE FUNCTION stream_model_version_notify(before jsonb, after jsonb) RETURNS integer
     LANGUAGE plpgsql
     AS $$
 DECLARE
@@ -114,7 +114,7 @@ return 0;
 END;
 $$;
 
-CREATE FUNCTION determined_code.stream_model_version_seq_modify() RETURNS trigger
+CREATE FUNCTION stream_model_version_seq_modify() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 BEGIN
@@ -124,7 +124,7 @@ END;
 $$;
 CREATE TRIGGER stream_model_version_trigger_seq BEFORE INSERT OR UPDATE OF name, version, checkpoint_uuid, last_updated_time, metadata, labels, user_id, model_id, notes, comment ON model_versions FOR EACH ROW EXECUTE PROCEDURE stream_model_version_seq_modify();
 
-CREATE FUNCTION determined_code.stream_model_version_seq_modify_by_model() RETURNS trigger
+CREATE FUNCTION stream_model_version_seq_modify_by_model() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 BEGIN

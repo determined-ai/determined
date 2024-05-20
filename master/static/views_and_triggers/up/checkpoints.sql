@@ -1,4 +1,4 @@
-CREATE VIEW determined_code.checkpoints_view AS
+CREATE VIEW checkpoints_view AS
 SELECT c.id,
     c.uuid,
     c.task_id,
@@ -24,7 +24,7 @@ SELECT c.id,
      LEFT JOIN raw_validations v ON ((c.metadata ->> 'steps_completed'::text)::integer) = v.total_batches AND r.id = v.trial_id AND NOT v.archived
      LEFT JOIN raw_steps s ON ((c.metadata ->> 'steps_completed'::text)::integer) = s.total_batches AND r.id = s.trial_id AND NOT s.archived;
 
-CREATE VIEW determined_code.proto_checkpoints_view AS
+CREATE VIEW proto_checkpoints_view AS
 SELECT c.uuid,
     c.task_id,
     c.allocation_id,
@@ -36,7 +36,7 @@ SELECT c.uuid,
     jsonb_build_object('trial_id', c.trial_id, 'experiment_id', c.experiment_id, 'experiment_config', c.experiment_config, 'hparams', c.hparams, 'training_metrics', jsonb_build_object('avg_metrics', c.training_metrics -> 'avg_metrics'::text, 'batch_metrics', c.training_metrics -> 'batch_metrics'::text), 'validation_metrics', json_build_object('avg_metrics', c.validation_metrics), 'searcher_metric', c.searcher_metric) AS training
    FROM checkpoints_view c;
 
-CREATE FUNCTION determined_code.abort_checkpoint_delete() RETURNS trigger
+CREATE FUNCTION abort_checkpoint_delete() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 BEGIN
