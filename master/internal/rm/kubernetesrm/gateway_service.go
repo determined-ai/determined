@@ -37,18 +37,19 @@ func newGatewayService(gatewayInterface gateway.GatewayInterface, gatewayName st
 
 func (g *gatewayService) addListeners(listeners []gatewayTyped.Listener) error {
 	for i, listener := range listeners {
-		port, err := g.portRange.getAndMarkUsed()
+		// PERF: we could do bulk allocation an releases for lower lock contention.
+		ports, err := g.portRange.GetAndMarkUsed(1)
 		if err != nil {
 			return fmt.Errorf("allocating port: %w", err)
 		}
-		listeners[i].Port = gatewayTyped.PortNumber(port)
+		listeners[i].Port = gatewayTyped.PortNumber(ports[0])
 	}
 
 	if err := g.updateGateway(func(gateway *gatewayTyped.Gateway) {
 		gateway.Spec.Listeners = append(gateway.Spec.Listeners, listeners...)
 	}); err != nil {
 		for _, listener := range listeners {
-			_ = g.portRange.markPortAsFree(int(listener.Port))
+			_ = g.portRange.MarkPortAsFree(int(listener.Port))
 		}
 		return fmt.Errorf("adding listeners %+v to gateway: %w", listeners, err)
 	}
@@ -70,7 +71,7 @@ func (g *gatewayService) freePorts(ports []int) error {
 	}
 
 	for _, port := range ports {
-		if err := g.portRange.markPortAsFree(port); err != nil {
+		if err := g.portRange.MarkPortAsFree(port); err != nil {
 			return fmt.Errorf("marking port %d as free: %w", port, err)
 		}
 	}
@@ -89,8 +90,7 @@ func (g *gatewayService) updateGateway(update func(*gatewayTyped.Gateway)) error
 
 	update(gateway)
 
-	if _, err := g.gatewayInterface.
-		Update(context.TODO(), gateway, metaV1.UpdateOptions{}); err != nil {
+	if _, err := g.gatewayInterface.Update(context.TODO(), gateway, metaV1.UpdateOptions{}); err != nil {
 		return fmt.Errorf("updating gateway with name '%s': %w", g.gatewayName, err)
 	}
 

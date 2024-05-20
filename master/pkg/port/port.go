@@ -52,7 +52,7 @@ func (p *Range) nextAvailablePort() (int, error) {
 }
 
 // Allocates and marks the specified number of ports as used.
-func (p *Range) getAndMarkUsed(count int) ([]int, error) {
+func (p *Range) GetAndMarkUsed(count int) ([]int, error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
@@ -74,7 +74,7 @@ func (p *Range) getAndMarkUsed(count int) ([]int, error) {
 }
 
 // Marks a port as used.
-func (p *Range) markPortAsUsed(port int) error {
+func (p *Range) MarkPortAsUsed(port int) error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
@@ -89,7 +89,7 @@ func (p *Range) markPortAsUsed(port int) error {
 }
 
 // Marks a port as free.
-func (p *Range) markPortAsFree(port int) error {
+func (p *Range) MarkPortAsFree(port int) error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
