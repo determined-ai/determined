@@ -9415,17 +9415,23 @@ export interface V1ResourcePool {
      */
     stats?: V1QueueStats;
     /**
-     * Resource manager name.
+     * Deprecated, use cluster_name instead.
      * @type {string}
      * @memberof V1ResourcePool
      */
-    resourceManagerName: string;
+    resourceManagerName?: string;
     /**
      * Resource manager's metadata.
      * @type {{ [key: string]: string; }}
      * @memberof V1ResourcePool
      */
     resourceManagerMetadata: { [key: string]: string; };
+    /**
+     * Resource manager's associated cluster name.
+     * @type {string}
+     * @memberof V1ResourcePool
+     */
+    clusterName: string;
 }
 /**
  * 

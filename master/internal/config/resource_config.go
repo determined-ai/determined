@@ -103,7 +103,7 @@ func (r *ResourceConfig) ResolveResource() error {
 
 	// Default the name but only for the root level field.
 	if r.RootManagerInternal.ClusterName() == "" {
-		r.RootManagerInternal.setName(DefaultRMName)
+		r.RootManagerInternal.setClusterName(DefaultRMName)
 	}
 
 	// Add a default resource pool for nonslurm default resource managers.

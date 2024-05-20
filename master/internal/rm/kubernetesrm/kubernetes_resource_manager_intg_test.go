@@ -703,7 +703,7 @@ func TestGetResourcePools(t *testing.T) {
 			InstanceType:            "n/a",
 			Details:                 &resourcepoolv1.ResourcePoolDetail{},
 			Stats:                   &jobv1.QueueStats{},
-			ResourceManagerName:     expectedName,
+			ClusterName:             expectedName,
 			ResourceManagerMetadata: expectedMetadata,
 		},
 		{
@@ -718,7 +718,7 @@ func TestGetResourcePools(t *testing.T) {
 			InstanceType:            "n/a",
 			Details:                 &resourcepoolv1.ResourcePoolDetail{},
 			Stats:                   &jobv1.QueueStats{},
-			ResourceManagerName:     expectedName,
+			ClusterName:             expectedName,
 			ResourceManagerMetadata: expectedMetadata,
 		},
 	}

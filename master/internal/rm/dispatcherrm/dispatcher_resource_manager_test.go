@@ -551,7 +551,7 @@ func Test_summarizeResourcePool(t *testing.T) {
 				require.Empty(t, pool.Location)
 				require.Empty(t, pool.InstanceType)
 				require.Empty(t, pool.ImageId)
-				require.Equal(t, expectedName, pool.ResourceManagerName)
+				require.Equal(t, expectedName, pool.ClusterName)
 				require.Equal(t, expectedMetadata, pool.ResourceManagerMetadata)
 			}
 		})

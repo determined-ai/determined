@@ -125,7 +125,7 @@ class ClusterStore extends PollingStore {
     bindings.map((workspaceIds) => workspaceIds.toJS()),
   );
   public readonly multiResourceManagers = this.#resourcePools.select((pools) =>
-    pools.map((p) => new Set(p.map((pp) => pp.resourceManagerName)).size > 1),
+    pools.map((p) => new Set(p.map((pp) => pp.clusterName)).size > 1),
   );
 
   public readonly resourcePools = this.#resourcePools.select((loadable) => {

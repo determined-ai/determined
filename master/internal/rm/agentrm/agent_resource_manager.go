@@ -152,7 +152,7 @@ func (a *ResourceManager) DisableAgent(msg *apiv1.DisableAgentRequest) (*apiv1.D
 func (a *ResourceManager) HealthCheck() []model.ResourceManagerHealth {
 	return []model.ResourceManagerHealth{
 		{
-			Name:   a.config.Name,
+			Name:   a.config.ClusterName,
 			Status: model.Healthy,
 		},
 	}
@@ -761,7 +761,7 @@ func (a *ResourceManager) createResourcePoolSummary(
 		Details:                      &resourcepoolv1.ResourcePoolDetail{},
 		SlotType:                     slotType.Proto(),
 		Accelerator:                  accelerator,
-		ResourceManagerName:          a.config.Name,
+		ClusterName:                  a.config.ClusterName,
 		ResourceManagerMetadata:      a.config.Metadata,
 	}
 	if pool.Provider != nil {

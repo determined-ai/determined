@@ -26,6 +26,7 @@ const (
 // DispatcherResourceManagerConfig is the object that stores the values of
 // the "resource_manager" section of "tools/devcluster.yaml".
 type DispatcherResourceManagerConfig struct {
+	ClusterName                string       `json:"cluster_name"`
 	MasterHost                 string       `json:"master_host"`
 	MasterPort                 int          `json:"master_port"`
 	LauncherHost               string       `json:"host"`
@@ -54,9 +55,9 @@ type DispatcherResourceManagerConfig struct {
 	DefaultComputeResourcePool *string `json:"default_compute_resource_pool"`
 	JobProjectSource           *string `json:"job_project_source"`
 
-	Name        string            `json:"name"`
-	ClusterName string            `json:"cluster_name"`
-	Metadata    map[string]string `json:"metadata"`
+	// Deprecated, use ClusterName.
+	Name     string            `json:"name"`
+	Metadata map[string]string `json:"metadata"`
 
 	Security           *DispatcherSecurityConfig                     `json:"security"`
 	PartitionOverrides map[string]DispatcherPartitionOverrideConfigs `json:"partition_overrides"`
