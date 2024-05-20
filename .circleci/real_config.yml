@@ -2991,7 +2991,7 @@ jobs:
           name: Download Apptainer/Enroot image
           command: |
             # rocm images are not required at present
-            if sudo su - launcher -c "/etc/launcher/scripts/manage-singularity-cache --cpu --cuda <<pipeline.parameters.default-pt-gpu-image>>"; then
+            if sudo su - launcher -c "/etc/launcher/scripts/manage-singularity-cache <<pipeline.parameters.default-pt-gpu-image>>"; then
                 echo "Downloaded Singularity image <<pipeline.parameters.default-pt-gpu-image>> "
             else
                 EXIT_STATUS=$?
