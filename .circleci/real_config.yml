@@ -1725,6 +1725,7 @@ jobs:
           repository: nvcr.io
           username: ${NGC_API_USERNAME}
           password: ${NGC_API_KEY}
+      - run: tools/scripts/update-docker-tags.sh <<pipeline.parameters.det-version>>
       - pre-package-and-push-system
       - make-package
       - run: make -C master publish
@@ -1752,6 +1753,7 @@ jobs:
       - login-docker:
           username: ${DOCKER_USER}
           password: ${DOCKER_PASS}
+      - run: tools/scripts/update-docker-tags.sh <<pipeline.parameters.det-version>>
       - pre-package-and-push-system
       - make-package-ee
       - run: make -C master publish-ee
@@ -1780,6 +1782,7 @@ jobs:
           repository: nvcr.io
           username: ${NGC_API_USERNAME}
           password: ${NGC_API_KEY}
+      - run: tools/scripts/update-docker-tags.sh <<pipeline.parameters.det-version>> --release
       - pre-package-and-push-system
       - run:
           no_output_timeout: 30m
@@ -1810,6 +1813,7 @@ jobs:
       - login-docker:
           username: ${DOCKER_USER}
           password: ${DOCKER_PASS}
+      - run: tools/scripts/update-docker-tags.sh <<pipeline.parameters.det-version>>
       - pre-package-and-push-system
       - run:
           no_output_timeout: 30m
