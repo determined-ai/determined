@@ -287,8 +287,18 @@ test.describe('User Management', () => {
           },
         ]) {
           await test.step(`Compare table rows with pagination: ${name}`, async () => {
-            await pagination.perPage.openMenu();
-            await paginationOption.pwLocator.click();
+            await expect(
+              repeatWithFallback(
+                async () => {
+                  await pagination.perPage.openMenu();
+                  await paginationOption.pwLocator.click();
+                },
+                async () => {
+                  // BUG [ET-233]
+                  await userManagementPage.goto();
+                },
+              ),
+            ).toPass({ timeout: 25_000 });
             await expect(userManagementPage.skeletonTable.pwLocator).not.toBeVisible();
             const matches = (await pagination.perPage.selectionItem.pwLocator.innerText()).match(
               /(\d+) \/ page/,
