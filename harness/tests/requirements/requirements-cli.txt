@@ -4,4 +4,4 @@ mypy==0.910
 # responses 0.23.2 requires urllib3>=2, which breaks several other dependencies
 responses!=0.23.2
 requests_mock
-requests<2.32.0 # https://github.com/docker/docker-py/issues/3256
+

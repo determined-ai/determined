@@ -26,3 +26,4 @@ ddtrace
 selenium
 # Pexpect for okta testing
 pexpect
+requests != 2.32.0 # https://github.com/docker/docker-py/issues/3256
