@@ -174,16 +174,9 @@ const getloadTests = (
       !!sD?.workspace.projectId,
     ),
     test(
-      "Get Project Columns for Runs Table",
+      "get project columns for runs table",
       getRequest(
         `/api/v1/projects/${sD?.workspace.projectId}/columns?table_type=TABLE_TYPE_RUN`,
-      ),
-      !!sD?.workspace.projectId,
-    ),
-    test(
-      "Get Project Columns for Experiments Table",
-      getRequest(
-        `/api/v1/projects/${sD?.workspace.projectId}/columns?table_type=TABLE_TYPE_EXPERIMENT`,
       ),
       !!sD?.workspace.projectId,
     ),

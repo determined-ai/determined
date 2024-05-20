@@ -183,7 +183,7 @@ func getRunSummaryMetrics(ctx context.Context, whereClause string, group []int) 
 		Order("json_path").Order("metric_name")
 	err := trialsQuery.Scan(ctx, &summaryMetrics)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("retreiving project summary metrics: %w", err)
 	}
 
 	for idx, stats := range summaryMetrics {
@@ -479,7 +479,7 @@ func (a *apiServer) getProjectRunColumnsByID(
 		Type        string
 	}{}
 
-	// get all runs in project
+	// Get all runs in project.
 	runsQuery := db.Bun().NewSelect().
 		ColumnExpr("?::int as workspace_id", p.WorkspaceId).
 		Column("hparam").
@@ -504,13 +504,11 @@ func (a *apiServer) getProjectRunColumnsByID(
 	}
 
 	// Get summary metrics only if project is not empty.
-	if len(hyperparameters) > 0 {
-		summaryMetricColumns, err := getRunSummaryMetrics(ctx, "project_id IN (?)", []int{int(id)})
-		if err != nil {
-			return nil, err
-		}
-		columns = append(columns, summaryMetricColumns...)
+	summaryMetricColumns, err := getRunSummaryMetrics(ctx, "project_id IN (?)", []int{int(id)})
+	if err != nil {
+		return nil, err
 	}
+	columns = append(columns, summaryMetricColumns...)
 	for _, hparam := range hyperparameters {
 		columns = append(columns, &projectv1.ProjectColumn{
 			Column:   fmt.Sprintf("hp.%s", hparam.Hparam),
