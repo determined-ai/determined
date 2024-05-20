@@ -118,7 +118,7 @@ func ensureMigrationUpgrade(tx *pg.Tx) error {
 
 func (db *PgDB) readDBCodeAndCheckIfDifferent(
 	dbCodeDir string,
-) (map[string]string, string, bool, error) {
+) (dbCodeFiles map[string]string, hash string, needToUpdateDBCode bool, err error) {
 	upDir := filepath.Join(dbCodeDir, "up")
 	files, err := os.ReadDir(upDir)
 	if err != nil {
@@ -144,8 +144,8 @@ func (db *PgDB) readDBCodeAndCheckIfDifferent(
 
 	// I didn't want to get into deciding when to apply database or code or not but integration
 	// tests make it really hard to not do this.
-	hash := sha256.Sum256([]byte(allCode))
-	ourHash := hex.EncodeToString(hash[:])
+	hashSHA := sha256.Sum256([]byte(allCode))
+	ourHash := hex.EncodeToString(hashSHA[:])
 
 	// Check if the views_and_triggers_hash table exists. If it doesn't return that we need to create db code.
 	var tableExists bool
