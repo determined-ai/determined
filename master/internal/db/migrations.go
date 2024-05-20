@@ -135,6 +135,7 @@ func (db *PgDB) readDBCodeAndCheckIfDifferent(dbCodeDir string) (map[string]stri
 		if err != nil {
 			return nil, false, fmt.Errorf("reading view definition file '%s': %w", filePath, err)
 		}
+
 		fileNamesToSQL[f.Name()] = string(b)
 		allCode += string(b)
 	}
@@ -161,7 +162,7 @@ func (db *PgDB) readDBCodeAndCheckIfDifferent(dbCodeDir string) (map[string]stri
 		return nil, false, fmt.Errorf("getting hash from views_and_triggers_hash: %w", err)
 	}
 	if databaseHash == ourHash {
-		return fileNamesToSQL, false, nil
+		return fileNamesToSQL, true, nil
 	}
 
 	// Update our hash and return we need to create views and triggers.
