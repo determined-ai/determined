@@ -6,6 +6,7 @@ import (
 	"slices"
 	"sync"
 
+	"github.com/determined-ai/determined/master/pkg/port"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	gatewayTyped "sigs.k8s.io/gateway-api/apis/v1"
 	gateway "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned/typed/apis/v1"
@@ -19,6 +20,19 @@ type gatewayService struct {
 	mu               sync.Mutex
 	gatewayInterface gateway.GatewayInterface
 	gatewayName      string
+	portRange        *port.Range
+}
+
+func newGatewayService(gatewayInterface gateway.GatewayInterface, gatewayName string, portRangeStart, portRangeEnd int) (*gatewayService, error) {
+	portRange, err := port.NewRange(portRangeStart, portRangeEnd, make([]int, 0))
+	if err != nil {
+		return nil, fmt.Errorf("creating port range: %w", err)
+	}
+	return &gatewayService{
+		gatewayInterface: gatewayInterface,
+		gatewayName:      gatewayName,
+		portRange:        portRange,
+	}, nil
 }
 
 func (g *gatewayService) addListeners(listeners []gatewayTyped.Listener) error {
