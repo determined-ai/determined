@@ -31,7 +31,7 @@ setuptools.setup(
         # Common:
         "certifi",
         "filelock",
-        "requests<2.32.0", # TODO(MD-415) remove this pin.
+        "requests<2.32.0",  # TODO(MD-415) remove this pin.
         "google-cloud-storage",
         "lomond>=0.3.3",
         "pathspec>=0.6.0",
