@@ -1,6 +1,7 @@
 package port
 
 import (
+	"sync"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -119,4 +120,37 @@ func TestRange_MarkPortAsFree(t *testing.T) {
 	assert.NoError(t, err)
 	err = r.MarkPortAsFree(1600)
 	assert.Error(t, err)
+}
+
+func TestRange_ConcurrentMarkAndFree(t *testing.T) {
+	r, err := NewRange(1000, 1010, []int{})
+	require.NoError(t, err)
+
+	var wg sync.WaitGroup
+
+	markAndFreePort := func(port int) {
+		defer wg.Done()
+		err := r.MarkPortAsUsed(port)
+		if err != nil {
+			t.Logf("Failed to mark port %d as used: %v", port, err)
+			return
+		}
+		err = r.MarkPortAsFree(port)
+		if err != nil {
+			t.Logf("Failed to mark port %d as free: %v", port, err)
+		}
+	}
+
+	// Start concurrent goroutines
+	for i := 0; i < 10; i++ {
+		wg.Add(1)
+		go markAndFreePort(1000 + (i % 11)) // wrap around to test out of range too
+	}
+
+	wg.Wait()
+
+	// Verify no ports are marked as used
+	for i := 1000; i <= 1010; i++ {
+		assert.False(t, r.usedPorts[i], "port %d should be free", i)
+	}
 }
