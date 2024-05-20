@@ -185,7 +185,7 @@ func setSearchPath(sql *sqlx.DB) error {
 
 	if _, err := sql.Exec(`DO $$
 BEGIN
-   execute 'ALTER DATABASE "'||current_database()||'" SET SEARCH_PATH TO public,determined_code';
+   execute 'ALTER ROLE "'||current_role||'" SET SEARCH_PATH TO public,determined_code';
 END
 $$;`); err != nil {
 		return fmt.Errorf("setting search path on db connection: %w", err)
