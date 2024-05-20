@@ -20,6 +20,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/project"
+	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/templates"
 	"github.com/determined-ai/determined/master/internal/workspace"
 	"github.com/determined-ai/determined/master/pkg/archive"
@@ -295,25 +296,28 @@ func (m *Master) parseCreateExperiment(ctx context.Context, req *apiv1.CreateExp
 	isSingleNode := resources.IsSingleNode() != nil && *resources.IsSingleNode()
 
 	taskSpec := *m.taskSpec
+	var poolName rm.ResourcePoolName
 	if !req.GetUnmanaged() {
-		poolName, _, err := m.ResolveResources(resources.ResourcePool(), resources.SlotsPerTrial(), workspaceID, isSingleNode)
+		poolName, _, err = m.ResolveResources(resources.ResourcePool(), resources.SlotsPerTrial(), workspaceID, isSingleNode)
 		if err != nil {
 			return nil, nil, config, nil, nil, errors.Wrapf(err, "invalid resource configuration")
 		}
-		taskContainerDefaults, err := m.rm.TaskContainerDefaults(
-			poolName,
-			m.config.TaskContainerDefaults,
-		)
-		if err != nil {
-			return nil, nil, config, nil, nil, errors.Wrapf(err, "error getting TaskContainerDefaults")
-		}
-		taskSpec.TaskContainerDefaults = taskContainerDefaults
-		taskSpec.TaskContainerDefaults.MergeIntoExpConfig(&config)
 
 		if defaulted.RawEntrypoint == nil {
 			return nil, nil, config, nil, nil, errors.New("managed experiments require entrypoint")
 		}
 	}
+
+	taskContainerDefaults, err := m.rm.TaskContainerDefaults(
+		poolName,
+		m.config.TaskContainerDefaults,
+	)
+	if err != nil {
+		return nil, nil, config, nil, nil, errors.Wrapf(err, "error getting TaskContainerDefaults")
+	}
+
+	taskSpec.TaskContainerDefaults = taskContainerDefaults
+	taskSpec.TaskContainerDefaults.MergeIntoExpConfig(&config)
 
 	// Merge log retention into the taskSpec.
 	if config.RawRetentionPolicy != nil {
