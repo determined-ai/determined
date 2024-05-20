@@ -679,7 +679,7 @@ func TestGetRMName(t *testing.T) {
 	}
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
-			rmName, err := mockMultiRM.getRM(tt.rpName)
+			rmName, err := mockMultiRM.getRMName(tt.rpName)
 			require.Equal(t, tt.expectedRMName, rmName)
 			require.Equal(t, tt.err, err)
 		})

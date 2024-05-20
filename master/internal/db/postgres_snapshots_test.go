@@ -20,7 +20,8 @@ import (
 func TestCustomSearcherSnapshot(t *testing.T) {
 	err := etc.SetRootPath(RootFromDB)
 	require.NoError(t, err)
-	db := MustResolveTestPostgres(t)
+	db, close := MustResolveTestPostgres(t)
+	defer close()
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 	user := RequireMockUser(t, db)
 	exp := RequireMockExperiment(t, db, user)

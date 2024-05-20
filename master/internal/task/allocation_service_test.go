@@ -32,12 +32,14 @@ import (
 )
 
 func TestStartAllocation(t *testing.T) {
-	db, _, id, q, exitFuture := requireStarted(t)
+	db, close, _, id, q, exitFuture := requireStarted(t)
+	defer close()
 	defer requireKilled(t, db, id, q, exitFuture)
 }
 
 func TestRestoreFailed(t *testing.T) {
-	db, _, id, q, exitFuture := requireStarted(t)
+	db, close, _, id, q, exitFuture := requireStarted(t)
+	defer close()
 	defer requireKilled(t, db, id, q, exitFuture)
 
 	q.Put(&sproto.ResourcesRestoreError{
@@ -49,7 +51,8 @@ func TestRestoreFailed(t *testing.T) {
 
 func TestInvalidResourcesRequest(t *testing.T) {
 	// TODO(DET-9699): Unify InvalidResourcesRequestError and ResourcesFailure code paths.
-	db, _, id, q, exitFuture := requireStarted(t)
+	db, close, _, id, q, exitFuture := requireStarted(t)
+	defer close()
 	defer requireKilled(t, db, id, q, exitFuture)
 
 	q.Put(&sproto.InvalidResourcesRequestError{
@@ -74,7 +77,8 @@ func (c *checkWriter) AddTaskLogs(logs []*model.TaskLog) error {
 }
 
 func TestSendLog(t *testing.T) {
-	db, _, id, q, exitFuture := requireStarted(t)
+	db, close, _, id, q, exitFuture := requireStarted(t)
+	defer close()
 	defer requireKilled(t, db, id, q, exitFuture)
 
 	log := "hello, world"
@@ -94,7 +98,8 @@ func TestSendLog(t *testing.T) {
 }
 
 func TestSetReady(t *testing.T) {
-	db, _, id, q, exitFuture := requireStarted(t)
+	db, close, _, id, q, exitFuture := requireStarted(t)
+	defer close()
 	defer requireKilled(t, db, id, q, exitFuture)
 
 	err := DefaultService.SetReady(context.TODO(), id)
@@ -107,7 +112,8 @@ func TestSetReady(t *testing.T) {
 }
 
 func TestSetWaiting(t *testing.T) {
-	db, _, id, q, exitFuture := requireStarted(t)
+	db, close, _, id, q, exitFuture := requireStarted(t)
+	defer close()
 	defer requireKilled(t, db, id, q, exitFuture)
 
 	err := DefaultService.SetWaiting(context.TODO(), id)
@@ -118,12 +124,13 @@ func TestSetWaiting(t *testing.T) {
 
 func TestSetProxyAddress(t *testing.T) {
 	proxy.InitProxy(nil)
-	db, _, id, q, exitFuture := requireStarted(t, func(ar *sproto.AllocateRequest) {
+	db, close, _, id, q, exitFuture := requireStarted(t, func(ar *sproto.AllocateRequest) {
 		ar.ProxyPorts = append(ar.ProxyPorts, &sproto.ProxyPortConfig{
 			ServiceID: "someid",
 			Port:      25,
 		})
 	})
+	defer close()
 	defer requireKilled(t, db, id, q, exitFuture)
 
 	addr := "localhost"
@@ -140,7 +147,8 @@ func TestSetProxyAddress(t *testing.T) {
 }
 
 func TestServiceRendezvous(t *testing.T) {
-	db, _, id, q, exitFuture := requireStarted(t)
+	db, close, _, id, q, exitFuture := requireStarted(t)
+	defer close()
 	defer requireKilled(t, db, id, q, exitFuture)
 
 	rID, _ := requireAssigned(t, db, id, q)
@@ -173,7 +181,8 @@ func TestServiceRendezvous(t *testing.T) {
 }
 
 func TestGracefullyTerminateAfterRestart(t *testing.T) {
-	pgDB := requireDeps(t)
+	pgDB, close := requireDeps(t)
+	defer close()
 
 	t.Log("setting up mocks")
 	var rm mocks.ResourceManager
@@ -278,7 +287,8 @@ func TestGracefullyTerminateAfterRestart(t *testing.T) {
 }
 
 func TestAllGather(t *testing.T) {
-	db, _, id, q, exitFuture := requireStarted(t)
+	db, close, _, id, q, exitFuture := requireStarted(t)
+	defer close()
 	defer requireKilled(t, db, id, q, exitFuture)
 
 	rID, _ := requireAssigned(t, db, id, q)
@@ -344,9 +354,10 @@ func TestPreemption(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			db, _, id, q, exitFuture := requireStarted(t, func(ar *sproto.AllocateRequest) {
+			db, close, _, id, q, exitFuture := requireStarted(t, func(ar *sproto.AllocateRequest) {
 				ar.Preemptible = true
 			})
+			defer close()
 			defer requireKilled(t, db, id, q, exitFuture)
 
 			rID, _ := requireAssigned(t, db, id, q)
@@ -404,7 +415,8 @@ func TestSignalBeforeLaunch(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			db, rm, id, q, exitFuture := requireStarted(t)
+			db, close, rm, id, q, exitFuture := requireStarted(t)
+			defer close()
 			defer requireKilled(t, db, id, q, exitFuture)
 
 			err := DefaultService.Signal(id, tt.args.sig, "some severe reason")
@@ -436,7 +448,8 @@ func TestSignalBeforeReady(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			db, rm, id, q, exitFuture := requireStarted(t)
+			db, close, rm, id, q, exitFuture := requireStarted(t)
+			defer close()
 			defer requireKilled(t, db, id, q, exitFuture)
 
 			_, _ = requireAssigned(t, db, id, q)
@@ -452,7 +465,8 @@ func TestSignalBeforeReady(t *testing.T) {
 }
 
 func TestSetResourcesDaemon(t *testing.T) {
-	db, rm, id, q, exitFuture := requireStarted(t)
+	db, close, rm, id, q, exitFuture := requireStarted(t)
+	defer close()
 	resources := requireAssignedMany(t, db, id, q, 3)
 
 	t.Log("setting daemon should have no effect (yet)")
@@ -491,7 +505,8 @@ func TestSetResourcesDaemon(t *testing.T) {
 }
 
 func TestStartError(t *testing.T) {
-	pgDB := requireDeps(t)
+	pgDB, close := requireDeps(t)
+	defer close()
 
 	var rm mocks.ResourceManager
 	expectedErr := fmt.Errorf("rm crashed")
@@ -511,7 +526,8 @@ func TestStartError(t *testing.T) {
 }
 
 func TestRestore(t *testing.T) {
-	pgDB := requireDeps(t)
+	pgDB, close := requireDeps(t)
+	defer close()
 
 	restoredTask := db.RequireMockTask(t, pgDB, nil)
 	restoredAr := stubAllocateRequest(restoredTask)
@@ -527,9 +543,10 @@ func TestRestore(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	db, _, id, q, exitFuture := requireStarted(t, func(ar *sproto.AllocateRequest) {
+	db, close, _, id, q, exitFuture := requireStarted(t, func(ar *sproto.AllocateRequest) {
 		*ar = restoredAr
 	})
+	defer close()
 
 	rID, resources := requireAssigned(t, pgDB, restoredAr.AllocationID, q)
 	q.Put(&sproto.ResourcesAllocated{
@@ -541,7 +558,7 @@ func TestRestore(t *testing.T) {
 	defer requireKilled(t, db, id, q, exitFuture)
 }
 
-func requireDeps(t *testing.T) *db.PgDB {
+func requireDeps(t *testing.T) (*db.PgDB, func()) {
 	tasklogger.SetDefaultLogger(tasklogger.New(&nullWriter{}))
 	portregistry.InitPortRegistry(nil)
 	require.NoError(t, etc.SetRootPath("../static/srv"))
@@ -550,12 +567,13 @@ func requireDeps(t *testing.T) *db.PgDB {
 
 func requireStarted(t *testing.T, opts ...func(*sproto.AllocateRequest)) (
 	*db.PgDB,
+	func(),
 	*mocks.ResourceManager,
 	model.AllocationID,
 	*queue.Queue[sproto.ResourcesEvent],
 	*atomic.Pointer[AllocationExited],
 ) {
-	pgDB := requireDeps(t)
+	pgDB, close := requireDeps(t)
 
 	var rm mocks.ResourceManager
 
@@ -598,7 +616,7 @@ func requireStarted(t *testing.T, opts ...func(*sproto.AllocateRequest)) (
 	require.Nil(t, state.SingleContainerAddresses())
 	require.Contains(t, DefaultService.GetAllAllocationIDs(), ar.AllocationID)
 
-	return pgDB, &rm, ar.AllocationID, q, &exitFuture
+	return pgDB, close, &rm, ar.AllocationID, q, &exitFuture
 }
 
 func stubAllocateRequest(task *model.Task) sproto.AllocateRequest {

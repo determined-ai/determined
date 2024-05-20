@@ -30,13 +30,13 @@ parameters:
     default: ubuntu-2004:2024.01.1
   gpu-machine-image:
     type: string
-    default: ubuntu-2004-cuda-11.2:202103-01
+    default: linux-cuda-12:default
   # DEFAULT_PT_GPU_IMAGE: Pytorch training image reference used by the tests
   # Inject here as a parameter so that it is updated by bumpversion, and can
   # be referenced by --ee testing.
   default-pt-gpu-image:
     type: string
-    default: determinedai/pytorch-tensorflow-cuda-dev:8b3bea3
+    default: determinedai/pytorch-ngc-dev:8b3bea3
   # Some python, go, and react dependencies are cached by circleci via `save_cache`/`restore_cache`.
   # If the dependencies stay the same, but the circleci code that would produce them is changed,
   # it may be necessary to invalidate the cache by incrementing this value.
@@ -251,7 +251,7 @@ commands:
       - when:
           condition: <<parameters.tf2>>
           steps:
-            - run: docker pull determinedai/pytorch-tensorflow-cpu-dev:8b3bea3
+            - run: docker pull determinedai/pytorch-ngc-dev:8b3bea3
 
   login-docker:
     parameters:
@@ -650,8 +650,11 @@ commands:
           command: |
             pytest -vv -s \
             -m <<parameters.mark>> \
+            --junitxml=/tmp/test-results/det-deploy-tests.xml \
             --no-compare-stats \
             --det-version="<<parameters.det-version>>"
+      - store_test_results:
+          path: /tmp/test-results/
 
   deploy-aws-cluster:
     parameters:
@@ -2155,6 +2158,8 @@ jobs:
       - setup-python-venv:
           executor: <<pipeline.parameters.machine-image>>
       - setup-go-intg-deps
+      - run: curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64 && sudo install minikube-linux-amd64 /usr/local/bin/minikube
+      - run: minikube start
       - run: make -C master test-intg
       - codecov/upload:
           flags: "backend"
@@ -2311,10 +2316,12 @@ jobs:
           root: .
           paths:
             - test-unit-harness-cpu-pycov
+      - store_test_results:
+          path: /tmp/test-results
 
-  test-unit-harness-gpu:
+  test-unit-harness-gpu-tf:
     docker:
-      - image: determinedai/pytorch-tensorflow-cuda-dev:8b3bea3
+      - image: determinedai/tensorflow-ngc-dev:8b3bea3
     resource_class: determined-ai/container-runner-gpu
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
@@ -2326,17 +2333,19 @@ jobs:
       - run: pip install mypy pytest coverage
       - install-codecov
       - setup-paths
-      - run: COVERAGE_FILE=/root/project/test-unit-harness-gpu-pycov make -C harness test-gpu
-      - run: coverage xml -i --data-file=./test-unit-harness-gpu-pycov
+      - run: COVERAGE_FILE=/root/project/test-unit-harness-gpu-tf-pycov make -C harness test-gpu-tf
+      - run: coverage xml -i --data-file=./test-unit-harness-gpu-tf-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
       - persist_to_workspace:
           root: .
           paths:
-            - test-unit-harness-gpu-pycov
+            - test-unit-harness-gpu-tf-pycov
+      - store_test_results:
+          path: /tmp/test-results
 
   test-unit-harness-pytorch2-gpu:
     docker:
-      - image: determinedai/pytorch-cuda-dev:8b3bea3
+      - image: determinedai/pytorch-ngc-dev:8b3bea3
     resource_class: determined-ai/container-runner-gpu
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
@@ -2355,10 +2364,12 @@ jobs:
           root: .
           paths:
             - test-unit-harness-pytorch2-gpu-pycov
+      - store_test_results:
+          path: /tmp/test-results
 
   test-unit-harness-pytorch2-cpu:
     docker:
-      - image: determinedai/pytorch-cpu-dev:8b3bea3
+      - image: determinedai/pytorch-ngc-dev:8b3bea3
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
       - checkout
@@ -2376,10 +2387,12 @@ jobs:
           root: .
           paths:
             - test-unit-harness-pytorch2-cpu-pycov
+      - store_test_results:
+          path: /tmp/test-results
 
   test-unit-harness-gpu-parallel:
     docker:
-      - image: determinedai/pytorch-tensorflow-cuda-dev:8b3bea3
+      - image: determinedai/pytorch-ngc-dev:8b3bea3
     resource_class: determined-ai/container-runner-multi-gpu
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
@@ -2398,6 +2411,8 @@ jobs:
           root: .
           paths:
             - test-unit-harness-gpu-parallel-pycov
+      - store_test_results:
+          path: /tmp/test-results
 
   test-unit-harness-gpu-deepspeed:
     docker:
@@ -2420,10 +2435,12 @@ jobs:
           root: .
           paths:
             - test-unit-harness-gpu-deepspeed-pycov
+      - store_test_results:
+          path: /tmp/test-results
 
   test-unit-harness-tf2:
     docker:
-      - image: <<pipeline.parameters.docker-image>>
+      - image: determinedai/tensorflow-ngc-dev:f17151a
     steps:
       - checkout
       - add-and-fetch-upstream
@@ -2431,11 +2448,9 @@ jobs:
       - skip-if-only-github
       - skip-if-only-webui
       - install-codecov
-      - setup-python-venv:
-          install-python: false
-          determined: true
-          extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
-          executor: <<pipeline.parameters.docker-image>>
+      - run: pip install mypy pytest coverage
+      - install-codecov
+      - setup-paths
       - run: COVERAGE_FILE=$PWD/test-unit-harness-tf2-pycov make -C harness test-tf2
       - run: coverage xml -i --data-file=./test-unit-harness-tf2-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
@@ -2443,6 +2458,8 @@ jobs:
           root: .
           paths:
             - test-unit-harness-tf2-pycov
+      - store_test_results:
+          path: /tmp/test-results
 
   test-unit-storage:
     docker:
@@ -2459,13 +2476,15 @@ jobs:
           determined: true
           extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
           executor: <<pipeline.parameters.docker-image>>
-      - run: COVERAGE_FILE=$PWD/test-unit-storage-pycov coverage run -m pytest -v --durations=0 --require-secrets -m cloud harness/tests
+      - run: COVERAGE_FILE=$PWD/test-unit-storage-pycov coverage run -m pytest -v --durations=0 --junitxml=/tmp/test-results/test-unit-storage.xml --require-secrets -m cloud harness/tests
       - run: coverage xml -i --data-file=./test-unit-storage-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
       - persist_to_workspace:
           root: .
           paths:
             - test-unit-storage-pycov
+      - store_test_results:
+          path: /tmp/test-results
 
   test-unit-model-hub:
     docker:
@@ -2541,7 +2560,9 @@ jobs:
       - run: pip install -r harness/tests/requirements/requirements-cli.txt
       - run: pip freeze --all
       - python-report
-      - run: pytest harness/tests/cli
+      - run: pytest --junitxml=/tmp/test-results/test-unit-storage.xml harness/tests/cli
+      - store_test_results:
+          path: /tmp/test-results
 
   test-e2e-slurm-disabled:
     parameters:
@@ -3605,7 +3626,7 @@ jobs:
         type: string
         default: "1"
       environment-image:
-        default: determinedai/pytorch-tensorflow-cuda-dev:8b3bea3
+        default: determinedai/pytorch-ngc-dev:8b3bea3
         type: string
       accel-node-taints:
         type: string
@@ -4005,7 +4026,7 @@ workflows:
       - test-unit-harness-pytorch2-cpu
       - test-unit-harness-pytorch2-gpu
 
-      - test-unit-harness-gpu:
+      - test-unit-harness-gpu-tf:
           filters: *any-upstream
       - test-unit-harness-gpu-deepspeed:
           filters: *any-upstream
@@ -4016,8 +4037,8 @@ workflows:
       - request-gpu-unit-tests:
           type: approval
           filters: *any-fork
-      - test-unit-harness-gpu:
-          name: f-test-unit-harness-gpu
+      - test-unit-harness-gpu-tf:
+          name: f-test-unit-harness-gpu-tf
           filters: *any-fork
       - test-unit-harness-gpu-deepspeed:
           name: f-test-unit-harness-gpu-deepspeed
@@ -4033,7 +4054,7 @@ workflows:
       - python-coverage:
           requires:
             - test-unit-harness-cpu
-            - test-unit-harness-gpu
+            - test-unit-harness-gpu-tf
             - test-unit-harness-gpu-parallel
             - test-unit-harness-tf2
             - test-unit-harness-pytorch2-cpu
@@ -4109,10 +4130,6 @@ workflows:
           requires:
             - build-react-oss
             - build-docs
-          filters:
-            branches:
-              only:
-                - main
 
       - upload-docs-search-index:
           requires:
@@ -4650,26 +4667,6 @@ workflows:
               num-machines: [2]
               max-slots-per-pod: [4]
 
-      # Legacy tf 2.4 tests.
-      - test-e2e-gke:
-          name: test-e2e-gke-single-gpu-tfonly
-          context:
-            - gcp-ci
-            - determined-ee
-            - gcp-ci-cluster-default-user-credentials
-          filters:
-            branches:
-              only: main
-          requires:
-            - package-and-push-system-dev-ee
-          matrix:
-            parameters:
-              cluster-id-prefix: ["e2e-gpu-tfonly"]
-              mark: ["e2e_gpu and tensorflow2"]
-              parallelism: [1]
-              environment-image:
-                - determinedai/environments:cuda-11.1-pytorch-1.9-tf-2.4-gpu-0.19.10
-
       - test-e2e-gke:
           name: test-e2e-gke-single-cpu
           context:
@@ -4889,25 +4886,6 @@ workflows:
               gpus-per-machine: [4]
               num-machines: [2]
               max-slots-per-pod: [4]
-
-      # Requestable legacy tf 2.4 tests.
-      - test-e2e-gke:
-          name: test-e2e-gke-single-gpu-tfonly
-          context:
-            - gcp-ci
-            - determined-ee
-            - gcp-ci-cluster-default-user-credentials
-          filters: *upstream-feature-branch
-          requires:
-            - request-k8-tests
-            - package-and-push-system-dev-ee
-          matrix:
-            parameters:
-              cluster-id-prefix: ["e2e-gpu-tfonly"]
-              mark: ["e2e_gpu and tensorflow2"]
-              parallelism: [1]
-              environment-image:
-                - determinedai/environments:cuda-11.1-pytorch-1.9-tf-2.4-gpu-0.19.10
 
       # K8s CPU tests
       - request-k8-tests-cpu:

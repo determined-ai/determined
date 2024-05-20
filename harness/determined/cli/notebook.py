@@ -39,7 +39,7 @@ def start_notebook(args: argparse.Namespace) -> None:
         print(nb.id)
         return
 
-    render.report_job_launched("notebook", resp.notebook.id)
+    render.report_job_launched("notebook", resp.notebook.id, nb.description)
 
     if resp.warnings:
         cli.print_launch_warnings(resp.warnings)
