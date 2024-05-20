@@ -47,21 +47,9 @@ func newGatewayService(gatewayInterface gateway.GatewayInterface, gatewayName st
 }
 
 func (g *gatewayService) addListeners(listeners []gatewayTyped.Listener) error {
-	for i := range listeners {
-		// PERF: we could do bulk allocation an releases for lower lock contention.
-		ports, err := g.portRange.GetAndMarkUsed(1)
-		if err != nil {
-			return fmt.Errorf("allocating port: %w", err)
-		}
-		listeners[i].Port = gatewayTyped.PortNumber(ports[0])
-	}
-
 	if err := g.updateGateway(func(gateway *gatewayTyped.Gateway) {
 		gateway.Spec.Listeners = append(gateway.Spec.Listeners, listeners...)
 	}); err != nil {
-		for _, listener := range listeners {
-			_ = g.portRange.MarkPortAsFree(int(listener.Port))
-		}
 		return fmt.Errorf("adding listeners %+v to gateway: %w", listeners, err)
 	}
 
