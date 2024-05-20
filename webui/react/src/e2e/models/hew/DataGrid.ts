@@ -99,11 +99,10 @@ export class DataGrid<
 
   /**
    * Scolls the table
-   * @param {object} args - The x and y coordinates
-   * @param {number} [args.xAbsolute] - The x coordinate
-   * @param {number} [args.xRelative] - The relative x coordinate
+   * @param {object} obj
+   * @param {number} [obj.xAbsolute] - The x coordinate. If not provided, the table will incrementally scroll to the right.
    */
-  private async scrollTable(args: { xAbsolute: number } | { xRelative: number }): Promise<void> {
+  private async scrollTable({ xAbsolute }: { xAbsolute?: number } = {}): Promise<void> {
     const box = await this.pwLocator.boundingBox();
     if (box === null) {
       throw new Error('Expected to see a bounding box for the table.');
@@ -111,13 +110,11 @@ export class DataGrid<
     const page = this.root._page;
     // move mouse to the center of the table
     await page.mouse.move((box.x + box.width) / 2, (box.y + box.height) / 2);
-    // scroll the table
-    await page.mouse.wheel(
-      'xAbsolute' in args ? args.xAbsolute : Math.max(box.width - args.xRelative, 200),
-      0,
-    );
-    // scrolling isn't waited on, and in this instance it's not guaranteed either. let's just wait a bit.
-    await page.waitForTimeout(3_000);
+    // scroll the table to the right by the width of the table minus 450
+    // All the permanent columns on the left together are under 450px wide
+    await page.mouse.wheel(xAbsolute ? xAbsolute : box.width - 450, 0);
+    // wait for 1 second for the scroll to happen
+    await page.waitForTimeout(999);
   }
 
   /**
@@ -135,10 +132,8 @@ export class DataGrid<
 
     let prevIndexes: (string | null)[] = [];
     const incrementScroll = async () => {
-      // scroll the table to the right by the width of the table minus 400
-      // All the permanent columns on the left together are 400px wide
+      await this.scrollTable();
       const cells = await this.headRow.cells.pwLocator.all();
-      await this.scrollTable({ xRelative: 400 });
       const indexes = await Promise.all(
         cells.map(async (cell) => {
           return await cell.getAttribute(this.headRow.columnIndexAttribute);
@@ -153,15 +148,19 @@ export class DataGrid<
     return incrementScroll;
   }
 
+  async scrollColumnIntoViewByName(s: string): Promise<boolean> {
+    return await this.scrollColumnIntoView(this.headRow.getColumnDef(s));
+  }
+
   /**
    * Scrolls the column into view
    * @param {number} index - The column index
    */
-  async scrollColumnIntoView(index: number): Promise<void> {
-    const incrementScroll = await this.incrementScrollGenerator();
+  async scrollColumnIntoView(index: number): Promise<boolean> {
     if (index === 0) {
-      return;
+      return true;
     }
+    const incrementScroll = await this.incrementScrollGenerator();
 
     const checkColumnInView = async () => {
       const cells = await this.headRow.cells.pwLocator.all();
@@ -180,10 +179,10 @@ export class DataGrid<
     };
     do {
       if (await checkColumnInView()) {
-        return;
+        return true;
       }
     } while (await incrementScroll());
-    throw new Error(`Column with index ${index} not found.`);
+    return false;
   }
 
   /**
@@ -347,14 +346,7 @@ export class Row<HeadRowType extends HeadRow<Row<HeadRowType>>> extends NamedCom
    * Returns a cell from a column name.
    */
   async getCellByColumnName(s: string): Promise<BaseComponent> {
-    const map = this.parentTable.headRow.columnDefs;
-    const index = map.get(s);
-    if (index === undefined) {
-      throw new Error(
-        `Column with title ${s} expected but not found (${[...map.entries()].join('), (')})`,
-      );
-    }
-    return await this.getCellByColIndex(index);
+    return await this.getCellByColIndex(this.parentTable.headRow.getColumnDef(s));
   }
 }
 
@@ -396,6 +388,18 @@ export class HeadRow<RowType extends Row<HeadRow<RowType>>> extends NamedCompone
     return this.#columnDefs;
   }
 
+  getColumnDef(columnName: string): number {
+    const index = this.columnDefs.get(columnName);
+    if (index === undefined) {
+      throw new Error(
+        `Column with title ${columnName} expected but not found (${[
+          ...this.columnDefs.entries(),
+        ].join('), (')})`,
+      );
+    }
+    return index;
+  }
+
   /**
    * Sets Column Definitions
    * Row.getCellByColumnName will fail without running this first.
@@ -403,13 +407,14 @@ export class HeadRow<RowType extends Row<HeadRow<RowType>>> extends NamedCompone
   async setColumnDefs(): Promise<Map<string, number>> {
     // make sure we see enough columns before getting textContent of each.
     // there are four columns on the left
+    this.#columnDefs.clear();
     await expect.poll(async () => await this.cells.pwLocator.count()).toBeGreaterThanOrEqual(4);
-    const cells = await this.cells.pwLocator.all();
-    if (cells.length === 0) {
-      throw new Error('Expected to see more than 0 columns.');
-    }
 
     const setVisibleColumns = async () => {
+      const cells = await this.cells.pwLocator.all();
+      if (cells.length === 0) {
+        throw new Error('Expected to see more than 0 columns.');
+      }
       await Promise.all(
         cells.map(async (cell) => {
           const index = await cell.getAttribute(this.columnIndexAttribute);
