@@ -21,6 +21,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/port"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/set"
 	"github.com/determined-ai/determined/master/pkg/tasks"
@@ -93,6 +94,7 @@ type pod struct {
 
 	gatewayProxyResources []gatewayProxyResource
 	exposeProxyConfig     *config.ExposeProxiesExternallyConfig
+	portRange             *port.Range // CHAT: or gw service ref?
 
 	// TODO(DET-10013) : Remove container field from pod struct.
 	container        cproto.Container
@@ -129,6 +131,7 @@ func newPod(
 	slotResourceRequests config.PodSlotResourceRequests,
 	scheduler string,
 	exposeProxyConfig *config.ExposeProxiesExternallyConfig,
+	portRange *port.Range,
 ) *pod {
 	podContainer := cproto.Container{
 		ID:          cproto.ID(msg.Spec.ContainerID),
@@ -166,6 +169,7 @@ func newPod(
 		slotType:             slotType,
 		slotResourceRequests: slotResourceRequests,
 		exposeProxyConfig:    exposeProxyConfig,
+		portRange:            portRange,
 		syslog: logrus.New().WithField("component", "pod").WithFields(
 			logger.MergeContexts(msg.LogContext, logger.Context{
 				"pod": uniqueName,
@@ -607,6 +611,7 @@ func getResourcesStartedForPod(
 		address := baseAddress
 		address.ContainerPort = port
 		address.HostPort = port
+		fmt.Println("HHH address", address, "port", port)
 		addresses = append(addresses, address)
 	}
 

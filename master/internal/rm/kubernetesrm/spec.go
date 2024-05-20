@@ -148,6 +148,12 @@ func (p *pod) configureProxyResources() []gatewayProxyResource {
 			i, p.submissionInfo.taskSpec.Description, uuid.New().String())
 		sharedName := tooLong[:min(63, len(tooLong)-1)]
 
+		ports, err := p.portRange.GetAndMarkUsed(1)
+		if err != nil {
+			log.WithError(err).Error("failed to allocate port")
+			return nil
+		}
+
 		allocLabels := map[string]string{
 			determinedLabel: p.submissionInfo.taskSpec.AllocationID,
 		}
@@ -183,7 +189,7 @@ func (p *pod) configureProxyResources() []gatewayProxyResource {
 						{
 							Namespace:   ptrs.Ptr(alphaGatewayTyped.Namespace(p.exposeProxyConfig.GatewayNamespace)),
 							Name:        alphaGatewayTyped.ObjectName(p.exposeProxyConfig.GatewayName),
-							Port:        ptrs.Ptr(alphaGatewayTyped.PortNumber(proxyPort.Port)),
+							Port:        ptrs.Ptr(alphaGatewayTyped.PortNumber(ports[0])),
 							SectionName: ptrs.Ptr(alphaGatewayTyped.SectionName(sectionName)),
 						},
 					},
@@ -204,13 +210,9 @@ func (p *pod) configureProxyResources() []gatewayProxyResource {
 			},
 		}
 
-		// TODO(RM-271/gateways) we make an assumption ports are unique, they aren't but kinda are.
-		// Maybe the easiest thing to do would be to have Kubernetes have its own port registry
-		// and then translate our port to the task port in the service with `TargetPort/Port`.
-		// Better yet maybe ask the gateway_service.go for a free port.
 		gatewayListener := gatewayTyped.Listener{
 			Name:     gatewayTyped.SectionName(sectionName),
-			Port:     gatewayTyped.PortNumber(proxyPort.Port),
+			Port:     gatewayTyped.PortNumber(ports[0]),
 			Protocol: "TCP",
 			AllowedRoutes: &gatewayTyped.AllowedRoutes{
 				Namespaces: &gatewayTyped.RouteNamespaces{
@@ -224,6 +226,8 @@ func (p *pod) configureProxyResources() []gatewayProxyResource {
 			tcpRouteSpec:    tcpRouteSpec,
 			gatewayListener: gatewayListener,
 		})
+
+		proxyPort.Port = int(ports[0])
 	}
 
 	return resources

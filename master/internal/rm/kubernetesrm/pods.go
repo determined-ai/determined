@@ -634,6 +634,7 @@ func (p *pods) reattachPod(
 		p.slotResourceRequests,
 		p.scheduler,
 		p.exposeProxyConfig,
+		p.gatewayService.portRange,
 	)
 
 	newPodHandler.restore = true
@@ -940,6 +941,7 @@ func (p *pods) receiveStartTaskPod(msg StartTaskPod) error {
 		p.slotResourceRequests,
 		p.scheduler,
 		p.exposeProxyConfig,
+		p.gatewayService.portRange,
 	)
 
 	if _, alreadyExists := p.podNameToPodHandler[newPodHandler.podName]; alreadyExists {

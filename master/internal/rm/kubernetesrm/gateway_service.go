@@ -32,11 +32,18 @@ func newGatewayService(gatewayInterface gateway.GatewayInterface, gatewayName st
 		return nil, fmt.Errorf("creating port range: %w", err)
 	}
 	// TODO: run an update to read in the used ports? not necessary.
-	return &gatewayService{
+
+	g := &gatewayService{
 		gatewayInterface: gatewayInterface,
 		gatewayName:      gatewayName,
 		portRange:        portRange,
-	}, nil
+	}
+
+	g.updateGateway(func(gateway *gatewayTyped.Gateway) {
+		// noop
+	})
+
+	return g, nil
 }
 
 func (g *gatewayService) addListeners(listeners []gatewayTyped.Listener) error {
@@ -98,7 +105,10 @@ func (g *gatewayService) updateGateway(update func(*gatewayTyped.Gateway)) error
 	for _, listener := range gateway.Spec.Listeners {
 		usedPorts = append(usedPorts, int(listener.Port))
 	}
-	g.portRange.LoadInUsedPorts(usedPorts)
+	err = g.portRange.LoadInUsedPorts(usedPorts)
+	if err != nil {
+		return fmt.Errorf("loading in used ports: %w", err)
+	}
 
 	update(gateway)
 
