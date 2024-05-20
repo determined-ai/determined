@@ -116,11 +116,13 @@ func ensureMigrationUpgrade(tx *pg.Tx) error {
 	return nil
 }
 
-func (db *PgDB) readDBCodeAndCheckIfDifferent(dbCodeDir string) (map[string]string, bool, error) {
+func (db *PgDB) readDBCodeAndCheckIfDifferent(
+	dbCodeDir string,
+) (map[string]string, string, bool, error) {
 	upDir := filepath.Join(dbCodeDir, "up")
 	files, err := os.ReadDir(upDir)
 	if err != nil {
-		return nil, false, fmt.Errorf("reading '%s' directory for database views: %w", dbCodeDir, err)
+		return nil, "", false, fmt.Errorf("reading '%s' directory for database views: %w", dbCodeDir, err)
 	}
 
 	allCode := ""
@@ -133,7 +135,7 @@ func (db *PgDB) readDBCodeAndCheckIfDifferent(dbCodeDir string) (map[string]stri
 		filePath := filepath.Join(upDir, f.Name())
 		b, err := os.ReadFile(filePath) //nolint: gosec // We trust dbCodeDir.
 		if err != nil {
-			return nil, false, fmt.Errorf("reading view definition file '%s': %w", filePath, err)
+			return nil, "", false, fmt.Errorf("reading view definition file '%s': %w", filePath, err)
 		}
 
 		fileNamesToSQL[f.Name()] = string(b)
@@ -150,34 +152,39 @@ func (db *PgDB) readDBCodeAndCheckIfDifferent(dbCodeDir string) (map[string]stri
 	if err = db.sql.QueryRow(
 		"SELECT EXISTS(SELECT 1 FROM information_schema.tables WHERE table_name = 'views_and_triggers_hash')").
 		Scan(&tableExists); err != nil {
-		return nil, false, fmt.Errorf("checking views_and_triggers_hash exists: %w", err)
+		return nil, "", false, fmt.Errorf("checking views_and_triggers_hash exists: %w", err)
 	}
 	if !tableExists {
-		return fileNamesToSQL, true, nil
+		return fileNamesToSQL, ourHash, true, nil
 	}
 
 	// Check if our hashes match. If they do we can just return we don't need to do anything.
 	var databaseHash string
 	if err := db.sql.QueryRow("SELECT hash FROM views_and_triggers_hash").Scan(&databaseHash); err != nil {
-		return nil, false, fmt.Errorf("getting hash from views_and_triggers_hash: %w", err)
+		return nil, "", false, fmt.Errorf("getting hash from views_and_triggers_hash: %w", err)
 	}
 	if databaseHash == ourHash {
-		return fileNamesToSQL, true, nil
+		return fileNamesToSQL, ourHash, false, nil
 	}
 
 	// Update our hash and return we need to create views and triggers.
-	if _, err := db.sql.Exec("UPDATE views_and_triggers_hash SET hash = $1", ourHash); err != nil {
-		return nil, false, fmt.Errorf("updating our database hash: %w", err)
+	if err := db.dropDBCode(dbCodeDir); err != nil {
+		return nil, "", false, err
 	}
-	return fileNamesToSQL, false, nil
+
+	return fileNamesToSQL, ourHash, true, nil
 }
 
-func (db *PgDB) addDBCode(fileNamesToSQL map[string]string) error {
+func (db *PgDB) addDBCode(fileNamesToSQL map[string]string, hash string) error {
 	if err := db.withTransaction("determined database views", func(tx *sqlx.Tx) error {
 		for filePath, sql := range fileNamesToSQL {
 			if _, err := tx.Exec(sql); err != nil {
 				return fmt.Errorf("running database view file '%s': %w", filePath, err)
 			}
+		}
+
+		if _, err := tx.Exec("UPDATE views_and_triggers_hash SET hash = $1", hash); err != nil {
+			return fmt.Errorf("updating our database hash: %w", err)
 		}
 
 		return nil
@@ -217,17 +224,9 @@ func (db *PgDB) Migrate(
 		defer cleanup()
 	}
 
-	dbCodeFiles, needToUpdateDBCode, err := db.readDBCodeAndCheckIfDifferent(dbCodeDir)
+	dbCodeFiles, hash, needToUpdateDBCode, err := db.readDBCodeAndCheckIfDifferent(dbCodeDir)
 	if err != nil {
 		return false, err
-	}
-	if needToUpdateDBCode {
-		if err := db.dropDBCode(dbCodeDir); err != nil {
-			return false, err
-		}
-		log.Info("database views changed")
-	} else {
-		log.Info("database views unchanged, will not updated")
 	}
 
 	// go-pg/migrations uses go-pg/pg connection API, which is not compatible
@@ -294,9 +293,12 @@ func (db *PgDB) Migrate(
 
 	if newVersion >= 20240502203516 { // Only comes up in testing old data.
 		if needToUpdateDBCode {
-			if err := db.addDBCode(dbCodeFiles); err != nil {
+			log.Info("database views changed")
+			if err := db.addDBCode(dbCodeFiles, hash); err != nil {
 				return false, err
 			}
+		} else {
+			log.Info("database views unchanged, will not updated")
 		}
 	}
 
