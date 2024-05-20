@@ -11,16 +11,16 @@ import (
 // ResourceManager is an interface for a resource manager, which can allocate and manage resources.
 type ResourceManager interface {
 	// Basic functionality
-	GetAllocationSummaries() (map[model.AllocationID]sproto.AllocationSummary, error)
-	Allocate(sproto.AllocateRequest) (*sproto.ResourcesSubscription, error)
-	Release(sproto.ResourcesReleased)
-	ValidateResources(sproto.ValidateResourcesRequest) ([]command.LaunchWarning, error)
-	DeleteJob(sproto.DeleteJob) (sproto.DeleteJobResponse, error)
-	NotifyContainerRunning(sproto.NotifyContainerRunning) error
+	GetAllocationSummaries() (map[model.AllocationID]sproto.AllocationSummary, error)   // KEEP
+	Allocate(sproto.AllocateRequest) (*sproto.ResourcesSubscription, error)             // KEEP
+	Release(sproto.ResourcesReleased)                                                   // KEEP
+	ValidateResources(sproto.ValidateResourcesRequest) ([]command.LaunchWarning, error) // KEEP
+	DeleteJob(sproto.DeleteJob) (sproto.DeleteJobResponse, error)                       // KEEP
+	NotifyContainerRunning(sproto.NotifyContainerRunning) error                         // KEEP
 
 	// Scheduling related stuff
-	SetGroupMaxSlots(sproto.SetGroupMaxSlots)
-	SetGroupWeight(sproto.SetGroupWeight) error
+	SetGroupMaxSlots(sproto.SetGroupMaxSlots)   // KEEP
+	SetGroupWeight(sproto.SetGroupWeight) error // KEEP
 	SetGroupPriority(sproto.SetGroupPriority) error
 	ExternalPreemptionPending(sproto.PendingPreemption) error
 	IsReattachableOnlyAfterStarted() bool
