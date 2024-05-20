@@ -36,9 +36,20 @@ func newGatewayService(gatewayInterface gateway.GatewayInterface, gatewayName st
 }
 
 func (g *gatewayService) addListeners(listeners []gatewayTyped.Listener) error {
+	for i, listener := range listeners {
+		port, err := g.portRange.getAndMarkUsed()
+		if err != nil {
+			return fmt.Errorf("allocating port: %w", err)
+		}
+		listeners[i].Port = gatewayTyped.PortNumber(port)
+	}
+
 	if err := g.updateGateway(func(gateway *gatewayTyped.Gateway) {
 		gateway.Spec.Listeners = append(gateway.Spec.Listeners, listeners...)
 	}); err != nil {
+		for _, listener := range listeners {
+			_ = g.portRange.markPortAsFree(int(listener.Port))
+		}
 		return fmt.Errorf("adding listeners %+v to gateway: %w", listeners, err)
 	}
 
@@ -53,10 +64,15 @@ func (g *gatewayService) freePorts(ports []int) error {
 				newListeners = append(newListeners, l)
 			}
 		}
-
 		gateway.Spec.Listeners = newListeners
 	}); err != nil {
 		return fmt.Errorf("freeing ports %v from gateway: %w", ports, err)
+	}
+
+	for _, port := range ports {
+		if err := g.portRange.markPortAsFree(port); err != nil {
+			return fmt.Errorf("marking port %d as free: %w", port, err)
+		}
 	}
 
 	return nil
