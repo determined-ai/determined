@@ -227,7 +227,7 @@ func (p *pod) configureProxyResources() []gatewayProxyResource {
 			gatewayListener: gatewayListener,
 		})
 
-		proxyPort.Port = int(ports[0])
+		proxyPort.Port = ports[0]
 	}
 
 	return resources

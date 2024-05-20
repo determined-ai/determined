@@ -377,8 +377,7 @@ func TestReceiveCreateKubernetesResources(t *testing.T) {
 	tcpInterface := &mocks.TCPRouteInterface{}
 	gatewayInterface := &mocks.GatewayInterface{}
 
-	gatewayService, err := &gatewayService(
-		gatewayInterface, "gatewayname")
+	gatewayService, err := newGatewayService(gatewayInterface, "gatewayname")
 	require.NoError(t, err)
 
 	w := &requestProcessingWorker{
@@ -442,8 +441,7 @@ func TestReceiveDeleteKubernetesResources(t *testing.T) {
 	serviceInterface := &mocks.ServiceInterface{}
 	tcpInterface := &mocks.TCPRouteInterface{}
 	gatewayInterface := &mocks.GatewayInterface{}
-	gatewayService, err := &gatewayService(
-		gatewayInterface, "gatewayname")
+	gatewayService, err := newGatewayService(gatewayInterface, "gatewayname")
 	require.NoError(t, err)
 
 	w := &requestProcessingWorker{

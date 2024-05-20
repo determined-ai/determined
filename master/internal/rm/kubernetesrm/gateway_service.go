@@ -6,10 +6,11 @@ import (
 	"slices"
 	"sync"
 
-	"github.com/determined-ai/determined/master/pkg/port"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	gatewayTyped "sigs.k8s.io/gateway-api/apis/v1"
 	gateway "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned/typed/apis/v1"
+
+	"github.com/determined-ai/determined/master/pkg/port"
 )
 
 // I wanted to do this all in patches, but Gateways don't yet support strategic merge patch.
@@ -39,9 +40,9 @@ func newGatewayService(gatewayInterface gateway.GatewayInterface, gatewayName st
 		portRange:        portRange,
 	}
 
-	g.updateGateway(func(gateway *gatewayTyped.Gateway) {
-		// noop
-	})
+	if err = g.updateGateway(func(gateway *gatewayTyped.Gateway) {}); err != nil {
+		return nil, fmt.Errorf("initializing gateway: %w", err)
+	}
 
 	return g, nil
 }
