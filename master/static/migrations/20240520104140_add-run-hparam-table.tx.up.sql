@@ -28,15 +28,14 @@ CREATE TABLE project_hparams (
     UNIQUE (project_id, hparam, type)
 );
 
+WITH RECURSIVE flat (run_id, key, value, type) AS (
+    SELECT r.id, h.key, h.value, jsonb_typeof(h.value) as type
+    FROM runs as r, jsonb_each(r.hparams) as h WHERE r.hparams is not NULL AND r.hparams !='null' 
+	UNION
+	SELECT f.run_id,concat(f.key, '.', j.key) as key, j.value, jsonb_typeof(j.value) as type
+    FROM flat f, jsonb_each(f.value) j WHERE f.type = 'object'
+	)
 INSERT INTO project_hparams(project_id, hparam, type)
-SELECT * FROM
-(SELECT r.project_id, h.key, jsonb_typeof(h.value) as type
-FROM runs as r, jsonb_each(r.hparams) as h WHERE r.hparams is not NULL AND r.hparams !='null'
-GROUP BY project_id, key, type) as s WHERE s.type!='object';
-
-INSERT INTO project_hparams(project_id, hparam, type)
-SELECT * FROM
-(SELECT s.project_id, CONCAT(s.key, '.', nh.key) as key,  jsonb_typeof(nh.value) as type
-FROM (SELECT r.project_id, r.id, h.key, h.value, jsonb_typeof(h.value) as type FROM
-runs as r, jsonb_each(r.hparams) as h WHERE r.hparams is not NULL AND r.hparams !='null') as s,
-jsonb_each(s.value) nh WHERE s.type='object') as n GROUP BY project_id, key, type;
+SELECT r.project_id, f.key, type
+FROM flat f JOIN runs r ON f.run_id=r.id
+WHERE type != 'object' GROUP BY project_id, key, type;
