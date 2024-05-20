@@ -12,15 +12,14 @@ If you need to change views / other db code, just change them and the changes wi
 
 If you need to delete views / other db code, just delete them from the file.
 
-If you need to add a view, just make sure you add it into the ```determined_code``` schema (aka do ```CREATE VIEW determined_code.test ...```). Exception are triggers inherit from the table, therefore just create them without the schema name. The procedure being executed should still be in the ```determined_code``` so that way when the ```determined_code``` schema get's dropped the trigger will get cascaded.
+If you need to add a view add it in a ```.sql``` file in the ```up``` folder and add a delete statement in the ``down.sql`` in this directory.
 
 ### How does dbviews_and_triggers work?
 
-On everytime the Determined master starts up
+On everytime the Determined master starts up we check if the database views have changed.
 
-- The Postgres schema ```determined_code``` will be dropped if it exists.
+- The ``down.sql`` file runs.
 - Migrations run as they did before ```determined_code``` was added.
-- The Postgres schema ```determined_code``` will be recreated.
 - All SQL files in the ``views_and_triggers`` will be run in lexicographical order.
 
 ### Limitations

@@ -117,7 +117,8 @@ func ensureMigrationUpgrade(tx *pg.Tx) error {
 }
 
 func (db *PgDB) readDBCodeAndCheckIfDifferent(dbCodeDir string) (map[string]string, bool, error) {
-	files, err := os.ReadDir(dbCodeDir)
+	upDir := filepath.Join(dbCodeDir, "up")
+	files, err := os.ReadDir(upDir)
 	if err != nil {
 		return nil, false, fmt.Errorf("reading '%s' directory for database views: %w", dbCodeDir, err)
 	}
@@ -129,7 +130,7 @@ func (db *PgDB) readDBCodeAndCheckIfDifferent(dbCodeDir string) (map[string]stri
 			continue
 		}
 
-		filePath := filepath.Join(dbCodeDir, f.Name())
+		filePath := filepath.Join(upDir, f.Name())
 		b, err := os.ReadFile(filePath) //nolint: gosec // We trust dbCodeDir.
 		if err != nil {
 			return nil, false, fmt.Errorf("reading view definition file '%s': %w", filePath, err)
@@ -186,10 +187,13 @@ func (db *PgDB) addDBCode(fileNamesToSQL map[string]string) error {
 	return nil
 }
 
-func (db *PgDB) dropDBCode() error {
-	if _, err := db.sql.Exec(`
-DROP SCHEMA IF EXISTS determined_code CASCADE;
-CREATE SCHEMA determined_code;`); err != nil {
+func (db *PgDB) dropDBCode(dbCodeDir string) error {
+	b, err := os.ReadFile(filepath.Join(dbCodeDir, "down.sql")) //nolint: gosec // We trust dbCodeDir.
+	if err != nil {
+		return fmt.Errorf("reading down db code migration: %w", err)
+	}
+
+	if _, err := db.sql.Exec(string(b)); err != nil {
 		return fmt.Errorf("removing determined database views so they can be created later: %w", err)
 	}
 
@@ -217,7 +221,7 @@ func (db *PgDB) Migrate(
 		return false, err
 	}
 	if needToUpdateDBCode {
-		if err := db.dropDBCode(); err != nil {
+		if err := db.dropDBCode(dbCodeDir); err != nil {
 			return false, err
 		}
 		log.Info("database views changed")

@@ -1,4 +1,4 @@
-CREATE VIEW determined_code.trials AS
+CREATE VIEW trials AS
  SELECT t.run_id AS id,
     r.summary_metrics,
     r.summary_metrics_timestamp,
@@ -27,7 +27,7 @@ CREATE VIEW determined_code.trials AS
    FROM trials_v2 t
      JOIN runs r ON t.run_id = r.id;
 
-CREATE VIEW determined_code.steps AS
+CREATE VIEW steps AS
  SELECT raw_steps.trial_id,
     raw_steps.end_time,
     raw_steps.metrics,
@@ -38,7 +38,7 @@ CREATE VIEW determined_code.steps AS
    FROM raw_steps
   WHERE NOT raw_steps.archived;
 
-CREATE VIEW determined_code.validations AS
+CREATE VIEW validations AS
   SELECT raw_validations.id,
     raw_validations.trial_id,
     raw_validations.end_time,
@@ -50,13 +50,13 @@ CREATE VIEW determined_code.validations AS
   WHERE NOT raw_validations.archived;
 
 
-CREATE FUNCTION determined_code.get_raw_metric(v raw_validations, e experiments) RETURNS double precision
+CREATE FUNCTION get_raw_metric(v raw_validations, e experiments) RETURNS double precision
     LANGUAGE sql STABLE
     AS $$
     SELECT (v.metrics->'validation_metrics'->>(e.config->'searcher'->>'metric'))::float8
 $$;
 
-CREATE FUNCTION determined_code.get_signed_metric(v raw_validations, e experiments) RETURNS double precision
+CREATE FUNCTION get_signed_metric(v raw_validations, e experiments) RETURNS double precision
     LANGUAGE sql STABLE
     AS $$
     SELECT get_raw_metric(v, e) * (
@@ -68,7 +68,7 @@ CREATE FUNCTION determined_code.get_signed_metric(v raw_validations, e experimen
         END)
 $$;
 
-CREATE VIEW determined_code.validation_metrics AS
+CREATE VIEW validation_metrics AS
  SELECT v.id,
     get_raw_metric(v.*, e.*) AS raw,
     get_signed_metric(v.*, e.*) AS signed
@@ -77,7 +77,7 @@ CREATE VIEW determined_code.validation_metrics AS
     raw_validations v
   WHERE e.id = t.experiment_id AND t.id = v.trial_id;
 
-CREATE FUNCTION determined_code.autoupdate_exp_best_trial_metrics() RETURNS trigger
+CREATE FUNCTION autoupdate_exp_best_trial_metrics() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 BEGIN
@@ -94,7 +94,7 @@ $$;
 CREATE TRIGGER autoupdate_exp_best_trial_metrics AFTER UPDATE OF best_validation_id ON runs FOR EACH ROW EXECUTE PROCEDURE autoupdate_exp_best_trial_metrics();
 
 
-CREATE FUNCTION determined_code.autoupdate_exp_best_trial_metrics_on_delete() RETURNS trigger
+CREATE FUNCTION autoupdate_exp_best_trial_metrics_on_delete() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 BEGIN

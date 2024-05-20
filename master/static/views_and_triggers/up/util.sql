@@ -1,4 +1,4 @@
-CREATE FUNCTION determined_code.page_info(total bigint, "offset" integer, "limit" integer) RETURNS json
+CREATE FUNCTION page_info(total bigint, "offset" integer, "limit" integer) RETURNS json
     LANGUAGE sql IMMUTABLE
     AS $$
 WITH start_index AS (
@@ -22,7 +22,7 @@ SELECT row_to_json(p)
 FROM page_info p
 $$;
 
-CREATE FUNCTION determined_code.proto_time(ts timestamp with time zone) RETURNS json
+CREATE FUNCTION proto_time(ts timestamp with time zone) RETURNS json
     LANGUAGE sql IMMUTABLE STRICT
     AS $$
     SELECT json_build_object(
@@ -33,7 +33,7 @@ CREATE FUNCTION determined_code.proto_time(ts timestamp with time zone) RETURNS 
     )
 $$;
 
-CREATE FUNCTION determined_code.retention_timestamp() RETURNS timestamp with time zone
+CREATE FUNCTION retention_timestamp() RETURNS timestamp with time zone
     LANGUAGE plpgsql
     AS $$
     BEGIN
@@ -41,7 +41,7 @@ CREATE FUNCTION determined_code.retention_timestamp() RETURNS timestamp with tim
     END
     $$;
 
-CREATE FUNCTION determined_code.try_float8_cast(text) RETURNS double precision
+CREATE FUNCTION try_float8_cast(text) RETURNS double precision
     LANGUAGE sql IMMUTABLE STRICT
     AS $_$
             SELECT
@@ -52,7 +52,7 @@ CREATE FUNCTION determined_code.try_float8_cast(text) RETURNS double precision
                 END;
         $_$;
 
-CREATE AGGREGATE determined_code.jsonb_collect(jsonb) (
+CREATE AGGREGATE jsonb_collect(jsonb) (
     SFUNC = jsonb_concat,
     STYPE = jsonb,
     INITCOND = '{}'

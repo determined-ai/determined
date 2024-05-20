@@ -1,4 +1,4 @@
-CREATE FUNCTION determined_code.stream_project_change() RETURNS trigger
+CREATE FUNCTION stream_project_change() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 BEGIN
@@ -17,7 +17,7 @@ $$;
 CREATE TRIGGER stream_project_trigger_d BEFORE DELETE ON projects FOR EACH ROW EXECUTE PROCEDURE stream_project_change();
 CREATE TRIGGER stream_project_trigger_iu AFTER INSERT OR UPDATE OF name, description, archived, created_at, notes, workspace_id, user_id, immutable, state ON projects FOR EACH ROW EXECUTE PROCEDURE stream_project_change();
 
-CREATE FUNCTION determined_code.stream_project_notify(before jsonb, after jsonb) RETURNS integer
+CREATE FUNCTION stream_project_notify(before jsonb, after jsonb) RETURNS integer
     LANGUAGE plpgsql
     AS $$
 DECLARE
@@ -38,7 +38,7 @@ return 0;
 END;
 $$;
 
-CREATE FUNCTION determined_code.stream_project_seq_modify() RETURNS trigger
+CREATE FUNCTION stream_project_seq_modify() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 BEGIN

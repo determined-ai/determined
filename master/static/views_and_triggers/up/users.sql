@@ -1,4 +1,4 @@
-CREATE FUNCTION determined_code.autoupdate_user_image_deleted() RETURNS trigger
+CREATE FUNCTION autoupdate_user_image_deleted() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 BEGIN
@@ -8,7 +8,7 @@ END;
 $$;
 CREATE TRIGGER autoupdate_user_image_deleted BEFORE DELETE ON user_profile_images FOR EACH ROW EXECUTE PROCEDURE autoupdate_user_image_deleted();
 
-CREATE FUNCTION determined_code.autoupdate_user_image_modified() RETURNS trigger
+CREATE FUNCTION autoupdate_user_image_modified() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 BEGIN
@@ -18,7 +18,7 @@ END;
 $$;
 CREATE TRIGGER autoupdate_user_image_modified BEFORE INSERT OR UPDATE ON user_profile_images FOR EACH ROW EXECUTE PROCEDURE autoupdate_user_image_modified();
 
-CREATE FUNCTION determined_code.set_modified_time() RETURNS trigger
+CREATE FUNCTION set_modified_time() RETURNS trigger
     LANGUAGE plpgsql
     AS $$
 BEGIN
