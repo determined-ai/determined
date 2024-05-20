@@ -1,0 +1,15 @@
+name: unmanaged-2
+entrypoint: python3 2_checkpoints.py
+
+# Use the single-searcher to run just one instance of the training script
+searcher:
+   name: single
+   # metric is required but it shouldn't hurt to ignore it at this point.
+   metric: x
+   # max_length is ignored if the training script ignores it.
+   max_length: 1
+
+max_restarts: 0
+
+resources:
+  slots_per_trial: 0
