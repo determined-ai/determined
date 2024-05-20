@@ -162,7 +162,9 @@ func getRunsColumns(q *bun.SelectQuery) *bun.SelectQuery {
 			'is_multitrial', (e.config->'searcher'->>'name' != 'single'),
 			'pachyderm_integration', NULLIF(e.config#>'{integrations,pachyderm}', 'null'),
 			'id', e.id) AS experiment`).
+		ColumnExpr("rm.metadata AS metadata").
 		Join("LEFT JOIN experiments AS e ON r.experiment_id=e.id").
+		Join("LEFT JOIN runs_metadata AS rm ON r.id=rm.run_id").
 		Join("LEFT JOIN users u ON e.owner_id = u.id").
 		Join("LEFT JOIN projects p ON r.project_id = p.id").
 		Join("LEFT JOIN workspaces w ON p.workspace_id = w.id")
@@ -924,11 +926,11 @@ func (a *apiServer) GetRunMetadata(
 	}
 
 	out := struct {
-		bun.BaseModel `bun:"table:runs"`
+		bun.BaseModel `bun:"table:runs_metadata"`
 		Metadata      model.JSONObj
 	}{}
-	err := db.Bun().NewSelect().Model(&out).Column("metadata").Where("id = ?", req.RunId).Scan(ctx)
-	if err != nil {
+	err := db.Bun().NewSelect().Model(&out).Column("metadata").Where("run_id = ?", req.RunId).Scan(ctx)
+	if err != nil && !errors.Is(err, db.ErrNotFound) {
 		return nil, fmt.Errorf("error getting metadata on run(%d): %w", req.RunId, err)
 	}
 
@@ -952,10 +954,11 @@ func (a *apiServer) PostRunMetadata(
 	}
 
 	// Flatten Request Metadata.
-	flatMetadata, keyCount, err := run.FlattenRunMetadata(req.Metadata.AsMap())
+	flatMetadata, err := run.FlattenMetadata(req.Metadata.AsMap())
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
+
 	flatKeys := make(map[string]struct{})
 	for _, record := range flatMetadata {
 		flatKeys[record.FlatKey] = struct{}{}
@@ -965,8 +968,6 @@ func (a *apiServer) PostRunMetadata(
 	result, err := db.UpdateRunMetadata(ctx,
 		int(req.RunId),
 		req.Metadata.AsMap(),
-		flatKeys,
-		keyCount,
 		flatMetadata,
 	)
 	if err != nil && status.Code(err) == codes.InvalidArgument {

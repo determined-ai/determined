@@ -3538,6 +3538,12 @@ export interface V1FlatRun {
      * @memberof V1FlatRun
      */
     experiment?: V1FlatRunExperiment;
+    /**
+     * The arbitrary metadata of the run.
+     * @type {any}
+     * @memberof V1FlatRun
+     */
+    metadata?: any;
 }
 /**
  * 

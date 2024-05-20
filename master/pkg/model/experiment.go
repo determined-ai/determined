@@ -460,6 +460,7 @@ type Trial struct {
 	RunnerState           string         `db:"runner_state"`
 	LastActivity          *time.Time     `db:"last_activity"`
 	LogRetentionDays      *int16         `db:"log_retention_days"`
+	Metadata              map[string]any `db:"metadata" bun:"metadata"`
 }
 
 // ToRunAndTrialV2 converts a trial to a run.
@@ -480,6 +481,7 @@ func (t *Trial) ToRunAndTrialV2(experimentsProjectID int) (*Run, *TrialV2) {
 		RunnerState:           t.RunnerState,
 		LastActivity:          t.LastActivity,
 		LogRetentionDays:      t.LogRetentionDays,
+		Metadata:              t.Metadata,
 	}
 	v2 := &TrialV2{
 		RunID:     t.ID,
@@ -518,7 +520,7 @@ type Run struct {
 	RunnerState           string         `db:"runner_state"`
 	LastActivity          *time.Time     `db:"last_activity"`
 	LogRetentionDays      *int16         `db:"log_retention_days"`
-	Metadata              map[string]any `db:"metadata" bun:"metadata"`
+	Metadata              map[string]any `db:"metadata" bun:"metadata,scanonly"`
 }
 
 // RunTaskID represents a row from the `run_id_task_id` table.

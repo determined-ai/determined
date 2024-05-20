@@ -7,7 +7,6 @@ import (
 
 	"github.com/stretchr/testify/require"
 
-	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
@@ -29,9 +28,8 @@ func TestFlattenMetadata(t *testing.T) {
 			},
 		},
 	}
-	flattened, keyCount, err := FlattenRunMetadata(data)
+	flattened, err := FlattenMetadata(data)
 	require.NoError(t, err)
-	require.Equal(t, 8, keyCount)
 	require.ElementsMatch(t, []model.RunMetadataIndex{
 		{
 			RunID:     0,
@@ -101,14 +99,14 @@ func TestFlattenMetadata(t *testing.T) {
 
 func TestFlattenMetadataEmpty(t *testing.T) {
 	data := map[string]interface{}{}
-	_, _, err := FlattenRunMetadata(data)
+	_, err := FlattenMetadata(data)
 	require.Error(t, err, "metadata is empty")
 }
 
 // TODO(corban): this should actually be adjusted to return an error since we don't want to
 // allow empty post requests to be made to the metadata endpoint.
 func TestFlattenMetadataNil(t *testing.T) {
-	_, _, err := FlattenRunMetadata(nil)
+	_, err := FlattenMetadata(nil)
 	require.Error(t, err, "metadata is empty")
 }
 
@@ -118,9 +116,8 @@ func TestFlattenMetadataNested(t *testing.T) {
 			"key2": 1,
 		},
 	}
-	flattened, keyCount, err := FlattenRunMetadata(data)
+	flattened, err := FlattenMetadata(data)
 	require.NoError(t, err)
-	require.Equal(t, 2, keyCount)
 	require.ElementsMatch(t, []model.RunMetadataIndex{
 		{
 			RunID:     0,
@@ -139,9 +136,8 @@ func TestFlattenMetadataArray(t *testing.T) {
 			2,
 		},
 	}
-	flattened, keyCount, err := FlattenRunMetadata(data)
+	flattened, err := FlattenMetadata(data)
 	require.NoError(t, err)
-	require.Equal(t, 1, keyCount)
 	require.ElementsMatch(t, []model.RunMetadataIndex{
 		{
 			RunID:     0,
@@ -168,9 +164,8 @@ func TestFlattenMetadataArrayNested(t *testing.T) {
 			},
 		},
 	}
-	flattened, keyCount, err := FlattenRunMetadata(data)
+	flattened, err := FlattenMetadata(data)
 	require.NoError(t, err)
-	require.Equal(t, 2, keyCount)
 	require.ElementsMatch(t, []model.RunMetadataIndex{
 		{
 			RunID:     0,
@@ -182,239 +177,13 @@ func TestFlattenMetadataArrayNested(t *testing.T) {
 	}, flattened)
 }
 
-func TestMergeRunMetadataOverwriteFailure(t *testing.T) {
-	data1 := map[string]interface{}{
-		"key1": 1,
-		"key2": 2,
-	}
-	data2 := map[string]interface{}{
-		"key2": 3,
-		"key3": 4,
-	}
-	_, err := db.MergeRunMetadata(data1, data2)
-	require.Error(t, err)
-}
-
-func TestMergeRunMetadata(t *testing.T) {
-	data1 := map[string]interface{}{
-		"key1": 1,
-		"key2": 2,
-	}
-	data2 := map[string]interface{}{
-		"key3": 3,
-		"key4": 4,
-	}
-	merged, err := db.MergeRunMetadata(data1, data2)
-	require.NoError(t, err)
-	require.Equal(t, map[string]interface{}{
-		"key1": 1,
-		"key2": 2,
-		"key3": 3,
-		"key4": 4,
-	}, merged)
-}
-
-func TestMergeRunMetadataNested(t *testing.T) {
-	data1 := map[string]interface{}{
-		"key1": 1,
-		"key2": map[string]interface{}{
-			"key3": 2,
-		},
-	}
-	data2 := map[string]interface{}{
-		"key2": map[string]interface{}{
-			"key4": 3,
-		},
-		"key5": 4,
-	}
-	merged, err := db.MergeRunMetadata(data1, data2)
-	require.NoError(t, err)
-	require.Equal(t, map[string]interface{}{
-		"key1": 1,
-		"key2": map[string]interface{}{
-			"key3": 2,
-			"key4": 3,
-		},
-		"key5": 4,
-	}, merged)
-}
-
-func TestMergeRunMetadataArrayAppend(t *testing.T) {
-	data1 := map[string]interface{}{
-		"key1": []interface{}{
-			1,
-			2,
-		},
-	}
-	data2 := map[string]interface{}{
-		"key1": []interface{}{
-			3,
-		},
-	}
-	merged, err := db.MergeRunMetadata(data1, data2)
-	require.NoError(t, err)
-	require.Equal(t, map[string]interface{}{"key1": []interface{}{1, 2, 3}}, merged)
-}
-
-func TestMergeRunMetadataArray(t *testing.T) {
-	data1 := map[string]interface{}{
-		"key1": []interface{}{
-			1,
-			2,
-		},
-	}
-	data2 := map[string]interface{}{
-		"key1": map[string]interface{}{
-			"key2": 3,
-			"key3": 4,
-			"key4": 5,
-		},
-	}
-	merged, err := db.MergeRunMetadata(data1, data2)
-	require.NoError(t, err)
-	require.Equal(t, map[string]interface{}{
-		"key1": []interface{}{
-			1,
-			2,
-			map[string]interface{}{
-				"key2": 3,
-				"key3": 4,
-				"key4": 5,
-			},
-		},
-	}, merged)
-}
-
-func TestMergeRunMetadataArrayNested(t *testing.T) {
-	data1 := map[string]interface{}{
-		"key1": map[string]interface{}{
-			"key2": 1,
-		},
-	}
-	data2 := map[string]interface{}{
-		"key1": map[string]interface{}{
-			"key3": 2,
-		},
-	}
-	merged, err := db.MergeRunMetadata(data1, data2)
-	require.NoError(t, err)
-	require.Equal(t, map[string]interface{}{
-		"key1": map[string]interface{}{
-			"key2": 1,
-			"key3": 2,
-		},
-	}, merged)
-}
-
-func TestMergeRunMetadataArrayNestedList(t *testing.T) {
-	data1 := map[string]interface{}{
-		"key1": []interface{}{
-			map[string]interface{}{
-				"key2": 1,
-			},
-		},
-	}
-	data2 := map[string]interface{}{
-		"key1": []interface{}{
-			map[string]interface{}{
-				"key3": 2,
-			},
-		},
-	}
-	merged, err := db.MergeRunMetadata(data1, data2)
-	require.NoError(t, err)
-	require.Equal(t, map[string]interface{}{
-		"key1": []interface{}{
-			map[string]interface{}{
-				"key2": 1,
-			},
-			map[string]interface{}{
-				"key3": 2,
-			},
-		},
-	}, merged)
-}
-
-func TestMergeRunMetadataArrayNestedListFailure(t *testing.T) {
-	data1 := map[string]interface{}{
-		"key1": []interface{}{
-			map[string]interface{}{
-				"key2": 1,
-			},
-		},
-	}
-	data2 := map[string]interface{}{
-		"key1": []interface{}{
-			map[string]interface{}{
-				"key2": 2,
-			},
-		},
-	}
-	_, err := db.MergeRunMetadata(data1, data2)
-	require.ErrorContains(t, err, "attempts to overwrite existing entry ('key2': 1) with new value '2'")
-}
-
-func TestMergeRunMetadataArrayNestedListDifferentLength(t *testing.T) {
-	data1 := map[string]interface{}{
-		"key1": []interface{}{
-			map[string]interface{}{
-				"key2": 1,
-			},
-		},
-	}
-	data2 := map[string]interface{}{
-		"key1": []interface{}{
-			map[string]interface{}{
-				"key3": 2,
-			},
-			map[string]interface{}{
-				"key4": 3,
-			},
-		},
-	}
-	merged, err := db.MergeRunMetadata(data1, data2)
-	require.NoError(t, err)
-	require.Equal(t, map[string]interface{}{
-		"key1": []interface{}{
-			map[string]interface{}{
-				"key2": 1,
-			},
-			map[string]interface{}{
-				"key3": 2,
-			},
-			map[string]interface{}{
-				"key4": 3,
-			},
-		},
-	}, merged)
-}
-
-func TestMergeRunMetadataAppendingToPrimitive(t *testing.T) {
-	data1 := map[string]interface{}{
-		"key1": 1,
-	}
-	data2 := map[string]interface{}{
-		"key1": map[string]interface{}{"key2": 2},
-	}
-	merged, err := db.MergeRunMetadata(data1, data2)
-	require.NoError(t, err)
-	require.Equal(t, map[string]interface{}{
-		"key1": []interface{}{
-			1,
-			map[string]interface{}{
-				"key2": 2,
-			},
-		},
-	}, merged)
-}
-
 func TestFlattenMetadataTooLongKey(t *testing.T) {
 	data := map[string]interface{}{
 		"key1": 1,
 		"key2": 2,
 	}
 	data[strings.Repeat("a", MaxMetadataKeyLength+1)] = 3
-	_, _, err := FlattenRunMetadata(data)
+	_, err := FlattenMetadata(data)
 	require.ErrorContains(
 		t,
 		err,
@@ -432,7 +201,7 @@ func TestFlattenMetadataTooLongArray(t *testing.T) {
 		tooLongArray[i] = i
 	}
 	data["key1"] = tooLongArray
-	_, _, err := FlattenRunMetadata(data)
+	_, err := FlattenMetadata(data)
 	require.ErrorContains(
 		t,
 		err,
@@ -458,7 +227,7 @@ func TestFlattenMetadataTooLongNestedArray(t *testing.T) {
 		nestedArray[i] = i
 	}
 	data["key1"].([]interface{})[0] = nestedArray
-	_, _, err := FlattenRunMetadata(data)
+	_, err := FlattenMetadata(data)
 	require.ErrorContains(
 		t,
 		err,
@@ -474,7 +243,7 @@ func TestFlattenMetadataTooLongValue(t *testing.T) {
 	data := map[string]interface{}{
 		"key1": strings.Repeat("a", MaxMetadataValueStringLength+1),
 	}
-	_, _, err := FlattenRunMetadata(data)
+	_, err := FlattenMetadata(data)
 	require.ErrorContains(
 		t,
 		err,
@@ -491,7 +260,7 @@ func TestFlattenMetadataArrayElementTooLongValue(t *testing.T) {
 			strings.Repeat("a", MaxMetadataValueStringLength+1),
 		},
 	}
-	_, _, err := FlattenRunMetadata(data)
+	_, err := FlattenMetadata(data)
 	require.ErrorContains(
 		t,
 		err,
@@ -508,7 +277,7 @@ func TestFlattenMetadataArrayElementTooLongKey(t *testing.T) {
 		},
 	}
 	data[strings.Repeat("a", MaxMetadataKeyLength+1)] = 2
-	_, _, err := FlattenRunMetadata(data)
+	_, err := FlattenMetadata(data)
 	require.ErrorContains(
 		t,
 		err,
@@ -528,7 +297,7 @@ func TestFlattenMetadataArrayElementTooLongKeyInNestedArray(t *testing.T) {
 		},
 	}
 	data["key1"].([]interface{})[0].(map[string]interface{})[strings.Repeat("a", MaxMetadataKeyLength+1)] = 2
-	_, _, err := FlattenRunMetadata(data)
+	_, err := FlattenMetadata(data)
 	require.ErrorContains(
 		t,
 		err,
@@ -546,7 +315,7 @@ func TestFlattenMetadataNestingTooDeep(t *testing.T) {
 		current[key] = map[string]interface{}{"key_level": i}
 		current = current[key].(map[string]interface{})
 	}
-	_, _, err := FlattenRunMetadata(data)
+	_, err := FlattenMetadata(data)
 	require.ErrorContains(
 		t,
 		err,

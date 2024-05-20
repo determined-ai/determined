@@ -1,5 +1,10 @@
--- ALTER RUNS TABLE
-ALTER TABLE runs ADD COLUMN metadata JSONB;
+-- CREATE RUN METADATA TABLE
+CREATE TABLE runs_metadata (
+    run_id INTEGER PRIMARY KEY,
+    metadata JSONB,
+    FOREIGN KEY (run_id) REFERENCES runs(id) ON DELETE CASCADE
+);
+
 -- CREATE INDEX TABLE
 CREATE TABLE runs_metadata_index (
     id SERIAL PRIMARY KEY,

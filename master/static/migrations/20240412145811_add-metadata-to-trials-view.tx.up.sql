@@ -37,10 +37,12 @@ SELECT
   r.experiment_id AS experiment_id,
   r.warm_start_checkpoint_id AS warm_start_checkpoint_id,
 
-  r.metadata as metadata,
+  -- arbitrary run metadata
+  rm.metadata as metadata,
 
   -- eventually delete runner state.
   r.runner_state AS runner_state
     
 FROM trials_v2 t
-JOIN runs r ON t.run_id = r.id;
+JOIN runs r ON t.run_id = r.id
+LEFT JOIN runs_metadata rm ON r.id = rm.run_id;

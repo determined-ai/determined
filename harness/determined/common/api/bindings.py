@@ -4319,6 +4319,7 @@ class v1FlatRun(Printable):
     externalRunId: "typing.Optional[int]" = None
     hyperparameters: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     labels: "typing.Optional[typing.Sequence[str]]" = None
+    metadata: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     searcherMetricValue: "typing.Optional[float]" = None
     summaryMetrics: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     userId: "typing.Optional[int]" = None
@@ -4342,6 +4343,7 @@ class v1FlatRun(Printable):
         externalRunId: "typing.Union[int, None, Unset]" = _unset,
         hyperparameters: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
         labels: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
+        metadata: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
         searcherMetricValue: "typing.Union[float, None, Unset]" = _unset,
         summaryMetrics: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
         userId: "typing.Union[int, None, Unset]" = _unset,
@@ -4368,6 +4370,8 @@ class v1FlatRun(Printable):
             self.hyperparameters = hyperparameters
         if not isinstance(labels, Unset):
             self.labels = labels
+        if not isinstance(metadata, Unset):
+            self.metadata = metadata
         if not isinstance(searcherMetricValue, Unset):
             self.searcherMetricValue = searcherMetricValue
         if not isinstance(summaryMetrics, Unset):
@@ -4401,6 +4405,8 @@ class v1FlatRun(Printable):
             kwargs["hyperparameters"] = obj["hyperparameters"]
         if "labels" in obj:
             kwargs["labels"] = obj["labels"]
+        if "metadata" in obj:
+            kwargs["metadata"] = obj["metadata"]
         if "searcherMetricValue" in obj:
             kwargs["searcherMetricValue"] = float(obj["searcherMetricValue"]) if obj["searcherMetricValue"] is not None else None
         if "summaryMetrics" in obj:
@@ -4434,6 +4440,8 @@ class v1FlatRun(Printable):
             out["hyperparameters"] = self.hyperparameters
         if not omit_unset or "labels" in vars(self):
             out["labels"] = self.labels
+        if not omit_unset or "metadata" in vars(self):
+            out["metadata"] = self.metadata
         if not omit_unset or "searcherMetricValue" in vars(self):
             out["searcherMetricValue"] = None if self.searcherMetricValue is None else dump_float(self.searcherMetricValue)
         if not omit_unset or "summaryMetrics" in vars(self):

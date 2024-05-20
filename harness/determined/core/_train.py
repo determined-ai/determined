@@ -68,9 +68,9 @@ class TrainContext:
         logger.debug(f"_get_last_validation() -> {steps_completed}")
         return steps_completed
 
-    def log_metadata(self, metadata: Dict[str, Any]) -> None:
+    def set_metadata(self, metadata: Dict[str, Any]) -> None:
         """
-        Log run metadata to the Determined master.
+        Set the metadata on the current run to the Determined master.
 
         The metadata is a dictionary of key-value pairs that can be used for analysis,
         post-processing, or debugging.
@@ -79,6 +79,13 @@ class TrainContext:
         body = {"metadata": metadata}
         logger.debug(f"log_metadata({metadata})")
         self._session.post(f"/api/v1/runs/{self._trial_id}/metadata", json=body)
+
+    def get_metadata(self) -> Dict[str, Any]:
+        """
+        Get the metadata of the current run from the Determined master.
+        """
+        r = self._session.get(f"/api/v1/runs/{self._trial_id}/metadata")
+        return r.json()
 
     def _report_trial_metrics(
         self,

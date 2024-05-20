@@ -27,7 +27,7 @@ func TestMigrateTrials(t *testing.T) {
 		var currentTrialsViewData []struct {
 			TrialData map[string]any
 		}
-		// get all trial info, excluding additional fields add after the transition to runs.
+		// get all trial info, excluding additional fields added after the transition to runs.
 		require.NoError(t, db.Bun().NewSelect().Table("trials").
 			ColumnExpr("to_jsonb(trials.*)-'metadata' AS trial_data").
 			Order("id").
