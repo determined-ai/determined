@@ -59,6 +59,8 @@ export const optionsByColumnType = {
 
 export const ADD_SORT_TEXT = 'Add sort';
 export const SORT_MENU_TITLE = 'Sort by';
+export const RESET_SORT_TEXT = 'Reset';
+export const REMOVE_SORT_TITLE = 'Remove sort';
 
 const SortArrow = ({ direction = 'asc' }: { direction: DirectionType }) => (
   <svg
@@ -179,7 +181,7 @@ const MultiSortRow: React.FC<MultiSortRowProps> = ({ sort, columns, onChange, on
       </div>
       <div>
         <Button
-          icon={<Icon name="close" title="Remove sort" />}
+          icon={<Icon name="close" title={REMOVE_SORT_TITLE} />}
           size="small"
           type="text"
           onClick={onRemove}
@@ -234,7 +236,7 @@ const MultiSort: React.FC<MultiSortProps> = ({ sorts, columns, onChange }) => {
           {ADD_SORT_TEXT}
         </Button>
         <Button type="text" onClick={clearAll}>
-          Reset
+          {RESET_SORT_TEXT}
         </Button>
       </div>
     </div>
