@@ -19,7 +19,7 @@ SELECT run_id, key,
 CASE WHEN type='number' THEN value::text::float ELSE NULL END as number_val,
 CASE WHEN type='string' THEN value::text ELSE NULL END as text_val,
 CASE WHEN type='boolean' THEN value::text::boolean ELSE NULL END as bool_val
-FROM flat WHERE type !='object'
+FROM flat WHERE type !='object';
 
 CREATE TABLE project_hparams (
     project_id int REFERENCES projects(id) ON DELETE CASCADE,
