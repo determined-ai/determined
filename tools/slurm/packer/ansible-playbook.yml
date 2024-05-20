@@ -90,6 +90,7 @@
         - unzip
         - virtualenv
         - wget
+        - xz-utils
         - zip
         state: latest
 

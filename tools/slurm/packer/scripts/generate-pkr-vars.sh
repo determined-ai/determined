@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -ex
 
 # Warning: this script is not meant to be ran directly. It is invoked by 'make build'.
 
@@ -11,7 +12,7 @@ ARTIFACT_BASE_URL=https://arti.hpc.amslabs.hpecorp.net/artifactory/analytics-mis
 
 # Checks the build directory for any debian files. If there is no launcher debians,
 # the latest launcher version is downloaded. Otherwise, the debian in build/ is used
-CURRENT_VERSION=$(ls build/ | grep hpe-hpc-launcher | grep .deb)
+CURRENT_VERSION=$(ls build/ | grep hpe-hpc-launcher | grep .deb || echo None)
 # Runs a curl command that gets all the debian files from artifactory, filters release versions (n.n.n-n),
 # sorts the versions in reverse order and chooses the latest one version.
 LATEST_VERSION=$(curl -sX GET $ARTIFACT_BASE_URL | sed 's/<[^>]*>//g' | grep hpe-hpc-launcher | grep -E '[0-9]+(\.[0-9]+){2}\-[0-9]\_' | sort -r --version-sort | head -n 1 | cut -d' ' -f1)
