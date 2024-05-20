@@ -169,43 +169,39 @@ You can start :ref:`notebooks` from the WebUI.
 
 You can launch TensorBoard from the WebUI. To learn how, visit :ref:`tensorboards`.
 
-**********************************
- Displaying a Maintenance Message
-**********************************
+*****************************
+ Displaying a Banner Message
+*****************************
 
-Administrators can create a maintenance message to alert users about scheduled maintenance.
+Administrators can create a banner message to alert users about important information, such as
+maintenance, setting a password, or other announcements. This message will be displayed on the
+header of every page in the WebUI for the configured duration. Commands include ``help``, ``clear``,
+``get``, and ``set``.
 
 **Prerequisites**
 
-Install the :ref:`CLI <cli-ug>`.
+-  Install the :ref:`CLI <cli-ug>`.
 
-**Steps**
+**Prepare the Message**
 
--  Prepare the maintenance message command. Use the following command template to create a
-   maintenance message.
+Prepare the maintenance message using the CLI command, `det master cluster-message set`.
 
-   -  Replace "Your maintenance message here" with your actual maintenance message.
-   -  Replace "2024-05-14T10:00:00Z" and "2024-05-14T12:00:00Z" with the actual start and end times
-      for the maintenance period.
+-  For example, the following command creates a maintenance message with a start and end date:
 
-   .. code:: bash
+      .. code:: bash
 
-      python your_script.py set-cluster-message -m "Cluster will be under maintenance from 10 AM to 12 PM." --start "2024-05-14T10:00:00Z" --end "2024-05-14T12:00:00Z"
+         det master cluster-message set --message "Scheduled maintenance on Dec 1st from 10pm CST to 11pm CST." --start "2024-12-01-22:00:00 CST" --end "2024-12-01-23:00:00 CST"
 
--  Set the maintenance message by executing the following command:
+-  Instead of using a start and end date, you could also set a duration:
 
-   .. code:: bash
+      .. code:: bash
 
-      python your_script.py set-cluster-message -m "Cluster will be under maintenance from 10 AM to 12 PM." --start "2024-05-14T10:00:00Z" --end "2024-05-14T12:00:00Z"
+         det master cluster-message set --message "Please change your password by Jan 1, 2025" --duration 14d
 
--  Verify the message with the following command:
+**Verify the Message**
 
-   .. code:: bash
-
-      python your_script.py get-cluster-message
-
--  Clear the message using the following command:
+Verify the message with the following command:
 
    .. code:: bash
 
-      python your_script.py clear-cluster-message
+      det master cluster-message get
