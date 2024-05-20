@@ -104,6 +104,7 @@ func (p *Range) MarkPortAsFree(port int) error {
 	return nil
 }
 
+// NewRange creates a new port range with inclusive start and end ports.
 func NewRange(start, end int, usedPorts []int) (*Range, error) {
 	ports := make(map[int]bool)
 	for _, port := range usedPorts {

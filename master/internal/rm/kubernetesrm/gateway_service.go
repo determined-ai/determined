@@ -23,8 +23,8 @@ type gatewayService struct {
 	portRange        *port.Range
 }
 
-func newGatewayService(gatewayInterface gateway.GatewayInterface, gatewayName string, portRangeStart, portRangeEnd int) (*gatewayService, error) {
-	portRange, err := port.NewRange(portRangeStart, portRangeEnd, make([]int, 0))
+func newGatewayService(gatewayInterface gateway.GatewayInterface, gatewayName string) (*gatewayService, error) {
+	portRange, err := port.NewRange(1024, 65535, make([]int, 0))
 	if err != nil {
 		return nil, fmt.Errorf("creating port range: %w", err)
 	}
