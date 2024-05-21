@@ -113,7 +113,7 @@ def test_create_user_sdk() -> None:
 @pytest.mark.e2e_cpu
 def test_logout() -> None:
     # Make sure that a logged out session cannot be reused.
-    sess = api_utils.make_session("determined", "")
+    sess = api_utils.make_session("determined", conf.USER_PASSWORD)
 
     bindings.post_Logout(sess)
     with pytest.raises(errors.UnauthenticatedException):

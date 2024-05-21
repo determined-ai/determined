@@ -254,9 +254,11 @@ class LocalSearchRunner(SearchRunner):
         self,
         search_method: searcher.SearchMethod,
         searcher_dir: Optional[pathlib.Path] = None,
+        session: Optional[api.Session] = None,
     ):
         super().__init__(search_method)
         self.state_path = None
+        self.session = session
 
         self.searcher_dir = searcher_dir or pathlib.Path.cwd()
         if not self.searcher_dir.exists():
@@ -310,7 +312,10 @@ class LocalSearchRunner(SearchRunner):
         # TODO: remove typing suppression when mypy #14473 is resolved
         client._require_singleton(lambda: None)()  # type: ignore
         assert client._determined is not None
-        session = client._determined._session
+        if self.session:
+            session = self.session
+        else:
+            session = client._determined._session
         self.run_experiment(experiment_id, session, operations)
         return experiment_id
 
