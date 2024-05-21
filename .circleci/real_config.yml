@@ -4442,6 +4442,8 @@ workflows:
 
       - test-e2e:
           name: test-e2e-rbac
+          context:
+            - dev-ci-cluster-default-user-credentials
           requires:
             - build-go-ee
           parallelism: 1
@@ -4450,6 +4452,8 @@ workflows:
 
       - test-e2e:
           name: test-e2e-cpu
+          context:
+            - dev-ci-cluster-default-user-credentials
           requires:
             - build-go-ee
           parallelism: 6
@@ -4459,6 +4463,8 @@ workflows:
 
       - test-e2e:
           name: test-e2e-cpu-double
+          context:
+            - dev-ci-cluster-default-user-credentials
           requires:
             - build-go-ee
           parallelism: 5
@@ -4470,6 +4476,8 @@ workflows:
 
       - test-e2e:
           name: test-e2e-cpu-oauth
+          context:
+            - dev-ci-cluster-default-user-credentials
           requires:
             - build-go-ee
           parallelism: 1
@@ -4479,6 +4487,8 @@ workflows:
 
       - test-e2e:
           name: test-e2e-cpu-model-registry-rbac
+          context:
+            - dev-ci-cluster-default-user-credentials
           requires:
             - build-go-ee
           parallelism: 1
@@ -4488,6 +4498,8 @@ workflows:
 
       - test-e2e:
           name: test-e2e-managed-devcluster
+          context:
+            - dev-ci-cluster-default-user-credentials
           requires:
             - build-go-ee
           parallelism: 4
@@ -4501,6 +4513,8 @@ workflows:
 
       - test-e2e:
           name: test-e2e-multi-k8s
+          context:
+            - dev-ci-cluster-default-user-credentials
           requires:
             - build-go-ee
           parallelism: 1
@@ -4512,6 +4526,8 @@ workflows:
 
       - test-e2e:
           name: test-e2e-port-registry
+          context:
+            - dev-ci-cluster-default-user-credentials
           requires:
             - build-go-ee
           parallelism: 1
@@ -4521,6 +4537,8 @@ workflows:
 
       - test-e2e:
           name: test-e2e-cpu-elastic
+          context:
+            - dev-ci-cluster-default-user-credentials
           requires:
             - build-go-ee
           parallelism: 1
@@ -4531,6 +4549,8 @@ workflows:
 
       - test-e2e:
           name: test-e2e-postgres10-with-ssl
+          context:
+            - dev-ci-cluster-default-user-credentials
           requires:
             - build-go-ee
           parallelism: 1
@@ -4541,6 +4561,8 @@ workflows:
 
       - test-e2e:
           name: test-e2e-postgres14-with-ssl
+          context:
+            - dev-ci-cluster-default-user-credentials
           requires:
             - build-go-ee
           parallelism: 1
@@ -4551,6 +4573,8 @@ workflows:
 
       - test-e2e:
           name: test-e2e-old-agent-versions
+          context:
+            - dev-ci-cluster-default-user-credentials
           requires:
             - build-go-ee
           parallelism: 1
@@ -4573,8 +4597,10 @@ workflows:
           extra-pytest-flags: "--no-compare-stats"
 
       - test-e2e:
-          context: okta
           name: test-e2e-saml
+          context:
+            - okta
+            - dev-ci-cluster-default-user-credentials
           requires:
             - build-go-ee
           parallelism: 1
