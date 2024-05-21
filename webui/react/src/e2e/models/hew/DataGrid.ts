@@ -39,6 +39,7 @@ export class DataGrid<
   RowType extends Row<HeadRowType>,
   HeadRowType extends HeadRow<RowType>,
 > extends NamedComponent {
+  static readonly columnIndexAttribute = 'aria-colindex';
   readonly defaultSelector = '[class^="DataGrid_base"]';
   constructor(args: TableArgs<RowType, HeadRowType>) {
     super(args);
@@ -136,7 +137,7 @@ export class DataGrid<
       const cells = await this.headRow.cells.pwLocator.all();
       const indexes = await Promise.all(
         cells.map(async (cell) => {
-          return await cell.getAttribute(this.headRow.columnIndexAttribute);
+          return await cell.getAttribute(DataGrid.columnIndexAttribute);
         }),
       );
       if (JSON.stringify(indexes) === JSON.stringify(prevIndexes)) {
@@ -171,7 +172,7 @@ export class DataGrid<
         await Promise.all(
           cells.map(async (cell) => {
             return (
-              index === parseInt((await cell.getAttribute(this.headRow.columnIndexAttribute)) || '')
+              index + 1 === parseInt((await cell.getAttribute(DataGrid.columnIndexAttribute)) || '')
             );
           }),
         )
@@ -338,7 +339,7 @@ export class Row<HeadRowType extends HeadRow<Row<HeadRowType>>> extends NamedCom
     expect(await this.parentTable.scrollColumnIntoView(n)).toBe(true);
     return new BaseComponent({
       parent: this,
-      selector: `[aria-colindex="${n + 1}"]`,
+      selector: `[${DataGrid.columnIndexAttribute}="${n + 1}"]`,
     });
   }
 
@@ -358,7 +359,6 @@ export class Row<HeadRowType extends HeadRow<Row<HeadRowType>>> extends NamedCom
  * @param {string} obj.selector - Used as a selector uesd to locate this object
  */
 export class HeadRow<RowType extends Row<HeadRow<RowType>>> extends NamedComponent {
-  readonly columnIndexAttribute = 'aria-colindex';
   readonly defaultSelector = 'tr';
   readonly parentTable: DataGrid<RowType, HeadRow<RowType>>;
   constructor(args: HeadRowArgs<RowType, HeadRow<RowType>>) {
@@ -373,7 +373,7 @@ export class HeadRow<RowType extends Row<HeadRow<RowType>>> extends NamedCompone
   readonly selectDropdown = new HeaderDropdown({
     childNode: new BaseComponent({
       parent: this,
-      selector: `[${this.columnIndexAttribute}="1"]`,
+      selector: `[${DataGrid.columnIndexAttribute}="1"]`,
     }),
     openMethod: this.clickSelectDropdown.bind(this),
     root: this.root,
@@ -417,10 +417,10 @@ export class HeadRow<RowType extends Row<HeadRow<RowType>>> extends NamedCompone
       }
       await Promise.all(
         cells.map(async (cell) => {
-          const index = await cell.getAttribute(this.columnIndexAttribute);
+          const index = await cell.getAttribute(DataGrid.columnIndexAttribute);
           if (index === null)
             throw new Error(
-              `All header cells should have the attribute ${this.columnIndexAttribute}`,
+              `All header cells should have the attribute ${DataGrid.columnIndexAttribute}`,
             );
           if (index !== '1') {
             expect(await cell.textContent()).not.toBe('');
