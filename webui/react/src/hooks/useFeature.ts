@@ -49,7 +49,7 @@ export const FEATURES: Record<ValidFeature, FeatureDescription> = {
     friendlyName: 'Streaming Updates',
   },
   task_templates: {
-    defaultValue: false,
+    defaultValue: true,
     description: 'Manage tempaltes through WebUI',
     friendlyName: 'Manage Templates',
   },
