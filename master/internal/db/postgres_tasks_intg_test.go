@@ -11,8 +11,6 @@ import (
 	"go/ast"
 	"go/parser"
 	"go/token"
-	"log"
-	"os"
 	"reflect"
 	"slices"
 	"strings"
@@ -26,36 +24,20 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/pkg/cproto"
-	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/taskv1"
 )
 
-func TestMain(m *testing.M) {
-	db, err := ResolveTestPostgres()
-	if err != nil {
-		log.Panicln(err)
-	}
-
-	err = MigrateTestPostgres(db, "file://../../static/migrations", "up")
-	if err != nil {
-		log.Panicln(err)
-	}
-
-	err = etc.SetRootPath("../../static/srv")
-	if err != nil {
-		log.Panicln(err)
-	}
-
-	os.Exit(m.Run())
-}
-
 // TestJobTaskAndAllocationAPI, in lieu of an ORM, ensures that the mappings into and out of the
 // database are total. We should look into an ORM in the near to medium term future.
 func TestJobTaskAndAllocationAPI(t *testing.T) {
-	ctx := context.TODO()
+	ctx := context.Background()
+	pgDB, close := MustResolveTestPostgres(t)
+	defer close()
+	MustMigrateTestPostgres(t, pgDB, MigrationsFromDB)
+
 	db := SingleDB()
 
 	// Add a mock user.
@@ -148,7 +130,10 @@ func TestJobTaskAndAllocationAPI(t *testing.T) {
 }
 
 func TestRecordAndEndTaskStats(t *testing.T) {
-	ctx := context.TODO()
+	ctx := context.Background()
+	pgDB, close := MustResolveTestPostgres(t)
+	defer close()
+	MustMigrateTestPostgres(t, pgDB, MigrationsFromDB)
 
 	tID := model.NewTaskID()
 	require.NoError(t, AddTask(ctx, &model.Task{
@@ -195,7 +180,10 @@ func TestRecordAndEndTaskStats(t *testing.T) {
 }
 
 func TestNonExperimentTasksContextDirectory(t *testing.T) {
-	ctx := context.TODO()
+	ctx := context.Background()
+	pgDB, close := MustResolveTestPostgres(t)
+	defer close()
+	MustMigrateTestPostgres(t, pgDB, MigrationsFromDB)
 
 	// Task doesn't exist.
 	_, err := NonExperimentTasksContextDirectory(ctx, model.TaskID(uuid.New().String()))
@@ -232,7 +220,11 @@ func TestNonExperimentTasksContextDirectory(t *testing.T) {
 }
 
 func TestAllocationState(t *testing.T) {
-	ctx := context.TODO()
+	ctx := context.Background()
+	pgDB, close := MustResolveTestPostgres(t)
+	defer close()
+	MustMigrateTestPostgres(t, pgDB, MigrationsFromDB)
+
 	db := SingleDB()
 
 	// Add an allocation of every possible state.
@@ -299,6 +291,10 @@ func TestAllocationState(t *testing.T) {
 }
 
 func TestExhaustiveEnums(t *testing.T) {
+	pgDB, close := MustResolveTestPostgres(t)
+	defer close()
+	MustMigrateTestPostgres(t, pgDB, MigrationsFromDB)
+
 	type check struct {
 		goType          string
 		goMembers       map[string]bool
@@ -390,7 +386,11 @@ func TestExhaustiveEnums(t *testing.T) {
 }
 
 func TestAddTask(t *testing.T) {
-	ctx := context.TODO()
+	ctx := context.Background()
+	pgDB, close := MustResolveTestPostgres(t)
+	defer close()
+	MustMigrateTestPostgres(t, pgDB, MigrationsFromDB)
+
 	db := SingleDB()
 
 	u := RequireMockUser(t, db)
@@ -415,7 +415,11 @@ func TestAddTask(t *testing.T) {
 }
 
 func TestTaskCompleted(t *testing.T) {
-	ctx := context.TODO()
+	ctx := context.Background()
+	pgDB, close := MustResolveTestPostgres(t)
+	defer close()
+	MustMigrateTestPostgres(t, pgDB, MigrationsFromDB)
+
 	db := SingleDB()
 
 	tIn := RequireMockTask(t, db, nil)
@@ -433,7 +437,11 @@ func TestTaskCompleted(t *testing.T) {
 }
 
 func TestAddAllocation(t *testing.T) {
-	ctx := context.TODO()
+	ctx := context.Background()
+	pgDB, close := MustResolveTestPostgres(t)
+	defer close()
+	MustMigrateTestPostgres(t, pgDB, MigrationsFromDB)
+
 	db := SingleDB()
 
 	tIn := RequireMockTask(t, db, nil)
@@ -456,7 +464,11 @@ func TestAddAllocation(t *testing.T) {
 }
 
 func TestAddAllocationExitStatus(t *testing.T) {
-	ctx := context.TODO()
+	ctx := context.Background()
+	pgDB, close := MustResolveTestPostgres(t)
+	defer close()
+	MustMigrateTestPostgres(t, pgDB, MigrationsFromDB)
+
 	db := SingleDB()
 
 	tIn := RequireMockTask(t, db, nil)
@@ -481,7 +493,11 @@ func TestAddAllocationExitStatus(t *testing.T) {
 }
 
 func TestCompleteAllocation(t *testing.T) {
-	ctx := context.TODO()
+	ctx := context.Background()
+	pgDB, close := MustResolveTestPostgres(t)
+	defer close()
+	MustMigrateTestPostgres(t, pgDB, MigrationsFromDB)
+
 	db := SingleDB()
 
 	tIn := RequireMockTask(t, db, nil)
@@ -498,6 +514,10 @@ func TestCompleteAllocation(t *testing.T) {
 }
 
 func TestCompleteAllocationTelemetry(t *testing.T) {
+	pgDB, close := MustResolveTestPostgres(t)
+	defer close()
+	MustMigrateTestPostgres(t, pgDB, MigrationsFromDB)
+
 	db := SingleDB()
 
 	tIn := RequireMockTask(t, db, nil)
@@ -511,6 +531,10 @@ func TestCompleteAllocationTelemetry(t *testing.T) {
 }
 
 func TestAllocationByID(t *testing.T) {
+	pgDB, close := MustResolveTestPostgres(t)
+	defer close()
+	MustMigrateTestPostgres(t, pgDB, MigrationsFromDB)
+
 	db := SingleDB()
 
 	tIn := RequireMockTask(t, db, nil)
@@ -522,7 +546,11 @@ func TestAllocationByID(t *testing.T) {
 }
 
 func TestAllocationSessionFlow(t *testing.T) {
-	ctx := context.TODO()
+	ctx := context.Background()
+	pgDB, close := MustResolveTestPostgres(t)
+	defer close()
+	MustMigrateTestPostgres(t, pgDB, MigrationsFromDB)
+
 	db := SingleDB()
 
 	uIn := RequireMockUser(t, db)
@@ -555,7 +583,11 @@ func TestAllocationSessionFlow(t *testing.T) {
 }
 
 func TestUpdateAllocation(t *testing.T) {
-	ctx := context.TODO()
+	ctx := context.Background()
+	pgDB, close := MustResolveTestPostgres(t)
+	defer close()
+	MustMigrateTestPostgres(t, pgDB, MigrationsFromDB)
+
 	db := SingleDB()
 
 	tIn := RequireMockTask(t, db, nil)
@@ -594,7 +626,11 @@ func TestUpdateAllocation(t *testing.T) {
 }
 
 func TestCloseOpenAllocations(t *testing.T) {
-	ctx := context.TODO()
+	ctx := context.Background()
+	pgDB, close := MustResolveTestPostgres(t)
+	defer close()
+	MustMigrateTestPostgres(t, pgDB, MigrationsFromDB)
+
 	db := SingleDB()
 
 	// Create test allocations, with a NULL end time.
@@ -631,6 +667,10 @@ func TestCloseOpenAllocations(t *testing.T) {
 }
 
 func TestTaskLogsFlow(t *testing.T) {
+	pgDB, close := MustResolveTestPostgres(t)
+	defer close()
+	MustMigrateTestPostgres(t, pgDB, MigrationsFromDB)
+
 	db := SingleDB()
 
 	t1In := RequireMockTask(t, db, nil)

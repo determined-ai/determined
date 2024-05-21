@@ -31,7 +31,8 @@ import (
 func TestCheckpointMetadata(t *testing.T) {
 	ctx := context.Background()
 	require.NoError(t, etc.SetRootPath(RootFromDB))
-	db := MustResolveTestPostgres(t)
+	db, close := MustResolveTestPostgres(t)
+	defer close()
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 
 	tests := []struct {
@@ -160,7 +161,8 @@ func TestMetricNames(t *testing.T) {
 	ctx := context.Background()
 
 	require.NoError(t, etc.SetRootPath(RootFromDB))
-	db := MustResolveTestPostgres(t)
+	db, close := MustResolveTestPostgres(t)
+	defer close()
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 
 	actualNames, err := db.MetricNames(ctx, []int{-1})
@@ -210,7 +212,8 @@ func TestExperimentByIDs(t *testing.T) {
 	ctx := context.Background()
 
 	require.NoError(t, etc.SetRootPath(RootFromDB))
-	db := MustResolveTestPostgres(t)
+	db, close := MustResolveTestPostgres(t)
+	defer close()
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 	user := RequireMockUser(t, db)
 
@@ -271,7 +274,8 @@ func TestTerminateExperimentInRestart(t *testing.T) {
 	ctx := context.Background()
 
 	require.NoError(t, etc.SetRootPath(RootFromDB))
-	db := MustResolveTestPostgres(t)
+	db, close := MustResolveTestPostgres(t)
+	defer close()
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 	user := RequireMockUser(t, db)
 
@@ -299,7 +303,8 @@ func TestExperimentsTrialAndTaskIDs(t *testing.T) {
 	ctx := context.Background()
 
 	require.NoError(t, etc.SetRootPath(RootFromDB))
-	db := MustResolveTestPostgres(t)
+	db, close := MustResolveTestPostgres(t)
+	defer close()
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 	user := RequireMockUser(t, db)
 
@@ -351,7 +356,8 @@ func TestExperimentBestSearcherValidation(t *testing.T) {
 	ctx := context.Background()
 
 	require.NoError(t, etc.SetRootPath(RootFromDB))
-	db := MustResolveTestPostgres(t)
+	db, close := MustResolveTestPostgres(t)
+	defer close()
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 	user := RequireMockUser(t, db)
 
@@ -387,7 +393,8 @@ func TestProjectHyperparameters(t *testing.T) {
 	ctx := context.Background()
 
 	require.NoError(t, etc.SetRootPath(RootFromDB))
-	db := MustResolveTestPostgres(t)
+	db, close := MustResolveTestPostgres(t)
+	defer close()
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 	user := RequireMockUser(t, db)
 
@@ -438,7 +445,8 @@ func TestActiveLogPatternPolicies(t *testing.T) {
 	ctx := context.Background()
 	require.NoError(t, etc.SetRootPath(RootFromDB))
 
-	db := MustResolveTestPostgres(t)
+	db, close := MustResolveTestPostgres(t)
+	defer close()
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 
 	_, err := ActiveLogPolicies(ctx, -1)
@@ -480,7 +488,8 @@ func TestActiveLogPatternPolicies(t *testing.T) {
 func TestGetNonTerminalExperimentCount(t *testing.T) {
 	ctx := context.Background()
 	require.NoError(t, etc.SetRootPath(RootFromDB))
-	db := MustResolveTestPostgres(t)
+	db, close := MustResolveTestPostgres(t)
+	defer close()
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 	user := RequireMockUser(t, db)
 
@@ -524,7 +533,8 @@ func TestGetNonTerminalExperimentCount(t *testing.T) {
 func TestMetricBatchesMilestones(t *testing.T) {
 	ctx := context.Background()
 	require.NoError(t, etc.SetRootPath(RootFromDB))
-	db := MustResolveTestPostgres(t)
+	db, close := MustResolveTestPostgres(t)
+	defer close()
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 	user := RequireMockUser(t, db)
 	exp := RequireMockExperiment(t, db, user)
@@ -554,7 +564,8 @@ func TestTopTrialsByMetric(t *testing.T) {
 	ctx := context.Background()
 
 	require.NoError(t, etc.SetRootPath(RootFromDB))
-	db := MustResolveTestPostgres(t)
+	db, close := MustResolveTestPostgres(t)
+	defer close()
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 
 	user := RequireMockUser(t, db)
@@ -904,7 +915,8 @@ func TestDeleteExperiments(t *testing.T) {
 
 func TestProjectExperiments(t *testing.T) {
 	require.NoError(t, etc.SetRootPath(RootFromDB))
-	db := MustResolveTestPostgres(t)
+	db, close := MustResolveTestPostgres(t)
+	defer close()
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 
 	// add a workspace, and project
@@ -981,7 +993,8 @@ func TestExperimentTotalStepTime(t *testing.T) {
 	ctx := context.Background()
 
 	require.NoError(t, etc.SetRootPath(RootFromDB))
-	db := MustResolveTestPostgres(t)
+	db, cleanup := MustResolveTestPostgres(t)
+	defer cleanup()
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 
 	t.Run("invalid experiment, return 0.0, no error", func(t *testing.T) {
@@ -1044,7 +1057,8 @@ func TestExperimentNumSteps(t *testing.T) {
 	ctx := context.Background()
 
 	require.NoError(t, etc.SetRootPath(RootFromDB))
-	db := MustResolveTestPostgres(t)
+	db, cleanup := MustResolveTestPostgres(t)
+	defer cleanup()
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 
 	t.Run("invalid experiment, return 0, no error", func(t *testing.T) {

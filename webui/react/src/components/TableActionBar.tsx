@@ -19,9 +19,10 @@ import ExperimentTensorBoardModal from 'components/ExperimentTensorBoardModal';
 import { FilterFormStore } from 'components/FilterForm/components/FilterFormStore';
 import TableFilter from 'components/FilterForm/TableFilter';
 import MultiSortMenu from 'components/MultiSortMenu';
-import { OptionsMenu, RowHeight, TableViewMode } from 'components/OptionsMenu';
+import { OptionsMenu, RowHeight } from 'components/OptionsMenu';
 import useMobile from 'hooks/useMobile';
 import usePermissions from 'hooks/usePermissions';
+import { defaultExperimentColumns } from 'pages/F_ExpList/expListColumns';
 import { BANNED_FILTER_COLUMNS } from 'pages/F_ExpList/F_ExperimentList';
 import {
   activateExperiments,
@@ -95,15 +96,15 @@ interface Props {
   onHeatmapToggle?: (heatmapOn: boolean) => void;
   onIsOpenFilterChange?: (value: boolean) => void;
   onRowHeightChange?: (rowHeight: RowHeight) => void;
-  onTableViewModeChange?: (mode: TableViewMode) => void;
   onSortChange?: (sorts: Sort[]) => void;
-  onVisibleColumnChange?: (newColumns: string[]) => void;
+  onVisibleColumnChange?: (newColumns: string[], pinnedCount?: number) => void;
+  onHeatmapSelectionRemove?: (id: string) => void;
   project: Project;
   projectColumns: Loadable<ProjectColumn[]>;
   rowHeight: RowHeight;
   selectedExperimentIds: number[];
   sorts: Sort[];
-  // tableViewMode: TableViewMode;
+  pinnedColumnsCount?: number;
   total: Loadable<number>;
   labelSingular: string;
   labelPlural: string;
@@ -124,14 +125,14 @@ const TableActionBar: React.FC<Props> = ({
   onIsOpenFilterChange,
   onRowHeightChange,
   onSortChange,
-  // onTableViewModeChange,
+  onHeatmapSelectionRemove,
   onVisibleColumnChange,
   project,
   projectColumns,
   rowHeight,
   selectedExperimentIds,
   sorts,
-  // tableViewMode,
+  pinnedColumnsCount = 0,
   total,
   labelSingular,
   labelPlural,
@@ -409,19 +410,18 @@ const TableActionBar: React.FC<Props> = ({
               onChange={onSortChange}
             />
             <ColumnPickerMenu
+              compare={compareViewOn}
+              defaultVisibleColumns={defaultExperimentColumns}
               initialVisibleColumns={initialVisibleColumns}
               isMobile={isMobile}
+              pinnedColumnsCount={pinnedColumnsCount}
               projectColumns={projectColumns}
               projectId={project.id}
               tabs={columnGroups}
+              onHeatmapSelectionRemove={onHeatmapSelectionRemove}
               onVisibleColumnChange={onVisibleColumnChange}
             />
-            <OptionsMenu
-              rowHeight={rowHeight}
-              // tableViewMode={tableViewMode}
-              onRowHeightChange={onRowHeightChange}
-              // onTableViewModeChange={onTableViewModeChange}
-            />
+            <OptionsMenu rowHeight={rowHeight} onRowHeightChange={onRowHeightChange} />
             {selectedExperimentIds.length > 0 && (
               <Dropdown menu={editMenuItems} onClick={handleAction}>
                 <Button hideChildren={isMobile}>Actions</Button>

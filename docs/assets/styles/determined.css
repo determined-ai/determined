@@ -138,11 +138,11 @@ html[data-theme="dark"] {
   width: 24px;
 }
 .tile-container:nth-child(2n - 1) > .tile {
-  background-color: #f2f2f3;
+  background-color: #f2f2f2;
 }
 
 .tile-container:nth-child(2n) > .tile {
-  background-color: #c8caca;
+  background-color: #f2f2f2;
 }
 
 .tile:hover {

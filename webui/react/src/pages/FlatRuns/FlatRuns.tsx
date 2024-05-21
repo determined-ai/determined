@@ -3,6 +3,7 @@ import { isLeft } from 'fp-ts/lib/Either';
 import Column from 'hew/Column';
 import {
   ColumnDef,
+  DEFAULT_COLUMN_WIDTH,
   defaultDateColumn,
   defaultNumberColumn,
   defaultSelectionColumn,
@@ -27,11 +28,13 @@ import Message from 'hew/Message';
 import Pagination from 'hew/Pagination';
 import Row from 'hew/Row';
 import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
+import { isUndefined } from 'lodash';
 import { useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 
+import ColumnPickerMenu from 'components/ColumnPickerMenu';
 import { Error } from 'components/exceptions';
 import { FilterFormStore, ROOT_ID } from 'components/FilterForm/components/FilterFormStore';
 import {
@@ -43,7 +46,7 @@ import {
 } from 'components/FilterForm/components/type';
 import TableFilter from 'components/FilterForm/TableFilter';
 import { EMPTY_SORT, sortMenuItemsForColumn } from 'components/MultiSortMenu';
-import { RowHeight } from 'components/OptionsMenu';
+import { OptionsMenu, RowHeight } from 'components/OptionsMenu';
 import {
   DataGridGlobalSettings,
   rowHeightMap,
@@ -69,7 +72,13 @@ import handleError from 'utils/error';
 import { eagerSubscribe } from 'utils/observable';
 import { pluralizer } from 'utils/string';
 
-import { defaultColumnWidths, getColumnDefs, RunColumn, runColumns } from './columns';
+import {
+  defaultColumnWidths,
+  defaultRunColumns,
+  getColumnDefs,
+  RunColumn,
+  runColumns,
+} from './columns';
 import css from './FlatRuns.module.scss';
 import {
   defaultFlatRunsSettings,
@@ -129,7 +138,8 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
     [flatRunsSettings],
   );
 
-  const { settings: globalSettings } = useSettings<DataGridGlobalSettings>(settingsConfigGlobal);
+  const { settings: globalSettings, updateSettings: updateGlobalSettings } =
+    useSettings<DataGridGlobalSettings>(settingsConfigGlobal);
 
   const [isOpenFilter, setIsOpenFilter] = useState<boolean>(false);
   const [runs, setRuns] = useState<Loadable<FlatRun>[]>(INITIAL_LOADING_RUNS);
@@ -328,6 +338,13 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
     settings.pinnedColumnsCount,
     users,
   ]);
+
+  const onRowHeightChange = useCallback(
+    (newRowHeight: RowHeight) => {
+      updateGlobalSettings({ rowHeight: newRowHeight });
+    },
+    [updateGlobalSettings],
+  );
 
   const onPageChange = useCallback(
     (cPage: number, cPageSize: number) => {
@@ -536,10 +553,24 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
     useCallback(() => {}, []);
 
   const handleColumnsOrderChange = useCallback(
-    (newColumnsOrder: string[]) => {
-      updateSettings({ columns: newColumnsOrder });
+    // changing both column order and pinned count should happen in one update:
+    (newColumnsOrder: string[], pinnedCount?: number) => {
+      const newColumnWidths = newColumnsOrder
+        .filter((c) => !(c in settings.columnWidths))
+        .reduce((acc: Record<string, number>, col) => {
+          acc[col] = DEFAULT_COLUMN_WIDTH;
+          return acc;
+        }, {});
+      updateSettings({
+        columns: newColumnsOrder,
+        columnWidths: {
+          ...settings.columnWidths,
+          ...newColumnWidths,
+        },
+        pinnedColumnsCount: isUndefined(pinnedCount) ? settings.pinnedColumnsCount : pinnedCount,
+      });
     },
-    [updateSettings],
+    [updateSettings, settings.pinnedColumnsCount, settings.columnWidths],
   );
 
   const handleSortChange = useCallback(
@@ -609,8 +640,8 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
                 onClick: () => {
                   const newColumnsOrder = columnsIfLoaded.filter((c) => c !== columnId);
                   newColumnsOrder.splice(settings.pinnedColumnsCount, 0, columnId);
-                  handleColumnsOrderChange?.(newColumnsOrder);
-                  handlePinnedColumnsCountChange?.(
+                  handleColumnsOrderChange(
+                    newColumnsOrder,
                     Math.min(settings.pinnedColumnsCount + 1, columnsIfLoaded.length),
                   );
                 },
@@ -623,10 +654,28 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
                 onClick: () => {
                   const newColumnsOrder = columnsIfLoaded.filter((c) => c !== columnId);
                   newColumnsOrder.splice(settings.pinnedColumnsCount - 1, 0, columnId);
-                  handleColumnsOrderChange?.(newColumnsOrder);
-                  handlePinnedColumnsCountChange?.(Math.max(settings.pinnedColumnsCount - 1, 0));
+                  handleColumnsOrderChange(
+                    newColumnsOrder,
+                    Math.max(settings.pinnedColumnsCount - 1, 0),
+                  );
                 },
               },
+        {
+          icon: <Icon decorative name="eye-close" />,
+          key: 'hide',
+          label: 'Hide column',
+          onClick: () => {
+            const newColumnsOrder = columnsIfLoaded.filter((c) => c !== columnId);
+            if (isPinned) {
+              handleColumnsOrderChange(
+                newColumnsOrder,
+                Math.max(settings.pinnedColumnsCount - 1, 0),
+              );
+            } else {
+              handleColumnsOrderChange(newColumnsOrder);
+            }
+          },
+        },
       ];
 
       if (!column) {
@@ -700,7 +749,6 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
     [
       columnsIfLoaded,
       handleColumnsOrderChange,
-      handlePinnedColumnsCountChange,
       handleSelectionChange,
       handleSortChange,
       isMobile,
@@ -723,14 +771,31 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
 
   return (
     <div className={css.content} ref={contentRef}>
-      <TableFilter
-        bannedFilterColumns={BANNED_FILTER_COLUMNS}
-        formStore={formStore}
-        isMobile={isMobile}
-        isOpenFilter={isOpenFilter}
-        loadableColumns={projectColumns}
-        onIsOpenFilterChange={handleIsOpenFilterChange}
-      />
+      <Row>
+        <TableFilter
+          bannedFilterColumns={BANNED_FILTER_COLUMNS}
+          formStore={formStore}
+          isMobile={isMobile}
+          isOpenFilter={isOpenFilter}
+          loadableColumns={projectColumns}
+          onIsOpenFilterChange={handleIsOpenFilterChange}
+        />
+        <ColumnPickerMenu
+          defaultVisibleColumns={defaultRunColumns}
+          initialVisibleColumns={columnsIfLoaded}
+          isMobile={isMobile}
+          pinnedColumnsCount={settings.pinnedColumnsCount}
+          projectColumns={projectColumns}
+          projectId={project.id}
+          tabs={[
+            V1LocationType.EXPERIMENT,
+            [V1LocationType.VALIDATIONS, V1LocationType.TRAINING, V1LocationType.CUSTOMMETRIC],
+            V1LocationType.HYPERPARAMETERS,
+          ]}
+          onVisibleColumnChange={handleColumnsOrderChange}
+        />
+        <OptionsMenu rowHeight={globalSettings.rowHeight} onRowHeightChange={onRowHeightChange} />
+      </Row>
       {!isLoading && total.isLoaded && total.data === 0 ? (
         numFilters === 0 ? (
           <Message

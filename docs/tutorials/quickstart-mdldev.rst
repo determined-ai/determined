@@ -115,6 +115,18 @@ Each YAML-formatted configuration file corresponds an example experiment.
 |                        | adaptive hyperparameter tuning algorithm.            |
 +------------------------+------------------------------------------------------+
 
+   .. important::
+
+      TensorFlow users must configure their environment image in this file before submitting an
+      experiment.
+
+      .. code:: bash
+
+         environment:
+            image:
+               cpu: determinedai/tensorflow-ngc-dev:f17151a
+               gpu: determinedai/tensorflow-ngc-dev:f17151a
+
 Description of Model and Pipeline Definition Files
 ==================================================
 

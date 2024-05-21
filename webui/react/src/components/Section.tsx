@@ -23,9 +23,7 @@ interface Props {
   title?: string | React.ReactNode;
 }
 
-const defaultProps = { divider: false };
-
-const Section: React.FC<Props> = ({ className = '', ...props }: Props) => {
+const Section: React.FC<Props> = ({ className = '', divider = false, ...props }: Props) => {
   const defaultId = isString(props.title) ? toHtmlId(props.title) : generateAlphaNumeric();
   const id = props.id || defaultId;
   const classes = [css.base, className];
@@ -35,7 +33,7 @@ const Section: React.FC<Props> = ({ className = '', ...props }: Props) => {
   if (props.bodyDynamic) classes.push(css.bodyDynamic);
   if (props.bodyNoPadding) classes.push(css.bodyNoPadding);
   if (props.bodyScroll) classes.push(css.bodyScroll);
-  if (props.divider) classes.push(css.divider);
+  if (divider) classes.push(css.divider);
   if (props.filters) classes.push(css.filters);
   if (props.maxHeight) classes.push(css.maxHeight);
   if (typeof props.title === 'string') titleClasses.push(css.string);
@@ -57,7 +55,5 @@ const Section: React.FC<Props> = ({ className = '', ...props }: Props) => {
     </section>
   );
 };
-
-Section.defaultProps = defaultProps;
 
 export default Section;

@@ -1,3 +1,4 @@
+TEST_RESULTS_DIR=/tmp/test-results
 py_bindings_dest=determined/common/api/bindings.py
 cuda_available=$(shell python -c "import torch; print(torch.cuda.is_available())") \
 
@@ -29,44 +30,46 @@ check: check-gen
 	python -m flake8
 	mypy .
 
+
 .PHONY: test-cpu
 test-cpu:
-	coverage run -m pytest -v --runslow --durations=0 -m "not gpu or cpu" tests
+	mkdir -p $(TEST_RESULTS_DIR)
+	coverage run -m pytest -v --runslow --durations=0 -m "not gpu or cpu" --junitxml=$(TEST_RESULTS_DIR)/test-cpu.xml tests
 
-.PHONY: test-gpu
-test-gpu:
-	# Since integration tests are image-specific, they must be excluded and run separately
-	coverage run -m pytest -v --runslow --durations=0 -m "gpu" tests/experiment --ignore=tests/experiment/integrations
+.PHONY: test-gpu-tf
+test-gpu-tf:
+	mkdir -p $(TEST_RESULTS_DIR)
+	coverage run -m pytest -v --runslow --durations=0 -m "gpu" --junitxml=$(TEST_RESULTS_DIR)/test-gpu.xml tests/experiment/keras
 
 .PHONY: test-gpu-deepspeed
 test-gpu-deepspeed:
-	coverage run -m pytest -v --runslow --durations=0 -m "deepspeed and gpu" tests/experiment/integrations/test_deepspeed_trial.py
+	mkdir -p $(TEST_RESULTS_DIR)
+	coverage run -m pytest -v --runslow --durations=0 -m "deepspeed and gpu" --junitxml=$(TEST_RESULTS_DIR)/test-gpu-deepspeed.xml tests/experiment/integrations/test_deepspeed_trial.py
 
 .PHONY: test-gpu-parallel
 test-gpu-parallel:
-	coverage run -m pytest -v --runslow --durations=0 -m tests/experiment -m "gpu_parallel" tests/experiment --ignore=tests/experiment/integrations
+	mkdir -p $(TEST_RESULTS_DIR)
+	coverage run -m pytest -v --runslow --durations=0 -m tests/experiment -m "gpu_parallel" --junitxml=$(TEST_RESULTS_DIR)/test-gpu-parallel.xml tests/experiment/pytorch
 
 .PHONY: test-pytorch-cpu
 test-pytorch-cpu:
-	coverage run -m pytest -v --runslow --durations=0 -m tests/experiment -m "not gpu or cpu" tests/experiment/pytorch
+	mkdir -p $(TEST_RESULTS_DIR)
+	coverage run -m pytest -v --runslow --durations=0 -m tests/experiment -m "not gpu or cpu" --junitxml=$(TEST_RESULTS_DIR)/test-pytorch-cpu.xml tests/experiment/pytorch
 
 .PHONY: test-pytorch-gpu
 test-pytorch-gpu:
-	coverage run -m pytest -v --runslow --durations=0 -m tests/experiment -m "gpu" tests/experiment/pytorch
+	mkdir -p $(TEST_RESULTS_DIR)
+	coverage run -m pytest -v --runslow --durations=0 -m tests/experiment -m "gpu" --junitxml=$(TEST_RESULTS_DIR)/test-pytorch-gpu.xml tests/experiment/pytorch
 
 .PHONY: test
 test:
-	coverage run -m pytest -v --runslow --durations=0 tests
+	mkdir -p $(TEST_RESULTS_DIR)
+	coverage run -m pytest -v --runslow --durations=0 --junitxml=$(TEST_RESULTS_DIR)/test.xml tests
 
 .PHONY: test-tf2
 test-tf2:
-	pip freeze | grep "tensorflow==2.*"
-	# We must run these tests separately becuase estimators need to disable v2
-	# behavior (a global operation). We are explicitly testing eager execution
-	# for tf keras which needs v2 behavior enabled. You can't enable v2 behavior
-	# anywhere but the "start" of your program. See:
-	# https://github.com/tensorflow/tensorflow/issues/18304#issuecomment-379435515.
-	coverage run -a -m pytest -v --runslow --durations=0 -m "not gpu" tests/experiment/keras
+	mkdir -p $(TEST_RESULTS_DIR)
+	coverage run -a -m pytest -v --runslow --durations=0 -m "not gpu" --junitxml=$(TEST_RESULTS_DIR)/test-tf2.xml tests/experiment/keras
 
 .PHONY: clean
 clean:

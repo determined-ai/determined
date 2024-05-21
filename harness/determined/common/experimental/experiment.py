@@ -633,6 +633,23 @@ class Experiment:
             experimentId=self._id,
         )
 
+    def get_pachyderm_config(self) -> Dict[str, Any]:
+        """Return the Pachyderm configuration for this experiment.
+
+        Pachyderm configs are defined in `integrations.pachyderm` in the experiment config.
+        """
+        if not self.config:
+            # In the case that Experiment was constructed manually, reload to populate attributes.
+            self.reload()
+        assert self.config  # for mypy
+
+        try:
+            pach_config = self.config["integrations"]["pachyderm"]
+            assert pach_config  # for mypy
+            return dict(pach_config)
+        except (KeyError, TypeError):
+            raise ValueError(f"No Pachyderm configuration found for experiment {self.id}.")
+
     def __repr__(self) -> str:
         return "Experiment(id={})".format(self.id)
 
