@@ -188,10 +188,6 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
   }, [basePath, navigate, tab, tabKey]);
 
   useEffect(() => {
-    stopPolling();
-  }, [stopPolling]);
-
-  useEffect(() => {
     if (wontHaveTrials || trialId !== undefined) stopPollingFirstTrialId();
   }, [trialId, stopPollingFirstTrialId, wontHaveTrials]);
 
@@ -208,7 +204,9 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
    * next polling cycle when trial Id goes from undefined to defined.
    */
   useEffect(() => {
-    if (prevTrialId === undefined && prevTrialId !== trialId) fetchTrialData();
+    if (prevTrialId === undefined && prevTrialId !== trialId) {
+      fetchTrialData();
+    }
   }, [fetchTrialData, prevTrialId, trialId]);
 
   const handleNotesUpdate = useCallback(

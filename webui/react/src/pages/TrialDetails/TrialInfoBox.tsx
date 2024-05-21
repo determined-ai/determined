@@ -44,6 +44,8 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
         return '-';
       case -1:
         return 'Forever';
+      case 1:
+        return `${trial?.logRetentionDays} day`;
       default:
         return `${trial?.logRetentionDays} days`;
     }
@@ -71,11 +73,7 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
             {checkpointModalComponents}
           </>
         )}
-        {
-          <OverviewStats data-testid="log-retention-box" title="Log Retention Days">
-            {logRetentionDays}
-          </OverviewStats>
-        }
+        {<OverviewStats title="Log Retention Days">{logRetentionDays}</OverviewStats>}
       </Card.Group>
     </Section>
   );

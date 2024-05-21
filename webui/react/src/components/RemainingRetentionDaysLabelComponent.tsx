@@ -9,34 +9,31 @@ interface Props {
 }
 
 const RemainingRetentionDaysLabel: React.FC<Props> = ({ remainingLogDays }: Props) => {
-  const RemainingRetentionDaysLabelComponent = useMemo(() => {
-    let toolTipText = '';
-    let badgeText = '';
+  const [toolTipText, badgeText] = useMemo(() => {
+    let toolTipTxt = '';
+    let badgeTxt = '';
     if (remainingLogDays === undefined) {
-      toolTipText = 'Days remaining to retention are not available yet.';
-      badgeText = '-';
+      toolTipTxt = 'Days remaining to retention are not available yet.';
+      badgeTxt = '-';
     } else if (remainingLogDays === -1) {
-      toolTipText = 'Logs will be retained forever.';
-      badgeText = 'Frvr';
+      toolTipTxt = 'Logs will be retained forever.';
+      badgeTxt = 'Frvr';
     } else if (remainingLogDays === 0) {
-      toolTipText = 'Some logs have begun to be deleted for this trial.';
-      badgeText = '0';
+      toolTipTxt = 'Some logs have begun to be deleted for this trial.';
+      badgeTxt = '0';
     } else {
-      toolTipText = `${remainingLogDays} ${pluralizer(
-        remainingLogDays,
-        'day',
-      )} left to retain logs`;
-      badgeText = `${remainingLogDays}`;
+      toolTipTxt = `${remainingLogDays} ${pluralizer(remainingLogDays, 'day')} left to retain logs`;
+      badgeTxt = `${remainingLogDays}`;
     }
-    return (
-      <div>
-        <span>Logs </span>
-        <Badge tooltip={toolTipText}>{badgeText}</Badge>
-      </div>
-    );
+    return [toolTipTxt, badgeTxt];
   }, [remainingLogDays]);
 
-  return RemainingRetentionDaysLabelComponent;
+  return (
+    <div>
+      <span>Logs </span>
+      <Badge tooltip={toolTipText}>{badgeText}</Badge>
+    </div>
+  );
 };
 
 export default RemainingRetentionDaysLabel;

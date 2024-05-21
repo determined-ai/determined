@@ -10,14 +10,13 @@ import TrialInfoBox from './TrialInfoBox';
 
 vi.useFakeTimers();
 const setup = (trial: TrialDetails, experiment: ExperimentBase) => {
-  const view = render(
+  render(
     <UIProvider theme={DefaultTheme.Light}>
       <ConfirmationProvider>
         <TrialInfoBox experiment={experiment} trial={trial} />
       </ConfirmationProvider>
     </UIProvider>,
   );
-  return { view };
 };
 
 const mockExperiment: ExperimentBase = {
