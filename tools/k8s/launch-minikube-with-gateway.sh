@@ -7,8 +7,9 @@ if [ -z "$1" ]; then
     exit 1
 fi
 
+k8s_version=1.29.5 # https://endoflife.date/kubernetes
 minikube_profile=$1
-minikube start --profile $minikube_profile
+minikube start --profile $minikube_profile --kubernetes-version $k8s_version
 
 kubectl apply -f https://projectcontour.io/quickstart/contour-gateway-provisioner.yaml
 
