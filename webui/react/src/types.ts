@@ -736,6 +736,7 @@ export const BulkExperimentItem = t.intersection([
   t.partial({
     checkpoints: t.number,
     checkpointSize: t.number,
+    config: ExperimentConfig,
     description: t.string,
     duration: t.number,
     endTime: t.string,

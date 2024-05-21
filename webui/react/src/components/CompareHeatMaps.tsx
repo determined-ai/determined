@@ -1,50 +1,45 @@
-import Alert from 'hew/Alert';
 import Message from 'hew/Message';
 import { useModal } from 'hew/Modal';
 import Spinner from 'hew/Spinner';
-import { isUndefined } from 'lodash';
+import { isObject, isUndefined } from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import ColorLegend from 'components/ColorLegend';
 import GalleryModalComponent from 'components/GalleryModalComponent';
 import Grid, { GridMode } from 'components/Grid';
 import MetricBadgeTag from 'components/MetricBadgeTag';
-import Section from 'components/Section';
 import useUI from 'components/ThemeProvider';
 import { UPlotScatterProps } from 'components/UPlot/types';
 import UPlotScatter from 'components/UPlot/UPlotScatter';
-import { terminalRunStates } from 'constants/states';
 import useResize from 'hooks/useResize';
-import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
-import { detApi } from 'services/apiConfig';
-import { readStream } from 'services/utils';
+import { TrialMetricData } from 'pages/TrialDetails/useTrialMetrics';
 import {
-  ExperimentBase,
+  ExperimentWithTrial,
+  Hyperparameter,
   HyperparameterType,
-  Metric,
   MetricType,
   Primitive,
   Range,
   Scale,
+  TrialItem,
+  XAxisDomain,
 } from 'types';
 import { getColorScale } from 'utils/chart';
 import { rgba2str, str2rgba } from 'utils/color';
-import { flattenObject, isBoolean, isObject, isString } from 'utils/data';
-import { metricToStr } from 'utils/metric';
+import { flattenObject, isBoolean, isString } from 'utils/data';
+import { metricToKey, metricToStr } from 'utils/metric';
 
-import { ViewType } from './ExperimentVisualizationFilters';
-import css from './HpHeatMaps.module.scss';
+import { CompareHyperparametersSettings } from './CompareHyperparameters.settings';
+
+export const COMPARE_HEAT_MAPS = 'compare-heatmaps';
+export const HEAT_MAPS_TITLE = 'Heat Maps';
 
 interface Props {
-  experiment: ExperimentBase;
-  filters?: React.ReactNode;
+  selectedExperiments: ExperimentWithTrial[];
+  trials: TrialItem[];
+  metricData: TrialMetricData;
   fullHParams: string[];
-  selectedBatch: number;
-  selectedBatchMargin: number;
-  selectedHParams: string[];
-  selectedMetric?: Metric;
-  selectedScale: Scale;
-  selectedView?: ViewType;
+  settings: CompareHyperparametersSettings;
 }
 
 type HpValue = Record<string, (number | string)[]>;
@@ -68,43 +63,44 @@ const parseHpKey = (key: string): [hParam1: string, hParam2: string] => {
   return [parts[0], parts[1] ?? ''];
 };
 
-const HpHeatMaps: React.FC<Props> = ({
-  experiment,
-  filters,
+const CompareHeatMaps: React.FC<Props> = ({
+  selectedExperiments,
+  trials,
+  metricData,
   fullHParams,
-  selectedBatch,
-  selectedBatchMargin,
-  selectedHParams,
-  selectedMetric,
-  selectedView = ViewType.Grid,
-  selectedScale,
+  settings,
 }: Props) => {
   const { ui } = useUI();
   const baseRef = useRef<HTMLDivElement>(null);
   const resize = useResize(baseRef);
-  const [hasLoaded, setHasLoaded] = useState(false);
   const [chartData, setChartData] = useState<HpData | undefined>();
-  const [pageError, setPageError] = useState<Error>();
   const [activeHParam, setActiveHParam] = useState<string | undefined>();
   const galleryModal = useModal(GalleryModalComponent);
-  const isExperimentTerminal = terminalRunStates.has(experiment.state);
-  const isListView = selectedView === ViewType.List;
+
+  const selectedScale = settings.scale;
+  const selectedMetric = settings.metric;
+  const selectedHParams = settings.hParams;
+
+  const { data, isLoaded: metricsLoaded } = metricData;
 
   useEffect(() => {
     if (activeHParam) {
       galleryModal.open();
     }
   }, [activeHParam, galleryModal]);
+
   const smallerIsBetter = useMemo(() => {
-    if (
-      selectedMetric &&
-      selectedMetric.group === MetricType.Validation &&
-      selectedMetric.name === experiment.config.searcher.metric
-    ) {
-      return experiment.config.searcher.smallerIsBetter;
+    if (selectedMetric && selectedMetric.group === MetricType.Validation) {
+      const selectedExperimentsWithMetric = selectedExperiments.filter((exp) => {
+        return selectedMetric.name === exp?.experiment?.config?.searcher?.metric;
+      });
+
+      return selectedExperimentsWithMetric.some((exp) => {
+        return exp?.experiment?.config?.searcher?.smallerIsBetter;
+      });
     }
     return undefined;
-  }, [experiment.config.searcher, selectedMetric]);
+  }, [selectedMetric, selectedExperiments]);
 
   const colorScale = useMemo(() => {
     return getColorScale(ui.theme, chartData?.metricRange, smallerIsBetter);
@@ -236,162 +232,126 @@ const HpHeatMaps: React.FC<Props> = ({
     });
   }, [selectedHParams]);
 
+  const experimentHyperparameters = useMemo(() => {
+    const hpMap: Record<string, Hyperparameter> = {};
+    selectedExperiments.forEach((exp) => {
+      const hps = Object.keys(exp.experiment.hyperparameters);
+      hps.forEach((hp) => (hpMap[hp] = exp.experiment.hyperparameters[hp]));
+    });
+    return hpMap;
+  }, [selectedExperiments]);
+
   useEffect(() => {
     if (ui.isPageHidden || !selectedMetric) return;
 
-    const canceler = new AbortController();
     const trialIds: number[] = [];
     const hpMetricMap: Record<number, Record<string, number | undefined>> = {};
     const hpValueMap: Record<number, Record<string, Primitive>> = {};
     const hpLabelMap: Record<string, string[]> = {};
     const hpLabelValueMap: Record<string, number[]> = {};
 
-    setHasLoaded(false);
+    const hpLogScaleMap: Record<string, boolean> = {};
+    const hpMetrics: Record<string, (number | undefined)[]> = {};
+    const hpValues: HpValue = {};
+    const metricRange: Range<number> = [Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY];
 
-    readStream<V1TrialsSnapshotResponse>(
-      detApi.StreamingInternal.trialsSnapshot(
-        experiment.id,
-        selectedMetric.name,
-        selectedBatch,
-        undefined,
-        selectedMetric.group,
-        selectedBatchMargin,
-        undefined,
-        { signal: canceler.signal },
-      ),
-      (event) => {
-        if (!event?.trials || !Array.isArray(event.trials)) return;
+    trials.forEach((trial) => {
+      if (!isObject(trial.hyperparameters)) return;
 
-        const hpLogScaleMap: Record<string, boolean> = {};
-        const hpMetrics: Record<string, (number | undefined)[]> = {};
-        const hpValues: HpValue = {};
-        const metricRange: Range<number> = [Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY];
+      const trialId = trial.id;
+      const flatHParams = flattenObject(trial.hyperparameters);
+      const trialHParams = Object.keys(flatHParams)
+        .filter((hParam) => fullHParams.includes(hParam))
+        .sort((a, b) => a.localeCompare(b, 'en'));
 
-        event.trials.forEach((trial) => {
-          if (!isObject(trial.hparams)) return;
+      /**
+       * TODO: filtering NaN, +/- Infinity for now, but handle it later with
+       * dynamic min/max ranges via uPlot.Scales.
+       */
+      const key = metricToKey(selectedMetric);
+      const trialMetric = data?.[trial.id]?.[key]?.data?.[XAxisDomain.Batches]?.at(-1)?.[1];
 
-          const trialId = trial.trialId;
-          const flatHParams = flattenObject(trial.hparams);
-          const trialHParams = Object.keys(flatHParams)
-            .filter((hParam) => fullHParams.includes(hParam))
-            .sort((a, b) => a.localeCompare(b, 'en'));
-
-          /**
-           * TODO: filtering NaN, +/- Infinity for now, but handle it later with
-           * dynamic min/max ranges via uPlot.Scales.
-           */
-          const trialMetric = Number.isFinite(trial.metric) ? trial.metric : undefined;
-
-          trialIds.push(trialId);
-          hpMetricMap[trialId] = hpMetricMap[trialId] || {};
-          hpValueMap[trialId] = hpValueMap[trialId] || {};
-          trialHParams.forEach((hParam1) => {
-            hpValueMap[trialId][hParam1] = flatHParams[hParam1];
-            trialHParams.forEach((hParam2) => {
-              const key = generateHpKey(hParam1, hParam2);
-              hpMetricMap[trialId][key] = trialMetric;
-            });
-          });
-
-          if (trialMetric !== undefined && trialMetric < metricRange[0])
-            metricRange[0] = trialMetric;
-          if (trialMetric !== undefined && trialMetric > metricRange[1])
-            metricRange[1] = trialMetric;
+      trialIds.push(trialId);
+      hpMetricMap[trialId] = hpMetricMap[trialId] || {};
+      hpValueMap[trialId] = hpValueMap[trialId] || {};
+      trialHParams.forEach((hParam1) => {
+        hpValueMap[trialId][hParam1] = flatHParams[hParam1];
+        trialHParams.forEach((hParam2) => {
+          const key = generateHpKey(hParam1, hParam2);
+          hpMetricMap[trialId][key] = trialMetric;
         });
+      });
 
-        fullHParams.forEach((hParam1) => {
-          const hp = experiment.hyperparameters?.[hParam1];
-          if (hp.type === HyperparameterType.Log) hpLogScaleMap[hParam1] = true;
+      if (trialMetric !== undefined && trialMetric < metricRange[0]) metricRange[0] = trialMetric;
+      if (trialMetric !== undefined && trialMetric > metricRange[1]) metricRange[1] = trialMetric;
+    });
 
-          hpLabelMap[hParam1] = [];
-          hpLabelValueMap[hParam1] = [];
-          hpValues[hParam1] = [];
+    fullHParams.forEach((hParam1) => {
+      const key = metricToKey(selectedMetric);
+      const hp = experimentHyperparameters[key] || {};
+      if (hp.type === HyperparameterType.Log) hpLogScaleMap[hParam1] = true;
 
-          trialIds.forEach((trialId) => {
-            const hpRawValue = hpValueMap[trialId][hParam1];
-            const hpValue = isBoolean(hpRawValue) ? hpRawValue.toString() : hpRawValue;
+      hpLabelMap[hParam1] = [];
+      hpLabelValueMap[hParam1] = [];
+      hpValues[hParam1] = [];
 
-            hpValues[hParam1].push(hpValue);
+      trialIds.forEach((trialId) => {
+        const hpRawValue = hpValueMap[trialId][hParam1];
+        const hpValue = isBoolean(hpRawValue) ? hpRawValue.toString() : hpRawValue;
 
-            if (isString(hpValue)) {
-              // Handle categorical hp.
-              let hpLabelIndex = hpLabelMap[hParam1].indexOf(hpValue);
-              if (hpLabelIndex === -1) {
-                hpLabelIndex = hpLabelMap[hParam1].length;
-                hpLabelMap[hParam1].push(hpValue);
-              }
-              hpLabelValueMap[hParam1].push(hpLabelIndex);
-            } else {
-              hpLabelValueMap[hParam1].push(hpValue);
-            }
-          });
+        hpValues[hParam1].push(hpValue);
 
-          fullHParams.forEach((hParam2) => {
-            const key = generateHpKey(hParam1, hParam2);
-            hpMetrics[key] = trialIds.map((trialId) => hpMetricMap[trialId][key]);
-          });
-        });
+        if (isString(hpValue)) {
+          // Handle categorical hp.
+          let hpLabelIndex = hpLabelMap[hParam1].indexOf(hpValue);
+          if (hpLabelIndex === -1) {
+            hpLabelIndex = hpLabelMap[hParam1].length;
+            hpLabelMap[hParam1].push(hpValue);
+          }
+          hpLabelValueMap[hParam1].push(hpLabelIndex);
+        } else {
+          hpLabelValueMap[hParam1].push(hpValue);
+        }
+      });
 
-        setChartData({
-          hpLabels: hpLabelMap,
-          hpLabelValues: hpLabelValueMap,
-          hpLogScales: hpLogScaleMap,
-          hpMetrics,
-          hpValues,
-          metricRange,
-          trialIds,
-        });
-        setHasLoaded(true);
-      },
-      (e) => {
-        setPageError(e);
-        setHasLoaded(true);
-      },
-    );
+      fullHParams.forEach((hParam2) => {
+        const key = generateHpKey(hParam1, hParam2);
+        hpMetrics[key] = trialIds.map((trialId) => hpMetricMap[trialId][key]);
+      });
+    });
 
-    return () => canceler.abort();
-  }, [
-    experiment,
-    fullHParams,
-    selectedBatch,
-    selectedBatchMargin,
-    selectedMetric,
-    ui.isPageHidden,
-  ]);
+    setChartData({
+      hpLabels: hpLabelMap,
+      hpLabelValues: hpLabelValueMap,
+      hpLogScales: hpLogScaleMap,
+      hpMetrics,
+      hpValues,
+      metricRange,
+      trialIds,
+    });
+  }, [fullHParams, selectedMetric, ui.isPageHidden, trials, data, experimentHyperparameters]);
 
-  if (pageError) {
-    return <Message title={pageError.message} />;
-  } else if ((hasLoaded && !chartData) || !selectedMetric) {
-    return isExperimentTerminal ? (
-      <Message icon="warning" title="No data to plot." />
-    ) : (
-      <div>
-        <Alert
-          description="Please wait until the experiment is further along."
-          message="Not enough data points to plot."
-        />
-        <Spinner spinning />
-      </div>
-    );
+  if (!metricsLoaded || !chartData) {
+    return <Spinner center spinning />;
   }
 
   return (
-    <div className={css.base} ref={baseRef}>
-      <Section bodyBorder bodyNoPadding bodyScroll filters={filters} loading={!hasLoaded}>
-        <div className={css.container}>
-          {chartProps ? (
+    <div ref={baseRef}>
+      <div>
+        <>
+          {chartProps && selectedMetric ? (
             <>
-              <div className={css.legend}>
+              <div>
                 <ColorLegend
                   colorScale={colorScale}
                   title={<MetricBadgeTag metric={selectedMetric} />}
                 />
               </div>
-              <div className={css.charts}>
+              <div data-testid={COMPARE_HEAT_MAPS}>
                 <Grid
                   border={true}
                   minItemWidth={resize.width > 320 ? 350 : 290}
-                  mode={!isListView ? selectedHParams.length : GridMode.AutoFill}>
+                  mode={GridMode.AutoFill}>
                   {selectedHParams.map((hParam1) =>
                     selectedHParams.map((hParam2) => {
                       const key = generateHpKey(hParam1, hParam2);
@@ -411,10 +371,10 @@ const HpHeatMaps: React.FC<Props> = ({
               </div>
             </>
           ) : (
-            <Message icon="warning" title="No data to plot." />
+            <Message title="No data available." />
           )}
-        </div>
-      </Section>
+        </>
+      </div>
       <galleryModal.Component
         activeHParam={activeHParam}
         chartProps={chartProps}
@@ -427,4 +387,4 @@ const HpHeatMaps: React.FC<Props> = ({
   );
 };
 
-export default HpHeatMaps;
+export default CompareHeatMaps;
