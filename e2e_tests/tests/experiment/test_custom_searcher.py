@@ -55,6 +55,7 @@ def test_run_custom_searcher_experiment(tmp_path: pathlib.Path) -> None:
 @pytest.mark.e2e_cpu_2a
 def test_run_random_searcher_exp() -> None:
     sess = api_utils.user_session()
+    client._determined = client.Determined._from_session(sess)
     config = conf.load_config(conf.fixtures_path("no_op/single.yaml"))
     config["searcher"] = {
         "name": "custom",
