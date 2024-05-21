@@ -22,6 +22,7 @@ stages:
         cache: 
           cache_dir: /tmp/determined-cache
         security:
+          initial_user_password: $INITIAL_USER_PASSWORD
           authz:
             type: rbac
             rbac_ui_enabled: true

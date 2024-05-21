@@ -21,6 +21,7 @@ stages:
           cache_dir: /tmp/determined-cache
         launch_error: false
         security:
+          initial_user_password: $INITIAL_USER_PASSWORD
           authz:
             rbac_ui_enabled: true
         resource_manager:
