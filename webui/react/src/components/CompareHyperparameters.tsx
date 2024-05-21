@@ -58,11 +58,9 @@ const CompareHyperparameters: React.FC<Props> = ({
     resetSettings,
   } = useSettings<CompareHyperparametersSettings>(settingsConfig);
 
-  const selectedScale = settings.scale;
-
   useEffect(() => {
-    setScale(selectedScale);
-  }, [selectedScale, setScale]);
+    setScale(settings.scale);
+  }, [settings.scale, setScale]);
 
   const filters: VisualizationFilters = useMemo(
     () => ({
