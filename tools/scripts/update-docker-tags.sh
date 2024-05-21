@@ -2,7 +2,7 @@
 # Retags all docker images from latest Environments build
 # tools/scripts/update-docker-tags.sh NEW_VERSION [--release]
 
-if [ "$#" -lt 1 ] || [ "$2" != "--release" ] || [ "$#" -gt 2 ]; then
+if [ "$#" -lt 1 ] || [ "$#" -gt 2 ] || [ -n "$2" && "$2" != "--release" ]; then
     echo "usage: $0 NEW_VERSION [--release]" >&2
     exit 1
 fi
@@ -18,14 +18,13 @@ export OLD_TAG=$(cat tools/scripts/environments-target.txt)
 export NEW_TAG="$1"
 
 # get list of images to replace via OLD_TAG in bumpenvs.yaml
-export IMAGES=$(grep -oP "(?<=new: ).*(?=,)" tools/scripts/bumpenvs.yaml | grep -F $OLD_TAG)
+export IMAGES=$(grep -oP "(?<=new: ).*(?=,)" tools/scripts/bumpenvs.yaml | grep -F :$OLD_TAG)
 
 # update tags on dockerhub
 for NAME in $IMAGES; do
+    NEW_NAME=${NAME%%:*}:$NEW_TAG
     if [ "$2" == "--release" ]; then
-        export NEW_NAME="$(echo $NAME | grep -oP '.*(?=-dev:)'):$NEW_TAG"
-    else
-        export NEW_NAME="$(echo $NAME | grep -o '.*:')$NEW_TAG"
+        NEW_NAME=${NEW_NAME/-dev:/:}
     fi
     echo "Adding $NEW_NAME (clone of $NAME) to docker repo"
     docker buildx imagetools create $NAME --tag $NEW_NAME
@@ -42,7 +41,7 @@ else
     python tools/scripts/retag-bumpenvs-yaml.py tools/scripts/bumpenvs.yaml $OLD_TAG $NEW_TAG
 fi
 echo "Performing bumpenvs"
-python -m tools/scripts/bumpenvs.py tools/scripts/bumpenvs.yaml
+python tools/scripts/bumpenvs.py tools/scripts/bumpenvs.yaml
 
 # check to see if update-docker-tags.py resulted in any file changes or not
 if [[ -z "$(git status --porcelain)" ]]; then

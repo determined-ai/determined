@@ -26,8 +26,12 @@ const (
 
 // DefaultSchedulerConfig returns the default fair share configuration for the scheduler.
 func DefaultSchedulerConfig() *SchedulerConfig {
+	tmp := DefaultSchedulingPriority
 	return &SchedulerConfig{
-		FairShare:     &FairShareSchedulerConfig{},
+		Priority: &PrioritySchedulerConfig{
+			Preemption:      false,
+			DefaultPriority: &tmp,
+		},
 		FittingPolicy: defaultFitPolicy,
 	}
 }

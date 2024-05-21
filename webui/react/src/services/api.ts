@@ -319,6 +319,12 @@ export const getExpValidationHistory = generateDetApi<
   Type.ValidationHistory[]
 >(Config.getExpValidationHistory);
 
+export const getTrialRemainingLogRetentionDays = generateDetApi<
+  Service.TrialDetailsParams,
+  Api.V1GetTrialRemainingLogRetentionDaysResponse,
+  Type.TrialRemainingLogRetentionDays
+>(Config.getTrialRemainingLogRetentionDays);
+
 export const getTrialDetails = generateDetApi<
   Service.TrialDetailsParams,
   Api.V1GetTrialResponse,
