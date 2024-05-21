@@ -20,13 +20,13 @@ export class Card extends NamedComponent {
   // provide an actionMenu with a Dropdown to use
   static actionMenuSelector = '[aria-label="Action menu"]';
 
-  // default to a workspace dropdown to avoid non-null but this should be overriden if a dropdown exists 
+  // default to a workspace dropdown to avoid non-null but this should be overriden if a dropdown exists
   readonly actionMenu: DropdownMenu = new WorkspaceActionDropdown({
-    root: this.root,
     childNode: new BaseComponent({
       parent: this,
       selector: Card.actionMenuSelector,
-    })
+    }),
+    root: this.root,
   });
 
   static withName<T extends Card>(

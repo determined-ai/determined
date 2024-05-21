@@ -1,7 +1,4 @@
-import {
-  BaseComponent,
-  NamedComponent,
-} from 'e2e/models/BaseComponent';
+import { BaseComponent, NamedComponent } from 'e2e/models/BaseComponent';
 import { Card } from 'e2e/models/hew/Card';
 
 import { WorkspaceActionDropdown } from './WorkspaceActionDropdown';

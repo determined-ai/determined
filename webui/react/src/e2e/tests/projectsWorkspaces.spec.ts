@@ -1,14 +1,11 @@
+import { expect } from '@playwright/test';
+import { v4 } from 'uuid';
+
 import { test } from 'e2e/fixtures/global-fixtures';
 import { BasePage } from 'e2e/models/BasePage';
 import { WorkspaceCreateModal } from 'e2e/models/components/WorkspaceCreateModal';
 import { Workspaces } from 'e2e/models/pages/Workspaces';
-import {
-  randId,
-  safeName,
-} from 'e2e/utils/naming';
-import { v4 } from 'uuid';
-
-import { expect } from '@playwright/test';
+import { randId, safeName } from 'e2e/utils/naming';
 
 test.describe('Projects', () => {
   test.setTimeout(120_000);
@@ -130,19 +127,19 @@ test.describe('Projects', () => {
       await projects.createModal.footer.submit.pwLocator.click();
       await authedPage.waitForURL('**/projects/*/experiments');
       await workspacesPage.nav.sidebar.sidebarWorkspaceItem(wsCreatedWithButton).pwLocator.click();
-      expect(projects.cardWithName(projectOneName).pwLocator).toBeVisible();
+      await expect(projects.cardWithName(projectOneName).pwLocator).toBeVisible();
     });
 
-    await test.step('Navigation on projects page - sorting and list', async () => { });
-    await test.step('Create a model with all possible metadata', async () => { });
-    await test.step('Archive a model', async () => { });
-    await test.step('Unarchive a model', async () => { });
-    await test.step('Move a model between projects', async () => { });
-    await test.step('Launch JupyterLab, kill the task, view logs', async () => { });
-    await test.step('Navigate with the breadcrumb and workspace page', async () => { });
-    await test.step('Navigation on workspace page', async () => { });
-    await test.step('Edit a workspace', async () => { });
-    await test.step('Delete a model', async () => { });
+    await test.step('Navigation on projects page - sorting and list', async () => {});
+    await test.step('Create a model with all possible metadata', async () => {});
+    await test.step('Archive a model', async () => {});
+    await test.step('Unarchive a model', async () => {});
+    await test.step('Move a model between projects', async () => {});
+    await test.step('Launch JupyterLab, kill the task, view logs', async () => {});
+    await test.step('Navigate with the breadcrumb and workspace page', async () => {});
+    await test.step('Navigation on workspace page', async () => {});
+    await test.step('Edit a workspace', async () => {});
+    await test.step('Delete a model', async () => {});
     await test.step('Delete a project', async () => {
       await workspacesPage.nav.sidebar.sidebarWorkspaceItem(wsCreatedWithButton).pwLocator.click();
       await workspacesPage.details.projects.pwLocator.click();

@@ -8,8 +8,8 @@ import { DropdownMenu } from 'e2e/models/hew/Dropdown';
  * @param {Function} [obj.openMethod] - optional if `childNode` is present. It's the method to open the dropdown.
  */
 export class ProjectActionDropdown extends DropdownMenu {
-  readonly edit = this.menuItem('edit'); 
-  readonly move = this.menuItem('move'); 
-  readonly archive = this.menuItem('switchArchive'); 
-  readonly delete = this.menuItem('delete'); 
+  readonly edit = this.menuItem('edit');
+  readonly move = this.menuItem('move');
+  readonly archive = this.menuItem('switchArchive');
+  readonly delete = this.menuItem('delete');
 }

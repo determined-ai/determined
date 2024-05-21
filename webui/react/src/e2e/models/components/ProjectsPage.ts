@@ -1,7 +1,4 @@
-import {
-  BaseComponent,
-  NamedComponent,
-} from 'e2e/models/BaseComponent';
+import { BaseComponent, NamedComponent } from 'e2e/models/BaseComponent';
 import { Card } from 'e2e/models/hew/Card';
 
 import { ProjectActionDropdown } from './ProjcetActionDropdown';
@@ -34,10 +31,10 @@ export class ProjectsComponent extends NamedComponent {
 
 class ProjectsCard extends Card {
   override readonly actionMenu = new ProjectActionDropdown({
-    root: this.root,
-    childNode: new BaseComponent({ 
+    childNode: new BaseComponent({
       parent: this,
       selector: Card.actionMenuSelector,
-    })
+    }),
+    root: this.root,
   });
 }

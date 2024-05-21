@@ -1,8 +1,4 @@
-import {
-  BaseComponent,
-  BaseComponentArgs,
-  NamedComponent,
-} from 'e2e/models/BaseComponent';
+import { BaseComponent, BaseComponentArgs, NamedComponent } from 'e2e/models/BaseComponent';
 
 /**
  * Returns a representation of the Tabs component from Ant.
@@ -19,14 +15,16 @@ export class Tabs extends NamedComponent {
     selector: '.ant-tabs-content-holder',
   });
 
-
   /**
-   * Returns a representation of a tab item with the specified id. The 
+   * Returns a representation of a tab item with the specified id. The
    * component type specified will be retuned for interaction with the tab.
    * @param {string} id - the id of the menu item
-   * @param {T extends BaseComponent} tabComponent - the type of the component that will be open after the tab is clicked.
+   * @param {new (args: BaseComponentArgs) => T} tabComponent - the type of the component that will be open after the tab is clicked.
    */
-  typedTab<T extends BaseComponent>(id: string, tabComponent: (new (args: BaseComponentArgs) => T)): T {
+  typedTab<T extends BaseComponent>(
+    id: string,
+    tabComponent: new (args: BaseComponentArgs) => T,
+  ): T {
     return new tabComponent({
       parent: this,
       selector: `div.ant-tabs-tab-btn[id$="${id}"]`,

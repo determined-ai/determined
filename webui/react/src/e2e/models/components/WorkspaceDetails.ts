@@ -16,11 +16,9 @@ import { TasksComponent } from './TasksPage';
 export class WorkspaceDetails extends NamedComponent {
   readonly defaultSelector: string = '[id=workspaceDetails]';
   // The details sections are all subpages wrapped with a Pivot tab
-  readonly pivot = new Pivot({parent: this});
+  readonly pivot = new Pivot({ parent: this });
   readonly projects = this.pivot.typedTab('projects', ProjectsComponent);
   readonly tasks = this.pivot.typedTab('tasks', TasksComponent);
   readonly modelRegistry = this.pivot.typedTab('models', ModelRegistryPage);
   readonly resourcePools = this.pivot.typedTab('pools', ResourcePoolsComponent);
 }
-
-
