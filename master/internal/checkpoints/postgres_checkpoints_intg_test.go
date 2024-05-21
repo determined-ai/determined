@@ -33,7 +33,7 @@ func sortUUIDSlice(uuids []uuid.UUID) {
 }
 
 func TestMain(m *testing.M) {
-	pgDB, err := db.ResolveTestPostgres()
+	pgDB, _, err := db.ResolveTestPostgres()
 	if err != nil {
 		log.Panicln(err)
 	}

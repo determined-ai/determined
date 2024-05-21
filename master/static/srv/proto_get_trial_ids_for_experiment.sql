@@ -30,7 +30,7 @@ WITH searcher_info AS (
                 WHERE v.id = t.best_validation_id
                 LIMIT 1)
             ELSE
-                -- For trials before `public.trials.best_validation_id` was added.
+                -- For trials before `trials.best_validation_id` was added.
                 (SELECT searcher_info.sign * (v.metrics->'validation_metrics'->>searcher_info.metric_name)::float8
                  FROM validations v
                  WHERE v.trial_id = t.id
@@ -49,7 +49,7 @@ WITH searcher_info AS (
     WHERE t.experiment_id = $1
       AND ($2 = '' OR t.state IN (SELECT unnest(string_to_array($2, ','))::trial_state))
 ), page_info AS (
-    SELECT public.page_info((SELECT COUNT(*) AS count FROM filtered_experiment_trials), $3, $4) AS page_info
+    SELECT page_info((SELECT COUNT(*) AS count FROM filtered_experiment_trials), $3, $4) AS page_info
 )
 SELECT
     (SELECT coalesce(json_agg(paginated_experiment_trials), '[]'::json) FROM (

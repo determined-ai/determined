@@ -18,7 +18,8 @@ func TestDispatchPersistence(t *testing.T) {
 	err := etc.SetRootPath(RootFromDB)
 	require.NoError(t, err)
 
-	db := MustResolveTestPostgres(t)
+	db, close := MustResolveTestPostgres(t)
+	defer close()
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 
 	u := RequireMockUser(t, db)

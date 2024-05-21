@@ -2,6 +2,7 @@ import Alert from 'hew/Alert';
 import Message from 'hew/Message';
 import { useModal } from 'hew/Modal';
 import Spinner from 'hew/Spinner';
+import { isUndefined } from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import ColorLegend from 'components/ColorLegend';
@@ -10,7 +11,7 @@ import Grid, { GridMode } from 'components/Grid';
 import MetricBadgeTag from 'components/MetricBadgeTag';
 import Section from 'components/Section';
 import useUI from 'components/ThemeProvider';
-import { FacetedData, UPlotScatterProps } from 'components/UPlot/types';
+import { UPlotScatterProps } from 'components/UPlot/types';
 import UPlotScatter from 'components/UPlot/UPlotScatter';
 import { terminalRunStates } from 'constants/states';
 import useResize from 'hooks/useResize';
@@ -64,7 +65,7 @@ const generateHpKey = (hParam1: string, hParam2: string): string => {
 
 const parseHpKey = (key: string): [hParam1: string, hParam2: string] => {
   const parts = key.split(':');
-  return [parts[0], parts[1]];
+  return [parts[0], parts[1] ?? ''];
 };
 
 const HpHeatMaps: React.FC<Props> = ({
@@ -82,9 +83,9 @@ const HpHeatMaps: React.FC<Props> = ({
   const baseRef = useRef<HTMLDivElement>(null);
   const resize = useResize(baseRef);
   const [hasLoaded, setHasLoaded] = useState(false);
-  const [chartData, setChartData] = useState<HpData>();
+  const [chartData, setChartData] = useState<HpData | undefined>();
   const [pageError, setPageError] = useState<Error>();
-  const [activeHParam, setActiveHParam] = useState<string>();
+  const [activeHParam, setActiveHParam] = useState<string | undefined>();
   const galleryModal = useModal(GalleryModalComponent);
   const isExperimentTerminal = terminalRunStates.has(experiment.state);
   const isListView = selectedView === ViewType.List;
@@ -110,7 +111,7 @@ const HpHeatMaps: React.FC<Props> = ({
   }, [chartData, smallerIsBetter, ui.theme]);
 
   const chartProps = useMemo(() => {
-    if (!chartData || !selectedMetric) return undefined;
+    if (!chartData || !selectedMetric || colorScale.length < 2) return undefined;
 
     const props: Record<string, UPlotScatterProps> = {};
     const rgbaStroke0 = str2rgba(colorScale[0].color);
@@ -130,33 +131,54 @@ const HpHeatMaps: React.FC<Props> = ({
         const title = `${yLabel} (y) vs ${xLabel} (x)`;
         const xHpLabels = chartData?.hpLabels[hParam2];
         const yHpLabels = chartData?.hpLabels[hParam1];
-        const isXLogarithmic = chartData?.hpLogScales[hParam2];
-        const isYLogarithmic = chartData?.hpLogScales[hParam1];
+        const isXLogarithmic = !isUndefined(selectedScale)
+          ? selectedScale === Scale.Log
+          : chartData?.hpLogScales[hParam2];
+        const isYLogarithmic = !isUndefined(selectedScale)
+          ? selectedScale === Scale.Log
+          : chartData?.hpLogScales[hParam1];
         const isXCategorical = xHpLabels?.length !== 0;
         const isYCategorical = yHpLabels?.length !== 0;
         const xScaleKey = isXCategorical ? 'xCategorical' : isXLogarithmic ? 'xLog' : 'x';
         const yScaleKey = isYCategorical ? 'yCategorical' : isYLogarithmic ? 'yLog' : 'y';
         const xSplits = isXCategorical
-          ? new Array(xHpLabels.length).fill(0).map((_x, i) => i)
+          ? new Array(xHpLabels?.length).fill(0).map((_x, i) => i)
           : undefined;
         const ySplits = isYCategorical
-          ? new Array(yHpLabels.length).fill(0).map((_x, i) => i)
+          ? new Array(yHpLabels?.length).fill(0).map((_x, i) => i)
           : undefined;
         const xValues = isXCategorical ? xHpLabels : undefined;
         const yValues = isYCategorical ? yHpLabels : undefined;
+
+        const getHParamData = (hParam: string, axis: 'x' | 'y') => {
+          // categorical x-axis should have values as element of xSplits
+          if (axis === 'x' && isXCategorical) {
+            return chartData?.hpValues[hParam]?.map((v) => {
+              return xValues?.findIndex((val) => val === v);
+            });
+          }
+          // categorical y-axis should have values as elements of ySplits
+          if (axis === 'y' && isYCategorical) {
+            return chartData?.hpValues[hParam]?.map((v) => {
+              return yValues?.findIndex((val) => val === v);
+            });
+          }
+
+          return chartData?.hpValues[hParam];
+        };
 
         props[key] = {
           data: [
             null,
             [
-              chartData?.hpValues[hParam2] || [],
-              chartData?.hpValues[hParam1] || [],
+              getHParamData(hParam2, 'x') || [],
+              getHParamData(hParam1, 'y') || [],
               null,
               chartData?.hpMetrics[key] || [],
               chartData?.hpMetrics[key] || [],
               chartData?.trialIds || [],
             ],
-          ] as FacetedData,
+          ],
           options: {
             axes: [
               { scale: xScaleKey, splits: xSplits, values: xValues },
@@ -172,7 +194,7 @@ const HpHeatMaps: React.FC<Props> = ({
     });
 
     return props;
-  }, [chartData, colorScale, selectedHParams, selectedMetric]);
+  }, [chartData, colorScale, selectedHParams, selectedMetric, selectedScale]);
 
   const handleChartClick = useCallback((hParam1: string, hParam2: string) => {
     setActiveHParam(generateHpKey(hParam1, hParam2));
@@ -368,7 +390,7 @@ const HpHeatMaps: React.FC<Props> = ({
               <div className={css.charts}>
                 <Grid
                   border={true}
-                  minItemWidth={resize.width > 320 ? 350 : 270}
+                  minItemWidth={resize.width > 320 ? 350 : 290}
                   mode={!isListView ? selectedHParams.length : GridMode.AutoFill}>
                   {selectedHParams.map((hParam1) =>
                     selectedHParams.map((hParam2) => {

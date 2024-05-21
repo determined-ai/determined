@@ -113,8 +113,8 @@ export class DataGrid<
     // scroll the table to the right by the width of the table minus 450
     // All the permanent columns on the left together are under 450px wide
     await page.mouse.wheel(xAbsolute ? xAbsolute : box.width - 450, 0);
-    // wait for table stable
-    await this.pwLocator.click({ trial: true });
+    // wait for 1 second for the scroll to happen
+    await page.waitForTimeout(999);
   }
 
   /**

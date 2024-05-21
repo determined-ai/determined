@@ -16,7 +16,8 @@ import (
 
 func TestProjectByName(t *testing.T) {
 	require.NoError(t, etc.SetRootPath(internaldb.RootFromDB))
-	db := internaldb.MustResolveTestPostgres(t)
+	db, close := internaldb.MustResolveTestPostgres(t)
+	defer close()
 	internaldb.MustMigrateTestPostgres(t, db, internaldb.MigrationsFromDB)
 
 	// add a workspace, and project
