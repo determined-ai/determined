@@ -38,6 +38,14 @@ stages:
 
       # config_file is just a master.yaml
       config_file:
+        task_container_defaults:
+          gpu_pod_spec:
+            apiVersion: v1
+            kind: Pod
+
+          checkpoint_gc_pod_spec:
+            apiVersion: v1
+            kind: Pod
         db:
           host: localhost
           port: 5432

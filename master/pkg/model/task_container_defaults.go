@@ -32,6 +32,7 @@ type TaskContainerDefaultsConfig struct {
 	// TODO(DET-9855) we should move these over to KubernetesTaskContainerDefaults.
 	CPUPodSpec           *k8sV1.Pod           `json:"cpu_pod_spec"`
 	GPUPodSpec           *k8sV1.Pod           `json:"gpu_pod_spec"`
+	CheckpointGCPodSpec  *k8sV1.Pod           `json:"checkpoint_gc_pod_spec"`
 	Image                *RuntimeItem         `json:"image,omitempty"`
 	RegistryAuth         *registry.AuthConfig `json:"registry_auth,omitempty"`
 	ForcePullImage       bool                 `json:"force_pull_image,omitempty"`
