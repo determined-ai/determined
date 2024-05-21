@@ -110,9 +110,9 @@ export class DataGrid<
     const page = this.root._page;
     // move mouse to the center of the table
     await page.mouse.move((box.x + box.width) / 2, (box.y + box.height) / 2);
-    // scroll the table to the right by the width of the table minus 450
-    // All the permanent columns on the left together are under 450px wide
-    await page.mouse.wheel(xAbsolute ? xAbsolute : box.width - 450, 0);
+    // scroll the table to the right by the width of the table minus 500
+    // All the permanent columns on the left together are under 500px wide
+    await page.mouse.wheel(xAbsolute ? xAbsolute : box.width - 500, 0);
     // wait for 1 second for the scroll to happen
     await page.waitForTimeout(999);
   }
