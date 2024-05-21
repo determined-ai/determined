@@ -8,7 +8,7 @@ In a typical organization, many Determined configuration files will share simila
 cause redundancy. For example, all training workloads run at a given organization might use the same
 checkpoint storage configuration. One way to reduce this redundancy is to use *configuration
 templates*. This feature allows users to consolidate settings shared across many experiments into a
-single YAML file that can be referenced by configurations needings those settings.
+single YAML file that can be referenced by configurations needing those settings.
 
 Each configuration template has a unique name and is stored by the Determined master. If a
 configuration employs a template, the effective configuration of the task will be the outcome of
@@ -97,6 +97,47 @@ To launch the experiment with the template:
 .. code:: bash
 
    $ det experiment create --template template-tf-gpu mnist_tf_const.yaml <model_code>
+
+There are two ways to manage templates: via the WebUI and CLI.
+
+**************************************
+ Managing Templates through the WebUI
+**************************************
+
+You can managing configuration templates including listing, creating, updating, and deleting
+templates through the WebUI. To do you'll need at least ``CanCreateTemplate`` permissions. Users
+without this permission can still view and use templates.
+
+Creating Templates
+==================
+
+-  Sign in to the cluster.
+-  Select the **Templates** panel.
+-  Select **Add New Template**.
+
+Alternatively, you can manage templates when launching JupyterLab.
+
+Provide the following information:
+
+-  Template Name: This will be the primary key and globally unique
+-  Workspace: Select a workspace that user has permission to create template
+-  If under Workspace -> Templates tab, the workspace if preselected and disabled
+-  Template content: A CodeEditor in YAML like the one in Experiment Fork modal, no additional
+   validation enforced
+
+Managing Templates
+==================
+
+To view, edit, or delete a template:
+
+-  Select the template you want to modify.
+
+Name: Sortable, Searchable, editable Workspace: Filterable, editable (Need backend support)
+
+Actions
+
+Edit: With our current API, only the config is editable Permission: CanUpdateTemplate Delete:
+Permission: CanDeleteTemplate
 
 ************************************
  Managing Templates through the CLI
