@@ -52,6 +52,7 @@ test.describe('Experiement List', () => {
     const row = await projectDetailsPage.f_experiemntList.dataGrid.getRowByColumnValue('ID', '1');
     await row.clickColumn('Select');
     expect(await row.isSelected()).toBeTruthy();
+    await expect((await row.getCellByColumnName('Checkpoints')).pwLocator).toHaveText('0');
     await (
       await projectDetailsPage.f_experiemntList.dataGrid.headRow.selectDropdown.open()
     ).select5.pwLocator.click();
