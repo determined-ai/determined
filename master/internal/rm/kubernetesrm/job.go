@@ -46,7 +46,7 @@ const (
 
 // special exit statuses codes we use that have special meanings.
 var (
-	podExitedWithoutCode  = "unable to get exit code or exit message from pod"
+	podExitedWithoutCode  = "unable to get exit code or exit message from pod (could've been deleted while queued)"
 	jobDeleted            = "job was deleted"
 	podDeleted            = "pod deleted"
 	podInImagePullBackoff = "killing job that is stuck due to unrecoverable image pull errors in pod"
@@ -380,15 +380,14 @@ func (j *job) podUpdatedCallback(updatedPod k8sV1.Pod) error {
 			}
 		}
 		if exit.code > 0 {
-			if j.jobExitCause == nil {
-				j.jobExitCause = exit
-			}
-
 			j.syslog.
 				WithField("code", exit.code).
 				WithField("cause", j.jobExitCause).
 				Infof("detected a determined containers crashed, cleaning up job: %s", exit.msg)
 			j.killPod(podName)
+		}
+		if j.jobExitCause == nil {
+			j.jobExitCause = exit
 		}
 		j.podExits[podName] = true
 	}
@@ -448,7 +447,7 @@ func (j *job) Kill() {
 
 	j.syslog.Info("received request to stop job")
 	if j.jobExitCause == nil {
-		j.jobExitCause = &exitReason{msg: "externally issued kill"}
+		j.jobExitCause = &exitReason{msg: "kill issued through us"}
 	}
 	j.kill()
 }

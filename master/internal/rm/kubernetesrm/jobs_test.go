@@ -2,6 +2,7 @@ package kubernetesrm
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"os"
 	"strings"
@@ -548,6 +549,110 @@ func TestKill(t *testing.T) {
 	require.NotNil(t, change.ResourcesStopped)
 	require.NotNil(t, change.ResourcesStopped.Failure)
 	require.Contains(t, change.ResourcesStopped.Failure.ErrMsg, "kill")
+}
+
+func TestExternalKillWhileQueuedFails(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	j := newTestJobsService()
+	rp := newTestResourcePool(j)
+
+	id := uuid.NewString()
+	jobID, taskID, allocationID := model.JobID(id), model.TaskID(id), model.AllocationID(id)
+	startTime := time.Now()
+
+	err := tasklist.GroupPriorityChangeRegistry.Add(jobID, func(i int) error { return nil })
+	require.NoError(t, err)
+
+	sub := rmevents.Subscribe(allocationID)
+	rp.AllocateRequest(sproto.AllocateRequest{
+		AllocationID:      allocationID,
+		TaskID:            taskID,
+		JobID:             jobID,
+		RequestTime:       startTime,
+		JobSubmissionTime: startTime,
+		IsUserVisible:     true,
+		Name:              "test job",
+		SlotsNeeded:       1,
+		ResourcePool:      "default",
+	})
+
+	require.True(t, rp.reschedule)
+	require.False(t, rp.reqList.IsScheduled(allocationID))
+	rp.Schedule()
+	require.False(t, rp.reschedule)
+	require.True(t, rp.reqList.IsScheduled(allocationID))
+
+	allocated := poll[*sproto.ResourcesAllocated](ctx, t, sub)
+	require.NotNil(t, allocated)
+	require.Len(t, allocated.Resources, 1)
+
+	for _, res := range allocated.Resources {
+		conf := expconf.ExperimentConfig{ //nolint:exhaustruct
+			RawEnvironment: &expconf.EnvironmentConfigV0{ //nolint:exhaustruct
+				RawImage: &expconf.EnvironmentImageMapV0{ //nolint:exhaustruct
+					RawCPU: ptrs.Ptr("ubuntu:latest"),
+				},
+				RawPodSpec: &expconf.PodSpec{
+					// Make them unschedulable.
+					Spec: k8sV1.PodSpec{NodeSelector: map[string]string{"non-existent": uuid.NewString()}},
+				},
+			},
+		}
+		conf = schemas.WithDefaults(conf)
+
+		err := res.Start(nil, tasks.TaskSpec{
+			Description:     fmt.Sprintf("test-job-%s", uuid.NewString()[:8]),
+			Entrypoint:      []string{"sleep", "99999"},
+			AgentUserGroup:  &model.AgentUserGroup{},
+			Environment:     conf.Environment(),
+			ResourcesConfig: conf.Resources(),
+			DontShipLogs:    true,
+		}, sproto.ResourcesRuntimeInfo{})
+		defer res.Kill(nil)
+		require.NoError(t, err)
+	}
+
+	ctxWaitForStarting, cancelWaitForStarting := context.WithTimeout(ctx, 5*time.Second)
+	defer cancelWaitForStarting()
+	for {
+		ev, err := sub.GetWithContext(ctxWaitForStarting)
+		if err != nil && errors.Is(err, context.DeadlineExceeded) {
+			break
+		} else if err != nil {
+			t.Error(err)
+			t.FailNow()
+		}
+
+		_, ok := ev.(*sproto.ResourcesStateChanged)
+		if ok {
+			t.Error("job should've stayed queued")
+			t.FailNow()
+			continue
+		}
+	}
+
+	podListOpts := metaV1.ListOptions{
+		LabelSelector: fmt.Sprintf("%s=%s", allocationIDLabel, string(allocationID)),
+	}
+	pods, err := j.clientSet.CoreV1().Pods("default").List(ctx, podListOpts)
+	require.NoError(t, err)
+
+	require.Len(t, pods.Items, 1)
+	pod := pods.Items[0]
+	err = j.clientSet.CoreV1().Pods("default").Delete(ctx, pod.Name, metaV1.DeleteOptions{})
+	require.NoError(t, err)
+
+	var stop *sproto.ResourcesStopped
+	for state := sproto.Assigned; state != sproto.Terminated; {
+		change := poll[*sproto.ResourcesStateChanged](ctx, t, sub)
+		require.True(t, state.BeforeOrEqual(change.ResourcesState))
+		state = change.ResourcesState
+		stop = change.ResourcesStopped
+	}
+	require.NotNil(t, stop.Failure)
+	require.Equal(t, stop.Failure.ErrMsg, podExitedWithoutCode)
 }
 
 func TestExternalPodDelete(t *testing.T) {
