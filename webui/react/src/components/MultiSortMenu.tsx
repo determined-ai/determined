@@ -61,6 +61,7 @@ export const ADD_SORT_TEXT = 'Add sort';
 export const SORT_MENU_TITLE = 'Sort by';
 export const RESET_SORT_TEXT = 'Reset';
 export const REMOVE_SORT_TITLE = 'Remove sort';
+export const SORT_MENU_BUTTON = 'sort-menu-button';
 
 const SortArrow = ({ direction = 'asc' }: { direction: DirectionType }) => (
   <svg
@@ -260,7 +261,7 @@ const MultiSortMenu: React.FC<MultiSortProps> = ({
     <Dropdown
       content={<MultiSort columns={columns} sorts={sorts} onChange={onChange} />}
       onOpenChange={onSortPopoverOpenChange}>
-      <Button hideChildren={isMobile} icon={<SortButtonIcon />}>
+      <Button data-testid={SORT_MENU_BUTTON} hideChildren={isMobile} icon={<SortButtonIcon />}>
         Sort {validSorts.length ? `(${validSorts.length})` : ''}
       </Button>
     </Dropdown>

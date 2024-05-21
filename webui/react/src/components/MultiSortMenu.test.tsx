@@ -10,6 +10,7 @@ import MultiSortMenu, {
   EMPTY_SORT,
   REMOVE_SORT_TITLE,
   RESET_SORT_TEXT,
+  SORT_MENU_BUTTON,
   SORT_MENU_TITLE,
 } from './MultiSortMenu';
 import { projectColumns } from './MultiSortMenu.test.mock';
@@ -56,12 +57,12 @@ const setup = () => {
 describe('Sort menu', () => {
   it('should display', async () => {
     const { user } = setup();
-    await user.click(await screen.findByRole('button'));
+    await user.click(await screen.findByTestId(SORT_MENU_BUTTON));
     expect(screen.queryByText(SORT_MENU_TITLE)).toBeInTheDocument();
   });
   it('should add sort', async () => {
     const { user, handleChange } = setup();
-    await user.click(await screen.findByRole('button'));
+    await user.click(await screen.findByTestId(SORT_MENU_BUTTON));
     expect(screen.queryByText(SORT_MENU_TITLE)).toBeInTheDocument();
     await user.click(await screen.findByText(ADD_SORT_TEXT));
     expect(handleChange).toHaveBeenNthCalledWith(1, [INITIAL_SORT, EMPTY_SORT]);
@@ -73,14 +74,14 @@ describe('Sort menu', () => {
   });
   it('should remove sort', async () => {
     const { user, handleChange } = setup();
-    await user.click(await screen.findByRole('button'));
+    await user.click(await screen.findByTestId(SORT_MENU_BUTTON));
     expect(screen.queryByText(SORT_MENU_TITLE)).toBeInTheDocument();
     await user.click(await screen.findByLabelText(REMOVE_SORT_TITLE));
     expect(handleChange).toHaveBeenCalledWith([EMPTY_SORT]);
   });
   it('should reset', async () => {
     const { user, handleChange } = setup();
-    await user.click(await screen.findByRole('button'));
+    await user.click(await screen.findByTestId(SORT_MENU_BUTTON));
     expect(screen.queryByText(SORT_MENU_TITLE)).toBeInTheDocument();
     await user.click(await screen.findByText(RESET_SORT_TEXT));
     expect(handleChange).toHaveBeenCalledWith([EMPTY_SORT]);
