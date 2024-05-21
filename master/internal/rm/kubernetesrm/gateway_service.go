@@ -57,6 +57,20 @@ func (g *gatewayService) addListeners(listeners []gatewayTyped.Listener) error {
 	return nil
 }
 
+func (g *gatewayService) updatePortStates(gateway *gatewayTyped.Gateway) error {
+	// CHAT: We could run into issues with multi-tenant gateways.
+	// also probably don't need this on every update?
+	usedPorts := make([]int, 0, len(gateway.Spec.Listeners))
+	for _, listener := range gateway.Spec.Listeners {
+		usedPorts = append(usedPorts, int(listener.Port))
+	}
+	err := g.portRange.LoadInUsedPorts(usedPorts)
+	if err != nil {
+		return fmt.Errorf("loading in used ports: %w", err)
+	}
+	return nil
+}
+
 func (g *gatewayService) freePorts(ports []int) error {
 	if err := g.updateGateway(func(gateway *gatewayTyped.Gateway) {
 		var newListeners []gatewayTyped.Listener
@@ -70,13 +84,30 @@ func (g *gatewayService) freePorts(ports []int) error {
 		return fmt.Errorf("freeing ports %v from gateway: %w", ports, err)
 	}
 
-	for _, port := range ports {
-		if err := g.portRange.MarkPortAsFree(port); err != nil {
-			return fmt.Errorf("marking port %d as free: %w", port, err)
-		}
-	}
+	// CHAT: if we're not gonna be using the inmemory view then no need to free the ports?
+	// g.updatePortStates(gateway)
+	// for _, port := range ports {
+	// 	if err := g.portRange.MarkPortAsFree(port); err != nil {
+	// 		return fmt.Errorf("marking port %d as free: %w", port, err)
+	// 	}
+	// }
 
 	return nil
+}
+
+func (g *gatewayService) GetFreePort() (int, error) {
+	gateway, err := g.gatewayInterface.Get(context.TODO(), g.gatewayName, metaV1.GetOptions{})
+	if err != nil {
+		return 0, fmt.Errorf("getting gateway with name '%s': %w", g.gatewayName, err)
+	}
+	if err = g.updatePortStates(gateway); err != nil {
+		return 0, fmt.Errorf("getting port states: %w", err)
+	}
+	ports, err := g.portRange.GetAndMarkUsed(1)
+	if err != nil {
+		return 0, fmt.Errorf("getting free port: %w", err)
+	}
+	return ports[0], nil
 }
 
 func (g *gatewayService) updateGateway(update func(*gatewayTyped.Gateway)) error {
@@ -86,17 +117,6 @@ func (g *gatewayService) updateGateway(update func(*gatewayTyped.Gateway)) error
 	gateway, err := g.gatewayInterface.Get(context.TODO(), g.gatewayName, metaV1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("getting gateway with name '%s': %w", g.gatewayName, err)
-	}
-
-	// CHAT: We could run into issues with multi-tenant gateways.
-	// also probably don't need this on every update?
-	usedPorts := make([]int, 0, len(gateway.Spec.Listeners))
-	for _, listener := range gateway.Spec.Listeners {
-		usedPorts = append(usedPorts, int(listener.Port))
-	}
-	err = g.portRange.LoadInUsedPorts(usedPorts)
-	if err != nil {
-		return fmt.Errorf("loading in used ports: %w", err)
 	}
 
 	update(gateway)

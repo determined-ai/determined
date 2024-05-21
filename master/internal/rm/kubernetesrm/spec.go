@@ -148,7 +148,7 @@ func (p *pod) configureProxyResources() []gatewayProxyResource {
 			i, p.submissionInfo.taskSpec.Description, uuid.New().String())
 		sharedName := tooLong[:min(63, len(tooLong)-1)]
 
-		ports, err := p.portRange.GetAndMarkUsed(1)
+		gwPort, err := p.gatewayService.GetFreePort()
 		if err != nil {
 			log.WithError(err).Error("failed to allocate port")
 			return nil
@@ -189,7 +189,7 @@ func (p *pod) configureProxyResources() []gatewayProxyResource {
 						{
 							Namespace:   ptrs.Ptr(alphaGatewayTyped.Namespace(p.exposeProxyConfig.GatewayNamespace)),
 							Name:        alphaGatewayTyped.ObjectName(p.exposeProxyConfig.GatewayName),
-							Port:        ptrs.Ptr(alphaGatewayTyped.PortNumber(ports[0])),
+							Port:        ptrs.Ptr(alphaGatewayTyped.PortNumber(gwPort)),
 							SectionName: ptrs.Ptr(alphaGatewayTyped.SectionName(sectionName)),
 						},
 					},
@@ -212,7 +212,7 @@ func (p *pod) configureProxyResources() []gatewayProxyResource {
 
 		gatewayListener := gatewayTyped.Listener{
 			Name:     gatewayTyped.SectionName(sectionName),
-			Port:     gatewayTyped.PortNumber(ports[0]),
+			Port:     gatewayTyped.PortNumber(gwPort),
 			Protocol: "TCP",
 			AllowedRoutes: &gatewayTyped.AllowedRoutes{
 				Namespaces: &gatewayTyped.RouteNamespaces{
@@ -227,7 +227,7 @@ func (p *pod) configureProxyResources() []gatewayProxyResource {
 			gatewayListener: gatewayListener,
 		})
 
-		proxyPort.Port = ports[0]
+		proxyPort.Port = gwPort
 	}
 
 	return resources

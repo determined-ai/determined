@@ -19,7 +19,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/port"
 	"github.com/determined-ai/determined/master/pkg/set"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 
@@ -51,18 +50,12 @@ func createPod(
 	slotType := device.CUDA
 	slotResourceRequests := config.PodSlotResourceRequests{}
 
-	portRange, err := port.NewRange(1, 65535, []int{})
-	if err != nil {
-		panic(err)
-	}
-
 	newPodHandler := newPod(
 		msg, clusterID, &clientSet, namespace, masterIP, masterPort,
 		model.TLSClientConfig{}, model.TLSClientConfig{},
 		model.LoggingConfig{DefaultLoggingConfig: &model.DefaultLoggingConfig{}},
 		podInterface, configMapInterface, resourceRequestQueue,
-		slotType, slotResourceRequests, "default-scheduler", nil,
-		portRange,
+		slotType, slotResourceRequests, "default-scheduler", nil, nil,
 	)
 
 	return newPodHandler
