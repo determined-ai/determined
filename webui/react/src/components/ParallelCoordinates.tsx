@@ -26,7 +26,11 @@ const ParallelCoordinates: React.FC<Props> = ({
 
   useEffect(() => {
     if (!containerRef.current) return;
-    chartRef.current = new Hermes(containerRef.current);
+    try {
+      chartRef.current = new Hermes(containerRef.current);
+    } catch {
+      return;
+    }
 
     return () => {
       chartRef.current?.destroy();
