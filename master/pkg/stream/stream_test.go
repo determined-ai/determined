@@ -1,6 +1,7 @@
 package stream
 
 import (
+	"fmt"
 	"slices"
 	"strconv"
 	"testing"
@@ -73,10 +74,11 @@ func (em TestMsgTypeB) DeleteMsg() DeleteMsg {
 }
 
 type TestEvent struct {
-	Type      string
-	UserID    int
-	BeforeSeq int64
-	AfterSeq  int64
+	Type          string
+	FallinUserID  []int
+	FalloutUserID []int
+	BeforeSeq     int64
+	AfterSeq      int64
 }
 
 func alwaysTrue[T Msg](msg T) bool {
@@ -924,11 +926,16 @@ func setup(testEvents []TestEvent, testSubscribers []TestSubscriber) {
 	for _, testEvent := range testEvents {
 		var event Event[TestMsgTypeA]
 		switch testEvent.Type {
-		case "update":
-			event = Event[TestMsgTypeA]{After: &TestMsgTypeA{
-				Seq: int64(testEvent.AfterSeq),
-				ID:  0,
-			}}
+		case "update", "insert", "fallin":
+			event = Event[TestMsgTypeA]{
+				Before: &TestMsgTypeA{
+					Seq: int64(testEvent.AfterSeq - 1),
+					ID:  0,
+				},
+				After: &TestMsgTypeA{
+					Seq: int64(testEvent.AfterSeq),
+					ID:  0,
+				}}
 		case "fallout":
 			event = Event[TestMsgTypeA]{
 				Before: &TestMsgTypeA{
@@ -939,7 +946,9 @@ func setup(testEvents []TestEvent, testSubscribers []TestSubscriber) {
 					Seq: int64(testEvent.AfterSeq),
 					ID:  0,
 				}}
-			userToFalloutSeq[testEvent.UserID] = int64(testEvent.AfterSeq)
+			for _, userID := range testEvent.FalloutUserID {
+				userToFalloutSeq[userID] = int64(testEvent.AfterSeq)
+			}
 		case "delete":
 			event = Event[TestMsgTypeA]{Before: &TestMsgTypeA{
 				Seq: int64(testEvent.BeforeSeq),
@@ -955,6 +964,7 @@ func setup(testEvents []TestEvent, testSubscribers []TestSubscriber) {
 			userToFalloutSeq[ts.ID] = int64(len(testEvents) + 1)
 		}
 	}
+	fmt.Printf("userToFalloutSeq: %+v\n", userToFalloutSeq)
 
 	// Setting seqs for the mocked hydrator
 	var seqs []int64
@@ -967,22 +977,25 @@ func setup(testEvents []TestEvent, testSubscribers []TestSubscriber) {
 		for range numOfEvents {
 			testEvent := testEvents[index]
 
-			if testEvent.Type == "update" && !hasFellout {
+			if testEvent.Type == "insert" {
 				seqs = append(seqs, testEvent.AfterSeq)
 				testEvents = append(testEvents[:index], testEvents[index+1:]...)
 
-			} else if testEvent.Type == "fallout" && !hasFellout {
-				if ts.ID != testEvent.UserID {
-					if !slices.Contains(seqs, testEvent.AfterSeq) {
-						seqs = append(seqs, testEvent.AfterSeq)
+			} else if testEvent.Type == "update" && !hasFellout {
+				if testEvent.FalloutUserID != nil && len(testEvent.FalloutUserID) > 0 {
+					if ts.ID != testEvent.UserID {
+						if !slices.Contains(seqs, testEvent.AfterSeq) {
+							seqs = append(seqs, testEvent.AfterSeq)
+						}
+						index += 1
+					} else {
+						hasFellout = true
+						// This entity has fell out. The remaining events are not relavent to the
+						// user.
+						// TODO: this is not true when we have tests with fallin events.
+						break
 					}
-					index += 1
-				} else {
-					hasFellout = true
-					// This entity has fell out. The remaining events are not relavent to the
-					// user.
-					// TODO: this is not true when we have tests with fallin events.
-					break
+
 				}
 
 			} else if testEvent.Type == "delete" {
@@ -996,6 +1009,7 @@ func setup(testEvents []TestEvent, testSubscribers []TestSubscriber) {
 			break
 		}
 	}
+	fmt.Printf("seqs: %+v\n", seqs)
 
 	hydrator := func(ID int) (TestMsgTypeA, error) {
 		seq := seqs[0]
@@ -1025,287 +1039,137 @@ func TestTwoSubscribers(t *testing.T) {
 
 	tcs := []testCase{
 		{
-			description: "1. update on id 0(1), subscriber1 fallout on id 0(2), subscriber2 fallout on id 0(3), delete id 0(4)",
+			description: "1. insert id 0(1), update on id 0(2)",
 			dBEvents: []TestEvent{
-				{Type: "update", AfterSeq: 1},
-				{Type: "fallout", UserID: 1, AfterSeq: 2},
-				{Type: "fallout", UserID: 2, AfterSeq: 3},
-				{Type: "delete", BeforeSeq: 3},
-			},
-			outGoingMsgs: []interface{}{
-				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
-				DeleteMsg{Deleted: "0"},
-				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
-				UpsertMsg{Msg: TestMsgTypeA{2, 0}},
-				DeleteMsg{Deleted: "0"},
-			},
-		},
-		{
-			description: "2. update on id 0(1), subscriber2 fallout on id 0(2), subscriber1 fallout on id 0(3), delete id 0(4)",
-			dBEvents: []TestEvent{
-				{Type: "update", AfterSeq: 1},
-				{Type: "fallout", UserID: 2, AfterSeq: 2},
-				{Type: "fallout", UserID: 1, AfterSeq: 3},
-				{Type: "delete", BeforeSeq: 3},
-			},
-			outGoingMsgs: []interface{}{
-				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
-				UpsertMsg{Msg: TestMsgTypeA{2, 0}},
-				DeleteMsg{Deleted: "0"},
-				DeleteMsg{Deleted: "0"},
-			},
-		},
-		{
-			description: "3. subscriber1 fallout on id 0(1), update on id 0(2), subscriber2 fallout on id 0(3), delete id 0(4))",
-			dBEvents: []TestEvent{
-				{Type: "fallout", UserID: 1, AfterSeq: 1},
+				{Type: "insert", AfterSeq: 1},
 				{Type: "update", AfterSeq: 2},
-				{Type: "fallout", UserID: 2, AfterSeq: 3},
-				{Type: "delete", BeforeSeq: 3},
-			},
-			outGoingMsgs: []interface{}{
-				DeleteMsg{Deleted: "0"},
-				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
-				UpsertMsg{Msg: TestMsgTypeA{2, 0}},
-				DeleteMsg{Deleted: "0"},
-			},
-		},
-		{
-			description: "4. subscriber1 fallout on id 0(1), subscriber2 fallout on id 0(2), update on id 0(3), delete id 0(4)",
-			dBEvents: []TestEvent{
-				{Type: "fallout", UserID: 1, AfterSeq: 1},
-				{Type: "fallout", UserID: 2, AfterSeq: 2},
-				{Type: "update", AfterSeq: 3},
-				{Type: "delete", BeforeSeq: 3},
-			},
-			outGoingMsgs: []interface{}{
-				DeleteMsg{Deleted: "0"},
-				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
-				DeleteMsg{Deleted: "0"},
-			},
-		},
-		{
-			description: "5. subscriber2 fallout on id 0(1), update on id 0(2), subscriber1 fallout on id 0(3), delete id 0(4)",
-			dBEvents: []TestEvent{
-				{Type: "fallout", UserID: 2, AfterSeq: 1},
-				{Type: "update", AfterSeq: 2},
-				{Type: "fallout", UserID: 1, AfterSeq: 3},
-				{Type: "delete", BeforeSeq: 3},
 			},
 			outGoingMsgs: []interface{}{
 				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
 				UpsertMsg{Msg: TestMsgTypeA{2, 0}},
-				DeleteMsg{Deleted: "0"},
-				DeleteMsg{Deleted: "0"},
+				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
+				UpsertMsg{Msg: TestMsgTypeA{2, 0}},
 			},
 		},
 		{
-			description: "6. subscriber2 fallout on id 0(1), subscriber1 fallout on id 0(2), update on id 0(3), delete id 0(4)",
+			description: "2. insert id 0(1), subscriber1 fallin on id 0(2)",
 			dBEvents: []TestEvent{
-				{Type: "fallout", UserID: 2, AfterSeq: 1},
-				{Type: "fallout", UserID: 1, AfterSeq: 2},
-				{Type: "update", AfterSeq: 3},
-				{Type: "delete", BeforeSeq: 3},
+				{Type: "insert", AfterSeq: 1},
+				{Type: "update", FallinUserID: []int{1}, AfterSeq: 2},
+			},
+			outGoingMsgs: []interface{}{
+
+				UpsertMsg{Msg: TestMsgTypeA{2, 0}},
+				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
+				UpsertMsg{Msg: TestMsgTypeA{2, 0}},
+			},
+		},
+		{
+			description: "3. insert id 0(1), subscriber2 fallin on id 0(2)",
+			dBEvents: []TestEvent{
+				{Type: "insert", AfterSeq: 1},
+				{Type: "update", FallinUserID: []int{2}, AfterSeq: 2},
+			},
+			outGoingMsgs: []interface{}{
+
+				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
+				UpsertMsg{Msg: TestMsgTypeA{2, 0}},
+				UpsertMsg{Msg: TestMsgTypeA{2, 0}},
+			},
+		},
+		{
+			description: "4. insert id 0(1), subscriber1 fallout on id 0(2)",
+			dBEvents: []TestEvent{
+				{Type: "insert", AfterSeq: 1},
+				{Type: "update", FalloutUserID: []int{1}, AfterSeq: 2},
 			},
 			outGoingMsgs: []interface{}{
 				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
 				DeleteMsg{Deleted: "0"},
+				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
+				UpsertMsg{Msg: TestMsgTypeA{2, 0}},
+			},
+		},
+		{
+			description: "5. insert id 0(1), subscriber2 fallout on id 0(2)",
+			dBEvents: []TestEvent{
+				{Type: "insert", AfterSeq: 1},
+				{Type: "update", FalloutUserID: []int{2}, AfterSeq: 2},
+			},
+			outGoingMsgs: []interface{}{
+				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
+				UpsertMsg{Msg: TestMsgTypeA{2, 0}},
+				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
 				DeleteMsg{Deleted: "0"},
 			},
 		},
 		{
-			description: "7. update on id 0(1), subscriber1 fallout on id 0(2), subscriber2 fallout on id 0(3)",
+			description: "6. insert id 0(1), delete id 0(2)",
+			dBEvents: []TestEvent{
+				{Type: "insert", AfterSeq: 1},
+				{Type: "delete", BeforeSeq: 1},
+			},
+			outGoingMsgs: []interface{}{
+				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
+				DeleteMsg{Deleted: "0"},
+				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
+				DeleteMsg{Deleted: "0"},
+			},
+		},
+		{
+			description: "7. update on id 0(1), subscriber1 fallin on id 0(2)",
 			dBEvents: []TestEvent{
 				{Type: "update", AfterSeq: 1},
-				{Type: "fallout", UserID: 1, AfterSeq: 2},
-				{Type: "fallout", UserID: 2, AfterSeq: 3},
+				{Type: "update", FallinUserID: []int{1}, AfterSeq: 2},
 			},
 			outGoingMsgs: []interface{}{
-				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
-				DeleteMsg{Deleted: "0"},
+
+				UpsertMsg{Msg: TestMsgTypeA{2, 0}},
 				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
 				UpsertMsg{Msg: TestMsgTypeA{2, 0}},
-				DeleteMsg{Deleted: "0"},
 			},
 		},
 		{
-			description: "8. update on id 0(1), subscriber1 fallout on id 0(2), delete id 0(3)",
+			description: "8. update on id 0(1), subscriber2 fallin on id 0(2)",
 			dBEvents: []TestEvent{
 				{Type: "update", AfterSeq: 1},
-				{Type: "fallout", UserID: 1, AfterSeq: 2},
-				{Type: "delete", BeforeSeq: 2},
+				{Type: "update", FallinUserID: []int{2}, AfterSeq: 2},
 			},
 			outGoingMsgs: []interface{}{
-				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
-				DeleteMsg{Deleted: "0"},
+
 				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
 				UpsertMsg{Msg: TestMsgTypeA{2, 0}},
-				DeleteMsg{Deleted: "0"},
+				UpsertMsg{Msg: TestMsgTypeA{2, 0}},
 			},
 		},
 		{
-			description: "9. update on id 0(1), subscriber2 fallout on id 0(2), subscriber1 fallout on id 0(3)",
+			description: "9. update on id 0(1), subscriber1 fallout on id 0(2)",
 			dBEvents: []TestEvent{
 				{Type: "update", AfterSeq: 1},
-				{Type: "fallout", UserID: 2, AfterSeq: 2},
-				{Type: "fallout", UserID: 1, AfterSeq: 3},
+				{Type: "update", FalloutUserID: []int{1}, AfterSeq: 2},
 			},
 			outGoingMsgs: []interface{}{
 				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
+				DeleteMsg{Deleted: "0"},
+				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
 				UpsertMsg{Msg: TestMsgTypeA{2, 0}},
-				DeleteMsg{Deleted: "0"},
-				DeleteMsg{Deleted: "0"},
 			},
 		},
 		{
-			description: "10. update on id 0(1), subscriber2 fallout on id 0(2), delete id 0(3)",
+			description: "10. update on id 0(1), subscriber2 fallout on id 0(2)",
 			dBEvents: []TestEvent{
 				{Type: "update", AfterSeq: 1},
-				{Type: "fallout", UserID: 2, AfterSeq: 2},
-				{Type: "delete", BeforeSeq: 2},
+				{Type: "update", FalloutUserID: []int{2}, AfterSeq: 2},
 			},
 			outGoingMsgs: []interface{}{
 				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
 				UpsertMsg{Msg: TestMsgTypeA{2, 0}},
-				DeleteMsg{Deleted: "0"},
-				DeleteMsg{Deleted: "0"},
-			},
-		},
-		{
-			description: "11. subscriber1 fallout on id 0(1), update on id 0(2), subscriber2 fallout on id 0(3)",
-			dBEvents: []TestEvent{
-				{Type: "fallout", UserID: 1, AfterSeq: 1},
-				{Type: "update", AfterSeq: 2},
-				{Type: "fallout", UserID: 2, AfterSeq: 3},
-			},
-			outGoingMsgs: []interface{}{
-				DeleteMsg{Deleted: "0"},
-				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
-				UpsertMsg{Msg: TestMsgTypeA{2, 0}},
-				DeleteMsg{Deleted: "0"},
-			},
-		},
-		{
-			description: "12. subscriber1 fallout on id 0(1), update on id 0(2), delete id 0(3)",
-			dBEvents: []TestEvent{
-				{Type: "fallout", UserID: 1, AfterSeq: 1},
-				{Type: "update", AfterSeq: 2},
-				{Type: "fallout", UserID: 2, AfterSeq: 3},
-			},
-			outGoingMsgs: []interface{}{
-				DeleteMsg{Deleted: "0"},
-				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
-				UpsertMsg{Msg: TestMsgTypeA{2, 0}},
-				DeleteMsg{Deleted: "0"},
-			},
-		},
-		{
-			description: "13. subscriber1 fallout on id 0(1), subscriber2 fallout on id 0(2), update on id 0(3)",
-			dBEvents: []TestEvent{
-				{Type: "fallout", UserID: 1, AfterSeq: 1},
-				{Type: "fallout", UserID: 2, AfterSeq: 2},
-				{Type: "update", AfterSeq: 3},
-			},
-			outGoingMsgs: []interface{}{
-				DeleteMsg{Deleted: "0"},
 				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
 				DeleteMsg{Deleted: "0"},
 			},
 		},
 		{
-			description: "14. subscriber1 fallout on id 0(1), subscriber2 fallout on id 0(2), delete id 0(3)",
-			dBEvents: []TestEvent{
-				{Type: "fallout", UserID: 1, AfterSeq: 1},
-				{Type: "fallout", UserID: 2, AfterSeq: 2},
-				{Type: "delete", BeforeSeq: 2},
-			},
-			outGoingMsgs: []interface{}{
-				DeleteMsg{Deleted: "0"},
-				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
-				DeleteMsg{Deleted: "0"},
-			},
-		},
-		{
-			description: "15. subscriber2 fallout on id 0(1), update on id 0(2), subscriber1 fallout on id 0(3)",
-			dBEvents: []TestEvent{
-				{Type: "fallout", UserID: 2, AfterSeq: 1},
-				{Type: "update", AfterSeq: 2},
-				{Type: "fallout", UserID: 1, AfterSeq: 3},
-			},
-			outGoingMsgs: []interface{}{
-				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
-				UpsertMsg{Msg: TestMsgTypeA{2, 0}},
-				DeleteMsg{Deleted: "0"},
-				DeleteMsg{Deleted: "0"},
-			},
-		},
-		{
-			description: "16. subscriber2 fallout on id 0(1), update on id 0(2), delete id 0(3)",
-			dBEvents: []TestEvent{
-				{Type: "fallout", UserID: 2, AfterSeq: 1},
-				{Type: "update", AfterSeq: 2},
-				{Type: "delete", BeforeSeq: 2},
-			},
-			outGoingMsgs: []interface{}{
-				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
-				UpsertMsg{Msg: TestMsgTypeA{2, 0}},
-				DeleteMsg{Deleted: "0"},
-				DeleteMsg{Deleted: "0"},
-			},
-		},
-		{
-			description: "17. subscriber2 fallout on id 0(1), subscriber1 fallout on id 0(2), update on id 0(3)",
-			dBEvents: []TestEvent{
-				{Type: "fallout", UserID: 2, AfterSeq: 1},
-				{Type: "fallout", UserID: 1, AfterSeq: 2},
-				{Type: "update", AfterSeq: 3},
-			},
-			outGoingMsgs: []interface{}{
-				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
-				DeleteMsg{Deleted: "0"},
-				DeleteMsg{Deleted: "0"},
-			},
-		},
-		{
-			description: "18. subscriber2 fallout on id 0(1), subscriber1 fallout on id 0(2), delete id 0(3)",
-			dBEvents: []TestEvent{
-				{Type: "fallout", UserID: 1, AfterSeq: 1},
-				{Type: "fallout", UserID: 2, AfterSeq: 2},
-				{Type: "delete", BeforeSeq: 2},
-			},
-			outGoingMsgs: []interface{}{
-				DeleteMsg{Deleted: "0"},
-				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
-				DeleteMsg{Deleted: "0"},
-			},
-		},
-		{
-			description: "19. update on id 0(1), subscriber1 fallout on id 0(2)",
-			dBEvents: []TestEvent{
-				{Type: "update", AfterSeq: 1},
-				{Type: "fallout", UserID: 1, AfterSeq: 2},
-			},
-			outGoingMsgs: []interface{}{
-				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
-				DeleteMsg{Deleted: "0"},
-				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
-				UpsertMsg{Msg: TestMsgTypeA{2, 0}},
-			},
-		},
-		{
-			description: "20. update on id 0(1), subscriber2 fallout on id 0(2)",
-			dBEvents: []TestEvent{
-				{Type: "update", AfterSeq: 1},
-				{Type: "fallout", UserID: 2, AfterSeq: 2},
-			},
-			outGoingMsgs: []interface{}{
-				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
-				UpsertMsg{Msg: TestMsgTypeA{2, 0}},
-				DeleteMsg{Deleted: "0"},
-			},
-		},
-		{
-			description: "21. update on id 0(1), delete id 0(2)",
+			description: "11. update on id 0(1), delete id 0(2)",
 			dBEvents: []TestEvent{
 				{Type: "update", AfterSeq: 1},
 				{Type: "delete", BeforeSeq: 1},
@@ -1313,13 +1177,152 @@ func TestTwoSubscribers(t *testing.T) {
 			outGoingMsgs: []interface{}{
 				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
 				DeleteMsg{Deleted: "0"},
+				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
+				DeleteMsg{Deleted: "0"},
+			},
+		},
+		{
+			description: "12. subscriber1 fallin on id 0(1), update on id 0(2)",
+			dBEvents: []TestEvent{
+				{Type: "update", FallinUserID: []int{1}, AfterSeq: 1},
+				{Type: "update", AfterSeq: 2},
+			},
+			outGoingMsgs: []interface{}{
+
+				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
+				UpsertMsg{Msg: TestMsgTypeA{2, 0}},
+				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
+				UpsertMsg{Msg: TestMsgTypeA{2, 0}},
+			},
+		},
+		{
+			description: "13. subscriber1 fallin on id 0(1), subscriber2 fallin on id 0(2)",
+			dBEvents: []TestEvent{
+				{Type: "update", FallinUserID: []int{1}, AfterSeq: 1},
+				{Type: "update", FallinUserID: []int{2}, AfterSeq: 2},
+			},
+			outGoingMsgs: []interface{}{
+
+				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
+				UpsertMsg{Msg: TestMsgTypeA{2, 0}},
+				UpsertMsg{Msg: TestMsgTypeA{2, 0}},
+			},
+		},
+		{
+			description: "14. subscriber1 fallin on id 0(1), subscriber1 fallout on id 0(2)",
+			dBEvents: []TestEvent{
+				{Type: "update", FallinUserID: []int{1}, AfterSeq: 1},
+				{Type: "update", FalloutUserID: []int{1}, AfterSeq: 2},
+			},
+			outGoingMsgs: []interface{}{
+
+				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
+				DeleteMsg{Deleted: "0"},
+				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
+				UpsertMsg{Msg: TestMsgTypeA{2, 0}},
+			},
+		},
+		{
+			description: "15. subscriber1 fallin on id 0(1), subscriber2 fallout on id 0(2)",
+			dBEvents: []TestEvent{
+				{Type: "update", FallinUserID: []int{1}, AfterSeq: 1},
+				{Type: "update", FalloutUserID: []int{2}, AfterSeq: 2},
+			},
+			outGoingMsgs: []interface{}{
+
+				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
+				UpsertMsg{Msg: TestMsgTypeA{2, 0}},
+				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
+				DeleteMsg{Deleted: "0"},
+			},
+		},
+		{
+			description: "16. subscriber1 fallin on id 0(1), delete id 0(2)",
+			dBEvents: []TestEvent{
+				{Type: "update", FallinUserID: []int{1}, AfterSeq: 1},
+				{Type: "delete", BeforeSeq: 1},
+			},
+			outGoingMsgs: []interface{}{
+
+				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
+				DeleteMsg{Deleted: "0"},
+				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
+				DeleteMsg{Deleted: "0"},
+			},
+		},
+		{
+			description: "17. subscriber2 fallin on id 0(1), update on id 0(2)",
+			dBEvents: []TestEvent{
+				{Type: "update", FallinUserID: []int{2}, AfterSeq: 1},
+				{Type: "update", AfterSeq: 2},
+			},
+			outGoingMsgs: []interface{}{
+
+				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
+				UpsertMsg{Msg: TestMsgTypeA{2, 0}},
+				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
+				UpsertMsg{Msg: TestMsgTypeA{2, 0}},
+			},
+		},
+		{
+			description: "18. subscriber2 fallin on id 0(1), subscriber1 fallin on id 0(2)",
+			dBEvents: []TestEvent{
+				{Type: "update", FallinUserID: []int{2}, AfterSeq: 1},
+				{Type: "update", FallinUserID: []int{1}, AfterSeq: 2},
+			},
+			outGoingMsgs: []interface{}{
+
+				UpsertMsg{Msg: TestMsgTypeA{2, 0}},
+				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
+				UpsertMsg{Msg: TestMsgTypeA{2, 0}},
+			},
+		},
+		{
+			description: "19. subscriber2 fallin on id 0(1), subscriber1 fallout on id 0(2)",
+			dBEvents: []TestEvent{
+				{Type: "update", FallinUserID: []int{2}, AfterSeq: 1},
+				{Type: "update", FalloutUserID: []int{1}, AfterSeq: 2},
+			},
+			outGoingMsgs: []interface{}{
+
+				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
+				DeleteMsg{Deleted: "0"},
+				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
+				UpsertMsg{Msg: TestMsgTypeA{2, 0}},
+			},
+		},
+		{
+			description: "20. subscriber2 fallin on id 0(1), subscriber2 fallout on id 0(2)",
+			dBEvents: []TestEvent{
+				{Type: "update", FallinUserID: []int{2}, AfterSeq: 1},
+				{Type: "update", FalloutUserID: []int{2}, AfterSeq: 2},
+			},
+			outGoingMsgs: []interface{}{
+
+				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
+				UpsertMsg{Msg: TestMsgTypeA{2, 0}},
+				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
+				DeleteMsg{Deleted: "0"},
+			},
+		},
+		{
+			description: "21. subscriber2 fallin on id 0(1), delete id 0(2)",
+			dBEvents: []TestEvent{
+				{Type: "update", FallinUserID: []int{2}, AfterSeq: 1},
+				{Type: "delete", BeforeSeq: 1},
+			},
+			outGoingMsgs: []interface{}{
+
+				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
+				DeleteMsg{Deleted: "0"},
+				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
 				DeleteMsg{Deleted: "0"},
 			},
 		},
 		{
 			description: "22. subscriber1 fallout on id 0(1), update on id 0(2)",
 			dBEvents: []TestEvent{
-				{Type: "fallout", UserID: 1, AfterSeq: 1},
+				{Type: "update", FalloutUserID: []int{1}, AfterSeq: 1},
 				{Type: "update", AfterSeq: 2},
 			},
 			outGoingMsgs: []interface{}{
@@ -1329,46 +1332,100 @@ func TestTwoSubscribers(t *testing.T) {
 			},
 		},
 		{
-			description: "23. subscriber1 fallout on id 0(1), subscriber2 fallout on id 0(2)",
+			description: "23. subscriber1 fallout on id 0(1), subscriber1 fallin on id 0(2)",
 			dBEvents: []TestEvent{
-				{Type: "fallout", UserID: 1, AfterSeq: 1},
-				{Type: "fallout", UserID: 2, AfterSeq: 2},
+				{Type: "update", FalloutUserID: []int{1}, AfterSeq: 1},
+				{Type: "update", FallinUserID: []int{1}, AfterSeq: 2},
 			},
 			outGoingMsgs: []interface{}{
+
 				DeleteMsg{Deleted: "0"},
-				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
-				DeleteMsg{Deleted: "0"},
-			},
-		},
-		{
-			description: "24. subscriber1 fallout on id 0(1), delete id 0(2)",
-			dBEvents: []TestEvent{
-				{Type: "fallout", UserID: 1, AfterSeq: 1},
-				{Type: "delete", BeforeSeq: 2},
-			},
-			outGoingMsgs: []interface{}{
-				DeleteMsg{Deleted: "0"},
-				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
-				DeleteMsg{Deleted: "0"},
-			},
-		},
-		{
-			description: "25. subscriber2 fallout on id 0(1), update on id 0(2)",
-			dBEvents: []TestEvent{
-				{Type: "fallout", UserID: 1, AfterSeq: 1},
-				{Type: "update", AfterSeq: 2},
-			},
-			outGoingMsgs: []interface{}{
-				DeleteMsg{Deleted: "0"},
+				UpsertMsg{Msg: TestMsgTypeA{2, 0}},
 				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
 				UpsertMsg{Msg: TestMsgTypeA{2, 0}},
 			},
 		},
 		{
-			description: "26. subscriber2 fallout on id 0(1), subscriber1 fallout on id 0(2)",
+			description: "24. subscriber1 fallout on id 0(1), subscriber2 fallin on id 0(2)",
 			dBEvents: []TestEvent{
-				{Type: "fallout", UserID: 2, AfterSeq: 1},
-				{Type: "fallout", UserID: 1, AfterSeq: 2},
+				{Type: "update", FalloutUserID: []int{1}, AfterSeq: 1},
+				{Type: "update", FallinUserID: []int{2}, AfterSeq: 2},
+			},
+			outGoingMsgs: []interface{}{
+
+				DeleteMsg{Deleted: "0"},
+				UpsertMsg{Msg: TestMsgTypeA{2, 0}},
+				UpsertMsg{Msg: TestMsgTypeA{2, 0}},
+			},
+		},
+		{
+			description: "25. subscriber1 fallout on id 0(1), subscriber2 fallout on id 0(2)",
+			dBEvents: []TestEvent{
+				{Type: "update", FalloutUserID: []int{1}, AfterSeq: 1},
+				{Type: "update", FalloutUserID: []int{2}, AfterSeq: 2},
+			},
+			outGoingMsgs: []interface{}{
+				DeleteMsg{Deleted: "0"},
+				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
+				DeleteMsg{Deleted: "0"},
+			},
+		},
+		{
+			description: "26. subscriber1 fallout on id 0(1), delete id 0(2)",
+			dBEvents: []TestEvent{
+				{Type: "update", FalloutUserID: []int{1}, AfterSeq: 1},
+				{Type: "delete", BeforeSeq: 1},
+			},
+			outGoingMsgs: []interface{}{
+				DeleteMsg{Deleted: "0"},
+				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
+				DeleteMsg{Deleted: "0"},
+			},
+		},
+		{
+			description: "27. subscriber2 fallout on id 0(1), update on id 0(2)",
+			dBEvents: []TestEvent{
+				{Type: "update", FalloutUserID: []int{2}, AfterSeq: 1},
+				{Type: "update", AfterSeq: 2},
+			},
+			outGoingMsgs: []interface{}{
+				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
+				UpsertMsg{Msg: TestMsgTypeA{2, 0}},
+				DeleteMsg{Deleted: "0"},
+			},
+		},
+		{
+			description: "28. subscriber2 fallout on id 0(1), subscriber1 fallin on id 0(2)",
+			dBEvents: []TestEvent{
+				{Type: "update", FalloutUserID: []int{2}, AfterSeq: 1},
+				{Type: "update", FallinUserID: []int{1}, AfterSeq: 2},
+			},
+			outGoingMsgs: []interface{}{
+
+				UpsertMsg{Msg: TestMsgTypeA{2, 0}},
+				DeleteMsg{Deleted: "0"},
+				UpsertMsg{Msg: TestMsgTypeA{2, 0}},
+			},
+		},
+		{
+			description: "29. subscriber2 fallout on id 0(1), subscriber2 fallin on id 0(2)",
+			dBEvents: []TestEvent{
+				{Type: "update", FalloutUserID: []int{2}, AfterSeq: 1},
+				{Type: "update", FallinUserID: []int{2}, AfterSeq: 2},
+			},
+			outGoingMsgs: []interface{}{
+
+				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
+				UpsertMsg{Msg: TestMsgTypeA{2, 0}},
+				DeleteMsg{Deleted: "0"},
+				UpsertMsg{Msg: TestMsgTypeA{2, 0}},
+			},
+		},
+		{
+			description: "30. subscriber2 fallout on id 0(1), subscriber1 fallout on id 0(2)",
+			dBEvents: []TestEvent{
+				{Type: "update", FalloutUserID: []int{2}, AfterSeq: 1},
+				{Type: "update", FalloutUserID: []int{1}, AfterSeq: 2},
 			},
 			outGoingMsgs: []interface{}{
 				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
@@ -1377,53 +1434,13 @@ func TestTwoSubscribers(t *testing.T) {
 			},
 		},
 		{
-			description: "27. subscriber2 fallout on id 0(1), delete id 0(2)",
+			description: "31. subscriber2 fallout on id 0(1), delete id 0(2)",
 			dBEvents: []TestEvent{
-				{Type: "fallout", UserID: 2, AfterSeq: 1},
+				{Type: "update", FalloutUserID: []int{2}, AfterSeq: 1},
 				{Type: "delete", BeforeSeq: 1},
 			},
 			outGoingMsgs: []interface{}{
 				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
-				DeleteMsg{Deleted: "0"},
-				DeleteMsg{Deleted: "0"},
-			},
-		},
-		{
-			description: "28. update on id 0(1)",
-			dBEvents: []TestEvent{
-				{Type: "update", AfterSeq: 1},
-			},
-			outGoingMsgs: []interface{}{
-				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
-				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
-			},
-		},
-		{
-			description: "29. subscriber1 fallout on id 0(1)",
-			dBEvents: []TestEvent{
-				{Type: "fallout", UserID: 1, AfterSeq: 1},
-			},
-			outGoingMsgs: []interface{}{
-				DeleteMsg{Deleted: "0"},
-				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
-			},
-		},
-		{
-			description: "30. subscriber2 fallout on id 0(1)",
-			dBEvents: []TestEvent{
-				{Type: "fallout", UserID: 2, AfterSeq: 1},
-			},
-			outGoingMsgs: []interface{}{
-				UpsertMsg{Msg: TestMsgTypeA{1, 0}},
-				DeleteMsg{Deleted: "0"},
-			},
-		},
-		{
-			description: "31. delete id 0(1)",
-			dBEvents: []TestEvent{
-				{Type: "delete", BeforeSeq: 0},
-			},
-			outGoingMsgs: []interface{}{
 				DeleteMsg{Deleted: "0"},
 				DeleteMsg{Deleted: "0"},
 			},
