@@ -4,21 +4,19 @@
  Configuration Templates
 #########################
 
-In a typical organization, many Determined configuration files will share similar settings. This can
-cause redundancy. For example, all training workloads run at a given organization might use the same
-checkpoint storage configuration. One way to reduce this redundancy is to use *configuration
-templates*. This feature allows users to consolidate settings shared across many experiments into a
-single YAML file that can be referenced by configurations needing those settings.
+In a typical organization, many Determined configuration files often share similar settings, leading
+to redundancy. For example, all training workloads might use the same checkpoint storage
+configuration. To reduce this redundancy, Determined offers *configuration templates*.
 
-Each configuration template has a unique name and is stored by the Determined master. If a
-configuration employs a template, the effective configuration of the task will be the outcome of
-merging the two YAML files (the configuration file and the template). The semantics of this merge
-operation are described below. Determined stores this effective configuration to ensure future
-changes to a template do not affect the reproducibility of experiments that used a previous version
-of the configuration template.
+These templates allow users to consolidate shared settings into a single YAML file that can be
+referenced by multiple configurations. Each configuration template has a unique name and is stored
+by the Determined master.
 
-A single configuration file can use at most one configuration template. A configuration template
-cannot itself use another configuration template.
+When a configuration uses a template, the final configuration of the task is the result of merging
+the two YAML files (the configuration of the task and the template). This merge ensures that future
+changes to a template do not affect the reproducibility of experiments that used an earlier version
+of the template. A single configuration file can use only one configuration template. Configuration
+templates cannot reference other templates.
 
 ************************************************************
  Leveraging Templates to Simplify Experiment Configurations
@@ -104,40 +102,36 @@ There are two ways to manage templates: via the WebUI and CLI.
  Managing Templates through the WebUI
 **************************************
 
-You can managing configuration templates including listing, creating, updating, and deleting
-templates through the WebUI. To do you'll need at least ``CanCreateTemplate`` permissions. Users
-without this permission can still view and use templates.
+You can create or manage a configuration template using the WebUI. You will need at least the
+``CanCreateTemplate`` permission to create or manage templates. Users without this permission can
+still view and use templates.
 
-Creating Templates
-==================
+Create a Configuration Template
+===============================
 
--  Sign in to the cluster.
--  Select the **Templates** panel.
--  Select **Add New Template**.
+To create a configuration template:
 
-Alternatively, you can manage templates when launching JupyterLab.
+-  Go to the **Templates** pane and then select **Add New Template**.
+
+Alternatively, you can create templates from the **Templates** tab in your Workspace or when
+launching JupyterLab.
 
 Provide the following information:
 
--  Template Name: This will be the primary key and globally unique
--  Workspace: Select a workspace that user has permission to create template
--  If under Workspace -> Templates tab, the workspace if preselected and disabled
--  Template content: A CodeEditor in YAML like the one in Experiment Fork modal, no additional
-   validation enforced
+-  **Name**: The template name will be the primary key. It must be globally unique.
+-  **Workspace**: Choose a workspace for which you have permissions to create templates.
+-  **Config**: This is a code editor for entering your YAML configuration.
 
-Managing Templates
-==================
+Manage a Configuration Template
+===============================
 
-To view, edit, or delete a template:
+To view, edit, or delete a configuration template:
 
--  Select the template you want to modify.
+-  Go to the **Templates** pane and then choose the template you want to manage.
+-  Choose an action from the actions menu.
 
-Name: Sortable, Searchable, editable Workspace: Filterable, editable (Need backend support)
-
-Actions
-
-Edit: With our current API, only the config is editable Permission: CanUpdateTemplate Delete:
-Permission: CanDeleteTemplate
+Alternatively, you can manage templates from the **Templates** tab in your Workspace or when
+launching JupyterLab.
 
 ************************************
  Managing Templates through the CLI
