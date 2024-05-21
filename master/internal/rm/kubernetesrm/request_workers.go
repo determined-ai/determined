@@ -106,6 +106,7 @@ func (r *requestProcessingWorker) receiveCreateKubernetesResources(
 	if len(gatewayListeners) > 0 {
 		// TODO(RM-272) do we leak resources if the request queue fails?
 		// Do we / should we delete created resources?
+		// TODO: handle potential port conflicts. It will need a pod spec and det proxy reconfiguration.
 		if err := r.gatewayService.addListeners(gatewayListeners); err != nil {
 			r.syslog.WithError(err).Errorf("error patching gateway for pod %s", msg.podSpec.Name)
 			r.failures <- resourceCreationFailed{podName: msg.podSpec.Name, err: err}
