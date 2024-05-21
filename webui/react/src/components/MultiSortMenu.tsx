@@ -57,6 +57,12 @@ export const optionsByColumnType = {
   ],
 };
 
+export const ADD_SORT_TEXT = 'Add sort';
+export const SORT_MENU_TITLE = 'Sort by';
+export const RESET_SORT_TEXT = 'Reset';
+export const REMOVE_SORT_TITLE = 'Remove sort';
+export const SORT_MENU_BUTTON = 'sort-menu-button';
+
 const SortArrow = ({ direction = 'asc' }: { direction: DirectionType }) => (
   <svg
     className={css.sortIcon + ' ' + (css[`sortIcon--${direction}`] || '')}
@@ -176,7 +182,7 @@ const MultiSortRow: React.FC<MultiSortRowProps> = ({ sort, columns, onChange, on
       </div>
       <div>
         <Button
-          icon={<Icon name="close" title="Remove sort" />}
+          icon={<Icon name="close" title={REMOVE_SORT_TITLE} />}
           size="small"
           type="text"
           onClick={onRemove}
@@ -208,7 +214,7 @@ const MultiSort: React.FC<MultiSortProps> = ({ sorts, columns, onChange }) => {
 
   return (
     <div className={css.base}>
-      <div>Sort by</div>
+      <div>{SORT_MENU_TITLE}</div>
       <div className={css.rows}>
         {sorts.map((sort, idx) => {
           const seenColumns = sorts.slice(0, idx).map((s) => s.column);
@@ -228,10 +234,10 @@ const MultiSort: React.FC<MultiSortProps> = ({ sorts, columns, onChange }) => {
       </div>
       <div className={css.actions}>
         <Button icon={<Icon decorative name="add" size="tiny" />} type="text" onClick={addRow}>
-          Add sort
+          {ADD_SORT_TEXT}
         </Button>
         <Button type="text" onClick={clearAll}>
-          Reset
+          {RESET_SORT_TEXT}
         </Button>
       </div>
     </div>
@@ -255,7 +261,7 @@ const MultiSortMenu: React.FC<MultiSortProps> = ({
     <Dropdown
       content={<MultiSort columns={columns} sorts={sorts} onChange={onChange} />}
       onOpenChange={onSortPopoverOpenChange}>
-      <Button hideChildren={isMobile} icon={<SortButtonIcon />}>
+      <Button data-testid={SORT_MENU_BUTTON} hideChildren={isMobile} icon={<SortButtonIcon />}>
         Sort {validSorts.length ? `(${validSorts.length})` : ''}
       </Button>
     </Dropdown>

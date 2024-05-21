@@ -45,7 +45,7 @@ import {
   SpecialColumnNames,
 } from 'components/FilterForm/components/type';
 import TableFilter from 'components/FilterForm/TableFilter';
-import { EMPTY_SORT, sortMenuItemsForColumn } from 'components/MultiSortMenu';
+import MultiSortMenu, { EMPTY_SORT, sortMenuItemsForColumn } from 'components/MultiSortMenu';
 import { OptionsMenu, RowHeight } from 'components/OptionsMenu';
 import {
   DataGridGlobalSettings,
@@ -779,6 +779,12 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
           isOpenFilter={isOpenFilter}
           loadableColumns={projectColumns}
           onIsOpenFilterChange={handleIsOpenFilterChange}
+        />
+        <MultiSortMenu
+          columns={projectColumns}
+          isMobile={isMobile}
+          sorts={sorts}
+          onChange={handleSortChange}
         />
         <ColumnPickerMenu
           defaultVisibleColumns={defaultRunColumns}

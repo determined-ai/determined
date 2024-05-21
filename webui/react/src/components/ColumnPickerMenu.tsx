@@ -29,6 +29,8 @@ export const LOCATION_LABEL_MAP = {
   [V1LocationType.HYPERPARAMETERS]: 'Hyperparameters',
 } as const;
 
+export const COLUMNS_MENU_BUTTON = 'columns-menu-button';
+
 interface ColumnMenuProps {
   isMobile?: boolean;
   initialVisibleColumns: string[];
@@ -299,6 +301,7 @@ const ColumnPickerMenu: React.FC<ColumnMenuProps> = ({
       onOpenChange={handleOpenChange}>
       <Button
         data-test-component="columnPickerMenu"
+        data-testid={COLUMNS_MENU_BUTTON}
         hideChildren={isMobile}
         icon={<Icon name="columns" title="column picker" />}>
         Columns
