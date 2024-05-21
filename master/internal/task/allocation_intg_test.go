@@ -68,7 +68,8 @@ func TestAllocation(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			rm, _, a := setup(t)
+			rm, _, close, a := setup(t)
+			defer close()
 
 			// Pre-allocated stage.
 			mockRsvn := func(rID sproto.ResourcesID, agentID string) sproto.Resources {
@@ -173,7 +174,7 @@ func TestAllocation(t *testing.T) {
 }
 
 func setup(t *testing.T) (
-	*mocks.ResourceManager, *db.PgDB, *allocation,
+	*mocks.ResourceManager, *db.PgDB, func(), *allocation,
 ) {
 	require.NoError(t, etc.SetRootPath("../static/srv"))
 	portregistry.InitPortRegistry(nil)
@@ -182,7 +183,7 @@ func setup(t *testing.T) (
 	var rm mocks.ResourceManager
 
 	// real db.
-	pgDB := db.MustSetupTestPostgres(t)
+	pgDB, close := db.MustSetupTestPostgres(t)
 
 	// instantiate the allocation
 	task := db.RequireMockTask(t, pgDB, nil)
@@ -209,7 +210,7 @@ func setup(t *testing.T) (
 	require.True(t, rm.AssertExpectations(t))
 
 	tasklogger.SetDefaultLogger(tasklogger.New(&nullWriter{}))
-	return &rm, pgDB, a
+	return &rm, pgDB, close, a
 }
 
 var tickInterval = 10 * time.Millisecond

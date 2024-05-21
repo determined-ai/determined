@@ -17,7 +17,8 @@ import (
 
 func TestCache(t *testing.T) {
 	require.NoError(t, etc.SetRootPath(db.RootFromDB))
-	dbIns := db.MustResolveTestPostgres(t)
+	dbIns, close := db.MustResolveTestPostgres(t)
+	defer close()
 	db.MustMigrateTestPostgres(t, dbIns, db.MigrationsFromDB)
 
 	user := db.RequireMockUser(t, dbIns)

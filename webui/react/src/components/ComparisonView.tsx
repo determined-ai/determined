@@ -5,6 +5,7 @@ import Pivot, { PivotProps } from 'hew/Pivot';
 import SplitPane, { Pane } from 'hew/SplitPane';
 import React, { useMemo } from 'react';
 
+import CompareHyperparameters from 'components/CompareHyperparameters';
 import useMobile from 'hooks/useMobile';
 import useScrollbarWidth from 'hooks/useScrollbarWidth';
 import { TrialsComparisonTable } from 'pages/ExperimentDetails/TrialsComparisonModal';
@@ -12,7 +13,6 @@ import { useTrialMetrics } from 'pages/TrialDetails/useTrialMetrics';
 import { ExperimentWithTrial, TrialItem } from 'types';
 
 import CompareMetrics from './CompareMetrics';
-import CompareParallelCoordinates from './CompareParallelCoordinates';
 
 interface Props {
   children: React.ReactElement;
@@ -68,7 +68,7 @@ const ComparisonView: React.FC<Props> = ({
       },
       {
         children: (
-          <CompareParallelCoordinates
+          <CompareHyperparameters
             metricData={metricData}
             projectId={projectId}
             selectedExperiments={selectedExperiments}

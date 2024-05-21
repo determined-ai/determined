@@ -650,8 +650,11 @@ commands:
           command: |
             pytest -vv -s \
             -m <<parameters.mark>> \
+            --junitxml=/tmp/test-results/det-deploy-tests.xml \
             --no-compare-stats \
             --det-version="<<parameters.det-version>>"
+      - store_test_results:
+          path: /tmp/test-results/
 
   deploy-aws-cluster:
     parameters:
@@ -2155,6 +2158,8 @@ jobs:
       - setup-python-venv:
           executor: <<pipeline.parameters.machine-image>>
       - setup-go-intg-deps
+      - run: curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64 && sudo install minikube-linux-amd64 /usr/local/bin/minikube
+      - run: minikube start
       - run: make -C master test-intg
       - codecov/upload:
           flags: "backend"
@@ -2311,6 +2316,8 @@ jobs:
           root: .
           paths:
             - test-unit-harness-cpu-pycov
+      - store_test_results:
+          path: /tmp/test-results
 
   test-unit-harness-gpu-tf:
     docker:
@@ -2333,6 +2340,8 @@ jobs:
           root: .
           paths:
             - test-unit-harness-gpu-tf-pycov
+      - store_test_results:
+          path: /tmp/test-results
 
   test-unit-harness-pytorch2-gpu:
     docker:
@@ -2355,6 +2364,8 @@ jobs:
           root: .
           paths:
             - test-unit-harness-pytorch2-gpu-pycov
+      - store_test_results:
+          path: /tmp/test-results
 
   test-unit-harness-pytorch2-cpu:
     docker:
@@ -2376,6 +2387,8 @@ jobs:
           root: .
           paths:
             - test-unit-harness-pytorch2-cpu-pycov
+      - store_test_results:
+          path: /tmp/test-results
 
   test-unit-harness-gpu-parallel:
     docker:
@@ -2398,6 +2411,8 @@ jobs:
           root: .
           paths:
             - test-unit-harness-gpu-parallel-pycov
+      - store_test_results:
+          path: /tmp/test-results
 
   test-unit-harness-gpu-deepspeed:
     docker:
@@ -2420,6 +2435,8 @@ jobs:
           root: .
           paths:
             - test-unit-harness-gpu-deepspeed-pycov
+      - store_test_results:
+          path: /tmp/test-results
 
   test-unit-harness-tf2:
     docker:
@@ -2441,6 +2458,8 @@ jobs:
           root: .
           paths:
             - test-unit-harness-tf2-pycov
+      - store_test_results:
+          path: /tmp/test-results
 
   test-unit-storage:
     docker:
@@ -2457,13 +2476,15 @@ jobs:
           determined: true
           extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
           executor: <<pipeline.parameters.docker-image>>
-      - run: COVERAGE_FILE=$PWD/test-unit-storage-pycov coverage run -m pytest -v --durations=0 --require-secrets -m cloud harness/tests
+      - run: COVERAGE_FILE=$PWD/test-unit-storage-pycov coverage run -m pytest -v --durations=0 --junitxml=/tmp/test-results/test-unit-storage.xml --require-secrets -m cloud harness/tests
       - run: coverage xml -i --data-file=./test-unit-storage-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
       - persist_to_workspace:
           root: .
           paths:
             - test-unit-storage-pycov
+      - store_test_results:
+          path: /tmp/test-results
 
   test-unit-model-hub:
     docker:
@@ -2539,7 +2560,9 @@ jobs:
       - run: pip install -r harness/tests/requirements/requirements-cli.txt
       - run: pip freeze --all
       - python-report
-      - run: pytest harness/tests/cli
+      - run: pytest --junitxml=/tmp/test-results/test-unit-storage.xml harness/tests/cli
+      - store_test_results:
+          path: /tmp/test-results
 
   test-e2e-slurm-disabled:
     parameters:
@@ -4107,10 +4130,6 @@ workflows:
           requires:
             - build-react-oss
             - build-docs
-          filters:
-            branches:
-              only:
-                - main
 
       - upload-docs-search-index:
           requires:

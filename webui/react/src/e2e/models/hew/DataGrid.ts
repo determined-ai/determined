@@ -335,7 +335,7 @@ export class Row<HeadRowType extends HeadRow<Row<HeadRowType>>> extends NamedCom
    * Returns a cell from an index. Start counting at 0.
    */
   async getCellByColIndex(n: number): Promise<BaseComponent> {
-    await this.parentTable.scrollColumnIntoView(n);
+    expect(await this.parentTable.scrollColumnIntoView(n)).toBe(true);
     return new BaseComponent({
       parent: this,
       selector: `[aria-colindex="${n + 1}"]`,

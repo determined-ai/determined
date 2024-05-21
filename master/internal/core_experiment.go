@@ -20,6 +20,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/project"
+	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/templates"
 	"github.com/determined-ai/determined/master/internal/workspace"
 	"github.com/determined-ai/determined/master/pkg/archive"
@@ -293,10 +294,20 @@ func (m *Master) parseCreateExperiment(ctx context.Context, req *apiv1.CreateExp
 	}
 	workspaceID := resolveWorkspaceID(workspaceModel)
 	isSingleNode := resources.IsSingleNode() != nil && *resources.IsSingleNode()
-	poolName, _, err := m.ResolveResources(resources.ResourcePool(), resources.SlotsPerTrial(), workspaceID, isSingleNode)
-	if err != nil {
-		return nil, nil, config, nil, nil, errors.Wrapf(err, "invalid resource configuration")
+
+	taskSpec := *m.taskSpec
+	var poolName rm.ResourcePoolName
+	if !req.GetUnmanaged() {
+		poolName, _, err = m.ResolveResources(resources.ResourcePool(), resources.SlotsPerTrial(), workspaceID, isSingleNode)
+		if err != nil {
+			return nil, nil, config, nil, nil, errors.Wrapf(err, "invalid resource configuration")
+		}
+
+		if defaulted.RawEntrypoint == nil {
+			return nil, nil, config, nil, nil, errors.New("managed experiments require entrypoint")
+		}
 	}
+
 	taskContainerDefaults, err := m.rm.TaskContainerDefaults(
 		poolName,
 		m.config.TaskContainerDefaults,
@@ -304,12 +315,10 @@ func (m *Master) parseCreateExperiment(ctx context.Context, req *apiv1.CreateExp
 	if err != nil {
 		return nil, nil, config, nil, nil, errors.Wrapf(err, "error getting TaskContainerDefaults")
 	}
-	taskSpec := *m.taskSpec
+
 	taskSpec.TaskContainerDefaults = taskContainerDefaults
 	taskSpec.TaskContainerDefaults.MergeIntoExpConfig(&config)
-	if defaulted.RawEntrypoint == nil && (req.Unmanaged == nil || !*req.Unmanaged) {
-		return nil, nil, config, nil, nil, errors.New("managed experiments require entrypoint")
-	}
+
 	// Merge log retention into the taskSpec.
 	if config.RawRetentionPolicy != nil {
 		taskSpec.LogRetentionDays = config.RawRetentionPolicy.RawLogRetentionDays
@@ -375,7 +384,7 @@ func (m *Master) parseCreateExperiment(ctx context.Context, req *apiv1.CreateExp
 
 	dbExp, err := model.NewExperiment(
 		config, req.Config, parentID, false,
-		int(p.Id), req.Unmanaged != nil && *req.Unmanaged,
+		int(p.Id), req.GetUnmanaged(),
 	)
 	if err != nil {
 		return nil, nil, config, nil, nil, err
