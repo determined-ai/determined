@@ -85,7 +85,7 @@ class TrainContext:
         Get the metadata of the current run from the Determined master.
         """
         r = self._session.get(f"/api/v1/runs/{self._trial_id}/metadata")
-        return r.json()
+        return r.json()["metadata"]
 
     def _report_trial_metrics(
         self,
