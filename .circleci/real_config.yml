@@ -5518,6 +5518,7 @@ workflows:
           context:
             - playwright
             - github-read
+            - dev-ci-cluster-default-user-credentials
 
   release:
     jobs:
