@@ -2,4 +2,4 @@
 
 **Improvements**
 
--  Web UI: Allow user to manage templates through Web UI
+-  WebUI: Allow users to create and manage configuration templates through the WebUI.
