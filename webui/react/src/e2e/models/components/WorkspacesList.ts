@@ -1,4 +1,7 @@
-import { BaseComponent, NamedComponent } from 'e2e/models/BaseComponent';
+import {
+  BaseComponent,
+  NamedComponent,
+} from 'e2e/models/BaseComponent';
 import { Card } from 'e2e/models/hew/Card';
 
 import { WorkspaceActionDropdown } from './WorkspaceActionDropdown';
@@ -17,10 +20,7 @@ export class WorkspacesList extends NamedComponent {
     selector: '[data-testid="newWorkspace"]',
   });
   readonly cardWithName = (name: string): WorkspaceCard => {
-    return new WorkspaceCard({
-      parent: this,
-      selector: `[data-testid="card-${name}"]`,
-    });
+    return Card.withName({ name: name, parent: this }, WorkspaceCard);
   };
 }
 
@@ -32,10 +32,10 @@ export class WorkspacesList extends NamedComponent {
  * @param {string} obj.selector - Used as a selector uesd to locate this object
  */
 class WorkspaceCard extends Card {
-  readonly actionMenu = new WorkspaceActionDropdown({
+  override readonly actionMenu = new WorkspaceActionDropdown({
     childNode: new BaseComponent({
       parent: this,
-      selector: '[aria-label="Action menu"]',
+      selector: Card.actionMenuSelector,
     }),
     root: this.root,
   });
