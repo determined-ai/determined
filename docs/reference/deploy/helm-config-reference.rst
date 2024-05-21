@@ -231,7 +231,7 @@
    any HTTP traffic. The default timeout is 300 (5 minutes).
 
 -  ``initialUserPassword``: Specifies a string containing the default password for the admin and
-   determined user accounts.
+   determined user accounts. (*Required*)
 
 -  ``defaultPassword``: (*Deprecated*) Specifies a string containing the default password for the
    admin and determined user accounts. Use ``initialUserPassword`` instead.
