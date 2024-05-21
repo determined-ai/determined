@@ -44,7 +44,7 @@ def test_run_custom_searcher_experiment(tmp_path: pathlib.Path) -> None:
     config["name"] = "single"
     config["description"] = "custom searcher"
     search_method = searchers.SingleSearchMethod(config, 500)
-    search_runner = searcher.LocalSearchRunner(search_method, tmp_path)
+    search_runner = searcher.LocalSearchRunner(search_method, tmp_path, session=sess)
     experiment_id = search_runner.run(config, model_dir=conf.fixtures_path("no_op"))
 
     assert client._determined is not None
@@ -73,7 +73,9 @@ def test_run_random_searcher_exp() -> None:
         search_method = searchers.RandomSearchMethod(
             max_trials, max_concurrent_trials, max_length, test_type="noop"
         )
-        search_runner = searcher.LocalSearchRunner(search_method, pathlib.Path(searcher_dir))
+        search_runner = searcher.LocalSearchRunner(
+            search_method, pathlib.Path(searcher_dir), session=sess
+        )
         experiment_id = search_runner.run(config, model_dir=conf.fixtures_path("no_op"))
 
     response = bindings.get_GetExperiment(sess, experimentId=experiment_id)
@@ -291,7 +293,9 @@ def test_resume_random_searcher_exp(exceptions: List[str]) -> None:
         search_method = searchers.RandomSearchMethod(
             max_trials, max_concurrent_trials, max_length, test_type="noop"
         )
-        search_runner = searcher.LocalSearchRunner(search_method, pathlib.Path(searcher_dir))
+        search_runner = searcher.LocalSearchRunner(
+            search_method, pathlib.Path(searcher_dir), session=sess
+        )
         experiment_id = search_runner.run(config, model_dir=conf.fixtures_path("no_op"))
 
     assert search_runner.state.last_event_id == 41
