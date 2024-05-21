@@ -490,19 +490,20 @@ func (k *kubernetesResourcePool) assignResources(
 		k.syslog.
 			WithField("allocation-id", req.AllocationID).
 			WithField("task-handler", req.Name).
-			Infof("resources restored with %d pods", numPods)
+			WithField("num-pods", numPods).
+			Infof("restored job")
 	} else {
 		k.syslog.
 			WithField("allocation-id", req.AllocationID).
 			WithField("task-handler", req.Name).
-			Infof("resources assigned with %d pods", numPods)
+			WithField("num-pods", numPods).
+			Infof("assigned job")
 	}
 
 	if req.Restore {
 		// This call must happen after we publish ResourcesAllocated, otherwise the allocation will
 		// receive an update for resources it does not know about, ignore it, then hang if it missed
 		// the termination.
-		k.syslog.Error("IN REFRESH JOB STATE")
 		err := k.jobsService.RefreshStates(req.AllocationID)
 		if err != nil {
 			k.syslog.WithError(err).Error("failed to refresh pod states after reattach")

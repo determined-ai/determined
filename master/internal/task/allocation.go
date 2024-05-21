@@ -591,7 +591,12 @@ func (a *allocation) finalize(
 // heavy stuff unless it is necessarily (which also works to spread occurrences of the same work
 // out). Eventually, Allocations should just be started with their TaskSpec.
 func (a *allocation) resourcesAllocated(msg *sproto.ResourcesAllocated) error {
-	a.syslog.WithField("restore", a.req.Restore).Infof("%d resources allocated", len(msg.Resources))
+	syslog := a.syslog.WithField("restored", a.req.Restore)
+	if syslog.Level >= logrus.DebugLevel {
+		syslog = syslog.WithField("count", len(msg.Resources))
+	}
+	syslog.Infof("resources allocated")
+
 	if !a.req.Restore {
 		if a.getModelState() != model.AllocationStatePending {
 			// If we have moved on from the pending state, these must be stale (and we must have

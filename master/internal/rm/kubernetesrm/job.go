@@ -44,15 +44,6 @@ const (
 	kubernetesJobNameLabel    = "batch.kubernetes.io/job-name"
 )
 
-// special exit statuses codes we use that have special meanings.
-var (
-	podExitedWithoutCode  = "unable to get exit code or exit message from pod (could've been deleted while queued)"
-	jobDeleted            = "job was deleted"
-	podDeleted            = "pod deleted"
-	podInImagePullBackoff = "killing job that is stuck due to unrecoverable image pull errors in pod"
-	jobExitedWithoutCode  = "job exited with a failure but we don't have pod-level detail"
-)
-
 // describes why a job failed. empty value indicates success.
 type exitReason struct {
 	code        int
@@ -276,7 +267,10 @@ func (j *job) jobUpdatedCallback(updatedJob *batchV1.Job) (cproto.State, error) 
 
 		case batchV1.JobFailed:
 			if j.jobExitCause == nil {
-				j.jobExitCause = &exitReason{msg: jobExitedWithoutCode + ": " + cond.Message}
+				j.jobExitCause = &exitReason{msg: fmt.Sprintf(
+					"job exited with a failure but we don't have pod-level detail: %s",
+					cond.Message,
+				)}
 			}
 			j.syslog.Infof("job %s failed and transitioned from %s to %s", updatedJob.Name, j.container.State, cproto.Terminated)
 			j.container.State = cproto.Terminated
@@ -297,7 +291,7 @@ func (j *job) jobDeletedCallback() {
 	}
 
 	if j.jobExitCause == nil {
-		j.jobExitCause = &exitReason{msg: jobDeleted}
+		j.jobExitCause = &exitReason{msg: "job was deleted"}
 	}
 	j.syslog.Info("job deleted")
 	j.container.State = cproto.Terminated
@@ -322,7 +316,7 @@ func (j *job) podUpdatedCallback(updatedPod k8sV1.Pod) error {
 		// Only check for ImagePullBackOff, ErrImagePull could be an intermittent issue and we want to be sure.
 		// Waiting for backoff doesn't take very long.
 		if waiting := s.State.Waiting; waiting != nil && waiting.Reason == "ImagePullBackOff" {
-			j.jobExitCause = &exitReason{msg: podInImagePullBackoff}
+			j.jobExitCause = &exitReason{msg: "job was stuck due to unrecoverable image pull errors"}
 			j.syslog.WithField("detail", waiting.Message).Infof(j.jobExitCause.msg)
 			j.kill()
 		}
@@ -332,11 +326,10 @@ func (j *job) podUpdatedCallback(updatedPod k8sV1.Pod) error {
 	if allPodsAtLeastStarting && !j.sentStartingEvent {
 		// Kubernetes does not have an explicit state for pulling container images.
 		// We insert it here because our  current implementation of the trial actor requires it.
-		j.syslog.Infof("saw pod %s in state %s", podName, cproto.Pulling)
+		j.syslog.Infof("pod %s is %s/%s", podName, cproto.Pulling, cproto.Starting)
 		j.container.State = cproto.Pulling
 		j.informTaskResourcesState()
 
-		j.syslog.Infof("saw pod %s in state %s", podName, cproto.Starting)
 		j.container.State = cproto.Starting
 		j.informTaskResourcesState()
 		j.sentStartingEvent = true
@@ -360,21 +353,21 @@ func (j *job) podUpdatedCallback(updatedPod k8sV1.Pod) error {
 
 	allPodsAtLeastRunning := all(cproto.Running.Before, maps.Values(j.podStates)...)
 	if allPodsAtLeastRunning && !j.sentRunningEvent {
-		j.syslog.Infof("saw pod %s in state %s", podName, cproto.Running)
+		j.syslog.Infof("pod %s is %s", podName, cproto.Running)
 		j.container.State = cproto.Running
 		j.informTaskResourcesStarted(sproto.ResourcesStarted{NativeResourcesID: j.jobName})
 		j.sentRunningEvent = true
 	}
 
 	if updatedPodState == cproto.Terminated && !j.podExits[podName] {
-		j.syslog.Infof("saw pod %s in state %s", podName, cproto.Terminated)
+		j.syslog.Infof("pod %s is %s", podName, cproto.Terminated)
 		exit, err := getExitCodeAndMessage(&updatedPod, j.containerNames)
 		if err != nil {
 			// When a pod is deleted, it is possible that it will exit before the
 			// determined containers generates an exit code. To check if this is
 			// the case we check if a deletion timestamp has been set.
 			if updatedPod.ObjectMeta.DeletionTimestamp != nil {
-				exit = &exitReason{msg: podExitedWithoutCode}
+				exit = &exitReason{msg: "unable to get exit code or exit message from deleted pod"}
 			} else {
 				return err
 			}
@@ -413,7 +406,10 @@ func (j *job) podDeletedCallback(deleted *k8sV1.Pod) {
 
 	j.syslog.WithField("pod-name", deleted.Name).Info("pod deleted")
 	if j.jobExitCause == nil {
-		j.jobExitCause = &exitReason{msg: podDeleted}
+		j.jobExitCause = &exitReason{
+			failureType: sproto.TaskError,
+			msg:         fmt.Sprintf("pod %s deleted", deleted.Name),
+		}
 	}
 }
 

@@ -652,7 +652,7 @@ func TestExternalKillWhileQueuedFails(t *testing.T) {
 		stop = change.ResourcesStopped
 	}
 	require.NotNil(t, stop.Failure)
-	require.Equal(t, stop.Failure.ErrMsg, podExitedWithoutCode)
+	require.Contains(t, stop.Failure.ErrMsg, "unable to get exit code")
 }
 
 func TestExternalPodDelete(t *testing.T) {
