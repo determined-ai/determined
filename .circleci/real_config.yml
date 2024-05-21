@@ -2025,9 +2025,9 @@ jobs:
           port: "8082"
       - run:
           environment:
-            PW_PASSWORD: ${INITIAL_USER_PASSWORD} # temporary until DET-10197 is merged and we can set PW_PASSWORD in circleci
             PW_EE: << parameters.ee >>
-          command: npm run e2e --prefix webui/react -- << parameters.playwright-options >>
+          # setting PW_PASSWORD is temporary until DET-10197 is merged and we can set PW_PASSWORD in circleci
+          command: PW_PASSWORD=${INITIAL_USER_PASSWORD} npm run e2e --prefix webui/react -- << parameters.playwright-options >>
       - store_artifacts:
           path: webui/react/src/e2e/playwright-report
       - store_artifacts:
