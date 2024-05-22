@@ -109,7 +109,7 @@ func TestGetClusterMessage(t *testing.T) {
 	_, err = bunDB.NewInsert().Model(&values).Table(tableKey).Exec(ctx)
 	require.NoError(t, err)
 
-	msg, err = GetClusterMessage(ctx, bunDB)
+	msg, err := GetClusterMessage(ctx, bunDB)
 	require.NoError(t, err)
 	require.Equal(t, content, msg.Message)
 
@@ -150,7 +150,7 @@ func TestSetClusterMessage(t *testing.T) {
 		closer()
 	}()
 
-	// test get cluster message - infinite expiration
+	// test set cluster message - infinite expiration
 	msg := model.ClusterMessage{
 		Message:   content,
 		CreatedBy: 1,
@@ -203,4 +203,39 @@ func TestSetClusterMessage(t *testing.T) {
 
 	err = SetClusterMessage(ctx, bunDB, msg)
 	require.True(t, errors.Is(err, ErrInvalidInput))
+}
+
+func TestClearClusterMessage(t *testing.T) {
+	ctx := context.TODO()
+	require.NoError(t, etc.SetRootPath(RootFromDB))
+
+	db, closer := MustResolveTestPostgres(t)
+	bunDB := bun.NewDB(db.sql.DB, pgdialect.New())
+	defer func() {
+		_, err := bunDB.NewTruncateTable().Table(tableKey).Exec(ctx)
+		require.NoError(t, err)
+
+		closer()
+	}()
+
+	msg := model.ClusterMessage{
+		Message:   content,
+		CreatedBy: 1,
+	}
+
+	err := SetClusterMessage(ctx, bunDB, msg)
+	require.NoError(t, err)
+
+	msg, err = GetClusterMessage(ctx, bunDB)
+	require.NoError(t, err)
+	require.Equal(t, content, msg.Message)
+
+	err = ClearClusterMessage(ctx, bunDB)
+	require.NoError(t, err)
+
+	msg, err = GetClusterMessage(ctx, bunDB)
+	require.True(t, errors.Is(err, ErrNotFound))
+
+	msg, err = GetActiveClusterMessage(ctx, bunDB)
+	require.True(t, errors.Is(err, ErrNotFound))
 }
