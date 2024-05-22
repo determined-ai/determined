@@ -30,6 +30,8 @@ import (
 	"github.com/determined-ai/determined/master/pkg/tasks"
 )
 
+var successfulExit = exitReason{}
+
 // describes why a job failed. empty value indicates success.
 type exitReason struct {
 	code        int
@@ -37,14 +39,12 @@ type exitReason struct {
 	failureType sproto.FailureType
 }
 
-func (r exitReason) String() string {
-	if r == successfulExit {
+func (r *exitReason) String() string {
+	if isSuccessfulExit(r) {
 		return "success"
 	}
 	return fmt.Sprintf("%s code=%d type=%s", r.msg, r.code, r.failureType)
 }
-
-var successfulExit = exitReason{}
 
 type podNodeInfo struct {
 	nodeName  string
@@ -177,7 +177,7 @@ func (j *job) finalize() {
 }
 
 func (j *job) exitCause() *sproto.ResourcesFailedError {
-	if j.jobExitCause == nil || *j.jobExitCause == successfulExit {
+	if isSuccessfulExit(j.jobExitCause) {
 		return nil
 	}
 
@@ -194,6 +194,10 @@ func (j *job) exitCause() *sproto.ResourcesFailedError {
 		ErrMsg:      j.jobExitCause.msg,
 		ExitCode:    exitCode,
 	}
+}
+
+func isSuccessfulExit(cause *exitReason) bool {
+	return cause == nil || *cause == successfulExit
 }
 
 func (j *job) jobUpdatedCallback(updatedJob *batchV1.Job) (cproto.State, error) {
