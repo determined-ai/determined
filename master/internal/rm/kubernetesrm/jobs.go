@@ -81,39 +81,39 @@ type jobSchedulingStateChanged struct {
 //
 // TODO(DET-10011): Give this literal a more intuitive name.
 type jobsService struct {
-	mu sync.RWMutex
-	wg waitgroupx.Group
-
+	// Configuration details. Set in initialization (the `newJobService` constructor) and never modified after.
 	namespace             string
 	namespaceToPoolName   map[string]string
-	masterServiceName     string
 	scheduler             string
 	slotType              device.Type
 	slotResourceRequests  config.PodSlotResourceRequests
 	resourcePoolConfigs   []config.ResourcePoolConfig
 	baseContainerDefaults *model.TaskContainerDefaultsConfig
+	masterServiceName     string
+	masterTLSConfig       model.TLSClientConfig
+	detMasterIP           string
+	detMasterPort         int32
+	kubeconfigPath        string
 
-	kubeconfigPath string
+	// System dependencies. Also set in initialization and never modified after.
+	syslog                     *logrus.Entry
+	clientSet                  k8sClient.Interface
+	podInterfaces              map[string]typedV1.PodInterface
+	configMapInterfaces        map[string]typedV1.ConfigMapInterface
+	jobInterfaces              map[string]typedBatchV1.JobInterface
+	resourceRequestQueue       *requestQueue
+	jobSchedulingStateCallback jobSchedulingStateCallbackFn
 
-	clientSet       k8sClient.Interface
-	detMasterIP     string
-	detMasterPort   int32
-	masterTLSConfig model.TLSClientConfig
-
-	resourceRequestQueue              *requestQueue
+	// Internal state. Access should be protected.
+	wg                                waitgroupx.Group
+	mu                                sync.RWMutex
 	jobNameToJobHandler               map[string]*job
 	jobNameToResourcePool             map[string]string
 	jobNameToPodNameToSchedulingState map[string]map[string]sproto.SchedulingState
 	allocationIDToJobName             map[model.AllocationID]string
 	jobHandlerToMetadata              map[*job]jobMetadata
 	nodeToSystemResourceRequests      map[string]int64
-
-	currentNodes map[string]*k8sV1.Node
-
-	podInterfaces       map[string]typedV1.PodInterface
-	configMapInterfaces map[string]typedV1.ConfigMapInterface
-	jobInterfaces       map[string]typedBatchV1.JobInterface
-
+	currentNodes                      map[string]*k8sV1.Node
 	// TODO(RM-236) make one cache and make this code more straightforward.
 	summarizeCacheLock sync.RWMutex
 	summarizeCache     summarizeResult
@@ -121,10 +121,6 @@ type jobsService struct {
 	getAgentsCacheLock sync.Mutex
 	getAgentsCache     *apiv1.GetAgentsResponse
 	getAgentsCacheTime time.Time
-
-	syslog *logrus.Entry
-
-	jobSchedulingStateCallback jobSchedulingStateCallbackFn
 }
 
 type summarizeResult struct {
