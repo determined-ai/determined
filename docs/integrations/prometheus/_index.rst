@@ -16,13 +16,11 @@
 | Determined 0.17.6+ |
 +--------------------+
 
-Discover how to enable a Grafana dashboard to monitor Determined hardware and system metrics.
-Determined provides a Prometheus endpoint that contains mappings between internal task, GPU, and
-container definitions, which are used by Prometheus to collect relevant metrics on a cluster running
-Determined. The endpoint is enabled by default but can be disabled in the master configuration file.
-
-Visit :ref:_kubernetes-observability for instructions on enabling observability in Kubernetes
-environments.
+Discover how to enable a Grafana dashboard to monitor Determined hardware and system metrics on a
+cloud cluster, such as AWS or Kubernetes. Determined provides a Prometheus endpoint that contains
+mappings between internal task, GPU, and container definitions, which are used by Prometheus to
+collect relevant metrics on a cluster running Determined. The endpoint is not enabled by default but
+can be enabled in the master configuration file.
 
 ***********
  Reference
@@ -62,9 +60,8 @@ other tools can differ, depending on the format and organization of the returned
  Configure Determined
 **********************
 
-Install and run Determined on a cluster. When launching the master instance, the Prometheus
-endpoints are enabled by default in versions 0.32.0 and later. To manually enable the Prometheus
-endpoints, add a flag to the ``master.yaml`` configuration file:
+Install and run Determined on a cluster. When launching the master instance, enable the Prometheus
+endpoints by adding a flag to the ``master.yaml`` configuration file:
 
 .. code:: yaml
 
@@ -177,8 +174,6 @@ see populated panels in the imported Grafana dashboard: **Grafana** -> **Dashboa
 Each panel in the dashboard is powered by one or more Prometheus queries and tracks a specific
 metric on the cluster as a percentage of total capacity. Results can be further filtered using
 ``tags`` and ``resource pool`` and time range in Grafana.
-
-.. _prometheus-grafana-alerts:
 
 ********
  Alerts
