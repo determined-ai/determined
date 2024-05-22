@@ -53,3 +53,7 @@ class GlobalStorage {
 export const globalStorage = new GlobalStorage(
   new StorageManager({ basePath: 'global', store: window.localStorage }),
 );
+
+export const sessionStorage = new GlobalStorage(
+  new StorageManager({ basePath: 'session', store: window.sessionStorage }),
+);
