@@ -32,8 +32,13 @@ import (
 )
 
 const (
+	// DefaultUserPassword is the password that will be set for determined and admin users in tests.
+	DefaultUserPassword = "TestPassword1"
 	defaultUsername     = "determined"
 	defaultMasterConfig = `
+security:
+  initial_user_password: TestPassword1
+
 checkpoint_storage:
   type: shared_fs
   host_path: /tmp
