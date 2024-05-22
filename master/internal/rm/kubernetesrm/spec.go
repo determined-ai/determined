@@ -13,7 +13,6 @@ import (
 
 	"github.com/docker/docker/api/types/mount"
 	petName "github.com/dustinkirkland/golang-petname"
-	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
@@ -137,17 +136,28 @@ func (p *pod) configureProxyResources() []gatewayProxyResource {
 		return nil
 	}
 
-	var resources []gatewayProxyResource
-	// TODO(RM-275/gateways) think about experiments, should they proxy every pod, or only rank 0?
-	for i, proxyPort := range p.req.ProxyPorts {
+	namePodNetworkResource := func(portIndex, proxyPort int) string {
 		// TODO(RM-276/gateways) use something more reasonable for the name.
 		// Podname is too long currently. There is like a 63 characeter limit for DNS.
 		// We should really be under this for everything even if not required (like it is for
 		// service and TCPRoute). Bradley is changing this but hopefully we land before him.
-		tooLong := fmt.Sprintf("porti%d-%s-%s",
-			i, p.submissionInfo.taskSpec.Description, uuid.New().String())
+		/*
+			- task id
+			- allocation id
+			- port exposed. task can have multiple pods and allocations that change
+			- each allocation/pod can have multiple ports
+			- tasks have types
+			$TASK_TYPE-$TASK_ID[:10]-$ALLOCATION_ID[:10]-P$PORT_INDEX
+		*/
+		tooLong := fmt.Sprintf("porti%d-%s", portIndex, p.submissionInfo.taskSpec.AllocationID)
 		sharedName := tooLong[:min(63, len(tooLong)-1)]
+		return sharedName
+	}
 
+	var resources []gatewayProxyResource
+	// TODO(RM-275/gateways) think about experiments, should they proxy every pod, or only rank 0?
+	for i, proxyPort := range p.req.ProxyPorts {
+		sharedName := namePodNetworkResource(i, proxyPort.Port)
 		allocLabels := map[string]string{
 			determinedLabel: p.submissionInfo.taskSpec.AllocationID,
 		}
