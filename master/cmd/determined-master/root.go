@@ -133,6 +133,9 @@ func mergeCustomSpecs(
 		if gpu, ok := conf["gpu_pod_spec"]; ok {
 			config["task_container_defaults"].(map[string]interface{})["gpu_pod_spec"] = gpu
 		}
+		if checkpointGCSpec, ok := conf["checkpoint_gc_pod_spec"]; ok {
+			config["task_container_defaults"].(map[string]interface{})["checkpoint_gc_pod_spec"] = checkpointGCSpec
+		}
 	}
 
 	return config
