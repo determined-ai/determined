@@ -145,6 +145,7 @@ def do_rendezvous_kubernetes(
         ),
     )
 
+    # TODO(RM-306): Use indexed completions and JOB_COMPLETION_INDEX to get pod rank.
     data_by_rank = []
     our_rank = None
     for i, d in enumerate(sorted(resp.data, key=lambda d: str(d["request_uuid"]))):
@@ -247,7 +248,6 @@ def get_eth_interface_name() -> Optional[str]:
 
 
 # The canonical definitions of these consts live in Go code.
-RESOURCES_TYPE_K8S_POD = "k8s-pod"
 RESOURCES_TYPE_K8S_JOB = "k8s-job"
 RESOURCES_TYPE_DOCKER_CONTAINER = "docker-container"
 RESOURCES_TYPE_SLURM_JOB = "slurm-job"
@@ -261,7 +261,7 @@ def do_rendezvous(sess: api.Session, allocation_id: str) -> None:
     assert r_type, "Unable to complete rendezvous info without DET_RESOURCES_TYPE"
 
     rendezvous_info = None
-    if r_type == RESOURCES_TYPE_DOCKER_CONTAINER or r_type == RESOURCES_TYPE_K8S_POD:
+    if r_type == RESOURCES_TYPE_DOCKER_CONTAINER:
         rendezvous_info = do_rendezvous_rm_provided(sess, allocation_id, r_id)
     elif r_type == RESOURCES_TYPE_SLURM_JOB:
         rendezvous_info = do_rendezvous_slurm(sess, allocation_id, r_id)
@@ -327,7 +327,7 @@ def do_proxy(sess: api.Session, allocation_id: str) -> None:
     r_type = os.environ.get("DET_RESOURCES_TYPE")
     assert r_type, "Unable to complete rendezvous info without DET_RESOURCES_TYPE"
 
-    if r_type == RESOURCES_TYPE_DOCKER_CONTAINER or r_type == RESOURCES_TYPE_K8S_POD:
+    if r_type == RESOURCES_TYPE_DOCKER_CONTAINER:
         return
     elif r_type == RESOURCES_TYPE_SLURM_JOB:
         set_proxy_address(sess, allocation_id)

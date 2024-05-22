@@ -167,7 +167,7 @@ func checkReceiveTermination(
 	assert.Equal(t, newJob.container.State, cproto.Terminated)
 }
 
-// TODO(!!!): Rewrite these tests as minikube integration tests.
+// TODO(RM-305): Rewrite these tests as minikube integration tests.
 func TestResourceCreationFailed(t *testing.T) {
 	setupEntrypoint(t)
 
