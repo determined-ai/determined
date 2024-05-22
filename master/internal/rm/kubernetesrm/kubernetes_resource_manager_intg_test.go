@@ -197,7 +197,7 @@ func TestGetAgent(t *testing.T) {
 		},
 		Status: k8sV1.NodeStatus{
 			Allocatable: map[k8sV1.ResourceName]resource.Quantity{
-				k8sV1.ResourceName(ResourceTypeNvidia): *resource.NewQuantity(
+				k8sV1.ResourceName(resourceTypeNvidia): *resource.NewQuantity(
 					16,
 					resource.DecimalSI,
 				),
@@ -767,7 +767,7 @@ func setupNodes() (*k8sV1.Node, *k8sV1.Node, *k8sV1.Node, *k8sV1.Node) {
 	}
 
 	compResourceList := map[k8sV1.ResourceName]resource.Quantity{
-		k8sV1.ResourceName(ResourceTypeNvidia): *resource.NewQuantity(
+		k8sV1.ResourceName(resourceTypeNvidia): *resource.NewQuantity(
 			nodeNumSlots,
 			resource.DecimalSI,
 		),
@@ -881,7 +881,7 @@ func createMockJobsService(nodes map[string]*k8sV1.Node, devSlotType device.Type
 			resourceList[k8sV1.ResourceName(device.CPU)] = *resource.NewQuantity(nodeNumSlotsCPU,
 				resource.DecimalSI)
 		} else {
-			resourceList[k8sV1.ResourceName(ResourceTypeNvidia)] = *resource.NewQuantity(nodeNumSlots,
+			resourceList[k8sV1.ResourceName(resourceTypeNvidia)] = *resource.NewQuantity(nodeNumSlots,
 				resource.DecimalSI)
 		}
 		nonDetNode := k8sV1.Node{

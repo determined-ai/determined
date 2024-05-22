@@ -70,10 +70,10 @@ func (j *job) configureResourcesRequirements() k8sV1.ResourceRequirements {
 		if j.slotsPerPod > 0 {
 			return k8sV1.ResourceRequirements{
 				Limits: map[k8sV1.ResourceName]resource.Quantity{
-					ResourceTypeNvidia: *resource.NewQuantity(int64(j.slotsPerPod), resource.DecimalSI),
+					resourceTypeNvidia: *resource.NewQuantity(int64(j.slotsPerPod), resource.DecimalSI),
 				},
 				Requests: map[k8sV1.ResourceName]resource.Quantity{
-					ResourceTypeNvidia: *resource.NewQuantity(int64(j.slotsPerPod), resource.DecimalSI),
+					resourceTypeNvidia: *resource.NewQuantity(int64(j.slotsPerPod), resource.DecimalSI),
 				},
 			}
 		}
@@ -614,7 +614,7 @@ func (j *job) createSpec(scheduler string) (*batchV1.Job, *k8sV1.ConfigMap, erro
 func configureUniqueName(t tasks.TaskSpec) string {
 	// Prefix with a cluster ID so multiple Determined installations can coexist within cluster. But
 	// limit to the first 8 chars of the cluster ID to avoid the 63 character limit (this is ~53).
-	return fmt.Sprintf("det-%s-%s", clusterID[:8], t.AllocationID)
+	return fmt.Sprintf("%s-%s", t.ClusterID[:8], t.Description)
 }
 
 func configureSecurityContext(agentUserGroup *model.AgentUserGroup) *k8sV1.SecurityContext {

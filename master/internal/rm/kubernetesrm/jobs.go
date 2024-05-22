@@ -47,8 +47,9 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 )
 
-// ResourceTypeNvidia describes the GPU resource type.
-const ResourceTypeNvidia = "nvidia.com/gpu"
+const resourceTypeNvidia = "nvidia.com/gpu"
+
+const kubernetesJobNameLabel = "batch.kubernetes.io/job-name"
 
 const (
 	getAgentsCacheDuration = 15 * time.Second
@@ -529,6 +530,7 @@ func (j *jobsService) reattachJob(msg reattachJobRequest) (reattachJobResponse, 
 	}
 
 	resp, err := j.recreateJobHandler(
+		job.Name,
 		msg.req,
 		msg.allocationID,
 		resourcePool,
@@ -545,6 +547,7 @@ func (j *jobsService) reattachJob(msg reattachJobRequest) (reattachJobResponse, 
 }
 
 func (j *jobsService) recreateJobHandler(
+	name string,
 	req *sproto.AllocateRequest,
 	allocationID model.AllocationID,
 	resourcePool string,
@@ -568,6 +571,7 @@ func (j *jobsService) recreateJobHandler(
 	}
 
 	newJobHandler := newJob(
+		name,
 		startMsg,
 		startMsg.Spec.ClusterID,
 		j.clientSet,
@@ -833,6 +837,7 @@ func (j *jobsService) handleResourceRequestFailure(msg resourcesRequestFailure) 
 
 func (j *jobsService) startJob(msg StartJob) error {
 	newJobHandler := newJob(
+		configureUniqueName(msg.Spec),
 		msg,
 		msg.Spec.ClusterID,
 		j.clientSet,
@@ -1417,7 +1422,7 @@ func (j *jobsService) getNodeResourcePoolMapping(nodeSummaries map[string]model.
 	// Nvidia automatically taints nodes, so we should tolerate that when users don't customize
 	// their resource pool config.
 	defaultTolerations := []k8sV1.Toleration{{
-		Key:      ResourceTypeNvidia,
+		Key:      resourceTypeNvidia,
 		Value:    "present",
 		Operator: k8sV1.TolerationOpEqual,
 	}}
@@ -1565,7 +1570,7 @@ func (j *jobsService) summarizeClusterByNodes() map[string]model.AgentSummary {
 		case device.CUDA:
 			fallthrough
 		default:
-			resources := node.Status.Allocatable[ResourceTypeNvidia]
+			resources := node.Status.Allocatable[resourceTypeNvidia]
 			numSlots = resources.Value()
 			deviceType = device.CUDA
 		}
@@ -1696,7 +1701,7 @@ func (j *jobsService) getNonDetSlots(deviceType device.Type) (map[string][]strin
 			if deviceType == device.CPU {
 				reqs += j.getCPUReqs(c)
 			} else if deviceType == device.CUDA {
-				reqs += c.Resources.Requests.Name(ResourceTypeNvidia, resource.DecimalSI).Value()
+				reqs += c.Resources.Requests.Name(resourceTypeNvidia, resource.DecimalSI).Value()
 			}
 		}
 		if reqs > 0 {

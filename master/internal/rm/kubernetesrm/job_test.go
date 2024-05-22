@@ -49,6 +49,7 @@ func createPod(
 	slotResourceRequests := config.PodSlotResourceRequests{}
 
 	newJobHandler := newJob(
+		configureUniqueName(msg.Spec),
 		msg, clusterID, &clientSet, namespace, masterIP, masterPort,
 		model.TLSClientConfig{},
 		podInterface, configMapInterface, resourceRequestQueue,

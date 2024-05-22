@@ -39,7 +39,6 @@ const (
 	determinedLabel           = "determined"
 	determinedPreemptionLabel = "determined-preemption"
 	determinedSystemLabel     = "determined-system"
-	kubernetesJobNameLabel    = "batch.kubernetes.io/job-name"
 )
 
 // describes why a job failed. empty value indicates success.
@@ -119,6 +118,7 @@ type job struct {
 }
 
 func newJob(
+	name string,
 	msg StartJob,
 	clusterID string,
 	clientSet k8sClient.Interface,
@@ -133,8 +133,6 @@ func newJob(
 	slotResourceRequests config.PodSlotResourceRequests,
 	scheduler string,
 ) *job {
-	uniqueName := configureUniqueName(msg.Spec)
-
 	// The lifecycle of the containers specified in this map will be monitored.
 	// As soon as one or more of them exits, the pod will be terminated.
 	containerNames := set.FromSlice([]string{model.DeterminedK8ContainerName})
@@ -156,8 +154,8 @@ func newJob(
 		podInterface:          podInterface,
 		configMapInterface:    configMapInterface,
 		resourceRequestQueue:  resourceRequestQueue,
-		jobName:               uniqueName,
-		configMapName:         uniqueName,
+		jobName:               name,
+		configMapName:         name,
 		podNodeNames:          make(map[string]string),
 		podStates:             make(map[string]cproto.State),
 		podKillSent:           make(map[string]bool),
@@ -174,7 +172,7 @@ func newJob(
 		slotResourceRequests: slotResourceRequests,
 		syslog: logrus.WithField("component", "job").WithFields(
 			logger.MergeContexts(msg.LogContext, logger.Context{
-				"job": uniqueName,
+				"job": name,
 			}).Fields(),
 		),
 	}
@@ -324,7 +322,7 @@ func (j *job) podUpdatedCallback(updatedPod k8sV1.Pod) error {
 	if allPodsAtLeastStarting && !j.sentStartingEvent {
 		// Kubernetes does not have an explicit state for pulling container images.
 		// We insert it here because our  current implementation of the trial actor requires it.
-		j.syslog.Infof("pod %s is %s/%s", podName, cproto.Pulling, cproto.Starting)
+		j.syslog.Infof("pod %s is pulling images and starting", podName)
 		j.container.State = cproto.Pulling
 		j.informTaskResourcesState()
 
@@ -351,14 +349,14 @@ func (j *job) podUpdatedCallback(updatedPod k8sV1.Pod) error {
 
 	allPodsAtLeastRunning := all(cproto.Running.Before, maps.Values(j.podStates)...)
 	if allPodsAtLeastRunning && !j.sentRunningEvent {
-		j.syslog.Infof("pod %s is %s", podName, cproto.Running)
+		j.syslog.Infof("pod %s is running", podName)
 		j.container.State = cproto.Running
 		j.informTaskResourcesStarted(sproto.ResourcesStarted{NativeResourcesID: j.jobName})
 		j.sentRunningEvent = true
 	}
 
 	if updatedPodState == cproto.Terminated && !j.podExits[podName] {
-		j.syslog.Infof("pod %s is %s", podName, cproto.Terminated)
+		j.syslog.Infof("pod %s terminated", podName)
 		exit, err := getExitCodeAndMessage(&updatedPod, j.containerNames)
 		if err != nil {
 			if updatedPod.ObjectMeta.DeletionTimestamp == nil {
@@ -551,17 +549,15 @@ func (j *job) informTaskResourcesStarted(rs sproto.ResourcesStarted) {
 }
 
 func (j *job) informTaskResourcesStopped() {
-	if j.sentTerminationEvent {
-		return
+	if !j.sentTerminationEvent {
+		rmevents.Publish(j.allocationID, &sproto.ResourcesStateChanged{
+			ResourcesID:      sproto.FromContainerID(j.container.ID),
+			ResourcesState:   sproto.FromContainerState(j.container.State),
+			ResourcesStopped: &sproto.ResourcesStopped{Failure: j.exitCause()},
+			Container:        j.container.DeepCopy(),
+		})
+		j.sentTerminationEvent = true
 	}
-
-	rmevents.Publish(j.allocationID, &sproto.ResourcesStateChanged{
-		ResourcesID:      sproto.FromContainerID(j.container.ID),
-		ResourcesState:   sproto.FromContainerState(j.container.State),
-		ResourcesStopped: &sproto.ResourcesStopped{Failure: j.exitCause()},
-		Container:        j.container.DeepCopy(),
-	})
-	j.sentTerminationEvent = true
 }
 
 func (j *job) receiveContainerLog(msg sproto.ContainerLog) {
