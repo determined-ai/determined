@@ -466,7 +466,7 @@ func (j *jobsService) startJob(msg startJob) error {
 		return fmt.Errorf("attempting to register same job name: %s multiple times", newJobHandler.jobName)
 	}
 
-	err := newJobHandler.start()
+	err := newJobHandler.createSpecAndSubmit(&msg.spec)
 	if err != nil {
 		return fmt.Errorf("creating pod: %w", err)
 	}
@@ -621,7 +621,7 @@ func (j *jobsService) recreateJobHandler(
 	newJobHandler.jobName = job.Name
 	newJobHandler.configMapName = job.Name
 
-	err := newJobHandler.start()
+	err := newJobHandler.startPodLogStreamers()
 	if err != nil {
 		return reattachJobResponse{}, fmt.Errorf("reattaching pod: %w", err)
 	}

@@ -122,7 +122,7 @@ func createJobWithMockQueue(t *testing.T, k8sRequestQueue *requestQueue) (
 
 	go consumeResourceRequestFailures(ctx, failures, newPod)
 
-	err := newPod.start()
+	err := newPod.createSpecAndSubmit(&tasks.TaskSpec{})
 	require.NoError(t, err)
 	time.Sleep(500 * time.Millisecond)
 
@@ -177,7 +177,7 @@ func TestResourceCreationFailed(t *testing.T) {
 	purge(aID, sub)
 	assert.Equal(t, sub.Len(), 0)
 	// Send a second start message to trigger an additional resource creation failure.
-	err := ref.start()
+	err := ref.createSpecAndSubmit(&tasks.TaskSpec{})
 	require.NoError(t, err)
 	time.Sleep(time.Second)
 

@@ -268,9 +268,6 @@ func TestDeterminedLabels(t *testing.T) {
 		req: &sproto.AllocateRequest{
 			ResourcePool: "test-rp",
 		},
-		submissionInfo: &jobSubmissionInfo{
-			taskSpec: taskSpec,
-		},
 	}
 
 	// Define expectations.
@@ -288,8 +285,10 @@ func TestDeterminedLabels(t *testing.T) {
 		expectedLabels[labelPrefix+k] = v
 	}
 
-	spec := p.configureJobSpec(make([]k8sV1.Volume, 1), k8sV1.Container{},
-		k8sV1.Container{}, make([]k8sV1.Container, 1), &k8sV1.Pod{}, "scheduler")
+	spec := p.configureJobSpec(
+		&taskSpec, make([]k8sV1.Volume, 1), k8sV1.Container{},
+		k8sV1.Container{}, make([]k8sV1.Container, 1), &k8sV1.Pod{}, "scheduler",
+	)
 
 	// Confirm pod spec has required labels.
 	require.NotNil(t, spec)

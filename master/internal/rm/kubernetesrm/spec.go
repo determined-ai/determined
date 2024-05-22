@@ -148,6 +148,7 @@ func (j *job) configureEnvVars(
 }
 
 func (j *job) configureConfigMapSpec(
+	taskSpec *tasks.TaskSpec,
 	runArchives []cproto.RunArchive,
 ) (*k8sV1.ConfigMap, error) {
 	configMapData := make(map[string][]byte, len(runArchives))
@@ -170,13 +171,14 @@ func (j *job) configureConfigMapSpec(
 		ObjectMeta: metaV1.ObjectMeta{
 			Name:      j.configMapName,
 			Namespace: j.namespace,
-			Labels:    map[string]string{determinedLabel: j.submissionInfo.taskSpec.AllocationID},
+			Labels:    map[string]string{determinedLabel: taskSpec.AllocationID},
 		},
 		BinaryData: configMapData,
 	}, nil
 }
 
 func (j *job) configureVolumes(
+	taskSpec *tasks.TaskSpec,
 	dockerMounts []mount.Mount,
 	runArchives []cproto.RunArchive,
 ) ([]k8sV1.VolumeMount, []k8sV1.VolumeMount, []k8sV1.Volume) {
@@ -187,9 +189,9 @@ func (j *job) configureVolumes(
 	volumeMounts = append(volumeMounts, hostVolumeMounts...)
 	volumes = append(volumes, hostVolumes...)
 
-	shmSize := j.submissionInfo.taskSpec.ShmSize
+	shmSize := taskSpec.ShmSize
 	if shmSize == 0 {
-		shmSize = j.submissionInfo.taskSpec.TaskContainerDefaults.ShmSizeBytes
+		shmSize = taskSpec.TaskContainerDefaults.ShmSizeBytes
 	}
 	shmVolumeMount, shmVolume := configureShmVolume(shmSize)
 	volumeMounts = append(volumeMounts, shmVolumeMount)
@@ -207,12 +209,16 @@ func (j *job) configureVolumes(
 	return initContainerVolumeMounts, volumeMounts, volumes
 }
 
-func (j *job) modifyPodSpec(newPod *k8sV1.Pod, scheduler string) {
-	if j.submissionInfo.taskSpec.Description == cmdTask {
+func (j *job) modifyPodSpec(
+	taskSpec *tasks.TaskSpec,
+	newPod *k8sV1.Pod,
+	scheduler string,
+) {
+	if taskSpec.Description == cmdTask {
 		return
 	}
 
-	if j.submissionInfo.taskSpec.Description == gcTask {
+	if taskSpec.Description == gcTask {
 		if newPod.Spec.PriorityClassName != "" {
 			log.Warnf(
 				"GC Priority is currently using priority class: %s. "+
@@ -225,13 +231,13 @@ func (j *job) modifyPodSpec(newPod *k8sV1.Pod, scheduler string) {
 		if newPod.Spec.SchedulerName == "" {
 			newPod.Spec.SchedulerName = scheduler
 		}
-		j.configureCoscheduler(newPod, scheduler)
+		j.configureCoscheduler(taskSpec, newPod, scheduler)
 	}
 
 	if newPod.Spec.PriorityClassName == "" &&
-		j.submissionInfo.taskSpec.ResourcesConfig.Priority() != nil {
-		priority := int32(*j.submissionInfo.taskSpec.ResourcesConfig.Priority())
-		name := fmt.Sprintf("%s-priorityclass", j.submissionInfo.taskSpec.ContainerID)
+		taskSpec.ResourcesConfig.Priority() != nil {
+		priority := int32(*taskSpec.ResourcesConfig.Priority())
+		name := fmt.Sprintf("%s-priorityclass", taskSpec.ContainerID)
 
 		err := j.createPriorityClass(name, priority)
 
@@ -316,12 +322,16 @@ func addNodeSelectorRequirement(
 	}
 }
 
-func (j *job) configureCoscheduler(newPod *k8sV1.Pod, scheduler string) {
+func (j *job) configureCoscheduler(
+	taskSpec *tasks.TaskSpec,
+	newPod *k8sV1.Pod,
+	scheduler string,
+) {
 	if newPod.Spec.SchedulerName != scheduler {
 		return
 	}
 
-	resources := j.submissionInfo.taskSpec.ResourcesConfig
+	resources := taskSpec.ResourcesConfig
 	minAvailable := 0
 
 	if j.slotType == device.CUDA && j.slotsPerPod > 0 {
@@ -416,6 +426,7 @@ func validatePodLabelValue(value string) (string, error) {
 }
 
 func (j *job) configureJobSpec(
+	taskSpec *tasks.TaskSpec,
 	volumes []k8sV1.Volume,
 	determinedInitContainers k8sV1.Container,
 	determinedContainer k8sV1.Container,
@@ -434,22 +445,22 @@ func (j *job) configureJobSpec(
 	if podSpec.ObjectMeta.Labels == nil {
 		podSpec.ObjectMeta.Labels = make(map[string]string)
 	}
-	if j.submissionInfo.taskSpec.Owner != nil {
+	if taskSpec.Owner != nil {
 		// Owner label will disappear if Owner is somehow nil.
-		labelValue, err := validatePodLabelValue(j.submissionInfo.taskSpec.Owner.Username)
+		labelValue, err := validatePodLabelValue(taskSpec.Owner.Username)
 		if err != nil {
 			labelValue = defaultPodLabelValue
 			log.Warnf("unable to reformat username=%s to Kubernetes standards; using %s",
-				j.submissionInfo.taskSpec.Owner.Username, labelValue)
+				taskSpec.Owner.Username, labelValue)
 		}
 		podSpec.ObjectMeta.Labels[userLabel] = labelValue
 	}
 
-	labelValue, err := validatePodLabelValue(j.submissionInfo.taskSpec.Workspace)
+	labelValue, err := validatePodLabelValue(taskSpec.Workspace)
 	if err != nil {
 		labelValue = defaultPodLabelValue
 		log.Warnf("unable to reformat workspace=%s to Kubernetes standards; using %s",
-			j.submissionInfo.taskSpec.Workspace, labelValue)
+			taskSpec.Workspace, labelValue)
 	}
 	podSpec.ObjectMeta.Labels[workspaceLabel] = labelValue
 
@@ -461,14 +472,14 @@ func (j *job) configureJobSpec(
 	}
 	podSpec.ObjectMeta.Labels[resourcePoolLabel] = labelValue
 
-	podSpec.ObjectMeta.Labels[taskTypeLabel] = string(j.submissionInfo.taskSpec.TaskType)
-	podSpec.ObjectMeta.Labels[taskIDLabel] = j.submissionInfo.taskSpec.TaskID
-	podSpec.ObjectMeta.Labels[containerIDLabel] = j.submissionInfo.taskSpec.ContainerID
-	podSpec.ObjectMeta.Labels[determinedLabel] = j.submissionInfo.taskSpec.AllocationID
-	podSpec.ObjectMeta.Labels[allocationIDLabel] = j.submissionInfo.taskSpec.AllocationID
+	podSpec.ObjectMeta.Labels[taskTypeLabel] = string(taskSpec.TaskType)
+	podSpec.ObjectMeta.Labels[taskIDLabel] = taskSpec.TaskID
+	podSpec.ObjectMeta.Labels[containerIDLabel] = taskSpec.ContainerID
+	podSpec.ObjectMeta.Labels[determinedLabel] = taskSpec.AllocationID
+	podSpec.ObjectMeta.Labels[allocationIDLabel] = taskSpec.AllocationID
 
 	// If map is not populated, labels will be missing and observability will be impacted.
-	for k, v := range j.submissionInfo.taskSpec.ExtraPodLabels {
+	for k, v := range taskSpec.ExtraPodLabels {
 		labelValue, err := validatePodLabelValue(v)
 		if err != nil {
 			labelValue = defaultPodLabelValue
@@ -476,7 +487,7 @@ func (j *job) configureJobSpec(
 		podSpec.ObjectMeta.Labels[labelPrefix+k] = labelValue
 	}
 
-	j.modifyPodSpec(podSpec, scheduler)
+	j.modifyPodSpec(taskSpec, podSpec, scheduler)
 
 	addNodeDisabledAffinityToPodSpec(podSpec, clusterIDNodeLabel())
 	addDisallowedNodesToPodSpec(j.req, podSpec)
@@ -514,7 +525,7 @@ func (j *job) configureJobSpec(
 	podSpec.Spec.Containers = append(podSpec.Spec.Containers, sidecarContainers...)
 	podSpec.Spec.Containers = append(podSpec.Spec.Containers, determinedContainer)
 	podSpec.Spec.Volumes = append(podSpec.Spec.Volumes, volumes...)
-	podSpec.Spec.HostNetwork = j.submissionInfo.taskSpec.TaskContainerDefaults.NetworkMode.IsHost()
+	podSpec.Spec.HostNetwork = taskSpec.TaskContainerDefaults.NetworkMode.IsHost()
 	podSpec.Spec.InitContainers = append(podSpec.Spec.InitContainers, determinedInitContainers)
 	podSpec.Spec.RestartPolicy = k8sV1.RestartPolicyNever
 
@@ -536,7 +547,7 @@ func (j *job) configureJobSpec(
 	}
 }
 
-func (j *job) createSpec(scheduler string) (*batchV1.Job, *k8sV1.ConfigMap, error) {
+func (j *job) createSpec(scheduler string, taskSpec *tasks.TaskSpec) (*batchV1.Job, *k8sV1.ConfigMap, error) {
 	deviceType := j.slotType
 	// Device type is currently configured globally on KubernetesResourceManagerConfig.
 	// So we special case certain functionality to use device.CPU.
@@ -544,13 +555,11 @@ func (j *job) createSpec(scheduler string) (*batchV1.Job, *k8sV1.ConfigMap, erro
 		deviceType = device.CPU
 	}
 
-	spec := j.submissionInfo.taskSpec
+	runArchives, rootArchives := taskSpec.Archives()
 
-	runArchives, rootArchives := spec.Archives()
+	initContainerVolumeMounts, volumeMounts, volumes := j.configureVolumes(taskSpec, taskSpec.Mounts, runArchives)
 
-	initContainerVolumeMounts, volumeMounts, volumes := j.configureVolumes(spec.Mounts, runArchives)
-
-	env := spec.Environment
+	env := taskSpec.Environment
 
 	// This array containerPorts is set on the container spec.
 	// This field on the container spec is for "primarily informational"
@@ -562,7 +571,7 @@ func (j *job) createSpec(scheduler string) (*batchV1.Job, *k8sV1.ConfigMap, erro
 		})
 	}
 
-	envVars, err := j.configureEnvVars(spec.EnvVars(), env, deviceType)
+	envVars, err := j.configureEnvVars(taskSpec.EnvVars(), env, deviceType)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -572,28 +581,28 @@ func (j *job) createSpec(scheduler string) (*batchV1.Job, *k8sV1.ConfigMap, erro
 		initContainerVolumeMounts,
 		env.Image().For(deviceType),
 		configureImagePullPolicy(env),
-		spec.AgentUserGroup,
+		taskSpec.AgentUserGroup,
 	)
 
 	var sidecars []k8sV1.Container
 
 	container := k8sV1.Container{
 		Name:            model.DeterminedK8ContainerName,
-		Command:         spec.LogShipperWrappedEntrypoint(),
+		Command:         taskSpec.LogShipperWrappedEntrypoint(),
 		Env:             envVars,
 		Image:           env.Image().For(deviceType),
 		ImagePullPolicy: configureImagePullPolicy(env),
 		SecurityContext: getDetContainerSecurityContext(
-			spec.AgentUserGroup,
+			taskSpec.AgentUserGroup,
 			env.PodSpec(),
 		),
 		Resources:    j.configureResourcesRequirements(),
 		VolumeMounts: volumeMounts,
-		WorkingDir:   spec.WorkDir,
+		WorkingDir:   taskSpec.WorkDir,
 		Ports:        containerPorts,
 	}
 
-	configMapSpec, err := j.configureConfigMapSpec(runArchives)
+	configMapSpec, err := j.configureConfigMapSpec(taskSpec, runArchives)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -606,6 +615,7 @@ func (j *job) createSpec(scheduler string) (*batchV1.Job, *k8sV1.ConfigMap, erro
 	container.VolumeMounts = append(container.VolumeMounts, rootVolumeMounts...)
 
 	return j.configureJobSpec(
+		taskSpec,
 		volumes,
 		initContainer,
 		container,

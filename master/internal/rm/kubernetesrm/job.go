@@ -46,10 +46,6 @@ func (r exitReason) String() string {
 
 var successfulExit = exitReason{}
 
-type jobSubmissionInfo struct {
-	taskSpec tasks.TaskSpec
-}
-
 type podNodeInfo struct {
 	nodeName  string
 	numSlots  int
@@ -78,10 +74,7 @@ type job struct {
 	scheduler            string
 	slotType             device.Type
 	slotResourceRequests config.PodSlotResourceRequests
-	// submissionInfo will be nil when the pod is restored.
-	// These fields can not be relied on after a pod is submitted.
-	submissionInfo *jobSubmissionInfo
-	restore        bool
+	restore              bool
 
 	// System dependencies. Also set in initialization and never modified after.
 	syslog               *logrus.Entry
@@ -127,10 +120,7 @@ func newJob(
 	containerNames := set.FromSlice([]string{model.DeterminedK8ContainerName})
 
 	p := &job{
-		req: msg.req,
-		submissionInfo: &jobSubmissionInfo{
-			taskSpec: msg.spec,
-		},
+		req:                   msg.req,
 		clusterID:             clusterID,
 		allocationID:          msg.allocationID,
 		clientSet:             clientSet,
@@ -166,19 +156,6 @@ func newJob(
 		),
 	}
 	return p
-}
-
-func (j *job) start() error {
-	if j.restore {
-		if err := j.startPodLogStreamers(); err != nil {
-			return err
-		}
-	} else {
-		if err := j.createSpecAndSubmit(); err != nil {
-			return fmt.Errorf("creating pod spec: %w", err)
-		}
-	}
-	return nil
 }
 
 func (j *job) finalize() {
@@ -496,8 +473,8 @@ func (j *job) startPodLogStreamers() error {
 	return nil
 }
 
-func (j *job) createSpecAndSubmit() error {
-	jobSpec, configMapSpec, err := j.createSpec(j.scheduler)
+func (j *job) createSpecAndSubmit(spec *tasks.TaskSpec) error {
+	jobSpec, configMapSpec, err := j.createSpec(j.scheduler, spec)
 	if err != nil {
 		return err
 	}
