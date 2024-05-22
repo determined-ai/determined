@@ -147,7 +147,7 @@ func TestApplyBackwardsCompatibility(t *testing.T) {
 					"type": "agent",
 					"scheduler": map[string]interface{}{
 						"fitting_policy": "best",
-						"type":           "fair_share",
+						"type":           "priority",
 					},
 					"default_cpu_resource_pool": "default",
 					"default_gpu_resource_pool": "default",
@@ -178,7 +178,7 @@ func TestApplyBackwardsCompatibility(t *testing.T) {
 					"type": "kubernetes",
 					"scheduler": map[string]interface{}{
 						"fitting_policy": "best",
-						"type":           "fair_share",
+						"type":           "priority",
 					},
 					"master_service_name": "k8s-det",
 				},

@@ -6603,6 +6603,33 @@ class v1GetTrialProfilerMetricsResponse(Printable):
         }
         return out
 
+class v1GetTrialRemainingLogRetentionDaysResponse(Printable):
+    """Response to GetTrialRemainingLogRetentionDaysRequest."""
+    remainingDays: "typing.Optional[int]" = None
+
+    def __init__(
+        self,
+        *,
+        remainingDays: "typing.Union[int, None, Unset]" = _unset,
+    ):
+        if not isinstance(remainingDays, Unset):
+            self.remainingDays = remainingDays
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetTrialRemainingLogRetentionDaysResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "remainingDays" in obj:
+            kwargs["remainingDays"] = obj["remainingDays"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "remainingDays" in vars(self):
+            out["remainingDays"] = self.remainingDays
+        return out
+
 class v1GetTrialResponse(Printable):
     """Response to GetTrialRequest."""
 
@@ -19891,6 +19918,30 @@ from the dataloader took.
             raise APIHttpStreamError("get_GetTrialProfilerMetrics", runtimeStreamError(message="ChunkedEncodingError"))
         return
     raise APIHttpError("get_GetTrialProfilerMetrics", _resp)
+
+def get_GetTrialRemainingLogRetentionDays(
+    session: "api.BaseSession",
+    *,
+    id: int,
+) -> "v1GetTrialRemainingLogRetentionDaysResponse":
+    """Get the list of trials for an experiment.
+
+    - id: The trial id.
+    """
+    _params = None
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/trials/{id}/remaining_log_retention_days",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1GetTrialRemainingLogRetentionDaysResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetTrialRemainingLogRetentionDays", _resp)
 
 def get_GetTrialWorkloads(
     session: "api.BaseSession",

@@ -27,6 +27,13 @@ def run(old_tag: str, new_tag: str, yaml_path: str, release: bool) -> None:
     for image_type in conf:
         if old_tag not in conf[image_type]["new"]:
             continue
+        elif ":" not in conf[image_type]["new"]:
+            # AMIS/GCP images do not contain :
+            continue
+        elif "environments:" in conf[image_type]["new"]:
+            # exempt legacy environments repo
+            continue
+
         replace_image(conf[image_type], new_tag, release)
 
     with open(yaml_path, "w") as f:
@@ -37,9 +44,8 @@ def replace_image(subconf: dict, new_tag: str, release: bool) -> None:
     old_tag = subconf["new"].split(":")[-1]
     subconf["old"] = subconf["new"]
     if release:
-        subconf["new"] = subconf["new"].replace("-dev:" + old_tag, ":" + new_tag)
-    else:
-        subconf["new"] = subconf["new"].replace(old_tag, new_tag)
+        subconf["new"] = subconf["new"].replace("-dev:", ":")
+    subconf["new"] = subconf["new"].replace(old_tag, new_tag)
 
 
 if __name__ == "__main__":

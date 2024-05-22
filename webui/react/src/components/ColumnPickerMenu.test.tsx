@@ -6,7 +6,7 @@ import _ from 'lodash';
 
 import { V1LocationType } from 'services/api-ts-sdk';
 
-import ColumnPickerMenu, { LOCATION_LABEL_MAP } from './ColumnPickerMenu';
+import ColumnPickerMenu, { COLUMNS_MENU_BUTTON, LOCATION_LABEL_MAP } from './ColumnPickerMenu';
 import { initialVisibleColumns, projectColumns } from './ColumnPickerMenu.test.mock';
 import { ThemeProvider } from './ThemeProvider';
 
@@ -45,7 +45,7 @@ const setup = (initCols?: string[]) => {
 describe('ColumnPickerMenu', () => {
   it('should deselect columns', async () => {
     const { onVisibleColumnChange, user } = setup();
-    await user.click(await screen.findByRole('button'));
+    await user.click(await screen.findByTestId(COLUMNS_MENU_BUTTON));
     const columnId = initialVisibleColumns[0];
     const displayName = projectColumns.find((c) => c.column === columnId)?.displayName;
     await user.click(await screen.findByText(displayName ?? ''));
@@ -57,7 +57,7 @@ describe('ColumnPickerMenu', () => {
 
   it('should select columns', async () => {
     const { onVisibleColumnChange, user } = setup();
-    await user.click(await screen.findByRole('button'));
+    await user.click(await screen.findByTestId(COLUMNS_MENU_BUTTON));
     const unselectedInitialColumns = projectColumns.filter(
       (c) => !initialVisibleColumns.includes(c.column),
     );
@@ -70,7 +70,7 @@ describe('ColumnPickerMenu', () => {
 
   it('should reset', async () => {
     const { onVisibleColumnChange, user } = setup();
-    await user.click(await screen.findByRole('button'));
+    await user.click(await screen.findByTestId(COLUMNS_MENU_BUTTON));
     const columnId = initialVisibleColumns[0];
     const displayName = projectColumns.find((c) => c.column === columnId)?.displayName;
     await user.click(await screen.findByText(displayName ?? ''));
@@ -85,7 +85,7 @@ describe('ColumnPickerMenu', () => {
 
   it('should switch tabs and display correct columns', async () => {
     const { user } = setup();
-    await user.click(await screen.findByRole('button'));
+    await user.click(await screen.findByTestId(COLUMNS_MENU_BUTTON));
     const tabs = new Set<string>(Object.values(LOCATION_LABEL_MAP));
     const testTab = async (tabName: string) => {
       await user.click(await screen.findByText(tabName));
@@ -102,7 +102,7 @@ describe('ColumnPickerMenu', () => {
 
   it('should show all', async () => {
     const { onVisibleColumnChange, user } = setup();
-    await user.click(await screen.findByRole('button'));
+    await user.click(await screen.findByTestId(COLUMNS_MENU_BUTTON));
     const showAlls = await screen.findAllByText('Show all');
     await user.click(showAlls[0]);
     const locationColumns = projectColumns
@@ -120,7 +120,7 @@ describe('ColumnPickerMenu', () => {
       .filter((c) => c.location === locations[0])
       .map((c) => c.column);
     const { onVisibleColumnChange, user } = setup(locationColumns);
-    await user.click(await screen.findByRole('button'));
+    await user.click(await screen.findByTestId(COLUMNS_MENU_BUTTON));
     const hideAlls = await screen.findAllByText('Hide all');
     await user.click(hideAlls[0]);
     expect(onVisibleColumnChange).toHaveBeenCalledWith([], PINNED_COLUMNS_COUNT);
@@ -128,7 +128,7 @@ describe('ColumnPickerMenu', () => {
 
   it('should filter', async () => {
     const { user } = setup();
-    await user.click(await screen.findByRole('button'));
+    await user.click(await screen.findByTestId(COLUMNS_MENU_BUTTON));
     const includedColumn = projectColumns.find((c) => c.column === initialVisibleColumns[0]);
     const excludedColumn = projectColumns.find((c) => c.column === initialVisibleColumns[1]);
     await user.type(await screen.findByRole('textbox'), includedColumn?.displayName ?? '');

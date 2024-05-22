@@ -283,6 +283,18 @@ message GetExperimentTrialsResponse {
   Pagination pagination = 2;
 }
 
+// Get the remaining log retention days for a trial id.
+message GetTrialRemainingLogRetentionDaysRequest {
+  // The trial id.
+  int32 id = 1;
+}
+
+// Response to GetTrialRemainingLogRetentionDaysRequest.
+message GetTrialRemainingLogRetentionDaysResponse {
+  // The remaining log retention days for the trial id.
+  optional int32 remaining_days = 1;
+}
+
 // Get trial details.
 message GetTrialRequest {
   // The requested trial's id.

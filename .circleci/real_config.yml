@@ -2026,7 +2026,8 @@ jobs:
       - run:
           environment:
             PW_EE: << parameters.ee >>
-          command: npm run e2e --prefix webui/react -- << parameters.playwright-options >>
+          # setting PW_PASSWORD is temporary until DET-10197 is merged and we can set PW_PASSWORD in circleci
+          command: PW_PASSWORD=${INITIAL_USER_PASSWORD} npm run e2e --prefix webui/react -- << parameters.playwright-options >>
       - store_artifacts:
           path: webui/react/src/e2e/playwright-report
       - store_artifacts:
@@ -4107,6 +4108,7 @@ workflows:
           context:
             - playwright
             - github-read
+            - dev-ci-cluster-default-user-credentials
           filters: *any-upstream
       - build-docs:
           requires:
@@ -4195,6 +4197,7 @@ workflows:
           context:
             - playwright
             - github-read
+            - dev-ci-cluster-default-user-credentials
           filters: *any-upstream
       - build-docs:
           requires:
@@ -4439,6 +4442,8 @@ workflows:
 
       - test-e2e:
           name: test-e2e-rbac
+          context:
+            - dev-ci-cluster-default-user-credentials
           requires:
             - build-go-ee
           parallelism: 1
@@ -4447,6 +4452,8 @@ workflows:
 
       - test-e2e:
           name: test-e2e-cpu
+          context:
+            - dev-ci-cluster-default-user-credentials
           requires:
             - build-go-ee
           parallelism: 6
@@ -4456,6 +4463,8 @@ workflows:
 
       - test-e2e:
           name: test-e2e-cpu-double
+          context:
+            - dev-ci-cluster-default-user-credentials
           requires:
             - build-go-ee
           parallelism: 5
@@ -4467,6 +4476,8 @@ workflows:
 
       - test-e2e:
           name: test-e2e-cpu-oauth
+          context:
+            - dev-ci-cluster-default-user-credentials
           requires:
             - build-go-ee
           parallelism: 1
@@ -4476,6 +4487,8 @@ workflows:
 
       - test-e2e:
           name: test-e2e-cpu-model-registry-rbac
+          context:
+            - dev-ci-cluster-default-user-credentials
           requires:
             - build-go-ee
           parallelism: 1
@@ -4485,6 +4498,8 @@ workflows:
 
       - test-e2e:
           name: test-e2e-managed-devcluster
+          context:
+            - dev-ci-cluster-default-user-credentials
           requires:
             - build-go-ee
           parallelism: 4
@@ -4498,6 +4513,8 @@ workflows:
 
       - test-e2e:
           name: test-e2e-multi-k8s
+          context:
+            - dev-ci-cluster-default-user-credentials
           requires:
             - build-go-ee
           parallelism: 1
@@ -4509,6 +4526,8 @@ workflows:
 
       - test-e2e:
           name: test-e2e-port-registry
+          context:
+            - dev-ci-cluster-default-user-credentials
           requires:
             - build-go-ee
           parallelism: 1
@@ -4518,6 +4537,8 @@ workflows:
 
       - test-e2e:
           name: test-e2e-cpu-elastic
+          context:
+            - dev-ci-cluster-default-user-credentials
           requires:
             - build-go-ee
           parallelism: 1
@@ -4528,6 +4549,8 @@ workflows:
 
       - test-e2e:
           name: test-e2e-postgres10-with-ssl
+          context:
+            - dev-ci-cluster-default-user-credentials
           requires:
             - build-go-ee
           parallelism: 1
@@ -4538,6 +4561,8 @@ workflows:
 
       - test-e2e:
           name: test-e2e-postgres14-with-ssl
+          context:
+            - dev-ci-cluster-default-user-credentials
           requires:
             - build-go-ee
           parallelism: 1
@@ -4548,6 +4573,8 @@ workflows:
 
       - test-e2e:
           name: test-e2e-old-agent-versions
+          context:
+            - dev-ci-cluster-default-user-credentials
           requires:
             - build-go-ee
           parallelism: 1
@@ -4570,8 +4597,10 @@ workflows:
           extra-pytest-flags: "--no-compare-stats"
 
       - test-e2e:
-          context: okta
           name: test-e2e-saml
+          context:
+            - okta
+            - dev-ci-cluster-default-user-credentials
           requires:
             - build-go-ee
           parallelism: 1
@@ -5516,6 +5545,7 @@ workflows:
           context:
             - playwright
             - github-read
+            - dev-ci-cluster-default-user-credentials
 
   release:
     jobs:

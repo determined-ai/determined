@@ -4927,6 +4927,19 @@ export interface V1GetTrialProfilerMetricsResponse {
     batch: V1TrialProfilerMetricsBatch;
 }
 /**
+ * Response to GetTrialRemainingLogRetentionDaysRequest.
+ * @export
+ * @interface V1GetTrialRemainingLogRetentionDaysResponse
+ */
+export interface V1GetTrialRemainingLogRetentionDaysResponse {
+    /**
+     * The remaining log retention days for the trial id.
+     * @type {number}
+     * @memberof V1GetTrialRemainingLogRetentionDaysResponse
+     */
+    remainingDays?: number;
+}
+/**
  * Response to GetTrialRequest.
  * @export
  * @interface V1GetTrialResponse
@@ -19815,6 +19828,42 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Get the list of trials for an experiment.
+         * @param {number} id The trial id.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTrialRemainingLogRetentionDays(id: number, options: any = {}): FetchArgs {
+            // verify required parameter 'id' is not null or undefined
+            if (id === null || id === undefined) {
+                throw new RequiredError('id','Required parameter id was null or undefined when calling getTrialRemainingLogRetentionDays.');
+            }
+            const localVarPath = `/api/v1/trials/{id}/remaining_log_retention_days`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get the list of workloads for a trial.
          * @param {number} trialId Limit workloads to those that are owned by the specified trial.
          * @param {V1OrderBy} [orderBy] Order workloads in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
@@ -22375,6 +22424,25 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Get the list of trials for an experiment.
+         * @param {number} id The trial id.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTrialRemainingLogRetentionDays(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTrialRemainingLogRetentionDaysResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getTrialRemainingLogRetentionDays(id, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Get the list of workloads for a trial.
          * @param {number} trialId Limit workloads to those that are owned by the specified trial.
          * @param {V1OrderBy} [orderBy] Order workloads in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
@@ -23597,6 +23665,16 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Get the list of trials for an experiment.
+         * @param {number} id The trial id.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTrialRemainingLogRetentionDays(id: number, options?: any) {
+            return InternalApiFp(configuration).getTrialRemainingLogRetentionDays(id, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Get the list of workloads for a trial.
          * @param {number} trialId Limit workloads to those that are owned by the specified trial.
          * @param {V1OrderBy} [orderBy] Order workloads in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
@@ -24530,6 +24608,18 @@ export class InternalApi extends BaseAPI {
      */
     public getTrialMetricsByModelVersion(modelName: string, modelVersionNum: number, trialSourceInfoType?: V1TrialSourceInfoType, metricGroup?: string, options?: any) {
         return InternalApiFp(this.configuration).getTrialMetricsByModelVersion(modelName, modelVersionNum, trialSourceInfoType, metricGroup, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Get the list of trials for an experiment.
+     * @param {number} id The trial id.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public getTrialRemainingLogRetentionDays(id: number, options?: any) {
+        return InternalApiFp(this.configuration).getTrialRemainingLogRetentionDays(id, options)(this.fetch, this.basePath)
     }
     
     /**
