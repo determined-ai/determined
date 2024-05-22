@@ -36,12 +36,6 @@ var defaultRunsTableColumns = []*projectv1.ProjectColumn{
 		Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
 	},
 	{
-		Column:      "name",
-		DisplayName: "Name",
-		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
-		Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
-	},
-	{
 		Column:      "experimentDescription",
 		DisplayName: "Description",
 		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
