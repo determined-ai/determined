@@ -135,7 +135,7 @@ func ConnectMaster(c *config.Config) (apiv1.DeterminedClient, error) {
 		}
 
 		cl = apiv1.NewDeterminedClient(clConn)
-		_, err = cl.Login(context.Background(), &apiv1.LoginRequest{Username: defaultUsername})
+		_, err = cl.Login(context.Background(), &apiv1.LoginRequest{Username: defaultUsername, Password: DefaultUserPassword})
 		if err == nil {
 			return cl, nil
 		}
