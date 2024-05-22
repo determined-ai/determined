@@ -269,7 +269,7 @@ func ModelVersionMakePermissionFilter(ctx context.Context, user model.User) (fun
 func ModelVersionMakeHydrator() func(int) (*ModelVersionMsg, error) {
 	return func(ID int) (*ModelVersionMsg, error) {
 		var modelVersionMsg ModelVersionMsg
-		query := db.Bun().NewSelect().Model(&modelVersionMsg).Where("id = ?", ID)
+		query := db.Bun().NewSelect().Model(&modelVersionMsg).Where("id = ?", ID).ExcludeColumn("workspace_id")
 		err := query.Scan(context.Background(), &modelVersionMsg)
 		if err != nil && errors.Cause(err) != sql.ErrNoRows {
 			log.Errorf("error in model version hydrator: %v\n", err)

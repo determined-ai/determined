@@ -55,7 +55,7 @@ BEGIN
         n = jsonb_set('id', NEW.id, '{workspace_id}', to_jsonb((SELECT workspace_id FROM models WHERE id = NEW.model_id)::text));
         PERFORM stream_model_version_notify(o, n);
     ELSEIF (TG_OP = 'DELETE') THEN
-        PERFORM stream_model_version_notify('id', OLD.id, NULL);
+        PERFORM stream_model_version_notify(jsonb_build_object('id', OLD.id), NULL);
         -- DELETEs trigger BEFORE, and must return a non-NULL value.
         return OLD;
     END IF;

@@ -15,6 +15,7 @@ type SubscriptionSet struct {
 	Projects      *subscriptionState[*ProjectMsg, ProjectSubscriptionSpec]
 	Models        *subscriptionState[*ModelMsg, ModelSubscriptionSpec]
 	ModelVersions *subscriptionState[*ModelVersionMsg, ModelVersionSubscriptionSpec]
+	Experiments   *subscriptionState[*ExperimentMsg, ExperimentSubscriptionSpec]
 }
 
 // subscriptionState contains per-type subscription state.
@@ -28,6 +29,7 @@ type SubscriptionSpecSet struct {
 	Projects     *ProjectSubscriptionSpec      `json:"projects"`
 	Models       *ModelSubscriptionSpec        `json:"models"`
 	ModelVersion *ModelVersionSubscriptionSpec `json:"modelversions"`
+	Experiments  *ExperimentSubscriptionSpec   `json:"experiments"`
 }
 
 // CollectStartupMsgsFunc collects messages that were missed prior to startup.
@@ -52,6 +54,7 @@ func NewSubscriptionSet(
 	var projectSubscriptionState *subscriptionState[*ProjectMsg, ProjectSubscriptionSpec]
 	var modelSubscriptionState *subscriptionState[*ModelMsg, ModelSubscriptionSpec]
 	var modelVersionSubscriptionState *subscriptionState[*ModelVersionMsg, ModelVersionSubscriptionSpec]
+	var experimentSubscriptionState *subscriptionState[*ExperimentMsg, ExperimentSubscriptionSpec]
 
 	if spec.Projects != nil {
 		projectSubscriptionState = &subscriptionState[*ProjectMsg, ProjectSubscriptionSpec]{
@@ -89,11 +92,24 @@ func NewSubscriptionSet(
 			ModelVersionCollectStartupMsgs,
 		}
 	}
+	if spec.Experiments != nil {
+		experimentSubscriptionState = &subscriptionState[*ExperimentMsg, ExperimentSubscriptionSpec]{
+			stream.NewSubscription(
+				streamer,
+				ps.Experiments,
+				newPermFilter(ctx, user, ExperimentMakePermissionFilter, &err),
+				newFilter(spec.Experiments, ExperimentMakeFilter, &err),
+				ExperimentMakeHydrator(),
+			),
+			ExperimentCollectStartupMsgs,
+		}
+	}
 
 	return SubscriptionSet{
 		Projects:      projectSubscriptionState,
 		Models:        modelSubscriptionState,
 		ModelVersions: modelVersionSubscriptionState,
+		Experiments:   experimentSubscriptionState,
 	}, err
 }
 

@@ -27,6 +27,7 @@ type PublisherSet struct {
 	Projects      *stream.Publisher[*ProjectMsg]
 	Models        *stream.Publisher[*ModelMsg]
 	ModelVersions *stream.Publisher[*ModelVersionMsg]
+	Experiments   *stream.Publisher[*ExperimentMsg]
 	bootemChan    chan struct{}
 	bootLock      sync.Mutex
 	readyCond     sync.Cond
@@ -41,6 +42,7 @@ func NewPublisherSet(dbAddress string) *PublisherSet {
 		Projects:      stream.NewPublisher[*ProjectMsg](),
 		Models:        stream.NewPublisher[*ModelMsg](),
 		ModelVersions: stream.NewPublisher[*ModelVersionMsg](),
+		Experiments:   stream.NewPublisher[*ExperimentMsg](),
 		bootemChan:    make(chan struct{}),
 		readyCond:     *sync.NewCond(&lock),
 	}
@@ -52,6 +54,7 @@ func (ps *PublisherSet) Start(ctx context.Context) error {
 		ps.Projects:      make(chan bool),
 		ps.Models:        make(chan bool),
 		ps.ModelVersions: make(chan bool),
+		ps.Experiments:   make(chan bool),
 	}
 
 	eg := errgroupx.WithContext(ctx)
@@ -93,6 +96,21 @@ func (ps *PublisherSet) Start(ctx context.Context) error {
 				modelVersionChannel,
 				ps.ModelVersions,
 				readyChannels[ps.ModelVersions],
+			)
+			if err != nil {
+				return fmt.Errorf("model versions publishLoop failed: %s", err.Error())
+			}
+			return nil
+		},
+	)
+	eg.Go(
+		func(c context.Context) error {
+			err := publishLoop(
+				c,
+				ps.DBAddress,
+				experimentChannel,
+				ps.Experiments,
+				readyChannels[ps.Experiments],
 			)
 			if err != nil {
 				return fmt.Errorf("model versions publishLoop failed: %s", err.Error())
