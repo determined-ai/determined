@@ -28,7 +28,7 @@ func newGatewayService(gatewayInterface gateway.GatewayInterface, gatewayName st
 	// TODO: make port range configurable by user. We currently assume we own the controller and
 	// the service.
 	// DOCS: note this limit on number of active proxied tasks.
-	portRange, err := port.NewRange(1024, 65535, make([]int, 0))
+	portRange, err := port.NewRange(2024, 65535, make([]int, 0))
 	if err != nil {
 		return nil, fmt.Errorf("creating port range: %w", err)
 	}

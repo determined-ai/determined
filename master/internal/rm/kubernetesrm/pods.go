@@ -654,8 +654,15 @@ func (p *pods) reattachPod(
 	}
 
 	var started *sproto.ResourcesStarted
+	gwPorts := make([]int, 0)
+	if p.exposeProxyConfig != nil {
+		for _, g := range newPodHandler.gatewayProxyResources {
+			gwPorts = append(gwPorts, int(g.gatewayListener.Port))
+		}
+	}
 	if newPodHandler.container.State == cproto.Running {
-		started = ptrs.Ptr(getResourcesStartedForPod(pod, newPodHandler.ports, p.exposeProxyConfig))
+		started = ptrs.Ptr(getResourcesStartedForPod(pod, newPodHandler.ports,
+			p.exposeProxyConfig, gwPorts))
 	}
 
 	newPodHandler.pod = pod

@@ -64,10 +64,12 @@ type (
 
 	// ProxyPortConfig configures a proxy the allocation should start.
 	ProxyPortConfig struct {
-		ServiceID       string `json:"service_id"`
-		Port            int    `json:"port"`
-		ProxyTCP        bool   `json:"proxy_tcp"`
-		Unauthenticated bool   `json:"unauthenticated"`
+		ServiceID string `json:"service_id"`
+		// Are we doing any translation or collision avoidance here?!
+		Port            int  `json:"port"`
+		DestinationPort int  `json:"destination_port"`
+		ProxyTCP        bool `json:"proxy_tcp"`
+		Unauthenticated bool `json:"unauthenticated"`
 	}
 
 	// ResourcesReleased notifies resource providers to return resources from a task.

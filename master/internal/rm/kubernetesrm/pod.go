@@ -237,14 +237,13 @@ func (p *pod) podStatusUpdate(updatedPod *k8sV1.Pod) (cproto.State, error) {
 	case cproto.Running:
 		p.syslog.Infof("transitioning pod state from %s to %s", p.container.State, containerState)
 		p.container = p.container.Transition(cproto.Running)
-		ports := p.ports
+		gwPorts := make([]int, 0)
 		if p.exposeProxyConfig != nil {
-			ports = []int{}
 			for _, g := range p.gatewayProxyResources {
-				ports = append(ports, int(g.gatewayListener.Port))
+				gwPorts = append(gwPorts, int(g.gatewayListener.Port))
 			}
 		}
-		p.informTaskResourcesStarted(getResourcesStartedForPod(p.pod, ports, p.exposeProxyConfig))
+		p.informTaskResourcesStarted(getResourcesStartedForPod(p.pod, p.ports, p.exposeProxyConfig, gwPorts))
 		err := p.startPodLogStreamer()
 		if err != nil {
 			return p.container.State, err
@@ -595,6 +594,7 @@ func getExitCodeAndMessage(pod *k8sV1.Pod, containerNames set.Set[string]) (int,
 
 func getResourcesStartedForPod(
 	pod *k8sV1.Pod, ports []int, exposeProxyConfig *config.ExposeProxiesExternallyConfig,
+	listenerPorts []int,
 ) sproto.ResourcesStarted {
 	addresses := []cproto.Address{}
 
@@ -605,11 +605,16 @@ func getResourcesStartedForPod(
 	if exposeProxyConfig != nil {
 		baseAddress.ContainerIP = exposeProxyConfig.GatewayAddress
 		baseAddress.HostIP = exposeProxyConfig.GatewayAddress
+		if len(ports) != len(listenerPorts) {
+			// TODO: exact mapping?
+			fmt.Println("HHH ports", ports, "listenerPorts", listenerPorts)
+			panic("ports and listenerPorts must have the same length")
+		}
 	}
-	for _, port := range ports {
+	for i, port := range ports {
 		address := baseAddress
 		address.ContainerPort = port
-		address.HostPort = port
+		address.HostPort = listenerPorts[i]
 		fmt.Println("HHH address", address, "port", port)
 		addresses = append(addresses, address)
 	}

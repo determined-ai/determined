@@ -12,7 +12,8 @@ searcher:
 max_restarts: 0
 
 environment:
-  proxy_ports:
+  proxy_ports: # need to map these and user needs to find them somehow.
+    # or external proxy ports should stay the same
     - proxy_port: 6379
       proxy_tcp: true
     - proxy_port: 8265
