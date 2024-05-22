@@ -1,7 +1,7 @@
 import { APIRequest, APIRequestContext, Browser, BrowserContext, Page } from '@playwright/test';
 
 export class ApiAuthFixture {
-  apiContext: APIRequestContext | undefined; // DNJ TODO - how to not have undefined
+  apiContext: APIRequestContext | undefined; // we can't get this until login, so may be undefined
   readonly request: APIRequest;
   readonly browser: Browser;
   _page: Page | undefined;
