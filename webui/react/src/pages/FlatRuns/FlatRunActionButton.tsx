@@ -81,8 +81,6 @@ const FlatRunActionButton = ({
   const BatchActionConfirmModal = useModal(BatchActionConfirmModalComponent);
 
   const sendBatchActions = useCallback(
-    // TODO: remove this
-    // eslint-disable-next-line require-await
     async (action: BatchAction): Promise<BulkActionResult | void> => {
       const validRunIds = selectedRuns
         // .filter((exp) => canActionExperiment(action, exp)) TODO: Runs permission
@@ -111,7 +109,7 @@ const FlatRunActionButton = ({
         case ExperimentAction.RetainLogs:
         //   return ExperimentRetainLogsModal.open();
         case ExperimentAction.Activate:
-        // return await archiveRuns(params);
+        // return await activate(params);
         case ExperimentAction.Archive:
           return await archiveRuns(params);
         case ExperimentAction.Cancel:
