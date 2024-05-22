@@ -149,17 +149,27 @@ export class DataGrid<
     return incrementScroll;
   }
 
-  async scrollColumnIntoViewByName(s: string): Promise<boolean> {
-    return await this.scrollColumnIntoView(this.headRow.getColumnDef(s));
+  /**
+   * Scrolls the column into view
+   * @param {string} s - The column name
+   */
+  async scrollColumnIntoViewByName(s: string): Promise<void> {
+    try {
+      return await this.scrollColumnIntoView(this.headRow.getColumnDef(s));
+    } catch (e) {
+      if ((e as Error).message.indexOf('Column with index') === 0) {
+        throw new Error(`Column with name ${s} not found.`);
+      }
+    }
   }
 
   /**
    * Scrolls the column into view
    * @param {number} index - The column index
    */
-  async scrollColumnIntoView(index: number): Promise<boolean> {
+  async scrollColumnIntoView(index: number): Promise<void> {
     if (index === 0) {
-      return true;
+      return;
     }
     const incrementScroll = await this.incrementScrollGenerator();
 
@@ -180,10 +190,10 @@ export class DataGrid<
     };
     do {
       if (await checkColumnInView()) {
-        return true;
+        return;
       }
     } while (await incrementScroll());
-    return false;
+    throw new Error(`Column with index ${index} not found.`);
   }
 
   /**
@@ -207,7 +217,7 @@ export class DataGrid<
       rows.map(async (row) => {
         return (
           (await row.getAttribute(indexAttribute)) ||
-          Promise.reject(new Error(`all rows should have the attribute ${indexAttribute}`))
+          Promise.reject(new Error(`All rows should have the attribute ${indexAttribute}`))
         );
       }),
     );
@@ -336,7 +346,7 @@ export class Row<HeadRowType extends HeadRow<Row<HeadRowType>>> extends NamedCom
    * Returns a cell from an index. Start counting at 0.
    */
   async getCellByColIndex(n: number): Promise<BaseComponent> {
-    expect(await this.parentTable.scrollColumnIntoView(n)).toBe(true);
+    await this.parentTable.scrollColumnIntoView(n);
     return new BaseComponent({
       parent: this,
       selector: `[${DataGrid.columnIndexAttribute}="${n + 1}"]`,
