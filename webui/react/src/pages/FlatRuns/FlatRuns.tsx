@@ -53,6 +53,7 @@ import {
   rowHeightMap,
   settingsConfigGlobal,
 } from 'components/OptionsMenu.settings';
+import { BatchAction } from 'components/TableActionBar';
 import useUI from 'components/ThemeProvider';
 import { useAsync } from 'hooks/useAsync';
 import { useGlasbey } from 'hooks/useGlasbey';
@@ -636,6 +637,15 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
     [rowRangeToIds, settings.selection, updateSettings],
   );
 
+  const onActionSuccess = useCallback(
+    // TODO: update this function
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    (_action: BatchAction, _successfulIds: number[]) => {
+      handleSelectionChange('remove-all');
+    },
+    [handleSelectionChange],
+  );
+
   const handleContextMenuComplete: ContextMenuCompleteHandlerProps<ExperimentAction, FlatRun> =
     useCallback(() => {}, []);
 
@@ -928,6 +938,7 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
               isMobile={isMobile}
               project={project}
               selectedRuns={selectedRuns}
+              onActionSuccess={onActionSuccess}
             />
           </Row>
         </Column>
