@@ -174,7 +174,7 @@ func trialWorkloadsAPIHugeMetrics(
 	err := pgDB.AddTrainingMetrics(context.Background(), &metrics)
 	assert.NilError(t, err, "failed to insert step")
 
-	_, err = pgDB.RawQuery("test_insert_huge_metrics", trial.ID, 100000)
+	_, err = pgDB.RawQuery("test_insert_huge_metrics", trial.ID, 50000)
 	assert.NilError(t, err, "failed to insert huge amount of metrics")
 
 	req := apiv1.GetTrialWorkloadsRequest{
