@@ -16,8 +16,6 @@ import (
 	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/sirupsen/logrus"
 
-	"github.com/pkg/errors"
-
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/rm/rmevents"
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -363,14 +361,13 @@ func (j *job) podUpdatedCallback(updatedPod k8sV1.Pod) error {
 		j.syslog.Infof("pod %s is %s", podName, cproto.Terminated)
 		exit, err := getExitCodeAndMessage(&updatedPod, j.containerNames)
 		if err != nil {
+			if updatedPod.ObjectMeta.DeletionTimestamp == nil {
+				return err
+			}
 			// When a pod is deleted, it is possible that it will exit before the
 			// determined containers generates an exit code. To check if this is
 			// the case we check if a deletion timestamp has been set.
-			if updatedPod.ObjectMeta.DeletionTimestamp != nil {
-				exit = &exitReason{msg: "unable to get exit code or exit message from deleted pod"}
-			} else {
-				return err
-			}
+			exit = &exitReason{msg: "unable to get exit code or exit message from deleted pod"}
 		}
 		if exit.code > 0 {
 			j.syslog.
@@ -532,8 +529,8 @@ func (j *job) receiveResourceCreationCancelled() {
 	j.resourcesDeleted.Store(true)
 }
 
-func (j *job) receiveResourceDeletionFailed(err resourceDeletionFailed) {
-	j.syslog.WithError(err.err).Error("pod handler notified that resource deletion failed")
+func (j *job) receiveResourceDeletionFailed(msg resourceDeletionFailed) {
+	j.syslog.WithError(msg.err).Error("pod handler notified that resource deletion failed")
 }
 
 func (j *job) informTaskResourcesState() {
@@ -670,15 +667,13 @@ func (j *job) getPodState(pod k8sV1.Pod) (cproto.State, error) {
 		return cproto.Terminated, nil
 
 	default:
-		return "", errors.Errorf(
-			"unexpected pod status %s for pod %s", pod.Status.Phase, pod.Name)
+		return "", fmt.Errorf("unexpected pod status %s for pod %s", pod.Status.Phase, pod.Name)
 	}
 }
 
 func getExitCodeAndMessage(pod *k8sV1.Pod, containerNames set.Set[string]) (*exitReason, error) {
 	if len(pod.Status.InitContainerStatuses) == 0 {
-		return nil, errors.Errorf(
-			"unexpected number of init containers when processing exit code for pod %s", pod.Name)
+		return nil, fmt.Errorf("unexpected number of init containers when processing exit code for pod %s", pod.Name)
 	}
 
 	for _, initContainerStatus := range pod.Status.InitContainerStatuses {
@@ -699,8 +694,7 @@ func getExitCodeAndMessage(pod *k8sV1.Pod, containerNames set.Set[string]) (*exi
 	}
 
 	if len(pod.Status.ContainerStatuses) < len(containerNames) {
-		return nil, errors.Errorf(
-			"unexpected number of containers when processing exit code for pod %s", pod.Name)
+		return nil, fmt.Errorf("unexpected number of containers when processing exit code for pod %s", pod.Name)
 	}
 
 	containerStatuses, err := getDeterminedContainersStatus(
@@ -719,7 +713,7 @@ func getExitCodeAndMessage(pod *k8sV1.Pod, containerNames set.Set[string]) (*exi
 		}
 	}
 
-	return nil, errors.Errorf("unable to get exit code from pod %s", pod.Name)
+	return nil, fmt.Errorf("unable to get exit code from pod %s", pod.Name)
 }
 
 func getDeterminedContainersStatus(
@@ -739,7 +733,7 @@ func getDeterminedContainersStatus(
 		for _, containerStatus := range containerStatuses {
 			containerNamesFound = append(containerNamesFound, containerStatus.Name)
 		}
-		return nil, errors.Errorf("found container statuses only for: %v", containerNamesFound)
+		return nil, fmt.Errorf("found container statuses only for: %v", containerNamesFound)
 	}
 
 	return containerStatuses, nil

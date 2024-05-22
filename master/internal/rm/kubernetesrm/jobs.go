@@ -16,7 +16,6 @@ import (
 	typedBatchV1 "k8s.io/client-go/kubernetes/typed/batch/v1"
 	"k8s.io/client-go/tools/cache"
 
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/exp/maps"
 	k8sV1 "k8s.io/api/core/v1"
@@ -443,12 +442,12 @@ func readClientConfig(kubeconfigPath string) (*rest.Config, error) {
 func (j *jobsService) startClientSet() error {
 	config, err := readClientConfig(j.kubeconfigPath)
 	if err != nil {
-		return errors.Wrap(err, "error building kubernetes config")
+		return fmt.Errorf("error building kubernetes config: %w", err)
 	}
 
 	j.clientSet, err = k8sClient.NewForConfig(config)
 	if err != nil {
-		return errors.Wrap(err, "failed to initialize kubernetes clientSet")
+		return fmt.Errorf("failed to initialize kubernetes clientSet: %w", err)
 	}
 
 	for _, ns := range append(maps.Keys(j.namespaceToPoolName), j.namespace) {
@@ -470,7 +469,7 @@ func (j *jobsService) getMasterIPAndPort() error {
 	masterService, err := j.clientSet.CoreV1().Services(j.namespace).Get(
 		context.TODO(), j.masterServiceName, metaV1.GetOptions{})
 	if err != nil {
-		return errors.Wrap(err, "failed to get master service")
+		return fmt.Errorf("failed to get master service: %w", err)
 	}
 
 	j.detMasterIP = masterService.Spec.ClusterIP
@@ -483,7 +482,7 @@ func (j *jobsService) getSystemResourceRequests() error {
 	systemPods, err := j.podInterfaces[j.namespace].List(
 		context.TODO(), metaV1.ListOptions{LabelSelector: determinedSystemLabel})
 	if err != nil {
-		return errors.Wrap(err, "failed to get system pods")
+		return fmt.Errorf("failed to get system pods: %w", err)
 	}
 
 	for _, systemPod := range systemPods.Items {
@@ -502,12 +501,12 @@ func (j *jobsService) reattachJob(msg reattachJobRequest) (reattachJobResponse, 
 
 	jobs, err := j.listJobsInAllNamespaces(context.TODO(), listOptions)
 	if err != nil {
-		return reattachJobResponse{}, errors.Wrap(err, "error listing pods checking if they can be restored")
+		return reattachJobResponse{}, fmt.Errorf("error listing pods checking if they can be restored: %w", err)
 	}
 
 	configMaps, err := j.listConfigMapsInAllNamespaces(context.TODO(), listOptions)
 	if err != nil {
-		return reattachJobResponse{}, errors.Wrap(err, "error listing config maps checking if they can be restored")
+		return reattachJobResponse{}, fmt.Errorf("error listing config maps checking if they can be restored: %w", err)
 	}
 	existingConfigMaps := make(set.Set[string])
 	for _, cm := range configMaps.Items {
@@ -540,7 +539,7 @@ func (j *jobsService) reattachJob(msg reattachJobRequest) (reattachJobResponse, 
 	)
 	if err != nil {
 		j.deleteKubernetesResources(jobs, configMaps)
-		return reattachJobResponse{}, errors.Wrapf(err, "error restoring pod with allocation ID %s", msg.allocationID)
+		return reattachJobResponse{}, fmt.Errorf("error restoring pod with allocation ID %s: %w", msg.allocationID, err)
 	}
 	return resp, nil
 }
@@ -614,7 +613,7 @@ func (j *jobsService) refreshJobState(allocationID model.AllocationID) error {
 		LabelSelector: fmt.Sprintf("%s=%s", determinedLabel, allocationID),
 	})
 	if err != nil {
-		return errors.Wrap(err, "error listing pods checking if they can be restored")
+		return fmt.Errorf("error listing pods checking if they can be restored: %w", err)
 	}
 
 	for _, job := range jobs.Items {
@@ -636,7 +635,7 @@ func (j *jobsService) refreshPodStates(allocationID model.AllocationID) error {
 		LabelSelector: fmt.Sprintf("%s=%s", determinedLabel, allocationID),
 	})
 	if err != nil {
-		return errors.Wrap(err, "error listing pods checking if they can be restored")
+		return fmt.Errorf("error listing pods checking if they can be restored: %w", err)
 	}
 
 	for _, pod := range pods.Items {
@@ -666,7 +665,7 @@ func (j *jobsService) deleteDoomedKubernetesResources() error {
 	if err := db.Bun().NewSelect().Model(&openAllocations).
 		Where("end_time IS NULL").
 		Scan(context.TODO()); err != nil {
-		return errors.Wrap(err, "error querying the database for open allocations")
+		return fmt.Errorf("error querying the database for open allocations: %w", err)
 	}
 	openAllocationIDs := make(set.Set[model.AllocationID])
 	for _, alloc := range openAllocations {
@@ -676,7 +675,7 @@ func (j *jobsService) deleteDoomedKubernetesResources() error {
 	listOptions := metaV1.ListOptions{LabelSelector: determinedLabel}
 	jobs, err := j.listJobsInAllNamespaces(context.TODO(), listOptions)
 	if err != nil {
-		return errors.Wrap(err, "error listing existing pods")
+		return fmt.Errorf("error listing existing pods: %w", err)
 	}
 
 	toKillJobs := &batchV1.JobList{}
@@ -712,7 +711,7 @@ func (j *jobsService) deleteDoomedKubernetesResources() error {
 
 	configMaps, err := j.listConfigMapsInAllNamespaces(context.TODO(), listOptions)
 	if err != nil {
-		return errors.Wrap(err, "error listing existing config maps")
+		return fmt.Errorf("error listing existing config maps: %w", err)
 	}
 	toKillConfigMaps := &k8sV1.ConfigMapList{}
 	for _, cm := range configMaps.Items {
@@ -850,8 +849,7 @@ func (j *jobsService) startJob(msg StartJob) error {
 	)
 
 	if _, alreadyExists := j.jobNameToJobHandler[newJobHandler.jobName]; alreadyExists {
-		return errors.Errorf(
-			"attempting to register same job name: %s multiple times", newJobHandler.jobName)
+		return fmt.Errorf("attempting to register same job name: %s multiple times", newJobHandler.jobName)
 	}
 
 	err := newJobHandler.start()
@@ -1298,7 +1296,7 @@ func (j *jobsService) cleanUpJobHandler(jobHandler *job) error {
 
 	jobInfo, ok := j.jobHandlerToMetadata[jobHandler]
 	if !ok {
-		return errors.Errorf("unknown job handler being deleted %s", jobHandler.jobName)
+		return fmt.Errorf("unknown job handler being deleted %s", jobHandler.jobName)
 	}
 
 	j.syslog.
@@ -1748,7 +1746,7 @@ func (j *jobsService) listJobsInAllNamespaces(
 	for n, i := range j.jobInterfaces {
 		pods, err := i.List(ctx, opts)
 		if err != nil {
-			return nil, errors.Wrapf(err, "error listing pods for namespace %s", n)
+			return nil, fmt.Errorf("error listing pods for namespace %s: %w", n, err)
 		}
 
 		res.Items = append(res.Items, pods.Items...)
@@ -1764,7 +1762,7 @@ func (j *jobsService) listPodsInAllNamespaces(
 	for n, i := range j.podInterfaces {
 		pods, err := i.List(ctx, opts)
 		if err != nil {
-			return nil, errors.Wrapf(err, "error listing pods for namespace %s", n)
+			return nil, fmt.Errorf("error listing pods for namespace %s: %w", n, err)
 		}
 
 		res.Items = append(res.Items, pods.Items...)
@@ -1780,9 +1778,8 @@ func (j *jobsService) listConfigMapsInAllNamespaces(
 	for n, i := range j.configMapInterfaces {
 		cms, err := i.List(ctx, opts)
 		if err != nil {
-			return nil, errors.Wrapf(err, "error listing config maps for namespace %s", n)
+			return nil, fmt.Errorf("error listing config maps for namespace %s: %w", n, err)
 		}
-
 		res.Items = append(res.Items, cms.Items...)
 	}
 
