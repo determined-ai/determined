@@ -169,7 +169,7 @@ func TestGetAgents(t *testing.T) {
 
 	for _, test := range agentsTests {
 		t.Run(test.Name, func(t *testing.T) {
-			agentsResp := test.jobsService.handleGetAgentsRequest()
+			agentsResp := test.jobsService.getAgents()
 			require.Equal(t, len(test.wantedAgentIDs), len(agentsResp.Agents))
 			for _, agent := range agentsResp.Agents {
 				_, ok := test.wantedAgentIDs[agent.Id]
@@ -290,7 +290,7 @@ func TestGetAgent(t *testing.T) {
 
 	for _, test := range agentTests {
 		t.Run(test.Name, func(t *testing.T) {
-			agentResp := test.jobsService.handleGetAgentRequest(test.wantedAgentID)
+			agentResp := test.jobsService.getAgent(test.wantedAgentID)
 			if agentResp == nil {
 				require.True(t, !test.agentExists)
 				return
@@ -403,7 +403,7 @@ func TestGetSlots(t *testing.T) {
 	}
 	for _, test := range slotsTests {
 		t.Run(test.Name, func(t *testing.T) {
-			slotsResp := test.jobsService.handleGetSlotsRequest(test.agentID)
+			slotsResp := test.jobsService.getSlots(test.agentID)
 			if slotsResp == nil {
 				require.True(t, !test.agentExists)
 				return
@@ -517,7 +517,7 @@ func TestGetSlot(t *testing.T) {
 			wantedSlotInt, err := strconv.Atoi(test.wantedSlotNum)
 			require.NoError(t, err)
 
-			slotResp := test.jobsService.handleGetSlotRequest(test.agentID, test.wantedSlotNum)
+			slotResp := test.jobsService.getSlot(test.agentID, test.wantedSlotNum)
 			if slotResp == nil {
 				require.True(t, wantedSlotInt < 0 || wantedSlotInt >= int(nodeNumSlots))
 				return
@@ -738,26 +738,26 @@ func TestROCmJobsService(t *testing.T) {
 
 func testROCMGetAgents() {
 	ps := createMockJobsService(createCompNodeMap(), device.ROCM, false)
-	ps.handleGetAgentsRequest()
+	ps.getAgents()
 }
 
 func testROCMGetAgent() {
 	nodes := createCompNodeMap()
 	ps := createMockJobsService(nodes, device.ROCM, false)
-	ps.handleGetAgentRequest(compNode1Name)
+	ps.getAgent(compNode1Name)
 }
 
 func testROCMGetSlots() {
 	nodes := createCompNodeMap()
 	ps := createMockJobsService(nodes, device.ROCM, false)
-	ps.handleGetSlotsRequest(compNode1Name)
+	ps.getSlots(compNode1Name)
 }
 
 func testROCMGetSlot() {
 	nodes := createCompNodeMap()
 	ps := createMockJobsService(nodes, device.ROCM, false)
 	for i := 0; i < int(nodeNumSlots); i++ {
-		ps.handleGetSlotRequest(compNode1Name, strconv.Itoa(i))
+		ps.getSlot(compNode1Name, strconv.Itoa(i))
 	}
 }
 

@@ -31,11 +31,11 @@ func createPod(
 	resourceHandler *requestQueue,
 	task tasks.TaskSpec,
 ) *job {
-	msg := StartJob{
-		Req:          &sproto.AllocateRequest{},
-		AllocationID: allocationID,
-		Spec:         task,
-		Slots:        1,
+	msg := startJob{
+		req:          &sproto.AllocateRequest{},
+		allocationID: allocationID,
+		spec:         task,
+		slots:        1,
 	}
 	clusterID := "test"
 	clientSet := k8sClient.Clientset{}
@@ -49,7 +49,7 @@ func createPod(
 	slotResourceRequests := config.PodSlotResourceRequests{}
 
 	newJobHandler := newJob(
-		configureUniqueName(msg.Spec),
+		configureUniqueName(msg.spec),
 		msg, clusterID, &clientSet, namespace, masterIP, masterPort,
 		model.TLSClientConfig{},
 		podInterface, configMapInterface, resourceRequestQueue,

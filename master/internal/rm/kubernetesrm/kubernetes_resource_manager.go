@@ -95,7 +95,7 @@ func New(
 		poolNamespaces[k.poolsConfig[i].KubernetesNamespace] = k.poolsConfig[i].PoolName
 	}
 
-	k.jobsService = newJobsService(
+	k.jobsService, err = newJobsService(
 		k.config.Namespace,
 		poolNamespaces,
 		k.config.MasterServiceName,
@@ -110,6 +110,9 @@ func New(
 		k.config.KubeconfigPath,
 		k.jobSchedulingStateCallback,
 	)
+	if err != nil {
+		return nil, err
+	}
 
 	for _, poolConfig := range k.poolsConfig {
 		maxSlotsPerPod := 0
@@ -512,6 +515,14 @@ func (k ResourceManager) TaskContainerDefaults(
 	}
 
 	return result, nil
+}
+
+type jobSchedulingStateCallbackFn func(jobSchedulingStateChanged)
+
+type jobSchedulingStateChanged struct {
+	AllocationID model.AllocationID
+	NumPods      int
+	State        sproto.SchedulingState
 }
 
 func (k *ResourceManager) jobSchedulingStateCallback(msg jobSchedulingStateChanged) {

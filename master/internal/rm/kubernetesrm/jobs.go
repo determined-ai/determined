@@ -3,6 +3,7 @@ package kubernetesrm
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -11,22 +12,21 @@ import (
 	"sync"
 	"time"
 
-	batchV1 "k8s.io/api/batch/v1"
-	"k8s.io/client-go/informers"
-	typedBatchV1 "k8s.io/client-go/kubernetes/typed/batch/v1"
-	"k8s.io/client-go/tools/cache"
-
 	"github.com/sirupsen/logrus"
 	"golang.org/x/exp/maps"
+	batchV1 "k8s.io/api/batch/v1"
 	k8sV1 "k8s.io/api/core/v1"
 	k8error "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/watch"
+	"k8s.io/client-go/informers"
 	k8sClient "k8s.io/client-go/kubernetes"
+	typedBatchV1 "k8s.io/client-go/kubernetes/typed/batch/v1"
 	typedV1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	"k8s.io/client-go/rest"
+	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
 
@@ -47,26 +47,29 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 )
 
-const resourceTypeNvidia = "nvidia.com/gpu"
+const (
+	determinedLabel           = "determined"
+	determinedPreemptionLabel = "determined-preemption"
+	determinedSystemLabel     = "determined-system"
 
-const kubernetesJobNameLabel = "batch.kubernetes.io/job-name"
+	kubernetesJobNameLabel = "batch.kubernetes.io/job-name"
+)
+
+const resourceTypeNvidia = "nvidia.com/gpu"
 
 const (
 	getAgentsCacheDuration = 15 * time.Second
 	summarizeCacheDuration = 5 * time.Second
 )
 
+type summarizeResult struct {
+	summary map[string]model.AgentSummary
+	err     error
+}
+
 type jobMetadata struct {
 	jobName      string
 	allocationID model.AllocationID
-}
-
-type jobSchedulingStateCallbackFn func(jobSchedulingStateChanged)
-
-type jobSchedulingStateChanged struct {
-	AllocationID model.AllocationID
-	NumPods      int
-	State        sproto.SchedulingState
 }
 
 // High lever overview of the actors within the kubernetes package:
@@ -123,34 +126,6 @@ type jobsService struct {
 	getAgentsCacheTime time.Time
 }
 
-type summarizeResult struct {
-	summary map[string]model.AgentSummary
-	err     error
-}
-
-// PodsInfo contains information for pods.
-type PodsInfo struct {
-	NumAgents      int
-	SlotsAvailable int
-}
-
-// SummarizeResources summerize pods resource.
-type SummarizeResources struct {
-	PoolName string
-}
-
-type reattachJobRequest struct {
-	req          *sproto.AllocateRequest
-	numPods      int
-	allocationID model.AllocationID
-	slots        int
-	logContext   logger.Context
-}
-
-type reattachJobResponse struct {
-	started *sproto.ResourcesStarted
-}
-
 // newJobsService creates a new pod service for launching, querying and interacting with k8s pods.
 func newJobsService(
 	namespace string,
@@ -166,7 +141,7 @@ func newJobsService(
 	detMasterPort int32,
 	kubeconfigPath string,
 	jobSchedulingStateCallback jobSchedulingStateCallbackFn,
-) *jobsService {
+) (*jobsService, error) {
 	p := &jobsService{
 		wg: waitgroupx.WithContext(context.Background()),
 
@@ -198,19 +173,19 @@ func newJobsService(
 	}
 
 	if err := p.startClientSet(); err != nil {
-		panic(err)
+		return nil, err
 	}
 	if err := p.getMasterIPAndPort(); err != nil {
-		panic(err)
+		return nil, err
 	}
 	if err := p.getSystemResourceRequests(); err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	p.startResourceRequestQueue()
 
 	if err := p.deleteDoomedKubernetesResources(); err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	err := p.startNodeInformer()
@@ -220,17 +195,17 @@ func newJobsService(
 			"some features will be degraded: %s", err,
 		)
 	case err != nil:
-		panic(err)
+		return nil, err
 	}
 
 	err = p.startEventListeners()
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	err = p.startPreemptionListeners()
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	var cacheSyncs []cache.InformerSynced
@@ -286,123 +261,30 @@ func newJobsService(
 		factory.Start(nil)
 	}
 	if !cache.WaitForCacheSync(nil, cacheSyncs...) {
-		panic("failed to wait for cache sync for jobs informer")
+		return nil, errors.New("failed to wait for cache sync for jobs informer")
 	}
-
-	return p
+	return p, nil
 }
 
-// StartJob notifies the pods actor to start a pod with the task spec.
-type StartJob struct {
-	Req          *sproto.AllocateRequest
-	AllocationID model.AllocationID
-	Spec         tasks.TaskSpec
-	Slots        int
-	Rank         int
-	ResourcePool string
-	Namespace    string
-
-	NumPods int
-
-	LogContext logger.Context
-}
-
-func (j *jobsService) StartJob(msg StartJob) error {
-	j.mu.Lock()
-	defer j.mu.Unlock()
-	return j.startJob(msg)
-}
-
-func (j *jobsService) ChangePriority(id model.AllocationID) {
-	j.mu.Lock()
-	defer j.mu.Unlock()
-	j.receivePriorityChange(id)
-}
-
-func (j *jobsService) ChangePosition(id model.AllocationID) {
-	j.mu.Lock()
-	defer j.mu.Unlock()
-	j.receivePositionChange(id)
-}
-
-func (j *jobsService) KillJob(id model.AllocationID) {
-	j.mu.Lock()
-	defer j.mu.Unlock()
-	j.receiveKill(id)
-}
-
-func (j *jobsService) SummarizeResources(msg SummarizeResources) (*PodsInfo, error) {
-	j.mu.Lock()
-	defer j.mu.Unlock()
-	return j.receiveResourceSummarize(msg)
-}
-
-func (j *jobsService) ReattachJob(msg reattachJobRequest) (reattachJobResponse, error) {
-	j.mu.Lock()
-	defer j.mu.Unlock()
-	return j.reattachJob(msg)
-}
-
-func (j *jobsService) RefreshStates(allocationID model.AllocationID) error {
-	j.mu.Lock()
-	defer j.mu.Unlock()
-	err := j.refreshJobState(allocationID)
+func (j *jobsService) startClientSet() error {
+	config, err := readClientConfig(j.kubeconfigPath)
 	if err != nil {
-		return err
-	}
-	return j.refreshPodStates(allocationID)
-}
-
-func (j *jobsService) GetSlots(msg *apiv1.GetSlotsRequest) *apiv1.GetSlotsResponse {
-	j.mu.Lock()
-	defer j.mu.Unlock()
-	return j.handleGetSlotsRequest(msg.AgentId)
-}
-
-func (j *jobsService) GetSlot(msg *apiv1.GetSlotRequest) *apiv1.GetSlotResponse {
-	j.mu.Lock()
-	defer j.mu.Unlock()
-	return j.handleGetSlotRequest(msg.AgentId, msg.SlotId)
-}
-
-func (j *jobsService) HealthStatus() model.HealthStatus {
-	j.mu.Lock()
-	defer j.mu.Unlock()
-	for _, podInterface := range j.podInterfaces {
-		_, err := podInterface.List(context.TODO(), metaV1.ListOptions{Limit: 1})
-		if err != nil {
-			j.syslog.WithError(err).Error("kubernetes resource manager marked as unhealthy")
-			return model.Unhealthy
-		}
-		return model.Healthy
+		return fmt.Errorf("error building kubernetes config: %w", err)
 	}
 
-	logrus.Error("expected jobInterface to be non empty")
-	return model.Unhealthy
-}
+	j.clientSet, err = k8sClient.NewForConfig(config)
+	if err != nil {
+		return fmt.Errorf("failed to initialize kubernetes clientSet: %w", err)
+	}
 
-func (j *jobsService) GetAgents() *apiv1.GetAgentsResponse {
-	j.mu.Lock()
-	defer j.mu.Unlock()
-	return j.handleGetAgentsRequest()
-}
+	for _, ns := range append(maps.Keys(j.namespaceToPoolName), j.namespace) {
+		j.podInterfaces[ns] = j.clientSet.CoreV1().Pods(ns)
+		j.configMapInterfaces[ns] = j.clientSet.CoreV1().ConfigMaps(ns)
+		j.jobInterfaces[ns] = j.clientSet.BatchV1().Jobs(ns)
+	}
 
-func (j *jobsService) GetAgent(msg *apiv1.GetAgentRequest) *apiv1.GetAgentResponse {
-	j.mu.Lock()
-	defer j.mu.Unlock()
-	return j.handleGetAgentRequest(msg.AgentId)
-}
-
-func (j *jobsService) EnableAgent(msg *apiv1.EnableAgentRequest) (*apiv1.EnableAgentResponse, error) {
-	j.mu.Lock()
-	defer j.mu.Unlock()
-	return j.enableNode(msg.AgentId)
-}
-
-func (j *jobsService) DisableAgent(msg *apiv1.DisableAgentRequest) (*apiv1.DisableAgentResponse, error) {
-	j.mu.Lock()
-	defer j.mu.Unlock()
-	return j.disableNode(msg.AgentId, msg.Drain)
+	j.syslog.Infof("kubernetes clientSet initialized")
+	return nil
 }
 
 func readClientConfig(kubeconfigPath string) (*rest.Config, error) {
@@ -434,27 +316,6 @@ func readClientConfig(kubeconfigPath string) (*rest.Config, error) {
 		return nil, fmt.Errorf("building rest.Config from kubeconfig at %s: %w", kubeconfigPath, err)
 	}
 	return cl, nil
-}
-
-func (j *jobsService) startClientSet() error {
-	config, err := readClientConfig(j.kubeconfigPath)
-	if err != nil {
-		return fmt.Errorf("error building kubernetes config: %w", err)
-	}
-
-	j.clientSet, err = k8sClient.NewForConfig(config)
-	if err != nil {
-		return fmt.Errorf("failed to initialize kubernetes clientSet: %w", err)
-	}
-
-	for _, ns := range append(maps.Keys(j.namespaceToPoolName), j.namespace) {
-		j.podInterfaces[ns] = j.clientSet.CoreV1().Pods(ns)
-		j.configMapInterfaces[ns] = j.clientSet.CoreV1().ConfigMaps(ns)
-		j.jobInterfaces[ns] = j.clientSet.BatchV1().Jobs(ns)
-	}
-
-	j.syslog.Infof("kubernetes clientSet initialized")
-	return nil
 }
 
 func (j *jobsService) getMasterIPAndPort() error {
@@ -489,175 +350,6 @@ func (j *jobsService) getSystemResourceRequests() error {
 		}
 	}
 	return nil
-}
-
-func (j *jobsService) reattachJob(msg reattachJobRequest) (reattachJobResponse, error) {
-	listOptions := metaV1.ListOptions{
-		LabelSelector: fmt.Sprintf("%s=%s", determinedLabel, msg.allocationID),
-	}
-
-	jobs, err := j.listJobsInAllNamespaces(context.TODO(), listOptions)
-	if err != nil {
-		return reattachJobResponse{}, fmt.Errorf("error listing pods checking if they can be restored: %w", err)
-	}
-
-	configMaps, err := j.listConfigMapsInAllNamespaces(context.TODO(), listOptions)
-	if err != nil {
-		return reattachJobResponse{}, fmt.Errorf("error listing config maps checking if they can be restored: %w", err)
-	}
-	existingConfigMaps := make(set.Set[string])
-	for _, cm := range configMaps.Items {
-		if _, ok := j.namespaceToPoolName[cm.Namespace]; !ok {
-			continue
-		}
-		existingConfigMaps.Insert(cm.Name)
-	}
-
-	if len(jobs.Items) == 0 {
-		return reattachJobResponse{}, fmt.Errorf("did not find job for allocation %s", msg.allocationID)
-	} else if len(jobs.Items) > 1 {
-		return reattachJobResponse{}, fmt.Errorf("found multiple allocation jobs for allocation %s", msg.allocationID)
-	}
-	job := jobs.Items[0]
-
-	resourcePool, ok := job.Labels[resourcePoolLabel]
-	if !ok {
-		return reattachJobResponse{}, fmt.Errorf("could not recover resource pool for %s", msg.allocationID)
-	}
-
-	resp, err := j.recreateJobHandler(
-		job.Name,
-		msg.req,
-		msg.allocationID,
-		resourcePool,
-		&job,
-		msg.slots,
-		msg.numPods,
-		msg.logContext,
-	)
-	if err != nil {
-		j.deleteKubernetesResources(jobs, configMaps)
-		return reattachJobResponse{}, fmt.Errorf("error restoring pod with allocation ID %s: %w", msg.allocationID, err)
-	}
-	return resp, nil
-}
-
-func (j *jobsService) recreateJobHandler(
-	name string,
-	req *sproto.AllocateRequest,
-	allocationID model.AllocationID,
-	resourcePool string,
-	job *batchV1.Job,
-	slots int,
-	numPods int,
-	logContext logger.Context,
-) (reattachJobResponse, error) {
-	startMsg := StartJob{
-		Req:          req,
-		AllocationID: allocationID,
-		Spec: tasks.TaskSpec{
-			// This gets used in reattach to find the job by label its determinedLabel.
-			AllocationID: string(allocationID),
-			ContainerID:  req.AllocationID.String(), // ContainerID is non-sense, make a better abstraction.
-		},
-		Slots:        slots,
-		NumPods:      numPods,
-		ResourcePool: resourcePool,
-		LogContext:   logContext,
-	}
-
-	newJobHandler := newJob(
-		name,
-		startMsg,
-		startMsg.Spec.ClusterID,
-		j.clientSet,
-		job.Namespace,
-		j.detMasterIP,
-		j.detMasterPort,
-		j.masterTLSConfig,
-		j.podInterfaces[job.Namespace],
-		j.configMapInterfaces[job.Namespace],
-		j.resourceRequestQueue,
-		j.slotType,
-		j.slotResourceRequests,
-		j.scheduler,
-	)
-
-	newJobHandler.restore = true
-	newJobHandler.jobName = job.Name
-	newJobHandler.configMapName = job.Name
-
-	err := newJobHandler.start()
-	if err != nil {
-		return reattachJobResponse{}, fmt.Errorf("reattaching pod: %w", err)
-	}
-
-	j.jobNameToJobHandler[job.Name] = newJobHandler
-	j.jobNameToResourcePool[job.Name] = resourcePool
-	j.allocationIDToJobName[newJobHandler.req.AllocationID] = job.Name
-	j.jobNameToPodNameToSchedulingState[job.Name] = make(map[string]sproto.SchedulingState)
-	j.jobHandlerToMetadata[newJobHandler] = jobMetadata{
-		jobName:      job.Name,
-		allocationID: newJobHandler.req.AllocationID,
-	}
-
-	return reattachJobResponse{started: nil}, nil
-}
-
-func (j *jobsService) refreshJobState(allocationID model.AllocationID) error {
-	if allocationID == "" {
-		return fmt.Errorf("invalid call: allocationID missing")
-	}
-
-	jobs, err := j.listJobsInAllNamespaces(context.TODO(), metaV1.ListOptions{
-		LabelSelector: fmt.Sprintf("%s=%s", determinedLabel, allocationID),
-	})
-	if err != nil {
-		return fmt.Errorf("error listing pods checking if they can be restored: %w", err)
-	}
-
-	for _, job := range jobs.Items {
-		if _, ok := j.namespaceToPoolName[job.Namespace]; !ok {
-			continue
-		}
-		job := job
-		j.jobUpdatedCallback(&job)
-	}
-	return nil
-}
-
-func (j *jobsService) refreshPodStates(allocationID model.AllocationID) error {
-	if allocationID == "" {
-		return fmt.Errorf("invalid call: allocationID missing")
-	}
-
-	pods, err := j.listPodsInAllNamespaces(context.TODO(), metaV1.ListOptions{
-		LabelSelector: fmt.Sprintf("%s=%s", determinedLabel, allocationID),
-	})
-	if err != nil {
-		return fmt.Errorf("error listing pods checking if they can be restored: %w", err)
-	}
-
-	for _, pod := range pods.Items {
-		if _, ok := j.namespaceToPoolName[pod.Namespace]; !ok {
-			continue
-		}
-		pod := pod
-		j.podStatusCallback(&pod)
-	}
-	return nil
-}
-
-func (j *jobsService) deleteKubernetesResources(
-	jobs *batchV1.JobList, configMaps *k8sV1.ConfigMapList,
-) {
-	for _, job := range jobs.Items {
-		j.resourceRequestQueue.deleteKubernetesResources(job.Namespace, job.Name, "", "")
-	}
-
-	for _, configMap := range configMaps.Items {
-		j.resourceRequestQueue.deleteKubernetesResources(configMap.Namespace, "", configMap.Name, "")
-	}
 }
 
 func (j *jobsService) deleteDoomedKubernetesResources() error {
@@ -729,6 +421,339 @@ func (j *jobsService) deleteDoomedKubernetesResources() error {
 
 	j.deleteKubernetesResources(toKillJobs, toKillConfigMaps)
 	return nil
+}
+
+// startJob notifies the pods actor to start a pod with the task spec.
+type startJob struct {
+	req          *sproto.AllocateRequest
+	allocationID model.AllocationID
+	spec         tasks.TaskSpec
+	slots        int
+	rank         int
+	resourcePool string
+	namespace    string
+
+	numPods int
+
+	logContext logger.Context
+}
+
+func (j *jobsService) StartJob(msg startJob) error {
+	j.mu.Lock()
+	defer j.mu.Unlock()
+	return j.startJob(msg)
+}
+
+func (j *jobsService) startJob(msg startJob) error {
+	newJobHandler := newJob(
+		configureUniqueName(msg.spec),
+		msg,
+		msg.spec.ClusterID,
+		j.clientSet,
+		msg.namespace,
+		j.detMasterIP,
+		j.detMasterPort,
+		j.masterTLSConfig,
+		j.podInterfaces[msg.namespace],
+		j.configMapInterfaces[msg.namespace],
+		j.resourceRequestQueue,
+		j.slotType,
+		j.slotResourceRequests,
+		j.scheduler,
+	)
+
+	if _, alreadyExists := j.jobNameToJobHandler[newJobHandler.jobName]; alreadyExists {
+		return fmt.Errorf("attempting to register same job name: %s multiple times", newJobHandler.jobName)
+	}
+
+	err := newJobHandler.start()
+	if err != nil {
+		return fmt.Errorf("creating pod: %w", err)
+	}
+
+	j.jobNameToJobHandler[newJobHandler.jobName] = newJobHandler
+	j.jobNameToResourcePool[newJobHandler.jobName] = msg.resourcePool
+	j.allocationIDToJobName[msg.req.AllocationID] = newJobHandler.jobName
+	j.jobNameToPodNameToSchedulingState[newJobHandler.jobName] = make(map[string]sproto.SchedulingState)
+	j.jobHandlerToMetadata[newJobHandler] = jobMetadata{
+		jobName:      newJobHandler.jobName,
+		allocationID: newJobHandler.req.AllocationID,
+	}
+
+	return nil
+}
+
+func (j *jobsService) ChangePriority(id model.AllocationID) {
+	j.mu.Lock()
+	defer j.mu.Unlock()
+	j.changePriority(id)
+}
+
+func (j *jobsService) ChangePosition(id model.AllocationID) {
+	j.mu.Lock()
+	defer j.mu.Unlock()
+	j.changePosition(id)
+}
+
+func (j *jobsService) KillJob(id model.AllocationID) {
+	j.mu.Lock()
+	defer j.mu.Unlock()
+	j.killJob(id)
+}
+
+func (j *jobsService) SummarizeResources(poolName string) (*computeUsageSummary, error) {
+	j.mu.Lock()
+	defer j.mu.Unlock()
+	return j.summarizeComputeUsage(poolName)
+}
+
+func (j *jobsService) ReattachJob(msg reattachJobRequest) (reattachJobResponse, error) {
+	j.mu.Lock()
+	defer j.mu.Unlock()
+	return j.reattachJob(msg)
+}
+
+type reattachJobRequest struct {
+	req          *sproto.AllocateRequest
+	numPods      int
+	allocationID model.AllocationID
+	slots        int
+	logContext   logger.Context
+}
+
+type reattachJobResponse struct {
+	started *sproto.ResourcesStarted
+}
+
+func (j *jobsService) reattachJob(msg reattachJobRequest) (reattachJobResponse, error) {
+	listOptions := metaV1.ListOptions{
+		LabelSelector: fmt.Sprintf("%s=%s", determinedLabel, msg.allocationID),
+	}
+
+	jobs, err := j.listJobsInAllNamespaces(context.TODO(), listOptions)
+	if err != nil {
+		return reattachJobResponse{}, fmt.Errorf("error listing pods checking if they can be restored: %w", err)
+	}
+
+	configMaps, err := j.listConfigMapsInAllNamespaces(context.TODO(), listOptions)
+	if err != nil {
+		return reattachJobResponse{}, fmt.Errorf("error listing config maps checking if they can be restored: %w", err)
+	}
+	existingConfigMaps := make(set.Set[string])
+	for _, cm := range configMaps.Items {
+		if _, ok := j.namespaceToPoolName[cm.Namespace]; !ok {
+			continue
+		}
+		existingConfigMaps.Insert(cm.Name)
+	}
+
+	if len(jobs.Items) == 0 {
+		return reattachJobResponse{}, fmt.Errorf("did not find job for allocation %s", msg.allocationID)
+	} else if len(jobs.Items) > 1 {
+		return reattachJobResponse{}, fmt.Errorf("found multiple allocation jobs for allocation %s", msg.allocationID)
+	}
+	job := jobs.Items[0]
+
+	resourcePool, ok := job.Labels[resourcePoolLabel]
+	if !ok {
+		return reattachJobResponse{}, fmt.Errorf("could not recover resource pool for %s", msg.allocationID)
+	}
+
+	resp, err := j.recreateJobHandler(
+		job.Name,
+		msg.req,
+		msg.allocationID,
+		resourcePool,
+		&job,
+		msg.slots,
+		msg.numPods,
+		msg.logContext,
+	)
+	if err != nil {
+		j.deleteKubernetesResources(jobs, configMaps)
+		return reattachJobResponse{}, fmt.Errorf("error restoring pod with allocation ID %s: %w", msg.allocationID, err)
+	}
+	return resp, nil
+}
+
+func (j *jobsService) recreateJobHandler(
+	name string,
+	req *sproto.AllocateRequest,
+	allocationID model.AllocationID,
+	resourcePool string,
+	job *batchV1.Job,
+	slots int,
+	numPods int,
+	logContext logger.Context,
+) (reattachJobResponse, error) {
+	startMsg := startJob{
+		req:          req,
+		allocationID: allocationID,
+		spec: tasks.TaskSpec{
+			// This gets used in reattach to find the job by label its determinedLabel.
+			AllocationID: string(allocationID),
+			ContainerID:  req.AllocationID.String(), // ContainerID is non-sense, make a better abstraction.
+		},
+		slots:        slots,
+		numPods:      numPods,
+		resourcePool: resourcePool,
+		logContext:   logContext,
+	}
+
+	newJobHandler := newJob(
+		name,
+		startMsg,
+		startMsg.spec.ClusterID,
+		j.clientSet,
+		job.Namespace,
+		j.detMasterIP,
+		j.detMasterPort,
+		j.masterTLSConfig,
+		j.podInterfaces[job.Namespace],
+		j.configMapInterfaces[job.Namespace],
+		j.resourceRequestQueue,
+		j.slotType,
+		j.slotResourceRequests,
+		j.scheduler,
+	)
+
+	newJobHandler.restore = true
+	newJobHandler.jobName = job.Name
+	newJobHandler.configMapName = job.Name
+
+	err := newJobHandler.start()
+	if err != nil {
+		return reattachJobResponse{}, fmt.Errorf("reattaching pod: %w", err)
+	}
+
+	j.jobNameToJobHandler[job.Name] = newJobHandler
+	j.jobNameToResourcePool[job.Name] = resourcePool
+	j.allocationIDToJobName[newJobHandler.req.AllocationID] = job.Name
+	j.jobNameToPodNameToSchedulingState[job.Name] = make(map[string]sproto.SchedulingState)
+	j.jobHandlerToMetadata[newJobHandler] = jobMetadata{
+		jobName:      job.Name,
+		allocationID: newJobHandler.req.AllocationID,
+	}
+
+	return reattachJobResponse{started: nil}, nil
+}
+
+func (j *jobsService) deleteKubernetesResources(
+	jobs *batchV1.JobList, configMaps *k8sV1.ConfigMapList,
+) {
+	for _, job := range jobs.Items {
+		j.resourceRequestQueue.deleteKubernetesResources(job.Namespace, job.Name, "", "")
+	}
+
+	for _, configMap := range configMaps.Items {
+		j.resourceRequestQueue.deleteKubernetesResources(configMap.Namespace, "", configMap.Name, "")
+	}
+}
+
+func (j *jobsService) RefreshStates(allocationID model.AllocationID) error {
+	j.mu.Lock()
+	defer j.mu.Unlock()
+	err := j.refreshJobState(allocationID)
+	if err != nil {
+		return err
+	}
+	return j.refreshPodStates(allocationID)
+}
+
+func (j *jobsService) refreshJobState(allocationID model.AllocationID) error {
+	if allocationID == "" {
+		return fmt.Errorf("invalid call: allocationID missing")
+	}
+
+	jobs, err := j.listJobsInAllNamespaces(context.TODO(), metaV1.ListOptions{
+		LabelSelector: fmt.Sprintf("%s=%s", determinedLabel, allocationID),
+	})
+	if err != nil {
+		return fmt.Errorf("error listing pods checking if they can be restored: %w", err)
+	}
+
+	for _, job := range jobs.Items {
+		if _, ok := j.namespaceToPoolName[job.Namespace]; !ok {
+			continue
+		}
+		job := job
+		j.jobUpdatedCallback(&job)
+	}
+	return nil
+}
+
+func (j *jobsService) refreshPodStates(allocationID model.AllocationID) error {
+	if allocationID == "" {
+		return fmt.Errorf("invalid call: allocationID missing")
+	}
+
+	pods, err := j.listPodsInAllNamespaces(context.TODO(), metaV1.ListOptions{
+		LabelSelector: fmt.Sprintf("%s=%s", determinedLabel, allocationID),
+	})
+	if err != nil {
+		return fmt.Errorf("error listing pods checking if they can be restored: %w", err)
+	}
+
+	for _, pod := range pods.Items {
+		if _, ok := j.namespaceToPoolName[pod.Namespace]; !ok {
+			continue
+		}
+		pod := pod
+		j.podStatusCallback(&pod)
+	}
+	return nil
+}
+
+func (j *jobsService) GetAgents() *apiv1.GetAgentsResponse {
+	j.mu.Lock()
+	defer j.mu.Unlock()
+	return j.getAgents()
+}
+
+func (j *jobsService) GetAgent(msg *apiv1.GetAgentRequest) *apiv1.GetAgentResponse {
+	j.mu.Lock()
+	defer j.mu.Unlock()
+	return j.getAgent(msg.AgentId)
+}
+
+func (j *jobsService) EnableAgent(msg *apiv1.EnableAgentRequest) (*apiv1.EnableAgentResponse, error) {
+	j.mu.Lock()
+	defer j.mu.Unlock()
+	return j.enableNode(msg.AgentId)
+}
+
+func (j *jobsService) DisableAgent(msg *apiv1.DisableAgentRequest) (*apiv1.DisableAgentResponse, error) {
+	j.mu.Lock()
+	defer j.mu.Unlock()
+	return j.disableNode(msg.AgentId, msg.Drain)
+}
+
+func (j *jobsService) GetSlots(msg *apiv1.GetSlotsRequest) *apiv1.GetSlotsResponse {
+	j.mu.Lock()
+	defer j.mu.Unlock()
+	return j.getSlots(msg.AgentId)
+}
+
+func (j *jobsService) GetSlot(msg *apiv1.GetSlotRequest) *apiv1.GetSlotResponse {
+	j.mu.Lock()
+	defer j.mu.Unlock()
+	return j.getSlot(msg.AgentId, msg.SlotId)
+}
+
+func (j *jobsService) HealthStatus() model.HealthStatus {
+	j.mu.Lock()
+	defer j.mu.Unlock()
+	for _, podInterface := range j.podInterfaces {
+		_, err := podInterface.List(context.TODO(), metaV1.ListOptions{Limit: 1})
+		if err != nil {
+			j.syslog.WithError(err).Error("kubernetes resource manager marked as unhealthy")
+			return model.Unhealthy
+		}
+		return model.Healthy
+	}
+
+	logrus.Error("expected jobInterface to be non empty")
+	return model.Unhealthy
 }
 
 func (j *jobsService) startNodeInformer() error {
@@ -829,45 +854,6 @@ func (j *jobsService) handleResourceRequestFailure(msg resourcesRequestFailure) 
 	if err != nil {
 		j.syslog.WithError(err).Error("cleaning up pod handler after resource request failure")
 	}
-}
-
-func (j *jobsService) startJob(msg StartJob) error {
-	newJobHandler := newJob(
-		configureUniqueName(msg.Spec),
-		msg,
-		msg.Spec.ClusterID,
-		j.clientSet,
-		msg.Namespace,
-		j.detMasterIP,
-		j.detMasterPort,
-		j.masterTLSConfig,
-		j.podInterfaces[msg.Namespace],
-		j.configMapInterfaces[msg.Namespace],
-		j.resourceRequestQueue,
-		j.slotType,
-		j.slotResourceRequests,
-		j.scheduler,
-	)
-
-	if _, alreadyExists := j.jobNameToJobHandler[newJobHandler.jobName]; alreadyExists {
-		return fmt.Errorf("attempting to register same job name: %s multiple times", newJobHandler.jobName)
-	}
-
-	err := newJobHandler.start()
-	if err != nil {
-		return fmt.Errorf("creating pod: %w", err)
-	}
-
-	j.jobNameToJobHandler[newJobHandler.jobName] = newJobHandler
-	j.jobNameToResourcePool[newJobHandler.jobName] = msg.ResourcePool
-	j.allocationIDToJobName[msg.Req.AllocationID] = newJobHandler.jobName
-	j.jobNameToPodNameToSchedulingState[newJobHandler.jobName] = make(map[string]sproto.SchedulingState)
-	j.jobHandlerToMetadata[newJobHandler] = jobMetadata{
-		jobName:      newJobHandler.jobName,
-		allocationID: newJobHandler.req.AllocationID,
-	}
-
-	return nil
 }
 
 func (j *jobsService) jobUpdatedCallback(obj any) {
@@ -1219,21 +1205,27 @@ func (j *jobsService) newEventCallback(event watch.Event) {
 	}
 }
 
-func (j *jobsService) receiveResourceSummarize(msg SummarizeResources) (*PodsInfo, error) {
+type computeUsageSummary struct {
+	numAgentsUsed  int
+	slotsAvailable int
+}
+
+// TODO(!!!): good func comment.
+func (j *jobsService) summarizeComputeUsage(poolName string) (*computeUsageSummary, error) {
 	summary, err := j.summarize()
 	if err != nil {
 		return nil, err
 	}
 
 	slots := 0
-	if len(msg.PoolName) > 0 {
-		slots = numSlots(summary[msg.PoolName].Slots)
+	if len(poolName) > 0 {
+		slots = numSlots(summary[poolName].Slots)
 	} else {
 		for _, pool := range summary {
 			slots += numSlots(pool.Slots)
 		}
 	}
-	return &PodsInfo{NumAgents: len(summary), SlotsAvailable: slots}, nil
+	return &computeUsageSummary{numAgentsUsed: len(summary), slotsAvailable: slots}, nil
 }
 
 func (j *jobsService) preemptionCallback(event watch.Event) {
@@ -1265,7 +1257,7 @@ func (j *jobsService) verifyJobAndGetRef(id model.AllocationID) (*job, error) {
 	return ref, nil
 }
 
-func (j *jobsService) receivePriorityChange(id model.AllocationID) {
+func (j *jobsService) changePriority(id model.AllocationID) {
 	ref, err := j.verifyJobAndGetRef(id)
 	if err != nil {
 		j.syslog.WithError(err).Debug("changing allocation priority")
@@ -1274,7 +1266,7 @@ func (j *jobsService) receivePriorityChange(id model.AllocationID) {
 	ref.changePriority()
 }
 
-func (j *jobsService) receivePositionChange(id model.AllocationID) {
+func (j *jobsService) changePosition(id model.AllocationID) {
 	ref, err := j.verifyJobAndGetRef(id)
 	if err != nil {
 		j.syslog.WithError(err).Debug("changing allocation position")
@@ -1283,7 +1275,7 @@ func (j *jobsService) receivePositionChange(id model.AllocationID) {
 	ref.changePosition()
 }
 
-func (j *jobsService) receiveKill(id model.AllocationID) {
+func (j *jobsService) killJob(id model.AllocationID) {
 	ref, err := j.verifyJobAndGetRef(id)
 	if err != nil {
 		j.syslog.WithError(err).Debug("killing allocation")
@@ -1325,8 +1317,8 @@ func (j *jobsService) cleanUpJobHandler(jobHandler *job) error {
 	return nil
 }
 
-func (j *jobsService) handleGetSlotsRequest(agentID string) *apiv1.GetSlotsResponse {
-	agentResp := j.handleGetAgentRequest(agentID)
+func (j *jobsService) getSlots(agentID string) *apiv1.GetSlotsResponse {
+	agentResp := j.getAgent(agentID)
 	if agentResp == nil {
 		j.syslog.Warnf("no agent with id %s", agentID)
 		return nil
@@ -1334,8 +1326,8 @@ func (j *jobsService) handleGetSlotsRequest(agentID string) *apiv1.GetSlotsRespo
 	return &apiv1.GetSlotsResponse{Slots: maps.Values(agentResp.Agent.Slots)}
 }
 
-func (j *jobsService) handleGetSlotRequest(agentID string, slotID string) *apiv1.GetSlotResponse {
-	agentResp := j.handleGetAgentRequest(agentID)
+func (j *jobsService) getSlot(agentID string, slotID string) *apiv1.GetSlotResponse {
+	agentResp := j.getAgent(agentID)
 	if agentResp == nil {
 		j.syslog.Warnf("no agent with id %s", agentID)
 		return nil
@@ -1355,7 +1347,7 @@ func (j *jobsService) handleGetSlotRequest(agentID string, slotID string) *apiv1
 	return &apiv1.GetSlotResponse{Slot: slot}
 }
 
-func (j *jobsService) handleGetAgentsRequest() *apiv1.GetAgentsResponse {
+func (j *jobsService) getAgents() *apiv1.GetAgentsResponse {
 	j.getAgentsCacheLock.Lock()
 	defer j.getAgentsCacheLock.Unlock()
 
@@ -1375,7 +1367,7 @@ func (j *jobsService) handleGetAgentsRequest() *apiv1.GetAgentsResponse {
 	return j.getAgentsCache
 }
 
-func (j *jobsService) handleGetAgentRequest(agentID string) *apiv1.GetAgentResponse {
+func (j *jobsService) getAgent(agentID string) *apiv1.GetAgentResponse {
 	nodeSummaries := j.summarizeClusterByNodes()
 	_, nodesToPools := j.getNodeResourcePoolMapping(nodeSummaries)
 	agentSummary, ok := nodeSummaries[agentID]

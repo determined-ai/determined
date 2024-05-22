@@ -235,8 +235,8 @@ func (k *kubernetesResourcePool) getResourceSummary() (*resourceSummary, error) 
 	}
 
 	return &resourceSummary{
-		numAgents:              pods.NumAgents,
-		numTotalSlots:          pods.SlotsAvailable,
+		numAgents:              pods.numAgentsUsed,
+		numTotalSlots:          pods.slotsAvailable,
 		numActiveSlots:         slotsUsed,
 		maxNumAuxContainers:    1,
 		numActiveAuxContainers: 0,
@@ -265,8 +265,8 @@ func (k *kubernetesResourcePool) Schedule() {
 	k.reschedule = false
 }
 
-func (k *kubernetesResourcePool) summarizePods() (*PodsInfo, error) {
-	resp, err := k.jobsService.SummarizeResources(SummarizeResources{PoolName: k.poolConfig.PoolName})
+func (k *kubernetesResourcePool) summarizePods() (*computeUsageSummary, error) {
+	resp, err := k.jobsService.SummarizeResources(k.poolConfig.PoolName)
 	if err != nil {
 		return nil, err
 	}
@@ -664,15 +664,15 @@ func (p k8sJobResource) Start(
 	spec.ExtraEnvVars[sproto.ResourcesTypeEnvVar] = string(sproto.ResourcesTypeK8sJob)
 	spec.ExtraEnvVars[resourcePoolEnvVar] = p.req.ResourcePool
 
-	return p.jobsService.StartJob(StartJob{
-		Req:          p.req,
-		AllocationID: p.req.AllocationID,
-		Spec:         spec,
-		Slots:        p.slots,
-		Rank:         rri.AgentRank,
-		Namespace:    p.namespace,
-		NumPods:      p.numPods,
-		LogContext:   logCtx,
+	return p.jobsService.StartJob(startJob{
+		req:          p.req,
+		allocationID: p.req.AllocationID,
+		spec:         spec,
+		slots:        p.slots,
+		rank:         rri.AgentRank,
+		namespace:    p.namespace,
+		numPods:      p.numPods,
+		logContext:   logCtx,
 	})
 }
 

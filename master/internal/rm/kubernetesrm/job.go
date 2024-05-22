@@ -9,12 +9,14 @@ import (
 	"sync/atomic"
 	"time"
 
-	"golang.org/x/exp/maps"
-	batchV1 "k8s.io/api/batch/v1"
-	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-
 	"github.com/docker/docker/pkg/stdcopy"
 	"github.com/sirupsen/logrus"
+	"golang.org/x/exp/maps"
+	batchV1 "k8s.io/api/batch/v1"
+	k8sV1 "k8s.io/api/core/v1"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	k8sClient "k8s.io/client-go/kubernetes"
+	typedV1 "k8s.io/client-go/kubernetes/typed/core/v1"
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/rm/rmevents"
@@ -26,19 +28,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/set"
 	"github.com/determined-ai/determined/master/pkg/tasks"
-
-	k8sV1 "k8s.io/api/core/v1"
-	k8sClient "k8s.io/client-go/kubernetes"
-	typedV1 "k8s.io/client-go/kubernetes/typed/core/v1"
-)
-
-const (
-	initContainerTarSrcPath   = "/run/determined/temp/tar/src"
-	initContainerTarDstPath   = "/run/determined/temp/tar/dst"
-	initContainerWorkDir      = "/run/determined/temp/"
-	determinedLabel           = "determined"
-	determinedPreemptionLabel = "determined-preemption"
-	determinedSystemLabel     = "determined-system"
 )
 
 // describes why a job failed. empty value indicates success.
@@ -119,7 +108,7 @@ type job struct {
 
 func newJob(
 	name string,
-	msg StartJob,
+	msg startJob,
 	clusterID string,
 	clientSet k8sClient.Interface,
 	namespace string,
@@ -138,19 +127,19 @@ func newJob(
 	containerNames := set.FromSlice([]string{model.DeterminedK8ContainerName})
 
 	p := &job{
-		req: msg.Req,
+		req: msg.req,
 		submissionInfo: &jobSubmissionInfo{
-			taskSpec: msg.Spec,
+			taskSpec: msg.spec,
 		},
 		clusterID:             clusterID,
-		allocationID:          msg.AllocationID,
+		allocationID:          msg.allocationID,
 		clientSet:             clientSet,
 		namespace:             namespace,
 		masterIP:              masterIP,
 		masterPort:            masterPort,
 		masterTLSConfig:       masterTLSConfig,
-		numPods:               msg.NumPods,
-		slotsPerPod:           msg.Slots,
+		numPods:               msg.numPods,
+		slotsPerPod:           msg.slots,
 		podInterface:          podInterface,
 		configMapInterface:    configMapInterface,
 		resourceRequestQueue:  resourceRequestQueue,
@@ -162,16 +151,16 @@ func newJob(
 		podExits:              make(map[string]bool),
 		podLogStreamerStarted: make(map[string]bool),
 		container: cproto.Container{
-			ID:          cproto.ID(msg.Spec.ContainerID),
+			ID:          cproto.ID(msg.spec.ContainerID),
 			State:       cproto.Assigned,
-			Description: msg.Spec.Description,
+			Description: msg.spec.Description,
 		},
 		containerNames:       containerNames,
 		scheduler:            scheduler,
 		slotType:             slotType,
 		slotResourceRequests: slotResourceRequests,
 		syslog: logrus.WithField("component", "job").WithFields(
-			logger.MergeContexts(msg.LogContext, logger.Context{
+			logger.MergeContexts(msg.logContext, logger.Context{
 				"job": name,
 			}).Fields(),
 		),
@@ -438,7 +427,7 @@ func (j *job) Kill() {
 
 	j.syslog.Info("received request to stop job")
 	if j.jobExitCause == nil {
-		j.jobExitCause = &exitReason{msg: "kill issued through us"}
+		j.jobExitCause = &exitReason{msg: "killed"}
 	}
 	j.kill()
 }

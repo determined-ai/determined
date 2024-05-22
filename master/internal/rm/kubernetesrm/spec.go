@@ -38,6 +38,10 @@ import (
 const (
 	coscheduler = "coscheduler"
 
+	initContainerTarSrcPath = "/run/determined/temp/tar/src"
+	initContainerTarDstPath = "/run/determined/temp/tar/dst"
+	initContainerWorkDir    = "/run/determined/temp/"
+
 	gcTask            = "gc"
 	cmdTask           = "cmd"
 	labelPrefix       = "determined.ai/"

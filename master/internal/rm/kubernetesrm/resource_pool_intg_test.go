@@ -141,7 +141,7 @@ func TestSchedule(t *testing.T) {
 }
 
 func testResourcePool(t *testing.T, slots int) *kubernetesResourcePool {
-	return newResourcePool(slots, &config.ResourcePoolConfig{}, newTestJobsService(), db.SingleDB())
+	return newResourcePool(slots, &config.ResourcePoolConfig{}, newTestJobsService(t), db.SingleDB())
 }
 
 func testAddAllocation(

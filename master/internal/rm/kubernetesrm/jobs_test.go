@@ -41,7 +41,7 @@ func TestLaunch(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	j := newTestJobsService()
+	j := newTestJobsService(t)
 	rp := newTestResourcePool(j)
 
 	id := uuid.NewString()
@@ -214,7 +214,7 @@ func testLaunch(
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Minute)
 	defer cancel()
 
-	j := newTestJobsService()
+	j := newTestJobsService(t)
 	rp := newTestResourcePool(j)
 
 	id := uuid.NewString()
@@ -302,7 +302,7 @@ func TestPodLogStreamerReattach(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
-	j := newTestJobsService()
+	j := newTestJobsService(t)
 	rp := newTestResourcePool(j)
 
 	user := db.RequireMockUser(t, db.SingleDB())
@@ -374,7 +374,7 @@ func TestPodLogStreamerReattach(t *testing.T) {
 	// Remake all component and "reattach" to this new resource pool. This saves
 	// us from needing to made the k8s code do graceful shutdown, but we should
 	// do it anyway someday.
-	rp = newTestResourcePool(newTestJobsService())
+	rp = newTestResourcePool(newTestJobsService(t))
 
 	sub = rmevents.Subscribe(allocationID)
 	allocateReq.Restore = true
@@ -406,7 +406,7 @@ func TestPodLogStreamer(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	j := newTestJobsService()
+	j := newTestJobsService(t)
 	rp := newTestResourcePool(j)
 
 	id := uuid.NewString()
@@ -475,7 +475,7 @@ func TestKill(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	j := newTestJobsService()
+	j := newTestJobsService(t)
 	rp := newTestResourcePool(j)
 
 	id := uuid.NewString()
@@ -555,7 +555,7 @@ func TestExternalKillWhileQueuedFails(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	j := newTestJobsService()
+	j := newTestJobsService(t)
 	rp := newTestResourcePool(j)
 
 	id := uuid.NewString()
@@ -659,7 +659,7 @@ func TestExternalPodDelete(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	j := newTestJobsService()
+	j := newTestJobsService(t)
 	rp := newTestResourcePool(j)
 
 	id := uuid.NewString()
@@ -745,7 +745,7 @@ func TestReattach(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
-	j := newTestJobsService()
+	j := newTestJobsService(t)
 	rp := newTestResourcePool(j)
 
 	user := db.RequireMockUser(t, db.SingleDB())
@@ -816,7 +816,7 @@ func TestReattach(t *testing.T) {
 	// Remake all component and "reattach" to this new resource pool. This saves
 	// us from needing to made the k8s code do graceful shutdown, but we should
 	// do it anyway someday.
-	rp = newTestResourcePool(newTestJobsService())
+	rp = newTestResourcePool(newTestJobsService(t))
 
 	sub = rmevents.Subscribe(allocationID)
 	allocateReq.Restore = true
@@ -847,10 +847,10 @@ func TestNodeWorkflows(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
-	j := newTestJobsService()
+	j := newTestJobsService(t)
 	rp := newTestResourcePool(j)
 
-	resp := j.handleGetAgentsRequest()
+	resp := j.getAgents()
 	require.Equal(t, 1, len(resp.Agents))
 	nodeID := resp.Agents[0].Id
 
@@ -992,8 +992,8 @@ func newTestResourcePool(j *jobsService) *kubernetesResourcePool {
 	return newResourcePool(1, &testResourcePoolConfig, j, db.SingleDB())
 }
 
-func newTestJobsService() *jobsService {
-	return newJobsService(
+func newTestJobsService(t *testing.T) *jobsService {
+	j, err := newJobsService(
 		"default",
 		map[string]string{"default": defaultResourcePool},
 		"",
@@ -1012,6 +1012,8 @@ func newTestJobsService() *jobsService {
 		"~/.kube/config",
 		nil,
 	)
+	require.NoError(t, err)
+	return j
 }
 
 func TestGetNonDetPods(t *testing.T) {
