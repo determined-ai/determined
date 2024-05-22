@@ -343,6 +343,9 @@ func (a *apiServer) PostUser(
 		if req.IsHashed {
 			hashedPassword = req.Password
 		} else {
+			if err := user.CheckPasswordComplexity(req.Password); err != nil {
+				return nil, status.Error(codes.InvalidArgument, err.Error())
+			}
 			hashedPassword = user.ReplicateClientSideSaltAndHash(req.Password)
 		}
 
@@ -384,6 +387,13 @@ func (a *apiServer) SetUserPassword(
 			return nil, authz.SubIfUnauthorized(canGetErr, api.NotFoundErrs("user", "", true))
 		}
 		return nil, status.Error(codes.PermissionDenied, err.Error())
+	}
+
+	if err := user.CheckPasswordComplexity(req.Password); err != nil {
+		if errors.As(err, &user.PasswordComplexityErrors{}) {
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		}
+		return nil, errors.Wrap(err, "error validating password")
 	}
 
 	if err = targetUser.UpdatePasswordHash(user.ReplicateClientSideSaltAndHash(req.Password)); err != nil {
@@ -451,9 +461,17 @@ func (a *apiServer) PatchUser(
 			if willBeRemote {
 				updatedUser.PasswordHash = model.NoPasswordLogin
 				insertColumns = append(insertColumns, "password_hash")
-			} else if !willBeRemote && req.User.Password == nil {
-				updatedUser.PasswordHash = model.EmptyPassword
-				insertColumns = append(insertColumns, "password_hash")
+			} else if req.User.Password == nil {
+				return nil, status.Errorf(
+					codes.InvalidArgument,
+					"non-remote users must have passwords",
+				)
+			} else if err := user.CheckPasswordComplexity(*req.User.Password); err != nil {
+				return nil, status.Errorf(
+					codes.InvalidArgument,
+					"non-remote users must have passwords that meet complexity requirements: %s",
+					err.Error(),
+				)
 			}
 		}
 	}
@@ -527,6 +545,12 @@ func (a *apiServer) PatchUser(
 
 		hashedPassword := *req.User.Password
 		if !req.User.IsHashed {
+			if err := user.CheckPasswordComplexity(hashedPassword); err != nil {
+				if errors.As(err, &user.PasswordComplexityErrors{}) {
+					return nil, status.Error(codes.InvalidArgument, err.Error())
+				}
+				return nil, errors.Wrap(err, "error validating password")
+			}
 			hashedPassword = user.ReplicateClientSideSaltAndHash(hashedPassword)
 		}
 		if err := updatedUser.UpdatePasswordHash(hashedPassword); err != nil {
