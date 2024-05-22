@@ -38,7 +38,7 @@ func makeGoPgOpts(dbURL string) (*pg.Options, error) {
 	return opts, nil
 }
 
-func tablesExist(tx *pg.Tx, tableNames []string) (map[string]bool, error) {
+func tablesExist(tx pg.DBI, tableNames []string) (map[string]bool, error) {
 	existingTables := []string{}
 	result := map[string]bool{}
 	for _, tn := range tableNames {
@@ -216,7 +216,7 @@ var testOnlyDBLock func(sql *sqlx.DB) (unlock func())
 // Migrate runs the migrations from the specified directory URL.
 func (db *PgDB) Migrate(
 	migrationURL string, dbCodeDir string, actions []string,
-) (isNew bool, err error) {
+) error {
 	if testOnlyDBLock != nil {
 		// In integration tests, multiple processes can be running this code at once, which can lead to
 		// errors because PostgreSQL's CREATE TABLE IF NOT EXISTS is not great with concurrency.
@@ -226,14 +226,14 @@ func (db *PgDB) Migrate(
 
 	dbCodeFiles, hash, needToUpdateDBCode, err := db.readDBCodeAndCheckIfDifferent(dbCodeDir)
 	if err != nil {
-		return false, err
+		return err
 	}
 
 	// go-pg/migrations uses go-pg/pg connection API, which is not compatible
 	// with pgx, so we use a one-off go-pg/pg connection.
 	pgOpts, err := makeGoPgOpts(db.URL)
 	if err != nil {
-		return false, err
+		return err
 	}
 
 	pgConn := pg.Connect(pgOpts)
@@ -245,7 +245,7 @@ func (db *PgDB) Migrate(
 
 	tx, err := pgConn.Begin()
 	if err != nil {
-		return false, err
+		return err
 	}
 
 	defer func() {
@@ -256,11 +256,11 @@ func (db *PgDB) Migrate(
 	}()
 
 	if err = ensureMigrationUpgrade(tx); err != nil {
-		return false, errors.Wrap(err, "error upgrading migration metadata")
+		return errors.Wrap(err, "error upgrading migration metadata")
 	}
 
 	if err = tx.Commit(); err != nil {
-		return false, err
+		return err
 	}
 
 	log.Infof("running DB migrations from %s; this might take a while...", migrationURL)
@@ -268,21 +268,21 @@ func (db *PgDB) Migrate(
 	re := regexp.MustCompile(`file://(.+)`)
 	match := re.FindStringSubmatch(migrationURL)
 	if len(match) != 2 {
-		return false, fmt.Errorf("failed to parse migrationsURL: %s", migrationURL)
+		return fmt.Errorf("failed to parse migrationsURL: %s", migrationURL)
 	}
 
 	collection := migrations.NewCollection()
 	collection.DisableSQLAutodiscover(true)
 	if err = collection.DiscoverSQLMigrations(match[1]); err != nil {
-		return false, err
+		return err
 	}
 	if len(collection.Migrations()) == 0 {
-		return false, errors.New("failed to discover any migrations")
+		return errors.New("failed to discover any migrations")
 	}
 
 	oldVersion, newVersion, err := collection.Run(pgConn, actions...)
 	if err != nil {
-		return false, errors.Wrap(err, "error applying migrations")
+		return errors.Wrap(err, "error applying migrations")
 	}
 
 	if oldVersion == newVersion {
@@ -295,7 +295,7 @@ func (db *PgDB) Migrate(
 		if needToUpdateDBCode {
 			log.Info("database views changed")
 			if err := db.addDBCode(dbCodeFiles, hash); err != nil {
-				return false, err
+				return err
 			}
 		} else {
 			log.Info("database views unchanged, will not updated")
@@ -303,5 +303,5 @@ func (db *PgDB) Migrate(
 	}
 
 	log.Info("DB migrations completed")
-	return oldVersion == 0, nil
+	return nil
 }
