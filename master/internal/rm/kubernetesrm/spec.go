@@ -9,6 +9,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/google/uuid"
+
 	"github.com/determined-ai/determined/master/internal/config"
 
 	"github.com/docker/docker/api/types/mount"
@@ -136,20 +138,27 @@ func (p *pod) configureProxyResources() []gatewayProxyResource {
 		return nil
 	}
 
-	namePodNetworkResource := func(portIndex, proxyPort int) string {
-		// TODO(RM-276/gateways) use something more reasonable for the name.
+	namePodNetworkResource := func(portIndex int) string {
 		// Podname is too long currently. There is like a 63 characeter limit for DNS.
 		// We should really be under this for everything even if not required (like it is for
-		// service and TCPRoute). Bradley is changing this but hopefully we land before him.
+		// service and TCPRoute).
 		/*
 			- task id
 			- allocation id
 			- port exposed. task can have multiple pods and allocations that change
 			- each allocation/pod can have multiple ports
 			- tasks have types
-			$TASK_TYPE-$TASK_ID[:10]-$ALLOCATION_ID[:10]-P$PORT_INDEX
+			- taskid and allocid include dashes.
+			$TASK_TYPE/$TASK_ID[:10]/$ALLOCATION_ID[:10]/P$PORT_INDEX/randombits
 		*/
-		tooLong := fmt.Sprintf("porti%d-%s", portIndex, p.submissionInfo.taskSpec.AllocationID)
+		shortTaskID := p.submissionInfo.taskSpec.TaskID[:min(10,
+			len(p.submissionInfo.taskSpec.TaskID)-1)]
+		shortAllocID := p.submissionInfo.taskSpec.AllocationID[max(0,
+			len(p.submissionInfo.taskSpec.AllocationID)-10):]
+		uuidStr := uuid.New().String()
+
+		tooLong := fmt.Sprintf("%s/%s/%s/P%d/%s",
+			p.submissionInfo.taskSpec.TaskType, shortTaskID, shortAllocID, portIndex, uuidStr)
 		sharedName := tooLong[:min(63, len(tooLong)-1)]
 		return sharedName
 	}
@@ -157,7 +166,8 @@ func (p *pod) configureProxyResources() []gatewayProxyResource {
 	var resources []gatewayProxyResource
 	// TODO(RM-275/gateways) think about experiments, should they proxy every pod, or only rank 0?
 	for i, proxyPort := range p.req.ProxyPorts {
-		sharedName := namePodNetworkResource(i, proxyPort.Port)
+		// Q: could the allocation give us multiple configs with the same ports?
+		sharedName := namePodNetworkResource(i)
 		allocLabels := map[string]string{
 			determinedLabel: p.submissionInfo.taskSpec.AllocationID,
 		}
