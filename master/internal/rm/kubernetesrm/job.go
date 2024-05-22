@@ -519,7 +519,7 @@ func (j *job) informTaskResourcesStarted(rs sproto.ResourcesStarted) {
 }
 
 func (j *job) informTaskResourcesStopped() {
-	if !j.sentTerminationEvent {
+	if j.sentTerminationEvent {
 		return
 	}
 

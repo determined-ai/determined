@@ -328,7 +328,7 @@ func (a *allocation) SetProxyAddress(ctx context.Context, address string) error 
 	defer a.mu.Unlock()
 
 	if len(a.req.ProxyPorts) == 0 {
-		a.syslog.Debug("No ports to proxy. Skipping proxy registration.")
+		a.syslog.Debug("no ports to proxy, skipping proxy registration.")
 		return nil
 	}
 	a.model.ProxyAddress = &address
