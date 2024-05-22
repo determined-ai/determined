@@ -125,7 +125,10 @@ const MenuKey = {
 
 const ExperimentList: React.FC<Props> = ({ project }) => {
   const [experiments, setExperiments] = useState<BulkExperimentItem[]>([]);
-  const [selectedExperiments, setSelectedExperiments] = useState<BulkExperimentItem[]>([]);
+  const [hiddenSelectedExperiments, setHiddenSelectedExperiments] = useState<BulkExperimentItem[]>(
+    // this is used to selected experiments that are not visible in the experiment table page
+    [],
+  );
   const [labels, setLabels] = useState<string[]>([]);
   const [batchMovingExperimentIds, setBatchMovingExperimentIds] = useState<number[]>();
   const [batchRetainLogsExperimentIds, setBatchRetainLogsExperimentIds] = useState<number[]>([]);
@@ -151,14 +154,14 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
   } = useSettings<ExperimentListSettings>(settingsConfig);
 
   const experimentMap = useMemo(() => {
-    return [...experiments, ...selectedExperiments].reduce(
+    return [...experiments, ...hiddenSelectedExperiments].reduce(
       (acc: Record<RecordKey, ProjectExperiment>, experiment) => {
         acc[experiment.id] = getProjectExperimentForExperimentItem(experiment, project);
         return acc;
       },
       {},
     );
-  }, [experiments, project, selectedExperiments]);
+  }, [experiments, project, hiddenSelectedExperiments]);
 
   const filterCount = useMemo(() => activeSettings(filterKeys).length, [activeSettings]);
 
@@ -230,10 +233,12 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, isLoadingSettings, settings, labelsString, pinnedString, statesString, usersString]);
 
-  const fetchSelectedExperiments = useCallback(async (): Promise<void> => {
+  const fetchHiddenSelectedExperiments = useCallback(async (): Promise<void> => {
     try {
       if ((settings.row?.length ?? 0) > 0) {
-        const chunkedSelectedExperimentIds = _.chunk(settings.row ?? [], 50);
+        const fetchedExpIds = new Set(experiments.map((exp) => exp.id));
+        const hiddenExpIds = (settings.row ?? []).filter((id) => !fetchedExpIds.has(id));
+        const chunkedSelectedExperimentIds = _.chunk(hiddenExpIds, settings.tableLimit);
         const selectedExpriments = await Promise.all(
           chunkedSelectedExperimentIds.map(async (ids) => {
             const expResponse = await getExperiments(
@@ -243,12 +248,12 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
             return expResponse.experiments;
           }),
         );
-        setSelectedExperiments(selectedExpriments.flat());
+        setHiddenSelectedExperiments(selectedExpriments.flat());
       }
     } catch (e) {
-      handleError(e, { publicSubject: 'Unable to fetch experiments.' });
+      handleError(e, { publicSubject: 'Unable to fetch selected experiments.' });
     }
-  }, [settings.row]);
+  }, [experiments, settings.row, settings.tableLimit]);
 
   const fetchLabels = useCallback(async () => {
     try {
@@ -264,10 +269,14 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
   }, [id]);
 
   const fetchAll = useCallback(async () => {
-    await Promise.allSettled([fetchExperiments(), fetchLabels(), fetchSelectedExperiments()]);
-  }, [fetchExperiments, fetchLabels, fetchSelectedExperiments]);
+    await Promise.allSettled([fetchExperiments(), fetchLabels()]);
+  }, [fetchExperiments, fetchLabels]);
 
   const { stopPolling } = usePolling(fetchAll, { rerunOnNewFn: true });
+  const { stopPolling: stopHiddenSelectExpPolling } = usePolling(fetchHiddenSelectedExperiments, {
+    interval: 30_000, // 30s
+    rerunOnNewFn: true,
+  });
 
   const experimentTags = useExperimentTags(fetchAll);
 
@@ -925,8 +934,11 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
   }, []);
 
   useEffect(() => {
-    return () => stopPolling();
-  }, [stopPolling]);
+    return () => {
+      stopPolling();
+      stopHiddenSelectExpPolling();
+    };
+  }, [stopHiddenSelectExpPolling, stopPolling]);
 
   useEffect(() => {
     const currentCanceler = canceler.current;
