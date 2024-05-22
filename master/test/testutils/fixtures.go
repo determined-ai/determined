@@ -198,7 +198,7 @@ func CurrentLogstashElasticIndex() string {
 // APICredentials takes a context and a connected apiv1.DeterminedClient and returns a context
 // with credentials or an error if unable to login with defaults.
 func APICredentials(ctx context.Context, cl apiv1.DeterminedClient) (context.Context, error) {
-	resp, err := cl.Login(context.TODO(), &apiv1.LoginRequest{Username: defaultUsername})
+	resp, err := cl.Login(context.TODO(), &apiv1.LoginRequest{Username: defaultUsername, Password: DefaultUserPassword})
 	if err != nil {
 		return nil, fmt.Errorf("failed to login: %w", err)
 	}
