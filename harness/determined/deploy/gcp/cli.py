@@ -11,6 +11,7 @@ import termcolor
 import determined
 from determined import cli
 from determined.cli import errors
+from determined.common.api import authentication
 from determined.deploy import errors as deploy_errors
 from determined.deploy.gcp import constants, gcp
 
@@ -198,6 +199,8 @@ def deploy_gcp(command: str, args: argparse.Namespace) -> None:
             initial_user_password_check = getpass.getpass("Enter the password again: ")
             if initial_user_password != initial_user_password_check:
                 raise ValueError("passwords did not match")
+            authentication.check_password_complexity(initial_user_password)
+
         det_configs["initial_user_password"] = initial_user_password
 
     print("Starting Determined deployment on GCP...\n")

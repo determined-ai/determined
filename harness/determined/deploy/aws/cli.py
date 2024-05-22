@@ -11,6 +11,7 @@ import termcolor
 from botocore import exceptions
 
 from determined import cli
+from determined.common.api import authentication
 from determined.deploy import errors
 from determined.deploy.aws import aws, constants, preflight
 from determined.deploy.aws.deployment_types import base, govcloud, secure, simple, vpc
@@ -306,6 +307,7 @@ def deploy_aws(command: str, args: argparse.Namespace) -> None:
             initial_user_password_check = getpass.getpass("Enter the password again: ")
             if initial_user_password != initial_user_password_check:
                 raise ValueError("passwords did not match")
+            authentication.check_password_complexity(initial_user_password)
 
         deployment_object.add_parameters(
             {constants.cloudformation.INITIAL_USER_PASSWORD: initial_user_password}
