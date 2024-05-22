@@ -11,6 +11,7 @@ import { useTheme } from 'hew/Theme';
 import Toggle from 'hew/Toggle';
 import { Body } from 'hew/Typography';
 import { Loadable } from 'hew/utils/loadable';
+import _ from 'lodash';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
@@ -124,6 +125,7 @@ const MenuKey = {
 
 const ExperimentList: React.FC<Props> = ({ project }) => {
   const [experiments, setExperiments] = useState<BulkExperimentItem[]>([]);
+  const [selectedExperiments, setSelectedExperiments] = useState<BulkExperimentItem[]>([]);
   const [labels, setLabels] = useState<string[]>([]);
   const [batchMovingExperimentIds, setBatchMovingExperimentIds] = useState<number[]>();
   const [batchRetainLogsExperimentIds, setBatchRetainLogsExperimentIds] = useState<number[]>([]);
@@ -149,14 +151,14 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
   } = useSettings<ExperimentListSettings>(settingsConfig);
 
   const experimentMap = useMemo(() => {
-    return (experiments || []).reduce(
-      (acc, experiment) => {
+    return [...experiments, ...selectedExperiments].reduce(
+      (acc: Record<RecordKey, ProjectExperiment>, experiment) => {
         acc[experiment.id] = getProjectExperimentForExperimentItem(experiment, project);
         return acc;
       },
-      {} as Record<RecordKey, ProjectExperiment>,
+      {},
     );
-  }, [experiments, project]);
+  }, [experiments, project, selectedExperiments]);
 
   const filterCount = useMemo(() => activeSettings(filterKeys).length, [activeSettings]);
 
@@ -228,6 +230,26 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, isLoadingSettings, settings, labelsString, pinnedString, statesString, usersString]);
 
+  const fetchSelectedExperiments = useCallback(async (): Promise<void> => {
+    try {
+      if ((settings.row?.length ?? 0) > 0) {
+        const chunkedSelectedExperimentIds = _.chunk(settings.row ?? [], 50);
+        const selectedExpriments = await Promise.all(
+          chunkedSelectedExperimentIds.map(async (ids) => {
+            const expResponse = await getExperiments(
+              { experimentIdFilter: { incl: ids } },
+              { signal: canceler.current.signal },
+            );
+            return expResponse.experiments;
+          }),
+        );
+        setSelectedExperiments(selectedExpriments.flat());
+      }
+    } catch (e) {
+      handleError(e, { publicSubject: 'Unable to fetch experiments.' });
+    }
+  }, [settings.row]);
+
   const fetchLabels = useCallback(async () => {
     try {
       const labels = await getExperimentLabels(
@@ -242,8 +264,8 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
   }, [id]);
 
   const fetchAll = useCallback(async () => {
-    await Promise.allSettled([fetchExperiments(), fetchLabels()]);
-  }, [fetchExperiments, fetchLabels]);
+    await Promise.allSettled([fetchExperiments(), fetchLabels(), fetchSelectedExperiments()]);
+  }, [fetchExperiments, fetchLabels, fetchSelectedExperiments]);
 
   const { stopPolling } = usePolling(fetchAll, { rerunOnNewFn: true });
 
