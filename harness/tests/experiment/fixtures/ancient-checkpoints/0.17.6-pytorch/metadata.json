@@ -38,8 +38,8 @@
       },
       "force_pull_image": false,
       "image": {
-        "cpu": "determinedai/tensorflow-ngc-dev:8b3bea3",
-        "cuda": "determinedai/tensorflow-ngc-dev:8b3bea3",
+        "cpu": "determinedai/pytorch-tensorflow-cpu-dev:8b3bea3",
+        "cuda": "determinedai/pytorch-tensorflow-cuda-dev:8b3bea3",
         "rocm": "determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-622d512"
       },
       "pod_spec": null,
