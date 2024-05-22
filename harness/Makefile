@@ -36,10 +36,11 @@ test-cpu:
 	mkdir -p $(TEST_RESULTS_DIR)
 	coverage run -m pytest -v --runslow --durations=0 -m "not gpu or cpu" --junitxml=$(TEST_RESULTS_DIR)/test-cpu.xml tests
 
-.PHONY: test-gpu-tf
-test-gpu-tf:
+.PHONY: test-gpu
+test-gpu:
 	mkdir -p $(TEST_RESULTS_DIR)
-	coverage run -m pytest -v --runslow --durations=0 -m "gpu" --junitxml=$(TEST_RESULTS_DIR)/test-gpu.xml tests/experiment/keras
+	# Since integration tests are image-specific, they must be excluded and run separately
+	coverage run -m pytest -v --runslow --durations=0 -m "gpu" --junitxml=$(TEST_RESULTS_DIR)/test-gpu.xml tests/experiment --ignore=tests/experiment/integrations
 
 .PHONY: test-gpu-deepspeed
 test-gpu-deepspeed:
@@ -49,7 +50,7 @@ test-gpu-deepspeed:
 .PHONY: test-gpu-parallel
 test-gpu-parallel:
 	mkdir -p $(TEST_RESULTS_DIR)
-	coverage run -m pytest -v --runslow --durations=0 -m tests/experiment -m "gpu_parallel" --junitxml=$(TEST_RESULTS_DIR)/test-gpu-parallel.xml tests/experiment/pytorch
+	coverage run -m pytest -v --runslow --durations=0 -m tests/experiment -m "gpu_parallel" --junitxml=$(TEST_RESULTS_DIR)/test-gpu-parallel.xml tests/experiment --ignore=tests/experiment/integrations
 
 .PHONY: test-pytorch-cpu
 test-pytorch-cpu:
@@ -69,6 +70,12 @@ test:
 .PHONY: test-tf2
 test-tf2:
 	mkdir -p $(TEST_RESULTS_DIR)
+	pip freeze | grep "tensorflow==2.*"
+	# We must run these tests separately becuase estimators need to disable v2
+	# behavior (a global operation). We are explicitly testing eager execution
+	# for tf keras which needs v2 behavior enabled. You can't enable v2 behavior
+	# anywhere but the "start" of your program. See:
+	# https://github.com/tensorflow/tensorflow/issues/18304#issuecomment-379435515.
 	coverage run -a -m pytest -v --runslow --durations=0 -m "not gpu" --junitxml=$(TEST_RESULTS_DIR)/test-tf2.xml tests/experiment/keras
 
 .PHONY: clean

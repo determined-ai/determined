@@ -694,8 +694,8 @@
         "environment_variables": {},
         "force_pull_image": false,
         "image": {
-          "cpu": "determinedai/pytorch-ngc-dev:8b3bea3",
-          "gpu": "determinedai/pytorch-ngc-dev:8b3bea3"
+          "cpu": "determinedai/pytorch-tensorflow-cpu-dev:8b3bea3",
+          "gpu": "determinedai/pytorch-tensorflow-cuda-dev:8b3bea3"
         },
         "pod_spec": null,
         "ports": null
@@ -838,8 +838,8 @@
         "environment_variables": {},
         "force_pull_image": false,
         "image": {
-          "cpu": "determinedai/tensorflow-ngc-dev:8b3bea3",
-          "gpu": "determinedai/tensorflow-ngc-dev:8b3bea3"
+          "cpu": "determinedai/pytorch-tensorflow-cpu-dev:8b3bea3",
+          "gpu": "determinedai/pytorch-tensorflow-cuda-dev:8b3bea3"
         },
         "pod_spec": {
           "metadata": {

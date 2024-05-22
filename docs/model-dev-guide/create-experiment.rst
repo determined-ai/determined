@@ -197,7 +197,7 @@ a distributed training context, the entry point is:
 
 .. code:: bash
 
-   python3 -m determined.launch.torch_distributed --trial model_def:TrialClass
+   python3 -m determined.launch.horovod --trial model_def:TrialClass
 
 Nested Launchers
 ================
@@ -210,7 +210,7 @@ Example:
 
 .. code:: bash
 
-   dlprof --mode=simple python3 -m determined.launch.torch_distributed --trial model_def:MnistTrial
+   dlprof --mode=simple python3 -m determined.launch.autohorovod --trial model_def:MnistTrial
 
 ************************
  Creating an Experiment
