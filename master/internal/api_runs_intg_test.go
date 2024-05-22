@@ -6,6 +6,7 @@ package internal
 import (
 	"context"
 	"fmt"
+	"slices"
 	"testing"
 	"time"
 
@@ -20,6 +21,19 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/taskv1"
 )
+
+// Retrieves the hyperparameters of a given project.
+func getTestProjectHyperparmeters(ctx context.Context, t *testing.T, projectID int) []string {
+	var hyperparameters []string
+	err := db.Bun().NewSelect().
+		Table("project_hparams").
+		Column("hparam").
+		Where("project_id = ?", projectID).
+		Scan(ctx, &hyperparameters)
+	require.NoError(t, err)
+
+	return hyperparameters
+}
 
 func TestSearchRunsArchivedExperiment(t *testing.T) {
 	api, curUser, ctx := setupAPITest(t, nil)
@@ -491,7 +505,7 @@ func TestMoveRunsFilter(t *testing.T) {
 		HParams:      hyperparameters1,
 	}, task1.TaskID))
 
-	hyperparameters2 := map[string]any{"global_batch_size": 1, "test1": map[string]any{"test2": 5}}
+	hyperparameters2 := map[string]any{"test1": map[string]any{"test2": 5}}
 	task2 := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
 	require.NoError(t, db.AddTask(ctx, task2))
 	require.NoError(t, db.AddTrial(ctx, &model.Trial{
@@ -500,6 +514,11 @@ func TestMoveRunsFilter(t *testing.T) {
 		StartTime:    time.Now(),
 		HParams:      hyperparameters2,
 	}, task2.TaskID))
+
+	projHparam := getTestProjectHyperparmeters(ctx, t, projectIDInt)
+	require.Len(t, projHparam, 2)
+	require.True(t, slices.Contains(projHparam, "test1.test2"))
+	require.True(t, slices.Contains(projHparam, "global_batch_size"))
 
 	req := &apiv1.SearchRunsRequest{
 		ProjectId: &sourceprojectID,
@@ -540,6 +559,17 @@ func TestMoveRunsFilter(t *testing.T) {
 	resp, err = api.SearchRuns(ctx, req)
 	require.NoError(t, err)
 	require.Len(t, resp.Runs, 1)
+
+	// Hyperparam moved out of project A
+	projHparam = getTestProjectHyperparmeters(ctx, t, projectIDInt)
+	require.Len(t, projHparam, 1)
+	require.Equal(t, "test1.test2", projHparam[0])
+
+	// Hyperparams moved into project B
+	projHparam = getTestProjectHyperparmeters(ctx, t, projectID2Int)
+	require.Len(t, projHparam, 2)
+	require.True(t, slices.Contains(projHparam, "test1.test2"))
+	require.True(t, slices.Contains(projHparam, "global_batch_size"))
 }
 
 func TestDeleteRunsNonTerminal(t *testing.T) {
@@ -659,7 +689,7 @@ func TestDeleteRunsFilter(t *testing.T) {
 		HParams:      hyperparameters1,
 	}, task1.TaskID))
 
-	hyperparameters2 := map[string]any{"global_batch_size": 1, "test1": map[string]any{"test2": 5}}
+	hyperparameters2 := map[string]any{"test1": map[string]any{"test2": 5}}
 	task2 := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
 	require.NoError(t, db.AddTask(ctx, task2))
 	require.NoError(t, db.AddTrial(ctx, &model.Trial{
@@ -668,6 +698,11 @@ func TestDeleteRunsFilter(t *testing.T) {
 		StartTime:    time.Now(),
 		HParams:      hyperparameters2,
 	}, task2.TaskID))
+
+	projHparam := getTestProjectHyperparmeters(ctx, t, projectIDInt)
+	require.Len(t, projHparam, 2)
+	require.True(t, slices.Contains(projHparam, "test1.test2"))
+	require.True(t, slices.Contains(projHparam, "global_batch_size"))
 
 	filter := `{
 		"filterGroup": {
@@ -701,6 +736,10 @@ func TestDeleteRunsFilter(t *testing.T) {
 		Filter:    ptrs.Ptr(`{"showArchived":true}`),
 		Sort:      ptrs.Ptr("id=asc"),
 	}
+
+	projHparam = getTestProjectHyperparmeters(ctx, t, projectIDInt)
+	require.Len(t, projHparam, 1)
+	require.Equal(t, "test1.test2", projHparam[0])
 
 	searchResp, err := api.SearchRuns(ctx, searchReq)
 	require.NoError(t, err)

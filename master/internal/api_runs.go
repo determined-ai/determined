@@ -197,6 +197,7 @@ func sortRuns(sortString *string, runQuery *bun.SelectQuery) error {
 		"externalRunId":         "r.external_run_id",
 		"experimentId":          "e.id",
 		"isExpMultitrial":       "((SELECT COUNT(*) FROM runs r WHERE e.id = r.experiment_id) > 1)",
+		"parentArchived":        "(w.archived OR p.archived)",
 	}
 	sortParams := strings.Split(*sortString, ",")
 	hasIDSort := false
@@ -384,22 +385,32 @@ func (a *apiServer) MoveRuns(
 				failedExpMoveIds = append(failedExpMoveIds, res.ID)
 			}
 		}
-		var acceptedIDs []int32
-		if _, err = db.Bun().NewUpdate().Table("runs").
-			Set("project_id = ?", req.DestinationProjectId).
-			Where("runs.id IN (?)", bun.In(validIDs)).
-			Where("runs.experiment_id NOT IN (?)", bun.In(failedExpMoveIds)).
-			Returning("runs.id").
-			Model(&acceptedIDs).
-			Exec(ctx); err != nil {
-			return nil, fmt.Errorf("updating run's project IDs: %w", err)
-		}
+		err = db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+			var acceptedIDs []int32
+			if _, err = tx.NewUpdate().Table("runs").
+				Set("project_id = ?", req.DestinationProjectId).
+				Where("runs.id IN (?)", bun.In(validIDs)).
+				Where("runs.experiment_id NOT IN (?)", bun.In(failedExpMoveIds)).
+				Returning("runs.id").
+				Model(&acceptedIDs).
+				Exec(ctx); err != nil {
+				return fmt.Errorf("updating run's project IDs: %w", err)
+			}
 
-		for _, acceptID := range acceptedIDs {
-			results = append(results, &apiv1.RunActionResult{
-				Error: "",
-				Id:    acceptID,
-			})
+			for _, acceptID := range acceptedIDs {
+				results = append(results, &apiv1.RunActionResult{
+					Error: "",
+					Id:    acceptID,
+				})
+			}
+
+			if err = db.AddProjectHparams(ctx, tx, int(req.DestinationProjectId), acceptedIDs); err != nil {
+				return err
+			}
+			return db.RemoveOutdatedProjectHparams(ctx, tx, int(req.SourceProjectId))
+		})
+		if err != nil {
+			return nil, err
 		}
 		var failedRunIDs []int32
 		if err = db.Bun().NewSelect().Table("runs").
@@ -623,6 +634,17 @@ func (a *apiServer) DeleteRuns(ctx context.Context, req *apiv1.DeleteRunsRequest
 			Error: "",
 			Id:    int32(acceptID),
 		})
+	}
+
+	// delete run hparams
+	if _, err = tx.NewDelete().Table("run_hparams").
+		Where("run_id IN (?)", bun.In(acceptedIDs)).
+		Exec(ctx); err != nil {
+		return nil, fmt.Errorf("deleting run hparams: %w", err)
+	}
+	// remove project hparams
+	if err = db.RemoveOutdatedProjectHparams(ctx, tx, int(req.ProjectId)); err != nil {
+		return nil, err
 	}
 
 	if err = tx.Commit(); err != nil {
