@@ -1149,6 +1149,11 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 				"`security.initial_user_password` setting.")
 			return errors.New("could not deploy without initial password")
 		}
+		err := user.CheckPasswordComplexity(password)
+		if err != nil {
+			log.Errorf("The initial user password failed a complexity check: %s", err)
+			return fmt.Errorf("the initial user password failed a complexity check: %w", err)
+		}
 		for _, username := range user.BuiltInUsers {
 			err := user.SetUserPassword(ctx, username, password)
 			if err != nil {
