@@ -50,9 +50,11 @@ const MenuKey = {
 } as const;
 
 const TemplateList: React.FC<Props> = ({ workspaceId }) => {
-  const { settings, updateSettings } = useSettings<Settings>(
-    settingsConfig(workspaceId ? workspaceId.toString() : 'global'),
-  );
+  const {
+    settings,
+    updateSettings,
+    isLoading: isLoadingSettings,
+  } = useSettings<Settings>(settingsConfig(workspaceId ? workspaceId.toString() : 'global'));
   const [selectedTemplate, setSelectedTemplate] = useState<Template>();
   const [templates, setTemplates] = useState<Template[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -66,6 +68,14 @@ const TemplateList: React.FC<Props> = ({ workspaceId }) => {
   const TemplateDeleteModal = useModal(TemplateDeleteModalComponent);
 
   const workspaces = Loadable.getOrElse([], useObservable(workspaceStore.workspaces));
+
+  const filters = useMemo(() => {
+    if (isLoadingSettings) return;
+
+    return {
+      name: settings.name,
+    };
+  }, [isLoadingSettings, settings.name]);
 
   const fetchTemplates = useCallback(async () => {
     try {
@@ -295,6 +305,7 @@ const TemplateList: React.FC<Props> = ({ workspaceId }) => {
           columns={columns}
           containerRef={pageRef}
           dataSource={templates}
+          filters={filters}
           interactiveColumns={false}
           loading={isLoading}
           pagination={getFullPaginationConfig(

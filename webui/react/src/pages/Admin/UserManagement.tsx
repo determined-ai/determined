@@ -211,8 +211,8 @@ const UserManagement: React.FC = () => {
   const [selectedUserIds, setSelectedUserIds] = useState<React.Key[]>([]);
   const [refresh, setRefresh] = useState<Record<string, never>>({});
   const [nameFilter, setNameFilter] = useState<string>('');
-  const [roleFilter, setRoleFilter] = useState<UserRole | number[] | ''>('');
-  const [statusFilter, setStatusFilter] = useState<UserStatus | ''>('');
+  const [roleFilter, setRoleFilter] = useState<UserRole | number[]>();
+  const [statusFilter, setStatusFilter] = useState<UserStatus>();
   const pageRef = useRef<HTMLElement>(null);
   const currentUser = Loadable.getOrElse(undefined, useObservable(userStore.currentUser));
   const loadableSettings = useObservable(userManagementSettings);
@@ -227,6 +227,22 @@ const UserManagement: React.FC = () => {
       userSettings.setPartial(UserManagementSettings, 'user-management', p),
     [],
   );
+
+  const filters = useMemo(() => {
+    if (loadableSettings.isNotLoaded) return;
+    const roleParam = Array.isArray(roleFilter)
+      ? {
+          roleIdAssignedDirectlyToUser: roleFilter,
+        }
+      : {
+          admin: roleFilter === UserRole.ADMIN,
+        };
+    return {
+      active: statusFilter === UserStatus.ACTIVE,
+      name: nameFilter,
+      ...roleParam,
+    };
+  }, [loadableSettings.isNotLoaded, nameFilter, roleFilter, statusFilter]);
 
   const userResponse = useAsync(async () => {
     try {
@@ -526,6 +542,7 @@ const UserManagement: React.FC = () => {
             columns={columns}
             containerRef={pageRef}
             dataSource={users}
+            filters={filters}
             interactiveColumns={false}
             loading={Loadable.isNotLoaded(userResponse)}
             pagination={Loadable.match(userResponse, {

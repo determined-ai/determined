@@ -94,8 +94,13 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
   const pageRef = useRef<HTMLElement>(null);
   const workspaceId = useMemo(() => workspace?.id.toString() ?? 'global', [workspace?.id]);
   const stgsConfig = useMemo(() => settingsConfig(workspaceId), [workspaceId]);
-  const { activeSettings, resetSettings, settings, updateSettings } =
-    useSettings<Settings>(stgsConfig);
+  const {
+    activeSettings,
+    resetSettings,
+    settings,
+    updateSettings,
+    isLoading: isLoadingSettings,
+  } = useSettings<Settings>(stgsConfig);
   const { canCreateNSC, canCreateWorkspaceNSC } = usePermissions();
   const { canModifyWorkspaceNSC } = usePermissions();
   const taskListModal = useModal(TaskListModalComponent);
@@ -111,6 +116,24 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
 
   const loadedTasks = useMemo(() => tasks?.map(taskFromCommandTask) || [], [tasks]);
 
+  const filters = useMemo(() => {
+    if (isLoadingSettings) return;
+    return {
+      limit: settings.tableLimit,
+      states: settings.state,
+      types: settings.type as CommandType[],
+      users: settings.user,
+      workspaces: settings.workspace,
+    };
+  }, [
+    isLoadingSettings,
+    settings.state,
+    settings.tableLimit,
+    settings.type,
+    settings.user,
+    settings.workspace,
+  ]);
+
   const filteredTasks = useMemo(() => {
     return filterTasks<CommandType, CommandTask>(
       loadedTasks,
@@ -124,7 +147,16 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
       users,
       settings.search,
     );
-  }, [loadedTasks, settings, users]);
+  }, [
+    loadedTasks,
+    settings.search,
+    settings.state,
+    settings.tableLimit,
+    settings.type,
+    settings.user,
+    settings.workspace,
+    users,
+  ]);
 
   const taskMap = useMemo(() => {
     return (loadedTasks || []).reduce(
@@ -622,6 +654,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
           ContextMenu={TaskActionDropdownCM}
           dataSource={filteredTasks}
           defaultColumns={stgsConfig.settings.columns.defaultValue}
+          filters={filters}
           loading={tasks === undefined || !settings}
           pagination={getFullPaginationConfig(
             {

@@ -117,6 +117,25 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
     [isLoading, isLoadingSettings],
   );
 
+  const filters = useMemo(() => {
+    if (isLoadingSettings) return;
+
+    return {
+      archived: settings.archived ? undefined : false,
+      description: settings.description,
+      labels: settings.tags,
+      name: settings.name,
+      users: settings.users,
+    };
+  }, [
+    isLoadingSettings,
+    settings.archived,
+    settings.description,
+    settings.name,
+    settings.tags,
+    settings.users,
+  ]);
+
   const fetchModels = useCallback(async () => {
     if (!settings) return;
 
@@ -711,6 +730,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
           containerRef={pageRef}
           ContextMenu={ModelActionDropdown}
           dataSource={models}
+          filters={filters}
           loading={isTableLoading}
           pagination={getFullPaginationConfig(
             {

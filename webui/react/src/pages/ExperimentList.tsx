@@ -170,6 +170,28 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
   const labelsString = useMemo(() => settings.label?.join('.'), [settings.label]);
   const usersString = useMemo(() => settings.user?.join('.'), [settings.user]);
 
+  const filters = useMemo(() => {
+    if (isLoadingSettings) return;
+
+    return {
+      archived: settings.archived ? undefined : false,
+      labels: settings.label,
+      name: settings.search,
+      states: validateDetApiEnumList(
+        Experimentv1State,
+        settings.state?.map((state) => encodeExperimentState(state as RunState)),
+      ),
+      users: settings.user,
+    };
+  }, [
+    isLoadingSettings,
+    settings.archived,
+    settings.label,
+    settings.search,
+    settings.state,
+    settings.user,
+  ]);
+
   const fetchExperiments = useCallback(async (): Promise<void> => {
     if (!settings || isLoadingSettings) return;
     try {
@@ -971,6 +993,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         containerRef={pageRef}
         ContextMenu={ContextMenu}
         dataSource={experiments}
+        filters={filters}
         loading={isLoading}
         numOfPinned={(settings.pinned?.[id] ?? []).length}
         pagination={getFullPaginationConfig(

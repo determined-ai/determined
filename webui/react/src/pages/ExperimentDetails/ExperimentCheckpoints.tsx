@@ -62,7 +62,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
   const models = useFetchModels();
 
   const config = useMemo(() => configForExperiment(experiment.id), [experiment.id]);
-  const { settings, updateSettings } = useSettings<Settings>(config);
+  const { settings, updateSettings, isLoading: isLoadingSettings } = useSettings<Settings>(config);
 
   const [checkpoint, setCheckpoint] = useState<CoreApiGenericCheckpoint>();
   const { checkpointModalComponents, openCheckpoint } = useCheckpointFlow({
@@ -263,13 +263,18 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
     stateFilterDropdown,
   ]);
 
-  const stateString = settings.state?.join('.');
+  const filters = useMemo(() => {
+    if (isLoadingSettings) return;
+    const states = settings.state?.map((state) => encodeCheckpointState(state as CheckpointState));
+
+    return { states: validateDetApiEnumList(Checkpointv1State, states) };
+  }, [isLoadingSettings, settings.state]);
+
   const fetchExperimentCheckpoints = useCallback(async () => {
     if (!settings) return;
+
+    const states = settings.state?.map((state) => encodeCheckpointState(state as CheckpointState));
     try {
-      const states = stateString
-        ?.split('.')
-        .map((state) => encodeCheckpointState(state as CheckpointState));
       const response = await getExperimentCheckpoints(
         {
           id: experiment.id,
@@ -294,7 +299,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
     } finally {
       setIsLoading(false);
     }
-  }, [experiment.id, canceler, settings, stateString, checkpoints]);
+  }, [settings, experiment.id, canceler.signal, checkpoints]);
 
   const submitBatchAction = useCallback(
     async (action: CheckpointAction) => {
@@ -375,6 +380,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
             containerRef={pageRef}
             ContextMenu={CheckpointActionDropdown}
             dataSource={checkpoints}
+            filters={filters}
             loading={isLoading}
             pagination={getFullPaginationConfig(
               {

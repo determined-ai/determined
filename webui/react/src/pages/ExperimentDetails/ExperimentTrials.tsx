@@ -69,7 +69,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
   const [canceler] = useState(new AbortController());
   const trialsComparisonModal = useModal(TrialsComparisonModalComponent);
   const config = useMemo(() => configForExperiment(experiment.id), [experiment.id]);
-  const { settings, updateSettings } = useSettings<Settings>(config);
+  const { settings, updateSettings, isLoading: isLoadingSettings } = useSettings<Settings>(config);
   const models = useFetchModels();
   const [checkpoint, setCheckpoint] = useState<CheckpointWorkloadExtended>();
   const { checkpointModalComponents, openCheckpoint } = useCheckpointFlow({
@@ -312,14 +312,17 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
     [columns, settings, updateSettings],
   );
 
-  const stateString = useMemo(() => settings.state?.join('.'), [settings.state]);
+  const filters = useMemo(() => {
+    if (isLoadingSettings) return;
+    const states = settings.state?.map((state) => encodeExperimentState(state as RunState));
+
+    return { states: validateDetApiEnumList(Experimentv1State, states) };
+  }, [isLoadingSettings, settings.state]);
+
   const fetchExperimentTrials = useCallback(async () => {
     if (!settings) return;
 
     try {
-      const states = stateString
-        ?.split('.')
-        .map((state) => encodeExperimentState(state as RunState));
       const { trials: experimentTrials, pagination: responsePagination } = await getExpTrials(
         {
           id: experiment.id,
@@ -327,7 +330,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
           offset: settings.tableOffset,
           orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
           sortBy: validateDetApiEnum(V1GetExperimentTrialsRequestSortBy, settings.sortKey),
-          states: validateDetApiEnumList(Experimentv1State, states),
+          ...filters,
         },
         { signal: canceler.signal },
       );
@@ -348,7 +351,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
     } finally {
       setIsLoading(false);
     }
-  }, [experiment.id, canceler, settings, stateString]);
+  }, [settings, experiment.id, filters, canceler.signal]);
 
   const sendBatchActions = useCallback(
     async (action: Action) => {
@@ -493,6 +496,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
           containerRef={pageRef}
           ContextMenu={TrialActionDropdown}
           dataSource={trials}
+          filters={filters}
           loading={isLoading}
           pagination={getFullPaginationConfig(
             {

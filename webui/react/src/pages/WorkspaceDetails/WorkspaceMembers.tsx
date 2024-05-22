@@ -111,7 +111,11 @@ const WorkspaceMembers: React.FC<Props> = ({
 }: Props) => {
   const { canAssignRoles } = usePermissions();
   const config = useMemo(() => configForWorkspace(workspace.id), [workspace.id]);
-  const { settings, updateSettings } = useSettings<WorkspaceMembersSettings>(config);
+  const {
+    settings,
+    updateSettings,
+    isLoading: isLoadingSettings,
+  } = useSettings<WorkspaceMembersSettings>(config);
   const userCanAssignRoles = canAssignRoles({ workspace });
 
   const userOrGroupWithRoles = getUserOrGroupWithRoleInfo(
@@ -123,6 +127,14 @@ const WorkspaceMembers: React.FC<Props> = ({
   const WorkspaceMemberAddModal = useModal(WorkspaceMemberAddModalComponent);
 
   const { rbacEnabled } = useObservable(determinedStore.info);
+
+  const filters = useMemo(() => {
+    if (isLoadingSettings) return;
+
+    return {
+      name: settings.name,
+    };
+  }, [isLoadingSettings, settings.name]);
 
   useEffect(() => {
     onFilterUpdate(settings.name);
@@ -255,6 +267,7 @@ const WorkspaceMembers: React.FC<Props> = ({
           columns={columns}
           containerRef={pageRef}
           dataSource={userOrGroupWithRoles}
+          filters={filters}
           pagination={getFullPaginationConfig(
             { limit: settings.tableLimit, offset: settings.tableOffset },
             userOrGroupWithRoles.length,
