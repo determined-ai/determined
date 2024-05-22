@@ -167,6 +167,7 @@ func checkReceiveTermination(
 	assert.Equal(t, newJob.container.State, cproto.Terminated)
 }
 
+// TODO(!!!): Rewrite these tests as minikube integration tests.
 func TestResourceCreationFailed(t *testing.T) {
 	setupEntrypoint(t)
 
@@ -175,7 +176,7 @@ func TestResourceCreationFailed(t *testing.T) {
 	ref, aID, sub := createJobWithMockQueue(t, nil)
 
 	purge(aID, sub)
-	assert.Equal(t, sub.Len(), 0)
+	require.Zero(t, sub.Len())
 	// Send a second start message to trigger an additional resource creation failure.
 	err := ref.createSpecAndSubmit(&tasks.TaskSpec{})
 	require.NoError(t, err)
@@ -190,7 +191,7 @@ func TestResourceCreationFailed(t *testing.T) {
 	if !ok {
 		t.Errorf("expected sproto.ContainerLog but received %s", reflect.TypeOf(message))
 	}
-	assert.ErrorContains(t, errors.New(*containerMsg.AuxMessage), correctMsg)
+	require.ErrorContains(t, errors.New(*containerMsg.AuxMessage), correctMsg)
 }
 
 func TestReceivePodStatusUpdateTerminated(t *testing.T) {
@@ -200,7 +201,7 @@ func TestReceivePodStatusUpdateTerminated(t *testing.T) {
 		t.Logf("Testing PodPending status")
 		ref, aID, sub := createJobWithMockQueue(t, nil)
 		purge(aID, sub)
-		assert.Equal(t, sub.Len(), 0)
+		require.Zero(t, sub.Len())
 
 		ref.jobDeletedCallback()
 		ref.finalize()
@@ -220,14 +221,14 @@ func TestReceivePodStatusUpdateTerminated(t *testing.T) {
 			t.Errorf("container stopped message not present (state=%s)", containerMsg.ResourcesState)
 		}
 
-		assert.Equal(t, ref.container.State, cproto.Terminated)
+		require.Equal(t, ref.container.State, cproto.Terminated)
 	})
 
 	t.Run("job failed", func(t *testing.T) {
 		t.Logf("Testing PodFailed status")
 		ref, aID, sub := createJobWithMockQueue(t, nil)
 		purge(aID, sub)
-		assert.Equal(t, sub.Len(), 0)
+		require.Zero(t, sub.Len())
 
 		job := batchV1.Job{
 			Status: batchV1.JobStatus{
@@ -245,7 +246,7 @@ func TestReceivePodStatusUpdateTerminated(t *testing.T) {
 	t.Run("pod succeeded", func(t *testing.T) {
 		ref, aID, sub := createJobWithMockQueue(t, nil)
 		purge(aID, sub)
-		assert.Equal(t, sub.Len(), 0)
+		require.Zero(t, sub.Len())
 
 		job := batchV1.Job{
 			Status: batchV1.JobStatus{

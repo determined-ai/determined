@@ -53,13 +53,8 @@ const (
 	determinedSystemLabel     = "determined-system"
 
 	kubernetesJobNameLabel = "batch.kubernetes.io/job-name"
-)
 
-const resourceTypeNvidia = "nvidia.com/gpu"
-
-const (
-	getAgentsCacheDuration = 15 * time.Second
-	summarizeCacheDuration = 5 * time.Second
+	resourceTypeNvidia = "nvidia.com/gpu"
 )
 
 type summarizeResult struct {
@@ -75,14 +70,12 @@ type jobMetadata struct {
 // High lever overview of the actors within the kubernetes package:
 //
 //	jobsService
-//	  +- pod(s): manages pod lifecycle. One per container in a task.
+//	  +- job(s): manages pod lifecycle. One per container in a task.
 //	     +- podLogStreamer: stream logs for a specific pod.
 //	  +- informer: sends updates about pod states
 //	  +- events: sends updates about kubernetes events.
 //	  +- requestQueue: queues requests to create / delete kubernetes resources.
 //	     +- requestProcessingWorkers: processes request to create / delete kubernetes resources.
-//
-// TODO(DET-10011): Give this literal a more intuitive name.
 type jobsService struct {
 	// Configuration details. Set in initialization (the `newJobService` constructor) and never modified after.
 	namespace             string
@@ -105,7 +98,7 @@ type jobsService struct {
 	configMapInterfaces        map[string]typedV1.ConfigMapInterface
 	jobInterfaces              map[string]typedBatchV1.JobInterface
 	resourceRequestQueue       *requestQueue
-	jobSchedulingStateCallback jobSchedulingStateCallbackFn
+	jobSchedulingStateCallback jobSchedulingStateCallback
 
 	// Internal state. Access should be protected.
 	wg                                waitgroupx.Group
@@ -140,7 +133,7 @@ func newJobsService(
 	detMasterIP string,
 	detMasterPort int32,
 	kubeconfigPath string,
-	jobSchedulingStateCallback jobSchedulingStateCallbackFn,
+	jobSchedulingStateCb jobSchedulingStateCallback,
 ) (*jobsService, error) {
 	p := &jobsService{
 		wg: waitgroupx.WithContext(context.Background()),
@@ -167,7 +160,7 @@ func newJobsService(
 		configMapInterfaces:               make(map[string]typedV1.ConfigMapInterface),
 		jobInterfaces:                     make(map[string]typedBatchV1.JobInterface),
 		syslog:                            logrus.WithField("namespace", namespace),
-		jobSchedulingStateCallback:        jobSchedulingStateCallback,
+		jobSchedulingStateCallback:        jobSchedulingStateCb,
 
 		kubeconfigPath: kubeconfigPath,
 	}
@@ -676,7 +669,6 @@ func (j *jobsService) refreshJobState(allocationID model.AllocationID) error {
 		if _, ok := j.namespaceToPoolName[job.Namespace]; !ok {
 			continue
 		}
-		job := job
 		j.jobUpdatedCallback(&job)
 	}
 	return nil
@@ -698,7 +690,6 @@ func (j *jobsService) refreshPodStates(allocationID model.AllocationID) error {
 		if _, ok := j.namespaceToPoolName[pod.Namespace]; !ok {
 			continue
 		}
-		pod := pod
 		j.podStatusCallback(&pod)
 	}
 	return nil
@@ -1347,6 +1338,8 @@ func (j *jobsService) getSlot(agentID string, slotID string) *apiv1.GetSlotRespo
 	return &apiv1.GetSlotResponse{Slot: slot}
 }
 
+const getAgentsCacheDuration = 15 * time.Second
+
 func (j *jobsService) getAgents() *apiv1.GetAgentsResponse {
 	j.getAgentsCacheLock.Lock()
 	defer j.getAgentsCacheLock.Unlock()
@@ -1380,6 +1373,8 @@ func (j *jobsService) getAgent(agentID string) *apiv1.GetAgentResponse {
 	agentSummary.ResourcePool = nodesToPools[agentSummary.ID]
 	return &apiv1.GetAgentResponse{Agent: agentSummary.ToProto()}
 }
+
+const summarizeCacheDuration = 5 * time.Second
 
 // summarize describes pods' available resources. When there's exactly one resource pool, it uses
 // the whole cluster's info. Otherwise, it matches nodes to resource pools using taints and

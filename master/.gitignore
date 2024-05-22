@@ -22,7 +22,6 @@ vendor/
 
 # Output of the go coverage tool
 *.out
-coverage.html
 
 # VS Code Workspace
 *.code-workspace

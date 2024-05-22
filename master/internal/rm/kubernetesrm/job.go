@@ -292,7 +292,7 @@ func (j *job) podUpdatedCallback(updatedPod k8sV1.Pod) error {
 	if allPodsAtLeastStarting && !j.sentStartingEvent {
 		// Kubernetes does not have an explicit state for pulling container images.
 		// We insert it here because our  current implementation of the trial actor requires it.
-		j.syslog.Infof("pod %s is pulling images and starting", podName)
+		j.syslog.WithField("pod-name", podName).Info("pod is pulling images and starting")
 		j.container.State = cproto.Pulling
 		j.informTaskResourcesState()
 
@@ -319,14 +319,14 @@ func (j *job) podUpdatedCallback(updatedPod k8sV1.Pod) error {
 
 	allPodsAtLeastRunning := all(cproto.Running.Before, maps.Values(j.podStates)...)
 	if allPodsAtLeastRunning && !j.sentRunningEvent {
-		j.syslog.Infof("pod %s is running", podName)
+		j.syslog.WithField("pod-name", podName).Info("pod is running")
 		j.container.State = cproto.Running
 		j.informTaskResourcesStarted(sproto.ResourcesStarted{NativeResourcesID: j.jobName})
 		j.sentRunningEvent = true
 	}
 
 	if updatedPodState == cproto.Terminated && !j.podExits[podName] {
-		j.syslog.Infof("pod %s terminated", podName)
+		j.syslog.WithField("pod-name", podName).Info("pod is terminated")
 		exit, err := getExitCodeAndMessage(&updatedPod, j.containerNames)
 		if err != nil {
 			if updatedPod.ObjectMeta.DeletionTimestamp == nil {
@@ -520,14 +520,16 @@ func (j *job) informTaskResourcesStarted(rs sproto.ResourcesStarted) {
 
 func (j *job) informTaskResourcesStopped() {
 	if !j.sentTerminationEvent {
-		rmevents.Publish(j.allocationID, &sproto.ResourcesStateChanged{
-			ResourcesID:      sproto.FromContainerID(j.container.ID),
-			ResourcesState:   sproto.FromContainerState(j.container.State),
-			ResourcesStopped: &sproto.ResourcesStopped{Failure: j.exitCause()},
-			Container:        j.container.DeepCopy(),
-		})
-		j.sentTerminationEvent = true
+		return
 	}
+
+	rmevents.Publish(j.allocationID, &sproto.ResourcesStateChanged{
+		ResourcesID:      sproto.FromContainerID(j.container.ID),
+		ResourcesState:   sproto.FromContainerState(j.container.State),
+		ResourcesStopped: &sproto.ResourcesStopped{Failure: j.exitCause()},
+		Container:        j.container.DeepCopy(),
+	})
+	j.sentTerminationEvent = true
 }
 
 func (j *job) receiveContainerLog(msg sproto.ContainerLog) {

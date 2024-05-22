@@ -517,7 +517,7 @@ func (k ResourceManager) TaskContainerDefaults(
 	return result, nil
 }
 
-type jobSchedulingStateCallbackFn func(jobSchedulingStateChanged)
+type jobSchedulingStateCallback func(jobSchedulingStateChanged)
 
 type jobSchedulingStateChanged struct {
 	AllocationID model.AllocationID
