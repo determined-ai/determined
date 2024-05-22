@@ -161,6 +161,8 @@ func (p *pod) configureProxyResources() []gatewayProxyResource {
 			p.submissionInfo.taskSpec.TaskType, shortTaskID, shortAllocID, portIndex, uuidStr)
 		sharedName := tooLong[:min(63, len(tooLong)-1)]
 		return sharedName
+		// TODO: use for section name in the listeners as well? `/` is an invalid char for section
+		// name.
 	}
 
 	var resources []gatewayProxyResource
