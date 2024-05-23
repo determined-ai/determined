@@ -2694,6 +2694,11 @@ jobs:
               echo "export OPT_DEVBOX_PREFIX=circleci-job-$(echo -n "${CIRCLE_USERNAME}-${CIRCLE_BRANCH}-${CIRCLE_JOB}" | md5sum | awk '{print $1}')" >> "$BASH_ENV"
             fi
 
+      - run:
+          name: Set initial user password
+          command: |
+            echo "export INITIAL_USER_PASSWORD=${INITIAL_USER_PASSWORD}" >> "$BASH_ENV"
+
       - attach_workspace:
           at: .
 
