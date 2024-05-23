@@ -164,24 +164,38 @@ test.describe('Experiement List', () => {
     const tableFilter = projectDetailsPage.f_experiemntList.tableActionBar.tableFilter;
     const totalExperiments = await getExpNum();
 
-    await test.step('Filter on ID', async () => {
-      await tableFilter.open();
-      await tableFilter.filterForm.filter.filterFields.columnName.selectMenuOption('ID');
-      await expect(tableFilter.filterForm.filter.filterFields.operator.pwLocator).toHaveText('=');
-      await tableFilter.filterForm.filter.filterFields.operator.selectMenuOption('=');
-      await tableFilter.filterForm.filter.filterFields.valueNumber.pwLocator.fill('1');
-      await waitTableStable();
-      await expect.poll(async () => await getExpNum()).toBe(1);
-      await closePopover();
-    });
+    const filterScenario = async (
+      name: string,
+      scenario: () => Promise<void>,
+      expectedValue: number,
+    ) => {
+      await test.step(name, async () => {
+        await tableFilter.open();
+        await scenario();
+        await waitTableStable();
+        await expect.poll(async () => await getExpNum()).toBe(expectedValue);
+        await closePopover();
+      });
+    };
 
-    await test.step('Filter against ID', async () => {
-      await tableFilter.open();
-      await tableFilter.filterForm.filter.filterFields.operator.selectMenuOption('!=');
-      await waitTableStable();
-      await expect.poll(async () => await getExpNum()).toBe(totalExperiments - 1);
-      await closePopover();
-    });
+    await filterScenario(
+      'Filter with ID',
+      async () => {
+        await tableFilter.filterForm.filter.filterFields.columnName.selectMenuOption('ID');
+        await expect(tableFilter.filterForm.filter.filterFields.operator.pwLocator).toHaveText('=');
+        await tableFilter.filterForm.filter.filterFields.operator.selectMenuOption('=');
+        await tableFilter.filterForm.filter.filterFields.valueNumber.pwLocator.fill('1');
+      },
+      1,
+    );
+
+    await filterScenario(
+      'Filter against ID',
+      async () => {
+        await tableFilter.filterForm.filter.filterFields.operator.selectMenuOption('!=');
+      },
+      totalExperiments - 1,
+    );
   });
 
   test('Click around the data grid', async ({ authedPage }) => {
