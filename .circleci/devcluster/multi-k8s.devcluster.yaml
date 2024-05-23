@@ -55,3 +55,7 @@ stages:
             determined_master_port: 8080
           resource_pools:
             - pool_name: additional_pool
+          expose_proxies_externally:
+            gateway_name: contour
+            gateway_namespace: projectcontour
+            gateway_address: $GATEWAY_IP
