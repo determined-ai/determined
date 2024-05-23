@@ -235,11 +235,11 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
 
   const fetchHiddenSelectedExperiments = useCallback(async (): Promise<void> => {
     try {
-      if ((settings.row?.length ?? 0) > 0) {
-        const fetchedExpIds = new Set(experiments.map((exp) => exp.id));
-        const hiddenExpIds = (settings.row ?? []).filter((id) => !fetchedExpIds.has(id));
-        const chunkedSelectedExperimentIds = _.chunk(hiddenExpIds, settings.tableLimit);
-        const selectedExpriments = await Promise.all(
+      const fetchedExpIds = new Set(experiments.map((exp) => exp.id));
+      const hiddenSelectedExpIds = (settings.row ?? []).filter((id) => !fetchedExpIds.has(id));
+      if (hiddenSelectedExpIds.length > 0) {
+        const chunkedSelectedExperimentIds = _.chunk(hiddenSelectedExpIds, settings.tableLimit);
+        const selectedExperiments = await Promise.all(
           chunkedSelectedExperimentIds.map(async (ids) => {
             const expResponse = await getExperiments(
               { experimentIdFilter: { incl: ids } },
@@ -248,7 +248,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
             return expResponse.experiments;
           }),
         );
-        setHiddenSelectedExperiments(selectedExpriments.flat());
+        setHiddenSelectedExperiments(selectedExperiments.flat());
       }
     } catch (e) {
       handleError(e, { publicSubject: 'Unable to fetch selected experiments.' });
