@@ -4312,6 +4312,7 @@ workflows:
             # that's required by the "gh" command for authentication.
             - github-read
             - gcp
+            - gcp-ci-cluster-default-user-credentials
           matrix:
             parameters:
               name: [test-e2e-slurm-singularity-gcp]
@@ -4330,6 +4331,7 @@ workflows:
             # that's required by the "gh" command for authentication.
             - github-read
             - gcp
+            - gcp-ci-cluster-default-user-credentials
           matrix:
             parameters:
               name: [test-e2e-slurm-podman-gcp]
@@ -4349,6 +4351,7 @@ workflows:
             # that's required by the "gh" command for authentication.
             - github-read
             - gcp
+            - gcp-ci-cluster-default-user-credentials
           matrix:
             parameters:
               name: [test-e2e-slurm-enroot-gcp]
@@ -4368,6 +4371,7 @@ workflows:
             # that's required by the "gh" command for authentication.
             - github-read
             - gcp
+            - gcp-ci-cluster-default-user-credentials
           matrix:
             parameters:
               name: [test-e2e-pbs-singularity-gcp]
@@ -4387,6 +4391,7 @@ workflows:
             # that's required by the "gh" command for authentication.
             - github-read
             - gcp
+            - gcp-ci-cluster-default-user-credentials
           matrix:
             parameters:
               name: [test-e2e-pbs-podman-gcp]
@@ -4408,6 +4413,7 @@ workflows:
             # that's required by the "gh" command for authentication.
             - github-read
             - gcp
+            - gcp-ci-cluster-default-user-credentials
           matrix:
             parameters:
               name: [test-e2e-pbs-enroot-gcp]
@@ -4428,6 +4434,7 @@ workflows:
             # that's required by the "gh" command for authentication.
             - github-read
             - gcp
+            - gcp-ci-cluster-default-user-credentials
           matrix:
             parameters:
               name: [test-e2e-slurm-agent-podman-gcp]
@@ -5213,6 +5220,7 @@ workflows:
             # that's required by the "gh" command for authentication.
             - github-read
             - gcp
+            - gcp-ci-cluster-default-user-credentials
           matrix:
             parameters:
               name: [test-e2e-slurm-singularity-gcp]
@@ -5229,6 +5237,7 @@ workflows:
             # that's required by the "gh" command for authentication.
             - github-read
             - gcp
+            - gcp-ci-cluster-default-user-credentials
           matrix:
             parameters:
               name: [test-e2e-slurm-podman-gcp]
@@ -5246,6 +5255,7 @@ workflows:
             # that's required by the "gh" command for authentication.
             - github-read
             - gcp
+            - gcp-ci-cluster-default-user-credentials
           matrix:
             parameters:
               name: [test-e2e-slurm-enroot-gcp]
@@ -5263,6 +5273,7 @@ workflows:
             # that's required by the "gh" command for authentication.
             - github-read
             - gcp
+            - gcp-ci-cluster-default-user-credentials
           matrix:
             parameters:
               name: [test-e2e-pbs-singularity-gcp]
@@ -5280,6 +5291,7 @@ workflows:
             # that's required by the "gh" command for authentication.
             - github-read
             - gcp
+            - gcp-ci-cluster-default-user-credentials
           matrix:
             parameters:
               name: [test-e2e-pbs-podman-gcp]
@@ -5299,6 +5311,7 @@ workflows:
             # that's required by the "gh" command for authentication.
             - github-read
             - gcp
+            - gcp-ci-cluster-default-user-credentials
           matrix:
             parameters:
               name: [test-e2e-pbs-enroot-gcp]
@@ -5317,6 +5330,7 @@ workflows:
             # that's required by the "gh" command for authentication.
             - github-read
             - gcp
+            - gcp-ci-cluster-default-user-credentials
           matrix:
             parameters:
               name: [test-e2e-slurm-agent-podman-gcp]
