@@ -3171,7 +3171,7 @@ jobs:
             - run:
                 name: Start defaultrm minikube
                 command: |
-                  source tools/k8s/launch-minikube-with-gateway.sh defaultrm
+                  K8S_VERSION=1.29.5 source tools/k8s/launch-minikube-with-gateway.sh defaultrm
                   echo "export GATEWAY_IP=\"${GATEWAY_IP}\"" >> $BASH_ENV
             - run:
                 name: Start additionalrm minikube
