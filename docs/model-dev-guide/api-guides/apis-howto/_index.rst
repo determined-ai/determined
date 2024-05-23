@@ -76,13 +76,13 @@ experiment is controlled by the container image that has been configured for tha
 Determined provides prebuilt Docker images that include TensorFlow 2.11, 1.15, and 2.8,
 respectively:
 
--  ``determinedai/pytorch-tensorflow-cuda-dev:8b3bea3`` (default)
+-  ``determinedai/pytorch-tensorflow-cuda:0.33.0`` (default)
 -  ``determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-0.21.2``
 -  ``determinedai/environments:cuda-11.2-tf-2.8-gpu-0.29.1``
 
 We also provide lightweight CPU-only counterparts:
 
--  ``determinedai/pytorch-tensorflow-cpu-dev:8b3bea3``
+-  ``determinedai/pytorch-tensorflow-cpu:0.33.0``
 -  ``determinedai/environments:py-3.8-tf-2.8-cpu-0.29.1``
 
 To change the container image used for an experiment, specify :ref:`environment.image
