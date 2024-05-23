@@ -1155,6 +1155,10 @@ export interface ExperimentPermissionsArgs {
   experiment: ProjectExperiment;
 }
 
+export interface FlatRunPermissionsArgs {
+  flatRun: FlatRun;
+}
+
 export interface PermissionWorkspace {
   id: number;
   userId?: number;
@@ -1262,3 +1266,14 @@ export interface FlatRunExperiment {
 export interface SearchFlatRunPagination extends WithPagination {
   runs: FlatRun[];
 }
+
+export const FlatRunAction = {
+  Archive: 'Archive',
+  Delete: 'Delete',
+  Kill: 'Kill',
+  Move: 'Move',
+  // Pause: 'Pause',
+  Unarchive: 'Unarchive',
+} as const;
+
+export type FlatRunAction = ValueOf<typeof FlatRunAction>;

@@ -6,57 +6,32 @@ import { useToast } from 'hew/Toast';
 import { useCallback, useMemo, useState } from 'react';
 
 import BatchActionConfirmModalComponent from 'components/BatchActionConfirmModal';
-import { BatchAction } from 'components/TableActionBar';
-// import usePermissions from 'hooks/usePermissions';
-import {
-  archiveRuns,
-  deleteRuns,
-  killRuns,
-  openOrCreateTensorBoard,
-  unarchiveRuns,
-} from 'services/api';
+import usePermissions from 'hooks/usePermissions';
+import { archiveRuns, deleteRuns, killRuns, unarchiveRuns } from 'services/api';
 import { BulkActionResult, ExperimentAction, FlatRun, Project } from 'types';
 import handleError from 'utils/error';
+import { canActionFlatRun, getActionsForFlatRunsUnion } from 'utils/flatRun';
 import { capitalizeWord } from 'utils/string';
-import { openCommandResponse } from 'utils/wait';
-
-// export const getActionsForRunsUnion = (
-//   experiments: FlatRun[],
-//   targets: ExperimentAction[],
-//   permissions: ExperimentPermissionSet,
-// ): ExperimentAction[] => {
-//   if (!experiments.length) return []; // redundant, for clarity
-//   const actionsForExperiments = experiments.map((e) =>
-//     getActionsForExperiment(e, targets, permissions),
-//   );
-//   return targets.filter((action) =>
-//     actionsForExperiments.some((experimentActions) => experimentActions.includes(action)),
-//   );
-// };
 
 const BATCH_ACTIONS = [
-  ExperimentAction.OpenTensorBoard,
+  // ExperimentAction.OpenTensorBoard,
   ExperimentAction.Move,
-  ExperimentAction.RetainLogs,
   ExperimentAction.Archive,
   ExperimentAction.Unarchive,
   ExperimentAction.Delete,
-  ExperimentAction.Activate,
-  ExperimentAction.Pause,
-  ExperimentAction.Cancel,
+  // ExperimentAction.Pause,
   ExperimentAction.Kill,
 ] as const;
 
+type BatchAction = (typeof BATCH_ACTIONS)[number];
+
 const ACTION_ICONS: Record<BatchAction, IconName> = {
-  [ExperimentAction.Activate]: 'play',
-  [ExperimentAction.Pause]: 'pause',
-  [ExperimentAction.Cancel]: 'stop',
+  // [ExperimentAction.Pause]: 'pause',
   [ExperimentAction.Archive]: 'archive',
   [ExperimentAction.Unarchive]: 'document',
   [ExperimentAction.Move]: 'workspaces',
-  [ExperimentAction.RetainLogs]: 'logs',
-  [ExperimentAction.OpenTensorBoard]: 'tensor-board',
   [ExperimentAction.Kill]: 'cancelled',
+  // [ExperimentAction.OpenTensorBoard]: 'tensor-board',
   [ExperimentAction.Delete]: 'error',
 } as const;
 
@@ -67,6 +42,7 @@ interface Props {
   selectedRuns: FlatRun[];
   project: Project;
   onActionSuccess?: (action: BatchAction, successfulIds: number[]) => void;
+  onActionComplete?: () => Promise<void>;
 }
 
 const FlatRunActionButton = ({
@@ -74,57 +50,39 @@ const FlatRunActionButton = ({
   selectedRuns,
   project,
   onActionSuccess,
+  onActionComplete,
 }: Props): JSX.Element => {
   const [batchAction, setBatchAction] = useState<BatchAction | undefined>(undefined);
-  // const permissions = usePermissions();
+  const permissions = usePermissions();
   const { openToast } = useToast();
   const BatchActionConfirmModal = useModal(BatchActionConfirmModalComponent);
 
   const sendBatchActions = useCallback(
     async (action: BatchAction): Promise<BulkActionResult | void> => {
       const validRunIds = selectedRuns
-        // .filter((exp) => canActionExperiment(action, exp)) TODO: Runs permission
+        .filter((exp) => canActionFlatRun(action, exp))
         .map((run) => run.id);
       const params = {
         projectId: project.id,
         runIds: validRunIds,
       };
       switch (action) {
-        case ExperimentAction.OpenTensorBoard: {
-          if (validRunIds.length !== selectedRuns.length) {
-            // if unmanaged experiments are selected, open experimentTensorBoardModal
-            // openExperimentTensorBoardModal(); // TODO Tensorboard for Runs
-          } else {
-            openCommandResponse(
-              await openOrCreateTensorBoard({
-                experimentIds: params.runIds,
-                workspaceId: project.workspaceId,
-              }),
-            );
-          }
-          return;
-        }
         case ExperimentAction.Move:
-        //   return ExperimentMoveModal.open();
-        case ExperimentAction.RetainLogs:
-        //   return ExperimentRetainLogsModal.open();
-        case ExperimentAction.Activate:
-        // return await activate(params);
+          //   return ExperimentMoveModal.open();
+          break;
         case ExperimentAction.Archive:
           return await archiveRuns(params);
-        case ExperimentAction.Cancel:
-        //   return await cancelExperiments(params);
         case ExperimentAction.Kill:
           return await killRuns(params);
-        case ExperimentAction.Pause:
-        //   return await pauseExperiments(params);
         case ExperimentAction.Unarchive:
           return await unarchiveRuns(params);
         case ExperimentAction.Delete:
           return await deleteRuns(params);
+        default:
+          break;
       }
     },
-    [project.id, project.workspaceId, selectedRuns],
+    [project.id, selectedRuns],
   );
 
   const submitBatchAction = useCallback(
@@ -169,10 +127,7 @@ const FlatRunActionButton = ({
           });
         }
       } catch (e) {
-        const publicSubject =
-          action === ExperimentAction.OpenTensorBoard
-            ? `Unable to View TensorBoard for Selected ${capitalizeWord(LABEL_PLURAL)}`
-            : `Unable to ${action} Selected ${capitalizeWord(LABEL_PLURAL)}`;
+        const publicSubject = `Unable to ${action} Selected ${capitalizeWord(LABEL_PLURAL)}`;
         handleError(e, {
           isUserTriggered: true,
           publicMessage: 'Please try again later.',
@@ -180,20 +135,16 @@ const FlatRunActionButton = ({
           silent: false,
         });
       } finally {
-        // onActionComplete?.();
+        onActionComplete?.();
       }
     },
-    [sendBatchActions, onActionSuccess, openToast],
+    [sendBatchActions, onActionSuccess, openToast, onActionComplete],
   );
 
   const handleBatchAction = useCallback(
     (action: string) => {
       switch (action) {
-        case ExperimentAction.OpenTensorBoard:
-          submitBatchAction(action);
-          break;
         case ExperimentAction.Move:
-        case ExperimentAction.RetainLogs:
           sendBatchActions(action);
           break;
         default:
@@ -202,27 +153,22 @@ const FlatRunActionButton = ({
           break;
       }
     },
-    [BatchActionConfirmModal, sendBatchActions, submitBatchAction],
+    [BatchActionConfirmModal, sendBatchActions],
   );
 
-  // const availableBatchActions = useMemo(() => {
-  //   return getActionsForExperimentsUnion(selectedRuns, [...BATCH_ACTIONS], permissions);
-  //   // Spreading batchActions is so TypeScript doesn't complain that it's readonly.
-  // }, [selectedExperimentIds, experimentMap, permissions]);
+  const availableBatchActions = useMemo(() => {
+    return getActionsForFlatRunsUnion(selectedRuns, [...BATCH_ACTIONS], permissions);
+  }, [selectedRuns, permissions]);
 
   const editMenuItems = useMemo(() => {
-    const groupedBatchActions = [
-      BATCH_ACTIONS.slice(0, 1), // View in TensorBoard
-      BATCH_ACTIONS.slice(1, 5), // Move, Archive, Unarchive, Delete
-      BATCH_ACTIONS.slice(5), // Resume, Pause, Cancel, Kill
-    ];
+    const groupedBatchActions = [BATCH_ACTIONS];
     const groupSize = groupedBatchActions.length;
     return groupedBatchActions.reduce((acc: MenuItem[], group, index) => {
       const isLastGroup = index === groupSize - 1;
       group.forEach((action) =>
         acc.push({
           danger: action === ExperimentAction.Delete,
-          // disabled: !availableBatchActions.includes(action), // TODO uncomment later
+          disabled: !availableBatchActions.includes(action),
           icon: <Icon name={ACTION_ICONS[action]} title={action} />,
           key: action,
           label: action,
@@ -231,7 +177,7 @@ const FlatRunActionButton = ({
       if (!isLastGroup) acc.push({ type: 'divider' });
       return acc;
     }, []);
-  }, []);
+  }, [availableBatchActions]);
 
   return (
     <>
@@ -245,7 +191,7 @@ const FlatRunActionButton = ({
       {batchAction && (
         <BatchActionConfirmModal.Component
           batchAction={batchAction}
-          // isUnmanagedIncluded={selectedExperiments.some((exp) => exp.unmanaged)} // TODO: is it needed for Runs?
+          isUnmanagedIncluded={selectedRuns.some((run) => run.experiment?.unmanaged ?? false)}
           onConfirm={() => submitBatchAction(batchAction)}
         />
       )}
