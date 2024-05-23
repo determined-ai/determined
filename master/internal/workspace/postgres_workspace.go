@@ -132,3 +132,35 @@ func AllWorkspaces(ctx context.Context) ([]*model.Workspace, error) {
 	}
 	return w, nil
 }
+
+// GetNamespaceFromWorkspace returns the namespace for the given workspace and kubernetes cluster.
+func GetNamespaceFromWorkspace(ctx context.Context, workspaceName string, clusterName string) (string, error) {
+	var ns string
+	err := db.Bun().
+		NewSelect().
+		TableExpr("workspaces as w").
+		ColumnExpr("n.namespace").
+		Join("JOIN workspace_namespace_bindings AS n ON  n.workspace_id = w.id").
+		Where("w.name = ? and n.cluster_name = ?", workspaceName, clusterName).
+		Scan(ctx, &ns)
+	if err != nil {
+		return "", fmt.Errorf("failed to get namespace: %w", err)
+	}
+	return ns, nil
+}
+
+// GetAllNamespacesForRM gets all namespaces associated with a particular kubernetes cluster. defaultNs is an optional
+// parameter, if there is no defaultNs provided, the "default" namespace will be added to the list instead.
+func GetAllNamespacesForRM(ctx context.Context, rmName string) ([]string, error) {
+	var ns []string
+	err := db.Bun().
+		NewSelect().
+		Table("workspace_namespace_bindings").
+		ColumnExpr("DISTINCT namespace").
+		Where("cluster_name = ?", rmName).
+		Scan(ctx, &ns)
+	if err != nil {
+		return ns, fmt.Errorf("failed to get all namespaces for %v: %w", rmName, err)
+	}
+	return ns, nil
+}

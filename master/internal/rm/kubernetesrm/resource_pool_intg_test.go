@@ -1167,12 +1167,11 @@ var testResourcePoolConfig = config.ResourcePoolConfig{
 	TaskContainerDefaults:    &model.TaskContainerDefaultsConfig{},
 	AgentReattachEnabled:     false,
 	AgentReconnectWait:       0,
-	KubernetesNamespace:      "default",
 	MaxCPUContainersPerAgent: 0,
 }
 
 func newTestResourcePool(j *jobsService) *kubernetesResourcePool {
-	rp := newResourcePool(1, &testResourcePoolConfig, j, db.SingleDB())
+	rp := newResourcePool(1, &testResourcePoolConfig, j, db.SingleDB(), "default", "default")
 	j.jobSchedulingStateCallback = rp.JobSchedulingStateChanged
 	return rp
 }
@@ -1180,7 +1179,7 @@ func newTestResourcePool(j *jobsService) *kubernetesResourcePool {
 func newTestJobsService(t *testing.T) *jobsService {
 	j, err := newJobsService(
 		"default",
-		map[string]string{"default": defaultResourcePool},
+		"default",
 		"",
 		model.TLSClientConfig{},
 		"",
