@@ -2,6 +2,7 @@ package kubernetesrm
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"sync"
 
@@ -16,6 +17,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/rm/rmevents"
 	"github.com/determined-ai/determined/master/internal/rm/tasklist"
 	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/internal/workspace"
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/logger"
@@ -31,8 +33,10 @@ const resourcePoolEnvVar = "DET_K8S_RESOURCE_POOL"
 type kubernetesResourcePool struct {
 	mu sync.Mutex
 
-	maxSlotsPerPod int
-	poolConfig     *config.ResourcePoolConfig
+	maxSlotsPerPod   int
+	poolConfig       *config.ResourcePoolConfig
+	defaultNamespace string
+	clusterName      string
 
 	reqList *tasklist.TaskList
 	groups  map[model.JobID]*tasklist.Group
@@ -57,6 +61,8 @@ func newResourcePool(
 	poolConfig *config.ResourcePoolConfig,
 	jobsService *jobsService,
 	db *db.PgDB,
+	defaultNamespace string,
+	clusterName string,
 ) *kubernetesResourcePool {
 	return &kubernetesResourcePool{
 		maxSlotsPerPod:            maxSlotsPerPod,
@@ -71,6 +77,8 @@ func newResourcePool(
 		queuePositions:            tasklist.InitializeJobSortState(true),
 		db:                        db,
 		syslog:                    logrus.WithField("component", "k8s-rp"),
+		defaultNamespace:          defaultNamespace,
+		clusterName:               clusterName,
 	}
 }
 
@@ -541,13 +549,14 @@ func (k *kubernetesResourcePool) createResources(
 	req *sproto.AllocateRequest, slotsPerPod, numPods int,
 ) *k8sJobResource {
 	return &k8sJobResource{
-		numPods:         numPods,
-		req:             req,
-		jobsService:     k.jobsService,
-		slots:           slotsPerPod,
-		group:           k.groups[req.JobID],
-		initialPosition: k.queuePositions[k.allocationIDToJobID[req.AllocationID]],
-		namespace:       k.poolConfig.KubernetesNamespace,
+		numPods:          numPods,
+		req:              req,
+		jobsService:      k.jobsService,
+		slots:            slotsPerPod,
+		group:            k.groups[req.JobID],
+		initialPosition:  k.queuePositions[k.allocationIDToJobID[req.AllocationID]],
+		defaultNamespace: k.defaultNamespace,
+		clusterName:      k.clusterName,
 	}
 }
 
@@ -566,12 +575,13 @@ func (k *kubernetesResourcePool) restoreResources(
 	}
 
 	return &k8sJobResource{
-		req:             req,
-		jobsService:     k.jobsService,
-		slots:           slotsPerPod,
-		group:           k.groups[req.JobID],
-		initialPosition: k.queuePositions[k.allocationIDToJobID[req.AllocationID]],
-		namespace:       k.poolConfig.KubernetesNamespace,
+		req:              req,
+		jobsService:      k.jobsService,
+		slots:            slotsPerPod,
+		group:            k.groups[req.JobID],
+		initialPosition:  k.queuePositions[k.allocationIDToJobID[req.AllocationID]],
+		defaultNamespace: k.defaultNamespace,
+		clusterName:      k.clusterName,
 
 		started: restored.started,
 	}, nil
@@ -639,13 +649,14 @@ func (k *kubernetesResourcePool) admitPendingTasks() {
 }
 
 type k8sJobResource struct {
-	req             *sproto.AllocateRequest
-	jobsService     *jobsService
-	group           *tasklist.Group
-	slots           int
-	numPods         int
-	initialPosition decimal.Decimal
-	namespace       string
+	req              *sproto.AllocateRequest
+	jobsService      *jobsService
+	group            *tasklist.Group
+	slots            int
+	numPods          int
+	initialPosition  decimal.Decimal
+	defaultNamespace string
+	clusterName      string
 
 	started *sproto.ResourcesStarted
 }
@@ -690,6 +701,13 @@ func (p k8sJobResource) Start(
 	spec.ExtraEnvVars[sproto.ResourcesTypeEnvVar] = string(sproto.ResourcesTypeK8sJob)
 	spec.ExtraEnvVars[resourcePoolEnvVar] = p.req.ResourcePool
 
+	ns, err := workspace.GetNamespaceFromWorkspace(context.TODO(), spec.Workspace, p.clusterName)
+	if errors.Is(err, db.ErrNotFound) || errors.Is(err, sql.ErrNoRows) {
+		ns = p.defaultNamespace
+	} else if err != nil {
+		return fmt.Errorf("getting namespace for workspace: %w", err)
+	}
+
 	return p.jobsService.StartJob(startJob{
 		req:          p.req,
 		allocationID: p.req.AllocationID,
@@ -697,7 +715,7 @@ func (p k8sJobResource) Start(
 		slots:        p.slots,
 		rank:         rri.AgentRank,
 		resourcePool: p.req.ResourcePool,
-		namespace:    p.namespace,
+		namespace:    ns,
 		numPods:      p.numPods,
 		logContext:   logCtx,
 	})
