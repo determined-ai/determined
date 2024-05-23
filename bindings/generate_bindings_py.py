@@ -508,6 +508,7 @@ class Printable:
         attrs = []
         for k, v in self.__dict__.items():
             if v is None: continue
+            if str(v) == "" or v == []: continue
             if isinstance(v, list):
                 vals = [str(x) if isinstance(x, allowed_types) else "..." for x in v]
                 attrs.append(f'{k}=[{", ".join(vals)}]')
