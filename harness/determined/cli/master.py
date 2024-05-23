@@ -86,12 +86,11 @@ def clear_cluster_message(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     bindings.delete_DeleteClusterMessage(sess)
 
-# TODO: use the GetClusterMessage endpoint so future-scheduled messages are visible to admins
 def get_cluster_message(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
 
     resp = bindings.get_GetClusterMessage(sess)
-    message = resp.to_json()['clusterMessage']
+    message = resp.to_json()
 
     if args.json:
         render.print_json(message)

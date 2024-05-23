@@ -18,10 +18,10 @@ export const BrandingType = {
 } as const;
 
 export interface ClusterMessage {
-  startTime: Date; // TODO: type?
-  endTime?: Date; // TODO: type?
+  startTime: Date;
+  endTime?: Date;
   message: string;
-  createdTime?: Date; // TODO: type?
+  createdTime?: Date;
 }
 
 export type BrandingType = ValueOf<typeof BrandingType>;

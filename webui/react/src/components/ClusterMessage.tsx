@@ -8,7 +8,7 @@ interface Props {
   message?: ClusterMessage;
 }
 
-const ClusterMessage: React.FC<Props> = ({ message }) => {
+const ClusterMessageBanner: React.FC<Props> = ({ message }) => {
   return message ? (
     <>
       <div className={css.base}>
@@ -21,4 +21,4 @@ const ClusterMessage: React.FC<Props> = ({ message }) => {
   ) : null;
 };
 
-export default ClusterMessage;
+export default ClusterMessageBanner;

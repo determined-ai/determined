@@ -62,9 +62,9 @@ func (a *apiServer) GetMaster(
 	}
 
 	msg, err := db.GetActiveClusterMessage(ctx, db.Bun())
-	if err != nil && err != db.ErrNotFound {
+	if err == nil {
 		masterResp.ClusterMessage = msg.ToProto()
-	} else if err != nil {
+	} else if err != db.ErrNotFound {
 		logrus.WithError(err).Error("error fetching cluster-wide messages")
 		return nil, status.Error(codes.Internal, "error fetching cluster-wide messages; check logs for details")
 	}
@@ -273,7 +273,7 @@ func (a *apiServer) GetClusterMessage(
 
 	msg, err := db.GetClusterMessage(ctx, db.Bun())
 	if err == db.ErrNotFound {
-		return nil, status.Error(codes.NotFound, "no cluster message active")
+		return &apiv1.GetClusterMessageResponse{}, nil
 	} else if err != nil {
 		logrus.WithError(err).Error("error looking up cluster message")
 		return nil, status.Error(codes.Internal, "error looking up cluster message; check logs for details")

@@ -11,7 +11,7 @@ import { HTML5Backend } from 'react-dnd-html5-backend';
 import { HelmetProvider } from 'react-helmet-async';
 import { useParams } from 'react-router-dom';
 
-import ClusterMessage from 'components/ClusterMessage';
+import ClusterMessageBanner from 'components/ClusterMessage';
 import JupyterLabGlobal from 'components/JupyterLabGlobal';
 import Link from 'components/Link';
 import Navigation from 'components/Navigation';
@@ -171,7 +171,7 @@ const AppView: React.FC = () => {
             <>
               {isServerReachable ? (
                 <ConfirmationProvider>
-                  <ClusterMessage message={info.clusterMessage} />
+                  <ClusterMessageBanner message={info.clusterMessage} />
                   <Navigation clusterMessagePresent={!!info.clusterMessage}>
                     <JupyterLabGlobal
                       enabled={
