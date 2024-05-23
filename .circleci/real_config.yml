@@ -3623,9 +3623,6 @@ jobs:
       environment-gpu-enabled:
         type: string
         default: "1"
-      environment-image:
-        default: determinedai/pytorch-ngc-dev:e960eae
-        type: string
       accel-node-taints:
         type: string
         default: ""
@@ -3665,16 +3662,8 @@ jobs:
           max-slots-per-pod: <<parameters.max-slots-per-pod>>
           region: <<parameters.region>>
           node-locations: <<parameters.node-locations>>
-          environment-image: <<parameters.environment-image>>
           accel-node-taints: <<parameters.accel-node-taints>>
       - set-google-application-credentials
-      - when:
-          condition: <<parameters.environment-image>>
-          steps:
-            - run:
-                command: |
-                  echo 'export TF2_GPU_IMAGE="<<parameters.environment-image>>"' >> "$BASH_ENV"
-                name: override test env images.
       - run-e2e-tests:
           mark: <<parameters.mark>>
           master-host: ${MASTER_HOST}
