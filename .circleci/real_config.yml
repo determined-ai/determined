@@ -3175,7 +3175,7 @@ jobs:
                   echo "export GATEWAY_IP=\"${GATEWAY_IP}\"" >> $BASH_ENV
             - run:
                 name: Start additionalrm minikube
-                command: minikube start --profile additionalrm
+                command: minikube start --profile additionalrm --kubernetes-version 1.29.5
 
       - install-devcluster
       - unless:
