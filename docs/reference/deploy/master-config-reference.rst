@@ -89,9 +89,9 @@ configure different container images for NVIDIA GPU tasks using the ``cuda`` key
 Determined 0.17.6), CPU tasks using ``cpu`` key, and ROCm (AMD GPU) tasks using the ``rocm`` key.
 Default values:
 
--  ``determinedai/pytorch-tensorflow-cuda-dev:8b3bea3`` for NVIDIA GPUs.
+-  ``determinedai/pytorch-tensorflow-cuda:0.33.0`` for NVIDIA GPUs.
 -  ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.26.4`` for ROCm.
--  ``determinedai/pytorch-tensorflow-cpu-dev:8b3bea3`` for CPUs.
+-  ``determinedai/pytorch-tensorflow-cpu:0.33.0`` for CPUs.
 
 ``environment_variables``
 =========================
