@@ -151,18 +151,29 @@ func (p *pod) configureProxyResources() []gatewayProxyResource {
 			- taskid and allocid include dashes.
 			$TASK_TYPE/$TASK_ID[:10]/$ALLOCATION_ID[:10]/P$PORT_INDEX/randombits
 		*/
+		const maxLen = 63
+		const separator = ":"
+
+		description := p.submissionInfo.taskSpec.Description[:min(10,
+			len(p.submissionInfo.taskSpec.Description))]
 		shortTaskID := p.submissionInfo.taskSpec.TaskID[:min(10,
-			len(p.submissionInfo.taskSpec.TaskID)-1)]
+			len(p.submissionInfo.taskSpec.TaskID))]
 		shortAllocID := p.submissionInfo.taskSpec.AllocationID[max(0,
 			len(p.submissionInfo.taskSpec.AllocationID)-10):]
 		uuidStr := uuid.New().String()
 
-		tooLong := fmt.Sprintf("%s/%s/%s/P%d/%s",
-			p.submissionInfo.taskSpec.TaskType, shortTaskID, shortAllocID, portIndex, uuidStr)
-		sharedName := tooLong[:min(63, len(tooLong)-1)]
+		components := []string{
+			string(p.submissionInfo.taskSpec.TaskType),
+			description,
+			shortTaskID,
+			shortAllocID,
+			fmt.Sprintf("P%d", portIndex),
+			uuidStr,
+		}
+
+		tooLong := strings.Join(components, separator)
+		sharedName := tooLong[:min(maxLen, len(tooLong))]
 		return sharedName
-		// TODO: use for section name in the listeners as well? `/` is an invalid char for section
-		// name.
 	}
 
 	var resources []gatewayProxyResource
