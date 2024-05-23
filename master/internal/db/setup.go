@@ -6,6 +6,8 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/go-pg/migrations/v8"
+	"github.com/go-pg/pg/v10"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
@@ -83,24 +85,61 @@ func Connect(opts *config.DBConfig) (*PgDB, error) {
 	return db, nil
 }
 
-// Setup connects to the database and run any necessary migrations.
-func Setup(opts *config.DBConfig) (db *PgDB, isNew bool, err error) {
-	db, err = Connect(opts)
+// IsNew checks to see if the database's migration tracking tables have been
+// created, and if so, if it's above version 0. It returns `false` if the current
+// version exists and is higher than zero, `true` otherwise.
+// This is not guaranteed to be accurate if the database is otherwise in a bad or
+// incomplete state. If an error is returned, the bool should be ignored.
+func IsNew(opts *config.DBConfig) (bool, error) {
+	dbURL := fmt.Sprintf(cnxTpl, opts.User, opts.Password, opts.Host, opts.Port, opts.Name)
+	dbURL += fmt.Sprintf(sslTpl, opts.SSLMode, opts.SSLRootCert)
+	pgOpts, err := makeGoPgOpts(dbURL)
 	if err != nil {
-		return db, false, err
+		return false, err
 	}
 
-	isNew, err = db.Migrate(opts.Migrations, opts.ViewsAndTriggers, []string{"up"})
+	pgConn := pg.Connect(pgOpts)
+	defer func() {
+		if errd := pgConn.Close(); errd != nil {
+			log.Errorf("error closing pg connection: %s", errd)
+		}
+	}()
+
+	exist, err := tablesExist(pgConn, []string{"gopg_migrations", "schema_migrations"})
 	if err != nil {
-		return nil, false, fmt.Errorf("error running migrations: %s", err)
+		return false, err
+	}
+	if !exist["gopg_migrations"] {
+		return true, nil
+	}
+
+	collection := migrations.NewCollection()
+	collection.DisableSQLAutodiscover(true)
+	version, err := collection.Version(pgConn)
+	if err != nil {
+		return false, err
+	}
+	return version == 0, nil
+}
+
+// Setup connects to the database and run any necessary migrations.
+func Setup(opts *config.DBConfig) (db *PgDB, err error) {
+	db, err = Connect(opts)
+	if err != nil {
+		return db, err
+	}
+
+	err = db.Migrate(opts.Migrations, opts.ViewsAndTriggers, []string{"up"})
+	if err != nil {
+		return nil, fmt.Errorf("error running migrations: %s", err)
 	}
 
 	if err = InitAuthKeys(); err != nil {
-		return nil, false, err
+		return nil, err
 	}
 
 	if err = initAllocationSessions(context.TODO()); err != nil {
-		return nil, false, err
+		return nil, err
 	}
-	return db, isNew, nil
+	return db, nil
 }

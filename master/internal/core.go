@@ -1129,19 +1129,15 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 		return errors.Wrap(err, "could not set static root")
 	}
 
-	var isBrandNewCluster bool
-	m.db, isBrandNewCluster, err = db.Setup(&m.config.DB)
+	isBrandNewCluster, err := db.IsNew(&m.config.DB)
 	if err != nil {
-		return err
-	}
-	defer closeWithErrCheck("db", m.db)
-
-	m.ClusterID, err = m.db.GetOrCreateClusterID(m.config.Telemetry.ClusterID)
-	if err != nil {
-		return errors.Wrap(err, "could not fetch cluster id from database")
+		return errors.Wrap(err, "could not verify database version")
 	}
 
 	if isBrandNewCluster {
+		// This has to happen before setup, to minimize risk of creating a database in a state that looks like
+		// there are already users, then aborting, which would allow a subsequent cluster to come up ignoring
+		// this check.
 		password := m.config.Security.InitialUserPassword
 		if password == "" {
 			log.Error("This cluster was deployed without an initial password for the built-in `determined` " +
@@ -1149,12 +1145,29 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 				"`security.initial_user_password` setting.")
 			return errors.New("could not deploy without initial password")
 		}
+	}
+
+	m.db, err = db.Setup(&m.config.DB)
+	if err != nil {
+		return err
+	}
+	defer closeWithErrCheck("db", m.db)
+
+	if isBrandNewCluster {
+		// This has to happen after setup, since creating the built-in users without a
+		// password is part of the first migration.
+		password := m.config.Security.InitialUserPassword
 		for _, username := range user.BuiltInUsers {
 			err := user.SetUserPassword(ctx, username, password)
 			if err != nil {
-				return fmt.Errorf("could not update default user password: %w", err)
+				return fmt.Errorf("could not set password for %s: %w", username, err)
 			}
 		}
+	}
+
+	m.ClusterID, err = m.db.GetOrCreateClusterID(m.config.Telemetry.ClusterID)
+	if err != nil {
+		return errors.Wrap(err, "could not fetch cluster id from database")
 	}
 
 	webhookManager, err := webhooks.New(ctx)

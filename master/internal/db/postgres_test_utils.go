@@ -196,7 +196,7 @@ func MigrateTestPostgres(db *PgDB, migrationsPath string, actions ...string) err
 	if len(actions) == 0 {
 		actions = []string{"up"}
 	}
-	_, err := db.Migrate(
+	err := db.Migrate(
 		migrationsPath, strings.ReplaceAll(migrationsPath+"/../views_and_triggers", "file://", ""), actions)
 	if err != nil {
 		return fmt.Errorf("failed to migrate postgres: %w", err)
