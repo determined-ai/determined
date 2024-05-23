@@ -602,7 +602,6 @@ func (p *pods) reattachPod(
 	resourcePool string,
 	containerID string,
 	pod *k8sV1.Pod,
-	// container ports
 	ports []int,
 	slots int,
 	logContext logger.Context,

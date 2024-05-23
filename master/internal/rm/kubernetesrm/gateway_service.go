@@ -79,6 +79,7 @@ func (g *gatewayService) freePorts(ports []int) error {
 				newListeners = append(newListeners, l)
 			}
 		}
+
 		gateway.Spec.Listeners = newListeners
 	}); err != nil {
 		return fmt.Errorf("freeing ports %v from gateway: %w", ports, err)
@@ -121,7 +122,8 @@ func (g *gatewayService) updateGateway(update func(*gatewayTyped.Gateway)) error
 
 	update(gateway)
 
-	if _, err := g.gatewayInterface.Update(context.TODO(), gateway, metaV1.UpdateOptions{}); err != nil {
+	if _, err := g.gatewayInterface.
+		Update(context.TODO(), gateway, metaV1.UpdateOptions{}); err != nil {
 		return fmt.Errorf("updating gateway with name '%s': %w", g.gatewayName, err)
 	}
 

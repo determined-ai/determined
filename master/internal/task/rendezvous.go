@@ -18,7 +18,6 @@ import (
 const (
 	// minLocalRendezvousPort is the smallest port to use (from the container's point of view;
 	// it will be mapped to some arbitrary port on the host) for communication across containers.
-	// why?
 	minLocalRendezvousPort = 1734
 
 	// maxLocalRendezvousPort is the largest port to use for communication across containers.
@@ -222,7 +221,6 @@ func (r *rendezvous) info() ([]cAddress, []string, []int32, error) {
 	var slots []int32
 	var err *multierror.Error
 	for _, caddr := range caddrs {
-		fmt.Println("HHH caddr", caddr)
 		var addrs []cproto.Address
 		for _, addr := range caddr.addresses {
 			if minLocalRendezvousPort <= addr.ContainerPort &&

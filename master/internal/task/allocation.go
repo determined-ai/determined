@@ -1054,7 +1054,6 @@ func (a *allocation) registerProxies(addresses []cproto.Address) {
 	if len(a.req.ProxyPorts) == 0 {
 		return
 	}
-	fmt.Println("HH allocation", a.req.AllocationID, "registerProxies", addresses)
 
 	for _, address := range addresses {
 		// Only proxy the port we expect to proxy. If a dockerfile uses an EXPOSE command,
