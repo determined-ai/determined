@@ -14,6 +14,12 @@ test.describe('Experiement List', () => {
   // trial click will wait for the element to be stable
   const waitTableStable = async () =>
     await projectDetailsPage.f_experiemntList.dataGrid.pwLocator.click({ trial: true });
+  const getExpNum = async () => {
+    const expNum =
+      await projectDetailsPage.f_experiemntList.tableActionBar.expNum.pwLocator.textContent();
+    if (expNum === null) throw new Error('Experiment number is null');
+    return parseInt(expNum);
+  };
 
   test.beforeAll(async ({ browser }) => {
     const pageSetupTeardown = await browser.newPage();
@@ -56,8 +62,15 @@ test.describe('Experiement List', () => {
       await columnPicker.columnPickerTab.reset.pwLocator.click();
       await closePopover();
       await waitTableStable();
-      await grid.headRow.setColumnDefs();
     });
+    await test.step('Reset Filters', async () => {
+      const tableFilter =
+        await projectDetailsPage.f_experiemntList.tableActionBar.tableFilter.open();
+      await tableFilter.filterForm.clearFilters.pwLocator.click();
+      await closePopover();
+      await waitTableStable();
+    });
+    await grid.headRow.setColumnDefs();
     await projectDetailsPage.f_experiemntList.dataGrid.setColumnHeight();
     await projectDetailsPage.f_experiemntList.dataGrid.headRow.setColumnDefs();
   });
@@ -144,6 +157,30 @@ test.describe('Experiement List', () => {
       expect.soft(previousTabs + idColumns).toBeLessThanOrEqual(grid.headRow.columnDefs.size);
       expect(grid.headRow.columnDefs.get(columnTitle)).toBeTruthy();
       await grid.scrollColumnIntoViewByName(columnTitle);
+    });
+  });
+
+  test('Table Filter', async () => {
+    const tableFilter = projectDetailsPage.f_experiemntList.tableActionBar.tableFilter;
+    const totalExperiments = await getExpNum();
+
+    await test.step('Filter on ID', async () => {
+      await tableFilter.open();
+      await tableFilter.filterForm.filter.filterFields.columnName.selectMenuOption('ID');
+      await expect(tableFilter.filterForm.filter.filterFields.operator.pwLocator).toHaveText('=');
+      await tableFilter.filterForm.filter.filterFields.operator.selectMenuOption('=');
+      await tableFilter.filterForm.filter.filterFields.valueNumber.pwLocator.fill('1');
+      await waitTableStable();
+      await expect.poll(async () => await getExpNum()).toBe(1);
+      await closePopover();
+    });
+
+    await test.step('Filter against ID', async () => {
+      await tableFilter.open();
+      await tableFilter.filterForm.filter.filterFields.operator.selectMenuOption('!=');
+      await waitTableStable();
+      await expect.poll(async () => await getExpNum()).toBe(totalExperiments - 1);
+      await closePopover();
     });
   });
 

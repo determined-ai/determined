@@ -10,7 +10,7 @@ import { BaseComponent, NamedComponent } from 'e2e/models/BaseComponent';
 export class Select extends BaseComponent {
   readonly _menu = new BaseComponent({
     parent: this.root,
-    selector: '.ant-select-dropdown .rc-virtual-list-holder-inner',
+    selector: '.ant-select-dropdown .rc-virtual-list-holder-inner:visible',
   });
 
   readonly search = new BaseComponent({
@@ -69,7 +69,7 @@ export class Select extends BaseComponent {
   menuItem(title: string): BaseComponent {
     return new BaseComponent({
       parent: this._menu,
-      selector: `div.ant-select-item[title$="${title}"]`,
+      selector: `div.ant-select-item[title="${title}"]`,
     });
   }
 
@@ -92,6 +92,7 @@ export class Select extends BaseComponent {
   async selectMenuOption(title: string): Promise<void> {
     await this.openMenu();
     await this.menuItem(title).pwLocator.click();
+    await this._menu.pwLocator.waitFor({ state: 'hidden' });
   }
 }
 
