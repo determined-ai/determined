@@ -226,10 +226,7 @@ func (p *pod) configureProxyResources() []gatewayProxyResource {
 			tcpRouteSpec:    tcpRouteSpec,
 			gatewayListener: gatewayListener,
 		})
-
-		proxyPort.Port = gwPort
 	}
-
 	return resources
 }
 

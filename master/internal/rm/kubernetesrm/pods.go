@@ -602,6 +602,7 @@ func (p *pods) reattachPod(
 	resourcePool string,
 	containerID string,
 	pod *k8sV1.Pod,
+	// container ports
 	ports []int,
 	slots int,
 	logContext logger.Context,
@@ -652,10 +653,16 @@ func (p *pods) reattachPod(
 	if state != cproto.Terminated {
 		newPodHandler.container.State = state
 	}
-
+	gwPort := 0
+	for _, g := range newPodHandler.gatewayProxyResources {
+		gwPort = int(g.gatewayListener.Port)
+		break
+	}
 	var started *sproto.ResourcesStarted
 	if newPodHandler.container.State == cproto.Running {
-		started = ptrs.Ptr(getResourcesStartedForPod(pod, newPodHandler.ports, p.exposeProxyConfig))
+		started = ptrs.Ptr(getResourcesStartedForPod(
+			pod, newPodHandler.ports, p.exposeProxyConfig, gwPort,
+		))
 	}
 
 	newPodHandler.pod = pod

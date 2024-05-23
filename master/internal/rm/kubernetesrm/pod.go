@@ -237,14 +237,16 @@ func (p *pod) podStatusUpdate(updatedPod *k8sV1.Pod) (cproto.State, error) {
 	case cproto.Running:
 		p.syslog.Infof("transitioning pod state from %s to %s", p.container.State, containerState)
 		p.container = p.container.Transition(cproto.Running)
-		ports := p.ports
+		gwPort := 0
 		if p.exposeProxyConfig != nil {
-			ports = []int{}
 			for _, g := range p.gatewayProxyResources {
-				ports = append(ports, int(g.gatewayListener.Port))
+				gwPort = int(g.gatewayListener.Port)
+				break
 			}
 		}
-		p.informTaskResourcesStarted(getResourcesStartedForPod(p.pod, ports, p.exposeProxyConfig))
+		fmt.Println("HHH gwPort", gwPort)
+		fmt.Println("HHH pod ports", p.ports)
+		p.informTaskResourcesStarted(getResourcesStartedForPod(p.pod, p.ports, p.exposeProxyConfig, gwPort))
 		err := p.startPodLogStreamer()
 		if err != nil {
 			return p.container.State, err
@@ -594,7 +596,8 @@ func getExitCodeAndMessage(pod *k8sV1.Pod, containerNames set.Set[string]) (int,
 }
 
 func getResourcesStartedForPod(
-	pod *k8sV1.Pod, ports []int, exposeProxyConfig *config.ExposeProxiesExternallyConfig,
+	pod *k8sV1.Pod, containerPorts []int, exposeProxyConfig *config.ExposeProxiesExternallyConfig,
+	hostPort int,
 ) sproto.ResourcesStarted {
 	addresses := []cproto.Address{}
 
@@ -606,11 +609,14 @@ func getResourcesStartedForPod(
 		baseAddress.ContainerIP = exposeProxyConfig.GatewayAddress
 		baseAddress.HostIP = exposeProxyConfig.GatewayAddress
 	}
-	for _, port := range ports {
+	for _, cPort := range containerPorts {
 		address := baseAddress
-		address.ContainerPort = port
-		address.HostPort = port
-		fmt.Println("HHH address", address, "port", port)
+		address.ContainerPort = cPort
+		address.HostPort = cPort
+		if hostPort != 0 {
+			address.HostPort = hostPort
+		}
+		fmt.Println("HHH address", address, "port", cPort)
 		addresses = append(addresses, address)
 	}
 

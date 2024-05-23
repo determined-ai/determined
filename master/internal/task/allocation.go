@@ -1054,6 +1054,7 @@ func (a *allocation) registerProxies(addresses []cproto.Address) {
 	if len(a.req.ProxyPorts) == 0 {
 		return
 	}
+	fmt.Println("HH allocation", a.req.AllocationID, "registerProxies", addresses)
 
 	for _, address := range addresses {
 		// Only proxy the port we expect to proxy. If a dockerfile uses an EXPOSE command,
@@ -1081,7 +1082,7 @@ func (a *allocation) registerProxies(addresses []cproto.Address) {
 			Scheme: urlScheme,
 			Host:   fmt.Sprintf("%s:%d", address.HostIP, address.HostPort),
 		}, pcfg.ProxyTCP, pcfg.Unauthenticated)
-		a.syslog.Debugf("registered proxy id: %s, tcp: %v\n", pcfg.ServiceID, pcfg.ProxyTCP)
+		a.syslog.Debugf("registered proxy id: %s, cfg: %v\n", pcfg.ServiceID, pcfg)
 		a.proxies = append(a.proxies, pcfg.ServiceID)
 	}
 
