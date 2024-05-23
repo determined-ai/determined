@@ -64,7 +64,7 @@ const SignIn: React.FC = () => {
    */
   useEffect(() => {
     if (location.state != null) {
-      sessionStorage.landingRedirect = locationToPath(location.state) || '';
+      sessionStorage.landingRedirect = locationToPath(location.state) ?? '';
     }
 
     if (isAuthenticated) {
@@ -81,7 +81,7 @@ const SignIn: React.FC = () => {
 
       // Reroute the authenticated user to the app.
       if (!queries.has('redirect')) {
-        const path = sessionStorage.landingRedirect || null;
+        const path = sessionStorage.landingRedirect;
         sessionStorage.removeLandingRedirect();
         routeToReactUrl(path || (rbacEnabled ? rbacDefaultRoute.path : defaultRoute.path));
       } else {
