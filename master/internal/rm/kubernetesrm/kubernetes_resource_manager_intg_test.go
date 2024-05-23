@@ -1056,7 +1056,7 @@ func createMockJobsService(nodes map[string]*k8sV1.Node, devSlotType device.Type
 
 	return &jobsService{
 		namespace:           "default",
-		namespaceToPoolName: make(map[string]string),
+		clusterName:         "",
 		currentNodes:        nodes,
 		jobNameToJobHandler: jobHandlers,
 		slotType:            devSlotType,
