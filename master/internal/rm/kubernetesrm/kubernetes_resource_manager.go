@@ -86,18 +86,13 @@ func New(
 		db: db,
 	}
 
-	poolNamespaces := make(map[string]string)
-	for i := range k.poolsConfig {
-		if k.poolsConfig[i].KubernetesNamespace == "" {
-			k.poolsConfig[i].KubernetesNamespace = k.config.Namespace
-		}
-
-		poolNamespaces[k.poolsConfig[i].KubernetesNamespace] = k.poolsConfig[i].PoolName
+	if len(k.config.Namespace) > 0 {
+		k.config.DefaultNamespace = k.config.Namespace
 	}
 
 	k.jobsService, err = newJobsService(
-		k.config.Namespace,
-		poolNamespaces,
+		k.config.DefaultNamespace,
+		k.config.Name,
 		k.config.MasterServiceName,
 		k.masterTLSConfig,
 		k.config.DefaultScheduler,
@@ -127,7 +122,8 @@ func New(
 			maxSlotsPerPod = *poolConfig.TaskContainerDefaults.Kubernetes.MaxSlotsPerPod
 		}
 
-		rp := newResourcePool(maxSlotsPerPod, &poolConfig, k.jobsService, k.db)
+		poolConfig := poolConfig
+		rp := newResourcePool(maxSlotsPerPod, &poolConfig, k.jobsService, k.db, k.config.DefaultNamespace, k.config.Name)
 		go func() {
 			t := time.NewTicker(podSubmissionInterval)
 			defer t.Stop()

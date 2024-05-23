@@ -357,7 +357,7 @@ resourcePools:
 #       type: kubernetes
 #       max_slots_per_pod: 1
 #       name: carolina-multirm-1
-#       namespace: default
+#       default_namespace: default
 #       kubeconfig_secret_name: additionalrm
 #       kubeconfig_secret_value: config
 #       determined_master_ip: 10.11.12.13
