@@ -1,0 +1,17 @@
+name: experiment-port-proxy
+entrypoint: python3 start.py
+
+resources:
+  slots_per_trial: 0
+
+searcher:
+   name: single
+   metric: x
+   max_length: 10000000
+
+max_restarts: 0
+
+environment:
+  proxy_ports:
+    - proxy_port: 8888
+      proxy_tcp: true
