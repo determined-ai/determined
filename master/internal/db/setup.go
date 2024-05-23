@@ -109,7 +109,7 @@ func IsNew(opts *config.DBConfig) (bool, error) {
 	if err != nil {
 		return false, err
 	}
-	if !exist["gopg_migrations"] || !exist["schema_migrations"] {
+	if !exist["gopg_migrations"] {
 		return true, nil
 	}
 
