@@ -1077,17 +1077,11 @@ func (a *allocation) registerProxies(addresses []cproto.Address) {
 		if a.req.ProxyTLS {
 			urlScheme = "https"
 		}
-		port := address.HostPort
-		// if pcfg.DestinationPort != 0 {
-		// 	port = pcfg.DestinationPort
-		// }
 		proxy.DefaultProxy.Register(pcfg.ServiceID, &url.URL{
 			Scheme: urlScheme,
-			Host:   fmt.Sprintf("%s:%d", address.HostIP, port),
+			Host:   fmt.Sprintf("%s:%d", address.HostIP, address.HostPort),
 		}, pcfg.ProxyTCP, pcfg.Unauthenticated)
 		a.syslog.Debugf("registered proxy id: %s, tcp: %v\n", pcfg.ServiceID, pcfg.ProxyTCP)
-		a.syslog.Infof("registered proxy id: %s, tcp: %v, cfg: %v\n", pcfg.ServiceID,
-			pcfg.ProxyTCP, pcfg)
 		a.proxies = append(a.proxies, pcfg.ServiceID)
 	}
 
@@ -1124,15 +1118,11 @@ func (a *allocation) containerProxyAddresses() []cproto.Address {
 	result := []cproto.Address{}
 
 	for _, pp := range a.req.ProxyPorts {
-		hostPort := pp.Port
-		// if pp.DestinationPort != 0 {
-		// 	hostPort = pp.DestinationPort
-		// }
 		result = append(result, cproto.Address{
 			ContainerIP:   *a.model.ProxyAddress,
 			ContainerPort: pp.Port,
 			HostIP:        *a.model.ProxyAddress,
-			HostPort:      hostPort,
+			HostPort:      pp.Port,
 		})
 	}
 
