@@ -1932,6 +1932,10 @@ jobs:
       - install-devcluster
       - start-devcluster:
           target-stage: db
+      - run: |
+          sudo echo "[Service]" > /etc/systemd/system/determined-master.service.d/password.override.conf
+          sudo echo "Environment=\"DET_SECURITY_INITIAL_USER_PASSWORD=${INITIAL_USER_PASSWORD}\"" >> /etc/systemd/system/determined-master.service.d/password.override.conf
+          sudo systemctl daemon-reload
       - run: python3 .circleci/scripts/wait_for_server.py localhost 5432
       - run: sudo systemctl restart determined-master
       - run: python3 .circleci/scripts/wait_for_server.py localhost 8080 || { journalctl --no-pager -u determined-master; exit 1; }
@@ -4249,6 +4253,8 @@ workflows:
       - test-debian-packaging:
           requires:
             - package-and-push-system-local-ee
+          context:
+            - dev-ci-cluster-default-user-credentials
           filters:
             branches:
               only:
@@ -4759,6 +4765,8 @@ workflows:
 
       - test-det-deploy:
           name: test-det-deploy-local
+          context:
+            - dev-ci-cluster-default-user-credentials
           requires:
             - package-and-push-system-local
             - package-and-push-system-local-ee
@@ -5115,10 +5123,14 @@ workflows:
           requires:
             - package-and-push-system-local-ee
             - request-packaging-tests
+          context:
+            - dev-ci-cluster-default-user-credentials
 
       # Local deployment
       - test-det-deploy:
           name: test-det-deploy-local
+          context:
+            - dev-ci-cluster-default-user-credentials
           requires:
             - package-and-push-system-local
             - package-and-push-system-local-ee
