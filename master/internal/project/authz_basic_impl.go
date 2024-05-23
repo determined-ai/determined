@@ -133,6 +133,16 @@ func (a *ProjectAuthZBasic) CanUnarchiveProject(
 	return nil
 }
 
+// CanSetProjectKey returns an error if the user isn't the owner of the project or workspace.
+func (a *ProjectAuthZBasic) CanSetProjectKey(
+	ctx context.Context, curUser model.User, project *projectv1.Project,
+) error {
+	if err := shouldBeAdminOrOwnWorkspaceOrProject(curUser, project); err != nil {
+		return fmt.Errorf("can't set project key: %w", err)
+	}
+	return nil
+}
+
 func init() {
 	AuthZProvider.Register("basic", &ProjectAuthZBasic{})
 }

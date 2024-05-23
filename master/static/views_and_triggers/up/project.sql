@@ -15,7 +15,7 @@ BEGIN
 END;
 $$;
 CREATE TRIGGER stream_project_trigger_d BEFORE DELETE ON projects FOR EACH ROW EXECUTE PROCEDURE stream_project_change();
-CREATE TRIGGER stream_project_trigger_iu AFTER INSERT OR UPDATE OF name, description, archived, created_at, notes, workspace_id, user_id, immutable, state ON projects FOR EACH ROW EXECUTE PROCEDURE stream_project_change();
+CREATE TRIGGER stream_project_trigger_iu AFTER INSERT OR UPDATE OF name, description, archived, created_at, notes, workspace_id, user_id, immutable, state, key ON projects FOR EACH ROW EXECUTE PROCEDURE stream_project_change();
 
 CREATE FUNCTION stream_project_notify(before jsonb, after jsonb) RETURNS integer
     LANGUAGE plpgsql
@@ -46,4 +46,19 @@ BEGIN
 RETURN NEW;
 END;
 $$;
-CREATE TRIGGER stream_project_trigger_seq BEFORE INSERT OR UPDATE OF name, description, archived, created_at, notes, workspace_id, user_id, immutable, state ON projects FOR EACH ROW EXECUTE PROCEDURE stream_project_seq_modify();
+CREATE TRIGGER stream_project_trigger_seq BEFORE
+INSERT
+	OR
+UPDATE
+	of name,
+	description,
+	archived,
+	created_at,
+	notes,
+	workspace_id,
+	user_id,
+	immutable,
+	state,
+    key
+ON
+    projects FOR EACH ROW EXECUTE PROCEDURE stream_project_seq_modify();

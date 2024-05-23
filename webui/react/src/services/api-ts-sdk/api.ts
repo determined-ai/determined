@@ -4447,6 +4447,19 @@ export interface V1GetPermissionsSummaryResponse {
     assignments: Array<V1RoleAssignmentSummary>;
 }
 /**
+ * Response to GetProjectByKeyRequest.
+ * @export
+ * @interface V1GetProjectByKeyResponse
+ */
+export interface V1GetProjectByKeyResponse {
+    /**
+     * The project requested.
+     * @type {V1Project}
+     * @memberof V1GetProjectByKeyResponse
+     */
+    project: V1Project;
+}
+/**
  * 
  * @export
  * @interface V1GetProjectColumnsResponse
@@ -7230,6 +7243,12 @@ export interface V1PatchProject {
      * @memberof V1PatchProject
      */
     description?: string;
+    /**
+     * The new key for the project.
+     * @type {string}
+     * @memberof V1PatchProject
+     */
+    key?: string;
 }
 /**
  * Response to PatchProjectRequest.
@@ -27902,6 +27921,42 @@ export const ProjectsApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Get the request project by key.
+         * @param {string} key The key of the project.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getProjectByKey(key: string, options: any = {}): FetchArgs {
+            // verify required parameter 'key' is not null or undefined
+            if (key === null || key === undefined) {
+                throw new RequiredError('key','Required parameter key was null or undefined when calling getProjectByKey.');
+            }
+            const localVarPath = `/api/v1/projects/key/{key}`
+                .replace(`{${"key"}}`, encodeURIComponent(String(key)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get a list of columns for experiment list table.
          * @param {number} id The id of the project.
          * @param {V1TableType} [tableType] type of table for project columns.   - TABLE_TYPE_UNSPECIFIED: Unspecified table type.  - TABLE_TYPE_EXPERIMENT: experiment table.  - TABLE_TYPE_RUN: run table.
@@ -28312,6 +28367,25 @@ export const ProjectsApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Get the request project by key.
+         * @param {string} key The key of the project.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getProjectByKey(key: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetProjectByKeyResponse> {
+            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).getProjectByKey(key, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Get a list of columns for experiment list table.
          * @param {number} id The id of the project.
          * @param {V1TableType} [tableType] type of table for project columns.   - TABLE_TYPE_UNSPECIFIED: Unspecified table type.  - TABLE_TYPE_EXPERIMENT: experiment table.  - TABLE_TYPE_RUN: run table.
@@ -28519,6 +28593,16 @@ export const ProjectsApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Get the request project by key.
+         * @param {string} key The key of the project.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getProjectByKey(key: string, options?: any) {
+            return ProjectsApiFp(configuration).getProjectByKey(key, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Get a list of columns for experiment list table.
          * @param {number} id The id of the project.
          * @param {V1TableType} [tableType] type of table for project columns.   - TABLE_TYPE_UNSPECIFIED: Unspecified table type.  - TABLE_TYPE_EXPERIMENT: experiment table.  - TABLE_TYPE_RUN: run table.
@@ -28659,6 +28743,18 @@ export class ProjectsApi extends BaseAPI {
      */
     public getProject(id: number, options?: any) {
         return ProjectsApiFp(this.configuration).getProject(id, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Get the request project by key.
+     * @param {string} key The key of the project.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ProjectsApi
+     */
+    public getProjectByKey(key: string, options?: any) {
+        return ProjectsApiFp(this.configuration).getProjectByKey(key, options)(this.fetch, this.basePath)
     }
     
     /**
