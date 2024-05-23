@@ -94,13 +94,8 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
   const pageRef = useRef<HTMLElement>(null);
   const workspaceId = useMemo(() => workspace?.id.toString() ?? 'global', [workspace?.id]);
   const stgsConfig = useMemo(() => settingsConfig(workspaceId), [workspaceId]);
-  const {
-    activeSettings,
-    resetSettings,
-    settings,
-    updateSettings,
-    isLoading: isLoadingSettings,
-  } = useSettings<Settings>(stgsConfig);
+  const { activeSettings, resetSettings, settings, updateSettings } =
+    useSettings<Settings>(stgsConfig);
   const { canCreateNSC, canCreateWorkspaceNSC } = usePermissions();
   const { canModifyWorkspaceNSC } = usePermissions();
   const taskListModal = useModal(TaskListModalComponent);
@@ -115,24 +110,6 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
   }, [taskListModal, sourcesModal]);
 
   const loadedTasks = useMemo(() => tasks?.map(taskFromCommandTask) || [], [tasks]);
-
-  const filters = useMemo(() => {
-    if (isLoadingSettings) return;
-    return {
-      limit: settings.tableLimit,
-      states: settings.state,
-      types: settings.type as CommandType[],
-      users: settings.user,
-      workspaces: settings.workspace,
-    };
-  }, [
-    isLoadingSettings,
-    settings.state,
-    settings.tableLimit,
-    settings.type,
-    settings.user,
-    settings.workspace,
-  ]);
 
   const filteredTasks = useMemo(() => {
     return filterTasks<CommandType, CommandTask>(
@@ -222,13 +199,13 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
 
   const handleNameSearchApply = useCallback(
     (newSearch: string) => {
-      updateSettings({ row: undefined, search: newSearch || undefined });
+      updateSettings({ row: undefined, search: newSearch || undefined, tableOffset: 0 });
     },
     [updateSettings],
   );
 
   const handleNameSearchReset = useCallback(() => {
-    updateSettings({ row: undefined, search: undefined });
+    updateSettings({ row: undefined, search: undefined, tableOffset: 0 });
   }, [updateSettings]);
 
   const nameFilterSearch = useCallback(
@@ -247,6 +224,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
     (types: string[]) => {
       updateSettings({
         row: undefined,
+        tableOffset: 0,
         type: types.length !== 0 ? (types as CommandType[]) : undefined,
       });
     },
@@ -257,6 +235,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
     (workspaces: string[]) => {
       updateSettings({
         row: undefined,
+        tableOffset: 0,
         workspace: workspaces.length !== 0 ? workspaces : undefined,
       });
     },
@@ -264,11 +243,11 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
   );
 
   const handleWorkspaceFilterReset = useCallback(() => {
-    updateSettings({ row: undefined, workspace: undefined });
+    updateSettings({ row: undefined, tableOffset: 0, workspace: undefined });
   }, [updateSettings]);
 
   const handleTypeFilterReset = useCallback(() => {
-    updateSettings({ row: undefined, type: undefined });
+    updateSettings({ row: undefined, tableOffset: 0, type: undefined });
   }, [updateSettings]);
 
   const typeFilterDropdown = useCallback(
@@ -303,13 +282,14 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
       updateSettings({
         row: undefined,
         state: states.length !== 0 ? (states as CommandState[]) : undefined,
+        tableOffset: 0,
       });
     },
     [updateSettings],
   );
 
   const handleStateFilterReset = useCallback(() => {
-    updateSettings({ row: undefined, state: undefined });
+    updateSettings({ row: undefined, state: undefined, tableOffset: 0 });
   }, [updateSettings]);
 
   const stateFilterDropdown = useCallback(
@@ -329,6 +309,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
     (users: string[]) => {
       updateSettings({
         row: undefined,
+        tableOffset: 0,
         user: users.length !== 0 ? users : undefined,
       });
     },
@@ -336,7 +317,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
   );
 
   const handleUserFilterReset = useCallback(() => {
-    updateSettings({ row: undefined, user: undefined });
+    updateSettings({ row: undefined, tableOffset: 0, user: undefined });
   }, [updateSettings]);
 
   const userFilterDropdown = useCallback(
@@ -654,7 +635,6 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
           ContextMenu={TaskActionDropdownCM}
           dataSource={filteredTasks}
           defaultColumns={stgsConfig.settings.columns.defaultValue}
-          filters={filters}
           loading={tasks === undefined || !settings}
           pagination={getFullPaginationConfig(
             {

@@ -29,7 +29,6 @@ import {
 } from 'react-draggable';
 
 import SkeletonTable from 'components/Table/SkeletonTable';
-import usePrevious from 'hooks/usePrevious';
 import useResize from 'hooks/useResize';
 import { UpdateSettings } from 'hooks/useSettings';
 import { Primitive } from 'types';
@@ -85,7 +84,6 @@ interface InteractiveTableProps<RecordType, Settings> extends TableProps<RecordT
   columns: ColumnDef<RecordType>[];
   containerRef: MutableRefObject<HTMLElement | null>;
   defaultColumns?: string[];
-  filters?: Record<string, unknown>;
   interactiveColumns?: boolean;
   numOfPinned?: number;
   settings: Settings;
@@ -361,7 +359,6 @@ const InteractiveTable = <
   dataSource,
   columns,
   containerRef,
-  filters = {},
   interactiveColumns = true,
   numOfPinned,
   settings,
@@ -380,14 +377,6 @@ const InteractiveTable = <
   const tableRef = useRef<HTMLDivElement>(null);
   const timeout = useRef<NodeJS.Timeout>();
   const settingsColumns = useMemo(() => [...settings.columns], [settings.columns]);
-
-  const prevFilters = usePrevious(filters, filters);
-
-  useEffect(() => {
-    if (prevFilters !== null && !_.isEqual(filters, prevFilters)) {
-      updateSettings({ tableOffset: 0 } as Partial<S>);
-    }
-  }, [filters, prevFilters, updateSettings]);
 
   const getUpscaledWidths = useCallback(
     (widths: number[]): number[] => {

@@ -62,7 +62,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
   const models = useFetchModels();
 
   const config = useMemo(() => configForExperiment(experiment.id), [experiment.id]);
-  const { settings, updateSettings, isLoading: isLoadingSettings } = useSettings<Settings>(config);
+  const { settings, updateSettings } = useSettings<Settings>(config);
 
   const [checkpoint, setCheckpoint] = useState<CoreApiGenericCheckpoint>();
   const { checkpointModalComponents, openCheckpoint } = useCheckpointFlow({
@@ -94,13 +94,14 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
       updateSettings({
         row: undefined,
         state: states.length !== 0 ? (states as CheckpointState[]) : undefined,
+        tableOffset: 0,
       });
     },
     [updateSettings],
   );
 
   const handleStateFilterReset = useCallback(() => {
-    updateSettings({ row: undefined, state: undefined });
+    updateSettings({ row: undefined, state: undefined, tableOffset: 0 });
   }, [updateSettings]);
 
   const stateFilterDropdown = useCallback(
@@ -263,13 +264,6 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
     stateFilterDropdown,
   ]);
 
-  const filters = useMemo(() => {
-    if (isLoadingSettings) return;
-    const states = settings.state?.map((state) => encodeCheckpointState(state as CheckpointState));
-
-    return { states: validateDetApiEnumList(Checkpointv1State, states) };
-  }, [isLoadingSettings, settings.state]);
-
   const fetchExperimentCheckpoints = useCallback(async () => {
     if (!settings) return;
 
@@ -380,7 +374,6 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
             containerRef={pageRef}
             ContextMenu={CheckpointActionDropdown}
             dataSource={checkpoints}
-            filters={filters}
             loading={isLoading}
             pagination={getFullPaginationConfig(
               {

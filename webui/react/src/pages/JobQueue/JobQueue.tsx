@@ -64,23 +64,12 @@ const JobQueue: React.FC<Props> = ({ rpStats, selectedRp, jobState }) => {
       manageJobModal.open();
     }
   }, [managingJob, manageJobModal]);
-  const {
-    settings,
-    updateSettings,
-    isLoading: isLoadingSettings,
-  } = useSettings<Settings>(useMemo(() => settingsConfig(jobState), [jobState]));
+  const { settings, updateSettings } = useSettings<Settings>(
+    useMemo(() => settingsConfig(jobState), [jobState]),
+  );
   const settingsColumns = useMemo(() => [...settings.columns], [settings.columns]);
 
   const isJobOrderAvailable = orderedSchedulers.has(selectedRp.schedulerType);
-
-  const filters = useMemo(() => {
-    if (isLoadingSettings) return;
-
-    return {
-      resourcePool: selectedRp.name,
-      states: jobState ? [jobState] : undefined,
-    };
-  }, [isLoadingSettings, jobState, selectedRp.name]);
 
   const fetchJobsTable = useCallback(async () => {
     if (!settings) return;
@@ -374,7 +363,6 @@ const JobQueue: React.FC<Props> = ({ rpStats, selectedRp, jobState }) => {
             columns={columns}
             containerRef={pageRef}
             dataSource={jobs}
-            filters={filters}
             loading={pageState.isLoading}
             pagination={getFullPaginationConfig(
               {

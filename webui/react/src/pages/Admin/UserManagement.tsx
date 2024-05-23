@@ -228,22 +228,6 @@ const UserManagement: React.FC = () => {
     [],
   );
 
-  const filters = useMemo(() => {
-    if (loadableSettings.isNotLoaded) return;
-    const roleParam = Array.isArray(roleFilter)
-      ? {
-          roleIdAssignedDirectlyToUser: roleFilter,
-        }
-      : {
-          admin: roleFilter === UserRole.ADMIN,
-        };
-    return {
-      active: statusFilter === UserStatus.ACTIVE,
-      name: nameFilter,
-      ...roleParam,
-    };
-  }, [loadableSettings.isNotLoaded, nameFilter, roleFilter, statusFilter]);
-
   const userResponse = useAsync(async () => {
     try {
       const params = {
@@ -542,7 +526,6 @@ const UserManagement: React.FC = () => {
             columns={columns}
             containerRef={pageRef}
             dataSource={users}
-            filters={filters}
             interactiveColumns={false}
             loading={Loadable.isNotLoaded(userResponse)}
             pagination={Loadable.match(userResponse, {
