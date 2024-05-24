@@ -4275,6 +4275,7 @@ class v1FlatRun(Printable):
     def __init__(
         self,
         *,
+        archived: bool,
         checkpointCount: int,
         checkpointSize: str,
         id: int,
@@ -4295,6 +4296,7 @@ class v1FlatRun(Printable):
         summaryMetrics: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
         userId: "typing.Union[int, None, Unset]" = _unset,
     ):
+        self.archived = archived
         self.checkpointCount = checkpointCount
         self.checkpointSize = checkpointSize
         self.id = id
@@ -4327,6 +4329,7 @@ class v1FlatRun(Printable):
     @classmethod
     def from_json(cls, obj: Json) -> "v1FlatRun":
         kwargs: "typing.Dict[str, typing.Any]" = {
+            "archived": obj["archived"],
             "checkpointCount": obj["checkpointCount"],
             "checkpointSize": obj["checkpointSize"],
             "id": obj["id"],
@@ -4360,6 +4363,7 @@ class v1FlatRun(Printable):
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
+            "archived": self.archived,
             "checkpointCount": self.checkpointCount,
             "checkpointSize": self.checkpointSize,
             "id": self.id,

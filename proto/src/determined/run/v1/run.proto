@@ -66,7 +66,8 @@ message FlatRun {
         "project_name",
         "workspace_id",
         "workspace_name",
-        "parent_archived"
+        "parent_archived",
+        "archived"
       ]
     }
   };
@@ -110,4 +111,6 @@ message FlatRun {
   bool parent_archived = 18;
   // Data related the the experiment associated with this run.
   optional FlatRunExperiment experiment = 19;
+  // The archived status of this run
+  bool archived = 20;
 }

@@ -3494,6 +3494,12 @@ export interface V1FlatRun {
      * @memberof V1FlatRun
      */
     experiment?: V1FlatRunExperiment;
+    /**
+     * The archived status of this run
+     * @type {boolean}
+     * @memberof V1FlatRun
+     */
+    archived: boolean;
 }
 /**
  * 
