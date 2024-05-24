@@ -13,8 +13,10 @@ const ClusterMessageBanner: React.FC<Props> = ({ message }) => {
     <>
       <div className={css.base}>
         <span>
-          <span className={css.clusterMessageLabel}>Message from Admin:</span>{' '}
-          <span>{message.message}</span>
+          <span className={css.clusterMessageLabel} data-testid="admin-msg">
+            Message from Admin:
+          </span>{' '}
+          <span data-testid="cluster-msg">{message.message}</span>
         </span>
       </div>
     </>

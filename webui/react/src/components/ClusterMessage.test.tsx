@@ -1,0 +1,37 @@
+// components/Counter.test.tsx
+import { render, screen } from '@testing-library/react';
+
+import ClusterMessageBanner from './ClusterMessage';
+
+// TODO (eliu): figure out typing for msg
+const setup = (msg) => {
+  render(<ClusterMessageBanner message={msg} />); // render arbitrary components
+};
+
+const msg = 'this is a test msg for use in the ClusterMessageBanner test';
+
+describe('ClusterMessageBanner', () => {
+  it('should have a banner with cluster message text', () => {
+    const time = new Date();
+    const testMsg = { createdTime: time, endTime: time, message: msg, startTime: time };
+
+    setup(testMsg);
+    // make sure these components exist.
+    expect(screen.getByTestId('admin-msg')).toBeInTheDocument();
+    expect(screen.getByTestId('cluster-msg')).toBeInTheDocument();
+
+    // make sure the cluster message is visible, but the admin msg is not.
+    expect(screen.getByText(msg)).toBeInTheDocument();
+    expect(screen.queryByText('Message from Admin')).not.toBeInTheDocument();
+  });
+
+  it('should not have a banner', () => {
+    setup(null);
+
+    // setting a null message means nothing should show up in the ui.
+    expect(screen.queryByTestId('admin-msg')).not.toBeInTheDocument();
+    expect(screen.queryByText('cluster-msg')).not.toBeInTheDocument();
+    expect(screen.queryByText('test msg')).not.toBeInTheDocument();
+    expect(screen.queryByText('Message from Admin')).not.toBeInTheDocument();
+  });
+});
