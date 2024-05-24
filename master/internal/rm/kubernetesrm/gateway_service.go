@@ -21,46 +21,51 @@ type gatewayService struct {
 	mu               sync.Mutex
 	gatewayInterface gateway.GatewayInterface
 	gatewayName      string
-	// portRange        *port.Range
+}
+
+type gatewayResourceComm struct {
+	requestedPorts     int
+	resourceDescriptor resourceDescriptor
+	updateCB           func([]gatewayProxyResource)
+}
+
+func genSectionName(port int) string {
+	return fmt.Sprintf("section-%d", port)
 }
 
 func newGatewayService(gatewayInterface gateway.GatewayInterface, gatewayName string) (*gatewayService, error) {
 	// TODO: make port range configurable by user. We currently assume we own the controller and
 	// the service.
 	// DOCS: note this limit on number of active proxied tasks.
-	// portRange, err := port.NewRange(49152, 65535, make([]int, 0))
-	// TODO: validate on startup
-	// if err != nil {
-	// 	return nil, fmt.Errorf("creating port range: %w", err)
-	// }
+	// TODO: validate existing port on the gateway on startup
 	g := &gatewayService{
 		gatewayInterface: gatewayInterface,
 		gatewayName:      gatewayName,
 	}
-
 	return g, nil
 }
 
 // PortMap is a map of pod ports to gateway ports.
 type PortMap map[int]int
 
-func (g *gatewayService) addListeners(listeners []gatewayTyped.Listener) (PortMap, error) {
-	portMap := make(map[int]int)
+func (g *gatewayService) generateAndAddListeners(count int) ([]int, error) {
+	var ports []int
 	if err := g.updateGateway(func(gateway *gatewayTyped.Gateway) error {
-		ports, err := pickNFreePorts(gateway, len(listeners))
+		var err error
+		listeners := make([]gatewayTyped.Listener, count)
+		ports, err = pickNFreePorts(gateway, len(listeners))
 		if err != nil {
 			return err
 		}
-		for i, listener := range listeners {
-			portMap[int(listener.Port)] = ports[i]
-			listeners[i].Port = gatewayTyped.PortNumber(ports[i])
+		for i := 0; i < count; i++ {
+			listeners[i] = createListenerForPod(ports[i], genSectionName(ports[i]))
 		}
 		gateway.Spec.Listeners = append(gateway.Spec.Listeners, listeners...)
 		return nil
 	}); err != nil {
-		return nil, fmt.Errorf("adding listeners %+v to gateway: %w", listeners, err)
+		return nil, fmt.Errorf("adding %d listeners to gateway: %w", count, err)
 	}
-	return portMap, nil
+	return ports, nil
 }
 
 func pickNFreePorts(gateway *gatewayTyped.Gateway, count int) ([]int, error) {
@@ -89,8 +94,6 @@ func (g *gatewayService) freePorts(ports []int) error {
 	}); err != nil {
 		return fmt.Errorf("freeing ports %v from gateway: %w", ports, err)
 	}
-
-	// CHAT: if we're not gonna be using the inmemory view then no need to free the ports?
 	return nil
 }
 

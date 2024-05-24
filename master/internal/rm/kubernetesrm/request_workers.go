@@ -8,7 +8,6 @@ import (
 
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	typedV1 "k8s.io/client-go/kubernetes/typed/core/v1"
-	gatewayTyped "sigs.k8s.io/gateway-api/apis/v1"
 	alphaGateway "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned/typed/apis/v1alpha2"
 )
 
@@ -81,24 +80,37 @@ func (r *requestProcessingWorker) receiveCreateKubernetesResources(
 	}
 	r.syslog.Infof("created configMap %s", configMap.Name)
 
-	var gatewayListeners []gatewayTyped.Listener
-	for _, proxyResource := range msg.gatewayProxyResources {
-		gatewayListeners = append(gatewayListeners, proxyResource.gatewayListener)
-	}
-	portMap := make(PortMap)
-	if len(gatewayListeners) > 0 {
-		// TODO(RM-272) do we leak resources if the request queue fails?
-		// Do we / should we delete created resources?
-		// TODO: handle potential port conflicts. It will need a pod spec and det proxy reconfiguration.
-		if portMap, err = r.gatewayService.addListeners(gatewayListeners); err != nil {
-			r.syslog.WithError(err).Errorf("error patching gateway for pod %s", msg.podSpec.Name)
-			r.failures <- resourceCreationFailed{podName: msg.podSpec.Name, err: err}
-			return
+	var ports []int
+	var proxyResources []gatewayProxyResource
+	if msg.gw != nil {
+		if msg.gw.requestedPorts > 0 {
+			if ports, err = r.gatewayService.generateAndAddListeners(msg.gw.requestedPorts); err != nil {
+				r.syslog.WithError(err).Errorf("error patching gateway for pod %s", msg.podSpec.Name)
+				r.failures <- resourceCreationFailed{podName: msg.podSpec.Name, err: err}
+				return
+			}
+			r.syslog.Info("created gateway proxy listeners", msg.gw.requestedPorts, ports)
 		}
-		r.syslog.Info("created gateway proxy resources")
+		proxyResources = msg.gw.resourceDescriptor(ports)
 	}
-	msg.gatewayProxyResources = mapResourcePorts(portMap, msg.gatewayProxyResources)
-	for _, proxyResource := range msg.gatewayProxyResources {
+
+	// var gatewayListeners []gatewayTyped.Listener
+	// for _, proxyResource := range msg.gatewayProxyResources {
+	// 	gatewayListeners = append(gatewayListeners, proxyResource.gatewayListener)
+	// }
+	// if len(gatewayListeners) > 0 {
+	// 	// TODO(RM-272) do we leak resources if the request queue fails?
+	// 	// Do we / should we delete created resources?
+	// 	// TODO: handle potential port conflicts. It will need a pod spec and det proxy reconfiguration.
+	// 	if portMap, err = r.gatewayService.generateAndAddListeners(gatewayListeners); err != nil {
+	// 		r.syslog.WithError(err).Errorf("error patching gateway for pod %s", msg.podSpec.Name)
+	// 		r.failures <- resourceCreationFailed{podName: msg.podSpec.Name, err: err}
+	// 		return
+	// 	}
+	// 	r.syslog.Info("created gateway proxy resources")
+	// }
+	// msg.gatewayProxyResources = mapResourcePorts(portMap, msg.gatewayProxyResources)
+	for _, proxyResource := range proxyResources {
 		r.syslog.Debugf("launching service with spec %v", *proxyResource.serviceSpec)
 		if _, err := r.serviceInterfaces[msg.podSpec.Namespace].Create(
 			context.TODO(), proxyResource.serviceSpec, metaV1.CreateOptions{},
@@ -118,10 +130,13 @@ func (r *requestProcessingWorker) receiveCreateKubernetesResources(
 		// we're creating listeners ahead of time which is a different err handling order.
 		// gatewayListeners = append(gatewayListeners, proxyResource.gatewayListener)
 	}
-	fmt.Println("HHH calling with port map", portMap)
-	if msg.updateCB != nil {
-		fmt.Println("HHH calling with updated resources", msg.gatewayProxyResources)
-		(*msg.updateCB)(portMap)
+	fmt.Println("HHH calling with port map", ports)
+	// if msg.updateCB != nil {
+	// 	fmt.Println("HHH calling with updated resources", msg.gatewayProxyResources)
+	// 	(*msg.updateCB)(portMap)
+	// }
+	if msg.gw != nil {
+		msg.gw.updateCB(proxyResources)
 	}
 
 	r.syslog.Debugf("launching pod with spec %v", msg.podSpec)

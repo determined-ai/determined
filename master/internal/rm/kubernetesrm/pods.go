@@ -655,7 +655,8 @@ func (p *pods) reattachPod(
 	var started *sproto.ResourcesStarted
 	if newPodHandler.container.State == cproto.Running {
 		started = ptrs.Ptr(getResourcesStartedForPod(
-			pod, newPodHandler.ports, p.exposeProxyConfig, newPodHandler.gatewayProxyResources,
+			// FIXME: how do we restore the proxy resources?
+			pod, newPodHandler.ports, nil, newPodHandler.gatewayProxyResources,
 		))
 	}
 

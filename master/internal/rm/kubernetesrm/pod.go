@@ -83,6 +83,10 @@ func (g gatewayProxyResource) SetGWPort(port int) {
 	g.tcpRouteSpec.Spec.CommonRouteSpec.ParentRefs[0].Port = &gwPort
 }
 
+// type ProxyResourceRequest struct {
+
+// }
+
 // pod manages the lifecycle of a Kubernetes pod that executes a
 // Determined task. The lifecycle of the pod is managed based on
 // the status of the specified set of containers.
@@ -118,6 +122,7 @@ type pod struct {
 	configMapName string
 
 	gatewayProxyResources []gatewayProxyResource
+	proxyRequests         []gatewayProxyResource
 	exposeProxyConfig     *config.ExposeProxiesExternallyConfig
 	gatewayService        *gatewayService
 
@@ -399,13 +404,17 @@ func (p *pod) createPodSpecAndSubmit() error {
 	if err := p.createPodSpec(p.scheduler); err != nil {
 		return err
 	}
-	updateResources := func(portMap PortMap) {
+	updateResources := func(resources []gatewayProxyResource) {
 		p.mu.Lock()
 		defer p.mu.Unlock()
-		fmt.Println("HHH pod updating resources", portMap, p.gatewayProxyResources)
-		p.gatewayProxyResources = mapResourcePorts(portMap, p.gatewayProxyResources)
+		p.gatewayProxyResources = resources
 	}
-	p.resourceRequestQueue.createKubernetesResources(p.pod, p.configMap, p.gatewayProxyResources, &updateResources)
+	gwComm := gatewayResourceComm{
+		resourceDescriptor: *p.configureProxyResources(),
+		updateCB:           updateResources,
+		requestedPorts:     len(p.req.ProxyPorts),
+	}
+	p.resourceRequestQueue.createKubernetesResources(p.pod, p.configMap, &gwComm)
 	return nil
 }
 
@@ -630,8 +639,12 @@ func getResourcesStartedForPod(
 		HostIP:      pod.Status.PodIP,
 	}
 	if exposeProxyConfig != nil {
-		// baseAddress.ContainerIP = exposeProxyConfig.GatewayAddress
+		baseAddress.ContainerIP = exposeProxyConfig.GatewayAddress
 		baseAddress.HostIP = exposeProxyConfig.GatewayAddress
+		if len(podPorts) > 0 && len(gatewayProxyResource) == 0 {
+			fmt.Println("HHH pod ports", podPorts)
+			panic("gatewayProxyResource is empty")
+		}
 		for _, g := range gatewayProxyResource {
 			gwPortMap[g.PodPort()] = g.GWPort()
 		}
@@ -645,6 +658,7 @@ func getResourcesStartedForPod(
 		if newHostPort, ok := gwPortMap[podPort]; ok {
 			fmt.Println("HHH swapping host port", podPort, newHostPort)
 			address.HostPort = newHostPort
+			// address.ContainerPort = newHostPort
 		}
 		addresses = append(addresses, address)
 	}

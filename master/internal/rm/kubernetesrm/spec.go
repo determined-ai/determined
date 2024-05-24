@@ -132,104 +132,113 @@ func (p *pod) configureEnvVars(
 	return envVars, nil
 }
 
-func (p *pod) configureProxyResources() []gatewayProxyResource { // TODO return an err.
+func createListenerForPod(port int, sectionName string) gatewayTyped.Listener {
+	gatewayListener := gatewayTyped.Listener{
+		Name:     gatewayTyped.SectionName(sectionName),
+		Port:     gatewayTyped.PortNumber(port),
+		Protocol: "TCP",
+		AllowedRoutes: &gatewayTyped.AllowedRoutes{
+			Namespaces: &gatewayTyped.RouteNamespaces{
+				From: ptrs.Ptr(gatewayTyped.NamespacesFromAll),
+			},
+		},
+	}
+	return gatewayListener
+}
+
+// resourceDescriptor returns a configured list of proxy resources for a pod.
+type resourceDescriptor func([]int) []gatewayProxyResource
+
+func (p *pod) configureProxyResources() *resourceDescriptor { // TODO return an err.
 	if p.exposeProxyConfig == nil {
 		return nil
 	}
 
-	var resources []gatewayProxyResource
-	// TODO(RM-275/gateways) think about experiments, should they proxy every pod, or only rank 0?
-	for i, proxyPort := range p.req.ProxyPorts {
-		// TODO(RM-276/gateways) use something more reasonable for the name.
-		// Podname is too long currently. There is like a 63 characeter limit for DNS.
-		// We should really be under this for everything even if not required (like it is for
-		// service and TCPRoute). Bradley is changing this but hopefully we land before him.
-		tooLong := fmt.Sprintf("porti%d-%s-%s",
-			i, p.submissionInfo.taskSpec.Description, uuid.New().String())
-		sharedName := tooLong[:min(63, len(tooLong)-1)]
-
-		gwPort, err := proxyPort.Port, error(nil) // p.gatewayService.GetFreePort()
-		if err != nil {
-			log.WithError(err).Error("failed to allocate port")
-			return nil
-		}
-		fmt.Println("hhh allocated gwPort", gwPort)
-
-		allocLabels := map[string]string{
-			determinedLabel: p.submissionInfo.taskSpec.AllocationID,
+	generator := resourceDescriptor(func(ports []int) []gatewayProxyResource {
+		var resources []gatewayProxyResource
+		// TODO(RM-275/gateways) think about experiments, should they proxy every pod, or only rank 0?
+		if len(ports) != len(p.req.ProxyPorts) {
+			panic("proxy ports and ports must be the same length")
 		}
 
-		serviceSpec := &k8sV1.Service{
-			ObjectMeta: metaV1.ObjectMeta{
-				Name:      sharedName,
-				Namespace: p.namespace,
-				Labels:    allocLabels,
-			},
-			Spec: k8sV1.ServiceSpec{
-				Ports: []k8sV1.ServicePort{
-					{
-						Protocol: k8sV1.ProtocolTCP,
-						Port:     int32(proxyPort.Port),
-					},
+		for i, proxyPort := range p.req.ProxyPorts {
+			// TODO(RM-276/gateways) use something more reasonable for the name.
+			// Podname is too long currently. There is like a 63 characeter limit for DNS.
+			// We should really be under this for everything even if not required (like it is for
+			// service and TCPRoute). Bradley is changing this but hopefully we land before him.
+			tooLong := fmt.Sprintf("porti%d-%s-%s",
+				i, p.submissionInfo.taskSpec.Description, uuid.New().String())
+			sharedName := tooLong[:min(63, len(tooLong)-1)]
+
+			gwPort := ports[i]
+			allocLabels := map[string]string{
+				determinedLabel: p.submissionInfo.taskSpec.AllocationID,
+			}
+
+			serviceSpec := &k8sV1.Service{
+				ObjectMeta: metaV1.ObjectMeta{
+					Name:      sharedName,
+					Namespace: p.namespace,
+					Labels:    allocLabels,
 				},
-				Selector: allocLabels,
-				Type:     k8sV1.ServiceTypeClusterIP,
-			},
-		}
-
-		sectionName := fmt.Sprintf("proxyport-%d-%d", i, gwPort)
-		tcpRouteSpec := &alphaGatewayTyped.TCPRoute{
-			ObjectMeta: metaV1.ObjectMeta{
-				Name:      sharedName,
-				Namespace: p.namespace,
-				Labels:    allocLabels,
-			},
-			Spec: alphaGatewayTyped.TCPRouteSpec{
-				CommonRouteSpec: alphaGatewayTyped.CommonRouteSpec{
-					ParentRefs: []alphaGatewayTyped.ParentReference{
+				Spec: k8sV1.ServiceSpec{
+					Ports: []k8sV1.ServicePort{
 						{
-							Namespace:   ptrs.Ptr(alphaGatewayTyped.Namespace(p.exposeProxyConfig.GatewayNamespace)),
-							Name:        alphaGatewayTyped.ObjectName(p.exposeProxyConfig.GatewayName),
-							Port:        ptrs.Ptr(alphaGatewayTyped.PortNumber(gwPort)),
-							SectionName: ptrs.Ptr(alphaGatewayTyped.SectionName(sectionName)),
+							Protocol: k8sV1.ProtocolTCP,
+							Port:     int32(proxyPort.Port),
 						},
 					},
+					Selector: allocLabels,
+					Type:     k8sV1.ServiceTypeClusterIP,
 				},
-				Rules: []alphaGatewayTyped.TCPRouteRule{
-					{
-						BackendRefs: []alphaGatewayTyped.BackendRef{
+			}
+
+			sectionName := genSectionName(gwPort)
+			tcpRouteSpec := &alphaGatewayTyped.TCPRoute{
+				ObjectMeta: metaV1.ObjectMeta{
+					Name:      sharedName,
+					Namespace: p.namespace,
+					Labels:    allocLabels,
+				},
+				Spec: alphaGatewayTyped.TCPRouteSpec{
+					CommonRouteSpec: alphaGatewayTyped.CommonRouteSpec{
+						ParentRefs: []alphaGatewayTyped.ParentReference{
 							{
-								BackendObjectReference: alphaGatewayTyped.BackendObjectReference{
-									Name: alphaGatewayTyped.ObjectName(serviceSpec.Name),
-									Kind: ptrs.Ptr(alphaGatewayTyped.Kind("Service")),
-									Port: ptrs.Ptr(alphaGatewayTyped.PortNumber(proxyPort.Port)),
+								Namespace:   ptrs.Ptr(alphaGatewayTyped.Namespace(p.exposeProxyConfig.GatewayNamespace)),
+								Name:        alphaGatewayTyped.ObjectName(p.exposeProxyConfig.GatewayName),
+								Port:        ptrs.Ptr(alphaGatewayTyped.PortNumber(gwPort)),
+								SectionName: ptrs.Ptr(alphaGatewayTyped.SectionName(sectionName)),
+							},
+						},
+					},
+					Rules: []alphaGatewayTyped.TCPRouteRule{
+						{
+							BackendRefs: []alphaGatewayTyped.BackendRef{
+								{
+									BackendObjectReference: alphaGatewayTyped.BackendObjectReference{
+										Name: alphaGatewayTyped.ObjectName(serviceSpec.Name),
+										Kind: ptrs.Ptr(alphaGatewayTyped.Kind("Service")),
+										Port: ptrs.Ptr(alphaGatewayTyped.PortNumber(proxyPort.Port)),
+									},
 								},
 							},
 						},
 					},
 				},
-			},
-		}
+			}
 
-		gatewayListener := gatewayTyped.Listener{
-			Name:     gatewayTyped.SectionName(sectionName),
-			Port:     gatewayTyped.PortNumber(gwPort),
-			Protocol: "TCP",
-			AllowedRoutes: &gatewayTyped.AllowedRoutes{
-				Namespaces: &gatewayTyped.RouteNamespaces{
-					From: ptrs.Ptr(gatewayTyped.NamespacesFromAll),
-				},
-			},
-		}
+			gatewayListener := createListenerForPod(gwPort, sectionName)
 
-		resources = append(resources, gatewayProxyResource{
-			podPort:         proxyPort.Port,
-			serviceSpec:     serviceSpec,
-			tcpRouteSpec:    tcpRouteSpec,
-			gatewayListener: gatewayListener,
-		})
-	}
-	return resources
+			resources = append(resources, gatewayProxyResource{
+				podPort:         proxyPort.Port,
+				serviceSpec:     serviceSpec,
+				tcpRouteSpec:    tcpRouteSpec,
+				gatewayListener: gatewayListener,
+			})
+		}
+		return resources
+	})
+	return &generator
 }
 
 func (p *pod) configureConfigMapSpec(
@@ -588,8 +597,6 @@ func (p *pod) createPodSpec(scheduler string) error {
 	if err != nil {
 		return err
 	}
-
-	p.gatewayProxyResources = p.configureProxyResources()
 
 	rootVolumes, rootVolumeMounts, err := handleRootArchiveFiles(rootArchives, p.configMap)
 	if err != nil {
