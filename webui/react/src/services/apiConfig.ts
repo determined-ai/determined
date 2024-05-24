@@ -1176,12 +1176,15 @@ export const moveRuns: DetApi<Api.V1MoveRunsRequest, Api.V1MoveRunsResponse, voi
   request: (params, options) => detApi.Internal.moveRuns(params, options),
 };
 
-export const unarchiveRuns: DetApi<Api.V1UnarchiveRunsRequest, Api.V1UnarchiveRunsResponse, void> =
-  {
-    name: 'unarchiveRuns',
-    postProcess: noOp,
-    request: (params, options) => detApi.Internal.unarchiveRuns(params, options),
-  };
+export const unarchiveRuns: DetApi<
+  Api.V1UnarchiveRunsRequest,
+  Api.V1UnarchiveRunsResponse,
+  Type.BulkActionResult
+> = {
+  name: 'unarchiveRuns',
+  postProcess: (response) => decoder.mapV1ActionResults(response.results),
+  request: (params, options) => detApi.Internal.unarchiveRuns(params, options),
+};
 
 /* Tasks */
 
