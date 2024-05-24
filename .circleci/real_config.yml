@@ -2926,6 +2926,8 @@ jobs:
             auth_file: /home/launcher/.launcher.$HOSTNAME.token
             path: /opt/singularity/bin:/usr/local/bin:${PATH}
             ld_library_path:
+          security:
+            initial_user_password: ${INITIAL_USER_PASSWORD}
       reserved_ports_znode50:
         type: string
         default: |
@@ -4321,6 +4323,8 @@ workflows:
           name: test-e2e-slurm-misconfigured
           requires:
             - package-and-push-system-local-ee
+          context:
+            - dev-ci-cluster-default-user-credentials
           filters:
             branches:
               only:
@@ -4362,12 +4366,16 @@ workflows:
               auth_file: /home/launcher/.launcher.$HOSTNAME.token
               path: /opt/singularity/bin:/usr/local/bin:${PATH}
               ld_library_path:
+            security:
+              initial_user_password: ${INITIAL_USER_PASSWORD}
 
       - test-e2e-slurm:
           name: test-e2e-slurm-gpu
           mark: "e2e_slurm_gpu"
           requires:
             - package-and-push-system-local-ee
+          context:
+            - dev-ci-cluster-default-user-credentials
           filters:
             branches:
               only:
@@ -5236,6 +5244,8 @@ workflows:
 
       - test-e2e-slurm:
           name: test-e2e-slurm-misconfigured
+          context:
+            - dev-ci-cluster-default-user-credentials
           filters: *upstream-feature-branch
           requires:
             - package-and-push-system-local-ee
@@ -5277,9 +5287,13 @@ workflows:
               auth_file: /home/launcher/.launcher.$HOSTNAME.token
               path: /opt/singularity/bin:/usr/local/bin:${PATH}
               ld_library_path:
+            security:
+              initial_user_password: ${INITIAL_USER_PASSWORD}
 
       - test-e2e-slurm:
           name: test-e2e-slurm-gpu
+          context:
+            - dev-ci-cluster-default-user-credentials
           filters: *upstream-feature-branch
           mark: "e2e_slurm_gpu"
           requires:
@@ -5522,23 +5536,31 @@ workflows:
           context: github-read
       - test-e2e-slurm:
           name: test-e2e-slurm-restart
+          context:
+            - dev-ci-cluster-default-user-credentials
           mark: "e2e_slurm_restart"
           requires:
             - package-and-push-system-local-ee
           extra-pytest-flags: "--no-compare-stats"
       - test-e2e-slurm:
           name: test-e2e-slurm-preemption
+          context:
+            - dev-ci-cluster-default-user-credentials
           mark: "e2e_slurm_preemption"
           requires:
             - package-and-push-system-local-ee
           extra-pytest-flags: "--no-compare-stats"
       - test-e2e-slurm:
           name: test-e2e-slurm-znode
+          context:
+            - dev-ci-cluster-default-user-credentials
           requires:
             - package-and-push-system-local-ee
           extra-pytest-flags: "--no-compare-stats"
       - test-e2e-slurm:
           name: test-e2e-slurm-enroot-znode
+          context:
+            - dev-ci-cluster-default-user-credentials
           matrix:
             parameters:
               mark: ["e2e_slurm and not deepspeed"]
@@ -5588,8 +5610,12 @@ workflows:
               auth_file: /home/launcher/.launcher.$HOSTNAME.token
               path: /opt/singularity/bin:/usr/local/bin:${PATH}
               ld_library_path:
+            security:
+              initial_user_password: ${INITIAL_USER_PASSWORD}
       - test-e2e-slurm:
             name: test-e2e-slurm-agent-singularity-znode
+            context:
+              - dev-ci-cluster-default-user-credentials
             requires:
               - package-and-push-system-local-ee
             agent-use: "-A"
