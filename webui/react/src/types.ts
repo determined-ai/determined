@@ -1237,6 +1237,7 @@ export interface FlatRun {
   projectName: string;
   workspaceId: number;
   workspaceName: string;
+  archived: boolean;
   parentArchived: boolean;
   experiment?: FlatRunExperiment;
 }
