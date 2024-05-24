@@ -139,22 +139,22 @@ const NavigationTabbar: React.FC = () => {
         </div>
       ),
     },
-    {
-      icon: 'settings',
-      label: 'User Settings',
-      onClick: () => setShowSettings(true),
-    },
   ];
 
   if (canAdministrateUsers) {
     overflowActionsTop.push({
       icon: 'group',
       label: 'Admin Settings',
-      path: paths.admin(),
+      onClick: (e: AnyMouseEvent) => handlePathUpdate(e, paths.admin()),
     });
   }
 
   const overflowActionsBottom: OverflowActionProps[] = [
+    {
+      icon: 'settings',
+      label: 'User Settings',
+      onClick: () => setShowSettings(true),
+    },
     {
       icon: 'user',
       label: 'Sign out',
