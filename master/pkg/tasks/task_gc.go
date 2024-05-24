@@ -40,8 +40,7 @@ func (g GCCkptSpec) ToTaskSpec() TaskSpec {
 
 	podSpec := g.LegacyConfig.Environment.PodSpec()
 	if g.Base.TaskContainerDefaults.CheckpointGCPodSpec != nil {
-		gcPodSpec := (*expconf.PodSpec)(g.Base.TaskContainerDefaults.CheckpointGCPodSpec)
-		podSpec = schemas.Merge(podSpec, gcPodSpec)
+		podSpec = (*expconf.PodSpec)(g.Base.TaskContainerDefaults.CheckpointGCPodSpec)
 	}
 
 	//nolint:exhaustruct // This has caused an issue before, but is valid as a partial struct.
