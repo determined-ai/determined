@@ -196,6 +196,31 @@ test.describe('Experiement List', () => {
       },
       totalExperiments - 1,
     );
+
+    await filterScenario(
+      'Filter OR',
+      async () => {
+        // This looks a little screwy with nth(1) in some places. Everything here is referring to the second filterfield row.
+        // [INFENG-715]
+        await tableFilter.filterForm.addCondition.pwLocator.click();
+        await tableFilter.filterForm.filter.filterFields.conjunctionContainer.conjunctionSelect.pwLocator.click();
+        await tableFilter.filterForm.filter.filterFields.conjunctionContainer.conjunctionSelect._menu.pwLocator.waitFor();
+        await tableFilter.filterForm.filter.filterFields.conjunctionContainer.conjunctionSelect.selectMenuOption(
+          'or',
+        );
+        await tableFilter.filterForm.filter.filterFields.columnName.pwLocator.nth(1).click();
+        await tableFilter.filterForm.filter.filterFields.columnName._menu.pwLocator.waitFor();
+        await tableFilter.filterForm.filter.filterFields.columnName.selectMenuOption('ID');
+        await expect(
+          tableFilter.filterForm.filter.filterFields.operator.pwLocator.nth(1),
+        ).toHaveText('=');
+        await tableFilter.filterForm.filter.filterFields.operator.pwLocator.nth(1).click();
+        await tableFilter.filterForm.filter.filterFields.operator._menu.pwLocator.waitFor();
+        await tableFilter.filterForm.filter.filterFields.operator.selectMenuOption('=');
+        await tableFilter.filterForm.filter.filterFields.valueNumber.pwLocator.nth(1).fill('1');
+      },
+      totalExperiments,
+    );
   });
 
   test('Click around the data grid', async ({ authedPage }) => {

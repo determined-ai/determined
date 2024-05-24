@@ -56,8 +56,8 @@ export class BaseComponent implements ComponentBasics {
    * The playwright Locator that represents this model
    */
   get pwLocator(): Locator {
+    // Treat the locator as a readonly, but only after we've created it
     if (this._locator === undefined) {
-      // Treat the locator as a readonly, but only after we've created it
       this._locator = this._parent.pwLocator.locator(this.selector);
     }
     return this._locator;

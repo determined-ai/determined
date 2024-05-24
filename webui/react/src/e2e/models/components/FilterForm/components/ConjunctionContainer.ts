@@ -1,4 +1,4 @@
-import { BaseComponent, NamedComponent } from 'e2e/models/BaseComponent';
+import { BaseComponent, BaseReactFragment } from 'e2e/models/BaseComponent';
 import { Select } from 'e2e/models/hew/Select';
 
 /**
@@ -8,8 +8,7 @@ import { Select } from 'e2e/models/hew/Select';
  * @param {CanBeParent} obj.parent - The parent used to locate this ConjunctionContainer
  * @param {string} obj.selector - Used instead of `defaultSelector`
  */
-export class ConjunctionContainer extends NamedComponent {
-  readonly defaultSelector = '[data-test-component="ConjunctionContainer"]';
+export class ConjunctionContainer extends BaseReactFragment {
   readonly where = new BaseComponent({ parent: this, selector: '[data-test="where"]' });
   readonly conjunctionSelect = new ConjunctionSelect({
     parent: this,
