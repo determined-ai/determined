@@ -521,13 +521,6 @@ func TestPodSpecsDefaultMerging(t *testing.T) {
 				},
 			},
 		},
-		CheckpointGCPodSpec: &k8sV1.Pod{
-			Spec: k8sV1.PodSpec{
-				SecurityContext: &k8sV1.PodSecurityContext{
-					SELinuxOptions: &k8sV1.SELinuxOptions{},
-				},
-			},
-		},
 	}
 
 	for i := 0; i <= 1; i++ {

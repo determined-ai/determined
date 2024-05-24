@@ -59,10 +59,6 @@ stages:
         enable_cors: true
         observability:
           enable_prometheus: true
-        task_container_defaults:
-          checkpoint_gc_pod_spec:
-            apiVersion: v1
-            kind: Pod
 
         # This is important: we have to use the symbolic links in the
         # tools/build directory to run properly.

@@ -4,10 +4,9 @@
 package tasks
 
 import (
+	"path/filepath"
 	"strings"
 	"testing"
-
-	"path/filepath"
 
 	k8sV1 "k8s.io/api/core/v1"
 
@@ -18,7 +17,8 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
-func Test_ToTaskSpec(t *testing.T) {
+//nolint:exhaustruct
+func Test_GCCkptSpec_ToTaskSpec(t *testing.T) {
 	tests := map[string]struct {
 		expectedType         model.TaskType
 		expectedEntrypoint   string
