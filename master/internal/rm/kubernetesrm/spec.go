@@ -6,6 +6,7 @@ import (
 	"math"
 	"path"
 	"reflect"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -150,9 +151,12 @@ func (p *pod) configureProxyResources() []gatewayProxyResource {
 			- tasks have types
 			- taskid and allocid include dashes.
 			$TASK_TYPE/$TASK_ID[:10]/$ALLOCATION_ID[:10]/P$PORT_INDEX/randombits
+			regex used for validation is '[a-z]([-a-z0-9]*[a-z0-9])?')"
 		*/
 		const maxLen = 63
-		const separator = ":"
+		const separator = "-"
+		pattern := `[a-z]([-a-z0-9]*[a-z0-9])?`
+		re := regexp.MustCompile(pattern)
 
 		description := p.submissionInfo.taskSpec.Description[:min(10,
 			len(p.submissionInfo.taskSpec.Description))]
@@ -172,6 +176,14 @@ func (p *pod) configureProxyResources() []gatewayProxyResource {
 		}
 
 		tooLong := strings.Join(components, separator)
+		tooLong = strings.ToLower(tooLong)
+		matches := re.FindAllString(tooLong, -1)
+		cleaned := ""
+		for _, match := range matches {
+			cleaned += match
+		}
+		tooLong = cleaned
+
 		sharedName := tooLong[:min(maxLen, len(tooLong))]
 		return sharedName
 	}
