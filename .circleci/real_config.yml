@@ -648,6 +648,7 @@ commands:
           name: Run det-deploy tests
           working_directory: ./e2e_tests
           command: |
+            DET_SECURITY_INITIAL_USER_PASSWORD=$INITIAL_USER_PASSWORD \
             pytest -vv -s \
             -m <<parameters.mark>> \
             --junitxml=/tmp/test-results/det-deploy-tests.xml \
@@ -1933,6 +1934,7 @@ jobs:
       - start-devcluster:
           target-stage: db
       - run: |
+          sudo mkdir -p /etc/systemd/system/determined-master.service.d
           sudo echo "[Service]" > /etc/systemd/system/determined-master.service.d/password.override.conf
           sudo echo "Environment=\"DET_SECURITY_INITIAL_USER_PASSWORD=${INITIAL_USER_PASSWORD}\"" >> /etc/systemd/system/determined-master.service.d/password.override.conf
           sudo systemctl daemon-reload
@@ -3388,7 +3390,7 @@ jobs:
           command: |
             export PERF_DOCKER_FLAGS="--network=host"
             export PERF_K6_FLAGS='-e DET_ADMIN_USERNAME="admin" \
-              -e DET_ADMIN_PASSWORD="" \
+              -e DET_ADMIN_PASSWORD="${INITIAL_USER_PASSWORD}" \
               -e model_name="tnjpuojqzbluqiyyqilftulsw" \
               -e model_version_number="1" \
               -e trial_id="8282" \
