@@ -1935,8 +1935,8 @@ jobs:
           target-stage: db
       - run: |
           sudo mkdir -p /etc/systemd/system/determined-master.service.d
-          sudo echo "[Service]" > /etc/systemd/system/determined-master.service.d/password.override.conf
-          sudo echo "Environment=\"DET_SECURITY_INITIAL_USER_PASSWORD=${INITIAL_USER_PASSWORD}\"" >> /etc/systemd/system/determined-master.service.d/password.override.conf
+          echo "[Service]" | sudo tee /etc/systemd/system/determined-master.service.d/password.override.conf >/dev/null
+          echo "Environment=\"DET_SECURITY_INITIAL_USER_PASSWORD=${INITIAL_USER_PASSWORD}\"" | sudo tee -a /etc/systemd/system/determined-master.service.d/password.override.conf >/dev/null
           sudo systemctl daemon-reload
       - run: python3 .circleci/scripts/wait_for_server.py localhost 5432
       - run: sudo systemctl restart determined-master
