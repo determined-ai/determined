@@ -2951,9 +2951,6 @@ jobs:
       determined_admin_username:
         type: string
         default: admin
-      determined_admin_password:
-        type: string
-        default: ""
       database_username:
         type: string
         default: postgres
@@ -3102,7 +3099,7 @@ jobs:
                 --data-binary @- \<< EOF | jq -r '.token'
               {
                   "username": "<<parameters.determined_admin_username>>",
-                  "password": "<<parameters.determined_admin_password>>"
+                  "password": "$INITIAL_USER_PASSWORD"
               }
             EOF
             )
