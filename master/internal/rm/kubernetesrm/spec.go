@@ -132,7 +132,7 @@ func (p *pod) configureEnvVars(
 	return envVars, nil
 }
 
-func (p *pod) configureProxyResources() []gatewayProxyResource {
+func (p *pod) configureProxyResources() []gatewayProxyResource { // TODO return an err.
 	if p.exposeProxyConfig == nil {
 		return nil
 	}
@@ -153,6 +153,7 @@ func (p *pod) configureProxyResources() []gatewayProxyResource {
 			log.WithError(err).Error("failed to allocate port")
 			return nil
 		}
+		fmt.Println("hhh allocated gwPort", gwPort)
 
 		allocLabels := map[string]string{
 			determinedLabel: p.submissionInfo.taskSpec.AllocationID,

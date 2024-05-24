@@ -653,7 +653,7 @@ func (p *pods) reattachPod(
 		newPodHandler.container.State = state
 	}
 	gwPort := 0
-	for _, g := range newPodHandler.gatewayProxyResources {
+	for _, g := range newPodHandler.gatewayProxyResources { // do we have these on reattach?
 		gwPort = int(g.gatewayListener.Port)
 		break
 	}

@@ -240,6 +240,8 @@ func (p *pod) podStatusUpdate(updatedPod *k8sV1.Pod) (cproto.State, error) {
 		gwPort := 0
 		if p.exposeProxyConfig != nil {
 			for _, g := range p.gatewayProxyResources {
+				fmt.Println("HHH g resources", g)
+				fmt.Println("HHH g gatewayListener", g.gatewayListener)
 				gwPort = int(g.gatewayListener.Port)
 				break
 			}

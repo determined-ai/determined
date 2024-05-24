@@ -31,7 +31,7 @@ spec:
   listeners:
     - name: tcp
       protocol: TCP
-      port: 22335 # Need at least one listener on a gateway. Master will add and patch to it.
+      port: 52335 # Need at least one listener on a gateway. Master will add and patch to it.
       allowedRoutes:
         namespaces:
           from: All

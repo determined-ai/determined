@@ -29,20 +29,20 @@ func newGatewayService(gatewayInterface gateway.GatewayInterface, gatewayName st
 	// the service.
 	// DOCS: note this limit on number of active proxied tasks.
 	portRange, err := port.NewRange(49152, 65535, make([]int, 0))
+	// TODO: validate on startup
 	if err != nil {
 		return nil, fmt.Errorf("creating port range: %w", err)
 	}
 	// TODO: run an update to read in the used ports? not necessary.
-
 	g := &gatewayService{
 		gatewayInterface: gatewayInterface,
 		gatewayName:      gatewayName,
 		portRange:        portRange,
 	}
 
-	if err = g.updateGateway(func(gateway *gatewayTyped.Gateway) {}); err != nil {
-		return nil, fmt.Errorf("initializing gateway: %w", err)
-	}
+	// 	if err = g.updateGateway(func(gateway *gatewayTyped.Gateway) {}); err != nil {
+	// 		return nil, fmt.Errorf("initializing gateway: %w", err)
+	// 	}
 
 	return g, nil
 }
