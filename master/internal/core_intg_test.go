@@ -136,6 +136,9 @@ func TestRun(t *testing.T) {
 			}
 			// listen on any available port, we don't care
 			m.config.Port = 0
+			m.config.FeatureSwitches = []string{
+				"prevent_blank_password",
+			}
 
 			ctx, cancel := context.WithCancel(context.Background())
 			gRPCLogInitDone := make(chan struct{})
