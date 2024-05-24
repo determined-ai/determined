@@ -126,6 +126,7 @@ const FlatRunActionButton = ({
             title: `Partial ${action} Failure`,
           });
         }
+        await onActionComplete?.();
       } catch (e) {
         const publicSubject = `Unable to ${action} Selected ${capitalizeWord(LABEL_PLURAL)}`;
         handleError(e, {
@@ -134,8 +135,6 @@ const FlatRunActionButton = ({
           publicSubject,
           silent: false,
         });
-      } finally {
-        onActionComplete?.();
       }
     },
     [sendBatchActions, onActionSuccess, openToast, onActionComplete],
