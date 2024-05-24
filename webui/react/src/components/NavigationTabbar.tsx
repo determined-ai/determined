@@ -65,7 +65,7 @@ const NavigationTabbar: React.FC = () => {
 
   const showNavigation = isAuthenticated && ui.showChrome;
 
-  const { canCreateWorkspace } = usePermissions();
+  const { canCreateWorkspace, canAdministrateUsers } = usePermissions();
 
   const WorkspaceCreateModal = useModal(WorkspaceCreateModalComponent);
 
@@ -141,17 +141,25 @@ const NavigationTabbar: React.FC = () => {
     },
     {
       icon: 'settings',
-      label: 'Settings',
+      label: 'User Settings',
       onClick: () => setShowSettings(true),
     },
+  ];
+
+  if (canAdministrateUsers) {
+    overflowActionsTop.push({
+      icon: 'group',
+      label: 'Admin Settings',
+      path: paths.admin(),
+    });
+  }
+
+  const overflowActionsBottom: OverflowActionProps[] = [
     {
       icon: 'user',
       label: 'Sign out',
       onClick: (e: AnyMouseEvent) => handlePathUpdate(e, paths.logout()),
     },
-  ];
-
-  const overflowActionsBottom: OverflowActionProps[] = [
     {
       external: true,
       icon: 'docs',
