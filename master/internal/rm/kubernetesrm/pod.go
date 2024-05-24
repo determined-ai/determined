@@ -230,6 +230,24 @@ func (p *pod) finalize() {
 	p.finalizeTaskState()
 }
 
+func (p *pod) hasAllResourcesStarted() bool {
+	if p.container.State != cproto.Running {
+		return false
+	}
+	if p.exposeProxyConfig == nil {
+		return true
+	}
+	if len(p.req.ProxyPorts) > 0 && len(p.gatewayProxyResources) == 0 {
+		return false
+	}
+	return true
+}
+
+func (p *pod) resourcesReady() {
+	fmt.Println("HHH pod ports", p.ports)
+	p.informTaskResourcesStarted(getResourcesStartedForPod(p.pod, p.ports, p.exposeProxyConfig, p.gatewayProxyResources))
+}
+
 func (p *pod) podStatusUpdate(updatedPod *k8sV1.Pod) (cproto.State, error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
@@ -268,8 +286,10 @@ func (p *pod) podStatusUpdate(updatedPod *k8sV1.Pod) (cproto.State, error) {
 	case cproto.Running:
 		p.syslog.Infof("transitioning pod state from %s to %s", p.container.State, containerState)
 		p.container = p.container.Transition(cproto.Running)
-		fmt.Println("HHH pod ports", p.ports)
-		p.informTaskResourcesStarted(getResourcesStartedForPod(p.pod, p.ports, p.exposeProxyConfig, p.gatewayProxyResources))
+		if p.hasAllResourcesStarted() {
+			fmt.Println("HHH pod ports", p.ports)
+			p.informTaskResourcesStarted(getResourcesStartedForPod(p.pod, p.ports, p.exposeProxyConfig, p.gatewayProxyResources))
+		}
 		err := p.startPodLogStreamer()
 		if err != nil {
 			return p.container.State, err
@@ -408,6 +428,10 @@ func (p *pod) createPodSpecAndSubmit() error {
 		p.mu.Lock()
 		defer p.mu.Unlock()
 		p.gatewayProxyResources = resources
+		if p.hasAllResourcesStarted() {
+			fmt.Println("HHH pod ports", p.ports)
+			p.informTaskResourcesStarted(getResourcesStartedForPod(p.pod, p.ports, p.exposeProxyConfig, p.gatewayProxyResources))
+		}
 	}
 	gwComm := gatewayResourceComm{
 		resourceDescriptor: *p.configureProxyResources(),
