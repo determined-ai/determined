@@ -55,7 +55,6 @@ type gatewayProxyResource struct {
 	serviceSpec     *k8sV1.Service
 	tcpRouteSpec    *alphaGatewayTyped.TCPRoute
 	gatewayListener gatewayTyped.Listener
-	originalPort    int
 }
 
 // pod manages the lifecycle of a Kubernetes pod that executes a
@@ -625,7 +624,7 @@ func getResourcesStartedForPod(
 	if exposeProxyConfig != nil {
 		newHostIp = exposeProxyConfig.GatewayAddress
 		for _, g := range gatewayProxyResource {
-			hostPortMap[int(g.originalPort)] = int(g.gatewayListener.Port)
+			hostPortMap[int(g.serviceSpec.Spec.Ports[0].TargetPort.IntVal)] = int(g.gatewayListener.Port)
 		}
 	}
 
