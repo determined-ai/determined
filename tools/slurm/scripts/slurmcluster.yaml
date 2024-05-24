@@ -67,7 +67,8 @@ stages:
           level: debug
         cache:
           cache_dir: /tmp
-        task_container_defaults: 
+        task_container_defaults:
+          $OPT_DEFAULT_TASK_IMAGE_CONF
           bind_mounts:
             - host_path: /etc/hosts
               container_path: /etc/hosts

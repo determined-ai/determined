@@ -9,6 +9,7 @@ VALID_CONTAINER_TYPES="enroot podman singularity"
 VALID_WORKLOAD_MANAGERS="slurm pbs"
 
 # Default values
+export OPT_DEFAULT_TASK_IMAGE_CONF=""
 export OPT_CONTAINER_RUN_TYPE="singularity"
 export OPT_WORKLOAD_MANAGER="slurm"
 export OPT_LAUNCHER_PORT=8081
@@ -32,6 +33,10 @@ while [[ $# -gt 0 ]]; do
                 echo >&2 "usage $0: Missing or invalid workload manager specified for the '-r' option.  Valid values are: ${VALID_WORKLOAD_MANAGERS}"
                 exit 1
             fi
+            shift 2
+            ;;
+        -i | --task-image)
+            export OPT_DEFAULT_TASK_IMAGE_CONF="image: $2"
             shift 2
             ;;
         -A)
@@ -62,7 +67,7 @@ while [[ $# -gt 0 ]]; do
             done
             ;;
         -h | --help)
-            echo "Usage: $0 [-Acwdmgt]"
+            echo "Usage: $0 [-Acwidmgt]"
             echo ""
             echo "Launches a compute instance with Slurm, Singularity (Apptainer), the HPC"
             echo "Launcher component, and many other dependencies pre-installed. Then, SSH tunnels"
@@ -84,6 +89,9 @@ while [[ $# -gt 0 ]]; do
             echo "           Description: Invokes a slurmcluster using the specified workload manager."
             echo "           Options are 'slurm' or 'pbs'. Default is 'slurm'."
             echo "           Example: $0 -w pbs"
+            echo '  -i'
+            echo "           Description: Sets 'task_container_defaults.image' in the master configuration."
+            echo "           Unset leaves the built-in default."
             echo '  -d'
             echo "           Description: Connect to a dev launcher manually deployed to the GCP VM using"
             echo "           'loadDevlauncher.sh -g'."
@@ -116,6 +124,9 @@ done
 
 echo "Using ${OPT_CONTAINER_RUN_TYPE} as a container host"
 echo "Using ${OPT_WORKLOAD_MANAGER} as a workload manager"
+if [[ -n $OPT_DEFAULT_TASK_IMAGE_CONF ]]; then
+    echo "Using \`${OPT_DEFAULT_TASK_IMAGE_CONF}\` as a the default task image setting"
+fi
 
 ZONE=$(terraform -chdir=terraform output --raw zone)
 INSTANCE_NAME=$(terraform -chdir=terraform output --raw instance_name)

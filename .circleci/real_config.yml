@@ -2615,6 +2615,10 @@ jobs:
         default: GOOGLE_PROJECT_ID
         description: The Google project ID to connect with via the gcloud CLI
         type: env_var_name
+      environment-image:
+        default: ""
+        description: Sets the master's `task_container_defaults.image`. Empty leaves the built-in default.
+        type: string
     machine:
       image: <<pipeline.parameters.machine-image>>
     resource_class: xlarge
@@ -2692,7 +2696,7 @@ jobs:
             sudo apt-get update
             sudo apt-get install gettext
             sudo apt-get install iproute2
-            yes yes | PATH=$HOME/.local/bin:$PATH make slurmcluster FLAGS="-c <<parameters.container-run-type>> -w <<parameters.workload-manager>> <<parameters.agent-use>>" TF_LOCK=false | tee output.log
+            yes yes | PATH=$HOME/.local/bin:$PATH make slurmcluster FLAGS="-c <<parameters.container-run-type>> -w <<parameters.workload-manager>> -i <<parameters.environment-image>> <<parameters.agent-use>>" TF_LOCK=false | tee output.log
           background: true
 
       - run:
@@ -4351,6 +4355,7 @@ workflows:
               name: [test-e2e-slurm-enroot-gcp]
               container-run-type: ["enroot"]
               mark: ["e2e_slurm and not parallel and not gpu_required"]
+              environment-image: [determinedai/pytorch-tensorflow-cpu-dev:8b3bea3]
           requires:
             - build-go-ee
           filters:
@@ -4411,6 +4416,7 @@ workflows:
               container-run-type: ["enroot"]
               workload-manager: ["pbs"]
               mark: ["e2e_pbs and not parallel and not gpu_required"]
+              environment-image: [determinedai/pytorch-tensorflow-cpu-dev:8b3bea3]
           requires:
             - build-go-ee
           filters:
@@ -5222,6 +5228,7 @@ workflows:
               name: [test-e2e-slurm-enroot-gcp]
               container-run-type: ["enroot"]
               mark: ["e2e_slurm and not parallel and not gpu_required"]
+              environment-image: [determinedai/pytorch-tensorflow-cpu-dev:8b3bea3]
           requires:
             - build-go
             - request-hpc-tests
@@ -5276,6 +5283,7 @@ workflows:
               container-run-type: ["enroot"]
               workload-manager: ["pbs"]
               mark: ["e2e_pbs and not parallel and not gpu_required"]
+              environment-image: [determinedai/pytorch-tensorflow-cpu-dev:8b3bea3]
           requires:
             - build-go
             - request-hpc-tests
