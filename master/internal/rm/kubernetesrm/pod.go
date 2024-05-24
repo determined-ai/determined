@@ -665,10 +665,10 @@ func getResourcesStartedForPod(
 	if exposeProxyConfig != nil {
 		baseAddress.ContainerIP = exposeProxyConfig.GatewayAddress
 		baseAddress.HostIP = exposeProxyConfig.GatewayAddress
-		if len(podPorts) > 0 && len(gatewayProxyResource) == 0 {
-			fmt.Println("HHH pod ports", podPorts)
-			panic("gatewayProxyResource is empty")
-		}
+		// if len(podPorts) > 0 && len(gatewayProxyResource) == 0 {
+		// 	fmt.Println("HHH pod ports", podPorts)
+		// 	panic("gatewayProxyResource is empty")
+		// }
 		for _, g := range gatewayProxyResource {
 			gwPortMap[g.PodPort()] = g.GWPort()
 		}
