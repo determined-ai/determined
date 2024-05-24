@@ -620,7 +620,7 @@ func getResourcesStartedForPod(
 	addresses := []cproto.Address{}
 
 	newHostIp := ""
-	hostPortMap := make(map[int]int)
+	hostPortMap := make(map[int]int) // podPort: gwPort
 	if exposeProxyConfig != nil {
 		newHostIp = exposeProxyConfig.GatewayAddress
 		for _, g := range gatewayProxyResource {

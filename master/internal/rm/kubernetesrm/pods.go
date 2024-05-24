@@ -652,11 +652,6 @@ func (p *pods) reattachPod(
 	if state != cproto.Terminated {
 		newPodHandler.container.State = state
 	}
-	// gwPort := 0
-	// for _, g := range newPodHandler.gatewayProxyResources { // do we have these on reattach?
-	// 	gwPort = int(g.gatewayListener.Port)
-	// 	break
-	// }
 	var started *sproto.ResourcesStarted
 	if newPodHandler.container.State == cproto.Running {
 		started = ptrs.Ptr(getResourcesStartedForPod(
