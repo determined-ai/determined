@@ -1,6 +1,6 @@
 locals {
-  name   = "ilia-karpenter-tf-1"  # Change to your cluster name
-  region = "us-west-2"            # Change to your preferred region
+  name   = "det-karpenter-example"  # Change to your cluster name
+  region = "us-west-2"              # Change to your preferred region
 
   vpc_cidr = "10.0.0.0/16"
   azs      = slice(data.aws_availability_zones.available.names, 0, 3)
