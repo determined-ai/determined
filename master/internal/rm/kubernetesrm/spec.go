@@ -6,7 +6,6 @@ import (
 	"math"
 	"path"
 	"reflect"
-	"regexp"
 	"strconv"
 	"strings"
 
@@ -33,6 +32,7 @@ import (
 	schedulingV1 "k8s.io/api/scheduling/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/validation"
 	gatewayTyped "sigs.k8s.io/gateway-api/apis/v1"
 	alphaGatewayTyped "sigs.k8s.io/gateway-api/apis/v1alpha2"
 )
@@ -151,13 +151,8 @@ func (p *pod) configureProxyResources() []gatewayProxyResource {
 			- tasks have types
 			- taskid and allocid include dashes.
 			$TASK_TYPE/$TASK_ID[:10]/$ALLOCATION_ID[:10]/P$PORT_INDEX/randombits
-			regex used for validation is '[a-z]([-a-z0-9]*[a-z0-9])?')"
+			a DNS-1035 label must consist of lower case alphanumeric characters or '-', start with an alphabetic character, and end with an alphanumeric character (e.g. 'my-name',  or 'abc-123', regex used for validation is '[a-z]([-a-z0-9]*[a-z0-9])?')"
 		*/
-		const maxLen = 63
-		const separator = "-"
-		pattern := `[a-z]([-a-z0-9]*[a-z0-9])?`
-		re := regexp.MustCompile(pattern)
-
 		description := p.submissionInfo.taskSpec.Description[:min(10,
 			len(p.submissionInfo.taskSpec.Description))]
 		shortTaskID := p.submissionInfo.taskSpec.TaskID[:min(10,
@@ -175,17 +170,8 @@ func (p *pod) configureProxyResources() []gatewayProxyResource {
 			uuidStr,
 		}
 
-		tooLong := strings.Join(components, separator)
-		tooLong = strings.ToLower(tooLong)
-		matches := re.FindAllString(tooLong, -1)
-		cleaned := ""
-		for _, match := range matches {
-			cleaned += match
-		}
-		tooLong = cleaned
-
-		sharedName := tooLong[:min(maxLen, len(tooLong))]
-		return sharedName
+		tooLong := strings.Join(components, "-")
+		return conformToDNS1035Label(tooLong)
 	}
 
 	var resources []gatewayProxyResource
@@ -787,4 +773,31 @@ func handleRootArchiveFiles(
 		})
 	}
 	return volumes, volumeMounts, nil
+}
+
+func conformToDNS1035Label(input string) string {
+	input = strings.ToLower(input)
+
+	const maxLabelLength = validation.DNS1035LabelMaxLength
+	sanitizedLabel := ""
+	for _, ch := range input {
+		if (ch >= 'a' && ch <= 'z') || (ch >= '0' && ch <= '9') || ch == '-' {
+			sanitizedLabel += string(ch)
+		}
+
+		// ensure the label doesn't exceed maximum length
+		if len(sanitizedLabel) >= maxLabelLength {
+			break
+		}
+	}
+
+	if len(sanitizedLabel) > 0 && (sanitizedLabel[0] < 'a' || sanitizedLabel[0] > 'z') {
+		sanitizedLabel = "a" + sanitizedLabel[1:]
+	}
+
+	if len(sanitizedLabel) > 0 && !((sanitizedLabel[len(sanitizedLabel)-1] >= 'a' && sanitizedLabel[len(sanitizedLabel)-1] <= 'z') || (sanitizedLabel[len(sanitizedLabel)-1] >= '0' && sanitizedLabel[len(sanitizedLabel)-1] <= '9')) {
+		sanitizedLabel = sanitizedLabel[:len(sanitizedLabel)-1] + "a"
+	}
+
+	return sanitizedLabel
 }
