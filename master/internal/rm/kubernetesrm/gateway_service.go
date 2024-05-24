@@ -21,58 +21,62 @@ type gatewayService struct {
 	mu               sync.Mutex
 	gatewayInterface gateway.GatewayInterface
 	gatewayName      string
-	portRange        *port.Range
+	// portRange        *port.Range
 }
 
 func newGatewayService(gatewayInterface gateway.GatewayInterface, gatewayName string) (*gatewayService, error) {
 	// TODO: make port range configurable by user. We currently assume we own the controller and
 	// the service.
 	// DOCS: note this limit on number of active proxied tasks.
-	portRange, err := port.NewRange(49152, 65535, make([]int, 0))
+	// portRange, err := port.NewRange(49152, 65535, make([]int, 0))
 	// TODO: validate on startup
-	if err != nil {
-		return nil, fmt.Errorf("creating port range: %w", err)
-	}
-	// TODO: run an update to read in the used ports? not necessary.
+	// if err != nil {
+	// 	return nil, fmt.Errorf("creating port range: %w", err)
+	// }
 	g := &gatewayService{
 		gatewayInterface: gatewayInterface,
 		gatewayName:      gatewayName,
-		portRange:        portRange,
 	}
-
-	// 	if err = g.updateGateway(func(gateway *gatewayTyped.Gateway) {}); err != nil {
-	// 		return nil, fmt.Errorf("initializing gateway: %w", err)
-	// 	}
 
 	return g, nil
 }
 
-func (g *gatewayService) addListeners(listeners []gatewayTyped.Listener) error {
-	if err := g.updateGateway(func(gateway *gatewayTyped.Gateway) {
-		gateway.Spec.Listeners = append(gateway.Spec.Listeners, listeners...)
-	}); err != nil {
-		return fmt.Errorf("adding listeners %+v to gateway: %w", listeners, err)
-	}
+// PortMap is a map of pod ports to gateway ports.
+type PortMap map[int]int
 
-	return nil
+func (g *gatewayService) addListeners(listeners []gatewayTyped.Listener) (PortMap, error) {
+	portMap := make(map[int]int)
+	if err := g.updateGateway(func(gateway *gatewayTyped.Gateway) error {
+		ports, err := pickNFreePorts(gateway, len(listeners))
+		if err != nil {
+			return err
+		}
+		for i, listener := range listeners {
+			portMap[int(listener.Port)] = ports[i]
+			listeners[i].Port = gatewayTyped.PortNumber(ports[i])
+		}
+		gateway.Spec.Listeners = append(gateway.Spec.Listeners, listeners...)
+		return nil
+	}); err != nil {
+		return nil, fmt.Errorf("adding listeners %+v to gateway: %w", listeners, err)
+	}
+	return portMap, nil
 }
 
-func (g *gatewayService) updatePortStates(gateway *gatewayTyped.Gateway) error {
-	// CHAT: We could run into issues with multi-tenant gateways.
-	// also probably don't need this on every update?
+func pickNFreePorts(gateway *gatewayTyped.Gateway, count int) ([]int, error) {
 	usedPorts := make([]int, 0, len(gateway.Spec.Listeners))
 	for _, listener := range gateway.Spec.Listeners {
 		usedPorts = append(usedPorts, int(listener.Port))
 	}
-	err := g.portRange.LoadInUsedPorts(usedPorts)
+	portRange, err := port.NewRange(49152, 65535, usedPorts)
 	if err != nil {
-		return fmt.Errorf("loading in used ports: %w", err)
+		return nil, fmt.Errorf("creating port range: %w", err)
 	}
-	return nil
+	return portRange.GetAndMarkUsed(count)
 }
 
 func (g *gatewayService) freePorts(ports []int) error {
-	if err := g.updateGateway(func(gateway *gatewayTyped.Gateway) {
+	if err := g.updateGateway(func(gateway *gatewayTyped.Gateway) error {
 		var newListeners []gatewayTyped.Listener
 		for _, l := range gateway.Spec.Listeners {
 			if !slices.Contains(ports, int(l.Port)) {
@@ -81,37 +85,16 @@ func (g *gatewayService) freePorts(ports []int) error {
 		}
 
 		gateway.Spec.Listeners = newListeners
+		return nil
 	}); err != nil {
 		return fmt.Errorf("freeing ports %v from gateway: %w", ports, err)
 	}
 
 	// CHAT: if we're not gonna be using the inmemory view then no need to free the ports?
-	// g.updatePortStates(gateway)
-	// for _, port := range ports {
-	// 	if err := g.portRange.MarkPortAsFree(port); err != nil {
-	// 		return fmt.Errorf("marking port %d as free: %w", port, err)
-	// 	}
-	// }
-
 	return nil
 }
 
-func (g *gatewayService) GetFreePort() (int, error) {
-	gateway, err := g.gatewayInterface.Get(context.TODO(), g.gatewayName, metaV1.GetOptions{})
-	if err != nil {
-		return 0, fmt.Errorf("getting gateway with name '%s': %w", g.gatewayName, err)
-	}
-	if err = g.updatePortStates(gateway); err != nil {
-		return 0, fmt.Errorf("getting port states: %w", err)
-	}
-	ports, err := g.portRange.GetAndMarkUsed(1)
-	if err != nil {
-		return 0, fmt.Errorf("getting free port: %w", err)
-	}
-	return ports[0], nil
-}
-
-func (g *gatewayService) updateGateway(update func(*gatewayTyped.Gateway)) error {
+func (g *gatewayService) updateGateway(update func(*gatewayTyped.Gateway) error) error {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 
@@ -120,7 +103,10 @@ func (g *gatewayService) updateGateway(update func(*gatewayTyped.Gateway)) error
 		return fmt.Errorf("getting gateway with name '%s': %w", g.gatewayName, err)
 	}
 
-	update(gateway)
+	err = update(gateway)
+	if err != nil {
+		return err
+	}
 
 	if _, err := g.gatewayInterface.
 		Update(context.TODO(), gateway, metaV1.UpdateOptions{}); err != nil {

@@ -35,12 +35,15 @@ func (p *Range) validate() error {
 }
 
 // LoadInUsedPorts loads the used ports into the range without raising for collisions.
-func (p *Range) LoadInUsedPorts(usedPorts []int) error {
+func (p *Range) LoadInUsedPorts(usedPorts []int, ignoreOutOfRange bool) error {
 	p.mu.Lock()
 	defer p.mu.Unlock()
 
 	for _, port := range usedPorts {
 		if !p.contains(port) {
+			if ignoreOutOfRange {
+				continue
+			}
 			return errors.Errorf("port %d is not within the range", port)
 		}
 		p.usedPorts[port] = true
@@ -131,7 +134,7 @@ func NewRange(start, end int, usedPorts []int) (*Range, error) {
 	if err := r.validate(); err != nil {
 		return nil, err
 	}
-	if err := r.LoadInUsedPorts(usedPorts); err != nil {
+	if err := r.LoadInUsedPorts(usedPorts, true); err != nil {
 		return nil, err
 	}
 	return r, nil

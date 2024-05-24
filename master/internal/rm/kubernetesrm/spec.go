@@ -148,7 +148,7 @@ func (p *pod) configureProxyResources() []gatewayProxyResource { // TODO return 
 			i, p.submissionInfo.taskSpec.Description, uuid.New().String())
 		sharedName := tooLong[:min(63, len(tooLong)-1)]
 
-		gwPort, err := p.gatewayService.GetFreePort()
+		gwPort, err := proxyPort.Port, error(nil) // p.gatewayService.GetFreePort()
 		if err != nil {
 			log.WithError(err).Error("failed to allocate port")
 			return nil
@@ -223,6 +223,7 @@ func (p *pod) configureProxyResources() []gatewayProxyResource { // TODO return 
 		}
 
 		resources = append(resources, gatewayProxyResource{
+			podPort:         proxyPort.Port,
 			serviceSpec:     serviceSpec,
 			tcpRouteSpec:    tcpRouteSpec,
 			gatewayListener: gatewayListener,
