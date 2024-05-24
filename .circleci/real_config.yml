@@ -236,12 +236,6 @@ commands:
       - run: mv ../license-key-gen/license.txt ./license.txt
       - run: mv ../license-key-gen/public.txt ./public.txt
 
-  get-slurmcluster:
-    steps:
-      - run: cd .. && git clone https://${GITHUB_TOKEN}@github.com/determined-ai/dev-scripts.git
-      - run: cp ../dev-scripts/slurm/slurmcluster.sh tools/slurmcluster.sh
-      - run: ls -a
-
   pull-task-images:
     parameters:
       tf2:
@@ -2657,7 +2651,6 @@ jobs:
 
       - install-devcluster
       - license-gen
-      - get-slurmcluster
 
       - gcloud/install:
           version: "412.0.0"
