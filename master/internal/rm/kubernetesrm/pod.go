@@ -55,6 +55,7 @@ type gatewayProxyResource struct {
 	serviceSpec     *k8sV1.Service
 	tcpRouteSpec    *alphaGatewayTyped.TCPRoute
 	gatewayListener gatewayTyped.Listener
+	originalPort    int
 }
 
 // pod manages the lifecycle of a Kubernetes pod that executes a
@@ -199,6 +200,22 @@ func (p *pod) finalize() {
 	p.finalizeTaskState()
 }
 
+// mapTranslatedAddresses translates the addresses of the pod to the new host IP and port.
+func mapTranslatedAddresses(addresses []cproto.Address, newHostIp string, hostPortMap map[int]int) []cproto.Address {
+	// happens for agents as well?
+	newAddresses := make([]cproto.Address, 0, len(addresses))
+	for _, address := range addresses {
+		newAddress := address
+		newAddress.HostIP = newHostIp
+		newAddress.ContainerIP = newHostIp
+		if newPort, ok := hostPortMap[address.HostPort]; ok {
+			newAddress.HostPort = newPort
+		}
+		newAddresses = append(newAddresses, newAddress)
+	}
+	return newAddresses
+}
+
 func (p *pod) podStatusUpdate(updatedPod *k8sV1.Pod) (cproto.State, error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
@@ -237,18 +254,18 @@ func (p *pod) podStatusUpdate(updatedPod *k8sV1.Pod) (cproto.State, error) {
 	case cproto.Running:
 		p.syslog.Infof("transitioning pod state from %s to %s", p.container.State, containerState)
 		p.container = p.container.Transition(cproto.Running)
-		gwPort := 0
-		if p.exposeProxyConfig != nil {
-			for _, g := range p.gatewayProxyResources {
-				fmt.Println("HHH g resources", g)
-				fmt.Println("HHH g gatewayListener", g.gatewayListener)
-				gwPort = int(g.gatewayListener.Port)
-				break
-			}
-		}
-		fmt.Println("HHH gwPort", gwPort)
+		// gwPort := 0
+		// if p.exposeProxyConfig != nil {
+		// 	for _, g := range p.gatewayProxyResources {
+		// 		fmt.Println("HHH g resources", g)
+		// 		fmt.Println("HHH g gatewayListener", g.gatewayListener)
+		// 		gwPort = int(g.gatewayListener.Port)
+		// 		break
+		// 	}
+		// }
+		// fmt.Println("HHH gwPort", gwPort)
 		fmt.Println("HHH pod ports", p.ports)
-		p.informTaskResourcesStarted(getResourcesStartedForPod(p.pod, p.ports, p.exposeProxyConfig, gwPort))
+		p.informTaskResourcesStarted(getResourcesStartedForPod(p.pod, p.ports, p.exposeProxyConfig, p.gatewayProxyResources))
 		err := p.startPodLogStreamer()
 		if err != nil {
 			return p.container.State, err
@@ -599,28 +616,40 @@ func getExitCodeAndMessage(pod *k8sV1.Pod, containerNames set.Set[string]) (int,
 
 func getResourcesStartedForPod(
 	pod *k8sV1.Pod, containerPorts []int, exposeProxyConfig *config.ExposeProxiesExternallyConfig,
-	hostPort int,
+	gatewayProxyResource []gatewayProxyResource,
 ) sproto.ResourcesStarted {
 	addresses := []cproto.Address{}
+
+	newHostIp := ""
+	hostPortMap := make(map[int]int)
+	if exposeProxyConfig != nil {
+		newHostIp = exposeProxyConfig.GatewayAddress
+		for _, g := range gatewayProxyResource {
+			hostPortMap[int(g.originalPort)] = int(g.gatewayListener.Port)
+		}
+	}
 
 	baseAddress := cproto.Address{
 		ContainerIP: pod.Status.PodIP,
 		HostIP:      pod.Status.PodIP,
 	}
-	if exposeProxyConfig != nil {
-		baseAddress.ContainerIP = exposeProxyConfig.GatewayAddress
-		baseAddress.HostIP = exposeProxyConfig.GatewayAddress
-	}
+	// if newHostIp != "" {
+	// 	baseAddress.ContainerIP = exposeProxyConfig.GatewayAddress
+	// 	baseAddress.HostIP = newHostIp
+	// }
 	for _, cPort := range containerPorts {
 		address := baseAddress
 		address.ContainerPort = cPort
 		address.HostPort = cPort
-		if hostPort != 0 {
-			address.HostPort = hostPort
-		}
-		fmt.Println("HHH address", address, "port", cPort)
+		// if newHostPort, ok := hostPortMap[cPort]; ok {
+		// 	address.HostPort = newHostPort
+		// }
+
+		// fmt.Println("HHH address", address, "port", cPort)
 		addresses = append(addresses, address)
 	}
+
+	addresses = mapTranslatedAddresses(addresses, newHostIp, hostPortMap)
 
 	var taskContainerID string
 	for _, containerStatus := range pod.Status.ContainerStatuses {

@@ -177,7 +177,7 @@ func (p *pod) configureProxyResources() []gatewayProxyResource { // TODO return 
 			},
 		}
 
-		sectionName := fmt.Sprintf("proxyport%d", proxyPort.Port)
+		sectionName := fmt.Sprintf("proxyport-%d-%d", i, gwPort)
 		tcpRouteSpec := &alphaGatewayTyped.TCPRoute{
 			ObjectMeta: metaV1.ObjectMeta{
 				Name:      sharedName,
@@ -226,6 +226,7 @@ func (p *pod) configureProxyResources() []gatewayProxyResource { // TODO return 
 			serviceSpec:     serviceSpec,
 			tcpRouteSpec:    tcpRouteSpec,
 			gatewayListener: gatewayListener,
+			originalPort:    proxyPort.Port,
 		})
 	}
 	return resources
