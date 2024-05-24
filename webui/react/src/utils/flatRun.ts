@@ -11,18 +11,17 @@ type FlatRunPermissionSet = Pick<
 
 const flatRunCheckers: Record<FlatRunAction, FlatRunChecker> = {
   [FlatRunAction.Archive]: (flatRun) =>
-    !flatRun.parentArchived && !flatRun.parentArchived && terminalRunStates.has(flatRun.state),
+    !flatRun.archived && !flatRun.archived && terminalRunStates.has(flatRun.state),
 
   [FlatRunAction.Delete]: (flatRun) => deletableRunStates.has(flatRun.state),
 
   [FlatRunAction.Kill]: (flatRun) => killableRunStates.includes(flatRun.state),
 
-  [FlatRunAction.Move]: (flatRun) => !flatRun?.parentArchived && !flatRun.parentArchived,
+  [FlatRunAction.Move]: (flatRun) => !flatRun.archived && !flatRun.archived,
 
   // [FlatRunAction.Pause]: (run) => pausableRunStates.has(run.state),
 
-  [FlatRunAction.Unarchive]: (flatRun) =>
-    terminalRunStates.has(flatRun.state) && flatRun.parentArchived,
+  [FlatRunAction.Unarchive]: (flatRun) => terminalRunStates.has(flatRun.state) && flatRun.archived,
 };
 
 export const canActionFlatRun = (action: FlatRunAction, flatRun: FlatRun): boolean => {
