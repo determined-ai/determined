@@ -1134,7 +1134,7 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 		return errors.Wrap(err, "could not verify database version")
 	}
 
-	if isBrandNewCluster {
+	if isBrandNewCluster && slices.Contains(m.config.FeatureSwitches, "prevent_blank_password") {
 		// This has to happen before setup, to minimize risk of creating a database in a state that looks like
 		// there are already users, then aborting, which would allow a subsequent cluster to come up ignoring
 		// this check.
@@ -1157,10 +1157,12 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 		// This has to happen after setup, since creating the built-in users without a
 		// password is part of the first migration.
 		password := m.config.Security.InitialUserPassword
-		for _, username := range user.BuiltInUsers {
-			err := user.SetUserPassword(ctx, username, password)
-			if err != nil {
-				return fmt.Errorf("could not set password for %s: %w", username, err)
+		if password != "" {
+			for _, username := range user.BuiltInUsers {
+				err := user.SetUserPassword(ctx, username, password)
+				if err != nil {
+					return fmt.Errorf("could not set password for %s: %w", username, err)
+				}
 			}
 		}
 	}
