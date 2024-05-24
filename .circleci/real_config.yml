@@ -2773,6 +2773,7 @@ jobs:
                 name: Query the slot count to ensure slots are allocated
                 command: |
                   tries=20
+                  export DET_PASS=${INITIAL_USER_PASSWORD}
                   det slot list
                   until [[ $(det slot list | wc -l) -gt 2 ]] ; do
                       if [[ $((--tries)) -eq 0 ]]; then
@@ -3106,6 +3107,7 @@ jobs:
                 name: Query the slot count to ensure slots are allocated
                 command: |
                   tries=20
+                  export DET_PASS=${INITIAL_USER_PASSWORD}
                   det slot list
                   until [[ $(det slot list | wc -l) -gt 2 ]] ; do
                       if [[ $((--tries)) -eq 0 ]]; then
