@@ -2799,7 +2799,9 @@ jobs:
           name: Make unslurmcluster
           when: always
           command: |
-            pkill determined-mast
+            # These scripts always run with `set -e`. Be careful that a failure doesn't stop
+            # make unslurmcluster from running, otherwise resources are left around.
+            pkill determined-mast || echo "failed to kill master (exit code $?)"
             (yes yes || true) | make unslurmcluster TF_LOCK=false
             # For some reason, even when `make unslurmcluster` is successful, CircleCI
             # receives exit code 141, so ignore that.
