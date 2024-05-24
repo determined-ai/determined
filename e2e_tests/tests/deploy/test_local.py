@@ -27,6 +27,8 @@ class Resource(enum.Enum):
 def mksess(host: str, port: int, username: str = "determined", password: str = "") -> api.Session:
     """Since this file frequently creates new masters, always create a fresh Session."""
 
+    if len(password) == 0:
+        password = conf.USER_PASSWORD
     master_url = api.canonicalize_master_url(f"http://{host}:{port}")
     return authentication.login(master_url, username=username, password=password)
 
@@ -103,7 +105,9 @@ def resource_manager(
 def test_cluster_down() -> None:
     name = "test_cluster_down"
 
-    with resource_manager(Resource.CLUSTER, name, {}, ["no-gpu"]):
+    with resource_manager(
+        Resource.CLUSTER, name, {"initial-user-password": conf.USER_PASSWORD}, ["no-gpu"]
+    ):
         container_name = name + "_determined-master_1"
         client = docker.from_env()
 
@@ -118,7 +122,12 @@ def test_cluster_down() -> None:
 def test_ee_cluster_up() -> None:
     name = "test_ee_cluster_up"
 
-    with resource_manager(Resource.CLUSTER, name, {}, ["no-gpu", "enterprise-edition"]):
+    with resource_manager(
+        Resource.CLUSTER,
+        name,
+        {"initial-user-password": conf.USER_PASSWORD},
+        ["no-gpu", "enterprise-edition"],
+    ):
         container_name = name + "_determined-master_1"
         client = docker.from_env()
 
@@ -135,7 +144,12 @@ def test_ee_cluster_up() -> None:
 def test_custom_etc() -> None:
     name = "test_custom_etc"
     etc_path = str(pathlib.Path(__file__).parent.joinpath("etc/master.yaml").resolve())
-    with resource_manager(Resource.CLUSTER, name, {"master-config-path": etc_path}, ["no-gpu"]):
+    with resource_manager(
+        Resource.CLUSTER,
+        name,
+        {"master-config-path": etc_path, "initial-user-password": conf.USER_PASSWORD},
+        ["no-gpu"],
+    ):
         sess = mksess("localhost", 8080)
         exp.run_basic_test(
             sess,
@@ -150,7 +164,9 @@ def test_custom_etc() -> None:
 def test_agent_config_path() -> None:
     cluster_name = "test_agent_config_path"
     master_name = f"{cluster_name}_determined-master_1"
-    with resource_manager(Resource.MASTER, master_name):
+    with resource_manager(
+        Resource.MASTER, master_name, {"initial-user-password": conf.USER_PASSWORD}
+    ):
         # Config makes it unmodified.
         etc_path = str(pathlib.Path(__file__).parent.joinpath("etc/agent.yaml").resolve())
         agent_name = "test-path-agent"
@@ -188,9 +204,13 @@ def test_agent_config_path() -> None:
 def test_custom_port() -> None:
     name = "port_test"
     custom_port = 12321
-    with resource_manager(Resource.CLUSTER, name, {"master-port": str(custom_port)}, ["no-gpu"]):
+    with resource_manager(
+        Resource.CLUSTER,
+        name,
+        {"master-port": str(custom_port), "initial-user-password": conf.USER_PASSWORD},
+        ["no-gpu"],
+    ):
         sess = mksess("localhost", custom_port)
-
         exp.run_basic_test(
             sess,
             conf.fixtures_path("no_op/single-one-short-step.yaml"),
@@ -203,7 +223,12 @@ def test_custom_port() -> None:
 def test_agents_made() -> None:
     name = "agents_test"
     num_agents = 2
-    with resource_manager(Resource.CLUSTER, name, {"agents": str(num_agents)}, ["no-gpu"]):
+    with resource_manager(
+        Resource.CLUSTER,
+        name,
+        {"agents": str(num_agents), "initial-user-password": conf.USER_PASSWORD},
+        ["no-gpu"],
+    ):
         container_names = [name + f"-agent-{i}" for i in range(0, num_agents)]
         client = docker.from_env()
 
@@ -217,7 +242,9 @@ def test_master_up_down() -> None:
     cluster_name = "test_master_up_down"
     master_name = f"{cluster_name}_determined-master_1"
 
-    with resource_manager(Resource.MASTER, master_name):
+    with resource_manager(
+        Resource.MASTER, master_name, {"initial-user-password": conf.USER_PASSWORD}
+    ):
         client = docker.from_env()
 
         containers = client.containers.list(filters={"name": master_name})
@@ -232,7 +259,12 @@ def test_ee_master_up() -> None:
     cluster_name = "test_master_up"
     master_name = f"{cluster_name}_determined-master_1"
 
-    with resource_manager(Resource.MASTER, master_name, {}, ["enterprise-edition"]):
+    with resource_manager(
+        Resource.MASTER,
+        master_name,
+        {"initial-user-password": conf.USER_PASSWORD},
+        ["enterprise-edition"],
+    ):
         client = docker.from_env()
 
         containers = client.containers.list(filters={"name": master_name})
@@ -248,7 +280,9 @@ def test_agent_up_down() -> None:
     cluster_name = "test_agent_up_down"
     master_name = f"{cluster_name}_determined-master_1"
 
-    with resource_manager(Resource.MASTER, master_name):
+    with resource_manager(
+        Resource.MASTER, master_name, {"initial-user-password": conf.USER_PASSWORD}
+    ):
         with resource_manager(Resource.AGENT, agent_name, {}, ["no-gpu"], [conf.MASTER_IP]):
             client = docker.from_env()
             containers = client.containers.list(filters={"name": agent_name})
@@ -264,7 +298,9 @@ def test_ee_agent_up() -> None:
     cluster_name = "test_agent_up"
     master_name = f"{cluster_name}_determined-master_1"
 
-    with resource_manager(Resource.MASTER, master_name):
+    with resource_manager(
+        Resource.MASTER, master_name, {"initial-user-password": conf.USER_PASSWORD}
+    ):
         with resource_manager(
             Resource.AGENT, agent_name, {}, ["no-gpu", "enterprise-edition"], [conf.MASTER_IP]
         ):
