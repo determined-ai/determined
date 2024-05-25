@@ -61,9 +61,13 @@ echo >&2 "INFO: Using image from family ${SOURCE_IMAGE_FAMILY}"
 
 # Other predefined variables
 
+# Why packer2? See https://github.com/GoogleCloudPlatform/hpc-toolkit/issues/1172.
 SSH_USERNAME="packer2"
-CPU_IMAGE_NAME=$(grep "CPUImage" ../../../master/pkg/schemas/expconf/const.go | awk -F'\"' '{print $2}')
-CUDA_IMAGE_NAME=$(grep "CUDAImage" ../../../master/pkg/schemas/expconf/const.go | awk -F'\"' '{print $2}')
+# We don't really have CPU images anymore but this is convenient to bake
+# any non-GPU image in for enroot tests. Enroot is very unhappy running without
+# GPUs with a GPU image (see https://github.com/NVIDIA/enroot/issues/26).
+CPU_IMAGE_NAME='determinedai/pytorch-tensorflow-cpu-dev:8b3bea3'
+CUDA_IMAGE_NAME='determinedai/pytorch-ngc-dev:e960eae'
 
 cat <<EOF
 ssh_username           = "${SSH_USERNAME}"
