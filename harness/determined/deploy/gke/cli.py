@@ -281,10 +281,10 @@ def configure_helm(args: argparse.Namespace) -> None:
         helm_values["taskContainerDefaults"]["cpuPodSpec"] = cpu_pod_spec
 
         checkpoint_gc_pod_spec = make_spec(
-            helm_values["taskContainerDefaults"], "checkpointgcpodspec"
+            helm_values["taskContainerDefaults"], "checkpointGcPodSpec"
         )
         checkpoint_gc_pod_spec = cast(Dict, checkpoint_gc_pod_spec["spec"])
-        helm_values["taskContainerDefaults"]["checkpointgcpodspec"] = checkpoint_gc_pod_spec
+        helm_values["taskContainerDefaults"]["checkpointGcPodSpec"] = checkpoint_gc_pod_spec
 
     with (helm_dir / "values.yaml").open("w") as f:
         yaml.round_trip_dump(helm_values, f)
