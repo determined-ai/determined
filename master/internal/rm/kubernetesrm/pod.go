@@ -435,7 +435,7 @@ func (p *pod) createPodSpecAndSubmit() error {
 	}
 	gwComm := gatewayResourceComm{
 		resourceDescriptor: *p.configureProxyResources(),
-		updateCB:           updateResources,
+		reportResources:    updateResources,
 		requestedPorts:     len(p.req.ProxyPorts),
 	}
 	p.resourceRequestQueue.createKubernetesResources(p.pod, p.configMap, &gwComm)

@@ -146,15 +146,15 @@ func createListenerForPod(port int, sectionName string) gatewayTyped.Listener {
 	return gatewayListener
 }
 
-// resourceDescriptor returns a configured list of proxy resources for a pod.
-type resourceDescriptor func([]int) []gatewayProxyResource
+// proxyResourceGenerator returns a configured list of proxy resources given a set of ports.
+type proxyResourceGenerator func([]int) []gatewayProxyResource
 
-func (p *pod) configureProxyResources() *resourceDescriptor { // TODO return an err.
+func (p *pod) configureProxyResources() *proxyResourceGenerator { // TODO return an err.
 	if p.exposeProxyConfig == nil {
 		return nil
 	}
 
-	generator := resourceDescriptor(func(ports []int) []gatewayProxyResource {
+	generator := proxyResourceGenerator(func(ports []int) []gatewayProxyResource {
 		var resources []gatewayProxyResource
 		// TODO(RM-275/gateways) think about experiments, should they proxy every pod, or only rank 0?
 		if len(ports) != len(p.req.ProxyPorts) {

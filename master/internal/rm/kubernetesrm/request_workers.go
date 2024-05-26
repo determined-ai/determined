@@ -135,8 +135,8 @@ func (r *requestProcessingWorker) receiveCreateKubernetesResources(
 	// 	fmt.Println("HHH calling with updated resources", msg.gatewayProxyResources)
 	// 	(*msg.updateCB)(portMap)
 	// }
-	if msg.gw != nil {
-		msg.gw.updateCB(proxyResources)
+	if msg.gw != nil && msg.gw.reportResources != nil {
+		msg.gw.reportResources(proxyResources)
 	}
 
 	r.syslog.Debugf("launching pod with spec %v", msg.podSpec)

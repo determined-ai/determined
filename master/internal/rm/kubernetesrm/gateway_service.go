@@ -25,8 +25,8 @@ type gatewayService struct {
 
 type gatewayResourceComm struct {
 	requestedPorts     int
-	resourceDescriptor resourceDescriptor
-	updateCB           func([]gatewayProxyResource)
+	resourceDescriptor proxyResourceGenerator
+	reportResources    func([]gatewayProxyResource)
 }
 
 func genSectionName(port int) string {
