@@ -424,21 +424,33 @@ func (p *pod) createPodSpecAndSubmit() error {
 	if err := p.createPodSpec(p.scheduler); err != nil {
 		return err
 	}
+	if p.exposeProxyConfig == nil {
+		p.resourceRequestQueue.createKubernetesResources(p.pod, p.configMap, nil)
+		return nil
+	}
+	var gwResourceComm *gatewayResourceComm
 	updateResources := func(resources []gatewayProxyResource) {
 		p.mu.Lock()
 		defer p.mu.Unlock()
 		p.gatewayProxyResources = resources
+		// chat: we want to delay this until the request queue worker has created the resources.
 		if p.hasAllResourcesStarted() {
 			fmt.Println("HHH pod ports", p.ports)
-			p.informTaskResourcesStarted(getResourcesStartedForPod(p.pod, p.ports, p.exposeProxyConfig, p.gatewayProxyResources))
+			p.informTaskResourcesStarted(
+				getResourcesStartedForPod(p.pod, p.ports, p.exposeProxyConfig, p.gatewayProxyResources),
+			)
 		}
 	}
-	gwComm := gatewayResourceComm{
-		resourceDescriptor: *p.configureProxyResources(),
+	resourceGenerator := p.configureProxyResources()
+	if resourceGenerator == nil {
+		return errors.New("gateway resource generator is nil")
+	}
+	gwResourceComm = &gatewayResourceComm{
+		resourceDescriptor: *resourceGenerator,
 		reportResources:    updateResources,
 		requestedPorts:     len(p.req.ProxyPorts),
 	}
-	p.resourceRequestQueue.createKubernetesResources(p.pod, p.configMap, &gwComm)
+	p.resourceRequestQueue.createKubernetesResources(p.pod, p.configMap, gwResourceComm)
 	return nil
 }
 
