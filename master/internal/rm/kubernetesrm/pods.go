@@ -432,7 +432,11 @@ func (p *pods) startClientSet() error {
 		if err != nil {
 			return fmt.Errorf("creating Kubernetes gateway clientSet: %w", err)
 		}
-		gwService, err := newGatewayService(gatewayClientSet.Gateways(exposeConfig.GatewayNamespace), exposeConfig.GatewayName)
+		gwService, err := newGatewayService(
+			gatewayClientSet.Gateways(exposeConfig.GatewayNamespace),
+			p.tcpRouteInterfaces,
+			exposeConfig.GatewayName,
+		)
 		if err != nil {
 			return fmt.Errorf("creating gateway service: %w", err)
 		}
@@ -654,7 +658,12 @@ func (p *pods) reattachPod(
 		newPodHandler.container.State = state
 	}
 	var started *sproto.ResourcesStarted
-	gwPortMap, ok := p.gatewayService.getDeployedPortMap()[allocationID]
+	// PERF: call once for all pods
+	gwPortMap, err := p.gatewayService.getDeployedPortMap()
+	if err != nil {
+		return reattachPodResponse{}, errors.Wrap(err, "error getting gateway ports")
+	}
+	allocPortMap, ok := gwPortMap[allocationID]
 	if !ok && p.exposeProxyConfig != nil {
 		return reattachPodResponse{}, errors.New(
 			fmt.Sprintf("gateway ports not found for allocation %s", allocationID),
@@ -662,7 +671,7 @@ func (p *pods) reattachPod(
 	}
 	if newPodHandler.container.State == cproto.Running {
 		started = ptrs.Ptr(getResourcesStartedForPod(
-			pod, newPodHandler.ports, nil, gwPortMap,
+			pod, newPodHandler.ports, nil, allocPortMap,
 		))
 	}
 

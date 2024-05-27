@@ -12,6 +12,7 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/port"
+	alphaGateway "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned/typed/apis/v1alpha2"
 )
 
 // I wanted to do this all in patches, but Gateways don't yet support strategic merge patch.
@@ -19,9 +20,10 @@ import (
 // as I don't think you can remove by value. Instead just serialize reading then submitting
 // updates on the gateway.
 type gatewayService struct {
-	mu               sync.Mutex
-	gatewayInterface gateway.GatewayInterface
-	gatewayName      string
+	mu                 sync.Mutex
+	gatewayInterface   gateway.GatewayInterface
+	tcpRouteInterfaces map[string]alphaGateway.TCPRouteInterface
+	gatewayName        string
 }
 
 type gatewayResourceComm struct {
@@ -34,14 +36,19 @@ func genSectionName(gwPort int) string {
 	return fmt.Sprintf("section-%d", gwPort)
 }
 
-func newGatewayService(gatewayInterface gateway.GatewayInterface, gatewayName string) (*gatewayService, error) {
+func newGatewayService(
+	gatewayInterface gateway.GatewayInterface,
+	tcpRouteInterfaces map[string]alphaGateway.TCPRouteInterface,
+	gatewayName string,
+) (*gatewayService, error) {
 	// TODO: make port range configurable by user. We currently assume we own the controller and
 	// the service.
 	// DOCS: note this limit on number of active proxied tasks.
 	// TODO: validate existing port on the gateway on startup
 	g := &gatewayService{
-		gatewayInterface: gatewayInterface,
-		gatewayName:      gatewayName,
+		gatewayInterface:   gatewayInterface,
+		tcpRouteInterfaces: tcpRouteInterfaces,
+		gatewayName:        gatewayName,
 	}
 	return g, nil
 }
@@ -99,13 +106,40 @@ func (g *gatewayService) freePorts(ports []int) error {
 }
 
 // getDeployedPortMap returns a mapping of ports based on gw config in the cluster.
-func (g *gatewayService) getDeployedPortMap() map[model.AllocationID]PortMap {
-	/*
-		get tcproutes each has alloc ids, source and dest ports.
-		can be encoded in configmaps or services too.
-	*/
+func (g *gatewayService) getDeployedPortMap() (map[model.AllocationID]PortMap, error) {
 	rv := make(map[model.AllocationID]PortMap)
-	return rv
+
+	for namespace, tcpRouteInterface := range g.tcpRouteInterfaces {
+		tcpRoutes, err := tcpRouteInterface.List(context.TODO(), metaV1.ListOptions{})
+		if err != nil {
+			return nil, fmt.Errorf("listing TCPRoutes in namespace '%s': %w", namespace, err)
+		}
+
+		for _, route := range tcpRoutes.Items {
+			allocIDStr, ok := route.Labels[determinedLabel]
+			if !ok {
+				continue
+			}
+			allocID := model.AllocationID(allocIDStr)
+			for _, rule := range route.Spec.Rules {
+				for _, backendRef := range rule.BackendRefs {
+					if _, ok := rv[allocID]; !ok {
+						rv[allocID] = make(PortMap)
+					}
+					if backendRef.Port == nil {
+						return nil, fmt.Errorf("TCPRoute '%s' has a nil port", route.Name)
+					}
+					if len(route.Spec.ParentRefs) != 1 {
+						return nil, fmt.Errorf("TCPRoute '%s' has %d parent refs, expected 1",
+							route.Name, len(route.Spec.ParentRefs))
+					}
+					rv[allocID][int(*backendRef.Port)] = int(*route.Spec.ParentRefs[0].Port)
+				}
+			}
+		}
+	}
+	fmt.Println("HHH getDeployedPortMap", rv)
+	return rv, nil
 }
 
 func (g *gatewayService) updateGateway(update func(*gatewayTyped.Gateway) error) error {
