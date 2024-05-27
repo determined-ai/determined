@@ -39,13 +39,20 @@ func TestRange_LoadInUsedPorts(t *testing.T) {
 	r, err := NewRange(1000, 2000, []int{})
 	require.NoError(t, err)
 
-	err = r.LoadInUsedPorts([]int{1500, 1600})
+	err = r.LoadInUsedPorts([]int{1500, 1600}, false)
 	assert.NoError(t, err)
 
-	err = r.LoadInUsedPorts([]int{3000})
+	err = r.LoadInUsedPorts([]int{3000}, false)
 	assert.Error(t, err)
 
-	err = r.LoadInUsedPorts([]int{1100, 1900})
+	err = r.LoadInUsedPorts([]int{1100, 1900}, false)
+	assert.NoError(t, err)
+
+	// out of range.
+	err = r.LoadInUsedPorts([]int{1100, 2900}, false)
+	assert.Error(t, err)
+
+	err = r.LoadInUsedPorts([]int{1100, 2900}, true)
 	assert.NoError(t, err)
 }
 
