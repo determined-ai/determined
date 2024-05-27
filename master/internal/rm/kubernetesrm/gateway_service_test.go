@@ -47,14 +47,9 @@ func TestGatewayServiceAddListeners(t *testing.T) {
 
 	gatewayMock.On("Get", mock.Anything, "gatewayname", metaV1.GetOptions{}).Return(toReturn, nil)
 	gatewayMock.On("Update", mock.Anything, expected, metaV1.UpdateOptions{}).Return(nil, nil)
-	require.NoError(t, g.addListeners([]gatewayTyped.Listener{
-		{
-			Port: 2,
-		},
-		{
-			Port: 3,
-		},
-	}))
+	listeners, err := g.generateAndAddListeners(2)
+	require.Len(t, listeners, 2)
+	require.NoError(t, err)
 
 	gatewayMock.AssertExpectations(t)
 }

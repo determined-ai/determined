@@ -389,15 +389,26 @@ func TestReceiveCreateKubernetesResources(t *testing.T) {
 		gatewayService:      gatewayService,
 	}
 
+	gatewayProxyResources := []gatewayProxyResource{
+		{
+			serviceSpec:     &k8sV1.Service{},
+			tcpRouteSpec:    &alphaGatewayTyped.TCPRoute{},
+			gatewayListener: gatewayTyped.Listener{},
+		},
+	}
+	generator := func(ports []int) []gatewayProxyResource {
+		return gatewayProxyResources
+	}
+	updater := func(prs []gatewayProxyResource) {
+		// noop
+	}
 	createReq := createKubernetesResources{
 		podSpec:       &k8sV1.Pod{},
 		configMapSpec: &k8sV1.ConfigMap{},
-		gatewayProxyResources: []gatewayProxyResource{
-			{
-				serviceSpec:     &k8sV1.Service{},
-				tcpRouteSpec:    &alphaGatewayTyped.TCPRoute{},
-				gatewayListener: gatewayTyped.Listener{},
-			},
+		gw: &gatewayResourceComm{
+			requestedPorts:     1,
+			resourceDescriptor: generator,
+			reportResources:    updater,
 		},
 	}
 
@@ -416,10 +427,10 @@ func TestReceiveCreateKubernetesResources(t *testing.T) {
 		Return(createReq.podSpec, nil)
 	configMapInterface.On("Create", mock.Anything, createReq.configMapSpec, metaV1.CreateOptions{}).
 		Return(createReq.configMapSpec, nil)
-	serviceInterface.On("Create", mock.Anything, createReq.gatewayProxyResources[0].serviceSpec,
-		metaV1.CreateOptions{}).Return(createReq.gatewayProxyResources[0].serviceSpec, nil)
-	tcpInterface.On("Create", mock.Anything, createReq.gatewayProxyResources[0].tcpRouteSpec,
-		metaV1.CreateOptions{}).Return(createReq.gatewayProxyResources[0].tcpRouteSpec, nil)
+	serviceInterface.On("Create", mock.Anything, gatewayProxyResources[0].serviceSpec,
+		metaV1.CreateOptions{}).Return(gatewayProxyResources[0].serviceSpec, nil)
+	tcpInterface.On("Create", mock.Anything, gatewayProxyResources[0].tcpRouteSpec,
+		metaV1.CreateOptions{}).Return(gatewayProxyResources[0].tcpRouteSpec, nil)
 
 	gatewayInterface.On("Get", mock.Anything, "gatewayname", metaV1.GetOptions{}).
 		Return(gateway, nil)
