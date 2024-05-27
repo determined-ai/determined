@@ -139,7 +139,7 @@ func (p *pod) configureProxyResources() *proxyResourceGenerator { // TODO return
 		return nil
 	}
 
-	// this needs to take PortMap for the reattach process to recreate the resoruces.
+	// this needs to take PortMap for the reattach process to recreate the resources.
 	generator := proxyResourceGenerator(func(ports []int) []gatewayProxyResource {
 		var resources []gatewayProxyResource
 		// TODO(RM-275/gateways) think about experiments, should they proxy every pod, or only rank 0?

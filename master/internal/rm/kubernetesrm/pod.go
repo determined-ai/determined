@@ -45,13 +45,6 @@ type podSubmissionInfo struct {
 	taskSpec tasks.TaskSpec
 }
 
-func mapResourcePorts(portMap PortMap, proxyResources []gatewayProxyResource) []gatewayProxyResource {
-	for _, g := range proxyResources {
-		g.SetGWPort(portMap[g.PodPort()])
-	}
-	return proxyResources
-}
-
 // TODO(mar).
 // podStatusUpdate: messages that are sent by the pod informer.
 type podStatusUpdate struct {
@@ -82,10 +75,6 @@ func (g gatewayProxyResource) SetGWPort(port int) {
 	}
 	g.tcpRouteSpec.Spec.CommonRouteSpec.ParentRefs[0].Port = &gwPort
 }
-
-// type ProxyResourceRequest struct {
-
-// }
 
 // pod manages the lifecycle of a Kubernetes pod that executes a
 // Determined task. The lifecycle of the pod is managed based on
@@ -122,7 +111,6 @@ type pod struct {
 	configMapName string
 
 	gatewayProxyResources []gatewayProxyResource
-	proxyRequests         []gatewayProxyResource
 	exposeProxyConfig     *config.ExposeProxiesExternallyConfig
 	gatewayService        *gatewayService
 

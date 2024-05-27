@@ -665,8 +665,8 @@ func (p *pods) reattachPod(
 	}
 	allocPortMap, ok := gwPortMap[allocationID]
 	if !ok && p.exposeProxyConfig != nil {
-		return reattachPodResponse{}, errors.New(
-			fmt.Sprintf("gateway ports not found for allocation %s", allocationID),
+		return reattachPodResponse{}, fmt.Errorf(
+			"gateway ports not found for allocation %s", allocationID,
 		)
 	}
 	if newPodHandler.container.State == cproto.Running {
