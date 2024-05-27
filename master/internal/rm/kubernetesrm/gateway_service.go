@@ -46,7 +46,7 @@ func newGatewayService(gatewayInterface gateway.GatewayInterface, gatewayName st
 	return g, nil
 }
 
-// PortMap is a map of pod ports to gateway ports.
+// PortMap is a map of internal pod ports to external gateway ports.
 type PortMap map[int]int
 
 func (g *gatewayService) generateAndAddListeners(count int) ([]int, error) {
@@ -98,11 +98,7 @@ func (g *gatewayService) freePorts(ports []int) error {
 	return nil
 }
 
-// func (g *gatewayService) getDeployedProxyResources() map[model.AllocationID][]gatewayProxyResource {
-// 	// TODO: implement. can we recreate this?
-// }
-
-// getPortMapping returns a mapping of ports based on gw config in the cluster.
+// getDeployedPortMap returns a mapping of ports based on gw config in the cluster.
 func (g *gatewayService) getDeployedPortMap() map[model.AllocationID]PortMap {
 	/*
 		get tcproutes each has alloc ids, source and dest ports.

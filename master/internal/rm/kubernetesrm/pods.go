@@ -555,7 +555,6 @@ func (p *pods) reattachAllocationPods(msg reattachAllocationPods) ([]reattachPod
 
 	var restoreResponses []reattachPodResponse
 	for i, containerID := range containerIDs {
-		fmt.Println("reattaching", i, containerID, k8sPods[i])
 		resp, err := p.reattachPod(msg.req, msg.allocationID, resourcePool, containerID,
 			k8sPods[i], ports[i], msg.slots, msg.logContext)
 		if err != nil {

@@ -82,6 +82,8 @@ func (r *requestProcessingWorker) receiveCreateKubernetesResources(
 
 	var ports []int
 	var proxyResources []gatewayProxyResource
+	// 	// TODO(RM-272) do we leak resources if the request queue fails?
+	// 	// Do we / should we delete created resources?
 	if msg.gw != nil {
 		if msg.gw.requestedPorts > 0 {
 			if ports, err = r.gatewayService.generateAndAddListeners(msg.gw.requestedPorts); err != nil {
@@ -94,22 +96,6 @@ func (r *requestProcessingWorker) receiveCreateKubernetesResources(
 		proxyResources = msg.gw.resourceDescriptor(ports)
 	}
 
-	// var gatewayListeners []gatewayTyped.Listener
-	// for _, proxyResource := range msg.gatewayProxyResources {
-	// 	gatewayListeners = append(gatewayListeners, proxyResource.gatewayListener)
-	// }
-	// if len(gatewayListeners) > 0 {
-	// 	// TODO(RM-272) do we leak resources if the request queue fails?
-	// 	// Do we / should we delete created resources?
-	// 	// TODO: handle potential port conflicts. It will need a pod spec and det proxy reconfiguration.
-	// 	if portMap, err = r.gatewayService.generateAndAddListeners(gatewayListeners); err != nil {
-	// 		r.syslog.WithError(err).Errorf("error patching gateway for pod %s", msg.podSpec.Name)
-	// 		r.failures <- resourceCreationFailed{podName: msg.podSpec.Name, err: err}
-	// 		return
-	// 	}
-	// 	r.syslog.Info("created gateway proxy resources")
-	// }
-	// msg.gatewayProxyResources = mapResourcePorts(portMap, msg.gatewayProxyResources)
 	for _, proxyResource := range proxyResources {
 		r.syslog.Debugf("launching service with spec %v", *proxyResource.serviceSpec)
 		if _, err := r.serviceInterfaces[msg.podSpec.Namespace].Create(
@@ -127,17 +113,12 @@ func (r *requestProcessingWorker) receiveCreateKubernetesResources(
 			r.failures <- resourceCreationFailed{podName: msg.podSpec.Name, err: err}
 			return
 		}
-		// we're creating listeners ahead of time which is a different err handling order.
-		// gatewayListeners = append(gatewayListeners, proxyResource.gatewayListener)
 	}
 	fmt.Println("HHH calling with port map", ports)
-	// if msg.updateCB != nil {
-	// 	fmt.Println("HHH calling with updated resources", msg.gatewayProxyResources)
-	// 	(*msg.updateCB)(portMap)
-	// }
 	if msg.gw != nil && msg.gw.reportResources != nil {
 		msg.gw.reportResources(proxyResources)
 	}
+	r.syslog.Info("created gateway proxy resources")
 
 	r.syslog.Debugf("launching pod with spec %v", msg.podSpec)
 	pod, err := r.podInterfaces[msg.podSpec.Namespace].Create(

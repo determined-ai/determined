@@ -78,7 +78,7 @@ func (g gatewayProxyResource) SetGWPort(port int) {
 	gwPort := gatewayTyped.PortNumber(port)
 	g.gatewayListener.Port = gwPort
 	if g.tcpRouteSpec == nil {
-		// log?
+		// FIXME: log?
 	}
 	g.tcpRouteSpec.Spec.CommonRouteSpec.ParentRefs[0].Port = &gwPort
 }
@@ -691,8 +691,6 @@ func getResourcesStartedForPod(
 		}
 		addresses = append(addresses, address)
 	}
-
-	// addresses = mapTranslatedAddresses(addresses, newHostIp, hostPortMap)
 
 	var taskContainerID string
 	for _, containerStatus := range pod.Status.ContainerStatuses {
