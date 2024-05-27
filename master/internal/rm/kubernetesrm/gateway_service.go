@@ -10,9 +10,10 @@ import (
 	gatewayTyped "sigs.k8s.io/gateway-api/apis/v1"
 	gateway "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned/typed/apis/v1"
 
+	alphaGateway "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned/typed/apis/v1alpha2"
+
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/port"
-	alphaGateway "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned/typed/apis/v1alpha2"
 )
 
 // I wanted to do this all in patches, but Gateways don't yet support strategic merge patch.
@@ -24,6 +25,8 @@ type gatewayService struct {
 	gatewayInterface   gateway.GatewayInterface
 	tcpRouteInterfaces map[string]alphaGateway.TCPRouteInterface
 	gatewayName        string
+	portRangeStart     int
+	portRangeEnd       int
 }
 
 type gatewayResourceComm struct {
@@ -49,6 +52,8 @@ func newGatewayService(
 		gatewayInterface:   gatewayInterface,
 		tcpRouteInterfaces: tcpRouteInterfaces,
 		gatewayName:        gatewayName,
+		portRangeStart:     49152,
+		portRangeEnd:       65535,
 	}
 	return g, nil
 }
@@ -61,7 +66,7 @@ func (g *gatewayService) generateAndAddListeners(count int) ([]int, error) {
 	if err := g.updateGateway(func(gateway *gatewayTyped.Gateway) error {
 		var err error
 		listeners := make([]gatewayTyped.Listener, count)
-		ports, err = pickNFreePorts(gateway, len(listeners))
+		ports, err = g.pickNFreePorts(gateway, len(listeners))
 		if err != nil {
 			return err
 		}
@@ -76,12 +81,12 @@ func (g *gatewayService) generateAndAddListeners(count int) ([]int, error) {
 	return ports, nil
 }
 
-func pickNFreePorts(gateway *gatewayTyped.Gateway, count int) ([]int, error) {
+func (g *gatewayService) pickNFreePorts(gateway *gatewayTyped.Gateway, count int) ([]int, error) {
 	usedPorts := make([]int, 0, len(gateway.Spec.Listeners))
 	for _, listener := range gateway.Spec.Listeners {
 		usedPorts = append(usedPorts, int(listener.Port))
 	}
-	portRange, err := port.NewRange(49152, 65535, usedPorts)
+	portRange, err := port.NewRange(g.portRangeStart, g.portRangeEnd, usedPorts)
 	if err != nil {
 		return nil, fmt.Errorf("creating port range: %w", err)
 	}
