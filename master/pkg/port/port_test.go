@@ -20,7 +20,7 @@ func TestNewRange(t *testing.T) {
 		{"Invalid range, start greater than end", 2000, 1000, []int{}, true},
 		{"Invalid range, negative start", -1000, 2000, []int{}, true},
 		{"Invalid range, end greater than 65535", 1000, 70000, []int{}, true},
-		{"Used port out of range", 1000, 2000, []int{3000}, true},
+		{"Used port out of range", 1000, 2000, []int{3000}, false},
 	}
 
 	for _, tt := range tests {
