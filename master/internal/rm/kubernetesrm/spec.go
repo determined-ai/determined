@@ -31,7 +31,6 @@ import (
 	schedulingV1 "k8s.io/api/scheduling/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	gatewayTyped "sigs.k8s.io/gateway-api/apis/v1"
 	alphaGatewayTyped "sigs.k8s.io/gateway-api/apis/v1alpha2"
 )
 
@@ -132,20 +131,6 @@ func (p *pod) configureEnvVars(
 	return envVars, nil
 }
 
-func createListenerForPod(port int, sectionName string) gatewayTyped.Listener {
-	gatewayListener := gatewayTyped.Listener{
-		Name:     gatewayTyped.SectionName(sectionName),
-		Port:     gatewayTyped.PortNumber(port),
-		Protocol: "TCP",
-		AllowedRoutes: &gatewayTyped.AllowedRoutes{
-			Namespaces: &gatewayTyped.RouteNamespaces{
-				From: ptrs.Ptr(gatewayTyped.NamespacesFromAll),
-			},
-		},
-	}
-	return gatewayListener
-}
-
 // proxyResourceGenerator returns a configured list of proxy resources given a set of ports.
 type proxyResourceGenerator func([]int) []gatewayProxyResource
 
@@ -154,6 +139,7 @@ func (p *pod) configureProxyResources() *proxyResourceGenerator { // TODO return
 		return nil
 	}
 
+	// this needs to take PortMap for the reattach process to recreate the resoruces.
 	generator := proxyResourceGenerator(func(ports []int) []gatewayProxyResource {
 		var resources []gatewayProxyResource
 		// TODO(RM-275/gateways) think about experiments, should they proxy every pod, or only rank 0?
@@ -193,7 +179,8 @@ func (p *pod) configureProxyResources() *proxyResourceGenerator { // TODO return
 				},
 			}
 
-			sectionName := genSectionName(gwPort)
+			// store port translations in configmaps and retrieve for reattach?
+
 			tcpRouteSpec := &alphaGatewayTyped.TCPRoute{
 				ObjectMeta: metaV1.ObjectMeta{
 					Name:      sharedName,
@@ -207,7 +194,7 @@ func (p *pod) configureProxyResources() *proxyResourceGenerator { // TODO return
 								Namespace:   ptrs.Ptr(alphaGatewayTyped.Namespace(p.exposeProxyConfig.GatewayNamespace)),
 								Name:        alphaGatewayTyped.ObjectName(p.exposeProxyConfig.GatewayName),
 								Port:        ptrs.Ptr(alphaGatewayTyped.PortNumber(gwPort)),
-								SectionName: ptrs.Ptr(alphaGatewayTyped.SectionName(sectionName)),
+								SectionName: ptrs.Ptr(alphaGatewayTyped.SectionName(genSectionName(gwPort))),
 							},
 						},
 					},
@@ -227,7 +214,7 @@ func (p *pod) configureProxyResources() *proxyResourceGenerator { // TODO return
 				},
 			}
 
-			gatewayListener := createListenerForPod(gwPort, sectionName)
+			gatewayListener := createListenerForPod(gwPort)
 
 			resources = append(resources, gatewayProxyResource{
 				podPort:         proxyPort.Port,

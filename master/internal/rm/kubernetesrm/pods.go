@@ -543,6 +543,7 @@ func (p *pods) reattachAllocationPods(msg reattachAllocationPods) ([]reattachPod
 	}
 
 	if len(k8sPods) != msg.numPods {
+		// need to delete the gw resources too? or all taken care of?
 		p.deleteKubernetesResources(pods, configMaps)
 		return nil, fmt.Errorf("not enough pods found for allocation expected %d got %d instead",
 			msg.numPods, len(k8sPods))
@@ -554,6 +555,7 @@ func (p *pods) reattachAllocationPods(msg reattachAllocationPods) ([]reattachPod
 
 	var restoreResponses []reattachPodResponse
 	for i, containerID := range containerIDs {
+		fmt.Println("reattaching", i, containerID, k8sPods[i])
 		resp, err := p.reattachPod(msg.req, msg.allocationID, resourcePool, containerID,
 			k8sPods[i], ports[i], msg.slots, msg.logContext)
 		if err != nil {
@@ -653,10 +655,15 @@ func (p *pods) reattachPod(
 		newPodHandler.container.State = state
 	}
 	var started *sproto.ResourcesStarted
+	gwPortMap, ok := p.gatewayService.getDeployedPortMap()[allocationID]
+	if !ok && p.exposeProxyConfig != nil {
+		return reattachPodResponse{}, errors.New(
+			fmt.Sprintf("gateway ports not found for allocation %s", allocationID),
+		)
+	}
 	if newPodHandler.container.State == cproto.Running {
 		started = ptrs.Ptr(getResourcesStartedForPod(
-			// FIXME: how do we restore the proxy resources?
-			pod, newPodHandler.ports, nil, newPodHandler.gatewayProxyResources,
+			pod, newPodHandler.ports, nil, gwPortMap,
 		))
 	}
 

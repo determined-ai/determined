@@ -243,11 +243,6 @@ func (p *pod) hasAllResourcesStarted() bool {
 	return true
 }
 
-func (p *pod) resourcesReady() {
-	fmt.Println("HHH pod ports", p.ports)
-	p.informTaskResourcesStarted(getResourcesStartedForPod(p.pod, p.ports, p.exposeProxyConfig, p.gatewayProxyResources))
-}
-
 func (p *pod) podStatusUpdate(updatedPod *k8sV1.Pod) (cproto.State, error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
@@ -288,7 +283,11 @@ func (p *pod) podStatusUpdate(updatedPod *k8sV1.Pod) (cproto.State, error) {
 		p.container = p.container.Transition(cproto.Running)
 		if p.hasAllResourcesStarted() {
 			fmt.Println("HHH pod ports", p.ports)
-			p.informTaskResourcesStarted(getResourcesStartedForPod(p.pod, p.ports, p.exposeProxyConfig, p.gatewayProxyResources))
+			gwPortMap := make(PortMap)
+			for _, g := range p.gatewayProxyResources {
+				gwPortMap[g.PodPort()] = g.GWPort()
+			}
+			p.informTaskResourcesStarted(getResourcesStartedForPod(p.pod, p.ports, p.exposeProxyConfig, gwPortMap))
 		}
 		err := p.startPodLogStreamer()
 		if err != nil {
@@ -436,8 +435,12 @@ func (p *pod) createPodSpecAndSubmit() error {
 		// chat: we want to delay this until the request queue worker has created the resources.
 		if p.hasAllResourcesStarted() {
 			fmt.Println("HHH pod ports", p.ports)
+			gwPortMap := make(PortMap)
+			for _, g := range p.gatewayProxyResources {
+				gwPortMap[g.PodPort()] = g.GWPort()
+			}
 			p.informTaskResourcesStarted(
-				getResourcesStartedForPod(p.pod, p.ports, p.exposeProxyConfig, p.gatewayProxyResources),
+				getResourcesStartedForPod(p.pod, p.ports, p.exposeProxyConfig, gwPortMap),
 			)
 		}
 	}
@@ -665,11 +668,10 @@ func getExitCodeAndMessage(pod *k8sV1.Pod, containerNames set.Set[string]) (int,
 
 func getResourcesStartedForPod(
 	pod *k8sV1.Pod, podPorts []int, exposeProxyConfig *config.ExposeProxiesExternallyConfig,
-	gatewayProxyResource []gatewayProxyResource,
+	gwPortMap PortMap,
 ) sproto.ResourcesStarted {
 	addresses := []cproto.Address{}
 
-	gwPortMap := make(PortMap)
 	baseAddress := cproto.Address{
 		ContainerIP: pod.Status.PodIP,
 		HostIP:      pod.Status.PodIP,
@@ -677,16 +679,7 @@ func getResourcesStartedForPod(
 	if exposeProxyConfig != nil {
 		baseAddress.ContainerIP = exposeProxyConfig.GatewayAddress
 		baseAddress.HostIP = exposeProxyConfig.GatewayAddress
-		// if len(podPorts) > 0 && len(gatewayProxyResource) == 0 {
-		// 	fmt.Println("HHH pod ports", podPorts)
-		// 	panic("gatewayProxyResource is empty")
-		// }
-		for _, g := range gatewayProxyResource {
-			gwPortMap[g.PodPort()] = g.GWPort()
-		}
 	}
-	fmt.Println("HHH pod port map for addr", gwPortMap)
-
 	for _, podPort := range podPorts {
 		address := baseAddress
 		address.ContainerPort = podPort

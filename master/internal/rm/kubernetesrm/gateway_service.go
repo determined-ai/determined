@@ -10,6 +10,7 @@ import (
 	gatewayTyped "sigs.k8s.io/gateway-api/apis/v1"
 	gateway "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned/typed/apis/v1"
 
+	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/port"
 )
 
@@ -29,8 +30,8 @@ type gatewayResourceComm struct {
 	reportResources    func([]gatewayProxyResource)
 }
 
-func genSectionName(port int) string {
-	return fmt.Sprintf("section-%d", port)
+func genSectionName(gwPort int) string {
+	return fmt.Sprintf("section-%d", gwPort)
 }
 
 func newGatewayService(gatewayInterface gateway.GatewayInterface, gatewayName string) (*gatewayService, error) {
@@ -58,7 +59,7 @@ func (g *gatewayService) generateAndAddListeners(count int) ([]int, error) {
 			return err
 		}
 		for i := 0; i < count; i++ {
-			listeners[i] = createListenerForPod(ports[i], genSectionName(ports[i]))
+			listeners[i] = createListenerForPod(ports[i])
 		}
 		gateway.Spec.Listeners = append(gateway.Spec.Listeners, listeners...)
 		return nil
@@ -95,6 +96,20 @@ func (g *gatewayService) freePorts(ports []int) error {
 		return fmt.Errorf("freeing ports %v from gateway: %w", ports, err)
 	}
 	return nil
+}
+
+// func (g *gatewayService) getDeployedProxyResources() map[model.AllocationID][]gatewayProxyResource {
+// 	// TODO: implement. can we recreate this?
+// }
+
+// getPortMapping returns a mapping of ports based on gw config in the cluster.
+func (g *gatewayService) getDeployedPortMap() map[model.AllocationID]PortMap {
+	/*
+		get tcproutes each has alloc ids, source and dest ports.
+		can be encoded in configmaps or services too.
+	*/
+	rv := make(map[model.AllocationID]PortMap)
+	return rv
 }
 
 func (g *gatewayService) updateGateway(update func(*gatewayTyped.Gateway) error) error {
