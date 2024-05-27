@@ -382,6 +382,7 @@ func TestReceiveCreateKubernetesResources(t *testing.T) {
 
 	gatewayService, err := newGatewayService(gatewayInterface, tcpInterfaces, "gatewayname")
 	require.NoError(t, err)
+	gatewayService.portRangeStart = 1
 
 	w := &requestProcessingWorker{
 		syslog:              logrus.New().WithField("test", "test"),
@@ -399,11 +400,12 @@ func TestReceiveCreateKubernetesResources(t *testing.T) {
 			gatewayListener: gatewayTyped.Listener{},
 		},
 	}
+	reportedResources := []gatewayProxyResource{}
 	generator := func(ports []int) []gatewayProxyResource {
 		return gatewayProxyResources
 	}
 	updater := func(prs []gatewayProxyResource) {
-		// noop
+		reportedResources = prs
 	}
 	createReq := createKubernetesResources{
 		podSpec:       &k8sV1.Pod{},
@@ -419,9 +421,7 @@ func TestReceiveCreateKubernetesResources(t *testing.T) {
 	expectedUpdatedGateway := &gatewayTyped.Gateway{
 		Spec: gatewayTyped.GatewaySpec{
 			Listeners: []gatewayTyped.Listener{
-				{
-					Port: 0,
-				},
+				createListenerForPod(1),
 			},
 		},
 	}
@@ -441,6 +441,8 @@ func TestReceiveCreateKubernetesResources(t *testing.T) {
 		Return(nil, nil)
 
 	w.receiveCreateKubernetesResources(createReq)
+
+	require.Equal(t, gatewayProxyResources, reportedResources)
 
 	podInterface.AssertExpectations(t)
 	configMapInterface.AssertExpectations(t)
