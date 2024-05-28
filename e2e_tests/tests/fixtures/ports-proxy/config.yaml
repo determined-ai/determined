@@ -6,10 +6,18 @@ resources:
 
 searcher:
   max_length: 10000000
-  name: adaptive_asha
+  name: grid
   metric: x
-  smaller_is_better: true
-  max_trials: 4
+  max_concurrent_trials: 2
+
+hyperparameters:
+  model_version:
+    type: categorical
+    vals:
+      - 1
+      - 2
+      - 3
+      - 4
 
 max_restarts: 0
 
