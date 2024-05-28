@@ -3,7 +3,6 @@ package kubernetesrm
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
@@ -12,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/exp/maps"
 	batchV1 "k8s.io/api/batch/v1"
@@ -356,6 +356,7 @@ func (j *jobsService) deleteDoomedKubernetesResources() error {
 	for _, alloc := range openAllocations {
 		openAllocationIDs.Insert(alloc.AllocationID)
 	}
+	j.syslog.Infof("found open allocations %s", openAllocationIDs)
 
 	listOptions := metaV1.ListOptions{LabelSelector: determinedLabel}
 	jobs, err := j.listJobsInAllNamespaces(context.TODO(), listOptions)
@@ -377,7 +378,7 @@ func (j *jobsService) deleteDoomedKubernetesResources() error {
 			continue
 		}
 
-		allocationIDStr := job.Labels[determinedLabel]
+		allocationIDStr := job.Labels[allocationIDLabel]
 		if allocationIDStr == "" {
 			j.syslog.Warnf("deleting job '%s' without determined label (whose value is the allocation ID)", job.Name)
 			toKillJobs.Items = append(toKillJobs.Items, job)
@@ -386,7 +387,9 @@ func (j *jobsService) deleteDoomedKubernetesResources() error {
 		allocationID := model.AllocationID(allocationIDStr)
 
 		if !openAllocationIDs.Contains(allocationID) {
-			j.syslog.Warnf("deleting job '%s', did not find an open allocation for it", allocationID)
+			j.syslog.
+				WithField("allocation-id", allocationID).
+				Warnf("deleting job '%s', did not find an open allocation for it", job.Name)
 			toKillJobs.Items = append(toKillJobs.Items, job)
 			continue
 		}
@@ -669,6 +672,7 @@ func (j *jobsService) refreshJobState(allocationID model.AllocationID) error {
 		if _, ok := j.namespaceToPoolName[job.Namespace]; !ok {
 			continue
 		}
+		job := job
 		j.jobUpdatedCallback(&job)
 	}
 	return nil
@@ -690,6 +694,7 @@ func (j *jobsService) refreshPodStates(allocationID model.AllocationID) error {
 		if _, ok := j.namespaceToPoolName[pod.Namespace]; !ok {
 			continue
 		}
+		pod := pod
 		j.podStatusCallback(&pod)
 	}
 	return nil

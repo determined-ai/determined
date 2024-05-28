@@ -4,14 +4,13 @@ import (
 	"context"
 	"fmt"
 
-	batchV1 "k8s.io/client-go/kubernetes/typed/batch/v1"
-
 	"github.com/sirupsen/logrus"
+	k8serrors "k8s.io/apimachinery/pkg/api/errors"
+	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	batchV1 "k8s.io/client-go/kubernetes/typed/batch/v1"
+	typedV1 "k8s.io/client-go/kubernetes/typed/core/v1"
 
 	"github.com/determined-ai/determined/master/pkg/ptrs"
-
-	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	typedV1 "k8s.io/client-go/kubernetes/typed/core/v1"
 )
 
 type requestProcessingWorker struct {
@@ -101,9 +100,12 @@ func (r *requestProcessingWorker) receiveDeleteKubernetesResources(
 			GracePeriodSeconds: &gracePeriod,
 			PropagationPolicy:  ptrs.Ptr(metaV1.DeletePropagationBackground),
 		})
-		if err != nil {
-			r.syslog.WithError(err).Errorf("failed to delete pod %s", msg.jobName)
-		} else {
+		switch {
+		case k8serrors.IsNotFound(err):
+			r.syslog.Infof("job %s is already deleted", msg.jobName)
+		case err != nil:
+			r.syslog.WithError(err).Errorf("failed to delete job %s", msg.jobName)
+		default:
 			r.syslog.Infof("deleted job %s", msg.jobName)
 		}
 	}
@@ -111,22 +113,27 @@ func (r *requestProcessingWorker) receiveDeleteKubernetesResources(
 	if len(msg.podName) > 0 {
 		err = r.podInterface[msg.namespace].Delete(
 			context.TODO(), msg.podName, metaV1.DeleteOptions{GracePeriodSeconds: &gracePeriod})
-		if err != nil {
-			r.syslog.WithError(err).Errorf("failed to delete pod %s", msg.podName)
-		} else {
-			r.syslog.Infof("deleted pod %s", msg.podName)
+		switch {
+		case k8serrors.IsNotFound(err):
+			r.syslog.Infof("pod %s is already deleted", msg.jobName)
+		case err != nil:
+			r.syslog.WithError(err).Errorf("failed to delete pod %s", msg.jobName)
+		default:
+			r.syslog.Infof("deleted pod %s", msg.jobName)
 		}
 	}
 
 	if len(msg.configMapName) > 0 {
-		errDeletingConfigMap := r.configMapInterfaces[msg.namespace].Delete(
+		err = r.configMapInterfaces[msg.namespace].Delete(
 			context.TODO(), msg.configMapName,
 			metaV1.DeleteOptions{GracePeriodSeconds: &gracePeriod})
-		if errDeletingConfigMap != nil {
-			r.syslog.WithError(err).Errorf("failed to delete configMap %s", msg.configMapName)
-			err = errDeletingConfigMap
-		} else {
-			r.syslog.Infof("deleted configMap %s", msg.configMapName)
+		switch {
+		case k8serrors.IsNotFound(err):
+			r.syslog.Infof("configMap %s is already deleted", msg.jobName)
+		case err != nil:
+			r.syslog.WithError(err).Errorf("failed to delete configMap %s", msg.jobName)
+		default:
+			r.syslog.Infof("deleted configMap %s", msg.jobName)
 		}
 	}
 

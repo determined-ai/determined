@@ -626,9 +626,22 @@ func (j *job) createSpec(scheduler string, taskSpec *tasks.TaskSpec) (*batchV1.J
 }
 
 func configureUniqueName(t tasks.TaskSpec) string {
+	name := t.Description
+
 	// Prefix with a cluster ID so multiple Determined installations can coexist within cluster. But
 	// limit to the first 8 chars of the cluster ID to avoid the 63 character limit (this is ~53).
-	return fmt.Sprintf("%s-%s", t.ClusterID[:8], t.Description)
+	// Handle short cluster IDs for tests.
+	var clusterIDPrefix string
+	if len(t.ClusterID) >= 8 {
+		clusterIDPrefix = t.ClusterID[:8]
+	} else {
+		clusterIDPrefix = t.ClusterID
+	}
+	if clusterIDPrefix != "" {
+		name = fmt.Sprintf("%s-%s", clusterIDPrefix, name)
+	}
+
+	return name
 }
 
 func configureSecurityContext(agentUserGroup *model.AgentUserGroup) *k8sV1.SecurityContext {

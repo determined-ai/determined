@@ -53,7 +53,7 @@ const (
 
 func TestMain(m *testing.M) {
 	// Need to set up the DB for TestJobQueueStats
-	pgDB, _, err := db.ResolveTestPostgres()
+	pgDB, _, err := db.ResolveNewPostgresDatabase()
 	if err != nil {
 		log.Panicln(err)
 	}

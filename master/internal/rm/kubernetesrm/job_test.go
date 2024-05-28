@@ -26,7 +26,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/tasks"
 )
 
-func createPod(
+func createJob(
 	allocationID model.AllocationID,
 	resourceHandler *requestQueue,
 	task tasks.TaskSpec,
@@ -82,6 +82,7 @@ func createUser() *model.User {
 func createJobWithMockQueue(t *testing.T, k8sRequestQueue *requestQueue) (
 	*job,
 	model.AllocationID,
+	*tasks.TaskSpec,
 	*sproto.ResourcesSubscription,
 ) {
 	commandSpec := tasks.GenericCommandSpec{
@@ -114,19 +115,20 @@ func createJobWithMockQueue(t *testing.T, k8sRequestQueue *requestQueue) (
 
 	aID := model.AllocationID(uuid.NewString())
 	sub := rmevents.Subscribe(aID)
-	newPod := createPod(
+	spec := commandSpec.ToTaskSpec()
+	newPod := createJob(
 		aID,
 		k8sRequestQueue,
-		commandSpec.ToTaskSpec(),
+		spec,
 	)
 
 	go consumeResourceRequestFailures(ctx, failures, newPod)
 
-	err := newPod.createSpecAndSubmit(&tasks.TaskSpec{})
+	err := newPod.createSpecAndSubmit(&spec)
 	require.NoError(t, err)
 	time.Sleep(500 * time.Millisecond)
 
-	return newPod, aID, sub
+	return newPod, aID, &spec, sub
 }
 
 func setupEntrypoint(t *testing.T) {
@@ -173,12 +175,12 @@ func TestResourceCreationFailed(t *testing.T) {
 
 	const correctMsg = "already exists"
 
-	ref, aID, sub := createJobWithMockQueue(t, nil)
+	ref, aID, spec, sub := createJobWithMockQueue(t, nil)
 
 	purge(aID, sub)
 	require.Zero(t, sub.Len())
 	// Send a second start message to trigger an additional resource creation failure.
-	err := ref.createSpecAndSubmit(&tasks.TaskSpec{})
+	err := ref.createSpecAndSubmit(spec)
 	require.NoError(t, err)
 	time.Sleep(time.Second)
 
@@ -199,7 +201,7 @@ func TestReceivePodStatusUpdateTerminated(t *testing.T) {
 
 	t.Run("job deleting, but in pending state", func(t *testing.T) {
 		t.Logf("Testing PodPending status")
-		ref, aID, sub := createJobWithMockQueue(t, nil)
+		ref, aID, _, sub := createJobWithMockQueue(t, nil)
 		purge(aID, sub)
 		require.Zero(t, sub.Len())
 
@@ -226,7 +228,7 @@ func TestReceivePodStatusUpdateTerminated(t *testing.T) {
 
 	t.Run("job failed", func(t *testing.T) {
 		t.Logf("Testing PodFailed status")
-		ref, aID, sub := createJobWithMockQueue(t, nil)
+		ref, aID, _, sub := createJobWithMockQueue(t, nil)
 		purge(aID, sub)
 		require.Zero(t, sub.Len())
 
@@ -244,7 +246,7 @@ func TestReceivePodStatusUpdateTerminated(t *testing.T) {
 	})
 
 	t.Run("pod succeeded", func(t *testing.T) {
-		ref, aID, sub := createJobWithMockQueue(t, nil)
+		ref, aID, _, sub := createJobWithMockQueue(t, nil)
 		purge(aID, sub)
 		require.Zero(t, sub.Len())
 

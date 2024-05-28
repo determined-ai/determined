@@ -1,15 +1,18 @@
+//go:build integration
+
 package kubernetesrm
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"os"
+	"runtime/debug"
 	"strings"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
@@ -72,7 +75,7 @@ func TestJobWorkflows(t *testing.T) {
 			slots:      1,
 			wantFailure: &sproto.ResourcesFailedError{
 				FailureType: sproto.ResourcesFailed,
-				ErrMsg:      "unrecoverable image pull errors in pod",
+				ErrMsg:      "unrecoverable image pull errors",
 			},
 		},
 		{
@@ -224,7 +227,7 @@ func testLaunch(
 }
 
 func TestPodLogStreamerReattach(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
 	j := newTestJobsService(t)
@@ -319,6 +322,7 @@ func TestPodLogStreamerReattach(t *testing.T) {
 	for {
 		log := poll[*sproto.ContainerLog](ctx, t, sub)
 		if strings.Contains(log.Message(), secret) {
+			t.Logf("saw one log: %s", log.Message())
 			seen++
 		}
 		if seen == 2 {
@@ -892,6 +896,7 @@ func poll[T sproto.ResourcesEvent](ctx context.Context, t *testing.T, sub *sprot
 		if err != nil {
 			var typed T
 			t.Errorf("failed to receive %T in time: %s", typed, err)
+			t.Error(string(debug.Stack()))
 			t.FailNow()
 		}
 
