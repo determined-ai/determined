@@ -1,5 +1,6 @@
 import logging
 import socket
+import threading
 from http.server import BaseHTTPRequestHandler, HTTPServer
 
 import determined as det
@@ -17,7 +18,7 @@ class HelloHandler(BaseHTTPRequestHandler):
 
 
 def start_http_server(
-    server_class=HTTPServer, handler_class=HelloHandler, port: int = 8888
+    server_class=HTTPServer, handler_class=HelloHandler, port: int = 8000
 ) -> None:
     server_address = ("", port)
     httpd = server_class(server_address, handler_class)
@@ -25,7 +26,7 @@ def start_http_server(
     httpd.serve_forever()
 
 
-def start_server(host: str = "127.0.0.1", port: int = 8888) -> None:
+def start_tcp_server(host: str = "127.0.0.1", port: int = 6000) -> None:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.bind((host, port))
         s.listen()
@@ -46,16 +47,22 @@ def start_server(host: str = "127.0.0.1", port: int = 8888) -> None:
                     conn.sendall(data)
 
 
-def run():
-    # start_server()
-    start_http_server()
+def run_servers() -> None:
+    http_thread = threading.Thread(target=start_http_server)
+    tcp_thread = threading.Thread(target=start_tcp_server)
+
+    http_thread.start()
+    tcp_thread.start()
+
+    http_thread.join()
+    tcp_thread.join()
 
 
 if __name__ == "__main__":
     logging.basicConfig(level=logging.INFO, format=det.LOG_FORMAT)
     info = det.get_cluster_info()
     if info is None:
-        run()
+        run_servers()
         exit(0)
     slots_per_node = len(info.slot_ids)
     num_nodes = len(info.container_addrs)
@@ -64,6 +71,6 @@ if __name__ == "__main__":
     print(info)
     print(f"cross_rank: {cross_rank}, chief_ip: {chief_ip}")
     if cross_rank == 0:
-        run()
+        run_servers()
     else:
         print("Not the chief, exiting.")
