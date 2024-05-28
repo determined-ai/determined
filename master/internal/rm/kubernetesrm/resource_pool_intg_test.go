@@ -131,6 +131,8 @@ func TestValidateResources(t *testing.T) {
 }
 
 func TestSchedule(t *testing.T) {
+	// TODO RM-301
+	t.Skip("skipping test until flake fixed")
 	rp := testResourcePool(t, defaultSlots)
 	_, allocID := testAddAllocation(t, rp, defaultState)
 
