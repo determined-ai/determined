@@ -228,7 +228,7 @@ Parameters:
   GenAISharedFSMountPath:
     Type: String
     Description: GenAI shared file system mount path
-    Default: latest
+    Default: /run/determined/workdir/shared_fs
 
   MountEFSId:
     Type: String
