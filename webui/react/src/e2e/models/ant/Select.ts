@@ -74,18 +74,6 @@ export class Select extends BaseComponent {
   }
 
   /**
-   * Returns a representation of a select dropdown menu item. Since order is not
-   * guaranteed, make sure to verify the contents of the menu item.
-   * @param {number} n - the number of the menu item
-   */
-  nthMenuItem(n: number): BaseComponent {
-    return new BaseComponent({
-      parent: this._menu,
-      selector: `div.ant-select-item:nth-of-type(${n})`,
-    });
-  }
-
-  /**
    * Selects a menu item with the specified title.
    * @param {string} title - title of the item to select
    */

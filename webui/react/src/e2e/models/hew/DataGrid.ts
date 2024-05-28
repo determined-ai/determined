@@ -115,7 +115,7 @@ export class DataGrid<
     // All the permanent columns on the left together are under 500px wide
     await page.mouse.wheel(xAbsolute ? xAbsolute : box.width - 500, 0);
     // wait for 1 second for the scroll to happen
-    await page.waitForTimeout(999);
+    await page.waitForTimeout(2_000);
   }
 
   /**
