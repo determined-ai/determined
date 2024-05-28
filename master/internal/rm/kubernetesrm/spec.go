@@ -31,7 +31,6 @@ import (
 	schedulingV1 "k8s.io/api/scheduling/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	gatewayTyped "sigs.k8s.io/gateway-api/apis/v1"
 	alphaGatewayTyped "sigs.k8s.io/gateway-api/apis/v1alpha2"
 )
 
@@ -132,101 +131,101 @@ func (p *pod) configureEnvVars(
 	return envVars, nil
 }
 
-func (p *pod) configureProxyResources() []gatewayProxyResource {
+// proxyResourceGenerator returns a configured list of proxy resources given a set of ports.
+type proxyResourceGenerator func([]int) []gatewayProxyResource
+
+func (p *pod) configureProxyResources() *proxyResourceGenerator { // TODO return an err.
 	if p.exposeProxyConfig == nil {
 		return nil
 	}
 
-	var resources []gatewayProxyResource
-	// TODO(RM-275/gateways) think about experiments, should they proxy every pod, or only rank 0?
-	for i, proxyPort := range p.req.ProxyPorts {
-		// TODO(RM-276/gateways) use something more reasonable for the name.
-		// Podname is too long currently. There is like a 63 characeter limit for DNS.
-		// We should really be under this for everything even if not required (like it is for
-		// service and TCPRoute). Bradley is changing this but hopefully we land before him.
-		tooLong := fmt.Sprintf("porti%d-%s-%s",
-			i, p.submissionInfo.taskSpec.Description, uuid.New().String())
-		sharedName := tooLong[:min(63, len(tooLong)-1)]
-
-		allocLabels := map[string]string{
-			determinedLabel: p.submissionInfo.taskSpec.AllocationID,
+	// this needs to take PortMap for the reattach process to recreate the resources.
+	generator := proxyResourceGenerator(func(ports []int) []gatewayProxyResource {
+		var resources []gatewayProxyResource
+		// TODO(RM-275/gateways) think about experiments, should they proxy every pod, or only rank 0?
+		if len(ports) != len(p.req.ProxyPorts) {
+			panic("proxy ports and ports must be the same length")
 		}
 
-		serviceSpec := &k8sV1.Service{
-			ObjectMeta: metaV1.ObjectMeta{
-				Name:      sharedName,
-				Namespace: p.namespace,
-				Labels:    allocLabels,
-			},
-			Spec: k8sV1.ServiceSpec{
-				Ports: []k8sV1.ServicePort{
-					{
-						Protocol: k8sV1.ProtocolTCP,
-						Port:     int32(proxyPort.Port),
-					},
+		for i, proxyPort := range p.req.ProxyPorts {
+			// TODO(RM-276/gateways) use something more reasonable for the name.
+			// Podname is too long currently. There is like a 63 characeter limit for DNS.
+			// We should really be under this for everything even if not required (like it is for
+			// service and TCPRoute). Bradley is changing this but hopefully we land before him.
+			tooLong := fmt.Sprintf("porti%d-%s-%s",
+				i, p.submissionInfo.taskSpec.Description, uuid.New().String())
+			sharedName := tooLong[:min(63, len(tooLong)-1)]
+
+			gwPort := ports[i]
+			allocLabels := map[string]string{
+				determinedLabel: p.submissionInfo.taskSpec.AllocationID,
+			}
+
+			serviceSpec := &k8sV1.Service{
+				ObjectMeta: metaV1.ObjectMeta{
+					Name:      sharedName,
+					Namespace: p.namespace,
+					Labels:    allocLabels,
 				},
-				Selector: allocLabels,
-				Type:     k8sV1.ServiceTypeClusterIP,
-			},
-		}
-
-		sectionName := fmt.Sprintf("proxyport%d", proxyPort.Port)
-		tcpRouteSpec := &alphaGatewayTyped.TCPRoute{
-			ObjectMeta: metaV1.ObjectMeta{
-				Name:      sharedName,
-				Namespace: p.namespace,
-				Labels:    allocLabels,
-			},
-			Spec: alphaGatewayTyped.TCPRouteSpec{
-				CommonRouteSpec: alphaGatewayTyped.CommonRouteSpec{
-					ParentRefs: []alphaGatewayTyped.ParentReference{
+				Spec: k8sV1.ServiceSpec{
+					Ports: []k8sV1.ServicePort{
 						{
-							Namespace:   ptrs.Ptr(alphaGatewayTyped.Namespace(p.exposeProxyConfig.GatewayNamespace)),
-							Name:        alphaGatewayTyped.ObjectName(p.exposeProxyConfig.GatewayName),
-							Port:        ptrs.Ptr(alphaGatewayTyped.PortNumber(proxyPort.Port)),
-							SectionName: ptrs.Ptr(alphaGatewayTyped.SectionName(sectionName)),
+							Protocol: k8sV1.ProtocolTCP,
+							Port:     int32(proxyPort.Port),
 						},
 					},
+					Selector: allocLabels,
+					Type:     k8sV1.ServiceTypeClusterIP,
 				},
-				Rules: []alphaGatewayTyped.TCPRouteRule{
-					{
-						BackendRefs: []alphaGatewayTyped.BackendRef{
+			}
+
+			// store port translations in configmaps and retrieve for reattach?
+
+			tcpRouteSpec := &alphaGatewayTyped.TCPRoute{
+				ObjectMeta: metaV1.ObjectMeta{
+					Name:      sharedName,
+					Namespace: p.namespace,
+					Labels:    allocLabels,
+				},
+				Spec: alphaGatewayTyped.TCPRouteSpec{
+					CommonRouteSpec: alphaGatewayTyped.CommonRouteSpec{
+						ParentRefs: []alphaGatewayTyped.ParentReference{
 							{
-								BackendObjectReference: alphaGatewayTyped.BackendObjectReference{
-									Name: alphaGatewayTyped.ObjectName(serviceSpec.Name),
-									Kind: ptrs.Ptr(alphaGatewayTyped.Kind("Service")),
-									Port: ptrs.Ptr(alphaGatewayTyped.PortNumber(proxyPort.Port)),
+								Namespace:   ptrs.Ptr(alphaGatewayTyped.Namespace(p.exposeProxyConfig.GatewayNamespace)),
+								Name:        alphaGatewayTyped.ObjectName(p.exposeProxyConfig.GatewayName),
+								Port:        ptrs.Ptr(alphaGatewayTyped.PortNumber(gwPort)),
+								SectionName: ptrs.Ptr(alphaGatewayTyped.SectionName(genSectionName(gwPort))),
+							},
+						},
+					},
+					Rules: []alphaGatewayTyped.TCPRouteRule{
+						{
+							BackendRefs: []alphaGatewayTyped.BackendRef{
+								{
+									BackendObjectReference: alphaGatewayTyped.BackendObjectReference{
+										Name: alphaGatewayTyped.ObjectName(serviceSpec.Name),
+										Kind: ptrs.Ptr(alphaGatewayTyped.Kind("Service")),
+										Port: ptrs.Ptr(alphaGatewayTyped.PortNumber(proxyPort.Port)),
+									},
 								},
 							},
 						},
 					},
 				},
-			},
+			}
+
+			gatewayListener := createListenerForPod(gwPort)
+
+			resources = append(resources, gatewayProxyResource{
+				podPort:         proxyPort.Port,
+				serviceSpec:     serviceSpec,
+				tcpRouteSpec:    tcpRouteSpec,
+				gatewayListener: gatewayListener,
+			})
 		}
-
-		// TODO(RM-271/gateways) we make an assumption ports are unique, they aren't but kinda are.
-		// Maybe the easiest thing to do would be to have Kubernetes have its own port registry
-		// and then translate our port to the task port in the service with `TargetPort/Port`.
-		// Better yet maybe ask the gateway_service.go for a free port.
-		gatewayListener := gatewayTyped.Listener{
-			Name:     gatewayTyped.SectionName(sectionName),
-			Port:     gatewayTyped.PortNumber(proxyPort.Port),
-			Protocol: "TCP",
-			AllowedRoutes: &gatewayTyped.AllowedRoutes{
-				Namespaces: &gatewayTyped.RouteNamespaces{
-					From: ptrs.Ptr(gatewayTyped.NamespacesFromAll),
-				},
-			},
-		}
-
-		resources = append(resources, gatewayProxyResource{
-			serviceSpec:     serviceSpec,
-			tcpRouteSpec:    tcpRouteSpec,
-			gatewayListener: gatewayListener,
-		})
-	}
-
-	return resources
+		return resources
+	})
+	return &generator
 }
 
 func (p *pod) configureConfigMapSpec(
@@ -585,8 +584,6 @@ func (p *pod) createPodSpec(scheduler string) error {
 	if err != nil {
 		return err
 	}
-
-	p.gatewayProxyResources = p.configureProxyResources()
 
 	rootVolumes, rootVolumeMounts, err := handleRootArchiveFiles(rootArchives, p.configMap)
 	if err != nil {

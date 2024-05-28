@@ -22,8 +22,7 @@ type (
 	createKubernetesResources struct {
 		podSpec       *k8sV1.Pod
 		configMapSpec *k8sV1.ConfigMap
-
-		gatewayProxyResources []gatewayProxyResource
+		gw            *gatewayResourceComm
 	}
 
 	deleteKubernetesResources struct {
@@ -136,6 +135,7 @@ func startRequestQueue(
 	gatewayService *gatewayService,
 	tcpRouteInterfaces map[string]alphaGateway.TCPRouteInterface,
 	failures chan<- resourcesRequestFailure,
+	// proxyupdateCB *func(cproto.ID, []gatewayProxyResource) error,
 ) *requestQueue {
 	r := &requestQueue{
 		podInterfaces:       podInterfaces,
@@ -199,12 +199,12 @@ func keyForDelete(msg deleteKubernetesResources) requestID {
 func (r *requestQueue) createKubernetesResources(
 	podSpec *k8sV1.Pod,
 	configMapSpec *k8sV1.ConfigMap,
-	gatewayProxyResources []gatewayProxyResource,
+	gwResources *gatewayResourceComm,
 ) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	msg := createKubernetesResources{podSpec, configMapSpec, gatewayProxyResources}
+	msg := createKubernetesResources{podSpec, configMapSpec, gwResources}
 	ref := keyForCreate(msg)
 
 	if _, requestAlreadyExists := r.pendingResourceCreations[ref]; requestAlreadyExists {

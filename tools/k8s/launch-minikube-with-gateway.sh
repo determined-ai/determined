@@ -7,8 +7,9 @@ if [ -z "$1" ]; then
     exit 1
 fi
 
+K8S_VERSION=${K8S_VERSION:-1.29.5} # https://endoflife.date/kubernetes
 minikube_profile=$1
-minikube start --profile $minikube_profile
+minikube start --profile $minikube_profile --kubernetes-version $K8S_VERSION
 
 kubectl apply -f https://projectcontour.io/quickstart/contour-gateway-provisioner.yaml
 
@@ -30,7 +31,7 @@ spec:
   listeners:
     - name: tcp
       protocol: TCP
-      port: 22335 # Need at least one listener on a gateway. Master will add and patch to it.
+      port: 52335 # Need at least one listener on a gateway. Master will add and patch to it.
       allowedRoutes:
         namespaces:
           from: All
