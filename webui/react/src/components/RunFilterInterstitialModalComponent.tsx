@@ -11,45 +11,64 @@ import { useAsync } from 'hooks/useAsync';
 import { searchRuns } from 'services/api';
 import { DetError } from 'utils/error';
 import mergeAbortControllers from 'utils/mergeAbortControllers';
+import { observable } from 'utils/observable';
+
+export type CloseReason = 'has_search_runs' | 'no_search_runs' | 'failed' | 'close' | 'manual';
 
 export interface Props {
   projectId?: number;
   selection: SelectionType;
   filterFormSet: FilterFormSetWithoutId;
-  onCloseAction: (reason: 'has_search_runs' | 'no_search_runs' | 'failed' | 'close') => void;
 }
 
 export interface ControlledModalRef {
-  open: () => void;
-  close: () => void;
+  open: () => Promise<CloseReason>;
+  close: (reason?: CloseReason) => void;
 }
 
 /**
  * Modal component for checking selections for runs that are part of a search.
- * is essentially a single purpose interstitial modal component. instead of firing `ok`, fires `has_search_runs` or `no_search_runs` to the close handler
+ * is essentially a single purpose interstitial modal component. Because it
+ * wraps a modal and the intended use is within a user flow, this component does
+ * not use the `useModal` hook. instead, it exposes control via ref. the `open`
+ * method of the ref returns a promise that resolves when the modal is closed
+ * with the reason why the modal closed.
  *
  */
 export const RunFilterInterstitialModalComponent = forwardRef<ControlledModalRef, Props>(
-  ({ projectId, selection, filterFormSet, onCloseAction }: Props, ref): JSX.Element => {
+  ({ projectId, selection, filterFormSet }: Props, ref): JSX.Element => {
     const InterstitialModal = useModal(InterstitialModalComponent);
     const [isOpen, setIsOpen] = useState<boolean>(false);
     const closeController = useRef(new AbortController());
+    const lifecycleObservable = useRef(observable<CloseReason | null>(null));
 
     const { close: internalClose, open: internalOpen } = InterstitialModal;
 
-    const open = () => {
-      setIsOpen(true);
+    const open = async () => {
       internalOpen();
+      setIsOpen(true);
+      const closeReason = await lifecycleObservable.current.toPromise();
+      if (closeReason === null) {
+        // this promise should never reject -- toPromise only resolves when the
+        // value changes, and no code sets the observavble to null
+        return Promise.reject();
+      }
+      return closeReason;
     };
 
-    const close = useCallback(() => {
-      setIsOpen(false);
-      // encourage render with isOpen to false before closing to prevent
-      // firing onCloseAction twice
-      setTimeout(() => internalClose('close'), 0);
-      closeController.current.abort();
-      closeController.current = new AbortController();
-    }, [internalClose]);
+    const close = useCallback(
+      (reason: CloseReason = 'manual') => {
+        setIsOpen(false);
+        // encourage render with isOpen to false before closing to prevent
+        // firing onCloseAction twice
+        setTimeout(() => internalClose('close'), 0);
+        closeController.current.abort();
+        closeController.current = new AbortController();
+        lifecycleObservable.current.set(reason);
+        lifecycleObservable.current = observable(null);
+      },
+      [internalClose],
+    );
 
     useImperativeHandle(ref, () => ({ close, open }));
 
@@ -126,15 +145,15 @@ export const RunFilterInterstitialModalComponent = forwardRef<ControlledModalRef
 
     const interstitialClose: onInterstitialCloseActionType = useCallback(
       (reason) => {
-        close();
         if (reason === 'ok') {
           return selectionHasSearchRuns.forEach((bool) => {
-            onCloseAction(bool ? 'has_search_runs' : 'no_search_runs');
+            const fixedReason = bool ? 'has_search_runs' : 'no_search_runs';
+            close(fixedReason);
           });
         }
-        onCloseAction(reason);
+        close(reason);
       },
-      [close, onCloseAction, selectionHasSearchRuns],
+      [close, selectionHasSearchRuns],
     );
 
     return (

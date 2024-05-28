@@ -1,10 +1,11 @@
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import UIProvider, { DefaultTheme } from 'hew/Theme';
 import { Ref } from 'react';
 
 import { FilterFormSetWithoutId, FormField } from 'components/FilterForm/components/type';
 import RunFilterInterstitialModalComponent, {
+  CloseReason,
   ControlledModalRef,
   Props,
 } from 'components/RunFilterInterstitialModalComponent';
@@ -35,10 +36,9 @@ const emptyFilterFormSetWithoutId: FilterFormSetWithoutId = {
 
 const setupTest = (props: Partial<Props> = {}) => {
   const ref: Ref<ControlledModalRef> = { current: null };
-  const onCloseAction = vi.fn();
   userEvent.setup();
 
-  const view = render(
+  render(
     <UIProvider theme={DefaultTheme.Light}>
       <ThemeProvider>
         <RunFilterInterstitialModalComponent
@@ -47,16 +47,13 @@ const setupTest = (props: Partial<Props> = {}) => {
           selection={{ selections: [], type: 'ONLY_IN' }}
           {...props}
           ref={ref}
-          onCloseAction={onCloseAction}
         />
       </ThemeProvider>
     </UIProvider>,
   );
 
   return {
-    onCloseAction,
     ref,
-    view,
   };
 };
 
@@ -155,13 +152,19 @@ describe('RunFilterInterstitialModalComponent', () => {
         });
       });
     });
-    const { ref, onCloseAction } = setupTest();
+    const { ref } = setupTest();
+    // explicit type here because typescript can't infer that the act function
+    // runs imperatively.
+    let lifecycle: Promise<CloseReason> | undefined;
+    // we don't await the act because we need the render pipeline to flush
+    // before we get the close reason back
     act(() => {
-      ref.current?.open();
+      lifecycle = ref.current?.open();
     });
     const closeButton = await screen.findByLabelText('Close');
     await userEvent.click(closeButton);
-    expect(onCloseAction).toBeCalledWith('close');
+    const closeReason = await lifecycle;
+    expect(closeReason).toBe('close');
   });
 
   it('closes modal with has_search_runs when it has runs', async () => {
@@ -173,14 +176,13 @@ describe('RunFilterInterstitialModalComponent', () => {
         runs: [],
       }),
     );
-    const { ref, onCloseAction } = setupTest();
+    const { ref } = setupTest();
+    let lifecycle: Promise<CloseReason> | undefined;
     act(() => {
-      ref.current?.open();
+      lifecycle = ref.current?.open();
     });
-    await waitFor(() => {
-      expect(onCloseAction).toBeCalledTimes(1);
-    });
-    expect(onCloseAction).toBeCalledWith('has_search_runs');
+    const closeReason = await lifecycle;
+    expect(closeReason).toBe('has_search_runs');
   });
 
   it('closes modal with no_search_runs when it lacks runs', async () => {
@@ -192,25 +194,23 @@ describe('RunFilterInterstitialModalComponent', () => {
         runs: [],
       }),
     );
-    const { ref, onCloseAction } = setupTest();
+    const { ref } = setupTest();
+    let lifecycle: Promise<CloseReason> | undefined;
     act(() => {
-      ref.current?.open();
+      lifecycle = ref.current?.open();
     });
-    await waitFor(() => {
-      expect(onCloseAction).toBeCalledTimes(1);
-    });
-    expect(onCloseAction).toBeCalledWith('no_search_runs');
+    const closeReason = await lifecycle;
+    expect(closeReason).toBe('no_search_runs');
   });
 
   it('closes modal with failed when request errors outside of aborts', async () => {
     searchRunsMock.mockImplementation(() => Promise.reject(new Error('uh oh!')));
-    const { ref, onCloseAction } = setupTest();
+    const { ref } = setupTest();
+    let lifecycle: Promise<CloseReason> | undefined;
     act(() => {
-      ref.current?.open();
+      lifecycle = ref.current?.open();
     });
-    await waitFor(() => {
-      expect(onCloseAction).toBeCalledTimes(1);
-    });
-    expect(onCloseAction).toBeCalledWith('failed');
+    const closeReason = await lifecycle;
+    expect(closeReason).toBe('failed');
   });
 });
