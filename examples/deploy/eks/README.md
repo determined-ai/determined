@@ -3,9 +3,9 @@
 This is an example terraform code to configure an EKS cluster to run Determined on.
 
 Supported features:
-- autoscaling via Karpenter
-- postgresql volume on EBS
-- shared fs on EFS
+- autoscaling via Karpenter,
+- postgresql volume on EBS,
+- shared fs on EFS.
 
 Based on [original Karpenter example](https://github.com/terraform-aws-modules/terraform-aws-eks/tree/master/examples/karpenter)
 

@@ -104,16 +104,6 @@ module "eks" {
       min_size     = 2
       max_size     = 3
       desired_size = 2
-
-      #taints = {
-        # This Taint aims to keep just EKS Addons and Karpenter running on this MNG
-        # The pods that do not tolerate this taint should run on nodes created by Karpenter
-        #addons = {
-        #  key    = "CriticalAddonsOnly"
-        #  value  = "true"
-        #  effect = "NO_SCHEDULE"
-        #},
-      #}
     }
   }
 
@@ -372,7 +362,7 @@ resource "aws_efs_file_system" "shared_efs" {
 }
 
 resource "aws_efs_mount_target" "shared_efs" {
-  count = 3 # slice match?
+  count = 3 # Must match number of AZs in VPC.
   file_system_id = aws_efs_file_system.shared_efs.id
   subnet_id = module.vpc.private_subnets[count.index]
   security_groups = [aws_security_group.allow_nfs.id]
