@@ -28,8 +28,9 @@ def _experiment_task_id(sess: api.Session, exp_id: int) -> str:
     return task_id
 
 
-def _probe_tunnel(proc: "subprocess.Popen[str]", port: int = 8265) -> None:
-    max_tunnel_time = 300
+def _probe_tunnel(
+    proc: "subprocess.Popen[str]", port: int = 8265, max_tunnel_time: int = 300
+) -> None:
     start = time.time()
     ctr = 0
     while time.time() - start < max_tunnel_time:
@@ -55,6 +56,56 @@ def _probe_tunnel(proc: "subprocess.Popen[str]", port: int = 8265) -> None:
 
 def _ray_job_submit(exp_path: pathlib.Path, port: int = 8265) -> None:
     return ray_utils.ray_job_submit(exp_path, ["python", "ray_job.py"], port=port)
+
+
+@pytest.mark.e2e_cpu
+@pytest.mark.timeout(600)
+def test_experiment_proxy_simple() -> None:
+    sess = api_utils.user_session()
+    exp_path = pathlib.Path(conf.fixtures_path("ports-proxy"))
+    exp_id = exp.create_experiment(
+        sess,
+        str(exp_path / "config.yaml"),
+        str(exp_path),
+    )
+    try:
+        exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.RUNNING)
+        task_id = _experiment_task_id(sess, exp_id)
+
+        tl = ""
+        for tl in api.task_logs(sess, task_id, follow=True):
+            if "Server listening" in tl.message:
+                break
+        print("server ready", tl)
+
+        port_maps = [
+            # listen_port, exp_port, is_tcp
+            (16000, 6000, True),
+            (18000, 8000, False),
+        ]
+        for listen_port, exp_port, _ in port_maps:
+            proc = detproc.Popen(
+                sess,
+                [
+                    "python",
+                    "-m",
+                    "determined.cli.tunnel",
+                    "--listener",
+                    str(listen_port),
+                    "--auth",
+                    conf.make_master_url(),
+                    f"{task_id}:{exp_port}",
+                ],
+                text=True,
+            )
+
+            try:
+                _probe_tunnel(proc, port=listen_port, max_tunnel_time=100)
+            finally:
+                proc.terminate()
+                proc.wait(10)
+    finally:
+        bindings.post_KillExperiment(sess, id=exp_id)
 
 
 @pytest.mark.e2e_cpu
