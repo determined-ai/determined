@@ -2,11 +2,14 @@ import csv
 import io
 import pathlib
 import re
+import socket
 import subprocess
 import time
+from typing import Tuple
 
 import pytest
 import requests
+from websocket import create_connection
 
 from determined.common import api
 from determined.common.api import bindings
@@ -60,7 +63,16 @@ def _ray_job_submit(exp_path: pathlib.Path, port: int = 8265) -> None:
 
 @pytest.mark.e2e_cpu
 @pytest.mark.timeout(600)
-def test_experiment_proxy_simple() -> None:
+@pytest.mark.parametrize(
+    "port_map",
+    [
+        # listen_port, exp_port, is_tcp
+        (16000, 6000, True),
+        (18000, 8000, False),
+    ],
+)
+def test_experiment_proxy_simple(port_map: Tuple[int, int, bool]) -> None:
+    listen_port, exp_port, is_tcp = port_map
     sess = api_utils.user_session()
     exp_path = pathlib.Path(conf.fixtures_path("ports-proxy"))
     exp_id = exp.create_experiment(
@@ -77,33 +89,28 @@ def test_experiment_proxy_simple() -> None:
             if "Server listening" in tl.message:
                 break
         print("server ready", tl)
-
-        port_maps = [
-            # listen_port, exp_port, is_tcp
-            (16000, 6000, True),
-            (18000, 8000, False),
-        ]
-        for listen_port, exp_port, _ in port_maps:
-            proc = detproc.Popen(
-                sess,
-                [
-                    "python",
-                    "-m",
-                    "determined.cli.tunnel",
-                    "--listener",
-                    str(listen_port),
-                    "--auth",
-                    conf.make_master_url(),
-                    f"{task_id}:{exp_port}",
-                ],
-                text=True,
-            )
-
-            try:
-                _probe_tunnel(proc, port=listen_port, max_tunnel_time=100)
-            finally:
-                proc.terminate()
-                proc.wait(10)
+        proxy_url = f"/proxy/{task_id}:{exp_port}/"
+        if is_tcp:
+            ws_url = conf.make_master_url().replace("http", "ws") + proxy_url
+            headers = [
+                "Authorization: Bearer " + sess.token,
+            ]
+            ws = create_connection(ws_url, header=headers)
+            message = "Hola"
+            ws.send(message)
+            response = ws.recv()
+            print(f"Received: {response}")
+            assert response == message
+            ws.close()
+            # with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+            #     s.connect((conf.make_master_url() + proxy_url, 80))
+            #     message = b"Hello"
+            #     s.sendall(message)
+            #     data = s.recv(1024)
+            #     print(f"Received {data}")
+            #     assert data == message
+        else:
+            _ = sess.get(proxy_url)
     finally:
         bindings.post_KillExperiment(sess, id=exp_id)
 
