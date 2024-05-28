@@ -183,7 +183,7 @@ export OPT_PROJECT_ROOT='../..'
 export OPT_CLUSTER_INTERNAL_IP=$(terraform -chdir=terraform output --raw internal_ip)
 export OPT_AUTHFILE=$LOCAL_TOKEN_DEST
 
-LOCAL_CPU_IMAGE_STRING="determinedai/pytorch-ngc-hpc-dev:e960eae"
+LOCAL_CPU_IMAGE_STRING="determinedai/pytorch-tensorflow-cpu-dev:8b3bea3"
 LOCAL_CPU_IMAGE_SQSH=${LOCAL_CPU_IMAGE_STRING//[\/:]/+}.sqsh
 LOCAL_CUDA_IMAGE_STRING="determinedai/pytorch-ngc-dev:e960eae"
 LOCAL_CUDA_IMAGE_SQSH=${LOCAL_CUDA_IMAGE_STRING//[\/:]/+}.sqsh
@@ -195,11 +195,11 @@ if [[ $OPT_CONTAINER_RUN_TYPE == "enroot" ]]; then
     CUDA_IMAGE_SQSH=$(gcloud_ssh_stdout_only "ls /srv/enroot/ | grep '^determinedai+environments+cuda'")
 
     if [[ $CPU_IMAGE_SQSH != "$LOCAL_CPU_IMAGE_SQSH" ]]; then
-        echo "WARNING: Local CPUImage specified in ../../master/pkg/schemas/expconf/const.go does not match the CPU Image found on existing ${OPT_WORKLOAD_MANAGER} image."
+        echo "WARNING: Local CPUImage ${LOCAL_CPU_IMAGE_STRING} does not match the CPU Image found on existing ${OPT_WORKLOAD_MANAGER} image."
         echo "   Regenerate base image with: make -C tools/slurm/packer build WORKLOAD_MANAGER=${OPT_WORKLOAD_MANAGER}"
     fi
     if [[ $CUDA_IMAGE_SQSH != "$LOCAL_CUDA_IMAGE_SQSH" ]]; then
-        echo "WARNING: Local CUDAImage specified in ../../master/pkg/schemas/expconf/const.go does not match the CUDA Image found on existing ${OPT_WORKLOAD_MANAGER} image."
+        echo "WARNING: Local CUDAImage ${LOCAL_CUDA_IMAGE_STRING} does not match the CUDA Image found on existing ${OPT_WORKLOAD_MANAGER} image."
         echo "   Regenerate base image with: make -C tools/slurm/packer build WORKLOAD_MANAGER=${OPT_WORKLOAD_MANAGER}"
     fi
 
