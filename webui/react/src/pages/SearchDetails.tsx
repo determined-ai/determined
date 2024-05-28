@@ -1,4 +1,4 @@
-import Pivot from 'hew/Pivot';
+import Pivot, { PivotProps } from 'hew/Pivot';
 import Notes from 'hew/RichTextEditor';
 import { Loadable } from 'hew/utils/loadable';
 import { string } from 'io-ts';
@@ -17,10 +17,10 @@ import { getExperimentDetails, patchExperiment } from 'services/api';
 import workspaceStore from 'stores/workspaces';
 import { ExperimentBase, Note, ValueOf, Workspace } from 'types';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
-import { isAborted } from 'utils/service';
+import { isAborted, isNotFound } from 'utils/service';
 
 import ExperimentCodeViewer from './ExperimentDetails/ExperimentCodeViewer';
-import ExperimentTrials from './ExperimentDetails/ExperimentTrials';
+import FlatRuns from './FlatRuns/FlatRuns';
 
 type Params = {
   searchId: string;
@@ -43,7 +43,6 @@ const SearchDetails: React.FC = () => {
   const canceler = useRef<AbortController>();
   const workspaces = Loadable.getOrElse([], useObservable(workspaceStore.workspaces));
   const id = parseInt(searchId ?? '');
-  const pageRef = useRef<HTMLElement>(null);
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -73,12 +72,16 @@ const SearchDetails: React.FC = () => {
   );
 
   const { canModifyExperimentMetadata, canViewExperimentArtifacts } = usePermissions();
-  const showExperimentArtifacts = experiment && canViewExperimentArtifacts({
-    workspace: { id: experiment.workspaceId },
-  });
-  const editableNotes = experiment && canModifyExperimentMetadata({
-    workspace: { id: experiment.workspaceId },
-  });
+  const showExperimentArtifacts =
+    experiment &&
+    canViewExperimentArtifacts({
+      workspace: { id: experiment.workspaceId },
+    });
+  const editableNotes =
+    experiment &&
+    canModifyExperimentMetadata({
+      workspace: { id: experiment.workspaceId },
+    });
 
   const handleTabChange = useCallback(
     (key: string) => {
@@ -133,44 +136,44 @@ const SearchDetails: React.FC = () => {
     [id, fetchExperimentDetails],
   );
 
-  const tabItems = [
+  const tabItems: PivotProps['items'] = [
     {
-      children: (
-        experiment && (
-          <ExperimentTrials experiment={experiment} pageRef={pageRef} />
-        )
+      children: experiment?.projectId && (
+        <FlatRuns projectId={experiment.projectId} searchId={id} />
       ),
       key: TabType.Trials,
       label: 'Trials',
     },
-    {
-      children: (
-        experiment && showExperimentArtifacts && (
-          <ExperimentCodeViewer
-            experiment={experiment}
-            selectedFilePath={settings.filePath}
-            onSelectFile={handleSelectFile}
-          />
-        )
+  ];
+
+  if (showExperimentArtifacts && experiment.modelDefinitionSize !== 0) {
+    tabItems.push({
+      children: experiment && showExperimentArtifacts && (
+        <ExperimentCodeViewer
+          experiment={experiment}
+          selectedFilePath={settings.filePath}
+          onSelectFile={handleSelectFile}
+        />
       ),
       key: TabType.Code,
       label: 'Code',
-    },
-    {
-      children: (
-        <Notes
-          disabled={!editableNotes}
-          disableTitle
-          docs={{ contents: experiment?.notes ?? '', name: 'Notes' }}
-          onError={handleError}
-          onPageUnloadHook={unstable_useBlocker}
-          onSave={handleNotesUpdate}
-        />
-      ),
-      key: 'notes',
-      label: 'Notes',
-    },
-  ];
+    });
+  }
+
+  tabItems.push({
+    children: (
+      <Notes
+        disabled={!editableNotes}
+        disableTitle
+        docs={{ contents: experiment?.notes ?? '', name: 'Notes' }}
+        onError={handleError}
+        onPageUnloadHook={unstable_useBlocker}
+        onSave={handleNotesUpdate}
+      />
+    ),
+    key: TabType.Notes,
+    label: 'Notes',
+  });
 
   const { stopPolling } = usePolling(fetchExperimentDetails, { rerunOnNewFn: true });
 
@@ -185,13 +188,13 @@ const SearchDetails: React.FC = () => {
   const pageBreadcrumb: BreadCrumbRoute[] = [
     workspaceName && experiment?.workspaceId !== 1
       ? {
-        breadcrumbName: workspaceName,
-        path: paths.workspaceDetails(experiment?.workspaceId ?? 1),
-      }
+          breadcrumbName: workspaceName,
+          path: paths.workspaceDetails(experiment?.workspaceId ?? 1),
+        }
       : {
-        breadcrumbName: 'Uncategorized Experiments',
-        path: paths.projectDetails(1),
-      },
+          breadcrumbName: 'Uncategorized Experiments',
+          path: paths.projectDetails(1),
+        },
   ];
 
   if (experiment?.projectName && experiment?.projectId && experiment?.projectId !== 1)
@@ -208,12 +211,12 @@ const SearchDetails: React.FC = () => {
   return (
     <Page
       breadcrumb={pageBreadcrumb}
+      notFound={pageError && isNotFound(pageError)}
       stickyHeader
       title={`Search ${searchId}`}>
       <Pivot activeKey={tabKey} items={tabItems} onChange={handleTabChange} />
     </Page>
   );
-
 };
 
 export default SearchDetails;
