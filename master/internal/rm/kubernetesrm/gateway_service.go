@@ -13,7 +13,6 @@ import (
 	alphaGateway "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned/typed/apis/v1alpha2"
 
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/port"
 )
 
 // I wanted to do this all in patches, but Gateways don't yet support strategic merge patch.
@@ -83,15 +82,20 @@ func (g *gatewayService) generateAndAddListeners(count int) ([]int, error) {
 }
 
 func (g *gatewayService) pickNFreePorts(gateway *gatewayTyped.Gateway, count int) ([]int, error) {
-	usedPorts := make([]int, 0, len(gateway.Spec.Listeners))
+	usedPorts := make(map[int]struct{}, len(gateway.Spec.Listeners))
 	for _, listener := range gateway.Spec.Listeners {
-		usedPorts = append(usedPorts, int(listener.Port))
+		usedPorts[int(listener.Port)] = struct{}{}
 	}
-	portRange, err := port.NewRange(g.portRangeStart, g.portRangeEnd, usedPorts)
-	if err != nil {
-		return nil, fmt.Errorf("creating port range: %w", err)
+	ports := make([]int, 0, count)
+	for port := g.portRangeStart; port <= g.portRangeEnd; port++ {
+		if _, used := usedPorts[port]; !used {
+			ports = append(ports, port)
+			if len(ports) == count {
+				return ports, nil
+			}
+		}
 	}
-	return portRange.GetAndMarkUsed(count)
+	return nil, fmt.Errorf("not enough free ports in range %d-%d", g.portRangeStart, g.portRangeEnd)
 }
 
 func (g *gatewayService) freePorts(ports []int) error {
