@@ -1,5 +1,3 @@
-import { v4 } from 'uuid';
-
 import {
   APIRequest,
   APIRequestContext,
@@ -7,6 +5,7 @@ import {
   BrowserContext,
   Page,
 } from '@playwright/test';
+import { v4 } from 'uuid';
 
 export class ApiAuthFixture {
   apiContext: APIRequestContext | undefined; // we can't get this until login, so may be undefined
