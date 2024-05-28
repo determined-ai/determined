@@ -2,7 +2,7 @@ import { deletableRunStates, killableRunStates, terminalRunStates } from 'consta
 import { PermissionsHook } from 'hooks/usePermissions';
 import { FlatRun, FlatRunAction } from 'types';
 
-type FlatRunChecker = (flatRun: FlatRun) => boolean;
+type FlatRunChecker = (flatRun: Readonly<FlatRun>) => boolean;
 
 type FlatRunPermissionSet = Pick<
   PermissionsHook,
@@ -24,15 +24,15 @@ const flatRunCheckers: Record<FlatRunAction, FlatRunChecker> = {
   [FlatRunAction.Unarchive]: (flatRun) => terminalRunStates.has(flatRun.state) && flatRun.archived,
 };
 
-export const canActionFlatRun = (action: FlatRunAction, flatRun: FlatRun): boolean => {
+export const canActionFlatRun = (action: FlatRunAction, flatRun: Readonly<FlatRun>): boolean => {
   return flatRunCheckers[action](flatRun);
 };
 
 const getActionsForFlatRun = (
-  flatRun: FlatRun,
-  targets: FlatRunAction[],
-  permissions: FlatRunPermissionSet,
-): FlatRunAction[] => {
+  flatRun: Readonly<FlatRun>,
+  targets: ReadonlyArray<FlatRunAction>,
+  permissions: Readonly<FlatRunPermissionSet>,
+): ReadonlyArray<FlatRunAction> => {
   if (!flatRun) return []; // redundant, for clarity
   const workspace = { id: flatRun.workspaceId };
   return targets
@@ -59,10 +59,10 @@ const getActionsForFlatRun = (
 };
 
 export const getActionsForFlatRunsUnion = (
-  flatRun: FlatRun[],
-  targets: FlatRunAction[],
-  permissions: FlatRunPermissionSet,
-): FlatRunAction[] => {
+  flatRun: ReadonlyArray<Readonly<FlatRun>>,
+  targets: ReadonlyArray<FlatRunAction>,
+  permissions: Readonly<FlatRunPermissionSet>,
+): Readonly<FlatRunAction[]> => {
   if (!flatRun.length) return [];
   const actionsForRuns = flatRun.map((run) => getActionsForFlatRun(run, targets, permissions));
   return targets.filter((action) =>
