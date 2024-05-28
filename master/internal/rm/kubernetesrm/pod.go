@@ -71,9 +71,9 @@ func (g gatewayProxyResource) GWPort() int {
 func (g gatewayProxyResource) SetGWPort(port int) {
 	gwPort := gatewayTyped.PortNumber(port)
 	g.gatewayListener.Port = gwPort
-	if g.tcpRouteSpec == nil {
-		// FIXME: log?
-	}
+	// if g.tcpRouteSpec == nil {
+	// 	// FIXME: log?
+	// }
 	g.tcpRouteSpec.Spec.CommonRouteSpec.ParentRefs[0].Port = &gwPort
 }
 
@@ -271,7 +271,6 @@ func (p *pod) podStatusUpdate(updatedPod *k8sV1.Pod) (cproto.State, error) {
 		p.syslog.Infof("transitioning pod state from %s to %s", p.container.State, containerState)
 		p.container = p.container.Transition(cproto.Running)
 		if p.hasAllResourcesStarted() {
-			fmt.Println("HHH pod ports", p.ports)
 			gwPortMap := make(PortMap)
 			for _, g := range p.gatewayProxyResources {
 				gwPortMap[g.PodPort()] = g.GWPort()
@@ -423,7 +422,6 @@ func (p *pod) createPodSpecAndSubmit() error {
 		p.gatewayProxyResources = resources
 		// chat: we want to delay this until the request queue worker has created the resources.
 		if p.hasAllResourcesStarted() {
-			fmt.Println("HHH pod ports", p.ports)
 			gwPortMap := make(PortMap)
 			for _, g := range p.gatewayProxyResources {
 				gwPortMap[g.PodPort()] = g.GWPort()
@@ -674,7 +672,6 @@ func getResourcesStartedForPod(
 		address.ContainerPort = podPort
 		address.HostPort = podPort
 		if newHostPort, ok := gwPortMap[podPort]; ok {
-			fmt.Println("HHH swapping host port", podPort, newHostPort)
 			address.HostPort = newHostPort
 			// address.ContainerPort = newHostPort
 		}

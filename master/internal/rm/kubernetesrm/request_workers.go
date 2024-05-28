@@ -114,7 +114,6 @@ func (r *requestProcessingWorker) receiveCreateKubernetesResources(
 			return
 		}
 	}
-	fmt.Println("HHH calling with port map", ports)
 	if msg.gw != nil && msg.gw.reportResources != nil {
 		msg.gw.reportResources(proxyResources)
 	}

@@ -669,6 +669,7 @@ func (p *pods) reattachPod(
 			"gateway ports not found for allocation %s", allocationID,
 		)
 	}
+	// FIXME: in case of reattach we're sending traffic to the wrong host.
 	if newPodHandler.container.State == cproto.Running {
 		started = ptrs.Ptr(getResourcesStartedForPod(
 			pod, newPodHandler.ports, nil, allocPortMap,

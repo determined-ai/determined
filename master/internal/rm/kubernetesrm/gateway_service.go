@@ -148,7 +148,6 @@ func (g *gatewayService) getDeployedPortMap() (map[model.AllocationID]PortMap, e
 			}
 		}
 	}
-	fmt.Println("HHH getDeployedPortMap", rv)
 	return rv, nil
 }
 
