@@ -1,10 +1,4 @@
-import {
-  APIRequest,
-  APIRequestContext,
-  Browser,
-  BrowserContext,
-  Page,
-} from '@playwright/test';
+import { APIRequest, APIRequestContext, Browser, BrowserContext, Page } from '@playwright/test';
 import { v4 } from 'uuid';
 
 export class ApiAuthFixture {
