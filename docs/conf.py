@@ -166,6 +166,10 @@ linkcheck_anchors_ignore = [
     "install-nvidia-device-plugin",
     "tag/System/operation/SystemAuth",
     "batch-size-related-parameters",
+    "metrics",
+    "join-metrics",
+    "exposed-metrics",
+    "L139-L169",
 ]
 
 # Some pages block python requests. Set user-agent to appear as a browser.
