@@ -39,8 +39,8 @@ const LABEL_PLURAL = 'runs';
 
 interface Props {
   isMobile: boolean;
-  selectedRuns: FlatRun[];
-  project: Project;
+  selectedRuns: ReadonlyArray<Readonly<FlatRun>>;
+  project: Readonly<Project>;
   onActionSuccess?: (action: BatchAction, successfulIds: number[]) => void;
   onActionComplete?: () => Promise<void>;
 }
