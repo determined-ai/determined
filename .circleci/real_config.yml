@@ -34,9 +34,9 @@ parameters:
   # DEFAULT_PT_GPU_IMAGE: Pytorch training image reference used by the tests
   # Inject here as a parameter so that it is updated by bumpversion, and can
   # be referenced by --ee testing.
-  default-pt-gpu-image:
+  default-pt-gpu-hpc-image:
     type: string
-    default: determinedai/pytorch-ngc-dev:e960eae
+    default: determinedai/pytorch-ngc-hpc-dev:e960eae
   # Some python, go, and react dependencies are cached by circleci via `save_cache`/`restore_cache`.
   # If the dependencies stay the same, but the circleci code that would produce them is changed,
   # it may be necessary to invalidate the cache by incrementing this value.
@@ -2991,8 +2991,8 @@ jobs:
           name: Download Apptainer/Enroot image
           command: |
             # rocm images are not required at present
-            if sudo su - launcher -c "/etc/launcher/scripts/manage-singularity-cache <<pipeline.parameters.default-pt-gpu-image>>"; then
-                echo "Downloaded Singularity image <<pipeline.parameters.default-pt-gpu-image>> "
+            if sudo su - launcher -c "/etc/launcher/scripts/manage-singularity-cache <<pipeline.parameters.default-pt-gpu-hpc-image>>"; then
+                echo "Downloaded Singularity image <<pipeline.parameters.default-pt-gpu-hpc-image>> "
             else
                 EXIT_STATUS=$?
                 echo "Failed downloading Singularity image. Received exit code $EXIT_STATUS"
@@ -3003,8 +3003,8 @@ jobs:
                     exit 0
                 fi
             fi
-            if sudo su - launcher -c "ENROOT_RUNTIME_PATH=/tmp/launcher /etc/launcher/scripts/manage-enroot-cache -s /lustre/ssd/foundation_engineering/ <<pipeline.parameters.default-pt-gpu-image>>"; then
-                echo "Downloaded Enroot image <<pipeline.parameters.default-pt-gpu-image>> "
+            if sudo su - launcher -c "ENROOT_RUNTIME_PATH=/tmp/launcher /etc/launcher/scripts/manage-enroot-cache -s /lustre/ssd/foundation_engineering/ <<pipeline.parameters.default-pt-gpu-hpc-image>>"; then
+                echo "Downloaded Enroot image <<pipeline.parameters.default-pt-gpu-hpc-image>> "
             else
                 EXIT_STATUS=$?
                 echo "Failed downloading Enroot image. Received exit code $EXIT_STATUS"

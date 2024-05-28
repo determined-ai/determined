@@ -62,8 +62,8 @@ echo >&2 "INFO: Using image from family ${SOURCE_IMAGE_FAMILY}"
 # Other predefined variables
 
 SSH_USERNAME="packer2"
-CPU_IMAGE_NAME=$(grep "CPUImage" ../../../master/pkg/schemas/expconf/const.go | awk -F'\"' '{print $2}')
-CUDA_IMAGE_NAME=$(grep "CUDAImage" ../../../master/pkg/schemas/expconf/const.go | awk -F'\"' '{print $2}')
+CPU_IMAGE_NAME="determinedai/pytorch-ngc-hpc-dev:e960eae"
+CUDA_IMAGE_NAME="determinedai/pytorch-ngc-hpc-dev:e960eae"
 
 cat <<EOF
 ssh_username           = "${SSH_USERNAME}"

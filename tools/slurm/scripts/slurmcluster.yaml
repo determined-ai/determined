@@ -67,6 +67,9 @@ stages:
           level: debug
         cache:
           cache_dir: /tmp
+        image:
+          cpu: determinedai/pytorch-ngc-hpc-dev:e960eae
+          cuda: determinedai/pytorch-ngc-hpc-dev:e960eae
         task_container_defaults: 
           bind_mounts:
             - host_path: /etc/hosts

@@ -183,9 +183,9 @@ export OPT_PROJECT_ROOT='../..'
 export OPT_CLUSTER_INTERNAL_IP=$(terraform -chdir=terraform output --raw internal_ip)
 export OPT_AUTHFILE=$LOCAL_TOKEN_DEST
 
-LOCAL_CPU_IMAGE_STRING=$(grep "CPUImage" ../../master/pkg/schemas/expconf/const.go | awk -F'\"' '{print $2}')
+LOCAL_CPU_IMAGE_STRING="determinedai/pytorch-ngc-hpc-dev:e960eae"
 LOCAL_CPU_IMAGE_SQSH=${LOCAL_CPU_IMAGE_STRING//[\/:]/+}.sqsh
-LOCAL_CUDA_IMAGE_STRING=$(grep "CUDAImage" ../../master/pkg/schemas/expconf/const.go | awk -F'\"' '{print $2}')
+LOCAL_CUDA_IMAGE_STRING="determinedai/pytorch-ngc-hpc-dev:e960eae"
 LOCAL_CUDA_IMAGE_SQSH=${LOCAL_CUDA_IMAGE_STRING//[\/:]/+}.sqsh
 
 # Enroot container creation
