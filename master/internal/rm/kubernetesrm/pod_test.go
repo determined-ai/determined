@@ -55,7 +55,7 @@ func createPod(
 		model.TLSClientConfig{}, model.TLSClientConfig{},
 		model.LoggingConfig{DefaultLoggingConfig: &model.DefaultLoggingConfig{}},
 		podInterface, configMapInterface, resourceRequestQueue,
-		slotType, slotResourceRequests, "default-scheduler", nil,
+		slotType, slotResourceRequests, "default-scheduler", nil, nil,
 	)
 
 	return newPodHandler
