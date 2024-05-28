@@ -143,7 +143,7 @@ export const paths = {
   resourcePool: (name: string): string => {
     return `/resourcepool/${name}`;
   },
-  searchDetails: (searchId: number): string => {
+  searchDetails: (searchId: number | string): string => {
     return `/searches/${searchId}`;
   },
   submitProductFeedback: (branding: BrandingType): string => {

@@ -91,6 +91,12 @@ const routes: RouteConfig[] = [
     title: 'Search',
   },
   {
+    id: 'searchDetails',
+    needAuth: true,
+    path: '/searches/:searchId/:tab',
+    title: 'Search',
+  },
+  {
     id: 'experimentDetails',
     needAuth: true,
     path: '/experiments/:experimentId/:tab',
