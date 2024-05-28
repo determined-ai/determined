@@ -705,7 +705,6 @@ args_description = cli.Cmd(
                 cli.Arg(
                     "--genai-shared-fs-mount-path",
                     type=str,
-                    default="/run/determined/workdir/shared_fs",
                     help="Specifies the path to mount the shared filesystem used for datasets in"
                     + " GenAI. Defaults to `/run/determined/workdir/shared_fs`",
                 ),
