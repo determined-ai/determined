@@ -101,7 +101,6 @@ Parameters:
   Version:
     Type: String
     Description: Determined version or commit for master image
-    Default: 0.32.1-dev0
 
   DBPassword:
     Type: String
