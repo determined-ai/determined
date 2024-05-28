@@ -29,7 +29,7 @@ def test_job_queue_adjust_priority() -> None:
 
         time.sleep(2)
         jobs.refresh()
-        new_priority = jobs.get_job_weight(ordered_ids[0])
+        new_priority = jobs.get_job_priority(ordered_ids[0])
         assert new_priority == "10"
 
         detproc.check_call(sess, ["det", "job", "update-batch", f"{ordered_ids[1]}.priority=10"])
