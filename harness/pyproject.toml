@@ -48,7 +48,7 @@ dependencies = [
   "analytics-python",
 ]
 
-license = "Apache License 2.0"
+license = { text = "Apache License 2.0" }
 
 classifiers = [
   "License :: OSI Approved :: Apache Software License",
