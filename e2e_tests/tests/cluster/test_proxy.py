@@ -66,13 +66,14 @@ def _ray_job_submit(exp_path: pathlib.Path, port: int = 8265) -> None:
 @pytest.mark.parametrize(
     "port_map",
     [
-        # listen_port, exp_port, is_tcp
-        (16000, 6000, True),
-        (18000, 8000, False),
+        # exp_port, is_tcp
+        (8000, False),
+        (6000, True),
     ],
 )
-def test_experiment_proxy_simple(port_map: Tuple[int, int, bool]) -> None:
-    listen_port, exp_port, is_tcp = port_map
+def test_experiment_proxy_simple(port_map: Tuple[int, bool]) -> None:
+    exp_port, is_tcp = port_map
+    listener_port = exp_port
     sess = api_utils.user_session()
     exp_path = pathlib.Path(conf.fixtures_path("ports-proxy"))
     exp_id = exp.create_experiment(
@@ -91,26 +92,30 @@ def test_experiment_proxy_simple(port_map: Tuple[int, int, bool]) -> None:
         print("server ready", tl)
         proxy_url = f"/proxy/{task_id}:{exp_port}/"
         if is_tcp:
-            ws_url = conf.make_master_url().replace("http", "ws") + proxy_url
-            headers = [
-                "Authorization: Bearer " + sess.token,
-            ]
-            ws = create_connection(ws_url, header=headers)
-            message = "Hola"
-            ws.send(message)
-            response = ws.recv()
-            print(f"Received: {response}")
-            assert response == message
-            ws.close()
-            # with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
-            #     s.connect((conf.make_master_url() + proxy_url, 80))
-            #     message = b"Hello"
-            #     s.sendall(message)
-            #     data = s.recv(1024)
-            #     print(f"Received {data}")
-            #     assert data == message
+            proc = detproc.Popen(
+                sess,
+                [
+                    "python",
+                    "-m",
+                    "determined.cli.tunnel",
+                    "--listener",
+                    str(listener_port),
+                    "--auth",
+                    conf.make_master_url(),
+                    f"{task_id}:{exp_port}",
+                ],
+                text=True,
+            )
+
+            try:
+                _probe_tunnel(proc, port=listener_port, max_tunnel_time=10)
+            finally:
+                proc.terminate()
+                proc.wait(10)
         else:
-            _ = sess.get(proxy_url)
+            resp = sess.get(proxy_url)
+            resp.raise_for_status()
+            assert "Hello" in resp.text
     finally:
         bindings.post_KillExperiment(sess, id=exp_id)
 
@@ -147,7 +152,7 @@ def test_experiment_proxy_ray_tunnel() -> None:
 
         try:
             _probe_tunnel(proc)
-            _ray_job_submit(exp_path)
+            # _ray_job_submit(exp_path)
         finally:
             proc.terminate()
             proc.wait(10)

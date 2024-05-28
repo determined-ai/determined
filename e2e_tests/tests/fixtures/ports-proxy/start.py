@@ -26,7 +26,7 @@ def start_http_server(
     httpd.serve_forever()
 
 
-def start_tcp_server(host: str = "127.0.0.1", port: int = 6000) -> None:
+def start_tcp_server(host: str = "0.0.0.0", port: int = 6000) -> None:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
         s.bind((host, port))
         s.listen()
