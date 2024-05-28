@@ -1086,7 +1086,7 @@ func (a *allocation) registerProxies(addresses []cproto.Address) {
 			Scheme: urlScheme,
 			Host:   fmt.Sprintf("%s:%d", address.HostIP, address.HostPort),
 		}, pcfg.ProxyTCP, pcfg.Unauthenticated)
-		a.syslog.Debugf("registered proxy id: %s, tcp: %v\n", pcfg.ServiceID, pcfg.ProxyTCP)
+		a.syslog.Debugf("registered proxy id: %s, cfg: %v\n", pcfg.ServiceID, pcfg)
 		a.proxies = append(a.proxies, pcfg.ServiceID)
 	}
 

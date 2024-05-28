@@ -17,7 +17,6 @@ import (
 
 	k8sV1 "k8s.io/api/core/v1"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
-	gatewayTyped "sigs.k8s.io/gateway-api/apis/v1"
 	alphaGatewayTyped "sigs.k8s.io/gateway-api/apis/v1alpha2"
 )
 
@@ -80,7 +79,7 @@ func TestConfigureProxyResources(t *testing.T) {
 			},
 		},
 	}
-	require.Len(t, p.configureProxyResources(), 0)
+	require.Nil(t, p.configureProxyResources())
 
 	expectedName := "porti0-" + longDesc
 	expectedName = expectedName[:63]
@@ -129,7 +128,7 @@ func TestConfigureProxyResources(t *testing.T) {
 						Namespace:   ptrs.Ptr(alphaGatewayTyped.Namespace("gatewaynamespace")),
 						Name:        alphaGatewayTyped.ObjectName("gatewayname"),
 						Port:        ptrs.Ptr(alphaGatewayTyped.PortNumber(12345)),
-						SectionName: ptrs.Ptr(alphaGatewayTyped.SectionName("proxyport12345")),
+						SectionName: ptrs.Ptr(alphaGatewayTyped.SectionName(genSectionName(12345))),
 					},
 				},
 			},
@@ -149,24 +148,16 @@ func TestConfigureProxyResources(t *testing.T) {
 		},
 	}
 
-	listener := gatewayTyped.Listener{
-		Name:     "proxyport12345",
-		Port:     12345,
-		Protocol: "TCP",
-		AllowedRoutes: &gatewayTyped.AllowedRoutes{
-			Namespaces: &gatewayTyped.RouteNamespaces{
-				From: ptrs.Ptr(gatewayTyped.NamespacesFromAll),
-			},
-		},
-	}
+	listener := createListenerForPod(12345)
 
 	require.Equal(t, []gatewayProxyResource{
 		{
+			podPort:         12345,
 			serviceSpec:     svc,
 			tcpRouteSpec:    tcp,
 			gatewayListener: listener,
 		},
-	}, p.configureProxyResources())
+	}, (*p.configureProxyResources())([]int{12345}))
 }
 
 func TestAddNodeDisabledAffinityToPodSpec(t *testing.T) {

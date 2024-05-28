@@ -432,10 +432,15 @@ func (p *pods) startClientSet() error {
 		if err != nil {
 			return fmt.Errorf("creating Kubernetes gateway clientSet: %w", err)
 		}
-		p.gatewayService = &gatewayService{
-			gatewayInterface: gatewayClientSet.Gateways(exposeConfig.GatewayNamespace),
-			gatewayName:      exposeConfig.GatewayName,
+		gwService, err := newGatewayService(
+			gatewayClientSet.Gateways(exposeConfig.GatewayNamespace),
+			p.tcpRouteInterfaces,
+			exposeConfig.GatewayName,
+		)
+		if err != nil {
+			return fmt.Errorf("creating gateway service: %w", err)
 		}
+		p.gatewayService = gwService
 	}
 
 	p.syslog.Infof("kubernetes clientSet initialized")
@@ -542,6 +547,7 @@ func (p *pods) reattachAllocationPods(msg reattachAllocationPods) ([]reattachPod
 	}
 
 	if len(k8sPods) != msg.numPods {
+		// need to delete the gw resources too? or all taken care of?
 		p.deleteKubernetesResources(pods, configMaps)
 		return nil, fmt.Errorf("not enough pods found for allocation expected %d got %d instead",
 			msg.numPods, len(k8sPods))
@@ -633,6 +639,7 @@ func (p *pods) reattachPod(
 		p.slotResourceRequests,
 		p.scheduler,
 		p.exposeProxyConfig,
+		p.gatewayService,
 	)
 
 	newPodHandler.restore = true
@@ -650,10 +657,23 @@ func (p *pods) reattachPod(
 	if state != cproto.Terminated {
 		newPodHandler.container.State = state
 	}
-
 	var started *sproto.ResourcesStarted
+	// PERF: call once for all pods
+	gwPortMap, err := p.gatewayService.getDeployedPortMap()
+	if err != nil {
+		return reattachPodResponse{}, errors.Wrap(err, "error getting gateway ports")
+	}
+	allocPortMap, ok := gwPortMap[allocationID]
+	if !ok && p.exposeProxyConfig != nil {
+		return reattachPodResponse{}, fmt.Errorf(
+			"gateway ports not found for allocation %s", allocationID,
+		)
+	}
+	// FIXME: in case of reattach we're sending traffic to the wrong host.
 	if newPodHandler.container.State == cproto.Running {
-		started = ptrs.Ptr(getResourcesStartedForPod(pod, newPodHandler.ports, p.exposeProxyConfig))
+		started = ptrs.Ptr(getResourcesStartedForPod(
+			pod, newPodHandler.ports, nil, allocPortMap,
+		))
 	}
 
 	newPodHandler.pod = pod
@@ -939,6 +959,7 @@ func (p *pods) receiveStartTaskPod(msg StartTaskPod) error {
 		p.slotResourceRequests,
 		p.scheduler,
 		p.exposeProxyConfig,
+		p.gatewayService,
 	)
 
 	if _, alreadyExists := p.podNameToPodHandler[newPodHandler.podName]; alreadyExists {
