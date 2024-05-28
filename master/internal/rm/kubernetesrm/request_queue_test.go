@@ -10,6 +10,7 @@ import (
 	petName "github.com/dustinkirkland/golang-petname"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/mock"
+	"github.com/stretchr/testify/require"
 	"gotest.tools/assert"
 
 	batchV1 "k8s.io/api/batch/v1"
@@ -361,6 +362,13 @@ func TestReceiveCreateKubernetesResources(t *testing.T) {
 	serviceInterface := &mocks.ServiceInterface{}
 	tcpInterface := &mocks.TCPRouteInterface{}
 	gatewayInterface := &mocks.GatewayInterface{}
+	tcpInterfaces := map[string]alphaGateway.TCPRouteInterface{
+		"default": tcpInterface,
+	}
+
+	gatewayService, err := newGatewayService(gatewayInterface, tcpInterfaces, "gatewayname")
+	require.NoError(t, err)
+	gatewayService.portRangeStart = 1
 
 	w := &requestProcessingWorker{
 		syslog:              logrus.New().WithField("test", "test"),
@@ -368,21 +376,30 @@ func TestReceiveCreateKubernetesResources(t *testing.T) {
 		configMapInterfaces: map[string]typedV1.ConfigMapInterface{"": configMapInterface},
 		serviceInterfaces:   map[string]typedV1.ServiceInterface{"": serviceInterface},
 		tcpRouteInterfaces:  map[string]alphaGateway.TCPRouteInterface{"": tcpInterface},
-		gatewayService: &gatewayService{
-			gatewayInterface: gatewayInterface,
-			gatewayName:      "gatewayname",
-		},
+		gatewayService:      gatewayService,
 	}
 
+	gatewayProxyResources := []gatewayProxyResource{
+		{
+			serviceSpec:     &k8sV1.Service{},
+			tcpRouteSpec:    &alphaGatewayTyped.TCPRoute{},
+			gatewayListener: gatewayTyped.Listener{},
+		},
+	}
+	reportedResources := []gatewayProxyResource{}
+	generator := func(ports []int) []gatewayProxyResource {
+		return gatewayProxyResources
+	}
+	updater := func(prs []gatewayProxyResource) {
+		reportedResources = prs
+	}
 	createReq := createKubernetesResources{
 		podSpec:       &k8sV1.Pod{},
 		configMapSpec: &k8sV1.ConfigMap{},
-		gatewayProxyResources: []gatewayProxyResource{
-			{
-				serviceSpec:     &k8sV1.Service{},
-				tcpRouteSpec:    &alphaGatewayTyped.TCPRoute{},
-				gatewayListener: gatewayTyped.Listener{},
-			},
+		gw: &gatewayResourceComm{
+			requestedPorts:     1,
+			resourceDescriptor: generator,
+			reportResources:    updater,
 		},
 	}
 
@@ -390,9 +407,7 @@ func TestReceiveCreateKubernetesResources(t *testing.T) {
 	expectedUpdatedGateway := &gatewayTyped.Gateway{
 		Spec: gatewayTyped.GatewaySpec{
 			Listeners: []gatewayTyped.Listener{
-				{
-					Port: 0,
-				},
+				createListenerForPod(1),
 			},
 		},
 	}
@@ -401,10 +416,10 @@ func TestReceiveCreateKubernetesResources(t *testing.T) {
 		Return(createReq.podSpec, nil)
 	configMapInterface.On("Create", mock.Anything, createReq.configMapSpec, metaV1.CreateOptions{}).
 		Return(createReq.configMapSpec, nil)
-	serviceInterface.On("Create", mock.Anything, createReq.gatewayProxyResources[0].serviceSpec,
-		metaV1.CreateOptions{}).Return(createReq.gatewayProxyResources[0].serviceSpec, nil)
-	tcpInterface.On("Create", mock.Anything, createReq.gatewayProxyResources[0].tcpRouteSpec,
-		metaV1.CreateOptions{}).Return(createReq.gatewayProxyResources[0].tcpRouteSpec, nil)
+	serviceInterface.On("Create", mock.Anything, gatewayProxyResources[0].serviceSpec,
+		metaV1.CreateOptions{}).Return(gatewayProxyResources[0].serviceSpec, nil)
+	tcpInterface.On("Create", mock.Anything, gatewayProxyResources[0].tcpRouteSpec,
+		metaV1.CreateOptions{}).Return(gatewayProxyResources[0].tcpRouteSpec, nil)
 
 	gatewayInterface.On("Get", mock.Anything, "gatewayname", metaV1.GetOptions{}).
 		Return(gateway, nil)
@@ -412,6 +427,8 @@ func TestReceiveCreateKubernetesResources(t *testing.T) {
 		Return(nil, nil)
 
 	w.receiveCreateKubernetesResources(createReq)
+
+	require.Equal(t, gatewayProxyResources, reportedResources)
 
 	podInterface.AssertExpectations(t)
 	configMapInterface.AssertExpectations(t)
@@ -426,6 +443,11 @@ func TestReceiveDeleteKubernetesResources(t *testing.T) {
 	serviceInterface := &mocks.ServiceInterface{}
 	tcpInterface := &mocks.TCPRouteInterface{}
 	gatewayInterface := &mocks.GatewayInterface{}
+	tcpInterfaces := map[string]alphaGateway.TCPRouteInterface{
+		"default": tcpInterface,
+	}
+	gatewayService, err := newGatewayService(gatewayInterface, tcpInterfaces, "gatewayname")
+	require.NoError(t, err)
 
 	w := &requestProcessingWorker{
 		syslog:              logrus.New().WithField("test", "test"),
@@ -433,10 +455,7 @@ func TestReceiveDeleteKubernetesResources(t *testing.T) {
 		configMapInterfaces: map[string]typedV1.ConfigMapInterface{"": configMapInterface},
 		serviceInterfaces:   map[string]typedV1.ServiceInterface{"": serviceInterface},
 		tcpRouteInterfaces:  map[string]alphaGateway.TCPRouteInterface{"": tcpInterface},
-		gatewayService: &gatewayService{
-			gatewayInterface: gatewayInterface,
-			gatewayName:      "gatewayname",
-		},
+		gatewayService:      gatewayService,
 	}
 
 	deleteReq := deleteKubernetesResources{
