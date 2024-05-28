@@ -1,12 +1,12 @@
+import http.server
 import logging
 import socket
 import threading
-from http.server import BaseHTTPRequestHandler, HTTPServer
 
 import determined as det
 
 
-class HelloHandler(BaseHTTPRequestHandler):
+class HelloHandler(http.server.BaseHTTPRequestHandler):
     def do_GET(self) -> None:
         self.send_response(200)
         self.send_header("Content-type", "text/plain")
@@ -18,7 +18,7 @@ class HelloHandler(BaseHTTPRequestHandler):
 
 
 def start_http_server(
-    server_class=HTTPServer, handler_class=HelloHandler, port: int = 8000
+    server_class=http.server.HTTPServer, handler_class=HelloHandler, port: int = 8000
 ) -> None:
     server_address = ("", port)
     httpd = server_class(server_address, handler_class)
