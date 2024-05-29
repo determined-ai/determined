@@ -10,7 +10,7 @@ import { BaseComponent, NamedComponent } from 'e2e/models/BaseComponent';
 export class Select extends BaseComponent {
   readonly _menu = new BaseComponent({
     parent: this.root,
-    selector: '.ant-select-dropdown .rc-virtual-list-holder-inner',
+    selector: ':not(.ant-select-dropdown-hidden).ant-select-dropdown .rc-virtual-list-holder-inner',
   });
 
   readonly search = new BaseComponent({
@@ -55,10 +55,16 @@ export class Select extends BaseComponent {
    */
   async openMenu(): Promise<Select> {
     if (await this._menu.pwLocator.isVisible()) {
-      return this;
+      try {
+        await this._menu.pwLocator.press('Escape', { timeout: 500 });
+        await this._menu.pwLocator.waitFor({ state: 'hidden' });
+      } catch (e) {
+        // it's fine if this fails, we are just ensuring they are all closed.
+      }
     }
     await this.pwLocator.click();
     await this._menu.pwLocator.waitFor();
+    await this.root._page.waitForTimeout(500); // ant/Popover - menus may reset input shortly after opening [ET-283]
     return this;
   }
 

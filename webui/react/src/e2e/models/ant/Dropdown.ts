@@ -29,7 +29,7 @@ type DropdownArgs = DropdownArgsWithoutChildNode | DropdownArgsWithChildNode;
  * @param {Function} [obj.openMethod] - optional if `childNode` is present. It's the method to open the dropdown.
  */
 export class Dropdown extends BaseComponent {
-  readonly openMethod: () => Promise<void>;
+  readonly openMethod: (args: { timeout?: number }) => Promise<void>;
   readonly childNode: ComponentBasics | undefined;
   constructor({ root, childNode, openMethod }: DropdownArgs) {
     super({
@@ -41,13 +41,13 @@ export class Dropdown extends BaseComponent {
     }
     this.openMethod =
       openMethod ||
-      (async () => {
+      (async (args = {}) => {
         if (this.childNode === undefined) {
           // We should never be able to throw this error. In the constructor, we
           // either provide a childNode or replace this method.
           throw new Error('This dropdown does not have a child node to click on.');
         }
-        await this.childNode.pwLocator.click();
+        await this.childNode.pwLocator.click(args); // refreshing with 10s intervals, this should give us enough time for everything to be stable even if a refresh occurs in the first 5 seconds.
       });
   }
 
@@ -55,8 +55,8 @@ export class Dropdown extends BaseComponent {
    * Opens the dropdown.
    * @returns {Promise<this>} - the dropdown for further actions
    */
-  async open(): Promise<this> {
-    await this.openMethod();
+  async open(args: { timeout?: number } = { timeout: 15_000 }): Promise<this> {
+    await this.openMethod(args);
     return this;
   }
 
