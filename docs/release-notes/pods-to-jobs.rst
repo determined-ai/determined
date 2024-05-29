@@ -2,9 +2,9 @@
 
 **New Features**
 
--  Kubernetes: When users submit Determined tasks, the system now launch Kubernetes jobs on their
-   behalf of instead of Kubernetes pods. The new system interacts differently with other Kubernetes
-   concepts; e.g., Determined tasks will now work properly with Kubernetes resources quotas.
+-  Kubernetes: The system now launches Kubernetes jobs on behalf of users when they submit workloads
+   to Determined, instead of launching Kubernetes pods. This change allows Determined to work
+   properly with other Kubernetes features like resource quotas.
 
-   Because of this, we now require permissions to create, get, list, delete and watch Kubernetes
-   jobs resources.
+   As a result, permissions are now required to create, get, list, delete, and watch Kubernetes job
+   resources.
