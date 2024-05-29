@@ -274,7 +274,9 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
             </Section>
             <Section divider title="Experimental">
               <div className={css.section}>
-                {Object.entries(FEATURES).map(([feature, description]) => (
+                {Object.entries(FEATURES)
+                  .filter(([_, description]) => !description.noUserControl)
+                  .map(([feature, description]) => (
                   <InlineForm<boolean>
                     initialValue={
                       savedFeatureSettings?.[feature as ValidFeature] ?? description.defaultValue
