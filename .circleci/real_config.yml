@@ -605,7 +605,7 @@ commands:
 
             cat /tmp/all-relevant-files | circleci tests run --command="DD_CIVISIBILITY_AGENTLESS_ENABLED=true \
             DD_SITE='datadoghq.com' \
-            DD_ENV=ci DD_SERVICE='pytest-<<parameters.mark>>' \
+            DD_ENV=ci-<<parameters.mark>> DD_SERVICE='determined-pytest-<<parameters.mark>>' \
             DET_MASTER_CERT_FILE=<<parameters.master-cert>> \
             DET_MASTER_CERT_NAME=<<parameters.master-cert-name>> \
             IS_CIRCLECI_JOB=1 XDG_CONFIG_HOME=/tmp \
@@ -2021,7 +2021,7 @@ jobs:
           environment:
             PW_EE: << parameters.ee >>
           # setting PW_PASSWORD is temporary until DET-10197 is merged and we can set PW_PASSWORD in circleci
-          command: PW_PASSWORD=${INITIAL_USER_PASSWORD} npm run e2e --prefix webui/react -- << parameters.playwright-options >>
+          command: PW_PASSWORD=${INITIAL_USER_PASSWORD} npm run e2e:ci --prefix webui/react -- << parameters.playwright-options >>
       - store_artifacts:
           path: webui/react/src/e2e/playwright-report
       - store_artifacts:

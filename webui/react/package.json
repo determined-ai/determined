@@ -27,6 +27,7 @@
     "format-check:misc": "prettier --check \"src/**/*.{md,json}\"",
     "test": "vitest",
     "e2e": "playwright test",
+    "e2e:ci": "NODE_OPTIONS=\"-r dd-trace/ci/init ${NODE_OPTIONS:-}\" DD_ENV=ci-devcluster-${PW_EE} DD_SERVICE=determined-ui-e2e DD_SITE='datadoghq.com' playwright test",
     "test:coverage": "vitest --run --coverage --silent",
     "analyze": "source-map-explorer --no-border-checks 'build/assets/*.js'",
     "unimported": "unimported"
@@ -41,6 +42,7 @@
     "antd": "^5.1.7",
     "core-js": "3.37.0",
     "dayjs": "^1.11.11",
+    "dd-trace": "^5.14.1",
     "debug": "^4.3.4",
     "events": "^3.3.0",
     "fp-ts": "^2.16.5",
