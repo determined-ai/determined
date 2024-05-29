@@ -151,7 +151,7 @@ func BuildRunHParams(runID int, projectID int, hparams map[string]any,
 		case map[string]any:
 			nestedHParams, nestedProjHparams, err := BuildRunHParams(runID, projectID, v.(map[string]any), hpName+".")
 			if err != nil {
-				return hparamsModel, projHparamsModel, fmt.Errorf("failed to get nested hyperperameters for %s", hpName)
+				return hparamsModel, projHparamsModel, fmt.Errorf("failed to get nested hyperperameters for %s: %w", hpName, err)
 			}
 			hparamsModel = append(hparamsModel, nestedHParams...)
 			projHparamsModel = append(projHparamsModel, nestedProjHparams...)
