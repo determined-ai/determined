@@ -49,10 +49,10 @@ func CheckpointSearcherMetricLess(ai, aj *checkpointv1.Checkpoint) bool {
 	if aj.Training == nil || aj.Training.SearcherMetric == nil {
 		return false
 	}
-	if *ai.Training.SearcherMetric == *aj.Training.SearcherMetric {
+	if ai.Training.SearcherMetric.GetNumberValue() == aj.Training.SearcherMetric.GetNumberValue() {
 		return CheckpointReportTimeLess(ai, aj)
 	}
-	return *ai.Training.SearcherMetric < *aj.Training.SearcherMetric
+	return ai.Training.SearcherMetric.GetNumberValue() < aj.Training.SearcherMetric.GetNumberValue()
 }
 
 // CheckpointMetricNameLess compares checkpoints by a metric name, falling back to

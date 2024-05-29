@@ -2115,7 +2115,7 @@ class v1CheckpointTrainingMetadata(Printable):
     experimentConfig: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     experimentId: "typing.Optional[int]" = None
     hparams: "typing.Optional[typing.Dict[str, typing.Any]]" = None
-    searcherMetric: "typing.Optional[float]" = None
+    searcherMetric: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     trainingMetrics: "typing.Optional[v1Metrics]" = None
     trialId: "typing.Optional[int]" = None
     validationMetrics: "typing.Optional[v1Metrics]" = None
@@ -2126,7 +2126,7 @@ class v1CheckpointTrainingMetadata(Printable):
         experimentConfig: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
         experimentId: "typing.Union[int, None, Unset]" = _unset,
         hparams: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
-        searcherMetric: "typing.Union[float, None, Unset]" = _unset,
+        searcherMetric: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
         trainingMetrics: "typing.Union[v1Metrics, None, Unset]" = _unset,
         trialId: "typing.Union[int, None, Unset]" = _unset,
         validationMetrics: "typing.Union[v1Metrics, None, Unset]" = _unset,
@@ -2157,7 +2157,7 @@ class v1CheckpointTrainingMetadata(Printable):
         if "hparams" in obj:
             kwargs["hparams"] = obj["hparams"]
         if "searcherMetric" in obj:
-            kwargs["searcherMetric"] = float(obj["searcherMetric"]) if obj["searcherMetric"] is not None else None
+            kwargs["searcherMetric"] = obj["searcherMetric"]
         if "trainingMetrics" in obj:
             kwargs["trainingMetrics"] = v1Metrics.from_json(obj["trainingMetrics"]) if obj["trainingMetrics"] is not None else None
         if "trialId" in obj:
@@ -2176,7 +2176,7 @@ class v1CheckpointTrainingMetadata(Printable):
         if not omit_unset or "hparams" in vars(self):
             out["hparams"] = self.hparams
         if not omit_unset or "searcherMetric" in vars(self):
-            out["searcherMetric"] = None if self.searcherMetric is None else dump_float(self.searcherMetric)
+            out["searcherMetric"] = self.searcherMetric
         if not omit_unset or "trainingMetrics" in vars(self):
             out["trainingMetrics"] = None if self.trainingMetrics is None else self.trainingMetrics.to_json(omit_unset)
         if not omit_unset or "trialId" in vars(self):

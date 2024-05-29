@@ -5,6 +5,7 @@ option go_package = "github.com/determined-ai/determined/proto/pkg/checkpointv1"
 
 import "google/protobuf/struct.proto";
 import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
 import "determined/common/v1/common.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 
@@ -62,7 +63,7 @@ message CheckpointTrainingMetadata {
   determined.common.v1.Metrics validation_metrics = 6;
   // Searcher metric (as specified by the expconf) at the same steps_completed
   // of the checkpoint.
-  optional double searcher_metric = 17;
+  google.protobuf.Value searcher_metric = 17;
 }
 
 // Checkpoint a collection of files saved by a task.
