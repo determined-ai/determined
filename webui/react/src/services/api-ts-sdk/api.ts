@@ -1915,10 +1915,10 @@ export interface V1CheckpointTrainingMetadata {
     validationMetrics?: V1Metrics;
     /**
      * Searcher metric (as specified by the expconf) at the same steps_completed of the checkpoint.
-     * @type {any}
+     * @type {number}
      * @memberof V1CheckpointTrainingMetadata
      */
-    searcherMetric?: any;
+    searcherMetric?: number;
 }
 /**
  * CheckpointWorkload is an artifact created by a trial during training.
