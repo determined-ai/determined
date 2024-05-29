@@ -2,17 +2,23 @@ package kubernetesrm
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"slices"
+	"strings"
 	"sync"
+	"time"
 
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/wait"
+	"k8s.io/client-go/util/retry"
 	gatewayTyped "sigs.k8s.io/gateway-api/apis/v1"
 	gateway "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned/typed/apis/v1"
 
 	alphaGateway "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned/typed/apis/v1alpha2"
 
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/sergi/go-diff/diffmatchpatch"
 )
 
 // I wanted to do this all in patches, but Gateways don't yet support strategic merge patch.
@@ -66,7 +72,7 @@ func (g *gatewayService) generateAndAddListeners(count int) ([]int, error) {
 	if err := g.updateGateway(func(gateway *gatewayTyped.Gateway) error {
 		var err error
 		listeners := make([]gatewayTyped.Listener, count)
-		ports, err = g.pickNFreePorts(gateway, len(listeners))
+		ports, err = g.pickNFreePorts(gateway, count)
 		if err != nil {
 			return err
 		}
@@ -151,24 +157,84 @@ func (g *gatewayService) getDeployedPortMap() (map[model.AllocationID]PortMap, e
 	return rv, nil
 }
 
+func diffGateways(old, new *gatewayTyped.Gateway) (string, error) {
+	oldJSON, err := json.MarshalIndent(old, "", "  ")
+	if err != nil {
+		return "", err
+	}
+
+	newJSON, err := json.MarshalIndent(new, "", "  ")
+	if err != nil {
+		return "", err
+	}
+
+	return diff(oldJSON, newJSON), nil
+}
+
+func diff(a, b []byte) string {
+	dmp := diffmatchpatch.New()
+	diffs := dmp.DiffMain(string(a), string(b), false)
+	return dmp.DiffPrettyText(diffs)
+}
+
+func isConflictError(err error) bool {
+	// statusErr, ok := err.(metaV1.StatusReason)
+	// if !ok {
+	//     return false
+	// }
+	// return statusErr == metaV1.StatusReasonConflict
+	msg := "the object has been modified; please apply your changes to the latest version"
+	return strings.Contains(err.Error(), msg)
+}
+
 func (g *gatewayService) updateGateway(update func(*gatewayTyped.Gateway) error) error {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 
-	gateway, err := g.gatewayInterface.Get(context.TODO(), g.gatewayName, metaV1.GetOptions{})
-	if err != nil {
-		return fmt.Errorf("getting gateway with name '%s': %w", g.gatewayName, err)
+	backoff := wait.Backoff{
+		Duration: 1 * time.Second,
+		Factor:   2.0,
+		Jitter:   0.1,
+		Steps:    2,
 	}
 
-	err = update(gateway)
-	if err != nil {
-		return err
-	}
+	return retry.OnError(backoff, isConflictError, func() error {
+		gateway, err := g.gatewayInterface.Get(context.TODO(), g.gatewayName, metaV1.GetOptions{})
+		if err != nil {
+			return fmt.Errorf("getting gateway with name '%s': %w", g.gatewayName, err)
+		}
 
-	if _, err := g.gatewayInterface.
-		Update(context.TODO(), gateway, metaV1.UpdateOptions{}); err != nil {
-		return fmt.Errorf("updating gateway with name '%s': %w", g.gatewayName, err)
-	}
+		err = update(gateway)
+		if err != nil {
+			return err
+		}
 
-	return nil
+		if _, err := g.gatewayInterface.Update(context.TODO(), gateway, metaV1.UpdateOptions{}); err != nil {
+			fmt.Printf("gwservice: ran into error: %v\n", err)
+			return fmt.Errorf("updating gateway with name '%s': %w", g.gatewayName, err)
+		}
+
+		return nil
+	})
+	// gateway, err := g.gatewayInterface.Get(context.TODO(), g.gatewayName, metaV1.GetOptions{})
+	// if err != nil {
+	// 	return fmt.Errorf("getting gateway with name '%s': %w", g.gatewayName, err)
+	// }
+
+	// err = update(gateway)
+	// if err != nil {
+	// 	return err
+	// }
+
+	// if updatedGateway, err := g.gatewayInterface.
+	// 	Update(context.TODO(), gateway, metaV1.UpdateOptions{}); err != nil {
+	// 	fmt.Printf("received gateway: %v\n", updatedGateway)
+	// 	gwDiff, diffErr := diffGateways(gateway, updatedGateway)
+	// 	if diffErr == nil {
+	// 		fmt.Printf("diff: %s\n", gwDiff)
+	// 	}
+	// 	return fmt.Errorf("updating gateway with name '%s': %w", g.gatewayName, err)
+	// }
+
+	// return nil
 }

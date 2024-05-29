@@ -217,6 +217,7 @@ require (
 
 require (
 	cloud.google.com/go/compute/metadata v0.2.3
+	github.com/sergi/go-diff v1.0.0
 	golang.org/x/sync v0.5.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20230711160842-782d3b101e98
 	sigs.k8s.io/gateway-api v1.0.0
