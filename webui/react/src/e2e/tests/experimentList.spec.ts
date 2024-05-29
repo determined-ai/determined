@@ -5,6 +5,8 @@ import { test } from 'e2e/fixtures/global-fixtures';
 import { ProjectDetails } from 'e2e/models/pages/ProjectDetails';
 import { detExecSync, fullPath } from 'e2e/utils/detCLI';
 
+test.describe.configure({ mode: 'serial' });
+
 test.describe('Experiement List', () => {
   let projectDetailsPage: ProjectDetails;
   // trial click to wait for the element to be stable won't work here
@@ -138,6 +140,7 @@ test.describe('Experiement List', () => {
     await test.step('General Tab Hide All', async () => {
       await columnPicker.open();
       await columnPicker.generalTab.pwLocator.click();
+      await expect.soft(columnPicker.columnPickerTab.showAll.pwLocator).toHaveText('Hide all');
       await columnPicker.columnPickerTab.showAll.pwLocator.click();
       await columnPicker.close();
       await waitTableStable();
