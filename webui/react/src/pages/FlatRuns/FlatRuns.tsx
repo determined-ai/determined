@@ -809,33 +809,60 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
             },
           },
         );
+      }
 
-        if (filterCount > 0) {
-          items.push({
-            icon: <Icon decorative name="filter" />,
-            key: 'filter-clear',
-            label: `Clear ${pluralizer(filterCount, 'Filter')}  (${filterCount})`,
-            onClick: () => {
-              setTimeout(clearFilterForColumn, 5);
-            },
-          });
-        }
+      if (filterCount > 0) {
+        items.push({
+          icon: <Icon decorative name="filter" />,
+          key: 'filter-clear',
+          label: `Clear ${pluralizer(filterCount, 'Filter')}  (${filterCount})`,
+          onClick: () => {
+            setTimeout(clearFilterForColumn, 5);
+          },
+        });
+      }
+      if (
+        settings.heatmapOn &&
+        (column.column === 'searcherMetricsVal' ||
+          (column.type === V1ColumnType.NUMBER &&
+            (column.location === V1LocationType.VALIDATIONS ||
+              column.location === V1LocationType.TRAINING)))
+      ) {
+        items.push(
+          { type: 'divider' as const },
+          {
+            icon: <Icon decorative name="heatmap" />,
+            key: 'heatmap',
+            label: !settings.heatmapSkipped.includes(column.column)
+              ? 'Cancel heatmap'
+              : 'Apply heatmap',
+            onClick: () =>
+              handleHeatmapSelection?.(
+                settings.heatmapSkipped.includes(column.column)
+                  ? settings.heatmapSkipped.filter((p) => p !== column.column)
+                  : [...settings.heatmapSkipped, column.column],
+              ),
+          },
+        );
       }
       return items;
     },
     [
-      columnsIfLoaded,
-      handleColumnsOrderChange,
-      handleSelectionChange,
-      handleSortChange,
-      isMobile,
-      loadableFormset,
-      handleIsOpenFilterChange,
       projectColumns,
       settings.pinnedColumnsCount,
-      sorts,
-      settings.pageLimit,
       settings.selection,
+      settings.pageLimit,
+      settings.heatmapOn,
+      settings.heatmapSkipped,
+      isMobile,
+      handleSelectionChange,
+      columnsIfLoaded,
+      handleColumnsOrderChange,
+      loadableFormset,
+      handleIsOpenFilterChange,
+      sorts,
+      handleSortChange,
+      handleHeatmapSelection,
     ],
   );
 
