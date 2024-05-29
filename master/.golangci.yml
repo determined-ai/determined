@@ -45,7 +45,6 @@ linters-settings:
     list-type: blacklist
     include-go-root: true
     packages:
-      - errors
       - gopkg.in/yaml.v2
       - github.com/dgrijalva/jwt-go
   dupl:

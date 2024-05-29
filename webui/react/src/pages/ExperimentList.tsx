@@ -11,6 +11,7 @@ import { useTheme } from 'hew/Theme';
 import Toggle from 'hew/Toggle';
 import { Body } from 'hew/Typography';
 import { Loadable } from 'hew/utils/loadable';
+import _ from 'lodash';
 import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
@@ -124,6 +125,10 @@ const MenuKey = {
 
 const ExperimentList: React.FC<Props> = ({ project }) => {
   const [experiments, setExperiments] = useState<BulkExperimentItem[]>([]);
+  const [hiddenSelectedExperiments, setHiddenSelectedExperiments] = useState<BulkExperimentItem[]>(
+    // this is used to selected experiments that are not visible in the experiment table page
+    [],
+  );
   const [labels, setLabels] = useState<string[]>([]);
   const [batchMovingExperimentIds, setBatchMovingExperimentIds] = useState<number[]>();
   const [batchRetainLogsExperimentIds, setBatchRetainLogsExperimentIds] = useState<number[]>([]);
@@ -149,14 +154,14 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
   } = useSettings<ExperimentListSettings>(settingsConfig);
 
   const experimentMap = useMemo(() => {
-    return (experiments || []).reduce(
-      (acc, experiment) => {
+    return [...experiments, ...hiddenSelectedExperiments].reduce(
+      (acc: Record<RecordKey, ProjectExperiment>, experiment) => {
         acc[experiment.id] = getProjectExperimentForExperimentItem(experiment, project);
         return acc;
       },
-      {} as Record<RecordKey, ProjectExperiment>,
+      {},
     );
-  }, [experiments, project]);
+  }, [experiments, project, hiddenSelectedExperiments]);
 
   const filterCount = useMemo(() => activeSettings(filterKeys).length, [activeSettings]);
 
@@ -228,6 +233,28 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [id, isLoadingSettings, settings, labelsString, pinnedString, statesString, usersString]);
 
+  const fetchHiddenSelectedExperiments = useCallback(async (): Promise<void> => {
+    try {
+      const fetchedExpIds = new Set(experiments.map((exp) => exp.id));
+      const hiddenSelectedExpIds = (settings.row ?? []).filter((id) => !fetchedExpIds.has(id));
+      if (hiddenSelectedExpIds.length > 0) {
+        const chunkedSelectedExperimentIds = _.chunk(hiddenSelectedExpIds, settings.tableLimit);
+        const selectedExperiments = await Promise.all(
+          chunkedSelectedExperimentIds.map(async (ids) => {
+            const expResponse = await getExperiments(
+              { experimentIdFilter: { incl: ids } },
+              { signal: canceler.current.signal },
+            );
+            return expResponse.experiments;
+          }),
+        );
+        setHiddenSelectedExperiments(selectedExperiments.flat());
+      }
+    } catch (e) {
+      handleError(e, { publicSubject: 'Unable to fetch selected experiments.' });
+    }
+  }, [experiments, settings.row, settings.tableLimit]);
+
   const fetchLabels = useCallback(async () => {
     try {
       const labels = await getExperimentLabels(
@@ -246,6 +273,10 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
   }, [fetchExperiments, fetchLabels]);
 
   const { stopPolling } = usePolling(fetchAll, { rerunOnNewFn: true });
+  const { stopPolling: stopHiddenSelectExpPolling } = usePolling(fetchHiddenSelectedExperiments, {
+    interval: 30_000, // 30s
+    rerunOnNewFn: true,
+  });
 
   const experimentTags = useExperimentTags(fetchAll);
 
@@ -255,13 +286,13 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
 
   const handleNameSearchApply = useCallback(
     (newSearch: string) => {
-      updateSettings({ row: undefined, search: newSearch || undefined });
+      updateSettings({ row: undefined, search: newSearch || undefined, tableOffset: 0 });
     },
     [updateSettings],
   );
 
   const handleNameSearchReset = useCallback(() => {
-    updateSettings({ row: undefined, search: undefined });
+    updateSettings({ row: undefined, search: undefined, tableOffset: 0 });
   }, [updateSettings]);
 
   const nameFilterSearch = useCallback(
@@ -281,13 +312,14 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       updateSettings({
         label: labels.length !== 0 ? labels : undefined,
         row: undefined,
+        tableOffset: 0,
       });
     },
     [updateSettings],
   );
 
   const handleLabelFilterReset = useCallback(() => {
-    updateSettings({ label: undefined, row: undefined });
+    updateSettings({ label: undefined, row: undefined, tableOffset: 0 });
   }, [updateSettings]);
 
   const labelFilterDropdown = useCallback(
@@ -309,13 +341,14 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
       updateSettings({
         row: undefined,
         state: states.length !== 0 ? (states as RunState[]) : undefined,
+        tableOffset: 0,
       });
     },
     [updateSettings],
   );
 
   const handleStateFilterReset = useCallback(() => {
-    updateSettings({ row: undefined, state: undefined });
+    updateSettings({ row: undefined, state: undefined, tableOffset: 0 });
   }, [updateSettings]);
 
   const stateFilterDropdown = useCallback(
@@ -335,6 +368,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
     (users: string[]) => {
       updateSettings({
         row: undefined,
+        tableOffset: 0,
         user: users.length !== 0 ? users : undefined,
       });
     },
@@ -342,7 +376,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
   );
 
   const handleUserFilterReset = useCallback(() => {
-    updateSettings({ row: undefined, user: undefined });
+    updateSettings({ row: undefined, tableOffset: 0, user: undefined });
   }, [updateSettings]);
 
   const userFilterDropdown = useCallback(
@@ -891,6 +925,7 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
         columns: newColumns,
         columnWidths: newColumnWidths,
         row: undefined,
+        tableOffset: 0,
       });
     },
     [settings, updateSettings],
@@ -903,8 +938,11 @@ const ExperimentList: React.FC<Props> = ({ project }) => {
   }, []);
 
   useEffect(() => {
-    return () => stopPolling();
-  }, [stopPolling]);
+    return () => {
+      stopPolling();
+      stopHiddenSelectExpPolling();
+    };
+  }, [stopHiddenSelectExpPolling, stopPolling]);
 
   useEffect(() => {
     const currentCanceler = canceler.current;

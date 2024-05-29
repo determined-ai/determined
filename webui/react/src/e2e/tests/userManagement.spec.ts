@@ -1,24 +1,25 @@
 import { expect } from '@playwright/test';
-import playwright from 'playwright';
 
-import { AuthFixture } from 'e2e/fixtures/auth.fixture';
 import { test } from 'e2e/fixtures/global-fixtures';
-import { User, UserFixture } from 'e2e/fixtures/user.fixture';
 import { UserManagement } from 'e2e/models/pages/Admin/UserManagement';
 import { SignIn } from 'e2e/models/pages/SignIn';
 import { sessionRandomHash } from 'e2e/utils/naming';
 import { repeatWithFallback } from 'e2e/utils/polling';
+import { saveTestUser } from 'e2e/utils/users';
+import { V1PostUserRequest } from 'services/api-ts-sdk/api';
 
 // creating users while running tests in parallel can cause the users table to refresh at unexpected times
 test.describe.configure({ mode: 'serial' });
 
 test.describe('User Management', () => {
-  test.beforeEach(async ({ auth, dev, page }) => {
-    await dev.setServerAddress();
-    await auth.login();
-    const userManagementPage = new UserManagement(page);
+  // One list of users per test session. This is to encourage a final teardown
+  // call of the user fixture to deactivate all users created by each test.
+  // Note: This can't collide when running tests in parallel because playwright
+  // workers can't share variables.
+  const testUsers = new Map<number, V1PostUserRequest>();
+  test.beforeEach(async ({ authedPage }) => {
+    const userManagementPage = new UserManagement(authedPage);
     await userManagementPage.goto();
-
     // wait for table to be stable and select page 1
     await userManagementPage.table.table.rows.pwLocator.count();
     const page1 = userManagementPage.table.table.pagination.pageButtonLocator(1);
@@ -36,41 +37,32 @@ test.describe('User Management', () => {
     }
   });
 
-  test('Navigate to User Management', async ({ page }) => {
-    const userManagementPage = new UserManagement(page);
+  test('Navigate to User Management', async ({ authedPage }) => {
+    const userManagementPage = new UserManagement(authedPage);
     await (await userManagementPage.nav.sidebar.headerDropdown.open()).admin.pwLocator.click();
-    await expect(page).toHaveTitle(userManagementPage.title);
-    await expect(page).toHaveURL(userManagementPage.url);
+    await expect(authedPage).toHaveTitle(userManagementPage.title);
+    await expect(authedPage).toHaveURL(userManagementPage.url);
   });
 
   test.describe('With New User Teardown', () => {
-    test.afterAll(async ({ browser }) => {
-      const pageSetupTeardown = await browser.newPage();
-      const authFixtureSetupTeardown = new AuthFixture(pageSetupTeardown);
-      const userFixtureSetupTeardown = new UserFixture(pageSetupTeardown);
-      const userManagementPageSetupTeardown = new UserManagement(pageSetupTeardown);
-      await authFixtureSetupTeardown.login();
+    test.afterAll(async ({ backgroundApiUser }) => {
+      await backgroundApiUser.apiAuth.login();
       await test.step('Deactivate Users', async () => {
-        await userManagementPageSetupTeardown.goto();
-        await userFixtureSetupTeardown.deactivateAllTestUsers();
+        for (const [id] of testUsers) {
+          await backgroundApiUser.patchUser(id, { active: false });
+        }
       });
-      await pageSetupTeardown.close();
+      await backgroundApiUser.apiAuth.dispose();
     });
 
     test.describe('With a Test User', () => {
-      let testUser: User;
-      test.beforeAll(async ({ browser }) => {
-        const pageSetupTeardown = await browser.newPage();
-        const authFixtureSetupTeardown = new AuthFixture(pageSetupTeardown);
-        const userFixtureSetupTeardown = new UserFixture(pageSetupTeardown);
-        const userManagementPageSetupTeardown = new UserManagement(pageSetupTeardown);
-        await authFixtureSetupTeardown.login();
+      let testUser: V1PostUserRequest;
+
+      test.beforeEach(async ({ user }) => {
         await test.step('Create User', async () => {
-          await userManagementPageSetupTeardown.goto();
-          testUser = await userFixtureSetupTeardown.createUser();
+          testUser = await user.createUser();
+          saveTestUser(testUser, testUsers);
         });
-        await authFixtureSetupTeardown.logout();
-        await pageSetupTeardown.close();
       });
 
       test('User table shows correct data', async ({ user }) => {
@@ -80,9 +72,11 @@ test.describe('User Management', () => {
       test('New user acess', async ({ page, auth }) => {
         const userManagementPage = new UserManagement(page);
         await auth.logout();
-        await auth.login(testUser);
+        await auth.login({ password: testUser.password, username: testUser.user?.username });
         await userManagementPage.nav.sidebar.headerDropdown.open();
-        await userManagementPage.nav.sidebar.headerDropdown.settings.pwLocator.waitFor();
+        await userManagementPage.nav.sidebar.headerDropdown.settings.pwLocator.waitFor({
+          state: 'visible',
+        });
         await userManagementPage.nav.sidebar.headerDropdown.admin.pwLocator.waitFor({
           state: 'hidden',
         });
@@ -90,33 +84,30 @@ test.describe('User Management', () => {
 
       test('Edit user', async ({ user }) => {
         await test.step('Edit once', async () => {
+          if (testUser.user === undefined) {
+            throw new Error('Trying to edit an undefined user.');
+          }
           testUser = await user.editUser(testUser, {
-            displayName: testUser.username + '_edited',
+            displayName: testUser.user.username + '_edited',
           });
           await user.validateUser(testUser);
         });
         await test.step('Edit again', async () => {
-          testUser = await user.editUser(testUser, { displayName: '', isAdmin: true });
+          testUser = await user.editUser(testUser, { admin: true, displayName: '' });
           await user.validateUser(testUser);
         });
       });
     });
 
     test.describe('With Test User we Deactivate', () => {
-      let testUser: User;
+      let testUser: V1PostUserRequest;
 
-      test.beforeAll(async ({ browser }) => {
-        const pageSetupTeardown = await browser.newPage();
-        const authFixtureSetupTeardown = new AuthFixture(pageSetupTeardown);
-        const userFixtureSetupTeardown = new UserFixture(pageSetupTeardown);
-        const userManagementPageSetupTeardown = new UserManagement(pageSetupTeardown);
-        await authFixtureSetupTeardown.login();
+      test.beforeAll(async ({ backgroundApiUser }) => {
+        await backgroundApiUser.apiAuth.login();
         await test.step('Create User', async () => {
-          await userManagementPageSetupTeardown.goto();
-          testUser = await userFixtureSetupTeardown.createUser();
+          testUser = await backgroundApiUser.createUser(backgroundApiUser.newRandom());
+          saveTestUser(testUser, testUsers);
         });
-        await authFixtureSetupTeardown.logout();
-        await pageSetupTeardown.close();
       });
 
       test('Deactivate and Reactivate', async ({ page, user, auth }) => {
@@ -126,13 +117,14 @@ test.describe('User Management', () => {
         const signInPage = new SignIn(page);
         await test.step('Deactivate', async () => {
           testUser = await user.changeStatusUser(testUser, false);
+          saveTestUser(testUser, testUsers);
           await user.validateUser(testUser);
         });
-        await test.step('Attempt Sign In', async () => {
+        await test.step('Attempt Sign In With Deactivated User', async () => {
           await auth.logout();
           await auth.login({
             password: testUser.password,
-            username: testUser.username,
+            username: testUser.user?.username,
             waitForURL: /login/,
           });
           expect(await signInPage.detAuth.errors.message.pwLocator.textContent()).toContain(
@@ -151,35 +143,32 @@ test.describe('User Management', () => {
           await expect(page).toHaveURL(/login/);
           await auth.login({ waitForURL: userManagementPage.url });
           testUser = await user.changeStatusUser(testUser, true);
+          saveTestUser(testUser, testUsers);
         });
         await test.step('Successful Sign In', async () => {
           await auth.logout();
-          await auth.login(testUser);
+          await auth.login({ password: testUser.password, username: testUser.user?.username });
         });
       });
     });
 
     test.describe('With 10 Users', () => {
       const usernamePrefix = 'test-user-pagination';
-      test.beforeAll(async ({ browser }) => {
+      test.beforeAll(async ({ backgroundApiUser }) => {
         test.setTimeout(180_000);
-        const pageSetupTeardown = await browser.newPage();
-        const authFixtureSetupTeardown = new AuthFixture(pageSetupTeardown);
-        const userFixtureSetupTeardown = new UserFixture(pageSetupTeardown);
-        const userManagementPageSetupTeardown = new UserManagement(pageSetupTeardown);
-        await authFixtureSetupTeardown.login();
+        await backgroundApiUser.apiAuth.login();
         await test.step('Create User', async () => {
-          await userManagementPageSetupTeardown.goto();
           // pagination will be 10 per page, so create 11 users
           for (let i = 0; i < 11; i++) {
-            await userFixtureSetupTeardown.createUser({ username: `${usernamePrefix}` });
+            const user = await backgroundApiUser.createUser(
+              backgroundApiUser.newRandom(`${usernamePrefix}`),
+            );
+            saveTestUser(user, testUsers);
           }
         });
-        await authFixtureSetupTeardown.logout();
-        await pageSetupTeardown.close();
       });
 
-      test.skip('[ET-233, ET-178] Bulk actions', async ({ page, user }, testInfo) => {
+      test('[ET-233, ET-178] Bulk actions', async ({ page, user, playwright }) => {
         const userManagementPage = new UserManagement(page);
 
         await test.step('Setup table filters', async () => {
@@ -229,13 +218,13 @@ test.describe('User Management', () => {
         });
         await test.step("Disable all users on the table's page", async () => {
           await userManagementPage.actions.pwLocator.waitFor({ state: 'hidden' });
-          await user.deactivateTestUsersOnTable();
+          await user.deactivateTestUsersOnTable(testUsers);
         });
         // expect this test step to fail
         await test.step('Check that all users are disabled', async () => {
           // wait for table to be stable and check that pagination and "no data" both dont show
           await userManagementPage.table.table.pwLocator.click({ trial: true });
-          testInfo.fail(); // BUG [ET-178]
+          await userManagementPage._page.reload(); // BUG [ET-240] requires reload
           try {
             await userManagementPage.table.table.noData.pwLocator.waitFor();
             await userManagementPage.table.table.pagination.pwLocator.waitFor();
@@ -300,13 +289,7 @@ test.describe('User Management', () => {
               ),
             ).toPass({ timeout: 25_000 });
             await expect(userManagementPage.skeletonTable.pwLocator).not.toBeVisible();
-            const matches = (await pagination.perPage.selectionItem.pwLocator.innerText()).match(
-              /(\d+) \/ page/,
-            );
-            if (matches === null) {
-              throw new Error("Couldn't find pagination selection.");
-            }
-            const paginationSelection = Number(matches[1]);
+            const paginationSelection = Number(name);
             await expect(
               repeatWithFallback(
                 async () => {

@@ -13,7 +13,7 @@ from tests import experiment as exp
 
 
 @pytest.mark.e2e_cpu
-def test_job_queue_adjust_weight() -> None:
+def test_job_queue_adjust_priority() -> None:
     sess = api_utils.user_session()
     config = conf.tutorials_path("mnist_pytorch/const.yaml")
     model = conf.tutorials_path("mnist_pytorch")
@@ -25,19 +25,19 @@ def test_job_queue_adjust_weight() -> None:
         assert ok
 
         ordered_ids = jobs.get_ids()
-        detproc.check_call(sess, ["det", "job", "update", ordered_ids[0], "--weight", "10"])
+        detproc.check_call(sess, ["det", "job", "update", ordered_ids[0], "--priority", "10"])
 
         time.sleep(2)
         jobs.refresh()
-        new_weight = jobs.get_job_weight(ordered_ids[0])
-        assert new_weight == "10"
+        new_priority = jobs.get_job_priority(ordered_ids[0])
+        assert new_priority == "10"
 
-        detproc.check_call(sess, ["det", "job", "update-batch", f"{ordered_ids[1]}.weight=10"])
+        detproc.check_call(sess, ["det", "job", "update-batch", f"{ordered_ids[1]}.priority=10"])
 
         time.sleep(2)
         jobs.refresh()
-        new_weight = jobs.get_job_weight(ordered_ids[1])
-        assert new_weight == "10"
+        new_priority = jobs.get_job_priority(ordered_ids[1])
+        assert new_priority == "10"
     finally:
         # Avoid leaking experiments even if this test fails.
         # Leaking experiments can block the cluster and other tests from running other tasks
@@ -84,9 +84,9 @@ class JobInfo:
     def get_ids(self) -> List:
         return self.ids
 
-    def get_job_weight(self, jobID: str) -> str:
+    def get_job_priority(self, jobID: str) -> str:
         for value_dict in self.values:
             if value_dict["ID"] != jobID:
                 continue
-            return value_dict["Weight"]
+            return value_dict["Priority"]
         return ""

@@ -7,6 +7,7 @@ import (
 	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -370,4 +371,62 @@ func TestGetProjectByActivity(t *testing.T) {
 
 	require.NoError(t, err)
 	require.Equal(t, 1, len(resp.Projects))
+}
+
+func TestGetProjectColumnsRuns(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+
+	_, projectIDInt := createProjectAndWorkspace(ctx, t, api)
+
+	exp1 := createTestExpWithProjectID(t, api, curUser, projectIDInt)
+	exp2 := createTestExpWithProjectID(t, api, curUser, projectIDInt)
+
+	hyperparameters1 := map[string]any{"global_batch_size": 1}
+
+	task1 := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
+	require.NoError(t, db.AddTask(ctx, task1))
+	require.NoError(t, db.AddTrial(ctx, &model.Trial{
+		State:        model.PausedState,
+		ExperimentID: exp1.ID,
+		StartTime:    time.Now(),
+		HParams:      hyperparameters1,
+	}, task1.TaskID))
+
+	getColumnsReq := &apiv1.GetProjectColumnsRequest{
+		Id:        int32(projectIDInt),
+		TableType: apiv1.TableType_TABLE_TYPE_RUN.Enum(),
+	}
+
+	getColumnsResp, err := api.GetProjectColumns(ctx, getColumnsReq)
+	require.NoError(t, err)
+	require.Len(t, getColumnsResp.Columns, len(defaultRunsTableColumns)+1)
+	for i, column := range defaultRunsTableColumns {
+		require.Equal(t, column, getColumnsResp.Columns[i])
+	}
+	expectedHparam := &projectv1.ProjectColumn{
+		Column:   "hp.global_batch_size",
+		Location: projectv1.LocationType_LOCATION_TYPE_RUN_HYPERPARAMETERS,
+		Type:     projectv1.ColumnType_COLUMN_TYPE_NUMBER,
+	}
+	require.Equal(t, getColumnsResp.Columns[len(getColumnsResp.Columns)-1], expectedHparam)
+
+	hyperparameters2 := map[string]any{"test1": map[string]any{"test2": "text_val"}}
+	task2 := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
+	require.NoError(t, db.AddTask(ctx, task2))
+	require.NoError(t, db.AddTrial(ctx, &model.Trial{
+		State:        model.PausedState,
+		ExperimentID: exp2.ID,
+		StartTime:    time.Now(),
+		HParams:      hyperparameters2,
+	}, task2.TaskID))
+
+	getColumnsResp, err = api.GetProjectColumns(ctx, getColumnsReq)
+	require.NoError(t, err)
+	require.Len(t, getColumnsResp.Columns, len(defaultRunsTableColumns)+2)
+	expectedHparam = &projectv1.ProjectColumn{
+		Column:   "hp.test1.test2",
+		Location: projectv1.LocationType_LOCATION_TYPE_RUN_HYPERPARAMETERS,
+		Type:     projectv1.ColumnType_COLUMN_TYPE_TEXT,
+	}
+	require.Equal(t, getColumnsResp.Columns[len(getColumnsResp.Columns)-1], expectedHparam)
 }

@@ -29,6 +29,7 @@ def make_mock_storage_manager(basedir: pathlib.Path) -> Any:
     storage_manager.store_path = mock.MagicMock(side_effect=store_path)
     storage_manager.restore_path = mock.MagicMock(side_effect=restore_path)
     storage_manager._list_directory = mock.MagicMock(return_value={"one": 1, "two": 2})
+    storage_manager.delete = mock.MagicMock()
 
     return storage_manager
 
@@ -144,6 +145,15 @@ def test_checkpoint_context(dummy: bool, mode: core.DownloadMode, tmp_path: path
                     pass
             storage_manager.restore_path.assert_called_once()
             storage_manager.restore_path.reset_mock()
+
+            # Test delete.
+            if pex.distributed.rank == 0:
+                checkpoint_context.delete("ckpt-uuid")
+                if not dummy:
+                    session._do_request.assert_called_once()
+                    session._do_request.reset_mock()
+                storage_manager.delete.assert_called_once()
+                storage_manager.delete.reset_mock()
 
 
 @pytest.mark.parametrize(

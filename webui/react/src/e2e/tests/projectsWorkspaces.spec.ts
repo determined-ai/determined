@@ -1,4 +1,5 @@
 import { expect } from '@playwright/test';
+import { v4 } from 'uuid';
 
 import { test } from 'e2e/fixtures/global-fixtures';
 import { BasePage } from 'e2e/models/BasePage';
@@ -8,8 +9,10 @@ import { randId, safeName } from 'e2e/utils/naming';
 
 test.describe('Projects', () => {
   test.setTimeout(120_000);
-  let wsCreatedWithButton: string = '';
-  let wsCreatedWithSidebar: string = '';
+  let wsCreatedWithButton = '';
+  let wsCreatedWithSidebar = '';
+  let projectOneName = '';
+
   const createWorkspaceAllFields = async function (
     modal: WorkspaceCreateModal,
     wsNamePrefix: string,
@@ -62,6 +65,19 @@ test.describe('Projects', () => {
       }
     });
   });
+  // test.afterEach(async ({ page }) => {
+  //   const workspacesPage = new Workspaces(page);
+
+  // });
+
+  // test('Projects and Workspaces archival and pinning', async ({ page }) => {
+  //   await test.step('Archive a workspace', async () => {});
+  //   await test.step('Unarchive a workspace', async () => {});
+  //   await test.step('Unpin a workspace through the sidebar', async () => {});
+  //   await test.step('Pin a workspace through the sidebar', async () => {});
+  //   await test.step('Archive a project', async () => {});
+  //   await test.step('Unarchive a project', async () => {});
+  // })
 
   test('Projects and Workspaces CRUD', async ({ authedPage }) => {
     const workspacesPage = new Workspaces(authedPage);
@@ -100,9 +116,20 @@ test.describe('Projects', () => {
       await expect(workspacesPage.list.cardWithName(wsCreatedWithSidebar).pwLocator).toBeVisible();
     });
 
-    await test.step('Create projects', async () => {});
-    await test.step('Archive a project', async () => {});
-    await test.step('Unarchive a project', async () => {});
+    await test.step('Create projects', async () => {
+      await workspacesPage.nav.sidebar.sidebarWorkspaceItem(wsCreatedWithButton).pwLocator.click();
+      const projects = workspacesPage.details.projects;
+      await projects.pwLocator.click();
+      await projects.newProject.pwLocator.click();
+      projectOneName = `test-1-${v4()}`;
+      await projects.createModal.projectName.pwLocator.fill(projectOneName);
+      await projects.createModal.description.pwLocator.fill(v4());
+      await projects.createModal.footer.submit.pwLocator.click();
+      await authedPage.waitForURL('**/projects/*/experiments');
+      await workspacesPage.nav.sidebar.sidebarWorkspaceItem(wsCreatedWithButton).pwLocator.click();
+      await expect(projects.cardWithName(projectOneName).pwLocator).toBeVisible();
+    });
+
     await test.step('Navigation on projects page - sorting and list', async () => {});
     await test.step('Create a model with all possible metadata', async () => {});
     await test.step('Archive a model', async () => {});
@@ -111,14 +138,17 @@ test.describe('Projects', () => {
     await test.step('Launch JupyterLab, kill the task, view logs', async () => {});
     await test.step('Navigate with the breadcrumb and workspace page', async () => {});
     await test.step('Navigation on workspace page', async () => {});
-    await test.step('Navigation to wokspace on the sidebar', async () => {});
-    await test.step('Edit a workspace through workspaces page', async () => {});
-    await test.step('Edit a workspace through the sidebar', async () => {});
-    await test.step('Archive a workspace', async () => {});
-    await test.step('Unarchive a workspace', async () => {});
-    await test.step('Unpin a workspace through the sidebar', async () => {});
-    await test.step('Pin a workspace through the sidebar', async () => {});
+    await test.step('Edit a workspace', async () => {});
     await test.step('Delete a model', async () => {});
-    await test.step('Delete a project', async () => {});
+    await test.step('Delete a project', async () => {
+      await workspacesPage.nav.sidebar.sidebarWorkspaceItem(wsCreatedWithButton).pwLocator.click();
+      await workspacesPage.details.projects.pwLocator.click();
+      const projectContent = workspacesPage.details.projects;
+      const projectCard = projectContent.cardWithName(projectOneName);
+      await projectCard.actionMenu.open();
+      await projectCard.actionMenu.delete.pwLocator.click();
+      await projectContent.deleteModal.nameConfirmation.pwLocator.fill(projectOneName);
+      await projectContent.deleteModal.footer.submit.pwLocator.click();
+    });
   });
 });

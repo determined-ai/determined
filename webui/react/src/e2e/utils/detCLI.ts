@@ -10,7 +10,8 @@ export function detExecSync(detCommand: string): string {
     return execSync(`${process.env.PW_DET_PATH || 'det'} ${detCommand}`, {
       env: {
         ...process.env,
-        DET_MASTER: process.env.PW_DET_MASTER || 'http://localhost:8080',
+        DET_MASTER:
+          process.env.PW_DET_MASTER || process.env.DET_WEBPACK_PROXY_URL || 'http://localhost:8080',
         DET_PASS: process.env.PW_PASSWORD,
         DET_USER: process.env.PW_USER_NAME,
       },

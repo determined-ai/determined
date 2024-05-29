@@ -21,7 +21,7 @@ executors:
 parameters:
   det-version:
     type: string
-    default: 0.32.1-dev0
+    default: 0.33.0-dev0
   docker-image:
     type: string
     default: determinedai/cimg-base:latest
@@ -30,13 +30,13 @@ parameters:
     default: ubuntu-2004:2024.01.1
   gpu-machine-image:
     type: string
-    default: linux-cuda-12:default
+    default: ubuntu-2004-cuda-11.2:202103-01
   # DEFAULT_PT_GPU_IMAGE: Pytorch training image reference used by the tests
   # Inject here as a parameter so that it is updated by bumpversion, and can
   # be referenced by --ee testing.
   default-pt-gpu-image:
     type: string
-    default: determinedai/pytorch-ngc-dev:8b3bea3
+    default: determinedai/pytorch-tensorflow-cuda-dev:8b3bea3
   # Some python, go, and react dependencies are cached by circleci via `save_cache`/`restore_cache`.
   # If the dependencies stay the same, but the circleci code that would produce them is changed,
   # it may be necessary to invalidate the cache by incrementing this value.
@@ -236,12 +236,6 @@ commands:
       - run: mv ../license-key-gen/license.txt ./license.txt
       - run: mv ../license-key-gen/public.txt ./public.txt
 
-  get-slurmcluster:
-    steps:
-      - run: cd .. && git clone https://${GITHUB_TOKEN}@github.com/determined-ai/dev-scripts.git
-      - run: cp ../dev-scripts/slurm/slurmcluster.sh tools/slurmcluster.sh
-      - run: ls -a
-
   pull-task-images:
     parameters:
       tf2:
@@ -251,7 +245,7 @@ commands:
       - when:
           condition: <<parameters.tf2>>
           steps:
-            - run: docker pull determinedai/pytorch-ngc-dev:8b3bea3
+            - run: docker pull determinedai/pytorch-tensorflow-cpu-dev:8b3bea3
 
   login-docker:
     parameters:
@@ -2026,7 +2020,8 @@ jobs:
       - run:
           environment:
             PW_EE: << parameters.ee >>
-          command: npm run e2e --prefix webui/react -- << parameters.playwright-options >>
+          # setting PW_PASSWORD is temporary until DET-10197 is merged and we can set PW_PASSWORD in circleci
+          command: PW_PASSWORD=${INITIAL_USER_PASSWORD} npm run e2e --prefix webui/react -- << parameters.playwright-options >>
       - store_artifacts:
           path: webui/react/src/e2e/playwright-report
       - store_artifacts:
@@ -2319,9 +2314,9 @@ jobs:
       - store_test_results:
           path: /tmp/test-results
 
-  test-unit-harness-gpu-tf:
+  test-unit-harness-gpu:
     docker:
-      - image: determinedai/tensorflow-ngc-dev:8b3bea3
+      - image: determinedai/pytorch-tensorflow-cuda-dev:8b3bea3
     resource_class: determined-ai/container-runner-gpu
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
@@ -2333,19 +2328,19 @@ jobs:
       - run: pip install mypy pytest coverage
       - install-codecov
       - setup-paths
-      - run: COVERAGE_FILE=/root/project/test-unit-harness-gpu-tf-pycov make -C harness test-gpu-tf
-      - run: coverage xml -i --data-file=./test-unit-harness-gpu-tf-pycov
+      - run: COVERAGE_FILE=/root/project/test-unit-harness-gpu-pycov make -C harness test-gpu
+      - run: coverage xml -i --data-file=./test-unit-harness-gpu-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
       - persist_to_workspace:
           root: .
           paths:
-            - test-unit-harness-gpu-tf-pycov
+            - test-unit-harness-gpu-pycov
       - store_test_results:
           path: /tmp/test-results
 
   test-unit-harness-pytorch2-gpu:
     docker:
-      - image: determinedai/pytorch-ngc-dev:8b3bea3
+      - image: determinedai/pytorch-cuda-dev:8b3bea3
     resource_class: determined-ai/container-runner-gpu
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
@@ -2369,7 +2364,7 @@ jobs:
 
   test-unit-harness-pytorch2-cpu:
     docker:
-      - image: determinedai/pytorch-ngc-dev:8b3bea3
+      - image: determinedai/pytorch-cpu-dev:8b3bea3
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
       - checkout
@@ -2392,7 +2387,7 @@ jobs:
 
   test-unit-harness-gpu-parallel:
     docker:
-      - image: determinedai/pytorch-ngc-dev:8b3bea3
+      - image: determinedai/pytorch-tensorflow-cuda-dev:8b3bea3
     resource_class: determined-ai/container-runner-multi-gpu
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
@@ -2440,7 +2435,7 @@ jobs:
 
   test-unit-harness-tf2:
     docker:
-      - image: determinedai/tensorflow-ngc-dev:f17151a
+      - image: <<pipeline.parameters.docker-image>>
     steps:
       - checkout
       - add-and-fetch-upstream
@@ -2448,9 +2443,11 @@ jobs:
       - skip-if-only-github
       - skip-if-only-webui
       - install-codecov
-      - run: pip install mypy pytest coverage
-      - install-codecov
-      - setup-paths
+      - setup-python-venv:
+          install-python: false
+          determined: true
+          extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
+          executor: <<pipeline.parameters.docker-image>>
       - run: COVERAGE_FILE=$PWD/test-unit-harness-tf2-pycov make -C harness test-tf2
       - run: coverage xml -i --data-file=./test-unit-harness-tf2-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
@@ -2654,7 +2651,6 @@ jobs:
 
       - install-devcluster
       - license-gen
-      - get-slurmcluster
 
       - gcloud/install:
           version: "412.0.0"
@@ -2797,7 +2793,9 @@ jobs:
           name: Make unslurmcluster
           when: always
           command: |
-            pkill determined-mast
+            # These scripts always run with `set -e`. Be careful that a failure doesn't stop
+            # make unslurmcluster from running, otherwise resources are left around.
+            pkill determined-mast || echo "failed to kill master (exit code $?)"
             (yes yes || true) | make unslurmcluster TF_LOCK=false
             # For some reason, even when `make unslurmcluster` is successful, CircleCI
             # receives exit code 141, so ignore that.
@@ -3626,7 +3624,7 @@ jobs:
         type: string
         default: "1"
       environment-image:
-        default: determinedai/pytorch-ngc-dev:8b3bea3
+        default: determinedai/pytorch-tensorflow-cuda-dev:8b3bea3
         type: string
       accel-node-taints:
         type: string
@@ -4026,7 +4024,7 @@ workflows:
       - test-unit-harness-pytorch2-cpu
       - test-unit-harness-pytorch2-gpu
 
-      - test-unit-harness-gpu-tf:
+      - test-unit-harness-gpu:
           filters: *any-upstream
       - test-unit-harness-gpu-deepspeed:
           filters: *any-upstream
@@ -4037,8 +4035,8 @@ workflows:
       - request-gpu-unit-tests:
           type: approval
           filters: *any-fork
-      - test-unit-harness-gpu-tf:
-          name: f-test-unit-harness-gpu-tf
+      - test-unit-harness-gpu:
+          name: f-test-unit-harness-gpu
           filters: *any-fork
       - test-unit-harness-gpu-deepspeed:
           name: f-test-unit-harness-gpu-deepspeed
@@ -4054,7 +4052,7 @@ workflows:
       - python-coverage:
           requires:
             - test-unit-harness-cpu
-            - test-unit-harness-gpu-tf
+            - test-unit-harness-gpu
             - test-unit-harness-gpu-parallel
             - test-unit-harness-tf2
             - test-unit-harness-pytorch2-cpu
@@ -4107,6 +4105,7 @@ workflows:
           context:
             - playwright
             - github-read
+            - dev-ci-cluster-default-user-credentials
           filters: *any-upstream
       - build-docs:
           requires:
@@ -4195,6 +4194,7 @@ workflows:
           context:
             - playwright
             - github-read
+            - dev-ci-cluster-default-user-credentials
           filters: *any-upstream
       - build-docs:
           requires:
@@ -4439,6 +4439,8 @@ workflows:
 
       - test-e2e:
           name: test-e2e-rbac
+          context:
+            - dev-ci-cluster-default-user-credentials
           requires:
             - build-go-ee
           parallelism: 1
@@ -4447,6 +4449,8 @@ workflows:
 
       - test-e2e:
           name: test-e2e-cpu
+          context:
+            - dev-ci-cluster-default-user-credentials
           requires:
             - build-go-ee
           parallelism: 6
@@ -4456,6 +4460,8 @@ workflows:
 
       - test-e2e:
           name: test-e2e-cpu-double
+          context:
+            - dev-ci-cluster-default-user-credentials
           requires:
             - build-go-ee
           parallelism: 5
@@ -4467,6 +4473,8 @@ workflows:
 
       - test-e2e:
           name: test-e2e-cpu-oauth
+          context:
+            - dev-ci-cluster-default-user-credentials
           requires:
             - build-go-ee
           parallelism: 1
@@ -4476,6 +4484,8 @@ workflows:
 
       - test-e2e:
           name: test-e2e-cpu-model-registry-rbac
+          context:
+            - dev-ci-cluster-default-user-credentials
           requires:
             - build-go-ee
           parallelism: 1
@@ -4485,6 +4495,8 @@ workflows:
 
       - test-e2e:
           name: test-e2e-managed-devcluster
+          context:
+            - dev-ci-cluster-default-user-credentials
           requires:
             - build-go-ee
           parallelism: 4
@@ -4498,6 +4510,8 @@ workflows:
 
       - test-e2e:
           name: test-e2e-multi-k8s
+          context:
+            - dev-ci-cluster-default-user-credentials
           requires:
             - build-go-ee
           parallelism: 1
@@ -4509,6 +4523,8 @@ workflows:
 
       - test-e2e:
           name: test-e2e-port-registry
+          context:
+            - dev-ci-cluster-default-user-credentials
           requires:
             - build-go-ee
           parallelism: 1
@@ -4518,6 +4534,8 @@ workflows:
 
       - test-e2e:
           name: test-e2e-cpu-elastic
+          context:
+            - dev-ci-cluster-default-user-credentials
           requires:
             - build-go-ee
           parallelism: 1
@@ -4528,6 +4546,8 @@ workflows:
 
       - test-e2e:
           name: test-e2e-postgres10-with-ssl
+          context:
+            - dev-ci-cluster-default-user-credentials
           requires:
             - build-go-ee
           parallelism: 1
@@ -4538,6 +4558,8 @@ workflows:
 
       - test-e2e:
           name: test-e2e-postgres14-with-ssl
+          context:
+            - dev-ci-cluster-default-user-credentials
           requires:
             - build-go-ee
           parallelism: 1
@@ -4548,6 +4570,8 @@ workflows:
 
       - test-e2e:
           name: test-e2e-old-agent-versions
+          context:
+            - dev-ci-cluster-default-user-credentials
           requires:
             - build-go-ee
           parallelism: 1
@@ -4570,8 +4594,10 @@ workflows:
           extra-pytest-flags: "--no-compare-stats"
 
       - test-e2e:
-          context: okta
           name: test-e2e-saml
+          context:
+            - okta
+            - dev-ci-cluster-default-user-credentials
           requires:
             - build-go-ee
           parallelism: 1
@@ -5516,6 +5542,7 @@ workflows:
           context:
             - playwright
             - github-read
+            - dev-ci-cluster-default-user-credentials
 
   release:
     jobs:

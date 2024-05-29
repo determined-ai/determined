@@ -20,6 +20,7 @@ def handle_cluster_up(args: argparse.Namespace) -> None:
     cluster_utils.cluster_up(
         num_agents=args.agents,
         port=args.master_port,
+        initial_user_password=args.initial_user_password,
         master_config_path=args.master_config_path,
         storage_host_path=args.storage_host_path,
         cluster_name=args.cluster_name,
@@ -49,6 +50,7 @@ def handle_master_up(args: argparse.Namespace) -> None:
 
     cluster_utils.master_up(
         port=args.master_port,
+        initial_user_password=args.initial_user_password,
         master_config_path=args.master_config_path,
         storage_host_path=args.storage_host_path,
         master_name=args.master_name,
@@ -132,6 +134,12 @@ args_description = cli.Cmd(
                         default=None,
                         help="Storage location for cluster data (e.g. checkpoints)",
                     ),
+                ),
+                cli.Arg(
+                    "--initial-user-password",
+                    type=str,
+                    default=None,
+                    help="Initial password for admin/determined users",
                 ),
                 cli.Arg(
                     "--agents",
@@ -229,6 +237,12 @@ args_description = cli.Cmd(
                         default=None,
                         help="Storage location for cluster data (e.g. checkpoints)",
                     ),
+                ),
+                cli.Arg(
+                    "--initial-user-password",
+                    type=str,
+                    default=None,
+                    help="Initial password for admin/determined users",
                 ),
                 cli.Arg(
                     "--master-port",

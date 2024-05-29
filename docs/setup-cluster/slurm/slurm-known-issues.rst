@@ -541,8 +541,9 @@ allocation on each node. Your ``slots_per_trial`` configuration should then be a
    integration. When using MPS, use one of the following workarounds:
 
    #. If the capabilities of MPS are not required, disable or uninstall the MPS service. See
-      `nvidia-cuda-mps-control <https://docs.nvidia.com/deploy/mps/index.html#topic_5_1_1>`__ or the
-      relevant documentation associated with your installation package.
+      `nvidia-cuda-mps-control
+      <https://docs.nvidia.com/deploy/mps/index.html#on-a-multi-user-system>`__ or the relevant
+      documentation associated with your installation package.
 
    #. Configure the MPS variable ``CUDA_MPS_PIPE_DIRECTORY`` to use a directory other than ``/tmp``
       (e.g. ``/dev/shm``).

@@ -10,6 +10,10 @@
    information that is obsolete. This documentation is preserved because it may contain useful
    insights relevant to legacy systems.
 
+   See `Github repo <https://github.com/determined-ai/determined/tree/main/examples/deploy/eks>` for
+   an up-to-date example for terraform code deploying Determined on EKS with autoscaling and EFS
+   support.
+
 Determined can be installed on a cluster that is hosted on a managed Kubernetes service such as
 `Amazon EKS <https://aws.amazon.com/eks/>`_. This document describes how to set up an EKS cluster
 with GPU-enabled nodes. The recommended setup includes deploying a cluster with a single non-GPU

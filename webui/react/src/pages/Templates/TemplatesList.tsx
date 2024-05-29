@@ -118,7 +118,7 @@ const TemplateList: React.FC<Props> = ({ workspaceId }) => {
   );
 
   const handleWorkspaceFilterReset = useCallback(() => {
-    updateSettings({ workspace: undefined });
+    updateSettings({ tableOffset: 0, workspace: undefined });
   }, [updateSettings]);
 
   const workspaceFilterDropdown = useCallback(
@@ -154,7 +154,7 @@ const TemplateList: React.FC<Props> = ({ workspaceId }) => {
   );
 
   const handleNameSearchReset = useCallback(() => {
-    updateSettings({ name: undefined });
+    updateSettings({ name: undefined, tableOffset: 0 });
   }, [updateSettings]);
 
   const handleNameSearchApply = useCallback(

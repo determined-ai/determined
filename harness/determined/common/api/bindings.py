@@ -14184,6 +14184,16 @@ class v1StartTrialResponse(Printable):
             out["latestCheckpoint"] = self.latestCheckpoint
         return out
 
+class v1TableType(DetEnum):
+    """Project Table type.
+    - TABLE_TYPE_UNSPECIFIED: Unspecified table type.
+    - TABLE_TYPE_EXPERIMENT: experiment table.
+    - TABLE_TYPE_RUN: run table.
+    """
+    UNSPECIFIED = "TABLE_TYPE_UNSPECIFIED"
+    EXPERIMENT = "TABLE_TYPE_EXPERIMENT"
+    RUN = "TABLE_TYPE_RUN"
+
 class v1Task(Printable):
     """Task is the model for a task in the database."""
     config: "typing.Optional[str]" = None
@@ -18960,12 +18970,20 @@ def get_GetProjectColumns(
     session: "api.BaseSession",
     *,
     id: int,
+    tableType: "typing.Optional[v1TableType]" = None,
 ) -> "v1GetProjectColumnsResponse":
     """Get a list of columns for experiment list table.
 
     - id: The id of the project.
+    - tableType: type of table for project columns.
+
+ - TABLE_TYPE_UNSPECIFIED: Unspecified table type.
+ - TABLE_TYPE_EXPERIMENT: experiment table.
+ - TABLE_TYPE_RUN: run table.
     """
-    _params = None
+    _params = {
+        "tableType": tableType.value if tableType is not None else None,
+    }
     _resp = session._do_request(
         method="GET",
         path=f"/api/v1/projects/{id}/columns",
