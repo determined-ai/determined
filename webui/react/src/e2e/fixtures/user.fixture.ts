@@ -1,13 +1,10 @@
+import { expect, Page } from '@playwright/test';
+import _ from 'lodash';
+
 import { UserManagement } from 'e2e/models/pages/Admin/UserManagement';
 import { safeName } from 'e2e/utils/naming';
 import { repeatWithFallback } from 'e2e/utils/polling';
-import _ from 'lodash';
 import { V1PostUserRequest } from 'services/api-ts-sdk/api';
-
-import {
-  expect,
-  Page,
-} from '@playwright/test';
 
 interface UserArgs {
   username?: string;

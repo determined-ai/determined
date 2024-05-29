@@ -1,7 +1,4 @@
-import {
-  BaseComponent,
-  NamedComponent,
-} from 'e2e/models/BaseComponent';
+import { BaseComponent, NamedComponent } from 'e2e/models/BaseComponent';
 
 /**
  * Returns a representation of the Select component from Ant.
@@ -60,7 +57,7 @@ export class Select extends BaseComponent {
     if (await this._menu.pwLocator.isVisible()) {
       try {
         await this._menu.pwLocator.press('Escape', { timeout: 500 });
-        await this._menu.pwLocator.waitFor({ state: "hidden" })
+        await this._menu.pwLocator.waitFor({ state: 'hidden' });
       } catch (e) {
         // it's fine if this fails, we are just ensuring they are all closed.
       }

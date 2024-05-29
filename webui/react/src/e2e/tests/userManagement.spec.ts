@@ -1,3 +1,5 @@
+import { expect } from '@playwright/test';
+
 import { test } from 'e2e/fixtures/global-fixtures';
 import { UserManagement } from 'e2e/models/pages/Admin/UserManagement';
 import { SignIn } from 'e2e/models/pages/SignIn';
@@ -5,8 +7,6 @@ import { sessionRandomHash } from 'e2e/utils/naming';
 import { repeatWithFallback } from 'e2e/utils/polling';
 import { saveTestUser } from 'e2e/utils/users';
 import { V1PostUserRequest } from 'services/api-ts-sdk/api';
-
-import { expect } from '@playwright/test';
 
 // creating users while running tests in parallel can cause the users table to refresh at unexpected times
 test.describe.configure({ mode: 'serial' });
