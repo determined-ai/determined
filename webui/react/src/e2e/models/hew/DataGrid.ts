@@ -2,6 +2,7 @@ import { expect } from '@playwright/test';
 
 import { BaseComponent, NamedComponent, NamedComponentArgs } from 'e2e/models/BaseComponent';
 import { DropdownMenu } from 'e2e/models/hew/Dropdown';
+import { printMap } from 'e2e/utils/debug';
 
 type RowClass<RowType extends Row<HeadRowType>, HeadRowType extends HeadRow<RowType>> = new (
   args: RowArgs<RowType, HeadRowType>,
@@ -402,9 +403,7 @@ export class HeadRow<RowType extends Row<HeadRow<RowType>>> extends NamedCompone
     const index = this.columnDefs.get(columnName);
     if (index === undefined) {
       throw new Error(
-        `Column with title ${columnName} expected but not found (${[
-          ...this.columnDefs.entries(),
-        ].join('), (')})`,
+        `Column with title ${columnName} expected but not found.\n${printMap(this.#columnDefs)}`,
       );
     }
     return index;
@@ -451,6 +450,7 @@ export class HeadRow<RowType extends Row<HeadRow<RowType>>> extends NamedCompone
     const incrementScroll = await this.parentTable.incrementScrollGenerator();
     do {
       await setVisibleColumns();
+      await this.root.log(printMap(this.#columnDefs));
     } while (await incrementScroll());
     return this.#columnDefs;
   }

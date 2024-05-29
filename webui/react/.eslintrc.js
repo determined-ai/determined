@@ -19,6 +19,7 @@ module.exports = {
     Atomics: 'readonly',
     SharedArrayBuffer: 'readonly',
   },
+  ignorePatterns: ['**/src/services/stream/wire.ts', '**/src/e2e/playwright-report/**'],
   overrides: [
     {
       files: ['**/*.ts', '**/*.tsx'],
@@ -35,6 +36,7 @@ module.exports = {
       files: ['**/src/e2e/**'],
       rules: {
         '@typescript-eslint/no-floating-promises': 'error',
+        'no-console': 'off',
       },
     },
   ],
@@ -42,11 +44,11 @@ module.exports = {
   parserOptions: {
     ecmaFeatures: { jsx: true },
     ecmaVersion: 2018,
+    project: true,
     sourceType: 'module',
   },
   plugins: ['import', 'jsdoc', 'react', 'react-hooks', 'sort-keys-fix'],
   root: true,
-  ignorePatterns: ['**/src/services/stream/wire.ts', '**/src/e2e/playwright-report/**'],
   rules: {
     // Can disagree with @typescript-eslint/member-ordering.
     '@typescript-eslint/adjacent-overload-signatures': 'off',

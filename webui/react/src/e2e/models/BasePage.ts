@@ -73,4 +73,10 @@ export abstract class BasePage implements ModelBasics {
     }
     return this;
   }
+
+  async log(s: string): Promise<void> {
+    await this._page.evaluate((s: string) => {
+      console.log(s);
+    }, s);
+  }
 }

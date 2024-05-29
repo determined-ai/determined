@@ -26,12 +26,8 @@ test.describe('User Management', () => {
     if (await userManagementPage.table.table.pagination.pwLocator.isVisible()) {
       await expect(
         repeatWithFallback(
-          async () => {
-            await expect(page1).toHaveClass(/ant-pagination-item-active/);
-          },
-          async () => {
-            await page1.click();
-          },
+          async () => await expect(page1).toHaveClass(/ant-pagination-item-active/),
+          async () => await page1.click(),
         ),
       ).toPass({ timeout: 10_000 });
     }
