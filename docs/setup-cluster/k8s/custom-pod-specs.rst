@@ -5,8 +5,8 @@
 #################
 
 In a :ref:`Determined cluster running on Kubernetes <determined-on-kubernetes>`, tasks (e.g.,
-experiments, notebooks) are executed by launching one or more Kubernetes pods. You can customize
-these pods by providing custom `pod specs
+experiments, notebooks) are executed by launching a Kubernetes job. These jobs launch one or more
+Kubernetes pods. You can customize these pods by providing custom `pod specs
 <https://kubernetes.io/docs/reference/generated/kubernetes-api/v1.23/#pod-v1-core>`__. Common use
 cases include assigning pods to specific nodes, specifying additional volume mounts, and attaching
 permissions. Configuring pod specs is not required to use Determined on Kubernetes.
