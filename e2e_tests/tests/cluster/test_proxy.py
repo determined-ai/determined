@@ -5,11 +5,10 @@ import re
 import socket
 import subprocess
 import time
-from typing import Tuple
+from typing import Callable, Optional, Tuple
 
 import pytest
 import requests
-from websocket import create_connection
 
 from determined.common import api
 from determined.common.api import bindings
@@ -31,20 +30,53 @@ def _experiment_task_id(sess: api.Session, exp_id: int) -> str:
     return task_id
 
 
-def _probe_tunnel(
-    proc: "subprocess.Popen[str]", port: int = 8265, max_tunnel_time: int = 300
-) -> None:
-    start = time.time()
-    ctr = 0
-    while time.time() - start < max_tunnel_time:
+Check = Callable[[], bool]
+
+
+def _ray_tunnel_check(port: int = 8265) -> Check:
+    def check() -> bool:
         try:
             r = requests.get(f"http://localhost:{port}", timeout=5)
             if r.status_code == 200:
-                break
+                return True
         except requests.exceptions.ConnectionError:
             pass
         except requests.exceptions.ReadTimeout:
             pass
+        return False
+
+    return check
+
+
+def _echo_server_check(port: int) -> Check:
+    host = "127.0.0.1"
+    test_message = "Hello, Server"
+
+    def check() -> bool:
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
+                client_socket.connect((host, port))
+                client_socket.sendall(test_message.encode())
+                received_message = client_socket.recv(1024).decode()
+                assert (
+                    received_message == test_message
+                ), f"Expected '{test_message}', but got '{received_message}'"
+                return True
+        except ConnectionRefusedError:
+            pass
+        return False
+
+    return check
+
+
+def _probe_tunnel(
+    proc: "subprocess.Popen[str]", predicate: Check, max_tunnel_time: int = 300
+) -> None:
+    start = time.time()
+    ctr = 0
+    while time.time() - start < max_tunnel_time:
+        if predicate():
+            break
         if ctr + 1 % 10 == 0:
             print(f"Tunnel probe pending: {ctr} ticks...")
         time.sleep(1)
@@ -73,7 +105,7 @@ def _ray_job_submit(exp_path: pathlib.Path, port: int = 8265) -> None:
 )
 def test_experiment_proxy_simple(port_map: Tuple[int, bool]) -> None:
     exp_port, is_tcp = port_map
-    listener_port = exp_port
+    listener_port = 23424
     sess = api_utils.user_session()
     exp_path = pathlib.Path(conf.fixtures_path("ports-proxy"))
     exp_id = exp.create_experiment(
@@ -85,10 +117,11 @@ def test_experiment_proxy_simple(port_map: Tuple[int, bool]) -> None:
         exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.RUNNING)
         task_id = _experiment_task_id(sess, exp_id)
 
-        tl = ""
+        tl: Optional[bindings.v1TaskLogsResponse] = None
         for tl in api.task_logs(sess, task_id, follow=True):
-            if "Server listening" in tl.message:
+            if "Servers started" in tl.message:
                 break
+        assert tl is not None, "Failed to find 'Servers started' in task logs"
         print("server ready", tl)
         proxy_url = f"/proxy/{task_id}:{exp_port}/"
         if is_tcp:
@@ -108,7 +141,7 @@ def test_experiment_proxy_simple(port_map: Tuple[int, bool]) -> None:
             )
 
             try:
-                _probe_tunnel(proc, port=listener_port, max_tunnel_time=10)
+                _probe_tunnel(proc, _echo_server_check(port=listener_port), max_tunnel_time=100)
             finally:
                 proc.terminate()
                 proc.wait(10)
@@ -151,8 +184,8 @@ def test_experiment_proxy_ray_tunnel() -> None:
         )
 
         try:
-            _probe_tunnel(proc)
-            # _ray_job_submit(exp_path)
+            _probe_tunnel(proc, _ray_tunnel_check(port=8265))
+            _ray_job_submit(exp_path)
         finally:
             proc.terminate()
             proc.wait(10)
@@ -230,7 +263,7 @@ def test_experiment_proxy_ray_publish() -> None:
 
         try:
             exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.RUNNING)
-            _probe_tunnel(proc)
+            _probe_tunnel(proc, _ray_tunnel_check(port=8265))
             _ray_job_submit(exp_path)
         finally:
             bindings.post_KillExperiment(sess, id=exp_id)
