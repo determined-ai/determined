@@ -1,10 +1,13 @@
-import { expect, Page } from '@playwright/test';
-import _ from 'lodash';
-
 import { UserManagement } from 'e2e/models/pages/Admin/UserManagement';
 import { safeName } from 'e2e/utils/naming';
 import { repeatWithFallback } from 'e2e/utils/polling';
+import _ from 'lodash';
 import { V1PostUserRequest } from 'services/api-ts-sdk/api';
+
+import {
+  expect,
+  Page,
+} from '@playwright/test';
 
 interface UserArgs {
   username?: string;
@@ -25,7 +28,7 @@ export class UserFixture {
    * @param {V1PostUserRequest} edit user settings to set user too.
    */
   async fillUserForm(edit: UserArgs): Promise<void> {
-    await this.userManagementPage._page.waitForTimeout(500); // [ET-283]
+    await this.userManagementPage._page.waitForTimeout(500); // ant/Popover - menus may reset input shortly after opening [ET-283]
     if (edit.username !== undefined) {
       await this.userManagementPage.createUserModal.username.pwLocator.fill(edit.username);
     }

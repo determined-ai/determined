@@ -1,13 +1,20 @@
-import { APIRequest, APIRequestContext, Browser, BrowserContext, Page } from '@playwright/test';
 import { v4 } from 'uuid';
 
+import {
+  APIRequest,
+  APIRequestContext,
+  Browser,
+  BrowserContext,
+  Page,
+} from '@playwright/test';
+
 export class ApiAuthFixture {
-  apiContext: APIRequestContext | undefined; // we can't get this until login, so may be undefined
+  apiContext?: APIRequestContext; // we can't get this until login, so may be undefined
   readonly request: APIRequest;
   readonly browser: Browser;
   readonly baseURL: string;
   readonly testId = v4();
-  _page: Page | undefined;
+  _page?: Page;
   get page(): Page {
     if (this._page === undefined) {
       throw new Error('Accessing page object before initialization in authentication');
@@ -17,14 +24,14 @@ export class ApiAuthFixture {
   readonly #STATE_FILE_SUFFIX = 'state.json';
   readonly #USERNAME: string;
   readonly #PASSWORD: string;
-  context: BrowserContext | undefined;
+  context?: BrowserContext;
   readonly #stateFile = `${this.testId}-${this.#STATE_FILE_SUFFIX}`;
 
   constructor(
     request: APIRequest,
     browser: Browser,
-    baseURL: string | undefined,
-    existingPage: Page | undefined = undefined,
+    baseURL?: string,
+    existingPage?: Page,
   ) {
     if (process.env.PW_USER_NAME === undefined) {
       throw new Error('username must be defined');

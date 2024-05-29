@@ -1,5 +1,3 @@
-import { expect } from '@playwright/test';
-
 import { test } from 'e2e/fixtures/global-fixtures';
 import { UserManagement } from 'e2e/models/pages/Admin/UserManagement';
 import { SignIn } from 'e2e/models/pages/SignIn';
@@ -8,14 +6,15 @@ import { repeatWithFallback } from 'e2e/utils/polling';
 import { saveTestUser } from 'e2e/utils/users';
 import { V1PostUserRequest } from 'services/api-ts-sdk/api';
 
+import { expect } from '@playwright/test';
+
 // creating users while running tests in parallel can cause the users table to refresh at unexpected times
 test.describe.configure({ mode: 'serial' });
 
 test.describe('User Management', () => {
   // One list of users per test session. This is to encourage a final teardown
-  // instance of the user fixture to deactivate all users created by the different
-  // instances of the fixture used in each test scenario.
-  // Note: This is can't collide when running tests in parallel because playwright
+  // call of the user fixture to deactivate all users created by each test.
+  // Note: This can't collide when running tests in parallel because playwright
   // workers can't share variables.
   const testUsers = new Map<number, V1PostUserRequest>();
   test.beforeEach(async ({ authedPage }) => {
@@ -50,7 +49,6 @@ test.describe('User Management', () => {
       await backgroundApiUser.apiAuth.login();
       await test.step('Deactivate Users', async () => {
         for (const [id] of testUsers) {
-          await backgroundApiUser.apiAuth.login();
           await backgroundApiUser.patchUser(id, { active: false });
         }
       });
