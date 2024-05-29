@@ -3878,7 +3878,7 @@ jobs:
                 name: Test EFS
                 command: |
                   DET_USER=admin DET_PASS=${INITIAL_USER_PASSWORD} \
-                  det cmd run --config resources.slots=1 'mount | grep efs && echo MARKER' | grep MARKER
+                  det cmd run --config resources.slots=1 'mount | grep nfs4 && echo MARKER' | grep MARKER
       - locate-cloudwatch-logs:
           cluster-id: ${CLUSTER_ID}
       - terminate-aws-cluster:
