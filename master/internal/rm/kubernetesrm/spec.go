@@ -46,6 +46,7 @@ const (
 	taskTypeLabel     = labelPrefix + "task_type"
 	taskIDLabel       = labelPrefix + "task_id"
 	containerIDLabel  = labelPrefix + "container_id"
+	rankLabel         = labelPrefix + "rank"
 )
 
 func (p *pod) configureResourcesRequirements() k8sV1.ResourceRequirements {
@@ -138,6 +139,9 @@ func (p *pod) configureProxyResources() *proxyResourceGenerator { // TODO return
 	if p.exposeProxyConfig == nil {
 		return nil
 	}
+	if p.rank == nil || *p.rank != 0 {
+		return nil
+	}
 
 	// this needs to take PortMap for the reattach process to recreate the resources.
 	generator := proxyResourceGenerator(func(ports []int) []gatewayProxyResource {
@@ -160,6 +164,12 @@ func (p *pod) configureProxyResources() *proxyResourceGenerator { // TODO return
 			allocLabels := map[string]string{
 				determinedLabel: p.submissionInfo.taskSpec.AllocationID,
 			}
+			selectorLabels := make(map[string]string)
+			for k, v := range allocLabels {
+				selectorLabels[k] = v
+			}
+			selectorLabels[rankLabel] = "0"
+			fmt.Println(selectorLabels)
 
 			serviceSpec := &k8sV1.Service{
 				ObjectMeta: metaV1.ObjectMeta{
@@ -174,7 +184,7 @@ func (p *pod) configureProxyResources() *proxyResourceGenerator { // TODO return
 							Port:     int32(proxyPort.Port),
 						},
 					},
-					Selector: allocLabels,
+					Selector: selectorLabels,
 					Type:     k8sV1.ServiceTypeClusterIP,
 				},
 			}
@@ -471,6 +481,9 @@ func (p *pod) configurePodSpec(
 	podSpec.ObjectMeta.Labels[taskIDLabel] = p.submissionInfo.taskSpec.TaskID
 	podSpec.ObjectMeta.Labels[containerIDLabel] = p.submissionInfo.taskSpec.ContainerID
 	podSpec.ObjectMeta.Labels[determinedLabel] = p.submissionInfo.taskSpec.AllocationID
+	if p.rank != nil {
+		podSpec.ObjectMeta.Labels[rankLabel] = strconv.Itoa(*p.rank)
+	}
 
 	// If map is not populated, labels will be missing and observability will be impacted.
 	for k, v := range p.submissionInfo.taskSpec.ExtraPodLabels {

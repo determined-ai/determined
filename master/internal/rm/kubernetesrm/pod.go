@@ -105,6 +105,7 @@ type pod struct {
 	scheduler            string
 	slotType             device.Type
 	slotResourceRequests config.PodSlotResourceRequests
+	rank                 *int
 
 	pod           *k8sV1.Pod
 	podName       string
@@ -178,6 +179,7 @@ func newPod(
 		loggingTLSConfig:     loggingTLSConfig,
 		loggingConfig:        loggingConfig,
 		slots:                msg.Slots,
+		rank:                 &msg.Rank,
 		podInterface:         podInterface,
 		resourceRequestQueue: resourceRequestQueue,
 		podName:              uniqueName,
@@ -223,7 +225,9 @@ func (p *pod) hasAllResourcesStarted() bool {
 	if p.container.State != cproto.Running {
 		return false
 	}
-	if p.exposeProxyConfig == nil {
+	// TODO: make this a "are we going to deploy/request gateway resources check.
+	// also no need to have it be a ptr
+	if p.exposeProxyConfig == nil || p.rank == nil || *p.rank != 0 {
 		return true
 	}
 	if len(p.req.ProxyPorts) > 0 && len(p.gatewayProxyResources) == 0 {
@@ -411,7 +415,7 @@ func (p *pod) createPodSpecAndSubmit() error {
 	if err := p.createPodSpec(p.scheduler); err != nil {
 		return err
 	}
-	if p.exposeProxyConfig == nil {
+	if p.exposeProxyConfig == nil || p.rank == nil || *p.rank != 0 {
 		p.resourceRequestQueue.createKubernetesResources(p.pod, p.configMap, nil)
 		return nil
 	}
