@@ -1,0 +1,29 @@
+name: experiment-port-proxy
+entrypoint: python3 start.py
+
+resources:
+  slots_per_trial: 0
+
+searcher:
+  max_length: 10000000
+  name: grid
+  metric: x
+  max_concurrent_trials: 2
+
+hyperparameters:
+  model_version:
+    type: categorical
+    vals:
+      - 1
+      - 2
+      - 3
+      - 4
+
+max_restarts: 0
+
+environment:
+  proxy_ports:
+    - proxy_port: 8000
+      proxy_tcp: false
+    - proxy_port: 6000
+      proxy_tcp: true
