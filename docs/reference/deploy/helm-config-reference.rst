@@ -192,7 +192,7 @@
    -  ``gpuPodSpec``: Sets the default pod spec for all GPU tasks. See :ref:`custom-pod-specs` for
       details.
 
-   -  ``checkpointGcPodSpec``: Sets the custom pod spec for Checkpoint GC defaults. See 
+   -  ``checkpointGcPodSpec``: Sets the custom pod spec for Checkpoint GC defaults. See
       :ref:`custom-pod-specs` for details.
 
    -  ``cpuImage``: Sets the default Docker image for all non-GPU tasks. If a Docker image is

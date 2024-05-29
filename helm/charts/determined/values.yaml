@@ -264,8 +264,8 @@ taskContainerDefaults:
   # cpuPodSpec:
   # gpuPodSpec:
 
-  # Configure a custom CheckpointGC pod spec for experiments. If a pod spec is defined for an 
-  # individual experiment, that pod spec will replace the default one that is defined here. See
+  # Configure a custom CheckpointGC pod spec for experiments. When a custom CheckpointGC pod spec
+  # is defined, it takes precedence over the default CheckpointGC pod specifications. See
   # https://docs:determined.ai/latest/topic-guides/custom-pod-specs.html for more details.
   # checkpointGcPodSpec:
 
