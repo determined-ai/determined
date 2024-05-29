@@ -64,10 +64,34 @@ export class Dropdown extends BaseComponent {
    * Returns a representation of a dropdown menu item with the specified id.
    * @param {string} id - the id of the menu item
    */
-  menuItem(id: string): BaseComponent {
-    return new BaseComponent({
+  menuItem(id: string): menuItem {
+    return new menuItem({
       parent: this,
       selector: `li.ant-dropdown-menu-item[data-menu-id$="${id}"]`,
     });
+  }
+
+  /**
+   * Selects a menu item with the specified id.
+   * @param {string} id - id of the item to select
+   */
+  async selectMenuOption(id: string): Promise<void> {
+    await this.open();
+    await this.menuItem(id).pwLocator.click();
+    await this.pwLocator.waitFor({ state: 'hidden' });
+  }
+}
+
+class menuItem extends BaseComponent {
+  override readonly _parent: Dropdown;
+  constructor({ parent, selector }: { parent: Dropdown; selector: string }) {
+    super({ parent, selector });
+    this._parent = parent;
+  }
+
+  async select(clickArgs = {}): Promise<void> {
+    await this._parent.open();
+    await this.pwLocator.click(clickArgs);
+    await this._parent.pwLocator.waitFor({ state: 'hidden' });
   }
 }

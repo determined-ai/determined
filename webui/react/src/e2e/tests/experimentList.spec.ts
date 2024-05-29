@@ -7,10 +7,6 @@ import { detExecSync, fullPath } from 'e2e/utils/detCLI';
 
 test.describe('Experiement List', () => {
   let projectDetailsPage: ProjectDetails;
-
-  // close the popover with a click elsewhere
-  const closePopover = async () =>
-    await projectDetailsPage.f_experiemntList.tableActionBar.expNum.pwLocator.click();
   // trial click to wait for the element to be stable won't work here
   const waitTableStable = async () => await projectDetailsPage._page.waitForTimeout(2_000);
   const getExpNum = async () => {
@@ -56,30 +52,27 @@ test.describe('Experiement List', () => {
     await projectDetailsPage.gotoProject();
     await expect(projectDetailsPage.f_experiemntList.dataGrid.rows.pwLocator).not.toHaveCount(0);
     await test.step('Deselect', async () => {
-      const selectMenu =
-        await projectDetailsPage.f_experiemntList.dataGrid.headRow.selectDropdown.open();
-      const selectNone = selectMenu.menuItem('select-none');
-      if (await selectNone.pwLocator.isVisible()) {
-        await selectNone.pwLocator.click();
+      try {
+        await grid.headRow.selectDropdown.menuItem('select-none').select({ timeout: 1_000 });
+      } catch (e) {
+        // Ignore if no selection
       }
-      await closePopover();
     });
     await test.step('Reset Columns', async () => {
       const columnPicker =
         await projectDetailsPage.f_experiemntList.tableActionBar.columnPickerMenu.open();
       await columnPicker.columnPickerTab.reset.pwLocator.click();
-      await closePopover();
+      await columnPicker.close();
     });
     await test.step('Reset Filters', async () => {
       const tableFilter =
         await projectDetailsPage.f_experiemntList.tableActionBar.tableFilter.open();
       await tableFilter.filterForm.clearFilters.pwLocator.click();
-      await closePopover();
+      await tableFilter.close();
     });
     await waitTableStable();
+    await grid.setColumnHeight();
     await grid.headRow.setColumnDefs();
-    await projectDetailsPage.f_experiemntList.dataGrid.setColumnHeight();
-    await projectDetailsPage.f_experiemntList.dataGrid.headRow.setColumnDefs();
   });
 
   test('Navigate to Experiment List', async ({ authedPage }) => {
@@ -98,7 +91,7 @@ test.describe('Experiement List', () => {
     await test.step('Check', async () => {
       await columnPicker.open();
       await checkbox.pwLocator.check();
-      await closePopover();
+      await columnPicker.close();
       await waitTableStable();
       await grid.headRow.setColumnDefs();
       expect(grid.headRow.columnDefs.get(columnTitle)).toBeTruthy();
@@ -108,7 +101,7 @@ test.describe('Experiement List', () => {
     await test.step('Uncheck', async () => {
       await columnPicker.open();
       await checkbox.pwLocator.uncheck();
-      await closePopover();
+      await columnPicker.close();
       await waitTableStable();
       await grid.headRow.setColumnDefs();
       expect(grid.headRow.columnDefs.get(columnTitle)).toBeUndefined();
@@ -124,7 +117,7 @@ test.describe('Experiement List', () => {
     await test.step('General Tab Show All', async () => {
       await columnPicker.open();
       await columnPicker.columnPickerTab.showAll.pwLocator.click();
-      await closePopover();
+      await columnPicker.close();
       await waitTableStable();
       await grid.headRow.setColumnDefs();
       expect.soft(previousTabs).toBeLessThan(grid.headRow.columnDefs.size);
@@ -135,7 +128,7 @@ test.describe('Experiement List', () => {
       await columnPicker.open();
       await columnPicker.hyperparameterTab.pwLocator.click();
       await columnPicker.columnPickerTab.showAll.pwLocator.click();
-      await closePopover();
+      await columnPicker.close();
       await waitTableStable();
       await grid.headRow.setColumnDefs();
       expect.soft(previousTabs).toBeLessThan(grid.headRow.columnDefs.size);
@@ -146,7 +139,7 @@ test.describe('Experiement List', () => {
       await columnPicker.open();
       await columnPicker.generalTab.pwLocator.click();
       await columnPicker.columnPickerTab.showAll.pwLocator.click();
-      await closePopover();
+      await columnPicker.close();
       await waitTableStable();
       await grid.headRow.setColumnDefs();
       expect.soft(previousTabs).toBeGreaterThan(grid.headRow.columnDefs.size);
@@ -159,7 +152,7 @@ test.describe('Experiement List', () => {
       await columnPicker.open();
       await columnPicker.columnPickerTab.search.pwLocator.fill(columnTitle);
       await columnPicker.columnPickerTab.showAll.pwLocator.click();
-      await closePopover();
+      await columnPicker.close();
       await waitTableStable();
       await grid.headRow.setColumnDefs();
       expect.soft(previousTabs + idColumns).toBeLessThanOrEqual(grid.headRow.columnDefs.size);
@@ -180,9 +173,11 @@ test.describe('Experiement List', () => {
       await test.step(name, async () => {
         await tableFilter.open();
         await scenario();
-        await waitTableStable();
+        // [ET-284] - Sometimes, closing the popover too quickly causes the filter to not apply.
+        // await waitTableStable();
+        await projectDetailsPage._page.waitForTimeout(1_000);
         await expect.poll(async () => await getExpNum()).toBe(expectedValue);
-        await closePopover();
+        await tableFilter.close();
       });
     };
 
@@ -191,10 +186,8 @@ test.describe('Experiement List', () => {
       async () => {
         await tableFilter.filterForm.filter.filterFields.columnName.selectMenuOption('ID');
         await expect(tableFilter.filterForm.filter.filterFields.operator.pwLocator).toHaveText('=');
-        await tableFilter.filterForm.filter.filterFields.operator.selectMenuOption('!=');
+        await tableFilter.filterForm.filter.filterFields.operator.selectMenuOption('=');
         await tableFilter.filterForm.filter.filterFields.valueNumber.pwLocator.fill('1');
-        // [ET-284] - Sometimes, closing the popover too quickly causes the filter to not apply.
-        await projectDetailsPage._page.waitForTimeout(1_000);
       },
       1,
     );
