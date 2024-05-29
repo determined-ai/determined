@@ -1,13 +1,10 @@
 package kubernetesrm
 
 import (
-	"context"
 	"testing"
 
 	"github.com/google/uuid"
-	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/require"
-	k8sClient "k8s.io/client-go/kubernetes"
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
@@ -15,8 +12,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
-	"github.com/determined-ai/determined/master/pkg/set"
-	"github.com/determined-ai/determined/master/pkg/syncx/waitgroupx"
 )
 
 var (
@@ -146,7 +141,7 @@ func TestSchedule(t *testing.T) {
 }
 
 func testResourcePool(t *testing.T, slots int) *kubernetesResourcePool {
-	return newResourcePool(slots, &config.ResourcePoolConfig{}, testPodsService(t), db.SingleDB())
+	return newResourcePool(slots, &config.ResourcePoolConfig{}, newTestJobsService(t), db.SingleDB())
 }
 
 func testAddAllocation(
@@ -168,34 +163,4 @@ func testAddAllocation(
 	require.True(t, ok)
 
 	return jobID, req.AllocationID
-}
-
-func testPodsService(t *testing.T) *pods {
-	config, err := readClientConfig("~/.kube/config")
-	require.NoError(t, err)
-
-	clientSet, err := k8sClient.NewForConfig(config)
-	require.NoError(t, err)
-
-	return &pods{
-		wg:                           waitgroupx.WithContext(context.Background()),
-		namespace:                    namespace,
-		masterServiceName:            "master",
-		clientSet:                    clientSet,
-		podNameToPodHandler:          make(map[string]*pod),
-		podNameToResourcePool:        make(map[string]string),
-		containerIDToPodName:         make(map[string]string),
-		containerIDToSchedulingState: make(map[string]sproto.SchedulingState),
-		podNameToContainerID:         make(map[string]string),
-		podHandlerToMetadata:         make(map[*pod]podMetadata),
-		resourceRequestQueue: &requestQueue{
-			failures:                 make(chan resourcesRequestFailure, 16),
-			workerChan:               make(chan interface{}),
-			queue:                    make([]*queuedResourceRequest, 0),
-			creationInProgress:       make(set.Set[requestID]),
-			pendingResourceCreations: make(map[requestID]*queuedResourceRequest),
-			blockedResourceDeletions: make(map[requestID]*queuedResourceRequest),
-			syslog:                   logrus.New().WithField("component", "kubernetesrm-queue"),
-		},
-	}
 }

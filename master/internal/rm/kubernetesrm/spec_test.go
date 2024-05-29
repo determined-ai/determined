@@ -188,7 +188,7 @@ func TestLaterEnvironmentVariablesGetSet(t *testing.T) {
 		},
 	}
 
-	p := pod{}
+	p := job{}
 	actual, err := p.configureEnvVars(make(map[string]string), env, device.CPU)
 	require.NoError(t, err)
 	require.NotContains(t, actual, dontBe, "earlier variable set")
@@ -213,7 +213,7 @@ func TestAllPrintableCharactersInEnv(t *testing.T) {
 		},
 	}
 
-	p := pod{}
+	p := job{}
 	actual, err := p.configureEnvVars(make(map[string]string), env, device.CPU)
 	require.NoError(t, err)
 	require.Contains(t, actual, k8sV1.EnvVar{Name: "test", Value: expectedValue})
@@ -264,12 +264,9 @@ func TestDeterminedLabels(t *testing.T) {
 		},
 	}
 
-	p := pod{
+	p := job{
 		req: &sproto.AllocateRequest{
 			ResourcePool: "test-rp",
-		},
-		submissionInfo: &podSubmissionInfo{
-			taskSpec: taskSpec,
 		},
 	}
 
@@ -282,13 +279,16 @@ func TestDeterminedLabels(t *testing.T) {
 		taskTypeLabel:     string(taskSpec.TaskType),
 		taskIDLabel:       taskSpec.TaskID,
 		containerIDLabel:  taskSpec.ContainerID,
+		allocationIDLabel: taskSpec.AllocationID,
 	}
 	for k, v := range taskSpec.ExtraPodLabels {
 		expectedLabels[labelPrefix+k] = v
 	}
 
-	spec := p.configurePodSpec(make([]k8sV1.Volume, 1), k8sV1.Container{},
-		k8sV1.Container{}, make([]k8sV1.Container, 1), &k8sV1.Pod{}, "scheduler")
+	spec := p.configureJobSpec(
+		&taskSpec, make([]k8sV1.Volume, 1), k8sV1.Container{},
+		k8sV1.Container{}, make([]k8sV1.Container, 1), &k8sV1.Pod{}, "scheduler",
+	)
 
 	// Confirm pod spec has required labels.
 	require.NotNil(t, spec)

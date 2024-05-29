@@ -459,7 +459,7 @@ func generateSlackPayload(
 	var wID int
 	var w *model.Workspace
 	config := conf.GetMasterConfig()
-	wName := activeConfig.Workspace() // TODO(!!!) this is incorrect on moves.
+	wName := activeConfig.Workspace() // TODO(nickb): This is incorrect on moves.
 	pName := activeConfig.Project()
 	webUIBaseURL := config.Webhooks.BaseURL
 	baseURLIsSet := webUIBaseURL != ""

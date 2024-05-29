@@ -103,9 +103,10 @@ func (s TrialSpec) ToTaskSpec() TaskSpec {
 	}
 
 	res.Description = fmt.Sprintf(
-		"exp-%d-trial-%d",
+		"exp-%d-trial-%d-attempt-%d",
 		s.ExperimentID,
 		s.TrialID,
+		s.TrialRunID,
 	)
 
 	res.Entrypoint = []string{"/run/determined/train/entrypoint.sh"}
