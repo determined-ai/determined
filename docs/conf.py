@@ -164,6 +164,7 @@ linkcheck_timeout = 20
 # linkcheck gets confused by anchors sometimes
 linkcheck_anchors_ignore = [
     "install-nvidia-device-plugin",
+    "on-a-multi-user-system",
     "tag/System/operation/SystemAuth",
     "batch-size-related-parameters",
     "metrics",
