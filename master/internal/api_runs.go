@@ -140,7 +140,7 @@ func getRunsColumns(q *bun.SelectQuery) *bun.SelectQuery {
 		Column("r.external_run_id").
 		Column("r.project_id").
 		Column("r.searcher_metric_value").
-		ColumnExpr("r.archived").
+		ColumnExpr("r.archived OR e.archived AS archived").
 		ColumnExpr("extract(epoch FROM coalesce(r.end_time, now()) - r.start_time)::int AS duration").
 		ColumnExpr("CASE WHEN r.hparams='null' THEN NULL ELSE r.hparams END AS hyperparameters").
 		ColumnExpr("r.summary_metrics AS summary_metrics").
