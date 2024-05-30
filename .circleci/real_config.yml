@@ -2023,7 +2023,7 @@ jobs:
           # setting PW_PASSWORD is temporary until DET-10197 is merged and we can set PW_PASSWORD in circleci
           command: |
               npm install dd-trace # DataDog integration
-              NODE_OPTIONS=\"-r 'dd-trace/ci/init'\" \
+              NODE_OPTIONS="-r dd-trace/ci/init" \
               DD_ENV=ci-devcluster-${PW_EE} \
               DD_SERVICE=determined-ui-e2e \
               DD_SITE='datadoghq.com' \
