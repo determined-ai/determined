@@ -2017,16 +2017,15 @@ jobs:
       - wait-for-master:
           host: "localhost"
           port: "8082"
+      - run: npm install dd-trace # DataDog integration
       - run:
           environment:
             PW_EE: << parameters.ee >>
+            NODE_OPTIONS: "-r dd-trace/ci/init"
           # setting PW_PASSWORD is temporary until DET-10197 is merged and we can set PW_PASSWORD in circleci
           command: |
-              npm install dd-trace # DataDog integration
-              NODE_OPTIONS="-r dd-trace/ci/init" \
               DD_ENV=ci-devcluster-${PW_EE} \
               DD_SERVICE=determined-ui-e2e \
-              DD_SITE='datadoghq.com' \
               PW_PASSWORD=${INITIAL_USER_PASSWORD} \
               npm run e2e --prefix webui/react -- << parameters.playwright-options >>
       - store_artifacts:
