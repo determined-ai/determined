@@ -92,7 +92,7 @@ export const RunFilterInterstitialModalComponent = forwardRef<ControlledModalRef
                   filterFormSet.filterGroup,
                   {
                     children: selection.exclusions.map(idToFilter.bind(this, '!=')),
-                    conjunction: 'or',
+                    conjunction: 'and',
                     kind: 'group',
                   },
                 ],
