@@ -889,28 +889,21 @@ func TestNodeWorkflows(t *testing.T) {
 	require.Nil(t, stop.Failure)
 }
 
-func TestAllocateAndReleaseBeforeScheduled(t *testing.T) {
+func TestAllocateAndReleaseBeforeStarted(t *testing.T) {
 	rp := newTestResourcePool(newTestJobsService(t))
 	allocID := model.AllocationID(uuid.NewString())
 
-	// AllocateRequest
 	allocReq := sproto.AllocateRequest{
 		AllocationID: allocID,
 		JobID:        model.NewJobID(),
 		Name:         uuid.NewString(),
 		BlockedNodes: []string{uuid.NewString(), uuid.NewString()},
 	}
-
 	rp.AllocateRequest(allocReq)
 	req, ok := rp.reqList.TaskByID(allocID)
-
 	require.True(t, ok)
-	require.Equal(t, allocID, req.AllocationID)
-	require.Equal(t, allocReq.JobID, req.JobID)
-	require.Equal(t, allocReq.BlockedNodes, req.BlockedNodes)
-	require.Equal(t, allocReq.Name, req.Name)
+	require.Equal(t, allocReq, *req)
 
-	// ResourcesReleased
 	rp.ResourcesReleased(sproto.ResourcesReleased{
 		AllocationID: allocID,
 		ResourcePool: rp.poolConfig.PoolName,
@@ -918,6 +911,69 @@ func TestAllocateAndReleaseBeforeScheduled(t *testing.T) {
 	req, ok = rp.reqList.TaskByID(allocID)
 	require.False(t, ok)
 	require.Nil(t, req)
+}
+
+func TestGroupMaxSlots(t *testing.T) {
+	j := newTestJobsService(t)
+	rp := newTestResourcePool(j)
+
+	id := uuid.NewString()
+	jobID := model.JobID(id)
+
+	err := tasklist.GroupPriorityChangeRegistry.Add(jobID, func(i int) error { return nil })
+	require.NoError(t, err)
+
+	t.Log("set group to have a max of one slot")
+	rp.SetGroupMaxSlots(sproto.SetGroupMaxSlots{
+		MaxSlots: ptrs.Ptr(1),
+		JobID:    jobID,
+	})
+
+	t.Log("first one slot task in the job should get scheduled")
+	taskID, allocationID := model.TaskID(id), model.AllocationID(id)
+	startTime := time.Now()
+	rp.AllocateRequest(sproto.AllocateRequest{
+		AllocationID:      allocationID,
+		TaskID:            taskID,
+		JobID:             jobID,
+		RequestTime:       startTime,
+		JobSubmissionTime: startTime,
+		IsUserVisible:     true,
+		Name:              "test job",
+		SlotsNeeded:       1,
+		ResourcePool:      "default",
+	})
+	require.True(t, rp.reschedule)
+	require.False(t, rp.reqList.IsScheduled(allocationID))
+	rp.Schedule()
+	require.False(t, rp.reschedule)
+	require.True(t, rp.reqList.IsScheduled(allocationID))
+
+	t.Log("but the second shouldn't")
+	id2 := uuid.NewString()
+	taskID2, allocationID2 := model.TaskID(id2), model.AllocationID(id2)
+	rp.AllocateRequest(sproto.AllocateRequest{
+		AllocationID:      allocationID2,
+		TaskID:            taskID2,
+		JobID:             jobID,
+		RequestTime:       startTime,
+		JobSubmissionTime: startTime,
+		IsUserVisible:     true,
+		Name:              "test job",
+		SlotsNeeded:       1,
+		ResourcePool:      "default",
+	})
+	require.True(t, rp.reschedule)
+	require.False(t, rp.reqList.IsScheduled(allocationID2))
+	rp.Schedule()
+	require.False(t, rp.reschedule)
+	require.False(t, rp.reqList.IsScheduled(allocationID2))
+
+	t.Log("and when the first releases it should get scheduled")
+	rp.ResourcesReleased(sproto.ResourcesReleased{AllocationID: allocationID})
+	rp.Schedule()
+	require.False(t, rp.reschedule)
+	require.True(t, rp.reqList.IsScheduled(allocationID2))
 }
 
 func TestPendingPreemption(t *testing.T) {
