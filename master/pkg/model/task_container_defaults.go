@@ -342,3 +342,8 @@ func envVarName(v string) string {
 	parts := strings.Split(v, "=")
 	return parts[0]
 }
+
+// IsNil checks with the TaskContainerDefaultsConfig is Nil or not.
+func (c *TaskContainerDefaultsConfig) IsNil() bool {
+	return c == nil
+}

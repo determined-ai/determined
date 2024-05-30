@@ -39,7 +39,7 @@ func (g GCCkptSpec) ToTaskSpec() TaskSpec {
 	envVars := g.LegacyConfig.Environment.EnvironmentVariables()
 
 	podSpec := g.LegacyConfig.Environment.PodSpec()
-	if g.Base.TaskContainerDefaults.CheckpointGCPodSpec != nil {
+	if !g.Base.TaskContainerDefaults.IsNil() && g.Base.TaskContainerDefaults.CheckpointGCPodSpec != nil {
 		podSpec = (*expconf.PodSpec)(g.Base.TaskContainerDefaults.CheckpointGCPodSpec)
 	}
 
