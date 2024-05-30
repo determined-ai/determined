@@ -889,6 +889,181 @@ func TestNodeWorkflows(t *testing.T) {
 	require.Nil(t, stop.Failure)
 }
 
+func TestAllocateAndReleaseBeforeStarted(t *testing.T) {
+	rp := newTestResourcePool(newTestJobsService(t))
+	allocID := model.AllocationID(uuid.NewString())
+
+	allocReq := sproto.AllocateRequest{
+		AllocationID: allocID,
+		JobID:        model.NewJobID(),
+		Name:         uuid.NewString(),
+		BlockedNodes: []string{uuid.NewString(), uuid.NewString()},
+	}
+	rp.AllocateRequest(allocReq)
+	req, ok := rp.reqList.TaskByID(allocID)
+	require.True(t, ok)
+	require.Equal(t, allocReq, *req)
+
+	rp.ResourcesReleased(sproto.ResourcesReleased{
+		AllocationID: allocID,
+		ResourcePool: rp.poolConfig.PoolName,
+	})
+	req, ok = rp.reqList.TaskByID(allocID)
+	require.False(t, ok)
+	require.Nil(t, req)
+}
+
+func TestGroupMaxSlots(t *testing.T) {
+	j := newTestJobsService(t)
+	rp := newTestResourcePool(j)
+
+	id := uuid.NewString()
+	jobID := model.JobID(id)
+
+	err := tasklist.GroupPriorityChangeRegistry.Add(jobID, func(i int) error { return nil })
+	require.NoError(t, err)
+
+	t.Log("set group to have a max of one slot")
+	rp.SetGroupMaxSlots(sproto.SetGroupMaxSlots{
+		MaxSlots: ptrs.Ptr(1),
+		JobID:    jobID,
+	})
+
+	t.Log("first one slot task in the job should get scheduled")
+	taskID, allocationID := model.TaskID(id), model.AllocationID(id)
+	startTime := time.Now()
+	rp.AllocateRequest(sproto.AllocateRequest{
+		AllocationID:      allocationID,
+		TaskID:            taskID,
+		JobID:             jobID,
+		RequestTime:       startTime,
+		JobSubmissionTime: startTime,
+		IsUserVisible:     true,
+		Name:              "test job",
+		SlotsNeeded:       1,
+		ResourcePool:      "default",
+	})
+	require.True(t, rp.reschedule)
+	require.False(t, rp.reqList.IsScheduled(allocationID))
+	rp.Schedule()
+	require.False(t, rp.reschedule)
+	require.True(t, rp.reqList.IsScheduled(allocationID))
+
+	t.Log("but the second shouldn't")
+	id2 := uuid.NewString()
+	taskID2, allocationID2 := model.TaskID(id2), model.AllocationID(id2)
+	rp.AllocateRequest(sproto.AllocateRequest{
+		AllocationID:      allocationID2,
+		TaskID:            taskID2,
+		JobID:             jobID,
+		RequestTime:       startTime,
+		JobSubmissionTime: startTime,
+		IsUserVisible:     true,
+		Name:              "test job",
+		SlotsNeeded:       1,
+		ResourcePool:      "default",
+	})
+	require.True(t, rp.reschedule)
+	require.False(t, rp.reqList.IsScheduled(allocationID2))
+	rp.Schedule()
+	require.False(t, rp.reschedule)
+	require.False(t, rp.reqList.IsScheduled(allocationID2))
+
+	t.Log("and when the first releases it should get scheduled")
+	rp.ResourcesReleased(sproto.ResourcesReleased{AllocationID: allocationID})
+	rp.Schedule()
+	require.False(t, rp.reschedule)
+	require.True(t, rp.reqList.IsScheduled(allocationID2))
+}
+
+func TestPendingPreemption(t *testing.T) {
+	var rp kubernetesResourcePool
+	err := rp.PendingPreemption(sproto.PendingPreemption{})
+	require.Equal(t, rmerrors.ErrNotSupported, err)
+}
+
+func TestSetGroupWeight(t *testing.T) {
+	var rp kubernetesResourcePool
+	err := rp.SetGroupWeight(sproto.SetGroupWeight{})
+	require.Equal(t, rmerrors.UnsupportedError("set group weight is unsupported in k8s"), err)
+}
+
+func TestSetGroupPriority(t *testing.T) {
+	rp := newTestResourcePool(newTestJobsService(t))
+
+	cases := []struct {
+		name        string
+		newPriority int
+		preemptible bool
+	}{
+		{"not-preemptible", 0, false},
+		{"no change", int(config.KubernetesDefaultPriority), true},
+		{"increase", 100, true},
+		{"decrease", 1, true},
+		{"negative", -10, true}, // doesn't make sense, but it is allowed
+	}
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			jobID := model.NewJobID()
+
+			rp.AllocateRequest(sproto.AllocateRequest{
+				JobID:       jobID,
+				Preemptible: tt.preemptible,
+			})
+
+			err := rp.SetGroupPriority(sproto.SetGroupPriority{
+				Priority:     tt.newPriority,
+				ResourcePool: rp.poolConfig.PoolName,
+				JobID:        jobID,
+			})
+
+			if tt.preemptible {
+				require.NoError(t, err)
+				// TODO (bradley): check that the priority change is reflected in rm events
+				// require.Equal(t, tt.newPriority, *rp.getOrCreateGroup(jobID).Priority)
+			} else {
+				require.Error(t, err)
+			}
+		})
+	}
+}
+
+func TestValidateResources(t *testing.T) {
+	rp := newTestResourcePool(newTestJobsService(t))
+
+	cases := []struct {
+		name        string
+		slots       int
+		fulfillable bool
+	}{
+		{"valid", 1, true},
+		{"invalid", 100, false},
+	}
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			res := rp.ValidateResources(sproto.ValidateResourcesRequest{
+				Slots: tt.slots,
+			})
+			require.Equal(t, tt.fulfillable, res.Fulfillable)
+		})
+	}
+}
+
+func TestSchedule(t *testing.T) {
+	// TODO RM-301
+	t.Skip("skipping test until flake fixed")
+	rp := newTestResourcePool(newTestJobsService(t))
+	_, allocID := testAddAllocation(t, rp, defaultState)
+
+	require.True(t, rp.reschedule)
+	require.False(t, rp.reqList.IsScheduled(allocID))
+
+	rp.Schedule()
+
+	require.False(t, rp.reschedule)
+	require.True(t, rp.reqList.IsScheduled(allocID))
+}
+
 func poll[T sproto.ResourcesEvent](ctx context.Context, t *testing.T, sub *sproto.ResourcesSubscription) T {
 	for {
 		ev, err := sub.GetWithContext(ctx)
@@ -943,129 +1118,6 @@ func newTestJobsService(t *testing.T) *jobsService {
 	)
 	require.NoError(t, err)
 	return j
-}
-
-func TestAllocateAndReleaseBeforeScheduled(t *testing.T) {
-	rp := testResourcePool(t, defaultSlots)
-	allocID := model.AllocationID(uuid.NewString())
-
-	// AllocateRequest
-	allocReq := sproto.AllocateRequest{
-		AllocationID: allocID,
-		JobID:        model.NewJobID(),
-		Name:         uuid.NewString(),
-		BlockedNodes: []string{uuid.NewString(), uuid.NewString()},
-	}
-
-	rp.AllocateRequest(allocReq)
-	req, ok := rp.reqList.TaskByID(allocID)
-
-	require.True(t, ok)
-	require.Equal(t, allocID, req.AllocationID)
-	require.Equal(t, allocReq.JobID, req.JobID)
-	require.Equal(t, allocReq.BlockedNodes, req.BlockedNodes)
-	require.Equal(t, allocReq.Name, req.Name)
-
-	// ResourcesReleased
-	rp.ResourcesReleased(sproto.ResourcesReleased{
-		AllocationID: allocID,
-		ResourcePool: rp.poolConfig.PoolName,
-	})
-	req, ok = rp.reqList.TaskByID(allocID)
-	require.False(t, ok)
-	require.Nil(t, req)
-}
-
-func TestPendingPreemption(t *testing.T) {
-	var rp kubernetesResourcePool
-	err := rp.PendingPreemption(sproto.PendingPreemption{})
-	require.Equal(t, rmerrors.ErrNotSupported, err)
-}
-
-func TestSetGroupWeight(t *testing.T) {
-	var rp kubernetesResourcePool
-	err := rp.SetGroupWeight(sproto.SetGroupWeight{})
-	require.Equal(t, rmerrors.UnsupportedError("set group weight is unsupported in k8s"), err)
-}
-
-func TestSetGroupPriority(t *testing.T) {
-	rp := testResourcePool(t, defaultSlots)
-
-	cases := []struct {
-		name        string
-		newPriority int
-		preemptible bool
-	}{
-		{"not-preemptible", 0, false},
-		{"no change", int(config.KubernetesDefaultPriority), true},
-		{"increase", 100, true},
-		{"decrease", 1, true},
-		{"negative", -10, true}, // doesn't make sense, but it is allowed
-	}
-	for _, tt := range cases {
-		t.Run(tt.name, func(t *testing.T) {
-			jobID := model.NewJobID()
-
-			rp.AllocateRequest(sproto.AllocateRequest{
-				JobID:       jobID,
-				Preemptible: tt.preemptible,
-			})
-
-			err := rp.SetGroupPriority(sproto.SetGroupPriority{
-				Priority:     tt.newPriority,
-				ResourcePool: rp.poolConfig.PoolName,
-				JobID:        jobID,
-			})
-
-			if tt.preemptible {
-				require.NoError(t, err)
-				// TODO (bradley): check that the priority change is reflected in rm events
-				// require.Equal(t, tt.newPriority, *rp.getOrCreateGroup(jobID).Priority)
-			} else {
-				require.Error(t, err)
-			}
-		})
-	}
-}
-
-func TestValidateResources(t *testing.T) {
-	rp := testResourcePool(t, defaultSlots)
-
-	cases := []struct {
-		name        string
-		slots       int
-		fulfillable bool
-	}{
-		{"valid", 1, true},
-		{"invalid", 100, false},
-	}
-	for _, tt := range cases {
-		t.Run(tt.name, func(t *testing.T) {
-			res := rp.ValidateResources(sproto.ValidateResourcesRequest{
-				Slots: tt.slots,
-			})
-			require.Equal(t, tt.fulfillable, res.Fulfillable)
-		})
-	}
-}
-
-func TestSchedule(t *testing.T) {
-	// TODO RM-301
-	t.Skip("skipping test until flake fixed")
-	rp := testResourcePool(t, defaultSlots)
-	_, allocID := testAddAllocation(t, rp, defaultState)
-
-	require.True(t, rp.reschedule)
-	require.False(t, rp.reqList.IsScheduled(allocID))
-
-	rp.Schedule()
-
-	require.False(t, rp.reschedule)
-	require.True(t, rp.reqList.IsScheduled(allocID))
-}
-
-func testResourcePool(t *testing.T, slots int) *kubernetesResourcePool {
-	return newResourcePool(slots, &config.ResourcePoolConfig{}, newTestJobsService(t), db.SingleDB())
 }
 
 func testAddAllocation(

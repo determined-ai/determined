@@ -491,13 +491,13 @@ func (k *kubernetesResourcePool) assignResources(
 			WithField("allocation-id", req.AllocationID).
 			WithField("task-handler", req.Name).
 			WithField("num-pods", numPods).
-			Infof("restored job")
+			Infof("restored kubernetes job")
 	} else {
 		k.syslog.
 			WithField("allocation-id", req.AllocationID).
 			WithField("task-handler", req.Name).
 			WithField("num-pods", numPods).
-			Infof("assigned job")
+			Infof("admitting kubernetes job")
 	}
 
 	if req.Restore {
