@@ -337,15 +337,15 @@ func (j *job) podUpdatedCallback(updatedPod k8sV1.Pod) error {
 			// the case we check if a deletion timestamp has been set.
 			exit = &exitReason{msg: "unable to get exit code or exit message from deleted pod"}
 		}
-		if exit.code > 0 {
+		if !isSuccessfulExit(exit) {
+			if j.jobExitCause == nil {
+				j.jobExitCause = exit
+			}
 			j.syslog.
 				WithField("code", exit.code).
 				WithField("cause", j.jobExitCause).
 				Infof("detected a determined containers crashed, cleaning up job: %s", exit.msg)
 			j.killPod(podName)
-		}
-		if j.jobExitCause == nil {
-			j.jobExitCause = exit
 		}
 		j.podExits[podName] = true
 	}

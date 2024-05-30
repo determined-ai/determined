@@ -54,36 +54,6 @@ func runDefaultErrorHandler(ctx context.Context, failures <-chan resourcesReques
 	}
 }
 
-func consumeResourceRequestFailures(
-	ctx context.Context,
-	failures <-chan resourcesRequestFailure,
-	ref *job,
-) {
-	for {
-		select {
-		case failure := <-failures:
-			switch e := failure.(type) {
-			case resourceCreationFailed:
-				logrus.Errorf("defaultErrorHandler resource creation failed: %v", e)
-				ref.receiveResourceCreationFailed(e)
-				ref.finalize()
-			case resourceDeletionFailed:
-				logrus.Errorf("defaultErrorHandler resource deletion failed: %v", e)
-				ref.receiveResourceDeletionFailed(e)
-				ref.finalize()
-			case resourceCreationCancelled:
-				logrus.Infof("defaultErrorHandler resource deletion failed: %v", e)
-				ref.receiveResourceCreationCancelled()
-				ref.finalize()
-			default:
-				panic(fmt.Sprintf("unexpected error %T", e))
-			}
-		case <-ctx.Done():
-			return
-		}
-	}
-}
-
 func (m *mockJob) create() {
 	jobSpec := batchV1.Job{ObjectMeta: metaV1.ObjectMeta{
 		Name:      m.name,
