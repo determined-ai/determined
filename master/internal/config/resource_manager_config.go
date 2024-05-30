@@ -187,17 +187,26 @@ type InternalTaskGatewayConfig struct {
 	GatewayName           string `json:"gateway_name"`
 	GatewayNamespace      string `json:"gateway_namespace"`
 	GatewayAddress        string `json:"gateway_ip"`
-	GatewayPortRangeStart int32  `json:"gateway_port_range_start"`
-	GatewayPortRangeEnd   int32  `json:"gateway_port_range_end"`
+	GatewayPortRangeStart int    `json:"gateway_port_range_start"`
+	GatewayPortRangeEnd   int    `json:"gateway_port_range_end"`
 }
 
 // DefaultPortRange returns the default inclusive port range for the internal task gateway.
-func (i *InternalTaskGatewayConfig) DefaultPortRange() (int32, int32) {
+func (i *InternalTaskGatewayConfig) DefaultPortRange() (int, int) {
 	return 1025, 65535
 }
 
 // Validate implements the check.Validatable interface.
 func (i *InternalTaskGatewayConfig) Validate() []error {
+	// FIXME: how do we handle defaults?
+	defaultStart, defaultEnd := i.DefaultPortRange()
+	if i.GatewayPortRangeStart == 0 {
+		i.GatewayPortRangeStart = defaultStart
+	}
+	if i.GatewayPortRangeEnd == 0 {
+		i.GatewayPortRangeEnd = defaultEnd
+	}
+
 	var errs []error
 
 	if err := check.IsValidK8sLabel(i.GatewayName); err != nil {
