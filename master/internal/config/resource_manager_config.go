@@ -251,7 +251,7 @@ func (k KubernetesResourceManagerConfig) Validate() []error {
 			check.NotEmpty(p.GatewayNamespace,
 				"expose_proxies_externally.gateway_namespace is required with expose_proxies_externally"),
 			check.NotEmpty(p.GatewayAddress,
-				"expose_proxies_externally.gateway_address is required with expose_proxies_externally"),
+				"expose_proxies_externally.gateway_ip is required with expose_proxies_externally"),
 		)
 	}
 
