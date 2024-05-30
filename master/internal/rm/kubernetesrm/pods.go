@@ -86,7 +86,8 @@ type pods struct {
 	resourcePoolConfigs   []config.ResourcePoolConfig
 	baseContainerDefaults *model.TaskContainerDefaultsConfig
 
-	kubeconfigPath    string
+	kubeconfigPath string
+	// TODO: also rename.
 	exposeProxyConfig *config.InternalTaskGatewayConfig
 
 	clientSet        k8sClient.Interface
