@@ -436,7 +436,7 @@ func (p *pods) startClientSet() error {
 		gwService, err := newGatewayService(
 			gatewayClientSet.Gateways(exposeConfig.GatewayNamespace),
 			p.tcpRouteInterfaces,
-			exposeConfig.GatewayName,
+			*exposeConfig,
 		)
 		if err != nil {
 			return fmt.Errorf("creating gateway service: %w", err)

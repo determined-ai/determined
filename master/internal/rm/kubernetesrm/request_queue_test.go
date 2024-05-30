@@ -380,7 +380,7 @@ func TestReceiveCreateKubernetesResources(t *testing.T) {
 		"default": tcpInterface,
 	}
 
-	gatewayService, err := newGatewayService(gatewayInterface, tcpInterfaces, "gatewayname")
+	gatewayService, err := newGatewayService(gatewayInterface, tcpInterfaces, testGatewayConfig())
 	require.NoError(t, err)
 	gatewayService.portRangeStart = 1
 
@@ -460,7 +460,7 @@ func TestReceiveDeleteKubernetesResources(t *testing.T) {
 	tcpInterfaces := map[string]alphaGateway.TCPRouteInterface{
 		"default": tcpInterface,
 	}
-	gatewayService, err := newGatewayService(gatewayInterface, tcpInterfaces, "gatewayname")
+	gatewayService, err := newGatewayService(gatewayInterface, tcpInterfaces, testGatewayConfig())
 	require.NoError(t, err)
 
 	w := &requestProcessingWorker{
