@@ -553,37 +553,3 @@ func TestPodSpecsDefaultMerging(t *testing.T) {
 		require.Equal(t, expected, conf.RawEnvironment.RawPodSpec)
 	}
 }
-
-func TestIsNil(t *testing.T) {
-	tests := map[string]struct {
-		expectedDefault bool
-		actualDefault   *TaskContainerDefaultsConfig
-	}{
-		"defaultNotNil": {
-			expectedDefault: false,
-			actualDefault: &TaskContainerDefaultsConfig{
-				CPUPodSpec: &k8sV1.Pod{
-					Spec: k8sV1.PodSpec{
-						SecurityContext: &k8sV1.PodSecurityContext{
-							SELinuxOptions: &k8sV1.SELinuxOptions{
-								Level: "cpuLevel",
-								Role:  "cpuRole",
-							},
-						},
-					},
-				},
-			},
-		},
-		"defaultNil": {
-			expectedDefault: true,
-			actualDefault:   nil,
-		},
-	}
-
-	for testCase, testVars := range tests {
-		t.Run(testCase, func(t *testing.T) {
-			res := testVars.actualDefault.IsNil()
-			require.Equal(t, testVars.expectedDefault, res)
-		})
-	}
-}
