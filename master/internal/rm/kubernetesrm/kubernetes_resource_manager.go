@@ -110,7 +110,7 @@ func New(
 		k.config.DetMasterPort,
 		k.config.KubeconfigPath,
 		k.podStatusUpdateCallback,
-		k.config.ExposeProxiesExternally,
+		k.config.InternalTaskGateway,
 	)
 
 	for _, poolConfig := range k.poolsConfig {

@@ -175,7 +175,7 @@ type KubernetesResourceManagerConfig struct {
 	DefaultComputeResourcePool string `json:"default_compute_resource_pool"`
 	NoDefaultResourcePools     bool   `json:"no_default_resource_pools"`
 
-	ExposeProxiesExternally *InternalTaskGatewayConfig `json:"internal_task_gateway"`
+	InternalTaskGateway *InternalTaskGatewayConfig `json:"internal_task_gateway"`
 
 	Name     string            `json:"name"`
 	Metadata map[string]string `json:"metadata"`
@@ -285,7 +285,7 @@ func (k KubernetesResourceManagerConfig) Validate() []error {
 		check.NotEmpty(k.Name, "name is required"),
 	}
 
-	if p := k.ExposeProxiesExternally; p != nil {
+	if p := k.InternalTaskGateway; p != nil {
 		checks = append(checks,
 			check.NotEmpty(p.GatewayName,
 				"expose_proxies_externally.gateway_name is required with expose_proxies_externally"),
