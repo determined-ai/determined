@@ -117,14 +117,14 @@ def do_rendezvous_kubernetes(
     resources_id: str,
 ) -> "det.RendezvousInfo":
     job_parallelism_str = os.environ.get("DET_KUBERNETES_JOB_PARALLELISM")
-    assert job_parallelism_str, "Unable rendezvous without DET_KUBERNETES_JOB_PARALLELISM"
+    assert job_parallelism_str, "Unable to rendezvous without DET_KUBERNETES_JOB_PARALLELISM"
     job_parallelism = int(job_parallelism_str)
 
     pod_ip_str = os.environ.get("DET_KUBERNETES_POD_IP")
-    assert pod_ip_str, "Unable rendezvous without DET_KUBERNETES_POD_IP"
+    assert pod_ip_str, "Unable to rendezvous without DET_KUBERNETES_POD_IP"
 
     num_slots_str = os.environ.get("DET_SLOT_IDS")
-    assert num_slots_str, "Unable rendezvous without DET_SLOT_IDS"
+    assert num_slots_str, "Unable to rendezvous without DET_SLOT_IDS"
     num_slots = len(json.loads(os.environ["DET_SLOT_IDS"]))
 
     request_uuid = str(uuid.uuid4())
@@ -311,9 +311,6 @@ def set_proxy_address_kubernetes(sess: api.Session, allocation_id: str) -> None:
     pod_ip_str = os.environ.get("DET_KUBERNETES_POD_IP")
     assert pod_ip_str, "Unable to complete rendezvous without DET_KUBERNETES_POD_IP"
 
-    # Right now this is just used in 'singularity-over-slurm' mode when singularity is using the
-    # equivalent of 'host' networking in Docker. When supporting any sort of network virtualization
-    # (https://sylabs.io/guides/3.0/user-guide/networking.html) this will need some revision.
     bindings.post_PostAllocationProxyAddress(
         sess,
         allocationId=allocation_id,
