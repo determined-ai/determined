@@ -2023,8 +2023,9 @@ jobs:
             PW_EE: << parameters.ee >>
             NODE_OPTIONS: "-r dd-trace/ci/init"
           # setting PW_PASSWORD is temporary until DET-10197 is merged and we can set PW_PASSWORD in circleci
-          command: |
-              DD_ENV=ci-devcluster-${PW_EE} \
+          command: -|
+              if [[ "$PW_EE" -eq 1 ]]; then env="ee"; else env="oss"; fi
+              DD_ENV="ci-devcluster-$env" \
               DD_SERVICE=determined-ui-e2e \
               PW_PASSWORD=${INITIAL_USER_PASSWORD} \
               npm run e2e --prefix webui/react -- << parameters.playwright-options >>
