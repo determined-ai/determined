@@ -8,7 +8,7 @@ searcher:
   max_length: 10000000
   name: grid
   metric: x
-  max_concurrent_trials: 2
+  max_concurrent_trials: 50
 
 hyperparameters:
   model_version:
