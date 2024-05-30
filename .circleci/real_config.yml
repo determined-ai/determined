@@ -2013,6 +2013,7 @@ jobs:
       - start-devcluster:
           devcluster-config: react.devcluster.yaml
       - run: make -C webui/react get-playwright-ci
+      - run: npm install --dev dd-trace # DataDog integration
       - run: SERVER_ADDRESS=${PW_SERVER_ADDRESS} npm run build --prefix webui/react
       - wait-for-master:
           host: "localhost"
