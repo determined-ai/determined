@@ -183,7 +183,7 @@ export OPT_PROJECT_ROOT='../..'
 export OPT_CLUSTER_INTERNAL_IP=$(terraform -chdir=terraform output --raw internal_ip)
 export OPT_AUTHFILE=$LOCAL_TOKEN_DEST
 
-LOCAL_CPU_IMAGE_STRING="determinedai/pytorch-tensorflow-cpu-dev:8b3bea3"
+LOCAL_CPU_IMAGE_STRING="determinedai/pytorch-tensorflow-cpu-dev:e960eae"
 LOCAL_CPU_IMAGE_SQSH=${LOCAL_CPU_IMAGE_STRING//[\/:]/+}.sqsh
 LOCAL_CUDA_IMAGE_STRING="determinedai/pytorch-ngc-dev:e960eae"
 LOCAL_CUDA_IMAGE_SQSH=${LOCAL_CUDA_IMAGE_STRING//[\/:]/+}.sqsh
