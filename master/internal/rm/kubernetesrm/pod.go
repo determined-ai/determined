@@ -112,7 +112,7 @@ type pod struct {
 	configMapName string
 
 	gatewayProxyResources []gatewayProxyResource
-	exposeProxyConfig     *config.ExposeProxiesExternallyConfig
+	exposeProxyConfig     *config.InternalTaskGatewayConfig
 	gatewayService        *gatewayService
 
 	// TODO(DET-10013) : Remove container field from pod struct.
@@ -149,7 +149,7 @@ func newPod(
 	slotType device.Type,
 	slotResourceRequests config.PodSlotResourceRequests,
 	scheduler string,
-	exposeProxyConfig *config.ExposeProxiesExternallyConfig,
+	exposeProxyConfig *config.InternalTaskGatewayConfig,
 	gatewayService *gatewayService,
 ) *pod {
 	podContainer := cproto.Container{
@@ -654,7 +654,7 @@ func getExitCodeAndMessage(pod *k8sV1.Pod, containerNames set.Set[string]) (int,
 }
 
 func getResourcesStartedForPod(
-	pod *k8sV1.Pod, podPorts []int, exposeProxyConfig *config.ExposeProxiesExternallyConfig,
+	pod *k8sV1.Pod, podPorts []int, exposeProxyConfig *config.InternalTaskGatewayConfig,
 	gwPortMap PortMap,
 ) sproto.ResourcesStarted {
 	addresses := []cproto.Address{}

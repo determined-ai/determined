@@ -87,7 +87,7 @@ type pods struct {
 	baseContainerDefaults *model.TaskContainerDefaultsConfig
 
 	kubeconfigPath    string
-	exposeProxyConfig *config.ExposeProxiesExternallyConfig
+	exposeProxyConfig *config.InternalTaskGatewayConfig
 
 	clientSet        k8sClient.Interface
 	detMasterIP      string
@@ -176,7 +176,7 @@ func newPodsService(
 	detMasterPort int32,
 	kubeconfigPath string,
 	podStatusUpdateCallback podStatusUpdateCallback,
-	exposeProxyConfig *config.ExposeProxiesExternallyConfig,
+	exposeProxyConfig *config.InternalTaskGatewayConfig,
 ) *pods {
 	loggingTLSConfig := masterTLSConfig
 	if loggingConfig.ElasticLoggingConfig != nil {

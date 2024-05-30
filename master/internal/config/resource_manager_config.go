@@ -171,15 +171,15 @@ type KubernetesResourceManagerConfig struct {
 	DefaultComputeResourcePool string `json:"default_compute_resource_pool"`
 	NoDefaultResourcePools     bool   `json:"no_default_resource_pools"`
 
-	ExposeProxiesExternally *ExposeProxiesExternallyConfig `json:"internal_task_gateway"`
+	ExposeProxiesExternally *InternalTaskGatewayConfig `json:"internal_task_gateway"`
 
 	Name     string            `json:"name"`
 	Metadata map[string]string `json:"metadata"`
 }
 
-// ExposeProxiesExternallyConfig is config for exposing Determined tasks to outside of the cluster.
+// InternalTaskGatewayConfig is config for exposing Determined tasks to outside of the cluster.
 // Useful for multirm when we can only be running in a single cluster.
-type ExposeProxiesExternallyConfig struct {
+type InternalTaskGatewayConfig struct {
 	GatewayName           string `json:"gateway_name"`
 	GatewayNamespace      string `json:"gateway_namespace"`
 	GatewayAddress        string `json:"gateway_ip"`
