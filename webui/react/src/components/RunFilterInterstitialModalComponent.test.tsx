@@ -110,12 +110,12 @@ describe('RunFilterInterstitialModalComponent', () => {
     const filterFormSet = JSON.parse(filterFormSetString || '');
 
     // TODO: is there a better way to test this expectation?
-    expect(filterFormSet.showArchived).toBe(true);
+    expect(filterFormSet.showArchived).toBeTruthy();
     const [filterGroup, idFilterGroup] = filterFormSet.filterGroup.children?.[0].children || [];
     expect(filterGroup).toEqual(expectedFilterGroup);
 
     const idFilters = idFilterGroup.children;
-    expect(idFilters.every((f: FormField) => f.operator === '!=')).toBe(true);
+    expect(idFilters.every((f: FormField) => f.operator === '!=')).toBeTruthy();
     expect(idFilters.map((f: FormField) => f.value)).toEqual(expectedExclusions);
   });
 
