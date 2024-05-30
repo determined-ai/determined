@@ -2013,7 +2013,6 @@ jobs:
       - start-devcluster:
           devcluster-config: react.devcluster.yaml
       - run: make -C webui/react get-playwright-ci
-      - run: npm install dd-trace # DataDog instrumentation
       - run: SERVER_ADDRESS=${PW_SERVER_ADDRESS} npm run build --prefix webui/react
       - wait-for-master:
           host: "localhost"
@@ -2022,7 +2021,13 @@ jobs:
           environment:
             PW_EE: << parameters.ee >>
           # setting PW_PASSWORD is temporary until DET-10197 is merged and we can set PW_PASSWORD in circleci
-          command: PW_PASSWORD=${INITIAL_USER_PASSWORD} npm run e2e:ci --prefix webui/react -- << parameters.playwright-options >>
+          command: |
+              NODE_OPTIONS=\"-r dd-trace/ci/init ${NODE_OPTIONS:-}\" \
+              DD_ENV=ci-devcluster-${PW_EE} \
+              DD_SERVICE=determined-ui-e2e \
+              DD_SITE='datadoghq.com' \
+              PW_PASSWORD=${INITIAL_USER_PASSWORD} \
+              npm run e2e --prefix webui/react -- << parameters.playwright-options >>
       - store_artifacts:
           path: webui/react/src/e2e/playwright-report
       - store_artifacts:
