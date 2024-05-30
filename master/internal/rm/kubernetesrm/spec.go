@@ -135,11 +135,16 @@ func (p *pod) configureEnvVars(
 // proxyResourceGenerator returns a configured list of proxy resources given a set of ports.
 type proxyResourceGenerator func([]int) []gatewayProxyResource
 
-func (p *pod) configureProxyResources() *proxyResourceGenerator { // TODO return an err.
-	if p.exposeProxyConfig == nil {
-		return nil
+// needsGWProxyResources returns true if the pod needs, has, or will have proxy resources.
+func (p *pod) needsGWProxyResources() bool {
+	if p.exposeProxyConfig == nil || p.rank == nil || *p.rank != 0 || len(p.req.ProxyPorts) == 0 {
+		return false
 	}
-	if p.rank == nil || *p.rank != 0 {
+	return true
+}
+
+func (p *pod) configureProxyResources() *proxyResourceGenerator { // TODO return an err.
+	if !p.needsGWProxyResources() {
 		return nil
 	}
 
