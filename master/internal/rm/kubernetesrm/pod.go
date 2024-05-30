@@ -105,7 +105,7 @@ type pod struct {
 	scheduler            string
 	slotType             device.Type
 	slotResourceRequests config.PodSlotResourceRequests
-	rank                 *int
+	rank                 int
 
 	pod           *k8sV1.Pod
 	podName       string
@@ -179,7 +179,7 @@ func newPod(
 		loggingTLSConfig:     loggingTLSConfig,
 		loggingConfig:        loggingConfig,
 		slots:                msg.Slots,
-		rank:                 &msg.Rank,
+		rank:                 msg.Rank,
 		podInterface:         podInterface,
 		resourceRequestQueue: resourceRequestQueue,
 		podName:              uniqueName,

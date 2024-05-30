@@ -137,7 +137,7 @@ type proxyResourceGenerator func([]int) []gatewayProxyResource
 
 // needsGWProxyResources returns true if the pod needs, has, or will have proxy resources.
 func (p *pod) needsGWProxyResources() bool {
-	if p.exposeProxyConfig == nil || p.rank == nil || *p.rank != 0 || len(p.req.ProxyPorts) == 0 {
+	if p.exposeProxyConfig == nil || p.rank != 0 || len(p.req.ProxyPorts) == 0 {
 		return false
 	}
 	return true
@@ -174,7 +174,6 @@ func (p *pod) configureProxyResources() *proxyResourceGenerator { // TODO return
 				selectorLabels[k] = v
 			}
 			selectorLabels[rankLabel] = "0"
-			fmt.Println(selectorLabels)
 
 			serviceSpec := &k8sV1.Service{
 				ObjectMeta: metaV1.ObjectMeta{
@@ -486,9 +485,7 @@ func (p *pod) configurePodSpec(
 	podSpec.ObjectMeta.Labels[taskIDLabel] = p.submissionInfo.taskSpec.TaskID
 	podSpec.ObjectMeta.Labels[containerIDLabel] = p.submissionInfo.taskSpec.ContainerID
 	podSpec.ObjectMeta.Labels[determinedLabel] = p.submissionInfo.taskSpec.AllocationID
-	if p.rank != nil {
-		podSpec.ObjectMeta.Labels[rankLabel] = strconv.Itoa(*p.rank)
-	}
+	podSpec.ObjectMeta.Labels[rankLabel] = strconv.Itoa(p.rank)
 
 	// If map is not populated, labels will be missing and observability will be impacted.
 	for k, v := range p.submissionInfo.taskSpec.ExtraPodLabels {
