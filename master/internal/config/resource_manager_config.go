@@ -191,22 +191,20 @@ type InternalTaskGatewayConfig struct {
 	GWPortEnd        int    `json:"gateway_port_range_end"`
 }
 
-// DefaultPortRange returns the default inclusive port range for the internal task gateway.
-func (i *InternalTaskGatewayConfig) DefaultPortRange() (int, int) {
-	return 1025, 65535
+var defaultInternalTaskGatewayConfig = InternalTaskGatewayConfig{
+	GWPortStart: 1025,
+	GWPortEnd:   65535,
+}
+
+// UnmarshalJSON implements the json.Unmarshaler interface.
+func (k *InternalTaskGatewayConfig) UnmarshalJSON(data []byte) error {
+	*k = defaultInternalTaskGatewayConfig
+	type DefaultParser *InternalTaskGatewayConfig
+	return json.Unmarshal(data, DefaultParser(k))
 }
 
 // Validate implements the check.Validatable interface.
 func (i *InternalTaskGatewayConfig) Validate() []error {
-	// FIXME: how do we handle defaults?
-	defaultStart, defaultEnd := i.DefaultPortRange()
-	if i.GWPortStart == 0 {
-		i.GWPortStart = defaultStart
-	}
-	if i.GWPortEnd == 0 {
-		i.GWPortEnd = defaultEnd
-	}
-
 	var errs []error
 
 	if err := check.IsValidK8sLabel(i.GatewayName); err != nil {

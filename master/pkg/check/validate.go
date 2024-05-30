@@ -41,6 +41,7 @@ func Validate(v interface{}) error {
 	return validationError{errs: errs}
 }
 
+// Q: do we want something similar for defaults?
 func validate(v reflect.Value, path interface{}) []error {
 	var errs []error
 	switch v.Kind() {
