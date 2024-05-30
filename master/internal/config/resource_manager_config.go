@@ -171,21 +171,20 @@ type KubernetesResourceManagerConfig struct {
 	DefaultComputeResourcePool string `json:"default_compute_resource_pool"`
 	NoDefaultResourcePools     bool   `json:"no_default_resource_pools"`
 
-	ExposeProxiesExternally *ExposeProxiesExternallyConfig `json:"expose_proxies_externally"`
+	ExposeProxiesExternally *ExposeProxiesExternallyConfig `json:"internal_task_gateway"`
 
 	Name     string            `json:"name"`
 	Metadata map[string]string `json:"metadata"`
 }
 
-// ExposeProxiesExternallyConfig is config for exposing Kubernetes proxies externally on a service.
+// ExposeProxiesExternallyConfig is config for exposing Determined tasks to outside of the cluster.
 // Useful for multirm when we can only be running in a single cluster.
 type ExposeProxiesExternallyConfig struct {
-	GatewayName      string `json:"gateway_name"`
-	GatewayNamespace string `json:"gateway_namespace"`
-	// TODO(RM-267/gateways) should this be a service name or an ip?
-	// Also is address the right term? Do we refer to hostnames / addresses as address or ip?
-	// A load balancer would need a static ip for address to make sense. Is this ok?
-	GatewayAddress string `json:"gateway_address"`
+	GatewayName           string `json:"gateway_name"`
+	GatewayNamespace      string `json:"gateway_namespace"`
+	GatewayAddress        string `json:"gateway_ip"`
+	GatewayPortRangeStart int32  `json:"gateway_port_range_start"`
+	GatewayPortRangeEnd   int32  `json:"gateway_port_range_end"`
 }
 
 var defaultKubernetesResourceManagerConfig = KubernetesResourceManagerConfig{
