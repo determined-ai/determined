@@ -89,6 +89,19 @@ func Bun() *bun.DB {
 	return theOneBun
 }
 
+// Can't use tablesExist because it is a different database type.
+func databaseIsFresh() (bool, error) {
+	fresh, err := Bun().NewSelect().Table("pg_tables").
+		Where("schemaname = ?", "public").
+		Where("tablename = ?", "gopg_migrations").
+		Exists(context.TODO())
+	if err != nil {
+		return false, fmt.Errorf("checking if database is fresh: %w", err)
+	}
+
+	return !fresh, nil
+}
+
 // SingleDB returns a singleton database client. Bun() should be preferred over this for all new
 // queries.
 func SingleDB() *PgDB {
