@@ -2017,6 +2017,7 @@ jobs:
       - wait-for-master:
           host: "localhost"
           port: "8082"
+      - run: npm install --save-dev dd-trace # DataDog integration
       - run:
           environment:
             PW_EE: << parameters.ee >>
