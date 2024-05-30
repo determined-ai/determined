@@ -222,7 +222,7 @@ resource_manager:
   name: a
   internal_task_gateway:
     gateway_namespace: test
-    gateway_ip: abc
+    gateway_ip: 127.0.0.1
   `, nil, "Check Failed! 1 errors found:\n\terror found at root.ResourceConfig." +
 			"RootManagerInternal.KubernetesRM: internal_task_gateway.gateway_name " +
 			"is required with internal_task_gateway:  must be non-empty"},
@@ -234,7 +234,7 @@ resource_manager:
   name: a
   internal_task_gateway:
     gateway_name: test
-    gateway_ip: abc
+    gateway_ip: 127.0.0.1
   `, nil, "Check Failed! 1 errors found:\n\terror found at root.ResourceConfig." +
 			"RootManagerInternal.KubernetesRM: internal_task_gateway.gateway_namespace " +
 			"is required with internal_task_gateway:  must be non-empty"},

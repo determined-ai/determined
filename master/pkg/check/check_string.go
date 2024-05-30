@@ -32,29 +32,40 @@ func Match(actual string, regex string, msgAndArgs ...interface{}) error {
 		"%s doesn't match regex %s", actual, regex)
 }
 
+// LenBetween checks whether the length of the first argument is between the second and third arguments.
+// The method returns an error with the provided message if the check fails.
+func LenBetween(actual string, min, max int, msgAndArgs ...interface{}) error {
+	return BetweenInclusive(len(actual), min, max, msgAndArgs...)
+}
+
 // IsValidK8sLabel checks whether the first argument is a valid Kubernetes label. The method returns
 // an error with the provided message if the check fails.
 func IsValidK8sLabel(actual string, msgAndArgs ...interface{}) error {
-	re := regexp.MustCompile(`^[a-zA-Z0-9]([-a-zA-Z0-9_.]*[a-zA-Z0-9])?$`)
-	if !re.MatchString(actual) {
-		return check(false, msgAndArgs, "%s is not a valid Kubernetes label", actual)
+	if err := NotEmpty(actual, msgAndArgs...); err != nil {
+		return err
 	}
-	return check(len(actual) > 0 && len(actual) < 64, msgAndArgs,
-		"%s is not between 1 and 63 chars ", actual)
+	if err := LenBetween(actual, 1, 63, msgAndArgs...); err != nil {
+		return err
+	}
+	if err := Match(actual, `^[a-zA-Z0-9]([-a-zA-Z0-9_.]*[a-zA-Z0-9])?$`, msgAndArgs); err != nil {
+		return err
+	}
+	return nil
 }
 
 // IsValidIPV4 checks whether the first argument is a valid IPv4 address. The method returns an error
 // with the provided message if the check fails.
 func IsValidIPV4(actual string, msgAndArgs ...interface{}) error {
-	re := regexp.MustCompile(`^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$`)
-	if !re.MatchString(actual) {
-		return check(false, msgAndArgs, "%s is not a valid IPv4 address", actual)
+	msgAndArgs = append(msgAndArgs, "%s is not valid IPV4", actual)
+	if err := Match(actual, `^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$`, msgAndArgs...); err != nil {
+		return err
 	}
+
 	parts := strings.Split(actual, ".")
 	for _, part := range parts {
 		num, err := strconv.Atoi(part)
 		if err != nil || num < 0 || num > 255 {
-			return check(false, msgAndArgs, "%s is not a valid IPv4 address", actual)
+			return check(false, msgAndArgs)
 		}
 	}
 	return nil
