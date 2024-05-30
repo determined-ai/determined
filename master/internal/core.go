@@ -1131,7 +1131,7 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 
 	isBrandNewCluster, err := db.IsNew(&m.config.DB)
 	if err != nil {
-		return errors.Wrap(err, "could not verify database version")
+		return fmt.Errorf("could not verify database version: %w", err)
 	}
 
 	if isBrandNewCluster && slices.Contains(m.config.FeatureSwitches, "prevent_blank_password") {
