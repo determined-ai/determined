@@ -220,36 +220,36 @@ resource_manager:
   type: kubernetes
   max_slots_per_pod: 1
   name: a
-  expose_proxies_externally:
+  internal_task_gateway:
     gateway_namespace: test
     gateway_ip: abc
   `, nil, "Check Failed! 1 errors found:\n\terror found at root.ResourceConfig." +
-			"RootManagerInternal.KubernetesRM: expose_proxies_externally.gateway_name " +
-			"is required with expose_proxies_externally:  must be non-empty"},
+			"RootManagerInternal.KubernetesRM: internal_task_gateway.gateway_name " +
+			"is required with internal_task_gateway:  must be non-empty"},
 
 		{"k8s missing gateway_namespace", `
 resource_manager:
   type: kubernetes
   max_slots_per_pod: 1
   name: a
-  expose_proxies_externally:
+  internal_task_gateway:
     gateway_name: test
     gateway_ip: abc
   `, nil, "Check Failed! 1 errors found:\n\terror found at root.ResourceConfig." +
-			"RootManagerInternal.KubernetesRM: expose_proxies_externally.gateway_namespace " +
-			"is required with expose_proxies_externally:  must be non-empty"},
+			"RootManagerInternal.KubernetesRM: internal_task_gateway.gateway_namespace " +
+			"is required with internal_task_gateway:  must be non-empty"},
 
 		{"k8s missing gateway_ip", `
 resource_manager:
   type: kubernetes
   max_slots_per_pod: 1
   name: a
-  expose_proxies_externally:
+  internal_task_gateway:
     gateway_name: test
     gateway_namespace: abc
   `, nil, "Check Failed! 1 errors found:\n\terror found at root.ResourceConfig." +
-			"RootManagerInternal.KubernetesRM: expose_proxies_externally.gateway_ip " +
-			"is required with expose_proxies_externally:  must be non-empty"},
+			"RootManagerInternal.KubernetesRM: internal_task_gateway.gateway_ip " +
+			"is required with internal_task_gateway:  must be non-empty"},
 	}
 
 	RegisterAuthZType("basic")

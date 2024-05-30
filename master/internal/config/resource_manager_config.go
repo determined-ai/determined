@@ -297,11 +297,11 @@ func (k KubernetesResourceManagerConfig) Validate() []error {
 	if p := k.InternalTaskGateway; p != nil {
 		checks = append(checks,
 			check.NotEmpty(p.GatewayName,
-				"expose_proxies_externally.gateway_name is required with expose_proxies_externally"),
+				"internal_task_gateway.gateway_name is required with internal_task_gateway"),
 			check.NotEmpty(p.GatewayNamespace,
-				"expose_proxies_externally.gateway_namespace is required with expose_proxies_externally"),
+				"internal_task_gateway.gateway_namespace is required with internal_task_gateway"),
 			check.NotEmpty(p.GatewayAddress,
-				"expose_proxies_externally.gateway_ip is required with expose_proxies_externally"),
+				"internal_task_gateway.gateway_ip is required with internal_task_gateway"),
 		)
 	}
 
