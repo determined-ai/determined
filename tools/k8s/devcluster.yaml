@@ -42,6 +42,18 @@ stages:
           level: debug
         enable_cors: true
         root: tools/build
+        task_container_defaults:
+          checkpoint_gc_pod_spec:
+            apiVersion: v1
+            kind: Pod
+            spec:
+              affinity:
+                nodeAffinity:
+                  requiredDuringSchedulingIgnoredDuringExecution:
+                    nodeSelectorTerms:
+                      - matchExpressions:
+                        - key: does-not-exist
+                          operator: Exists
 
         resource_manager:
           type: kubernetes

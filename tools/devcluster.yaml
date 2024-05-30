@@ -38,6 +38,18 @@ stages:
 
       # config_file is just a master.yaml
       config_file:
+        task_container_defaults:
+          checkpoint_gc_pod_spec:
+            apiVersion: v1
+            kind: Pod
+            spec:
+              affinity:
+                nodeAffinity:
+                  requiredDuringSchedulingIgnoredDuringExecution:
+                    nodeSelectorTerms:
+                      - matchExpressions:
+                        - key: does-not-exist
+                          operator: Exists
         db:
           host: localhost
           port: 5432

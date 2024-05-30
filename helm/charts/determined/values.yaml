@@ -160,8 +160,8 @@ db:
   # Determined deployed database, as well as the CPU and memory requirements. Should be adjusted for
   # scale.
   storageSize: 30Gi
-  cpuRequest: 2
-  memRequest: 8Gi
+  cpuRequest: 1
+  memRequest: 4Gi
   #  cpuLimit: 2
   #  memLimit: 8Gi
 
@@ -236,16 +236,16 @@ checkpointStorage:
 maxSlotsPerPod:
 
 ## For CPU-only clusters, use `slotType: cpu`, and make sure to set `slotResourceRequest` below.
-# slotType: cpu
-# slotResourceRequests:
-  ## Number of cpu units requested for compute slots. Note: since kubernetes may schedule some
-  ## system tasks on the nodes which take up some resources, 8-core node may not always fit
-  ## a `cpu: 8` task container.
-  # cpu: 7
+slotType: cpu
+slotResourceRequests:
+  # Number of cpu units requested for compute slots. Note: since kubernetes may schedule some
+  # system tasks on the nodes which take up some resources, 8-core node may not always fit
+  # a `cpu: 8` task container.
+  cpu: 1
 
 # Memory and CPU requirements for the master instance. Should be adjusted for scale.
-masterCpuRequest: 2
-masterMemRequest: 8Gi
+masterCpuRequest: 1
+masterMemRequest: 4Gi
 # masterCpuLimit: 2
 # masterMemLimit: 8Gi
 
@@ -350,7 +350,7 @@ resourcePools:
 # defaultComputeResourcePool: default
 
 ## Configure the initial user password for the cluster
-# initialUserPassword:
+initialUserPassword: "Test@123"
 
 # additional_resource_managers:
 #   - resource_manager:
