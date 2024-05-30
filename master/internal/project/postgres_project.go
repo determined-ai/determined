@@ -42,12 +42,13 @@ func getProjectColumns(q *bun.SelectQuery) *bun.SelectQuery {
 		ColumnExpr("p.error_message").
 		ColumnExpr("p.workspace_id").
 		ColumnExpr("p.description").
-		ColumnExpr("p.archived").
+		ColumnExpr("(p.archived OR w.archived) as archived").
 		ColumnExpr("p.immutable").
 		ColumnExpr("p.notes").
 		ColumnExpr("(SELECT username FROM users WHERE id = p.user_id) AS username").
 		ColumnExpr("p.user_id").
-		ColumnExpr("p.key")
+		ColumnExpr("p.key").
+		Join("INNER JOIN workspaces w ON w.id = p.workspace_id")
 }
 
 // getProjectByIDTx returns a project by its ID using the provided transaction.
@@ -284,14 +285,16 @@ func UpdateProject(
 	err := db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		currentProject := model.Project{}
 		err := tx.NewSelect().Model(&currentProject).
-			Column("id").
-			Column("archived").
-			Column("immutable").
-			Column("name").
-			Column("description").
-			Column("key").
-			Column("workspace_id").
-			Where("id = ?", projectID).
+			ModelTableExpr("projects as p").
+			Column("p.id").
+			ColumnExpr("(p.archived OR w.archived) as archived").
+			Column("p.immutable").
+			Column("p.name").
+			Column("p.description").
+			Column("p.key").
+			Column("p.workspace_id").
+			Where("p.id = ?", projectID).
+			Join("INNER JOIN workspaces w ON w.id = p.workspace_id").
 			For("UPDATE").
 			Scan(ctx)
 		if errors.Is(err, sql.ErrNoRows) {
