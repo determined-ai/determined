@@ -253,7 +253,12 @@ func TestValidatePodLabelValues(t *testing.T) {
 func TestDeterminedLabels(t *testing.T) {
 	// Fill out task spec.
 	taskSpec := tasks.TaskSpec{
-		Owner:       createUser(),
+		Owner: &model.User{
+			ID:       1,
+			Username: "determined",
+			Active:   true,
+			Admin:    false,
+		},
 		Workspace:   "test-workspace",
 		TaskType:    model.TaskTypeCommand,
 		TaskID:      model.NewTaskID().String(),

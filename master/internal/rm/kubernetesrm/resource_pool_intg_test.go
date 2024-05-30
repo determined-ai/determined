@@ -30,11 +30,6 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
-var (
-	defaultState = sproto.SchedulingStateQueued
-	defaultSlots = 3
-)
-
 const (
 	defaultResourcePool = "default"
 )
@@ -580,7 +575,7 @@ func TestExternalKillWhileQueuedFails(t *testing.T) {
 		stop = change.ResourcesStopped
 	}
 	require.NotNil(t, stop.Failure)
-	require.Contains(t, stop.Failure.ErrMsg, "unable to get exit code")
+	require.Contains(t, stop.Failure.ErrMsg, "deleted pod")
 }
 
 func TestExternalPodDelete(t *testing.T) {
@@ -1053,13 +1048,23 @@ func TestSchedule(t *testing.T) {
 	// TODO RM-301
 	t.Skip("skipping test until flake fixed")
 	rp := newTestResourcePool(newTestJobsService(t))
-	_, allocID := testAddAllocation(t, rp, defaultState)
+	jobID := model.NewJobID()
+	allocID := model.AllocationID(jobID)
+
+	allocReq := sproto.AllocateRequest{
+		AllocationID: allocID,
+		JobID:        jobID,
+		Preemptible:  true,
+		State:        sproto.SchedulingStateQueued,
+	}
+	rp.AllocateRequest(allocReq)
+
+	_, ok := rp.reqList.TaskByID(allocReq.AllocationID)
+	require.True(t, ok)
 
 	require.True(t, rp.reschedule)
 	require.False(t, rp.reqList.IsScheduled(allocID))
-
 	rp.Schedule()
-
 	require.False(t, rp.reschedule)
 	require.True(t, rp.reqList.IsScheduled(allocID))
 }
@@ -1080,6 +1085,18 @@ func poll[T sproto.ResourcesEvent](ctx context.Context, t *testing.T, sub *sprot
 		}
 		return res
 	}
+}
+
+var tickInterval = 10 * time.Millisecond
+
+func waitForCondition(timeout time.Duration, condition func() bool) bool {
+	for i := 0; i < int(timeout/tickInterval); i++ {
+		if condition() {
+			return true
+		}
+		time.Sleep(tickInterval)
+	}
+	return false
 }
 
 var testResourcePoolConfig = config.ResourcePoolConfig{
@@ -1118,25 +1135,4 @@ func newTestJobsService(t *testing.T) *jobsService {
 	)
 	require.NoError(t, err)
 	return j
-}
-
-func testAddAllocation(
-	t *testing.T, rp *kubernetesResourcePool, state sproto.SchedulingState,
-) (model.JobID, model.AllocationID) {
-	jobID := model.NewJobID()
-	allocID := uuid.NewString()
-
-	allocReq := sproto.AllocateRequest{
-		AllocationID: *model.NewAllocationID(&allocID),
-		JobID:        jobID,
-		Preemptible:  true,
-		State:        state,
-	}
-
-	rp.AllocateRequest(allocReq)
-
-	req, ok := rp.reqList.TaskByID(allocReq.AllocationID)
-	require.True(t, ok)
-
-	return jobID, req.AllocationID
 }
