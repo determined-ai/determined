@@ -186,7 +186,7 @@ type KubernetesResourceManagerConfig struct {
 type InternalTaskGatewayConfig struct {
 	GatewayName      string `json:"gateway_name"`
 	GatewayNamespace string `json:"gateway_namespace"`
-	GatewayAddress   string `json:"gateway_ip"`
+	GatewayIP        string `json:"gateway_ip"`
 	GWPortStart      int    `json:"gateway_port_range_start"`
 	GWPortEnd        int    `json:"gateway_port_range_end"`
 }
@@ -215,8 +215,8 @@ func (i *InternalTaskGatewayConfig) Validate() []error {
 		errs = append(errs, errors.Wrap(err, "invalid GatewayNamespace"))
 	}
 
-	if err := check.IsValidIPV4(i.GatewayAddress); err != nil {
-		errs = append(errs, errors.Wrap(err, "invalid GatewayAddress"))
+	if err := check.IsValidIPV4(i.GatewayIP); err != nil {
+		errs = append(errs, errors.Wrap(err, "invalid GatewayIP"))
 	}
 
 	if err := check.BetweenInclusive(
@@ -298,7 +298,7 @@ func (k KubernetesResourceManagerConfig) Validate() []error {
 				"internal_task_gateway.gateway_name is required with internal_task_gateway"),
 			check.NotEmpty(p.GatewayNamespace,
 				"internal_task_gateway.gateway_namespace is required with internal_task_gateway"),
-			check.NotEmpty(p.GatewayAddress,
+			check.NotEmpty(p.GatewayIP,
 				"internal_task_gateway.gateway_ip is required with internal_task_gateway"),
 		)
 	}

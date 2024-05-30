@@ -664,8 +664,8 @@ func getResourcesStartedForPod(
 		HostIP:      pod.Status.PodIP,
 	}
 	if exposeProxyConfig != nil {
-		baseAddress.ContainerIP = exposeProxyConfig.GatewayAddress
-		baseAddress.HostIP = exposeProxyConfig.GatewayAddress
+		baseAddress.ContainerIP = exposeProxyConfig.GatewayIP
+		baseAddress.HostIP = exposeProxyConfig.GatewayIP
 	}
 	for _, podPort := range podPorts {
 		address := baseAddress
