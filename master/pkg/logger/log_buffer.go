@@ -160,6 +160,7 @@ func (lb *LogBuffer) Fire(entry *logrus.Entry) error {
 	if audit.IsRBACLog(entry) && !audit.IsRBACPermissionDenied(entry) {
 		return nil
 	}
+
 	lb.write(&Entry{
 		Message: logrusMessageAndData(entry),
 		Time:    entry.Time,
