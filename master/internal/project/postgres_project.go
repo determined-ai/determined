@@ -147,7 +147,9 @@ func GetProjectByKey(ctx context.Context, key string) (*model.Project, error) {
 			Table("projects").
 			Where("key = ?", key).
 			Scan(ctx, &projectID)
-		if err != nil {
+		if err != nil && errors.Is(err, sql.ErrNoRows) {
+			return db.ErrNotFound
+		} else if err != nil {
 			return err
 		}
 

@@ -67,7 +67,7 @@ func TestGetProjectByKey(t *testing.T) {
 	t.Run("non-existent project key", func(t *testing.T) {
 		_, err := GetProjectByKey(context.Background(), "bogus")
 		require.Error(t, err)
-		require.True(t, strings.Contains(err.Error(), "not found"))
+		require.ErrorContains(t, err, "not found")
 	})
 }
 
