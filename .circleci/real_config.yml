@@ -2022,7 +2022,6 @@ jobs:
           environment:
             PW_EE: << parameters.ee >>
             NODE_OPTIONS: "-r dd-trace/ci/init"
-          # setting PW_PASSWORD is temporary until DET-10197 is merged and we can set PW_PASSWORD in circleci
           command: |
               if [[ "$PW_EE" -eq 1 ]]; then env="ee"; else env="oss"; fi
               DD_ENV="ci-devcluster-$env" \
