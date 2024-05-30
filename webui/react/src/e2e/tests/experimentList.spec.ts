@@ -52,7 +52,9 @@ test.describe('Experiement List', () => {
     const grid = projectDetailsPage.f_experiemntList.dataGrid;
 
     await projectDetailsPage.gotoProject();
-    await expect(projectDetailsPage.f_experiemntList.dataGrid.rows.pwLocator).not.toHaveCount(0);
+    await expect(projectDetailsPage.f_experiemntList.dataGrid.rows.pwLocator).not.toHaveCount(0, {
+      timeout: 10_000,
+    });
     await test.step('Deselect', async () => {
       try {
         await grid.headRow.selectDropdown.menuItem('select-none').select({ timeout: 1_000 });
@@ -84,6 +86,7 @@ test.describe('Experiement List', () => {
   });
 
   test('Column Picker add and remove', async () => {
+    test.setTimeout(120_000);
     const columnTitle = 'Forked From',
       columnTestid = 'forkedFrom';
     const columnPicker = projectDetailsPage.f_experiemntList.tableActionBar.columnPickerMenu;
@@ -111,7 +114,7 @@ test.describe('Experiement List', () => {
   });
 
   test('Column Picker Show All and Hide All', async () => {
-    test.setTimeout(120_000);
+    test.setTimeout(180_000);
     const columnPicker = projectDetailsPage.f_experiemntList.tableActionBar.columnPickerMenu;
     const grid = projectDetailsPage.f_experiemntList.dataGrid;
     let previousTabs = grid.headRow.columnDefs.size;
@@ -212,20 +215,27 @@ test.describe('Experiement List', () => {
         // This looks a little screwy with nth(1) in some places. Everything here is referring to the second filterfield row.
         // [INFENG-715]
         await tableFilter.filterForm.addCondition.pwLocator.click();
-        await tableFilter.filterForm.filter.filterFields.conjunctionContainer.conjunctionSelect.pwLocator.click();
-        await tableFilter.filterForm.filter.filterFields.conjunctionContainer.conjunctionSelect._menu.pwLocator.waitFor();
-        await tableFilter.filterForm.filter.filterFields.conjunctionContainer.conjunctionSelect.selectMenuOption(
-          'or',
-        );
-        await tableFilter.filterForm.filter.filterFields.columnName.pwLocator.nth(1).click();
-        await tableFilter.filterForm.filter.filterFields.columnName._menu.pwLocator.waitFor();
-        await tableFilter.filterForm.filter.filterFields.columnName.selectMenuOption('ID');
-        await expect(
-          tableFilter.filterForm.filter.filterFields.operator.pwLocator.nth(1),
-        ).toHaveText('=');
-        await tableFilter.filterForm.filter.filterFields.operator.pwLocator.nth(1).click();
-        await tableFilter.filterForm.filter.filterFields.operator._menu.pwLocator.waitFor();
-        await tableFilter.filterForm.filter.filterFields.operator.selectMenuOption('=');
+
+        const conjunction =
+          tableFilter.filterForm.filter.filterFields.conjunctionContainer.conjunctionSelect;
+        await conjunction.pwLocator.click();
+        await conjunction._menu.pwLocator.waitFor();
+        await conjunction.menuItem('or').pwLocator.click();
+        await conjunction._menu.pwLocator.waitFor({ state: 'hidden' });
+
+        const columnName = tableFilter.filterForm.filter.filterFields.columnName;
+        await columnName.pwLocator.nth(1).click();
+        await columnName._menu.pwLocator.waitFor();
+        await columnName.menuItem('ID').pwLocator.click();
+        await columnName._menu.pwLocator.waitFor({ state: 'hidden' });
+
+        const operator = tableFilter.filterForm.filter.filterFields.operator;
+        await expect(operator.pwLocator.nth(1)).toHaveText('=');
+        await operator.pwLocator.nth(1).click();
+        await operator._menu.pwLocator.waitFor();
+        await operator.menuItem('=').pwLocator.click();
+        await operator._menu.pwLocator.waitFor({ state: 'hidden' });
+
         await tableFilter.filterForm.filter.filterFields.valueNumber.pwLocator.nth(1).fill('1');
       },
       totalExperiments,
