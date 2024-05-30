@@ -84,36 +84,31 @@ func Connect(opts *config.DBConfig) (*PgDB, error) {
 }
 
 // Setup connects to the database and run any necessary migrations.
-// Takes a list of checks that run after the database is connected on new databases.
-func Setup(opts *config.DBConfig, newOnlyChecks ...func() error) (db *PgDB, isNew bool, err error) {
+func Setup(
+	opts *config.DBConfig, postConnectHooks ...func(*PgDB) error,
+) (db *PgDB, err error) {
 	db, err = Connect(opts)
 	if err != nil {
-		return db, false, err
+		return db, err
 	}
 
-	isNew, err = databaseIsFresh()
-	if err != nil {
-		return nil, false, err
-	}
-	if isNew {
-		for _, check := range newOnlyChecks {
-			if err := check(); err != nil {
-				return nil, false, err
-			}
+	for _, hook := range postConnectHooks {
+		if err := hook(db); err != nil {
+			return nil, err
 		}
 	}
 
 	err = db.Migrate(opts.Migrations, opts.ViewsAndTriggers, []string{"up"})
 	if err != nil {
-		return nil, false, fmt.Errorf("error running migrations: %s", err)
+		return nil, fmt.Errorf("error running migrations: %s", err)
 	}
 
 	if err = InitAuthKeys(); err != nil {
-		return nil, false, err
+		return nil, err
 	}
 
 	if err = initAllocationSessions(context.TODO()); err != nil {
-		return nil, false, err
+		return nil, err
 	}
-	return db, isNew, nil
+	return db, nil
 }
