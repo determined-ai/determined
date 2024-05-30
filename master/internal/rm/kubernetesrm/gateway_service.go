@@ -53,8 +53,8 @@ func newGatewayService(
 		gatewayInterface:   gatewayInterface,
 		tcpRouteInterfaces: tcpRouteInterfaces,
 		gatewayName:        taskGWConfig.GatewayName,
-		portRangeStart:     taskGWConfig.GatewayPortRangeStart,
-		portRangeEnd:       taskGWConfig.GatewayPortRangeEnd,
+		portRangeStart:     taskGWConfig.GWPortStart,
+		portRangeEnd:       taskGWConfig.GWPortEnd,
 	}
 	return g, nil
 }

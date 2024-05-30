@@ -184,11 +184,11 @@ type KubernetesResourceManagerConfig struct {
 // InternalTaskGatewayConfig is config for exposing Determined tasks to outside of the cluster.
 // Useful for multirm when we can only be running in a single cluster.
 type InternalTaskGatewayConfig struct {
-	GatewayName           string `json:"gateway_name"`
-	GatewayNamespace      string `json:"gateway_namespace"`
-	GatewayAddress        string `json:"gateway_ip"`
-	GatewayPortRangeStart int    `json:"gateway_port_range_start"`
-	GatewayPortRangeEnd   int    `json:"gateway_port_range_end"`
+	GatewayName      string `json:"gateway_name"`
+	GatewayNamespace string `json:"gateway_namespace"`
+	GatewayAddress   string `json:"gateway_ip"`
+	GWPortStart      int    `json:"gateway_port_range_start"`
+	GWPortEnd        int    `json:"gateway_port_range_end"`
 }
 
 // DefaultPortRange returns the default inclusive port range for the internal task gateway.
@@ -200,11 +200,11 @@ func (i *InternalTaskGatewayConfig) DefaultPortRange() (int, int) {
 func (i *InternalTaskGatewayConfig) Validate() []error {
 	// FIXME: how do we handle defaults?
 	defaultStart, defaultEnd := i.DefaultPortRange()
-	if i.GatewayPortRangeStart == 0 {
-		i.GatewayPortRangeStart = defaultStart
+	if i.GWPortStart == 0 {
+		i.GWPortStart = defaultStart
 	}
-	if i.GatewayPortRangeEnd == 0 {
-		i.GatewayPortRangeEnd = defaultEnd
+	if i.GWPortEnd == 0 {
+		i.GWPortEnd = defaultEnd
 	}
 
 	var errs []error
@@ -222,16 +222,16 @@ func (i *InternalTaskGatewayConfig) Validate() []error {
 	}
 
 	if err := check.BetweenInclusive(
-		i.GatewayPortRangeStart, validGWPortRangeStart, validGWPortRangeEnd); err != nil {
+		i.GWPortStart, validGWPortRangeStart, validGWPortRangeEnd); err != nil {
 		errs = append(errs, errors.Wrap(err, "invalid GatewayPortRangeStart"))
 	}
 
 	if err := check.BetweenInclusive(
-		i.GatewayPortRangeEnd, validGWPortRangeStart, validGWPortRangeEnd); err != nil {
+		i.GWPortEnd, validGWPortRangeStart, validGWPortRangeEnd); err != nil {
 		errs = append(errs, errors.Wrap(err, "invalid GatewayPortRangeEnd"))
 	}
 
-	if i.GatewayPortRangeStart > i.GatewayPortRangeEnd {
+	if i.GWPortStart > i.GWPortEnd {
 		errs = append(errs, errors.New("GatewayPortRangeStart must be less than or equal to GatewayPortRangeEnd"))
 	}
 	return errs
