@@ -11,7 +11,11 @@ import (
 	"github.com/determined-ai/determined/master/pkg/union"
 )
 
-const defaultResourcePoolName = "default"
+const (
+	defaultResourcePoolName = "default"
+	validGWPortRangeStart   = 1025
+	validGWPortRangeEnd     = 65535
+)
 
 // ResourceManagerConfig hosts configuration fields for the resource manager.
 type ResourceManagerConfig struct {
@@ -185,6 +189,43 @@ type InternalTaskGatewayConfig struct {
 	GatewayAddress        string `json:"gateway_ip"`
 	GatewayPortRangeStart int32  `json:"gateway_port_range_start"`
 	GatewayPortRangeEnd   int32  `json:"gateway_port_range_end"`
+}
+
+// DefaultPortRange returns the default inclusive port range for the internal task gateway.
+func (i *InternalTaskGatewayConfig) DefaultPortRange() (int32, int32) {
+	return 1025, 65535
+}
+
+// Validate implements the check.Validatable interface.
+func (i *InternalTaskGatewayConfig) Validate() []error {
+	var errs []error
+
+	if err := check.IsValidK8sLabel(i.GatewayName); err != nil {
+		errs = append(errs, errors.Wrap(err, "invalid GatewayName"))
+	}
+
+	if err := check.IsValidK8sLabel(i.GatewayNamespace); err != nil {
+		errs = append(errs, errors.Wrap(err, "invalid GatewayNamespace"))
+	}
+
+	if err := check.IsValidIPV4(i.GatewayAddress); err != nil {
+		errs = append(errs, errors.Wrap(err, "invalid GatewayAddress"))
+	}
+
+	if err := check.BetweenInclusive(
+		i.GatewayPortRangeStart, validGWPortRangeStart, validGWPortRangeEnd); err != nil {
+		errs = append(errs, errors.Wrap(err, "invalid GatewayPortRangeStart"))
+	}
+
+	if err := check.BetweenInclusive(
+		i.GatewayPortRangeEnd, validGWPortRangeStart, validGWPortRangeEnd); err != nil {
+		errs = append(errs, errors.Wrap(err, "invalid GatewayPortRangeEnd"))
+	}
+
+	if i.GatewayPortRangeStart > i.GatewayPortRangeEnd {
+		errs = append(errs, errors.New("GatewayPortRangeStart must be less than or equal to GatewayPortRangeEnd"))
+	}
+	return errs
 }
 
 var defaultKubernetesResourceManagerConfig = KubernetesResourceManagerConfig{
