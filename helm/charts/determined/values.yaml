@@ -160,8 +160,8 @@ db:
   # Determined deployed database, as well as the CPU and memory requirements. Should be adjusted for
   # scale.
   storageSize: 30Gi
-  cpuRequest: 1
-  memRequest: 4Gi
+  cpuRequest: 2
+  memRequest: 8Gi
   #  cpuLimit: 2
   #  memLimit: 8Gi
 
@@ -244,8 +244,8 @@ maxSlotsPerPod:
   # cpu: 7
 
 # Memory and CPU requirements for the master instance. Should be adjusted for scale.
-masterCpuRequest: 1
-masterMemRequest: 4Gi
+masterCpuRequest: 2
+masterMemRequest: 8Gi
 # masterCpuLimit: 2
 # masterMemLimit: 8Gi
 
@@ -350,7 +350,7 @@ resourcePools:
 # defaultComputeResourcePool: default
 
 ## Configure the initial user password for the cluster
-initialUserPassword: "Test@123"
+# initialUserPassword:
 
 # additional_resource_managers:
 #   - resource_manager:
