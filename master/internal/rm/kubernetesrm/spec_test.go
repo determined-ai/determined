@@ -110,8 +110,11 @@ func TestConfigureProxyResources(t *testing.T) {
 					Port:     12345,
 				},
 			},
-			Selector: map[string]string{determinedLabel: "allocID"},
-			Type:     k8sV1.ServiceTypeClusterIP,
+			Selector: map[string]string{
+				determinedLabel: "allocID",
+				rankLabel:       "0",
+			},
+			Type: k8sV1.ServiceTypeClusterIP,
 		},
 	}
 
@@ -349,6 +352,7 @@ func TestDeterminedLabels(t *testing.T) {
 		taskTypeLabel:    string(taskSpec.TaskType),
 		taskIDLabel:      taskSpec.TaskID,
 		containerIDLabel: taskSpec.ContainerID,
+		rankLabel:        "0",
 	}
 	for k, v := range taskSpec.ExtraPodLabels {
 		expectedLabels[labelPrefix+k] = v
