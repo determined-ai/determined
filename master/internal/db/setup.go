@@ -6,8 +6,6 @@ import (
 	"database/sql"
 	"fmt"
 
-	"github.com/go-pg/migrations/v8"
-	"github.com/go-pg/pg/v10"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
@@ -85,48 +83,19 @@ func Connect(opts *config.DBConfig) (*PgDB, error) {
 	return db, nil
 }
 
-// IsNew checks to see if the database's migration tracking tables have been
-// created, and if so, if it's above version 0. It returns `false` if the current
-// version exists and is higher than zero, `true` otherwise.
-// This is not guaranteed to be accurate if the database is otherwise in a bad or
-// incomplete state. If an error is returned, the bool should be ignored.
-func IsNew(opts *config.DBConfig) (bool, error) {
-	dbURL := fmt.Sprintf(cnxTpl, opts.User, opts.Password, opts.Host, opts.Port, opts.Name)
-	dbURL += fmt.Sprintf(sslTpl, opts.SSLMode, opts.SSLRootCert)
-	pgOpts, err := makeGoPgOpts(dbURL)
-	if err != nil {
-		return false, err
-	}
-
-	pgConn := pg.Connect(pgOpts)
-	defer func() {
-		if errd := pgConn.Close(); errd != nil {
-			log.Errorf("error closing pg connection: %s", errd)
-		}
-	}()
-
-	exist, err := tablesExist(pgConn, []string{"gopg_migrations", "schema_migrations"})
-	if err != nil {
-		return false, err
-	}
-	if !exist["gopg_migrations"] {
-		return true, nil
-	}
-
-	collection := migrations.NewCollection()
-	collection.DisableSQLAutodiscover(true)
-	version, err := collection.Version(pgConn)
-	if err != nil {
-		return false, err
-	}
-	return version == 0, nil
-}
-
 // Setup connects to the database and run any necessary migrations.
-func Setup(opts *config.DBConfig) (db *PgDB, err error) {
+func Setup(
+	opts *config.DBConfig, postConnectHooks ...func(*PgDB) error,
+) (db *PgDB, err error) {
 	db, err = Connect(opts)
 	if err != nil {
 		return db, err
+	}
+
+	for _, hook := range postConnectHooks {
+		if err := hook(db); err != nil {
+			return nil, err
+		}
 	}
 
 	err = db.Migrate(opts.Migrations, opts.ViewsAndTriggers, []string{"up"})

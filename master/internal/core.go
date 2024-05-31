@@ -1129,31 +1129,34 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 		return errors.Wrap(err, "could not set static root")
 	}
 
-	isBrandNewCluster, err := db.IsNew(&m.config.DB)
-	if err != nil {
-		return errors.Wrap(err, "could not verify database version")
-	}
+	var isOldCluster bool
+	newClustersRequirePasswords := func(*db.PgDB) error {
+		isOldCluster, err = db.Bun().NewSelect().Table("pg_tables").
+			Where("schemaname = 'public'").
+			Where("tablename = 'gopg_migrations'").
+			Exists(ctx)
+		if err != nil {
+			return fmt.Errorf("checking if database is fresh: %w", err)
+		}
 
-	if isBrandNewCluster && slices.Contains(m.config.FeatureSwitches, "prevent_blank_password") {
-		// This has to happen before setup, to minimize risk of creating a database in a state that looks like
-		// there are already users, then aborting, which would allow a subsequent cluster to come up ignoring
-		// this check.
-		password := m.config.Security.InitialUserPassword
-		if password == "" {
+		if !isOldCluster &&
+			slices.Contains(m.config.FeatureSwitches, "prevent_blank_password") &&
+			m.config.Security.InitialUserPassword == "" {
 			log.Error("This cluster was deployed without an initial password for the built-in `determined` " +
 				"and `admin` users. New clusters can be deployed with initial passwords set using the " +
 				"`security.initial_user_password` setting.")
 			return errors.New("could not deploy without initial password")
 		}
-	}
 
-	m.db, err = db.Setup(&m.config.DB)
+		return nil
+	}
+	m.db, err = db.Setup(&m.config.DB, newClustersRequirePasswords)
 	if err != nil {
 		return err
 	}
 	defer closeWithErrCheck("db", m.db)
 
-	if isBrandNewCluster {
+	if !isOldCluster {
 		// This has to happen after setup, since creating the built-in users without a
 		// password is part of the first migration.
 		password := m.config.Security.InitialUserPassword
