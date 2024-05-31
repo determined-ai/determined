@@ -225,6 +225,9 @@ stringData:
       {{- if .Values.taskContainerDefaults.gpuPodSpec }}
       gpu_pod_spec: {{ .Values.taskContainerDefaults.gpuPodSpec | toJson }}
       {{- end }}
+      {{- if .Values.taskContainerDefaults.checkpointGcPodSpec }}
+      checkpoint_gc_pod_spec: {{ .Values.taskContainerDefaults.checkpointGcPodSpec | toJson }}
+      {{- end }}
       {{- if .Values.taskContainerDefaults.logPolicies }}
       log_policies:
         {{- toYaml .Values.taskContainerDefaults.logPolicies | nindent 8}}
