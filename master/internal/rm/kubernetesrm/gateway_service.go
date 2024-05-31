@@ -12,6 +12,7 @@ import (
 
 	alphaGateway "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned/typed/apis/v1alpha2"
 
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
@@ -42,7 +43,7 @@ func genSectionName(gwPort int) string {
 func newGatewayService(
 	gatewayInterface gateway.GatewayInterface,
 	tcpRouteInterfaces map[string]alphaGateway.TCPRouteInterface,
-	gatewayName string,
+	taskGWConfig config.InternalTaskGatewayConfig,
 ) (*gatewayService, error) {
 	// TODO: make port range configurable by user. We currently assume we own the controller and
 	// the service.
@@ -51,9 +52,9 @@ func newGatewayService(
 	g := &gatewayService{
 		gatewayInterface:   gatewayInterface,
 		tcpRouteInterfaces: tcpRouteInterfaces,
-		gatewayName:        gatewayName,
-		portRangeStart:     49152,
-		portRangeEnd:       65535,
+		gatewayName:        taskGWConfig.GatewayName,
+		portRangeStart:     taskGWConfig.GWPortStart,
+		portRangeEnd:       taskGWConfig.GWPortEnd,
 	}
 	return g, nil
 }

@@ -86,8 +86,9 @@ type pods struct {
 	resourcePoolConfigs   []config.ResourcePoolConfig
 	baseContainerDefaults *model.TaskContainerDefaultsConfig
 
-	kubeconfigPath    string
-	exposeProxyConfig *config.ExposeProxiesExternallyConfig
+	kubeconfigPath string
+	// TODO: also rename.
+	exposeProxyConfig *config.InternalTaskGatewayConfig
 
 	clientSet        k8sClient.Interface
 	detMasterIP      string
@@ -176,7 +177,7 @@ func newPodsService(
 	detMasterPort int32,
 	kubeconfigPath string,
 	podStatusUpdateCallback podStatusUpdateCallback,
-	exposeProxyConfig *config.ExposeProxiesExternallyConfig,
+	exposeProxyConfig *config.InternalTaskGatewayConfig,
 ) *pods {
 	loggingTLSConfig := masterTLSConfig
 	if loggingConfig.ElasticLoggingConfig != nil {
@@ -435,7 +436,7 @@ func (p *pods) startClientSet() error {
 		gwService, err := newGatewayService(
 			gatewayClientSet.Gateways(exposeConfig.GatewayNamespace),
 			p.tcpRouteInterfaces,
-			exposeConfig.GatewayName,
+			*exposeConfig,
 		)
 		if err != nil {
 			return fmt.Errorf("creating gateway service: %w", err)

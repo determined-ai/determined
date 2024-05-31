@@ -220,36 +220,36 @@ resource_manager:
   type: kubernetes
   max_slots_per_pod: 1
   name: a
-  expose_proxies_externally:
+  internal_task_gateway:
     gateway_namespace: test
-    gateway_address: abc
-  `, nil, "Check Failed! 1 errors found:\n\terror found at root.ResourceConfig." +
-			"RootManagerInternal.KubernetesRM: expose_proxies_externally.gateway_name " +
-			"is required with expose_proxies_externally:  must be non-empty"},
+    gateway_ip: 127.0.0.1
+  `, nil, "Check Failed! 1 errors found:\n\terror found at " +
+			"root.ResourceConfig.RootManagerInternal.KubernetesRM.InternalTaskGateway: " +
+			"invalid gateway_name:  must be non-empty"},
 
 		{"k8s missing gateway_namespace", `
 resource_manager:
   type: kubernetes
   max_slots_per_pod: 1
   name: a
-  expose_proxies_externally:
+  internal_task_gateway:
     gateway_name: test
-    gateway_address: abc
-  `, nil, "Check Failed! 1 errors found:\n\terror found at root.ResourceConfig." +
-			"RootManagerInternal.KubernetesRM: expose_proxies_externally.gateway_namespace " +
-			"is required with expose_proxies_externally:  must be non-empty"},
+    gateway_ip: 127.0.0.1
+  `, nil, "Check Failed! 1 errors found:\n\terror found at " +
+			"root.ResourceConfig.RootManagerInternal.KubernetesRM.InternalTaskGateway: " +
+			"invalid gateway_namespace:  must be non-empty"},
 
-		{"k8s missing gateway_address", `
+		{"k8s missing gateway_ip", `
 resource_manager:
   type: kubernetes
   max_slots_per_pod: 1
   name: a
-  expose_proxies_externally:
+  internal_task_gateway:
     gateway_name: test
     gateway_namespace: abc
-  `, nil, "Check Failed! 1 errors found:\n\terror found at root.ResourceConfig." +
-			"RootManagerInternal.KubernetesRM: expose_proxies_externally.gateway_address " +
-			"is required with expose_proxies_externally:  must be non-empty"},
+  `, nil, "Check Failed! 1 errors found:\n\terror found at " +
+			"root.ResourceConfig.RootManagerInternal.KubernetesRM.InternalTaskGateway: " +
+			"invalid gateway_ip:  must be non-empty"},
 	}
 
 	RegisterAuthZType("basic")
