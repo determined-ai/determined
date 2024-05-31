@@ -232,3 +232,12 @@ func LessThanOrEqualTo(actual, expected interface{}, msgAndArgs ...interface{}) 
 	return maybeCompare(actual, expected, func(comparison int) bool { return comparison <= 0 },
 		msgAndArgs, "%v is not less than or equal to %v", actual, expected)
 }
+
+// BetweenInclusive checks whether `actual` is between `lower` and `upper` inclusive.
+func BetweenInclusive(actual, lower, upper interface{}, msgAndArgs ...interface{}) error {
+	err := GreaterThanOrEqualTo(actual, lower, msgAndArgs...)
+	if err != nil {
+		return err
+	}
+	return LessThanOrEqualTo(actual, upper, msgAndArgs...)
+}

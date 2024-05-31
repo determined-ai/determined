@@ -36,10 +36,13 @@ stages:
           kubeconfig_path: /tmp/defaultrm-kubeconf
           determined_master_ip: $DOCKER_LOCALHOST
           determined_master_port: 8080
-          expose_proxies_externally:
+          internal_task_gateway:
             gateway_name: contour
             gateway_namespace: projectcontour
-            gateway_address: $GATEWAY_IP
+            gateway_ip: $GATEWAY_IP
+            gateway_port_range_start: 49152
+            gateway_port_range_end: 65535
+
 
         additional_resource_managers:
         - resource_manager:

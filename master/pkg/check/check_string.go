@@ -1,6 +1,7 @@
 package check
 
 import (
+	"net"
 	"regexp"
 	"strings"
 )
@@ -29,4 +30,41 @@ func Match(actual string, regex string, msgAndArgs ...interface{}) error {
 	compiled.Longest()
 	return check(compiled.FindString(actual) == actual, msgAndArgs,
 		"%s doesn't match regex %s", actual, regex)
+}
+
+// LenBetween checks whether the length of the first argument is between the second and third arguments.
+// The method returns an error with the provided message if the check fails.
+func LenBetween(actual string, min, max int, msgAndArgs ...interface{}) error {
+	return BetweenInclusive(len(actual), min, max, msgAndArgs...)
+}
+
+// IsValidK8sLabel checks whether the first argument is a valid Kubernetes label. The method returns
+// an error with the provided message if the check fails.
+func IsValidK8sLabel(actual string, msgAndArgs ...interface{}) error {
+	if err := NotEmpty(actual, msgAndArgs...); err != nil {
+		return err
+	}
+	if err := LenBetween(actual, 1, 63, msgAndArgs...); err != nil {
+		return err
+	}
+	if err := Match(
+		actual, `^[a-zA-Z0-9]([-a-zA-Z0-9_.]*[a-zA-Z0-9])?$`, msgAndArgs...,
+	); err != nil {
+		return err
+	}
+	return nil
+}
+
+// IsValidIP checks whether the first argument is a valid IP address. The method returns an error
+// with the provided message if the check fails.
+func IsValidIP(actual string, msgAndArgs ...interface{}) error {
+	if err := NotEmpty(actual, msgAndArgs...); err != nil {
+		return err
+	}
+
+	ip := net.ParseIP(actual)
+	if ip == nil {
+		return check(false, msgAndArgs, "%s is not a valid IP address", actual)
+	}
+	return nil
 }

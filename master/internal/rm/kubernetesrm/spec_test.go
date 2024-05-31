@@ -92,7 +92,7 @@ func TestConfigureProxyResources(t *testing.T) {
 			},
 		},
 	}
-	p.exposeProxyConfig = &config.ExposeProxiesExternallyConfig{
+	p.exposeProxyConfig = &config.InternalTaskGatewayConfig{
 		GatewayName:      "gatewayname",
 		GatewayNamespace: "gatewaynamespace",
 	}
