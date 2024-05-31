@@ -2066,10 +2066,10 @@ service Determined {
   }
 
   // Add namespace binding to a workspace.
-  rpc AddWorkspaceNamespaceBinding(AddWorkspaceNamespaceBindingRequest)
-      returns (AddWorkspaceNamespaceBindingResponse) {
+  rpc SetWorkspaceNamespaceBindings(SetWorkspaceNamespaceBindingsRequest)
+      returns (SetWorkspaceNamespaceBindingsResponse) {
     option (google.api.http) = {
-      post: "/api/v1/workspaces/{id}/bind",
+      post: "/api/v1/workspaces/{workspace_id}/bind",
       body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
@@ -2081,7 +2081,7 @@ service Determined {
   rpc ListWorkspaceNamespaceBindings(ListWorkspaceNamespaceBindingsRequest)
       returns (ListWorkspaceNamespaceBindingsResponse) {
     option (google.api.http) = {
-      get: "/api/v1/workspaces/{id}/list-workspace-namespace-bindings"
+      get: "/api/v1/workspaces/{id}/list-namespace-bindings"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Workspaces"

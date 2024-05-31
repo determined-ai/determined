@@ -129,7 +129,7 @@ func startRequestQueue(
 	podInterfaces map[string]typedV1.PodInterface,
 	configMapInterfaces map[string]typedV1.ConfigMapInterface,
 	failures chan<- resourcesRequestFailure,
-) *requestQueue {
+) (*requestQueue, []*requestProcessingWorker) {
 	r := &requestQueue{
 		jobInterfaces:       jobInterfaces,
 		podInterfaces:       podInterfaces,
@@ -146,13 +146,14 @@ func startRequestQueue(
 
 		syslog: logrus.WithField("component", "kubernetesrm-queue"),
 	}
-	r.startWorkers()
-	return r
+	workers := r.startWorkers()
+	return r, workers
 }
 
-func (r *requestQueue) startWorkers() {
+func (r *requestQueue) startWorkers() []*requestProcessingWorker {
+	allWorkers := []*requestProcessingWorker{}
 	for i := 0; i < numKubernetesWorkers; i++ {
-		startRequestProcessingWorker(
+		worker := startRequestProcessingWorker(
 			r.jobInterfaces,
 			r.podInterfaces,
 			r.configMapInterfaces,
@@ -161,7 +162,9 @@ func (r *requestQueue) startWorkers() {
 			r.workerReady,
 			r.failures,
 		)
+		allWorkers = append(allWorkers, worker)
 	}
+	return allWorkers
 }
 
 func keyForCreate(msg createKubernetesResources) requestID {

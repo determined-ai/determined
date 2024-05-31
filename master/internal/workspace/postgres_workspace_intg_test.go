@@ -9,11 +9,13 @@ import (
 	"os"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/etc"
+	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 const (
@@ -40,11 +42,109 @@ func TestMain(m *testing.M) {
 	os.Exit(m.Run())
 }
 
-type Bindings struct {
-	bun.BaseModel `bun:"table:workspace_namespace_bindings"`
-	WorkspaceID   int    `bun:"workspace_id"`
-	ClusterName   string `bun:"cluster_name"`
-	NamespaceName string `bun:"namespace"`
+func TestAddWorkspace(t *testing.T) {
+	ctx := context.Background()
+	curUserID := model.UserID(100)
+	wkspState := model.WorkspaceStateDeleteFailed
+	defaultComputePool := uuid.NewString()
+	agentUID := int32(90)
+	agentUser := uuid.NewString()
+
+	tx, err := db.Bun().BeginTx(ctx, nil)
+	require.NoError(t, err)
+
+	cases := []struct {
+		name    string
+		wksp    *model.Workspace
+		tx      *bun.Tx
+		wantErr bool
+	}{
+		{
+			"valid-wksp-no-tx",
+			&model.Workspace{
+				Name:               uuid.NewString(),
+				Archived:           true,
+				UserID:             curUserID,
+				Immutable:          true,
+				State:              &wkspState,
+				AgentUID:           &agentUID,
+				AgentUser:          &agentUser,
+				DefaultComputePool: defaultComputePool,
+			},
+			nil,
+			false,
+		},
+		{
+			"valid-wksp-with-tx",
+			&model.Workspace{
+				Name:               uuid.NewString(),
+				Archived:           true,
+				UserID:             curUserID,
+				Immutable:          true,
+				State:              &wkspState,
+				AgentUID:           &agentUID,
+				AgentUser:          &agentUser,
+				DefaultComputePool: defaultComputePool,
+			},
+			&tx,
+			false,
+		},
+		{
+			"no-user-id-no-tx",
+			&model.Workspace{
+				Name:               uuid.NewString(),
+				Archived:           true,
+				Immutable:          true,
+				State:              &wkspState,
+				AgentUID:           &agentUID,
+				AgentUser:          &agentUser,
+				DefaultComputePool: defaultComputePool,
+			},
+			nil,
+			true,
+		},
+		{
+			"no-user-id-with-tx",
+			&model.Workspace{
+				Name:               uuid.NewString(),
+				Archived:           true,
+				Immutable:          true,
+				State:              &wkspState,
+				AgentUID:           &agentUID,
+				AgentUser:          &agentUser,
+				DefaultComputePool: defaultComputePool,
+			},
+			&tx,
+			true,
+		},
+		{
+			"agent-id-no-agent-user-id",
+			&model.Workspace{
+				Name:               uuid.NewString(),
+				Archived:           true,
+				Immutable:          true,
+				State:              &wkspState,
+				AgentUID:           &agentUID,
+				DefaultComputePool: defaultComputePool,
+			},
+			nil,
+			true,
+		},
+	}
+
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			err := AddWorkspace(ctx, test.wksp, test.tx)
+			if !test.wantErr {
+				require.NoError(t, err)
+			} else {
+				require.Error(t, err)
+			}
+		})
+	}
+
+	err = tx.Rollback()
+	require.NoError(t, err)
 }
 
 func TestGetNamespaceFromWorkspace(t *testing.T) {
@@ -53,11 +153,11 @@ func TestGetNamespaceFromWorkspace(t *testing.T) {
 	wkspID2, wksp2 := db.RequireMockWorkspaceID(t, db.SingleDB(), "")
 	_, wksp3 := db.RequireMockWorkspaceID(t, db.SingleDB(), "")
 
-	b1 := Bindings{WorkspaceID: wkspID1, ClusterName: "C1", NamespaceName: "n1"}
-	b2 := Bindings{WorkspaceID: wkspID1, ClusterName: "C2", NamespaceName: "n2"}
-	b3 := Bindings{WorkspaceID: wkspID2, ClusterName: "C1", NamespaceName: "n3"}
+	b1 := model.WorkspaceNamespace{WorkspaceID: wkspID1, ClusterName: "C1", Namespace: "n1"}
+	b2 := model.WorkspaceNamespace{WorkspaceID: wkspID1, ClusterName: "C2", Namespace: "n2"}
+	b3 := model.WorkspaceNamespace{WorkspaceID: wkspID2, ClusterName: "C1", Namespace: "n3"}
 
-	bindings := []Bindings{b1, b2, b3}
+	bindings := []model.WorkspaceNamespace{b1, b2, b3}
 
 	_, err := db.Bun().NewInsert().Model(&bindings).Exec(ctx)
 	require.NoError(t, err)
@@ -95,11 +195,11 @@ func TestGetAllNamespacesForRM(t *testing.T) {
 	wkspID1, _ := db.RequireMockWorkspaceID(t, db.SingleDB(), "")
 	wkspID2, _ := db.RequireMockWorkspaceID(t, db.SingleDB(), "")
 
-	b1 := Bindings{WorkspaceID: wkspID1, ClusterName: cluster1, NamespaceName: "n1"}
-	b2 := Bindings{WorkspaceID: wkspID1, ClusterName: cluster2, NamespaceName: "n2"}
-	b3 := Bindings{WorkspaceID: wkspID2, ClusterName: cluster1, NamespaceName: "n3"}
+	b1 := model.WorkspaceNamespace{WorkspaceID: wkspID1, ClusterName: cluster1, Namespace: "n1"}
+	b2 := model.WorkspaceNamespace{WorkspaceID: wkspID1, ClusterName: cluster2, Namespace: "n2"}
+	b3 := model.WorkspaceNamespace{WorkspaceID: wkspID2, ClusterName: cluster1, Namespace: "n3"}
 
-	bindings := []Bindings{b1, b2, b3}
+	bindings := []model.WorkspaceNamespace{b1, b2, b3}
 
 	_, err := db.Bun().NewInsert().Model(&bindings).Exec(ctx)
 	require.NoError(t, err)
@@ -115,4 +215,77 @@ func TestGetAllNamespacesForRM(t *testing.T) {
 	ns, err = GetAllNamespacesForRM(ctx, "cluster3")
 	require.NoError(t, err)
 	require.Equal(t, ns, []string(nil))
+}
+
+func TestAddWorkspaceNamespaceBinding(t *testing.T) {
+	ctx := context.Background()
+	userID, err := db.HackAddUser(ctx, &model.User{Username: uuid.NewString()})
+	require.NoError(t, err)
+	wksp := &model.Workspace{Name: uuid.NewString(), UserID: userID}
+	err = AddWorkspace(ctx, wksp, nil)
+	require.NoError(t, err)
+
+	clusterName := uuid.NewString()
+	namespace := uuid.NewString()
+	expectedWkspNmsp := &model.WorkspaceNamespace{
+		WorkspaceID: wksp.ID,
+		ClusterName: clusterName,
+		Namespace:   namespace,
+	}
+	err = AddWorkspaceNamespaceBinding(ctx, expectedWkspNmsp, nil)
+	require.NoError(t, err)
+
+	// Verify that workspace-namespace binding must be unique.
+	err = AddWorkspaceNamespaceBinding(ctx, expectedWkspNmsp, nil)
+	require.Error(t, err)
+
+	// Test in transaction.
+	err = db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		wksp := &model.Workspace{Name: uuid.NewString(), UserID: userID}
+		err = AddWorkspace(ctx, wksp, nil)
+		require.NoError(t, err)
+
+		expectedWkspNmsp.WorkspaceID = wksp.ID
+		err = AddWorkspaceNamespaceBinding(ctx, expectedWkspNmsp, &tx)
+		require.NoError(t, err)
+
+		return nil
+	})
+
+	require.NoError(t, err)
+}
+
+func TestGetWorkspaceNamespaceBindings(t *testing.T) {
+	// Create workspace and add workspace-namespace bindings.
+	ctx := context.Background()
+	userID, err := db.HackAddUser(ctx, &model.User{Username: uuid.NewString()})
+	require.NoError(t, err)
+	wksp := &model.Workspace{Name: uuid.NewString(), UserID: userID}
+	err = AddWorkspace(ctx, wksp, nil)
+	require.NoError(t, err)
+
+	expectedBindings := make(map[string]model.WorkspaceNamespace)
+
+	for i := 0; i < 3; i++ {
+		clusterName := uuid.NewString()
+		namespace := uuid.NewString()
+		wsns := &model.WorkspaceNamespace{
+			WorkspaceID: wksp.ID,
+			Namespace:   namespace,
+			ClusterName: clusterName,
+		}
+		err := AddWorkspaceNamespaceBinding(ctx, wsns, nil)
+		require.NoError(t, err)
+		expectedBindings[clusterName] = *wsns
+	}
+
+	// Test that added workspace-namespace bindings are listed.
+	var wsnsBindings []model.WorkspaceNamespace
+	wsnsBindings, err = GetWorkspaceNamespaceBindings(ctx, int32(wksp.ID))
+	require.NoError(t, err)
+
+	for _, binding := range wsnsBindings {
+		clusterName := binding.ClusterName
+		require.Equal(t, expectedBindings[clusterName], binding)
+	}
 }

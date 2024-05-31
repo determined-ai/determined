@@ -21,19 +21,19 @@ type ResourceManagerConfig struct {
 	PbsRM        *DispatcherResourceManagerConfig `union:"type,pbs" json:"-"`
 }
 
-// Name returns the name for the resource manager.
-func (r ResourceManagerConfig) Name() string {
+// ClusterName returns the name for the resource manager.
+func (r ResourceManagerConfig) ClusterName() string {
 	if agentRM := r.AgentRM; agentRM != nil {
-		return agentRM.Name
+		return agentRM.ClusterName
 	}
 	if k8RM := r.KubernetesRM; k8RM != nil {
-		return k8RM.Name
+		return k8RM.ClusterName
 	}
 	if dis := r.DispatcherRM; dis != nil {
-		return dis.Name
+		return dis.ClusterName
 	}
 	if pbs := r.PbsRM; pbs != nil {
-		return pbs.Name
+		return pbs.ClusterName
 	}
 
 	panic(fmt.Sprintf("unknown rm type %+v", r))

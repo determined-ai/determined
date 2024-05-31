@@ -110,15 +110,15 @@ type WorkspacePin struct {
 type WorkspaceNamespace struct {
 	bun.BaseModel `bun:"table:workspace_namespace_bindings"`
 	WorkspaceID   int    `bun:"workspace_id"`
-	NamespaceName string `bun:"namespace_name"`
+	Namespace     string `bun:"namespace"`
 	ClusterName   string `bun:"cluster_name"`
 }
 
 // ToProto converts a WorkspaceNamespaceBinding to its protobuf representation.
 func (wn WorkspaceNamespace) ToProto() *workspacev1.WorkspaceNamespace {
 	return &workspacev1.WorkspaceNamespace{
-		WorkspaceId:   int32(wn.WorkspaceID),
-		NamespaceName: wn.NamespaceName,
-		ClusterName:   wn.ClusterName,
+		WorkspaceId: int32(wn.WorkspaceID),
+		Namespace:   wn.Namespace,
+		ClusterName: wn.ClusterName,
 	}
 }

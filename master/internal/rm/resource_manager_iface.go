@@ -10,9 +10,6 @@ import (
 
 // ResourceManager is an interface for a resource manager, which can allocate and manage resources.
 type ResourceManager interface {
-	// RM type Getter and Setter
-	RMType() ResourceManagerType
-
 	// Basic functionality
 	GetAllocationSummaries() (map[model.AllocationID]sproto.AllocationSummary, error)
 	Allocate(sproto.AllocateRequest) (*sproto.ResourcesSubscription, error)
@@ -57,7 +54,8 @@ type ResourceManager interface {
 	HealthCheck() []model.ResourceManagerHealth
 
 	// Kubernetes Namespaces.
-	VerifyNamespaceExists(string, *string) error
+	DefaultNamespace(string) (*string, error)
+	VerifyNamespaceExists(string, string) error
 }
 
 // ResourcePoolName holds the name of the resource pool, and describes the input/output
@@ -74,22 +72,4 @@ type ClusterName string
 
 func (c ClusterName) String() string {
 	return string(c)
-}
-
-// ResourceManagerType is the type of Resource Manager.
-type ResourceManagerType string
-
-const (
-	// TypeMultiRMRouter is the type MultiRM Router.
-	TypeMultiRMRouter ResourceManagerType = "mutli"
-	// TypeAgentRM is the type agent RM.
-	TypeAgentRM ResourceManagerType = "agent"
-	// TypeKubernetesRM is the type Kubernetes RM.
-	TypeKubernetesRM ResourceManagerType = "kubernetes"
-	// TypeDispatcherRM is the type dispatcher RM.
-	TypeDispatcherRM ResourceManagerType = "dispatcher"
-)
-
-func (rmType ResourceManagerType) String() string {
-	return string(rmType)
 }

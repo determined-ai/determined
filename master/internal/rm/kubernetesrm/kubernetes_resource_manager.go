@@ -121,6 +121,9 @@ func New(
 		}
 
 		poolConfig := poolConfig
+		if k.config.DefaultNamespace == "" {
+			k.config.DefaultNamespace = defaultNamespace
+		}
 		rp := newResourcePool(maxSlotsPerPod, &poolConfig, k.jobsService, k.db, k.config.DefaultNamespace, k.config.Name)
 		go func() {
 			t := time.NewTicker(podSubmissionInterval)
@@ -132,11 +135,6 @@ func New(
 		k.pools[poolConfig.PoolName] = rp
 	}
 	return k, nil
-}
-
-// RMType is the type of resource manager that allocates resources for the corresponding cluster.
-func (k *ResourceManager) RMType() rm.ResourceManagerType {
-	return rm.TypeKubernetesRM
 }
 
 // Allocate implements rm.ResourceManager.
@@ -388,11 +386,20 @@ func (k *ResourceManager) ValidateResources(
 	return nil, nil
 }
 
+// DefaultNamespace implements rm.ResourceManager.
+func (k *ResourceManager) DefaultNamespace(clusterName string) (*string, error) {
+	if clusterName != k.config.ClusterName {
+		return nil, fmt.Errorf("invalid cluster name %s", clusterName)
+	}
+	namespace := k.jobsService.DefaultNamespace()
+	return &namespace, nil
+}
+
 // VerifyNamespaceExists implements rm.ResourceManager.
-func (k *ResourceManager) VerifyNamespaceExists(namespaceName string, clusterName *string) error {
+func (k *ResourceManager) VerifyNamespaceExists(namespaceName string, clusterName string) error {
 	configClusterName := rm.ClusterName(k.config.ClusterName)
-	if clusterName != nil && configClusterName != rm.ClusterName(*clusterName) {
-		return nil
+	if configClusterName != rm.ClusterName(clusterName) {
+		return fmt.Errorf("invalid cluster name %s", clusterName)
 	}
 	err := k.jobsService.VerifyNamespaceExists(namespaceName)
 	if err != nil {

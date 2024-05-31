@@ -265,17 +265,17 @@ func TestPermissionMatch(t *testing.T) {
 		// Verify that a user who has ClusterAdmin privileges can add workspace-namespace bindings,
 		// while a user with Editor privileges and below cannot.
 		err = DoesPermissionMatch(ctx, userIDViewer, &workspaceID,
-			rbacv1.PermissionType_PERMISSION_TYPE_ADD_WORKSPACE_NAMESPACE_BINDINGS)
+			rbacv1.PermissionType_PERMISSION_TYPE_SET_WORKSPACE_NAMESPACE_BINDINGS)
 		require.IsType(t, authz.PermissionDeniedError{}, err,
 			"user should not have permission to add workspace-namespace bindings")
 
 		err = DoesPermissionMatch(ctx, userIDEditor, &workspaceID,
-			rbacv1.PermissionType_PERMISSION_TYPE_ADD_WORKSPACE_NAMESPACE_BINDINGS)
+			rbacv1.PermissionType_PERMISSION_TYPE_SET_WORKSPACE_NAMESPACE_BINDINGS)
 		require.IsType(t, authz.PermissionDeniedError{}, err,
 			"user should not have permission to add workspace-namespace bindings")
 
 		err = DoesPermissionMatch(ctx, userIDClusterAdmin, &workspaceID,
-			rbacv1.PermissionType_PERMISSION_TYPE_ADD_WORKSPACE_NAMESPACE_BINDINGS)
+			rbacv1.PermissionType_PERMISSION_TYPE_SET_WORKSPACE_NAMESPACE_BINDINGS)
 		require.NoError(t, err)
 
 		err = DoesPermissionMatch(ctx, userIDEditor, &workspaceID,
@@ -312,12 +312,12 @@ func TestPermissionMatch(t *testing.T) {
 			"user should not have permission to update experiments")
 
 		err = DoesPermissionMatchAll(ctx, userIDEditor,
-			rbacv1.PermissionType_PERMISSION_TYPE_ADD_WORKSPACE_NAMESPACE_BINDINGS, workspaceID)
+			rbacv1.PermissionType_PERMISSION_TYPE_SET_WORKSPACE_NAMESPACE_BINDINGS, workspaceID)
 		require.IsType(t, authz.PermissionDeniedError{}, err,
 			"user should not have permission to add workspace-namespace bindings")
 
 		err = DoesPermissionMatchAll(ctx, userIDClusterAdmin,
-			rbacv1.PermissionType_PERMISSION_TYPE_ADD_WORKSPACE_NAMESPACE_BINDINGS, workspaceID)
+			rbacv1.PermissionType_PERMISSION_TYPE_SET_WORKSPACE_NAMESPACE_BINDINGS, workspaceID)
 		require.NoError(t, err)
 	})
 
@@ -332,7 +332,7 @@ func TestPermissionMatch(t *testing.T) {
 		require.NoError(t, err, "error when searching for permissions")
 
 		err = DoesPermissionMatchAll(ctx, userIDClusterAdmin,
-			rbacv1.PermissionType_PERMISSION_TYPE_ADD_WORKSPACE_NAMESPACE_BINDINGS, workspaceIDs...)
+			rbacv1.PermissionType_PERMISSION_TYPE_SET_WORKSPACE_NAMESPACE_BINDINGS, workspaceIDs...)
 		require.NoError(t, err, "error when searching for permissions")
 	})
 
@@ -363,7 +363,7 @@ func TestPermissionMatch(t *testing.T) {
 
 		workspaceIDs = []int32{int32(wsIDs[0]), int32(wsIDs[1]), badWorkspaceID}
 		err = DoesPermissionMatchAll(ctx, userIDClusterAdmin,
-			rbacv1.PermissionType_PERMISSION_TYPE_ADD_WORKSPACE_NAMESPACE_BINDINGS, workspaceIDs...)
+			rbacv1.PermissionType_PERMISSION_TYPE_SET_WORKSPACE_NAMESPACE_BINDINGS, workspaceIDs...)
 		require.IsType(t, authz.PermissionDeniedError{}, err,
 			"error should have been returned when searching for permissions")
 	})
@@ -397,7 +397,7 @@ func TestPermissionMatch(t *testing.T) {
 		require.NoError(t, err)
 
 		err = DoPermissionsExist(ctx, userIDClusterAdmin,
-			rbacv1.PermissionType_PERMISSION_TYPE_ADD_WORKSPACE_NAMESPACE_BINDINGS)
+			rbacv1.PermissionType_PERMISSION_TYPE_SET_WORKSPACE_NAMESPACE_BINDINGS)
 		require.NoError(t, err)
 
 		err = DoPermissionsExist(ctx, userIDEditorRestricted,
@@ -411,7 +411,7 @@ func TestPermissionMatch(t *testing.T) {
 			"error should have been returned when searching for permissions")
 
 		err = DoPermissionsExist(ctx, userIDEditor,
-			rbacv1.PermissionType_PERMISSION_TYPE_ADD_WORKSPACE_NAMESPACE_BINDINGS)
+			rbacv1.PermissionType_PERMISSION_TYPE_SET_WORKSPACE_NAMESPACE_BINDINGS)
 		require.IsType(t, authz.PermissionDeniedError{}, err,
 			"error should have been returned when searching for permissions")
 	})
@@ -430,12 +430,12 @@ func TestPermissionMatch(t *testing.T) {
 		require.Equal(t, noWorkspaces, workspaces)
 
 		workspaces, err = GetNonGlobalWorkspacesWithPermission(ctx, userIDClusterAdmin,
-			rbacv1.PermissionType_PERMISSION_TYPE_ADD_WORKSPACE_NAMESPACE_BINDINGS)
+			rbacv1.PermissionType_PERMISSION_TYPE_SET_WORKSPACE_NAMESPACE_BINDINGS)
 		require.NoError(t, err, "error when searching for permissions")
 		require.Equal(t, workspaceIDs, workspaces)
 
 		workspaces, err = GetNonGlobalWorkspacesWithPermission(ctx, userIDEditorRestricted,
-			rbacv1.PermissionType_PERMISSION_TYPE_ADD_WORKSPACE_NAMESPACE_BINDINGS)
+			rbacv1.PermissionType_PERMISSION_TYPE_SET_WORKSPACE_NAMESPACE_BINDINGS)
 		require.NoError(t, err, "error when searching for permissions")
 		require.Equal(t, noWorkspaces, workspaces)
 	})

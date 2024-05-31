@@ -103,9 +103,9 @@ message PatchWorkspace {
 // cluster.
 message WorkspaceNamespace {
   // The id of the workspace.
-  int32 workspace_id = 2;
-  // The namespace name.
-  string namespace_name = 3;
+  int32 workspace_id = 1;
+  // The Kubernetes namespace.
+  string namespace = 2;
   // User cluster name.
-  string cluster_name = 4;
+  string cluster_name = 3;
 }

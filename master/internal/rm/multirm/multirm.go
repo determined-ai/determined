@@ -37,11 +37,6 @@ func New(defaultRMName string, rms map[string]rm.ResourceManager) *MultiRMRouter
 	}
 }
 
-// RMType is the type of resource manager that allocates resources for the corresponding cluster.
-func (m *MultiRMRouter) RMType() rm.ResourceManagerType {
-	return rm.TypeMultiRMRouter
-}
-
 // GetAllocationSummaries returns the allocation summaries for all resource pools across all resource managers.
 func (m *MultiRMRouter) GetAllocationSummaries() (
 	map[model.AllocationID]sproto.AllocationSummary,
@@ -386,22 +381,37 @@ func (m *MultiRMRouter) DisableSlot(req *apiv1.DisableSlotRequest) (*apiv1.Disab
 	return m.rms[resolvedRMName].DisableSlot(req)
 }
 
+// DefaultNamespace is the default namespace used within a given Kubernetes RpM's Kubernetes cluster.
+func (m *MultiRMRouter) DefaultNamespace(clusterName string) (*string, error) {
+	if len(clusterName) == 0 {
+		return nil, fmt.Errorf("must specify cluster name when using multiRM")
+	}
+	rm, err := m.getRM(clusterName)
+	if err != nil {
+		return nil, fmt.Errorf("error getting resource manager for cluster %s: %w", clusterName, err)
+	}
+	namespace, err := rm.DefaultNamespace(clusterName)
+	if err != nil {
+		return nil, fmt.Errorf("error getting default namespace: %w", err)
+	}
+	return namespace, nil
+}
+
 // VerifyNamespaceExists verifies the existence of a Kubernetes namespace within a given cluster.
 func (m *MultiRMRouter) VerifyNamespaceExists(namespaceName string,
-	clusterName *string,
+	clusterName string,
 ) error {
-	if clusterName == nil {
+	if len(clusterName) == 0 {
 		return fmt.Errorf("must specify cluster name when using multiRM")
 	}
-	rm, err := m.getRM(*clusterName)
+	rm, err := m.getRM(clusterName)
 	if err != nil {
-		return fmt.Errorf("error getting resource manager for cluster %p: %w", clusterName, err)
+		return fmt.Errorf("error getting resource manager for cluster %s: %w", clusterName, err)
 	}
 	err = rm.VerifyNamespaceExists(namespaceName, clusterName)
 	if err != nil {
-		return fmt.Errorf("error verifying namespace existence %s: %w", namespaceName, err)
+		return err
 	}
-
 	return nil
 }
 
@@ -427,13 +437,13 @@ func (m *MultiRMRouter) getRMName(rpName rm.ResourcePoolName) (string, error) {
 	return "", ErrRPNotDefined(rpName)
 }
 
-func (m *MultiRMRouter) getRM(name string) (rm.ResourceManager, error) {
-	if name == "" {
+func (m *MultiRMRouter) getRM(clusterName string) (rm.ResourceManager, error) {
+	if clusterName == "" {
 		return m.rms[m.defaultRMName], nil
 	}
-	resourceManager, ok := m.rms[name]
+	resourceManager, ok := m.rms[clusterName]
 	if !ok {
-		return nil, fmt.Errorf("no resource manager of the specified name")
+		return nil, rmerrors.ErrResourceManagerDNE
 	}
 	return resourceManager, nil
 }

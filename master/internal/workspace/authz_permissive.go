@@ -155,12 +155,12 @@ func (p *WorkspaceAuthZPermissive) CanSetWorkspacesDefaultPools(
 	return (&WorkspaceAuthZBasic{}).CanSetWorkspacesDefaultPools(ctx, curUser, workspace)
 }
 
-// CanAddWorkspaceNamespaceBindings retruns a nil error.
-func (p *WorkspaceAuthZPermissive) CanAddWorkspaceNamespaceBindings(
+// CanSetWorkspaceNamespaceBindings retruns a nil error.
+func (p *WorkspaceAuthZPermissive) CanSetWorkspaceNamespaceBindings(
 	ctx context.Context, curUser model.User, workspaceID int32,
 ) error {
-	_ = (&WorkspaceAuthZRBAC{}).CanAddWorkspaceNamespaceBindings(ctx, curUser, workspaceID)
-	return (&WorkspaceAuthZBasic{}).CanAddWorkspaceNamespaceBindings(ctx, curUser, workspaceID)
+	_ = (&WorkspaceAuthZRBAC{}).CanSetWorkspaceNamespaceBindings(ctx, curUser, workspaceID)
+	return (&WorkspaceAuthZBasic{}).CanSetWorkspaceNamespaceBindings(ctx, curUser, workspaceID)
 }
 
 func init() {
