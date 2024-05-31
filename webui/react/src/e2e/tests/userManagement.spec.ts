@@ -22,9 +22,7 @@ test.describe('User Management', () => {
     await userManagementPage.goto();
     // wait for table to be stable and select page 1
     const page1 = userManagementPage.table.table.pagination.pageButtonLocator(1);
-    await expect(async () =>
-      expect(await userManagementPage.table.table.rows.pwLocator.count()).toBeGreaterThanOrEqual(1),
-    ).toPass({ timeout: 10_000 });
+    await userManagementPage.table.table.rows.pwLocator.nth(0).waitFor({ timeout: 10_000 });
     if (await page1.isVisible()) {
       await expect(
         repeatWithFallback(

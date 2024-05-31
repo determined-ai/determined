@@ -36,7 +36,6 @@ module.exports = {
       files: ['**/src/e2e/**'],
       rules: {
         '@typescript-eslint/no-floating-promises': 'error',
-        'no-console': 'off',
       },
     },
   ],

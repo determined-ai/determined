@@ -74,8 +74,13 @@ export abstract class BasePage implements ModelBasics {
     return this;
   }
 
-  async log(s: string): Promise<void> {
+  /**
+   * Logs a string to the browser console. This string will show in playwright's trace.
+   * @param {string} s - the string to log to the browser console
+   */
+  async browserLog(s: string): Promise<void> {
     await this._page.evaluate((s: string) => {
+      // eslint-disable-next-line no-console
       console.log(s);
     }, s);
   }

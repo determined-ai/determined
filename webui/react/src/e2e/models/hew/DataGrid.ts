@@ -115,7 +115,7 @@ export class DataGrid<
     // scroll the table to the right by the width of the table minus 500
     // All the permanent columns on the left together are under 500px wide
     await page.mouse.wheel(xAbsolute ? xAbsolute : box.width - 500, 0);
-    // wait for 1 second for the scroll to happen
+    // wait for the scroll to happen
     await page.waitForTimeout(2_000);
   }
 
@@ -450,7 +450,7 @@ export class HeadRow<RowType extends Row<HeadRow<RowType>>> extends NamedCompone
     const incrementScroll = await this.parentTable.incrementScrollGenerator();
     do {
       await setVisibleColumns();
-      await this.root.log(printMap(this.#columnDefs));
+      await this.root.browserLog(printMap(this.#columnDefs));
     } while (await incrementScroll());
     return this.#columnDefs;
   }
