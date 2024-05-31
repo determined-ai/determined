@@ -105,7 +105,7 @@ def _ray_job_submit(exp_path: pathlib.Path, port: int = 8265) -> None:
     ],
 )
 def test_experiment_proxy_simple_single_slot(port_map: Tuple[int, bool]) -> None:
-    return _test_experiment_proxy_simple(port_map, slots=1)
+    return _test_experiment_proxy_simple(port_map, slots=0)
 
 
 @pytest.mark.port_registry  # has multiple slots
