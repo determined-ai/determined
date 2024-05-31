@@ -35,7 +35,7 @@ spec:
           {{ $tag = .Values.detVersion }}
         {{- end -}}
         image: {{ .Values.imageRegistry }}/{{ $image }}:{{ $tag }}
-        imagePullPolicy: "Always"
+        imagePullPolicy: "Never"
         {{- if .Values.enterpriseEdition }}
         {{- if .Values.oidc }}
         env:
@@ -100,7 +100,7 @@ spec:
           - -c
           - update-ca-certificates --fresh
         image: {{ .Values.imageRegistry }}/{{ $image }}:{{ $tag }}
-        imagePullPolicy: "Always"
+        imagePullPolicy: "Never"
         terminationMessagePath: /dev/termination-log
         terminationMessagePolicy: File
         volumeMounts:

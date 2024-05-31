@@ -267,7 +267,7 @@ taskContainerDefaults:
   # Configure a custom CheckpointGC pod spec for experiments. When a custom CheckpointGC pod spec
   # is defined, it takes precedence over the default experiment pod specifications. See
   # https://docs:determined.ai/latest/topic-guides/custom-pod-specs.html for more details.
-  # checkpointGcPodSpec:
+  checkpointGcPodSpec:
 
   # Configure default Docker images for all GPU tasks (experiments, notebooks, commands) and
   # CPU tasks (CPU notebooks, TensorBoards, zero-slot commands). If a Docker image is defined
