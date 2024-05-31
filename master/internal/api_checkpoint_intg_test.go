@@ -419,10 +419,17 @@ func TestGetCheckpointNaNInfinityValues(t *testing.T) {
 			})
 			require.NoError(t, err)
 
-			_, err = api.GetCheckpoint(ctx, &apiv1.GetCheckpointRequest{
+			resp, err := api.GetCheckpoint(ctx, &apiv1.GetCheckpointRequest{
 				CheckpointUuid: checkpointID,
 			})
 			require.NoError(t, err)
+			require.Equal(t, testVars.metric,
+				resp.Checkpoint.Training.ValidationMetrics.AvgMetrics.Fields["loss"].GetStringValue())
+			if testVars.metric == "NaN" {
+				require.True(t, math.IsNaN(*resp.Checkpoint.Training.SearcherMetric))
+			} else {
+				require.Equal(t, testVars.metricValue, *resp.Checkpoint.Training.SearcherMetric)
+			}
 		})
 	}
 }
