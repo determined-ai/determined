@@ -195,7 +195,7 @@ func TestIsValidIPV4(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.ip, func(t *testing.T) {
-			err := IsValidIPV4(tt.ip)
+			err := IsValidIP(tt.ip)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("IsValidIPV4(%s) error = %v, wantErr %v", tt.ip, err, tt.wantErr)
 			}

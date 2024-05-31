@@ -1,8 +1,8 @@
 package check
 
 import (
+	"net"
 	"regexp"
-	"strconv"
 	"strings"
 )
 
@@ -47,30 +47,24 @@ func IsValidK8sLabel(actual string, msgAndArgs ...interface{}) error {
 	if err := LenBetween(actual, 1, 63, msgAndArgs...); err != nil {
 		return err
 	}
-	if err := Match(actual, `^[a-zA-Z0-9]([-a-zA-Z0-9_.]*[a-zA-Z0-9])?$`, msgAndArgs); err != nil {
+	if err := Match(
+		actual, `^[a-zA-Z0-9]([-a-zA-Z0-9_.]*[a-zA-Z0-9])?$`, msgAndArgs...,
+	); err != nil {
 		return err
 	}
 	return nil
 }
 
-// IsValidIPV4 checks whether the first argument is a valid IPv4 address. The method returns an error
+// IsValidIP checks whether the first argument is a valid IP address. The method returns an error
 // with the provided message if the check fails.
-func IsValidIPV4(actual string, msgAndArgs ...interface{}) error {
+func IsValidIP(actual string, msgAndArgs ...interface{}) error {
 	if err := NotEmpty(actual, msgAndArgs...); err != nil {
 		return err
 	}
 
-	msgAndArgs = append(msgAndArgs, "%s is not valid IPV4", actual)
-	if err := Match(actual, `^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$`, msgAndArgs...); err != nil {
-		return err
-	}
-
-	parts := strings.Split(actual, ".")
-	for _, part := range parts {
-		num, err := strconv.Atoi(part)
-		if err != nil || num < 0 || num > 255 {
-			return check(false, msgAndArgs)
-		}
+	ip := net.ParseIP(actual)
+	if ip == nil {
+		return check(false, msgAndArgs, "%s is not a valid IP address", actual)
 	}
 	return nil
 }

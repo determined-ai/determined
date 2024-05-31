@@ -215,7 +215,7 @@ func (i *InternalTaskGatewayConfig) Validate() []error {
 		errs = append(errs, errors.Wrap(err, "invalid gateway_namespace"))
 	}
 
-	if err := check.IsValidIPV4(i.GatewayIP); err != nil {
+	if err := check.IsValidIP(i.GatewayIP); err != nil {
 		errs = append(errs, errors.Wrap(err, "invalid gateway_ip"))
 	}
 
