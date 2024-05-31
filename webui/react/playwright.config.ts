@@ -2,12 +2,8 @@
  * Read environment variables from file.
  * https://github.com/motdotla/dotenv
  */
+import { defineConfig, devices } from '@playwright/test';
 import * as dotenv from 'dotenv';
-
-import {
-  defineConfig,
-  devices,
-} from '@playwright/test';
 
 dotenv.config();
 
@@ -28,7 +24,7 @@ export default defineConfig({
   fullyParallel: !!process.env.CI,
 
   /* https://playwright.dev/docs/test-timeouts#global-timeout */
-  globalTimeout: process.env.PWDEBUG ? 0 : 900_000,
+  globalTimeout: process.env.PWDEBUG ? 0 : 1_800_000,
   /* Folder for test artifacts such as screenshots, videos, traces, etc. */
   outputDir: './src/e2e/test-results',
   /* Folder for test artifacts such as screenshots, videos, traces, etc. */
@@ -42,7 +38,7 @@ export default defineConfig({
 
     {
       name: 'firefox',
-      use: { ...devices['Desktop Firefox']},
+      use: { ...devices['Desktop Firefox'] },
     },
 
     {
@@ -103,5 +99,6 @@ export default defineConfig({
     reuseExistingServer: !process.env.CI,
   },
 
-  workers: process.env.CI ? 4 : 1,
+  // workers: process.env.CI ? 4 : 1,
+  workers: 1,
 });

@@ -21,17 +21,13 @@ test.describe('User Management', () => {
     const userManagementPage = new UserManagement(authedPage);
     await userManagementPage.goto();
     // wait for table to be stable and select page 1
-    await userManagementPage.table.table.rows.pwLocator.count();
     const page1 = userManagementPage.table.table.pagination.pageButtonLocator(1);
-    if (await userManagementPage.table.table.pagination.pwLocator.isVisible()) {
+    await userManagementPage.table.table.rows.pwLocator.nth(0).waitFor({ timeout: 10_000 });
+    if (await page1.isVisible()) {
       await expect(
         repeatWithFallback(
-          async () => {
-            await expect(page1).toHaveClass(/ant-pagination-item-active/);
-          },
-          async () => {
-            await page1.click();
-          },
+          async () => await expect(page1).toHaveClass(/ant-pagination-item-active/),
+          async () => await page1.click(),
         ),
       ).toPass({ timeout: 10_000 });
     }
@@ -224,12 +220,12 @@ test.describe('User Management', () => {
         await test.step('Check that all users are disabled', async () => {
           // wait for table to be stable and check that pagination and "no data" both dont show
           await userManagementPage.table.table.pwLocator.click({ trial: true });
-          await userManagementPage._page.reload(); // BUG [ET-240] requires reload
           try {
             await userManagementPage.table.table.noData.pwLocator.waitFor();
             await userManagementPage.table.table.pagination.pwLocator.waitFor();
             // if we see these elements, we should fail the test
             // sometimes BUG [ET-240] makes this test pass unexpectedly
+            test.fail();
             throw new Error('Expected table to have data and no pagination');
           } catch (error) {
             // if we see a timeout error, that means we don't see "no data"

@@ -75,19 +75,7 @@ export class Select extends BaseComponent {
   menuItem(title: string): BaseComponent {
     return new BaseComponent({
       parent: this._menu,
-      selector: `div.ant-select-item[title$="${title}"]`,
-    });
-  }
-
-  /**
-   * Returns a representation of a select dropdown menu item. Since order is not
-   * guaranteed, make sure to verify the contents of the menu item.
-   * @param {number} n - the number of the menu item
-   */
-  nthMenuItem(n: number): BaseComponent {
-    return new BaseComponent({
-      parent: this._menu,
-      selector: `div.ant-select-item:nth-of-type(${n})`,
+      selector: `div.ant-select-item[title="${title}"]`,
     });
   }
 
@@ -98,6 +86,7 @@ export class Select extends BaseComponent {
   async selectMenuOption(title: string): Promise<void> {
     await this.openMenu();
     await this.menuItem(title).pwLocator.click();
+    await this._menu.pwLocator.waitFor({ state: 'hidden' });
   }
 }
 
