@@ -131,6 +131,8 @@ func (a *apiServer) GetCheckpoint(
 	resp := &apiv1.GetCheckpointResponse{}
 	resp.Checkpoint = &checkpointv1.Checkpoint{}
 
+	// We don't use Bun here as Bun's marshaling/unmarshaling does not account for "NaN",
+	// "Infinity", and "-Infinity"
 	if err := a.m.db.QueryProto(
 		"get_checkpoint", resp.Checkpoint, req.CheckpointUuid); err != nil {
 		return resp,
