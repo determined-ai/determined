@@ -686,6 +686,11 @@ func (*DispatcherResourceManager) DeleteNamespace(string) error {
 	return nil
 }
 
+// RemoveEmptyNamespace is not supported.
+func (*DispatcherResourceManager) RemoveEmptyNamespace(string, string) error {
+	return rmerrors.ErrNotSupported
+}
+
 // ResolveResourcePool returns the resolved slurm partition or an error if it doesn't exist or
 // can't be resolved due to internal errors.
 // Note to developers: this function doesn't acquire a lock and, ideally, we won't make it, since

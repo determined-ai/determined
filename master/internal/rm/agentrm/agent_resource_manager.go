@@ -597,6 +597,12 @@ func (a *ResourceManager) DeleteNamespace(namespaceName string) error {
 	return nil
 }
 
+// RemoveEmptyNamespace is not supported.
+func (a *ResourceManager) RemoveEmptyNamespace(string, string) error {
+	return fmt.Errorf("cannot remove namespace with resource manager type AgentRM: %w",
+		rmerrors.ErrNotSupported)
+}
+
 func (a *ResourceManager) createResourcePool(
 	db db.DB, config config.ResourcePoolConfig, cert *tls.Certificate,
 ) (*resourcePool, error) {
