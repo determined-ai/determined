@@ -137,6 +137,33 @@ commands:
       - run: git remote add upstream https://github.com/determined-ai/determined
       - run: tools/scripts/retry.sh git fetch upstream
 
+  collect-task-logs:
+    parameters:
+      master_address:
+        type: string
+        default: "http://localhost:8080"
+      store_path:
+        type: string
+        default: "/tmp/artifacts/logs"
+    description: Collect logs from the cluster tasks.
+    steps:
+      - run: |
+          pkg_names="fire determined"
+          for pkg_name in $pkg_names; do
+            if ! python -c "import $pkg_name" 2>/dev/null; then
+              # echo "Package $pkg_name not found, installing"
+              pip install $pkg_name
+              # echo "Package $pkg_name not found, aborting"
+              # exit 0
+            fi
+          done
+      - run: |
+          target_dir="<< parameters.store_path >>"
+          mkdir -p $target_dir
+          python .circleci/scripts/collect_logs.py --username determined --password "${INITIAL_USER_PASSWORD}" --mlde-host "<< parameters.master_address >>" save_all_logs $target_dir
+          echo "collected logs at $target_dir"
+
+
   skip-if-only-dir:
     parameters:
       dir:
@@ -628,6 +655,10 @@ commands:
       - upload-test-job:
           only_on_branch: main
           test_results_path: <<parameters.junit-path>>
+      - collect-task-logs:
+          master_address: "<<parameters.master-scheme>>://<<parameters.master-host>>:<<parameters.master-port>>"
+      - store_artifacts:
+          path: /tmp/artifacts/logs
 
   run-det-deploy-tests:
     parameters:
@@ -3212,6 +3243,11 @@ jobs:
 
       - store_test_results:
           path: /tmp/test-results/
+
+      - run:
+          name: Wait for devcluster to finish
+          command: |
+            echo hi
 
       - when:
           condition: <<parameters.managed-devcluster>>
