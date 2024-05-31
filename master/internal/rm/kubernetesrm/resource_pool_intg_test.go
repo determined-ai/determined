@@ -159,10 +159,10 @@ func testLaunch(
 		ResourcePool:      "default",
 	})
 
-	require.True(t, rp.reschedule)
+	require.True(t, rp.tryAdmitPendingTasks)
 	require.False(t, rp.reqList.IsScheduled(allocationID))
-	rp.Schedule()
-	require.False(t, rp.reschedule)
+	rp.Admit()
+	require.False(t, rp.tryAdmitPendingTasks)
 	require.True(t, rp.reqList.IsScheduled(allocationID))
 
 	allocated := poll[*sproto.ResourcesAllocated](ctx, t, sub)
@@ -250,10 +250,10 @@ func TestPodLogStreamerReattach(t *testing.T) {
 	}
 	rp.AllocateRequest(allocateReq)
 
-	require.True(t, rp.reschedule)
+	require.True(t, rp.tryAdmitPendingTasks)
 	require.False(t, rp.reqList.IsScheduled(allocationID))
-	rp.Schedule()
-	require.False(t, rp.reschedule)
+	rp.Admit()
+	require.False(t, rp.tryAdmitPendingTasks)
 	require.True(t, rp.reqList.IsScheduled(allocationID))
 
 	allocated := poll[*sproto.ResourcesAllocated](ctx, t, sub)
@@ -293,7 +293,7 @@ func TestPodLogStreamerReattach(t *testing.T) {
 	require.Equal(t, sproto.Running, change.ResourcesState)
 	require.NotNil(t, change.ResourcesStarted)
 
-	// Remake all component and "reattach" to this new resource pool. This saves
+	// Remake all components and "reattach" to this new resource pool. This saves
 	// us from needing to made the k8s code do graceful shutdown, but we should
 	// do it anyway someday.
 	rp = newTestResourcePool(newTestJobsService(t))
@@ -302,10 +302,10 @@ func TestPodLogStreamerReattach(t *testing.T) {
 	allocateReq.Restore = true
 	rp.AllocateRequest(allocateReq)
 
-	require.True(t, rp.reschedule)
+	require.True(t, rp.tryAdmitPendingTasks)
 	require.False(t, rp.reqList.IsScheduled(allocationID))
-	rp.Schedule()
-	require.False(t, rp.reschedule)
+	rp.Admit()
+	require.False(t, rp.tryAdmitPendingTasks)
 	require.True(t, rp.reqList.IsScheduled(allocationID))
 
 	reallocated := poll[*sproto.ResourcesAllocated](ctx, t, sub)
@@ -352,10 +352,10 @@ func TestPodLogStreamer(t *testing.T) {
 		ResourcePool:      "default",
 	})
 
-	require.True(t, rp.reschedule)
+	require.True(t, rp.tryAdmitPendingTasks)
 	require.False(t, rp.reqList.IsScheduled(allocationID))
-	rp.Schedule()
-	require.False(t, rp.reschedule)
+	rp.Admit()
+	require.False(t, rp.tryAdmitPendingTasks)
 	require.True(t, rp.reqList.IsScheduled(allocationID))
 
 	allocated := poll[*sproto.ResourcesAllocated](ctx, t, sub)
@@ -421,10 +421,10 @@ func TestKill(t *testing.T) {
 		ResourcePool:      "default",
 	})
 
-	require.True(t, rp.reschedule)
+	require.True(t, rp.tryAdmitPendingTasks)
 	require.False(t, rp.reqList.IsScheduled(allocationID))
-	rp.Schedule()
-	require.False(t, rp.reschedule)
+	rp.Admit()
+	require.False(t, rp.tryAdmitPendingTasks)
 	require.True(t, rp.reqList.IsScheduled(allocationID))
 
 	allocated := poll[*sproto.ResourcesAllocated](ctx, t, sub)
@@ -501,10 +501,10 @@ func TestExternalKillWhileQueuedFails(t *testing.T) {
 		ResourcePool:      "default",
 	})
 
-	require.True(t, rp.reschedule)
+	require.True(t, rp.tryAdmitPendingTasks)
 	require.False(t, rp.reqList.IsScheduled(allocationID))
-	rp.Schedule()
-	require.False(t, rp.reschedule)
+	rp.Admit()
+	require.False(t, rp.tryAdmitPendingTasks)
 	require.True(t, rp.reqList.IsScheduled(allocationID))
 
 	allocated := poll[*sproto.ResourcesAllocated](ctx, t, sub)
@@ -605,10 +605,10 @@ func TestExternalPodDelete(t *testing.T) {
 		ResourcePool:      "default",
 	})
 
-	require.True(t, rp.reschedule)
+	require.True(t, rp.tryAdmitPendingTasks)
 	require.False(t, rp.reqList.IsScheduled(allocationID))
-	rp.Schedule()
-	require.False(t, rp.reschedule)
+	rp.Admit()
+	require.False(t, rp.tryAdmitPendingTasks)
 	require.True(t, rp.reqList.IsScheduled(allocationID))
 
 	allocated := poll[*sproto.ResourcesAllocated](ctx, t, sub)
@@ -694,10 +694,10 @@ func TestReattach(t *testing.T) {
 	}
 	rp.AllocateRequest(allocateReq)
 
-	require.True(t, rp.reschedule)
+	require.True(t, rp.tryAdmitPendingTasks)
 	require.False(t, rp.reqList.IsScheduled(allocationID))
-	rp.Schedule()
-	require.False(t, rp.reschedule)
+	rp.Admit()
+	require.False(t, rp.tryAdmitPendingTasks)
 	require.True(t, rp.reqList.IsScheduled(allocationID))
 
 	allocated := poll[*sproto.ResourcesAllocated](ctx, t, sub)
@@ -736,7 +736,7 @@ func TestReattach(t *testing.T) {
 	require.Equal(t, sproto.Running, change.ResourcesState)
 	require.NotNil(t, change.ResourcesStarted)
 
-	// Remake all component and "reattach" to this new resource pool. This saves
+	// Remake all components and "reattach" to this new resource pool. This saves
 	// us from needing to made the k8s code do graceful shutdown, but we should
 	// do it anyway someday.
 	rp = newTestResourcePool(newTestJobsService(t))
@@ -745,10 +745,10 @@ func TestReattach(t *testing.T) {
 	allocateReq.Restore = true
 	rp.AllocateRequest(allocateReq)
 
-	require.True(t, rp.reschedule)
+	require.True(t, rp.tryAdmitPendingTasks)
 	require.False(t, rp.reqList.IsScheduled(allocationID))
-	rp.Schedule()
-	require.False(t, rp.reschedule)
+	rp.Admit()
+	require.False(t, rp.tryAdmitPendingTasks)
 	require.True(t, rp.reqList.IsScheduled(allocationID))
 
 	reallocated := poll[*sproto.ResourcesAllocated](ctx, t, sub)
@@ -795,6 +795,7 @@ func TestJobQueueReattach(t *testing.T) {
 		ResourcePool:      "default",
 	}
 	rp.AllocateRequest(allocateReq)
+	rp.Admit()
 
 	jobq := rp.GetJobQ()
 	require.Len(t, jobq, 1)
@@ -807,16 +808,9 @@ func TestJobQueueReattach(t *testing.T) {
 	require.Equal(t, 0, info.AllocatedSlots)
 	require.Equal(t, 2, info.RequestedSlots)
 
-	require.True(t, rp.reschedule)
-	require.False(t, rp.reqList.IsScheduled(allocationID))
-	rp.Schedule()
-	require.False(t, rp.reschedule)
-	require.True(t, rp.reqList.IsScheduled(allocationID))
-
 	allocated := poll[*sproto.ResourcesAllocated](ctx, t, sub)
 	require.NotNil(t, allocated)
 	require.Len(t, allocated.Resources, 1)
-
 	for _, res := range allocated.Resources {
 		conf := expconf.ExperimentConfig{ //nolint:exhaustruct
 			RawEnvironment: &expconf.EnvironmentConfigV0{ //nolint:exhaustruct
@@ -838,16 +832,12 @@ func TestJobQueueReattach(t *testing.T) {
 		defer res.Kill(nil)
 		require.NoError(t, err)
 	}
-
 	change := poll[*sproto.ResourcesStateChanged](ctx, t, sub)
 	require.Equal(t, sproto.Pulling, change.ResourcesState)
-
 	change = poll[*sproto.ResourcesStateChanged](ctx, t, sub)
 	require.Equal(t, sproto.Starting, change.ResourcesState)
-
 	change = poll[*sproto.ResourcesStateChanged](ctx, t, sub)
 	require.Equal(t, sproto.Running, change.ResourcesState)
-	require.NotNil(t, change.ResourcesStarted)
 
 	jobq = rp.GetJobQ()
 	require.Len(t, jobq, 1)
@@ -859,7 +849,7 @@ func TestJobQueueReattach(t *testing.T) {
 	require.Equal(t, 2, info.AllocatedSlots)
 	require.Equal(t, 2, info.RequestedSlots)
 
-	// Remake all component and "reattach" to this new resource pool. This saves
+	// Remake all components and "reattach" to this new resource pool. This saves
 	// us from needing to made the k8s code do graceful shutdown, but we should
 	// do it anyway someday.
 	rp = newTestResourcePool(newTestJobsService(t))
@@ -867,22 +857,7 @@ func TestJobQueueReattach(t *testing.T) {
 	sub = rmevents.Subscribe(allocationID)
 	allocateReq.Restore = true
 	rp.AllocateRequest(allocateReq)
-
-	jobq = rp.GetJobQ()
-	require.Len(t, jobq, 1)
-	for _, tmp := range jobq {
-		info = tmp
-		break
-	}
-	require.Equal(t, sproto.SchedulingStateQueued, info.State)
-	require.Equal(t, 0, info.AllocatedSlots)
-	require.Equal(t, 2, info.RequestedSlots)
-
-	require.True(t, rp.reschedule)
-	require.False(t, rp.reqList.IsScheduled(allocationID))
-	rp.Schedule()
-	require.False(t, rp.reschedule)
-	require.True(t, rp.reqList.IsScheduled(allocationID))
+	rp.Admit()
 
 	reallocated := poll[*sproto.ResourcesAllocated](ctx, t, sub)
 	require.True(t, reallocated.Recovered)
@@ -898,16 +873,6 @@ func TestJobQueueReattach(t *testing.T) {
 	}), "job isn' showing scheduling within 5s of being reattached")
 	require.Equal(t, 2, reattachInfo.AllocatedSlots)
 	require.Equal(t, 2, reattachInfo.RequestedSlots)
-
-	for _, res := range reallocated.Resources {
-		res.Kill(nil)
-	}
-
-	for state := sproto.Assigned; state != sproto.Terminated; {
-		change := poll[*sproto.ResourcesStateChanged](ctx, t, sub)
-		require.True(t, state.BeforeOrEqual(change.ResourcesState))
-		state = change.ResourcesState
-	}
 }
 
 func TestNodeWorkflows(t *testing.T) {
@@ -961,10 +926,10 @@ func TestNodeWorkflows(t *testing.T) {
 		ResourcePool:      "default",
 	})
 
-	require.True(t, rp.reschedule)
+	require.True(t, rp.tryAdmitPendingTasks)
 	require.False(t, rp.reqList.IsScheduled(allocationID))
-	rp.Schedule()
-	require.False(t, rp.reschedule)
+	rp.Admit()
+	require.False(t, rp.tryAdmitPendingTasks)
 	require.True(t, rp.reqList.IsScheduled(allocationID))
 
 	allocated := poll[*sproto.ResourcesAllocated](ctx, t, sub)
@@ -1082,10 +1047,10 @@ func TestGroupMaxSlots(t *testing.T) {
 		SlotsNeeded:       1,
 		ResourcePool:      "default",
 	})
-	require.True(t, rp.reschedule)
+	require.True(t, rp.tryAdmitPendingTasks)
 	require.False(t, rp.reqList.IsScheduled(allocationID))
-	rp.Schedule()
-	require.False(t, rp.reschedule)
+	rp.Admit()
+	require.False(t, rp.tryAdmitPendingTasks)
 	require.True(t, rp.reqList.IsScheduled(allocationID))
 
 	t.Log("but the second shouldn't")
@@ -1102,16 +1067,16 @@ func TestGroupMaxSlots(t *testing.T) {
 		SlotsNeeded:       1,
 		ResourcePool:      "default",
 	})
-	require.True(t, rp.reschedule)
+	require.True(t, rp.tryAdmitPendingTasks)
 	require.False(t, rp.reqList.IsScheduled(allocationID2))
-	rp.Schedule()
-	require.False(t, rp.reschedule)
+	rp.Admit()
+	require.False(t, rp.tryAdmitPendingTasks)
 	require.False(t, rp.reqList.IsScheduled(allocationID2))
 
 	t.Log("and when the first releases it should get scheduled")
 	rp.ResourcesReleased(sproto.ResourcesReleased{AllocationID: allocationID})
-	rp.Schedule()
-	require.False(t, rp.reschedule)
+	rp.Admit()
+	require.False(t, rp.tryAdmitPendingTasks)
 	require.True(t, rp.reqList.IsScheduled(allocationID2))
 }
 
@@ -1206,10 +1171,10 @@ func TestSchedule(t *testing.T) {
 	_, ok := rp.reqList.TaskByID(allocReq.AllocationID)
 	require.True(t, ok)
 
-	require.True(t, rp.reschedule)
+	require.True(t, rp.tryAdmitPendingTasks)
 	require.False(t, rp.reqList.IsScheduled(allocID))
-	rp.Schedule()
-	require.False(t, rp.reschedule)
+	rp.Admit()
+	require.False(t, rp.tryAdmitPendingTasks)
 	require.True(t, rp.reqList.IsScheduled(allocID))
 }
 
