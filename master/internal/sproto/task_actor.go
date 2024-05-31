@@ -31,12 +31,6 @@ type (
 		AgentID *string
 	}
 
-	// UpdatePodStatus notifies the resource manager of job state changes.
-	UpdatePodStatus struct {
-		ContainerID string
-		State       SchedulingState
-	}
-
 	// SetGroupMaxSlots sets the maximum number of slots that a group can consume in the cluster.
 	SetGroupMaxSlots struct {
 		MaxSlots     *int
