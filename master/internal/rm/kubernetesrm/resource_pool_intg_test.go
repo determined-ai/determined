@@ -766,6 +766,150 @@ func TestReattach(t *testing.T) {
 	}
 }
 
+func TestJobQueueReattach(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	j := newTestJobsService(t)
+	rp := newTestResourcePool(j)
+
+	user := db.RequireMockUser(t, db.SingleDB())
+	task := db.RequireMockTask(t, db.SingleDB(), &user.ID)
+	alloc := db.RequireMockAllocation(t, db.SingleDB(), task.TaskID)
+	allocationID, taskID, jobID := alloc.AllocationID, task.TaskID, *task.JobID
+	startTime := task.StartTime
+
+	err := tasklist.GroupPriorityChangeRegistry.Add(jobID, func(i int) error { return nil })
+	require.NoError(t, err)
+
+	sub := rmevents.Subscribe(allocationID)
+	allocateReq := sproto.AllocateRequest{
+		AllocationID:      allocationID,
+		TaskID:            taskID,
+		JobID:             jobID,
+		RequestTime:       startTime,
+		JobSubmissionTime: startTime,
+		IsUserVisible:     true,
+		Name:              "test job",
+		SlotsNeeded:       2,
+		ResourcePool:      "default",
+	}
+	rp.AllocateRequest(allocateReq)
+
+	jobq := rp.GetJobQ()
+	require.Len(t, jobq, 1)
+	var info *sproto.RMJobInfo
+	for _, tmp := range jobq {
+		info = tmp
+		break
+	}
+	require.Equal(t, sproto.SchedulingStateQueued, info.State)
+	require.Equal(t, 0, info.AllocatedSlots)
+	require.Equal(t, 2, info.RequestedSlots)
+
+	require.True(t, rp.reschedule)
+	require.False(t, rp.reqList.IsScheduled(allocationID))
+	rp.Schedule()
+	require.False(t, rp.reschedule)
+	require.True(t, rp.reqList.IsScheduled(allocationID))
+
+	allocated := poll[*sproto.ResourcesAllocated](ctx, t, sub)
+	require.NotNil(t, allocated)
+	require.Len(t, allocated.Resources, 1)
+
+	for _, res := range allocated.Resources {
+		conf := expconf.ExperimentConfig{ //nolint:exhaustruct
+			RawEnvironment: &expconf.EnvironmentConfigV0{ //nolint:exhaustruct
+				RawImage: &expconf.EnvironmentImageMapV0{ //nolint:exhaustruct
+					RawCPU: ptrs.Ptr("ubuntu:latest"),
+				},
+			},
+		}
+		conf = schemas.WithDefaults(conf)
+
+		err := res.Start(nil, tasks.TaskSpec{
+			Description:     fmt.Sprintf("test-job-%s", uuid.NewString()[:8]),
+			Entrypoint:      []string{"sleep", "99999"},
+			AgentUserGroup:  &model.AgentUserGroup{},
+			Environment:     conf.Environment(),
+			ResourcesConfig: conf.Resources(),
+			DontShipLogs:    true,
+		}, sproto.ResourcesRuntimeInfo{})
+		defer res.Kill(nil)
+		require.NoError(t, err)
+	}
+
+	change := poll[*sproto.ResourcesStateChanged](ctx, t, sub)
+	require.Equal(t, sproto.Pulling, change.ResourcesState)
+
+	change = poll[*sproto.ResourcesStateChanged](ctx, t, sub)
+	require.Equal(t, sproto.Starting, change.ResourcesState)
+
+	change = poll[*sproto.ResourcesStateChanged](ctx, t, sub)
+	require.Equal(t, sproto.Running, change.ResourcesState)
+	require.NotNil(t, change.ResourcesStarted)
+
+	jobq = rp.GetJobQ()
+	require.Len(t, jobq, 1)
+	for _, tmp := range jobq {
+		info = tmp
+		break
+	}
+	require.Equal(t, sproto.SchedulingStateScheduled, info.State)
+	require.Equal(t, 2, info.AllocatedSlots)
+	require.Equal(t, 2, info.RequestedSlots)
+
+	// Remake all component and "reattach" to this new resource pool. This saves
+	// us from needing to made the k8s code do graceful shutdown, but we should
+	// do it anyway someday.
+	rp = newTestResourcePool(newTestJobsService(t))
+
+	sub = rmevents.Subscribe(allocationID)
+	allocateReq.Restore = true
+	rp.AllocateRequest(allocateReq)
+
+	jobq = rp.GetJobQ()
+	require.Len(t, jobq, 1)
+	for _, tmp := range jobq {
+		info = tmp
+		break
+	}
+	require.Equal(t, sproto.SchedulingStateQueued, info.State)
+	require.Equal(t, 0, info.AllocatedSlots)
+	require.Equal(t, 2, info.RequestedSlots)
+
+	require.True(t, rp.reschedule)
+	require.False(t, rp.reqList.IsScheduled(allocationID))
+	rp.Schedule()
+	require.False(t, rp.reschedule)
+	require.True(t, rp.reqList.IsScheduled(allocationID))
+
+	reallocated := poll[*sproto.ResourcesAllocated](ctx, t, sub)
+	require.True(t, reallocated.Recovered)
+	require.Len(t, reallocated.Resources, 1)
+
+	var reattachInfo *sproto.RMJobInfo
+	require.True(t, waitForCondition(5*time.Second, func() bool {
+		for _, i := range rp.GetJobQ() {
+			reattachInfo = i
+			return i.State == sproto.SchedulingStateScheduled
+		}
+		return false
+	}), "job isn' showing scheduling within 5s of being reattached")
+	require.Equal(t, 2, reattachInfo.AllocatedSlots)
+	require.Equal(t, 2, reattachInfo.RequestedSlots)
+
+	for _, res := range reallocated.Resources {
+		res.Kill(nil)
+	}
+
+	for state := sproto.Assigned; state != sproto.Terminated; {
+		change := poll[*sproto.ResourcesStateChanged](ctx, t, sub)
+		require.True(t, state.BeforeOrEqual(change.ResourcesState))
+		state = change.ResourcesState
+	}
+}
+
 func TestNodeWorkflows(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
@@ -1110,7 +1254,9 @@ var testResourcePoolConfig = config.ResourcePoolConfig{
 }
 
 func newTestResourcePool(j *jobsService) *kubernetesResourcePool {
-	return newResourcePool(1, &testResourcePoolConfig, j, db.SingleDB())
+	rp := newResourcePool(1, &testResourcePoolConfig, j, db.SingleDB())
+	j.jobSchedulingStateCallback = rp.JobSchedulingStateChanged
+	return rp
 }
 
 func newTestJobsService(t *testing.T) *jobsService {

@@ -108,7 +108,7 @@ func (k *kubernetesResourcePool) JobSchedulingStateChanged(msg jobSchedulingStat
 		if req.AllocationID == msg.AllocationID {
 			req.State = msg.State
 			if sproto.ScheduledStates[req.State] {
-				k.allocationIDToRunningPods[msg.AllocationID] += msg.NumPods
+				k.allocationIDToRunningPods[msg.AllocationID] = msg.NumPods
 			}
 		}
 	}
