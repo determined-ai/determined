@@ -63,17 +63,17 @@ func (pm *ProjectMsg) GetID() int {
 }
 
 // UpsertMsg creates a Project stream upsert message.
-func (pm *ProjectMsg) UpsertMsg() stream.UpsertMsg {
-	return stream.UpsertMsg{
+func (pm *ProjectMsg) UpsertMsg() *stream.UpsertMsg {
+	return &stream.UpsertMsg{
 		JSONKey: ProjectsUpsertKey,
 		Msg:     pm,
 	}
 }
 
 // DeleteMsg creates a Project stream delete message.
-func (pm *ProjectMsg) DeleteMsg() stream.DeleteMsg {
-	deleted := strconv.FormatInt(int64(pm.ID), 10)
-	return stream.DeleteMsg{
+func (pm *ProjectMsg) DeleteMsg() *stream.DeleteMsg {
+	deleted := strconv.Itoa(pm.ID)
+	return &stream.DeleteMsg{
 		Key:     ProjectsDeleteKey,
 		Deleted: deleted,
 	}
@@ -155,7 +155,7 @@ func ProjectCollectStartupMsgs(
 	}
 	missing, appeared, err := processQuery(ctx, createQuery, spec.Since, known, "p")
 	if err != nil {
-		return nil, fmt.Errorf("processing known: %s", err.Error())
+		return nil, fmt.Errorf("processing known: %w", err)
 	}
 
 	// step 2: hydrate appeared IDs into full ProjectMsgs
@@ -166,14 +166,14 @@ func ProjectCollectStartupMsgs(
 			query = permFilterQuery(query, accessScopes)
 		}
 		err := query.Scan(ctx, &projMsgs)
-		if err != nil && errors.Cause(err) != sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			log.Errorf("error: %v\n", err)
 			return nil, err
 		}
 	}
 
 	// step 3: emit deletions and updates to the client
-	out = append(out, stream.DeleteMsg{
+	out = append(out, &stream.DeleteMsg{
 		Key:     ProjectsDeleteKey,
 		Deleted: missing,
 	})
@@ -241,12 +241,14 @@ func ProjectMakePermissionFilter(ctx context.Context, user model.User) (func(*Pr
 
 // ProjectMakeHydrator returns a function that gets properties of a project by
 // its id.
-func ProjectMakeHydrator() func(int) (*ProjectMsg, error) {
-	return func(ID int) (*ProjectMsg, error) {
+func ProjectMakeHydrator() func(*ProjectMsg) (*ProjectMsg, error) {
+	return func(msg *ProjectMsg) (*ProjectMsg, error) {
 		var projMsg ProjectMsg
-		query := db.Bun().NewSelect().Model(&projMsg).Where("project_msg.id = ?", ID)
+		query := db.Bun().NewSelect().Model(&projMsg).Where("project_msg.id = ?", msg.GetID())
 		err := query.Scan(context.Background(), &projMsg)
-		if err != nil && errors.Cause(err) != sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, err
+		} else if err != nil {
 			log.Errorf("error in project hydrator: %v\n", err)
 			return nil, err
 		}

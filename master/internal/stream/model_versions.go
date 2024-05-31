@@ -62,17 +62,17 @@ func (mm *ModelVersionMsg) GetID() int {
 }
 
 // UpsertMsg creates a ModelVersion stream upsert message.
-func (mm *ModelVersionMsg) UpsertMsg() stream.UpsertMsg {
-	return stream.UpsertMsg{
+func (mm *ModelVersionMsg) UpsertMsg() *stream.UpsertMsg {
+	return &stream.UpsertMsg{
 		JSONKey: ModelVersionsUpsertKey,
 		Msg:     mm,
 	}
 }
 
 // DeleteMsg creates a ModelVersion stream delete message.
-func (mm *ModelVersionMsg) DeleteMsg() stream.DeleteMsg {
-	deleted := strconv.FormatInt(int64(mm.ID), 10)
-	return stream.DeleteMsg{
+func (mm *ModelVersionMsg) DeleteMsg() *stream.DeleteMsg {
+	deleted := strconv.Itoa(mm.ID)
+	return &stream.DeleteMsg{
 		Key:     ModelVersionsDeleteKey,
 		Deleted: deleted,
 	}
@@ -163,7 +163,7 @@ func ModelVersionCollectStartupMsgs(
 	}
 	missing, appeared, err := processQuery(ctx, createQuery, spec.Since, known, "m")
 	if err != nil {
-		return nil, fmt.Errorf("processing known: %s", err.Error())
+		return nil, fmt.Errorf("processing known: %w", err)
 	}
 
 	// step 2: hydrate appeared IDs into full ModelVersionMsgs
@@ -176,14 +176,14 @@ func ModelVersionCollectStartupMsgs(
 			query = modelVersionPermFilterQuery(query, accessScopes)
 		}
 		err := query.Scan(ctx, &mvMsgs)
-		if err != nil && errors.Cause(err) != sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			log.Errorf("error: %v\n", err)
 			return nil, err
 		}
 	}
 
 	// step 3: emit deletions and updates to the client
-	out = append(out, stream.DeleteMsg{
+	out = append(out, &stream.DeleteMsg{
 		Key:     ModelVersionsDeleteKey,
 		Deleted: missing,
 	})
@@ -266,15 +266,18 @@ func ModelVersionMakePermissionFilter(ctx context.Context, user model.User) (fun
 
 // ModelMakeHydrator returns a function that gets properties of a model version by
 // its id.
-func ModelVersionMakeHydrator() func(int) (*ModelVersionMsg, error) {
-	return func(ID int) (*ModelVersionMsg, error) {
+func ModelVersionMakeHydrator() func(*ModelVersionMsg) (*ModelVersionMsg, error) {
+	return func(msg *ModelVersionMsg) (*ModelVersionMsg, error) {
 		var modelVersionMsg ModelVersionMsg
-		query := db.Bun().NewSelect().Model(&modelVersionMsg).Where("id = ?", ID)
+		query := db.Bun().NewSelect().Model(&modelVersionMsg).Where("id = ?", msg.GetID()).ExcludeColumn("workspace_id")
 		err := query.Scan(context.Background(), &modelVersionMsg)
-		if err != nil && errors.Cause(err) != sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, err
+		} else if err != nil {
 			log.Errorf("error in model version hydrator: %v\n", err)
 			return nil, err
 		}
+		modelVersionMsg.WorkspaceID = msg.WorkspaceID
 		return &modelVersionMsg, nil
 	}
 }

@@ -3,11 +3,18 @@ CREATE FUNCTION stream_model_change() RETURNS trigger
     AS $$
 BEGIN
     IF (TG_OP = 'INSERT') THEN
-        PERFORM stream_model_notify(NULL, to_jsonb(NEW));
+        PERFORM stream_model_notify(
+            NULL, jsonb_build_object('id', NEW.id, 'workspace_id', NEW.workspace_id, 'user_id', NEW.user_id, 'seq', NEW.seq)
+        );
     ELSEIF (TG_OP = 'UPDATE') THEN
-        PERFORM stream_model_notify(to_jsonb(OLD), to_jsonb(NEW));
+        PERFORM stream_model_notify(
+            jsonb_build_object('id', OLD.id, 'workspace_id', OLD.workspace_id, 'user_id', NEW.user_id, 'seq', OLD.seq), 
+            jsonb_build_object('id', NEW.id, 'workspace_id', NEW.workspace_id, 'user_id', NEW.user_id, 'seq', NEW.seq)
+        );
     ELSEIF (TG_OP = 'DELETE') THEN
-        PERFORM stream_model_notify(to_jsonb(OLD), NULL);
+        PERFORM stream_model_notify(
+            jsonb_build_object('id', OLD.id, 'workspace_id', OLD.workspace_id, 'user_id', NEW.user_id, 'seq', OLD.seq), NULL
+        );
         -- DELETEs trigger BEFORE, and must return a non-NULL value.
         return OLD;
     END IF;
@@ -32,8 +39,8 @@ BEGIN
             output = jsonb_object_agg('after', after);
         ELSE
             output = output || jsonb_object_agg('after', after);
+        END IF;
     END IF;
-END IF;
     PERFORM pg_notify('stream_model_chan', output::text);
 return 0;
 END;
@@ -58,14 +65,32 @@ DECLARE
     o jsonb = NULL;
 BEGIN
     IF (TG_OP = 'INSERT') THEN
-        n = jsonb_set(to_jsonb(NEW), '{workspace_id}', to_jsonb((SELECT workspace_id FROM models WHERE id = NEW.model_id)::text));
+        n = jsonb_build_object(
+            'id', NEW.id,
+            'workspace_id', to_jsonb((SELECT workspace_id FROM models WHERE id = NEW.model_id)::text),
+            'model_id', NEW.model_id,
+            'user_id', to_jsonb((SELECT user_id FROM models WHERE id = NEW.model_id)::integer),
+            'seq', NEW.seq
+        );
         PERFORM stream_model_version_notify(NULL, n);
     ELSEIF (TG_OP = 'UPDATE') THEN
-        n = jsonb_set(to_jsonb(NEW), '{workspace_id}', to_jsonb((SELECT workspace_id FROM models WHERE id = NEW.model_id)::text));
-        o = jsonb_set(to_jsonb(OLD), '{workspace_id}', to_jsonb((SELECT workspace_id FROM models WHERE id = OLD.model_id)::text));
+        o = jsonb_build_object(
+            'id', OLD.id,
+            'workspace_id', to_jsonb((SELECT workspace_id FROM models WHERE id = OLD.model_id)::text),
+            'model_id', OLD.model_id,
+            'user_id', to_jsonb((SELECT user_id FROM models WHERE id = OLD.model_id)::integer),
+            'seq', OLD.seq
+        );
+        n = jsonb_build_object(
+            'id', NEW.id,
+            'workspace_id', to_jsonb((SELECT workspace_id FROM models WHERE id = NEW.model_id)::text),
+            'model_id', NEW.model_id,
+            'user_id', to_jsonb((SELECT user_id FROM models WHERE id = NEW.model_id)::integer),
+            'seq', NEW.seq
+        );
         PERFORM stream_model_version_notify(o, n);
     ELSEIF (TG_OP = 'DELETE') THEN
-        PERFORM stream_model_version_notify(to_jsonb(OLD), NULL);
+        PERFORM stream_model_version_notify('id', OLD.id, NULL);
         -- DELETEs trigger BEFORE, and must return a non-NULL value.
         return OLD;
     END IF;
@@ -85,8 +110,21 @@ BEGIN
     FOR f in (SELECT * FROM model_versions WHERE model_id = NEW.id)
     LOOP
         PERFORM stream_model_version_notify(
-            jsonb_set(to_jsonb(f), '{workspace_id}', to_jsonb(OLD.workspace_id::text)),
-            jsonb_set(to_jsonb(f), '{workspace_id}', to_jsonb(NEW.workspace_id::text)));
+            jsonb_build_object(
+                'id', f.id,
+                'workspace_id', to_jsonb(OLD.workspace_id::text),
+                'model_id', f.model_id,
+                'user_id', to_jsonb(OLD.user_id::integer),
+                'seq', f.seq
+            ),
+            jsonb_build_object(
+                'id', f.id,
+                'workspace_id', to_jsonb(NEW.workspace_id::text),
+                'model_id', f.model_id,
+                'user_id', to_jsonb(NEW.user_id::integer),
+                'seq', f.seq
+            )
+        );
     END LOOP;
     RETURN NEW;
 END;

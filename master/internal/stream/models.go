@@ -61,17 +61,17 @@ func (mm *ModelMsg) GetID() int {
 }
 
 // UpsertMsg creates a model stream upsert message.
-func (mm *ModelMsg) UpsertMsg() stream.UpsertMsg {
-	return stream.UpsertMsg{
+func (mm *ModelMsg) UpsertMsg() *stream.UpsertMsg {
+	return &stream.UpsertMsg{
 		JSONKey: ModelsUpsertKey,
 		Msg:     mm,
 	}
 }
 
 // DeleteMsg creates a model stream delete message.
-func (mm *ModelMsg) DeleteMsg() stream.DeleteMsg {
+func (mm *ModelMsg) DeleteMsg() *stream.DeleteMsg {
 	deleted := strconv.FormatInt(int64(mm.ID), 10)
-	return stream.DeleteMsg{
+	return &stream.DeleteMsg{
 		Key:     ModelsDeleteKey,
 		Deleted: deleted,
 	}
@@ -157,7 +157,7 @@ func ModelCollectStartupMsgs(
 	}
 	missing, appeared, err := processQuery(ctx, createQuery, spec.Since, known, "m")
 	if err != nil {
-		return nil, fmt.Errorf("processing known: %s", err.Error())
+		return nil, fmt.Errorf("processing known: %w", err)
 	}
 
 	// step 2: hydrate appeared IDs into full ModelMsgs
@@ -168,14 +168,14 @@ func ModelCollectStartupMsgs(
 			query = permFilterQuery(query, accessScopes)
 		}
 		err := query.Scan(ctx, &modelMsgs)
-		if err != nil && errors.Cause(err) != sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
 			log.Errorf("error: %v\n", err)
 			return nil, err
 		}
 	}
 
 	// step 3: emit deletions and updates to the client
-	out = append(out, stream.DeleteMsg{
+	out = append(out, &stream.DeleteMsg{
 		Key:     ModelsDeleteKey,
 		Deleted: missing,
 	})
@@ -218,6 +218,8 @@ func ModelMakeFilter(spec *ModelSubscriptionSpec) (func(*ModelMsg) bool, error) 
 	// return a closure around our copied maps
 	return func(msg *ModelMsg) bool {
 		// subscribed to model by this model_id?
+		fmt.Printf("model msg: %#v\n", msg)
+		fmt.Printf("modelIDs: %#v, workspaceIDs: %#v, userIDs: %#v\n", modelIDs, workspaceIDs, userIDs)
 		if _, ok := modelIDs[msg.ID]; ok {
 			return true
 		}
@@ -254,12 +256,14 @@ func ModelMakePermissionFilter(ctx context.Context, user model.User) (func(*Mode
 
 // ModelMakeHydrator returns a function that gets properties of a model by
 // its id.
-func ModelMakeHydrator() func(int) (*ModelMsg, error) {
-	return func(ID int) (*ModelMsg, error) {
+func ModelMakeHydrator() func(*ModelMsg) (*ModelMsg, error) {
+	return func(msg *ModelMsg) (*ModelMsg, error) {
 		var modelMsg ModelMsg
-		query := db.Bun().NewSelect().Model(&modelMsg).Where("id = ?", ID)
+		query := db.Bun().NewSelect().Model(&modelMsg).Where("id = ?", msg.GetID())
 		err := query.Scan(context.Background(), &modelMsg)
-		if err != nil && errors.Cause(err) != sql.ErrNoRows {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, err
+		} else if err != nil {
 			log.Errorf("error in model hydrator: %v\n", err)
 			return nil, err
 		}

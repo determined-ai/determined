@@ -18,6 +18,8 @@ import (
 	"github.com/determined-ai/determined/master/pkg/syncx/errgroupx"
 )
 
+const maxEventCount = 120
+
 // PublisherSet contains all publishers, and handles all websockets.  It will connect each websocket
 // with the appropriate set of publishers, based on that websocket's subscriptions.
 //
@@ -38,9 +40,9 @@ func NewPublisherSet(dbAddress string) *PublisherSet {
 	lock := sync.Mutex{}
 	return &PublisherSet{
 		DBAddress:     dbAddress,
-		Projects:      stream.NewPublisher[*ProjectMsg](),
-		Models:        stream.NewPublisher[*ModelMsg](),
-		ModelVersions: stream.NewPublisher[*ModelVersionMsg](),
+		Projects:      stream.NewPublisher[*ProjectMsg](ProjectMakeHydrator()),
+		Models:        stream.NewPublisher[*ModelMsg](ModelMakeHydrator()),
+		ModelVersions: stream.NewPublisher[*ModelVersionMsg](ModelVersionMakeHydrator()),
 		bootemChan:    make(chan struct{}),
 		readyCond:     *sync.NewCond(&lock),
 	}
@@ -401,6 +403,7 @@ func publishLoop[T stream.Msg](
 
 		// Did we get a notification?
 		case notification := <-listener.Notify:
+			fmt.Println("recemove notification")
 			if notification == nil {
 				// Some notification may be lost during connection loss. Restart the publisher
 				// system to recover.
@@ -408,12 +411,15 @@ func publishLoop[T stream.Msg](
 			}
 			var event stream.Event[T]
 			err = json.Unmarshal([]byte(notification.Extra), &event)
+			fmt.Printf("notification: %#v, err: %#v\n", notification.Extra, err)
 			if err != nil {
 				return err
 			}
+			fmt.Printf("%+v are of type %T\n", event, event)
 			events = append(events, event)
 			// Collect all available notifications before proceeding.
 			keepGoing := true
+			eventCount := 0
 			for keepGoing {
 				select {
 				case notification = <-listener.Notify:
@@ -423,12 +429,20 @@ func publishLoop[T stream.Msg](
 						return err
 					}
 					events = append(events, event)
+					eventCount += 1
+					keepGoing = eventCount < maxEventCount
 				default:
 					keepGoing = false
 				}
 			}
+
+			idToRecordCache := map[int]stream.RecordCache{}
+			// hydratedEvents :=
+			for _, ev := range events {
+				idToRecordCache = publisher.HydrateMsg(ev.After, idToRecordCache)
+			}
 			// Broadcast all the events.
-			publisher.Broadcast(events)
+			publisher.Broadcast(events, idToRecordCache)
 		}
 	}
 }
