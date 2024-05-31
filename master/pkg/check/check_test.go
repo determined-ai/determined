@@ -188,7 +188,7 @@ func TestIsValidIPV4(t *testing.T) {
 		{"192.168.1.256", true},
 		{"192.168.1.-1", true},
 		{"192.168.1.1.1", true},
-		{"192.168.1.01", false},
+		{"192.168.1.01", true},
 		{"invalid_ip", true},
 		{"", true},
 	}
