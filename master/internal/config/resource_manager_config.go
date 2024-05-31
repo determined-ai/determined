@@ -11,7 +11,11 @@ import (
 	"github.com/determined-ai/determined/master/pkg/union"
 )
 
-const defaultResourcePoolName = "default"
+const (
+	defaultResourcePoolName = "default"
+	validGWPortRangeStart   = 1025
+	validGWPortRangeEnd     = 65535
+)
 
 // ResourceManagerConfig hosts configuration fields for the resource manager.
 type ResourceManagerConfig struct {
@@ -171,21 +175,64 @@ type KubernetesResourceManagerConfig struct {
 	DefaultComputeResourcePool string `json:"default_compute_resource_pool"`
 	NoDefaultResourcePools     bool   `json:"no_default_resource_pools"`
 
-	ExposeProxiesExternally *ExposeProxiesExternallyConfig `json:"expose_proxies_externally"`
+	InternalTaskGateway *InternalTaskGatewayConfig `json:"internal_task_gateway"`
 
 	Name     string            `json:"name"`
 	Metadata map[string]string `json:"metadata"`
 }
 
-// ExposeProxiesExternallyConfig is config for exposing Kubernetes proxies externally on a service.
+// InternalTaskGatewayConfig is config for exposing Determined tasks to outside of the cluster.
 // Useful for multirm when we can only be running in a single cluster.
-type ExposeProxiesExternallyConfig struct {
+type InternalTaskGatewayConfig struct {
 	GatewayName      string `json:"gateway_name"`
 	GatewayNamespace string `json:"gateway_namespace"`
-	// TODO(RM-267/gateways) should this be a service name or an ip?
-	// Also is address the right term? Do we refer to hostnames / addresses as address or ip?
-	// A load balancer would need a static ip for address to make sense. Is this ok?
-	GatewayAddress string `json:"gateway_address"`
+	GatewayIP        string `json:"gateway_ip"`
+	GWPortStart      int    `json:"gateway_port_range_start"`
+	GWPortEnd        int    `json:"gateway_port_range_end"`
+}
+
+var defaultInternalTaskGatewayConfig = InternalTaskGatewayConfig{
+	GWPortStart: 1025,
+	GWPortEnd:   65535,
+}
+
+// UnmarshalJSON implements the json.Unmarshaler interface.
+func (i *InternalTaskGatewayConfig) UnmarshalJSON(data []byte) error {
+	*i = defaultInternalTaskGatewayConfig
+	type DefaultParser *InternalTaskGatewayConfig
+	return json.Unmarshal(data, DefaultParser(i))
+}
+
+// Validate implements the check.Validatable interface.
+func (i *InternalTaskGatewayConfig) Validate() []error {
+	var errs []error
+
+	if err := check.IsValidK8sLabel(i.GatewayName); err != nil {
+		errs = append(errs, errors.Wrap(err, "invalid gateway_name"))
+	}
+
+	if err := check.IsValidK8sLabel(i.GatewayNamespace); err != nil {
+		errs = append(errs, errors.Wrap(err, "invalid gateway_namespace"))
+	}
+
+	if err := check.IsValidIP(i.GatewayIP); err != nil {
+		errs = append(errs, errors.Wrap(err, "invalid gateway_ip"))
+	}
+
+	if err := check.BetweenInclusive(
+		i.GWPortStart, validGWPortRangeStart, validGWPortRangeEnd); err != nil {
+		errs = append(errs, errors.Wrap(err, "invalid gateway_port_range_start"))
+	}
+
+	if err := check.BetweenInclusive(
+		i.GWPortEnd, validGWPortRangeStart, validGWPortRangeEnd); err != nil {
+		errs = append(errs, errors.Wrap(err, "invalid gateway_port_range_end"))
+	}
+
+	if i.GWPortStart >= i.GWPortEnd {
+		errs = append(errs, errors.New("gateway_port_range_start must be less than or equal to gateway_port_range_end"))
+	}
+	return errs
 }
 
 var defaultKubernetesResourceManagerConfig = KubernetesResourceManagerConfig{
@@ -243,17 +290,6 @@ func (k KubernetesResourceManagerConfig) Validate() []error {
 		checkSlotType,
 		checkCPUResource,
 		check.NotEmpty(k.Name, "name is required"),
-	}
-
-	if p := k.ExposeProxiesExternally; p != nil {
-		checks = append(checks,
-			check.NotEmpty(p.GatewayName,
-				"expose_proxies_externally.gateway_name is required with expose_proxies_externally"),
-			check.NotEmpty(p.GatewayNamespace,
-				"expose_proxies_externally.gateway_namespace is required with expose_proxies_externally"),
-			check.NotEmpty(p.GatewayAddress,
-				"expose_proxies_externally.gateway_address is required with expose_proxies_externally"),
-		)
 	}
 
 	return checks

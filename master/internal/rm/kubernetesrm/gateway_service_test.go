@@ -10,8 +10,16 @@ import (
 	gatewayTyped "sigs.k8s.io/gateway-api/apis/v1"
 	alphaGateway "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned/typed/apis/v1alpha2"
 
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/mocks"
 )
+
+func testGatewayConfig() config.InternalTaskGatewayConfig {
+	return config.InternalTaskGatewayConfig{
+		GWPortStart: 1, GWPortEnd: 100,
+		GatewayName: "gatewayname",
+	}
+}
 
 func TestGatewayServiceAddListeners(t *testing.T) {
 	gatewayMock := &mocks.GatewayInterface{}
@@ -20,9 +28,8 @@ func TestGatewayServiceAddListeners(t *testing.T) {
 		"default": TCPRouteMock,
 	}
 	g, err := newGatewayService(
-		gatewayMock, tcpInterfaces, "gatewayname",
+		gatewayMock, tcpInterfaces, testGatewayConfig(),
 	)
-	g.portRangeStart = 1
 	require.NoError(t, err)
 
 	toReturn := &gatewayTyped.Gateway{
@@ -59,7 +66,7 @@ func TestGatewayServiceFreePorts(t *testing.T) {
 		"default": TCPRouteMock,
 	}
 	g, err := newGatewayService(
-		gatewayMock, tcpInterfaces, "gatewayname",
+		gatewayMock, tcpInterfaces, testGatewayConfig(),
 	)
 	require.NoError(t, err)
 
