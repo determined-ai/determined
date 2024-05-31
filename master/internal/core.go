@@ -1279,12 +1279,26 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 
 	// Add resistance to common HTTP attacks.
 	secureConfig := middleware.SecureConfig{
-		Skipper:            middleware.DefaultSkipper,
-		XSSProtection:      "1; mode=block",
-		ContentTypeNosniff: "nosniff",
-		XFrameOptions:      "SAMEORIGIN",
+		Skipper:               middleware.DefaultSkipper,
+		XSSProtection:         "1; mode=block",
+		ContentTypeNosniff:    "nosniff",
+		XFrameOptions:         "SAMEORIGIN",
+		ReferrerPolicy:        "SAMEORIGIN",
+		ContentSecurityPolicy: "default-src 'self'",
+	}
+	if m.config.Security.TLS.Enabled() {
+		secureConfig.HSTSMaxAge = 31536000
+		secureConfig.HSTSExcludeSubdomains = true
 	}
 	m.echo.Use(middleware.SecureWithConfig(secureConfig))
+	m.echo.Use(func(next echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			c.Response().Header().Set("Permissions-Policy",
+				"geolocation=(),midi=(),sync-xhr=(),microphone=(),camera=(),"+
+					"magnetometer=(),gyroscope=(),fullscreen=(self),payment=()")
+			return next(c)
+		}
+	})
 
 	// Register middleware that extends default context.
 	m.echo.Use(func(h echo.HandlerFunc) echo.HandlerFunc {
