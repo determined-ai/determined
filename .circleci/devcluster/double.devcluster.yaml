@@ -61,7 +61,6 @@ stages:
         container_auto_remove_disabled: true
         hooks:
           on_connection_lost: ["touch", "/tmp/agent1-connection-lost"]
-        artificial_slots: 4
 
   - agent:
       name: agent2
@@ -71,4 +70,3 @@ stages:
         agent_id: agent2
         container_master_host: $DOCKER_LOCALHOST
         container_auto_remove_disabled: true
-        artificial_slots: 4
