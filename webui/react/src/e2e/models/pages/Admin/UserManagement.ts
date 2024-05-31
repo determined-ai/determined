@@ -39,16 +39,16 @@ export class UserManagement extends AdminPage {
     parent: this.#actionRow,
     selector: '[data-testid="statusSelect"]',
   });
-  readonly addUser = new BaseComponent({
-    parent: this.#actionRow,
-    selector: '[data-testid="addUser"]',
-  });
   readonly actions = new ActionDropdownMenu({
     childNode: new BaseComponent({
       parent: this.#actionRow,
       selector: '[data-testid="actions"]',
     }),
     root: this,
+  });
+  readonly addUser = new BaseComponent({
+    parent: this.#actionRow,
+    selector: '[data-testid="addUser"]',
   });
 
   readonly table = new InteractiveTable({

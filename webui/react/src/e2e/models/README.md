@@ -6,106 +6,248 @@ Models represented in this folder are meant to be a one-to-one representations o
 - `src/components/DeterminedAuth.tsx` -> `src/e2e/models/components/DeterminedAuth.ts`
 - `src/utils/error.ts` -> `src/e2e/models/utils/error.ts`
 
-## Why page models
+Currently, there are subdirectories for `ant` and `hew` models, but we should have these directories moved to their own packages eventually.
+
+## Why Page Models
 
 Playwright has [a writeup](https://playwright.dev/docs/pom) on how page models are useful, namely that they can be used as an API for interacting with pages. While this is true, there is much more to be gained from using page models.
 
-### What playwright POM is missing
+### What Playwright POM is Missing
 
-The playwright API approach still loosely defines each component. Relying on text can be volitile, so it would be better to use accessibility or `data-test`. Playwright POM also serves as an API rather than a **model**.
+The playwright API approach still loosely defines each component. Relying on text can be volitile, so it would be better to use accessibility or `data-test` attributes. Playwright POM also serves as an API rather than a **model**.
 
-Our page models are meant to implement the precise structure of a page. This allows us to be specific in which components we represent. For exmaple, a login page might have different sign in boxes for straightforward authetication and for SSO. Or maybe a dashboard page has several tables. When we test for "a username input" or "the first row of the table", these models will provide a uniform, specific mechanism to clearly state which component we're using.
+Most importantly, our page models are instaciated with `parent` elements. This enables us to build a chain of playwright locators one link at a time and mirror the UI implementation much more closely.
 
-In addition, playwright POM muddies their implementation with test steps executing inside the model. We want our models to represent a page that a test can perform actions on instead of acting as an interface to perform actions on that page. Here's an example.
+## How to use Page Models
 
-| Unclear Test Case | `jspage.createNewProject()`                            |
-| ----------------- | ------------------------------------------------------ |
-| Precise Test Case | `await page.header.createNewProject.pwLocator.click()` |
-
-The difference is suble, but in the precise exmaple, a reader will understand exactly what actions the test case is performing from a glance. This can be helpful when test cases fail and the person triaging the case isn't the same person who wrote the test. Utilities and abstarctions are still welcome, but this model pattern will elimate the need for as many!
-
-## How to use page models
-
-Simply instantiate a new page inside a test case or fixture. The page will come with properties representing the page. The `pwLocator` property gets the playwright locator which the model is representing.
+Every test comes with a `page` object. Instantiate a page model importanting it and passing the `page` to its constructor. The page comes with more `readonly` properties which model the elements on the page. At any point in the chain, use the `pwlocator` propery to access a chain of playwright locators representing that model.
 
 | Page model Autocomplete                                                 | Locator automcomplete                                             |
 | ----------------------------------------------------------------------- | ----------------------------------------------------------------- |
 | ![page model automcomplete](../docs/images/page-model-autocomplete.png) | ![locator automcomplete](../docs/images/loactor-autocomplete.png) |
 
-And here's a complete example with an `expect`:
+### An Example from Auth Spec
 
 ```js
-await detAuth.username.pwLocator.fill(username);
-await detAuth.password.pwLocator.fill(password);
-expect(await signInPage.detAuth.error.message.pwLocator.textContent()).toContain('Login failed');
+test('Expect submit disabled; Show multiple errors', async ({ page }) => {
+  const signInPage = new SignIn(page);
+  await signInPage.goto();
+  await expect.soft(signInPage.detAuth.submit.pwLocator).toBeDisabled();
+  await signInPage.detAuth.username.pwLocator.fill('chubbs');
+  await signInPage.detAuth.submit.pwLocator.click();
+  await signInPage.detAuth.submit.pwLocator.click();
+  await expect(signInPage.detAuth.errors.close.pwLocator).toHaveCount(2);
+});
 ```
 
-## How to contribute
+## Types of Models
 
-First, if the model doesn't exist, create it. The file name and path in `src/e2e/models` with match the file name and path from it's counterpart in `src`.
+We want to model any part of the DOM that could be important to a test case. Typically, that means a `BasePage` will have a combination of `BaseComponents` and `NamedComponents` as child elements. This section will go over the different types of models.
 
-- Pages will inherit from `BasePage` and serve as the root of a component tree. Each page will need a `url`, and the `BasePage` class provides common properties for all pages like `goto`.
-- Named components and utilities will inherit form `NamedComponent`. This class is similar to `BaseComponent` but it enforces that a static `defaultSelector` be declared. Use this selector in the component's constructor as an alternative if `selector` isn't passed through.
-- If the component being represented returns a `React.Fragment`, inherit from the `BaseReactFragment` class
+### `BasePage`
 
-All pages and components support subcomponents using instance properties. Initalize new components using instances of BaseComponent. They should support selector and parent arguments.
+Pages inherit from `BasePage`. It's the root of a component tree.
 
-| Argument   | Description                                                                                                                                                                                                                            |
-| ---------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `selector` | The selector passed through to playwright's `locator` method. Required if initalizing a `BaseComponent`, but optional for `NamedComponent`s.                                                                                           |
-| `parent`   | The component's parent. It could be `this` or any instance of `BaseComponent \| BasePage`. In some cases, it will be set to `this.root` if the component lives at the root of the DOM. `BasePage`s are always at the root of the tree. |
+### `BaseComponent`
 
-Here's a simplified example using part of the `DeterminedAuth` component. Intrinsic elements are be represent with `BaseComponent`, and they can be as `parent`s for other elements. The amount of specificity is left to the author's discretion. If you're not sure, more is better to avoid conflicts with future additions. Deeper specificity will also optimize for searching through the DOM on larger pages.
+Base Components represent native react elements and containers.
 
-```js
-export class DeterminedAuth extends NamedComponent({ defaultselector: `div[data-test-component="detAuth"]`}) {
-  constructor({ selector, parent }: NamedComponentArgs) {
-    super({ parent: parent, selector: selector || DeterminedAuth.defaultSelector });
+Base components can still have child elements. All base components must be instanciated with a `selector` and a `parent`. Elements that extend from `BaseComponent` are typically defined as some variable, but aren't the top level element returned by the file.
+
+- `Row`, `Tab`, `Item`
+- `Dropdown`, `Select`, `Popover`, `Modal`
+- `Header`, `Footer`
+
+### `NamedComponent`
+
+Named Components are similar to `BaseComponent`, but they represent the top level element returned by a component. Syntactically, this means they require a `readonly defaultSelector` property. There are three ways to instanciate a named component.
+
+- parent (uses defaultSelector by default)
+- parent and attatchment (`attatchment` appends to `defaultSelector`)
+- parent and selector (just like `BaseComponent`, ignores `defaultSelector`)
+
+### `BaseReactFragment`
+
+Use `BaseReactFragment` instead of `NamedComponent` if the top level element is a react `React.Fragment`. Representing a react fragment with this class will preserve the parent locator heirachy while also providing a way to group elements, just like the React Fragments they model.
+
+## Model Usage Example
+
+This is an example of the action row on the admin user management page. Notice that all elements defined directly on `UserManagement.tsx` get their own test hooks and are represented by `BaseComponents`.
+
+The only `NamedComponents` present in this example are the `InteractiveTable` and `SkeletonTable`. They define their test hooks in their own files, and so our models have thier `selector` defined as `defaultSelector` in their respective model files instead of being passed through the constructor.
+
+Also notice, there are a few stylistic choices I made regarding `readonly #actionRow = new BaseComponent(...)`.
+
+- First, I made it a private variable. This was to prevent test cases from accessing the model directly. For example, I wouldn't expect test authors to be clicking on the element or getting it's textContent. Instead, I would expect authors to be accessing one of it's child elements.
+- Second, I could've written `readonly #actionRow = new ActionRow(...)` and `class ActionRow extends BaseComponent` into the file. These are both valid approaches, but the first one is easier and shorter at the cost of clarity. In a test scenario, this is the difference between accessing `userManagementPage.addUser` and `userManagementPage.actionRow.addUser`.
+
+<!-- markdownlint-disable MD033 -->
+<table>
+<tr>
+<td>
+
+`src/pages/Admin/UserManagement.tsx`
+
+</td>
+<td>
+
+`src/e2e/models/pages/Admin/UserManagement.ts`
+
+</td>
+</tr>
+<tr>
+<td>
+
+```ts
+<div className={css.actionBar} data-testid="actionRow">
+  <Row>
+    <Column>
+      <Row>
+        <Input data-testid="search"/>
+        <Select data-testid="roleSelect"/>
+        <Select data-testid="statusSelect"/>
+      </Row>
+    </Column>
+    <Column align="right">
+      <Row>
+        {selectedUserIds.length > 0 && (
+          <Dropdown menu={actionDropdownMenu}>
+            <Button data-testid="actions">Actions</Button>
+          </Dropdown>
+        )}
+        <Button data-testid="addUser">
+          {CREATE_USER}
+        </Button>
+      </Row>
+    </Column>
+  </Row>
+</div>
+```
+
+</td>
+<td>
+
+```ts
+readonly #actionRow = new BaseComponent({
+  parent: this.pivot.tabContent,
+  selector: '[data-testid="actionRow"]',
+});
+readonly search = new BaseComponent({
+  parent: this.#actionRow,
+  selector: '[data-testid="search"]',
+});
+readonly filterRole = new RoleSelect({
+  parent: this.#actionRow,
+  selector: '[data-testid="roleSelect"]',
+});
+readonly filterStatus = new StatusSelect({
+  parent: this.#actionRow,
+  selector: '[data-testid="statusSelect"]',
+});
+readonly actions = new ActionDropdownMenu({
+  childNode: new BaseComponent({
+    parent: this.#actionRow,
+    selector: '[data-testid="actions"]',
+  }),
+  root: this,
+});
+readonly addUser = new BaseComponent({
+  parent: this.#actionRow,
+  selector: '[data-testid="addUser"]',
+});
+```
+
+</td>
+</tr>
+<tr>
+<td>
+
+```ts
+{settings ? (
+  <InteractiveTable<DetailedUser, UserManagementSettingsWithColumns> .../>
+) : (
+  <SkeletonTable />
+)}
+```
+
+</td>
+<td>
+
+```ts
+readonly table = new InteractiveTable({
+  headRowType: UserHeadRow,
+  parent: this.pivot.tabContent,
+  rowType: UserRow,
+});
+readonly skeletonTable = new SkeletonTable({ parent: this.pivot.tabContent });
+```
+
+</td>
+</tr>
+</table>
+
+<table>
+<tr>
+<td>
+
+`src/components/Table/InteractiveTable.tsx`
+
+</td>
+<td>
+
+`src/e2e/models/components/Table/InteractiveTable.ts`
+
+</td>
+</tr>
+<tr>
+<td>
+
+```ts
+return (
+  <div data-test-component="interactiveTable">
+    <Spinner spinning={!!spinning}>
+      {spinning || !settings ? (
+        <SkeletonTable />
+      ) : (
+        <Table data-testid="table" />
+      )}
+    </Spinner>
+  </div>
+);
+```
+
+</td>
+<td>
+
+```ts
+export class InteractiveTable<
+  RowType extends Row,
+  HeadRowType extends HeadRow,
+> extends NamedComponent {
+  readonly defaultSelector = 'div[data-test-component="interactiveTable"]';
+  constructor(args: TableArgs<RowType, HeadRowType>) {
+    super(args);
+    this.table = new Table({ ...args, attachment: '[data-testid="table"]', parent: this });
   }
-  readonly #form = new BaseComponent({ parent: this, selector: `form` });
-  readonly username = new BaseComponent({
-    parent: this.#form,
-    selector: `input[data-test="username"]`,
-  });
-  readonly password = new BaseComponent({
-    parent: this.#form,
-    selector: `input[data-test="password"]`,
-  });
-  readonly submit = new BaseComponent({
-    parent: this.#form,
-    selector: `button[data-test="submit"]`,
-  });
-  ...
+
+  readonly table: Table<RowType, HeadRowType>;
+  readonly skeleton = new SkeletonTable({ parent: this });
 }
 ```
 
-### Default Selectors
+</td>
+</tr>
+</table>
+<!-- markdownlint-enable MD033 -->
 
-`NamedComponent`s will have a `static defaultSelector` to use if a selector isn't provided. Since this property is static, we can use it to create elements with more details. Here's an example using an imaginary `DeterminedTable` component:
+## Practices Around Test Hooks
 
-```js
-  readonly userTable = new DeterminedTable({ parent: this, selector: DeterminedTable.defaultSelector + "[data-test='userTable']" });
-  readonly roleTable = new DeterminedTable({ parent: this, selector: DeterminedTable.defaultSelector + "[data-test='roleTable']" });
-```
+When creating page models, you'll most likely want to author test hooks into the `src` components. Here's how.
 
-## Practices around test hooks
+| Test Hook Type                       | Usage                                                                                                                            |
+| ------------------------------------ | -------------------------------------------------------------------------------------------------------------------------------- |
+| `data-test-component='my-component'` | Belongs at the top level element wrapping the component                                                                          |
+| `data-test='my-instance'`            | Attributed to any _instances_ of components or any intrinsic element                                                             |
+| `data-test-id={something dynamic}`   | Test Hook for dynamic data. Consider having many `data-test='row'`s and looking for the attachemnt `data-test-id='my-test-user'` |
 
-When creating page models, you'll most likely want to author test hooks into the `src` model.
-
-| Test Hook                            | Usage                                                                                                                              |
-| ------------------------------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `data-test-component='my-component'` | Belongs at the top level element wrapping the component                                                                            |
-| `data-test='component'`              | Attributed to any _instances_ of components or any intrinsic element                                                               |
-| `data-test-id='dynamic'`             | Test Hook for dynamic data. Consider having many `data-test='row'`s and needing to differentiate them in some way other than order |
-
-Looking back to the exmaple with the imaginary `DeterminedTable`, we want to enable this pattern:
-
-```js
-  // DeterminedTable.defaultSelector = '[data-test-component="DetTable"]'
-  readonly userTable = new DeterminedTable({ parent: this, selector: DeterminedTable.defaultSelector + '[data-test="userTable"]' });
-  readonly roleTable = new DeterminedTable({ parent: this, selector: DeterminedTable.defaultSelector + '[data-test="roleTable"]' });
-```
-
-The component `DeterminedTable` would have `data-test-component="DetTable"` as a top level attribute, and instances would each get their own `data-test`. This way, the static attribute and the instance attribute don't conflict with each other.
-
-Not every component needs a data-test, but, in general, more is better. It's better to select for _"a duck named Hoffman"_ rather than "a duck" or "Hoffman".
+Not every component needs a data-test, but, in general, more is better. It's better to select for _"a duck named Hoffman"_ rather than "a duck" or "Hoffman". In situations where adding a top-level test hook (`data-test-component`) could be more trouble than it's worth, it's okay to use other unique identifiers, like `.table.ant-table`.

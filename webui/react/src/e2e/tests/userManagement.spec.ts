@@ -22,7 +22,9 @@ test.describe('User Management', () => {
     await userManagementPage.goto();
     // wait for table to be stable and select page 1
     const page1 = userManagementPage.table.table.pagination.pageButtonLocator(1);
-    await userManagementPage.table.table.rows.pwLocator.nth(0).waitFor({ timeout: 10_000 });
+    await expect(userManagementPage.table.table.rows.pwLocator).not.toHaveCount(0, {
+      timeout: 10_000,
+    });
     if (await page1.isVisible()) {
       await expect(
         repeatWithFallback(
@@ -70,9 +72,7 @@ test.describe('User Management', () => {
         await auth.logout();
         await auth.login({ password: testUser.password, username: testUser.user?.username });
         await userManagementPage.nav.sidebar.headerDropdown.open();
-        await userManagementPage.nav.sidebar.headerDropdown.settings.pwLocator.waitFor({
-          state: 'visible',
-        });
+        await userManagementPage.nav.sidebar.headerDropdown.settings.pwLocator.waitFor();
         await userManagementPage.nav.sidebar.headerDropdown.admin.pwLocator.waitFor({
           state: 'hidden',
         });
