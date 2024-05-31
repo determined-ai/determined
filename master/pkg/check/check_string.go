@@ -56,6 +56,10 @@ func IsValidK8sLabel(actual string, msgAndArgs ...interface{}) error {
 // IsValidIPV4 checks whether the first argument is a valid IPv4 address. The method returns an error
 // with the provided message if the check fails.
 func IsValidIPV4(actual string, msgAndArgs ...interface{}) error {
+	if err := NotEmpty(actual, msgAndArgs...); err != nil {
+		return err
+	}
+
 	msgAndArgs = append(msgAndArgs, "%s is not valid IPV4", actual)
 	if err := Match(actual, `^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$`, msgAndArgs...); err != nil {
 		return err

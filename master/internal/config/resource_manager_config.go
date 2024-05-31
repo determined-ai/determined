@@ -197,10 +197,10 @@ var defaultInternalTaskGatewayConfig = InternalTaskGatewayConfig{
 }
 
 // UnmarshalJSON implements the json.Unmarshaler interface.
-func (k *InternalTaskGatewayConfig) UnmarshalJSON(data []byte) error {
-	*k = defaultInternalTaskGatewayConfig
+func (i *InternalTaskGatewayConfig) UnmarshalJSON(data []byte) error {
+	*i = defaultInternalTaskGatewayConfig
 	type DefaultParser *InternalTaskGatewayConfig
-	return json.Unmarshal(data, DefaultParser(k))
+	return json.Unmarshal(data, DefaultParser(i))
 }
 
 // Validate implements the check.Validatable interface.
@@ -208,29 +208,29 @@ func (i *InternalTaskGatewayConfig) Validate() []error {
 	var errs []error
 
 	if err := check.IsValidK8sLabel(i.GatewayName); err != nil {
-		errs = append(errs, errors.Wrap(err, "invalid GatewayName"))
+		errs = append(errs, errors.Wrap(err, "invalid gateway_name"))
 	}
 
 	if err := check.IsValidK8sLabel(i.GatewayNamespace); err != nil {
-		errs = append(errs, errors.Wrap(err, "invalid GatewayNamespace"))
+		errs = append(errs, errors.Wrap(err, "invalid gateway_namespace"))
 	}
 
 	if err := check.IsValidIPV4(i.GatewayIP); err != nil {
-		errs = append(errs, errors.Wrap(err, "invalid GatewayIP"))
+		errs = append(errs, errors.Wrap(err, "invalid gateway_ip"))
 	}
 
 	if err := check.BetweenInclusive(
 		i.GWPortStart, validGWPortRangeStart, validGWPortRangeEnd); err != nil {
-		errs = append(errs, errors.Wrap(err, "invalid GatewayPortRangeStart"))
+		errs = append(errs, errors.Wrap(err, "invalid gateway_port_range_start"))
 	}
 
 	if err := check.BetweenInclusive(
 		i.GWPortEnd, validGWPortRangeStart, validGWPortRangeEnd); err != nil {
-		errs = append(errs, errors.Wrap(err, "invalid GatewayPortRangeEnd"))
+		errs = append(errs, errors.Wrap(err, "invalid gateway_port_range_end"))
 	}
 
-	if i.GWPortStart > i.GWPortEnd {
-		errs = append(errs, errors.New("GatewayPortRangeStart must be less than or equal to GatewayPortRangeEnd"))
+	if i.GWPortStart >= i.GWPortEnd {
+		errs = append(errs, errors.New("gateway_port_range_start must be less than or equal to gateway_port_range_end"))
 	}
 	return errs
 }
@@ -290,17 +290,6 @@ func (k KubernetesResourceManagerConfig) Validate() []error {
 		checkSlotType,
 		checkCPUResource,
 		check.NotEmpty(k.Name, "name is required"),
-	}
-
-	if p := k.InternalTaskGateway; p != nil {
-		checks = append(checks,
-			check.NotEmpty(p.GatewayName,
-				"internal_task_gateway.gateway_name is required with internal_task_gateway"),
-			check.NotEmpty(p.GatewayNamespace,
-				"internal_task_gateway.gateway_namespace is required with internal_task_gateway"),
-			check.NotEmpty(p.GatewayIP,
-				"internal_task_gateway.gateway_ip is required with internal_task_gateway"),
-		)
 	}
 
 	return checks
