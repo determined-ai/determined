@@ -94,8 +94,8 @@ def _ray_job_submit(exp_path: pathlib.Path, port: int = 8265) -> None:
 
 
 @pytest.mark.e2e_cpu
-@pytest.mark.timeout(600)
 @pytest.mark.e2e_multi_k8s
+@pytest.mark.timeout(600)
 @pytest.mark.parametrize(
     "port_map",
     [
@@ -108,8 +108,9 @@ def test_experiment_proxy_simple_single_slot(port_map: Tuple[int, bool]) -> None
     return _test_experiment_proxy_simple(port_map, slots=1)
 
 
-@pytest.mark.timeout(600)
+@pytest.mark.port_registry  # has multiple slots
 @pytest.mark.e2e_multi_k8s
+@pytest.mark.timeout(600)
 @pytest.mark.parametrize(
     "port_map",
     [
