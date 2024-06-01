@@ -220,6 +220,13 @@ func (k *kubernetesResourcePool) GetAllocationSummaries() map[model.AllocationID
 	return k.reqList.TaskSummaries(k.groups, kubernetesScheduler)
 }
 
+func (k *kubernetesResourcePool) GetAllocationSummary(id model.AllocationID) *sproto.AllocationSummary {
+	k.mu.Lock()
+	defer k.mu.Unlock()
+
+	return k.reqList.TaskSummary(id, k.groups, kubernetesScheduler)
+}
+
 func (k *kubernetesResourcePool) getResourceSummary() (*resourceSummary, error) {
 	k.mu.Lock()
 	defer k.mu.Unlock()

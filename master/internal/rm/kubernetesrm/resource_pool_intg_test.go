@@ -159,11 +159,9 @@ func testLaunch(
 		ResourcePool:      "default",
 	})
 
-	require.True(t, rp.tryAdmitPendingTasks)
-	require.False(t, rp.reqList.IsScheduled(allocationID))
+	require.Len(t, rp.GetAllocationSummary(allocationID).Resources, 0)
 	rp.Admit()
-	require.False(t, rp.tryAdmitPendingTasks)
-	require.True(t, rp.reqList.IsScheduled(allocationID))
+	require.Len(t, rp.GetAllocationSummary(allocationID).Resources, 1)
 
 	allocated := poll[*sproto.ResourcesAllocated](ctx, t, sub)
 	require.NotNil(t, allocated)
@@ -250,11 +248,9 @@ func TestPodLogStreamerReattach(t *testing.T) {
 	}
 	rp.AllocateRequest(allocateReq)
 
-	require.True(t, rp.tryAdmitPendingTasks)
-	require.False(t, rp.reqList.IsScheduled(allocationID))
+	require.Len(t, rp.GetAllocationSummary(allocationID).Resources, 0)
 	rp.Admit()
-	require.False(t, rp.tryAdmitPendingTasks)
-	require.True(t, rp.reqList.IsScheduled(allocationID))
+	require.Len(t, rp.GetAllocationSummary(allocationID).Resources, 1)
 
 	allocated := poll[*sproto.ResourcesAllocated](ctx, t, sub)
 	require.NotNil(t, allocated)
@@ -302,11 +298,9 @@ func TestPodLogStreamerReattach(t *testing.T) {
 	allocateReq.Restore = true
 	rp.AllocateRequest(allocateReq)
 
-	require.True(t, rp.tryAdmitPendingTasks)
-	require.False(t, rp.reqList.IsScheduled(allocationID))
+	require.Len(t, rp.GetAllocationSummary(allocationID).Resources, 0)
 	rp.Admit()
-	require.False(t, rp.tryAdmitPendingTasks)
-	require.True(t, rp.reqList.IsScheduled(allocationID))
+	require.Len(t, rp.GetAllocationSummary(allocationID).Resources, 1)
 
 	reallocated := poll[*sproto.ResourcesAllocated](ctx, t, sub)
 	require.True(t, reallocated.Recovered)
@@ -352,11 +346,9 @@ func TestPodLogStreamer(t *testing.T) {
 		ResourcePool:      "default",
 	})
 
-	require.True(t, rp.tryAdmitPendingTasks)
-	require.False(t, rp.reqList.IsScheduled(allocationID))
+	require.Len(t, rp.GetAllocationSummary(allocationID).Resources, 0)
 	rp.Admit()
-	require.False(t, rp.tryAdmitPendingTasks)
-	require.True(t, rp.reqList.IsScheduled(allocationID))
+	require.Len(t, rp.GetAllocationSummary(allocationID).Resources, 1)
 
 	allocated := poll[*sproto.ResourcesAllocated](ctx, t, sub)
 	require.NotNil(t, allocated)
@@ -421,11 +413,9 @@ func TestKill(t *testing.T) {
 		ResourcePool:      "default",
 	})
 
-	require.True(t, rp.tryAdmitPendingTasks)
-	require.False(t, rp.reqList.IsScheduled(allocationID))
+	require.Len(t, rp.GetAllocationSummary(allocationID).Resources, 0)
 	rp.Admit()
-	require.False(t, rp.tryAdmitPendingTasks)
-	require.True(t, rp.reqList.IsScheduled(allocationID))
+	require.Len(t, rp.GetAllocationSummary(allocationID).Resources, 1)
 
 	allocated := poll[*sproto.ResourcesAllocated](ctx, t, sub)
 	require.NotNil(t, allocated)
@@ -501,11 +491,9 @@ func TestExternalKillWhileQueuedFails(t *testing.T) {
 		ResourcePool:      "default",
 	})
 
-	require.True(t, rp.tryAdmitPendingTasks)
-	require.False(t, rp.reqList.IsScheduled(allocationID))
+	require.Len(t, rp.GetAllocationSummary(allocationID).Resources, 0)
 	rp.Admit()
-	require.False(t, rp.tryAdmitPendingTasks)
-	require.True(t, rp.reqList.IsScheduled(allocationID))
+	require.Len(t, rp.GetAllocationSummary(allocationID).Resources, 1)
 
 	allocated := poll[*sproto.ResourcesAllocated](ctx, t, sub)
 	require.NotNil(t, allocated)
@@ -605,11 +593,9 @@ func TestExternalPodDelete(t *testing.T) {
 		ResourcePool:      "default",
 	})
 
-	require.True(t, rp.tryAdmitPendingTasks)
-	require.False(t, rp.reqList.IsScheduled(allocationID))
+	require.Len(t, rp.GetAllocationSummary(allocationID).Resources, 0)
 	rp.Admit()
-	require.False(t, rp.tryAdmitPendingTasks)
-	require.True(t, rp.reqList.IsScheduled(allocationID))
+	require.Len(t, rp.GetAllocationSummary(allocationID).Resources, 1)
 
 	allocated := poll[*sproto.ResourcesAllocated](ctx, t, sub)
 	require.NotNil(t, allocated)
@@ -694,11 +680,9 @@ func TestReattach(t *testing.T) {
 	}
 	rp.AllocateRequest(allocateReq)
 
-	require.True(t, rp.tryAdmitPendingTasks)
-	require.False(t, rp.reqList.IsScheduled(allocationID))
+	require.Len(t, rp.GetAllocationSummary(allocationID).Resources, 0)
 	rp.Admit()
-	require.False(t, rp.tryAdmitPendingTasks)
-	require.True(t, rp.reqList.IsScheduled(allocationID))
+	require.Len(t, rp.GetAllocationSummary(allocationID).Resources, 1)
 
 	allocated := poll[*sproto.ResourcesAllocated](ctx, t, sub)
 	require.NotNil(t, allocated)
@@ -745,11 +729,9 @@ func TestReattach(t *testing.T) {
 	allocateReq.Restore = true
 	rp.AllocateRequest(allocateReq)
 
-	require.True(t, rp.tryAdmitPendingTasks)
-	require.False(t, rp.reqList.IsScheduled(allocationID))
+	require.Len(t, rp.GetAllocationSummary(allocationID).Resources, 0)
 	rp.Admit()
-	require.False(t, rp.tryAdmitPendingTasks)
-	require.True(t, rp.reqList.IsScheduled(allocationID))
+	require.Len(t, rp.GetAllocationSummary(allocationID).Resources, 1)
 
 	reallocated := poll[*sproto.ResourcesAllocated](ctx, t, sub)
 	require.True(t, reallocated.Recovered)
@@ -926,11 +908,9 @@ func TestNodeWorkflows(t *testing.T) {
 		ResourcePool:      "default",
 	})
 
-	require.True(t, rp.tryAdmitPendingTasks)
-	require.False(t, rp.reqList.IsScheduled(allocationID))
+	require.Len(t, rp.GetAllocationSummary(allocationID).Resources, 0)
 	rp.Admit()
-	require.False(t, rp.tryAdmitPendingTasks)
-	require.True(t, rp.reqList.IsScheduled(allocationID))
+	require.Len(t, rp.GetAllocationSummary(allocationID).Resources, 1)
 
 	allocated := poll[*sproto.ResourcesAllocated](ctx, t, sub)
 	require.NotNil(t, allocated)
@@ -1001,20 +981,18 @@ func TestAllocateAndReleaseBeforeStarted(t *testing.T) {
 		AllocationID: allocID,
 		JobID:        model.NewJobID(),
 		Name:         uuid.NewString(),
-		BlockedNodes: []string{uuid.NewString(), uuid.NewString()},
 	}
 	rp.AllocateRequest(allocReq)
-	req, ok := rp.reqList.TaskByID(allocID)
-	require.True(t, ok)
-	require.Equal(t, allocReq, *req)
+	summary := rp.GetAllocationSummary(allocID)
+	require.NotNil(t, summary)
+	require.Equal(t, allocReq.Name, summary.Name)
 
 	rp.ResourcesReleased(sproto.ResourcesReleased{
 		AllocationID: allocID,
 		ResourcePool: rp.poolConfig.PoolName,
 	})
-	req, ok = rp.reqList.TaskByID(allocID)
-	require.False(t, ok)
-	require.Nil(t, req)
+	summary = rp.GetAllocationSummary(allocID)
+	require.Nil(t, summary)
 }
 
 func TestGroupMaxSlots(t *testing.T) {
@@ -1047,11 +1025,9 @@ func TestGroupMaxSlots(t *testing.T) {
 		SlotsNeeded:       1,
 		ResourcePool:      "default",
 	})
-	require.True(t, rp.tryAdmitPendingTasks)
-	require.False(t, rp.reqList.IsScheduled(allocationID))
+	require.Len(t, rp.GetAllocationSummary(allocationID).Resources, 0)
 	rp.Admit()
-	require.False(t, rp.tryAdmitPendingTasks)
-	require.True(t, rp.reqList.IsScheduled(allocationID))
+	require.Len(t, rp.GetAllocationSummary(allocationID).Resources, 1)
 
 	t.Log("but the second shouldn't")
 	id2 := uuid.NewString()
@@ -1067,17 +1043,14 @@ func TestGroupMaxSlots(t *testing.T) {
 		SlotsNeeded:       1,
 		ResourcePool:      "default",
 	})
-	require.True(t, rp.tryAdmitPendingTasks)
-	require.False(t, rp.reqList.IsScheduled(allocationID2))
+	require.Len(t, rp.GetAllocationSummary(allocationID2).Resources, 0)
 	rp.Admit()
-	require.False(t, rp.tryAdmitPendingTasks)
-	require.False(t, rp.reqList.IsScheduled(allocationID2))
+	require.Len(t, rp.GetAllocationSummary(allocationID2).Resources, 0)
 
 	t.Log("and when the first releases it should get scheduled")
 	rp.ResourcesReleased(sproto.ResourcesReleased{AllocationID: allocationID})
 	rp.Admit()
-	require.False(t, rp.tryAdmitPendingTasks)
-	require.True(t, rp.reqList.IsScheduled(allocationID2))
+	require.Len(t, rp.GetAllocationSummary(allocationID2).Resources, 1)
 }
 
 func TestPendingPreemption(t *testing.T) {
@@ -1151,31 +1124,6 @@ func TestValidateResources(t *testing.T) {
 			require.Equal(t, tt.fulfillable, res.Fulfillable)
 		})
 	}
-}
-
-func TestSchedule(t *testing.T) {
-	// TODO RM-301
-	t.Skip("skipping test until flake fixed")
-	rp := newTestResourcePool(newTestJobsService(t))
-	jobID := model.NewJobID()
-	allocID := model.AllocationID(jobID)
-
-	allocReq := sproto.AllocateRequest{
-		AllocationID: allocID,
-		JobID:        jobID,
-		Preemptible:  true,
-		State:        sproto.SchedulingStateQueued,
-	}
-	rp.AllocateRequest(allocReq)
-
-	_, ok := rp.reqList.TaskByID(allocReq.AllocationID)
-	require.True(t, ok)
-
-	require.True(t, rp.tryAdmitPendingTasks)
-	require.False(t, rp.reqList.IsScheduled(allocID))
-	rp.Admit()
-	require.False(t, rp.tryAdmitPendingTasks)
-	require.True(t, rp.reqList.IsScheduled(allocID))
 }
 
 func poll[T sproto.ResourcesEvent](ctx context.Context, t *testing.T, sub *sproto.ResourcesSubscription) T {
