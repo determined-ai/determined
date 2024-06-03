@@ -849,7 +849,7 @@ func pauseResumeAction(ctx context.Context, isPause bool, projectID int32,
 		}
 		if cand.IsMultitrial {
 			results = append(results, &apiv1.RunActionResult{
-				Error: fmt.Sprintf("Cannot pause run '%d' (part of multi-trial).", cand.ID),
+				Error: fmt.Sprintf("Cannot pause/unpause run '%d' (part of multi-trial).", cand.ID),
 				Id:    cand.ID,
 			})
 			continue
@@ -883,10 +883,10 @@ func pauseResumeAction(ctx context.Context, isPause bool, projectID int32,
 	var expResults []experiment.ExperimentActionResult
 	var errMsg string
 	if isPause {
-		expResults, err = experiment.PauseExperiments(ctx, expIDs.ToSlice(), nil)
+		expResults, err = experiment.PauseExperiments(ctx, projectID, expIDs.ToSlice(), nil)
 		errMsg = "Failed to pause associated experiment: %s"
 	} else {
-		expResults, err = experiment.ActivateExperiments(ctx, expIDs.ToSlice(), nil)
+		expResults, err = experiment.ActivateExperiments(ctx, projectID, expIDs.ToSlice(), nil)
 		errMsg = "Failed to resume associated experiment: %s"
 	}
 	if err != nil {

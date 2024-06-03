@@ -10293,12 +10293,10 @@ class v1PauseRunsRequest(Printable):
         *,
         projectId: int,
         runIds: "typing.Sequence[int]",
-        skipMultitrial: bool,
         filter: "typing.Union[str, None, Unset]" = _unset,
     ):
         self.projectId = projectId
         self.runIds = runIds
-        self.skipMultitrial = skipMultitrial
         if not isinstance(filter, Unset):
             self.filter = filter
 
@@ -10307,7 +10305,6 @@ class v1PauseRunsRequest(Printable):
         kwargs: "typing.Dict[str, typing.Any]" = {
             "projectId": obj["projectId"],
             "runIds": obj["runIds"],
-            "skipMultitrial": obj["skipMultitrial"],
         }
         if "filter" in obj:
             kwargs["filter"] = obj["filter"]
@@ -10317,7 +10314,6 @@ class v1PauseRunsRequest(Printable):
         out: "typing.Dict[str, typing.Any]" = {
             "projectId": self.projectId,
             "runIds": self.runIds,
-            "skipMultitrial": self.skipMultitrial,
         }
         if not omit_unset or "filter" in vars(self):
             out["filter"] = self.filter
@@ -12964,12 +12960,10 @@ class v1ResumeRunsRequest(Printable):
         *,
         projectId: int,
         runIds: "typing.Sequence[int]",
-        skipMultitrial: bool,
         filter: "typing.Union[str, None, Unset]" = _unset,
     ):
         self.projectId = projectId
         self.runIds = runIds
-        self.skipMultitrial = skipMultitrial
         if not isinstance(filter, Unset):
             self.filter = filter
 
@@ -12978,7 +12972,6 @@ class v1ResumeRunsRequest(Printable):
         kwargs: "typing.Dict[str, typing.Any]" = {
             "projectId": obj["projectId"],
             "runIds": obj["runIds"],
-            "skipMultitrial": obj["skipMultitrial"],
         }
         if "filter" in obj:
             kwargs["filter"] = obj["filter"]
@@ -12988,7 +12981,6 @@ class v1ResumeRunsRequest(Printable):
         out: "typing.Dict[str, typing.Any]" = {
             "projectId": self.projectId,
             "runIds": self.runIds,
-            "skipMultitrial": self.skipMultitrial,
         }
         if not omit_unset or "filter" in vars(self):
             out["filter"] = self.filter

@@ -7565,12 +7565,6 @@ export interface V1PauseRunsRequest {
      * @memberof V1PauseRunsRequest
      */
     filter?: string;
-    /**
-     * If true, skip multi-trial experiments for move.
-     * @type {boolean}
-     * @memberof V1PauseRunsRequest
-     */
-    skipMultitrial: boolean;
 }
 /**
  * Response to PauseRunsRequest.
@@ -9603,12 +9597,6 @@ export interface V1ResumeRunsRequest {
      * @memberof V1ResumeRunsRequest
      */
     filter?: string;
-    /**
-     * If true, skip multi-trial experiments for move.
-     * @type {boolean}
-     * @memberof V1ResumeRunsRequest
-     */
-    skipMultitrial: boolean;
 }
 /**
  * Response to ResumeRunsRequest.

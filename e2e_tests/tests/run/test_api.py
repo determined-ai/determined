@@ -171,7 +171,7 @@ def test_run_pause_and_resume() -> None:
     assert searchResp.runs[0].state == bindings.trialv1State.ACTIVE
     run_id = searchResp.runs[0].id
     pauseResp = bindings.post_PauseRuns(
-        sess, body=bindings.v1PauseRunsRequest(runIds=[run_id], projectId=1, skipMultitrial=False)
+        sess, body=bindings.v1PauseRunsRequest(runIds=[run_id], projectId=1)
     )
 
     # validate response
@@ -183,7 +183,7 @@ def test_run_pause_and_resume() -> None:
     wait_for_run_state(sess, run_id, bindings.trialv1State.PAUSED)
 
     resumeResp = bindings.post_ResumeRuns(
-        sess, body=bindings.v1ResumeRunsRequest(runIds=[run_id], projectId=1, skipMultitrial=False)
+        sess, body=bindings.v1ResumeRunsRequest(runIds=[run_id], projectId=1)
     )
 
     assert len(resumeResp.results) == 1
@@ -236,21 +236,19 @@ def test_run_pause_and_resume_filter_skip_empty() -> None:
             runIds=[],
             filter=runFilter,
             projectId=1,
-            skipMultitrial=True,
         ),
     )
 
     # validate response
     for r in pauseResp.results:
-        assert r.error == "Cannot pause run '" + str(r.id) + "' (part of multi-trial)."
+        assert r.error == "Cannot pause/unpause run '" + str(r.id) + "' (part of multi-trial)."
 
     resumeResp = bindings.post_ResumeRuns(
         sess,
         body=bindings.v1ResumeRunsRequest(
-            runIds=[], projectId=1, filter=runFilter, skipMultitrial=False
-        ),
+            runIds=[], projectId=1, filter=runFilter),
     )
 
     for res in resumeResp.results:
-        assert res.error == ""
+        assert res.error == "Cannot pause/unpause run '" + str(res.id) + "' (part of multi-trial)."
         wait_for_run_state(sess, res.id, bindings.trialv1State.ACTIVE)
