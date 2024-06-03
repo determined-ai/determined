@@ -11,7 +11,7 @@ import {
   MIN_COLUMN_WIDTH,
   MULTISELECT,
 } from 'hew/DataGrid/columns';
-import { ContextMenuCompleteHandlerProps } from 'hew/DataGrid/contextMenu';
+// import { ContextMenuCompleteHandlerProps } from 'hew/DataGrid/contextMenu';
 import DataGrid, {
   DataGridHandle,
   HandleSelectionChangeType,
@@ -27,6 +27,7 @@ import Link from 'hew/Link';
 import Message from 'hew/Message';
 import Pagination from 'hew/Pagination';
 import Row from 'hew/Row';
+// import { useToast } from 'hew/Toast';
 import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import { isUndefined } from 'lodash';
 import { useObservable } from 'micro-observables';
@@ -52,6 +53,7 @@ import {
   rowHeightMap,
   settingsConfigGlobal,
 } from 'components/OptionsMenu.settings';
+import RunActionDropdown from 'components/RunActionDropdown';
 import useUI from 'components/ThemeProvider';
 import { useAsync } from 'hooks/useAsync';
 import { useGlasbey } from 'hooks/useGlasbey';
@@ -67,8 +69,9 @@ import { getProjectColumns, searchRuns } from 'services/api';
 import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
 import userStore from 'stores/users';
 import userSettings from 'stores/userSettings';
-import { DetailedUser, ExperimentAction, FlatRun, Project, ProjectColumn } from 'types';
+import { BulkExperimentItem, DetailedUser, ExperimentAction, FlatRun, Project, ProjectColumn } from 'types';
 import handleError from 'utils/error';
+// import { getProjectExperimentForExperimentItem } from 'utils/experiment';
 import { eagerSubscribe } from 'utils/observable';
 import { pluralizer } from 'utils/string';
 
@@ -118,6 +121,7 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
   const dataGridRef = useRef<DataGridHandle>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const [searchParams, setSearchParams] = useSearchParams();
+  // const { openToast } = useToast();
 
   const settingsPath = useMemo(() => settingsPathForProject(project.id), [project.id]);
   const flatRunsSettingsObs = useMemo(
@@ -296,8 +300,8 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
               currentColumn.column,
               currentColumn.displayName || currentColumn.column,
               settings.columnWidths[currentColumn.column] ??
-                defaultColumnWidths[currentColumn.column as RunColumn] ??
-                MIN_COLUMN_WIDTH,
+              defaultColumnWidths[currentColumn.column as RunColumn] ??
+              MIN_COLUMN_WIDTH,
               dataPath,
             );
             break;
@@ -306,8 +310,8 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
               currentColumn.column,
               currentColumn.displayName || currentColumn.column,
               settings.columnWidths[currentColumn.column] ??
-                defaultColumnWidths[currentColumn.column as RunColumn] ??
-                MIN_COLUMN_WIDTH,
+              defaultColumnWidths[currentColumn.column as RunColumn] ??
+              MIN_COLUMN_WIDTH,
               dataPath,
             );
             break;
@@ -318,8 +322,8 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
               currentColumn.column,
               currentColumn.displayName || currentColumn.column,
               settings.columnWidths[currentColumn.column] ??
-                defaultColumnWidths[currentColumn.column as RunColumn] ??
-                MIN_COLUMN_WIDTH,
+              defaultColumnWidths[currentColumn.column as RunColumn] ??
+              MIN_COLUMN_WIDTH,
               dataPath,
             );
         }
@@ -549,9 +553,6 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
     [rowRangeToIds, settings.selection, updateSettings],
   );
 
-  const handleContextMenuComplete: ContextMenuCompleteHandlerProps<ExperimentAction, FlatRun> =
-    useCallback(() => {}, []);
-
   const handleColumnsOrderChange = useCallback(
     // changing both column order and pinned count should happen in one update:
     (newColumnsOrder: string[], pinnedCount?: number) => {
@@ -600,12 +601,12 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
         const items: MenuItem[] = [
           settings.selection.type === 'ALL_EXCEPT' || settings.selection.selections.length > 0
             ? {
-                key: 'select-none',
-                label: 'Clear selected',
-                onClick: () => {
-                  handleSelectionChange?.('remove-all');
-                },
-              }
+              key: 'select-none',
+              label: 'Clear selected',
+              onClick: () => {
+                handleSelectionChange?.('remove-all');
+              },
+            }
             : null,
           ...[5, 10, 25].map((n) => ({
             key: `select-${n}`,
@@ -634,32 +635,32 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
           ? null
           : !isPinned
             ? {
-                icon: <Icon decorative name="pin" />,
-                key: 'pin',
-                label: 'Pin column',
-                onClick: () => {
-                  const newColumnsOrder = columnsIfLoaded.filter((c) => c !== columnId);
-                  newColumnsOrder.splice(settings.pinnedColumnsCount, 0, columnId);
-                  handleColumnsOrderChange(
-                    newColumnsOrder,
-                    Math.min(settings.pinnedColumnsCount + 1, columnsIfLoaded.length),
-                  );
-                },
-              }
-            : {
-                disabled: settings.pinnedColumnsCount <= 1,
-                icon: <Icon decorative name="pin" />,
-                key: 'unpin',
-                label: 'Unpin column',
-                onClick: () => {
-                  const newColumnsOrder = columnsIfLoaded.filter((c) => c !== columnId);
-                  newColumnsOrder.splice(settings.pinnedColumnsCount - 1, 0, columnId);
-                  handleColumnsOrderChange(
-                    newColumnsOrder,
-                    Math.max(settings.pinnedColumnsCount - 1, 0),
-                  );
-                },
+              icon: <Icon decorative name="pin" />,
+              key: 'pin',
+              label: 'Pin column',
+              onClick: () => {
+                const newColumnsOrder = columnsIfLoaded.filter((c) => c !== columnId);
+                newColumnsOrder.splice(settings.pinnedColumnsCount, 0, columnId);
+                handleColumnsOrderChange(
+                  newColumnsOrder,
+                  Math.min(settings.pinnedColumnsCount + 1, columnsIfLoaded.length),
+                );
               },
+            }
+            : {
+              disabled: settings.pinnedColumnsCount <= 1,
+              icon: <Icon decorative name="pin" />,
+              key: 'unpin',
+              label: 'Unpin column',
+              onClick: () => {
+                const newColumnsOrder = columnsIfLoaded.filter((c) => c !== columnId);
+                newColumnsOrder.splice(settings.pinnedColumnsCount - 1, 0, columnId);
+                handleColumnsOrderChange(
+                  newColumnsOrder,
+                  Math.max(settings.pinnedColumnsCount - 1, 0),
+                );
+              },
+            },
         {
           icon: <Icon decorative name="eye-close" />,
           key: 'hide',
@@ -716,9 +717,9 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
           sortCount === 0
             ? []
             : [
-                { type: 'divider' as const },
-                ...sortMenuItemsForColumn(column, sorts, handleSortChange),
-              ];
+              { type: 'divider' as const },
+              ...sortMenuItemsForColumn(column, sorts, handleSortChange),
+            ];
 
         items.push(
           ...sortMenuItems,
@@ -821,7 +822,7 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
         <Error fetchData={fetchRuns} />
       ) : (
         <>
-          <DataGrid
+          <DataGrid<FlatRun, ExperimentAction, BulkExperimentItem>
             columns={columns}
             data={runs}
             getHeaderMenuItems={getHeaderMenuItems}
@@ -831,6 +832,32 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
             page={page}
             pageSize={PAGE_SIZE}
             pinnedColumnsCount={isLoadingSettings ? 0 : settings.pinnedColumnsCount}
+            renderContextMenuComponent={({
+              cell,
+              rowData,
+              link,
+              open,
+              onComplete,
+              onClose,
+              onVisibleChange,
+            }) => {
+              return (
+                <RunActionDropdown
+                  cell={cell}
+                  // experiment={getProjectExperimentForExperimentItem(
+                  //   rowData.experiment,
+                  //   project,
+                  // )}
+                  link={link}
+                  makeOpen={open}
+                  run={rowData}
+                  onComplete={onComplete}
+                  onLink={onClose}
+                  onVisibleChange={onVisibleChange}>
+                  <div />
+                </RunActionDropdown>
+              );
+            }}
             rowHeight={rowHeightMap[globalSettings.rowHeight as RowHeight]}
             selection={selection}
             sorts={sorts}
@@ -838,7 +865,7 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
             total={total.getOrElse(PAGE_SIZE)}
             onColumnResize={handleColumnWidthChange}
             onColumnsOrderChange={handleColumnsOrderChange}
-            onContextMenuComplete={handleContextMenuComplete}
+            // onContextMenuComplete={handleContextMenuComplete}
             onPageUpdate={handlePageUpdate}
             onPinnedColumnsCountChange={handlePinnedColumnsCountChange}
             onSelectionChange={handleSelectionChange}
