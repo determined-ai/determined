@@ -143,6 +143,9 @@ export const paths = {
   resourcePool: (name: string): string => {
     return `/resourcepool/${name}`;
   },
+  searchDetails: (searchId: number | string): string => {
+    return `/searches/${searchId}`;
+  },
   submitProductFeedback: (branding: BrandingType): string => {
     return branding === BrandingType.Determined
       ? 'https://airtable.com/shr87rnMuHhiDTpLo'
