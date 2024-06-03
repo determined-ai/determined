@@ -22,19 +22,19 @@ import { isAborted, isNotFound } from 'utils/service';
 import ExperimentCodeViewer from './ExperimentDetails/ExperimentCodeViewer';
 import FlatRuns from './FlatRuns/FlatRuns';
 
-type Params = {
-  searchId: string;
-  tab?: ValueOf<typeof TabType>;
-};
-
 const TabType = {
   Code: 'code',
   Notes: 'notes',
   Trials: 'trials',
 } as const;
 
+type Params = {
+  searchId: string;
+  tab?: ValueOf<typeof TabType>;
+};
+
 const TAB_KEYS = Object.values(TabType);
-const DEFAULT_TAB_KEY = TabType.Trials;
+const INITIAL_TAB_KEY = TabType.Trials;
 
 const SearchDetails: React.FC = () => {
   const { tab, searchId } = useParams<Params>();
@@ -46,8 +46,7 @@ const SearchDetails: React.FC = () => {
 
   const navigate = useNavigate();
   const location = useLocation();
-  const defaultTabKey = tab && TAB_KEYS.includes(tab) ? tab : DEFAULT_TAB_KEY;
-  const [tabKey, setTabKey] = useState(defaultTabKey);
+  const [tabKey, setTabKey] = useState(tab && TAB_KEYS.includes(tab) ? tab : INITIAL_TAB_KEY);
   const basePath = paths.searchDetails(id);
 
   const configForExperiment = (experimentId: number): SettingsConfig<{ filePath: string }> => ({
@@ -91,7 +90,7 @@ const SearchDetails: React.FC = () => {
   );
 
   useEffect(() => {
-    setTabKey(tab ?? DEFAULT_TAB_KEY);
+    setTabKey(tab ?? INITIAL_TAB_KEY);
   }, [location.pathname, tab]);
 
   // Sets the default sub route.
@@ -188,13 +187,13 @@ const SearchDetails: React.FC = () => {
   const pageBreadcrumb: BreadCrumbRoute[] = [
     workspaceName && experiment?.workspaceId !== 1
       ? {
-          breadcrumbName: workspaceName,
-          path: paths.workspaceDetails(experiment?.workspaceId ?? 1),
-        }
+        breadcrumbName: workspaceName,
+        path: paths.workspaceDetails(experiment?.workspaceId ?? 1),
+      }
       : {
-          breadcrumbName: 'Uncategorized Experiments',
-          path: paths.projectDetails(1),
-        },
+        breadcrumbName: 'Uncategorized Experiments',
+        path: paths.projectDetails(1),
+      },
   ];
 
   if (experiment?.projectName && experiment?.projectId && experiment?.projectId !== 1)
