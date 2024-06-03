@@ -457,7 +457,9 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
                 {!workspace.immutable &&
                   !workspace.archived &&
                   canCreateProject({ workspace: workspace }) && (
-                    <Button onClick={handleProjectCreateClick}>New Project</Button>
+                    <Button data-testid="newProject" onClick={handleProjectCreateClick}>
+                      New Project
+                    </Button>
                   )}
               </div>
             </Row>

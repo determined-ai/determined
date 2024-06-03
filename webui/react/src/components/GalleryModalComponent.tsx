@@ -1,9 +1,9 @@
 import Button from 'hew/Button';
 import Icon from 'hew/Icon';
-import { UPlotScatterProps } from 'hew/internal/UPlot/types';
 import { Modal } from 'hew/Modal';
 import React, { useCallback, useEffect } from 'react';
 
+import { UPlotScatterProps } from 'components/UPlot/types';
 import { keyEmitter, KeyEvent } from 'hooks/useKeyTracker';
 import { Scale } from 'types';
 

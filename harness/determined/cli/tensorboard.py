@@ -36,7 +36,7 @@ def start_tensorboard(args: argparse.Namespace) -> None:
         print(resp.tensorboard.id)
         return
 
-    render.report_job_launched("tensorboard", tsb.id)
+    render.report_job_launched("tensorboard", tsb.id, tsb.description)
 
     if resp.warnings:
         cli.print_launch_warnings(resp.warnings)

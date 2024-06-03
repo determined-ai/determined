@@ -23,6 +23,7 @@ import { User, ValueOf } from 'types';
 import handleError from 'utils/error';
 import { useObservable } from 'utils/observable';
 
+import TemplateList from './Templates/TemplatesList';
 import ResourcePoolsBound from './WorkspaceDetails/ResourcePoolsBound';
 import WorkspaceMembers from './WorkspaceDetails/WorkspaceMembers';
 import WorkspaceProjects from './WorkspaceDetails/WorkspaceProjects';
@@ -216,7 +217,7 @@ const WorkspaceDetails: React.FC = () => {
 
     if (templatesOn) {
       items.push({
-        children: <div />,
+        children: <TemplateList workspaceId={workspace.id} />,
         key: WorkspaceDetailsTab.Templates,
         label: 'Templates',
       });

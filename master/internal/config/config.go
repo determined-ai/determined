@@ -63,14 +63,15 @@ type CacheConfig struct {
 
 // DBConfig hosts configuration fields of the database.
 type DBConfig struct {
-	User        string `json:"user"`
-	Password    string `json:"password"`
-	Migrations  string `json:"migrations"`
-	Host        string `json:"host"`
-	Port        string `json:"port"`
-	Name        string `json:"name"`
-	SSLMode     string `json:"ssl_mode"`
-	SSLRootCert string `json:"ssl_root_cert"`
+	User             string `json:"user"`
+	Password         string `json:"password"`
+	Migrations       string `json:"migrations"`
+	ViewsAndTriggers string `json:"views_and_triggers"`
+	Host             string `json:"host"`
+	Port             string `json:"port"`
+	Name             string `json:"name"`
+	SSLMode          string `json:"ssl_mode"`
+	SSLRootCert      string `json:"ssl_root_cert"`
 }
 
 // WebhooksConfig hosts configuration fields for webhook functionality.
@@ -86,6 +87,7 @@ type IntegrationsConfig struct {
 
 // PachydermConfig stores fields needed to integrate Pachyderm with determined.
 type PachydermConfig struct {
+	// pachyderm daemon address.
 	Address string `json:"address"`
 }
 
@@ -318,6 +320,7 @@ func (c *Config) Resolve() error {
 	c.Root = root
 
 	c.DB.Migrations = fmt.Sprintf("file://%s", filepath.Join(c.Root, "static/migrations"))
+	c.DB.ViewsAndTriggers = filepath.Join(c.Root, "static/views_and_triggers")
 
 	// We must resolve resources before we apply pool defaults.
 	if err := c.ResolveResource(); err != nil {

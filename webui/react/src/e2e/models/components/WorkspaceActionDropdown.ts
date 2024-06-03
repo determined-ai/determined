@@ -1,27 +1,15 @@
-import { BaseComponent } from 'e2e/models/BaseComponent';
-import { Dropdown } from 'e2e/models/hew/Dropdown';
+import { DropdownMenu } from 'e2e/models/hew/Dropdown';
 
 /**
- * Returns a representation of the Action Menu Dropdown component.
+ * Returns a representation of the Action Menu Dropdown component for workspaces.
  * @param {object} obj
- * @param {implementsGetLocator} obj.parent - The parent used to locate this dropdown. Normally dropdowns need to be the root.
- * @param {string} [obj.selector] - Used instead of `defaultSelector`
+ * @param {BasePage} obj.root - root of the page
+ * @param {ComponentBasics} [obj.childNode] - optional if `openMethod` is present. It's the element we click on to open the dropdown.
+ * @param {Function} [obj.openMethod] - optional if `childNode` is present. It's the method to open the dropdown.
  */
-export class WorkspaceActionDropdown extends Dropdown {
-  readonly pin = new BaseComponent({
-    parent: this._menu,
-    selector: Dropdown.selectorTemplate('switchPin'),
-  });
-  readonly edit = new BaseComponent({
-    parent: this._menu,
-    selector: Dropdown.selectorTemplate('edit'),
-  });
-  readonly archive = new BaseComponent({
-    parent: this._menu,
-    selector: Dropdown.selectorTemplate('switchArchive'),
-  });
-  readonly delete = new BaseComponent({
-    parent: this._menu,
-    selector: Dropdown.selectorTemplate('delete'),
-  });
+export class WorkspaceActionDropdown extends DropdownMenu {
+  readonly pin = this.menuItem('switchPin');
+  readonly edit = this.menuItem('edit');
+  readonly archive = this.menuItem('switchArchive');
+  readonly delete = this.menuItem('delete');
 }

@@ -167,7 +167,6 @@ func TestTensorboardManagerLifecycle(t *testing.T) {
 }
 
 func setupTest(t *testing.T) *db.PgDB {
-	pgDB := db.MustSetupTestPostgres(t)
 	// First init the new Command Service
 	var mockRM mocks.ResourceManager
 	sub := sproto.NewAllocationSubscription(queue.New[sproto.ResourcesEvent](), func() {})
@@ -175,13 +174,13 @@ func setupTest(t *testing.T) *db.PgDB {
 	mockRM.On("Release", mock.Anything, mock.Anything).Return(nil)
 	mockRM.On("SetGroupPriority", mock.Anything, mock.Anything).Return(nil)
 
-	cs, _ := NewService(pgDB, &mockRM)
+	cs, _ := NewService(db.SingleDB(), &mockRM)
 	SetDefaultService(cs)
 
 	jobservice.SetDefaultService(&mockRM)
 
 	require.NotNil(t, DefaultCmdService)
-	return pgDB
+	return db.SingleDB()
 }
 
 func CreateMockGenericReq(t *testing.T, pgDB *db.PgDB) *CreateGeneric {

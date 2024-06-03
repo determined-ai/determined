@@ -113,7 +113,7 @@ func BunSelectMetricsQuery(mGroup model.MetricGroup, inclArchived bool) *bun.Sel
 
 // BunSelectMetricGroupNames sets up a bun select query for getting all the metric group and names.
 func BunSelectMetricGroupNames() *bun.SelectQuery {
-	return Bun().NewSelect().Table("trials").
+	return Bun().NewSelect().Table("runs").
 		ColumnExpr("jsonb_object_keys(summary_metrics) as json_path").
 		ColumnExpr("jsonb_object_keys(summary_metrics->jsonb_object_keys(summary_metrics))" +
 			" as metric_name").

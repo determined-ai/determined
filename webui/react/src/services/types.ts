@@ -66,7 +66,12 @@ interface PaginationParams {
 
 export interface GetTemplatesParams extends PaginationParams {
   name?: string;
+  workspaceIds?: number[];
   sortBy?: 'SORT_BY_UNSPECIFIED' | 'SORT_BY_NAME';
+}
+
+export interface DeleteTemplateParams {
+  name: string;
 }
 
 export interface GetExperimentsParams extends PaginationParams {
@@ -106,6 +111,7 @@ export interface BulkActionParams {
   excludedExperimentIds?: number[];
   experimentIds: number[];
   filters?: Api.V1BulkExperimentFilters;
+  projectId: number;
 }
 
 export interface GetExperimentParams {

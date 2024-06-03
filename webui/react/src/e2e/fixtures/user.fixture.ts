@@ -10,11 +10,13 @@ export interface User {
   id: string;
   isAdmin: boolean;
   isActive: boolean;
+  password: string;
 }
 interface UserArgs {
   username?: string;
   displayName?: string;
   isAdmin?: boolean;
+  password?: string;
 }
 
 // One list of users per test session. This is to encourage a final teardown
@@ -37,13 +39,18 @@ export class UserFixture {
    * @param {string} [obj.username] - The username to fill in the form
    * @param {string} [obj.displayName] - The display name to fill in the form
    * @param {boolean} [obj.isAdmin] - Whether the user should be an admin
+   * @param {string} [obj.password] - The password to fill in the form
    */
-  async fillUserForm({ username, displayName, isAdmin }: UserArgs): Promise<void> {
+  async fillUserForm({ username, displayName, isAdmin, password }: UserArgs): Promise<void> {
     if (username !== undefined) {
       await this.userManagementPage.createUserModal.username.pwLocator.fill(username);
     }
     if (displayName !== undefined) {
       await this.userManagementPage.createUserModal.displayName.pwLocator.fill(displayName);
+    }
+    if (password !== undefined) {
+      await this.userManagementPage.createUserModal.password.pwLocator.fill(password);
+      await this.userManagementPage.createUserModal.confirmPassword.pwLocator.fill(password);
     }
 
     const checkedAttribute =
@@ -58,6 +65,10 @@ export class UserFixture {
       await this.userManagementPage.createUserModal.adminToggle.pwLocator.click();
     }
 
+    // password and username are required to create a user; if these are filled, submit should be enabled
+    await expect(
+      this.userManagementPage.createUserModal.footer.submit.pwLocator,
+    ).not.toBeDisabled();
     await this.userManagementPage.createUserModal.footer.submit.pwLocator.click();
   }
 
@@ -67,9 +78,15 @@ export class UserFixture {
    * @param {string} [obj.username] - The username to create
    * @param {string} [obj.displayName] - The display name to create
    * @param {boolean} [obj.isAdmin] - Whether the user should be an admin
+   * @param {string} [obj.password] - Password to set
    * @returns {Promise<User>} Representation of the created user
    */
-  async createUser({ username = 'test-user', displayName, isAdmin }: UserArgs = {}): Promise<User> {
+  async createUser({
+    username = 'test-user',
+    displayName,
+    isAdmin,
+    password = 'TestPassword1',
+  }: UserArgs = {}): Promise<User> {
     const safeUsername = safeName(username);
     await expect(
       repeatWithFallback(
@@ -81,21 +98,29 @@ export class UserFixture {
           await this.userManagementPage.goto();
         },
       ),
-    ).toPass({ timeout: 15000 });
+    ).toPass({ timeout: 15_000 });
     await expect(this.userManagementPage.createUserModal.pwLocator).toBeVisible();
     await expect(this.userManagementPage.createUserModal.header.title.pwLocator).toContainText(
       'Add User',
     );
-    await this.fillUserForm({ displayName, isAdmin, username: safeUsername });
-    await expect(this.userManagementPage.toast.pwLocator).toBeVisible();
+    await this.fillUserForm({ displayName, isAdmin, password, username: safeUsername });
+    // Hashing a password after form submit might take a little extra time, so this can be a slower operation
+    await expect(this.userManagementPage.toast.pwLocator).toBeVisible({ timeout: 10_000 });
     await expect(this.userManagementPage.toast.message.pwLocator).toContainText(
-      'New user with empty password has been created, advise user to reset password as soon as possible.',
+      'New user has been created; advise user to change password as soon as possible.',
     );
     await this.userManagementPage.toast.close.pwLocator.click();
     await expect(this.userManagementPage.toast.pwLocator).toHaveCount(0);
     const row = await this.userManagementPage.getRowByUsernameSearch(safeUsername);
     const id = await row.getId();
-    const user = { displayName, id, isActive: true, isAdmin: !!isAdmin, username: safeUsername };
+    const user = {
+      displayName,
+      id,
+      isActive: true,
+      isAdmin: !!isAdmin,
+      password,
+      username: safeUsername,
+    };
     users.set(String(id), user);
     return user;
   }
@@ -111,8 +136,7 @@ export class UserFixture {
    */
   async editUser(user: User, edit: UserArgs = {}): Promise<User> {
     const row = await this.userManagementPage.getRowByUsernameSearch(user.username);
-    await row.actions.pwLocator.click();
-    await row.actions.edit.pwLocator.click();
+    await (await row.actions.open()).edit.pwLocator.click();
     await expect(this.userManagementPage.createUserModal.pwLocator).toBeVisible();
     await expect(this.userManagementPage.createUserModal.header.title.pwLocator).toContainText(
       'Edit User',
@@ -135,7 +159,7 @@ export class UserFixture {
       expect(adminState).not.toBeTruthy();
     }
     await this.fillUserForm(edit);
-    await expect(this.userManagementPage.toast.pwLocator).toBeVisible();
+    await expect(this.userManagementPage.toast.pwLocator).toBeVisible({ timeout: 5_000 });
     await expect(this.userManagementPage.toast.message.pwLocator).toContainText(
       'User has been updated',
     );
@@ -170,15 +194,13 @@ export class UserFixture {
     // get all user ids so we can update the status later
     const ids = await this.userManagementPage.table.table.allRowKeys();
     // select all users
-    await this.userManagementPage.actions.pwLocator.waitFor({ state: 'hidden' });
     await this.userManagementPage.table.table.headRow.selectAll.pwLocator.click();
     await expect(this.userManagementPage.table.table.headRow.selectAll.pwLocator).toBeChecked();
     // open group actions
-    await this.userManagementPage.actions.pwLocator.click();
-    await this.userManagementPage.actions.status.pwLocator.click();
+    await (await this.userManagementPage.actions.open()).status.pwLocator.click();
     // deactivate
     await this.userManagementPage.changeUserStatusModal.pwLocator.waitFor();
-    await this.userManagementPage.changeUserStatusModal.status.pwLocator.click();
+    await this.userManagementPage.changeUserStatusModal.status.openMenu();
     await this.userManagementPage.changeUserStatusModal.status.deactivate.pwLocator.click();
     await this.userManagementPage.changeUserStatusModal.footer.submit.pwLocator.click();
     for (const id of ids) {
@@ -204,8 +226,9 @@ export class UserFixture {
     }
     await expect(async () => {
       // user table can flake if running in parrallel
-      const actions = (await this.userManagementPage.getRowByUsernameSearch(user.username)).actions;
-      await actions.pwLocator.click();
+      const actions = await (
+        await this.userManagementPage.getRowByUsernameSearch(user.username)
+      ).actions.open();
       if (
         (await actions.state.pwLocator.textContent()) !== (activate ? 'Activate' : 'Deactivate')
       ) {
@@ -216,7 +239,7 @@ export class UserFixture {
         activate ? 'User has been activated' : 'User has been deactivated',
       );
       await this.userManagementPage.toast.close.pwLocator.click();
-    }).toPass({ timeout: 15000 });
+    }).toPass({ timeout: 35_000 });
     const editedUser = { ...user, isActive: activate };
     users.set(String(user.id), editedUser);
     return editedUser;

@@ -104,8 +104,8 @@ def test_run_kill_filter() -> None:
     sess = api_utils.user_session()
     exp_id = exp.create_experiment(
         sess,
-        conf.fixtures_path("mnist_pytorch/adaptive_short.yaml"),
-        conf.fixtures_path("mnist_pytorch"),
+        conf.fixtures_path("no_op/grid-long-run.yaml"),
+        conf.fixtures_path("no_op"),
     )
 
     runFilter = (
@@ -121,12 +121,12 @@ def test_run_kill_filter() -> None:
         "value": %s
       },
       {
-        "columnName": "hp.n_filters2",
+        "columnName": "hp.unique_id",
         "kind": "field",
         "location": "LOCATION_TYPE_RUN_HYPERPARAMETERS",
         "operator": ">=",
         "type": "COLUMN_TYPE_NUMBER",
-        "value": 40
+        "value": 3
       }
     ],
     "conjunction": "and",
@@ -144,8 +144,8 @@ def test_run_kill_filter() -> None:
     searchResp = bindings.get_SearchRuns(sess, filter=runFilter)
 
     # validate response
-    assert len(killResp.results) > 0
     assert len(searchResp.runs) > 0
+    assert len(killResp.results) > 0
     assert len(killResp.results) == len(searchResp.runs)
     for res in killResp.results:
         assert res.error == ""

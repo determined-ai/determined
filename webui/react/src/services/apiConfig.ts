@@ -719,7 +719,7 @@ export const archiveExperiments: DetApi<
   name: 'archiveExperiments',
   postProcess: (response) => decoder.mapV1ExperimentActionResults(response.results),
   request: (params: Service.BulkActionParams, options) => {
-    return detApi.Experiments.archiveExperiments(params, options);
+    return detApi.Experiments.archiveExperiments(params.projectId, params, options);
   },
 };
 
@@ -743,7 +743,7 @@ export const deleteExperiments: DetApi<
   name: 'deleteExperiments',
   postProcess: (response) => decoder.mapV1ExperimentActionResults(response.results),
   request: (params: Service.BulkActionParams, options) => {
-    return detApi.Experiments.deleteExperiments(params, options);
+    return detApi.Experiments.deleteExperiments(params.projectId, params, options);
   },
 };
 
@@ -767,7 +767,7 @@ export const unarchiveExperiments: DetApi<
   name: 'unarchiveExperiments',
   postProcess: (response) => decoder.mapV1ExperimentActionResults(response.results),
   request: (params: Service.BulkActionParams, options) => {
-    return detApi.Experiments.unarchiveExperiments(params, options);
+    return detApi.Experiments.unarchiveExperiments(params.projectId, params, options);
   },
 };
 
@@ -791,7 +791,7 @@ export const activateExperiments: DetApi<
   name: 'activateExperiments',
   postProcess: (response) => decoder.mapV1ExperimentActionResults(response.results),
   request: (params: Service.BulkActionParams, options) => {
-    return detApi.Experiments.activateExperiments(params, options);
+    return detApi.Experiments.activateExperiments(params.projectId, params, options);
   },
 };
 
@@ -815,7 +815,7 @@ export const pauseExperiments: DetApi<
   name: 'pauseExperiments',
   postProcess: (response) => decoder.mapV1ExperimentActionResults(response.results),
   request: (params: Service.BulkActionParams, options) => {
-    return detApi.Experiments.pauseExperiments(params, options);
+    return detApi.Experiments.pauseExperiments(params.projectId, params, options);
   },
 };
 
@@ -839,7 +839,7 @@ export const cancelExperiments: DetApi<
   name: 'cancelExperiments',
   postProcess: (response) => decoder.mapV1ExperimentActionResults(response.results),
   request: (params: Service.BulkActionParams, options) => {
-    return detApi.Experiments.cancelExperiments(params, options);
+    return detApi.Experiments.cancelExperiments(params.projectId, params, options);
   },
 };
 
@@ -863,7 +863,7 @@ export const killExperiments: DetApi<
   name: 'killExperiments',
   postProcess: (response) => decoder.mapV1ExperimentActionResults(response.results),
   request: (params: Service.BulkActionParams, options) => {
-    return detApi.Experiments.killExperiments(params, options);
+    return detApi.Experiments.killExperiments(params.projectId, params, options);
   },
 };
 
@@ -979,6 +979,21 @@ export const getTrialDetails: DetApi<
   request: (params: Service.TrialDetailsParams) => detApi.Experiments.getTrial(params.id),
 };
 
+export const getTrialRemainingLogRetentionDays: DetApi<
+  Service.TrialDetailsParams,
+  Api.V1GetTrialRemainingLogRetentionDaysResponse,
+  Type.TrialRemainingLogRetentionDays
+> = {
+  name: 'getTrialRemainingLogRetentionDays',
+  postProcess: (response: Api.V1GetTrialRemainingLogRetentionDaysResponse) => {
+    return {
+      remainingLogRetentionDays: response.remainingDays,
+    };
+  },
+  request: (params: Service.TrialDetailsParams) =>
+    detApi.Internal.getTrialRemainingLogRetentionDays(params.id),
+};
+
 export const moveExperiment: DetApi<
   Api.V1MoveExperimentRequest,
   Api.V1MoveExperimentResponse,
@@ -1000,7 +1015,8 @@ export const moveExperiments: DetApi<
 > = {
   name: 'moveExperiments',
   postProcess: (response) => decoder.mapV1ExperimentActionResults(response.results),
-  request: (params, options) => detApi.Experiments.moveExperiments(params, options),
+  request: (params, options) =>
+    detApi.Experiments.moveExperiments(params.projectId, params, options),
 };
 
 export const changeExperimentLogRetention: DetApi<
@@ -1010,7 +1026,8 @@ export const changeExperimentLogRetention: DetApi<
 > = {
   name: 'changeExperimentLogRetention',
   postProcess: (response) => decoder.mapV1ExperimentActionResults(response.results),
-  request: (params, options) => detApi.Experiments.putExperimentsRetainLogs(params, options),
+  request: (params, options) =>
+    detApi.Experiments.putExperimentsRetainLogs(params.projectId, params, options),
 };
 
 export const timeSeries: DetApi<
@@ -1860,7 +1877,42 @@ export const getTemplates: DetApi<
       params.offset,
       params.limit,
       params.name,
+      params.workspaceIds,
     ),
+};
+
+export const createTaskTemplate: DetApi<Api.V1Template, Api.V1PostTemplateResponse, Type.Template> =
+  {
+    name: 'createTaskTemplate',
+    postProcess: (response) => decoder.mapV1Template(response.template),
+    request: (params: Api.V1Template) => detApi.Templates.postTemplate(params.name, params),
+  };
+
+export const updateTaskTemplate: DetApi<Api.V1Template, Api.V1PutTemplateResponse, void> = {
+  name: 'updateTaskTemplate',
+  postProcess: noOp,
+  request: (params: Api.V1Template) => detApi.Templates.putTemplate(params.name, params),
+};
+
+export const updateTaskTemplateName: DetApi<
+  Api.V1PatchTemplateNameRequest,
+  Api.V1PatchTemplateNameResponse,
+  void
+> = {
+  name: 'updateTaskTemplateName',
+  postProcess: noOp,
+  request: (params: Api.V1PatchTemplateNameRequest) => detApi.Templates.patchTemplateName(params),
+};
+
+export const deleteTaskTemplate: DetApi<
+  Service.DeleteTemplateParams,
+  Api.V1DeleteTemplateResponse,
+  void
+> = {
+  name: 'deleteTaskTemplate',
+  postProcess: noOp,
+  request: (params: Service.DeleteTemplateParams) =>
+    detApi.Templates.deleteTemplate(params.name, params),
 };
 
 export const launchJupyterLab: DetApi<

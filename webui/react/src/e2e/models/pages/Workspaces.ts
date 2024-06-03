@@ -14,7 +14,7 @@ export class Workspaces extends BasePage {
   readonly list = new WorkspacesList({
     parent: this,
   });
-  readonly projects = new WorkspaceDetails({
+  readonly details = new WorkspaceDetails({
     parent: this,
   });
   readonly createModal = new WorkspaceCreateModal({

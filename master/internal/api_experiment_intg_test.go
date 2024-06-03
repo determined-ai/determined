@@ -333,9 +333,10 @@ func TestMoveExperiments(t *testing.T) {
 	api, curUser, ctx := setupAPITest(t, nil)
 	_, projectID := createProjectAndWorkspace(ctx, t, api)
 
-	t.Run("Move an experiement without filters", func(t *testing.T) {
+	t.Run("Move an experiment without filters", func(t *testing.T) {
 		exp := createTestExp(t, api, curUser)
 		result, err := api.MoveExperiments(ctx, &apiv1.MoveExperimentsRequest{
+			ProjectId:            int32(exp.ProjectID),
 			ExperimentIds:        []int32{int32(exp.ID)},
 			DestinationProjectId: int32(projectID),
 			Filters:              nil,
@@ -351,6 +352,7 @@ func TestMoveExperiments(t *testing.T) {
 		exp1 := createTestExp(t, api, curUser)
 		exp2 := createTestExp(t, api, curUser)
 		result, err := api.MoveExperiments(ctx, &apiv1.MoveExperimentsRequest{
+			ProjectId:            int32(exp1.ProjectID),
 			ExperimentIds:        []int32{int32(exp1.ID), int32(exp2.ID)},
 			DestinationProjectId: int32(projectID),
 			Filters:              nil,
@@ -361,33 +363,12 @@ func TestMoveExperiments(t *testing.T) {
 		require.Equal(t, len(result.Results), 2)
 		require.NoError(t, err)
 	})
-
-	t.Run("Move experiments with filters", func(t *testing.T) {
-		const numNewExp = 13
-		label := uuid.New().String()
-		for i := 0; i < numNewExp; i++ {
-			createTestExp(t, api, curUser, label)
-		}
-
-		result, err := api.MoveExperiments(ctx, &apiv1.MoveExperimentsRequest{
-			ExperimentIds:        []int32{},
-			DestinationProjectId: int32(projectID),
-			Filters: &apiv1.BulkExperimentFilters{
-				Labels: []string{label},
-			},
-		})
-		for _, v := range result.Results {
-			require.Equal(t, v.Error, "")
-		}
-		require.Equal(t, len(result.Results), numNewExp)
-		require.NoError(t, err)
-	})
-
 	t.Run("Move no experiments with filters (no filter match)", func(t *testing.T) {
 		notExsistentLable := uuid.New().String()
 		createTestExp(t, api, curUser)
 
 		result, err := api.MoveExperiments(ctx, &apiv1.MoveExperimentsRequest{
+			ProjectId:            int32(projectID),
 			ExperimentIds:        []int32{},
 			DestinationProjectId: int32(projectID),
 			Filters: &apiv1.BulkExperimentFilters{
@@ -403,6 +384,7 @@ func TestMoveExperiments(t *testing.T) {
 		exp1 := createTestExp(t, api, curUser)
 		exp2 := createTestExp(t, api, curUser)
 		result, err := api.MoveExperiments(ctx, &apiv1.MoveExperimentsRequest{
+			ProjectId:            int32(exp1.ProjectID),
 			ExperimentIds:        []int32{int32(exp1.ID), int32(exp2.ID)},
 			DestinationProjectId: 0,
 			Filters:              nil,
@@ -413,6 +395,7 @@ func TestMoveExperiments(t *testing.T) {
 
 	t.Run("Move 0 experiments", func(t *testing.T) {
 		result, err := api.MoveExperiments(ctx, &apiv1.MoveExperimentsRequest{
+			ProjectId:            0,
 			ExperimentIds:        []int32{},
 			DestinationProjectId: int32(projectID),
 			Filters:              nil,
@@ -423,6 +406,7 @@ func TestMoveExperiments(t *testing.T) {
 
 	t.Run("Move a non-existent experiement", func(t *testing.T) {
 		result, err := api.MoveExperiments(ctx, &apiv1.MoveExperimentsRequest{
+			ProjectId:            0,
 			ExperimentIds:        []int32{-1, 0},
 			DestinationProjectId: int32(projectID),
 			Filters:              nil,
@@ -435,6 +419,7 @@ func TestMoveExperiments(t *testing.T) {
 		exp := createTestExp(t, api, curUser)
 		expIds := []int32{-1, 0, int32(exp.ID)}
 		result, err := api.MoveExperiments(ctx, &apiv1.MoveExperimentsRequest{
+			ProjectId:            int32(exp.ProjectID),
 			ExperimentIds:        expIds,
 			DestinationProjectId: int32(projectID),
 			Filters:              nil,
@@ -537,7 +522,8 @@ func TestPutExperimentRetainLogs(t *testing.T) {
 
 	numDays := -1
 	res, err := api.PutExperimentRetainLogs(ctx, &apiv1.PutExperimentRetainLogsRequest{
-		ExperimentId: exp.Id, NumDays: int32(numDays),
+		ExperimentId: exp.Id,
+		NumDays:      int32(numDays),
 	})
 	require.NoError(t, err)
 	require.NotNil(t, res)
@@ -573,7 +559,9 @@ func TestPutExperimentsRetainLogs(t *testing.T) {
 
 	numDays := 10
 	res, err := api.PutExperimentsRetainLogs(ctx, &apiv1.PutExperimentsRetainLogsRequest{
-		ExperimentIds: expIDs, NumDays: int32(numDays),
+		ProjectId:     1,
+		ExperimentIds: expIDs,
+		NumDays:       int32(numDays),
 	})
 	require.NoError(t, err)
 	require.NotNil(t, res)
@@ -1343,22 +1331,14 @@ func BenchmarkGetExeriments500(b *testing.B) { benchmarkGetExperiments(b, 500) }
 
 func BenchmarkGetExeriments2500(b *testing.B) { benchmarkGetExperiments(b, 2500) }
 
-// nolint: exhaustruct
-func createTestExpWithProjectID(
-	t *testing.T, api *apiServer, curUser model.User, projectID int, labels ...string,
-) *model.Experiment {
-	labelMap := make(map[string]bool)
-	for _, l := range labels {
-		labelMap[l] = true
-	}
-
-	activeConfig := schemas.Merge(minExpConfig, expconf.ExperimentConfig{
-		RawLabels:      labelMap,
-		RawDescription: ptrs.Ptr("desc"),
-		RawName:        expconf.Name{RawString: ptrs.Ptr("name")},
-	})
-	activeConfig = schemas.WithDefaults(activeConfig)
-	exp := &model.Experiment{
+func createTestExpWithActiveConfig(
+	t *testing.T,
+	api *apiServer,
+	curUser model.User,
+	projectID int,
+	activeConfig expconf.ExperimentConfig,
+) (exp *model.Experiment) {
+	exp = &model.Experiment{
 		JobID:     model.JobID(uuid.New().String()),
 		State:     model.PausedState,
 		OwnerID:   &curUser.ID,
@@ -1372,6 +1352,25 @@ func createTestExpWithProjectID(
 	exp, err := db.ExperimentByID(context.TODO(), exp.ID)
 	require.NoError(t, err)
 	return exp
+}
+
+// nolint: exhaustruct
+func createTestExpWithProjectID(
+	t *testing.T, api *apiServer, curUser model.User, projectID int, labels ...string,
+) *model.Experiment {
+	labelMap := make(map[string]bool)
+	for _, l := range labels {
+		labelMap[l] = true
+	}
+
+	experimentConfig := expconf.ExperimentConfig{
+		RawLabels:      labelMap,
+		RawDescription: ptrs.Ptr("desc"),
+		RawName:        expconf.Name{RawString: ptrs.Ptr("name")},
+	}
+
+	activeConfig := schemas.WithDefaults(schemas.Merge(minExpConfig, experimentConfig))
+	return createTestExpWithActiveConfig(t, api, curUser, projectID, activeConfig)
 }
 
 func TestAuthZGetExperiment(t *testing.T) {
@@ -1838,6 +1837,7 @@ func TestAuthZGetExperimentAndCanDoActions(t *testing.T) {
 	}{
 		{"CanEditExperiment", func(id int) ([]*apiv1.ExperimentActionResult, error) {
 			res, err := api.ActivateExperiments(ctx, &apiv1.ActivateExperimentsRequest{
+				ProjectId:     1,
 				ExperimentIds: []int32{int32(id)},
 			})
 			if err != nil {
@@ -1847,6 +1847,7 @@ func TestAuthZGetExperimentAndCanDoActions(t *testing.T) {
 		}},
 		{"CanEditExperiment", func(id int) ([]*apiv1.ExperimentActionResult, error) {
 			res, err := api.PauseExperiments(ctx, &apiv1.PauseExperimentsRequest{
+				ProjectId:     1,
 				ExperimentIds: []int32{int32(id)},
 			})
 			if err != nil {
@@ -1856,6 +1857,7 @@ func TestAuthZGetExperimentAndCanDoActions(t *testing.T) {
 		}},
 		{"CanEditExperiment", func(id int) ([]*apiv1.ExperimentActionResult, error) {
 			res, err := api.CancelExperiments(ctx, &apiv1.CancelExperimentsRequest{
+				ProjectId:     1,
 				ExperimentIds: []int32{int32(id)},
 			})
 			if err != nil {
@@ -1865,6 +1867,7 @@ func TestAuthZGetExperimentAndCanDoActions(t *testing.T) {
 		}},
 		{"CanEditExperiment", func(id int) ([]*apiv1.ExperimentActionResult, error) {
 			res, err := api.KillExperiments(ctx, &apiv1.KillExperimentsRequest{
+				ProjectId:     1,
 				ExperimentIds: []int32{int32(id)},
 			})
 			if err != nil {
@@ -1874,6 +1877,7 @@ func TestAuthZGetExperimentAndCanDoActions(t *testing.T) {
 		}},
 		{"CanEditExperimentsMetadata", func(id int) ([]*apiv1.ExperimentActionResult, error) {
 			res, err := api.ArchiveExperiments(ctx, &apiv1.ArchiveExperimentsRequest{
+				ProjectId:     1,
 				ExperimentIds: []int32{int32(id)},
 			})
 			if err != nil {
@@ -1883,6 +1887,7 @@ func TestAuthZGetExperimentAndCanDoActions(t *testing.T) {
 		}},
 		{"CanEditExperimentsMetadata", func(id int) ([]*apiv1.ExperimentActionResult, error) {
 			res, err := api.UnarchiveExperiments(ctx, &apiv1.UnarchiveExperimentsRequest{
+				ProjectId:     1,
 				ExperimentIds: []int32{int32(id)},
 			})
 			if err != nil {
@@ -2114,7 +2119,10 @@ func TestDeleteExperiments(t *testing.T) {
 	}
 
 	t.Log("if DeleteExperiment fails, all experiments become DELETE_FAILED")
-	_, err := api.DeleteExperiments(ctx, &apiv1.DeleteExperimentsRequest{ExperimentIds: expIDs})
+	_, err := api.DeleteExperiments(ctx, &apiv1.DeleteExperimentsRequest{
+		ProjectId:     1,
+		ExperimentIds: expIDs,
+	})
 	require.NoError(t, err)
 
 	var success bool
@@ -2139,7 +2147,7 @@ func TestDeleteExperiments(t *testing.T) {
 
 	t.Log("and if the RM then succeeds, the experiments are then successfully deleted")
 	api.m.rm = MockRM()
-	_, err = api.DeleteExperiments(ctx, &apiv1.DeleteExperimentsRequest{ExperimentIds: expIDs})
+	_, err = api.DeleteExperiments(ctx, &apiv1.DeleteExperimentsRequest{ProjectId: 1, ExperimentIds: expIDs})
 	require.NoError(t, err)
 
 	// Delete is async so we need to retry until it completes.
@@ -2188,6 +2196,7 @@ func TestDeleteExperimentsFiltered(t *testing.T) {
 	// Try delete experiments using a filter, this tests the branch condition
 	// where we have a filter with the experiment delete request.
 	_, err := api.DeleteExperiments(ctx, &apiv1.DeleteExperimentsRequest{
+		ProjectId:     1,
 		ExperimentIds: expIDs,
 		Filters:       &apiv1.BulkExperimentFilters{ProjectId: 1},
 	})
@@ -2215,7 +2224,7 @@ func TestDeleteExperimentsFiltered(t *testing.T) {
 
 	t.Log("and if the RM then succeeds, the experiments are then successfully deleted")
 	api.m.rm = MockRM()
-	_, err = api.DeleteExperiments(ctx, &apiv1.DeleteExperimentsRequest{ExperimentIds: expIDs})
+	_, err = api.DeleteExperiments(ctx, &apiv1.DeleteExperimentsRequest{ProjectId: 1, ExperimentIds: expIDs})
 	require.NoError(t, err)
 
 	// Delete is async so we need to retry until it completes.

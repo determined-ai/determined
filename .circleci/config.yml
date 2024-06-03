@@ -14,6 +14,12 @@ parameters:
   params_basename:
     type: string
     default: params.json
+  ee:
+    type: boolean
+    default: false
+  e2e-react:
+    type: string
+    default: ""
 
 all-filters: &all-filters
   branches:

@@ -93,6 +93,17 @@ class TensorboardManager(metaclass=abc.ABCMeta):
         mangler: Callable[[pathlib.Path, int], pathlib.Path] = lambda p, __: p,
         rank: int = 0,
     ) -> None:
+        # Only sync a maximum of once per second to play nice with cloud storage request quotas.
+        if time.time() - self.last_sync < 1:
+            return
+        self._sync(selector, mangler, rank)
+
+    def _sync(
+        self,
+        selector: Callable[[pathlib.Path], bool] = lambda _: True,
+        mangler: Callable[[pathlib.Path, int], pathlib.Path] = lambda p, __: p,
+        rank: int = 0,
+    ) -> None:
         paths = self.to_sync(selector)
         path_list = []
         for path in paths:
@@ -117,7 +128,7 @@ class TensorboardManager(metaclass=abc.ABCMeta):
 
     def close(self) -> None:
         if self.sync_on_close:
-            self.sync()
+            self._sync()
         if self.upload_thread is not None and self.upload_thread.is_alive():
             self.upload_thread.close()
 

@@ -114,7 +114,9 @@ class ManagedCluster(abstract_cluster.Cluster):
     def ensure_agent_ok(self) -> None:
         sess = api_utils.user_session()
         agent_data = get_agent_data(sess)
-        assert len(agent_data) == 1
+        assert (
+            len(agent_data) == 1
+        ), f"expected agent_data for 1, instead found {len(agent_data)} agents:\n{agent_data}\n"
         assert agent_data[0]["enabled"] is True
         assert agent_data[0]["draining"] is False
 

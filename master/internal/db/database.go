@@ -15,7 +15,7 @@ import (
 
 // DB is an interface for _all_ the functionality packed into the DB.
 type DB interface {
-	Migrate(migrationURL string, actions []string) (isNew bool, err error)
+	Migrate(migrationURL, codeURL string, actions []string) error
 	Close() error
 	GetOrCreateClusterID(telemetryID string) (string, error)
 	TrialExperimentAndRequestID(id int) (int, model.RequestID, error)
@@ -30,10 +30,8 @@ type DB interface {
 	ExperimentHasCheckpointsInRegistry(id int) (bool, error)
 	SaveExperimentProgress(id int, progress *float64) error
 	ActiveExperimentConfig(id int) (expconf.ExperimentConfig, error)
-	ExperimentTotalStepTime(id int) (float64, error)
 	ExperimentNumTrials(id int) (int64, error)
 	ExperimentTrialIDs(expID int) ([]int, error)
-	ExperimentNumSteps(id int) (int64, error)
 	ExperimentModelDefinitionRaw(id int) ([]byte, error)
 	UpdateTrialFields(id int, newRunnerMetadata *trialv1.TrialRunnerMetadata, newRunID, newRestarts int) error
 	TrialRunIDAndRestarts(trialID int) (int, int, error)

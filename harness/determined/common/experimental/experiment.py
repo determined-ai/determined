@@ -500,7 +500,7 @@ class Experiment:
 
         def get_with_offset(offset: int) -> bindings.v1GetExperimentCheckpointsResponse:
             return bindings.get_GetExperimentCheckpoints(
-                self._session,
+                session=self._session,
                 id=self._id,
                 limit=max_results,
                 offset=offset,
@@ -561,13 +561,13 @@ class Experiment:
 
         def get_with_offset(offset: int) -> bindings.v1GetExperimentCheckpointsResponse:
             return bindings.get_GetExperimentCheckpoints(
-                self._session,
+                session=self._session,
                 id=self._id,
                 offset=offset,
                 states=[bindings.checkpointv1State.COMPLETED],
             )
 
-        resps = api.read_paginated(get_with_offset)
+        resps = api.read_paginated(get_with_offset=get_with_offset)
 
         checkpoints = [
             checkpoint.Checkpoint._from_bindings(c, self._session)
@@ -632,6 +632,23 @@ class Experiment:
             self._session,
             experimentId=self._id,
         )
+
+    def get_pachyderm_config(self) -> Dict[str, Any]:
+        """Return the Pachyderm configuration for this experiment.
+
+        Pachyderm configs are defined in `integrations.pachyderm` in the experiment config.
+        """
+        if not self.config:
+            # In the case that Experiment was constructed manually, reload to populate attributes.
+            self.reload()
+        assert self.config  # for mypy
+
+        try:
+            pach_config = self.config["integrations"]["pachyderm"]
+            assert pach_config  # for mypy
+            return dict(pach_config)
+        except (KeyError, TypeError):
+            raise ValueError(f"No Pachyderm configuration found for experiment {self.id}.")
 
     def __repr__(self) -> str:
         return "Experiment(id={})".format(self.id)

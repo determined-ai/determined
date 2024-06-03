@@ -221,8 +221,37 @@ func TestAllPrintableCharactersInEnv(t *testing.T) {
 	require.Contains(t, actual, k8sV1.EnvVar{Name: "func", Value: "f(x)=x"})
 }
 
+func TestValidatePodLabelValues(t *testing.T) {
+	tests := []struct {
+		name   string
+		input  string
+		output string
+	}{
+		{"valid all alpha", "simpleCharacters", "simpleCharacters"},
+		{"valid all alphanumeric", "simple4Characters", "simple4Characters"},
+		{"valid contains non-alphanumeric", "simple-Characters.With_Other", "simple-Characters.With_Other"},
+		{"invalid chars", "letters contain *@ other chars -=%", "letters_contain____other_chars"},
+		{"invalid leading chars", "-%4-simpleCharacters0", "4-simpleCharacters0"},
+		{"invalid trailing chars", "simple-Characters4%-.#", "simple-Characters4"},
+		{
+			"invalid too many chars", "simpleCharactersGoesOnForWayTooLong36384042444648505254565860-_AndThenSome",
+			"simpleCharactersGoesOnForWayTooLong36384042444648505254565860",
+		},
+		{"invalid email-style input", "name@domain.com", "name_domain.com"},
+		{"invalid chars only", "-.*$%#$...", ""},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			testOutput, err := validatePodLabelValue(tt.input)
+			require.NoError(t, err)
+			require.Equal(t, tt.output, testOutput, tt.name+" failed")
+		})
+	}
+}
+
 func TestDeterminedLabels(t *testing.T) {
-	// fill out task spec
+	// Fill out task spec.
 	taskSpec := tasks.TaskSpec{
 		Owner:       createUser(),
 		Workspace:   "test-workspace",
@@ -244,7 +273,7 @@ func TestDeterminedLabels(t *testing.T) {
 		},
 	}
 
-	// define expectations
+	// Define expectations.
 	expectedLabels := map[string]string{
 		determinedLabel:   taskSpec.AllocationID,
 		userLabel:         taskSpec.Owner.Username,
@@ -261,7 +290,7 @@ func TestDeterminedLabels(t *testing.T) {
 	spec := p.configurePodSpec(make([]k8sV1.Volume, 1), k8sV1.Container{},
 		k8sV1.Container{}, make([]k8sV1.Container, 1), &k8sV1.Pod{}, "scheduler")
 
-	// confirm pod spec has required labels
+	// Confirm pod spec has required labels.
 	require.NotNil(t, spec)
 	require.Equal(t, expectedLabels, spec.ObjectMeta.Labels)
 }

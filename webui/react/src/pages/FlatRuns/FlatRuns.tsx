@@ -3,6 +3,7 @@ import { isLeft } from 'fp-ts/lib/Either';
 import Column from 'hew/Column';
 import {
   ColumnDef,
+  DEFAULT_COLUMN_WIDTH,
   defaultDateColumn,
   defaultNumberColumn,
   defaultSelectionColumn,
@@ -27,15 +28,25 @@ import Message from 'hew/Message';
 import Pagination from 'hew/Pagination';
 import Row from 'hew/Row';
 import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
+import { isUndefined } from 'lodash';
 import { useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { v4 as uuidv4 } from 'uuid';
 
+import ColumnPickerMenu from 'components/ColumnPickerMenu';
 import { Error } from 'components/exceptions';
-import { FilterFormStore } from 'components/FilterForm/components/FilterFormStore';
-import { IOFilterFormSet } from 'components/FilterForm/components/type';
-import { EMPTY_SORT, sortMenuItemsForColumn } from 'components/MultiSortMenu';
-import { RowHeight } from 'components/OptionsMenu';
+import { FilterFormStore, ROOT_ID } from 'components/FilterForm/components/FilterFormStore';
+import {
+  AvailableOperators,
+  FormKind,
+  IOFilterFormSet,
+  Operator,
+  SpecialColumnNames,
+} from 'components/FilterForm/components/type';
+import TableFilter from 'components/FilterForm/TableFilter';
+import MultiSortMenu, { EMPTY_SORT, sortMenuItemsForColumn } from 'components/MultiSortMenu';
+import { OptionsMenu, RowHeight } from 'components/OptionsMenu';
 import {
   DataGridGlobalSettings,
   rowHeightMap,
@@ -58,8 +69,16 @@ import userStore from 'stores/users';
 import userSettings from 'stores/userSettings';
 import { DetailedUser, ExperimentAction, FlatRun, Project, ProjectColumn } from 'types';
 import handleError from 'utils/error';
+import { eagerSubscribe } from 'utils/observable';
+import { pluralizer } from 'utils/string';
 
-import { defaultColumnWidths, getColumnDefs, RunColumn, runColumns } from './columns';
+import {
+  defaultColumnWidths,
+  defaultRunColumns,
+  getColumnDefs,
+  RunColumn,
+  runColumns,
+} from './columns';
 import css from './FlatRuns.module.scss';
 import {
   defaultFlatRunsSettings,
@@ -71,6 +90,8 @@ export const PAGE_SIZE = 100;
 const INITIAL_LOADING_RUNS: Loadable<FlatRun>[] = new Array(PAGE_SIZE).fill(NotLoaded);
 
 const STATIC_COLUMNS = [MULTISELECT];
+
+const BANNED_FILTER_COLUMNS = new Set(['searcherMetricsVal']);
 
 const formStore = new FilterFormStore();
 
@@ -117,10 +138,12 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
     [flatRunsSettings],
   );
 
-  const { settings: globalSettings } = useSettings<DataGridGlobalSettings>(settingsConfigGlobal);
+  const { settings: globalSettings, updateSettings: updateGlobalSettings } =
+    useSettings<DataGridGlobalSettings>(settingsConfigGlobal);
 
+  const [isOpenFilter, setIsOpenFilter] = useState<boolean>(false);
   const [runs, setRuns] = useState<Loadable<FlatRun>[]>(INITIAL_LOADING_RUNS);
-  const isPagedView = globalSettings.tableViewMode === 'paged';
+  const isPagedView = true;
   const [page, setPage] = useState(() =>
     isFinite(Number(searchParams.get('page'))) ? Math.max(Number(searchParams.get('page')), 0) : 0,
   );
@@ -133,6 +156,7 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
   });
   const sortString = useMemo(() => makeSortString(sorts.filter(validSort.is)), [sorts]);
   const loadableFormset = useObservable(formStore.formset);
+  const filtersString = useObservable(formStore.asJsonString);
   const [total, setTotal] = useState<Loadable<number>>(NotLoaded);
   const isMobile = useMobile();
   const [isLoading, setIsLoading] = useState(true);
@@ -173,56 +197,43 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
     );
   }, [isMobile, isPagedView, settings.compare, settings.pinnedColumnsCount]);
 
-  const selectAll = useMemo<boolean>(
-    () => !isLoadingSettings && settings.selection.type === 'ALL_EXCEPT',
-    [isLoadingSettings, settings.selection.type],
-  );
-
-  const [excludedRunIds, selectedRunIds] = useMemo(() => {
+  const loadedSelectedRunIds = useMemo(() => {
     const selectedMap = new Map<number, { run: FlatRun; index: number }>();
-    const excludedMap = new Map<number, { run: FlatRun; index: number }>();
     if (isLoadingSettings) {
-      return [excludedMap, selectedMap];
+      return selectedMap;
     }
     const selectedIdSet = new Set(
       settings.selection.type === 'ONLY_IN' ? settings.selection.selections : [],
     );
-    const excludedIdSet = new Set(
-      settings.selection.type === 'ALL_EXCEPT' ? settings.selection.exclusions : [],
-    );
     runs.forEach((r, index) => {
       Loadable.forEach(r, (run) => {
-        const mapToAdd =
-          (selectAll && !excludedIdSet.has(run.id)) || selectedIdSet.has(run.id)
-            ? selectedMap
-            : excludedMap;
-        mapToAdd.set(run.id, { index, run });
+        if (selectedIdSet.has(run.id)) {
+          selectedMap.set(run.id, { index, run });
+        }
       });
     });
-    return [excludedMap, selectedMap];
-  }, [isLoadingSettings, settings.selection, runs, selectAll]);
+    return selectedMap;
+  }, [isLoadingSettings, settings.selection, runs]);
 
   const selection = useMemo<GridSelection>(() => {
     let rows = CompactSelection.empty();
-    if (selectAll) {
-      Loadable.forEach(total, (t) => {
-        rows = rows.add([0, t]);
-      });
-      excludedRunIds.forEach((info) => {
-        rows = rows.remove(info.index);
-      });
-    } else {
-      selectedRunIds.forEach((info) => {
-        rows = rows.add(info.index);
-      });
-    }
+    loadedSelectedRunIds.forEach((info) => {
+      rows = rows.add(info.index);
+    });
     return {
       columns: CompactSelection.empty(),
       rows,
     };
-  }, [selectAll, total, excludedRunIds, selectedRunIds]);
+  }, [loadedSelectedRunIds]);
 
-  const colorMap = useGlasbey([...selectedRunIds.keys()]);
+  const handleIsOpenFilterChange = useCallback((newOpen: boolean) => {
+    setIsOpenFilter(newOpen);
+    if (!newOpen) {
+      formStore.sweep();
+    }
+  }, []);
+
+  const colorMap = useGlasbey([...loadedSelectedRunIds.keys()]);
 
   const columns: ColumnDef<FlatRun>[] = useMemo(() => {
     const projectColumnsMap: Loadable<Record<string, ProjectColumn>> = Loadable.map(
@@ -244,7 +255,7 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
     )
       .map((columnName) => {
         if (columnName === MULTISELECT) {
-          return defaultSelectionColumn(selection.rows, selectAll);
+          return defaultSelectionColumn(selection.rows, false);
         }
 
         if (columnName in columnDefs) return columnDefs[columnName];
@@ -321,13 +332,19 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
     columnsIfLoaded,
     isDarkMode,
     projectColumns,
-    selectAll,
     selection.rows,
     settings.columnWidths,
     settings.compare,
     settings.pinnedColumnsCount,
     users,
   ]);
+
+  const onRowHeightChange = useCallback(
+    (newRowHeight: RowHeight) => {
+      updateGlobalSettings({ rowHeight: newRowHeight });
+    },
+    [updateGlobalSettings],
+  );
 
   const onPageChange = useCallback(
     (cPage: number, cPageSize: number) => {
@@ -349,7 +366,7 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
       const tableOffset = Math.max((page - 0.5) * PAGE_SIZE, 0);
       const response = await searchRuns(
         {
-          //filter: filtersString,
+          filter: filtersString,
           limit: isPagedView ? settings.pageLimit : 2 * PAGE_SIZE,
           offset: isPagedView ? page * settings.pageLimit : tableOffset,
           projectId: project.id,
@@ -381,6 +398,7 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
     }
   }, [
     canceler.signal,
+    filtersString,
     isLoadingSettings,
     isPagedView,
     loadableFormset,
@@ -424,19 +442,38 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
   }, [page]);
 
   useEffect(() => {
-    // useSettings load the default value first, and then load the data from DB
-    // use this useEffect to re-init the correct useSettings value when settings.filterset is changed
-    if (isLoadingSettings) return;
-    const formSetValidation = IOFilterFormSet.decode(JSON.parse(settings.filterset));
-    if (isLeft(formSetValidation)) {
-      handleError(formSetValidation.left, {
-        publicSubject: 'Unable to initialize filterset from settings',
-      });
-    } else {
-      const formset = formSetValidation.right;
-      formStore.init(formset);
-    }
-  }, [settings.filterset, isLoadingSettings]);
+    let cleanup: () => void;
+    // eagerSubscribe is like subscribe but it runs once before the observed value changes.
+    cleanup = eagerSubscribe(flatRunsSettingsObs, (ps, prevPs) => {
+      // init formset once from settings when loaded, then flip the sync
+      // direction -- when formset changes, update settings
+      if (!prevPs?.isLoaded) {
+        ps.forEach((s) => {
+          cleanup?.();
+          if (!s?.filterset) {
+            formStore.init();
+          } else {
+            const formSetValidation = IOFilterFormSet.decode(JSON.parse(s.filterset));
+            if (isLeft(formSetValidation)) {
+              handleError(formSetValidation.left, {
+                publicSubject: 'Unable to initialize filterset from settings',
+              });
+            } else {
+              formStore.init(formSetValidation.right);
+            }
+          }
+          cleanup = formStore.asJsonString.subscribe(() => {
+            resetPagination();
+            const loadableFormset = formStore.formset.get();
+            Loadable.forEach(loadableFormset, (formSet) =>
+              updateSettings({ filterset: JSON.stringify(formSet), selection: DEFAULT_SELECTION }),
+            );
+          });
+        });
+      }
+    });
+    return () => cleanup?.();
+  }, [flatRunsSettingsObs, resetPagination, updateSettings]);
 
   const handleColumnWidthChange = useCallback(
     (columnId: string, width: number) => {
@@ -516,10 +553,24 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
     useCallback(() => {}, []);
 
   const handleColumnsOrderChange = useCallback(
-    (newColumnsOrder: string[]) => {
-      updateSettings({ columns: newColumnsOrder });
+    // changing both column order and pinned count should happen in one update:
+    (newColumnsOrder: string[], pinnedCount?: number) => {
+      const newColumnWidths = newColumnsOrder
+        .filter((c) => !(c in settings.columnWidths))
+        .reduce((acc: Record<string, number>, col) => {
+          acc[col] = DEFAULT_COLUMN_WIDTH;
+          return acc;
+        }, {});
+      updateSettings({
+        columns: newColumnsOrder,
+        columnWidths: {
+          ...settings.columnWidths,
+          ...newColumnWidths,
+        },
+        pinnedColumnsCount: isUndefined(pinnedCount) ? settings.pinnedColumnsCount : pinnedCount,
+      });
     },
-    [updateSettings],
+    [updateSettings, settings.pinnedColumnsCount, settings.columnWidths],
   );
 
   const handleSortChange = useCallback(
@@ -547,7 +598,7 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
     (columnId: string, colIdx: number): MenuItem[] => {
       if (columnId === MULTISELECT) {
         const items: MenuItem[] = [
-          selection.rows.length > 0
+          settings.selection.type === 'ALL_EXCEPT' || settings.selection.selections.length > 0
             ? {
                 key: 'select-none',
                 label: 'Clear selected',
@@ -568,13 +619,14 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
             key: 'select-all',
             label: 'Select all',
             onClick: () => {
-              handleSelectionChange?.('add-all');
+              handleSelectionChange?.('set', [0, settings.pageLimit]);
             },
           },
         ];
         return items;
       }
 
+      const column = Loadable.getOrElse([], projectColumns).find((c) => c.column === columnId);
       const isPinned = colIdx <= settings.pinnedColumnsCount + STATIC_COLUMNS.length - 1;
       const items: MenuItem[] = [
         // Column is pinned if the index is inside of the frozen columns
@@ -588,8 +640,8 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
                 onClick: () => {
                   const newColumnsOrder = columnsIfLoaded.filter((c) => c !== columnId);
                   newColumnsOrder.splice(settings.pinnedColumnsCount, 0, columnId);
-                  handleColumnsOrderChange?.(newColumnsOrder);
-                  handlePinnedColumnsCountChange?.(
+                  handleColumnsOrderChange(
+                    newColumnsOrder,
                     Math.min(settings.pinnedColumnsCount + 1, columnsIfLoaded.length),
                   );
                 },
@@ -602,52 +654,112 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
                 onClick: () => {
                   const newColumnsOrder = columnsIfLoaded.filter((c) => c !== columnId);
                   newColumnsOrder.splice(settings.pinnedColumnsCount - 1, 0, columnId);
-                  handleColumnsOrderChange?.(newColumnsOrder);
-                  handlePinnedColumnsCountChange?.(Math.max(settings.pinnedColumnsCount - 1, 0));
+                  handleColumnsOrderChange(
+                    newColumnsOrder,
+                    Math.max(settings.pinnedColumnsCount - 1, 0),
+                  );
                 },
               },
+        {
+          icon: <Icon decorative name="eye-close" />,
+          key: 'hide',
+          label: 'Hide column',
+          onClick: () => {
+            const newColumnsOrder = columnsIfLoaded.filter((c) => c !== columnId);
+            if (isPinned) {
+              handleColumnsOrderChange(
+                newColumnsOrder,
+                Math.max(settings.pinnedColumnsCount - 1, 0),
+              );
+            } else {
+              handleColumnsOrderChange(newColumnsOrder);
+            }
+          },
+        },
       ];
-      const column = Loadable.getOrElse([], projectColumns).find((c) => c.column === columnId);
-      if (!column) return items;
 
-      const BANNED_FILTER_COLUMNS = ['searcherMetricsVal'];
-      const sortOptions = sortMenuItemsForColumn(column, sorts, handleSortChange);
-      if (sortOptions.length > 0) {
-        items.push(
-          ...(BANNED_FILTER_COLUMNS.includes(column.column)
+      if (!column) {
+        return items;
+      }
+
+      const filterMenuItemsForColumn = () => {
+        const isSpecialColumn = (SpecialColumnNames as ReadonlyArray<string>).includes(
+          column.column,
+        );
+        formStore.addChild(ROOT_ID, FormKind.Field, {
+          index: Loadable.match(loadableFormset, {
+            _: () => 0,
+            Loaded: (formset) => formset.filterGroup.children.length,
+          }),
+          item: {
+            columnName: column.column,
+            id: uuidv4(),
+            kind: FormKind.Field,
+            location: column.location,
+            operator: isSpecialColumn ? Operator.Eq : AvailableOperators[column.type][0],
+            type: column.type,
+            value: null,
+          },
+        });
+        handleIsOpenFilterChange?.(true);
+      };
+
+      const clearFilterForColumn = () => {
+        formStore.removeByField(column.column);
+      };
+
+      const filterCount = formStore.getFieldCount(column.column).get();
+
+      if (!BANNED_FILTER_COLUMNS.has(column.column)) {
+        const sortCount = sortMenuItemsForColumn(column, sorts, handleSortChange).length;
+        const sortMenuItems =
+          sortCount === 0
             ? []
             : [
                 { type: 'divider' as const },
                 ...sortMenuItemsForColumn(column, sorts, handleSortChange),
-              ]),
+              ];
+
+        items.push(
+          ...sortMenuItems,
+          { type: 'divider' as const },
+          {
+            icon: <Icon decorative name="filter" />,
+            key: 'filter',
+            label: 'Add Filter',
+            onClick: () => {
+              setTimeout(filterMenuItemsForColumn, 5);
+            },
+          },
         );
+
+        if (filterCount > 0) {
+          items.push({
+            icon: <Icon decorative name="filter" />,
+            key: 'filter-clear',
+            label: `Clear ${pluralizer(filterCount, 'Filter')}  (${filterCount})`,
+            onClick: () => {
+              setTimeout(clearFilterForColumn, 5);
+            },
+          });
+        }
       }
       return items;
     },
     [
       columnsIfLoaded,
       handleColumnsOrderChange,
-      handlePinnedColumnsCountChange,
       handleSelectionChange,
       handleSortChange,
       isMobile,
+      loadableFormset,
+      handleIsOpenFilterChange,
       projectColumns,
-      selection.rows.length,
       settings.pinnedColumnsCount,
       sorts,
+      settings.pageLimit,
+      settings.selection,
     ],
-  );
-
-  useEffect(
-    () =>
-      formStore.asJsonString.subscribe(() => {
-        resetPagination();
-        const loadableFormset = formStore.formset.get();
-        Loadable.forEach(loadableFormset, (formSet) =>
-          updateSettings({ filterset: JSON.stringify(formSet) }),
-        );
-      }),
-    [resetPagination, updateSettings],
   );
 
   useEffect(() => {
@@ -659,6 +771,37 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
 
   return (
     <div className={css.content} ref={contentRef}>
+      <Row>
+        <TableFilter
+          bannedFilterColumns={BANNED_FILTER_COLUMNS}
+          formStore={formStore}
+          isMobile={isMobile}
+          isOpenFilter={isOpenFilter}
+          loadableColumns={projectColumns}
+          onIsOpenFilterChange={handleIsOpenFilterChange}
+        />
+        <MultiSortMenu
+          columns={projectColumns}
+          isMobile={isMobile}
+          sorts={sorts}
+          onChange={handleSortChange}
+        />
+        <ColumnPickerMenu
+          defaultVisibleColumns={defaultRunColumns}
+          initialVisibleColumns={columnsIfLoaded}
+          isMobile={isMobile}
+          pinnedColumnsCount={settings.pinnedColumnsCount}
+          projectColumns={projectColumns}
+          projectId={project.id}
+          tabs={[
+            V1LocationType.EXPERIMENT,
+            [V1LocationType.VALIDATIONS, V1LocationType.TRAINING, V1LocationType.CUSTOMMETRIC],
+            V1LocationType.HYPERPARAMETERS,
+          ]}
+          onVisibleColumnChange={handleColumnsOrderChange}
+        />
+        <OptionsMenu rowHeight={globalSettings.rowHeight} onRowHeightChange={onRowHeightChange} />
+      </Row>
       {!isLoading && total.isLoaded && total.data === 0 ? (
         numFilters === 0 ? (
           <Message

@@ -3,6 +3,7 @@ import { isLeft } from 'fp-ts/lib/Either';
 import Column from 'hew/Column';
 import {
   ColumnDef,
+  DEFAULT_COLUMN_WIDTH,
   defaultDateColumn,
   defaultNumberColumn,
   defaultSelectionColumn,
@@ -25,6 +26,7 @@ import Pagination from 'hew/Pagination';
 import Row from 'hew/Row';
 import { useToast } from 'hew/Toast';
 import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
+import { isUndefined } from 'lodash';
 import { useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
@@ -43,7 +45,7 @@ import {
   SpecialColumnNames,
 } from 'components/FilterForm/components/type';
 import { EMPTY_SORT, sortMenuItemsForColumn } from 'components/MultiSortMenu';
-import { RowHeight, TableViewMode } from 'components/OptionsMenu';
+import { RowHeight } from 'components/OptionsMenu';
 import { DataGridGlobalSettings, settingsConfigGlobal } from 'components/OptionsMenu.settings';
 import TableActionBar from 'components/TableActionBar';
 import useUI from 'components/ThemeProvider';
@@ -151,7 +153,7 @@ const Searches: React.FC<Props> = ({ project }) => {
   const { settings: globalSettings, updateSettings: updateGlobalSettings } =
     useSettings<DataGridGlobalSettings>(settingsConfigGlobal);
 
-  const isPagedView = globalSettings.tableViewMode === 'paged';
+  const isPagedView = true;
   const [sorts, setSorts] = useState<Sort[]>(() => {
     if (!isLoadingSettings) {
       return parseSortString(settings.sortString);
@@ -172,11 +174,6 @@ const Searches: React.FC<Props> = ({ project }) => {
   });
   const isMobile = useMobile();
   const { openToast } = useToast();
-
-  const selectAll = useMemo<boolean>(
-    () => !isLoadingSettings && settings.selection.type === 'ALL_EXCEPT',
-    [isLoadingSettings, settings.selection],
-  );
 
   const handlePinnedColumnsCountChange = useCallback(
     (newCount: number) => updateSettings({ pinnedColumnsCount: newCount }),
@@ -220,7 +217,10 @@ const Searches: React.FC<Props> = ({ project }) => {
             resetPagination();
             const loadableFormset = formStore.formset.get();
             Loadable.forEach(loadableFormset, (formSet) =>
-              updateSettings({ filterset: JSON.stringify(formSet) }),
+              updateSettings({
+                filterset: JSON.stringify(formSet),
+                selection: DEFAULT_SELECTION,
+              }),
             );
           });
         });
@@ -233,52 +233,41 @@ const Searches: React.FC<Props> = ({ project }) => {
   const [error] = useState(false);
   const [canceler] = useState(new AbortController());
 
-  // partition experiment list into not selected/selected with indices and experiments so we only iterate the result list once
-  const [excludedExperimentIds, selectedExperimentIds] = useMemo(() => {
-    const selectedMap = new Map<number, ExperimentWithIndex>();
-    const excludedMap = new Map<number, ExperimentWithIndex>();
-    if (isLoadingSettings) {
-      return [excludedMap, selectedMap];
+  const allSelectedExperimentIds = useMemo(() => {
+    if (settings.selection.type === 'ONLY_IN') {
+      return settings.selection.selections;
     }
-    const selectedIdSet = new Set(
-      settings.selection.type === 'ONLY_IN' ? settings.selection.selections : [],
-    );
-    const excludedIdSet = new Set(
-      settings.selection.type === 'ALL_EXCEPT' ? settings.selection.exclusions : [],
-    );
+    return [];
+  }, [settings.selection]);
+
+  const loadedSelectedExperimentIds = useMemo(() => {
+    const selectedMap = new Map<number, ExperimentWithIndex>();
+    if (isLoadingSettings) {
+      return selectedMap;
+    }
+    const selectedIdSet = new Set(allSelectedExperimentIds);
     experiments.forEach((e, index) => {
       Loadable.forEach(e, ({ experiment }) => {
-        const mapToAdd =
-          (selectAll && !excludedIdSet.has(experiment.id)) || selectedIdSet.has(experiment.id)
-            ? selectedMap
-            : excludedMap;
-        mapToAdd.set(experiment.id, { experiment, index });
+        if (selectedIdSet.has(experiment.id)) {
+          selectedMap.set(experiment.id, { experiment, index });
+        }
       });
     });
-    return [excludedMap, selectedMap];
-  }, [isLoadingSettings, selectAll, settings.selection, experiments]);
+    return selectedMap;
+  }, [isLoadingSettings, allSelectedExperimentIds, experiments]);
 
   const selection = useMemo<GridSelection>(() => {
     let rows = CompactSelection.empty();
-    if (selectAll) {
-      Loadable.forEach(total, (t) => {
-        rows = rows.add([0, t]);
-      });
-      excludedExperimentIds.forEach((info) => {
-        rows = rows.remove(info.index);
-      });
-    } else {
-      selectedExperimentIds.forEach((info) => {
-        rows = rows.add(info.index);
-      });
-    }
+    loadedSelectedExperimentIds.forEach((info) => {
+      rows = rows.add(info.index);
+    });
     return {
       columns: CompactSelection.empty(),
       rows,
     };
-  }, [selectAll, selectedExperimentIds, excludedExperimentIds, total]);
+  }, [loadedSelectedExperimentIds]);
 
-  const colorMap = useGlasbey([...selectedExperimentIds.keys()]);
+  const colorMap = useGlasbey([...loadedSelectedExperimentIds.keys()]);
 
   const experimentFilters = useMemo(() => {
     const filters: V1BulkExperimentFilters = {
@@ -551,10 +540,24 @@ const Searches: React.FC<Props> = ({ project }) => {
   );
 
   const handleColumnsOrderChange = useCallback(
-    (newColumnsOrder: string[]) => {
-      updateSettings({ columns: newColumnsOrder });
+    // changing both column order and pinned count should happen in one update:
+    (newColumnsOrder: string[], pinnedCount?: number) => {
+      const newColumnWidths = newColumnsOrder
+        .filter((c) => !(c in settings.columnWidths))
+        .reduce((acc: Record<string, number>, col) => {
+          acc[col] = DEFAULT_COLUMN_WIDTH;
+          return acc;
+        }, {});
+      updateSettings({
+        columns: newColumnsOrder,
+        columnWidths: {
+          ...settings.columnWidths,
+          ...newColumnWidths,
+        },
+        pinnedColumnsCount: isUndefined(pinnedCount) ? settings.pinnedColumnsCount : pinnedCount,
+      });
     },
-    [updateSettings],
+    [updateSettings, settings.pinnedColumnsCount, settings.columnWidths],
   );
 
   const handleRowHeightChange = useCallback(
@@ -576,15 +579,6 @@ const Searches: React.FC<Props> = ({ project }) => {
       window.removeEventListener('keydown', handleEsc);
     };
   }, [handleSelectionChange]);
-
-  const handleTableViewModeChange = useCallback(
-    (mode: TableViewMode) => {
-      // Reset page index when table view mode changes.
-      resetPagination();
-      updateGlobalSettings({ tableViewMode: mode });
-    },
-    [resetPagination, updateGlobalSettings],
-  );
 
   const onPageChange = useCallback(
     (cPage: number, cPageSize: number) => {
@@ -642,7 +636,7 @@ const Searches: React.FC<Props> = ({ project }) => {
     const gridColumns = [...STATIC_COLUMNS, ...columnsIfLoaded]
       .map((columnName) => {
         if (columnName === MULTISELECT) {
-          return (columnDefs[columnName] = defaultSelectionColumn(selection.rows, selectAll));
+          return (columnDefs[columnName] = defaultSelectionColumn(selection.rows, false));
         }
         if (columnName in columnDefs) return columnDefs[columnName];
         if (!Loadable.isLoaded(projectColumnsMap)) return;
@@ -700,7 +694,6 @@ const Searches: React.FC<Props> = ({ project }) => {
     columnsIfLoaded,
     appTheme,
     isDarkMode,
-    selectAll,
     selection.rows,
     users,
   ]);
@@ -708,7 +701,7 @@ const Searches: React.FC<Props> = ({ project }) => {
   const getHeaderMenuItems = (columnId: string, colIdx: number): MenuItem[] => {
     if (columnId === MULTISELECT) {
       const items: MenuItem[] = [
-        selection.rows.length > 0
+        settings.selection.type === 'ALL_EXCEPT' || settings.selection.selections.length > 0
           ? {
               key: 'select-none',
               label: 'Clear selected',
@@ -729,7 +722,7 @@ const Searches: React.FC<Props> = ({ project }) => {
           key: 'select-all',
           label: 'Select all',
           onClick: () => {
-            handleSelectionChange?.('add-all');
+            handleSelectionChange?.('add', [0, settings.pageLimit]);
           },
         },
       ];
@@ -780,8 +773,8 @@ const Searches: React.FC<Props> = ({ project }) => {
               onClick: () => {
                 const newColumnsOrder = columnsIfLoaded.filter((c) => c !== column.column);
                 newColumnsOrder.splice(settings.pinnedColumnsCount, 0, column.column);
-                handleColumnsOrderChange?.(newColumnsOrder);
-                handlePinnedColumnsCountChange?.(
+                handleColumnsOrderChange?.(
+                  newColumnsOrder,
                   Math.min(settings.pinnedColumnsCount + 1, columnsIfLoaded.length),
                 );
               },
@@ -794,8 +787,10 @@ const Searches: React.FC<Props> = ({ project }) => {
               onClick: () => {
                 const newColumnsOrder = columnsIfLoaded.filter((c) => c !== column.column);
                 newColumnsOrder.splice(settings.pinnedColumnsCount - 1, 0, column.column);
-                handleColumnsOrderChange?.(newColumnsOrder);
-                handlePinnedColumnsCountChange?.(Math.max(settings.pinnedColumnsCount - 1, 0));
+                handleColumnsOrderChange?.(
+                  newColumnsOrder,
+                  Math.max(settings.pinnedColumnsCount - 1, 0),
+                );
               },
             },
       {
@@ -804,9 +799,13 @@ const Searches: React.FC<Props> = ({ project }) => {
         label: 'Hide column',
         onClick: () => {
           const newColumnsOrder = columnsIfLoaded.filter((c) => c !== column.column);
-          handleColumnsOrderChange?.(newColumnsOrder);
           if (isPinned) {
-            handlePinnedColumnsCountChange?.(Math.max(settings.pinnedColumnsCount - 1, 0));
+            handleColumnsOrderChange?.(
+              newColumnsOrder,
+              Math.max(settings.pinnedColumnsCount - 1, 0),
+            );
+          } else {
+            handleColumnsOrderChange?.(newColumnsOrder);
           }
         },
       },
@@ -847,9 +846,6 @@ const Searches: React.FC<Props> = ({ project }) => {
     <>
       <TableActionBar
         columnGroups={[V1LocationType.EXPERIMENT]}
-        excludedExperimentIds={excludedExperimentIds}
-        experiments={experiments}
-        filters={experimentFilters}
         formStore={formStore}
         initialVisibleColumns={columnsIfLoaded}
         isOpenFilter={isOpenFilter}
@@ -858,18 +854,14 @@ const Searches: React.FC<Props> = ({ project }) => {
         project={project}
         projectColumns={projectColumns}
         rowHeight={globalSettings.rowHeight}
-        selectAll={selectAll}
-        selectedExperimentIds={selectedExperimentIds}
-        selection={settings.selection}
+        selectedExperimentIds={allSelectedExperimentIds}
         sorts={sorts}
-        tableViewMode={globalSettings.tableViewMode}
         total={total}
         onActionComplete={handleActionComplete}
         onActionSuccess={handleActionSuccess}
         onIsOpenFilterChange={handleIsOpenFilterChange}
         onRowHeightChange={handleRowHeightChange}
         onSortChange={handleSortChange}
-        onTableViewModeChange={handleTableViewModeChange}
         onVisibleColumnChange={handleColumnsOrderChange}
       />
       <div className={css.content} ref={contentRef}>

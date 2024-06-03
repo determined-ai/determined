@@ -94,13 +94,14 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
       updateSettings({
         row: undefined,
         state: states.length !== 0 ? (states as CheckpointState[]) : undefined,
+        tableOffset: 0,
       });
     },
     [updateSettings],
   );
 
   const handleStateFilterReset = useCallback(() => {
-    updateSettings({ row: undefined, state: undefined });
+    updateSettings({ row: undefined, state: undefined, tableOffset: 0 });
   }, [updateSettings]);
 
   const stateFilterDropdown = useCallback(
@@ -263,13 +264,11 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
     stateFilterDropdown,
   ]);
 
-  const stateString = settings.state?.join('.');
   const fetchExperimentCheckpoints = useCallback(async () => {
     if (!settings) return;
+
+    const states = settings.state?.map((state) => encodeCheckpointState(state as CheckpointState));
     try {
-      const states = stateString
-        ?.split('.')
-        .map((state) => encodeCheckpointState(state as CheckpointState));
       const response = await getExperimentCheckpoints(
         {
           id: experiment.id,
@@ -294,7 +293,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
     } finally {
       setIsLoading(false);
     }
-  }, [experiment.id, canceler, settings, stateString, checkpoints]);
+  }, [settings, experiment.id, canceler.signal, checkpoints]);
 
   const submitBatchAction = useCallback(
     async (action: CheckpointAction) => {

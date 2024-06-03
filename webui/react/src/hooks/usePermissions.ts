@@ -15,10 +15,15 @@ import {
   PermissionWorkspace,
   Project,
   ProjectExperiment,
+  Template,
   UserAssignment,
   UserRole,
   WorkspacePermissionsArgs,
 } from 'types';
+
+interface TemplatePermissionArgs {
+  template: Template;
+}
 
 interface ModelPermissionsArgs {
   model: ModelItem;
@@ -57,6 +62,8 @@ interface PermissionsHook {
   canCreateModels: boolean;
   canCreateNSC: boolean;
   canCreateProject: (arg0: WorkspacePermissionsArgs) => boolean;
+  canCreateTemplate: boolean;
+  canCreateTemplateWorkspace: (args0: WorkspacePermissionsArgs) => boolean;
   canCreateWorkspace: boolean;
   canCreateWorkspaceNSC(arg0: WorkspacePermissionsArgs): boolean;
   canDeleteExperiment: (arg0: ExperimentPermissionsArgs) => boolean;
@@ -64,6 +71,8 @@ interface PermissionsHook {
   canDeleteModelVersion: (arg0: ModelVersionPermissionsArgs) => boolean;
   canDeleteProjects: (arg0: ProjectPermissionsArgs) => boolean;
   canDeleteWorkspace: (arg0: WorkspacePermissionsArgs) => boolean;
+  canDeleteTemplate: (arg0: TemplatePermissionArgs) => boolean;
+  canModifyTemplate: (arg0: TemplatePermissionArgs) => boolean;
   canEditWebhooks: boolean;
   canManageResourcePoolBindings: boolean;
   canModifyExperiment: (arg0: WorkspacePermissionsArgs) => boolean;
@@ -127,6 +136,9 @@ const usePermissions = (): PermissionsHook => {
       canCreateNSC: canCreateNSC(rbacOpts),
       canCreateProject: (args: WorkspacePermissionsArgs) =>
         canCreateProject(rbacOpts, args.workspace),
+      canCreateTemplate: canCreateTemplate(rbacOpts),
+      canCreateTemplateWorkspace: (args: WorkspacePermissionsArgs) =>
+        canCreateTemplateWorkspace(rbacOpts, args.workspace!.id),
       canCreateWorkspace: canCreateWorkspace(rbacOpts),
       canCreateWorkspaceNSC: (args: WorkspacePermissionsArgs) =>
         canCreateWorkspaceNSC(rbacOpts, args.workspace),
@@ -137,6 +149,8 @@ const usePermissions = (): PermissionsHook => {
         canDeleteModelVersion(rbacOpts, args.modelVersion),
       canDeleteProjects: (args: ProjectPermissionsArgs) =>
         canDeleteWorkspaceProjects(rbacOpts, args.workspace, args.project),
+      canDeleteTemplate: (args: TemplatePermissionArgs) =>
+        canDeleteTemplate(rbacOpts, args.template),
       canDeleteWorkspace: (args: WorkspacePermissionsArgs) =>
         canDeleteWorkspace(rbacOpts, args.workspace),
       canEditWebhooks: canEditWebhooks(rbacOpts),
@@ -152,6 +166,8 @@ const usePermissions = (): PermissionsHook => {
       canModifyPermissions: canModifyPermissions(rbacOpts),
       canModifyProjects: (args: ProjectPermissionsArgs) =>
         canModifyWorkspaceProjects(rbacOpts, args.workspace, args.project),
+      canModifyTemplate: (args: TemplatePermissionArgs) =>
+        canModifyTemplate(rbacOpts, args.template),
       canModifyUsers: canAdministrateUsers(rbacOpts),
       canModifyWorkspace: (args: WorkspacePermissionsArgs) =>
         canModifyWorkspace(rbacOpts, args.workspace),
@@ -397,6 +413,41 @@ const canModifyModelVersion = (
 ): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles, modelVersion.model.workspaceId);
   return !rbacEnabled || permitted.has(V1PermissionType.EDITMODELREGISTRY);
+};
+
+// Template actions
+const canCreateTemplate = ({ rbacEnabled, userRoles }: RbacOptsProps): boolean => {
+  return (
+    !rbacEnabled ||
+    (!!userRoles &&
+      !!userRoles.find(
+        (r) => !!r.permissions.find((p) => p.id === V1PermissionType.CREATETEMPLATES),
+      ))
+  );
+};
+
+const canCreateTemplateWorkspace = (
+  { rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
+  workspaceId: number,
+): boolean => {
+  const permitted = relevantPermissions(userAssignments, userRoles, workspaceId);
+  return !rbacEnabled || permitted.has(V1PermissionType.CREATETEMPLATES);
+};
+
+const canDeleteTemplate = (
+  { rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
+  template: Template,
+): boolean => {
+  const permitted = relevantPermissions(userAssignments, userRoles, template.workspaceId);
+  return !rbacEnabled || permitted.has(V1PermissionType.DELETETEMPLATES);
+};
+
+const canModifyTemplate = (
+  { rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
+  template: Template,
+): boolean => {
+  const permitted = relevantPermissions(userAssignments, userRoles, template.workspaceId);
+  return !rbacEnabled || permitted.has(V1PermissionType.UPDATETEMPLATES);
 };
 
 // Project actions

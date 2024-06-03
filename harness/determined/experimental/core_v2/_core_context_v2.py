@@ -188,4 +188,5 @@ def _make_v2_context(
         _tensorboard_manager=tensorboard_manager,
         _heartbeat=heartbeat,
         _log_shipper=log_shipper,
+        _session=session,
     )

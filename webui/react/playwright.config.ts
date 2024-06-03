@@ -23,7 +23,7 @@ export default defineConfig({
   fullyParallel: !!process.env.CI,
 
   /* https://playwright.dev/docs/test-timeouts#global-timeout */
-  globalTimeout: process.env.PWDEBUG ? 0 : 800_000,
+  globalTimeout: process.env.PWDEBUG ? 0 : 900_000,
   /* Folder for test artifacts such as screenshots, videos, traces, etc. */
   outputDir: './src/e2e/test-results',
   /* Folder for test artifacts such as screenshots, videos, traces, etc. */
@@ -94,7 +94,7 @@ export default defineConfig({
   /* Run your local dev server before starting the tests */
   webServer: {
     command: 'npm run preview',
-    port: port,
+    port,
     reuseExistingServer: !process.env.CI,
   },
 

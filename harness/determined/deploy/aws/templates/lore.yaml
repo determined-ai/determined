@@ -3,35 +3,35 @@ Mappings:
   RegionMap:
     ap-northeast-1:
       Master: ami-00910ef9457f0df47
-      Agent: ami-0d16e1e0dcb55d0cc
+      Agent: ami-0d17768c113bc7053
     # TODO(DET-4258) Uncomment these when we fully support all P3 regions.
     # ap-northeast-2:
     #   Master: ami-035e3e44dc41db6a2
-    #   Agent: ami-0b5e1d346243cc56d
+    #   Agent: ami-06542874b4ab6003d
     # ap-southeast-1:
     #   Master: ami-0fd1ee6c8b656f020
-    #   Agent: ami-0c82409e1680a5f05
+    #   Agent: ami-03d1fba6f5c61a233
     # ap-southeast-2:
     #   Master: ami-0b62ecd3babd1c548
-    #   Agent: ami-0fb880629a676b994
+    #   Agent: ami-0a662e555f59bc56f
     eu-central-1:
       Master: ami-0abbe417ed83c0b29
-      Agent: ami-06b9510e1e2ff459a
+      Agent: ami-0a510a21bcbb901a1
     eu-west-1:
       Master: ami-0e3f7dd2dc743e48a
-      Agent: ami-0cdb3c6edfed8684a
+      Agent: ami-0287a5461ed8dbf38
     # eu-west-2:
     #   Master: ami-0d78429fb6af30994
-    #   Agent: ami-0b7adfc10fc8f8cae
+    #   Agent: ami-08b973d39f7eee569
     us-east-1:
       Master: ami-0172070f66a8ebe63
-      Agent: ami-080fa6043c3db5762
+      Agent: ami-0f49364aa77da45f2
     us-east-2:
       Master: ami-0bafa3699418551cd
-      Agent: ami-03fedff28640be3f8
+      Agent: ami-01168798b1af4c386
     us-west-2:
       Master: ami-0ceeab680f529cc36
-      Agent: ami-03c80bd6abfc63658
+      Agent: ami-03081ca9dd5286010
 
 Parameters:
   VpcCIDR:
@@ -101,7 +101,7 @@ Parameters:
   Version:
     Type: String
     Description: Determined version or commit for master image
-    Default: 0.32.0-dev0
+    Default: 0.33.0-dev0
 
   DBPassword:
     Type: String
@@ -223,6 +223,11 @@ Parameters:
   GenAIVersion:
     Type: String
     Description: GenAI version to deploy
+    Default: latest
+
+  GenAISharedFSMountPath:
+    Type: String
+    Description: GenAI shared file system mount path
     Default: latest
 
   MountEFSId:
@@ -936,7 +941,7 @@ Resources:
 
             bind_mounts:
               - host_path: /mnt/efs
-                container_path: /run/determined/workdir/shared_fs
+                container_path: "${GenAISharedFSMountPath}"
             
             security:
               initial_user_password: "${InitialUserPassword}"
@@ -976,6 +981,8 @@ Resources:
 
             apt-get install -y binutils git
             if [ ! -d "efs-utils" ]; then
+              apt-get update
+              apt-get -y install git binutils rustc cargo pkg-config libssl-dev
               git clone https://github.com/aws/efs-utils
               cd efs-utils
               ./build-deb.sh
@@ -997,8 +1004,9 @@ Resources:
                 --env DB_HOST=${Database.Endpoint.Address} \
                 --env DB_PORT=5432 \
                 --env LORE_DOCKER_TAG_SUFFIX="${GenAIVersion}" \
+                --env SHARED_FS_ROOT_PATH="${GenAISharedFSMountPath}" \
                 -p 9013:9013 \
-                -v /mnt/efs:/run/determined/workdir/shared_fs \
+                -v /mnt/efs:"${GenAISharedFSMountPath}" \
                 --network determined \
                 "${ImageRepoPrefix}/genai:${GenAIVersion}"
               test $? -eq 0 || ( echo "Failed to launch GenAI container." && exit 1 )

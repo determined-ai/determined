@@ -73,15 +73,15 @@ def test_hpc_job_pending_reason() -> None:
     # for the pending job to have a chance to refresh the state and write out the
     # state reason in experiment logs
     time.sleep(60)
-    exp.kill_experiments(sess, [running_exp_id])
+    exp.kill_experiments(sess, [running_exp_id], -1)
 
-    # Make sure the second experiment will start running after the first experinemt
+    # Make sure the second experiment will start running after the first experiment
     # releases the CPUs
     exp.wait_for_experiment_state(sess, pending_exp_id, bindings.experimentv1State.RUNNING)
     print(f"Experiment {pending_exp_id} running")
 
     # Now kill the second experiment to shorten the test run
-    exp.kill_experiments(sess, [pending_exp_id])
+    exp.kill_experiments(sess, [pending_exp_id], -1)
 
     trials = exp.experiment_trials(sess, pending_exp_id)
     print(f"Check logs for exp {pending_exp_id}")

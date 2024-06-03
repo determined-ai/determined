@@ -28,7 +28,7 @@ var pgDB *db.PgDB
 
 func TestMain(m *testing.M) {
 	var err error
-	pgDB, err = db.ResolveTestPostgres()
+	pgDB, _, err = db.ResolveTestPostgres()
 	if err != nil {
 		log.Panicln(err)
 	}
@@ -489,7 +489,8 @@ func mockWebhook() *Webhook {
 
 func TestDequeueEvents(t *testing.T) {
 	ctx := context.Background()
-	pgDB := db.MustResolveTestPostgres(t)
+	pgDB, close := db.MustResolveTestPostgres(t)
+	defer close()
 	db.MustMigrateTestPostgres(t, pgDB, db.MigrationsFromDB)
 	clearWebhooksTables(ctx, t)
 

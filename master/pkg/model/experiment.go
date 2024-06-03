@@ -528,6 +528,26 @@ type RunTaskID struct {
 	TaskID TaskID
 }
 
+// RunHparam represents a row from the `run_hparams` table.
+type RunHparam struct {
+	bun.BaseModel `bun:"table:run_hparams"`
+
+	RunID     int      `bun:"run_id"`
+	HParam    string   `bun:"hparam"`
+	NumberVal *float64 `bun:"number_val"`
+	TextVal   *string  `bun:"text_val"`
+	BoolVal   *bool    `bun:"bool_val"`
+}
+
+// ProjectHparam represents a row from the `project_hparams` table.
+type ProjectHparam struct {
+	bun.BaseModel `bun:"table:project_hparams"`
+
+	ProjectID int    `db:"project_id" bun:"project_id"`
+	HParam    string `bun:"hparam"`
+	Type      string `bun:"type"`
+}
+
 // NewTrial creates a new trial in the specified state.  Note that the trial ID
 // will not be set.
 func NewTrial(

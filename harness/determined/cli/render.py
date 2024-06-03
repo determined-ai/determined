@@ -293,8 +293,8 @@ def print_json(data: Union[str, Any]) -> None:
         print(data)
 
 
-def report_job_launched(_type: str, _id: str) -> None:
-    msg = f"Launched {_type} (id: {_id})."
+def report_job_launched(_type: str, _id: str, name: str) -> None:
+    msg = f"Launched {_type} (id: {_id}, name: {name})."
     print(termcolor.colored(msg, "green"))
 
 

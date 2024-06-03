@@ -319,6 +319,12 @@ export const getExpValidationHistory = generateDetApi<
   Type.ValidationHistory[]
 >(Config.getExpValidationHistory);
 
+export const getTrialRemainingLogRetentionDays = generateDetApi<
+  Service.TrialDetailsParams,
+  Api.V1GetTrialRemainingLogRetentionDaysResponse,
+  Type.TrialRemainingLogRetentionDays
+>(Config.getTrialRemainingLogRetentionDays);
+
 export const getTrialDetails = generateDetApi<
   Service.TrialDetailsParams,
   Api.V1GetTrialResponse,
@@ -826,6 +832,28 @@ export const getTaskTemplates = generateDetApi<
   Api.V1GetTemplatesResponse,
   Type.Template[]
 >(Config.getTemplates);
+
+export const updateTaskTemplate = generateDetApi<Api.V1Template, Api.V1PutTemplateResponse, void>(
+  Config.updateTaskTemplate,
+);
+
+export const updateTaskTemplateName = generateDetApi<
+  Api.V1PatchTemplateNameRequest,
+  Api.V1PatchTemplateNameResponse,
+  void
+>(Config.updateTaskTemplateName);
+
+export const deleteTaskTemplate = generateDetApi<
+  Service.DeleteTemplateParams,
+  Api.V1DeleteTemplateResponse,
+  void
+>(Config.deleteTaskTemplate);
+
+export const createTaskTemplate = generateDetApi<
+  Api.V1Template,
+  Api.V1PostTemplateResponse,
+  Type.Template
+>(Config.createTaskTemplate);
 
 export const launchJupyterLab = generateDetApi<
   Service.LaunchJupyterLabParams,

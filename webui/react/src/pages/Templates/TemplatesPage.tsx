@@ -3,6 +3,8 @@ import React, { useRef } from 'react';
 import Page from 'components/Page';
 import { paths } from 'routes/utils';
 
+import TemplateList from './TemplatesList';
+
 const TemplatesPage: React.FC = () => {
   const pageRef = useRef<HTMLElement>(null);
 
@@ -16,8 +18,9 @@ const TemplatesPage: React.FC = () => {
       ]}
       containerRef={pageRef}
       id="templates"
-      title="Manage Templates"
-    />
+      title="Manage Templates">
+      <TemplateList />
+    </Page>
   );
 };
 

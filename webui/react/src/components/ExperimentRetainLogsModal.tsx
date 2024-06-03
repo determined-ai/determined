@@ -21,6 +21,7 @@ type FormInputs = {
 interface Props {
   excludedExperimentIds?: Map<number, unknown>;
   experimentIds: number[];
+  projectId: number;
   filters?: V1BulkExperimentFilters;
   onSubmit?: (successfulIds?: number[]) => void;
 }
@@ -28,6 +29,7 @@ interface Props {
 const ExperimentRetainLogsModalComponent: React.FC<Props> = ({
   excludedExperimentIds,
   experimentIds,
+  projectId,
   filters,
   onSubmit,
 }: Props) => {
@@ -62,6 +64,7 @@ const ExperimentRetainLogsModalComponent: React.FC<Props> = ({
         experimentIds,
         filters: filt,
         numDays: numberDays,
+        projectId,
       });
 
       onSubmit?.(results.successful);
@@ -102,7 +105,7 @@ const ExperimentRetainLogsModalComponent: React.FC<Props> = ({
     } catch (e) {
       handleError(e, { publicSubject: 'Unable to retain logs' });
     }
-  }, [form, excludedExperimentIds, experimentIds, filters, onSubmit, openToast]);
+  }, [form, excludedExperimentIds, experimentIds, projectId, filters, onSubmit, openToast]);
 
   return (
     <Modal

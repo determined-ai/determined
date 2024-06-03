@@ -47,7 +47,7 @@ func auditLogMiddleware() echo.MiddlewareFunc {
 			}
 
 			for path := range staticWebDirectoryPaths {
-				if strings.HasPrefix(c.Path(), path) {
+				if strings.HasPrefix(c.Request().URL.Path, path) {
 					return
 				}
 			}

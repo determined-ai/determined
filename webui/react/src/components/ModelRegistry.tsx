@@ -228,7 +228,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
   );
 
   const handleUserFilterReset = useCallback(() => {
-    updateSettings({ users: undefined });
+    updateSettings({ tableOffset: 0, users: undefined });
   }, [updateSettings]);
 
   const userFilterDropdown = useCallback(
@@ -255,7 +255,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
   );
 
   const handleNameSearchReset = useCallback(() => {
-    updateSettings({ name: undefined });
+    updateSettings({ name: undefined, tableOffset: 0 });
   }, [updateSettings]);
 
   const nameFilterSearch = useCallback(
@@ -278,7 +278,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
   );
 
   const handleDescriptionSearchReset = useCallback(() => {
-    updateSettings({ description: undefined });
+    updateSettings({ description: undefined, tableOffset: 0 });
   }, [updateSettings]);
 
   const descriptionFilterSearch = useCallback(
@@ -301,7 +301,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
   );
 
   const handleLabelFilterReset = useCallback(() => {
-    updateSettings({ tags: undefined });
+    updateSettings({ tableOffset: 0, tags: undefined });
   }, [updateSettings]);
 
   const handleWorkspaceFilterApply = useCallback(
@@ -317,7 +317,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
   );
 
   const handleWorkspaceFilterReset = useCallback(() => {
-    updateSettings({ row: undefined, workspace: undefined });
+    updateSettings({ row: undefined, tableOffset: 0, workspace: undefined });
   }, [updateSettings]);
 
   const workspaceFilterDropdown = useCallback(

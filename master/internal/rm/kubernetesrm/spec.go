@@ -6,6 +6,7 @@ import (
 	"math"
 	"path"
 	"reflect"
+	"regexp"
 	"strconv"
 	"strings"
 
@@ -30,6 +31,7 @@ import (
 	schedulingV1 "k8s.io/api/scheduling/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/util/validation"
 )
 
 const (
@@ -349,6 +351,54 @@ func (p *pod) createPriorityClass(name string, priority int32) error {
 	return err
 }
 
+const (
+	maxChars             int    = 63
+	fmtAlphaNumeric      string = "A-Za-z0-9"
+	fmtAllowedChars      string = fmtAlphaNumeric + `\.\-_`
+	defaultPodLabelValue string = "invalid_value"
+)
+
+var (
+	regDisallowedSpecialChars  = regexp.MustCompile("[^" + fmtAllowedChars + "]")
+	regLeadingNonAlphaNumeric  = regexp.MustCompile("^[^" + fmtAlphaNumeric + "]+")
+	regTrailingNonAlphaNumeric = regexp.MustCompile("[^" + fmtAlphaNumeric + "]+$")
+)
+
+func validatePodLabelValue(value string) (string, error) {
+	errs := validation.IsValidLabelValue(value)
+	if len(errs) == 0 {
+		return value, nil
+	}
+
+	// Label value is not valid; attempt to fix it.
+	// 0. Convert dis-allowed special characters to underscore.
+	fixedValue := regDisallowedSpecialChars.ReplaceAllString(value, "_")
+
+	// 1. Strip leading non-alphanumeric characters.
+	fixedValue = regLeadingNonAlphaNumeric.ReplaceAllString(fixedValue, "")
+
+	// 2. Truncate to 63 characters.
+	if len(fixedValue) > maxChars {
+		fixedValue = fixedValue[:maxChars]
+	}
+
+	// 3. Strip ending non-alphanumeric characters.
+	fixedValue = regTrailingNonAlphaNumeric.ReplaceAllString(fixedValue, "")
+
+	log.Debugf(
+		"conform to Kubernetes pod label value standards: reformatting %s to %s",
+		value, fixedValue,
+	)
+
+	// Final validation check, return error if still not valid for safety.
+	errs = validation.IsValidLabelValue(fixedValue)
+	if len(errs) != 0 {
+		return "", errors.New("pod label value is not valid")
+	}
+
+	return fixedValue, nil
+}
+
 func (p *pod) configurePodSpec(
 	volumes []k8sV1.Volume,
 	determinedInitContainers k8sV1.Container,
@@ -370,10 +420,31 @@ func (p *pod) configurePodSpec(
 	}
 	if p.submissionInfo.taskSpec.Owner != nil {
 		// Owner label will disappear if Owner is somehow nil.
-		podSpec.ObjectMeta.Labels[userLabel] = p.submissionInfo.taskSpec.Owner.Username
+		labelValue, err := validatePodLabelValue(p.submissionInfo.taskSpec.Owner.Username)
+		if err != nil {
+			labelValue = defaultPodLabelValue
+			log.Warnf("unable to reformat username=%s to Kubernetes standards; using %s",
+				p.submissionInfo.taskSpec.Owner.Username, labelValue)
+		}
+		podSpec.ObjectMeta.Labels[userLabel] = labelValue
 	}
-	podSpec.ObjectMeta.Labels[workspaceLabel] = p.submissionInfo.taskSpec.Workspace
-	podSpec.ObjectMeta.Labels[resourcePoolLabel] = p.req.ResourcePool
+
+	labelValue, err := validatePodLabelValue(p.submissionInfo.taskSpec.Workspace)
+	if err != nil {
+		labelValue = defaultPodLabelValue
+		log.Warnf("unable to reformat workspace=%s to Kubernetes standards; using %s",
+			p.submissionInfo.taskSpec.Workspace, labelValue)
+	}
+	podSpec.ObjectMeta.Labels[workspaceLabel] = labelValue
+
+	labelValue, err = validatePodLabelValue(p.req.ResourcePool)
+	if err != nil {
+		labelValue = defaultPodLabelValue
+		log.Warnf("unable to reformat resource_pool=%s to Kubernetes standards; using %s",
+			p.req.ResourcePool, labelValue)
+	}
+	podSpec.ObjectMeta.Labels[resourcePoolLabel] = labelValue
+
 	podSpec.ObjectMeta.Labels[taskTypeLabel] = string(p.submissionInfo.taskSpec.TaskType)
 	podSpec.ObjectMeta.Labels[taskIDLabel] = p.submissionInfo.taskSpec.TaskID
 	podSpec.ObjectMeta.Labels[containerIDLabel] = p.submissionInfo.taskSpec.ContainerID
@@ -381,7 +452,11 @@ func (p *pod) configurePodSpec(
 
 	// If map is not populated, labels will be missing and observability will be impacted.
 	for k, v := range p.submissionInfo.taskSpec.ExtraPodLabels {
-		podSpec.ObjectMeta.Labels[labelPrefix+k] = v
+		labelValue, err := validatePodLabelValue(v)
+		if err != nil {
+			labelValue = defaultPodLabelValue
+		}
+		podSpec.ObjectMeta.Labels[labelPrefix+k] = labelValue
 	}
 
 	p.modifyPodSpec(podSpec, scheduler)
