@@ -403,7 +403,6 @@ func publishLoop[T stream.Msg](
 
 		// Did we get a notification?
 		case notification := <-listener.Notify:
-			fmt.Println("recemove notification")
 			if notification == nil {
 				// Some notification may be lost during connection loss. Restart the publisher
 				// system to recover.
@@ -411,11 +410,9 @@ func publishLoop[T stream.Msg](
 			}
 			var event stream.Event[T]
 			err = json.Unmarshal([]byte(notification.Extra), &event)
-			fmt.Printf("notification: %#v, err: %#v\n", notification.Extra, err)
 			if err != nil {
 				return err
 			}
-			fmt.Printf("%+v are of type %T\n", event, event)
 			events = append(events, event)
 			// Collect all available notifications before proceeding.
 			keepGoing := true
@@ -437,7 +434,6 @@ func publishLoop[T stream.Msg](
 			}
 
 			idToRecordCache := map[int]stream.RecordCache{}
-			// hydratedEvents :=
 			for _, ev := range events {
 				idToRecordCache = publisher.HydrateMsg(ev.After, idToRecordCache)
 			}

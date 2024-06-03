@@ -4,7 +4,6 @@ import (
 	"container/list"
 	"database/sql"
 	"encoding/json"
-	"fmt"
 	"reflect"
 	"sync"
 
@@ -195,13 +194,8 @@ func (p *Publisher[T]) CloseAllStreamers() {
 	p.Subscriptions = nil
 }
 
-// hydrateMsg queries the DB by the ID from rawMsg of a upsert or fallin event
-// and grabs the fields(hydrated message) that we care about.
-// Here are the different scenarios of an event in this function:
-// 1. The record with id x has been deleted.
-// 2. The record with id x still has the same Seq as the rawMsg.
-// 3. The record with id x has a Seq greater than the rawMsg.
-// The function returns an upsert message scenarios 2.
+// HydrateMsg queries the DB by the ID from rawMsg of a upsert or fallin event
+// and get the full record.
 func (p *Publisher[T]) HydrateMsg(rawMsg T, idToRecordCache map[int]RecordCache) map[int]RecordCache {
 	if reflect.ValueOf(rawMsg).IsNil() {
 		return idToRecordCache
@@ -236,57 +230,46 @@ func (p *Publisher[T]) Broadcast(events []Event[T], idToRecordCache map[int]Reco
 	// check each event against each subscription
 	for e := p.Subscriptions.Front(); e != nil; e = e.Next() {
 		if sub, ok := e.Value.(*Subscription[T]); ok {
-			fmt.Printf("\nsub: %+v\n", sub)
 			userNotKnownIDs := set.New[int]()
 			func() {
-				for i, ev := range events {
-					fmt.Printf("ev: %#v\n", ev)
+				for _, ev := range events {
 					var msg interface{}
 					switch {
 					case !reflect.ValueOf(ev.After).IsNil() && sub.filter(ev.After) && sub.permissionFilter(ev.After):
 						// update, insert, or fallin: send the record to the client.
-						fmt.Println("in update, insert, fallin")
-						fmt.Printf("index: %+v, afterMsg: %+v\n", i, ev.After)
 						afterMsg := ev.After
 						isInsert := reflect.ValueOf(ev.Before).IsNil()
 						isFallin := !reflect.ValueOf(ev.Before).IsNil() && (!sub.filter(ev.Before) || !sub.permissionFilter(ev.Before))
-						fmt.Printf("isInsert: %v, isFallin: %+v\n", isInsert, isFallin)
 
 						if recordCache, ok := idToRecordCache[afterMsg.GetID()]; ok && recordCache.UpsertMsg != nil {
 							cachedSeq := recordCache.UpsertMsg.SeqNum()
 							if cachedSeq == afterMsg.SeqNum() {
 								msg = sub.Streamer.PrepareFn(recordCache.UpsertMsg)
-								fmt.Printf("send msg: %+v\n", msg)
 							} else {
 								if isInsert || isFallin {
 									userNotKnownIDs.Insert(afterMsg.GetID())
-									fmt.Printf("userNotKnownIDS: %#v\n", userNotKnownIDs)
 								}
 								continue
 							}
 						} else {
 							if isInsert || isFallin {
 								userNotKnownIDs.Insert(afterMsg.GetID())
-								fmt.Printf("userNotKnownIDS: %#v\n", userNotKnownIDs)
 							}
 							continue
 						}
 
 					case !reflect.ValueOf(ev.Before).IsNil() && sub.filter(ev.Before) && sub.permissionFilter(ev.Before):
 						// deletion or fallout: tell the client the record is deleted.
-						fmt.Println("delete or fallout")
 						beforeMsg := ev.Before
 						if !userNotKnownIDs.Contains(beforeMsg.GetID()) {
 							msg = sub.Streamer.PrepareFn(beforeMsg.DeleteMsg())
 							userNotKnownIDs.Insert(beforeMsg.GetID())
-							fmt.Printf("send msg: %+v\n", msg)
 						} else {
 							continue
 						}
 
 					default:
 						// ignore this message
-						fmt.Println("ignore")
 						continue
 					}
 					// is this the first match for this Subscription during this Broadcast?

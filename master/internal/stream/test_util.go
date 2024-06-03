@@ -23,7 +23,6 @@ const (
 // testPrepareFunc returns a string representation of known messages;
 // otherwise, returns the MarshallableMsg that the streamer sends.
 func testPrepareFunc(i stream.MarshallableMsg) interface{} {
-	fmt.Printf("msg: %#v\n", i)
 	switch msg := i.(type) {
 	case *stream.UpsertMsg:
 		switch typedMsg := msg.Msg.(type) {

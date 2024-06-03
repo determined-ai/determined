@@ -218,8 +218,6 @@ func ModelMakeFilter(spec *ModelSubscriptionSpec) (func(*ModelMsg) bool, error) 
 	// return a closure around our copied maps
 	return func(msg *ModelMsg) bool {
 		// subscribed to model by this model_id?
-		fmt.Printf("model msg: %#v\n", msg)
-		fmt.Printf("modelIDs: %#v, workspaceIDs: %#v, userIDs: %#v\n", modelIDs, workspaceIDs, userIDs)
 		if _, ok := modelIDs[msg.ID]; ok {
 			return true
 		}

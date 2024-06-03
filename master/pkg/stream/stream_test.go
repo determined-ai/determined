@@ -2,7 +2,6 @@ package stream
 
 import (
 	"database/sql"
-	"fmt"
 	"strconv"
 	"testing"
 
@@ -136,7 +135,7 @@ func TestConfigureSubscription(t *testing.T) {
 	dummyFilter := func(msg *TestMsgTypeA) bool {
 		return true
 	}
-	dummyHydrator := func(ID int) (*TestMsgTypeA, error) {
+	dummyHydrator := func(msg *TestMsgTypeA) (*TestMsgTypeA, error) {
 		return &TestMsgTypeA{}, nil
 	}
 	streamer := NewStreamer(prepareNothing)
@@ -175,10 +174,10 @@ func TestConfigureSubscription(t *testing.T) {
 }
 
 func TestBroadcast(t *testing.T) {
-	hydrator := func(ID int) (*TestMsgTypeA, error) {
+	hydrator := func(msg *TestMsgTypeA) (*TestMsgTypeA, error) {
 		return &TestMsgTypeA{
-			Seq: int64(ID),
-			ID:  ID,
+			Seq: int64(msg.GetID()),
+			ID:  msg.GetID(),
 		}, nil
 	}
 	streamer := NewStreamer(prepareNothing)
@@ -217,10 +216,10 @@ func TestBroadcast(t *testing.T) {
 
 func TestBroadcastWithFilters(t *testing.T) {
 	streamer := NewStreamer(prepareNothing)
-	hydrator := func(ID int) (*TestMsgTypeA, error) {
+	hydrator := func(msg *TestMsgTypeA) (*TestMsgTypeA, error) {
 		return &TestMsgTypeA{
-			Seq: int64(ID),
-			ID:  ID,
+			Seq: int64(msg.GetID()),
+			ID:  msg.GetID(),
 		}, nil
 	}
 	publisher := NewPublisher[*TestMsgTypeA](hydrator)
@@ -338,10 +337,10 @@ func TestBroadcastWithFilters(t *testing.T) {
 
 func TestBroadcastWithPermissionFilters(t *testing.T) {
 	streamer := NewStreamer(prepareNothing)
-	hydrator := func(ID int) (*TestMsgTypeA, error) {
+	hydrator := func(msg *TestMsgTypeA) (*TestMsgTypeA, error) {
 		return &TestMsgTypeA{
-			Seq: int64(ID),
-			ID:  ID,
+			Seq: int64(msg.GetID()),
+			ID:  msg.GetID(),
 		}, nil
 	}
 	publisher := NewPublisher[*TestMsgTypeA](hydrator)
@@ -428,16 +427,16 @@ func TestBroadcastWithPermissionFilters(t *testing.T) {
 func TestBroadcastSeparateEvents(t *testing.T) {
 	streamer := NewStreamer(prepareNothing)
 	streamerTwo := NewStreamer(prepareNothing)
-	hydratorA := func(ID int) (*TestMsgTypeA, error) {
+	hydratorA := func(msg *TestMsgTypeA) (*TestMsgTypeA, error) {
 		return &TestMsgTypeA{
-			Seq: int64(ID),
-			ID:  ID,
+			Seq: int64(msg.GetID()),
+			ID:  msg.GetID(),
 		}, nil
 	}
-	hydratorB := func(ID int) (*TestMsgTypeB, error) {
+	hydratorB := func(msg *TestMsgTypeB) (*TestMsgTypeB, error) {
 		return &TestMsgTypeB{
-			Seq: int64(ID),
-			ID:  ID,
+			Seq: int64(msg.GetID()),
+			ID:  msg.GetID(),
 		}, nil
 	}
 	publisher := NewPublisher[*TestMsgTypeA](hydratorA)
@@ -535,7 +534,6 @@ func TestBroadcastSeparateEvents(t *testing.T) {
 }
 
 func setup(t *testing.T, testEvents []TestEvent, testSubscribers []TestSubscriber) {
-
 	var events []Event[*TestMsgTypeA]
 	userToFalloutSeq := make(map[int]int64)
 	userToFallinSeq := make(map[int]int64)
@@ -582,29 +580,25 @@ func setup(t *testing.T, testEvents []TestEvent, testSubscribers []TestSubscribe
 			userToFalloutSeq[ts.ID] = int64(len(testEvents) + 1)
 		}
 	}
-	fmt.Printf("userToFalloutSeq: %+v\n", userToFalloutSeq)
 	// Setting fallin seq for users do not have a fallin event.
 	for _, ts := range testSubscribers {
 		if _, ok := userToFallinSeq[ts.ID]; !ok {
 			userToFallinSeq[ts.ID] = int64(-1)
 		}
 	}
-	fmt.Printf("userToFallinSeq: %+v\n", userToFallinSeq)
 
-	// Getting seq for the mocked hydrator
-
-	var hydrator func(int) (*TestMsgTypeA, error)
+	var hydrator func(*TestMsgTypeA) (*TestMsgTypeA, error)
 	if testEvents[len(testEvents)-1].Type != "delete" {
 		lastSeq := testEvents[len(testEvents)-1].AfterSeq
 
-		hydrator = func(ID int) (*TestMsgTypeA, error) {
+		hydrator = func(msg *TestMsgTypeA) (*TestMsgTypeA, error) {
 			return &TestMsgTypeA{
 				Seq: lastSeq,
-				ID:  ID,
+				ID:  msg.GetID(),
 			}, nil
 		}
 	} else {
-		hydrator = func(ID int) (*TestMsgTypeA, error) {
+		hydrator = func(msg *TestMsgTypeA) (*TestMsgTypeA, error) {
 			return nil, sql.ErrNoRows
 		}
 	}
@@ -987,11 +981,9 @@ func TestTwoSubscribers(t *testing.T) {
 			for _, ts := range testSubscribers {
 				streamerMsgs = append(streamerMsgs, ts.Streamer.Msgs...)
 			}
-			fmt.Printf("all msg: %#v\n", streamerMsgs)
 			require.Equal(t, len(tc.outGoingMsgs), len(streamerMsgs), "streamer.Msgs length incorrect")
 
 			for i, o := range tc.outGoingMsgs {
-				fmt.Printf("msg: %#v\n", streamerMsgs[i])
 				switch o.(type) {
 				case UpsertMsg:
 					upsertMsg, ok := streamerMsgs[i].(*UpsertMsg)
