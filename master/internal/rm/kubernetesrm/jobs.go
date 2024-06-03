@@ -961,7 +961,6 @@ func (j *jobsService) podDeletedCallback(obj any) {
 // jobSchedulingState is a roll-up of the sceduling states of its individual pods.
 func (j *jobsService) jobSchedulingState(jobName string) sproto.SchedulingState {
 	states, ok := j.jobNameToPodNameToSchedulingState[jobName]
-
 	if !ok {
 		return sproto.SchedulingStateQueued
 	}
