@@ -418,17 +418,39 @@ func (a *apiServer) MoveRuns(
 			})
 		}
 
-		if _, err = tx.NewRaw(`UPDATE runs SET local_id=s.local_id FROM runs as r 
-		JOIN (SELECT r.id as id, (p.max_local_id + ROW_NUMBER() OVER(PARTITION BY p.id)) as local_id
-		FROM projects p JOIN runs r ON r.project_id=p.id) as s ON r.id=s.id WHERE r.id IN (?)`,
-			bun.In(validIDs)).Exec(ctx); err != nil {
+		if _, err = tx.NewRaw(`
+		UPDATE runs SET local_id=s.local_id
+		FROM
+			(
+				SELECT
+					r.id as id,
+					(p.max_local_id + ROW_NUMBER() OVER(PARTITION BY p.id ORDER BY p.id)) as local_id
+				FROM
+					projects p
+					JOIN runs r ON r.project_id=p.id
+				WHERE r.id IN (?)
+			) as s 
+		WHERE s.id=runs.id
+		`,
+			bun.In(acceptedIDs)).Exec(ctx); err != nil {
 			return nil, fmt.Errorf("updating run's local IDs: %w", err)
 		}
 
-		if _, err = tx.NewRaw(`UPDATE projects SET max_local_id=s.max_local_id FROM projects as p
-		JOIN (SELECT project_id, COALESCE(MAX(local_id), 1) as max_local_id FROM runs GROUP BY project_id
-		ORDER BY project_id) as s ON p.id=s.project_id WHERE p.id=?`,
-			req.DestinationProjectId).Exec(ctx); err != nil {
+		if _, err = tx.NewRaw(`
+		UPDATE projects SET max_local_id=s.max_local_id
+		FROM 
+			(
+				SELECT 
+					project_id,
+					COALESCE(MAX(local_id), 1) as max_local_id
+				FROM 
+					runs
+				GROUP BY
+					project_id
+				HAVING project_id=?
+			) as s
+		WHERE projects.id=?
+		`, req.DestinationProjectId, req.DestinationProjectId).Exec(ctx); err != nil {
 			return nil, fmt.Errorf("updating projects max local id: %w", err)
 		}
 
