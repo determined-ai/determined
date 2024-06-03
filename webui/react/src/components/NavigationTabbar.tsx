@@ -3,15 +3,16 @@ import Icon, { IconName } from 'hew/Icon';
 import { useModal } from 'hew/Modal';
 import Spinner from 'hew/Spinner';
 import { Loadable } from 'hew/utils/loadable';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState} from 'react';
 import { useLocation } from 'react-router-dom';
+import LogoGenAI from 'assets/images/logo-genai.svg?url';
 
 import ActionSheet, { ActionItem } from 'components/ActionSheet';
 import Link, { Props as LinkProps } from 'components/Link';
 import useUI from 'components/ThemeProvider';
 import UserSettings from 'components/UserSettings';
 import usePermissions from 'hooks/usePermissions';
-import { handlePath, paths } from 'routes/utils';
+import {handlePath, paths, serverAddress} from 'routes/utils';
 import authStore from 'stores/auth';
 import clusterStore from 'stores/cluster';
 import determinedStore, { BrandingType } from 'stores/determinedInfo';
@@ -23,6 +24,7 @@ import { AnyMouseEvent, routeToReactUrl } from 'utils/routes';
 import css from './NavigationTabbar.module.scss';
 import UserBadge from './UserBadge';
 import WorkspaceCreateModalComponent from './WorkspaceCreateModal';
+import useFeature from "../hooks/useFeature";
 
 interface ToolbarItemProps extends LinkProps {
   badge?: number;
@@ -66,6 +68,7 @@ const NavigationTabbar: React.FC = () => {
   const showNavigation = isAuthenticated && ui.showChrome;
 
   const { canCreateWorkspace, canAdministrateUsers } = usePermissions();
+  const gasLinkOn = useFeature().isOn('genai');
 
   const WorkspaceCreateModal = useModal(WorkspaceCreateModalComponent);
 
@@ -122,7 +125,7 @@ const NavigationTabbar: React.FC = () => {
 
   interface OverflowActionProps {
     external?: boolean;
-    icon?: IconName;
+    icon?: IconName | JSX.Element;
     label: string;
     onClick?: (e: AnyMouseEvent) => void;
     path?: string;
@@ -182,6 +185,16 @@ const NavigationTabbar: React.FC = () => {
       popout: true,
     },
   ];
+
+    if (gasLinkOn) {
+      overflowActionsBottom.push({
+        external: true,
+        icon: <img alt="GenAI Studio" height={24} src={LogoGenAI} width={24} />,
+        label: 'GenAI',
+        path: serverAddress('/genai'),
+        popout: true,
+      });
+  }
 
   return (
     <>
