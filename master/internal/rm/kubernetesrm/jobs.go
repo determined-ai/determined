@@ -979,7 +979,7 @@ func (j *jobsService) updatePodSchedulingState(jobName string, pod k8sV1.Pod) {
 
 	// A nodename in the spec is a request to be scheduled onto a node but it is not guaranteed.
 	states[pod.Name] = sproto.SchedulingStateQueued
-	if PodScheduled(pod) {
+	if podScheduled(pod) {
 		states[pod.Name] = sproto.SchedulingStateScheduled
 	}
 	j.jobNameToPodNameToSchedulingState[jobName] = states

@@ -588,7 +588,7 @@ func (j *job) preparePodUpdateMessage(msgText string) string {
 }
 
 // PodScheduled checks pod conditions to determine if a pod has been scheduled onto a node.
-func PodScheduled(pod k8sV1.Pod) bool {
+func podScheduled(pod k8sV1.Pod) bool {
 	for _, condition := range pod.Status.Conditions {
 		if condition.Type == k8sV1.PodScheduled {
 			return condition.Status == k8sV1.ConditionTrue
@@ -609,7 +609,7 @@ func (j *job) getPodState(pod k8sV1.Pod) (cproto.State, error) {
 			return cproto.Terminated, nil
 		}
 
-		if PodScheduled(pod) {
+		if podScheduled(pod) {
 			return cproto.Starting, nil
 		}
 		return cproto.Assigned, nil
