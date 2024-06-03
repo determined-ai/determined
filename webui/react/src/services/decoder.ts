@@ -875,11 +875,11 @@ export const decodeJobStates = (
   >;
 };
 
-export const mapV1ExperimentActionResults = (
-  results: Sdk.V1ExperimentActionResult[],
+export const mapV1ActionResults = (
+  results: Sdk.V1ExperimentActionResult[] | Sdk.V1RunActionResult[],
 ): types.BulkActionResult => {
   return results.reduce(
-    (acc, cur) => {
+    (acc: types.BulkActionResult, cur) => {
       if (cur.error.length > 0) {
         acc.failed.push(cur);
       } else {
@@ -887,7 +887,7 @@ export const mapV1ExperimentActionResults = (
       }
       return acc;
     },
-    { failed: [], successful: [] } as types.BulkActionResult,
+    { failed: [], successful: [] },
   );
 };
 
