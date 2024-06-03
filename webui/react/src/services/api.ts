@@ -771,9 +771,11 @@ export const killRuns = generateDetApi<Api.V1KillRunsRequest, Api.V1KillRunsResp
   Config.killRuns,
 );
 
-export const moveRuns = generateDetApi<Api.V1MoveRunsRequest, Api.V1MoveRunsResponse, void>(
-  Config.moveRuns,
-);
+export const moveRuns = generateDetApi<
+  Api.V1MoveRunsRequest,
+  Api.V1MoveRunsResponse,
+  Type.BulkActionResult
+>(Config.moveRuns);
 
 export const unarchiveRuns = generateDetApi<
   Api.V1UnarchiveRunsRequest,
