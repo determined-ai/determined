@@ -316,8 +316,8 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
                 currentColumn.column,
                 currentColumn.displayName || currentColumn.column,
                 settings.columnWidths[currentColumn.column] ??
-                defaultColumnWidths[currentColumn.column as RunColumn] ??
-                MIN_COLUMN_WIDTH,
+                  defaultColumnWidths[currentColumn.column as RunColumn] ??
+                  MIN_COLUMN_WIDTH,
                 dataPath,
                 {
                   max: heatmap.max,
@@ -329,8 +329,8 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
                 currentColumn.column,
                 currentColumn.displayName || currentColumn.column,
                 settings.columnWidths[currentColumn.column] ??
-                defaultColumnWidths[currentColumn.column as RunColumn] ??
-                MIN_COLUMN_WIDTH,
+                  defaultColumnWidths[currentColumn.column as RunColumn] ??
+                  MIN_COLUMN_WIDTH,
                 dataPath,
               );
             }
@@ -341,8 +341,8 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
               currentColumn.column,
               currentColumn.displayName || currentColumn.column,
               settings.columnWidths[currentColumn.column] ??
-              defaultColumnWidths[currentColumn.column as RunColumn] ??
-              MIN_COLUMN_WIDTH,
+                defaultColumnWidths[currentColumn.column as RunColumn] ??
+                MIN_COLUMN_WIDTH,
               dataPath,
             );
             break;
@@ -353,8 +353,8 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
               currentColumn.column,
               currentColumn.displayName || currentColumn.column,
               settings.columnWidths[currentColumn.column] ??
-              defaultColumnWidths[currentColumn.column as RunColumn] ??
-              MIN_COLUMN_WIDTH,
+                defaultColumnWidths[currentColumn.column as RunColumn] ??
+                MIN_COLUMN_WIDTH,
               dataPath,
             );
         }
@@ -367,9 +367,9 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
             settings.columnWidths[currentColumn.column],
             heatmap && settings.heatmapOn && !settings.heatmapSkipped.includes(currentColumn.column)
               ? {
-                max: heatmap.max,
-                min: heatmap.min,
-              }
+                  max: heatmap.max,
+                  min: heatmap.min,
+                }
               : undefined,
           );
         }
@@ -647,7 +647,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
   );
 
   const handleContextMenuComplete: ContextMenuCompleteHandlerProps<ExperimentAction, FlatRun> =
-    useCallback(() => { }, []);
+    useCallback(() => {}, []);
 
   const handleColumnsOrderChange = useCallback(
     // changing both column order and pinned count should happen in one update:
@@ -697,12 +697,12 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
         const items: MenuItem[] = [
           settings.selection.type === 'ALL_EXCEPT' || settings.selection.selections.length > 0
             ? {
-              key: 'select-none',
-              label: 'Clear selected',
-              onClick: () => {
-                handleSelectionChange?.('remove-all');
-              },
-            }
+                key: 'select-none',
+                label: 'Clear selected',
+                onClick: () => {
+                  handleSelectionChange?.('remove-all');
+                },
+              }
             : null,
           ...[5, 10, 25].map((n) => ({
             key: `select-${n}`,
@@ -731,32 +731,32 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
           ? null
           : !isPinned
             ? {
-              icon: <Icon decorative name="pin" />,
-              key: 'pin',
-              label: 'Pin column',
-              onClick: () => {
-                const newColumnsOrder = columnsIfLoaded.filter((c) => c !== columnId);
-                newColumnsOrder.splice(settings.pinnedColumnsCount, 0, columnId);
-                handleColumnsOrderChange(
-                  newColumnsOrder,
-                  Math.min(settings.pinnedColumnsCount + 1, columnsIfLoaded.length),
-                );
-              },
-            }
+                icon: <Icon decorative name="pin" />,
+                key: 'pin',
+                label: 'Pin column',
+                onClick: () => {
+                  const newColumnsOrder = columnsIfLoaded.filter((c) => c !== columnId);
+                  newColumnsOrder.splice(settings.pinnedColumnsCount, 0, columnId);
+                  handleColumnsOrderChange(
+                    newColumnsOrder,
+                    Math.min(settings.pinnedColumnsCount + 1, columnsIfLoaded.length),
+                  );
+                },
+              }
             : {
-              disabled: settings.pinnedColumnsCount <= 1,
-              icon: <Icon decorative name="pin" />,
-              key: 'unpin',
-              label: 'Unpin column',
-              onClick: () => {
-                const newColumnsOrder = columnsIfLoaded.filter((c) => c !== columnId);
-                newColumnsOrder.splice(settings.pinnedColumnsCount - 1, 0, columnId);
-                handleColumnsOrderChange(
-                  newColumnsOrder,
-                  Math.max(settings.pinnedColumnsCount - 1, 0),
-                );
+                disabled: settings.pinnedColumnsCount <= 1,
+                icon: <Icon decorative name="pin" />,
+                key: 'unpin',
+                label: 'Unpin column',
+                onClick: () => {
+                  const newColumnsOrder = columnsIfLoaded.filter((c) => c !== columnId);
+                  newColumnsOrder.splice(settings.pinnedColumnsCount - 1, 0, columnId);
+                  handleColumnsOrderChange(
+                    newColumnsOrder,
+                    Math.max(settings.pinnedColumnsCount - 1, 0),
+                  );
+                },
               },
-            },
         {
           icon: <Icon decorative name="eye-close" />,
           key: 'hide',
@@ -813,9 +813,9 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
           sortCount === 0
             ? []
             : [
-              { type: 'divider' as const },
-              ...sortMenuItemsForColumn(column, sorts, handleSortChange),
-            ];
+                { type: 'divider' as const },
+                ...sortMenuItemsForColumn(column, sorts, handleSortChange),
+              ];
 
         items.push(
           ...sortMenuItems,
@@ -926,8 +926,10 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
               ]}
               onVisibleColumnChange={handleColumnsOrderChange}
             />
-            <OptionsMenu rowHeight={globalSettings.rowHeight} onRowHeightChange={onRowHeightChange} />
-
+            <OptionsMenu
+              rowHeight={globalSettings.rowHeight}
+              onRowHeightChange={onRowHeightChange}
+            />
           </Row>
         </Column>
         <Column align="right">
@@ -943,64 +945,62 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
           </Row>
         </Column>
       </Row>
-      {
-        !isLoading && total.isLoaded && total.data === 0 ? (
-          numFilters === 0 ? (
-            <Message
-              action={
-                <Link external href={paths.docs('/get-started/webui-qs.html')}>
-                  Quick Start Guide
-                </Link>
-              }
-              description="Keep track of runs in a project by connecting up your code."
-              icon="experiment"
-              title="No Runs"
-            />
-          ) : (
-            <Message description="No results matching your filters" icon="search" />
-          )
-        ) : error ? (
-          <Error fetchData={fetchRuns} />
+      {!isLoading && total.isLoaded && total.data === 0 ? (
+        numFilters === 0 ? (
+          <Message
+            action={
+              <Link external href={paths.docs('/get-started/webui-qs.html')}>
+                Quick Start Guide
+              </Link>
+            }
+            description="Keep track of runs in a project by connecting up your code."
+            icon="experiment"
+            title="No Runs"
+          />
         ) : (
-          <>
-            <DataGrid
-              columns={columns}
-              data={runs}
-              getHeaderMenuItems={getHeaderMenuItems}
-              getRowAccentColor={getRowAccentColor}
-              imperativeRef={dataGridRef}
-              isPaginated={isPagedView}
-              page={page}
-              pageSize={PAGE_SIZE}
-              pinnedColumnsCount={isLoadingSettings ? 0 : settings.pinnedColumnsCount}
-              rowHeight={rowHeightMap[globalSettings.rowHeight as RowHeight]}
-              selection={selection}
-              sorts={sorts}
-              staticColumns={STATIC_COLUMNS}
-              total={total.getOrElse(PAGE_SIZE)}
-              onColumnResize={handleColumnWidthChange}
-              onColumnsOrderChange={handleColumnsOrderChange}
-              onContextMenuComplete={handleContextMenuComplete}
-              onPageUpdate={handlePageUpdate}
-              onPinnedColumnsCountChange={handlePinnedColumnsCountChange}
-              onSelectionChange={handleSelectionChange}
-            />
-            {showPagination && (
-              <Row>
-                <Column align="right">
-                  <Pagination
-                    current={page + 1}
-                    pageSize={settings.pageLimit}
-                    pageSizeOptions={[20, 40, 80]}
-                    total={Loadable.getOrElse(0, total)}
-                    onChange={onPageChange}
-                  />
-                </Column>
-              </Row>
-            )}
-          </>
+          <Message description="No results matching your filters" icon="search" />
         )
-      }
+      ) : error ? (
+        <Error fetchData={fetchRuns} />
+      ) : (
+        <>
+          <DataGrid
+            columns={columns}
+            data={runs}
+            getHeaderMenuItems={getHeaderMenuItems}
+            getRowAccentColor={getRowAccentColor}
+            imperativeRef={dataGridRef}
+            isPaginated={isPagedView}
+            page={page}
+            pageSize={PAGE_SIZE}
+            pinnedColumnsCount={isLoadingSettings ? 0 : settings.pinnedColumnsCount}
+            rowHeight={rowHeightMap[globalSettings.rowHeight as RowHeight]}
+            selection={selection}
+            sorts={sorts}
+            staticColumns={STATIC_COLUMNS}
+            total={total.getOrElse(PAGE_SIZE)}
+            onColumnResize={handleColumnWidthChange}
+            onColumnsOrderChange={handleColumnsOrderChange}
+            onContextMenuComplete={handleContextMenuComplete}
+            onPageUpdate={handlePageUpdate}
+            onPinnedColumnsCountChange={handlePinnedColumnsCountChange}
+            onSelectionChange={handleSelectionChange}
+          />
+          {showPagination && (
+            <Row>
+              <Column align="right">
+                <Pagination
+                  current={page + 1}
+                  pageSize={settings.pageLimit}
+                  pageSizeOptions={[20, 40, 80]}
+                  total={Loadable.getOrElse(0, total)}
+                  onChange={onPageChange}
+                />
+              </Column>
+            </Row>
+          )}
+        </>
+      )}
     </div>
   );
 };

@@ -187,13 +187,13 @@ const SearchDetails: React.FC = () => {
   const pageBreadcrumb: BreadCrumbRoute[] = [
     workspaceName && experiment?.workspaceId !== 1
       ? {
-        breadcrumbName: workspaceName,
-        path: paths.workspaceDetails(experiment?.workspaceId ?? 1),
-      }
+          breadcrumbName: workspaceName,
+          path: paths.workspaceDetails(experiment?.workspaceId ?? 1),
+        }
       : {
-        breadcrumbName: 'Uncategorized Experiments',
-        path: paths.projectDetails(1),
-      },
+          breadcrumbName: 'Uncategorized Experiments',
+          path: paths.projectDetails(1),
+        },
   ];
 
   if (experiment?.projectName && experiment?.projectId && experiment?.projectId !== 1)
