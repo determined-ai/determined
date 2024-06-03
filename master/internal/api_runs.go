@@ -454,6 +454,21 @@ func (a *apiServer) MoveRuns(
 			return nil, fmt.Errorf("updating projects max local id: %w", err)
 		}
 
+		if _, err = tx.NewRaw(`
+		INSERT INTO local_id_redirect (run_id, project_key, local_id)
+		SELECT 
+			r.id as runs_id,
+			p.key as project_key,
+			r.local_id
+		FROM 
+			projects p
+			JOIN runs r 
+			ON r.project_id=p.id
+		WHERE r.id IN (?)
+		`, bun.In(acceptedIDs)).Exec(ctx); err != nil {
+			return nil, fmt.Errorf("adding local id redirect: %w", err)
+		}
+
 		var failedRunIDs []int32
 		if err = tx.NewSelect().Table("runs").
 			Column("id").

@@ -812,7 +812,7 @@ func MoveExperiments(
 			) as s 
 		WHERE s.id=runs.id
 		`,
-			bun.In(validIDs)).Exec(ctx); err != nil {
+			bun.In(acceptedIDs)).Exec(ctx); err != nil {
 			return nil, fmt.Errorf("updating run's local IDs: %w", err)
 		}
 
@@ -832,6 +832,21 @@ func MoveExperiments(
 		WHERE projects.id=?`,
 			destinationProjectID, destinationProjectID).Exec(ctx); err != nil {
 			return nil, fmt.Errorf("updating projects max local id: %w", err)
+		}
+
+		if _, err = tx.NewRaw(`
+		INSERT INTO local_id_redirect (run_id, project_key, local_id)
+		SELECT 
+			r.id as run_id,
+			p.key as project_key,
+			r.local_id
+		FROM 
+			projects p
+			JOIN runs r 
+			ON r.project_id=p.id
+		WHERE r.experiment_id IN (?)
+		`, bun.In(acceptedIDs)).Exec(ctx); err != nil {
+			return nil, fmt.Errorf("adding local id redirect: %w", err)
 		}
 
 		for _, acceptID := range acceptedIDs {
