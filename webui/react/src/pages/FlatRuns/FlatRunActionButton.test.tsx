@@ -3,25 +3,14 @@ import dayjs from 'dayjs';
 import UIProvider, { DefaultTheme } from 'hew/Theme';
 
 import FlatRunActionButton from 'pages/FlatRuns/FlatRunActionButton';
-import { FlatRun, Project, RunState, WorkspaceState } from 'types';
+import { FlatRun, RunState } from 'types';
 
 const setup = (selectedFlatRuns: ReadonlyArray<Readonly<FlatRun>>) => {
-  const project: Readonly<Project> = {
-    archived: false,
-    id: 1,
-    immutable: false,
-    name: 'proj',
-    notes: [],
-    state: WorkspaceState.Unspecified,
-    userId: 1,
-    workspaceId: 1,
-  };
-
   render(
     <UIProvider theme={DefaultTheme.Light}>
       <FlatRunActionButton
         isMobile={false}
-        project={project}
+        projectId={1}
         selectedRuns={selectedFlatRuns}
         onActionComplete={vi.fn()}
       />
