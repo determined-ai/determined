@@ -1,0 +1,1 @@
+DROP FUNCTION IF EXISTS stream_project_change;

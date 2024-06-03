@@ -51,6 +51,68 @@ class ClientMsg:
         return isinstance(other, type(self)) and self.to_json() == other.to_json()
 
 
+class ExperimentMsg(ServerMsg):
+    def __init__(
+        self,
+        id: "int",
+        state: "str",
+        config: "typing.Any",
+        model_definition: "bytearray",
+        start_time: "float",
+        end_time: "float",
+        archived: "bool",
+        parent_id: "int",
+        owner_id: "int",
+        progress: "float",
+        original_config: "str",
+        notes: "str",
+        job_id: "str",
+        project_id: "int",
+        checkpoint_size: "int",
+        checkpoint_count: "int",
+        best_trial_id: "int",
+        unmanaged: "bool",
+        external_experiment_id: "str",
+        seq: "int",
+    ) -> None:
+        self.id = id
+        self.state = state
+        self.config = config
+        self.model_definition = model_definition
+        self.start_time = start_time
+        self.end_time = end_time
+        self.archived = archived
+        self.parent_id = parent_id
+        self.owner_id = owner_id
+        self.progress = progress
+        self.original_config = original_config
+        self.notes = notes
+        self.job_id = job_id
+        self.project_id = project_id
+        self.checkpoint_size = checkpoint_size
+        self.checkpoint_count = checkpoint_count
+        self.best_trial_id = best_trial_id
+        self.unmanaged = unmanaged
+        self.external_experiment_id = external_experiment_id
+        self.seq = seq
+
+
+class ProjectsDeleted(DeleteMsg):
+    pass
+
+
+class ExperimentSubscriptionSpec(ClientMsg):
+    def __init__(
+        self,
+        experiment_ids: "typing.Optional[typing.List[int]]" = None,
+        project_ids: "typing.Optional[typing.List[int]]" = None,
+        since: "typing.Optional[int]" = None,
+    ) -> None:
+        self.experiment_ids = experiment_ids
+        self.project_ids = project_ids
+        self.since = since
+
+
 class ModelMsg(ServerMsg):
     def __init__(
         self,

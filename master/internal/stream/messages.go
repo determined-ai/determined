@@ -27,6 +27,7 @@ type KnownKeySet struct {
 	Projects      string `json:"projects"`
 	Models        string `json:"models"`
 	ModelVersions string `json:"modelversions"`
+	Experiments   string `json:"experiments"`
 }
 
 // prepareWebsocketMessage converts the MarshallableMsg into a websocket.PreparedMessage.

@@ -3,8 +3,6 @@ package stream
 import (
 	"context"
 
-	"github.com/labstack/echo/v4"
-
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/stream"
 )
@@ -17,6 +15,7 @@ type SubscriptionSet struct {
 	Projects      *subscriptionState[*ProjectMsg, ProjectSubscriptionSpec]
 	Models        *subscriptionState[*ModelMsg, ModelSubscriptionSpec]
 	ModelVersions *subscriptionState[*ModelVersionMsg, ModelVersionSubscriptionSpec]
+	Experiments   *subscriptionState[*ExperimentMsg, ExperimentSubscriptionSpec]
 }
 
 // subscriptionState contains per-type subscription state.
@@ -30,6 +29,7 @@ type SubscriptionSpecSet struct {
 	Projects     *ProjectSubscriptionSpec      `json:"projects"`
 	Models       *ModelSubscriptionSpec        `json:"models"`
 	ModelVersion *ModelVersionSubscriptionSpec `json:"modelversions"`
+	Experiments  *ExperimentSubscriptionSpec   `json:"experiments"`
 }
 
 // CollectStartupMsgsFunc collects messages that were missed prior to startup.
@@ -54,6 +54,7 @@ func NewSubscriptionSet(
 	var projectSubscriptionState *subscriptionState[*ProjectMsg, ProjectSubscriptionSpec]
 	var modelSubscriptionState *subscriptionState[*ModelMsg, ModelSubscriptionSpec]
 	var modelVersionSubscriptionState *subscriptionState[*ModelVersionMsg, ModelVersionSubscriptionSpec]
+	var experimentSubscriptionState *subscriptionState[*ExperimentMsg, ExperimentSubscriptionSpec]
 
 	if spec.Projects != nil {
 		projectSubscriptionState = &subscriptionState[*ProjectMsg, ProjectSubscriptionSpec]{
@@ -62,6 +63,7 @@ func NewSubscriptionSet(
 				ps.Projects,
 				newPermFilter(ctx, user, ProjectMakePermissionFilter, &err),
 				newFilter(spec.Projects, ProjectMakeFilter, &err),
+				ProjectMakeHydrator(),
 			),
 			ProjectCollectStartupMsgs,
 		}
@@ -73,6 +75,7 @@ func NewSubscriptionSet(
 				ps.Models,
 				newPermFilter(ctx, user, ModelMakePermissionFilter, &err),
 				newFilter(spec.Models, ModelMakeFilter, &err),
+				ModelMakeHydrator(),
 			),
 			ModelCollectStartupMsgs,
 		}
@@ -84,8 +87,21 @@ func NewSubscriptionSet(
 				ps.ModelVersions,
 				newPermFilter(ctx, user, ModelVersionMakePermissionFilter, &err),
 				newFilter(spec.ModelVersion, ModelVersionMakeFilter, &err),
+				ModelVersionMakeHydrator(),
 			),
 			ModelVersionCollectStartupMsgs,
+		}
+	}
+	if spec.Experiments != nil {
+		experimentSubscriptionState = &subscriptionState[*ExperimentMsg, ExperimentSubscriptionSpec]{
+			stream.NewSubscription(
+				streamer,
+				ps.Experiments,
+				newPermFilter(ctx, user, ExperimentMakePermissionFilter, &err),
+				newFilter(spec.Experiments, ExperimentMakeFilter, &err),
+				ExperimentMakeHydrator(),
+			),
+			ExperimentCollectStartupMsgs,
 		}
 	}
 
@@ -93,6 +109,7 @@ func NewSubscriptionSet(
 		Projects:      projectSubscriptionState,
 		Models:        modelSubscriptionState,
 		ModelVersions: modelVersionSubscriptionState,
+		Experiments:   experimentSubscriptionState,
 	}, err
 }
 
@@ -156,7 +173,7 @@ func startup[T stream.Msg, S any](
 	// Scan for historical msgs matching newly-added subscriptions.
 	newmsgs, err := state.CollectStartupMsgs(ctx, user, known, *spec)
 	if err != nil {
-		return echo.ErrCookieNotFound
+		return err
 	}
 	for _, msg := range newmsgs {
 		*msgs = append(*msgs, prepare(msg))

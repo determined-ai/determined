@@ -36,6 +36,9 @@ const (
 	requestID      streamType = "model.RequestID"
 	requestIDPtr   streamType = "*model.RequestID"
 	workspaceState streamType = "model.WorkspaceState"
+	state          streamType = "model.State"
+	byteArr        streamType = "[]byte"
+	float64        streamType = "float64"
 )
 
 const (
@@ -283,6 +286,9 @@ func genTypescript(streamables []Streamable) ([]byte, error) {
 			requestID:      {"number", "0"},
 			requestIDPtr:   {"number | undefined", "undefined"},
 			workspaceState: {"types.WorkspaceState", "types.WorkspaceState.Unspecified"},
+			state:          {"types.RunState", "types.RunState.Unspecified"},
+			byteArr:        {"Array<any>", "[]"},
+			float64:        {"number", "0"},
 		}
 		out, ok := x[f.Type]
 		if !ok {
@@ -385,6 +391,9 @@ func genPython(streamables []Streamable) ([]byte, error) {
 			requestID:      "int",
 			requestIDPtr:   "typing.Optional[int]",
 			workspaceState: "str",
+			state:          "str",
+			byteArr:        "bytearray",
+			float64:        "float",
 		}
 		out, ok := x[f.Type]
 		if !ok {

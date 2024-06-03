@@ -23,6 +23,7 @@ const (
 	projects      = "projects"
 	models        = "models"
 	modelVersions = "modelversions"
+	experiments   = "experiments"
 )
 
 func TestMockSocket(t *testing.T) {
@@ -84,7 +85,13 @@ func initializeStreamDB(ctx context.Context, t *testing.T) *db.PgDB {
 		INSERT INTO model_versions (name, version, model_id, creation_time, user_id, checkpoint_uuid) 
 		VALUES ('test_model_version_1',1, 1, NOW(), 1, 
 		uuid_in(md5(random()::text || random()::text)::cstring));
-		`,
+		INSERT INTO jobs (
+			job_id, job_type, owner_id, q_position
+		) VALUES ('test_job_id_1', 'EXPERIMENT', 1, ''); 
+		INSERT INTO experiments (
+			state, config, model_definition, start_time, archived, owner_id, notes, job_id, project_id,
+			checkpoint_size, checkpoint_count, unmanaged
+		) VALUES ('ACTIVE', '{}', '', NOW(), false, 1, '', 'test_job_id_1', 1, 1, 1, false);`,
 	).Exec(ctx)
 	if err != nil {
 		t.Errorf("failed to generate test data for streaming integration test: %s", err)
@@ -184,6 +191,8 @@ func buildStartupMsg(
 			knownKeySet.Models = known
 		case modelVersions:
 			knownKeySet.ModelVersions = known
+		case experiments:
+			knownKeySet.Projects = known
 		}
 	}
 
@@ -236,6 +245,19 @@ func buildStartupMsg(
 				ModelVersionIDs: modelVersionIDs,
 				UserIDs:         userIDs,
 				Since:           0,
+			}
+		case experiments:
+			var projectIDs, experimentIDs []int
+			if subscriptionIDs[projects] != nil {
+				projectIDs = subscriptionIDs[projects].([]int)
+			}
+			if subscriptionIDs[experiments] != nil {
+				experimentIDs = subscriptionIDs[experiments].([]int)
+			}
+			subscriptionSpecSet.Experiments = &ExperimentSubscriptionSpec{
+				ProjectIDs:    projectIDs,
+				ExperimentIDs: experimentIDs,
+				Since:         0,
 			}
 		}
 	}
@@ -514,6 +536,9 @@ func TestOnlineChanges(t *testing.T) {
 
 func TestMultipleSubscriptions(t *testing.T) {
 	pgDB := initializeStreamDB(context.Background(), t)
+	user := db.RequireMockUser(t, pgDB)
+	jobID := db.RequireMockJob(t, pgDB, &user.ID)
+
 	testProject := model.Project{
 		Name:        uuid.NewString(),
 		CreatedAt:   time.Now(),
@@ -537,17 +562,33 @@ func TestMultipleSubscriptions(t *testing.T) {
 		ModelID:        1,
 		UserID:         1,
 	}
+	testExperiment := ExperimentMsg{
+		ID:              2,
+		State:           "ACTIVE",
+		Config:          "",
+		ModelDefinition: []byte{},
+		StartTime:       time.Now(),
+		Archived:        false,
+		OwnerID:         1,
+		Notes:           "",
+		JobID:           jobID.String(),
+		ProjectID:       1,
+		CheckpointSize:  1,
+		CheckpointCount: 1,
+		Unmanaged:       false,
+	}
 	testCases := []updateTestCase{
 		{
 			startupCase: startupTestCase{
 				description: "startup test case for: multiple subscriptions",
 				startupMsg: buildStartupMsg(
 					"1",
-					map[string]string{projects: "2", models: "1", modelVersions: "1"},
+					map[string]string{projects: "2", models: "1", modelVersions: "1", experiments: "1"},
 					map[string]map[string]interface{}{
 						projects:      {"workspaces": []int{2}},
 						models:        {"workspaces": []int{2}},
 						modelVersions: {models: []int{1}},
+						experiments:   {projects: []int{2}},
 					},
 				),
 				expectedUpserts: []string{},
@@ -555,6 +596,7 @@ func TestMultipleSubscriptions(t *testing.T) {
 					"key: projects_deleted, deleted: ",
 					"key: models_deleted, deleted: ",
 					"key: modelversions_deleted, deleted: ",
+					"key: experiments_deleted, deleted: ",
 				},
 			},
 			description: "multiple subscriptions",
@@ -562,11 +604,13 @@ func TestMultipleSubscriptions(t *testing.T) {
 				streamdata.GetAddProjectQuery(testProject),
 				db.Bun().NewInsert().Model(&testModel),
 				db.Bun().NewInsert().Model(&testModelVersion).ExcludeColumn("workspace_id"),
+				db.Bun().NewInsert().Model(&testExperiment).ExcludeColumn("workspace_id"),
 			},
 			expectedUpserts: []string{
 				"key: project, project_id: 3, state: UNSPECIFIED, workspace_id: 2",
 				"key: model, model_id: 2, workspace_id: 2",
 				"key: modelversion, model_version_id: 2, model_id: 1, workspace_id: 2",
+				"key: experiment, model_version_id: 2, model_id: 1, workspace_id: 2",
 			},
 			expectedDeletions: []string{},
 		},
