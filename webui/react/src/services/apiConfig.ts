@@ -1170,9 +1170,13 @@ export const killRuns: DetApi<Api.V1KillRunsRequest, Api.V1KillRunsResponse, voi
   request: (params, options) => detApi.Internal.killRuns(params, options),
 };
 
-export const moveRuns: DetApi<Api.V1MoveRunsRequest, Api.V1MoveRunsResponse, void> = {
+export const moveRuns: DetApi<
+  Api.V1MoveRunsRequest,
+  Api.V1MoveRunsResponse,
+  Type.BulkActionResult
+> = {
   name: 'moveRuns',
-  postProcess: noOp,
+  postProcess: (response) => decoder.mapV1ActionResults(response.results),
   request: (params, options) => detApi.Internal.moveRuns(params, options),
 };
 

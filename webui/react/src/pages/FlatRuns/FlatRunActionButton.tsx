@@ -7,6 +7,7 @@ import { useCallback, useMemo, useState } from 'react';
 
 import BatchActionConfirmModalComponent from 'components/BatchActionConfirmModal';
 import usePermissions from 'hooks/usePermissions';
+import FlatRunMoveModalComponent from 'pages/FlatRuns/FlatRunMoveModal';
 import { archiveRuns, deleteRuns, killRuns, unarchiveRuns } from 'services/api';
 import { BulkActionResult, ExperimentAction, FlatRun } from 'types';
 import handleError from 'utils/error';
@@ -14,24 +15,20 @@ import { canActionFlatRun, getActionsForFlatRunsUnion } from 'utils/flatRun';
 import { capitalizeWord } from 'utils/string';
 
 const BATCH_ACTIONS = [
-  // ExperimentAction.OpenTensorBoard,
   ExperimentAction.Move,
   ExperimentAction.Archive,
   ExperimentAction.Unarchive,
   ExperimentAction.Delete,
-  // ExperimentAction.Pause,
   ExperimentAction.Kill,
 ] as const;
 
 type BatchAction = (typeof BATCH_ACTIONS)[number];
 
 const ACTION_ICONS: Record<BatchAction, IconName> = {
-  // [ExperimentAction.Pause]: 'pause',
   [ExperimentAction.Archive]: 'archive',
   [ExperimentAction.Unarchive]: 'document',
   [ExperimentAction.Move]: 'workspaces',
   [ExperimentAction.Kill]: 'cancelled',
-  // [ExperimentAction.OpenTensorBoard]: 'tensor-board',
   [ExperimentAction.Delete]: 'error',
 } as const;
 
@@ -41,6 +38,7 @@ interface Props {
   isMobile: boolean;
   selectedRuns: ReadonlyArray<Readonly<FlatRun>>;
   projectId: number;
+  workspaceId: number;
   onActionSuccess?: (action: BatchAction, successfulIds: number[]) => void;
   onActionComplete?: () => Promise<void>;
 }
@@ -49,12 +47,15 @@ const FlatRunActionButton = ({
   isMobile,
   selectedRuns,
   projectId,
+  workspaceId,
   onActionSuccess,
   onActionComplete,
 }: Props): JSX.Element => {
   const [batchAction, setBatchAction] = useState<BatchAction | undefined>(undefined);
   const permissions = usePermissions();
   const { openToast } = useToast();
+  const { Component: FlatRunMoveComponentModal, open: flatRunMoveModalOpen } =
+    useModal(FlatRunMoveModalComponent);
   const BatchActionConfirmModal = useModal(BatchActionConfirmModalComponent);
 
   const sendBatchActions = useCallback(
@@ -68,8 +69,7 @@ const FlatRunActionButton = ({
       };
       switch (action) {
         case ExperimentAction.Move:
-          //   return ExperimentMoveModal.open();
-          break;
+          return flatRunMoveModalOpen();
         case ExperimentAction.Archive:
           return await archiveRuns(params);
         case ExperimentAction.Kill:
@@ -82,7 +82,7 @@ const FlatRunActionButton = ({
           break;
       }
     },
-    [projectId, selectedRuns],
+    [flatRunMoveModalOpen, projectId, selectedRuns],
   );
 
   const submitBatchAction = useCallback(
@@ -194,6 +194,11 @@ const FlatRunActionButton = ({
           onConfirm={() => submitBatchAction(batchAction)}
         />
       )}
+      <FlatRunMoveComponentModal
+        flatRuns={[...selectedRuns]}
+        sourceProjectId={projectId}
+        sourceWorkspaceId={workspaceId}
+      />
     </>
   );
 };
