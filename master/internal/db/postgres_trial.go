@@ -35,10 +35,11 @@ func AddTrial(ctx context.Context, trial *model.Trial, taskID model.TaskID) erro
 			return fmt.Errorf("converting trial to run and trialv2: %w", err)
 		}
 
+		var key string
 		var localID int
 		if err := tx.NewUpdate().Table("projects").
 			Set("max_local_id = max_local_id + 1").Where("id = ?", run.ProjectID).
-			Returning("max_local_id").Scan(ctx, &localID); err != nil {
+			Returning("key, max_local_id").Scan(ctx, &key, &localID); err != nil {
 			return fmt.Errorf("updating and returning project max_local_id: %w", err)
 		}
 		run.LocalID = localID
@@ -50,6 +51,20 @@ func AddTrial(ctx context.Context, trial *model.Trial, taskID model.TaskID) erro
 		v2.RunID = run.ID
 		if _, err := tx.NewInsert().Model(v2).Exec(ctx); err != nil {
 			return fmt.Errorf("inserting trial v2 model: %w", err)
+		}
+
+		redirect := struct {
+			bun.BaseModel `bun:"table:local_id_redirect"`
+
+			RunID      int    `db:"run_id" bun:"run_id"`
+			ProjectKey string `db:"project_key" bun:"project_key"`
+			LocalID    int    `db:"local_id" bun:"local_id"`
+		}{}
+		redirect.RunID = run.ID
+		redirect.ProjectKey = key
+		redirect.LocalID = localID
+		if _, err := tx.NewInsert().Model(&redirect).Exec(ctx); err != nil {
+			return fmt.Errorf("storing run_id in redirect table: %w", err)
 		}
 
 		trial.ID = run.ID // We need to mutate trial.ID.
