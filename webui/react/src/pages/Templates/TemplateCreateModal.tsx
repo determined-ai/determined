@@ -99,6 +99,7 @@ const TemplateCreateModalComponent: React.FC<Props> = ({ workspaceId, onSuccess,
           type: ErrorType.Server,
         });
       }
+      throw e;
     }
   }, [form, openToast, onSuccess, template]);
 
@@ -114,7 +115,7 @@ const TemplateCreateModalComponent: React.FC<Props> = ({ workspaceId, onSuccess,
   return (
     <Modal
       cancel
-      size="medium"
+      size="large"
       submit={{
         disabled,
         form: idPrefix + FORM_ID,

@@ -71,7 +71,10 @@ const TableFilter = ({
         }
         open={isOpenFilter}
         onOpenChange={handleIsOpenFilterChange}>
-        <Button hideChildren={isMobile} icon={<Icon decorative name="filter" />}>
+        <Button
+          data-test-component="tableFilter"
+          hideChildren={isMobile}
+          icon={<Icon decorative name="filter" />}>
           Filter {fieldCount > 0 && `(${fieldCount})`}
         </Button>
       </Dropdown>

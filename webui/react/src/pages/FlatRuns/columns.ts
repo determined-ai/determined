@@ -1,6 +1,12 @@
-import { CellClickedEventArgs, GridCellKind } from '@glideapps/glide-data-grid';
+import { CellClickedEventArgs, GridCellKind, Theme as GTheme } from '@glideapps/glide-data-grid';
 import { getColor, getInitials } from 'hew/Avatar';
-import { ColumnDefs, MIN_COLUMN_WIDTH } from 'hew/DataGrid/columns';
+import {
+  ColumnDef,
+  ColumnDefs,
+  getHeatmapColor,
+  HeatmapProps,
+  MIN_COLUMN_WIDTH,
+} from 'hew/DataGrid/columns';
 import {
   LINK_CELL,
   State,
@@ -388,28 +394,6 @@ export const getColumnDefs = ({
     tooltip: () => undefined,
     width: columnWidths.searcherMetric ?? defaultColumnWidths.searcherMetric ?? MIN_COLUMN_WIDTH,
   },
-  searcherMetricsVal: {
-    id: 'searcherMetricsVal',
-    isNumerical: true,
-    renderer: (record: FlatRun) => {
-      const sMetricValue = record.searcherMetricValue;
-
-      return {
-        allowOverlay: false,
-        copyData: sMetricValue
-          ? typeof sMetricValue === 'number'
-            ? humanReadableNumber(sMetricValue)
-            : sMetricValue
-          : '',
-        data: { kind: TEXT_CELL },
-        kind: GridCellKind.Custom,
-      };
-    },
-    title: 'Searcher Metric Value',
-    tooltip: () => undefined,
-    width:
-      columnWidths.searcherMetricsVal ?? defaultColumnWidths.searcherMetricsVal ?? MIN_COLUMN_WIDTH,
-  },
   searcherType: {
     id: 'searcherType',
     renderer: (record: FlatRun) => ({
@@ -499,6 +483,43 @@ export const getColumnDefs = ({
     width: columnWidths.user ?? defaultColumnWidths.user ?? MIN_COLUMN_WIDTH,
   },
 });
+
+export const searcherMetricsValColumn = (
+  columnWidth?: number,
+  heatmapProps?: HeatmapProps,
+): ColumnDef<FlatRun> => {
+  return {
+    id: 'searcherMetricsVal',
+    isNumerical: true,
+    renderer: (record: FlatRun) => {
+      const sMetricValue = record.searcherMetricValue;
+
+      let theme: Partial<GTheme> = {};
+      if (heatmapProps && sMetricValue) {
+        const { min, max } = heatmapProps;
+        theme = {
+          accentLight: getHeatmapColor(min, max, sMetricValue),
+          bgCell: getHeatmapColor(min, max, sMetricValue),
+          textDark: 'white',
+        };
+      }
+      return {
+        allowOverlay: false,
+        copyData: sMetricValue
+          ? typeof sMetricValue === 'number'
+            ? humanReadableNumber(sMetricValue)
+            : sMetricValue
+          : '',
+        data: { kind: TEXT_CELL },
+        kind: GridCellKind.Custom,
+        themeOverride: theme,
+      };
+    },
+    title: 'Searcher Metric Value',
+    tooltip: () => undefined,
+    width: columnWidth ?? defaultColumnWidths.searcherMetricsVal ?? MIN_COLUMN_WIDTH,
+  };
+};
 
 export const defaultColumnWidths: Partial<Record<RunColumn, number>> = {
   checkpointCount: 120,

@@ -2,6 +2,7 @@ import { expect } from '@playwright/test';
 
 import { BaseComponent, NamedComponent, NamedComponentArgs } from 'e2e/models/BaseComponent';
 import { DropdownMenu } from 'e2e/models/hew/Dropdown';
+import { printMap } from 'e2e/utils/debug';
 
 type RowClass<RowType extends Row<HeadRowType>, HeadRowType extends HeadRow<RowType>> = new (
   args: RowArgs<RowType, HeadRowType>,
@@ -114,8 +115,8 @@ export class DataGrid<
     // scroll the table to the right by the width of the table minus 500
     // All the permanent columns on the left together are under 500px wide
     await page.mouse.wheel(xAbsolute ? xAbsolute : box.width - 500, 0);
-    // wait for 1 second for the scroll to happen
-    await page.waitForTimeout(999);
+    // wait for the scroll to happen
+    await page.waitForTimeout(2_000);
   }
 
   /**
@@ -149,17 +150,27 @@ export class DataGrid<
     return incrementScroll;
   }
 
-  async scrollColumnIntoViewByName(s: string): Promise<boolean> {
-    return await this.scrollColumnIntoView(this.headRow.getColumnDef(s));
+  /**
+   * Scrolls the column into view
+   * @param {string} s - The column name
+   */
+  async scrollColumnIntoViewByName(s: string): Promise<void> {
+    try {
+      return await this.scrollColumnIntoView(this.headRow.getColumnDef(s));
+    } catch (e) {
+      if ((e as Error).message.indexOf('Column with index') === 0) {
+        throw new Error(`Column with name ${s} not found.`);
+      }
+    }
   }
 
   /**
    * Scrolls the column into view
    * @param {number} index - The column index
    */
-  async scrollColumnIntoView(index: number): Promise<boolean> {
+  async scrollColumnIntoView(index: number): Promise<void> {
     if (index === 0) {
-      return true;
+      return;
     }
     const incrementScroll = await this.incrementScrollGenerator();
 
@@ -180,10 +191,10 @@ export class DataGrid<
     };
     do {
       if (await checkColumnInView()) {
-        return true;
+        return;
       }
     } while (await incrementScroll());
-    return false;
+    throw new Error(`Column with index ${index} not found.`);
   }
 
   /**
@@ -207,7 +218,7 @@ export class DataGrid<
       rows.map(async (row) => {
         return (
           (await row.getAttribute(indexAttribute)) ||
-          Promise.reject(new Error(`all rows should have the attribute ${indexAttribute}`))
+          Promise.reject(new Error(`All rows should have the attribute ${indexAttribute}`))
         );
       }),
     );
@@ -336,7 +347,7 @@ export class Row<HeadRowType extends HeadRow<Row<HeadRowType>>> extends NamedCom
    * Returns a cell from an index. Start counting at 0.
    */
   async getCellByColIndex(n: number): Promise<BaseComponent> {
-    expect(await this.parentTable.scrollColumnIntoView(n)).toBe(true);
+    await this.parentTable.scrollColumnIntoView(n);
     return new BaseComponent({
       parent: this,
       selector: `[${DataGrid.columnIndexAttribute}="${n + 1}"]`,
@@ -392,9 +403,7 @@ export class HeadRow<RowType extends Row<HeadRow<RowType>>> extends NamedCompone
     const index = this.columnDefs.get(columnName);
     if (index === undefined) {
       throw new Error(
-        `Column with title ${columnName} expected but not found (${[
-          ...this.columnDefs.entries(),
-        ].join('), (')})`,
+        `Column with title ${columnName} expected but not found.\n${printMap(this.#columnDefs)}`,
       );
     }
     return index;
@@ -441,6 +450,7 @@ export class HeadRow<RowType extends Row<HeadRow<RowType>>> extends NamedCompone
     const incrementScroll = await this.parentTable.incrementScrollGenerator();
     do {
       await setVisibleColumns();
+      await this.root.browserLog(printMap(this.#columnDefs));
     } while (await incrementScroll());
     return this.#columnDefs;
   }

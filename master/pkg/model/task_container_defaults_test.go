@@ -97,6 +97,15 @@ func TestTaskContainerDefaultsConfigMerging(t *testing.T) {
 				},
 			},
 		},
+		CheckpointGCPodSpec: &k8sV1.Pod{
+			Spec: k8sV1.PodSpec{
+				Volumes: []k8sV1.Volume{
+					{
+						Name: "some CHECKPOINT GC vol",
+					},
+				},
+			},
+		},
 		Image: &RuntimeItem{
 			CPU:  "docker://ubuntu",
 			CUDA: "docker://ubuntucuda",
@@ -194,6 +203,15 @@ func TestTaskContainerDefaultsConfigMerging(t *testing.T) {
 						},
 					},
 				},
+				CheckpointGCPodSpec: &k8sV1.Pod{
+					Spec: k8sV1.PodSpec{
+						Volumes: []k8sV1.Volume{
+							{
+								Name: "some CHECKPOINT GC vol 2",
+							},
+						},
+					},
+				},
 				Image: &RuntimeItem{
 					CPU:  "docker://ubuntu2",
 					CUDA: "docker://ubuntucuda2",
@@ -267,6 +285,15 @@ func TestTaskContainerDefaultsConfigMerging(t *testing.T) {
 						Volumes: []k8sV1.Volume{
 							{
 								Name: "some GPU vol 2",
+							},
+						},
+					},
+				},
+				CheckpointGCPodSpec: &k8sV1.Pod{
+					Spec: k8sV1.PodSpec{
+						Volumes: []k8sV1.Volume{
+							{
+								Name: "some CHECKPOINT GC vol 2",
 							},
 						},
 					},

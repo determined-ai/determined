@@ -29,7 +29,7 @@ export class ColumnPickerMenu extends DropdownContent {
 }
 
 class ColumnPickerTab extends NamedComponent {
-  readonly defaultSelector = '[data-test-component="columnPickerTab"]';
+  readonly defaultSelector = '[data-test-component="columnPickerTab"]:visible';
   readonly search = new BaseComponent({ parent: this, selector: '[data-test="search"]' });
   readonly columns = new List({ parent: this });
   readonly noResults = new Message({ parent: this.columns });
@@ -39,20 +39,38 @@ class ColumnPickerTab extends NamedComponent {
 
 class List extends NamedComponent {
   readonly defaultSelector = '[data-test="columns"]';
-  readonly rows = new Row({ parent: this, selector: '[data-test="row"]' });
+  readonly rows = new Row({ parent: this });
+
   /**
    * Returns a representation of a list row with the specified testid.
    * @param {string} [testid] - the testid of the tab, generally the name
    */
   public listItem(testid: string): Row {
     return new Row({
-      attachment: `[data-test-id="${testid}"]`,
+      attachment: `[${this.rows.keyAttribute}="${testid}"]`,
       parent: this,
     });
+  }
+
+  /**
+   * Returns a list of keys associated with attributes from rows from the entire table.
+   */
+  async allRowKeys(): Promise<string[]> {
+    const { pwLocator, keyAttribute } = this.rows;
+    const rows = await pwLocator.all();
+    return Promise.all(
+      rows.map(async (row) => {
+        return (
+          (await row.getAttribute(keyAttribute)) ||
+          Promise.reject(new Error(`All rows should have the attribute ${keyAttribute}`))
+        );
+      }),
+    );
   }
 }
 
 class Row extends NamedComponent {
   readonly defaultSelector = '[data-test="row"]';
+  readonly keyAttribute = 'data-test-id';
   readonly checkbox = new BaseComponent({ parent: this, selector: '[data-test="checkbox"]' });
 }
