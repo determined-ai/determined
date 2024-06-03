@@ -30,19 +30,19 @@ test.describe('Authentication', () => {
     });
   });
 
-  test('Redirect to the target URL after login', async ({ page, auth }) => {
-    await test.step('Visit a page and expect redirect back to login', async () => {
+  test('Login Redirect', async ({ page, auth }) => {
+    await test.step('Attempt to Visit a Page', async () => {
       await page.goto('./models');
       await expect(page).toHaveURL(/login/);
     });
 
-    await test.step('Login and expect redirect to previous page', async () => {
+    await test.step('Login and Redirect', async () => {
       await auth.login({ waitForURL: /models/ });
       await expect(page).toHaveTitle(BasePage.getTitle('Model Registry'));
     });
   });
 
-  test('Bad credentials should throw an error', async ({ page, auth }) => {
+  test('Bad Credentials', async ({ page, auth }) => {
     const signInPage = new SignIn(page);
     await auth.login({ password: 'superstar', username: 'jcom', waitForURL: /login/ });
     await expect(page).toHaveTitle(signInPage.title);
@@ -57,10 +57,9 @@ test.describe('Authentication', () => {
     );
   });
 
-  test('Expect submit disabled; Show multiple errors', async ({ page }) => {
+  test('Show Multiple Errors', async ({ page }) => {
     const signInPage = new SignIn(page);
     await signInPage.goto();
-    await expect.soft(signInPage.detAuth.submit.pwLocator).toBeDisabled();
     await signInPage.detAuth.username.pwLocator.fill('chubbs');
     await signInPage.detAuth.submit.pwLocator.click();
     await signInPage.detAuth.submit.pwLocator.click();

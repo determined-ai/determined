@@ -34,6 +34,7 @@ export class AuthFixture {
     if (!(await detAuth.pwLocator.isVisible())) {
       await this.#page.goto('/');
       await expect(detAuth.pwLocator).toBeVisible();
+      await expect.soft(this.signInPage.detAuth.submit.pwLocator).toBeDisabled();
     }
     await detAuth.username.pwLocator.fill(username);
     await detAuth.password.pwLocator.fill(password);
@@ -44,6 +45,7 @@ export class AuthFixture {
 
   async logout(): Promise<void> {
     await (await this.signInPage.nav.sidebar.headerDropdown.open()).signOut.pwLocator.click();
-    await this.#page.waitForURL(/login/);
+    await this.#page.waitForURL(this.signInPage.title);
+    await expect.soft(this.#page).toHaveURL(this.signInPage.getUrlRegExp());
   }
 }
