@@ -7,8 +7,86 @@
 ###############
 
 **************
+ Version 0.33
+**************
+
+Version 0.33.0
+==============
+
+**Release Date:** May 29, 2024
+
+**Breaking Changes**
+
+-  Helm: An entry for ``initialUserPassword`` is now required when running ``helm install``.
+   Existing deployments are unaffected. See :ref:`Helm Chart <helm-config-reference>`.
+
+-  Web UI: Enforce password requirements for all new non-remote users. See
+   :ref:`password-requirements` for details.
+
+   -  Applies to users created using the **Add User** button in the Web UI for admins.
+   -  Admins can change the passwords of other users using the same interface.
+   -  Does not affect existing users with empty or non-compliant passwords, but setting strong
+      passwords for these users is recommended.
+
+**Improvements**
+
+Kubernetes: Add Determined resource information such as ``workspace`` and ``task ID`` as pod labels.
+This improvement facilitates better resource tracking and management within Kubernetes environments.
+
+Configuration: Introduce a DCGM Helm chart and Prometheus configuration to the
+``tools/observability`` directory. Additionally, two new dashboards, "API Monitoring" and "Resource
+Utilization", have been added to improve observability and operational insight.
+
+-  WebUI: Allow users to create and manage configuration templates through the WebUI.
+-  Commands: Commands now support automatically executing a ``startup-hook.sh`` script if it is
+   present in the command's context directory.
+
+**Bug Fixes**
+
+-  Kubernetes: Fix an issue where Determined failed to report slots as occupied when non Determined
+   jobs were running on namespaces besides 'default'. For Determined to detect non Determined jobs
+   they must be running in a namespace that Determined can launch jobs into.
+
+-  Kubernetes: Fix an issue where the cluster page displayed slots out of order on refresh. Slots
+   are now consistently filled from left to right, even with more than 10 GPUs and when using RBAC.
+
+**Deprecations**
+
+To enhance stability and streamline the onboarding process, we may remove the following features in
+future releases. Our goal is for Agent Resource Manager environments to function seamlessly
+out-of-the-box with minimal customization required.
+
+Agent Resource Manager:
+
+-  Container Runtimes: Due to limited usage, we will limit supported container runtimes to Docker
+   for the Agent Resource Manager. This does not impact Kubernetes, Slurm or PBS environments.
+
+-  Job Scheduling: The default scheduler is now ``priority``. Support for round-robin and fair share
+   schedulers has been discontinued. We recommend using the priority scheduler, as it meets most
+   scheduling needs and simplifies configuration. To move a job, you will need to adjust its
+   priority; jobs cannot be shifted within the same priority group.
+
+-  AMD GPUs: Due to limited usage, we will limit supported accelerators to NVIDIA GPUs. If you have
+   a use case requiring AMD GPU support with the Agent Resource Manager, please reach out to us via
+   a `GitHub Issue <https://github.com/determined-ai/determined/issues>`__ or `community slack
+   <https://join.slack.com/t/determined-community/shared_invite/zt-1f4hj60z5-JMHb~wSr2xksLZVBN61g_Q>`__!
+   This does not impact Kubernetes or Slurm environments.
+
+Machine Architectures: PPC64/POWER builds across all environments are no longer supported.
+
+**************
  Version 0.32
 **************
+
+Version 0.32.1
+==============
+
+**Release Date**: May 10, 2024
+
+**Bug Fixes**
+
+-  Kubernetes: Fix an issue introduced in 0.32.0 where workspaces with names incompatible with
+   Kubernetes naming requirements would cause jobs in that workspace to fail.
 
 Version 0.32.0
 ==============

@@ -10,7 +10,7 @@ import { BaseComponent, NamedComponent } from 'e2e/models/BaseComponent';
 export class Select extends BaseComponent {
   readonly _menu = new BaseComponent({
     parent: this.root,
-    selector: '.ant-select-dropdown .rc-virtual-list-holder-inner',
+    selector: ':not(.ant-select-dropdown-hidden).ant-select-dropdown .rc-virtual-list-holder-inner',
   });
 
   readonly search = new BaseComponent({
@@ -55,10 +55,16 @@ export class Select extends BaseComponent {
    */
   async openMenu(): Promise<Select> {
     if (await this._menu.pwLocator.isVisible()) {
-      return this;
+      try {
+        await this._menu.pwLocator.press('Escape', { timeout: 500 });
+        await this._menu.pwLocator.waitFor({ state: 'hidden' });
+      } catch (e) {
+        // it's fine if this fails, we are just ensuring they are all closed.
+      }
     }
     await this.pwLocator.click();
     await this._menu.pwLocator.waitFor();
+    await this.root._page.waitForTimeout(500); // ant/Popover - menus may reset input shortly after opening [ET-283]
     return this;
   }
 
@@ -69,19 +75,7 @@ export class Select extends BaseComponent {
   menuItem(title: string): BaseComponent {
     return new BaseComponent({
       parent: this._menu,
-      selector: `div.ant-select-item[title$="${title}"]`,
-    });
-  }
-
-  /**
-   * Returns a representation of a select dropdown menu item. Since order is not
-   * guaranteed, make sure to verify the contents of the menu item.
-   * @param {number} n - the number of the menu item
-   */
-  nthMenuItem(n: number): BaseComponent {
-    return new BaseComponent({
-      parent: this._menu,
-      selector: `div.ant-select-item:nth-of-type(${n})`,
+      selector: `div.ant-select-item[title="${title}"]`,
     });
   }
 
@@ -92,6 +86,7 @@ export class Select extends BaseComponent {
   async selectMenuOption(title: string): Promise<void> {
     await this.openMenu();
     await this.menuItem(title).pwLocator.click();
+    await this._menu.pwLocator.waitFor({ state: 'hidden' });
   }
 }
 
