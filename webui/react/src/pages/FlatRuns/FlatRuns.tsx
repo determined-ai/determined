@@ -1003,7 +1003,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
             />
             <FlatRunActionButton
               isMobile={isMobile}
-              project={project}
+              projectId={projectId}
               selectedRuns={selectedRuns}
               onActionComplete={onActionComplete}
             />
