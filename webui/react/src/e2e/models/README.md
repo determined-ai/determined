@@ -250,4 +250,4 @@ When creating page models, you'll most likely want to author test hooks into the
 | `data-test='my-instance'`            | Attributed to any _instances_ of components or any intrinsic element                                                             |
 | `data-test-id={something dynamic}`   | Test Hook for dynamic data. Consider having many `data-test='row'`s and looking for the attachemnt `data-test-id='my-test-user'` |
 
-Not every component needs a data-test, but, in general, more is better. It's better to select for _"a duck named Hoffman"_ rather than "a duck" or "Hoffman". In situations where adding a top-level test hook (`data-test-component`) could be more trouble than it's worth, it's okay to use other unique identifiers, like `.table.ant-table`.
+Not every component needs a data-test, but, in general, more is better. It's better to select for _"a duck named Hoffman"_ rather than "a duck" or "Hoffman". In situations where adding a top-level test hook (`data-test-component`) could be more trouble than it's worth, it's okay to use other unique identifiers, like `.ant-table`.

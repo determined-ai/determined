@@ -35,14 +35,7 @@ test.describe('User Management', () => {
     }
   });
 
-  test('Navigate to User Management', async ({ authedPage }) => {
-    const userManagementPage = new UserManagement(authedPage);
-    await (await userManagementPage.nav.sidebar.headerDropdown.open()).admin.pwLocator.click();
-    await expect(authedPage).toHaveTitle(userManagementPage.title);
-    await expect(authedPage).toHaveURL(userManagementPage.url);
-  });
-
-  test.describe('With New User Teardown', () => {
+  test.describe('With User Teardown', () => {
     test.afterAll(async ({ backgroundApiUser }) => {
       await backgroundApiUser.apiAuth.login();
       await test.step('Deactivate Users', async () => {
@@ -53,7 +46,7 @@ test.describe('User Management', () => {
       await backgroundApiUser.apiAuth.dispose();
     });
 
-    test.describe('With a Test User', () => {
+    test.describe('With Test User', () => {
       let testUser: V1PostUserRequest;
 
       test.beforeEach(async ({ user }) => {
@@ -63,11 +56,11 @@ test.describe('User Management', () => {
         });
       });
 
-      test('User table shows correct data', async ({ user }) => {
+      test('User Table Read', async ({ user }) => {
         await user.validateUser(testUser);
       });
 
-      test('New user acess', async ({ page, auth }) => {
+      test('New User Access', async ({ page, auth }) => {
         const userManagementPage = new UserManagement(page);
         await auth.logout();
         await auth.login({ password: testUser.password, username: testUser.user?.username });
@@ -78,8 +71,8 @@ test.describe('User Management', () => {
         });
       });
 
-      test('Edit user', async ({ user }) => {
-        await test.step('Edit once', async () => {
+      test('Edit User', async ({ user }) => {
+        await test.step('Edit Once', async () => {
           if (testUser.user === undefined) {
             throw new Error('Trying to edit an undefined user.');
           }
@@ -88,14 +81,14 @@ test.describe('User Management', () => {
           });
           await user.validateUser(testUser);
         });
-        await test.step('Edit again', async () => {
+        await test.step('Edit Again', async () => {
           testUser = await user.editUser(testUser, { admin: true, displayName: '' });
           await user.validateUser(testUser);
         });
       });
     });
 
-    test.describe('With Test User we Deactivate', () => {
+    test.describe('With Test User', () => {
       let testUser: V1PostUserRequest;
 
       test.beforeAll(async ({ backgroundApiUser }) => {
@@ -119,9 +112,9 @@ test.describe('User Management', () => {
         await test.step('Attempt Sign In With Deactivated User', async () => {
           await auth.logout();
           await auth.login({
+            expectedURL: /login/,
             password: testUser.password,
             username: testUser.user?.username,
-            waitForURL: /login/,
           });
           expect(await signInPage.detAuth.errors.message.pwLocator.textContent()).toContain(
             'Login failed',
@@ -137,7 +130,7 @@ test.describe('User Management', () => {
           // thinks we've already logged in, skipping the login automation.
           // We might need to find a way to be more explicit about the page state.
           await expect(page).toHaveURL(/login/);
-          await auth.login({ waitForURL: userManagementPage.url });
+          await auth.login({ expectedURL: userManagementPage.url });
           testUser = await user.changeStatusUser(testUser, true);
           saveTestUser(testUser, testUsers);
         });
@@ -164,10 +157,10 @@ test.describe('User Management', () => {
         });
       });
 
-      test('[ET-233, ET-178] Bulk actions', async ({ page, user, playwright }) => {
+      test('[ET-233] Bulk Actions', async ({ page, user, playwright }) => {
         const userManagementPage = new UserManagement(page);
 
-        await test.step('Setup table filters', async () => {
+        await test.step('Setup Table Filters', async () => {
           // set pagination to 10
           await expect(
             repeatWithFallback(
@@ -212,12 +205,11 @@ test.describe('User Management', () => {
             });
           }).toPass({ timeout: 10_000 });
         });
-        await test.step("Disable all users on the table's page", async () => {
+        await test.step("Deactivate All Users on the Table's Page (1 User)", async () => {
           await userManagementPage.actions.pwLocator.waitFor({ state: 'hidden' });
           await user.deactivateTestUsersOnTable(testUsers);
         });
-        // expect this test step to fail
-        await test.step('Check that all users are disabled', async () => {
+        await test.step('Check That the 1 User is Disabled', async () => {
           // wait for table to be stable and check that pagination and "no data" both dont show
           await userManagementPage.table.table.pwLocator.click({ trial: true });
           try {
@@ -239,7 +231,7 @@ test.describe('User Management', () => {
         });
       });
 
-      test('Users table count matches users tab count', async ({ page }) => {
+      test('Users Table Row Count matches Users Tab Value', async ({ page }) => {
         test.setTimeout(120_000);
         const userManagementPage = new UserManagement(page);
         const getExpectedRowCount = async (): Promise<number> => {
@@ -271,7 +263,7 @@ test.describe('User Management', () => {
             paginationOption: pagination.perPage.perPage100,
           },
         ]) {
-          await test.step(`Compare table rows with pagination: ${name}`, async () => {
+          await test.step(`Compare Table Rows With Pagination ${name}`, async () => {
             await expect(
               repeatWithFallback(
                 async () => {
