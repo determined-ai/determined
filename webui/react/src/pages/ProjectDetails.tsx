@@ -94,7 +94,7 @@ const ProjectDetails: React.FC = () => {
         children: (
           <div className={css.tabPane}>
             <div className={css.base}>
-              <FlatRuns projectId={project.id} />
+              <FlatRuns projectId={project.id} workspaceId={project.workspaceId} />
             </div>
           </div>
         ),
