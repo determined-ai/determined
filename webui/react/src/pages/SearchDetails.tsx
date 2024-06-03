@@ -141,7 +141,11 @@ const SearchDetails: React.FC = () => {
   const tabItems: PivotProps['items'] = [
     {
       children: experiment?.projectId && (
-        <FlatRuns projectId={experiment.projectId} searchId={id} />
+        <FlatRuns
+          projectId={experiment.projectId}
+          searchId={id}
+          workspaceId={experiment.workspaceId}
+        />
       ),
       key: TabType.Runs,
       label: 'Runs',
