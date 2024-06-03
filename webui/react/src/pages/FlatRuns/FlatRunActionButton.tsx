@@ -8,7 +8,7 @@ import { useCallback, useMemo, useState } from 'react';
 import BatchActionConfirmModalComponent from 'components/BatchActionConfirmModal';
 import usePermissions from 'hooks/usePermissions';
 import { archiveRuns, deleteRuns, killRuns, unarchiveRuns } from 'services/api';
-import { BulkActionResult, ExperimentAction, FlatRun, Project } from 'types';
+import { BulkActionResult, ExperimentAction, FlatRun } from 'types';
 import handleError from 'utils/error';
 import { canActionFlatRun, getActionsForFlatRunsUnion } from 'utils/flatRun';
 import { capitalizeWord } from 'utils/string';
@@ -40,7 +40,7 @@ const LABEL_PLURAL = 'runs';
 interface Props {
   isMobile: boolean;
   selectedRuns: ReadonlyArray<Readonly<FlatRun>>;
-  project: Readonly<Project>;
+  projectId: number;
   onActionSuccess?: (action: BatchAction, successfulIds: number[]) => void;
   onActionComplete?: () => Promise<void>;
 }
@@ -48,7 +48,7 @@ interface Props {
 const FlatRunActionButton = ({
   isMobile,
   selectedRuns,
-  project,
+  projectId,
   onActionSuccess,
   onActionComplete,
 }: Props): JSX.Element => {
@@ -63,7 +63,7 @@ const FlatRunActionButton = ({
         .filter((exp) => canActionFlatRun(action, exp))
         .map((run) => run.id);
       const params = {
-        projectId: project.id,
+        projectId,
         runIds: validRunIds,
       };
       switch (action) {
@@ -82,7 +82,7 @@ const FlatRunActionButton = ({
           break;
       }
     },
-    [project.id, selectedRuns],
+    [projectId, selectedRuns],
   );
 
   const submitBatchAction = useCallback(
