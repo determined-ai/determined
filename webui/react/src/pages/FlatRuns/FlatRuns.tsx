@@ -109,6 +109,7 @@ const formStore = new FilterFormStore();
 
 interface Props {
   projectId: number;
+  workspaceId: number;
   searchId?: number;
 }
 
@@ -127,7 +128,7 @@ const parseSortString = (sortString: string): Sort[] => {
   });
 };
 
-const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
+const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
   const dataGridRef = useRef<DataGridHandle>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const { params, updateParams } = useTypedParams(ProjectUrlSettings, {});
@@ -1005,6 +1006,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
               isMobile={isMobile}
               projectId={projectId}
               selectedRuns={selectedRuns}
+              workspaceId={workspaceId}
               onActionComplete={onActionComplete}
             />
           </Row>
