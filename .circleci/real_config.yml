@@ -1663,8 +1663,6 @@ jobs:
                 tools/scripts/retry.sh make -C model_hub publish-docker-dev
             fi
       - run: mkdir /tmp/pkgs && cp -v */dist/*.{rpm,deb,tar.gz} /tmp/pkgs
-      - store_artifacts:
-          path: /tmp/pkgs
 
   package-and-push-system-dev-small:
     docker:
@@ -1751,8 +1749,6 @@ jobs:
       - run: make -C master publish-ee
       - run: make -C agent publish-ee
       - run: mkdir /tmp/pkgs && cp -v */dist/*.{rpm,deb,tar.gz} /tmp/pkgs
-      - store_artifacts:
-          path: /tmp/pkgs
 
   package-and-push-system-release:
     docker:
@@ -1812,8 +1808,6 @@ jobs:
           no_output_timeout: 30m
           command: make -C agent release-ee
       - run: mkdir /tmp/pkgs && cp -v */dist/*.{rpm,deb,tar.gz} /tmp/pkgs
-      - store_artifacts:
-          path: /tmp/pkgs
 
   publish-helm-gh:
     parameters:
