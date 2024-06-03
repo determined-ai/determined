@@ -195,8 +195,6 @@ message PauseRunsRequest {
   int32 project_id = 2;
   // Filter expression
   optional string filter = 3;
-  // If true, skip multi-trial experiments for move.
-  bool skip_multitrial = 4;
 }
 
 // Response to PauseRunsRequest.
@@ -221,8 +219,6 @@ message ResumeRunsRequest {
   int32 project_id = 2;
   // Filter expression
   optional string filter = 3;
-  // If true, skip multi-trial experiments for move.
-  bool skip_multitrial = 4;
 }
 
 // Response to ResumeRunsRequest.

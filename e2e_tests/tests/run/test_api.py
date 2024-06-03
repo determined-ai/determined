@@ -193,72 +193,6 @@ def test_run_pause_and_resume() -> None:
     # ensure that run is unpaused
     wait_for_run_state(sess, run_id, bindings.trialv1State.ACTIVE)
 
-
-@pytest.mark.e2e_cpu
-def test_run_pause_and_resume_filter_no_skip() -> None:
-    sess = api_utils.user_session()
-    exp_id = exp.create_experiment(
-        sess,
-        conf.fixtures_path("mnist_pytorch/adaptive_short.yaml"),
-        conf.fixtures_path("mnist_pytorch"),
-    )
-
-    runFilter = (
-        """{
-  "filterGroup": {
-    "children": [
-      {
-        "columnName": "experimentId",
-        "kind": "field",
-        "location": "LOCATION_TYPE_RUN",
-        "operator": "=",
-        "type": "COLUMN_TYPE_NUMBER",
-        "value": %s
-      },
-      {
-        "columnName": "hp.n_filters2",
-        "kind": "field",
-        "location": "LOCATION_TYPE_RUN_HYPERPARAMETERS",
-        "operator": ">=",
-        "type": "COLUMN_TYPE_NUMBER",
-        "value": 40
-      }
-    ],
-    "conjunction": "and",
-    "kind": "group"
-  },
-  "showArchived": false
-}"""
-        % exp_id
-    )
-
-    pauseResp = bindings.post_PauseRuns(
-        sess,
-        body=bindings.v1PauseRunsRequest(
-            runIds=[],
-            filter=runFilter,
-            projectId=1,
-            skipMultitrial=False,
-        ),
-    )
-
-    # validate response
-    for res in pauseResp.results:
-        assert res.error == ""
-        wait_for_run_state(sess, res.id, bindings.trialv1State.PAUSED)
-
-    resumeResp = bindings.post_ResumeRuns(
-        sess,
-        body=bindings.v1ResumeRunsRequest(
-            runIds=[], projectId=1, filter=runFilter, skipMultitrial=False
-        ),
-    )
-
-    for res in resumeResp.results:
-        assert res.error == ""
-        wait_for_run_state(sess, res.id, bindings.trialv1State.ACTIVE)
-
-
 @pytest.mark.e2e_cpu
 def test_run_pause_and_resume_filter_skip_empty() -> None:
     sess = api_utils.user_session()
@@ -308,7 +242,7 @@ def test_run_pause_and_resume_filter_skip_empty() -> None:
 
     # validate response
     for r in pauseResp.results:
-        assert r.error == "Skipping run '" + str(r.id) + "' (part of multi-trial)."
+        assert r.error == "Cannot pause run '" + str(r.id) + "' (part of multi-trial)."
 
     resumeResp = bindings.post_ResumeRuns(
         sess,

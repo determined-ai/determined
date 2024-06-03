@@ -759,7 +759,7 @@ func archiveUnarchiveAction(ctx context.Context, archive bool, runIDs []int32,
 
 func (a *apiServer) PauseRuns(ctx context.Context, req *apiv1.PauseRunsRequest,
 ) (*apiv1.PauseRunsResponse, error) {
-	results, err := pauseResumeAction(ctx, true, req.ProjectId, req.RunIds, req.Filter, req.SkipMultitrial)
+	results, err := pauseResumeAction(ctx, true, req.ProjectId, req.RunIds, req.Filter)
 	if err != nil {
 		return nil, err
 	}
@@ -768,7 +768,7 @@ func (a *apiServer) PauseRuns(ctx context.Context, req *apiv1.PauseRunsRequest,
 
 func (a *apiServer) ResumeRuns(ctx context.Context, req *apiv1.ResumeRunsRequest,
 ) (*apiv1.ResumeRunsResponse, error) {
-	results, err := pauseResumeAction(ctx, false, req.ProjectId, req.RunIds, req.Filter, req.SkipMultitrial)
+	results, err := pauseResumeAction(ctx, false, req.ProjectId, req.RunIds, req.Filter)
 	if err != nil {
 		return nil, err
 	}
@@ -776,7 +776,7 @@ func (a *apiServer) ResumeRuns(ctx context.Context, req *apiv1.ResumeRunsRequest
 }
 
 func pauseResumeAction(ctx context.Context, isPause bool, projectID int32,
-	runIds []int32, filter *string, skipMultitrial bool) (
+	runIds []int32, filter *string) (
 	[]*apiv1.RunActionResult, error,
 ) {
 	if len(runIds) > 0 && filter != nil {
@@ -824,9 +824,9 @@ func pauseResumeAction(ctx context.Context, isPause bool, projectID int32,
 			})
 			continue
 		}
-		if cand.IsMultitrial && skipMultitrial {
+		if cand.IsMultitrial {
 			results = append(results, &apiv1.RunActionResult{
-				Error: fmt.Sprintf("Skipping run '%d' (part of multi-trial).", cand.ID),
+				Error: fmt.Sprintf("Cannot pause run '%d' (part of multi-trial).", cand.ID),
 				Id:    cand.ID,
 			})
 			continue
