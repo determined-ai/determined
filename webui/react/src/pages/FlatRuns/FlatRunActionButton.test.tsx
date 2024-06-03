@@ -12,6 +12,7 @@ const setup = (selectedFlatRuns: ReadonlyArray<Readonly<FlatRun>>) => {
         isMobile={false}
         projectId={1}
         selectedRuns={selectedFlatRuns}
+        workspaceId={1}
         onActionComplete={vi.fn()}
       />
     </UIProvider>,
