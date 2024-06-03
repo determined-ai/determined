@@ -101,7 +101,7 @@ test.describe('User Management', () => {
 
       test('Deactivate and Reactivate', async ({ page, user, auth }) => {
         // test does does three and a half logins, so we need to increase the timeout
-        test.setTimeout(120_000);
+        test.slow();
         const userManagementPage = new UserManagement(page);
         const signInPage = new SignIn(page);
         await test.step('Deactivate', async () => {
@@ -144,7 +144,7 @@ test.describe('User Management', () => {
     test.describe('With 10 Users', () => {
       const usernamePrefix = 'test-user-pagination';
       test.beforeAll(async ({ backgroundApiUser }) => {
-        test.setTimeout(180_000);
+        test.slow();
         await backgroundApiUser.apiAuth.login();
         await test.step('Create User', async () => {
           // pagination will be 10 per page, so create 11 users
@@ -232,7 +232,7 @@ test.describe('User Management', () => {
       });
 
       test('Users Table Row Count matches Users Tab Value', async ({ page }) => {
-        test.setTimeout(120_000);
+        test.slow();
         const userManagementPage = new UserManagement(page);
         const getExpectedRowCount = async (): Promise<number> => {
           const match = (await userManagementPage.userTab.pwLocator.innerText()).match(

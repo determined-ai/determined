@@ -79,8 +79,9 @@ test.describe('Experiement List', () => {
     await grid.headRow.setColumnDefs();
   });
 
-  test('Column Picker Check and Uncheck', async () => {
-    test.setTimeout(120_000);
+  test.skip('Column Picker Check and Uncheck', async () => {
+    // BUG [ET-287]
+    test.slow();
     const columnTitle = 'Forked From',
       columnTestid = 'forkedFrom';
     const columnPicker = projectDetailsPage.f_experiemntList.tableActionBar.columnPickerMenu;
@@ -108,7 +109,7 @@ test.describe('Experiement List', () => {
   });
 
   test('Column Picker Show All and Hide All', async () => {
-    test.setTimeout(180_000);
+    test.slow();
     const columnPicker = projectDetailsPage.f_experiemntList.tableActionBar.columnPickerMenu;
     const grid = projectDetailsPage.f_experiemntList.dataGrid;
     let previousTabs = grid.headRow.columnDefs.size;

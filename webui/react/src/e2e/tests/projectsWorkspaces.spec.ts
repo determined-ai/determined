@@ -8,7 +8,7 @@ import { Workspaces } from 'e2e/models/pages/Workspaces';
 import { randId, safeName } from 'e2e/utils/naming';
 
 test.describe('Projects', () => {
-  test.setTimeout(120_000);
+  test.slow();
   let wsCreatedWithButton = '';
   let wsCreatedWithSidebar = '';
   let projectOneName = '';
