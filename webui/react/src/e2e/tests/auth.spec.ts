@@ -37,14 +37,14 @@ test.describe('Authentication', () => {
     });
 
     await test.step('Login and Redirect', async () => {
-      await auth.login({ waitForURL: /models/ });
+      await auth.login({ expectedURL: /models/ });
       await expect(page).toHaveTitle(BasePage.getTitle('Model Registry'));
     });
   });
 
   test('Bad Credentials', async ({ page, auth }) => {
     const signInPage = new SignIn(page);
-    await auth.login({ password: 'superstar', username: 'jcom', waitForURL: /login/ });
+    await auth.login({ expectedURL: /login/, password: 'superstar', username: 'jcom' });
     await expect(page).toHaveTitle(signInPage.title);
     await expect(page).toHaveURL(/login/);
     await expect(signInPage.detAuth.errors.pwLocator).toBeVisible();

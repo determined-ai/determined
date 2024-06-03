@@ -19,7 +19,7 @@ export type TableArgs<RowType, HeadRowType> = NamedComponentArgs & {
  * @param {HeadRowType} [obj.headRowType] - Value of the HeadRowType used to instanciate the head row
  */
 export class Table<RowType extends Row, HeadRowType extends HeadRow> extends NamedComponent {
-  readonly defaultSelector = 'table.ant-table';
+  readonly defaultSelector = '.ant-table';
   constructor(args: TableArgs<RowType, HeadRowType>) {
     super(args);
     this.#rowType = args.rowType;

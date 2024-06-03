@@ -112,9 +112,9 @@ test.describe('User Management', () => {
         await test.step('Attempt Sign In With Deactivated User', async () => {
           await auth.logout();
           await auth.login({
+            expectedURL: /login/,
             password: testUser.password,
             username: testUser.user?.username,
-            waitForURL: /login/,
           });
           expect(await signInPage.detAuth.errors.message.pwLocator.textContent()).toContain(
             'Login failed',
@@ -130,7 +130,7 @@ test.describe('User Management', () => {
           // thinks we've already logged in, skipping the login automation.
           // We might need to find a way to be more explicit about the page state.
           await expect(page).toHaveURL(/login/);
-          await auth.login({ waitForURL: userManagementPage.url });
+          await auth.login({ expectedURL: userManagementPage.url });
           testUser = await user.changeStatusUser(testUser, true);
           saveTestUser(testUser, testUsers);
         });

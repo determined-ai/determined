@@ -22,11 +22,11 @@ export class AuthFixture {
   }
 
   async login({
-    waitForURL = /dashboard/,
+    expectedURL = /dashboard/,
     username = this.#USERNAME,
     password = this.#PASSWORD,
   }: {
-    waitForURL?: string | RegExp | ((url: URL) => boolean);
+    expectedURL?: string | RegExp | ((url: URL) => boolean);
     username?: string;
     password?: string;
   } = {}): Promise<void> {
@@ -39,13 +39,13 @@ export class AuthFixture {
     await detAuth.username.pwLocator.fill(username);
     await detAuth.password.pwLocator.fill(password);
     await detAuth.submit.pwLocator.click();
-    await this.#page.waitForURL(waitForURL);
+    await this.#page.waitForURL(expectedURL);
     // BUG [ET-239] can cause the following line to fail
   }
 
   async logout(): Promise<void> {
     await (await this.signInPage.nav.sidebar.headerDropdown.open()).signOut.pwLocator.click();
-    await this.#page.waitForURL(this.signInPage.title);
+    await expect.soft(this.#page).toHaveTitle(this.signInPage.title);
     await expect.soft(this.#page).toHaveURL(this.signInPage.getUrlRegExp());
   }
 }
