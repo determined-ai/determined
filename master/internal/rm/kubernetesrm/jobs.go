@@ -176,7 +176,8 @@ func newJobsService(
 		syslog:                            logrus.WithField("namespace", namespace),
 		jobSchedulingStateCallback:        jobSchedulingStateCb,
 
-		kubeconfigPath: kubeconfigPath,
+		exposeProxyConfig: exposeProxyConfig,
+		kubeconfigPath:    kubeconfigPath,
 	}
 
 	if err := p.startClientSet(); err != nil {

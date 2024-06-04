@@ -136,6 +136,8 @@ type allocation struct {
 	rendezvous *rendezvous
 	// proxy state
 	proxies []string
+	// Records if we got a proxy address from resources started.
+	gotProxyAddressInResourcesStarted bool
 
 	logCtx          detLogger.Context
 	restored        bool
@@ -326,6 +328,14 @@ func (a *allocation) Signal(sig AllocationSignal, reason string) {
 func (a *allocation) SetProxyAddress(ctx context.Context, address string) error {
 	a.mu.Lock()
 	defer a.mu.Unlock()
+
+	// This is used in K8s to tell if we need to save the proxy address or not. Normally
+	// we rely on the pods posting their proxy address to the allocation. In some cases,
+	// we want to instead go through a gateway to access the task. We know this in advance
+	// so we don't need to wait for the pods to post their address.
+	if a.gotProxyAddressInResourcesStarted {
+		return nil
+	}
 
 	if len(a.req.ProxyPorts) == 0 {
 		a.syslog.Debug("no ports to proxy, skipping proxy registration.")
@@ -764,6 +774,7 @@ func (a *allocation) resourcesStateChanged(msg *sproto.ResourcesStateChanged) {
 		}
 		if len(a.req.ProxyPorts) > 0 && msg.ResourcesStarted.Addresses != nil &&
 			a.resources[msg.ResourcesID].Rank == 0 {
+			a.gotProxyAddressInResourcesStarted = true
 			a.registerProxies(msg.ResourcesStarted.Addresses)
 			a.closers = append(a.closers, a.unregisterProxies)
 		}
