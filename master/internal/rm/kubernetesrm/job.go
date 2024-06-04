@@ -301,20 +301,24 @@ func (j *job) jobDeletedCallback() {
 	j.informTaskResourcesStopped()
 }
 
-/*
-func (p *pod) hasAllResourcesStarted() bool {
-	if p.container.State != cproto.Running {
-		return false
+func (j *job) getGatewayAddresses() []cproto.Address {
+	if j.exposeProxyConfig == nil {
+		return nil
 	}
-	if p.exposeProxyConfig == nil {
-		return true
+
+	// TODO might be a race condition here technically. Maybe wait for the callback to have happened.
+	var addresses []cproto.Address
+	for _, g := range j.gatewayProxyResources {
+		addresses = append(addresses, cproto.Address{
+			ContainerIP:   j.exposeProxyConfig.GatewayIP,
+			HostIP:        j.exposeProxyConfig.GatewayIP,
+			ContainerPort: g.PodPort(),
+			HostPort:      g.GWPort(),
+		})
 	}
-	if len(p.req.ProxyPorts) > 0 && len(p.gatewayProxyResources) == 0 {
-		return false
-	}
-	return true
+
+	return addresses
 }
-*/
 
 func (j *job) podUpdatedCallback(updatedPod k8sV1.Pod) error {
 	j.mu.Lock()
@@ -371,36 +375,12 @@ func (j *job) podUpdatedCallback(updatedPod k8sV1.Pod) error {
 
 	allPodsAtLeastRunning := all(cproto.Running.Before, maps.Values(j.podStates)...)
 	if allPodsAtLeastRunning && !j.sentRunningEvent {
-		// TODO(gateways) do we need to check that ports are set here?
-		gwPortMap := make(PortMap)
-		for _, g := range j.gatewayProxyResources {
-			gwPortMap[g.PodPort()] = g.GWPort()
-		}
-
 		j.syslog.WithField("pod-name", podName).Info("pod is running")
 		j.container.State = cproto.Running
-		j.informTaskResourcesStarted(sproto.ResourcesStarted{NativeResourcesID: j.jobName})
-
-		// TODO(gateways) how do we fix this? How do jobs currently set the ip?
-		/*
-			baseAddress := cproto.Address{
-				ContainerIP: pod.Status.PodIP,
-				HostIP:      pod.Status.PodIP,
-			}
-			if exposeProxyConfig != nil {
-				baseAddress.ContainerIP = exposeProxyConfig.GatewayIP
-				baseAddress.HostIP = exposeProxyConfig.GatewayIP
-			}
-			for _, podPort := range podPorts {
-				address := baseAddress
-				address.ContainerPort = podPort
-				address.HostPort = podPort
-				if newHostPort, ok := gwPortMap[podPort]; ok {
-					address.HostPort = newHostPort
-					// address.ContainerPort = newHostPort
-				}
-				addresses = append(addresses, address)
-		*/
+		j.informTaskResourcesStarted(sproto.ResourcesStarted{
+			NativeResourcesID: j.jobName,
+			Addresses:         j.getGatewayAddresses(),
+		})
 
 		j.sentRunningEvent = true
 	}
@@ -592,18 +572,6 @@ func (j *job) createSpecAndSubmit(spec *tasks.TaskSpec) error {
 		j.mu.Lock()
 		defer j.mu.Unlock()
 		j.gatewayProxyResources = resources
-		// chat: we want to delay this until the request queue worker has created the resources.
-		// if p.hasAllResourcesStarted() {
-		gwPortMap := make(PortMap)
-		for _, g := range j.gatewayProxyResources {
-			gwPortMap[g.PodPort()] = g.GWPort()
-		}
-		// TODO(gateways) I think it is fine to assume the request queue will happen before it starts.
-		// We could submit the gateway first so this is always true.
-		//	p.informTaskResourcesStarted(
-		//		getResourcesStartedForPod(p.pod, p.ports, p.exposeProxyConfig, gwPortMap),
-		//	)
-		//}
 	}
 	resourceGenerator := j.configureProxyResources(spec)
 	if resourceGenerator == nil {

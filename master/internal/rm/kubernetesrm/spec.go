@@ -732,7 +732,7 @@ func configureUniqueName(t tasks.TaskSpec) string {
 		clusterIDPrefix = t.ClusterID
 	}
 	if clusterIDPrefix != "" {
-		name = fmt.Sprintf("%s-%s", clusterIDPrefix, name)
+		name = fmt.Sprintf("det-%s-%s", clusterIDPrefix, name)
 	}
 
 	return name
