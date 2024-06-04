@@ -6,32 +6,30 @@ import { useToast } from 'hew/Toast';
 import { useCallback, useMemo, useState } from 'react';
 
 import BatchActionConfirmModalComponent from 'components/BatchActionConfirmModal';
+import { FilterFormSetWithoutId } from 'components/FilterForm/components/type';
 import usePermissions from 'hooks/usePermissions';
+import FlatRunMoveModalComponent from 'pages/FlatRuns/FlatRunMoveModal';
 import { archiveRuns, deleteRuns, killRuns, unarchiveRuns } from 'services/api';
-import { BulkActionResult, ExperimentAction, FlatRun, Project } from 'types';
+import { BulkActionResult, ExperimentAction, FlatRun } from 'types';
 import handleError from 'utils/error';
 import { canActionFlatRun, getActionsForFlatRunsUnion } from 'utils/flatRun';
 import { capitalizeWord } from 'utils/string';
 
 const BATCH_ACTIONS = [
-  // ExperimentAction.OpenTensorBoard,
   ExperimentAction.Move,
   ExperimentAction.Archive,
   ExperimentAction.Unarchive,
   ExperimentAction.Delete,
-  // ExperimentAction.Pause,
   ExperimentAction.Kill,
 ] as const;
 
 type BatchAction = (typeof BATCH_ACTIONS)[number];
 
 const ACTION_ICONS: Record<BatchAction, IconName> = {
-  // [ExperimentAction.Pause]: 'pause',
   [ExperimentAction.Archive]: 'archive',
   [ExperimentAction.Unarchive]: 'document',
   [ExperimentAction.Move]: 'workspaces',
   [ExperimentAction.Kill]: 'cancelled',
-  // [ExperimentAction.OpenTensorBoard]: 'tensor-board',
   [ExperimentAction.Delete]: 'error',
 } as const;
 
@@ -40,7 +38,9 @@ const LABEL_PLURAL = 'runs';
 interface Props {
   isMobile: boolean;
   selectedRuns: ReadonlyArray<Readonly<FlatRun>>;
-  project: Readonly<Project>;
+  projectId: number;
+  workspaceId: number;
+  filterFormSetWithoutId: FilterFormSetWithoutId;
   onActionSuccess?: (action: BatchAction, successfulIds: number[]) => void;
   onActionComplete?: () => Promise<void>;
 }
@@ -48,13 +48,17 @@ interface Props {
 const FlatRunActionButton = ({
   isMobile,
   selectedRuns,
-  project,
+  projectId,
+  filterFormSetWithoutId,
+  workspaceId,
   onActionSuccess,
   onActionComplete,
 }: Props): JSX.Element => {
   const [batchAction, setBatchAction] = useState<BatchAction | undefined>(undefined);
   const permissions = usePermissions();
   const { openToast } = useToast();
+  const { Component: FlatRunMoveComponentModal, open: flatRunMoveModalOpen } =
+    useModal(FlatRunMoveModalComponent);
   const BatchActionConfirmModal = useModal(BatchActionConfirmModalComponent);
 
   const sendBatchActions = useCallback(
@@ -63,12 +67,12 @@ const FlatRunActionButton = ({
         .filter((exp) => canActionFlatRun(action, exp))
         .map((run) => run.id);
       const params = {
-        projectId: project.id,
+        projectId,
         runIds: validRunIds,
       };
       switch (action) {
         case ExperimentAction.Move:
-          //   return ExperimentMoveModal.open();
+          flatRunMoveModalOpen();
           break;
         case ExperimentAction.Archive:
           return await archiveRuns(params);
@@ -82,7 +86,7 @@ const FlatRunActionButton = ({
           break;
       }
     },
-    [project.id, selectedRuns],
+    [flatRunMoveModalOpen, projectId, selectedRuns],
   );
 
   const submitBatchAction = useCallback(
@@ -104,9 +108,8 @@ const FlatRunActionButton = ({
         } else if (numFailures === 0) {
           openToast({
             closeable: true,
-            description: `${action} succeeded for ${
-              results.successful.length
-            } ${LABEL_PLURAL.toLowerCase()}`,
+            description: `${action} succeeded for ${results.successful.length
+              } ${LABEL_PLURAL.toLowerCase()}`,
             title: `${action} Success`,
           });
         } else if (numSuccesses === 0) {
@@ -118,9 +121,8 @@ const FlatRunActionButton = ({
         } else {
           openToast({
             closeable: true,
-            description: `${action} succeeded for ${numSuccesses} out of ${
-              numFailures + numSuccesses
-            } eligible
+            description: `${action} succeeded for ${numSuccesses} out of ${numFailures + numSuccesses
+              } eligible
             ${LABEL_PLURAL.toLowerCase()}`,
             severity: 'Warning',
             title: `Partial ${action} Failure`,
@@ -194,6 +196,13 @@ const FlatRunActionButton = ({
           onConfirm={() => submitBatchAction(batchAction)}
         />
       )}
+      <FlatRunMoveComponentModal
+        filterFormSetWithoutId={filterFormSetWithoutId}
+        flatRuns={[...selectedRuns]}
+        sourceProjectId={projectId}
+        sourceWorkspaceId={workspaceId}
+        onActionComplete={onActionComplete}
+      />
     </>
   );
 };

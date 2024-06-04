@@ -2,27 +2,22 @@ import { render, screen } from '@testing-library/react';
 import dayjs from 'dayjs';
 import UIProvider, { DefaultTheme } from 'hew/Theme';
 
+import { Conjunction, FormKind } from 'components/FilterForm/components/type';
 import FlatRunActionButton from 'pages/FlatRuns/FlatRunActionButton';
-import { FlatRun, Project, RunState, WorkspaceState } from 'types';
+import { FlatRun, RunState } from 'types';
 
 const setup = (selectedFlatRuns: ReadonlyArray<Readonly<FlatRun>>) => {
-  const project: Readonly<Project> = {
-    archived: false,
-    id: 1,
-    immutable: false,
-    name: 'proj',
-    notes: [],
-    state: WorkspaceState.Unspecified,
-    userId: 1,
-    workspaceId: 1,
-  };
-
   render(
     <UIProvider theme={DefaultTheme.Light}>
       <FlatRunActionButton
+        filterFormSetWithoutId={{
+          filterGroup: { children: [], conjunction: Conjunction.Or, kind: FormKind.Group },
+          showArchived: true,
+        }}
         isMobile={false}
-        project={project}
+        projectId={1}
         selectedRuns={selectedFlatRuns}
+        workspaceId={1}
         onActionComplete={vi.fn()}
       />
     </UIProvider>,

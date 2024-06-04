@@ -28,7 +28,7 @@ export const canActionFlatRun = (action: FlatRunAction, flatRun: Readonly<FlatRu
   return flatRunCheckers[action](flatRun);
 };
 
-export const getActionsForFlatRun = (
+const getActionsForFlatRun = (
   flatRun: Readonly<FlatRun>,
   targets: ReadonlyArray<FlatRunAction>,
   permissions: Readonly<FlatRunPermissionSet>,

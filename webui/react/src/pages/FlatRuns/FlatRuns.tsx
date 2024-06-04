@@ -12,7 +12,7 @@ import {
   MIN_COLUMN_WIDTH,
   MULTISELECT,
 } from 'hew/DataGrid/columns';
-// import { ContextMenuCompleteHandlerProps } from 'hew/DataGrid/contextMenu';
+import { ContextMenuCompleteHandlerProps } from 'hew/DataGrid/contextMenu';
 import DataGrid, {
   DataGridHandle,
   HandleSelectionChangeType,
@@ -65,7 +65,7 @@ import {
   DEFAULT_SELECTION,
   SelectionType as SelectionState,
 } from 'pages/F_ExpList/F_ExperimentList.settings';
-// import FlatRunActionButton from 'pages/FlatRuns/FlatRunActionButton';
+import FlatRunActionButton from 'pages/FlatRuns/FlatRunActionButton';
 import { paths } from 'routes/utils';
 import { getProjectColumns, getProjectNumericMetricsRange, searchRuns } from 'services/api';
 import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
@@ -103,6 +103,7 @@ const formStore = new FilterFormStore();
 
 interface Props {
   projectId: number;
+  workspaceId: number;
   searchId?: number;
 }
 
@@ -121,7 +122,7 @@ const parseSortString = (sortString: string): Sort[] => {
   });
 };
 
-const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
+const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
   const dataGridRef = useRef<DataGridHandle>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const [searchParams, setSearchParams] = useSearchParams();
@@ -165,6 +166,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
   const sortString = useMemo(() => makeSortString(sorts.filter(validSort.is)), [sorts]);
   const loadableFormset = useObservable(formStore.formset);
   const filtersString = useObservable(formStore.asJsonString);
+  const filterFormSetWithoutId = useObservable(formStore.filterFormSetWithoutId);
   const [total, setTotal] = useState<Loadable<number>>(NotLoaded);
   const isMobile = useMobile();
   const [isLoading, setIsLoading] = useState(true);
@@ -245,12 +247,12 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
     };
   }, [loadedSelectedRunIds]);
 
-  // const selectedRuns: FlatRun[] = useMemo(() => {
-  //   const selected = runs.flatMap((run) => {
-  //     return run.isLoaded && selectedRunIdSet.has(run.data.id) ? [run.data] : [];
-  //   });
-  //   return selected;
-  // }, [runs, selectedRunIdSet]);
+  const selectedRuns: FlatRun[] = useMemo(() => {
+    const selected = runs.flatMap((run) => {
+      return run.isLoaded && selectedRunIdSet.has(run.data.id) ? [run.data] : [];
+    });
+    return selected;
+  }, [runs, selectedRunIdSet]);
 
   const handleIsOpenFilterChange = useCallback((newOpen: boolean) => {
     setIsOpenFilter(newOpen);
@@ -330,8 +332,8 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
                 currentColumn.column,
                 currentColumn.displayName || currentColumn.column,
                 settings.columnWidths[currentColumn.column] ??
-                  defaultColumnWidths[currentColumn.column as RunColumn] ??
-                  MIN_COLUMN_WIDTH,
+                defaultColumnWidths[currentColumn.column as RunColumn] ??
+                MIN_COLUMN_WIDTH,
                 dataPath,
                 {
                   max: heatmap.max,
@@ -343,8 +345,8 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
                 currentColumn.column,
                 currentColumn.displayName || currentColumn.column,
                 settings.columnWidths[currentColumn.column] ??
-                  defaultColumnWidths[currentColumn.column as RunColumn] ??
-                  MIN_COLUMN_WIDTH,
+                defaultColumnWidths[currentColumn.column as RunColumn] ??
+                MIN_COLUMN_WIDTH,
                 dataPath,
               );
             }
@@ -355,8 +357,8 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
               currentColumn.column,
               currentColumn.displayName || currentColumn.column,
               settings.columnWidths[currentColumn.column] ??
-                defaultColumnWidths[currentColumn.column as RunColumn] ??
-                MIN_COLUMN_WIDTH,
+              defaultColumnWidths[currentColumn.column as RunColumn] ??
+              MIN_COLUMN_WIDTH,
               dataPath,
             );
             break;
@@ -367,8 +369,8 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
               currentColumn.column,
               currentColumn.displayName || currentColumn.column,
               settings.columnWidths[currentColumn.column] ??
-                defaultColumnWidths[currentColumn.column as RunColumn] ??
-                MIN_COLUMN_WIDTH,
+              defaultColumnWidths[currentColumn.column as RunColumn] ??
+              MIN_COLUMN_WIDTH,
               dataPath,
             );
         }
@@ -381,9 +383,9 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
             settings.columnWidths[currentColumn.column],
             heatmap && settings.heatmapOn && !settings.heatmapSkipped.includes(currentColumn.column)
               ? {
-                  max: heatmap.max,
-                  min: heatmap.min,
-                }
+                max: heatmap.max,
+                min: heatmap.min,
+              }
               : undefined,
           );
         }
@@ -660,77 +662,13 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
     [rowRangeToIds, settings.selection, updateSettings],
   );
 
-  // const onActionComplete = useCallback(async () => {
-  //   handleSelectionChange('remove-all');
-  //   await fetchRuns();
-  // }, [fetchRuns, handleSelectionChange]);
+  const onActionComplete = useCallback(async () => {
+    handleSelectionChange('remove-all');
+    await fetchRuns();
+  }, [fetchRuns, handleSelectionChange]);
 
-  const handleActionSuccess = useCallback(
-    (
-      action: ExperimentAction,
-      successfulIds: number[],
-      // data?: Partial<BulkExperimentItem>,
-    ): void => {
-      const idSet = new Set(successfulIds);
-      const updateExperiment = (updated: Partial<FlatRun>) => {
-        setRuns((prev) =>
-          prev.map((runsLoadable) =>
-            Loadable.map(runsLoadable, (run) => (idSet.has(run.id) ? { ...run, ...updated } : run)),
-          ),
-        );
-      };
-      switch (action) {
-        case ExperimentAction.Activate:
-          updateExperiment({ state: RunState.Active });
-          break;
-        case ExperimentAction.Archive:
-          updateExperiment({ archived: true });
-          break;
-        case ExperimentAction.Cancel:
-          updateExperiment({ state: RunState.StoppingCanceled });
-          break;
-        case ExperimentAction.Kill:
-          updateExperiment({ state: RunState.StoppingKilled });
-          break;
-        case ExperimentAction.Pause:
-          updateExperiment({ state: RunState.Paused });
-          break;
-        case ExperimentAction.Unarchive:
-          updateExperiment({ archived: false });
-          break;
-        // case ExperimentAction.Edit:
-        //   if (data) updateExperiment(data);
-        //   openToast({ severity: 'Confirm', title: 'Experiment updated successfully' });
-        //   break;
-        // case ExperimentAction.Move:
-        case ExperimentAction.Delete:
-          setRuns((prev) =>
-            prev.filter((runLoadable) =>
-              Loadable.match(runLoadable, {
-                _: () => true,
-                Loaded: (run) => !idSet.has(run.id),
-              }),
-            ),
-          );
-          break;
-        case ExperimentAction.RetainLogs:
-          break;
-        // Exhaustive cases to ignore.
-        default:
-          break;
-      }
-      handleSelectionChange('remove-all');
-    },
-    [
-      handleSelectionChange,
-      // openToast,
-    ],
-  );
-
-  const handleContextMenuComplete = useCallback(
-    (action: ExperimentAction, id: number) => handleActionSuccess(action, [id]),
-    [handleActionSuccess],
-  );
+  const handleContextMenuComplete: ContextMenuCompleteHandlerProps<ExperimentAction, FlatRun> =
+    useCallback(() => { }, []);
 
   const handleColumnsOrderChange = useCallback(
     // changing both column order and pinned count should happen in one update:
@@ -780,12 +718,12 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
         const items: MenuItem[] = [
           settings.selection.type === 'ALL_EXCEPT' || settings.selection.selections.length > 0
             ? {
-                key: 'select-none',
-                label: 'Clear selected',
-                onClick: () => {
-                  handleSelectionChange?.('remove-all');
-                },
-              }
+              key: 'select-none',
+              label: 'Clear selected',
+              onClick: () => {
+                handleSelectionChange?.('remove-all');
+              },
+            }
             : null,
           ...[5, 10, 25].map((n) => ({
             key: `select-${n}`,
@@ -814,32 +752,32 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
           ? null
           : !isPinned
             ? {
-                icon: <Icon decorative name="pin" />,
-                key: 'pin',
-                label: 'Pin column',
-                onClick: () => {
-                  const newColumnsOrder = columnsIfLoaded.filter((c) => c !== columnId);
-                  newColumnsOrder.splice(settings.pinnedColumnsCount, 0, columnId);
-                  handleColumnsOrderChange(
-                    newColumnsOrder,
-                    Math.min(settings.pinnedColumnsCount + 1, columnsIfLoaded.length),
-                  );
-                },
-              }
-            : {
-                disabled: settings.pinnedColumnsCount <= 1,
-                icon: <Icon decorative name="pin" />,
-                key: 'unpin',
-                label: 'Unpin column',
-                onClick: () => {
-                  const newColumnsOrder = columnsIfLoaded.filter((c) => c !== columnId);
-                  newColumnsOrder.splice(settings.pinnedColumnsCount - 1, 0, columnId);
-                  handleColumnsOrderChange(
-                    newColumnsOrder,
-                    Math.max(settings.pinnedColumnsCount - 1, 0),
-                  );
-                },
+              icon: <Icon decorative name="pin" />,
+              key: 'pin',
+              label: 'Pin column',
+              onClick: () => {
+                const newColumnsOrder = columnsIfLoaded.filter((c) => c !== columnId);
+                newColumnsOrder.splice(settings.pinnedColumnsCount, 0, columnId);
+                handleColumnsOrderChange(
+                  newColumnsOrder,
+                  Math.min(settings.pinnedColumnsCount + 1, columnsIfLoaded.length),
+                );
               },
+            }
+            : {
+              disabled: settings.pinnedColumnsCount <= 1,
+              icon: <Icon decorative name="pin" />,
+              key: 'unpin',
+              label: 'Unpin column',
+              onClick: () => {
+                const newColumnsOrder = columnsIfLoaded.filter((c) => c !== columnId);
+                newColumnsOrder.splice(settings.pinnedColumnsCount - 1, 0, columnId);
+                handleColumnsOrderChange(
+                  newColumnsOrder,
+                  Math.max(settings.pinnedColumnsCount - 1, 0),
+                );
+              },
+            },
         {
           icon: <Icon decorative name="eye-close" />,
           key: 'hide',
@@ -896,9 +834,9 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
           sortCount === 0
             ? []
             : [
-                { type: 'divider' as const },
-                ...sortMenuItemsForColumn(column, sorts, handleSortChange),
-              ];
+              { type: 'divider' as const },
+              ...sortMenuItemsForColumn(column, sorts, handleSortChange),
+            ];
 
         items.push(
           ...sortMenuItems,
@@ -1013,12 +951,14 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
               rowHeight={globalSettings.rowHeight}
               onRowHeightChange={onRowHeightChange}
             />
-            {/* <FlatRunActionButton
+            <FlatRunActionButton
+              filterFormSetWithoutId={filterFormSetWithoutId}
               isMobile={isMobile}
-              project={project}
+              projectId={projectId}
               selectedRuns={selectedRuns}
+              workspaceId={workspaceId}
               onActionComplete={onActionComplete}
-            /> */}
+            />
           </Row>
         </Column>
         <Column align="right">
