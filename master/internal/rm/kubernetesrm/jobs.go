@@ -29,6 +29,8 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
+	gateway "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned/typed/apis/v1"
+	alphaGateway "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned/typed/apis/v1alpha2"
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
@@ -91,6 +93,9 @@ type jobsService struct {
 	detMasterPort         int32
 	kubeconfigPath        string
 
+	// TODO: also rename.
+	exposeProxyConfig *config.InternalTaskGatewayConfig
+
 	// System dependencies. Also set in initialization and never modified after.
 	syslog                     *logrus.Entry
 	clientSet                  k8sClient.Interface
@@ -110,6 +115,8 @@ type jobsService struct {
 	jobHandlerToMetadata              map[*job]jobMetadata
 	nodeToSystemResourceRequests      map[string]int64
 	currentNodes                      map[string]*k8sV1.Node
+	gatewayService                    *gatewayService
+
 	// TODO(RM-236) make one cache and make this code more straightforward.
 	summarizeCacheLock sync.RWMutex
 	summarizeCache     summarizeResult
@@ -270,10 +277,38 @@ func (j *jobsService) startClientSet() error {
 		return fmt.Errorf("failed to initialize kubernetes clientSet: %w", err)
 	}
 
+	namespaces := append(maps.Keys(p.namespaceToPoolName), p.namespace)
 	for _, ns := range append(maps.Keys(j.namespaceToPoolName), j.namespace) {
 		j.podInterfaces[ns] = j.clientSet.CoreV1().Pods(ns)
 		j.configMapInterfaces[ns] = j.clientSet.CoreV1().ConfigMaps(ns)
 		j.jobInterfaces[ns] = j.clientSet.BatchV1().Jobs(ns)
+	}
+
+	if exposeConfig := p.exposeProxyConfig; exposeConfig != nil {
+		// Using the CoreV1 RESTClient for gateway resources will cause "resource not found" errors.
+		alphaGatewayClientSet, err := alphaGateway.NewForConfig(config)
+		if err != nil {
+			return fmt.Errorf("creating Kubernetes gateway clientSet: %w", err)
+		}
+		for _, ns := range namespaces {
+			p.serviceInterfaces[ns] = p.clientSet.CoreV1().Services(ns)
+			p.tcpRouteInterfaces[ns] = alphaGatewayClientSet.TCPRoutes(ns)
+		}
+
+		// Don't think you can use the alphaGateway clientSet, because you can't.
+		gatewayClientSet, err := gateway.NewForConfig(config)
+		if err != nil {
+			return fmt.Errorf("creating Kubernetes gateway clientSet: %w", err)
+		}
+		gwService, err := newGatewayService(
+			gatewayClientSet.Gateways(exposeConfig.GatewayNamespace),
+			p.tcpRouteInterfaces,
+			*exposeConfig,
+		)
+		if err != nil {
+			return fmt.Errorf("creating gateway service: %w", err)
+		}
+		p.gatewayService = gwService
 	}
 
 	j.syslog.Infof("kubernetes clientSet initialized")
@@ -456,6 +491,8 @@ func (j *jobsService) startJob(msg startJob) error {
 		j.slotType,
 		j.slotResourceRequests,
 		j.scheduler,
+		p.exposeProxyConfig,
+		p.gatewayService,
 	)
 
 	if _, alreadyExists := j.jobNameToJobHandler[newJobHandler.jobName]; alreadyExists {
@@ -504,6 +541,7 @@ func (j *jobsService) SummarizeResources(poolName string) (*computeUsageSummary,
 }
 
 func (j *jobsService) ReattachJob(msg reattachJobRequest) (reattachJobResponse, error) {
+	// TODO(RM-270/gateways) make reattach works for gateways.
 	j.mu.Lock()
 	defer j.mu.Unlock()
 	return j.reattachJob(msg)
@@ -631,6 +669,7 @@ func (j *jobsService) recreateJobHandler(
 		allocationID: newJobHandler.req.AllocationID,
 	}
 
+	// FIXME: in case of reattach we're sending traffic to the wrong host.
 	return reattachJobResponse{started: nil}, nil
 }
 
@@ -644,6 +683,8 @@ func (j *jobsService) deleteKubernetesResources(
 	for _, configMap := range configMaps.Items {
 		j.resourceRequestQueue.deleteKubernetesResources(configMap.Namespace, "", configMap.Name, "")
 	}
+
+	// TODO(RM-270/gateways) include services / TCPRoutes and so on so restore can cleanup.
 }
 
 func (j *jobsService) RefreshStates(allocationID model.AllocationID) error {
@@ -811,7 +852,13 @@ func (j *jobsService) startPreemptionListeners() error {
 
 func (j *jobsService) startResourceRequestQueue() {
 	failures := make(chan resourcesRequestFailure, 16)
-	j.resourceRequestQueue = startRequestQueue(j.jobInterfaces, j.podInterfaces, j.configMapInterfaces, failures)
+	p.resourceRequestQueue = startRequestQueue(
+		p.podInterfaces,
+		p.configMapInterfaces,
+		p.serviceInterfaces,
+		p.gatewayService,
+		p.tcpRouteInterfaces,
+		failures)
 	j.wg.Go(func(ctx context.Context) {
 		for {
 			select {
