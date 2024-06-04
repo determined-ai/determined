@@ -186,13 +186,13 @@ header of every page in the WebUI for the configured duration. Commands include 
 
 Prepare the maintenance message using the CLI command, `det master cluster-message set`.
 
--  For example, the following command creates a maintenance message with a start and end date:
+-  For example, the following command creates a maintenance message with a start and end date (which must be expressed in UTC):
 
       .. code:: bash
 
-         det master cluster-message set --message "Scheduled maintenance on Dec 1st from 10pm CST to 11pm CST." --start "2024-12-01-22:00:00 CST" --end "2024-12-01-23:00:00 CST"
+         det master cluster-message set --message "Scheduled maintenance on Dec 1st from 10pm CST to 11pm CST." --start "2024-12-02-04:00:00Z" --end "2024-12-02-05:00:00Z"
 
--  Instead of using a start and end date, you could also set a duration:
+-  You can also express the end date as a duration:
 
       .. code:: bash
 
@@ -205,3 +205,11 @@ Verify the message with the following command:
    .. code:: bash
 
       det master cluster-message get
+
+**Clear the Message**
+
+Clear the message with the following command:
+
+   .. code:: bash
+
+      det master cluster-message clear
