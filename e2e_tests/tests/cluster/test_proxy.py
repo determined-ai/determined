@@ -119,7 +119,7 @@ def test_experiment_proxy_simple_single_slot(port_map: Tuple[int, bool]) -> None
         (6000, True),
     ],
 )
-def test_experiment_proxy_simple_two_slot(port_map: Tuple[int, bool]) -> None:
+def test_experiment_proxy_simple_two_slots(port_map: Tuple[int, bool]) -> None:
     return _test_experiment_proxy_simple(port_map, slots=2)
 
 
@@ -162,7 +162,7 @@ def _test_experiment_proxy_simple(port_map: Tuple[int, bool], slots: int) -> Non
             )
 
             try:
-                _probe_tunnel(proc, _echo_server_check(port=listen_port), max_tunnel_time=100)
+                _probe_tunnel(proc, _echo_server_check(port=listen_port))
             finally:
                 proc.terminate()
                 proc.wait(10)
