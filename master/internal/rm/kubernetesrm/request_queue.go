@@ -25,8 +25,7 @@ type (
 	createKubernetesResources struct {
 		jobSpec       *batchV1.Job
 		configMapSpec *k8sV1.ConfigMap
-
-		gatewayProxyResources []gatewayProxyResource
+		gw            *gatewayResourceComm
 	}
 
 	deleteKubernetesResources struct {
@@ -201,8 +200,8 @@ func keyForDelete(msg deleteKubernetesResources) requestID {
 	if msg.podName != "" {
 		return requestID(msg.namespace + "/" + msg.podName)
 	}
-	if msg.configMapName != nil {
-		return requestID(msg.namespace + "/" + *msg.configMapName)
+	if msg.configMapName != "" {
+		return requestID(msg.namespace + "/" + msg.configMapName)
 	}
 	panic("invalid deleteKubernetesResources message")
 }
@@ -210,12 +209,12 @@ func keyForDelete(msg deleteKubernetesResources) requestID {
 func (r *requestQueue) createKubernetesResources(
 	jobSpec *batchV1.Job,
 	configMapSpec *k8sV1.ConfigMap,
-	gatewayProxyResources []gatewayProxyResource,
+	gwResources *gatewayResourceComm,
 ) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	msg := createKubernetesResources{jobSpec, configMapSpec, gatewayProxyResources}
+	msg := createKubernetesResources{jobSpec, configMapSpec, gwResources}
 	ref := keyForCreate(msg)
 
 	if _, requestAlreadyExists := r.pendingResourceCreations[ref]; requestAlreadyExists {
@@ -244,12 +243,8 @@ func (r *requestQueue) deleteKubernetesResources(msg deleteKubernetesResources) 
 		r.pendingResourceCreations[ref].createResources = nil
 		delete(r.pendingResourceCreations, ref)
 
-		podName := ""
-		if msg.podName != nil {
-			podName = *msg.podName
-		}
 		r.failures <- resourceCreationCancelled{
-			jobName: jobName,
+			jobName: msg.jobName,
 		}
 		r.syslog.Warnf("delete issued with pending create request for %s", ref)
 		return
