@@ -2,6 +2,7 @@ import { render, screen } from '@testing-library/react';
 import dayjs from 'dayjs';
 import UIProvider, { DefaultTheme } from 'hew/Theme';
 
+import { Conjunction, FormKind } from 'components/FilterForm/components/type';
 import FlatRunActionButton from 'pages/FlatRuns/FlatRunActionButton';
 import { FlatRun, RunState } from 'types';
 
@@ -9,6 +10,10 @@ const setup = (selectedFlatRuns: ReadonlyArray<Readonly<FlatRun>>) => {
   render(
     <UIProvider theme={DefaultTheme.Light}>
       <FlatRunActionButton
+        filterFormSetWithoutId={{
+          filterGroup: { children: [], conjunction: Conjunction.Or, kind: FormKind.Group },
+          showArchived: true,
+        }}
         isMobile={false}
         projectId={1}
         selectedRuns={selectedFlatRuns}
