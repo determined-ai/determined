@@ -5,11 +5,13 @@ import Dropdown, { DropdownEvent, MenuItem } from 'hew/Dropdown';
 import Icon from 'hew/Icon';
 // import { useModal } from 'hew/Modal';
 import { useToast } from 'hew/Toast';
-// import useConfirm from 'hew/useConfirm';
+import useConfirm from 'hew/useConfirm';
 import { copyToClipboard } from 'hew/utils/functions';
 // import { Failed, Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import React, {
-  MouseEvent, useCallback, useMemo,
+  MouseEvent,
+  useCallback,
+  useMemo,
   // useRef, useState
 } from 'react';
 
@@ -21,7 +23,7 @@ import css from 'components/ActionDropdown/ActionDropdown.module.scss';
 // import InterstitialModalComponent, {
 //   type onInterstitialCloseActionType,
 // } from 'components/InterstitialModalComponent';
-// import usePermissions from 'hooks/usePermissions';
+import usePermissions from 'hooks/usePermissions';
 import { handlePath } from 'routes/utils';
 // import {
 //   activateExperiment,
@@ -34,16 +36,18 @@ import { handlePath } from 'routes/utils';
 //   pauseExperiment,
 //   unarchiveExperiment,
 // } from 'services/api';
+import { archiveRuns, deleteRuns, killRuns, unarchiveRuns } from 'services/api';
 import {
-  BulkExperimentItem,
-  ExperimentAction,
+  // BulkExperimentItem,
   FlatRun,
+  FlatRunAction,
   // FullExperimentItem,
   // ProjectExperiment,
   ValueOf,
 } from 'types';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 // import { getActionsForExperiment } from 'utils/experiment';
+import { getActionsForFlatRun } from 'utils/flatRun';
 import { capitalize } from 'utils/string';
 // import { openCommandResponse } from 'utils/wait';
 
@@ -55,36 +59,37 @@ interface Props {
   isContextMenu?: boolean;
   link?: string;
   makeOpen?: boolean;
-  onComplete?: ContextMenuCompleteHandlerProps<ExperimentAction, BulkExperimentItem>;
+  onComplete?: ContextMenuCompleteHandlerProps<FlatRunAction, void>;
   onLink?: () => void;
   onVisibleChange?: (visible: boolean) => void;
   workspaceId?: number;
+  projectId: number;
 }
 
 const Action = {
   Copy: 'Copy Value',
   NewTab: 'Open Link in New Tab',
   NewWindow: 'Open Link in New Window',
-  ...ExperimentAction,
+  ...FlatRunAction,
 };
 
 type Action = ValueOf<typeof Action>;
 
-// const dropdownActions = [
-//   Action.SwitchPin,
-//   Action.Activate,
-//   Action.Pause,
-//   Action.Archive,
-//   Action.Unarchive,
-//   Action.Cancel,
-//   Action.Kill,
-//   Action.Edit,
-//   Action.Move,
-//   Action.RetainLogs,
-//   Action.OpenTensorBoard,
-//   Action.HyperparameterSearch,
-//   Action.Delete,
-// ];
+const dropdownActions = [
+  //   Action.SwitchPin,
+  //   Action.Activate,
+  //   Action.Pause,
+  Action.Archive,
+  Action.Unarchive,
+  //   Action.Cancel,
+  Action.Kill,
+  //   Action.Edit,
+  //   Action.Move,
+  //   Action.RetainLogs,
+  //   Action.OpenTensorBoard,
+  //   Action.HyperparameterSearch,
+  Action.Delete,
+];
 
 const RunActionDropdown: React.FC<Props> = ({
   run,
@@ -92,10 +97,11 @@ const RunActionDropdown: React.FC<Props> = ({
   isContextMenu,
   link,
   makeOpen,
-  // onComplete,
+  onComplete,
   onLink,
   onVisibleChange,
   children,
+  projectId,
 }: Props) => {
   // const id = experiment.id;
   const id = run.id;
@@ -114,7 +120,7 @@ const RunActionDropdown: React.FC<Props> = ({
   // } = useModal(InterstitialModalComponent);
   // const [experimentItem, setExperimentItem] = useState<Loadable<FullExperimentItem>>(NotLoaded);
   // const canceler = useRef<AbortController>(new AbortController());
-  // const confirm = useConfirm();
+  const confirm = useConfirm();
   const { openToast } = useToast();
 
   // this is required when experiment does not contain `config`.
@@ -153,26 +159,26 @@ const RunActionDropdown: React.FC<Props> = ({
 
   // const handleEditComplete = useCallback(
   //   (data: Partial<BulkExperimentItem>) => {
-  //     onComplete?.(ExperimentAction.Edit, id, data);
+  //     onComplete?.(FlatRunAction.Edit, id, data);
   //   },
   //   [id, onComplete],
   // );
 
   // const handleMoveComplete = useCallback(() => {
-  //   onComplete?.(ExperimentAction.Move, id);
+  //   onComplete?.(FlatRunAction.Move, id);
   // }, [id, onComplete]);
 
   // const handleRetainLogsComplete = useCallback(() => {
-  //   onComplete?.(ExperimentAction.RetainLogs, id);
+  //   onComplete?.(FlatRunAction.RetainLogs, id);
   // }, [id, onComplete]);
 
-  // const menuItems = getActionsForExperiment(experiment, dropdownActions, usePermissions())
-  //   .filter((action) => action !== Action.SwitchPin)
-  //   .map((action) => {
-  //     return { danger: action === Action.Delete, key: action, label: action };
-  //   });
+  const menuItems = getActionsForFlatRun(run, dropdownActions, usePermissions())
+    // .filter((action) => action !== Action.SwitchPin)
+    .map((action: FlatRunAction) => {
+      return { danger: action === Action.Delete, key: action, label: action };
+    });
 
-  const menuItems: MenuItem[] = useMemo(() => [], []);
+  // const menuItems: MenuItem[] = useMemo(() => [], []);
 
   const dropdownMenu = useMemo(() => {
     const items: MenuItem[] = [...menuItems];
@@ -206,10 +212,10 @@ const RunActionDropdown: React.FC<Props> = ({
           //   await activateExperiment({ experimentId: id });
           //   await onComplete?.(action, id);
           //   break;
-          // case Action.Archive:
-          //   await archiveExperiment({ experimentId: id });
-          //   await onComplete?.(action, id);
-          //   break;
+          case Action.Archive:
+            await archiveRuns({ projectId, runIds: [id] });
+            await onComplete?.(action, id);
+            break;
           // case Action.Cancel:
           //   await cancelExperiment({ experimentId: id });
           //   await onComplete?.(action, id);
@@ -243,40 +249,40 @@ const RunActionDropdown: React.FC<Props> = ({
           //   // await onComplete?.(action, id);
           //   break;
           // }
-          // case Action.Kill:
-          //   confirm({
-          //     content: `Are you sure you want to kill experiment ${id}?`,
-          //     danger: true,
-          //     okText: 'Kill',
-          //     onConfirm: async () => {
-          //       await killExperiment({ experimentId: id });
-          //       await onComplete?.(action, id);
-          //     },
-          //     onError: handleError,
-          //     title: 'Confirm Experiment Kill',
-          //   });
-          //   break;
+          case Action.Kill:
+            confirm({
+              content: `Are you sure you want to kill run ${id}?`,
+              danger: true,
+              okText: 'Kill',
+              onConfirm: async () => {
+                await killRuns({ projectId, runIds: [id] });
+                await onComplete?.(action, id);
+              },
+              onError: handleError,
+              title: 'Confirm Run Kill',
+            });
+            break;
           // case Action.Pause:
           //   await pauseExperiment({ experimentId: id });
           //   await onComplete?.(action, id);
           //   break;
-          // case Action.Unarchive:
-          //   await unarchiveExperiment({ experimentId: id });
-          //   await onComplete?.(action, id);
-          //   break;
-          // case Action.Delete:
-          // confirm({
-          //   content: `Are you sure you want to delete experiment ${id}?`,
-          //   danger: true,
-          //   okText: 'Delete',
-          //   onConfirm: async () => {
-          //     await deleteExperiment({ experimentId: id });
-          //     await onComplete?.(action, id);
-          //   },
-          //   onError: handleError,
-          //   title: 'Confirm Experiment Deletion',
-          // });
-          //   break;
+          case Action.Unarchive:
+            await unarchiveRuns({ projectId, runIds: [id] });
+            await onComplete?.(action, id);
+            break;
+          case Action.Delete:
+            confirm({
+              content: `Are you sure you want to delete run ${id}?`,
+              danger: true,
+              okText: 'Delete',
+              onConfirm: async () => {
+                await deleteRuns({ projectId, runIds: [id] });
+                await onComplete?.(action, id);
+              },
+              onError: handleError,
+              title: 'Confirm Run Deletion',
+            });
+            break;
           // case Action.Edit:
           //   ExperimentEditModal.open();
           //   break;
@@ -315,8 +321,8 @@ const RunActionDropdown: React.FC<Props> = ({
       link,
       onLink,
       id,
-      // onComplete,
-      // confirm,
+      onComplete,
+      confirm,
       // ExperimentEditModal,
       // ExperimentMoveModal,
       // ExperimentRetainLogsModal,
@@ -326,6 +332,7 @@ const RunActionDropdown: React.FC<Props> = ({
       openToast,
       // experiment.workspaceId,
       onVisibleChange,
+      projectId,
     ],
   );
 
