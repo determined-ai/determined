@@ -1,0 +1,5 @@
+:orphan:
+
+**Deprecations**
+
+-  Machine Architectures: Deprecate PPC64/POWER builds architecture as part of deprecating underutilized AgentRM features. Users can’t use Determined on PPC64 architecture anymore.
