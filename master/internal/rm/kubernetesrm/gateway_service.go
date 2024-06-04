@@ -13,7 +13,6 @@ import (
 	alphaGateway "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned/typed/apis/v1alpha2"
 
 	"github.com/determined-ai/determined/master/internal/config"
-	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 // I wanted to do this all in patches, but Gateways don't yet support strategic merge patch.
@@ -116,6 +115,8 @@ func (g *gatewayService) freePorts(ports []int) error {
 	return nil
 }
 
+/*
+// TODO(gateways) probably will need this code for restore.
 // getDeployedPortMap returns a mapping of ports based on gw config in the cluster.
 func (g *gatewayService) getDeployedPortMap() (map[model.AllocationID]PortMap, error) {
 	rv := make(map[model.AllocationID]PortMap)
@@ -151,6 +152,7 @@ func (g *gatewayService) getDeployedPortMap() (map[model.AllocationID]PortMap, e
 	}
 	return rv, nil
 }
+*/
 
 func (g *gatewayService) updateGateway(update func(*gatewayTyped.Gateway) error) error {
 	g.mu.Lock()
