@@ -2,5 +2,5 @@
 
 **Bug Fixes**
 
--  Kubernetes: Job state will now correctly show as "SCHEDULED" once all pods have been assigned to
-   nodes. Previously, jobs would remain in state "QUEUED" until all pods were in phase "Running".
+-  Kubernetes: Fix an issue where where jobs would remain in "QUEUED" state until all pods were
+   running. Jobs will now correctly show as "SCHEDULED" once all pods have been assigned to nodes.
