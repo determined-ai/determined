@@ -193,6 +193,7 @@ def test_run_pause_and_resume() -> None:
     # ensure that run is unpaused
     wait_for_run_state(sess, run_id, bindings.trialv1State.ACTIVE)
 
+
 @pytest.mark.e2e_cpu
 def test_run_pause_and_resume_filter_skip_empty() -> None:
     sess = api_utils.user_session()
@@ -245,8 +246,7 @@ def test_run_pause_and_resume_filter_skip_empty() -> None:
 
     resumeResp = bindings.post_ResumeRuns(
         sess,
-        body=bindings.v1ResumeRunsRequest(
-            runIds=[], projectId=1, filter=runFilter),
+        body=bindings.v1ResumeRunsRequest(runIds=[], projectId=1, filter=runFilter),
     )
 
     for res in resumeResp.results:
