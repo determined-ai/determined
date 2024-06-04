@@ -58,4 +58,15 @@ export class Popover extends BaseComponent {
     await this.openMethod();
     return this;
   }
+
+  /**
+   * Closes the popover.
+   */
+  async close(): Promise<void> {
+    // [ET-284] Popover click handle doesn't work unless we wait
+    await this.root._page.waitForTimeout(500);
+    // [ET-something] Popover has no close button and doesn't respect Escape key
+    await this.root.nav.sidebar.header.pwLocator.click();
+    await this.pwLocator.waitFor({ state: 'hidden' });
+  }
 }

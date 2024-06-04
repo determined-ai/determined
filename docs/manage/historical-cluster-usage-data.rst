@@ -4,29 +4,36 @@
  Historical Cluster Usage Data
 ###############################
 
-Determined aims to provide users with insights on how their Determined cluster is used. Historical
-cluster usage is measured in the number of compute hours allocated by Determined. Note that this is
-not based on resource utilization, so if a user gets 1 GPU allocated but only utilizes 20% of the
-GPU, we would still report one GPU hour.
+Determined provides insights into the usage of your cluster, measured in compute hours allocated.
+Note that this is based on allocation, not resource utilization. For example, if a user has 1 GPU
+allocated but uses only 20% of it, we still report one GPU hour.
 
 .. warning::
 
-   The total used compute hours reported by Determined may be less than the hours reported by the
-   cloud because we do not include the time that the slots are idle (e.g., time waiting for a GPU to
-   spin up, or when a GPU is not scheduled with any jobs) in that.
+   The total used compute hours reported by Determined may be less than those reported by the cloud
+   provider. This discrepancy occurs because we do not include idle time (e.g., waiting for a GPU to
+   become active or when a GPU is not scheduled with any jobs).
 
 .. warning::
 
-   Our data is aggregated by Determined metadata (e.g., label, user). This aggregation is performed
-   nightly, so any data visualized on the WebUI or downloaded via the endpoint is fresh as of the
-   last night. It will not reflect changes to the metadata of a previously run experiment (e.g.,
-   labels) until the next nightly aggregation.
+   Data is aggregated by Determined metadata (e.g., label, user) nightly. Therefore, any data
+   visualized on the WebUI or downloaded via the endpoint reflects the state as of the previous
+   night. Changes to the metadata of a previously run experiment (e.g., labels) will be updated
+   after the next nightly aggregation.
+
+.. note::
+
+   When using the export to CSV functionality, ``gpu_hours`` reflects only the GPU hours used during
+   the export time window. This means that allocations overlapping the export window have their GPU
+   hours calculated only for the time within the window. As a result, allocations not starting and
+   ending within the export window may appear to have incorrect GPU hours when calculated manually
+   from their start and end times.
 
 *********************
  WebUI Visualization
 *********************
 
-We build WebUI visualizations for a quick snapshot of the historical cluster usage:
+WebUI visualizations provide a quick snapshot of the historical cluster usage:
 
 .. image:: /assets/images/historical-cluster-usage-data.png
    :width: 100%
@@ -36,10 +43,10 @@ We build WebUI visualizations for a quick snapshot of the historical cluster usa
  Command-line Interface
 ************************
 
-Alternatively, you can use the :ref:`CLI <cli-ug>` or the API endpoints to download the resource
+Alternatively, you can use the :ref:`CLI <cli-ug>` or the API endpoints to download resource
 allocation data for analysis:
 
--  ``det resources raw <start time> <end time>``: get raw allocation information, where the times
-   are full times in the format yyyy-mm-ddThh:mm:ssZ.
--  ``det resources aggregated <start date> <end date>``: get aggregated allocation information,
-   where the dates are in the format yyyy-mm-dd.
+-  ``det resources raw <start time> <end time>``: Get raw allocation information. Times are in the
+   format yyyy-mm-ddThh:mm:ssZ.
+-  ``det resources aggregated <start date> <end date>``: Get aggregated allocation information.
+   Dates are in the format yyyy-mm-dd.

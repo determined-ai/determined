@@ -42,7 +42,7 @@ func TestRestoreFailed(t *testing.T) {
 	defer close()
 	defer requireKilled(t, db, id, q, exitFuture)
 
-	q.Put(&sproto.ResourcesRestoreError{
+	q.Put(&sproto.ResourcesFailedError{
 		FailureType: sproto.RestoreError,
 		ErrMsg:      "things weren't there",
 	})
@@ -670,7 +670,7 @@ func requireAssignedMany(
 				ResourcesID:    rID,
 				ResourcesState: sproto.Terminated,
 				ResourcesStopped: &sproto.ResourcesStopped{
-					Failure: &sproto.ResourcesRestoreError{
+					Failure: &sproto.ResourcesFailedError{
 						FailureType: sproto.TaskError,
 						ErrMsg:      "exit code 137",
 						ExitCode:    ptrs.Ptr(sproto.ExitCode(137)),

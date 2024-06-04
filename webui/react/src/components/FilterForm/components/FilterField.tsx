@@ -179,7 +179,7 @@ const FilterField = ({
   );
 
   return (
-    <div className={css.base} ref={(node) => drop(node)}>
+    <div className={css.base} data-test-component="FilterField" ref={(node) => drop(node)}>
       <ConjunctionContainer
         conjunction={conjunction}
         index={index}

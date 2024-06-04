@@ -13,7 +13,7 @@ import { Select } from 'e2e/models/hew/Select';
 export class MultiSortMenu extends DropdownContent {
   constructor({ parent, root }: { parent: CanBeParent; root: BasePage }) {
     super({
-      childNode: new BaseComponent({ parent, selector: '[data-test-component="multiSortMenu"]' }),
+      childNode: new BaseComponent({ parent, selector: '[data-testid="sort-menu-button"]' }),
       root,
     });
   }

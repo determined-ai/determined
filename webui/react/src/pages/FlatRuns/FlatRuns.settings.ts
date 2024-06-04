@@ -13,6 +13,8 @@ export const FlatRunsSettings = t.intersection([
     columnWidths: t.record(t.string, t.number),
     compare: t.boolean,
     filterset: t.string, // save FilterFormSet as string
+    heatmapOn: t.boolean,
+    heatmapSkipped: t.array(t.string),
     pageLimit: t.number,
     pinnedColumnsCount: t.number,
     selection: SelectionType,
@@ -26,6 +28,8 @@ export const defaultFlatRunsSettings: Required<FlatRunsSettings> = {
   columnWidths: defaultColumnWidths,
   compare: false,
   filterset: JSON.stringify(INIT_FORMSET),
+  heatmapOn: false,
+  heatmapSkipped: [],
   pageLimit: 20,
   pinnedColumnsCount: 3,
   selection: DEFAULT_SELECTION,

@@ -376,6 +376,7 @@ const TableActionBar: React.FC<Props> = ({
         let label = `${totalExperiments.toLocaleString()} ${pluralizer(
           totalExperiments,
           labelSingular.toLowerCase(),
+          labelPlural,
         )}`;
 
         if (selectedExperimentIds.length) {
@@ -424,10 +425,16 @@ const TableActionBar: React.FC<Props> = ({
             <OptionsMenu rowHeight={rowHeight} onRowHeightChange={onRowHeightChange} />
             {selectedExperimentIds.length > 0 && (
               <Dropdown menu={editMenuItems} onClick={handleAction}>
-                <Button hideChildren={isMobile}>Actions</Button>
+                <Button data-test="actionsDropdown" hideChildren={isMobile}>
+                  Actions
+                </Button>
               </Dropdown>
             )}
-            {!isMobile && <span className={css.expNum}>{selectionLabel}</span>}
+            {!isMobile && (
+              <span className={css.expNum} data-test="expNum">
+                {selectionLabel}
+              </span>
+            )}
           </Row>
         </Column>
         <Column align="right">
@@ -435,6 +442,7 @@ const TableActionBar: React.FC<Props> = ({
             {heatmapBtnVisible && (
               <Tooltip content={'Toggle Metric Heatmap'}>
                 <Button
+                  data-test="heatmapToggle"
                   icon={<Icon name="heatmap" title="heatmap" />}
                   type={heatmapOn ? 'primary' : 'default'}
                   onClick={() => onHeatmapToggle?.(heatmapOn ?? false)}
@@ -443,6 +451,7 @@ const TableActionBar: React.FC<Props> = ({
             )}
             {!!onComparisonViewToggle && (
               <Button
+                data-test="compare"
                 hideChildren={isMobile}
                 icon={<Icon name={compareViewOn ? 'panel-on' : 'panel'} title="compare" />}
                 onClick={onComparisonViewToggle}>

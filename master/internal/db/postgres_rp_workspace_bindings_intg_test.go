@@ -119,7 +119,7 @@ func TestGetDefaultPoolsForWorkspace(t *testing.T) {
 	MustMigrateTestPostgres(t, pgDB, MigrationsFromDB)
 
 	comp, aux, err := GetDefaultPoolsForWorkspace(ctx, -1)
-	require.NoError(t, err) // TODO(!!!) we should return errors for these cases.
+	require.NoError(t, err) // TODO(nickb): We should return errors for these cases.
 	require.Equal(t, "", comp)
 	require.Equal(t, "", aux)
 
