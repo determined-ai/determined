@@ -1,10 +1,10 @@
 // components/Counter.test.tsx
 import { render, screen } from '@testing-library/react';
 
+import { ClusterMessage } from 'stores/determinedInfo';
 import ClusterMessageBanner from './ClusterMessage';
 
-// TODO (eliu): figure out typing for msg
-const setup = (msg) => {
+const setup = (msg?: ClusterMessage) => {
   render(<ClusterMessageBanner message={msg} />); // render arbitrary components
 };
 
@@ -26,7 +26,7 @@ describe('ClusterMessageBanner', () => {
   });
 
   it('should not have a banner', () => {
-    setup(null);
+    setup();
 
     // setting a null message means nothing should show up in the ui.
     expect(screen.queryByTestId('admin-msg')).not.toBeInTheDocument();
