@@ -11,7 +11,6 @@ import (
 	typedV1 "k8s.io/client-go/kubernetes/typed/core/v1"
 
 	"github.com/determined-ai/determined/master/pkg/ptrs"
-	gatewayTyped "sigs.k8s.io/gateway-api/apis/v1"
 	alphaGateway "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned/typed/apis/v1alpha2"
 )
 
@@ -96,40 +95,46 @@ func (r *requestProcessingWorker) receiveCreateKubernetesResources(
 		r.failures <- resourceCreationFailed{jobName: msg.jobSpec.Name, err: err}
 		return
 	}
+	r.syslog.Infof("created job %s", job.Name)
 
-	var gatewayListeners []gatewayTyped.Listener
-	for _, proxyResource := range msg.gatewayProxyResources {
+	var ports []int
+	var proxyResources []gatewayProxyResource
+	// TODO(RM-272) do we leak resources if the request queue fails?
+	// Do we / should we delete created resources?
+	if msg.gw != nil {
+		if msg.gw.requestedPorts > 0 {
+			if ports, err = r.gatewayService.generateAndAddListeners(msg.gw.requestedPorts); err != nil {
+				r.syslog.WithError(err).Errorf("error patching gateway for job %s", msg.jobSpec.Name)
+				r.failures <- resourceCreationFailed{jobName: msg.jobSpec.Name, err: err}
+				return
+			}
+			r.syslog.Info("created gateway proxy listeners", msg.gw.requestedPorts, ports)
+		}
+		proxyResources = msg.gw.resourceDescriptor(ports)
+	}
+
+	for _, proxyResource := range proxyResources {
 		r.syslog.Debugf("launching service with spec %v", *proxyResource.serviceSpec)
-		if _, err := r.serviceInterfaces[msg.podSpec.Namespace].Create(
+		if _, err := r.serviceInterfaces[msg.jobSpec.Namespace].Create(
 			context.TODO(), proxyResource.serviceSpec, metaV1.CreateOptions{},
 		); err != nil {
-			r.syslog.WithError(err).Errorf("error creating service for pod %s", msg.podSpec.Name)
-			r.failures <- resourceCreationFailed{podName: msg.podSpec.Name, err: err}
+			r.syslog.WithError(err).Errorf("error creating service for pod %s", msg.jobSpec.Name)
+			r.failures <- resourceCreationFailed{jobName: msg.jobSpec.Name, err: err}
 			return
 		}
-
 		r.syslog.Debugf("launching tcproute with spec %v", *proxyResource.tcpRouteSpec)
-		if _, err := r.tcpRouteInterfaces[msg.podSpec.Namespace].Create(
+		if _, err := r.tcpRouteInterfaces[msg.jobSpec.Namespace].Create(
 			context.TODO(), proxyResource.tcpRouteSpec, metaV1.CreateOptions{},
 		); err != nil {
-			r.syslog.WithError(err).Errorf("error creating tcproute for pod %s", msg.podSpec.Name)
-			r.failures <- resourceCreationFailed{podName: msg.podSpec.Name, err: err}
+			r.syslog.WithError(err).Errorf("error creating tcproute for pod %s", msg.jobSpec.Name)
+			r.failures <- resourceCreationFailed{jobName: msg.jobSpec.Name, err: err}
 			return
 		}
-
-		gatewayListeners = append(gatewayListeners, proxyResource.gatewayListener)
 	}
-	if len(gatewayListeners) > 0 {
-		// TODO(RM-272) do we leak resources if the request queue fails?
-		// Do we / should we delete created resources?
-		if err := r.gatewayService.addListeners(gatewayListeners); err != nil {
-			r.syslog.WithError(err).Errorf("error patching gateway for pod %s", msg.podSpec.Name)
-			r.failures <- resourceCreationFailed{podName: msg.podSpec.Name, err: err}
-			return
-		}
-		r.syslog.Info("created gateway proxy resources")
+	if msg.gw != nil && msg.gw.reportResources != nil {
+		msg.gw.reportResources(proxyResources)
 	}
-	r.syslog.Infof("created job %s", job.Name)
+	r.syslog.Info("created gateway proxy resources")
 }
 
 func (r *requestProcessingWorker) receiveDeleteKubernetesResources(

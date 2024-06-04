@@ -108,9 +108,7 @@ func New(
 		k.config.DetMasterIP,
 		k.config.DetMasterPort,
 		k.config.KubeconfigPath,
-		k.podStatusUpdateCallback,
 		k.jobSchedulingStateCallback,
-		k.config.ExposeProxiesExternally,
 		k.config.InternalTaskGateway,
 	)
 	if err != nil {
