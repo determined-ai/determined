@@ -242,7 +242,6 @@ func (r *requestQueue) deleteKubernetesResources(msg deleteKubernetesResources) 
 	if _, creationPending := r.pendingResourceCreations[ref]; creationPending {
 		r.pendingResourceCreations[ref].createResources = nil
 		delete(r.pendingResourceCreations, ref)
-
 		r.failures <- resourceCreationCancelled{
 			jobName: msg.jobName,
 		}
