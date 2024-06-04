@@ -17,6 +17,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8sClient "k8s.io/client-go/kubernetes"
 	typedV1 "k8s.io/client-go/kubernetes/typed/core/v1"
+	gatewayTyped "sigs.k8s.io/gateway-api/apis/v1"
+	alphaGatewayTyped "sigs.k8s.io/gateway-api/apis/v1alpha2"
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/rm/rmevents"
@@ -29,6 +31,32 @@ import (
 	"github.com/determined-ai/determined/master/pkg/set"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 )
+
+type gatewayProxyResource struct {
+	serviceSpec     *k8sV1.Service
+	tcpRouteSpec    *alphaGatewayTyped.TCPRoute
+	gatewayListener gatewayTyped.Listener
+	// we should be able to remove this and juse use PodPort from the tcpRouteSpec.
+	podPort int
+}
+
+func (g gatewayProxyResource) PodPort() int {
+	// return int(*g.tcpRouteSpec.Spec.CommonRouteSpec.ParentRefs[0].Port)
+	return g.podPort
+}
+
+func (g gatewayProxyResource) GWPort() int {
+	return int(g.gatewayListener.Port)
+}
+
+func (g gatewayProxyResource) SetGWPort(port int) {
+	gwPort := gatewayTyped.PortNumber(port)
+	g.gatewayListener.Port = gwPort
+	// if g.tcpRouteSpec == nil {
+	// 	// FIXME: log?
+	// }
+	g.tcpRouteSpec.Spec.CommonRouteSpec.ParentRefs[0].Port = &gwPort
+}
 
 var successfulExit = exitReason{}
 
@@ -63,7 +91,12 @@ type job struct {
 	masterTLSConfig model.TLSClientConfig
 	jobName         string
 	configMapName   string
-	allocationID    model.AllocationID
+
+	gatewayProxyResources []gatewayProxyResource
+	exposeProxyConfig     *config.InternalTaskGatewayConfig
+	gatewayService        *gatewayService
+
+	allocationID model.AllocationID
 	// req.State is mutated, we should change this.
 	req *sproto.AllocateRequest
 	// Kubernetes-specific request information.
@@ -114,6 +147,8 @@ func newJob(
 	slotType device.Type,
 	slotResourceRequests config.PodSlotResourceRequests,
 	scheduler string,
+	exposeProxyConfig *config.InternalTaskGatewayConfig,
+	gatewayService *gatewayService,
 ) *job {
 	// The lifecycle of the containers specified in this map will be monitored.
 	// As soon as one or more of them exits, the pod will be terminated.
@@ -149,6 +184,8 @@ func newJob(
 		scheduler:            scheduler,
 		slotType:             slotType,
 		slotResourceRequests: slotResourceRequests,
+		exposeProxyConfig:    exposeProxyConfig,
+		gatewayService:       gatewayService,
 		syslog: logrus.WithField("component", "job").WithFields(
 			logger.MergeContexts(msg.logContext, logger.Context{
 				"job": name,
@@ -264,6 +301,19 @@ func (j *job) jobDeletedCallback() {
 	j.informTaskResourcesStopped()
 }
 
+func (p *pod) hasAllResourcesStarted() bool {
+	if p.container.State != cproto.Running {
+		return false
+	}
+	if p.exposeProxyConfig == nil {
+		return true
+	}
+	if len(p.req.ProxyPorts) > 0 && len(p.gatewayProxyResources) == 0 {
+		return false
+	}
+	return true
+}
+
 func (j *job) podUpdatedCallback(updatedPod k8sV1.Pod) error {
 	j.mu.Lock()
 	defer j.mu.Unlock()
@@ -320,9 +370,37 @@ func (j *job) podUpdatedCallback(updatedPod k8sV1.Pod) error {
 
 	allPodsAtLeastRunning := all(cproto.Running.Before, maps.Values(j.podStates)...)
 	if allPodsFound && allPodsAtLeastRunning && !j.sentRunningEvent {
+		// TODO(gateways) do we need to check that ports are set here?
+		gwPortMap := make(PortMap)
+		for _, g := range p.gatewayProxyResources {
+			gwPortMap[g.PodPort()] = g.GWPort()
+		}
+
 		j.syslog.WithField("pod-name", podName).Info("pod is running")
 		j.container.State = cproto.Running
 		j.informTaskResourcesStarted(sproto.ResourcesStarted{NativeResourcesID: j.jobName})
+
+		// TODO(gateways) how do we fix this? How do jobs currently set the ip?
+		/*
+			baseAddress := cproto.Address{
+				ContainerIP: pod.Status.PodIP,
+				HostIP:      pod.Status.PodIP,
+			}
+			if exposeProxyConfig != nil {
+				baseAddress.ContainerIP = exposeProxyConfig.GatewayIP
+				baseAddress.HostIP = exposeProxyConfig.GatewayIP
+			}
+			for _, podPort := range podPorts {
+				address := baseAddress
+				address.ContainerPort = podPort
+				address.HostPort = podPort
+				if newHostPort, ok := gwPortMap[podPort]; ok {
+					address.HostPort = newHostPort
+					// address.ContainerPort = newHostPort
+				}
+				addresses = append(addresses, address)
+		*/
+
 		j.sentRunningEvent = true
 	}
 
@@ -419,8 +497,24 @@ func (j *job) kill() {
 		return
 	}
 
+	var serviceNames, tcpRouteNames []string
+	var gatewayPortsToFree []int
+	for _, g := range p.gatewayProxyResources {
+		serviceNames = append(serviceNames, g.serviceSpec.Name)
+		tcpRouteNames = append(tcpRouteNames, g.tcpRouteSpec.Name)
+		gatewayPortsToFree = append(gatewayPortsToFree, int(g.gatewayListener.Port))
+	}
+
 	j.syslog.Infof("requesting to delete kubernetes resources %s", j.jobName)
-	j.resourceRequestQueue.deleteKubernetesResources(j.namespace, j.jobName, j.configMapName, "")
+	j.resourceRequestQueue.deleteKubernetesResources(
+		j.namespace,
+		j.jobName,
+		j.configMapName,
+		"",
+		serviceNames,
+		tcpRouteNames,
+		gatewayPortsToFree,
+	)
 }
 
 func (j *job) killPod(name string) {
@@ -484,7 +578,40 @@ func (j *job) createSpecAndSubmit(spec *tasks.TaskSpec) error {
 		return err
 	}
 
-	j.resourceRequestQueue.createKubernetesResources(jobSpec, configMapSpec)
+	if p.exposeProxyConfig == nil {
+		j.resourceRequestQueue.createKubernetesResources(jobSpec, configMapSpec)
+		return nil
+	}
+
+	var gwResourceComm *gatewayResourceComm
+	updateResources := func(resources []gatewayProxyResource) {
+		p.mu.Lock()
+		defer p.mu.Unlock()
+		p.gatewayProxyResources = resources
+		// chat: we want to delay this until the request queue worker has created the resources.
+		// if p.hasAllResourcesStarted() {
+		gwPortMap := make(PortMap)
+		for _, g := range p.gatewayProxyResources {
+			gwPortMap[g.PodPort()] = g.GWPort()
+		}
+		// TODO(gateways) I think it is fine to assume the request queue will happen before it starts.
+		// We could submit the gateway first so this is always true.
+		//	p.informTaskResourcesStarted(
+		//		getResourcesStartedForPod(p.pod, p.ports, p.exposeProxyConfig, gwPortMap),
+		//	)
+		//}
+	}
+	resourceGenerator := p.configureProxyResources()
+	if resourceGenerator == nil {
+		return errors.New("gateway resource generator is nil")
+	}
+	gwResourceComm = &gatewayResourceComm{
+		resourceDescriptor: *resourceGenerator,
+		reportResources:    updateResources,
+		requestedPorts:     len(p.req.ProxyPorts),
+	}
+	p.resourceRequestQueue.createKubernetesResources(jobSpec, configMapSpec, gwResourceComm)
+
 	return nil
 }
 
