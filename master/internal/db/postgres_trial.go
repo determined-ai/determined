@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"math"
 	"regexp"
@@ -157,7 +158,14 @@ func BuildRunHParams(runID int, projectID int, hparams map[string]any,
 			projHparamsModel = append(projHparamsModel, nestedProjHparams...)
 			continue
 		default:
-			continue
+			valBytes, err := json.Marshal(v)
+			if err != nil {
+				return hparamsModel, projHparamsModel,
+					fmt.Errorf("cannot assign hyperparameter %s, failed to encode type %T", hpName, val)
+			}
+			valString := string(valBytes)
+			hp.TextVal = &valString
+			projHp.Type = MetricTypeString
 		}
 		hparamsModel = append(hparamsModel, hp)
 		projHparamsModel = append(projHparamsModel, projHp)
