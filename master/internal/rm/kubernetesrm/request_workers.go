@@ -134,8 +134,8 @@ func (r *requestProcessingWorker) receiveCreateKubernetesResources(
 	}
 	if msg.gw != nil && msg.gw.reportResources != nil {
 		msg.gw.reportResources(proxyResources)
+		r.syslog.Info("created gateway proxy resources")
 	}
-	r.syslog.Info("created gateway proxy resources")
 }
 
 func (r *requestProcessingWorker) receiveDeleteKubernetesResources(
@@ -170,7 +170,7 @@ func (r *requestProcessingWorker) receiveDeleteKubernetesResources(
 		case err != nil:
 			r.syslog.WithError(err).Errorf("failed to delete pod %s", msg.jobName)
 		default:
-			r.syslog.Infof("deleted pod %s", msg.jobName)
+			r.syslog.Infof("deleted pod %s", msg.podName)
 		}
 	}
 
@@ -184,7 +184,7 @@ func (r *requestProcessingWorker) receiveDeleteKubernetesResources(
 		case err != nil:
 			r.syslog.WithError(err).Errorf("failed to delete configMap %s", msg.jobName)
 		default:
-			r.syslog.Infof("deleted configMap %s", msg.jobName)
+			r.syslog.Infof("deleted configMap %s", msg.configMapName)
 		}
 	}
 

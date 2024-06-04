@@ -65,20 +65,15 @@ func TestGetDetContainerSecurityContext(t *testing.T) {
 }
 
 func TestConfigureProxyResources(t *testing.T) {
-	longDesc := ""
-	for i := 0; i < 100; i++ {
-		longDesc += "a"
+	j := &job{
+		namespace: "podnamespace",
+		jobName:   "sharedName",
 	}
-
-	j := &job{namespace: "podnamespace"}
 	taskSpec := &tasks.TaskSpec{
 		AllocationID: "allocID",
-		Description:  longDesc,
 	}
 	require.Nil(t, j.configureProxyResources(taskSpec))
 
-	expectedName := "porti0-" + longDesc
-	expectedName = expectedName[:63]
 	j.req = &sproto.AllocateRequest{
 		ProxyPorts: []*sproto.ProxyPortConfig{
 			{
@@ -95,7 +90,7 @@ func TestConfigureProxyResources(t *testing.T) {
 
 	svc := &k8sV1.Service{
 		ObjectMeta: metaV1.ObjectMeta{
-			Name:      expectedName,
+			Name:      j.jobName,
 			Namespace: "podnamespace",
 			Labels:    map[string]string{determinedLabel: "allocID"},
 		},
@@ -113,7 +108,7 @@ func TestConfigureProxyResources(t *testing.T) {
 
 	tcp := &alphaGatewayTyped.TCPRoute{
 		ObjectMeta: metaV1.ObjectMeta{
-			Name:      expectedName,
+			Name:      j.jobName,
 			Namespace: "podnamespace",
 			Labels:    map[string]string{determinedLabel: "allocID"},
 		},
@@ -133,7 +128,7 @@ func TestConfigureProxyResources(t *testing.T) {
 					BackendRefs: []alphaGatewayTyped.BackendRef{
 						{
 							BackendObjectReference: alphaGatewayTyped.BackendObjectReference{
-								Name: alphaGatewayTyped.ObjectName(expectedName),
+								Name: alphaGatewayTyped.ObjectName(j.jobName),
 								Kind: ptrs.Ptr(alphaGatewayTyped.Kind("Service")),
 								Port: ptrs.Ptr(alphaGatewayTyped.PortNumber(12345)),
 							},
