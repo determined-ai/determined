@@ -33,7 +33,6 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation"
-	gatewayTyped "sigs.k8s.io/gateway-api/apis/v1"
 
 	alphaGatewayTyped "sigs.k8s.io/gateway-api/apis/v1alpha2"
 )
@@ -153,8 +152,8 @@ func (j *job) configureEnvVars(
 // proxyResourceGenerator returns a configured list of proxy resources given a set of ports.
 type proxyResourceGenerator func([]int) []gatewayProxyResource
 
-func (p *pod) configureProxyResources() *proxyResourceGenerator { // TODO return an err.
-	if p.exposeProxyConfig == nil {
+func (j *job) configureProxyResources(t *tasks.TaskSpec) *proxyResourceGenerator {
+	if j.exposeProxyConfig == nil {
 		return nil
 	}
 
@@ -162,28 +161,22 @@ func (p *pod) configureProxyResources() *proxyResourceGenerator { // TODO return
 	generator := proxyResourceGenerator(func(ports []int) []gatewayProxyResource {
 		var resources []gatewayProxyResource
 		// TODO(RM-275/gateways) think about experiments, should they proxy every pod, or only rank 0?
-		if len(ports) != len(p.req.ProxyPorts) {
+		if len(ports) != len(j.req.ProxyPorts) {
 			panic("proxy ports and ports must be the same length")
 		}
 
-		for i, proxyPort := range p.req.ProxyPorts {
-			// TODO(RM-276/gateways) use something more reasonable for the name.
-			// Podname is too long currently. There is like a 63 characeter limit for DNS.
-			// We should really be under this for everything even if not required (like it is for
-			// service and TCPRoute). Bradley is changing this but hopefully we land before him.
-			tooLong := fmt.Sprintf("porti%d-%s-%s",
-				i, p.submissionInfo.taskSpec.Description, uuid.New().String())
-			sharedName := tooLong[:min(63, len(tooLong)-1)]
+		for i, proxyPort := range j.req.ProxyPorts {
+			sharedName := j.jobName
 
 			gwPort := ports[i]
 			allocLabels := map[string]string{
-				determinedLabel: p.submissionInfo.taskSpec.AllocationID,
+				determinedLabel: t.AllocationID,
 			}
 
 			serviceSpec := &k8sV1.Service{
 				ObjectMeta: metaV1.ObjectMeta{
 					Name:      sharedName,
-					Namespace: p.namespace,
+					Namespace: j.namespace,
 					Labels:    allocLabels,
 				},
 				Spec: k8sV1.ServiceSpec{
@@ -203,15 +196,15 @@ func (p *pod) configureProxyResources() *proxyResourceGenerator { // TODO return
 			tcpRouteSpec := &alphaGatewayTyped.TCPRoute{
 				ObjectMeta: metaV1.ObjectMeta{
 					Name:      sharedName,
-					Namespace: p.namespace,
+					Namespace: j.namespace,
 					Labels:    allocLabels,
 				},
 				Spec: alphaGatewayTyped.TCPRouteSpec{
 					CommonRouteSpec: alphaGatewayTyped.CommonRouteSpec{
 						ParentRefs: []alphaGatewayTyped.ParentReference{
 							{
-								Namespace:   ptrs.Ptr(alphaGatewayTyped.Namespace(p.exposeProxyConfig.GatewayNamespace)),
-								Name:        alphaGatewayTyped.ObjectName(p.exposeProxyConfig.GatewayName),
+								Namespace:   ptrs.Ptr(alphaGatewayTyped.Namespace(j.exposeProxyConfig.GatewayNamespace)),
+								Name:        alphaGatewayTyped.ObjectName(j.exposeProxyConfig.GatewayName),
 								Port:        ptrs.Ptr(alphaGatewayTyped.PortNumber(gwPort)),
 								SectionName: ptrs.Ptr(alphaGatewayTyped.SectionName(genSectionName(gwPort))),
 							},
@@ -247,7 +240,8 @@ func (p *pod) configureProxyResources() *proxyResourceGenerator { // TODO return
 	return &generator
 }
 
-func (p *job) configureConfigMapSpec(
+func (j *job) configureConfigMapSpec(
+	taskSpec *tasks.TaskSpec,
 	runArchives []cproto.RunArchive,
 ) (*k8sV1.ConfigMap, error) {
 	configMapData := make(map[string][]byte, len(runArchives))
@@ -706,12 +700,11 @@ func (j *job) createSpec(scheduler string, taskSpec *tasks.TaskSpec) (*batchV1.J
 		return nil, nil, err
 	}
 
-	rootVolumes, rootVolumeMounts, err := handleRootArchiveFiles(rootArchives, p.configMap)
-
-	p.gatewayProxyResources = p.configureProxyResources()
+	rootVolumes, rootVolumeMounts, err := handleRootArchiveFiles(rootArchives, configMapSpec)
 	if err != nil {
 		return nil, nil, err
 	}
+
 	volumes = append(volumes, rootVolumes...)
 	container.VolumeMounts = append(container.VolumeMounts, rootVolumeMounts...)
 

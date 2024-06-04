@@ -301,6 +301,7 @@ func (j *job) jobDeletedCallback() {
 	j.informTaskResourcesStopped()
 }
 
+/*
 func (p *pod) hasAllResourcesStarted() bool {
 	if p.container.State != cproto.Running {
 		return false
@@ -313,6 +314,7 @@ func (p *pod) hasAllResourcesStarted() bool {
 	}
 	return true
 }
+*/
 
 func (j *job) podUpdatedCallback(updatedPod k8sV1.Pod) error {
 	j.mu.Lock()
@@ -371,7 +373,7 @@ func (j *job) podUpdatedCallback(updatedPod k8sV1.Pod) error {
 	if allPodsAtLeastRunning && !j.sentRunningEvent {
 		// TODO(gateways) do we need to check that ports are set here?
 		gwPortMap := make(PortMap)
-		for _, g := range p.gatewayProxyResources {
+		for _, g := range j.gatewayProxyResources {
 			gwPortMap[g.PodPort()] = g.GWPort()
 		}
 
@@ -498,22 +500,21 @@ func (j *job) kill() {
 
 	var serviceNames, tcpRouteNames []string
 	var gatewayPortsToFree []int
-	for _, g := range p.gatewayProxyResources {
+	for _, g := range j.gatewayProxyResources {
 		serviceNames = append(serviceNames, g.serviceSpec.Name)
 		tcpRouteNames = append(tcpRouteNames, g.tcpRouteSpec.Name)
 		gatewayPortsToFree = append(gatewayPortsToFree, int(g.gatewayListener.Port))
 	}
 
 	j.syslog.Infof("requesting to delete kubernetes resources %s", j.jobName)
-	j.resourceRequestQueue.deleteKubernetesResources(
-		j.namespace,
-		j.jobName,
-		j.configMapName,
-		"",
-		serviceNames,
-		tcpRouteNames,
-		gatewayPortsToFree,
-	)
+	j.resourceRequestQueue.deleteKubernetesResources(deleteKubernetesResources{
+		namespace:          j.namespace,
+		jobName:            j.jobName,
+		configMapName:      j.configMapName,
+		serviceNames:       serviceNames,
+		tcpRouteNames:      tcpRouteNames,
+		gatewayPortsToFree: gatewayPortsToFree,
+	})
 }
 
 func (j *job) killPod(name string) {
@@ -522,7 +523,10 @@ func (j *job) killPod(name string) {
 	}
 
 	j.syslog.Infof("requesting to delete kubernetes resources %s", j.jobName)
-	j.resourceRequestQueue.deleteKubernetesResources(j.namespace, "", "", name)
+	j.resourceRequestQueue.deleteKubernetesResources(deleteKubernetesResources{
+		namespace: j.namespace,
+		podName:   name,
+	})
 	j.podKillSent[name] = true
 }
 
@@ -577,20 +581,21 @@ func (j *job) createSpecAndSubmit(spec *tasks.TaskSpec) error {
 		return err
 	}
 
-	if p.exposeProxyConfig == nil {
-		j.resourceRequestQueue.createKubernetesResources(jobSpec, configMapSpec)
+	if j.exposeProxyConfig == nil {
+		j.resourceRequestQueue.createKubernetesResources(jobSpec, configMapSpec, nil)
 		return nil
 	}
 
+	// TODO(nick) make this one function.
 	var gwResourceComm *gatewayResourceComm
 	updateResources := func(resources []gatewayProxyResource) {
-		p.mu.Lock()
-		defer p.mu.Unlock()
-		p.gatewayProxyResources = resources
+		j.mu.Lock()
+		defer j.mu.Unlock()
+		j.gatewayProxyResources = resources
 		// chat: we want to delay this until the request queue worker has created the resources.
 		// if p.hasAllResourcesStarted() {
 		gwPortMap := make(PortMap)
-		for _, g := range p.gatewayProxyResources {
+		for _, g := range j.gatewayProxyResources {
 			gwPortMap[g.PodPort()] = g.GWPort()
 		}
 		// TODO(gateways) I think it is fine to assume the request queue will happen before it starts.
@@ -600,16 +605,16 @@ func (j *job) createSpecAndSubmit(spec *tasks.TaskSpec) error {
 		//	)
 		//}
 	}
-	resourceGenerator := p.configureProxyResources()
+	resourceGenerator := j.configureProxyResources(spec)
 	if resourceGenerator == nil {
-		return errors.New("gateway resource generator is nil")
+		return fmt.Errorf("gateway resource generator is nil")
 	}
 	gwResourceComm = &gatewayResourceComm{
 		resourceDescriptor: *resourceGenerator,
 		reportResources:    updateResources,
-		requestedPorts:     len(p.req.ProxyPorts),
+		requestedPorts:     len(j.req.ProxyPorts),
 	}
-	p.resourceRequestQueue.createKubernetesResources(jobSpec, configMapSpec, gwResourceComm)
+	j.resourceRequestQueue.createKubernetesResources(jobSpec, configMapSpec, gwResourceComm)
 
 	return nil
 }

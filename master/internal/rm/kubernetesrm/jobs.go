@@ -97,11 +97,14 @@ type jobsService struct {
 	exposeProxyConfig *config.InternalTaskGatewayConfig
 
 	// System dependencies. Also set in initialization and never modified after.
-	syslog                     *logrus.Entry
-	clientSet                  k8sClient.Interface
-	podInterfaces              map[string]typedV1.PodInterface
-	configMapInterfaces        map[string]typedV1.ConfigMapInterface
-	jobInterfaces              map[string]typedBatchV1.JobInterface
+	syslog              *logrus.Entry
+	clientSet           k8sClient.Interface
+	podInterfaces       map[string]typedV1.PodInterface
+	configMapInterfaces map[string]typedV1.ConfigMapInterface
+	jobInterfaces       map[string]typedBatchV1.JobInterface
+	serviceInterfaces   map[string]typedV1.ServiceInterface
+	tcpRouteInterfaces  map[string]alphaGateway.TCPRouteInterface
+
 	resourceRequestQueue       *requestQueue
 	jobSchedulingStateCallback jobSchedulingStateCallback
 
@@ -141,6 +144,7 @@ func newJobsService(
 	detMasterPort int32,
 	kubeconfigPath string,
 	jobSchedulingStateCb jobSchedulingStateCallback,
+	exposeProxyConfig *config.InternalTaskGatewayConfig,
 ) (*jobsService, error) {
 	p := &jobsService{
 		wg: waitgroupx.WithContext(context.Background()),
@@ -166,6 +170,8 @@ func newJobsService(
 		podInterfaces:                     make(map[string]typedV1.PodInterface),
 		configMapInterfaces:               make(map[string]typedV1.ConfigMapInterface),
 		jobInterfaces:                     make(map[string]typedBatchV1.JobInterface),
+		serviceInterfaces:                 make(map[string]typedV1.ServiceInterface),
+		tcpRouteInterfaces:                make(map[string]alphaGateway.TCPRouteInterface),
 		syslog:                            logrus.WithField("namespace", namespace),
 		jobSchedulingStateCallback:        jobSchedulingStateCb,
 
@@ -277,22 +283,22 @@ func (j *jobsService) startClientSet() error {
 		return fmt.Errorf("failed to initialize kubernetes clientSet: %w", err)
 	}
 
-	namespaces := append(maps.Keys(p.namespaceToPoolName), p.namespace)
+	namespaces := append(maps.Keys(j.namespaceToPoolName), j.namespace)
 	for _, ns := range append(maps.Keys(j.namespaceToPoolName), j.namespace) {
 		j.podInterfaces[ns] = j.clientSet.CoreV1().Pods(ns)
 		j.configMapInterfaces[ns] = j.clientSet.CoreV1().ConfigMaps(ns)
 		j.jobInterfaces[ns] = j.clientSet.BatchV1().Jobs(ns)
 	}
 
-	if exposeConfig := p.exposeProxyConfig; exposeConfig != nil {
+	if exposeConfig := j.exposeProxyConfig; exposeConfig != nil {
 		// Using the CoreV1 RESTClient for gateway resources will cause "resource not found" errors.
 		alphaGatewayClientSet, err := alphaGateway.NewForConfig(config)
 		if err != nil {
 			return fmt.Errorf("creating Kubernetes gateway clientSet: %w", err)
 		}
 		for _, ns := range namespaces {
-			p.serviceInterfaces[ns] = p.clientSet.CoreV1().Services(ns)
-			p.tcpRouteInterfaces[ns] = alphaGatewayClientSet.TCPRoutes(ns)
+			j.serviceInterfaces[ns] = j.clientSet.CoreV1().Services(ns)
+			j.tcpRouteInterfaces[ns] = alphaGatewayClientSet.TCPRoutes(ns)
 		}
 
 		// Don't think you can use the alphaGateway clientSet, because you can't.
@@ -302,13 +308,13 @@ func (j *jobsService) startClientSet() error {
 		}
 		gwService, err := newGatewayService(
 			gatewayClientSet.Gateways(exposeConfig.GatewayNamespace),
-			p.tcpRouteInterfaces,
+			j.tcpRouteInterfaces,
 			*exposeConfig,
 		)
 		if err != nil {
 			return fmt.Errorf("creating gateway service: %w", err)
 		}
-		p.gatewayService = gwService
+		j.gatewayService = gwService
 	}
 
 	j.syslog.Infof("kubernetes clientSet initialized")
@@ -491,8 +497,8 @@ func (j *jobsService) startJob(msg startJob) error {
 		j.slotType,
 		j.slotResourceRequests,
 		j.scheduler,
-		p.exposeProxyConfig,
-		p.gatewayService,
+		j.exposeProxyConfig,
+		j.gatewayService,
 	)
 
 	if _, alreadyExists := j.jobNameToJobHandler[newJobHandler.jobName]; alreadyExists {
@@ -649,6 +655,8 @@ func (j *jobsService) recreateJobHandler(
 		j.slotType,
 		j.slotResourceRequests,
 		j.scheduler,
+		j.exposeProxyConfig,
+		j.gatewayService,
 	)
 
 	newJobHandler.restore = true
@@ -677,11 +685,17 @@ func (j *jobsService) deleteKubernetesResources(
 	jobs *batchV1.JobList, configMaps *k8sV1.ConfigMapList,
 ) {
 	for _, job := range jobs.Items {
-		j.resourceRequestQueue.deleteKubernetesResources(job.Namespace, job.Name, "", "")
+		j.resourceRequestQueue.deleteKubernetesResources(deleteKubernetesResources{
+			namespace: job.Namespace,
+			jobName:   job.Name,
+		})
 	}
 
 	for _, configMap := range configMaps.Items {
-		j.resourceRequestQueue.deleteKubernetesResources(configMap.Namespace, "", configMap.Name, "")
+		j.resourceRequestQueue.deleteKubernetesResources(deleteKubernetesResources{
+			namespace:     configMap.Namespace,
+			configMapName: configMap.Name,
+		})
 	}
 
 	// TODO(RM-270/gateways) include services / TCPRoutes and so on so restore can cleanup.
@@ -852,12 +866,13 @@ func (j *jobsService) startPreemptionListeners() error {
 
 func (j *jobsService) startResourceRequestQueue() {
 	failures := make(chan resourcesRequestFailure, 16)
-	p.resourceRequestQueue = startRequestQueue(
-		p.podInterfaces,
-		p.configMapInterfaces,
-		p.serviceInterfaces,
-		p.gatewayService,
-		p.tcpRouteInterfaces,
+	j.resourceRequestQueue = startRequestQueue(
+		j.jobInterfaces,
+		j.podInterfaces,
+		j.configMapInterfaces,
+		j.serviceInterfaces,
+		j.gatewayService,
+		j.tcpRouteInterfaces,
 		failures)
 	j.wg.Go(func(ctx context.Context) {
 		for {
