@@ -220,7 +220,7 @@ func newJobsService(
 		factory := informers.NewSharedInformerFactoryWithOptions(p.clientSet, time.Hour, informers.WithNamespace(namespace))
 
 		jobsInformer := factory.Batch().V1().Jobs()
-		jobsInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
+		if _, err := jobsInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 			AddFunc: func(obj interface{}) {
 				p.mu.Lock()
 				defer p.mu.Unlock()
@@ -239,11 +239,13 @@ func newJobsService(
 				defer p.mu.Unlock()
 				p.jobDeletedCallback(obj)
 			},
-		})
+		}); err != nil {
+			return nil, fmt.Errorf("adding job informer: %w", err)
+		}
 		cacheSyncs = append(cacheSyncs, jobsInformer.Informer().HasSynced)
 
 		podsInformer := factory.Core().V1().Pods()
-		podsInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
+		if _, err := podsInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 			AddFunc: func(obj interface{}) {
 				p.mu.Lock()
 				defer p.mu.Unlock()
@@ -262,7 +264,9 @@ func newJobsService(
 				defer p.mu.Unlock()
 				p.podDeletedCallback(obj)
 			},
-		})
+		}); err != nil {
+			return nil, fmt.Errorf("adding pod informer: %w", err)
+		}
 		cacheSyncs = append(cacheSyncs, podsInformer.Informer().HasSynced)
 
 		factory.Start(nil)
