@@ -19,6 +19,7 @@ import (
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/apimachinery/pkg/watch"
+	applyBatchV1 "k8s.io/client-go/applyconfigurations/batch/v1"
 	corev1 "k8s.io/client-go/applyconfigurations/core/v1"
 	"k8s.io/client-go/rest"
 )
@@ -343,6 +344,18 @@ func (m *mockJobInterface) Watch(
 func (m *mockJobInterface) Patch(
 	ctx context.Context, name string, pt types.PatchType, data []byte, opts metaV1.PatchOptions,
 	subresources ...string,
+) (result *batchV1.Job, err error) {
+	panic("implement me")
+}
+
+func (m *mockJobInterface) Apply(
+	ctx context.Context, job *applyBatchV1.JobApplyConfiguration, opts metaV1.ApplyOptions,
+) (result *batchV1.Job, err error) {
+	panic("Apply method not implemented")
+}
+
+func (m *mockJobInterface) ApplyStatus(
+	ctx context.Context, job *applyBatchV1.JobApplyConfiguration, opts metaV1.ApplyOptions,
 ) (result *batchV1.Job, err error) {
 	panic("implement me")
 }
