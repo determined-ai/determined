@@ -74,6 +74,27 @@ export class FilterFormStore {
     );
   }
 
+  public get filterFormSetWithoutId(): Observable<FilterFormSetWithoutId> {
+    const replacer = (key: string, value: unknown): unknown => {
+      return key === 'id' ? undefined : value;
+    };
+    return this.#formset.select((loadableFormset) =>
+      Loadable.match(loadableFormset, {
+        _: () => ({
+          filterGroup: { children: [], conjunction: Conjunction.Or, kind: FormKind.Group },
+          showArchived: true,
+        }),
+        Loaded: (formset) => {
+          const sweepedForm = this.#sweepInvalid(structuredClone(formset.filterGroup));
+          const newFormSet: FilterFormSetWithoutId = JSON.parse(
+            JSON.stringify({ ...formset, filterGroup: sweepedForm }, replacer),
+          );
+          return newFormSet;
+        },
+      }),
+    );
+  }
+
   public get fieldCount(): Observable<number> {
     return this.getFieldCount();
   }
