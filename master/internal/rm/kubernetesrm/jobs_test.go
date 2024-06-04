@@ -132,7 +132,6 @@ func TestJobScheduledStatus(t *testing.T) {
 	actualState = js.jobSchedulingState(jobName)
 	expectedState = sproto.SchedulingStateScheduled
 	require.Equal(t, expectedState, actualState)
-
 }
 
 func TestTaintTolerated(t *testing.T) {
