@@ -419,12 +419,33 @@ To set up multiple resource pools for Determined on your Kubernetes cluster:
                     operator: "Equal"
                     value: "prod"
                     effect: "NoSchedule"
+                  affinity:
+                  # Define an example node selector label.
+                     nodeSelectorTerms:
+                        kubernetes.io/hostname: "foo"
+                  # Define an example node affinity.
+                     nodeAffinity:
+                     requiredDuringSchedulingIgnoredDuringExecution:
+                        nodeSelectorTerms:
+                           - matchExpressions:
+                           - key: topology.kubernetes.io/zone
+                              operator: In
+                              values:
+                              - antarctica-west1
+                              - antarctica-east1
 
-#. Label/taint the appropriate nodes you want to include as part of each resource pool. For instance
-   you may add a taint like ``kubectl taint nodes prod_node_name pool_taint=prod:NoSchedule`` and
-   the appropriate toleration to the PodTolerationRestriction admissions controller or in
-   ``resourcePools.pool_name.task_container_defaults.gpu_pod_spec`` as above so it is automatically
-   added to the pod spec based on which namespace (and hence resource pool) a task runs in.
+#. Label/taint the appropriate nodes you want to include as part of each resource pool.
+
+   #. For instance you may add a taint like ``kubectl taint nodes prod_node_name
+   pool_taint=prod:NoSchedule`` to add the appropriate toleration to the PodTolerationRestriction
+   admissions controller or in ``resourcePools.pool_name.task_container_defaults.gpu_pod_spec`` as
+   above so it is automatically added to the pod spec based on which namespace (and hence resource
+   pool) a task runs in.
+
+   #. Adding node selector or node affinity logic to your resource pool will ensure that only nodes
+   that match this logic are selected. You may add a node selector like ``kubernetes.io/hostname =
+   foo``, or match your resource pool to any nodes that match the ``topology.kubernetes.io/zone``
+   value in the set ``{antactica-west1, antarctica-east`}``.
 
 #. Add the appropriate resource pool name to namespace mappings in the ``resourcePools`` section of
    the ``values.yaml`` file in the Helm chart.

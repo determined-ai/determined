@@ -218,6 +218,7 @@ require (
 	cloud.google.com/go/compute/metadata v0.2.3
 	golang.org/x/sync v0.5.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20230711160842-782d3b101e98
+	k8s.io/component-helpers v0.20.14
 )
 
 // Determined AI's CircleCI doesn't have access to "github.hpe.com/hpe/hpc-ard-launcher-go",

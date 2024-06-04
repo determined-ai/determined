@@ -29,6 +29,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
+	"k8s.io/component-helpers/scheduling/corev1/nodeaffinity"
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
@@ -1383,8 +1384,8 @@ func (j *jobsService) getAgent(agentID string) *apiv1.GetAgentResponse {
 const summarizeCacheDuration = 5 * time.Second
 
 // summarize describes pods' available resources. When there's exactly one resource pool, it uses
-// the whole cluster's info. Otherwise, it matches nodes to resource pools using taints and
-// tolerations to derive that info. This may be cached, so don't use this for decisions
+// the whole cluster's info. Otherwise, it matches nodes to resource pools using node selectors, affinities,
+// taints and tolerations to derive that info. This may be cached, so don't use this for decisions
 // that require up-to-date information.
 func (j *jobsService) summarize() (map[string]model.AgentSummary, error) {
 	j.summarizeCacheLock.Lock()
@@ -1424,6 +1425,7 @@ func (j *jobsService) getNodeResourcePoolMapping(nodeSummaries map[string]model.
 
 		for poolName, tcd := range poolTaskContainerDefaults {
 			var poolTolerations []k8sV1.Toleration
+			var selectors, affinities *k8sV1.NodeSelector
 
 			// If they're using the default RP config, use the default tolerations.
 			if len(j.resourcePoolConfigs) <= 1 &&
@@ -1431,18 +1433,22 @@ func (j *jobsService) getNodeResourcePoolMapping(nodeSummaries map[string]model.
 				if slotType == device.CUDA {
 					//nolint:gocritic
 					poolTolerations = append(defaultTolerations, gpuTolerations...)
+					selectors, affinities = extractNodeSelectors(tcd.GPUPodSpec)
 				} else if slotType == device.CPU {
 					//nolint:gocritic
 					poolTolerations = append(defaultTolerations, cpuTolerations...)
+					selectors, affinities = extractNodeSelectors(tcd.CPUPodSpec)
 				}
 			} else if tcd != nil {
 				// Decide which poolTolerations to use based on slot device type
 				if slotType == device.CUDA && tcd.GPUPodSpec != nil {
 					//nolint:gocritic
 					poolTolerations = append(tcd.GPUPodSpec.Spec.Tolerations, gpuTolerations...)
+					selectors, affinities = extractNodeSelectors(tcd.GPUPodSpec)
 				} else if tcd.CPUPodSpec != nil {
 					//nolint:gocritic
 					poolTolerations = append(tcd.CPUPodSpec.Spec.Tolerations, cpuTolerations...)
+					selectors, affinities = extractNodeSelectors(tcd.CPUPodSpec)
 				}
 			}
 
@@ -1453,8 +1459,11 @@ func (j *jobsService) getNodeResourcePoolMapping(nodeSummaries map[string]model.
 				Effect:            "PreferNoSchedule",
 				TolerationSeconds: nil,
 			})
-			// If all of a node's taints are tolerated by a pool, that node belongs to the pool.
-			if allTaintsTolerated(node.Spec.Taints, poolTolerations) {
+
+			// If all of a node's taints are tolerated by a pool & a node is a "match" to the pool's
+			// node affinities and node selectors, that node belongs to the pool.
+			if allTaintsTolerated(node.Spec.Taints, poolTolerations) &&
+				j.podsCanBeScheduledOnNode(selectors, node) && j.podsCanBeScheduledOnNode(affinities, node) {
 				poolsToNodes[poolName] = append(poolsToNodes[poolName], node)
 				nodesToPools[node.Name] = append(nodesToPools[node.Name], poolName)
 			}
@@ -1809,6 +1818,48 @@ func allTaintsTolerated(taints []k8sV1.Taint, tolerations []k8sV1.Toleration) bo
 	}
 
 	return true
+}
+
+// Check that pods belong to this resource pool (from poolTCD) can be scheduled on a given node.
+func (j *jobsService) podsCanBeScheduledOnNode(selector *k8sV1.NodeSelector, node *k8sV1.Node) bool {
+	// In case of no defined affinities/node selectors, the pod can default to schedule on the given node.
+	if selector == nil || len(selector.NodeSelectorTerms) == 0 {
+		return true
+	}
+
+	ns, err := nodeaffinity.NewNodeSelector(selector)
+	if err != nil {
+		j.syslog.WithError(err)
+		return false
+	}
+	return ns.Match(node)
+}
+
+// Gets the node affinity/selector from the resource pool.
+func extractNodeSelectors(pod *k8sV1.Pod) (selectors, affinities *k8sV1.NodeSelector) {
+	if pod == nil {
+		return nil, nil
+	}
+
+	// First check for node affinities.
+	if nodeAffinity := pod.Spec.Affinity; nodeAffinity != nil {
+		affinities = nodeAffinity.NodeAffinity.RequiredDuringSchedulingIgnoredDuringExecution
+	}
+
+	// Then add any node labels.
+	if nodeSelector := pod.Spec.NodeSelector; nodeSelector != nil {
+		selectors = &k8sV1.NodeSelector{}
+		expr := []k8sV1.NodeSelectorRequirement{}
+		for k, v := range nodeSelector {
+			expr = append(expr, k8sV1.NodeSelectorRequirement{
+				Key:      k,
+				Operator: k8sV1.NodeSelectorOpIn,
+				Values:   strings.Split(v, ","),
+			})
+		}
+		selectors.NodeSelectorTerms = []k8sV1.NodeSelectorTerm{{MatchExpressions: expr}}
+	}
+	return selectors, affinities
 }
 
 func extractSlotInfo(node model.AgentSummary) (numSlots int, devType device.Type) {
