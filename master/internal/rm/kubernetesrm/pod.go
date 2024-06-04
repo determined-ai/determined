@@ -219,19 +219,6 @@ func (p *pod) finalize() {
 	p.finalizeTaskState()
 }
 
-func (p *pod) hasAllResourcesStarted() bool {
-	if p.container.State != cproto.Running {
-		return false
-	}
-	if p.exposeProxyConfig == nil {
-		return true
-	}
-	if len(p.req.ProxyPorts) > 0 && len(p.gatewayProxyResources) == 0 {
-		return false
-	}
-	return true
-}
-
 func (p *pod) podStatusUpdate(updatedPod *k8sV1.Pod) (cproto.State, error) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
