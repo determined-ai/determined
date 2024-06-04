@@ -301,6 +301,29 @@ func (j *job) jobDeletedCallback() {
 	j.informTaskResourcesStopped()
 }
 
+func (j *job) makeGatewayComms(spec *tasks.TaskSpec) *gatewayResourceComm {
+	if j.exposeProxyConfig == nil {
+		return nil
+	}
+
+	updateResources := func(resources []gatewayProxyResource) {
+		j.mu.Lock()
+		defer j.mu.Unlock()
+		j.gatewayProxyResources = resources
+	}
+	// TODO(gateways) make this always return not nil.
+	resourceGenerator := j.configureProxyResources(spec)
+	if resourceGenerator == nil {
+		panic("gateway resource generator is nil")
+	}
+
+	return &gatewayResourceComm{
+		resourceDescriptor: *resourceGenerator,
+		reportResources:    updateResources,
+		requestedPorts:     len(j.req.ProxyPorts),
+	}
+}
+
 func (j *job) getGatewayAddresses() []cproto.Address {
 	if j.exposeProxyConfig == nil {
 		return nil
@@ -562,29 +585,7 @@ func (j *job) createSpecAndSubmit(spec *tasks.TaskSpec) error {
 		return err
 	}
 
-	if j.exposeProxyConfig == nil {
-		j.resourceRequestQueue.createKubernetesResources(jobSpec, configMapSpec, nil)
-		return nil
-	}
-
-	// TODO(nick) make this one function.
-	var gwResourceComm *gatewayResourceComm
-	updateResources := func(resources []gatewayProxyResource) {
-		j.mu.Lock()
-		defer j.mu.Unlock()
-		j.gatewayProxyResources = resources
-	}
-	resourceGenerator := j.configureProxyResources(spec)
-	if resourceGenerator == nil {
-		return fmt.Errorf("gateway resource generator is nil")
-	}
-	gwResourceComm = &gatewayResourceComm{
-		resourceDescriptor: *resourceGenerator,
-		reportResources:    updateResources,
-		requestedPorts:     len(j.req.ProxyPorts),
-	}
-	j.resourceRequestQueue.createKubernetesResources(jobSpec, configMapSpec, gwResourceComm)
-
+	j.resourceRequestQueue.createKubernetesResources(jobSpec, configMapSpec, j.makeGatewayComms(spec))
 	return nil
 }
 
