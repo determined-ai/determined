@@ -1019,6 +1019,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
                   //   rowData.experiment,
                   //   project,
                   // )}
+                  filterFormSetWithoutId={filterFormSetWithoutId}
                   link={link}
                   makeOpen={open}
                   projectId={projectId}

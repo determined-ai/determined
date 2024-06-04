@@ -42,7 +42,7 @@ interface Props {
   workspaceId: number;
   filterFormSetWithoutId: FilterFormSetWithoutId;
   onActionSuccess?: (action: BatchAction, successfulIds: number[]) => void;
-  onActionComplete?: () => Promise<void>;
+  onActionComplete?: () => void;
 }
 
 const FlatRunActionButton = ({

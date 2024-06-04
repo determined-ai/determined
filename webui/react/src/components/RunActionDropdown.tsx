@@ -4,6 +4,7 @@ import { ContextMenuCompleteHandlerProps } from 'hew/DataGrid/contextMenu';
 import Dropdown, { DropdownEvent, MenuItem } from 'hew/Dropdown';
 import Icon from 'hew/Icon';
 // import { useModal } from 'hew/Modal';
+import { useModal } from 'hew/Modal';
 import { useToast } from 'hew/Toast';
 import useConfirm from 'hew/useConfirm';
 import { copyToClipboard } from 'hew/utils/functions';
@@ -24,6 +25,7 @@ import css from 'components/ActionDropdown/ActionDropdown.module.scss';
 //   type onInterstitialCloseActionType,
 // } from 'components/InterstitialModalComponent';
 import usePermissions from 'hooks/usePermissions';
+import FlatRunMoveModalComponent from 'pages/FlatRuns/FlatRunMoveModal';
 import { handlePath } from 'routes/utils';
 // import {
 //   activateExperiment,
@@ -49,6 +51,8 @@ import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 // import { getActionsForExperiment } from 'utils/experiment';
 import { getActionsForFlatRun } from 'utils/flatRun';
 import { capitalize } from 'utils/string';
+
+import { FilterFormSetWithoutId } from './FilterForm/components/type';
 // import { openCommandResponse } from 'utils/wait';
 
 interface Props {
@@ -64,6 +68,7 @@ interface Props {
   onVisibleChange?: (visible: boolean) => void;
   workspaceId?: number;
   projectId: number;
+  filterFormSetWithoutId: FilterFormSetWithoutId;
 }
 
 const Action = {
@@ -84,7 +89,7 @@ const dropdownActions = [
   //   Action.Cancel,
   Action.Kill,
   //   Action.Edit,
-  //   Action.Move,
+  Action.Move,
   //   Action.RetainLogs,
   //   Action.OpenTensorBoard,
   //   Action.HyperparameterSearch,
@@ -101,10 +106,13 @@ const RunActionDropdown: React.FC<Props> = ({
   onLink,
   onVisibleChange,
   children,
+  filterFormSetWithoutId,
   projectId,
 }: Props) => {
   // const id = experiment.id;
   const id = run.id;
+  const { Component: FlatRunMoveComponentModal, open: flatRunMoveModalOpen } =
+    useModal(FlatRunMoveModalComponent);
   // const ExperimentEditModal = useModal(ExperimentEditModalComponent);
   // const ExperimentMoveModal = useModal(ExperimentMoveModalComponent);
   // const ExperimentRetainLogsModal = useModal(ExperimentRetainLogsModalComponent);
@@ -286,9 +294,10 @@ const RunActionDropdown: React.FC<Props> = ({
           // case Action.Edit:
           //   ExperimentEditModal.open();
           //   break;
-          // case Action.Move:
-          //   ExperimentMoveModal.open();
-          //   break;
+          case Action.Move:
+            //   ExperimentMoveModal.open();
+            flatRunMoveModalOpen();
+            break;
           // case Action.RetainLogs:
           //   ExperimentRetainLogsModal.open();
           //   break;
@@ -333,6 +342,7 @@ const RunActionDropdown: React.FC<Props> = ({
       // experiment.workspaceId,
       onVisibleChange,
       projectId,
+      flatRunMoveModalOpen,
     ],
   );
 
@@ -350,6 +360,13 @@ const RunActionDropdown: React.FC<Props> = ({
 
   const shared = (
     <>
+      <FlatRunMoveComponentModal
+        filterFormSetWithoutId={filterFormSetWithoutId}
+        flatRuns={[run]}
+        sourceProjectId={projectId}
+        sourceWorkspaceId={run.workspaceId}
+        onActionComplete={() => onComplete?.(FlatRunAction.Move, id)}
+      />
       {/* <ExperimentEditModal.Component
         description={experiment.description ?? ''}
         experimentId={experiment.id}
