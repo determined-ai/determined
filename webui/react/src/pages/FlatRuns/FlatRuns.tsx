@@ -28,7 +28,6 @@ import Link from 'hew/Link';
 import Message from 'hew/Message';
 import Pagination from 'hew/Pagination';
 import Row from 'hew/Row';
-// import { useToast } from 'hew/Toast';
 import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import { isUndefined } from 'lodash';
 import { useObservable } from 'micro-observables';
@@ -73,7 +72,6 @@ import userStore from 'stores/users';
 import userSettings from 'stores/userSettings';
 import { DetailedUser, FlatRun, FlatRunAction, ProjectColumn } from 'types';
 import handleError from 'utils/error';
-// import { getProjectExperimentForExperimentItem } from 'utils/experiment';
 import { eagerSubscribe } from 'utils/observable';
 import { pluralizer } from 'utils/string';
 
@@ -126,7 +124,6 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
   const dataGridRef = useRef<DataGridHandle>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const [searchParams, setSearchParams] = useSearchParams();
-  // const { openToast } = useToast();
 
   const settingsPath = useMemo(() => settingsPathForProject(projectId), [projectId]);
   const flatRunsSettingsObs = useMemo(
@@ -1015,10 +1012,6 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
               return (
                 <RunActionDropdown
                   cell={cell}
-                  // experiment={getProjectExperimentForExperimentItem(
-                  //   rowData.experiment,
-                  //   project,
-                  // )}
                   filterFormSetWithoutId={filterFormSetWithoutId}
                   link={link}
                   makeOpen={open}
@@ -1027,7 +1020,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
                   onComplete={onComplete}
                   onLink={onClose}
                   onVisibleChange={onVisibleChange}>
-                  <div />
+                  {/* <div /> */}
                 </RunActionDropdown>
               );
             }}
