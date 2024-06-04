@@ -46,6 +46,7 @@ const (
 	taskTypeLabel     = labelPrefix + "task_type"
 	taskIDLabel       = labelPrefix + "task_id"
 	containerIDLabel  = labelPrefix + "container_id"
+	rankLabel         = labelPrefix + "rank"
 )
 
 func (p *pod) configureResourcesRequirements() k8sV1.ResourceRequirements {
@@ -134,8 +135,16 @@ func (p *pod) configureEnvVars(
 // proxyResourceGenerator returns a configured list of proxy resources given a set of ports.
 type proxyResourceGenerator func([]int) []gatewayProxyResource
 
+// needsGWProxyResources returns true if the pod needs, has, or will have proxy resources.
+func (p *pod) needsGWProxyResources() bool {
+	if p.exposeProxyConfig == nil || p.rank != 0 || len(p.req.ProxyPorts) == 0 {
+		return false
+	}
+	return true
+}
+
 func (p *pod) configureProxyResources() *proxyResourceGenerator { // TODO return an err.
-	if p.exposeProxyConfig == nil {
+	if !p.needsGWProxyResources() {
 		return nil
 	}
 
@@ -160,6 +169,11 @@ func (p *pod) configureProxyResources() *proxyResourceGenerator { // TODO return
 			allocLabels := map[string]string{
 				determinedLabel: p.submissionInfo.taskSpec.AllocationID,
 			}
+			selectorLabels := make(map[string]string)
+			for k, v := range allocLabels {
+				selectorLabels[k] = v
+			}
+			selectorLabels[rankLabel] = "0"
 
 			serviceSpec := &k8sV1.Service{
 				ObjectMeta: metaV1.ObjectMeta{
@@ -174,7 +188,7 @@ func (p *pod) configureProxyResources() *proxyResourceGenerator { // TODO return
 							Port:     int32(proxyPort.Port),
 						},
 					},
-					Selector: allocLabels,
+					Selector: selectorLabels,
 					Type:     k8sV1.ServiceTypeClusterIP,
 				},
 			}
@@ -471,6 +485,7 @@ func (p *pod) configurePodSpec(
 	podSpec.ObjectMeta.Labels[taskIDLabel] = p.submissionInfo.taskSpec.TaskID
 	podSpec.ObjectMeta.Labels[containerIDLabel] = p.submissionInfo.taskSpec.ContainerID
 	podSpec.ObjectMeta.Labels[determinedLabel] = p.submissionInfo.taskSpec.AllocationID
+	podSpec.ObjectMeta.Labels[rankLabel] = strconv.Itoa(p.rank)
 
 	// If map is not populated, labels will be missing and observability will be impacted.
 	for k, v := range p.submissionInfo.taskSpec.ExtraPodLabels {
