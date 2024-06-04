@@ -69,7 +69,7 @@ func (m *mockJob) create() {
 func (m *mockJob) delete() {
 	m.requestQueue.deleteKubernetesResources(deleteKubernetesResources{
 		namespace:     "default",
-		podName:       m.name,
+		jobName:       m.name,
 		configMapName: m.name,
 	})
 }
