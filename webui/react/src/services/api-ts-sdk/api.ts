@@ -2717,6 +2717,13 @@ export interface V1DeleteTensorboardFilesResponse {
 export interface V1DeleteWebhookResponse {
 }
 /**
+ * Response to DeleteWorkspaceNamespaceBindingsRequest.
+ * @export
+ * @interface V1DeleteWorkspaceNamespaceBindingsResponse
+ */
+export interface V1DeleteWorkspaceNamespaceBindingsResponse {
+}
+/**
  * Response to DeleteWorkspaceRequest.
  * @export
  * @interface V1DeleteWorkspaceResponse
@@ -34690,6 +34697,47 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
         },
         /**
          * 
+         * @summary Deletes workpace namespace bindings.
+         * @param {number} workspaceId The unique id of the workspace.
+         * @param {Array<string>} [clusterNames] The names of the clusters to delete the bindings for.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteWorkspaceNamespaceBindings(workspaceId: number, clusterNames?: Array<string>, options: any = {}): FetchArgs {
+            // verify required parameter 'workspaceId' is not null or undefined
+            if (workspaceId === null || workspaceId === undefined) {
+                throw new RequiredError('workspaceId','Required parameter workspaceId was null or undefined when calling deleteWorkspaceNamespaceBindings.');
+            }
+            const localVarPath = `/api/v1/workspaces/{workspaceId}/namespace-bindings`
+                .replace(`{${"workspaceId"}}`, encodeURIComponent(String(workspaceId)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'DELETE', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            if (clusterNames) {
+                localVarQueryParameter['clusterNames'] = clusterNames
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get the requested workspace.
          * @param {number} id The id of the workspace.
          * @param {*} [options] Override http request option.
@@ -35097,7 +35145,7 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling setWorkspaceNamespaceBindings.');
             }
-            const localVarPath = `/api/v1/workspaces/{workspaceId}/bind`
+            const localVarPath = `/api/v1/workspaces/{workspaceId}/namespace-bindings`
                 .replace(`{${"workspaceId"}}`, encodeURIComponent(String(workspaceId)));
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
@@ -35233,6 +35281,26 @@ export const WorkspacesApiFp = function (configuration?: Configuration) {
          */
         deleteWorkspace(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteWorkspaceResponse> {
             const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).deleteWorkspace(id, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Deletes workpace namespace bindings.
+         * @param {number} workspaceId The unique id of the workspace.
+         * @param {Array<string>} [clusterNames] The names of the clusters to delete the bindings for.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteWorkspaceNamespaceBindings(workspaceId: number, clusterNames?: Array<string>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteWorkspaceNamespaceBindingsResponse> {
+            const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).deleteWorkspaceNamespaceBindings(workspaceId, clusterNames, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -35504,6 +35572,17 @@ export const WorkspacesApiFactory = function (configuration?: Configuration, fet
         },
         /**
          * 
+         * @summary Deletes workpace namespace bindings.
+         * @param {number} workspaceId The unique id of the workspace.
+         * @param {Array<string>} [clusterNames] The names of the clusters to delete the bindings for.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteWorkspaceNamespaceBindings(workspaceId: number, clusterNames?: Array<string>, options?: any) {
+            return WorkspacesApiFp(configuration).deleteWorkspaceNamespaceBindings(workspaceId, clusterNames, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Get the requested workspace.
          * @param {number} id The id of the workspace.
          * @param {*} [options] Override http request option.
@@ -35665,6 +35744,19 @@ export class WorkspacesApi extends BaseAPI {
      */
     public deleteWorkspace(id: number, options?: any) {
         return WorkspacesApiFp(this.configuration).deleteWorkspace(id, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Deletes workpace namespace bindings.
+     * @param {number} workspaceId The unique id of the workspace.
+     * @param {Array<string>} [clusterNames] The names of the clusters to delete the bindings for.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof WorkspacesApi
+     */
+    public deleteWorkspaceNamespaceBindings(workspaceId: number, clusterNames?: Array<string>, options?: any) {
+        return WorkspacesApiFp(this.configuration).deleteWorkspaceNamespaceBindings(workspaceId, clusterNames, options)(this.fetch, this.basePath)
     }
     
     /**
