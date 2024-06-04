@@ -1191,6 +1191,7 @@ func newTestJobsService(t *testing.T) *jobsService {
 		8080,
 		"~/.kube/config",
 		nil,
+		nil,
 	)
 	require.NoError(t, err)
 	return j

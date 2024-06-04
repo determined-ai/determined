@@ -10,8 +10,9 @@ import (
 	batchV1 "k8s.io/client-go/kubernetes/typed/batch/v1"
 	typedV1 "k8s.io/client-go/kubernetes/typed/core/v1"
 
-	"github.com/determined-ai/determined/master/pkg/ptrs"
 	alphaGateway "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned/typed/apis/v1alpha2"
+
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 )
 
 type requestProcessingWorker struct {

@@ -70,20 +70,16 @@ func TestConfigureProxyResources(t *testing.T) {
 		longDesc += "a"
 	}
 
-	p := &pod{
-		namespace: "podnamespace",
-		submissionInfo: &podSubmissionInfo{
-			taskSpec: tasks.TaskSpec{
-				AllocationID: "allocID",
-				Description:  longDesc,
-			},
-		},
+	j := &job{namespace: "podnamespace"}
+	taskSpec := &tasks.TaskSpec{
+		AllocationID: "allocID",
+		Description:  longDesc,
 	}
-	require.Nil(t, p.configureProxyResources())
+	require.Nil(t, j.configureProxyResources(taskSpec))
 
 	expectedName := "porti0-" + longDesc
 	expectedName = expectedName[:63]
-	p.req = &sproto.AllocateRequest{
+	j.req = &sproto.AllocateRequest{
 		ProxyPorts: []*sproto.ProxyPortConfig{
 			{
 				ServiceID: "test_unused",
@@ -92,7 +88,7 @@ func TestConfigureProxyResources(t *testing.T) {
 			},
 		},
 	}
-	p.exposeProxyConfig = &config.InternalTaskGatewayConfig{
+	j.exposeProxyConfig = &config.InternalTaskGatewayConfig{
 		GatewayName:      "gatewayname",
 		GatewayNamespace: "gatewaynamespace",
 	}
@@ -157,7 +153,7 @@ func TestConfigureProxyResources(t *testing.T) {
 			tcpRouteSpec:    tcp,
 			gatewayListener: listener,
 		},
-	}, (*p.configureProxyResources())([]int{12345}))
+	}, (*j.configureProxyResources(taskSpec))([]int{12345}))
 }
 
 func TestAddNodeDisabledAffinityToPodSpec(t *testing.T) {
