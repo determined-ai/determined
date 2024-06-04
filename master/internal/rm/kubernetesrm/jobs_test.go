@@ -77,6 +77,7 @@ func TestGetNonDetPods(t *testing.T) {
 }
 
 func TestJobScheduledStatus(t *testing.T) {
+	// Pod has been created, but has zero PodConditions yet.
 	pendingPod := k8sV1.Pod{
 		ObjectMeta: metaV1.ObjectMeta{
 			Name: "test-pod",
@@ -85,6 +86,16 @@ func TestJobScheduledStatus(t *testing.T) {
 			Conditions: make([]k8sV1.PodCondition, 0),
 		},
 	}
+	js := jobsService{
+		jobNameToPodNameToSchedulingState: make(map[string]map[string]sproto.SchedulingState),
+	}
+	jobName := "test-job"
+	js.updatePodSchedulingState(jobName, pendingPod)
+	actualState := js.jobSchedulingState(jobName)
+	expectedState := sproto.SchedulingStateQueued
+	require.Equal(t, expectedState, actualState)
+
+	// Pod has been created, but the PodScheduled PodCondition is false.
 	notScheduledPod := k8sV1.Pod{
 		ObjectMeta: metaV1.ObjectMeta{
 			Name: "test-pod",
@@ -98,6 +109,12 @@ func TestJobScheduledStatus(t *testing.T) {
 			},
 		},
 	}
+	js.updatePodSchedulingState(jobName, notScheduledPod)
+	actualState = js.jobSchedulingState(jobName)
+	expectedState = sproto.SchedulingStateQueued
+	require.Equal(t, expectedState, actualState)
+
+	// Pod has been created, and the PodScheduled PodCondition is true.
 	scheduledPod := k8sV1.Pod{
 		ObjectMeta: metaV1.ObjectMeta{
 			Name: "test-pod",
@@ -111,25 +128,11 @@ func TestJobScheduledStatus(t *testing.T) {
 			},
 		},
 	}
-
-	js := jobsService{
-		jobNameToPodNameToSchedulingState: make(map[string]map[string]sproto.SchedulingState),
-	}
-	jobName := "test-job"
-	js.updatePodSchedulingState(jobName, pendingPod)
-	actualState := js.jobSchedulingState(jobName)
-	expectedState := sproto.SchedulingStateQueued
-	require.Equal(t, expectedState, actualState)
-
-	js.updatePodSchedulingState(jobName, notScheduledPod)
-	actualState = js.jobSchedulingState(jobName)
-	expectedState = sproto.SchedulingStateQueued
-	require.Equal(t, expectedState, actualState)
-
 	js.updatePodSchedulingState(jobName, scheduledPod)
 	actualState = js.jobSchedulingState(jobName)
 	expectedState = sproto.SchedulingStateScheduled
 	require.Equal(t, expectedState, actualState)
+
 }
 
 func TestTaintTolerated(t *testing.T) {
