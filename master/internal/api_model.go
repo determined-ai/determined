@@ -632,10 +632,12 @@ func (a *apiServer) PostModelVersion(
 	}
 
 	// make sure the checkpoint exists
-	c, getCheckpointErr := db.GetCheckpoint(ctx, req.CheckpointUuid)
-	if getCheckpointErr == db.ErrNotFound {
+	c := &checkpointv1.Checkpoint{}
+
+	switch getCheckpointErr := a.m.db.QueryProto("get_checkpoint", c, req.CheckpointUuid); {
+	case getCheckpointErr == db.ErrNotFound:
 		return nil, api.NotFoundErrs("checkpoint", req.CheckpointUuid, true)
-	} else if getCheckpointErr != nil {
+	case getCheckpointErr != nil:
 		return nil, getCheckpointErr
 	}
 
