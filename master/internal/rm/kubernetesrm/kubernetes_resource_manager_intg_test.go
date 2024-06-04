@@ -571,14 +571,12 @@ func TestAssignResources(t *testing.T) {
 	groups[allocateReq.JobID] = &tasklist.Group{
 		JobID: allocateReq.JobID,
 	}
-	mockPods := createMockPodsService(make(map[string]*k8sV1.Node), device.CUDA, true)
+	mockPods := createMockJobsService(make(map[string]*k8sV1.Node), device.CUDA, true)
 	poolRef := &kubernetesResourcePool{
 		poolConfig:                &config.ResourcePoolConfig{PoolName: "pool"},
-		podsService:               mockPods,
+		jobsService:               mockPods,
 		reqList:                   taskList,
 		groups:                    groups,
-		allocationIDToContainerID: map[model.AllocationID]cproto.ID{},
-		containerIDtoAllocationID: map[string]model.AllocationID{},
 		jobIDToAllocationID:       map[model.JobID]model.AllocationID{},
 		allocationIDToJobID:       map[model.AllocationID]model.JobID{},
 		slotsUsedPerGroup:         map[*tasklist.Group]int{},
@@ -789,7 +787,7 @@ func TestROCmJobsService(t *testing.T) {
 	}
 }
 
-func TestValidateResources(t *testing.T) {
+func TestRMValidateResources(t *testing.T) {
 	resourcePool := &kubernetesResourcePool{
 		poolConfig:     &config.ResourcePoolConfig{PoolName: "test-pool"},
 		maxSlotsPerPod: 4,

@@ -1120,7 +1120,11 @@ func TestValidateResources(t *testing.T) {
 			res := rp.ValidateResources(sproto.ValidateResourcesRequest{
 				Slots: tt.slots,
 			})
-			require.Equal(t, tt.fulfillable, res.Fulfillable)
+			if tt.fulfillable {
+				require.NoError(t, res)
+			} else {
+				require.ErrorContains(t, res, "invalid resource request")
+			}
 		})
 	}
 }
