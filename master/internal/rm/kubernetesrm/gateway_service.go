@@ -7,6 +7,7 @@ import (
 	"sync"
 
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/util/retry"
 	gatewayTyped "sigs.k8s.io/gateway-api/apis/v1"
 	gateway "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned/typed/apis/v1"
 
@@ -158,18 +159,23 @@ func (g *gatewayService) updateGateway(update func(*gatewayTyped.Gateway) error)
 	g.mu.Lock()
 	defer g.mu.Unlock()
 
-	gateway, err := g.gatewayInterface.Get(context.TODO(), g.gatewayName, metaV1.GetOptions{})
-	if err != nil {
-		return fmt.Errorf("getting gateway with name '%s': %w", g.gatewayName, err)
-	}
+	if err := retry.RetryOnConflict(retry.DefaultRetry, func() error {
+		gateway, err := g.gatewayInterface.Get(context.TODO(), g.gatewayName, metaV1.GetOptions{})
+		if err != nil {
+			return err
+		}
 
-	err = update(gateway)
-	if err != nil {
-		return err
-	}
+		if err = update(gateway); err != nil {
+			return err
+		}
 
-	if _, err := g.gatewayInterface.
-		Update(context.TODO(), gateway, metaV1.UpdateOptions{}); err != nil {
+		if _, err := g.gatewayInterface.
+			Update(context.TODO(), gateway, metaV1.UpdateOptions{}); err != nil {
+			return err
+		}
+
+		return nil
+	}); err != nil {
 		return fmt.Errorf("updating gateway with name '%s': %w", g.gatewayName, err)
 	}
 
