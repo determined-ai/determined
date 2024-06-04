@@ -157,7 +157,7 @@ func BuildRunHParams(runID int, projectID int, hparams map[string]any,
 			projHparamsModel = append(projHparamsModel, nestedProjHparams...)
 			continue
 		default:
-			return hparamsModel, projHparamsModel, fmt.Errorf("cannot assign hyperparameter %s, received type %T", hpName, val)
+			continue
 		}
 		hparamsModel = append(hparamsModel, hp)
 		projHparamsModel = append(projHparamsModel, projHp)
