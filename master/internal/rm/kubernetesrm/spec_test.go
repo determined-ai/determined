@@ -90,7 +90,7 @@ func TestConfigureProxyResources(t *testing.T) {
 
 	svc := &k8sV1.Service{
 		ObjectMeta: metaV1.ObjectMeta{
-			Name:      j.jobName,
+			Name:      j.jobName + "-0",
 			Namespace: "podnamespace",
 			Labels:    map[string]string{determinedLabel: "allocID"},
 		},
@@ -108,7 +108,7 @@ func TestConfigureProxyResources(t *testing.T) {
 
 	tcp := &alphaGatewayTyped.TCPRoute{
 		ObjectMeta: metaV1.ObjectMeta{
-			Name:      j.jobName,
+			Name:      j.jobName + "-0",
 			Namespace: "podnamespace",
 			Labels:    map[string]string{determinedLabel: "allocID"},
 		},
@@ -128,7 +128,7 @@ func TestConfigureProxyResources(t *testing.T) {
 					BackendRefs: []alphaGatewayTyped.BackendRef{
 						{
 							BackendObjectReference: alphaGatewayTyped.BackendObjectReference{
-								Name: alphaGatewayTyped.ObjectName(j.jobName),
+								Name: alphaGatewayTyped.ObjectName(j.jobName + "-0"),
 								Kind: ptrs.Ptr(alphaGatewayTyped.Kind("Service")),
 								Port: ptrs.Ptr(alphaGatewayTyped.PortNumber(12345)),
 							},
