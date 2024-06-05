@@ -111,6 +111,60 @@ def do_rendezvous_slurm(
     )
 
 
+def do_rendezvous_kubernetes(
+    sess: api.Session,
+    allocation_id: str,
+    resources_id: str,
+) -> "det.RendezvousInfo":
+    job_parallelism_str = os.environ.get("DET_KUBERNETES_JOB_PARALLELISM")
+    assert job_parallelism_str, "Unable to rendezvous without DET_KUBERNETES_JOB_PARALLELISM"
+    job_parallelism = int(job_parallelism_str)
+
+    pod_ip_str = os.environ.get("DET_KUBERNETES_POD_IP")
+    assert pod_ip_str, "Unable to rendezvous without DET_KUBERNETES_POD_IP"
+
+    num_slots_str = os.environ.get("DET_SLOT_IDS")
+    assert num_slots_str, "Unable to rendezvous without DET_SLOT_IDS"
+    num_slots = len(json.loads(os.environ["DET_SLOT_IDS"]))
+
+    request_uuid = str(uuid.uuid4())
+    resp = bindings.post_AllocationAllGather(
+        sess,
+        allocationId=allocation_id,
+        body=bindings.v1AllocationAllGatherRequest(
+            allocationId=allocation_id,
+            requestUuid=request_uuid,
+            numPeers=job_parallelism,
+            data={
+                # We use the lexigraphical order of request IDs to
+                # agree on ranks among peers, so they all need it.
+                "request_uuid": request_uuid,
+                "rendezvous_ip": pod_ip_str,
+                "slots": num_slots,
+            },
+        ),
+    )
+
+    # TODO(RM-306): Use indexed completions and JOB_COMPLETION_INDEX to get pod rank.
+    data_by_rank = []
+    our_rank = None
+    for i, d in enumerate(sorted(resp.data, key=lambda d: str(d["request_uuid"]))):
+        if d["request_uuid"] == request_uuid:
+            our_rank = i
+        data_by_rank.append(d)
+    assert our_rank is not None, "rendezvous was missing our own information"
+    assert len(data_by_rank) == job_parallelism, "didn't receive enough peers from rendezvous"
+
+    addrs = [d["rendezvous_ip"] for d in data_by_rank]
+    slots = [d["slots"] for d in data_by_rank]
+
+    return det.RendezvousInfo(
+        container_addrs=addrs,
+        container_rank=our_rank,
+        container_slot_counts=slots,
+    )
+
+
 # On HPC, the "launcher" tells the Determined Master that the job is "Running"
 # as soon as the workload manager (e.g., Slurm, PBS, etc) starts running the job.
 # However, if the container is not already cached on the compute node, it will
@@ -194,7 +248,7 @@ def get_eth_interface_name() -> Optional[str]:
 
 
 # The canonical definitions of these consts live in Go code.
-RESOURCES_TYPE_K8S_POD = "k8s-pod"
+RESOURCES_TYPE_K8S_JOB = "k8s-job"
 RESOURCES_TYPE_DOCKER_CONTAINER = "docker-container"
 RESOURCES_TYPE_SLURM_JOB = "slurm-job"
 
@@ -207,10 +261,12 @@ def do_rendezvous(sess: api.Session, allocation_id: str) -> None:
     assert r_type, "Unable to complete rendezvous info without DET_RESOURCES_TYPE"
 
     rendezvous_info = None
-    if r_type == RESOURCES_TYPE_DOCKER_CONTAINER or r_type == RESOURCES_TYPE_K8S_POD:
+    if r_type == RESOURCES_TYPE_DOCKER_CONTAINER:
         rendezvous_info = do_rendezvous_rm_provided(sess, allocation_id, r_id)
     elif r_type == RESOURCES_TYPE_SLURM_JOB:
         rendezvous_info = do_rendezvous_slurm(sess, allocation_id, r_id)
+    elif r_type == RESOURCES_TYPE_K8S_JOB:
+        rendezvous_info = do_rendezvous_kubernetes(sess, allocation_id, r_id)
     else:
         raise ValueError(f"unsupported resources type: {r_type}")
 
@@ -251,14 +307,29 @@ def set_proxy_address(sess: api.Session, allocation_id: str) -> None:
     )
 
 
+def set_proxy_address_kubernetes(sess: api.Session, allocation_id: str) -> None:
+    pod_ip_str = os.environ.get("DET_KUBERNETES_POD_IP")
+    assert pod_ip_str, "Unable to complete rendezvous without DET_KUBERNETES_POD_IP"
+
+    bindings.post_PostAllocationProxyAddress(
+        sess,
+        allocationId=allocation_id,
+        body=bindings.v1PostAllocationProxyAddressRequest(
+            proxyAddress=pod_ip_str,
+        ),
+    )
+
+
 def do_proxy(sess: api.Session, allocation_id: str) -> None:
     r_type = os.environ.get("DET_RESOURCES_TYPE")
     assert r_type, "Unable to complete rendezvous info without DET_RESOURCES_TYPE"
 
-    if r_type == RESOURCES_TYPE_DOCKER_CONTAINER or r_type == RESOURCES_TYPE_K8S_POD:
+    if r_type == RESOURCES_TYPE_DOCKER_CONTAINER:
         return
     elif r_type == RESOURCES_TYPE_SLURM_JOB:
         set_proxy_address(sess, allocation_id)
+    elif r_type == RESOURCES_TYPE_K8S_JOB:
+        set_proxy_address_kubernetes(sess, allocation_id)
     else:
         raise ValueError(f"unsupported resources type: {r_type}")
 

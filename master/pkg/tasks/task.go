@@ -115,6 +115,9 @@ type TaskSpec struct {
 	Labels    []string
 	// Ports required by trial or commands and their respective base port values.
 	UniqueExposedPortRequests map[string]int
+
+	// For testing only.
+	DontShipLogs bool
 }
 
 // Clone deep copies a taskSpec.
@@ -242,6 +245,10 @@ func (t TaskSpec) EnvVars() map[string]string {
 
 // LogShipperWrappedEntrypoint returns the configured Entrypoint wrapped with ship_logs.py.
 func (t *TaskSpec) LogShipperWrappedEntrypoint() []string {
+	if t.DontShipLogs {
+		return t.Entrypoint
+	}
+
 	// Prepend the entrypoint like: `ship-logs.sh ship_logs.py "$@"`.
 	shipLogsShell := filepath.Join(RunDir, taskShipLogsShell)
 	shipLogsPython := filepath.Join(RunDir, taskShipLogsPython)

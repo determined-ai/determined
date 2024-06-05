@@ -437,7 +437,7 @@ func TestProjectHyperparameters(t *testing.T) {
 
 	require.NoError(t,
 		RemoveProjectHyperparameters(ctx, nil, []int32{int32(exp1.ID)}))
-	require.ElementsMatch(t, []string{}, // TODO(!!!) this is a bug in the query.
+	require.ElementsMatch(t, []string{}, // TODO(nickb): This is a bug in the query.
 		RequireGetProjectHParams(t, db, projectID))
 }
 

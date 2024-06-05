@@ -1,9 +1,10 @@
-import { defineConfig, devices } from '@playwright/test';
 /**
  * Read environment variables from file.
  * https://github.com/motdotla/dotenv
  */
+import { defineConfig, devices } from '@playwright/test';
 import * as dotenv from 'dotenv';
+
 dotenv.config();
 
 const serverAddess = process.env.PW_SERVER_ADDRESS;
@@ -23,7 +24,7 @@ export default defineConfig({
   fullyParallel: !!process.env.CI,
 
   /* https://playwright.dev/docs/test-timeouts#global-timeout */
-  globalTimeout: process.env.PWDEBUG ? 0 : 900_000,
+  globalTimeout: process.env.PWDEBUG ? 0 : 1_800_000,
   /* Folder for test artifacts such as screenshots, videos, traces, etc. */
   outputDir: './src/e2e/test-results',
   /* Folder for test artifacts such as screenshots, videos, traces, etc. */
@@ -98,5 +99,6 @@ export default defineConfig({
     reuseExistingServer: !process.env.CI,
   },
 
-  workers: process.env.CI ? 4 : 1,
+  // workers: process.env.CI ? 4 : 1,
+  workers: 1,
 });

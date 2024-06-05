@@ -129,12 +129,15 @@ func (a *apiServer) GetCheckpoint(
 	}
 
 	resp := &apiv1.GetCheckpointResponse{}
+	resp.Checkpoint = &checkpointv1.Checkpoint{}
 
-	ckpt, err := internaldb.GetCheckpoint(ctx, req.CheckpointUuid)
-	if err != nil {
-		return resp, errors.Wrapf(err, "error fetching checkpoint %s from database", req.CheckpointUuid)
+	// We don't use Bun here as Bun's marshaling/unmarshaling does not account for "NaN",
+	// "Infinity", and "-Infinity"
+	if err := a.m.db.QueryProto(
+		"get_checkpoint", resp.Checkpoint, req.CheckpointUuid); err != nil {
+		return resp,
+			errors.Wrapf(err, "error fetching checkpoint %s from database", req.CheckpointUuid)
 	}
-	resp.Checkpoint = ckpt
 	return resp, nil
 }
 
@@ -476,8 +479,8 @@ func (a *apiServer) PostCheckpointMetadata(
 		return nil, err
 	}
 
-	currCheckpoint, err := internaldb.GetCheckpoint(ctx, req.Checkpoint.Uuid)
-	if err != nil {
+	currCheckpoint := &checkpointv1.Checkpoint{}
+	if err := a.m.db.QueryProto("get_checkpoint", currCheckpoint, req.Checkpoint.Uuid); err != nil {
 		return nil,
 			errors.Wrapf(err, "error fetching checkpoint %s from database", req.Checkpoint.Uuid)
 	}

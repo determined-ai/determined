@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"testing"
 	"time"
 
@@ -326,6 +327,111 @@ func TestCheckpointReturned(t *testing.T) {
 		require.Len(t, versionsRes.ModelVersions, 1)
 		assertCheckpoints(versionsRes.ModelVersions[0].Checkpoint)
 	})
+}
+
+func TestGetCheckpointNaNInfinityValues(t *testing.T) {
+	tests := map[string]struct {
+		metric      string
+		metricValue float64
+	}{
+		"NaNCase": {
+			metric:      "NaN",
+			metricValue: math.NaN(),
+		},
+		"InfinityCase": {
+			metric:      "Infinity",
+			metricValue: math.Inf(1),
+		},
+		"-InfinityCase": {
+			metric:      "-Infinity",
+			metricValue: math.Inf(-1),
+		},
+	}
+	for testCase, testVars := range tests {
+		t.Run(testCase, func(t *testing.T) {
+			// This tries to test all places where we will return a checkpointv1.Checkpoint.
+			api, curUser, ctx := setupAPITest(t, nil)
+			trial, task := createTestTrial(t, api, curUser)
+
+			checkpointStorage, err := structpb.NewStruct(map[string]any{
+				"type":        "shared_fs",
+				"host_path":   uuid.New().String(),
+				"propagation": "private",
+			})
+			require.NoError(t, err)
+
+			reportResponse, err := api.RunPrepareForReporting(ctx, &apiv1.RunPrepareForReportingRequest{
+				RunId: int32(trial.ID),
+			})
+			require.NoError(t, err)
+			require.Nil(t, reportResponse.StorageId)
+
+			reportResponse, err = api.RunPrepareForReporting(ctx, &apiv1.RunPrepareForReportingRequest{
+				RunId:             int32(trial.ID),
+				CheckpointStorage: checkpointStorage,
+			})
+			require.NoError(t, err)
+			require.NotNil(t, reportResponse.StorageId)
+			checkpointMeta, err := structpb.NewStruct(map[string]any{
+				"steps_completed": 1,
+			})
+			require.NoError(t, err)
+			checkpointID := uuid.New().String()
+			checkpoint := &checkpointv1.Checkpoint{
+				TaskId:       string(task.TaskID),
+				AllocationId: nil,
+				Uuid:         checkpointID,
+				ReportTime:   timestamppb.New(time.Now().UTC().Truncate(time.Millisecond)),
+				Resources:    map[string]int64{"x": 128, "y/": 0},
+				Metadata:     checkpointMeta,
+				State:        checkpointv1.State_STATE_COMPLETED,
+				StorageId:    reportResponse.StorageId,
+			}
+			require.NoError(t, err)
+			int32TrialID := int32(trial.ID)
+			int32ExperimentID := int32(trial.ExperimentID)
+			checkpoint.Training = &checkpointv1.CheckpointTrainingMetadata{
+				TrialId:         &int32TrialID,
+				ExperimentId:    &int32ExperimentID,
+				TrainingMetrics: &commonv1.Metrics{},
+				ValidationMetrics: &commonv1.Metrics{
+					AvgMetrics: &structpb.Struct{
+						Fields: map[string]*structpb.Value{
+							"loss": structpb.NewStringValue(testVars.metric),
+						},
+					},
+				},
+				SearcherMetric: &testVars.metricValue,
+			}
+			_, err = api.ReportCheckpoint(ctx, &apiv1.ReportCheckpointRequest{
+				Checkpoint: checkpoint,
+			})
+			require.NoError(t, err)
+
+			_, err = api.ReportTrialValidationMetrics(ctx, &apiv1.ReportTrialValidationMetricsRequest{
+				ValidationMetrics: &trialv1.TrialMetrics{
+					TrialId:        int32TrialID,
+					TrialRunId:     0,
+					StepsCompleted: ptrs.Ptr(int32(1)),
+					ReportTime:     timestamppb.New(time.Now().UTC().Truncate(time.Millisecond)),
+					Metrics:        checkpoint.Training.ValidationMetrics,
+				},
+			})
+			require.NoError(t, err)
+
+			resp, err := api.GetCheckpoint(ctx, &apiv1.GetCheckpointRequest{
+				CheckpointUuid: checkpointID,
+			})
+			require.NoError(t, err)
+			require.Equal(t, testVars.metric,
+				resp.Checkpoint.Training.ValidationMetrics.AvgMetrics.Fields["loss"].GetStringValue())
+			if testVars.metric == "NaN" {
+				require.True(t, math.IsNaN(*resp.Checkpoint.Training.SearcherMetric))
+			} else {
+				require.Equal(t, testVars.metricValue, *resp.Checkpoint.Training.SearcherMetric)
+			}
+		})
+	}
 }
 
 func TestCheckpointRemoveFilesPrefixAndEmpty(t *testing.T) {

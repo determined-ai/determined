@@ -14,6 +14,7 @@ import ModelVersionDetails from 'pages/ModelVersionDetails';
 import ProjectDetails from 'pages/ProjectDetails';
 import Reload from 'pages/Reload';
 import ResourcepoolDetail from 'pages/ResourcePool/ResourcepoolDetail';
+import SearchDetails from 'pages/SearchDetails';
 import SignIn from 'pages/SignIn';
 import SignOut from 'pages/SignOut';
 import TaskListPage from 'pages/TaskListPage';
@@ -45,6 +46,7 @@ const routeComponentMap: Record<string, React.ReactNode> = {
   projectDetails: <ProjectDetails key="projectdetails" />,
   reload: <Reload />,
   resourcepool: <ResourcepoolDetail />,
+  searchDetails: <SearchDetails />,
   signIn: <SignIn />,
   signOut: <SignOut />,
   taskList: <TaskListPage />,

@@ -18,7 +18,7 @@ func (s State) String() string {
 	return string(s)
 }
 
-// Before returns if our state comes before or is equal to another. Callers have an implicit
+// Before returns true if our state comes before or is equal to another. Callers have an implicit
 // assumption that states always transition in order.
 func (s State) Before(other State) bool {
 	ordering := []State{
