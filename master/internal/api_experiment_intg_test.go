@@ -1171,6 +1171,41 @@ func TestSearchExperiments(t *testing.T) {
 	require.Equal(t, int32(5), resp.Experiments[2].BestTrial.Restarts)
 }
 
+func TestSearchExperimentsFilters(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	_, projectIDInt := createProjectAndWorkspace(ctx, t, api)
+	projectID := int32(projectIDInt)
+
+	paramNames := []string{"foo"}
+	db.RequireMockExperimentParams(t, api.m.db, curUser, db.MockExperimentParams{
+		HParamNames: &paramNames,
+	}, projectIDInt)
+
+	tests := map[string]struct {
+		expectedNumExperiments int
+		filter                 string
+	}{
+		"ExpHPNotContains": {
+			expectedNumExperiments: 0,
+			filter: `{"filterGroup":{"children":[{"columnName":"hp.foo","kind":"field",` +
+				`"location":"LOCATION_TYPE_HYPERPARAMETERS","operator":"notContains","type":"COLUMN_TYPE_NUMBER","value":1}]` +
+				`"conjunction":"and","kind":"group"},"showArchived":false}`,
+		},
+	}
+
+	for testCase, testVars := range tests {
+		t.Run(testCase, func(t *testing.T) {
+			resp, err := api.SearchExperiments(ctx, &apiv1.SearchExperimentsRequest{
+				ProjectId: &projectID,
+				Filter:    ptrs.Ptr(testVars.filter),
+			})
+
+			require.NoError(t, err)
+			require.Len(t, resp.Experiments, testVars.expectedNumExperiments)
+		})
+	}
+}
+
 func TestSearchExperimentsMalformed(t *testing.T) {
 	api, curUser, ctx := setupAPITest(t, nil)
 	_, projectIDInt := createProjectAndWorkspace(ctx, t, api)
