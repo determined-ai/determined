@@ -52,14 +52,14 @@ Hardware
 -  Master node:
 
    -  At least 4 CPU cores. The master node does not require GPUs.
-   -  Intel/AMD x86, Arm, and PowerPC architectures are supported.
+   -  Intel/AMD x86 and Arm architectures are supported.
    -  8GB RAM
    -  200GB of free disk space.
 
 -  Agent node:
 
    -  At least 2 CPU cores.
-   -  Intel/AMD x86, Arm, and PowerPC architectures are supported.
+   -  Intel/AMD x86 and Arm architectures are supported.
    -  If you are using GPUs, NVIDIA GPUs with compute capability 3.7 or greater are required: K80,
       P100, V100, A100, GTX 1080, GTX 1080 Ti, TITAN, or TITAN XP.
    -  4GB RAM
