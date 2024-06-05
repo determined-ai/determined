@@ -552,7 +552,6 @@ func (j *jobsService) SummarizeResources(poolName string) (*computeUsageSummary,
 }
 
 func (j *jobsService) ReattachJob(msg reattachJobRequest) (reattachJobResponse, error) {
-	// TODO(RM-270/gateways) make reattach works for gateways.
 	j.mu.Lock()
 	defer j.mu.Unlock()
 	return j.reattachJob(msg)

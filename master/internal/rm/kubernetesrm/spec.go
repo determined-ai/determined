@@ -130,6 +130,10 @@ func (j *job) configureEnvVars(
 
 	envVarsMap["DET_KUBERNETES_JOB_PARALLELISM"] = strconv.Itoa(j.numPods)
 
+	if j.exposeProxyConfig != nil {
+		envVarsMap["DET_PROXY_THROUGH_GATEWAY"] = "true"
+	}
+
 	envVars := make([]k8sV1.EnvVar, 0, len(envVarsMap))
 	for envVarKey, envVarValue := range envVarsMap {
 		envVars = append(envVars, k8sV1.EnvVar{Name: envVarKey, Value: envVarValue})

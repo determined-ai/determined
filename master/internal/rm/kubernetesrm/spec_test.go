@@ -266,6 +266,38 @@ func TestAddDisallowedNodesToPodSpec(t *testing.T) {
 	}
 }
 
+func TestDetProxyThroughGatewayEnv(t *testing.T) {
+	env := expconf.EnvironmentConfig{
+		RawEnvironmentVariables: &expconf.EnvironmentVariablesMap{
+			RawCPU: []string{},
+		},
+	}
+
+	t.Run("with gateway", func(t *testing.T) {
+		j := job{
+			exposeProxyConfig: &config.InternalTaskGatewayConfig{},
+		}
+
+		actual, err := j.configureEnvVars(make(map[string]string), env, device.CPU)
+		require.NoError(t, err)
+		require.Contains(t, actual, k8sV1.EnvVar{Name: "DET_PROXY_THROUGH_GATEWAY", Value: "true"})
+	})
+
+	t.Run("without gateway", func(t *testing.T) {
+		j := job{
+			exposeProxyConfig: nil,
+		}
+
+		actual, err := j.configureEnvVars(make(map[string]string), env, device.CPU)
+		require.NoError(t, err)
+		var keys []string
+		for _, a := range actual {
+			keys = append(keys, a.Name)
+		}
+		require.NotContains(t, keys, "DET_PROXY_THROUGH_GATEWAY")
+	})
+}
+
 func TestLaterEnvironmentVariablesGetSet(t *testing.T) {
 	dontBe := k8sV1.EnvVar{Name: "var", Value: "dontbe"}
 	shouldBe := k8sV1.EnvVar{Name: "var", Value: "shouldbe"}
