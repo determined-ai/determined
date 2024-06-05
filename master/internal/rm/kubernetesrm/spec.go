@@ -166,7 +166,7 @@ func (j *job) configureProxyResources(t *tasks.TaskSpec) *proxyResourceGenerator
 		}
 
 		for i, proxyPort := range j.req.ProxyPorts {
-			sharedName := j.jobName
+			sharedName := fmt.Sprintf("%s-%d", j.jobName, i)
 
 			gwPort := ports[i]
 			allocLabels := map[string]string{
