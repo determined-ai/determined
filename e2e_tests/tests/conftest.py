@@ -4,7 +4,7 @@ import pathlib
 import subprocess
 import time
 import uuid
-from typing import Any, Dict, Iterator, Optional, Tuple, cast
+from typing import Any, Dict, Iterator, List, Optional, Tuple, cast
 
 import _pytest.config.argparsing
 import _pytest.fixtures
@@ -223,7 +223,7 @@ def is_multirm_cluster() -> bool:
 
 
 @pytest.fixture(scope="session")
-def namespaces_created(is_multirm_cluster) -> Tuple[str, str]:
+def namespaces_created(is_multirm_cluster: bool) -> Tuple[str, str]:
     defaultrm_namespace = uuid.uuid4().hex[:8]
     additionalrm_namespace = uuid.uuid4().hex[:8]
 
@@ -259,7 +259,7 @@ def namespaces_created(is_multirm_cluster) -> Tuple[str, str]:
     return defaultrm_namespace, additionalrm_namespace
 
 
-def get_namespace(namespace, kubeconfig):
+def get_namespace(namespace: str, kubeconfig: List[str]) -> None:
     for _ in range(150):
         try:
             p = subprocess.run(["kubectl", "get", "namespace", namespace] + kubeconfig, check=True)

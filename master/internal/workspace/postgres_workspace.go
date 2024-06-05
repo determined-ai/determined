@@ -201,7 +201,7 @@ func AddWorkspaceNamespaceBinding(ctx context.Context, wkspNmsp *model.Workspace
 
 // GetWorkspaceNamespaceBindings gets the workspace-namespace bindings for a given workspace.
 func GetWorkspaceNamespaceBindings(ctx context.Context,
-	wkspID int32,
+	wkspID int,
 ) ([]model.WorkspaceNamespace, error) {
 	var workspaceNamespaceBindings []model.WorkspaceNamespace
 	err := db.Bun().NewSelect().
@@ -212,4 +212,22 @@ func GetWorkspaceNamespaceBindings(ctx context.Context,
 		return nil, err
 	}
 	return workspaceNamespaceBindings, nil
+}
+
+// DeleteWorkspaceNamespaceBindings deletes the workspace-namespace binding.
+func DeleteWorkspaceNamespaceBindings(ctx context.Context, wkspID int,
+	clusterNames []string, tx *bun.Tx,
+) ([]model.WorkspaceNamespace, error) {
+	var deletedBindings []model.WorkspaceNamespace
+
+	_, err := tx.NewDelete().Model(&model.WorkspaceNamespace{}).
+		Where("workspace_id = ?", wkspID).
+		Where("cluster_name in (?)", bun.In(clusterNames)).
+		Returning("*").
+		Exec(ctx, &deletedBindings)
+	if err != nil {
+		return nil, fmt.Errorf(`error deleting workspace-namespace binding with workspace-id %d`,
+			wkspID)
+	}
+	return deletedBindings, nil
 }

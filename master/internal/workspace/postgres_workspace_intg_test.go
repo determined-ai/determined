@@ -44,7 +44,8 @@ func TestMain(m *testing.M) {
 
 func TestAddWorkspace(t *testing.T) {
 	ctx := context.Background()
-	curUserID := model.UserID(100)
+	curUserID, err := db.HackAddUser(ctx, &model.User{Username: uuid.NewString()})
+	require.NoError(t, err)
 	wkspState := model.WorkspaceStateDeleteFailed
 	defaultComputePool := uuid.NewString()
 	agentUID := int32(90)
@@ -219,11 +220,7 @@ func TestGetAllNamespacesForRM(t *testing.T) {
 
 func TestAddWorkspaceNamespaceBinding(t *testing.T) {
 	ctx := context.Background()
-	userID, err := db.HackAddUser(ctx, &model.User{Username: uuid.NewString()})
-	require.NoError(t, err)
-	wksp := &model.Workspace{Name: uuid.NewString(), UserID: userID}
-	err = AddWorkspace(ctx, wksp, nil)
-	require.NoError(t, err)
+	wksp, userID := createWorkspace(ctx, t)
 
 	clusterName := uuid.NewString()
 	namespace := uuid.NewString()
@@ -232,7 +229,7 @@ func TestAddWorkspaceNamespaceBinding(t *testing.T) {
 		ClusterName: clusterName,
 		Namespace:   namespace,
 	}
-	err = AddWorkspaceNamespaceBinding(ctx, expectedWkspNmsp, nil)
+	err := AddWorkspaceNamespaceBinding(ctx, expectedWkspNmsp, nil)
 	require.NoError(t, err)
 
 	// Verify that workspace-namespace binding must be unique.
@@ -256,14 +253,10 @@ func TestAddWorkspaceNamespaceBinding(t *testing.T) {
 }
 
 func TestGetWorkspaceNamespaceBindings(t *testing.T) {
-	// Create workspace and add workspace-namespace bindings.
 	ctx := context.Background()
-	userID, err := db.HackAddUser(ctx, &model.User{Username: uuid.NewString()})
-	require.NoError(t, err)
-	wksp := &model.Workspace{Name: uuid.NewString(), UserID: userID}
-	err = AddWorkspace(ctx, wksp, nil)
-	require.NoError(t, err)
+	wksp, _ := createWorkspace(ctx, t)
 
+	// Set 3 workspace-namespace bindings for the workspace.
 	expectedBindings := make(map[string]model.WorkspaceNamespace)
 
 	for i := 0; i < 3; i++ {
@@ -279,13 +272,85 @@ func TestGetWorkspaceNamespaceBindings(t *testing.T) {
 		expectedBindings[clusterName] = *wsns
 	}
 
-	// Test that added workspace-namespace bindings are listed.
+	// Verify that the added workspace-namespace bindings are listed.
 	var wsnsBindings []model.WorkspaceNamespace
-	wsnsBindings, err = GetWorkspaceNamespaceBindings(ctx, int32(wksp.ID))
+	wsnsBindings, err := GetWorkspaceNamespaceBindings(ctx, wksp.ID)
 	require.NoError(t, err)
 
 	for _, binding := range wsnsBindings {
 		clusterName := binding.ClusterName
 		require.Equal(t, expectedBindings[clusterName], binding)
 	}
+}
+
+func TestDeleteWorkspaceNamespaceBindings(t *testing.T) {
+	// Create workspace with workspace-namespace bindings in the database.
+	ctx := context.Background()
+	wksp, _ := createWorkspace(ctx, t)
+	tx, err := db.Bun().BeginTx(ctx, nil)
+	require.NoError(t, err)
+	// Set 4 workspace-namespace bindings for the workspace.
+	expectedBindings := []*model.WorkspaceNamespace{}
+	bindingsToMassDelete := []string{}
+	numToMassDelete := 3
+	for i := 0; i < 5; i++ {
+		clusterName := uuid.NewString()
+		namespace := uuid.NewString()
+		if i < numToMassDelete {
+			bindingsToMassDelete = append(bindingsToMassDelete, clusterName)
+		}
+		wsns := &model.WorkspaceNamespace{
+			WorkspaceID: wksp.ID,
+			Namespace:   namespace,
+			ClusterName: clusterName,
+		}
+		err := AddWorkspaceNamespaceBinding(ctx, wsns, nil)
+		require.NoError(t, err)
+		expectedBindings = append(expectedBindings, wsns)
+	}
+
+	// Delete workspace-namespace bindings one by one.
+	expectedMassDeletedBindings := []model.WorkspaceNamespace{}
+	for i := 0; i < 5; i++ {
+		binding := expectedBindings[i]
+		if i < numToMassDelete {
+			expectedMassDeletedBindings = append(expectedMassDeletedBindings, *binding)
+		} else {
+			expectedDeletedBindings := []model.WorkspaceNamespace{*binding}
+			deletedBindings, err := DeleteWorkspaceNamespaceBindings(ctx, wksp.ID,
+				[]string{binding.ClusterName}, &tx)
+			require.NoError(t, err)
+			require.Equal(t, deletedBindings, expectedDeletedBindings)
+		}
+	}
+
+	// Delete the remaining workspace-namespace bindings in bulk.
+	deletedBindings, err := DeleteWorkspaceNamespaceBindings(ctx, wksp.ID, bindingsToMassDelete,
+		&tx)
+	require.NoError(t, err)
+	require.Equal(t, len(expectedMassDeletedBindings), len(deletedBindings))
+	require.EqualValues(t, expectedMassDeletedBindings, deletedBindings)
+
+	for _, binding := range expectedBindings {
+		namespace := binding.Namespace
+		clusterName := binding.ClusterName
+		err := tx.NewSelect().
+			Model(&model.WorkspaceNamespace{}).
+			Where("workspace_id = ?", wksp.ID).
+			Where("namespace = ?", namespace).
+			Where("cluster_name = ?", clusterName).
+			Scan(ctx)
+		require.Error(t, err)
+	}
+	err = tx.Rollback()
+	require.NoError(t, err)
+}
+
+func createWorkspace(ctx context.Context, t *testing.T) (*model.Workspace, model.UserID) {
+	userID, err := db.HackAddUser(ctx, &model.User{Username: uuid.NewString()})
+	require.NoError(t, err)
+	wksp := &model.Workspace{Name: uuid.NewString(), UserID: userID}
+	err = AddWorkspace(ctx, wksp, nil)
+	require.NoError(t, err)
+	return wksp, userID
 }

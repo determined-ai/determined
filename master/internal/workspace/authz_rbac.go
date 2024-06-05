@@ -368,7 +368,7 @@ func (r *WorkspaceAuthZRBAC) CanSetWorkspacesDefaultPools(
 
 // CanSetWorkspaceNamespaceBindings determines whether a user can set a workspace namespace bindng.
 func (r *WorkspaceAuthZRBAC) CanSetWorkspaceNamespaceBindings(ctx context.Context,
-	curUser model.User, workspaceID int32,
+	curUser model.User, workspace *workspacev1.Workspace,
 ) (err error) {
 	fields := audit.ExtractLogFields(ctx)
 	addInfoWithoutWorkspace(curUser, fields,
@@ -377,7 +377,7 @@ func (r *WorkspaceAuthZRBAC) CanSetWorkspaceNamespaceBindings(ctx context.Contex
 		audit.LogFromErr(fields, err)
 	}()
 
-	return db.DoesPermissionMatch(ctx, curUser.ID, &workspaceID,
+	return db.DoesPermissionMatch(ctx, curUser.ID, &workspace.Id,
 		rbacv1.PermissionType_PERMISSION_TYPE_SET_WORKSPACE_NAMESPACE_BINDINGS)
 }
 

@@ -3,7 +3,7 @@ import http
 import os
 import tempfile
 import uuid
-from typing import Generator, List, Optional
+from typing import Generator, List, Optional, Tuple
 
 import pytest
 
@@ -592,7 +592,9 @@ def test_workspaceid_set() -> None:
 
 @pytest.mark.e2e_gpu
 @pytest.mark.e2e_multi_k8s
-def test_set_workspace_namespace_bindings(is_multirm_cluster, namespaces_created) -> None:
+def test_set_workspace_namespace_bindings(
+    is_multirm_cluster: bool, namespaces_created: Tuple[str, str]
+) -> None:
     # Create a workspace.
     sess = api_utils.admin_session()
     w_name = uuid.uuid4().hex[:8]
@@ -655,6 +657,7 @@ def test_set_workspace_namespace_bindings(is_multirm_cluster, namespaces_created
         )
         assert bound_to_namespace in output
 
+        w_name = uuid.uuid4().hex[:8]
         output = detproc.check_output(
             sess,
             ["det", "w", "create", w_name, "--namespace", namespace],
@@ -662,24 +665,23 @@ def test_set_workspace_namespace_bindings(is_multirm_cluster, namespaces_created
         assert bound_to_namespace in output
 
     # MultiRM: Valid cluster name, no namespace name.
-    # Single KubernetesRM: No cluster name, no namespace name.
-    w_name = uuid.uuid4().hex[:8]
-    detproc.check_call(sess, ["det", "w", "create", w_name])
-
-    set_binding_cmd = ["det", "w", "bindings", "set", w_name]
-    create_wksp_with_binding_cmd = ["det", "w", "create", w_name]
-
     if is_multirm_cluster:
+        w_name = uuid.uuid4().hex[:8]
+        detproc.check_call(sess, ["det", "w", "create", w_name])
+
+        set_binding_cmd = ["det", "w", "bindings", "set", w_name]
+        create_wksp_with_binding_cmd = ["det", "w", "create", w_name]
+
         set_binding_cmd += ["--cluster-name", conf.DEFAULT_RM_CLUSTER_NAME]
         create_wksp_with_binding_cmd += ["--cluster-name", conf.DEFAULT_RM_CLUSTER_NAME]
 
-    detproc.check_error(
-        sess,
-        set_binding_cmd,
-        "must provide --namespace",
-    )
+        detproc.check_error(
+            sess,
+            set_binding_cmd,
+            "must provide --namespace",
+        )
 
-    detproc.check_error(sess, create_wksp_with_binding_cmd, "must provide --namespace")
+        detproc.check_error(sess, create_wksp_with_binding_cmd, "must provide --namespace")
 
     # MultiRM: Valid cluster name, invalid namespace name.
     # Single KubernetesRM: No cluster name, invalid namespace name.
@@ -721,7 +723,9 @@ def test_set_workspace_namespace_bindings(is_multirm_cluster, namespaces_created
 
 @pytest.mark.e2e_gpu
 @pytest.mark.e2e_multi_k8s
-def test_list_workspace_namespace_bindings(is_multirm_cluster, namespaces_created) -> None:
+def test_list_workspace_namespace_bindings(
+    is_multirm_cluster: bool, namespaces_created: Tuple[str, str]
+) -> None:
     # Create a workspace.
     w_name = uuid.uuid4().hex[:8]
     sess = api_utils.admin_session()
