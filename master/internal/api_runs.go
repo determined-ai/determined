@@ -815,7 +815,7 @@ func pauseResumeAction(ctx context.Context, isPause bool, projectID int32,
 		Column("r.id").
 		ColumnExpr("COALESCE((r.archived OR e.archived OR p.archived OR w.archived), FALSE) AS archived").
 		ColumnExpr("r.experiment_id as exp_id").
-		ColumnExpr("((SELECT COUNT(*) FROM runs r WHERE e.id = r.experiment_id) > 1) as is_multitrial").
+		ColumnExpr("(config->'searcher'->>'name' != 'single') as is_multitrial").
 		Join("LEFT JOIN experiments e ON r.experiment_id=e.id").
 		Join("JOIN projects p ON r.project_id = p.id").
 		Join("JOIN workspaces w ON p.workspace_id = w.id").
@@ -891,7 +891,10 @@ func pauseResumeAction(ctx context.Context, isPause bool, projectID int32,
 	for _, expRes := range expResults {
 		val, ok := expToRun[expRes.ID]
 		if !ok {
-			continue
+			results = append(results, &apiv1.RunActionResult{
+				Error: fmt.Sprintf("Unexpected action performed on experiment '%d'", expRes.ID),
+				Id:    -1,
+			})
 		}
 
 		if expRes.Error != nil {
