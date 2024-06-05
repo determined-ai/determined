@@ -593,6 +593,9 @@ commands:
       wait-for-master:
         type: boolean
         default: true
+      collect-det-job-logs:
+        type: boolean
+        default: true
     steps:
       # Wait for master before splitting tests, since so many splits depend on
       # asking master for its configuration in order to apply skipifs.
@@ -655,8 +658,11 @@ commands:
       - upload-test-job:
           only_on_branch: main
           test_results_path: <<parameters.junit-path>>
-      - collect-task-logs:
-          master_address: "<<parameters.master-scheme>>://<<parameters.master-host>>:<<parameters.master-port>>"
+      - when:
+          condition: <<parameters.collect-det-job-logs>>
+          steps:
+            - collect-task-logs:
+                master_address: "<<parameters.master-scheme>>://<<parameters.master-host>>:<<parameters.master-port>>"
       - store_artifacts:
           path: /tmp/artifacts/logs
 
@@ -3187,6 +3193,9 @@ jobs:
       resource-class:
         type: string
         default: xlarge
+      collect-det-job-logs:
+        type: boolean
+        default: true
     machine:
       image: <<pipeline.parameters.machine-image>>
     resource_class: <<parameters.resource-class>>
@@ -3240,14 +3249,10 @@ jobs:
           managed-devcluster: <<parameters.managed-devcluster>>
           extra-pytest-flags: <<parameters.extra-pytest-flags>>
           wait-for-master: <<parameters.wait-for-master>>
+          collect-det-job-logs: <<parameters.collect-det-job-logs>>
 
       - store_test_results:
           path: /tmp/test-results/
-
-      - run:
-          name: Wait for devcluster to finish
-          command: |
-            echo hi
 
       - when:
           condition: <<parameters.managed-devcluster>>
@@ -4543,6 +4548,7 @@ workflows:
           # Managed devcluster restarts the master over the course of the tests,
           # so `compare_stats` cannot get the full logs from `det master logs`.
           extra-pytest-flags: "--no-compare-stats"
+          collect-det-job-logs: false
 
       - test-e2e:
           name: test-e2e-multi-k8s
@@ -4628,6 +4634,7 @@ workflows:
           target-stage: agent
           wait-for-master: false
           extra-pytest-flags: "--no-compare-stats"
+          collect-det-job-logs: false
 
       - test-e2e:
           name: test-e2e-saml
