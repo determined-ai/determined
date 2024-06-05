@@ -40,7 +40,7 @@ interface Props {
   sourceWorkspaceId?: number;
   filterFormSetWithoutId: FilterFormSetWithoutId;
   onSubmit?: (successfulIds?: number[]) => void;
-  onActionComplete?: () => Promise<void>;
+  onActionComplete?: () => void;
 }
 
 const FlatRunMoveModalComponent: React.FC<Props> = ({
