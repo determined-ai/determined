@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 
+	"github.com/pkg/errors"
 	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -13,9 +14,9 @@ import (
 // updateRunMetadata is a helper function that returns the closure to update the metadata of a run.
 func updateRunMetadata(
 	runID int,
-	rawMetadata map[string]interface{},
+	rawMetadata map[string]any,
 	flatMetadata []model.RunMetadataIndex,
-	result *map[string]interface{},
+	result *map[string]any,
 ) func(context.Context, bun.Tx) error {
 	return func(ctx context.Context, tx bun.Tx) error {
 		var projectID int
@@ -66,9 +67,9 @@ func updateRunMetadata(
 func UpdateRunMetadata(
 	ctx context.Context,
 	runID int,
-	rawMetadata map[string]interface{},
+	rawMetadata map[string]any,
 	flatMetadata []model.RunMetadataIndex,
-) (result map[string]interface{}, err error) {
+) (result map[string]any, err error) {
 	err = Bun().RunInTx(
 		ctx,
 		&sql.TxOptions{Isolation: sql.LevelReadCommitted},
@@ -78,4 +79,18 @@ func UpdateRunMetadata(
 		return nil, err
 	}
 	return result, nil
+}
+
+// GetRunMetadata returns the metadata of a run from the database.
+// If the run does not have any metadata, it returns an empty map.
+func GetRunMetadata(ctx context.Context, runID int) (map[string]any, error) {
+	var metadata model.RunMetadata
+	err := Bun().NewSelect().Model(&metadata).Where("run_id = ?", runID).Scan(ctx)
+	switch {
+	case errors.Is(err, sql.ErrNoRows):
+		return map[string]any{}, nil
+	case err != nil:
+		return nil, err
+	}
+	return metadata.Metadata, nil
 }

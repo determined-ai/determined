@@ -85,7 +85,10 @@ class TrainContext:
         Get the metadata of the current run from the Determined master.
         """
         r = self._session.get(f"/api/v1/runs/{self._trial_id}/metadata")
-        assert r.status_code == 200, f"failed to get metadata: {r.text}"
+        if r.status_code == 404:
+            return {}
+        if r.status_code != 200:
+            raise RuntimeError(f"failed to get metadata: {r.text}")
         return dict(r.json())
 
     def _report_trial_metrics(

@@ -924,18 +924,12 @@ func (a *apiServer) GetRunMetadata(
 		experiment.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 		return nil, err
 	}
-
-	out := struct {
-		bun.BaseModel `bun:"table:runs_metadata"`
-		Metadata      model.JSONObj
-	}{}
-	err := db.Bun().NewSelect().Model(&out).Column("metadata").Where("run_id = ?", req.RunId).Scan(ctx)
-	if err != nil && !errors.Is(err, db.ErrNotFound) {
-		return nil, fmt.Errorf("error getting metadata on run(%d): %w", req.RunId, err)
+	metadata, err := db.GetRunMetadata(ctx, int(req.RunId))
+	if err != nil {
+		return nil, err
 	}
-
 	return &apiv1.GetRunMetadataResponse{
-		Metadata: protoutils.ToStruct(out.Metadata),
+		Metadata: protoutils.ToStruct(metadata),
 	}, nil
 }
 
