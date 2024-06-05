@@ -36,7 +36,7 @@ type gatewayProxyResource struct {
 	serviceSpec     *k8sV1.Service
 	tcpRouteSpec    *alphaGatewayTyped.TCPRoute
 	gatewayListener gatewayTyped.Listener
-	// we should be able to remove this and juse use PodPort from the tcpRouteSpec.
+	// TODO(gateways) we should be able to remove this and just use PodPort from the tcpRouteSpec.
 	podPort int
 }
 

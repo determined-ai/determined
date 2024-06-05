@@ -95,8 +95,7 @@ type jobsService struct {
 	detMasterPort         int32
 	kubeconfigPath        string
 
-	// TODO: also rename.
-	exposeProxyConfig *config.InternalTaskGatewayConfig
+	internalTaskGWConfig *config.InternalTaskGatewayConfig
 
 	// System dependencies. Also set in initialization and never modified after.
 	syslog              *logrus.Entry
@@ -177,8 +176,8 @@ func newJobsService(
 		syslog:                            logrus.WithField("namespace", namespace),
 		jobSchedulingStateCallback:        jobSchedulingStateCb,
 
-		exposeProxyConfig: exposeProxyConfig,
-		kubeconfigPath:    kubeconfigPath,
+		internalTaskGWConfig: exposeProxyConfig,
+		kubeconfigPath:       kubeconfigPath,
 	}
 
 	if err := p.startClientSet(); err != nil {
@@ -297,7 +296,7 @@ func (j *jobsService) startClientSet() error {
 		j.jobInterfaces[ns] = j.clientSet.BatchV1().Jobs(ns)
 	}
 
-	if exposeConfig := j.exposeProxyConfig; exposeConfig != nil {
+	if exposeConfig := j.internalTaskGWConfig; exposeConfig != nil {
 		// Using the CoreV1 RESTClient for gateway resources will cause "resource not found" errors.
 		alphaGatewayClientSet, err := alphaGateway.NewForConfig(config)
 		if err != nil {
@@ -564,7 +563,7 @@ func (j *jobsService) startJob(msg startJob) error {
 		j.slotType,
 		j.slotResourceRequests,
 		j.scheduler,
-		j.exposeProxyConfig,
+		j.internalTaskGWConfig,
 		j.gatewayService,
 	)
 
@@ -822,7 +821,7 @@ func (j *jobsService) recreateJobHandler(
 		j.slotType,
 		j.slotResourceRequests,
 		j.scheduler,
-		j.exposeProxyConfig,
+		j.internalTaskGWConfig,
 		j.gatewayService,
 	)
 
