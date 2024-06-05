@@ -234,24 +234,6 @@ RetryLoop:
 	return errors.Wrapf(err, "error inserting project %s into database", p.Name)
 }
 
-// UpdateProjectKey updates the key of a project.
-func UpdateProjectKey(ctx context.Context, projectID int, key string) error {
-	if len(key) > MaxProjectKeyLength {
-		return fmt.Errorf("project key must be at most %d characters", MaxProjectKeyLength)
-	}
-	if projectID == 0 {
-		return fmt.Errorf("invalid project ID")
-	}
-	return db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		_, err := tx.NewUpdate().
-			Model(&model.Project{ID: projectID, Key: key}).WherePK("id").Column("key").Exec(ctx)
-		if err != nil && strings.Contains(err.Error(), "duplicate key value violates unique constraint") {
-			return fmt.Errorf("project key %s is already in use", key)
-		}
-		return err
-	})
-}
-
 // ValidateProjectKey validates a project key.
 func ValidateProjectKey(key string) error {
 	switch {

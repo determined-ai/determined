@@ -9,11 +9,14 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/types/known/wrapperspb"
 	"gopkg.in/oauth2.v3/utils/uuid"
 	"gotest.tools/assert"
 
 	internaldb "github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/etc"
+	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/proto/pkg/projectv1"
 )
 
 func TestProjectByName(t *testing.T) {
@@ -52,12 +55,18 @@ func TestGetProjectByKey(t *testing.T) {
 	internaldb.MustMigrateTestPostgres(t, db, internaldb.MigrationsFromDB)
 
 	// add a workspace, and project
+	user := internaldb.RequireMockUser(t, db)
 	workspaceID, _ := internaldb.RequireMockWorkspaceID(t, db, "")
 	projectID, _ := internaldb.RequireMockProjectID(t, db, workspaceID, false)
 
 	t.Run("valid project key", func(t *testing.T) {
 		key := uuid.Must(uuid.NewRandom()).String()[:MaxProjectKeyLength]
-		err := UpdateProjectKey(context.Background(), projectID, key)
+		_, err := UpdateProject(
+			context.Background(),
+			int32(projectID),
+			user,
+			&projectv1.PatchProject{Key: &wrapperspb.StringValue{Value: key}},
+		)
 		require.NoError(t, err)
 		project, err := GetProjectByKey(context.Background(), key)
 		require.NoError(t, err)
@@ -81,21 +90,46 @@ func TestUpdateProjectKey(t *testing.T) {
 	workspaceID, _ := internaldb.RequireMockWorkspaceID(t, db, "")
 	projectID, _ := internaldb.RequireMockProjectID(t, db, workspaceID, false)
 
+	user := model.User{
+		Username: uuid.Must(uuid.NewRandom()).String(),
+		Admin:    true,
+	}
+	_, err := internaldb.HackAddUser(
+		context.Background(),
+		&user,
+	)
+	require.NoError(t, err)
+
 	t.Run("update project key", func(t *testing.T) {
 		key := uuid.Must(uuid.NewRandom()).String()[:MaxProjectKeyLength]
-		err := UpdateProjectKey(context.Background(), projectID, key)
+		_, err := UpdateProject(
+			context.Background(),
+			int32(projectID),
+			user,
+			&projectv1.PatchProject{Key: &wrapperspb.StringValue{Value: key}},
+		)
 		require.NoError(t, err)
 	})
 
 	t.Run("update project key with invalid project id", func(t *testing.T) {
 		key := uuid.Must(uuid.NewRandom()).String()[:MaxProjectKeyLength]
-		err := UpdateProjectKey(context.Background(), 0, key)
+		_, err := UpdateProject(
+			context.Background(),
+			0,
+			user,
+			&projectv1.PatchProject{Key: &wrapperspb.StringValue{Value: key}},
+		)
 		require.Error(t, err)
 	})
 
 	t.Run("update project key with invalid key", func(t *testing.T) {
 		invalidKey := strings.Repeat("a", MaxProjectKeyLength+1)
-		err := UpdateProjectKey(context.Background(), projectID, invalidKey)
+		_, err := UpdateProject(
+			context.Background(),
+			int32(projectID),
+			user,
+			&projectv1.PatchProject{Key: &wrapperspb.StringValue{Value: invalidKey}},
+		)
 		require.Error(t, err)
 	})
 }
