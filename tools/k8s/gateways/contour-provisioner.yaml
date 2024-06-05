@@ -10201,7 +10201,7 @@ spec:
                   - port
                   - protocol
                   type: object
-                maxItems: 64
+                maxItems: 128
                 minItems: 1
                 type: array
                 x-kubernetes-list-map-keys:
@@ -11089,7 +11089,7 @@ spec:
                   - port
                   - protocol
                   type: object
-                maxItems: 64
+                maxItems: 128
                 minItems: 1
                 type: array
                 x-kubernetes-list-map-keys:
