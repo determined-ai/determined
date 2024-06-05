@@ -2,7 +2,7 @@ name: experiment-port-proxy
 entrypoint: python3 start.py
 
 resources:
-  slots_per_trial: 0
+  slots_per_trial: 2
 
 searcher:
   max_length: 10000000
