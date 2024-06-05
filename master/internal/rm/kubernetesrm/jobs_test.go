@@ -1,3 +1,5 @@
+//go:build integration
+
 package kubernetesrm
 
 import (
@@ -61,7 +63,7 @@ func TestGetNonDetPods(t *testing.T) {
 	ns2.On("List", mock.Anything, mock.Anything).Once().
 		Return(&k8sV1.PodList{Items: append(hiddenPods, expectedPods[1])}, nil)
 
-	p := pods{
+	p := jobsService{
 		podInterfaces: map[string]typedV1.PodInterface{
 			"ns1": ns1,
 			"ns2": ns2,

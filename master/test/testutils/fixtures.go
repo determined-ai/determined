@@ -192,13 +192,25 @@ func DefaultMasterConfig() (*config.Config, error) {
 
 // DefaultElasticConfig returns the default elastic config.
 func DefaultElasticConfig() model.LoggingConfig {
-	port, err := strconv.Atoi(os.Getenv("DET_INTEGRATION_ES_PORT"))
-	if err != nil {
-		panic("elastic config had non-numeric port")
+	host := os.Getenv("DET_INTEGRATION_ES_HOST")
+	if host == "" {
+		host = "localhost"
 	}
+
+	var port int
+	if portStr := os.Getenv("DET_INTEGRATION_ES_PORT"); portStr != "" {
+		parsed, err := strconv.Atoi(portStr)
+		if err != nil {
+			panic(fmt.Errorf("elastic config had non-numeric port: %s", err))
+		}
+		port = parsed
+	} else {
+		port = 9200
+	}
+
 	return model.LoggingConfig{
 		ElasticLoggingConfig: &model.ElasticLoggingConfig{
-			Host: os.Getenv("DET_INTEGRATION_ES_HOST"),
+			Host: host,
 			Port: port,
 		},
 	}

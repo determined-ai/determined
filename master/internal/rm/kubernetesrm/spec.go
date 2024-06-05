@@ -10,10 +10,11 @@ import (
 	"strconv"
 	"strings"
 
+	batchV1 "k8s.io/api/batch/v1"
+
 	"github.com/determined-ai/determined/master/internal/config"
 
 	"github.com/docker/docker/api/types/mount"
-	petName "github.com/dustinkirkland/golang-petname"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 
@@ -37,6 +38,10 @@ import (
 const (
 	coscheduler = "coscheduler"
 
+	initContainerTarSrcPath = "/run/determined/temp/tar/src"
+	initContainerTarDstPath = "/run/determined/temp/tar/dst"
+	initContainerWorkDir    = "/run/determined/temp/"
+
 	gcTask            = "gc"
 	cmdTask           = "cmd"
 	labelPrefix       = "determined.ai/"
@@ -45,13 +50,14 @@ const (
 	resourcePoolLabel = labelPrefix + "resource_pool"
 	taskTypeLabel     = labelPrefix + "task_type"
 	taskIDLabel       = labelPrefix + "task_id"
+	allocationIDLabel = labelPrefix + "allocation_id"
 	containerIDLabel  = labelPrefix + "container_id"
 )
 
-func (p *pod) configureResourcesRequirements() k8sV1.ResourceRequirements {
-	switch p.slotType {
+func (j *job) configureResourcesRequirements() k8sV1.ResourceRequirements {
+	switch j.slotType {
 	case device.CPU:
-		cpuMillisRequested := int64(p.slotResourceRequests.CPU * float32(p.slots) * 1000)
+		cpuMillisRequested := int64(j.slotResourceRequests.CPU * float32(j.slotsPerPod) * 1000)
 		return k8sV1.ResourceRequirements{
 			Limits: map[k8sV1.ResourceName]resource.Quantity{
 				"cpu": *resource.NewMilliQuantity(cpuMillisRequested, resource.DecimalSI),
@@ -65,13 +71,13 @@ func (p *pod) configureResourcesRequirements() k8sV1.ResourceRequirements {
 	case device.CUDA: // default to CUDA-backed slots.
 		fallthrough
 	default:
-		if p.slots > 0 {
+		if j.slotsPerPod > 0 {
 			return k8sV1.ResourceRequirements{
 				Limits: map[k8sV1.ResourceName]resource.Quantity{
-					ResourceTypeNvidia: *resource.NewQuantity(int64(p.slots), resource.DecimalSI),
+					resourceTypeNvidia: *resource.NewQuantity(int64(j.slotsPerPod), resource.DecimalSI),
 				},
 				Requests: map[k8sV1.ResourceName]resource.Quantity{
-					ResourceTypeNvidia: *resource.NewQuantity(int64(p.slots), resource.DecimalSI),
+					resourceTypeNvidia: *resource.NewQuantity(int64(j.slotsPerPod), resource.DecimalSI),
 				},
 			}
 		}
@@ -82,7 +88,7 @@ func (p *pod) configureResourcesRequirements() k8sV1.ResourceRequirements {
 	}
 }
 
-func (p *pod) configureEnvVars(
+func (j *job) configureEnvVars(
 	envVarsMap map[string]string,
 	environment expconf.EnvironmentConfig,
 	deviceType device.Type,
@@ -95,23 +101,23 @@ func (p *pod) configureEnvVars(
 		}
 	}
 
-	var slotIds []string
-	for i := 0; i < p.slots; i++ {
-		slotIds = append(slotIds, strconv.Itoa(i))
+	var slotIDs []string
+	for i := 0; i < j.slotsPerPod; i++ {
+		slotIDs = append(slotIDs, strconv.Itoa(i))
 	}
 
 	masterScheme := "http"
-	if p.masterTLSConfig.Enabled {
+	if j.masterTLSConfig.Enabled {
 		masterScheme = "https"
 	}
-	envVarsMap["DET_CLUSTER_ID"] = p.clusterID
-	envVarsMap["DET_MASTER"] = fmt.Sprintf("%s://%s:%d", masterScheme, p.masterIP, p.masterPort)
-	envVarsMap["DET_MASTER_HOST"] = p.masterIP
-	envVarsMap["DET_MASTER_ADDR"] = p.masterIP
-	envVarsMap["DET_MASTER_PORT"] = fmt.Sprintf("%d", p.masterPort)
-	envVarsMap["DET_SLOT_IDS"] = fmt.Sprintf("[%s]", strings.Join(slotIds, ","))
-	if p.masterTLSConfig.CertificateName != "" {
-		envVarsMap["DET_MASTER_CERT_NAME"] = p.masterTLSConfig.CertificateName
+	envVarsMap["DET_CLUSTER_ID"] = j.clusterID
+	envVarsMap["DET_MASTER"] = fmt.Sprintf("%s://%s:%d", masterScheme, j.masterIP, j.masterPort)
+	envVarsMap["DET_MASTER_HOST"] = j.masterIP
+	envVarsMap["DET_MASTER_ADDR"] = j.masterIP
+	envVarsMap["DET_MASTER_PORT"] = strconv.Itoa(int(j.masterPort))
+	envVarsMap["DET_SLOT_IDS"] = fmt.Sprintf("[%s]", strings.Join(slotIDs, ","))
+	if j.masterTLSConfig.CertificateName != "" {
+		envVarsMap["DET_MASTER_CERT_NAME"] = j.masterTLSConfig.CertificateName
 	}
 
 	// Without this zero slot tasks will have access to all GPUs.
@@ -119,6 +125,8 @@ func (p *pod) configureEnvVars(
 	if deviceType == device.CPU || deviceType == device.ZeroSlot {
 		envVarsMap["NVIDIA_VISIBLE_DEVICES"] = "void"
 	}
+
+	envVarsMap["DET_KUBERNETES_JOB_PARALLELISM"] = strconv.Itoa(j.numPods)
 
 	envVars := make([]k8sV1.EnvVar, 0, len(envVarsMap))
 	for envVarKey, envVarValue := range envVarsMap {
@@ -128,10 +136,19 @@ func (p *pod) configureEnvVars(
 		Name:      "DET_AGENT_ID",
 		ValueFrom: &k8sV1.EnvVarSource{FieldRef: &k8sV1.ObjectFieldSelector{FieldPath: "spec.nodeName"}},
 	})
+	envVars = append(envVars, k8sV1.EnvVar{
+		Name: "DET_KUBERNETES_POD_IP",
+		ValueFrom: &k8sV1.EnvVarSource{
+			FieldRef: &k8sV1.ObjectFieldSelector{
+				FieldPath: "status.podIP",
+			},
+		},
+	})
 	return envVars, nil
 }
 
-func (p *pod) configureConfigMapSpec(
+func (j *job) configureConfigMapSpec(
+	taskSpec *tasks.TaskSpec,
 	runArchives []cproto.RunArchive,
 ) (*k8sV1.ConfigMap, error) {
 	configMapData := make(map[string][]byte, len(runArchives))
@@ -152,15 +169,16 @@ func (p *pod) configureConfigMapSpec(
 	// for the init container.
 	return &k8sV1.ConfigMap{
 		ObjectMeta: metaV1.ObjectMeta{
-			Name:      p.configMapName,
-			Namespace: p.namespace,
-			Labels:    map[string]string{determinedLabel: p.submissionInfo.taskSpec.AllocationID},
+			Name:      j.configMapName,
+			Namespace: j.namespace,
+			Labels:    map[string]string{determinedLabel: taskSpec.AllocationID},
 		},
 		BinaryData: configMapData,
 	}, nil
 }
 
-func (p *pod) configureVolumes(
+func (j *job) configureVolumes(
+	taskSpec *tasks.TaskSpec,
 	dockerMounts []mount.Mount,
 	runArchives []cproto.RunArchive,
 ) ([]k8sV1.VolumeMount, []k8sV1.VolumeMount, []k8sV1.Volume) {
@@ -171,9 +189,9 @@ func (p *pod) configureVolumes(
 	volumeMounts = append(volumeMounts, hostVolumeMounts...)
 	volumes = append(volumes, hostVolumes...)
 
-	shmSize := p.submissionInfo.taskSpec.ShmSize
+	shmSize := taskSpec.ShmSize
 	if shmSize == 0 {
-		shmSize = p.submissionInfo.taskSpec.TaskContainerDefaults.ShmSizeBytes
+		shmSize = taskSpec.TaskContainerDefaults.ShmSizeBytes
 	}
 	shmVolumeMount, shmVolume := configureShmVolume(shmSize)
 	volumeMounts = append(volumeMounts, shmVolumeMount)
@@ -181,7 +199,7 @@ func (p *pod) configureVolumes(
 
 	// //nolint:lll // There isn't a great way to break this line that makes it more readable.
 	initContainerVolumeMounts, mainContainerRunArchiveVolumeMounts, runArchiveVolumes := configureAdditionalFilesVolumes(
-		p.configMapName,
+		j.configMapName,
 		runArchives,
 	)
 
@@ -191,12 +209,16 @@ func (p *pod) configureVolumes(
 	return initContainerVolumeMounts, volumeMounts, volumes
 }
 
-func (p *pod) modifyPodSpec(newPod *k8sV1.Pod, scheduler string) {
-	if p.submissionInfo.taskSpec.Description == cmdTask {
+func (j *job) modifyPodSpec(
+	taskSpec *tasks.TaskSpec,
+	newPod *k8sV1.Pod,
+	scheduler string,
+) {
+	if taskSpec.Description == cmdTask {
 		return
 	}
 
-	if p.submissionInfo.taskSpec.Description == gcTask {
+	if taskSpec.Description == gcTask {
 		if newPod.Spec.PriorityClassName != "" {
 			log.Warnf(
 				"GC Priority is currently using priority class: %s. "+
@@ -209,15 +231,15 @@ func (p *pod) modifyPodSpec(newPod *k8sV1.Pod, scheduler string) {
 		if newPod.Spec.SchedulerName == "" {
 			newPod.Spec.SchedulerName = scheduler
 		}
-		p.configureCoscheduler(newPod, scheduler)
+		j.configureCoscheduler(taskSpec, newPod, scheduler)
 	}
 
 	if newPod.Spec.PriorityClassName == "" &&
-		p.submissionInfo.taskSpec.ResourcesConfig.Priority() != nil {
-		priority := int32(*p.submissionInfo.taskSpec.ResourcesConfig.Priority())
-		name := fmt.Sprintf("%s-priorityclass", p.submissionInfo.taskSpec.ContainerID)
+		taskSpec.ResourcesConfig.Priority() != nil {
+		priority := int32(*taskSpec.ResourcesConfig.Priority())
+		name := fmt.Sprintf("%s-priorityclass", taskSpec.ContainerID)
 
-		err := p.createPriorityClass(name, priority)
+		err := j.createPriorityClass(name, priority)
 
 		if err == nil {
 			newPod.Spec.PriorityClassName = name
@@ -300,30 +322,32 @@ func addNodeSelectorRequirement(
 	}
 }
 
-func (p *pod) configureCoscheduler(newPod *k8sV1.Pod, scheduler string) {
+func (j *job) configureCoscheduler(
+	taskSpec *tasks.TaskSpec,
+	newPod *k8sV1.Pod,
+	scheduler string,
+) {
 	if newPod.Spec.SchedulerName != scheduler {
 		return
 	}
 
-	resources := p.submissionInfo.taskSpec.ResourcesConfig
+	resources := taskSpec.ResourcesConfig
 	minAvailable := 0
 
-	if p.slotType == device.CUDA && p.slots > 0 {
-		minAvailable = int(math.Ceil(float64(resources.SlotsPerTrial()) / float64(p.slots)))
+	if j.slotType == device.CUDA && j.slotsPerPod > 0 {
+		minAvailable = int(math.Ceil(float64(resources.SlotsPerTrial()) / float64(j.slotsPerPod)))
 	}
 
 	if newPod.APIVersion == "" {
 		newPod.APIVersion = "v1"
 	}
 	if newPod.Kind == "" {
-		newPod.Kind = "Pod"
+		newPod.Kind = "Pod" //nolint:goconst
 	}
 
 	_, ok := newPod.ObjectMeta.Labels["pod-group.scheduling.sigs.k8s.io/name"]
 	if !ok {
-		newPod.ObjectMeta.Labels["pod-group.scheduling.sigs.k8s.io/name"] = trialNameFromPod(
-			p.podName,
-		)
+		newPod.ObjectMeta.Labels["pod-group.scheduling.sigs.k8s.io/name"] = j.jobName
 	}
 	_, ok = newPod.ObjectMeta.Labels["pod-group.scheduling.sigs.k8s.io/min-available"]
 	if !ok {
@@ -332,10 +356,12 @@ func (p *pod) configureCoscheduler(newPod *k8sV1.Pod, scheduler string) {
 	}
 }
 
-func (p *pod) createPriorityClass(name string, priority int32) error {
+var defaultTTLSecondsAfterFinished int32 = 15 * 60 // 15 minutes
+
+func (j *job) createPriorityClass(name string, priority int32) error {
 	preemptionPolicy := k8sV1.PreemptNever
 
-	_, err := p.clientSet.SchedulingV1().PriorityClasses().Create(context.TODO(),
+	_, err := j.clientSet.SchedulingV1().PriorityClasses().Create(context.TODO(),
 		&schedulingV1.PriorityClass{
 			TypeMeta: metaV1.TypeMeta{},
 			ObjectMeta: metaV1.ObjectMeta{
@@ -399,59 +425,61 @@ func validatePodLabelValue(value string) (string, error) {
 	return fixedValue, nil
 }
 
-func (p *pod) configurePodSpec(
+func (j *job) configureJobSpec(
+	taskSpec *tasks.TaskSpec,
 	volumes []k8sV1.Volume,
 	determinedInitContainers k8sV1.Container,
 	determinedContainer k8sV1.Container,
 	sidecarContainers []k8sV1.Container,
 	podSpec *k8sV1.Pod,
 	scheduler string,
-) *k8sV1.Pod {
+) *batchV1.Job {
 	if podSpec == nil {
 		podSpec = &k8sV1.Pod{}
 	} else {
 		podSpec = podSpec.DeepCopy()
 	}
 
-	podSpec.ObjectMeta.Name = p.podName
-	podSpec.ObjectMeta.Namespace = p.namespace
+	podSpec.ObjectMeta.Name = j.jobName
+	podSpec.ObjectMeta.Namespace = j.namespace
 	if podSpec.ObjectMeta.Labels == nil {
 		podSpec.ObjectMeta.Labels = make(map[string]string)
 	}
-	if p.submissionInfo.taskSpec.Owner != nil {
+	if taskSpec.Owner != nil {
 		// Owner label will disappear if Owner is somehow nil.
-		labelValue, err := validatePodLabelValue(p.submissionInfo.taskSpec.Owner.Username)
+		labelValue, err := validatePodLabelValue(taskSpec.Owner.Username)
 		if err != nil {
 			labelValue = defaultPodLabelValue
 			log.Warnf("unable to reformat username=%s to Kubernetes standards; using %s",
-				p.submissionInfo.taskSpec.Owner.Username, labelValue)
+				taskSpec.Owner.Username, labelValue)
 		}
 		podSpec.ObjectMeta.Labels[userLabel] = labelValue
 	}
 
-	labelValue, err := validatePodLabelValue(p.submissionInfo.taskSpec.Workspace)
+	labelValue, err := validatePodLabelValue(taskSpec.Workspace)
 	if err != nil {
 		labelValue = defaultPodLabelValue
 		log.Warnf("unable to reformat workspace=%s to Kubernetes standards; using %s",
-			p.submissionInfo.taskSpec.Workspace, labelValue)
+			taskSpec.Workspace, labelValue)
 	}
 	podSpec.ObjectMeta.Labels[workspaceLabel] = labelValue
 
-	labelValue, err = validatePodLabelValue(p.req.ResourcePool)
+	labelValue, err = validatePodLabelValue(j.req.ResourcePool)
 	if err != nil {
 		labelValue = defaultPodLabelValue
 		log.Warnf("unable to reformat resource_pool=%s to Kubernetes standards; using %s",
-			p.req.ResourcePool, labelValue)
+			j.req.ResourcePool, labelValue)
 	}
 	podSpec.ObjectMeta.Labels[resourcePoolLabel] = labelValue
 
-	podSpec.ObjectMeta.Labels[taskTypeLabel] = string(p.submissionInfo.taskSpec.TaskType)
-	podSpec.ObjectMeta.Labels[taskIDLabel] = p.submissionInfo.taskSpec.TaskID
-	podSpec.ObjectMeta.Labels[containerIDLabel] = p.submissionInfo.taskSpec.ContainerID
-	podSpec.ObjectMeta.Labels[determinedLabel] = p.submissionInfo.taskSpec.AllocationID
+	podSpec.ObjectMeta.Labels[taskTypeLabel] = string(taskSpec.TaskType)
+	podSpec.ObjectMeta.Labels[taskIDLabel] = taskSpec.TaskID
+	podSpec.ObjectMeta.Labels[containerIDLabel] = taskSpec.ContainerID
+	podSpec.ObjectMeta.Labels[determinedLabel] = taskSpec.AllocationID
+	podSpec.ObjectMeta.Labels[allocationIDLabel] = taskSpec.AllocationID
 
 	// If map is not populated, labels will be missing and observability will be impacted.
-	for k, v := range p.submissionInfo.taskSpec.ExtraPodLabels {
+	for k, v := range taskSpec.ExtraPodLabels {
 		labelValue, err := validatePodLabelValue(v)
 		if err != nil {
 			labelValue = defaultPodLabelValue
@@ -459,10 +487,10 @@ func (p *pod) configurePodSpec(
 		podSpec.ObjectMeta.Labels[labelPrefix+k] = labelValue
 	}
 
-	p.modifyPodSpec(podSpec, scheduler)
+	j.modifyPodSpec(taskSpec, podSpec, scheduler)
 
 	addNodeDisabledAffinityToPodSpec(podSpec, clusterIDNodeLabel())
-	addDisallowedNodesToPodSpec(p.req, podSpec)
+	addDisallowedNodesToPodSpec(j.req, podSpec)
 
 	nonDeterminedContainers := make([]k8sV1.Container, 0)
 	for idx, container := range podSpec.Spec.Containers {
@@ -497,43 +525,55 @@ func (p *pod) configurePodSpec(
 	podSpec.Spec.Containers = append(podSpec.Spec.Containers, sidecarContainers...)
 	podSpec.Spec.Containers = append(podSpec.Spec.Containers, determinedContainer)
 	podSpec.Spec.Volumes = append(podSpec.Spec.Volumes, volumes...)
-	podSpec.Spec.HostNetwork = p.submissionInfo.taskSpec.TaskContainerDefaults.NetworkMode.IsHost()
+	podSpec.Spec.HostNetwork = taskSpec.TaskContainerDefaults.NetworkMode.IsHost()
 	podSpec.Spec.InitContainers = append(podSpec.Spec.InitContainers, determinedInitContainers)
 	podSpec.Spec.RestartPolicy = k8sV1.RestartPolicyNever
 
-	return podSpec
+	return &batchV1.Job{
+		ObjectMeta: podSpec.ObjectMeta,
+		Spec: batchV1.JobSpec{
+			Parallelism:  ptrs.Ptr(int32(j.numPods)),
+			Completions:  ptrs.Ptr(int32(j.numPods)),
+			BackoffLimit: ptrs.Ptr(int32(0)),
+			Template: k8sV1.PodTemplateSpec{
+				ObjectMeta: podSpec.ObjectMeta,
+				Spec:       podSpec.Spec,
+			},
+			// TTLSeconds is useful for debugging but also must be set reasonably high so we
+			// can recover job exit codes in the case where the job exits while the master
+			// is down.
+			TTLSecondsAfterFinished: &defaultTTLSecondsAfterFinished,
+		},
+	}
 }
 
-func (p *pod) createPodSpec(scheduler string) error {
-	deviceType := p.slotType
+func (j *job) createSpec(scheduler string, taskSpec *tasks.TaskSpec) (*batchV1.Job, *k8sV1.ConfigMap, error) {
+	deviceType := j.slotType
 	// Device type is currently configured globally on KubernetesResourceManagerConfig.
 	// So we special case certain functionality to use device.CPU.
-	if deviceType == device.ZeroSlot || p.slots == 0 {
+	if deviceType == device.ZeroSlot || j.slotsPerPod == 0 {
 		deviceType = device.CPU
 	}
 
-	spec := p.submissionInfo.taskSpec
+	runArchives, rootArchives := taskSpec.Archives()
 
-	runArchives, rootArchives := spec.Archives()
+	initContainerVolumeMounts, volumeMounts, volumes := j.configureVolumes(taskSpec, taskSpec.Mounts, runArchives)
 
-	initContainerVolumeMounts, volumeMounts, volumes := p.configureVolumes(spec.Mounts, runArchives)
-
-	env := spec.Environment
+	env := taskSpec.Environment
 
 	// This array containerPorts is set on the container spec.
 	// This field on the container spec is for "primarily informational"
 	// reasons and to allow us to read these ports in reattaching pods.
 	var containerPorts []k8sV1.ContainerPort
 	for _, port := range env.Ports() {
-		p.ports = append(p.ports, port)
 		containerPorts = append(containerPorts, k8sV1.ContainerPort{
 			ContainerPort: int32(port),
 		})
 	}
 
-	envVars, err := p.configureEnvVars(spec.EnvVars(), env, deviceType)
+	envVars, err := j.configureEnvVars(taskSpec.EnvVars(), env, deviceType)
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 
 	initContainer := configureInitContainer(
@@ -541,61 +581,67 @@ func (p *pod) createPodSpec(scheduler string) error {
 		initContainerVolumeMounts,
 		env.Image().For(deviceType),
 		configureImagePullPolicy(env),
-		spec.AgentUserGroup,
+		taskSpec.AgentUserGroup,
 	)
 
 	var sidecars []k8sV1.Container
 
 	container := k8sV1.Container{
 		Name:            model.DeterminedK8ContainerName,
-		Command:         spec.LogShipperWrappedEntrypoint(),
+		Command:         taskSpec.LogShipperWrappedEntrypoint(),
 		Env:             envVars,
 		Image:           env.Image().For(deviceType),
 		ImagePullPolicy: configureImagePullPolicy(env),
 		SecurityContext: getDetContainerSecurityContext(
-			spec.AgentUserGroup,
+			taskSpec.AgentUserGroup,
 			env.PodSpec(),
 		),
-		Resources:    p.configureResourcesRequirements(),
+		Resources:    j.configureResourcesRequirements(),
 		VolumeMounts: volumeMounts,
-		WorkingDir:   spec.WorkDir,
+		WorkingDir:   taskSpec.WorkDir,
 		Ports:        containerPorts,
 	}
 
-	p.configMap, err = p.configureConfigMapSpec(runArchives)
+	configMapSpec, err := j.configureConfigMapSpec(taskSpec, runArchives)
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 
-	rootVolumes, rootVolumeMounts, err := handleRootArchiveFiles(rootArchives, p.configMap)
+	rootVolumes, rootVolumeMounts, err := handleRootArchiveFiles(rootArchives, configMapSpec)
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 	volumes = append(volumes, rootVolumes...)
 	container.VolumeMounts = append(container.VolumeMounts, rootVolumeMounts...)
 
-	p.pod = p.configurePodSpec(
-		volumes, initContainer, container, sidecars, (*k8sV1.Pod)(env.PodSpec()), scheduler)
-	return nil
+	return j.configureJobSpec(
+		taskSpec,
+		volumes,
+		initContainer,
+		container,
+		sidecars,
+		(*k8sV1.Pod)(env.PodSpec()),
+		scheduler,
+	), configMapSpec, nil
 }
 
-func configureUniqueName(t tasks.TaskSpec, rank int) string {
-	return fmt.Sprintf("%s-%d-%s-%s",
-		t.Description, rank, t.AllocationID, petName.Generate(2, "-"))
-}
+func configureUniqueName(t tasks.TaskSpec) string {
+	name := t.Description
 
-func trialNameFromPod(podName string) string {
-	// Given a pod name of the form exp-#-trial-#-rank-#..., returns a string exp#trial#
-	// e.g. input: exp-1-trial-1-rank-0-71af9..., returns: exp1trial1
-
-	newName := ""
-	for i, v := range strings.Split(podName, "-") {
-		if i > 3 {
-			break
-		}
-		newName += v
+	// Prefix with a cluster ID so multiple Determined installations can coexist within cluster. But
+	// limit to the first 8 chars of the cluster ID to avoid the 63 character limit (this is ~53).
+	// Handle short cluster IDs for tests.
+	var clusterIDPrefix string
+	if len(t.ClusterID) >= 8 {
+		clusterIDPrefix = t.ClusterID[:8]
+	} else {
+		clusterIDPrefix = t.ClusterID
 	}
-	return newName
+	if clusterIDPrefix != "" {
+		name = fmt.Sprintf("%s-%s", clusterIDPrefix, name)
+	}
+
+	return name
 }
 
 func configureSecurityContext(agentUserGroup *model.AgentUserGroup) *k8sV1.SecurityContext {

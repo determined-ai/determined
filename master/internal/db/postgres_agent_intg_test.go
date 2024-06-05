@@ -112,7 +112,7 @@ func TestEndAllAgentStats(t *testing.T) {
 	setTimesTo(a0, a0Start, nil)
 
 	// Cluster heartbeat between these.
-	// TODO(!!!) make cluster heartbeat a timestamptz.
+	// TODO(nickb): make cluster heartbeat a timestamptz.
 	_, err := db.GetOrCreateClusterID("")
 	require.NoError(t, err)
 	heartBeatTime := time.Date(2021, 10, 10, 0, 0, 0, 0, time.Local).Truncate(time.Millisecond)

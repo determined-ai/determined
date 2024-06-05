@@ -21,7 +21,7 @@ executors:
 parameters:
   det-version:
     type: string
-    default: 0.33.0-dev0
+    default: 0.33.1-dev0
   docker-image:
     type: string
     default: determinedai/cimg-base:latest
@@ -605,7 +605,7 @@ commands:
 
             cat /tmp/all-relevant-files | circleci tests run --command="DD_CIVISIBILITY_AGENTLESS_ENABLED=true \
             DD_SITE='datadoghq.com' \
-            DD_ENV=ci DD_SERVICE='pytest-<<parameters.mark>>' \
+            DD_ENV='ci-<<parameters.mark>>' DD_SERVICE='determined-pytest-<<parameters.mark>>' \
             DET_MASTER_CERT_FILE=<<parameters.master-cert>> \
             DET_MASTER_CERT_NAME=<<parameters.master-cert-name>> \
             IS_CIRCLECI_JOB=1 XDG_CONFIG_HOME=/tmp \
@@ -1663,8 +1663,6 @@ jobs:
                 tools/scripts/retry.sh make -C model_hub publish-docker-dev
             fi
       - run: mkdir /tmp/pkgs && cp -v */dist/*.{rpm,deb,tar.gz} /tmp/pkgs
-      - store_artifacts:
-          path: /tmp/pkgs
 
   package-and-push-system-dev-small:
     docker:
@@ -1751,8 +1749,6 @@ jobs:
       - run: make -C master publish-ee
       - run: make -C agent publish-ee
       - run: mkdir /tmp/pkgs && cp -v */dist/*.{rpm,deb,tar.gz} /tmp/pkgs
-      - store_artifacts:
-          path: /tmp/pkgs
 
   package-and-push-system-release:
     docker:
@@ -1812,8 +1808,6 @@ jobs:
           no_output_timeout: 30m
           command: make -C agent release-ee
       - run: mkdir /tmp/pkgs && cp -v */dist/*.{rpm,deb,tar.gz} /tmp/pkgs
-      - store_artifacts:
-          path: /tmp/pkgs
 
   publish-helm-gh:
     parameters:
@@ -2017,11 +2011,17 @@ jobs:
       - wait-for-master:
           host: "localhost"
           port: "8082"
+      - run: npm install --save-dev dd-trace # DataDog integration
       - run:
           environment:
             PW_EE: << parameters.ee >>
-          # setting PW_PASSWORD is temporary until DET-10197 is merged and we can set PW_PASSWORD in circleci
-          command: PW_PASSWORD=${INITIAL_USER_PASSWORD} npm run e2e --prefix webui/react -- << parameters.playwright-options >>
+            NODE_OPTIONS: "-r dd-trace/ci/init"
+          command: |
+              if [[ "$PW_EE" -eq 1 ]]; then env="ee"; else env="oss"; fi
+              DD_ENV="ci-devcluster-$env" \
+              DD_SERVICE=determined-ui-e2e \
+              PW_PASSWORD=${INITIAL_USER_PASSWORD} \
+              npm run e2e --prefix webui/react -- << parameters.playwright-options >>
       - store_artifacts:
           path: webui/react/src/e2e/playwright-report
       - store_artifacts:

@@ -21,7 +21,7 @@ export class FilterGroup extends NamedComponent {
       this.filterGroups = new FilterGroup({
         attachment: this.#notNestedSelector,
         level: level + 1,
-        parent: this.children,
+        parent: this.#children,
       });
     }
   }
@@ -36,41 +36,41 @@ export class FilterGroup extends NamedComponent {
    */
   private selectorTemplate = (selector: string) => `${selector}${this.#notNestedSelector}`;
   readonly conjunctionContainer = new ConjunctionContainer({ parent: this });
-  readonly groupCard = new BaseComponent({
+  readonly #groupCard = new BaseComponent({
     parent: this,
     selector: this.selectorTemplate('[data-test="groupCard"]'),
   });
-  readonly header = new BaseComponent({
-    parent: this.groupCard,
+  readonly #header = new BaseComponent({
+    parent: this.#groupCard,
     selector: this.selectorTemplate('[data-test="header"]'),
   });
   readonly explanation = new BaseComponent({
-    parent: this.header,
+    parent: this.#header,
     selector: this.selectorTemplate('[data-test="explanation"]'),
   });
   readonly addDropdown = new AddDropdown({
     childNode: new BaseComponent({
-      parent: this.header,
+      parent: this.#header,
       selector: this.selectorTemplate('[data-test="add"]'),
     }),
     root: this.root,
   });
   readonly remove = new BaseComponent({
-    parent: this.header,
+    parent: this.#header,
     selector: this.selectorTemplate('[data-test="remove"]'),
   });
   readonly move = new BaseComponent({
-    parent: this.header,
+    parent: this.#header,
     selector: this.selectorTemplate('[data-test="move"]'),
   });
-  readonly children = new BaseComponent({
-    parent: this.groupCard,
+  readonly #children = new BaseComponent({
+    parent: this.#groupCard,
     selector: this.#childrenSelector,
   });
   readonly filterGroups: FilterGroup | undefined;
   readonly filterFields = new FilterField({
     attachment: this.#notNestedSelector,
-    parent: this.children,
+    parent: this.#children,
   });
 }
 
