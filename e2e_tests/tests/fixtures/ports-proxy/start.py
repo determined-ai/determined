@@ -2,6 +2,7 @@ import http.server
 import logging
 import socket
 import threading
+import time
 
 import determined as det
 
@@ -81,4 +82,6 @@ if __name__ == "__main__":
     if cross_rank == 0:
         run_servers()
     else:
-        print("Not the chief, exiting.")
+        print("Not the chief, waiting around...")
+        while True:
+            time.sleep(1)
