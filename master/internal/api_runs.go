@@ -808,6 +808,7 @@ func pauseResumeAction(ctx context.Context, isPause bool, projectID int32,
 	// Get experiment ids
 	var err error
 	var runCandidates []runCandidateResult
+	isRunIDAction := (len(runIds) > 0)
 	getQ := db.Bun().NewSelect().
 		ModelTableExpr("runs AS r").
 		Model(&runCandidates).
@@ -820,7 +821,7 @@ func pauseResumeAction(ctx context.Context, isPause bool, projectID int32,
 		Join("JOIN workspaces w ON p.workspace_id = w.id").
 		Where("r.project_id = ?", projectID)
 
-	if filter == nil {
+	if isRunIDAction {
 		getQ = getQ.Where("r.id IN (?)", bun.In(runIds))
 	} else {
 		getQ, err = filterRunQuery(getQ, filter)
@@ -864,7 +865,7 @@ func pauseResumeAction(ctx context.Context, isPause bool, projectID int32,
 		expToRun[*cand.ExpID] = cand.ID
 		expIDs.Insert(*cand.ExpID)
 	}
-	if filter == nil {
+	if isRunIDAction {
 		for _, originalID := range runIds {
 			if !visibleIDs.Contains(originalID) {
 				results = append(results, &apiv1.RunActionResult{
