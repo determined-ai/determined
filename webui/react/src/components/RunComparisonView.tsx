@@ -5,10 +5,10 @@ import Pivot, { PivotProps } from 'hew/Pivot';
 import SplitPane, { Pane } from 'hew/SplitPane';
 import React, { useMemo } from 'react';
 
-//import CompareHyperparameters from 'components/CompareHyperparameters';
+import CompareHyperparameters from 'components/CompareHyperparameters';
 import useMobile from 'hooks/useMobile';
 import useScrollbarWidth from 'hooks/useScrollbarWidth';
-//import { TrialsComparisonTable } from 'pages/ExperimentDetails/TrialsComparisonModal';
+import { TrialsComparisonTable } from 'pages/ExperimentDetails/TrialsComparisonModal';
 import { useRunMetrics } from 'pages/FlatRuns/useRunMetrics';
 import { FlatRun } from 'types';
 
@@ -30,7 +30,7 @@ const RunComparisonView: React.FC<Props> = ({
   initialWidth,
   onWidthChange,
   fixedColumnsCount,
-  //projectId,
+  projectId,
   selectedRuns,
 }) => {
   const scrollbarWidth = useScrollbarWidth();
@@ -50,25 +50,24 @@ const RunComparisonView: React.FC<Props> = ({
         key: 'metrics',
         label: 'Metrics',
       },
-      // {
-      //   children: (
-      //     <CompareHyperparameters
-      //       metricData={metricData}
-      //       projectId={projectId}
-      //       selectedExperiments={selectedExperiments}
-      //       trials={trials}
-      //     />
-      //   ),
-      //   key: 'hyperparameters',
-      //   label: 'Hyperparameters',
-      // },
-      // {
-      //   children: <TrialsComparisonTable experiment={experiments} trials={trials} />,
-      //   key: 'details',
-      //   label: 'Details',
-      // },
+      {
+        children: (
+          <CompareHyperparameters
+            metricData={metricData}
+            projectId={projectId}
+            selectedRuns={selectedRuns}
+          />
+        ),
+        key: 'hyperparameters',
+        label: 'Hyperparameters',
+      },
+      {
+        children: <TrialsComparisonTable runs={selectedRuns} />,
+        key: 'details',
+        label: 'Details',
+      },
     ];
-  }, [metricData, selectedRuns]);
+  }, [metricData, projectId, selectedRuns]);
 
   const leftPane =
     open && !hasPinnedColumns ? (
