@@ -2,16 +2,23 @@
 
 set -e
 
+K8S_VERSION=${K8S_VERSION:-1.29.5} # https://endoflife.date/kubernetes
+minikube_profile=$1
+tools_k8s_dir=tools/k8s # $(dirname "$(realpath "$0")")
+contour_config_file=$tools_k8s_dir/gateways/contour-provisioner.yaml
+
 if [ -z "$1" ]; then
     echo "Usage: $0 <minikube_profile>"
     exit 1
 fi
 
-K8S_VERSION=${K8S_VERSION:-1.29.5} # https://endoflife.date/kubernetes
-minikube_profile=$1
-minikube start --profile $minikube_profile --kubernetes-version $K8S_VERSION
+if [ ! -f $contour_config_file ]; then
+    echo "Gateway configuration file not found: $contour_config_file"
+    exit 1
+fi
 
-kubectl apply -f https://projectcontour.io/quickstart/contour-gateway-provisioner.yaml
+minikube start --profile $minikube_profile --kubernetes-version $K8S_VERSION
+kubectl apply -f $contour_config_file
 
 kubectl apply -f - <<EOF
 kind: GatewayClass
