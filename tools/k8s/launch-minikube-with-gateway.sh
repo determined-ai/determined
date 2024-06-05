@@ -4,8 +4,8 @@ set -e
 
 K8S_VERSION=${K8S_VERSION:-1.29.5} # https://endoflife.date/kubernetes
 minikube_profile=$1
-this_dir=$(dirname "$(realpath "$0")")
-contour_config_file=$this_dir/gateways/contour-provisioner.yaml
+tools_k8s_dir=tools/k8s # $(dirname "$(realpath "$0")")
+contour_config_file=$tools_k8s_dir/gateways/contour-provisioner.yaml
 
 if [ -z "$1" ]; then
     echo "Usage: $0 <minikube_profile>"
