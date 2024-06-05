@@ -328,8 +328,20 @@ func (c *Config) Resolve() error {
 	}
 
 	for _, r := range c.ResourceManagers() {
-		if r.ResourceManager.AgentRM != nil && r.ResourceManager.AgentRM.Scheduler == nil {
-			r.ResourceManager.AgentRM.Scheduler = DefaultSchedulerConfig()
+		if r.ResourceManager.AgentRM != nil {
+			if r.ResourceManager.AgentRM.Scheduler == nil {
+				r.ResourceManager.AgentRM.Scheduler = DefaultSchedulerConfig()
+			}
+			if r.ResourceManager.AgentRM.Scheduler.GetType() == FairShareScheduling {
+				log.Warnf("Fair-Share Scheduler has been deprecated, announced in release 0.33.0.")
+				log.Warnf("Please update master config to use Priority Scheduler (configured by default).")
+			}
+			if r.ResourceManager.AgentRM.Scheduler.GetType() == RoundRobinScheduling {
+				log.Error("Round Robin Scheduler is no longer available. Deprecation announced in release 0.33.0.")
+				log.Warn("Please update master config to use Priority Scheduler (configured by default).")
+				log.Info("Priority Scheduler with all priorities equal will have the same behavior as a Round Robin Scheduler.")
+				return fmt.Errorf("round robin scheduler no longer exists")
+			}
 		}
 
 		if r.ResourceManager.KubernetesRM != nil {

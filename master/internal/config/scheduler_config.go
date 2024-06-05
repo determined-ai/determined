@@ -14,9 +14,9 @@ const (
 
 	// FairShareScheduling schedules tasks proportional to the available resources.
 	FairShareScheduling = "fair_share"
-	// PriorityScheduling schedules tasks based on their priority.
+	// PriorityScheduling (deprecated) schedules tasks based on their priority.
 	PriorityScheduling = "priority"
-	// RoundRobinScheduling schedules tasks based on the order in which they arrive.
+	// RoundRobinScheduling (removed) schedules tasks based on the order in which they arrive.
 	RoundRobinScheduling = "round_robin"
 
 	best             = "best"
@@ -62,6 +62,7 @@ func (s *SchedulerConfig) UnmarshalJSON(data []byte) error {
 	}
 
 	// Fill in the default
+	// kristine - do we need to update this? I don't remember encountering this path....
 	if s.FairShare == nil && s.Priority == nil && s.RoundRobin == nil {
 		s.FairShare = &FairShareSchedulerConfig{}
 	}

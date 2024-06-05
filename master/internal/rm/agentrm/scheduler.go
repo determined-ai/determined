@@ -26,8 +26,6 @@ func MakeScheduler(conf *config.SchedulerConfig) Scheduler {
 		return NewPriorityScheduler(conf)
 	case config.FairShareScheduling:
 		return NewFairShareScheduler()
-	case config.RoundRobinScheduling:
-		return NewRoundRobinScheduler()
 	default:
 		panic(fmt.Sprintf("invalid scheduler: %s", conf.GetType()))
 	}
