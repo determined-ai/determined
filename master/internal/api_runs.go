@@ -815,7 +815,7 @@ func pauseResumeAction(ctx context.Context, isPause bool, projectID int32,
 		Column("r.id").
 		ColumnExpr("COALESCE((r.archived OR e.archived OR p.archived OR w.archived), FALSE) AS archived").
 		ColumnExpr("r.experiment_id as exp_id").
-		ColumnExpr("(config->'searcher'->>'name' != 'single') as is_multitrial").
+		ColumnExpr("(e.config->'searcher'->>'name' != 'single') as is_multitrial").
 		Join("LEFT JOIN experiments e ON r.experiment_id=e.id").
 		Join("JOIN projects p ON r.project_id = p.id").
 		Join("JOIN workspaces w ON p.workspace_id = w.id").
