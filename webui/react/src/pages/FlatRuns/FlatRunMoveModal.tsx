@@ -205,7 +205,6 @@ const FlatRunMoveModalComponent: React.FC<Props> = ({
           </Form.Item>
           {workspaceId && workspaceId !== 1 && (
             <Form.Item
-              initialValue={sourceProjectId}
               label="Project"
               name="projectId"
               rules={[{ message: 'Project is required', required: true }]}>
