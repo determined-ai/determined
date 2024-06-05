@@ -837,7 +837,7 @@ func pauseResumeAction(ctx context.Context, isPause bool, projectID int32,
 	var results []*apiv1.RunActionResult
 	visibleIDs := set.New[int32]()
 	expIDs := set.New[int32]()
-	expToRun := make(map[int32][]int32)
+	expToRun := make(map[int32]int32)
 	for _, cand := range runCandidates {
 		visibleIDs.Insert(cand.ID)
 		if cand.Archived {
@@ -861,12 +861,7 @@ func pauseResumeAction(ctx context.Context, isPause bool, projectID int32,
 			})
 			continue
 		}
-		_, ok := expToRun[*cand.ExpID]
-		if ok {
-			expToRun[*cand.ExpID] = append(expToRun[*cand.ExpID], cand.ID)
-		} else {
-			expToRun[*cand.ExpID] = []int32{cand.ID}
-		}
+		expToRun[*cand.ExpID] = cand.ID
 		expIDs.Insert(*cand.ExpID)
 	}
 	if filter == nil {
@@ -895,20 +890,19 @@ func pauseResumeAction(ctx context.Context, isPause bool, projectID int32,
 	for _, expRes := range expResults {
 		val, ok := expToRun[expRes.ID]
 		if !ok {
-			val = []int32{-1}
+			continue
 		}
-		for _, runID := range val {
-			if expRes.Error != nil {
-				results = append(results, &apiv1.RunActionResult{
-					Error: fmt.Sprintf(errMsg, expRes.Error),
-					Id:    runID,
-				})
-			} else {
-				results = append(results, &apiv1.RunActionResult{
-					Error: "",
-					Id:    runID,
-				})
-			}
+
+		if expRes.Error != nil {
+			results = append(results, &apiv1.RunActionResult{
+				Error: fmt.Sprintf(errMsg, expRes.Error),
+				Id:    val,
+			})
+		} else {
+			results = append(results, &apiv1.RunActionResult{
+				Error: "",
+				Id:    val,
+			})
 		}
 	}
 	return results, nil
