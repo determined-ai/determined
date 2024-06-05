@@ -9379,7 +9379,7 @@ spec:
                   - ReferenceGrant
                   - TLSRoute
                   type: string
-                maxItems: 128
+                maxItems: 64
                 type: array
                 x-kubernetes-list-type: set
             type: object
@@ -9613,7 +9613,7 @@ spec:
                   - ReferenceGrant
                   - TLSRoute
                   type: string
-                maxItems: 128
+                maxItems: 64
                 type: array
                 x-kubernetes-list-type: set
             type: object
@@ -10151,7 +10151,7 @@ spec:
                             required:
                             - name
                             type: object
-                          maxItems: 128
+                          maxItems: 64
                           type: array
                         mode:
                           default: Terminate
@@ -10201,7 +10201,7 @@ spec:
                   - port
                   - protocol
                   type: object
-                maxItems: 128
+                maxItems: 64
                 minItems: 1
                 type: array
                 x-kubernetes-list-map-keys:
@@ -10531,7 +10531,7 @@ spec:
                   - name
                   - supportedKinds
                   type: object
-                maxItems: 128
+                maxItems: 64
                 type: array
                 x-kubernetes-list-map-keys:
                 - name
@@ -11039,7 +11039,7 @@ spec:
                             required:
                             - name
                             type: object
-                          maxItems: 128
+                          maxItems: 64
                           type: array
                         mode:
                           default: Terminate
@@ -11089,7 +11089,7 @@ spec:
                   - port
                   - protocol
                   type: object
-                maxItems: 128
+                maxItems: 64
                 minItems: 1
                 type: array
                 x-kubernetes-list-map-keys:
@@ -11419,7 +11419,7 @@ spec:
                   - name
                   - supportedKinds
                   type: object
-                maxItems: 128
+                maxItems: 64
                 type: array
                 x-kubernetes-list-map-keys:
                 - name
