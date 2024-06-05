@@ -1,0 +1,124 @@
+# .mockery.yaml
+with-expecter: True
+dir: internal/mocks
+outpkg: mocks
+quiet: True
+packages:
+  github.com/determined-ai/determined/master/internal/db:
+    interfaces:
+      # mockery --quiet --name=DB --dir=internal/db --output internal/mocks --filename db.go
+      DB:
+        config:
+          filename: db.go
+          mockname: DB
+  github.com/determined-ai/determined/master/internal/sproto:
+    interfaces:
+      # mockery --quiet --name=Resources --dir=internal/sproto --output internal/mocks --filename resources.go
+      Resources:
+        config:
+          filename: resources.go
+          mockname: Resources
+  github.com/determined-ai/determined/master/internal/user:
+    interfaces:
+      # mockery --quiet --name=UserAuthZ --dir=internal/user --output internal/mocks --filename user_authz_iface.go
+      UserAuthZ:
+        config:
+          filename: user_authz_iface.go
+          mockname: UserAuthZ
+  github.com/determined-ai/determined/master/internal/workspace:
+    interfaces:
+      # mockery --quiet --name=WorkspaceAuthZ --dir=internal/workspace --output internal/mocks --filename workspace_authz_iface.go
+      WorkspaceAuthZ:
+        config:
+          filename: workspace_authz_iface.go
+          mockname: WorkspaceAuthZ
+  github.com/determined-ai/determined/master/internal/project:
+    interfaces:
+      # mockery --quiet --name=ProjectAuthZ --dir=internal/project --output internal/mocks --filename project_authz_iface.go
+      ProjectAuthZ:
+        config:
+          filename: project_authz_iface.go
+          mockname: ProjectAuthZ
+  github.com/determined-ai/determined/master/internal/experiment:
+    interfaces:
+      # mockery --quiet --name=ExperimentAuthZ --dir=internal/experiment --output internal/mocks --filename authz_experiment_iface.go
+      ExperimentAuthZ:
+        config:
+          filename: authz_experiment_iface.go
+          mockname: ExperimentAuthZ
+  github.com/determined-ai/determined/master/internal/command:
+    interfaces:
+      # mockery --quiet --name=NSCAuthZ --dir=internal/command --output internal/mocks --filename nsc_authz_iface.go
+      NSCAuthZ:
+        config:
+          filename: nsc_authz_iface.go
+          mockname: NSCAuthZ
+  github.com/determined-ai/determined/master/internal/model:
+    interfaces:
+      # mockery --quiet --name=ModelAuthZ --dir=internal/model --output internal/mocks --filename authz_model_iface.go
+      ModelAuthZ:
+        config:
+          filename: authz_model_iface.go
+          mockname: ModelAuthZ
+  github.com/determined-ai/determined/master/internal/rm:
+    interfaces:
+      # mockery --quiet --name=ResourceManager --dir=internal/rm --output internal/mocks --filename rm.go
+      ResourceManager:
+        config:
+          filename: rm.go
+          mockname: ResourceManager
+      # mockery --quiet --name=ResourceManagerAuthZ --dir=internal/rm --output internal/mocks --filename rm_authz_iface.go
+      ResourceManagerAuthZ:
+        config:
+          filename: rm_authz_iface.go
+          mockname: ResourceManagerAuthZ
+  github.com/determined-ai/determined/master/internal/task:
+    interfaces:
+      # mockery --quiet --name=AllocationService --dir=internal/task --output internal/mocks/allocationmocks --filename allocation_service.go --outpkg allocationmocks
+      AllocationService:
+        config:
+          filename: allocation_service.go
+          mockname: AllocationService
+          dir: internal/mocks/allocationmocks
+          outpkg: allocationmocks
+  k8s.io/client-go/kubernetes/typed/core/v1:
+    interfaces:
+      # mockery --quiet --name=PodInterface --srcpkg=k8s.io/client-go/kubernetes/typed/core/v1 --output internal/mocks --filename pod_iface.go
+      PodInterface:
+        config:
+          filename: pod_iface.go
+          mockname: PodInterface
+      # mockery --quiet --name=EventInterface --srcpkg=k8s.io/client-go/kubernetes/typed/core/v1 --output internal/mocks --filename event_iface.go
+      EventInterface:
+        config:
+          filename: event_iface.go
+          mockname: EventInterface
+      # mockery --quiet --name=NodeInterface --srcpkg=k8s.io/client-go/kubernetes/typed/core/v1 --output internal/mocks --filename node_iface.go
+      NodeInterface:
+        config:
+          filename: node_iface.go
+          mockname: NodeInterface
+      # mockery --quiet --name=CoreV1Interface --output internal/mocks --srcpkg "k8s.io/client-go/kubernetes/typed/core/v1" --filename k8s_corev1_iface.go --structname K8sCoreV1Interface
+      CoreV1Interface:
+        config:
+          filename: k8s_corev1_iface.go
+          mockname: K8sCoreV1Interface
+  k8s.io/client-go/kubernetes/typed/batch/v1:
+    interfaces:
+      # mockery --quiet --name=JobInterface --srcpkg=k8s.io/client-go/kubernetes/typed/batch/v1 --output internal/mocks --filename job_iface.go
+      JobInterface:
+        config:
+          filename: job_iface.go
+          mockname: JobInterface
+      # mockery --quiet --name=BatchV1Interface --output internal/mocks --srcpkg "k8s.io/client-go/kubernetes/typed/batch/v1" --filename k8s_batchv1_iface.go --structname K8sBatchV1Interface
+      BatchV1Interface:
+        config:
+          filename: k8s_batchv1_iface.go
+          mockname: K8sBatchV1Interface
+  k8s.io/client-go/kubernetes:
+    interfaces:
+      # mockery --quiet --name=Interface --output internal/mocks --srcpkg "k8s.io/client-go/kubernetes" --filename k8s_clientset.go --structname K8sClientsetInterface
+      Interface:
+        config:
+          filename: k8s_clientset.go
+          mockname: K8sClientsetInterface
