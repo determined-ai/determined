@@ -1335,7 +1335,7 @@ func (j *jobsService) getSlot(agentID string, slotID string) *apiv1.GetSlotRespo
 		// Try converting an index input to a slot and see if that exists (1 to 001).
 		tryIndex, err := strconv.Atoi(slotID)
 		s, ok := slots[model.SortableSlotIndex(tryIndex)]
-		if err == nil && ok {
+		if err != nil || !ok {
 			j.syslog.Warnf("no slot with id %s", slotID)
 			return nil
 		}
