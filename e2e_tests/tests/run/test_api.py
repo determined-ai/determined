@@ -193,6 +193,10 @@ def test_run_pause_and_resume() -> None:
     # ensure that run is unpaused
     wait_for_run_state(sess, run_id, bindings.trialv1State.ACTIVE)
 
+    # kill run for cleanup
+    _ = bindings.post_KillRuns(sess, body=bindings.v1KillRunsRequest(runIds=[run_id], projectId=1))
+    wait_for_run_state(sess, run_id, bindings.trialv1State.CANCELED)
+
 
 @pytest.mark.e2e_cpu
 def test_run_pause_and_resume_filter_skip_empty() -> None:
@@ -252,3 +256,7 @@ def test_run_pause_and_resume_filter_skip_empty() -> None:
     for res in resumeResp.results:
         assert res.error == "Cannot pause/unpause run '" + str(res.id) + "' (part of multi-trial)."
         wait_for_run_state(sess, res.id, bindings.trialv1State.ACTIVE)
+
+    # kill run for cleanup
+    _ = bindings.post_KillRuns(sess, body=bindings.v1KillRunsRequest(runIds=[res.id], projectId=1))
+    wait_for_run_state(sess, res.id, bindings.trialv1State.CANCELED)
