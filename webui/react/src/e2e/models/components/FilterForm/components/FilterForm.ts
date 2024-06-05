@@ -2,11 +2,7 @@ import { BaseComponent, NamedComponent } from 'e2e/models/BaseComponent';
 import { FilterGroup } from 'e2e/models/components/FilterForm/components/FilterGroup';
 
 /**
- * Returns a representation of the FilterForm component.
- * This constructor represents the contents in src/components/FilterForm.tsx.
- * @param {object} obj
- * @param {CanBeParent} obj.parent - The parent used to locate this FilterForm
- * @param {string} obj.selector - Used instead of `defaultSelector`
+ * Represents the FilterForm component in src/components/FilterForm/components/FilterForm.tsx
  */
 export class FilterForm extends NamedComponent {
   readonly defaultSelector = '[data-test-component="FilterForm"]';

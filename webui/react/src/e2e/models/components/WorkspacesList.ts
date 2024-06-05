@@ -4,11 +4,7 @@ import { Card } from 'e2e/models/hew/Card';
 import { WorkspaceActionDropdown } from './WorkspaceActionDropdown';
 
 /**
- * Returns a representation of the Workspaces Page component.
- * This constructor represents the contents in src/components/WorkspacesList.tsx.
- * @param {object} obj
- * @param {implementsGetLocator} obj.parent - The parent used to locate this Page
- * @param {string} [obj.selector] - Used instead of `defaultSelector`
+ * Represents the WorkspacesList component in src/components/WorkspacesList.tsx
  */
 export class WorkspacesList extends NamedComponent {
   readonly defaultSelector: string = '[id=workspaces]';
@@ -22,11 +18,7 @@ export class WorkspacesList extends NamedComponent {
 }
 
 /**
- * Returns the representation of a Card.
- * This constructor is a base class for any component in src/components/WorkspacesList.tsx.
- * @param {object} obj
- * @param {CanBeParent} obj.parent - The parent used to locate this Card
- * @param {string} obj.selector - Used as a selector uesd to locate this object
+ * Represents the WorkspaceCard in the WorkspacesList component
  */
 class WorkspaceCard extends Card {
   override readonly actionMenu = new WorkspaceActionDropdown({

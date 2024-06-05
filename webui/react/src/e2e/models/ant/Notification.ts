@@ -1,13 +1,8 @@
 import { BaseComponent, NamedComponent } from 'e2e/models/BaseComponent';
 
 /**
- * Returns a representation of the Notification component from Ant.
- * This constructor represents the contents in antd/es/notification/index.d.ts.
- * @param {object} obj
- * @param {CanBeParent} obj.parent - The parent used to locate this Notification
- * @param {string} obj.selector - Used instead of `defaultSelector`
+ * Represents the Notification component from antd/es/notification/index.js
  */
-
 export class Notification extends NamedComponent {
   readonly defaultSelector = '.ant-notification';
   static readonly selectorTopRight = '.ant-notification-topRight';

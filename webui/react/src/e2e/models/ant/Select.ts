@@ -1,11 +1,7 @@
 import { BaseComponent, NamedComponent } from 'e2e/models/BaseComponent';
 
 /**
- * Returns a representation of the Select component from Ant.
- * This constructor represents the contents in antd/es/select/index.d.ts.
- * @param {object} obj
- * @param {implementsGetLocator} obj.parent - The parent used to locate this Select
- * @param {string} obj.selector - Used instead of `defaultSelector`
+ * Represents the Select component from antd/es/select/index.js
  */
 export class Select extends BaseComponent {
   readonly _menu = new BaseComponent({
@@ -33,7 +29,7 @@ export class Select extends BaseComponent {
   });
 
   /**
-   * Returns a representation of a select item with the specified title.
+   * Returns a selectedMenuOverflowItem in the Select component
    * @param {string} title - the title of the select item
    */
   selectedMenuOverflowItem(title: string): selectionOverflowItem {
@@ -69,7 +65,7 @@ export class Select extends BaseComponent {
   }
 
   /**
-   * Returns a representation of a select dropdown menu item with the specified title.
+   * Returns a menuItem in the Select component
    * @param {string} title - the title of the menu item
    */
   menuItem(title: string): BaseComponent {
@@ -91,11 +87,7 @@ export class Select extends BaseComponent {
 }
 
 /**
- * Returns a representation of the Selection Overflow Item component from Ant.
- * This constructor represents the contents in antd/es/select/index.d.ts.
- * @param {object} obj
- * @param {implementsGetLocator} obj.parent - The parent used to locate this selectionOverflowItem
- * @param {string} obj.selector - Used instead of `defaultSelector`
+ * Represents a selectionOverflowItem from the Select component
  */
 class selectionOverflowItem extends NamedComponent {
   defaultSelector = '.ant-select-selection-overflow-item ant-select-selection-item';
