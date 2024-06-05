@@ -19,7 +19,15 @@ import MetricSelect from 'components/MetricSelect';
 import useMetricNames from 'hooks/useMetricNames';
 import { paths } from 'routes/utils';
 import { getTrialDetails } from 'services/api';
-import { BulkExperimentItem, Metric, MetricSummary, Primitive, TrialDetails, XOR } from 'types';
+import {
+  BulkExperimentItem,
+  FlatRun,
+  Metric,
+  MetricSummary,
+  Primitive,
+  TrialDetails,
+  XOR,
+} from 'types';
 import { isNumber } from 'utils/data';
 import handleError, { ErrorType } from 'utils/error';
 import { humanReadableBytes, pluralizer } from 'utils/string';
@@ -27,17 +35,19 @@ import { humanReadableBytes, pluralizer } from 'utils/string';
 import css from './TrialsComparisonModal.module.scss';
 
 interface TablePropsBase {
-  experiment: BulkExperimentItem | BulkExperimentItem[];
   onUnselect?: (trialId: number) => void;
 }
 
 type TableProps = XOR<
-  {
-    trialIds: number[];
-  },
-  {
-    trials: TrialDetails[];
-  }
+  XOR<
+    {
+      trialIds: number[];
+    },
+    {
+      trials: TrialDetails[];
+    }
+  > & { experiment: BulkExperimentItem | BulkExperimentItem[] },
+  { runs: FlatRun[] }
 > &
   TablePropsBase;
 
@@ -50,8 +60,9 @@ const TrialsComparisonModalComponent: React.FC<ModalProps> = ({
   ...props
 }: ModalProps) => {
   useEffect(() => {
-    if ((props.trialIds?.length === 0 || props.trials?.length === 0) && onCancel) onCancel();
-  }, [onCancel, props.trialIds?.length, props.trials?.length]);
+    if (props.trialIds?.length === 0 || props.trials?.length === 0 || props.runs?.length === 0)
+      onCancel?.();
+  }, [onCancel, props.runs?.length, props.trialIds?.length, props.trials?.length]);
 
   return (
     <Modal
@@ -62,7 +73,7 @@ const TrialsComparisonModalComponent: React.FC<ModalProps> = ({
         text: 'Close',
       }}
       title={
-        !Array.isArray(props.experiment)
+        props.experiment !== undefined && !Array.isArray(props.experiment)
           ? `Experiment ${props.experiment.id} Trial Comparison`
           : 'Trial Comparison'
       }
@@ -76,9 +87,10 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
   trialIds,
   trials,
   experiment,
+  runs,
   onUnselect,
 }: TableProps) => {
-  const [trialsDetails, setTrialsDetails] = useState(trials ?? []);
+  const [trialsDetails, setTrialsDetails] = useState<(TrialDetails | FlatRun)[]>(trials ?? []);
   const [selectedHyperparameters, setSelectedHyperparameters] = useState<string[]>([]);
   const [selectedMetrics, setSelectedMetrics] = useState<Metric[]>([]);
   const colSpan = (Array.isArray(experiment) ? experiment.length : trialIds?.length ?? 0) + 1;
@@ -111,11 +123,19 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
     setTrialsDetails(trials);
   }, [trials]);
 
+  useEffect(() => {
+    if (runs === undefined) return;
+    setTrialsDetails(runs);
+  }, [runs]);
+
   const handleTrialUnselect = useCallback((trialId: number) => onUnselect?.(trialId), [onUnselect]);
 
-  const getCheckpointSize = useCallback((trial: TrialDetails) => {
-    const totalBytes = trial.totalCheckpointSize;
-    return humanReadableBytes(totalBytes);
+  const isRun = (trial: TrialDetails | FlatRun): trial is FlatRun => {
+    return 'checkpointSize' in trial;
+  };
+
+  const getCheckpointSize = useCallback((trial: TrialDetails | FlatRun) => {
+    return humanReadableBytes(isRun(trial) ? trial.checkpointSize : trial.totalCheckpointSize);
   }, []);
 
   const totalCheckpointsSizes: Record<string, string> = useMemo(
@@ -132,11 +152,18 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
           (acc, cur) => ({ ...acc, [cur.id]: cur }),
           {} as Record<number, BulkExperimentItem>,
         )
-      : { [experiment.id]: experiment };
+      : experiment
+        ? { [experiment.id]: experiment }
+        : {};
   }, [experiment]);
 
   const experimentIds = useMemo(
-    () => (Array.isArray(experiment) ? experiment.map((exp) => exp.id) : [experiment.id]),
+    () =>
+      Array.isArray(experiment)
+        ? experiment.map((exp) => exp.id)
+        : experiment
+          ? [experiment.id]
+          : [],
     [experiment],
   );
 
@@ -156,8 +183,28 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
 
   const loadableMetrics = useMetricNames(experimentIds, handleMetricNamesError);
   const metrics: Metric[] = useMemo(() => {
-    return Loadable.getOrElse([], loadableMetrics);
-  }, [loadableMetrics]);
+    if (experiment) {
+      return Loadable.getOrElse([], loadableMetrics);
+    }
+    return Object.values(
+      runs.reduce(
+        (comparisonMetrics, run) => {
+          const runMetrics = Object.entries(run.summaryMetrics ?? {});
+          runMetrics.forEach(([metricGroup, metrics]) => {
+            Object.keys(metrics ?? {}).forEach(
+              (metricName) =>
+                (comparisonMetrics[`${metricGroup}.${metricName}`] = {
+                  group: metricGroup,
+                  name: metricName,
+                }),
+            );
+          });
+          return comparisonMetrics;
+        },
+        {} as Record<string, Metric>,
+      ),
+    );
+  }, [experiment, loadableMetrics, runs]);
 
   const prevMetrics = usePrevious(metrics, []);
 
@@ -198,7 +245,7 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
   const hyperparameterNames = useMemo(() => {
     return [
       ...trialsDetails.reduce((hpSet, curTrial) => {
-        Object.keys(curTrial.hyperparameters).forEach((hp) => hpSet.add(hp));
+        Object.keys(curTrial.hyperparameters ?? {}).forEach((hp) => hpSet.add(hp));
         return hpSet;
       }, new Set<string>()),
     ];
@@ -223,10 +270,7 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
 
   return (
     <div className={css.base}>
-      {!(
-        (trialIds === undefined || trialIds.length === 0) &&
-        (trials === undefined || trials.length === 0)
-      ) ? (
+      {!(trialsDetails.length === 0) ? (
         <Spinner center spinning={!isLoaded}>
           <table>
             <thead>
@@ -236,10 +280,14 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
                   <th className={css.trialTag} key={trial.id}>
                     <Row justifyContent="space-between" width="fill">
                       <Label truncate={{ tooltip: true }}>
-                        <Link path={paths.trialDetails(trial.id, trial.experimentId)}>
-                          {Array.isArray(experiment)
+                        <Link
+                          path={paths.trialDetails(
+                            trial.id,
+                            isRun(trial) ? undefined : trial.experimentId,
+                          )}>
+                          {!isRun(trial) && Array.isArray(experiment)
                             ? experimentMap[trial.experimentId]?.name
-                            : `Trial ${trial.id}`}
+                            : `${isRun(trial) ? 'Run' : 'Trial'} ${trial.id}`}
                         </Link>
                       </Label>
                       {onUnselect ? (
@@ -269,7 +317,9 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
                     <th scope="row">Experiment ID</th>
                     {trialsDetails.map((trial) => (
                       <td key={trial.id}>
-                        <Label truncate={{ tooltip: true }}>{trial.experimentId}</Label>
+                        <Label truncate={{ tooltip: true }}>
+                          {isRun(trial) ? trial.experiment?.id : trial.experimentId}
+                        </Label>
                       </td>
                     ))}
                   </tr>
@@ -284,10 +334,12 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
                 </>
               )}
               <tr>
-                <th scope="row">Batched Processed</th>
+                <th scope="row">Batches Processed</th>
                 {trialsDetails.map((trial) => (
                   <td key={trial.id}>
-                    <Label truncate={{ tooltip: true }}>{trial.totalBatchesProcessed}</Label>
+                    <Label truncate={{ tooltip: true }}>
+                      {!isRun(trial) && trial.totalBatchesProcessed}
+                    </Label>
                   </td>
                 ))}
               </tr>
@@ -359,7 +411,7 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
                     <Label truncate={{ tooltip: true }}>{hp}</Label>
                   </th>
                   {trialsDetails.map((trial) => {
-                    const hpValue = trial.hyperparameters[hp];
+                    const hpValue = trial.hyperparameters?.[hp];
                     const stringValue = JSON.stringify(hpValue);
                     return (
                       <td key={trial.id}>
