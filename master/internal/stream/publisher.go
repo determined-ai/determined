@@ -433,12 +433,12 @@ func publishLoop[T stream.Msg](
 				}
 			}
 
-			idToRecordCache := map[int]stream.RecordCache{}
+			idToSaturatedMsg := map[int]*stream.UpsertMsg{}
 			for _, ev := range events {
-				idToRecordCache = publisher.HydrateMsg(ev.After, idToRecordCache)
+				publisher.HydrateMsg(ev.After, idToSaturatedMsg)
 			}
 			// Broadcast all the events.
-			publisher.Broadcast(events, idToRecordCache)
+			publisher.Broadcast(events, idToSaturatedMsg)
 		}
 	}
 }

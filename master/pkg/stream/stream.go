@@ -1,7 +1,6 @@
 package stream
 
 import (
-	"container/list"
 	"database/sql"
 	"encoding/json"
 	"reflect"
@@ -25,13 +24,6 @@ type Msg interface {
 type Event[T Msg] struct {
 	Before T `json:"before"`
 	After  T `json:"after"`
-}
-
-const insertSeq = int64(1)
-
-type RecordCache struct {
-	UpsertMsg *UpsertMsg
-	DeleteMsg *DeleteMsg
 }
 
 // MarshallableMsg is an intermediary message that is ready to be marshaled and broadcast.
@@ -123,8 +115,6 @@ type Subscription[T Msg] struct {
 	permissionFilter func(T) bool
 	// wakeupID prevent duplicate wakeups if multiple events in a single Broadcast are relevant
 	wakeupID int64
-	// reference to itself in the publisher subscriptions linked list for unregister.
-	element *list.Element
 }
 
 // NewSubscription creates a new Subscription to messages of type T.
@@ -146,7 +136,7 @@ func NewSubscription[T Msg](
 func (s *Subscription[T]) Register() {
 	s.Publisher.Lock.Lock()
 	defer s.Publisher.Lock.Unlock()
-	s.element = s.Publisher.Subscriptions.PushBack(s)
+	s.Publisher.Subscriptions.Insert(s)
 }
 
 // Unregister removes a Subscription from its Publisher.
@@ -154,14 +144,14 @@ func (s *Subscription[T]) Unregister() {
 	s.Publisher.Lock.Lock()
 	defer s.Publisher.Lock.Unlock()
 	subscriptions := s.Publisher.Subscriptions
-	subscriptions.Remove(s.element)
+	subscriptions.Remove(s)
 }
 
 // Publisher is responsible for publishing messages of type T
 // to streamers associate with active subscriptions.
 type Publisher[T Msg] struct {
 	Lock          sync.Mutex
-	Subscriptions *list.List
+	Subscriptions set.Set[*Subscription[T]]
 	WakeupID      int64
 	// Hydrate an UpsertMsg.
 	Hydrator func(T) (T, error)
@@ -170,7 +160,7 @@ type Publisher[T Msg] struct {
 // NewPublisher creates a new Publisher for message type T.
 func NewPublisher[T Msg](hydrator func(T) (T, error)) *Publisher[T] {
 	return &Publisher[T]{
-		Subscriptions: list.New(),
+		Subscriptions: set.Set[*Subscription[T]]{},
 		Hydrator:      hydrator,
 	}
 }
@@ -180,14 +170,10 @@ func (p *Publisher[T]) CloseAllStreamers() {
 	p.Lock.Lock()
 	defer p.Lock.Unlock()
 	seenStreamersSet := make(map[*Streamer]struct{})
-	for e := p.Subscriptions.Front(); e != nil; e = e.Next() {
-		if sub, ok := e.Value.(*Subscription[T]); ok {
-			if _, ok := seenStreamersSet[sub.Streamer]; !ok {
-				sub.Streamer.Close()
-				seenStreamersSet[sub.Streamer] = struct{}{}
-			}
-		} else {
-			log.Errorf("got data of type %T but wanted *Subscription[T]", e.Value)
+	for sub := range p.Subscriptions {
+		if _, ok := seenStreamersSet[sub.Streamer]; !ok {
+			sub.Streamer.Close()
+			seenStreamersSet[sub.Streamer] = struct{}{}
 		}
 	}
 
@@ -196,30 +182,26 @@ func (p *Publisher[T]) CloseAllStreamers() {
 
 // HydrateMsg queries the DB by the ID from rawMsg of a upsert or fallin event
 // and get the full record.
-func (p *Publisher[T]) HydrateMsg(rawMsg T, idToRecordCache map[int]RecordCache) map[int]RecordCache {
-	if reflect.ValueOf(rawMsg).IsNil() {
-		return idToRecordCache
+func (p *Publisher[T]) HydrateMsg(msg T, idToSaturatedMsg map[int]*UpsertMsg) {
+	if reflect.ValueOf(msg).IsNil() {
+		return
 	}
 
-	hydratedMsg, err := p.Hydrator(rawMsg)
-	if errors.Is(err, sql.ErrNoRows) {
-		// This id has deleted.
-		idToRecordCache[rawMsg.GetID()] = RecordCache{DeleteMsg: rawMsg.DeleteMsg()}
-		return idToRecordCache
-	} else if err != nil {
+	hydratedMsg, err := p.Hydrator(msg)
+	if err != nil && errors.Is(err, sql.ErrNoRows) {
+		return
+	} else if err != nil && !errors.Is(err, sql.ErrNoRows) {
 		log.Errorf("failed to hydrate message: %s", err.Error())
-		return idToRecordCache
+		return
 	}
 
-	idToRecordCache[rawMsg.GetID()] = RecordCache{UpsertMsg: hydratedMsg.UpsertMsg()}
-
-	return idToRecordCache
+	idToSaturatedMsg[msg.GetID()] = hydratedMsg.UpsertMsg()
 }
 
 // Broadcast receives a list of events, determines if they are
 // applicable to the publisher's subscriptions, and sends
 // appropriate messages to corresponding streamers.
-func (p *Publisher[T]) Broadcast(events []Event[T], idToRecordCache map[int]RecordCache) {
+func (p *Publisher[T]) Broadcast(events []Event[T], idToSaturatedMsg map[int]*UpsertMsg) {
 	p.Lock.Lock()
 	defer p.Lock.Unlock()
 
@@ -228,63 +210,56 @@ func (p *Publisher[T]) Broadcast(events []Event[T], idToRecordCache map[int]Reco
 	wakeupID := p.WakeupID
 
 	// check each event against each subscription
-	for e := p.Subscriptions.Front(); e != nil; e = e.Next() {
-		if sub, ok := e.Value.(*Subscription[T]); ok {
-			userNotKnownIDs := set.New[int]()
-			func() {
-				for _, ev := range events {
-					var msg interface{}
-					switch {
-					case !reflect.ValueOf(ev.After).IsNil() && sub.filter(ev.After) && sub.permissionFilter(ev.After):
-						// update, insert, or fallin: send the record to the client.
-						afterMsg := ev.After
-						isInsert := reflect.ValueOf(ev.Before).IsNil()
-						isFallin := !reflect.ValueOf(ev.Before).IsNil() && (!sub.filter(ev.Before) || !sub.permissionFilter(ev.Before))
+	for sub := range p.Subscriptions {
+		userNotKnownIDs := set.New[int]()
+		func() {
+			for _, ev := range events {
+				var msg interface{}
+				switch {
+				case !reflect.ValueOf(ev.After).IsNil() && sub.filter(ev.After) && sub.permissionFilter(ev.After):
+					// update, insert, or fallin: send the record to the client.
+					afterMsg := ev.After
+					isInsert := reflect.ValueOf(ev.Before).IsNil()
+					isFallin := !reflect.ValueOf(ev.Before).IsNil() && (!sub.filter(ev.Before) || !sub.permissionFilter(ev.Before))
 
-						if recordCache, ok := idToRecordCache[afterMsg.GetID()]; ok && recordCache.UpsertMsg != nil {
-							cachedSeq := recordCache.UpsertMsg.SeqNum()
-							if cachedSeq == afterMsg.SeqNum() {
-								msg = sub.Streamer.PrepareFn(recordCache.UpsertMsg)
-							} else {
-								if isInsert || isFallin {
-									userNotKnownIDs.Insert(afterMsg.GetID())
-								}
-								continue
-							}
+					if saturatedMsg, ok := idToSaturatedMsg[afterMsg.GetID()]; ok {
+						cachedSeq := saturatedMsg.SeqNum()
+						if cachedSeq == afterMsg.SeqNum() {
+							msg = sub.Streamer.PrepareFn(saturatedMsg)
 						} else {
 							if isInsert || isFallin {
 								userNotKnownIDs.Insert(afterMsg.GetID())
 							}
 							continue
 						}
-
-					case !reflect.ValueOf(ev.Before).IsNil() && sub.filter(ev.Before) && sub.permissionFilter(ev.Before):
-						// deletion or fallout: tell the client the record is deleted.
-						beforeMsg := ev.Before
-						if !userNotKnownIDs.Contains(beforeMsg.GetID()) {
-							msg = sub.Streamer.PrepareFn(beforeMsg.DeleteMsg())
-							userNotKnownIDs.Insert(beforeMsg.GetID())
-						} else {
-							continue
+					} else {
+						if isInsert || isFallin {
+							userNotKnownIDs.Insert(afterMsg.GetID())
 						}
-
-					default:
-						// ignore this message
 						continue
 					}
-					// is this the first match for this Subscription during this Broadcast?
-					if sub.wakeupID != wakeupID {
-						sub.wakeupID = wakeupID
-						sub.Streamer.Cond.L.Lock()
-						defer sub.Streamer.Cond.L.Unlock()
-						sub.Streamer.Cond.Signal()
+				case !reflect.ValueOf(ev.Before).IsNil() && sub.filter(ev.Before) && sub.permissionFilter(ev.Before):
+					// deletion or fallout: tell the client the record is deleted.
+					beforeMsg := ev.Before
+					if !userNotKnownIDs.Contains(beforeMsg.GetID()) {
+						msg = sub.Streamer.PrepareFn(beforeMsg.DeleteMsg())
+						userNotKnownIDs.Remove(beforeMsg.GetID())
+					} else {
+						continue
 					}
-					sub.Streamer.Msgs = append(sub.Streamer.Msgs, msg)
+				default:
+					// ignore this message
+					continue
 				}
-			}()
-
-		} else {
-			log.Errorf("got data of type %T but wanted *Subscription[T]", e.Value)
-		}
+				// is this the first match for this Subscription during this Broadcast?
+				if sub.wakeupID != wakeupID {
+					sub.wakeupID = wakeupID
+					sub.Streamer.Cond.L.Lock()
+					defer sub.Streamer.Cond.L.Unlock()
+					sub.Streamer.Cond.Signal()
+				}
+				sub.Streamer.Msgs = append(sub.Streamer.Msgs, msg)
+			}
+		}()
 	}
 }

@@ -176,7 +176,7 @@ func ModelVersionCollectStartupMsgs(
 			query = modelVersionPermFilterQuery(query, accessScopes)
 		}
 		err := query.Scan(ctx, &mvMsgs)
-		if errors.Is(err, sql.ErrNoRows) {
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			log.Errorf("error: %v\n", err)
 			return nil, err
 		}
@@ -268,16 +268,16 @@ func ModelVersionMakePermissionFilter(ctx context.Context, user model.User) (fun
 // its id.
 func ModelVersionMakeHydrator() func(*ModelVersionMsg) (*ModelVersionMsg, error) {
 	return func(msg *ModelVersionMsg) (*ModelVersionMsg, error) {
-		var modelVersionMsg ModelVersionMsg
-		query := db.Bun().NewSelect().Model(&modelVersionMsg).Where("id = ?", msg.GetID()).ExcludeColumn("workspace_id")
-		err := query.Scan(context.Background(), &modelVersionMsg)
-		if errors.Is(err, sql.ErrNoRows) {
+		var saturatedMsg ModelVersionMsg
+		query := db.Bun().NewSelect().Model(&saturatedMsg).Where("id = ?", msg.GetID()).ExcludeColumn("workspace_id")
+		err := query.Scan(context.Background(), &saturatedMsg)
+		if err != nil && errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		} else if err != nil {
 			log.Errorf("error in model version hydrator: %v\n", err)
 			return nil, err
 		}
-		modelVersionMsg.WorkspaceID = msg.WorkspaceID
-		return &modelVersionMsg, nil
+		saturatedMsg.WorkspaceID = msg.WorkspaceID
+		return &saturatedMsg, nil
 	}
 }

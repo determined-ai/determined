@@ -166,7 +166,7 @@ func ProjectCollectStartupMsgs(
 			query = permFilterQuery(query, accessScopes)
 		}
 		err := query.Scan(ctx, &projMsgs)
-		if errors.Is(err, sql.ErrNoRows) {
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			log.Errorf("error: %v\n", err)
 			return nil, err
 		}
@@ -243,15 +243,15 @@ func ProjectMakePermissionFilter(ctx context.Context, user model.User) (func(*Pr
 // its id.
 func ProjectMakeHydrator() func(*ProjectMsg) (*ProjectMsg, error) {
 	return func(msg *ProjectMsg) (*ProjectMsg, error) {
-		var projMsg ProjectMsg
-		query := db.Bun().NewSelect().Model(&projMsg).Where("project_msg.id = ?", msg.GetID())
-		err := query.Scan(context.Background(), &projMsg)
-		if errors.Is(err, sql.ErrNoRows) {
+		var saturatedMsg ProjectMsg
+		query := db.Bun().NewSelect().Model(&saturatedMsg).Where("project_msg.id = ?", msg.GetID())
+		err := query.Scan(context.Background(), &saturatedMsg)
+		if err != nil && errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		} else if err != nil {
 			log.Errorf("error in project hydrator: %v\n", err)
 			return nil, err
 		}
-		return &projMsg, nil
+		return &saturatedMsg, nil
 	}
 }

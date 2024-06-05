@@ -168,7 +168,7 @@ func ModelCollectStartupMsgs(
 			query = permFilterQuery(query, accessScopes)
 		}
 		err := query.Scan(ctx, &modelMsgs)
-		if errors.Is(err, sql.ErrNoRows) {
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			log.Errorf("error: %v\n", err)
 			return nil, err
 		}
@@ -256,15 +256,15 @@ func ModelMakePermissionFilter(ctx context.Context, user model.User) (func(*Mode
 // its id.
 func ModelMakeHydrator() func(*ModelMsg) (*ModelMsg, error) {
 	return func(msg *ModelMsg) (*ModelMsg, error) {
-		var modelMsg ModelMsg
-		query := db.Bun().NewSelect().Model(&modelMsg).Where("id = ?", msg.GetID())
-		err := query.Scan(context.Background(), &modelMsg)
-		if errors.Is(err, sql.ErrNoRows) {
+		var saturatedMsg ModelMsg
+		query := db.Bun().NewSelect().Model(&saturatedMsg).Where("id = ?", msg.GetID())
+		err := query.Scan(context.Background(), &saturatedMsg)
+		if err != nil && errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		} else if err != nil {
 			log.Errorf("error in model hydrator: %v\n", err)
 			return nil, err
 		}
-		return &modelMsg, nil
+		return &saturatedMsg, nil
 	}
 }

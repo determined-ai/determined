@@ -142,34 +142,30 @@ func TestConfigureSubscription(t *testing.T) {
 	publisher := NewPublisher[*TestMsgTypeA](dummyHydrator)
 	sub := NewSubscription[*TestMsgTypeA](streamer, publisher, alwaysTrue[*TestMsgTypeA], dummyFilter)
 	require.NotNil(t, sub.filter, "subscription filter is nil after instantiation")
-	require.Empty(t, publisher.Subscriptions.Len(),
+	require.Empty(t, publisher.Subscriptions,
 		"publisher's subscriptions are non-nil after instantiation")
 
 	sub.Register()
 	require.NotNil(t, sub.filter, "subscription filter is nil after configuration")
-	require.True(t, sub.filter(TestMsgTypeA{}), "set filter does not work")
-	require.Len(t, publisher.Subscriptions.Len(), 1,
+	require.True(t, sub.filter(&TestMsgTypeA{}), "set filter does not work")
+	require.Len(t, publisher.Subscriptions, 1,
 		"publisher's subscriptions are nil after configuration")
-	for e := publisher.Subscriptions.Front(); e != nil; e = e.Next() {
-		if sub, ok := e.Value.(*Subscription[*TestMsgTypeA]); ok {
-			require.True(t, sub.filter(&TestMsgTypeA{}),
-				"publisher's subscription has the wrong filter")
-		} else {
-			t.Errorf("got data of type %T but wanted *Subscription[T]", e.Value)
-		}
+	for sub := range publisher.Subscriptions {
+		require.True(t, sub.filter(&TestMsgTypeA{}),
+			"publisher's subscription has the wrong filter")
 	}
 
-	sub2 := NewSubscription[TestMsgTypeA](streamer, publisher, alwaysTrue[TestMsgTypeA], alwaysFalse[TestMsgTypeA])
+	sub2 := NewSubscription[*TestMsgTypeA](streamer, publisher, alwaysTrue[*TestMsgTypeA], alwaysFalse[*TestMsgTypeA])
 	require.NotNil(t, sub2.filter, "subscription filter is nil after instantiation")
 
 	sub2.Register()
 	require.NotNil(t, sub2.filter, "subscription filter is nil after configuration")
-	require.False(t, sub2.filter(TestMsgTypeA{}), "set filter does not work")
-	require.Len(t, publisher.Subscriptions.Len(), 2,
+	require.False(t, sub2.filter(&TestMsgTypeA{}), "set filter does not work")
+	require.Len(t, publisher.Subscriptions, 2,
 		"publisher's subscriptions are nil after configuration")
 
 	sub.Unregister()
-	require.Len(t, publisher.Subscriptions.Len(), 1,
+	require.Len(t, publisher.Subscriptions, 1,
 		"publisher's still has subscriptions after deletion")
 }
 
@@ -191,9 +187,9 @@ func TestBroadcast(t *testing.T) {
 		ID:  0,
 	}
 	event := Event[*TestMsgTypeA]{After: &afterMsg}
-	idToRecordCache := map[int]RecordCache{}
-	publisher.HydrateMsg(event.After, idToRecordCache)
-	publisher.Broadcast([]Event[*TestMsgTypeA]{event}, idToRecordCache)
+	idToSaturatedMsg := map[int]*UpsertMsg{}
+	publisher.HydrateMsg(event.After, idToSaturatedMsg)
+	publisher.Broadcast([]Event[*TestMsgTypeA]{event}, idToSaturatedMsg)
 
 	require.Len(t, streamer.Msgs, 1, "upsert message was not upserted")
 	upsertMsg, ok := streamer.Msgs[0].(*UpsertMsg)
@@ -205,9 +201,9 @@ func TestBroadcast(t *testing.T) {
 		ID:  1,
 	}
 	event = Event[*TestMsgTypeA]{Before: &beforeMsg}
-	idToRecordCache = map[int]RecordCache{}
-	publisher.HydrateMsg(event.After, idToRecordCache)
-	publisher.Broadcast([]Event[*TestMsgTypeA]{event}, idToRecordCache)
+	idToSaturatedMsg = map[int]*UpsertMsg{}
+	publisher.HydrateMsg(event.After, idToSaturatedMsg)
+	publisher.Broadcast([]Event[*TestMsgTypeA]{event}, idToSaturatedMsg)
 	require.Len(t, streamer.Msgs, 2, "delete message was not upsert")
 	deleteMsg, ok := streamer.Msgs[1].(*DeleteMsg)
 	require.True(t, ok, "message was not a delete type")
@@ -248,9 +244,9 @@ func TestBroadcastWithFilters(t *testing.T) {
 		ID:  0,
 	}
 	event := Event[*TestMsgTypeA]{After: &afterMsg}
-	idToRecordCache := map[int]RecordCache{}
-	publisher.HydrateMsg(event.After, idToRecordCache)
-	publisher.Broadcast([]Event[*TestMsgTypeA]{event}, idToRecordCache)
+	idToSaturatedMsg := map[int]*UpsertMsg{}
+	publisher.HydrateMsg(event.After, idToSaturatedMsg)
+	publisher.Broadcast([]Event[*TestMsgTypeA]{event}, idToSaturatedMsg)
 	require.Zero(t, streamer.Msgs, "picked up message we don't want")
 
 	beforeMsg := TestMsgTypeA{
@@ -258,9 +254,9 @@ func TestBroadcastWithFilters(t *testing.T) {
 		ID:  1,
 	}
 	event = Event[*TestMsgTypeA]{Before: &beforeMsg}
-	idToRecordCache = map[int]RecordCache{}
-	publisher.HydrateMsg(event.After, idToRecordCache)
-	publisher.Broadcast([]Event[*TestMsgTypeA]{event}, idToRecordCache)
+	idToSaturatedMsg = map[int]*UpsertMsg{}
+	publisher.HydrateMsg(event.After, idToSaturatedMsg)
+	publisher.Broadcast([]Event[*TestMsgTypeA]{event}, idToSaturatedMsg)
 	require.Zero(t, streamer.Msgs, "picked up message we don't want")
 
 	afterMsg = TestMsgTypeA{
@@ -268,9 +264,9 @@ func TestBroadcastWithFilters(t *testing.T) {
 		ID:  20,
 	}
 	event = Event[*TestMsgTypeA]{After: &afterMsg}
-	idToRecordCache = map[int]RecordCache{}
-	publisher.HydrateMsg(event.After, idToRecordCache)
-	publisher.Broadcast([]Event[*TestMsgTypeA]{event}, idToRecordCache)
+	idToSaturatedMsg = map[int]*UpsertMsg{}
+	publisher.HydrateMsg(event.After, idToSaturatedMsg)
+	publisher.Broadcast([]Event[*TestMsgTypeA]{event}, idToSaturatedMsg)
 	require.Zero(t, streamer.Msgs, "picked up message we don't want")
 
 	// Msgs sent on publisherTwo should be conditionally sent.
@@ -279,9 +275,9 @@ func TestBroadcastWithFilters(t *testing.T) {
 		ID:  1,
 	}
 	event = Event[*TestMsgTypeA]{After: &afterMsg}
-	idToRecordCache = map[int]RecordCache{}
-	publisher.HydrateMsg(event.After, idToRecordCache)
-	publisherTwo.Broadcast([]Event[*TestMsgTypeA]{event}, idToRecordCache)
+	idToSaturatedMsg = map[int]*UpsertMsg{}
+	publisher.HydrateMsg(event.After, idToSaturatedMsg)
+	publisherTwo.Broadcast([]Event[*TestMsgTypeA]{event}, idToSaturatedMsg)
 	require.Zero(t, streamer.Msgs, "picked up message we don't want")
 
 	beforeMsg = TestMsgTypeA{
@@ -289,9 +285,9 @@ func TestBroadcastWithFilters(t *testing.T) {
 		ID:  2,
 	}
 	event = Event[*TestMsgTypeA]{Before: &beforeMsg}
-	idToRecordCache = map[int]RecordCache{}
-	publisher.HydrateMsg(event.After, idToRecordCache)
-	publisherTwo.Broadcast([]Event[*TestMsgTypeA]{event}, idToRecordCache)
+	idToSaturatedMsg = map[int]*UpsertMsg{}
+	publisher.HydrateMsg(event.After, idToSaturatedMsg)
+	publisherTwo.Broadcast([]Event[*TestMsgTypeA]{event}, idToSaturatedMsg)
 	require.Zero(t, len(streamer.Msgs), "picked up message we don't want")
 
 	afterMsg = TestMsgTypeA{
@@ -299,9 +295,9 @@ func TestBroadcastWithFilters(t *testing.T) {
 		ID:  3,
 	}
 	event = Event[*TestMsgTypeA]{After: &afterMsg}
-	idToRecordCache = map[int]RecordCache{}
-	publisher.HydrateMsg(event.After, idToRecordCache)
-	publisherTwo.Broadcast([]Event[*TestMsgTypeA]{event}, idToRecordCache)
+	idToSaturatedMsg = map[int]*UpsertMsg{}
+	publisher.HydrateMsg(event.After, idToSaturatedMsg)
+	publisherTwo.Broadcast([]Event[*TestMsgTypeA]{event}, idToSaturatedMsg)
 
 	require.Len(t, streamer.Msgs, 1, "upsert message was not upserted")
 	upsertMsg, ok := streamer.Msgs[0].(*UpsertMsg)
@@ -313,9 +309,9 @@ func TestBroadcastWithFilters(t *testing.T) {
 		ID:  4,
 	}
 	event = Event[*TestMsgTypeA]{Before: &beforeMsg}
-	idToRecordCache = map[int]RecordCache{}
-	publisher.HydrateMsg(event.After, idToRecordCache)
-	publisherTwo.Broadcast([]Event[*TestMsgTypeA]{event}, idToRecordCache)
+	idToSaturatedMsg = map[int]*UpsertMsg{}
+	publisher.HydrateMsg(event.After, idToSaturatedMsg)
+	publisherTwo.Broadcast([]Event[*TestMsgTypeA]{event}, idToSaturatedMsg)
 
 	deleteMsg, ok := streamer.Msgs[1].(DeleteMsg)
 	require.Len(t, streamer.Msgs, 2, "upsert message was not upserted")
@@ -328,9 +324,9 @@ func TestBroadcastWithFilters(t *testing.T) {
 		ID:  30,
 	}
 	event = Event[*TestMsgTypeA]{After: &afterMsg}
-	idToRecordCache = map[int]RecordCache{}
-	publisher.HydrateMsg(event.After, idToRecordCache)
-	publisher.Broadcast([]Event[*TestMsgTypeA]{event}, idToRecordCache)
+	idToSaturatedMsg = map[int]*UpsertMsg{}
+	publisher.HydrateMsg(event.After, idToSaturatedMsg)
+	publisher.Broadcast([]Event[*TestMsgTypeA]{event}, idToSaturatedMsg)
 
 	require.Len(t, streamer.Msgs, 2, "upsert message was not upserted")
 }
@@ -368,18 +364,18 @@ func TestBroadcastWithPermissionFilters(t *testing.T) {
 		ID:  1,
 	}
 	event := Event[*TestMsgTypeA]{After: &afterMsg}
-	idToRecordCache := map[int]RecordCache{}
-	publisher.HydrateMsg(event.After, idToRecordCache)
-	publisherTwo.Broadcast([]Event[*TestMsgTypeA]{event}, idToRecordCache)
+	idToSaturatedMsg := map[int]*UpsertMsg{}
+	publisher.HydrateMsg(event.After, idToSaturatedMsg)
+	publisherTwo.Broadcast([]Event[*TestMsgTypeA]{event}, idToSaturatedMsg)
 
 	beforeMsg := TestMsgTypeA{
 		Seq: 2,
 		ID:  2,
 	}
 	event = Event[*TestMsgTypeA]{Before: &beforeMsg}
-	idToRecordCache = map[int]RecordCache{}
-	publisher.HydrateMsg(event.After, idToRecordCache)
-	publisherTwo.Broadcast([]Event[*TestMsgTypeA]{event}, idToRecordCache)
+	idToSaturatedMsg = map[int]*UpsertMsg{}
+	publisher.HydrateMsg(event.After, idToSaturatedMsg)
+	publisherTwo.Broadcast([]Event[*TestMsgTypeA]{event}, idToSaturatedMsg)
 
 	require.Zero(t, len(streamer.Msgs), "picked up message we don't want")
 
@@ -388,9 +384,9 @@ func TestBroadcastWithPermissionFilters(t *testing.T) {
 		ID:  3,
 	}
 	event = Event[*TestMsgTypeA]{After: &afterMsg}
-	idToRecordCache = map[int]RecordCache{}
-	publisher.HydrateMsg(event.After, idToRecordCache)
-	publisherTwo.Broadcast([]Event[*TestMsgTypeA]{event}, idToRecordCache)
+	idToSaturatedMsg = map[int]*UpsertMsg{}
+	publisher.HydrateMsg(event.After, idToSaturatedMsg)
+	publisherTwo.Broadcast([]Event[*TestMsgTypeA]{event}, idToSaturatedMsg)
 
 	require.Len(t, streamer.Msgs, 1, "upsert message was not upserted")
 	upsertMsg, ok := streamer.Msgs[0].(*UpsertMsg)
@@ -402,9 +398,9 @@ func TestBroadcastWithPermissionFilters(t *testing.T) {
 		ID:  4,
 	}
 	event = Event[*TestMsgTypeA]{Before: &beforeMsg}
-	idToRecordCache = map[int]RecordCache{}
-	publisher.HydrateMsg(event.After, idToRecordCache)
-	publisherTwo.Broadcast([]Event[*TestMsgTypeA]{event}, idToRecordCache)
+	idToSaturatedMsg = map[int]*UpsertMsg{}
+	publisher.HydrateMsg(event.After, idToSaturatedMsg)
+	publisherTwo.Broadcast([]Event[*TestMsgTypeA]{event}, idToSaturatedMsg)
 
 	require.Len(t, streamer.Msgs, 2, "upsert message was not upserted")
 	deleteMsg, ok := streamer.Msgs[1].(*DeleteMsg)
@@ -417,9 +413,9 @@ func TestBroadcastWithPermissionFilters(t *testing.T) {
 		ID:  3,
 	}
 	event = Event[*TestMsgTypeA]{After: &afterMsg}
-	idToRecordCache = map[int]RecordCache{}
-	publisher.HydrateMsg(event.After, idToRecordCache)
-	publisher.Broadcast([]Event[*TestMsgTypeA]{event}, idToRecordCache)
+	idToSaturatedMsg = map[int]*UpsertMsg{}
+	publisher.HydrateMsg(event.After, idToSaturatedMsg)
+	publisher.Broadcast([]Event[*TestMsgTypeA]{event}, idToSaturatedMsg)
 
 	require.Len(t, streamer.Msgs, 2, "upsert message was not upserted")
 }
@@ -457,9 +453,9 @@ func TestBroadcastSeparateEvents(t *testing.T) {
 		ID:  0,
 	}
 	event := Event[*TestMsgTypeA]{After: &afterMsg}
-	idToRecordCache := map[int]RecordCache{}
-	publisher.HydrateMsg(event.After, idToRecordCache)
-	publisher.Broadcast([]Event[*TestMsgTypeA]{event}, idToRecordCache)
+	idToSaturatedMsg := map[int]*UpsertMsg{}
+	publisher.HydrateMsg(event.After, idToSaturatedMsg)
+	publisher.Broadcast([]Event[*TestMsgTypeA]{event}, idToSaturatedMsg)
 
 	require.Len(t, streamer.Msgs, 1, "picked up message we don't want")
 	upsertMsg, ok := streamer.Msgs[0].(*UpsertMsg)
@@ -472,9 +468,9 @@ func TestBroadcastSeparateEvents(t *testing.T) {
 	}
 
 	event = Event[*TestMsgTypeA]{Before: &beforeMsg}
-	idToRecordCache = map[int]RecordCache{}
-	publisher.HydrateMsg(event.After, idToRecordCache)
-	publisher.Broadcast([]Event[*TestMsgTypeA]{event}, idToRecordCache)
+	idToSaturatedMsg = map[int]*UpsertMsg{}
+	publisher.HydrateMsg(event.After, idToSaturatedMsg)
+	publisher.Broadcast([]Event[*TestMsgTypeA]{event}, idToSaturatedMsg)
 	require.Len(t, streamer.Msgs, 2, "picked up message we don't want")
 	deleteMsg, ok := streamer.Msgs[1].(*DeleteMsg)
 	require.True(t, ok, "message was not a delete type")
@@ -486,9 +482,9 @@ func TestBroadcastSeparateEvents(t *testing.T) {
 		ID:  2,
 	}
 	eventB := Event[*TestMsgTypeB]{After: &afterMsgB}
-	idToRecordCache = map[int]RecordCache{}
-	publisherTwo.HydrateMsg(eventB.After, idToRecordCache)
-	publisherTwo.Broadcast([]Event[*TestMsgTypeB]{eventB}, idToRecordCache)
+	idToSaturatedMsg = map[int]*UpsertMsg{}
+	publisherTwo.HydrateMsg(eventB.After, idToSaturatedMsg)
+	publisherTwo.Broadcast([]Event[*TestMsgTypeB]{eventB}, idToSaturatedMsg)
 
 	require.Len(t, streamer.Msgs, 2, "picked up message we don't want")
 
@@ -497,9 +493,9 @@ func TestBroadcastSeparateEvents(t *testing.T) {
 		ID:  3,
 	}
 	eventB = Event[*TestMsgTypeB]{Before: &beforeMsgB}
-	idToRecordCache = map[int]RecordCache{}
-	publisherTwo.HydrateMsg(eventB.After, idToRecordCache)
-	publisherTwo.Broadcast([]Event[*TestMsgTypeB]{eventB}, idToRecordCache)
+	idToSaturatedMsg = map[int]*UpsertMsg{}
+	publisherTwo.HydrateMsg(eventB.After, idToSaturatedMsg)
+	publisherTwo.Broadcast([]Event[*TestMsgTypeB]{eventB}, idToSaturatedMsg)
 
 	require.Len(t, streamer.Msgs, 2, "picked up message we don't want")
 
@@ -509,9 +505,9 @@ func TestBroadcastSeparateEvents(t *testing.T) {
 		ID:  4,
 	}
 	eventB = Event[*TestMsgTypeB]{After: &afterMsgB}
-	idToRecordCache = map[int]RecordCache{}
-	publisherThree.HydrateMsg(eventB.After, idToRecordCache)
-	publisherThree.Broadcast([]Event[*TestMsgTypeB]{eventB}, idToRecordCache)
+	idToSaturatedMsg = map[int]*UpsertMsg{}
+	publisherThree.HydrateMsg(eventB.After, idToSaturatedMsg)
+	publisherThree.Broadcast([]Event[*TestMsgTypeB]{eventB}, idToSaturatedMsg)
 
 	require.Len(t, streamer.Msgs, 3, "upsert message was not upserted")
 	upsertMsg, ok = streamer.Msgs[2].(*UpsertMsg)
@@ -523,9 +519,9 @@ func TestBroadcastSeparateEvents(t *testing.T) {
 		ID:  5,
 	}
 	eventB = Event[*TestMsgTypeB]{Before: &beforeMsgB}
-	idToRecordCache = map[int]RecordCache{}
-	publisherThree.HydrateMsg(eventB.After, idToRecordCache)
-	publisherThree.Broadcast([]Event[*TestMsgTypeB]{eventB}, idToRecordCache)
+	idToSaturatedMsg = map[int]*UpsertMsg{}
+	publisherThree.HydrateMsg(eventB.After, idToSaturatedMsg)
+	publisherThree.Broadcast([]Event[*TestMsgTypeB]{eventB}, idToSaturatedMsg)
 
 	require.Len(t, streamer.Msgs, 4, "upsert message was not upserted")
 	deleteMsg, ok = streamer.Msgs[3].(*DeleteMsg)
@@ -614,12 +610,12 @@ func setup(t *testing.T, testEvents []TestEvent, testSubscribers []TestSubscribe
 		subscriber.Register()
 	}
 
-	idToRecordCache := map[int]RecordCache{}
+	idToSaturatedMsg := map[int]*UpsertMsg{}
 	for _, ev := range events {
-		publisher.HydrateMsg(ev.After, idToRecordCache)
+		publisher.HydrateMsg(ev.After, idToSaturatedMsg)
 	}
 
-	publisher.Broadcast(events, idToRecordCache)
+	publisher.Broadcast(events, idToSaturatedMsg)
 }
 
 // Up to four DB events are included in the TestTwoSubscribers. Update on id 0, subscriber1 fallout on id 0,
