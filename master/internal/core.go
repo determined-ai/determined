@@ -1279,12 +1279,11 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 
 	// Add resistance to common HTTP attacks.
 	secureConfig := middleware.SecureConfig{
-		Skipper:               middleware.DefaultSkipper,
-		XSSProtection:         "1; mode=block",
-		ContentTypeNosniff:    "nosniff",
-		XFrameOptions:         "SAMEORIGIN",
-		ReferrerPolicy:        "SAMEORIGIN",
-		ContentSecurityPolicy: "default-src 'self'",
+		Skipper:            middleware.DefaultSkipper,
+		XSSProtection:      "1; mode=block",
+		ContentTypeNosniff: "nosniff",
+		XFrameOptions:      "SAMEORIGIN",
+		ReferrerPolicy:     "same-origin",
 	}
 	if m.config.Security.TLS.Enabled() {
 		secureConfig.HSTSMaxAge = 31536000
