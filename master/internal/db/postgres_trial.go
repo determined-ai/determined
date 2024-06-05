@@ -161,7 +161,7 @@ func BuildRunHParams(runID int, projectID int, hparams map[string]any,
 			valBytes, err := json.Marshal(v)
 			if err != nil {
 				return hparamsModel, projHparamsModel,
-					fmt.Errorf("cannot assign hyperparameter %s, failed to encode type %T", hpName, val)
+					fmt.Errorf("cannot assign hyperparameter %s, failed to encode type %T: %w", hpName, val, err)
 			}
 			valString := string(valBytes)
 			hp.TextVal = &valString
