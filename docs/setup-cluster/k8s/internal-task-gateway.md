@@ -25,7 +25,7 @@ config explanation.
 an optional config.
 Sitting under `internal_task_gateway` key under each resource manager config in master config.
 
-represented by go package `config.InternalTaskGatewayConfig`
+represented by Go package `config.InternalTaskGatewayConfig` probably defined in `master/internal/config/resource_manager_config.go`
 
 ```go
 // InternalTaskGatewayConfig is config for exposing Determined tasks to outside of the cluster.
