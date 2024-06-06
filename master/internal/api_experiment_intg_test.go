@@ -1194,7 +1194,7 @@ func TestSearchExperimentsFilters(t *testing.T) {
 		"ExpHPNotContains": {
 			expectedNumExperiments: 0,
 			filter: `{"filterGroup":{"children":[{"columnName":"hp.foo","kind":"field",` +
-				`"location":"LOCATION_TYPE_HYPERPARAMETERS","operator":"notContains","type":"COLUMN_TYPE_NUMBER","value":1}]` +
+				`"location":"LOCATION_TYPE_HYPERPARAMETERS","operator":"notContains","type":"COLUMN_TYPE_NUMBER","value":1}],` +
 				`"conjunction":"and","kind":"group"},"showArchived":false}`,
 		},
 	}
