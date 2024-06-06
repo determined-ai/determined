@@ -68,7 +68,7 @@ class TrainContext:
         logger.debug(f"_get_last_validation() -> {steps_completed}")
         return steps_completed
 
-    def set_metadata(self, metadata: Dict[str, Any]) -> Dict[str, Any]:
+    def set_metadata(self, metadata: Dict[str, Any]) -> Optional[Dict[str, Any]]:
         """
         Set the metadata on the current run to the Determined master, overwrite
         existing metadata on the current run. Returns the metadata that was set.
@@ -88,7 +88,7 @@ class TrainContext:
         )
         return r.metadata
 
-    def get_metadata(self) -> Dict[str, Any]:
+    def get_metadata(self) -> Optional[Dict[str, Any]]:
         """
         Get the metadata of the current run from the Determined master.
         """
