@@ -76,23 +76,24 @@ class TrainContext:
         The metadata is a dictionary of key-value pairs that can be used for analysis,
         post-processing, or debugging.
         """
-        body = {"metadata": metadata}
-        logger.debug(f"log_metadata({metadata})")
-        r = bindings.post_PostRunMetadata(sess=self._session, run_id=self._trial_id, body=body)
-        if r.status_code != 200:
-            raise RuntimeError(f"failed to set metadata: {r.text}")
-        return r.json()
+        logger.debug(f"set_metadata({metadata})")
+
+        body = bindings.v1PostRunMetadataRequest(
+            metadata={"metadata": metadata}, runId=self._trial_id
+        )
+        r = bindings.post_PostRunMetadata(
+            session=self._session,
+            body=body,
+            runId=self._trial_id,
+        )
+        return r.metadata
 
     def get_metadata(self) -> Dict[str, Any]:
         """
         Get the metadata of the current run from the Determined master.
         """
-        r = bindings.get_GetRunMetadata(sess=self._session, run_id=self._trial_id)
-        if r.status_code == 404:
-            return {}
-        if r.status_code != 200:
-            raise RuntimeError(f"failed to get metadata: {r.text}")
-        return r.json()
+        r = bindings.get_GetRunMetadata(session=self._session, runId=self._trial_id)
+        return r.metadata
 
     def _report_trial_metrics(
         self,
