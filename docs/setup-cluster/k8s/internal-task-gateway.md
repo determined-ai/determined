@@ -1,13 +1,25 @@
 # Internal Task Gateway
 
 
-- limit of port range
+## Controller Support - Requirements
+supported controllers list
 
+### sample setup
+include example doc for deploying a gateway controller
 
 ## Configuration
 
+- total active proxies will be limited by: min(maxItems, portRange) (not exhaustive).
 
-### Master Configuraiton
+### Gateway
+In the CRD `gateways.gateway.networking.k8s.io`
+`schema.openAPIV3Schema.properties.spec.properties.listeners.maxItems` defines a max limit of how many
+listeners can be active on a single gateway. This limit sets the upper bound on how many tasks can be activly proxied.
+
+note k8s valiation complexity cost estimates.
+
+- limit of listeners in gateway CRD setup
+### Master Configuration
 config explanation.
 
 an optional config.
@@ -35,14 +47,17 @@ type InternalTaskGatewayConfig struct {
 
 valid port range starts from 1025 to 65535 inclusive.
 
+- CHECK: might wanna set max aux containers < min(this and port range)
 
-- limit of listeners in gateway CRD setup
-    - max aux containers < min(this and port range)
+## Dev Docs
 - developer docs on how to test and use
-- master config docs
+
+## Release Notes
+- mention docs
+- mention current limits if any
+
+
+## TODO
 - update setup guide on multirm 
-- release note
 - update k8s architecture docs? to include we will deploy services / routes / 
-- include example doc for deploying a gateway controller
 - update Carolina’s bug bash docs to include notebook testing
-- supported controllers list
