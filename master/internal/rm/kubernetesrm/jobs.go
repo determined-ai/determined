@@ -101,6 +101,7 @@ type jobsService struct {
 	configMapInterfaces        map[string]typedV1.ConfigMapInterface
 	jobInterfaces              map[string]typedBatchV1.JobInterface
 	resourceRequestQueue       *requestQueue
+	requestQueueWorkers        []*requestProcessingWorker
 	jobSchedulingStateCallback jobSchedulingStateCallback
 
 	// Internal state. Access should be protected.
@@ -127,12 +128,11 @@ func (j *jobsService) GetAllNamespacesForRM() ([]string, error) {
 	if err != nil {
 		return ns, err
 	}
-	defaultNs := j.namespace
-	if defaultNs == "" {
-		defaultNs = defaultNamespace
+	if j.namespace == "" {
+		j.namespace = defaultNamespace
 	}
-	if !slices.Contains(ns, defaultNs) {
-		ns = append(ns, defaultNs)
+	if !slices.Contains(ns, j.namespace) {
+		ns = append(ns, j.namespace)
 	}
 	return ns, nil
 }
@@ -532,6 +532,19 @@ func (j *jobsService) ReattachJob(msg reattachJobRequest) (reattachJobResponse, 
 	return j.reattachJob(msg)
 }
 
+func (j *jobsService) DefaultNamespace() string {
+	j.mu.Lock()
+	defer j.mu.Unlock()
+
+	return j.namespace
+}
+
+func (j *jobsService) VerifyNamespaceExists(namespaceName string) error {
+	j.mu.Lock()
+	defer j.mu.Unlock()
+	return j.verifyNamespaceExists(namespaceName)
+}
+
 type reattachJobRequest struct {
 	req          *sproto.AllocateRequest
 	numPods      int
@@ -849,7 +862,8 @@ func (j *jobsService) startPreemptionListeners(namespaces []string) error {
 
 func (j *jobsService) startResourceRequestQueue() {
 	failures := make(chan resourcesRequestFailure, 16)
-	j.resourceRequestQueue = startRequestQueue(j.jobInterfaces, j.podInterfaces, j.configMapInterfaces, failures)
+	j.resourceRequestQueue, j.requestQueueWorkers = startRequestQueue(j.jobInterfaces,
+		j.podInterfaces, j.configMapInterfaces, failures)
 	j.wg.Go(func(ctx context.Context) {
 		for {
 			select {
@@ -1815,6 +1829,25 @@ func (j *jobsService) listConfigMapsInAllNamespaces(
 	}
 
 	return res, nil
+}
+
+func (j *jobsService) verifyNamespaceExists(namespaceName string) error {
+	_, err := j.clientSet.CoreV1().Namespaces().Get(context.Background(), namespaceName,
+		metaV1.GetOptions{})
+	if err != nil {
+		return fmt.Errorf("error finding namespace %s: %w", namespaceName, err)
+	}
+
+	j.podInterfaces[namespaceName] = j.clientSet.CoreV1().Pods(namespaceName)
+	j.configMapInterfaces[namespaceName] = j.clientSet.CoreV1().ConfigMaps(namespaceName)
+	j.jobInterfaces[namespaceName] = j.clientSet.BatchV1().Jobs(namespaceName)
+
+	for _, worker := range j.requestQueueWorkers {
+		worker.podInterface = j.podInterfaces
+		worker.configMapInterfaces = j.configMapInterfaces
+		worker.jobInterface = j.jobInterfaces
+	}
+	return nil
 }
 
 func extractTCDs(resourcePoolConfigs []config.ResourcePoolConfig,

@@ -52,6 +52,10 @@ type ResourceManager interface {
 	EnableSlot(*apiv1.EnableSlotRequest) (*apiv1.EnableSlotResponse, error)
 	DisableSlot(*apiv1.DisableSlotRequest) (*apiv1.DisableSlotResponse, error)
 	HealthCheck() []model.ResourceManagerHealth
+
+	// Kubernetes Namespaces.
+	DefaultNamespace(string) (*string, error)
+	VerifyNamespaceExists(string, string) error
 }
 
 // ResourcePoolName holds the name of the resource pool, and describes the input/output
@@ -61,4 +65,11 @@ type ResourcePoolName string
 // String converts a ResourcePoolName to String.
 func (r ResourcePoolName) String() string {
 	return string(r)
+}
+
+// ClusterName is the name of the cluster within which we want to send a request.
+type ClusterName string
+
+func (c ClusterName) String() string {
+	return string(c)
 }
