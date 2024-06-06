@@ -184,11 +184,17 @@ type KubernetesResourceManagerConfig struct {
 // InternalTaskGatewayConfig is config for exposing Determined tasks to outside of the cluster.
 // Useful for multirm when we can only be running in a single cluster.
 type InternalTaskGatewayConfig struct {
-	GatewayName      string `json:"gateway_name"`
+	// GatewayName as defined in the k8s cluster.
+	GatewayName string `json:"gateway_name"`
+	// GatewayNamespace as defined in the k8s cluster.
 	GatewayNamespace string `json:"gateway_namespace"`
 	GatewayIP        string `json:"gateway_ip"`
-	GWPortStart      int    `json:"gateway_port_range_start"`
-	GWPortEnd        int    `json:"gateway_port_range_end"`
+	// GWPortStart denotes the inclusive start of the available and exclusive port range to
+	// MLDE for InternalTaskGateway.
+	GWPortStart int `json:"gateway_port_range_start"`
+	// GWPortEnd denotes the inclusive end of the available and exclusive port range to
+	// MLDE for InternalTaskGateway.
+	GWPortEnd int `json:"gateway_port_range_end"`
 }
 
 var defaultInternalTaskGatewayConfig = InternalTaskGatewayConfig{
