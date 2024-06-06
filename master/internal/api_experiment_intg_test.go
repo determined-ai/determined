@@ -8,6 +8,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"os"
 	"sort"
 	"sync"
 	"testing"
@@ -1176,10 +1177,15 @@ func TestSearchExperimentsFilters(t *testing.T) {
 	_, projectIDInt := createProjectAndWorkspace(ctx, t, api)
 	projectID := int32(projectIDInt)
 
+	// RequireMockExperimentParams expects to be run in the db folder.
+	err := os.Chdir("./db")
+	require.NoError(t, err)
 	paramNames := []string{"foo"}
 	db.RequireMockExperimentParams(t, api.m.db, curUser, db.MockExperimentParams{
 		HParamNames: &paramNames,
 	}, projectIDInt)
+	err = os.Chdir("./..")
+	require.NoError(t, err)
 
 	tests := map[string]struct {
 		expectedNumExperiments int
@@ -1195,12 +1201,12 @@ func TestSearchExperimentsFilters(t *testing.T) {
 
 	for testCase, testVars := range tests {
 		t.Run(testCase, func(t *testing.T) {
-			resp, err := api.SearchExperiments(ctx, &apiv1.SearchExperimentsRequest{
+			resp, requestError := api.SearchExperiments(ctx, &apiv1.SearchExperimentsRequest{
 				ProjectId: &projectID,
 				Filter:    ptrs.Ptr(testVars.filter),
 			})
 
-			require.NoError(t, err)
+			require.NoError(t, requestError)
 			require.Len(t, resp.Experiments, testVars.expectedNumExperiments)
 		})
 	}
