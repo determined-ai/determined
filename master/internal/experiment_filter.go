@@ -156,7 +156,7 @@ func runColumnNameToSQL(columnName string) (string, error) {
 		"checkpointCount":       "e.checkpoint_count",
 		"searcherMetricsVal":    "r.searcher_metric_value",
 		"externalExperimentId":  "e.external_experiment_id",
-		"externalTrialId":       "r.external_run_id",
+		"externalRunId":         "r.external_run_id",
 		"experimentId":          "e.id",
 	}
 	var exists bool

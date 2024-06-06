@@ -60,6 +60,12 @@ var defaultRunsTableColumns = []*projectv1.ProjectColumn{
 		Type:        projectv1.ColumnType_COLUMN_TYPE_DATE,
 	},
 	{
+		Column:      "endTime",
+		DisplayName: "End Time",
+		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
+		Type:        projectv1.ColumnType_COLUMN_TYPE_DATE,
+	},
+	{
 		Column:      "duration",
 		DisplayName: "Duration",
 		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
@@ -116,6 +122,12 @@ var defaultRunsTableColumns = []*projectv1.ProjectColumn{
 	{
 		Column:      "externalExperimentId",
 		DisplayName: "External Experiment ID",
+		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
+		Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
+	},
+	{
+		Column:      "projectId",
+		DisplayName: "Project ID",
 		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
 		Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
 	},
