@@ -131,7 +131,7 @@ func TestSearchRunsSortAndFilterAllDefaultColumns(t *testing.T) {
 		filter := fmt.Sprintf(`{"filterGroup":{"children":[{"columnName":"%s","kind":"field",`+
 			`"location":"%s","operator":"=","type":"%s","value":null}],`+
 			`"conjunction":"and","kind":"group"},"showArchived":false}`, c.Column, c.Location.String(), c.Type.String())
-		resp, err = api.SearchRuns(ctx, &apiv1.SearchRunsRequest{
+		_, err = api.SearchRuns(ctx, &apiv1.SearchRunsRequest{
 			ProjectId: req.ProjectId,
 			Sort:      ptrs.Ptr(c.Column + "=asc"),
 			Filter:    ptrs.Ptr(filter),
@@ -139,7 +139,6 @@ func TestSearchRunsSortAndFilterAllDefaultColumns(t *testing.T) {
 
 		require.NoError(t, err)
 	}
-
 }
 
 func TestSearchRunsSort(t *testing.T) {
