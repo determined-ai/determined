@@ -6,7 +6,7 @@ from typing import Any, Callable, Dict, List, Optional, Set
 import determined as det
 from determined import core, tensorboard
 from determined.common import api, util
-from determined.common.api import errors
+from determined.common.api import bindings, errors
 
 logger = logging.getLogger("determined.core")
 
@@ -68,28 +68,31 @@ class TrainContext:
         logger.debug(f"_get_last_validation() -> {steps_completed}")
         return steps_completed
 
-    def set_metadata(self, metadata: Dict[str, Any]) -> None:
+    def set_metadata(self, metadata: Dict[str, Any]) -> Dict[str, Any]:
         """
-        Set the metadata on the current run to the Determined master.
+        Set the metadata on the current run to the Determined master, overwrite
+        existing metadata on the current run. Returns the metadata that was set.
 
         The metadata is a dictionary of key-value pairs that can be used for analysis,
         post-processing, or debugging.
         """
-
         body = {"metadata": metadata}
         logger.debug(f"log_metadata({metadata})")
-        self._session.post(f"/api/v1/runs/{self._trial_id}/metadata", json=body)
+        r = bindings.post_PostRunMetadata(sess=self._session, run_id=self._trial_id, body=body)
+        if r.status_code != 200:
+            raise RuntimeError(f"failed to set metadata: {r.text}")
+        return r.json()
 
     def get_metadata(self) -> Dict[str, Any]:
         """
         Get the metadata of the current run from the Determined master.
         """
-        r = self._session.get(f"/api/v1/runs/{self._trial_id}/metadata")
+        r = bindings.get_GetRunMetadata(sess=self._session, run_id=self._trial_id)
         if r.status_code == 404:
             return {}
         if r.status_code != 200:
             raise RuntimeError(f"failed to get metadata: {r.text}")
-        return dict(r.json())
+        return r.json()
 
     def _report_trial_metrics(
         self,
