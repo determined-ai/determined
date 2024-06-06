@@ -156,6 +156,8 @@ message PostWorkspaceRequest {
   string default_compute_pool = 14;
   // The name of the default aux pool.
   string default_aux_pool = 15;
+  // The cluster-namespace pairs for workspace-namespace bindings.
+  map<string, string> cluster_namespace_pairs = 16;
 }
 
 // Response to PostWorkspaceRequest.
@@ -166,6 +168,9 @@ message PostWorkspaceResponse {
 
   // The workspace created.
   determined.workspace.v1.Workspace workspace = 1;
+  // The workspace-namespace bindings created.
+  map<string, determined.workspace.v1.WorkspaceNamespace> namespace_bindings =
+      2;
 }
 
 // Request for updating a workspace.
@@ -208,6 +213,50 @@ message DeleteWorkspaceResponse {
 
   // Status of deletion.
   bool completed = 1;
+}
+
+// Request for modifying a namespace binding to a workspace.
+message SetWorkspaceNamespaceBindingsRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "workspace_id" ] }
+  };
+
+  // The id of the workspace.
+  int32 workspace_id = 1;
+  // The cluster-namespace pairs used to create workspace=namespace bindings.
+  map<string, string> cluster_namespace_pairs = 2;
+}
+
+// Response for modify a namespace binding to a workspace.
+message SetWorkspaceNamespaceBindingsResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "namespace_bindings" ] }
+  };
+
+  // The added workspace-namespace bindings.
+  map<string, determined.workspace.v1.WorkspaceNamespace> namespace_bindings =
+      1;
+}
+
+// Request for listing namespaces bound to a workspace.
+message ListWorkspaceNamespaceBindingsRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "id" ] }
+  };
+
+  // The unique id of the workspace.
+  int32 id = 1;
+}
+
+// Response for listing namespaces bound to a workspace.
+message ListWorkspaceNamespaceBindingsResponse {
+  // List of namespaces bound to the workspace.
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "namespace_bindings" ] }
+  };
+
+  // List of workspace-namespace bindings for a given workspace.
+  map<string, string> namespace_bindings = 1;
 }
 
 // Request for archiving a workspace.

@@ -103,10 +103,11 @@ type Master struct {
 	config   *config.Config
 	taskSpec *tasks.TaskSpec
 
-	logs *logger.LogBuffer
-	echo *echo.Echo
-	db   *db.PgDB
-	rm   rm.ResourceManager
+	logs   *logger.LogBuffer
+	echo   *echo.Echo
+	db     *db.PgDB
+	rm     rm.ResourceManager
+	allRms map[string]rm.ResourceManager
 
 	trialLogBackend TrialLogBackend
 	taskLogBackend  TaskLogBackend
@@ -1062,7 +1063,7 @@ func (m *Master) postTaskLogs(c echo.Context) (interface{}, error) {
 	return "", nil
 }
 
-func buildRM(
+func (m *Master) buildRM(
 	db *db.PgDB,
 	echo *echo.Echo,
 	rmConfigs []*config.ResourceManagerWithPoolsConfig,
@@ -1070,17 +1071,33 @@ func buildRM(
 	opts *aproto.MasterSetAgentOptions,
 	cert *tls.Certificate,
 ) (rm.ResourceManager, error) {
+	m.allRms = make(map[string]rm.ResourceManager)
 	if len(rmConfigs) <= 1 {
 		config := rmConfigs[0]
 		switch {
 		case config.ResourceManager.AgentRM != nil:
-			return agentrm.New(db, echo, config, opts, cert)
+			agentRM, err := agentrm.New(db, echo, config, opts, cert)
+			if err != nil {
+				return nil, err
+			}
+			m.allRms[config.ResourceManager.AgentRM.ClusterName] = agentRM
+			return agentRM, nil
 		case config.ResourceManager.KubernetesRM != nil:
-			return kubernetesrm.New(db, config, tcd, opts, cert)
+			kubernetesRM, err := kubernetesrm.New(db, config, tcd, opts, cert)
+			if err != nil {
+				return nil, err
+			}
+			m.allRms[config.ResourceManager.KubernetesRM.ClusterName] = kubernetesRM
+			return kubernetesRM, nil
 		case config.ResourceManager.DispatcherRM != nil,
 			config.ResourceManager.PbsRM != nil:
 			license.RequireLicense("dispatcher resource manager")
-			return dispatcherrm.New(db, echo, config, opts, cert)
+			dispatcherRM, err := dispatcherrm.New(db, echo, config, opts, cert)
+			if err != nil {
+				return nil, err
+			}
+			m.allRms[config.ResourceManager.DispatcherRM.ClusterName] = dispatcherRM
+			return dispatcherRM, nil
 		default:
 			return nil, fmt.Errorf("no expected resource manager config is defined")
 		}
@@ -1090,29 +1107,48 @@ func buildRM(
 	license.RequireLicense("multiple resource managers")
 
 	// Set the default RM name for the multi-rm, from the default RM index.
-	defaultRMName := rmConfigs[config.DefaultRMIndex].ResourceManager.Name()
+	defaultRMName := rmConfigs[config.DefaultRMIndex].ResourceManager.ClusterName()
 	rms := map[string]rm.ResourceManager{}
+	clusterNames := map[string]int{}
 
 	for _, cfg := range rmConfigs {
 		c := cfg.ResourceManager
 		switch {
 		case c.AgentRM != nil:
+			rmClusterName := c.AgentRM.ClusterName
+			if len(rmClusterName) == 0 {
+				return nil, fmt.Errorf("resource manager %s must have a cluster name",
+					c.ClusterName())
+			}
+			clusterNames[rmClusterName] = 0
 			agentRM, err := agentrm.New(db, echo, cfg, opts, cert)
+			rms[rmClusterName] = agentRM
 			if err != nil {
-				return nil, fmt.Errorf("resource manager %s: %w", c.Name(), err)
+				return nil, fmt.Errorf("resource manager %s: %w", c.ClusterName(), err)
 			}
-			rms[c.Name()] = agentRM
+			rms[c.ClusterName()] = agentRM
 		case c.KubernetesRM != nil:
-			k8sRM, err := kubernetesrm.New(db, cfg, tcd, opts, cert)
-			if err != nil {
-				return nil, fmt.Errorf("resource manager %s: %w", c.Name(), err)
+			rmClusterName := c.KubernetesRM.ClusterName
+			if len(rmClusterName) == 0 {
+				return nil, fmt.Errorf("resource manager %s must have a cluster name",
+					c.ClusterName())
 			}
-			rms[c.Name()] = k8sRM
+			clusterNames[rmClusterName] = 0
+			k8sRM, err := kubernetesrm.New(db, cfg, tcd, opts, cert)
+			rms[rmClusterName] = k8sRM
+			if err != nil {
+				return nil, fmt.Errorf("resource manager %s: %w", c.ClusterName(), err)
+			}
+			rms[c.ClusterName()] = k8sRM
 		default:
 			return nil, fmt.Errorf("no expected resource manager config is defined")
 		}
 	}
 
+	if len(clusterNames) != len(rmConfigs) {
+		return nil, fmt.Errorf("resource managers must all have distinct cluster names")
+	}
+	m.allRms = rms
 	return multirm.New(defaultRMName, rms), nil
 }
 
@@ -1328,7 +1364,7 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 	}
 
 	// Resource Manager.
-	if m.rm, err = buildRM(m.db, m.echo, m.config.ResourceManagers(),
+	if m.rm, err = m.buildRM(m.db, m.echo, m.config.ResourceManagers(),
 		&m.config.TaskContainerDefaults,
 		&aproto.MasterSetAgentOptions{
 			MasterInfo:     m.Info(),
