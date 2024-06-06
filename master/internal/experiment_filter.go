@@ -158,6 +158,8 @@ func runColumnNameToSQL(columnName string) (string, error) {
 		"externalExperimentId":  "e.external_experiment_id",
 		"externalRunId":         "r.external_run_id",
 		"experimentId":          "e.id",
+		"isExpMultitrial":       "e.config->'searcher'->>'name' != 'single'",
+		"parentArchived":        "(w.archived OR p.archived)",
 	}
 	var exists bool
 	col, exists := filterExperimentColMap[columnName]

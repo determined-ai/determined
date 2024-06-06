@@ -82,6 +82,66 @@ func TestSearchRunsArchivedExperiment(t *testing.T) {
 	require.Len(t, resp.Runs, 0)
 }
 
+func TestSearchRunsSortAndFilterAllDefaultColumns(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	_, projectIDInt := createProjectAndWorkspace(ctx, t, api)
+	projectID := int32(projectIDInt)
+
+	req := &apiv1.SearchRunsRequest{
+		ProjectId: &projectID,
+		Sort:      ptrs.Ptr("id=asc"),
+	}
+
+	hyperparameters := map[string]any{"global_batch_size": 1, "test1": map[string]any{"test2": 1}}
+
+	exp := createTestExpWithProjectID(t, api, curUser, projectIDInt)
+
+	task := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
+	require.NoError(t, db.AddTask(ctx, task))
+	require.NoError(t, db.AddTrial(ctx, &model.Trial{
+		State:        model.PausedState,
+		ExperimentID: exp.ID,
+		StartTime:    time.Now(),
+		HParams:      hyperparameters,
+	}, task.TaskID))
+
+	resp, err := api.SearchRuns(ctx, req)
+	require.NoError(t, err)
+	require.Len(t, resp.Runs, 1)
+
+	hyperparameters2 := map[string]any{"global_batch_size": 2, "test1": map[string]any{"test2": 5}}
+
+	// Add second experiment
+	exp2 := createTestExpWithProjectID(t, api, curUser, projectIDInt)
+
+	task2 := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
+	require.NoError(t, db.AddTask(ctx, task2))
+	require.NoError(t, db.AddTrial(ctx, &model.Trial{
+		State:        model.PausedState,
+		ExperimentID: exp2.ID,
+		StartTime:    time.Now(),
+		HParams:      hyperparameters2,
+	}, task2.TaskID))
+
+	for _, c := range defaultRunsTableColumns {
+		if c.Column == "tags" {
+			continue
+		}
+
+		filter := fmt.Sprintf(`{"filterGroup":{"children":[{"columnName":"%s","kind":"field",`+
+			`"location":"%s","operator":"=","type":"%s","value":null}],`+
+			`"conjunction":"and","kind":"group"},"showArchived":false}`, c.Column, c.Location.String(), c.Type.String())
+		resp, err = api.SearchRuns(ctx, &apiv1.SearchRunsRequest{
+			ProjectId: req.ProjectId,
+			Sort:      ptrs.Ptr(c.Column + "=asc"),
+			Filter:    ptrs.Ptr(filter),
+		})
+
+		require.NoError(t, err)
+	}
+
+}
+
 func TestSearchRunsSort(t *testing.T) {
 	api, curUser, ctx := setupAPITest(t, nil)
 	_, projectIDInt := createProjectAndWorkspace(ctx, t, api)
