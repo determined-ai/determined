@@ -4,6 +4,7 @@
 package kubernetesrm
 
 import (
+	"context"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -21,6 +22,8 @@ import (
 	k8sV1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/client-go/kubernetes"
+	typedBatchV1 "k8s.io/client-go/kubernetes/typed/batch/v1"
 	typedV1 "k8s.io/client-go/kubernetes/typed/core/v1"
 
 	"github.com/determined-ai/determined/master/internal/config"
@@ -799,6 +802,98 @@ func TestHealthCheck(t *testing.T) {
 	})
 }
 
+func TestVerifyNamespaceExists(t *testing.T) {
+	js := createMockJobsService(nil, device.CPU, false)
+	namespaceName := "validNamespace"
+	nonexistentNamespaceName := "nonExistentNamespace"
+	js.clientSet = setupClientSetForVerifyNamespaceTests(namespaceName, nonexistentNamespaceName)
+	js.podInterfaces = make(map[string]typedV1.PodInterface)
+	js.configMapInterfaces = make(map[string]typedV1.ConfigMapInterface)
+	js.jobInterfaces = make(map[string]typedBatchV1.JobInterface)
+
+	channel := make(chan resourcesRequestFailure, 16)
+	js.requestQueueWorkers = []*requestProcessingWorker{
+		{
+			js.jobInterfaces,
+			js.podInterfaces,
+			js.configMapInterfaces,
+			channel, nil,
+		},
+	}
+
+	// Valid namespace name.
+	err := js.verifyNamespaceExists(namespaceName)
+	require.NoError(t, err)
+
+	invalidNamespace := "invalidNamespace"
+
+	// Verify that the namespace was registered by all necessary components of the request
+	// processing workers.
+	for _, worker := range js.requestQueueWorkers {
+		_, ok := worker.podInterface[namespaceName]
+		_, notOk := worker.podInterface[invalidNamespace]
+		require.True(t, ok)
+		require.True(t, !notOk)
+		_, ok = worker.jobInterface[namespaceName]
+		_, notOk = worker.jobInterface[invalidNamespace]
+		require.True(t, ok)
+		require.True(t, !notOk)
+		_, ok = worker.configMapInterfaces[namespaceName]
+		_, notOk = worker.configMapInterfaces[invalidNamespace]
+		require.True(t, ok)
+		require.True(t, !notOk)
+	}
+
+	// Test that a non-existent namespace name.
+	err = js.verifyNamespaceExists(nonexistentNamespaceName)
+	require.Error(t, err)
+}
+
+func setupClientSetForVerifyNamespaceTests(namespaceName string,
+	invalidNamespaceName string,
+) kubernetes.Interface {
+	jobsClientSet := &mocks.K8sClientsetInterface{}
+	coreV1Interface := &mocks.K8sCoreV1Interface{}
+
+	k8sNamespace := &k8sV1.Namespace{
+		ObjectMeta: metaV1.ObjectMeta{Name: namespaceName},
+	}
+
+	namespaceInterface := &mocks.NamespaceInterface{}
+	namespaceInterface.On("Get", context.Background(), namespaceName, metaV1.GetOptions{}).
+		Return(k8sNamespace, nil).Once()
+
+	namespaceInterface.On("Get", context.Background(), invalidNamespaceName, metaV1.GetOptions{}).
+		Return(nil, fmt.Errorf("namespace does not exist")).Once()
+
+	coreV1Interface.On("Namespaces").Return(namespaceInterface)
+
+	configMapInterace := &mocks.ConfigMapInterface{}
+	coreV1Interface.On("ConfigMaps", namespaceName).Return(configMapInterace)
+
+	podsInterface := &mocks.PodInterface{}
+	coreV1Interface.On("Pods", namespaceName).Return(podsInterface)
+
+	jobsClientSet.On("CoreV1").Return(coreV1Interface)
+
+	batchV1Interface := &mocks.K8sBatchV1Interface{}
+	jobsInterface := &mocks.JobInterface{}
+	batchV1Interface.On("Jobs", namespaceName).Return(jobsInterface)
+
+	jobsClientSet.On("BatchV1").Return(batchV1Interface)
+
+	return jobsClientSet
+}
+
+func TestDefaultNamespace(t *testing.T) {
+	js := createMockJobsService(nil, device.CPU, false)
+
+	newDefaultNamespace := "newNamespace"
+	js.namespace = newDefaultNamespace
+	ns := js.DefaultNamespace()
+	require.Equal(t, newDefaultNamespace, ns)
+}
+
 func TestROCmJobsService(t *testing.T) {
 	tests := []struct {
 		name     string
@@ -1042,7 +1137,7 @@ func createMockJobsService(nodes map[string]*k8sV1.Node, devSlotType device.Type
 	}
 
 	// Create pod service client set.
-	podsClientSet := &mocks.K8sClientsetInterface{}
+	jobsClientSet := &mocks.K8sClientsetInterface{}
 	coreV1Interface := &mocks.K8sCoreV1Interface{}
 	podsInterface := &mocks.PodInterface{}
 	podsInterface.On("List", mock.Anything, mock.Anything).Return(podsList, nil)
@@ -1051,8 +1146,8 @@ func createMockJobsService(nodes map[string]*k8sV1.Node, devSlotType device.Type
 	jobsInterface.On("List", mock.Anything, mock.Anything).Return(jobsList, nil)
 	coreV1Interface.On("Pods", mock.Anything).Return(podsInterface)
 	batchV1Interface.On("Jobs", mock.Anything).Return(jobsInterface)
-	podsClientSet.On("CoreV1").Return(coreV1Interface)
-	podsClientSet.On("BatchV1").Return(batchV1Interface)
+	jobsClientSet.On("CoreV1").Return(coreV1Interface)
+	jobsClientSet.On("BatchV1").Return(batchV1Interface)
 
 	return &jobsService{
 		namespace:           "default",
@@ -1066,6 +1161,6 @@ func createMockJobsService(nodes map[string]*k8sV1.Node, devSlotType device.Type
 			auxNode2Name: cpuResourceRequests,
 		},
 		slotResourceRequests: config.PodSlotResourceRequests{CPU: 2},
-		clientSet:            podsClientSet,
+		clientSet:            jobsClientSet,
 	}
 }

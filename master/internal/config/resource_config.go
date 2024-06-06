@@ -91,7 +91,7 @@ func (r *ResourceConfig) ResolveResource() error {
 	}
 
 	// Default the name but only for the root level field.
-	if r.RootManagerInternal.Name() == "" {
+	if r.RootManagerInternal.ClusterName() == "" {
 		r.RootManagerInternal.setName(DefaultRMName)
 	}
 
@@ -121,7 +121,7 @@ func (r ResourceConfig) Validate() []error {
 				"for additional_resource_managers, you must specify at least one resource pool"))
 		}
 
-		name := r.ResourceManager.Name()
+		name := r.ResourceManager.ClusterName()
 		if _, ok := seenResourceManagerNames[name]; ok {
 			errs = append(errs, fmt.Errorf("resource manager has a duplicate name: %s", name))
 		}

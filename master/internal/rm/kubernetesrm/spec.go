@@ -630,6 +630,7 @@ func (j *job) configureJobSpec(
 	podSpec.Spec.HostNetwork = taskSpec.TaskContainerDefaults.NetworkMode.IsHost()
 	podSpec.Spec.InitContainers = append(podSpec.Spec.InitContainers, determinedInitContainers)
 	podSpec.Spec.RestartPolicy = k8sV1.RestartPolicyNever
+	podSpec.ObjectMeta.Namespace = j.namespace
 
 	return &batchV1.Job{
 		ObjectMeta: podSpec.ObjectMeta,

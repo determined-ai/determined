@@ -577,6 +577,18 @@ func (a *ResourceManager) ValidateResourcePool(name rm.ResourcePoolName) error {
 	return nil
 }
 
+// DefaultNamespace is not supported.
+func (a *ResourceManager) DefaultNamespace(string) (*string, error) {
+	return nil, fmt.Errorf("resource manager type AgentRM does not have a default namespace: %w",
+		rmerrors.ErrNotSupported)
+}
+
+// VerifyNamespaceExists is not supported.
+func (a *ResourceManager) VerifyNamespaceExists(string, string) error {
+	return fmt.Errorf("cannot verify namespace existence with resource manager type AgentRM: %w",
+		rmerrors.ErrNotSupported)
+}
+
 func (a *ResourceManager) createResourcePool(
 	db db.DB, config config.ResourcePoolConfig, cert *tls.Certificate,
 ) (*resourcePool, error) {

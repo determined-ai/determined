@@ -1,7 +1,9 @@
 package multirm
 
 import (
+	"fmt"
 	"os"
+	"strings"
 	"strconv"
 	"testing"
 
@@ -632,6 +634,63 @@ func TestDisableSlot(t *testing.T) {
 	}
 }
 
+func TestVerifyNamespaceExists(t *testing.T) {
+	rm1 := mocks.ResourceManager{}
+	rm1ClusterName := "cluster1"
+	rm2ClusterName := "cluster2"
+	rm2 := mocks.ResourceManager{}
+	mockMultiRM := MultiRMRouter{
+		rms: map[string]rm.ResourceManager{
+			rm1ClusterName: &rm1,
+			rm2ClusterName: &rm2,
+		},
+		syslog: logrus.WithField("component", "resource-router"),
+	}
+
+	validNamespaceName := "good-namespace"
+	invalidNamespaceName := "bad-namespace"
+	cases := []struct {
+		name          string
+		namespaceName string
+		clusterName   string
+		setupMockRM   func()
+		err           error
+	}{
+		{
+			"valid-namespace",
+			validNamespaceName,
+			rm1ClusterName,
+			func() {
+				rm1.On("VerifyNamespaceExists", validNamespaceName, rm1ClusterName).
+					Return(nil).Once()
+			},
+			nil,
+		},
+		{
+			"invalid-namespace-name",
+			invalidNamespaceName,
+			rm2ClusterName,
+			func() {
+				rm2.On("VerifyNamespaceExists", invalidNamespaceName, rm2ClusterName).
+					Return(fmt.Errorf("namespace %s does not exist", invalidNamespaceName)).Once()
+			},
+			fmt.Errorf("namespace %s does not exist", invalidNamespaceName),
+		},
+	}
+
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			test.setupMockRM()
+			err := mockMultiRM.VerifyNamespaceExists(test.namespaceName, test.clusterName)
+			if err == nil {
+				require.Equal(t, test.err, err)
+			} else {
+				require.True(t, strings.Contains(err.Error(), "does not exist"))
+			}
+		})
+	}
+}
+
 func TestGetRMName(t *testing.T) {
 	def := mocks.ResourceManager{}
 	def.On("GetResourcePools").Return(&apiv1.GetResourcePoolsResponse{
@@ -685,6 +744,57 @@ func TestGetRMName(t *testing.T) {
 	}
 }
 
+func TestGetRM(t *testing.T) {
+	defaultRM := &mocks.ResourceManager{}
+	otherRM := &mocks.ResourceManager{}
+
+	m := &MultiRMRouter{
+		defaultRMName: defaultRMName,
+		rms: map[string]rm.ResourceManager{
+			defaultRMName: defaultRM,
+			"rm1":         otherRM,
+		},
+	}
+
+	cases := []struct {
+		name          string
+		rmClusterName string
+		err           error
+		expectedRM    *mocks.ResourceManager
+	}{
+		{
+			"get-default-rm",
+			"",
+			nil,
+			defaultRM,
+		},
+		{
+			"get-existing-rm",
+			"rm1",
+			nil,
+			otherRM,
+		},
+		{
+			"get-nonexistent-rm",
+			"badRM",
+			rmerrors.ErrResourceManagerDNE,
+			nil,
+		},
+	}
+
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			rmToUse, err := m.getRM(test.rmClusterName)
+			require.Equal(t, test.err, err)
+			if test.expectedRM != nil {
+				require.Equal(t, test.expectedRM, rmToUse)
+			} else {
+				require.Equal(t, nil, rmToUse)
+			}
+		})
+	}
+}
+
 func mockRM(poolName rm.ResourcePoolName) *mocks.ResourceManager {
 	mockRM := mocks.ResourceManager{}
 	mockRM.On("GetResourcePools").Return(&apiv1.GetResourcePoolsResponse{
@@ -717,6 +827,7 @@ func mockRM(poolName rm.ResourcePoolName) *mocks.ResourceManager {
 	mockRM.On("GetSlot", mock.Anything).Return(&apiv1.GetSlotResponse{}, nil)
 	mockRM.On("EnableSlot", mock.Anything).Return(&apiv1.EnableSlotResponse{}, nil)
 	mockRM.On("DisableSlot", mock.Anything).Return(&apiv1.DisableSlotResponse{}, nil)
-
+	mockRM.On("DefaultNamespace", mock.Anything).Return("default", nil)
+	mockRM.On("VerifyNamespaceExists", mock.Anything).Return(nil)
 	return &mockRM
 }
