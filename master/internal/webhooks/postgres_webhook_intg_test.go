@@ -67,10 +67,10 @@ func TestWebhooks(t *testing.T) {
 		webhooks, err := GetWebhooks(ctx)
 		webhookFourResponse := getWebhookByID(webhooks, testWebhookFour.ID)
 		require.NoError(t, err, "unable to get webhooks")
-		require.Equal(t, len(webhooks), 2, "did not retrieve two webhooks")
-		require.Equal(t, getWebhookIds(webhooks), expectedWebhookIds,
+		require.Len(t, webhooks, 2, "did not retrieve two webhooks")
+		require.Equal(t, expectedWebhookIds, getWebhookIds(webhooks),
 			"get request returned incorrect webhook Ids")
-		require.Equal(t, len(webhooks), 2, "did not retrieve two webhooks")
+		require.Len(t, webhooks, 2, "did not retrieve two webhooks")
 		require.Equal(t, webhookFourResponse.URL, testWebhookFour.URL,
 			"returned webhook url did not match")
 		require.Equal(t, webhookFourResponse.WebhookType, testWebhookFour.WebhookType,
@@ -90,7 +90,7 @@ func TestWebhooks(t *testing.T) {
 		webhooks, err := GetWebhooks(ctx)
 		require.NoError(t, err)
 		createdWebhook := getWebhookByID(webhooks, testWebhookTwo.ID)
-		require.Equal(t, len(createdWebhook.Triggers), len(testTriggersTwo),
+		require.Len(t, createdWebhook.Triggers, len(testTriggersTwo),
 			"did not retriee correct number of triggers")
 	})
 
@@ -195,7 +195,7 @@ func TestWebhookScanLogs(t *testing.T) {
 		require.NoError(t, manager.scanLogs(ctx, logs))
 
 		require.Equal(t, 1, countEventsForURL(ctx, t, w0.URL))
-		require.Equal(t, 0, countEventsForURL(ctx, t, w1.URL))
+		require.Zero(t, countEventsForURL(ctx, t, w1.URL))
 		require.Equal(t, 1, countEventsForURL(ctx, t, w2.URL))
 	}
 }
@@ -330,7 +330,7 @@ func TestReportExperimentStateChanged(t *testing.T) {
 			State: model.CanceledState,
 		}, config))
 
-		require.Equal(t, 0, countEventsForURL(ctx, t, w.URL))
+		require.Zero(t, countEventsForURL(ctx, t, w.URL))
 	})
 
 	t.Run("no match triggers for event type", func(t *testing.T) {
@@ -344,7 +344,7 @@ func TestReportExperimentStateChanged(t *testing.T) {
 			State: model.CanceledState,
 		}, config))
 
-		require.Equal(t, 0, countEventsForURL(ctx, t, w.URL))
+		require.Zero(t, countEventsForURL(ctx, t, w.URL))
 	})
 
 	clearWebhooksTables(ctx, t)
@@ -489,8 +489,8 @@ func mockWebhook() *Webhook {
 
 func TestDequeueEvents(t *testing.T) {
 	ctx := context.Background()
-	pgDB, close := db.MustResolveTestPostgres(t)
-	defer close()
+	pgDB, closeDB := db.MustResolveTestPostgres(t)
+	defer closeDB()
 	db.MustMigrateTestPostgres(t, pgDB, db.MigrationsFromDB)
 	clearWebhooksTables(ctx, t)
 
@@ -522,7 +522,7 @@ func TestDequeueEvents(t *testing.T) {
 		batch, err := dequeueEvents(ctx, maxEventBatchSize)
 		require.NoError(t, batch.commit())
 		require.NoError(t, err)
-		require.Equal(t, 1, len(batch.events))
+		require.Len(t, batch.events, 1)
 	})
 
 	t.Run("dequeueing and consuming a full batch of events should work", func(t *testing.T) {
@@ -534,7 +534,7 @@ func TestDequeueEvents(t *testing.T) {
 		batch, err := dequeueEvents(ctx, maxEventBatchSize)
 		require.NoError(t, batch.commit())
 		require.NoError(t, err)
-		require.Equal(t, maxEventBatchSize, len(batch.events))
+		require.Len(t, batch.events, maxEventBatchSize)
 	})
 
 	t.Run("rolling back an event should work, and it should be reconsumed", func(t *testing.T) {
@@ -548,7 +548,7 @@ func TestDequeueEvents(t *testing.T) {
 		batch, err = dequeueEvents(ctx, maxEventBatchSize)
 		require.NoError(t, batch.commit())
 		require.NoError(t, err)
-		require.Equal(t, 1, len(batch.events))
+		require.Len(t, batch.events, 1)
 	})
 }
 

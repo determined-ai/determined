@@ -277,40 +277,36 @@ func (s *ScaleDecider) FindInstancesToTerminate() sproto.TerminateDecision {
 
 	// Terminate instances that are idle for a long time.
 	for id := range s.longIdle {
-		if len(s.instances)-len(toTerminate) > s.minInstanceNum {
-			toTerminate[id] = sproto.TerminateLongIdleInstances
-			delete(s.idle, id)
-		} else {
+		if len(s.instances)-len(toTerminate) <= s.minInstanceNum {
 			break
 		}
+		toTerminate[id] = sproto.TerminateLongIdleInstances
+		delete(s.idle, id)
 	}
 
 	// Terminate instances to keep the number of instances less than the desired size.
 	// We start by terminating unfulfilled spot requests, then idle instances, then
 	// disconnected instances, then the most recently provisioned instances
 	for id := range s.pending {
-		if len(s.instances)-len(toTerminate) > s.maxInstanceNum {
-			toTerminate[id] = sproto.InstanceNumberExceedsMaximum
-			delete(s.pending, id)
-		} else {
+		if len(s.instances)-len(toTerminate) <= s.maxInstanceNum {
 			break
 		}
+		toTerminate[id] = sproto.InstanceNumberExceedsMaximum
+		delete(s.pending, id)
 	}
 	for id := range s.idle {
-		if len(s.instances)-len(toTerminate) > s.maxInstanceNum {
-			toTerminate[id] = sproto.InstanceNumberExceedsMaximum
-			delete(s.idle, id)
-		} else {
+		if len(s.instances)-len(toTerminate) <= s.maxInstanceNum {
 			break
 		}
+		toTerminate[id] = sproto.InstanceNumberExceedsMaximum
+		delete(s.idle, id)
 	}
 	for id := range s.disconnected {
-		if len(s.instances)-len(toTerminate) > s.maxInstanceNum {
-			toTerminate[id] = sproto.InstanceNumberExceedsMaximum
-			delete(s.disconnected, id)
-		} else {
+		if len(s.instances)-len(toTerminate) <= s.maxInstanceNum {
 			break
 		}
+		toTerminate[id] = sproto.InstanceNumberExceedsMaximum
+		delete(s.disconnected, id)
 	}
 	instances := make([]*model.Instance, 0, len(s.instances))
 	for _, inst := range s.instances {

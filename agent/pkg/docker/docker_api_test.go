@@ -41,10 +41,8 @@ func TestPullImage(t *testing.T) {
 	cl := docker.NewClient(rawCl)
 
 	t.Log("removing image")
-	switch _, err = rawCl.ImageRemove(ctx, testImage, types.ImageRemoveOptions{Force: true}); {
-	case err == nil, strings.Contains(err.Error(), "No such image"):
-		break
-	case err != nil:
+	_, err = rawCl.ImageRemove(ctx, testImage, types.ImageRemoveOptions{Force: true})
+	if err != nil && !strings.Contains(err.Error(), "No such image") {
 		t.Errorf("removing image: %s", err.Error())
 		return
 	}
@@ -57,7 +55,7 @@ func TestPullImage(t *testing.T) {
 		return
 	}
 	close(evs)
-	if !witnessedPull(t, evs) {
+	if !witnessedPull(evs) {
 		t.Errorf("did not witness expected pull events")
 		return
 	}
@@ -72,7 +70,7 @@ func TestPullImage(t *testing.T) {
 		return
 	}
 	close(evs)
-	if witnessedPull(t, evs) {
+	if witnessedPull(evs) {
 		t.Error("saw pull of pulled image")
 		return
 	}
@@ -90,7 +88,7 @@ func TestPullImage(t *testing.T) {
 		return
 	}
 	close(evs)
-	if !witnessedPull(t, evs) {
+	if !witnessedPull(evs) {
 		t.Errorf("did not witness expected pull events")
 		return
 	}
@@ -98,7 +96,7 @@ func TestPullImage(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func witnessedPull(t *testing.T, events <-chan docker.Event) bool {
+func witnessedPull(events <-chan docker.Event) bool {
 	pullWitnessed, statsBeginWitnessed, statsEndWitnessed := false, false, false
 	for event := range events {
 		switch {
@@ -281,7 +279,6 @@ func TestRunContainerWithService(t *testing.T) {
 		return
 	case exit := <-c.ContainerWaiter.Waiter:
 		require.Equal(t, int64(0), exit.StatusCode)
-		break
 	}
 
 	t.Log("reattached waiters should also exit after being killed")
@@ -291,6 +288,5 @@ func TestRunContainerWithService(t *testing.T) {
 		return
 	case exit := <-reattached.ContainerWaiter.Waiter:
 		require.Equal(t, int64(0), exit.StatusCode)
-		break
 	}
 }

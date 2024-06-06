@@ -54,7 +54,7 @@ func TestSimpleTar(t *testing.T) {
 	require.Equal(t, "bar", string(result))
 	size, err = tr.Read(result)
 	require.Equal(t, io.EOF, err)
-	require.Equal(t, 0, size)
+	require.Zero(t, size)
 	_, err = tr.Next()
 	require.Equal(t, io.EOF, err)
 	require.Equal(t, buf.writeCount, buf.readCount)
@@ -122,7 +122,7 @@ func TestTarDryRun(t *testing.T) {
 
 	_, err = tr.Next()
 	require.Equal(t, io.EOF, err)
-	require.Equal(t, buf.Len(), 0)
+	require.Zero(t, buf.Len())
 	require.Equal(t, buf.writeCount, buf.readCount)
 	require.Equal(t, buf.writeCount, contentLength)
 }

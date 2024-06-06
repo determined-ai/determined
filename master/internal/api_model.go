@@ -229,7 +229,7 @@ func (a *apiServer) GetModelLabels(
 	return &resp, errors.Wrapf(err, "error getting model labels")
 }
 
-func (a *apiServer) clearModelName(ctx context.Context, modelName string) error {
+func (a *apiServer) clearModelName(modelName string) error {
 	if len(strings.ReplaceAll(modelName, " ", "")) == 0 {
 		return status.Errorf(codes.InvalidArgument, "model names cannot be blank")
 	}
@@ -249,7 +249,7 @@ func (a *apiServer) clearModelName(ctx context.Context, modelName string) error 
 func (a *apiServer) PostModel(
 	ctx context.Context, req *apiv1.PostModelRequest,
 ) (*apiv1.PostModelResponse, error) {
-	if err := a.clearModelName(ctx, req.Name); err != nil {
+	if err := a.clearModelName(req.Name); err != nil {
 		return nil, err
 	}
 
@@ -322,7 +322,7 @@ func (a *apiServer) PatchModel(
 	if req.Model.Name != nil && req.Model.Name.Value != currModel.Name {
 		log.Infof("model (%v) name changing from %q to %q",
 			currModel.Id, currModel.Name, req.Model.Name.Value)
-		if err = a.clearModelName(ctx, req.Model.Name.Value); err != nil {
+		if err = a.clearModelName(req.Model.Name.Value); err != nil {
 			return nil, err
 		}
 		madeChanges = true

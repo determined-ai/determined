@@ -3,6 +3,7 @@ package internal
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"github.com/pkg/errors"
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -26,7 +27,7 @@ func (e *internalExperiment) ToV1Job() (*jobv1.Job, error) {
 
 	j := jobv1.Job{
 		JobId:          e.JobID.String(),
-		EntityId:       fmt.Sprint(e.ID),
+		EntityId:       strconv.Itoa(e.ID),
 		Type:           jobv1.Type_TYPE_EXPERIMENT,
 		SubmissionTime: timestamppb.New(e.StartTime),
 		Username:       e.Username,
@@ -50,7 +51,7 @@ func (e *internalExperiment) SetJobPriority(priority int) error {
 	defer e.mu.Unlock()
 
 	if priority < 1 || priority > 99 {
-		return errors.New("priority must be between 1 and 99")
+		return fmt.Errorf("priority must be between 1 and 99")
 	}
 	err := e.setPriority(&priority, true)
 	if err != nil {

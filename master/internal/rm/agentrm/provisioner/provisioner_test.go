@@ -9,9 +9,10 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
+	"github.com/stretchr/testify/require"
 	"gotest.tools/assert"
 
-	. "github.com/determined-ai/determined/master/internal/config/provconfig"
+	"github.com/determined-ai/determined/master/internal/config/provconfig"
 	"github.com/determined-ai/determined/master/internal/rm/agentrm/provisioner/scaledecider"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	errInfo "github.com/determined-ai/determined/master/pkg/errors"
@@ -40,7 +41,7 @@ func newInstanceIDSet(instanceIDs []string) map[string]bool {
 }
 
 type mockConfig struct {
-	*Config
+	*provconfig.Config
 	maxDisconnectPeriod time.Duration
 	instanceType        model.InstanceType
 	initInstances       []*model.Instance
@@ -200,7 +201,7 @@ func TestProvisionerScaleUp(t *testing.T) {
 			NameString: "test.instanceType",
 			NumSlots:   4,
 		},
-		Config: &Config{
+		Config: &provconfig.Config{
 			MaxInstances: 100,
 		},
 		initInstances: []*model.Instance{},
@@ -224,7 +225,7 @@ func TestProvisionerScaleUpNotPastMax(t *testing.T) {
 			NameString: "test.instanceType",
 			NumSlots:   4,
 		},
-		Config: &Config{
+		Config: &provconfig.Config{
 			MaxInstances: 1,
 		},
 		initInstances: []*model.Instance{},
@@ -248,7 +249,7 @@ func TestProvisionerScaleDown(t *testing.T) {
 			NameString: "test.instanceType",
 			NumSlots:   4,
 		},
-		Config: &Config{
+		Config: &provconfig.Config{
 			MaxIdleAgentPeriod: model.Duration(50 * time.Millisecond),
 			MaxInstances:       100,
 		},
@@ -297,7 +298,7 @@ func TestProvisionerNotProvisionExtraInstances(t *testing.T) {
 			NameString: "test.instanceType",
 			NumSlots:   4,
 		},
-		Config: &Config{
+		Config: &provconfig.Config{
 			// If startup period is too short, we might try to re-launch agents.
 			MaxAgentStartingPeriod: model.Duration(1 * time.Hour),
 			// If idle period is too short, this test might do extra terminate/launch cycles.
@@ -367,7 +368,7 @@ func TestProvisionerTerminateDisconnectedInstances(t *testing.T) {
 			NameString: "test.instanceType",
 			NumSlots:   4,
 		},
-		Config: &Config{
+		Config: &provconfig.Config{
 			MaxAgentStartingPeriod: model.Duration(3 * time.Minute),
 			MaxIdleAgentPeriod:     model.Duration(50 * time.Millisecond),
 			MaxInstances:           100,
@@ -407,7 +408,7 @@ func TestProvisionerLaunchFailure(t *testing.T) {
 	timeout := model.Duration(5 * time.Second)
 	setup := &mockConfig{
 		instanceType: TestInstanceType{},
-		Config: &Config{
+		Config: &provconfig.Config{
 			MaxInstances:       2,
 			LaunchErrorTimeout: &timeout,
 		},
@@ -417,14 +418,14 @@ func TestProvisionerLaunchFailure(t *testing.T) {
 
 	mock.provisioner.UpdateScalingInfo(&sproto.ScalingInfo{DesiredNewInstances: 4})
 	mock.provisioner.Provision()
-	assert.Error(t, provisioner.LaunchError(), "failed to launch", "expected error")
+	require.Error(t, provisioner.LaunchError(), "failed to launch", "expected error")
 }
 
 func TestProvisionerLaunchOneAtATime(t *testing.T) {
 	timeout := model.Duration(5 * time.Second)
 	setup := &mockConfig{
 		instanceType: TestInstanceType{},
-		Config: &Config{
+		Config: &provconfig.Config{
 			MaxInstances:       4,
 			LaunchErrorTimeout: &timeout,
 			LaunchErrorRetries: 4,
@@ -453,7 +454,7 @@ func TestProvisionerLaunchOneAtATimeFail(t *testing.T) {
 	timeout := model.Duration(5 * time.Second)
 	setup := &mockConfig{
 		instanceType: TestInstanceType{},
-		Config: &Config{
+		Config: &provconfig.Config{
 			MaxInstances:       4,
 			LaunchErrorTimeout: &timeout,
 			LaunchErrorRetries: 4,
@@ -468,5 +469,5 @@ func TestProvisionerLaunchOneAtATimeFail(t *testing.T) {
 	for i := 0; i <= 4; i++ {
 		mock.provisioner.Provision()
 	}
-	assert.Error(t, provisioner.LaunchError(), "failed to launch", "expected error")
+	require.Error(t, provisioner.LaunchError(), "failed to launch", "expected error")
 }

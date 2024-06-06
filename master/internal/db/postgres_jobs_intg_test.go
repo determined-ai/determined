@@ -16,8 +16,8 @@ import (
 )
 
 func TestAddJob(t *testing.T) {
-	close := setupDBForTest(t)
-	defer close()
+	closeDB := setupDBForTest(t)
+	defer closeDB()
 
 	t.Run("add job", func(t *testing.T) {
 		_, err := createAndAddJob(0)
@@ -41,8 +41,8 @@ func TestAddJob(t *testing.T) {
 }
 
 func TestJobByID(t *testing.T) {
-	close := setupDBForTest(t)
-	defer close()
+	closeDB := setupDBForTest(t)
+	defer closeDB()
 
 	t.Run("add and retrieve job", func(t *testing.T) {
 		// create and send job
@@ -67,8 +67,8 @@ func TestJobByID(t *testing.T) {
 }
 
 func TestUpdateJobPosition(t *testing.T) {
-	close := setupDBForTest(t)
-	defer close()
+	closeDB := setupDBForTest(t)
+	defer closeDB()
 
 	t.Run("update position", func(t *testing.T) {
 		// create and send job
@@ -141,9 +141,9 @@ func TestUpdateJobPosition(t *testing.T) {
 func setupDBForTest(t *testing.T) func() {
 	require.NoError(t, etc.SetRootPath(RootFromDB))
 
-	db, close := MustResolveTestPostgres(t)
+	db, closeDB := MustResolveTestPostgres(t)
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
-	return close
+	return closeDB
 }
 
 func createAndAddJob(pos int64) (model.Job, error) {

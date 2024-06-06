@@ -6,6 +6,7 @@ package internal
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"testing"
 	"time"
 
@@ -53,7 +54,7 @@ func setupProjectAuthZTest(
 	return api, pAuthZ, workspaceAuthZ, curUser, ctx
 }
 
-func createProjectAndWorkspace(ctx context.Context, t *testing.T, api *apiServer) (int, int) {
+func createProjectAndWorkspace(ctx context.Context, t *testing.T, api *apiServer) (wkspID int, projID int) {
 	if isMockAuthZ() {
 		wAuthZ.On("CanCreateWorkspace", mock.Anything, mock.Anything).Return(nil).Once()
 	}
@@ -99,7 +100,7 @@ func TestAuthZCanCreateProject(t *testing.T) {
 		WorkspaceId: int32(workspaceID),
 	})
 	require.Equal(t,
-		apiPkg.NotFoundErrs("workspace", fmt.Sprint(workspaceID), true).Error(), err.Error())
+		apiPkg.NotFoundErrs("workspace", strconv.Itoa(workspaceID), true).Error(), err.Error())
 
 	// Workspace error returns error unmodified.
 	expectedErr := fmt.Errorf("canGetWorkspaceErr")
@@ -176,7 +177,7 @@ func TestAuthZCanMoveProject(t *testing.T) {
 		Return(authz2.PermissionDeniedError{}).Once()
 	_, err = api.MoveProject(ctx, req)
 	require.Equal(t,
-		apiPkg.NotFoundErrs("project", fmt.Sprint(projectID), true).Error(), err.Error())
+		apiPkg.NotFoundErrs("project", strconv.Itoa(int(projectID)), true).Error(), err.Error())
 
 	// Can't view from workspace.
 	projectAuthZ.On("CanGetProject", mock.Anything, mock.Anything, mock.Anything).
@@ -185,7 +186,7 @@ func TestAuthZCanMoveProject(t *testing.T) {
 		Return(authz2.PermissionDeniedError{}).Once()
 	_, err = api.MoveProject(ctx, req)
 	require.Equal(t, apiPkg.NotFoundErrs("workspace",
-		fmt.Sprint(int(fromResp.Workspace.Id)), true).Error(), err.Error())
+		strconv.Itoa(int(fromResp.Workspace.Id)), true).Error(), err.Error())
 
 	// Can't move project.
 	expectedErr := status.Error(codes.PermissionDenied, "canMoveProjectDeny")
@@ -220,7 +221,7 @@ func TestAuthZCanMoveProjectExperiments(t *testing.T) {
 		Return(authz2.PermissionDeniedError{}).Once()
 	_, err := api.MoveExperiment(ctx, req)
 	require.Equal(t,
-		apiPkg.NotFoundErrs("project", fmt.Sprint(srcProjectID), true).Error(), err.Error())
+		apiPkg.NotFoundErrs("project", strconv.Itoa(srcProjectID), true).Error(), err.Error())
 
 	// Can't view destination project
 	authZExp.On("CanGetExperiment", mock.Anything, mock.Anything, mock.Anything).
@@ -231,7 +232,7 @@ func TestAuthZCanMoveProjectExperiments(t *testing.T) {
 		Return(authz2.PermissionDeniedError{}).Once()
 	_, err = api.MoveExperiment(ctx, req)
 	require.Equal(t,
-		apiPkg.NotFoundErrs("project", fmt.Sprint(destProjectID), true).Error(), err.Error())
+		apiPkg.NotFoundErrs("project", strconv.Itoa(destProjectID), true).Error(), err.Error())
 
 	// Can't create experiment in destination project.
 	expectedErr := status.Error(codes.PermissionDenied, "canCreateExperimentDeny")
@@ -331,7 +332,7 @@ func TestAuthZRoutesGetProjectThenAction(t *testing.T) {
 		projectAuthZ.On("CanGetProject", mock.Anything, mock.Anything, mock.Anything).
 			Return(authz2.PermissionDeniedError{}).Once()
 		err = curCase.IDToReqCall(projectID)
-		require.Equal(t, apiPkg.NotFoundErrs("project", fmt.Sprint(projectID), true).Error(),
+		require.Equal(t, apiPkg.NotFoundErrs("project", strconv.Itoa(projectID), true).Error(),
 			err.Error())
 
 		// Error checking if project errors during view check.
@@ -370,7 +371,7 @@ func TestGetProjectByActivity(t *testing.T) {
 	require.NoError(t, err)
 
 	require.NoError(t, err)
-	require.Equal(t, 1, len(resp.Projects))
+	require.Len(t, resp.Projects, 1)
 }
 
 func TestGetProjectColumnsRuns(t *testing.T) {
@@ -408,7 +409,7 @@ func TestGetProjectColumnsRuns(t *testing.T) {
 		Location: projectv1.LocationType_LOCATION_TYPE_RUN_HYPERPARAMETERS,
 		Type:     projectv1.ColumnType_COLUMN_TYPE_NUMBER,
 	}
-	require.Equal(t, getColumnsResp.Columns[len(getColumnsResp.Columns)-1], expectedHparam)
+	require.Equal(t, expectedHparam, getColumnsResp.Columns[len(getColumnsResp.Columns)-1])
 
 	hyperparameters2 := map[string]any{"test1": map[string]any{"test2": "text_val"}}
 	task2 := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
@@ -428,5 +429,5 @@ func TestGetProjectColumnsRuns(t *testing.T) {
 		Location: projectv1.LocationType_LOCATION_TYPE_RUN_HYPERPARAMETERS,
 		Type:     projectv1.ColumnType_COLUMN_TYPE_TEXT,
 	}
-	require.Equal(t, getColumnsResp.Columns[len(getColumnsResp.Columns)-1], expectedHparam)
+	require.Equal(t, expectedHparam, getColumnsResp.Columns[len(getColumnsResp.Columns)-1])
 }

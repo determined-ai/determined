@@ -159,7 +159,7 @@ func testLaunch(
 		ResourcePool:      "default",
 	})
 
-	require.Len(t, rp.GetAllocationSummary(allocationID).Resources, 0)
+	require.Empty(t, rp.GetAllocationSummary(allocationID).Resources)
 	rp.Admit()
 	require.Len(t, rp.GetAllocationSummary(allocationID).Resources, 1)
 
@@ -248,7 +248,7 @@ func TestPodLogStreamerReattach(t *testing.T) {
 	}
 	rp.AllocateRequest(allocateReq)
 
-	require.Len(t, rp.GetAllocationSummary(allocationID).Resources, 0)
+	require.Empty(t, rp.GetAllocationSummary(allocationID).Resources)
 	rp.Admit()
 	require.Len(t, rp.GetAllocationSummary(allocationID).Resources, 1)
 
@@ -298,7 +298,7 @@ func TestPodLogStreamerReattach(t *testing.T) {
 	allocateReq.Restore = true
 	rp.AllocateRequest(allocateReq)
 
-	require.Len(t, rp.GetAllocationSummary(allocationID).Resources, 0)
+	require.Empty(t, rp.GetAllocationSummary(allocationID).Resources)
 	rp.Admit()
 	require.Len(t, rp.GetAllocationSummary(allocationID).Resources, 1)
 
@@ -346,7 +346,7 @@ func TestPodLogStreamer(t *testing.T) {
 		ResourcePool:      "default",
 	})
 
-	require.Len(t, rp.GetAllocationSummary(allocationID).Resources, 0)
+	require.Empty(t, rp.GetAllocationSummary(allocationID).Resources)
 	rp.Admit()
 	require.Len(t, rp.GetAllocationSummary(allocationID).Resources, 1)
 
@@ -413,7 +413,7 @@ func TestKill(t *testing.T) {
 		ResourcePool:      "default",
 	})
 
-	require.Len(t, rp.GetAllocationSummary(allocationID).Resources, 0)
+	require.Empty(t, rp.GetAllocationSummary(allocationID).Resources)
 	rp.Admit()
 	require.Len(t, rp.GetAllocationSummary(allocationID).Resources, 1)
 
@@ -491,7 +491,7 @@ func TestExternalKillWhileQueuedFails(t *testing.T) {
 		ResourcePool:      "default",
 	})
 
-	require.Len(t, rp.GetAllocationSummary(allocationID).Resources, 0)
+	require.Empty(t, rp.GetAllocationSummary(allocationID).Resources)
 	rp.Admit()
 	require.Len(t, rp.GetAllocationSummary(allocationID).Resources, 1)
 
@@ -540,7 +540,6 @@ func TestExternalKillWhileQueuedFails(t *testing.T) {
 		if ok {
 			t.Error("job should've stayed queued")
 			t.FailNow()
-			continue
 		}
 	}
 
@@ -593,7 +592,7 @@ func TestExternalPodDelete(t *testing.T) {
 		ResourcePool:      "default",
 	})
 
-	require.Len(t, rp.GetAllocationSummary(allocationID).Resources, 0)
+	require.Empty(t, rp.GetAllocationSummary(allocationID).Resources)
 	rp.Admit()
 	require.Len(t, rp.GetAllocationSummary(allocationID).Resources, 1)
 
@@ -680,7 +679,7 @@ func TestReattach(t *testing.T) {
 	}
 	rp.AllocateRequest(allocateReq)
 
-	require.Len(t, rp.GetAllocationSummary(allocationID).Resources, 0)
+	require.Empty(t, rp.GetAllocationSummary(allocationID).Resources)
 	rp.Admit()
 	require.Len(t, rp.GetAllocationSummary(allocationID).Resources, 1)
 
@@ -729,7 +728,7 @@ func TestReattach(t *testing.T) {
 	allocateReq.Restore = true
 	rp.AllocateRequest(allocateReq)
 
-	require.Len(t, rp.GetAllocationSummary(allocationID).Resources, 0)
+	require.Empty(t, rp.GetAllocationSummary(allocationID).Resources)
 	rp.Admit()
 	require.Len(t, rp.GetAllocationSummary(allocationID).Resources, 1)
 
@@ -865,7 +864,7 @@ func TestNodeWorkflows(t *testing.T) {
 	rp := newTestResourcePool(j)
 
 	resp := j.getAgents()
-	require.Equal(t, 1, len(resp.Agents))
+	require.Len(t, resp.Agents, 1)
 	nodeID := resp.Agents[0].Id
 
 	_, err := rp.jobsService.DisableAgent(&apiv1.DisableAgentRequest{AgentId: nodeID})
@@ -884,7 +883,7 @@ func TestNodeWorkflows(t *testing.T) {
 		j.mu.Unlock()
 
 		resp = j.GetAgents()
-		require.Equal(t, 1, len(resp.Agents))
+		require.Len(t, resp.Agents, 1)
 		return !resp.Agents[0].Enabled
 	}), "GetAgents didn't say %s is disabled, but we just disabled it", nodeID)
 
@@ -908,7 +907,7 @@ func TestNodeWorkflows(t *testing.T) {
 		ResourcePool:      "default",
 	})
 
-	require.Len(t, rp.GetAllocationSummary(allocationID).Resources, 0)
+	require.Empty(t, rp.GetAllocationSummary(allocationID).Resources)
 	rp.Admit()
 	require.Len(t, rp.GetAllocationSummary(allocationID).Resources, 1)
 
@@ -1025,7 +1024,7 @@ func TestGroupMaxSlots(t *testing.T) {
 		SlotsNeeded:       1,
 		ResourcePool:      "default",
 	})
-	require.Len(t, rp.GetAllocationSummary(allocationID).Resources, 0)
+	require.Empty(t, rp.GetAllocationSummary(allocationID).Resources)
 	rp.Admit()
 	require.Len(t, rp.GetAllocationSummary(allocationID).Resources, 1)
 
@@ -1043,9 +1042,9 @@ func TestGroupMaxSlots(t *testing.T) {
 		SlotsNeeded:       1,
 		ResourcePool:      "default",
 	})
-	require.Len(t, rp.GetAllocationSummary(allocationID2).Resources, 0)
+	require.Empty(t, rp.GetAllocationSummary(allocationID2).Resources)
 	rp.Admit()
-	require.Len(t, rp.GetAllocationSummary(allocationID2).Resources, 0)
+	require.Empty(t, rp.GetAllocationSummary(allocationID2).Resources)
 
 	t.Log("and when the first releases it should get scheduled")
 	rp.ResourcesReleased(sproto.ResourcesReleased{AllocationID: allocationID})

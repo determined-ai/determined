@@ -4,11 +4,11 @@ import (
 	"context"
 	"fmt"
 	"sort"
-
-	"github.com/uptrace/bun"
+	"strconv"
 
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+	"github.com/uptrace/bun"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
@@ -225,7 +225,7 @@ func getRunSummaryMetrics(ctx context.Context, whereClause string, group []int) 
 func (a *apiServer) GetProjectByID(
 	ctx context.Context, id int32, curUser model.User,
 ) (*projectv1.Project, error) {
-	notFoundErr := api.NotFoundErrs("project", fmt.Sprint(id), true)
+	notFoundErr := api.NotFoundErrs("project", strconv.Itoa(int(id)), true)
 	p := &projectv1.Project{}
 	if err := a.m.db.QueryProto("get_project", p, id); errors.Is(err, db.ErrNotFound) {
 		return nil, notFoundErr
@@ -608,7 +608,7 @@ func (a *apiServer) GetProjectNumericMetricsRange(
 		return nil, err
 	}
 	metricsValues, searcherMetricsValue, err := a.getProjectNumericMetricsRange(
-		ctx, *curUser, p)
+		ctx, p)
 	if err != nil {
 		return nil, err
 	}
@@ -634,7 +634,7 @@ func (a *apiServer) GetProjectNumericMetricsRange(
 }
 
 func (a *apiServer) getProjectNumericMetricsRange(
-	ctx context.Context, curUser model.User, project *projectv1.Project,
+	ctx context.Context, project *projectv1.Project,
 ) (map[string]([]float64), []float64, error) {
 	query := db.Bun().NewSelect().Table("trials").Table("experiments").
 		ColumnExpr(`searcher_metric_value_signed = searcher_metric_value AS smaller_is_better`).

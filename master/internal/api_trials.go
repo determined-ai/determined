@@ -6,6 +6,7 @@ import (
 	"math"
 	"slices"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -544,7 +545,7 @@ func (a *apiServer) KillTrial(
 
 	e, ok := experiment.ExperimentRegistry.Load(eID)
 	if !ok {
-		return nil, api.NotFoundErrs("experiment", fmt.Sprint(eID), true)
+		return nil, api.NotFoundErrs("experiment", strconv.Itoa(eID), true)
 	}
 	if err = e.PatchTrialState(s); err != nil {
 		log.WithError(err).Error("error killing trial")
@@ -1313,7 +1314,7 @@ func (a *apiServer) GetCurrentTrialSearcherOperation(
 
 	e, ok := experiment.ExperimentRegistry.Load(eID)
 	if !ok {
-		return nil, api.NotFoundErrs("experiment", fmt.Sprint(eID), true)
+		return nil, api.NotFoundErrs("experiment", strconv.Itoa(eID), true)
 	}
 	resp, err := e.TrialGetSearcherState(rID)
 	if err != nil {
@@ -1344,7 +1345,7 @@ func (a *apiServer) CompleteTrialSearcherValidation(
 
 	e, ok := experiment.ExperimentRegistry.Load(eID)
 	if !ok {
-		return nil, api.NotFoundErrs("experiment", fmt.Sprint(eID), true)
+		return nil, api.NotFoundErrs("experiment", strconv.Itoa(eID), true)
 	}
 
 	msg := experiment.TrialCompleteOperation{
@@ -1372,7 +1373,7 @@ func (a *apiServer) ReportTrialSearcherEarlyExit(
 
 	e, ok := experiment.ExperimentRegistry.Load(eID)
 	if !ok {
-		return nil, api.NotFoundErrs("experiment", fmt.Sprint(eID), true)
+		return nil, api.NotFoundErrs("experiment", strconv.Itoa(eID), true)
 	}
 
 	msg := experiment.UserInitiatedEarlyTrialExit{
@@ -1399,7 +1400,7 @@ func (a *apiServer) ReportTrialProgress(
 
 	e, ok := experiment.ExperimentRegistry.Load(eID)
 	if !ok {
-		return nil, api.NotFoundErrs("experiment", fmt.Sprint(eID), true)
+		return nil, api.NotFoundErrs("experiment", strconv.Itoa(eID), true)
 	}
 
 	msg := experiment.TrialReportProgress{

@@ -3,6 +3,7 @@ package internal
 import (
 	"context"
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/uptrace/bun"
@@ -164,7 +165,7 @@ func (a *apiServer) canCreateGenericTask(ctx context.Context, projectID int) err
 		return err
 	}
 
-	errProjectNotFound := api.NotFoundErrs("project", fmt.Sprint(projectID), true)
+	errProjectNotFound := api.NotFoundErrs("project", strconv.Itoa(projectID), true)
 	p := &projectv1.Project{}
 	// Get project details
 	projectExperimentsQuery := db.Bun().NewSelect().
@@ -231,9 +232,6 @@ func (a *apiServer) CreateGenericTask(
 		}
 
 		forkedConfig = []byte(resp.Config)
-		if err != nil {
-			return nil, err
-		}
 
 		if len(req.ContextDirectory) == 0 {
 			contextDirectoryResp, err := a.GetTaskContextDirectory(ctx, &apiv1.GetTaskContextDirectoryRequest{

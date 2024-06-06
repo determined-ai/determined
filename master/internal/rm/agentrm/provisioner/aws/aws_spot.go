@@ -376,17 +376,17 @@ func (c *awsCluster) attemptToApproximateClockSkew() {
 			c.syslog.Debugf("Successfully cleaned up spot request used to approximate clock skew")
 			break
 		}
-		if awsErr, ok := err.(awserr.Error); ok {
-			c.syslog.
-				Debugf(
-					"AWS error while terminating spot request used for clock skew approximation, %s, %s",
-					awsErr.Code(),
-					awsErr.Message())
-			if awsErr.Code() != "InvalidSpotInstanceRequestID.NotFound" {
-				return
-			}
-		} else {
+
+		awsErr, ok := err.(awserr.Error)
+		if !ok {
 			c.syslog.Errorf("unknown error while launch spot instances, %s", err.Error())
+			return
+		}
+
+		c.syslog.Debugf("AWS error while terminating spot request used for clock skew approximation, %s, %s",
+			awsErr.Code(), awsErr.Message())
+
+		if awsErr.Code() != "InvalidSpotInstanceRequestID.NotFound" {
 			return
 		}
 		time.Sleep(time.Second * 2)
@@ -480,20 +480,17 @@ func (c *awsCluster) createSpotInstanceRequestsCorrectingForClockSkew(
 			return resp, nil
 		}
 
-		if awsErr, ok := err.(awserr.Error); ok {
-			c.syslog.
-				Infof("AWS error while launching spot instances, %s, %s",
-					awsErr.Code(),
-					awsErr.Message())
-			if awsErr.Code() == "InvalidTime" {
-				c.spot.launchTimeOffset += launchTimeOffsetGrowth
-				c.syslog.Infof("AWS error while launch spot instances - InvalidTime. Increasing "+
-					"launchOffset to %s to correct for clock skew",
-					c.spot.launchTimeOffset.String())
-			}
-		} else {
+		awsErr, ok := err.(awserr.Error)
+		if !ok {
 			c.syslog.Errorf("unknown error while launch spot instances, %s", err.Error())
 			return nil, err
+		}
+
+		c.syslog.Infof("AWS error while launching spot instances, %s, %s", awsErr.Code(), awsErr.Message())
+		if awsErr.Code() == "InvalidTime" {
+			c.spot.launchTimeOffset += launchTimeOffsetGrowth
+			c.syslog.Infof("AWS error while launch spot instances - InvalidTime. Increasing "+
+				"launchOffset to %s to correct for clock skew", c.spot.launchTimeOffset.String())
 		}
 	}
 	return nil, err

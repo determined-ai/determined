@@ -26,7 +26,7 @@ func ReplicateClientSideSaltAndHash(password string) string {
 		return password
 	}
 	sum := sha512.Sum512([]byte(clientSidePasswordSalt + password))
-	return fmt.Sprintf("%x", sum)
+	return fmt.Sprintf("%x", sum) // nolint: perfsprint
 }
 
 // SetUserPassword sets the password of the user with the given username to the plaintext string provided.

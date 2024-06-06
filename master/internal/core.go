@@ -75,7 +75,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
-	opentelemetry "github.com/determined-ai/determined/master/pkg/opentelemetry"
+	opentelemetry "github.com/determined-ai/determined/master/pkg/opentelemetry" //nolint:revive
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/master/version"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"

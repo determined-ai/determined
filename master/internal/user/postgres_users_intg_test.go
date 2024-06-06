@@ -122,7 +122,7 @@ func TestUserAddDuplicate(t *testing.T) {
 	require.Equal(t, err, db.ErrDuplicateRecord)
 
 	if pgerr, ok := errors.Cause(err).(*pgconn.PgError); ok {
-		require.Equal(t, pgerr.Code, db.CodeUniqueViolation)
+		require.Equal(t, db.CodeUniqueViolation, pgerr.Code)
 	}
 }
 
@@ -231,7 +231,7 @@ func TestDeleteSessionByToken(t *testing.T) {
 	exists, err := db.Bun().NewSelect().Table("user_sessions").
 		Where("user_id = ?", userID).Exists(context.TODO())
 	require.False(t, exists)
-	require.ErrorAs(t, errors.New("Receive unexpected error: bun: Model(nil)"), &err)
+	require.NoError(t, err)
 }
 
 func TestDeleteSessionByID(t *testing.T) {
@@ -244,7 +244,7 @@ func TestDeleteSessionByID(t *testing.T) {
 	exists, err := db.Bun().NewSelect().Table("user_sessions").
 		Where("user_id = ?", userID).Exists(context.TODO())
 	require.False(t, exists)
-	require.ErrorAs(t, errors.New("Receive unexpected error: bun: Model(nil)"), &err)
+	require.NoError(t, err)
 }
 
 func TestUpdateUsername(t *testing.T) {
@@ -573,5 +573,5 @@ func TestUpdateUserSettings(t *testing.T) {
 
 	out, err = GetUserSetting(context.Background(), u.ID)
 	require.NoError(t, err)
-	require.Len(t, out, 0, "found user web settings when all should be deleted")
+	require.Empty(t, out, "found user web settings when all should be deleted")
 }

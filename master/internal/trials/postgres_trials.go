@@ -165,12 +165,12 @@ func MetricsTimeSeries(trialID int32, startTime time.Time,
 		}
 		var epoch *float64
 		if results[i]["epoch"] != nil {
-			if e, ok := results[i]["epoch"].(float64); ok {
-				epoch = &e
-			} else {
+			e, ok := results[i]["epoch"].(float64)
+			if !ok {
 				return nil, fmt.Errorf(
 					"metric 'epoch' has nonnumeric value reported value='%v'", results[i]["epoch"])
 			}
+			epoch = &e
 		}
 		var endTime time.Time
 		if results[i]["time"] == nil {
@@ -454,8 +454,7 @@ func ProtoGetTrialsPlusTx(
 			"task_ids",
 		}
 		for _, field := range jsonFields {
-			switch sVal := resMap[field].(type) {
-			case string:
+			if sVal, ok := resMap[field].(string); ok {
 				resMap[field] = []byte(sVal)
 			}
 		}

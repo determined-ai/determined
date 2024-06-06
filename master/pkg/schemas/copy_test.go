@@ -113,7 +113,7 @@ func (g *G) Copy() G {
 // Wrong number of outputs is not Copyable.
 // type H int // defined in merge_test.go
 
-func (h H) Copy() (H, H) {
+func (h H) Copy() (h1 H, h2 H) {
 	return H(0), H(1)
 }
 

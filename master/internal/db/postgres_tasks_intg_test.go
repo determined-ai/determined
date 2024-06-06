@@ -34,8 +34,8 @@ import (
 // database are total. We should look into an ORM in the near to medium term future.
 func TestJobTaskAndAllocationAPI(t *testing.T) {
 	ctx := context.Background()
-	pgDB, close := MustResolveTestPostgres(t)
-	defer close()
+	pgDB, closeDB := MustResolveTestPostgres(t)
+	defer closeDB()
 	MustMigrateTestPostgres(t, pgDB, MigrationsFromDB)
 
 	db := SingleDB()
@@ -131,8 +131,8 @@ func TestJobTaskAndAllocationAPI(t *testing.T) {
 
 func TestRecordAndEndTaskStats(t *testing.T) {
 	ctx := context.Background()
-	pgDB, close := MustResolveTestPostgres(t)
-	defer close()
+	pgDB, closeDB := MustResolveTestPostgres(t)
+	defer closeDB()
 	MustMigrateTestPostgres(t, pgDB, MigrationsFromDB)
 
 	tID := model.NewTaskID()
@@ -181,8 +181,8 @@ func TestRecordAndEndTaskStats(t *testing.T) {
 
 func TestNonExperimentTasksContextDirectory(t *testing.T) {
 	ctx := context.Background()
-	pgDB, close := MustResolveTestPostgres(t)
-	defer close()
+	pgDB, closeDB := MustResolveTestPostgres(t)
+	defer closeDB()
 	MustMigrateTestPostgres(t, pgDB, MigrationsFromDB)
 
 	// Task doesn't exist.
@@ -201,7 +201,7 @@ func TestNonExperimentTasksContextDirectory(t *testing.T) {
 
 	dir, err := NonExperimentTasksContextDirectory(ctx, tID)
 	require.NoError(t, err)
-	require.Len(t, dir, 0)
+	require.Empty(t, dir)
 
 	// Non nil context directory.
 	tID = model.NewTaskID()
@@ -221,8 +221,8 @@ func TestNonExperimentTasksContextDirectory(t *testing.T) {
 
 func TestAllocationState(t *testing.T) {
 	ctx := context.Background()
-	pgDB, close := MustResolveTestPostgres(t)
-	defer close()
+	pgDB, closeDB := MustResolveTestPostgres(t)
+	defer closeDB()
 	MustMigrateTestPostgres(t, pgDB, MigrationsFromDB)
 
 	db := SingleDB()
@@ -272,7 +272,7 @@ func TestAllocationState(t *testing.T) {
 			require.NoError(t, db.QueryProto("get_task", tOut, tID), "failed to get task")
 
 			// Ensure our state is the same as allocation.
-			require.Equal(t, len(tOut.Allocations), 1, "failed to get exactly 1 allocation")
+			require.Len(t, tOut.Allocations, 1, "failed to get exactly 1 allocation")
 			aOut := tOut.Allocations[0]
 
 			if slices.Contains([]model.AllocationState{
@@ -291,8 +291,8 @@ func TestAllocationState(t *testing.T) {
 }
 
 func TestExhaustiveEnums(t *testing.T) {
-	pgDB, close := MustResolveTestPostgres(t)
-	defer close()
+	pgDB, closeDB := MustResolveTestPostgres(t)
+	defer closeDB()
 	MustMigrateTestPostgres(t, pgDB, MigrationsFromDB)
 
 	type check struct {
@@ -387,8 +387,8 @@ func TestExhaustiveEnums(t *testing.T) {
 
 func TestAddTask(t *testing.T) {
 	ctx := context.Background()
-	pgDB, close := MustResolveTestPostgres(t)
-	defer close()
+	pgDB, closeDB := MustResolveTestPostgres(t)
+	defer closeDB()
 	MustMigrateTestPostgres(t, pgDB, MigrationsFromDB)
 
 	db := SingleDB()
@@ -416,8 +416,8 @@ func TestAddTask(t *testing.T) {
 
 func TestTaskCompleted(t *testing.T) {
 	ctx := context.Background()
-	pgDB, close := MustResolveTestPostgres(t)
-	defer close()
+	pgDB, closeDB := MustResolveTestPostgres(t)
+	defer closeDB()
 	MustMigrateTestPostgres(t, pgDB, MigrationsFromDB)
 
 	db := SingleDB()
@@ -438,8 +438,8 @@ func TestTaskCompleted(t *testing.T) {
 
 func TestAddAllocation(t *testing.T) {
 	ctx := context.Background()
-	pgDB, close := MustResolveTestPostgres(t)
-	defer close()
+	pgDB, closeDB := MustResolveTestPostgres(t)
+	defer closeDB()
 	MustMigrateTestPostgres(t, pgDB, MigrationsFromDB)
 
 	db := SingleDB()
@@ -465,8 +465,8 @@ func TestAddAllocation(t *testing.T) {
 
 func TestAddAllocationExitStatus(t *testing.T) {
 	ctx := context.Background()
-	pgDB, close := MustResolveTestPostgres(t)
-	defer close()
+	pgDB, closeDB := MustResolveTestPostgres(t)
+	defer closeDB()
 	MustMigrateTestPostgres(t, pgDB, MigrationsFromDB)
 
 	db := SingleDB()
@@ -494,8 +494,8 @@ func TestAddAllocationExitStatus(t *testing.T) {
 
 func TestCompleteAllocation(t *testing.T) {
 	ctx := context.Background()
-	pgDB, close := MustResolveTestPostgres(t)
-	defer close()
+	pgDB, closeDB := MustResolveTestPostgres(t)
+	defer closeDB()
 	MustMigrateTestPostgres(t, pgDB, MigrationsFromDB)
 
 	db := SingleDB()
@@ -514,8 +514,8 @@ func TestCompleteAllocation(t *testing.T) {
 }
 
 func TestCompleteAllocationTelemetry(t *testing.T) {
-	pgDB, close := MustResolveTestPostgres(t)
-	defer close()
+	pgDB, closeDB := MustResolveTestPostgres(t)
+	defer closeDB()
 	MustMigrateTestPostgres(t, pgDB, MigrationsFromDB)
 
 	db := SingleDB()
@@ -531,8 +531,8 @@ func TestCompleteAllocationTelemetry(t *testing.T) {
 }
 
 func TestAllocationByID(t *testing.T) {
-	pgDB, close := MustResolveTestPostgres(t)
-	defer close()
+	pgDB, closeDB := MustResolveTestPostgres(t)
+	defer closeDB()
 	MustMigrateTestPostgres(t, pgDB, MigrationsFromDB)
 
 	db := SingleDB()
@@ -547,8 +547,8 @@ func TestAllocationByID(t *testing.T) {
 
 func TestAllocationSessionFlow(t *testing.T) {
 	ctx := context.Background()
-	pgDB, close := MustResolveTestPostgres(t)
-	defer close()
+	pgDB, closeDB := MustResolveTestPostgres(t)
+	defer closeDB()
 	MustMigrateTestPostgres(t, pgDB, MigrationsFromDB)
 
 	db := SingleDB()
@@ -561,7 +561,7 @@ func TestAllocationSessionFlow(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, tok)
 
-	as, err := allocationSessionByID(t, aIn.AllocationID)
+	as, err := allocationSessionByID(aIn.AllocationID)
 	require.NoError(t, err)
 	require.Equal(t, uIn.ID, *as.OwnerID)
 
@@ -577,15 +577,15 @@ func TestAllocationSessionFlow(t *testing.T) {
 	err = DeleteAllocationSession(ctx, aIn.AllocationID)
 	require.NoError(t, err)
 
-	as, err = allocationSessionByID(t, aIn.AllocationID)
+	as, err = allocationSessionByID(aIn.AllocationID)
 	require.ErrorContains(t, err, "no rows in result set")
 	require.Nil(t, as)
 }
 
 func TestUpdateAllocation(t *testing.T) {
 	ctx := context.Background()
-	pgDB, close := MustResolveTestPostgres(t)
-	defer close()
+	pgDB, closeDB := MustResolveTestPostgres(t)
+	defer closeDB()
 	MustMigrateTestPostgres(t, pgDB, MigrationsFromDB)
 
 	db := SingleDB()
@@ -627,8 +627,8 @@ func TestUpdateAllocation(t *testing.T) {
 
 func TestCloseOpenAllocations(t *testing.T) {
 	ctx := context.Background()
-	pgDB, close := MustResolveTestPostgres(t)
-	defer close()
+	pgDB, closeDB := MustResolveTestPostgres(t)
+	defer closeDB()
 	MustMigrateTestPostgres(t, pgDB, MigrationsFromDB)
 
 	db := SingleDB()
@@ -667,8 +667,8 @@ func TestCloseOpenAllocations(t *testing.T) {
 }
 
 func TestTaskLogsFlow(t *testing.T) {
-	pgDB, close := MustResolveTestPostgres(t)
-	defer close()
+	pgDB, closeDB := MustResolveTestPostgres(t)
+	defer closeDB()
 	MustMigrateTestPostgres(t, pgDB, MigrationsFromDB)
 
 	db := SingleDB()
@@ -701,7 +701,7 @@ func TestTaskLogsFlow(t *testing.T) {
 		Values:    []string{"testing-agent-1"},
 	}})
 	require.NoError(t, err)
-	require.Equal(t, count, 0)
+	require.Zero(t, count)
 
 	// Try adding the rest of the Task logs, and count 2 for t1In.TaskID, and 1 for t2In.TaskID
 	err = db.AddTaskLogs([]*model.TaskLog{taskLog2, taskLog3})
@@ -709,11 +709,11 @@ func TestTaskLogsFlow(t *testing.T) {
 
 	count, err = db.TaskLogsCount(t1In.TaskID, []api.Filter{})
 	require.NoError(t, err)
-	require.Equal(t, count, 2)
+	require.Equal(t, 2, count)
 
 	count, err = db.TaskLogsCount(t2In.TaskID, []api.Filter{})
 	require.NoError(t, err)
-	require.Equal(t, count, 1)
+	require.Equal(t, 1, count)
 
 	// Test TaskLogsFields.
 	resp, err := db.TaskLogsFields(t1In.TaskID)
@@ -725,14 +725,14 @@ func TestTaskLogsFlow(t *testing.T) {
 	// Get 1 task log matching t1In task ID.
 	logs, _, err := db.TaskLogs(t1In.TaskID, 1, []api.Filter{}, apiv1.OrderBy_ORDER_BY_UNSPECIFIED, nil)
 	require.NoError(t, err)
-	require.Equal(t, 1, len(logs))
+	require.Len(t, logs, 1)
 	require.Equal(t, logs[0].TaskID, string(t1In.TaskID))
 	require.Contains(t, []string{"1", "2"}, *logs[0].ContainerID)
 
 	// Get up to 5 tasks matching t2In task ID -- receive only 2.
 	logs, _, err = db.TaskLogs(t1In.TaskID, 5, []api.Filter{}, apiv1.OrderBy_ORDER_BY_UNSPECIFIED, nil)
 	require.NoError(t, err)
-	require.Equal(t, 2, len(logs))
+	require.Len(t, logs, 2)
 
 	// Test DeleteTaskLogs.
 	err = db.DeleteTaskLogs([]model.TaskID{t2In.TaskID})
@@ -740,12 +740,12 @@ func TestTaskLogsFlow(t *testing.T) {
 
 	count, err = db.TaskLogsCount(t2In.TaskID, []api.Filter{})
 	require.NoError(t, err)
-	require.Equal(t, 0, count)
+	require.Zero(t, count)
 }
 
 func RequireMockTaskLog(t *testing.T, db *PgDB, tID model.TaskID, suffix string) *model.TaskLog {
 	mockA := RequireMockAllocation(t, db, tID)
-	agentID := fmt.Sprintf("testing-agent-%s", suffix)
+	agentID := "testing-agent-" + suffix
 	containerID := suffix
 	log := &model.TaskLog{
 		TaskID:       string(tID),
@@ -757,7 +757,7 @@ func RequireMockTaskLog(t *testing.T, db *PgDB, tID model.TaskID, suffix string)
 	return log
 }
 
-func allocationSessionByID(t *testing.T, aID model.AllocationID) (*model.AllocationSession, error) {
+func allocationSessionByID(aID model.AllocationID) (*model.AllocationSession, error) {
 	var res model.AllocationSession
 	if err := Bun().NewSelect().Table("allocation_sessions").
 		Where("allocation_id = ?", aID).Scan(context.TODO(), &res); err != nil {
