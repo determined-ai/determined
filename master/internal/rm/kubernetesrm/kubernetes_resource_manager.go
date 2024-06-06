@@ -122,6 +122,9 @@ func New(
 		}
 
 		poolConfig := poolConfig
+		if k.config.DefaultNamespace == "" {
+			k.config.DefaultNamespace = defaultNamespace
+		}
 		rp := newResourcePool(maxSlotsPerPod, &poolConfig, k.jobsService, k.db, k.config.DefaultNamespace, k.config.Name)
 		go func() {
 			t := time.NewTicker(podSubmissionInterval)
@@ -374,6 +377,28 @@ func (k *ResourceManager) ValidateResources(
 
 	err = rp.ValidateResources(msg)
 	return nil, err
+}
+
+// DefaultNamespace implements rm.ResourceManager.
+func (k *ResourceManager) DefaultNamespace(clusterName string) (*string, error) {
+	if clusterName != k.config.ClusterName {
+		return nil, fmt.Errorf("invalid cluster name %s", clusterName)
+	}
+	namespace := k.jobsService.DefaultNamespace()
+	return &namespace, nil
+}
+
+// VerifyNamespaceExists implements rm.ResourceManager.
+func (k *ResourceManager) VerifyNamespaceExists(namespaceName string, clusterName string) error {
+	configClusterName := rm.ClusterName(k.config.ClusterName)
+	if configClusterName != rm.ClusterName(clusterName) {
+		return fmt.Errorf("invalid cluster name %s", clusterName)
+	}
+	err := k.jobsService.VerifyNamespaceExists(namespaceName)
+	if err != nil {
+		return fmt.Errorf("error verifying namespace existence %s: %w", namespaceName, err)
+	}
+	return nil
 }
 
 // getResourcePoolRef gets an actor ref to a resource pool by name.

@@ -3,7 +3,7 @@ import http
 import os
 import tempfile
 import uuid
-from typing import Generator, List, Optional
+from typing import Generator, List, Optional, Tuple
 
 import pytest
 
@@ -588,3 +588,202 @@ def test_workspaceid_set() -> None:
 
         cmd = bindings.get_GetCommand(admin_session, commandId=cmd.id).command
         assert cmd.workspaceId == workspace.id
+
+
+@pytest.mark.e2e_gpu
+@pytest.mark.e2e_multi_k8s
+def test_set_workspace_namespace_bindings(
+    is_multirm_cluster: bool, namespaces_created: Tuple[str, str]
+) -> None:
+    # Create a workspace.
+    sess = api_utils.admin_session()
+    w_name = uuid.uuid4().hex[:8]
+    detproc.check_call(sess, ["det", "w", "create", w_name])
+
+    bound_to_namespace = "bound to namespace"
+    namespace, _ = namespaces_created
+
+    # Valid namespace name, invalid cluster name.
+    nonexistent_cluster = "nonexistentrm"
+    detproc.check_error(
+        sess,
+        [
+            "det",
+            "w",
+            "bindings",
+            "set",
+            w_name,
+            "--cluster-name",
+            nonexistent_cluster,
+            "--namespace",
+            namespace,
+        ],
+        "no resource manager with cluster name",
+    )
+
+    detproc.check_error(
+        sess,
+        [
+            "det",
+            "w",
+            "create",
+            w_name,
+            "--cluster-name",
+            nonexistent_cluster,
+            "--namespace",
+            namespace,
+        ],
+        "no resource manager with cluster name",
+    )
+
+    # Valid namespace name, no cluster name. (Should fail for multirm but work for single
+    # kubernetes rm).
+    if is_multirm_cluster:
+        detproc.check_error(
+            sess,
+            ["det", "w", "bindings", "set", w_name, "--namespace", namespace],
+            "must specify a cluster name",
+        )
+
+        detproc.check_error(
+            sess,
+            ["det", "w", "create", w_name, "--namespace", namespace],
+            "must specify a cluster name",
+        )
+    else:
+        output = detproc.check_output(
+            sess,
+            ["det", "w", "bindings", "set", w_name, "--namespace", namespace],
+        )
+        assert bound_to_namespace in output
+
+        w_name = uuid.uuid4().hex[:8]
+        output = detproc.check_output(
+            sess,
+            ["det", "w", "create", w_name, "--namespace", namespace],
+        )
+        assert bound_to_namespace in output
+
+    # MultiRM: Valid cluster name, no namespace name.
+    if is_multirm_cluster:
+        w_name = uuid.uuid4().hex[:8]
+        detproc.check_call(sess, ["det", "w", "create", w_name])
+
+        set_binding_cmd = ["det", "w", "bindings", "set", w_name]
+        create_wksp_with_binding_cmd = ["det", "w", "create", w_name]
+
+        set_binding_cmd += ["--cluster-name", conf.DEFAULT_RM_CLUSTER_NAME]
+        create_wksp_with_binding_cmd += ["--cluster-name", conf.DEFAULT_RM_CLUSTER_NAME]
+
+        detproc.check_error(
+            sess,
+            set_binding_cmd,
+            "must provide --namespace",
+        )
+
+        detproc.check_error(sess, create_wksp_with_binding_cmd, "must provide --namespace")
+
+    # MultiRM: Valid cluster name, invalid namespace name.
+    # Single KubernetesRM: No cluster name, invalid namespace name.
+    nonexistent_namespace = "nonexistent-namespace"
+
+    w_name = uuid.uuid4().hex[:8]
+    set_binding_cmd = ["det", "w", "bindings", "set", w_name]
+    create_wksp_cmd = ["det", "w", "create", w_name]
+    if is_multirm_cluster:
+        set_binding_cmd += ["--cluster-name", conf.DEFAULT_RM_CLUSTER_NAME]
+        create_wksp_cmd += ["--cluster-name", conf.DEFAULT_RM_CLUSTER_NAME]
+    detproc.check_error(
+        sess,
+        create_wksp_cmd + ["--namespace", nonexistent_namespace],
+        "error finding namespace",
+    )
+    create_wksp_cmd = create_wksp_cmd[0:4]
+    detproc.check_call(sess, create_wksp_cmd)
+    detproc.check_error(
+        sess,
+        set_binding_cmd + ["--namespace", nonexistent_namespace],
+        "error finding namespace",
+    )
+
+    # Valid namespace name and valid cluster name.
+    w_name = uuid.uuid4().hex[:8]
+    set_binding_cmd = ["det", "w", "bindings", "set", w_name]
+    create_wksp_cmd = ["det", "w", "create", w_name]
+    if is_multirm_cluster:
+        set_binding_cmd += ["--cluster-name", conf.DEFAULT_RM_CLUSTER_NAME]
+        create_wksp_cmd += ["--cluster-name", conf.DEFAULT_RM_CLUSTER_NAME]
+
+    output = detproc.check_output(sess, create_wksp_cmd + ["--namespace", namespace])
+    assert bound_to_namespace in output
+
+    output = detproc.check_output(sess, set_binding_cmd + ["--namespace", namespace])
+    assert bound_to_namespace in output
+
+
+@pytest.mark.e2e_gpu
+@pytest.mark.e2e_multi_k8s
+def test_list_workspace_namespace_bindings(
+    is_multirm_cluster: bool, namespaces_created: Tuple[str, str]
+) -> None:
+    # Create a workspace.
+    w_name = uuid.uuid4().hex[:8]
+    sess = api_utils.admin_session()
+    detproc.check_call(sess, ["det", "w", "create", w_name])
+
+    # List workspace-namespace bindings and ensure that they are set to the default namespace.
+    cmd = ["det", "w", "bindings", "list", w_name]
+    output = detproc.check_output(sess, cmd)
+
+    cluster_namespace_pair = {
+        conf.DEFAULT_RM_CLUSTER_NAME: conf.DEFAULT_KUBERNETES_NAMESPACE,
+        conf.ADDITIONAL_RM_CLUSTER_NAME: conf.DEFAULT_KUBERNETES_NAMESPACE,
+    }
+    if not is_multirm_cluster:
+        default_namespace = detproc.check_json(sess, ["det", "master", "config", "show", "--json"])[
+            "resource_manager"
+        ]["default_namespace"]
+        cluster_namespace_pair = {"": default_namespace}
+
+    for cluster in cluster_namespace_pair:
+        assert cluster in output
+        assert cluster_namespace_pair[cluster] in output
+
+    defaultrm_namespace, additionalrm_namespace = namespaces_created
+
+    # Modify workspace-namespace bindings for each cluster.
+    set_binding_cmd = ["det", "w", "bindings", "set", w_name]
+    if is_multirm_cluster:
+        detproc.check_call(
+            sess,
+            [
+                "det",
+                "w",
+                "bindings",
+                "set",
+                w_name,
+                "--namespace",
+                additionalrm_namespace,
+                "--cluster-name",
+                conf.ADDITIONAL_RM_CLUSTER_NAME,
+            ],
+        )
+        set_binding_cmd += ["--cluster-name", conf.DEFAULT_RM_CLUSTER_NAME]
+
+    detproc.check_call(sess, set_binding_cmd + ["--namespace", defaultrm_namespace])
+
+    # List workspace-namespace bindings after setting a namespace other than default.
+    cmd = ["det", "w", "bindings", "list", w_name]
+    output = detproc.check_output(sess, cmd)
+
+    cluster_namespace_pair = {"": defaultrm_namespace}
+
+    if is_multirm_cluster:
+        cluster_namespace_pair = {
+            "defaultrm": defaultrm_namespace,
+            "additionalrm": additionalrm_namespace,
+        }
+
+    for cluster in cluster_namespace_pair:
+        assert cluster in output
+        assert cluster_namespace_pair[cluster] in output

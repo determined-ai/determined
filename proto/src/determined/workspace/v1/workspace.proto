@@ -75,6 +75,8 @@ message Workspace {
   string default_compute_pool = 15;
   // Name of the default aux pool.
   string default_aux_pool = 16;
+  // Namespaces to which the workspace is bound.
+  repeated string namespace_bindings = 17;
 }
 
 // PatchWorkspace is a partial update to a workspace with all optional fields.
@@ -95,4 +97,15 @@ message PatchWorkspace {
   string default_aux_pool = 15 [deprecated = true];
   // Name of the default aux pool can be optional.
   optional string default_aux_resource_pool = 17;
+}
+
+// WorkspaceNamespace represents a workspace-namespace binding for a given
+// cluster.
+message WorkspaceNamespace {
+  // The id of the workspace.
+  int32 workspace_id = 1;
+  // The Kubernetes namespace.
+  string namespace = 2;
+  // User cluster name.
+  string cluster_name = 3;
 }

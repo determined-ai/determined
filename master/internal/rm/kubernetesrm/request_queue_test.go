@@ -113,7 +113,7 @@ func TestRequestQueueCreatingManyPod(t *testing.T) {
 	configMapInterface := &mockConfigMapInterface{configMaps: make(map[string]*k8sV1.ConfigMap)}
 
 	failures := make(chan resourcesRequestFailure, 64)
-	k8sRequestQueue := startRequestQueue(
+	k8sRequestQueue, _ := startRequestQueue(
 		map[string]typedBatchV1.JobInterface{"default": jobInterface},
 		map[string]typedV1.PodInterface{"default": podInterface},
 		map[string]typedV1.ConfigMapInterface{"default": configMapInterface},
@@ -139,7 +139,7 @@ func TestRequestQueueCreatingAndDeletingManyPod(t *testing.T) {
 	configMapInterface := &mockConfigMapInterface{configMaps: make(map[string]*k8sV1.ConfigMap)}
 
 	failures := make(chan resourcesRequestFailure, 64)
-	k8sRequestQueue := startRequestQueue(
+	k8sRequestQueue, _ := startRequestQueue(
 		map[string]typedBatchV1.JobInterface{"default": jobInterface},
 		map[string]typedV1.PodInterface{"default": podInterface},
 		map[string]typedV1.ConfigMapInterface{"default": configMapInterface},
@@ -167,7 +167,7 @@ func TestRequestQueueCreatingThenDeletingManyPods(t *testing.T) {
 	configMapInterface := &mockConfigMapInterface{configMaps: make(map[string]*k8sV1.ConfigMap)}
 
 	failures := make(chan resourcesRequestFailure, 64)
-	k8sRequestQueue := startRequestQueue(
+	k8sRequestQueue, _ := startRequestQueue(
 		map[string]typedBatchV1.JobInterface{"default": jobInterface},
 		map[string]typedV1.PodInterface{"default": podInterface},
 		map[string]typedV1.ConfigMapInterface{"default": configMapInterface},
@@ -202,7 +202,7 @@ func TestRequestQueueCreatingAndDeletingManyPodWithDelay(t *testing.T) {
 	configMapInterface := &mockConfigMapInterface{configMaps: make(map[string]*k8sV1.ConfigMap)}
 
 	failures := make(chan resourcesRequestFailure, 64)
-	k8sRequestQueue := startRequestQueue(
+	k8sRequestQueue, _ := startRequestQueue(
 		map[string]typedBatchV1.JobInterface{"default": jobInterface},
 		map[string]typedV1.PodInterface{"default": podInterface},
 		map[string]typedV1.ConfigMapInterface{"default": configMapInterface},
@@ -233,7 +233,7 @@ func TestRequestQueueCreationCancelled(t *testing.T) {
 	configMapInterface := &mockConfigMapInterface{configMaps: make(map[string]*k8sV1.ConfigMap)}
 
 	failures := make(chan resourcesRequestFailure, 64)
-	k8sRequestQueue := startRequestQueue(
+	k8sRequestQueue, _ := startRequestQueue(
 		map[string]typedBatchV1.JobInterface{"default": jobInterface},
 		map[string]typedV1.PodInterface{"default": podInterface},
 		map[string]typedV1.ConfigMapInterface{"default": configMapInterface},
@@ -274,7 +274,7 @@ func TestRequestQueueCreationFailed(t *testing.T) {
 	configMapInterface := &mockConfigMapInterface{configMaps: make(map[string]*k8sV1.ConfigMap)}
 
 	failures := make(chan resourcesRequestFailure, 64)
-	k8sRequestQueue := startRequestQueue(
+	k8sRequestQueue, _ := startRequestQueue(
 		map[string]typedBatchV1.JobInterface{"default": jobInterface},
 		map[string]typedV1.PodInterface{"default": podInterface},
 		map[string]typedV1.ConfigMapInterface{"default": configMapInterface},
@@ -312,7 +312,7 @@ func TestRequestQueueDeletionFailed(t *testing.T) {
 	configMapInterface := &mockConfigMapInterface{configMaps: make(map[string]*k8sV1.ConfigMap)}
 
 	failures := make(chan resourcesRequestFailure, 64)
-	k8sRequestQueue := startRequestQueue(
+	k8sRequestQueue, _ := startRequestQueue(
 		map[string]typedBatchV1.JobInterface{"default": jobInterface},
 		map[string]typedV1.PodInterface{"default": podInterface},
 		map[string]typedV1.ConfigMapInterface{"default": configMapInterface},

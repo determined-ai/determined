@@ -54,8 +54,9 @@ type DispatcherResourceManagerConfig struct {
 	DefaultComputeResourcePool *string `json:"default_compute_resource_pool"`
 	JobProjectSource           *string `json:"job_project_source"`
 
-	Name     string            `json:"name"`
-	Metadata map[string]string `json:"metadata"`
+	Name        string            `json:"name"`
+	ClusterName string            `json:"cluster_name"`
+	Metadata    map[string]string `json:"metadata"`
 
 	Security           *DispatcherSecurityConfig                     `json:"security"`
 	PartitionOverrides map[string]DispatcherPartitionOverrideConfigs `json:"partition_overrides"`
