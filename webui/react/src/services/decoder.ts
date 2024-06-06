@@ -373,6 +373,7 @@ export const ioToExperimentConfig = (
       : undefined,
     description: io.description || undefined,
     hyperparameters: ioToHyperparametereters(io.hyperparameters),
+    integrations: io.integrations || undefined,
     labels: io.labels || undefined,
     maxRestarts: io.max_restarts,
     name: io.name,

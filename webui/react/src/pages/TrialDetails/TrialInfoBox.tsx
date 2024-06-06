@@ -1,11 +1,13 @@
 import Card from 'hew/Card';
-import React, { useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 
 import OverviewStats from 'components/OverviewStats';
 import Section from 'components/Section';
 import TimeAgo from 'components/TimeAgo';
 import { useCheckpointFlow } from 'hooks/useCheckpointFlow';
+import { handlePath } from 'routes/utils';
 import { CheckpointWorkloadExtended, ExperimentBase, TrialDetails } from 'types';
+import { AnyMouseEvent } from 'utils/routes';
 import { humanReadableBytes } from 'utils/string';
 
 interface Props {
@@ -50,6 +52,36 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
         return `${trial?.logRetentionDays} days`;
     }
   }, [trial]);
+  const integrationData = useMemo(() => {
+    const {
+      config: { integrations },
+    } = experiment;
+
+    if (!integrations)
+      return {
+        hasIntegrationData: false,
+        text: '-',
+        url: '-',
+      };
+
+    const { dataset, proxy } = integrations.pachyderm;
+
+    return {
+      hasIntegrationData: true,
+      text: '<MLDM repo>',
+      url: `${proxy.scheme}://${proxy.host}:${proxy.port}/linage/${dataset.project}/repos/${dataset.repo}/commit/${dataset.commit}/?branchId=${dataset.branch}`,
+    };
+  }, [experiment]);
+
+  const handleClickDataInput = useCallback(
+    (e: AnyMouseEvent) => {
+      if (integrationData.hasIntegrationData)
+        handlePath(e, {
+          path: integrationData.url,
+        });
+    },
+    [integrationData],
+  );
 
   return (
     <Section>
@@ -74,6 +106,11 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
           </>
         )}
         {<OverviewStats title="Log Retention Days">{logRetentionDays}</OverviewStats>}
+        {
+          <OverviewStats title="Data input" onClick={handleClickDataInput}>
+            {integrationData.text}
+          </OverviewStats>
+        }
       </Card.Group>
     </Section>
   );

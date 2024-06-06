@@ -367,6 +367,27 @@ export type HyperparameterType = t.TypeOf<typeof HyperparametersType>;
 export type Hyperparameters = {
   [keys: string]: Hyperparameters | HyperparameterBase;
 };
+
+export const PachdIntegration = t.type({
+  pachyderm: t.type({
+    dataset: t.type({
+      branch: t.string,
+      commit: t.string,
+      project: t.string,
+      repo: t.string,
+      token: t.string,
+    }),
+    pachd: t.type({
+      host: t.string,
+      port: t.number,
+    }),
+    proxy: t.type({
+      host: t.string,
+      port: t.number,
+      scheme: t.string,
+    }),
+  }),
+});
 const Hyperparameters: t.RecursiveType<t.Type<Hyperparameters>> = t.recursion(
   'Hyperparameters',
   () => t.record(t.string, t.union([Hyperparameters, HyperparameterBase])),
@@ -446,6 +467,7 @@ export const ExperimentConfig = t.intersection([
   t.partial({
     checkpointStorage: CheckpointStorage,
     description: t.string,
+    integrations: t.union([t.null, t.undefined, PachdIntegration]),
     labels: t.array(t.string),
     profiling: t.type({
       enabled: t.boolean,
