@@ -1034,6 +1034,7 @@ WHERE id = $1`, id)
 
 // GetCheckpoint gets checkpointv1.Checkpoint from the database by UUID.
 // Can be moved to master/internal/checkpoints once db/postgres_model_intg_test is bunified.
+// WARNING: Function does not account for "NaN", "Infinity", or "-Infinity" due to Bun unmarshallling.
 func GetCheckpoint(ctx context.Context, checkpointUUID string) (*checkpointv1.Checkpoint, error) {
 	var retCkpt1 checkpointv1.Checkpoint
 	err := Bun().NewSelect().

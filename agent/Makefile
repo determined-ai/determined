@@ -9,7 +9,7 @@ FULL_COMMIT = $(shell git rev-parse HEAD)
 SHORT_COMMIT = $(shell git rev-parse HEAD | head -c9)
 PROJECT_NAME = determined-agent
 EE_PROJECT_NAME = hpe-mlde-agent
-ARCHS = amd64 arm64 ppc64
+ARCHS = amd64 arm64
 MULTI_ARCH_IMAGES = $(shell for arch in $(ARCHS); do echo $(DOCKER_REPO)/$(PROJECT_NAME):$(FULL_COMMIT)-$$arch; done)
 EE_MULTI_ARCH_IMAGES = $(shell for arch in $(ARCHS); do echo $(DOCKER_REPO)/$(EE_PROJECT_NAME):$(FULL_COMMIT)-$$arch; done)
 
@@ -91,7 +91,6 @@ buildx:
 	{ \
 		platforms=(); \
 		for arch in $(ARCHS); do \
-			[ $$arch == "ppc64" ] && arch="ppc64le"; \
 			platforms+=("linux/$$arch"); \
 		done; \
 		platform_list=$$(IFS=, ; echo "$${platforms[*]}"); \

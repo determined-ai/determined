@@ -925,7 +925,7 @@ func (j *jobsService) podStatusCallback(obj any) {
 		return
 	}
 
-	j.updatePodSchedulingState(jobName, pod)
+	j.updatePodSchedulingState(jobName, *pod)
 	if j.jobSchedulingStateCallback != nil {
 		go j.jobSchedulingStateCallback(jobSchedulingStateChanged{
 			AllocationID: jobHandler.req.AllocationID,
@@ -970,15 +970,16 @@ func (j *jobsService) jobSchedulingState(jobName string) sproto.SchedulingState 
 	return sproto.SchedulingStateScheduled
 }
 
-// updatePodSchedulingState stores the scheduling state of a pod based on its state (in particular the phase).
-func (j *jobsService) updatePodSchedulingState(jobName string, pod *k8sV1.Pod) {
+// updatePodSchedulingState stores the scheduling state of a pod based on its state.
+func (j *jobsService) updatePodSchedulingState(jobName string, pod k8sV1.Pod) {
 	states, ok := j.jobNameToPodNameToSchedulingState[jobName]
 	if !ok {
 		states = make(map[string]sproto.SchedulingState)
 	}
 
+	// The field pod.Spec.NodeName is a request to be scheduled onto a node but it is not guaranteed.
 	states[pod.Name] = sproto.SchedulingStateQueued
-	if pod.Status.Phase == "Running" {
+	if podScheduled(pod) {
 		states[pod.Name] = sproto.SchedulingStateScheduled
 	}
 	j.jobNameToPodNameToSchedulingState[jobName] = states

@@ -19,6 +19,7 @@ type FeatureDescription = {
   friendlyName: string;
   description: string;
   defaultValue: boolean;
+  noUserControl?: boolean;
 };
 
 export const FEATURES: Record<ValidFeature, FeatureDescription> = {
@@ -37,6 +38,7 @@ export const FEATURES: Record<ValidFeature, FeatureDescription> = {
     defaultValue: false,
     description: 'Enable links to Generative AI Studio',
     friendlyName: 'Generative AI Studio (genai)',
+    noUserControl: true,
   },
   rp_binding: {
     defaultValue: true,
@@ -89,6 +91,8 @@ const IsOn = (
   // Read from config settings
   featureSwitches.includes(feature) && (isOn = true);
   featureSwitches.includes(`-${feature}`) && (isOn = false);
+
+  if (FEATURES[feature]?.noUserControl) return isOn;
 
   // Read from user settings
   if (settings && feature in settings) {
