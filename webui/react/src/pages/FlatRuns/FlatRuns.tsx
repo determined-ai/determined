@@ -34,6 +34,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { v4 as uuidv4 } from 'uuid';
 
 import ColumnPickerMenu from 'components/ColumnPickerMenu';
+import ComparisonView from 'components/ComparisonView';
 import { Error } from 'components/exceptions';
 import { FilterFormStore, ROOT_ID } from 'components/FilterForm/components/FilterFormStore';
 import {
@@ -51,7 +52,6 @@ import {
   rowHeightMap,
   settingsConfigGlobal,
 } from 'components/OptionsMenu.settings';
-import RunComparisonView from 'components/RunComparisonView';
 import useUI from 'components/ThemeProvider';
 import { useAsync } from 'hooks/useAsync';
 import { useGlasbey } from 'hooks/useGlasbey';
@@ -1016,7 +1016,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
         <Error fetchData={fetchRuns} />
       ) : (
         <>
-          <RunComparisonView
+          <ComparisonView
             fixedColumnsCount={STATIC_COLUMNS.length + settings.pinnedColumnsCount}
             initialWidth={comparisonViewTableWidth}
             open={settings.compare}
@@ -1045,7 +1045,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
               onPinnedColumnsCountChange={handlePinnedColumnsCountChange}
               onSelectionChange={handleSelectionChange}
             />
-          </RunComparisonView>
+          </ComparisonView>
           {showPagination && (
             <Row>
               <Column align="right">
