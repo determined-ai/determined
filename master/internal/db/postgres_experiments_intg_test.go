@@ -585,8 +585,8 @@ func TestTopTrialsByMetric(t *testing.T) {
 		`[{"a":-1.5, "b":1.0, "c":"Infinity"}]`, false)
 
 	const (
-		moreExpected     = false
-		lessExpected     = true
+		moreIsBetter     = false
+		lessIsBetter     = true
 		noErrorExpected  = true
 		errorExpected    = false
 		orderExpected    = true
@@ -602,55 +602,55 @@ func TestTopTrialsByMetric(t *testing.T) {
 		expected              []int
 		expectedOrderRequired bool
 	}{
-		{"'a' limit 1 less", "a", lessExpected, 1, noErrorExpected, []int{trial2}, orderExpected},
-		{"'a' limit 1 more", "a", moreExpected, 1, noErrorExpected, []int{trial1}, orderExpected},
+		{"'a' limit 1 less", "a", lessIsBetter, 1, noErrorExpected, []int{trial2}, orderExpected},
+		{"'a' limit 1 more", "a", moreIsBetter, 1, noErrorExpected, []int{trial1}, orderExpected},
 
-		{"'a' limit 2 less", "a", lessExpected, 2, noErrorExpected, []int{trial2, trial1}, orderExpected},
-		{"'a' limit 2 more", "a", moreExpected, 2, noErrorExpected, []int{trial1, trial2}, orderExpected},
+		{"'a' limit 2 less", "a", lessIsBetter, 2, noErrorExpected, []int{trial2, trial1}, orderExpected},
+		{"'a' limit 2 more", "a", moreIsBetter, 2, noErrorExpected, []int{trial1, trial2}, orderExpected},
 
 		{
-			"NaNs are bigger than everything less", "b", lessExpected, 2, noErrorExpected,
+			"NaNs are bigger than everything less", "b", lessIsBetter, 2, noErrorExpected,
 			[]int{trial2, trial1},
 			orderExpected,
 		},
 		{
-			"NaNs are bigger than everything more", "b", moreExpected, 2, noErrorExpected,
+			"NaNs are bigger than everything more", "b", moreIsBetter, 2, noErrorExpected,
 			[]int{trial1, trial2},
 			orderExpected,
 		},
 
 		{
-			"Infinity works as expected less", "c", lessExpected, 2, noErrorExpected,
+			"Infinity works as expected less", "c", lessIsBetter, 2, noErrorExpected,
 			[]int{trial1, trial2},
 			orderExpected,
 		},
 		{
-			"Infinity works as expected more", "c", moreExpected, 2, noErrorExpected,
+			"Infinity works as expected more", "c", moreIsBetter, 2, noErrorExpected,
 			[]int{trial2, trial1},
 			orderExpected,
 		},
 
-		{"Non numeric metrics error less", "d", lessExpected, 2, errorExpected, nil, orderExpected},
-		{"Non numeric metrics error more", "d", moreExpected, 2, errorExpected, nil, orderExpected},
+		{"Non numeric metrics error less", "d", lessIsBetter, 2, errorExpected, nil, orderExpected},
+		{"Non numeric metrics error more", "d", moreIsBetter, 2, errorExpected, nil, orderExpected},
 
 		{
-			"Metrics only reported in one trial appear first less", "e", lessExpected, 2, noErrorExpected,
+			"Metrics only reported in one trial appear first less", "e", lessIsBetter, 2, noErrorExpected,
 			[]int{trial1, trial2},
 			orderExpected,
 		},
 		{
-			"Metrics only reported in one trial appear first more", "e", moreExpected, 2, noErrorExpected,
+			"Metrics only reported in one trial appear first more", "e", moreIsBetter, 2, noErrorExpected,
 			[]int{trial1, trial2},
 			orderExpected,
 		},
 
 		{
-			"Metric doesn't exist order doesn't matter less", "z", lessExpected, 2, noErrorExpected,
+			"Metric doesn't exist order doesn't matter less", "z", lessIsBetter, 2, noErrorExpected,
 			[]int{trial1, trial2},
 			orderNotRequired,
 		},
 		{
-			"Metric doesn't exist order doesn't matter more", "z", moreExpected, 2, noErrorExpected,
+			"Metric doesn't exist order doesn't matter more", "z", moreIsBetter, 2, noErrorExpected,
 			[]int{trial1, trial2},
 			orderNotRequired,
 		},

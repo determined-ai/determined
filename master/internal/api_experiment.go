@@ -2230,7 +2230,7 @@ func (a *apiServer) TrialsSample(req *apiv1.TrialsSampleRequest,
 				return err
 			}
 
-			if timeSinceLastAuth.Equal((time.Time{})) { // Initialzation.
+			if timeSinceLastAuth.IsZero() { // Initialzation.
 				searcherConfig = exp.Config.Searcher
 			}
 			timeSinceLastAuth = time.Now()

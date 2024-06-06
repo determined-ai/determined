@@ -40,6 +40,7 @@ func getCheckpointStorage(raw map[string]interface{}) (CheckpointStorageConfig, 
 
 	csOnly := raw["checkpoint_storage"]
 
+	// Special case for hdfs.
 	if m, ok := csOnly.(map[string]any); ok {
 		if t, ok := m["type"].(string); ok && t == "hdfs" {
 			var saveExpBest, saveTrialBest, saveTrialLatest *int
