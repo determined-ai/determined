@@ -38,6 +38,13 @@ SCIM_PASSWORD = "password"
 ALL_NTSC = set(api.NTSC_Kind.__members__.values())
 PROXIED_NTSC = {api.NTSC_Kind.notebook, api.NTSC_Kind.tensorboard}
 
+DEFAULT_RM_CLUSTER_NAME = "defaultrm"
+DEFAULT_RM_KUBECONFIG = "/tmp/defaultrm-kubeconf"
+ADDITIONAL_RM_CLUSTER_NAME = "additionalrm"
+ADDITIONAL_RM_KUBECONFIG = "/tmp/additionalrm-kubeconf"
+DEFAULT_KUBECONFIG = "~/.kube/config"
+DEFAULT_KUBERNETES_NAMESPACE = "default"
+
 
 def fixtures_path(path: str) -> str:
     return os.path.join(os.path.dirname(__file__), "fixtures", path)

@@ -158,6 +158,16 @@ func (a *WorkspaceAuthZBasic) CanCreateWorkspaceWithCheckpointStorageConfig(
 	return nil
 }
 
+// CanSetWorkspaceNamespaceBindings retruns a nil error.
+func (a *WorkspaceAuthZBasic) CanSetWorkspaceNamespaceBindings(
+	ctx context.Context, curUser model.User, workspace *workspacev1.Workspace,
+) error {
+	if !curUser.Admin {
+		return fmt.Errorf("only admins may set workspace bindings")
+	}
+	return nil
+}
+
 // CanSetWorkspacesDefaultPools returns a nil error.
 func (a *WorkspaceAuthZBasic) CanSetWorkspacesDefaultPools(
 	ctx context.Context, curUser model.User, workspace *workspacev1.Workspace,
