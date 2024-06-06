@@ -412,7 +412,7 @@ func (j *jobsService) deleteDoomedKubernetesResources() error {
 		return fmt.Errorf("error listing existing pods: %w", err)
 	}
 
-	toKillJobs := &batchV1.JobList{}
+	var toKillJobs []batchV1.Job
 	savedJobNames := make(set.Set[string])
 	for _, job := range jobs {
 		if _, ok := j.namespaceToPoolName[job.Namespace]; !ok {
@@ -422,14 +422,14 @@ func (j *jobsService) deleteDoomedKubernetesResources() error {
 		resourcePool := job.Labels[resourcePoolLabel]
 		if resourcePool == "" {
 			j.syslog.Warnf("deleting job '%s' without resource pool label", job.Name)
-			toKillJobs.Items = append(toKillJobs.Items, job)
+			toKillJobs = append(toKillJobs, job)
 			continue
 		}
 
 		allocationIDStr := job.Labels[allocationIDLabel]
 		if allocationIDStr == "" {
 			j.syslog.Warnf("deleting job '%s' without determined label (whose value is the allocation ID)", job.Name)
-			toKillJobs.Items = append(toKillJobs.Items, job)
+			toKillJobs = append(toKillJobs, job)
 			continue
 		}
 		allocationID := model.AllocationID(allocationIDStr)
@@ -438,32 +438,92 @@ func (j *jobsService) deleteDoomedKubernetesResources() error {
 			j.syslog.
 				WithField("allocation-id", allocationID).
 				Warnf("deleting job '%s', did not find an open allocation for it", job.Name)
-			toKillJobs.Items = append(toKillJobs.Items, job)
+			toKillJobs = append(toKillJobs, job)
 			continue
 		}
 
 		savedJobNames.Insert(job.Name)
 	}
 
+	resourceIsSaved := func(namespace, name string) bool { // Job name is same as other resources.
+		if _, ok := j.namespaceToPoolName[namespace]; !ok {
+			return true
+		}
+
+		return savedJobNames.Contains(name)
+	}
 	configMaps, err := j.listConfigMapsInAllNamespaces(context.TODO(), listOptions)
 	if err != nil {
 		return fmt.Errorf("error listing existing config maps: %w", err)
 	}
-	toKillConfigMaps := &k8sV1.ConfigMapList{}
+	var toKillConfigMaps []k8sV1.ConfigMap
 	for _, cm := range configMaps {
-		if _, ok := j.namespaceToPoolName[cm.Namespace]; !ok {
-			continue
-		}
-
-		if savedJobNames.Contains(cm.Name) { // Job name is same as config map name.
+		if resourceIsSaved(cm.Namespace, cm.Name) {
 			continue
 		}
 
 		j.syslog.Debugf("deleting config map '%s', did not find a matching job that will be restored", cm.Name)
-		toKillConfigMaps.Items = append(toKillConfigMaps.Items, cm)
+		toKillConfigMaps = append(toKillConfigMaps, cm)
 	}
 
-	j.deleteKubernetesResources(toKillJobs.Items, toKillConfigMaps.Items, nil, nil, nil)
+	var toKillServices []k8sV1.Service
+	var toKillTCPRoutes []alphaGatewayTyped.TCPRoute
+	var toFreeGatewayPorts []int
+	if j.exposeProxyConfig != nil {
+		services, err := j.listServicesInAllNamespaces(context.TODO(), listOptions)
+		if err != nil {
+			return fmt.Errorf("listing exisitng services: %w", err)
+		}
+		for _, s := range services {
+			if resourceIsSaved(s.Namespace, stripIndexFromSharedName(s.Name)) {
+				continue
+			}
+
+			j.syslog.Debugf("deleting service '%s', did not find a matching job that will be restored", s.Name)
+			toKillServices = append(toKillServices, s)
+		}
+
+		savedGatewayPorts := make(map[int]bool)
+		tcpRoutes, err := j.listTCPRoutesInAllNamespaces(context.TODO(), listOptions)
+		if err != nil {
+			return fmt.Errorf("listing exisitng services: %w", err)
+		}
+		for _, t := range tcpRoutes {
+			if resourceIsSaved(t.Namespace, stripIndexFromSharedName(t.Name)) {
+				for _, s := range t.Spec.ParentRefs {
+					if p := s.Port; p != nil {
+						savedGatewayPorts[int(*p)] = true
+					}
+				}
+
+				continue
+			}
+
+			j.syslog.Debugf("deleting TCPRoute '%s', did not find a matching job that will be restored", t.Name)
+			toKillTCPRoutes = append(toKillTCPRoutes, t)
+		}
+
+		gatewayPorts, err := j.gatewayService.getProxyPorts(nil)
+		if err != nil {
+			return fmt.Errorf("listing gateway ports: %w", err)
+		}
+		for _, p := range gatewayPorts {
+			if savedGatewayPorts[p] {
+				continue
+			}
+
+			j.syslog.Debugf("freeing Gateway port '%d', did not find a matching job that will be restored", p)
+			toFreeGatewayPorts = append(toFreeGatewayPorts, p)
+		}
+	}
+
+	j.deleteKubernetesResources(
+		toKillJobs,
+		toKillConfigMaps,
+		toKillServices,
+		toKillTCPRoutes,
+		toFreeGatewayPorts,
+	)
 	return nil
 }
 
@@ -594,7 +654,7 @@ func (j *jobsService) reattachJob(msg reattachJobRequest) (reattachJobResponse, 
 		tcpRoutes, err = j.listTCPRoutesInAllNamespaces(context.TODO(), listOptions)
 		errs = multierror.Append(errs, err)
 
-		gatewayPorts, err = j.gatewayService.getProxyPorts(msg.allocationID)
+		gatewayPorts, err = j.gatewayService.getProxyPorts(&msg.allocationID)
 		errs = multierror.Append(errs, err)
 	}
 
@@ -718,7 +778,6 @@ func (j *jobsService) recreateGatewayProxyResources(
 		})
 	}
 
-	fmt.Println("RESOURCES", resources)
 	return resources, nil
 }
 

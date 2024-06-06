@@ -114,7 +114,7 @@ func (g *gatewayService) freePorts(ports []int) error {
 	return nil
 }
 
-func (g *gatewayService) getProxyPorts(allocationID model.AllocationID) ([]int, error) {
+func (g *gatewayService) getProxyPorts(allocationID *model.AllocationID) ([]int, error) {
 	g.mu.Lock()
 	defer g.mu.Unlock()
 
@@ -125,9 +125,17 @@ func (g *gatewayService) getProxyPorts(allocationID model.AllocationID) ([]int, 
 
 	var ports []int
 	for _, listener := range gateway.Spec.Listeners {
-		if string(getAllocationIDFromListenerName(string(listener.Name))) == string(allocationID) {
-			ports = append(ports, int(listener.Port))
+		listenerName := string(listener.Name)
+		if !listenerIsDetermined(listenerName) { // Always ignore non Determined gateways.
+			continue
 		}
+
+		if allocationID != nil &&
+			model.AllocationID(getAllocationIDFromListenerName(listenerName)) != *allocationID {
+			continue
+		}
+
+		ports = append(ports, int(listener.Port))
 	}
 
 	return ports, nil

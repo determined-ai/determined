@@ -24,19 +24,32 @@ func createListenerForPod(allocationID model.AllocationID, gwPort int) gatewayTy
 	return gatewayListener
 }
 
-func generateListenerName(allocationID model.AllocationID, port int) string {
-	return fmt.Sprintf("%d-det-%s", port, allocationID)
-}
-
-func getAllocationIDFromListenerName(listenerName string) string {
-	if !strings.Contains(listenerName, "det") {
-		return ""
-	}
-
-	lastHyphenIndex := strings.LastIndex(listenerName, "det-")
+func stripIndexFromSharedName(n string) string {
+	lastHyphenIndex := strings.LastIndex(n, "-")
 	if lastHyphenIndex == -1 {
 		return ""
 	}
 
-	return listenerName[lastHyphenIndex+len("det-"):]
+	return n[:lastHyphenIndex]
+}
+
+func generateListenerName(allocationID model.AllocationID, port int) string {
+	return fmt.Sprintf("%d-determined-%s", port, allocationID)
+}
+
+func listenerIsDetermined(listenerName string) bool {
+	return strings.Contains(listenerName, "determined")
+}
+
+func getAllocationIDFromListenerName(listenerName string) string {
+	if !listenerIsDetermined(listenerName) {
+		return ""
+	}
+
+	lastHyphenIndex := strings.LastIndex(listenerName, "determined-")
+	if lastHyphenIndex == -1 {
+		return ""
+	}
+
+	return listenerName[lastHyphenIndex+len("determined-"):]
 }

@@ -300,6 +300,12 @@ func TestDetProxyThroughGatewayEnv(t *testing.T) {
 	})
 }
 
+func TestStripIndexFromSharedName(t *testing.T) {
+	require.Equal(t, "1-2-3", stripIndexFromSharedName("1-2-3-4"))
+	require.Equal(t, "", stripIndexFromSharedName("-"))
+	require.Equal(t, "", stripIndexFromSharedName(""))
+}
+
 func TestListenerName(t *testing.T) {
 	t.Run("allocationID", func(t *testing.T) {
 		allocationID := "abc-cde"
