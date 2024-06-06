@@ -35,7 +35,7 @@ func TestGatewayServiceAddListeners(t *testing.T) {
 	toReturn := &gatewayTyped.Gateway{
 		Spec: gatewayTyped.GatewaySpec{
 			Listeners: []gatewayTyped.Listener{
-				createListenerForPod(1),
+				createListenerForPod("alloc", 1),
 			},
 		},
 	}
@@ -43,16 +43,16 @@ func TestGatewayServiceAddListeners(t *testing.T) {
 	expected := &gatewayTyped.Gateway{
 		Spec: gatewayTyped.GatewaySpec{
 			Listeners: []gatewayTyped.Listener{
-				createListenerForPod(1),
-				createListenerForPod(2),
-				createListenerForPod(3),
+				createListenerForPod("alloc", 1),
+				createListenerForPod("alloc", 2),
+				createListenerForPod("alloc", 3),
 			},
 		},
 	}
 
 	gatewayMock.On("Get", mock.Anything, "gatewayname", metaV1.GetOptions{}).Return(toReturn, nil)
 	gatewayMock.On("Update", mock.Anything, expected, metaV1.UpdateOptions{}).Return(nil, nil)
-	ports, err := g.generateAndAddListeners(2)
+	ports, err := g.generateAndAddListeners("alloc", 2)
 	require.Len(t, ports, 2)
 	require.Equal(t, []int{2, 3}, ports)
 	require.NoError(t, err)
@@ -222,7 +222,7 @@ func TestGatewayServicePickPorts(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			listeners := []gatewayTyped.Listener{}
 			for _, port := range tc.usedPorts {
-				listeners = append(listeners, createListenerForPod(port))
+				listeners = append(listeners, createListenerForPod("alloc", port))
 			}
 			gatewayGetReturn := &gatewayTyped.Gateway{
 				Spec: gatewayTyped.GatewaySpec{

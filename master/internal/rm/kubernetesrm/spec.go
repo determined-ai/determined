@@ -207,10 +207,12 @@ func (j *job) configureProxyResources(t *tasks.TaskSpec) *proxyResourceGenerator
 					CommonRouteSpec: alphaGatewayTyped.CommonRouteSpec{
 						ParentRefs: []alphaGatewayTyped.ParentReference{
 							{
-								Namespace:   ptrs.Ptr(alphaGatewayTyped.Namespace(j.exposeProxyConfig.GatewayNamespace)),
-								Name:        alphaGatewayTyped.ObjectName(j.exposeProxyConfig.GatewayName),
-								Port:        ptrs.Ptr(alphaGatewayTyped.PortNumber(gwPort)),
-								SectionName: ptrs.Ptr(alphaGatewayTyped.SectionName(genSectionName(gwPort))),
+								Namespace: ptrs.Ptr(alphaGatewayTyped.Namespace(j.exposeProxyConfig.GatewayNamespace)),
+								Name:      alphaGatewayTyped.ObjectName(j.exposeProxyConfig.GatewayName),
+								Port:      ptrs.Ptr(alphaGatewayTyped.PortNumber(gwPort)),
+								SectionName: ptrs.Ptr(alphaGatewayTyped.SectionName(
+									generateListenerName(model.AllocationID(t.AllocationID), gwPort),
+								)),
 							},
 						},
 					},
@@ -230,7 +232,7 @@ func (j *job) configureProxyResources(t *tasks.TaskSpec) *proxyResourceGenerator
 				},
 			}
 
-			gatewayListener := createListenerForPod(gwPort)
+			gatewayListener := createListenerForPod(model.AllocationID(t.AllocationID), gwPort)
 
 			resources = append(resources, gatewayProxyResource{
 				podPort:         proxyPort.Port,
