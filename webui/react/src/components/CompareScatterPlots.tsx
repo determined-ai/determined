@@ -7,8 +7,8 @@ import GalleryModalComponent from 'components/GalleryModalComponent';
 import Grid, { GridMode } from 'components/Grid';
 import { UPlotScatterProps } from 'components/UPlot/types';
 import UPlotScatter from 'components/UPlot/UPlotScatter';
+import { RunMetricData } from 'hooks/useMetrics';
 import useResize from 'hooks/useResize';
-import { TrialMetricData } from 'pages/TrialDetails/useTrialMetrics';
 import {
   ExperimentWithTrial,
   FlatRun,
@@ -29,7 +29,7 @@ import { CompareHyperparametersSettings } from './CompareHyperparameters.setting
 export const COMPARE_SCATTER_PLOTS = 'compare-scatterplots';
 
 interface BaseProps {
-  metricData: TrialMetricData;
+  metricData: RunMetricData;
   fullHParams: string[];
   settings: CompareHyperparametersSettings;
 }

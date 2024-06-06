@@ -11,8 +11,8 @@ import MetricBadgeTag from 'components/MetricBadgeTag';
 import useUI from 'components/ThemeProvider';
 import { UPlotScatterProps } from 'components/UPlot/types';
 import UPlotScatter from 'components/UPlot/UPlotScatter';
+import { RunMetricData } from 'hooks/useMetrics';
 import useResize from 'hooks/useResize';
-import { TrialMetricData } from 'pages/TrialDetails/useTrialMetrics';
 import {
   ExperimentWithTrial,
   FlatRun,
@@ -38,7 +38,7 @@ export const COMPARE_HEAT_MAPS = 'compare-heatmaps';
 export const HEAT_MAPS_TITLE = 'Heat Maps';
 
 interface BaseProps {
-  metricData: TrialMetricData;
+  metricData: RunMetricData;
   fullHParams: string[];
   settings: CompareHyperparametersSettings;
 }

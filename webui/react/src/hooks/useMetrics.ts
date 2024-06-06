@@ -8,9 +8,19 @@ import useMetricNames from 'hooks/useMetricNames';
 import usePolling from 'hooks/usePolling';
 import usePrevious from 'hooks/usePrevious';
 import { timeSeries } from 'services/api';
-import { FlatRun, Metric, MetricContainer, RunState, Scale, Serie, XAxisDomain } from 'types';
+import {
+  FlatRun,
+  Metric,
+  MetricContainer,
+  RunState,
+  Scale,
+  Serie,
+  TrialDetails,
+  XAxisDomain,
+} from 'types';
 import handleError, { ErrorType } from 'utils/error';
 import { metricToKey } from 'utils/metric';
+import { isRun } from 'utils/run';
 
 type MetricName = string;
 export interface RunMetrics {
@@ -60,7 +70,7 @@ const summarizedMetricToSeries = (
       });
     });
   });
-  const runData: Record<string, Serie> = {};
+  const recordData: Record<string, Serie> = {};
   const metricHasData: Record<string, boolean> = {};
   selectedMetrics.forEach((metric) => {
     const metricKey = metricToKey(metric);
@@ -74,41 +84,57 @@ const summarizedMetricToSeries = (
       name: `${metric.group}.${metric.name}`,
     };
 
-    runData[metricToKey(metric)] = series;
+    recordData[metricToKey(metric)] = series;
   });
   const xAxisOptions = Object.values(XAxisDomain);
   // Record whether or not each metric contains at least one value for any
   // xAxis option.
-  Object.keys(runData).forEach((key) => {
+  Object.keys(recordData).forEach((key) => {
     metricHasData[key] ||= xAxisOptions.some(
-      (xAxis) => (runData?.[key]?.data?.[xAxis]?.length ?? 0) > 0,
+      (xAxis) => (recordData?.[key]?.data?.[xAxis]?.length ?? 0) > 0,
     );
   });
-  return { data: runData, metricHasData, selectedMetrics };
+  return { data: recordData, metricHasData, selectedMetrics };
 };
 
-export const useRunMetrics = (runs: FlatRun[]): RunMetricData => {
-  const runsAllTerminated = runs?.every((run) =>
-    terminalRunStates.has(run?.state ?? RunState.Active),
+export const useMetrics = (records: (TrialDetails | FlatRun | undefined)[]): RunMetricData => {
+  const recordsAllTerminated = records?.every((record) =>
+    terminalRunStates.has(record?.state ?? RunState.Active),
   );
-  const runsAllNonTerminal = !runs?.find((run) =>
-    terminalRunStates.has(run?.state ?? RunState.Error),
+  const recordsAllNonTerminal = !records?.find((record) =>
+    terminalRunStates.has(record?.state ?? RunState.Error),
   );
-
-  const experimentIds = useMemo(() => runs.flatMap((run) => run.experiment?.id ?? []), [runs]);
-
+  const experimentIds = useMemo(
+    () =>
+      records.flatMap((r) =>
+        r === undefined
+          ? []
+          : isRun(r)
+            ? r.experiment === undefined
+              ? []
+              : [r.experiment.id]
+            : [r.experimentId],
+      ),
+    [records],
+  );
   const handleMetricNamesError = useCallback(
     (e: unknown) => {
       handleError(e, {
-        publicMessage: `Failed to load metric names for runs ${runs?.map((r) => `[${r?.id}]`)}.`,
-        publicSubject: 'Run metric name stream failed.',
+        publicMessage: `Failed to load metric names for records ${records?.map(
+          (r) => `[${r?.id}]`,
+        )}.`,
+        publicSubject: 'Metric name stream failed.',
         type: ErrorType.Api,
       });
     },
-    [runs],
+    [records],
   );
 
-  const loadableMetrics = useMetricNames(experimentIds, handleMetricNamesError, runsAllNonTerminal);
+  const loadableMetrics = useMetricNames(
+    experimentIds,
+    handleMetricNamesError,
+    recordsAllNonTerminal,
+  );
   const metricNamesLoaded = Loadable.isLoaded(loadableMetrics);
   const metrics = useMemo(() => {
     return Loadable.getOrElse([], loadableMetrics);
@@ -119,47 +145,47 @@ export const useRunMetrics = (runs: FlatRun[]): RunMetricData => {
   const [scale, setScale] = useState<Scale>(Scale.Linear);
   const [selectedMetrics, setSelectedMetrics] = useState<Metric[]>([]);
 
-  const previousRuns = usePrevious(runs, []);
+  const previousRecords = usePrevious(records, []);
 
-  const fetchRunSummary = useCallback(async () => {
-    // If the run ids have not changed then we do not need to
+  const fetchRecordSummary = useCallback(async () => {
+    // If the record ids have not changed then we do not need to
     // show the loading state again.
-    if (!_.isEqual(_.map(previousRuns, 'id'), _.map(runs, 'id'))) setLoadableData(NotLoaded);
+    if (!_.isEqual(_.map(previousRecords, 'id'), _.map(records, 'id'))) setLoadableData(NotLoaded);
 
-    if (runs.length === 0) {
-      // If there are no runs selected then
+    if (records.length === 0) {
+      // If there are no trials selected then
       // no data is available.
       setMetricHasData({});
       setLoadableData(Loaded({}));
       return;
     }
-    if (runs.length > 0) {
+    if (records.length > 0) {
       try {
         const metricsHaveData: Record<string, boolean> = {};
         const response = await timeSeries({
           maxDatapoints: screen.width > 1600 ? 1500 : 1000,
           metrics,
           startBatches: 0,
-          trialIds: runs?.map((t) => t?.id || 0).filter((i) => i > 0),
+          trialIds: records?.map((t) => t?.id || 0).filter((i) => i > 0),
         });
         const newData: Record<number, Record<string, Serie>> = {};
         response.forEach((r) => {
           const {
-            data: runData,
+            data: recordData,
             metricHasData,
             selectedMetrics: s,
           } = summarizedMetricToSeries(r?.metrics, metrics);
           Object.keys(metricHasData).forEach((key) => {
             metricsHaveData[key] ||= metricHasData[key];
           });
-          newData[r.id] = runData;
+          newData[r.id] = recordData;
           setSelectedMetrics((prev) => (_.isEqual(selectedMetrics, s) ? prev : s));
         });
         setLoadableData((prev) =>
           _.isEqual(Loadable.getOrElse([], prev), newData) ? prev : Loaded(newData),
         );
         // Wait until the metric names are loaded
-        // to determine if runs have data for any metric
+        // to determine if trials have data for any metric
         if (Loadable.isLoaded(loadableMetrics)) {
           setMetricHasData(metricsHaveData);
         }
@@ -167,21 +193,21 @@ export const useRunMetrics = (runs: FlatRun[]): RunMetricData => {
         makeToast({ severity: 'Error', title: 'Error fetching metrics' });
       }
     }
-  }, [loadableMetrics, metrics, selectedMetrics, runs, previousRuns]);
+  }, [loadableMetrics, metrics, selectedMetrics, records, previousRecords]);
 
   const fetchAll = useCallback(async () => {
-    await Promise.allSettled([fetchRunSummary()]);
-  }, [fetchRunSummary]);
+    await Promise.allSettled([fetchRecordSummary()]);
+  }, [fetchRecordSummary]);
 
   const { stopPolling } = usePolling(fetchAll, { interval: 2000, rerunOnNewFn: true });
 
   useEffect(() => {
-    if (runsAllTerminated) {
+    if (recordsAllTerminated) {
       stopPolling();
     }
-  }, [runsAllTerminated, stopPolling]);
+  }, [recordsAllTerminated, stopPolling]);
 
-  if (runsAllTerminated) {
+  if (recordsAllTerminated) {
     stopPolling();
   }
 

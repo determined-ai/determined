@@ -5,13 +5,13 @@ import React, { useCallback, useMemo, useState } from 'react';
 
 import MetricBadgeTag from 'components/MetricBadgeTag';
 import { MapOfIdsToColors, useGlasbey } from 'hooks/useGlasbey';
-import { TrialMetricData } from 'pages/TrialDetails/useTrialMetrics';
+import { RunMetricData } from 'hooks/useMetrics';
 import { ExperimentWithTrial, FlatRun, Serie, TrialItem, XAxisDomain, XOR } from 'types';
 import handleError from 'utils/error';
 import { metricToKey } from 'utils/metric';
 
 interface BaseProps {
-  metricData: TrialMetricData;
+  metricData: RunMetricData;
 }
 
 type Props = XOR<
@@ -34,7 +34,7 @@ const CompareMetrics: React.FC<Props> = ({
 
   const calculateExperimentChartProps = useCallback(
     (
-      metricData: TrialMetricData,
+      metricData: RunMetricData,
       experiments: ExperimentWithTrial[],
       trials: TrialItem[],
       xAxis: XAxisDomain,
@@ -43,7 +43,10 @@ const CompareMetrics: React.FC<Props> = ({
       const { metrics, data } = metricData;
       const chartedMetrics: Record<string, boolean> = {};
       const expNameById = experiments.reduce(
-        (acc, cur) => (acc[cur.experiment.id] = cur.experiment.name),
+        (acc, cur) => {
+          acc[cur.experiment.id] = cur.experiment.name;
+          return acc;
+        },
         {} as Record<number, string>,
       );
 
@@ -79,7 +82,7 @@ const CompareMetrics: React.FC<Props> = ({
 
   const calculateRunsChartProps = useCallback(
     (
-      metricData: TrialMetricData,
+      metricData: RunMetricData,
       runs: FlatRun[],
       xAxis: XAxisDomain,
       colorMap: MapOfIdsToColors,

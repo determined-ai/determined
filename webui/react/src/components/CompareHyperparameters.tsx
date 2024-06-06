@@ -6,12 +6,12 @@ import { Title } from 'hew/Typography';
 import React, { useCallback, useEffect, useMemo } from 'react';
 
 import Section from 'components/Section';
+import { RunMetricData } from 'hooks/useMetrics';
 import { useSettings } from 'hooks/useSettings';
 import { ExperimentVisualizationType } from 'pages/ExperimentDetails/ExperimentVisualization';
 import ExperimentVisualizationFilters, {
   VisualizationFilters,
 } from 'pages/ExperimentDetails/ExperimentVisualization/ExperimentVisualizationFilters';
-import { TrialMetricData } from 'pages/TrialDetails/useTrialMetrics';
 import { ExperimentWithTrial, FlatRun, TrialItem, XOR } from 'types';
 
 import CompareHeatMaps from './CompareHeatMaps';
@@ -25,7 +25,7 @@ import css from './HpParallelCoordinates.module.scss';
 
 interface BaseProps {
   projectId: number;
-  metricData: TrialMetricData;
+  metricData: RunMetricData;
 }
 
 type Props = XOR<

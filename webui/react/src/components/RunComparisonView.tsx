@@ -6,10 +6,10 @@ import SplitPane, { Pane } from 'hew/SplitPane';
 import React, { useMemo } from 'react';
 
 import CompareHyperparameters from 'components/CompareHyperparameters';
+import { useMetrics } from 'hooks/useMetrics';
 import useMobile from 'hooks/useMobile';
 import useScrollbarWidth from 'hooks/useScrollbarWidth';
 import { TrialsComparisonTable } from 'pages/ExperimentDetails/TrialsComparisonModal';
-import { useRunMetrics } from 'pages/FlatRuns/useRunMetrics';
 import { FlatRun } from 'types';
 
 import CompareMetrics from './CompareMetrics';
@@ -41,7 +41,7 @@ const RunComparisonView: React.FC<Props> = ({
     return [fixedColumnsCount * MIN_COLUMN_WIDTH + scrollbarWidth, 100];
   }, [fixedColumnsCount, scrollbarWidth]);
 
-  const metricData = useRunMetrics(selectedRuns);
+  const metricData = useMetrics(selectedRuns);
 
   const tabs: PivotProps['items'] = useMemo(() => {
     return [

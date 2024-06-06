@@ -1020,7 +1020,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
             fixedColumnsCount={STATIC_COLUMNS.length + settings.pinnedColumnsCount}
             initialWidth={comparisonViewTableWidth}
             open={settings.compare}
-            projectId={project.id}
+            projectId={projectId}
             selectedRuns={loadedSelectedRuns}
             onWidthChange={handleCompareWidthChange}>
             <DataGrid

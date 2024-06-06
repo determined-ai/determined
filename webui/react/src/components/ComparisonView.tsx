@@ -6,10 +6,10 @@ import SplitPane, { Pane } from 'hew/SplitPane';
 import React, { useMemo } from 'react';
 
 import CompareHyperparameters from 'components/CompareHyperparameters';
+import { useMetrics } from 'hooks/useMetrics';
 import useMobile from 'hooks/useMobile';
 import useScrollbarWidth from 'hooks/useScrollbarWidth';
 import { TrialsComparisonTable } from 'pages/ExperimentDetails/TrialsComparisonModal';
-import { useTrialMetrics } from 'pages/TrialDetails/useTrialMetrics';
 import { ExperimentWithTrial, TrialItem } from 'types';
 
 import CompareMetrics from './CompareMetrics';
@@ -51,7 +51,7 @@ const ComparisonView: React.FC<Props> = ({
     [selectedExperiments],
   );
 
-  const metricData = useTrialMetrics(trials);
+  const metricData = useMetrics(trials);
 
   const tabs: PivotProps['items'] = useMemo(() => {
     return [

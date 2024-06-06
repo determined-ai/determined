@@ -30,6 +30,7 @@ import {
 } from 'types';
 import { isNumber } from 'utils/data';
 import handleError, { ErrorType } from 'utils/error';
+import { isRun } from 'utils/run';
 import { humanReadableBytes, pluralizer } from 'utils/string';
 
 import css from './TrialsComparisonModal.module.scss';
@@ -129,10 +130,6 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
   }, [runs]);
 
   const handleTrialUnselect = useCallback((trialId: number) => onUnselect?.(trialId), [onUnselect]);
-
-  const isRun = (trial: TrialDetails | FlatRun): trial is FlatRun => {
-    return 'checkpointSize' in trial;
-  };
 
   const getCheckpointSize = useCallback((trial: TrialDetails | FlatRun) => {
     return humanReadableBytes(isRun(trial) ? trial.checkpointSize : trial.totalCheckpointSize);

@@ -1,10 +1,10 @@
 import React from 'react';
 
-import { TrialMetricData } from 'pages/TrialDetails/useTrialMetrics';
+import { RunMetricData } from 'hooks/useMetrics';
 import { Scale } from 'types';
 
 import CompareHyperparameters from './CompareHyperparameters';
-export const METRIC_DATA: TrialMetricData = {
+export const METRIC_DATA: RunMetricData = {
   data: {
     3400: {
       '{"group":"training","name":"loss"}': {

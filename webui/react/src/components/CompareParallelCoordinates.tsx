@@ -6,7 +6,7 @@ import React, { useEffect, useMemo, useState } from 'react';
 
 import ParallelCoordinates from 'components/ParallelCoordinates';
 import { useGlasbey } from 'hooks/useGlasbey';
-import { TrialMetricData } from 'pages/TrialDetails/useTrialMetrics';
+import { RunMetricData } from 'hooks/useMetrics';
 import {
   ExperimentWithTrial,
   FlatRun,
@@ -31,7 +31,7 @@ export const COMPARE_PARALLEL_COORDINATES = 'compare-parallel-coordinates';
 
 interface BaseProps {
   projectId: number;
-  metricData: TrialMetricData;
+  metricData: RunMetricData;
   settings: CompareHyperparametersSettings;
   fullHParams: string[];
 }
