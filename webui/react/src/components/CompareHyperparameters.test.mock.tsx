@@ -2,6 +2,7 @@ import React from 'react';
 
 import { RunMetricData } from 'hooks/useMetrics';
 import { Scale } from 'types';
+import { generateTestRunData } from 'utils/tests/generateTestData';
 
 import CompareHyperparameters from './CompareHyperparameters';
 export const METRIC_DATA: RunMetricData = {
@@ -395,10 +396,14 @@ export const TRIALS = [
   },
 ];
 
+export const SELECTED_RUNS = [generateTestRunData(), generateTestRunData(), generateTestRunData()];
+
 interface Props {
   empty?: boolean;
 }
-export const CompareHyperparametersWithMocks: React.FC<Props> = ({ empty }: Props): JSX.Element => {
+export const CompareTrialHyperparametersWithMocks: React.FC<Props> = ({
+  empty,
+}: Props): JSX.Element => {
   return (
     <CompareHyperparameters
       metricData={METRIC_DATA}
@@ -407,6 +412,18 @@ export const CompareHyperparametersWithMocks: React.FC<Props> = ({ empty }: Prop
       selectedExperiments={empty ? [] : SELECTED_EXPERIMENTS}
       // @ts-expect-error Mock data does not need type checking
       trials={empty ? [] : TRIALS}
+    />
+  );
+};
+
+export const CompareRunHyperparametersWithMocks: React.FC<Props> = ({
+  empty,
+}: Props): JSX.Element => {
+  return (
+    <CompareHyperparameters
+      metricData={METRIC_DATA}
+      projectId={1}
+      selectedRuns={empty ? [] : SELECTED_RUNS}
     />
   );
 };

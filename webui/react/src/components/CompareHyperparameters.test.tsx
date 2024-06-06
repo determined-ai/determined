@@ -8,7 +8,10 @@ import { SettingsProvider } from 'hooks/useSettingsProvider';
 
 import { COMPARE_HEAT_MAPS } from './CompareHeatMaps';
 import { NO_DATA_MESSAGE } from './CompareHyperparameters';
-import { CompareHyperparametersWithMocks } from './CompareHyperparameters.test.mock';
+import {
+  CompareRunHyperparametersWithMocks,
+  CompareTrialHyperparametersWithMocks,
+} from './CompareHyperparameters.test.mock';
 import { COMPARE_PARALLEL_COORDINATES } from './CompareParallelCoordinates';
 import { COMPARE_SCATTER_PLOTS } from './CompareScatterPlots';
 import { ThemeProvider } from './ThemeProvider';
@@ -35,13 +38,17 @@ vi.mock('hooks/useSettings', async (importOriginal) => {
   };
 });
 
-const setup = (empty?: boolean) => {
+const setup = (type: 'trials' | 'runs', empty?: boolean) => {
   render(
     <BrowserRouter>
       <UIProvider theme={DefaultTheme.Light}>
         <ThemeProvider>
           <SettingsProvider>
-            <CompareHyperparametersWithMocks empty={empty} />
+            {type === 'trials' ? (
+              <CompareTrialHyperparametersWithMocks empty={empty} />
+            ) : (
+              <CompareRunHyperparametersWithMocks empty={empty} />
+            )}
           </SettingsProvider>
         </ThemeProvider>
       </UIProvider>
@@ -50,23 +57,25 @@ const setup = (empty?: boolean) => {
 };
 
 describe('CompareHyperparameters component', () => {
-  it('renders Parallel Coordinates', () => {
-    setup();
-    expect(screen.getByTestId(COMPARE_PARALLEL_COORDINATES)).toBeInTheDocument();
-  });
-  it('renders Scatter Plots', () => {
-    setup();
-    expect(screen.getByTestId(COMPARE_SCATTER_PLOTS)).toBeInTheDocument();
-  });
-  it('renders Heat Maps', () => {
-    setup();
-    expect(screen.getByTestId(COMPARE_HEAT_MAPS)).toBeInTheDocument();
-  });
-  it('renders no data state', () => {
-    setup(true);
-    expect(screen.queryByTestId(COMPARE_PARALLEL_COORDINATES)).not.toBeInTheDocument();
-    expect(screen.queryByTestId(COMPARE_SCATTER_PLOTS)).not.toBeInTheDocument();
-    expect(screen.queryByTestId(COMPARE_HEAT_MAPS)).not.toBeInTheDocument();
-    expect(screen.queryByText(NO_DATA_MESSAGE)).toBeInTheDocument();
+  describe.each(['trials', 'runs'] as const)('%s', (type) => {
+    it('renders Parallel Coordinates', () => {
+      setup(type);
+      expect(screen.getByTestId(COMPARE_PARALLEL_COORDINATES)).toBeInTheDocument();
+    });
+    it('renders Scatter Plots', () => {
+      setup(type);
+      expect(screen.getByTestId(COMPARE_SCATTER_PLOTS)).toBeInTheDocument();
+    });
+    it('renders Heat Maps', () => {
+      setup(type);
+      expect(screen.getByTestId(COMPARE_HEAT_MAPS)).toBeInTheDocument();
+    });
+    it('renders no data state', () => {
+      setup(type, true);
+      expect(screen.queryByTestId(COMPARE_PARALLEL_COORDINATES)).not.toBeInTheDocument();
+      expect(screen.queryByTestId(COMPARE_SCATTER_PLOTS)).not.toBeInTheDocument();
+      expect(screen.queryByTestId(COMPARE_HEAT_MAPS)).not.toBeInTheDocument();
+      expect(screen.queryByText(NO_DATA_MESSAGE)).toBeInTheDocument();
+    });
   });
 });

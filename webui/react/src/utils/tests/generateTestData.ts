@@ -4,6 +4,7 @@ import {
   CheckpointWorkloadExtended,
   ExperimentBase,
   ExperimentSearcherName,
+  FlatRun,
   HyperparameterType,
   Project,
   RunState,
@@ -262,6 +263,22 @@ export const generateTestExperimentData = (): {
   };
 
   return { checkpoint, experiment, trial };
+};
+
+export const generateTestRunData = (): FlatRun => {
+  return {
+    checkpointCount: 0,
+    checkpointSize: 0,
+    hyperparameters: { 1: 1 },
+    id: 1,
+    parentArchived: false,
+    projectId: 1,
+    projectName: 'Uncategorized',
+    startTime: new Date(),
+    state: RunState.Active,
+    workspaceId: 1,
+    workspaceName: 'Uncategorized',
+  };
 };
 
 export const generateTestProjectData = (overrides: Partial<Project> = {}): Project => {
