@@ -3,3 +3,4 @@ transformers>=4.28.1,<4.29.0
 tokenizers>=0.13.3
 datasets
 chromadb
+huggingface_hub<0.23.0
