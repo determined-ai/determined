@@ -32,6 +32,7 @@ stages:
         resource_manager:
           type: kubernetes
           name: default
+          cluster_name: defaultrm
           default_namespace: default
           max_slots_per_pod: 1
           slot_type: "cpu"
@@ -52,6 +53,7 @@ stages:
         - resource_manager:
             type: kubernetes
             name: additionalrm
+            cluster_name: additionalrm
             default_namespace: default
             max_slots_per_pod: 1
             slot_type: "cpu"
