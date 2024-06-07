@@ -16,6 +16,7 @@ spec:
       labels:
         app: determined-master-{{ .Release.Name }}
         determined-system: master
+        release-namespace: {{ .Release.Namespace }}
       annotations:
         # This is added so that the master deployment restarts when an upgrade occurs that
         # changes the master-config.yaml.
@@ -36,19 +37,19 @@ spec:
         {{- end -}}
         image: {{ .Values.imageRegistry }}/{{ $image }}:{{ $tag }}
         imagePullPolicy: "Always"
+        env:
+          - name: DET_RELEASE_NAMESPACE
+            valueFrom:
+              fieldRef:
+                fieldPath: metadata.namespace
         {{- if .Values.enterpriseEdition }}
         {{- if .Values.oidc }}
-        env:
           - name: DET_OIDC_CLIENT_SECRET
             valueFrom:
               secretKeyRef:
                 name: {{ required "A valid client secret name is required!" .Values.oidc.clientSecretName }}
                 key: {{ required "A valid client secret filename is required!" .Values.oidc.clientSecretKey }}
                 optional: false
-          - name: DET_INSTALLATION_NAMESPACE
-              valueFrom:
-                fieldRef:
-                  fieldPath: metadata.namespace
         {{- end }}
         {{- end }}
         volumeMounts:

@@ -58,6 +58,9 @@ const (
 
 	resourceTypeNvidia = "nvidia.com/gpu"
 	defaultNamespace   = "default"
+	// ReleaseNamespaceEnvVar is the name of the environment variable within a pod running the
+	// master service containing the namespace in which determined was deployed.
+	ReleaseNamespaceEnvVar = "DET_RELEASE_NAMESPACE"
 )
 
 type summarizeResult struct {
@@ -340,8 +343,9 @@ func (j *jobsService) getMasterIPAndPort() error {
 		// outside of this cluster (happens in development or when we spread across multiple k8s clusters).
 		return nil
 	}
-	masterService, err := j.clientSet.CoreV1().Services(j.namespace).Get(
-		context.TODO(), j.masterServiceName, metaV1.GetOptions{})
+	masterService, err := j.clientSet.CoreV1().
+		Services(os.Getenv(ReleaseNamespaceEnvVar)).
+		Get(context.TODO(), j.masterServiceName, metaV1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to get master service: %w", err)
 	}
