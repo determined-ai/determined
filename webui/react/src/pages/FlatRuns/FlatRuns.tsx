@@ -129,7 +129,10 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
     [updateParams],
   );
 
-  const settingsPath = useMemo(() => settingsPathForProject(projectId), [projectId]);
+  const settingsPath = useMemo(
+    () => settingsPathForProject(projectId, searchId),
+    [projectId, searchId],
+  );
   const flatRunsSettingsObs = useMemo(
     () => userSettings.get(FlatRunsSettings, settingsPath),
     [settingsPath],
