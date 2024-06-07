@@ -1105,7 +1105,7 @@ commands:
       - run:
           name: Pull docker images onto nodes
           command: |
-            kubectl apply .circleci/scripts/pull_image_daemonset.yaml
+            kubectl apply -f .circleci/scripts/pull_image_daemonset.yaml
       - run:
           command: |
             echo 'export HELM_VALUES="${HELM_VALUES},security.tls.cert=\"${MASTER_TLS_CERT}\",security.tls.key=\"${MASTER_TLS_KEY}\",masterPort=8443,tlsSecret=<<parameters.master-cert-name>>"' >> "$BASH_ENV"
