@@ -548,6 +548,13 @@ func (m *Master) getResourceAllocations(c echo.Context) error {
 		return err
 	}
 
+	nullIfZero := func(val int) string {
+		if val == 0 {
+			return ""
+		}
+		return strconv.Itoa(val)
+	}
+
 	// Write each entry to the output CSV
 	for rows.Next() {
 		allocationMetadata := new(AllocationMetadata)
@@ -559,7 +566,7 @@ func (m *Master) getResourceAllocations(c echo.Context) error {
 			string(allocationMetadata.TaskType),
 			allocationMetadata.Username,
 			allocationMetadata.WorkspaceName,
-			strconv.Itoa(allocationMetadata.ExperimentID),
+			nullIfZero(allocationMetadata.ExperimentID),
 			strconv.Itoa(allocationMetadata.Slots),
 			formatTimestamp(allocationMetadata.StartTime),
 			formatTimestamp(allocationMetadata.EndTime),
