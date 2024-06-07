@@ -247,13 +247,13 @@ export const getColumnDefs = ({
       data: {
         kind: LINK_CELL,
         link: {
-          href: paths.experimentDetails(record.experiment.id),
+          href: paths.searchDetails(record.experiment.id),
           title: String(record.experiment.id),
         },
         navigateOn: 'click',
         onClick: (e: CellClickedEventArgs) => {
           handlePath(e as unknown as AnyMouseEvent, {
-            path: paths.experimentDetails(record.experiment.id),
+            path: paths.searchDetails(record.experiment.id),
           });
         },
         underlineOffset: 6,
@@ -274,14 +274,14 @@ export const getColumnDefs = ({
       data: {
         kind: LINK_CELL,
         link: {
-          href: paths.experimentDetails(record.experiment.id),
+          href: paths.searchDetails(record.experiment.id),
           title: String(record.experiment.name),
           unmanaged: record.experiment.unmanaged,
         },
         navigateOn: 'click',
         onClick: (e: CellClickedEventArgs) => {
           handlePath(e as unknown as AnyMouseEvent, {
-            path: paths.experimentDetails(record.experiment.id),
+            path: paths.searchDetails(record.experiment.id),
           });
         },
         underlineOffset: 6,

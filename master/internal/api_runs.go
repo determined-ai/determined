@@ -779,3 +779,135 @@ func archiveUnarchiveAction(ctx context.Context, archive bool, runIDs []int32,
 
 	return results, nil
 }
+
+func (a *apiServer) PauseRuns(ctx context.Context, req *apiv1.PauseRunsRequest,
+) (*apiv1.PauseRunsResponse, error) {
+	results, err := pauseResumeAction(ctx, true, req.ProjectId, req.RunIds, req.Filter)
+	if err != nil {
+		return nil, err
+	}
+	return &apiv1.PauseRunsResponse{Results: results}, nil
+}
+
+func (a *apiServer) ResumeRuns(ctx context.Context, req *apiv1.ResumeRunsRequest,
+) (*apiv1.ResumeRunsResponse, error) {
+	results, err := pauseResumeAction(ctx, false, req.ProjectId, req.RunIds, req.Filter)
+	if err != nil {
+		return nil, err
+	}
+	return &apiv1.ResumeRunsResponse{Results: results}, nil
+}
+
+func pauseResumeAction(ctx context.Context, isPause bool, projectID int32,
+	runIds []int32, filter *string) (
+	[]*apiv1.RunActionResult, error,
+) {
+	if len(runIds) > 0 && filter != nil {
+		return nil, fmt.Errorf("if filter is provided run id list must be empty")
+	}
+	// Get experiment ids
+	var err error
+	var runCandidates []runCandidateResult
+	isRunIDAction := (len(runIds) > 0)
+	getQ := db.Bun().NewSelect().
+		ModelTableExpr("runs AS r").
+		Model(&runCandidates).
+		Column("r.id").
+		ColumnExpr("COALESCE((r.archived OR e.archived OR p.archived OR w.archived), FALSE) AS archived").
+		ColumnExpr("r.experiment_id as exp_id").
+		ColumnExpr("(e.config->'searcher'->>'name' != 'single') as is_multitrial").
+		Join("LEFT JOIN experiments e ON r.experiment_id=e.id").
+		Join("JOIN projects p ON r.project_id = p.id").
+		Join("JOIN workspaces w ON p.workspace_id = w.id").
+		Where("r.project_id = ?", projectID)
+
+	if isRunIDAction {
+		getQ = getQ.Where("r.id IN (?)", bun.In(runIds))
+	} else {
+		getQ, err = filterRunQuery(getQ, filter)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	err = getQ.Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	var results []*apiv1.RunActionResult
+	visibleIDs := set.New[int32]()
+	expIDs := set.New[int32]()
+	expToRun := make(map[int32]int32)
+	for _, cand := range runCandidates {
+		visibleIDs.Insert(cand.ID)
+		if cand.Archived {
+			results = append(results, &apiv1.RunActionResult{
+				Error: "Run is archived.",
+				Id:    cand.ID,
+			})
+			continue
+		}
+		if cand.IsMultitrial {
+			results = append(results, &apiv1.RunActionResult{
+				Error: fmt.Sprintf("Cannot pause/unpause run '%d' (part of multi-trial).", cand.ID),
+				Id:    cand.ID,
+			})
+			continue
+		}
+		if cand.ExpID == nil {
+			results = append(results, &apiv1.RunActionResult{
+				Error: fmt.Sprintf("Cannot pause run '%d' (no associated experiment).", cand.ID),
+				Id:    cand.ID,
+			})
+			continue
+		}
+		expToRun[*cand.ExpID] = cand.ID
+		expIDs.Insert(*cand.ExpID)
+	}
+	if isRunIDAction {
+		for _, originalID := range runIds {
+			if !visibleIDs.Contains(originalID) {
+				results = append(results, &apiv1.RunActionResult{
+					Error: fmt.Sprintf("Run with id '%d' not found in project with id '%d'", originalID, projectID),
+					Id:    originalID,
+				})
+			}
+		}
+	}
+	// Pause/Resume experiments
+	var expResults []experiment.ExperimentActionResult
+	var errMsg string
+	if isPause {
+		expResults, err = experiment.PauseExperiments(ctx, projectID, expIDs.ToSlice(), nil)
+		errMsg = "Failed to pause associated experiment: %s"
+	} else {
+		expResults, err = experiment.ActivateExperiments(ctx, projectID, expIDs.ToSlice(), nil)
+		errMsg = "Failed to resume associated experiment: %s"
+	}
+	if err != nil {
+		return nil, err
+	}
+	for _, expRes := range expResults {
+		val, ok := expToRun[expRes.ID]
+		if !ok {
+			results = append(results, &apiv1.RunActionResult{
+				Error: fmt.Sprintf("Unexpected action performed on experiment '%d'", expRes.ID),
+				Id:    -1,
+			})
+		}
+
+		if expRes.Error != nil {
+			results = append(results, &apiv1.RunActionResult{
+				Error: fmt.Sprintf(errMsg, expRes.Error),
+				Id:    val,
+			})
+		} else {
+			results = append(results, &apiv1.RunActionResult{
+				Error: "",
+				Id:    val,
+			})
+		}
+	}
+	return results, nil
+}

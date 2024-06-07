@@ -10,14 +10,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"github.com/uptrace/bun"
 	"golang.org/x/exp/maps"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-
-	"github.com/google/uuid"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	apiPkg "github.com/determined-ai/determined/master/internal/api"
@@ -107,7 +106,7 @@ func TestPostTaskLogs(t *testing.T) {
 }
 
 func mockNotebookWithWorkspaceID(
-	ctx context.Context, api *apiServer, t *testing.T, workspaceID int,
+	ctx context.Context, t *testing.T, workspaceID int,
 ) model.TaskID {
 	nb := &model.Task{
 		TaskID:   model.NewTaskID(),
@@ -167,11 +166,11 @@ func TestGetTasksAuthZ(t *testing.T) {
 			return e.ID == cantAccessTrial.ExperimentID
 		})).Return(authz2.PermissionDeniedError{}).Once()
 
-	canAccessNotebookID := mockNotebookWithWorkspaceID(ctx, api, t, -100)
+	canAccessNotebookID := mockNotebookWithWorkspaceID(ctx, t, -100)
 	authZNSC.On("CanGetNSC", mock.Anything, mock.Anything, model.AccessScopeID(-100)).
 		Return(nil).Once()
 
-	cantAccessNotebookID := mockNotebookWithWorkspaceID(ctx, api, t, -101)
+	cantAccessNotebookID := mockNotebookWithWorkspaceID(ctx, t, -101)
 	authZNSC.On("CanGetNSC", mock.Anything, mock.Anything, model.AccessScopeID(-101)).
 		Return(authz2.PermissionDeniedError{}).Once()
 
@@ -345,7 +344,7 @@ func TestAddAllocationAcceleratorData(t *testing.T) {
 	resp, err := api.GetTaskAcceleratorData(ctx,
 		&apiv1.GetTaskAcceleratorDataRequest{TaskId: tID.String()})
 	require.NoError(t, err, "failed to get task AccelerationData")
-	require.Equal(t, len(resp.AcceleratorData), 1, "incorrect number of allocation accelerator data returned")
+	require.Len(t, resp.AcceleratorData, 1, "incorrect number of allocation accelerator data returned")
 	require.Equal(t, resp.AcceleratorData[0].AllocationId,
 		aID.String(), "failed to get the correct allocation's accelerator data")
 }
@@ -374,7 +373,7 @@ func TestGetAllocationAcceleratorDataWithNoData(t *testing.T) {
 	resp, err := api.GetTaskAcceleratorData(ctx,
 		&apiv1.GetTaskAcceleratorDataRequest{TaskId: tID.String()})
 	require.NoError(t, err, "failed to get task AccelerationData")
-	require.Equal(t, len(resp.AcceleratorData), 0, "unexpected allocation accelerator data returned")
+	require.Empty(t, resp.AcceleratorData, "unexpected allocation accelerator data returned")
 }
 
 // Checks if GetAllocationAcceleratorData works when a task has more than one allocation
@@ -421,7 +420,7 @@ func TestGetAllocationAcceleratorData(t *testing.T) {
 	resp, err := api.GetTaskAcceleratorData(ctx,
 		&apiv1.GetTaskAcceleratorDataRequest{TaskId: tID.String()})
 	require.NoError(t, err, "failed to get task AccelerationData")
-	require.Equal(t, len(resp.AcceleratorData), 1, "incorrect number of allocation accelerator data returned")
+	require.Len(t, resp.AcceleratorData, 1, "incorrect number of allocation accelerator data returned")
 	require.Equal(t, resp.AcceleratorData[0].AllocationId,
 		aID1.String(), "failed to get the correct allocation's accelerator data")
 }

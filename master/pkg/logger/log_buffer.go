@@ -14,7 +14,7 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/logv1"
 )
 
-func computeSlice(startID int, endID int, limit int, totalEntries int, capacity int) (int, int) {
+func computeSlice(startID int, endID int, limit int, totalEntries int, capacity int) (startIdx int, entryCount int) {
 	if endID < -1 || startID < -1 || limit < -1 {
 		return 0, 0
 	}

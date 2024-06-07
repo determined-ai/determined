@@ -376,6 +376,7 @@ const TableActionBar: React.FC<Props> = ({
         let label = `${totalExperiments.toLocaleString()} ${pluralizer(
           totalExperiments,
           labelSingular.toLowerCase(),
+          labelPlural,
         )}`;
 
         if (selectedExperimentIds.length) {

@@ -100,9 +100,9 @@ func (s *Service) authorize(c echo.Context) error {
 
 // clientFormHandler verifies a token request by hashing the client ID and secret instead of using
 // the secret from the form directly.
-func clientFormHandler(r *http.Request) (string, string, error) {
-	clientID := r.Form.Get("client_id")
-	clientSecret := r.Form.Get("client_secret")
+func clientFormHandler(r *http.Request) (clientID string, clientSecret string, err error) {
+	clientID = r.Form.Get("client_id")
+	clientSecret = r.Form.Get("client_secret")
 	if clientID == "" || clientSecret == "" {
 		return "", "", oauth2Errors.ErrInvalidClient
 	}

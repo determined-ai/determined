@@ -2,8 +2,9 @@ package config
 
 import (
 	"fmt"
-	"reflect"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
@@ -18,7 +19,7 @@ func TestDispatcherResourceManagerConfig_Validate(t *testing.T) {
 	tests := []struct {
 		name   string
 		fields fields
-		want   []error
+		want   error
 	}{
 		{
 			name:   "Default slot_type",
@@ -39,13 +40,13 @@ func TestDispatcherResourceManagerConfig_Validate(t *testing.T) {
 				LauncherContainerRunType: "singularity",
 				SlotType:                 ptrs.Ptr("invalid-type"),
 			},
-			want: []error{fmt.Errorf(
-				"invalid slot_type 'invalid-type'.  Specify one of cuda, rocm, or cpu")},
+			want: fmt.Errorf(
+				"invalid slot_type 'invalid-type'.  Specify one of cuda, rocm, or cpu"),
 		},
 		{
 			name:   "Invalid type case",
 			fields: fields{LauncherContainerRunType: "invalid-type"},
-			want:   []error{fmt.Errorf("invalid launch container run type: 'invalid-type'")},
+			want:   fmt.Errorf("invalid launch container run type: 'invalid-type'"),
 		},
 		{
 			name:   "singularity case",
@@ -100,9 +101,9 @@ func TestDispatcherResourceManagerConfig_Validate(t *testing.T) {
 				LauncherContainerRunType: "enroot",
 				JobProjectSource:         ptrs.Ptr("something-bad"),
 			},
-			want: []error{fmt.Errorf(
+			want: fmt.Errorf(
 				"invalid job_project_source value: 'something-bad'. " +
-					"Specify one of project, workspace or label[:value]")},
+					"Specify one of project, workspace or label[:value]"),
 		},
 	}
 	for _, tt := range tests {
@@ -112,8 +113,9 @@ func TestDispatcherResourceManagerConfig_Validate(t *testing.T) {
 				JobProjectSource:         tt.fields.JobProjectSource,
 				SlotType:                 (*device.Type)(tt.fields.SlotType),
 			}
-			if got := c.Validate(); !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("DispatcherResourceManagerConfig.Validate(%s) = %v, want %v", tt.name, got, tt.want)
+			if got := c.Validate(); got != nil {
+				require.Equal(t, tt.want.Error(), got[0].Error(),
+					"DispatcherResourceManagerConfig.Validate(%s) = %v, want %v", tt.name, got, tt.want)
 			}
 		})
 	}

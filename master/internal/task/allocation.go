@@ -482,7 +482,6 @@ func (a *allocation) validateRendezvous() error {
 
 	switch a.resources.first().Summary().ResourcesType {
 	case sproto.ResourcesTypeDockerContainer, sproto.ResourcesTypeK8sJob:
-		break
 	default:
 		return BehaviorUnsupportedError{Behavior: "rendezvous"}
 	}
@@ -866,7 +865,6 @@ func (a *allocation) restoreResourceFailure(msg *sproto.ResourcesFailedError) {
 		// TODO(DET-8822): This heartbeat can be nil.
 		switch heartbeat := cluster.TheLastBootClusterHeartbeat(); {
 		case a.model.StartTime == nil:
-			break
 		case heartbeat.Before(*a.model.StartTime):
 			a.model.EndTime = a.model.StartTime
 		default:

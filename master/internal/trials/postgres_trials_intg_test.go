@@ -17,7 +17,7 @@ import (
 
 func TestMarkLostTrials(t *testing.T) {
 	ctx := context.Background()
-	pgDB, close := db.MustResolveTestPostgres(t)
+	pgDB, closeDB := db.MustResolveTestPostgres(t)
 
 	user := db.RequireMockUser(t, pgDB)
 	// TODO(ilia): it'd be useful to cleanup the user, but we can't because of a foreign key
@@ -70,7 +70,7 @@ func TestMarkLostTrials(t *testing.T) {
 
 		require.NoError(t, err)
 
-		close()
+		closeDB()
 	})
 
 	trials := map[int][]int{}

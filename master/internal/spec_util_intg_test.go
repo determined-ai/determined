@@ -177,5 +177,5 @@ func TestGetTaskSessionToken(t *testing.T) {
 
 	token, err := getTaskSessionToken(ctx, &userModel)
 	require.NoError(t, err, "Error in getTaskSessionToken()")
-	require.Greater(t, len(token), 0)
+	require.NotEmpty(t, token)
 }

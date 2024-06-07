@@ -1,11 +1,7 @@
 import { BaseComponent, NamedComponent } from 'e2e/models/BaseComponent';
 
 /**
- * Returns a representation of the Modal component from Ant.
- * This constructor represents the contents in antd/es/modal/index.d.ts.
- * @param {object} obj
- * @param {CanBeParent} obj.parent - The parent used to locate this Modal
- * @param {string} obj.selector - Used instead of `defaultSelector`
+ * Represents the Modal component from antd/es/modal/index.d.ts
  */
 export class Modal extends NamedComponent {
   readonly defaultSelector = '.ant-modal-content';
@@ -15,22 +11,14 @@ export class Modal extends NamedComponent {
 }
 
 /**
- * Returns a representation of the Modal's Footer component from Ant.
- * This constructor represents the footer in antd/es/modal/index.d.ts..
- * @param {object} obj
- * @param {CanBeParent} obj.parent - The parent used to locate this Modal
- * @param {string} obj.selector - Used instead of `defaultSelector`
+ * Represents the header from the Modal component
  */
 class ModalHeader extends BaseComponent {
   readonly title = new BaseComponent({ parent: this, selector: '.ant-modal-title' });
 }
 
 /**
- * Returns a representation of the Modal's Footer component from Ant.
- * This constructor represents the footer in antd/es/modal/index.d.ts..
- * @param {object} obj
- * @param {implementsGetLocator} obj.parent - The parent used to locate this Modal
- * @param {string} obj.selector - Used instead of `defaultSelector`
+ * Represents the footer from the Modal component
  */
 class ModalFooter extends BaseComponent {
   readonly submit = new BaseComponent({ parent: this, selector: '[type="submit"]' });

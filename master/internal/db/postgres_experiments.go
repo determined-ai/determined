@@ -172,17 +172,16 @@ func MetricBatches(
 	batches []int32, endTime time.Time, err error,
 ) {
 	var rows []*batchesWrapper
-	JSONKey := model.TrialMetricsJSONPath(metricGroup == model.ValidationMetricGroup)
+	jsonKey := model.TrialMetricsJSONPath(metricGroup == model.ValidationMetricGroup)
 
 	err = BunSelectMetricsQuery(metricGroup, false).
 		TableExpr("trials t").
 		Join("INNER JOIN metrics m ON t.id=m.trial_id").
 		ColumnExpr("m.total_batches AS batches_processed, max(t.end_time) as end_time").
 		Where("t.experiment_id = ?", experimentID).
-		Where(fmt.Sprintf("m.metrics->'%s' ? '%s'", JSONKey, metricName)).
+		Where(fmt.Sprintf("m.metrics->'%s' ? '%s'", jsonKey, metricName)).
 		Where("m.end_time > ?", startTime).
 		Group("batches_processed").Scan(context.Background(), &rows)
-
 	if err != nil {
 		return nil, endTime, errors.Wrapf(err, "error querying DB for metric batches")
 	}
@@ -525,7 +524,7 @@ func RemoveProjectHyperparameters(ctx context.Context, idb bun.IDB, experimentID
 		return err
 	}
 	if len(projectIDs) > 1 {
-		return errors.New("error removing experiment hyperparameters")
+		return fmt.Errorf("error removing experiment hyperparameters")
 	}
 	return nil
 }
@@ -562,7 +561,7 @@ func AddProjectHyperparameters(
 		return err
 	}
 	if len(projectIDs) > 1 {
-		return errors.New("error adding experiment hyperparameters")
+		return fmt.Errorf("error adding experiment hyperparameters")
 	}
 	return nil
 }
@@ -820,7 +819,7 @@ RETURNING e.state, old.state
 		return errors.Wrap(err, "updating experiment state")
 	}
 	if newState == oldState {
-		return errors.New("could not transition experiment")
+		return fmt.Errorf("could not transition experiment")
 	}
 	return nil
 }
@@ -1034,6 +1033,7 @@ WHERE id = $1`, id)
 
 // GetCheckpoint gets checkpointv1.Checkpoint from the database by UUID.
 // Can be moved to master/internal/checkpoints once db/postgres_model_intg_test is bunified.
+// WARNING: Function does not account for "NaN", "Infinity", or "-Infinity" due to Bun unmarshallling.
 func GetCheckpoint(ctx context.Context, checkpointUUID string) (*checkpointv1.Checkpoint, error) {
 	var retCkpt1 checkpointv1.Checkpoint
 	err := Bun().NewSelect().

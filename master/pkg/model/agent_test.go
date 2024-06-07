@@ -8,8 +8,8 @@ import (
 )
 
 func TestSortableSlotIndex(t *testing.T) {
-	require.Equal(t, SortableSlotIndex(2), "002")
-	require.Equal(t, SortableSlotIndex(16), "016")
+	require.Equal(t, "002", SortableSlotIndex(2))
+	require.Equal(t, "016", SortableSlotIndex(16))
 
 	// Do we actually sort?
 	var gpuIndexes []string

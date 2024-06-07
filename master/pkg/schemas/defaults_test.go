@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/santhosh-tekuri/jsonschema/v2"
+	"github.com/stretchr/testify/require"
 	"gotest.tools/assert"
 
 	"github.com/determined-ai/determined/master/pkg/ptrs"
@@ -40,10 +41,10 @@ func (b BindMountV0) CompletenessValidator() *jsonschema.Schema {
 
 func TestFillEmptyDefaults(t *testing.T) {
 	assertDefaults := func(b BindMountV0) {
-		assert.Assert(t, b.ReadOnly != nil)
-		assert.Assert(t, *b.ReadOnly == false)
-		assert.Assert(t, b.Propagation != nil)
-		assert.Assert(t, *b.Propagation == rprivate)
+		require.NotNil(t, b.ReadOnly)
+		require.False(t, *b.ReadOnly)
+		require.NotNil(t, b.Propagation)
+		require.Equal(t, rprivate, *b.Propagation)
 	}
 
 	obj := BindMountV0{}
@@ -64,8 +65,8 @@ func TestFillEmptyDefaults(t *testing.T) {
 func TestNonEmptyDefaults(t *testing.T) {
 	obj := BindMountV0{ReadOnly: ptrs.Ptr(true), Propagation: ptrs.Ptr("asdf")}
 	out := WithDefaults(obj)
-	assert.Assert(t, *out.ReadOnly == true)
-	assert.Assert(t, *out.Propagation == "asdf")
+	require.True(t, *out.ReadOnly)
+	require.Equal(t, "asdf", *out.Propagation)
 }
 
 func TestArrayOfDefautables(t *testing.T) {
@@ -77,10 +78,10 @@ func TestArrayOfDefautables(t *testing.T) {
 	out := WithDefaults(obj)
 
 	for _, b := range out {
-		assert.Assert(t, b.ReadOnly != nil)
-		assert.Assert(t, *b.ReadOnly == false)
-		assert.Assert(t, b.Propagation != nil)
-		assert.Assert(t, *b.Propagation == rprivate)
+		require.NotNil(t, b.ReadOnly)
+		require.False(t, *b.ReadOnly)
+		require.NotNil(t, b.Propagation)
+		require.Equal(t, rprivate, *b.Propagation)
 	}
 }
 
@@ -108,7 +109,7 @@ func (g *G) WithDefaults() G {
 // Wrong number of outputs is not Defaultable.
 // type H int // defined in merge_test.go
 
-func (h H) WithDefaults() (H, H) {
+func (h H) WithDefaults() (h0 H, h1 H) {
 	return H(0), H(1)
 }
 

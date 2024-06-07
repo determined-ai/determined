@@ -134,23 +134,23 @@ func TestAddNodeDisabledAffinityToPodSpec(t *testing.T) {
 		MatchExpressions, nodeSelectorTerm)
 
 	// Test idempotency.
-	copy := p.DeepCopy()
+	copyPod := p.DeepCopy()
 	addNodeDisabledAffinityToPodSpec(p, "cluster-id")
 	addNodeDisabledAffinityToPodSpec(p, "cluster-id")
-	require.Equal(t, copy, p)
+	require.Equal(t, copyPod, p)
 }
 
 func TestAddDisallowedNodesToPodSpec(t *testing.T) {
 	p := &k8sV1.Pod{}
 	addNodeDisabledAffinityToPodSpec(p, "cluster-id")
 
-	copy := p.DeepCopy()
+	copyPod := p.DeepCopy()
 
 	// No block list adds anything.
 	addDisallowedNodesToPodSpec(&sproto.AllocateRequest{
 		BlockedNodes: nil,
 	}, p)
-	require.Equal(t, copy, p)
+	require.Equal(t, copyPod, p)
 
 	addDisallowedNodesToPodSpec(&sproto.AllocateRequest{
 		BlockedNodes: []string{"a1", "a2"},

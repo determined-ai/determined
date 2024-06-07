@@ -9,6 +9,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -24,13 +25,12 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
-	"github.com/determined-ai/determined/master/pkg/protoutils/protoconverter"
-
 	apiPkg "github.com/determined-ai/determined/master/internal/api"
 	authz2 "github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/trials"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/protoutils/protoconverter"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
@@ -291,11 +291,11 @@ func TestMultiTrialSampleSpecialMetrics(t *testing.T) {
 		"", maxDataPoints, 0, 10, nil, []string{
 			"mygroup.zgroup_b/me.t r%i]\\c_1",
 		})
-	require.Equal(t, 1, len(actualMetrics))
+	require.Len(t, actualMetrics, 1)
 	require.NoError(t, err)
 	mygroup := actualMetrics[0]
-	require.Equal(t, maxDataPoints, len(mygroup.Data))
-	require.Equal(t, 1, len(mygroup.Data[0].Values.AsMap()))
+	require.Len(t, mygroup.Data, maxDataPoints)
+	require.Len(t, mygroup.Data[0].Values.AsMap(), 1)
 }
 
 func TestMultiTrialSampleMetrics(t *testing.T) {
@@ -317,7 +317,7 @@ func TestMultiTrialSampleMetrics(t *testing.T) {
 	actualTrainingMetrics, err := api.multiTrialSample(int32(trial.ID), trainMetricNames,
 		model.TrainingMetricGroup, maxDataPoints, 0, 10, nil, []string{})
 	require.NoError(t, err)
-	require.Equal(t, 1, len(actualTrainingMetrics))
+	require.Len(t, actualTrainingMetrics, 1)
 
 	var validationMetricNames []string
 	for metricName := range expectedValMetrics[0].AvgMetrics.AsMap() {
@@ -327,7 +327,7 @@ func TestMultiTrialSampleMetrics(t *testing.T) {
 	actualValidationTrainingMetrics, err := api.multiTrialSample(int32(trial.ID),
 		validationMetricNames, model.ValidationMetricGroup, maxDataPoints,
 		0, 10, nil, []string{})
-	require.Equal(t, 1, len(actualValidationTrainingMetrics))
+	require.Len(t, actualValidationTrainingMetrics, 1)
 	require.NoError(t, err)
 
 	var genericMetricNames []string
@@ -338,7 +338,7 @@ func TestMultiTrialSampleMetrics(t *testing.T) {
 	actualGenericTrainingMetrics, err := api.multiTrialSample(int32(trial.ID),
 		genericMetricNames, model.MetricGroup("mygroup"), maxDataPoints,
 		0, 10, nil, []string{})
-	require.Equal(t, 1, len(actualGenericTrainingMetrics))
+	require.Len(t, actualGenericTrainingMetrics, 1)
 	require.NoError(t, err)
 
 	require.True(t, isMultiTrialSampleCorrect(expectedTrainMetrics, actualTrainingMetrics[0]))
@@ -346,10 +346,10 @@ func TestMultiTrialSampleMetrics(t *testing.T) {
 
 	actualAllMetrics, err := api.multiTrialSample(int32(trial.ID), []string{},
 		"", maxDataPoints, 0, 10, nil, metricIds)
-	require.Equal(t, 3, len(actualAllMetrics))
+	require.Len(t, actualAllMetrics, 3)
 	require.NoError(t, err)
-	require.Equal(t, maxDataPoints, len(actualAllMetrics[1].Data)) // max datapoints check
-	require.Equal(t, maxDataPoints, len(actualAllMetrics[2].Data)) // max datapoints check
+	require.Len(t, actualAllMetrics[1].Data, maxDataPoints) // max datapoints check
+	require.Len(t, actualAllMetrics[2].Data, maxDataPoints) // max datapoints check
 	require.True(t, isMultiTrialSampleCorrect(expectedTrainMetrics, actualAllMetrics[1]))
 	require.True(t, isMultiTrialSampleCorrect(expectedValMetrics, actualAllMetrics[2]))
 }
@@ -411,11 +411,11 @@ func TestStreamTrainingMetrics(t *testing.T) {
 		// No trial IDs.
 		_, err := curCase.requestFunc([]int32{})
 		require.Error(t, err)
-		require.Equal(t, status.Code(err), codes.InvalidArgument)
+		require.Equal(t, codes.InvalidArgument, status.Code(err))
 
 		// Trial IDs not found.
 		_, err = curCase.requestFunc([]int32{-1})
-		require.Equal(t, status.Code(err), codes.NotFound)
+		require.Equal(t, codes.NotFound, status.Code(err))
 
 		// One trial.
 		resp, err := curCase.requestFunc([]int32{int32(trials[0].ID)})
@@ -456,7 +456,7 @@ func TestNonNumericEpochMetric(t *testing.T) {
 			},
 		},
 	})
-	require.Equal(t, fmt.Errorf("cannot add metric with non numeric 'epoch' value got x"), err)
+	require.Equal(t, "cannot add metric with non numeric 'epoch' value got x", err.Error())
 }
 
 func TestTrialsNonNumericMetrics(t *testing.T) {
@@ -530,7 +530,7 @@ func TestTrialsNonNumericMetrics(t *testing.T) {
 			require.NoError(t, err)
 
 			data := resp.getData()
-			require.Greater(t, len(data), 0)
+			require.NotEmpty(t, data)
 			require.Len(t, data[0].Trials, 1)
 			require.Len(t, data[0].Trials[0].Data, 1)
 			require.Equal(t, map[string]any{
@@ -599,7 +599,7 @@ func TestReportCheckpoint(t *testing.T) {
 func TestReportCheckpointNonTrialErrors(t *testing.T) {
 	api, _, ctx := setupAPITest(t, nil)
 
-	notebookTask := mockNotebookWithWorkspaceID(ctx, api, t, 1)
+	notebookTask := mockNotebookWithWorkspaceID(ctx, t, 1)
 
 	checkpointMeta, err := structpb.NewStruct(map[string]any{
 		"steps_completed": 1,
@@ -821,7 +821,7 @@ func TestTrialAuthZ(t *testing.T) {
 		authZExp.On("CanGetExperiment", mock.Anything, mockUserArg, mock.Anything).
 			Return(authz2.PermissionDeniedError{}).Once()
 		require.ErrorIs(t, curCase.IDToReqCall(trial.ID),
-			apiPkg.NotFoundErrs("trial", fmt.Sprint(trial.ID), true))
+			apiPkg.NotFoundErrs("trial", strconv.Itoa(trial.ID), true))
 
 		// Experiment view error returns error unmodified.
 		expectedErr := fmt.Errorf("canGetTrialError")
@@ -976,7 +976,7 @@ func TestTrialLogsBackported(t *testing.T) {
 	require.NoError(t, err)
 
 	actual := stream.getData()
-	require.Equal(t, len(expected), len(actual))
+	require.Len(t, actual, len(expected))
 	for i, expected := range expected {
 		require.Equal(t, expected.Log, *actual[i].Log)
 	}
@@ -1027,7 +1027,7 @@ func TestTrialLogs(t *testing.T) {
 	}, stream)
 	require.NoError(t, err)
 
-	require.Equal(t, len(expected), len(stream.data))
+	require.Len(t, stream.data, len(expected))
 	for i, expected := range expected {
 		require.Equal(t, expected, *stream.data[i].Log)
 	}
@@ -1054,7 +1054,6 @@ func TestTrialLogs(t *testing.T) {
 		require.NoError(t, err)
 		t.Fatal("follow isn't following task logs")
 	case <-time.After(10 * time.Second):
-		break
 	}
 
 	// Note we only update the latest task. We only care about the latest task in following.
@@ -1066,13 +1065,12 @@ func TestTrialLogs(t *testing.T) {
 
 	select {
 	case <-done:
-		break
 	case <-time.After(30 * time.Second):
 		t.Fatal("follow is following too long task logs")
 	}
 
 	actual := newStream.getData()
-	require.Equal(t, len(expected), len(actual))
+	require.Len(t, actual, len(expected))
 	for i, expected := range expected {
 		require.Equal(t, expected, *actual[i].Log)
 	}
@@ -1159,7 +1157,6 @@ func TestTrialLogFields(t *testing.T) {
 		require.NoError(t, err)
 		t.Fatal("follow isn't following task logs")
 	case <-time.After(10 * time.Second):
-		break
 	}
 
 	// Note we only update the latest task. We only care about the latest task in following.
@@ -1171,7 +1168,6 @@ func TestTrialLogFields(t *testing.T) {
 
 	select {
 	case <-done:
-		break
 	case <-time.After(30 * time.Second):
 		t.Fatal("follow is following too long task logs")
 	}
@@ -1204,11 +1200,11 @@ func TestCompareTrialsSampling(t *testing.T) {
 	trial, _ := createTestTrialWithMetrics(
 		ctx, t, api, curUser, false)
 
-	const DATAPOINTS = 3
+	const datapoints = 3
 
 	req := &apiv1.CompareTrialsRequest{
 		TrialIds:      []int32{int32(trial.ID)},
-		MaxDatapoints: DATAPOINTS,
+		MaxDatapoints: datapoints,
 		MetricNames:   []string{"loss"},
 		StartBatches:  0,
 		EndBatches:    1000,
@@ -1219,7 +1215,7 @@ func TestCompareTrialsSampling(t *testing.T) {
 	require.NoError(t, err)
 
 	sampleBatches1 := compareTrialsResponseToBatches(resp)
-	require.Equal(t, DATAPOINTS, len(sampleBatches1))
+	require.Len(t, sampleBatches1, datapoints)
 
 	resp, err = api.CompareTrials(ctx, req)
 	require.NoError(t, err)
@@ -1305,7 +1301,7 @@ func TestTrialSourceInfoCheckpoint(t *testing.T) {
 		},
 	)
 	require.NoError(t, getErr)
-	require.Equal(t, len(getCkptResp.Metrics), 2)
+	require.Len(t, getCkptResp.Metrics, 2)
 
 	infTrialExp, err := db.ExperimentByID(ctx, infTrial.ExperimentID)
 	require.NoError(t, err)
@@ -1332,7 +1328,7 @@ func TestTrialSourceInfoCheckpoint(t *testing.T) {
 	)
 	require.NoError(t, getErr)
 	// Only infTrial2 should be visible, but it doesn't have metrics
-	require.Equal(t, 1, len(getCkptResp.Metrics))
+	require.Len(t, getCkptResp.Metrics, 1)
 	require.Equal(t, int32(infTrial2.ID), getCkptResp.Metrics[0].TrialId)
 }
 
@@ -1383,7 +1379,7 @@ func TestTrialSourceInfoModelVersion(t *testing.T) {
 	)
 	require.NoError(t, getMVErr)
 	// One trial is valid and it has one aggregated MetricsReport
-	require.Equal(t, 1, len(getMVResp.Metrics))
+	require.Len(t, getMVResp.Metrics, 1)
 	require.Equal(t, int32(infTrial.ID), getMVResp.Metrics[0].TrialId)
 }
 
@@ -1433,7 +1429,7 @@ func TestPutTrialRetainLogs(t *testing.T) {
 
 	orgLogRetentionDays, err := getLogRetentionDays(ctx, trialIDs)
 	require.NoError(t, err)
-	require.Equal(t, orgLogRetentionDays, []int32{-1, -1, -1, -1, -1})
+	require.Equal(t, []int32{-1, -1, -1, -1, -1}, orgLogRetentionDays)
 
 	newLogRetentionDays := []int32{10, 10, 10, 10, 10}
 	for i, v := range trialIDs {

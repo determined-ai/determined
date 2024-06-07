@@ -3,6 +3,7 @@ package workspace
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -22,7 +23,7 @@ func init() {
 }
 
 // ErrLookup is the error returned when a user's permissions couldn't be looked up.
-var ErrLookup = errors.New("error looking up user's permissions")
+var ErrLookup = fmt.Errorf("error looking up user's permissions")
 
 // WorkspaceAuthZRBAC is the RBAC implementation of WorkspaceAuthZ.
 type WorkspaceAuthZRBAC struct{}
@@ -163,7 +164,7 @@ func (r *WorkspaceAuthZRBAC) CanGetWorkspaceID(
 		{
 			PermissionTypes: []rbacv1.PermissionType{workspacePermission},
 			SubjectType:     "workspace",
-			SubjectIDs:      []string{fmt.Sprint(workspaceID)},
+			SubjectIDs:      []string{strconv.Itoa(int(workspaceID))},
 		},
 	}
 	defer func() {
@@ -462,7 +463,7 @@ func addWorkspaceInfo(
 		{
 			PermissionTypes: permissions,
 			SubjectType:     "workspace",
-			SubjectIDs:      []string{fmt.Sprint(workspace.Id)},
+			SubjectIDs:      []string{strconv.Itoa(int(workspace.Id))},
 		},
 	}
 }

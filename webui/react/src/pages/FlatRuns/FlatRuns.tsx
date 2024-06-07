@@ -68,7 +68,7 @@ import { getProjectColumns, getProjectNumericMetricsRange, searchRuns } from 'se
 import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
 import userStore from 'stores/users';
 import userSettings from 'stores/userSettings';
-import { DetailedUser, ExperimentAction, FlatRun, Project, ProjectColumn } from 'types';
+import { DetailedUser, ExperimentAction, FlatRun, ProjectColumn } from 'types';
 import handleError from 'utils/error';
 import { eagerSubscribe } from 'utils/observable';
 import { pluralizer } from 'utils/string';
@@ -98,7 +98,8 @@ const BANNED_FILTER_COLUMNS = new Set(['searcherMetricsVal']);
 const formStore = new FilterFormStore();
 
 interface Props {
-  project: Project;
+  projectId: number;
+  searchId?: number;
 }
 
 const makeSortString = (sorts: ValidSort[]): string =>
@@ -116,12 +117,12 @@ const parseSortString = (sortString: string): Sort[] => {
   });
 };
 
-const FlatRuns: React.FC<Props> = ({ project }) => {
+const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
   const dataGridRef = useRef<DataGridHandle>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const settingsPath = useMemo(() => settingsPathForProject(project.id), [project.id]);
+  const settingsPath = useMemo(() => settingsPathForProject(projectId), [projectId]);
   const flatRunsSettingsObs = useMemo(
     () => userSettings.get(FlatRunsSettings, settingsPath),
     [settingsPath],
@@ -173,16 +174,16 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
 
   const projectHeatmap = useAsync(async () => {
     try {
-      return await getProjectNumericMetricsRange({ id: project.id });
+      return await getProjectNumericMetricsRange({ id: projectId });
     } catch (e) {
       handleError(e, { publicSubject: 'Unable to fetch project heatmap' });
       return NotLoaded;
     }
-  }, [project.id]);
+  }, [projectId]);
 
   const projectColumns = useAsync(async () => {
     try {
-      const columns = await getProjectColumns({ id: project.id });
+      const columns = await getProjectColumns({ id: projectId });
       columns.sort((a, b) =>
         a.location === V1LocationType.EXPERIMENT && b.location === V1LocationType.EXPERIMENT
           ? runColumns.indexOf(a.column as RunColumn) - runColumns.indexOf(b.column as RunColumn)
@@ -193,7 +194,7 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
       handleError(e, { publicSubject: 'Unable to fetch project columns' });
       return NotLoaded;
     }
-  }, [project.id]);
+  }, [projectId]);
 
   const columnsIfLoaded = useMemo(
     () => (isLoadingSettings ? [] : settings.columns),
@@ -440,13 +441,31 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
   const fetchRuns = useCallback(async (): Promise<void> => {
     if (isLoadingSettings || Loadable.isNotLoaded(loadableFormset)) return;
     try {
+      const filters = JSON.parse(filtersString);
+      if (searchId) {
+        // only display trials for search
+        const existingFilterGroup = { ...filters.filterGroup };
+        const searchFilter = {
+          columnName: 'experimentId',
+          kind: 'field',
+          location: 'LOCATION_TYPE_RUN',
+          operator: '=',
+          type: 'COLUMN_TYPE_NUMBER',
+          value: searchId,
+        };
+        filters.filterGroup = {
+          children: [existingFilterGroup, searchFilter],
+          conjunction: 'and',
+          kind: 'group',
+        };
+      }
       const tableOffset = Math.max((page - 0.5) * PAGE_SIZE, 0);
       const response = await searchRuns(
         {
-          filter: filtersString,
+          filter: JSON.stringify(filters),
           limit: isPagedView ? settings.pageLimit : 2 * PAGE_SIZE,
           offset: isPagedView ? page * settings.pageLimit : tableOffset,
-          projectId: project.id,
+          projectId: projectId,
           sort: sortString || undefined,
         },
         { signal: canceler.signal },
@@ -480,9 +499,10 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
     isPagedView,
     loadableFormset,
     page,
-    project.id,
+    projectId,
     settings.pageLimit,
     sortString,
+    searchId,
   ]);
 
   const { stopPolling } = usePolling(fetchRuns, { rerunOnNewFn: true });
@@ -898,16 +918,12 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
               isMobile={isMobile}
               pinnedColumnsCount={settings.pinnedColumnsCount}
               projectColumns={projectColumns}
-              projectId={project.id}
+              projectId={projectId}
               tabs={[
                 V1LocationType.EXPERIMENT,
                 [V1LocationType.VALIDATIONS, V1LocationType.TRAINING, V1LocationType.CUSTOMMETRIC],
                 V1LocationType.HYPERPARAMETERS,
               ]}
-              onHeatmapSelectionRemove={(id) => {
-                const newSelection = settings.heatmapSkipped.filter((s) => s !== id);
-                handleHeatmapSelection(newSelection);
-              }}
               onVisibleColumnChange={handleColumnsOrderChange}
             />
             <OptionsMenu

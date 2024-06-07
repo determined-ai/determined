@@ -125,15 +125,15 @@ func (s *Service) callback(c echo.Context) error {
 	ctx := context.TODO()
 	u, err := s.lookupUser(ctx, claims.AuthenticationClaim)
 	if errors.Is(err, db.ErrNotFound) {
-		if s.config.AutoProvisionUsers {
-			newUser, err := s.provisionUser(ctx, claims.AuthenticationClaim, claims.Groups)
-			if err != nil {
-				return err
-			}
-			u = newUser
-		} else {
+		if !s.config.AutoProvisionUsers {
 			return errNotProvisioned
 		}
+
+		newUser, err := s.provisionUser(ctx, claims.AuthenticationClaim, claims.Groups)
+		if err != nil {
+			return err
+		}
+		u = newUser
 	} else if err != nil {
 		return echo.NewHTTPError(http.StatusInternalServerError, err.Error())
 	}
@@ -217,15 +217,15 @@ func (s *Service) toIDTokenClaim(userInfo *oidc.UserInfo) (*IDTokenClaims, error
 
 	c := IDTokenClaims{}
 
-	if cs[s.config.AuthenticationClaim] != nil {
-		authValue, ok := cs[s.config.AuthenticationClaim].(string)
-		if !ok {
-			return nil, fmt.Errorf("user info authenticationClaim value was not a string")
-		}
-		c.AuthenticationClaim = authValue
-	} else {
+	if cs[s.config.AuthenticationClaim] == nil {
 		return nil, fmt.Errorf("user info authenticationClaim missing")
 	}
+
+	authValue, ok := cs[s.config.AuthenticationClaim].(string)
+	if !ok {
+		return nil, fmt.Errorf("user info authenticationClaim value was not a string")
+	}
+	c.AuthenticationClaim = authValue
 
 	if cs[s.config.DisplayNameAttributeName] != nil {
 		displayName, ok := cs[s.config.DisplayNameAttributeName].(string)

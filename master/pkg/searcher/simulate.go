@@ -2,9 +2,9 @@ package searcher
 
 import (
 	"encoding/json"
-	"fmt"
 	"math/rand"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -37,7 +37,7 @@ func (s SimulationResults) MarshalJSON() ([]byte, error) {
 	for _, ops := range s {
 		var keyParts []string
 		for _, op := range ops {
-			keyParts = append(keyParts, fmt.Sprintf("%d", op.Length))
+			keyParts = append(keyParts, strconv.FormatUint(op.Length, 10))
 		}
 		summary[strings.Join(keyParts, " ")]++
 	}

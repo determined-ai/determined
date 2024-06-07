@@ -44,8 +44,8 @@ type kubernetesResourcePool struct {
 
 	jobsService *jobsService
 
-	queuePositions tasklist.JobSortState
-	reschedule     bool
+	queuePositions       tasklist.JobSortState
+	tryAdmitPendingTasks bool
 
 	db *db.PgDB
 
@@ -77,7 +77,7 @@ func newResourcePool(
 func (k *kubernetesResourcePool) SetGroupMaxSlots(msg sproto.SetGroupMaxSlots) {
 	k.mu.Lock()
 	defer k.mu.Unlock()
-	k.reschedule = true
+	k.tryAdmitPendingTasks = true
 
 	k.getOrCreateGroup(msg.JobID).MaxSlots = msg.MaxSlots
 }
@@ -85,7 +85,7 @@ func (k *kubernetesResourcePool) SetGroupMaxSlots(msg sproto.SetGroupMaxSlots) {
 func (k *kubernetesResourcePool) AllocateRequest(msg sproto.AllocateRequest) {
 	k.mu.Lock()
 	defer k.mu.Unlock()
-	k.reschedule = true
+	k.tryAdmitPendingTasks = true
 
 	k.addTask(msg)
 }
@@ -93,7 +93,7 @@ func (k *kubernetesResourcePool) AllocateRequest(msg sproto.AllocateRequest) {
 func (k *kubernetesResourcePool) ResourcesReleased(msg sproto.ResourcesReleased) {
 	k.mu.Lock()
 	defer k.mu.Unlock()
-	k.reschedule = true
+	k.tryAdmitPendingTasks = true
 
 	k.resourcesReleased(msg)
 }
@@ -101,14 +101,14 @@ func (k *kubernetesResourcePool) ResourcesReleased(msg sproto.ResourcesReleased)
 func (k *kubernetesResourcePool) JobSchedulingStateChanged(msg jobSchedulingStateChanged) {
 	k.mu.Lock()
 	defer k.mu.Unlock()
-	k.reschedule = true
+	k.tryAdmitPendingTasks = true
 
 	for it := k.reqList.Iterator(); it.Next(); {
 		req := it.Value()
 		if req.AllocationID == msg.AllocationID {
 			req.State = msg.State
 			if sproto.ScheduledStates[req.State] {
-				k.allocationIDToRunningPods[msg.AllocationID] += msg.NumPods
+				k.allocationIDToRunningPods[msg.AllocationID] = msg.NumPods
 			}
 		}
 	}
@@ -121,7 +121,7 @@ func (k *kubernetesResourcePool) PendingPreemption(msg sproto.PendingPreemption)
 func (k *kubernetesResourcePool) GetJobQ() map[model.JobID]*sproto.RMJobInfo {
 	k.mu.Lock()
 	defer k.mu.Unlock()
-	k.reschedule = true
+	k.tryAdmitPendingTasks = true
 
 	return k.jobQInfo()
 }
@@ -129,7 +129,7 @@ func (k *kubernetesResourcePool) GetJobQ() map[model.JobID]*sproto.RMJobInfo {
 func (k *kubernetesResourcePool) GetJobQStats() *jobv1.QueueStats {
 	k.mu.Lock()
 	defer k.mu.Unlock()
-	k.reschedule = true
+	k.tryAdmitPendingTasks = true
 
 	return tasklist.JobStats(k.reqList)
 }
@@ -137,7 +137,7 @@ func (k *kubernetesResourcePool) GetJobQStats() *jobv1.QueueStats {
 func (k *kubernetesResourcePool) GetJobQStatsAPI(msg *apiv1.GetJobQueueStatsRequest) *apiv1.GetJobQueueStatsResponse {
 	k.mu.Lock()
 	defer k.mu.Unlock()
-	k.reschedule = true
+	k.tryAdmitPendingTasks = true
 
 	resp := &apiv1.GetJobQueueStatsResponse{
 		Results: make([]*apiv1.RPQueueStat, 0),
@@ -152,7 +152,7 @@ func (k *kubernetesResourcePool) GetJobQStatsAPI(msg *apiv1.GetJobQueueStatsRequ
 func (k *kubernetesResourcePool) SetGroupWeight(msg sproto.SetGroupWeight) error {
 	k.mu.Lock()
 	defer k.mu.Unlock()
-	k.reschedule = true
+	k.tryAdmitPendingTasks = true
 
 	return rmerrors.UnsupportedError("set group weight is unsupported in k8s")
 }
@@ -160,7 +160,7 @@ func (k *kubernetesResourcePool) SetGroupWeight(msg sproto.SetGroupWeight) error
 func (k *kubernetesResourcePool) SetGroupPriority(msg sproto.SetGroupPriority) error {
 	k.mu.Lock()
 	defer k.mu.Unlock()
-	k.reschedule = true
+	k.tryAdmitPendingTasks = true
 
 	group := k.getOrCreateGroup(msg.JobID)
 	// Check if there is already a submitted task in this group for which
@@ -191,7 +191,7 @@ func (k *kubernetesResourcePool) SetGroupPriority(msg sproto.SetGroupPriority) e
 func (k *kubernetesResourcePool) MoveJob(msg sproto.MoveJob) error {
 	k.mu.Lock()
 	defer k.mu.Unlock()
-	k.reschedule = true
+	k.tryAdmitPendingTasks = true
 
 	return k.moveJob(msg.ID, msg.Anchor, msg.Ahead)
 }
@@ -199,7 +199,7 @@ func (k *kubernetesResourcePool) MoveJob(msg sproto.MoveJob) error {
 func (k *kubernetesResourcePool) DeleteJob(msg sproto.DeleteJob) sproto.DeleteJobResponse {
 	k.mu.Lock()
 	defer k.mu.Unlock()
-	k.reschedule = true
+	k.tryAdmitPendingTasks = true
 
 	// For now, there is nothing to cleanup in k8s.
 	return sproto.EmptyDeleteJobResponse()
@@ -208,7 +208,7 @@ func (k *kubernetesResourcePool) DeleteJob(msg sproto.DeleteJob) sproto.DeleteJo
 func (k *kubernetesResourcePool) RecoverJobPosition(msg sproto.RecoverJobPosition) {
 	k.mu.Lock()
 	defer k.mu.Unlock()
-	k.reschedule = true
+	k.tryAdmitPendingTasks = true
 
 	k.queuePositions.RecoverJobPosition(msg.JobID, msg.JobPosition)
 }
@@ -220,10 +220,17 @@ func (k *kubernetesResourcePool) GetAllocationSummaries() map[model.AllocationID
 	return k.reqList.TaskSummaries(k.groups, kubernetesScheduler)
 }
 
+func (k *kubernetesResourcePool) GetAllocationSummary(id model.AllocationID) *sproto.AllocationSummary {
+	k.mu.Lock()
+	defer k.mu.Unlock()
+
+	return k.reqList.TaskSummary(id, k.groups, kubernetesScheduler)
+}
+
 func (k *kubernetesResourcePool) getResourceSummary() (*resourceSummary, error) {
 	k.mu.Lock()
 	defer k.mu.Unlock()
-	k.reschedule = true
+	k.tryAdmitPendingTasks = true
 
 	slotsUsed := 0
 	for _, slotsUsedByGroup := range k.slotsUsedPerGroup {
@@ -249,20 +256,20 @@ func (k *kubernetesResourcePool) ValidateResources(
 ) sproto.ValidateResourcesResponse {
 	k.mu.Lock()
 	defer k.mu.Unlock()
-	k.reschedule = true
+	k.tryAdmitPendingTasks = true
 
 	fulfillable := k.maxSlotsPerPod >= msg.Slots
 	return sproto.ValidateResourcesResponse{Fulfillable: fulfillable}
 }
 
-func (k *kubernetesResourcePool) Schedule() {
+func (k *kubernetesResourcePool) Admit() {
 	k.mu.Lock()
 	defer k.mu.Unlock()
 
-	if k.reschedule {
-		k.schedulePendingTasks()
+	if k.tryAdmitPendingTasks {
+		k.admitPendingTasks()
 	}
-	k.reschedule = false
+	k.tryAdmitPendingTasks = false
 }
 
 func (k *kubernetesResourcePool) summarizePods() (*computeUsageSummary, error) {
@@ -365,15 +372,15 @@ func (k *kubernetesResourcePool) moveJob(
 		oldPriority := g.Priority
 		g.Priority = &anchorPriority
 
-		if priorityChanger, ok := tasklist.GroupPriorityChangeRegistry.Load(jobID); ok {
-			if priorityChanger != nil {
-				if err := priorityChanger(anchorPriority); err != nil {
-					g.Priority = oldPriority
-					return err
-				}
-			}
-		} else {
+		priorityChanger, ok := tasklist.GroupPriorityChangeRegistry.Load(jobID)
+		if !ok {
 			return fmt.Errorf("unable to move job with ID %s", jobID)
+		}
+		if priorityChanger != nil {
+			if err := priorityChanger(anchorPriority); err != nil {
+				g.Priority = oldPriority
+				return err
+			}
 		}
 	}
 
@@ -593,7 +600,7 @@ func (k *kubernetesResourcePool) getOrCreateGroup(jobID model.JobID) *tasklist.G
 	return g
 }
 
-func (k *kubernetesResourcePool) schedulePendingTasks() {
+func (k *kubernetesResourcePool) admitPendingTasks() {
 	for it := k.reqList.Iterator(); it.Next(); {
 		req := it.Value()
 		group := k.groups[req.JobID]

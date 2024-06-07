@@ -4,15 +4,18 @@ import { FilterField } from 'e2e/models/components/FilterForm/components/FilterF
 import { DropdownMenu } from 'e2e/models/hew/Dropdown';
 
 /**
- * Returns a representation of the FilterGroup component.
- * This constructor represents the contents in src/components/FilterGroup.tsx.
- * @param {object} obj
- * @param {CanBeParent} obj.parent - The parent used to locate this FilterGroup
- * @param {string} obj.selector - Used instead of `defaultSelector`
- * @param {number} [level] - Level of the FilterGroup. Max depth is 2.
+ * Represents the FilterGroup component in src/components/FilterForm/components/FilterGroup.tsx
  */
 export class FilterGroup extends NamedComponent {
   readonly defaultSelector = '[data-test-component="FilterGroup"]';
+
+  /**
+   * Constructs a FilterGroup
+   * @param {object} args
+   * @param {CanBeParent} args.parent - The parent used to locate this FilterGroup
+   * @param {string} args.selector - Used instead of `defaultSelector`
+   * @param {number} [args.level] - Level of the FilterGroup. Max depth is 2.
+   */
   constructor(args: NamedComponentArgs & { level?: number }) {
     super(args);
     const level = args.level || 0;
@@ -74,6 +77,9 @@ export class FilterGroup extends NamedComponent {
   });
 }
 
+/**
+ * This constructor represents the contents in src/components/FilterForm/components/FilterGroup.tsx.
+ */
 class AddDropdown extends DropdownMenu {
   readonly addCondition = this.menuItem('field');
   readonly addConditionGroup = this.menuItem('group');

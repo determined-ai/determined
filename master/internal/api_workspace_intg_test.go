@@ -7,6 +7,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"strconv"
 	"testing"
 
 	"google.golang.org/grpc/codes"
@@ -233,7 +234,7 @@ func TestWorkspacesIDsByExperimentIDs(t *testing.T) {
 
 	resp, err := workspace.WorkspacesIDsByExperimentIDs(ctx, nil)
 	require.NoError(t, err)
-	require.Len(t, resp, 0)
+	require.Empty(t, resp)
 
 	w0, p0 := createProjectAndWorkspace(ctx, t, api)
 	w1, p1 := createProjectAndWorkspace(ctx, t, api)
@@ -248,7 +249,7 @@ func TestWorkspacesIDsByExperimentIDs(t *testing.T) {
 
 	resp, err = workspace.WorkspacesIDsByExperimentIDs(ctx, []int{e0.ID, e1.ID, -1})
 	require.Error(t, err)
-	require.Len(t, resp, 0)
+	require.Empty(t, resp)
 }
 
 func TestPatchWorkspace(t *testing.T) {
@@ -560,7 +561,7 @@ func TestAuthzWorkspaceGetThenActionRoutes(t *testing.T) {
 		// Without permission to view returns not found.
 		workspaceAuthZ.On("CanGetWorkspace", mock.Anything, mock.Anything, mock.Anything).
 			Return(authz2.PermissionDeniedError{}).Once()
-		require.Equal(t, apiPkg.NotFoundErrs("workspace", fmt.Sprint(id), true).Error(),
+		require.Equal(t, apiPkg.NotFoundErrs("workspace", strconv.Itoa(id), true).Error(),
 			curCase.IDToReqCall(id).Error())
 
 		// A error returned by CanGetWorkspace is returned unmodified.

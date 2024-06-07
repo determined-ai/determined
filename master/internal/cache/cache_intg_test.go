@@ -17,8 +17,8 @@ import (
 
 func TestCache(t *testing.T) {
 	require.NoError(t, etc.SetRootPath(db.RootFromDB))
-	dbIns, close := db.MustResolveTestPostgres(t)
-	defer close()
+	dbIns, closeDB := db.MustResolveTestPostgres(t)
+	defer closeDB()
 	db.MustMigrateTestPostgres(t, dbIns, db.MigrationsFromDB)
 
 	user := db.RequireMockUser(t, dbIns)
@@ -30,7 +30,7 @@ func TestCache(t *testing.T) {
 	// Test fetch
 	files, _, err := cache.getFileTree(expID)
 	require.NoError(t, err)
-	require.True(t, len(files) > 0)
+	require.NotEmpty(t, files)
 	path := files[0].Path
 	_, err = cache.FileContent(expID, path)
 	require.NoError(t, err)

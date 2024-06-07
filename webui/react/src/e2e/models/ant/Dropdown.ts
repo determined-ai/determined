@@ -1,16 +1,16 @@
 import { BaseComponent, ComponentBasics } from 'e2e/models/BaseComponent';
 import { BasePage } from 'e2e/models/BasePage';
 
-interface requiresRoot {
+interface RequiresRoot {
   root: BasePage;
 }
 
-interface DropdownArgsWithoutChildNode extends requiresRoot {
+interface DropdownArgsWithoutChildNode extends RequiresRoot {
   childNode?: never;
   openMethod: () => Promise<void>;
 }
 
-interface DropdownArgsWithChildNode extends requiresRoot {
+interface DropdownArgsWithChildNode extends RequiresRoot {
   childNode: ComponentBasics;
   openMethod?: () => Promise<void>;
 }
@@ -18,19 +18,24 @@ interface DropdownArgsWithChildNode extends requiresRoot {
 type DropdownArgs = DropdownArgsWithoutChildNode | DropdownArgsWithChildNode;
 
 /**
- * Returns a representation of the Dropdown component from Ant.
+ * Represents the Dropdown component from antd/es/dropdown/index.js
  * Until the dropdown component supports test ids, this model will match any open dropdown.
- * This constructor represents the contents in antd/es/dropdown/index.d.ts.
- *
- * The dropdown can be opened by calling the open method. By default, the open method clicks on the child node. Sometimes you might even need to provide both optional arguments, like when a child node is present but impossible to click on due to canvas behavior.
- * @param {object} obj
- * @param {BasePage} obj.root - root of the page
- * @param {ComponentBasics} [obj.childNode] - optional if `openMethod` is present. It's the element we click on to open the dropdown.
- * @param {Function} [obj.openMethod] - optional if `childNode` is present. It's the method to open the dropdown.
  */
 export class Dropdown extends BaseComponent {
   readonly openMethod: (args: { timeout?: number }) => Promise<void>;
   readonly childNode: ComponentBasics | undefined;
+
+  /**
+   * Constructs a new Dropdown component.
+   * The dropdown can be opened by calling the open method. By default, the open
+   * method clicks on the child node. Sometimes you might even need to provide
+   * both optional arguments, like when a child node is present but impossible to
+   * click on due to being blocked by another element behavior.
+   * @param {object} obj
+   * @param {BasePage} obj.root - root of the page
+   * @param {ComponentBasics} [obj.childNode] - optional if `openMethod` is present. It's the element we click on to open the dropdown.
+   * @param {Function} [obj.openMethod] - optional if `childNode` is present. It's the method to open the dropdown.
+   */
   constructor({ root, childNode, openMethod }: DropdownArgs) {
     super({
       parent: root,
@@ -61,18 +66,18 @@ export class Dropdown extends BaseComponent {
   }
 
   /**
-   * Returns a representation of a dropdown menu item with the specified id.
+   * Returns a MenuItem with the specified id
    * @param {string} id - the id of the menu item
    */
-  menuItem(id: string): menuItem {
-    return new menuItem({
+  menuItem(id: string): MenuItem {
+    return new MenuItem({
       parent: this,
       selector: `li.ant-dropdown-menu-item[data-menu-id$="${id}"]`,
     });
   }
 
   /**
-   * Selects a menu item with the specified id.
+   * Selects a MenuItem with the specified id
    * @param {string} id - id of the item to select
    */
   async selectMenuOption(id: string): Promise<void> {
@@ -82,14 +87,21 @@ export class Dropdown extends BaseComponent {
   }
 }
 
-class menuItem extends BaseComponent {
+/**
+ * Represents a menu item from the Dropdown component
+ */
+class MenuItem extends BaseComponent {
   override readonly _parent: Dropdown;
   constructor({ parent, selector }: { parent: Dropdown; selector: string }) {
     super({ parent, selector });
     this._parent = parent;
   }
 
-  async select(clickArgs = {}): Promise<void> {
+  /**
+   * Selects the menu item
+   * @param {object} clickArgs - arguments to pass to the click method
+   */
+  async select(clickArgs: object = {}): Promise<void> {
     await this._parent.open();
     await this.pwLocator.click(clickArgs);
     await this._parent.pwLocator.waitFor({ state: 'hidden' });

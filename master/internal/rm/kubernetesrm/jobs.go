@@ -925,7 +925,7 @@ func (j *jobsService) podStatusCallback(obj any) {
 		return
 	}
 
-	j.updatePodSchedulingState(jobName, pod)
+	j.updatePodSchedulingState(jobName, *pod)
 	if j.jobSchedulingStateCallback != nil {
 		go j.jobSchedulingStateCallback(jobSchedulingStateChanged{
 			AllocationID: jobHandler.req.AllocationID,
@@ -970,15 +970,16 @@ func (j *jobsService) jobSchedulingState(jobName string) sproto.SchedulingState 
 	return sproto.SchedulingStateScheduled
 }
 
-// updatePodSchedulingState stores the scheduling state of a pod based on its state (in particular the phase).
-func (j *jobsService) updatePodSchedulingState(jobName string, pod *k8sV1.Pod) {
+// updatePodSchedulingState stores the scheduling state of a pod based on its state.
+func (j *jobsService) updatePodSchedulingState(jobName string, pod k8sV1.Pod) {
 	states, ok := j.jobNameToPodNameToSchedulingState[jobName]
 	if !ok {
 		states = make(map[string]sproto.SchedulingState)
 	}
 
+	// The field pod.Spec.NodeName is a request to be scheduled onto a node but it is not guaranteed.
 	states[pod.Name] = sproto.SchedulingStateQueued
-	if pod.Status.Phase == "Running" {
+	if podScheduled(pod) {
 		states[pod.Name] = sproto.SchedulingStateScheduled
 	}
 	j.jobNameToPodNameToSchedulingState[jobName] = states
@@ -1333,12 +1334,12 @@ func (j *jobsService) getSlot(agentID string, slotID string) *apiv1.GetSlotRespo
 	if !ok {
 		// Try converting an index input to a slot and see if that exists (1 to 001).
 		tryIndex, err := strconv.Atoi(slotID)
-		if s, ok := slots[model.SortableSlotIndex(tryIndex)]; err == nil && ok {
-			slot = s
-		} else {
+		s, ok := slots[model.SortableSlotIndex(tryIndex)]
+		if err != nil || !ok {
 			j.syslog.Warnf("no slot with id %s", slotID)
 			return nil
 		}
+		slot = s
 	}
 	return &apiv1.GetSlotResponse{Slot: slot}
 }

@@ -102,7 +102,7 @@ type SCIMUser struct {
 func (u SCIMUser) Validate() []error {
 	var errs []error
 	if len(u.Username) == 0 {
-		errs = append(errs, errors.New("missing userName"))
+		errs = append(errs, fmt.Errorf("missing userName"))
 	}
 
 	return errs
@@ -119,7 +119,7 @@ func (u *SCIMUser) Sanitize() {
 // invariants.
 func (u SCIMUser) ValidateChanges() error {
 	if !u.ID.Valid {
-		return errors.New("missing ID")
+		return fmt.Errorf("missing ID")
 	}
 
 	return nil
@@ -164,7 +164,7 @@ const clientSidePasswordSalt = "GubPEmmotfiK9TMD6Zdw" // #nosec G101
 // unrecognizable sha512 hash from the frontend.
 func replicateClientSideSaltAndHash(password string) string {
 	sum := sha512.Sum512([]byte(clientSidePasswordSalt + password))
-	return fmt.Sprintf("%x", sum)
+	return fmt.Sprintf("%x", sum) // nolint: perfsprint
 }
 
 // SCIMUsers is a list of users in SCIM.

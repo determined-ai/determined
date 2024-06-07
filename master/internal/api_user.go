@@ -10,13 +10,13 @@ import (
 	"github.com/pkg/errors"
 	"gopkg.in/guregu/null.v3"
 
-	bun "github.com/uptrace/bun"
+	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/internal/config"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
+	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/authz"
@@ -119,11 +119,7 @@ func getFullModelUser(
 	return userModel, err
 }
 
-func getUser(
-	ctx context.Context,
-	d *db.PgDB,
-	userID model.UserID,
-) (*userv1.User, error) {
+func getUser(ctx context.Context, userID model.UserID) (*userv1.User, error) {
 	user, err := getFullModelUser(ctx, userID)
 	if err != nil {
 		return nil, err
@@ -358,7 +354,7 @@ func (a *apiServer) PostUser(
 	case err != nil:
 		return nil, err
 	}
-	fullUser, err := getUser(ctx, a.m.db, userID)
+	fullUser, err := getUser(ctx, userID)
 	return &apiv1.PostUserResponse{User: fullUser}, err
 }
 
@@ -395,7 +391,7 @@ func (a *apiServer) SetUserPassword(
 	case err != nil:
 		return nil, err
 	}
-	fullUser, err := getUser(ctx, a.m.db, model.UserID(req.UserId))
+	fullUser, err := getUser(ctx, model.UserID(req.UserId))
 	return &apiv1.SetUserPasswordResponse{User: fullUser}, err
 }
 
@@ -554,7 +550,7 @@ func (a *apiServer) PatchUser(
 		return nil, err
 	}
 
-	fullUser, err := getUser(ctx, a.m.db, model.UserID(req.UserId))
+	fullUser, err := getUser(ctx, model.UserID(req.UserId))
 	return &apiv1.PatchUserResponse{User: fullUser}, err
 }
 

@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"path/filepath"
+	"strconv"
 	"strings"
 
 	docker "github.com/docker/docker/api/types/container"
@@ -223,7 +224,7 @@ func (t TaskSpec) EnvVars() map[string]string {
 		e["DET_USE_TLS"] = "false"
 	}
 
-	e["DET_SEGMENT_ENABLED"] = fmt.Sprintf("%v", t.SegmentEnabled)
+	e["DET_SEGMENT_ENABLED"] = strconv.FormatBool(t.SegmentEnabled)
 	if t.SegmentEnabled {
 		e["DET_SEGMENT_API_KEY"] = t.SegmentAPIKey
 	}

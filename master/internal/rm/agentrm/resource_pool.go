@@ -728,19 +728,20 @@ func (rp *resourcePool) moveJob(
 			return err
 		}
 
-		if priorityChanger, ok := tasklist.GroupPriorityChangeRegistry.Load(jobID); ok {
-			if priorityChanger != nil {
-				if err := priorityChanger(anchorPriority); err != nil {
-					_ = rp.setGroupPriority(sproto.SetGroupPriority{
-						Priority:     oldPriority,
-						ResourcePool: rp.config.PoolName,
-						JobID:        jobID,
-					})
-					return err
-				}
-			}
-		} else {
+		priorityChanger, ok := tasklist.GroupPriorityChangeRegistry.Load(jobID)
+		if !ok {
 			return fmt.Errorf("unable to move job with ID %s", jobID)
+		}
+
+		if priorityChanger != nil {
+			if err := priorityChanger(anchorPriority); err != nil {
+				_ = rp.setGroupPriority(sproto.SetGroupPriority{
+					Priority:     oldPriority,
+					ResourcePool: rp.config.PoolName,
+					JobID:        jobID,
+				})
+				return err
+			}
 		}
 
 		if !tasklist.NeedMove(

@@ -49,7 +49,6 @@ func (a *JobAuthZRBAC) FilterJobs(
 		case nil:
 			userHasGlobalExpViewPerm = true
 		case authz.PermissionDeniedError:
-			break
 		default:
 			return nil, err
 		}
@@ -62,7 +61,6 @@ func (a *JobAuthZRBAC) FilterJobs(
 		case nil:
 			userHasGlobalNTSCViewPerm = true
 		case authz.PermissionDeniedError:
-			break
 		default:
 			return nil, err
 		}

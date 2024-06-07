@@ -2599,4 +2599,26 @@ service Determined {
       tags: "Internal"
     };
   }
+
+  // Pause experiment associated with provided runs.
+  rpc PauseRuns(PauseRunsRequest) returns (PauseRunsResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/runs/pause"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+
+  // Unpause experiment associated with provided runs.
+  rpc ResumeRuns(ResumeRunsRequest) returns (ResumeRunsResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/runs/resume"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
 }

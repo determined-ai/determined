@@ -58,18 +58,17 @@ func TestEnvironmentVarsDefaultMerging(t *testing.T) {
 
 	defaults.MergeIntoExpConfig(&conf)
 
-	require.Equal(t, conf.RawEnvironment.RawEnvironmentVariables,
-		&expconf.EnvironmentVariablesMap{
-			RawCPU:  []string{"cpu=default", "cpu=expconf"},
-			RawCUDA: []string{"cuda=default", "extra=expconf"},
-			RawROCM: []string{"rocm=default"},
-		})
+	require.Equal(t, &expconf.EnvironmentVariablesMap{
+		RawCPU:  []string{"cpu=default", "cpu=expconf"},
+		RawCUDA: []string{"cuda=default", "extra=expconf"},
+		RawROCM: []string{"rocm=default"},
+	}, conf.RawEnvironment.RawEnvironmentVariables)
 
-	require.Equal(t, *conf.RawSlurmConfig.RawGpuType, expGpuType)
-	require.Equal(t, *conf.RawSlurmConfig.RawSlotsPerNode, expSlurmSlotsPerNode)
-	require.Equal(t, conf.RawSlurmConfig.SbatchArgs(), []string{"-SlrumTaskDefault", "-SlrumExpConf"})
-	require.Equal(t, *conf.RawPbsConfig.RawSlotsPerNode, defaultSlotsPerNode)
-	require.Equal(t, conf.RawPbsConfig.SbatchArgs(), []string{"-WpbsTaskDefault", "-PbsExpConf"})
+	require.Equal(t, expGpuType, *conf.RawSlurmConfig.RawGpuType)
+	require.Equal(t, expSlurmSlotsPerNode, *conf.RawSlurmConfig.RawSlotsPerNode)
+	require.Equal(t, []string{"-SlrumTaskDefault", "-SlrumExpConf"}, conf.RawSlurmConfig.SbatchArgs())
+	require.Equal(t, defaultSlotsPerNode, *conf.RawPbsConfig.RawSlotsPerNode)
+	require.Equal(t, []string{"-WpbsTaskDefault", "-PbsExpConf"}, conf.RawPbsConfig.SbatchArgs())
 }
 
 func TestTaskContainerDefaultsConfigMerging(t *testing.T) {

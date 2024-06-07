@@ -24,7 +24,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/set"
-
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
 	"github.com/determined-ai/determined/proto/pkg/workspacev1"
@@ -72,7 +71,7 @@ func validateWorkspaceName(name string) error {
 func (a *apiServer) GetWorkspaceByID(
 	ctx context.Context, id int32, curUser model.User, rejectImmutable bool,
 ) (*workspacev1.Workspace, error) {
-	notFoundErr := api.NotFoundErrs("workspace", fmt.Sprint(id), true)
+	notFoundErr := api.NotFoundErrs("workspace", strconv.Itoa(int(id)), true)
 	w := &workspacev1.Workspace{}
 
 	if err := a.m.db.QueryProto("get_workspace", w, id, curUser.ID); errors.Is(err, db.ErrNotFound) {
@@ -359,7 +358,6 @@ func (a *apiServer) PostWorkspace(
 	}
 
 	_, err = tx.NewInsert().Model(w).Exec(ctx)
-
 	if err != nil {
 		if strings.Contains(err.Error(), db.CodeUniqueViolation) {
 			return nil,

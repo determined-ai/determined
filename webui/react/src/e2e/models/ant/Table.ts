@@ -10,16 +10,16 @@ export type TableArgs<RowType, HeadRowType> = NamedComponentArgs & {
 };
 
 /**
- * Returns the representation of a Table.
- * This constructor represents the Table in src/components/Table/InteractiveTable.tsx.
- * @param {object} obj
- * @param {CanBeParent} obj.parent - The parent used to locate this Table
- * @param {string} obj.selector - Used as a selector uesd to locate this object
- * @param {RowType} [obj.rowType] - Value for the RowType used to instanciate rows
- * @param {HeadRowType} [obj.headRowType] - Value of the HeadRowType used to instanciate the head row
+ * Represents the Table component in src/components/Table/InteractiveTable.tsx.
  */
 export class Table<RowType extends Row, HeadRowType extends HeadRow> extends NamedComponent {
   readonly defaultSelector = '.ant-table';
+  /**
+   * Constructs a Table
+   * @param {object} args
+   * @param {RowType} args.rowType - Value for the RowType used to instanciate rows
+   * @param {HeadRowType} args.headRowType - Value of the HeadRowType used to instanciate the head row
+   */
   constructor(args: TableArgs<RowType, HeadRowType>) {
     super(args);
     this.#rowType = args.rowType;
@@ -110,11 +110,7 @@ export class Table<RowType extends Row, HeadRowType extends HeadRow> extends Nam
 }
 
 /**
- * Returns the representation of a Table Row.
- * This constructor represents the Table in src/components/Table/InteractiveTable.tsx.
- * @param {object} obj
- * @param {CanBeParent} obj.parent - The parent used to locate this Row
- * @param {string} obj.selector - Used as a selector uesd to locate this object
+ * Represents a row from the Table component
  */
 export class Row extends NamedComponent {
   readonly defaultSelector = 'tr.ant-table-row';
@@ -134,11 +130,7 @@ export class Row extends NamedComponent {
 }
 
 /**
- * Returns the representation of a Table HeadRow.
- * This constructor represents the Table in src/components/Table/InteractiveTable.tsx.
- * @param {object} obj
- * @param {CanBeParent} obj.parent - The parent used to locate this HeadRow
- * @param {string} obj.selector - Used as a selector uesd to locate this object
+ * Represents the head row from the Table component
  */
 export class HeadRow extends NamedComponent {
   readonly defaultSelector = 'tr';

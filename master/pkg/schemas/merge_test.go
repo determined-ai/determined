@@ -89,7 +89,7 @@ func (g *G) Merge(g2 G) G {
 // Wrong number of outputs is not Mergable.
 type H int
 
-func (h H) Merge(h2 H) (H, H) {
+func (h H) Merge(h2 H) (h0 H, h1 H) {
 	return H(0), H(1)
 }
 

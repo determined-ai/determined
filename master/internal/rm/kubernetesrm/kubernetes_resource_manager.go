@@ -131,7 +131,7 @@ func New(
 			t := time.NewTicker(podSubmissionInterval)
 			defer t.Stop()
 			for range t.C {
-				rp.Schedule()
+				rp.Admit()
 			}
 		}()
 		k.pools[poolConfig.PoolName] = rp

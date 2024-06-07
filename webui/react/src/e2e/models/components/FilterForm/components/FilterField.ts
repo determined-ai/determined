@@ -4,11 +4,7 @@ import { DatePicker } from 'e2e/models/hew/DatePicker';
 import { Select } from 'e2e/models/hew/Select';
 
 /**
- * Returns a representation of the FilterField component.
- * This constructor represents the contents in src/components/FilterField.tsx.
- * @param {object} obj
- * @param {CanBeParent} obj.parent - The parent used to locate this FilterField
- * @param {string} obj.selector - Used instead of `defaultSelector`
+ * Represents the FilterField component in src/components/FilterForm/components/FilterField.tsx
  */
 export class FilterField extends NamedComponent {
   readonly defaultSelector = '[data-test-component="FilterField"]';

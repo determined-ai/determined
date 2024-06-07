@@ -213,7 +213,6 @@ func (k KubernetesResourceManagerConfig) Validate() []error {
 	var checkSlotType error
 	switch k.SlotType {
 	case device.CPU, device.CUDA:
-		break
 	case device.ROCM:
 		checkSlotType = errors.Errorf("rocm slot_type is not supported yet on k8s")
 	default:

@@ -16,7 +16,7 @@ FULL_COMMIT = $(shell git rev-parse HEAD)
 SHORT_COMMIT = $(shell git rev-parse HEAD | head -c9)
 PROJECT_NAME = determined-master
 EE_PROJECT_NAME = hpe-mlde-master
-ARCHS = amd64 arm64 ppc64
+ARCHS = amd64 arm64
 ARCH_SMALL = amd64-shared-cluster
 MULTI_ARCH_IMAGES = $(shell for arch in $(ARCHS); do echo $(DOCKER_REPO)/$(PROJECT_NAME):$(FULL_COMMIT)-$$arch; done)
 EE_MULTI_ARCH_IMAGES = $(shell for arch in $(ARCHS); do echo $(DOCKER_REPO)/$(EE_PROJECT_NAME):$(FULL_COMMIT)-$$arch; done)
@@ -88,25 +88,7 @@ stream-gen: $(STREAM_PYTHON_CLIENT) $(STREAM_TS_CLIENT)
 mocks: build/mock_gen.stamp
 
 build/mock_gen.stamp: $(MOCK_INPUTS)
-	mockery --quiet --name=DB --dir=internal/db --output internal/mocks --filename db.go
-	mockery --quiet --name=Resources --dir=internal/sproto --output internal/mocks --filename resources.go
-	mockery --quiet --name=UserAuthZ --dir=internal/user --output internal/mocks --filename user_authz_iface.go
-	mockery --quiet --name=WorkspaceAuthZ --dir=internal/workspace --output internal/mocks --filename workspace_authz_iface.go
-	mockery --quiet --name=ProjectAuthZ --dir=internal/project --output internal/mocks --filename project_authz_iface.go
-	mockery --quiet --name=ExperimentAuthZ --dir=internal/experiment --output internal/mocks --filename authz_experiment_iface.go
-	mockery --quiet --name=NSCAuthZ --dir=internal/command --output internal/mocks --filename nsc_authz_iface.go
-	mockery --quiet --name=ModelAuthZ --dir=internal/model --output internal/mocks --filename authz_model_iface.go
-	mockery --quiet --name=PodInterface --srcpkg=k8s.io/client-go/kubernetes/typed/core/v1 --output internal/mocks --filename pod_iface.go
-	mockery --quiet --name=EventInterface --srcpkg=k8s.io/client-go/kubernetes/typed/core/v1 --output internal/mocks --filename event_iface.go
-	mockery --quiet --name=NodeInterface --srcpkg=k8s.io/client-go/kubernetes/typed/core/v1 --output internal/mocks --filename node_iface.go
-	mockery --quiet --name=JobInterface --srcpkg=k8s.io/client-go/kubernetes/typed/batch/v1 --output internal/mocks --filename job_iface.go
-	mockery --quiet --name=ResourceManager --dir=internal/rm --output internal/mocks --filename rm.go
-	mockery --quiet --name=AllocationService --dir=internal/task --output internal/mocks/allocationmocks --filename allocation_service.go --outpkg allocationmocks
-	mockery --quiet --name=ResourceManagerAuthZ --dir=internal/rm --output internal/mocks --filename rm_authz_iface.go
-	mockery --quiet --name=Interface --output internal/mocks --srcpkg "k8s.io/client-go/kubernetes" --filename k8s_clientset.go --structname K8sClientsetInterface
-	mockery --quiet --name=CoreV1Interface --output internal/mocks --srcpkg "k8s.io/client-go/kubernetes/typed/core/v1" --filename k8s_corev1_iface.go --structname K8sCoreV1Interface
-	mockery --quiet --name=BatchV1Interface --output internal/mocks --srcpkg "k8s.io/client-go/kubernetes/typed/batch/v1" --filename k8s_batchv1_iface.go --structname K8sBatchV1Interface
-
+	mockery --config "./.mockery.yaml"
 	mkdir -p build
 	touch $@
 
@@ -221,7 +203,6 @@ buildx:
 	{ \
 		platforms=(); \
 		for arch in $(ARCHS); do \
-			[ $$arch == "ppc64" ] && arch="ppc64le"; \
 			platforms+=("linux/$$arch"); \
 		done; \
 		platform_list=$$(IFS=, ; echo "$${platforms[*]}"); \

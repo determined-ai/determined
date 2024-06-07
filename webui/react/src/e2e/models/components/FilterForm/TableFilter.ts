@@ -4,13 +4,15 @@ import { FilterForm } from 'e2e/models/components/FilterForm/components/FilterFo
 import { DropdownContent } from 'e2e/models/hew/Dropdown';
 
 /**
- * Returns a representation of the TableFilter component.
- * This constructor represents the contents in src/components/TableFilter.tsx.
- * @param {object} obj
- * @param {CanBeParent} obj.parent - The parent used to locate this TableFilter
- * @param {string} obj.selector - Used instead of `defaultSelector`
+ * Represents the TableFilter component in src/components/FilterForm/TableFilter.tsx
  */
 export class TableFilter extends DropdownContent {
+  /**
+   * Constructs a TableFilter
+   * @param {object} obj
+   * @param {CanBeParent} obj.parent - parent component
+   * @param {BasePage} obj.root - root page
+   */
   constructor({ parent, root }: { parent: CanBeParent; root: BasePage }) {
     super({
       childNode: new BaseComponent({ parent, selector: '[data-test-component="tableFilter"]' }),
