@@ -18,6 +18,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/taskv1"
 )
@@ -1098,4 +1099,77 @@ func TestArchiveUnarchiveNoInput(t *testing.T) {
 	unarchRes, err := api.UnarchiveRuns(ctx, unarchReq)
 	require.NoError(t, err)
 	require.Empty(t, unarchRes.Results)
+}
+
+func TestArchiveUnarchiveWithArchivedParent(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	_, projectID := createProjectAndWorkspace(ctx, t, api)
+
+	activeConfig := schemas.WithDefaults(schemas.Merge(minExpConfig, expconf.ExperimentConfig{
+		RawDescription: ptrs.Ptr("desc"),
+		RawName:        expconf.Name{RawString: ptrs.Ptr("name")},
+	}))
+
+	exp := &model.Experiment{
+		JobID:     model.JobID(uuid.New().String()),
+		State:     model.CompletedState,
+		OwnerID:   &curUser.ID,
+		ProjectID: projectID,
+		StartTime: time.Now(),
+		Config:    activeConfig.AsLegacy(),
+	}
+	require.NoError(t, api.m.db.AddExperiment(exp, []byte{10, 11, 12}, activeConfig))
+
+	task1 := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
+	require.NoError(t, db.AddTask(ctx, task1))
+	require.NoError(t, db.AddTrial(ctx, &model.Trial{
+		State:        model.CompletedState,
+		ExperimentID: exp.ID,
+		StartTime:    time.Now(),
+	}, task1.TaskID))
+
+	task2 := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
+	require.NoError(t, db.AddTask(ctx, task2))
+	require.NoError(t, db.AddTrial(ctx, &model.Trial{
+		State:        model.CompletedState,
+		ExperimentID: exp.ID,
+		StartTime:    time.Now(),
+	}, task2.TaskID))
+
+	sourceprojectID := int32(projectID)
+	req := &apiv1.SearchRunsRequest{
+		ProjectId: &sourceprojectID,
+		Sort:      ptrs.Ptr("id=asc"),
+	}
+
+	resp, err := api.SearchRuns(ctx, req)
+	require.NoError(t, err)
+	require.Len(t, resp.Runs, 2)
+
+	runID1, runID2 := resp.Runs[0].Id, resp.Runs[1].Id
+
+	// Set the parent experiment as archived
+	_, err = api.ArchiveExperiment(ctx, &apiv1.ArchiveExperimentRequest{Id: int32(exp.ID)})
+	require.NoError(t, err)
+
+	runIDs := []int32{runID1, runID2}
+	unarchRes, err := api.ArchiveRuns(ctx, &apiv1.ArchiveRunsRequest{
+		RunIds:    runIDs,
+		ProjectId: sourceprojectID,
+	})
+
+	errMsg := "Run is part of archived Search."
+	require.NoError(t, err)
+	require.Len(t, unarchRes.Results, 2)
+	require.Equal(t, errMsg, unarchRes.Results[0].Error)
+	require.Equal(t, errMsg, unarchRes.Results[1].Error)
+
+	_, err = api.UnarchiveRuns(ctx, &apiv1.UnarchiveRunsRequest{
+		RunIds:    runIDs,
+		ProjectId: sourceprojectID,
+	})
+	require.NoError(t, err)
+	require.Len(t, unarchRes.Results, 2)
+	require.Equal(t, errMsg, unarchRes.Results[0].Error)
+	require.Equal(t, errMsg, unarchRes.Results[1].Error)
 }
