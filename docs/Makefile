@@ -52,8 +52,12 @@ build/swagger.stamp: ../proto/build/swagger/determined/api/v1/api.swagger.json s
 	mkdir -p build
 	touch $@
 
+.PHONY: gen-versions
+gen-versions:
+	python3 gen-versions.py 4c821c3725641e0b05cd9b05a8e5e43c6fb74f25 -o _static/version-switcher/versions.json
+
 .PHONY: build
-build: build/sp-html.stamp
+build: gen-versions build/sp-html.stamp
 
 .PHONY: xml
 xml: build/sp-xml.stamp

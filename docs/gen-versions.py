@@ -12,7 +12,7 @@ import git.refs.tag
 
 # This is the original versions.json file, frozen so we can generate newer
 # versions while still maintaining the functionality of older versions.
-versions = [
+VERSIONS = [
     {
         "version": "0.33.0",
         "url": "https://docs.determined.ai/0.33.0/"
@@ -112,19 +112,63 @@ versions = [
 ]
 
 def parse_args():
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        prog="gen-versions.py",
+        description="Generate Sphinx version switcher JSON file from git tags.",
+    )
 
-    parser.add_argument("--end-commit",
+    parser.add_argument("commit",
         help="commit to stop at while walking the graph to look for tags, beyond which tags will be ignored",
         metavar="commit",
-        type=str,
-        default="4c821c3725641e0b05cd9b05a8e5e43c6fb74f25",
+    )
+
+    parser.add_argument("-o", "--out-file",
+        help="path to output file, including filename, for generated versions JSON file",
+        metavar="path",
+        default=None,
+    )
+
+    # Escape-hatch argument in case someone needs more granular control over the
+    # generated file.
+    parser.add_argument("--override-versions",
+        help="comma-separated list of versions, in ascending order, to use instead of the existing versions and the tags in git. E.g. 0.0.1,0.0.2,0.0.3",
+        metavar="versions",
+        type=str
     )
 
     return parser.parse_args()
 
+def generate_hardcoded(versions, out_file):
+    latest = versions.pop()
+    versions.reverse()
+
+    out = []
+    out.append({
+        "version": latest,
+        "url": "https://docs.determined.ai/latest/"
+    })
+
+    for version in versions:
+        out.append({
+            "version": version,
+            "url": "https://docs.determined.ai/{}/".format(version)
+        })
+
+    # Dump to stdout.
+    if out_file is not None:
+        with open(out_file, "w") as fd:
+            json.dump(out, fd, indent=4)
+    else:
+        print(json.dumps(out, indent=4))
+
 def main():
     args = parse_args()
+
+    if args.override_versions is not None:
+        versions = args.override_versions.split(",")
+        generate_hardcoded(versions)
+
+        sys.exit(0)
 
     # Probably run this from inside the repo somewhere.
     try:
@@ -138,13 +182,13 @@ def main():
 
     # Validate commit.
     try:
-        repo.rev_parse(args.end_commit)
+        repo.rev_parse(args.commit)
     except git.exc.BadName as e:
         print("Bad revision: {}.".format(e))
         sys.exit(-1)
 
-    # git rev-list --branches --ancestry-path <end_commit>..HEAD
-    comms_iter = repo.iter_commits("{}..HEAD".format(args.end_commit), branches=True, ancestry_path=True)
+    # git rev-list --branches --ancestry-path <commit>..HEAD
+    comms_iter = repo.iter_commits("{}..HEAD".format(args.commit), branches=True, ancestry_path=True)
 
     # Get commits from iterator.
     commits = []
@@ -180,19 +224,26 @@ def main():
 
     # Prepend all new versions that aren't the current tag.
     for tag in tags:
-        versions.insert(0, {
+        VERSIONS.insert(0, {
             "version": tag,
             "url": "https://docs.determined.ai/{}/".format(tag),
         })
 
     # Latest version is a special case.
-    versions.insert(0, {
+    VERSIONS.insert(0, {
         "version": latest_tag,
         "url": "https://docs.determined.ai/latest/"
     })
 
-    # Dump to stdout.
-    print(json.dumps(versions, indent=4))
+    if args.out_file is not None:
+        try:
+            with open(args.out_file, "w") as fd:
+                json.dump(VERSIONS, fd, indent=4)
+        except FileNotFoundError as e:
+            print("File not found: {}. Do all parent directories exist?".format(e), file=sys.stderr)
+            sys.exit(-1)
+    else:
+        print(json.dumps(VERSIONS, indent=4))
 
 if __name__ == "__main__":
     main()
