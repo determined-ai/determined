@@ -81,7 +81,7 @@ def test_run_kill() -> None:
     killResp = bindings.post_KillRuns(
         sess, body=bindings.v1KillRunsRequest(runIds=[run_id], projectId=1)
     )
-    assert len(killResp.results) == 1
+    assert len(killResp.results) == 1, f"failed to kill run {run_id} from exp {exp_id}"
     assert killResp.results[0].id == run_id
     assert killResp.results[0].error == ""
 
@@ -94,7 +94,9 @@ def test_run_kill() -> None:
     )
 
     # validate response
-    assert len(killResp.results) == 1
+    assert (
+        len(killResp.results) == 1
+    ), f"error when trying to terminate run {run_id} from exp {exp_id} a second time"
     assert killResp.results[0].id == run_id
     assert killResp.results[0].error == ""
 
@@ -144,8 +146,8 @@ def test_run_kill_filter() -> None:
     searchResp = bindings.get_SearchRuns(sess, filter=runFilter)
 
     # validate response
-    assert len(searchResp.runs) > 0
-    assert len(killResp.results) > 0
+    assert len(killResp.results) > 0, f"failed to kill runs in exp {exp_id}"
+    assert len(searchResp.runs) > 0, f"failed to search runs in exp {exp_id}"
     assert len(killResp.results) == len(searchResp.runs)
     for res in killResp.results:
         assert res.error == ""
