@@ -1,0 +1,43 @@
+[build-system]
+# Minimum requirements for the build system to execute.
+requires = ["setuptools>=64", "wheel", "setuptools_scm>=8"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "model-hub"
+description = "Model Hub for Determined Deep Learning Training Platform"
+requires-python = ">=3.6"
+
+authors = [
+  { name = "Determined AI", email = "ai-open-source@hpe.com" },
+]
+
+dependencies = [
+  "determined>=0.13.11",  # We require custom reducers for PyTorchTrial.
+]
+
+classifiers = [
+  "License :: OSI Approved :: Apache Software License",
+]
+
+dynamic = ["version"]
+
+[project.urls]
+Homepage = "https://determined.ai/"
+Documentation = "https://docs.determined.ai/"
+
+[tool.black]
+line-length = 100
+
+[tool.setuptools_scm]
+# Path relative_to pyproject.toml. Necessary for correct git metadata parsing.
+root = "../"
+
+# Don't add the extra commit hash. PyPI complains, and it's also just noisy.
+local_scheme = "no-local-version"
+
+[tool.setuptools]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+include = ["model_hub*"]
