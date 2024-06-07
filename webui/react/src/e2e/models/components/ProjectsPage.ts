@@ -6,11 +6,7 @@ import { ProjectCreateModal } from './ProjectCreateModal';
 import { ProjectDeleteModal } from './ProjectDeleteModal';
 
 /**
- * Returns a representation of the Projects Page component.
- * This constructor represents the contents in src/components/Page.tsx.
- * @param {object} obj
- * @param {implementsGetLocator} obj.parent - The parent used to locate this Page
- * @param {string} [obj.selector] - Used instead of `defaultSelector`
+ * Represents the ProjectsComponent component in src/components/ProjectsComponent.tsx
  */
 export class ProjectsComponent extends NamedComponent {
   override defaultSelector: string = '[id$=projects]';
@@ -29,6 +25,9 @@ export class ProjectsComponent extends NamedComponent {
   };
 }
 
+/**
+ * Represents the ProjectsCard in the ProjectsComponent component
+ */
 class ProjectsCard extends Card {
   override readonly actionMenu = new ProjectActionDropdown({
     childNode: new BaseComponent({

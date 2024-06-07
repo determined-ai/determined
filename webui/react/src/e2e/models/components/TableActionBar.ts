@@ -6,11 +6,7 @@ import { OptionsMenu } from 'e2e/models/components/OptionsMenu';
 import { DropdownMenu } from 'e2e/models/hew/Dropdown';
 
 /**
- * Returns a representation of the TableActionBar component.
- * This constructor represents the contents in src/components/TableActionBar.tsx.
- * @param {object} obj
- * @param {CanBeParent} obj.parent - The parent used to locate this TableActionBar
- * @param {string} [obj.selector] - Used instead of `defaultSelector`
+ * Represents the TableActionBar component in src/components/TableActionBar.tsx
  */
 export class TableActionBar extends NamedComponent {
   defaultSelector = '[data-test-component="tableActionBar"]';
@@ -31,6 +27,9 @@ export class TableActionBar extends NamedComponent {
   // TODO a bunch of modals
 }
 
+/**
+ * Represents the ActionsDropdown in the TableActionBar component
+ */
 class ActionsDropdown extends DropdownMenu {
   readonly openTensorBoard = this.menuItem('View in TensorBoard');
   readonly move = this.menuItem('Move');

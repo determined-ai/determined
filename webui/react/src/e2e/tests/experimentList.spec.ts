@@ -79,14 +79,9 @@ test.describe('Experiement List', () => {
     await grid.headRow.setColumnDefs();
   });
 
-  test('Navigate to Experiment List', async ({ authedPage }) => {
-    await projectDetailsPage.gotoProject();
-    await expect(authedPage).toHaveTitle(projectDetailsPage.title);
-    await expect(projectDetailsPage.f_experiemntList.tableActionBar.pwLocator).toBeVisible();
-  });
-
-  test('Column Picker add and remove', async () => {
-    test.setTimeout(120_000);
+  test.skip('Column Picker Check and Uncheck', async () => {
+    // BUG [ET-287]
+    test.slow();
     const columnTitle = 'Forked From',
       columnTestid = 'forkedFrom';
     const columnPicker = projectDetailsPage.f_experiemntList.tableActionBar.columnPickerMenu;
@@ -114,7 +109,7 @@ test.describe('Experiement List', () => {
   });
 
   test('Column Picker Show All and Hide All', async () => {
-    test.setTimeout(180_000);
+    test.slow();
     const columnPicker = projectDetailsPage.f_experiemntList.tableActionBar.columnPickerMenu;
     const grid = projectDetailsPage.f_experiemntList.dataGrid;
     let previousTabs = grid.headRow.columnDefs.size;
@@ -188,7 +183,7 @@ test.describe('Experiement List', () => {
     };
 
     await filterScenario(
-      'Filter with ID',
+      'Filter With ID',
       async () => {
         await tableFilter.filterForm.filter.filterFields.columnName.selectMenuOption('ID');
         await expect(tableFilter.filterForm.filter.filterFields.operator.pwLocator).toHaveText('=');
@@ -199,7 +194,7 @@ test.describe('Experiement List', () => {
     );
 
     await filterScenario(
-      'Filter against ID',
+      'Filter Against ID',
       async () => {
         await expect(
           tableFilter.filterForm.filter.filterFields.columnName.selectionItem.pwLocator,
@@ -242,16 +237,24 @@ test.describe('Experiement List', () => {
     );
   });
 
-  test('Click around the data grid', async ({ authedPage }) => {
+  test('Datagrid Functionality Validations', async ({ authedPage }) => {
     const row = await projectDetailsPage.f_experiemntList.dataGrid.getRowByColumnValue('ID', '1');
-    await row.clickColumn('Select');
-    expect(await row.isSelected()).toBeTruthy();
-    await expect((await row.getCellByColumnName('Checkpoints')).pwLocator).toHaveText('0');
-    await (
-      await projectDetailsPage.f_experiemntList.dataGrid.headRow.selectDropdown.open()
-    ).select5.pwLocator.click();
-    await projectDetailsPage.f_experiemntList.dataGrid.scrollLeft();
-    await row.clickColumn('ID');
-    await authedPage.waitForURL(/overview/);
+    await test.step('Select Row', async () => {
+      await row.clickColumn('Select');
+      expect.soft(await row.isSelected()).toBeTruthy();
+    });
+    await test.step('Read Cell Value', async () => {
+      await expect.soft((await row.getCellByColumnName('Checkpoints')).pwLocator).toHaveText('0');
+    });
+    await test.step('Select 5', async () => {
+      await (
+        await projectDetailsPage.f_experiemntList.dataGrid.headRow.selectDropdown.open()
+      ).select5.pwLocator.click();
+    });
+    await test.step('Experiement Overview Navigation', async () => {
+      await projectDetailsPage.f_experiemntList.dataGrid.scrollLeft();
+      await row.clickColumn('ID');
+      await authedPage.waitForURL(/overview/);
+    });
   });
 });

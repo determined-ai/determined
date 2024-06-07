@@ -7,10 +7,7 @@ import { DataGrid, HeadRow, Row, RowArgs } from 'e2e/models/hew/DataGrid';
 import { Message } from 'e2e/models/hew/Message';
 
 /**
- * Returns a representation of the F_ExperiementList component.
- * This constructor represents the contents in src/components/F_ExperiementList.tsx.
- * @param {object} obj
- * @param {CanBeParent} obj.parent - The parent used to locate this F_ExperiementList
+ * Represents the F_ExperiementList component in src/components/F_ExperiementList.tsx
  */
 export class F_ExperiementList extends BaseReactFragment {
   readonly tableActionBar = new TableActionBar({ parent: this });
@@ -26,7 +23,14 @@ export class F_ExperiementList extends BaseReactFragment {
   readonly pagination = new Pagination({ parent: this });
 }
 
+/**
+ * Represents the ExperimentHeadRow in the F_ExperiementList component
+ */
 class ExperimentHeadRow extends HeadRow<ExperimentRow> {}
+
+/**
+ * Represents the ExperimentRow in the F_ExperiementList component
+ */
 class ExperimentRow extends Row<ExperimentHeadRow> {
   constructor(args: RowArgs<ExperimentRow, ExperimentHeadRow>) {
     super(args);

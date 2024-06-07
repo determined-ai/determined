@@ -16,16 +16,9 @@ interface PopoverArgsWithChildNode extends requiresRoot {
 }
 
 type PopoverArgs = PopoverArgsWithoutChildNode | PopoverArgsWithChildNode;
+
 /**
- * Returns a representation of the Popover component from Ant.
- * Until the popover component supports test ids, this model will match any open popover.
- * This constructor represents the contents in antd/es/popover/index.d.ts.
- *
- * The popover can be opened by calling the open method. By default, the open method clicks on the child node. Sometimes you might even need to provide both optional arguments, like when a child node is present but impossible to click on due to canvas behavior.
- * @param {object} obj
- * @param {BasePage} obj.root - root of the page
- * @param {ComponentBasics} [obj.childNode] - optional if `openMethod` is present. It's the element we click on to open the dropdown.
- * @param {Function} [obj.openMethod] - optional if `childNode` is present. It's the method to open the dropdown.
+ * Represents the Popver component from antd/es/popover/index.js
  */
 export class Popover extends BaseComponent {
   readonly openMethod: () => Promise<void>;
@@ -65,7 +58,7 @@ export class Popover extends BaseComponent {
   async close(): Promise<void> {
     // [ET-284] Popover click handle doesn't work unless we wait
     await this.root._page.waitForTimeout(500);
-    // [ET-something] Popover has no close button and doesn't respect Escape key
+    // Popover has no close button and doesn't respect Escape key
     await this.root.nav.sidebar.header.pwLocator.click();
     await this.pwLocator.waitFor({ state: 'hidden' });
   }

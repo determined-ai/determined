@@ -3,13 +3,15 @@ import { BasePage } from 'e2e/models/BasePage';
 import { DropdownMenu } from 'e2e/models/hew/Dropdown';
 
 /**
- * Returns a representation of the OptionsMenu component.
- * This constructor represents the contents in src/components/OptionsMenu.tsx.
- * @param {object} obj
- * @param {CanBeParent} obj.parent - The parent used to locate this OptionsMenu
- * @param {string} obj.selector - Used instead of `defaultSelector`
+ * Represents the OptionsMenu component in src/components/FilterForm/OptionsMenu.tsx
  */
 export class OptionsMenu extends DropdownMenu {
+  /**
+   * Constructs a OptionsMenu
+   * @param {object} obj
+   * @param {CanBeParent} obj.parent - parent component
+   * @param {BasePage} obj.root - root page
+   */
   constructor({ parent, root }: { parent: BaseComponent; root: BasePage }) {
     super({
       childNode: new BaseComponent({ parent, selector: '[data-test-component="OptionsMenu"]' }),
