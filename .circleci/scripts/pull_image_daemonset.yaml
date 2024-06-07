@@ -1,0 +1,28 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: pull-docker-daemon
+spec:
+  selector:
+    matchLabels:
+      name: pull-docker-daemonset
+  template:
+    metadata:
+      labels:
+        name: pull-docker-daemonset
+    spec:
+      containers:
+        - name: pull-docker-daemonset
+          image: determinedai/pytorch-ngc-dev:e960eae
+          command: ["/bin/bash"]
+          args: ["echo", "test"]
+          resources:
+            limits:
+              memory: 200Mi
+            requests:
+              cpu: 100m
+              memory: 200Mi
+      # it may be desirable to set a high priority class to ensure that a DaemonSet Pod
+      # preempts running Pods
+      priorityClassName: important
+      terminationGracePeriodSeconds: 30s
