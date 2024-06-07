@@ -14,6 +14,8 @@ import { ExperimentWithTrial, FlatRun, TrialItem, XOR } from 'types';
 
 import CompareMetrics from './CompareMetrics';
 
+export const EMPTY_MESSAGE = 'No items selected.';
+
 interface BaseProps {
   children: React.ReactElement;
   open: boolean;
@@ -113,7 +115,7 @@ const ComparisonView: React.FC<Props> = ({
 
   const rightPane =
     selectedExperiments?.length === 0 || selectedRuns?.length === 0 ? (
-      <Alert description="Select records you would like to compare." message="No items selected." />
+      <Alert description="Select records you would like to compare." message={EMPTY_MESSAGE} />
     ) : (
       <Pivot items={tabs} />
     );

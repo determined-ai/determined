@@ -1,5 +1,3 @@
-//
-
 import { render, screen } from '@testing-library/react';
 import UIProvider, { DefaultTheme } from 'hew/Theme';
 import { BrowserRouter } from 'react-router-dom';
