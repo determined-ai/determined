@@ -20,8 +20,8 @@ test.describe('User Management', () => {
   test.beforeEach(async ({ authedPage }) => {
     const userManagementPage = new UserManagement(authedPage);
     await userManagementPage.goto();
-    // wait for table to be stable and select page 1
     const page1 = userManagementPage.table.table.pagination.pageButtonLocator(1);
+    // rows don't load as fast as the rest of the page, so timeout of 10s
     await expect(userManagementPage.table.table.rows.pwLocator).not.toHaveCount(0, {
       timeout: 10_000,
     });
