@@ -76,6 +76,7 @@ import { pluralizer } from 'utils/string';
 import {
   defaultColumnWidths,
   defaultRunColumns,
+  defaultSearchRunColumns,
   getColumnDefs,
   RunColumn,
   runColumns,
@@ -139,13 +140,13 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
     (p: Partial<FlatRunsSettings>) => userSettings.setPartial(FlatRunsSettings, settingsPath, p),
     [settingsPath],
   );
-  const settings = useMemo(
-    () =>
-      flatRunsSettings
-        .map((s) => ({ ...defaultFlatRunsSettings, ...s }))
-        .getOrElse(defaultFlatRunsSettings),
-    [flatRunsSettings],
-  );
+  const settings = useMemo(() => {
+    const defaultSettings = { ...defaultFlatRunsSettings };
+    if (searchId) {
+      defaultSettings.columns = defaultSearchRunColumns;
+    }
+    return flatRunsSettings.map((s) => ({ ...defaultSettings, ...s })).getOrElse(defaultSettings);
+  }, [flatRunsSettings, searchId]);
 
   const { settings: globalSettings, updateSettings: updateGlobalSettings } =
     useSettings<DataGridGlobalSettings>(settingsConfigGlobal);
@@ -898,7 +899,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
               onChange={handleSortChange}
             />
             <ColumnPickerMenu
-              defaultVisibleColumns={defaultRunColumns}
+              defaultVisibleColumns={searchId ? defaultSearchRunColumns : defaultRunColumns}
               initialVisibleColumns={columnsIfLoaded}
               isMobile={isMobile}
               pinnedColumnsCount={settings.pinnedColumnsCount}

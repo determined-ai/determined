@@ -51,9 +51,19 @@ export const runColumns = [
   'parentArchived',
 ] as const;
 
+const EXCLUDED_SEARCH_DEFAULT_COLUMNS: RunColumn[] = [
+  'searcherType',
+  'searcherMetric',
+  'searcherMetricsVal',
+];
+
 export type RunColumn = (typeof runColumns)[number];
 
 export const defaultRunColumns: RunColumn[] = [...runColumns];
+
+export const defaultSearchRunColumns: RunColumn[] = [...runColumns].filter(
+  (c) => !EXCLUDED_SEARCH_DEFAULT_COLUMNS?.includes(c),
+);
 
 function getCellStateFromExperimentState(expState: RunState) {
   switch (expState) {
