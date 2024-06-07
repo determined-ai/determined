@@ -55,7 +55,15 @@ func TestGetProjectByKey(t *testing.T) {
 	internaldb.MustMigrateTestPostgres(t, db, internaldb.MigrationsFromDB)
 
 	// add a workspace, and project
-	user := internaldb.RequireMockUser(t, db)
+	user := model.User{
+		Username: uuid.Must(uuid.NewRandom()).String(),
+		Admin:    true,
+	}
+	_, err := internaldb.HackAddUser(
+		context.Background(),
+		&user,
+	)
+	require.NoError(t, err)
 	workspaceID, _ := internaldb.RequireMockWorkspaceID(t, db, "")
 	projectID, _ := internaldb.RequireMockProjectID(t, db, workspaceID, false)
 

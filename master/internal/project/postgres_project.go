@@ -145,7 +145,7 @@ func GetProjectByKey(ctx context.Context, key string) (*model.Project, error) {
 		err := tx.NewSelect().
 			Column("id").
 			Table("projects").
-			Where("key = ?", key).
+			Where("key = UPPER(?)", key). // case-insensitive
 			Scan(ctx, &projectID)
 		if err != nil && errors.Is(err, sql.ErrNoRows) {
 			return db.ErrNotFound
@@ -204,7 +204,6 @@ RetryLoop:
 					p.Key = *requestedKey
 				}
 				_, err = tx.NewInsert().Model(p).Exec(ctx)
-
 				if err != nil && strings.Contains(err.Error(), db.CodeUniqueViolation) {
 					switch errString := err.Error(); {
 					case strings.Contains(errString, "projects_key_key"):
@@ -303,7 +302,7 @@ func UpdateProject(
 				return status.Error(codes.PermissionDenied, err.Error())
 			}
 			log.Infof(
-				"project (%d) name changing from \"%s\" to \"%s\"",
+				`project (%d) name changing from "%s" to "%s"`,
 				currentProject.ID,
 				currentProject.Name,
 				p.Name.Value,
@@ -317,7 +316,7 @@ func UpdateProject(
 				return status.Error(codes.PermissionDenied, err.Error())
 			}
 			log.Infof(
-				"project (%d) description changing from \"%s\" to \"%s\"",
+				`project (%d) description changing from "%s" to "%s"`,
 				currentProject.ID,
 				currentProject.Description,
 				p.Description.Value,
@@ -331,7 +330,7 @@ func UpdateProject(
 				return status.Error(codes.PermissionDenied, err.Error())
 			}
 			log.Infof(
-				"project (%d) key changing from \"%s\" to \"%s\"",
+				`project (%d) key changing from "%s" to "%s"`,
 				currentProject.ID,
 				currentProject.Key,
 				p.Key.Value,
@@ -389,7 +388,6 @@ func UpdateProject(
 			Apply(getProjectColumns).
 			Where("p.id = ?", projectID).
 			Scan(ctx)
-		// finalProject, err = GetProjectByID(ctx, currentProject.ID)
 		if err != nil {
 			return err
 		}
