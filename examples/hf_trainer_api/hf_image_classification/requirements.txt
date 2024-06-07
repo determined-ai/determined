@@ -6,3 +6,4 @@ datasets
 evaluate
 transformers>=4.28.1,<4.29.0
 scikit-learn
+huggingface_hub<0.23.0
