@@ -14,9 +14,9 @@ include example doc for deploying a gateway controller
 ### Gateway
 In the CRD `gateways.gateway.networking.k8s.io`
 `schema.openAPIV3Schema.properties.spec.properties.listeners.maxItems` defines a max limit of how many
-listeners can be active on a single gateway. This limit sets the upper bound on how many tasks can be activly proxied.
+listeners can be active on a single gateway. This limit sets the upper bound on how many tasks can be actively proxied.
 
-note k8s valiation complexity cost estimates.
+note k8s validation complexity cost estimates.
 
 - limit of listeners in gateway CRD setup
 ### Master Configuration
