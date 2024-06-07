@@ -27,6 +27,7 @@ import Pagination from 'hew/Pagination';
 import Row from 'hew/Row';
 import { useToast } from 'hew/Toast';
 import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
+import { isUndefined } from 'lodash';
 import { useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
@@ -46,10 +47,7 @@ import {
   SpecialColumnNames,
 } from 'components/FilterForm/components/type';
 import { EMPTY_SORT, sortMenuItemsForColumn } from 'components/MultiSortMenu';
-import {
-  RowHeight,
-  // TableViewMode
-} from 'components/OptionsMenu';
+import { RowHeight } from 'components/OptionsMenu';
 import {
   DataGridGlobalSettings,
   rowHeightMap,
@@ -588,7 +586,8 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   );
 
   const handleColumnsOrderChange = useCallback(
-    (newColumnsOrder: string[]) => {
+    // changing both column order and pinned count should happen in one update:
+    (newColumnsOrder: string[], pinnedCount?: number) => {
       const newColumnWidths = newColumnsOrder
         .filter((c) => !(c in settings.columnWidths))
         .reduce((acc: Record<string, number>, col) => {
@@ -601,9 +600,10 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
           ...settings.columnWidths,
           ...newColumnWidths,
         },
+        pinnedColumnsCount: isUndefined(pinnedCount) ? settings.pinnedColumnsCount : pinnedCount,
       });
     },
-    [updateSettings, settings.columnWidths],
+    [updateSettings, settings.columnWidths, settings.pinnedColumnsCount],
   );
 
   const handleRowHeightChange = useCallback(
@@ -625,15 +625,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
       window.removeEventListener('keydown', handleEsc);
     };
   }, [handleSelectionChange]);
-
-  // const handleTableViewModeChange = useCallback(
-  //   (mode: TableViewMode) => {
-  //     // Reset page index when table view mode changes.
-  //     resetPagination();
-  //     updateGlobalSettings({ tableViewMode: mode });
-  //   },
-  //   [resetPagination, updateGlobalSettings],
-  // );
 
   const onPageChange = useCallback(
     (cPage: number, cPageSize: number) => {
@@ -984,8 +975,8 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
               onClick: () => {
                 const newColumnsOrder = columnsIfLoaded.filter((c) => c !== column.column);
                 newColumnsOrder.splice(settings.pinnedColumnsCount, 0, column.column);
-                handleColumnsOrderChange?.(newColumnsOrder);
-                handlePinnedColumnsCountChange?.(
+                handleColumnsOrderChange?.(
+                  newColumnsOrder,
                   Math.min(settings.pinnedColumnsCount + 1, columnsIfLoaded.length),
                 );
               },
@@ -998,8 +989,10 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
               onClick: () => {
                 const newColumnsOrder = columnsIfLoaded.filter((c) => c !== column.column);
                 newColumnsOrder.splice(settings.pinnedColumnsCount - 1, 0, column.column);
-                handleColumnsOrderChange?.(newColumnsOrder);
-                handlePinnedColumnsCountChange?.(Math.max(settings.pinnedColumnsCount - 1, 0));
+                handleColumnsOrderChange?.(
+                  newColumnsOrder,
+                  Math.max(settings.pinnedColumnsCount - 1, 0),
+                );
               },
             },
       {
@@ -1008,9 +1001,13 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         label: 'Hide column',
         onClick: () => {
           const newColumnsOrder = columnsIfLoaded.filter((c) => c !== column.column);
-          handleColumnsOrderChange?.(newColumnsOrder);
           if (isPinned) {
-            handlePinnedColumnsCountChange?.(Math.max(settings.pinnedColumnsCount - 1, 0));
+            handleColumnsOrderChange?.(
+              newColumnsOrder,
+              Math.max(settings.pinnedColumnsCount - 1, 0),
+            );
+          } else {
+            handleColumnsOrderChange?.(newColumnsOrder);
           }
         },
       },
@@ -1083,21 +1080,24 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         isOpenFilter={isOpenFilter}
         labelPlural="experiments"
         labelSingular="experiment"
+        pinnedColumnsCount={settings.pinnedColumnsCount}
         project={project}
         projectColumns={projectColumns}
         rowHeight={globalSettings.rowHeight}
         selectedExperimentIds={allSelectedExperimentIds}
         sorts={sorts}
-        // tableViewMode={globalSettings.tableViewMode}
         total={total}
         onActionComplete={handleActionComplete}
         onActionSuccess={handleActionSuccess}
         onComparisonViewToggle={handleToggleComparisonView}
+        onHeatmapSelectionRemove={(id) => {
+          const newSelection = settings.heatmapSkipped.filter((s) => s !== id);
+          handleHeatmapSelection(newSelection);
+        }}
         onHeatmapToggle={handleHeatmapToggle}
         onIsOpenFilterChange={handleIsOpenFilterChange}
         onRowHeightChange={handleRowHeightChange}
         onSortChange={handleSortChange}
-        // onTableViewModeChange={handleTableViewModeChange}
         onVisibleColumnChange={handleColumnsOrderChange}
       />
       <div className={css.content} ref={contentRef}>
@@ -1154,7 +1154,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                     </ExperimentActionDropdown>
                   );
                 }}
-                rowHeight={rowHeightMap[globalSettings.rowHeight as RowHeight]}
+                rowHeight={rowHeightMap[globalSettings.rowHeight]}
                 selection={selection}
                 sorts={sorts}
                 staticColumns={STATIC_COLUMNS}

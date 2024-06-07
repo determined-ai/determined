@@ -6,12 +6,14 @@ import { Loadable } from 'hew/utils/loadable';
 import React, { useCallback, useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 
+import LogoGenAI from 'assets/images/logo-genai.svg?url';
 import ActionSheet, { ActionItem } from 'components/ActionSheet';
 import Link, { Props as LinkProps } from 'components/Link';
 import useUI from 'components/ThemeProvider';
 import UserSettings from 'components/UserSettings';
+import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
-import { handlePath, paths } from 'routes/utils';
+import { handlePath, paths, serverAddress } from 'routes/utils';
 import authStore from 'stores/auth';
 import clusterStore from 'stores/cluster';
 import determinedStore, { BrandingType } from 'stores/determinedInfo';
@@ -65,7 +67,8 @@ const NavigationTabbar: React.FC = () => {
 
   const showNavigation = isAuthenticated && ui.showChrome;
 
-  const { canCreateWorkspace } = usePermissions();
+  const { canCreateWorkspace, canAdministrateUsers } = usePermissions();
+  const gasLinkOn = useFeature().isOn('genai');
 
   const WorkspaceCreateModal = useModal(WorkspaceCreateModalComponent);
 
@@ -122,7 +125,7 @@ const NavigationTabbar: React.FC = () => {
 
   interface OverflowActionProps {
     external?: boolean;
-    icon?: IconName;
+    icon?: IconName | JSX.Element;
     label: string;
     onClick?: (e: AnyMouseEvent) => void;
     path?: string;
@@ -139,9 +142,20 @@ const NavigationTabbar: React.FC = () => {
         </div>
       ),
     },
+  ];
+
+  if (canAdministrateUsers) {
+    overflowActionsTop.push({
+      icon: 'group',
+      label: 'Admin Settings',
+      onClick: (e: AnyMouseEvent) => handlePathUpdate(e, paths.admin()),
+    });
+  }
+
+  const overflowActionsBottom: OverflowActionProps[] = [
     {
       icon: 'settings',
-      label: 'Settings',
+      label: 'User Settings',
       onClick: () => setShowSettings(true),
     },
     {
@@ -149,9 +163,6 @@ const NavigationTabbar: React.FC = () => {
       label: 'Sign out',
       onClick: (e: AnyMouseEvent) => handlePathUpdate(e, paths.logout()),
     },
-  ];
-
-  const overflowActionsBottom: OverflowActionProps[] = [
     {
       external: true,
       icon: 'docs',
@@ -174,6 +185,16 @@ const NavigationTabbar: React.FC = () => {
       popout: true,
     },
   ];
+
+  if (gasLinkOn) {
+    overflowActionsBottom.push({
+      external: true,
+      icon: <img alt="GenAI Studio" height={24} src={LogoGenAI} width={24} />,
+      label: 'GenAI',
+      path: serverAddress('/genai'),
+      popout: true,
+    });
+  }
 
   return (
     <>

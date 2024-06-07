@@ -38,7 +38,7 @@ export type NamedComponentArgs =
  * @param {CanBeParent} obj.parent - The parent used to locate this BaseComponent
  * @param {string} obj.selector - Used as a selector uesd to locate this object
  */
-export class BaseComponent implements ModelBasics {
+export class BaseComponent implements ComponentBasics {
   protected _selector: string;
   readonly _parent: CanBeParent;
   protected _locator: Locator | undefined;
@@ -56,8 +56,8 @@ export class BaseComponent implements ModelBasics {
    * The playwright Locator that represents this model
    */
   get pwLocator(): Locator {
+    // Treat the locator as a readonly, but only after we've created it
     if (this._locator === undefined) {
-      // Treat the locator as a readonly, but only after we've created it
       this._locator = this._parent.pwLocator.locator(this.selector);
     }
     return this._locator;
@@ -82,7 +82,7 @@ export class BaseComponent implements ModelBasics {
  * @param {object} obj
  * @param {CanBeParent} obj.parent - The parent used to locate this BaseComponent
  */
-export class BaseReactFragment implements ModelBasics {
+export class BaseReactFragment implements ComponentBasics {
   readonly _parent: CanBeParent;
 
   constructor({ parent }: ComponentArgBasics) {

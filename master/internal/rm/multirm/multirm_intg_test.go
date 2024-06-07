@@ -1,8 +1,8 @@
 package multirm
 
 import (
-	"fmt"
 	"os"
+	"strconv"
 	"testing"
 
 	"github.com/google/uuid"
@@ -57,10 +57,10 @@ func TestGetAllocationSummaries(t *testing.T) {
 			for i := 1; i <= tt.managers; i++ {
 				ret := map[model.AllocationID]sproto.AllocationSummary{}
 				for _, alloc := range tt.allocNames {
-					a := alloc + fmt.Sprint(i)
+					a := alloc + strconv.Itoa(i)
 					ret[*model.NewAllocationID(&a)] = sproto.AllocationSummary{}
 				}
-				require.Equal(t, len(ret), len(tt.allocNames))
+				require.Len(t, ret, len(tt.allocNames))
 
 				mockRM := mocks.ResourceManager{}
 				mockRM.On("GetAllocationSummaries").Return(ret, nil)
@@ -72,14 +72,14 @@ func TestGetAllocationSummaries(t *testing.T) {
 
 			allocs, err := m.GetAllocationSummaries()
 			require.NoError(t, err)
-			require.Equal(t, tt.managers*len(tt.allocNames), len(allocs))
+			require.Len(t, allocs, tt.managers*len(tt.allocNames))
 			require.NotNil(t, allocs)
 
 			bogus := "bogus"
 			require.Empty(t, allocs[*model.NewAllocationID(&bogus)])
 
 			for _, name := range tt.allocNames {
-				n := fmt.Sprintf(name + "0")
+				n := name + "0"
 				tmpName := name
 
 				require.NotNil(t, allocs[*model.NewAllocationID(&n)])
@@ -225,7 +225,7 @@ func TestExternalPreemptionPending(t *testing.T) {
 
 func TestIsReattachable(t *testing.T) {
 	val := testMultiRM.IsReattachableOnlyAfterStarted()
-	require.Equal(t, true, val)
+	require.True(t, val)
 }
 
 func TestGetResourcePools(t *testing.T) {
@@ -256,7 +256,7 @@ func TestGetResourcePools(t *testing.T) {
 
 			rps, err := m.GetResourcePools()
 			require.NoError(t, err)
-			require.Equal(t, tt.managers*len(tt.rpNames), len(rps.ResourcePools))
+			require.Len(t, rps.ResourcePools, tt.managers*len(tt.rpNames))
 
 			for _, rp := range rps.ResourcePools {
 				require.Contains(t, tt.rpNames, rp.Name)
@@ -387,7 +387,7 @@ func TestGetJobQueueStatsRequest(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			res, err := testMultiRM.GetJobQueueStatsRequest(tt.req)
 			require.Equal(t, tt.err, err)
-			require.Equal(t, tt.expectedLen, len(res.Results))
+			require.Len(t, res.Results, tt.expectedLen)
 		})
 	}
 }
@@ -491,7 +491,7 @@ func TestGetAgents(t *testing.T) {
 
 			rps, err := m.GetAgents()
 			require.NoError(t, err)
-			require.Equal(t, tt.managers*len(tt.agentNames), len(rps.Agents))
+			require.Len(t, rps.Agents, tt.managers*len(tt.agentNames))
 
 			for _, rp := range rps.Agents {
 				require.Subset(t, tt.agentNames, rp.ResourcePools)
@@ -679,7 +679,7 @@ func TestGetRMName(t *testing.T) {
 	}
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
-			rmName, err := mockMultiRM.getRM(tt.rpName)
+			rmName, err := mockMultiRM.getRMName(tt.rpName)
 			require.Equal(t, tt.expectedRMName, rmName)
 			require.Equal(t, tt.err, err)
 		})

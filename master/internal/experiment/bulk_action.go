@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"fmt"
 	"slices"
+	"strconv"
 	"strings"
 
 	"google.golang.org/grpc/codes"
@@ -215,7 +216,7 @@ func ActivateExperiments(
 		for _, originalID := range experimentIds {
 			if !slices.Contains(expIDs, originalID) {
 				results = append(results, ExperimentActionResult{
-					Error: api.NotFoundErrs("experiment", fmt.Sprint(originalID), true),
+					Error: api.NotFoundErrs("experiment", strconv.Itoa(int(originalID)), true),
 					ID:    originalID,
 				})
 			}
@@ -255,7 +256,7 @@ func CancelExperiments(
 		for _, originalID := range experimentIds {
 			if !slices.Contains(expIDs, originalID) {
 				results = append(results, ExperimentActionResult{
-					Error: api.NotFoundErrs("experiment", fmt.Sprint(originalID), true),
+					Error: api.NotFoundErrs("experiment", strconv.Itoa(int(originalID)), true),
 					ID:    originalID,
 				})
 			}
@@ -307,7 +308,7 @@ func KillExperiments(
 		for _, originalID := range experimentIds {
 			if !slices.Contains(expIDs, originalID) {
 				results = append(results, ExperimentActionResult{
-					Error: api.NotFoundErrs("experiment", fmt.Sprint(originalID), true),
+					Error: api.NotFoundErrs("experiment", strconv.Itoa(int(originalID)), true),
 					ID:    originalID,
 				})
 			}
@@ -357,7 +358,7 @@ func PauseExperiments(
 		for _, originalID := range experimentIds {
 			if !slices.Contains(expIDs, originalID) {
 				results = append(results, ExperimentActionResult{
-					Error: api.NotFoundErrs("experiment", fmt.Sprint(originalID), true),
+					Error: api.NotFoundErrs("experiment", strconv.Itoa(int(originalID)), true),
 					ID:    originalID,
 				})
 			}
@@ -447,7 +448,7 @@ func DeleteExperiments(
 		for _, originalID := range experimentIds {
 			if !slices.Contains(visibleIDs, originalID) {
 				results = append(results, ExperimentActionResult{
-					Error: api.NotFoundErrs("experiment", fmt.Sprint(originalID), true),
+					Error: api.NotFoundErrs("experiment", strconv.Itoa(int(originalID)), true),
 					ID:    originalID,
 				})
 			}
@@ -549,7 +550,7 @@ func ArchiveExperiments(
 		for _, originalID := range experimentIds {
 			if !slices.Contains(visibleIDs, originalID) {
 				results = append(results, ExperimentActionResult{
-					Error: api.NotFoundErrs("experiment", fmt.Sprint(originalID), true),
+					Error: api.NotFoundErrs("experiment", strconv.Itoa(int(originalID)), true),
 					ID:    originalID,
 				})
 			}
@@ -650,7 +651,7 @@ func UnarchiveExperiments(
 		for _, originalID := range experimentIds {
 			if !slices.Contains(visibleIDs, originalID) {
 				results = append(results, ExperimentActionResult{
-					Error: api.NotFoundErrs("experiment", fmt.Sprint(originalID), true),
+					Error: api.NotFoundErrs("experiment", strconv.Itoa(int(originalID)), true),
 					ID:    originalID,
 				})
 			}
@@ -753,7 +754,7 @@ func MoveExperiments(
 		for _, originalID := range experimentIds {
 			if !slices.Contains(visibleIDs, originalID) {
 				results = append(results, ExperimentActionResult{
-					Error: api.NotFoundErrs("experiment", fmt.Sprint(originalID), true),
+					Error: api.NotFoundErrs("experiment", strconv.Itoa(int(originalID)), true),
 					ID:    originalID,
 				})
 			}
@@ -791,11 +792,38 @@ func MoveExperiments(
 			return nil, fmt.Errorf("updating experiment's project IDs: %w", err)
 		}
 
-		if _, err = tx.NewUpdate().Table("runs").
-			Set("project_id = ?", destinationProjectID).
-			Where("runs.experiment_id IN (?)", bun.In(validIDs)).
-			Exec(ctx); err != nil {
-			return nil, fmt.Errorf("updating run's project IDs: %w", err)
+		// Move hyperparams for perf table
+		var runIDs []int32
+		err = tx.NewSelect().Table("runs").Column("id").
+			Where("experiment_id IN (?)", bun.In(validIDs)).
+			Scan(ctx, &runIDs)
+		if err != nil {
+			return nil, err
+		}
+
+		if len(runIDs) > 0 {
+			var sourceProjectID int
+			err = tx.NewSelect().Table("runs").Column("project_id").
+				Where("id IN (?)", bun.In(runIDs)).
+				Limit(1).
+				Scan(ctx, &sourceProjectID)
+			if err != nil {
+				return nil, err
+			}
+
+			if _, err = tx.NewUpdate().Table("runs").
+				Set("project_id = ?", destinationProjectID).
+				Where("runs.experiment_id IN (?)", bun.In(validIDs)).
+				Exec(ctx); err != nil {
+				return nil, fmt.Errorf("updating run's project IDs: %w", err)
+			}
+
+			if err = db.AddProjectHparams(ctx, tx, int(destinationProjectID), runIDs); err != nil {
+				return nil, err
+			}
+			if err = db.RemoveOutdatedProjectHparams(ctx, tx, sourceProjectID); err != nil {
+				return nil, err
+			}
 		}
 
 		for _, acceptID := range acceptedIDs {
@@ -863,7 +891,7 @@ func BulkUpdateLogRentention(
 		for _, originalID := range expIDs {
 			if !slices.Contains(editableExperimentIDList, originalID) {
 				results = append(results, ExperimentActionResult{
-					Error: api.NotFoundErrs("experiment", fmt.Sprint(originalID), true),
+					Error: api.NotFoundErrs("experiment", strconv.Itoa(int(originalID)), true),
 					ID:    originalID,
 				})
 			}
@@ -905,7 +933,6 @@ func BulkUpdateLogRentention(
 		}
 		return nil
 	})
-
 	if err != nil {
 		return nil, err
 	}

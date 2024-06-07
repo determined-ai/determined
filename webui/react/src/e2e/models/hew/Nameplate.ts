@@ -8,12 +8,13 @@ import { BaseComponent, NamedComponent } from 'e2e/models/BaseComponent';
  * @param {string} obj.selector - Used instead of `defaultSelector`
  */
 export class Nameplate extends NamedComponent {
-  override defaultSelector: string = '[class^="Nameplate_base"]';
+  readonly defaultSelector = '[class^="Nameplate_base"]';
 
-  #nameSelector = '.ant-typography:last-of-type'; // We could replace this with a more specific selector in Hew
+  // We could replace this with a more specific selector in Hew
+  #nameSelector = '.ant-typography:last-of-type';
   readonly icon = new BaseComponent({
     parent: this,
-    selector: 'id="avatar"',
+    selector: '[id="avatar"]',
   });
   readonly #text: BaseComponent = new BaseComponent({
     parent: this,

@@ -1,7 +1,7 @@
 package db
 
 import (
-	"fmt"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -37,7 +37,7 @@ func TestMetricsBodyToJSON(t *testing.T) {
 	}
 
 	for idx, body := range cases {
-		t.Run(fmt.Sprint(idx), func(t *testing.T) {
+		t.Run(strconv.Itoa(idx), func(t *testing.T) {
 			json := body.ToJSONObj()
 			_, ok := (*json)["batch_metrics"]
 			if body.isValidation {

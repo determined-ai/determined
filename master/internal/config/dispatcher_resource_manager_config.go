@@ -80,7 +80,6 @@ func (c DispatcherResourceManagerConfig) Validate() []error {
 	if c.SlotType != nil {
 		switch *c.SlotType {
 		case device.CPU, device.CUDA, device.ROCM:
-			break
 		default:
 			return []error{fmt.Errorf(
 				"invalid slot_type '%s'.  Specify one of cuda, rocm, or cpu", *c.SlotType)}

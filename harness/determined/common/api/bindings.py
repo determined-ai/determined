@@ -3731,6 +3731,7 @@ class v1Experiment(Printable):
     labels: "typing.Optional[typing.Sequence[str]]" = None
     modelDefinitionSize: "typing.Optional[int]" = None
     notes: "typing.Optional[str]" = None
+    pachydermIntegration: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     parentArchived: "typing.Optional[bool]" = None
     progress: "typing.Optional[float]" = None
     projectName: "typing.Optional[str]" = None
@@ -3773,6 +3774,7 @@ class v1Experiment(Printable):
         labels: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
         modelDefinitionSize: "typing.Union[int, None, Unset]" = _unset,
         notes: "typing.Union[str, None, Unset]" = _unset,
+        pachydermIntegration: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
         parentArchived: "typing.Union[bool, None, Unset]" = _unset,
         progress: "typing.Union[float, None, Unset]" = _unset,
         projectName: "typing.Union[str, None, Unset]" = _unset,
@@ -3827,6 +3829,8 @@ class v1Experiment(Printable):
             self.modelDefinitionSize = modelDefinitionSize
         if not isinstance(notes, Unset):
             self.notes = notes
+        if not isinstance(pachydermIntegration, Unset):
+            self.pachydermIntegration = pachydermIntegration
         if not isinstance(parentArchived, Unset):
             self.parentArchived = parentArchived
         if not isinstance(progress, Unset):
@@ -3895,6 +3899,8 @@ class v1Experiment(Printable):
             kwargs["modelDefinitionSize"] = obj["modelDefinitionSize"]
         if "notes" in obj:
             kwargs["notes"] = obj["notes"]
+        if "pachydermIntegration" in obj:
+            kwargs["pachydermIntegration"] = obj["pachydermIntegration"]
         if "parentArchived" in obj:
             kwargs["parentArchived"] = obj["parentArchived"]
         if "progress" in obj:
@@ -3963,6 +3969,8 @@ class v1Experiment(Printable):
             out["modelDefinitionSize"] = self.modelDefinitionSize
         if not omit_unset or "notes" in vars(self):
             out["notes"] = self.notes
+        if not omit_unset or "pachydermIntegration" in vars(self):
+            out["pachydermIntegration"] = self.pachydermIntegration
         if not omit_unset or "parentArchived" in vars(self):
             out["parentArchived"] = self.parentArchived
         if not omit_unset or "progress" in vars(self):
@@ -4386,6 +4394,7 @@ class v1FlatRun(Printable):
 class v1FlatRunExperiment(Printable):
     externalExperimentId: "typing.Optional[str]" = None
     forkedFrom: "typing.Optional[int]" = None
+    pachydermIntegration: "typing.Optional[typing.Dict[str, typing.Any]]" = None
 
     def __init__(
         self,
@@ -4401,6 +4410,7 @@ class v1FlatRunExperiment(Printable):
         unmanaged: bool,
         externalExperimentId: "typing.Union[str, None, Unset]" = _unset,
         forkedFrom: "typing.Union[int, None, Unset]" = _unset,
+        pachydermIntegration: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
     ):
         self.description = description
         self.id = id
@@ -4415,6 +4425,8 @@ class v1FlatRunExperiment(Printable):
             self.externalExperimentId = externalExperimentId
         if not isinstance(forkedFrom, Unset):
             self.forkedFrom = forkedFrom
+        if not isinstance(pachydermIntegration, Unset):
+            self.pachydermIntegration = pachydermIntegration
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1FlatRunExperiment":
@@ -4433,6 +4445,8 @@ class v1FlatRunExperiment(Printable):
             kwargs["externalExperimentId"] = obj["externalExperimentId"]
         if "forkedFrom" in obj:
             kwargs["forkedFrom"] = obj["forkedFrom"]
+        if "pachydermIntegration" in obj:
+            kwargs["pachydermIntegration"] = obj["pachydermIntegration"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -4451,6 +4465,8 @@ class v1FlatRunExperiment(Printable):
             out["externalExperimentId"] = self.externalExperimentId
         if not omit_unset or "forkedFrom" in vars(self):
             out["forkedFrom"] = self.forkedFrom
+        if not omit_unset or "pachydermIntegration" in vars(self):
+            out["pachydermIntegration"] = self.pachydermIntegration
         return out
 
 class v1GenericTaskState(DetEnum):
@@ -6585,6 +6601,33 @@ class v1GetTrialProfilerMetricsResponse(Printable):
         out: "typing.Dict[str, typing.Any]" = {
             "batch": self.batch.to_json(omit_unset),
         }
+        return out
+
+class v1GetTrialRemainingLogRetentionDaysResponse(Printable):
+    """Response to GetTrialRemainingLogRetentionDaysRequest."""
+    remainingDays: "typing.Optional[int]" = None
+
+    def __init__(
+        self,
+        *,
+        remainingDays: "typing.Union[int, None, Unset]" = _unset,
+    ):
+        if not isinstance(remainingDays, Unset):
+            self.remainingDays = remainingDays
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetTrialRemainingLogRetentionDaysResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "remainingDays" in obj:
+            kwargs["remainingDays"] = obj["remainingDays"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "remainingDays" in vars(self):
+            out["remainingDays"] = self.remainingDays
         return out
 
 class v1GetTrialResponse(Printable):
@@ -9819,6 +9862,54 @@ class v1PatchTemplateConfigResponse(Printable):
         }
         return out
 
+class v1PatchTemplateNameRequest(Printable):
+
+    def __init__(
+        self,
+        *,
+        newName: str,
+        oldName: str,
+    ):
+        self.newName = newName
+        self.oldName = oldName
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PatchTemplateNameRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "newName": obj["newName"],
+            "oldName": obj["oldName"],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "newName": self.newName,
+            "oldName": self.oldName,
+        }
+        return out
+
+class v1PatchTemplateNameResponse(Printable):
+
+    def __init__(
+        self,
+        *,
+        template: "v1Template",
+    ):
+        self.template = template
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PatchTemplateNameResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "template": v1Template.from_json(obj["template"]),
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "template": self.template.to_json(omit_unset),
+        }
+        return out
+
 class v1PatchTrialRequest(Printable):
     """Patch a trial."""
     state: "typing.Optional[trialv1State]" = None
@@ -10184,6 +10275,64 @@ class v1PauseExperimentsResponse(Printable):
     def from_json(cls, obj: Json) -> "v1PauseExperimentsResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "results": [v1ExperimentActionResult.from_json(x) for x in obj["results"]],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "results": [x.to_json(omit_unset) for x in self.results],
+        }
+        return out
+
+class v1PauseRunsRequest(Printable):
+    """Request to pause the experiment associated witha run."""
+    filter: "typing.Optional[str]" = None
+
+    def __init__(
+        self,
+        *,
+        projectId: int,
+        runIds: "typing.Sequence[int]",
+        filter: "typing.Union[str, None, Unset]" = _unset,
+    ):
+        self.projectId = projectId
+        self.runIds = runIds
+        if not isinstance(filter, Unset):
+            self.filter = filter
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PauseRunsRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "projectId": obj["projectId"],
+            "runIds": obj["runIds"],
+        }
+        if "filter" in obj:
+            kwargs["filter"] = obj["filter"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "projectId": self.projectId,
+            "runIds": self.runIds,
+        }
+        if not omit_unset or "filter" in vars(self):
+            out["filter"] = self.filter
+        return out
+
+class v1PauseRunsResponse(Printable):
+    """Response to PauseRunsRequest."""
+
+    def __init__(
+        self,
+        *,
+        results: "typing.Sequence[v1RunActionResult]",
+    ):
+        self.results = results
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PauseRunsResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "results": [v1RunActionResult.from_json(x) for x in obj["results"]],
         }
         return cls(**kwargs)
 
@@ -12802,6 +12951,64 @@ class v1ResourcesSummary(Printable):
             out["started"] = None if self.started is None else self.started.to_json(omit_unset)
         return out
 
+class v1ResumeRunsRequest(Printable):
+    """Request to unpause the experiment associated witha run."""
+    filter: "typing.Optional[str]" = None
+
+    def __init__(
+        self,
+        *,
+        projectId: int,
+        runIds: "typing.Sequence[int]",
+        filter: "typing.Union[str, None, Unset]" = _unset,
+    ):
+        self.projectId = projectId
+        self.runIds = runIds
+        if not isinstance(filter, Unset):
+            self.filter = filter
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1ResumeRunsRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "projectId": obj["projectId"],
+            "runIds": obj["runIds"],
+        }
+        if "filter" in obj:
+            kwargs["filter"] = obj["filter"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "projectId": self.projectId,
+            "runIds": self.runIds,
+        }
+        if not omit_unset or "filter" in vars(self):
+            out["filter"] = self.filter
+        return out
+
+class v1ResumeRunsResponse(Printable):
+    """Response to ResumeRunsRequest."""
+
+    def __init__(
+        self,
+        *,
+        results: "typing.Sequence[v1RunActionResult]",
+    ):
+        self.results = results
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1ResumeRunsResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "results": [v1RunActionResult.from_json(x) for x in obj["results"]],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "results": [x.to_json(omit_unset) for x in self.results],
+        }
+        return out
+
 class v1Role(Printable):
     name: "typing.Optional[str]" = None
     permissions: "typing.Optional[typing.Sequence[v1Permission]]" = None
@@ -14092,6 +14299,16 @@ class v1StartTrialResponse(Printable):
         if not omit_unset or "latestCheckpoint" in vars(self):
             out["latestCheckpoint"] = self.latestCheckpoint
         return out
+
+class v1TableType(DetEnum):
+    """Project Table type.
+    - TABLE_TYPE_UNSPECIFIED: Unspecified table type.
+    - TABLE_TYPE_EXPERIMENT: experiment table.
+    - TABLE_TYPE_RUN: run table.
+    """
+    UNSPECIFIED = "TABLE_TYPE_UNSPECIFIED"
+    EXPERIMENT = "TABLE_TYPE_EXPERIMENT"
+    RUN = "TABLE_TYPE_RUN"
 
 class v1Task(Printable):
     """Task is the model for a task in the database."""
@@ -18869,12 +19086,20 @@ def get_GetProjectColumns(
     session: "api.BaseSession",
     *,
     id: int,
+    tableType: "typing.Optional[v1TableType]" = None,
 ) -> "v1GetProjectColumnsResponse":
     """Get a list of columns for experiment list table.
 
     - id: The id of the project.
+    - tableType: type of table for project columns.
+
+ - TABLE_TYPE_UNSPECIFIED: Unspecified table type.
+ - TABLE_TYPE_EXPERIMENT: experiment table.
+ - TABLE_TYPE_RUN: run table.
     """
-    _params = None
+    _params = {
+        "tableType": tableType.value if tableType is not None else None,
+    }
     _resp = session._do_request(
         method="GET",
         path=f"/api/v1/projects/{id}/columns",
@@ -19355,7 +19580,7 @@ def get_GetTemplates(
     offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
     sortBy: "typing.Optional[v1GetTemplatesRequestSortBy]" = None,
-    workspaceId: "typing.Optional[int]" = None,
+    workspaceIds: "typing.Optional[typing.Sequence[int]]" = None,
 ) -> "v1GetTemplatesResponse":
     """Get a list of templates.
 
@@ -19372,7 +19597,7 @@ denote number of templates to skip from the end before returning results.
 
  - SORT_BY_UNSPECIFIED: Returns templates in an unsorted list.
  - SORT_BY_NAME: Returns templates sorted by name.
-    - workspaceId: Limit templates to those that match the workspace id.
+    - workspaceIds: Limit templates to those that match the workspace id.
     """
     _params = {
         "limit": limit,
@@ -19380,7 +19605,7 @@ denote number of templates to skip from the end before returning results.
         "offset": offset,
         "orderBy": orderBy.value if orderBy is not None else None,
         "sortBy": sortBy.value if sortBy is not None else None,
-        "workspaceId": workspaceId,
+        "workspaceIds": workspaceIds,
     }
     _resp = session._do_request(
         method="GET",
@@ -19809,6 +20034,30 @@ from the dataloader took.
             raise APIHttpStreamError("get_GetTrialProfilerMetrics", runtimeStreamError(message="ChunkedEncodingError"))
         return
     raise APIHttpError("get_GetTrialProfilerMetrics", _resp)
+
+def get_GetTrialRemainingLogRetentionDays(
+    session: "api.BaseSession",
+    *,
+    id: int,
+) -> "v1GetTrialRemainingLogRetentionDaysResponse":
+    """Get the list of trials for an experiment.
+
+    - id: The trial id.
+    """
+    _params = None
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/trials/{id}/remaining_log_retention_days",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1GetTrialRemainingLogRetentionDaysResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetTrialRemainingLogRetentionDays", _resp)
 
 def get_GetTrialWorkloads(
     session: "api.BaseSession",
@@ -21170,6 +21419,27 @@ def patch_PatchTemplateConfig(
         return v1PatchTemplateConfigResponse.from_json(_resp.json())
     raise APIHttpError("patch_PatchTemplateConfig", _resp)
 
+def patch_PatchTemplateName(
+    session: "api.BaseSession",
+    *,
+    body: "v1PatchTemplateNameRequest",
+) -> "v1PatchTemplateNameResponse":
+    """Patch template name."""
+    _params = None
+    _resp = session._do_request(
+        method="PATCH",
+        path="/api/v1/template/rename",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1PatchTemplateNameResponse.from_json(_resp.json())
+    raise APIHttpError("patch_PatchTemplateName", _resp)
+
 def patch_PatchTrial(
     session: "api.BaseSession",
     *,
@@ -21342,6 +21612,27 @@ def post_PauseGenericTask(
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_PauseGenericTask", _resp)
+
+def post_PauseRuns(
+    session: "api.BaseSession",
+    *,
+    body: "v1PauseRunsRequest",
+) -> "v1PauseRunsResponse":
+    """Pause experiment associated with provided runs."""
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/runs/pause",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1PauseRunsResponse.from_json(_resp.json())
+    raise APIHttpError("post_PauseRuns", _resp)
 
 def post_PinWorkspace(
     session: "api.BaseSession",
@@ -22264,6 +22555,27 @@ def get_ResourceAllocationRaw(
     if _resp.status_code == 200:
         return v1ResourceAllocationRawResponse.from_json(_resp.json())
     raise APIHttpError("get_ResourceAllocationRaw", _resp)
+
+def post_ResumeRuns(
+    session: "api.BaseSession",
+    *,
+    body: "v1ResumeRunsRequest",
+) -> "v1ResumeRunsResponse":
+    """Unpause experiment associated with provided runs."""
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/runs/resume",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1ResumeRunsResponse.from_json(_resp.json())
+    raise APIHttpError("post_ResumeRuns", _resp)
 
 def post_RunPrepareForReporting(
     session: "api.BaseSession",

@@ -106,6 +106,105 @@ def test_run_kill_filter() -> None:
     sess = api_utils.user_session()
     exp_id = exp.create_experiment(
         sess,
+        conf.fixtures_path("no_op/grid-long-run.yaml"),
+        conf.fixtures_path("no_op"),
+    )
+
+    runFilter = (
+        """{
+  "filterGroup": {
+    "children": [
+      {
+        "columnName": "experimentId",
+        "kind": "field",
+        "location": "LOCATION_TYPE_RUN",
+        "operator": "=",
+        "type": "COLUMN_TYPE_NUMBER",
+        "value": %s
+      },
+      {
+        "columnName": "hp.unique_id",
+        "kind": "field",
+        "location": "LOCATION_TYPE_RUN_HYPERPARAMETERS",
+        "operator": ">=",
+        "type": "COLUMN_TYPE_NUMBER",
+        "value": 3
+      }
+    ],
+    "conjunction": "and",
+    "kind": "group"
+  },
+  "showArchived": false
+}"""
+        % exp_id
+    )
+
+    killResp = bindings.post_KillRuns(
+        sess, body=bindings.v1KillRunsRequest(runIds=[], filter=runFilter, projectId=1)
+    )
+
+    searchResp = bindings.get_SearchRuns(sess, filter=runFilter)
+
+    # validate response
+    assert len(killResp.results) > 0, f"failed to kill runs in exp {exp_id}"
+    assert len(searchResp.runs) > 0, f"failed to search runs in exp {exp_id}"
+    assert len(killResp.results) == len(searchResp.runs)
+    for res in killResp.results:
+        assert res.error == ""
+        wait_for_run_state(sess, res.id, bindings.trialv1State.CANCELED)
+
+
+@pytest.mark.e2e_cpu
+def test_run_pause_and_resume() -> None:
+    sess = api_utils.user_session()
+    exp_id = exp.create_experiment(
+        sess, conf.fixtures_path("no_op/single.yaml"), conf.fixtures_path("no_op")
+    )
+
+    searchResp = bindings.get_SearchRuns(
+        sess,
+        limit=1,
+        filter="""{"filterGroup":{"children":[{"columnName":"experimentId","kind":"field",
+        "location":"LOCATION_TYPE_RUN","operator":"=","type":"COLUMN_TYPE_NUMBER","value":"""
+        + str(exp_id)
+        + """}],"conjunction":"and","kind":"group"},"showArchived":false}""",
+    )
+
+    assert searchResp.runs[0].state == bindings.trialv1State.ACTIVE
+    run_id = searchResp.runs[0].id
+    pauseResp = bindings.post_PauseRuns(
+        sess, body=bindings.v1PauseRunsRequest(runIds=[run_id], projectId=1)
+    )
+
+    # validate response
+    assert len(pauseResp.results) == 1
+    assert pauseResp.results[0].id == run_id
+    assert pauseResp.results[0].error == ""
+
+    # ensure that run is paused
+    wait_for_run_state(sess, run_id, bindings.trialv1State.PAUSED)
+
+    resumeResp = bindings.post_ResumeRuns(
+        sess, body=bindings.v1ResumeRunsRequest(runIds=[run_id], projectId=1)
+    )
+
+    assert len(resumeResp.results) == 1
+    assert resumeResp.results[0].id == run_id
+    assert resumeResp.results[0].error == ""
+
+    # ensure that run is unpaused
+    wait_for_run_state(sess, run_id, bindings.trialv1State.ACTIVE)
+
+    # kill run for cleanup
+    _ = bindings.post_KillRuns(sess, body=bindings.v1KillRunsRequest(runIds=[run_id], projectId=1))
+    wait_for_run_state(sess, run_id, bindings.trialv1State.CANCELED)
+
+
+@pytest.mark.e2e_cpu
+def test_run_pause_and_resume_filter_skip_empty() -> None:
+    sess = api_utils.user_session()
+    exp_id = exp.create_experiment(
+        sess,
         conf.fixtures_path("mnist_pytorch/adaptive_short.yaml"),
         conf.fixtures_path("mnist_pytorch"),
     )
@@ -138,17 +237,28 @@ def test_run_kill_filter() -> None:
 }"""
         % exp_id
     )
-
-    killResp = bindings.post_KillRuns(
-        sess, body=bindings.v1KillRunsRequest(runIds=[], filter=runFilter, projectId=1)
+    pauseResp = bindings.post_PauseRuns(
+        sess,
+        body=bindings.v1PauseRunsRequest(
+            runIds=[],
+            filter=runFilter,
+            projectId=1,
+        ),
     )
 
-    searchResp = bindings.get_SearchRuns(sess, filter=runFilter)
-
     # validate response
-    assert len(killResp.results) > 0, f"failed to kill runs in exp {exp_id}"
-    assert len(searchResp.runs) > 0, f"failed to search runs in exp {exp_id}"
-    assert len(killResp.results) == len(searchResp.runs)
-    for res in killResp.results:
-        assert res.error == ""
-        wait_for_run_state(sess, res.id, bindings.trialv1State.CANCELED)
+    for r in pauseResp.results:
+        assert r.error == "Cannot pause/unpause run '" + str(r.id) + "' (part of multi-trial)."
+
+    resumeResp = bindings.post_ResumeRuns(
+        sess,
+        body=bindings.v1ResumeRunsRequest(runIds=[], projectId=1, filter=runFilter),
+    )
+
+    for res in resumeResp.results:
+        assert res.error == "Cannot pause/unpause run '" + str(res.id) + "' (part of multi-trial)."
+        wait_for_run_state(sess, res.id, bindings.trialv1State.ACTIVE)
+
+    # kill run for cleanup
+    _ = bindings.post_KillRuns(sess, body=bindings.v1KillRunsRequest(runIds=[res.id], projectId=1))
+    wait_for_run_state(sess, res.id, bindings.trialv1State.CANCELED)

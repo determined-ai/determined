@@ -23,7 +23,7 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	pgDB, err := db.ResolveTestPostgres()
+	pgDB, _, err := db.ResolveTestPostgres()
 	if err != nil {
 		log.Panicln(err)
 	}
@@ -80,7 +80,7 @@ func TestGetTemplates(t *testing.T) {
 	t.Run("GetTemplates without any templates", func(t *testing.T) {
 		resp, err := api.GetTemplates(ctx, &apiv1.GetTemplatesRequest{})
 		require.NoError(t, err)
-		require.Len(t, resp.Templates, 0)
+		require.Empty(t, resp.Templates)
 	})
 
 	inputNames := []string{
@@ -150,7 +150,7 @@ func TestGetTemplates(t *testing.T) {
 
 	t.Run("GetTemplates filter by workspace", func(t *testing.T) {
 		resp, err := api.GetTemplates(ctx, &apiv1.GetTemplatesRequest{
-			WorkspaceId: workspaceIDs[0],
+			WorkspaceIds: []int32{workspaceIDs[0]},
 		})
 		require.NoError(t, err)
 		require.Len(t, resp.Templates, 1)
@@ -231,6 +231,54 @@ func TestPatchTemplateConfig(t *testing.T) {
 		})
 		require.NoError(t, err)
 		requireToJSONEq(t, revised, resp.Template.Config)
+	})
+}
+
+func TestPatchTemplateName(t *testing.T) {
+	api := TemplateAPIServer{}
+	ctx := apitest.WithCredentials(context.Background())
+
+	t.Run("TestPatchTemplateName that doesn't exist", func(t *testing.T) {
+		_, err := api.PatchTemplateName(
+			ctx,
+			&apiv1.PatchTemplateNameRequest{
+				OldName: uuid.NewString(),
+				NewName: uuid.NewString(),
+			})
+		require.ErrorContains(t, err, "not found")
+	})
+	t.Run("TestPatchTemplateName functions", func(t *testing.T) {
+		// Create a template and patch name with old name.
+		input := &templatev1.Template{
+			Name:        uuid.NewString(),
+			Config:      fakeTemplate(t),
+			WorkspaceId: 1,
+		}
+		resp, err := api.PostTemplate(ctx, &apiv1.PostTemplateRequest{Template: input})
+		require.NoError(t, err)
+		requireToJSONEq(t, input, resp.Template)
+
+		resp1, err := api.PatchTemplateName(ctx, &apiv1.PatchTemplateNameRequest{OldName: input.Name, NewName: input.Name})
+		require.NoError(t, err)
+		requireToJSONEq(t, input, resp1.Template)
+
+		// Create a second templates and patch name with duplicated name.
+		input1 := &templatev1.Template{
+			Name:        uuid.NewString(),
+			Config:      fakeTemplate(t),
+			WorkspaceId: 1,
+		}
+		_, err = api.PostTemplate(ctx, &apiv1.PostTemplateRequest{Template: input1})
+		require.NoError(t, err)
+
+		_, err = api.PatchTemplateName(ctx, &apiv1.PatchTemplateNameRequest{OldName: input.Name, NewName: input1.Name})
+		require.ErrorContains(t, err, "templates_pkey")
+
+		// Patch name with random name.
+		randomName := uuid.NewString()
+		resp1, err = api.PatchTemplateName(ctx, &apiv1.PatchTemplateNameRequest{OldName: input.Name, NewName: randomName})
+		require.NoError(t, err)
+		require.Equal(t, randomName, resp1.Template.Name)
 	})
 }
 

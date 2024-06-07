@@ -41,7 +41,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/trials"
 	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/internal/workspace"
-	command "github.com/determined-ai/determined/master/pkg/command"
+	"github.com/determined-ai/determined/master/pkg/command"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
 	"github.com/determined-ai/determined/master/pkg/protoutils/protoless"
@@ -49,7 +49,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/searcher"
-	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
@@ -157,7 +156,7 @@ func (a *apiServer) getExperiment(
 func (a *apiServer) getExperimentTx(
 	ctx context.Context, idb bun.IDB, curUser model.User, experimentID int,
 ) (*experimentv1.Experiment, error) {
-	expNotFound := api.NotFoundErrs("experiment", fmt.Sprint(experimentID), true)
+	expNotFound := api.NotFoundErrs("experiment", strconv.Itoa(experimentID), true)
 	exp := &experimentv1.Experiment{}
 	expMap := map[string]interface{}{}
 	query := `
@@ -189,7 +188,7 @@ func (a *apiServer) getExperimentTx(
 		e.checkpoint_count AS checkpoint_count,
 		u.username AS username,
 		(SELECT json_agg(id) FROM trial_ids) AS trial_ids,
-		  (SELECT count(id) FROM trial_ids) AS num_trials,
+		(SELECT count(id) FROM trial_ids) AS num_trials,
 		p.id AS project_id,
 		p.name AS project_name,
 		p.user_id AS project_owner_id,
@@ -197,7 +196,8 @@ func (a *apiServer) getExperimentTx(
 		w.name AS workspace_name,
 		(w.archived OR p.archived) AS parent_archived,
 		e.unmanaged AS unmanaged,
-		length(e.model_definition) AS model_definition_size
+		length(e.model_definition) AS model_definition_size,
+		NULLIF(e.config#>'{integrations, pachyderm}', 'null') AS pachyderm_integration
 	FROM
 		experiments e
 	JOIN users u ON e.owner_id = u.id
@@ -212,10 +212,9 @@ func (a *apiServer) getExperimentTx(
 		return nil, errors.Wrapf(err, "error fetching experiment from database: %d", experimentID)
 	}
 	// Cast string -> []byte `ParseMapToProto` magic.
-	jsonFields := []string{"config", "trial_ids", "labels"}
+	jsonFields := []string{"config", "trial_ids", "labels", "pachyderm_integration"}
 	for _, field := range jsonFields {
-		switch sVal := expMap[field].(type) {
-		case string:
+		if sVal, ok := expMap[field].(string); ok {
 			expMap[field] = []byte(sVal)
 		}
 	}
@@ -273,7 +272,7 @@ func (a *apiServer) GetSearcherEvents(
 
 	e, ok := experiment.ExperimentRegistry.Load(int(req.ExperimentId))
 	if !ok {
-		return nil, api.NotFoundErrs("experiment", fmt.Sprint(req.ExperimentId), true)
+		return nil, api.NotFoundErrs("experiment", strconv.Itoa(int(req.ExperimentId)), true)
 	}
 	w, err := e.GetSearcherEventsWatcher()
 	if err != nil {
@@ -316,7 +315,7 @@ func (a *apiServer) PostSearcherOperations(
 
 	e, ok := experiment.ExperimentRegistry.Load(int(req.ExperimentId))
 	if !ok {
-		return nil, api.NotFoundErrs("experiment", fmt.Sprint(req.ExperimentId), true)
+		return nil, api.NotFoundErrs("experiment", strconv.Itoa(int(req.ExperimentId)), true)
 	}
 	if err := e.PerformSearcherOperations(req); err != nil {
 		return nil, status.Errorf(codes.Internal, "failed to post operations: %v", err)
@@ -585,6 +584,7 @@ func getExperimentColumns(q *bun.SelectQuery) *bun.SelectQuery {
 		Column("e.unmanaged").
 		Column("e.external_experiment_id").
 		ColumnExpr(`r.external_run_id AS external_trial_id`).
+		ColumnExpr("NULLIF(e.config#>'{integrations, pachyderm}', 'null') AS pachyderm_integration").
 		Join("LEFT JOIN users u ON e.owner_id = u.id").
 		Join("LEFT JOIN projects p ON e.project_id = p.id").
 		Join("LEFT JOIN workspaces w ON p.workspace_id = w.id").
@@ -849,7 +849,7 @@ func (a *apiServer) GetExperimentValidationHistory(
 	var resp apiv1.GetExperimentValidationHistoryResponse
 	switch err := a.m.db.QueryProto("proto_experiment_validation_history", &resp, req.ExperimentId); {
 	case err == db.ErrNotFound:
-		return nil, api.NotFoundErrs("experiment", fmt.Sprint(req.ExperimentId), true)
+		return nil, api.NotFoundErrs("experiment", strconv.Itoa(int(req.ExperimentId)), true)
 	case err != nil:
 		return nil, errors.Wrapf(err,
 			"error fetching validation history for experiment from database: %d", req.ExperimentId)
@@ -959,7 +959,7 @@ func (a *apiServer) ActivateExperiment(
 
 	e, ok := experiment.ExperimentRegistry.Load(int(req.Id))
 	if !ok {
-		return nil, api.NotFoundErrs("experiment", fmt.Sprint(req.Id), true)
+		return nil, api.NotFoundErrs("experiment", strconv.Itoa(int(req.Id)), true)
 	}
 	if err := e.ActivateExperiment(); err != nil {
 		return nil, err
@@ -1237,7 +1237,7 @@ func (a *apiServer) PatchExperiment(
 		if newResources != nil {
 			e, ok := experiment.ExperimentRegistry.Load(int(exp.Id))
 			if !ok {
-				return nil, api.NotFoundErrs("experiment", fmt.Sprint(exp.Id), true)
+				return nil, api.NotFoundErrs("experiment", strconv.Itoa(int(exp.Id)), true)
 			}
 
 			if newResources.MaxSlots != nil {
@@ -1335,7 +1335,7 @@ func (a *apiServer) GetExperimentCheckpoints(
 	resp.Checkpoints = []*checkpointv1.Checkpoint{}
 	switch err = a.m.db.QueryProto("get_checkpoints_for_experiment", &resp.Checkpoints, req.Id); {
 	case err == db.ErrNotFound:
-		return nil, api.NotFoundErrs("checkpoints for experiment", fmt.Sprint(req.Id), true)
+		return nil, api.NotFoundErrs("checkpoints for experiment", strconv.Itoa(int(req.Id)), true)
 	case err != nil:
 		return nil,
 			errors.Wrapf(err, "error fetching checkpoints for experiment %d from database", req.Id)
@@ -1401,9 +1401,9 @@ func (a *apiServer) GetExperimentCheckpoints(
 
 func (a *apiServer) createUnmanagedExperimentTx(
 	ctx context.Context, idb bun.IDB, dbExp *model.Experiment, modelDef []byte,
-	activeConfig expconf.ExperimentConfigV0, taskSpec *tasks.TaskSpec, user *model.User,
+	activeConfig expconf.ExperimentConfigV0, user *model.User,
 ) (*apiv1.CreateExperimentResponse, error) {
-	e, _, err := newUnmanagedExperiment(ctx, idb, a.m, dbExp, modelDef, activeConfig, taskSpec)
+	e, _, err := newUnmanagedExperiment(ctx, idb, dbExp, modelDef, activeConfig)
 	if err != nil {
 		return nil, fmt.Errorf("failed to make new unmanaged experiment: %w", err)
 	}
@@ -1686,7 +1686,7 @@ func (a *apiServer) CreateExperiment(
 	}
 
 	if req.Unmanaged != nil && *req.Unmanaged {
-		return a.createUnmanagedExperimentTx(ctx, db.Bun(), dbExp, modelDef, activeConfig, taskSpec, user)
+		return a.createUnmanagedExperimentTx(ctx, db.Bun(), dbExp, modelDef, activeConfig, user)
 	}
 	// Check user has permission for what they are trying to do
 	// before actually saving the experiment.
@@ -1767,11 +1767,11 @@ func (a *apiServer) PutExperiment(
 	ctx context.Context, req *apiv1.PutExperimentRequest,
 ) (*apiv1.PutExperimentResponse, error) {
 	if req.CreateExperimentRequest.Unmanaged == nil || !*req.CreateExperimentRequest.Unmanaged {
-		return nil, errors.New("only unmanaged experiments are supported")
+		return nil, fmt.Errorf("only unmanaged experiments are supported")
 	}
 
 	if req.CreateExperimentRequest.ParentId != 0 {
-		return nil, errors.New("can't fork into an unmanaged experiment")
+		return nil, fmt.Errorf("can't fork into an unmanaged experiment")
 	}
 
 	user, _, err := grpcutil.GetUser(ctx)
@@ -1779,7 +1779,7 @@ func (a *apiServer) PutExperiment(
 		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
 	}
 
-	dbExp, modelDef, activeConfig, p, taskSpec, err := a.m.parseCreateExperiment(ctx,
+	dbExp, modelDef, activeConfig, p, _, err := a.m.parseCreateExperiment(ctx,
 		req.CreateExperimentRequest, user,
 	)
 	if err != nil {
@@ -1794,7 +1794,7 @@ func (a *apiServer) PutExperiment(
 	dbExp.ExternalExperimentID = &req.ExternalExperimentId
 
 	innerResp, err = a.createUnmanagedExperimentTx(
-		ctx, db.Bun(), dbExp, modelDef, activeConfig, taskSpec, user,
+		ctx, db.Bun(), dbExp, modelDef, activeConfig, user,
 	)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create unmanaged experiment: %w", err)
@@ -1842,7 +1842,7 @@ func (a *apiServer) ExpMetricNames(req *apiv1.ExpMetricNamesRequest,
 					return err
 				}
 
-				if timeSinceLastAuth == (time.Time{}) { // Initialization.
+				if timeSinceLastAuth.Equal((time.Time{})) { // Initialization.
 					searcherMetric := exp.Config.Searcher.Metric
 
 					if seen := seenSearcher[searcherMetric]; !seen {
@@ -2082,38 +2082,38 @@ func (a *apiServer) topTrials(
 ) (trials []int32, err error) {
 	type Ranking int
 	const (
-		ByMetricOfInterest Ranking = 1
-		ByTrainingLength   Ranking = 2
+		byMetricOfInterest Ranking = 1
+		byTrainingLength   Ranking = 2
 	)
 	var ranking Ranking
 
 	switch s.Name {
 	case "random":
-		ranking = ByMetricOfInterest
+		ranking = byMetricOfInterest
 	case "grid":
-		ranking = ByMetricOfInterest
+		ranking = byMetricOfInterest
 	case "custom":
-		ranking = ByMetricOfInterest
+		ranking = byMetricOfInterest
 	case "async_halving":
-		ranking = ByTrainingLength
+		ranking = byTrainingLength
 	case "adaptive_asha":
-		ranking = ByTrainingLength
+		ranking = byTrainingLength
 	case "single":
-		return nil, errors.New("single-trial experiments are not supported for trial sampling")
+		return nil, fmt.Errorf("single-trial experiments are not supported for trial sampling")
 	// EOL searcher configs:
 	case "adaptive":
-		ranking = ByTrainingLength
+		ranking = byTrainingLength
 	case "adaptive_simple":
-		ranking = ByTrainingLength
+		ranking = byTrainingLength
 	case "sync_halving":
-		ranking = ByTrainingLength
+		ranking = byTrainingLength
 	default:
 		return nil, errors.Errorf("unable to detect a searcher algorithm for trial sampling")
 	}
 	switch ranking {
-	case ByMetricOfInterest:
+	case byMetricOfInterest:
 		return db.TopTrialsByMetric(ctx, experimentID, maxTrials, s.Metric, s.SmallerIsBetter)
-	case ByTrainingLength:
+	case byTrainingLength:
 		return a.m.db.TopTrialsByTrainingLength(experimentID, maxTrials, s.Metric, s.SmallerIsBetter)
 	default:
 		panic("Invalid state in trial sampling")
@@ -2230,7 +2230,7 @@ func (a *apiServer) TrialsSample(req *apiv1.TrialsSampleRequest,
 				return err
 			}
 
-			if timeSinceLastAuth == (time.Time{}) { // Initialzation.
+			if timeSinceLastAuth.IsZero() { // Initialzation.
 				searcherConfig = exp.Config.Searcher
 			}
 			timeSinceLastAuth = time.Now()
@@ -2741,7 +2741,7 @@ func (a *apiServer) createTrialTx(
 	ctx context.Context, tx bun.Tx, req *apiv1.CreateTrialRequest, externalTrialID *string,
 ) (*apiv1.CreateTrialResponse, error) {
 	if !req.Unmanaged {
-		return nil, errors.New("only unmanaged trials are supported")
+		return nil, fmt.Errorf("only unmanaged trials are supported")
 	}
 
 	exp, _, err := a.getExperimentAndCheckCanDoActions(ctx, int(req.ExperimentId),
@@ -2751,7 +2751,7 @@ func (a *apiServer) createTrialTx(
 	}
 
 	if !exp.Unmanaged {
-		return nil, errors.New("trials can only be created on unmanaged experiments")
+		return nil, fmt.Errorf("trials can only be created on unmanaged experiments")
 	}
 
 	var taskIDSuffix string
@@ -2827,7 +2827,7 @@ func (a *apiServer) PutTrial(ctx context.Context, req *apiv1.PutTrialRequest) (
 	*apiv1.PutTrialResponse, error,
 ) {
 	if !req.CreateTrialRequest.Unmanaged {
-		return nil, errors.New("only unmanaged trials are supported")
+		return nil, fmt.Errorf("only unmanaged trials are supported")
 	}
 
 	_, _, err := a.getExperimentAndCheckCanDoActions(ctx, int(req.CreateTrialRequest.ExperimentId),
@@ -2846,7 +2846,6 @@ func (a *apiServer) PutTrial(ctx context.Context, req *apiv1.PutTrialRequest) (
 		trial = innerResp.Trial
 		return nil
 	})
-
 	if err != nil {
 		return nil, fmt.Errorf("failed to run create trial tx: %w", err)
 	}
@@ -2883,7 +2882,7 @@ func (a *apiServer) PatchTrial(ctx context.Context, req *apiv1.PatchTrialRequest
 	}
 
 	if !exp.Unmanaged {
-		return nil, errors.New("only unmanaged trials are supported")
+		return nil, fmt.Errorf("only unmanaged trials are supported")
 	}
 
 	obj := model.Run{

@@ -1,0 +1,49 @@
+prometheus:
+  prometheusSpec:
+    volumes:
+      - name: det-secret-volume
+        secret:
+          secretName: det-prom-token
+
+    volumeMounts:
+      - name: det-secret-volume
+        mountPath: /tmp/det-secret
+
+    additionalScrapeConfigs:
+      - job_name: det-master-api-server
+        honor_timestamps: true
+        scrape_interval: 1s
+        scrape_timeout: 1s
+        metrics_path: /debug/prom/metrics
+        scheme: http
+        follow_redirects: true
+        authorization:
+          type: Bearer
+          credentials_file: /tmp/det-secret/det-token
+        kubernetes_sd_configs:
+        - role: service
+          selectors:
+            - label: determined.ai/master-service=true
+              role: service
+
+      - job_name: gpu-metrics
+        scrape_interval: 1s
+        metrics_path: /metrics
+        scheme: http
+        kubernetes_sd_configs:
+        - role: endpoints
+          namespaces:
+            names:
+            - gpu-operator
+            - gmp-public
+        relabel_configs:
+        - source_labels: [__meta_kubernetes_endpoints_name]
+          action: drop
+          regex: .*-node-feature-discovery-master
+        - source_labels: [__meta_kubernetes_pod_node_name]
+          action: replace
+          target_label: kubernetes_node
+
+kube-state-metrics:
+    metricLabelsAllowlist:
+      - pods=[determined.ai/container_id,determined.ai/experiment_id,determined.ai/resource_pool,determined.ai/task_id,determined.ai/task_type,determined.ai/trial_id,determined.ai/user,determined.ai/workspace]

@@ -13,8 +13,10 @@ import (
 
 	"github.com/jackc/pgconn"
 	"github.com/pkg/errors"
+	"gopkg.in/guregu/null.v3"
 
 	"github.com/determined-ai/determined/master/internal/config"
+	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/elastic"
 	"github.com/determined-ai/determined/master/pkg/model"
 
@@ -32,8 +34,13 @@ import (
 )
 
 const (
+	// DefaultUserPassword is the password that will be set for determined and admin users in tests.
+	DefaultUserPassword = "TestPassword1"
 	defaultUsername     = "determined"
 	defaultMasterConfig = `
+security:
+  initial_user_password: TestPassword1
+
 checkpoint_storage:
   type: shared_fs
   host_path: /tmp
@@ -121,6 +128,10 @@ func ConnectMaster(c *config.Config) (apiv1.DeterminedClient, error) {
 	var cl apiv1.DeterminedClient
 	var clConn *grpc.ClientConn
 	var err error
+
+	var passwordHash null.String
+	err = db.Bun().QueryRow(`SELECT password_hash FROM users WHERE username = 'determined'`).Scan(&passwordHash)
+
 	for i := 0; i < 15; i++ {
 		clConn, err = grpc.Dial(fmt.Sprintf("localhost:%d", c.Port),
 			grpc.WithTransportCredentials(insecure.NewCredentials()))
@@ -130,7 +141,15 @@ func ConnectMaster(c *config.Config) (apiv1.DeterminedClient, error) {
 		}
 
 		cl = apiv1.NewDeterminedClient(clConn)
-		_, err = cl.Login(context.Background(), &apiv1.LoginRequest{Username: defaultUsername})
+		if passwordHash.String == "" {
+			_, err = cl.Login(context.Background(), &apiv1.LoginRequest{Username: defaultUsername})
+		} else {
+			// assume default password
+			_, err = cl.Login(context.Background(), &apiv1.LoginRequest{
+				Username: defaultUsername,
+				Password: DefaultUserPassword,
+			})
+		}
 		if err == nil {
 			return cl, nil
 		}
@@ -173,13 +192,25 @@ func DefaultMasterConfig() (*config.Config, error) {
 
 // DefaultElasticConfig returns the default elastic config.
 func DefaultElasticConfig() model.LoggingConfig {
-	port, err := strconv.Atoi(os.Getenv("DET_INTEGRATION_ES_PORT"))
-	if err != nil {
-		panic("elastic config had non-numeric port")
+	host := os.Getenv("DET_INTEGRATION_ES_HOST")
+	if host == "" {
+		host = "localhost"
 	}
+
+	var port int
+	if portStr := os.Getenv("DET_INTEGRATION_ES_PORT"); portStr != "" {
+		parsed, err := strconv.Atoi(portStr)
+		if err != nil {
+			panic(fmt.Errorf("elastic config had non-numeric port: %s", err))
+		}
+		port = parsed
+	} else {
+		port = 9200
+	}
+
 	return model.LoggingConfig{
 		ElasticLoggingConfig: &model.ElasticLoggingConfig{
-			Host: os.Getenv("DET_INTEGRATION_ES_HOST"),
+			Host: host,
 			Port: port,
 		},
 	}
@@ -193,7 +224,19 @@ func CurrentLogstashElasticIndex() string {
 // APICredentials takes a context and a connected apiv1.DeterminedClient and returns a context
 // with credentials or an error if unable to login with defaults.
 func APICredentials(ctx context.Context, cl apiv1.DeterminedClient) (context.Context, error) {
-	resp, err := cl.Login(context.TODO(), &apiv1.LoginRequest{Username: defaultUsername})
+	var passwordHash null.String
+	err := db.Bun().QueryRow(`SELECT password_hash FROM users WHERE username = 'determined'`).Scan(&passwordHash)
+	if err != nil {
+		return nil, fmt.Errorf("could not query database for password settings: %w", err)
+	}
+
+	var req *apiv1.LoginRequest
+	if passwordHash.String == "" {
+		req = &apiv1.LoginRequest{Username: defaultUsername}
+	} else {
+		req = &apiv1.LoginRequest{Username: defaultUsername, Password: DefaultUserPassword}
+	}
+	resp, err := cl.Login(context.TODO(), req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to login: %w", err)
 	}

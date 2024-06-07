@@ -2,7 +2,7 @@ package rbac
 
 import (
 	"context"
-	"fmt"
+	"strconv"
 
 	"github.com/uptrace/bun"
 
@@ -19,7 +19,7 @@ type RBACAuthZRBAC struct{}
 func intSliceToStringSlice(ids ...int32) []string {
 	stringIDs := make([]string, 0, len(ids))
 	for _, id := range ids {
-		stringIDs = append(stringIDs, fmt.Sprint(id))
+		stringIDs = append(stringIDs, strconv.Itoa(int(id)))
 	}
 	return stringIDs
 }
@@ -194,7 +194,7 @@ func (a *RBACAuthZRBAC) CanSearchScope(ctx context.Context, curUser model.User,
 ) (err error) {
 	var subjectIDs []string
 	if workspaceID != nil {
-		subjectIDs = append(subjectIDs, fmt.Sprint(*workspaceID))
+		subjectIDs = append(subjectIDs, strconv.Itoa(int(*workspaceID)))
 	}
 
 	fields := audit.ExtractLogFields(ctx)
@@ -249,21 +249,17 @@ func (a *RBACAuthZRBAC) CanAssignRoles(
 	var workspaces []int32
 
 	for _, v := range groupRoleAssignments {
-		if v.RoleAssignment.ScopeWorkspaceId != nil {
-			workspaces = append(workspaces, *v.RoleAssignment.ScopeWorkspaceId)
-		} else {
-			return db.DoesPermissionMatch(ctx, curUser.ID, nil,
-				rbacv1.PermissionType_PERMISSION_TYPE_ASSIGN_ROLES)
+		if v.RoleAssignment.ScopeWorkspaceId == nil {
+			return db.DoesPermissionMatch(ctx, curUser.ID, nil, rbacv1.PermissionType_PERMISSION_TYPE_ASSIGN_ROLES)
 		}
+		workspaces = append(workspaces, *v.RoleAssignment.ScopeWorkspaceId)
 	}
 
 	for _, v := range userRoleAssignments {
-		if v.RoleAssignment.ScopeWorkspaceId != nil {
-			workspaces = append(workspaces, *v.RoleAssignment.ScopeWorkspaceId)
-		} else {
-			return db.DoesPermissionMatch(ctx, curUser.ID, nil,
-				rbacv1.PermissionType_PERMISSION_TYPE_ASSIGN_ROLES)
+		if v.RoleAssignment.ScopeWorkspaceId == nil {
+			return db.DoesPermissionMatch(ctx, curUser.ID, nil, rbacv1.PermissionType_PERMISSION_TYPE_ASSIGN_ROLES)
 		}
+		workspaces = append(workspaces, *v.RoleAssignment.ScopeWorkspaceId)
 	}
 
 	fields := audit.ExtractLogFields(ctx)

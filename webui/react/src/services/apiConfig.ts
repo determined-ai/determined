@@ -979,6 +979,21 @@ export const getTrialDetails: DetApi<
   request: (params: Service.TrialDetailsParams) => detApi.Experiments.getTrial(params.id),
 };
 
+export const getTrialRemainingLogRetentionDays: DetApi<
+  Service.TrialDetailsParams,
+  Api.V1GetTrialRemainingLogRetentionDaysResponse,
+  Type.TrialRemainingLogRetentionDays
+> = {
+  name: 'getTrialRemainingLogRetentionDays',
+  postProcess: (response: Api.V1GetTrialRemainingLogRetentionDaysResponse) => {
+    return {
+      remainingLogRetentionDays: response.remainingDays,
+    };
+  },
+  request: (params: Service.TrialDetailsParams) =>
+    detApi.Internal.getTrialRemainingLogRetentionDays(params.id),
+};
+
 export const moveExperiment: DetApi<
   Api.V1MoveExperimentRequest,
   Api.V1MoveExperimentResponse,
@@ -1862,6 +1877,7 @@ export const getTemplates: DetApi<
       params.offset,
       params.limit,
       params.name,
+      params.workspaceIds,
     ),
 };
 
@@ -1871,6 +1887,33 @@ export const createTaskTemplate: DetApi<Api.V1Template, Api.V1PostTemplateRespon
     postProcess: (response) => decoder.mapV1Template(response.template),
     request: (params: Api.V1Template) => detApi.Templates.postTemplate(params.name, params),
   };
+
+export const updateTaskTemplate: DetApi<Api.V1Template, Api.V1PutTemplateResponse, void> = {
+  name: 'updateTaskTemplate',
+  postProcess: noOp,
+  request: (params: Api.V1Template) => detApi.Templates.putTemplate(params.name, params),
+};
+
+export const updateTaskTemplateName: DetApi<
+  Api.V1PatchTemplateNameRequest,
+  Api.V1PatchTemplateNameResponse,
+  void
+> = {
+  name: 'updateTaskTemplateName',
+  postProcess: noOp,
+  request: (params: Api.V1PatchTemplateNameRequest) => detApi.Templates.patchTemplateName(params),
+};
+
+export const deleteTaskTemplate: DetApi<
+  Service.DeleteTemplateParams,
+  Api.V1DeleteTemplateResponse,
+  void
+> = {
+  name: 'deleteTaskTemplate',
+  postProcess: noOp,
+  request: (params: Service.DeleteTemplateParams) =>
+    detApi.Templates.deleteTemplate(params.name, params),
+};
 
 export const launchJupyterLab: DetApi<
   Service.LaunchJupyterLabParams,

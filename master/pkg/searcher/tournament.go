@@ -140,8 +140,7 @@ func (s *tournamentSearch) Unit() expconf.Unit {
 
 func (s *tournamentSearch) markCreates(subSearchID int, operations []Operation) []Operation {
 	for _, operation := range operations {
-		switch operation := operation.(type) {
-		case Create:
+		if operation, ok := operation.(Create); ok {
 			s.TrialTable[operation.RequestID] = subSearchID
 		}
 	}

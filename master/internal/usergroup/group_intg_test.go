@@ -20,11 +20,14 @@ import (
 
 func TestUserGroups(t *testing.T) {
 	ctx := context.Background()
-	pgDB := db.MustResolveTestPostgres(t)
+	pgDB, closeDB := db.MustResolveTestPostgres(t)
 	db.MustMigrateTestPostgres(t, pgDB, pathToMigrations)
 
-	t.Cleanup(func() { cleanUp(ctx, t) })
-	setUp(ctx, t, pgDB)
+	t.Cleanup(func() {
+		cleanUp(ctx, t)
+		closeDB()
+	})
+	setUp(ctx, t)
 
 	t.Run("group creation", func(t *testing.T) {
 		_, _, err := AddGroupWithMembers(ctx, testGroup)
@@ -97,7 +100,7 @@ func TestUserGroups(t *testing.T) {
 		require.NoError(t, err, "failed to search for groups that user belongs to")
 
 		index := groupsContain(groups, testGroup.ID)
-		require.Equal(t, 2, len(groups), "group search returned wrong count")
+		require.Len(t, groups, 2, "group search returned wrong count")
 		require.NotEqual(t, -1, index,
 			"Group user was added to not found when searching by user membership")
 	})
@@ -231,7 +234,7 @@ func TestUserGroups(t *testing.T) {
 		foundGroup := groups[index]
 		require.Equal(t, answerGroups[0].Name, foundGroup.Name,
 			"Expected found group to have the same name as the first answerGroup")
-		require.Equal(t, 1, len(groups), "Expected no more than one group to have been returned")
+		require.Len(t, groups, 1, "Expected no more than one group to have been returned")
 
 		groups, _, count, err = SearchGroups(ctx, "", 0, 1, 2)
 		require.NoError(t, err, "failed to search for groups")
@@ -258,8 +261,8 @@ func TestUserGroups(t *testing.T) {
 
 		groups, _, count, err := SearchGroups(ctx, tempGroupName, 0, 0, 0)
 		require.NoError(t, err, "error searching for groups to verify rollback")
-		require.Equal(t, 0, count, "should be zero matching groups in the DB")
-		require.Equal(t, 0, len(groups), "should be zero matching groups returned")
+		require.Zero(t, count, "should be zero matching groups in the DB")
+		require.Zero(t, len(groups), "should be zero matching groups returned")
 	})
 
 	t.Run("update groups and memberships", func(t *testing.T) {
@@ -289,14 +292,14 @@ func TestUserGroups(t *testing.T) {
 		users, name, err := UpdateGroupAndMembers(ctx, testGroup.ID, "newName",
 			[]model.UserID{updateTestUser1.ID}, []model.UserID{})
 		require.NoError(t, err, "failed to update group")
-		require.Equal(t, name, "newName", "group name not updated properly")
+		require.Equal(t, "newName", name, "group name not updated properly")
 		index := usersContain(users, updateTestUser1.ID)
 		require.NotEqual(t, -1, index, "group users not updated properly")
 
 		users, name, err = UpdateGroupAndMembers(ctx, testGroup.ID, "anotherNewName",
 			[]model.UserID{updateTestUser2.ID}, []model.UserID{updateTestUser1.ID})
 		require.NoError(t, err, "failed to update group")
-		require.Equal(t, name, "anotherNewName", "group name not updated properly")
+		require.Equal(t, "anotherNewName", name, "group name not updated properly")
 		index = usersContain(users, updateTestUser1.ID)
 		require.Equal(t, -1, index, "group users not removed properly")
 		index = usersContain(users, updateTestUser2.ID)
@@ -306,19 +309,19 @@ func TestUserGroups(t *testing.T) {
 		require.Error(t, err, "succeeded when update should have failed")
 		group, err := GroupByIDTx(ctx, nil, testGroup.ID)
 		require.NoError(t, err, "getting groups by ID failed")
-		require.Equal(t, group.Name, "anotherNewName", "group name should not be updated")
+		require.Equal(t, "anotherNewName", group.Name, "group name should not be updated")
 
 		_, _, err = UpdateGroupAndMembers(ctx, testGroup.ID, "testGroup", []model.UserID{-500}, nil)
 		require.Error(t, err, "succeeded when update should have failed")
 		group, err = GroupByIDTx(ctx, nil, testGroup.ID)
 		require.NoError(t, err, "getting groups by ID failed")
-		require.Equal(t, group.Name, "anotherNewName", "group name should not be updated")
+		require.Equal(t, "anotherNewName", group.Name, "group name should not be updated")
 
 		users, name, err = UpdateGroupAndMembers(ctx, testGroup.ID, "testGroup", nil,
 			[]model.UserID{updateTestUser2.ID, -500})
 		require.NoError(t, err, "failed to update group")
-		require.Equal(t, name, "testGroup", "group name not updated properly")
-		require.GreaterOrEqual(t, 0, len(users), "group users not updated properly")
+		require.Equal(t, "testGroup", name, "group name not updated properly")
+		require.Empty(t, users, "group users not updated properly")
 		index = usersContain(users, updateTestUser1.ID)
 		require.Equal(t, -1, index, "group users not removed properly")
 		index = usersContain(users, updateTestUser2.ID)
@@ -396,8 +399,8 @@ var (
 	}
 	testGroups = []model.Group{testGroup, testGroupStatic}
 	testUser   = model.User{
-		ID:       1217651234,
-		Username: fmt.Sprintf("IntegrationTest%d", 1217651234),
+		ID:       1217651235,
+		Username: fmt.Sprintf("IntegrationTest%d", 1217651235),
 		Admin:    false,
 		Active:   false,
 	}
@@ -407,7 +410,7 @@ const (
 	pathToMigrations = "file://../../static/migrations"
 )
 
-func setUp(ctx context.Context, t *testing.T, pgDB *db.PgDB) {
+func setUp(ctx context.Context, t *testing.T) {
 	_, err := user.Add(ctx, &testUser, nil)
 	require.NoError(t, err, "failure creating user in setup")
 

@@ -37,17 +37,14 @@ def start_shell(args: argparse.Namespace) -> None:
         includes=args.include,
         data=data,
         workspace_id=workspace_id,
-    )["shell"]
-
-    sid = resp["id"]
+    )
+    shell = bindings.v1LaunchShellResponse.from_json(resp).shell
 
     if args.detach:
-        print(sid)
+        print(shell.id)
         return
 
-    render.report_job_launched("shell", sid)
-
-    shell = bindings.get_GetShell(sess, shellId=sid).shell
+    render.report_job_launched("shell", shell.id, shell.description)
     _open_shell(
         sess,
         shell.to_json(),

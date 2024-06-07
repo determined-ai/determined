@@ -1,14 +1,16 @@
 import Message from 'hew/Message';
 import Pivot, { PivotProps } from 'hew/Pivot';
 import Spinner from 'hew/Spinner';
-import { Loadable } from 'hew/utils/loadable';
-import React, { ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import Page from 'components/Page';
+import RemainingRetentionDaysLabel from 'components/RemainingRetentionDaysLabelComponent';
 import RoutePagination from 'components/RoutePagination';
 import TrialLogPreview from 'components/TrialLogPreview';
 import { terminalRunStates } from 'constants/states';
+import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import usePolling from 'hooks/usePolling';
 import TrialDetailsHeader from 'pages/TrialDetails/TrialDetailsHeader';
@@ -18,7 +20,11 @@ import TrialDetailsMetrics from 'pages/TrialDetails/TrialDetailsMetrics';
 import TrialDetailsOverview from 'pages/TrialDetails/TrialDetailsOverview';
 import TrialDetailsProfiles from 'pages/TrialDetails/TrialDetailsProfiles';
 import { paths } from 'routes/utils';
-import { getExperimentDetails, getTrialDetails } from 'services/api';
+import {
+  getExperimentDetails,
+  getTrialDetails,
+  getTrialRemainingLogRetentionDays,
+} from 'services/api';
 import workspaceStore from 'stores/workspaces';
 import { ApiState, ExperimentBase, TrialDetails, ValueOf, Workspace } from 'types';
 import handleError, { ErrorType } from 'utils/error';
@@ -65,6 +71,8 @@ const TrialDetailsComp: React.FC = () => {
   const workspaces = Loadable.getOrElse([], useObservable(workspaceStore.workspaces));
   const basePath = paths.trialDetails(trialId, experimentId);
   const trial = trialDetails.data;
+  const [remainingLogDays, setRemainingLogDays] = useState<Loadable<number | undefined>>(NotLoaded);
+  const f_flat_runs = useFeature().isOn('flat_runs');
 
   const showExperimentArtifacts = usePermissions().canViewExperimentArtifacts({
     workspace: { id: experiment?.workspaceId ?? 0 },
@@ -97,10 +105,14 @@ const TrialDetailsComp: React.FC = () => {
     }
   }, [canceler, navigate, experimentId, trial]);
 
-  const fetchTrialDetails = useCallback(async () => {
+  const fetchTrialData = useCallback(async () => {
     try {
-      const response = await getTrialDetails({ id: trialId }, { signal: canceler.signal });
-      setTrialDetails((prev) => ({ ...prev, data: response }));
+      const [trialDetailResponse, logRemainingResponse] = await Promise.all([
+        getTrialDetails({ id: trialId }, { signal: canceler.signal }),
+        getTrialRemainingLogRetentionDays({ id: trialId }),
+      ]);
+      setTrialDetails((prev) => ({ ...prev, data: trialDetailResponse }));
+      setRemainingLogDays(Loaded(logRemainingResponse.remainingLogRetentionDays));
     } catch (e) {
       if (!trialDetails.error && !isAborted(e)) {
         setTrialDetails((prev) => ({ ...prev, error: e as Error }));
@@ -134,7 +146,7 @@ const TrialDetailsComp: React.FC = () => {
       return [];
     }
 
-    const tabs: Array<{ children: ReactNode; key: TabType; label: string }> = [
+    const tabs: PivotProps['items'] = [
       {
         children: <TrialDetailsOverview experiment={experiment} trial={trial} />,
         key: TabType.Overview,
@@ -161,7 +173,11 @@ const TrialDetailsComp: React.FC = () => {
       {
         children: <TrialDetailsLogs experiment={experiment} trial={trial} />,
         key: TabType.Logs,
-        label: 'Logs',
+        label: (
+          <RemainingRetentionDaysLabel
+            remainingLogDays={Loadable.getOrElse(undefined, remainingLogDays)}
+          />
+        ),
       },
     ];
 
@@ -174,9 +190,9 @@ const TrialDetailsComp: React.FC = () => {
     }
 
     return tabs;
-  }, [experiment, trial, showExperimentArtifacts]);
+  }, [experiment, trial, remainingLogDays, showExperimentArtifacts]);
 
-  const { stopPolling } = usePolling(fetchTrialDetails);
+  const { stopPolling } = usePolling(fetchTrialData);
 
   useEffect(() => {
     setTrialId(Number(trialID));
@@ -184,8 +200,8 @@ const TrialDetailsComp: React.FC = () => {
 
   useEffect(() => {
     setIsFetching(true);
-    fetchTrialDetails();
-  }, [fetchTrialDetails, trialId]);
+    fetchTrialData();
+  }, [fetchTrialData, trialId]);
 
   useEffect(() => {
     fetchExperimentDetails();
@@ -230,7 +246,9 @@ const TrialDetailsComp: React.FC = () => {
             },
         {
           breadcrumbName: experiment?.name ?? '',
-          path: paths.experimentDetails(experiment.id),
+          path: f_flat_runs
+            ? paths.searchDetails(experiment.id)
+            : paths.experimentDetails(experiment.id),
         },
         {
           breadcrumbName: `Trial ${trial.id}`,
@@ -241,7 +259,7 @@ const TrialDetailsComp: React.FC = () => {
       headerComponent={
         <TrialDetailsHeader
           experiment={experiment}
-          fetchTrialDetails={fetchTrialDetails}
+          fetchTrialDetails={fetchTrialData}
           trial={trial}
         />
       }

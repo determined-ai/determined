@@ -108,11 +108,11 @@ func (c *AWSClusterConfig) InitDefaultValues() error {
 	}
 
 	if len(c.ImageID) == 0 {
-		if v, ok := defaultAWSImageID[c.Region]; ok {
-			c.ImageID = v
-		} else {
+		v, ok := defaultAWSImageID[c.Region]
+		if !ok {
 			return errors.Errorf("cannot find default image ID in the region %s", c.Region)
 		}
+		c.ImageID = v
 	}
 
 	// One common reason that metadata.GetInstanceIdentityDocument() fails is that the master is not

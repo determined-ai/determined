@@ -1,6 +1,6 @@
 import uPlot from 'uplot';
 
-export type UPlotData = number | null | undefined;
+export type UPlotData = number | string | null | undefined;
 export type FacetedData = [
   null: null,
   series: [

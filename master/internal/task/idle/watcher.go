@@ -6,14 +6,12 @@ import (
 	"sync"
 	"time"
 
-	"github.com/determined-ai/determined/master/pkg/ptrs"
-	"github.com/determined-ai/determined/master/pkg/syncx/waitgroupx"
-
 	log "github.com/sirupsen/logrus"
 
-	"github.com/determined-ai/determined/master/internal/sproto"
-
 	"github.com/determined-ai/determined/master/internal/proxy"
+	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
+	"github.com/determined-ai/determined/master/pkg/syncx/waitgroupx"
 )
 
 var syslog = log.WithField("component", "idle-watcher")

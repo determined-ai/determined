@@ -9,12 +9,11 @@ import (
 	"encoding/json"
 	"fmt"
 	"sort"
+	"strconv"
 	"sync"
 	"testing"
 	"time"
 	"unsafe"
-
-	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 
@@ -342,9 +341,9 @@ func TestMoveExperiments(t *testing.T) {
 			Filters:              nil,
 		})
 		for _, v := range result.Results {
-			require.Equal(t, v.Error, "")
+			require.Empty(t, v.Error)
 		}
-		require.Equal(t, len(result.Results), 1)
+		require.Len(t, result.Results, 1)
 		require.NoError(t, err)
 	})
 
@@ -358,9 +357,9 @@ func TestMoveExperiments(t *testing.T) {
 			Filters:              nil,
 		})
 		for _, v := range result.Results {
-			require.Equal(t, v.Error, "")
+			require.Empty(t, v.Error)
 		}
-		require.Equal(t, len(result.Results), 2)
+		require.Len(t, result.Results, 2)
 		require.NoError(t, err)
 	})
 	t.Run("Move no experiments with filters (no filter match)", func(t *testing.T) {
@@ -376,7 +375,7 @@ func TestMoveExperiments(t *testing.T) {
 				Archived: &wrappers.BoolValue{Value: true},
 			},
 		})
-		require.Equal(t, len(result.Results), 0)
+		require.Empty(t, result.Results)
 		require.NoError(t, err)
 	})
 
@@ -400,7 +399,7 @@ func TestMoveExperiments(t *testing.T) {
 			DestinationProjectId: int32(projectID),
 			Filters:              nil,
 		})
-		require.Equal(t, len(result.Results), 0)
+		require.Empty(t, result.Results)
 		require.NoError(t, err)
 	})
 
@@ -411,7 +410,7 @@ func TestMoveExperiments(t *testing.T) {
 			DestinationProjectId: int32(projectID),
 			Filters:              nil,
 		})
-		require.Equal(t, len(result.Results), 2)
+		require.Len(t, result.Results, 2)
 		require.NoError(t, err)
 	})
 
@@ -428,7 +427,7 @@ func TestMoveExperiments(t *testing.T) {
 		errorIDList := make([]int32, 0)
 		for _, v := range result.Results {
 			if v.Error == "" {
-				require.Equal(t, v.Error, "")
+				require.Empty(t, v.Error)
 				successIDList = append(successIDList, v.Id)
 			} else {
 				require.Equal(
@@ -439,10 +438,10 @@ func TestMoveExperiments(t *testing.T) {
 				errorIDList = append(errorIDList, v.Id)
 			}
 		}
-		require.Equal(t, len(successIDList), 1)
-		require.Equal(t, len(errorIDList), 2)
+		require.Len(t, successIDList, 1)
+		require.Len(t, errorIDList, 2)
 		require.Equal(t, successIDList[0], int32(exp.ID))
-		require.Equal(t, len(result.Results), len(expIds))
+		require.Len(t, result.Results, len(expIds))
 		require.NoError(t, err)
 	})
 }
@@ -462,7 +461,7 @@ func TestDeleteExperimentWithoutCheckpoints(t *testing.T) {
 	for i := 0; i < 60; i++ {
 		e, err := api.GetExperiment(ctx, &apiv1.GetExperimentRequest{ExperimentId: int32(exp.ID)})
 		if err != nil {
-			require.Equal(t, apiPkg.NotFoundErrs("experiment", fmt.Sprint(exp.ID), true), err)
+			require.Equal(t, apiPkg.NotFoundErrs("experiment", strconv.Itoa(exp.ID), true), err)
 			return
 		}
 		require.NotEqual(t, experimentv1.State_STATE_DELETE_FAILED, e.Experiment.State)
@@ -785,7 +784,7 @@ func TestGetExperimentsShowTrialData(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, resp.Experiments, 2)
 	require.NotNil(t, resp.Experiments[0].BestTrialSearcherMetric)
-	require.Equal(t, 0.0, *resp.Experiments[0].BestTrialSearcherMetric) // 0.0 is the best metric.
+	require.Zero(t, *resp.Experiments[0].BestTrialSearcherMetric) // 0.0 is the best metric.
 	require.Nil(t, resp.Experiments[1].BestTrialSearcherMetric)
 }
 
@@ -926,84 +925,84 @@ func TestGetExperiments(t *testing.T) {
 	}
 
 	// Filtering tests.
-	getExperimentsTest(ctx, t, api, pid, &apiv1.GetExperimentsRequest{}, exp0Expected, exp1Expected)
+	testGetExperiments(ctx, t, api, pid, &apiv1.GetExperimentsRequest{}, exp0Expected, exp1Expected)
 
-	getExperimentsTest(ctx, t, api, pid,
+	testGetExperiments(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{Description: "12345"}, exp0Expected)
-	getExperimentsTest(ctx, t, api, pid,
+	testGetExperiments(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{Description: "234"}, exp0Expected, exp1Expected)
-	getExperimentsTest(ctx, t, api, pid,
+	testGetExperiments(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{Description: "123456"})
 
-	getExperimentsTest(ctx, t, api, pid,
+	testGetExperiments(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{Name: "longername"}, exp1Expected)
-	getExperimentsTest(ctx, t, api, pid,
+	testGetExperiments(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{Name: "name"}, exp0Expected, exp1Expected)
-	getExperimentsTest(ctx, t, api, pid,
+	testGetExperiments(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{Name: "longlongername"})
 
-	getExperimentsTest(ctx, t, api, pid,
+	testGetExperiments(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{Labels: []string{"l0", "l1"}}, exp0Expected)
-	getExperimentsTest(ctx, t, api, pid,
+	testGetExperiments(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{Labels: []string{"l0"}}, exp0Expected, exp1Expected)
-	getExperimentsTest(ctx, t, api, pid,
+	testGetExperiments(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{Labels: []string{"l0", "l1", "l3"}})
 
-	getExperimentsTest(ctx, t, api, pid,
+	testGetExperiments(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{Archived: wrapperspb.Bool(false)}, exp0Expected)
-	getExperimentsTest(ctx, t, api, pid,
+	testGetExperiments(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{Archived: wrapperspb.Bool(true)}, exp1Expected)
 
-	getExperimentsTest(ctx, t, api, pid,
+	testGetExperiments(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{
 			States: []experimentv1.State{experimentv1.State_STATE_PAUSED},
 		}, exp0Expected)
-	getExperimentsTest(ctx, t, api, pid,
+	testGetExperiments(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{
 			States: []experimentv1.State{experimentv1.State_STATE_ERROR},
 		}, exp1Expected)
-	getExperimentsTest(ctx, t, api, pid,
+	testGetExperiments(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{
 			States: []experimentv1.State{
 				experimentv1.State_STATE_PAUSED,
 				experimentv1.State_STATE_ERROR,
 			},
 		}, exp0Expected, exp1Expected)
-	getExperimentsTest(ctx, t, api, pid,
+	testGetExperiments(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{
 			States: []experimentv1.State{experimentv1.State_STATE_CANCELED},
 		})
 
-	getExperimentsTest(ctx, t, api, pid,
+	testGetExperiments(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{Users: []string{"admin"}}, exp0Expected)
-	getExperimentsTest(ctx, t, api, pid,
+	testGetExperiments(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{Users: []string{userResp.User.Username}}, exp1Expected)
-	getExperimentsTest(ctx, t, api, pid,
+	testGetExperiments(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{Users: []string{"admin", userResp.User.Username}},
 		exp0Expected, exp1Expected)
-	getExperimentsTest(ctx, t, api, pid,
+	testGetExperiments(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{Users: []string{"notarealuser"}})
 
-	getExperimentsTest(ctx, t, api, pid,
+	testGetExperiments(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{UserIds: []int32{1}}, exp0Expected)
-	getExperimentsTest(ctx, t, api, pid,
+	testGetExperiments(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{UserIds: []int32{userResp.User.Id}}, exp1Expected)
-	getExperimentsTest(ctx, t, api, pid,
+	testGetExperiments(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{UserIds: []int32{1, userResp.User.Id}},
 		exp0Expected, exp1Expected)
-	getExperimentsTest(ctx, t, api, pid, &apiv1.GetExperimentsRequest{UserIds: []int32{-999}})
+	testGetExperiments(ctx, t, api, pid, &apiv1.GetExperimentsRequest{UserIds: []int32{-999}})
 
 	// Sort and order by tests.
-	getExperimentsTest(ctx, t, api, pid,
+	testGetExperiments(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{
 			SortBy: apiv1.GetExperimentsRequest_SORT_BY_NUM_TRIALS,
 		}, exp1Expected, exp0Expected)
-	getExperimentsTest(ctx, t, api, pid,
+	testGetExperiments(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{
 			SortBy:  apiv1.GetExperimentsRequest_SORT_BY_NUM_TRIALS,
 			OrderBy: apiv1.OrderBy_ORDER_BY_ASC,
 		}, exp1Expected, exp0Expected)
-	getExperimentsTest(ctx, t, api, pid,
+	testGetExperiments(ctx, t, api, pid,
 		&apiv1.GetExperimentsRequest{
 			SortBy:  apiv1.GetExperimentsRequest_SORT_BY_NUM_TRIALS,
 			OrderBy: apiv1.OrderBy_ORDER_BY_DESC,
@@ -1011,21 +1010,21 @@ func TestGetExperiments(t *testing.T) {
 
 	// Pagination tests.
 	// No experiments should be returned for Limit -2.
-	getExperimentsTest(ctx, t, api, pid, &apiv1.GetExperimentsRequest{Limit: -2})
-	getExperimentsPageTest(ctx, t, api, pid, &apiv1.GetExperimentsRequest{Offset: 1},
+	testGetExperiments(ctx, t, api, pid, &apiv1.GetExperimentsRequest{Limit: -2})
+	testGetExperimentsPage(ctx, t, api, pid, &apiv1.GetExperimentsRequest{Offset: 1},
 		&apiv1.Pagination{Offset: 1, Limit: 0, StartIndex: 1, EndIndex: 2, Total: 2})
-	getExperimentsPageTest(ctx, t, api, pid, &apiv1.GetExperimentsRequest{Limit: 1},
+	testGetExperimentsPage(ctx, t, api, pid, &apiv1.GetExperimentsRequest{Limit: 1},
 		&apiv1.Pagination{Offset: 0, Limit: 1, StartIndex: 0, EndIndex: 1, Total: 2})
-	getExperimentsPageTest(ctx, t, api, pid, &apiv1.GetExperimentsRequest{Limit: 1, Offset: 1},
+	testGetExperimentsPage(ctx, t, api, pid, &apiv1.GetExperimentsRequest{Limit: 1, Offset: 1},
 		&apiv1.Pagination{Offset: 1, Limit: 1, StartIndex: 1, EndIndex: 2, Total: 2})
-	getExperimentsPageTest(ctx, t, api, pid, &apiv1.GetExperimentsRequest{Offset: 2},
+	testGetExperimentsPage(ctx, t, api, pid, &apiv1.GetExperimentsRequest{Offset: 2},
 		&apiv1.Pagination{Offset: 2, Limit: 0, StartIndex: 2, EndIndex: 2, Total: 2})
 
-	getExperimentsPageTest(ctx, t, api, pid, &apiv1.GetExperimentsRequest{Limit: -1},
+	testGetExperimentsPage(ctx, t, api, pid, &apiv1.GetExperimentsRequest{Limit: -1},
 		&apiv1.Pagination{Offset: 0, Limit: -1, StartIndex: 0, EndIndex: 2, Total: 2})
 }
 
-func getExperimentsPageTest(ctx context.Context, t *testing.T, api *apiServer, pid int32,
+func testGetExperimentsPage(ctx context.Context, t *testing.T, api *apiServer, pid int32,
 	req *apiv1.GetExperimentsRequest, expected *apiv1.Pagination,
 ) {
 	req.ProjectId = pid
@@ -1035,13 +1034,13 @@ func getExperimentsPageTest(ctx context.Context, t *testing.T, api *apiServer, p
 	require.Equal(t, expected, res.Pagination)
 }
 
-func getExperimentsTest(ctx context.Context, t *testing.T, api *apiServer, pid int32,
+func testGetExperiments(ctx context.Context, t *testing.T, api *apiServer, pid int32,
 	req *apiv1.GetExperimentsRequest, expected ...*experimentv1.Experiment,
 ) {
 	req.ProjectId = pid
 	res, err := api.GetExperiments(ctx, req)
 	require.NoError(t, err)
-	require.Equal(t, len(expected), len(res.Experiments),
+	require.Len(t, res.Experiments, len(expected),
 		fmt.Sprintf("wrong length of result set with request %+v", req))
 
 	for i := range expected {
@@ -1085,7 +1084,7 @@ func TestSearchExperiments(t *testing.T) {
 	}
 	resp, err := api.SearchExperiments(ctx, req)
 	require.NoError(t, err)
-	require.Len(t, resp.Experiments, 0)
+	require.Empty(t, resp.Experiments)
 
 	// No trial doesn't cause errors.
 	exp := createTestExpWithProjectID(t, api, curUser, projectIDInt)
@@ -1159,14 +1158,14 @@ func TestSearchExperiments(t *testing.T) {
 	require.NoError(t, err)
 	bestExpected, err := json.Marshal(valMetrics[0])
 	require.NoError(t, err)
-	require.Equal(t, string(bestActual), string(bestExpected))
+	require.Equal(t, string(bestExpected), string(bestActual))
 
 	require.Equal(t, int32(9), resp.Experiments[2].BestTrial.LatestValidation.TotalBatches)
 	latestActual, err := json.Marshal(resp.Experiments[2].BestTrial.LatestValidation.Metrics)
 	require.NoError(t, err)
 	latestExpected, err := json.Marshal(valMetrics[len(valMetrics)-1])
 	require.NoError(t, err)
-	require.Equal(t, string(latestActual), string(latestExpected))
+	require.Equal(t, string(latestExpected), string(latestActual))
 
 	require.Equal(t, int32(5), resp.Experiments[2].BestTrial.Restarts)
 }
@@ -1331,22 +1330,14 @@ func BenchmarkGetExeriments500(b *testing.B) { benchmarkGetExperiments(b, 500) }
 
 func BenchmarkGetExeriments2500(b *testing.B) { benchmarkGetExperiments(b, 2500) }
 
-// nolint: exhaustruct
-func createTestExpWithProjectID(
-	t *testing.T, api *apiServer, curUser model.User, projectID int, labels ...string,
-) *model.Experiment {
-	labelMap := make(map[string]bool)
-	for _, l := range labels {
-		labelMap[l] = true
-	}
-
-	activeConfig := schemas.Merge(minExpConfig, expconf.ExperimentConfig{
-		RawLabels:      labelMap,
-		RawDescription: ptrs.Ptr("desc"),
-		RawName:        expconf.Name{RawString: ptrs.Ptr("name")},
-	})
-	activeConfig = schemas.WithDefaults(activeConfig)
-	exp := &model.Experiment{
+func createTestExpWithActiveConfig(
+	t *testing.T,
+	api *apiServer,
+	curUser model.User,
+	projectID int,
+	activeConfig expconf.ExperimentConfig,
+) (exp *model.Experiment) {
+	exp = &model.Experiment{
 		JobID:     model.JobID(uuid.New().String()),
 		State:     model.PausedState,
 		OwnerID:   &curUser.ID,
@@ -1360,6 +1351,25 @@ func createTestExpWithProjectID(
 	exp, err := db.ExperimentByID(context.TODO(), exp.ID)
 	require.NoError(t, err)
 	return exp
+}
+
+// nolint: exhaustruct
+func createTestExpWithProjectID(
+	t *testing.T, api *apiServer, curUser model.User, projectID int, labels ...string,
+) *model.Experiment {
+	labelMap := make(map[string]bool)
+	for _, l := range labels {
+		labelMap[l] = true
+	}
+
+	experimentConfig := expconf.ExperimentConfig{
+		RawLabels:      labelMap,
+		RawDescription: ptrs.Ptr("desc"),
+		RawName:        expconf.Name{RawString: ptrs.Ptr("name")},
+	}
+
+	activeConfig := schemas.WithDefaults(schemas.Merge(minExpConfig, experimentConfig))
+	return createTestExpWithActiveConfig(t, api, curUser, projectID, activeConfig)
 }
 
 func TestAuthZGetExperiment(t *testing.T) {
@@ -1377,7 +1387,7 @@ func TestAuthZGetExperiment(t *testing.T) {
 	authZExp.On("CanGetExperiment", mock.Anything, mockUserArg, mock.Anything).
 		Return(authz2.PermissionDeniedError{}).Once()
 	_, err = api.GetExperiment(ctx, &apiv1.GetExperimentRequest{ExperimentId: int32(exp.ID)})
-	require.Equal(t, apiPkg.NotFoundErrs("experiment", fmt.Sprint(exp.ID), true).Error(),
+	require.Equal(t, apiPkg.NotFoundErrs("experiment", strconv.Itoa(exp.ID), true).Error(),
 		err.Error())
 
 	// Error returns error unmodified.
@@ -1407,7 +1417,7 @@ func TestAuthZGetExperiments(t *testing.T) {
 	authZProject.On("CanGetProject", mock.Anything, mockUserArg,
 		mock.Anything).Return(authz2.PermissionDeniedError{}).Once()
 	_, err := api.GetExperiments(ctx, &apiv1.GetExperimentsRequest{ProjectId: int32(projectID)})
-	require.Equal(t, apiPkg.NotFoundErrs("project", fmt.Sprint(projectID), true).Error(),
+	require.Equal(t, apiPkg.NotFoundErrs("project", strconv.Itoa(projectID), true).Error(),
 		err.Error())
 
 	// Error from FilterExperimentsQuery passes through.
@@ -1459,7 +1469,7 @@ func TestAuthZGetExperimentLabels(t *testing.T) {
 	_, err := api.GetExperimentLabels(ctx, &apiv1.GetExperimentLabelsRequest{
 		ProjectId: int32(projectID),
 	})
-	require.Equal(t, apiPkg.NotFoundErrs("project", fmt.Sprint(projectID), true).Error(),
+	require.Equal(t, apiPkg.NotFoundErrs("project", strconv.Itoa(projectID), true).Error(),
 		err.Error())
 
 	// Error from FilterExperimentsLabelsQuery passes through.
@@ -1502,7 +1512,7 @@ func TestAuthZCreateExperiment(t *testing.T) {
 			ParentId: int32(forkFrom.ID),
 		})
 		require.Equal(t, apiPkg.NotFoundErrs("experiment",
-			fmt.Sprint(forkFrom.ID), true), err)
+			strconv.Itoa(forkFrom.ID), true), err)
 	})
 
 	t.Run("can't fork from experiment", func(t *testing.T) {
@@ -1523,7 +1533,7 @@ func TestAuthZCreateExperiment(t *testing.T) {
 			ProjectId: int32(projectID),
 			Config:    minExpConfToYaml(t),
 		})
-		require.Equal(t, apiPkg.NotFoundErrs("project", fmt.Sprint(projectID), true), err)
+		require.Equal(t, apiPkg.NotFoundErrs("project", strconv.Itoa(projectID), true), err)
 	})
 
 	t.Run("can't view project passed in from config", func(t *testing.T) {
@@ -1743,7 +1753,7 @@ func TestAuthZGetExperimentAndCanDoActions(t *testing.T) {
 
 		authZExp.On("CanGetExperiment", mock.Anything, mockUserArg, mock.Anything).
 			Return(authz2.PermissionDeniedError{}).Once()
-		require.Equal(t, apiPkg.NotFoundErrs("experiment", fmt.Sprint(exp.ID), true),
+		require.Equal(t, apiPkg.NotFoundErrs("experiment", strconv.Itoa(exp.ID), true),
 			curCase.IDToReqCall(exp.ID))
 
 		// CanGetExperiment error returns unmodified.
@@ -1806,7 +1816,7 @@ func TestAuthZGetExperimentAndCanDoActions(t *testing.T) {
 			q := args.Get(3).(*bun.SelectQuery).Where("0 = 1")
 			*resQuery = *q
 		})
-		require.Equal(t, apiPkg.NotFoundErrs("experiment", fmt.Sprint(exp.ID), true),
+		require.Equal(t, apiPkg.NotFoundErrs("experiment", strconv.Itoa(exp.ID), true),
 			curCase.IDToReqCall(exp.ID))
 
 		// FilterExperimentsQuery error returned unmodified.
@@ -1896,7 +1906,7 @@ func TestAuthZGetExperimentAndCanDoActions(t *testing.T) {
 		})
 		results, _ := curCase.IDToReqCall(exp.ID)
 		require.Equal(t, apiPkg.NotFoundErrs("experiment",
-			fmt.Sprint(exp.ID), true).Error(), results[0].Error)
+			strconv.Itoa(exp.ID), true).Error(), results[0].Error)
 
 		// FilterExperimentsQuery error returned unmodified.
 		expectedErr := fmt.Errorf("canGetExperimentError")
@@ -2091,7 +2101,7 @@ func TestDeleteExperiments(t *testing.T) {
 	// still after that.
 	mockRM.On("DeleteJob", mock.Anything).Return(func(sproto.DeleteJob) sproto.DeleteJobResponse {
 		errC := make(chan error, 1)
-		errC <- errors.New("something real bad")
+		errC <- fmt.Errorf("something real bad")
 		return sproto.DeleteJobResponse{Err: errC}
 	}, nil)
 
@@ -2145,7 +2155,7 @@ func TestDeleteExperiments(t *testing.T) {
 		for _, expID := range expIDs {
 			e, err := api.GetExperiment(ctx, &apiv1.GetExperimentRequest{ExperimentId: expID})
 			if err != nil {
-				require.Equal(t, apiPkg.NotFoundErrs("experiment", fmt.Sprint(expID), true), err)
+				require.Equal(t, apiPkg.NotFoundErrs("experiment", strconv.Itoa(int(expID)), true), err)
 				deleted++
 				continue
 			}
@@ -2165,7 +2175,7 @@ func TestDeleteExperimentsFiltered(t *testing.T) {
 	// still after that.
 	mockRM.On("DeleteJob", mock.Anything).Return(func(sproto.DeleteJob) sproto.DeleteJobResponse {
 		errC := make(chan error, 1)
-		errC <- errors.New("something real bad")
+		errC <- fmt.Errorf("something real bad")
 		return sproto.DeleteJobResponse{Err: errC}
 	}, nil)
 
@@ -2222,7 +2232,7 @@ func TestDeleteExperimentsFiltered(t *testing.T) {
 		for _, expID := range expIDs {
 			e, err := api.GetExperiment(ctx, &apiv1.GetExperimentRequest{ExperimentId: expID})
 			if err != nil {
-				require.Equal(t, apiPkg.NotFoundErrs("experiment", fmt.Sprint(expID), true), err)
+				require.Equal(t, apiPkg.NotFoundErrs("experiment", strconv.Itoa(int(expID)), true), err)
 				deleted++
 				continue
 			}

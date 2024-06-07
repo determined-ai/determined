@@ -101,7 +101,7 @@ Parameters:
   Version:
     Type: String
     Description: Determined version or commit for master image
-    Default: 0.32.0-dev0
+    Default: 0.33.1-dev0
 
   DBPassword:
     Type: String
@@ -224,6 +224,11 @@ Parameters:
     Type: String
     Description: GenAI version to deploy
     Default: latest
+
+  GenAISharedFSMountPath:
+    Type: String
+    Description: GenAI shared file system mount path
+    Default: /run/determined/workdir/shared_fs
 
   MountEFSId:
     Type: String
@@ -936,7 +941,7 @@ Resources:
 
             bind_mounts:
               - host_path: /mnt/efs
-                container_path: /run/determined/workdir/shared_fs
+                container_path: "${GenAISharedFSMountPath}"
             
             security:
               initial_user_password: "${InitialUserPassword}"
@@ -999,8 +1004,9 @@ Resources:
                 --env DB_HOST=${Database.Endpoint.Address} \
                 --env DB_PORT=5432 \
                 --env LORE_DOCKER_TAG_SUFFIX="${GenAIVersion}" \
+                --env SHARED_FS_ROOT_PATH="${GenAISharedFSMountPath}" \
                 -p 9013:9013 \
-                -v /mnt/efs:/run/determined/workdir/shared_fs \
+                -v /mnt/efs:"${GenAISharedFSMountPath}" \
                 --network determined \
                 "${ImageRepoPrefix}/genai:${GenAIVersion}"
               test $? -eq 0 || ( echo "Failed to launch GenAI container." && exit 1 )

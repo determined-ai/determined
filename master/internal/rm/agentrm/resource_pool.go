@@ -155,7 +155,7 @@ func (rp *resourcePool) allocateRequest(msg sproto.AllocateRequest) {
 			log.WithError(err).Error("error restoring resources")
 
 			// Clear out the state / close and terminate the allocation.
-			rmevents.Publish(msg.AllocationID, &sproto.ResourcesRestoreError{
+			rmevents.Publish(msg.AllocationID, &sproto.ResourcesFailedError{
 				FailureType: sproto.RestoreError,
 				ErrMsg:      err.Error(),
 				ExitCode:    nil,
@@ -728,19 +728,20 @@ func (rp *resourcePool) moveJob(
 			return err
 		}
 
-		if priorityChanger, ok := tasklist.GroupPriorityChangeRegistry.Load(jobID); ok {
-			if priorityChanger != nil {
-				if err := priorityChanger(anchorPriority); err != nil {
-					_ = rp.setGroupPriority(sproto.SetGroupPriority{
-						Priority:     oldPriority,
-						ResourcePool: rp.config.PoolName,
-						JobID:        jobID,
-					})
-					return err
-				}
-			}
-		} else {
+		priorityChanger, ok := tasklist.GroupPriorityChangeRegistry.Load(jobID)
+		if !ok {
 			return fmt.Errorf("unable to move job with ID %s", jobID)
+		}
+
+		if priorityChanger != nil {
+			if err := priorityChanger(anchorPriority); err != nil {
+				_ = rp.setGroupPriority(sproto.SetGroupPriority{
+					Priority:     oldPriority,
+					ResourcePool: rp.config.PoolName,
+					JobID:        jobID,
+				})
+				return err
+			}
 		}
 
 		if !tasklist.NeedMove(

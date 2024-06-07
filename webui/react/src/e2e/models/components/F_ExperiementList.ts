@@ -1,9 +1,10 @@
+import { Pagination } from 'e2e/models/ant/Pagination';
 import { BaseReactFragment } from 'e2e/models/BaseComponent';
 import { ComparisonView } from 'e2e/models/components/ComparisonView';
 import { ExperimentActionDropdown } from 'e2e/models/components/ExperimentActionDropdown';
 import { TableActionBar } from 'e2e/models/components/TableActionBar';
 import { DataGrid, HeadRow, Row, RowArgs } from 'e2e/models/hew/DataGrid';
-import { Pagination } from 'e2e/models/hew/Pagination';
+import { Message } from 'e2e/models/hew/Message';
 
 /**
  * Returns a representation of the F_ExperiementList component.
@@ -13,7 +14,7 @@ import { Pagination } from 'e2e/models/hew/Pagination';
  */
 export class F_ExperiementList extends BaseReactFragment {
   readonly tableActionBar = new TableActionBar({ parent: this });
-  // TODO no experiments
+  readonly noExperimentsMessage = new Message({ parent: this });
   // TODO no filtered experiments
   // TODO error
   readonly comparisonView = new ComparisonView({ parent: this });
@@ -22,18 +23,18 @@ export class F_ExperiementList extends BaseReactFragment {
     parent: this.comparisonView.initial,
     rowType: ExperimentRow,
   });
-  // There is no button which activates this dropdown. To display it, right-click the grid
-  readonly experimentActionDropdown = new ExperimentActionDropdown({
-    parent: this.root,
-    selector: '',
-  });
   readonly pagination = new Pagination({ parent: this });
 }
 
-class ExperimentHeadRow extends HeadRow {}
-class ExperimentRow extends Row<ExperimentRow, ExperimentHeadRow> {
+class ExperimentHeadRow extends HeadRow<ExperimentRow> {}
+class ExperimentRow extends Row<ExperimentHeadRow> {
   constructor(args: RowArgs<ExperimentRow, ExperimentHeadRow>) {
     super(args);
     this.columnPositions.set('ID', 50);
   }
+  readonly experimentActionDropdown = new ExperimentActionDropdown({
+    // without bind, we fail on `this.parentTable`
+    openMethod: this.rightClick.bind(this),
+    root: this.root,
+  });
 }

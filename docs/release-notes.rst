@@ -7,6 +7,181 @@
 ###############
 
 **************
+ Version 0.33
+**************
+
+Version 0.33.0
+==============
+
+**Release Date:** May 29, 2024
+
+**Breaking Changes**
+
+-  Helm: An entry for ``initialUserPassword`` is now required when running ``helm install``.
+   Existing deployments are unaffected. See :ref:`Helm Chart <helm-config-reference>`.
+
+-  Web UI: Enforce password requirements for all new non-remote users. See
+   :ref:`password-requirements` for details.
+
+   -  Applies to users created using the **Add User** button in the Web UI for admins.
+   -  Admins can change the passwords of other users using the same interface.
+   -  Does not affect existing users with empty or non-compliant passwords, but setting strong
+      passwords for these users is recommended.
+
+**Improvements**
+
+Kubernetes: Add Determined resource information such as ``workspace`` and ``task ID`` as pod labels.
+This improvement facilitates better resource tracking and management within Kubernetes environments.
+
+Configuration: Introduce a DCGM Helm chart and Prometheus configuration to the
+``tools/observability`` directory. Additionally, two new dashboards, "API Monitoring" and "Resource
+Utilization", have been added to improve observability and operational insight.
+
+-  WebUI: Allow users to create and manage configuration templates through the WebUI.
+-  Commands: Commands now support automatically executing a ``startup-hook.sh`` script if it is
+   present in the command's context directory.
+
+**Bug Fixes**
+
+-  Kubernetes: Fix an issue where Determined failed to report slots as occupied when non Determined
+   jobs were running on namespaces besides 'default'. For Determined to detect non Determined jobs
+   they must be running in a namespace that Determined can launch jobs into.
+
+-  Kubernetes: Fix an issue where the cluster page displayed slots out of order on refresh. Slots
+   are now consistently filled from left to right, even with more than 10 GPUs and when using RBAC.
+
+**Deprecations**
+
+To enhance stability and streamline the onboarding process, we may remove the following features in
+future releases. Our goal is for Agent Resource Manager environments to function seamlessly
+out-of-the-box with minimal customization required.
+
+Agent Resource Manager:
+
+-  Container Runtimes: Due to limited usage, we will limit supported container runtimes to Docker
+   for the Agent Resource Manager. This does not impact Kubernetes, Slurm or PBS environments.
+
+-  Job Scheduling: The default scheduler is now ``priority``. Support for round-robin and fair share
+   schedulers has been discontinued. We recommend using the priority scheduler, as it meets most
+   scheduling needs and simplifies configuration. To move a job, you will need to adjust its
+   priority; jobs cannot be shifted within the same priority group.
+
+-  AMD GPUs: Due to limited usage, we will limit supported accelerators to NVIDIA GPUs. If you have
+   a use case requiring AMD GPU support with the Agent Resource Manager, please reach out to us via
+   a `GitHub Issue <https://github.com/determined-ai/determined/issues>`__ or `community slack
+   <https://join.slack.com/t/determined-community/shared_invite/zt-1f4hj60z5-JMHb~wSr2xksLZVBN61g_Q>`__!
+   This does not impact Kubernetes or Slurm environments.
+
+Machine Architectures: PPC64/POWER builds across all environments are no longer supported.
+
+**************
+ Version 0.32
+**************
+
+Version 0.32.1
+==============
+
+**Release Date**: May 10, 2024
+
+**Bug Fixes**
+
+-  Kubernetes: Fix an issue introduced in 0.32.0 where workspaces with names incompatible with
+   Kubernetes naming requirements would cause jobs in that workspace to fail.
+
+Version 0.32.0
+==============
+
+**Release Date:** May 08, 2024
+
+Notice: This release contains an important fix for a bug that poses data loss risk when using the
+Experiment table in the project view in the WebUI. All users on affected versions are strongly
+encouraged to upgrade as soon as possible. For more details, scroll down to ``Bug Fixes``.
+
+**Breaking Changes**
+
+-  Python SDK and CLI: Password requirements are now enforced for all non-remote users. (The
+   requirements do not apply to remote users, since they use single sign-on.) Existing users with
+   empty or non-compliant passwords can still sign in. However, we recommend updating these
+   passwords to meet the new requirements as soon as possible. For more information, visit
+   :ref:`password-requirements`.
+
+   This change affects the :meth:`~determined.experimental.client.Determined.create_user` and
+   :meth:`~determined.experimental.client.User.change_password` SDK methods and the ``det user
+   create`` and ``det user change-password`` CLI commands.
+
+   When creating non-remote users at the CLI with ``det user create``, setting a password is now
+   mandatory. You can set the password interactively by following the prompts during user creation
+   or non-interactively with the ``--password`` option.
+
+**New Features**
+
+-  Kubernetes: In the enterprise edition, add the ability to set up the Determined master service on
+   one Kubernetes cluster and manage workloads across different Kubernetes clusters. Additional
+   non-default resource managers and resource pools are configured under the
+   ``additional_resource_managers`` section (additional resource managers are required to have at
+   least one resource pool defined). Additional resource managers and their resource pools must have
+   unique names. For more information, visit :ref:`master configuration <master-config-reference>`.
+   Support for notebooks and other workloads that require proxying is under development.
+
+-  API/CLI/WebUI: In the enterprise edition, route any requests to resource pools not defined in the
+   master configuration to the default resource manager, not any additional resource manager, if
+   defined.
+
+-  Configuration: In the enterprise edition, add an ``additional_resource_managers`` section that
+   can define multiple resource managers following the same patteroas ``resource_manager``. Add
+   ``name`` and ``metadata`` fields to individual resource manager definitions.
+
+-  WebUI: In the enterprise edition, add the ability to view resource manager name for resource
+   pools.
+
+**Improvements**
+
+-  Configuration: The master configuration parameter ``observability.enable_prometheus`` now
+   defaults to ``true``. Consequently, Prometheus endpoints are enabled by default, which does not
+   affect clusters that do not use Prometheus.
+
+-  Experiment metrics tracking: Add enhanced support for metrics with long names. Previously,
+   metrics with names exceeding 63 characters were recorded but not displayed in the UI or returned
+   via APIs.
+
+**Bug Fixes**
+
+-  A bug was fixed impacting the selection functionality in the Experiments page. From version
+   0.27.1 to version 0.31.0, this bug was causing actions to be applied to more experiments than are
+   visibly selected. For example, when using the **Select All > Actions > Move** sequence to
+   transfer all experiments from one project to another, the action may inadvertently include
+   experiments not only from the targeted project but also from other projects you have permissions
+   to edit. We urge all users on the affected versions to upgrade as soon as possible. The following
+   applies to versions 0.27.1 to 0.31.0:
+
+   -  There is a risk of data loss if, when attempting to delete a set of experiments, the action
+      inadvertently deletes a larger set than intended.
+
+   -  When role-based access control (an enterprise edition feature) is enabled, there is a risk of
+      a permissions leak if moving experiments from one project to another inadvertently includes
+      experiments from other workspaces.
+
+   -  This issue affects all bulk actions including delete, move, archive, unarchive, resume, pause,
+      kill, stop, and view in TensorBoard.
+
+   -  We strongly advise refraining from using the experiment table in the project view to take any
+      actions.
+
+   -  Workaround: To manage actions on a single trial, use the trial view in the WebUI.
+      Alternatively, for bulk actions affected by this issue, consider using the command-line
+      interface (CLI). You can also turn off the New Experiment List setting under the User Settings
+      > Experimental section. For more information visit Manage User Settings under :ref:`WebUI
+      <web-ui-if>`.
+
+-  A bug was fixed impacting deployments using Amazon Aurora PostgreSQL-Compatible Edition
+   Serverless V1 as the database. Since version 0.28.1, deployments using Amazon Aurora
+   PostgreSQL-Compatible Edition Serverless V1 as the database have been at risk of becoming
+   unresponsive due to certain autoscaling errors. This issue affects multiple ``det deploy aws``
+   deployment types, including ``simple``, ``vpc``, ``efs``, ``fsx``, and ``secure``. Installations
+   using AWS RDS, including ``det deploy aws --deployment-type=govcloud``, are not affected. We urge
+   all users with affected setups to upgrade as soon as possible.
+
+**************
  Version 0.31
 **************
 

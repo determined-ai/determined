@@ -76,20 +76,31 @@ for diagnosing any issues that arise during installation.
    # Get logs for the pod running the Determined master.
    kubectl logs <determined-master-pod-name>
 
-***************************
- Get All Running Task Pods
-***************************
+*********************************************
+ Get All Determined-launched Kubernetes Jobs
+*********************************************
 
-These ``kubectl`` commands list and delete pods which are running Determined tasks:
+On Determined with Kubernetes, tasks start their own jobs, which have associated pods. These
+``kubectl`` commands list and delete pods which are running Determined tasks:
 
 .. code:: bash
 
-   # Get all pods that are running Determined tasks.
-   kubectl get pods -l=determined
+   # Get all jobs that are running Determined tasks.
+   kubectl get jobs -l=determined
 
-   # Delete all Determined task pods. Users should never have to run this,
+   # Get all pods associated with a given job.
+   kubectl get pods -l="batch.kubernetes.io/job-name=<determined-job-name>"
+
+   # Delete all Determined jobs for all tasks for ALL clusters. Users should never have to run this,
    # unless they are removing a deployment of Determined.
-   kubectl get pods --no-headers=true -l=determined | awk '{print $1}' | xargs kubectl delete pod
+   kubectl get jobs --no-headers=true -l=determined | awk '{print $1}' | xargs kubectl delete jobs
+
+   # Get logs for a Determined task that make it to STDOUT or STDERR. Most logs are shipped to the
+   # Determined API server but logs that can't be shipped still go here. This is useful for debugging
+   # log shipping failures.
+   # For Determined tasks that require multiple pods, this will return logs for only one pod. It is
+   # recommended that you search the logs for each pod individually.
+   kubectl logs jobs/<determined-job-name>
 
 ***************************
  Useful Debugging Commands

@@ -52,18 +52,18 @@ See :ref:`checkpoint-storage` for details.
  Telemetry
 ***********
 
-To improve product design, the master and WebUI both collect anonymous information about how
-Determined is being used, by default. This information includes various metrics and events such as
-the number of experiments, trials, registered users, and more.
+To improve product design, the master and WebUI both collect information about how Determined is
+being used, by default. This information includes various metrics and events such as the number of
+experiments, trials, registered users, and more.
 
-Telemetry does not report information that can be used to identify individual users of the product,
-nor does it include model source code, model architecture/checkpoints, training datasets, training
-and validation metrics, logs, or hyperparameter values.
+Telemetry does not report model source code, model architecture/checkpoints, training datasets,
+training and validation metrics, logs, or hyperparameter values.
 
 The information we collect from the master periodically includes:
 
 -  a unique, randomly generated ID for the current database and for the current instance of the
    master
+-  the IP address of the master
 -  the version of Determined
 -  the version of Go that was used to compile the master
 -  the number of registered :ref:`users <users>`

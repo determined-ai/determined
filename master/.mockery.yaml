@@ -1,0 +1,106 @@
+# .mockery.yaml
+with-expecter: True
+dir: internal/mocks
+outpkg: mocks
+quiet: True
+packages:
+  github.com/determined-ai/determined/master/internal/db:
+    interfaces:
+      DB:
+        config:
+          filename: db.go
+          mockname: DB
+  github.com/determined-ai/determined/master/internal/sproto:
+    interfaces:
+      Resources:
+        config:
+          filename: resources.go
+          mockname: Resources
+  github.com/determined-ai/determined/master/internal/user:
+    interfaces:
+      UserAuthZ:
+        config:
+          filename: user_authz_iface.go
+          mockname: UserAuthZ
+  github.com/determined-ai/determined/master/internal/workspace:
+    interfaces:
+      WorkspaceAuthZ:
+        config:
+          filename: workspace_authz_iface.go
+          mockname: WorkspaceAuthZ
+  github.com/determined-ai/determined/master/internal/project:
+    interfaces:
+      ProjectAuthZ:
+        config:
+          filename: project_authz_iface.go
+          mockname: ProjectAuthZ
+  github.com/determined-ai/determined/master/internal/experiment:
+    interfaces:
+      ExperimentAuthZ:
+        config:
+          filename: authz_experiment_iface.go
+          mockname: ExperimentAuthZ
+  github.com/determined-ai/determined/master/internal/command:
+    interfaces:
+      NSCAuthZ:
+        config:
+          filename: nsc_authz_iface.go
+          mockname: NSCAuthZ
+  github.com/determined-ai/determined/master/internal/model:
+    interfaces:
+      ModelAuthZ:
+        config:
+          filename: authz_model_iface.go
+          mockname: ModelAuthZ
+  github.com/determined-ai/determined/master/internal/rm:
+    interfaces:
+      ResourceManager:
+        config:
+          filename: rm.go
+          mockname: ResourceManager
+      ResourceManagerAuthZ:
+        config:
+          filename: rm_authz_iface.go
+          mockname: ResourceManagerAuthZ
+  github.com/determined-ai/determined/master/internal/task:
+    interfaces:
+      AllocationService:
+        config:
+          filename: allocation_service.go
+          mockname: AllocationService
+          dir: internal/mocks/allocationmocks
+          outpkg: allocationmocks
+  k8s.io/client-go/kubernetes/typed/core/v1:
+    interfaces:
+      PodInterface:
+        config:
+          filename: pod_iface.go
+          mockname: PodInterface
+      EventInterface:
+        config:
+          filename: event_iface.go
+          mockname: EventInterface
+      NodeInterface:
+        config:
+          filename: node_iface.go
+          mockname: NodeInterface
+      CoreV1Interface:
+        config:
+          filename: k8s_corev1_iface.go
+          mockname: K8sCoreV1Interface
+  k8s.io/client-go/kubernetes/typed/batch/v1:
+    interfaces:
+      JobInterface:
+        config:
+          filename: job_iface.go
+          mockname: JobInterface
+      BatchV1Interface:
+        config:
+          filename: k8s_batchv1_iface.go
+          mockname: K8sBatchV1Interface
+  k8s.io/client-go/kubernetes:
+    interfaces:
+      Interface:
+        config:
+          filename: k8s_clientset.go
+          mockname: K8sClientsetInterface

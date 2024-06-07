@@ -6,6 +6,7 @@ package internal
 import (
 	"context"
 	"fmt"
+	"slices"
 	"testing"
 	"time"
 
@@ -20,6 +21,19 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/taskv1"
 )
+
+// Retrieves the hyperparameters of a given project.
+func getTestProjectHyperparmeters(ctx context.Context, t *testing.T, projectID int) []string {
+	var hyperparameters []string
+	err := db.Bun().NewSelect().
+		Table("project_hparams").
+		Column("hparam").
+		Where("project_id = ?", projectID).
+		Scan(ctx, &hyperparameters)
+	require.NoError(t, err)
+
+	return hyperparameters
+}
 
 func TestSearchRunsArchivedExperiment(t *testing.T) {
 	api, curUser, ctx := setupAPITest(t, nil)
@@ -65,7 +79,7 @@ func TestSearchRunsArchivedExperiment(t *testing.T) {
 	// Run should not be in result
 	resp, err = api.SearchRuns(ctx, req)
 	require.NoError(t, err)
-	require.Len(t, resp.Runs, 0)
+	require.Empty(t, resp.Runs)
 }
 
 func TestSearchRunsSort(t *testing.T) {
@@ -80,7 +94,7 @@ func TestSearchRunsSort(t *testing.T) {
 	}
 	resp, err := api.SearchRuns(ctx, req)
 	require.NoError(t, err)
-	require.Len(t, resp.Runs, 0)
+	require.Empty(t, resp.Runs)
 
 	hyperparameters := map[string]any{"global_batch_size": 1, "test1": map[string]any{"test2": 1}}
 
@@ -156,7 +170,7 @@ func TestSearchRunsFilter(t *testing.T) {
 	}
 	resp, err := api.SearchRuns(ctx, req)
 	require.NoError(t, err)
-	require.Len(t, resp.Runs, 0)
+	require.Empty(t, resp.Runs)
 
 	hyperparameters := map[string]any{"global_batch_size": 1, "test1": map[string]any{"test2": 1}}
 
@@ -348,15 +362,15 @@ func TestMoveRunsIds(t *testing.T) {
 	// Experiment in new project
 	exp, err := api.getExperiment(ctx, curUser, run1.ExperimentID)
 	require.NoError(t, err)
-	require.Equal(t, destprojectID, exp.ProjectId)
+	require.Equal(t, exp.ProjectId, destprojectID)
 }
 
 func setUpMultiTrialExperiments(ctx context.Context, t *testing.T, api *apiServer, curUser model.User,
-) (int32, int32, int32, int32, int32) {
+) (sourceprojectID int32, destprojectID int32, runID1 int32, runID2 int32, expID int32) {
 	_, projectIDInt := createProjectAndWorkspace(ctx, t, api)
 	_, projectID2Int := createProjectAndWorkspace(ctx, t, api)
-	sourceprojectID := int32(projectIDInt)
-	destprojectID := int32(projectID2Int)
+	sourceprojectID = int32(projectIDInt)
+	destprojectID = int32(projectID2Int)
 
 	exp := createTestExpWithProjectID(t, api, curUser, projectIDInt)
 
@@ -424,7 +438,7 @@ func TestMoveRunsMultiTrialSkip(t *testing.T) {
 
 	resp, err = api.SearchRuns(ctx, req)
 	require.NoError(t, err)
-	require.Len(t, resp.Runs, 0)
+	require.Empty(t, resp.Runs)
 }
 
 func TestMoveRunsMultiTrialNoSkip(t *testing.T) {
@@ -452,7 +466,7 @@ func TestMoveRunsMultiTrialNoSkip(t *testing.T) {
 	}
 	resp, err := api.SearchRuns(ctx, req)
 	require.NoError(t, err)
-	require.Len(t, resp.Runs, 0)
+	require.Empty(t, resp.Runs)
 
 	// runs in new project
 	req = &apiv1.SearchRunsRequest{
@@ -491,7 +505,7 @@ func TestMoveRunsFilter(t *testing.T) {
 		HParams:      hyperparameters1,
 	}, task1.TaskID))
 
-	hyperparameters2 := map[string]any{"global_batch_size": 1, "test1": map[string]any{"test2": 5}}
+	hyperparameters2 := map[string]any{"test1": map[string]any{"test2": 5}}
 	task2 := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
 	require.NoError(t, db.AddTask(ctx, task2))
 	require.NoError(t, db.AddTrial(ctx, &model.Trial{
@@ -500,6 +514,11 @@ func TestMoveRunsFilter(t *testing.T) {
 		StartTime:    time.Now(),
 		HParams:      hyperparameters2,
 	}, task2.TaskID))
+
+	projHparam := getTestProjectHyperparmeters(ctx, t, projectIDInt)
+	require.Len(t, projHparam, 2)
+	require.True(t, slices.Contains(projHparam, "test1.test2"))
+	require.True(t, slices.Contains(projHparam, "global_batch_size"))
 
 	req := &apiv1.SearchRunsRequest{
 		ProjectId: &sourceprojectID,
@@ -540,6 +559,17 @@ func TestMoveRunsFilter(t *testing.T) {
 	resp, err = api.SearchRuns(ctx, req)
 	require.NoError(t, err)
 	require.Len(t, resp.Runs, 1)
+
+	// Hyperparam moved out of project A
+	projHparam = getTestProjectHyperparmeters(ctx, t, projectIDInt)
+	require.Len(t, projHparam, 1)
+	require.Equal(t, "test1.test2", projHparam[0])
+
+	// Hyperparams moved into project B
+	projHparam = getTestProjectHyperparmeters(ctx, t, projectID2Int)
+	require.Len(t, projHparam, 2)
+	require.True(t, slices.Contains(projHparam, "test1.test2"))
+	require.True(t, slices.Contains(projHparam, "global_batch_size"))
 }
 
 func TestDeleteRunsNonTerminal(t *testing.T) {
@@ -620,7 +650,7 @@ func TestDeleteRunsIds(t *testing.T) {
 
 	searchResp, err := api.SearchRuns(ctx, searchReq)
 	require.NoError(t, err)
-	require.Len(t, searchResp.Runs, 0)
+	require.Empty(t, searchResp.Runs)
 }
 
 func TestDeleteRunsIdsNonExistant(t *testing.T) {
@@ -659,7 +689,7 @@ func TestDeleteRunsFilter(t *testing.T) {
 		HParams:      hyperparameters1,
 	}, task1.TaskID))
 
-	hyperparameters2 := map[string]any{"global_batch_size": 1, "test1": map[string]any{"test2": 5}}
+	hyperparameters2 := map[string]any{"test1": map[string]any{"test2": 5}}
 	task2 := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
 	require.NoError(t, db.AddTask(ctx, task2))
 	require.NoError(t, db.AddTrial(ctx, &model.Trial{
@@ -668,6 +698,11 @@ func TestDeleteRunsFilter(t *testing.T) {
 		StartTime:    time.Now(),
 		HParams:      hyperparameters2,
 	}, task2.TaskID))
+
+	projHparam := getTestProjectHyperparmeters(ctx, t, projectIDInt)
+	require.Len(t, projHparam, 2)
+	require.True(t, slices.Contains(projHparam, "test1.test2"))
+	require.True(t, slices.Contains(projHparam, "global_batch_size"))
 
 	filter := `{
 		"filterGroup": {
@@ -701,6 +736,10 @@ func TestDeleteRunsFilter(t *testing.T) {
 		Filter:    ptrs.Ptr(`{"showArchived":true}`),
 		Sort:      ptrs.Ptr("id=asc"),
 	}
+
+	projHparam = getTestProjectHyperparmeters(ctx, t, projectIDInt)
+	require.Len(t, projHparam, 1)
+	require.Equal(t, "test1.test2", projHparam[0])
 
 	searchResp, err := api.SearchRuns(ctx, searchReq)
 	require.NoError(t, err)
@@ -785,11 +824,11 @@ func TestDeleteRunsLogs(t *testing.T) {
 
 	searchResp, err = api.SearchRuns(ctx, searchReq)
 	require.NoError(t, err)
-	require.Len(t, searchResp.Runs, 0)
+	require.Empty(t, searchResp.Runs)
 	// ensure all logs are deleted
 	total, err := api.m.taskLogBackend.TaskLogsCount(task1.TaskID, []a.Filter{})
 	require.NoError(t, err)
-	require.Equal(t, 0, total)
+	require.Zero(t, total)
 }
 
 func TestDeleteRunsOverfillInput(t *testing.T) {
@@ -805,7 +844,7 @@ func TestDeleteRunsOverfillInput(t *testing.T) {
 	}
 	expectedError := fmt.Errorf("if filter is provided run id list must be empty")
 	_, err := api.DeleteRuns(ctx, req)
-	require.Equal(t, expectedError, err)
+	require.Equal(t, expectedError.Error(), err.Error())
 }
 
 func TestDeleteRunsNoInput(t *testing.T) {
@@ -817,7 +856,7 @@ func TestDeleteRunsNoInput(t *testing.T) {
 	}
 	resp, err := api.DeleteRuns(ctx, req)
 	require.NoError(t, err)
-	require.Len(t, resp.Results, 0)
+	require.Empty(t, resp.Results)
 }
 
 func TestArchiveUnarchiveIds(t *testing.T) {
@@ -844,7 +883,7 @@ func TestArchiveUnarchiveIds(t *testing.T) {
 
 	searchResp, err := api.SearchRuns(ctx, searchReq)
 	require.NoError(t, err)
-	require.Len(t, searchResp.Runs, 0)
+	require.Empty(t, searchResp.Runs)
 
 	// Unarchive runs
 	unarchReq := &apiv1.UnarchiveRunsRequest{
@@ -954,7 +993,7 @@ func TestArchiveAlreadyArchived(t *testing.T) {
 
 	searchResp, err := api.SearchRuns(ctx, searchReq)
 	require.NoError(t, err)
-	require.Len(t, searchResp.Runs, 0)
+	require.Empty(t, searchResp.Runs)
 
 	// Try to archive again
 	archRes, err = api.ArchiveRuns(ctx, archReq)
@@ -1028,7 +1067,7 @@ func TestArchiveUnarchiveOverfilledInput(t *testing.T) {
 		Filter:    ptrs.Ptr("nonempty"),
 	}
 	_, err := api.ArchiveRuns(ctx, archReq)
-	require.Equal(t, expectedError, err)
+	require.Equal(t, expectedError.Error(), err.Error())
 
 	// Unarchive runs
 	unarchReq := &apiv1.UnarchiveRunsRequest{
@@ -1037,7 +1076,7 @@ func TestArchiveUnarchiveOverfilledInput(t *testing.T) {
 		Filter:    ptrs.Ptr("nonempty"),
 	}
 	_, err = api.UnarchiveRuns(ctx, unarchReq)
-	require.Equal(t, expectedError, err)
+	require.Equal(t, expectedError.Error(), err.Error())
 }
 
 func TestArchiveUnarchiveNoInput(t *testing.T) {
@@ -1049,7 +1088,7 @@ func TestArchiveUnarchiveNoInput(t *testing.T) {
 	}
 	archRes, err := api.ArchiveRuns(ctx, archReq)
 	require.NoError(t, err)
-	require.Len(t, archRes.Results, 0)
+	require.Empty(t, archRes.Results)
 
 	// Unarchive runs
 	unarchReq := &apiv1.UnarchiveRunsRequest{
@@ -1058,5 +1097,5 @@ func TestArchiveUnarchiveNoInput(t *testing.T) {
 	}
 	unarchRes, err := api.UnarchiveRuns(ctx, unarchReq)
 	require.NoError(t, err)
-	require.Len(t, unarchRes.Results, 0)
+	require.Empty(t, unarchRes.Results)
 }

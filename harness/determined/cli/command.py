@@ -7,6 +7,7 @@ import termcolor
 from determined import cli
 from determined.cli import ntsc, render, task, workspace
 from determined.common import api
+from determined.common.api import bindings
 
 
 def run_command(args: argparse.Namespace) -> None:
@@ -21,22 +22,23 @@ def run_command(args: argparse.Namespace) -> None:
         context_path=args.context,
         includes=args.include,
         workspace_id=workspace_id,
-    )["command"]
+    )
+    cmd = bindings.v1LaunchCommandResponse.from_json(resp).command
 
     if args.detach:
-        print(resp["id"])
+        print(cmd.id)
         return
 
-    render.report_job_launched("command", resp["id"])
+    render.report_job_launched("command", cmd.id, cmd.description)
 
     try:
-        logs = api.task_logs(sess, resp["id"], follow=True)
+        logs = api.task_logs(sess, cmd.id, follow=True)
         api.pprint_logs(logs)
     finally:
         print(
             termcolor.colored(
                 "Task log stream ended. To reopen log stream, run: "
-                "det task logs -f {}".format(resp["id"]),
+                "det task logs -f {}".format(cmd.id),
                 "green",
             )
         )

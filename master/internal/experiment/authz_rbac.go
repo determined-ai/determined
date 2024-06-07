@@ -3,6 +3,7 @@ package experiment
 import (
 	"context"
 	"fmt"
+	"strconv"
 
 	log "github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
@@ -55,7 +56,7 @@ func addExpInfo(
 		{
 			PermissionTypes: []rbacv1.PermissionType{permission},
 			SubjectType:     "experiment",
-			SubjectIDs:      []string{fmt.Sprint(e.ID)},
+			SubjectIDs:      []string{strconv.Itoa(e.ID)},
 		},
 	}
 }
@@ -220,12 +221,11 @@ func (a *ExperimentAuthZRBAC) FilterExperimentLabelsQuery(
 			if permission.ID == int(
 				rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA) {
 				for _, assignment := range roleAssignments {
-					if assignment.Scope.WorkspaceID.Valid {
-						workspaces = append(workspaces, assignment.Scope.WorkspaceID.Int32)
-					} else {
+					if !assignment.Scope.WorkspaceID.Valid {
 						// if permission is global, return without filtering
 						return query, nil
 					}
+					workspaces = append(workspaces, assignment.Scope.WorkspaceID.Int32)
 				}
 			}
 		}

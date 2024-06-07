@@ -166,7 +166,7 @@ func TestDeleteExpiredTaskLogs(t *testing.T) {
 	for _, taskID := range taskIDs {
 		logCount, err := api.m.db.TaskLogsCount(taskID, nil)
 		require.NoError(t, err)
-		require.Equal(t, logCount, 2)
+		require.Equal(t, 2, logCount)
 	}
 
 	// Move time database time 30 days in the future.
@@ -207,7 +207,7 @@ func TestDeleteExpiredTaskLogs(t *testing.T) {
 	for _, taskID := range taskIDs1 {
 		logCount, err := api.m.db.TaskLogsCount(taskID, nil)
 		require.NoError(t, err)
-		require.Equal(t, 0, logCount)
+		require.Zero(t, logCount)
 	}
 	// Ensure that experiment2 logs are not deleted.
 	for _, taskID := range taskIDs2 {
@@ -240,7 +240,7 @@ func TestDeleteExpiredTaskLogs(t *testing.T) {
 	for _, taskID := range taskIDs2 {
 		logCount, err := api.m.db.TaskLogsCount(taskID, nil)
 		require.NoError(t, err)
-		require.Equal(t, 0, logCount)
+		require.Zero(t, logCount)
 	}
 	// Ensure that experiment3 logs are not deleted.
 	for _, taskID := range taskIDs3 {
@@ -336,7 +336,7 @@ func TestScheduleRetentionNoConfig(t *testing.T) {
 	for _, taskID := range taskIDs {
 		logCount, err := api.m.db.TaskLogsCount(taskID, nil)
 		require.NoError(t, err)
-		require.Equal(t, logCount, 2)
+		require.Equal(t, 2, logCount)
 	}
 
 	// Advance time to midnight.
@@ -380,13 +380,13 @@ func TestScheduleRetentionNoConfig(t *testing.T) {
 	// Verify that logs are deleted.
 	count, err = countTaskLogs(api.m.db, taskIDs)
 	require.NoError(t, err)
-	require.Equal(t, 0, count)
+	require.Zero(t, count)
 
 	// Ensure that experiment1 logs are deleted.
 	for _, taskID := range taskIDs {
 		logCount, err := api.m.db.TaskLogsCount(taskID, nil)
 		require.NoError(t, err)
-		require.Equal(t, 0, logCount)
+		require.Zero(t, logCount)
 	}
 }
 
@@ -433,7 +433,7 @@ func TestScheduleRetention100days(t *testing.T) {
 	for _, taskID := range taskIDs {
 		logCount, err := api.m.db.TaskLogsCount(taskID, nil)
 		require.NoError(t, err)
-		require.Equal(t, logCount, 2)
+		require.Equal(t, 2, logCount)
 	}
 
 	// Advance time to midnight.
@@ -484,13 +484,13 @@ func TestScheduleRetention100days(t *testing.T) {
 	// Verify that logs are deleted.
 	count, err = countTaskLogs(api.m.db, taskIDs)
 	require.NoError(t, err)
-	require.Equal(t, 0, count)
+	require.Zero(t, count)
 
 	// Ensure that experiment logs are deleted.
 	for _, taskID := range taskIDs {
 		logCount, err := api.m.db.TaskLogsCount(taskID, nil)
 		require.NoError(t, err)
-		require.Equal(t, 0, logCount)
+		require.Zero(t, logCount)
 	}
 }
 
@@ -537,7 +537,7 @@ func TestScheduleRetentionNeverExpire(t *testing.T) {
 	for _, taskID := range taskIDs {
 		logCount, err := api.m.db.TaskLogsCount(taskID, nil)
 		require.NoError(t, err)
-		require.Equal(t, logCount, 2)
+		require.Equal(t, 2, logCount)
 	}
 
 	// Advance time to midnight.

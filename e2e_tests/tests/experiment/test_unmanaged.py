@@ -18,6 +18,8 @@ def _run_unmanaged_script(cmd: List, env_to_add: Optional[dict] = None) -> None:
     master_url = conf.make_master_url()
     env = os.environ.copy()
     env["DET_MASTER"] = master_url
+    env["DET_USER"] = "determined"
+    env["DET_PASS"] = conf.USER_PASSWORD
 
     if env_to_add is not None:
         env.update(env_to_add)

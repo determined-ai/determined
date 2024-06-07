@@ -11,23 +11,25 @@ import (
 	"github.com/sirupsen/logrus"
 	"gotest.tools/assert"
 
+	batchV1 "k8s.io/api/batch/v1"
 	k8sV1 "k8s.io/api/core/v1"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	typedBatchV1 "k8s.io/client-go/kubernetes/typed/batch/v1"
 	typedV1 "k8s.io/client-go/kubernetes/typed/core/v1"
 )
 
-type mockPod struct {
+type mockJob struct {
 	requestQueue *requestQueue
 	name         string
 	syslog       *logrus.Entry
 }
 
-func startMockPod(requestQueue *requestQueue) *mockPod {
-	m := &mockPod{
+func startMockJob(requestQueue *requestQueue) *mockJob {
+	m := &mockJob{
 		requestQueue: requestQueue,
 		name:         petName.Generate(3, "-"),
 	}
-	m.syslog = logrus.New().WithField("component", "kubernetesrm-mock-pod").WithField("name", m.name)
+	m.syslog = logrus.WithField("component", "kubernetesrm-mock-pod").WithField("name", m.name)
 	m.create()
 	return m
 }
@@ -52,38 +54,8 @@ func runDefaultErrorHandler(ctx context.Context, failures <-chan resourcesReques
 	}
 }
 
-func consumeResourceRequestFailures(
-	ctx context.Context,
-	failures <-chan resourcesRequestFailure,
-	ref *pod,
-) {
-	for {
-		select {
-		case failure := <-failures:
-			switch e := failure.(type) {
-			case resourceCreationFailed:
-				logrus.Errorf("defaultErrorHandler resource creation failed: %v", e)
-				ref.receiveResourceCreationFailed(e)
-				ref.finalize()
-			case resourceDeletionFailed:
-				logrus.Errorf("defaultErrorHandler resource deletion failed: %v", e)
-				ref.receiveResourceDeletionFailed(e)
-				ref.finalize()
-			case resourceCreationCancelled:
-				logrus.Infof("defaultErrorHandler resource deletion failed: %v", e)
-				ref.receiveResourceCreationCancelled()
-				ref.finalize()
-			default:
-				panic(fmt.Sprintf("unexpected error %T", e))
-			}
-		case <-ctx.Done():
-			return
-		}
-	}
-}
-
-func (m *mockPod) create() {
-	podSpec := k8sV1.Pod{ObjectMeta: metaV1.ObjectMeta{
+func (m *mockJob) create() {
+	jobSpec := batchV1.Job{ObjectMeta: metaV1.ObjectMeta{
 		Name:      m.name,
 		Namespace: "default",
 	}}
@@ -91,20 +63,20 @@ func (m *mockPod) create() {
 		Name:      m.name,
 		Namespace: "default",
 	}}
-	m.requestQueue.createKubernetesResources(&podSpec, &cmSpec)
+	m.requestQueue.createKubernetesResources(&jobSpec, &cmSpec)
 }
 
-func (m *mockPod) delete() {
-	m.requestQueue.deleteKubernetesResources("default", m.name, m.name)
+func (m *mockJob) delete() {
+	m.requestQueue.deleteKubernetesResources("default", m.name, m.name, "")
 }
 
-func getNumberOfActivePods(podInterface typedV1.PodInterface) int {
-	podList, err := podInterface.List(context.TODO(), metaV1.ListOptions{})
+func getNumberOfActiveJobs(jobInterface typedBatchV1.JobInterface) int {
+	jobList, err := jobInterface.List(context.TODO(), metaV1.ListOptions{})
 	if err != nil {
 		panic(err)
 	}
 
-	return len(podList.Items)
+	return len(jobList.Items)
 }
 
 func requestQueueIsDone(r *requestQueue) bool {
@@ -125,18 +97,20 @@ func waitForPendingRequestToFinish(k8RequestQueue *requestQueue) {
 	time.Sleep(time.Second)
 }
 
-func deleteAll(pods []*mockPod) {
+func deleteAll(pods []*mockJob) {
 	for _, p := range pods {
 		p.delete()
 	}
 }
 
 func TestRequestQueueCreatingManyPod(t *testing.T) {
+	jobInterface := &mockJobInterface{jobs: make(map[string]*batchV1.Job)}
 	podInterface := &mockPodInterface{pods: make(map[string]*k8sV1.Pod)}
 	configMapInterface := &mockConfigMapInterface{configMaps: make(map[string]*k8sV1.ConfigMap)}
 
 	failures := make(chan resourcesRequestFailure, 64)
 	k8sRequestQueue := startRequestQueue(
+		map[string]typedBatchV1.JobInterface{"default": jobInterface},
 		map[string]typedV1.PodInterface{"default": podInterface},
 		map[string]typedV1.ConfigMapInterface{"default": configMapInterface},
 		failures,
@@ -148,19 +122,21 @@ func TestRequestQueueCreatingManyPod(t *testing.T) {
 
 	numPods := 15
 	for i := 0; i < numPods; i++ {
-		startMockPod(k8sRequestQueue)
+		startMockJob(k8sRequestQueue)
 	}
 
 	waitForPendingRequestToFinish(k8sRequestQueue)
-	assert.Equal(t, getNumberOfActivePods(podInterface), numPods)
+	assert.Equal(t, getNumberOfActiveJobs(jobInterface), numPods)
 }
 
 func TestRequestQueueCreatingAndDeletingManyPod(t *testing.T) {
+	jobInterface := &mockJobInterface{jobs: make(map[string]*batchV1.Job)}
 	podInterface := &mockPodInterface{pods: make(map[string]*k8sV1.Pod)}
 	configMapInterface := &mockConfigMapInterface{configMaps: make(map[string]*k8sV1.ConfigMap)}
 
 	failures := make(chan resourcesRequestFailure, 64)
 	k8sRequestQueue := startRequestQueue(
+		map[string]typedBatchV1.JobInterface{"default": jobInterface},
 		map[string]typedV1.PodInterface{"default": podInterface},
 		map[string]typedV1.ConfigMapInterface{"default": configMapInterface},
 		failures,
@@ -171,22 +147,24 @@ func TestRequestQueueCreatingAndDeletingManyPod(t *testing.T) {
 	go runDefaultErrorHandler(ctx, failures)
 
 	numPods := 15
-	pods := make([]*mockPod, 0)
+	pods := make([]*mockJob, 0)
 	for i := 0; i < numPods; i++ {
-		pods = append(pods, startMockPod(k8sRequestQueue))
+		pods = append(pods, startMockJob(k8sRequestQueue))
 	}
 	deleteAll(pods)
 
 	waitForPendingRequestToFinish(k8sRequestQueue)
-	assert.Equal(t, getNumberOfActivePods(podInterface), 0)
+	assert.Equal(t, getNumberOfActiveJobs(jobInterface), 0)
 }
 
 func TestRequestQueueCreatingThenDeletingManyPods(t *testing.T) {
+	jobInterface := &mockJobInterface{jobs: make(map[string]*batchV1.Job)}
 	podInterface := &mockPodInterface{pods: make(map[string]*k8sV1.Pod)}
 	configMapInterface := &mockConfigMapInterface{configMaps: make(map[string]*k8sV1.ConfigMap)}
 
 	failures := make(chan resourcesRequestFailure, 64)
 	k8sRequestQueue := startRequestQueue(
+		map[string]typedBatchV1.JobInterface{"default": jobInterface},
 		map[string]typedV1.PodInterface{"default": podInterface},
 		map[string]typedV1.ConfigMapInterface{"default": configMapInterface},
 		failures,
@@ -197,29 +175,31 @@ func TestRequestQueueCreatingThenDeletingManyPods(t *testing.T) {
 	go runDefaultErrorHandler(ctx, failures)
 
 	numPods := 15
-	pods := make([]*mockPod, 0)
+	pods := make([]*mockJob, 0)
 	for i := 0; i < numPods; i++ {
-		pods = append(pods, startMockPod(k8sRequestQueue))
+		pods = append(pods, startMockJob(k8sRequestQueue))
 	}
 
 	waitForPendingRequestToFinish(k8sRequestQueue)
-	assert.Equal(t, getNumberOfActivePods(podInterface), numPods)
+	assert.Equal(t, getNumberOfActiveJobs(jobInterface), numPods)
 
 	deleteAll(pods)
 
 	waitForPendingRequestToFinish(k8sRequestQueue)
-	assert.Equal(t, getNumberOfActivePods(podInterface), 0)
+	assert.Equal(t, getNumberOfActiveJobs(jobInterface), 0)
 }
 
 func TestRequestQueueCreatingAndDeletingManyPodWithDelay(t *testing.T) {
-	podInterface := &mockPodInterface{
-		pods:             make(map[string]*k8sV1.Pod),
+	jobInterface := &mockJobInterface{
+		jobs:             make(map[string]*batchV1.Job),
 		operationalDelay: time.Millisecond * 500,
 	}
+	podInterface := &mockPodInterface{pods: make(map[string]*k8sV1.Pod), operationalDelay: time.Millisecond * 500}
 	configMapInterface := &mockConfigMapInterface{configMaps: make(map[string]*k8sV1.ConfigMap)}
 
 	failures := make(chan resourcesRequestFailure, 64)
 	k8sRequestQueue := startRequestQueue(
+		map[string]typedBatchV1.JobInterface{"default": jobInterface},
 		map[string]typedV1.PodInterface{"default": podInterface},
 		map[string]typedV1.ConfigMapInterface{"default": configMapInterface},
 		failures,
@@ -230,32 +210,34 @@ func TestRequestQueueCreatingAndDeletingManyPodWithDelay(t *testing.T) {
 	go runDefaultErrorHandler(ctx, failures)
 
 	numPods := 15
-	pods := make([]*mockPod, 0)
+	pods := make([]*mockJob, 0)
 	for i := 0; i < numPods; i++ {
-		pods = append(pods, startMockPod(k8sRequestQueue))
+		pods = append(pods, startMockJob(k8sRequestQueue))
 	}
 	deleteAll(pods)
 
 	waitForPendingRequestToFinish(k8sRequestQueue)
-	assert.Equal(t, getNumberOfActivePods(podInterface), 0)
+	assert.Equal(t, getNumberOfActiveJobs(jobInterface), 0)
 }
 
 func TestRequestQueueCreationCancelled(t *testing.T) {
-	podInterface := &mockPodInterface{
-		pods:             make(map[string]*k8sV1.Pod),
+	jobInterface := &mockJobInterface{
+		jobs:             make(map[string]*batchV1.Job),
 		operationalDelay: time.Millisecond * 500,
 	}
+	podInterface := &mockPodInterface{pods: make(map[string]*k8sV1.Pod), operationalDelay: time.Millisecond * 500}
 	configMapInterface := &mockConfigMapInterface{configMaps: make(map[string]*k8sV1.ConfigMap)}
 
 	failures := make(chan resourcesRequestFailure, 64)
 	k8sRequestQueue := startRequestQueue(
+		map[string]typedBatchV1.JobInterface{"default": jobInterface},
 		map[string]typedV1.PodInterface{"default": podInterface},
 		map[string]typedV1.ConfigMapInterface{"default": configMapInterface},
 		failures,
 	)
 
 	for i := 0; i < numKubernetesWorkers; i++ {
-		startMockPod(k8sRequestQueue)
+		startMockJob(k8sRequestQueue)
 	}
 	time.Sleep(time.Millisecond * 100)
 
@@ -275,7 +257,7 @@ func TestRequestQueueCreationCancelled(t *testing.T) {
 		}
 	}()
 
-	pod := startMockPod(k8sRequestQueue)
+	pod := startMockJob(k8sRequestQueue)
 	assert.Equal(t, createCancelled, false)
 	pod.delete()
 	wg.Wait()
@@ -283,11 +265,13 @@ func TestRequestQueueCreationCancelled(t *testing.T) {
 }
 
 func TestRequestQueueCreationFailed(t *testing.T) {
+	jobInterface := &mockJobInterface{jobs: make(map[string]*batchV1.Job)}
 	podInterface := &mockPodInterface{pods: make(map[string]*k8sV1.Pod)}
 	configMapInterface := &mockConfigMapInterface{configMaps: make(map[string]*k8sV1.ConfigMap)}
 
 	failures := make(chan resourcesRequestFailure, 64)
 	k8sRequestQueue := startRequestQueue(
+		map[string]typedBatchV1.JobInterface{"default": jobInterface},
 		map[string]typedV1.PodInterface{"default": podInterface},
 		map[string]typedV1.ConfigMapInterface{"default": configMapInterface},
 		failures,
@@ -309,7 +293,7 @@ func TestRequestQueueCreationFailed(t *testing.T) {
 		}
 	}()
 
-	pod := startMockPod(k8sRequestQueue)
+	pod := startMockJob(k8sRequestQueue)
 	waitForPendingRequestToFinish(k8sRequestQueue)
 	assert.Equal(t, createFailed, false)
 
@@ -319,11 +303,13 @@ func TestRequestQueueCreationFailed(t *testing.T) {
 }
 
 func TestRequestQueueDeletionFailed(t *testing.T) {
+	jobInterface := &mockJobInterface{jobs: make(map[string]*batchV1.Job)}
 	podInterface := &mockPodInterface{pods: make(map[string]*k8sV1.Pod)}
 	configMapInterface := &mockConfigMapInterface{configMaps: make(map[string]*k8sV1.ConfigMap)}
 
 	failures := make(chan resourcesRequestFailure, 64)
 	k8sRequestQueue := startRequestQueue(
+		map[string]typedBatchV1.JobInterface{"default": jobInterface},
 		map[string]typedV1.PodInterface{"default": podInterface},
 		map[string]typedV1.ConfigMapInterface{"default": configMapInterface},
 		failures,
@@ -345,7 +331,7 @@ func TestRequestQueueDeletionFailed(t *testing.T) {
 		}
 	}()
 
-	pod := startMockPod(k8sRequestQueue)
+	pod := startMockJob(k8sRequestQueue)
 	waitForPendingRequestToFinish(k8sRequestQueue)
 	assert.Equal(t, deleteFailed, false)
 

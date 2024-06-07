@@ -23,9 +23,10 @@ Determined master and a Postgres database in the Kubernetes cluster. Once the ma
 running, you can launch :ref:`experiments <experiments>`, :ref:`notebooks <notebooks>`,
 :ref:`TensorBoards <tensorboards>`, :ref:`commands <commands-and-shells>`, and :ref:`shells
 <commands-and-shells>`. When new workloads are submitted to the Determined master, the master
-launches pods and configMaps on the Kubernetes cluster to execute those workloads. Users of
+launches jobs and config maps on the Kubernetes cluster to execute those workloads. Users of
 Determined shouldn't need to interact with Kubernetes directly after installation, as Determined
-handles all the necessary interaction with the Kubernetes cluster.
+handles all the necessary interaction with the Kubernetes cluster. Kubernetes creates and cleans up
+pods for all jobs that Determined may request.
 
 It is also important to note that when running Determined on Kubernetes, a higher priority value
 means a higher priority (e.g. a priority 50 task will run before a priority 40 task). This is
@@ -137,20 +138,6 @@ for diagnosing any issues that arise during installation.
 
    # Get logs for the pod running the Determined master.
    kubectl logs <determined-master-pod-name>
-
-Get All Running Task Pods
-=========================
-
-These ``kubectl`` commands list and delete pods which are running Determined tasks:
-
-.. code:: bash
-
-   # Get all pods that are running Determined tasks.
-   kubectl get pods -l=determined
-
-   # Delete all Determined task pods. Users should never have to run this,
-   # unless they are removing a deployment of Determined.
-   kubectl get pods --no-headers=true -l=determined | awk '{print $1}' | xargs kubectl delete pod
 
 .. toctree::
    :maxdepth: 1

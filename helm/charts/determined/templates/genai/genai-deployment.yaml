@@ -64,6 +64,8 @@ spec:
           - name: K8S_SHARED_PVC_NAME
             value: {{ include "genai.PVCName" . }}
           {{- end }}
+          - name: SHARED_FS_ROOT_PATH
+            value: {{ include "genai.sharedFSMountPath" . }}
           - name: RESOURCE_POOL_EXTRA_METADATA_PATH
             value: /run/determined/workdir/rp_config/resource_pool_metadata.yaml
           - name: MESSAGE_QUEUE_HOST
@@ -77,10 +79,10 @@ spec:
         volumeMounts:
           {{- if .Values.genai.sharedFSHostPath }}
           - name: genai-shared-host-path
-            mountPath: /run/determined/workdir/shared_fs
+            mountPath: {{ include "genai.sharedFSMountPath" . }}
           {{- else }}
           - name: genai-pvc-storage
-            mountPath: /run/determined/workdir/shared_fs
+            mountPath: {{ include "genai.sharedFSMountPath" . }}
             readOnly: false
           {{- end }}
           - name: genai-resource-pool-metadata

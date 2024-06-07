@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"log"
+	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -13,7 +14,7 @@ import (
 	echoV4 "github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
-	launcher "github.hpe.com/hpe/hpc-ard-launcher-go/launcher"
+	"github.hpe.com/hpe/hpc-ard-launcher-go/launcher"
 	"golang.org/x/exp/maps"
 	"google.golang.org/protobuf/proto"
 
@@ -603,7 +604,7 @@ func (m *DispatcherResourceManager) DisableAgent(msg *apiv1.DisableAgentRequest,
 	defer m.mu.Unlock()
 
 	if m.wlmType == pbsSchedulerType {
-		return nil, errors.New("disable agent is not supported for PBS")
+		return nil, fmt.Errorf("disable agent is not supported for PBS")
 	}
 
 	agent, err := m.findAgent(msg.AgentId)
@@ -624,7 +625,7 @@ func (m *DispatcherResourceManager) EnableAgent(
 	msg *apiv1.EnableAgentRequest,
 ) (*apiv1.EnableAgentResponse, error) {
 	if m.wlmType == pbsSchedulerType {
-		return nil, errors.New("enable agent is not supported for PBS")
+		return nil, fmt.Errorf("enable agent is not supported for PBS")
 	}
 
 	agent, err := m.findAgent(msg.AgentId)
@@ -1015,7 +1016,7 @@ func addSlotToAgent(
 	}
 	slotRef := fmt.Sprintf("/agents/%s/slots/%d", node.Name, slotID)
 	slot := agentv1.Slot{
-		Id:       fmt.Sprintf("%d", slotID),
+		Id:       strconv.Itoa(slotID),
 		Device:   &device,
 		Enabled:  true,
 		Draining: false,
@@ -1038,7 +1039,7 @@ func (m *DispatcherResourceManager) StartDispatcherResources(msg StartDispatcher
 	// Perform any necessary actions on m.reqList before going async
 	req, ok := m.reqList.TaskByID(msg.AllocationID)
 	if !ok {
-		m.sendResourceStateChangedErrorResponse(errors.New("no such task"), msg,
+		m.sendResourceStateChangedErrorResponse(fmt.Errorf("no such task"), msg,
 			"task not found in the task list")
 
 		// no request to process, so bail
@@ -1302,12 +1303,11 @@ func (m *DispatcherResourceManager) waitForDispatchTerminalState(
 	log := m.syslog.WithField("dispatch-id", dispatchID)
 
 	for i := 0; i < 20; i++ {
-		if m.jobWatcher.isDispatchInProgress(impersonatedUser, dispatchID) {
-			log.Debugf("dispatch still active, waiting for termination")
-			time.Sleep(6 * time.Second)
-		} else {
+		if !m.jobWatcher.isDispatchInProgress(impersonatedUser, dispatchID) {
 			return
 		}
+		log.Debugf("dispatch still active, waiting for termination")
+		time.Sleep(6 * time.Second)
 	}
 	log.Warn("dispatch still active, but wait time exceeded, continuing...")
 }
@@ -1773,7 +1773,7 @@ func (m *DispatcherResourceManager) sendManifestToDispatcher(
 		if response != nil {
 			// If we have a real error body, return the details message
 			if details := extractDetailsFromResponse(response, err); len(details) > 0 {
-				return "", errors.New(details)
+				return "", fmt.Errorf(details)
 			}
 			return "", errors.Wrapf(err, m.apiClient.handleLauncherError(
 				response, "Job launch failed", err))

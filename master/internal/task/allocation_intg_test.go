@@ -38,7 +38,7 @@ func (m mockTaskSpecifier) ToTaskSpec() (t tasks.TaskSpec) {
 func TestAllocation(t *testing.T) {
 	cases := []struct {
 		name  string
-		err   *sproto.ResourcesRestoreError
+		err   *sproto.ResourcesFailedError
 		acked bool
 		exit  *AllocationExited
 	}{
@@ -55,20 +55,21 @@ func TestAllocation(t *testing.T) {
 		{
 			name:  "container failed",
 			acked: false,
-			err:   &sproto.ResourcesRestoreError{FailureType: sproto.ResourcesFailed},
-			exit:  &AllocationExited{Err: sproto.ResourcesRestoreError{FailureType: sproto.ResourcesFailed}},
+			err:   &sproto.ResourcesFailedError{FailureType: sproto.ResourcesFailed},
+			exit:  &AllocationExited{Err: sproto.ResourcesFailedError{FailureType: sproto.ResourcesFailed}},
 		},
 		{
 			name:  "container failed, but acked preemption",
 			acked: true,
-			err:   &sproto.ResourcesRestoreError{FailureType: sproto.ResourcesFailed},
+			err:   &sproto.ResourcesFailedError{FailureType: sproto.ResourcesFailed},
 			exit:  &AllocationExited{},
 		},
 	}
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			rm, _, a := setup(t)
+			rm, _, closeDB, a := setup(t)
+			defer closeDB()
 
 			// Pre-allocated stage.
 			mockRsvn := func(rID sproto.ResourcesID, agentID string) sproto.Resources {
@@ -173,7 +174,7 @@ func TestAllocation(t *testing.T) {
 }
 
 func setup(t *testing.T) (
-	*mocks.ResourceManager, *db.PgDB, *allocation,
+	*mocks.ResourceManager, *db.PgDB, func(), *allocation,
 ) {
 	require.NoError(t, etc.SetRootPath("../static/srv"))
 	portregistry.InitPortRegistry(nil)
@@ -182,7 +183,7 @@ func setup(t *testing.T) (
 	var rm mocks.ResourceManager
 
 	// real db.
-	pgDB := db.MustSetupTestPostgres(t)
+	pgDB, closeDB := db.MustSetupTestPostgres(t)
 
 	// instantiate the allocation
 	task := db.RequireMockTask(t, pgDB, nil)
@@ -209,7 +210,7 @@ func setup(t *testing.T) (
 	require.True(t, rm.AssertExpectations(t))
 
 	tasklogger.SetDefaultLogger(tasklogger.New(&nullWriter{}))
-	return &rm, pgDB, a
+	return &rm, pgDB, closeDB, a
 }
 
 var tickInterval = 10 * time.Millisecond

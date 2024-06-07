@@ -88,7 +88,11 @@ func newEventInformer(
 		"namespace": namespace,
 	})
 	for i := range events.Items {
-		syslog.Debugf("informer added event: %s", events.Items[i].Name)
+		syslog.Debugf(
+			"informer added %s event: %s",
+			events.Items[i].InvolvedObject.Kind,
+			events.Items[i].Name,
+		)
 		cb(watch.Event{Object: &events.Items[i]})
 	}
 

@@ -3,10 +3,9 @@
 package internal
 
 import (
+	"fmt"
 	"testing"
 	"time"
-
-	"github.com/pkg/errors"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
@@ -24,7 +23,7 @@ import (
 )
 
 func TestRunCheckpointGCTask(t *testing.T) {
-	pgDB := db.MustResolveTestPostgres(t)
+	pgDB, _ := db.MustResolveTestPostgres(t)
 	db.MustMigrateTestPostgres(t, pgDB, "file://../static/migrations")
 	user := db.RequireMockUser(t, pgDB)
 
@@ -73,7 +72,7 @@ func TestRunCheckpointGCTask(t *testing.T) {
 						"StartAllocation",
 						mock.Anything,
 						mock.MatchedBy(func(ar sproto.AllocateRequest) bool {
-							return ar.IsUserVisible == false &&
+							return !ar.IsUserVisible &&
 								ar.ResourcePool == "default" &&
 								ar.SlotsNeeded == 0
 						}),
@@ -118,7 +117,7 @@ func TestRunCheckpointGCTask(t *testing.T) {
 					var r mocks.ResourceManager
 
 					r.On("ResolveResourcePool", mock.Anything, mock.Anything, mock.Anything, mock.Anything).
-						Return(rm.ResourcePoolName(""), errors.New("rm is down or something"))
+						Return(rm.ResourcePoolName(""), fmt.Errorf("rm is down or something"))
 
 					return &r
 				}(),

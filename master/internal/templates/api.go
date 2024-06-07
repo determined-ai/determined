@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	"strconv"
 
 	"github.com/pkg/errors"
 	"github.com/uptrace/bun"
@@ -48,8 +49,8 @@ func (a *TemplateAPIServer) GetTemplates(
 	if req.Name != "" {
 		q.Where("name ILIKE  ('%%' || ? || '%%')", req.Name)
 	}
-	if req.WorkspaceId != 0 {
-		q.Where("workspace_id = ?", req.WorkspaceId)
+	if req.WorkspaceIds != nil {
+		q.Where("workspace_id IN (?)", bun.In(req.WorkspaceIds))
 	}
 	q.Order(fmt.Sprintf("name %s", grpcutil.OrderBySQL[req.OrderBy])) // Only name is supported.
 	q, pagination, err := bunutils.Paginate(ctx, q, int(req.Offset), int(req.Limit))
@@ -206,6 +207,41 @@ func (a *TemplateAPIServer) PostTemplate(
 	return &apiv1.PostTemplateResponse{Template: &inserted}, nil
 }
 
+// PatchTemplateName rename a template.
+func (a *TemplateAPIServer) PatchTemplateName(
+	ctx context.Context,
+	req *apiv1.PatchTemplateNameRequest,
+) (*apiv1.PatchTemplateNameResponse, error) {
+	user, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	tpl, err := TemplateByName(ctx, req.OldName)
+	if err != nil {
+		return nil, err
+	}
+	permErr, err := AuthZProvider.Get().CanUpdateTemplate(
+		ctx, user, model.AccessScopeID(tpl.WorkspaceID),
+	)
+	if err != nil {
+		return nil, fmt.Errorf("failed to check for permissions: %w", err)
+	}
+	if permErr != nil {
+		return nil, permErr
+	}
+
+	var updated templatev1.Template
+	_, err = db.Bun().NewUpdate().Model(&updated).
+		Where("name = ?", req.OldName).
+		Set("name = ?", req.NewName).
+		Returning("*").Exec(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to update template name: %w", err)
+	}
+	return &apiv1.PatchTemplateNameResponse{Template: &updated}, nil
+}
+
 // PatchTemplateConfig does a full update of the requested template's config.
 func (a *TemplateAPIServer) PatchTemplateConfig(
 	ctx context.Context,
@@ -306,7 +342,7 @@ func canCreateTemplateWorkspace(ctx context.Context, user *model.User, workspace
 	case err != nil:
 		return fmt.Errorf("failed to check workspace %d: %w", workspaceID, err)
 	case !exists:
-		return api.NotFoundErrs("workspace", fmt.Sprint(workspaceID), true)
+		return api.NotFoundErrs("workspace", strconv.Itoa(int(workspaceID)), true)
 	}
 
 	permErr, err := AuthZProvider.Get().CanCreateTemplate(

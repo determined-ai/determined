@@ -134,23 +134,23 @@ func TestAddNodeDisabledAffinityToPodSpec(t *testing.T) {
 		MatchExpressions, nodeSelectorTerm)
 
 	// Test idempotency.
-	copy := p.DeepCopy()
+	copyPod := p.DeepCopy()
 	addNodeDisabledAffinityToPodSpec(p, "cluster-id")
 	addNodeDisabledAffinityToPodSpec(p, "cluster-id")
-	require.Equal(t, copy, p)
+	require.Equal(t, copyPod, p)
 }
 
 func TestAddDisallowedNodesToPodSpec(t *testing.T) {
 	p := &k8sV1.Pod{}
 	addNodeDisabledAffinityToPodSpec(p, "cluster-id")
 
-	copy := p.DeepCopy()
+	copyPod := p.DeepCopy()
 
 	// No block list adds anything.
 	addDisallowedNodesToPodSpec(&sproto.AllocateRequest{
 		BlockedNodes: nil,
 	}, p)
-	require.Equal(t, copy, p)
+	require.Equal(t, copyPod, p)
 
 	addDisallowedNodesToPodSpec(&sproto.AllocateRequest{
 		BlockedNodes: []string{"a1", "a2"},
@@ -188,7 +188,7 @@ func TestLaterEnvironmentVariablesGetSet(t *testing.T) {
 		},
 	}
 
-	p := pod{}
+	p := job{}
 	actual, err := p.configureEnvVars(make(map[string]string), env, device.CPU)
 	require.NoError(t, err)
 	require.NotContains(t, actual, dontBe, "earlier variable set")
@@ -213,7 +213,7 @@ func TestAllPrintableCharactersInEnv(t *testing.T) {
 		},
 	}
 
-	p := pod{}
+	p := job{}
 	actual, err := p.configureEnvVars(make(map[string]string), env, device.CPU)
 	require.NoError(t, err)
 	require.Contains(t, actual, k8sV1.EnvVar{Name: "test", Value: expectedValue})
@@ -221,10 +221,44 @@ func TestAllPrintableCharactersInEnv(t *testing.T) {
 	require.Contains(t, actual, k8sV1.EnvVar{Name: "func", Value: "f(x)=x"})
 }
 
+func TestValidatePodLabelValues(t *testing.T) {
+	tests := []struct {
+		name   string
+		input  string
+		output string
+	}{
+		{"valid all alpha", "simpleCharacters", "simpleCharacters"},
+		{"valid all alphanumeric", "simple4Characters", "simple4Characters"},
+		{"valid contains non-alphanumeric", "simple-Characters.With_Other", "simple-Characters.With_Other"},
+		{"invalid chars", "letters contain *@ other chars -=%", "letters_contain____other_chars"},
+		{"invalid leading chars", "-%4-simpleCharacters0", "4-simpleCharacters0"},
+		{"invalid trailing chars", "simple-Characters4%-.#", "simple-Characters4"},
+		{
+			"invalid too many chars", "simpleCharactersGoesOnForWayTooLong36384042444648505254565860-_AndThenSome",
+			"simpleCharactersGoesOnForWayTooLong36384042444648505254565860",
+		},
+		{"invalid email-style input", "name@domain.com", "name_domain.com"},
+		{"invalid chars only", "-.*$%#$...", ""},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.input, func(t *testing.T) {
+			testOutput, err := validatePodLabelValue(tt.input)
+			require.NoError(t, err)
+			require.Equal(t, tt.output, testOutput, tt.name+" failed")
+		})
+	}
+}
+
 func TestDeterminedLabels(t *testing.T) {
-	// fill out task spec
+	// Fill out task spec.
 	taskSpec := tasks.TaskSpec{
-		Owner:       createUser(),
+		Owner: &model.User{
+			ID:       1,
+			Username: "determined",
+			Active:   true,
+			Admin:    false,
+		},
 		Workspace:   "test-workspace",
 		TaskType:    model.TaskTypeCommand,
 		TaskID:      model.NewTaskID().String(),
@@ -235,16 +269,13 @@ func TestDeterminedLabels(t *testing.T) {
 		},
 	}
 
-	p := pod{
+	p := job{
 		req: &sproto.AllocateRequest{
 			ResourcePool: "test-rp",
 		},
-		submissionInfo: &podSubmissionInfo{
-			taskSpec: taskSpec,
-		},
 	}
 
-	// define expectations
+	// Define expectations.
 	expectedLabels := map[string]string{
 		determinedLabel:   taskSpec.AllocationID,
 		userLabel:         taskSpec.Owner.Username,
@@ -253,15 +284,18 @@ func TestDeterminedLabels(t *testing.T) {
 		taskTypeLabel:     string(taskSpec.TaskType),
 		taskIDLabel:       taskSpec.TaskID,
 		containerIDLabel:  taskSpec.ContainerID,
+		allocationIDLabel: taskSpec.AllocationID,
 	}
 	for k, v := range taskSpec.ExtraPodLabels {
 		expectedLabels[labelPrefix+k] = v
 	}
 
-	spec := p.configurePodSpec(make([]k8sV1.Volume, 1), k8sV1.Container{},
-		k8sV1.Container{}, make([]k8sV1.Container, 1), &k8sV1.Pod{}, "scheduler")
+	spec := p.configureJobSpec(
+		&taskSpec, make([]k8sV1.Volume, 1), k8sV1.Container{},
+		k8sV1.Container{}, make([]k8sV1.Container, 1), &k8sV1.Pod{}, "scheduler",
+	)
 
-	// confirm pod spec has required labels
+	// Confirm pod spec has required labels.
 	require.NotNil(t, spec)
 	require.Equal(t, expectedLabels, spec.ObjectMeta.Labels)
 }

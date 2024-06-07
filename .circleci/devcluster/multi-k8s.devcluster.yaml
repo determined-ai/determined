@@ -9,6 +9,8 @@ stages:
         - sh: cp ~/.kube/config /tmp/defaultrm-kubeconf && kubectl config use-context defaultrm --kubeconfig=/tmp/defaultrm-kubeconf
         - sh: cp ~/.kube/config /tmp/additionalrm-kubeconf && kubectl config use-context additionalrm --kubeconfig=/tmp/additionalrm-kubeconf
       config_file:
+        security:
+          initial_user_password: $INITIAL_USER_PASSWORD
         db:
           host: localhost
           port: 5432

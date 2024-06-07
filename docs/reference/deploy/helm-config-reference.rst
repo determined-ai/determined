@@ -192,6 +192,9 @@
    -  ``gpuPodSpec``: Sets the default pod spec for all GPU tasks. See :ref:`custom-pod-specs` for
       details.
 
+   -  ``checkpointGcPodSpec``: Sets the custom pod spec for Checkpoint GC defaults. See
+      :ref:`custom-pod-specs` for details.
+
    -  ``cpuImage``: Sets the default Docker image for all non-GPU tasks. If a Docker image is
       specified in the :ref:`experiment config <exp-environment-image>` this default is overriden.
       Defaults to: ``determinedai/pytorch-tensorflow-cpu-dev:8b3bea3``.
@@ -231,7 +234,7 @@
    any HTTP traffic. The default timeout is 300 (5 minutes).
 
 -  ``initialUserPassword``: Specifies a string containing the default password for the admin and
-   determined user accounts.
+   determined user accounts. (*Required*)
 
 -  ``defaultPassword``: (*Deprecated*) Specifies a string containing the default password for the
    admin and determined user accounts. Use ``initialUserPassword`` instead.

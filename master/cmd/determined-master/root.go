@@ -133,6 +133,9 @@ func mergeCustomSpecs(
 		if gpu, ok := conf["gpu_pod_spec"]; ok {
 			config["task_container_defaults"].(map[string]interface{})["gpu_pod_spec"] = gpu
 		}
+		if checkpointGcPodSpec, ok := conf["checkpoint_gc_pod_spec"]; ok {
+			config["task_container_defaults"].(map[string]interface{})["checkpoint_gc_pod_spec"] = checkpointGcPodSpec
+		}
 	}
 
 	return config
@@ -193,18 +196,21 @@ func applyBackwardsCompatibility(configMap map[string]interface{}) (map[string]i
 	vProvisioner, provisionerExisted := configMap["provisioner"]
 
 	// Ensure we use either the old schema or the new one.
-	if (rmExisted || rpsExisted) && (schedulerExisted || provisionerExisted) {
+	oldRMConfig := schedulerExisted || provisionerExisted
+	newRMConfig := rmExisted || rpsExisted
+	if newRMConfig && oldRMConfig {
 		return nil, errors.New(
 			"cannot use the old and the new configuration schema at the same time",
 		)
 	}
-	if rmExisted || rpsExisted {
+	if !oldRMConfig {
+		// Use configMap if RMs are not defined at all, or if they are defined using the new schema.
 		return configMap, nil
 	}
 
 	// If use the old schema, convert it to the new one.
 	newScheduler := map[string]interface{}{
-		"type":           "fair_share",
+		"type":           "priority",
 		"fitting_policy": "best",
 	}
 	newRM := map[string]interface{}{

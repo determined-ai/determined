@@ -13,9 +13,9 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/jmoiron/sqlx"
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/structpb"
-	"gotest.tools/assert"
 
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -31,7 +31,8 @@ import (
 func TestCheckpointMetadata(t *testing.T) {
 	ctx := context.Background()
 	require.NoError(t, etc.SetRootPath(RootFromDB))
-	db := MustResolveTestPostgres(t)
+	db, closeDB := MustResolveTestPostgres(t)
+	defer closeDB()
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 
 	tests := []struct {
@@ -124,7 +125,7 @@ func TestCheckpointMetadata(t *testing.T) {
 				require.NoError(t, conv.Error())
 				require.Equal(t, expected.State, conv.ToCheckpointState(actual.State))
 				if tt.hasValidation {
-					require.Equal(t, metricValue, *actual.Training.SearcherMetric)
+					require.InEpsilon(t, metricValue, *actual.Training.SearcherMetric, 0.01)
 					require.NotNil(t, actual.Training.ValidationMetrics.AvgMetrics)
 				} else {
 					require.Nil(t, actual.Training.SearcherMetric)
@@ -160,13 +161,14 @@ func TestMetricNames(t *testing.T) {
 	ctx := context.Background()
 
 	require.NoError(t, etc.SetRootPath(RootFromDB))
-	db := MustResolveTestPostgres(t)
+	db, closeDB := MustResolveTestPostgres(t)
+	defer closeDB()
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 
 	actualNames, err := db.MetricNames(ctx, []int{-1})
 	require.NoError(t, err)
-	require.Len(t, actualNames[model.TrainingMetricGroup], 0)
-	require.Len(t, actualNames[model.ValidationMetricGroup], 0)
+	require.Empty(t, actualNames[model.TrainingMetricGroup])
+	require.Empty(t, actualNames[model.ValidationMetricGroup])
 
 	user := RequireMockUser(t, db)
 
@@ -210,7 +212,8 @@ func TestExperimentByIDs(t *testing.T) {
 	ctx := context.Background()
 
 	require.NoError(t, etc.SetRootPath(RootFromDB))
-	db := MustResolveTestPostgres(t)
+	db, closeDB := MustResolveTestPostgres(t)
+	defer closeDB()
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 	user := RequireMockUser(t, db)
 
@@ -271,7 +274,8 @@ func TestTerminateExperimentInRestart(t *testing.T) {
 	ctx := context.Background()
 
 	require.NoError(t, etc.SetRootPath(RootFromDB))
-	db := MustResolveTestPostgres(t)
+	db, closeDB := MustResolveTestPostgres(t)
+	defer closeDB()
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 	user := RequireMockUser(t, db)
 
@@ -283,14 +287,14 @@ func TestTerminateExperimentInRestart(t *testing.T) {
 
 	actualExp, err := ExperimentByID(ctx, exp.ID)
 	require.NoError(t, err)
-	require.Equal(t, actualExp.State, model.ErrorState)
+	require.Equal(t, model.ErrorState, actualExp.State)
 	require.NotNil(t, actualExp.EndTime)
 	require.Nil(t, actualExp.Progress)
 
 	for _, trialID := range []int{trial0.ID, trial1.ID} {
 		actualTrial, err := TrialByID(ctx, trialID)
 		require.NoError(t, err)
-		require.Equal(t, actualTrial.State, model.ErrorState)
+		require.Equal(t, model.ErrorState, actualTrial.State)
 		require.NotNil(t, actualTrial.EndTime)
 	}
 }
@@ -299,19 +303,20 @@ func TestExperimentsTrialAndTaskIDs(t *testing.T) {
 	ctx := context.Background()
 
 	require.NoError(t, etc.SetRootPath(RootFromDB))
-	db := MustResolveTestPostgres(t)
+	db, closeDB := MustResolveTestPostgres(t)
+	defer closeDB()
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 	user := RequireMockUser(t, db)
 
 	tIDs, taskIDs, err := ExperimentsTrialAndTaskIDs(ctx, Bun(), nil)
 	require.NoError(t, err)
-	require.Len(t, tIDs, 0)
-	require.Len(t, taskIDs, 0)
+	require.Empty(t, tIDs)
+	require.Empty(t, taskIDs)
 
 	tIDs, taskIDs, err = ExperimentsTrialAndTaskIDs(ctx, Bun(), []int{-1})
 	require.NoError(t, err)
-	require.Len(t, tIDs, 0)
-	require.Len(t, taskIDs, 0)
+	require.Empty(t, tIDs)
+	require.Empty(t, taskIDs)
 
 	e0 := RequireMockExperiment(t, db, user)
 	e0Trial0, e0Task0 := RequireMockTrial(t, db, e0)
@@ -351,7 +356,8 @@ func TestExperimentBestSearcherValidation(t *testing.T) {
 	ctx := context.Background()
 
 	require.NoError(t, etc.SetRootPath(RootFromDB))
-	db := MustResolveTestPostgres(t)
+	db, closeDB := MustResolveTestPostgres(t)
+	defer closeDB()
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 	user := RequireMockUser(t, db)
 
@@ -370,7 +376,7 @@ func TestExperimentBestSearcherValidation(t *testing.T) {
 
 	val, err := ExperimentBestSearcherValidation(ctx, exp.ID)
 	require.NoError(t, err)
-	require.Equal(t, float32(-5.0), val)
+	require.InEpsilon(t, float32(-5.0), val, 0.01)
 
 	_, err = Bun().NewUpdate().Table("experiments").
 		Set("config = jsonb_set(config, '{searcher,smaller_is_better}', 'false'::jsonb)").
@@ -380,14 +386,15 @@ func TestExperimentBestSearcherValidation(t *testing.T) {
 
 	val, err = ExperimentBestSearcherValidation(ctx, exp.ID)
 	require.NoError(t, err)
-	require.Equal(t, float32(5.0), val)
+	require.InEpsilon(t, float32(5.0), val, 0.01)
 }
 
 func TestProjectHyperparameters(t *testing.T) {
 	ctx := context.Background()
 
 	require.NoError(t, etc.SetRootPath(RootFromDB))
-	db := MustResolveTestPostgres(t)
+	db, closeDB := MustResolveTestPostgres(t)
+	defer closeDB()
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 	user := RequireMockUser(t, db)
 
@@ -407,11 +414,11 @@ func TestProjectHyperparameters(t *testing.T) {
 
 	require.NoError(t,
 		RemoveProjectHyperparameters(ctx, nil, []int32{int32(exp0.ID), int32(exp1.ID)}))
-	require.Len(t, RequireGetProjectHParams(t, db, projectID), 0)
+	require.Empty(t, RequireGetProjectHParams(t, db, projectID))
 
 	require.NoError(t,
 		RemoveProjectHyperparameters(ctx, nil, []int32{int32(exp0.ID), int32(exp1.ID)}))
-	require.Len(t, RequireGetProjectHParams(t, db, projectID), 0)
+	require.Empty(t, RequireGetProjectHParams(t, db, projectID))
 
 	require.NoError(t,
 		AddProjectHyperparameters(ctx, nil, int32(projectID), []int32{int32(exp0.ID)}))
@@ -430,7 +437,7 @@ func TestProjectHyperparameters(t *testing.T) {
 
 	require.NoError(t,
 		RemoveProjectHyperparameters(ctx, nil, []int32{int32(exp1.ID)}))
-	require.ElementsMatch(t, []string{}, // TODO(!!!) this is a bug in the query.
+	require.ElementsMatch(t, []string{}, // TODO(nickb): This is a bug in the query.
 		RequireGetProjectHParams(t, db, projectID))
 }
 
@@ -438,7 +445,8 @@ func TestActiveLogPatternPolicies(t *testing.T) {
 	ctx := context.Background()
 	require.NoError(t, etc.SetRootPath(RootFromDB))
 
-	db := MustResolveTestPostgres(t)
+	db, closeDB := MustResolveTestPostgres(t)
+	defer closeDB()
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 
 	_, err := ActiveLogPolicies(ctx, -1)
@@ -449,7 +457,7 @@ func TestActiveLogPatternPolicies(t *testing.T) {
 
 	policies, err := ActiveLogPolicies(ctx, exp.ID)
 	require.NoError(t, err)
-	require.Len(t, policies, 0)
+	require.Empty(t, policies)
 
 	activeConfig, err := db.ActiveExperimentConfig(exp.ID)
 	require.NoError(t, err)
@@ -480,16 +488,17 @@ func TestActiveLogPatternPolicies(t *testing.T) {
 func TestGetNonTerminalExperimentCount(t *testing.T) {
 	ctx := context.Background()
 	require.NoError(t, etc.SetRootPath(RootFromDB))
-	db := MustResolveTestPostgres(t)
+	db, closeDB := MustResolveTestPostgres(t)
+	defer closeDB()
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 	user := RequireMockUser(t, db)
 
 	c, err := GetNonTerminalExperimentCount(ctx, nil)
 	require.NoError(t, err)
-	require.Equal(t, 0, c)
+	require.Zero(t, c)
 	c, err = GetNonTerminalExperimentCount(ctx, []int32{})
 	require.NoError(t, err)
-	require.Equal(t, 0, c)
+	require.Zero(t, c)
 
 	e0 := RequireMockExperimentParams(t, db, user, MockExperimentParams{
 		State: ptrs.Ptr(model.ActiveState),
@@ -503,7 +512,7 @@ func TestGetNonTerminalExperimentCount(t *testing.T) {
 	}, DefaultProjectID)
 	c, err = GetNonTerminalExperimentCount(ctx, []int32{int32(e1.ID)})
 	require.NoError(t, err)
-	require.Equal(t, 0, c)
+	require.Zero(t, c)
 
 	e2 := RequireMockExperimentParams(t, db, user, MockExperimentParams{
 		State: ptrs.Ptr(model.PausedState),
@@ -524,7 +533,8 @@ func TestGetNonTerminalExperimentCount(t *testing.T) {
 func TestMetricBatchesMilestones(t *testing.T) {
 	ctx := context.Background()
 	require.NoError(t, etc.SetRootPath(RootFromDB))
-	db := MustResolveTestPostgres(t)
+	db, closeDB := MustResolveTestPostgres(t)
+	defer closeDB()
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 	user := RequireMockUser(t, db)
 	exp := RequireMockExperiment(t, db, user)
@@ -541,27 +551,28 @@ func TestMetricBatchesMilestones(t *testing.T) {
 	batches, _, err := MetricBatches(exp.ID, "a", startTime, model.MetricGroup("inference"))
 	require.NoError(t, err)
 	require.Len(t, batches, 1)
-	require.Equal(t, batches[0], int32(1))
+	require.Equal(t, int32(1), batches[0])
 
 	batches, _, err = MetricBatches(exp.ID, "b", startTime, model.MetricGroup("inference"))
 	require.NoError(t, err)
 	require.Len(t, batches, 2, "should have 2 batches", batches, trial1, trial2)
-	require.Equal(t, batches[0], int32(1))
-	require.Equal(t, batches[1], int32(2))
+	require.Equal(t, int32(1), batches[0])
+	require.Equal(t, int32(2), batches[1])
 }
 
 func TestTopTrialsByMetric(t *testing.T) {
 	ctx := context.Background()
 
 	require.NoError(t, etc.SetRootPath(RootFromDB))
-	db := MustResolveTestPostgres(t)
+	db, closeDB := MustResolveTestPostgres(t)
+	defer closeDB()
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 
 	user := RequireMockUser(t, db)
 
 	res, err := TopTrialsByMetric(ctx, -1, 1, "metric", true)
 	require.NoError(t, err)
-	require.Len(t, res, 0)
+	require.Empty(t, res)
 
 	exp := RequireMockExperiment(t, db, user)
 	trial1 := RequireMockTrialID(t, db, exp)
@@ -574,10 +585,10 @@ func TestTopTrialsByMetric(t *testing.T) {
 		`[{"a":-1.5, "b":1.0, "c":"Infinity"}]`, false)
 
 	const (
-		more             = false
-		less             = true
-		noError          = true
-		error            = false
+		moreIsBetter     = false
+		lessIsBetter     = true
+		noErrorExpected  = true
+		errorExpected    = false
 		orderExpected    = true
 		orderNotRequired = false
 	)
@@ -591,55 +602,55 @@ func TestTopTrialsByMetric(t *testing.T) {
 		expected              []int
 		expectedOrderRequired bool
 	}{
-		{"'a' limit 1 less", "a", less, 1, noError, []int{trial2}, orderExpected},
-		{"'a' limit 1 more", "a", more, 1, noError, []int{trial1}, orderExpected},
+		{"'a' limit 1 less", "a", lessIsBetter, 1, noErrorExpected, []int{trial2}, orderExpected},
+		{"'a' limit 1 more", "a", moreIsBetter, 1, noErrorExpected, []int{trial1}, orderExpected},
 
-		{"'a' limit 2 less", "a", less, 2, noError, []int{trial2, trial1}, orderExpected},
-		{"'a' limit 2 more", "a", more, 2, noError, []int{trial1, trial2}, orderExpected},
+		{"'a' limit 2 less", "a", lessIsBetter, 2, noErrorExpected, []int{trial2, trial1}, orderExpected},
+		{"'a' limit 2 more", "a", moreIsBetter, 2, noErrorExpected, []int{trial1, trial2}, orderExpected},
 
 		{
-			"NaNs are bigger than everything less", "b", less, 2, noError,
+			"NaNs are bigger than everything less", "b", lessIsBetter, 2, noErrorExpected,
 			[]int{trial2, trial1},
 			orderExpected,
 		},
 		{
-			"NaNs are bigger than everything more", "b", more, 2, noError,
+			"NaNs are bigger than everything more", "b", moreIsBetter, 2, noErrorExpected,
 			[]int{trial1, trial2},
 			orderExpected,
 		},
 
 		{
-			"Infinity works as expected less", "c", less, 2, noError,
+			"Infinity works as expected less", "c", lessIsBetter, 2, noErrorExpected,
 			[]int{trial1, trial2},
 			orderExpected,
 		},
 		{
-			"Infinity works as expected more", "c", more, 2, noError,
+			"Infinity works as expected more", "c", moreIsBetter, 2, noErrorExpected,
 			[]int{trial2, trial1},
 			orderExpected,
 		},
 
-		{"Non numeric metrics error less", "d", less, 2, error, nil, orderExpected},
-		{"Non numeric metrics error more", "d", more, 2, error, nil, orderExpected},
+		{"Non numeric metrics error less", "d", lessIsBetter, 2, errorExpected, nil, orderExpected},
+		{"Non numeric metrics error more", "d", moreIsBetter, 2, errorExpected, nil, orderExpected},
 
 		{
-			"Metrics only reported in one trial appear first less", "e", less, 2, noError,
+			"Metrics only reported in one trial appear first less", "e", lessIsBetter, 2, noErrorExpected,
 			[]int{trial1, trial2},
 			orderExpected,
 		},
 		{
-			"Metrics only reported in one trial appear first more", "e", more, 2, noError,
+			"Metrics only reported in one trial appear first more", "e", moreIsBetter, 2, noErrorExpected,
 			[]int{trial1, trial2},
 			orderExpected,
 		},
 
 		{
-			"Metric doesn't exist order doesn't matter less", "z", less, 2, noError,
+			"Metric doesn't exist order doesn't matter less", "z", lessIsBetter, 2, noErrorExpected,
 			[]int{trial1, trial2},
 			orderNotRequired,
 		},
 		{
-			"Metric doesn't exist order doesn't matter more", "z", more, 2, noError,
+			"Metric doesn't exist order doesn't matter more", "z", moreIsBetter, 2, noErrorExpected,
 			[]int{trial1, trial2},
 			orderNotRequired,
 		},
@@ -666,6 +677,26 @@ func TestTopTrialsByMetric(t *testing.T) {
 			}
 		})
 	}
+}
+
+func createMetric(sc int32, mv float64, trID int) *trialv1.TrialMetrics {
+	m := &trialv1.TrialMetrics{
+		TrialId:        int32(trID),
+		StepsCompleted: &sc,
+		Metrics: &commonv1.Metrics{
+			AvgMetrics: &structpb.Struct{
+				Fields: map[string]*structpb.Value{
+					defaultSearcherMetric: {
+						Kind: &structpb.Value_NumberValue{
+							NumberValue: mv,
+						},
+					},
+				},
+			},
+			BatchMetrics: []*structpb.Struct{},
+		},
+	}
+	return m
 }
 
 func TestDeleteExperiments(t *testing.T) {
@@ -697,26 +728,6 @@ func TestDeleteExperiments(t *testing.T) {
 		numMtrsGen = 2 // Generic metrics per trial
 		numExptSns = 1 // Experiment snapshots per experiment
 	)
-
-	createMetric := func(sc int32, mv float64, trID int) *trialv1.TrialMetrics {
-		m := &trialv1.TrialMetrics{
-			TrialId:        int32(trID),
-			StepsCompleted: &sc,
-			Metrics: &commonv1.Metrics{
-				AvgMetrics: &structpb.Struct{
-					Fields: map[string]*structpb.Value{
-						defaultSearcherMetric: {
-							Kind: &structpb.Value_NumberValue{
-								NumberValue: mv,
-							},
-						},
-					},
-				},
-				BatchMetrics: []*structpb.Struct{},
-			},
-		}
-		return m
-	}
 
 	checkPointIndex := 1
 	for i := 0; i < numExpts; i++ { // Create experiments
@@ -798,12 +809,12 @@ func TestDeleteExperiments(t *testing.T) {
 		var ids []int
 		err := Bun().NewSelect().Table(table).Column(column).Scan(context.Background(), &ids)
 		require.NoError(t, err)
-		require.Equalf(t, num, len(ids),
+		require.Len(t, ids, num,
 			"table=%s column=%s removed=%+v num=%d", table, column, removed, num)
 
 		for _, id := range ids {
 			_, inRm := removed[id]
-			require.Equal(t, false, inRm)
+			require.False(t, inRm)
 		}
 	}
 
@@ -904,7 +915,8 @@ func TestDeleteExperiments(t *testing.T) {
 
 func TestProjectExperiments(t *testing.T) {
 	require.NoError(t, etc.SetRootPath(RootFromDB))
-	db := MustResolveTestPostgres(t)
+	db, closeDB := MustResolveTestPostgres(t)
+	defer closeDB()
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 
 	// add a workspace, and project
@@ -915,7 +927,7 @@ func TestProjectExperiments(t *testing.T) {
 	t.Run("valid project with zero experiments", func(t *testing.T) {
 		actualExps, err := ProjectExperiments(context.Background(), projectID)
 		require.NoError(t, err)
-		assert.Equal(t, len(actualExps), 0)
+		assert.Empty(t, actualExps)
 	})
 
 	t.Run("valid project with experiments", func(t *testing.T) {
@@ -935,7 +947,7 @@ func TestProjectExperiments(t *testing.T) {
 	t.Run("invalid project", func(t *testing.T) {
 		actualExps, err := ProjectExperiments(context.Background(), -11)
 		require.NoError(t, err)
-		assert.Equal(t, 0, len(actualExps))
+		assert.Empty(t, len(actualExps))
 	})
 
 	t.Run("archived project", func(t *testing.T) {
@@ -974,5 +986,133 @@ func validateExperimentMatch(t *testing.T, expected []*model.Experiment, actual 
 	}
 
 	// map should be empty
-	require.Equal(t, len(m), 0)
+	require.Empty(t, m)
+}
+
+func TestExperimentTotalStepTime(t *testing.T) {
+	ctx := context.Background()
+
+	require.NoError(t, etc.SetRootPath(RootFromDB))
+	db, cleanup := MustResolveTestPostgres(t)
+	defer cleanup()
+	MustMigrateTestPostgres(t, db, MigrationsFromDB)
+
+	t.Run("invalid experiment, return 0.0, no error", func(t *testing.T) {
+		sec, err := ExperimentTotalStepTime(ctx, -1)
+		require.Zero(t, sec)
+		require.NoError(t, err)
+	})
+
+	t.Run("experiment with single trial/task with null endtime", func(t *testing.T) {
+		user := RequireMockUser(t, db)
+		exp := RequireMockExperiment(t, db, user)
+		timeInSeconds, err := ExperimentTotalStepTime(ctx, exp.ID)
+		require.NoError(t, err)
+		require.Zero(t, timeInSeconds)
+	})
+
+	t.Run("experiment with single trial/task with set endtime", func(t *testing.T) {
+		user := RequireMockUser(t, db)
+		exp := RequireMockExperiment(t, db, user)
+		_, task := RequireMockTrial(t, db, exp)
+		alloc := RequireMockAllocation(t, db, task.TaskID)
+		endTime := alloc.StartTime.Add(time.Hour)
+		alloc.EndTime = &endTime // It only changes the memory and not DB.
+		require.NoError(t, CompleteAllocation(ctx, alloc))
+		timeInSeconds, err := ExperimentTotalStepTime(ctx, exp.ID)
+		require.NoError(t, err)
+		require.InEpsilon(t, 3600.0, timeInSeconds, 0.01)
+	})
+
+	t.Run("experiment with multiple trials/tasks", func(t *testing.T) {
+		user := RequireMockUser(t, db)
+		exp := RequireMockExperiment(t, db, user)
+
+		// Add 3 tasks to an experiment.
+		_, task := RequireMockTrial(t, db, exp)
+		alloc := RequireMockAllocation(t, db, task.TaskID)
+		endTime := alloc.StartTime.Add(time.Hour) // Adding an hour.
+		alloc.EndTime = &endTime
+		require.NoError(t, CompleteAllocation(ctx, alloc))
+
+		_, task = RequireMockTrial(t, db, exp)
+		alloc = RequireMockAllocation(t, db, task.TaskID)
+		endTime = alloc.StartTime.Add(time.Minute) // Adding a minute.
+		alloc.EndTime = &endTime
+		require.NoError(t, CompleteAllocation(ctx, alloc))
+
+		_, task = RequireMockTrial(t, db, exp)
+		alloc = RequireMockAllocation(t, db, task.TaskID)
+		endTime = alloc.StartTime.Add(time.Second) // Adding a second.
+		alloc.EndTime = &endTime
+		require.NoError(t, CompleteAllocation(ctx, alloc))
+
+		timeInSeconds, err := ExperimentTotalStepTime(ctx, exp.ID)
+		require.NoError(t, err)
+		require.InEpsilon(t, 3661.0, timeInSeconds, 0.01)
+	})
+}
+
+func TestExperimentNumSteps(t *testing.T) {
+	ctx := context.Background()
+
+	require.NoError(t, etc.SetRootPath(RootFromDB))
+	db, cleanup := MustResolveTestPostgres(t)
+	defer cleanup()
+	MustMigrateTestPostgres(t, db, MigrationsFromDB)
+
+	t.Run("invalid experiment, return 0, no error", func(t *testing.T) {
+		sec, err := ExperimentNumSteps(ctx, -1)
+		require.Equal(t, int64(0), sec)
+		require.NoError(t, err)
+	})
+
+	t.Run("experiment with single trial metrics", func(t *testing.T) {
+		user := RequireMockUser(t, db)
+		exp := RequireMockExperiment(t, db, user)
+		trialID := RequireMockTrialID(t, db, exp)
+
+		// Create training metrics (raw_steps).
+		mRaw1 := createMetric(10, 0.5, trialID)
+		err := db.AddTrainingMetrics(ctx, mRaw1)
+		require.NoError(t, err)
+
+		count, err := ExperimentNumSteps(ctx, exp.ID)
+		require.NoError(t, err)
+		require.Equal(t, int64(1), count)
+	})
+
+	t.Run("experiment with single trial multiple raw metrics", func(t *testing.T) {
+		user := RequireMockUser(t, db)
+		exp := RequireMockExperiment(t, db, user)
+		trialID := RequireMockTrialID(t, db, exp)
+
+		// Create training metrics (raw_steps).
+		for i := 1; i < 5; i++ {
+			mRaw := createMetric(int32(i), 0.5, trialID)
+			err := db.AddTrainingMetrics(ctx, mRaw)
+			require.NoError(t, err)
+		}
+
+		count, err := ExperimentNumSteps(ctx, exp.ID)
+		require.NoError(t, err)
+		require.Equal(t, int64(4), count)
+	})
+
+	t.Run("experiment with multiple trial raw metrics", func(t *testing.T) {
+		user := RequireMockUser(t, db)
+		exp := RequireMockExperiment(t, db, user)
+
+		// Create training metrics (raw_steps).
+		for i := 0; i < 3; i++ {
+			trialID := RequireMockTrialID(t, db, exp)
+			mRaw := createMetric(10, 0.5, trialID)
+			err := db.AddTrainingMetrics(ctx, mRaw)
+			require.NoError(t, err)
+		}
+
+		count, err := ExperimentNumSteps(ctx, exp.ID)
+		require.NoError(t, err)
+		require.Equal(t, int64(3), count)
+	})
 }

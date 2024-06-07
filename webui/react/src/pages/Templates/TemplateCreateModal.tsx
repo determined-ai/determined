@@ -8,11 +8,11 @@ import { useToast } from 'hew/Toast';
 import { Loadable } from 'hew/utils/loadable';
 import yaml from 'js-yaml';
 import { useObservable } from 'micro-observables';
-import React, { useCallback, useId, useState } from 'react';
+import React, { useCallback, useEffect, useId, useState } from 'react';
 
-import { createTaskTemplate } from 'services/api';
+import { createTaskTemplate, updateTaskTemplate, updateTaskTemplateName } from 'services/api';
 import workspaceStore from 'stores/workspaces';
-import { Workspace } from 'types';
+import { Template, Workspace } from 'types';
 import handleError, { DetError, ErrorLevel, ErrorType } from 'utils/error';
 
 const FORM_ID = 'create-template-form';
@@ -25,9 +25,11 @@ interface FormInputs {
 
 interface Props {
   workspaceId?: number;
+  onSuccess?: () => void;
+  template?: Template;
 }
 
-const TemplateCreateModalComponent: React.FC<Props> = ({ workspaceId }) => {
+const TemplateCreateModalComponent: React.FC<Props> = ({ workspaceId, onSuccess, template }) => {
   const idPrefix = useId();
   const { openToast } = useToast();
   const [form] = Form.useForm<FormInputs>();
@@ -45,23 +47,46 @@ const TemplateCreateModalComponent: React.FC<Props> = ({ workspaceId }) => {
 
     try {
       if (values) {
-        await createTaskTemplate({
-          ...values,
-          config: yaml.load(values.config),
-        });
+        if (template) {
+          await updateTaskTemplate({
+            config: yaml.load(values.config),
+            name: template.name,
+            workspaceId: values.workspaceId,
+          });
+
+          // Edit template name
+          if (template.name !== values.name) {
+            await updateTaskTemplateName({
+              newName: values.name,
+              oldName: template.name,
+            });
+          }
+          openToast({
+            description: `Template ${values.name} has been updated`,
+            severity: 'Info',
+            title: 'Template Updated',
+          });
+        } else {
+          await createTaskTemplate({
+            ...values,
+            config: yaml.load(values.config),
+          });
+          openToast({
+            description: `Template ${values.name} has been created`,
+            severity: 'Info',
+            title: 'Template Created',
+          });
+        }
+
         form.resetFields();
-        openToast({
-          description: `Template ${values.name} has been created`,
-          severity: 'Info',
-          title: 'Template Created',
-        });
+        onSuccess?.();
       }
     } catch (e) {
       if (e instanceof DetError) {
         handleError(e, {
           level: e.level,
           publicMessage: e.publicMessage,
-          publicSubject: 'Unable to create template.',
+          publicSubject: 'Unable to manage template.',
           silent: false,
           type: e.type,
         });
@@ -69,26 +94,36 @@ const TemplateCreateModalComponent: React.FC<Props> = ({ workspaceId }) => {
         handleError(e, {
           level: ErrorLevel.Error,
           publicMessage: 'Please try again later.',
-          publicSubject: 'Unable to create template.',
+          publicSubject: 'Unable to manage template.',
           silent: false,
           type: ErrorType.Server,
         });
       }
+      throw e;
     }
-  }, [form, openToast]);
+  }, [form, openToast, onSuccess, template]);
+
+  useEffect(() => {
+    if (!template || !form) return;
+    form.setFieldsValue({
+      config: yaml.dump(template.config),
+      name: template.name,
+      workspaceId: template.workspaceId,
+    });
+  }, [template, form]);
 
   return (
     <Modal
       cancel
-      size="small"
+      size="large"
       submit={{
         disabled,
         form: idPrefix + FORM_ID,
         handleError,
         handler: handleSubmit,
-        text: 'Create Template',
+        text: `${template ? 'Edit' : 'Create'} Template`,
       }}
-      title="New Template">
+      title={`${template ? 'Edit' : 'New'} Template`}>
       <Form
         autoComplete="off"
         form={form}
@@ -96,17 +131,21 @@ const TemplateCreateModalComponent: React.FC<Props> = ({ workspaceId }) => {
         layout="vertical"
         onFieldsChange={onChange}>
         <Form.Item
+          initialValue={template?.name}
           label="Name"
           name="name"
           rules={[{ message: 'Name is required.', required: true }]}>
           <Input />
         </Form.Item>
         <Form.Item
-          initialValue={workspaceId}
+          initialValue={template?.workspaceId ?? workspaceId}
           label="Workspace"
           name="workspaceId"
           rules={[{ message: 'Workspace is required', required: true, type: 'number' }]}>
-          <Select allowClear disabled={!!workspaceId} placeholder="Workspace (required)">
+          <Select
+            allowClear
+            disabled={!!workspaceId && !template}
+            placeholder="Workspace (required)">
             {workspaces.map((workspace: Workspace) => (
               <Option key={workspace.id} value={workspace.id}>
                 {workspace.name}
@@ -135,7 +174,7 @@ const TemplateCreateModalComponent: React.FC<Props> = ({ workspaceId }) => {
             },
           ]}>
           <CodeEditor
-            file={''}
+            file={template?.config ? yaml.dump(template.config) : ''}
             files={[{ key: 'template.yaml' }]}
             height="40vh"
             onError={handleError}

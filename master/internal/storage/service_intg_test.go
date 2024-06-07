@@ -31,7 +31,7 @@ type storageBackendExhaustiveTestCases struct {
 }
 
 func TestMain(m *testing.M) {
-	pgDB, err := db.ResolveTestPostgres()
+	pgDB, _, err := db.ResolveTestPostgres()
 	if err != nil {
 		log.Panicln(err)
 	}
@@ -336,7 +336,7 @@ func TestGroupCheckpointsByStorageIDs(t *testing.T) {
 		storageID0: {checkpoint1.UUID},
 		storageID1: {checkpoint2.UUID, checkpoint3.UUID},
 	}
-	require.Equal(t, len(expected), len(actual))
+	require.Len(t, actual, len(expected))
 	for _, a := range actual {
 		id := model.StorageBackendID(0)
 		if a.StorageID != nil {
