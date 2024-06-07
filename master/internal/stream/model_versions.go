@@ -274,8 +274,7 @@ func ModelVersionMakeHydrator() func(*ModelVersionMsg) (*ModelVersionMsg, error)
 		if err != nil && errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		} else if err != nil {
-			log.Errorf("error in model version hydrator: %v\n", err)
-			return nil, err
+			return nil, fmt.Errorf("error in model version hydrator: %w", err)
 		}
 		saturatedMsg.WorkspaceID = msg.WorkspaceID
 		return &saturatedMsg, nil

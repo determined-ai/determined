@@ -70,7 +70,7 @@ func (mm *ModelMsg) UpsertMsg() *stream.UpsertMsg {
 
 // DeleteMsg creates a model stream delete message.
 func (mm *ModelMsg) DeleteMsg() *stream.DeleteMsg {
-	deleted := strconv.FormatInt(int64(mm.ID), 10)
+	deleted := strconv.Itoa(mm.ID)
 	return &stream.DeleteMsg{
 		Key:     ModelsDeleteKey,
 		Deleted: deleted,
@@ -262,8 +262,7 @@ func ModelMakeHydrator() func(*ModelMsg) (*ModelMsg, error) {
 		if err != nil && errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		} else if err != nil {
-			log.Errorf("error in model hydrator: %v\n", err)
-			return nil, err
+			return nil, fmt.Errorf("error in model hydrator: %w", err)
 		}
 		return &saturatedMsg, nil
 	}

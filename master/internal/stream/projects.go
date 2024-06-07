@@ -249,8 +249,7 @@ func ProjectMakeHydrator() func(*ProjectMsg) (*ProjectMsg, error) {
 		if err != nil && errors.Is(err, sql.ErrNoRows) {
 			return nil, err
 		} else if err != nil {
-			log.Errorf("error in project hydrator: %v\n", err)
-			return nil, err
+			return nil, fmt.Errorf("error in project hydrator: %w", err)
 		}
 		return &saturatedMsg, nil
 	}
