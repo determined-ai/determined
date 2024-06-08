@@ -86,6 +86,7 @@ def clear_cluster_message(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     bindings.delete_DeleteClusterMessage(sess)
 
+
 def get_cluster_message(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
 
