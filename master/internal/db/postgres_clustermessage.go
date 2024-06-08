@@ -15,10 +15,6 @@ import (
 
 // GetActiveClusterMessage returns the active cluster message if one is set and active, or
 // ErrNotFound if not.
-// Things to test:
-// - When active, returns it
-// - When not yet active, returns ErrNotFound
-// - When expired, returns ErrNotFound
 func GetActiveClusterMessage(ctx context.Context, db *bun.DB) (model.ClusterMessage, error) {
 	var msg model.ClusterMessage
 	err := db.NewRaw(`
@@ -79,8 +75,6 @@ const ClusterMessageMaxLength = 250
 // SetClusterMessage sets the cluster-wide message. Any existing message will be expired because
 // only one cluster message is allowed at any time. Messages may be at most ClusterMessageMaxLength
 // characters long. Returns a wrapped ErrInvalidInput when input is invalid.
-// Stuff to test:
-// - Max length of ClusterMessageMaxLength
 func SetClusterMessage(ctx context.Context, db *bun.DB, msg model.ClusterMessage) error {
 	if msgLen := utf8.RuneCountInString(msg.Message); msgLen > ClusterMessageMaxLength {
 		return fmt.Errorf("%w: message must be at most %d characters; got %d",
