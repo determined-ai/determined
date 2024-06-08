@@ -6,6 +6,7 @@ package db
 import (
 	"context"
 	"database/sql"
+	"strings"
 	"testing"
 	"time"
 	"unicode/utf8"
@@ -164,7 +165,6 @@ func TestSetClusterMessage(t *testing.T) {
 	require.Equal(t, content, msg.Message)
 
 	// test cluster message > 250 runes
-	// TODO (eliu): fix borked test
 	runeContent := ""
 	for x := 0; x < 251; x++ {
 		runeContent += "a"
@@ -203,6 +203,56 @@ func TestSetClusterMessage(t *testing.T) {
 
 	err = SetClusterMessage(ctx, bunDB, msg)
 	require.True(t, errors.Is(err, ErrInvalidInput))
+}
+
+func TestSetClusterMessageLength(t *testing.T) {
+	ctx := context.TODO()
+	require.NoError(t, etc.SetRootPath(RootFromDB))
+
+	db, closer := MustResolveTestPostgres(t)
+	bunDB := bun.NewDB(db.sql.DB, pgdialect.New())
+	defer func() {
+		_, err := bunDB.NewTruncateTable().Table(tableKey).Exec(ctx)
+		require.NoError(t, err)
+
+		closer()
+	}()
+
+	testCases := []struct {
+		name        string
+		msg         string
+		expectedErr error
+	}{{
+		name:        "Message is accepted when short enough and single-byte",
+		msg:         "Test message 123!",
+		expectedErr: nil,
+	}, {
+		name:        "Message is rejected when a letter-only message is too long",
+		msg:         strings.Repeat("a", 251),
+		expectedErr: ErrInvalidInput,
+	}, {
+		name:        "Message containing multi-byte characters is rejected when too long",
+		msg:         strings.Repeat("😱👍", 126),
+		expectedErr: ErrInvalidInput,
+	}, {
+		name:        "Message containing multi-byte characters is accepted when not too long",
+		msg:         strings.Repeat("😱👍", 120),
+		expectedErr: nil,
+	}}
+
+	for _, c := range testCases {
+		t.Run(c.name, func(t *testing.T) {
+			actualErr := SetClusterMessage(ctx, bunDB, model.ClusterMessage{
+				CreatedBy: 1, // admin
+				Message:   c.msg,
+			})
+			require.ErrorIs(t, actualErr, c.expectedErr, "SetClusterMessage behaved unexpectedly based on message length")
+		})
+	}
+
+	// Clean up after ourselves
+	cleanupErr := ClearClusterMessage(ctx, bunDB)
+	require.NoError(t, cleanupErr, "expected no error during cleanup")
 }
 
 func TestClearClusterMessage(t *testing.T) {

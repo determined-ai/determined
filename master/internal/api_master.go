@@ -8,7 +8,6 @@ import (
 	"time"
 
 	structpb "github.com/golang/protobuf/ptypes/struct"
-	pkgerrors "github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -102,7 +101,7 @@ func (a *apiServer) GetMasterConfig(
 
 	config, err := a.m.config.Printable()
 	if err != nil {
-		return nil, pkgerrors.Wrap(err, "error parsing master config")
+		return nil, fmt.Errorf("error parsing master config: %w", err)
 	}
 	configStruct := &structpb.Struct{}
 	err = protojson.Unmarshal(config, configStruct)
@@ -234,7 +233,7 @@ func (a *apiServer) ResourceAllocationRaw(
 	if err := a.m.db.QueryProto(
 		"get_raw_allocation", &resp.ResourceEntries, start.UTC(), end.UTC(),
 	); err != nil {
-		return nil, pkgerrors.Wrap(err, "error fetching raw allocation data")
+		return nil, fmt.Errorf("error fetching raw allocation data: %w", err)
 	}
 
 	return resp, nil
