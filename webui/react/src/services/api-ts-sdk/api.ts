@@ -3744,13 +3744,13 @@ export interface V1GetCheckpointResponse {
     checkpoint: V1Checkpoint;
 }
 /**
- * 
+ * GetClusterMessageResponse is the response that contains the current cluster message.
  * @export
  * @interface V1GetClusterMessageResponse
  */
 export interface V1GetClusterMessageResponse {
     /**
-     * 
+     * cluster_message is the current cluster message.
      * @type {V1ClusterMessage}
      * @memberof V1GetClusterMessageResponse
      */

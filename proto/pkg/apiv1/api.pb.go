@@ -3777,8 +3777,8 @@ type DeterminedClient interface {
 	MasterLogs(ctx context.Context, in *MasterLogsRequest, opts ...grpc.CallOption) (Determined_MasterLogsClient, error)
 	// Get the currently configured cluster-wide message.
 	GetClusterMessage(ctx context.Context, in *GetClusterMessageRequest, opts ...grpc.CallOption) (*GetClusterMessageResponse, error)
-	// Set the cluster-wide message shown to users. Only one can be set at at time, so
-	// any existing message will be disabled.
+	// Set the cluster-wide message shown to users. Only one can be set at at
+	// time, so any existing message will be disabled.
 	SetClusterMessage(ctx context.Context, in *SetClusterMessageRequest, opts ...grpc.CallOption) (*SetClusterMessageResponse, error)
 	// Clear the cluster-wide message shown to all users.
 	DeleteClusterMessage(ctx context.Context, in *DeleteClusterMessageRequest, opts ...grpc.CallOption) (*DeleteClusterMessageResponse, error)
@@ -6824,8 +6824,8 @@ type DeterminedServer interface {
 	MasterLogs(*MasterLogsRequest, Determined_MasterLogsServer) error
 	// Get the currently configured cluster-wide message.
 	GetClusterMessage(context.Context, *GetClusterMessageRequest) (*GetClusterMessageResponse, error)
-	// Set the cluster-wide message shown to users. Only one can be set at at time, so
-	// any existing message will be disabled.
+	// Set the cluster-wide message shown to users. Only one can be set at at
+	// time, so any existing message will be disabled.
 	SetClusterMessage(context.Context, *SetClusterMessageRequest) (*SetClusterMessageResponse, error)
 	// Clear the cluster-wide message shown to all users.
 	DeleteClusterMessage(context.Context, *DeleteClusterMessageRequest) (*DeleteClusterMessageResponse, error)

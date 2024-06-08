@@ -4708,6 +4708,9 @@ class v1GetCheckpointResponse(Printable):
         return out
 
 class v1GetClusterMessageResponse(Printable):
+    """GetClusterMessageResponse is the response that contains the current cluster
+    message.
+    """
     clusterMessage: "typing.Optional[v1ClusterMessage]" = None
 
     def __init__(
@@ -22929,8 +22932,8 @@ def put_SetClusterMessage(
     *,
     body: "v1SetClusterMessageRequest",
 ) -> None:
-    """Set the cluster-wide message shown to users. Only one can be set at at time, so
-    any existing message will be disabled.
+    """Set the cluster-wide message shown to users. Only one can be set at at
+    time, so any existing message will be disabled.
     """
     _params = None
     _resp = session._do_request(

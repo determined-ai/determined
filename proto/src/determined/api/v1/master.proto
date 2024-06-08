@@ -128,8 +128,14 @@ message PatchMasterConfigRequest {
 // Response to PatchMasterConfigRequest.
 message PatchMasterConfigResponse {}
 
+// GetClusterMessageRequest is used to get the current cluster message by
+// admins.
 message GetClusterMessageRequest {}
+
+// GetClusterMessageResponse is the response that contains the current cluster
+// message.
 message GetClusterMessageResponse {
+  // cluster_message is the current cluster message.
   optional ClusterMessage cluster_message = 1;
 }
 
@@ -144,8 +150,8 @@ message SetClusterMessageRequest {
   google.protobuf.Timestamp start_time = 2;
   // Time to stop showing message.
   optional google.protobuf.Timestamp end_time = 3;
-  // Duration expressing how long the message should last. Should be a Go-format duration (e.g. 24h,
-  // 2w, 5d)
+  // Duration expressing how long the message should last. Should be a Go-format
+  // duration (e.g. 24h, 2w, 5d)
   optional string duration = 4;
 }
 // Response to SetClusterMessageRequest.

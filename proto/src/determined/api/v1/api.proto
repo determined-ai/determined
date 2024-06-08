@@ -290,8 +290,8 @@ service Determined {
       tags: "Cluster"
     };
   }
-  // Set the cluster-wide message shown to users. Only one can be set at at time, so
-  // any existing message will be disabled.
+  // Set the cluster-wide message shown to users. Only one can be set at at
+  // time, so any existing message will be disabled.
   rpc SetClusterMessage(SetClusterMessageRequest)
       returns (SetClusterMessageResponse) {
     option (google.api.http) = {
