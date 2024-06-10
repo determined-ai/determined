@@ -97,14 +97,14 @@ def _ray_job_submit(exp_path: pathlib.Path, port: int = 8265) -> None:
 @pytest.mark.e2e_multi_k8s
 @pytest.mark.timeout(600)
 @pytest.mark.parametrize(
-    "port_map",
+    "exp_port, is_tcp",
     [
-        # exp_port, is_tcp
         (8000, False),
         (6000, True),
     ],
 )
-def test_experiment_proxy_simple_zero_slot(port_map: Tuple[int, bool]) -> None:
+def test_experiment_proxy_simple_zero_slot(exp_port: int, is_tcp: bool) -> None:
+    port_map = (exp_port, is_tcp)
     return _test_experiment_proxy_simple(port_map, slots=0, max_conc_trials=2)
 
 
@@ -112,30 +112,19 @@ def test_experiment_proxy_simple_zero_slot(port_map: Tuple[int, bool]) -> None:
 @pytest.mark.e2e_multi_k8s
 @pytest.mark.timeout(600)
 @pytest.mark.parametrize(
-    "port_map",
+    "exp_port, is_tcp, max_conc_trials",
     [
-        # exp_port, is_tcp
-        (8000, False),
-        (6000, True),
+        (8000, False, 1),
+        (6000, True, 2),
     ],
 )
-def test_experiment_proxy_simple_two_slots_single_trial(port_map: Tuple[int, bool]) -> None:
-    return _test_experiment_proxy_simple(port_map, slots=2, max_conc_trials=1)
-
-
-@pytest.mark.port_registry  # has multiple slots
-@pytest.mark.e2e_multi_k8s
-@pytest.mark.timeout(600)
-@pytest.mark.parametrize(
-    "port_map",
-    [
-        # exp_port, is_tcp
-        (8000, False),
-        (6000, True),
-    ],
-)
-def test_experiment_proxy_simple_two_slots_multi_trial(port_map: Tuple[int, bool]) -> None:
-    return _test_experiment_proxy_simple(port_map, slots=2, max_conc_trials=2)
+def test_experiment_proxy_simple_two_slots(
+    exp_port: int,
+    is_tcp: bool,
+    max_conc_trials: int,
+) -> None:
+    port_map = (exp_port, is_tcp)
+    return _test_experiment_proxy_simple(port_map, slots=2, max_conc_trials=max_conc_trials)
 
 
 def _test_experiment_proxy_simple(
