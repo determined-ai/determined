@@ -1,32 +1,44 @@
 # Internal Task Gateway
 
+K8s Gateway APIs allow us to expose otherwise internal Determined jobs running on remote K8s clusters
+to Determined master and proxies. This is useful for multi-resource manager setups.
+
+The overall set up includes setting up a Gateway controller in the K8s cluster external to Determined
+and configuring the Determined master to use the Gateway controller. Please refert to the sections
+below to see the configuration changes and controller requirements.
+
 
 ## Controller Support - Requirements
-supported controllers list
 
-### sample setup
-include example doc for deploying a gateway controller
+High level requirements from the controller implementations are:
+- Supports Gateway APIs > v1
+- Supports TCPRoute and level 4 routing support
+
+TODO inline: supported controllers list from the attached markdown file. `./controller-reviews.md`
+
+In these docs we'll be using Contour from Project Contour.
+
+### Sample Setup - Development
+For internal testing and development we provide a simple setup script that uses a dynamic
+provisioner provided by Project Contour.
+
+On a local dev machine you can use Minikube and Contour as the controller. We provide a script
+to simplify the process. This can be found in `tools/k8s/launch-minikube-with-gateway.sh`
+
+After you can a working K8s cluster and a Gateway controller running. Configure the resource manager
+via master config and start the Determined cluster.
 
 ## Configuration
+Below you'll find details on how to configure your cluster and Determined master to use the Internal Task Gateway.
 
-- total active proxies will be limited by: min(maxItems, portRange) (not exhaustive).
+- Total active proxies will be limited by: maxItems set in the Gateway CRD and the portRange configured
+for Determined (not exhaustive).
 
-### Gateway
-In the CRD `gateways.gateway.networking.k8s.io`
-`schema.openAPIV3Schema.properties.spec.properties.listeners.maxItems` defines a max limit of how many
-listeners can be active on a single gateway. This limit sets the upper bound on how many tasks can be actively proxied.
-
-note k8s validation complexity cost estimates.
-
-- limit of listeners in gateway CRD setup
 ### Master Configuration
-config explanation.
+To configure the optional InternalTaskGateway for a K8s resource manager, you need to add
+a struct under `internal_task_gateway` key under each of the desired resource manager configurations.
 
-an optional config.
-Sitting under `internal_task_gateway` key under each resource manager config in master config.
-
-represented by Go package `config.InternalTaskGatewayConfig` probably defined in `master/internal/config/resource_manager_config.go`
-
+This is represented by Go package `config.InternalTaskGatewayConfig` defined in `master/internal/config/resource_manager_config.go`
 ```go
 // InternalTaskGatewayConfig is config for exposing Determined tasks to outside of the cluster.
 // Useful for multirm when we can only be running in a single cluster.
@@ -45,19 +57,30 @@ type InternalTaskGatewayConfig struct {
 }
 ```
 
-valid port range starts from 1025 to 65535 inclusive.
-
+Note that the valid port range starts from 1025 to 65535, inclusive.
 - CHECK: might wanna set max aux containers < min(this and port range)
 
-## Dev Docs
-- developer docs on how to test and use
+### Gateway
+In the CRD `gateways.gateway.networking.k8s.io`
+`schema.openAPIV3Schema.properties.spec.properties.listeners.maxItems` defines a max limit of how many
+listeners can be active on a single gateway. This limit sets the upper bound on how many tasks can be actively proxied.
+
+Note that when configuring this number you might hit K8s validation complexity thresholds checks. This can
+be configured and is dependent on each K8s cluster's requirements and setup.
+
+## Other Dev Docs
+If you're running Determined outside of the K8s cluster, for example on your local machine for testing and development,
+it's possible to test this feature using just a single K8s cluster. All that is needed is for Det master to be sitting external
+to the target cluster.
 
 ## Release Notes
+TBD
 - mention docs
-- mention current limits if any
+- mention current limitations?
 
 
 ## TODO
 - update setup guide on multirm 
 - update k8s architecture docs? to include we will deploy services / routes / 
 - update Carolina’s bug bash docs to include notebook testing
+- helm install path?
