@@ -129,7 +129,7 @@ var defaultRunsTableColumns = []*projectv1.ProjectColumn{
 		Column:      "projectId",
 		DisplayName: "Project ID",
 		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
-		Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
+		Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
 	},
 	{
 		Column:      "externalRunId",
