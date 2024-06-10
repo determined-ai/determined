@@ -216,9 +216,7 @@ type FlatRun struct {
 	ParentArchived bool `protobuf:"varint,18,opt,name=parent_archived,json=parentArchived,proto3" json:"parent_archived,omitempty"`
 	// Data related the the experiment associated with this run.
 	Experiment *FlatRunExperiment `protobuf:"bytes,19,opt,name=experiment,proto3,oneof" json:"experiment,omitempty"`
-	// The archived status of this run.
-	// This is only looking at the archived status at the run level and not taking
-	// into account whether the experiment is archived or not.
+	// The archived status of this run
 	Archived bool `protobuf:"varint,20,opt,name=archived,proto3" json:"archived,omitempty"`
 }
 
