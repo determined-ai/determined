@@ -14,6 +14,8 @@ const (
 	TestMsgBUpsertKey = "testmsgB"
 	TestMsgBDeleteKey = "testmsgB_deleted"
 	MsgDeleteType     = "delete"
+	MsgUpdateType     = "update"
+	MsgInsertType     = "insert"
 )
 
 type TestMsgTypeA struct {
@@ -541,14 +543,14 @@ func setup(t *testing.T, testEvents []TestEvent, testSubscribers []TestSubscribe
 	for _, testEvent := range testEvents {
 		var event Event[*TestMsgTypeA]
 		switch testEvent.Type {
-		case "insert":
+		case MsgInsertType:
 			event = Event[*TestMsgTypeA]{
 				After: &TestMsgTypeA{
 					Seq: testEvent.AfterSeq,
 					ID:  0,
 				},
 			}
-		case "update":
+		case MsgUpdateType:
 			event = Event[*TestMsgTypeA]{
 				Before: &TestMsgTypeA{
 					Seq: testEvent.AfterSeq - 1,
@@ -636,8 +638,8 @@ func TestTwoSubscribers(t *testing.T) {
 		{
 			description: "1. insert id 0(1), update on id 0(2)",
 			dBEvents: []TestEvent{
-				{Type: "insert", AfterSeq: 1},
-				{Type: "update", AfterSeq: 2},
+				{Type: MsgInsertType, AfterSeq: 1},
+				{Type: MsgUpdateType, AfterSeq: 2},
 			},
 			outGoingMsgs: []interface{}{
 				UpsertMsg{Msg: &TestMsgTypeA{2, 0}},
@@ -647,8 +649,8 @@ func TestTwoSubscribers(t *testing.T) {
 		{
 			description: "2. insert id 0(1), subscriber1 fallin on id 0(2)",
 			dBEvents: []TestEvent{
-				{Type: "insert", AfterSeq: 1},
-				{Type: "update", FallinUserID: []int{1}, AfterSeq: 2},
+				{Type: MsgInsertType, AfterSeq: 1},
+				{Type: MsgUpdateType, FallinUserID: []int{1}, AfterSeq: 2},
 			},
 			outGoingMsgs: []interface{}{
 				UpsertMsg{Msg: &TestMsgTypeA{2, 0}},
@@ -658,8 +660,8 @@ func TestTwoSubscribers(t *testing.T) {
 		{
 			description: "3. insert id 0(1), subscriber2 fallin on id 0(2)",
 			dBEvents: []TestEvent{
-				{Type: "insert", AfterSeq: 1},
-				{Type: "update", FallinUserID: []int{2}, AfterSeq: 2},
+				{Type: MsgInsertType, AfterSeq: 1},
+				{Type: MsgUpdateType, FallinUserID: []int{2}, AfterSeq: 2},
 			},
 			outGoingMsgs: []interface{}{
 				UpsertMsg{Msg: &TestMsgTypeA{2, 0}},
@@ -669,8 +671,8 @@ func TestTwoSubscribers(t *testing.T) {
 		{
 			description: "4. insert id 0(1), subscriber1 fallout on id 0(2)",
 			dBEvents: []TestEvent{
-				{Type: "insert", AfterSeq: 1},
-				{Type: "update", FalloutUserID: []int{1}, AfterSeq: 2},
+				{Type: MsgInsertType, AfterSeq: 1},
+				{Type: MsgUpdateType, FalloutUserID: []int{1}, AfterSeq: 2},
 			},
 			outGoingMsgs: []interface{}{
 				UpsertMsg{Msg: &TestMsgTypeA{2, 0}},
@@ -679,8 +681,8 @@ func TestTwoSubscribers(t *testing.T) {
 		{
 			description: "5. insert id 0(1), subscriber2 fallout on id 0(2)",
 			dBEvents: []TestEvent{
-				{Type: "insert", AfterSeq: 1},
-				{Type: "update", FalloutUserID: []int{2}, AfterSeq: 2},
+				{Type: MsgInsertType, AfterSeq: 1},
+				{Type: MsgUpdateType, FalloutUserID: []int{2}, AfterSeq: 2},
 			},
 			outGoingMsgs: []interface{}{
 				UpsertMsg{Msg: &TestMsgTypeA{2, 0}},
@@ -689,7 +691,7 @@ func TestTwoSubscribers(t *testing.T) {
 		{
 			description: "6. insert id 0(1), delete id 0(2)",
 			dBEvents: []TestEvent{
-				{Type: "insert", AfterSeq: 1},
+				{Type: MsgInsertType, AfterSeq: 1},
 				{Type: MsgDeleteType, BeforeSeq: 1},
 			},
 			outGoingMsgs: []interface{}{},
@@ -697,8 +699,8 @@ func TestTwoSubscribers(t *testing.T) {
 		{
 			description: "7. update on id 0(1), subscriber1 fallin on id 0(2)",
 			dBEvents: []TestEvent{
-				{Type: "update", AfterSeq: 1},
-				{Type: "update", FallinUserID: []int{1}, AfterSeq: 2},
+				{Type: MsgUpdateType, AfterSeq: 1},
+				{Type: MsgUpdateType, FallinUserID: []int{1}, AfterSeq: 2},
 			},
 			outGoingMsgs: []interface{}{
 				UpsertMsg{Msg: &TestMsgTypeA{2, 0}},
@@ -708,8 +710,8 @@ func TestTwoSubscribers(t *testing.T) {
 		{
 			description: "8. update on id 0(1), subscriber2 fallin on id 0(2)",
 			dBEvents: []TestEvent{
-				{Type: "update", AfterSeq: 1},
-				{Type: "update", FallinUserID: []int{2}, AfterSeq: 2},
+				{Type: MsgUpdateType, AfterSeq: 1},
+				{Type: MsgUpdateType, FallinUserID: []int{2}, AfterSeq: 2},
 			},
 			outGoingMsgs: []interface{}{
 				UpsertMsg{Msg: &TestMsgTypeA{2, 0}},
@@ -719,8 +721,8 @@ func TestTwoSubscribers(t *testing.T) {
 		{
 			description: "9. update on id 0(1), subscriber1 fallout on id 0(2)",
 			dBEvents: []TestEvent{
-				{Type: "update", AfterSeq: 1},
-				{Type: "update", FalloutUserID: []int{1}, AfterSeq: 2},
+				{Type: MsgUpdateType, AfterSeq: 1},
+				{Type: MsgUpdateType, FalloutUserID: []int{1}, AfterSeq: 2},
 			},
 			outGoingMsgs: []interface{}{
 				DeleteMsg{Deleted: "0"},
@@ -730,8 +732,8 @@ func TestTwoSubscribers(t *testing.T) {
 		{
 			description: "10. update on id 0(1), subscriber2 fallout on id 0(2)",
 			dBEvents: []TestEvent{
-				{Type: "update", AfterSeq: 1},
-				{Type: "update", FalloutUserID: []int{2}, AfterSeq: 2},
+				{Type: MsgUpdateType, AfterSeq: 1},
+				{Type: MsgUpdateType, FalloutUserID: []int{2}, AfterSeq: 2},
 			},
 			outGoingMsgs: []interface{}{
 				UpsertMsg{Msg: &TestMsgTypeA{2, 0}},
@@ -741,7 +743,7 @@ func TestTwoSubscribers(t *testing.T) {
 		{
 			description: "11. update on id 0(1), delete id 0(2)",
 			dBEvents: []TestEvent{
-				{Type: "update", AfterSeq: 1},
+				{Type: MsgUpdateType, AfterSeq: 1},
 				{Type: MsgDeleteType, BeforeSeq: 1},
 			},
 			outGoingMsgs: []interface{}{
@@ -752,8 +754,8 @@ func TestTwoSubscribers(t *testing.T) {
 		{
 			description: "12. subscriber1 fallin on id 0(1), update on id 0(2)",
 			dBEvents: []TestEvent{
-				{Type: "update", FallinUserID: []int{1}, AfterSeq: 1},
-				{Type: "update", AfterSeq: 2},
+				{Type: MsgUpdateType, FallinUserID: []int{1}, AfterSeq: 1},
+				{Type: MsgUpdateType, AfterSeq: 2},
 			},
 			outGoingMsgs: []interface{}{
 				UpsertMsg{Msg: &TestMsgTypeA{2, 0}},
@@ -763,8 +765,8 @@ func TestTwoSubscribers(t *testing.T) {
 		{
 			description: "13. subscriber1 fallin on id 0(1), subscriber2 fallin on id 0(2)",
 			dBEvents: []TestEvent{
-				{Type: "update", FallinUserID: []int{1}, AfterSeq: 1},
-				{Type: "update", FallinUserID: []int{2}, AfterSeq: 2},
+				{Type: MsgUpdateType, FallinUserID: []int{1}, AfterSeq: 1},
+				{Type: MsgUpdateType, FallinUserID: []int{2}, AfterSeq: 2},
 			},
 			outGoingMsgs: []interface{}{
 				UpsertMsg{Msg: &TestMsgTypeA{2, 0}},
@@ -774,8 +776,8 @@ func TestTwoSubscribers(t *testing.T) {
 		{
 			description: "14. subscriber1 fallin on id 0(1), subscriber1 fallout on id 0(2)",
 			dBEvents: []TestEvent{
-				{Type: "update", FallinUserID: []int{1}, AfterSeq: 1},
-				{Type: "update", FalloutUserID: []int{1}, AfterSeq: 2},
+				{Type: MsgUpdateType, FallinUserID: []int{1}, AfterSeq: 1},
+				{Type: MsgUpdateType, FalloutUserID: []int{1}, AfterSeq: 2},
 			},
 			outGoingMsgs: []interface{}{
 				UpsertMsg{Msg: &TestMsgTypeA{2, 0}},
@@ -784,8 +786,8 @@ func TestTwoSubscribers(t *testing.T) {
 		{
 			description: "15. subscriber1 fallin on id 0(1), subscriber2 fallout on id 0(2)",
 			dBEvents: []TestEvent{
-				{Type: "update", FallinUserID: []int{1}, AfterSeq: 1},
-				{Type: "update", FalloutUserID: []int{2}, AfterSeq: 2},
+				{Type: MsgUpdateType, FallinUserID: []int{1}, AfterSeq: 1},
+				{Type: MsgUpdateType, FalloutUserID: []int{2}, AfterSeq: 2},
 			},
 			outGoingMsgs: []interface{}{
 				UpsertMsg{Msg: &TestMsgTypeA{2, 0}},
@@ -795,7 +797,7 @@ func TestTwoSubscribers(t *testing.T) {
 		{
 			description: "16. subscriber1 fallin on id 0(1), delete id 0(2)",
 			dBEvents: []TestEvent{
-				{Type: "update", FallinUserID: []int{1}, AfterSeq: 1},
+				{Type: MsgUpdateType, FallinUserID: []int{1}, AfterSeq: 1},
 				{Type: MsgDeleteType, BeforeSeq: 1},
 			},
 			outGoingMsgs: []interface{}{
@@ -805,8 +807,8 @@ func TestTwoSubscribers(t *testing.T) {
 		{
 			description: "17. subscriber2 fallin on id 0(1), update on id 0(2)",
 			dBEvents: []TestEvent{
-				{Type: "update", FallinUserID: []int{2}, AfterSeq: 1},
-				{Type: "update", AfterSeq: 2},
+				{Type: MsgUpdateType, FallinUserID: []int{2}, AfterSeq: 1},
+				{Type: MsgUpdateType, AfterSeq: 2},
 			},
 			outGoingMsgs: []interface{}{
 				UpsertMsg{Msg: &TestMsgTypeA{2, 0}},
@@ -816,8 +818,8 @@ func TestTwoSubscribers(t *testing.T) {
 		{
 			description: "18. subscriber2 fallin on id 0(1), subscriber1 fallin on id 0(2)",
 			dBEvents: []TestEvent{
-				{Type: "update", FallinUserID: []int{2}, AfterSeq: 1},
-				{Type: "update", FallinUserID: []int{1}, AfterSeq: 2},
+				{Type: MsgUpdateType, FallinUserID: []int{2}, AfterSeq: 1},
+				{Type: MsgUpdateType, FallinUserID: []int{1}, AfterSeq: 2},
 			},
 			outGoingMsgs: []interface{}{
 				UpsertMsg{Msg: &TestMsgTypeA{2, 0}},
@@ -827,8 +829,8 @@ func TestTwoSubscribers(t *testing.T) {
 		{
 			description: "19. subscriber2 fallin on id 0(1), subscriber1 fallout on id 0(2)",
 			dBEvents: []TestEvent{
-				{Type: "update", FallinUserID: []int{2}, AfterSeq: 1},
-				{Type: "update", FalloutUserID: []int{1}, AfterSeq: 2},
+				{Type: MsgUpdateType, FallinUserID: []int{2}, AfterSeq: 1},
+				{Type: MsgUpdateType, FalloutUserID: []int{1}, AfterSeq: 2},
 			},
 			outGoingMsgs: []interface{}{
 				DeleteMsg{Deleted: "0"},
@@ -838,8 +840,8 @@ func TestTwoSubscribers(t *testing.T) {
 		{
 			description: "20. subscriber2 fallin on id 0(1), subscriber2 fallout on id 0(2)",
 			dBEvents: []TestEvent{
-				{Type: "update", FallinUserID: []int{2}, AfterSeq: 1},
-				{Type: "update", FalloutUserID: []int{2}, AfterSeq: 2},
+				{Type: MsgUpdateType, FallinUserID: []int{2}, AfterSeq: 1},
+				{Type: MsgUpdateType, FalloutUserID: []int{2}, AfterSeq: 2},
 			},
 			outGoingMsgs: []interface{}{
 				UpsertMsg{Msg: &TestMsgTypeA{2, 0}},
@@ -848,7 +850,7 @@ func TestTwoSubscribers(t *testing.T) {
 		{
 			description: "21. subscriber2 fallin on id 0(1), delete id 0(2)",
 			dBEvents: []TestEvent{
-				{Type: "update", FallinUserID: []int{2}, AfterSeq: 1},
+				{Type: MsgUpdateType, FallinUserID: []int{2}, AfterSeq: 1},
 				{Type: MsgDeleteType, BeforeSeq: 1},
 			},
 			outGoingMsgs: []interface{}{
@@ -858,8 +860,8 @@ func TestTwoSubscribers(t *testing.T) {
 		{
 			description: "22. subscriber1 fallout on id 0(1), update on id 0(2)",
 			dBEvents: []TestEvent{
-				{Type: "update", FalloutUserID: []int{1}, AfterSeq: 1},
-				{Type: "update", AfterSeq: 2},
+				{Type: MsgUpdateType, FalloutUserID: []int{1}, AfterSeq: 1},
+				{Type: MsgUpdateType, AfterSeq: 2},
 			},
 			outGoingMsgs: []interface{}{
 				DeleteMsg{Deleted: "0"},
@@ -869,8 +871,8 @@ func TestTwoSubscribers(t *testing.T) {
 		{
 			description: "23. subscriber1 fallout on id 0(1), subscriber1 fallin on id 0(2)",
 			dBEvents: []TestEvent{
-				{Type: "update", FalloutUserID: []int{1}, AfterSeq: 1},
-				{Type: "update", FallinUserID: []int{1}, AfterSeq: 2},
+				{Type: MsgUpdateType, FalloutUserID: []int{1}, AfterSeq: 1},
+				{Type: MsgUpdateType, FallinUserID: []int{1}, AfterSeq: 2},
 			},
 			outGoingMsgs: []interface{}{
 				DeleteMsg{Deleted: "0"},
@@ -881,8 +883,8 @@ func TestTwoSubscribers(t *testing.T) {
 		{
 			description: "24. subscriber1 fallout on id 0(1), subscriber2 fallin on id 0(2)",
 			dBEvents: []TestEvent{
-				{Type: "update", FalloutUserID: []int{1}, AfterSeq: 1},
-				{Type: "update", FallinUserID: []int{2}, AfterSeq: 2},
+				{Type: MsgUpdateType, FalloutUserID: []int{1}, AfterSeq: 1},
+				{Type: MsgUpdateType, FallinUserID: []int{2}, AfterSeq: 2},
 			},
 			outGoingMsgs: []interface{}{
 				DeleteMsg{Deleted: "0"},
@@ -892,8 +894,8 @@ func TestTwoSubscribers(t *testing.T) {
 		{
 			description: "25. subscriber1 fallout on id 0(1), subscriber2 fallout on id 0(2)",
 			dBEvents: []TestEvent{
-				{Type: "update", FalloutUserID: []int{1}, AfterSeq: 1},
-				{Type: "update", FalloutUserID: []int{2}, AfterSeq: 2},
+				{Type: MsgUpdateType, FalloutUserID: []int{1}, AfterSeq: 1},
+				{Type: MsgUpdateType, FalloutUserID: []int{2}, AfterSeq: 2},
 			},
 			outGoingMsgs: []interface{}{
 				DeleteMsg{Deleted: "0"},
@@ -903,7 +905,7 @@ func TestTwoSubscribers(t *testing.T) {
 		{
 			description: "26. subscriber1 fallout on id 0(1), delete id 0(2)",
 			dBEvents: []TestEvent{
-				{Type: "update", FalloutUserID: []int{1}, AfterSeq: 1},
+				{Type: MsgUpdateType, FalloutUserID: []int{1}, AfterSeq: 1},
 				{Type: MsgDeleteType, BeforeSeq: 1},
 			},
 			outGoingMsgs: []interface{}{
@@ -914,8 +916,8 @@ func TestTwoSubscribers(t *testing.T) {
 		{
 			description: "27. subscriber2 fallout on id 0(1), update on id 0(2)",
 			dBEvents: []TestEvent{
-				{Type: "update", FalloutUserID: []int{2}, AfterSeq: 1},
-				{Type: "update", AfterSeq: 2},
+				{Type: MsgUpdateType, FalloutUserID: []int{2}, AfterSeq: 1},
+				{Type: MsgUpdateType, AfterSeq: 2},
 			},
 			outGoingMsgs: []interface{}{
 				UpsertMsg{Msg: &TestMsgTypeA{2, 0}},
@@ -925,8 +927,8 @@ func TestTwoSubscribers(t *testing.T) {
 		{
 			description: "28. subscriber2 fallout on id 0(1), subscriber1 fallin on id 0(2)",
 			dBEvents: []TestEvent{
-				{Type: "update", FalloutUserID: []int{2}, AfterSeq: 1},
-				{Type: "update", FallinUserID: []int{1}, AfterSeq: 2},
+				{Type: MsgUpdateType, FalloutUserID: []int{2}, AfterSeq: 1},
+				{Type: MsgUpdateType, FallinUserID: []int{1}, AfterSeq: 2},
 			},
 			outGoingMsgs: []interface{}{
 				UpsertMsg{Msg: &TestMsgTypeA{2, 0}},
@@ -936,8 +938,8 @@ func TestTwoSubscribers(t *testing.T) {
 		{
 			description: "29. subscriber2 fallout on id 0(1), subscriber2 fallin on id 0(2)",
 			dBEvents: []TestEvent{
-				{Type: "update", FalloutUserID: []int{2}, AfterSeq: 1},
-				{Type: "update", FallinUserID: []int{2}, AfterSeq: 2},
+				{Type: MsgUpdateType, FalloutUserID: []int{2}, AfterSeq: 1},
+				{Type: MsgUpdateType, FallinUserID: []int{2}, AfterSeq: 2},
 			},
 			outGoingMsgs: []interface{}{
 				UpsertMsg{Msg: &TestMsgTypeA{2, 0}},
@@ -948,8 +950,8 @@ func TestTwoSubscribers(t *testing.T) {
 		{
 			description: "30. subscriber2 fallout on id 0(1), subscriber1 fallout on id 0(2)",
 			dBEvents: []TestEvent{
-				{Type: "update", FalloutUserID: []int{2}, AfterSeq: 1},
-				{Type: "update", FalloutUserID: []int{1}, AfterSeq: 2},
+				{Type: MsgUpdateType, FalloutUserID: []int{2}, AfterSeq: 1},
+				{Type: MsgUpdateType, FalloutUserID: []int{1}, AfterSeq: 2},
 			},
 			outGoingMsgs: []interface{}{
 				DeleteMsg{Deleted: "0"},
@@ -959,7 +961,7 @@ func TestTwoSubscribers(t *testing.T) {
 		{
 			description: "31. subscriber2 fallout on id 0(1), delete id 0(2)",
 			dBEvents: []TestEvent{
-				{Type: "update", FalloutUserID: []int{2}, AfterSeq: 1},
+				{Type: MsgUpdateType, FalloutUserID: []int{2}, AfterSeq: 1},
 				{Type: MsgDeleteType, BeforeSeq: 1},
 			},
 			outGoingMsgs: []interface{}{

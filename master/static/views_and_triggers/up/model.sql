@@ -8,12 +8,12 @@ BEGIN
         );
     ELSEIF (TG_OP = 'UPDATE') THEN
         PERFORM stream_model_notify(
-            jsonb_build_object('id', OLD.id, 'workspace_id', OLD.workspace_id, 'user_id', NEW.user_id, 'seq', OLD.seq), 
+            jsonb_build_object('id', OLD.id, 'workspace_id', OLD.workspace_id, 'user_id', OLD.user_id, 'seq', OLD.seq),
             jsonb_build_object('id', NEW.id, 'workspace_id', NEW.workspace_id, 'user_id', NEW.user_id, 'seq', NEW.seq)
         );
     ELSEIF (TG_OP = 'DELETE') THEN
         PERFORM stream_model_notify(
-            jsonb_build_object('id', OLD.id, 'workspace_id', OLD.workspace_id, 'user_id', NEW.user_id, 'seq', OLD.seq), NULL
+            jsonb_build_object('id', OLD.id, 'workspace_id', OLD.workspace_id, 'user_id', OLD.user_id, 'seq', OLD.seq), NULL
         );
         -- DELETEs trigger BEFORE, and must return a non-NULL value.
         return OLD;
@@ -90,7 +90,7 @@ BEGIN
         );
         PERFORM stream_model_version_notify(o, n);
     ELSEIF (TG_OP = 'DELETE') THEN
-        PERFORM stream_model_version_notify('id', OLD.id, NULL);
+        PERFORM stream_model_version_notify(jsonb_build_object('id', OLD.id), NULL);
         -- DELETEs trigger BEFORE, and must return a non-NULL value.
         return OLD;
     END IF;
