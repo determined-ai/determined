@@ -47,6 +47,10 @@ define one or more additional resource managers. Default resource managers are d
    -  Ensure each additional resource manager has at least one resource pool defined.
    -  Resource pool names must be unique across the cluster to prevent crashes.
 
+.. note::
+
+   If desired, you can apply a `name` to the default resource manager.
+
 #. Locate the ``resource_manager`` section in the :ref:`master configuration
    <master-config-reference>` yaml file. This represents the default resource manager.
 #. Add ``additional_resource_managers`` under the ``resource_manager`` to configure extra resource
