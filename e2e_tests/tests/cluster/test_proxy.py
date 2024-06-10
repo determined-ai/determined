@@ -104,8 +104,8 @@ def _ray_job_submit(exp_path: pathlib.Path, port: int = 8265) -> None:
         (6000, True),
     ],
 )
-def test_experiment_proxy_simple_single_slot(port_map: Tuple[int, bool]) -> None:
-    return _test_experiment_proxy_simple(port_map, slots=0)
+def test_experiment_proxy_simple_zero_slot(port_map: Tuple[int, bool]) -> None:
+    return _test_experiment_proxy_simple(port_map, slots=0, max_conc_trials=2)
 
 
 @pytest.mark.port_registry  # has multiple slots
@@ -119,11 +119,28 @@ def test_experiment_proxy_simple_single_slot(port_map: Tuple[int, bool]) -> None
         (6000, True),
     ],
 )
-def test_experiment_proxy_simple_two_slots(port_map: Tuple[int, bool]) -> None:
-    return _test_experiment_proxy_simple(port_map, slots=2)
+def test_experiment_proxy_simple_two_slots_single_trial(port_map: Tuple[int, bool]) -> None:
+    return _test_experiment_proxy_simple(port_map, slots=2, max_conc_trials=1)
 
 
-def _test_experiment_proxy_simple(port_map: Tuple[int, bool], slots: int) -> None:
+@pytest.mark.port_registry  # has multiple slots
+@pytest.mark.e2e_multi_k8s
+@pytest.mark.timeout(600)
+@pytest.mark.parametrize(
+    "port_map",
+    [
+        # exp_port, is_tcp
+        (8000, False),
+        (6000, True),
+    ],
+)
+def test_experiment_proxy_simple_two_slots_multi_trial(port_map: Tuple[int, bool]) -> None:
+    return _test_experiment_proxy_simple(port_map, slots=2, max_conc_trials=2)
+
+
+def _test_experiment_proxy_simple(
+    port_map: Tuple[int, bool], slots: int, max_conc_trials: int
+) -> None:
     exp_port, is_tcp = port_map
     listen_port = 23424
     sess = api_utils.user_session()
@@ -132,7 +149,12 @@ def _test_experiment_proxy_simple(port_map: Tuple[int, bool], slots: int) -> Non
         sess,
         str(exp_path / "config.yaml"),
         str(exp_path),
-        ["--config", f"resources.slots_per_trial={slots}"],
+        [
+            "--config",
+            f"resources.slots_per_trial={slots}",
+            "--config",
+            f"searcher.max_concurrent_trials={max_conc_trials}",
+        ],
     )
     try:
         exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.RUNNING)
