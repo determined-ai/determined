@@ -1,7 +1,7 @@
 .. _controller-reviews:
 
 #############################
- Gateway API Implementations 
+ Gateway API Implementations
 #############################
 
 This document is a survey of the Gateway API controllers that are available and listed by the `SIG
