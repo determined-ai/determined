@@ -185,17 +185,7 @@ func runHpToSQL(c string, filterColumnType *string, filterValue *interface{},
 		queryColumnType = *filterColumnType
 	}
 	var queryArgs []interface{}
-	hp := strings.Split(strings.TrimPrefix(c, "hp."), ".")
-	for i := 0; i < len(hp); i++ {
-		queryArgs = append(queryArgs, hp[i])
-		// for last element
-		if i == len(hp)-1 {
-			hp[i] = ">?"
-		} else {
-			hp[i] = "?"
-		}
-	}
-	hpQuery := strings.Join(hp, "->")
+	runHparam := strings.TrimPrefix(c, "hp.")
 	oSQL, err := o.toSQL()
 	if err != nil {
 		return nil, err
@@ -203,29 +193,44 @@ func runHpToSQL(c string, filterColumnType *string, filterValue *interface{},
 	var queryString string
 	switch o {
 	case empty:
-		queryString = fmt.Sprintf(`r.hparams->%s IS NULL`, hpQuery)
+		queryString = fmt.Sprintf(`r.id NOT IN (SELECT run_id FROM run_hparams WHERE hparam='%s')`, runHparam)
 	case notEmpty:
-		queryString = fmt.Sprintf(`r.hparams->%s IS NOT NULL`, hpQuery)
+		queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM run_hparams WHERE hparam='%s')`, runHparam)
 	case contains:
 		queryArgs = append(queryArgs, queryValue)
 		if queryColumnType == projectv1.ColumnType_COLUMN_TYPE_NUMBER.String() {
-			queryString = fmt.Sprintf(`(r.hparams->%s)::float8 = %s`, hpQuery, "?")
+			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM run_hparams WHERE hparam='%s' AND number_val=%s)`,
+				runHparam, "?")
+		} else if queryColumnType == projectv1.ColumnType_COLUMN_TYPE_TEXT.String() {
+			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM run_hparams WHERE hparam='%s' AND text_val LIKE %s)`,
+				runHparam, "?")
 		} else {
-			queryString = fmt.Sprintf(`r.hparams->%s LIKE %s`, hpQuery, "?")
+			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM run_hparams WHERE hparam='%s' AND bool_val=%s)`,
+				runHparam, "?")
 		}
 	case doesNotContain:
 		queryArgs = append(queryArgs, queryValue)
 		if queryColumnType == projectv1.ColumnType_COLUMN_TYPE_NUMBER.String() {
-			queryString = fmt.Sprintf(`(r.hparams->%s)::float8 != %s`, hpQuery, "?")
+			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM run_hparams WHERE hparam='%s' AND number_val!=%s)`,
+				runHparam, "?")
+		} else if queryColumnType == projectv1.ColumnType_COLUMN_TYPE_TEXT.String() {
+			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM run_hparams WHERE hparam='%s' AND text_val NOT LIKE %s)`,
+				runHparam, "?")
 		} else {
-			queryString = fmt.Sprintf(`r.hparams->%s NOT LIKE %s`, hpQuery, "?")
+			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM run_hparams WHERE hparam='%s' AND bool_val!=%s)`,
+				runHparam, "?")
 		}
 	default:
 		queryArgs = append(queryArgs, bun.Safe(oSQL), queryValue)
 		if queryColumnType == projectv1.ColumnType_COLUMN_TYPE_NUMBER.String() {
-			queryString = fmt.Sprintf(`(r.hparams->%s)::float8 %s %s`, hpQuery, "?", "?")
+			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM run_hparams WHERE hparam='%s' AND number_val %s %s)`,
+				runHparam, "?", "?")
+		} else if queryColumnType == projectv1.ColumnType_COLUMN_TYPE_TEXT.String() {
+			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM run_hparams WHERE hparam='%s' AND text_val %s %s)`,
+				runHparam, "?", "?")
 		} else {
-			queryString = fmt.Sprintf(`r.hparams->%s %s %s`, hpQuery, "?", "?")
+			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM run_hparams WHERE hparam='%s' AND bool_val %s %s)`,
+				runHparam, "?", "?")
 		}
 	}
 
