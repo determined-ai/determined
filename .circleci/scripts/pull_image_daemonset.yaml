@@ -25,4 +25,4 @@ spec:
       # it may be desirable to set a high priority class to ensure that a DaemonSet Pod
       # preempts running Pods
       priorityClassName: important
-      terminationGracePeriodSeconds: 30s
+      terminationGracePeriodSeconds: 30
