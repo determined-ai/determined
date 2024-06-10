@@ -14,6 +14,7 @@ import (
 	alphaGateway "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned/typed/apis/v1alpha2"
 
 	"github.com/determined-ai/determined/master/internal/config"
+	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 // I wanted to do this all in patches, but Gateways don't yet support strategic merge patch.
@@ -33,11 +34,8 @@ type gatewayService struct {
 type gatewayResourceComm struct {
 	requestedPorts     int
 	resourceDescriptor proxyResourceGenerator
+	allocationID       model.AllocationID
 	reportResources    func([]gatewayProxyResource)
-}
-
-func genSectionName(gwPort int) string {
-	return fmt.Sprintf("section-%d", gwPort)
 }
 
 func newGatewayService(
@@ -62,7 +60,7 @@ func newGatewayService(
 // PortMap is a map of internal pod ports to external gateway ports.
 type PortMap map[int]int
 
-func (g *gatewayService) generateAndAddListeners(count int) ([]int, error) {
+func (g *gatewayService) generateAndAddListeners(allocationID model.AllocationID, count int) ([]int, error) {
 	var ports []int
 	if err := g.updateGateway(func(gateway *gatewayTyped.Gateway) error {
 		var err error
@@ -72,7 +70,7 @@ func (g *gatewayService) generateAndAddListeners(count int) ([]int, error) {
 			return err
 		}
 		for i := 0; i < count; i++ {
-			listeners[i] = createListenerForPod(ports[i])
+			listeners[i] = createListenerForPod(allocationID, ports[i])
 		}
 		gateway.Spec.Listeners = append(gateway.Spec.Listeners, listeners...)
 		return nil
@@ -114,6 +112,33 @@ func (g *gatewayService) freePorts(ports []int) error {
 		return fmt.Errorf("freeing ports %v from gateway: %w", ports, err)
 	}
 	return nil
+}
+
+func (g *gatewayService) getProxyPorts(allocationID *model.AllocationID) ([]int, error) {
+	g.mu.Lock()
+	defer g.mu.Unlock()
+
+	gateway, err := g.gatewayInterface.Get(context.TODO(), g.gatewayName, metaV1.GetOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("getting gateway for proxy ports: %w", err)
+	}
+
+	var ports []int
+	for _, listener := range gateway.Spec.Listeners {
+		listenerName := string(listener.Name)
+		if !listenerIsDetermined(listenerName) { // Always ignore non Determined gateways.
+			continue
+		}
+
+		if allocationID != nil &&
+			model.AllocationID(getAllocationIDFromListenerName(listenerName)) != *allocationID {
+			continue
+		}
+
+		ports = append(ports, int(listener.Port))
+	}
+
+	return ports, nil
 }
 
 /*

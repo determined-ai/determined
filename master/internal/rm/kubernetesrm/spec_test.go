@@ -116,10 +116,12 @@ func TestConfigureProxyResources(t *testing.T) {
 			CommonRouteSpec: alphaGatewayTyped.CommonRouteSpec{
 				ParentRefs: []alphaGatewayTyped.ParentReference{
 					{
-						Namespace:   ptrs.Ptr(alphaGatewayTyped.Namespace("gatewaynamespace")),
-						Name:        alphaGatewayTyped.ObjectName("gatewayname"),
-						Port:        ptrs.Ptr(alphaGatewayTyped.PortNumber(12345)),
-						SectionName: ptrs.Ptr(alphaGatewayTyped.SectionName(genSectionName(12345))),
+						Namespace: ptrs.Ptr(alphaGatewayTyped.Namespace("gatewaynamespace")),
+						Name:      alphaGatewayTyped.ObjectName("gatewayname"),
+						Port:      ptrs.Ptr(alphaGatewayTyped.PortNumber(12345)),
+						SectionName: ptrs.Ptr(alphaGatewayTyped.SectionName(
+							generateListenerName("allocID", 12345),
+						)),
 					},
 				},
 			},
@@ -139,7 +141,7 @@ func TestConfigureProxyResources(t *testing.T) {
 		},
 	}
 
-	listener := createListenerForPod(12345)
+	listener := createListenerForPod("allocID", 12345)
 
 	require.Equal(t, []gatewayProxyResource{
 		{
@@ -264,6 +266,65 @@ func TestAddDisallowedNodesToPodSpec(t *testing.T) {
 			NodeSelectorTerms[0].
 			MatchFields, e)
 	}
+}
+
+func TestDetProxyThroughGatewayEnv(t *testing.T) {
+	env := expconf.EnvironmentConfig{
+		RawEnvironmentVariables: &expconf.EnvironmentVariablesMap{
+			RawCPU: []string{},
+		},
+	}
+
+	t.Run("with gateway", func(t *testing.T) {
+		j := job{
+			exposeProxyConfig: &config.InternalTaskGatewayConfig{},
+		}
+
+		actual, err := j.configureEnvVars(make(map[string]string), env, device.CPU)
+		require.NoError(t, err)
+		require.Contains(t, actual, k8sV1.EnvVar{Name: "DET_PROXY_THROUGH_GATEWAY", Value: "true"})
+	})
+
+	t.Run("without gateway", func(t *testing.T) {
+		j := job{
+			exposeProxyConfig: nil,
+		}
+
+		actual, err := j.configureEnvVars(make(map[string]string), env, device.CPU)
+		require.NoError(t, err)
+		var keys []string
+		for _, a := range actual {
+			keys = append(keys, a.Name)
+		}
+		require.NotContains(t, keys, "DET_PROXY_THROUGH_GATEWAY")
+	})
+}
+
+func TestStripIndexFromSharedName(t *testing.T) {
+	require.Equal(t, "1-2-3", stripIndexFromSharedName("1-2-3-4"))
+	require.Equal(t, "", stripIndexFromSharedName("-"))
+	require.Equal(t, "", stripIndexFromSharedName(""))
+}
+
+func TestListenerName(t *testing.T) {
+	t.Run("allocationID", func(t *testing.T) {
+		allocationID := "abc-cde"
+		require.Equal(t, allocationID, getAllocationIDFromListenerName(
+			generateListenerName(model.AllocationID(allocationID), 1234),
+		))
+	})
+
+	t.Run("non determined", func(t *testing.T) {
+		require.Empty(t, getAllocationIDFromListenerName("mygatewayport"))
+	})
+
+	t.Run("invalid format", func(t *testing.T) {
+		require.Empty(t, getAllocationIDFromListenerName("mygatewayport"))
+	})
+
+	t.Run("invalid format", func(t *testing.T) {
+		require.Empty(t, getAllocationIDFromListenerName("det-"))
+	})
 }
 
 func TestLaterEnvironmentVariablesGetSet(t *testing.T) {
