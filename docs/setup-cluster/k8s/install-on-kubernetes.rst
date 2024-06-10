@@ -18,15 +18,22 @@ using the `Determined Helm Chart <https://helm.determined.ai/>`__.
 When the Determined Helm chart is installed, the following entities will be created:
 
 -  Deployment of the Determined master.
+
 -  ConfigMap containing configurations for the Determined master.
+
 -  LoadBalancer service to make the Determined master accessible. Later in this guide, we describe
    how it is possible to replace this with a NodePort service.
+
 -  ServiceAccount which will be used by the Determined master.
+
 -  Deployment of a Postgres database. Later in this guide, we describe how an external database can
    be used instead.
+
 -  PersistentVolumeClaim for the Postgres database. Omitted if using an external database.
+
 -  Service to allow the Determined master to communicate with the Postgres database. Omitted if
    using an external database.
+
 -  In case of multiple resource pools and in each external-to-master clusters:
 
    -  Gateway service to allow north-south access to Determined proxied tasks in external-to-master

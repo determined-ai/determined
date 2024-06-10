@@ -8,9 +8,20 @@
 Determined jobs running on remote K8s clusters to Determined master and proxies. This is useful for
 multi-resource manager setups.
 
-The overall setup includes setting up a Gateway controller in the K8s cluster external to Determined
-and configuring the Determined master to use the Gateway controller. Please refer to the sections
-below to see the configuration changes and controller requirements.
+The overall setup includes installing and configuring a Gateway controller in the K8s cluster
+external to Determined and configuring the Determined master to use the Gateway controller. Please
+refer to the sections below to see the configuration changes and controller requirements.
+
+.. warning::
+
+   This feature exposes Determined tasks to the outside world. Please ensure that you have the
+   necessary security measures in place to limit access to the exposed tasks. This could include
+   setting up a firewall, using a VPN, IP whitelisting, or other security measures.
+
+Limitations:
+
+-  Exposing proxies in multi-slot jobs is not supported. Currently this only includes experiments
+   running distributed training that want to manually expose proxies to the outside world.
 
 ###################################
  Controller Support - Requirements
@@ -106,13 +117,7 @@ that is needed is for Det master to be sitting external to the target cluster.
  Release Notes
 ###############
 
-TBD - Mention docs - Mention current limitations?
+TBD
 
-######
- TODO
-######
-
--  Update setup guide on multirm
--  Update k8s architecture docs? to include we will deploy services/routes
--  Update Carolina’s bug bash docs to include notebook testing
--  Helm install path?
+-  Mention docs
+-  Mention current limitations?
