@@ -329,7 +329,7 @@ func TestDeleteWorkspaceNamespaceBindings(t *testing.T) {
 		&tx)
 	require.NoError(t, err)
 	require.Equal(t, len(expectedMassDeletedBindings), len(deletedBindings))
-	require.EqualValues(t, expectedMassDeletedBindings, deletedBindings)
+	require.ElementsMatch(t, expectedMassDeletedBindings, deletedBindings)
 
 	for _, binding := range expectedBindings {
 		namespace := binding.Namespace

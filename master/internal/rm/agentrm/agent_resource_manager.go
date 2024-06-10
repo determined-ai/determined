@@ -580,6 +580,14 @@ func (a *ResourceManager) VerifyNamespaceExists(string, string) error {
 		rmerrors.ErrNotSupported)
 }
 
+// DeleteNamespace is not supported.
+func (a *ResourceManager) DeleteNamespace(namespaceName string) error {
+	// We don't want to error out when this gets called, because the function cannot get called
+	// because of an API request to delete the namespace. It is only used internally to clean up
+	// namespaces created for workspaces that no longer exist.
+	return nil
+}
+
 func (a *ResourceManager) createResourcePool(
 	db db.DB, config config.ResourcePoolConfig, cert *tls.Certificate,
 ) (*resourcePool, error) {

@@ -65,6 +65,9 @@ const (
 
 	resourceTypeNvidia = "nvidia.com/gpu"
 	defaultNamespace   = "default"
+	// ReleaseNamespaceEnvVar is the name of the environment variable within a pod running the
+	// master service containing the namespace in which determined was deployed.
+	ReleaseNamespaceEnvVar = "DET_RELEASE_NAMESPACE"
 )
 
 type summarizeResult struct {
@@ -392,8 +395,9 @@ func (j *jobsService) getMasterIPAndPort() error {
 		// outside of this cluster (happens in development or when we spread across multiple k8s clusters).
 		return nil
 	}
-	masterService, err := j.clientSet.CoreV1().Services(j.namespace).Get(
-		context.TODO(), j.masterServiceName, metaV1.GetOptions{})
+	masterService, err := j.clientSet.CoreV1().
+		Services(os.Getenv(ReleaseNamespaceEnvVar)).
+		Get(context.TODO(), j.masterServiceName, metaV1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to get master service: %w", err)
 	}
@@ -653,6 +657,12 @@ func (j *jobsService) VerifyNamespaceExists(namespaceName string) error {
 	j.mu.Lock()
 	defer j.mu.Unlock()
 	return j.verifyNamespaceExists(namespaceName)
+}
+
+func (j *jobsService) DeleteNamespace(namespaceName string) error {
+	j.mu.Lock()
+	defer j.mu.Lock()
+	return j.deleteNamespace(namespaceName)
 }
 
 type reattachJobRequest struct {
@@ -2117,6 +2127,15 @@ func (j *jobsService) verifyNamespaceExists(namespaceName string) error {
 		worker.podInterface = j.podInterfaces
 		worker.configMapInterfaces = j.configMapInterfaces
 		worker.jobInterface = j.jobInterfaces
+	}
+	return nil
+}
+
+func (j *jobsService) deleteNamespace(namespaceName string) error {
+	err := j.clientSet.CoreV1().Namespaces().Delete(context.TODO(), namespaceName,
+		metaV1.DeleteOptions{})
+	if err != nil && !strings.Contains(err.Error(), "not found") {
+		return err
 	}
 	return nil
 }

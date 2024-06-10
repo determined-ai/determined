@@ -405,6 +405,14 @@ func (m *MultiRMRouter) VerifyNamespaceExists(namespaceName string,
 	return nil
 }
 
+// DeleteNamespace deletes the given namespace (if it exists) in all Kubernetes clusters referenced
+// by resource managers in the current determined deployment.
+func (m *MultiRMRouter) DeleteNamespace(namespaceName string) error {
+	return m.fanOutRMCommand(func(rm rm.ResourceManager) error {
+		return rm.DeleteNamespace(namespaceName)
+	})
+}
+
 func (m *MultiRMRouter) getRMName(rpName rm.ResourcePoolName) (string, error) {
 	// If not given RP name, route to default RM.
 	if rpName == "" {
@@ -455,4 +463,22 @@ func fanOutRMCall[TReturn any](m *MultiRMRouter, f func(rm.ResourceManager) (TRe
 		return nil, err
 	}
 	return res, nil
+}
+
+func (m *MultiRMRouter) fanOutRMCommand(f func(rm.ResourceManager) error) error {
+	var eg errgroup.Group
+	for _, rm := range maps.Values(m.rms) {
+		rm := rm
+		eg.Go(func() error {
+			err := f(rm)
+			if err != nil {
+				return err
+			}
+			return nil
+		})
+	}
+	if err := eg.Wait(); err != nil {
+		return err
+	}
+	return nil
 }
