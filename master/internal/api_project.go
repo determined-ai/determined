@@ -822,7 +822,7 @@ func (a *apiServer) PatchProject(
 		req.Project,
 	)
 	if err != nil && errors.Is(err, db.ErrNotFound) {
-		return nil, api.NotFoundErrs("project", fmt.Sprint(int(req.Id)), true)
+		return nil, api.NotFoundErrs("project", strconv.Itoa(int(req.Id)), true)
 	} else if err != nil {
 		log.WithError(err).Errorf("failed to update project %d", req.Id)
 		return nil, err

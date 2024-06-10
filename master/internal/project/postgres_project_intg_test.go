@@ -8,9 +8,9 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/wrapperspb"
-	"gopkg.in/oauth2.v3/utils/uuid"
 	"gotest.tools/assert"
 
 	internaldb "github.com/determined-ai/determined/master/internal/db"
@@ -21,13 +21,13 @@ import (
 
 func TestProjectByName(t *testing.T) {
 	require.NoError(t, etc.SetRootPath(internaldb.RootFromDB))
-	db, closeDB := internaldb.MustResolveTestPostgres(t)
+	testDB, closeDB := internaldb.MustResolveTestPostgres(t)
 	defer closeDB()
-	internaldb.MustMigrateTestPostgres(t, db, internaldb.MigrationsFromDB)
+	internaldb.MustMigrateTestPostgres(t, testDB, internaldb.MigrationsFromDB)
 
 	// add a workspace, and project
-	workspaceID, workspaceName := internaldb.RequireMockWorkspaceID(t, db, "")
-	projectID, projectName := internaldb.RequireMockProjectID(t, db, workspaceID, false)
+	workspaceID, workspaceName := internaldb.RequireMockWorkspaceID(t, testDB, "")
+	projectID, projectName := internaldb.RequireMockProjectID(t, testDB, workspaceID, false)
 
 	t.Run("valid project name", func(t *testing.T) {
 		actualProjectID, err := ProjectByName(context.Background(), workspaceName, projectName)
@@ -42,7 +42,7 @@ func TestProjectByName(t *testing.T) {
 
 	t.Run("archived project", func(t *testing.T) {
 		// add archived project to workspace
-		_, archivedProjectName := internaldb.RequireMockProjectID(t, db, workspaceID, true)
+		_, archivedProjectName := internaldb.RequireMockProjectID(t, testDB, workspaceID, true)
 		_, err := ProjectByName(context.Background(), workspaceName, archivedProjectName)
 		require.Error(t, err)
 	})
@@ -50,9 +50,9 @@ func TestProjectByName(t *testing.T) {
 
 func TestGetProjectByKey(t *testing.T) {
 	require.NoError(t, etc.SetRootPath(internaldb.RootFromDB))
-	db, close := internaldb.MustResolveTestPostgres(t)
+	testDB, close := internaldb.MustResolveTestPostgres(t)
 	defer close()
-	internaldb.MustMigrateTestPostgres(t, db, internaldb.MigrationsFromDB)
+	internaldb.MustMigrateTestPostgres(t, testDB, internaldb.MigrationsFromDB)
 
 	// add a workspace, and project
 	user := model.User{
@@ -64,8 +64,8 @@ func TestGetProjectByKey(t *testing.T) {
 		&user,
 	)
 	require.NoError(t, err)
-	workspaceID, _ := internaldb.RequireMockWorkspaceID(t, db, "")
-	projectID, _ := internaldb.RequireMockProjectID(t, db, workspaceID, false)
+	workspaceID, _ := internaldb.RequireMockWorkspaceID(t, testDB, "")
+	projectID, _ := internaldb.RequireMockProjectID(t, testDB, workspaceID, false)
 
 	t.Run("valid project key", func(t *testing.T) {
 		key := uuid.Must(uuid.NewRandom()).String()[:MaxProjectKeyLength]
@@ -90,13 +90,13 @@ func TestGetProjectByKey(t *testing.T) {
 
 func TestUpdateProjectKey(t *testing.T) {
 	require.NoError(t, etc.SetRootPath(internaldb.RootFromDB))
-	db, close := internaldb.MustResolveTestPostgres(t)
+	testDB, close := internaldb.MustResolveTestPostgres(t)
 	defer close()
-	internaldb.MustMigrateTestPostgres(t, db, internaldb.MigrationsFromDB)
+	internaldb.MustMigrateTestPostgres(t, testDB, internaldb.MigrationsFromDB)
 
 	// add a workspace, and project
-	workspaceID, _ := internaldb.RequireMockWorkspaceID(t, db, "")
-	projectID, _ := internaldb.RequireMockProjectID(t, db, workspaceID, false)
+	workspaceID, _ := internaldb.RequireMockWorkspaceID(t, testDB, "")
+	projectID, _ := internaldb.RequireMockProjectID(t, testDB, workspaceID, false)
 
 	user := model.User{
 		Username: uuid.Must(uuid.NewRandom()).String(),

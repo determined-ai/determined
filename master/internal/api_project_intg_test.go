@@ -343,7 +343,7 @@ func TestAuthZRoutesGetProjectThenAction(t *testing.T) {
 			Return(authz2.PermissionDeniedError{}).Once()
 		err = curCase.IDToReqCall(projectID)
 		require.Error(t, err)
-		require.Equal(t, apiPkg.NotFoundErrs("project", fmt.Sprint(projectID), true).Error(),
+		require.Equal(t, apiPkg.NotFoundErrs("project", strconv.Itoa(projectID), true).Error(),
 			err.Error())
 
 		// Error checking if project errors during view check.
