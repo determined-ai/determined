@@ -225,14 +225,13 @@ func (p *Publisher[T]) Broadcast(events []Event[T], idToSaturatedMsg map[int]*Up
 
 					if saturatedMsg, ok := idToSaturatedMsg[afterMsg.GetID()]; ok {
 						cachedSeq := saturatedMsg.SeqNum()
-						if cachedSeq == afterMsg.SeqNum() {
-							msg = sub.Streamer.PrepareFn(saturatedMsg)
-						} else {
+						if cachedSeq != afterMsg.SeqNum() {
 							if isInsert || isFallin {
 								userNotKnownIDs.Insert(afterMsg.GetID())
 							}
 							continue
 						}
+						msg = sub.Streamer.PrepareFn(saturatedMsg)
 					} else {
 						if isInsert || isFallin {
 							userNotKnownIDs.Insert(afterMsg.GetID())
