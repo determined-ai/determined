@@ -27,6 +27,11 @@ When the Determined Helm chart is installed, the following entities will be crea
 -  PersistentVolumeClaim for the Postgres database. Omitted if using an external database.
 -  Service to allow the Determined master to communicate with the Postgres database. Omitted if
    using an external database.
+-  In case of multiple resource pools and in each external-to-master clusters:
+      -  Gateway service to allow north-south access to Determined proxied tasks in
+         external-to-master clusters.
+      -  Service to expose proxied ports on Determined jobs.
+      -  TCPRoute to attach the gateway service the proxied ports service.
 
 ***************
  Prerequisites
