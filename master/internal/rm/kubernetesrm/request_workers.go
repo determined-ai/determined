@@ -104,7 +104,9 @@ func (r *requestProcessingWorker) receiveCreateKubernetesResources(
 	// Do we / should we delete created resources?
 	if msg.gw != nil {
 		if msg.gw.requestedPorts > 0 {
-			if ports, err = r.gatewayService.generateAndAddListeners(msg.gw.requestedPorts); err != nil {
+			if ports, err = r.gatewayService.generateAndAddListeners(
+				msg.gw.allocationID, msg.gw.requestedPorts,
+			); err != nil {
 				r.syslog.WithError(err).Errorf("error patching gateway for job %s", msg.jobSpec.Name)
 				r.failures <- resourceCreationFailed{jobName: msg.jobSpec.Name, err: err}
 				return
