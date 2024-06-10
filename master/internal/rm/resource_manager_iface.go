@@ -56,6 +56,7 @@ type ResourceManager interface {
 	// Kubernetes Namespaces.
 	DefaultNamespace(string) (*string, error)
 	VerifyNamespaceExists(string, string) error
+	DeleteNamespace(string) error
 }
 
 // ResourcePoolName holds the name of the resource pool, and describes the input/output
