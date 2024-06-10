@@ -18,7 +18,7 @@ below to see the configuration changes and controller requirements.
 High-level requirements from the controller implementations are: - Supports Gateway APIs > v1 -
 Supports TCPRoute and level 4 routing support
 
-TODO inline: supported controllers list from the attached markdown file. `./controller-reviews.md`
+Take a look at our current survey of the existing implementations here: :doc:`controller-reviews`
 
 In these docs, we'll be using Contour from Project Contour.
 
