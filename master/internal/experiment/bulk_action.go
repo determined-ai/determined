@@ -832,7 +832,7 @@ func MoveExperiments(
 			(
 				SELECT
 					r.id as id,
-					(p.max_local_id + ROW_NUMBER() OVER(PARTITION BY p.id ORDER BY p.id)) as local_id
+					(p.max_local_id + ROW_NUMBER() OVER(PARTITION BY p.id ORDER BY r.id)) as local_id
 				FROM
 					projects p
 					JOIN runs r ON r.project_id=p.id
