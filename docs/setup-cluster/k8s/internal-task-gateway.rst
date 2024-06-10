@@ -72,26 +72,28 @@ under `internal_task_gateway` key under each of the desired resource manager con
 This is represented by Go package `config.InternalTaskGatewayConfig` defined in
 `master/internal/config/resource_manager_config.go`
 
-.. code:: go
+.. code:: yaml
 
-   // InternalTaskGatewayConfig is config for exposing Determined tasks to outside of the cluster.
-   // Useful for multirm when we can only be running in a single cluster.
-   type InternalTaskGatewayConfig struct {
-       // GatewayName as defined in the k8s cluster.
-       GatewayName string `json:"gateway_name"`
-       // GatewayNamespace as defined in the k8s cluster.
-       GatewayNamespace string `json:"gateway_namespace"`
-       GatewayIP        string `json:"gateway_ip"`
-       // GWPortStart denotes the inclusive start of the available and exclusive port range to
-       // MLDE for InternalTaskGateway.
-       GWPortStart int `json:"gateway_port_range_start"`
-       // GWPortEnd denotes the inclusive end of the available and exclusive port range to
-       // MLDE for InternalTaskGateway.
-       GWPortEnd int `json:"gateway_port_range_end"`
-   }
+   internal_task_gateway:
+     # GatewayName as defined in the k8s cluster.
+     gateway_name: <GatewayName>
 
-Note that the valid port range starts from 1025 to 65535, inclusive. - CHECK: might want to set max
-aux containers < min(this and port range)
+     # GatewayNamespace as defined in the k8s cluster.
+     gateway_namespace: <GatewayNamespace>
+
+     # GatewayIP as defined in the k8s cluster.
+     gateway_ip: <GatewayIP>
+
+     # GWPortStart denotes the inclusive start of the available and exclusive port range to
+     # MLDE for InternalTaskGateway.
+     gateway_port_range_start: <GWPortStart>
+
+     # GWPortEnd denotes the inclusive end of the available and exclusive port range to
+     # MLDE for InternalTaskGateway.
+     gateway_port_range_end: <GWPortEnd>
+
+-  Valid port range starts from 1025 to 65535, inclusive.
+-  GatewayIP is the IP address of the Gateway controller that is visible to the Determined master.
 
 *********
  Gateway
@@ -104,6 +106,10 @@ can be actively proxied.
 
 Note that when configuring this number you might hit K8s validation complexity thresholds checks.
 This can be configured and is dependent on each K8s cluster's requirements and setup.
+
+For example to up the number from allowed listeners to 128, you can modify the CRD at the given path
+above and `kubectl apply -f <path-to-crd>`. Make sure to set the value for the version of the spec
+that your Gateway API is going to use.
 
 ################
  Other Dev Docs

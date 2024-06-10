@@ -4,7 +4,8 @@
  Gateway API Controller Survey
 ###############################
 
-https://gateway-api.sigs.k8s.io/implementations/#haproxy-kubernetes-ingress-controller
+This document is a survey of the Gateway API controllers that are available and listed by the `SIG
+here <https://gateway-api.sigs.k8s.io/implementations/#haproxy-kubernetes-ingress-controller>`_
 
 *********
  Contour
@@ -21,6 +22,10 @@ https://projectcontour.io/docs/1.29/guides/gateway-api/
 ***************
 
 https://gateway.envoyproxy.io/latest/tasks/traffic/tcp-routing/
+
+####################
+ Support Not Tested
+####################
 
 ********
  Cilium
