@@ -426,7 +426,7 @@ func publishLoop[T stream.Msg](
 						return err
 					}
 					events = append(events, event)
-					eventCount += 1
+					eventCount++
 					keepGoing = eventCount < maxEventCount
 				default:
 					keepGoing = false

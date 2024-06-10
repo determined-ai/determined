@@ -6,9 +6,10 @@ import (
 	"reflect"
 	"sync"
 
-	"github.com/determined-ai/determined/master/pkg/set"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
+
+	"github.com/determined-ai/determined/master/pkg/set"
 )
 
 // Msg is an object with a message and a sequence number and json marshal caching.

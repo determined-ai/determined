@@ -264,7 +264,7 @@ func ModelVersionMakePermissionFilter(ctx context.Context, user model.User) (fun
 	}
 }
 
-// ModelMakeHydrator returns a function that gets properties of a model version by
+// ModelVersionMakeHydrator returns a function that gets properties of a model version by
 // its id.
 func ModelVersionMakeHydrator() func(*ModelVersionMsg) (*ModelVersionMsg, error) {
 	return func(msg *ModelVersionMsg) (*ModelVersionMsg, error) {

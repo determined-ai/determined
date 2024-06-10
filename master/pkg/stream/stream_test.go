@@ -13,6 +13,7 @@ const (
 	TestMsgADeleteKey = "testmsgA_deleted"
 	TestMsgBUpsertKey = "testmsgB"
 	TestMsgBDeleteKey = "testmsgB_deleted"
+	MsgDeleteType     = "delete"
 )
 
 type TestMsgTypeA struct {
@@ -53,19 +54,19 @@ func (tm *TestMsgTypeB) GetID() int {
 	return tm.ID
 }
 
-func (em *TestMsgTypeB) SeqNum() int64 {
-	return em.Seq
+func (tm *TestMsgTypeB) SeqNum() int64 {
+	return tm.Seq
 }
 
-func (em *TestMsgTypeB) UpsertMsg() *UpsertMsg {
+func (tm *TestMsgTypeB) UpsertMsg() *UpsertMsg {
 	return &UpsertMsg{
 		JSONKey: TestMsgBUpsertKey,
-		Msg:     em,
+		Msg:     tm,
 	}
 }
 
-func (em *TestMsgTypeB) DeleteMsg() *DeleteMsg {
-	deleted := strconv.Itoa(em.ID)
+func (tm *TestMsgTypeB) DeleteMsg() *DeleteMsg {
+	deleted := strconv.Itoa(tm.ID)
 	return &DeleteMsg{
 		Key:     TestMsgBDeleteKey,
 		Deleted: deleted,
@@ -95,23 +96,26 @@ func trueAfterN[T Msg](n int) func(T) bool {
 func msgFilter[T Msg](t *testing.T, fallinSeq int64, falloutSeq int64) func(T) bool {
 	return func(msg T) bool {
 		msgSeq := msg.SeqNum()
-		if fallinSeq < falloutSeq {
-			if msgSeq < fallinSeq {
+		switch {
+		case fallinSeq < falloutSeq:
+			switch {
+			case msgSeq < fallinSeq:
 				return false
-			} else if fallinSeq <= msgSeq && msgSeq < falloutSeq {
+			case fallinSeq <= msgSeq && msgSeq < falloutSeq:
 				return true
-			} else {
+			default:
 				return false
 			}
-		} else if falloutSeq < fallinSeq {
-			if msgSeq < falloutSeq {
+		case falloutSeq < fallinSeq:
+			switch {
+			case msgSeq < falloutSeq:
 				return true
-			} else if falloutSeq <= msgSeq && msgSeq < fallinSeq {
+			case falloutSeq <= msgSeq && msgSeq < fallinSeq:
 				return false
-			} else {
+			default:
 				return true
 			}
-		} else {
+		default:
 			t.Errorf("falloutSeq can't equal fallinSeq.")
 			return false
 		}
@@ -540,30 +544,31 @@ func setup(t *testing.T, testEvents []TestEvent, testSubscribers []TestSubscribe
 		case "insert":
 			event = Event[*TestMsgTypeA]{
 				After: &TestMsgTypeA{
-					Seq: int64(testEvent.AfterSeq),
+					Seq: testEvent.AfterSeq,
 					ID:  0,
 				},
 			}
 		case "update":
 			event = Event[*TestMsgTypeA]{
 				Before: &TestMsgTypeA{
-					Seq: int64(testEvent.AfterSeq - 1),
+					Seq: testEvent.AfterSeq - 1,
 					ID:  0,
 				},
 				After: &TestMsgTypeA{
-					Seq: int64(testEvent.AfterSeq),
+					Seq: testEvent.AfterSeq,
 					ID:  0,
-				}}
+				},
+			}
 
 			for _, userID := range testEvent.FalloutUserID {
-				userToFalloutSeq[userID] = int64(testEvent.AfterSeq)
+				userToFalloutSeq[userID] = testEvent.AfterSeq
 			}
 			for _, userID := range testEvent.FallinUserID {
-				userToFallinSeq[userID] = int64(testEvent.AfterSeq)
+				userToFallinSeq[userID] = testEvent.AfterSeq
 			}
-		case "delete":
+		case MsgDeleteType:
 			event = Event[*TestMsgTypeA]{Before: &TestMsgTypeA{
-				Seq: int64(testEvent.BeforeSeq),
+				Seq: testEvent.BeforeSeq,
 				ID:  0,
 			}}
 		}
@@ -584,7 +589,7 @@ func setup(t *testing.T, testEvents []TestEvent, testSubscribers []TestSubscribe
 	}
 
 	var hydrator func(*TestMsgTypeA) (*TestMsgTypeA, error)
-	if testEvents[len(testEvents)-1].Type != "delete" {
+	if testEvents[len(testEvents)-1].Type != MsgDeleteType {
 		lastSeq := testEvents[len(testEvents)-1].AfterSeq
 
 		hydrator = func(msg *TestMsgTypeA) (*TestMsgTypeA, error) {
@@ -685,7 +690,7 @@ func TestTwoSubscribers(t *testing.T) {
 			description: "6. insert id 0(1), delete id 0(2)",
 			dBEvents: []TestEvent{
 				{Type: "insert", AfterSeq: 1},
-				{Type: "delete", BeforeSeq: 1},
+				{Type: MsgDeleteType, BeforeSeq: 1},
 			},
 			outGoingMsgs: []interface{}{},
 		},
@@ -737,7 +742,7 @@ func TestTwoSubscribers(t *testing.T) {
 			description: "11. update on id 0(1), delete id 0(2)",
 			dBEvents: []TestEvent{
 				{Type: "update", AfterSeq: 1},
-				{Type: "delete", BeforeSeq: 1},
+				{Type: MsgDeleteType, BeforeSeq: 1},
 			},
 			outGoingMsgs: []interface{}{
 				DeleteMsg{Deleted: "0"},
@@ -791,7 +796,7 @@ func TestTwoSubscribers(t *testing.T) {
 			description: "16. subscriber1 fallin on id 0(1), delete id 0(2)",
 			dBEvents: []TestEvent{
 				{Type: "update", FallinUserID: []int{1}, AfterSeq: 1},
-				{Type: "delete", BeforeSeq: 1},
+				{Type: MsgDeleteType, BeforeSeq: 1},
 			},
 			outGoingMsgs: []interface{}{
 				DeleteMsg{Deleted: "0"},
@@ -844,7 +849,7 @@ func TestTwoSubscribers(t *testing.T) {
 			description: "21. subscriber2 fallin on id 0(1), delete id 0(2)",
 			dBEvents: []TestEvent{
 				{Type: "update", FallinUserID: []int{2}, AfterSeq: 1},
-				{Type: "delete", BeforeSeq: 1},
+				{Type: MsgDeleteType, BeforeSeq: 1},
 			},
 			outGoingMsgs: []interface{}{
 				DeleteMsg{Deleted: "0"},
@@ -899,7 +904,7 @@ func TestTwoSubscribers(t *testing.T) {
 			description: "26. subscriber1 fallout on id 0(1), delete id 0(2)",
 			dBEvents: []TestEvent{
 				{Type: "update", FalloutUserID: []int{1}, AfterSeq: 1},
-				{Type: "delete", BeforeSeq: 1},
+				{Type: MsgDeleteType, BeforeSeq: 1},
 			},
 			outGoingMsgs: []interface{}{
 				DeleteMsg{Deleted: "0"},
@@ -955,7 +960,7 @@ func TestTwoSubscribers(t *testing.T) {
 			description: "31. subscriber2 fallout on id 0(1), delete id 0(2)",
 			dBEvents: []TestEvent{
 				{Type: "update", FalloutUserID: []int{2}, AfterSeq: 1},
-				{Type: "delete", BeforeSeq: 1},
+				{Type: MsgDeleteType, BeforeSeq: 1},
 			},
 			outGoingMsgs: []interface{}{
 				DeleteMsg{Deleted: "0"},
@@ -980,11 +985,11 @@ func TestTwoSubscribers(t *testing.T) {
 			require.Equal(t, len(tc.outGoingMsgs), len(streamerMsgs), "streamer.Msgs length incorrect")
 
 			for i, o := range tc.outGoingMsgs {
-				switch o.(type) {
+				switch ot := o.(type) {
 				case UpsertMsg:
 					upsertMsg, ok := streamerMsgs[i].(*UpsertMsg)
 					require.True(t, ok, "message was not an upsert type")
-					require.Equal(t, o.(UpsertMsg).Msg.SeqNum(), upsertMsg.Msg.SeqNum(), "Sequence number incorrect")
+					require.Equal(t, ot.Msg.SeqNum(), upsertMsg.Msg.SeqNum(), "Sequence number incorrect")
 				case DeleteMsg:
 					deleteMsg, ok := streamerMsgs[i].(*DeleteMsg)
 					require.True(t, ok, "message was not an delete type")
