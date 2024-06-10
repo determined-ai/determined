@@ -38,7 +38,7 @@ func generateListenerName(allocationID model.AllocationID, port int) string {
 }
 
 func listenerIsDetermined(listenerName string) bool {
-	return strings.Contains(listenerName, "determined")
+	return strings.Contains(listenerName, "determined-")
 }
 
 func getAllocationIDFromListenerName(listenerName string) string {

@@ -472,7 +472,7 @@ func (j *jobsService) deleteDoomedKubernetesResources() error {
 	if j.exposeProxyConfig != nil {
 		services, err := j.listServicesInAllNamespaces(context.TODO(), listOptions)
 		if err != nil {
-			return fmt.Errorf("listing exisitng services: %w", err)
+			return fmt.Errorf("listing existing services: %w", err)
 		}
 		for _, s := range services {
 			if resourceIsSaved(s.Namespace, stripIndexFromSharedName(s.Name)) {
@@ -486,7 +486,7 @@ func (j *jobsService) deleteDoomedKubernetesResources() error {
 		savedGatewayPorts := make(map[int]bool)
 		tcpRoutes, err := j.listTCPRoutesInAllNamespaces(context.TODO(), listOptions)
 		if err != nil {
-			return fmt.Errorf("listing exisitng services: %w", err)
+			return fmt.Errorf("listing existing services: %w", err)
 		}
 		for _, t := range tcpRoutes {
 			if resourceIsSaved(t.Namespace, stripIndexFromSharedName(t.Name)) {
@@ -744,10 +744,10 @@ func (j *jobsService) recreateGatewayProxyResources(
 	for _, port := range gatewayPorts {
 		var tcpRoute *alphaGatewayTyped.TCPRoute
 		for _, t := range tcpRoutes {
+			t := t
 			if len(t.Spec.ParentRefs) > 0 &&
 				t.Spec.ParentRefs[0].Port != nil &&
 				int(*t.Spec.ParentRefs[0].Port) == port {
-
 				tcpRoute = &t
 				break
 			}
@@ -758,6 +758,7 @@ func (j *jobsService) recreateGatewayProxyResources(
 
 		var service *k8sV1.Service
 		for _, s := range services {
+			s := s
 			if s.Name == tcpRoute.Name {
 				service = &s
 				break
