@@ -1,102 +1,124 @@
-# Gateway API Controller Survey
+Gateway API Controller Survey
+=============================
 
 https://gateway-api.sigs.k8s.io/implementations/#haproxy-kubernetes-ingress-controller
 
-## Contour
+Contour
+-------
 > Contour v1.29.0 implements Gateway API v1.0.0. All Standard channel v1 API group resources (GatewayClass, Gateway, HTTPRoute, ReferenceGrant), plus most v1alpha2 API group resources (TLSRoute, TCPRoute, GRPCRoute, ReferenceGrant, and BackendTLSPolicy) are supported.
 
 https://projectcontour.io/docs/1.29/guides/gateway-api/
 
-## Envoy gateway
+Envoy Gateway
+-------------
 https://gateway.envoyproxy.io/latest/tasks/traffic/tcp-routing/
 
-## Cilium
+Cilium
+------
 https://docs.cilium.io/en/stable/network/servicemesh/gateway-api/gateway-api/#gs-gateway-api
 Based on Envoy.
 
-## HAProxy k8s ingress controller
+HAProxy K8s Ingress Controller
+------------------------------
 https://www.haproxy.com/documentation/kubernetes-ingress/gateway-api/tcproute/
 HAProxy Enterprise Kubernetes Ingress Controller
 enterprise only?
 
-## Hashicorp Consul
+Hashicorp Consul
+----------------
 https://developer.hashicorp.com/consul/docs/k8s/multiport/reference/tcproute
 
-## traefik
+Traefik
+-------
 https://doc.traefik.io/traefik/routing/providers/kubernetes-gateway/
 https://doc.traefik.io/traefik/providers/kubernetes-gateway/ 
 > Enabling The Experimental Kubernetes Gateway Provider
 > Since this provider is still experimental, it needs to be activated in the experimental section of the static configuration.
 
-## kong operator and kong ingress controller
+Kong Operator and Kong Ingress Controller
+-----------------------------------------
 https://docs.konghq.com/gateway-operator/latest/concepts/gateway-api/#main
 
-## Kuma
+Kuma
+----
 Based on Envoy.
 https://kuma.io/docs/2.7.x/policies/meshtcproute/#meshtcproute
 
-## Flomesh
+Flomesh
+-------
 https://github.com/flomesh-io/fsm/blob/main/docs/gateway-api-compatibility.md
 partial tcproute support
 
-## Istio
+Istio
+-----
 https://istio.io/latest/docs/tasks/traffic-management/ingress/gateway-api/#differences-from-istio-apis
 
-# Not Yet Supported
+Not Yet Supported
+=================
 
-## Acnodal epic
-supports k8s v0.5 
+Acnodal Epic
+------------
+Supports k8s v0.5 
 
-## Apache Apisix
+Apache Apisix
+-------------
 https://apisix.apache.org/docs/ingress-controller/getting-started/ mentions 
 gateway.networking.k8s.io/v1alpha2
-
 mainly ingress focused
 
-## Azure
+Azure
+-----
 https://learn.microsoft.com/en-us/azure/application-gateway/for-containers/overview
-no tcproute
+No TCPRoute support.
 
-## VMWare Avi
+VMWare Avi
+----------
 Advertises level 4 load balancing but no TCPRoute support yet.
-Supports k8v1
-
+Supports k8v1.
 https://docs.vmware.com/en/VMware-Avi-Load-Balancer/1.12/Avi-Kubernetes-Operator-Guide/GUID-84BD68AB-B96F-425C-8323-3A249D6AC8B2.html
 
+Easegress
+---------
+No TCPRoute support.
 
-## Easegress
-No TCPRoute suport.
-
-## emissary ingress - ambassador
+Emissary Ingress - Ambassador
+-----------------------------
 No TCPRoute support.
 https://www.getambassador.io/docs/edge-stack/latest/topics/using/gateway-api#gateway-api
 
-
-## Gloo Solo
+Gloo Solo
+---------
 Based on Envoy but no TCPRoute support.
 
-## HAProxy ingress
-no TCPRoute support
+HAProxy Ingress
+---------------
+No TCPRoute support.
 https://haproxy-ingress.github.io/docs/configuration/gateway-api/
 
-## linkerd
-No TCPRoute support
-between pods https://linkerd.io/2.15/features/automatic-mtls/
+Linkerd
+-------
+No TCPRoute support.
+Between pods: https://linkerd.io/2.15/features/automatic-mtls/
 https://linkerd.io/2.15/reference/httproute/
-## litespeed
+
+Litespeed
+---------
 https://docs.litespeedtech.com/cloud/kubernetes/gateway/
-No TCPRoute support
+No TCPRoute support.
 
-## nginx gw fabric 
-No TCPRoute support yet
+Nginx GW Fabric
+---------------
+No TCPRoute support yet.
 https://docs.nginx.com/nginx-gateway-fabric/overview/gateway-api-compatibility/
-https://ngrok.com/docs/k8s/with-edges/#gateway-api
 
-## ngrok
-No TCPRoute support
+Ngrok
+-----
+No TCPRoute support.
 Only HTTRoutes are stable, the others are in an experimental channel. ngrok supports edges for HTTP/S, TLS, and TCP. The ngrok Operator currently only supports the HTTPRoute. TLSRoute and TCPRoute will be added after they become stable.
 https://ngrok.com/docs/k8s/?k8s-install=gatewayAPI
 
-## wso2 apk
-no TCPRoute support
+WSO2 APK
+--------
+No TCPRoute support.
 https://apk.docs.wso2.com/en/latest/catalogs/kubernetes-crds/
+
