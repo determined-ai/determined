@@ -953,21 +953,14 @@ func (a *apiServer) PostRunMetadata(
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	flatKeys := make(map[string]struct{})
-	for _, record := range flatMetadata {
-		flatKeys[record.FlatKey] = struct{}{}
-	}
-
 	// Update the metadata in DB
 	result, err := db.UpdateRunMetadata(ctx,
 		int(req.RunId),
 		req.Metadata.AsMap(),
 		flatMetadata,
 	)
-	if err != nil && status.Code(err) == codes.InvalidArgument {
-		return nil, err
+	if err != nil {
+		return nil, errors.Wrapf(err, "error updating metadata on run(%d)", req.RunId)
 	}
-
-	return &apiv1.PostRunMetadataResponse{Metadata: protoutils.ToStruct(result)},
-		errors.Wrapf(err, "error updating metadata on run(%d)", req.RunId)
+	return &apiv1.PostRunMetadataResponse{Metadata: protoutils.ToStruct(result)}, nil
 }
