@@ -151,4 +151,6 @@ for diagnosing any issues that arise during installation.
    custom-pod-specs
    helm-commands
    setup-multiple-resource-managers
+   internal-task-gateway
+   controller-reviews
    troubleshooting
