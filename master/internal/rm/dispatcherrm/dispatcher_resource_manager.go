@@ -671,6 +671,14 @@ func (*DispatcherResourceManager) VerifyNamespaceExists(string, string) error {
 	return rmerrors.ErrNotSupported
 }
 
+// DeleteNamespace is not supported.
+func (*DispatcherResourceManager) DeleteNamespace(string) error {
+	// We don't want to error out when this gets called, because the function cannot get called
+	// because of an API request to delete the namespace. It is only used internally to clean up
+	// namespaces created for workspaces that no longer exist.
+	return nil
+}
+
 // ResolveResourcePool returns the resolved slurm partition or an error if it doesn't exist or
 // can't be resolved due to internal errors.
 // Note to developers: this function doesn't acquire a lock and, ideally, we won't make it, since

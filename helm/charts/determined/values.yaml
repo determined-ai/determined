@@ -373,3 +373,6 @@ resourcePools:
   # logRetentionDays: 7
   # Schedule for cleaning up logs. This also accepts a cron expression. For example to run retention every Sunday at 2 am, use "0 2 * * 0"
   # schedule: "24h"
+
+# The default namespace to be referenced by each resource manager.
+# defaultNamespace:
