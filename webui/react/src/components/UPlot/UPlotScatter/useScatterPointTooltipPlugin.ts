@@ -2,6 +2,7 @@ import { useCallback, useMemo, useRef } from 'react';
 import uPlot, { Plugin } from 'uplot';
 
 import { UPlotData } from 'components/UPlot/types';
+import { isNumber } from 'utils/data';
 import { humanReadableNumber } from 'utils/number';
 import { generateAlphaNumeric } from 'utils/string';
 
@@ -94,7 +95,7 @@ const useScatterPointTooltipPlugin = (props: Props = {}): Plugin => {
           const value = (data as UPlotData[])[dataIndex];
           if (value == null) return null;
 
-          return { key: label, value: humanReadableNumber(value) };
+          return { key: label, value: isNumber(value) ? humanReadableNumber(value) : value };
         })
         .filter((keyValue) => keyValue != null) as KeyValue[];
       createTooltipContent(tooltipRef.current, keyValues);
@@ -109,6 +110,7 @@ const useScatterPointTooltipPlugin = (props: Props = {}): Plugin => {
       const chartRect = u.root.querySelector(ROOT_SELECTOR)?.getBoundingClientRect();
       if (!chartRect) return;
 
+      if (!isNumber(x) || !isNumber(y)) return;
       /**
        * Calculate where the tooltip should be placed based on
        * the size of the tooltip content and the cursor position.

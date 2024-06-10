@@ -481,6 +481,8 @@ type PatchProject struct {
 	Name *wrappers.StringValue `protobuf:"bytes,1,opt,name=name,proto3" json:"name,omitempty"`
 	// The new description for the project.
 	Description *wrappers.StringValue `protobuf:"bytes,2,opt,name=description,proto3" json:"description,omitempty"`
+	// The new key for the project.
+	Key *wrappers.StringValue `protobuf:"bytes,3,opt,name=key,proto3" json:"key,omitempty"`
 }
 
 func (x *PatchProject) Reset() {
@@ -525,6 +527,13 @@ func (x *PatchProject) GetName() *wrappers.StringValue {
 func (x *PatchProject) GetDescription() *wrappers.StringValue {
 	if x != nil {
 		return x.Description
+	}
+	return nil
+}
+
+func (x *PatchProject) GetKey() *wrappers.StringValue {
+	if x != nil {
+		return x.Key
 	}
 	return nil
 }
@@ -762,11 +771,12 @@ var file_determined_project_v1_project_proto_depIdxs = []int32{
 	8, // 4: determined.project.v1.Project.state:type_name -> determined.workspace.v1.WorkspaceState
 	9, // 5: determined.project.v1.PatchProject.name:type_name -> google.protobuf.StringValue
 	9, // 6: determined.project.v1.PatchProject.description:type_name -> google.protobuf.StringValue
-	7, // [7:7] is the sub-list for method output_type
-	7, // [7:7] is the sub-list for method input_type
-	7, // [7:7] is the sub-list for extension type_name
-	7, // [7:7] is the sub-list for extension extendee
-	0, // [0:7] is the sub-list for field type_name
+	9, // 7: determined.project.v1.PatchProject.key:type_name -> google.protobuf.StringValue
+	8, // [8:8] is the sub-list for method output_type
+	8, // [8:8] is the sub-list for method input_type
+	8, // [8:8] is the sub-list for extension type_name
+	8, // [8:8] is the sub-list for extension extendee
+	0, // [0:8] is the sub-list for field type_name
 }
 
 func init() { file_determined_project_v1_project_proto_init() }

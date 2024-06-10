@@ -40,13 +40,13 @@ func makeMetrics() *structpb.Struct {
 	}
 }
 
-func reportNonTrivialMetrics(ctx context.Context, api *apiServer, trialID int32,
+func reportNonTrivialMetrics(ctx context.Context, trialID int32,
 	batches int,
 ) error {
 	fmt.Println("non trivial metrics for", batches, "batches") //nolint:forbidigo
-	N := 5
+	n := 5
 	losses := []float64{}
-	for i := 0; i < N; i++ {
+	for i := 0; i < n; i++ {
 		losses = append(losses, rand.Float64()) //nolint: gosec
 	}
 
@@ -55,7 +55,7 @@ func reportNonTrivialMetrics(ctx context.Context, api *apiServer, trialID int32,
 	}
 
 	factors := []Factor{}
-	for i := 0; i < N; i++ {
+	for i := 0; i < n; i++ {
 		factors = append(factors, Factor{rand.Float64(), rand.Float64() / 10}) //nolint: gosec
 	}
 
@@ -65,7 +65,7 @@ func reportNonTrivialMetrics(ctx context.Context, api *apiServer, trialID int32,
 		if b%printTime == 0 {
 			start = time.Now()
 		}
-		for i := 0; i < N; i++ {
+		for i := 0; i < n; i++ {
 			val := float64(1)
 			if rand.Float64() <= factors[i].a { //nolint: gosec
 				val = float64(-1)
@@ -149,7 +149,7 @@ func reportNonTrivialMetrics(ctx context.Context, api *apiServer, trialID int32,
 	return nil
 }
 
-func reportTrivialMetrics(ctx context.Context, api *apiServer, trialID int32, batches int) error {
+func reportTrivialMetrics(ctx context.Context, trialID int32, batches int) error {
 	fmt.Println("trivial metrics for", batches, "batches") //nolint:forbidigo
 
 	stepsCompleted := int32(batches)
@@ -207,7 +207,6 @@ func PopulateExpTrialsMetrics(pgdb *db.PgDB, masterConfig *config.Config, trivia
 
 	ctx := metadata.NewIncomingContext(context.TODO(),
 		metadata.Pairs("x-user-token", fmt.Sprintf("Bearer %s", resp.Token)))
-
 	// create exp and config
 	maxLength := expconf.NewLengthInBatches(100)
 	maxRestarts := 0
@@ -266,7 +265,7 @@ func PopulateExpTrialsMetrics(pgdb *db.PgDB, masterConfig *config.Config, trivia
 		return err
 	}
 	if trivialMetrics {
-		return reportTrivialMetrics(ctx, api, int32(tr.ID), batches)
+		return reportTrivialMetrics(ctx, int32(tr.ID), batches)
 	}
-	return reportNonTrivialMetrics(ctx, api, int32(tr.ID), batches)
+	return reportNonTrivialMetrics(ctx, int32(tr.ID), batches)
 }

@@ -72,21 +72,21 @@ func TestAuthZGetExperimentAndCanDoActionsEcho(t *testing.T) {
 		{"CanGetExperimentArtifacts", func(id int) error {
 			ctx := newTestEchoContext(curUser)
 			ctx.SetParamNames("experiment_id")
-			ctx.SetParamValues(fmt.Sprintf("%d", id))
+			ctx.SetParamValues(strconv.Itoa(id))
 			ctx.SetRequest(httptest.NewRequest(http.MethodPost, "/", nil))
 			return api.m.getExperimentModelDefinition(ctx)
 		}, []any{mock.Anything, mock.Anything, mock.Anything}},
 		{"CanGetExperimentArtifacts", func(id int) error {
 			ctx := newTestEchoContext(curUser)
 			ctx.SetParamNames("experiment_id")
-			ctx.SetParamValues(fmt.Sprintf("%d", id))
+			ctx.SetParamValues(strconv.Itoa(id))
 			ctx.SetRequest(httptest.NewRequest(http.MethodPost, "/?path=rootPath", nil))
 			return api.m.getExperimentModelFile(ctx)
 		}, []any{mock.Anything, mock.Anything, mock.Anything}},
 		{"CanGetExperimentArtifacts", func(id int) error {
 			ctx := newTestEchoContext(curUser)
 			ctx.SetParamNames("experiment_id")
-			ctx.SetParamValues(fmt.Sprintf("%d", id))
+			ctx.SetParamValues(strconv.Itoa(id))
 			ctx.SetRequest(httptest.NewRequest(http.MethodPost,
 				"/?save_experiment_best=10&save_trial_best=2&save_trial_latest=3", nil))
 
@@ -101,7 +101,7 @@ func TestAuthZGetExperimentAndCanDoActionsEcho(t *testing.T) {
 
 		authZExp.On("CanGetExperiment", mock.Anything, mock.Anything, mock.Anything).
 			Return(authz2.PermissionDeniedError{}).Once()
-		require.Equal(t, apiPkg.NotFoundErrs("experiment", fmt.Sprint(exp.ID), false),
+		require.Equal(t, apiPkg.NotFoundErrs("experiment", strconv.Itoa(exp.ID), false),
 			curCase.IDToReqCall(exp.ID))
 
 		// CanGetExperiment error returns unmodified.

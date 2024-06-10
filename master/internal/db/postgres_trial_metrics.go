@@ -113,7 +113,7 @@ func BunSelectMetricsQuery(mGroup model.MetricGroup, inclArchived bool) *bun.Sel
 
 // BunSelectMetricGroupNames sets up a bun select query for getting all the metric group and names.
 func BunSelectMetricGroupNames() *bun.SelectQuery {
-	return Bun().NewSelect().Table("trials").
+	return Bun().NewSelect().Table("runs").
 		ColumnExpr("jsonb_object_keys(summary_metrics) as json_path").
 		ColumnExpr("jsonb_object_keys(summary_metrics->jsonb_object_keys(summary_metrics))" +
 			" as metric_name").
@@ -190,12 +190,12 @@ FOR UPDATE`,
 	if err != nil {
 		return 0, nil, err
 	}
-	id, err := db.updateRawMetrics(ctx, tx, finalBody, runID, trialID, lastProcessedBatch, mGroup)
+	id, err := db.updateRawMetrics(ctx, tx, finalBody, trialID, lastProcessedBatch, mGroup)
 	return id, mBody, err
 }
 
 func (db *PgDB) updateRawMetrics(ctx context.Context, tx *sqlx.Tx, mBody *metricsBody,
-	runID, trialID int32, lastProcessedBatch *int32, mGroup model.MetricGroup,
+	trialID int32, lastProcessedBatch *int32, mGroup model.MetricGroup,
 ) (int, error) {
 	if err := mGroup.Validate(); err != nil {
 		return 0, err

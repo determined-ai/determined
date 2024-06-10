@@ -22,6 +22,12 @@
              </a>
          </div>
          <div class="tile-container">
+             <a class="tile" href="genai/_index.html">
+                 <h2 class="tile-title">GenAI Studio</h2>
+                 <p class="tile-description">Test and customize large language models (LLMs) within privately hosted infrastructure.</p>
+             </a>
+         </div>
+         <div class="tile-container">
              <a class="tile" href="webui-if.html">
                  <h2 class="tile-title">WebUI</h2>
                  <p class="tile-description">Using the web interface to create and monitor experiments.</p>
@@ -57,4 +63,5 @@
    Notebooks <notebooks>
    Proxy Ports <proxy-ports>
    TensorBoard <tensorboard>
+   GenAI Studio <genai/_index>
    WebUI <webui-if>

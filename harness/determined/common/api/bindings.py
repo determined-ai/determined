@@ -5807,6 +5807,29 @@ class v1GetPermissionsSummaryResponse(Printable):
         }
         return out
 
+class v1GetProjectByKeyResponse(Printable):
+    """Response to GetProjectByKeyRequest."""
+
+    def __init__(
+        self,
+        *,
+        project: "v1Project",
+    ):
+        self.project = project
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetProjectByKeyResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "project": v1Project.from_json(obj["project"]),
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "project": self.project.to_json(omit_unset),
+        }
+        return out
+
 class v1GetProjectColumnsResponse(Printable):
 
     def __init__(
@@ -6609,6 +6632,33 @@ class v1GetTrialProfilerMetricsResponse(Printable):
         out: "typing.Dict[str, typing.Any]" = {
             "batch": self.batch.to_json(omit_unset),
         }
+        return out
+
+class v1GetTrialRemainingLogRetentionDaysResponse(Printable):
+    """Response to GetTrialRemainingLogRetentionDaysRequest."""
+    remainingDays: "typing.Optional[int]" = None
+
+    def __init__(
+        self,
+        *,
+        remainingDays: "typing.Union[int, None, Unset]" = _unset,
+    ):
+        if not isinstance(remainingDays, Unset):
+            self.remainingDays = remainingDays
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetTrialRemainingLogRetentionDaysResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "remainingDays" in obj:
+            kwargs["remainingDays"] = obj["remainingDays"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "remainingDays" in vars(self):
+            out["remainingDays"] = self.remainingDays
         return out
 
 class v1GetTrialResponse(Printable):
@@ -9765,16 +9815,20 @@ class v1PatchModelVersionResponse(Printable):
 class v1PatchProject(Printable):
     """PatchProject is a partial update to a project with all optional fields."""
     description: "typing.Optional[str]" = None
+    key: "typing.Optional[str]" = None
     name: "typing.Optional[str]" = None
 
     def __init__(
         self,
         *,
         description: "typing.Union[str, None, Unset]" = _unset,
+        key: "typing.Union[str, None, Unset]" = _unset,
         name: "typing.Union[str, None, Unset]" = _unset,
     ):
         if not isinstance(description, Unset):
             self.description = description
+        if not isinstance(key, Unset):
+            self.key = key
         if not isinstance(name, Unset):
             self.name = name
 
@@ -9784,6 +9838,8 @@ class v1PatchProject(Printable):
         }
         if "description" in obj:
             kwargs["description"] = obj["description"]
+        if "key" in obj:
+            kwargs["key"] = obj["key"]
         if "name" in obj:
             kwargs["name"] = obj["name"]
         return cls(**kwargs)
@@ -9793,6 +9849,8 @@ class v1PatchProject(Printable):
         }
         if not omit_unset or "description" in vars(self):
             out["description"] = self.description
+        if not omit_unset or "key" in vars(self):
+            out["key"] = self.key
         if not omit_unset or "name" in vars(self):
             out["name"] = self.name
         return out
@@ -10256,6 +10314,64 @@ class v1PauseExperimentsResponse(Printable):
     def from_json(cls, obj: Json) -> "v1PauseExperimentsResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "results": [v1ExperimentActionResult.from_json(x) for x in obj["results"]],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "results": [x.to_json(omit_unset) for x in self.results],
+        }
+        return out
+
+class v1PauseRunsRequest(Printable):
+    """Request to pause the experiment associated witha run."""
+    filter: "typing.Optional[str]" = None
+
+    def __init__(
+        self,
+        *,
+        projectId: int,
+        runIds: "typing.Sequence[int]",
+        filter: "typing.Union[str, None, Unset]" = _unset,
+    ):
+        self.projectId = projectId
+        self.runIds = runIds
+        if not isinstance(filter, Unset):
+            self.filter = filter
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PauseRunsRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "projectId": obj["projectId"],
+            "runIds": obj["runIds"],
+        }
+        if "filter" in obj:
+            kwargs["filter"] = obj["filter"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "projectId": self.projectId,
+            "runIds": self.runIds,
+        }
+        if not omit_unset or "filter" in vars(self):
+            out["filter"] = self.filter
+        return out
+
+class v1PauseRunsResponse(Printable):
+    """Response to PauseRunsRequest."""
+
+    def __init__(
+        self,
+        *,
+        results: "typing.Sequence[v1RunActionResult]",
+    ):
+        self.results = results
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PauseRunsResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "results": [v1RunActionResult.from_json(x) for x in obj["results"]],
         }
         return cls(**kwargs)
 
@@ -12886,6 +13002,64 @@ class v1ResourcesSummary(Printable):
             out["started"] = None if self.started is None else self.started.to_json(omit_unset)
         return out
 
+class v1ResumeRunsRequest(Printable):
+    """Request to unpause the experiment associated witha run."""
+    filter: "typing.Optional[str]" = None
+
+    def __init__(
+        self,
+        *,
+        projectId: int,
+        runIds: "typing.Sequence[int]",
+        filter: "typing.Union[str, None, Unset]" = _unset,
+    ):
+        self.projectId = projectId
+        self.runIds = runIds
+        if not isinstance(filter, Unset):
+            self.filter = filter
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1ResumeRunsRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "projectId": obj["projectId"],
+            "runIds": obj["runIds"],
+        }
+        if "filter" in obj:
+            kwargs["filter"] = obj["filter"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "projectId": self.projectId,
+            "runIds": self.runIds,
+        }
+        if not omit_unset or "filter" in vars(self):
+            out["filter"] = self.filter
+        return out
+
+class v1ResumeRunsResponse(Printable):
+    """Response to ResumeRunsRequest."""
+
+    def __init__(
+        self,
+        *,
+        results: "typing.Sequence[v1RunActionResult]",
+    ):
+        self.results = results
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1ResumeRunsResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "results": [v1RunActionResult.from_json(x) for x in obj["results"]],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "results": [x.to_json(omit_unset) for x in self.results],
+        }
+        return out
+
 class v1Role(Printable):
     name: "typing.Optional[str]" = None
     permissions: "typing.Optional[typing.Sequence[v1Permission]]" = None
@@ -14176,6 +14350,16 @@ class v1StartTrialResponse(Printable):
         if not omit_unset or "latestCheckpoint" in vars(self):
             out["latestCheckpoint"] = self.latestCheckpoint
         return out
+
+class v1TableType(DetEnum):
+    """Project Table type.
+    - TABLE_TYPE_UNSPECIFIED: Unspecified table type.
+    - TABLE_TYPE_EXPERIMENT: experiment table.
+    - TABLE_TYPE_RUN: run table.
+    """
+    UNSPECIFIED = "TABLE_TYPE_UNSPECIFIED"
+    EXPERIMENT = "TABLE_TYPE_EXPERIMENT"
+    RUN = "TABLE_TYPE_RUN"
 
 class v1Task(Printable):
     """Task is the model for a task in the database."""
@@ -18949,16 +19133,50 @@ def get_GetProject(
         return v1GetProjectResponse.from_json(_resp.json())
     raise APIHttpError("get_GetProject", _resp)
 
+def get_GetProjectByKey(
+    session: "api.BaseSession",
+    *,
+    key: str,
+) -> "v1GetProjectByKeyResponse":
+    """Get the request project by key.
+
+    - key: The key of the project.
+    """
+    _params = None
+    if type(key) == str:
+        key = parse.quote(key)
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/projects/key/{key}",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1GetProjectByKeyResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetProjectByKey", _resp)
+
 def get_GetProjectColumns(
     session: "api.BaseSession",
     *,
     id: int,
+    tableType: "typing.Optional[v1TableType]" = None,
 ) -> "v1GetProjectColumnsResponse":
     """Get a list of columns for experiment list table.
 
     - id: The id of the project.
+    - tableType: type of table for project columns.
+
+ - TABLE_TYPE_UNSPECIFIED: Unspecified table type.
+ - TABLE_TYPE_EXPERIMENT: experiment table.
+ - TABLE_TYPE_RUN: run table.
     """
-    _params = None
+    _params = {
+        "tableType": tableType.value if tableType is not None else None,
+    }
     _resp = session._do_request(
         method="GET",
         path=f"/api/v1/projects/{id}/columns",
@@ -19893,6 +20111,30 @@ from the dataloader took.
             raise APIHttpStreamError("get_GetTrialProfilerMetrics", runtimeStreamError(message="ChunkedEncodingError"))
         return
     raise APIHttpError("get_GetTrialProfilerMetrics", _resp)
+
+def get_GetTrialRemainingLogRetentionDays(
+    session: "api.BaseSession",
+    *,
+    id: int,
+) -> "v1GetTrialRemainingLogRetentionDaysResponse":
+    """Get the list of trials for an experiment.
+
+    - id: The trial id.
+    """
+    _params = None
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/trials/{id}/remaining_log_retention_days",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1GetTrialRemainingLogRetentionDaysResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetTrialRemainingLogRetentionDays", _resp)
 
 def get_GetTrialWorkloads(
     session: "api.BaseSession",
@@ -21448,6 +21690,27 @@ def post_PauseGenericTask(
         return
     raise APIHttpError("post_PauseGenericTask", _resp)
 
+def post_PauseRuns(
+    session: "api.BaseSession",
+    *,
+    body: "v1PauseRunsRequest",
+) -> "v1PauseRunsResponse":
+    """Pause experiment associated with provided runs."""
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/runs/pause",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1PauseRunsResponse.from_json(_resp.json())
+    raise APIHttpError("post_PauseRuns", _resp)
+
 def post_PinWorkspace(
     session: "api.BaseSession",
     *,
@@ -22369,6 +22632,27 @@ def get_ResourceAllocationRaw(
     if _resp.status_code == 200:
         return v1ResourceAllocationRawResponse.from_json(_resp.json())
     raise APIHttpError("get_ResourceAllocationRaw", _resp)
+
+def post_ResumeRuns(
+    session: "api.BaseSession",
+    *,
+    body: "v1ResumeRunsRequest",
+) -> "v1ResumeRunsResponse":
+    """Unpause experiment associated with provided runs."""
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/runs/resume",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1ResumeRunsResponse.from_json(_resp.json())
+    raise APIHttpError("post_ResumeRuns", _resp)
 
 def post_RunPrepareForReporting(
     session: "api.BaseSession",

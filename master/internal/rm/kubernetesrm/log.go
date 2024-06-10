@@ -33,8 +33,8 @@ func startPodLogStreamer(
 		return errors.Wrapf(err, "failed to initialize log stream for pod: %s", podName)
 	}
 	syslog := logrus.WithField("podName", podName)
-	logger := &podLogStreamer{callback}
 
+	logger := &podLogStreamer{callback}
 	go logger.receiveStreamLogs(syslog, logReader)
 
 	return nil
@@ -50,6 +50,7 @@ func (p *podLogStreamer) receiveStreamLogs(
 	syslog *logrus.Entry,
 	logReader io.ReadCloser,
 ) {
+	syslog.Debug("starting pod log streamer")
 	_, err := io.Copy(p, logReader)
 	if err != nil {
 		syslog.WithError(err).Debug("error reading logs")

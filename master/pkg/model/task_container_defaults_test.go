@@ -58,18 +58,17 @@ func TestEnvironmentVarsDefaultMerging(t *testing.T) {
 
 	defaults.MergeIntoExpConfig(&conf)
 
-	require.Equal(t, conf.RawEnvironment.RawEnvironmentVariables,
-		&expconf.EnvironmentVariablesMap{
-			RawCPU:  []string{"cpu=default", "cpu=expconf"},
-			RawCUDA: []string{"cuda=default", "extra=expconf"},
-			RawROCM: []string{"rocm=default"},
-		})
+	require.Equal(t, &expconf.EnvironmentVariablesMap{
+		RawCPU:  []string{"cpu=default", "cpu=expconf"},
+		RawCUDA: []string{"cuda=default", "extra=expconf"},
+		RawROCM: []string{"rocm=default"},
+	}, conf.RawEnvironment.RawEnvironmentVariables)
 
-	require.Equal(t, *conf.RawSlurmConfig.RawGpuType, expGpuType)
-	require.Equal(t, *conf.RawSlurmConfig.RawSlotsPerNode, expSlurmSlotsPerNode)
-	require.Equal(t, conf.RawSlurmConfig.SbatchArgs(), []string{"-SlrumTaskDefault", "-SlrumExpConf"})
-	require.Equal(t, *conf.RawPbsConfig.RawSlotsPerNode, defaultSlotsPerNode)
-	require.Equal(t, conf.RawPbsConfig.SbatchArgs(), []string{"-WpbsTaskDefault", "-PbsExpConf"})
+	require.Equal(t, expGpuType, *conf.RawSlurmConfig.RawGpuType)
+	require.Equal(t, expSlurmSlotsPerNode, *conf.RawSlurmConfig.RawSlotsPerNode)
+	require.Equal(t, []string{"-SlrumTaskDefault", "-SlrumExpConf"}, conf.RawSlurmConfig.SbatchArgs())
+	require.Equal(t, defaultSlotsPerNode, *conf.RawPbsConfig.RawSlotsPerNode)
+	require.Equal(t, []string{"-WpbsTaskDefault", "-PbsExpConf"}, conf.RawPbsConfig.SbatchArgs())
 }
 
 func TestTaskContainerDefaultsConfigMerging(t *testing.T) {
@@ -93,6 +92,15 @@ func TestTaskContainerDefaultsConfigMerging(t *testing.T) {
 				Volumes: []k8sV1.Volume{
 					{
 						Name: "some GPU vol",
+					},
+				},
+			},
+		},
+		CheckpointGCPodSpec: &k8sV1.Pod{
+			Spec: k8sV1.PodSpec{
+				Volumes: []k8sV1.Volume{
+					{
+						Name: "some CHECKPOINT GC vol",
 					},
 				},
 			},
@@ -194,6 +202,15 @@ func TestTaskContainerDefaultsConfigMerging(t *testing.T) {
 						},
 					},
 				},
+				CheckpointGCPodSpec: &k8sV1.Pod{
+					Spec: k8sV1.PodSpec{
+						Volumes: []k8sV1.Volume{
+							{
+								Name: "some CHECKPOINT GC vol 2",
+							},
+						},
+					},
+				},
 				Image: &RuntimeItem{
 					CPU:  "docker://ubuntu2",
 					CUDA: "docker://ubuntucuda2",
@@ -267,6 +284,15 @@ func TestTaskContainerDefaultsConfigMerging(t *testing.T) {
 						Volumes: []k8sV1.Volume{
 							{
 								Name: "some GPU vol 2",
+							},
+						},
+					},
+				},
+				CheckpointGCPodSpec: &k8sV1.Pod{
+					Spec: k8sV1.PodSpec{
+						Volumes: []k8sV1.Volume{
+							{
+								Name: "some CHECKPOINT GC vol 2",
 							},
 						},
 					},

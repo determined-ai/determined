@@ -3,6 +3,7 @@ package tasks
 import (
 	"testing"
 
+	"github.com/stretchr/testify/require"
 	"gotest.tools/assert"
 )
 
@@ -22,7 +23,7 @@ func validateEnvironmentResult(expected []string, t *testing.T, err []error) {
 	} else {
 		assert.Assert(t, len(err) > 0, "Expected some errors", expected)
 		for i, msg := range expected {
-			assert.ErrorContains(t, err[i], msg)
+			require.ErrorContains(t, err[i], msg)
 		}
 	}
 }

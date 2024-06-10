@@ -684,6 +684,10 @@ export interface TrialDetails extends TrialItem {
   runnerState?: string;
 }
 
+export interface TrialRemainingLogRetentionDays {
+  remainingLogRetentionDays?: number;
+}
+
 export interface TrialWorkloads extends WithPagination {
   workloads: WorkloadGroup[];
 }
@@ -736,6 +740,7 @@ export const BulkExperimentItem = t.intersection([
   t.partial({
     checkpoints: t.number,
     checkpointSize: t.number,
+    config: ExperimentConfig,
     description: t.string,
     duration: t.number,
     endTime: t.string,

@@ -5,7 +5,7 @@ import {
   TablePaginationConfig,
 } from 'antd/lib/table/interface';
 import Button from 'hew/Button';
-import Dropdown from 'hew/Dropdown';
+import Dropdown, { MenuItem } from 'hew/Dropdown';
 import Icon from 'hew/Icon';
 import Message from 'hew/Message';
 import { useModal } from 'hew/Modal';
@@ -33,9 +33,9 @@ import workspaceStore from 'stores/workspaces';
 import { Template } from 'types';
 import handleError, { ErrorType } from 'utils/error';
 import { validateDetApiEnum } from 'utils/service';
-import { alphaNumericSorter } from 'utils/sort';
 
 import TemplateCreateModalComponent from './TemplateCreateModal';
+import TemplateDeleteModalComponent from './TemplateDeleteModal';
 import settingsConfig, { DEFAULT_COLUMN_WIDTHS, Settings } from './TemplatesList.settings';
 import TemplateViewModalComponent from './TemplateViewModal';
 
@@ -44,10 +44,10 @@ interface Props {
 }
 
 const MenuKey = {
+  DeleteTemplate: 'delete-template',
+  EditTemplate: 'edit-template',
   ViewTemplate: 'view-template',
 } as const;
-
-const DROPDOWN_MENU = [{ key: MenuKey.ViewTemplate, label: 'View Template' }];
 
 const TemplateList: React.FC<Props> = ({ workspaceId }) => {
   const { settings, updateSettings } = useSettings<Settings>(
@@ -58,10 +58,12 @@ const TemplateList: React.FC<Props> = ({ workspaceId }) => {
   const [isLoading, setIsLoading] = useState(true);
   const [canceler] = useState(new AbortController());
   const pageRef = useRef<HTMLElement>(null);
-  const { canCreateTemplate, canCreateTemplateWorkspace } = usePermissions();
-  const TemplateCreateModal = useModal(TemplateCreateModalComponent);
+  const { canCreateTemplate, canCreateTemplateWorkspace, canDeleteTemplate, canModifyTemplate } =
+    usePermissions();
 
+  const TemplateCreateModal = useModal(TemplateCreateModalComponent);
   const TemplateViewModal = useModal(TemplateViewModalComponent);
+  const TemplateDeleteModal = useModal(TemplateDeleteModalComponent);
 
   const workspaces = Loadable.getOrElse([], useObservable(workspaceStore.workspaces));
 
@@ -116,7 +118,7 @@ const TemplateList: React.FC<Props> = ({ workspaceId }) => {
   );
 
   const handleWorkspaceFilterReset = useCallback(() => {
-    updateSettings({ workspace: undefined });
+    updateSettings({ tableOffset: 0, workspace: undefined });
   }, [updateSettings]);
 
   const workspaceFilterDropdown = useCallback(
@@ -135,18 +137,24 @@ const TemplateList: React.FC<Props> = ({ workspaceId }) => {
 
   const handleDropdown = useCallback(
     (key: string, record: Template) => {
+      setSelectedTemplate(record);
       switch (key) {
         case MenuKey.ViewTemplate:
-          setSelectedTemplate(record);
           TemplateViewModal.open();
+          break;
+        case MenuKey.EditTemplate:
+          TemplateCreateModal.open();
+          break;
+        case MenuKey.DeleteTemplate:
+          TemplateDeleteModal.open();
           break;
       }
     },
-    [TemplateViewModal],
+    [TemplateViewModal, TemplateCreateModal, TemplateDeleteModal],
   );
 
   const handleNameSearchReset = useCallback(() => {
-    updateSettings({ name: undefined });
+    updateSettings({ name: undefined, tableOffset: 0 });
   }, [updateSettings]);
 
   const handleNameSearchApply = useCallback(
@@ -169,8 +177,19 @@ const TemplateList: React.FC<Props> = ({ workspaceId }) => {
   );
 
   const columns = useMemo(() => {
+    const actionMenu = (record: Template) => {
+      const menu: MenuItem[] = [{ key: MenuKey.ViewTemplate, label: 'View Template' }];
+      if (canModifyTemplate({ template: record })) {
+        menu.push({ key: MenuKey.EditTemplate, label: 'Edit Template' });
+      }
+      if (canDeleteTemplate({ template: record })) {
+        menu.push({ danger: true, key: MenuKey.DeleteTemplate, label: 'Delete Template' });
+      }
+      return menu;
+    };
+
     const actionRenderer = (_: string, record: Template) => (
-      <Dropdown menu={DROPDOWN_MENU} onClick={(key) => handleDropdown(key, record)}>
+      <Dropdown menu={actionMenu(record)} onClick={(key) => handleDropdown(key, record)}>
         <Button icon={<Icon name="overflow-vertical" title="Action menu" />} type="text" />
       </Dropdown>
     );
@@ -182,8 +201,8 @@ const TemplateList: React.FC<Props> = ({ workspaceId }) => {
         filterDropdown: nameFilterSearch,
         filterIcon: <Icon name="search" size="tiny" title="Search" />,
         isFiltered: (settings: Settings) => !!settings.name,
-        key: 'name',
-        sorter: (a: Template, b: Template): number => alphaNumericSorter(a.name, b.name),
+        key: V1GetTemplatesRequestSortBy.NAME,
+        sorter: true,
         title: 'Name',
       },
       {
@@ -198,7 +217,7 @@ const TemplateList: React.FC<Props> = ({ workspaceId }) => {
               value: ws.id,
             })),
         isFiltered: (settings: Settings) => !!settings.workspace?.length,
-        key: V1GetTemplatesRequestSortBy.NAME,
+        key: 'workspace',
         render: (_v: string, record: Template) => taskWorkspaceRenderer(record, workspaces),
         title: 'Workspace',
       },
@@ -214,7 +233,15 @@ const TemplateList: React.FC<Props> = ({ workspaceId }) => {
         width: DEFAULT_COLUMN_WIDTHS['action'],
       },
     ] as ColumnDef<Template>[];
-  }, [workspaceFilterDropdown, workspaces, handleDropdown, workspaceId, nameFilterSearch]);
+  }, [
+    workspaceFilterDropdown,
+    workspaces,
+    handleDropdown,
+    workspaceId,
+    nameFilterSearch,
+    canDeleteTemplate,
+    canModifyTemplate,
+  ]);
 
   const handleTableChange = useCallback(
     (
@@ -224,12 +251,15 @@ const TemplateList: React.FC<Props> = ({ workspaceId }) => {
     ) => {
       if (Array.isArray(tableSorter)) return;
 
-      const { columnKey, order } = tableSorter as SorterResult<Template>;
+      const { columnKey, order, field } = tableSorter as SorterResult<Template>;
       if (!columnKey || !columns.find((column) => column.key === columnKey)) return;
 
       const newSettings = {
         sortDesc: order === 'descend',
-        sortKey: columnKey === 'name' ? columnKey : V1GetTemplatesRequestSortBy.UNSPECIFIED,
+        sortKey:
+          field === 'name'
+            ? V1GetTemplatesRequestSortBy.NAME
+            : V1GetTemplatesRequestSortBy.UNSPECIFIED,
         tableLimit: tablePagination.pageSize,
         tableOffset: ((tablePagination.current ?? 1) - 1) * (tablePagination.pageSize ?? 0),
       };
@@ -244,10 +274,15 @@ const TemplateList: React.FC<Props> = ({ workspaceId }) => {
       : canCreateTemplate;
   }, [workspaceId, canCreateTemplate, canCreateTemplateWorkspace]);
 
+  const onClickCreate = useCallback(() => {
+    setSelectedTemplate(undefined);
+    TemplateCreateModal.open();
+  }, [TemplateCreateModal]);
+
   return (
     <>
       <div className={css.headerButton}>
-        {canCreate && <Button onClick={TemplateCreateModal.open}>New Template</Button>}
+        {canCreate && <Button onClick={onClickCreate}>New Template</Button>}
       </div>
       {!(settings.name || settings.workspace?.length) && templates.length === 0 && !isLoading ? (
         <Message
@@ -280,8 +315,13 @@ const TemplateList: React.FC<Props> = ({ workspaceId }) => {
       ) : (
         <SkeletonTable columns={columns.length} />
       )}
-      <TemplateCreateModal.Component workspaceId={workspaceId} onSuccess={fetchTemplates} />
+      <TemplateCreateModal.Component
+        template={selectedTemplate}
+        workspaceId={workspaceId}
+        onSuccess={fetchTemplates}
+      />
       <TemplateViewModal.Component template={selectedTemplate} workspaces={workspaces} />
+      <TemplateDeleteModal.Component template={selectedTemplate} onSuccess={fetchTemplates} />
     </>
   );
 };

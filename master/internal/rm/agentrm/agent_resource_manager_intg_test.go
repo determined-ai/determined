@@ -7,8 +7,6 @@ import (
 	"encoding/json"
 	"testing"
 
-	"github.com/determined-ai/determined/master/internal/db"
-
 	"github.com/stretchr/testify/require"
 	"gotest.tools/assert"
 
@@ -159,8 +157,6 @@ func TestAgentRMRoutingTaskRelatedMessages(t *testing.T) {
 	assert.Equal(t, len(taskSummaries), 0)
 
 	// Fetch average queued time for resource pool
-	pgDB := db.MustResolveTestPostgres(t)
-	db.MustMigrateTestPostgres(t, pgDB, "file://../../../static/migrations")
 	_, err = agentRM.fetchAvgQueuedTime("cpu-pool")
 	assert.NilError(t, err, "error fetch average queued time for cpu-pool")
 	_, err = agentRM.fetchAvgQueuedTime("gpu-pool")
@@ -275,7 +271,7 @@ func TestGetJobQueueStatsRequest(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			res, err := agentRM.GetJobQueueStatsRequest(&apiv1.GetJobQueueStatsRequest{ResourcePools: tt.filteredRPs})
 			require.NoError(t, err)
-			require.Equal(t, tt.expected, len(res.Results))
+			require.Len(t, res.Results, tt.expected)
 		})
 	}
 }

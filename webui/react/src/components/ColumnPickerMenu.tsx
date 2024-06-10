@@ -7,18 +7,10 @@ import Message from 'hew/Message';
 import Pivot from 'hew/Pivot';
 import Spinner from 'hew/Spinner';
 import { Loadable } from 'hew/utils/loadable';
-import { useObservable } from 'micro-observables';
 import React, { ChangeEvent, useCallback, useMemo, useState } from 'react';
 import { FixedSizeList as List } from 'react-window';
 
-import { defaultExperimentColumns } from 'pages/F_ExpList/expListColumns';
-import {
-  defaultProjectSettings,
-  ProjectSettings,
-  settingsPathForProject,
-} from 'pages/F_ExpList/F_ExperimentList.settings';
 import { V1LocationType } from 'services/api-ts-sdk';
-import userSettings from 'stores/userSettings';
 import { ProjectColumn } from 'types';
 import { ensureArray } from 'utils/data';
 
@@ -29,7 +21,7 @@ const BANNED_COLUMNS: Set<string> = new Set([]);
 const removeBannedColumns = (columns: ProjectColumn[]) =>
   columns.filter((col) => !BANNED_COLUMNS.has(col.column));
 
-const locationLabelMap = {
+export const LOCATION_LABEL_MAP = {
   [V1LocationType.EXPERIMENT]: 'General',
   [V1LocationType.VALIDATIONS]: 'Metrics',
   [V1LocationType.TRAINING]: 'Metrics',
@@ -37,64 +29,64 @@ const locationLabelMap = {
   [V1LocationType.HYPERPARAMETERS]: 'Hyperparameters',
 } as const;
 
+export const COLUMNS_MENU_BUTTON = 'columns-menu-button';
+
 interface ColumnMenuProps {
   isMobile?: boolean;
   initialVisibleColumns: string[];
-  onVisibleColumnChange?: (newColumns: string[]) => void;
+  defaultVisibleColumns: string[];
+  onVisibleColumnChange?: (newColumns: string[], pinnedCount?: number) => void;
+  onHeatmapSelectionRemove?: (id: string) => void;
   projectColumns: Loadable<ProjectColumn[]>;
   projectId: number;
   tabs: (V1LocationType | V1LocationType[])[];
+  compare?: boolean;
+  pinnedColumnsCount: number;
 }
 
 interface ColumnTabProps {
   columnState: string[];
   handleShowSuggested: () => void;
-  onVisibleColumnChange?: (newColumns: string[]) => void;
+  onVisibleColumnChange?: (newColumns: string[], pinnedCount?: number) => void;
   projectId: number;
   searchString: string;
   setSearchString: React.Dispatch<React.SetStateAction<string>>;
   tab: V1LocationType | V1LocationType[];
   totalColumns: ProjectColumn[];
+  compare: boolean;
+  pinnedColumnsCount: number;
+  onHeatmapSelectionRemove?: (id: string) => void;
 }
 
 const ColumnPickerTab: React.FC<ColumnTabProps> = ({
   columnState,
+  compare,
+  pinnedColumnsCount,
   handleShowSuggested,
-  projectId,
   searchString,
   setSearchString,
   tab,
   totalColumns,
   onVisibleColumnChange,
+  onHeatmapSelectionRemove,
 }) => {
-  const settingsPath = useMemo(() => settingsPathForProject(projectId), [projectId]);
-  const projectSettings = useObservable(userSettings.get(ProjectSettings, settingsPath));
-  const updateSettings = useCallback(
-    (p: Partial<ProjectSettings>) => userSettings.setPartial(ProjectSettings, settingsPath, p),
-    [settingsPath],
-  );
-  const settings = useMemo(
-    () =>
-      projectSettings
-        .map((s) => ({ ...s, ...defaultProjectSettings }))
-        .getOrElse(defaultProjectSettings),
-    [projectSettings],
-  );
-
-  const checkedColumn = useMemo(
-    () =>
-      settings.compare
-        ? new Set(columnState.slice(0, settings.pinnedColumnsCount))
-        : new Set(columnState),
-    [columnState, settings.compare, settings.pinnedColumnsCount],
+  const checkedColumns = useMemo(
+    () => (compare ? new Set(columnState.slice(0, pinnedColumnsCount)) : new Set(columnState)),
+    [columnState, compare, pinnedColumnsCount],
   );
 
   const filteredColumns = useMemo(() => {
     const regex = new RegExp(searchString, 'i');
     const locations = ensureArray(tab);
-    return totalColumns.filter(
-      (col) => locations.includes(col.location) && regex.test(col.displayName || col.column),
-    );
+    return totalColumns
+      .filter(
+        (col) => locations.includes(col.location) && regex.test(col.displayName || col.column),
+      )
+      .sort(
+        (a, b) =>
+          locations.findIndex((l) => l === a.location) -
+          locations.findIndex((l) => l === b.location),
+      );
   }, [searchString, totalColumns, tab]);
 
   const allFilteredColumnsChecked = useMemo(() => {
@@ -110,62 +102,52 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
     const newColumns = allFilteredColumnsChecked
       ? columnState.filter((col) => !filteredColumnMap[col])
       : [...new Set([...columnState, ...filteredColumns.map((col) => col.column)])];
-    onVisibleColumnChange?.(newColumns);
+    const pinnedCount = allFilteredColumnsChecked
+      ? // If uncheck something pinned, reduce the pinnedColumnsCount
+        newColumns.filter((col) => columnState.indexOf(col) < pinnedColumnsCount).length
+      : pinnedColumnsCount;
 
-    // If uncheck something pinned, reduce the pinnedColumnsCount
-    allFilteredColumnsChecked &&
-      updateSettings({
-        pinnedColumnsCount: newColumns.filter(
-          (col) => columnState.indexOf(col) < settings.pinnedColumnsCount,
-        ).length,
-      });
+    onVisibleColumnChange?.(newColumns, pinnedCount);
   }, [
     allFilteredColumnsChecked,
     columnState,
     filteredColumns,
     onVisibleColumnChange,
-    settings.pinnedColumnsCount,
-    updateSettings,
+    pinnedColumnsCount,
   ]);
 
   const handleColumnChange = useCallback(
     (event: CheckboxChangeEvent) => {
       const { id, checked } = event.target;
       if (id === undefined) return;
-      const pinnedColumnsCount = settings.pinnedColumnsCount;
-      if (settings.compare) {
+      if (compare) {
         // pin or unpin column
         const newColumns = columnState.filter((c) => c !== id);
+        let pinnedCount = pinnedColumnsCount;
         if (checked) {
           newColumns.splice(pinnedColumnsCount, 0, id);
-          updateSettings({ pinnedColumnsCount: Math.max(pinnedColumnsCount + 1, 0) });
+          pinnedCount = Math.max(pinnedColumnsCount + 1, 0);
         } else {
           newColumns.splice(pinnedColumnsCount - 1, 0, id);
-          updateSettings({ pinnedColumnsCount: Math.max(pinnedColumnsCount - 1, 0) });
+          pinnedCount = Math.max(pinnedColumnsCount - 1, 0);
         }
-        onVisibleColumnChange?.(newColumns);
+        onVisibleColumnChange?.(newColumns, pinnedCount);
       } else {
+        let pinnedCount = pinnedColumnsCount;
         // If uncheck something pinned, reduce the pinnedColumnsCount
         if (!checked && columnState.indexOf(id) < pinnedColumnsCount) {
-          updateSettings({ pinnedColumnsCount: Math.max(pinnedColumnsCount - 1, 0) });
+          pinnedCount = Math.max(pinnedColumnsCount - 1, 0);
         }
         // If uncheck something had heatmap skipped, reset to heatmap visible
         if (!checked) {
-          updateSettings({ heatmapSkipped: settings.heatmapSkipped.filter((s) => s !== id) });
+          onHeatmapSelectionRemove?.(id);
         }
         const newColumnSet = new Set(columnState);
         checked ? newColumnSet.add(id) : newColumnSet.delete(id);
-        onVisibleColumnChange?.([...newColumnSet]);
+        onVisibleColumnChange?.([...newColumnSet], pinnedCount);
       }
     },
-    [
-      columnState,
-      onVisibleColumnChange,
-      settings.compare,
-      settings.pinnedColumnsCount,
-      settings.heatmapSkipped,
-      updateSettings,
-    ],
+    [compare, columnState, onVisibleColumnChange, onHeatmapSelectionRemove, pinnedColumnsCount],
   );
 
   const handleSearch = useCallback(
@@ -179,9 +161,15 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
     ({ index, style }: { index: number; style: React.CSSProperties }) => {
       const col = filteredColumns[index];
       return (
-        <div className={css.rows} key={col.column} style={style}>
+        <div
+          className={css.rows}
+          data-test="row"
+          data-test-id={col.column}
+          key={col.column}
+          style={style}>
           <Checkbox
-            checked={checkedColumn.has(col.column)}
+            checked={checkedColumns.has(col.column)}
+            data-test="checkbox"
             id={col.column}
             onChange={handleColumnChange}>
             {col.displayName || col.column}
@@ -189,20 +177,21 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
         </div>
       );
     },
-    [filteredColumns, checkedColumn, handleColumnChange],
+    [filteredColumns, checkedColumns, handleColumnChange],
   );
 
   return (
-    <div>
+    <div data-test-component="columnPickerTab">
       <Input
         allowClear
         autoFocus
+        data-test="search"
         placeholder="Search"
         value={searchString}
         onChange={handleSearch}
       />
       {totalColumns.length !== 0 ? (
-        <div className={css.columns}>
+        <div className={css.columns} data-test="columns">
           {filteredColumns.length > 0 ? (
             <List height={360} itemCount={filteredColumns.length} itemSize={30} width="100%">
               {rows}
@@ -214,12 +203,12 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
       ) : (
         <Spinner spinning />
       )}
-      {!settings.compare && (
+      {!compare && (
         <div className={css.actionRow}>
-          <Button type="text" onClick={handleShowHideAll}>
+          <Button data-test="showAll" type="text" onClick={handleShowHideAll}>
             {allFilteredColumnsChecked ? 'Hide' : 'Show'} all
           </Button>
-          <Button type="text" onClick={handleShowSuggested}>
+          <Button data-test="reset" type="text" onClick={handleShowSuggested}>
             Reset
           </Button>
         </div>
@@ -229,11 +218,15 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
 };
 
 const ColumnPickerMenu: React.FC<ColumnMenuProps> = ({
+  compare = false,
+  pinnedColumnsCount,
   projectColumns,
   initialVisibleColumns,
+  defaultVisibleColumns,
   projectId,
   isMobile = false,
   onVisibleColumnChange,
+  onHeatmapSelectionRemove,
   tabs,
 }) => {
   const [searchString, setSearchString] = useState('');
@@ -253,9 +246,9 @@ const ColumnPickerMenu: React.FC<ColumnMenuProps> = ({
   );
 
   const handleShowSuggested = useCallback(() => {
-    onVisibleColumnChange?.(defaultExperimentColumns);
+    onVisibleColumnChange?.(defaultVisibleColumns);
     closeMenu();
-  }, [onVisibleColumnChange]);
+  }, [onVisibleColumnChange, defaultVisibleColumns]);
 
   return (
     <Dropdown
@@ -269,18 +262,21 @@ const ColumnPickerMenu: React.FC<ColumnMenuProps> = ({
                   children: (
                     <ColumnPickerTab
                       columnState={initialVisibleColumns}
+                      compare={compare}
                       handleShowSuggested={handleShowSuggested}
+                      pinnedColumnsCount={pinnedColumnsCount}
                       projectId={projectId}
                       searchString={searchString}
                       setSearchString={setSearchString}
                       tab={tab}
                       totalColumns={totalColumns}
+                      onHeatmapSelectionRemove={onHeatmapSelectionRemove}
                       onVisibleColumnChange={onVisibleColumnChange}
                     />
                   ),
                   forceRender: true,
                   key: canonicalTab,
-                  label: locationLabelMap[canonicalTab as keyof typeof locationLabelMap],
+                  label: LOCATION_LABEL_MAP[canonicalTab as keyof typeof LOCATION_LABEL_MAP],
                 };
               })}
             />
@@ -288,7 +284,9 @@ const ColumnPickerMenu: React.FC<ColumnMenuProps> = ({
           {tabs.length === 1 && (
             <ColumnPickerTab
               columnState={initialVisibleColumns}
+              compare={compare}
               handleShowSuggested={handleShowSuggested}
+              pinnedColumnsCount={pinnedColumnsCount}
               projectId={projectId}
               searchString={searchString}
               setSearchString={setSearchString}
@@ -303,6 +301,7 @@ const ColumnPickerMenu: React.FC<ColumnMenuProps> = ({
       onOpenChange={handleOpenChange}>
       <Button
         data-test-component="columnPickerMenu"
+        data-testid={COLUMNS_MENU_BUTTON}
         hideChildren={isMobile}
         icon={<Icon name="columns" title="column picker" />}>
         Columns

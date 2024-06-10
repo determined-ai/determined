@@ -1,0 +1,29 @@
+maxSlotsPerPod: 1
+
+taskContainerDefaults:
+  cpuPodSpec:
+    apiVersion: v1
+    kind: Pod
+    spec:
+      containers:
+        - name: determined-container
+          volumeMounts:
+            - name: efs-volume
+              mountPath: /run/determined/workdir/shared_fs
+      volumes:
+        - name: efs-volume
+          persistentVolumeClaim:
+            claimName: efs-claim
+  gpuPodSpec:
+    apiVersion: v1
+    kind: Pod
+    spec:
+      containers:
+        - name: determined-container
+          volumeMounts:
+            - name: efs-volume
+              mountPath: /run/determined/workdir/shared_fs
+      volumes:
+        - name: efs-volume
+          persistentVolumeClaim:
+            claimName: efs-claim

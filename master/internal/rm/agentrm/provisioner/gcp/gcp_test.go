@@ -17,5 +17,5 @@ func TestGCPNodeNameGenGreaterThanMaxLength(t *testing.T) {
 		syslog: logrus.WithField("gcp-cluster", "resourcePool"),
 	}
 	name := cluster.generateInstanceNamePattern()
-	assert.Equal(t, maxInstanceNameLength, len(name))
+	assert.Len(t, name, maxInstanceNameLength)
 }

@@ -139,6 +139,7 @@ def test_reconnect() -> None:
         user_id=1,
         immutable=False,
         state="",
+        key="value",
         seq=1,
     )
     ws.expect_next(retval={"project": p1.to_json()})
@@ -171,6 +172,7 @@ def test_reconnect() -> None:
         user_id=1,
         immutable=False,
         state="",
+        key="value",
         seq=2,
     )
     ws.expect_next(retval={"project": p2.to_json()})
@@ -208,6 +210,7 @@ def test_reconnect() -> None:
         user_id=1,
         immutable=False,
         state="",
+        key="value",
         seq=3,
     )
     ws.expect_next(retval={"project": p3.to_json()})
@@ -246,6 +249,7 @@ def test_change_subscription() -> None:
         user_id=1,
         immutable=False,
         state="",
+        key="value",
         seq=1,
     )
     ws.expect_next(retval={"project": p1.to_json()})
@@ -282,6 +286,7 @@ def test_change_subscription() -> None:
         user_id=1,
         immutable=False,
         state="",
+        key="value",
         seq=1000,  # Note the high seq here will be ignored since this is from the old subscription.
     )
     ws.expect_next(retval={"project": p1b.to_json()})
@@ -300,6 +305,7 @@ def test_change_subscription() -> None:
         user_id=1,
         immutable=False,
         state="",
+        key="value",
         seq=2,
     )
     ws.expect_next(retval={"project": p2.to_json()})

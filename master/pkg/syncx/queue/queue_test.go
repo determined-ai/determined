@@ -14,7 +14,7 @@ import (
 
 func TestQueue(t *testing.T) {
 	q := queue.New[int]()
-	require.Equal(t, 0, q.Len())
+	require.Zero(t, q.Len())
 
 	q.Put(1)
 	require.Equal(t, 1, q.Len())
@@ -26,7 +26,7 @@ func TestQueue(t *testing.T) {
 	require.Equal(t, 1, q.Len())
 
 	require.Equal(t, 2, q.Get())
-	require.Equal(t, 0, q.Len())
+	require.Zero(t, q.Len())
 
 	done := make(chan struct{})
 	go func() {
@@ -48,13 +48,13 @@ func TestQueue(t *testing.T) {
 	case <-done:
 	}
 
-	require.Equal(t, 0, q.Len())
+	require.Zero(t, q.Len())
 }
 
 func TestQueueMultipleBlockedReaders(t *testing.T) {
 	t.Log("creating queue with max size 1")
 	q := queue.New[int]()
-	require.Equal(t, 0, q.Len())
+	require.Zero(t, q.Len())
 
 	t.Log("launch goroutines to add 3 elements")
 	var mu sync.Mutex
@@ -115,15 +115,15 @@ func TestQueueMultipleBlockedReaders(t *testing.T) {
 		default:
 		}
 	}
-	require.Equal(t, len(in), numDone, "all goroutines should have unblocked")
+	require.Len(t, in, numDone, "all goroutines should have unblocked")
 
 	require.ElementsMatch(t, in, out, "should have gotten all values")
-	require.Equal(t, 0, q.Len())
+	require.Zero(t, q.Len())
 }
 
 func TestQueueConcurrent(t *testing.T) {
 	q := queue.New[int]()
-	require.Equal(t, 0, q.Len())
+	require.Zero(t, q.Len())
 
 	var in []int
 	for i := 0; i < 100; i++ {

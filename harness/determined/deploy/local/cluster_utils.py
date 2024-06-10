@@ -140,6 +140,7 @@ def _wait_for_container(container_name: str, timeout: int = 100) -> None:
 
 def master_up(
     port: int,
+    initial_user_password: Optional[str],
     master_config_path: Optional[pathlib.Path],
     storage_host_path: pathlib.Path,
     master_name: Optional[str],
@@ -163,6 +164,13 @@ def master_up(
             master_conf = util.yaml_safe_load(f)
     else:
         master_conf = MASTER_CONF_DEFAULT
+        make_temp_conf = True
+
+    if master_conf.get("security") is None:
+        master_conf["security"] = {}
+
+    if initial_user_password is not None:
+        master_conf["security"]["initial_user_password"] = initial_user_password
         make_temp_conf = True
 
     if storage_host_path is not None:
@@ -343,6 +351,7 @@ def remove_network(network_name: str) -> None:
 def cluster_up(
     num_agents: int,
     port: int,
+    initial_user_password: Optional[str],
     master_config_path: Optional[pathlib.Path],
     storage_host_path: pathlib.Path,
     cluster_name: str,
@@ -358,6 +367,7 @@ def cluster_up(
     cluster_down(cluster_name, delete_db)
     master_up(
         port=port,
+        initial_user_password=initial_user_password,
         master_config_path=master_config_path,
         storage_host_path=storage_host_path,
         master_name=f"{cluster_name}_{MASTER_NAME}",

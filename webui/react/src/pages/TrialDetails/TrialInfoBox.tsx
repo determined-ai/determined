@@ -38,6 +38,19 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
     return humanReadableBytes(totalBytes);
   }, [trial?.totalCheckpointSize]);
 
+  const logRetentionDays = useMemo(() => {
+    switch (trial?.logRetentionDays) {
+      case undefined:
+        return '-';
+      case -1:
+        return 'Forever';
+      case 1:
+        return `${trial?.logRetentionDays} day`;
+      default:
+        return `${trial?.logRetentionDays} days`;
+    }
+  }, [trial]);
+
   return (
     <Section>
       <Card.Group size="small">
@@ -60,6 +73,7 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
             {checkpointModalComponents}
           </>
         )}
+        {<OverviewStats title="Log Retention Days">{logRetentionDays}</OverviewStats>}
       </Card.Group>
     </Section>
   );

@@ -63,7 +63,7 @@ func TestAddAndRemoveBindings(t *testing.T) {
 
 	count, err = Bun().NewSelect().Model(&values).ScanAndCount(ctx)
 	require.NoError(t, err, "error when scanning DB: %t", err)
-	require.Equal(t, 0, count, "expected 0 items in DB, found %d", count)
+	require.Zero(t, count, "expected 0 items in DB, found %d", count)
 
 	err = AddRPWorkspaceBindings(ctx, workspaceIDs, testPool2Name, []config.ResourcePoolConfig{
 		{PoolName: testPoolName}, {PoolName: testPool2Name},
@@ -85,12 +85,13 @@ func TestAddAndRemoveBindings(t *testing.T) {
 
 	count, err = Bun().NewSelect().Model(&values).ScanAndCount(ctx)
 	require.NoError(t, err, "error when scanning DB: %t", err)
-	require.Equal(t, 0, count, "expected 0 items in DB, found %d", count)
+	require.Zero(t, count, "expected 0 items in DB, found %d", count)
 }
 
 func TestCheckIfRPUnbound(t *testing.T) {
 	ctx := context.Background()
-	pgDB := MustResolveTestPostgres(t)
+	pgDB, closeDB := MustResolveTestPostgres(t)
+	defer closeDB()
 	MustMigrateTestPostgres(t, pgDB, MigrationsFromDB)
 
 	poolName := uuid.New().String()
@@ -113,11 +114,12 @@ func TestCheckIfRPUnbound(t *testing.T) {
 
 func TestGetDefaultPoolsForWorkspace(t *testing.T) {
 	ctx := context.Background()
-	pgDB := MustResolveTestPostgres(t)
+	pgDB, closeDB := MustResolveTestPostgres(t)
+	defer closeDB()
 	MustMigrateTestPostgres(t, pgDB, MigrationsFromDB)
 
 	comp, aux, err := GetDefaultPoolsForWorkspace(ctx, -1)
-	require.NoError(t, err) // TODO(!!!) we should return errors for these cases.
+	require.NoError(t, err) // TODO(nickb): We should return errors for these cases.
 	require.Equal(t, "", comp)
 	require.Equal(t, "", aux)
 
@@ -161,7 +163,8 @@ func TestGetDefaultPoolsForWorkspace(t *testing.T) {
 func TestBindingFail(t *testing.T) {
 	// Test add the same binding multiple times - should fail
 	ctx := context.Background()
-	pgDB := MustResolveTestPostgres(t)
+	pgDB, closeDB := MustResolveTestPostgres(t)
+	defer closeDB()
 	MustMigrateTestPostgres(t, pgDB, MigrationsFromDB)
 
 	user := RequireMockUser(t, pgDB)
@@ -216,7 +219,7 @@ func TestListWorkspacesBindingRP(t *testing.T) {
 	// no bindings
 	bindings, _, err := ReadWorkspacesBoundToRP(ctx, testPoolName, 0, 0, existingPools)
 	require.NoError(t, err, "error when reading workspaces bound to RP %s", testPoolName)
-	require.Equal(t, 0, len(bindings),
+	require.Zero(t, len(bindings),
 		"expected length of bindings to be 0, but got %d", len(bindings))
 
 	// one binding
@@ -225,7 +228,7 @@ func TestListWorkspacesBindingRP(t *testing.T) {
 
 	bindings, _, err = ReadWorkspacesBoundToRP(ctx, testPoolName, 0, 0, existingPools)
 	require.NoError(t, err, "error when reading workspaces bound to RP %s", testPoolName)
-	require.Equal(t, 1, len(bindings),
+	require.Len(t, bindings, 1,
 		"expected length of bindings to be 0, but got %d", len(bindings))
 	require.Equal(t, int(workspaceIDs[0]), bindings[0].WorkspaceID,
 		"expected workspaceID %d, but got %d", workspaceIDs[0], bindings[0].WorkspaceID)
@@ -239,7 +242,7 @@ func TestListWorkspacesBindingRP(t *testing.T) {
 
 	bindings, _, err = ReadWorkspacesBoundToRP(ctx, testPoolName, 0, 0, existingPools)
 	require.NoError(t, err, "error when reading workspaces bound to RP %s", testPoolName)
-	require.Equal(t, 1, len(bindings),
+	require.Len(t, bindings, 1,
 		"expected length of bindings to be 0, but got %d", len(bindings))
 	require.Equal(t, int(workspaceIDs[0]), bindings[0].WorkspaceID,
 		"expected workspaceID %d, but got %d", workspaceIDs[0], bindings[0].WorkspaceID)
@@ -249,13 +252,14 @@ func TestListWorkspacesBindingRP(t *testing.T) {
 	require.NoError(t, err, "failed to add bindings: %t", err)
 	bindings, err = GetAllBindings(ctx)
 	require.NoError(t, err, "failed to get all bindings")
-	require.Equal(t, 2, len(bindings),
+	require.Len(t, bindings, 2,
 		"expected length of bindings to be 0 but got %d", len(bindings))
 }
 
 func TestListRPsAvailableToWorkspace(t *testing.T) {
 	require.NoError(t, etc.SetRootPath(RootFromDB))
-	db := MustResolveTestPostgres(t)
+	db, closeDB := MustResolveTestPostgres(t)
+	defer closeDB()
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 	ctx := context.Background()
 	user := RequireMockUser(t, db)
@@ -387,7 +391,8 @@ func TestListRPsAvailableToWorkspace(t *testing.T) {
 
 func TestOverwriteBindings(t *testing.T) {
 	require.NoError(t, etc.SetRootPath(RootFromDB))
-	db := MustResolveTestPostgres(t)
+	db, closeDB := MustResolveTestPostgres(t)
+	defer closeDB()
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 	ctx := context.Background()
 	user := RequireMockUser(t, db)
@@ -408,7 +413,7 @@ func TestOverwriteBindings(t *testing.T) {
 	require.NoError(t, err, "failed to add ")
 	bindings, _, err := ReadWorkspacesBoundToRP(ctx, testPoolName, 0, 0, existingPools)
 	require.NoError(t, err, "failed to read bindings: %t", err)
-	require.Equal(t, 3, len(bindings),
+	require.Len(t, bindings, 3,
 		"expected bindings length 3, but got length %d", len(bindings))
 	var bindingsIDs []int32
 	for _, binding := range bindings {
@@ -425,7 +430,7 @@ func TestOverwriteBindings(t *testing.T) {
 	require.NoError(t, err, "failed to overwrite bindings: %t", err)
 	bindings, _, err = ReadWorkspacesBoundToRP(ctx, testPoolName, 0, 0, existingPools)
 	require.NoError(t, err, "failed to read bindings: %t", err)
-	require.Equal(t, 1, len(bindings),
+	require.Len(t, bindings, 1,
 		"expected bindings length 1, but got length %d", len(bindings))
 	require.Equal(t, int(workspaceIDs[0]), bindings[0].WorkspaceID,
 		"workspaceID %d does not match bound workspace ID %d",
@@ -440,7 +445,7 @@ func TestOverwriteBindings(t *testing.T) {
 
 	bindings, _, err = ReadWorkspacesBoundToRP(ctx, testPool2Name, 0, 0, existingPools)
 	require.NoError(t, err, "failed to read bindings: %t", err)
-	require.Equal(t, 1, len(bindings),
+	require.Len(t, bindings, 1,
 		"expected bindings length 1, but got length %d", len(bindings))
 	require.Equal(t, int(workspaceIDs[0]), bindings[0].WorkspaceID,
 		"workspaceID %d does not match bound workspace ID %d",
@@ -452,7 +457,8 @@ func TestOverwriteBindings(t *testing.T) {
 
 func TestOverwriteFail(t *testing.T) {
 	ctx := context.Background()
-	pgDB := MustResolveTestPostgres(t)
+	pgDB, closeDB := MustResolveTestPostgres(t)
+	defer closeDB()
 	MustMigrateTestPostgres(t, pgDB, MigrationsFromDB)
 
 	existingPools := []config.ResourcePoolConfig{{PoolName: testPoolName}}
@@ -469,7 +475,8 @@ func TestOverwriteFail(t *testing.T) {
 
 func TestRemoveInvalidBinding(t *testing.T) {
 	ctx := context.Background()
-	pgDB := MustResolveTestPostgres(t)
+	pgDB, closeDB := MustResolveTestPostgres(t)
+	defer closeDB()
 	MustMigrateTestPostgres(t, pgDB, MigrationsFromDB)
 	// remove binding that doesn't exist
 	workspaceIDs := []int32{1}

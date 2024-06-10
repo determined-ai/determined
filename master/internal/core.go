@@ -75,7 +75,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
-	opentelemetry "github.com/determined-ai/determined/master/pkg/opentelemetry"
+	opentelemetry "github.com/determined-ai/determined/master/pkg/opentelemetry" //nolint:revive
 	"github.com/determined-ai/determined/master/pkg/tasks"
 	"github.com/determined-ai/determined/master/version"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -1129,31 +1129,50 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 		return errors.Wrap(err, "could not set static root")
 	}
 
-	var isBrandNewCluster bool
-	m.db, isBrandNewCluster, err = db.Setup(&m.config.DB)
+	var isOldCluster bool
+	newClustersRequirePasswords := func(*db.PgDB) error {
+		isOldCluster, err = db.Bun().NewSelect().Table("pg_tables").
+			Where("schemaname = 'public'").
+			Where("tablename = 'gopg_migrations'").
+			Exists(ctx)
+		if err != nil {
+			return fmt.Errorf("checking if database is fresh: %w", err)
+		}
+
+		if !isOldCluster &&
+			slices.Contains(m.config.FeatureSwitches, "prevent_blank_password") &&
+			m.config.Security.InitialUserPassword == "" {
+			log.Error("This cluster was deployed without an initial password for the built-in `determined` " +
+				"and `admin` users. New clusters can be deployed with initial passwords set using the " +
+				"`security.initial_user_password` setting.")
+			return errors.New("could not deploy without initial password")
+		}
+
+		return nil
+	}
+	m.db, err = db.Setup(&m.config.DB, newClustersRequirePasswords)
 	if err != nil {
 		return err
 	}
 	defer closeWithErrCheck("db", m.db)
 
-	m.ClusterID, err = m.db.GetOrCreateClusterID(m.config.Telemetry.ClusterID)
-	if err != nil {
-		return errors.Wrap(err, "could not fetch cluster id from database")
-	}
-
-	if isBrandNewCluster {
-		if password := m.config.Security.InitialUserPassword; password == "" {
-			log.Warn("This cluster was deployed without a default password for the built-in `determined` " +
-				"and `admin` users. You should set one using `det user change-password`. New clusters can be " +
-				"deployed with default passwords set using the `security.initial_user_password` setting.")
-		} else {
+	if !isOldCluster {
+		// This has to happen after setup, since creating the built-in users without a
+		// password is part of the first migration.
+		password := m.config.Security.InitialUserPassword
+		if password != "" {
 			for _, username := range user.BuiltInUsers {
 				err := user.SetUserPassword(ctx, username, password)
 				if err != nil {
-					return fmt.Errorf("could not update default user password: %w", err)
+					return fmt.Errorf("could not set password for %s: %w", username, err)
 				}
 			}
 		}
+	}
+
+	m.ClusterID, err = m.db.GetOrCreateClusterID(m.config.Telemetry.ClusterID)
+	if err != nil {
+		return errors.Wrap(err, "could not fetch cluster id from database")
 	}
 
 	webhookManager, err := webhooks.New(ctx)

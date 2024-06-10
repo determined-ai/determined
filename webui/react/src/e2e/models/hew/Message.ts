@@ -1,14 +1,10 @@
 import { BaseComponent, NamedComponent } from 'e2e/models/BaseComponent';
 
 /**
- * Returns a representation of the Message component from Hew.
- * This constructor represents the contents in hew/src/kit/Message.tsx.
- * @param {object} obj
- * @param {implementsGetLocator} obj.parent - The parent used to locate this Message
- * @param {string} obj.selector - Used instead of `defaultSelector`
+ * Represents the Message component from hew/src/kit/Message.tsx
  */
 export class Message extends NamedComponent {
-  override defaultSelector: string = '[class^="Message_base"]';
+  readonly defaultSelector = '[class^="Message_base"]';
 
   readonly icon = new BaseComponent({
     parent: this,

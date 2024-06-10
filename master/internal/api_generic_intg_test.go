@@ -82,6 +82,6 @@ func TestGetTaskChildren(t *testing.T) {
 	require.NoError(t, err)
 	for _, e := range tasks {
 		_, ok := taskSet[e.TaskID]
-		require.Equal(t, true, ok)
+		require.True(t, ok)
 	}
 }

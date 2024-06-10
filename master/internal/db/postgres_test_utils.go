@@ -12,6 +12,7 @@ import (
 	"net/url"
 	"os"
 	"path/filepath"
+	"strings"
 	"testing"
 	"time"
 
@@ -63,22 +64,48 @@ type Model struct {
 	WorkspaceID     int           `db:"workspace_id" json:"workspace_id"`
 }
 
+func init() {
+	testOnlyDBLock = func(sql *sqlx.DB) (unlock func()) {
+		tx, err := sql.Beginx()
+		if err != nil {
+			panic(err)
+		}
+
+		const lockID = 0x33ad0708c9bed25b // Chosen arbitrarily.
+		if _, err := tx.Exec("SELECT pg_advisory_xact_lock($1)", lockID); err != nil {
+			_ = tx.Rollback()
+			panic(err)
+		}
+
+		return func() {
+			if err := tx.Commit(); err != nil {
+				_ = tx.Rollback()
+				panic(err)
+			}
+		}
+	}
+}
+
 // ResolveTestPostgres resolves a connection to a postgres database. To debug tests that use this
 // (or otherwise run the tests outside of the Makefile), make sure to set
 // DET_INTEGRATION_POSTGRES_URL.
-func ResolveTestPostgres() (*PgDB, error) {
+func ResolveTestPostgres() (*PgDB, func(), error) {
 	pgDB, err := ConnectPostgres(os.Getenv("DET_INTEGRATION_POSTGRES_URL"))
 	if err != nil {
-		return nil, fmt.Errorf("failed to connect to postgres: %w", err)
+		return nil, nil, fmt.Errorf("failed to connect to postgres: %w", err)
 	}
-	return pgDB, nil
+	return pgDB, func() {
+		if err := pgDB.Close(); err != nil {
+			panic(err)
+		}
+	}, nil
 }
 
 // MustResolveTestPostgres is the same as ResolveTestPostgres but with panics on errors.
-func MustResolveTestPostgres(t *testing.T) *PgDB {
-	pgDB, err := ResolveTestPostgres()
+func MustResolveTestPostgres(t *testing.T) (*PgDB, func()) {
+	pgDB, closeDB, err := ResolveTestPostgres()
 	require.NoError(t, err, "failed to connect to postgres")
-	return pgDB
+	return pgDB, closeDB
 }
 
 // ResolveNewPostgresDatabase returns a connection to a randomly-named, newly-created database, and
@@ -86,7 +113,7 @@ func MustResolveTestPostgres(t *testing.T) *PgDB {
 func ResolveNewPostgresDatabase() (*PgDB, func(), error) {
 	baseURL := os.Getenv("DET_INTEGRATION_POSTGRES_URL")
 	if baseURL == "" {
-		return nil, nil, errors.New("no DET_INTEGRATION_POSTGRES_URL detected")
+		return nil, nil, fmt.Errorf("no DET_INTEGRATION_POSTGRES_URL detected")
 	}
 
 	url, err := url.Parse(baseURL)
@@ -169,7 +196,8 @@ func MigrateTestPostgres(db *PgDB, migrationsPath string, actions ...string) err
 	if len(actions) == 0 {
 		actions = []string{"up"}
 	}
-	_, err := db.Migrate(migrationsPath, actions)
+	err := db.Migrate(
+		migrationsPath, strings.ReplaceAll(migrationsPath+"/../views_and_triggers", "file://", ""), actions)
 	if err != nil {
 		return fmt.Errorf("failed to migrate postgres: %w", err)
 	}
@@ -182,10 +210,10 @@ func MigrateTestPostgres(db *PgDB, migrationsPath string, actions ...string) err
 }
 
 // MustSetupTestPostgres returns a ready to use test postgres connection.
-func MustSetupTestPostgres(t *testing.T) *PgDB {
-	pgDB := MustResolveTestPostgres(t)
+func MustSetupTestPostgres(t *testing.T) (*PgDB, func()) {
+	pgDB, closeDB := MustResolveTestPostgres(t)
 	MustMigrateTestPostgres(t, pgDB, MigrationsFromDB)
-	return pgDB
+	return pgDB, closeDB
 }
 
 // RequireMockJob returns a stub job.

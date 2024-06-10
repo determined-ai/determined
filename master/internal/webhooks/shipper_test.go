@@ -32,7 +32,8 @@ func TestShipper(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	pgDB := db.MustResolveTestPostgres(t)
+	pgDB, closeDB := db.MustResolveTestPostgres(t)
+	defer closeDB()
 	db.MustMigrateTestPostgres(t, pgDB, db.MigrationsFromDB)
 	clearWebhooksTables(ctx, t)
 
@@ -56,8 +57,8 @@ func TestShipper(t *testing.T) {
 		key := []byte("testsigningkey")
 		signedPayload := generateSignedPayload(req, ts, key)
 
-		require.Equal(t, signedPayload,
-			"899cc042278415da7d91605ffefe81376d64a4d842aa5663cd614f497f88910f")
+		require.Equal(t, "899cc042278415da7d91605ffefe81376d64a4d842aa5663cd614f497f88910f",
+			signedPayload)
 	})
 
 	t.Log("setup test webhook receiver")
@@ -200,7 +201,7 @@ func TestShipper(t *testing.T) {
 		t.Log("waitgroup closed, checking results")
 		require.ElementsMatch(t, maps.Keys(expected), maps.Keys(actual), "missing events for exps")
 		for expID, events := range actual {
-			require.Equalf(t, 3, len(events), "missing events for exp %d", expID)
+			require.Len(t, events, 3, "missing events for exp %d", expID)
 			for _, sends := range events {
 				require.GreaterOrEqual(t, sends, 1, "event was not sent at least once")
 				require.LessOrEqual(t, sends, 3, "event was not sent an excessive number of times")

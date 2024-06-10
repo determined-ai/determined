@@ -677,9 +677,31 @@ class CheckpointContext:
 
     def delete(self, storage_id: str) -> None:
         """
-        Delete a checkpoint from the storage backend.
+        Delete a checkpoint from the storage backend and notify the master.
         """
-        self._storage_manager.delete(storage_id, ["**/*"])
+        resources_deleted = self._storage_manager.delete(storage_id, ["**/*"])
+        self._report_checkpoint_deleted(storage_id=storage_id, resources=resources_deleted)
+
+    def _report_checkpoint_deleted(
+        self,
+        storage_id: str,
+        resources: Optional[Dict[str, int]] = None,
+    ) -> None:
+        """
+        After deleting a checkpoint, report deletion to the master.
+        """
+        deleted_checkpoint = [
+            bindings.v1PatchCheckpoint(
+                uuid=storage_id,
+                resources=bindings.PatchCheckpointOptionalResources(
+                    resources=resources,  # type: ignore
+                ),
+            )
+        ]
+
+        bindings.patch_PatchCheckpoints(
+            self._session, body=bindings.v1PatchCheckpointsRequest(checkpoints=deleted_checkpoint)
+        )
 
     def _write_metadata_file(self, ckpt_dir: str, metadata: Dict[str, Any]) -> None:
         metadata_path = pathlib.Path(ckpt_dir).joinpath("metadata.json")
@@ -741,6 +763,14 @@ class DummyCheckpointContext(CheckpointContext):
     ) -> None:
         # No master to report to; just log the event.
         logger.info(f"saved checkpoint {storage_id}")
+
+    def _report_checkpoint_deleted(
+        self,
+        storage_id: str,
+        resources: Optional[Dict[str, int]] = None,
+    ) -> None:
+        # No master to report to; just log the event.
+        logger.info(f"deleted checkpoint {storage_id}")
 
     def get_metadata(self, storage_id: str) -> Dict[str, Any]:
         # TODO: when the StorageManager supports downloading with a file filter, we should attempt

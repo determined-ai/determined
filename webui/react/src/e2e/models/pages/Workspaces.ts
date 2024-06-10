@@ -5,8 +5,10 @@ import { WorkspaceDetails } from 'e2e/models/components/WorkspaceDetails';
 import { WorkspacesList } from 'e2e/models/components/WorkspacesList';
 
 /**
- * Returns a representation of an Workspaces page.
- * @param {Page} page - The '@playwright/test' Page being used by a test
+ * Represents the Workspaces page from pages/WorkspacesList.tsx
+ * Represents the Workspaces page from pages/WorkspaceDetails.tsx
+ * Represents the Workspaces page from pages/WorkspaceCreateModal.tsx
+ * Represents the Workspaces page from pages/WorkspaceDeleteModal.tsx
  */
 export class Workspaces extends BasePage {
   readonly title: string = Workspaces.getTitle('Workspaces');
@@ -14,7 +16,7 @@ export class Workspaces extends BasePage {
   readonly list = new WorkspacesList({
     parent: this,
   });
-  readonly projects = new WorkspaceDetails({
+  readonly details = new WorkspaceDetails({
     parent: this,
   });
   readonly createModal = new WorkspaceCreateModal({

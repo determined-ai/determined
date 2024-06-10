@@ -249,7 +249,7 @@ func (s *PodmanClient) RunContainer(
 
 	// from master task_container_defaults.shm_size_bytes
 	if shmsize := req.HostConfig.ShmSize; shmsize != 4294967296 { // 4294967296 is the default.
-		args = append(args, "--shm-size", fmt.Sprintf("%d", shmsize))
+		args = append(args, "--shm-size", strconv.Itoa(int(shmsize)))
 	}
 
 	args = capabilitiesToPodmanArgs(req, args)

@@ -1,13 +1,13 @@
 package main
 
 import (
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strconv"
 	"time"
 
-	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
@@ -23,7 +23,7 @@ func newPopulateCmd() *cobra.Command {
 		Short: `populate metrics with given number of batches. 
 		trivial is an optional arg for trivial metrics rather than more complex ones.`,
 		Run: func(cmd *cobra.Command, args []string) {
-			if err := runPopulate(cmd, args); err != nil {
+			if err := runPopulate(args); err != nil {
 				log.Error(fmt.Sprintf("%+v", err))
 				os.Exit(1)
 			}
@@ -31,7 +31,7 @@ func newPopulateCmd() *cobra.Command {
 	}
 }
 
-func runPopulate(cmd *cobra.Command, args []string) error {
+func runPopulate(args []string) error {
 	start := time.Now()
 	err := initializeConfig()
 	if err != nil {
@@ -39,7 +39,7 @@ func runPopulate(cmd *cobra.Command, args []string) error {
 	}
 
 	masterConfig := config.GetMasterConfig()
-	database, _, err := db.Setup(&masterConfig.DB)
+	database, err := db.Setup(&masterConfig.DB)
 	if err != nil {
 		return err
 	}

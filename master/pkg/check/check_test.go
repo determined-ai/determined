@@ -3,6 +3,7 @@ package check
 import (
 	"testing"
 
+	"github.com/stretchr/testify/require"
 	"gotest.tools/assert"
 )
 
@@ -31,7 +32,7 @@ func TestTrue(t *testing.T) {
 			if tc.msg == "" {
 				assert.NilError(t, err)
 			} else {
-				assert.Error(t, err, tc.msg)
+				require.Error(t, err, tc.msg)
 			}
 		})
 	}
@@ -61,7 +62,7 @@ func TestFalse(t *testing.T) {
 			if tc.msg == "" {
 				assert.NilError(t, err)
 			} else {
-				assert.Error(t, err, tc.msg)
+				require.Error(t, err, tc.msg)
 			}
 		})
 	}
@@ -101,7 +102,7 @@ func TestEqual(t *testing.T) {
 			if tc.msg == "" {
 				assert.NilError(t, err)
 			} else {
-				assert.Error(t, err, tc.msg)
+				require.Error(t, err, tc.msg)
 			}
 		})
 	}
@@ -133,7 +134,7 @@ func TestGreaterThanOrEqualTo(t *testing.T) {
 			if tc.msg == "" {
 				assert.NilError(t, err)
 			} else {
-				assert.Error(t, err, tc.msg)
+				require.Error(t, err, tc.msg)
 			}
 		})
 	}

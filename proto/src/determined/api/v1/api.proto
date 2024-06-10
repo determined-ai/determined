@@ -739,6 +739,18 @@ service Determined {
     };
   }
 
+  // Get the list of trials for an experiment.
+  rpc GetTrialRemainingLogRetentionDays(
+      GetTrialRemainingLogRetentionDaysRequest)
+      returns (GetTrialRemainingLogRetentionDaysResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/trials/{id}/remaining_log_retention_days"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+
   // Return a downsampled time series of metrics from multiple trials to compare
   // them side-by-side.
   rpc CompareTrials(CompareTrialsRequest) returns (CompareTrialsResponse) {
@@ -2062,6 +2074,16 @@ service Determined {
       tags: "Projects"
     };
   }
+  // Get the request project by key.
+  rpc GetProjectByKey(GetProjectByKeyRequest)
+      returns (GetProjectByKeyResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/projects/key/{key}"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Projects"
+    };
+  }
   // Get a list of columns for experiment list table.
   rpc GetProjectColumns(GetProjectColumnsRequest)
       returns (GetProjectColumnsResponse) {
@@ -2581,6 +2603,28 @@ service Determined {
   rpc UnarchiveRuns(UnarchiveRunsRequest) returns (UnarchiveRunsResponse) {
     option (google.api.http) = {
       post: "/api/v1/runs/unarchive"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+
+  // Pause experiment associated with provided runs.
+  rpc PauseRuns(PauseRunsRequest) returns (PauseRunsResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/runs/pause"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+
+  // Unpause experiment associated with provided runs.
+  rpc ResumeRuns(ResumeRunsRequest) returns (ResumeRunsResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/runs/resume"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {

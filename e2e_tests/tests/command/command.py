@@ -16,6 +16,7 @@ class _InteractiveCommandProcess:
         self.process = process
         self.detach = detach
         self.task_id = None  # type: Optional[str]
+        self.task_name: Optional[str] = None
 
         if self.detach:
             iterator = iter(self.process.stdout)  # type: ignore
@@ -29,9 +30,12 @@ class _InteractiveCommandProcess:
             while not m and iterations < max_iterations:
                 line = next(iterator)
                 iterations += 1
-                m = re.search(rb"Launched .* \(id: (.*)\)", line)
+                m = re.search(rb"Launched .* \(id: (.*), name: (.*)\)", line)
             assert m is not None
             self.task_id = m.group(1).decode() if m else None
+            self.task_name = m.group(2).decode() if m else None
+            assert self.task_id is not None, "Task ID could not be found"
+            assert self.task_name is not None, "Task name could not be found"
 
     @property
     def stdout(self) -> Iterator[str]:

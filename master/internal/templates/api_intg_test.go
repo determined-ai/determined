@@ -23,7 +23,7 @@ import (
 )
 
 func TestMain(m *testing.M) {
-	pgDB, err := db.ResolveTestPostgres()
+	pgDB, _, err := db.ResolveTestPostgres()
 	if err != nil {
 		log.Panicln(err)
 	}
@@ -80,7 +80,7 @@ func TestGetTemplates(t *testing.T) {
 	t.Run("GetTemplates without any templates", func(t *testing.T) {
 		resp, err := api.GetTemplates(ctx, &apiv1.GetTemplatesRequest{})
 		require.NoError(t, err)
-		require.Len(t, resp.Templates, 0)
+		require.Empty(t, resp.Templates)
 	})
 
 	inputNames := []string{

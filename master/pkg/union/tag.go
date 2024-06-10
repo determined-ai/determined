@@ -12,7 +12,7 @@ const unionTag = "union"
 // parseUnionStructTag parses the "union" struct tag. The format of the struct tag is "key,value"
 // where key is the key is the common union type name for all the union type values and value is
 // the name of the fields union type.
-func parseUnionStructTag(tagValue string) (string, string, error) {
+func parseUnionStructTag(tagValue string) (key string, value string, err error) {
 	switch parsed := strings.Split(tagValue, ","); {
 	case len(parsed) == 2:
 		return parsed[0], parsed[1], nil

@@ -42,23 +42,26 @@ func init() {
 	config.GetMasterConfig().Security.AuthZ = config.AuthZConfig{Type: "mock"}
 }
 
-func setup(t *testing.T) (*Service, *mocks.UserAuthZ, echo.Context) {
+func setup(t *testing.T) (*Service, func(), *mocks.UserAuthZ, echo.Context) {
 	e := echo.New()
 	c := e.NewContext(nil, nil)
 	ctx := &context.DetContext{Context: c}
 	ctx.SetUser(model.User{})
 
-	pgDB = db.MustResolveTestPostgres(t)
+	var cl func()
+	pgDB, cl = db.MustResolveTestPostgres(t)
 	db.MustMigrateTestPostgres(t, pgDB, "file://../../static/migrations")
 	require.NoError(t, etc.SetRootPath("../../static/srv"))
 
 	externalSessions := &model.ExternalSessions{}
 	InitService(pgDB, externalSessions)
-	return GetService(), userAuthzSingleton, ctx
+	return GetService(), cl, userAuthzSingleton, ctx
 }
 
 func TestAddUserExec(t *testing.T) {
-	setup(t)
+	_, closeDB, _, _ := setup(t) //nolint: dogsled
+	defer closeDB()
+
 	ctx := stdContext.TODO()
 	u := &model.User{Username: uuid.New().String()}
 	_, err := AddUserTx(ctx, db.Bun(), u)
@@ -86,14 +89,15 @@ func TestAddUserExec(t *testing.T) {
 }
 
 func TestAuthzUserList(t *testing.T) {
-	svc, authzUser, ctx := setup(t)
+	svc, closeDB, authzUser, ctx := setup(t)
+	defer closeDB()
 
 	// Error passes through.
 	expectedErr := fmt.Errorf("filterUserListError")
 	authzUser.On("FilterUserList", mock.Anything, model.User{}, mock.Anything).
 		Return(nil, expectedErr).Once()
 	_, err := svc.getUsers(ctx)
-	require.Equal(t, err, expectedErr)
+	require.Equal(t, expectedErr, err)
 
 	// Nil error returns whatever FilterUserList returns.
 	users := []model.FullUser{
@@ -108,7 +112,8 @@ func TestAuthzUserList(t *testing.T) {
 }
 
 func TestAuthzPatchUser(t *testing.T) {
-	svc, authzUser, ctx := setup(t)
+	svc, closeDB, authzUser, ctx := setup(t)
+	defer closeDB()
 	cases := []struct {
 		expectedCall string
 		args         []any
@@ -190,7 +195,8 @@ func TestAuthzPatchUser(t *testing.T) {
 }
 
 func TestAuthzPatchUsername(t *testing.T) {
-	svc, authzUser, ctx := setup(t)
+	svc, closeDB, authzUser, ctx := setup(t)
+	defer closeDB()
 
 	// If we can view the user we get canSetUsersUsername error.
 	ctx.SetParamNames("username")
@@ -233,7 +239,8 @@ func TestAuthzPatchUsername(t *testing.T) {
 }
 
 func TestAuthzPostUser(t *testing.T) {
-	svc, authzUser, ctx := setup(t)
+	svc, closeDB, authzUser, ctx := setup(t)
+	defer closeDB()
 	ctx.SetParamNames("username")
 	ctx.SetParamValues("admin")
 	ctx.SetRequest(httptest.NewRequest("", "/", strings.NewReader(
@@ -255,7 +262,8 @@ func TestAuthzPostUser(t *testing.T) {
 
 func TestAuthzPostUserDuplicate(t *testing.T) {
 	userString := fmt.Sprintf("{\"username\":\"%s\"}", uuid.New().String())
-	svc, authzUser, ctx := setup(t)
+	svc, closeDB, authzUser, ctx := setup(t)
+	defer closeDB()
 	ctx.SetRequest(httptest.NewRequest("", "/", strings.NewReader(userString)))
 
 	authzUser.On("CanCreateUser", mock.Anything, model.User{}, mock.Anything, mock.Anything).Return(nil)
@@ -265,7 +273,8 @@ func TestAuthzPostUserDuplicate(t *testing.T) {
 	require.NoError(t, err)
 
 	// post user a second time, expect an error.
-	_, _, ctx2 := setup(t)
+	_, closeDB, _, ctx2 := setup(t)
+	defer closeDB()
 	ctx2.SetRequest(httptest.NewRequest("", "/", strings.NewReader(userString)))
 
 	expectedErr := api.ErrUserExists
@@ -275,7 +284,8 @@ func TestAuthzPostUserDuplicate(t *testing.T) {
 }
 
 func TestAuthzGetUserImage(t *testing.T) {
-	svc, authzUser, ctx := setup(t)
+	svc, closeDB, authzUser, ctx := setup(t)
+	defer closeDB()
 
 	// If we can get the user return the error from canGetUsersImageError.
 	ctx.SetParamNames("username")

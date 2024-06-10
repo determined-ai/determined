@@ -20,7 +20,7 @@ var pgDB *db.PgDB
 
 func TestMain(m *testing.M) {
 	var err error
-	pgDB, err = db.ResolveTestPostgres()
+	pgDB, _, err = db.ResolveTestPostgres()
 	if err != nil {
 		log.Panicln(err)
 	}
@@ -43,7 +43,7 @@ func TestRetryOnDifferentNode(t *testing.T) {
 
 	blocked, err := GetBlockedNodes(ctx, model.TaskID("fake task ID"))
 	require.NoError(t, err)
-	require.Len(t, blocked, 0)
+	require.Empty(t, blocked)
 
 	user := db.RequireMockUser(t, pgDB)
 	exp := db.RequireMockExperiment(t, pgDB, user)
@@ -51,7 +51,7 @@ func TestRetryOnDifferentNode(t *testing.T) {
 
 	blocked, err = GetBlockedNodes(ctx, task.TaskID)
 	require.NoError(t, err)
-	require.Len(t, blocked, 0)
+	require.Empty(t, blocked)
 
 	require.NoError(t, addRetryOnDifferentNode(ctx, task.TaskID, "n0", "regexa", "loga"))
 	require.NoError(t, addRetryOnDifferentNode(ctx, task.TaskID, "n1", "regexa", "logb"))
@@ -95,7 +95,7 @@ func TestShouldRetry(t *testing.T) {
 
 	resp, err := ShouldRetry(ctx, model.TaskID("fake task ID"))
 	require.NoError(t, err)
-	require.Len(t, resp, 0)
+	require.Empty(t, resp)
 
 	user := db.RequireMockUser(t, pgDB)
 	exp := db.RequireMockExperiment(t, pgDB, user)
@@ -103,7 +103,7 @@ func TestShouldRetry(t *testing.T) {
 
 	resp, err = ShouldRetry(ctx, task.TaskID)
 	require.NoError(t, err)
-	require.Len(t, resp, 0)
+	require.Empty(t, resp)
 
 	require.NoError(t, addDontRetry(ctx, task.TaskID, "n0", "regexa", "loga"))
 	require.NoError(t, addDontRetry(ctx, task.TaskID, "n0", "regexb", "logb"))

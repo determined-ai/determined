@@ -257,7 +257,7 @@ func (a *allocation) HandleRMEvent(msg sproto.ResourcesEvent) (done bool) {
 		a.releaseResources(msg)
 	case *sproto.ContainerLog:
 		a.sendTaskLog(msg.ToTaskLog())
-	case *sproto.ResourcesRestoreError:
+	case *sproto.ResourcesFailedError:
 		a.restoreResourceFailure(msg)
 		return true
 	case *sproto.InvalidResourcesRequestError:
@@ -328,7 +328,7 @@ func (a *allocation) SetProxyAddress(ctx context.Context, address string) error 
 	defer a.mu.Unlock()
 
 	if len(a.req.ProxyPorts) == 0 {
-		a.syslog.Debug("No ports to proxy. Skipping proxy registration.")
+		a.syslog.Debug("no ports to proxy, skipping proxy registration.")
 		return nil
 	}
 	a.model.ProxyAddress = &address
@@ -481,8 +481,7 @@ func (a *allocation) validateRendezvous() error {
 	}
 
 	switch a.resources.first().Summary().ResourcesType {
-	case sproto.ResourcesTypeDockerContainer, sproto.ResourcesTypeK8sPod:
-		break
+	case sproto.ResourcesTypeDockerContainer, sproto.ResourcesTypeK8sJob:
 	default:
 		return BehaviorUnsupportedError{Behavior: "rendezvous"}
 	}
@@ -591,7 +590,12 @@ func (a *allocation) finalize(
 // heavy stuff unless it is necessarily (which also works to spread occurrences of the same work
 // out). Eventually, Allocations should just be started with their TaskSpec.
 func (a *allocation) resourcesAllocated(msg *sproto.ResourcesAllocated) error {
-	a.syslog.WithField("restore", a.req.Restore).Infof("%d resources allocated", len(msg.Resources))
+	syslog := a.syslog.WithField("restored", a.req.Restore)
+	if syslog.Level >= logrus.DebugLevel {
+		syslog = syslog.WithField("count", len(msg.Resources))
+	}
+	syslog.Infof("resources allocated")
+
 	if !a.req.Restore {
 		if a.getModelState() != model.AllocationStatePending {
 			// If we have moved on from the pending state, these must be stale (and we must have
@@ -724,7 +728,7 @@ func (a *allocation) resourcesStateChanged(msg *sproto.ResourcesStateChanged) {
 	}
 
 	a.resources[msg.ResourcesID].Container = msg.Container
-	a.syslog.Debugf("resources state changed: %+v", msg)
+	a.syslog.Debugf("resources state changed: %s", msg)
 	switch msg.ResourcesState {
 	case sproto.Pulling:
 		a.setMostProgressedModelState(model.AllocationStatePulling)
@@ -847,7 +851,7 @@ func (a *allocation) resourcesStateChanged(msg *sproto.ResourcesStateChanged) {
 }
 
 // restoreResourceFailure handles the restored resource failures.
-func (a *allocation) restoreResourceFailure(msg *sproto.ResourcesRestoreError) {
+func (a *allocation) restoreResourceFailure(msg *sproto.ResourcesFailedError) {
 	a.syslog.Debugf("allocation resource failure")
 	a.setMostProgressedModelState(model.AllocationStateTerminating)
 
@@ -861,7 +865,6 @@ func (a *allocation) restoreResourceFailure(msg *sproto.ResourcesRestoreError) {
 		// TODO(DET-8822): This heartbeat can be nil.
 		switch heartbeat := cluster.TheLastBootClusterHeartbeat(); {
 		case a.model.StartTime == nil:
-			break
 		case heartbeat.Before(*a.model.StartTime):
 			a.model.EndTime = a.model.StartTime
 		default:
@@ -1028,7 +1031,7 @@ func (a *allocation) exitedWithoutErr() bool {
 
 func (a *allocation) SetExitStatus(exitReason string, exitErr error, statusCode *int32) {
 	switch err := exitErr.(type) {
-	case sproto.ResourcesRestoreError:
+	case sproto.ResourcesFailedError:
 		a.model.ExitErr = ptrs.Ptr(err.Error())
 		if err.ExitCode != nil {
 			a.model.StatusCode = ptrs.Ptr(int32(*err.ExitCode))
@@ -1158,7 +1161,7 @@ func (a *allocation) calculateExitStatus(reason string) (
 		return fmt.Sprintf("allocation stopped early after %s", reason), true, logrus.InfoLevel, nil
 	case a.exitErr != nil:
 		switch err := a.exitErr.(type) {
-		case sproto.ResourcesRestoreError:
+		case sproto.ResourcesFailedError:
 			switch err.FailureType {
 			case sproto.ResourcesFailed, sproto.TaskError:
 				if a.killedDaemonsGracefully {

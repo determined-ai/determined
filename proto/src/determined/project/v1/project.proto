@@ -130,6 +130,8 @@ message PatchProject {
   google.protobuf.StringValue name = 1;
   // The new description for the project.
   google.protobuf.StringValue description = 2;
+  // The new key for the project.
+  google.protobuf.StringValue key = 3;
 }
 
 // MetricsRange represents the range of a metrics. Range is a in the format of

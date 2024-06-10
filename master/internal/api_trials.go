@@ -6,6 +6,7 @@ import (
 	"math"
 	"slices"
 	"sort"
+	"strconv"
 	"strings"
 	"time"
 
@@ -544,7 +545,7 @@ func (a *apiServer) KillTrial(
 
 	e, ok := experiment.ExperimentRegistry.Load(eID)
 	if !ok {
-		return nil, api.NotFoundErrs("experiment", fmt.Sprint(eID), true)
+		return nil, api.NotFoundErrs("experiment", strconv.Itoa(eID), true)
 	}
 	if err = e.PatchTrialState(s); err != nil {
 		log.WithError(err).Error("error killing trial")
@@ -640,6 +641,40 @@ func (a *apiServer) GetExperimentTrials(
 
 	if err = a.enrichTrialState(resp.Trials...); err != nil {
 		return nil, err
+	}
+
+	return resp, nil
+}
+
+func (a *apiServer) GetTrialRemainingLogRetentionDays(
+	ctx context.Context, req *apiv1.GetTrialRemainingLogRetentionDaysRequest,
+) (resp *apiv1.GetTrialRemainingLogRetentionDaysResponse, err error) {
+	t, err := db.TrialByID(ctx, int(req.Id))
+	if err != nil {
+		return nil, fmt.Errorf("getting trial %v: %w", req.Id, err)
+	}
+
+	q := `
+SELECT   
+CASE
+	WHEN MIN(t.end_time) <= ( NOW() - make_interval(days => ?) ) THEN 0
+	ELSE extract(day from MIN(end_time) + make_interval(days => ?) - NOW())::int
+END remaining_log_retention_days
+FROM tasks t
+JOIN run_id_task_id as r ON t.task_id = r.task_id
+WHERE r.run_id = ?
+`
+	resp = &apiv1.GetTrialRemainingLogRetentionDaysResponse{}
+	if t.LogRetentionDays == nil || *t.LogRetentionDays == -1 {
+		days := int32(-1)
+		resp.RemainingDays = &days
+	} else {
+		var days *int32
+		err = db.Bun().NewRaw(q, t.LogRetentionDays, t.LogRetentionDays, t.ID).Scan(ctx, &days)
+		if err != nil {
+			return nil, fmt.Errorf("getting remaining log days for trial %v: %w", t.ID, err)
+		}
+		resp.RemainingDays = days
 	}
 
 	return resp, nil
@@ -1279,7 +1314,7 @@ func (a *apiServer) GetCurrentTrialSearcherOperation(
 
 	e, ok := experiment.ExperimentRegistry.Load(eID)
 	if !ok {
-		return nil, api.NotFoundErrs("experiment", fmt.Sprint(eID), true)
+		return nil, api.NotFoundErrs("experiment", strconv.Itoa(eID), true)
 	}
 	resp, err := e.TrialGetSearcherState(rID)
 	if err != nil {
@@ -1310,7 +1345,7 @@ func (a *apiServer) CompleteTrialSearcherValidation(
 
 	e, ok := experiment.ExperimentRegistry.Load(eID)
 	if !ok {
-		return nil, api.NotFoundErrs("experiment", fmt.Sprint(eID), true)
+		return nil, api.NotFoundErrs("experiment", strconv.Itoa(eID), true)
 	}
 
 	msg := experiment.TrialCompleteOperation{
@@ -1338,7 +1373,7 @@ func (a *apiServer) ReportTrialSearcherEarlyExit(
 
 	e, ok := experiment.ExperimentRegistry.Load(eID)
 	if !ok {
-		return nil, api.NotFoundErrs("experiment", fmt.Sprint(eID), true)
+		return nil, api.NotFoundErrs("experiment", strconv.Itoa(eID), true)
 	}
 
 	msg := experiment.UserInitiatedEarlyTrialExit{
@@ -1365,7 +1400,7 @@ func (a *apiServer) ReportTrialProgress(
 
 	e, ok := experiment.ExperimentRegistry.Load(eID)
 	if !ok {
-		return nil, api.NotFoundErrs("experiment", fmt.Sprint(eID), true)
+		return nil, api.NotFoundErrs("experiment", strconv.Itoa(eID), true)
 	}
 
 	msg := experiment.TrialReportProgress{
@@ -1534,6 +1569,8 @@ func (a *apiServer) PostTrialRunnerMetadata(
 func (a *apiServer) isTrialTerminalFunc(trialID int, buffer time.Duration) api.TerminationCheckFn {
 	return func() (bool, error) {
 		state, endTime, err := a.m.db.TrialStatus(trialID)
+		log.Print("state, ", state)
+		log.Print("endTime", endTime)
 		if err != nil ||
 			(model.TerminalStates[state] && endTime.Add(buffer).Before(time.Now().UTC())) {
 			return true, err

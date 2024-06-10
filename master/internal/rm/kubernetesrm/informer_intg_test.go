@@ -2,6 +2,7 @@ package kubernetesrm
 
 import (
 	"context"
+	"fmt"
 	"reflect"
 	"sync"
 	"testing"
@@ -20,7 +21,7 @@ import (
 
 const namespace = "default"
 
-var errCanceled = errors.New("informer stopped unexpectedly: context canceled")
+var errCanceled = fmt.Errorf("informer stopped unexpectedly: context canceled")
 
 // mockWatcher implements watch.Interface so it can be returned by mocks' calls to Watch.
 type mockWatcher struct {
@@ -84,7 +85,7 @@ func TestPodInformer(t *testing.T) {
 			i, err := newPodInformer(context.TODO(), determinedLabel,
 				"pod", namespace, mockPodInterface, mockPodHandler)
 			assert.NotNil(t, i)
-			assert.Nil(t, err)
+			require.NoError(t, err)
 
 			// Test run().
 			go func() {
@@ -191,7 +192,7 @@ func TestNodeInformer(t *testing.T) {
 			// Test newNodeInformer is created.
 			n, err := newNodeInformer(context.TODO(), mockNode, mockNodeHandler)
 			assert.NotNil(t, n)
-			assert.Nil(t, err)
+			require.NoError(t, err)
 
 			// Test run() & iterate through/apply a set of events received by the informer.
 			go func() {
@@ -272,7 +273,7 @@ func TestEventListener(t *testing.T) {
 			i, err := newEventInformer(context.TODO(), mockEventInterface,
 				namespace, mockEventHandler)
 			assert.NotNil(t, i)
-			assert.Nil(t, err)
+			require.NoError(t, err)
 
 			// Test run() & iterate through/apply a set of events received by the informer.
 			go func() {

@@ -18,11 +18,7 @@ import { Loadable } from 'hew/utils/loadable';
 import React, { useCallback, useState } from 'react';
 
 import Grid from 'components/Grid';
-import {
-  RowHeight,
-  rowHeightItems,
-  // TableViewMode
-} from 'components/OptionsMenu';
+import { RowHeight, rowHeightItems } from 'components/OptionsMenu';
 import PasswordChangeModalComponent from 'components/PasswordChangeModal';
 import Section from 'components/Section';
 import useUI, { Mode } from 'components/ThemeProvider';
@@ -234,28 +230,6 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
                     ))}
                   </Select>
                 </InlineForm>
-                {/* <InlineForm<TableViewMode>
-                  initialValue={dataGridGlobalSettings.tableViewMode}
-                  label="Infinite Scroll"
-                  valueFormatter={(mode) => (mode === 'scroll' ? 'On' : 'Off')}
-                  onSubmit={(mode) => {
-                    userSettings.setPartial(
-                      dataGridGlobalSettingsConfig,
-                      dataGridGlobalSettingsPath,
-                      {
-                        tableViewMode: mode,
-                      },
-                    );
-                  }}>
-                  <Select searchable={false}>
-                    <Option key="scroll" value="scroll">
-                      On
-                    </Option>
-                    <Option key="paged" value="paged">
-                      Off
-                    </Option>
-                  </Select>
-                </InlineForm> */}
               </div>
             </Section>
             <Section divider title="Shortcuts">
@@ -300,32 +274,34 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
             </Section>
             <Section divider title="Experimental">
               <div className={css.section}>
-                {Object.entries(FEATURES).map(([feature, description]) => (
-                  <InlineForm<boolean>
-                    initialValue={
-                      savedFeatureSettings?.[feature as ValidFeature] ?? description.defaultValue
-                    }
-                    key={feature}
-                    label={
-                      <Row>
-                        {description.friendlyName}
-                        <Column align="right">
-                          <Icon name="info" showTooltip title={description.description} />
-                        </Column>
-                      </Row>
-                    }
-                    valueFormatter={(value) => (value ? 'On' : 'Off')}
-                    onSubmit={(val) => {
-                      userSettings.set(FeatureSettingsConfig, FEATURE_SETTINGS_PATH, {
-                        [feature]: val,
-                      });
-                    }}>
-                    <Select searchable={false}>
-                      <Option value={true}>On</Option>
-                      <Option value={false}>Off</Option>
-                    </Select>
-                  </InlineForm>
-                ))}
+                {Object.entries(FEATURES)
+                  .filter(([, description]) => !description.noUserControl)
+                  .map(([feature, description]) => (
+                    <InlineForm<boolean>
+                      initialValue={
+                        savedFeatureSettings?.[feature as ValidFeature] ?? description.defaultValue
+                      }
+                      key={feature}
+                      label={
+                        <Row>
+                          {description.friendlyName}
+                          <Column align="right">
+                            <Icon name="info" showTooltip title={description.description} />
+                          </Column>
+                        </Row>
+                      }
+                      valueFormatter={(value) => (value ? 'On' : 'Off')}
+                      onSubmit={(val) => {
+                        userSettings.set(FeatureSettingsConfig, FEATURE_SETTINGS_PATH, {
+                          [feature]: val,
+                        });
+                      }}>
+                      <Select searchable={false}>
+                        <Option value={true}>On</Option>
+                        <Option value={false}>Off</Option>
+                      </Select>
+                    </InlineForm>
+                  ))}
               </div>
             </Section>
             <Section title="Advanced">

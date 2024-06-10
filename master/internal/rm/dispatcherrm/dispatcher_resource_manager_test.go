@@ -531,28 +531,28 @@ func Test_summarizeResourcePool(t *testing.T) {
 
 			res, _ := m.GetResourcePools()
 
-			assert.Equal(t, len(tt.want.pools), len(res.ResourcePools))
+			require.Len(t, res.ResourcePools, len(tt.want.pools))
 			for i, pool := range res.ResourcePools {
-				assert.Equal(t, pool.Name, tt.want.pools[i].Name)
-				assert.Equal(t, pool.SlotType, tt.want.pools[i].SlotType)
-				assert.Equal(t, pool.SlotsAvailable, tt.want.pools[i].SlotsAvailable)
-				assert.Equal(t, pool.SlotsUsed, tt.want.pools[i].SlotsUsed)
-				assert.Equal(t, pool.NumAgents, tt.want.pools[i].NumAgents)
+				require.Equal(t, tt.want.pools[i].Name, pool.Name)
+				require.Equal(t, tt.want.pools[i].SlotType, pool.SlotType)
+				require.Equal(t, tt.want.pools[i].SlotsAvailable, pool.SlotsAvailable)
+				require.Equal(t, tt.want.pools[i].SlotsUsed, pool.SlotsUsed)
+				require.Equal(t, tt.want.pools[i].NumAgents, pool.NumAgents)
 				wantDescription := tt.want.pools[i].Description
 				if wantDescription == "" {
 					wantDescription = tt.want.wlmName + "-managed pool of resources"
 				}
-				assert.Equal(t, pool.Description, wantDescription)
-				assert.Equal(t, pool.Type, resourcepoolv1.ResourcePoolType_RESOURCE_POOL_TYPE_STATIC)
-				assert.Equal(t, pool.SlotsPerAgent, tt.want.pools[i].SlotsPerAgent)
-				assert.Equal(t, pool.AuxContainerCapacityPerAgent, int32(0))
-				assert.Equal(t, pool.SchedulerType, tt.want.schedulerType)
-				assert.Equal(t, pool.SchedulerFittingPolicy, tt.want.fittingPolicy)
-				assert.Equal(t, pool.Location, "")
-				assert.Equal(t, pool.InstanceType, "")
-				assert.Equal(t, pool.ImageId, "")
-				assert.Equal(t, pool.ResourceManagerName, expectedName)
-				require.Equal(t, pool.ResourceManagerMetadata, expectedMetadata)
+				require.Equal(t, wantDescription, pool.Description)
+				require.Equal(t, resourcepoolv1.ResourcePoolType_RESOURCE_POOL_TYPE_STATIC, pool.Type)
+				require.Equal(t, tt.want.pools[i].SlotsPerAgent, pool.SlotsPerAgent)
+				require.Zero(t, pool.AuxContainerCapacityPerAgent)
+				require.Equal(t, tt.want.schedulerType, pool.SchedulerType)
+				require.Equal(t, tt.want.fittingPolicy, pool.SchedulerFittingPolicy)
+				require.Empty(t, pool.Location)
+				require.Empty(t, pool.InstanceType)
+				require.Empty(t, pool.ImageId)
+				require.Equal(t, expectedName, pool.ResourceManagerName)
+				require.Equal(t, expectedMetadata, pool.ResourceManagerMetadata)
 			}
 		})
 	}

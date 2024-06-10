@@ -1,8 +1,10 @@
 import { CompactSelection, GridSelection } from '@glideapps/glide-data-grid';
 import { isLeft } from 'fp-ts/lib/Either';
+import Button from 'hew/Button';
 import Column from 'hew/Column';
 import {
   ColumnDef,
+  DEFAULT_COLUMN_WIDTH,
   defaultDateColumn,
   defaultNumberColumn,
   defaultSelectionColumn,
@@ -27,11 +29,13 @@ import Message from 'hew/Message';
 import Pagination from 'hew/Pagination';
 import Row from 'hew/Row';
 import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
+import { isUndefined } from 'lodash';
 import { useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 
+import ColumnPickerMenu from 'components/ColumnPickerMenu';
 import { Error } from 'components/exceptions';
 import { FilterFormStore, ROOT_ID } from 'components/FilterForm/components/FilterFormStore';
 import {
@@ -42,8 +46,8 @@ import {
   SpecialColumnNames,
 } from 'components/FilterForm/components/type';
 import TableFilter from 'components/FilterForm/TableFilter';
-import { EMPTY_SORT, sortMenuItemsForColumn } from 'components/MultiSortMenu';
-import { RowHeight } from 'components/OptionsMenu';
+import MultiSortMenu, { EMPTY_SORT, sortMenuItemsForColumn } from 'components/MultiSortMenu';
+import { OptionsMenu, RowHeight } from 'components/OptionsMenu';
 import {
   DataGridGlobalSettings,
   rowHeightMap,
@@ -60,16 +64,23 @@ import {
   SelectionType as SelectionState,
 } from 'pages/F_ExpList/F_ExperimentList.settings';
 import { paths } from 'routes/utils';
-import { getProjectColumns, searchRuns } from 'services/api';
+import { getProjectColumns, getProjectNumericMetricsRange, searchRuns } from 'services/api';
 import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
 import userStore from 'stores/users';
 import userSettings from 'stores/userSettings';
-import { DetailedUser, ExperimentAction, FlatRun, Project, ProjectColumn } from 'types';
+import { DetailedUser, ExperimentAction, FlatRun, ProjectColumn } from 'types';
 import handleError from 'utils/error';
 import { eagerSubscribe } from 'utils/observable';
 import { pluralizer } from 'utils/string';
 
-import { defaultColumnWidths, getColumnDefs, RunColumn, runColumns } from './columns';
+import {
+  defaultColumnWidths,
+  defaultRunColumns,
+  getColumnDefs,
+  RunColumn,
+  runColumns,
+  searcherMetricsValColumn,
+} from './columns';
 import css from './FlatRuns.module.scss';
 import {
   defaultFlatRunsSettings,
@@ -87,7 +98,8 @@ const BANNED_FILTER_COLUMNS = new Set(['searcherMetricsVal']);
 const formStore = new FilterFormStore();
 
 interface Props {
-  project: Project;
+  projectId: number;
+  searchId?: number;
 }
 
 const makeSortString = (sorts: ValidSort[]): string =>
@@ -105,12 +117,12 @@ const parseSortString = (sortString: string): Sort[] => {
   });
 };
 
-const FlatRuns: React.FC<Props> = ({ project }) => {
+const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
   const dataGridRef = useRef<DataGridHandle>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const [searchParams, setSearchParams] = useSearchParams();
 
-  const settingsPath = useMemo(() => settingsPathForProject(project.id), [project.id]);
+  const settingsPath = useMemo(() => settingsPathForProject(projectId), [projectId]);
   const flatRunsSettingsObs = useMemo(
     () => userSettings.get(FlatRunsSettings, settingsPath),
     [settingsPath],
@@ -129,7 +141,8 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
     [flatRunsSettings],
   );
 
-  const { settings: globalSettings } = useSettings<DataGridGlobalSettings>(settingsConfigGlobal);
+  const { settings: globalSettings, updateSettings: updateGlobalSettings } =
+    useSettings<DataGridGlobalSettings>(settingsConfigGlobal);
 
   const [isOpenFilter, setIsOpenFilter] = useState<boolean>(false);
   const [runs, setRuns] = useState<Loadable<FlatRun>[]>(INITIAL_LOADING_RUNS);
@@ -159,9 +172,18 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
     isDarkMode,
   } = useUI();
 
+  const projectHeatmap = useAsync(async () => {
+    try {
+      return await getProjectNumericMetricsRange({ id: projectId });
+    } catch (e) {
+      handleError(e, { publicSubject: 'Unable to fetch project heatmap' });
+      return NotLoaded;
+    }
+  }, [projectId]);
+
   const projectColumns = useAsync(async () => {
     try {
-      const columns = await getProjectColumns({ id: project.id });
+      const columns = await getProjectColumns({ id: projectId });
       columns.sort((a, b) =>
         a.location === V1LocationType.EXPERIMENT && b.location === V1LocationType.EXPERIMENT
           ? runColumns.indexOf(a.column as RunColumn) - runColumns.indexOf(b.column as RunColumn)
@@ -172,7 +194,7 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
       handleError(e, { publicSubject: 'Unable to fetch project columns' });
       return NotLoaded;
     }
-  }, [project.id]);
+  }, [projectId]);
 
   const columnsIfLoaded = useMemo(
     () => (isLoadingSettings ? [] : settings.columns),
@@ -281,16 +303,39 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
             break;
         }
         switch (currentColumn.type) {
-          case V1ColumnType.NUMBER:
-            columnDefs[currentColumn.column] = defaultNumberColumn(
-              currentColumn.column,
-              currentColumn.displayName || currentColumn.column,
-              settings.columnWidths[currentColumn.column] ??
-                defaultColumnWidths[currentColumn.column as RunColumn] ??
-                MIN_COLUMN_WIDTH,
-              dataPath,
-            );
+          case V1ColumnType.NUMBER: {
+            const heatmap = projectHeatmap
+              .getOrElse([])
+              .find((h) => h.metricsName === currentColumn.column);
+            if (
+              heatmap &&
+              settings.heatmapOn &&
+              !settings.heatmapSkipped.includes(currentColumn.column)
+            ) {
+              columnDefs[currentColumn.column] = defaultNumberColumn(
+                currentColumn.column,
+                currentColumn.displayName || currentColumn.column,
+                settings.columnWidths[currentColumn.column] ??
+                  defaultColumnWidths[currentColumn.column as RunColumn] ??
+                  MIN_COLUMN_WIDTH,
+                dataPath,
+                {
+                  max: heatmap.max,
+                  min: heatmap.min,
+                },
+              );
+            } else {
+              columnDefs[currentColumn.column] = defaultNumberColumn(
+                currentColumn.column,
+                currentColumn.displayName || currentColumn.column,
+                settings.columnWidths[currentColumn.column] ??
+                  defaultColumnWidths[currentColumn.column as RunColumn] ??
+                  MIN_COLUMN_WIDTH,
+                dataPath,
+              );
+            }
             break;
+          }
           case V1ColumnType.DATE:
             columnDefs[currentColumn.column] = defaultDateColumn(
               currentColumn.column,
@@ -313,6 +358,21 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
               dataPath,
             );
         }
+        if (currentColumn.column === 'searcherMetricsVal') {
+          const heatmap = projectHeatmap
+            .getOrElse([])
+            .find((h) => h.metricsName === currentColumn.column);
+
+          columnDefs[currentColumn.column] = searcherMetricsValColumn(
+            settings.columnWidths[currentColumn.column],
+            heatmap && settings.heatmapOn && !settings.heatmapSkipped.includes(currentColumn.column)
+              ? {
+                  max: heatmap.max,
+                  min: heatmap.min,
+                }
+              : undefined,
+          );
+        }
         return columnDefs[currentColumn.column];
       })
       .flatMap((col) => (col ? [col] : []));
@@ -322,12 +382,47 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
     columnsIfLoaded,
     isDarkMode,
     projectColumns,
+    projectHeatmap,
     selection.rows,
     settings.columnWidths,
     settings.compare,
+    settings.heatmapOn,
+    settings.heatmapSkipped,
     settings.pinnedColumnsCount,
     users,
   ]);
+
+  const onRowHeightChange = useCallback(
+    (newRowHeight: RowHeight) => {
+      updateGlobalSettings({ rowHeight: newRowHeight });
+    },
+    [updateGlobalSettings],
+  );
+
+  const handleHeatmapToggle = useCallback(
+    (heatmapOn: boolean) => updateSettings({ heatmapOn: !heatmapOn }),
+    [updateSettings],
+  );
+
+  const handleHeatmapSelection = useCallback(
+    (selection: string[]) => updateSettings({ heatmapSkipped: selection }),
+    [updateSettings],
+  );
+
+  const heatmapBtnVisible = useMemo(() => {
+    const visibleColumns = settings.columns.slice(
+      0,
+      settings.compare ? settings.pinnedColumnsCount : undefined,
+    );
+    return Loadable.getOrElse([], projectColumns).some(
+      (column) =>
+        visibleColumns.includes(column.column) &&
+        (column.column === 'searcherMetricsVal' ||
+          (column.type === V1ColumnType.NUMBER &&
+            (column.location === V1LocationType.VALIDATIONS ||
+              column.location === V1LocationType.TRAINING))),
+    );
+  }, [settings.columns, projectColumns, settings.pinnedColumnsCount, settings.compare]);
 
   const onPageChange = useCallback(
     (cPage: number, cPageSize: number) => {
@@ -346,13 +441,31 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
   const fetchRuns = useCallback(async (): Promise<void> => {
     if (isLoadingSettings || Loadable.isNotLoaded(loadableFormset)) return;
     try {
+      const filters = JSON.parse(filtersString);
+      if (searchId) {
+        // only display trials for search
+        const existingFilterGroup = { ...filters.filterGroup };
+        const searchFilter = {
+          columnName: 'experimentId',
+          kind: 'field',
+          location: 'LOCATION_TYPE_RUN',
+          operator: '=',
+          type: 'COLUMN_TYPE_NUMBER',
+          value: searchId,
+        };
+        filters.filterGroup = {
+          children: [existingFilterGroup, searchFilter],
+          conjunction: 'and',
+          kind: 'group',
+        };
+      }
       const tableOffset = Math.max((page - 0.5) * PAGE_SIZE, 0);
       const response = await searchRuns(
         {
-          filter: filtersString,
+          filter: JSON.stringify(filters),
           limit: isPagedView ? settings.pageLimit : 2 * PAGE_SIZE,
           offset: isPagedView ? page * settings.pageLimit : tableOffset,
-          projectId: project.id,
+          projectId: projectId,
           sort: sortString || undefined,
         },
         { signal: canceler.signal },
@@ -386,9 +499,10 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
     isPagedView,
     loadableFormset,
     page,
-    project.id,
+    projectId,
     settings.pageLimit,
     sortString,
+    searchId,
   ]);
 
   const { stopPolling } = usePolling(fetchRuns, { rerunOnNewFn: true });
@@ -536,10 +650,24 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
     useCallback(() => {}, []);
 
   const handleColumnsOrderChange = useCallback(
-    (newColumnsOrder: string[]) => {
-      updateSettings({ columns: newColumnsOrder });
+    // changing both column order and pinned count should happen in one update:
+    (newColumnsOrder: string[], pinnedCount?: number) => {
+      const newColumnWidths = newColumnsOrder
+        .filter((c) => !(c in settings.columnWidths))
+        .reduce((acc: Record<string, number>, col) => {
+          acc[col] = DEFAULT_COLUMN_WIDTH;
+          return acc;
+        }, {});
+      updateSettings({
+        columns: newColumnsOrder,
+        columnWidths: {
+          ...settings.columnWidths,
+          ...newColumnWidths,
+        },
+        pinnedColumnsCount: isUndefined(pinnedCount) ? settings.pinnedColumnsCount : pinnedCount,
+      });
     },
-    [updateSettings],
+    [updateSettings, settings.pinnedColumnsCount, settings.columnWidths],
   );
 
   const handleSortChange = useCallback(
@@ -609,8 +737,8 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
                 onClick: () => {
                   const newColumnsOrder = columnsIfLoaded.filter((c) => c !== columnId);
                   newColumnsOrder.splice(settings.pinnedColumnsCount, 0, columnId);
-                  handleColumnsOrderChange?.(newColumnsOrder);
-                  handlePinnedColumnsCountChange?.(
+                  handleColumnsOrderChange(
+                    newColumnsOrder,
                     Math.min(settings.pinnedColumnsCount + 1, columnsIfLoaded.length),
                   );
                 },
@@ -623,10 +751,28 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
                 onClick: () => {
                   const newColumnsOrder = columnsIfLoaded.filter((c) => c !== columnId);
                   newColumnsOrder.splice(settings.pinnedColumnsCount - 1, 0, columnId);
-                  handleColumnsOrderChange?.(newColumnsOrder);
-                  handlePinnedColumnsCountChange?.(Math.max(settings.pinnedColumnsCount - 1, 0));
+                  handleColumnsOrderChange(
+                    newColumnsOrder,
+                    Math.max(settings.pinnedColumnsCount - 1, 0),
+                  );
                 },
               },
+        {
+          icon: <Icon decorative name="eye-close" />,
+          key: 'hide',
+          label: 'Hide column',
+          onClick: () => {
+            const newColumnsOrder = columnsIfLoaded.filter((c) => c !== columnId);
+            if (isPinned) {
+              handleColumnsOrderChange(
+                newColumnsOrder,
+                Math.max(settings.pinnedColumnsCount - 1, 0),
+              );
+            } else {
+              handleColumnsOrderChange(newColumnsOrder);
+            }
+          },
+        },
       ];
 
       if (!column) {
@@ -683,34 +829,60 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
             },
           },
         );
+      }
 
-        if (filterCount > 0) {
-          items.push({
-            icon: <Icon decorative name="filter" />,
-            key: 'filter-clear',
-            label: `Clear ${pluralizer(filterCount, 'Filter')}  (${filterCount})`,
-            onClick: () => {
-              setTimeout(clearFilterForColumn, 5);
-            },
-          });
-        }
+      if (filterCount > 0) {
+        items.push({
+          icon: <Icon decorative name="filter" />,
+          key: 'filter-clear',
+          label: `Clear ${pluralizer(filterCount, 'Filter')}  (${filterCount})`,
+          onClick: () => {
+            setTimeout(clearFilterForColumn, 5);
+          },
+        });
+      }
+      if (
+        settings.heatmapOn &&
+        (column.column === 'searcherMetricsVal' ||
+          (column.type === V1ColumnType.NUMBER &&
+            (column.location === V1LocationType.VALIDATIONS ||
+              column.location === V1LocationType.TRAINING)))
+      ) {
+        items.push(
+          { type: 'divider' as const },
+          {
+            icon: <Icon decorative name="heatmap" />,
+            key: 'heatmap',
+            label: !settings.heatmapSkipped.includes(column.column)
+              ? 'Cancel heatmap'
+              : 'Apply heatmap',
+            onClick: () =>
+              handleHeatmapSelection?.(
+                settings.heatmapSkipped.includes(column.column)
+                  ? settings.heatmapSkipped.filter((p) => p !== column.column)
+                  : [...settings.heatmapSkipped, column.column],
+              ),
+          },
+        );
       }
       return items;
     },
     [
-      columnsIfLoaded,
-      handleColumnsOrderChange,
-      handlePinnedColumnsCountChange,
-      handleSelectionChange,
-      handleSortChange,
-      isMobile,
-      loadableFormset,
-      handleIsOpenFilterChange,
       projectColumns,
       settings.pinnedColumnsCount,
-      sorts,
-      settings.pageLimit,
       settings.selection,
+      settings.pageLimit,
+      settings.heatmapOn,
+      settings.heatmapSkipped,
+      isMobile,
+      handleSelectionChange,
+      columnsIfLoaded,
+      handleColumnsOrderChange,
+      loadableFormset,
+      handleIsOpenFilterChange,
+      sorts,
+      handleSortChange,
+      handleHeatmapSelection,
     ],
   );
 
@@ -723,14 +895,56 @@ const FlatRuns: React.FC<Props> = ({ project }) => {
 
   return (
     <div className={css.content} ref={contentRef}>
-      <TableFilter
-        bannedFilterColumns={BANNED_FILTER_COLUMNS}
-        formStore={formStore}
-        isMobile={isMobile}
-        isOpenFilter={isOpenFilter}
-        loadableColumns={projectColumns}
-        onIsOpenFilterChange={handleIsOpenFilterChange}
-      />
+      <Row>
+        <Column>
+          <Row>
+            <TableFilter
+              bannedFilterColumns={BANNED_FILTER_COLUMNS}
+              formStore={formStore}
+              isMobile={isMobile}
+              isOpenFilter={isOpenFilter}
+              loadableColumns={projectColumns}
+              onIsOpenFilterChange={handleIsOpenFilterChange}
+            />
+            <MultiSortMenu
+              columns={projectColumns}
+              isMobile={isMobile}
+              sorts={sorts}
+              onChange={handleSortChange}
+            />
+            <ColumnPickerMenu
+              defaultVisibleColumns={defaultRunColumns}
+              initialVisibleColumns={columnsIfLoaded}
+              isMobile={isMobile}
+              pinnedColumnsCount={settings.pinnedColumnsCount}
+              projectColumns={projectColumns}
+              projectId={projectId}
+              tabs={[
+                V1LocationType.EXPERIMENT,
+                [V1LocationType.VALIDATIONS, V1LocationType.TRAINING, V1LocationType.CUSTOMMETRIC],
+                V1LocationType.HYPERPARAMETERS,
+              ]}
+              onVisibleColumnChange={handleColumnsOrderChange}
+            />
+            <OptionsMenu
+              rowHeight={globalSettings.rowHeight}
+              onRowHeightChange={onRowHeightChange}
+            />
+          </Row>
+        </Column>
+        <Column align="right">
+          <Row>
+            {heatmapBtnVisible && (
+              <Button
+                icon={<Icon name="heatmap" title="heatmap" />}
+                tooltip="Toggle Metric Heatmap"
+                type={settings.heatmapOn ? 'primary' : 'default'}
+                onClick={() => handleHeatmapToggle(settings.heatmapOn ?? false)}
+              />
+            )}
+          </Row>
+        </Column>
+      </Row>
       {!isLoading && total.isLoaded && total.data === 0 ? (
         numFilters === 0 ? (
           <Message

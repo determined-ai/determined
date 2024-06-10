@@ -219,8 +219,10 @@ To manage users and groups via the WebUI:
 
 Admin Settings displays the **Users** and **Groups** lists.
 
-To create new users, select **Add User**. To set the user as a :ref:`remote user <remote-users>`:,
-select the **Remote** option.
+To create new users, select **Add User**. When creating a new, non-remote user, :ref:`password
+requirements <password-requirements>` apply.
+
+To set the user as a :ref:`remote user <remote-users>`:, select the **Remote** option.
 
 .. note::
 

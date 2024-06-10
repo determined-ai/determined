@@ -1,11 +1,7 @@
 import { BaseComponent, NamedComponent } from 'e2e/models/BaseComponent';
 
 /**
- * Returns a representation of the Mondal component from Hew.
- * This constructor represents the contents in hew/src/kit/SplitPane.tsx.
- * @param {object} obj
- * @param {CanBeParent} obj.parent - The parent used to locate this SplitPane
- * @param {string} obj.selector - Used instead of `defaultSelector`
+ * Represents the SplitPane component from hew/src/kit/SplitPane.tsx
  */
 export class SplitPane extends NamedComponent {
   readonly defaultSelector = '[class^="SplitPane_base"]';

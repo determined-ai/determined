@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/http"
 	"regexp"
+	"strconv"
 
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
@@ -20,6 +21,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/project"
+	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/templates"
 	"github.com/determined-ai/determined/master/internal/workspace"
 	"github.com/determined-ai/determined/master/pkg/archive"
@@ -82,7 +84,7 @@ func echoGetExperimentAndCheckCanDoActions(ctx context.Context, c echo.Context,
 ) (*model.Experiment, model.User, error) {
 	user := c.(*detContext.DetContext).MustGetUser()
 	e, err := db.ExperimentByID(ctx, expID)
-	expNotFound := api.NotFoundErrs("experiment", fmt.Sprint(expID), false)
+	expNotFound := api.NotFoundErrs("experiment", strconv.Itoa(expID), false)
 	if errors.Is(err, db.ErrNotFound) {
 		return nil, model.User{}, expNotFound
 	} else if err != nil {
@@ -227,14 +229,14 @@ func getCreateExperimentsProject(
 	// Place experiment in Uncategorized, unless project set in request params or config.
 	var err error
 	projectID := model.DefaultProjectID
-	errProjectNotFound := api.NotFoundErrs("project", fmt.Sprint(projectID), true)
+	errProjectNotFound := api.NotFoundErrs("project", strconv.Itoa(projectID), true)
 	if req.ProjectId > 1 {
 		projectID = int(req.ProjectId)
-		errProjectNotFound = api.NotFoundErrs("project", fmt.Sprint(projectID), true)
+		errProjectNotFound = api.NotFoundErrs("project", strconv.Itoa(projectID), true)
 	} else {
 		if (config.Workspace() == "") != (config.Project() == "") {
 			return nil,
-				errors.New("workspace and project must both be included in config if one is provided")
+				fmt.Errorf("workspace and project must both be included in config if one is provided")
 		}
 		if config.Workspace() != "" && config.Project() != "" {
 			errProjectNotFound = api.NotFoundErrs("workspace/project",
@@ -293,10 +295,20 @@ func (m *Master) parseCreateExperiment(ctx context.Context, req *apiv1.CreateExp
 	}
 	workspaceID := resolveWorkspaceID(workspaceModel)
 	isSingleNode := resources.IsSingleNode() != nil && *resources.IsSingleNode()
-	poolName, _, err := m.ResolveResources(resources.ResourcePool(), resources.SlotsPerTrial(), workspaceID, isSingleNode)
-	if err != nil {
-		return nil, nil, config, nil, nil, errors.Wrapf(err, "invalid resource configuration")
+
+	taskSpec := *m.taskSpec
+	var poolName rm.ResourcePoolName
+	if !req.GetUnmanaged() {
+		poolName, _, err = m.ResolveResources(resources.ResourcePool(), resources.SlotsPerTrial(), workspaceID, isSingleNode)
+		if err != nil {
+			return nil, nil, config, nil, nil, errors.Wrapf(err, "invalid resource configuration")
+		}
+
+		if defaulted.RawEntrypoint == nil {
+			return nil, nil, config, nil, nil, fmt.Errorf("managed experiments require entrypoint")
+		}
 	}
+
 	taskContainerDefaults, err := m.rm.TaskContainerDefaults(
 		poolName,
 		m.config.TaskContainerDefaults,
@@ -304,12 +316,10 @@ func (m *Master) parseCreateExperiment(ctx context.Context, req *apiv1.CreateExp
 	if err != nil {
 		return nil, nil, config, nil, nil, errors.Wrapf(err, "error getting TaskContainerDefaults")
 	}
-	taskSpec := *m.taskSpec
+
 	taskSpec.TaskContainerDefaults = taskContainerDefaults
 	taskSpec.TaskContainerDefaults.MergeIntoExpConfig(&config)
-	if defaulted.RawEntrypoint == nil && (req.Unmanaged == nil || !*req.Unmanaged) {
-		return nil, nil, config, nil, nil, errors.New("managed experiments require entrypoint")
-	}
+
 	// Merge log retention into the taskSpec.
 	if config.RawRetentionPolicy != nil {
 		taskSpec.LogRetentionDays = config.RawRetentionPolicy.RawLogRetentionDays
@@ -375,7 +385,7 @@ func (m *Master) parseCreateExperiment(ctx context.Context, req *apiv1.CreateExp
 
 	dbExp, err := model.NewExperiment(
 		config, req.Config, parentID, false,
-		int(p.Id), req.Unmanaged != nil && *req.Unmanaged,
+		int(p.Id), req.GetUnmanaged(),
 	)
 	if err != nil {
 		return nil, nil, config, nil, nil, err

@@ -97,13 +97,14 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
       updateSettings({
         row: undefined,
         state: states.length !== 0 ? (states as RunState[]) : undefined,
+        tableOffset: 0,
       });
     },
     [updateSettings],
   );
 
   const handleStateFilterReset = useCallback(() => {
-    updateSettings({ row: undefined, state: undefined });
+    updateSettings({ row: undefined, state: undefined, tableOffset: 0 });
   }, [updateSettings]);
 
   const stateFilterDropdown = useCallback(
@@ -312,14 +313,11 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
     [columns, settings, updateSettings],
   );
 
-  const stateString = useMemo(() => settings.state?.join('.'), [settings.state]);
   const fetchExperimentTrials = useCallback(async () => {
     if (!settings) return;
+    const states = settings.state?.map((state) => encodeExperimentState(state as RunState));
 
     try {
-      const states = stateString
-        ?.split('.')
-        .map((state) => encodeExperimentState(state as RunState));
       const { trials: experimentTrials, pagination: responsePagination } = await getExpTrials(
         {
           id: experiment.id,
@@ -348,7 +346,7 @@ const ExperimentTrials: React.FC<Props> = ({ experiment, pageRef }: Props) => {
     } finally {
       setIsLoading(false);
     }
-  }, [experiment.id, canceler, settings, stateString]);
+  }, [settings, experiment.id, canceler.signal]);
 
   const sendBatchActions = useCallback(
     async (action: Action) => {

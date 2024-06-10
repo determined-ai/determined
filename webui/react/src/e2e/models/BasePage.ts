@@ -7,9 +7,7 @@ export interface ModelBasics {
 }
 
 /**
- * Returns the representation of a Page.
- * This constructor is a base class for any component in src/pages/.
- * @param {Page} page - The '@playwright/test' Page being used by a test
+ * Base model for any Page in src/pages/
  */
 export abstract class BasePage implements ModelBasics {
   readonly _page: Page;
@@ -23,6 +21,10 @@ export abstract class BasePage implements ModelBasics {
   abstract readonly url: string | RegExp;
   abstract readonly title: string | RegExp;
 
+  /**
+   * Constructs a BasePage
+   * @param {Page} page - Playwright's Page object
+   */
   constructor(page: Page) {
     this._page = page;
   }
@@ -61,7 +63,7 @@ export abstract class BasePage implements ModelBasics {
   async goto({
     url = this.url,
     verify = true,
-  }: { url?: string | RegExp; verify?: boolean } = {}): Promise<BasePage> {
+  }: { url?: string | RegExp; verify?: boolean } = {}): Promise<this> {
     if (url instanceof RegExp) {
       throw new Error(`${typeof this}.url is a regular expression. Please provide a url to visit.`);
     }
@@ -72,5 +74,16 @@ export abstract class BasePage implements ModelBasics {
       await expect(this._page).toHaveTitle(this.title);
     }
     return this;
+  }
+
+  /**
+   * Logs a string to the browser console. This string will show in playwright's trace.
+   * @param {string} s - the string to log to the browser console
+   */
+  async browserLog(s: string): Promise<void> {
+    await this._page.evaluate((s: string) => {
+      // eslint-disable-next-line no-console
+      console.log(s);
+    }, s);
   }
 }

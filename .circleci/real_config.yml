@@ -21,7 +21,7 @@ executors:
 parameters:
   det-version:
     type: string
-    default: 0.32.1-dev0
+    default: 0.33.1-dev0
   docker-image:
     type: string
     default: determinedai/cimg-base:latest
@@ -235,12 +235,6 @@ commands:
       - run: cd ../license-key-gen && go run ./licensegen.go
       - run: mv ../license-key-gen/license.txt ./license.txt
       - run: mv ../license-key-gen/public.txt ./public.txt
-
-  get-slurmcluster:
-    steps:
-      - run: cd .. && git clone https://${GITHUB_TOKEN}@github.com/determined-ai/dev-scripts.git
-      - run: cp ../dev-scripts/slurm/slurmcluster.sh tools/slurmcluster.sh
-      - run: ls -a
 
   pull-task-images:
     parameters:
@@ -611,7 +605,7 @@ commands:
 
             cat /tmp/all-relevant-files | circleci tests run --command="DD_CIVISIBILITY_AGENTLESS_ENABLED=true \
             DD_SITE='datadoghq.com' \
-            DD_ENV=ci DD_SERVICE='pytest-<<parameters.mark>>' \
+            DD_ENV='ci-<<parameters.mark>>' DD_SERVICE='determined-pytest-<<parameters.mark>>' \
             DET_MASTER_CERT_FILE=<<parameters.master-cert>> \
             DET_MASTER_CERT_NAME=<<parameters.master-cert-name>> \
             IS_CIRCLECI_JOB=1 XDG_CONFIG_HOME=/tmp \
@@ -650,8 +644,11 @@ commands:
           command: |
             pytest -vv -s \
             -m <<parameters.mark>> \
+            --junitxml=/tmp/test-results/det-deploy-tests.xml \
             --no-compare-stats \
             --det-version="<<parameters.det-version>>"
+      - store_test_results:
+          path: /tmp/test-results/
 
   deploy-aws-cluster:
     parameters:
@@ -964,7 +961,7 @@ commands:
           name: Get Kubeconfig
       - run:
           command: |
-            echo 'export HELM_VALUES="detVersion=<<parameters.det-version>>,maxSlotsPerPod=<<parameters.max-slots-per-pod>>,checkpointStorage.type=gcs,checkpointStorage.bucket=<<parameters.storage-bucket>>,taskContainerDefaults.startupHook=echo hello from master tcd startup hook"' >> "$BASH_ENV"
+            echo 'export HELM_VALUES="initialUserPassword=${INITIAL_USER_PASSWORD},detVersion=<<parameters.det-version>>,maxSlotsPerPod=<<parameters.max-slots-per-pod>>,checkpointStorage.type=gcs,checkpointStorage.bucket=<<parameters.storage-bucket>>,taskContainerDefaults.startupHook=echo hello from master tcd startup hook"' >> "$BASH_ENV"
           name: Prepare helm overrides
       - run:
           command: |
@@ -1666,8 +1663,6 @@ jobs:
                 tools/scripts/retry.sh make -C model_hub publish-docker-dev
             fi
       - run: mkdir /tmp/pkgs && cp -v */dist/*.{rpm,deb,tar.gz} /tmp/pkgs
-      - store_artifacts:
-          path: /tmp/pkgs
 
   package-and-push-system-dev-small:
     docker:
@@ -1754,8 +1749,6 @@ jobs:
       - run: make -C master publish-ee
       - run: make -C agent publish-ee
       - run: mkdir /tmp/pkgs && cp -v */dist/*.{rpm,deb,tar.gz} /tmp/pkgs
-      - store_artifacts:
-          path: /tmp/pkgs
 
   package-and-push-system-release:
     docker:
@@ -1815,8 +1808,6 @@ jobs:
           no_output_timeout: 30m
           command: make -C agent release-ee
       - run: mkdir /tmp/pkgs && cp -v */dist/*.{rpm,deb,tar.gz} /tmp/pkgs
-      - store_artifacts:
-          path: /tmp/pkgs
 
   publish-helm-gh:
     parameters:
@@ -2020,10 +2011,17 @@ jobs:
       - wait-for-master:
           host: "localhost"
           port: "8082"
+      - run: npm install --save-dev dd-trace # DataDog integration
       - run:
           environment:
             PW_EE: << parameters.ee >>
-          command: npm run e2e --prefix webui/react -- << parameters.playwright-options >>
+            NODE_OPTIONS: "-r dd-trace/ci/init"
+          command: |
+              if [[ "$PW_EE" -eq 1 ]]; then env="ee"; else env="oss"; fi
+              DD_ENV="ci-devcluster-$env" \
+              DD_SERVICE=determined-ui-e2e \
+              PW_PASSWORD=${INITIAL_USER_PASSWORD} \
+              npm run e2e --prefix webui/react -- << parameters.playwright-options >>
       - store_artifacts:
           path: webui/react/src/e2e/playwright-report
       - store_artifacts:
@@ -2155,6 +2153,8 @@ jobs:
       - setup-python-venv:
           executor: <<pipeline.parameters.machine-image>>
       - setup-go-intg-deps
+      - run: curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64 && sudo install minikube-linux-amd64 /usr/local/bin/minikube
+      - run: minikube start
       - run: make -C master test-intg
       - codecov/upload:
           flags: "backend"
@@ -2311,6 +2311,8 @@ jobs:
           root: .
           paths:
             - test-unit-harness-cpu-pycov
+      - store_test_results:
+          path: /tmp/test-results
 
   test-unit-harness-gpu:
     docker:
@@ -2333,6 +2335,8 @@ jobs:
           root: .
           paths:
             - test-unit-harness-gpu-pycov
+      - store_test_results:
+          path: /tmp/test-results
 
   test-unit-harness-pytorch2-gpu:
     docker:
@@ -2355,6 +2359,8 @@ jobs:
           root: .
           paths:
             - test-unit-harness-pytorch2-gpu-pycov
+      - store_test_results:
+          path: /tmp/test-results
 
   test-unit-harness-pytorch2-cpu:
     docker:
@@ -2376,6 +2382,8 @@ jobs:
           root: .
           paths:
             - test-unit-harness-pytorch2-cpu-pycov
+      - store_test_results:
+          path: /tmp/test-results
 
   test-unit-harness-gpu-parallel:
     docker:
@@ -2398,6 +2406,8 @@ jobs:
           root: .
           paths:
             - test-unit-harness-gpu-parallel-pycov
+      - store_test_results:
+          path: /tmp/test-results
 
   test-unit-harness-gpu-deepspeed:
     docker:
@@ -2420,6 +2430,8 @@ jobs:
           root: .
           paths:
             - test-unit-harness-gpu-deepspeed-pycov
+      - store_test_results:
+          path: /tmp/test-results
 
   test-unit-harness-tf2:
     docker:
@@ -2443,6 +2455,8 @@ jobs:
           root: .
           paths:
             - test-unit-harness-tf2-pycov
+      - store_test_results:
+          path: /tmp/test-results
 
   test-unit-storage:
     docker:
@@ -2459,13 +2473,15 @@ jobs:
           determined: true
           extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
           executor: <<pipeline.parameters.docker-image>>
-      - run: COVERAGE_FILE=$PWD/test-unit-storage-pycov coverage run -m pytest -v --durations=0 --require-secrets -m cloud harness/tests
+      - run: COVERAGE_FILE=$PWD/test-unit-storage-pycov coverage run -m pytest -v --durations=0 --junitxml=/tmp/test-results/test-unit-storage.xml --require-secrets -m cloud harness/tests
       - run: coverage xml -i --data-file=./test-unit-storage-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
       - persist_to_workspace:
           root: .
           paths:
             - test-unit-storage-pycov
+      - store_test_results:
+          path: /tmp/test-results
 
   test-unit-model-hub:
     docker:
@@ -2541,7 +2557,9 @@ jobs:
       - run: pip install -r harness/tests/requirements/requirements-cli.txt
       - run: pip freeze --all
       - python-report
-      - run: pytest harness/tests/cli
+      - run: pytest --junitxml=/tmp/test-results/test-unit-storage.xml harness/tests/cli
+      - store_test_results:
+          path: /tmp/test-results
 
   test-e2e-slurm-disabled:
     parameters:
@@ -2633,7 +2651,6 @@ jobs:
 
       - install-devcluster
       - license-gen
-      - get-slurmcluster
 
       - gcloud/install:
           version: "412.0.0"
@@ -2776,7 +2793,9 @@ jobs:
           name: Make unslurmcluster
           when: always
           command: |
-            pkill determined-mast
+            # These scripts always run with `set -e`. Be careful that a failure doesn't stop
+            # make unslurmcluster from running, otherwise resources are left around.
+            pkill determined-mast || echo "failed to kill master (exit code $?)"
             (yes yes || true) | make unslurmcluster TF_LOCK=false
             # For some reason, even when `make unslurmcluster` is successful, CircleCI
             # receives exit code 141, so ignore that.
@@ -4086,6 +4105,7 @@ workflows:
           context:
             - playwright
             - github-read
+            - dev-ci-cluster-default-user-credentials
           filters: *any-upstream
       - build-docs:
           requires:
@@ -4109,10 +4129,6 @@ workflows:
           requires:
             - build-react-oss
             - build-docs
-          filters:
-            branches:
-              only:
-                - main
 
       - upload-docs-search-index:
           requires:
@@ -4178,6 +4194,7 @@ workflows:
           context:
             - playwright
             - github-read
+            - dev-ci-cluster-default-user-credentials
           filters: *any-upstream
       - build-docs:
           requires:
@@ -4422,6 +4439,8 @@ workflows:
 
       - test-e2e:
           name: test-e2e-rbac
+          context:
+            - dev-ci-cluster-default-user-credentials
           requires:
             - build-go-ee
           parallelism: 1
@@ -4430,6 +4449,8 @@ workflows:
 
       - test-e2e:
           name: test-e2e-cpu
+          context:
+            - dev-ci-cluster-default-user-credentials
           requires:
             - build-go-ee
           parallelism: 6
@@ -4439,6 +4460,8 @@ workflows:
 
       - test-e2e:
           name: test-e2e-cpu-double
+          context:
+            - dev-ci-cluster-default-user-credentials
           requires:
             - build-go-ee
           parallelism: 5
@@ -4450,6 +4473,8 @@ workflows:
 
       - test-e2e:
           name: test-e2e-cpu-oauth
+          context:
+            - dev-ci-cluster-default-user-credentials
           requires:
             - build-go-ee
           parallelism: 1
@@ -4459,6 +4484,8 @@ workflows:
 
       - test-e2e:
           name: test-e2e-cpu-model-registry-rbac
+          context:
+            - dev-ci-cluster-default-user-credentials
           requires:
             - build-go-ee
           parallelism: 1
@@ -4468,6 +4495,8 @@ workflows:
 
       - test-e2e:
           name: test-e2e-managed-devcluster
+          context:
+            - dev-ci-cluster-default-user-credentials
           requires:
             - build-go-ee
           parallelism: 4
@@ -4481,6 +4510,8 @@ workflows:
 
       - test-e2e:
           name: test-e2e-multi-k8s
+          context:
+            - dev-ci-cluster-default-user-credentials
           requires:
             - build-go-ee
           parallelism: 1
@@ -4492,6 +4523,8 @@ workflows:
 
       - test-e2e:
           name: test-e2e-port-registry
+          context:
+            - dev-ci-cluster-default-user-credentials
           requires:
             - build-go-ee
           parallelism: 1
@@ -4501,6 +4534,8 @@ workflows:
 
       - test-e2e:
           name: test-e2e-cpu-elastic
+          context:
+            - dev-ci-cluster-default-user-credentials
           requires:
             - build-go-ee
           parallelism: 1
@@ -4511,6 +4546,8 @@ workflows:
 
       - test-e2e:
           name: test-e2e-postgres10-with-ssl
+          context:
+            - dev-ci-cluster-default-user-credentials
           requires:
             - build-go-ee
           parallelism: 1
@@ -4521,6 +4558,8 @@ workflows:
 
       - test-e2e:
           name: test-e2e-postgres14-with-ssl
+          context:
+            - dev-ci-cluster-default-user-credentials
           requires:
             - build-go-ee
           parallelism: 1
@@ -4531,6 +4570,8 @@ workflows:
 
       - test-e2e:
           name: test-e2e-old-agent-versions
+          context:
+            - dev-ci-cluster-default-user-credentials
           requires:
             - build-go-ee
           parallelism: 1
@@ -4553,8 +4594,10 @@ workflows:
           extra-pytest-flags: "--no-compare-stats"
 
       - test-e2e:
-          context: okta
           name: test-e2e-saml
+          context:
+            - okta
+            - dev-ci-cluster-default-user-credentials
           requires:
             - build-go-ee
           parallelism: 1
@@ -4617,6 +4660,7 @@ workflows:
           context:
             - gcp-ci
             - determined-ee
+            - gcp-ci-cluster-default-user-credentials
           filters:
             branches:
               only: main
@@ -4633,6 +4677,7 @@ workflows:
           context:
             - gcp-ci
             - determined-ee
+            - gcp-ci-cluster-default-user-credentials
           filters:
             branches:
               only: main
@@ -4648,30 +4693,12 @@ workflows:
               num-machines: [2]
               max-slots-per-pod: [4]
 
-      # Legacy tf 2.4 tests.
-      - test-e2e-gke:
-          name: test-e2e-gke-single-gpu-tfonly
-          context:
-            - gcp-ci
-            - determined-ee
-          filters:
-            branches:
-              only: main
-          requires:
-            - package-and-push-system-dev-ee
-          matrix:
-            parameters:
-              cluster-id-prefix: ["e2e-gpu-tfonly"]
-              mark: ["e2e_gpu and tensorflow2"]
-              parallelism: [1]
-              environment-image:
-                - determinedai/environments:cuda-11.1-pytorch-1.9-tf-2.4-gpu-0.19.10
-
       - test-e2e-gke:
           name: test-e2e-gke-single-cpu
           context:
             - gcp-ci
             - determined-ee
+            - gcp-ci-cluster-default-user-credentials
           filters:
             branches:
               only: main
@@ -4694,6 +4721,7 @@ workflows:
           context:
             - gcp-ci
             - determined-ee
+            - gcp-ci-cluster-default-user-credentials
           filters:
             branches:
               only: main
@@ -4854,6 +4882,7 @@ workflows:
           context:
             - gcp-ci
             - determined-ee
+            - gcp-ci-cluster-default-user-credentials
           filters: *upstream-feature-branch
           requires:
             - request-k8-tests
@@ -4869,6 +4898,7 @@ workflows:
           context:
             - gcp-ci
             - determined-ee
+            - gcp-ci-cluster-default-user-credentials
           filters: *upstream-feature-branch
           requires:
             - request-k8-tests
@@ -4883,24 +4913,6 @@ workflows:
               num-machines: [2]
               max-slots-per-pod: [4]
 
-      # Requestable legacy tf 2.4 tests.
-      - test-e2e-gke:
-          name: test-e2e-gke-single-gpu-tfonly
-          context:
-            - gcp-ci
-            - determined-ee
-          filters: *upstream-feature-branch
-          requires:
-            - request-k8-tests
-            - package-and-push-system-dev-ee
-          matrix:
-            parameters:
-              cluster-id-prefix: ["e2e-gpu-tfonly"]
-              mark: ["e2e_gpu and tensorflow2"]
-              parallelism: [1]
-              environment-image:
-                - determinedai/environments:cuda-11.1-pytorch-1.9-tf-2.4-gpu-0.19.10
-
       # K8s CPU tests
       - request-k8-tests-cpu:
           type: approval
@@ -4911,6 +4923,7 @@ workflows:
           context:
             - gcp-ci
             - determined-ee
+            - gcp-ci-cluster-default-user-credentials
           filters: *upstream-feature-branch
           requires:
             - request-k8-tests-cpu
@@ -4932,6 +4945,7 @@ workflows:
           context:
             - gcp-ci
             - determined-ee
+            - gcp-ci-cluster-default-user-credentials
           filters: *upstream-feature-branch
           requires:
             - request-k8-tests-cpu
@@ -5528,6 +5542,7 @@ workflows:
           context:
             - playwright
             - github-read
+            - dev-ci-cluster-default-user-credentials
 
   release:
     jobs:

@@ -32,6 +32,7 @@ type TaskContainerDefaultsConfig struct {
 	// TODO(DET-9855) we should move these over to KubernetesTaskContainerDefaults.
 	CPUPodSpec           *k8sV1.Pod           `json:"cpu_pod_spec"`
 	GPUPodSpec           *k8sV1.Pod           `json:"gpu_pod_spec"`
+	CheckpointGCPodSpec  *k8sV1.Pod           `json:"checkpoint_gc_pod_spec"`
 	Image                *RuntimeItem         `json:"image,omitempty"`
 	RegistryAuth         *registry.AuthConfig `json:"registry_auth,omitempty"`
 	ForcePullImage       bool                 `json:"force_pull_image,omitempty"`
@@ -92,6 +93,7 @@ func (c *TaskContainerDefaultsConfig) Validate() []error {
 
 	errs = append(errs, validatePodSpec(c.CPUPodSpec)...)
 	errs = append(errs, validatePodSpec(c.GPUPodSpec)...)
+	errs = append(errs, validatePodSpec(c.CheckpointGCPodSpec)...)
 
 	return errs
 }
@@ -204,6 +206,10 @@ func (c TaskContainerDefaultsConfig) Merge(
 
 	if other.GPUPodSpec != nil {
 		res.GPUPodSpec = other.GPUPodSpec.DeepCopy()
+	}
+
+	if other.CheckpointGCPodSpec != nil {
+		res.CheckpointGCPodSpec = other.CheckpointGCPodSpec.DeepCopy()
 	}
 
 	if other.Image != nil {

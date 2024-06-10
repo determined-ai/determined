@@ -11,30 +11,27 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
-
-	"github.com/determined-ai/determined/master/internal/job/jobservice"
-	"github.com/determined-ai/determined/master/internal/rm"
-	"github.com/determined-ai/determined/master/internal/rm/rmevents"
-	"github.com/determined-ai/determined/master/internal/sproto"
-
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
-	"gopkg.in/guregu/null.v3"
-
-	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/metadata"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/wrapperspb"
+	"gopkg.in/guregu/null.v3"
 
 	apiPkg "github.com/determined-ai/determined/master/internal/api"
 	authz2 "github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
+	"github.com/determined-ai/determined/master/internal/job/jobservice"
 	"github.com/determined-ai/determined/master/internal/logpattern"
 	"github.com/determined-ai/determined/master/internal/mocks"
+	"github.com/determined-ai/determined/master/internal/rm"
+	"github.com/determined-ai/determined/master/internal/rm/rmevents"
+	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -89,7 +86,7 @@ func setupAPITest(t *testing.T, pgdb *db.PgDB,
 
 	if pgdb == nil {
 		if thePgDB == nil {
-			thePgDB = db.MustResolveTestPostgres(t)
+			thePgDB, _ = db.MustResolveTestPostgres(t)
 			db.MustMigrateTestPostgres(t, thePgDB, "file://../static/migrations")
 			require.NoError(t, etc.SetRootPath("../static/srv"))
 
@@ -137,7 +134,6 @@ func setupAPITest(t *testing.T, pgdb *db.PgDB,
 	require.NoError(t, err, "Couldn't get admin user")
 	ctx := metadata.NewIncomingContext(context.TODO(),
 		metadata.Pairs("x-user-token", fmt.Sprintf("Bearer %s", resp.Token)))
-
 	return api, *userModel, ctx
 }
 
@@ -235,11 +231,11 @@ func TestAuthMiddleware(t *testing.T) {
 			allocationHeader: fmt.Sprintf("Bearer %s", allocationToken),
 		}},
 		{proxiedSubRoute, http.StatusSeeOther, redirectedSubRoute, map[string]string{
-			allocationHeader: fmt.Sprintf("Bearer %s", "invalid-token"),
+			allocationHeader: "Bearer invalid-token",
 		}},
 		{proxiedSubRoute, http.StatusUnauthorized, "", map[string]string{
 			"Accept":         "application/json",
-			allocationHeader: fmt.Sprintf("Bearer %s", "invalid-token"),
+			allocationHeader: "Bearer invalid-token",
 		}},
 		{"/non-proxied-path", http.StatusUnauthorized, "", map[string]string{}},
 		{"/non-proxied-path", http.StatusUnauthorized, "", map[string]string{
@@ -397,7 +393,7 @@ func TestLoginRemote(t *testing.T) {
 			Where("username = ?", username).
 			Scan(ctx, &expectedUser)
 		require.NoError(t, err)
-		require.Equal(t, model.NoPasswordLogin, expectedUser.PasswordHash)
+		require.Equal(t, expectedUser.PasswordHash, model.NoPasswordLogin)
 
 		// Changing back to unremote unsets password to blank.
 		_, err = api.PatchUser(ctx, &apiv1.PatchUserRequest{
@@ -630,7 +626,7 @@ func TestPatchUsers(t *testing.T) {
 		UserId: int32(userID),
 	})
 	require.NoError(t, err)
-	require.Equal(t, resp2.User.Active, true)
+	require.True(t, resp2.User.Active)
 }
 
 func TestRenameUserThenReuseName(t *testing.T) {
@@ -909,7 +905,7 @@ func TestPostUserActivity(t *testing.T) {
 
 	activityCount, err := getActivityEntry(ctx, curUser.ID, 1)
 	require.NoError(t, err)
-	require.Equal(t, activityCount, 1, ctx)
+	require.Equal(t, 1, activityCount, ctx)
 
 	_, err = api.PostUserActivity(ctx, &apiv1.PostUserActivityRequest{
 		ActivityType: userv1.ActivityType_ACTIVITY_TYPE_GET,
@@ -921,7 +917,7 @@ func TestPostUserActivity(t *testing.T) {
 
 	activityCount, err = getActivityEntry(ctx, curUser.ID, 1)
 	require.NoError(t, err)
-	require.Equal(t, activityCount, 1, ctx)
+	require.Equal(t, 1, activityCount, ctx)
 }
 
 func getActivityEntry(ctx context.Context, userID model.UserID, entityID int32) (int, error) {

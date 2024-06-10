@@ -18,7 +18,8 @@ func TestDispatchPersistence(t *testing.T) {
 	err := etc.SetRootPath(RootFromDB)
 	require.NoError(t, err)
 
-	db := MustResolveTestPostgres(t)
+	db, closeDB := MustResolveTestPostgres(t)
+	defer closeDB()
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 
 	u := RequireMockUser(t, db)
@@ -59,8 +60,8 @@ VALUES ($1, $2)
 	require.Equal(t, int64(1), count)
 
 	ds, _ = ListDispatchesByAllocationID(context.TODO(), d.AllocationID)
-	require.Len(t, ds, 0)
+	require.Empty(t, ds)
 
 	ds, _ = ListAllDispatches(context.TODO())
-	require.Len(t, ds, 0)
+	require.Empty(t, ds)
 }

@@ -2,6 +2,7 @@ package sproto
 
 import (
 	"fmt"
+	"slices"
 
 	"github.com/pkg/errors"
 
@@ -47,6 +48,21 @@ const (
 	// Unknown state is a null value.
 	Unknown ResourcesState = ""
 )
+
+var resourcesStateOrdering = []ResourcesState{
+	Assigned,
+	Pulling,
+	Starting,
+	Running,
+	Terminated,
+}
+
+// BeforeOrEqual returns if one state is chronologically before or the same as other.
+func (s ResourcesState) BeforeOrEqual(other ResourcesState) bool {
+	selfIndex := slices.Index(resourcesStateOrdering, s)
+	otherIndex := slices.Index(resourcesStateOrdering, other)
+	return selfIndex <= otherIndex
+}
 
 // FromContainerState converts a cproto.State to ResourcesState. This may shortly become much less
 // granular (not a one to one mapping).
@@ -108,7 +124,7 @@ func FromContainerStarted(cs *aproto.ContainerStarted) *ResourcesStarted {
 
 // ResourcesStopped contains the information needed by tasks from container stopped.
 type ResourcesStopped struct {
-	Failure *ResourcesRestoreError
+	Failure *ResourcesFailedError
 }
 
 // Proto returns the proto representation of ResourcesStopped.
@@ -129,7 +145,7 @@ func FromContainerStopped(cs *aproto.ContainerStopped) *ResourcesStopped {
 
 	rs := &ResourcesStopped{}
 	if f := cs.Failure; f != nil {
-		rs.Failure = &ResourcesRestoreError{
+		rs.Failure = &ResourcesFailedError{
 			FailureType: FromContainerFailureType(f.FailureType),
 			ErrMsg:      f.ErrMsg,
 			ExitCode:    FromContainerExitCode(f.ExitCode),
@@ -143,14 +159,14 @@ func FromContainerStopped(cs *aproto.ContainerStopped) *ResourcesStopped {
 func ResourcesError(failureType FailureType, err error) ResourcesStopped {
 	if err == nil {
 		return ResourcesStopped{
-			Failure: &ResourcesRestoreError{
+			Failure: &ResourcesFailedError{
 				FailureType: failureType,
 				ErrMsg:      errors.WithStack(errors.Errorf("unknown error occurred")).Error(),
 			},
 		}
 	}
 	return ResourcesStopped{
-		Failure: &ResourcesRestoreError{
+		Failure: &ResourcesFailedError{
 			FailureType: failureType,
 			ErrMsg:      err.Error(),
 		},
@@ -164,15 +180,15 @@ func (r ResourcesStopped) String() string {
 	return r.Failure.Error()
 }
 
-// ResourcesRestoreError contains information about restored resources' failure.
-type ResourcesRestoreError struct {
+// ResourcesFailedError contains information about restored resources' failure.
+type ResourcesFailedError struct {
 	FailureType FailureType
 	ErrMsg      string
 	ExitCode    *ExitCode
 }
 
 // Proto returns the proto representation of ResourcesFailure.
-func (f *ResourcesRestoreError) Proto() *taskv1.ResourcesFailure {
+func (f *ResourcesFailedError) Proto() *taskv1.ResourcesFailure {
 	if f == nil {
 		return nil
 	}
@@ -193,15 +209,15 @@ func (f *ResourcesRestoreError) Proto() *taskv1.ResourcesFailure {
 // NewResourcesFailure returns a resources failure message wrapping the type, msg and exit code.
 func NewResourcesFailure(
 	failureType FailureType, msg string, code *ExitCode,
-) *ResourcesRestoreError {
-	return &ResourcesRestoreError{
+) *ResourcesFailedError {
+	return &ResourcesFailedError{
 		FailureType: failureType,
 		ErrMsg:      msg,
 		ExitCode:    code,
 	}
 }
 
-func (f ResourcesRestoreError) Error() string {
+func (f ResourcesFailedError) Error() string {
 	if f.ExitCode == nil {
 		if len(f.ErrMsg) > 0 {
 			return fmt.Sprintf("%s: %s", f.FailureType, f.ErrMsg)
@@ -336,7 +352,7 @@ func IsUnrecoverableSystemError(err error) bool {
 // shouldn't count against `max_restarts`.
 func IsTransientSystemError(err error) bool {
 	switch err := err.(type) {
-	case ResourcesRestoreError:
+	case ResourcesFailedError:
 		switch err.FailureType {
 		case ResourcesFailed, TaskError:
 			return false
@@ -366,6 +382,14 @@ type ResourcesStateChanged struct {
 	// More granular information about specific resource types.
 	// TODO(DET-9700): This can be removed now.
 	Container *cproto.Container
+}
+
+func (r ResourcesStateChanged) String() string {
+	var reason string
+	if r.ResourcesStopped != nil {
+		reason = r.ResourcesStopped.String()
+	}
+	return fmt.Sprintf("id=%s state=%s reason=%s", r.ResourcesID, r.ResourcesState, reason)
 }
 
 // FromContainerStateChanged converts an aproto.ContainerStateChanged message to

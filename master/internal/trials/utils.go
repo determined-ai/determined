@@ -2,7 +2,7 @@ package trials
 
 import (
 	"context"
-	"fmt"
+	"strconv"
 
 	"github.com/pkg/errors"
 	"google.golang.org/grpc/codes"
@@ -26,7 +26,7 @@ func CanGetTrialsExperimentAndCheckCanDoAction(ctx context.Context,
 		return err
 	}
 
-	trialNotFound := api.NotFoundErrs("trial", fmt.Sprint(trialID), true)
+	trialNotFound := api.NotFoundErrs("trial", strconv.Itoa(trialID), true)
 	exp, err := db.ExperimentByTrialID(ctx, trialID)
 	if errors.Is(err, db.ErrNotFound) {
 		return trialNotFound

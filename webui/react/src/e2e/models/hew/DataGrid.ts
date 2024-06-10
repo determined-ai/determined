@@ -1,40 +1,48 @@
-import { expect, Locator } from '@playwright/test';
+import { expect } from '@playwright/test';
 
 import { BaseComponent, NamedComponent, NamedComponentArgs } from 'e2e/models/BaseComponent';
-import { Dropdown } from 'e2e/models/hew/Dropdown';
+import { DropdownMenu } from 'e2e/models/hew/Dropdown';
+import { printMap } from 'e2e/utils/debug';
 
-type RowClass<RowType extends Row<RowType, HeadRowType>, HeadRowType extends HeadRow> = new (
+type RowClass<RowType extends Row<HeadRowType>, HeadRowType extends HeadRow<RowType>> = new (
   args: RowArgs<RowType, HeadRowType>,
 ) => RowType;
-type HeadRowClass<HeadRowType> = new (args: HeadRowArgs) => HeadRowType;
+type HeadRowClass<RowType extends Row<HeadRowType>, HeadRowType extends HeadRow<RowType>> = new (
+  args: HeadRowArgs<RowType, HeadRowType>,
+) => HeadRowType;
 
 export type RowArgs<
-  RowType extends Row<RowType, HeadRowType>,
-  HeadRowType extends HeadRow,
+  RowType extends Row<HeadRowType>,
+  HeadRowType extends HeadRow<RowType>,
 > = NamedComponentArgs & { parentTable: DataGrid<RowType, HeadRowType> };
-export type HeadRowArgs = NamedComponentArgs & { clickableParentLocator: Locator };
+export type HeadRowArgs<
+  RowType extends Row<HeadRowType>,
+  HeadRowType extends HeadRow<RowType>,
+> = NamedComponentArgs & { parentTable: DataGrid<RowType, HeadRowType> };
 export type TableArgs<
-  RowType extends Row<RowType, HeadRowType>,
-  HeadRowType extends HeadRow,
+  RowType extends Row<HeadRowType>,
+  HeadRowType extends HeadRow<RowType>,
 > = NamedComponentArgs & {
   rowType: RowClass<RowType, HeadRowType>;
-  headRowType: HeadRowClass<HeadRowType>;
+  headRowType: HeadRowClass<RowType, HeadRowType>;
 };
 
 /**
- * Returns a representation of the DataGrid component.
- * This constructor represents the contents in hew/src/kit/DataGrid.tsx.
- * @param {object} obj
- * @param {CanBeParent} obj.parent - The parent used to locate this DataGrid
- * @param {string} [obj.selector] - Used instead of `defaultSelector`
- * @param {RowType} [obj.rowType] - Value for the RowType used to instanciate rows
- * @param {HeadRowType} [obj.headRowType] - Value of the HeadRowType used to instanciate the head row
+ * Represents the DataGrid component in hew/src/kit/DataGrid.tsx
  */
 export class DataGrid<
-  RowType extends Row<RowType, HeadRowType>,
-  HeadRowType extends HeadRow,
+  RowType extends Row<HeadRowType>,
+  HeadRowType extends HeadRow<RowType>,
 > extends NamedComponent {
-  readonly defaultSelector: string = '[class^="DataGrid_base"]';
+  static readonly columnIndexAttribute = 'aria-colindex';
+  readonly defaultSelector = '[class^="DataGrid_base"]';
+
+  /**
+   * Constructs a DataGrid
+   * @param {object} args
+   * @param {RowType} args.rowType - Value for the RowType used to instanciate rows
+   * @param {HeadRowType} args.headRowType - Value of the HeadRowType used to instanciate the head row
+   */
   constructor(args: TableArgs<RowType, HeadRowType>) {
     super(args);
     this.#rowType = args.rowType;
@@ -43,8 +51,8 @@ export class DataGrid<
       parentTable: this,
     });
     this.headRow = new args.headRowType({
-      clickableParentLocator: this.pwLocator,
       parent: this.#head,
+      parentTable: this,
     });
   }
   readonly canvasTable = new BaseComponent({
@@ -93,6 +101,104 @@ export class DataGrid<
   }
 
   /**
+   * Scolls the table
+   * @param {object} obj
+   * @param {number} [obj.xAbsolute] - The x coordinate. If not provided, the table will incrementally scroll to the right.
+   */
+  private async scrollTable({ xAbsolute }: { xAbsolute?: number } = {}): Promise<void> {
+    const box = await this.pwLocator.boundingBox();
+    if (box === null) {
+      throw new Error('Expected to see a bounding box for the table.');
+    }
+    const page = this.root._page;
+    // move mouse to the center of the table
+    await page.mouse.move((box.x + box.width) / 2, (box.y + box.height) / 2);
+    // scroll the table to the right by the width of the table minus 500
+    // All the permanent columns on the left together are under 500px wide
+    await page.mouse.wheel(xAbsolute ? xAbsolute : box.width - 500, 0);
+    // wait for the scroll to happen
+    await page.waitForTimeout(2_000);
+  }
+
+  /**
+   * Scrolls the table to the left
+   */
+  async scrollLeft(): Promise<void> {
+    await this.scrollTable({ xAbsolute: -9999 });
+  }
+
+  /**
+   * Increments the scroll of the table to the right
+   */
+  async incrementScrollGenerator(): Promise<() => Promise<boolean>> {
+    await this.scrollLeft();
+
+    let prevIndexes: (string | null)[] = [];
+    const incrementScroll = async () => {
+      await this.scrollTable();
+      const cells = await this.headRow.cells.pwLocator.all();
+      const indexes = await Promise.all(
+        cells.map(async (cell) => {
+          return await cell.getAttribute(DataGrid.columnIndexAttribute);
+        }),
+      );
+      if (JSON.stringify(indexes) === JSON.stringify(prevIndexes)) {
+        return false;
+      }
+      prevIndexes = indexes;
+      return true;
+    };
+    return incrementScroll;
+  }
+
+  /**
+   * Scrolls the column into view
+   * @param {string} s - The column name
+   */
+  async scrollColumnIntoViewByName(s: string): Promise<void> {
+    try {
+      return await this.scrollColumnIntoView(this.headRow.getColumnDef(s));
+    } catch (e) {
+      if ((e as Error).message.indexOf('Column with index') === 0) {
+        throw new Error(`Column with name ${s} not found.`);
+      }
+    }
+  }
+
+  /**
+   * Scrolls the column into view
+   * @param {number} index - The column index
+   */
+  async scrollColumnIntoView(index: number): Promise<void> {
+    if (index === 0) {
+      return;
+    }
+    const incrementScroll = await this.incrementScrollGenerator();
+
+    const checkColumnInView = async () => {
+      const cells = await this.headRow.cells.pwLocator.all();
+      if (cells.length === 0) {
+        throw new Error('Expected to see more than 0 columns.');
+      }
+      return (
+        await Promise.all(
+          cells.map(async (cell) => {
+            return (
+              index + 1 === parseInt((await cell.getAttribute(DataGrid.columnIndexAttribute)) || '')
+            );
+          }),
+        )
+      ).some(Boolean);
+    };
+    do {
+      if (await checkColumnInView()) {
+        return;
+      }
+    } while (await incrementScroll());
+    throw new Error(`Column with index ${index} not found.`);
+  }
+
+  /**
    * Returns a row from an index. Start counting at 0.
    */
   getRowByIndex(n: number): RowType {
@@ -113,7 +219,7 @@ export class DataGrid<
       rows.map(async (row) => {
         return (
           (await row.getAttribute(indexAttribute)) ||
-          Promise.reject(new Error(`all rows should have the attribute ${indexAttribute}`))
+          Promise.reject(new Error(`All rows should have the attribute ${indexAttribute}`))
         );
       }),
     );
@@ -145,13 +251,16 @@ export class DataGrid<
   async getRowByColumnValue(columnName: string, value: string): Promise<RowType> {
     const rows = await this.filterRows(async (row) => {
       return (
-        ((await row.getCellByColumnName(columnName).pwLocator.textContent()) || '').indexOf(value) >
-        -1
+        ((await (await row.getCellByColumnName(columnName)).pwLocator.textContent()) || '').indexOf(
+          value,
+        ) > -1
       );
     });
     if (rows.length !== 1) {
       const names = await Promise.all(
-        rows.map(async (row) => await row.getCellByColumnName('Name').pwLocator.textContent()),
+        rows.map(
+          async (row) => await (await row.getCellByColumnName('Name')).pwLocator.textContent(),
+        ),
       );
       throw new Error(
         `Expected one row to match ${columnName}:${value}. Found ${rows.length} rows that meet the condition: ${names}.`,
@@ -162,24 +271,24 @@ export class DataGrid<
 }
 
 /**
- * Returns the representation of a Table Row.
- * This constructor represents the Table in hew/src/kit/DataGrid.tsx.
- * @param {object} obj
- * @param {CanBeParent} obj.parent - The parent used to locate this Row
- * @param {string} obj.selector - Used as a selector uesd to locate this object
- * @param {DataGrid<RowType, HeadRowType>} [obj.parentTable] - Reference to the original table
+ * Represents a row from the DataGrid component
  */
-export class Row<
-  RowType extends Row<RowType, HeadRowType>,
-  HeadRowType extends HeadRow,
-> extends NamedComponent {
+export class Row<HeadRowType extends HeadRow<Row<HeadRowType>>> extends NamedComponent {
   readonly defaultSelector = 'tr';
   readonly indexAttribute = 'aria-rowindex';
-  constructor(args: RowArgs<RowType, HeadRowType>) {
+
+  /**
+   * Constructs a Row
+   * @param {object} obj
+   * @param {CanBeParent} obj.parent - The parent used to locate this Row
+   * @param {string} obj.selector - Used as a selector uesd to locate this object
+   * @param {DataGrid<RowType, HeadRowType>} [obj.parentTable] - Reference to the original table
+   */
+  constructor(args: RowArgs<Row<HeadRowType>, HeadRowType>) {
     super(args);
     this.parentTable = args.parentTable;
   }
-  parentTable: DataGrid<RowType, HeadRowType>;
+  parentTable: DataGrid<Row<HeadRowType>, HeadRowType>;
 
   protected columnPositions: Map<string, number> = new Map<string, number>([['Select', 5]]);
 
@@ -206,7 +315,7 @@ export class Row<
    * @param {object} index - The row's index
    */
   protected getY(index: number): number {
-    // (index + 1) here to account for header row
+    // (index + 2) here to account for header row and counting from 0
     return (index + 1) * this.parentTable.columnHeight + 5;
   }
 
@@ -229,48 +338,65 @@ export class Row<
   }
 
   /**
+   * Right clicks the row
+   */
+  async rightClick(): Promise<void> {
+    await this.parentTable.pwLocator.click({
+      button: 'right',
+      position: { x: 5, y: this.getY(await this.getIndex()) },
+    });
+  }
+
+  /**
    * Returns a cell from an index. Start counting at 0.
    */
-  getCellByIndex(n: number): BaseComponent {
+  async getCellByColIndex(n: number): Promise<BaseComponent> {
+    await this.parentTable.scrollColumnIntoView(n);
     return new BaseComponent({
       parent: this,
-      selector: `[aria-colindex="${n + 1}"]`,
+      selector: `[${DataGrid.columnIndexAttribute}="${n + 1}"]`,
     });
   }
 
   /**
    * Returns a cell from a column name.
    */
-  getCellByColumnName(s: string): BaseComponent {
-    const map = this.parentTable.headRow.columnDefs;
-    const index = map.get(s);
-    if (index === undefined) {
-      throw new Error(`Column with title expected but not found ${[...map.entries()]}`);
-    }
-    return this.getCellByIndex(index - 1);
+  async getCellByColumnName(s: string): Promise<BaseComponent> {
+    return await this.getCellByColIndex(this.parentTable.headRow.getColumnDef(s));
   }
 }
 
 /**
- * Returns the representation of a Table HeadRow.
- * This constructor represents the Table in hew/src/kit/DataGrid.tsx.
- * @param {object} obj
- * @param {CanBeParent} obj.parent - The parent used to locate this HeadRow
- * @param {string} obj.selector - Used as a selector uesd to locate this object
+ * Represents the head row from the DataGrid component
  */
-export class HeadRow extends NamedComponent {
-  readonly #columnIndexAttribute = 'aria-colindex';
+export class HeadRow<RowType extends Row<HeadRow<RowType>>> extends NamedComponent {
   readonly defaultSelector = 'tr';
-  readonly clickableParentLocator: Locator;
-  constructor(args: HeadRowArgs) {
+  readonly parentTable: DataGrid<RowType, HeadRow<RowType>>;
+
+  /**
+   * Constructs a HeadRow
+   * @param {object} obj
+   * @param {CanBeParent} obj.parent - The parent used to locate this HeadRow
+   * @param {string} obj.selector - Used as a selector uesd to locate this object
+   */
+  constructor(args: HeadRowArgs<RowType, HeadRow<RowType>>) {
     super(args);
-    this.clickableParentLocator = args.clickableParentLocator;
+    this.parentTable = args.parentTable;
   }
 
-  readonly selectDropdown = new HeaderDropdown({
+  readonly cells = new BaseComponent({
     parent: this,
-    selector: `[${this.#columnIndexAttribute}="1"]`,
+    selector: 'th',
   });
+  readonly selectDropdown = new HeaderDropdown({
+    childNode: new BaseComponent({
+      parent: this,
+      selector: `[${DataGrid.columnIndexAttribute}="1"]`,
+    }),
+    openMethod: this.clickSelectDropdown.bind(this),
+    root: this.root,
+  });
+
   #columnDefs = new Map<string, number>();
 
   get columnDefs(): Map<string, number> {
@@ -280,6 +406,16 @@ export class HeadRow extends NamedComponent {
     return this.#columnDefs;
   }
 
+  getColumnDef(columnName: string): number {
+    const index = this.columnDefs.get(columnName);
+    if (index === undefined) {
+      throw new Error(
+        `Column with title ${columnName} expected but not found.\n${printMap(this.#columnDefs)}`,
+      );
+    }
+    return index;
+  }
+
   /**
    * Sets Column Definitions
    * Row.getCellByColumnName will fail without running this first.
@@ -287,34 +423,42 @@ export class HeadRow extends NamedComponent {
   async setColumnDefs(): Promise<Map<string, number>> {
     // make sure we see enough columns before getting textContent of each.
     // there are four columns on the left
-    await expect
-      .poll(async () => await this.pwLocator.locator('th').count())
-      .toBeGreaterThanOrEqual(4);
-    const cells = await this.pwLocator.locator('th').all();
-    if (cells.length === 0) {
-      throw new Error('Expected to see more than 0 columns.');
-    }
-    await Promise.all(
-      cells.map(async (cell) => {
-        const index = await cell.getAttribute(this.#columnIndexAttribute);
-        if (index === null)
-          throw new Error(
-            `All header cells should have the attribute ${this.#columnIndexAttribute}`,
-          );
-        if (index !== '1') {
-          expect(await cell.textContent()).not.toBe('');
-        }
-        let text = await cell.textContent();
-        if (text === null) {
-          if (index === '1') {
-            text = '';
-          } else {
-            throw new Error('Expected to see text in the column header.');
+    this.#columnDefs.clear();
+    await expect.poll(async () => await this.cells.pwLocator.count()).toBeGreaterThanOrEqual(4);
+
+    const setVisibleColumns = async () => {
+      const cells = await this.cells.pwLocator.all();
+      if (cells.length === 0) {
+        throw new Error('Expected to see more than 0 columns.');
+      }
+      await Promise.all(
+        cells.map(async (cell) => {
+          const index = await cell.getAttribute(DataGrid.columnIndexAttribute);
+          if (index === null)
+            throw new Error(
+              `All header cells should have the attribute ${DataGrid.columnIndexAttribute}`,
+            );
+          if (index !== '1') {
+            expect(await cell.textContent()).not.toBe('');
           }
-        }
-        this.#columnDefs.set(text, parseInt(index));
-      }),
-    );
+          let text = await cell.textContent();
+          if (text === null) {
+            if (index === '1') {
+              text = '';
+            } else {
+              throw new Error('Expected to see text in the column header.');
+            }
+          }
+          this.#columnDefs.set(text, parseInt(index) - 1);
+        }),
+      );
+    };
+
+    const incrementScroll = await this.parentTable.incrementScrollGenerator();
+    do {
+      await setVisibleColumns();
+      await this.root.browserLog(printMap(this.#columnDefs));
+    } while (await incrementScroll());
     return this.#columnDefs;
   }
 
@@ -323,32 +467,16 @@ export class HeadRow extends NamedComponent {
    */
   async clickSelectDropdown(): Promise<void> {
     // magic numbers for the select button
-    await this.clickableParentLocator.click({ position: { x: 5, y: 5 } });
+    await this.parentTable.pwLocator.click({ position: { x: 5, y: 5 } });
   }
 }
 
 /**
- * Returns the representation of the grid's Header Dropdown.
- * This constructor represents the HeaderDropdown in hew/src/kit/DataGrid.tsx.
- * @param {object} obj
- * @param {CanBeParent} obj.parent - The parent used to locate this HeadRow
- * @param {string} obj.selector - Used as a selector uesd to locate this object
+ * Represents the HeaderDropdown from the DataGrid component
  */
-class HeaderDropdown extends Dropdown {
-  readonly select5 = new BaseComponent({
-    parent: this._menu,
-    selector: Dropdown.selectorTemplate('select-5'),
-  });
-  readonly select10 = new BaseComponent({
-    parent: this._menu,
-    selector: Dropdown.selectorTemplate('select-10'),
-  });
-  readonly select25 = new BaseComponent({
-    parent: this._menu,
-    selector: Dropdown.selectorTemplate('select-25'),
-  });
-  readonly selectAll = new BaseComponent({
-    parent: this._menu,
-    selector: Dropdown.selectorTemplate('select-all'),
-  });
+class HeaderDropdown extends DropdownMenu {
+  readonly select5 = this.menuItem('select-5');
+  readonly select10 = this.menuItem('select-10');
+  readonly select25 = this.menuItem('select-25');
+  readonly selectAll = this.menuItem('select-all');
 }

@@ -6,7 +6,7 @@ with open("../README.md", "r") as readme:
 
 setuptools.setup(
     name="determined",
-    version="0.32.1-dev0",
+    version="0.33.1-dev0",
     author="Determined AI",
     author_email="ai-open-source@hpe.com",
     url="https://determined.ai/",
@@ -31,7 +31,7 @@ setuptools.setup(
         # Common:
         "certifi",
         "filelock",
-        "requests",
+        "requests<2.32.0",  # TODO(MD-415) remove this pin.
         "google-cloud-storage",
         "lomond>=0.3.3",
         "pathspec>=0.6.0",

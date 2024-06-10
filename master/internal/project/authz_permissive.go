@@ -94,6 +94,14 @@ func (p *ProjectAuthZPermissive) CanUnarchiveProject(
 	return (&ProjectAuthZBasic{}).CanUnarchiveProject(ctx, curUser, project)
 }
 
+// CanSetProjectKey calls RBAC authz but enforces basic authz.
+func (p *ProjectAuthZPermissive) CanSetProjectKey(
+	ctx context.Context, curUser model.User, project *projectv1.Project,
+) error {
+	_ = (&ProjectAuthZRBAC{}).CanSetProjectKey(ctx, curUser, project)
+	return (&ProjectAuthZBasic{}).CanSetProjectKey(ctx, curUser, project)
+}
+
 func init() {
 	AuthZProvider.Register("permissive", &ProjectAuthZPermissive{})
 }

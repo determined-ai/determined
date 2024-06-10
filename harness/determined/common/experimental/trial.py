@@ -6,7 +6,7 @@ from typing import Any, Dict, Iterable, List, Optional, Union
 
 from determined.common import api, util
 from determined.common.api import bindings, logs
-from determined.common.experimental import checkpoint, metrics
+from determined.common.experimental import checkpoint, experiment, metrics
 
 # TODO (MLG-1087): move OrderBy to experimental.client namespace
 from determined.common.experimental._util import OrderBy  # noqa: I2041
@@ -523,6 +523,16 @@ class Trial:
             stacklevel=2,
         )
         return _stream_validation_metrics(self._session, [self.id])
+
+    def get_experiment(self) -> "experiment.Experiment":
+        """Return the parent :class:`~determined.experimental.Experiment` for this trial."""
+        if not self.experiment_id:
+            # In the case that Trial was constructed manually, reload to populate attributes.
+            self.reload()
+
+        assert self.experiment_id  # for mypy
+        resp = bindings.get_GetExperiment(session=self._session, experimentId=self.experiment_id)
+        return experiment.Experiment._from_bindings(resp.experiment, self._session)
 
     @classmethod
     def _from_bindings(cls, trial_bindings: bindings.trialv1Trial, session: api.Session) -> "Trial":

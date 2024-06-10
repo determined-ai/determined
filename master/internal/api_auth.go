@@ -67,7 +67,7 @@ func (a *apiServer) Login(
 	if err != nil {
 		return nil, err
 	}
-	fullUser, err := getUser(ctx, a.m.db, userModel.ID)
+	fullUser, err := getUser(ctx, userModel.ID)
 	return &apiv1.LoginResponse{Token: token, User: fullUser}, err
 }
 
@@ -78,7 +78,7 @@ func (a *apiServer) CurrentUser(
 	if err != nil {
 		return nil, err
 	}
-	fullUser, err := getUser(ctx, a.m.db, user.ID)
+	fullUser, err := getUser(ctx, user.ID)
 	return &apiv1.CurrentUserResponse{User: fullUser}, err
 }
 

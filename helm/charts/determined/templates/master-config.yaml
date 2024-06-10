@@ -1,3 +1,20 @@
+{{- if empty (lookup "v1" "Service" .Release.Namespace (printf "determined-db-service-%s" .Release.Name)) }}
+  {{- $initialPassword := coalesce .Values.initialUserPassword .Values.defaultPassword | required "An initial password for admin and determined users is required!" }}
+  {{- if not (gt (len $initialPassword) 7) }}
+    {{- fail "initialUserPassword must have at least 8 characters" }}
+  {{- end }}
+  {{- if not (regexMatch "[A-Z]" $initialPassword) }}
+    {{- fail "initialUserPassword must include an uppercase letter" }}
+  {{- end }}
+  {{- if not (regexMatch "[a-z]" $initialPassword) }}
+    {{- fail "initialUserPassword must include a lowercase letter" }}
+  {{- end }}
+  {{- if not (regexMatch "[0-9]" $initialPassword) }}
+    {{- fail "initialUserPassword must include a number" }}
+  {{- end }}
+{{- end}}
+
+---
 apiVersion: v1
 kind: Secret
 metadata:
@@ -56,8 +73,8 @@ stringData:
       {{- end }}
 
     security:
-      {{- if .Values.initialUserPassword }}
-      initial_user_password: {{ coalesce .Values.initialUserPassword .Values.defaultPassword | quote }}
+      {{- if $initialPassword := coalesce .Values.initialUserPassword .Values.defaultPassword }}
+      initial_user_password: {{ quote $initialPassword }}
       {{- end }}
       {{- if .Values.tlsSecret }}
       tls:
@@ -207,6 +224,9 @@ stringData:
       {{- end }}
       {{- if .Values.taskContainerDefaults.gpuPodSpec }}
       gpu_pod_spec: {{ .Values.taskContainerDefaults.gpuPodSpec | toJson }}
+      {{- end }}
+      {{- if .Values.taskContainerDefaults.checkpointGcPodSpec }}
+      checkpoint_gc_pod_spec: {{ .Values.taskContainerDefaults.checkpointGcPodSpec | toJson }}
       {{- end }}
       {{- if .Values.taskContainerDefaults.logPolicies }}
       log_policies:

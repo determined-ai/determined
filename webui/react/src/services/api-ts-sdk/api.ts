@@ -4453,6 +4453,19 @@ export interface V1GetPermissionsSummaryResponse {
     assignments: Array<V1RoleAssignmentSummary>;
 }
 /**
+ * Response to GetProjectByKeyRequest.
+ * @export
+ * @interface V1GetProjectByKeyResponse
+ */
+export interface V1GetProjectByKeyResponse {
+    /**
+     * The project requested.
+     * @type {V1Project}
+     * @memberof V1GetProjectByKeyResponse
+     */
+    project: V1Project;
+}
+/**
  * 
  * @export
  * @interface V1GetProjectColumnsResponse
@@ -4931,6 +4944,19 @@ export interface V1GetTrialProfilerMetricsResponse {
      * @memberof V1GetTrialProfilerMetricsResponse
      */
     batch: V1TrialProfilerMetricsBatch;
+}
+/**
+ * Response to GetTrialRemainingLogRetentionDaysRequest.
+ * @export
+ * @interface V1GetTrialRemainingLogRetentionDaysResponse
+ */
+export interface V1GetTrialRemainingLogRetentionDaysResponse {
+    /**
+     * The remaining log retention days for the trial id.
+     * @type {number}
+     * @memberof V1GetTrialRemainingLogRetentionDaysResponse
+     */
+    remainingDays?: number;
 }
 /**
  * Response to GetTrialRequest.
@@ -7223,6 +7249,12 @@ export interface V1PatchProject {
      * @memberof V1PatchProject
      */
     description?: string;
+    /**
+     * The new key for the project.
+     * @type {string}
+     * @memberof V1PatchProject
+     */
+    key?: string;
 }
 /**
  * Response to PatchProjectRequest.
@@ -7533,6 +7565,44 @@ export interface V1PauseExperimentsResponse {
  * @interface V1PauseGenericTaskResponse
  */
 export interface V1PauseGenericTaskResponse {
+}
+/**
+ * Request to pause the experiment associated witha run.
+ * @export
+ * @interface V1PauseRunsRequest
+ */
+export interface V1PauseRunsRequest {
+    /**
+     * The ids of the runs being moved.
+     * @type {Array<number>}
+     * @memberof V1PauseRunsRequest
+     */
+    runIds: Array<number>;
+    /**
+     * The id of the project of the runs being paused.
+     * @type {number}
+     * @memberof V1PauseRunsRequest
+     */
+    projectId: number;
+    /**
+     * Filter expression
+     * @type {string}
+     * @memberof V1PauseRunsRequest
+     */
+    filter?: string;
+}
+/**
+ * Response to PauseRunsRequest.
+ * @export
+ * @interface V1PauseRunsResponse
+ */
+export interface V1PauseRunsResponse {
+    /**
+     * Details on success or error for each run.
+     * @type {Array<V1RunActionResult>}
+     * @memberof V1PauseRunsResponse
+     */
+    results: Array<V1RunActionResult>;
 }
 /**
  * 
@@ -9541,6 +9611,44 @@ export interface V1ResourcesSummary {
     exited?: V1ResourcesStopped;
 }
 /**
+ * Request to unpause the experiment associated witha run.
+ * @export
+ * @interface V1ResumeRunsRequest
+ */
+export interface V1ResumeRunsRequest {
+    /**
+     * The ids of the runs being moved.
+     * @type {Array<number>}
+     * @memberof V1ResumeRunsRequest
+     */
+    runIds: Array<number>;
+    /**
+     * The id of the project of the runs being unpaused.
+     * @type {number}
+     * @memberof V1ResumeRunsRequest
+     */
+    projectId: number;
+    /**
+     * Filter expression
+     * @type {string}
+     * @memberof V1ResumeRunsRequest
+     */
+    filter?: string;
+}
+/**
+ * Response to ResumeRunsRequest.
+ * @export
+ * @interface V1ResumeRunsResponse
+ */
+export interface V1ResumeRunsResponse {
+    /**
+     * Details on success or error for each run.
+     * @type {Array<V1RunActionResult>}
+     * @memberof V1ResumeRunsResponse
+     */
+    results: Array<V1RunActionResult>;
+}
+/**
  * 
  * @export
  * @interface V1Role
@@ -10380,6 +10488,17 @@ export interface V1StartTrialResponse {
      */
     stepsCompleted: number;
 }
+/**
+ * Project Table type.   - TABLE_TYPE_UNSPECIFIED: Unspecified table type.  - TABLE_TYPE_EXPERIMENT: experiment table.  - TABLE_TYPE_RUN: run table.
+ * @export
+ * @enum {string}
+ */
+export const V1TableType = {
+    UNSPECIFIED: 'TABLE_TYPE_UNSPECIFIED',
+    EXPERIMENT: 'TABLE_TYPE_EXPERIMENT',
+    RUN: 'TABLE_TYPE_RUN',
+} as const
+export type V1TableType = ValueOf<typeof V1TableType>
 /**
  * Task is the model for a task in the database.
  * @export
@@ -19504,10 +19623,11 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * 
          * @summary Get a list of columns for experiment list table.
          * @param {number} id The id of the project.
+         * @param {V1TableType} [tableType] type of table for project columns.   - TABLE_TYPE_UNSPECIFIED: Unspecified table type.  - TABLE_TYPE_EXPERIMENT: experiment table.  - TABLE_TYPE_RUN: run table.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getProjectColumns(id: number, options: any = {}): FetchArgs {
+        getProjectColumns(id: number, tableType?: V1TableType, options: any = {}): FetchArgs {
             // verify required parameter 'id' is not null or undefined
             if (id === null || id === undefined) {
                 throw new RequiredError('id','Required parameter id was null or undefined when calling getProjectColumns.');
@@ -19525,6 +19645,10 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                     ? configuration.apiKey("Authorization")
                     : configuration.apiKey;
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            if (tableType !== undefined) {
+                localVarQueryParameter['tableType'] = tableType
             }
             
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
@@ -19804,6 +19928,42 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             
             if (metricGroup !== undefined) {
                 localVarQueryParameter['metricGroup'] = metricGroup
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Get the list of trials for an experiment.
+         * @param {number} id The trial id.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTrialRemainingLogRetentionDays(id: number, options: any = {}): FetchArgs {
+            // verify required parameter 'id' is not null or undefined
+            if (id === null || id === undefined) {
+                throw new RequiredError('id','Required parameter id was null or undefined when calling getTrialRemainingLogRetentionDays.');
+            }
+            const localVarPath = `/api/v1/trials/{id}/remaining_log_retention_days`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
@@ -20508,6 +20668,44 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Pause experiment associated with provided runs.
+         * @param {V1PauseRunsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        pauseRuns(body: V1PauseRunsRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling pauseRuns.');
+            }
+            const localVarPath = `/api/v1/runs/pause`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary PostAllocationAcceleratorData sets the accelerator for a given allocation.
          * @param {string} allocationId The id of the allocation.
          * @param {V1PostAllocationAcceleratorDataRequest} body
@@ -21067,6 +21265,44 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             }
             const localVarPath = `/api/v1/trials/{validationMetricsTrialId}/validation_metrics`
                 .replace(`{${"validationMetricsTrialId"}}`, encodeURIComponent(String(validationMetricsTrialId)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Unpause experiment associated with provided runs.
+         * @param {V1ResumeRunsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        resumeRuns(body: V1ResumeRunsRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling resumeRuns.');
+            }
+            const localVarPath = `/api/v1/runs/resume`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
@@ -22219,11 +22455,12 @@ export const InternalApiFp = function (configuration?: Configuration) {
          * 
          * @summary Get a list of columns for experiment list table.
          * @param {number} id The id of the project.
+         * @param {V1TableType} [tableType] type of table for project columns.   - TABLE_TYPE_UNSPECIFIED: Unspecified table type.  - TABLE_TYPE_EXPERIMENT: experiment table.  - TABLE_TYPE_RUN: run table.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getProjectColumns(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetProjectColumnsResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getProjectColumns(id, options);
+        getProjectColumns(id: number, tableType?: V1TableType, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetProjectColumnsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getProjectColumns(id, tableType, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -22364,6 +22601,25 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         getTrialMetricsByModelVersion(modelName: string, modelVersionNum: number, trialSourceInfoType?: V1TrialSourceInfoType, metricGroup?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTrialMetricsByModelVersionResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getTrialMetricsByModelVersion(modelName, modelVersionNum, trialSourceInfoType, metricGroup, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Get the list of trials for an experiment.
+         * @param {number} id The trial id.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTrialRemainingLogRetentionDays(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetTrialRemainingLogRetentionDaysResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getTrialRemainingLogRetentionDays(id, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -22685,6 +22941,25 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Pause experiment associated with provided runs.
+         * @param {V1PauseRunsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        pauseRuns(body: V1PauseRunsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PauseRunsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).pauseRuns(body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary PostAllocationAcceleratorData sets the accelerator for a given allocation.
          * @param {string} allocationId The id of the allocation.
          * @param {V1PostAllocationAcceleratorDataRequest} body
@@ -22948,6 +23223,25 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         reportTrialValidationMetrics(validationMetricsTrialId: number, body: V1TrialMetrics, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ReportTrialValidationMetricsResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).reportTrialValidationMetrics(validationMetricsTrialId, body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Unpause experiment associated with provided runs.
+         * @param {V1ResumeRunsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        resumeRuns(body: V1ResumeRunsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ResumeRunsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).resumeRuns(body, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -23512,11 +23806,12 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * 
          * @summary Get a list of columns for experiment list table.
          * @param {number} id The id of the project.
+         * @param {V1TableType} [tableType] type of table for project columns.   - TABLE_TYPE_UNSPECIFIED: Unspecified table type.  - TABLE_TYPE_EXPERIMENT: experiment table.  - TABLE_TYPE_RUN: run table.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getProjectColumns(id: number, options?: any) {
-            return InternalApiFp(configuration).getProjectColumns(id, options)(fetch, basePath);
+        getProjectColumns(id: number, tableType?: V1TableType, options?: any) {
+            return InternalApiFp(configuration).getProjectColumns(id, tableType, options)(fetch, basePath);
         },
         /**
          * 
@@ -23594,6 +23889,16 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          */
         getTrialMetricsByModelVersion(modelName: string, modelVersionNum: number, trialSourceInfoType?: V1TrialSourceInfoType, metricGroup?: string, options?: any) {
             return InternalApiFp(configuration).getTrialMetricsByModelVersion(modelName, modelVersionNum, trialSourceInfoType, metricGroup, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Get the list of trials for an experiment.
+         * @param {number} id The trial id.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getTrialRemainingLogRetentionDays(id: number, options?: any) {
+            return InternalApiFp(configuration).getTrialRemainingLogRetentionDays(id, options)(fetch, basePath);
         },
         /**
          * 
@@ -23771,6 +24076,16 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Pause experiment associated with provided runs.
+         * @param {V1PauseRunsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        pauseRuns(body: V1PauseRunsRequest, options?: any) {
+            return InternalApiFp(configuration).pauseRuns(body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary PostAllocationAcceleratorData sets the accelerator for a given allocation.
          * @param {string} allocationId The id of the allocation.
          * @param {V1PostAllocationAcceleratorDataRequest} body
@@ -23917,6 +24232,16 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          */
         reportTrialValidationMetrics(validationMetricsTrialId: number, body: V1TrialMetrics, options?: any) {
             return InternalApiFp(configuration).reportTrialValidationMetrics(validationMetricsTrialId, body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Unpause experiment associated with provided runs.
+         * @param {V1ResumeRunsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        resumeRuns(body: V1ResumeRunsRequest, options?: any) {
+            return InternalApiFp(configuration).resumeRuns(body, options)(fetch, basePath);
         },
         /**
          * 
@@ -24432,12 +24757,13 @@ export class InternalApi extends BaseAPI {
      * 
      * @summary Get a list of columns for experiment list table.
      * @param {number} id The id of the project.
+     * @param {V1TableType} [tableType] type of table for project columns.   - TABLE_TYPE_UNSPECIFIED: Unspecified table type.  - TABLE_TYPE_EXPERIMENT: experiment table.  - TABLE_TYPE_RUN: run table.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public getProjectColumns(id: number, options?: any) {
-        return InternalApiFp(this.configuration).getProjectColumns(id, options)(this.fetch, this.basePath)
+    public getProjectColumns(id: number, tableType?: V1TableType, options?: any) {
+        return InternalApiFp(this.configuration).getProjectColumns(id, tableType, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -24529,6 +24855,18 @@ export class InternalApi extends BaseAPI {
      */
     public getTrialMetricsByModelVersion(modelName: string, modelVersionNum: number, trialSourceInfoType?: V1TrialSourceInfoType, metricGroup?: string, options?: any) {
         return InternalApiFp(this.configuration).getTrialMetricsByModelVersion(modelName, modelVersionNum, trialSourceInfoType, metricGroup, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Get the list of trials for an experiment.
+     * @param {number} id The trial id.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public getTrialRemainingLogRetentionDays(id: number, options?: any) {
+        return InternalApiFp(this.configuration).getTrialRemainingLogRetentionDays(id, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -24737,6 +25075,18 @@ export class InternalApi extends BaseAPI {
     
     /**
      * 
+     * @summary Pause experiment associated with provided runs.
+     * @param {V1PauseRunsRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public pauseRuns(body: V1PauseRunsRequest, options?: any) {
+        return InternalApiFp(this.configuration).pauseRuns(body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
      * @summary PostAllocationAcceleratorData sets the accelerator for a given allocation.
      * @param {string} allocationId The id of the allocation.
      * @param {V1PostAllocationAcceleratorDataRequest} body
@@ -24910,6 +25260,18 @@ export class InternalApi extends BaseAPI {
      */
     public reportTrialValidationMetrics(validationMetricsTrialId: number, body: V1TrialMetrics, options?: any) {
         return InternalApiFp(this.configuration).reportTrialValidationMetrics(validationMetricsTrialId, body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Unpause experiment associated with provided runs.
+     * @param {V1ResumeRunsRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public resumeRuns(body: V1ResumeRunsRequest, options?: any) {
+        return InternalApiFp(this.configuration).resumeRuns(body, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -27565,12 +27927,49 @@ export const ProjectsApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
-         * @summary Get a list of columns for experiment list table.
-         * @param {number} id The id of the project.
+         * @summary Get the request project by key.
+         * @param {string} key The key of the project.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getProjectColumns(id: number, options: any = {}): FetchArgs {
+        getProjectByKey(key: string, options: any = {}): FetchArgs {
+            // verify required parameter 'key' is not null or undefined
+            if (key === null || key === undefined) {
+                throw new RequiredError('key','Required parameter key was null or undefined when calling getProjectByKey.');
+            }
+            const localVarPath = `/api/v1/projects/key/{key}`
+                .replace(`{${"key"}}`, encodeURIComponent(String(key)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Get a list of columns for experiment list table.
+         * @param {number} id The id of the project.
+         * @param {V1TableType} [tableType] type of table for project columns.   - TABLE_TYPE_UNSPECIFIED: Unspecified table type.  - TABLE_TYPE_EXPERIMENT: experiment table.  - TABLE_TYPE_RUN: run table.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getProjectColumns(id: number, tableType?: V1TableType, options: any = {}): FetchArgs {
             // verify required parameter 'id' is not null or undefined
             if (id === null || id === undefined) {
                 throw new RequiredError('id','Required parameter id was null or undefined when calling getProjectColumns.');
@@ -27588,6 +27987,10 @@ export const ProjectsApiFetchParamCreator = function (configuration?: Configurat
                     ? configuration.apiKey("Authorization")
                     : configuration.apiKey;
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            if (tableType !== undefined) {
+                localVarQueryParameter['tableType'] = tableType
             }
             
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
@@ -27970,13 +28373,33 @@ export const ProjectsApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Get a list of columns for experiment list table.
-         * @param {number} id The id of the project.
+         * @summary Get the request project by key.
+         * @param {string} key The key of the project.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getProjectColumns(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetProjectColumnsResponse> {
-            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).getProjectColumns(id, options);
+        getProjectByKey(key: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetProjectByKeyResponse> {
+            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).getProjectByKey(key, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Get a list of columns for experiment list table.
+         * @param {number} id The id of the project.
+         * @param {V1TableType} [tableType] type of table for project columns.   - TABLE_TYPE_UNSPECIFIED: Unspecified table type.  - TABLE_TYPE_EXPERIMENT: experiment table.  - TABLE_TYPE_RUN: run table.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getProjectColumns(id: number, tableType?: V1TableType, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetProjectColumnsResponse> {
+            const localVarFetchArgs = ProjectsApiFetchParamCreator(configuration).getProjectColumns(id, tableType, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -28176,13 +28599,24 @@ export const ProjectsApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
-         * @summary Get a list of columns for experiment list table.
-         * @param {number} id The id of the project.
+         * @summary Get the request project by key.
+         * @param {string} key The key of the project.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getProjectColumns(id: number, options?: any) {
-            return ProjectsApiFp(configuration).getProjectColumns(id, options)(fetch, basePath);
+        getProjectByKey(key: string, options?: any) {
+            return ProjectsApiFp(configuration).getProjectByKey(key, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Get a list of columns for experiment list table.
+         * @param {number} id The id of the project.
+         * @param {V1TableType} [tableType] type of table for project columns.   - TABLE_TYPE_UNSPECIFIED: Unspecified table type.  - TABLE_TYPE_EXPERIMENT: experiment table.  - TABLE_TYPE_RUN: run table.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getProjectColumns(id: number, tableType?: V1TableType, options?: any) {
+            return ProjectsApiFp(configuration).getProjectColumns(id, tableType, options)(fetch, basePath);
         },
         /**
          * 
@@ -28319,14 +28753,27 @@ export class ProjectsApi extends BaseAPI {
     
     /**
      * 
-     * @summary Get a list of columns for experiment list table.
-     * @param {number} id The id of the project.
+     * @summary Get the request project by key.
+     * @param {string} key The key of the project.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ProjectsApi
      */
-    public getProjectColumns(id: number, options?: any) {
-        return ProjectsApiFp(this.configuration).getProjectColumns(id, options)(this.fetch, this.basePath)
+    public getProjectByKey(key: string, options?: any) {
+        return ProjectsApiFp(this.configuration).getProjectByKey(key, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Get a list of columns for experiment list table.
+     * @param {number} id The id of the project.
+     * @param {V1TableType} [tableType] type of table for project columns.   - TABLE_TYPE_UNSPECIFIED: Unspecified table type.  - TABLE_TYPE_EXPERIMENT: experiment table.  - TABLE_TYPE_RUN: run table.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ProjectsApi
+     */
+    public getProjectColumns(id: number, tableType?: V1TableType, options?: any) {
+        return ProjectsApiFp(this.configuration).getProjectColumns(id, tableType, options)(this.fetch, this.basePath)
     }
     
     /**

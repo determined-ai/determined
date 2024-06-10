@@ -7,6 +7,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"math/rand"
+	"strconv"
 
 	petname "github.com/dustinkirkland/golang-petname"
 	pstruct "github.com/golang/protobuf/ptypes/struct"
@@ -176,7 +177,7 @@ func (a *apiServer) GetCommands(
 		return nil, err
 	}
 
-	workspaceNotFoundErr := api.NotFoundErrs("workspace", fmt.Sprint(req.WorkspaceId), true)
+	workspaceNotFoundErr := api.NotFoundErrs("workspace", strconv.Itoa(int(req.WorkspaceId)), true)
 
 	if req.WorkspaceId != 0 {
 		// check if the workspace exists.
@@ -370,11 +371,11 @@ func (a *apiServer) LaunchCommand(
 		"DET_TASK_TYPE": string(model.TaskTypeCommand),
 	}
 
-	OIDCPachydermEnvVars, err := a.getOIDCPachydermEnvVars(session)
+	oidcPachydermEnvVars, err := a.getOIDCPachydermEnvVars(session)
 	if err != nil {
 		return nil, err
 	}
-	maps.Copy(launchReq.Spec.Base.ExtraEnvVars, OIDCPachydermEnvVars)
+	maps.Copy(launchReq.Spec.Base.ExtraEnvVars, oidcPachydermEnvVars)
 
 	// Launch a command.
 	cmd, err := command.DefaultCmdService.LaunchGenericCommand(

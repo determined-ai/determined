@@ -101,7 +101,7 @@ Parameters:
   Version:
     Type: String
     Description: Determined version or commit for master image
-    Default: 0.32.1-dev0
+    Default: 0.33.1-dev0
 
   DBPassword:
     Type: String
@@ -228,7 +228,7 @@ Parameters:
   GenAISharedFSMountPath:
     Type: String
     Description: GenAI shared file system mount path
-    Default: latest
+    Default: /run/determined/workdir/shared_fs
 
   MountEFSId:
     Type: String

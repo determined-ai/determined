@@ -1,11 +1,11 @@
 package dispatcherrm
 
 import (
+	"fmt"
 	"sync/atomic"
 	"time"
 
 	"github.com/ghodss/yaml"
-	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/internal/config"
@@ -13,7 +13,7 @@ import (
 
 const hpcResourceDetailsRefreshPeriod = time.Minute
 
-var errHPCDetailsCacheEmpty = errors.New("HPC resource details cache is empty")
+var errHPCDetailsCacheEmpty = fmt.Errorf("HPC resource details cache is empty")
 
 // hpcResources is a data type describing the HPC resources available
 // to Slurm on the Launcher node.
@@ -29,8 +29,8 @@ var errHPCDetailsCacheEmpty = errors.New("HPC resource details cache is empty")
 // - totalAvailableNodes: 293
 // ...more partitions.
 type hpcResources struct {
-	Partitions                  []hpcPartitionDetails `json:"partitions,flow"` //nolint:staticcheck
-	Nodes                       []hpcNodeDetails      `json:"nodes,flow"`      //nolint:staticcheck
+	Partitions                  []hpcPartitionDetails `json:"partitions,flow"` //nolint:staticcheck,revive
+	Nodes                       []hpcNodeDetails      `json:"nodes,flow"`      //nolint:staticcheck,revive
 	DefaultComputePoolPartition string                `json:"defaultComputePoolPartition"`
 	DefaultAuxPoolPartition     string                `json:"defaultAuxPoolPartition"`
 }
@@ -214,14 +214,14 @@ func selectDefaultPools(
 	defaultComputePool *string,
 	defaultAuxPool *string,
 ) (
-	string, string,
+	defaultComputePar string, defaultAuxPar string,
 ) {
 	// The default compute pool is the default partition if it has any GPUS,
 	// otherwise select any partition with GPUs.
 	// The AUX partition, use the default partition if available, otherwise any partition.
 
-	defaultComputePar := "" // Selected default Compute/GPU partition
-	defaultAuxPar := ""     // Selected default Aux partition
+	defaultComputePar = "" // Selected default Compute/GPU partition
+	defaultAuxPar = ""     // Selected default Aux partition
 
 	fallbackComputePar := "" // Fallback Compute/GPU partition (has GPUs)
 	fallbackAuxPar := ""     // Fallback partition if no default

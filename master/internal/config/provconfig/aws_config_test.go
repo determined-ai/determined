@@ -5,6 +5,7 @@ import (
 	"testing"
 
 	"github.com/ghodss/yaml"
+	"github.com/stretchr/testify/require"
 	"gotest.tools/assert"
 
 	"github.com/determined-ai/determined/master/pkg/check"
@@ -94,5 +95,5 @@ func TestAWSClusterConfigMissingFields(t *testing.T) {
 	err := yaml.Unmarshal([]byte(`{}`), &config, yaml.DisallowUnknownFields)
 	assert.NilError(t, err)
 	err = check.Validate(&config)
-	assert.ErrorContains(t, err, "non-empty")
+	require.ErrorContains(t, err, "non-empty")
 }
