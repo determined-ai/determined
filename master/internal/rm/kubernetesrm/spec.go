@@ -130,6 +130,10 @@ func (j *job) configureEnvVars(
 
 	envVarsMap["DET_KUBERNETES_JOB_PARALLELISM"] = strconv.Itoa(j.numPods)
 
+	if j.exposeProxyConfig != nil {
+		envVarsMap["DET_PROXY_THROUGH_GATEWAY"] = "true"
+	}
+
 	envVars := make([]k8sV1.EnvVar, 0, len(envVarsMap))
 	for envVarKey, envVarValue := range envVarsMap {
 		envVars = append(envVars, k8sV1.EnvVar{Name: envVarKey, Value: envVarValue})
@@ -203,10 +207,12 @@ func (j *job) configureProxyResources(t *tasks.TaskSpec) *proxyResourceGenerator
 					CommonRouteSpec: alphaGatewayTyped.CommonRouteSpec{
 						ParentRefs: []alphaGatewayTyped.ParentReference{
 							{
-								Namespace:   ptrs.Ptr(alphaGatewayTyped.Namespace(j.exposeProxyConfig.GatewayNamespace)),
-								Name:        alphaGatewayTyped.ObjectName(j.exposeProxyConfig.GatewayName),
-								Port:        ptrs.Ptr(alphaGatewayTyped.PortNumber(gwPort)),
-								SectionName: ptrs.Ptr(alphaGatewayTyped.SectionName(genSectionName(gwPort))),
+								Namespace: ptrs.Ptr(alphaGatewayTyped.Namespace(j.exposeProxyConfig.GatewayNamespace)),
+								Name:      alphaGatewayTyped.ObjectName(j.exposeProxyConfig.GatewayName),
+								Port:      ptrs.Ptr(alphaGatewayTyped.PortNumber(gwPort)),
+								SectionName: ptrs.Ptr(alphaGatewayTyped.SectionName(
+									generateListenerName(model.AllocationID(t.AllocationID), gwPort),
+								)),
 							},
 						},
 					},
@@ -226,7 +232,7 @@ func (j *job) configureProxyResources(t *tasks.TaskSpec) *proxyResourceGenerator
 				},
 			}
 
-			gatewayListener := createListenerForPod(gwPort)
+			gatewayListener := createListenerForPod(model.AllocationID(t.AllocationID), gwPort)
 
 			resources = append(resources, gatewayProxyResource{
 				podPort:         proxyPort.Port,

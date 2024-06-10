@@ -320,6 +320,7 @@ func (j *job) makeGatewayComms(spec *tasks.TaskSpec) *gatewayResourceComm {
 	return &gatewayResourceComm{
 		resourceDescriptor: *resourceGenerator,
 		reportResources:    updateResources,
+		allocationID:       j.req.AllocationID,
 		requestedPorts:     len(j.req.ProxyPorts),
 	}
 }

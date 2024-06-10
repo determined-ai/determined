@@ -2,6 +2,7 @@ package kubernetesrm
 
 import (
 	"strconv"
+	"strings"
 	"sync"
 
 	batchV1 "k8s.io/api/batch/v1"
@@ -203,6 +204,21 @@ func keyForDelete(msg deleteKubernetesResources) requestID {
 	if msg.configMapName != "" {
 		return requestID(msg.namespace + "/" + msg.configMapName)
 	}
+	if len(msg.serviceNames) > 0 {
+		return requestID(msg.namespace + "/" + strings.Join(msg.serviceNames, ","))
+	}
+	if len(msg.tcpRouteNames) > 0 {
+		return requestID(msg.namespace + "/" + strings.Join(msg.tcpRouteNames, ","))
+	}
+	if len(msg.gatewayPortsToFree) > 0 {
+		var stringPorts []string
+		for _, p := range msg.gatewayPortsToFree {
+			stringPorts = append(stringPorts, strconv.Itoa(p))
+		}
+
+		return requestID(msg.namespace + "/" + strings.Join(stringPorts, ","))
+	}
+
 	panic("invalid deleteKubernetesResources message")
 }
 
