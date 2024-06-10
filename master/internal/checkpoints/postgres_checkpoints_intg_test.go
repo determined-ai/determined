@@ -409,7 +409,7 @@ func TestUpdateCheckpointStateToDeleted(t *testing.T) {
 		Scan(ctx, &numDStateCheckpoints)
 	require.NoError(t, err)
 
-	require.Equal(t, 0, numDStateCheckpoints)
+	require.Zero(t, numDStateCheckpoints)
 }
 
 func TestDeleteCheckpoints(t *testing.T) {
@@ -446,7 +446,7 @@ func TestDeleteCheckpoints(t *testing.T) {
 	// Verify that checkpoint was deleted once its state was marked 'DELETED'.
 	ct, err = db.Bun().NewSelect().Model(&model.CheckpointV2{}).Where("uuid = ?", ckpt1).Count(ctx)
 	require.NoError(t, err)
-	require.Equal(t, 0, ct)
+	require.Zero(t, ct)
 }
 
 func BenchmarkUpdateCheckpointSize(b *testing.B) {

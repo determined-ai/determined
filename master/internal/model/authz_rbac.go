@@ -62,13 +62,12 @@ func (a *ModelAuthZRBAC) CanGetModels(ctx context.Context, curUser model.User, w
 			if permission.ID == int(
 				rbacv1.PermissionType_PERMISSION_TYPE_VIEW_MODEL_REGISTRY) {
 				for _, assignment := range roleAssignments {
-					if assignment.Scope.WorkspaceID.Valid {
-						workspacesIDsWithPermsSet[assignment.Scope.WorkspaceID.Int32] = true
-						workspacesIDsWithPerms = append(workspacesIDsWithPerms, assignment.Scope.WorkspaceID.Int32)
-					} else {
+					if !assignment.Scope.WorkspaceID.Valid {
 						// if permission is global, return true and the list provided by user.
 						return workspaceIDs, nil
 					}
+					workspacesIDsWithPermsSet[assignment.Scope.WorkspaceID.Int32] = true
+					workspacesIDsWithPerms = append(workspacesIDsWithPerms, assignment.Scope.WorkspaceID.Int32)
 				}
 			}
 		}
@@ -270,12 +269,11 @@ func (a *ModelAuthZRBAC) FilterReadableModelsQuery(
 			if permission.ID == int(
 				rbacv1.PermissionType_PERMISSION_TYPE_VIEW_MODEL_REGISTRY) {
 				for _, assignment := range roleAssignments {
-					if assignment.Scope.WorkspaceID.Valid {
-						workspaces = append(workspaces, assignment.Scope.WorkspaceID.Int32)
-					} else {
+					if !assignment.Scope.WorkspaceID.Valid {
 						// if permission is global, return without filtering
 						return query, nil
 					}
+					workspaces = append(workspaces, assignment.Scope.WorkspaceID.Int32)
 				}
 			}
 		}

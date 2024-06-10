@@ -5,6 +5,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
 	"gotest.tools/assert"
 
 	"github.com/determined-ai/determined/master/pkg/check"
@@ -137,7 +138,7 @@ func TestGCEServiceAccount(t *testing.T) {
 			if err = check.Validate(&unmarshaled); tc.errContains == "" {
 				assert.NilError(t, err)
 			} else {
-				assert.ErrorContains(t, err, tc.errContains)
+				require.ErrorContains(t, err, tc.errContains)
 			}
 		})
 	}
@@ -217,7 +218,7 @@ func TestGCEInstanceType(t *testing.T) {
 			if err = check.Validate(&unmarshaled); tc.errContains == "" {
 				assert.NilError(t, err)
 			} else {
-				assert.ErrorContains(t, err, tc.errContains)
+				require.ErrorContains(t, err, tc.errContains)
 			}
 		})
 	}

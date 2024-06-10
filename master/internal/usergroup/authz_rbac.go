@@ -2,7 +2,7 @@ package usergroup
 
 import (
 	"context"
-	"fmt"
+	"strconv"
 
 	"github.com/uptrace/bun"
 
@@ -87,7 +87,7 @@ func CanViewGroup(ctx context.Context, userBelongsTo model.UserID, gid int) (err
 				rbacv1.PermissionType_PERMISSION_TYPE_ASSIGN_ROLES,
 			},
 			SubjectType: "group",
-			SubjectIDs:  []string{fmt.Sprint(gid)},
+			SubjectIDs:  []string{strconv.Itoa(gid)},
 		},
 	}
 	defer func() {

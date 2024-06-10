@@ -3,7 +3,7 @@ package check
 import (
 	"testing"
 
-	"gotest.tools/assert"
+	"github.com/stretchr/testify/require"
 )
 
 type testcase1 struct {
@@ -34,11 +34,11 @@ func TestMethodSets(t *testing.T) {
 		A: false,
 	}
 	err := Validate(case1)
-	assert.ErrorContains(t, err, "error found at root: field A must be true: expected true, got false")
+	require.ErrorContains(t, err, "error found at root: field A must be true: expected true, got false")
 	err = Validate(&case1)
-	assert.ErrorContains(t, err, "error found at root: field A must be true: expected true, got false")
+	require.ErrorContains(t, err, "error found at root: field A must be true: expected true, got false")
 	err = Validate(case2)
-	assert.ErrorContains(t, err, "error found at root: field A must be true: expected true, got false")
+	require.ErrorContains(t, err, "error found at root: field A must be true: expected true, got false")
 	err = Validate(&case2)
-	assert.ErrorContains(t, err, "error found at root: field A must be true: expected true, got false")
+	require.ErrorContains(t, err, "error found at root: field A must be true: expected true, got false")
 }

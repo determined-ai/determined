@@ -211,7 +211,7 @@ func (a *apiServer) LaunchTensorboard(
 
 	// Validate the request.
 	if len(req.ExperimentIds) == 0 && len(req.TrialIds) == 0 && req.Filters == nil {
-		err = errors.New("must set experiment, trial ids, or filters")
+		err = fmt.Errorf("must set experiment, trial ids, or filters")
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
@@ -282,11 +282,11 @@ func (a *apiServer) LaunchTensorboard(
 		"DET_TASK_TYPE":        string(model.TaskTypeTensorboard),
 	}
 
-	OIDCPachydermEnvVars, err := a.getOIDCPachydermEnvVars(session)
+	oidcPachydermEnvVars, err := a.getOIDCPachydermEnvVars(session)
 	if err != nil {
 		return nil, err
 	}
-	maps.Copy(launchReq.Spec.Base.ExtraEnvVars, OIDCPachydermEnvVars)
+	maps.Copy(launchReq.Spec.Base.ExtraEnvVars, oidcPachydermEnvVars)
 
 	if launchReq.Spec.Config.Debug {
 		uniqEnvVars["DET_DEBUG"] = "true"

@@ -62,7 +62,7 @@ func TestSAMLWorkflowAutoProvision(t *testing.T) {
 	require.NoError(t, err)
 	require.Contains(t, groups, "abc")
 	require.Contains(t, groups, "bcd")
-	require.Equal(t, len(groups), 3)
+	require.Len(t, groups, 3)
 
 	_, err = user.StartSession(ctx, u)
 	require.NoError(t, err)
@@ -77,7 +77,7 @@ func TestSAMLWorkflowAutoProvision(t *testing.T) {
 	require.NoError(t, err)
 	require.Contains(t, groups2, "abc")
 	require.NotContains(t, groups2, "bcd")
-	require.Equal(t, len(groups2), 2)
+	require.Len(t, groups2, 2)
 
 	_, err = user.StartSession(ctx, u)
 	require.NoError(t, err)
@@ -126,7 +126,7 @@ func TestSAMLWorkflowUserProvisioned(t *testing.T) {
 	require.NoError(t, err)
 	require.Contains(t, groups, "abc")
 	require.Contains(t, groups, "bcd")
-	require.Equal(t, len(groups), 3)
+	require.Len(t, groups, 3)
 
 	_, err = user.StartSession(ctx, u)
 	require.NoError(t, err)

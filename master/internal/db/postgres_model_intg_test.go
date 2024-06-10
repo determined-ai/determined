@@ -25,8 +25,8 @@ var emptyMetadata = []byte(`{}`)
 func TestModels(t *testing.T) {
 	ctx := context.Background()
 	require.NoError(t, etc.SetRootPath(RootFromDB))
-	db, close := MustResolveTestPostgres(t)
-	defer close()
+	db, closeDB := MustResolveTestPostgres(t)
+	defer closeDB()
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 
 	tests := []struct {
@@ -120,9 +120,8 @@ func TestModels(t *testing.T) {
 				require.Equal(t, expected.Model.Name, actual.Model.Name)
 				require.Equal(t, expected.Checkpoint.Uuid, actual.Checkpoint.Uuid)
 				if tt.hasValidation {
-					require.Equal(t,
-						*expected.Checkpoint.Training.SearcherMetric,
-						*actual.Checkpoint.Training.SearcherMetric)
+					require.InEpsilon(t, *expected.Checkpoint.Training.SearcherMetric,
+						*actual.Checkpoint.Training.SearcherMetric, 0.01)
 					require.NotNil(t, actual.Checkpoint.Training.ValidationMetrics.AvgMetrics)
 				} else {
 					require.Nil(t, actual.Checkpoint.Training.SearcherMetric)

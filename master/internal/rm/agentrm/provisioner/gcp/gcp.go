@@ -135,7 +135,7 @@ func (c *gcpCluster) SlotsPerInstance() int {
 }
 
 func (c *gcpCluster) idFromInstance(inst *compute.Instance) string {
-	return fmt.Sprintf("%v", inst.Name)
+	return inst.Name
 }
 
 func (c *gcpCluster) idFromOperation(op *compute.Operation) string {
@@ -144,7 +144,7 @@ func (c *gcpCluster) idFromOperation(op *compute.Operation) string {
 }
 
 func (c *gcpCluster) agentNameFromInstance(inst *compute.Instance) string {
-	return fmt.Sprintf("%v", inst.Name)
+	return inst.Name
 }
 
 // See https://cloud.google.com/compute/docs/instances/instance-life-cycle.
@@ -251,9 +251,9 @@ func (c *gcpCluster) Terminate(instances []string) {
 
 	var ops []*compute.Operation
 	for _, inst := range instances {
-		ClientCtx := context.Background()
+		clientCtx := context.Background()
 		resp, err := c.client.Instances.Delete(c.config.Project, c.config.Zone, inst).
-			Context(ClientCtx).Do()
+			Context(clientCtx).Do()
 		if err != nil {
 			c.syslog.WithError(err).Errorf("cannot delete GCE instance: %s", inst)
 		} else {

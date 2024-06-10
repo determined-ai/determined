@@ -9,6 +9,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"strconv"
 	"sync"
 	"time"
 
@@ -218,7 +219,7 @@ func generateWebhookRequest(
 	}
 	key := []byte(conf.GetMasterConfig().Webhooks.SigningKey)
 	signedPayload := generateSignedPayload(req, t, key)
-	req.Header.Add("X-Determined-AI-Signature-Timestamp", fmt.Sprintf("%v", t))
+	req.Header.Add("X-Determined-AI-Signature-Timestamp", strconv.FormatInt(t, 10))
 	req.Header.Add("X-Determined-AI-Signature", signedPayload)
 	req.Header.Add("Content-Type", "application/json; charset=UTF-8")
 	return req, nil

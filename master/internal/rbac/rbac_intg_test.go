@@ -112,14 +112,14 @@ type Workspace struct {
 
 func TestRbac(t *testing.T) {
 	ctx := context.Background()
-	pgDB, close := db.MustResolveTestPostgres(t)
+	pgDB, closeDB := db.MustResolveTestPostgres(t)
 	db.MustMigrateTestPostgres(t, pgDB, pathToMigrations)
 
 	t.Cleanup(func() {
-		cleanUp(ctx, t, pgDB)
-		close()
+		cleanUp(ctx, t)
+		closeDB()
 	})
-	setUp(ctx, t, pgDB)
+	setUp(ctx, t)
 
 	rbacRole := &rbacv1.Role{
 		RoleId: int32(testRole.ID),
@@ -320,7 +320,7 @@ func TestRbac(t *testing.T) {
 		roles := filterToTestRoles(allRoles)
 
 		require.NoError(t, err, "error getting all roles")
-		require.Equal(t, 4, len(roles), "incorrect number of roles retrieved")
+		require.Len(t, roles, 4, "incorrect number of roles retrieved")
 		require.True(t, compareRoles(testRole, roles[0]),
 			"test role 1 is not equivalent to the retrieved role")
 		require.True(t, compareRoles(testRole2, roles[1]),
@@ -333,7 +333,7 @@ func TestRbac(t *testing.T) {
 		globalRoles, _, err := GetAllRoles(ctx, true, 0, total)
 		roles = filterToTestRoles(globalRoles)
 		require.NoError(t, err, "error getting non-global roles")
-		require.Equal(t, 3, len(roles), "incorrect number of non-global roles retrieved")
+		require.Len(t, roles, 3, "incorrect number of non-global roles retrieved")
 		require.True(t, compareRoles(testRole, roles[0]),
 			"test role 1 is not equivalent to the retrieved role")
 		require.True(t, compareRoles(testRole2, roles[1]),
@@ -356,7 +356,7 @@ func TestRbac(t *testing.T) {
 
 		roles, _, err = GetAllRoles(ctx, false, len(allRoles), len(allRoles))
 		require.NoError(t, err, "error getting roles with limit")
-		require.Len(t, roles, 0)
+		require.Empty(t, roles)
 	})
 
 	t.Run("test getting roles by id", func(t *testing.T) {
@@ -427,7 +427,7 @@ func TestRbac(t *testing.T) {
 		require.NoError(t, err, "error removing assignments from group")
 		roles, err = GetRolesAssignedToGroupsTx(ctx, nil, int32(testGroupStatic.ID))
 		require.NoError(t, err)
-		require.Equal(t, 1, len(roles), "incorrect number of roles retrieved")
+		require.Len(t, roles, 1, "incorrect number of roles retrieved")
 	})
 
 	t.Run("test UserPermissionsForScope", func(t *testing.T) {
@@ -546,8 +546,8 @@ func TestRbac(t *testing.T) {
 				globalTestPermission,
 			}
 			require.Len(t, v, 1)
-			require.Equal(t, *k, expectedRole)
-			require.Equal(t, v[0], &RoleAssignment{
+			require.Equal(t, expectedRole, *k)
+			require.Equal(t, &RoleAssignment{
 				GroupID: testGroupStatic.ID,
 				RoleID:  testRole.ID,
 				ScopeID: 0,
@@ -558,18 +558,18 @@ func TestRbac(t *testing.T) {
 						Int32: int32(testWorkspace.ID),
 					},
 				},
-			})
+			}, v[0])
 		}
 	})
 
 	t.Run("testOnWorkspace", func(t *testing.T) {
-		testOnWorkspace(ctx, t, pgDB)
+		testOnWorkspace(ctx, t)
 	})
 
 	t.Run("test GetAssignedRoles", func(t *testing.T) {
 		roles, err := GetAssignedRoles(ctx, testUser.ID)
 		require.NoError(t, err, "error getting roles for user")
-		require.Equal(t, 1, len(roles), "returned number of roles is incorrect")
+		require.Len(t, roles, 1, "returned number of roles is incorrect")
 		require.Equal(t, testRole.ID, int(roles[0]), "role IDs do not match")
 
 		groupRoleAssignments := []*rbacv1.GroupRoleAssignment{
@@ -595,14 +595,14 @@ func TestRbac(t *testing.T) {
 
 		roles, err = GetAssignedRoles(ctx, testUser.ID)
 		require.NoError(t, err, "error getting roles for user")
-		require.Equal(t, 3, len(roles), "returned number of roles is incorrect")
+		require.Len(t, roles, 3, "returned number of roles is incorrect")
 		require.Equal(t, testRole.ID, int(roles[0]), "incorrect roleID returned")
 		require.Equal(t, testRole2.ID, int(roles[1]), "incorrect roleID returned")
 		require.Equal(t, testRole3.ID, int(roles[2]), "incorrect roleID returned")
 	})
 }
 
-func setUp(ctx context.Context, t *testing.T, pgDB *db.PgDB) {
+func setUp(ctx context.Context, t *testing.T) {
 	_, err := db.HackAddUser(context.TODO(), &testUser)
 	require.NoError(t, err, "failure creating user in setup")
 
@@ -630,7 +630,7 @@ func setUp(ctx context.Context, t *testing.T, pgDB *db.PgDB) {
 	require.NoError(t, err, "failure creating workspace in setup")
 }
 
-func cleanUp(ctx context.Context, t *testing.T, pgDB *db.PgDB) {
+func cleanUp(ctx context.Context, t *testing.T) {
 	_, err := db.Bun().NewDelete().Table("workspaces").Where(
 		"name=?", "test workspace").Exec(ctx)
 	if err != nil {
@@ -723,15 +723,15 @@ func filterToTestRoles(rolesGotten []Role) []Role {
 	return roles
 }
 
-func testOnWorkspace(ctx context.Context, t *testing.T, pgDB db.DB) {
+func testOnWorkspace(ctx context.Context, t *testing.T) {
 	// Don't error if we pass a non-existent workspaceID.
 	roles, err := GetRolesWithAssignmentsOnWorkspace(ctx, -999)
 	require.NoError(t, err)
-	require.Len(t, roles, 0)
+	require.Empty(t, roles)
 	users, membership, err := GetUsersAndGroupMembershipOnWorkspace(ctx, -999)
 	require.NoError(t, err)
-	require.Len(t, users, 0)
-	require.Len(t, membership, 0)
+	require.Empty(t, users)
+	require.Empty(t, membership)
 
 	// Create empty workspace.
 	ws := struct {
@@ -745,11 +745,11 @@ func testOnWorkspace(ctx context.Context, t *testing.T, pgDB db.DB) {
 	// Don't error with workspace with no assignmnets.
 	roles, err = GetRolesWithAssignmentsOnWorkspace(ctx, ws.ID)
 	require.NoError(t, err)
-	require.Len(t, roles, 0)
+	require.Empty(t, roles)
 	users, membership, err = GetUsersAndGroupMembershipOnWorkspace(ctx, ws.ID)
 	require.NoError(t, err)
-	require.Len(t, users, 0)
-	require.Len(t, membership, 0)
+	require.Empty(t, users)
+	require.Empty(t, membership)
 
 	// Add users and assignments.
 	user0 := model.User{Username: uuid.New().String()}
@@ -816,7 +816,7 @@ func testOnWorkspace(ctx context.Context, t *testing.T, pgDB db.DB) {
 	require.NoError(t, err)
 	require.Len(t, users, 1)
 	require.Equal(t, user0.ID, users[0].ID)
-	require.Len(t, membership, 0) // Personal groups don't show.
+	require.Empty(t, membership) // Personal groups don't show.
 
 	// Add groups and group assignments.
 	group0, _, err := usergroup.AddGroupWithMembers(ctx, model.Group{Name: uuid.New().String()},

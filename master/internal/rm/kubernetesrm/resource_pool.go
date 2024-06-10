@@ -372,15 +372,15 @@ func (k *kubernetesResourcePool) moveJob(
 		oldPriority := g.Priority
 		g.Priority = &anchorPriority
 
-		if priorityChanger, ok := tasklist.GroupPriorityChangeRegistry.Load(jobID); ok {
-			if priorityChanger != nil {
-				if err := priorityChanger(anchorPriority); err != nil {
-					g.Priority = oldPriority
-					return err
-				}
-			}
-		} else {
+		priorityChanger, ok := tasklist.GroupPriorityChangeRegistry.Load(jobID)
+		if !ok {
 			return fmt.Errorf("unable to move job with ID %s", jobID)
+		}
+		if priorityChanger != nil {
+			if err := priorityChanger(anchorPriority); err != nil {
+				g.Priority = oldPriority
+				return err
+			}
 		}
 	}
 

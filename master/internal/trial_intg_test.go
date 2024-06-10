@@ -11,7 +11,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/pkg/errors"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
@@ -61,20 +60,20 @@ func TestTrial(t *testing.T) {
 
 	dbTrial, err := internaldb.TrialByID(context.TODO(), tr.id)
 	require.NoError(t, err)
-	require.Equal(t, dbTrial.State, model.StoppingCompletedState)
+	require.Equal(t, model.StoppingCompletedState, dbTrial.State)
 
 	// Terminating stage.
 	tr.AllocationExitedCallback(&task.AllocationExited{})
 	select {
 	case <-done: // success
 	case <-time.After(5 * time.Second):
-		require.Error(t, errors.New("timed out waiting for trial to terminate"))
+		require.Error(t, fmt.Errorf("timed out waiting for trial to terminate"))
 	}
 	require.True(t, model.TerminalStates[tr.state])
 
 	dbTrial, err = internaldb.TrialByID(context.TODO(), tr.id)
 	require.NoError(t, err)
-	require.Equal(t, dbTrial.State, model.CompletedState)
+	require.Equal(t, model.CompletedState, dbTrial.State)
 }
 
 func TestTrialRestarts(t *testing.T) {
@@ -96,12 +95,12 @@ func TestTrialRestarts(t *testing.T) {
 		require.NotNil(t, tr.allocationID)
 		require.Equal(t, i, tr.restarts)
 
-		tr.AllocationExitedCallback(&task.AllocationExited{Err: errors.New("bad stuff went down")})
+		tr.AllocationExitedCallback(&task.AllocationExited{Err: fmt.Errorf("bad stuff went down")})
 
 		if i == tr.config.MaxRestarts() {
 			dbTrial, err := internaldb.TrialByID(context.TODO(), tr.id)
 			require.NoError(t, err)
-			require.Equal(t, dbTrial.State, model.ErrorState)
+			require.Equal(t, model.ErrorState, dbTrial.State)
 		} else {
 			// For the next go-around, when we update trial run ID.
 			runID, _, err := pgDB.TrialRunIDAndRestarts(tr.id)
@@ -112,7 +111,7 @@ func TestTrialRestarts(t *testing.T) {
 	select {
 	case <-done: // success
 	case <-time.After(5 * time.Second):
-		require.Error(t, errors.New("timed out waiting for trial to terminate"))
+		require.Error(t, fmt.Errorf("timed out waiting for trial to terminate"))
 	}
 	require.True(t, model.TerminalStates[tr.state])
 }

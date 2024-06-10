@@ -108,7 +108,7 @@ func TestDeleteWorkspaceTemplates(t *testing.T) {
 
 	n, err = workspaceTemplatesCount(ctx, 1)
 	require.NoError(t, err)
-	require.Equal(t, 0, n)
+	require.Zero(t, n)
 }
 
 func workspaceTemplatesCount(ctx context.Context, workspaceID int) (int, error) {

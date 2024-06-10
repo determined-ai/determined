@@ -396,11 +396,11 @@ func (s *SingularityClient) computeImageReference(requestedImage string) string 
 	s.log.Tracef("requested image: %s", requestedImage)
 	if s.imageRoot != "" {
 		cachePathName := s.imageRoot + "/" + requestedImage
-		if _, err := os.Stat(cachePathName); err != nil {
-			s.log.Tracef("image is not in cache: %s", err.Error())
-		} else {
+		_, err := os.Stat(cachePathName)
+		if err == nil {
 			return cachePathName
 		}
+		s.log.Tracef("image is not in cache: %s", err.Error())
 	}
 	return cruntimes.CanonicalizeImage(requestedImage)
 }

@@ -60,5 +60,5 @@ func TestMapx(t *testing.T) {
 	}
 
 	testMap.Clear()
-	assert.Equal(t, 0, testMap.Len())
+	assert.Empty(t, testMap.Len())
 }

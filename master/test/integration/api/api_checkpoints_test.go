@@ -75,7 +75,7 @@ func testGetCheckpoint(
 
 	conv := &protoconverter.ProtoConverter{}
 
-	runTestCase := func(t *testing.T, tc testCase, id int) {
+	runTestCase := func(t *testing.T, tc testCase) {
 		t.Run(tc.name, func(t *testing.T) {
 			experiment, trial, allocation := createPrereqs(t, pgDB)
 
@@ -149,8 +149,8 @@ func testGetCheckpoint(
 		})
 	}
 
-	for idx, tc := range testCases {
-		runTestCase(t, tc, idx)
+	for _, tc := range testCases {
+		runTestCase(t, tc)
 	}
 }
 
