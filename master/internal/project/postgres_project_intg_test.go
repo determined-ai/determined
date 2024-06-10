@@ -50,8 +50,8 @@ func TestProjectByName(t *testing.T) {
 
 func TestGetProjectByKey(t *testing.T) {
 	require.NoError(t, etc.SetRootPath(internaldb.RootFromDB))
-	testDB, close := internaldb.MustResolveTestPostgres(t)
-	defer close()
+	testDB, closeDB := internaldb.MustResolveTestPostgres(t)
+	defer closeDB()
 	internaldb.MustMigrateTestPostgres(t, testDB, internaldb.MigrationsFromDB)
 
 	// add a workspace, and project
@@ -90,8 +90,8 @@ func TestGetProjectByKey(t *testing.T) {
 
 func TestUpdateProjectKey(t *testing.T) {
 	require.NoError(t, etc.SetRootPath(internaldb.RootFromDB))
-	testDB, close := internaldb.MustResolveTestPostgres(t)
-	defer close()
+	testDB, closeDB := internaldb.MustResolveTestPostgres(t)
+	defer closeDB()
 	internaldb.MustMigrateTestPostgres(t, testDB, internaldb.MigrationsFromDB)
 
 	// add a workspace, and project

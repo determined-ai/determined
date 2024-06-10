@@ -22,7 +22,7 @@ type Project struct {
 	Username                string            `bun:"username,scanonly"`
 	Immutable               bool              `bun:"immutable"`
 	Description             string            `bun:"description"`
-	Notes                   []*projectv1.Note `bun:"notes,type:jsonb"`
+	Notes                   []*projectv1.Note `bun:"notes,type:jsonb,nullzero"`
 	NumActiveExperiments    int32             `bun:"num_active_experiments,scanonly"`
 	NumExperiments          int32             `bun:"num_experiments,scanonly"`
 	State                   WorkspaceState    `bun:"state,default:'UNSPECIFIED'::workspace_state"`
