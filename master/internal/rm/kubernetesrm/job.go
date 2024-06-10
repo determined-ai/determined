@@ -36,7 +36,7 @@ type gatewayProxyResource struct {
 	serviceSpec     *k8sV1.Service
 	tcpRouteSpec    *alphaGatewayTyped.TCPRoute
 	gatewayListener gatewayTyped.Listener
-	// we should be able to remove this and juse use PodPort from the tcpRouteSpec.
+	// TODO(gateways) we should be able to remove this and just use PodPort from the tcpRouteSpec.
 	podPort int
 }
 
@@ -93,7 +93,7 @@ type job struct {
 	configMapName   string
 
 	gatewayProxyResources []gatewayProxyResource
-	exposeProxyConfig     *config.InternalTaskGatewayConfig
+	internalTaskGWConfig  *config.InternalTaskGatewayConfig
 	gatewayService        *gatewayService
 
 	allocationID model.AllocationID
@@ -147,7 +147,7 @@ func newJob(
 	slotType device.Type,
 	slotResourceRequests config.PodSlotResourceRequests,
 	scheduler string,
-	exposeProxyConfig *config.InternalTaskGatewayConfig,
+	internalTaskGWConfig *config.InternalTaskGatewayConfig,
 	gatewayService *gatewayService,
 ) *job {
 	// The lifecycle of the containers specified in this map will be monitored.
@@ -184,7 +184,7 @@ func newJob(
 		scheduler:            scheduler,
 		slotType:             slotType,
 		slotResourceRequests: slotResourceRequests,
-		exposeProxyConfig:    exposeProxyConfig,
+		internalTaskGWConfig: internalTaskGWConfig,
 		gatewayService:       gatewayService,
 		syslog: logrus.WithField("component", "job").WithFields(
 			logger.MergeContexts(msg.logContext, logger.Context{
@@ -302,7 +302,7 @@ func (j *job) jobDeletedCallback() {
 }
 
 func (j *job) makeGatewayComms(spec *tasks.TaskSpec) *gatewayResourceComm {
-	if j.exposeProxyConfig == nil {
+	if j.internalTaskGWConfig == nil {
 		return nil
 	}
 
@@ -326,7 +326,7 @@ func (j *job) makeGatewayComms(spec *tasks.TaskSpec) *gatewayResourceComm {
 }
 
 func (j *job) getGatewayAddresses() []cproto.Address {
-	if j.exposeProxyConfig == nil {
+	if j.internalTaskGWConfig == nil {
 		return nil
 	}
 
@@ -334,8 +334,8 @@ func (j *job) getGatewayAddresses() []cproto.Address {
 	var addresses []cproto.Address
 	for _, g := range j.gatewayProxyResources {
 		addresses = append(addresses, cproto.Address{
-			ContainerIP:   j.exposeProxyConfig.GatewayIP,
-			HostIP:        j.exposeProxyConfig.GatewayIP,
+			ContainerIP:   j.internalTaskGWConfig.GatewayIP,
+			HostIP:        j.internalTaskGWConfig.GatewayIP,
 			ContainerPort: g.PodPort(),
 			HostPort:      g.GWPort(),
 		})

@@ -18,15 +18,28 @@ using the `Determined Helm Chart <https://helm.determined.ai/>`__.
 When the Determined Helm chart is installed, the following entities will be created:
 
 -  Deployment of the Determined master.
+
 -  ConfigMap containing configurations for the Determined master.
+
 -  LoadBalancer service to make the Determined master accessible. Later in this guide, we describe
    how it is possible to replace this with a NodePort service.
--  ServiceAcccount which will be used by the Determined master.
+
+-  ServiceAccount which will be used by the Determined master.
+
 -  Deployment of a Postgres database. Later in this guide, we describe how an external database can
    be used instead.
+
 -  PersistentVolumeClaim for the Postgres database. Omitted if using an external database.
+
 -  Service to allow the Determined master to communicate with the Postgres database. Omitted if
    using an external database.
+
+-  In case of multiple resource pools and in each external-to-master clusters:
+
+   -  Gateway service to allow north-south access to Determined proxied tasks in external-to-master
+      clusters.
+   -  Service to expose proxied ports on Determined jobs.
+   -  TCPRoute to attach the gateway service to the proxied ports service.
 
 ***************
  Prerequisites
@@ -449,6 +462,12 @@ To set up multiple resource pools for Determined on your Kubernetes cluster:
 
 #. Add the appropriate resource pool name to namespace mappings in the ``resourcePools`` section of
    the ``values.yaml`` file in the Helm chart.
+
+.. note::
+
+   If you'd like to enable north-south access to Determined proxied tasks in external-to-master
+   clusters you'd need to set up a gateway as described in the docs :doc:`Internal Task Gateway
+   <internal-task-gateway>`
 
 ********************
  Install Determined
