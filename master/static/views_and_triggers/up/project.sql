@@ -3,17 +3,25 @@ CREATE FUNCTION stream_project_change() RETURNS trigger
     AS $$
 BEGIN
     IF (TG_OP = 'INSERT') THEN
-        PERFORM stream_project_notify(NULL, to_jsonb(NEW));
+        PERFORM stream_project_notify(
+            NULL, jsonb_build_object('id', NEW.id, 'workspace_id', NEW.workspace_id, 'seq', NEW.seq)
+        );
     ELSEIF (TG_OP = 'UPDATE') THEN
-        PERFORM stream_project_notify(to_jsonb(OLD), to_jsonb(NEW));
+        PERFORM stream_project_notify(
+            jsonb_build_object('id', OLD.id, 'workspace_id', OLD.workspace_id, 'seq', OLD.seq), 
+            jsonb_build_object('id', NEW.id, 'workspace_id', NEW.workspace_id, 'seq', NEW.seq)
+        );
     ELSEIF (TG_OP = 'DELETE') THEN
-        PERFORM stream_project_notify(to_jsonb(OLD), NULL);
+        PERFORM stream_project_notify(
+            jsonb_build_object('id', OLD.id, 'workspace_id', OLD.workspace_id, 'seq', OLD.seq), NULL
+        );
         -- DELETEs trigger BEFORE, and must return a non-NULL value.
         return OLD;
     END IF;
     return NULL;
 END;
 $$;
+
 CREATE TRIGGER stream_project_trigger_d BEFORE DELETE ON projects FOR EACH ROW EXECUTE PROCEDURE stream_project_change();
 CREATE TRIGGER stream_project_trigger_iu AFTER INSERT OR UPDATE OF name, description, archived, created_at, notes, workspace_id, user_id, immutable, state, key ON projects FOR EACH ROW EXECUTE PROCEDURE stream_project_change();
 
@@ -31,8 +39,8 @@ BEGIN
             output = jsonb_object_agg('after', after);
         ELSE
             output = output || jsonb_object_agg('after', after);
+        END IF;
     END IF;
-END IF;
     PERFORM pg_notify('stream_project_chan', output::text);
 return 0;
 END;

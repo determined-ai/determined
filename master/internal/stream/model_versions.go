@@ -52,22 +52,27 @@ type ModelVersionMsg struct {
 }
 
 // SeqNum gets the SeqNum from a ModelVersionMsg.
-func (pm *ModelVersionMsg) SeqNum() int64 {
-	return pm.Seq
+func (mm *ModelVersionMsg) SeqNum() int64 {
+	return mm.Seq
+}
+
+// GetID gets the ID from a ModelVersionMsg.
+func (mm *ModelVersionMsg) GetID() int {
+	return mm.ID
 }
 
 // UpsertMsg creates a ModelVersion stream upsert message.
-func (pm *ModelVersionMsg) UpsertMsg() stream.UpsertMsg {
-	return stream.UpsertMsg{
+func (mm *ModelVersionMsg) UpsertMsg() *stream.UpsertMsg {
+	return &stream.UpsertMsg{
 		JSONKey: ModelVersionsUpsertKey,
-		Msg:     pm,
+		Msg:     mm,
 	}
 }
 
 // DeleteMsg creates a ModelVersion stream delete message.
-func (pm *ModelVersionMsg) DeleteMsg() stream.DeleteMsg {
-	deleted := strconv.FormatInt(int64(pm.ID), 10)
-	return stream.DeleteMsg{
+func (mm *ModelVersionMsg) DeleteMsg() *stream.DeleteMsg {
+	deleted := strconv.Itoa(mm.ID)
+	return &stream.DeleteMsg{
 		Key:     ModelVersionsDeleteKey,
 		Deleted: deleted,
 	}
@@ -158,7 +163,7 @@ func ModelVersionCollectStartupMsgs(
 	}
 	missing, appeared, err := processQuery(ctx, createQuery, spec.Since, known, "m")
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("processing known: %w", err)
 	}
 
 	// step 2: hydrate appeared IDs into full ModelVersionMsgs
@@ -171,14 +176,14 @@ func ModelVersionCollectStartupMsgs(
 			query = modelVersionPermFilterQuery(query, accessScopes)
 		}
 		err := query.Scan(ctx, &mvMsgs)
-		if err != nil && errors.Cause(err) != sql.ErrNoRows {
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			log.Errorf("error: %v\n", err)
 			return nil, err
 		}
 	}
 
 	// step 3: emit deletions and updates to the client
-	out = append(out, stream.DeleteMsg{
+	out = append(out, &stream.DeleteMsg{
 		Key:     ModelVersionsDeleteKey,
 		Deleted: missing,
 	})
@@ -256,5 +261,22 @@ func ModelVersionMakePermissionFilter(ctx context.Context, user model.User) (fun
 			workspaceID, _ := strconv.Atoi(msg.WorkspaceID)
 			return accessScopeSet[model.AccessScopeID(workspaceID)]
 		}, nil
+	}
+}
+
+// ModelVersionMakeHydrator returns a function that gets properties of a model version by
+// its id.
+func ModelVersionMakeHydrator() func(*ModelVersionMsg) (*ModelVersionMsg, error) {
+	return func(msg *ModelVersionMsg) (*ModelVersionMsg, error) {
+		var saturatedMsg ModelVersionMsg
+		query := db.Bun().NewSelect().Model(&saturatedMsg).Where("id = ?", msg.GetID()).ExcludeColumn("workspace_id")
+		err := query.Scan(context.Background(), &saturatedMsg)
+		if err != nil && errors.Is(err, sql.ErrNoRows) {
+			return nil, err
+		} else if err != nil {
+			return nil, fmt.Errorf("error in model version hydrator: %w", err)
+		}
+		saturatedMsg.WorkspaceID = msg.WorkspaceID
+		return &saturatedMsg, nil
 	}
 }
