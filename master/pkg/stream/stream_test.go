@@ -319,7 +319,7 @@ func TestBroadcastWithFilters(t *testing.T) {
 	publisher.HydrateMsg(event.After, idToSaturatedMsg)
 	publisherTwo.Broadcast([]Event[*TestMsgTypeA]{event}, idToSaturatedMsg)
 
-	deleteMsg, ok := streamer.Msgs[1].(DeleteMsg)
+	deleteMsg, ok := streamer.Msgs[1].(*DeleteMsg)
 	require.Len(t, streamer.Msgs, 2, "upsert message was not upserted")
 	require.True(t, ok, "message was not a delete type")
 	require.Equal(t, "4", deleteMsg.Deleted, "Deleted number incorrect")

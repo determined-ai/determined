@@ -63,29 +63,34 @@ CREATE FUNCTION stream_model_version_change() RETURNS trigger
 DECLARE
     n jsonb = NULL;
     o jsonb = NULL;
+    wid text = NULL;
+    usrid integer = NULL;
 BEGIN
     IF (TG_OP = 'INSERT') THEN
+        SELECT workspace_id, user_id INTO wid, usrid FROM models WHERE id = NEW.model_id;
         n = jsonb_build_object(
             'id', NEW.id,
-            'workspace_id', to_jsonb((SELECT workspace_id FROM models WHERE id = NEW.model_id)::text),
+            'workspace_id', to_jsonb(wid),
             'model_id', NEW.model_id,
-            'user_id', to_jsonb((SELECT user_id FROM models WHERE id = NEW.model_id)::integer),
+            'user_id', to_jsonb(usrid),
             'seq', NEW.seq
         );
         PERFORM stream_model_version_notify(NULL, n);
     ELSEIF (TG_OP = 'UPDATE') THEN
+        SELECT workspace_id, user_id INTO wid, usrid FROM models WHERE id = OLD.model_id;
         o = jsonb_build_object(
             'id', OLD.id,
-            'workspace_id', to_jsonb((SELECT workspace_id FROM models WHERE id = OLD.model_id)::text),
+            'workspace_id', to_jsonb(wid),
             'model_id', OLD.model_id,
-            'user_id', to_jsonb((SELECT user_id FROM models WHERE id = OLD.model_id)::integer),
+            'user_id', to_jsonb(usrid),
             'seq', OLD.seq
         );
+        SELECT workspace_id, user_id INTO wid, usrid FROM models WHERE id = NEW.model_id;
         n = jsonb_build_object(
             'id', NEW.id,
-            'workspace_id', to_jsonb((SELECT workspace_id FROM models WHERE id = NEW.model_id)::text),
+            'workspace_id', to_jsonb(wid),
             'model_id', NEW.model_id,
-            'user_id', to_jsonb((SELECT user_id FROM models WHERE id = NEW.model_id)::integer),
+            'user_id', to_jsonb(usrid),
             'seq', NEW.seq
         );
         PERFORM stream_model_version_notify(o, n);
