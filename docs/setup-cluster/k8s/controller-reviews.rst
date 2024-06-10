@@ -1,8 +1,8 @@
 .. _controller-reviews:
 
-###############################
- Gateway API Controller Survey
-###############################
+#############################
+ Gateway API Implementations 
+#############################
 
 This document is a survey of the Gateway API controllers that are available and listed by the `SIG
 here <https://gateway-api.sigs.k8s.io/implementations/#haproxy-kubernetes-ingress-controller>`_
