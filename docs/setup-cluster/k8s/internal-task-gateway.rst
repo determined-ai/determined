@@ -4,8 +4,9 @@
  Internal Task Gateway
 #######################
 
-K8s Gateway APIs allow us to expose otherwise internal Determined jobs running on remote K8s
-clusters to Determined master and proxies. This is useful for multi-resource manager setups.
+`K8s Gateway APIs <https://gateway-api.sigs.k8s.io/>`_ allow us to expose otherwise internal
+Determined jobs running on remote K8s clusters to Determined master and proxies. This is useful for
+multi-resource manager setups.
 
 The overall setup includes setting up a Gateway controller in the K8s cluster external to Determined
 and configuring the Determined master to use the Gateway controller. Please refer to the sections
@@ -15,12 +16,17 @@ below to see the configuration changes and controller requirements.
  Controller Support - Requirements
 ###################################
 
-High-level requirements from the controller implementations are: - Supports Gateway APIs > v1 -
-Supports TCPRoute and level 4 routing support
+High-level requirements from the controller implementations are:
+
+-  Supports Gateway APIs > v1
+
+-  Supports `TCPRoute
+   <https://gateway-api.sigs.k8s.io/concepts/api-overview/#tcproute-and-udproute>`_ and level 4
+   routing support
 
 Take a look at our current survey of the existing implementations here: :doc:`controller-reviews`
 
-In these docs, we'll be using Contour from Project Contour.
+In these docs, we'll be using `Contour from Project Contour <https://projectcontour.io/>`_.
 
 ############################
  Sample Setup - Development
