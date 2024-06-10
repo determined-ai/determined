@@ -412,19 +412,17 @@ func (a *apiServer) MoveRuns(
 			return nil, fmt.Errorf("updating run's project IDs: %w", err)
 		}
 
-			for _, acceptID := range acceptedIDs {
-				results = append(results, &apiv1.RunActionResult{
-					Error: "",
-					Id:    acceptID,
-				})
-			}
+		for _, acceptID := range acceptedIDs {
+			results = append(results, &apiv1.RunActionResult{
+				Error: "",
+				Id:    acceptID,
+			})
+		}
 
-			if err = db.AddProjectHparams(ctx, tx, int(req.DestinationProjectId), acceptedIDs); err != nil {
-				return err
-			}
-			return db.RemoveOutdatedProjectHparams(ctx, tx, int(req.SourceProjectId))
-		})
-		if err != nil {
+		if err = db.AddProjectHparams(ctx, tx, int(req.DestinationProjectId), acceptedIDs); err != nil {
+			return nil, err
+		}
+		if err = db.RemoveOutdatedProjectHparams(ctx, tx, int(req.SourceProjectId)); err != nil {
 			return nil, err
 		}
 

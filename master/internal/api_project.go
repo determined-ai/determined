@@ -3,7 +3,6 @@ package internal
 import (
 	"context"
 	"fmt"
-	"regexp"
 	"sort"
 	"strconv"
 	"strings"
@@ -733,19 +732,6 @@ func (a *apiServer) getProjectNumericMetricsRange(
 		}
 	}
 	return metricsValues, searcherMetricsValue, nil
-}
-
-func validateProjectKey(key string) error {
-	switch {
-	case len(key) > project.MaxProjectKeyLength:
-		return errors.Errorf("project key cannot be longer than %d characters", project.MaxProjectKeyLength)
-	case len(key) < 1:
-		return errors.New("project key cannot be empty")
-	case !regexp.MustCompile(ProjectKeyRegex).MatchString(key):
-		return errors.Errorf("project key can only contain alphanumeric characters")
-	default:
-		return nil
-	}
 }
 
 func (a *apiServer) PostProject(
