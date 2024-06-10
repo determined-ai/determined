@@ -434,6 +434,7 @@ func publishLoop[T stream.Msg](
 			}
 
 			idToSaturatedMsg := map[int]*stream.UpsertMsg{}
+			// TODO: MD-434 improve performance by batch hydrating the messages.
 			for _, ev := range events {
 				publisher.HydrateMsg(ev.After, idToSaturatedMsg)
 			}
