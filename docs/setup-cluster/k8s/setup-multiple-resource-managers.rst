@@ -24,6 +24,10 @@ service in one Kubernetes cluster and schedule workloads in the same or other Ku
 Any requests to resource pools not defined in the master configuration are routed to the default
 resource manager. Such requests are not routed to additional resource managers, if defined.
 
+If you'd like to enable north-south access to Determined proxied tasks in external-to-master
+clusters you'd need to set up a gateway as described in the docs :doc:`Internal Task Gateway
+<internal-task-gateway>`
+
 *********************************************
  How to Configure Multiple Resource Managers
 *********************************************

@@ -95,8 +95,7 @@ type jobsService struct {
 	detMasterPort         int32
 	kubeconfigPath        string
 
-	// TODO: also rename.
-	exposeProxyConfig *config.InternalTaskGatewayConfig
+	internalTaskGWConfig *config.InternalTaskGatewayConfig
 
 	// System dependencies. Also set in initialization and never modified after.
 	syslog              *logrus.Entry
@@ -146,7 +145,7 @@ func newJobsService(
 	detMasterPort int32,
 	kubeconfigPath string,
 	jobSchedulingStateCb jobSchedulingStateCallback,
-	exposeProxyConfig *config.InternalTaskGatewayConfig,
+	internalTaskGWConfig *config.InternalTaskGatewayConfig,
 ) (*jobsService, error) {
 	p := &jobsService{
 		wg: waitgroupx.WithContext(context.Background()),
@@ -177,8 +176,8 @@ func newJobsService(
 		syslog:                            logrus.WithField("namespace", namespace),
 		jobSchedulingStateCallback:        jobSchedulingStateCb,
 
-		exposeProxyConfig: exposeProxyConfig,
-		kubeconfigPath:    kubeconfigPath,
+		internalTaskGWConfig: internalTaskGWConfig,
+		kubeconfigPath:       kubeconfigPath,
 	}
 
 	if err := p.startClientSet(); err != nil {
@@ -297,7 +296,7 @@ func (j *jobsService) startClientSet() error {
 		j.jobInterfaces[ns] = j.clientSet.BatchV1().Jobs(ns)
 	}
 
-	if exposeConfig := j.exposeProxyConfig; exposeConfig != nil {
+	if exposeConfig := j.internalTaskGWConfig; exposeConfig != nil {
 		// Using the CoreV1 RESTClient for gateway resources will cause "resource not found" errors.
 		alphaGatewayClientSet, err := alphaGateway.NewForConfig(config)
 		if err != nil {
@@ -469,7 +468,7 @@ func (j *jobsService) deleteDoomedKubernetesResources() error {
 	var toKillServices []k8sV1.Service
 	var toKillTCPRoutes []alphaGatewayTyped.TCPRoute
 	var toFreeGatewayPorts []int
-	if j.exposeProxyConfig != nil {
+	if j.internalTaskGWConfig != nil {
 		services, err := j.listServicesInAllNamespaces(context.TODO(), listOptions)
 		if err != nil {
 			return fmt.Errorf("listing existing services: %w", err)
@@ -564,7 +563,7 @@ func (j *jobsService) startJob(msg startJob) error {
 		j.slotType,
 		j.slotResourceRequests,
 		j.scheduler,
-		j.exposeProxyConfig,
+		j.internalTaskGWConfig,
 		j.gatewayService,
 	)
 
@@ -647,7 +646,7 @@ func (j *jobsService) reattachJob(msg reattachJobRequest) (reattachJobResponse, 
 	var services []k8sV1.Service
 	var tcpRoutes []alphaGatewayTyped.TCPRoute
 	var gatewayPorts []int
-	if j.exposeProxyConfig != nil {
+	if j.internalTaskGWConfig != nil {
 		services, err = j.listServicesInAllNamespaces(context.TODO(), listOptions)
 		errs = multierror.Append(errs, err)
 
@@ -667,7 +666,7 @@ func (j *jobsService) reattachJob(msg reattachJobRequest) (reattachJobResponse, 
 		errs = multierror.Append(errs, fmt.Errorf("expected one config map got %d", len(configMaps)))
 	}
 	expectedProxyNum := len(msg.req.ProxyPorts)
-	if j.exposeProxyConfig != nil && expectedProxyNum > 0 {
+	if j.internalTaskGWConfig != nil && expectedProxyNum > 0 {
 		if len(services) != expectedProxyNum {
 			errs = multierror.Append(errs,
 				fmt.Errorf("expected %d services got %d", expectedProxyNum, len(services)))
@@ -736,7 +735,7 @@ func (j *jobsService) recreateGatewayProxyResources(
 	tcpRoutes []alphaGatewayTyped.TCPRoute,
 	gatewayPorts []int,
 ) ([]gatewayProxyResource, error) {
-	if j.exposeProxyConfig == nil {
+	if j.internalTaskGWConfig == nil {
 		return nil, nil
 	}
 
@@ -822,7 +821,7 @@ func (j *jobsService) recreateJobHandler(
 		j.slotType,
 		j.slotResourceRequests,
 		j.scheduler,
-		j.exposeProxyConfig,
+		j.internalTaskGWConfig,
 		j.gatewayService,
 	)
 
@@ -885,9 +884,9 @@ func (j *jobsService) deleteKubernetesResources(
 		})
 	}
 
-	if len(gatewayPortsToFree) > 0 && j.exposeProxyConfig != nil {
+	if len(gatewayPortsToFree) > 0 && j.internalTaskGWConfig != nil {
 		j.resourceRequestQueue.deleteKubernetesResources(deleteKubernetesResources{
-			namespace:          j.exposeProxyConfig.GatewayNamespace,
+			namespace:          j.internalTaskGWConfig.GatewayNamespace,
 			gatewayPortsToFree: gatewayPortsToFree,
 		})
 	}

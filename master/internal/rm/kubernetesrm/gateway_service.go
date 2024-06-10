@@ -43,10 +43,8 @@ func newGatewayService(
 	tcpRouteInterfaces map[string]alphaGateway.TCPRouteInterface,
 	taskGWConfig config.InternalTaskGatewayConfig,
 ) (*gatewayService, error) {
-	// TODO: make port range configurable by user. We currently assume we own the controller and
-	// the service.
 	// DOCS: note this limit on number of active proxied tasks.
-	// TODO: validate existing port on the gateway on startup
+	// TODO: validate existing port on the gateway on startup. Maybe? Restore could cover this?
 	g := &gatewayService{
 		gatewayInterface:   gatewayInterface,
 		tcpRouteInterfaces: tcpRouteInterfaces,
