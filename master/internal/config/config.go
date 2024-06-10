@@ -340,7 +340,7 @@ func (c *Config) Resolve() error {
 				log.Error("Round Robin Scheduler is no longer available. Deprecation announced in release 0.33.0.")
 				log.Warn("Please update master config to use Priority Scheduler (configured by default).")
 				log.Info("Priority Scheduler with all priorities equal will have the same behavior as a Round Robin Scheduler.")
-				return fmt.Errorf("round robin scheduler no longer exists")
+				return fmt.Errorf("scheduler not available")
 			}
 		}
 
