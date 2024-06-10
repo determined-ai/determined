@@ -59,6 +59,7 @@ export interface PermissionsHook {
   canAdministrateUsers: boolean;
   canAssignRoles: (arg0: WorkspacePermissionsArgs) => boolean;
   canCreateExperiment: (arg0: WorkspacePermissionsArgs) => boolean;
+  canCreateFlatRun: (arg0: WorkspacePermissionsArgs) => boolean;
   canCreateModelVersion: (arg0: ModelPermissionsArgs) => boolean;
   canCreateModelWorkspace: (arg0: ModelWorkspacePermissionsArgs) => boolean;
   canCreateModels: boolean;
@@ -79,6 +80,7 @@ export interface PermissionsHook {
   canEditWebhooks: boolean;
   canManageResourcePoolBindings: boolean;
   canModifyExperiment: (arg0: WorkspacePermissionsArgs) => boolean;
+  canModifyFlatRun: (arg0: WorkspacePermissionsArgs) => boolean;
   canModifyExperimentMetadata: (arg0: WorkspacePermissionsArgs) => boolean;
   canModifyGroups: boolean;
   canModifyModel: (arg0: ModelPermissionsArgs) => boolean;
@@ -132,6 +134,8 @@ const usePermissions = (): PermissionsHook => {
       canAssignRoles: (args: WorkspacePermissionsArgs) => canAssignRoles(rbacOpts, args.workspace),
       canCreateExperiment: (args: WorkspacePermissionsArgs) =>
         canCreateExperiment(rbacOpts, args.workspace),
+      canCreateFlatRun: (args: WorkspacePermissionsArgs) =>
+        canCreateFlatRun(rbacOpts, args.workspace),
       canCreateModels: canCreateModels(rbacOpts),
       canCreateModelVersion: (args: ModelPermissionsArgs) =>
         canCreateModelVersion(rbacOpts, args.model),
@@ -164,6 +168,8 @@ const usePermissions = (): PermissionsHook => {
         canModifyExperiment(rbacOpts, args.workspace),
       canModifyExperimentMetadata: (args: WorkspacePermissionsArgs) =>
         canModifyExperimentMetadata(rbacOpts, args.workspace),
+      canModifyFlatRun: (args: WorkspacePermissionsArgs) =>
+        canModifyFlatRun(rbacOpts, args.workspace),
       canModifyGroups: canModifyGroups(rbacOpts),
       canModifyModel: (args: ModelPermissionsArgs) => canModifyModel(rbacOpts, args.model),
       canModifyModelVersion: (args: ModelVersionPermissionsArgs) =>
@@ -686,6 +692,22 @@ const canManageResourcePoolBindings = ({
 };
 
 // Flat Runs
+
+// alias of canCreateExperiment
+const canCreateFlatRun = (
+  { rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
+  workspace?: PermissionWorkspace,
+): boolean => {
+  return canCreateExperiment({ rbacEnabled, userAssignments, userRoles }, workspace);
+};
+
+// alias of canModifyExperiment
+const canModifyFlatRun = (
+  { rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
+  workspace?: PermissionWorkspace,
+): boolean => {
+  return canModifyExperiment({ rbacEnabled, userAssignments, userRoles }, workspace);
+};
 
 const canDeleteFlatRun = (
   { currentUser, rbacEnabled, userAssignments, userRoles }: RbacOptsProps,

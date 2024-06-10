@@ -1158,15 +1158,23 @@ export const archiveRuns: DetApi<
   request: (params, options) => detApi.Internal.archiveRuns(params, options),
 };
 
-export const deleteRuns: DetApi<Api.V1DeleteRunsRequest, Api.V1DeleteRunsResponse, void> = {
+export const deleteRuns: DetApi<
+  Api.V1DeleteRunsRequest,
+  Api.V1DeleteRunsResponse,
+  Type.BulkActionResult
+> = {
   name: 'deleteRuns',
-  postProcess: noOp,
+  postProcess: (response) => decoder.mapV1ActionResults(response.results),
   request: (params, options) => detApi.Internal.deleteRuns(params, options),
 };
 
-export const killRuns: DetApi<Api.V1KillRunsRequest, Api.V1KillRunsResponse, void> = {
+export const killRuns: DetApi<
+  Api.V1KillRunsRequest,
+  Api.V1KillRunsResponse,
+  Type.BulkActionResult
+> = {
   name: 'killRuns',
-  postProcess: noOp,
+  postProcess: (response) => decoder.mapV1ActionResults(response.results),
   request: (params, options) => detApi.Internal.killRuns(params, options),
 };
 
