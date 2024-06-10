@@ -1,3 +1,5 @@
+.. _controller-reviews:
+
 Gateway API Controller Survey
 =============================
 

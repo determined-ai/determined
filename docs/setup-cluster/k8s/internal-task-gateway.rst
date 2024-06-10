@@ -1,3 +1,5 @@
+.. _internal-task-gateway:
+
 Internal Task Gateway
 ======================
 
