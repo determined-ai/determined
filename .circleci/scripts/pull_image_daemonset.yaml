@@ -24,5 +24,5 @@ spec:
               memory: 200Mi
       # it may be desirable to set a high priority class to ensure that a DaemonSet Pod
       # preempts running Pods
-      priorityClassName: important
+      # priorityClassName: important
       terminationGracePeriodSeconds: 30

@@ -1094,10 +1094,6 @@ commands:
             - run:
                 command: kubectl apply -f https://raw.githubusercontent.com/GoogleCloudPlatform/container-engine-accelerators/master/nvidia-driver-installer/cos/daemonset-preloaded.yaml
                 name: Install NVIDIA drivers
-      - run:
-          name: Pull docker images onto nodes
-          command: |
-            kubectl apply -f .circleci/scripts/pull_image_daemonset.yaml --validate=false
       - unless:
           condition:
             equal: [ "gpu", <<parameters.slot-type>> ]
@@ -1147,6 +1143,10 @@ commands:
           name: Set context to the created namespace
       - run:
           command: kubectl create secret tls <<parameters.master-cert-name>> --cert <<parameters.master-tls-cert>> --key <<parameters.master-tls-key>> --namespace ${GENERATED_NAMESPACE} # Create tls secret in namespace w/secret name
+      - run:
+          name: Pull docker images onto nodes
+          command: |
+            kubectl apply -f .circleci/scripts/pull_image_daemonset.yaml
       - run:
           command: gsutil mb -p ${<<parameters.google-project-id>>} gs://${GENERATED_NAMESPACE}-bucket
       - helm/install-helm-client:
