@@ -31,7 +31,7 @@ Pick between live and static
 #### Live Changes
 
 1. `npm run start` `--prefix webui/react`
-2. `conda activate det &&` `devcluster`
+2. `conda activate det &&` `make devcluster`
 
 #### Static Build and Cluster Up
 
