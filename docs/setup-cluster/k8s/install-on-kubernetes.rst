@@ -429,6 +429,12 @@ To set up multiple resource pools for Determined on your Kubernetes cluster:
 #. Add the appropriate resource pool name to namespace mappings in the ``resourcePools`` section of
    the ``values.yaml`` file in the Helm chart.
 
+.. note::
+
+   If you'd like to enable north-south access to Determined proxied tasks in external-to-master
+   clusters you'd need to set up a gateway as described in the docs :doc:`Internal Task Gateway
+   <internal-task-gateway>`
+
 ********************
  Install Determined
 ********************
