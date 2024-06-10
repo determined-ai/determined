@@ -83,7 +83,7 @@ func TestConfigureProxyResources(t *testing.T) {
 			},
 		},
 	}
-	j.exposeProxyConfig = &config.InternalTaskGatewayConfig{
+	j.internalTaskGWConfig = &config.InternalTaskGatewayConfig{
 		GatewayName:      "gatewayname",
 		GatewayNamespace: "gatewaynamespace",
 	}
@@ -277,7 +277,7 @@ func TestDetProxyThroughGatewayEnv(t *testing.T) {
 
 	t.Run("with gateway", func(t *testing.T) {
 		j := job{
-			exposeProxyConfig: &config.InternalTaskGatewayConfig{},
+			internalTaskGWConfig: &config.InternalTaskGatewayConfig{},
 		}
 
 		actual, err := j.configureEnvVars(make(map[string]string), env, device.CPU)
@@ -287,7 +287,7 @@ func TestDetProxyThroughGatewayEnv(t *testing.T) {
 
 	t.Run("without gateway", func(t *testing.T) {
 		j := job{
-			exposeProxyConfig: nil,
+			internalTaskGWConfig: nil,
 		}
 
 		actual, err := j.configureEnvVars(make(map[string]string), env, device.CPU)

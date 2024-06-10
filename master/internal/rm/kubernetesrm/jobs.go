@@ -145,7 +145,7 @@ func newJobsService(
 	detMasterPort int32,
 	kubeconfigPath string,
 	jobSchedulingStateCb jobSchedulingStateCallback,
-	exposeProxyConfig *config.InternalTaskGatewayConfig,
+	internalTaskGWConfig *config.InternalTaskGatewayConfig,
 ) (*jobsService, error) {
 	p := &jobsService{
 		wg: waitgroupx.WithContext(context.Background()),
@@ -176,7 +176,7 @@ func newJobsService(
 		syslog:                            logrus.WithField("namespace", namespace),
 		jobSchedulingStateCallback:        jobSchedulingStateCb,
 
-		internalTaskGWConfig: exposeProxyConfig,
+		internalTaskGWConfig: internalTaskGWConfig,
 		kubeconfigPath:       kubeconfigPath,
 	}
 
@@ -468,7 +468,7 @@ func (j *jobsService) deleteDoomedKubernetesResources() error {
 	var toKillServices []k8sV1.Service
 	var toKillTCPRoutes []alphaGatewayTyped.TCPRoute
 	var toFreeGatewayPorts []int
-	if j.exposeProxyConfig != nil {
+	if j.internalTaskGWConfig != nil {
 		services, err := j.listServicesInAllNamespaces(context.TODO(), listOptions)
 		if err != nil {
 			return fmt.Errorf("listing existing services: %w", err)
@@ -646,7 +646,7 @@ func (j *jobsService) reattachJob(msg reattachJobRequest) (reattachJobResponse, 
 	var services []k8sV1.Service
 	var tcpRoutes []alphaGatewayTyped.TCPRoute
 	var gatewayPorts []int
-	if j.exposeProxyConfig != nil {
+	if j.internalTaskGWConfig != nil {
 		services, err = j.listServicesInAllNamespaces(context.TODO(), listOptions)
 		errs = multierror.Append(errs, err)
 
@@ -666,7 +666,7 @@ func (j *jobsService) reattachJob(msg reattachJobRequest) (reattachJobResponse, 
 		errs = multierror.Append(errs, fmt.Errorf("expected one config map got %d", len(configMaps)))
 	}
 	expectedProxyNum := len(msg.req.ProxyPorts)
-	if j.exposeProxyConfig != nil && expectedProxyNum > 0 {
+	if j.internalTaskGWConfig != nil && expectedProxyNum > 0 {
 		if len(services) != expectedProxyNum {
 			errs = multierror.Append(errs,
 				fmt.Errorf("expected %d services got %d", expectedProxyNum, len(services)))
@@ -735,7 +735,7 @@ func (j *jobsService) recreateGatewayProxyResources(
 	tcpRoutes []alphaGatewayTyped.TCPRoute,
 	gatewayPorts []int,
 ) ([]gatewayProxyResource, error) {
-	if j.exposeProxyConfig == nil {
+	if j.internalTaskGWConfig == nil {
 		return nil, nil
 	}
 
@@ -884,9 +884,9 @@ func (j *jobsService) deleteKubernetesResources(
 		})
 	}
 
-	if len(gatewayPortsToFree) > 0 && j.exposeProxyConfig != nil {
+	if len(gatewayPortsToFree) > 0 && j.internalTaskGWConfig != nil {
 		j.resourceRequestQueue.deleteKubernetesResources(deleteKubernetesResources{
-			namespace:          j.exposeProxyConfig.GatewayNamespace,
+			namespace:          j.internalTaskGWConfig.GatewayNamespace,
 			gatewayPortsToFree: gatewayPortsToFree,
 		})
 	}
