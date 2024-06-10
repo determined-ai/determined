@@ -463,7 +463,7 @@ export const getColumnDefs = ({
       });
       return {
         allowOverlay: true,
-        copyData: String(record.userId),
+        copyData: String(displayName),
         data: {
           image: undefined,
           initials: getInitials(displayName),

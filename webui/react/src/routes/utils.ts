@@ -1,4 +1,5 @@
 import { pathToRegexp } from 'path-to-regexp';
+import { KeyboardEvent } from 'react';
 
 import { globalStorage } from 'globalStorage';
 import { ClusterApi, Configuration } from 'services/api-ts-sdk';
@@ -9,6 +10,7 @@ import {
   AnyMouseEventHandler,
   isAbsolutePath,
   isFullPath,
+  isMouseEvent,
   isNewTabClickEvent,
   openBlank,
   reactHostAddress,
@@ -200,7 +202,7 @@ export const routeAll = (path: string): void => {
   }
 };
 export const handlePath = (
-  event: AnyMouseEvent,
+  event: AnyMouseEvent | KeyboardEvent,
   options: {
     external?: boolean;
     onClick?: AnyMouseEventHandler;
@@ -212,10 +214,10 @@ export const handlePath = (
 
   const href = options.path ? linkPath(options.path, options.external) : undefined;
 
-  if (options.onClick) {
+  if (options.onClick && isMouseEvent(event)) {
     options.onClick(event);
   } else if (href) {
-    if (isNewTabClickEvent(event) || options.popout) {
+    if ((isMouseEvent(event) && isNewTabClickEvent(event)) || options.popout) {
       /**
        * `location=0` forces a new window instead of a tab to open.
        * https://stackoverflow.com/questions/726761/javascript-open-in-a-new-window-not-tab

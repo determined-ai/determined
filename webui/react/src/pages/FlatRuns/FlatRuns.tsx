@@ -28,6 +28,7 @@ import Link from 'hew/Link';
 import Message from 'hew/Message';
 import Pagination from 'hew/Pagination';
 import Row from 'hew/Row';
+import { useToast } from 'hew/Toast';
 import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import { isUndefined } from 'lodash';
 import { useObservable } from 'micro-observables';
@@ -70,7 +71,7 @@ import { getProjectColumns, getProjectNumericMetricsRange, searchRuns } from 'se
 import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
 import userStore from 'stores/users';
 import userSettings from 'stores/userSettings';
-import { DetailedUser, FlatRun, FlatRunAction, ProjectColumn } from 'types';
+import { DetailedUser, FlatRun, FlatRunAction, ProjectColumn, RunState } from 'types';
 import handleError from 'utils/error';
 import { eagerSubscribe } from 'utils/observable';
 import { pluralizer } from 'utils/string';
@@ -170,6 +171,8 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
   const [error] = useState(false);
   const [canceler] = useState(new AbortController());
   const users = useObservable<Loadable<DetailedUser[]>>(userStore.getUsers());
+
+  const { openToast } = useToast();
 
   const {
     ui: { theme: appTheme },
@@ -664,8 +667,56 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
     await fetchRuns();
   }, [fetchRuns, handleSelectionChange]);
 
+  const handleActionSuccess = useCallback(
+    (action: FlatRunAction, id: number): void => {
+      const updateRun = (updated: Partial<FlatRun>) => {
+        setRuns((prev) =>
+          prev.map((runs) =>
+            Loadable.map(runs, (run) => {
+              if (run.id === id) {
+                return { ...run, ...updated };
+              }
+              return run;
+            }),
+          ),
+        );
+      };
+      switch (action) {
+        case FlatRunAction.Archive:
+          updateRun({ archived: true });
+          break;
+        case FlatRunAction.Kill:
+          updateRun({ state: RunState.StoppingKilled });
+          break;
+        case FlatRunAction.Unarchive:
+          updateRun({ archived: false });
+          break;
+        case FlatRunAction.Move:
+        case FlatRunAction.Delete:
+          setRuns((prev) =>
+            prev.filter((runs) =>
+              Loadable.match(runs, {
+                _: () => true,
+                Loaded: (run) => run.id !== id,
+              }),
+            ),
+          );
+          break;
+        default:
+          break;
+      }
+      openToast({ severity: 'Confirm', title: `Run ${action.toLowerCase()}d successfully` });
+    },
+    [openToast],
+  );
+
   const handleContextMenuComplete: ContextMenuCompleteHandlerProps<FlatRunAction, void> =
-    useCallback(() => {}, []);
+    useCallback(
+      (action: FlatRunAction, id: number) => {
+        handleActionSuccess(action, id);
+      },
+      [handleActionSuccess],
+    );
 
   const handleColumnsOrderChange = useCallback(
     // changing both column order and pinned count should happen in one update:
@@ -1019,9 +1070,8 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
                   run={rowData}
                   onComplete={onComplete}
                   onLink={onClose}
-                  onVisibleChange={onVisibleChange}>
-                  {/* <div /> */}
-                </RunActionDropdown>
+                  onVisibleChange={onVisibleChange}
+                />
               );
             }}
             rowHeight={rowHeightMap[globalSettings.rowHeight as RowHeight]}

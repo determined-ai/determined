@@ -1,6 +1,6 @@
 import { GridCell, GridCellKind } from '@glideapps/glide-data-grid';
 
-import { DateString } from 'ioTypes';
+import { DateString, decode, optional } from 'ioTypes';
 import { FlatRun } from 'types';
 
 import { FilterFormSetWithoutId } from './FilterForm/components/type';
@@ -10,7 +10,7 @@ export const run: FlatRun = {
   checkpointCount: 1,
   checkpointSize: 43090,
   duration: 256,
-  endTime: '2024-06-03T17:50:38.703259Z' as DateString,
+  endTime: decode(optional(DateString), '2024-06-03T17:50:38.703259Z'),
   experiment: {
     description: '',
     forkedFrom: 6634,
@@ -35,7 +35,7 @@ export const run: FlatRun = {
   projectId: 1,
   projectName: 'Uncategorized',
   searcherMetricValue: 0.46666666865348816,
-  startTime: '2024-06-03T17:46:22.682019Z' as DateString,
+  startTime: decode(optional(DateString), '2024-06-03T17:46:22.682019Z'),
   state: 'COMPLETED',
   summaryMetrics: {
     avgMetrics: {

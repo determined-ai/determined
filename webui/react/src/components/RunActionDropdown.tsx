@@ -5,7 +5,8 @@ import { useModal } from 'hew/Modal';
 import { useToast } from 'hew/Toast';
 import useConfirm from 'hew/useConfirm';
 import { copyToClipboard } from 'hew/utils/functions';
-import React, { MouseEvent, useCallback, useMemo } from 'react';
+import { isString } from 'lodash';
+import React, { useCallback, useMemo } from 'react';
 
 import usePermissions from 'hooks/usePermissions';
 import FlatRunMoveModalComponent from 'pages/FlatRuns/FlatRunMoveModal';
@@ -53,7 +54,6 @@ const RunActionDropdown: React.FC<Props> = ({
   filterFormSetWithoutId,
   projectId,
 }: Props) => {
-  const id = run.id;
   const { Component: FlatRunMoveComponentModal, open: flatRunMoveModalOpen } =
     useModal(FlatRunMoveModalComponent);
   const confirm = useConfirm();
@@ -65,63 +65,73 @@ const RunActionDropdown: React.FC<Props> = ({
     },
   );
 
-  const dropdownMenu = useMemo(() => {
-    const items: MenuItem[] = [...menuItems];
-    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-    if (cell && (cell.copyData || (cell as any).displayData)) {
-      items.unshift({ key: Action.Copy, label: Action.Copy });
+  const cellCopyData = useMemo(() => {
+    if (cell) {
+      if ('displayData' in cell && isString(cell.displayData)) {
+        return cell.displayData;
+      }
+      if (cell.copyData) return cell.copyData;
     }
+    return undefined;
+  }, [cell]);
+
+  const dropdownMenu = useMemo(() => {
+    const items: MenuItem[] = [];
     if (link) {
-      items.unshift(
+      items.push(
         { key: Action.NewTab, label: Action.NewTab },
         { key: Action.NewWindow, label: Action.NewWindow },
         { type: 'divider' },
       );
     }
+    if (cellCopyData) {
+      items.push({ key: Action.Copy, label: Action.Copy });
+    }
+    items.push(...menuItems);
     return items;
-  }, [link, menuItems, cell]);
+  }, [link, menuItems, cellCopyData]);
 
   const handleDropdown = useCallback(
     async (action: string, e: DropdownEvent) => {
       try {
         switch (action) {
           case Action.NewTab:
-            handlePath(e as MouseEvent, { path: link, popout: 'tab' });
+            handlePath(e, { path: link, popout: 'tab' });
             await onLink?.();
             break;
           case Action.NewWindow:
-            handlePath(e as MouseEvent, { path: link, popout: 'window' });
+            handlePath(e, { path: link, popout: 'window' });
             await onLink?.();
             break;
           case Action.Archive:
-            await archiveRuns({ projectId, runIds: [id] });
-            await onComplete?.(action, id);
+            await archiveRuns({ projectId, runIds: [run.id] });
+            await onComplete?.(action, run.id);
             break;
           case Action.Kill:
             confirm({
-              content: `Are you sure you want to kill run ${id}?`,
+              content: `Are you sure you want to kill run ${run.id}?`,
               danger: true,
               okText: 'Kill',
               onConfirm: async () => {
-                await killRuns({ projectId, runIds: [id] });
-                await onComplete?.(action, id);
+                await killRuns({ projectId, runIds: [run.id] });
+                await onComplete?.(action, run.id);
               },
               onError: handleError,
               title: 'Confirm Run Kill',
             });
             break;
           case Action.Unarchive:
-            await unarchiveRuns({ projectId, runIds: [id] });
-            await onComplete?.(action, id);
+            await unarchiveRuns({ projectId, runIds: [run.id] });
+            await onComplete?.(action, run.id);
             break;
           case Action.Delete:
             confirm({
-              content: `Are you sure you want to delete run ${id}?`,
+              content: `Are you sure you want to delete run ${run.id}?`,
               danger: true,
               okText: 'Delete',
               onConfirm: async () => {
-                await deleteRuns({ projectId, runIds: [id] });
-                await onComplete?.(action, id);
+                await deleteRuns({ projectId, runIds: [run.id] });
+                await onComplete?.(action, run.id);
               },
               onError: handleError,
               title: 'Confirm Run Deletion',
@@ -131,8 +141,7 @@ const RunActionDropdown: React.FC<Props> = ({
             flatRunMoveModalOpen();
             break;
           case Action.Copy:
-            /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-            await copyToClipboard((cell as any).displayData || cell?.copyData);
+            await copyToClipboard(cellCopyData ?? '');
             openToast({
               severity: 'Confirm',
               title: 'Value has been copied to clipboard.',
@@ -142,7 +151,7 @@ const RunActionDropdown: React.FC<Props> = ({
       } catch (e) {
         handleError(e, {
           level: ErrorLevel.Error,
-          publicMessage: `Unable to ${action} experiment ${id}.`,
+          publicMessage: `Unable to ${action} experiment ${run.id}.`,
           publicSubject: `${capitalize(action)} failed.`,
           silent: false,
           type: ErrorType.Server,
@@ -154,10 +163,10 @@ const RunActionDropdown: React.FC<Props> = ({
     [
       link,
       onLink,
-      id,
+      run.id,
       onComplete,
       confirm,
-      cell,
+      cellCopyData,
       openToast,
       onVisibleChange,
       projectId,
@@ -166,15 +175,13 @@ const RunActionDropdown: React.FC<Props> = ({
   );
 
   const shared = (
-    <>
-      <FlatRunMoveComponentModal
-        filterFormSetWithoutId={filterFormSetWithoutId}
-        flatRuns={[run]}
-        sourceProjectId={projectId}
-        sourceWorkspaceId={run.workspaceId}
-        onActionComplete={() => onComplete?.(FlatRunAction.Move, id)}
-      />
-    </>
+    <FlatRunMoveComponentModal
+      filterFormSetWithoutId={filterFormSetWithoutId}
+      flatRuns={[run]}
+      sourceProjectId={projectId}
+      sourceWorkspaceId={run.workspaceId}
+      onActionComplete={() => onComplete?.(FlatRunAction.Move, run.id)}
+    />
   );
 
   return (

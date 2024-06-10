@@ -2,7 +2,6 @@ import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import UIProvider, { DefaultTheme } from 'hew/Theme';
 import { ConfirmationProvider } from 'hew/useConfirm';
-import _ from 'lodash';
 
 import { handlePath } from 'routes/utils';
 import { archiveRuns, deleteRuns, killRuns, unarchiveRuns } from 'services/api';
@@ -68,8 +67,8 @@ const setup = (link?: string, state?: RunState, archived?: boolean) => {
           projectId={run.projectId}
           run={{
             ...run,
-            archived: _.isUndefined(archived) ? run.archived : archived,
-            state: _.isUndefined(state) ? run.state : state,
+            archived: archived === undefined ? run.archived : archived,
+            state: state === undefined ? run.state : state,
           }}
           onComplete={onComplete}
           onVisibleChange={onVisibleChange}
