@@ -2074,6 +2074,16 @@ service Determined {
       tags: "Projects"
     };
   }
+  // Get the request project by key.
+  rpc GetProjectByKey(GetProjectByKeyRequest)
+      returns (GetProjectByKeyResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/projects/key/{key}"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Projects"
+    };
+  }
   // Get a list of columns for experiment list table.
   rpc GetProjectColumns(GetProjectColumnsRequest)
       returns (GetProjectColumnsResponse) {

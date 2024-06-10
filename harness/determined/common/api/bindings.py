@@ -5799,6 +5799,29 @@ class v1GetPermissionsSummaryResponse(Printable):
         }
         return out
 
+class v1GetProjectByKeyResponse(Printable):
+    """Response to GetProjectByKeyRequest."""
+
+    def __init__(
+        self,
+        *,
+        project: "v1Project",
+    ):
+        self.project = project
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetProjectByKeyResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "project": v1Project.from_json(obj["project"]),
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "project": self.project.to_json(omit_unset),
+        }
+        return out
+
 class v1GetProjectColumnsResponse(Printable):
 
     def __init__(
@@ -9784,16 +9807,20 @@ class v1PatchModelVersionResponse(Printable):
 class v1PatchProject(Printable):
     """PatchProject is a partial update to a project with all optional fields."""
     description: "typing.Optional[str]" = None
+    key: "typing.Optional[str]" = None
     name: "typing.Optional[str]" = None
 
     def __init__(
         self,
         *,
         description: "typing.Union[str, None, Unset]" = _unset,
+        key: "typing.Union[str, None, Unset]" = _unset,
         name: "typing.Union[str, None, Unset]" = _unset,
     ):
         if not isinstance(description, Unset):
             self.description = description
+        if not isinstance(key, Unset):
+            self.key = key
         if not isinstance(name, Unset):
             self.name = name
 
@@ -9803,6 +9830,8 @@ class v1PatchProject(Printable):
         }
         if "description" in obj:
             kwargs["description"] = obj["description"]
+        if "key" in obj:
+            kwargs["key"] = obj["key"]
         if "name" in obj:
             kwargs["name"] = obj["name"]
         return cls(**kwargs)
@@ -9812,6 +9841,8 @@ class v1PatchProject(Printable):
         }
         if not omit_unset or "description" in vars(self):
             out["description"] = self.description
+        if not omit_unset or "key" in vars(self):
+            out["key"] = self.key
         if not omit_unset or "name" in vars(self):
             out["name"] = self.name
         return out
@@ -10838,6 +10869,7 @@ class v1PostModelVersionResponse(Printable):
 class v1PostProjectRequest(Printable):
     """Request for creating a project."""
     description: "typing.Optional[str]" = None
+    key: "typing.Optional[str]" = None
 
     def __init__(
         self,
@@ -10845,11 +10877,14 @@ class v1PostProjectRequest(Printable):
         name: str,
         workspaceId: int,
         description: "typing.Union[str, None, Unset]" = _unset,
+        key: "typing.Union[str, None, Unset]" = _unset,
     ):
         self.name = name
         self.workspaceId = workspaceId
         if not isinstance(description, Unset):
             self.description = description
+        if not isinstance(key, Unset):
+            self.key = key
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1PostProjectRequest":
@@ -10859,6 +10894,8 @@ class v1PostProjectRequest(Printable):
         }
         if "description" in obj:
             kwargs["description"] = obj["description"]
+        if "key" in obj:
+            kwargs["key"] = obj["key"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -10868,6 +10905,8 @@ class v1PostProjectRequest(Printable):
         }
         if not omit_unset or "description" in vars(self):
             out["description"] = self.description
+        if not omit_unset or "key" in vars(self):
+            out["key"] = self.key
         return out
 
 class v1PostProjectResponse(Printable):
@@ -11309,6 +11348,7 @@ class v1Project(Printable):
         errorMessage: str,
         id: int,
         immutable: bool,
+        key: str,
         name: str,
         notes: "typing.Sequence[v1Note]",
         numActiveExperiments: int,
@@ -11325,6 +11365,7 @@ class v1Project(Printable):
         self.errorMessage = errorMessage
         self.id = id
         self.immutable = immutable
+        self.key = key
         self.name = name
         self.notes = notes
         self.numActiveExperiments = numActiveExperiments
@@ -11347,6 +11388,7 @@ class v1Project(Printable):
             "errorMessage": obj["errorMessage"],
             "id": obj["id"],
             "immutable": obj["immutable"],
+            "key": obj["key"],
             "name": obj["name"],
             "notes": [v1Note.from_json(x) for x in obj["notes"]],
             "numActiveExperiments": obj["numActiveExperiments"],
@@ -11370,6 +11412,7 @@ class v1Project(Printable):
             "errorMessage": self.errorMessage,
             "id": self.id,
             "immutable": self.immutable,
+            "key": self.key,
             "name": self.name,
             "notes": [x.to_json(omit_unset) for x in self.notes],
             "numActiveExperiments": self.numActiveExperiments,
@@ -19081,6 +19124,32 @@ def get_GetProject(
     if _resp.status_code == 200:
         return v1GetProjectResponse.from_json(_resp.json())
     raise APIHttpError("get_GetProject", _resp)
+
+def get_GetProjectByKey(
+    session: "api.BaseSession",
+    *,
+    key: str,
+) -> "v1GetProjectByKeyResponse":
+    """Get the request project by key.
+
+    - key: The key of the project.
+    """
+    _params = None
+    if type(key) == str:
+        key = parse.quote(key)
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/projects/key/{key}",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1GetProjectByKeyResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetProjectByKey", _resp)
 
 def get_GetProjectColumns(
     session: "api.BaseSession",

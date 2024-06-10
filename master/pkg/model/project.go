@@ -17,17 +17,18 @@ type Project struct {
 	CreatedAt               time.Time         `bun:"created_at,scanonly"`
 	Archived                bool              `bun:"archived"`
 	WorkspaceID             int               `bun:"workspace_id"`
-	WorkspaceName           string            `bun:"workspace_name"`
+	WorkspaceName           string            `bun:"workspace_name,scanonly"`
 	UserID                  int               `bun:"user_id"`
-	Username                string            `bun:"username"`
+	Username                string            `bun:"username,scanonly"`
 	Immutable               bool              `bun:"immutable"`
 	Description             string            `bun:"description"`
-	Notes                   []*projectv1.Note `bun:"notes,type:jsonb"`
-	NumActiveExperiments    int32             `bun:"num_active_experiments"`
-	NumExperiments          int32             `bun:"num_experiments"`
-	State                   WorkspaceState    `bun:"state"`
+	Notes                   []*projectv1.Note `bun:"notes,type:jsonb,nullzero"`
+	NumActiveExperiments    int32             `bun:"num_active_experiments,scanonly"`
+	NumExperiments          int32             `bun:"num_experiments,scanonly"`
+	State                   WorkspaceState    `bun:"state,default:'UNSPECIFIED'::workspace_state"`
 	ErrorMessage            string            `bun:"error_message"`
-	LastExperimentStartedAt time.Time         `bun:"last_experiment_started_at"`
+	LastExperimentStartedAt time.Time         `bun:"last_experiment_started_at,scanonly"`
+	Key                     string            `bun:"key"`
 }
 
 // Projects is an array of project instances.
@@ -55,6 +56,7 @@ func (p Project) Proto() *projectv1.Project {
 		NumActiveExperiments:    p.NumActiveExperiments,
 		Notes:                   p.Notes,
 		LastExperimentStartedAt: lastExperimentStartedAt,
+		Key:                     p.Key,
 	}
 }
 
