@@ -8,7 +8,7 @@ import { Workspaces } from 'e2e/models/pages/Workspaces';
 import { randId, safeName } from 'e2e/utils/naming';
 
 test.describe('Projects', () => {
-  test.setTimeout(120_000);
+  test.slow();
   let wsCreatedWithButton = '';
   let wsCreatedWithSidebar = '';
   let projectOneName = '';
@@ -39,13 +39,20 @@ test.describe('Projects', () => {
   };
 
   test.beforeEach(async ({ authedPage }) => {
+    const workspacesPage = new Workspaces(authedPage);
+
     await expect(authedPage).toHaveTitle(BasePage.getTitle('Home'));
     await expect(authedPage).toHaveURL(/dashboard/);
+    await test.step('Navigate to Workspaces', async () => {
+      await workspacesPage.nav.sidebar.workspaces.pwLocator.click();
+      await authedPage.waitForURL(`**/${workspacesPage.url}?**`); // glob pattern for query params
+      await expect.soft(authedPage).toHaveTitle(workspacesPage.title);
+    });
   });
 
   test.afterEach(async ({ authedPage }) => {
     const workspacesPage = new Workspaces(authedPage);
-    await test.step('Delete a workspace', async () => {
+    await test.step('Delete Workspace from Card', async () => {
       if (wsCreatedWithButton !== '') {
         await workspacesPage.nav.sidebar.workspaces.pwLocator.click();
         const workspaceCard = workspacesPage.list.cardWithName(wsCreatedWithButton);
@@ -54,7 +61,7 @@ test.describe('Projects', () => {
         await workspacesPage.deleteModal.footer.submit.pwLocator.click();
       }
     });
-    await test.step('Delete a workspace through sidebar', async () => {
+    await test.step('Delete Workspace from Sidebar', async () => {
       if (wsCreatedWithSidebar !== '') {
         const workspaceItem = workspacesPage.nav.sidebar.sidebarWorkspaceItem(wsCreatedWithSidebar);
         await (await workspaceItem.actionMenu.open()).delete.pwLocator.click();
@@ -65,10 +72,6 @@ test.describe('Projects', () => {
       }
     });
   });
-  // test.afterEach(async ({ page }) => {
-  //   const workspacesPage = new Workspaces(page);
-
-  // });
 
   // test('Projects and Workspaces archival and pinning', async ({ page }) => {
   //   await test.step('Archive a workspace', async () => {});
@@ -82,13 +85,7 @@ test.describe('Projects', () => {
   test('Projects and Workspaces CRUD', async ({ authedPage }) => {
     const workspacesPage = new Workspaces(authedPage);
 
-    await test.step('Navigate to Workspaces', async () => {
-      await workspacesPage.nav.sidebar.workspaces.pwLocator.click();
-      await authedPage.waitForURL(`**/${workspacesPage.url}?**`); // glob pattern for query params
-      await expect.soft(authedPage).toHaveTitle(workspacesPage.title);
-    });
-
-    await test.step('Create a workspace', async () => {
+    await test.step('Create a Workspace from Card', async () => {
       await workspacesPage.list.newWorkspaceButton.pwLocator.click();
       wsCreatedWithButton = await createWorkspaceAllFields(
         workspacesPage.createModal,
@@ -101,7 +98,7 @@ test.describe('Projects', () => {
       await workspacesPage.nav.sidebar.workspaces.pwLocator.click();
       await expect(workspacesPage.list.cardWithName(wsCreatedWithButton).pwLocator).toBeVisible();
     });
-    await test.step('Create a workspace through the sidebar', async () => {
+    await test.step('Create a Workspace from Sidebar', async () => {
       await workspacesPage.nav.sidebar.workspaces.pwLocator.hover();
       await workspacesPage.nav.sidebar.createWorkspace.pwLocator.click();
       wsCreatedWithSidebar = await createWorkspaceAllFields(
@@ -116,7 +113,7 @@ test.describe('Projects', () => {
       await expect(workspacesPage.list.cardWithName(wsCreatedWithSidebar).pwLocator).toBeVisible();
     });
 
-    await test.step('Create projects', async () => {
+    await test.step('Create Projects', async () => {
       await workspacesPage.nav.sidebar.sidebarWorkspaceItem(wsCreatedWithButton).pwLocator.click();
       const projects = workspacesPage.details.projects;
       await projects.pwLocator.click();
@@ -130,17 +127,17 @@ test.describe('Projects', () => {
       await expect(projects.cardWithName(projectOneName).pwLocator).toBeVisible();
     });
 
-    await test.step('Navigation on projects page - sorting and list', async () => {});
-    await test.step('Create a model with all possible metadata', async () => {});
-    await test.step('Archive a model', async () => {});
-    await test.step('Unarchive a model', async () => {});
-    await test.step('Move a model between projects', async () => {});
-    await test.step('Launch JupyterLab, kill the task, view logs', async () => {});
-    await test.step('Navigate with the breadcrumb and workspace page', async () => {});
-    await test.step('Navigation on workspace page', async () => {});
-    await test.step('Edit a workspace', async () => {});
-    await test.step('Delete a model', async () => {});
-    await test.step('Delete a project', async () => {
+    await test.step('Navigation on Projects Page - Sorting and List', async () => {});
+    await test.step('Create a Model with All Possible Metadata', async () => {});
+    await test.step('Archive a Model', async () => {});
+    await test.step('Unarchive a Model', async () => {});
+    await test.step('Move a Model Between Projects', async () => {});
+    await test.step('Launch JupyterLab, Kill the Task, View Logs', async () => {});
+    await test.step('Navigate with the Breadcrumb and Workspace Page', async () => {});
+    await test.step('Navigation on Workspace Page', async () => {});
+    await test.step('Edit a Workspace', async () => {});
+    await test.step('Delete a Model', async () => {});
+    await test.step('Delete a Project', async () => {
       await workspacesPage.nav.sidebar.sidebarWorkspaceItem(wsCreatedWithButton).pwLocator.click();
       await workspacesPage.details.projects.pwLocator.click();
       const projectContent = workspacesPage.details.projects;

@@ -47,6 +47,7 @@ type ProjectMsg struct {
 	UserID      int                  `bun:"user_id" json:"user_id"`
 	Immutable   bool                 `bun:"immutable" json:"immutable"`
 	State       model.WorkspaceState `bun:"state" json:"state"`
+	Key         string               `bun:"key" json:"key"`
 
 	// metadata
 	Seq int64 `bun:"seq" json:"seq"`

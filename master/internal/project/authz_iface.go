@@ -28,6 +28,7 @@ type ProjectAuthZ interface {
 	CanSetProjectDescription(
 		ctx context.Context, curUser model.User, project *projectv1.Project,
 	) error
+	CanSetProjectKey(ctx context.Context, curUser model.User, project *projectv1.Project) error
 
 	// DELETE /api/v1/projects/:project_id
 	CanDeleteProject(

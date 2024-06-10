@@ -4,13 +4,15 @@ import { DropdownContent } from 'e2e/models/hew/Dropdown';
 import { Select } from 'e2e/models/hew/Select';
 
 /**
- * Returns a representation of the MultiSortMenu component.
- * This constructor represents the contents in src/components/MultiSortMenu.tsx.
- * @param {object} obj
- * @param {CanBeParent} obj.parent - The parent used to locate this MultiSortMenu
- * @param {string} obj.selector - Used instead of `defaultSelector`
+ * Represents the MultiSortMenu component in src/components/MultiSortMenu.tsx
  */
 export class MultiSortMenu extends DropdownContent {
+  /**
+   * Constructs a MultiSortMenu
+   * @param {object} obj
+   * @param {CanBeParent} obj.parent - parent component
+   * @param {BasePage} obj.root - root page
+   */
   constructor({ parent, root }: { parent: CanBeParent; root: BasePage }) {
     super({
       childNode: new BaseComponent({ parent, selector: '[data-testid="sort-menu-button"]' }),
@@ -20,6 +22,9 @@ export class MultiSortMenu extends DropdownContent {
   readonly multiSort = new MultiSort({ parent: this });
 }
 
+/**
+ * Represents the MultiSort in the MultiSortMenu component
+ */
 class MultiSort extends NamedComponent {
   readonly defaultSelector = '[data-test-component="multiSort"]';
   readonly add = new BaseComponent({ parent: this, selector: '[data-test="add"]' });
@@ -27,6 +32,9 @@ class MultiSort extends NamedComponent {
   readonly rows = new MultiSortRow({ parent: this, selector: '[data-test="reset"]' });
 }
 
+/**
+ * Represents the MultiSortRow in the MultiSortMenu component
+ */
 class MultiSortRow extends NamedComponent {
   readonly defaultSelector = '[data-test-component="multiSortRow"]';
   readonly column = new ColumnOptions({ parent: this, selector: '[data-test="column"]' });
@@ -34,6 +42,12 @@ class MultiSortRow extends NamedComponent {
   readonly remove = new BaseComponent({ parent: this, selector: '[data-test="remove"]' });
 }
 
+/**
+ * Represents the ColumnOptions in the MultiSortMenu component
+ */
 class ColumnOptions extends Select {}
 
+/**
+ * Represents the DirectionOptions in the MultiSortMenu component
+ */
 class DirectionOptions extends Select {}

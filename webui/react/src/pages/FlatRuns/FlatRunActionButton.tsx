@@ -108,9 +108,8 @@ const FlatRunActionButton = ({
         } else if (numFailures === 0) {
           openToast({
             closeable: true,
-            description: `${action} succeeded for ${
-              results.successful.length
-            } ${LABEL_PLURAL.toLowerCase()}`,
+            description: `${action} succeeded for ${results.successful.length
+              } ${LABEL_PLURAL.toLowerCase()}`,
             title: `${action} Success`,
           });
         } else if (numSuccesses === 0) {
@@ -122,9 +121,8 @@ const FlatRunActionButton = ({
         } else {
           openToast({
             closeable: true,
-            description: `${action} succeeded for ${numSuccesses} out of ${
-              numFailures + numSuccesses
-            } eligible
+            description: `${action} succeeded for ${numSuccesses} out of ${numFailures + numSuccesses
+              } eligible
             ${LABEL_PLURAL.toLowerCase()}`,
             severity: 'Warning',
             title: `Partial ${action} Failure`,

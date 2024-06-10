@@ -26,6 +26,26 @@ message GetProjectResponse {
   determined.project.v1.Project project = 1;
 }
 
+// Get the requested project by key.
+message GetProjectByKeyRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "key" ] }
+  };
+
+  // The key of the project.
+  string key = 1;
+}
+
+// Response to GetProjectByKeyRequest.
+message GetProjectByKeyResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "project" ] }
+  };
+
+  // The project requested.
+  determined.project.v1.Project project = 1;
+}
+
 // Project Table type.
 enum TableType {
   // Unspecified table type.
@@ -89,6 +109,8 @@ message PostProjectRequest {
   string description = 3;
   // Id of the associated workspace.
   int32 workspace_id = 4;
+  // Key for the project.
+  optional string key = 5;
 }
 
 // Response to PostProjectRequest.

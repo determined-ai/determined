@@ -1,11 +1,7 @@
 import { BaseComponent, NamedComponent } from 'e2e/models/BaseComponent';
 
 /**
- * Returns a representation of the Nameplate component from Hew.
- * This constructor represents the contents in hew/src/kit/Nameplate.tsx.
- * @param {object} obj
- * @param {implementsGetLocator} obj.parent - The parent used to locate this Nameplate
- * @param {string} obj.selector - Used instead of `defaultSelector`
+ * Represents the SplitPane component from hew/src/kit/Nameplate.tsx
  */
 export class Nameplate extends NamedComponent {
   readonly defaultSelector = '[class^="Nameplate_base"]';

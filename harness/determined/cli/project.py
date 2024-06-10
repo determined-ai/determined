@@ -47,12 +47,13 @@ def render_experiments(
 def render_project(project: bindings.v1Project) -> None:
     values = [
         project.id,
+        project.key,
         project.name,
         project.description,
         project.numExperiments,
         project.numActiveExperiments,
     ]
-    PROJECT_HEADERS = ["ID", "Name", "Description", "# Experiments", "# Active Experiments"]
+    PROJECT_HEADERS = ["ID", "Key", "Name", "Description", "# Experiments", "# Active Experiments"]
     render.tabulate_or_csv(PROJECT_HEADERS, [values], False)
 
 
@@ -100,7 +101,7 @@ def create_project(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     w = api.workspace_by_name(sess, args.workspace_name)
     content = bindings.v1PostProjectRequest(
-        name=args.name, description=args.description, workspaceId=w.id
+        name=args.name, description=args.description, workspaceId=w.id, key=args.key
     )
     p = bindings.post_PostProject(sess, body=content, workspaceId=w.id).project
     if args.json:
@@ -154,7 +155,9 @@ def delete_project(args: argparse.Namespace) -> None:
 def edit_project(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     (w, p) = project_by_name(sess, args.workspace_name, args.project_name)
-    updated = bindings.v1PatchProject(name=args.new_name, description=args.description)
+    updated = bindings.v1PatchProject(
+        name=args.new_name, description=args.description, key=args.key
+    )
     new_p = bindings.patch_PatchProject(sess, body=updated, id=p.id).project
 
     if args.json:
@@ -247,6 +250,7 @@ args_description = [
                     cli.Arg("workspace_name", type=str, help="name of the workspace"),
                     cli.Arg("name", type=str, help="name of the project"),
                     cli.Arg("--description", type=str, help="description of the project"),
+                    cli.Arg("--key", type=str, help="key of the project"),
                     cli.Arg("--json", action="store_true", help="print as JSON"),
                 ],
             ),
@@ -309,6 +313,7 @@ args_description = [
                     cli.Arg("project_name", type=str, help="name of the project"),
                     cli.Arg("--new_name", type=str, help="new name of the project"),
                     cli.Arg("--description", type=str, help="description of the project"),
+                    cli.Arg("--key", type=str, help="key of the project"),
                     cli.Arg("--json", action="store_true", help="print as JSON"),
                 ],
             ),

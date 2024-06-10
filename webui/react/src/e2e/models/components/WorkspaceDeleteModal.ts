@@ -2,14 +2,11 @@ import { BaseComponent } from 'e2e/models/BaseComponent';
 import { Modal } from 'e2e/models/hew/Modal';
 
 /**
- * Returns a representation of the Workspace delete modal component.
- * @param {object} obj
- * @param {implementsGetLocator} obj.parent - The parent used to locate this Page
- * @param {string} [obj.selector] - Used instead of `defaultSelector`
+ * Represents the WorkspaceDeleteModal component in src/components/WorkspaceDeleteModal.tsx
  */
 export class WorkspaceDeleteModal extends Modal {
   readonly nameConfirmation = new BaseComponent({
-    parent: this,
+    parent: this.body,
     selector: 'input[id="workspaceName"]',
   });
 }

@@ -5,13 +5,15 @@ import { Message } from 'e2e/models/hew/Message';
 import { Pivot } from 'e2e/models/hew/Pivot';
 
 /**
- * Returns a representation of the ColumnPickerMenu component.
- * This constructor represents the contents in src/components/ColumnPickerMenu.tsx.
- * @param {object} obj
- * @param {CanBeParent} obj.parent - The parent used to locate this ColumnPickerMenu
- * @param {string} obj.selector - Used instead of `defaultSelector`
+ * Represents the ColumnPickerMenu component in src/components/ColumnPickerMenu.tsx
  */
 export class ColumnPickerMenu extends DropdownContent {
+  /**
+   * Constructs a ColumnPickerMenu
+   * @param {object} obj
+   * @param {CanBeParent} obj.parent - parent component
+   * @param {BasePage} obj.root - root page
+   */
   constructor({ parent, root }: { parent: CanBeParent; root: BasePage }) {
     super({
       childNode: new BaseComponent({
@@ -28,6 +30,9 @@ export class ColumnPickerMenu extends DropdownContent {
   readonly columnPickerTab = new ColumnPickerTab({ parent: this.pivot.tabContent });
 }
 
+/**
+ * Represents the ColumnPickerTab in the ColumnPickerMenu component
+ */
 class ColumnPickerTab extends NamedComponent {
   readonly defaultSelector = '[data-test-component="columnPickerTab"]:visible';
   readonly search = new BaseComponent({ parent: this, selector: '[data-test="search"]' });
@@ -37,6 +42,9 @@ class ColumnPickerTab extends NamedComponent {
   readonly reset = new BaseComponent({ parent: this, selector: '[data-test="reset"]' });
 }
 
+/**
+ * Represents the List in the ColumnPickerMenu component
+ */
 class List extends NamedComponent {
   readonly defaultSelector = '[data-test="columns"]';
   readonly rows = new Row({ parent: this });
@@ -69,6 +77,9 @@ class List extends NamedComponent {
   }
 }
 
+/**
+ * Represents a Row in the ColumnPickerMenu component
+ */
 class Row extends NamedComponent {
   readonly defaultSelector = '[data-test="row"]';
   readonly keyAttribute = 'data-test-id';
