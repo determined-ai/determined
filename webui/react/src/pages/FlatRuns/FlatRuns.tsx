@@ -96,7 +96,7 @@ const STATIC_COLUMNS = [MULTISELECT];
 
 const BANNED_FILTER_COLUMNS = new Set(['searcherMetricsVal']);
 
-const formStore = new FilterFormStore();
+export const formStore = new FilterFormStore();
 
 interface Props {
   projectId: number;
@@ -162,7 +162,6 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
   const sortString = useMemo(() => makeSortString(sorts.filter(validSort.is)), [sorts]);
   const loadableFormset = useObservable(formStore.formset);
   const filtersString = useObservable(formStore.asJsonString);
-  const filterFormSetWithoutId = useObservable(formStore.filterFormSetWithoutId);
   const [total, setTotal] = useState<Loadable<number>>(NotLoaded);
   const isMobile = useMobile();
   const [isLoading, setIsLoading] = useState(true);
@@ -948,7 +947,6 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
               onRowHeightChange={onRowHeightChange}
             />
             <FlatRunActionButton
-              filterFormSetWithoutId={filterFormSetWithoutId}
               isMobile={isMobile}
               projectId={projectId}
               selectedRuns={selectedRuns}
