@@ -93,6 +93,9 @@ func TestConfigureProxyResources(t *testing.T) {
 			Name:      j.jobName + "-0",
 			Namespace: "podnamespace",
 			Labels:    map[string]string{determinedLabel: "allocID"},
+			Annotations: map[string]string{
+				jobNameAnnotation: j.jobName,
+			},
 		},
 		Spec: k8sV1.ServiceSpec{
 			Ports: []k8sV1.ServicePort{
@@ -111,6 +114,9 @@ func TestConfigureProxyResources(t *testing.T) {
 			Name:      j.jobName + "-0",
 			Namespace: "podnamespace",
 			Labels:    map[string]string{determinedLabel: "allocID"},
+			Annotations: map[string]string{
+				jobNameAnnotation: j.jobName,
+			},
 		},
 		Spec: alphaGatewayTyped.TCPRouteSpec{
 			CommonRouteSpec: alphaGatewayTyped.CommonRouteSpec{
