@@ -32,7 +32,7 @@ import (
 var defaultRunsTableColumns = []*projectv1.ProjectColumn{
 	{
 		Column:      "id",
-		DisplayName: "ID",
+		DisplayName: "Global Run ID",
 		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
 		Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
 	},
@@ -155,6 +155,12 @@ var defaultRunsTableColumns = []*projectv1.ProjectColumn{
 		DisplayName: "Parent Archived",
 		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
 		Type:        projectv1.ColumnType_COLUMN_TYPE_UNSPECIFIED,
+	},
+	{
+		Column:      "localId",
+		DisplayName: "Run ID",
+		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
+		Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
 	},
 }
 

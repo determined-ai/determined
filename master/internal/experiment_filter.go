@@ -158,6 +158,7 @@ func runColumnNameToSQL(columnName string) (string, error) {
 		"externalExperimentId":  "e.external_experiment_id",
 		"externalTrialId":       "r.external_run_id",
 		"experimentId":          "e.id",
+		"localId":               "CONCAT(p.key, '-' ,CAST(r.local_id as text))",
 	}
 	var exists bool
 	col, exists := filterExperimentColMap[columnName]
