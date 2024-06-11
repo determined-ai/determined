@@ -6,7 +6,7 @@ type FlatRunChecker = (flatRun: Readonly<FlatRun>) => boolean;
 
 type FlatRunPermissionSet = Pick<
   PermissionsHook,
-  'canCreateExperiment' | 'canDeleteFlatRun' | 'canModifyExperiment' | 'canMoveFlatRun'
+  'canCreateFlatRun' | 'canDeleteFlatRun' | 'canModifyFlatRun' | 'canMoveFlatRun'
 >;
 
 const flatRunCheckers: Record<FlatRunAction, FlatRunChecker> = {
@@ -41,17 +41,13 @@ export const getActionsForFlatRun = (
       switch (action) {
         case FlatRunAction.Delete:
           return permissions.canDeleteFlatRun({ flatRun });
-
         case FlatRunAction.Move:
           return permissions.canMoveFlatRun({ flatRun });
-
         case FlatRunAction.Archive:
         case FlatRunAction.Unarchive:
-          return permissions.canModifyExperiment({ workspace });
-
+          return permissions.canModifyFlatRun({ workspace });
         case FlatRunAction.Kill:
-          return permissions.canModifyExperiment({ workspace }) && !flatRun.experiment?.unmanaged;
-
+          return permissions.canModifyFlatRun({ workspace }) && !flatRun.experiment?.unmanaged;
         default:
           return true;
       }

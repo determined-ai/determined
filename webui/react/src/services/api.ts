@@ -763,13 +763,17 @@ export const archiveRuns = generateDetApi<
   Type.BulkActionResult
 >(Config.archiveRuns);
 
-export const deleteRuns = generateDetApi<Api.V1DeleteRunsRequest, Api.V1DeleteRunsResponse, void>(
-  Config.deleteRuns,
-);
+export const deleteRuns = generateDetApi<
+  Api.V1DeleteRunsRequest,
+  Api.V1DeleteRunsResponse,
+  Type.BulkActionResult
+>(Config.deleteRuns);
 
-export const killRuns = generateDetApi<Api.V1KillRunsRequest, Api.V1KillRunsResponse, void>(
-  Config.killRuns,
-);
+export const killRuns = generateDetApi<
+  Api.V1KillRunsRequest,
+  Api.V1KillRunsResponse,
+  Type.BulkActionResult
+>(Config.killRuns);
 
 export const moveRuns = generateDetApi<
   Api.V1MoveRunsRequest,
