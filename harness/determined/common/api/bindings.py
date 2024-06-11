@@ -17928,6 +17928,7 @@ def get_GetCommand(
 def get_GetCommands(
     session: "api.BaseSession",
     *,
+    ids: "typing.Optional[typing.Sequence[str]]" = None,
     limit: "typing.Optional[int]" = None,
     offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
@@ -17938,6 +17939,7 @@ def get_GetCommands(
 ) -> "v1GetCommandsResponse":
     """Get a list of commands.
 
+    - ids: Limit commands to the list of ids.
     - limit: Limit the number of commands. A value of 0 denotes no limit.
     - offset: Skip the number of commands before returning results. Negative values
 denote number of commands to skip from the end before returning results.
@@ -17960,6 +17962,7 @@ usernames.
 accessible workspaces.
     """
     _params = {
+        "ids": ids,
         "limit": limit,
         "offset": offset,
         "orderBy": orderBy.value if orderBy is not None else None,

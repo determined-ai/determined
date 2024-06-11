@@ -14024,10 +14024,11 @@ export const CommandsApiFetchParamCreator = function (configuration?: Configurat
          * @param {Array<string>} [users] Limit commands to those that are owned by users with the specified usernames.
          * @param {Array<number>} [userIds] Limit commands to those that are owned by users with the specified userIds.
          * @param {number} [workspaceId] Limit commands to those within a specific workspace, or 0 for all accessible workspaces.
+         * @param {Array<string>} [ids] Limit commands to the list of ids.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getCommands(sortBy?: V1GetTensorboardsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, workspaceId?: number, options: any = {}): FetchArgs {
+        getCommands(sortBy?: V1GetTensorboardsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, workspaceId?: number, ids?: Array<string>, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/commands`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
@@ -14068,6 +14069,10 @@ export const CommandsApiFetchParamCreator = function (configuration?: Configurat
             
             if (workspaceId !== undefined) {
                 localVarQueryParameter['workspaceId'] = workspaceId
+            }
+            
+            if (ids) {
+                localVarQueryParameter['ids'] = ids
             }
             
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
@@ -14235,11 +14240,12 @@ export const CommandsApiFp = function (configuration?: Configuration) {
          * @param {Array<string>} [users] Limit commands to those that are owned by users with the specified usernames.
          * @param {Array<number>} [userIds] Limit commands to those that are owned by users with the specified userIds.
          * @param {number} [workspaceId] Limit commands to those within a specific workspace, or 0 for all accessible workspaces.
+         * @param {Array<string>} [ids] Limit commands to the list of ids.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getCommands(sortBy?: V1GetTensorboardsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, workspaceId?: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetCommandsResponse> {
-            const localVarFetchArgs = CommandsApiFetchParamCreator(configuration).getCommands(sortBy, orderBy, offset, limit, users, userIds, workspaceId, options);
+        getCommands(sortBy?: V1GetTensorboardsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, workspaceId?: number, ids?: Array<string>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetCommandsResponse> {
+            const localVarFetchArgs = CommandsApiFetchParamCreator(configuration).getCommands(sortBy, orderBy, offset, limit, users, userIds, workspaceId, ids, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -14337,11 +14343,12 @@ export const CommandsApiFactory = function (configuration?: Configuration, fetch
          * @param {Array<string>} [users] Limit commands to those that are owned by users with the specified usernames.
          * @param {Array<number>} [userIds] Limit commands to those that are owned by users with the specified userIds.
          * @param {number} [workspaceId] Limit commands to those within a specific workspace, or 0 for all accessible workspaces.
+         * @param {Array<string>} [ids] Limit commands to the list of ids.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getCommands(sortBy?: V1GetTensorboardsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, workspaceId?: number, options?: any) {
-            return CommandsApiFp(configuration).getCommands(sortBy, orderBy, offset, limit, users, userIds, workspaceId, options)(fetch, basePath);
+        getCommands(sortBy?: V1GetTensorboardsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, workspaceId?: number, ids?: Array<string>, options?: any) {
+            return CommandsApiFp(configuration).getCommands(sortBy, orderBy, offset, limit, users, userIds, workspaceId, ids, options)(fetch, basePath);
         },
         /**
          * 
@@ -14406,12 +14413,13 @@ export class CommandsApi extends BaseAPI {
      * @param {Array<string>} [users] Limit commands to those that are owned by users with the specified usernames.
      * @param {Array<number>} [userIds] Limit commands to those that are owned by users with the specified userIds.
      * @param {number} [workspaceId] Limit commands to those within a specific workspace, or 0 for all accessible workspaces.
+     * @param {Array<string>} [ids] Limit commands to the list of ids.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof CommandsApi
      */
-    public getCommands(sortBy?: V1GetTensorboardsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, workspaceId?: number, options?: any) {
-        return CommandsApiFp(this.configuration).getCommands(sortBy, orderBy, offset, limit, users, userIds, workspaceId, options)(this.fetch, this.basePath)
+    public getCommands(sortBy?: V1GetTensorboardsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, users?: Array<string>, userIds?: Array<number>, workspaceId?: number, ids?: Array<string>, options?: any) {
+        return CommandsApiFp(this.configuration).getCommands(sortBy, orderBy, offset, limit, users, userIds, workspaceId, ids, options)(this.fetch, this.basePath)
     }
     
     /**
