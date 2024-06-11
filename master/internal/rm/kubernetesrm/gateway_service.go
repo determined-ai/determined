@@ -30,7 +30,7 @@ type gatewayService struct {
 	portRangeEnd       int
 }
 
-// chat: these probably could use a better names or packaging.
+// TODO: these probably could use a better names or packaging.
 type gatewayResourceComm struct {
 	requestedPorts     int
 	resourceDescriptor proxyResourceGenerator
@@ -43,7 +43,6 @@ func newGatewayService(
 	tcpRouteInterfaces map[string]alphaGateway.TCPRouteInterface,
 	taskGWConfig config.InternalTaskGatewayConfig,
 ) (*gatewayService, error) {
-	// DOCS: note this limit on number of active proxied tasks.
 	// TODO: validate existing port on the gateway on startup. Maybe? Restore could cover this?
 	g := &gatewayService{
 		gatewayInterface:   gatewayInterface,

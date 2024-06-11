@@ -15,13 +15,16 @@ refer to the sections below to see the configuration changes and controller requ
 .. warning::
 
    This feature exposes Determined tasks to the outside world. Please ensure that you have the
-   necessary security measures in place to limit access to the exposed tasks. This could include
-   setting up a firewall, using a VPN, IP whitelisting, or other security measures.
+   necessary security measures in place to both limit access to the exposed tasks, and secure the
+   communication between the external cluster and the main one. This could include setting up a
+   firewall, using a VPN, IP white-listing, K8s Network Policies, native cloud solutions, or other
+   security measures. Some Determined tasks including JupyterLab Notebooks and shells already have
+   secure transport built-in.
 
 Limitations:
 
--  Exposing proxies in multi-slot jobs is not supported. Currently this only includes experiments
-   running distributed training that want to manually expose proxies to the outside world.
+-  Proxying to multi-node trials is not supported: Exposing proxies in multi-slot jobs is not supported.
+  Currently this only includes experiments running distributed training that want to manually expose proxies to the outside world.
 
 ###################################
  Controller Support - Requirements
@@ -119,11 +122,6 @@ If you're running Determined outside of the K8s cluster, for example on your loc
 testing and development, it's possible to test this feature using just a single K8s cluster. All
 that is needed is for Det master to be sitting external to the target cluster.
 
-###############
- Release Notes
-###############
-
-TBD
-
--  Mention docs
--  Mention current limitations?
+For allowing Determined tasks to connect to master that's running locally on your machine, you can
+use services like ngrok or a reverse SSH tunnel if you have access to a public IP like so: `ssh -R
+8080:localhost:8080 aws-dev.prv -N -o ServerAliveInterval=60 -o ServerAliveCountMax=10`
