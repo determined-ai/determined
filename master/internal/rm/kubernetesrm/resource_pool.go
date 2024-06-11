@@ -451,23 +451,26 @@ func (k *kubernetesResourcePool) jobQInfo() map[model.JobID]*sproto.RMJobInfo {
 func (k *kubernetesResourcePool) assignResources(
 	req *sproto.AllocateRequest,
 ) {
-	err := k.ValidateResources(sproto.ValidateResourcesRequest{
-		ResourcePool: req.ResourcePool, Slots: req.SlotsNeeded, IsSingleNode: req.FittingRequirements.SingleAgent,
-	})
-	if err != nil {
-		k.syslog.WithField("allocation-id", req.AllocationID).WithError(err)
-		rmevents.Publish(req.AllocationID, &sproto.InvalidResourcesRequestError{
-			Cause: err,
-		})
-		return
-	}
-
 	numPods := 1
 	slotsPerPod := req.SlotsNeeded
+	if req.SlotsNeeded > 1 {
+		if k.maxSlotsPerPod == 0 {
+			k.syslog.WithField("allocation-id", req.AllocationID).Error(
+				"set max_slots_per_pod > 0 to schedule tasks with slots")
+			return
+		}
 
-	if req.SlotsNeeded > k.maxSlotsPerPod {
-		numPods = req.SlotsNeeded / k.maxSlotsPerPod
-		slotsPerPod = k.maxSlotsPerPod
+		if req.SlotsNeeded > k.maxSlotsPerPod {
+			if req.SlotsNeeded%k.maxSlotsPerPod != 0 {
+				k.syslog.WithField("allocation-id", req.AllocationID).Errorf(
+					"task number of slots (%d) is not schedulable on the configured "+
+						"max_slots_per_pod (%d)", req.SlotsNeeded, k.maxSlotsPerPod)
+				return
+			}
+
+			numPods = req.SlotsNeeded / k.maxSlotsPerPod
+			slotsPerPod = k.maxSlotsPerPod
+		}
 	}
 
 	group := k.groups[req.JobID]

@@ -560,61 +560,6 @@ func TestAssignResourcesTime(t *testing.T) {
 	require.False(t, resourcesAllocated.JobSubmissionTime.IsZero())
 }
 
-func TestAssignResources(t *testing.T) {
-	taskList := tasklist.New()
-	groups := make(map[model.JobID]*tasklist.Group)
-	allocateReq := sproto.AllocateRequest{
-		JobID:             model.JobID("test-job"),
-		JobSubmissionTime: time.Now(),
-		SlotsNeeded:       2,
-		AllocationID:      model.AllocationID("test-alloc"),
-	}
-	groups[allocateReq.JobID] = &tasklist.Group{
-		JobID: allocateReq.JobID,
-	}
-	mockPods := createMockJobsService(make(map[string]*k8sV1.Node), device.CUDA, true)
-	poolRef := &kubernetesResourcePool{
-		poolConfig:                &config.ResourcePoolConfig{PoolName: "pool"},
-		jobsService:               mockPods,
-		reqList:                   taskList,
-		groups:                    groups,
-		jobIDToAllocationID:       map[model.JobID]model.AllocationID{},
-		allocationIDToJobID:       map[model.AllocationID]model.JobID{},
-		slotsUsedPerGroup:         map[*tasklist.Group]int{},
-		allocationIDToRunningPods: map[model.AllocationID]int{},
-		syslog:                    logrus.WithField("component", "k8s-rp"),
-	}
-
-	cases := []struct {
-		name           string
-		slotsRequested int
-		maxSlotsPerPod int
-		expSlots       int
-	}{
-		{"slots < max_slots_per_pod", 1, 2, 1},
-		{"slots multiple of max_slots_per_pod", 6, 2, 6},
-		{"invalid slots request", 3, 2, 0},
-	}
-	for i, c := range cases {
-		t.Run(c.name, func(t *testing.T) {
-			allocateReq.SlotsNeeded = c.slotsRequested
-			allocateReq.AllocationID = model.AllocationID(fmt.Sprintf("test-alloc-%d", i))
-			poolRef.maxSlotsPerPod = c.maxSlotsPerPod
-			poolRef.assignResources(&allocateReq)
-			resourcesAllocated := poolRef.reqList.Allocation(allocateReq.AllocationID)
-			if c.expSlots == 0 {
-				require.Nil(t, resourcesAllocated)
-				return
-			}
-			podSlotsAllocated := 0
-			for _, v := range resourcesAllocated.Resources {
-				podSlotsAllocated = v.Summary().Slots()
-			}
-			require.Equal(t, c.expSlots, podSlotsAllocated)
-		})
-	}
-}
-
 func TestGetResourcePools(t *testing.T) {
 	expectedName := "testname"
 	expectedMetadata := map[string]string{"x": "y*y"}
