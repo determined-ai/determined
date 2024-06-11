@@ -12,6 +12,8 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/config"
@@ -579,8 +581,7 @@ func (a *ResourceManager) ValidateResourcePool(name rm.ResourcePoolName) error {
 
 // DefaultNamespace is not supported.
 func (a *ResourceManager) DefaultNamespace(string) (*string, error) {
-	return nil, fmt.Errorf("resource manager type AgentRM does not have a default namespace: %w",
-		rmerrors.ErrNotSupported)
+	return nil, status.Error(codes.NotFound, rmerrors.ErrNotSupported.Error())
 }
 
 // VerifyNamespaceExists is not supported.
@@ -599,8 +600,7 @@ func (a *ResourceManager) DeleteNamespace(namespaceName string) error {
 
 // RemoveEmptyNamespace is not supported.
 func (a *ResourceManager) RemoveEmptyNamespace(string, string) error {
-	return fmt.Errorf("cannot remove namespace with resource manager type AgentRM: %w",
-		rmerrors.ErrNotSupported)
+	return rmerrors.ErrNotSupported
 }
 
 func (a *ResourceManager) createResourcePool(

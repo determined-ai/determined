@@ -15,6 +15,8 @@ import (
 	"github.com/sirupsen/logrus"
 	launcher "github.hpe.com/hpe/hpc-ard-launcher-go/launcher"
 	"golang.org/x/exp/maps"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 
 	"github.com/determined-ai/determined/master/internal/api/apiutils"
@@ -670,7 +672,7 @@ func (*DispatcherResourceManager) GetSlots(*apiv1.GetSlotsRequest) (*apiv1.GetSl
 
 // DefaultNamespace is unsupported.
 func (*DispatcherResourceManager) DefaultNamespace(string) (*string, error) {
-	return nil, rmerrors.ErrNotSupported
+	return nil, status.Error(codes.NotFound, rmerrors.ErrNotSupported.Error())
 }
 
 // VerifyNamespaceExists is unsupported.

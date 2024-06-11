@@ -49,7 +49,7 @@ interface Props {
 const CodeEditor = React.lazy(() => import('hew/CodeEditor'));
 
 const isNonK8RMError = (e: unknown): boolean => {
-  return e instanceof DetError && (e.publicMessage?.includes('operation not supported') ?? false);
+  return e instanceof DetError && e.sourceErr instanceof Response && e.sourceErr['status'] === 404;
 };
 
 const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }: Props = {}) => {
@@ -81,7 +81,7 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
   const namespaceBindingsList = useAsync(
     async (canceller) => {
       if (workspaceId === undefined) {
-        return {};
+        return NotLoaded;
       }
       try {
         const clusterNamespacePairs = await listWorkspaceNamespaceBindings(
