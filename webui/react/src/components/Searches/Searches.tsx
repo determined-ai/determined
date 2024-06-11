@@ -312,12 +312,12 @@ const Searches: React.FC<Props> = ({ project }) => {
       const filters = JSON.parse(filtersString);
       const existingFilterGroup = { ...filters.filterGroup };
       const singleTrialFilter = {
-        columnName: 'numTrials',
+        columnName: 'searcherType',
         kind: 'field',
         location: 'LOCATION_TYPE_EXPERIMENT',
-        operator: '>',
-        type: 'COLUMN_TYPE_NUMBER',
-        value: 1,
+        operator: '!=',
+        type: 'COLUMN_TYPE_TEXT',
+        value: 'single',
       };
       filters.filterGroup = {
         children: [existingFilterGroup, singleTrialFilter],

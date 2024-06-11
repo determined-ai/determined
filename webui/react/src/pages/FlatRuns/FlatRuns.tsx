@@ -32,7 +32,6 @@ import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import { isUndefined } from 'lodash';
 import { useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useSearchParams } from 'react-router-dom';
 import { v4 as uuidv4 } from 'uuid';
 
 import ColumnPickerMenu from 'components/ColumnPickerMenu';
@@ -59,6 +58,7 @@ import { useGlasbey } from 'hooks/useGlasbey';
 import useMobile from 'hooks/useMobile';
 import usePolling from 'hooks/usePolling';
 import { useSettings } from 'hooks/useSettings';
+import useTypedParams from 'hooks/useTypedParams';
 import {
   DEFAULT_SELECTION,
   SelectionType as SelectionState,
@@ -76,6 +76,7 @@ import { pluralizer } from 'utils/string';
 import {
   defaultColumnWidths,
   defaultRunColumns,
+  defaultSearchRunColumns,
   getColumnDefs,
   RunColumn,
   runColumns,
@@ -85,6 +86,7 @@ import css from './FlatRuns.module.scss';
 import {
   defaultFlatRunsSettings,
   FlatRunsSettings,
+  ProjectUrlSettings,
   settingsPathForProject,
 } from './FlatRuns.settings';
 
@@ -120,9 +122,17 @@ const parseSortString = (sortString: string): Sort[] => {
 const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
   const dataGridRef = useRef<DataGridHandle>(null);
   const contentRef = useRef<HTMLDivElement>(null);
-  const [searchParams, setSearchParams] = useSearchParams();
+  const { params, updateParams } = useTypedParams(ProjectUrlSettings, {});
+  const page = params.page || 0;
+  const setPage = useCallback(
+    (p: number) => updateParams({ page: p || undefined }),
+    [updateParams],
+  );
 
-  const settingsPath = useMemo(() => settingsPathForProject(projectId), [projectId]);
+  const settingsPath = useMemo(
+    () => settingsPathForProject(projectId, searchId),
+    [projectId, searchId],
+  );
   const flatRunsSettingsObs = useMemo(
     () => userSettings.get(FlatRunsSettings, settingsPath),
     [settingsPath],
@@ -133,13 +143,13 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
     (p: Partial<FlatRunsSettings>) => userSettings.setPartial(FlatRunsSettings, settingsPath, p),
     [settingsPath],
   );
-  const settings = useMemo(
-    () =>
-      flatRunsSettings
-        .map((s) => ({ ...defaultFlatRunsSettings, ...s }))
-        .getOrElse(defaultFlatRunsSettings),
-    [flatRunsSettings],
-  );
+  const settings = useMemo(() => {
+    const defaultSettings = { ...defaultFlatRunsSettings };
+    if (searchId) {
+      defaultSettings.columns = defaultSearchRunColumns;
+    }
+    return flatRunsSettings.map((s) => ({ ...defaultSettings, ...s })).getOrElse(defaultSettings);
+  }, [flatRunsSettings, searchId]);
 
   const { settings: globalSettings, updateSettings: updateGlobalSettings } =
     useSettings<DataGridGlobalSettings>(settingsConfigGlobal);
@@ -147,9 +157,6 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
   const [isOpenFilter, setIsOpenFilter] = useState<boolean>(false);
   const [runs, setRuns] = useState<Loadable<FlatRun>[]>(INITIAL_LOADING_RUNS);
   const isPagedView = true;
-  const [page, setPage] = useState(() =>
-    isFinite(Number(searchParams.get('page'))) ? Math.max(Number(searchParams.get('page')), 0) : 0,
-  );
 
   const [sorts, setSorts] = useState<Sort[]>(() => {
     if (!isLoadingSettings) {
@@ -428,14 +435,12 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
     (cPage: number, cPageSize: number) => {
       updateSettings({ pageLimit: cPageSize });
       // Pagination component is assuming starting index of 1.
-      setPage((prevPage) => {
-        if (cPage - 1 !== prevPage) {
-          setRuns(Array(cPageSize).fill(NotLoaded));
-        }
-        return cPage - 1;
-      });
+      if (cPage - 1 !== page) {
+        setRuns(Array(cPageSize).fill(NotLoaded));
+      }
+      setPage(cPage - 1);
     },
-    [updateSettings],
+    [page, updateSettings, setPage],
   );
 
   const fetchRuns = useCallback(async (): Promise<void> => {
@@ -507,17 +512,13 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
 
   const { stopPolling } = usePolling(fetchRuns, { rerunOnNewFn: true });
 
-  const handlePageUpdate = useCallback((page: number) => {
-    setPage(page);
-  }, []);
-
   const numFilters = 0;
 
   const resetPagination = useCallback(() => {
     setIsLoading(true);
     setPage(0);
     setRuns(INITIAL_LOADING_RUNS);
-  }, []);
+  }, [setPage]);
 
   useEffect(() => {
     if (!isLoadingSettings && settings.sortString) {
@@ -525,18 +526,6 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isLoadingSettings]);
-
-  useEffect(() => {
-    setSearchParams((params) => {
-      if (page) {
-        params.set('page', page.toString());
-      } else {
-        params.delete('page');
-      }
-      return params;
-    });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [page]);
 
   useEffect(() => {
     let cleanup: () => void;
@@ -913,7 +902,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
               onChange={handleSortChange}
             />
             <ColumnPickerMenu
-              defaultVisibleColumns={defaultRunColumns}
+              defaultVisibleColumns={searchId ? defaultSearchRunColumns : defaultRunColumns}
               initialVisibleColumns={columnsIfLoaded}
               isMobile={isMobile}
               pinnedColumnsCount={settings.pinnedColumnsCount}
@@ -982,7 +971,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
             onColumnResize={handleColumnWidthChange}
             onColumnsOrderChange={handleColumnsOrderChange}
             onContextMenuComplete={handleContextMenuComplete}
-            onPageUpdate={handlePageUpdate}
+            onPageUpdate={setPage}
             onPinnedColumnsCountChange={handlePinnedColumnsCountChange}
             onSelectionChange={handleSelectionChange}
           />
