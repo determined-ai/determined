@@ -91,12 +91,16 @@ export const mapV1MasterInfo = (data: Sdk.V1GetMasterResponse): DeterminedInfo =
   }, BrandingType.Determined);
 
   const clustMsg = data.clusterMessage
-    ? ({
-        createdTime: data.clusterMessage.createdTime ? new Date(data.clusterMessage.createdTime.toString()) : new Date(),
+    ? {
+        createdTime: data.clusterMessage.createdTime
+          ? new Date(data.clusterMessage.createdTime.toString())
+          : new Date(),
         endTime: data.clusterMessage.endTime ? new Date(data.clusterMessage.endTime) : undefined,
         message: data.clusterMessage.message,
-        startTime: data.clusterMessage.startTime ? new Date(data.clusterMessage.startTime) : new Date(),
-      })
+        startTime: data.clusterMessage.startTime
+          ? new Date(data.clusterMessage.startTime)
+          : new Date(),
+      }
     : undefined;
 
   return {

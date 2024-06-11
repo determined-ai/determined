@@ -2,6 +2,7 @@
 import { render, screen } from '@testing-library/react';
 
 import { ClusterMessage } from 'stores/determinedInfo';
+
 import ClusterMessageBanner from './ClusterMessage';
 
 const setUp = (msg?: ClusterMessage) => {
