@@ -186,7 +186,8 @@ header of every page in the WebUI for the configured duration. Commands include 
 
 Prepare the maintenance message using the CLI command, ``det master cluster-message set``.
 
--  For example, the following command creates a maintenance message with a start and end date (which must be expressed in UTC):
+-  For example, the following command creates a maintenance message with a start and end date (which
+   must be expressed in UTC):
 
       .. code:: bash
 
