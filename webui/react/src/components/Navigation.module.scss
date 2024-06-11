@@ -1,7 +1,7 @@
 .base {
   display: flex;
   flex-grow: 1;
-  height: calc(100vh);
+  height: 100vh;
   overflow: hidden;
 
   [class*='NavigationSideBar_base_'] {
