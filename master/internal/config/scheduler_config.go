@@ -2,6 +2,7 @@ package config
 
 import (
 	"encoding/json"
+	"runtime/debug"
 
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -14,9 +15,9 @@ const (
 
 	// FairShareScheduling schedules tasks proportional to the available resources.
 	FairShareScheduling = "fair_share"
-	// PriorityScheduling (deprecated) schedules tasks based on their priority.
+	// PriorityScheduling schedules tasks based on their priority.
 	PriorityScheduling = "priority"
-	// RoundRobinScheduling (removed) schedules tasks based on the order in which they arrive.
+	// RoundRobinScheduling schedules tasks based on the order in which they arrive.
 	RoundRobinScheduling = "round_robin"
 
 	best             = "best"
@@ -52,6 +53,7 @@ func (s SchedulerConfig) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements the json.Unmarshaler interface.
 func (s *SchedulerConfig) UnmarshalJSON(data []byte) error {
+	debug.PrintStack()
 	if err := union.Unmarshal(data, s); err != nil {
 		return err
 	}
@@ -62,9 +64,8 @@ func (s *SchedulerConfig) UnmarshalJSON(data []byte) error {
 	}
 
 	// Fill in the default
-	// kristine - do we need to update this? I don't remember encountering this path....
 	if s.FairShare == nil && s.Priority == nil && s.RoundRobin == nil {
-		s.FairShare = &FairShareSchedulerConfig{}
+		s.Priority = &PrioritySchedulerConfig{}
 	}
 	if s.Priority != nil && s.Priority.DefaultPriority == nil {
 		defaultPriority := DefaultSchedulingPriority
