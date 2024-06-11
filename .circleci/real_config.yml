@@ -2047,6 +2047,11 @@ jobs:
       - codecov/upload:
           flags: "web"
           xtra_args: "-v"
+      - run:
+          name: Upload Tests to DataDog
+          command: |
+              npm install -g @datadog/datadog-ci
+              datadog-ci junit upload --service "determined-ai/test-unit-react" --env "ci-local" /tmp/test-results/
       - store_test_results:
           path: webui/react/junit.xml
       - store_artifacts:
@@ -2317,6 +2322,11 @@ jobs:
       - run: COVERAGE_FILE=$PWD/test-unit-harness-cpu-pycov make -C harness test-cpu
       - run: coverage xml -i --data-file=./test-unit-harness-cpu-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
+      - run:
+          name: Upload Tests to DataDog
+          command: |
+              npm install -g @datadog/datadog-ci
+              datadog-ci junit upload --service "determined-ai/test-unit-harness-cpu" --env "ci-cpu" /tmp/test-results/
       - persist_to_workspace:
           root: .
           paths:
@@ -2341,6 +2351,11 @@ jobs:
       - run: COVERAGE_FILE=/root/project/test-unit-harness-gpu-pycov make -C harness test-gpu
       - run: coverage xml -i --data-file=./test-unit-harness-gpu-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
+      - run:
+          name: Upload Tests to DataDog
+          command: |
+              npm install -g @datadog/datadog-ci
+              datadog-ci junit upload --service "determined-ai/test-unit-harness-gpu" --env "ci-gpu" /tmp/test-results/
       - persist_to_workspace:
           root: .
           paths:
@@ -2365,6 +2380,11 @@ jobs:
       - run: COVERAGE_FILE=/root/project/test-unit-harness-pytorch2-gpu-pycov make -C harness test-pytorch-gpu
       - run: coverage xml -i --data-file=./test-unit-harness-pytorch2-gpu-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
+      - run:
+          name: Upload Tests to DataDog
+          command: |
+              npm install -g @datadog/datadog-ci
+              datadog-ci junit upload --service "determined-ai/test-unit-harness-pytorch2-gpu" --env "ci-gpu" /tmp/test-results/
       - persist_to_workspace:
           root: .
           paths:
@@ -2388,6 +2408,11 @@ jobs:
       - run: COVERAGE_FILE=/root/project/test-unit-harness-pytorch2-cpu-pycov make -C harness test-pytorch-cpu
       - run: coverage xml -i --data-file=./test-unit-harness-pytorch2-cpu-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
+      - run:
+          name: Upload Tests to DataDog
+          command: |
+              npm install -g @datadog/datadog-ci
+              datadog-ci junit upload --service "determined-ai/test-unit-harness-cpu" --env "ci-cpu" /tmp/test-results/
       - persist_to_workspace:
           root: .
           paths:
@@ -2412,6 +2437,11 @@ jobs:
       - run: COVERAGE_FILE=/root/project/test-unit-harness-gpu-parallel-pycov make -C harness test-gpu-parallel
       - run: coverage xml -i --data-file=./test-unit-harness-gpu-parallel-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
+      - run:
+          name: Upload Tests to DataDog
+          command: |
+              npm install -g @datadog/datadog-ci
+              datadog-ci junit upload --service "determined-ai/test-unit-harness-gpu-parallel" --env "ci-gpu" /tmp/test-results/
       - persist_to_workspace:
           root: .
           paths:
@@ -2436,6 +2466,11 @@ jobs:
       - run: COVERAGE_FILE=/root/project/test-unit-harness-gpu-deepspeed-pycov make -C harness test-gpu-deepspeed
       - run: coverage xml -i --data-file=./test-unit-harness-gpu-deepspeed-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
+      - run:
+          name: Upload Tests to DataDog
+          command: |
+              npm install -g @datadog/datadog-ci
+              datadog-ci junit upload --service "determined-ai/test-unit-harness-gpu-deepseed" --env "ci-gpu" /tmp/test-results/
       - persist_to_workspace:
           root: .
           paths:
@@ -2461,6 +2496,11 @@ jobs:
       - run: COVERAGE_FILE=$PWD/test-unit-harness-tf2-pycov make -C harness test-tf2
       - run: coverage xml -i --data-file=./test-unit-harness-tf2-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
+      - run:
+          name: Upload Tests to DataDog
+          command: |
+              npm install -g @datadog/datadog-ci
+              datadog-ci junit upload --service "determined-ai/test-unit-harness-tf2" --env "ci-cpu" /tmp/test-results/
       - persist_to_workspace:
           root: .
           paths:
@@ -2486,6 +2526,11 @@ jobs:
       - run: COVERAGE_FILE=$PWD/test-unit-storage-pycov coverage run -m pytest -v --durations=0 --junitxml=/tmp/test-results/test-unit-storage.xml --require-secrets -m cloud harness/tests
       - run: coverage xml -i --data-file=./test-unit-storage-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
+      - run:
+          name: Upload Tests to DataDog
+          command: |
+              npm install -g @datadog/datadog-ci
+              datadog-ci junit upload --service "determined-ai/test-unit-storage" --env "ci-cpu" /tmp/test-results/
       - persist_to_workspace:
           root: .
           paths:
@@ -2514,6 +2559,11 @@ jobs:
       - run: COVERAGE_FILE=$PWD/test-model-hub-pycov make -C model_hub test
       - run: coverage xml -i --data-file=./test-model-hub-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
+      - run:
+          name: Upload Tests to DataDog
+          command: |
+              npm install -g @datadog/datadog-ci
+              datadog-ci junit upload --service "determined-ai/test-unit-model-hub" --env "ci-cpu" /tmp/test-results/
       - persist_to_workspace:
           root: .
           paths:
