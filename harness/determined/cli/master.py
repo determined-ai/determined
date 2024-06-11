@@ -6,6 +6,7 @@ from determined import cli
 from determined.cli import render
 from determined.common import util
 from determined.common.api import bindings
+from determined.common.util import is_protobuf_timestamp
 
 
 def show_config(args: argparse.Namespace) -> None:
@@ -76,6 +77,11 @@ def set_message(args: argparse.Namespace) -> None:
 
     if args.message is None:
         raise ValueError("Provide a message using the -m flag.")
+    if args.start is not None and not is_protobuf_timestamp(args.start):
+        raise ValueError("Start time must be RFC-3339, i.e. of the form YYYY-MM-DDThh:mm:ssZ")
+    if args.end is not None and not is_protobuf_timestamp(args.end):
+        raise ValueError("End time must be RFC-3339, i.e. of the form YYYY-MM-DDThh:mm:ssZ")
+
     body = bindings.v1SetClusterMessageRequest(
         startTime=args.start, endTime=args.end, message=args.message, duration=args.duration
     )
@@ -101,7 +107,6 @@ def get_cluster_message(args: argparse.Namespace) -> None:
 
 # fmt: off
 
-timestring = "%Y-%m-%dT%H:%M:%SZ"
 args_description = [
     cli.Cmd("master", None, "manage master", [
         cli.Cmd(
@@ -157,7 +162,7 @@ args_description = [
         ]),
         cli.Cmd("cluster-message", None, "set or clear cluster-wide message", [
             cli.Cmd("set", set_message, "create or edit the displayed cluster-wide message", [
-                cli.Arg("-s", "--start", default=datetime.datetime.utcnow().strftime(timestring),
+                cli.Arg("-s", "--start", default=datetime.datetime.utcnow().isoformat("T") + "Z",
                     help="Timestamp to start displaying message (RFC 3339 format), "
                     + "e.g. '2021-10-26T23:17:12Z'; default is now."),
                 cli.Group(
