@@ -48,7 +48,8 @@ def test_notebook_capture() -> None:
 
         for line in notebook.stdout:
             if re.search("Jupyter Notebook .*is running at", line) is not None:
-                return
+                break
+
     assert task_id is not None
 
     end_time = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
@@ -56,7 +57,11 @@ def test_notebook_capture() -> None:
     r = sess.get(f"{API_URL}timestamp_after={start_time}&timestamp_before={end_time}")
     assert r.status_code == requests.codes.ok, r.text
 
-    assert re.search(f"{task_id},NOTEBOOK", r.text) is not None
+    assert re.search(f"{task_id}.*,NOTEBOOK", r.text) is not None
+
+    workspace = clu.utils.get_task_info(sess, "notebook", task_id).get("workspaceName", None)
+    assert workspace is not None
+    assert re.search(f"{workspace},,", r.text) is not None
 
 
 # Create a No_Op Experiment/Tensorboard & Confirm Tensorboard task is captured
@@ -93,3 +98,35 @@ def test_tensorboard_experiment_capture() -> None:
 
     # Confirm Tensorboard task is captured
     assert re.search(f"{tb.task_id}.*,TENSORBOARD", r.text) is not None
+
+    workspace = clu.utils.get_task_info(sess, "tensorboard", tb.task_id).get("workspaceName", None)
+    assert workspace is not None
+    assert re.search(f"{workspace},,", r.text) is not None
+
+
+# Create a command and confirm that the task is captured.
+@pytest.mark.e2e_cpu
+def test_cmd_capture() -> None:
+    sess = api_utils.user_session()
+    start_time = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+
+    task_id = None
+    with cmd.interactive_command(sess, ["cmd", "run", "sleep 10s"]) as sleep_cmd:
+        task_id = sleep_cmd.task_id
+
+        for line in sleep_cmd.stdout:
+            if re.search("Resources for Command .*have started", line) is not None:
+                break
+
+    assert task_id is not None
+
+    end_time = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+    sess = api_utils.user_session()
+    r = sess.get(f"{API_URL}timestamp_after={start_time}&timestamp_before={end_time}")
+    assert r.status_code == requests.codes.ok, r.text
+
+    assert re.search(f"{task_id}.*,COMMAND", r.text) is not None
+
+    workspace = clu.utils.get_task_info(sess, "command", task_id).get("workspaceName", None)
+    assert workspace is not None
+    assert re.search(f"{workspace},,", r.text) is not None
