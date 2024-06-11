@@ -639,7 +639,7 @@ func (p k8sJobResource) Summary() sproto.ResourcesSummary {
 		ResourcesType: sproto.ResourcesTypeK8sJob,
 		AgentDevices: map[aproto.ID][]device.Device{
 			// TODO: Make it more obvious k8s can't be trusted.
-			aproto.ID("pods"): make([]device.Device, p.slots),
+			aproto.ID("pods"): make([]device.Device, p.slots*p.numPods),
 		},
 
 		Started: p.started,
