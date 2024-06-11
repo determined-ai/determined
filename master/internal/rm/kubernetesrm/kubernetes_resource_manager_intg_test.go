@@ -588,10 +588,10 @@ func TestAssignResources(t *testing.T) {
 		name           string
 		slotsRequested int
 		maxSlotsPerPod int
-		expPodSlots    []int
+		expSlots       []int
 	}{
 		{"slots < max_slots_per_pod", 1, 2, []int{1}},
-		{"slots multiple of max_slots_per_pod", 6, 2, []int{2, 2, 2}},
+		{"slots multiple of max_slots_per_pod", 6, 2, []int{6}},
 		{"invalid slots request", 3, 2, []int{}},
 	}
 	for _, c := range cases {
@@ -606,7 +606,7 @@ func TestAssignResources(t *testing.T) {
 				podSlotsAllocated = append(podSlotsAllocated, v.Summary().Slots())
 				delete(resourcesAllocated.Resources, k)
 			}
-			require.Equal(t, c.expPodSlots, podSlotsAllocated)
+			require.Equal(t, c.expSlots, podSlotsAllocated)
 		})
 	}
 }
