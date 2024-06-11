@@ -2,7 +2,6 @@ package config
 
 import (
 	"encoding/json"
-	"runtime/debug"
 
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -53,7 +52,6 @@ func (s SchedulerConfig) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements the json.Unmarshaler interface.
 func (s *SchedulerConfig) UnmarshalJSON(data []byte) error {
-	debug.PrintStack()
 	if err := union.Unmarshal(data, s); err != nil {
 		return err
 	}
