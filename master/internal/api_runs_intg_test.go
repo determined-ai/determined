@@ -507,7 +507,6 @@ func TestMoveRunsMultiTrialNoSkip(t *testing.T) {
 	require.Equal(t, "3", localID2)
 	// original run should keeps the same local id
 	require.Equal(t, "1", localID3)
-
 }
 
 func TestMoveRunsFilter(t *testing.T) {

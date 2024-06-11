@@ -583,6 +583,58 @@ func TestPatchProject(t *testing.T) {
 	require.Equal(t, strings.ToUpper(newKey), project.Key)
 }
 
+func TestPatchProjectRecordRedirect(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	wresp, werr := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: uuid.New().String()})
+	require.NoError(t, werr)
+
+	projectName := "test-project" + uuid.New().String()
+	resp, err := api.PostProject(ctx, &apiv1.PostProjectRequest{
+		Name: projectName, WorkspaceId: wresp.Workspace.Id,
+	})
+	require.NoError(t, err)
+
+	exp := createTestExpWithProjectID(t, api, curUser, int(resp.Project.Id))
+	task := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
+	require.NoError(t, db.AddTask(ctx, task))
+	require.NoError(t, db.AddTrial(ctx, &model.Trial{
+		State:        model.CompletedState,
+		ExperimentID: exp.ID,
+		StartTime:    time.Now(),
+	}, task.TaskID))
+
+	newName := uuid.New().String()
+	newDescription := uuid.New().String()
+	newKey := uuid.New().String()[:project.MaxProjectKeyLength]
+	_, err = api.PatchProject(ctx, &apiv1.PatchProjectRequest{
+		Id: resp.Project.Id,
+		Project: &projectv1.PatchProject{
+			Name:        wrapperspb.String(newName),
+			Description: wrapperspb.String(newDescription),
+			Key:         wrapperspb.String(newKey),
+		},
+	})
+	require.NoError(t, err)
+
+	// Check that new local id is recorded in redirect table
+	var numRuns int
+	err = db.Bun().NewSelect().
+		Table("runs").
+		ColumnExpr("COUNT(*) as num_runs").
+		Where("project_id = ?", resp.Project.Id).
+		Scan(ctx, &numRuns)
+	require.NoError(t, err)
+
+	var numRunsRedirect int
+	err = db.Bun().NewSelect().
+		Table("local_id_redirect").
+		ColumnExpr("COUNT(*) as num_runs_redirect").
+		Where("project_key = ?", resp.Project.Key).
+		Scan(ctx, &numRunsRedirect)
+	require.NoError(t, err)
+	require.Equal(t, numRuns, numRunsRedirect)
+}
+
 func TestPatchProjectWithDuplicateProjectKey(t *testing.T) {
 	api, _, ctx := setupAPITest(t, nil)
 	wresp, werr := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: uuid.New().String()})

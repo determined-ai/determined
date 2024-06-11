@@ -344,6 +344,20 @@ func UpdateProject(
 			return nil
 		}
 
+		var isUsed bool
+		err = tx.NewSelect().Table("local_id_redirect").
+			ColumnExpr("COUNT(*) > 0 as is_used").
+			Where("project_key = ?", currentProject.Key).
+			Scan(ctx, &isUsed)
+		if err != nil {
+			return fmt.Errorf("error updating project %s", currentProject.Name)
+		}
+		if isUsed {
+			return status.Errorf(
+				codes.AlreadyExists,
+				"error updating project %s, provided key '%s' already in use in redirect table",
+				currentProject.Name, currentProject.Key)
+		}
 		_, err = tx.NewUpdate().Table("projects").
 			Set("name = ?", currentProject.Name).
 			Set("description = ?", currentProject.Description).
@@ -368,6 +382,17 @@ func UpdateProject(
 				}
 			}
 			return errors.Wrapf(db.MatchSentinelError(err), "error updating project %s", currentProject.Name)
+		}
+
+		if _, err = tx.NewRaw(`
+		INSERT INTO local_id_redirect (run_id, project_key, local_id)
+		SELECT
+			id, ? as project_key, local_id 
+		FROM
+			runs
+		WHERE project_id = ?
+		`, currentProject.Key, currentProject.ID).Exec(ctx); err != nil {
+			return fmt.Errorf("adding local id redirect: %w for project %s", err, currentProject.Name)
 		}
 
 		// no need to lock the project since it's already been locked above
