@@ -2,21 +2,15 @@ package run
 
 import (
 	"fmt"
-	"reflect"
 	"regexp"
-	"strconv"
 	"strings"
 	"time"
 
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 )
 
 const (
-	integerType   = "integer"
-	floatType     = "float"
-	booleanType   = "boolean"
-	stringType    = "string"
-	timestampType = "timestamp"
 	// MaxMetadataValueStringLength is the maximum length of a metadata value.
 	MaxMetadataValueStringLength = 5000
 	// MaxMetadataKeyLength is the maximum length of a metadata key.
@@ -59,30 +53,6 @@ func parseTimestamp(value string) (string, error) {
 		}
 	}
 	return "", fmt.Errorf("unable to parse timestamp")
-}
-
-// parseMetadataValueType converts a value to a string and returns the type of the value.
-func parseMetadataValueType(rawValue any) (value string, valueType string) {
-	switch v := rawValue.(type) {
-	case int:
-		return strconv.Itoa(v), integerType
-	case float64:
-		if v == float64(int(v)) {
-			return strconv.Itoa(int(v)), integerType
-		}
-		return strconv.FormatFloat(v, 'f', -1, 64), floatType
-	case bool:
-		return strconv.FormatBool(v), booleanType
-	case string:
-		// check if the string is a timestamp.
-		timeValue, err := parseTimestamp(v)
-		if err == nil {
-			return timeValue, timestampType
-		}
-		return v, stringType
-	default:
-		return fmt.Sprintf("%v", v), reflect.TypeOf(rawValue).String()
-	}
 }
 
 func flattenMetadata(data map[string]any) (flatMetadata []model.RunMetadataIndex, err error) {
@@ -153,20 +123,35 @@ func flattenMetadata(data map[string]any) (flatMetadata []model.RunMetadataIndex
 			}
 		// if the value is a primitive or an unknown type, treat it as a leaf node.
 		default:
-			val, valType := parseMetadataValueType(entry.value)
-			if valType == stringType && len(val) > MaxMetadataValueStringLength {
-				return nil, fmt.Errorf(
-					"metadata value exceeds maximum length of %d characters",
-					MaxMetadataValueStringLength,
-				)
+			newIndex := model.RunMetadataIndex{
+				FlatKey: entry.prefix + entry.key,
 			}
-			flatMetadata = append(
-				flatMetadata,
-				model.RunMetadataIndex{
-					FlatKey:  entry.prefix + entry.key,
-					Value:    val,
-					DataType: valType,
-				})
+			// parse the value and set the appropriate field.
+			switch v := entry.value.(type) {
+			case int:
+				newIndex.IntegerValue = &v
+			case float64:
+				if v == float64(int(v)) {
+					newIndex.IntegerValue = ptrs.Ptr(int(v))
+				} else {
+					newIndex.FloatValue = &v
+				}
+			case bool:
+				newIndex.BooleanValue = &v
+			case string:
+				if timestampVal, err := parseTimestamp(v); err == nil {
+					newIndex.TimestampValue = &timestampVal
+				} else {
+					if len(v) > MaxMetadataValueStringLength {
+						return nil, fmt.Errorf(
+							"metadata value exceeds maximum length of %d characters",
+							MaxMetadataValueStringLength,
+						)
+					}
+					newIndex.StringValue = &v
+				}
+			}
+			flatMetadata = append(flatMetadata, newIndex)
 		}
 	}
 

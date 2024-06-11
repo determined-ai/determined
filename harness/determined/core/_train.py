@@ -78,9 +78,7 @@ class TrainContext:
         """
         logger.debug(f"set_metadata({metadata})")
 
-        body = bindings.v1PostRunMetadataRequest(
-            metadata={"metadata": metadata}, runId=self._trial_id
-        )
+        body = bindings.v1PostRunMetadataRequest(metadata=metadata, runId=self._trial_id)
         r = bindings.post_PostRunMetadata(
             session=self._session,
             body=body,

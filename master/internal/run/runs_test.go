@@ -8,6 +8,7 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 )
 
 func TestFlattenMetadata(t *testing.T) {
@@ -32,67 +33,58 @@ func TestFlattenMetadata(t *testing.T) {
 	require.NoError(t, err)
 	require.ElementsMatch(t, []model.RunMetadataIndex{
 		{
-			RunID:     0,
-			FlatKey:   "key1",
-			Value:     "1",
-			DataType:  "integer",
-			ProjectID: 0,
+			RunID:        0,
+			FlatKey:      "key1",
+			IntegerValue: ptrs.Ptr(1),
+			ProjectID:    0,
 		},
 		{
-			RunID:     0,
-			FlatKey:   "key2",
-			Value:     "2.1",
-			DataType:  "float",
-			ProjectID: 0,
+			RunID:      0,
+			FlatKey:    "key2",
+			FloatValue: ptrs.Ptr(2.1),
+			ProjectID:  0,
 		},
 		{
-			RunID:     0,
-			FlatKey:   "key3",
-			Value:     "true",
-			DataType:  "boolean",
-			ProjectID: 0,
+			RunID:        0,
+			FlatKey:      "key3",
+			BooleanValue: ptrs.Ptr(true),
+			ProjectID:    0,
 		},
 		{
-			RunID:     0,
-			FlatKey:   "key4",
-			Value:     "string",
-			DataType:  "string",
-			ProjectID: 0,
+			RunID:       0,
+			FlatKey:     "key4",
+			StringValue: ptrs.Ptr("string"),
+			ProjectID:   0,
 		},
 		{
-			RunID:     0,
-			FlatKey:   "key5",
-			Value:     "2021-01-01T00:00:00Z",
-			DataType:  "timestamp",
-			ProjectID: 0,
+			RunID:          0,
+			FlatKey:        "key5",
+			TimestampValue: ptrs.Ptr("2021-01-01T00:00:00Z"),
+			ProjectID:      0,
 		},
 		{
-			RunID:     0,
-			FlatKey:   "key6",
-			Value:     "2021-01-01T00:00:00Z",
-			DataType:  "timestamp",
-			ProjectID: 0,
+			RunID:          0,
+			FlatKey:        "key6",
+			TimestampValue: ptrs.Ptr("2021-01-01T00:00:00Z"),
+			ProjectID:      0,
 		},
 		{
-			RunID:     0,
-			FlatKey:   "key7.key8",
-			Value:     "3",
-			DataType:  "integer",
-			ProjectID: 0,
+			RunID:        0,
+			FlatKey:      "key7.key8",
+			IntegerValue: ptrs.Ptr(3),
+			ProjectID:    0,
 		},
 		{
-			RunID:     0,
-			FlatKey:   "key7",
-			Value:     "string_1",
-			DataType:  "string",
-			ProjectID: 0,
+			RunID:       0,
+			FlatKey:     "key7",
+			StringValue: ptrs.Ptr("string_1"),
+			ProjectID:   0,
 		},
 		{
-			RunID:     0,
-			FlatKey:   "key7",
-			Value:     "string_2",
-			DataType:  "string",
-			ProjectID: 0,
+			RunID:       0,
+			FlatKey:     "key7",
+			StringValue: ptrs.Ptr("string_2"),
+			ProjectID:   0,
 		},
 	}, flattened)
 }
@@ -120,11 +112,10 @@ func TestFlattenMetadataNested(t *testing.T) {
 	require.NoError(t, err)
 	require.ElementsMatch(t, []model.RunMetadataIndex{
 		{
-			RunID:     0,
-			FlatKey:   "key1.key2",
-			Value:     "1",
-			DataType:  "integer",
-			ProjectID: 0,
+			RunID:        0,
+			FlatKey:      "key1.key2",
+			IntegerValue: ptrs.Ptr(1),
+			ProjectID:    0,
 		},
 	}, flattened)
 }
@@ -140,18 +131,16 @@ func TestFlattenMetadataArray(t *testing.T) {
 	require.NoError(t, err)
 	require.ElementsMatch(t, []model.RunMetadataIndex{
 		{
-			RunID:     0,
-			FlatKey:   "key1",
-			Value:     "1",
-			DataType:  "integer",
-			ProjectID: 0,
+			RunID:        0,
+			FlatKey:      "key1",
+			IntegerValue: ptrs.Ptr(1),
+			ProjectID:    0,
 		},
 		{
-			RunID:     0,
-			FlatKey:   "key1",
-			Value:     "2",
-			DataType:  "integer",
-			ProjectID: 0,
+			RunID:        0,
+			FlatKey:      "key1",
+			IntegerValue: ptrs.Ptr(2),
+			ProjectID:    0,
 		},
 	}, flattened)
 }
@@ -168,11 +157,10 @@ func TestFlattenMetadataArrayNested(t *testing.T) {
 	require.NoError(t, err)
 	require.ElementsMatch(t, []model.RunMetadataIndex{
 		{
-			RunID:     0,
-			FlatKey:   "key1.key2",
-			Value:     "1",
-			DataType:  "integer",
-			ProjectID: 0,
+			RunID:        0,
+			FlatKey:      "key1.key2",
+			IntegerValue: ptrs.Ptr(1),
+			ProjectID:    0,
 		},
 	}, flattened)
 }
