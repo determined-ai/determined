@@ -6,7 +6,6 @@ import { useToast } from 'hew/Toast';
 import { useCallback, useMemo, useState } from 'react';
 
 import BatchActionConfirmModalComponent from 'components/BatchActionConfirmModal';
-import { FilterFormSetWithoutId } from 'components/FilterForm/components/type';
 import usePermissions from 'hooks/usePermissions';
 import FlatRunMoveModalComponent from 'pages/FlatRuns/FlatRunMoveModal';
 import { archiveRuns, deleteRuns, killRuns, unarchiveRuns } from 'services/api';
@@ -40,16 +39,14 @@ interface Props {
   selectedRuns: ReadonlyArray<Readonly<FlatRun>>;
   projectId: number;
   workspaceId: number;
-  filterFormSetWithoutId: FilterFormSetWithoutId;
   onActionSuccess?: (action: BatchAction, successfulIds: number[]) => void;
-  onActionComplete?: () => Promise<void>;
+  onActionComplete?: () => void | Promise<void>;
 }
 
 const FlatRunActionButton = ({
   isMobile,
   selectedRuns,
   projectId,
-  filterFormSetWithoutId,
   workspaceId,
   onActionSuccess,
   onActionComplete,
@@ -199,7 +196,6 @@ const FlatRunActionButton = ({
         />
       )}
       <FlatRunMoveComponentModal
-        filterFormSetWithoutId={filterFormSetWithoutId}
         flatRuns={[...selectedRuns]}
         sourceProjectId={projectId}
         sourceWorkspaceId={workspaceId}
