@@ -274,6 +274,25 @@ commands:
   install-codecov:
     steps:
       - run: pip install codecov
+      
+  upload-junit-datadog:
+    parameters:
+      service:
+        type: string
+        default: ""
+      env:
+        type: string
+        default: "ci-cpu"
+      path:
+        type: string
+        default: "/tmp/test-results"
+    steps:
+      - run:
+          name: Upload Tests to DataDog
+          when: always
+          command: |
+              sudo npm install -g @datadog/datadog-ci
+              datadog-ci junit upload --service "determined-ai/<< parameters.service >>" --env "<< parameters.env >>" << parameters.path >>
 
   setup-go-intg-deps:
     steps:
@@ -2047,11 +2066,9 @@ jobs:
       - codecov/upload:
           flags: "web"
           xtra_args: "-v"
-      - run:
-          name: Upload Tests to DataDog
-          command: |
-              npm install -g @datadog/datadog-ci
-              datadog-ci junit upload --service "determined-ai/test-unit-react" --env "ci-local" /tmp/test-results/
+      - upload-junit-datadog:
+          service:
+          env: "ci-cpu"
       - store_test_results:
           path: webui/react/junit.xml
       - store_artifacts:
@@ -2164,11 +2181,10 @@ jobs:
       - codecov/upload:
           flags: "backend"
           xtra_args: "-v -X fixes"
-      - run:
-          name: Upload Tests to DataDog
-          command: |
-              npm install -g @datadog/datadog-ci
-              datadog-ci junit upload --service "determined-ai/master/test-intg" --env "ci-local" master/test-intg.junit.xml
+      - upload-junit-datadog:
+          service: master/test-intg
+          env: ci-cpu
+          path: master/test-intg.junit.xml
       - store_test_results:
           path: master/test-intg.junit.xml
       - persist_to_workspace:
@@ -2197,11 +2213,10 @@ jobs:
       - codecov/upload:
           flags: "backend"
           xtra_args: "-v -X fixes"
-      - run:
-          name: Upload Tests to DataDog
-          command: |
-              npm install -g @datadog/datadog-ci
-              datadog-ci junit upload --service "determined-ai/agent/test-intg" --env "ci-local" agent/test-intg.junit.xml
+      - upload-junit-datadog:
+          service: agent/test-intg
+          env: ci-cpu
+          path: agent/test-intg.junit.xml
       - store_test_results:
           path: agent/test-intg.junit.xml
       - persist_to_workspace:
@@ -2324,6 +2339,7 @@ jobs:
       - run: codecov -v -t $CODECOV_TOKEN -F harness
       - run:
           name: Upload Tests to DataDog
+          when: always
           command: |
               npm install -g @datadog/datadog-ci
               datadog-ci junit upload --service "determined-ai/test-unit-harness-cpu" --env "ci-cpu" /tmp/test-results/
@@ -2353,6 +2369,7 @@ jobs:
       - run: codecov -v -t $CODECOV_TOKEN -F harness
       - run:
           name: Upload Tests to DataDog
+          when: always
           command: |
               npm install -g @datadog/datadog-ci
               datadog-ci junit upload --service "determined-ai/test-unit-harness-gpu" --env "ci-gpu" /tmp/test-results/
@@ -2382,6 +2399,7 @@ jobs:
       - run: codecov -v -t $CODECOV_TOKEN -F harness
       - run:
           name: Upload Tests to DataDog
+          when: always
           command: |
               npm install -g @datadog/datadog-ci
               datadog-ci junit upload --service "determined-ai/test-unit-harness-pytorch2-gpu" --env "ci-gpu" /tmp/test-results/
@@ -2410,6 +2428,7 @@ jobs:
       - run: codecov -v -t $CODECOV_TOKEN -F harness
       - run:
           name: Upload Tests to DataDog
+          when: always
           command: |
               npm install -g @datadog/datadog-ci
               datadog-ci junit upload --service "determined-ai/test-unit-harness-cpu" --env "ci-cpu" /tmp/test-results/
@@ -2439,6 +2458,7 @@ jobs:
       - run: codecov -v -t $CODECOV_TOKEN -F harness
       - run:
           name: Upload Tests to DataDog
+          when: always
           command: |
               npm install -g @datadog/datadog-ci
               datadog-ci junit upload --service "determined-ai/test-unit-harness-gpu-parallel" --env "ci-gpu" /tmp/test-results/
@@ -2468,6 +2488,7 @@ jobs:
       - run: codecov -v -t $CODECOV_TOKEN -F harness
       - run:
           name: Upload Tests to DataDog
+          when: always
           command: |
               npm install -g @datadog/datadog-ci
               datadog-ci junit upload --service "determined-ai/test-unit-harness-gpu-deepseed" --env "ci-gpu" /tmp/test-results/
@@ -2498,6 +2519,7 @@ jobs:
       - run: codecov -v -t $CODECOV_TOKEN -F harness
       - run:
           name: Upload Tests to DataDog
+          when: always
           command: |
               npm install -g @datadog/datadog-ci
               datadog-ci junit upload --service "determined-ai/test-unit-harness-tf2" --env "ci-cpu" /tmp/test-results/
@@ -2528,6 +2550,7 @@ jobs:
       - run: codecov -v -t $CODECOV_TOKEN -F harness
       - run:
           name: Upload Tests to DataDog
+          when: always
           command: |
               npm install -g @datadog/datadog-ci
               datadog-ci junit upload --service "determined-ai/test-unit-storage" --env "ci-cpu" /tmp/test-results/
@@ -2561,6 +2584,7 @@ jobs:
       - run: codecov -v -t $CODECOV_TOKEN -F harness
       - run:
           name: Upload Tests to DataDog
+          when: always
           command: |
               npm install -g @datadog/datadog-ci
               datadog-ci junit upload --service "determined-ai/test-unit-model-hub" --env "ci-cpu" /tmp/test-results/
