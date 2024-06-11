@@ -23,6 +23,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/command"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
+	"github.com/determined-ai/determined/master/internal/license"
 	"github.com/determined-ai/determined/master/internal/rm/kubernetesrm"
 	"github.com/determined-ai/determined/master/internal/templates"
 	"github.com/determined-ai/determined/master/internal/workspace"
@@ -69,7 +70,8 @@ func maskStorageConfigSecrets(w *workspacev1.Workspace) error {
 
 func (a *apiServer) validateRequestClusterName(clusterName string) (string, error) {
 	if len(clusterName) == 0 && len(a.m.allRms) > 1 {
-		return "", status.Errorf(codes.InvalidArgument, "must specify a cluster name when using MultiRM")
+		return "", status.Errorf(codes.InvalidArgument,
+			"must specify a cluster name when using MultiRM")
 	}
 
 	// Since SingleRM clusters don't have to specify the cluster name in namespace-binding requests,
@@ -93,16 +95,30 @@ func (a *apiServer) validateClusterNamespaceMeta(
 ) {
 	allClusters := make(map[string]int)
 	for clusterName, metadata := range namespaceMeta {
-		namespace := metadata.Namespace
 		if _, ok := allClusters[clusterName]; ok {
 			return nil, status.Errorf(codes.InvalidArgument, "Cannot specify the same cluster "+
 				"name with different namespace, workspace-namespace bindings are unique per "+
 				"cluster per workspace.")
 		}
+
+		if metadata.Namespace != nil {
+			if metadata.AutoCreateNamespace || metadata.AutoCreateNamespaceAllClusters {
+				return nil, status.Errorf(codes.InvalidArgument, "must either specify a namespace or "+
+					"indicate that you would like an auto-created namespace, but cannot request both.")
+			}
+			// Verify that the namespace exists in the Kubernetes cluster for the corresponding RM.
+			err := a.m.rm.VerifyNamespaceExists(*metadata.Namespace, clusterName)
+			if err != nil {
+				return nil, fmt.Errorf("error verifying Kubernetes namespace: %w", err)
+			}
+		}
+
 		allClusters[clusterName] = 1
-		if len(clusterName) > 0 && namespace == nil {
+		if len(clusterName) > 0 && !(metadata.Namespace != nil || metadata.AutoCreateNamespace ||
+			!metadata.AutoCreateNamespaceAllClusters) {
 			return nil, status.Errorf(codes.InvalidArgument,
-				"Must specify a Kubernetes namespace")
+				"must either specify a Kubernetes namespace or indicate that you would like an "+
+					"auto-created namespace.")
 		}
 		newClusterName, err := a.validateRequestClusterName(clusterName)
 		if err != nil {
@@ -170,7 +186,7 @@ func generateNamespaceName(clusterID string, workspace string, wkspID int) strin
 	// lowercased and stripped of all characters that are out of compliance with the acceptable
 	// regex pattern for namespace names.
 	workspace = strings.ToLower(workspace)
-	re := regexp.MustCompile(`[a-z0-9]([-a-z0-9]*[a-z0-9])?`)
+	re := regexp.MustCompile(`[^a-z0-9]([^-a-z0-9]*[^a-z0-9])?`)
 	workspaceStripped := re.ReplaceAllString(workspace, "")
 	workspaceCap := math.Min(float64(len(workspaceStripped)), float64(31))
 	workspacePrefix := workspace[0:int(workspaceCap)]
@@ -178,7 +194,7 @@ func generateNamespaceName(clusterID string, workspace string, wkspID int) strin
 	if wkspID > 999999 {
 		workspaceID = workspaceID[0:6]
 	}
-	namespace := detNamespacePrefix + "_" + clusterIDPrefix + "_" + workspacePrefix + "_" +
+	namespace := workspacePrefix + "_" + detNamespacePrefix + "_" + clusterIDPrefix + "_" +
 		workspaceID
 	return namespace
 }
@@ -767,25 +783,51 @@ func (a *apiServer) setWorkspaceNamespaceBindings(ctx context.Context,
 	req *apiv1.SetWorkspaceNamespaceBindingsRequest, tx *bun.Tx, curUser *model.User,
 	w *workspacev1.Workspace,
 ) (*apiv1.SetWorkspaceNamespaceBindingsResponse, error) {
-	// TODO(amanda): When we land auto-creating namespaces, add an AND to this if condition checking
-	// for nil namespace name AND False auto-create namespace.
-	// NamespaceName is an optional param in the request's proto message to leave room for the
-	// auto-create namespace feature.
+
+	var noLicenseError error
+
+	defer func() {
+		if recover() != nil {
+			noLicenseError = status.Error(codes.InvalidArgument, "Auto-creating namespaces is "+
+				"an Enterprise-Edition feature")
+		}
+	}()
+
 	wkspID := int(w.Id)
 	if err := workspace.AuthZProvider.Get().
 		CanSetWorkspaceNamespaceBindings(ctx, *curUser, w); err != nil {
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
-	namespaceBindings := make(map[string]*workspacev1.WorkspaceNamespaceBinding)
-	for clusterName, namespaceMetadata := range req.ClusterNamespaceMeta {
-		namespace := namespaceMetadata.Namespace
-		// Verify that the namespace exists in the Kubernetes cluster for the corresponding RM.
-		err := a.m.rm.VerifyNamespaceExists(*namespace, clusterName)
-		if err != nil {
-			return nil, fmt.Errorf("error verifying Kubernetes namespace: %w", err)
-		}
+	if err := a.validateClusterNamespaceMetaPairs(req.ClusterNamespaceMeta); err != nil {
+		return nil, err
+	}
 
+	namespaceBindings := make(map[string]*workspacev1.WorkspaceNamespaceBinding)
+	verified := false
+	var namespace string
+	for clusterName, metadata := range req.ClusterNamespaceMeta {
+		if metadata.AutoCreateNamespaceAllClusters {
+			license.RequireLicense("auto-create namespace")
+			autoCreatedNamespace, err := getAutoGeneratedNamespaceName(ctx, wkspID)
+			if err != nil {
+				return nil, err
+			}
+			namespace = *autoCreatedNamespace
+			a.m.rm.CreateNamespace(*autoCreatedNamespace, clusterName, true)
+		} else if metadata.AutoCreateNamespace {
+			if !verified { // We only want to perform these actions once.
+				license.RequireLicense("auto-create namespace")
+				verified = true
+				autoCreatedNamespace, err := getAutoGeneratedNamespaceName(ctx, wkspID)
+				if err != nil {
+					return nil, err
+				}
+
+				a.m.rm.CreateNamespace(*autoCreatedNamespace, clusterName, false)
+				namespace = *autoCreatedNamespace
+			}
+		}
 		// Since workspace-namespace bindings for the default namespace of a given cluster are not
 		// automatically saved in the database, maintain constistency by not saving default
 		// namespace bindings to the db if a user tries to set them.
@@ -793,7 +835,7 @@ func (a *apiServer) setWorkspaceNamespaceBindings(ctx context.Context,
 		if err != nil {
 			return nil, err
 		}
-		isDefaultNamespace := namespace == defaultNamespace
+		isDefaultNamespace := namespace == *defaultNamespace
 
 		// Change the workspace-namespace binding for the given cluster if it already exists. If no
 		// namespace is bound to the workspace for the specified cluster, add one.
@@ -809,13 +851,13 @@ func (a *apiServer) setWorkspaceNamespaceBindings(ctx context.Context,
 			}
 			namespaceBindings[clusterName] = &workspacev1.WorkspaceNamespaceBinding{
 				WorkspaceId: int32(wkspID),
-				Namespace:   *namespace,
+				Namespace:   namespace,
 				ClusterName: clusterName,
 			}
 			// The workspace has no namespace binding for the specified cluster, so we add one.
 			wsns = model.WorkspaceNamespace{
 				WorkspaceID: wkspID,
-				Namespace:   *namespace,
+				Namespace:   namespace,
 				ClusterName: clusterName,
 			}
 			if !isDefaultNamespace {
@@ -824,7 +866,7 @@ func (a *apiServer) setWorkspaceNamespaceBindings(ctx context.Context,
 					return nil, err
 				}
 			}
-		} else if wsns.Namespace != *namespace {
+		} else if wsns.Namespace != namespace {
 			if !isDefaultNamespace {
 				// Update the existing workspace-namespace binding for the specified cluster.
 				_, err = tx.NewUpdate().Model(&model.WorkspaceNamespace{}).
@@ -853,9 +895,14 @@ func (a *apiServer) setWorkspaceNamespaceBindings(ctx context.Context,
 		}
 		namespaceBindings[clusterName] = &workspacev1.WorkspaceNamespaceBinding{
 			WorkspaceId: w.Id,
-			Namespace:   *namespace, ClusterName: clusterName,
+			Namespace:   namespace, ClusterName: clusterName,
 		}
 	}
+
+	if noLicenseError != nil {
+		return nil, noLicenseError
+	}
+
 	resp := &apiv1.SetWorkspaceNamespaceBindingsResponse{NamespaceBindings: namespaceBindings}
 	return resp, nil
 }

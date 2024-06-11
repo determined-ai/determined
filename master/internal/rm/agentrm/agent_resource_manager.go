@@ -590,6 +590,12 @@ func (a *ResourceManager) VerifyNamespaceExists(string, string) error {
 		rmerrors.ErrNotSupported)
 }
 
+// CreateNamespace is not supported.
+func (a *ResourceManager) CreateNamespace(string, string, bool) error {
+	return fmt.Errorf("cannot create a namespace with resource manager type AgentRM: %w",
+		rmerrors.ErrNotSupported)
+}
+
 // DeleteNamespace is not supported.
 func (a *ResourceManager) DeleteNamespace(namespaceName string) error {
 	// We don't want to error out when this gets called, because the function cannot get called
