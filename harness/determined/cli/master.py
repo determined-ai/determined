@@ -1,5 +1,5 @@
 import argparse
-from datetime import datetime
+import datetime
 from typing import Any, List, Optional
 
 from determined import cli
@@ -71,7 +71,7 @@ def logs(args: argparse.Namespace) -> None:
         print(format_log_entry(response.logEntry))
 
 
-def set_cluster_message(args: argparse.Namespace) -> None:
+def set_message(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
 
     if args.message is None:
@@ -101,6 +101,7 @@ def get_cluster_message(args: argparse.Namespace) -> None:
 
 # fmt: off
 
+timestring = "%Y-%m-%dT%H:%M:%SZ"
 args_description = [
     cli.Cmd("master", None, "manage master", [
         cli.Cmd(
@@ -155,20 +156,21 @@ args_description = [
                 "of the log (default is all)")
         ]),
         cli.Cmd("cluster-message", None, "set or clear cluster-wide message", [
-            cli.Cmd("set", set_cluster_message, "create or edit the displayed cluster-wide message", [
-                cli.Arg("-s", "--start", default=datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ"),
+            cli.Cmd("set", set_message, "create or edit the displayed cluster-wide message", [
+                cli.Arg("-s", "--start", default=datetime.datetime.utcnow().strftime(timestring),
                     help="Timestamp to start displaying message (RFC 3339 format), "
                     + "e.g. '2021-10-26T23:17:12Z'; default is now."),
                 cli.Group(
                     cli.Arg("-e", "--end", default=None,
-                        help="Timestamp to end displaying message (RFC 3339 format), "
-                        + "e.g. '2021-10-26T23:17:12Z'; default is indefinite."),
+                            help="Timestamp to end displaying message (RFC 3339 format), "
+                            + "e.g. '2021-10-26T23:17:12Z'; default is indefinite."),
                     cli.Arg("-d", "--duration", default=None,
-                        help="How long the message should last; mutually exclusive with --end and should"
-                        + "be formatted as a Go duration string e.g. 24h, 2w, 5d"),
+                            help="How long the message should last; mutually exclusive with "
+                            + "--end and should be formatted as a Go duration string "
+                            + "e.g. 24h, 2w, 5d"),
                 ),
                 cli.Arg("-m", "--message", default=None,
-                    help="Text of the message to display to users"),
+                        help="Text of the message to display to users"),
             ]),
             cli.Cmd("clear", clear_cluster_message, "clear cluster-wide message", [
                 cli.Arg("-c", "--clear", action="store_true", default=False,
