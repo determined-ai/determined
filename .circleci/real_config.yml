@@ -2159,6 +2159,10 @@ jobs:
       - codecov/upload:
           flags: "backend"
           xtra_args: "-v -X fixes"
+      - upload_tests_datadog:
+          command: |
+              npm install -g @datadog/datadog-ci
+              datadog-ci version
       - store_test_results:
           path: master/test-intg.junit.xml
       - persist_to_workspace:
