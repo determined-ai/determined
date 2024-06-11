@@ -199,12 +199,14 @@ func (a *agents) createAgent(
 		return nil, errors.Errorf("invalid agent id specified: %s", id)
 	}
 	if resourcePool == "" {
+		a.syslog.Info("resource pool is empty; using default resource pool: default")
 		resourcePool = "default"
 	}
 
 	var poolConfig *config.ResourcePoolConfig
 	for _, pc := range a.poolConfigs {
-		a.syslog.Info("resource pool = " + pc.PoolName)
+		// The address of a loop variable is always the same. Use a temporary variable to capture the address.
+		pc := pc
 		if pc.PoolName == resourcePool {
 			poolConfig = &pc
 			break
