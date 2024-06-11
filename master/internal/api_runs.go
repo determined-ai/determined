@@ -192,7 +192,7 @@ func sortRuns(sortString *string, runQuery *bun.SelectQuery) error {
 		"checkpointSize":        "checkpoint_size",
 		"checkpointCount":       "checkpoint_count",
 		"duration":              "duration",
-		"searcherMetricsVal":    "r.searcher_metric_val",
+		"searcherMetricsVal":    "r.searcher_metric_value",
 		"externalExperimentId":  "e.external_experiment_id",
 		"externalRunId":         "r.external_run_id",
 		"experimentId":          "e.id",
