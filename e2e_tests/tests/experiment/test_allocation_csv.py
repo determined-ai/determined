@@ -33,7 +33,7 @@ def test_experiment_capture() -> None:
 
     # Check if an entry exists for experiment that just ran
     reader = csv.DictReader(io.StringIO(r.text))
-    matches = [row for row in reader if int(row["experiment_id"]) == experiment_id]
+    matches = [row for row in reader if row["experiment_id"] == str(experiment_id)]
     assert len(matches) >= 1, f"could not find any rows for experiment {experiment_id}"
 
 
@@ -93,7 +93,7 @@ def test_tensorboard_experiment_capture() -> None:
 
     # Confirm Experiment is captured and valid
     reader = csv.DictReader(io.StringIO(r.text))
-    matches = [row for row in reader if int(row["experiment_id"]) == experiment_id]
+    matches = [row for row in reader if row["experiment_id"] == str(experiment_id)]
     assert len(matches) >= 1
 
     # Confirm Tensorboard task is captured
