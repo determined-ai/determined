@@ -209,6 +209,9 @@ def list_tasks(args: argparse.Namespace) -> None:
     if not args.all:
         params["users"] = [sess.username]
 
+    if args.ids:
+        params["ids"] = args.ids
+
     res = sess.get(api_full_path, params=params).json()[api_path]
 
     if args.quiet:

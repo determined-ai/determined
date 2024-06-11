@@ -247,3 +247,8 @@ def add_args(parser: argparse.ArgumentParser, description: ArgsDescription, dept
 def string_to_bool(s: str) -> bool:
     """Converts string values to boolean for flag arguments (e.g. --active=true)"""
     return util.strtobool(s)
+
+
+def string_to_list(s: str) -> list[str]:
+    """Converts string values to a list for arguments"""
+    return s.split(" ")

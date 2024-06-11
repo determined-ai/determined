@@ -65,6 +65,18 @@ def test_basic_workflows(tmp_path: pathlib.Path) -> None:
         "non-existent-path' doesn't exist",
     )
 
+    output = detproc.check_output(sess, ["det", "cmd", "list"]).split("\n")
+    assert len(output) > 3
+
+    output.pop(0)  # remove header
+    output.pop(0)  # remove divider
+    id0 = output[0].split("|")[0].strip()
+    id1 = output[1].split("|")[0].strip()
+    output = detproc.check_output(sess, ["det", "cmd", "list", "--ids", f"{id0} {id1} invalid-id"])
+    assert len(output.split("\n")) == 5  # header, divider, record * 2, empty line
+    assert id0 in output
+    assert id1 in output
+
 
 @pytest.mark.slow
 @pytest.mark.e2e_cpu

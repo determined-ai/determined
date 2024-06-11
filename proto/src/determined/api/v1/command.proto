@@ -42,6 +42,8 @@ message GetCommandsRequest {
   // Limit commands to those within a specific workspace, or 0 for all
   // accessible workspaces.
   int32 workspace_id = 7;
+  // Limit commands to the list of ids.
+  repeated string ids = 8;
 }
 // Response to GetCommandsRequest.
 message GetCommandsResponse {
