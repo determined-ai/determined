@@ -567,6 +567,7 @@ func TestAssignResources(t *testing.T) {
 		JobID:             model.JobID("test-job"),
 		JobSubmissionTime: time.Now(),
 		SlotsNeeded:       2,
+		AllocationID:      model.AllocationID("test-alloc"),
 	}
 	groups[allocateReq.JobID] = &tasklist.Group{
 		JobID: allocateReq.JobID,
@@ -588,23 +589,26 @@ func TestAssignResources(t *testing.T) {
 		name           string
 		slotsRequested int
 		maxSlotsPerPod int
-		expSlots       []int
+		expSlots       int
 	}{
-		{"slots < max_slots_per_pod", 1, 2, []int{1}},
-		{"slots multiple of max_slots_per_pod", 6, 2, []int{6}},
-		{"invalid slots request", 3, 2, []int{}},
+		{"slots < max_slots_per_pod", 1, 2, 1},
+		{"slots multiple of max_slots_per_pod", 6, 2, 6},
+		{"invalid slots request", 3, 2, 0},
 	}
-	for _, c := range cases {
+	for i, c := range cases {
 		t.Run(c.name, func(t *testing.T) {
 			allocateReq.SlotsNeeded = c.slotsRequested
+			allocateReq.AllocationID = model.AllocationID(fmt.Sprintf("test-alloc-%d", i))
 			poolRef.maxSlotsPerPod = c.maxSlotsPerPod
 			poolRef.assignResources(&allocateReq)
 			resourcesAllocated := poolRef.reqList.Allocation(allocateReq.AllocationID)
-
-			podSlotsAllocated := []int{}
-			for k, v := range resourcesAllocated.Resources {
-				podSlotsAllocated = append(podSlotsAllocated, v.Summary().Slots())
-				delete(resourcesAllocated.Resources, k)
+			if c.expSlots == 0 {
+				require.Nil(t, resourcesAllocated)
+				return
+			}
+			podSlotsAllocated := 0
+			for _, v := range resourcesAllocated.Resources {
+				podSlotsAllocated = v.Summary().Slots()
 			}
 			require.Equal(t, c.expSlots, podSlotsAllocated)
 		})
