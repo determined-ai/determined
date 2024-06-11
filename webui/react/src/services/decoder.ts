@@ -1,7 +1,7 @@
 import dayjs from 'dayjs';
 
 import * as ioTypes from 'ioTypes';
-import { BrandingType, DeterminedInfo } from 'stores/determinedInfo';
+import { BrandingType, ClusterMessage, DeterminedInfo } from 'stores/determinedInfo';
 import { Pagination, RawJson } from 'types';
 import * as types from 'types';
 import { flattenObject, isNullOrUndefined, isNumber, isObject, isPrimitive } from 'utils/data';
@@ -90,7 +90,7 @@ export const mapV1MasterInfo = (data: Sdk.V1GetMasterResponse): DeterminedInfo =
     return acc;
   }, BrandingType.Determined);
 
-  const clustMsg = data.clusterMessage
+  const clustMsg: ClusterMessage | undefined = data.clusterMessage
     ? {
         createdTime: data.clusterMessage.createdTime
           ? new Date(data.clusterMessage.createdTime.toString())

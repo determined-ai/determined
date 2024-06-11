@@ -17,10 +17,10 @@ import NavigationSideBar from './NavigationSideBar';
 import NavigationTabbar from './NavigationTabbar';
 
 interface Props extends PropsWithChildren {
-  clusterMessagePresent?: boolean;
+  isClusterMessagePresent?: boolean;
 }
 
-const Navigation: React.FC<Props> = ({ clusterMessagePresent, children }) => {
+const Navigation: React.FC<Props> = ({ isClusterMessagePresent, children }) => {
   useInitApi();
   const { ui } = useUI();
   const info = useObservable(determinedStore.info);
@@ -47,7 +47,7 @@ const Navigation: React.FC<Props> = ({ clusterMessagePresent, children }) => {
   }, [loadableCurrentUser, rbacEnabled]);
 
   const navClasses = [css.base];
-  if (clusterMessagePresent) {
+  if (isClusterMessagePresent) {
     navClasses.push(css.clusterMessage);
   }
 

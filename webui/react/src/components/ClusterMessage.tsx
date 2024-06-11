@@ -9,14 +9,12 @@ interface Props {
 }
 
 const ClusterMessageBanner: React.FC<Props> = ({ message }) => {
-  return message ? (
+  return message && message.message.length > 0 ? (
     <div className={css.base}>
-      <span>
-        <span className={css.clusterMessageLabel} data-testid="admin-msg">
-          Message from Admin:
-        </span>{' '}
-        <span data-testid="cluster-msg">{message.message}</span>
+      <span className={css.clusterMessageLabel} data-testid="admin-msg">
+        Message from Admin:
       </span>
+      <span data-testid="cluster-msg">{message.message}</span>
     </div>
   ) : null;
 };

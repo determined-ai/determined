@@ -6,7 +6,6 @@ from determined import cli
 from determined.cli import render
 from determined.common import util
 from determined.common.api import bindings
-from determined.common.util import is_protobuf_timestamp
 
 
 def show_config(args: argparse.Namespace) -> None:
@@ -77,9 +76,9 @@ def set_message(args: argparse.Namespace) -> None:
 
     if args.message is None:
         raise ValueError("Provide a message using the -m flag.")
-    if args.start is not None and not is_protobuf_timestamp(args.start):
+    if args.start is not None and not util.is_protobuf_timestamp(args.start):
         raise ValueError("Start time must be RFC-3339, i.e. of the form YYYY-MM-DDThh:mm:ssZ")
-    if args.end is not None and not is_protobuf_timestamp(args.end):
+    if args.end is not None and not util.is_protobuf_timestamp(args.end):
         raise ValueError("End time must be RFC-3339, i.e. of the form YYYY-MM-DDThh:mm:ssZ")
 
     body = bindings.v1SetClusterMessageRequest(

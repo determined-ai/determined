@@ -5,20 +5,21 @@ $height: 40px;
   background-color: #b44;
   color: #ddd;
   display: inline-flex;
+  gap: 4px;
   height: $height;
   justify-content: center;
   min-height: $height;
   padding: 0 1em;
   width: 100%;
-}
-.base > * {
-  max-height: 100%;
-  overflow: hidden;
-  text-align: center;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+
+  > span {
+    max-height: 100%;
+    overflow: hidden;
+    text-align: center;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
 }
 .clusterMessageLabel {
   font-weight: bold;
-  width: 60%;
 }

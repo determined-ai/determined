@@ -172,7 +172,7 @@ const AppView: React.FC = () => {
               {isServerReachable ? (
                 <ConfirmationProvider>
                   <ClusterMessageBanner message={info.clusterMessage} />
-                  <Navigation clusterMessagePresent={!!info.clusterMessage}>
+                  <Navigation isClusterMessagePresent={!!info.clusterMessage}>
                     <JupyterLabGlobal
                       enabled={
                         Loadable.isLoaded(loadableUser) &&
