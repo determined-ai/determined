@@ -250,6 +250,6 @@ def string_to_bool(s: str) -> bool:
     return util.strtobool(s)
 
 
-def string_to_list(s: str) -> typing.list[str]:
+def string_to_list(s: str) -> typing.List[str]:
     """Converts string values to a list for arguments"""
     return s.split(" ")
