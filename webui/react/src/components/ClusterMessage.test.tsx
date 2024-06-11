@@ -23,7 +23,7 @@ describe('ClusterMessageBanner', () => {
     // make sure the cluster message is visible, but the admin msg is not.
     expect(screen.getByText(msg)).toBeInTheDocument();
     expect(screen.getByTestId('admin-msg')).toBeInTheDocument();
-    expect(screen.getByTestId('cluster-msg').textContent).toEqual(msg);
+    expect(screen.getByTestId('cluster-msg')).toHaveTextContent(msg);
   });
 
   it('should not have a banner when there is no cluster message', () => {
