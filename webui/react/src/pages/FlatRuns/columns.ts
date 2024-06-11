@@ -61,7 +61,7 @@ export type RunColumn = (typeof runColumns)[number];
 
 export const defaultRunColumns: RunColumn[] = [...runColumns];
 
-export const defaultSearchRunColumns: RunColumn[] = [...runColumns].filter(
+export const defaultSearchRunColumns: RunColumn[] = runColumns.filter(
   (c) => !EXCLUDED_SEARCH_DEFAULT_COLUMNS?.includes(c),
 );
 
