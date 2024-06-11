@@ -6,11 +6,6 @@ import { useModal } from 'hew/Modal';
 import UIProvider, { DefaultTheme } from 'hew/Theme';
 import { useMemo } from 'react';
 
-import {
-  Conjunction,
-  FilterFormSetWithoutId,
-  FormKind,
-} from 'components/FilterForm/components/type';
 import { V1MoveRunsRequest } from 'services/api-ts-sdk';
 import { FlatRun, RunState } from 'types';
 
@@ -50,23 +45,12 @@ const Container = (): JSX.Element => {
     ];
   }, []);
 
-  const filterFormSetWithoutId: FilterFormSetWithoutId = useMemo(() => {
-    return {
-      filterGroup: { children: [], conjunction: Conjunction.Or, kind: FormKind.Group },
-      showArchived: false,
-    };
-  }, []);
-
   const flatRunMoveModal = useModal(FlatRunMoveModalComponent);
 
   return (
     <div>
       <Button onClick={flatRunMoveModal.open}>{OPEN_MODAL_TEXT}</Button>
-      <flatRunMoveModal.Component
-        filterFormSetWithoutId={filterFormSetWithoutId}
-        flatRuns={BASE_FLAT_RUNS}
-        sourceProjectId={1}
-      />
+      <flatRunMoveModal.Component flatRuns={BASE_FLAT_RUNS} sourceProjectId={1} />
     </div>
   );
 };
