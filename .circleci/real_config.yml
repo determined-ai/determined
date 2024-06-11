@@ -3670,13 +3670,6 @@ jobs:
           environment-image: <<parameters.environment-image>>
           accel-node-taints: <<parameters.accel-node-taints>>
       - set-google-application-credentials
-      - when:
-          condition: <<parameters.environment-image>>
-          steps:
-            - run:
-                command: |
-                  echo 'export TF2_GPU_IMAGE="<<parameters.environment-image>>"' >> "$BASH_ENV"
-                name: override test env images.
       - run-e2e-tests:
           mark: <<parameters.mark>>
           master-host: ${MASTER_HOST}

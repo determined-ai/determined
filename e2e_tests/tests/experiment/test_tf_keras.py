@@ -42,7 +42,7 @@ def test_tf_keras_parallel(aggregation_frequency: int) -> None:
     config = conf.set_slots_per_trial(config, 8)
     config = conf.set_max_length(config, {"batches": 200})
     config = conf.set_aggregation_frequency(config, aggregation_frequency)
-    config = conf.set_tf2_image(config, ignore_env=True)
+    config = conf.set_tf2_image(config)
     config = conf.set_profiling_enabled(config)
 
     experiment_id = exp.run_basic_test_with_temp_config(

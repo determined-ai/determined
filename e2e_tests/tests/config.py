@@ -139,9 +139,7 @@ def set_image(config: Dict[Any, Any], cpu_image: str, gpu_image: str) -> Dict[An
     return config
 
 
-def set_tf2_image(config: Dict[Any, Any], ignore_env: bool = False) -> Dict[Any, Any]:
-    if ignore_env:
-        return set_image(config, DEFAULT_TF2_CPU_IMAGE, DEFAULT_TF2_GPU_IMAGE)
+def set_tf2_image(config: Dict[Any, Any]) -> Dict[Any, Any]:
     return set_image(config, TF2_CPU_IMAGE, TF2_GPU_IMAGE)
 
 
