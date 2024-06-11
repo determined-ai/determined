@@ -205,7 +205,7 @@ func (a *agents) createAgent(
 
 	var poolConfig *config.ResourcePoolConfig
 	for _, pc := range a.poolConfigs {
-		pc := pc
+		a.syslog.Info("resource pool = " + pc.PoolName)
 		if pc.PoolName == resourcePool {
 			poolConfig = &pc
 			break
