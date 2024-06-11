@@ -2163,7 +2163,7 @@ jobs:
           name: Upload Tests to DataDog
           command: |
               npm install -g @datadog/datadog-ci
-              datadog-ci version
+              datadog-ci junit upload --service "determined-ai/master/test-intg" --env "ci-local" master/test-intg.junit.xml
       - store_test_results:
           path: master/test-intg.junit.xml
       - persist_to_workspace:
@@ -2192,6 +2192,11 @@ jobs:
       - codecov/upload:
           flags: "backend"
           xtra_args: "-v -X fixes"
+      - run:
+          name: Upload Tests to DataDog
+          command: |
+              npm install -g @datadog/datadog-ci
+              datadog-ci junit upload --service "determined-ai/agent/test-intg" --env "ci-local" agent/test-intg.junit.xml
       - store_test_results:
           path: agent/test-intg.junit.xml
       - persist_to_workspace:
