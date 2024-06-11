@@ -388,6 +388,7 @@ export const PachdIntegration = t.type({
     }),
   }),
 });
+export type PachdIntegrationType = t.TypeOf<typeof PachdIntegration>;
 const Hyperparameters: t.RecursiveType<t.Type<Hyperparameters>> = t.recursion(
   'Hyperparameters',
   () => t.record(t.string, t.union([Hyperparameters, HyperparameterBase])),

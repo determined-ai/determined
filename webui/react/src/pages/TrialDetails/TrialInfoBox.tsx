@@ -7,6 +7,7 @@ import TimeAgo from 'components/TimeAgo';
 import { useCheckpointFlow } from 'hooks/useCheckpointFlow';
 import { handlePath } from 'routes/utils';
 import { CheckpointWorkloadExtended, ExperimentBase, TrialDetails } from 'types';
+import { createIntegrationLink } from 'utils/integrations';
 import { AnyMouseEvent } from 'utils/routes';
 import { humanReadableBytes } from 'utils/string';
 
@@ -64,12 +65,10 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
         url: '-',
       };
 
-    const { dataset, proxy } = integrations.pachyderm;
-
     return {
       hasIntegrationData: true,
       text: '<MLDM repo>',
-      url: `${proxy.scheme}://${proxy.host}:${proxy.port}/linage/${dataset.project}/repos/${dataset.repo}/commit/${dataset.commit}/?branchId=${dataset.branch}`,
+      url: createIntegrationLink(integrations),
     };
   }, [experiment]);
 
