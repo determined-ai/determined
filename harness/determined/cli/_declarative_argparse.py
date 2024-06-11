@@ -2,7 +2,6 @@ import argparse
 import functools
 import itertools
 from typing import Any, Callable, List, NamedTuple, Optional, Tuple, Union, cast
-import typing
 
 import termcolor
 
@@ -250,6 +249,6 @@ def string_to_bool(s: str) -> bool:
     return util.strtobool(s)
 
 
-def string_to_list(s: str) -> typing.List[str]:
+def string_to_list(s: str) -> List[str]:
     """Converts string values to a list for arguments"""
     return s.split(" ")
