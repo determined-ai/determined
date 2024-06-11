@@ -120,7 +120,7 @@ func TestConfigureProxyResources(t *testing.T) {
 						Name:      alphaGatewayTyped.ObjectName("gatewayname"),
 						Port:      ptrs.Ptr(alphaGatewayTyped.PortNumber(12345)),
 						SectionName: ptrs.Ptr(alphaGatewayTyped.SectionName(
-							generateListenerName("allocID", 12345),
+							generateListenerName(12345),
 						)),
 					},
 				},
@@ -141,7 +141,7 @@ func TestConfigureProxyResources(t *testing.T) {
 		},
 	}
 
-	listener := createListenerForPod("allocID", 12345)
+	listener := createListenerForPod(12345)
 
 	require.Equal(t, []gatewayProxyResource{
 		{
@@ -297,33 +297,6 @@ func TestDetProxyThroughGatewayEnv(t *testing.T) {
 			keys = append(keys, a.Name)
 		}
 		require.NotContains(t, keys, "DET_PROXY_THROUGH_GATEWAY")
-	})
-}
-
-func TestStripIndexFromSharedName(t *testing.T) {
-	require.Equal(t, "1-2-3", stripIndexFromSharedName("1-2-3-4"))
-	require.Equal(t, "", stripIndexFromSharedName("-"))
-	require.Equal(t, "", stripIndexFromSharedName(""))
-}
-
-func TestListenerName(t *testing.T) {
-	t.Run("allocationID", func(t *testing.T) {
-		allocationID := "abc-cde"
-		require.Equal(t, allocationID, getAllocationIDFromListenerName(
-			generateListenerName(model.AllocationID(allocationID), 1234),
-		))
-	})
-
-	t.Run("non determined", func(t *testing.T) {
-		require.Empty(t, getAllocationIDFromListenerName("mygatewayport"))
-	})
-
-	t.Run("invalid format", func(t *testing.T) {
-		require.Empty(t, getAllocationIDFromListenerName("mygatewayport"))
-	})
-
-	t.Run("invalid format", func(t *testing.T) {
-		require.Empty(t, getAllocationIDFromListenerName("det-"))
 	})
 }
 

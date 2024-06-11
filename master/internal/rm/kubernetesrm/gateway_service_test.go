@@ -33,19 +33,31 @@ func TestGatewayServiceAddListeners(t *testing.T) {
 	require.NoError(t, err)
 
 	toReturn := &gatewayTyped.Gateway{
+		ObjectMeta: metaV1.ObjectMeta{
+			Annotations: map[string]string{
+				portToAnnotationKey(1): "alloc",
+			},
+		},
 		Spec: gatewayTyped.GatewaySpec{
 			Listeners: []gatewayTyped.Listener{
-				createListenerForPod("alloc", 1),
+				createListenerForPod(1),
 			},
 		},
 	}
 
 	expected := &gatewayTyped.Gateway{
+		ObjectMeta: metaV1.ObjectMeta{
+			Annotations: map[string]string{
+				portToAnnotationKey(1): "alloc",
+				portToAnnotationKey(2): "alloc",
+				portToAnnotationKey(3): "alloc",
+			},
+		},
 		Spec: gatewayTyped.GatewaySpec{
 			Listeners: []gatewayTyped.Listener{
-				createListenerForPod("alloc", 1),
-				createListenerForPod("alloc", 2),
-				createListenerForPod("alloc", 3),
+				createListenerForPod(1),
+				createListenerForPod(2),
+				createListenerForPod(3),
 			},
 		},
 	}
@@ -71,6 +83,13 @@ func TestGatewayServiceFreePorts(t *testing.T) {
 	require.NoError(t, err)
 
 	toReturn := &gatewayTyped.Gateway{
+		ObjectMeta: metaV1.ObjectMeta{
+			Annotations: map[string]string{
+				portToAnnotationKey(1): "alloc",
+				portToAnnotationKey(2): "alloc",
+				portToAnnotationKey(3): "alloc",
+			},
+		},
 		Spec: gatewayTyped.GatewaySpec{
 			Listeners: []gatewayTyped.Listener{
 				{
@@ -87,6 +106,11 @@ func TestGatewayServiceFreePorts(t *testing.T) {
 	}
 
 	expected := &gatewayTyped.Gateway{
+		ObjectMeta: metaV1.ObjectMeta{
+			Annotations: map[string]string{
+				portToAnnotationKey(2): "alloc",
+			},
+		},
 		Spec: gatewayTyped.GatewaySpec{
 			Listeners: []gatewayTyped.Listener{
 				{
@@ -222,7 +246,7 @@ func TestGatewayServicePickPorts(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			listeners := []gatewayTyped.Listener{}
 			for _, port := range tc.usedPorts {
-				listeners = append(listeners, createListenerForPod("alloc", port))
+				listeners = append(listeners, createListenerForPod(port))
 			}
 			gatewayGetReturn := &gatewayTyped.Gateway{
 				Spec: gatewayTyped.GatewaySpec{
