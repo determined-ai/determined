@@ -199,7 +199,6 @@ func (a *agents) createAgent(
 		return nil, errors.Errorf("invalid agent id specified: %s", id)
 	}
 	if resourcePool == "" {
-		a.syslog.Info("resource pool is empty; using default resource pool: default")
 		resourcePool = "default"
 	}
 
