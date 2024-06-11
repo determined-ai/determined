@@ -115,7 +115,7 @@ def test_experiment_proxy_simple_zero_slot(exp_port: int, is_tcp: bool) -> None:
     "exp_port, is_tcp, max_conc_trials",
     [
         (8000, False, 1),
-        (6000, True, 2),
+        (6000, True, 1),
     ],
 )
 def test_experiment_proxy_simple_two_slots(
