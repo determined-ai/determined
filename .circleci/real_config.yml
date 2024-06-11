@@ -2159,7 +2159,8 @@ jobs:
       - codecov/upload:
           flags: "backend"
           xtra_args: "-v -X fixes"
-      - upload_tests_datadog:
+      - run:
+          name: Upload Tests to DataDog
           command: |
               npm install -g @datadog/datadog-ci
               datadog-ci version
