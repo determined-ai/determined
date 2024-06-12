@@ -54,12 +54,12 @@ export class ApiAuthFixture {
   /**
    * Logs in via the API. If there is a browser context already assosciated with the
    * fixture, the bearer token will be attached to that context. If not a new
-   * browser ontext will be created with the cookie.
+   * browser context will be created with the cookie.
    */
   async login({
     creds = { password: this.#PASSWORD, username: this.#USERNAME },
   } = {}): Promise<void> {
-    this.apiContext = await this.request.newContext();
+    this.apiContext = this.apiContext || (await this.request.newContext());
     const resp = await this.apiContext.post('/api/v1/auth/login', {
       data: {
         ...creds,

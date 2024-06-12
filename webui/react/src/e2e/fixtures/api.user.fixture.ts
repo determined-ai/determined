@@ -2,7 +2,7 @@ import streamConsumers from 'stream/consumers';
 
 import _ from 'lodash';
 
-import { safeName } from 'e2e/utils/naming';
+import { randIdAlphanumeric, safeName } from 'e2e/utils/naming';
 import { UsersApi, V1PatchUser, V1PostUserRequest, V1User } from 'services/api-ts-sdk/api';
 
 import { ApiAuthFixture } from './api.auth.fixture';
@@ -16,7 +16,7 @@ export class ApiUserFixture {
   new({ userProps = {}, usernamePrefix = 'test-user' } = {}): V1PostUserRequest {
     const defaults = {
       isHashed: false,
-      password: 'TestPassword1',
+      password: randIdAlphanumeric({ length: 12 }),
       user: {
         active: true,
         admin: true,

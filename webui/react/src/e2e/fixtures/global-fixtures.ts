@@ -30,14 +30,13 @@ type CustomWorkerFixtures = {
 // https://playwright.dev/docs/test-fixtures
 export const test = base.extend<CustomFixtures, CustomWorkerFixtures>({
   /**
-   * Returns a new admin user and a page with the user logged in.
+   * Creates an admin and logs in as that admin for the duraction of the test suite
    */
   adminAuthedPage: [
     async ({ backgroundApiUser }, use, workerInfo) => {
       const adminUser = await backgroundApiUser.createUser(
         backgroundApiUser.new({
           userProps: {
-            password: 'TestPassword1',
             user: {
               active: true,
               admin: true,
@@ -50,15 +49,22 @@ export const test = base.extend<CustomFixtures, CustomWorkerFixtures>({
         creds: { password: adminUser.password!, username: adminUser.user!.username },
       });
       await use({ adminUser, page: backgroundApiUser.apiAuth.page });
+      await backgroundApiUser.apiAuth.login();
+      await backgroundApiUser.patchUser(adminUser.user!.id!, { active: false });
     },
     { scope: 'worker' },
   ],
 
   // get the auth but allow yourself to log in through the api manually.
-  apiAuth: async ({ playwright, browser, dev, baseURL }, use) => {
+  apiAuth: async ({ playwright, browser, dev, baseURL, adminAuthedPage }, use) => {
     await dev.setServerAddress();
     const apiAuth = new ApiAuthFixture(playwright.request, browser, baseURL, dev.page);
-    await apiAuth.login();
+    await apiAuth.login({
+      creds: {
+        password: adminAuthedPage.adminUser.password!,
+        username: adminAuthedPage.adminUser.user!.username,
+      },
+    });
     await use(apiAuth);
   },
 

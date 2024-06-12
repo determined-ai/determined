@@ -44,7 +44,7 @@ test.describe('User Management', () => {
       });
     });
 
-    test.describe('With Test User', () => {
+    test.describe('With a User for Each Test', () => {
       let testUser: V1PostUserRequest;
 
       test.beforeEach(async ({ user }) => {
@@ -82,17 +82,6 @@ test.describe('User Management', () => {
         await test.step('Edit Again', async () => {
           testUser = await user.editUser(testUser, { admin: true, displayName: '' });
           await user.validateUser(testUser);
-        });
-      });
-    });
-
-    test.describe('With Test User', () => {
-      let testUser: V1PostUserRequest;
-
-      test.beforeAll(async ({ backgroundApiUser }) => {
-        await test.step('Create User', async () => {
-          testUser = await backgroundApiUser.createUser(backgroundApiUser.new());
-          saveTestUser(testUser, testUsers);
         });
       });
 
