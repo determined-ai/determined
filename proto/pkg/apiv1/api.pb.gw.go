@@ -9317,6 +9317,24 @@ func local_request_Determined_GetResourcePools_0(ctx context.Context, marshaler 
 
 }
 
+func request_Determined_GetKubernetesResourceManagers_0(ctx context.Context, marshaler runtime.Marshaler, client DeterminedClient, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq GetKubernetesResourceManagersRequest
+	var metadata runtime.ServerMetadata
+
+	msg, err := client.GetKubernetesResourceManagers(ctx, &protoReq, grpc.Header(&metadata.HeaderMD), grpc.Trailer(&metadata.TrailerMD))
+	return msg, metadata, err
+
+}
+
+func local_request_Determined_GetKubernetesResourceManagers_0(ctx context.Context, marshaler runtime.Marshaler, server DeterminedServer, req *http.Request, pathParams map[string]string) (proto.Message, runtime.ServerMetadata, error) {
+	var protoReq GetKubernetesResourceManagersRequest
+	var metadata runtime.ServerMetadata
+
+	msg, err := server.GetKubernetesResourceManagers(ctx, &protoReq)
+	return msg, metadata, err
+
+}
+
 var (
 	filter_Determined_ResourceAllocationRaw_0 = &utilities.DoubleArray{Encoding: map[string]int{}, Base: []int(nil), Check: []int(nil)}
 )
@@ -16058,6 +16076,26 @@ func RegisterDeterminedHandlerServer(ctx context.Context, mux *runtime.ServeMux,
 
 	})
 
+	mux.Handle("GET", pattern_Determined_GetKubernetesResourceManagers_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		rctx, err := runtime.AnnotateIncomingContext(ctx, mux, req)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := local_request_Determined_GetKubernetesResourceManagers_0(rctx, inboundMarshaler, server, req, pathParams)
+		ctx = runtime.NewServerMetadataContext(ctx, md)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_Determined_GetKubernetesResourceManagers_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
 	mux.Handle("GET", pattern_Determined_ResourceAllocationRaw_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
@@ -20979,6 +21017,26 @@ func RegisterDeterminedHandlerClient(ctx context.Context, mux *runtime.ServeMux,
 
 	})
 
+	mux.Handle("GET", pattern_Determined_GetKubernetesResourceManagers_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
+		ctx, cancel := context.WithCancel(req.Context())
+		defer cancel()
+		inboundMarshaler, outboundMarshaler := runtime.MarshalerForRequest(mux, req)
+		rctx, err := runtime.AnnotateContext(ctx, mux, req)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+		resp, md, err := request_Determined_GetKubernetesResourceManagers_0(rctx, inboundMarshaler, client, req, pathParams)
+		ctx = runtime.NewServerMetadataContext(ctx, md)
+		if err != nil {
+			runtime.HTTPError(ctx, mux, outboundMarshaler, w, req, err)
+			return
+		}
+
+		forward_Determined_GetKubernetesResourceManagers_0(ctx, mux, outboundMarshaler, w, req, resp, mux.GetForwardResponseOptions()...)
+
+	})
+
 	mux.Handle("GET", pattern_Determined_ResourceAllocationRaw_0, func(w http.ResponseWriter, req *http.Request, pathParams map[string]string) {
 		ctx, cancel := context.WithCancel(req.Context())
 		defer cancel()
@@ -22659,6 +22717,8 @@ var (
 
 	pattern_Determined_GetResourcePools_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "v1", "resource-pools"}, "", runtime.AssumeColonVerbOpt(true)))
 
+	pattern_Determined_GetKubernetesResourceManagers_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "v1", "k8-resource-managers"}, "", runtime.AssumeColonVerbOpt(true)))
+
 	pattern_Determined_ResourceAllocationRaw_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"api", "v1", "resources", "allocation", "raw"}, "", runtime.AssumeColonVerbOpt(true)))
 
 	pattern_Determined_ResourceAllocationAggregated_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"api", "v1", "resources", "allocation", "aggregated"}, "", runtime.AssumeColonVerbOpt(true)))
@@ -23148,6 +23208,8 @@ var (
 	forward_Determined_TrialsSample_0 = runtime.ForwardResponseStream
 
 	forward_Determined_GetResourcePools_0 = runtime.ForwardResponseMessage
+
+	forward_Determined_GetKubernetesResourceManagers_0 = runtime.ForwardResponseMessage
 
 	forward_Determined_ResourceAllocationRaw_0 = runtime.ForwardResponseMessage
 

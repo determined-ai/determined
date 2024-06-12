@@ -5,13 +5,20 @@ import InputNumber from 'hew/InputNumber';
 import { Modal } from 'hew/Modal';
 import Spinner from 'hew/Spinner';
 import Toggle from 'hew/Toggle';
+import { Body } from 'hew/Typography';
 import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import yaml from 'js-yaml';
+import { pick } from 'lodash';
 import React, { useCallback, useEffect, useId, useMemo } from 'react';
 
+import { useAsync } from 'hooks/useAsync';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
-import { patchWorkspace } from 'services/api';
+import {
+  getKubernetesResourceManagers,
+  listWorkspaceNamespaceBindings,
+  patchWorkspace,
+} from 'services/api';
 import { V1AgentUserGroup } from 'services/api-ts-sdk';
 import workspaceStore from 'stores/workspaces';
 import { Workspace } from 'types';
@@ -31,6 +38,7 @@ interface FormInputs {
   useAgentUser: boolean;
   useCheckpointStorage: boolean;
   workspaceName: string;
+  bindings?: Record<string, string>;
 }
 
 interface Props {
@@ -40,14 +48,61 @@ interface Props {
 
 const CodeEditor = React.lazy(() => import('hew/CodeEditor'));
 
+const isNonK8RMError = (e: unknown): boolean => {
+  return e instanceof DetError && e.sourceErr instanceof Response && e.sourceErr['status'] === 404;
+};
+
 const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }: Props = {}) => {
   const idPrefix = useId();
-  const { canModifyWorkspaceAgentUserGroup, canModifyWorkspaceCheckpointStorage } =
-    usePermissions();
+  const {
+    canModifyWorkspaceAgentUserGroup,
+    canModifyWorkspaceCheckpointStorage,
+    canSetWorkspaceNamespaceBindings,
+  } = usePermissions();
   const [form] = Form.useForm<FormInputs>();
   const useAgentUser = Form.useWatch('useAgentUser', form);
   const useAgentGroup = Form.useWatch('useAgentGroup', form);
   const useCheckpointStorage = Form.useWatch('useCheckpointStorage', form);
+  const resourceManagers = useAsync(async (canceller) => {
+    try {
+      const response = await getKubernetesResourceManagers(undefined, { signal: canceller.signal });
+      return response.names;
+    } catch (e) {
+      handleError(e, {
+        level: ErrorLevel.Error,
+        publicMessage: 'Failed to fetch Resource Managers.',
+        silent: false,
+        type: ErrorType.Server,
+      });
+      return NotLoaded;
+    }
+  }, []);
+
+  const namespaceBindingsList = useAsync(
+    async (canceller) => {
+      if (workspaceId === undefined) {
+        return NotLoaded;
+      }
+      try {
+        const clusterNamespacePairs = await listWorkspaceNamespaceBindings(
+          { id: workspaceId },
+          { signal: canceller.signal },
+        );
+        return clusterNamespacePairs.clusterNamespacePairs;
+      } catch (e) {
+        if (!isNonK8RMError(e)) {
+          handleError(e, {
+            level: ErrorLevel.Error,
+            publicMessage: 'Failed to fetch list of workspace namespace bindings.',
+            silent: false,
+            type: ErrorType.Server,
+          });
+        }
+        return NotLoaded;
+      }
+    },
+    [workspaceId],
+  );
 
   const initFields = useCallback(
     (ws?: Workspace) => {
@@ -70,24 +125,34 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
             useAgentUser: !!agentUid && !!agentUser,
           });
         }
+        namespaceBindingsList.forEach((bindingsList) => {
+          form.setFieldValue('bindings', { ...bindingsList });
+        });
       }
     },
-    [form],
+    [form, namespaceBindingsList],
   );
 
   const loadableWorkspace = useObservable(workspaceStore.getWorkspace(workspaceId || 0));
   const workspace = Loadable.getOrElse(undefined, loadableWorkspace);
+
   useEffect(() => {
     initFields(workspace || undefined);
   }, [workspace, initFields]);
 
-  const [canModifyAUG, canModifyCPS] = useMemo(() => {
+  const [canModifyAUG, canModifyCPS, canModifyBindings] = useMemo(() => {
     const workspace = workspaceId ? { id: workspaceId } : undefined;
     return [
       canModifyWorkspaceAgentUserGroup({ workspace }),
       canModifyWorkspaceCheckpointStorage({ workspace }),
+      canSetWorkspaceNamespaceBindings({ workspace }),
     ];
-  }, [canModifyWorkspaceAgentUserGroup, canModifyWorkspaceCheckpointStorage, workspaceId]);
+  }, [
+    canModifyWorkspaceAgentUserGroup,
+    canModifyWorkspaceCheckpointStorage,
+    canSetWorkspaceNamespaceBindings,
+    workspaceId,
+  ]);
 
   const modalContent = useMemo(() => {
     if (workspaceId && loadableWorkspace === NotLoaded) return <Spinner spinning />;
@@ -110,6 +175,23 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
           ]}>
           <Input maxLength={80} />
         </Form.Item>
+        {canModifyBindings && Loadable.getOrElse([], resourceManagers).length > 0 && (
+          <>
+            <Divider />
+            Namespace Bindings:
+            <Body inactive>
+              Note: If you leave the Namespace name blank, the workspace will be bound to the
+              default Namespace configured in the Master Config.
+            </Body>
+            <>
+              {Loadable.getOrElse([], resourceManagers).map((name) => (
+                <Form.Item key={name} label={name} name={['bindings', name]}>
+                  <Input maxLength={63} />
+                </Form.Item>
+              ))}
+            </>
+          </>
+        )}
         {canModifyAUG && (
           <>
             <Divider />
@@ -214,6 +296,8 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
     loadableWorkspace,
     form,
     idPrefix,
+    canModifyBindings,
+    resourceManagers,
     canModifyAUG,
     useAgentUser,
     useAgentGroup,
@@ -223,7 +307,6 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
 
   const handleSubmit = useCallback(async () => {
     const values = await form.validateFields();
-
     try {
       if (values) {
         const {
@@ -240,9 +323,14 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
           agentUserGroup?: V1AgentUserGroup;
           checkpointStorageConfig?: unknown;
           name: string;
+          clusterNamespacePairs?: Record<string, string>;
         } = {
           name: workspaceName,
         };
+
+        if (values.bindings) {
+          body['clusterNamespacePairs'] = pick(values.bindings, resourceManagers.getOrElse([]));
+        }
 
         if (canModifyAUG) {
           let agentUserGroup = {};
@@ -287,7 +375,7 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
         });
       }
     }
-  }, [form, workspaceId, canModifyAUG, canModifyCPS]);
+  }, [form, workspaceId, canModifyAUG, canModifyCPS, resourceManagers]);
 
   return (
     <Modal

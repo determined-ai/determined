@@ -5325,6 +5325,29 @@ class v1GetJobsV2Response(Printable):
         }
         return out
 
+class v1GetKubernetesResourceManagersResponse(Printable):
+    """Response to GetKubernetesResourceManagersRequest."""
+
+    def __init__(
+        self,
+        *,
+        resourceManagers: "typing.Sequence[str]",
+    ):
+        self.resourceManagers = resourceManagers
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetKubernetesResourceManagersResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "resourceManagers": obj["resourceManagers"],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "resourceManagers": self.resourceManagers,
+        }
+        return out
+
 class v1GetMasterConfigResponse(Printable):
     """Response to GetMasterRequest."""
 
@@ -10266,6 +10289,7 @@ class v1PatchWorkspace(Printable):
     """PatchWorkspace is a partial update to a workspace with all optional fields."""
     agentUserGroup: "typing.Optional[v1AgentUserGroup]" = None
     checkpointStorageConfig: "typing.Optional[typing.Dict[str, typing.Any]]" = None
+    clusterNamespacePairs: "typing.Optional[typing.Dict[str, str]]" = None
     defaultAuxPool: "typing.Optional[str]" = None
     defaultAuxResourcePool: "typing.Optional[str]" = None
     defaultComputePool: "typing.Optional[str]" = None
@@ -10277,6 +10301,7 @@ class v1PatchWorkspace(Printable):
         *,
         agentUserGroup: "typing.Union[v1AgentUserGroup, None, Unset]" = _unset,
         checkpointStorageConfig: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
+        clusterNamespacePairs: "typing.Union[typing.Dict[str, str], None, Unset]" = _unset,
         defaultAuxPool: "typing.Union[str, None, Unset]" = _unset,
         defaultAuxResourcePool: "typing.Union[str, None, Unset]" = _unset,
         defaultComputePool: "typing.Union[str, None, Unset]" = _unset,
@@ -10287,6 +10312,8 @@ class v1PatchWorkspace(Printable):
             self.agentUserGroup = agentUserGroup
         if not isinstance(checkpointStorageConfig, Unset):
             self.checkpointStorageConfig = checkpointStorageConfig
+        if not isinstance(clusterNamespacePairs, Unset):
+            self.clusterNamespacePairs = clusterNamespacePairs
         if not isinstance(defaultAuxPool, Unset):
             self.defaultAuxPool = defaultAuxPool
         if not isinstance(defaultAuxResourcePool, Unset):
@@ -10306,6 +10333,8 @@ class v1PatchWorkspace(Printable):
             kwargs["agentUserGroup"] = v1AgentUserGroup.from_json(obj["agentUserGroup"]) if obj["agentUserGroup"] is not None else None
         if "checkpointStorageConfig" in obj:
             kwargs["checkpointStorageConfig"] = obj["checkpointStorageConfig"]
+        if "clusterNamespacePairs" in obj:
+            kwargs["clusterNamespacePairs"] = obj["clusterNamespacePairs"]
         if "defaultAuxPool" in obj:
             kwargs["defaultAuxPool"] = obj["defaultAuxPool"]
         if "defaultAuxResourcePool" in obj:
@@ -10325,6 +10354,8 @@ class v1PatchWorkspace(Printable):
             out["agentUserGroup"] = None if self.agentUserGroup is None else self.agentUserGroup.to_json(omit_unset)
         if not omit_unset or "checkpointStorageConfig" in vars(self):
             out["checkpointStorageConfig"] = self.checkpointStorageConfig
+        if not omit_unset or "clusterNamespacePairs" in vars(self):
+            out["clusterNamespacePairs"] = self.clusterNamespacePairs
         if not omit_unset or "defaultAuxPool" in vars(self):
             out["defaultAuxPool"] = self.defaultAuxPool
         if not omit_unset or "defaultAuxResourcePool" in vars(self):
@@ -18934,6 +18965,25 @@ jobs ahead.
         return v1GetJobsV2Response.from_json(_resp.json())
     raise APIHttpError("get_GetJobsV2", _resp)
 
+def get_GetKubernetesResourceManagers(
+    session: "api.BaseSession",
+) -> "v1GetKubernetesResourceManagersResponse":
+    """Get a list of all Kubernetes cluster names."""
+    _params = None
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/k8-resource-managers",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1GetKubernetesResourceManagersResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetKubernetesResourceManagers", _resp)
+
 def get_GetMaster(
     session: "api.BaseSession",
 ) -> "v1GetMasterResponse":
@@ -23264,7 +23314,7 @@ def post_SetWorkspaceNamespaceBindings(
 ) -> "v1SetWorkspaceNamespaceBindingsResponse":
     """Add namespace binding to a workspace.
 
-    - workspaceId: The id of the workspace.
+    - workspaceId: The unique id of the workspace.
     """
     _params = None
     _resp = session._do_request(

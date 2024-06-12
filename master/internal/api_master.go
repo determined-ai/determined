@@ -365,3 +365,21 @@ func (a *apiServer) DeleteClusterMessage(
 
 	return &apiv1.DeleteClusterMessageResponse{}, nil
 }
+
+func (a *apiServer) GetKubernetesResourceManagers(
+	ctx context.Context,
+	req *apiv1.GetKubernetesResourceManagersRequest,
+) (*apiv1.GetKubernetesResourceManagersResponse, error) {
+	u, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	permErr, err := cluster.AuthZProvider.Get().CanGetMasterConfig(ctx, u)
+	if err != nil {
+		return nil, err
+	} else if permErr != nil {
+		return nil, permErr
+	}
+
+	return &apiv1.GetKubernetesResourceManagersResponse{ResourceManagers: a.m.config.GetKubernetesClusterNames()}, nil
+}

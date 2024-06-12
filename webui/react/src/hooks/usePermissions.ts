@@ -86,6 +86,7 @@ interface PermissionsHook {
   canModifyWorkspace: (arg0: WorkspacePermissionsArgs) => boolean;
   canModifyWorkspaceAgentUserGroup: (arg0: WorkspacePermissionsArgs) => boolean;
   canModifyWorkspaceCheckpointStorage: (arg0: WorkspacePermissionsArgs) => boolean;
+  canSetWorkspaceNamespaceBindings: (arg0: WorkspacePermissionsArgs) => boolean;
   canModifyWorkspaceNSC(arg0: WorkspacePermissionsArgs): boolean;
   canMoveExperiment: (arg0: ExperimentPermissionsArgs) => boolean;
   canMoveExperimentsTo: (arg0: MovePermissionsArgs) => boolean;
@@ -186,6 +187,8 @@ const usePermissions = (): PermissionsHook => {
         canMoveWorkspaceProjects(rbacOpts, args.project),
       canMoveProjectsTo: (args: MovePermissionsArgs) =>
         canMoveProjectsTo(rbacOpts, args.destination),
+      canSetWorkspaceNamespaceBindings: (args: WorkspacePermissionsArgs) =>
+        canSetWorkspaceNamespaceBindings(rbacOpts, args.workspace),
       canUpdateRoles: (args: WorkspacePermissionsArgs) => canUpdateRoles(rbacOpts, args.workspace),
       canViewExperimentArtifacts: (args: WorkspacePermissionsArgs) =>
         canViewExperimentArtifacts(rbacOpts, args.workspace),
@@ -581,6 +584,17 @@ const canModifyWorkspaceCheckpointStorage = (
     (rbacEnabled
       ? permitted.has(V1PermissionType.SETWORKSPACECHECKPOINTSTORAGECONFIG)
       : currentUser.isAdmin)
+  );
+};
+
+const canSetWorkspaceNamespaceBindings = (
+  { currentUser, rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
+  workspace?: PermissionWorkspace,
+): boolean => {
+  const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
+  return (
+    !!currentUser &&
+    (rbacEnabled ? permitted.has(V1PermissionType.MODIFYRPWORKSPACEBINDINGS) : currentUser.isAdmin)
   );
 };
 

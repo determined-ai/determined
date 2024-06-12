@@ -4131,6 +4131,19 @@ export interface V1GetJobsV2Response {
     jobs: Array<V1RBACJob>;
 }
 /**
+ * Response to GetKubernetesResourceManagersRequest.
+ * @export
+ * @interface V1GetKubernetesResourceManagersResponse
+ */
+export interface V1GetKubernetesResourceManagersResponse {
+    /**
+     * List of clusters
+     * @type {Array<string>}
+     * @memberof V1GetKubernetesResourceManagersResponse
+     */
+    resourceManagers: Array<string>;
+}
+/**
  * Response to GetMasterRequest.
  * @export
  * @interface V1GetMasterConfigResponse
@@ -7564,6 +7577,12 @@ export interface V1PatchWorkspace {
      * @memberof V1PatchWorkspace
      */
     defaultAuxResourcePool?: string;
+    /**
+     * Optional cluster namespace map to create a workspace namespace binding for each cluster.
+     * @type {{ [key: string]: string; }}
+     * @memberof V1PatchWorkspace
+     */
+    clusterNamespacePairs?: { [key: string]: string; };
 }
 /**
  * Response to PatchWorkspaceRequest.
@@ -10363,7 +10382,7 @@ export interface V1SetUserPasswordResponse {
  */
 export interface V1SetWorkspaceNamespaceBindingsRequest {
     /**
-     * The id of the workspace.
+     * The unique id of the workspace.
      * @type {number}
      * @memberof V1SetWorkspaceNamespaceBindingsRequest
      */
@@ -20014,6 +20033,36 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Get a list of all Kubernetes cluster names.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getKubernetesResourceManagers(options: any = {}): FetchArgs {
+            const localVarPath = `/api/v1/k8-resource-managers`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get a list of columns for experiment list table.
          * @param {number} id The id of the project.
          * @param {V1TableType} [tableType] type of table for project columns.   - TABLE_TYPE_UNSPECIFIED: Unspecified table type.  - TABLE_TYPE_EXPERIMENT: experiment table.  - TABLE_TYPE_RUN: run table.
@@ -22846,6 +22895,24 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Get a list of all Kubernetes cluster names.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getKubernetesResourceManagers(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetKubernetesResourceManagersResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getKubernetesResourceManagers(options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Get a list of columns for experiment list table.
          * @param {number} id The id of the project.
          * @param {V1TableType} [tableType] type of table for project columns.   - TABLE_TYPE_UNSPECIFIED: Unspecified table type.  - TABLE_TYPE_EXPERIMENT: experiment table.  - TABLE_TYPE_RUN: run table.
@@ -24197,6 +24264,15 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Get a list of all Kubernetes cluster names.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getKubernetesResourceManagers(options?: any) {
+            return InternalApiFp(configuration).getKubernetesResourceManagers(options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Get a list of columns for experiment list table.
          * @param {number} id The id of the project.
          * @param {V1TableType} [tableType] type of table for project columns.   - TABLE_TYPE_UNSPECIFIED: Unspecified table type.  - TABLE_TYPE_EXPERIMENT: experiment table.  - TABLE_TYPE_RUN: run table.
@@ -25144,6 +25220,17 @@ export class InternalApi extends BaseAPI {
      */
     public getJobsV2(offset?: number, limit?: number, resourcePool?: string, orderBy?: V1OrderBy, states?: Array<Jobv1State>, options?: any) {
         return InternalApiFp(this.configuration).getJobsV2(offset, limit, resourcePool, orderBy, states, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Get a list of all Kubernetes cluster names.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public getKubernetesResourceManagers(options?: any) {
+        return InternalApiFp(this.configuration).getKubernetesResourceManagers(options)(this.fetch, this.basePath)
     }
     
     /**
@@ -34996,7 +35083,7 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
         /**
          * 
          * @summary Add namespace binding to a workspace.
-         * @param {number} workspaceId The id of the workspace.
+         * @param {number} workspaceId The unique id of the workspace.
          * @param {V1SetWorkspaceNamespaceBindingsRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -35331,7 +35418,7 @@ export const WorkspacesApiFp = function (configuration?: Configuration) {
         /**
          * 
          * @summary Add namespace binding to a workspace.
-         * @param {number} workspaceId The id of the workspace.
+         * @param {number} workspaceId The unique id of the workspace.
          * @param {V1SetWorkspaceNamespaceBindingsRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -35518,7 +35605,7 @@ export const WorkspacesApiFactory = function (configuration?: Configuration, fet
         /**
          * 
          * @summary Add namespace binding to a workspace.
-         * @param {number} workspaceId The id of the workspace.
+         * @param {number} workspaceId The unique id of the workspace.
          * @param {V1SetWorkspaceNamespaceBindingsRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -35699,7 +35786,7 @@ export class WorkspacesApi extends BaseAPI {
     /**
      * 
      * @summary Add namespace binding to a workspace.
-     * @param {number} workspaceId The id of the workspace.
+     * @param {number} workspaceId The unique id of the workspace.
      * @param {V1SetWorkspaceNamespaceBindingsRequest} body
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
