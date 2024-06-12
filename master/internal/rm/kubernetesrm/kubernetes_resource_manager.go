@@ -92,7 +92,7 @@ func New(
 
 	k.jobsService, err = newJobsService(
 		k.config.DefaultNamespace,
-		k.config.Name,
+		k.config.ClusterName,
 		k.config.MasterServiceName,
 		k.masterTLSConfig,
 		k.config.DefaultScheduler,
@@ -398,6 +398,18 @@ func (k *ResourceManager) DeleteNamespace(namespaceName string) error {
 	err := k.jobsService.DeleteNamespace(namespaceName)
 	if err != nil {
 		return fmt.Errorf("error deleting namespace %s: %w", namespaceName, err)
+	}
+	return nil
+}
+
+// RemoveEmptyNamespace removes a namespace from our interfaces in cluster if it is no
+// longer used by any workspace.
+func (k *ResourceManager) RemoveEmptyNamespace(namespaceName string,
+	clusterName string,
+) error {
+	err := k.jobsService.RemoveEmptyNamespace(namespaceName, clusterName)
+	if err != nil {
+		return fmt.Errorf("error removing namespace %s: %w", namespaceName, err)
 	}
 	return nil
 }

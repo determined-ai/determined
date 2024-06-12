@@ -97,6 +97,9 @@ message PatchWorkspace {
   string default_aux_pool = 15 [deprecated = true];
   // Name of the default aux pool can be optional.
   optional string default_aux_resource_pool = 17;
+  // Optional cluster namespace map to create a workspace namespace binding for
+  // each cluster.
+  map<string, string> cluster_namespace_pairs = 3;
 }
 
 // WorkspaceNamespace represents a workspace-namespace binding for a given

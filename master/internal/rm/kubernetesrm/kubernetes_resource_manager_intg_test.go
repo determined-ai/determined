@@ -806,7 +806,7 @@ func TestVerifyNamespaceExists(t *testing.T) {
 	js := createMockJobsService(nil, device.CPU, false)
 	namespaceName := "validNamespace"
 	nonexistentNamespaceName := "nonExistentNamespace"
-	js.clientSet = setupClientSetForVerifyNamespaceTests(namespaceName, nonexistentNamespaceName)
+	js.clientSet = setupClientSetForTests(namespaceName, &nonexistentNamespaceName)
 	js.podInterfaces = make(map[string]typedV1.PodInterface)
 	js.configMapInterfaces = make(map[string]typedV1.ConfigMapInterface)
 	js.jobInterfaces = make(map[string]typedBatchV1.JobInterface)
@@ -849,8 +849,112 @@ func TestVerifyNamespaceExists(t *testing.T) {
 	require.Error(t, err)
 }
 
-func setupClientSetForVerifyNamespaceTests(namespaceName string,
-	invalidNamespaceName string,
+func TestRemoveEmptyNamespace(t *testing.T) {
+	ctx := context.Background()
+	wkspID1, _ := db.RequireMockWorkspaceID(t, db.SingleDB(), "")
+	// wkspID2, _ := db.RequireMockWorkspaceID(t, db.SingleDB(), "")
+	// wkspID3, _ := db.RequireMockWorkspaceID(t, db.SingleDB(), "")
+
+	namespaceName := "anamespace"
+	clusterName := "testing_C1"
+
+	binding := model.WorkspaceNamespace{
+		WorkspaceID: wkspID1,
+		ClusterName: clusterName,
+		Namespace:   namespaceName,
+	}
+
+	_, err := db.Bun().NewInsert().Model(&binding).Exec(ctx)
+	require.NoError(t, err)
+
+	js := createMockJobsService(nil, device.CPU, false)
+
+	js.clientSet = setupClientSetForTests(namespaceName, nil)
+	js.podInterfaces = map[string]typedV1.PodInterface{namespaceName: js.clientSet.CoreV1().Pods(namespaceName)}
+	js.configMapInterfaces = map[string]typedV1.ConfigMapInterface{
+		namespaceName: js.clientSet.CoreV1().ConfigMaps(namespaceName),
+	}
+	js.jobInterfaces = map[string]typedBatchV1.JobInterface{namespaceName: js.clientSet.BatchV1().Jobs(namespaceName)}
+
+	channel := make(chan resourcesRequestFailure, 16)
+	js.requestQueueWorkers = []*requestProcessingWorker{
+		{
+			js.jobInterfaces,
+			js.podInterfaces,
+			js.configMapInterfaces,
+			channel, nil,
+		},
+	}
+	// Try removing non-empty namespace name.
+	err = js.RemoveEmptyNamespace(namespaceName, clusterName)
+	require.NoError(t, err)
+
+	// Verify that the namespace was not removed from anywhere.
+	_, ok := js.podInterfaces[namespaceName]
+	require.True(t, ok)
+	_, ok = js.jobInterfaces[namespaceName]
+	require.True(t, ok)
+	_, ok = js.configMapInterfaces[namespaceName]
+	require.True(t, ok)
+	for _, worker := range js.requestQueueWorkers {
+		_, ok = worker.podInterface[namespaceName]
+		require.True(t, ok)
+		_, ok = worker.jobInterface[namespaceName]
+		require.True(t, ok)
+		_, ok = worker.configMapInterfaces[namespaceName]
+		require.True(t, ok)
+	}
+
+	// Remove namespace from bindings.
+	_, err = db.Bun().NewDelete().
+		Model(&model.WorkspaceNamespace{}).
+		Where("workspace_id = ?", wkspID1).
+		Exec(ctx)
+	require.NoError(t, err)
+
+	// Try removing empty namespace name.
+	err = js.RemoveEmptyNamespace(namespaceName, clusterName)
+	require.NoError(t, err)
+
+	// Verify that the namespace was removed from everywhere.
+	_, notOk := js.podInterfaces[namespaceName]
+	require.True(t, !notOk)
+	_, notOk = js.jobInterfaces[namespaceName]
+	require.True(t, !notOk)
+	_, notOk = js.configMapInterfaces[namespaceName]
+	require.True(t, !notOk)
+	for _, worker := range js.requestQueueWorkers {
+		_, notOk = worker.podInterface[namespaceName]
+		require.True(t, !notOk)
+		_, notOk = worker.jobInterface[namespaceName]
+		require.True(t, !notOk)
+		_, notOk = worker.configMapInterfaces[namespaceName]
+		require.True(t, !notOk)
+	}
+
+	// Try removing empty namespace name again.
+	err = js.RemoveEmptyNamespace(namespaceName, clusterName)
+	require.NoError(t, err)
+
+	// Verify that the namespace is still removed from everywhere.
+	_, notOk = js.podInterfaces[namespaceName]
+	require.True(t, !notOk)
+	_, notOk = js.jobInterfaces[namespaceName]
+	require.True(t, !notOk)
+	_, notOk = js.configMapInterfaces[namespaceName]
+	require.True(t, !notOk)
+	for _, worker := range js.requestQueueWorkers {
+		_, notOk = worker.podInterface[namespaceName]
+		require.True(t, !notOk)
+		_, notOk = worker.jobInterface[namespaceName]
+		require.True(t, !notOk)
+		_, notOk = worker.configMapInterfaces[namespaceName]
+		require.True(t, !notOk)
+	}
+}
+
+func setupClientSetForTests(namespaceName string,
+	invalidNamespaceName *string,
 ) kubernetes.Interface {
 	jobsClientSet := &mocks.K8sClientsetInterface{}
 	coreV1Interface := &mocks.K8sCoreV1Interface{}
@@ -863,8 +967,10 @@ func setupClientSetForVerifyNamespaceTests(namespaceName string,
 	namespaceInterface.On("Get", context.Background(), namespaceName, metaV1.GetOptions{}).
 		Return(k8sNamespace, nil).Once()
 
-	namespaceInterface.On("Get", context.Background(), invalidNamespaceName, metaV1.GetOptions{}).
-		Return(nil, fmt.Errorf("namespace does not exist")).Once()
+	if invalidNamespaceName != nil {
+		namespaceInterface.On("Get", context.Background(), *invalidNamespaceName, metaV1.GetOptions{}).
+			Return(nil, fmt.Errorf("namespace does not exist")).Once()
+	}
 
 	coreV1Interface.On("Namespaces").Return(namespaceInterface)
 

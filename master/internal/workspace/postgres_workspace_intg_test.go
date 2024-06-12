@@ -354,3 +354,52 @@ func createWorkspace(ctx context.Context, t *testing.T) (*model.Workspace, model
 	require.NoError(t, err)
 	return wksp, userID
 }
+
+func TestGetNumWorkspacesUsingNamespaceInCluster(t *testing.T) {
+	ctx := context.Background()
+	wkspID1, _ := db.RequireMockWorkspaceID(t, db.SingleDB(), "")
+	wkspID2, _ := db.RequireMockWorkspaceID(t, db.SingleDB(), "")
+	wkspID3, _ := db.RequireMockWorkspaceID(t, db.SingleDB(), "")
+
+	bindings := []model.WorkspaceNamespace{
+		{WorkspaceID: wkspID1, ClusterName: "test_C1", Namespace: "test_n1"},
+		{WorkspaceID: wkspID2, ClusterName: "test_C1", Namespace: "test_n1"},
+		{WorkspaceID: wkspID3, ClusterName: "test_C2", Namespace: "test_n1"},
+		{WorkspaceID: wkspID1, ClusterName: "test_C1", Namespace: "test_n2"},
+	}
+
+	_, err := db.Bun().NewInsert().Model(&bindings).Exec(ctx)
+	require.NoError(t, err)
+
+	// valid combination
+	n, err := GetNumWorkspacesUsingNamespaceInCluster(ctx, "test_C1", "test_n1")
+	require.NoError(t, err)
+	require.Equal(t, 2, n)
+
+	// existing clusters and namespaces but invalid combination
+	n, err = GetNumWorkspacesUsingNamespaceInCluster(ctx, "test_C2", "test_n2")
+	require.NoError(t, err)
+	require.Equal(t, 0, n)
+
+	// non-existent cluster
+	n, err = GetNumWorkspacesUsingNamespaceInCluster(ctx, "test_C3", "test_n1")
+	require.NoError(t, err)
+	require.Equal(t, 0, n)
+
+	// non-existent namespace
+	n, err = GetNumWorkspacesUsingNamespaceInCluster(ctx, "test_C1", "test_n3")
+	require.NoError(t, err)
+	require.Equal(t, 0, n)
+
+	// non-existent cluster and namespace
+	n, err = GetNumWorkspacesUsingNamespaceInCluster(ctx, "test_C4", "test_n3")
+	require.NoError(t, err)
+	require.Equal(t, 0, n)
+
+	// Clean up
+	_, err = db.Bun().NewDelete().
+		Model(&model.WorkspaceNamespace{}).
+		Where("workspace_id in (?)", bun.In([]int{wkspID1, wkspID2, wkspID3})).
+		Exec(ctx)
+	require.NoError(t, err)
+}
