@@ -207,15 +207,15 @@ func TestGetAllNamespacesForRM(t *testing.T) {
 
 	ns, err := GetAllNamespacesForRM(ctx, cluster1)
 	require.NoError(t, err)
-	require.Equal(t, ns, []string{"n1", "n3"})
+	require.Equal(t, []string{"n1", "n3"}, ns)
 
 	ns, err = GetAllNamespacesForRM(ctx, cluster2)
 	require.NoError(t, err)
-	require.Equal(t, ns, []string{"n2"})
+	require.Equal(t, []string{"n2"}, ns)
 
 	ns, err = GetAllNamespacesForRM(ctx, "cluster3")
 	require.NoError(t, err)
-	require.Equal(t, ns, []string(nil))
+	require.Equal(t, []string(nil), ns)
 }
 
 func TestAddWorkspaceNamespaceBinding(t *testing.T) {
@@ -320,7 +320,7 @@ func TestDeleteWorkspaceNamespaceBindings(t *testing.T) {
 			deletedBindings, err := DeleteWorkspaceNamespaceBindings(ctx, wksp.ID,
 				[]string{binding.ClusterName}, &tx)
 			require.NoError(t, err)
-			require.Equal(t, deletedBindings, expectedDeletedBindings)
+			require.Equal(t, expectedDeletedBindings, deletedBindings)
 		}
 	}
 

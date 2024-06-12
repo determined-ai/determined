@@ -58,13 +58,13 @@ func (r *ResourceConfig) GetAgentRMConfig() (*ResourceManagerWithPoolsConfig, bo
 
 // GetKubernetesClusterNames gets the list of Kubernetes Cluster names.
 func (r *ResourceConfig) GetKubernetesClusterNames() []string {
-	RMs := []string{}
+	rms := []string{}
 	for _, c := range r.ResourceManagers() {
 		if c.ResourceManager.KubernetesRM != nil {
-			RMs = append(RMs, c.ResourceManager.KubernetesRM.ClusterName)
+			rms = append(rms, c.ResourceManager.KubernetesRM.ClusterName)
 		}
 	}
-	return RMs
+	return rms
 }
 
 func defaultAgentRM() *AgentResourceManagerConfig {
