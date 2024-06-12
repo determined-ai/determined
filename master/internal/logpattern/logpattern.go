@@ -18,7 +18,8 @@ import (
 const regexCacheSize = 256
 
 var (
-	defaultSingleton       *LogPatternPolicies
+	defaultSingleton *LogPatternPolicies
+	// ExpconfigCompiledRegex is used to identify user submitted config.
 	ExpconfigCompiledRegex = regexp.MustCompile("(.*)(\\\"log_policies\\\":)(.*)")
 )
 
