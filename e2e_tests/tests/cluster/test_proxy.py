@@ -109,7 +109,6 @@ def test_experiment_proxy_simple_zero_slot(exp_port: int, is_tcp: bool) -> None:
 
 
 @pytest.mark.port_registry  # has multiple slots
-@pytest.mark.e2e_multi_k8s
 @pytest.mark.timeout(600)
 @pytest.mark.parametrize(
     "exp_port, is_tcp, max_conc_trials",

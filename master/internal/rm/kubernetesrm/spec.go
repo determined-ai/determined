@@ -236,7 +236,6 @@ func (j *job) configureProxyResources(t *tasks.TaskSpec) *proxyResourceGenerator
 			gatewayListener := createListenerForPod(gwPort)
 
 			resources = append(resources, gatewayProxyResource{
-				podPort:         proxyPort.Port,
 				serviceSpec:     serviceSpec,
 				tcpRouteSpec:    tcpRouteSpec,
 				gatewayListener: gatewayListener,
