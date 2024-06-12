@@ -67,10 +67,17 @@ func (g *gatewayService) generateAndAddListeners(allocationID model.AllocationID
 		if err != nil {
 			return err
 		}
+
+		if gateway.Annotations == nil {
+			gateway.Annotations = make(map[string]string)
+		}
+
 		for i := 0; i < count; i++ {
-			listeners[i] = createListenerForPod(allocationID, ports[i])
+			gateway.Annotations[portToAnnotationKey(ports[i])] = string(allocationID)
+			listeners[i] = createListenerForPod(ports[i])
 		}
 		gateway.Spec.Listeners = append(gateway.Spec.Listeners, listeners...)
+
 		return nil
 	}); err != nil {
 		return nil, fmt.Errorf("adding %d listeners to gateway: %w", count, err)
@@ -97,9 +104,15 @@ func (g *gatewayService) pickNFreePorts(gateway *gatewayTyped.Gateway, count int
 
 func (g *gatewayService) freePorts(ports []int) error {
 	if err := g.updateGateway(func(gateway *gatewayTyped.Gateway) error {
+		if gateway.Annotations == nil {
+			gateway.Annotations = make(map[string]string)
+		}
+
 		var newListeners []gatewayTyped.Listener
 		for _, l := range gateway.Spec.Listeners {
-			if !slices.Contains(ports, int(l.Port)) {
+			if slices.Contains(ports, int(l.Port)) {
+				delete(gateway.Annotations, portToAnnotationKey(int(l.Port)))
+			} else {
 				newListeners = append(newListeners, l)
 			}
 		}
@@ -123,13 +136,11 @@ func (g *gatewayService) getProxyPorts(allocationID *model.AllocationID) ([]int,
 
 	var ports []int
 	for _, listener := range gateway.Spec.Listeners {
-		listenerName := string(listener.Name)
-		if !listenerIsDetermined(listenerName) { // Always ignore non Determined gateways.
-			continue
+		portAllocationID := gateway.Annotations[portToAnnotationKey(int(listener.Port))]
+		if portAllocationID == "" {
+			continue // Don't touch ports that we didn't add.
 		}
-
-		if allocationID != nil &&
-			model.AllocationID(getAllocationIDFromListenerName(listenerName)) != *allocationID {
+		if allocationID != nil && string(*allocationID) != portAllocationID {
 			continue
 		}
 
@@ -138,45 +149,6 @@ func (g *gatewayService) getProxyPorts(allocationID *model.AllocationID) ([]int,
 
 	return ports, nil
 }
-
-/*
-// TODO(gateways) probably will need this code for restore.
-// getDeployedPortMap returns a mapping of ports based on gw config in the cluster.
-func (g *gatewayService) getDeployedPortMap() (map[model.AllocationID]PortMap, error) {
-	rv := make(map[model.AllocationID]PortMap)
-
-	for namespace, tcpRouteInterface := range g.tcpRouteInterfaces {
-		tcpRoutes, err := tcpRouteInterface.List(context.TODO(), metaV1.ListOptions{})
-		if err != nil {
-			return nil, fmt.Errorf("listing TCPRoutes in namespace '%s': %w", namespace, err)
-		}
-
-		for _, route := range tcpRoutes.Items {
-			allocIDStr, ok := route.Labels[determinedLabel]
-			if !ok {
-				continue
-			}
-			allocID := model.AllocationID(allocIDStr)
-			for _, rule := range route.Spec.Rules {
-				for _, backendRef := range rule.BackendRefs {
-					if _, ok := rv[allocID]; !ok {
-						rv[allocID] = make(PortMap)
-					}
-					if backendRef.Port == nil {
-						return nil, fmt.Errorf("TCPRoute '%s' has a nil port", route.Name)
-					}
-					if len(route.Spec.ParentRefs) != 1 {
-						return nil, fmt.Errorf("TCPRoute '%s' has %d parent refs, expected 1",
-							route.Name, len(route.Spec.ParentRefs))
-					}
-					rv[allocID][int(*backendRef.Port)] = int(*route.Spec.ParentRefs[0].Port)
-				}
-			}
-		}
-	}
-	return rv, nil
-}
-*/
 
 func (g *gatewayService) updateGateway(update func(*gatewayTyped.Gateway) error) error {
 	g.mu.Lock()

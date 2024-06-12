@@ -55,6 +55,7 @@ const (
 	determinedLabel           = "determined"
 	determinedPreemptionLabel = "determined-preemption"
 	determinedSystemLabel     = "determined-system"
+	jobNameAnnotation         = "determined.ai/job-name"
 
 	kubernetesJobNameLabel = "batch.kubernetes.io/job-name"
 
@@ -444,12 +445,12 @@ func (j *jobsService) deleteDoomedKubernetesResources() error {
 		savedJobNames.Insert(job.Name)
 	}
 
-	resourceIsSaved := func(namespace, name string) bool { // Job name is same as other resources.
+	resourceIsSaved := func(namespace, jobName string) bool {
 		if _, ok := j.namespaceToPoolName[namespace]; !ok {
 			return true
 		}
 
-		return savedJobNames.Contains(name)
+		return savedJobNames.Contains(jobName)
 	}
 	configMaps, err := j.listConfigMapsInAllNamespaces(context.TODO(), listOptions)
 	if err != nil {
@@ -457,6 +458,7 @@ func (j *jobsService) deleteDoomedKubernetesResources() error {
 	}
 	var toKillConfigMaps []k8sV1.ConfigMap
 	for _, cm := range configMaps {
+		// Config map name and job name are the same.
 		if resourceIsSaved(cm.Namespace, cm.Name) {
 			continue
 		}
@@ -474,7 +476,7 @@ func (j *jobsService) deleteDoomedKubernetesResources() error {
 			return fmt.Errorf("listing existing services: %w", err)
 		}
 		for _, s := range services {
-			if resourceIsSaved(s.Namespace, stripIndexFromSharedName(s.Name)) {
+			if resourceIsSaved(s.Namespace, s.Annotations[jobNameAnnotation]) {
 				continue
 			}
 
@@ -488,7 +490,7 @@ func (j *jobsService) deleteDoomedKubernetesResources() error {
 			return fmt.Errorf("listing existing services: %w", err)
 		}
 		for _, t := range tcpRoutes {
-			if resourceIsSaved(t.Namespace, stripIndexFromSharedName(t.Name)) {
+			if resourceIsSaved(t.Namespace, t.Annotations[jobNameAnnotation]) {
 				for _, s := range t.Spec.ParentRefs {
 					if p := s.Port; p != nil {
 						savedGatewayPorts[int(*p)] = true
@@ -774,7 +776,7 @@ func (j *jobsService) recreateGatewayProxyResources(
 			podPort:         int(service.Spec.Ports[0].Port),
 			serviceSpec:     service,
 			tcpRouteSpec:    tcpRoute,
-			gatewayListener: createListenerForPod(allocationID, port),
+			gatewayListener: createListenerForPod(port),
 		})
 	}
 
