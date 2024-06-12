@@ -30,7 +30,6 @@ type gatewayService struct {
 	portRangeEnd       int
 }
 
-// TODO: these probably could use a better names or packaging.
 type gatewayResourceComm struct {
 	requestedPorts     int
 	resourceDescriptor proxyResourceGenerator
