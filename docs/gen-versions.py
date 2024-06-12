@@ -10,107 +10,6 @@ import git
 import git.exc
 import git.refs.tag
 
-# This is the original versions.json file, frozen so we can generate newer
-# versions while still maintaining the functionality of older versions.
-VERSIONS = [
-    {
-        "version": "0.33.0",
-        "url": "https://docs.determined.ai/0.33.0/"
-    },
-    {
-        "version": "0.32.1",
-        "url": "https://docs.determined.ai/0.32.1/"
-    },
-    {
-        "version": "0.32.0",
-        "url": "https://docs.determined.ai/0.32.0/"
-    },
-    {
-        "version": "0.31.0",
-        "url": "https://docs.determined.ai/0.31.0/"
-    },
-    {
-        "version": "0.30.0",
-        "url": "https://docs.determined.ai/0.30.0/"
-    },
-    {
-        "version": "0.29.1",
-        "url": "https://docs.determined.ai/0.29.1/"
-    },
-    {
-        "version": "0.29.0",
-        "url": "https://docs.determined.ai/0.29.0/"
-    },
-    {
-        "version": "0.28.1",
-        "url": "https://docs.determined.ai/0.28.1/"
-    },
-    {
-        "version": "0.28.0",
-        "url": "https://docs.determined.ai/0.28.0/"
-    },
-    {
-        "version": "0.27.1",
-        "url": "https://docs.determined.ai/0.27.1/"
-    },
-    {
-        "version": "0.27.0",
-        "url": "https://docs.determined.ai/0.27.0/"
-    },
-    {
-        "version": "0.26.7",
-        "url": "https://docs.determined.ai/0.26.7/"
-    },
-    {
-        "version": "0.26.6",
-        "url": "https://docs.determined.ai/0.26.6/"
-    },
-    {
-        "version": "0.26.4",
-        "url": "https://docs.determined.ai/0.26.4/"
-    },
-    {
-        "version": "0.26.3",
-        "url": "https://docs.determined.ai/0.26.3/"
-    },
-    {
-        "version": "0.26.2",
-        "url": "https://docs.determined.ai/0.26.2/"
-    },
-    {
-        "version": "0.26.1",
-        "url": "https://docs.determined.ai/0.26.1/"
-    },
-    {
-        "version": "0.26.0",
-        "url": "https://docs.determined.ai/0.26.0/"
-    },
-    {
-        "version": "0.25.1",
-        "url": "https://docs.determined.ai/0.25.1/"
-    },
-    {
-        "version": "0.25.0",
-        "url": "https://docs.determined.ai/0.25.0/"
-    },
-    {
-        "version": "0.24.0",
-        "url": "https://docs.determined.ai/0.24.0/"
-    },
-    {
-        "version": "0.23.0",
-        "url": "https://docs.determined.ai/0.23.0/"
-    },
-    {
-        "version": "0.22.0",
-        "url": "https://docs.determined.ai/0.22.0/"
-    },
-    {
-        "version": "0.21.0",
-        "url": "https://docs.determined.ai/0.21.0/"
-    }
-]
-
 def parse_args():
     parser = argparse.ArgumentParser(
         prog="gen-versions.py",
@@ -128,38 +27,20 @@ def parse_args():
         default=None,
     )
 
-    # Escape-hatch argument in case someone needs more granular control over the
-    # generated file.
-    parser.add_argument("--override-versions",
-        help="comma-separated list of versions, in ascending order, to use instead of the existing versions and the tags in git. E.g. 0.0.1,0.0.2,0.0.3",
+    # Escape-hatch argument to exclude versions that are returned from
+    # git-rev-list. This basically lets us recreate the original file we already
+    # have, along with appending subsequent new version tags. We need this
+    # because the git-rev-list tags returned are a superset of the versions
+    # originally in versions.json. I.e. some of the existing tagged patch
+    # release versions don't have corresponding separate doc links.
+    parser.add_argument("--exclude-versions",
+        help="comma-separated list of versions to exclude from the versions returned by walking the git DAG",
+        default="0.26.5,0.23.4,0.23.3,0.23.2,0.23.1,0.22.2,0.22.1,0.21.2,0.21.1",
         metavar="versions",
-        type=str
+        type=str,
     )
 
     return parser.parse_args()
-
-def generate_hardcoded(versions, out_file):
-    latest = versions.pop()
-    versions.reverse()
-
-    out = []
-    out.append({
-        "version": latest,
-        "url": "https://docs.determined.ai/latest/"
-    })
-
-    for version in versions:
-        out.append({
-            "version": version,
-            "url": "https://docs.determined.ai/{}/".format(version)
-        })
-
-    # Dump to stdout.
-    if out_file is not None:
-        with open(out_file, "w") as fd:
-            json.dump(out, fd, indent=4)
-    else:
-        print(json.dumps(out, indent=4))
 
 def main():
     args = parse_args()
@@ -169,6 +50,10 @@ def main():
         generate_hardcoded(versions)
 
         sys.exit(0)
+
+    exclude_versions = []
+    if args.exclude_versions is not None:
+        exclude_versions = args.exclude_versions.split(",")
 
     # Probably run this from inside the repo somewhere.
     try:
@@ -187,8 +72,8 @@ def main():
         print("Bad revision: {}.".format(e))
         sys.exit(-1)
 
-    # git rev-list --branches --ancestry-path <commit>..HEAD
-    comms_iter = repo.iter_commits("{}..HEAD".format(args.commit), branches=True, ancestry_path=True)
+    # git rev-list --tags --ancestry-path <commit>..HEAD
+    comms_iter = repo.iter_commits("{}..HEAD".format(args.commit), ancestry_path=True, tags=True)
 
     # Get commits from iterator.
     commits = []
@@ -204,46 +89,53 @@ def main():
     tag_refs = git.refs.tag.TagReference.list_items(repo)
 
     commit_tags = {}
-    for tag in tag_refs:
-        commit_tags.update({str(tag.commit): tag.name})
 
     # Ignore all tags that aren't of the form x.y.z
     tag_regex = re.compile("\d+\.\d+\.\d+$")
+
+    for tag in tag_refs:
+        m = tag_regex.search(str(tag))
+        if m:
+            commit_tags.update({str(tag.commit): m.group()})
 
     # Emulate git describe --tags <tag> 2>/dev/null and collect tags.
     tags = []
     for commit in commits:
         tag = commit_tags.get(str(commit))
-        if tag:
-            m = tag_regex.search(tag)
-            if m:
-                tags.append(m.group())
+        if tag and tag not in exclude_versions:
+            tags.append(tag)
 
-    # Remove current tag so we don't loop over it by mistake.
-    latest_tag = tags.pop()
+    versions = []
+    if tags:
+        # Descending order.
+        tags.reverse()
 
-    # Prepend all new versions that aren't the current tag.
-    for tag in tags:
-        VERSIONS.insert(0, {
-            "version": tag,
-            "url": "https://docs.determined.ai/{}/".format(tag),
+        # Remove latest tag as it is a special case.
+        latest_tag = tags.pop()
+
+        # Append all new versions that aren't the latest tag.
+        for tag in tags:
+            versions.append({
+                "version": tag,
+                "url": "https://docs.determined.ai/{}/".format(tag),
+            })
+
+        versions.append({
+            "version": latest_tag,
+            "url": "https://docs.determined.ai/latest/",
         })
 
-    # Latest version is a special case.
-    VERSIONS.insert(0, {
-        "version": latest_tag,
-        "url": "https://docs.determined.ai/latest/"
-    })
+    versions.reverse()
 
     if args.out_file is not None:
         try:
             with open(args.out_file, "w") as fd:
-                json.dump(VERSIONS, fd, indent=4)
+                json.dump(versions, fd, indent=4)
         except FileNotFoundError as e:
             print("File not found: {}. Do all parent directories exist?".format(e), file=sys.stderr)
             sys.exit(-1)
     else:
-        print(json.dumps(VERSIONS, indent=4))
+        print(json.dumps(versions, indent=4))
 
 if __name__ == "__main__":
     main()
