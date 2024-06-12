@@ -8,10 +8,10 @@ import requests
 
 from determined.common.api import bindings
 from tests import api_utils
-from tests import cluster as clu
 from tests import command as cmd
 from tests import config as conf
 from tests import experiment as exp
+from tests.cluster import utils as cluster_utils
 
 API_URL = "/resources/allocation/allocations-csv?"
 
@@ -59,7 +59,7 @@ def test_notebook_capture() -> None:
 
     assert re.search(f"{task_id}.*,NOTEBOOK", r.text) is not None
 
-    workspace = clu.utils.get_task_info(sess, "notebook", task_id).get("workspaceName", None)
+    workspace = cluster_utils.get_task_info(sess, "notebook", task_id).get("workspaceName", None)
     assert workspace is not None
     assert re.search(f"{workspace},,", r.text) is not None
 
@@ -81,8 +81,8 @@ def test_tensorboard_experiment_capture() -> None:
         ["tensorboard", "start", "--detach", str(experiment_id)],
     ) as tb:
         assert tb.task_id
-        clu.utils.wait_for_task_state(sess, "tensorboard", tb.task_id, "RUNNING")
-    clu.utils.wait_for_task_state(sess, "tensorboard", tb.task_id, "TERMINATED")
+        cluster_utils.wait_for_task_state(sess, "tensorboard", tb.task_id, "RUNNING")
+    cluster_utils.wait_for_task_state(sess, "tensorboard", tb.task_id, "TERMINATED")
 
     # Ensure that end_time captures tensorboard
     end_time = (
@@ -99,7 +99,9 @@ def test_tensorboard_experiment_capture() -> None:
     # Confirm Tensorboard task is captured
     assert re.search(f"{tb.task_id}.*,TENSORBOARD", r.text) is not None
 
-    workspace = clu.utils.get_task_info(sess, "tensorboard", tb.task_id).get("workspaceName", None)
+    workspace = cluster_utils.get_task_info(sess, "tensorboard", tb.task_id).get(
+        "workspaceName", None
+    )
     assert workspace is not None
     assert re.search(f"{workspace},,", r.text) is not None
 
@@ -127,6 +129,6 @@ def test_cmd_capture() -> None:
 
     assert re.search(f"{task_id}.*,COMMAND", r.text) is not None
 
-    workspace = clu.utils.get_task_info(sess, "command", task_id).get("workspaceName", None)
+    workspace = cluster_utils.get_task_info(sess, "command", task_id).get("workspaceName", None)
     assert workspace is not None
     assert re.search(f"{workspace},,", r.text) is not None
