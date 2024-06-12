@@ -84,7 +84,8 @@ func (a *apiServer) SearchRuns(
 	query := db.Bun().NewSelect().
 		Model(&runs).
 		ModelTableExpr("runs AS r").
-		Apply(getRunsColumns)
+		Apply(getRunsColumns).
+		Group("r.id")
 
 	var proj *projectv1.Project
 	if req.ProjectId != nil {
@@ -164,7 +165,8 @@ func getRunsColumns(q *bun.SelectQuery) *bun.SelectQuery {
 		Join("LEFT JOIN experiments AS e ON r.experiment_id=e.id").
 		Join("LEFT JOIN users u ON e.owner_id = u.id").
 		Join("LEFT JOIN projects p ON r.project_id = p.id").
-		Join("LEFT JOIN workspaces w ON p.workspace_id = w.id")
+		Join("LEFT JOIN workspaces w ON p.workspace_id = w.id").
+		Join("LEFT JOIN run_hparams rhp ON r.id=rhp.run_id")
 }
 
 func sortRuns(sortString *string, runQuery *bun.SelectQuery) error {
