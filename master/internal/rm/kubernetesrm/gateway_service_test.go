@@ -23,9 +23,9 @@ func testGatewayConfig() config.InternalTaskGatewayConfig {
 
 func TestGatewayServiceAddListeners(t *testing.T) {
 	gatewayMock := &mocks.GatewayInterface{}
-	TCPRouteMock := &mocks.TCPRouteInterface{}
+	tcpRouteMock := &mocks.TCPRouteInterface{}
 	tcpInterfaces := map[string]alphaGateway.TCPRouteInterface{
-		"default": TCPRouteMock,
+		"default": tcpRouteMock,
 	}
 	g, err := newGatewayService(
 		gatewayMock, tcpInterfaces, testGatewayConfig(),
@@ -73,9 +73,9 @@ func TestGatewayServiceAddListeners(t *testing.T) {
 
 func TestGatewayServiceFreePorts(t *testing.T) {
 	gatewayMock := &mocks.GatewayInterface{}
-	TCPRouteMock := &mocks.TCPRouteInterface{}
+	tcpRouteMock := &mocks.TCPRouteInterface{}
 	tcpInterfaces := map[string]alphaGateway.TCPRouteInterface{
-		"default": TCPRouteMock,
+		"default": tcpRouteMock,
 	}
 	g, err := newGatewayService(
 		gatewayMock, tcpInterfaces, testGatewayConfig(),
