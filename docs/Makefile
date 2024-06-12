@@ -56,7 +56,6 @@ build/swagger.stamp: ../proto/build/swagger/determined/api/v1/api.swagger.json s
 gen-versions: ANCESTOR=$(shell git rev-parse $(shell git merge-base 0.21.0 main)~1)
 gen-versions:
 	python3 gen-versions.py $(ANCESTOR) -o _static/version-switcher/versions.json
-	@echo $(ANCESTOR)
 
 .PHONY: build
 build: gen-versions build/sp-html.stamp
