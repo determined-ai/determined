@@ -771,9 +771,7 @@ func (j *jobsService) recreateGatewayProxyResources(
 		if len(service.Spec.Ports) != 1 {
 			return nil, fmt.Errorf("expected service to have one port got %d", len(service.Spec.Ports))
 		}
-
 		resources = append(resources, gatewayProxyResource{
-			podPort:         int(service.Spec.Ports[0].Port),
 			serviceSpec:     service,
 			tcpRouteSpec:    tcpRoute,
 			gatewayListener: createListenerForPod(port),
