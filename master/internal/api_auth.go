@@ -198,15 +198,18 @@ func processAuthWithRedirect(redirectPaths []string) echo.MiddlewareFunc {
 				return err
 			}
 
-			// TODO: reverse this logic to redirect only if accept is empty or specifies text/html.
-			// No web page redirects for programmatic requests.
-			for _, accept := range c.Request().Header["Accept"] {
-				if strings.Contains(accept, "application/json") {
-					return echoErr
+			acceptHeaders, ok := c.Request().Header["Accept"]
+			if !ok || len(acceptHeaders) == 0 {
+				return redirectToLogin(c)
+			}
+
+			for _, accept := range acceptHeaders {
+				if strings.Contains(accept, "text/html") {
+					return redirectToLogin(c)
 				}
 			}
 
-			return redirectToLogin(c)
+			return echoErr
 		}
 	}
 }
