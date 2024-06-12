@@ -110,13 +110,13 @@ packages:
           mockname: K8sClientsetInterface
   sigs.k8s.io/gateway-api/pkg/client/clientset/versioned/typed/apis/v1:
     interfaces:
-      Interface:
+      GatewayInterface:
         config:
           filename: gateway_iface.go
           mockname: GatewayInterface
   sigs.k8s.io/gateway-api/pkg/client/clientset/versioned/typed/apis/v1alpha2:
     interfaces:
-      Interface:
+      TCPRouteInterface:
         config:
-          filename: gateway_iface.go
+          filename: tcproute_iface.go
           mockname: TCPRouteInterface
