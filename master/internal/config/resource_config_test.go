@@ -62,6 +62,71 @@ func TestResourceManagers(t *testing.T) {
 	require.Equal(t, expected, r.ResourceManagers())
 }
 
+func TestGetKubernetesClusterNames(t *testing.T) {
+	cases := []struct {
+		name          string
+		config        ResourceConfig
+		expectedNames []string
+	}{
+		{
+			"agent rm",
+			ResourceConfig{
+				RootManagerInternal: &ResourceManagerConfig{
+					AgentRM: &AgentResourceManagerConfig{},
+				},
+			},
+			[]string{},
+		},
+		{
+			"dispatcher rm",
+			ResourceConfig{
+				RootManagerInternal: &ResourceManagerConfig{
+					DispatcherRM: &DispatcherResourceManagerConfig{},
+				},
+			},
+			[]string{},
+		},
+		{
+			"kubernetes rm",
+			ResourceConfig{
+				RootManagerInternal: &ResourceManagerConfig{
+					KubernetesRM: &KubernetesResourceManagerConfig{
+						ClusterName: "test",
+					},
+				},
+			},
+			[]string{"test"},
+		},
+		{
+			"multi rm",
+			ResourceConfig{
+				RootManagerInternal: &ResourceManagerConfig{
+					KubernetesRM: &KubernetesResourceManagerConfig{
+						ClusterName: "test1",
+					},
+				},
+				AdditionalResourceManagersInternal: []*ResourceManagerWithPoolsConfig{
+					{
+						ResourceManager: &ResourceManagerConfig{
+							KubernetesRM: &KubernetesResourceManagerConfig{
+								ClusterName: "test2",
+							},
+						},
+					},
+				},
+			},
+			[]string{"test1", "test2"},
+		},
+	}
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			names := c.config.GetKubernetesClusterNames()
+			require.Equal(t, c.expectedNames, names)
+		})
+	}
+}
+
 func TestGetAgentRMConfig(t *testing.T) {
 	t.Run("no agent rm", func(t *testing.T) {
 		noAgentRM := ResourceConfig{
