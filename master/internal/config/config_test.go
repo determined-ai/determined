@@ -148,14 +148,16 @@ integrations:
 	assert.DeepEqual(t, unmarshaled, expected)
 }
 
-func TestAgentRMSchedulerDeprecation(t *testing.T) {
-	dbConfig := `
+const (
+	dbConfig = `
 db:
   user: config_file_user
   password: password
   host: hostname
   port: "3000"`
+)
 
+func TestAgentRMSchedulerDeprecation(t *testing.T) {
 	noScheduler := dbConfig + `
 
 resource_manager:
@@ -195,10 +197,9 @@ resource_manager:
 			require.Error(t, unmarshaled.Resolve())
 		}
 		rm := unmarshaled.ResourceManagers()
-		require.Equal(t, 1, len(rm))
+		require.Len(t, rm, 1)
 		require.Equal(t, expected.scheduler, rm[0].ResourceManager.AgentRM.Scheduler.GetType())
 	}
-
 }
 
 func TestUnmarshalConfigWithCPUGPUPools(t *testing.T) {

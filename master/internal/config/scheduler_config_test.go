@@ -8,13 +8,6 @@ import (
 )
 
 func TestResourcePoolDefaults(t *testing.T) {
-	dbConfig := `
-db:
-  user: config_file_user
-  password: password
-  host: hostname
-  port: "3000"`
-
 	resourcePoolDefault := dbConfig + `
 resource_manager:
   type: agent
@@ -33,9 +26,9 @@ resource_pools:
 	require.NoError(t, unmarshaled.Resolve())
 
 	rm := unmarshaled.ResourceManagers()
-	require.Equal(t, 1, len(rm))
+	require.Len(t, rm, 1)
 	rp := rm[0].ResourcePools
-	require.Equal(t, 1, len(rp))
+	require.Len(t, rp, 1)
 
 	require.Equal(t, PriorityScheduling, rm[0].ResourceManager.AgentRM.Scheduler.GetType())
 	require.Equal(t, PriorityScheduling, rp[0].Scheduler.GetType())
