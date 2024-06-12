@@ -8,9 +8,6 @@ import { repeatWithFallback } from 'e2e/utils/polling';
 import { saveTestUser } from 'e2e/utils/users';
 import { V1PostUserRequest } from 'services/api-ts-sdk/api';
 
-// creating users while running tests in parallel can cause the users table to refresh at unexpected times
-test.describe.configure({ mode: 'serial' });
-
 test.describe('User Management', () => {
   // One list of users per test session. This is to encourage a final teardown
   // call of the user fixture to deactivate all users created by each test.
@@ -85,7 +82,7 @@ test.describe('User Management', () => {
         });
       });
 
-      test('Deactivate and Reactivate', async ({ page, user, auth }) => {
+      test('Deactivate and Reactivate', async ({ page, user, auth, newAdmin }) => {
         // test does does three and a half logins, so we need to increase the timeout
         test.slow();
         const userManagementPage = new UserManagement(page);
@@ -116,7 +113,11 @@ test.describe('User Management', () => {
           // thinks we've already logged in, skipping the login automation.
           // We might need to find a way to be more explicit about the page state.
           await expect(page).toHaveURL(/login/);
-          await auth.login({ expectedURL: userManagementPage.url });
+          await auth.login({
+            expectedURL: userManagementPage.url,
+            password: newAdmin.password,
+            username: newAdmin.user?.username,
+          });
           testUser = await user.changeStatusUser(testUser, true);
           saveTestUser(testUser, testUsers);
         });

@@ -22,47 +22,21 @@ type CustomFixtures = {
 };
 
 type CustomWorkerFixtures = {
-  adminAuthedPage: { page: Page; adminUser: V1PostUserRequest };
+  newAdmin: V1PostUserRequest;
   backgroundApiAuth: ApiAuthFixture;
   backgroundApiUser: ApiUserFixture;
 };
 
 // https://playwright.dev/docs/test-fixtures
 export const test = base.extend<CustomFixtures, CustomWorkerFixtures>({
-  /**
-   * Creates an admin and logs in as that admin for the duraction of the test suite
-   */
-  adminAuthedPage: [
-    async ({ backgroundApiUser }, use, workerInfo) => {
-      const adminUser = await backgroundApiUser.createUser(
-        backgroundApiUser.new({
-          userProps: {
-            user: {
-              active: true,
-              admin: true,
-              username: safeName(`test-admin-${workerInfo.workerIndex}`),
-            },
-          },
-        }),
-      );
-      await backgroundApiUser.apiAuth.login({
-        creds: { password: adminUser.password!, username: adminUser.user!.username },
-      });
-      await use({ adminUser, page: backgroundApiUser.apiAuth.page });
-      await backgroundApiUser.apiAuth.login();
-      await backgroundApiUser.patchUser(adminUser.user!.id!, { active: false });
-    },
-    { scope: 'worker' },
-  ],
-
   // get the auth but allow yourself to log in through the api manually.
-  apiAuth: async ({ playwright, browser, dev, baseURL, adminAuthedPage }, use) => {
+  apiAuth: async ({ playwright, browser, dev, baseURL, newAdmin }, use) => {
     await dev.setServerAddress();
     const apiAuth = new ApiAuthFixture(playwright.request, browser, baseURL, dev.page);
     await apiAuth.login({
       creds: {
-        password: adminAuthedPage.adminUser.password!,
-        username: adminAuthedPage.adminUser.user!.username,
+        password: newAdmin.password!,
+        username: newAdmin.user!.username,
       },
     });
     await use(apiAuth);
@@ -118,7 +92,31 @@ export const test = base.extend<CustomFixtures, CustomWorkerFixtures>({
     const dev = new DevFixture(page);
     await use(dev);
   },
-
+  /**
+   * Creates an admin and logs in as that admin for the duraction of the test suite
+   */
+  newAdmin: [
+    async ({ backgroundApiUser }, use, workerInfo) => {
+      const adminUser = await backgroundApiUser.createUser(
+        backgroundApiUser.new({
+          userProps: {
+            user: {
+              active: true,
+              admin: true,
+              username: safeName(`test-admin-${workerInfo.workerIndex}`),
+            },
+          },
+        }),
+      );
+      await backgroundApiUser.apiAuth.login({
+        creds: { password: adminUser.password!, username: adminUser.user!.username },
+      });
+      await use(adminUser);
+      await backgroundApiUser.apiAuth.login();
+      await backgroundApiUser.patchUser(adminUser.user!.id!, { active: false });
+    },
+    { scope: 'worker' },
+  ],
   user: async ({ page }, use) => {
     const user = new UserFixture(page);
     await use(user);

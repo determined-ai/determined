@@ -75,10 +75,6 @@ export class ApiAuthFixture {
       // add cookies to current page's existing context
       this.context = this._page.context();
       await this.context.addCookies(state.cookies);
-    } else {
-      // Create a new context for the browser with the saved token.
-      this.context = await this.browser.newContext({ storageState: this.#stateFile });
-      this._page = await this.context.newPage();
     }
   }
 
