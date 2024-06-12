@@ -1347,7 +1347,7 @@ func TestListWorkspaceNamespaceBindings(t *testing.T) {
 		&apiv1.ListWorkspaceNamespaceBindingsRequest{Id: wkspID},
 	)
 	require.NoError(t, err)
-	require.Equal(t, 1, len(wsNsResp.NamespaceBindings))
+	require.Len(t, wsNsResp.NamespaceBindings, 1)
 
 	expectedWsNsBindings := map[string]string{emptyClusterName: defaultKubernetesNamespaceName}
 	require.Equal(t, expectedWsNsBindings, wsNsResp.NamespaceBindings)
@@ -1367,7 +1367,7 @@ func TestListWorkspaceNamespaceBindings(t *testing.T) {
 		&apiv1.ListWorkspaceNamespaceBindingsRequest{Id: wkspID},
 	)
 	require.NoError(t, err)
-	require.Equal(t, 1, len(wsNsResp.NamespaceBindings))
+	require.Len(t, wsNsResp.NamespaceBindings, 1)
 
 	expectedWsNsBindings = map[string]string{emptyClusterName: namespace1Name}
 	require.Equal(t, expectedWsNsBindings, wsNsResp.NamespaceBindings)
@@ -1386,7 +1386,7 @@ func TestListWorkspaceNamespaceBindings(t *testing.T) {
 		&apiv1.ListWorkspaceNamespaceBindingsRequest{Id: wkspID},
 	)
 	require.NoError(t, err)
-	require.Equal(t, 2, len(wsNsResp.NamespaceBindings))
+	require.Len(t, wsNsResp.NamespaceBindings, 2)
 
 	expectedBindings := map[string]string{
 		emptyClusterName + staleLabel: namespace1Name,
@@ -1425,7 +1425,7 @@ func TestListWorkspaceNamespaceBindings(t *testing.T) {
 		&apiv1.ListWorkspaceNamespaceBindingsRequest{Id: wkspID},
 	)
 	require.NoError(t, err)
-	require.Equal(t, numRms+len(staleBindings), len(wsNsResp.NamespaceBindings))
+	require.Len(t, wsNsResp.NamespaceBindings, numRms+len(staleBindings))
 
 	for cluster, ns := range wsNsResp.NamespaceBindings {
 		require.Contains(t, expectedBindings, cluster)
@@ -1453,7 +1453,7 @@ func TestListWorkspaceNamespaceBindings(t *testing.T) {
 		&apiv1.ListWorkspaceNamespaceBindingsRequest{Id: wkspID},
 	)
 	require.NoError(t, err)
-	require.Equal(t, numRms+len(staleBindings), len(wsNsResp.NamespaceBindings))
+	require.Len(t, wsNsResp.NamespaceBindings, numRms+len(staleBindings))
 
 	for cluster, ns := range wsNsResp.NamespaceBindings {
 		require.Contains(t, expectedBindings, cluster)
@@ -1477,7 +1477,7 @@ func TestListWorkspaceNamespaceBindings(t *testing.T) {
 		&apiv1.ListWorkspaceNamespaceBindingsRequest{Id: wkspID},
 	)
 	require.NoError(t, err)
-	require.Equal(t, len(api.m.allRms)+len(staleBindings), len(wsNsResp.NamespaceBindings))
+	require.Len(t, wsNsResp.NamespaceBindings, len(api.m.allRms)+len(staleBindings))
 
 	for cluster, ns := range wsNsResp.NamespaceBindings {
 		require.Contains(t, expectedBindings, cluster)
@@ -1499,7 +1499,7 @@ func TestListWorkspaceNamespaceBindings(t *testing.T) {
 		&apiv1.ListWorkspaceNamespaceBindingsRequest{Id: wkspID},
 	)
 	require.NoError(t, err)
-	require.Equal(t, 3, len(wsNsResp.NamespaceBindings))
+	require.Len(t, wsNsResp.NamespaceBindings, 3)
 	require.NoError(t, err)
 
 	for cluster, ns := range wsNsResp.NamespaceBindings {

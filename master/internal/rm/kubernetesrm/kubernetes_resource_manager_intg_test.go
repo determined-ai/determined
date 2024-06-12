@@ -833,15 +833,15 @@ func TestVerifyNamespaceExists(t *testing.T) {
 		_, ok := worker.podInterface[namespaceName]
 		_, notOk := worker.podInterface[invalidNamespace]
 		require.True(t, ok)
-		require.True(t, !notOk)
+		require.False(t, notOk)
 		_, ok = worker.jobInterface[namespaceName]
 		_, notOk = worker.jobInterface[invalidNamespace]
 		require.True(t, ok)
-		require.True(t, !notOk)
+		require.False(t, notOk)
 		_, ok = worker.configMapInterfaces[namespaceName]
 		_, notOk = worker.configMapInterfaces[invalidNamespace]
 		require.True(t, ok)
-		require.True(t, !notOk)
+		require.False(t, notOk)
 	}
 
 	// Test that a non-existent namespace name.
@@ -918,18 +918,18 @@ func TestRemoveEmptyNamespace(t *testing.T) {
 
 	// Verify that the namespace was removed from everywhere.
 	_, notOk := js.podInterfaces[namespaceName]
-	require.True(t, !notOk)
+	require.False(t, notOk)
 	_, notOk = js.jobInterfaces[namespaceName]
-	require.True(t, !notOk)
+	require.False(t, notOk)
 	_, notOk = js.configMapInterfaces[namespaceName]
-	require.True(t, !notOk)
+	require.False(t, notOk)
 	for _, worker := range js.requestQueueWorkers {
 		_, notOk = worker.podInterface[namespaceName]
-		require.True(t, !notOk)
+		require.False(t, notOk)
 		_, notOk = worker.jobInterface[namespaceName]
-		require.True(t, !notOk)
+		require.False(t, notOk)
 		_, notOk = worker.configMapInterfaces[namespaceName]
-		require.True(t, !notOk)
+		require.False(t, notOk)
 	}
 
 	// Try removing empty namespace name again.
@@ -938,18 +938,18 @@ func TestRemoveEmptyNamespace(t *testing.T) {
 
 	// Verify that the namespace is still removed from everywhere.
 	_, notOk = js.podInterfaces[namespaceName]
-	require.True(t, !notOk)
+	require.False(t, notOk)
 	_, notOk = js.jobInterfaces[namespaceName]
-	require.True(t, !notOk)
+	require.False(t, notOk)
 	_, notOk = js.configMapInterfaces[namespaceName]
-	require.True(t, !notOk)
+	require.False(t, notOk)
 	for _, worker := range js.requestQueueWorkers {
 		_, notOk = worker.podInterface[namespaceName]
-		require.True(t, !notOk)
+		require.False(t, notOk)
 		_, notOk = worker.jobInterface[namespaceName]
-		require.True(t, !notOk)
+		require.False(t, notOk)
 		_, notOk = worker.configMapInterfaces[namespaceName]
-		require.True(t, !notOk)
+		require.False(t, notOk)
 	}
 }
 
