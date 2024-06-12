@@ -126,7 +126,8 @@ func New(
 		if k.config.DefaultNamespace == "" {
 			k.config.DefaultNamespace = defaultNamespace
 		}
-		rp := newResourcePool(maxSlotsPerPod, &poolConfig, k.jobsService, k.db, k.config.DefaultNamespace, k.config.Name)
+		rp := newResourcePool(maxSlotsPerPod, &poolConfig, k.jobsService, k.db,
+			k.config.DefaultNamespace, k.config.ClusterName)
 		go func() {
 			t := time.NewTicker(podSubmissionInterval)
 			defer t.Stop()
