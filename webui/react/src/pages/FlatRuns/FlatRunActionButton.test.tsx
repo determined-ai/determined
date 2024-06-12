@@ -6,8 +6,19 @@ import UIProvider, { DefaultTheme } from 'hew/Theme';
 import FlatRunActionButton from 'pages/FlatRuns/FlatRunActionButton';
 import { FlatRun, RunState } from 'types';
 
+vi.mock('services/api', () => ({
+  getWorkspaceProjects: vi.fn(() =>
+    Promise.resolve({ projects: [{ id: 1, name: 'project_1', workspaceId: 1 }] }),
+  ),
+  killRuns: vi.fn((params: { projectId: number; runIds: number[] }) => {
+    return Promise.resolve(params.runIds.map((id) => ({ error: '', id })));
+  }),
+}));
+
 const setup = (selectedFlatRuns: ReadonlyArray<Readonly<FlatRun>>) => {
   const user = userEvent.setup();
+  const onActionSuccess = vi.fn();
+  const onActionComplete = vi.fn();
 
   render(
     <UIProvider theme={DefaultTheme.Light}>
@@ -16,12 +27,14 @@ const setup = (selectedFlatRuns: ReadonlyArray<Readonly<FlatRun>>) => {
         projectId={1}
         selectedRuns={selectedFlatRuns}
         workspaceId={1}
-        onActionComplete={vi.fn()}
+        onActionComplete={onActionComplete}
+        onActionSuccess={onActionSuccess}
       />
     </UIProvider>,
   );
 
   return {
+    handler: { onActionSuccess },
     user,
   };
 };
@@ -64,6 +77,14 @@ describe('canActionFlatRun function', () => {
       expect(await screen.findByText('Unarchive')).toBeInTheDocument();
       expect(await screen.findByText('Delete')).toBeInTheDocument();
       expect(await screen.findByText('Kill')).toBeInTheDocument();
+    });
+
+    it('should kill runs', async () => {
+      const { user } = setup(flatRuns);
+      const actionButton = await screen.findByText('Actions');
+      await user.click(actionButton);
+      await user.click(await screen.findByText('Kill'));
+      expect(await screen.findByText('Confirm Batch Kill')).toBeInTheDocument();
     });
   });
 });
