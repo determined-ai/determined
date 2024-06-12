@@ -37,13 +37,11 @@ test.describe('User Management', () => {
 
   test.describe('With User Teardown', () => {
     test.afterAll(async ({ backgroundApiUser }) => {
-      await backgroundApiUser.apiAuth.login();
       await test.step('Deactivate Users', async () => {
         for (const [id] of testUsers) {
           await backgroundApiUser.patchUser(id, { active: false });
         }
       });
-      await backgroundApiUser.apiAuth.dispose();
     });
 
     test.describe('With Test User', () => {
@@ -92,9 +90,8 @@ test.describe('User Management', () => {
       let testUser: V1PostUserRequest;
 
       test.beforeAll(async ({ backgroundApiUser }) => {
-        await backgroundApiUser.apiAuth.login();
         await test.step('Create User', async () => {
-          testUser = await backgroundApiUser.createUser(backgroundApiUser.newRandom());
+          testUser = await backgroundApiUser.createUser(backgroundApiUser.new());
           saveTestUser(testUser, testUsers);
         });
       });
@@ -145,12 +142,11 @@ test.describe('User Management', () => {
       const usernamePrefix = 'test-user-pagination';
       test.beforeAll(async ({ backgroundApiUser }) => {
         test.slow();
-        await backgroundApiUser.apiAuth.login();
         await test.step('Create User', async () => {
           // pagination will be 10 per page, so create 11 users
           for (let i = 0; i < 11; i++) {
             const user = await backgroundApiUser.createUser(
-              backgroundApiUser.newRandom(`${usernamePrefix}`),
+              backgroundApiUser.new({ usernamePrefix }),
             );
             saveTestUser(user, testUsers);
           }

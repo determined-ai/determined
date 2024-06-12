@@ -13,8 +13,8 @@ export class ApiUserFixture {
     this.apiAuth = apiAuth;
   }
 
-  newRandom(usernamePrefix = 'test-user'): V1PostUserRequest {
-    return {
+  new({ userProps = {}, usernamePrefix = 'test-user' } = {}): V1PostUserRequest {
+    const defaults = {
       isHashed: false,
       password: 'TestPassword1',
       user: {
@@ -22,6 +22,10 @@ export class ApiUserFixture {
         admin: true,
         username: safeName(usernamePrefix),
       },
+    };
+    return {
+      ...defaults,
+      ...userProps,
     };
   }
 

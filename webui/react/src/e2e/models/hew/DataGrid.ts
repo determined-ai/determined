@@ -63,7 +63,7 @@ export class DataGrid<
     parent: this,
     selector: 'canvas:not([data-testid])',
   });
-  #columnheight: number | undefined;
+  #columnheight?: number;
   readonly #rowType: RowClass<RowType, HeadRowType>;
   readonly rows: RowType;
   readonly headRow: HeadRowType;
@@ -279,10 +279,10 @@ export class Row<HeadRowType extends HeadRow<Row<HeadRowType>>> extends NamedCom
 
   /**
    * Constructs a Row
-   * @param {object} obj
-   * @param {CanBeParent} obj.parent - The parent used to locate this Row
-   * @param {string} obj.selector - Used as a selector uesd to locate this object
-   * @param {DataGrid<RowType, HeadRowType>} [obj.parentTable] - Reference to the original table
+   * @param {object} args
+   * @param {CanBeParent} args.parent - The parent used to locate this Row
+   * @param {string} args.selector - Used as a selector uesd to locate this object
+   * @param {DataGrid<RowType, HeadRowType>} [args.parentTable] - Reference to the original table
    */
   constructor(args: RowArgs<Row<HeadRowType>, HeadRowType>) {
     super(args);
@@ -375,9 +375,9 @@ export class HeadRow<RowType extends Row<HeadRow<RowType>>> extends NamedCompone
 
   /**
    * Constructs a HeadRow
-   * @param {object} obj
-   * @param {CanBeParent} obj.parent - The parent used to locate this HeadRow
-   * @param {string} obj.selector - Used as a selector uesd to locate this object
+   * @param {object} args
+   * @param {CanBeParent} args.parent - The parent used to locate this HeadRow
+   * @param {string} args.selector - Used as a selector uesd to locate this object
    */
   constructor(args: HeadRowArgs<RowType, HeadRow<RowType>>) {
     super(args);
