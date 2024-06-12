@@ -176,12 +176,16 @@ func (j *job) configureProxyResources(t *tasks.TaskSpec) *proxyResourceGenerator
 			allocLabels := map[string]string{
 				determinedLabel: t.AllocationID,
 			}
+			annotations := map[string]string{
+				jobNameAnnotation: j.jobName,
+			}
 
 			serviceSpec := &k8sV1.Service{
 				ObjectMeta: metaV1.ObjectMeta{
-					Name:      sharedName,
-					Namespace: j.namespace,
-					Labels:    allocLabels,
+					Name:        sharedName,
+					Namespace:   j.namespace,
+					Labels:      allocLabels,
+					Annotations: annotations,
 				},
 				Spec: k8sV1.ServiceSpec{
 					Ports: []k8sV1.ServicePort{
@@ -199,9 +203,10 @@ func (j *job) configureProxyResources(t *tasks.TaskSpec) *proxyResourceGenerator
 
 			tcpRouteSpec := &alphaGatewayTyped.TCPRoute{
 				ObjectMeta: metaV1.ObjectMeta{
-					Name:      sharedName,
-					Namespace: j.namespace,
-					Labels:    allocLabels,
+					Name:        sharedName,
+					Namespace:   j.namespace,
+					Labels:      allocLabels,
+					Annotations: annotations,
 				},
 				Spec: alphaGatewayTyped.TCPRouteSpec{
 					CommonRouteSpec: alphaGatewayTyped.CommonRouteSpec{
@@ -211,7 +216,7 @@ func (j *job) configureProxyResources(t *tasks.TaskSpec) *proxyResourceGenerator
 								Name:      alphaGatewayTyped.ObjectName(j.internalTaskGWConfig.GatewayName),
 								Port:      ptrs.Ptr(alphaGatewayTyped.PortNumber(gwPort)),
 								SectionName: ptrs.Ptr(alphaGatewayTyped.SectionName(
-									generateListenerName(model.AllocationID(t.AllocationID), gwPort),
+									generateListenerName(gwPort),
 								)),
 							},
 						},
@@ -232,7 +237,7 @@ func (j *job) configureProxyResources(t *tasks.TaskSpec) *proxyResourceGenerator
 				},
 			}
 
-			gatewayListener := createListenerForPod(model.AllocationID(t.AllocationID), gwPort)
+			gatewayListener := createListenerForPod(gwPort)
 
 			resources = append(resources, gatewayProxyResource{
 				podPort:         proxyPort.Port,

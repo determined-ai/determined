@@ -2,17 +2,19 @@ package kubernetesrm
 
 import (
 	"fmt"
-	"strings"
 
 	gatewayTyped "sigs.k8s.io/gateway-api/apis/v1"
 
-	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 )
 
-func createListenerForPod(allocationID model.AllocationID, gwPort int) gatewayTyped.Listener {
+func generateListenerName(p int) string {
+	return fmt.Sprintf("det-%d", p)
+}
+
+func createListenerForPod(gwPort int) gatewayTyped.Listener {
 	gatewayListener := gatewayTyped.Listener{
-		Name:     gatewayTyped.SectionName(generateListenerName(allocationID, gwPort)),
+		Name:     gatewayTyped.SectionName(generateListenerName(gwPort)),
 		Port:     gatewayTyped.PortNumber(gwPort),
 		Protocol: "TCP",
 		AllowedRoutes: &gatewayTyped.AllowedRoutes{
@@ -24,32 +26,6 @@ func createListenerForPod(allocationID model.AllocationID, gwPort int) gatewayTy
 	return gatewayListener
 }
 
-func stripIndexFromSharedName(n string) string {
-	lastHyphenIndex := strings.LastIndex(n, "-")
-	if lastHyphenIndex == -1 {
-		return ""
-	}
-
-	return n[:lastHyphenIndex]
-}
-
-func generateListenerName(allocationID model.AllocationID, port int) string {
-	return fmt.Sprintf("%d-determined-%s", port, allocationID)
-}
-
-func listenerIsDetermined(listenerName string) bool {
-	return strings.Contains(listenerName, "determined-")
-}
-
-func getAllocationIDFromListenerName(listenerName string) string {
-	if !listenerIsDetermined(listenerName) {
-		return ""
-	}
-
-	lastHyphenIndex := strings.LastIndex(listenerName, "determined-")
-	if lastHyphenIndex == -1 {
-		return ""
-	}
-
-	return listenerName[lastHyphenIndex+len("determined-"):]
+func portToAnnotationKey(port int) string {
+	return fmt.Sprintf("determined.ai/det-gateway-port-%d", port)
 }
