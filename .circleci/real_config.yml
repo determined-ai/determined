@@ -147,28 +147,26 @@ commands:
         default: "/tmp/artifacts/logs"
     description: Collect logs from the cluster tasks.
     steps:
-      - run: |
-          pkg_names="fire determined"
-          for pkg_name in $pkg_names; do
-            if ! python -c "import $pkg_name" 2>/dev/null; then
-              # echo "Package $pkg_name not found, installing"
-              pip install $pkg_name
-              # echo "Package $pkg_name not found, aborting"
-              # exit 0
-            fi
-          done
-      - run: |
-          target_dir="<< parameters.store_path >>"
-          mkdir -p $target_dir
-          python .circleci/scripts/collect_logs.py --username determined --password "${INITIAL_USER_PASSWORD}" --mlde-host "<< parameters.master_address >>" save_all_logs $target_dir
-          echo "collected logs at $target_dir"
-          log_count=$(find "<< parameters.store_path >>" -type f | wc -l)
-          total_size=$(du -sh "<< parameters.store_path >>" | cut -f1)
-          echo "Number of log files collected: $log_count"
-          echo "Total size of collected logs: $total_size"
       - run:
-          name: hitarget_dir="<< parameters.store_path >>"
-          command: echo hi
+          name: "Ensure necessary Python packages are available."
+          command: |
+            pkg_names="fire determined"
+            for pkg_name in $pkg_names; do
+              if ! python -c "import $pkg_name" 2>/dev/null; then
+                pip install $pkg_name
+              fi
+            done
+      - run:
+          name: "Collect logs and calculate statistics"
+          command: |
+            target_dir="<< parameters.store_path >>"
+            mkdir -p $target_dir
+            python .circleci/scripts/collect_logs.py --username determined --password "${INITIAL_USER_PASSWORD}" --mlde-host "<< parameters.master_address >>" save_all_logs $target_dir
+            echo "collected logs at $target_dir"
+            log_count=$(find "<< parameters.store_path >>" -type f | wc -l)
+            total_size=$(du -sh "<< parameters.store_path >>" | cut -f1)
+            echo "Number of log files collected: $log_count"
+            echo "Total size of collected logs: $total_size"
 
 
   skip-if-only-dir:
