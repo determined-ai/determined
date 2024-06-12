@@ -1256,6 +1256,7 @@ func testSetWkspNmspBindingsSuccessCases(t *testing.T) {
 	// Set workspace-namespace binding to the default namespace.
 	mockRM1.On("VerifyNamespaceExists", defaultNamespace, noName).Return(nil).Once()
 	mockRM1.On("DefaultNamespace", noName).Return(&defaultNamespace, nil).Once()
+	mockRM1.On("RemoveEmptyNamespace", newNamespace1Name, noName).Return(nil).Once()
 	respWsNs, err = api.SetWorkspaceNamespaceBindings(ctx,
 		&apiv1.SetWorkspaceNamespaceBindingsRequest{
 			WorkspaceId:           wkspID,
@@ -1271,10 +1272,9 @@ func testSetWkspNmspBindingsSuccessCases(t *testing.T) {
 		},
 	}, respWsNs.NamespaceBindings)
 
-	// Old workspace-namespace binding removed?
+	// workspace-namespace binding removed from db?
 	err = db.Bun().NewSelect().Model(&model.WorkspaceNamespace{}).
 		Where("workspace_id = ?", wkspID).
-		Where("namespace = ?", newNamespace1Name).
 		Where("cluster_name = ?", noName).
 		Scan(ctx)
 	require.Error(t, err)

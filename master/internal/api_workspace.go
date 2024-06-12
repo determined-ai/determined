@@ -501,6 +501,40 @@ func (a *apiServer) PostWorkspace(
 	}, nil
 }
 
+func (a *apiServer) deleteWorkspaceNamespaceBinding(ctx context.Context,
+	clusterNames []string, workspaceID int32, curUser *model.User,
+) error {
+	w, err := a.GetWorkspaceByID(ctx, workspaceID, *curUser, true)
+	if err != nil {
+		return err
+	}
+
+	if err := workspace.AuthZProvider.Get().
+		CanSetWorkspaceNamespaceBindings(ctx, *curUser, w); err != nil {
+		return status.Error(codes.PermissionDenied, err.Error())
+	}
+	if len(clusterNames) > 0 {
+		err = db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+			deletedBindings, err := workspace.DeleteWorkspaceNamespaceBindings(ctx, int(workspaceID), clusterNames, &tx)
+			if err != nil {
+				return err
+			}
+			for _, v := range deletedBindings {
+				err = a.m.rm.RemoveEmptyNamespace(v.Namespace, v.ClusterName)
+				if err != nil {
+					return err
+				}
+			}
+			return nil
+		})
+		if err != nil {
+			return fmt.Errorf("failed to delete namespace binding: %w", err)
+		}
+	}
+
+	return nil
+}
+
 func (a *apiServer) PatchWorkspace(
 	ctx context.Context, req *apiv1.PatchWorkspaceRequest,
 ) (*apiv1.PatchWorkspaceResponse, error) {
@@ -607,6 +641,37 @@ func (a *apiServer) PatchWorkspace(
 			}
 		}
 		insertColumns = append(insertColumns, "checkpoint_storage_config")
+
+		toDelete := []string{}
+		for cluster, ns := range req.Workspace.ClusterNamespacePairs {
+			if ns == "" {
+				toDelete = append(toDelete, cluster)
+				delete(req.Workspace.ClusterNamespacePairs, cluster)
+			}
+		}
+		if len(toDelete) > 0 {
+			err = a.deleteWorkspaceNamespaceBinding(ctx, toDelete, req.Id, &currUser)
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		if len(req.Workspace.ClusterNamespacePairs) != 0 {
+			newReq := &apiv1.SetWorkspaceNamespaceBindingsRequest{
+				WorkspaceId:           req.Id,
+				ClusterNamespacePairs: req.Workspace.ClusterNamespacePairs,
+			}
+			err = db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+				_, err := a.setWorkspaceNamespaceBindings(ctx, newReq, &tx, &currUser, currWorkspace)
+				if err != nil {
+					return fmt.Errorf("failed to create namespace binding: %w", err)
+				}
+				return nil
+			})
+			if err != nil {
+				return nil, err
+			}
+		}
 	}
 
 	if len(insertColumns) == 0 {
@@ -706,10 +771,15 @@ func (a *apiServer) setWorkspaceNamespaceBindings(ctx context.Context,
 			} else {
 				// Delete the existing workspace-namespace binding if a user wants to bind the
 				// workspace to the default namespace for a given cluster.
-				_, err := workspace.DeleteWorkspaceNamespaceBindings(ctx, wsns.WorkspaceID,
-					[]string{clusterName}, tx)
+				deletedBindings, err := workspace.DeleteWorkspaceNamespaceBindings(ctx, wsns.WorkspaceID, []string{clusterName}, tx)
 				if err != nil {
 					return nil, err
+				}
+				for _, v := range deletedBindings {
+					err = a.m.rm.RemoveEmptyNamespace(v.Namespace, v.ClusterName)
+					if err != nil {
+						return nil, err
+					}
 				}
 			}
 		}

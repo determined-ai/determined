@@ -1045,6 +1045,9 @@ export interface Template {
   name: string;
   workspaceId: number;
 }
+export interface KubernetesResourceManagers {
+  names: string[];
+}
 
 export interface ResourcePool extends Omit<Api.V1ResourcePool, 'slotType'> {
   slotType: ResourceType;
@@ -1092,6 +1095,10 @@ export interface Workspace {
   userId: number;
   defaultComputePool?: string;
   defaultAuxPool?: string;
+}
+
+export interface WorkspaceNamespaceBindings {
+  clusterNamespacePairs: Record<string, string>;
 }
 
 export interface WorkspacePagination extends WithPagination {

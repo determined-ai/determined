@@ -413,6 +413,25 @@ func (m *MultiRMRouter) DeleteNamespace(namespaceName string) error {
 	})
 }
 
+// RemoveEmptyNamespace removes a namespace from our interfaces in cluster if it is no
+// longer used by any workspace.
+func (m *MultiRMRouter) RemoveEmptyNamespace(namespaceName string,
+	clusterName string,
+) error {
+	if len(clusterName) == 0 {
+		return fmt.Errorf("must specify cluster name when using multiRM")
+	}
+	rm, err := m.getRM(clusterName)
+	if err != nil {
+		return fmt.Errorf("error getting resource manager for cluster %s: %w", clusterName, err)
+	}
+	err = rm.RemoveEmptyNamespace(namespaceName, clusterName)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 func (m *MultiRMRouter) getRMName(rpName rm.ResourcePoolName) (string, error) {
 	// If not given RP name, route to default RM.
 	if rpName == "" {

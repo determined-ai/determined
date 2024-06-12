@@ -505,6 +505,20 @@ export const disableAgent: DetApi<string, Api.V1DisableAgentResponse, Type.Agent
   request: (agentId) => detApi.Cluster.disableAgent(agentId, {}),
 };
 
+export const getKubernetesResourceManagers: DetApi<
+  void,
+  Api.V1GetKubernetesResourceManagersResponse,
+  Type.KubernetesResourceManagers
+> = {
+  name: 'getKubernetesResourceManagers',
+  postProcess: (response) => {
+    return {
+      names: response.resourceManagers,
+    };
+  },
+  request: () => detApi.Internal.getKubernetesResourceManagers(),
+};
+
 export const getResourcePools: DetApi<
   Service.GetResourcePoolsParams,
   Api.V1GetResourcePoolsResponse,
@@ -1589,6 +1603,22 @@ export const patchWorkspace: DetApi<
       },
       options,
     );
+  },
+};
+
+export const listWorkspaceNamespaceBindings: DetApi<
+  Service.ListWorkspaceNamespaceBindingsParams,
+  Api.V1ListWorkspaceNamespaceBindingsResponse,
+  Type.WorkspaceNamespaceBindings
+> = {
+  name: 'listWorkspaceNamespaceBindings',
+  postProcess: (response) => {
+    return {
+      clusterNamespacePairs: response.namespaceBindings,
+    };
+  },
+  request: (params) => {
+    return detApi.Workspaces.listWorkspaceNamespaceBindings(params.id);
   },
 };
 

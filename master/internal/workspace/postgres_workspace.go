@@ -231,3 +231,15 @@ func DeleteWorkspaceNamespaceBindings(ctx context.Context, wkspID int,
 	}
 	return deletedBindings, nil
 }
+
+// GetNumWorkspacesUsingNamespaceInCluster gets the number of Workspaces that are
+// using a particular namespace for the given cluster.
+func GetNumWorkspacesUsingNamespaceInCluster(ctx context.Context, clusterName string,
+	namespaceName string,
+) (int, error) {
+	return db.Bun().NewSelect().
+		Table("workspace_namespace_bindings").
+		ColumnExpr("count(*)").
+		Where("cluster_name = ? and namespace = ?", clusterName, namespaceName).
+		Count(ctx)
+}

@@ -973,7 +973,7 @@ type SetWorkspaceNamespaceBindingsRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// The id of the workspace.
+	// The unique id of the workspace.
 	WorkspaceId int32 `protobuf:"varint,1,opt,name=workspace_id,json=workspaceId,proto3" json:"workspace_id,omitempty"`
 	// The cluster-namespace pairs used to create workspace=namespace bindings.
 	ClusterNamespacePairs map[string]string `protobuf:"bytes,2,rep,name=cluster_namespace_pairs,json=clusterNamespacePairs,proto3" json:"cluster_namespace_pairs,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
