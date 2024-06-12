@@ -6,7 +6,7 @@ import Row from 'hew/Row';
 import Select, { Option, SelectValue } from 'hew/Select';
 import Spinner from 'hew/Spinner';
 import { Label } from 'hew/Typography';
-import { Loadable } from 'hew/utils/loadable';
+import { Loadable, NotLoaded } from 'hew/utils/loadable';
 import usePrevious from 'hew/utils/usePrevious';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
@@ -16,6 +16,7 @@ import HumanReadableNumber from 'components/HumanReadableNumber';
 import Link from 'components/Link';
 import MetricBadgeTag from 'components/MetricBadgeTag';
 import MetricSelect from 'components/MetricSelect';
+import { useAsync } from 'hooks/useAsync';
 import useMetricNames from 'hooks/useMetricNames';
 import { paths } from 'routes/utils';
 import { getTrialDetails } from 'services/api';
@@ -91,43 +92,33 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
   runs,
   onUnselect,
 }: TableProps) => {
-  const [trialsDetails, setTrialsDetails] = useState<(TrialDetails | FlatRun)[]>(trials ?? []);
   const [selectedHyperparameters, setSelectedHyperparameters] = useState<string[]>([]);
   const [selectedMetrics, setSelectedMetrics] = useState<Metric[]>([]);
   const colSpan = (Array.isArray(experiment) ? experiment.length : trialIds?.length ?? 0) + 1;
 
-  useEffect(() => {
-    if (trialIds === undefined) return;
-    const canceler = new AbortController();
+  // the loadable has the flat run type here to make the getOrElse later on succeed.
+  const trialDetailsRequest = useAsync<TrialDetails[] | FlatRun[]>(
+    async (canceler) => {
+      if (trialIds === undefined) return NotLoaded;
+      return (
+        await Promise.all(
+          trialIds.map(async (trialId: number) => {
+            try {
+              return await getTrialDetails({ id: trialId }, { signal: canceler.signal });
+            } catch (e) {
+              handleError(e);
+              return undefined;
+            }
+          }),
+        )
+      ).filter((r): r is Exclude<typeof r, undefined> => !!r);
+    },
+    [trialIds],
+  );
 
-    const fetchTrialDetails = async (trialId: number) => {
-      try {
-        const response = await getTrialDetails({ id: trialId }, { signal: canceler.signal });
-        setTrialsDetails((prev) => [...prev, response]);
-      } catch (e) {
-        handleError(e);
-      }
-    };
-
-    setTrialsDetails([]);
-    trialIds.forEach((trialId) => {
-      fetchTrialDetails(trialId);
-    });
-
-    return () => {
-      canceler.abort();
-    };
-  }, [trialIds]);
-
-  useEffect(() => {
-    if (trials === undefined) return;
-    setTrialsDetails(trials);
-  }, [trials]);
-
-  useEffect(() => {
-    if (runs === undefined) return;
-    setTrialsDetails(runs);
-  }, [runs]);
+  const trialsDetails = useMemo(() => {
+    return trialDetailsRequest.getOrElse(trials ?? runs ?? []);
+  }, [trialDetailsRequest, trials, runs]);
 
   const handleTrialUnselect = useCallback((trialId: number) => onUnselect?.(trialId), [onUnselect]);
 

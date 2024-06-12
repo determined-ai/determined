@@ -43,15 +43,12 @@ const setup = (type: 'experiments' | 'runs', empty?: boolean) => {
             {type === 'experiments' ? (
               <ExperimentComparisonViewWithMocks
                 empty={empty}
-                open={true}
+                open
                 onWidthChange={handleWidthChange}>
                 <p>Children</p>
               </ExperimentComparisonViewWithMocks>
             ) : (
-              <RunComparisonViewWithMocks
-                empty={empty}
-                open={true}
-                onWidthChange={handleWidthChange}>
+              <RunComparisonViewWithMocks empty={empty} open onWidthChange={handleWidthChange}>
                 <p>Children</p>
               </RunComparisonViewWithMocks>
             )}
@@ -65,13 +62,23 @@ const setup = (type: 'experiments' | 'runs', empty?: boolean) => {
 };
 
 describe('ComparisonView', () => {
-  describe.each(['experiments', 'runs'] as const)('%s', (type) => {
+  describe('Experiments', () => {
     it('renders children', () => {
-      setup(type);
+      setup('experiments');
       expect(screen.getByText('Children')).toBeInTheDocument();
     });
     it('shows empty message', () => {
-      setup(type, true);
+      setup('experiments', true);
+      expect(screen.getByText(EMPTY_MESSAGE)).toBeInTheDocument();
+    });
+  });
+  describe('Runs', () => {
+    it('renders children', () => {
+      setup('runs');
+      expect(screen.getByText('Children')).toBeInTheDocument();
+    });
+    it('shows empty message', () => {
+      setup('runs', true);
       expect(screen.getByText(EMPTY_MESSAGE)).toBeInTheDocument();
     });
   });
