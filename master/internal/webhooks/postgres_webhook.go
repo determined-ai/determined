@@ -18,6 +18,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/workspace"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
+	"github.com/determined-ai/determined/master/internal/logpattern"
 
 	"github.com/google/uuid"
 )
@@ -121,6 +122,11 @@ func (l *WebhookManager) scanLogs(ctx context.Context, logs []*model.TaskLog) er
 		}
 
 		for _, cacheItem := range l.regexToTriggers {
+			// One of the trial logs prints expconf which has the regex pattern.
+			// We skip monitoring this line.
+			if logpattern.ExpconfigCompiledRegex.MatchString(log.Log) {
+				continue
+			}
 			if cacheItem.re.MatchString(log.Log) {
 				for _, t := range cacheItem.triggerIDToTrigger {
 					if err := addTaskLogEvent(ctx,
