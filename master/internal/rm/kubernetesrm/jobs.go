@@ -667,6 +667,12 @@ func (j *jobsService) DeleteNamespace(namespaceName string) error {
 	return j.deleteNamespace(namespaceName)
 }
 
+func (j *jobsService) RemoveEmptyNamespace(namespaceName string, clusterName string) error {
+	j.mu.Lock()
+	defer j.mu.Unlock()
+	return j.removeEmptyNamespace(namespaceName, clusterName)
+}
+
 type reattachJobRequest struct {
 	req          *sproto.AllocateRequest
 	numPods      int
@@ -2147,6 +2153,25 @@ func (j *jobsService) deleteNamespace(namespaceName string) error {
 		metaV1.DeleteOptions{})
 	if err != nil && !strings.Contains(err.Error(), "not found") {
 		return err
+	}
+	return nil
+}
+
+func (j *jobsService) removeEmptyNamespace(namespaceName string, clusterName string) error {
+	count, err := workspace.GetNumWorkspacesUsingNamespaceInCluster(context.Background(), clusterName, namespaceName)
+	if err != nil {
+		return err
+	}
+	if count == 0 {
+		delete(j.podInterfaces, namespaceName)
+		delete(j.configMapInterfaces, namespaceName)
+		delete(j.jobInterfaces, namespaceName)
+
+		for _, worker := range j.requestQueueWorkers {
+			worker.podInterface = j.podInterfaces
+			worker.configMapInterfaces = j.configMapInterfaces
+			worker.jobInterface = j.jobInterfaces
+		}
 	}
 	return nil
 }

@@ -1977,6 +1977,17 @@ service Determined {
     };
   }
 
+  // Get a list of all Kubernetes cluster names.
+  rpc GetKubernetesResourceManagers(GetKubernetesResourceManagersRequest)
+      returns (GetKubernetesResourceManagersResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/k8-resource-managers"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+
   // Get a detailed view of resource allocation during the given time period.
   rpc ResourceAllocationRaw(ResourceAllocationRawRequest)
       returns (ResourceAllocationRawResponse) {

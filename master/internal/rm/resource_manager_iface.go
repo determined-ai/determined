@@ -59,6 +59,7 @@ type ResourceManager interface {
 	DefaultNamespace(string) (*string, error)
 	VerifyNamespaceExists(string, string) error
 	DeleteNamespace(string) error
+	RemoveEmptyNamespace(string, string) error
 }
 
 // ResourcePoolName holds the name of the resource pool, and describes the input/output

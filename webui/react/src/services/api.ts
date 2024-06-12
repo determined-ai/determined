@@ -219,6 +219,12 @@ export const disableAgent = generateDetApi<string, Api.V1DisableAgentResponse, T
   Config.disableAgent,
 );
 
+export const getKubernetesResourceManagers = generateDetApi<
+  void,
+  Api.V1GetKubernetesResourceManagersResponse,
+  Type.KubernetesResourceManagers
+>(Config.getKubernetesResourceManagers);
+
 export const getResourcePools = generateDetApi<
   Service.GetResourcePoolsParams,
   Api.V1GetResourcePoolsResponse,
@@ -650,6 +656,12 @@ export const patchWorkspace = generateDetApi<
   Api.V1PatchWorkspaceResponse,
   Type.Workspace
 >(Config.patchWorkspace);
+
+export const listWorkspaceNamespaceBindings = generateDetApi<
+  Service.ListWorkspaceNamespaceBindingsParams,
+  Api.V1ListWorkspaceNamespaceBindingsResponse,
+  Type.WorkspaceNamespaceBindings
+>(Config.listWorkspaceNamespaceBindings);
 
 export const archiveWorkspace = generateDetApi<
   Service.ActionWorkspaceParams,

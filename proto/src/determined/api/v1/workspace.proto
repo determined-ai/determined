@@ -221,7 +221,7 @@ message SetWorkspaceNamespaceBindingsRequest {
     json_schema: { required: [ "workspace_id" ] }
   };
 
-  // The id of the workspace.
+  // The unique id of the workspace.
   int32 workspace_id = 1;
   // The cluster-namespace pairs used to create workspace=namespace bindings.
   map<string, string> cluster_namespace_pairs = 2;
