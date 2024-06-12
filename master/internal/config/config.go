@@ -331,10 +331,12 @@ func (c *Config) Resolve() error {
 		if r.ResourceManager.AgentRM != nil {
 			if r.ResourceManager.AgentRM.Scheduler == nil {
 				r.ResourceManager.AgentRM.Scheduler = DefaultSchedulerConfig()
-			} else if r.ResourceManager.AgentRM.Scheduler.GetType() == FairShareScheduling {
+			}
+			if r.ResourceManager.AgentRM.Scheduler.GetType() == FairShareScheduling {
 				log.Warnf("Fair-Share Scheduler has been deprecated, announced in release 0.33.0.")
 				log.Warnf("Please update master config to use Priority Scheduler (configured by default).")
-			} else if r.ResourceManager.AgentRM.Scheduler.GetType() == RoundRobinScheduling {
+			}
+			if r.ResourceManager.AgentRM.Scheduler.GetType() == RoundRobinScheduling {
 				log.Error("Round Robin Scheduler is no longer available. Deprecation announced in release 0.33.0.")
 				log.Warn("Please update master config to use Priority Scheduler (configured by default).")
 				log.Info("Priority Scheduler with all priorities equal will have the same behavior as a Round Robin Scheduler.")

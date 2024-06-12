@@ -289,7 +289,7 @@ resource_manager:
 resource_manager:
   type: agent
   scheduler:
-    type: round_robin`, Config{
+    type: fair_share`, Config{
 			ResourceConfig: ResourceConfig{
 				RootManagerInternal: &ResourceManagerConfig{
 					AgentRM: &AgentResourceManagerConfig{
@@ -297,7 +297,7 @@ resource_manager:
 						DefaultAuxResourcePool:     "default",
 						DefaultComputeResourcePool: "default",
 						Scheduler: &SchedulerConfig{
-							RoundRobin:    &RoundRobinSchedulerConfig{},
+							FairShare:     &FairShareSchedulerConfig{},
 							FittingPolicy: "best",
 						},
 					},
@@ -317,7 +317,7 @@ resource_manager:
 resource_manager:
   type: agent
   scheduler:
-    type: round_robin
+    type: fair_share
 resource_pools:
   - pool_name: test
   - pool_name: test2`, Config{
@@ -328,7 +328,7 @@ resource_pools:
 						DefaultAuxResourcePool:     "default",
 						DefaultComputeResourcePool: "default",
 						Scheduler: &SchedulerConfig{
-							RoundRobin:    &RoundRobinSchedulerConfig{},
+							FairShare:     &FairShareSchedulerConfig{},
 							FittingPolicy: "best",
 						},
 					},
