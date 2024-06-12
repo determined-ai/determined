@@ -2,11 +2,13 @@ package internal
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"fmt"
 	"time"
 
 	structpb "github.com/golang/protobuf/ptypes/struct"
-	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/encoding/protojson"
@@ -15,10 +17,12 @@ import (
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/cluster"
 	"github.com/determined-ai/determined/master/internal/config"
+	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/license"
 	"github.com/determined-ai/determined/master/internal/plugin/sso"
 	"github.com/determined-ai/determined/master/pkg/logger"
+	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/version"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/logv1"
@@ -27,7 +31,7 @@ import (
 var masterLogsBatchMissWaitTime = time.Second
 
 func (a *apiServer) GetMaster(
-	_ context.Context, _ *apiv1.GetMasterRequest,
+	ctx context.Context, _ *apiv1.GetMasterRequest,
 ) (*apiv1.GetMasterResponse, error) {
 	product := apiv1.GetMasterResponse_PRODUCT_UNSPECIFIED
 	if a.m.config.InternalConfig.ExternalSessions.Enabled() {
@@ -53,7 +57,17 @@ func (a *apiServer) GetMaster(
 		Product:               product,
 		UserManagementEnabled: !a.m.config.InternalConfig.ExternalSessions.Enabled(),
 		FeatureSwitches:       a.m.config.FeatureSwitches,
+		ClusterMessage:        nil,
 	}
+
+	msg, err := db.GetActiveClusterMessage(ctx, db.Bun())
+	if err == nil {
+		masterResp.ClusterMessage = msg.ToProto()
+	} else if err != db.ErrNotFound {
+		logrus.WithError(err).Error("error fetching cluster-wide messages")
+		return nil, status.Error(codes.Internal, "error fetching cluster-wide messages; check logs for details")
+	}
+
 	sso.AddProviderInfoToMasterResponse(a.m.config, masterResp)
 
 	return masterResp, nil
@@ -87,7 +101,7 @@ func (a *apiServer) GetMasterConfig(
 
 	config, err := a.m.config.Printable()
 	if err != nil {
-		return nil, errors.Wrap(err, "error parsing master config")
+		return nil, fmt.Errorf("error parsing master config: %w", err)
 	}
 	configStruct := &structpb.Struct{}
 	err = protojson.Unmarshal(config, configStruct)
@@ -219,7 +233,7 @@ func (a *apiServer) ResourceAllocationRaw(
 	if err := a.m.db.QueryProto(
 		"get_raw_allocation", &resp.ResourceEntries, start.UTC(), end.UTC(),
 	); err != nil {
-		return nil, errors.Wrap(err, "error fetching raw allocation data")
+		return nil, fmt.Errorf("error fetching raw allocation data: %w", err)
 	}
 
 	return resp, nil
@@ -238,4 +252,116 @@ func (a *apiServer) ResourceAllocationAggregated(
 	}
 
 	return a.m.fetchAggregatedResourceAllocation(req)
+}
+
+func (a *apiServer) GetClusterMessage(
+	ctx context.Context,
+	req *apiv1.GetClusterMessageRequest,
+) (*apiv1.GetClusterMessageResponse, error) {
+	u, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	permErr, err := cluster.AuthZProvider.Get().CanUpdateMasterConfig(ctx, u)
+	if err != nil {
+		return nil, err
+	} else if permErr != nil {
+		return nil, permErr
+	}
+
+	msg, err := db.GetClusterMessage(ctx, db.Bun())
+	if err == db.ErrNotFound {
+		return &apiv1.GetClusterMessageResponse{}, nil
+	} else if err != nil {
+		logrus.WithError(err).Error("error looking up cluster message")
+		return nil, status.Error(codes.Internal, "error looking up cluster message; check logs for details")
+	}
+
+	return &apiv1.GetClusterMessageResponse{
+		ClusterMessage: msg.ToProto(),
+	}, nil
+}
+
+func (a *apiServer) SetClusterMessage(
+	ctx context.Context,
+	req *apiv1.SetClusterMessageRequest,
+) (*apiv1.SetClusterMessageResponse, error) {
+	u, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	permErr, err := cluster.AuthZProvider.Get().CanUpdateMasterConfig(ctx, u)
+	if err != nil {
+		return nil, err
+	} else if permErr != nil {
+		return nil, permErr
+	}
+
+	if req.EndTime != nil && req.Duration != nil {
+		return nil,
+			status.Errorf(codes.InvalidArgument, "EndTime and Duration are mutually exclusive")
+	}
+
+	mm := model.ClusterMessage{
+		CreatedBy: int(u.ID),
+		Message:   req.Message,
+		StartTime: req.StartTime.AsTime(),
+	}
+
+	if req.EndTime != nil {
+		mm.EndTime = sql.NullTime{
+			Time:  req.EndTime.AsTime(),
+			Valid: true,
+		}
+	}
+
+	if req.Duration != nil {
+		d, err := time.ParseDuration(*req.Duration)
+		if err != nil || d < 0 {
+			return nil, status.Error(codes.InvalidArgument,
+				"Duration must be a Go-formatted duration string with a positive value")
+		}
+
+		mm.EndTime = sql.NullTime{
+			Time:  req.StartTime.AsTime().Add(d),
+			Valid: true,
+		}
+	}
+
+	err = db.SetClusterMessage(ctx, db.Bun(), mm)
+	if errors.Is(err, db.ErrInvalidInput) {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	} else if err != nil {
+		logrus.WithError(err).Error("error setting cluster message")
+		return nil, status.Error(codes.Internal, "error setting cluster message; check logs for details")
+	}
+
+	return &apiv1.SetClusterMessageResponse{}, nil
+}
+
+func (a *apiServer) DeleteClusterMessage(
+	ctx context.Context,
+	req *apiv1.DeleteClusterMessageRequest,
+) (*apiv1.DeleteClusterMessageResponse, error) {
+	u, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	permErr, err := cluster.AuthZProvider.Get().CanUpdateMasterConfig(ctx, u)
+	if err != nil {
+		return nil, err
+	} else if permErr != nil {
+		return nil, permErr
+	}
+
+	err = db.ClearClusterMessage(ctx, db.Bun())
+	if err != nil {
+		logrus.WithError(err).Error("error clearing the cluster message")
+		return nil, status.Error(codes.Internal, "error clearing the cluster message; check logs for details")
+	}
+
+	return &apiv1.DeleteClusterMessageResponse{}, nil
 }

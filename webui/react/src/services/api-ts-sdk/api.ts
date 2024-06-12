@@ -1990,6 +1990,37 @@ export interface V1CloseTrialOperation {
     requestId?: string;
 }
 /**
+ * Active notice from the server admin.
+ * @export
+ * @interface V1ClusterMessage
+ */
+export interface V1ClusterMessage {
+    /**
+     * Text content of message.
+     * @type {string}
+     * @memberof V1ClusterMessage
+     */
+    message: string;
+    /**
+     * Time to begin showing message.
+     * @type {Date | DateString}
+     * @memberof V1ClusterMessage
+     */
+    startTime: Date | DateString;
+    /**
+     * Time to stop showing message.
+     * @type {Date | DateString}
+     * @memberof V1ClusterMessage
+     */
+    endTime?: Date | DateString;
+    /**
+     * Time message was created.
+     * @type {Date | DateString}
+     * @memberof V1ClusterMessage
+     */
+    createdTime?: Date | DateString;
+}
+/**
  * ColumnType indicates the type of data under the column - COLUMN_TYPE_UNSPECIFIED: data type is unknown/mixed  - COLUMN_TYPE_TEXT: data type is textual  - COLUMN_TYPE_NUMBER: data type is numeric  - COLUMN_TYPE_DATE: data type is a date
  * @export
  * @enum {string}
@@ -2526,6 +2557,13 @@ export interface V1DeleteCheckpointsRequest {
  * @interface V1DeleteCheckpointsResponse
  */
 export interface V1DeleteCheckpointsResponse {
+}
+/**
+ * Response to DeleteClusterMessageRequest.
+ * @export
+ * @interface V1DeleteClusterMessageResponse
+ */
+export interface V1DeleteClusterMessageResponse {
 }
 /**
  * Response to DeleteExperimentLabelRequest.
@@ -3706,6 +3744,19 @@ export interface V1GetCheckpointResponse {
     checkpoint: V1Checkpoint;
 }
 /**
+ * GetClusterMessageResponse is the response that contains the current cluster message.
+ * @export
+ * @interface V1GetClusterMessageResponse
+ */
+export interface V1GetClusterMessageResponse {
+    /**
+     * cluster_message is the current cluster message.
+     * @type {V1ClusterMessage}
+     * @memberof V1GetClusterMessageResponse
+     */
+    clusterMessage?: V1ClusterMessage;
+}
+/**
  * Response to GetCommandRequest.
  * @export
  * @interface V1GetCommandResponse
@@ -4182,6 +4233,12 @@ export interface V1GetMasterResponse {
      * @memberof V1GetMasterResponse
      */
     strictJobQueueControl: boolean;
+    /**
+     * Active server cluster-wide message if any.
+     * @type {V1ClusterMessage}
+     * @memberof V1GetMasterResponse
+     */
+    clusterMessage?: V1ClusterMessage;
 }
 /**
  * Response to GetMeRequest.
@@ -10082,6 +10139,44 @@ export interface V1SearchRunsResponse {
     pagination: V1Pagination;
 }
 /**
+ * Set the cluster-wide message.
+ * @export
+ * @interface V1SetClusterMessageRequest
+ */
+export interface V1SetClusterMessageRequest {
+    /**
+     * Text content of message.
+     * @type {string}
+     * @memberof V1SetClusterMessageRequest
+     */
+    message: string;
+    /**
+     * Time to begin showing message.
+     * @type {Date | DateString}
+     * @memberof V1SetClusterMessageRequest
+     */
+    startTime: Date | DateString;
+    /**
+     * Time to stop showing message.
+     * @type {Date | DateString}
+     * @memberof V1SetClusterMessageRequest
+     */
+    endTime?: Date | DateString;
+    /**
+     * Duration expressing how long the message should last. Should be a Go-format duration (e.g. 24h, 2w, 5d)
+     * @type {string}
+     * @memberof V1SetClusterMessageRequest
+     */
+    duration?: string;
+}
+/**
+ * Response to SetClusterMessageRequest.
+ * @export
+ * @interface V1SetClusterMessageResponse
+ */
+export interface V1SetClusterMessageResponse {
+}
+/**
  * Set the priority of the requested command.
  * @export
  * @interface V1SetCommandPriorityRequest
@@ -12700,6 +12795,36 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
     return {
         /**
          * 
+         * @summary Clear the cluster-wide message shown to all users.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteClusterMessage(options: any = {}): FetchArgs {
+            const localVarPath = `/api/v1/master/cluster_message`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'DELETE', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Disable the agent.
          * @param {string} agentId The id of the agent.
          * @param {V1DisableAgentRequest} body
@@ -12960,6 +13085,36 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
             
             if (excludeContainers !== undefined) {
                 localVarQueryParameter['excludeContainers'] = excludeContainers
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Get the currently configured cluster-wide message.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getClusterMessage(options: any = {}): FetchArgs {
+            const localVarPath = `/api/v1/master/cluster_message`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
@@ -13319,6 +13474,44 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
                 options: localVarRequestOptions,
             };
         },
+        /**
+         * 
+         * @summary Set the cluster-wide message shown to users. Only one can be set at at time, so any existing message will be disabled.
+         * @param {V1SetClusterMessageRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        setClusterMessage(body: V1SetClusterMessageRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling setClusterMessage.');
+            }
+            const localVarPath = `/api/v1/master/cluster_message`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'PUT', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
     }
 };
 
@@ -13328,6 +13521,24 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
  */
 export const ClusterApiFp = function (configuration?: Configuration) {
     return {
+        /**
+         * 
+         * @summary Clear the cluster-wide message shown to all users.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteClusterMessage(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteClusterMessageResponse> {
+            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).deleteClusterMessage(options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
         /**
          * 
          * @summary Disable the agent.
@@ -13442,6 +13653,24 @@ export const ClusterApiFp = function (configuration?: Configuration) {
          */
         getAgents(sortBy?: V1GetAgentsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, label?: string, excludeSlots?: boolean, excludeContainers?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetAgentsResponse> {
             const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).getAgents(sortBy, orderBy, offset, limit, label, excludeSlots, excludeContainers, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Get the currently configured cluster-wide message.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getClusterMessage(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetClusterMessageResponse> {
+            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).getClusterMessage(options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -13626,6 +13855,25 @@ export const ClusterApiFp = function (configuration?: Configuration) {
                 });
             };
         },
+        /**
+         * 
+         * @summary Set the cluster-wide message shown to users. Only one can be set at at time, so any existing message will be disabled.
+         * @param {V1SetClusterMessageRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        setClusterMessage(body: V1SetClusterMessageRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SetClusterMessageResponse> {
+            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).setClusterMessage(body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
     }
 };
 
@@ -13635,6 +13883,15 @@ export const ClusterApiFp = function (configuration?: Configuration) {
  */
 export const ClusterApiFactory = function (configuration?: Configuration, fetch?: FetchAPI, basePath?: string) {
     return {
+        /**
+         * 
+         * @summary Clear the cluster-wide message shown to all users.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteClusterMessage(options?: any) {
+            return ClusterApiFp(configuration).deleteClusterMessage(options)(fetch, basePath);
+        },
         /**
          * 
          * @summary Disable the agent.
@@ -13704,6 +13961,15 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
          */
         getAgents(sortBy?: V1GetAgentsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, label?: string, excludeSlots?: boolean, excludeContainers?: boolean, options?: any) {
             return ClusterApiFp(configuration).getAgents(sortBy, orderBy, offset, limit, label, excludeSlots, excludeContainers, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Get the currently configured cluster-wide message.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getClusterMessage(options?: any) {
+            return ClusterApiFp(configuration).getClusterMessage(options)(fetch, basePath);
         },
         /**
          * 
@@ -13798,6 +14064,16 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
         resourceAllocationRaw(timestampAfter: Date | DateString, timestampBefore: Date | DateString, options?: any) {
             return ClusterApiFp(configuration).resourceAllocationRaw(timestampAfter, timestampBefore, options)(fetch, basePath);
         },
+        /**
+         * 
+         * @summary Set the cluster-wide message shown to users. Only one can be set at at time, so any existing message will be disabled.
+         * @param {V1SetClusterMessageRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        setClusterMessage(body: V1SetClusterMessageRequest, options?: any) {
+            return ClusterApiFp(configuration).setClusterMessage(body, options)(fetch, basePath);
+        },
     }
 };
 
@@ -13808,6 +14084,17 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
  * @extends {BaseAPI}
  */
 export class ClusterApi extends BaseAPI {
+    /**
+     * 
+     * @summary Clear the cluster-wide message shown to all users.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ClusterApi
+     */
+    public deleteClusterMessage(options?: any) {
+        return ClusterApiFp(this.configuration).deleteClusterMessage(options)(this.fetch, this.basePath)
+    }
+    
     /**
      * 
      * @summary Disable the agent.
@@ -13888,6 +14175,17 @@ export class ClusterApi extends BaseAPI {
      */
     public getAgents(sortBy?: V1GetAgentsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, label?: string, excludeSlots?: boolean, excludeContainers?: boolean, options?: any) {
         return ClusterApiFp(this.configuration).getAgents(sortBy, orderBy, offset, limit, label, excludeSlots, excludeContainers, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Get the currently configured cluster-wide message.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ClusterApi
+     */
+    public getClusterMessage(options?: any) {
+        return ClusterApiFp(this.configuration).getClusterMessage(options)(this.fetch, this.basePath)
     }
     
     /**
@@ -13999,6 +14297,18 @@ export class ClusterApi extends BaseAPI {
      */
     public resourceAllocationRaw(timestampAfter: Date | DateString, timestampBefore: Date | DateString, options?: any) {
         return ClusterApiFp(this.configuration).resourceAllocationRaw(timestampAfter, timestampBefore, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Set the cluster-wide message shown to users. Only one can be set at at time, so any existing message will be disabled.
+     * @param {V1SetClusterMessageRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof ClusterApi
+     */
+    public setClusterMessage(body: V1SetClusterMessageRequest, options?: any) {
+        return ClusterApiFp(this.configuration).setClusterMessage(body, options)(this.fetch, this.basePath)
     }
     
 }
