@@ -36,13 +36,10 @@ type gatewayProxyResource struct {
 	serviceSpec     *k8sV1.Service
 	tcpRouteSpec    *alphaGatewayTyped.TCPRoute
 	gatewayListener gatewayTyped.Listener
-	// TODO(gateways) we should be able to remove this and just use PodPort from the tcpRouteSpec.
-	podPort int
 }
 
 func (g gatewayProxyResource) PodPort() int {
-	// return int(*g.tcpRouteSpec.Spec.CommonRouteSpec.ParentRefs[0].Port)
-	return g.podPort
+	return int(g.serviceSpec.Spec.Ports[0].Port)
 }
 
 func (g gatewayProxyResource) GWPort() int {

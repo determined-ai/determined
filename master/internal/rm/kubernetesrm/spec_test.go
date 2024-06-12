@@ -151,7 +151,6 @@ func TestConfigureProxyResources(t *testing.T) {
 
 	require.Equal(t, []gatewayProxyResource{
 		{
-			podPort:         12345,
 			serviceSpec:     svc,
 			tcpRouteSpec:    tcp,
 			gatewayListener: listener,
