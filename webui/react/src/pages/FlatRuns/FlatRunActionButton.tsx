@@ -192,6 +192,7 @@ const FlatRunActionButton = ({
         <BatchActionConfirmModal.Component
           batchAction={batchAction}
           isUnmanagedIncluded={selectedRuns.some((run) => run.experiment?.unmanaged ?? false)}
+          itemName="run"
           onConfirm={() => submitBatchAction(batchAction)}
         />
       )}
