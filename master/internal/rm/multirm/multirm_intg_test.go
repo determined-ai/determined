@@ -3,8 +3,8 @@ package multirm
 import (
 	"fmt"
 	"os"
-	"strings"
 	"strconv"
+	"strings"
 	"testing"
 
 	"github.com/google/uuid"
@@ -770,7 +770,7 @@ func TestGetRM(t *testing.T) {
 			if test.expectedRM != nil {
 				require.Equal(t, test.expectedRM, rmToUse)
 			} else {
-				require.Equal(t, nil, rmToUse)
+				require.Nil(t, rmToUse)
 			}
 		})
 	}
