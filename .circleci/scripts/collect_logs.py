@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 
-import os
 import warnings
+from pathlib import Path
 from typing import List, Union
 
 import requests
@@ -82,12 +82,12 @@ class Cli(CliBase):
         Save logs from first trial of each experiment to a given directory.
         """
         experiments = self.get_experiments(just_active)
-        output_dir = output_dir.rstrip("/")
-        os.makedirs(output_dir, exist_ok=True)
+        output_path = Path(output_dir)
+        output_path.mkdir(parents=True, exist_ok=True)
         for c in experiments:
-            output = f"{output_dir}/{c.id}-{c.name}.log"
-            print(f"Saving logs {output}")
-            with open(output, "w") as f:
+            output_file = output_path / f"{c.id}-{c.name}.log"
+            print(f"Saving logs {output_file}")
+            with output_file.open("w") as f:
                 for log in self.get_single_trial_exp_logs(c.id):
                     f.write(log)
 
@@ -107,24 +107,26 @@ class Cli(CliBase):
 
     def save_all_logs(self, output_dir: str, just_active: bool = False):
         """
-        Save all task? logs to a given directory
+        Save all task logs to a given directory
         """
         experiments = self.get_experiments(just_active)
-        output_dir = output_dir.rstrip("/")
-        os.makedirs(output_dir, exist_ok=True)
+        output_path = Path(output_dir)
+        output_path.mkdir(parents=True, exist_ok=True)
         for exp in experiments:
             trials = b.get_GetExperimentTrials(self.session, experimentId=exp.id).trials
             for t in trials:
-                output = self.clean_os_path(f"{output_dir}/exp{exp.id}-trial{t.id}-{exp.name}.log")
-                print(f"Saving {output}")
-                with open(output, "w") as f:
+                output_file = output_path / self.clean_os_path(
+                    f"exp{exp.id}-trial{t.id}-{exp.name}.log"
+                )
+                print(f"Saving {output_file}")
+                with output_file.open("w") as f:
                     for log in self.get_trial_logs(t.id):
                         f.write(log)
         tasks = self.get_tasks()
         for task in tasks:
-            output = self.clean_os_path(f"{output_dir}/task-{task.id}-{task.description}.log")
-            print(f"Saving {output}")
-            with open(output, "w") as f:
+            output_file = output_path / self.clean_os_path(f"task-{task.id}-{task.description}.log")
+            print(f"Saving {output_file}")
+            with output_file.open("w") as f:
                 for log in b.get_TaskLogs(self.session, taskId=task.id):
                     f.write(log.message)
 
