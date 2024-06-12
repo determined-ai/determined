@@ -10653,6 +10653,7 @@ class v1PermissionType(DetEnum):
     - PERMISSION_TYPE_EDIT_WEBHOOKS: Ability to create and delete webhooks.
     - PERMISSION_TYPE_MODIFY_RP_WORKSPACE_BINDINGS: Ability to bind, unbind or overwrite resource pool workspace bindings.
     - PERMISSION_TYPE_SET_WORKSPACE_NAMESPACE_BINDINGS: Ability to bind, unbind, or overwrite namespace workspace bindings.
+    - PERMISSION_TYPE_SET_RESOURCE_QUOTAS: Ability to set resource quotas on workspaces.
     """
     UNSPECIFIED = "PERMISSION_TYPE_UNSPECIFIED"
     ADMINISTRATE_USER = "PERMISSION_TYPE_ADMINISTRATE_USER"
@@ -10702,6 +10703,7 @@ class v1PermissionType(DetEnum):
     EDIT_WEBHOOKS = "PERMISSION_TYPE_EDIT_WEBHOOKS"
     MODIFY_RP_WORKSPACE_BINDINGS = "PERMISSION_TYPE_MODIFY_RP_WORKSPACE_BINDINGS"
     SET_WORKSPACE_NAMESPACE_BINDINGS = "PERMISSION_TYPE_SET_WORKSPACE_NAMESPACE_BINDINGS"
+    SET_RESOURCE_QUOTAS = "PERMISSION_TYPE_SET_RESOURCE_QUOTAS"
 
 class v1PolymorphicFilter(Printable):
     doubleRange: "typing.Optional[v1DoubleFieldFilter]" = None
@@ -11445,6 +11447,7 @@ class v1PostWorkspaceRequest(Printable):
     agentUserGroup: "typing.Optional[v1AgentUserGroup]" = None
     checkpointStorageConfig: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     clusterNamespaceMeta: "typing.Optional[typing.Dict[str, v1WorkspaceNamespaceMeta]]" = None
+    clusterQuotaPairs: "typing.Optional[typing.Dict[str, int]]" = None
     defaultAuxPool: "typing.Optional[str]" = None
     defaultComputePool: "typing.Optional[str]" = None
 
@@ -11455,6 +11458,7 @@ class v1PostWorkspaceRequest(Printable):
         agentUserGroup: "typing.Union[v1AgentUserGroup, None, Unset]" = _unset,
         checkpointStorageConfig: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
         clusterNamespaceMeta: "typing.Union[typing.Dict[str, v1WorkspaceNamespaceMeta], None, Unset]" = _unset,
+        clusterQuotaPairs: "typing.Union[typing.Dict[str, int], None, Unset]" = _unset,
         defaultAuxPool: "typing.Union[str, None, Unset]" = _unset,
         defaultComputePool: "typing.Union[str, None, Unset]" = _unset,
     ):
@@ -11465,6 +11469,8 @@ class v1PostWorkspaceRequest(Printable):
             self.checkpointStorageConfig = checkpointStorageConfig
         if not isinstance(clusterNamespaceMeta, Unset):
             self.clusterNamespaceMeta = clusterNamespaceMeta
+        if not isinstance(clusterQuotaPairs, Unset):
+            self.clusterQuotaPairs = clusterQuotaPairs
         if not isinstance(defaultAuxPool, Unset):
             self.defaultAuxPool = defaultAuxPool
         if not isinstance(defaultComputePool, Unset):
@@ -11481,6 +11487,8 @@ class v1PostWorkspaceRequest(Printable):
             kwargs["checkpointStorageConfig"] = obj["checkpointStorageConfig"]
         if "clusterNamespaceMeta" in obj:
             kwargs["clusterNamespaceMeta"] = {k: v1WorkspaceNamespaceMeta.from_json(v) for k, v in obj["clusterNamespaceMeta"].items()} if obj["clusterNamespaceMeta"] is not None else None
+        if "clusterQuotaPairs" in obj:
+            kwargs["clusterQuotaPairs"] = obj["clusterQuotaPairs"]
         if "defaultAuxPool" in obj:
             kwargs["defaultAuxPool"] = obj["defaultAuxPool"]
         if "defaultComputePool" in obj:
@@ -11497,6 +11505,8 @@ class v1PostWorkspaceRequest(Printable):
             out["checkpointStorageConfig"] = self.checkpointStorageConfig
         if not omit_unset or "clusterNamespaceMeta" in vars(self):
             out["clusterNamespaceMeta"] = None if self.clusterNamespaceMeta is None else {k: v.to_json(omit_unset) for k, v in self.clusterNamespaceMeta.items()}
+        if not omit_unset or "clusterQuotaPairs" in vars(self):
+            out["clusterQuotaPairs"] = self.clusterQuotaPairs
         if not omit_unset or "defaultAuxPool" in vars(self):
             out["defaultAuxPool"] = self.defaultAuxPool
         if not omit_unset or "defaultComputePool" in vars(self):
@@ -14165,6 +14175,37 @@ class v1SetNotebookPriorityResponse(Printable):
             out["notebook"] = None if self.notebook is None else self.notebook.to_json(omit_unset)
         return out
 
+class v1SetResourceQuotasRequest(Printable):
+    """Request to set a resource quota on a workspace (for a specific cluster)."""
+    clusterQuotaPairs: "typing.Optional[typing.Dict[str, int]]" = None
+
+    def __init__(
+        self,
+        *,
+        id: int,
+        clusterQuotaPairs: "typing.Union[typing.Dict[str, int], None, Unset]" = _unset,
+    ):
+        self.id = id
+        if not isinstance(clusterQuotaPairs, Unset):
+            self.clusterQuotaPairs = clusterQuotaPairs
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1SetResourceQuotasRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "id": obj["id"],
+        }
+        if "clusterQuotaPairs" in obj:
+            kwargs["clusterQuotaPairs"] = obj["clusterQuotaPairs"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "id": self.id,
+        }
+        if not omit_unset or "clusterQuotaPairs" in vars(self):
+            out["clusterQuotaPairs"] = self.clusterQuotaPairs
+        return out
+
 class v1SetSearcherProgressOperation(Printable):
     """SetSearcherProgressOperation informs the master of the progress of the custom
     searcher.
@@ -14346,7 +14387,7 @@ class v1SetUserPasswordResponse(Printable):
         return out
 
 class v1SetWorkspaceNamespaceBindingsRequest(Printable):
-    """Request for modifying a workspace-namespace binding."""
+    """Request for setting workspace-namespace bindings."""
     clusterNamespaceMeta: "typing.Optional[typing.Dict[str, v1WorkspaceNamespaceMeta]]" = None
 
     def __init__(
@@ -14377,7 +14418,7 @@ class v1SetWorkspaceNamespaceBindingsRequest(Printable):
         return out
 
 class v1SetWorkspaceNamespaceBindingsResponse(Printable):
-    """Response for modify a namespace binding to a workspace."""
+    """Response for setting workspace-namespace bindings."""
 
     def __init__(
         self,
@@ -16810,25 +16851,25 @@ class v1WorkspaceNamespaceBinding(Printable):
     """WorkspaceNamespace represents a workspace-namespace binding for a given
     workspace and cluster.
     """
+    autoCreateNamespace: "typing.Optional[bool]" = None
     clusterName: "typing.Optional[str]" = None
     namespace: "typing.Optional[str]" = None
-    resourceQuota: "typing.Optional[int]" = None
     workspaceId: "typing.Optional[int]" = None
 
     def __init__(
         self,
         *,
+        autoCreateNamespace: "typing.Union[bool, None, Unset]" = _unset,
         clusterName: "typing.Union[str, None, Unset]" = _unset,
         namespace: "typing.Union[str, None, Unset]" = _unset,
-        resourceQuota: "typing.Union[int, None, Unset]" = _unset,
         workspaceId: "typing.Union[int, None, Unset]" = _unset,
     ):
+        if not isinstance(autoCreateNamespace, Unset):
+            self.autoCreateNamespace = autoCreateNamespace
         if not isinstance(clusterName, Unset):
             self.clusterName = clusterName
         if not isinstance(namespace, Unset):
             self.namespace = namespace
-        if not isinstance(resourceQuota, Unset):
-            self.resourceQuota = resourceQuota
         if not isinstance(workspaceId, Unset):
             self.workspaceId = workspaceId
 
@@ -16836,12 +16877,12 @@ class v1WorkspaceNamespaceBinding(Printable):
     def from_json(cls, obj: Json) -> "v1WorkspaceNamespaceBinding":
         kwargs: "typing.Dict[str, typing.Any]" = {
         }
+        if "autoCreateNamespace" in obj:
+            kwargs["autoCreateNamespace"] = obj["autoCreateNamespace"]
         if "clusterName" in obj:
             kwargs["clusterName"] = obj["clusterName"]
         if "namespace" in obj:
             kwargs["namespace"] = obj["namespace"]
-        if "resourceQuota" in obj:
-            kwargs["resourceQuota"] = obj["resourceQuota"]
         if "workspaceId" in obj:
             kwargs["workspaceId"] = obj["workspaceId"]
         return cls(**kwargs)
@@ -16849,12 +16890,12 @@ class v1WorkspaceNamespaceBinding(Printable):
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
         }
+        if not omit_unset or "autoCreateNamespace" in vars(self):
+            out["autoCreateNamespace"] = self.autoCreateNamespace
         if not omit_unset or "clusterName" in vars(self):
             out["clusterName"] = self.clusterName
         if not omit_unset or "namespace" in vars(self):
             out["namespace"] = self.namespace
-        if not omit_unset or "resourceQuota" in vars(self):
-            out["resourceQuota"] = self.resourceQuota
         if not omit_unset or "workspaceId" in vars(self):
             out["workspaceId"] = self.workspaceId
         return out
@@ -23473,6 +23514,31 @@ def post_SetNotebookPriority(
         return v1SetNotebookPriorityResponse.from_json(_resp.json())
     raise APIHttpError("post_SetNotebookPriority", _resp)
 
+def post_SetResourceQuotas(
+    session: "api.BaseSession",
+    *,
+    body: "v1SetResourceQuotasRequest",
+    id: int,
+) -> None:
+    """Set a resource quota for a worksoace (within a specific cluster).
+
+    - id: The id of the workspace.
+    """
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/workspaces/{id}/set-resource-quota",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("post_SetResourceQuotas", _resp)
+
 def post_SetShellPriority(
     session: "api.BaseSession",
     *,
@@ -23559,7 +23625,7 @@ def post_SetWorkspaceNamespaceBindings(
     body: "v1SetWorkspaceNamespaceBindingsRequest",
     workspaceId: int,
 ) -> "v1SetWorkspaceNamespaceBindingsResponse":
-    """Add namespace binding to a workspace.
+    """Bind a namespace to a workspace.
 
     - workspaceId: The unique id of the workspace.
     """

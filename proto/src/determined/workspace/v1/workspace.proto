@@ -111,9 +111,9 @@ message WorkspaceNamespaceBinding {
   string namespace = 2;
   // User cluster name.
   string cluster_name = 3;
-  // The optional resource quota placed on the namespace (and consequentially,
-  // the workspace).
-  int32 resource_quota = 4;
+  // Whether we want to auto-create a namespace for a workspace-namespace
+  // binding.
+  bool auto_create_namespace = 4;
 }
 
 // WorkspaceNamespaceMeta is the metadata associated with a workspace-namespace

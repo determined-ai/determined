@@ -382,6 +382,21 @@ func (r *WorkspaceAuthZRBAC) CanSetWorkspaceNamespaceBindings(ctx context.Contex
 		rbacv1.PermissionType_PERMISSION_TYPE_SET_WORKSPACE_NAMESPACE_BINDINGS)
 }
 
+// CanSetResourceQuotas determines whether a user can set a resource quota on a workspace.
+func (r *WorkspaceAuthZRBAC) CanSetResourceQuotas(ctx context.Context,
+	curUser model.User, workspace *workspacev1.Workspace,
+) (err error) {
+	fields := audit.ExtractLogFields(ctx)
+	addInfoWithoutWorkspace(curUser, fields,
+		rbacv1.PermissionType_PERMISSION_TYPE_SET_RESOURCE_QUOTAS)
+	defer func() {
+		audit.LogFromErr(fields, err)
+	}()
+
+	return db.DoesPermissionMatch(ctx, curUser.ID, &workspace.Id,
+		rbacv1.PermissionType_PERMISSION_TYPE_SET_RESOURCE_QUOTAS)
+}
+
 func hasPermissionOnWorkspace(ctx context.Context, uid model.UserID,
 	workspace *workspacev1.Workspace, permID rbacv1.PermissionType,
 ) error {

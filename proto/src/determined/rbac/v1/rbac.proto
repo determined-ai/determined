@@ -171,6 +171,9 @@ enum PermissionType {
 
   // Ability to bind, unbind, or overwrite namespace workspace bindings.
   PERMISSION_TYPE_SET_WORKSPACE_NAMESPACE_BINDINGS = 11001;
+
+  // Ability to set resource quotas on workspaces.
+  PERMISSION_TYPE_SET_RESOURCE_QUOTAS = 11002;
 }
 
 // RoleAssignmentSummary is used to describe permissions a user has.
