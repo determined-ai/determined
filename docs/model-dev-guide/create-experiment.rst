@@ -255,8 +255,8 @@ a few seconds.
  Pause and Activate
 ********************
 
-A trial can be paused and reactivated without losing training progress. 
-Pausing a trial saves its progress by creating a checkpoint before exiting the cluster.
+A trial can be paused and reactivated without losing training progress. Pausing a trial saves its
+progress by creating a checkpoint before exiting the cluster.
 
 The scheduler can pause a trial to free its resources for another task. You can also manually pause
 an experiment, which pauses all trials in the experiment, freeing the slots used by the trial. When

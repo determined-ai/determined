@@ -8,15 +8,16 @@
  Viewing the Job Queue
 ***********************
 
-The Determined Queue Management system enhances scheduler functionality, providing better visibility and 
-control over job scheduling decisions. The Job Queue displays job ordering and allows dynamic job 
-modifications.
+The Determined Queue Management system enhances scheduler functionality, providing better visibility
+and control over job scheduling decisions. The Job Queue displays job ordering and allows dynamic
+job modifications.
 
-Queue Management is available for both the fair share scheduler and the priority scheduler. 
-This feature shows all submitted jobs and their states, and allows you to modify configurations 
-like priority, queue position, and resource pool.
+Queue Management is available for both the fair share scheduler and the priority scheduler. This
+feature shows all submitted jobs and their states, and allows you to modify configurations like
+priority, queue position, and resource pool.
 
-To manage job queues, navigate to the WebUI ``Job Queue`` section or use the ``det job`` CLI commands.
+To manage job queues, navigate to the WebUI ``Job Queue`` section or use the ``det job`` CLI
+commands.
 
 Jobs in the queue can be in either the ``Queued`` or ``Scheduled`` state:
 
@@ -43,17 +44,17 @@ To view other resource pool queues, use the ``--resource-pool`` option:
 
 For more CLI options, visit the CLI documentation or run the ``det job list -h`` command.
 
-Both the WebUI and CLI display a table of jobs, ordered by scheduling order. The table includes job states 
-and the number of slots allocated to each job. Note that scheduling order does not represent 
+Both the WebUI and CLI display a table of jobs, ordered by scheduling order. The table includes job
+states and the number of slots allocated to each job. Note that scheduling order does not represent
 job priority.
 
 *************************
  Modifying the Job Queue
 *************************
 
-You can modify the job queue in the WebUI **Job Queue** section or using the ``det job
-update`` CLI command. Changes can be made on a per-job basis by selecting a job and 
-performing an operation. Available operations include:
+You can modify the job queue in the WebUI **Job Queue** section or using the ``det job update`` CLI
+command. Changes can be made on a per-job basis by selecting a job and performing an operation.
+Available operations include:
 
 -  Changing priorities for resource pools (priority scheduler)
 -  Changing weights for resource pools (fair share scheduler)
@@ -62,9 +63,12 @@ performing an operation. Available operations include:
 
 Constraints:
 
-- The priority and fair share fields are mutually exclusive. The priority field is active only for the priority scheduler, and the fair share field is active only for the fair share scheduler.
-- The ``ahead-of``, ``behind-of``, and WebUI **Move to Top** operations are available only for the priority scheduler and are not supported for the Kubernetes priority scheduler.
-- The change resource pool operation can only be performed on experiments. For other tasks, cancel and resubmit the task to change the resource pool.
+-  The priority and fair share fields are mutually exclusive. The priority field is active only for
+   the priority scheduler, and the fair share field is active only for the fair share scheduler.
+-  The ``ahead-of``, ``behind-of``, and WebUI **Move to Top** operations are available only for the
+   priority scheduler and are not supported for the Kubernetes priority scheduler.
+-  The change resource pool operation can only be performed on experiments. For other tasks, cancel
+   and resubmit the task to change the resource pool.
 
 Modify the Job Queue using the WebUI
 ====================================
@@ -78,8 +82,8 @@ Modify the Job Queue using the WebUI
 Modify the Job Queue using the CLI
 ==================================
 
-To modify the job queue using the CLI, use the ``det job update`` command. 
-Run ``det job update --help`` for more information. Example operations:
+To modify the job queue using the CLI, use the ``det job update`` command. Run ``det job update
+--help`` for more information. Example operations:
 
 .. code::
 
