@@ -297,7 +297,7 @@ func (j *jobsService) startClientSet() error {
 		j.jobInterfaces[ns] = j.clientSet.BatchV1().Jobs(ns)
 	}
 
-	if exposeConfig := j.internalTaskGWConfig; exposeConfig != nil {
+	if taskGWConfig := j.internalTaskGWConfig; taskGWConfig != nil {
 		// Using the CoreV1 RESTClient for gateway resources will cause "resource not found" errors.
 		alphaGatewayClientSet, err := alphaGateway.NewForConfig(config)
 		if err != nil {
@@ -314,9 +314,9 @@ func (j *jobsService) startClientSet() error {
 			return fmt.Errorf("creating Kubernetes gateway clientSet: %w", err)
 		}
 		gwService, err := newGatewayService(
-			gatewayClientSet.Gateways(exposeConfig.GatewayNamespace),
+			gatewayClientSet.Gateways(taskGWConfig.GatewayNamespace),
 			j.tcpRouteInterfaces,
-			*exposeConfig,
+			*taskGWConfig,
 		)
 		if err != nil {
 			return fmt.Errorf("creating gateway service: %w", err)
