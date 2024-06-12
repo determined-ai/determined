@@ -291,8 +291,8 @@ commands:
           name: Upload Tests to DataDog
           when: always
           command: |
-              sudo curl -L --fail "https://github.com/DataDog/datadog-ci/releases/latest/download/datadog-ci_linux-x64" --output "/usr/local/bin/datadog-ci" && sudo chmod +x /usr/local/bin/datadog-ci
-              /usr/local/bin/datadog-ci junit upload --service "determined-ai/<< parameters.service >>" --env "<< parameters.env >>" << parameters.path >>
+              curl -L --fail "https://github.com/DataDog/datadog-ci/releases/latest/download/datadog-ci_linux-x64" --output "./datadog-ci" && sudo chmod +x ./datadog-ci
+              ./datadog-ci junit upload --service "determined-ai/<< parameters.service >>" --env "<< parameters.env >>" << parameters.path >>
 
   setup-go-intg-deps:
     steps:
