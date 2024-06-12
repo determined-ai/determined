@@ -10,7 +10,6 @@ import { List } from 'immutable';
 import { useObservable } from 'micro-observables';
 import React, { Ref, useCallback, useEffect, useId, useRef } from 'react';
 
-import { FilterFormSetWithoutId } from 'components/FilterForm/components/type';
 import Link from 'components/Link';
 import RunFilterInterstitialModalComponent, {
   ControlledModalRef,
@@ -19,6 +18,7 @@ import RunMoveWarningModalComponent, {
   RunMoveWarningFlowRef,
 } from 'components/RunMoveWarningModalComponent';
 import usePermissions from 'hooks/usePermissions';
+import { formStore } from 'pages/FlatRuns/FlatRuns';
 import { paths } from 'routes/utils';
 import { moveRuns } from 'services/api';
 import projectStore from 'stores/projects';
@@ -38,14 +38,12 @@ interface Props {
   flatRuns: Readonly<FlatRun>[];
   sourceProjectId: number;
   sourceWorkspaceId?: number;
-  filterFormSetWithoutId: FilterFormSetWithoutId;
   onSubmit?: (successfulIds?: number[]) => void;
-  onActionComplete?: () => void;
+  onActionComplete?: () => void | Promise<void>;
 }
 
 const FlatRunMoveModalComponent: React.FC<Props> = ({
   flatRuns,
-  filterFormSetWithoutId,
   sourceProjectId,
   sourceWorkspaceId,
   onSubmit,
@@ -55,6 +53,7 @@ const FlatRunMoveModalComponent: React.FC<Props> = ({
   const runMoveWarningFlowRef: Ref<RunMoveWarningFlowRef> = useRef(null);
   const idPrefix = useId();
   const { openToast } = useToast();
+  const filterFormSetWithoutId = useObservable(formStore.filterFormSetWithoutId);
   const [form] = Form.useForm<FormInputs>();
   const workspaceId = Form.useWatch('workspaceId', form);
   const projectId = Form.useWatch('projectId', form);

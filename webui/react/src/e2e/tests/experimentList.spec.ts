@@ -257,4 +257,31 @@ test.describe('Experiement List', () => {
       await authedPage.waitForURL(/overview/);
     });
   });
+
+  // remember to unskip this test
+  test.skip('Datagrid Actions', async () => {
+    const row = await projectDetailsPage.f_experiemntList.dataGrid.getRowByColumnValue('ID', '1');
+    await row.experimentActionDropdown.open();
+    // feel free to split actions into their own test cases. this is just a starting point
+    await test.step('Pause', async () => {
+      // what happens if the experiment is already paused?
+    });
+    await test.step('Stop', async () => {
+      // what happens if the experiment is already stopped?
+    });
+    await test.step('Kill', async () => {
+      // what happens if the experiment is already killed? do we need to change beforeAll logic?
+    });
+    await test.step('Move', async () => {
+      // move to where? do we need a new project? check project spec
+    });
+    await test.step('Archive / Unarchive', async () => {
+      // what happens if the experiment is already archived?
+    });
+    await test.step('View in Tensorboard', async () => {
+      // might want something like this
+      // await authedPage.waitForURL(;
+    });
+    await test.step('Hyperparameter Search', async () => {});
+  });
 });

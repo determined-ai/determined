@@ -51,22 +51,27 @@ type ModelMsg struct {
 }
 
 // SeqNum gets the SeqNum from a ModelMsg.
-func (pm *ModelMsg) SeqNum() int64 {
-	return pm.Seq
+func (mm *ModelMsg) SeqNum() int64 {
+	return mm.Seq
+}
+
+// GetID gets the ID from a ModelMsg.
+func (mm *ModelMsg) GetID() int {
+	return mm.ID
 }
 
 // UpsertMsg creates a model stream upsert message.
-func (pm *ModelMsg) UpsertMsg() stream.UpsertMsg {
-	return stream.UpsertMsg{
+func (mm *ModelMsg) UpsertMsg() *stream.UpsertMsg {
+	return &stream.UpsertMsg{
 		JSONKey: ModelsUpsertKey,
-		Msg:     pm,
+		Msg:     mm,
 	}
 }
 
 // DeleteMsg creates a model stream delete message.
-func (pm *ModelMsg) DeleteMsg() stream.DeleteMsg {
-	deleted := strconv.FormatInt(int64(pm.ID), 10)
-	return stream.DeleteMsg{
+func (mm *ModelMsg) DeleteMsg() *stream.DeleteMsg {
+	deleted := strconv.Itoa(mm.ID)
+	return &stream.DeleteMsg{
 		Key:     ModelsDeleteKey,
 		Deleted: deleted,
 	}
@@ -152,7 +157,7 @@ func ModelCollectStartupMsgs(
 	}
 	missing, appeared, err := processQuery(ctx, createQuery, spec.Since, known, "m")
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("processing known: %w", err)
 	}
 
 	// step 2: hydrate appeared IDs into full ModelMsgs
@@ -163,14 +168,14 @@ func ModelCollectStartupMsgs(
 			query = permFilterQuery(query, accessScopes)
 		}
 		err := query.Scan(ctx, &modelMsgs)
-		if err != nil && errors.Cause(err) != sql.ErrNoRows {
+		if err != nil && !errors.Is(err, sql.ErrNoRows) {
 			log.Errorf("error: %v\n", err)
 			return nil, err
 		}
 	}
 
 	// step 3: emit deletions and updates to the client
-	out = append(out, stream.DeleteMsg{
+	out = append(out, &stream.DeleteMsg{
 		Key:     ModelsDeleteKey,
 		Deleted: missing,
 	})
@@ -244,5 +249,21 @@ func ModelMakePermissionFilter(ctx context.Context, user model.User) (func(*Mode
 		return func(msg *ModelMsg) bool {
 			return accessScopeSet[model.AccessScopeID(msg.WorkspaceID)]
 		}, nil
+	}
+}
+
+// ModelMakeHydrator returns a function that gets properties of a model by
+// its id.
+func ModelMakeHydrator() func(*ModelMsg) (*ModelMsg, error) {
+	return func(msg *ModelMsg) (*ModelMsg, error) {
+		var saturatedMsg ModelMsg
+		query := db.Bun().NewSelect().Model(&saturatedMsg).Where("id = ?", msg.GetID())
+		err := query.Scan(context.Background(), &saturatedMsg)
+		if err != nil && errors.Is(err, sql.ErrNoRows) {
+			return nil, err
+		} else if err != nil {
+			return nil, fmt.Errorf("error in model hydrator: %w", err)
+		}
+		return &saturatedMsg, nil
 	}
 }

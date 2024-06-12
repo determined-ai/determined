@@ -6,7 +6,6 @@ import { useToast } from 'hew/Toast';
 import { useCallback, useMemo, useState } from 'react';
 
 import BatchActionConfirmModalComponent from 'components/BatchActionConfirmModal';
-import { FilterFormSetWithoutId } from 'components/FilterForm/components/type';
 import usePermissions from 'hooks/usePermissions';
 import FlatRunMoveModalComponent from 'pages/FlatRuns/FlatRunMoveModal';
 import { archiveRuns, deleteRuns, killRuns, unarchiveRuns } from 'services/api';
@@ -40,16 +39,14 @@ interface Props {
   selectedRuns: ReadonlyArray<Readonly<FlatRun>>;
   projectId: number;
   workspaceId: number;
-  filterFormSetWithoutId: FilterFormSetWithoutId;
   onActionSuccess?: (action: BatchAction, successfulIds: number[]) => void;
-  onActionComplete?: () => void;
+  onActionComplete?: () => void | Promise<void>;
 }
 
 const FlatRunActionButton = ({
   isMobile,
   selectedRuns,
   projectId,
-  filterFormSetWithoutId,
   workspaceId,
   onActionSuccess,
   onActionComplete,
@@ -108,9 +105,8 @@ const FlatRunActionButton = ({
         } else if (numFailures === 0) {
           openToast({
             closeable: true,
-            description: `${action} succeeded for ${
-              results.successful.length
-            } ${LABEL_PLURAL.toLowerCase()}`,
+            description: `${action} succeeded for ${results.successful.length
+              } ${LABEL_PLURAL.toLowerCase()}`,
             title: `${action} Success`,
           });
         } else if (numSuccesses === 0) {
@@ -122,9 +118,8 @@ const FlatRunActionButton = ({
         } else {
           openToast({
             closeable: true,
-            description: `${action} succeeded for ${numSuccesses} out of ${
-              numFailures + numSuccesses
-            } eligible
+            description: `${action} succeeded for ${numSuccesses} out of ${numFailures + numSuccesses
+              } eligible
             ${LABEL_PLURAL.toLowerCase()}`,
             severity: 'Warning',
             title: `Partial ${action} Failure`,
@@ -199,7 +194,6 @@ const FlatRunActionButton = ({
         />
       )}
       <FlatRunMoveComponentModal
-        filterFormSetWithoutId={filterFormSetWithoutId}
         flatRuns={[...selectedRuns]}
         sourceProjectId={projectId}
         sourceWorkspaceId={workspaceId}
