@@ -8,7 +8,7 @@ import { archiveRuns, deleteRuns, killRuns, unarchiveRuns } from 'services/api';
 import { RunState } from 'types';
 
 import RunActionDropdown from './RunActionDropdown';
-import { cell, filterFormSetWithoutId, run } from './RunActionDropdown.test.mock';
+import { cell, run } from './RunActionDropdown.test.mock';
 
 const mockNavigatorClipboard = () => {
   Object.defineProperty(navigator, 'clipboard', {
@@ -61,7 +61,6 @@ const setup = (link?: string, state?: RunState, archived?: boolean) => {
       <ConfirmationProvider>
         <RunActionDropdown
           cell={cell}
-          filterFormSetWithoutId={filterFormSetWithoutId}
           link={link}
           makeOpen
           projectId={run.projectId}

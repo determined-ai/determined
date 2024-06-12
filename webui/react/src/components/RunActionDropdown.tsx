@@ -17,8 +17,6 @@ import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { getActionsForFlatRun } from 'utils/flatRun';
 import { capitalize } from 'utils/string';
 
-import { FilterFormSetWithoutId } from './FilterForm/components/type';
-
 interface Props {
   children?: React.ReactNode;
   cell?: GridCell;
@@ -29,7 +27,6 @@ interface Props {
   onLink?: () => void;
   onVisibleChange?: (visible: boolean) => void;
   projectId: number;
-  filterFormSetWithoutId: FilterFormSetWithoutId;
 }
 
 const Action = {
@@ -51,7 +48,6 @@ const RunActionDropdown: React.FC<Props> = ({
   onComplete,
   onLink,
   onVisibleChange,
-  filterFormSetWithoutId,
   projectId,
 }: Props) => {
   const { Component: FlatRunMoveComponentModal, open: flatRunMoveModalOpen } =
@@ -176,7 +172,6 @@ const RunActionDropdown: React.FC<Props> = ({
 
   const shared = (
     <FlatRunMoveComponentModal
-      filterFormSetWithoutId={filterFormSetWithoutId}
       flatRuns={[run]}
       sourceProjectId={projectId}
       sourceWorkspaceId={run.workspaceId}
