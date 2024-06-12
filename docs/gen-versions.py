@@ -45,12 +45,6 @@ def parse_args():
 def main():
     args = parse_args()
 
-    if args.override_versions is not None:
-        versions = args.override_versions.split(",")
-        generate_hardcoded(versions)
-
-        sys.exit(0)
-
     exclude_versions = []
     if args.exclude_versions is not None:
         exclude_versions = args.exclude_versions.split(",")
