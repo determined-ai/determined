@@ -33,9 +33,9 @@ stages:
         - logcheck:
             regex: accepting incoming connections on port
         - sh: >
-            curl localhost:8080/api/v1/auth/login -X POST -d '{"username": "admin", "password": ""}'
+            curl localhost:8080/api/v1/auth/login -X POST -d "{\"username\": \"admin\", \"password\": \"${INITIAL_USER_PASSWORD}\"}"
         - sh: >
-            curl localhost:8080/api/v1/auth/login -X POST -d '{"username": "admin", "password": ""}' 2>/dev/null | jq -r .token > /tmp/slurmcluster-token
+            curl localhost:8080/api/v1/auth/login -X POST -d "{\"username\": \"admin\", \"password\": \"${INITIAL_USER_PASSWORD}\"}" 2>/dev/null | jq -r .token > /tmp/slurmcluster-token
         - sh: >
             echo curl -H "Authorization: Bearer $(cat /tmp/slurmcluster-token)" -X PATCH -d '{"agent_user_group": {"agent_uid": $OPT_REMOTE_UID, "agent_gid": $OPT_REMOTE_GID, "agent_user": "$OPT_REMOTE_USER", "agent_group": "$OPT_REMOTE_GROUP"}}' localhost:8080/api/v1/users/1
         - sh: >
@@ -54,6 +54,8 @@ stages:
       # config_file is just a master.yaml
       config_file:
         port: 8080
+        security:
+          initial_user_password: $INITIAL_USER_PASSWORD
         db:
           host: localhost
           port: 5432

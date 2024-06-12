@@ -703,6 +703,7 @@ commands:
           name: Run det-deploy tests
           working_directory: ./e2e_tests
           command: |
+            DET_SECURITY_INITIAL_USER_PASSWORD=$INITIAL_USER_PASSWORD \
             pytest -vv -s \
             -m <<parameters.mark>> \
             --junitxml=/tmp/test-results/det-deploy-tests.xml \
@@ -1981,6 +1982,11 @@ jobs:
       - install-devcluster
       - start-devcluster:
           target-stage: db
+      - run: |
+          sudo mkdir -p /etc/systemd/system/determined-master.service.d
+          echo "[Service]" | sudo tee /etc/systemd/system/determined-master.service.d/password.override.conf >/dev/null
+          echo "Environment=\"DET_SECURITY_INITIAL_USER_PASSWORD=${INITIAL_USER_PASSWORD}\"" | sudo tee -a /etc/systemd/system/determined-master.service.d/password.override.conf >/dev/null
+          sudo systemctl daemon-reload
       - run: python3 .circleci/scripts/wait_for_server.py localhost 5432
       - run: sudo systemctl restart determined-master
       - run: python3 .circleci/scripts/wait_for_server.py localhost 8080 || { journalctl --no-pager -u determined-master; exit 1; }
@@ -2736,6 +2742,11 @@ jobs:
               echo "export OPT_DEVBOX_PREFIX=circleci-job-$(echo -n "${CIRCLE_USERNAME}-${CIRCLE_BRANCH}-${CIRCLE_JOB}" | md5sum | awk '{print $1}')" >> "$BASH_ENV"
             fi
 
+      - run:
+          name: Set initial user password
+          command: |
+            echo "export INITIAL_USER_PASSWORD=${INITIAL_USER_PASSWORD}" >> "$BASH_ENV"
+
       - attach_workspace:
           at: .
 
@@ -2854,6 +2865,8 @@ jobs:
                 name: Query the slot count to ensure slots are allocated
                 command: |
                   tries=20
+                  export DET_USER=determined
+                  export DET_PASS=${INITIAL_USER_PASSWORD}
                   det slot list
                   until [[ $(det slot list | wc -l) -gt 2 ]] ; do
                       if [[ $((--tries)) -eq 0 ]]; then
@@ -2955,6 +2968,8 @@ jobs:
             auth_file: /home/launcher/.launcher.$HOSTNAME.token
             path: /opt/singularity/bin:/usr/local/bin:${PATH}
             ld_library_path:
+          security:
+            initial_user_password: ${INITIAL_USER_PASSWORD}
       reserved_ports_znode50:
         type: string
         default: |
@@ -2978,9 +2993,6 @@ jobs:
       determined_admin_username:
         type: string
         default: admin
-      determined_admin_password:
-        type: string
-        default: ""
       database_username:
         type: string
         default: postgres
@@ -3129,7 +3141,7 @@ jobs:
                 --data-binary @- \<< EOF | jq -r '.token'
               {
                   "username": "<<parameters.determined_admin_username>>",
-                  "password": "<<parameters.determined_admin_password>>"
+                  "password": "$INITIAL_USER_PASSWORD"
               }
             EOF
             )
@@ -3189,6 +3201,7 @@ jobs:
                 name: Query the slot count to ensure slots are allocated
                 command: |
                   tries=20
+                  export DET_PASS=${INITIAL_USER_PASSWORD}
                   det slot list
                   until [[ $(det slot list | wc -l) -gt 2 ]] ; do
                       if [[ $((--tries)) -eq 0 ]]; then
@@ -3477,7 +3490,7 @@ jobs:
           command: |
             export PERF_DOCKER_FLAGS="--network=host"
             export PERF_K6_FLAGS='-e DET_ADMIN_USERNAME="admin" \
-              -e DET_ADMIN_PASSWORD="" \
+              -e DET_ADMIN_PASSWORD="${INITIAL_USER_PASSWORD}" \
               -e model_name="tnjpuojqzbluqiyyqilftulsw" \
               -e model_version_number="1" \
               -e trial_id="8282" \
@@ -4342,6 +4355,8 @@ workflows:
       - test-debian-packaging:
           requires:
             - package-and-push-system-local-ee
+          context:
+            - dev-ci-cluster-default-user-credentials
           filters:
             branches:
               only:
@@ -4351,6 +4366,8 @@ workflows:
           name: test-e2e-slurm-misconfigured
           requires:
             - package-and-push-system-local-ee
+          context:
+            - dev-ci-cluster-default-user-credentials
           filters:
             branches:
               only:
@@ -4392,12 +4409,16 @@ workflows:
               auth_file: /home/launcher/.launcher.$HOSTNAME.token
               path: /opt/singularity/bin:/usr/local/bin:${PATH}
               ld_library_path:
+            security:
+              initial_user_password: ${INITIAL_USER_PASSWORD}
 
       - test-e2e-slurm:
           name: test-e2e-slurm-gpu
           mark: "e2e_slurm_gpu"
           requires:
             - package-and-push-system-local-ee
+          context:
+            - dev-ci-cluster-default-user-credentials
           filters:
             branches:
               only:
@@ -4410,6 +4431,7 @@ workflows:
             # that's required by the "gh" command for authentication.
             - github-read
             - gcp
+            - gcp-ci-cluster-default-user-credentials
           matrix:
             parameters:
               name: [test-e2e-slurm-singularity-gcp]
@@ -4428,6 +4450,7 @@ workflows:
             # that's required by the "gh" command for authentication.
             - github-read
             - gcp
+            - gcp-ci-cluster-default-user-credentials
           matrix:
             parameters:
               name: [test-e2e-slurm-podman-gcp]
@@ -4447,6 +4470,7 @@ workflows:
             # that's required by the "gh" command for authentication.
             - github-read
             - gcp
+            - gcp-ci-cluster-default-user-credentials
           matrix:
             parameters:
               name: [test-e2e-slurm-enroot-gcp]
@@ -4466,6 +4490,7 @@ workflows:
             # that's required by the "gh" command for authentication.
             - github-read
             - gcp
+            - gcp-ci-cluster-default-user-credentials
           matrix:
             parameters:
               name: [test-e2e-pbs-singularity-gcp]
@@ -4485,6 +4510,7 @@ workflows:
             # that's required by the "gh" command for authentication.
             - github-read
             - gcp
+            - gcp-ci-cluster-default-user-credentials
           matrix:
             parameters:
               name: [test-e2e-pbs-podman-gcp]
@@ -4506,6 +4532,7 @@ workflows:
             # that's required by the "gh" command for authentication.
             - github-read
             - gcp
+            - gcp-ci-cluster-default-user-credentials
           matrix:
             parameters:
               name: [test-e2e-pbs-enroot-gcp]
@@ -4526,6 +4553,7 @@ workflows:
             # that's required by the "gh" command for authentication.
             - github-read
             - gcp
+            - gcp-ci-cluster-default-user-credentials
           matrix:
             parameters:
               name: [test-e2e-slurm-agent-podman-gcp]
@@ -4847,6 +4875,8 @@ workflows:
 
       - test-det-deploy:
           name: test-det-deploy-local
+          context:
+            - dev-ci-cluster-default-user-credentials
           requires:
             - package-and-push-system-local
             - package-and-push-system-local-ee
@@ -5203,10 +5233,14 @@ workflows:
           requires:
             - package-and-push-system-local-ee
             - request-packaging-tests
+          context:
+            - dev-ci-cluster-default-user-credentials
 
       # Local deployment
       - test-det-deploy:
           name: test-det-deploy-local
+          context:
+            - dev-ci-cluster-default-user-credentials
           requires:
             - package-and-push-system-local
             - package-and-push-system-local-ee
@@ -5255,6 +5289,8 @@ workflows:
 
       - test-e2e-slurm:
           name: test-e2e-slurm-misconfigured
+          context:
+            - dev-ci-cluster-default-user-credentials
           filters: *upstream-feature-branch
           requires:
             - package-and-push-system-local-ee
@@ -5296,9 +5332,13 @@ workflows:
               auth_file: /home/launcher/.launcher.$HOSTNAME.token
               path: /opt/singularity/bin:/usr/local/bin:${PATH}
               ld_library_path:
+            security:
+              initial_user_password: ${INITIAL_USER_PASSWORD}
 
       - test-e2e-slurm:
           name: test-e2e-slurm-gpu
+          context:
+            - dev-ci-cluster-default-user-credentials
           filters: *upstream-feature-branch
           mark: "e2e_slurm_gpu"
           requires:
@@ -5313,6 +5353,7 @@ workflows:
             # that's required by the "gh" command for authentication.
             - github-read
             - gcp
+            - gcp-ci-cluster-default-user-credentials
           matrix:
             parameters:
               name: [test-e2e-slurm-singularity-gcp]
@@ -5329,6 +5370,7 @@ workflows:
             # that's required by the "gh" command for authentication.
             - github-read
             - gcp
+            - gcp-ci-cluster-default-user-credentials
           matrix:
             parameters:
               name: [test-e2e-slurm-podman-gcp]
@@ -5346,6 +5388,7 @@ workflows:
             # that's required by the "gh" command for authentication.
             - github-read
             - gcp
+            - gcp-ci-cluster-default-user-credentials
           matrix:
             parameters:
               name: [test-e2e-slurm-enroot-gcp]
@@ -5363,6 +5406,7 @@ workflows:
             # that's required by the "gh" command for authentication.
             - github-read
             - gcp
+            - gcp-ci-cluster-default-user-credentials
           matrix:
             parameters:
               name: [test-e2e-pbs-singularity-gcp]
@@ -5380,6 +5424,7 @@ workflows:
             # that's required by the "gh" command for authentication.
             - github-read
             - gcp
+            - gcp-ci-cluster-default-user-credentials
           matrix:
             parameters:
               name: [test-e2e-pbs-podman-gcp]
@@ -5399,6 +5444,7 @@ workflows:
             # that's required by the "gh" command for authentication.
             - github-read
             - gcp
+            - gcp-ci-cluster-default-user-credentials
           matrix:
             parameters:
               name: [test-e2e-pbs-enroot-gcp]
@@ -5417,6 +5463,7 @@ workflows:
             # that's required by the "gh" command for authentication.
             - github-read
             - gcp
+            - gcp-ci-cluster-default-user-credentials
           matrix:
             parameters:
               name: [test-e2e-slurm-agent-podman-gcp]
@@ -5534,23 +5581,31 @@ workflows:
           context: github-read
       - test-e2e-slurm:
           name: test-e2e-slurm-restart
+          context:
+            - dev-ci-cluster-default-user-credentials
           mark: "e2e_slurm_restart"
           requires:
             - package-and-push-system-local-ee
           extra-pytest-flags: "--no-compare-stats"
       - test-e2e-slurm:
           name: test-e2e-slurm-preemption
+          context:
+            - dev-ci-cluster-default-user-credentials
           mark: "e2e_slurm_preemption"
           requires:
             - package-and-push-system-local-ee
           extra-pytest-flags: "--no-compare-stats"
       - test-e2e-slurm:
           name: test-e2e-slurm-znode
+          context:
+            - dev-ci-cluster-default-user-credentials
           requires:
             - package-and-push-system-local-ee
           extra-pytest-flags: "--no-compare-stats"
       - test-e2e-slurm:
           name: test-e2e-slurm-enroot-znode
+          context:
+            - dev-ci-cluster-default-user-credentials
           matrix:
             parameters:
               mark: ["e2e_slurm and not deepspeed"]
@@ -5600,8 +5655,12 @@ workflows:
               auth_file: /home/launcher/.launcher.$HOSTNAME.token
               path: /opt/singularity/bin:/usr/local/bin:${PATH}
               ld_library_path:
+            security:
+              initial_user_password: ${INITIAL_USER_PASSWORD}
       - test-e2e-slurm:
             name: test-e2e-slurm-agent-singularity-znode
+            context:
+              - dev-ci-cluster-default-user-credentials
             requires:
               - package-and-push-system-local-ee
             agent-use: "-A"
