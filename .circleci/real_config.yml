@@ -137,6 +137,38 @@ commands:
       - run: git remote add upstream https://github.com/determined-ai/determined
       - run: tools/scripts/retry.sh git fetch upstream
 
+  collect-task-logs:
+    parameters:
+      master_address:
+        type: string
+        default: "http://localhost:8080"
+      store_path:
+        type: string
+        default: "/tmp/artifacts/logs"
+    description: Collect logs from the cluster tasks.
+    steps:
+      - run:
+          name: "Ensure necessary Python packages are available."
+          command: |
+            pkg_names="fire determined"
+            for pkg_name in $pkg_names; do
+              if ! python -c "import $pkg_name" 2>/dev/null; then
+                pip install $pkg_name
+              fi
+            done
+      - run:
+          name: "Collect logs and calculate statistics"
+          command: |
+            target_dir="<< parameters.store_path >>"
+            mkdir -p $target_dir
+            python .circleci/scripts/collect_logs.py --username determined --password "${INITIAL_USER_PASSWORD}" --mlde-host "<< parameters.master_address >>" save_all_logs $target_dir
+            echo "collected logs at $target_dir"
+            log_count=$(find "<< parameters.store_path >>" -type f | wc -l)
+            total_size=$(du -sh "<< parameters.store_path >>" | cut -f1)
+            echo "Number of log files collected: $log_count"
+            echo "Total size of collected logs: $total_size"
+
+
   skip-if-only-dir:
     parameters:
       dir:
@@ -585,6 +617,9 @@ commands:
       wait-for-master:
         type: boolean
         default: true
+      collect-det-job-logs:
+        type: boolean
+        default: true
     steps:
       # Wait for master before splitting tests, since so many splits depend on
       # asking master for its configuration in order to apply skipifs.
@@ -647,6 +682,13 @@ commands:
       - upload-test-job:
           only_on_branch: main
           test_results_path: <<parameters.junit-path>>
+      - when:
+          condition: <<parameters.collect-det-job-logs>>
+          steps:
+            - collect-task-logs:
+                master_address: "<<parameters.master-scheme>>://<<parameters.master-host>>:<<parameters.master-port>>"
+      - store_artifacts:
+          path: /tmp/artifacts/logs
 
   run-det-deploy-tests:
     parameters:
@@ -3213,6 +3255,9 @@ jobs:
       resource-class:
         type: string
         default: xlarge
+      collect-det-job-logs:
+        type: boolean
+        default: true
     machine:
       image: <<pipeline.parameters.machine-image>>
     resource_class: <<parameters.resource-class>>
@@ -3266,6 +3311,7 @@ jobs:
           managed-devcluster: <<parameters.managed-devcluster>>
           extra-pytest-flags: <<parameters.extra-pytest-flags>>
           wait-for-master: <<parameters.wait-for-master>>
+          collect-det-job-logs: <<parameters.collect-det-job-logs>>
 
       - store_test_results:
           path: /tmp/test-results/
@@ -4564,6 +4610,7 @@ workflows:
           # Managed devcluster restarts the master over the course of the tests,
           # so `compare_stats` cannot get the full logs from `det master logs`.
           extra-pytest-flags: "--no-compare-stats"
+          collect-det-job-logs: false
 
       - test-e2e:
           name: test-e2e-multi-k8s
@@ -4649,6 +4696,7 @@ workflows:
           target-stage: agent
           wait-for-master: false
           extra-pytest-flags: "--no-compare-stats"
+          collect-det-job-logs: false
 
       - test-e2e:
           name: test-e2e-saml
