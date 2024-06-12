@@ -10,9 +10,6 @@ import { ProjectColumn } from 'types';
 
 import css from './MultiSortMenu.module.scss';
 
-// in the list of columns from the api but not supported by the sort functionality
-export const BANNED_SORT_COLUMNS = new Set(['tags']);
-
 export const EMPTY_SORT: Sort = { column: undefined, direction: undefined };
 
 interface MultiSortProps {
@@ -20,12 +17,14 @@ interface MultiSortProps {
   isMobile?: boolean;
   onChange?: (sorts: Sort[]) => void;
   sorts: Sort[];
+  bannedSortColumns?: Set<string>;
 }
 interface MultiSortRowProps {
   sort: Sort;
   columns: Loadable<ProjectColumn[]>;
   onChange?: (sort: Sort) => void;
   onRemove?: () => void;
+  bannedSortColumns: Set<string>;
 }
 interface DirectionOptionsProps {
   onChange?: (direction: DirectionType) => void;
@@ -36,6 +35,7 @@ interface ColumnOptionsProps {
   columns: Loadable<ProjectColumn[]>;
   onChange?: (column: string) => void;
   value?: string;
+  bannedSortColumns: Set<string>;
 }
 
 export const optionsByColumnType = {
@@ -100,9 +100,6 @@ export const sortMenuItemsForColumn = (
   sorts: Sort[],
   onSortChange?: (sorts: Sort[]) => void,
 ): MenuItem[] => {
-  if (BANNED_SORT_COLUMNS.has(column.column)) {
-    return [];
-  }
   return optionsByColumnType[column.type].map((option) => {
     const curSort = sorts.find((s) => s.column === column.column);
     const isSortMatch = curSort && curSort.direction === option.value;
@@ -119,9 +116,9 @@ export const sortMenuItemsForColumn = (
             s.column !== column.column
               ? s
               : {
-                  ...s,
-                  direction: option.value as DirectionType,
-                },
+                ...s,
+                direction: option.value as DirectionType,
+              },
           );
         } else {
           newSort = [{ column: column.column, direction: option.value as DirectionType }];
@@ -142,13 +139,13 @@ const DirectionOptions: React.FC<DirectionOptionsProps> = ({ onChange, type, val
   />
 );
 
-const ColumnOptions: React.FC<ColumnOptionsProps> = ({ onChange, columns, value }) => (
+const ColumnOptions: React.FC<ColumnOptionsProps> = ({ onChange, columns, value, bannedSortColumns }) => (
   <Select
     autoFocus
     dropdownMatchSelectWidth={300}
     loading={Loadable.isNotLoaded(columns)}
     options={Loadable.getOrElse([], columns)
-      .filter((c) => !BANNED_SORT_COLUMNS.has(c.column))
+      .filter((c) => !bannedSortColumns.has(c.column))
       .map((c) => ({
         label: c.displayName || c.column,
         value: c.column,
@@ -160,7 +157,7 @@ const ColumnOptions: React.FC<ColumnOptionsProps> = ({ onChange, columns, value 
   />
 );
 
-const MultiSortRow: React.FC<MultiSortRowProps> = ({ sort, columns, onChange, onRemove }) => {
+const MultiSortRow: React.FC<MultiSortRowProps> = ({ sort, columns, onChange, onRemove, bannedSortColumns }) => {
   const valueType =
     Loadable.getOrElse([], columns).find((c) => c.column === sort.column)?.type ||
     V1ColumnType.UNSPECIFIED;
@@ -168,6 +165,7 @@ const MultiSortRow: React.FC<MultiSortRowProps> = ({ sort, columns, onChange, on
     <div className={css.sortRow}>
       <div className={css.select}>
         <ColumnOptions
+          bannedSortColumns={bannedSortColumns}
           columns={columns}
           value={sort.column}
           onChange={(column) => onChange?.({ ...sort, column })}
@@ -192,7 +190,7 @@ const MultiSortRow: React.FC<MultiSortRowProps> = ({ sort, columns, onChange, on
   );
 };
 
-const MultiSort: React.FC<MultiSortProps> = ({ sorts, columns, onChange }) => {
+const MultiSort: React.FC<MultiSortProps> = ({ sorts, columns, onChange, bannedSortColumns }) => {
   const makeOnRowChange = (idx: number) => (sort: Sort) => {
     const newSorts = [...sorts];
     newSorts[idx] = {
@@ -223,6 +221,7 @@ const MultiSort: React.FC<MultiSortProps> = ({ sorts, columns, onChange }) => {
           );
           return (
             <MultiSortRow
+              bannedSortColumns={bannedSortColumns ?? new Set()}
               columns={columnOptions}
               key={sort.column || idx}
               sort={sort}
@@ -249,6 +248,7 @@ const MultiSortMenu: React.FC<MultiSortProps> = ({
   columns,
   onChange,
   isMobile = false,
+  bannedSortColumns,
 }) => {
   const validSorts = sorts.filter(validSort.is);
   const onSortPopoverOpenChange = (open: boolean) => {
@@ -259,7 +259,7 @@ const MultiSortMenu: React.FC<MultiSortProps> = ({
 
   return (
     <Dropdown
-      content={<MultiSort columns={columns} sorts={sorts} onChange={onChange} />}
+      content={<MultiSort bannedSortColumns={bannedSortColumns} columns={columns} sorts={sorts} onChange={onChange} />}
       onOpenChange={onSortPopoverOpenChange}>
       <Button data-testid={SORT_MENU_BUTTON} hideChildren={isMobile} icon={<SortButtonIcon />}>
         Sort {validSorts.length ? `(${validSorts.length})` : ''}

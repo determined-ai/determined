@@ -23,10 +23,12 @@ const removeBannedColumns = (columns: ProjectColumn[]) =>
 
 export const LOCATION_LABEL_MAP = {
   [V1LocationType.EXPERIMENT]: 'General',
+  [V1LocationType.RUN]: 'General',
   [V1LocationType.VALIDATIONS]: 'Metrics',
   [V1LocationType.TRAINING]: 'Metrics',
   [V1LocationType.CUSTOMMETRIC]: 'Metrics',
   [V1LocationType.HYPERPARAMETERS]: 'Hyperparameters',
+  [V1LocationType.RUNHYPERPARAMETERS]: 'Hyperparameters',
 } as const;
 
 export const COLUMNS_MENU_BUTTON = 'columns-menu-button';
@@ -104,7 +106,7 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
       : [...new Set([...columnState, ...filteredColumns.map((col) => col.column)])];
     const pinnedCount = allFilteredColumnsChecked
       ? // If uncheck something pinned, reduce the pinnedColumnsCount
-        newColumns.filter((col) => columnState.indexOf(col) < pinnedColumnsCount).length
+      newColumns.filter((col) => columnState.indexOf(col) < pinnedColumnsCount).length
       : pinnedColumnsCount;
 
     onVisibleColumnChange?.(newColumns, pinnedCount);

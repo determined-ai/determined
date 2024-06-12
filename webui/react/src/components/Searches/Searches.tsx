@@ -89,6 +89,9 @@ interface Props {
 
 type ExperimentWithIndex = { index: number; experiment: BulkExperimentItem };
 
+const BANNED_FILTER_COLUMNS = new Set(['searcherMetricsVal']);
+const BANNED_SORT_COLUMNS = new Set(['tags', 'searcherMetricsVal']);
+
 const makeSortString = (sorts: ValidSort[]): string =>
   sorts.map((s) => `${s.column}=${s.direction}`).join(',');
 
@@ -638,10 +641,21 @@ const Searches: React.FC<Props> = ({ project }) => {
         if (columnName === MULTISELECT) {
           return (columnDefs[columnName] = defaultSelectionColumn(selection.rows, false));
         }
-        if (columnName in columnDefs) return columnDefs[columnName];
-        if (!Loadable.isLoaded(projectColumnsMap)) return;
+
+        if (!Loadable.isLoaded(projectColumnsMap)) {
+          if (columnName in columnDefs) return columnDefs[columnName];
+          return;
+        }
+
         const currentColumn = projectColumnsMap.data[columnName];
-        if (!currentColumn) return;
+        if (!currentColumn) {
+          if (columnName in columnDefs) return columnDefs[columnName];
+          return;
+        }
+
+        // prioritize column title from getProjectColumns API response, but use static front-end definition as fallback:
+        if (columnName in columnDefs) return { ...columnDefs[columnName], title: currentColumn.displayName ?? columnDefs[columnName].title };
+
         let dataPath: string | undefined = undefined;
         switch (currentColumn.location) {
           case V1LocationType.EXPERIMENT:
@@ -735,7 +749,6 @@ const Searches: React.FC<Props> = ({ project }) => {
 
     const filterCount = formStore.getFieldCount(column.column).get();
 
-    const BANNED_FILTER_COLUMNS = ['searcherMetricsVal'];
     const loadableFormset = formStore.formset.get();
     const filterMenuItemsForColumn = () => {
       const isSpecialColumn = (SpecialColumnNames as ReadonlyArray<string>).includes(column.column);
@@ -809,11 +822,14 @@ const Searches: React.FC<Props> = ({ project }) => {
           }
         },
       },
-      { type: 'divider' as const },
-      ...(BANNED_FILTER_COLUMNS.includes(column.column)
+      ...(BANNED_SORT_COLUMNS.has(column.column)
+        ? [] : [
+          { type: 'divider' as const },
+          ...sortMenuItemsForColumn(column, sorts, handleSortChange),
+        ]),
+      ...(BANNED_FILTER_COLUMNS.has(column.column)
         ? []
         : [
-          ...sortMenuItemsForColumn(column, sorts, handleSortChange),
           { type: 'divider' as const },
           {
             icon: <Icon decorative name="filter" />,
@@ -845,6 +861,8 @@ const Searches: React.FC<Props> = ({ project }) => {
   return (
     <>
       <TableActionBar
+        bannedFilterColumns={BANNED_FILTER_COLUMNS}
+        bannedSortColumns={BANNED_SORT_COLUMNS}
         columnGroups={[V1LocationType.EXPERIMENT]}
         formStore={formStore}
         initialVisibleColumns={columnsIfLoaded}
