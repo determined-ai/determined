@@ -44,12 +44,12 @@ describe('canActionFlatRun function', () => {
       },
     ];
 
-    it('should not be appeard without selected flat runs', () => {
+    it('should not appear without selected flat runs', () => {
       setup([]);
       expect(screen.queryByText('Actions')).not.toBeInTheDocument();
     });
 
-    it('should be appeard with selected flat runs', async () => {
+    it('should appear with selected flat runs', async () => {
       setup(flatRuns);
       expect(await screen.findByText('Actions')).toBeInTheDocument();
     });
