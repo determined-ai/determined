@@ -23,8 +23,8 @@ refer to the sections below to see the configuration changes and controller requ
 
 Limitations:
 
--  Proxying to multi-node trials is not supported: Exposing proxies in multi-slot jobs is not supported.
-  Currently this only includes experiments running distributed training that want to manually expose proxies to the outside world.
+-  Proxying to multi-node trials is not supported. Currently this only includes experiments running
+      distributed training that want to manually expose proxies to the outside world.
 
 ###################################
  Controller Support - Requirements
