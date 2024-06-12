@@ -85,7 +85,7 @@ func (a *apiServer) SearchRuns(
 		Model(&runs).
 		ModelTableExpr("runs AS r").
 		Apply(getRunsColumns).
-		Group("r.id")
+		Group("r.id", "e.owner_id", "e.config", "w.id", "p.archived", "p.name", "e.unmanaged", "e.progress", "e.parent_id", "e.external_experiment_id", "e.id")
 
 	var proj *projectv1.Project
 	if req.ProjectId != nil {
