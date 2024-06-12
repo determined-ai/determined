@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -ex
 
 # Warning: this script is not meant to be ran directly. It is invoked by 'make build'.
 
@@ -11,7 +12,7 @@ ARTIFACT_BASE_URL=https://arti.hpc.amslabs.hpecorp.net/artifactory/analytics-mis
 
 # Checks the build directory for any debian files. If there is no launcher debians,
 # the latest launcher version is downloaded. Otherwise, the debian in build/ is used
-CURRENT_VERSION=$(ls build/ | grep hpe-hpc-launcher | grep .deb)
+CURRENT_VERSION=$(ls build/ | grep hpe-hpc-launcher | grep .deb || echo None)
 # Runs a curl command that gets all the debian files from artifactory, filters release versions (n.n.n-n),
 # sorts the versions in reverse order and chooses the latest one version.
 LATEST_VERSION=$(curl -sX GET $ARTIFACT_BASE_URL | sed 's/<[^>]*>//g' | grep hpe-hpc-launcher | grep -E '[0-9]+(\.[0-9]+){2}\-[0-9]\_' | sort -r --version-sort | head -n 1 | cut -d' ' -f1)
@@ -45,7 +46,7 @@ fi
 
 WORKLOAD_MANAGER="slurm"
 SOURCE_IMAGE_PROJECT_ID="schedmd-slurm-public"
-SOURCE_IMAGE_FAMILY="slurm-gcp-6-1-ubuntu-2004-lts"
+SOURCE_IMAGE_FAMILY="slurm-gcp-6-3-ubuntu-2004-lts"
 
 # Only one argument (predefined) will ever be passed in so this should be okay
 if [[ $1 == "pbs" ]]; then
@@ -61,8 +62,8 @@ echo >&2 "INFO: Using image from family ${SOURCE_IMAGE_FAMILY}"
 # Other predefined variables
 
 SSH_USERNAME="packer2"
-CPU_IMAGE_NAME=$(grep "CPUImage" ../../../master/pkg/schemas/expconf/const.go | awk -F'\"' '{print $2}')
-CUDA_IMAGE_NAME=$(grep "CUDAImage" ../../../master/pkg/schemas/expconf/const.go | awk -F'\"' '{print $2}')
+CPU_IMAGE_NAME="determinedai/pytorch-tensorflow-cpu-dev:e960eae"
+CUDA_IMAGE_NAME="determinedai/pytorch-ngc-dev:e960eae"
 
 cat <<EOF
 ssh_username           = "${SSH_USERNAME}"

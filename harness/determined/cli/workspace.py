@@ -9,7 +9,7 @@ from determined.common import api, util
 from determined.common.api import bindings, errors
 from determined.common.experimental import workspace
 
-PROJECT_HEADERS = ["ID", "Name", "Description", "# Experiments", "# Active Experiments"]
+PROJECT_HEADERS = ["ID", "Key", "Name", "Description", "# Experiments", "# Active Experiments"]
 WORKSPACE_HEADERS = [
     "ID",
     "Name",
@@ -121,6 +121,7 @@ def list_workspace_projects(args: argparse.Namespace) -> None:
         values = [
             [
                 p.id,
+                p.key,
                 p.name,
                 p.description,
                 p.n_experiments,

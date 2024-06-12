@@ -164,6 +164,7 @@ class ProjectMsg(ServerMsg):
         user_id: "int",
         immutable: "bool",
         state: "str",
+        key: "str",
         seq: "int",
     ) -> None:
         self.id = id
@@ -176,6 +177,7 @@ class ProjectMsg(ServerMsg):
         self.user_id = user_id
         self.immutable = immutable
         self.state = state
+        self.key = key
         self.seq = seq
 
 

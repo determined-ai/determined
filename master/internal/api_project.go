@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"sort"
 	"strconv"
+	"strings"
 
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -56,6 +57,12 @@ var defaultRunsTableColumns = []*projectv1.ProjectColumn{
 	{
 		Column:      "startTime",
 		DisplayName: "Start Time",
+		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
+		Type:        projectv1.ColumnType_COLUMN_TYPE_DATE,
+	},
+	{
+		Column:      "endTime",
+		DisplayName: "End Time",
 		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
 		Type:        projectv1.ColumnType_COLUMN_TYPE_DATE,
 	},
@@ -118,6 +125,12 @@ var defaultRunsTableColumns = []*projectv1.ProjectColumn{
 		DisplayName: "External Experiment ID",
 		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
 		Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
+	},
+	{
+		Column:      "projectId",
+		DisplayName: "Project ID",
+		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
+		Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
 	},
 	{
 		Column:      "externalRunId",
@@ -222,21 +235,44 @@ func getRunSummaryMetrics(ctx context.Context, whereClause string, group []int) 
 	return columns, nil
 }
 
+func (a *apiServer) GetProjectByKey(
+	ctx context.Context,
+	req *apiv1.GetProjectByKeyRequest,
+) (*apiv1.GetProjectByKeyResponse, error) {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	p, err := project.GetProjectByKey(ctx, req.Key)
+	if errors.Is(err, db.ErrNotFound) {
+		return nil, api.NotFoundErrs("project", req.Key, true)
+	} else if err != nil {
+		return nil, err
+	}
+
+	protoProject := p.Proto()
+	if err := project.AuthZProvider.Get().CanGetProject(ctx, *curUser, protoProject); err != nil {
+		return nil, err
+	}
+	return &apiv1.GetProjectByKeyResponse{Project: protoProject}, nil
+}
+
 func (a *apiServer) GetProjectByID(
 	ctx context.Context, id int32, curUser model.User,
 ) (*projectv1.Project, error) {
 	notFoundErr := api.NotFoundErrs("project", strconv.Itoa(int(id)), true)
-	p := &projectv1.Project{}
-	if err := a.m.db.QueryProto("get_project", p, id); errors.Is(err, db.ErrNotFound) {
+	p, err := project.GetProjectByID(ctx, int(id))
+	if errors.Is(err, db.ErrNotFound) {
 		return nil, notFoundErr
 	} else if err != nil {
 		return nil, errors.Wrapf(err, "error fetching project (%d) from database", id)
 	}
-
-	if err := project.AuthZProvider.Get().CanGetProject(ctx, curUser, p); err != nil {
+	protoProject := p.Proto()
+	if err := project.AuthZProvider.Get().CanGetProject(ctx, curUser, protoProject); err != nil {
 		return nil, authz.SubIfUnauthorized(err, notFoundErr)
 	}
-	return p, nil
+	return protoProject, nil
 }
 
 func (a *apiServer) getProjectColumnsByID(
@@ -725,11 +761,25 @@ func (a *apiServer) PostProject(
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
-	p := &projectv1.Project{}
-	err = a.m.db.QueryProto("insert_project", p, req.Name, req.Description,
-		req.WorkspaceId, curUser.ID)
+	if req.Key != nil {
+		// allow user to provide a key, but ensure it is uppercase.
+		*req.Key = strings.ToUpper(*req.Key)
+		if err = project.ValidateProjectKey(*req.Key); err != nil {
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		}
+	}
 
-	return &apiv1.PostProjectResponse{Project: p},
+	p := &model.Project{
+		Name:        req.Name,
+		Description: req.Description,
+		WorkspaceID: int(req.WorkspaceId),
+		UserID:      int(curUser.ID),
+		Username:    curUser.Username,
+	}
+
+	err = project.InsertProject(ctx, p, req.Key)
+	err = apiutils.MapAndFilterErrors(err, nil, nil)
+	return &apiv1.PostProjectResponse{Project: p.Proto()},
 		errors.Wrapf(err, "error creating project %s in database", req.Name)
 }
 
@@ -772,53 +822,24 @@ func (a *apiServer) PutProjectNotes(
 func (a *apiServer) PatchProject(
 	ctx context.Context, req *apiv1.PatchProjectRequest,
 ) (*apiv1.PatchProjectResponse, error) {
-	currProject, currUser, err := a.getProjectAndCheckCanDoActions(ctx, req.Id)
+	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
+		return nil, fmt.Errorf("failed to get user while updating project")
+	}
+
+	updatedProject, err := project.UpdateProject(
+		ctx,
+		req.Id,
+		*curUser,
+		req.Project,
+	)
+	if err != nil && errors.Is(err, db.ErrNotFound) {
+		return nil, api.NotFoundErrs("project", strconv.Itoa(int(req.Id)), true)
+	} else if err != nil {
+		log.WithError(err).Errorf("failed to update project %d", req.Id)
 		return nil, err
 	}
-	if currProject.Archived {
-		return nil, errors.Errorf("project (%d) is archived and cannot have attributes updated",
-			currProject.Id)
-	}
-	if currProject.Immutable {
-		return nil, errors.Errorf("project (%v) is immutable and cannot have attributes updated",
-			currProject.Id)
-	}
-
-	madeChanges := false
-	if req.Project.Name != nil && req.Project.Name.Value != currProject.Name {
-		if err = project.AuthZProvider.Get().CanSetProjectName(ctx, currUser, currProject); err != nil {
-			return nil, status.Error(codes.PermissionDenied, err.Error())
-		}
-
-		log.Infof("project (%d) name changing from \"%s\" to \"%s\"",
-			currProject.Id, currProject.Name, req.Project.Name.Value)
-		madeChanges = true
-		currProject.Name = req.Project.Name.Value
-	}
-
-	if req.Project.Description != nil && req.Project.Description.Value != currProject.Description {
-		if err = project.AuthZProvider.Get().
-			CanSetProjectDescription(ctx, currUser, currProject); err != nil {
-			return nil, status.Error(codes.PermissionDenied, err.Error())
-		}
-
-		log.Infof("project (%d) description changing from \"%s\" to \"%s\"",
-			currProject.Id, currProject.Description, req.Project.Description.Value)
-		madeChanges = true
-		currProject.Description = req.Project.Description.Value
-	}
-
-	if !madeChanges {
-		return &apiv1.PatchProjectResponse{Project: currProject}, nil
-	}
-
-	finalProject := &projectv1.Project{}
-	err = a.m.db.QueryProto("update_project",
-		finalProject, currProject.Id, currProject.Name, currProject.Description)
-
-	return &apiv1.PatchProjectResponse{Project: finalProject},
-		errors.Wrapf(err, "error updating project (%d) in database", currProject.Id)
+	return &apiv1.PatchProjectResponse{Project: updatedProject.Proto()}, nil
 }
 
 func (a *apiServer) deleteProject(ctx context.Context, projectID int32,

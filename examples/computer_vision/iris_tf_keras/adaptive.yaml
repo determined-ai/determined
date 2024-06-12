@@ -2,6 +2,10 @@ name: iris_tf_keras_adaptive_search
 data:
   train_url: http://download.tensorflow.org/data/iris_training.csv
   test_url: http://download.tensorflow.org/data/iris_test.csv
+environment:
+  image:
+    cpu: determinedai/tensorflow-ngc-dev:e960eae
+    gpu: determinedai/tensorflow-ngc-dev:e960eae
 hyperparameters:
   learning_rate:
     type: log
@@ -24,4 +28,4 @@ searcher:
   max_length:
     batches: 6400
   max_trials: 512
-entrypoint: model_def:IrisTrial
+entrypoint: python3 -m determined.launch.horovod --autohorovod --trial model_def:IrisTrial

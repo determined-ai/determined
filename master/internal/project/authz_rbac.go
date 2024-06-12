@@ -246,3 +246,19 @@ func (a *ProjectAuthZRBAC) CanUnarchiveProject(
 	return permCheck(ctx, curUser, project.WorkspaceId,
 		rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_PROJECT)
 }
+
+// CanSetProjectKey returns an error if a user doesn't have "UPDATE_PROJECT" globally
+// or on the target project's workspace.
+func (a *ProjectAuthZRBAC) CanSetProjectKey(
+	ctx context.Context, curUser model.User, project *projectv1.Project,
+) (err error) {
+	fields := audit.ExtractLogFields(ctx)
+	logEntryWithProjectTarget(fields, curUser,
+		rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_PROJECT, project.Id)
+	defer func() {
+		audit.LogFromErr(fields, err)
+	}()
+
+	return permCheck(ctx, curUser, project.WorkspaceId,
+		rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_PROJECT)
+}

@@ -204,6 +204,10 @@ const (
 	// insert/update violates a foreign key constraint.  Obtained from:
 	// https://www.postgresql.org/docs/10/errcodes-appendix.html
 	CodeForeignKeyViolation = "23503"
+	// CodeSerializationFailure is the error code that Postgres uses to indicate that a transaction
+	// failed due to a serialization failure.  Obtained from:
+	// https://www.postgresql.org/docs/10/errcodes-appendix.html
+	CodeSerializationFailure = "40001"
 )
 
 // Close closes the underlying pq connection.

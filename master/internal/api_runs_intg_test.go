@@ -18,6 +18,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/taskv1"
 )
@@ -80,6 +81,65 @@ func TestSearchRunsArchivedExperiment(t *testing.T) {
 	resp, err = api.SearchRuns(ctx, req)
 	require.NoError(t, err)
 	require.Empty(t, resp.Runs)
+}
+
+func TestSearchRunsSortAndFilterAllDefaultColumns(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	_, projectIDInt := createProjectAndWorkspace(ctx, t, api)
+	projectID := int32(projectIDInt)
+
+	req := &apiv1.SearchRunsRequest{
+		ProjectId: &projectID,
+		Sort:      ptrs.Ptr("id=asc"),
+	}
+
+	hyperparameters := map[string]any{"global_batch_size": 1, "test1": map[string]any{"test2": 1}}
+
+	exp := createTestExpWithProjectID(t, api, curUser, projectIDInt)
+
+	task := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
+	require.NoError(t, db.AddTask(ctx, task))
+	require.NoError(t, db.AddTrial(ctx, &model.Trial{
+		State:        model.PausedState,
+		ExperimentID: exp.ID,
+		StartTime:    time.Now(),
+		HParams:      hyperparameters,
+	}, task.TaskID))
+
+	resp, err := api.SearchRuns(ctx, req)
+	require.NoError(t, err)
+	require.Len(t, resp.Runs, 1)
+
+	hyperparameters2 := map[string]any{"global_batch_size": 2, "test1": map[string]any{"test2": 5}}
+
+	// Add second experiment
+	exp2 := createTestExpWithProjectID(t, api, curUser, projectIDInt)
+
+	task2 := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
+	require.NoError(t, db.AddTask(ctx, task2))
+	require.NoError(t, db.AddTrial(ctx, &model.Trial{
+		State:        model.PausedState,
+		ExperimentID: exp2.ID,
+		StartTime:    time.Now(),
+		HParams:      hyperparameters2,
+	}, task2.TaskID))
+
+	for _, c := range defaultRunsTableColumns {
+		if c.Column == "tags" {
+			continue
+		}
+
+		filter := fmt.Sprintf(`{"filterGroup":{"children":[{"columnName":"%s","kind":"field",`+
+			`"location":"%s","operator":"=","type":"%s","value":null}],`+
+			`"conjunction":"and","kind":"group"},"showArchived":false}`, c.Column, c.Location.String(), c.Type.String())
+		_, err = api.SearchRuns(ctx, &apiv1.SearchRunsRequest{
+			ProjectId: req.ProjectId,
+			Sort:      ptrs.Ptr(c.Column + "=asc"),
+			Filter:    ptrs.Ptr(filter),
+		})
+
+		require.NoError(t, err)
+	}
 }
 
 func TestSearchRunsSort(t *testing.T) {
@@ -402,7 +462,52 @@ func setUpMultiTrialExperiments(ctx context.Context, t *testing.T, api *apiServe
 
 func TestMoveRunsMultiTrialSkip(t *testing.T) {
 	api, curUser, ctx := setupAPITest(t, nil)
-	sourceprojectID, destprojectID, runID1, runID2, _ := setUpMultiTrialExperiments(ctx, t, api, curUser)
+	_, projectIDInt := createProjectAndWorkspace(ctx, t, api)
+	_, projectID2Int := createProjectAndWorkspace(ctx, t, api)
+	sourceprojectID := int32(projectIDInt)
+	destprojectID := int32(projectID2Int)
+
+	// nolint: exhaustruct
+	experimentConfig := expconf.ExperimentConfig{
+		RawDescription: ptrs.Ptr("descnew"),
+		RawName:        expconf.Name{RawString: ptrs.Ptr("name")},
+		RawSearcher: &expconf.SearcherConfigV0{
+			RawRandomConfig: &expconf.RandomConfigV0{
+				RawMaxLength: &expconf.LengthV0{
+					Unit:  expconf.Batches,
+					Units: 1,
+				},
+			},
+		},
+	}
+
+	activeConfig := schemas.WithDefaults(schemas.Merge(experimentConfig, minExpConfig))
+
+	exp := createTestExpWithActiveConfig(t, api, curUser, projectIDInt, activeConfig)
+
+	task1 := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
+	require.NoError(t, db.AddTask(ctx, task1))
+	require.NoError(t, db.AddTrial(ctx, &model.Trial{
+		State:        model.CompletedState,
+		ExperimentID: exp.ID,
+		StartTime:    time.Now(),
+	}, task1.TaskID))
+
+	task2 := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
+	require.NoError(t, db.AddTask(ctx, task2))
+	require.NoError(t, db.AddTrial(ctx, &model.Trial{
+		State:        model.CompletedState,
+		ExperimentID: exp.ID,
+		StartTime:    time.Now(),
+	}, task2.TaskID))
+
+	req := &apiv1.SearchRunsRequest{
+		ProjectId: &sourceprojectID,
+		Sort:      ptrs.Ptr("id=asc"),
+	}
+	resp, err := api.SearchRuns(ctx, req)
+	require.NoError(t, err)
+	runID1, runID2 := resp.Runs[0].Id, resp.Runs[1].Id
 
 	moveIds := []int32{runID1}
 
@@ -420,11 +525,11 @@ func TestMoveRunsMultiTrialSkip(t *testing.T) {
 		moveResp.Results[0].Error)
 
 	// run still in old project
-	req := &apiv1.SearchRunsRequest{
+	req = &apiv1.SearchRunsRequest{
 		ProjectId: &sourceprojectID,
 		Sort:      ptrs.Ptr("id=asc"),
 	}
-	resp, err := api.SearchRuns(ctx, req)
+	resp, err = api.SearchRuns(ctx, req)
 	require.NoError(t, err)
 	require.Len(t, resp.Runs, 2)
 	require.Equal(t, runID1, resp.Runs[0].Id)

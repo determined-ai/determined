@@ -1108,19 +1108,25 @@ func TestValidateResources(t *testing.T) {
 	rp := newTestResourcePool(newTestJobsService(t))
 
 	cases := []struct {
-		name        string
-		slots       int
-		fulfillable bool
+		name           string
+		slots          int
+		maxSlotsPerPod int
+		fulfillable    bool
 	}{
-		{"valid", 1, true},
-		{"invalid", 100, false},
+		{"valid", 1, 2, true},
+		{"invalid, not divisible", 10, 3, false},
 	}
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
+			rp.maxSlotsPerPod = tt.maxSlotsPerPod
 			res := rp.ValidateResources(sproto.ValidateResourcesRequest{
 				Slots: tt.slots,
 			})
-			require.Equal(t, tt.fulfillable, res.Fulfillable)
+			if tt.fulfillable {
+				require.NoError(t, res)
+			} else {
+				require.ErrorContains(t, res, "invalid resource request")
+			}
 		})
 	}
 }

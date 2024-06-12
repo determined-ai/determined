@@ -30,13 +30,13 @@ parameters:
     default: ubuntu-2004:2024.01.1
   gpu-machine-image:
     type: string
-    default: ubuntu-2004-cuda-11.2:202103-01
+    default: linux-cuda-12:default
   # DEFAULT_PT_GPU_IMAGE: Pytorch training image reference used by the tests
   # Inject here as a parameter so that it is updated by bumpversion, and can
   # be referenced by --ee testing.
-  default-pt-gpu-image:
+  default-pt-gpu-hpc-image:
     type: string
-    default: determinedai/pytorch-tensorflow-cuda-dev:8b3bea3
+    default: determinedai/pytorch-ngc-dev:e960eae
   # Some python, go, and react dependencies are cached by circleci via `save_cache`/`restore_cache`.
   # If the dependencies stay the same, but the circleci code that would produce them is changed,
   # it may be necessary to invalidate the cache by incrementing this value.
@@ -136,6 +136,38 @@ commands:
     steps:
       - run: git remote add upstream https://github.com/determined-ai/determined
       - run: tools/scripts/retry.sh git fetch upstream
+
+  collect-task-logs:
+    parameters:
+      master_address:
+        type: string
+        default: "http://localhost:8080"
+      store_path:
+        type: string
+        default: "/tmp/artifacts/logs"
+    description: Collect logs from the cluster tasks.
+    steps:
+      - run:
+          name: "Ensure necessary Python packages are available."
+          command: |
+            pkg_names="fire determined"
+            for pkg_name in $pkg_names; do
+              if ! python -c "import $pkg_name" 2>/dev/null; then
+                pip install $pkg_name
+              fi
+            done
+      - run:
+          name: "Collect logs and calculate statistics"
+          command: |
+            target_dir="<< parameters.store_path >>"
+            mkdir -p $target_dir
+            python .circleci/scripts/collect_logs.py --username determined --password "${INITIAL_USER_PASSWORD}" --mlde-host "<< parameters.master_address >>" save_all_logs $target_dir
+            echo "collected logs at $target_dir"
+            log_count=$(find "<< parameters.store_path >>" -type f | wc -l)
+            total_size=$(du -sh "<< parameters.store_path >>" | cut -f1)
+            echo "Number of log files collected: $log_count"
+            echo "Total size of collected logs: $total_size"
+
 
   skip-if-only-dir:
     parameters:
@@ -245,7 +277,7 @@ commands:
       - when:
           condition: <<parameters.tf2>>
           steps:
-            - run: docker pull determinedai/pytorch-tensorflow-cpu-dev:8b3bea3
+            - run: docker pull determinedai/pytorch-ngc-dev:e960eae
 
   login-docker:
     parameters:
@@ -274,6 +306,25 @@ commands:
   install-codecov:
     steps:
       - run: pip install codecov
+      
+  upload-junit-datadog:
+    parameters:
+      service:
+        type: string
+        default: ""
+      env:
+        type: string
+        default: "ci-cpu"
+      path:
+        type: string
+        default: "/tmp/test-results"
+    steps:
+      - run:
+          name: Upload Tests to DataDog
+          when: always
+          command: |
+              curl -L --fail "https://github.com/DataDog/datadog-ci/releases/latest/download/datadog-ci_linux-x64" --output "./datadog-ci" && chmod +x ./datadog-ci
+              ./datadog-ci junit upload --service "determined-ai/<< parameters.service >>" --env "<< parameters.env >>" << parameters.path >>
 
   setup-go-intg-deps:
     steps:
@@ -566,6 +617,9 @@ commands:
       wait-for-master:
         type: boolean
         default: true
+      collect-det-job-logs:
+        type: boolean
+        default: true
     steps:
       # Wait for master before splitting tests, since so many splits depend on
       # asking master for its configuration in order to apply skipifs.
@@ -628,6 +682,13 @@ commands:
       - upload-test-job:
           only_on_branch: main
           test_results_path: <<parameters.junit-path>>
+      - when:
+          condition: <<parameters.collect-det-job-logs>>
+          steps:
+            - collect-task-logs:
+                master_address: "<<parameters.master-scheme>>://<<parameters.master-host>>:<<parameters.master-port>>"
+      - store_artifacts:
+          path: /tmp/artifacts/logs
 
   run-det-deploy-tests:
     parameters:
@@ -642,6 +703,7 @@ commands:
           name: Run det-deploy tests
           working_directory: ./e2e_tests
           command: |
+            DET_SECURITY_INITIAL_USER_PASSWORD=$INITIAL_USER_PASSWORD \
             pytest -vv -s \
             -m <<parameters.mark>> \
             --junitxml=/tmp/test-results/det-deploy-tests.xml \
@@ -1144,12 +1206,16 @@ commands:
       - run:
           command: kubectl create secret tls <<parameters.master-cert-name>> --cert <<parameters.master-tls-cert>> --key <<parameters.master-tls-key>> --namespace ${GENERATED_NAMESPACE} # Create tls secret in namespace w/secret name
       - run:
+          name: Pull docker images onto nodes
+          command: |
+            kubectl apply -f .circleci/scripts/pull_image_daemonset.yaml
+      - run:
           command: gsutil mb -p ${<<parameters.google-project-id>>} gs://${GENERATED_NAMESPACE}-bucket
       - helm/install-helm-client:
           version: v3.12.3
       - run:
           command: |
-            helm install ${GENERATED_NAMESPACE} helm/charts/determined  --set "${HELM_VALUES}" --namespace="${GENERATED_NAMESPACE}" --wait --timeout 10m0s
+            helm install ${GENERATED_NAMESPACE} helm/charts/determined  --set "${HELM_VALUES}" --namespace="${GENERATED_NAMESPACE}" --wait --timeout 20m0s
           name: Helm Install
       - run:
           command: |
@@ -1920,6 +1986,11 @@ jobs:
       - install-devcluster
       - start-devcluster:
           target-stage: db
+      - run: |
+          sudo mkdir -p /etc/systemd/system/determined-master.service.d
+          echo "[Service]" | sudo tee /etc/systemd/system/determined-master.service.d/password.override.conf >/dev/null
+          echo "Environment=\"DET_SECURITY_INITIAL_USER_PASSWORD=${INITIAL_USER_PASSWORD}\"" | sudo tee -a /etc/systemd/system/determined-master.service.d/password.override.conf >/dev/null
+          sudo systemctl daemon-reload
       - run: python3 .circleci/scripts/wait_for_server.py localhost 5432
       - run: sudo systemctl restart determined-master
       - run: python3 .circleci/scripts/wait_for_server.py localhost 8080 || { journalctl --no-pager -u determined-master; exit 1; }
@@ -2047,6 +2118,9 @@ jobs:
       - codecov/upload:
           flags: "web"
           xtra_args: "-v"
+      - upload-junit-datadog:
+          service:
+          env: "ci-cpu"
       - store_test_results:
           path: webui/react/junit.xml
       - store_artifacts:
@@ -2159,6 +2233,10 @@ jobs:
       - codecov/upload:
           flags: "backend"
           xtra_args: "-v -X fixes"
+      - upload-junit-datadog:
+          service: master/test-intg
+          env: ci-cpu
+          path: master/test-intg.junit.xml
       - store_test_results:
           path: master/test-intg.junit.xml
       - persist_to_workspace:
@@ -2187,6 +2265,10 @@ jobs:
       - codecov/upload:
           flags: "backend"
           xtra_args: "-v -X fixes"
+      - upload-junit-datadog:
+          service: agent/test-intg
+          env: ci-cpu
+          path: agent/test-intg.junit.xml
       - store_test_results:
           path: agent/test-intg.junit.xml
       - persist_to_workspace:
@@ -2307,6 +2389,9 @@ jobs:
       - run: COVERAGE_FILE=$PWD/test-unit-harness-cpu-pycov make -C harness test-cpu
       - run: coverage xml -i --data-file=./test-unit-harness-cpu-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
+      - upload-junit-datadog:
+          service: test-unit-harness-cpu
+          env: ci-cpu 
       - persist_to_workspace:
           root: .
           paths:
@@ -2314,9 +2399,9 @@ jobs:
       - store_test_results:
           path: /tmp/test-results
 
-  test-unit-harness-gpu:
+  test-unit-harness-gpu-tf:
     docker:
-      - image: determinedai/pytorch-tensorflow-cuda-dev:8b3bea3
+      - image: determinedai/tensorflow-ngc-dev:e960eae
     resource_class: determined-ai/container-runner-gpu
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
@@ -2328,19 +2413,22 @@ jobs:
       - run: pip install mypy pytest coverage
       - install-codecov
       - setup-paths
-      - run: COVERAGE_FILE=/root/project/test-unit-harness-gpu-pycov make -C harness test-gpu
-      - run: coverage xml -i --data-file=./test-unit-harness-gpu-pycov
+      - run: COVERAGE_FILE=/root/project/test-unit-harness-gpu-tf-pycov make -C harness test-gpu-tf
+      - run: coverage xml -i --data-file=./test-unit-harness-gpu-tf-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
+      - upload-junit-datadog:
+          service: test-unit-harness-gpu
+          env: ci-gpu 
       - persist_to_workspace:
           root: .
           paths:
-            - test-unit-harness-gpu-pycov
+            - test-unit-harness-gpu-tf-pycov
       - store_test_results:
           path: /tmp/test-results
 
   test-unit-harness-pytorch2-gpu:
     docker:
-      - image: determinedai/pytorch-cuda-dev:8b3bea3
+      - image: determinedai/pytorch-ngc-dev:e960eae
     resource_class: determined-ai/container-runner-gpu
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
@@ -2355,6 +2443,9 @@ jobs:
       - run: COVERAGE_FILE=/root/project/test-unit-harness-pytorch2-gpu-pycov make -C harness test-pytorch-gpu
       - run: coverage xml -i --data-file=./test-unit-harness-pytorch2-gpu-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
+      - upload-junit-datadog:
+          service: test-unit-harness-pytorch2-gpu
+          env: ci-gpu 
       - persist_to_workspace:
           root: .
           paths:
@@ -2364,7 +2455,7 @@ jobs:
 
   test-unit-harness-pytorch2-cpu:
     docker:
-      - image: determinedai/pytorch-cpu-dev:8b3bea3
+      - image: determinedai/pytorch-ngc-dev:e960eae
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
       - checkout
@@ -2378,6 +2469,9 @@ jobs:
       - run: COVERAGE_FILE=/root/project/test-unit-harness-pytorch2-cpu-pycov make -C harness test-pytorch-cpu
       - run: coverage xml -i --data-file=./test-unit-harness-pytorch2-cpu-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
+      - upload-junit-datadog:
+          service: test-unit-harness-pytorch2-cpu
+          env: ci-cpu 
       - persist_to_workspace:
           root: .
           paths:
@@ -2387,7 +2481,7 @@ jobs:
 
   test-unit-harness-gpu-parallel:
     docker:
-      - image: determinedai/pytorch-tensorflow-cuda-dev:8b3bea3
+      - image: determinedai/pytorch-ngc-dev:e960eae
     resource_class: determined-ai/container-runner-multi-gpu
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
@@ -2402,6 +2496,9 @@ jobs:
       - run: COVERAGE_FILE=/root/project/test-unit-harness-gpu-parallel-pycov make -C harness test-gpu-parallel
       - run: coverage xml -i --data-file=./test-unit-harness-gpu-parallel-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
+      - upload-junit-datadog:
+          service: test-unit-harness-gpu-parallel
+          env: ci-gpu 
       - persist_to_workspace:
           root: .
           paths:
@@ -2411,7 +2508,7 @@ jobs:
 
   test-unit-harness-gpu-deepspeed:
     docker:
-      - image: determinedai/pytorch-ngc-dev:8b3bea3
+      - image: determinedai/pytorch-ngc-dev:e960eae
     resource_class: determined-ai/container-runner-gpu
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
@@ -2426,6 +2523,9 @@ jobs:
       - run: COVERAGE_FILE=/root/project/test-unit-harness-gpu-deepspeed-pycov make -C harness test-gpu-deepspeed
       - run: coverage xml -i --data-file=./test-unit-harness-gpu-deepspeed-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
+      - upload-junit-datadog:
+          service: test-unit-harness-gpu-deepseed
+          env: ci-gpu 
       - persist_to_workspace:
           root: .
           paths:
@@ -2435,7 +2535,7 @@ jobs:
 
   test-unit-harness-tf2:
     docker:
-      - image: <<pipeline.parameters.docker-image>>
+      - image: determinedai/tensorflow-ngc-dev:f17151a
     steps:
       - checkout
       - add-and-fetch-upstream
@@ -2443,14 +2543,15 @@ jobs:
       - skip-if-only-github
       - skip-if-only-webui
       - install-codecov
-      - setup-python-venv:
-          install-python: false
-          determined: true
-          extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
-          executor: <<pipeline.parameters.docker-image>>
+      - run: pip install mypy pytest coverage
+      - install-codecov
+      - setup-paths
       - run: COVERAGE_FILE=$PWD/test-unit-harness-tf2-pycov make -C harness test-tf2
       - run: coverage xml -i --data-file=./test-unit-harness-tf2-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
+      - upload-junit-datadog:
+          service: test-unit-harness-tf2
+          env: ci-cpu 
       - persist_to_workspace:
           root: .
           paths:
@@ -2476,6 +2577,9 @@ jobs:
       - run: COVERAGE_FILE=$PWD/test-unit-storage-pycov coverage run -m pytest -v --durations=0 --junitxml=/tmp/test-results/test-unit-storage.xml --require-secrets -m cloud harness/tests
       - run: coverage xml -i --data-file=./test-unit-storage-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
+      - upload-junit-datadog:
+          service: test-unit-storage
+          env: ci-cpu 
       - persist_to_workspace:
           root: .
           paths:
@@ -2504,6 +2608,9 @@ jobs:
       - run: COVERAGE_FILE=$PWD/test-model-hub-pycov make -C model_hub test
       - run: coverage xml -i --data-file=./test-model-hub-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
+      - upload-junit-datadog:
+          service: test-unit-model-hub
+          env: ci-cpu 
       - persist_to_workspace:
           root: .
           paths:
@@ -2637,6 +2744,11 @@ jobs:
               echo "export OPT_DEVBOX_PREFIX=circleci-job-$(echo -n "${CIRCLE_USERNAME}-${CIRCLE_BRANCH}-${CIRCLE_JOB}" | md5sum | awk '{print $1}')" >> "$BASH_ENV"
             fi
 
+      - run:
+          name: Set initial user password
+          command: |
+            echo "export INITIAL_USER_PASSWORD=${INITIAL_USER_PASSWORD}" >> "$BASH_ENV"
+
       - attach_workspace:
           at: .
 
@@ -2697,14 +2809,14 @@ jobs:
           name: Wait for VM creation
           command: |
             sleep 5
-            for i in {1..220}; do
+            for i in {1..500}; do
               ELAPSED_TIME=$((i * 5))
               echo "Waiting for VM creation [${ELAPSED_TIME}s]..."
               if grep -q "^Running cluster..." output.log; then
                 echo "VM creation has finished."
                 break
               fi
-              if [[ $i -eq 220 ]]; then
+              if [[ $i -eq 500 ]]; then
                 echo "Timeout waiting for VM creation."
                 exit 1
               fi
@@ -2755,6 +2867,8 @@ jobs:
                 name: Query the slot count to ensure slots are allocated
                 command: |
                   tries=20
+                  export DET_USER=determined
+                  export DET_PASS=${INITIAL_USER_PASSWORD}
                   det slot list
                   until [[ $(det slot list | wc -l) -gt 2 ]] ; do
                       if [[ $((--tries)) -eq 0 ]]; then
@@ -2856,6 +2970,8 @@ jobs:
             auth_file: /home/launcher/.launcher.$HOSTNAME.token
             path: /opt/singularity/bin:/usr/local/bin:${PATH}
             ld_library_path:
+          security:
+            initial_user_password: ${INITIAL_USER_PASSWORD}
       reserved_ports_znode50:
         type: string
         default: |
@@ -2879,9 +2995,6 @@ jobs:
       determined_admin_username:
         type: string
         default: admin
-      determined_admin_password:
-        type: string
-        default: ""
       database_username:
         type: string
         default: postgres
@@ -2991,8 +3104,8 @@ jobs:
           name: Download Apptainer/Enroot image
           command: |
             # rocm images are not required at present
-            if sudo su - launcher -c "/etc/launcher/scripts/manage-singularity-cache --cuda --cpu <<pipeline.parameters.default-pt-gpu-image>>"; then
-                echo "Downloaded Singularity image <<pipeline.parameters.default-pt-gpu-image>> "
+            if sudo su - launcher -c "/etc/launcher/scripts/manage-singularity-cache <<pipeline.parameters.default-pt-gpu-hpc-image>>"; then
+                echo "Downloaded Singularity image <<pipeline.parameters.default-pt-gpu-hpc-image>> "
             else
                 EXIT_STATUS=$?
                 echo "Failed downloading Singularity image. Received exit code $EXIT_STATUS"
@@ -3003,8 +3116,8 @@ jobs:
                     exit 0
                 fi
             fi
-            if sudo su - launcher -c "ENROOT_RUNTIME_PATH=/tmp/launcher /etc/launcher/scripts/manage-enroot-cache -s /lustre/ssd/foundation_engineering/ --cuda --cpu <<pipeline.parameters.default-pt-gpu-image>>"; then
-                echo "Downloaded Enroot image <<pipeline.parameters.default-pt-gpu-image>> "
+            if sudo su - launcher -c "ENROOT_RUNTIME_PATH=/tmp/launcher /etc/launcher/scripts/manage-enroot-cache -s /lustre/ssd/foundation_engineering/ <<pipeline.parameters.default-pt-gpu-hpc-image>>"; then
+                echo "Downloaded Enroot image <<pipeline.parameters.default-pt-gpu-hpc-image>> "
             else
                 EXIT_STATUS=$?
                 echo "Failed downloading Enroot image. Received exit code $EXIT_STATUS"
@@ -3030,7 +3143,7 @@ jobs:
                 --data-binary @- \<< EOF | jq -r '.token'
               {
                   "username": "<<parameters.determined_admin_username>>",
-                  "password": "<<parameters.determined_admin_password>>"
+                  "password": "$INITIAL_USER_PASSWORD"
               }
             EOF
             )
@@ -3090,6 +3203,7 @@ jobs:
                 name: Query the slot count to ensure slots are allocated
                 command: |
                   tries=20
+                  export DET_PASS=${INITIAL_USER_PASSWORD}
                   det slot list
                   until [[ $(det slot list | wc -l) -gt 2 ]] ; do
                       if [[ $((--tries)) -eq 0 ]]; then
@@ -3156,6 +3270,9 @@ jobs:
       resource-class:
         type: string
         default: xlarge
+      collect-det-job-logs:
+        type: boolean
+        default: true
     machine:
       image: <<pipeline.parameters.machine-image>>
     resource_class: <<parameters.resource-class>>
@@ -3209,6 +3326,7 @@ jobs:
           managed-devcluster: <<parameters.managed-devcluster>>
           extra-pytest-flags: <<parameters.extra-pytest-flags>>
           wait-for-master: <<parameters.wait-for-master>>
+          collect-det-job-logs: <<parameters.collect-det-job-logs>>
 
       - store_test_results:
           path: /tmp/test-results/
@@ -3374,7 +3492,7 @@ jobs:
           command: |
             export PERF_DOCKER_FLAGS="--network=host"
             export PERF_K6_FLAGS='-e DET_ADMIN_USERNAME="admin" \
-              -e DET_ADMIN_PASSWORD="" \
+              -e DET_ADMIN_PASSWORD="${INITIAL_USER_PASSWORD}" \
               -e model_name="tnjpuojqzbluqiyyqilftulsw" \
               -e model_version_number="1" \
               -e trial_id="8282" \
@@ -3624,7 +3742,7 @@ jobs:
         type: string
         default: "1"
       environment-image:
-        default: determinedai/pytorch-tensorflow-cuda-dev:8b3bea3
+        default: determinedai/pytorch-ngc-dev:e960eae
         type: string
       accel-node-taints:
         type: string
@@ -3668,13 +3786,6 @@ jobs:
           environment-image: <<parameters.environment-image>>
           accel-node-taints: <<parameters.accel-node-taints>>
       - set-google-application-credentials
-      - when:
-          condition: <<parameters.environment-image>>
-          steps:
-            - run:
-                command: |
-                  echo 'export TF2_GPU_IMAGE="<<parameters.environment-image>>"' >> "$BASH_ENV"
-                name: override test env images.
       - run-e2e-tests:
           mark: <<parameters.mark>>
           master-host: ${MASTER_HOST}
@@ -3878,7 +3989,7 @@ jobs:
                 name: Test EFS
                 command: |
                   DET_USER=admin DET_PASS=${INITIAL_USER_PASSWORD} \
-                  det cmd run --config resources.slots=1 'mount | grep efs && echo MARKER' | grep MARKER
+                  det cmd run --config resources.slots=1 'mount | grep nfs4 && echo MARKER' | grep MARKER
       - locate-cloudwatch-logs:
           cluster-id: ${CLUSTER_ID}
       - terminate-aws-cluster:
@@ -4024,7 +4135,7 @@ workflows:
       - test-unit-harness-pytorch2-cpu
       - test-unit-harness-pytorch2-gpu
 
-      - test-unit-harness-gpu:
+      - test-unit-harness-gpu-tf:
           filters: *any-upstream
       - test-unit-harness-gpu-deepspeed:
           filters: *any-upstream
@@ -4035,8 +4146,8 @@ workflows:
       - request-gpu-unit-tests:
           type: approval
           filters: *any-fork
-      - test-unit-harness-gpu:
-          name: f-test-unit-harness-gpu
+      - test-unit-harness-gpu-tf:
+          name: f-test-unit-harness-gpu-tf
           filters: *any-fork
       - test-unit-harness-gpu-deepspeed:
           name: f-test-unit-harness-gpu-deepspeed
@@ -4052,7 +4163,7 @@ workflows:
       - python-coverage:
           requires:
             - test-unit-harness-cpu
-            - test-unit-harness-gpu
+            - test-unit-harness-gpu-tf
             - test-unit-harness-gpu-parallel
             - test-unit-harness-tf2
             - test-unit-harness-pytorch2-cpu
@@ -4239,6 +4350,8 @@ workflows:
       - test-debian-packaging:
           requires:
             - package-and-push-system-local-ee
+          context:
+            - dev-ci-cluster-default-user-credentials
           filters:
             branches:
               only:
@@ -4248,6 +4361,8 @@ workflows:
           name: test-e2e-slurm-misconfigured
           requires:
             - package-and-push-system-local-ee
+          context:
+            - dev-ci-cluster-default-user-credentials
           filters:
             branches:
               only:
@@ -4289,12 +4404,16 @@ workflows:
               auth_file: /home/launcher/.launcher.$HOSTNAME.token
               path: /opt/singularity/bin:/usr/local/bin:${PATH}
               ld_library_path:
+            security:
+              initial_user_password: ${INITIAL_USER_PASSWORD}
 
       - test-e2e-slurm:
           name: test-e2e-slurm-gpu
           mark: "e2e_slurm_gpu"
           requires:
             - package-and-push-system-local-ee
+          context:
+            - dev-ci-cluster-default-user-credentials
           filters:
             branches:
               only:
@@ -4307,6 +4426,7 @@ workflows:
             # that's required by the "gh" command for authentication.
             - github-read
             - gcp
+            - gcp-ci-cluster-default-user-credentials
           matrix:
             parameters:
               name: [test-e2e-slurm-singularity-gcp]
@@ -4325,6 +4445,7 @@ workflows:
             # that's required by the "gh" command for authentication.
             - github-read
             - gcp
+            - gcp-ci-cluster-default-user-credentials
           matrix:
             parameters:
               name: [test-e2e-slurm-podman-gcp]
@@ -4344,6 +4465,7 @@ workflows:
             # that's required by the "gh" command for authentication.
             - github-read
             - gcp
+            - gcp-ci-cluster-default-user-credentials
           matrix:
             parameters:
               name: [test-e2e-slurm-enroot-gcp]
@@ -4363,6 +4485,7 @@ workflows:
             # that's required by the "gh" command for authentication.
             - github-read
             - gcp
+            - gcp-ci-cluster-default-user-credentials
           matrix:
             parameters:
               name: [test-e2e-pbs-singularity-gcp]
@@ -4382,6 +4505,7 @@ workflows:
             # that's required by the "gh" command for authentication.
             - github-read
             - gcp
+            - gcp-ci-cluster-default-user-credentials
           matrix:
             parameters:
               name: [test-e2e-pbs-podman-gcp]
@@ -4403,6 +4527,7 @@ workflows:
             # that's required by the "gh" command for authentication.
             - github-read
             - gcp
+            - gcp-ci-cluster-default-user-credentials
           matrix:
             parameters:
               name: [test-e2e-pbs-enroot-gcp]
@@ -4423,6 +4548,7 @@ workflows:
             # that's required by the "gh" command for authentication.
             - github-read
             - gcp
+            - gcp-ci-cluster-default-user-credentials
           matrix:
             parameters:
               name: [test-e2e-slurm-agent-podman-gcp]
@@ -4507,6 +4633,7 @@ workflows:
           # Managed devcluster restarts the master over the course of the tests,
           # so `compare_stats` cannot get the full logs from `det master logs`.
           extra-pytest-flags: "--no-compare-stats"
+          collect-det-job-logs: false
 
       - test-e2e:
           name: test-e2e-multi-k8s
@@ -4592,6 +4719,7 @@ workflows:
           target-stage: agent
           wait-for-master: false
           extra-pytest-flags: "--no-compare-stats"
+          collect-det-job-logs: false
 
       - test-e2e:
           name: test-e2e-saml
@@ -4742,6 +4870,8 @@ workflows:
 
       - test-det-deploy:
           name: test-det-deploy-local
+          context:
+            - dev-ci-cluster-default-user-credentials
           requires:
             - package-and-push-system-local
             - package-and-push-system-local-ee
@@ -5098,10 +5228,14 @@ workflows:
           requires:
             - package-and-push-system-local-ee
             - request-packaging-tests
+          context:
+            - dev-ci-cluster-default-user-credentials
 
       # Local deployment
       - test-det-deploy:
           name: test-det-deploy-local
+          context:
+            - dev-ci-cluster-default-user-credentials
           requires:
             - package-and-push-system-local
             - package-and-push-system-local-ee
@@ -5150,6 +5284,8 @@ workflows:
 
       - test-e2e-slurm:
           name: test-e2e-slurm-misconfigured
+          context:
+            - dev-ci-cluster-default-user-credentials
           filters: *upstream-feature-branch
           requires:
             - package-and-push-system-local-ee
@@ -5191,9 +5327,13 @@ workflows:
               auth_file: /home/launcher/.launcher.$HOSTNAME.token
               path: /opt/singularity/bin:/usr/local/bin:${PATH}
               ld_library_path:
+            security:
+              initial_user_password: ${INITIAL_USER_PASSWORD}
 
       - test-e2e-slurm:
           name: test-e2e-slurm-gpu
+          context:
+            - dev-ci-cluster-default-user-credentials
           filters: *upstream-feature-branch
           mark: "e2e_slurm_gpu"
           requires:
@@ -5208,6 +5348,7 @@ workflows:
             # that's required by the "gh" command for authentication.
             - github-read
             - gcp
+            - gcp-ci-cluster-default-user-credentials
           matrix:
             parameters:
               name: [test-e2e-slurm-singularity-gcp]
@@ -5224,6 +5365,7 @@ workflows:
             # that's required by the "gh" command for authentication.
             - github-read
             - gcp
+            - gcp-ci-cluster-default-user-credentials
           matrix:
             parameters:
               name: [test-e2e-slurm-podman-gcp]
@@ -5241,6 +5383,7 @@ workflows:
             # that's required by the "gh" command for authentication.
             - github-read
             - gcp
+            - gcp-ci-cluster-default-user-credentials
           matrix:
             parameters:
               name: [test-e2e-slurm-enroot-gcp]
@@ -5258,6 +5401,7 @@ workflows:
             # that's required by the "gh" command for authentication.
             - github-read
             - gcp
+            - gcp-ci-cluster-default-user-credentials
           matrix:
             parameters:
               name: [test-e2e-pbs-singularity-gcp]
@@ -5275,6 +5419,7 @@ workflows:
             # that's required by the "gh" command for authentication.
             - github-read
             - gcp
+            - gcp-ci-cluster-default-user-credentials
           matrix:
             parameters:
               name: [test-e2e-pbs-podman-gcp]
@@ -5294,6 +5439,7 @@ workflows:
             # that's required by the "gh" command for authentication.
             - github-read
             - gcp
+            - gcp-ci-cluster-default-user-credentials
           matrix:
             parameters:
               name: [test-e2e-pbs-enroot-gcp]
@@ -5312,6 +5458,7 @@ workflows:
             # that's required by the "gh" command for authentication.
             - github-read
             - gcp
+            - gcp-ci-cluster-default-user-credentials
           matrix:
             parameters:
               name: [test-e2e-slurm-agent-podman-gcp]
@@ -5429,23 +5576,31 @@ workflows:
           context: github-read
       - test-e2e-slurm:
           name: test-e2e-slurm-restart
+          context:
+            - dev-ci-cluster-default-user-credentials
           mark: "e2e_slurm_restart"
           requires:
             - package-and-push-system-local-ee
           extra-pytest-flags: "--no-compare-stats"
       - test-e2e-slurm:
           name: test-e2e-slurm-preemption
+          context:
+            - dev-ci-cluster-default-user-credentials
           mark: "e2e_slurm_preemption"
           requires:
             - package-and-push-system-local-ee
           extra-pytest-flags: "--no-compare-stats"
       - test-e2e-slurm:
           name: test-e2e-slurm-znode
+          context:
+            - dev-ci-cluster-default-user-credentials
           requires:
             - package-and-push-system-local-ee
           extra-pytest-flags: "--no-compare-stats"
       - test-e2e-slurm:
           name: test-e2e-slurm-enroot-znode
+          context:
+            - dev-ci-cluster-default-user-credentials
           matrix:
             parameters:
               mark: ["e2e_slurm and not deepspeed"]
@@ -5460,7 +5615,7 @@ workflows:
               # cd /lustre/ssd/foundation_engineering/
               # enroot import docker://determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-24586f0.sqsh
               # enroot create /lustre/ssd/foundation_engineering/determinedai+environments+cuda-11.3-pytorch-1.10-tf-2.8-gpu-24586f0.sqsh
-              #image: determinedai+environments+cuda-11.3-pytorch-1.10-tf-2.8-gpu-24586f0
+              # image: determinedai+environments+cuda-11.3-pytorch-1.10-tf-2.8-gpu-24586f0
               environment_variables:
                   # Some ports are not working, disable them so distributed jobs work.
                   - NCCL_IB_HCA=mlx6_0:0
@@ -5495,8 +5650,12 @@ workflows:
               auth_file: /home/launcher/.launcher.$HOSTNAME.token
               path: /opt/singularity/bin:/usr/local/bin:${PATH}
               ld_library_path:
+            security:
+              initial_user_password: ${INITIAL_USER_PASSWORD}
       - test-e2e-slurm:
             name: test-e2e-slurm-agent-singularity-znode
+            context:
+              - dev-ci-cluster-default-user-credentials
             requires:
               - package-and-push-system-local-ee
             agent-use: "-A"

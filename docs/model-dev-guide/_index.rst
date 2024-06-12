@@ -58,9 +58,9 @@
              </a>
          </div>
          <div class="tile-container">
-             <a class="tile" href="../model-dev-guide/debug-models.html">
-                 <h2 class="tile-title">Debugging Models</h2>
-                 <p class="tile-description">Step-by-step instructions for debugging your models.</p>
+             <a class="tile" href="../model-dev-guide/manage-job-queue.html">
+                 <h2 class="tile-title">Managing the Job Queue</h2>
+                 <p class="tile-description">After submitting an experiment, you can manage the job queue.</p>
              </a>
          </div>
          <div class="tile-container">

@@ -158,7 +158,7 @@ func getRunsColumns(q *bun.SelectQuery) *bun.SelectQuery {
 			'progress', e.progress,
 			'forked_from', e.parent_id,
 			'external_experiment_id', e.external_experiment_id,
-			'is_multitrial', ((SELECT COUNT(*) FROM runs r WHERE e.id = r.experiment_id) > 1),
+			'is_multitrial', (e.config->'searcher'->>'name' != 'single'),
 			'pachyderm_integration', NULLIF(e.config#>'{integrations,pachyderm}', 'null'),
 			'id', e.id) AS experiment`).
 		Join("LEFT JOIN experiments AS e ON r.experiment_id=e.id").
@@ -192,11 +192,11 @@ func sortRuns(sortString *string, runQuery *bun.SelectQuery) error {
 		"checkpointSize":        "checkpoint_size",
 		"checkpointCount":       "checkpoint_count",
 		"duration":              "duration",
-		"searcherMetricsVal":    "r.searcher_metric_val",
+		"searcherMetricsVal":    "r.searcher_metric_value",
 		"externalExperimentId":  "e.external_experiment_id",
 		"externalRunId":         "r.external_run_id",
 		"experimentId":          "e.id",
-		"isExpMultitrial":       "((SELECT COUNT(*) FROM runs r WHERE e.id = r.experiment_id) > 1)",
+		"isExpMultitrial":       "(e.config->'searcher'->>'name' != 'single')",
 		"parentArchived":        "(w.archived OR p.archived)",
 	}
 	sortParams := strings.Split(*sortString, ",")
@@ -310,7 +310,7 @@ func (a *apiServer) MoveRuns(
 		Column("r.id").
 		ColumnExpr("COALESCE((r.archived OR e.archived OR p.archived OR w.archived), FALSE) AS archived").
 		ColumnExpr("r.experiment_id as exp_id").
-		ColumnExpr("((SELECT COUNT(*) FROM runs r WHERE e.id = r.experiment_id) > 1) as is_multitrial").
+		ColumnExpr("(e.config->'searcher'->>'name' != 'single') as is_multitrial").
 		Join("LEFT JOIN experiments e ON r.experiment_id=e.id").
 		Join("JOIN projects p ON r.project_id = p.id").
 		Join("JOIN workspaces w ON p.workspace_id = w.id").
@@ -539,7 +539,7 @@ func (a *apiServer) DeleteRuns(ctx context.Context, req *apiv1.DeleteRunsRequest
 		Column("r.id").
 		ColumnExpr("COALESCE((r.archived OR e.archived OR p.archived OR w.archived), FALSE) AS archived").
 		ColumnExpr("r.experiment_id as exp_id").
-		ColumnExpr("((SELECT COUNT(*) FROM runs r WHERE e.id = r.experiment_id) > 1) as is_multitrial").
+		ColumnExpr("(e.config->'searcher'->>'name' != 'single') as is_multitrial").
 		ColumnExpr("r.state IN (?) AS is_terminal", bun.In(model.StatesToStrings(model.TerminalStates))).
 		Where("r.project_id = ?", req.ProjectId)
 

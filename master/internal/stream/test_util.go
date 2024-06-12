@@ -24,7 +24,7 @@ const (
 // otherwise, returns the MarshallableMsg that the streamer sends.
 func testPrepareFunc(i stream.MarshallableMsg) interface{} {
 	switch msg := i.(type) {
-	case stream.UpsertMsg:
+	case *stream.UpsertMsg:
 		switch typedMsg := msg.Msg.(type) {
 		case *ProjectMsg:
 			return fmt.Sprintf(
@@ -50,7 +50,7 @@ func testPrepareFunc(i stream.MarshallableMsg) interface{} {
 				typedMsg.WorkspaceID,
 			)
 		}
-	case stream.DeleteMsg:
+	case *stream.DeleteMsg:
 		return fmt.Sprintf("key: %s, deleted: %s", msg.Key, msg.Deleted)
 	case stream.SyncMsg:
 		return fmt.Sprintf("key: %s, sync_id: %s, complete: %t", syncKey, msg.SyncID, msg.Complete)

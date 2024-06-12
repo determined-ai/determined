@@ -45,9 +45,13 @@ The following configuration settings are supported:
       different container images for NVIDIA GPU tasks using ``cuda`` key (``gpu`` prior to 0.17.6),
       CPU tasks using ``cpu`` key, and ROCm (AMD GPU) tasks using ``rocm`` key. Default values:
 
-      -  ``determinedai/pytorch-tensorflow-cuda-dev:8b3bea3`` for NVIDIA GPUs.
+      -  ``determinedai/pytorch-ngc-dev:e960eae`` for NVIDIA GPUs and for CPUs.
       -  ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.26.4`` for ROCm.
-      -  ``determinedai/pytorch-tensorflow-cpu-dev:8b3bea3`` for CPUs.
+
+      For TensorFlow users, we provide an image that must be referenced in the experiment
+      configuration:
+
+      -  ``determinedai/tensorflow-ngc-dev:e960eae`` for NVIDIA GPUs and for CPUs.
 
    -  ``force_pull_image``: Forcibly pull the image from the Docker registry and bypass the Docker
       cache. Defaults to ``false``.

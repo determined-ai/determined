@@ -18,13 +18,7 @@ type ExecutableQuery interface {
 
 // GetAddProjectQuery constructs a query to create a new project in the db.
 func GetAddProjectQuery(proj model.Project) ExecutableQuery {
-	return db.Bun().NewInsert().Model(&proj).ExcludeColumn(
-		"workspace_name",
-		"username",
-		"num_active_experiments",
-		"num_experiments",
-		"last_experiment_started_at",
-	)
+	return db.Bun().NewInsert().Model(&proj)
 }
 
 // GetUpdateProjectQuery constructs a query to update a project.

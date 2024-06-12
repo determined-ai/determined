@@ -11,6 +11,7 @@ import { HTML5Backend } from 'react-dnd-html5-backend';
 import { HelmetProvider } from 'react-helmet-async';
 import { useParams } from 'react-router-dom';
 
+import ClusterMessageBanner from 'components/ClusterMessage';
 import JupyterLabGlobal from 'components/JupyterLabGlobal';
 import Link from 'components/Link';
 import Navigation from 'components/Navigation';
@@ -87,7 +88,7 @@ const AppView: React.FC = () => {
     () => (isAuthenticated ? workspaceStore.startPolling({ delay: 60_000 }) : undefined),
     [isAuthenticated],
   );
-  useEffect(() => determinedStore.startPolling({ delay: 600_000 }), []);
+  useEffect(() => determinedStore.startPolling({ delay: 60_000 }), []);
 
   useEffect(() => {
     /*
@@ -163,14 +164,15 @@ const AppView: React.FC = () => {
 
   return Loadable.match(loadableInfo, {
     Failed: () => null, // TODO display any errors we receive
-    Loaded: () => (
+    Loaded: (info) => (
       <UIProvider theme={theme} themeIsDark={isDarkMode}>
         <div className={css.base}>
           {isAuthChecked ? (
             <>
               {isServerReachable ? (
                 <ConfirmationProvider>
-                  <Navigation>
+                  <ClusterMessageBanner message={info.clusterMessage} />
+                  <Navigation isClusterMessagePresent={!!info.clusterMessage}>
                     <JupyterLabGlobal
                       enabled={
                         Loadable.isLoaded(loadableUser) &&
