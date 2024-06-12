@@ -30,13 +30,13 @@ parameters:
     default: ubuntu-2004:2024.01.1
   gpu-machine-image:
     type: string
-    default: ubuntu-2004-cuda-11.2:202103-01
+    default: linux-cuda-12:default
   # DEFAULT_PT_GPU_IMAGE: Pytorch training image reference used by the tests
   # Inject here as a parameter so that it is updated by bumpversion, and can
   # be referenced by --ee testing.
-  default-pt-gpu-image:
+  default-pt-gpu-hpc-image:
     type: string
-    default: determinedai/pytorch-tensorflow-cuda-dev:8b3bea3
+    default: determinedai/pytorch-ngc-dev:e960eae
   # Some python, go, and react dependencies are cached by circleci via `save_cache`/`restore_cache`.
   # If the dependencies stay the same, but the circleci code that would produce them is changed,
   # it may be necessary to invalidate the cache by incrementing this value.
@@ -277,7 +277,7 @@ commands:
       - when:
           condition: <<parameters.tf2>>
           steps:
-            - run: docker pull determinedai/pytorch-tensorflow-cpu-dev:8b3bea3
+            - run: docker pull determinedai/pytorch-ngc-dev:e960eae
 
   login-docker:
     parameters:
@@ -1206,12 +1206,16 @@ commands:
       - run:
           command: kubectl create secret tls <<parameters.master-cert-name>> --cert <<parameters.master-tls-cert>> --key <<parameters.master-tls-key>> --namespace ${GENERATED_NAMESPACE} # Create tls secret in namespace w/secret name
       - run:
+          name: Pull docker images onto nodes
+          command: |
+            kubectl apply -f .circleci/scripts/pull_image_daemonset.yaml
+      - run:
           command: gsutil mb -p ${<<parameters.google-project-id>>} gs://${GENERATED_NAMESPACE}-bucket
       - helm/install-helm-client:
           version: v3.12.3
       - run:
           command: |
-            helm install ${GENERATED_NAMESPACE} helm/charts/determined  --set "${HELM_VALUES}" --namespace="${GENERATED_NAMESPACE}" --wait --timeout 10m0s
+            helm install ${GENERATED_NAMESPACE} helm/charts/determined  --set "${HELM_VALUES}" --namespace="${GENERATED_NAMESPACE}" --wait --timeout 20m0s
           name: Helm Install
       - run:
           command: |
@@ -2395,9 +2399,9 @@ jobs:
       - store_test_results:
           path: /tmp/test-results
 
-  test-unit-harness-gpu:
+  test-unit-harness-gpu-tf:
     docker:
-      - image: determinedai/pytorch-tensorflow-cuda-dev:8b3bea3
+      - image: determinedai/tensorflow-ngc-dev:e960eae
     resource_class: determined-ai/container-runner-gpu
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
@@ -2409,8 +2413,8 @@ jobs:
       - run: pip install mypy pytest coverage
       - install-codecov
       - setup-paths
-      - run: COVERAGE_FILE=/root/project/test-unit-harness-gpu-pycov make -C harness test-gpu
-      - run: coverage xml -i --data-file=./test-unit-harness-gpu-pycov
+      - run: COVERAGE_FILE=/root/project/test-unit-harness-gpu-tf-pycov make -C harness test-gpu-tf
+      - run: coverage xml -i --data-file=./test-unit-harness-gpu-tf-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
       - upload-junit-datadog:
           service: test-unit-harness-gpu
@@ -2418,13 +2422,13 @@ jobs:
       - persist_to_workspace:
           root: .
           paths:
-            - test-unit-harness-gpu-pycov
+            - test-unit-harness-gpu-tf-pycov
       - store_test_results:
           path: /tmp/test-results
 
   test-unit-harness-pytorch2-gpu:
     docker:
-      - image: determinedai/pytorch-cuda-dev:8b3bea3
+      - image: determinedai/pytorch-ngc-dev:e960eae
     resource_class: determined-ai/container-runner-gpu
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
@@ -2451,7 +2455,7 @@ jobs:
 
   test-unit-harness-pytorch2-cpu:
     docker:
-      - image: determinedai/pytorch-cpu-dev:8b3bea3
+      - image: determinedai/pytorch-ngc-dev:e960eae
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
       - checkout
@@ -2477,7 +2481,7 @@ jobs:
 
   test-unit-harness-gpu-parallel:
     docker:
-      - image: determinedai/pytorch-tensorflow-cuda-dev:8b3bea3
+      - image: determinedai/pytorch-ngc-dev:e960eae
     resource_class: determined-ai/container-runner-multi-gpu
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
@@ -2504,7 +2508,7 @@ jobs:
 
   test-unit-harness-gpu-deepspeed:
     docker:
-      - image: determinedai/pytorch-ngc-dev:8b3bea3
+      - image: determinedai/pytorch-ngc-dev:e960eae
     resource_class: determined-ai/container-runner-gpu
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
@@ -2531,7 +2535,7 @@ jobs:
 
   test-unit-harness-tf2:
     docker:
-      - image: <<pipeline.parameters.docker-image>>
+      - image: determinedai/tensorflow-ngc-dev:f17151a
     steps:
       - checkout
       - add-and-fetch-upstream
@@ -2539,11 +2543,9 @@ jobs:
       - skip-if-only-github
       - skip-if-only-webui
       - install-codecov
-      - setup-python-venv:
-          install-python: false
-          determined: true
-          extra-requirements-file: "harness/tests/requirements/requirements-harness.txt"
-          executor: <<pipeline.parameters.docker-image>>
+      - run: pip install mypy pytest coverage
+      - install-codecov
+      - setup-paths
       - run: COVERAGE_FILE=$PWD/test-unit-harness-tf2-pycov make -C harness test-tf2
       - run: coverage xml -i --data-file=./test-unit-harness-tf2-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness
@@ -2807,14 +2809,14 @@ jobs:
           name: Wait for VM creation
           command: |
             sleep 5
-            for i in {1..220}; do
+            for i in {1..500}; do
               ELAPSED_TIME=$((i * 5))
               echo "Waiting for VM creation [${ELAPSED_TIME}s]..."
               if grep -q "^Running cluster..." output.log; then
                 echo "VM creation has finished."
                 break
               fi
-              if [[ $i -eq 220 ]]; then
+              if [[ $i -eq 500 ]]; then
                 echo "Timeout waiting for VM creation."
                 exit 1
               fi
@@ -3102,8 +3104,8 @@ jobs:
           name: Download Apptainer/Enroot image
           command: |
             # rocm images are not required at present
-            if sudo su - launcher -c "/etc/launcher/scripts/manage-singularity-cache --cuda --cpu <<pipeline.parameters.default-pt-gpu-image>>"; then
-                echo "Downloaded Singularity image <<pipeline.parameters.default-pt-gpu-image>> "
+            if sudo su - launcher -c "/etc/launcher/scripts/manage-singularity-cache <<pipeline.parameters.default-pt-gpu-hpc-image>>"; then
+                echo "Downloaded Singularity image <<pipeline.parameters.default-pt-gpu-hpc-image>> "
             else
                 EXIT_STATUS=$?
                 echo "Failed downloading Singularity image. Received exit code $EXIT_STATUS"
@@ -3114,8 +3116,8 @@ jobs:
                     exit 0
                 fi
             fi
-            if sudo su - launcher -c "ENROOT_RUNTIME_PATH=/tmp/launcher /etc/launcher/scripts/manage-enroot-cache -s /lustre/ssd/foundation_engineering/ --cuda --cpu <<pipeline.parameters.default-pt-gpu-image>>"; then
-                echo "Downloaded Enroot image <<pipeline.parameters.default-pt-gpu-image>> "
+            if sudo su - launcher -c "ENROOT_RUNTIME_PATH=/tmp/launcher /etc/launcher/scripts/manage-enroot-cache -s /lustre/ssd/foundation_engineering/ <<pipeline.parameters.default-pt-gpu-hpc-image>>"; then
+                echo "Downloaded Enroot image <<pipeline.parameters.default-pt-gpu-hpc-image>> "
             else
                 EXIT_STATUS=$?
                 echo "Failed downloading Enroot image. Received exit code $EXIT_STATUS"
@@ -3740,7 +3742,7 @@ jobs:
         type: string
         default: "1"
       environment-image:
-        default: determinedai/pytorch-tensorflow-cuda-dev:8b3bea3
+        default: determinedai/pytorch-ngc-dev:e960eae
         type: string
       accel-node-taints:
         type: string
@@ -3784,13 +3786,6 @@ jobs:
           environment-image: <<parameters.environment-image>>
           accel-node-taints: <<parameters.accel-node-taints>>
       - set-google-application-credentials
-      - when:
-          condition: <<parameters.environment-image>>
-          steps:
-            - run:
-                command: |
-                  echo 'export TF2_GPU_IMAGE="<<parameters.environment-image>>"' >> "$BASH_ENV"
-                name: override test env images.
       - run-e2e-tests:
           mark: <<parameters.mark>>
           master-host: ${MASTER_HOST}
@@ -3994,7 +3989,7 @@ jobs:
                 name: Test EFS
                 command: |
                   DET_USER=admin DET_PASS=${INITIAL_USER_PASSWORD} \
-                  det cmd run --config resources.slots=1 'mount | grep efs && echo MARKER' | grep MARKER
+                  det cmd run --config resources.slots=1 'mount | grep nfs4 && echo MARKER' | grep MARKER
       - locate-cloudwatch-logs:
           cluster-id: ${CLUSTER_ID}
       - terminate-aws-cluster:
@@ -4140,7 +4135,7 @@ workflows:
       - test-unit-harness-pytorch2-cpu
       - test-unit-harness-pytorch2-gpu
 
-      - test-unit-harness-gpu:
+      - test-unit-harness-gpu-tf:
           filters: *any-upstream
       - test-unit-harness-gpu-deepspeed:
           filters: *any-upstream
@@ -4151,8 +4146,8 @@ workflows:
       - request-gpu-unit-tests:
           type: approval
           filters: *any-fork
-      - test-unit-harness-gpu:
-          name: f-test-unit-harness-gpu
+      - test-unit-harness-gpu-tf:
+          name: f-test-unit-harness-gpu-tf
           filters: *any-fork
       - test-unit-harness-gpu-deepspeed:
           name: f-test-unit-harness-gpu-deepspeed
@@ -4168,7 +4163,7 @@ workflows:
       - python-coverage:
           requires:
             - test-unit-harness-cpu
-            - test-unit-harness-gpu
+            - test-unit-harness-gpu-tf
             - test-unit-harness-gpu-parallel
             - test-unit-harness-tf2
             - test-unit-harness-pytorch2-cpu
@@ -5620,7 +5615,7 @@ workflows:
               # cd /lustre/ssd/foundation_engineering/
               # enroot import docker://determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-24586f0.sqsh
               # enroot create /lustre/ssd/foundation_engineering/determinedai+environments+cuda-11.3-pytorch-1.10-tf-2.8-gpu-24586f0.sqsh
-              #image: determinedai+environments+cuda-11.3-pytorch-1.10-tf-2.8-gpu-24586f0
+              # image: determinedai+environments+cuda-11.3-pytorch-1.10-tf-2.8-gpu-24586f0
               environment_variables:
                   # Some ports are not working, disable them so distributed jobs work.
                   - NCCL_IB_HCA=mlx6_0:0

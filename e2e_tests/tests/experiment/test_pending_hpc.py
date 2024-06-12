@@ -38,7 +38,7 @@ def test_hpc_job_pending_reason() -> None:
     config = conf.set_slots_per_trial(config, 1)
     config = conf.set_profiling_enabled(config)
     config = conf.set_entrypoint(
-        config, "python3 -m determined.launch.horovod --autohorovod python3 train.py"
+        config, "python3 -m determined.launch.torch_distributed python3 train.py"
     )
     config["max_restarts"] = 0
 

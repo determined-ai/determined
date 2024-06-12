@@ -76,6 +76,9 @@ stages:
           # Workaround XDG_RUNTIME_DIR not provided by Slurm
           environment_variables:
             - ENROOT_RUNTIME_PATH=/srv/enroot
+          image:
+            cpu: determinedai/pytorch-tensorflow-cpu-dev:e960eae
+            cuda: determinedai/pytorch-ngc-dev:e960eae
         resource_pools:
 
         resource_manager:
