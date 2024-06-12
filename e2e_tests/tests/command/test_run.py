@@ -72,7 +72,9 @@ def test_basic_workflows(tmp_path: pathlib.Path) -> None:
     output.pop(0)  # remove divider
     id0 = output[0].split("|")[0].strip()
     id1 = output[1].split("|")[0].strip()
-    filtered_output = detproc.check_output(sess, ["det", "cmd", "list", "--ids", f"{id0} {id1} invalid-id"])
+    filtered_output = detproc.check_output(
+        sess, ["det", "cmd", "list", "--ids", f"{id0} {id1} invalid-id"]
+    )
     assert len(filtered_output.split("\n")) == 5  # header, divider, record * 2, empty line
     assert id0 in filtered_output
     assert id1 in filtered_output
