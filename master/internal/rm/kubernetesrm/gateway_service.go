@@ -42,7 +42,6 @@ func newGatewayService(
 	tcpRouteInterfaces map[string]alphaGateway.TCPRouteInterface,
 	taskGWConfig config.InternalTaskGatewayConfig,
 ) (*gatewayService, error) {
-	// TODO: validate existing port on the gateway on startup. Maybe? Restore could cover this?
 	g := &gatewayService{
 		gatewayInterface:   gatewayInterface,
 		tcpRouteInterfaces: tcpRouteInterfaces,
@@ -52,9 +51,6 @@ func newGatewayService(
 	}
 	return g, nil
 }
-
-// PortMap is a map of internal pod ports to external gateway ports.
-type PortMap map[int]int
 
 func (g *gatewayService) generateAndAddListeners(allocationID model.AllocationID, count int) ([]int, error) {
 	var ports []int

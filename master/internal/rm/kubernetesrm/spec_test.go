@@ -155,7 +155,7 @@ func TestConfigureProxyResources(t *testing.T) {
 			tcpRouteSpec:    tcp,
 			gatewayListener: listener,
 		},
-	}, (*j.configureProxyResources(taskSpec))([]int{12345}))
+	}, (j.configureProxyResources(taskSpec))([]int{12345}))
 }
 
 func TestAddNodeDisabledAffinityToPodSpec(t *testing.T) {
