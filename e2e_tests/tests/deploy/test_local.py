@@ -106,7 +106,10 @@ def test_cluster_down() -> None:
     name = "test_cluster_down"
 
     with resource_manager(
-        Resource.CLUSTER, name, {"initial-user-password": conf.USER_PASSWORD}, ["no-gpu"]
+        Resource.CLUSTER,
+        name,
+        {"initial-user-password": conf.USER_PASSWORD},
+        ["no-gpu", "delete-db"],
     ):
         container_name = name + "_determined-master_1"
         client = docker.from_env()
@@ -126,7 +129,7 @@ def test_ee_cluster_up() -> None:
         Resource.CLUSTER,
         name,
         {"initial-user-password": conf.USER_PASSWORD},
-        ["no-gpu", "enterprise-edition"],
+        ["no-gpu", "enterprise-edition", "delete-db"],
     ):
         container_name = name + "_determined-master_1"
         client = docker.from_env()
@@ -148,7 +151,7 @@ def test_custom_etc() -> None:
         Resource.CLUSTER,
         name,
         {"master-config-path": etc_path, "initial-user-password": conf.USER_PASSWORD},
-        ["no-gpu"],
+        ["no-gpu", "delete-db"],
     ):
         sess = mksess("localhost", 8080)
         exp.run_basic_test(
@@ -165,7 +168,10 @@ def test_agent_config_path() -> None:
     cluster_name = "test_agent_config_path"
     master_name = f"{cluster_name}_determined-master_1"
     with resource_manager(
-        Resource.MASTER, master_name, {"initial-user-password": conf.USER_PASSWORD}
+        Resource.MASTER,
+        master_name,
+        {"initial-user-password": conf.USER_PASSWORD},
+        ["delete-db"],
     ):
         # Config makes it unmodified.
         etc_path = str(pathlib.Path(__file__).parent.joinpath("etc/agent.yaml").resolve())
@@ -208,7 +214,7 @@ def test_custom_port() -> None:
         Resource.CLUSTER,
         name,
         {"master-port": str(custom_port), "initial-user-password": conf.USER_PASSWORD},
-        ["no-gpu"],
+        ["no-gpu", "delete-db"],
     ):
         sess = mksess("localhost", custom_port)
         exp.run_basic_test(
@@ -227,7 +233,7 @@ def test_agents_made() -> None:
         Resource.CLUSTER,
         name,
         {"agents": str(num_agents), "initial-user-password": conf.USER_PASSWORD},
-        ["no-gpu"],
+        ["no-gpu", "delete-db"],
     ):
         container_names = [name + f"-agent-{i}" for i in range(0, num_agents)]
         client = docker.from_env()
@@ -243,7 +249,10 @@ def test_master_up_down() -> None:
     master_name = f"{cluster_name}_determined-master_1"
 
     with resource_manager(
-        Resource.MASTER, master_name, {"initial-user-password": conf.USER_PASSWORD}
+        Resource.MASTER,
+        master_name,
+        {"initial-user-password": conf.USER_PASSWORD},
+        ["delete-db"],
     ):
         client = docker.from_env()
 
@@ -263,7 +272,7 @@ def test_master_up_implicit_password() -> None:
     cluster_name = "test_master_up_implicit_password"
     master_name = f"{cluster_name}_determined-master_1"
 
-    with resource_manager(Resource.MASTER, master_name):
+    with resource_manager(Resource.MASTER, master_name, boolean_flags=["delete-db"]):
         client = docker.from_env()
 
         containers = client.containers.list(filters={"name": master_name})
@@ -285,7 +294,7 @@ def test_ee_master_up() -> None:
         Resource.MASTER,
         master_name,
         {"initial-user-password": conf.USER_PASSWORD},
-        ["enterprise-edition"],
+        ["enterprise-edition", "delete-db"],
     ):
         client = docker.from_env()
 
@@ -303,7 +312,7 @@ def test_agent_up_down() -> None:
     master_name = f"{cluster_name}_determined-master_1"
 
     with resource_manager(
-        Resource.MASTER, master_name, {"initial-user-password": conf.USER_PASSWORD}
+        Resource.MASTER, master_name, {"initial-user-password": conf.USER_PASSWORD}, ["delete-db"]
     ):
         with resource_manager(Resource.AGENT, agent_name, {}, ["no-gpu"], [conf.MASTER_IP]):
             client = docker.from_env()
@@ -321,7 +330,7 @@ def test_ee_agent_up() -> None:
     master_name = f"{cluster_name}_determined-master_1"
 
     with resource_manager(
-        Resource.MASTER, master_name, {"initial-user-password": conf.USER_PASSWORD}
+        Resource.MASTER, master_name, {"initial-user-password": conf.USER_PASSWORD}, ["delete-db"]
     ):
         with resource_manager(
             Resource.AGENT, agent_name, {}, ["no-gpu", "enterprise-edition"], [conf.MASTER_IP]
