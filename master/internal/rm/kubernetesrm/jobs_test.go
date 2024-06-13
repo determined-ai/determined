@@ -8,10 +8,13 @@ import (
 
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	batchV1 "k8s.io/api/batch/v1"
 	k8sV1 "k8s.io/api/core/v1"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	typedBatchV1 "k8s.io/client-go/kubernetes/typed/batch/v1"
 	typedV1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
+	alphaGateway "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned/typed/apis/v1alpha2"
 
 	"github.com/determined-ai/determined/master/internal/mocks"
 	"github.com/determined-ai/determined/master/internal/sproto"
@@ -192,6 +195,38 @@ func TestTaintTolerated(t *testing.T) {
 		actual := taintTolerated(c.taint, c.tolerations)
 		require.Equal(t, c.expected, actual, "test case %d failed", i)
 	}
+}
+
+func TestReattachJobMock(t *testing.T) {
+	msg := reattachJobRequest{
+		allocationID: "allocationID",
+	}
+
+	jobs := &mocks.JobInterface{}
+	jobs.On("List", mock.Anything, mock.Anything).Return(&batchV1.JobList{
+		Items: []batchV1.Job{
+			{
+				ObjectMeta: metaV1.ObjectMeta{
+					Name: "test-pod",
+				},
+			},
+		},
+	}, nil)
+	configMaps := &mocks.ConfigMapInterface{}
+	services := &mocks.ServiceInterface{}
+	tcpRoutes := &mocks.TCPRouteInterface{}
+	gatewayService := &gatewayService{}
+
+	j := jobsService{
+		configMapInterfaces: map[string]typedV1.ConfigMapInterface{"default": configMaps},
+		jobInterfaces:       map[string]typedBatchV1.JobInterface{"default": jobs},
+		serviceInterfaces:   map[string]typedV1.ServiceInterface{"default": services},
+		tcpRouteInterfaces:  map[string]alphaGateway.TCPRouteInterface{"default": tcpRoutes},
+		gatewayService:      gatewayService,
+	}
+
+	_, err := j.ReattachJob(msg)
+	require.NoError(t, err)
 }
 
 func TestAllTaintsTolerated(t *testing.T) {
