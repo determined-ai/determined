@@ -259,7 +259,7 @@ def test_master_up_down() -> None:
         containers = client.containers.list(filters={"name": master_name})
         assert len(containers) > 0
         assert (
-            "The admin and determined users can log in with this password:"
+            b"The admin and determined users can log in with this password:"
             not in master_up_command.stdout
         )
 
@@ -280,7 +280,7 @@ def test_master_up_implicit_password() -> None:
         containers = client.containers.list(filters={"name": master_name})
         assert len(containers) > 0
         assert (
-            "The admin and determined users can log in with this password:"
+            b"The admin and determined users can log in with this password:"
             in master_up_command.stdout
         )
 
