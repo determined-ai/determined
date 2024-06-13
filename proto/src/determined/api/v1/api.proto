@@ -2663,4 +2663,26 @@ service Determined {
       tags: "Internal"
     };
   }
+
+  // Get run metadata.
+  rpc GetRunMetadata(GetRunMetadataRequest) returns (GetRunMetadataResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/runs/{run_id}/metadata"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+
+  // Update run metadata.
+  rpc PostRunMetadata(PostRunMetadataRequest)
+      returns (PostRunMetadataResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/runs/{run_id}/metadata"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
 }
