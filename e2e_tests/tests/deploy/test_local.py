@@ -33,14 +33,14 @@ def mksess(host: str, port: int, username: str = "determined", password: str = "
     return authentication.login(master_url, username=username, password=password)
 
 
-def det_deploy(subcommand: List) -> None:
+def det_deploy(subcommand: List) -> subprocess.CompletedProcess:
     command = [
         "det",
         "deploy",
         "local",
     ] + subcommand
     print(f"Running deployment: {' '.join(command)}")
-    subprocess.run(command, check=True)
+    return subprocess.run(command, check=True, stdout=subprocess.PIPE)
 
 
 def resource_up(
@@ -49,7 +49,7 @@ def resource_up(
     kwflags: Optional[Dict[str, str]] = None,
     flags: Optional[List[str]] = None,
     positional_arguments: Optional[List[str]] = None,
-) -> None:
+) -> subprocess.CompletedProcess:
     """Issue a `det deploy local` command to bring up a resource.
 
     Ex:
@@ -77,12 +77,12 @@ def resource_up(
     det_version = conf.DET_VERSION
     if det_version is not None:
         command += ["--det-version", det_version]
-    det_deploy(command)
+    return det_deploy(command)
 
 
-def resource_down(resource: Resource, name: str) -> None:
+def resource_down(resource: Resource, name: str) -> subprocess.CompletedProcess:
     command = [f"{resource}-down", f"--{resource}-name", name]
-    det_deploy(command)
+    return det_deploy(command)
 
 
 @contextlib.contextmanager
@@ -92,11 +92,11 @@ def resource_manager(
     kwflags: Optional[Dict[str, str]] = None,
     boolean_flags: Optional[List[str]] = None,
     positional_arguments: Optional[List[str]] = None,
-) -> Iterator[None]:
+) -> Iterator[subprocess.CompletedProcess]:
     """Context manager to bring resources up and down."""
-    resource_up(resource, name, kwflags, boolean_flags, positional_arguments)
+    res = resource_up(resource, name, kwflags, boolean_flags, positional_arguments)
     try:
-        yield
+        yield res
     finally:
         resource_down(resource, name)
 
@@ -253,14 +253,14 @@ def test_master_up_down() -> None:
         master_name,
         {"initial-user-password": conf.USER_PASSWORD},
         ["delete-db"],
-    ):
+    ) as master_up_command:
         client = docker.from_env()
 
         containers = client.containers.list(filters={"name": master_name})
         assert len(containers) > 0
         assert (
             "The admin and determined users can log in with this password:"
-            not in containers[0].logs()
+            not in master_up_command.stdout
         )
 
     containers = client.containers.list(filters={"name": master_name})
@@ -272,13 +272,16 @@ def test_master_up_implicit_password() -> None:
     cluster_name = "test_master_up_implicit_password"
     master_name = f"{cluster_name}_determined-master_1"
 
-    with resource_manager(Resource.MASTER, master_name, boolean_flags=["delete-db"]):
+    with resource_manager(
+        Resource.MASTER, master_name, boolean_flags=["delete-db"]
+    ) as master_up_command:
         client = docker.from_env()
 
         containers = client.containers.list(filters={"name": master_name})
         assert len(containers) > 0
         assert (
-            "The admin and determined users can log in with this password:" in containers[0].logs()
+            "The admin and determined users can log in with this password:"
+            in master_up_command.stdout
         )
 
     containers = client.containers.list(filters={"name": master_name})
