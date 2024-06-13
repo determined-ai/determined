@@ -459,15 +459,30 @@ func (m *Master) getResourceAllocations(c echo.Context) error {
 		Where("ts.event_type = 'IMAGEPULL'").
 		Group("a.allocation_id")
 
+	taskWorkspaceIDs := db.Bun().NewSelect().
+		ColumnExpr("t.task_id").
+		ColumnExpr("c.generic_command_spec->'Metadata'->>'workspace_id' AS workspace_id").
+		TableExpr("tasks_in_range t").
+		Join("INNER JOIN command_state c ON t.task_id = c.task_id")
+
+	taskWorkspaceNames := db.Bun().NewSelect().
+		ColumnExpr("t.task_id").
+		ColumnExpr("w.name as workspace_name").
+		With("task_wids", taskWorkspaceIDs).
+		TableExpr("task_wids t").
+		Join("INNER JOIN workspaces w ON t.workspace_id::int=w.id")
+
 	// Get experiment info for tasks within time range
 	taskExperimentInfo := db.Bun().NewSelect().
 		ColumnExpr("t.task_id").
 		ColumnExpr("e.id as experiment_id").
-		ColumnExpr("w.name as workspace_name").
+		ColumnExpr("COALESCE(w.name, task_wnames.workspace_name) as workspace_name").
+		With("task_wnames", taskWorkspaceNames).
 		TableExpr("tasks_in_range t").
-		Join("INNER JOIN experiments e ON t.job_id = e.job_id").
-		Join("INNER JOIN projects p ON e.project_id = p.id").
-		Join("INNER JOIN workspaces w ON p.workspace_id = w.id")
+		Join("LEFT JOIN experiments e ON t.job_id = e.job_id").
+		Join("LEFT JOIN projects p ON e.project_id = p.id").
+		Join("LEFT JOIN workspaces w ON p.workspace_id = w.id").
+		Join("LEFT JOIN task_wnames ON task_wnames.task_id=t.task_id")
 
 	// Get task information row-by-row for all tasks in time range
 	rows, err := db.Bun().NewSelect().
@@ -533,6 +548,13 @@ func (m *Master) getResourceAllocations(c echo.Context) error {
 		return err
 	}
 
+	nullIfZero := func(val int) string {
+		if val == 0 {
+			return ""
+		}
+		return strconv.Itoa(val)
+	}
+
 	// Write each entry to the output CSV
 	for rows.Next() {
 		allocationMetadata := new(AllocationMetadata)
@@ -544,7 +566,7 @@ func (m *Master) getResourceAllocations(c echo.Context) error {
 			string(allocationMetadata.TaskType),
 			allocationMetadata.Username,
 			allocationMetadata.WorkspaceName,
-			strconv.Itoa(allocationMetadata.ExperimentID),
+			nullIfZero(allocationMetadata.ExperimentID),
 			strconv.Itoa(allocationMetadata.Slots),
 			formatTimestamp(allocationMetadata.StartTime),
 			formatTimestamp(allocationMetadata.EndTime),

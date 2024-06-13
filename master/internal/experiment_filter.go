@@ -156,8 +156,10 @@ func runColumnNameToSQL(columnName string) (string, error) {
 		"checkpointCount":       "e.checkpoint_count",
 		"searcherMetricsVal":    "r.searcher_metric_value",
 		"externalExperimentId":  "e.external_experiment_id",
-		"externalTrialId":       "r.external_run_id",
+		"externalRunId":         "r.external_run_id",
 		"experimentId":          "e.id",
+		"isExpMultitrial":       "e.config->'searcher'->>'name' != 'single'",
+		"parentArchived":        "(w.archived OR p.archived)",
 	}
 	var exists bool
 	col, exists := filterExperimentColMap[columnName]
@@ -317,7 +319,7 @@ func hpToSQL(c string, filterColumnType *string, filterValue *interface{},
 			queryArgs = append(queryArgs, bun.Safe("?"), queryValue)
 			queryString = fmt.Sprintf(`(CASE
 				WHEN config->'hyperparameters'->%s->>'type' = 'const' THEN config->'hyperparameters'->%s->>'val' NOT LIKE %s
-				WHEN config->'hyperparameters'->%s->>'type' = 'categorical' THEN (config->'hyperparameters'->%s->>'vals')::jsonb %s %s) IS NOT TRUE
+				WHEN config->'hyperparameters'->%s->>'type' = 'categorical' THEN (config->'hyperparameters'->%s->>'vals')::jsonb %s %s IS NOT TRUE
 				ELSE false
 			 END)`, hpQuery, hpQuery, "?", hpQuery, hpQuery, "?", "?")
 		default:

@@ -11,18 +11,21 @@ import MetricBadgeTag from 'components/MetricBadgeTag';
 import useUI from 'components/ThemeProvider';
 import { UPlotScatterProps } from 'components/UPlot/types';
 import UPlotScatter from 'components/UPlot/UPlotScatter';
+import { RunMetricData } from 'hooks/useMetrics';
 import useResize from 'hooks/useResize';
-import { TrialMetricData } from 'pages/TrialDetails/useTrialMetrics';
 import {
   ExperimentWithTrial,
+  FlatRun,
   Hyperparameter,
   HyperparameterType,
   MetricType,
   Primitive,
   Range,
   Scale,
+  TrialHyperparameters,
   TrialItem,
   XAxisDomain,
+  XOR,
 } from 'types';
 import { getColorScale } from 'utils/chart';
 import { rgba2str, str2rgba } from 'utils/color';
@@ -34,13 +37,17 @@ import { CompareHyperparametersSettings } from './CompareHyperparameters.setting
 export const COMPARE_HEAT_MAPS = 'compare-heatmaps';
 export const HEAT_MAPS_TITLE = 'Heat Maps';
 
-interface Props {
-  selectedExperiments: ExperimentWithTrial[];
-  trials: TrialItem[];
-  metricData: TrialMetricData;
+interface BaseProps {
+  metricData: RunMetricData;
   fullHParams: string[];
   settings: CompareHyperparametersSettings;
 }
+
+type Props = XOR<
+  { selectedExperiments: ExperimentWithTrial[]; trials: TrialItem[] },
+  { selectedRuns: FlatRun[] }
+> &
+  BaseProps;
 
 type HpValue = Record<string, (number | string)[]>;
 
@@ -51,7 +58,7 @@ interface HpData {
   hpMetrics: Record<string, (number | undefined)[]>;
   hpValues: HpValue;
   metricRange: Range<number>;
-  trialIds: number[];
+  recordIds: number[];
 }
 
 const generateHpKey = (hParam1: string, hParam2: string): string => {
@@ -65,6 +72,7 @@ const parseHpKey = (key: string): [hParam1: string, hParam2: string] => {
 
 const CompareHeatMaps: React.FC<Props> = ({
   selectedExperiments,
+  selectedRuns,
   trials,
   metricData,
   fullHParams,
@@ -91,11 +99,11 @@ const CompareHeatMaps: React.FC<Props> = ({
 
   const smallerIsBetter = useMemo(() => {
     if (selectedMetric && selectedMetric.group === MetricType.Validation) {
-      const selectedExperimentsWithMetric = selectedExperiments.filter((exp) => {
+      const selectedExperimentsWithMetric = selectedExperiments?.filter((exp) => {
         return selectedMetric.name === exp?.experiment?.config?.searcher?.metric;
       });
 
-      return selectedExperimentsWithMetric.some((exp) => {
+      return selectedExperimentsWithMetric?.some((exp) => {
         return exp?.experiment?.config?.searcher?.smallerIsBetter;
       });
     }
@@ -172,7 +180,7 @@ const CompareHeatMaps: React.FC<Props> = ({
               null,
               chartData?.hpMetrics[key] || [],
               chartData?.hpMetrics[key] || [],
-              chartData?.trialIds || [],
+              chartData?.recordIds || [],
             ],
           ],
           options: {
@@ -184,7 +192,7 @@ const CompareHeatMaps: React.FC<Props> = ({
             series: [{}, { fill, stroke }],
             title,
           },
-          tooltipLabels: [xLabel, yLabel, null, metricToStr(selectedMetric), null, 'trial ID'],
+          tooltipLabels: [xLabel, yLabel, null, metricToStr(selectedMetric), null, 'record ID'],
         };
       });
     });
@@ -234,7 +242,7 @@ const CompareHeatMaps: React.FC<Props> = ({
 
   const experimentHyperparameters = useMemo(() => {
     const hpMap: Record<string, Hyperparameter> = {};
-    selectedExperiments.forEach((exp) => {
+    selectedExperiments?.forEach((exp) => {
       const hps = Object.keys(exp.experiment.hyperparameters);
       hps.forEach((hp) => (hpMap[hp] = exp.experiment.hyperparameters[hp]));
     });
@@ -244,7 +252,7 @@ const CompareHeatMaps: React.FC<Props> = ({
   useEffect(() => {
     if (ui.isPageHidden || !selectedMetric) return;
 
-    const trialIds: number[] = [];
+    const recordIds: number[] = [];
     const hpMetricMap: Record<number, Record<string, number | undefined>> = {};
     const hpValueMap: Record<number, Record<string, Primitive>> = {};
     const hpLabelMap: Record<string, string[]> = {};
@@ -255,11 +263,14 @@ const CompareHeatMaps: React.FC<Props> = ({
     const hpValues: HpValue = {};
     const metricRange: Range<number> = [Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY];
 
-    trials.forEach((trial) => {
-      if (!isObject(trial.hyperparameters)) return;
+    const recordHyperparameters: [number, TrialHyperparameters][] = selectedRuns
+      ? selectedRuns.flatMap((run) => (run.hyperparameters ? [[run.id, run.hyperparameters]] : []))
+      : trials.map((trial) => [trial.id, trial.hyperparameters]);
 
-      const trialId = trial.id;
-      const flatHParams = flattenObject(trial.hyperparameters);
+    recordHyperparameters?.forEach(([recordId, recordHp]) => {
+      if (!isObject(recordHp)) return;
+
+      const flatHParams = flattenObject(recordHp);
       const trialHParams = Object.keys(flatHParams)
         .filter((hParam) => fullHParams.includes(hParam))
         .sort((a, b) => a.localeCompare(b, 'en'));
@@ -269,16 +280,16 @@ const CompareHeatMaps: React.FC<Props> = ({
        * dynamic min/max ranges via uPlot.Scales.
        */
       const key = metricToKey(selectedMetric);
-      const trialMetric = data?.[trial.id]?.[key]?.data?.[XAxisDomain.Batches]?.at(-1)?.[1];
+      const trialMetric = data?.[recordId]?.[key]?.data?.[XAxisDomain.Batches]?.at(-1)?.[1];
 
-      trialIds.push(trialId);
-      hpMetricMap[trialId] = hpMetricMap[trialId] || {};
-      hpValueMap[trialId] = hpValueMap[trialId] || {};
+      recordIds.push(recordId);
+      hpMetricMap[recordId] = hpMetricMap[recordId] || {};
+      hpValueMap[recordId] = hpValueMap[recordId] || {};
       trialHParams.forEach((hParam1) => {
-        hpValueMap[trialId][hParam1] = flatHParams[hParam1];
+        hpValueMap[recordId][hParam1] = flatHParams[hParam1];
         trialHParams.forEach((hParam2) => {
           const key = generateHpKey(hParam1, hParam2);
-          hpMetricMap[trialId][key] = trialMetric;
+          hpMetricMap[recordId][key] = trialMetric;
         });
       });
 
@@ -295,8 +306,8 @@ const CompareHeatMaps: React.FC<Props> = ({
       hpLabelValueMap[hParam1] = [];
       hpValues[hParam1] = [];
 
-      trialIds.forEach((trialId) => {
-        const hpRawValue = hpValueMap[trialId][hParam1];
+      recordIds.forEach((recordId) => {
+        const hpRawValue = hpValueMap[recordId][hParam1];
         const hpValue = isBoolean(hpRawValue) ? hpRawValue.toString() : hpRawValue;
 
         hpValues[hParam1].push(hpValue);
@@ -316,7 +327,7 @@ const CompareHeatMaps: React.FC<Props> = ({
 
       fullHParams.forEach((hParam2) => {
         const key = generateHpKey(hParam1, hParam2);
-        hpMetrics[key] = trialIds.map((trialId) => hpMetricMap[trialId][key]);
+        hpMetrics[key] = recordIds.map((recordId) => hpMetricMap[recordId][key]);
       });
     });
 
@@ -327,9 +338,17 @@ const CompareHeatMaps: React.FC<Props> = ({
       hpMetrics,
       hpValues,
       metricRange,
-      trialIds,
+      recordIds,
     });
-  }, [fullHParams, selectedMetric, ui.isPageHidden, trials, data, experimentHyperparameters]);
+  }, [
+    fullHParams,
+    selectedMetric,
+    ui.isPageHidden,
+    trials,
+    data,
+    experimentHyperparameters,
+    selectedRuns,
+  ]);
 
   if (!metricsLoaded || !chartData) {
     return <Spinner center spinning />;

@@ -25,16 +25,17 @@ import FlatRuns from './FlatRuns/FlatRuns';
 const TabType = {
   Code: 'code',
   Notes: 'notes',
-  Trials: 'trials',
+  Runs: 'runs',
 } as const;
+
+type TabType = ValueOf<typeof TabType>;
 
 type Params = {
   searchId: string;
-  tab?: ValueOf<typeof TabType>;
+  tab?: TabType;
 };
-
 const TAB_KEYS = Object.values(TabType);
-const INITIAL_TAB_KEY = TabType.Trials;
+const INITIAL_TAB_KEY = TabType.Runs;
 
 const SearchDetails: React.FC = () => {
   const { tab, searchId } = useParams<Params>();
@@ -46,7 +47,9 @@ const SearchDetails: React.FC = () => {
 
   const navigate = useNavigate();
   const location = useLocation();
-  const [tabKey, setTabKey] = useState(tab && TAB_KEYS.includes(tab) ? tab : INITIAL_TAB_KEY);
+  const [tabKey, setTabKey] = useState<TabType>(
+    tab && TAB_KEYS.includes(tab) ? tab : INITIAL_TAB_KEY,
+  );
   const basePath = paths.searchDetails(id);
 
   const configForExperiment = (experimentId: number): SettingsConfig<{ filePath: string }> => ({
@@ -140,8 +143,8 @@ const SearchDetails: React.FC = () => {
       children: experiment?.projectId && (
         <FlatRuns projectId={experiment.projectId} searchId={id} />
       ),
-      key: TabType.Trials,
-      label: 'Trials',
+      key: TabType.Runs,
+      label: 'Runs',
     },
   ];
 
