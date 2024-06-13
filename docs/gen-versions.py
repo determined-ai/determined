@@ -10,6 +10,12 @@ import git
 import git.exc
 import git.refs.tag
 
+# These are the tags that are present in git, but not in the original
+# versions.json file. We specify them here to ensure we don't create links to
+# documentation that doesn't exist, and to recreate part of the original
+# versions.json file.
+EXCLUDE_VERSIONS = ["0.26.5", "0.23.4", "0.23.3", "0.23.2", "0.23.1", "0.22.2", "0.22.1", "0.21.2", "0.21.1"]
+
 def parse_args():
     parser = argparse.ArgumentParser(
         prog="gen-versions.py",
@@ -34,8 +40,7 @@ def parse_args():
     # originally in versions.json. I.e. some of the existing tagged patch
     # release versions don't have corresponding separate doc links.
     parser.add_argument("--exclude-versions",
-        help="comma-separated list of versions to exclude from the versions returned by walking the git DAG",
-        default="0.26.5,0.23.4,0.23.3,0.23.2,0.23.1,0.22.2,0.22.1,0.21.2,0.21.1",
+        help="comma-separated list of additional versions to exclude from the versions returned by walking the git DAG",
         metavar="versions",
         type=str,
     )
@@ -47,7 +52,10 @@ def main():
 
     exclude_versions = []
     if args.exclude_versions is not None:
+        # Include the default EXCLUDE_VERSIONS to reflect the historical
+        # versions.json file.
         exclude_versions = args.exclude_versions.split(",")
+        EXCLUDE_VERSIONS.extend(exclude_versions)
 
     # Probably run this from inside the repo somewhere.
     try:
