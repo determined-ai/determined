@@ -3,10 +3,11 @@ package agentrm
 import (
 	"fmt"
 
+	log "github.com/sirupsen/logrus"
+
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/model"
-	log "github.com/sirupsen/logrus"
 )
 
 // Scheduler schedules tasks on agents.  Its only function Schedule is called
