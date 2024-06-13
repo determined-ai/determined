@@ -372,15 +372,15 @@ func (k *kubernetesResourcePool) moveJob(
 		oldPriority := g.Priority
 		g.Priority = &anchorPriority
 
-		if priorityChanger, ok := tasklist.GroupPriorityChangeRegistry.Load(jobID); ok {
-			if priorityChanger != nil {
-				if err := priorityChanger(anchorPriority); err != nil {
-					g.Priority = oldPriority
-					return err
-				}
-			}
-		} else {
+		priorityChanger, ok := tasklist.GroupPriorityChangeRegistry.Load(jobID)
+		if !ok {
 			return fmt.Errorf("unable to move job with ID %s", jobID)
+		}
+		if priorityChanger != nil {
+			if err := priorityChanger(anchorPriority); err != nil {
+				g.Priority = oldPriority
+				return err
+			}
 		}
 	}
 
@@ -639,7 +639,7 @@ func (p k8sJobResource) Summary() sproto.ResourcesSummary {
 		ResourcesType: sproto.ResourcesTypeK8sJob,
 		AgentDevices: map[aproto.ID][]device.Device{
 			// TODO: Make it more obvious k8s can't be trusted.
-			aproto.ID("pods"): make([]device.Device, p.slots),
+			aproto.ID("pods"): make([]device.Device, p.slots*p.numPods),
 		},
 
 		Started: p.started,

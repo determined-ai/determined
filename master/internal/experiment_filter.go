@@ -156,8 +156,10 @@ func runColumnNameToSQL(columnName string) (string, error) {
 		"checkpointCount":       "e.checkpoint_count",
 		"searcherMetricsVal":    "r.searcher_metric_value",
 		"externalExperimentId":  "e.external_experiment_id",
-		"externalTrialId":       "r.external_run_id",
+		"externalRunId":         "r.external_run_id",
 		"experimentId":          "e.id",
+		"isExpMultitrial":       "e.config->'searcher'->>'name' != 'single'",
+		"parentArchived":        "(w.archived OR p.archived)",
 	}
 	var exists bool
 	col, exists := filterExperimentColMap[columnName]
@@ -591,15 +593,15 @@ func (e experimentFilter) toSQL(q *bun.SelectQuery,
 // training.loss.min -> avg_metrics, loss, min
 // group_a.value.last -> group_a, value, last
 // group_b.value.a.last -> group_b, value.a, last .
-func parseMetricsName(str string) (string, string, string, error) {
+func parseMetricsName(str string) (metricGroup string, metricName string, metricQualifier string, err error) {
 	matches := metricIDTemplate.FindStringSubmatch(str)
 	if len(matches) < 4 {
 		return "", "", "", fmt.Errorf("%s is not a valid metrics id", str)
 	}
 
-	metricGroup := matches[1]
-	metricName := matches[2]
-	metricQualifier := matches[3]
+	metricGroup = matches[1]
+	metricName = matches[2]
+	metricQualifier = matches[3]
 
 	if metricGroup == metricIDTraining {
 		metricGroup = metricGroupTraining

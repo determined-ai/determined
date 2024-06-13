@@ -4,9 +4,7 @@ import { F_ExperiementList } from 'e2e/models/components/F_ExperiementList';
 import { PageComponent } from 'e2e/models/components/Page';
 
 /**
- * Returns a representation of the admin User Management page.
- * This constructor represents the contents in src/pages/ProjectDetails.tsx.
- * @param {Page} page - The '@playwright/test' Page being used by a test
+ * Represents the SignIn page from src/pages/ProjectDetails.tsx
  */
 export class ProjectDetails extends BasePage {
   readonly title = new RegExp(
@@ -16,11 +14,10 @@ export class ProjectDetails extends BasePage {
   readonly url: RegExp = /projects\/\d+/;
 
   /**
-   * Returns this so we can chain. Visits the page.
-   * ie. await expect(thePage.goto().theElement.pwLocator()).toBeVisible()
+   * Visits the project details page.
    * @param {string} [projectID] - The Project to visit. Defaults to '1' for uncategorized
    */
-  async gotoProject(projectID: string = '1', args = {}): Promise<BasePage> {
+  async gotoProject(projectID: string = '1', args = {}): Promise<this> {
     return await this.goto({ ...args, url: `projects/${projectID}` });
   }
 

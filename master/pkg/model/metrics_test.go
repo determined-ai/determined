@@ -1,7 +1,7 @@
 package model
 
 import (
-	"fmt"
+	"strconv"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -63,7 +63,7 @@ func TestMetricIdentifierDeserialize(t *testing.T) {
 		},
 	}
 	for idx, tt := range tests {
-		t.Run(fmt.Sprint(idx), func(t *testing.T) {
+		t.Run(strconv.Itoa(idx), func(t *testing.T) {
 			got, err := DeserializeMetricIdentifier(tt.args.s)
 			if tt.wantErr {
 				require.Error(t, err, "Expected error with arg %v", tt.args.s)

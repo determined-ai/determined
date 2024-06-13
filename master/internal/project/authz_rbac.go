@@ -2,7 +2,7 @@ package project
 
 import (
 	"context"
-	"fmt"
+	"strconv"
 
 	log "github.com/sirupsen/logrus"
 
@@ -26,7 +26,7 @@ func logEntryWithProjectTarget(
 ) {
 	pids := make([]string, 0, len(projectIDs))
 	for _, pid := range projectIDs {
-		pids = append(pids, fmt.Sprint(pid))
+		pids = append(pids, strconv.Itoa(int(pid)))
 	}
 
 	fields["userID"] = curUser.ID
@@ -158,14 +158,14 @@ func (a *ProjectAuthZRBAC) CanMoveProject(
 				rbacv1.PermissionType_PERMISSION_TYPE_DELETE_PROJECT,
 			},
 			SubjectType: "workspace",
-			SubjectIDs:  []string{fmt.Sprint(from.Id)},
+			SubjectIDs:  []string{strconv.Itoa(int(from.Id))},
 		},
 		{
 			PermissionTypes: []rbacv1.PermissionType{
 				rbacv1.PermissionType_PERMISSION_TYPE_CREATE_PROJECT,
 			},
 			SubjectType: "workspace",
-			SubjectIDs:  []string{fmt.Sprint(to.Id)},
+			SubjectIDs:  []string{strconv.Itoa(int(to.Id))},
 		},
 	}
 	defer func() {
@@ -193,14 +193,14 @@ func (a *ProjectAuthZRBAC) CanMoveProjectExperiments(
 				rbacv1.PermissionType_PERMISSION_TYPE_DELETE_EXPERIMENT,
 			},
 			SubjectType: "project",
-			SubjectIDs:  []string{fmt.Sprint(from.Id)},
+			SubjectIDs:  []string{strconv.Itoa(int(from.Id))},
 		},
 		{
 			PermissionTypes: []rbacv1.PermissionType{
 				rbacv1.PermissionType_PERMISSION_TYPE_CREATE_EXPERIMENT,
 			},
 			SubjectType: "project",
-			SubjectIDs:  []string{fmt.Sprint(to.Id)},
+			SubjectIDs:  []string{strconv.Itoa(int(to.Id))},
 		},
 	}
 	defer func() {
@@ -234,6 +234,22 @@ func (a *ProjectAuthZRBAC) CanArchiveProject(
 // CanUnarchiveProject returns an error if a user doesn't have "UPDATE_PROJECT" globally
 // or on the target project's workspace.
 func (a *ProjectAuthZRBAC) CanUnarchiveProject(
+	ctx context.Context, curUser model.User, project *projectv1.Project,
+) (err error) {
+	fields := audit.ExtractLogFields(ctx)
+	logEntryWithProjectTarget(fields, curUser,
+		rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_PROJECT, project.Id)
+	defer func() {
+		audit.LogFromErr(fields, err)
+	}()
+
+	return permCheck(ctx, curUser, project.WorkspaceId,
+		rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_PROJECT)
+}
+
+// CanSetProjectKey returns an error if a user doesn't have "UPDATE_PROJECT" globally
+// or on the target project's workspace.
+func (a *ProjectAuthZRBAC) CanSetProjectKey(
 	ctx context.Context, curUser model.User, project *projectv1.Project,
 ) (err error) {
 	fields := audit.ExtractLogFields(ctx)

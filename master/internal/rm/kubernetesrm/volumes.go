@@ -3,6 +3,7 @@ package kubernetesrm
 import (
 	"fmt"
 	"path"
+	"strconv"
 
 	"github.com/determined-ai/determined/master/pkg/etc"
 
@@ -147,7 +148,7 @@ func configureAdditionalFilesVolumes(
 			mainContainerVolumeMounts = append(mainContainerVolumeMounts, k8sV1.VolumeMount{
 				Name:      additionalFilesVolumeName,
 				MountPath: path.Join(runArchive.Path, item.Path),
-				SubPath:   path.Join(fmt.Sprintf("%d", idx), item.Path),
+				SubPath:   path.Join(strconv.Itoa(idx), item.Path),
 			})
 		}
 	}

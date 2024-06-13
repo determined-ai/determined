@@ -14,6 +14,7 @@ import (
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
 	"github.com/determined-ai/determined/master/internal/mocks"
+	"github.com/determined-ai/determined/master/internal/sproto"
 )
 
 func TestGetNonDetPods(t *testing.T) {
@@ -63,16 +64,74 @@ func TestGetNonDetPods(t *testing.T) {
 	ns2.On("List", mock.Anything, mock.Anything).Once().
 		Return(&k8sV1.PodList{Items: append(hiddenPods, expectedPods[1])}, nil)
 
-	p := jobsService{
+	js := jobsService{
 		podInterfaces: map[string]typedV1.PodInterface{
 			"ns1": ns1,
 			"ns2": ns2,
 		},
 	}
 
-	actualPods, err := p.getNonDetPods()
+	actualPods, err := js.getNonDetPods()
 	require.NoError(t, err)
 	require.ElementsMatch(t, expectedPods, actualPods)
+}
+
+func TestJobScheduledStatus(t *testing.T) {
+	// Pod has been created, but has zero PodConditions yet.
+	pendingPod := k8sV1.Pod{
+		ObjectMeta: metaV1.ObjectMeta{
+			Name: "test-pod",
+		},
+		Status: k8sV1.PodStatus{
+			Conditions: make([]k8sV1.PodCondition, 0),
+		},
+	}
+	js := jobsService{
+		jobNameToPodNameToSchedulingState: make(map[string]map[string]sproto.SchedulingState),
+	}
+	jobName := "test-job"
+	js.updatePodSchedulingState(jobName, pendingPod)
+	actualState := js.jobSchedulingState(jobName)
+	expectedState := sproto.SchedulingStateQueued
+	require.Equal(t, expectedState, actualState)
+
+	// Pod has been created, but the PodScheduled PodCondition is false.
+	notScheduledPod := k8sV1.Pod{
+		ObjectMeta: metaV1.ObjectMeta{
+			Name: "test-pod",
+		},
+		Status: k8sV1.PodStatus{
+			Conditions: []k8sV1.PodCondition{
+				{
+					Type:   k8sV1.PodScheduled,
+					Status: k8sV1.ConditionFalse,
+				},
+			},
+		},
+	}
+	js.updatePodSchedulingState(jobName, notScheduledPod)
+	actualState = js.jobSchedulingState(jobName)
+	expectedState = sproto.SchedulingStateQueued
+	require.Equal(t, expectedState, actualState)
+
+	// Pod has been created, and the PodScheduled PodCondition is true.
+	scheduledPod := k8sV1.Pod{
+		ObjectMeta: metaV1.ObjectMeta{
+			Name: "test-pod",
+		},
+		Status: k8sV1.PodStatus{
+			Conditions: []k8sV1.PodCondition{
+				{
+					Type:   k8sV1.PodScheduled,
+					Status: k8sV1.ConditionTrue,
+				},
+			},
+		},
+	}
+	js.updatePodSchedulingState(jobName, scheduledPod)
+	actualState = js.jobSchedulingState(jobName)
+	expectedState = sproto.SchedulingStateScheduled
+	require.Equal(t, expectedState, actualState)
 }
 
 func TestTaintTolerated(t *testing.T) {

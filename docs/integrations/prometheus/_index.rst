@@ -21,7 +21,7 @@ Determined provides a Prometheus endpoint that contains mappings between interna
 container definitions, which are used by Prometheus to collect relevant metrics on a cluster running
 Determined. The endpoint is enabled by default but can be disabled in the master configuration file.
 
-Visit :ref:_kubernetes-observability for instructions on enabling observability in Kubernetes
+Visit :ref:`kubernetes-observability` for instructions on enabling observability in Kubernetes
 environments.
 
 ***********

@@ -18,8 +18,8 @@ import (
 func TestClusterAPI(t *testing.T) {
 	require.NoError(t, etc.SetRootPath(RootFromDB))
 
-	db, close := MustResolveTestPostgres(t)
-	defer close()
+	db, closeDB := MustResolveTestPostgres(t)
+	defer closeDB()
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 
 	_, err := db.GetOrCreateClusterID("")

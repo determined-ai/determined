@@ -8,20 +8,20 @@ import (
 )
 
 func TestMin(t *testing.T) {
-	require.Equal(t, Min(1, 2, 3), 1)
-	require.Equal(t, Min(math.MinInt64, 2, 3), math.MinInt64)
-	require.Equal(t, Min(math.MaxInt64, 2, 3), 2)
+	require.Equal(t, 1, Min(1, 2, 3))
+	require.Equal(t, math.MinInt64, Min(math.MinInt64, 2, 3))
+	require.Equal(t, 2, Min(math.MaxInt64, 2, 3))
 }
 
 func TestMax(t *testing.T) {
-	require.Equal(t, Max(1, 2, 3), 3)
-	require.Equal(t, Max(math.MinInt64, 2, 3), 3)
-	require.Equal(t, Max(math.MaxInt64, 2, 3), math.MaxInt64)
+	require.Equal(t, 3, Max(1, 2, 3))
+	require.Equal(t, 3, Max(math.MinInt64, 2, 3))
+	require.Equal(t, math.MaxInt64, Max(math.MaxInt64, 2, 3))
 }
 
 func TestClamp(t *testing.T) {
-	require.Equal(t, Clamp(1, 2, 3), 2)
-	require.Equal(t, Clamp(1, 4, 3), 3)
-	require.Equal(t, Clamp(1, 0, 3), 1)
+	require.Equal(t, 2, Clamp(1, 2, 3))
+	require.Equal(t, 3, Clamp(1, 4, 3))
+	require.Equal(t, 1, Clamp(1, 0, 3))
 	require.Panics(t, func() { Clamp(3, 0, 1) })
 }

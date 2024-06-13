@@ -12,8 +12,8 @@ import (
 	"net/http"
 	"net/url"
 
-	saml "github.com/crewjam/saml"
-	samlsp "github.com/crewjam/saml/samlsp"
+	"github.com/crewjam/saml"
+	"github.com/crewjam/saml/samlsp"
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"

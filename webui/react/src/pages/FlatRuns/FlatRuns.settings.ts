@@ -41,4 +41,5 @@ export const ProjectUrlSettings = t.partial({
   page: t.number,
 });
 
-export const settingsPathForProject = (id: number): string => `flatRunsForProject${id}`;
+export const settingsPathForProject = (projectId: number, searchId?: number): string =>
+  `flatRunsForProject${projectId}-${searchId}`;

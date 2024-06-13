@@ -192,7 +192,7 @@ func TestGenPathWithValidation(t *testing.T) {
 		if test.hasErr {
 			require.Errorf(t, err, test.description)
 		} else {
-			require.Equalf(t, p, test.expected, test.description)
+			require.Equalf(t, test.expected, p, test.description)
 		}
 	}
 }

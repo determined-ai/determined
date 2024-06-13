@@ -180,8 +180,7 @@ func UnionExtension() jsonschema.Extension {
 // it doesn't fully match.  unionKey allows us to select the correct error message to show to the
 // user from the union type.
 func evaluateUnionKey(key JSON, instance JSON) bool {
-	switch tKey := key.(type) {
-	case string:
+	if tKey, ok := key.(string); ok {
 		// Parse the string and evaluate.
 		switch {
 		case tKey == "always":
@@ -257,5 +256,6 @@ func evaluateUnionKey(key JSON, instance JSON) bool {
 			return ok
 		}
 	}
+
 	panic(fmt.Sprintf("invalid unionKey: %v", key))
 }

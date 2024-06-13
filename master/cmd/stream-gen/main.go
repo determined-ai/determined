@@ -639,13 +639,12 @@ func main() {
 			// old output is already up-to-date
 			fmt.Fprintf(os.Stderr, "output is up-to-date\n")
 			os.Exit(0)
-		} else {
-			// write a new output
-			err := os.WriteFile(output, content, 0o666) //nolint: gosec // let umask do its thing
-			if err != nil {
-				fmt.Fprintf(os.Stderr, "failed writing to %v: %v\n", output, err.Error())
-				os.Exit(1)
-			}
+		}
+		// write a new output
+		err = os.WriteFile(output, content, 0o666) //nolint: gosec // let umask do its thing
+		if err != nil {
+			fmt.Fprintf(os.Stderr, "failed writing to %v: %v\n", output, err.Error())
+			os.Exit(1)
 		}
 	}
 }

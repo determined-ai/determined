@@ -1,11 +1,7 @@
 import { BaseComponent } from 'e2e/models/BaseComponent';
 
 /**
- * Returns a representation of the Switch item component from Ant.
- * .
- * @param {object} obj
- * @param {implementsGetLocator} obj.parent - The parent used to locate this Dropdown
- * @param {string} obj.selector - the selector for the entire switch. The finding the button or label is handled by this component.
+ * Represents the Switch component from antd/es/switch/index.js
  */
 export class Switch extends BaseComponent {
   readonly switch = new BaseComponent({

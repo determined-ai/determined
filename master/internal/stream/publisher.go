@@ -18,6 +18,8 @@ import (
 	"github.com/determined-ai/determined/master/pkg/syncx/errgroupx"
 )
 
+const maxEventCount = 120
+
 // PublisherSet contains all publishers, and handles all websockets.  It will connect each websocket
 // with the appropriate set of publishers, based on that websocket's subscriptions.
 //
@@ -38,9 +40,9 @@ func NewPublisherSet(dbAddress string) *PublisherSet {
 	lock := sync.Mutex{}
 	return &PublisherSet{
 		DBAddress:     dbAddress,
-		Projects:      stream.NewPublisher[*ProjectMsg](),
-		Models:        stream.NewPublisher[*ModelMsg](),
-		ModelVersions: stream.NewPublisher[*ModelVersionMsg](),
+		Projects:      stream.NewPublisher[*ProjectMsg](ProjectMakeHydrator()),
+		Models:        stream.NewPublisher[*ModelMsg](ModelMakeHydrator()),
+		ModelVersions: stream.NewPublisher[*ModelVersionMsg](ModelVersionMakeHydrator()),
 		bootemChan:    make(chan struct{}),
 		readyCond:     *sync.NewCond(&lock),
 	}
@@ -414,6 +416,7 @@ func publishLoop[T stream.Msg](
 			events = append(events, event)
 			// Collect all available notifications before proceeding.
 			keepGoing := true
+			eventCount := 0
 			for keepGoing {
 				select {
 				case notification = <-listener.Notify:
@@ -423,12 +426,20 @@ func publishLoop[T stream.Msg](
 						return err
 					}
 					events = append(events, event)
+					eventCount++
+					keepGoing = eventCount < maxEventCount
 				default:
 					keepGoing = false
 				}
 			}
+
+			idToSaturatedMsg := map[int]*stream.UpsertMsg{}
+			// TODO: MD-434 improve performance by batch hydrating the messages.
+			for _, ev := range events {
+				publisher.HydrateMsg(ev.After, idToSaturatedMsg)
+			}
 			// Broadcast all the events.
-			publisher.Broadcast(events)
+			publisher.Broadcast(events, idToSaturatedMsg)
 		}
 	}
 }

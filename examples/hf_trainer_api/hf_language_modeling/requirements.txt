@@ -10,3 +10,4 @@ rouge_score
 fire
 sentencepiece
 scikit-learn
+huggingface_hub<0.23.0

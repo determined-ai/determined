@@ -32,22 +32,27 @@ export type NamedComponentArgs =
   | NamedComponentWithAttachment;
 
 /**
- * Returns the representation of a Component.
- * This constructor is a base class for any component in src/components/.
- * @param {object} obj
- * @param {CanBeParent} obj.parent - The parent used to locate this BaseComponent
- * @param {string} obj.selector - Used as a selector uesd to locate this object
+ * Base model for any Component in src/components/
  */
 export class BaseComponent implements ComponentBasics {
   protected _selector: string;
   readonly _parent: CanBeParent;
   protected _locator: Locator | undefined;
 
+  /**
+   * Constructs a BaseComponent
+   * @param {object} obj
+   * @param {CanBeParent} obj.parent - parent component
+   * @param {string} obj.selector - identifier
+   */
   constructor({ parent, selector }: BaseComponentArgs) {
     this._selector = selector;
     this._parent = parent;
   }
 
+  /**
+   * The identifier used to locate this model
+   */
   get selector(): string {
     return this._selector;
   }
@@ -76,15 +81,17 @@ export class BaseComponent implements ComponentBasics {
 }
 
 /**
- * Returns the representation of a React Fragment.
- * React Fragment Components are special in that they group elements, but not under a dir.
- * Fragments cannot have selectors
- * @param {object} obj
- * @param {CanBeParent} obj.parent - The parent used to locate this BaseComponent
+ * BaseReactFragment will preserve the parent locator heirachy while also
+ * providing a way to group elements, just like the React Fragments they model.
  */
 export class BaseReactFragment implements ComponentBasics {
   readonly _parent: CanBeParent;
 
+  /**
+   * Constructs a BaseReactFragment
+   * @param {object} obj
+   * @param {CanBeParent} obj.parent - parent component
+   */
   constructor({ parent }: ComponentArgBasics) {
     this._parent = parent;
   }
@@ -110,20 +117,23 @@ export class BaseReactFragment implements ComponentBasics {
 }
 
 /**
- * Returns a representation of a named component. These components need a defaultSelector.
- * @param {object} obj
- * @param {CanBeParent} obj.parent - The parent used to locate this NamedComponent
- * @param {string} obj.selector - Used as a selector uesd to locate this object
+ * Named Components are components that have a default selector
  */
 export abstract class NamedComponent extends BaseComponent {
   abstract readonly defaultSelector: string;
   readonly #attachment: string;
 
+  /**
+   * The identifier used to locate this model
+   */
   override get selector(): string {
     return this._selector || this.defaultSelector + this.#attachment;
   }
 
-  static getSelector(args: NamedComponentArgs): { selector: string; attachment: string } {
+  /**
+   * Internal method used to compute the named component's selector
+   */
+  private static getSelector(args: NamedComponentArgs): { selector: string; attachment: string } {
     if (NamedComponent.isBaseComponentArgs(args))
       return { attachment: '', selector: args.selector };
     if (NamedComponent.isNamedComponentWithAttachment(args))
@@ -131,15 +141,29 @@ export abstract class NamedComponent extends BaseComponent {
     else return { attachment: '', selector: '' };
   }
 
-  static isBaseComponentArgs(args: NamedComponentArgs): args is BaseComponentArgs {
+  /**
+   * Internal method to check the type of args passed into the constructor
+   */
+  private static isBaseComponentArgs(args: NamedComponentArgs): args is BaseComponentArgs {
     return 'selector' in args;
   }
 
-  static isNamedComponentWithAttachment(
+  /**
+   * Internal method to check the type of args passed into the constructor
+   */
+  private static isNamedComponentWithAttachment(
     args: NamedComponentArgs,
   ): args is NamedComponentWithAttachment {
     return 'attachment' in args;
   }
+
+  /**
+   * Constructs a NamedComponent
+   * @param {object} args
+   * @param {CanBeParent} args.parent - parent component
+   * @param {string} [args.selector] - identifier to be used in place of defaultSelector
+   * @param {string} [args.attachment] - identifier to be appended to defaultSelector
+   */
   constructor(args: NamedComponentArgs) {
     const { selector, attachment } = NamedComponent.getSelector(args);
     super({ parent: args.parent, selector });

@@ -6,6 +6,8 @@ package internal
 import (
 	"context"
 	"fmt"
+	"strconv"
+	"strings"
 	"testing"
 	"time"
 
@@ -25,6 +27,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/mocks"
 	"github.com/determined-ai/determined/master/internal/project"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/syncx/errgroupx"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
 	"github.com/determined-ai/determined/proto/pkg/rbacv1"
@@ -53,7 +56,7 @@ func setupProjectAuthZTest(
 	return api, pAuthZ, workspaceAuthZ, curUser, ctx
 }
 
-func createProjectAndWorkspace(ctx context.Context, t *testing.T, api *apiServer) (int, int) {
+func createProjectAndWorkspace(ctx context.Context, t *testing.T, api *apiServer) (wkspID int, projID int) {
 	if isMockAuthZ() {
 		wAuthZ.On("CanCreateWorkspace", mock.Anything, mock.Anything).Return(nil).Once()
 	}
@@ -99,7 +102,7 @@ func TestAuthZCanCreateProject(t *testing.T) {
 		WorkspaceId: int32(workspaceID),
 	})
 	require.Equal(t,
-		apiPkg.NotFoundErrs("workspace", fmt.Sprint(workspaceID), true).Error(), err.Error())
+		apiPkg.NotFoundErrs("workspace", strconv.Itoa(workspaceID), true).Error(), err.Error())
 
 	// Workspace error returns error unmodified.
 	expectedErr := fmt.Errorf("canGetWorkspaceErr")
@@ -176,7 +179,7 @@ func TestAuthZCanMoveProject(t *testing.T) {
 		Return(authz2.PermissionDeniedError{}).Once()
 	_, err = api.MoveProject(ctx, req)
 	require.Equal(t,
-		apiPkg.NotFoundErrs("project", fmt.Sprint(projectID), true).Error(), err.Error())
+		apiPkg.NotFoundErrs("project", strconv.Itoa(int(projectID)), true).Error(), err.Error())
 
 	// Can't view from workspace.
 	projectAuthZ.On("CanGetProject", mock.Anything, mock.Anything, mock.Anything).
@@ -185,7 +188,7 @@ func TestAuthZCanMoveProject(t *testing.T) {
 		Return(authz2.PermissionDeniedError{}).Once()
 	_, err = api.MoveProject(ctx, req)
 	require.Equal(t, apiPkg.NotFoundErrs("workspace",
-		fmt.Sprint(int(fromResp.Workspace.Id)), true).Error(), err.Error())
+		strconv.Itoa(int(fromResp.Workspace.Id)), true).Error(), err.Error())
 
 	// Can't move project.
 	expectedErr := status.Error(codes.PermissionDenied, "canMoveProjectDeny")
@@ -220,7 +223,7 @@ func TestAuthZCanMoveProjectExperiments(t *testing.T) {
 		Return(authz2.PermissionDeniedError{}).Once()
 	_, err := api.MoveExperiment(ctx, req)
 	require.Equal(t,
-		apiPkg.NotFoundErrs("project", fmt.Sprint(srcProjectID), true).Error(), err.Error())
+		apiPkg.NotFoundErrs("project", strconv.Itoa(srcProjectID), true).Error(), err.Error())
 
 	// Can't view destination project
 	authZExp.On("CanGetExperiment", mock.Anything, mock.Anything, mock.Anything).
@@ -231,7 +234,7 @@ func TestAuthZCanMoveProjectExperiments(t *testing.T) {
 		Return(authz2.PermissionDeniedError{}).Once()
 	_, err = api.MoveExperiment(ctx, req)
 	require.Equal(t,
-		apiPkg.NotFoundErrs("project", fmt.Sprint(destProjectID), true).Error(), err.Error())
+		apiPkg.NotFoundErrs("project", strconv.Itoa(destProjectID), true).Error(), err.Error())
 
 	// Can't create experiment in destination project.
 	expectedErr := status.Error(codes.PermissionDenied, "canCreateExperimentDeny")
@@ -300,6 +303,13 @@ func TestAuthZRoutesGetProjectThenAction(t *testing.T) {
 			})
 			return err
 		}},
+		{"CanSetProjectKey", func(id int) error {
+			_, err := api.PatchProject(ctx, &apiv1.PatchProjectRequest{
+				Project: &projectv1.PatchProject{Key: wrapperspb.String("newma")},
+				Id:      int32(id),
+			})
+			return err
+		}},
 		{"CanDeleteProject", func(id int) error {
 			_, err := api.DeleteProject(ctx, &apiv1.DeleteProjectRequest{
 				Id: int32(id),
@@ -325,13 +335,15 @@ func TestAuthZRoutesGetProjectThenAction(t *testing.T) {
 
 		// Project not found.
 		err := curCase.IDToReqCall(-9999)
+		require.Error(t, err)
 		require.Equal(t, apiPkg.NotFoundErrs("project", "-9999", true).Error(), err.Error())
 
 		// Project can't be viewed.
 		projectAuthZ.On("CanGetProject", mock.Anything, mock.Anything, mock.Anything).
 			Return(authz2.PermissionDeniedError{}).Once()
 		err = curCase.IDToReqCall(projectID)
-		require.Equal(t, apiPkg.NotFoundErrs("project", fmt.Sprint(projectID), true).Error(),
+		require.Error(t, err)
+		require.Equal(t, apiPkg.NotFoundErrs("project", strconv.Itoa(projectID), true).Error(),
 			err.Error())
 
 		// Error checking if project errors during view check.
@@ -339,6 +351,7 @@ func TestAuthZRoutesGetProjectThenAction(t *testing.T) {
 		projectAuthZ.On("CanGetProject", mock.Anything, mock.Anything, mock.Anything).
 			Return(expectedErr).Once()
 		err = curCase.IDToReqCall(projectID)
+		require.Error(t, err)
 		require.Equal(t, expectedErr, err)
 
 		// Can view but can't perform action.
@@ -348,6 +361,7 @@ func TestAuthZRoutesGetProjectThenAction(t *testing.T) {
 		projectAuthZ.On(curCase.DenyFuncName, mock.Anything, mock.Anything, mock.Anything).
 			Return(fmt.Errorf(curCase.DenyFuncName + "Deny"))
 		err = curCase.IDToReqCall(projectID)
+		require.Error(t, err)
 		require.Equal(t, expectedErr.Error(), err.Error())
 	}
 }
@@ -370,7 +384,7 @@ func TestGetProjectByActivity(t *testing.T) {
 	require.NoError(t, err)
 
 	require.NoError(t, err)
-	require.Equal(t, 1, len(resp.Projects))
+	require.Len(t, resp.Projects, 1)
 }
 
 func TestGetProjectColumnsRuns(t *testing.T) {
@@ -408,7 +422,7 @@ func TestGetProjectColumnsRuns(t *testing.T) {
 		Location: projectv1.LocationType_LOCATION_TYPE_RUN_HYPERPARAMETERS,
 		Type:     projectv1.ColumnType_COLUMN_TYPE_NUMBER,
 	}
-	require.Equal(t, getColumnsResp.Columns[len(getColumnsResp.Columns)-1], expectedHparam)
+	require.Equal(t, expectedHparam, getColumnsResp.Columns[len(getColumnsResp.Columns)-1])
 
 	hyperparameters2 := map[string]any{"test1": map[string]any{"test2": "text_val"}}
 	task2 := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
@@ -428,5 +442,202 @@ func TestGetProjectColumnsRuns(t *testing.T) {
 		Location: projectv1.LocationType_LOCATION_TYPE_RUN_HYPERPARAMETERS,
 		Type:     projectv1.ColumnType_COLUMN_TYPE_TEXT,
 	}
-	require.Equal(t, getColumnsResp.Columns[len(getColumnsResp.Columns)-1], expectedHparam)
+	require.Equal(t, expectedHparam, getColumnsResp.Columns[len(getColumnsResp.Columns)-1])
+}
+
+func TestCreateProjectWithoutProjectKey(t *testing.T) {
+	api, _, ctx := setupAPITest(t, nil)
+	wresp, werr := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: uuid.New().String()})
+	require.NoError(t, werr)
+
+	projectName := "test-project" + uuid.New().String()
+	projectKeyPrefix := strings.ToUpper(projectName[:project.MaxProjectKeyPrefixLength])
+	resp, err := api.PostProject(ctx, &apiv1.PostProjectRequest{
+		Name: projectName, WorkspaceId: wresp.Workspace.Id,
+	})
+	require.NoError(t, err)
+	require.Equal(t, projectKeyPrefix, resp.Project.Key[:project.MaxProjectKeyPrefixLength])
+}
+
+func TestCreateProjectWithProjectKey(t *testing.T) {
+	api, _, ctx := setupAPITest(t, nil)
+	wresp, werr := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: uuid.New().String()})
+	require.NoError(t, werr)
+
+	projectName := "test-project" + uuid.New().String()
+	projectKey := uuid.New().String()[:project.MaxProjectKeyLength]
+	resp, err := api.PostProject(ctx, &apiv1.PostProjectRequest{
+		Name: projectName, WorkspaceId: wresp.Workspace.Id, Key: &projectKey,
+	})
+	require.NoError(t, err)
+
+	// Check that the project key is generated correctly.
+	err = db.Bun().NewSelect().
+		Column("key").
+		Table("projects").
+		Where("id = ?", resp.Project.Id).
+		Scan(ctx, &resp.Project.Key)
+	require.NoError(t, err)
+	require.Equal(t, projectKey, resp.Project.Key)
+}
+
+func TestCreateProjectWithDuplicateProjectKey(t *testing.T) {
+	api, _, ctx := setupAPITest(t, nil)
+	wresp, werr := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: uuid.New().String()})
+	require.NoError(t, werr)
+
+	projectName := "test-project" + uuid.New().String()
+	projectKey := uuid.New().String()[:project.MaxProjectKeyLength]
+	_, err := api.PostProject(ctx, &apiv1.PostProjectRequest{
+		Name: projectName, WorkspaceId: wresp.Workspace.Id, Key: &projectKey,
+	})
+	require.NoError(t, err)
+
+	_, err = api.PostProject(ctx, &apiv1.PostProjectRequest{
+		Name: projectName + "2", WorkspaceId: wresp.Workspace.Id, Key: &projectKey,
+	})
+	require.Error(t, err)
+	require.ErrorContains(t, err, fmt.Sprintf("project key %s is already in use", projectKey))
+}
+
+func TestCreateProjectWithDefaultKeyAndDuplicatePrefix(t *testing.T) {
+	api, _, ctx := setupAPITest(t, nil)
+	wresp, werr := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: uuid.New().String()})
+	require.NoError(t, werr)
+
+	projectName := uuid.New().String()
+	projectKeyPrefix := strings.ToUpper(projectName[:project.MaxProjectKeyPrefixLength])
+	resp1, err := api.PostProject(ctx, &apiv1.PostProjectRequest{
+		Name: projectName, WorkspaceId: wresp.Workspace.Id,
+	})
+	require.NoError(t, err)
+	require.Equal(t, projectKeyPrefix, resp1.Project.Key[:project.MaxProjectKeyPrefixLength])
+
+	resp2, err := api.PostProject(ctx, &apiv1.PostProjectRequest{
+		Name: projectName + "2", WorkspaceId: wresp.Workspace.Id,
+	})
+	require.NoError(t, err)
+	require.NoError(t, err)
+	require.Equal(t, projectKeyPrefix, resp2.Project.Key[:project.MaxProjectKeyPrefixLength])
+}
+
+func TestConcurrentProjectKeyGenerationAttempts(t *testing.T) {
+	api, _, ctx := setupAPITest(t, nil)
+	wresp, werr := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: uuid.New().String()})
+	require.NoError(t, werr)
+	for x := 0; x < 20; x++ {
+		errgrp := errgroupx.WithContext(ctx)
+		for i := 0; i < 20; i++ {
+			projectName := "test-project" + uuid.New().String()
+			errgrp.Go(func(context.Context) error {
+				_, err := api.PostProject(ctx, &apiv1.PostProjectRequest{
+					Name: projectName, WorkspaceId: wresp.Workspace.Id,
+				})
+				require.NoError(t, err)
+				return err
+			})
+		}
+		require.NoError(t, errgrp.Wait())
+		t.Cleanup(func() {
+			_, err := db.Bun().NewDelete().Table("projects").Where("workspace_id = ?", wresp.Workspace.Id).Exec(ctx)
+			require.NoError(t, err)
+			_, err = db.Bun().NewDelete().Table("workspaces").Where("id = ?", wresp.Workspace.Id).Exec(ctx)
+			require.NoError(t, err)
+		})
+	}
+}
+
+func TestPatchProject(t *testing.T) {
+	api, _, ctx := setupAPITest(t, nil)
+	wresp, werr := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: uuid.New().String()})
+	require.NoError(t, werr)
+
+	projectName := "test-project" + uuid.New().String()
+	resp, err := api.PostProject(ctx, &apiv1.PostProjectRequest{
+		Name: projectName, WorkspaceId: wresp.Workspace.Id,
+	})
+	require.NoError(t, err)
+
+	newName := uuid.New().String()
+	newDescription := uuid.New().String()
+	newKey := uuid.New().String()[:project.MaxProjectKeyLength]
+	_, err = api.PatchProject(ctx, &apiv1.PatchProjectRequest{
+		Id: resp.Project.Id,
+		Project: &projectv1.PatchProject{
+			Name:        wrapperspb.String(newName),
+			Description: wrapperspb.String(newDescription),
+			Key:         wrapperspb.String(newKey),
+		},
+	})
+	require.NoError(t, err)
+
+	// Check that the project was updated correctly.
+	var project model.Project
+	err = db.Bun().NewSelect().
+		Model(&project).
+		Where("id = ?", resp.Project.Id).
+		Scan(ctx)
+	require.NoError(t, err)
+	require.Equal(t, newName, project.Name)
+	require.Equal(t, newDescription, project.Description)
+	require.Equal(t, strings.ToUpper(newKey), project.Key)
+}
+
+func TestPatchProjectWithDuplicateProjectKey(t *testing.T) {
+	api, _, ctx := setupAPITest(t, nil)
+	wresp, werr := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: uuid.New().String()})
+	require.NoError(t, werr)
+
+	projectName := "test-project" + uuid.New().String()
+	resp1, err := api.PostProject(ctx, &apiv1.PostProjectRequest{
+		Name: projectName, WorkspaceId: wresp.Workspace.Id,
+	})
+	require.NoError(t, err)
+
+	projectName = "test-project" + uuid.New().String()
+	resp2, err := api.PostProject(ctx, &apiv1.PostProjectRequest{
+		Name: projectName, WorkspaceId: wresp.Workspace.Id,
+	})
+	require.NoError(t, err)
+
+	_, err = api.PatchProject(ctx, &apiv1.PatchProjectRequest{
+		Id: resp2.Project.Id,
+		Project: &projectv1.PatchProject{
+			Key: wrapperspb.String(resp1.Project.Key),
+		},
+	})
+	require.Error(t, err)
+	require.Equal(t, status.Errorf(codes.AlreadyExists, "project key %s is already in use", resp1.Project.Key), err)
+}
+
+func TestPatchProjectWithConcurrent(t *testing.T) {
+	api, _, ctx := setupAPITest(t, nil)
+	wresp, werr := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: uuid.New().String()})
+	require.NoError(t, werr)
+
+	projectName := "test-project" + uuid.New().String()
+	resp, err := api.PostProject(ctx, &apiv1.PostProjectRequest{
+		Name: projectName, WorkspaceId: wresp.Workspace.Id,
+	})
+	require.NoError(t, err)
+
+	newName := "new-name"
+	newDescription := "new-description"
+	errgrp := errgroupx.WithContext(ctx)
+	for i := 0; i < 20; i++ {
+		newKey := uuid.New().String()[:project.MaxProjectKeyLength]
+		errgrp.Go(func(context.Context) error {
+			_, err := api.PatchProject(ctx, &apiv1.PatchProjectRequest{
+				Id: resp.Project.Id,
+				Project: &projectv1.PatchProject{
+					Name:        wrapperspb.String(newName),
+					Description: wrapperspb.String(newDescription),
+					Key:         wrapperspb.String(newKey),
+				},
+			})
+			require.NoError(t, err)
+			return err
+		})
+	}
+	require.NoError(t, errgrp.Wait())
 }

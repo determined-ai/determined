@@ -415,8 +415,8 @@ type summaryMetrics struct {
 func TestSummaryMetricsInsert(t *testing.T) {
 	ctx := context.Background()
 	require.NoError(t, etc.SetRootPath(RootFromDB))
-	db, close := MustResolveTestPostgres(t)
-	defer close()
+	db, closeDB := MustResolveTestPostgres(t)
+	defer closeDB()
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 	trialIDs, expectedTrain, expectedVal := generateSummaryMetricsTestCases(ctx, t, db, false)
 
@@ -428,8 +428,8 @@ func TestSummaryMetricsInsert(t *testing.T) {
 func TestSummaryMetricsInsertRollback(t *testing.T) {
 	ctx := context.Background()
 	require.NoError(t, etc.SetRootPath(RootFromDB))
-	db, close := MustResolveTestPostgres(t)
-	defer close()
+	db, closeDB := MustResolveTestPostgres(t)
+	defer closeDB()
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 	trialIDs, expectedTrain, expectedVal := generateSummaryMetricsTestCases(ctx, t, db, true)
 
@@ -441,8 +441,8 @@ func TestSummaryMetricsInsertRollback(t *testing.T) {
 func TestEpochMetricGroups(t *testing.T) {
 	ctx := context.Background()
 	require.NoError(t, etc.SetRootPath(RootFromDB))
-	db, close := MustResolveTestPostgres(t)
-	defer close()
+	db, closeDB := MustResolveTestPostgres(t)
+	defer closeDB()
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 
 	user := RequireMockUser(t, db)
@@ -566,8 +566,8 @@ func TestMetricMergeUtil(t *testing.T) {
 func TestMetricMerge(t *testing.T) {
 	ctx := context.Background()
 	require.NoError(t, etc.SetRootPath(RootFromDB))
-	db, close := MustResolveTestPostgres(t)
-	defer close()
+	db, closeDB := MustResolveTestPostgres(t)
+	defer closeDB()
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 	mGroup := model.TrainingMetricGroup
 	metricGroup := mGroup.ToString()
@@ -637,8 +637,8 @@ func TestGetAllMetrics(t *testing.T) {
 	// will be returned when you ask for a blank MetricGroup ("")
 	ctx := context.Background()
 	require.NoError(t, etc.SetRootPath(RootFromDB))
-	db, close := MustResolveTestPostgres(t)
-	defer close()
+	db, closeDB := MustResolveTestPostgres(t)
+	defer closeDB()
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 
 	user := RequireMockUser(t, db)
@@ -693,8 +693,8 @@ func TestGetAllMetrics(t *testing.T) {
 func TestMetricMergeFail(t *testing.T) {
 	ctx := context.Background()
 	require.NoError(t, etc.SetRootPath(RootFromDB))
-	db, close := MustResolveTestPostgres(t)
-	defer close()
+	db, closeDB := MustResolveTestPostgres(t)
+	defer closeDB()
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 	mGroup := model.TrainingMetricGroup
 
@@ -739,8 +739,8 @@ func TestMetricMergeFail(t *testing.T) {
 func TestLatestMetricID(t *testing.T) {
 	ctx := context.Background()
 	require.NoError(t, etc.SetRootPath(RootFromDB))
-	db, close := MustResolveTestPostgres(t)
-	defer close()
+	db, closeDB := MustResolveTestPostgres(t)
+	defer closeDB()
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 
 	user := RequireMockUser(t, db)
@@ -789,8 +789,8 @@ func TestLatestMetricID(t *testing.T) {
 func TestTrialByTaskID(t *testing.T) {
 	ctx := context.Background()
 	require.NoError(t, etc.SetRootPath(RootFromDB))
-	db, close := MustResolveTestPostgres(t)
-	defer close()
+	db, closeDB := MustResolveTestPostgres(t)
+	defer closeDB()
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 
 	user := RequireMockUser(t, db)
@@ -811,8 +811,8 @@ func TestTrialByTaskID(t *testing.T) {
 func TestUpsertTrialByExternalIDTx(t *testing.T) {
 	ctx := context.Background()
 	require.NoError(t, etc.SetRootPath(RootFromDB))
-	db, close := MustResolveTestPostgres(t)
-	defer close()
+	db, closeDB := MustResolveTestPostgres(t)
+	defer closeDB()
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 
 	user := RequireMockUser(t, db)
@@ -851,8 +851,8 @@ func TestUpsertTrialByExternalIDTx(t *testing.T) {
 func TestExperimentsProjectID(t *testing.T) {
 	ctx := context.Background()
 	require.NoError(t, etc.SetRootPath(RootFromDB))
-	db, close := MustResolveTestPostgres(t)
-	defer close()
+	db, closeDB := MustResolveTestPostgres(t)
+	defer closeDB()
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 
 	trial := &model.Trial{
@@ -878,8 +878,8 @@ func TestExperimentsProjectID(t *testing.T) {
 func TestProtoGetTrial(t *testing.T) {
 	ctx := context.Background()
 	require.NoError(t, etc.SetRootPath(RootFromDB))
-	db, close := MustResolveTestPostgres(t)
-	defer close()
+	db, closeDB := MustResolveTestPostgres(t)
+	defer closeDB()
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 
 	exp, activeConfig := model.ExperimentModel()
@@ -918,7 +918,7 @@ func TestProtoGetTrial(t *testing.T) {
 		1,
 	)
 	require.NoError(t, err, "failed to query trial")
-	require.Equal(t, trResp.WallClockTime, float64(3), "wall clock time is wrong")
+	require.InEpsilon(t, float64(3), trResp.WallClockTime, 0.01, "wall clock time is wrong")
 }
 
 // Covers an issue where checkpoint_view returned multiple records per checkpoint
@@ -929,8 +929,8 @@ func TestProtoGetTrial(t *testing.T) {
 func TestAddValidationMetricsDupeCheckpoints(t *testing.T) {
 	ctx := context.Background()
 	require.NoError(t, etc.SetRootPath(RootFromDB))
-	db, close := MustResolveTestPostgres(t)
-	defer close()
+	db, closeDB := MustResolveTestPostgres(t)
+	defer closeDB()
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 
 	exp, activeConfig := model.ExperimentModel()
@@ -994,8 +994,8 @@ func TestAddValidationMetricsDupeCheckpoints(t *testing.T) {
 	checkpoints := []*checkpointv1.Checkpoint{}
 	require.NoError(t, db.QueryProto("get_checkpoints_for_experiment", &checkpoints, exp.ID))
 	require.Len(t, checkpoints, 1)
-	require.Equal(t, 10.0, checkpoints[0].Training.TrainingMetrics.AvgMetrics.AsMap()["loss"])
-	require.Equal(t, 50.0, checkpoints[0].Training.ValidationMetrics.AvgMetrics.AsMap()["loss"])
+	require.InEpsilon(t, 10.0, checkpoints[0].Training.TrainingMetrics.AvgMetrics.AsMap()["loss"], 0.01)
+	require.InEpsilon(t, 50.0, checkpoints[0].Training.ValidationMetrics.AvgMetrics.AsMap()["loss"], 0.01)
 
 	// Dummy metrics still happen if no other results at given total_batches.
 	checkpoint2UUID := uuid.New()
@@ -1023,18 +1023,18 @@ func TestAddValidationMetricsDupeCheckpoints(t *testing.T) {
 		return checkpoints[i].Uuid != checkpoint2UUID.String() // Have second checkpoint later.
 	})
 
-	require.Equal(t, 10.0, checkpoints[0].Training.TrainingMetrics.AvgMetrics.AsMap()["loss"])
-	require.Equal(t, 50.0, checkpoints[0].Training.ValidationMetrics.AvgMetrics.AsMap()["loss"])
+	require.InEpsilon(t, 10.0, checkpoints[0].Training.TrainingMetrics.AvgMetrics.AsMap()["loss"], 0.01)
+	require.InEpsilon(t, 50.0, checkpoints[0].Training.ValidationMetrics.AvgMetrics.AsMap()["loss"], 0.01)
 
-	require.Equal(t, nil, checkpoints[1].Training.TrainingMetrics.AvgMetrics.AsMap()["loss"])
-	require.Equal(t, 1.5, checkpoints[1].Training.ValidationMetrics.AvgMetrics.AsMap()["loss"])
+	require.Nil(t, checkpoints[1].Training.TrainingMetrics.AvgMetrics.AsMap()["loss"])
+	require.InEpsilon(t, 1.5, checkpoints[1].Training.ValidationMetrics.AvgMetrics.AsMap()["loss"], 0.01)
 }
 
 func TestBatchesProcessedNRollbacks(t *testing.T) {
 	ctx := context.Background()
 	require.NoError(t, etc.SetRootPath(RootFromDB))
-	db, close := MustResolveTestPostgres(t)
-	defer close()
+	db, closeDB := MustResolveTestPostgres(t)
+	defer closeDB()
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 
 	exp, activeConfig := model.ExperimentModel()
@@ -1049,7 +1049,7 @@ func TestBatchesProcessedNRollbacks(t *testing.T) {
 
 	dbTr, err := TrialByID(ctx, tr.ID)
 	require.NoError(t, err)
-	require.Equal(t, 0, dbTr.TotalBatches)
+	require.Zero(t, dbTr.TotalBatches)
 
 	a := &model.Allocation{
 		AllocationID: model.AllocationID(fmt.Sprintf("%s-%d", task.TaskID, 0)),
@@ -1153,14 +1153,14 @@ func TestBatchesProcessedNRollbacks(t *testing.T) {
 	metricGroup := "generic-golabi"
 	returnedMetrics, err := GetMetrics(ctx, tr.ID, 0, 10, &metricGroup)
 	require.NoError(t, err)
-	require.Equal(t, 1, len(returnedMetrics))
+	require.Len(t, returnedMetrics, 1)
 }
 
 func TestUpdateTrialRunnerMetadata(t *testing.T) {
 	ctx := context.Background()
 	require.NoError(t, etc.SetRootPath(RootFromDB))
-	db, close := MustResolveTestPostgres(t)
-	defer close()
+	db, closeDB := MustResolveTestPostgres(t)
+	defer closeDB()
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 
 	user := RequireMockUser(t, db)
@@ -1184,8 +1184,8 @@ func TestUpdateTrialRunnerMetadata(t *testing.T) {
 func TestGenericMetricsIO(t *testing.T) {
 	ctx := context.Background()
 	require.NoError(t, etc.SetRootPath(RootFromDB))
-	db, close := MustResolveTestPostgres(t)
-	defer close()
+	db, closeDB := MustResolveTestPostgres(t)
+	defer closeDB()
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 	exp, activeConfig := model.ExperimentModel()
 	require.NoError(t, db.AddExperiment(exp, []byte{}, activeConfig))
@@ -1200,7 +1200,7 @@ func TestGenericMetricsIO(t *testing.T) {
 
 	dbTr, err := TrialByID(ctx, tr.ID)
 	require.NoError(t, err)
-	require.Equal(t, 0, dbTr.TotalBatches)
+	require.Zero(t, dbTr.TotalBatches)
 
 	a := &model.Allocation{
 		AllocationID: model.AllocationID(fmt.Sprintf("%s-%d", task.TaskID, 0)),
@@ -1266,7 +1266,7 @@ ORDER BY name ASC`, "inference")
 	summaryRows := []*summaryMetrics{}
 	err = Bun().NewRaw(query, tr.ID).Scan(ctx, &summaryRows)
 	require.NoError(t, err)
-	require.Equal(t, 4, len(summaryRows), summaryRows)
+	require.Len(t, summaryRows, 4, summaryRows)
 	require.Equal(t, summaryMetrics{
 		Name:  "aloss",
 		Max:   20,
@@ -1312,8 +1312,8 @@ ORDER BY name ASC`, "inference")
 func TestConcurrentMetricUpdate(t *testing.T) {
 	ctx := context.Background()
 	require.NoError(t, etc.SetRootPath(RootFromDB))
-	db, close := MustResolveTestPostgres(t)
-	defer close()
+	db, closeDB := MustResolveTestPostgres(t)
+	defer closeDB()
 	MustMigrateTestPostgres(t, db, MigrationsFromDB)
 	exp, activeConfig := model.ExperimentModel()
 	require.NoError(t, db.AddExperiment(exp, []byte{}, activeConfig))
@@ -1337,7 +1337,7 @@ func TestConcurrentMetricUpdate(t *testing.T) {
 
 		dbTr, err := TrialByID(ctx, tr.ID)
 		require.NoError(t, err)
-		require.Equal(t, 0, dbTr.TotalBatches)
+		require.Zero(t, dbTr.TotalBatches)
 		return &tr
 	}
 

@@ -428,7 +428,7 @@ func TestGetCheckpointNaNInfinityValues(t *testing.T) {
 			if testVars.metric == "NaN" {
 				require.True(t, math.IsNaN(*resp.Checkpoint.Training.SearcherMetric))
 			} else {
-				require.Equal(t, testVars.metricValue, *resp.Checkpoint.Training.SearcherMetric)
+				require.InEpsilon(t, testVars.metricValue, *resp.Checkpoint.Training.SearcherMetric, 0.01)
 			}
 		})
 	}
@@ -532,8 +532,8 @@ func TestPatchCheckpoint(t *testing.T) {
 	require.Equal(t, 1, actualSize) // Size and resources don't get cleared.
 	require.Equal(t, resources, actualResources)
 	require.Equal(t, model.DeletedState, actualState)
-	require.Equal(t, 0, getTrialSizeFromUUID(ctx, t, uuid))
-	require.Equal(t, 0, getExperimentSizeFromUUID(ctx, t, uuid))
+	require.Zero(t, getTrialSizeFromUUID(ctx, t, uuid))
+	require.Zero(t, getExperimentSizeFromUUID(ctx, t, uuid))
 
 	// Test metadata.json special handling.
 	startingResources = map[string]int64{

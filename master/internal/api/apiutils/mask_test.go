@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/stretchr/testify/require"
-	field_mask "google.golang.org/genproto/protobuf/field_mask"
+	"google.golang.org/genproto/protobuf/field_mask"
 )
 
 func TestFieldInSet(t *testing.T) {

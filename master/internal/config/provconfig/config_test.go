@@ -7,6 +7,7 @@ import (
 	"time"
 
 	"github.com/ghodss/yaml"
+	"github.com/stretchr/testify/require"
 	"google.golang.org/api/compute/v1"
 	"gotest.tools/assert"
 
@@ -21,7 +22,7 @@ func TestProvisionerConfigMissingFields(t *testing.T) {
 	err := json.Unmarshal([]byte(`{}`), &config)
 	assert.NilError(t, err)
 	err = check.Validate(&config)
-	assert.ErrorContains(t, err, "must configure aws or gcp or hpc cluster")
+	require.ErrorContains(t, err, "must configure aws or gcp or hpc cluster")
 	expected := Config{
 		MaxIdleAgentPeriod:     model.Duration(20 * time.Minute),
 		MaxAgentStartingPeriod: model.Duration(20 * time.Minute),

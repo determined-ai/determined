@@ -4,11 +4,7 @@ import { BaseComponent, NamedComponent } from 'e2e/models/BaseComponent';
 import { Select } from 'e2e/models/hew/Select';
 
 /**
- * Returns the representation of a Table Pagination from Ant.
- * This constructor represents the Table in antd/es/pagination/index.d.ts.
- * @param {object} obj
- * @param {CanBeParent} obj.parent - The parent used to locate this Pagination
- * @param {string} obj.selector - Used as a selector uesd to locate this object
+ * Represents the Pagination component from antd/es/pagination/index.d.ts
  */
 export class Pagination extends NamedComponent {
   readonly defaultSelector = '.ant-pagination';
@@ -34,11 +30,7 @@ export class Pagination extends NamedComponent {
 }
 
 /**
- * Returns the representation of a Table Pagination.
- * This constructor represents the Table in src/components/Table/Table.tsx.
- * @param {object} obj
- * @param {parentTypes} obj.parent - The parent used to locate this Pagination
- * @param {string} obj.selector - Used as a selector uesd to locate this object
+ * Represents the Select in the Pagination component
  */
 class PaginationSelect extends Select {
   readonly perPage10 = this.menuItem('10 / page');

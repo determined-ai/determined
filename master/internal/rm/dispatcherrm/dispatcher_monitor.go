@@ -14,13 +14,12 @@ import (
 
 	"github.com/ghodss/yaml"
 	"github.com/sirupsen/logrus"
+	"github.hpe.com/hpe/hpc-ard-launcher-go/launcher"
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/determined-ai/determined/master/pkg/mathx"
 	"github.com/determined-ai/determined/master/pkg/syncx/mapx"
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
-
-	launcher "github.hpe.com/hpe/hpc-ard-launcher-go/launcher"
 )
 
 //nolint:lll

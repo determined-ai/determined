@@ -11,6 +11,7 @@ class Project:
 
     Attributes:
         id: (int) The ID of the project.
+        key: (Mutable, str) The key of the project.
         archived: (Mutable, bool) True if experiment is archived, else false.
         description: (Mutable, str) The description of the project.
         n_active_experiments: (int) The number of active experiments in the project.
@@ -45,6 +46,7 @@ class Project:
         self.notes: Optional[List[Dict[str, str]]] = None
         self.workspace_id: Optional[int] = None
         self.username: Optional[str] = None
+        self.key: Optional[str] = None
 
     @classmethod
     def _from_bindings(
@@ -64,6 +66,7 @@ class Project:
         self.notes = [note.to_json() for note in project_bindings.notes]
         self.workspace_id = project_bindings.workspaceId
         self.username = project_bindings.username
+        self.key = project_bindings.key
 
     def reload(self) -> None:
         resp = bindings.get_GetProject(session=self._session, id=self.id)
@@ -92,6 +95,17 @@ class Project:
         resp = bindings.patch_PatchProject(session=self._session, id=self.id, body=patch_body)
 
         self.description = resp.project.description
+
+    def set_key(self, key: str) -> None:
+        """Set the project's key locally and on master.
+
+        Args:
+            key: The new key to set.
+        """
+        patch_body = bindings.v1PatchProject(key=key)
+        resp = bindings.patch_PatchProject(session=self._session, id=self.id, body=patch_body)
+
+        self.key = resp.project.key
 
     def set_name(self, name: str) -> None:
         """Set the project's name locally and on master.

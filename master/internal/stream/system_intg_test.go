@@ -45,10 +45,10 @@ func TestMockSocket(t *testing.T) {
 	actualMsg := StartupMsg{}
 	err := socket.ReadJSON(&actualMsg)
 	require.NoError(t, err)
-	require.Equal(t, actualMsg.Known, expectedMsg.Known)
-	require.Equal(t, actualMsg.Subscribe, expectedMsg.Subscribe)
-	require.Equal(t, actualMsg.SyncID, expectedMsg.SyncID)
-	require.Equal(t, 0, len(socket.outbound))
+	require.Equal(t, expectedMsg.Known, actualMsg.Known)
+	require.Equal(t, expectedMsg.Subscribe, actualMsg.Subscribe)
+	require.Equal(t, expectedMsg.SyncID, actualMsg.SyncID)
+	require.Zero(t, len(socket.outbound))
 
 	// test write
 	err = socket.Write("test")
@@ -67,7 +67,7 @@ func TestMockSocket(t *testing.T) {
 	var msgs []string
 	socket.ReadUntilFound(t, &msgs, []string{"final"})
 	require.NoError(t, err)
-	require.Equal(t, 2, len(msgs))
+	require.Len(t, msgs, 2)
 	require.Equal(t, "test", msgs[0])
 	require.Equal(t, "final", msgs[1])
 }

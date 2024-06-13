@@ -72,7 +72,7 @@ func TestAgentStatePersistence(t *testing.T) {
 		ContainersReattached: []aproto.ContainerReattachAck{},
 	}
 	state.agentStarted(started)
-	require.Equal(t, 2, len(state.getSlotsSummary("/myagent")))
+	require.Len(t, state.getSlotsSummary("/myagent"), 2)
 
 	// Run through some container states.
 	tID := model.TaskID(uuid.NewString())
@@ -156,14 +156,14 @@ func TestAgentStatePersistence(t *testing.T) {
 	// And test restoring the existence of containers.
 	err = restored.restoreContainersField()
 	require.NoError(t, err)
-	require.Equal(t, 1, len(restored.containerAllocation))
+	require.Len(t, restored.containerAllocation, 1)
 
 	// And it is correctly kept if it is recovered.
 	err = state.clearUnlessRecovered(map[cproto.ID]aproto.ContainerReattachAck{
 		cID: {Container: container},
 	})
 	require.NoError(t, err)
-	require.Equal(t, 1, len(restored.containerAllocation))
+	require.Len(t, restored.containerAllocation, 1)
 
 	// Containers removed after exit.
 	state.containerStateChanged(aproto.ContainerStateChanged{
@@ -362,14 +362,14 @@ func TestSlotStates(t *testing.T) {
 		drain:   ptrs.Ptr(true),
 	})
 	require.NoError(t, err)
-	require.Equal(t, true, slot.Draining)
-	require.Equal(t, false, slot.Enabled)
+	require.True(t, slot.Draining)
+	require.False(t, slot.Enabled)
 	require.Equal(t, 2, state.numSlots())
 
 	slots = state.patchAllSlotsState(patchAllSlotsState{
 		enabled: ptrs.Ptr(true),
 	})
-	require.Equal(t, 2, len(slots))
+	require.Len(t, slots, 2)
 	for _, s := range slots {
 		require.True(t, s.Enabled)
 	}
@@ -380,10 +380,10 @@ func TestSlotStates(t *testing.T) {
 	require.Equal(t, 1, state.numSlots())
 
 	state.Devices[devices[0]] = nil
-	require.Equal(t, 0, state.numSlots())
+	require.Zero(t, state.numSlots())
 
 	state.disable(false)
-	require.Equal(t, 0, state.numSlots())
+	require.Zero(t, state.numSlots())
 
 	state.enable()
 	require.Equal(t, 2, state.numSlots())

@@ -168,3 +168,49 @@ You can start :ref:`notebooks` from the WebUI.
 ***********************
 
 You can launch TensorBoard from the WebUI. To learn how, visit :ref:`tensorboards`.
+
+*****************************
+ Displaying a Banner Message
+*****************************
+
+Administrators can create a banner message to alert users about important information, such as
+maintenance, setting a password, or other announcements. This message will be displayed on the
+header of every page in the WebUI for the configured duration. Commands include ``help``, ``clear``,
+``get``, and ``set``.
+
+**Prerequisites**
+
+-  Install the :ref:`CLI <cli-ug>`.
+
+**Prepare the Message**
+
+Prepare the maintenance message using the CLI command, ``det master cluster-message set``.
+
+-  For example, the following command creates a maintenance message with a start and end date (which
+   must be expressed in UTC):
+
+      .. code:: bash
+
+         det master cluster-message set --message "Scheduled maintenance on Dec 1st from 10pm CST to 11pm CST." --start "2024-12-02-04:00:00Z" --end "2024-12-02-05:00:00Z"
+
+-  You can also express the end date as a duration:
+
+      .. code:: bash
+
+         det master cluster-message set --message "Please change your password by Jan 1, 2025" --duration 14d
+
+**Verify the Message**
+
+Verify the message with the following command:
+
+   .. code:: bash
+
+      det master cluster-message get
+
+**Clear the Message**
+
+Clear the message with the following command:
+
+   .. code:: bash
+
+      det master cluster-message clear

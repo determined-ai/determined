@@ -90,7 +90,7 @@ func TestAuditLogMiddleware(t *testing.T) {
 		defer resp.Body.Close() //nolint:errcheck
 	}
 	// Then webui static files are ignored.
-	require.Len(t, logs.inner, 0)
+	require.Empty(t, logs.inner)
 
 	// When making a GET request to some resource.
 	resp, err = http.Get("http://" + url + "/ok")
@@ -122,5 +122,5 @@ func TestAuditLogMiddleware(t *testing.T) {
 	require.Len(t, logs.inner, 3)
 	require.Equal(t, logrus.InfoLevel, logs.inner[2].Level)
 	require.Contains(t, logs.inner[2].Message, "/notok")
-	require.Equal(t, logs.inner[2].Data["unauthorized"], true)
+	require.Equal(t, true, logs.inner[2].Data["unauthorized"])
 }

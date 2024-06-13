@@ -103,9 +103,9 @@ func ResolveTestPostgres() (*PgDB, func(), error) {
 
 // MustResolveTestPostgres is the same as ResolveTestPostgres but with panics on errors.
 func MustResolveTestPostgres(t *testing.T) (*PgDB, func()) {
-	pgDB, close, err := ResolveTestPostgres()
+	pgDB, closeDB, err := ResolveTestPostgres()
 	require.NoError(t, err, "failed to connect to postgres")
-	return pgDB, close
+	return pgDB, closeDB
 }
 
 // ResolveNewPostgresDatabase returns a connection to a randomly-named, newly-created database, and
@@ -113,7 +113,7 @@ func MustResolveTestPostgres(t *testing.T) (*PgDB, func()) {
 func ResolveNewPostgresDatabase() (*PgDB, func(), error) {
 	baseURL := os.Getenv("DET_INTEGRATION_POSTGRES_URL")
 	if baseURL == "" {
-		return nil, nil, errors.New("no DET_INTEGRATION_POSTGRES_URL detected")
+		return nil, nil, fmt.Errorf("no DET_INTEGRATION_POSTGRES_URL detected")
 	}
 
 	url, err := url.Parse(baseURL)
@@ -211,9 +211,9 @@ func MigrateTestPostgres(db *PgDB, migrationsPath string, actions ...string) err
 
 // MustSetupTestPostgres returns a ready to use test postgres connection.
 func MustSetupTestPostgres(t *testing.T) (*PgDB, func()) {
-	pgDB, close := MustResolveTestPostgres(t)
+	pgDB, closeDB := MustResolveTestPostgres(t)
 	MustMigrateTestPostgres(t, pgDB, MigrationsFromDB)
-	return pgDB, close
+	return pgDB, closeDB
 }
 
 // RequireMockJob returns a stub job.

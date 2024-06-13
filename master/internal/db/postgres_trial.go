@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"math"
 	"regexp"
@@ -151,13 +152,20 @@ func BuildRunHParams(runID int, projectID int, hparams map[string]any,
 		case map[string]any:
 			nestedHParams, nestedProjHparams, err := BuildRunHParams(runID, projectID, v.(map[string]any), hpName+".")
 			if err != nil {
-				return hparamsModel, projHparamsModel, fmt.Errorf("failed to get nested hyperperameters for %s", hpName)
+				return hparamsModel, projHparamsModel, fmt.Errorf("failed to get nested hyperperameters for %s: %w", hpName, err)
 			}
 			hparamsModel = append(hparamsModel, nestedHParams...)
 			projHparamsModel = append(projHparamsModel, nestedProjHparams...)
 			continue
 		default:
-			return hparamsModel, projHparamsModel, fmt.Errorf("cannot assign hyperparameter %s, received type %T", hpName, val)
+			valBytes, err := json.Marshal(v)
+			if err != nil {
+				return hparamsModel, projHparamsModel,
+					fmt.Errorf("cannot assign hyperparameter %s, failed to encode type %T: %w", hpName, val, err)
+			}
+			valString := string(valBytes)
+			hp.TextVal = &valString
+			projHp.Type = MetricTypeString
 		}
 		hparamsModel = append(hparamsModel, hp)
 		projHparamsModel = append(projHparamsModel, projHp)
@@ -345,8 +353,7 @@ func (db *PgDB) UpdateTrialFields(id int, newRunnerMetadata *trialv1.TrialRunner
 }
 
 // TrialRunIDAndRestarts returns the run id and restart count for a trial.
-func (db *PgDB) TrialRunIDAndRestarts(trialID int) (int, int, error) {
-	var runID, restart int
+func (db *PgDB) TrialRunIDAndRestarts(trialID int) (runID int, restart int, err error) {
 	if err := db.sql.QueryRowx(`
 SELECT run_id, restarts
 FROM trials

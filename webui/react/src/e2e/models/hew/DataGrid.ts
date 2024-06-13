@@ -28,13 +28,7 @@ export type TableArgs<
 };
 
 /**
- * Returns a representation of the DataGrid component.
- * This constructor represents the contents in hew/src/kit/DataGrid.tsx.
- * @param {object} obj
- * @param {CanBeParent} obj.parent - The parent used to locate this DataGrid
- * @param {string} [obj.selector] - Used instead of `defaultSelector`
- * @param {RowType} [obj.rowType] - Value for the RowType used to instanciate rows
- * @param {HeadRowType} [obj.headRowType] - Value of the HeadRowType used to instanciate the head row
+ * Represents the DataGrid component in hew/src/kit/DataGrid.tsx
  */
 export class DataGrid<
   RowType extends Row<HeadRowType>,
@@ -42,6 +36,13 @@ export class DataGrid<
 > extends NamedComponent {
   static readonly columnIndexAttribute = 'aria-colindex';
   readonly defaultSelector = '[class^="DataGrid_base"]';
+
+  /**
+   * Constructs a DataGrid
+   * @param {object} args
+   * @param {RowType} args.rowType - Value for the RowType used to instanciate rows
+   * @param {HeadRowType} args.headRowType - Value of the HeadRowType used to instanciate the head row
+   */
   constructor(args: TableArgs<RowType, HeadRowType>) {
     super(args);
     this.#rowType = args.rowType;
@@ -270,16 +271,19 @@ export class DataGrid<
 }
 
 /**
- * Returns the representation of a Table Row.
- * This constructor represents the Table in hew/src/kit/DataGrid.tsx.
- * @param {object} obj
- * @param {CanBeParent} obj.parent - The parent used to locate this Row
- * @param {string} obj.selector - Used as a selector uesd to locate this object
- * @param {DataGrid<RowType, HeadRowType>} [obj.parentTable] - Reference to the original table
+ * Represents a row from the DataGrid component
  */
 export class Row<HeadRowType extends HeadRow<Row<HeadRowType>>> extends NamedComponent {
   readonly defaultSelector = 'tr';
   readonly indexAttribute = 'aria-rowindex';
+
+  /**
+   * Constructs a Row
+   * @param {object} obj
+   * @param {CanBeParent} obj.parent - The parent used to locate this Row
+   * @param {string} obj.selector - Used as a selector uesd to locate this object
+   * @param {DataGrid<RowType, HeadRowType>} [obj.parentTable] - Reference to the original table
+   */
   constructor(args: RowArgs<Row<HeadRowType>, HeadRowType>) {
     super(args);
     this.parentTable = args.parentTable;
@@ -363,15 +367,18 @@ export class Row<HeadRowType extends HeadRow<Row<HeadRowType>>> extends NamedCom
 }
 
 /**
- * Returns the representation of a Table HeadRow.
- * This constructor represents the Table in hew/src/kit/DataGrid.tsx.
- * @param {object} obj
- * @param {CanBeParent} obj.parent - The parent used to locate this HeadRow
- * @param {string} obj.selector - Used as a selector uesd to locate this object
+ * Represents the head row from the DataGrid component
  */
 export class HeadRow<RowType extends Row<HeadRow<RowType>>> extends NamedComponent {
   readonly defaultSelector = 'tr';
   readonly parentTable: DataGrid<RowType, HeadRow<RowType>>;
+
+  /**
+   * Constructs a HeadRow
+   * @param {object} obj
+   * @param {CanBeParent} obj.parent - The parent used to locate this HeadRow
+   * @param {string} obj.selector - Used as a selector uesd to locate this object
+   */
   constructor(args: HeadRowArgs<RowType, HeadRow<RowType>>) {
     super(args);
     this.parentTable = args.parentTable;
@@ -465,15 +472,7 @@ export class HeadRow<RowType extends Row<HeadRow<RowType>>> extends NamedCompone
 }
 
 /**
- * Returns the representation of the grid's Header Dropdown.
- * Until the dropdown component supports test ids, this model will match any open dropdown.
- * This constructor represents the contents in hew/src/kit/DataGrid.tsx.
- *
- * The dropdown can be opened by calling the open method.
- * @param {object} obj
- * @param {BasePage} obj.root - root of the page
- * @param {ComponentBasics} [obj.childNode] - optional if `openMethod` is present. It's the element we click on to open the dropdown.
- * @param {Function} [obj.openMethod] - optional if `childNode` is present. It's the method to open the dropdown.
+ * Represents the HeaderDropdown from the DataGrid component
  */
 class HeaderDropdown extends DropdownMenu {
   readonly select5 = this.menuItem('select-5');

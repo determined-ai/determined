@@ -8,7 +8,7 @@ WITH pe AS (
 ),
 
 p AS (
-    UPDATE projects SET name = $2, description = $3
+    UPDATE projects SET name = $2, description = $3, key = $4
     WHERE projects.id = $1
     RETURNING projects . *
 ),
@@ -32,5 +32,6 @@ SELECT
     pe.num_experiments,
     pe.num_active_experiments,
     u.username,
-    p.user_id
+    p.user_id,
+    p.key
 FROM p, pe, u;
