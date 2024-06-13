@@ -62,17 +62,17 @@ def main():
         repo = git.Repo(os.getcwd(), search_parent_directories=True)
     except git.exc.InvalidGitRepositoryError as e:
         print("Invalid git repository: {}. Are you running this from a git repository?".format(e), file=sys.stderr)
-        sys.exit(-1)
+        raise
     except git.exc.NoSuchPathError as e:
         print("Path does not exist: {}.", file=sys.stderr)
-        sys.exit(-1)
+        raise
 
     # Validate commit.
     try:
         repo.rev_parse(args.commit)
     except git.exc.BadName as e:
-        print("Bad revision: {}.".format(e))
-        sys.exit(-1)
+        print("Bad revision: {}.".format(e), file=sys.stderr)
+        raise
 
     # git rev-list --tags --ancestry-path <commit>..HEAD
     comms_iter = repo.iter_commits("{}..HEAD".format(args.commit), ancestry_path=True, tags=True)
@@ -84,8 +84,8 @@ def main():
             commits.append(comm)
     except git.exc.GitCommandError as e:
         # rev_parse up above should catch these, but you never know.
-        print("Unable to list commits: {}. Is your commit ID correct?".format(e))
-        sys.exit(-1)
+        print("Unable to list commits: {}. Is your commit ID correct?".format(e), file=sys.stderr)
+        raise
 
     # Map SHA hash to tag.
     tag_refs = git.refs.tag.TagReference.list_items(repo)
@@ -135,7 +135,7 @@ def main():
                 json.dump(versions, fd, indent=4)
         except FileNotFoundError as e:
             print("File not found: {}. Do all parent directories exist?".format(e), file=sys.stderr)
-            sys.exit(-1)
+            raise
     else:
         print(json.dumps(versions, indent=4))
 
