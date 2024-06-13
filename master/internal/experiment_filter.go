@@ -195,33 +195,42 @@ func runHpToSQL(c string, filterColumnType *string, filterValue *interface{},
 	case empty:
 		queryString = fmt.Sprintf(`r.id NOT IN (SELECT run_id FROM run_hparams WHERE hparam='%s')`, runHparam)
 	case notEmpty:
-		queryString = fmt.Sprintf(`rhp.hparam='%s'`, runHparam)
+		queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM run_hparams WHERE hparam='%s')`, runHparam)
 	case contains:
 		queryArgs = append(queryArgs, queryValue)
 		if queryColumnType == projectv1.ColumnType_COLUMN_TYPE_NUMBER.String() {
-			queryString = fmt.Sprintf(`rhp.hparam='%s' AND rhp.number_val=%s)`, runHparam, "?")
+			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM run_hparams WHERE hparam='%s' AND number_val=%s)`,
+				runHparam, "?")
 		} else if queryColumnType == projectv1.ColumnType_COLUMN_TYPE_TEXT.String() {
-			queryString = fmt.Sprintf(`rhp.hparam='%s' AND rhp.text_val LIKE %s)`, runHparam, "?")
+			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM run_hparams WHERE hparam='%s' AND text_val LIKE %s)`,
+				runHparam, "?")
 		} else {
-			queryString = fmt.Sprintf(`rhp.hparam='%s' AND rhp.bool_val=%s)`, runHparam, "?")
+			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM run_hparams WHERE hparam='%s' AND bool_val=%s)`,
+				runHparam, "?")
 		}
 	case doesNotContain:
 		queryArgs = append(queryArgs, queryValue)
 		if queryColumnType == projectv1.ColumnType_COLUMN_TYPE_NUMBER.String() {
-			queryString = fmt.Sprintf(`rhp.hparam='%s' AND rhp.number_val!=%s)`, runHparam, "?")
+			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM run_hparams WHERE hparam='%s' AND number_val!=%s)`,
+				runHparam, "?")
 		} else if queryColumnType == projectv1.ColumnType_COLUMN_TYPE_TEXT.String() {
-			queryString = fmt.Sprintf(`rhp.hparam='%s' AND rhp.text_val NOT LIKE %s)`, runHparam, "?")
+			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM run_hparams WHERE hparam='%s' AND text_val NOT LIKE %s)`,
+				runHparam, "?")
 		} else {
-			queryString = fmt.Sprintf(`rhp.hparam='%s' AND rhp.bool_val!=%s)`, runHparam, "?")
+			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM run_hparams WHERE hparam='%s' AND bool_val!=%s)`,
+				runHparam, "?")
 		}
 	default:
 		queryArgs = append(queryArgs, bun.Safe(oSQL), queryValue)
 		if queryColumnType == projectv1.ColumnType_COLUMN_TYPE_NUMBER.String() {
-			queryString = fmt.Sprintf(`rhp.hparam='%s' AND rhp.number_val %s %s)`, runHparam, "?", "?")
+			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM run_hparams WHERE hparam='%s' AND number_val %s %s)`,
+				runHparam, "?", "?")
 		} else if queryColumnType == projectv1.ColumnType_COLUMN_TYPE_TEXT.String() {
-			queryString = fmt.Sprintf(`rhp.hparam='%s' AND rhp.text_val %s %s)`, runHparam, "?", "?")
+			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM run_hparams WHERE hparam='%s' AND text_val %s %s)`,
+				runHparam, "?", "?")
 		} else {
-			queryString = fmt.Sprintf(`rhp.hparam='%s' AND rhp.bool_val %s %s)`, runHparam, "?", "?")
+			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM run_hparams WHERE hparam='%s' AND bool_val %s %s)`,
+				runHparam, "?", "?")
 		}
 	}
 
