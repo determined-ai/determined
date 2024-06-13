@@ -69,7 +69,7 @@ Agent Resource Manager:
 -  AMD GPUs: Due to limited usage, we will limit supported accelerators to NVIDIA GPUs. If you have
    a use case requiring AMD GPU support with the Agent Resource Manager, please reach out to us via
    a `GitHub Issue <https://github.com/determined-ai/determined/issues>`__ or `community slack
-   <https://join.slack.com/t/determined-community/shared_invite/zt-1f4hj60z5-JMHb~wSr2xksLZVBN61g_Q>`__!
+   <https://determined-community.slack.com/join/shared_invite/zt-1f4hj60z5-JMHb~wSr2xksLZVBN61g_Q>`__!
    This does not impact Kubernetes or Slurm environments.
 
 Machine Architectures: PPC64/POWER builds across all environments are no longer supported.
