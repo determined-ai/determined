@@ -55,7 +55,7 @@ def main():
         # Include the default EXCLUDE_VERSIONS to reflect the historical
         # versions.json file.
         exclude_versions = args.exclude_versions.split(",")
-        EXCLUDE_VERSIONS.extend(exclude_versions)
+        exclude_versions.extend(EXCLUDE_VERSIONS)
 
     # Probably run this from inside the repo somewhere.
     try:
