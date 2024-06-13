@@ -8,9 +8,6 @@ import { repeatWithFallback } from 'e2e/utils/polling';
 import { saveTestUser } from 'e2e/utils/users';
 import { V1PostUserRequest } from 'services/api-ts-sdk/api';
 
-// creating users while running tests in parallel can cause the users table to refresh at unexpected times
-test.describe.configure({ mode: 'serial' });
-
 test.describe('User Management', () => {
   // One list of users per test session. This is to encourage a final teardown
   // call of the user fixture to deactivate all users created by each test.
@@ -37,16 +34,14 @@ test.describe('User Management', () => {
 
   test.describe('With User Teardown', () => {
     test.afterAll(async ({ backgroundApiUser }) => {
-      await backgroundApiUser.apiAuth.login();
       await test.step('Deactivate Users', async () => {
         for (const [id] of testUsers) {
           await backgroundApiUser.patchUser(id, { active: false });
         }
       });
-      await backgroundApiUser.apiAuth.dispose();
     });
 
-    test.describe('With Test User', () => {
+    test.describe('With a User for Each Test', () => {
       let testUser: V1PostUserRequest;
 
       test.beforeEach(async ({ user }) => {
@@ -86,20 +81,8 @@ test.describe('User Management', () => {
           await user.validateUser(testUser);
         });
       });
-    });
 
-    test.describe('With Test User', () => {
-      let testUser: V1PostUserRequest;
-
-      test.beforeAll(async ({ backgroundApiUser }) => {
-        await backgroundApiUser.apiAuth.login();
-        await test.step('Create User', async () => {
-          testUser = await backgroundApiUser.createUser(backgroundApiUser.newRandom());
-          saveTestUser(testUser, testUsers);
-        });
-      });
-
-      test('Deactivate and Reactivate', async ({ page, user, auth }) => {
+      test('Deactivate and Reactivate', async ({ page, user, auth, newAdmin }) => {
         // test does does three and a half logins, so we need to increase the timeout
         test.slow();
         const userManagementPage = new UserManagement(page);
@@ -130,7 +113,11 @@ test.describe('User Management', () => {
           // thinks we've already logged in, skipping the login automation.
           // We might need to find a way to be more explicit about the page state.
           await expect(page).toHaveURL(/login/);
-          await auth.login({ expectedURL: userManagementPage.url });
+          await auth.login({
+            expectedURL: userManagementPage.url,
+            password: newAdmin.password,
+            username: newAdmin.user?.username,
+          });
           testUser = await user.changeStatusUser(testUser, true);
           saveTestUser(testUser, testUsers);
         });
@@ -145,12 +132,11 @@ test.describe('User Management', () => {
       const usernamePrefix = 'test-user-pagination';
       test.beforeAll(async ({ backgroundApiUser }) => {
         test.slow();
-        await backgroundApiUser.apiAuth.login();
         await test.step('Create User', async () => {
           // pagination will be 10 per page, so create 11 users
           for (let i = 0; i < 11; i++) {
             const user = await backgroundApiUser.createUser(
-              backgroundApiUser.newRandom(`${usernamePrefix}`),
+              backgroundApiUser.new({ usernamePrefix }),
             );
             saveTestUser(user, testUsers);
           }
