@@ -1,3 +1,4 @@
+import { PASSWORD_RULES } from 'constants/passwordRules';
 import { V1Group, V1RoleWithAssignments } from 'services/api-ts-sdk';
 import {
   DetailedUser,
@@ -85,3 +86,16 @@ export const getUserOrGroupWithRoleInfo = (
     .filter((d) => d.userId !== -1);
   return [...groups, ...users];
 };
+
+export function isPasswordWeak(password: string): boolean {
+  let isWeak = false;
+  PASSWORD_RULES.forEach((rule) => {
+    if (rule.min && password.length < rule.min) {
+      isWeak = true;
+    }
+    if (rule.pattern && !RegExp(rule.pattern).test(password)) {
+      isWeak = true;
+    }
+  });
+  return isWeak;
+}
