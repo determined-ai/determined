@@ -351,7 +351,7 @@ func (m *mockJobInterface) Patch(
 func (m *mockJobInterface) Apply(
 	ctx context.Context, job *applyBatchV1.JobApplyConfiguration, opts metaV1.ApplyOptions,
 ) (result *batchV1.Job, err error) {
-	panic("Apply method not implemented")
+	panic("implement me")
 }
 
 func (m *mockJobInterface) ApplyStatus(

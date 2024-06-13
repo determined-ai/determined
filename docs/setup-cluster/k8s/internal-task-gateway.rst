@@ -19,7 +19,8 @@ refer to the sections below to see the configuration changes and controller requ
    communication between the external cluster and the main one. This could include setting up a
    firewall, using a VPN, IP white-listing, K8s Network Policies, native cloud solutions, or other
    security measures. Some Determined tasks including JupyterLab Notebooks and shells already have
-   secure transport built-in.
+   secure transport built-in. Tensorboards do not use TLS currently so a tunneling solution should
+   be considered.
 
 Limitations:
 
@@ -72,8 +73,7 @@ Task Gateway.
 To configure the optional InternalTaskGateway for a K8s resource manager, you need to add a struct
 under `internal_task_gateway` key under each of the desired resource manager configurations.
 
-This is represented by Go package `config.InternalTaskGatewayConfig` defined in
-`master/internal/config/resource_manager_config.go`
+The config is shown below.
 
 .. code:: yaml
 
@@ -105,7 +105,7 @@ This is represented by Go package `config.InternalTaskGatewayConfig` defined in
 In the CRD `gateways.gateway.networking.k8s.io`
 `schema.openAPIV3Schema.properties.spec.properties.listeners.maxItems` defines a max limit of how
 many listeners can be active on a single gateway. This limit sets the upper bound on how many tasks
-can be actively proxied.
+can be actively proxied. By default this limit is only 64.
 
 Note that when configuring this number you might hit K8s validation complexity thresholds checks.
 This can be configured and is dependent on each K8s cluster's requirements and setup.

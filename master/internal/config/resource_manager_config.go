@@ -198,7 +198,7 @@ type InternalTaskGatewayConfig struct {
 }
 
 var defaultInternalTaskGatewayConfig = InternalTaskGatewayConfig{
-	GWPortStart: 1025,
+	GWPortStart: 32768,
 	GWPortEnd:   65535,
 }
 
@@ -214,29 +214,30 @@ func (i *InternalTaskGatewayConfig) Validate() []error {
 	var errs []error
 
 	if err := check.IsValidK8sLabel(i.GatewayName); err != nil {
-		errs = append(errs, errors.Wrap(err, "invalid gateway_name"))
+		errs = append(errs, fmt.Errorf("invalid gateway_name: %w", err))
 	}
 
 	if err := check.IsValidK8sLabel(i.GatewayNamespace); err != nil {
-		errs = append(errs, errors.Wrap(err, "invalid gateway_namespace"))
+		errs = append(errs, fmt.Errorf("invalid gateway_namespace: %w", err))
 	}
 
-	if err := check.IsValidIP(i.GatewayIP); err != nil {
-		errs = append(errs, errors.Wrap(err, "invalid gateway_ip"))
+	// Don't validate the IP just check it is not empty so hostnames and the like can be used.
+	if err := check.NotEmpty(i.GatewayIP); err != nil {
+		errs = append(errs, fmt.Errorf("invalid gateway_ip: %w", err))
 	}
 
 	if err := check.BetweenInclusive(
 		i.GWPortStart, validGWPortRangeStart, validGWPortRangeEnd); err != nil {
-		errs = append(errs, errors.Wrap(err, "invalid gateway_port_range_start"))
+		errs = append(errs, fmt.Errorf("invalid gateway_port_range_start: %w", err))
 	}
 
 	if err := check.BetweenInclusive(
 		i.GWPortEnd, validGWPortRangeStart, validGWPortRangeEnd); err != nil {
-		errs = append(errs, errors.Wrap(err, "invalid gateway_port_range_end"))
+		errs = append(errs, fmt.Errorf("invalid gateway_port_range_end: %w", err))
 	}
 
 	if i.GWPortStart >= i.GWPortEnd {
-		errs = append(errs, errors.New("gateway_port_range_start must be less than or equal to gateway_port_range_end"))
+		errs = append(errs, fmt.Errorf("gateway_port_range_start must be less than or equal to gateway_port_range_end"))
 	}
 	return errs
 }
@@ -291,13 +292,11 @@ func (k KubernetesResourceManagerConfig) Validate() []error {
 			k.SlotResourceRequests.CPU, float32(0), "slot_resource_requests.cpu must be > 0")
 	}
 
-	checks := []error{
+	return []error{
 		checkSlotType,
 		checkCPUResource,
 		check.NotEmpty(k.Name, "name is required"),
 	}
-
-	return checks
 }
 
 // PodSlotResourceRequests contains the per-slot container requests.

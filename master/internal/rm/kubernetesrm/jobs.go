@@ -308,7 +308,7 @@ func (j *jobsService) startClientSet() error {
 			j.tcpRouteInterfaces[ns] = alphaGatewayClientSet.TCPRoutes(ns)
 		}
 
-		// Don't think you can use the alphaGateway clientSet, because you can't.
+		// Using the alphaGateway clientSet will not work properly.
 		gatewayClientSet, err := gateway.NewForConfig(config)
 		if err != nil {
 			return fmt.Errorf("creating Kubernetes gateway clientSet: %w", err)
@@ -730,7 +730,6 @@ func (j *jobsService) reattachJob(msg reattachJobRequest) (reattachJobResponse, 
 	return resp, nil
 }
 
-// TODO(test)? Move to a gateway specific file?
 func (j *jobsService) recreateGatewayProxyResources(
 	allocationID model.AllocationID,
 	services []k8sV1.Service,
@@ -845,7 +844,6 @@ func (j *jobsService) recreateJobHandler(
 		allocationID: newJobHandler.req.AllocationID,
 	}
 
-	// FIXME: in case of reattach we're sending traffic to the wrong host.
 	return reattachJobResponse{started: nil}, nil
 }
 

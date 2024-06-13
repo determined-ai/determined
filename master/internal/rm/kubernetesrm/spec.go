@@ -154,9 +154,11 @@ func (j *job) configureEnvVars(
 }
 
 // proxyResourceGenerator returns a configured list of proxy resources given a set of ports.
+// We do this lazily to make port selection easier. If we created the resource before it is
+// added to the request queue we risk that port being taken later on.
 type proxyResourceGenerator func([]int) []gatewayProxyResource
 
-func (j *job) configureProxyResources(t *tasks.TaskSpec) *proxyResourceGenerator {
+func (j *job) configureProxyResources(t *tasks.TaskSpec) proxyResourceGenerator {
 	if j.internalTaskGWConfig == nil {
 		return nil
 	}
@@ -243,7 +245,8 @@ func (j *job) configureProxyResources(t *tasks.TaskSpec) *proxyResourceGenerator
 		}
 		return resources
 	})
-	return &generator
+
+	return generator
 }
 
 func (j *job) configureConfigMapSpec(
@@ -710,7 +713,6 @@ func (j *job) createSpec(scheduler string, taskSpec *tasks.TaskSpec) (*batchV1.J
 	if err != nil {
 		return nil, nil, err
 	}
-
 	volumes = append(volumes, rootVolumes...)
 	container.VolumeMounts = append(container.VolumeMounts, rootVolumeMounts...)
 
@@ -738,6 +740,7 @@ func configureUniqueName(t tasks.TaskSpec) string {
 		clusterIDPrefix = t.ClusterID
 	}
 	if clusterIDPrefix != "" {
+		// Starting with clusterID is not a valid DNS name since it could be a number sometimes.
 		name = fmt.Sprintf("det-%s-%s", clusterIDPrefix, name)
 	}
 
