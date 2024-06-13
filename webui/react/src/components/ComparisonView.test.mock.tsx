@@ -245,18 +245,6 @@ export const SELECTED_EXPERIMENTS: ExperimentWithTrial[] = [
 
 export const SELECTED_RUNS = [generateTestRunData(), generateTestRunData(), generateTestRunData()];
 
-vi.mock('hooks/useMetrics', async (importOriginal) => {
-  const useMetrics = vi.fn(() => {
-    return METRIC_DATA;
-  });
-
-  return {
-    __esModule: true,
-    ...(await importOriginal<typeof import('hooks/useMetrics')>()),
-    useMetrics,
-  };
-});
-
 interface Props {
   children: React.ReactElement;
   empty?: boolean;

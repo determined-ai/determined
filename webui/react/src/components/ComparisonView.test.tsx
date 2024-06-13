@@ -7,6 +7,7 @@ import { SettingsProvider } from 'hooks/useSettingsProvider';
 import { EMPTY_MESSAGE } from './ComparisonView';
 import {
   ExperimentComparisonViewWithMocks,
+  METRIC_DATA,
   RunComparisonViewWithMocks,
 } from './ComparisonView.test.mock';
 import { ThemeProvider } from './ThemeProvider';
@@ -30,6 +31,18 @@ vi.mock('hooks/useSettings', async (importOriginal) => {
     __esModule: true,
     ...(await importOriginal<typeof import('hooks/useSettings')>()),
     useSettings,
+  };
+});
+
+vi.mock('hooks/useMetrics', async (importOriginal) => {
+  const useMetrics = vi.fn(() => {
+    return METRIC_DATA;
+  });
+
+  return {
+    __esModule: true,
+    ...(await importOriginal<typeof import('hooks/useMetrics')>()),
+    useMetrics,
   };
 });
 
