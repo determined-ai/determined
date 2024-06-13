@@ -23,7 +23,7 @@ def parse_args():
     )
 
     parser.add_argument("commit",
-        help="commit to stop at while walking the graph to look for tags, beyond which tags will be ignored",
+        help="commit to stop at while walking the graph, from each tag ref as a starting point, to look for tags, beyond which tags will be ignored. This corresponds to ^commit in git-rev-list.",
         metavar="commit",
     )
 
