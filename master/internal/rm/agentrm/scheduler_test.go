@@ -43,8 +43,10 @@ func setupResourcePool(
 
 	agentsRef, _ := newAgentService([]config.ResourcePoolConfig{*conf}, &aproto.MasterSetAgentOptions{})
 
+	scheduler, err := MakeScheduler(conf.Scheduler)
+	require.NoError(t, err)
 	rp, err := newResourcePool(
-		conf, db, nil, MakeScheduler(conf.Scheduler),
+		conf, db, nil, scheduler,
 		MakeFitFunction(conf.Scheduler.FittingPolicy), agentsRef)
 	require.NoError(t, err)
 	rp.taskList, rp.groups, rp.agentStatesCache = setupSchedulerStates(
