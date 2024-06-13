@@ -544,3 +544,14 @@ func setupSchedulerStates(
 
 	return taskList, groups, agents
 }
+
+func TestRoundRobinResourcePoolDeprecation(t *testing.T) {
+	conf := &config.ResourcePoolConfig{PoolName: "pool"}
+	conf.Scheduler = &config.SchedulerConfig{
+		RoundRobin:    &config.RoundRobinSchedulerConfig{},
+		FittingPolicy: best,
+	}
+
+	_, err := MakeScheduler(conf.Scheduler)
+	require.Error(t, err)
+}
