@@ -85,6 +85,7 @@ The config is shown below.
      gateway_namespace: <GatewayNamespace>
 
      # GatewayIP as defined in the k8s cluster.
+     # GatewayIP can also be a hostname if that is easier for your setup.
      gateway_ip: <GatewayIP>
 
      # GWPortStart denotes the inclusive start of the available and exclusive port range to
