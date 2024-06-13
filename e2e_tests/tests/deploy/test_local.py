@@ -249,6 +249,28 @@ def test_master_up_down() -> None:
 
         containers = client.containers.list(filters={"name": master_name})
         assert len(containers) > 0
+        assert (
+            "The admin and determined users can log in with this password:"
+            not in containers[0].logs()
+        )
+
+    containers = client.containers.list(filters={"name": master_name})
+    assert len(containers) == 0
+
+
+@pytest.mark.det_deploy_local
+def test_master_up_implicit_password() -> None:
+    cluster_name = "test_master_up_implicit_password"
+    master_name = f"{cluster_name}_determined-master_1"
+
+    with resource_manager(Resource.MASTER, master_name):
+        client = docker.from_env()
+
+        containers = client.containers.list(filters={"name": master_name})
+        assert len(containers) > 0
+        assert (
+            "The admin and determined users can log in with this password:" in containers[0].logs()
+        )
 
     containers = client.containers.list(filters={"name": master_name})
     assert len(containers) == 0
