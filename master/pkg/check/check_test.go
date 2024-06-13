@@ -176,34 +176,6 @@ func TestIsValidK8sLabel(t *testing.T) {
 	}
 }
 
-func TestIsValidIPV4(t *testing.T) {
-	tests := []struct {
-		ip      string
-		wantErr bool
-	}{
-		{"192.168.1.1", false},
-		{"0.0.0.0", false},
-		{"255.255.255.255", false},
-		{"1.1.1.1", false},
-		{"192.168.1", true},
-		{"192.168.1.256", true},
-		{"192.168.1.-1", true},
-		{"192.168.1.1.1", true},
-		{"192.168.1.01", true},
-		{"invalid_ip", true},
-		{"", true},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.ip, func(t *testing.T) {
-			err := IsValidIP(tt.ip)
-			if (err != nil) != tt.wantErr {
-				t.Errorf("IsValidIPV4(%s) error = %v, wantErr %v", tt.ip, err, tt.wantErr)
-			}
-		})
-	}
-}
-
 func TestBetweenInclusive(t *testing.T) {
 	tests := []struct {
 		actual  interface{}

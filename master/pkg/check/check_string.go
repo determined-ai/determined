@@ -1,7 +1,6 @@
 package check
 
 import (
-	"net"
 	"regexp"
 	"strings"
 )
@@ -51,20 +50,6 @@ func IsValidK8sLabel(actual string, msgAndArgs ...interface{}) error {
 		actual, `^[a-zA-Z0-9]([-a-zA-Z0-9_.]*[a-zA-Z0-9])?$`, msgAndArgs...,
 	); err != nil {
 		return err
-	}
-	return nil
-}
-
-// IsValidIP checks whether the first argument is a valid IP address. The method returns an error
-// with the provided message if the check fails.
-func IsValidIP(actual string, msgAndArgs ...interface{}) error {
-	if err := NotEmpty(actual, msgAndArgs...); err != nil {
-		return err
-	}
-
-	ip := net.ParseIP(actual)
-	if ip == nil {
-		return check(false, msgAndArgs, "%s is not a valid IP address", actual)
 	}
 	return nil
 }

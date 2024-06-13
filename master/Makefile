@@ -89,7 +89,6 @@ mocks: build/mock_gen.stamp
 
 build/mock_gen.stamp: $(MOCK_INPUTS)
 	mockery --config "./.mockery.yaml"
-
 	mkdir -p build
 	touch $@
 

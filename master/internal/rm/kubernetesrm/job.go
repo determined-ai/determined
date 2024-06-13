@@ -49,9 +49,6 @@ func (g gatewayProxyResource) GWPort() int {
 func (g gatewayProxyResource) SetGWPort(port int) {
 	gwPort := gatewayTyped.PortNumber(port)
 	g.gatewayListener.Port = gwPort
-	// if g.tcpRouteSpec == nil {
-	// 	// FIXME: log?
-	// }
 	g.tcpRouteSpec.Spec.CommonRouteSpec.ParentRefs[0].Port = &gwPort
 }
 
@@ -308,14 +305,9 @@ func (j *job) makeGatewayComms(spec *tasks.TaskSpec) *gatewayResourceComm {
 		defer j.mu.Unlock()
 		j.gatewayProxyResources = resources
 	}
-	// TODO(gateways) make this always return not nil.
-	resourceGenerator := j.configureProxyResources(spec)
-	if resourceGenerator == nil {
-		panic("gateway resource generator is nil")
-	}
 
 	return &gatewayResourceComm{
-		resourceDescriptor: *resourceGenerator,
+		resourceDescriptor: j.configureProxyResources(spec),
 		reportResources:    updateResources,
 		allocationID:       j.req.AllocationID,
 		requestedPorts:     len(j.req.ProxyPorts),
@@ -327,7 +319,6 @@ func (j *job) getGatewayAddresses() []cproto.Address {
 		return nil
 	}
 
-	// TODO might be a race condition here technically. Maybe wait for the callback to have happened.
 	var addresses []cproto.Address
 	for _, g := range j.gatewayProxyResources {
 		addresses = append(addresses, cproto.Address{
