@@ -4740,7 +4740,7 @@ workflows:
           matrix:
             parameters:
               cluster-id-prefix: ["e2e-cpu"]
-              mark: ["e2e_gpu and not (gpu_required or e2e_multi_k8s)"]
+              mark: ["e2e_gpu and not gpu_required and not e2e_multi_k8s"]
               parallelism: [1]
               machine-type: ["n1-standard-8"]
               gpus-per-machine: [0]
@@ -4947,7 +4947,7 @@ workflows:
           matrix:
             parameters:
               cluster-id-prefix: ["e2e-cpu"]
-              mark: ["e2e_gpu and not (gpu_required or e2e_multi_k8s)"]
+              mark: ["e2e_gpu and not gpu_required and not e2e_multi_k8s"]
               parallelism: [1]
               machine-type: ["n1-standard-8"]
               gpus-per-machine: [0]
