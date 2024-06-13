@@ -158,7 +158,7 @@ def master_up(
     # Some cli flags for det deploy local will cause us to write a temporary master.yaml.
     make_temp_conf = False
     # If we have to generate a password for the user, we should print it later.
-    used_generated_password = False
+    generated_user_password = None
 
     if master_name is None:
         master_name = f"{cluster_name}_{MASTER_NAME}"
@@ -177,10 +177,9 @@ def master_up(
         master_conf["security"]["initial_user_password"] = initial_user_password
         make_temp_conf = True
     elif master_conf["security"].get("initial_user_password") is None:
-        initial_user_password = secrets.token_urlsafe(16)
-        master_conf["security"]["initial_user_password"] = initial_user_password
+        generated_user_password = secrets.token_urlsafe(16)
+        master_conf["security"]["initial_user_password"] = generated_user_password
         make_temp_conf = True
-        used_generated_password = True
 
     if storage_host_path is not None:
         master_conf["checkpoint_storage"] = {
@@ -295,10 +294,10 @@ def master_up(
 
         _wait_for_master(f"http://localhost:{port}", cluster_name)
 
-        if used_generated_password:
+        if generated_user_password is not None:
             try:
                 session = authentication.login(
-                    f"http://localhost:{port}", "determined", initial_user_password
+                    f"http://localhost:{port}", "determined", generated_user_password
                 ).with_retry(util.get_max_retries_config())
                 session.get("/api/v1/me")
                 print(
