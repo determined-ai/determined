@@ -198,37 +198,40 @@ func runHpToSQL(c string, filterColumnType *string, filterValue *interface{},
 		queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM run_hparams WHERE hparam='%s')`, runHparam)
 	case contains:
 		queryArgs = append(queryArgs, queryValue)
-		if queryColumnType == projectv1.ColumnType_COLUMN_TYPE_NUMBER.String() {
+		switch queryColumnType {
+		case projectv1.ColumnType_COLUMN_TYPE_NUMBER.String():
 			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM run_hparams WHERE hparam='%s' AND number_val=%s)`,
 				runHparam, "?")
-		} else if queryColumnType == projectv1.ColumnType_COLUMN_TYPE_TEXT.String() {
+		case projectv1.ColumnType_COLUMN_TYPE_TEXT.String():
 			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM run_hparams WHERE hparam='%s' AND text_val LIKE %s)`,
 				runHparam, "?")
-		} else {
+		default:
 			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM run_hparams WHERE hparam='%s' AND bool_val=%s)`,
 				runHparam, "?")
 		}
 	case doesNotContain:
 		queryArgs = append(queryArgs, queryValue)
-		if queryColumnType == projectv1.ColumnType_COLUMN_TYPE_NUMBER.String() {
+		switch queryColumnType {
+		case projectv1.ColumnType_COLUMN_TYPE_NUMBER.String():
 			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM run_hparams WHERE hparam='%s' AND number_val!=%s)`,
 				runHparam, "?")
-		} else if queryColumnType == projectv1.ColumnType_COLUMN_TYPE_TEXT.String() {
+		case projectv1.ColumnType_COLUMN_TYPE_TEXT.String():
 			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM run_hparams WHERE hparam='%s' AND text_val NOT LIKE %s)`,
 				runHparam, "?")
-		} else {
+		default:
 			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM run_hparams WHERE hparam='%s' AND bool_val!=%s)`,
 				runHparam, "?")
 		}
 	default:
 		queryArgs = append(queryArgs, bun.Safe(oSQL), queryValue)
-		if queryColumnType == projectv1.ColumnType_COLUMN_TYPE_NUMBER.String() {
+		switch queryColumnType {
+		case projectv1.ColumnType_COLUMN_TYPE_NUMBER.String():
 			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM run_hparams WHERE hparam='%s' AND number_val %s %s)`,
 				runHparam, "?", "?")
-		} else if queryColumnType == projectv1.ColumnType_COLUMN_TYPE_TEXT.String() {
+		case projectv1.ColumnType_COLUMN_TYPE_TEXT.String():
 			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM run_hparams WHERE hparam='%s' AND text_val %s %s)`,
 				runHparam, "?", "?")
-		} else {
+		default:
 			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM run_hparams WHERE hparam='%s' AND bool_val %s %s)`,
 				runHparam, "?", "?")
 		}
