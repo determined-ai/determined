@@ -308,8 +308,62 @@ interleaving micro batches:
 Fully Sharded Data Parallelism (FSDP)
 =====================================
 
-To use FSDP, use the PyTorch FSDP package as usual along with the Core API. ``PytorchTrial`` API
-does not support FSDP. To find out more about the PyTorch FSDP package, visit `PyTorch tutorials
+To use FSDP, use the PyTorch FSDP package as usual along with the :ref:`api-core-ug`.
+
+.. note::
+
+   ``PytorchTrial`` API does not support FSDP.
+
+Example of a simple transformer model adapted from GPT-fast training on sample data:
+
+.. code:: python
+
+   if __name__ == "__main__":
+       ...
+       with det.core.init(distributed=distributed) as core_context:
+           main(
+               core_context=core_context,
+               hparams=hparams,
+               checkpoint_uuid=checkpoint_uuid,
+       ...
+   ...
+
+   def main(core_context: det.core.Context, ...) -> None:
+
+       ...
+
+       device = torch.device(f"cuda:{core_context.distributed.local_rank}")
+       torch.cuda.set_device(device)
+
+       # Build the unsharded model directly on the device.
+       model = Transformer(
+           d_model=hparams["d_model"],
+           n_heads=hparams["n_heads"],
+           vocab_size=hparams["vocab_size"],
+           n_layers=hparams["n_layers"],
+           max_seq_len=hparams["max_seq_len"],
+           device=device,
+       )
+
+       # Wrap the embedding layer, the lm head, and each transformer block into its own FSDP unit:
+       auto_wrap_policy = ModuleWrapPolicy([TransformerBlock, EmbedAndEncode, LMHead])
+
+       # The fsdp model:
+       fsdp_model = FSDP(
+           model,
+           auto_wrap_policy=auto_wrap_policy,
+           sharding_strategy=ShardingStrategy.FULL_SHARD,
+           device_id=device,
+           use_orig_params=True,
+       )
+
+       # The optimizer must be created post-FSDP
+       optimizer = torch.optim.AdamW(fsdp_model.parameters(), lr=hparams["lr"])
+
+       # Use the FSDP model as you would a normal Core API model
+       ...
+
+To find out more about the PyTorch FSDP package, visit `PyTorch tutorials
 <https://pytorch.org/tutorials/>`__ > Getting Started with Fully Sharded Data Parallel (FSDP).
 
 ***********
