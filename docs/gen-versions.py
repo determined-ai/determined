@@ -74,8 +74,8 @@ def main():
         print("Bad revision: {}.".format(e), file=sys.stderr)
         raise
 
-    # git rev-list --tags --ancestry-path <commit>..HEAD
-    comms_iter = repo.iter_commits("{}..HEAD".format(args.commit), ancestry_path=True, tags=True)
+    # git rev-list --tags --ancestry-path ^commit
+    comms_iter = repo.iter_commits("^{}".format(args.commit), ancestry_path=True, tags=True)
 
     # Get commits from iterator.
     commits = []
