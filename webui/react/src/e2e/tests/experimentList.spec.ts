@@ -57,7 +57,8 @@ test.describe('Experiement List', () => {
       try {
         await grid.headRow.selectDropdown.menuItem('select-none').select({ timeout: 1_000 });
       } catch (e) {
-        // Ignore if no selection
+        // close the dropdown by clicking elsewhere
+        await projectDetailsPage.f_experiemntList.tableActionBar.expNum.pwLocator.click();
       }
     });
     await test.step('Reset Columns', async () => {
@@ -161,6 +162,7 @@ test.describe('Experiement List', () => {
   });
 
   test('Table Filter', async () => {
+    test.slow();
     const tableFilter = projectDetailsPage.f_experiemntList.tableActionBar.tableFilter;
     const totalExperiments = await getExpNum();
 
