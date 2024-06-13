@@ -2,7 +2,6 @@ import contextlib
 import os
 import pathlib
 import re
-import secrets
 import socket
 import subprocess
 import sys
@@ -14,8 +13,7 @@ from typing import Any, Callable, Dict, Generator, List, Optional, Sequence, Typ
 import appdirs
 import docker
 
-from determined.common import api, constants, util
-from determined.common.api import authentication
+from determined.common import constants, util
 from determined.deploy import errors, healthcheck
 
 AGENT_NAME_DEFAULT = f"det-agent-{socket.gethostname()}"
@@ -155,6 +153,9 @@ def master_up(
     auto_work_dir: Optional[pathlib.Path],
     enterprise_edition: bool = False,
 ) -> None:
+    # Some cli flags for det deploy local will cause us to write a temporary master.yaml.
+    make_temp_conf = False
+
     if master_name is None:
         master_name = f"{cluster_name}_{MASTER_NAME}"
 
@@ -163,22 +164,21 @@ def master_up(
             master_conf = util.yaml_safe_load(f)
     else:
         master_conf = MASTER_CONF_DEFAULT
+        make_temp_conf = True
 
     if master_conf.get("security") is None:
         master_conf["security"] = {}
 
-    used_generated_password = False
-    if not initial_user_password:
-        initial_user_password = secrets.token_urlsafe(16)
-        used_generated_password = True
-
-    master_conf["security"]["initial_user_password"] = initial_user_password
+    if initial_user_password is not None:
+        master_conf["security"]["initial_user_password"] = initial_user_password
+        make_temp_conf = True
 
     if storage_host_path is not None:
         master_conf["checkpoint_storage"] = {
             "type": "shared_fs",
             "host_path": str(storage_host_path.resolve()),
         }
+        make_temp_conf = True
 
     # Ensure checkpoint storage directory exists.
     storage_info = master_conf.get("checkpoint_storage", {})
@@ -198,12 +198,16 @@ def master_up(
         master_conf["task_container_defaults"].setdefault("bind_mounts", []).append(
             {"host_path": work_dir, "container_path": work_dir}
         )
+        make_temp_conf = True
 
-    fd, temp_path = tempfile.mkstemp(prefix="det-deploy-local-master-config-")
-    with open(fd, "w") as f:
-        util.yaml_safe_dump(master_conf, f)
-    master_config_path = pathlib.Path(temp_path)
+    if make_temp_conf:
+        fd, temp_path = tempfile.mkstemp(prefix="det-deploy-local-master-config-")
+        with open(fd, "w") as f:
+            util.yaml_safe_dump(master_conf, f)
+        master_config_path = pathlib.Path(temp_path)
 
+    # This is always true by now, but mypy needs help.
+    assert master_config_path is not None
     restart_policy = "unless-stopped" if autorestart else "no"
     env = {
         "DET_MASTER_HTTP_PORT": str(port),
@@ -281,22 +285,6 @@ def master_up(
         )
 
         _wait_for_master(f"http://localhost:{port}", cluster_name)
-
-        if used_generated_password:
-            try:
-                session = authentication.login(
-                    f"http://localhost:{port}", "determined", initial_user_password
-                ).with_retry(util.get_max_retries_config())
-                session.get("/api/v1/me")
-                print(
-                    "Determined Master was launched without an initial_user_password set, "
-                    + "so a password has been created for you. The admin and determined users "
-                    + f"can log in with this password:\n\t{initial_user_password}\n"
-                    + "Please change these passwords as soon as possible."
-                )
-            except api.errors.UnauthenticatedException:
-                # There was a non-generated password there already; carry on
-                pass
 
         # Remove all cleanup methods from ExitStack.
         exit_stack.pop_all()
