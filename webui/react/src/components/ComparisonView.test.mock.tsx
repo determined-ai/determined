@@ -1,10 +1,11 @@
 import React from 'react';
 
 import { RunMetricData } from 'hooks/useMetrics';
-import { Scale } from 'types';
+import { ExperimentWithTrial, Scale } from 'types';
 import { generateTestRunData } from 'utils/tests/generateTestData';
 
-import CompareHyperparameters from './CompareHyperparameters';
+import ComparisonView from './ComparisonView';
+
 export const METRIC_DATA: RunMetricData = {
   data: {
     3400: {
@@ -74,11 +75,11 @@ export const METRIC_DATA: RunMetricData = {
   },
 };
 
-export const SELECTED_EXPERIMENTS = [
+export const SELECTED_EXPERIMENTS: ExperimentWithTrial[] = [
   {
     bestTrial: {
       autoRestarts: 0,
-      bestAvailableCheckpoint: null,
+      bestAvailableCheckpoint: undefined,
       bestValidationMetric: {
         endTime: '2023-04-20T16:20:22.902226Z',
         metrics: {
@@ -115,7 +116,6 @@ export const SELECTED_EXPERIMENTS = [
             count: 1,
             last: 0.5823304653167725,
             max: 0.582330465316772,
-            mean: 0.582330465316772,
             min: 0.582330465316772,
             sum: 0.582330465316772,
             type: 'number',
@@ -126,7 +126,6 @@ export const SELECTED_EXPERIMENTS = [
             count: 1,
             last: 0.8522093949044586,
             max: 0.852209394904459,
-            mean: 0.852209394904459,
             min: 0.852209394904459,
             sum: 0.852209394904459,
             type: 'number',
@@ -135,7 +134,6 @@ export const SELECTED_EXPERIMENTS = [
             count: 1,
             last: 0.49773818169050155,
             max: 0.497738181690502,
-            mean: 0.497738181690502,
             min: 0.497738181690502,
             sum: 0.497738181690502,
             type: 'number',
@@ -150,46 +148,8 @@ export const SELECTED_EXPERIMENTS = [
       checkpoints: 1,
       checkpointSize: 83008221,
       config: {
-        bind_mounts: [],
-        checkpoint_policy: 'best',
-        checkpoint_storage: {
-          access_key: null,
-          bucket: 'det-determined-master-us-west-2-573932760021',
-          endpoint_url: null,
-          prefix: null,
-          save_experiment_best: 0,
-          save_trial_best: 1,
-          save_trial_latest: 1,
-          secret_key: null,
-          type: 's3',
-        },
-        data: {},
-        data_layer: {
-          container_storage_path: null,
-          host_storage_path: null,
-          type: 'shared_fs',
-        },
-        debug: false,
+        checkpointPolicy: 'best',
         description: 'Continuation of trial 3355, experiment 1101 (Fork of dsdfs)',
-        entrypoint: 'model_def:MNistTrial',
-        environment: {
-          add_capabilities: [],
-          drop_capabilities: [],
-          environment_variables: {
-            cpu: [],
-            cuda: [],
-            rocm: [],
-          },
-          force_pull_image: false,
-          image: {
-            cpu: 'determinedai/environments:py-3.8-pytorch-1.10-lightning-1.5-tf-2.8-cpu-3e933ea',
-            cuda: 'determinedai/environments:cuda-11.3-pytorch-1.10-lightning-1.5-tf-2.8-gpu-3e933ea',
-            rocm: 'determinedai/environments:rocm-4.2-pytorch-1.9-tf-2.5-rocm-3e933ea',
-          },
-          pod_spec: null,
-          ports: {},
-          registry_auth: null,
-        },
         hyperparameters: {
           dropout1: {
             type: 'const',
@@ -216,61 +176,20 @@ export const SELECTED_EXPERIMENTS = [
             val: 70,
           },
         },
-        labels: null,
-        max_restarts: 5,
-        min_checkpoint_period: {
-          batches: 0,
-        },
-        min_validation_period: {
-          batches: 0,
-        },
+        labels: [],
+        maxRestarts: 5,
         name: 'mnist_pytorch_adaptive_search',
-        optimizations: {
-          aggregation_frequency: 1,
-          auto_tune_tensor_fusion: false,
-          average_aggregated_gradients: true,
-          average_training_metrics: false,
-          grad_updates_size_file: null,
-          gradient_compression: false,
-          mixed_precision: 'O0',
-          tensor_fusion_cycle_time: 5,
-          tensor_fusion_threshold: 64,
-        },
-        perform_initial_validation: false,
         profiling: {
-          begin_on_batch: 0,
           enabled: false,
-          end_after_batch: null,
-          sync_timings: true,
         },
-        project: 'Uncategorized',
-        records_per_epoch: 10,
-        reproducibility: {
-          experiment_seed: 1654719872,
-        },
-        resources: {
-          agent_label: '',
-          devices: [],
-          max_slots: null,
-          native_parallel: false,
-          priority: null,
-          resource_pool: 'compute-pool',
-          shm_size: null,
-          slots_per_trial: 1,
-          weight: 1,
-        },
-        scheduling_unit: 100,
+        resources: {},
         searcher: {
-          max_length: {
-            batches: 2,
-          },
+          max_length: undefined,
           metric: 'validation_loss',
           name: 'single',
-          smaller_is_better: true,
-          source_checkpoint_uuid: null,
-          source_trial_id: 3355,
+          smallerIsBetter: true,
+          sourceTrialId: 3355,
         },
-        workspace: 'Uncategorized',
       },
       description: 'Continuation of trial 3355, experiment 1101 (Fork of dsdfs)',
       duration: 578,
@@ -324,106 +243,49 @@ export const SELECTED_EXPERIMENTS = [
   },
 ];
 
-export const TRIALS = [
-  {
-    autoRestarts: 0,
-    bestAvailableCheckpoint: null,
-    bestValidationMetric: {
-      endTime: '2023-04-20T16:20:22.902226Z',
-      metrics: {
-        loss: 1,
-      },
-      totalBatches: 1,
-    },
-    checkpointCount: 1,
-    endTime: '2022-06-26T16:16:04.171606Z',
-    experimentId: 1156,
-    hyperparameters: {
-      dropout1: 0.532803505916605,
-      dropout2: 0.39400711778394015,
-      global_batch_size: 64,
-      learning_rate: 0.06716139157036664,
-      n_filters1: 54,
-      n_filters2: 70,
-    },
-    id: 3400,
-    latestValidationMetric: {
-      endTime: '2022-06-26T16:15:46.436495Z',
-      metrics: {
-        accuracy: 0.8522093949044586,
-        validation_loss: 0.49773818169050155,
-      },
-      totalBatches: 2,
-    },
-    searcherMetricsVal: 1,
-    startTime: '2022-06-26T16:08:36.678225Z',
-    state: 'COMPLETED',
-    summaryMetrics: {
-      avgMetrics: {
-        loss: {
-          count: 1,
-          last: 0.5823304653167725,
-          max: 0.582330465316772,
-          mean: 0.582330465316772,
-          min: 0.582330465316772,
-          sum: 0.582330465316772,
-          type: 'number',
-        },
-      },
-      validationMetrics: {
-        accuracy: {
-          count: 1,
-          last: 0.8522093949044586,
-          max: 0.852209394904459,
-          mean: 0.852209394904459,
-          min: 0.852209394904459,
-          sum: 0.852209394904459,
-          type: 'number',
-        },
-        validation_loss: {
-          count: 1,
-          last: 0.49773818169050155,
-          max: 0.497738181690502,
-          mean: 0.497738181690502,
-          min: 0.497738181690502,
-          sum: 0.497738181690502,
-          type: 'number',
-        },
-      },
-    },
-    totalBatchesProcessed: 100,
-    totalCheckpointSize: 83008221,
-  },
-];
-
 export const SELECTED_RUNS = [generateTestRunData(), generateTestRunData(), generateTestRunData()];
 
 interface Props {
+  children: React.ReactElement;
   empty?: boolean;
+  open: boolean;
+  onWidthChange: (width: number) => void;
 }
-export const CompareTrialHyperparametersWithMocks: React.FC<Props> = ({
+
+export const ExperimentComparisonViewWithMocks: React.FC<Props> = ({
+  children,
   empty,
+  onWidthChange,
+  open,
 }: Props): JSX.Element => {
   return (
-    <CompareHyperparameters
-      metricData={METRIC_DATA}
+    <ComparisonView
+      fixedColumnsCount={2}
+      initialWidth={200}
+      open={open}
       projectId={1}
-      // @ts-expect-error Mock data does not need type checking
       selectedExperiments={empty ? [] : SELECTED_EXPERIMENTS}
-      // @ts-expect-error Mock data does not need type checking
-      trials={empty ? [] : TRIALS}
-    />
+      onWidthChange={onWidthChange}>
+      {children}
+    </ComparisonView>
   );
 };
 
-export const CompareRunHyperparametersWithMocks: React.FC<Props> = ({
+export const RunComparisonViewWithMocks: React.FC<Props> = ({
+  children,
   empty,
+  onWidthChange,
+  open,
 }: Props): JSX.Element => {
   return (
-    <CompareHyperparameters
-      metricData={METRIC_DATA}
+    <ComparisonView
+      fixedColumnsCount={2}
+      initialWidth={200}
+      open={open}
       projectId={1}
       selectedRuns={empty ? [] : SELECTED_RUNS}
-    />
+      onWidthChange={onWidthChange}>
+      {children}
+    </ComparisonView>
   );
 };
