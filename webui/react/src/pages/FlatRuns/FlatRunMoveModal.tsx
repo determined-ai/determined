@@ -10,7 +10,6 @@ import { List } from 'immutable';
 import { useObservable } from 'micro-observables';
 import React, { Ref, useCallback, useEffect, useId, useRef } from 'react';
 
-import Link from 'components/Link';
 import RunFilterInterstitialModalComponent, {
   ControlledModalRef,
 } from 'components/RunFilterInterstitialModalComponent';
@@ -19,27 +18,25 @@ import RunMoveWarningModalComponent, {
 } from 'components/RunMoveWarningModalComponent';
 import usePermissions from 'hooks/usePermissions';
 import { formStore } from 'pages/FlatRuns/FlatRuns';
-import { paths } from 'routes/utils';
 import { moveRuns } from 'services/api';
 import projectStore from 'stores/projects';
 import workspaceStore from 'stores/workspaces';
-import { FlatRun, Project } from 'types';
+import { BulkActionResult, FlatRun, Project } from 'types';
 import handleError from 'utils/error';
 import { pluralizer } from 'utils/string';
 
 const FORM_ID = 'move-flat-run-form';
 
 type FormInputs = {
-  projectId?: number;
-  workspaceId?: number;
+  destinationProjectId?: number;
+  destinationWorkspaceId?: number;
 };
 
 interface Props {
   flatRuns: Readonly<FlatRun>[];
   sourceProjectId: number;
   sourceWorkspaceId?: number;
-  onSubmit?: (successfulIds?: number[]) => void;
-  onActionComplete?: () => void | Promise<void>;
+  onSubmit?: (results: BulkActionResult, destinationProjectId: number) => void | Promise<void>;
 }
 
 const FlatRunMoveModalComponent: React.FC<Props> = ({
@@ -47,7 +44,6 @@ const FlatRunMoveModalComponent: React.FC<Props> = ({
   sourceProjectId,
   sourceWorkspaceId,
   onSubmit,
-  onActionComplete,
 }: Props) => {
   const controlledModalRef: Ref<ControlledModalRef> = useRef(null);
   const runMoveWarningFlowRef: Ref<RunMoveWarningFlowRef> = useRef(null);
@@ -55,30 +51,31 @@ const FlatRunMoveModalComponent: React.FC<Props> = ({
   const { openToast } = useToast();
   const filterFormSetWithoutId = useObservable(formStore.filterFormSetWithoutId);
   const [form] = Form.useForm<FormInputs>();
-  const workspaceId = Form.useWatch('workspaceId', form);
-  const projectId = Form.useWatch('projectId', form);
+  const destinationWorkspaceId = Form.useWatch('destinationWorkspaceId', form);
+  const destinationProjectId = Form.useWatch('destinationProjectId', form);
 
   const { canMoveExperimentsTo } = usePermissions();
   const workspaces = Loadable.getOrElse([], useObservable(workspaceStore.unarchived)).filter((w) =>
     canMoveExperimentsTo({ destination: { id: w.id } }),
   );
   const loadableProjects: Loadable<List<Project>> = useObservable(
-    projectStore.getProjectsByWorkspace(workspaceId),
+    projectStore.getProjectsByWorkspace(destinationWorkspaceId),
   );
 
   useEffect(() => {
-    if (workspaceId !== undefined) {
-      projectStore.fetch(workspaceId, undefined, true);
+    if (destinationWorkspaceId !== undefined) {
+      projectStore.fetch(destinationWorkspaceId, undefined, true);
     }
-  }, [workspaceId]);
+  }, [destinationWorkspaceId]);
 
   const handleSubmit = useCallback(async () => {
-    if (workspaceId === sourceWorkspaceId && projectId === sourceProjectId) {
+    const values = await form.validateFields();
+    const projId = values.destinationProjectId ?? 1;
+
+    if (destinationWorkspaceId === sourceWorkspaceId && projId === sourceProjectId) {
       openToast({ title: 'No changes to save.' });
       return;
     }
-    const values = await form.validateFields();
-    const projId = values.projectId ?? 1;
 
     try {
       const closeReason = (await controlledModalRef.current?.open()) ?? 'failed';
@@ -105,59 +102,19 @@ const FlatRunMoveModalComponent: React.FC<Props> = ({
         runIds: flatRuns.map((flatRun) => flatRun.id),
         sourceProjectId,
       });
-
-      onSubmit?.(results.successful);
-
-      const numSuccesses = results.successful.length;
-      const numFailures = results.failed.length;
-
-      const destinationProjectName =
-        Loadable.getOrElse(List<Project>(), loadableProjects).find((p) => p.id === projId)?.name ??
-        '';
-
-      if (numSuccesses === 0 && numFailures === 0) {
-        openToast({
-          description: 'No selected runs were eligible for moving',
-          title: 'No eligible runs',
-        });
-      } else if (numFailures === 0) {
-        openToast({
-          closeable: true,
-          description: `${results.successful.length} runs moved to project ${destinationProjectName}`,
-          link: <Link path={paths.projectDetails(projId)}>View Project</Link>,
-          title: 'Move Success',
-        });
-      } else if (numSuccesses === 0) {
-        openToast({
-          description: `Unable to move ${numFailures} runs`,
-          severity: 'Warning',
-          title: 'Move Failure',
-        });
-      } else {
-        openToast({
-          closeable: true,
-          description: `${numFailures} out of ${numFailures + numSuccesses} eligible runs failed to move to project ${destinationProjectName}`,
-          link: <Link path={paths.projectDetails(projId)}>View Project</Link>,
-          severity: 'Warning',
-          title: 'Partial Move Failure',
-        });
-      }
+      await onSubmit?.(results, projId);
       form.resetFields();
-      await onActionComplete?.();
     } catch (e) {
       handleError(e, { publicSubject: 'Unable to move runs' });
     }
   }, [
     flatRuns,
     form,
-    loadableProjects,
-    onActionComplete,
     onSubmit,
     openToast,
-    projectId,
     sourceProjectId,
     sourceWorkspaceId,
-    workspaceId,
+    destinationWorkspaceId,
   ]);
 
   return (
@@ -166,7 +123,7 @@ const FlatRunMoveModalComponent: React.FC<Props> = ({
         cancel
         size="small"
         submit={{
-          disabled: workspaceId !== 1 && !projectId,
+          disabled: destinationWorkspaceId !== 1 && !destinationProjectId,
           form: idPrefix + FORM_ID,
           handleError,
           handler: handleSubmit,
@@ -177,7 +134,7 @@ const FlatRunMoveModalComponent: React.FC<Props> = ({
           <Form.Item
             initialValue={sourceWorkspaceId ?? 1}
             label="Workspace"
-            name="workspaceId"
+            name="destinationWorkspaceId"
             rules={[{ message: 'Workspace is required', required: true }]}>
             <Select
               filterOption={(input, option) =>
@@ -202,10 +159,10 @@ const FlatRunMoveModalComponent: React.FC<Props> = ({
               })}
             </Select>
           </Form.Item>
-          {workspaceId && workspaceId !== 1 && (
+          {destinationWorkspaceId !== undefined && destinationWorkspaceId !== 1 && (
             <Form.Item
               label="Project"
-              name="projectId"
+              name="destinationProjectId"
               rules={[{ message: 'Project is required', required: true }]}>
               {Loadable.match(loadableProjects, {
                 Failed: () => <div>Failed to load</div>,
