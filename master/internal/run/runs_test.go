@@ -95,8 +95,6 @@ func TestFlattenMetadataEmpty(t *testing.T) {
 	require.Error(t, err, "metadata is empty")
 }
 
-// TODO(corban): this should actually be adjusted to return an error since we don't want to
-// allow empty post requests to be made to the metadata endpoint.
 func TestFlattenMetadataNil(t *testing.T) {
 	_, err := FlattenMetadata(nil)
 	require.Error(t, err, "metadata is empty")
