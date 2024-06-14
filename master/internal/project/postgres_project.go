@@ -29,7 +29,7 @@ const (
 	// MaxRetries is the maximum number of retries for transaction conflicts.
 	MaxRetries = 5
 	// ProjectKeyRegex is the regex pattern for a project key.
-	ProjectKeyRegex = "^[A-Z0-9]{1,5}$"
+	ProjectKeyRegex = "^[a-zA-Z0-9]{1,5}$"
 )
 
 // getProjectColumns returns a query with the columns for a project, not including experiment
