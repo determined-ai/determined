@@ -81,9 +81,8 @@ type Options struct {
 	// master config.
 	AgentReconnectBackoff int `json:"agent_reconnect_backoff"`
 
-	ContainerRuntime   string             `json:"container_runtime"`
-	SingularityOptions SingularityOptions `json:"singularity_options"`
-	PodmanOptions      PodmanOptions      `json:"podman_options"`
+	ContainerRuntime string        `json:"container_runtime"`
+	PodmanOptions    PodmanOptions `json:"podman_options"`
 
 	ContainerAutoRemoveDisabled bool `json:"container_auto_remove_disabled"`
 
@@ -220,14 +219,6 @@ const (
 	DockerContainerRuntime      = "docker"
 	PodmanContainerRuntime      = "podman"
 )
-
-// SingularityOptions configures how we interact with Singularity.
-type SingularityOptions struct {
-	// AllowNetworkCreation allows the agent to use `singularity run`'s `--net` option, which sets
-	// up and launches containers into a new network namespace. Disabled by default since this
-	// requires root or a suid installation with /etc/subuid --fakeroot.
-	AllowNetworkCreation bool `json:"allow_network_creation"`
-}
 
 // PodmanOptions configures how we interact with podman.
 type PodmanOptions struct {
