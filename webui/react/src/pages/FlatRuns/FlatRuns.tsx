@@ -704,7 +704,10 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
         default:
           break;
       }
-      openToast({ severity: 'Confirm', title: `Run ${action.toLowerCase()}d successfully` });
+      openToast({
+        severity: 'Confirm',
+        title: `Run ${action.split('')[action.length - 1] === 'e' ? action.toLowerCase() : `${action.toLowerCase()}e`}d successfully`,
+      });
     },
     [openToast],
   );
