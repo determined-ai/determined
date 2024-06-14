@@ -4,6 +4,7 @@ import pathlib
 import re
 import secrets
 import socket
+import string
 import subprocess
 import sys
 import tempfile
@@ -177,7 +178,10 @@ def master_up(
         master_conf["security"]["initial_user_password"] = initial_user_password
         make_temp_conf = True
     elif master_conf["security"].get("initial_user_password") is None:
-        generated_user_password = secrets.token_urlsafe(16)
+        random_password_characters = string.ascii_uppercase + string.ascii_lowercase + string.digits
+        generated_user_password = "".join(
+            [secrets.choice(random_password_characters) for _ in range(16)]
+        )
         master_conf["security"]["initial_user_password"] = generated_user_password
         make_temp_conf = True
 
