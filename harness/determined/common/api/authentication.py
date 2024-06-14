@@ -236,6 +236,15 @@ def login_with_cache(
             raise api.errors.UnauthenticatedException()
         raise
 
+    try:
+        check_password_complexity(password)
+    except ValueError as e:
+        print(
+            "Warning: your password does not appear to satisfy "
+            + f"recommended complexity requirements:\n{e}\n"
+            + "Please change your password as soon as possible."
+        )
+
     token_store.set_token(user, token)
 
     return sess
