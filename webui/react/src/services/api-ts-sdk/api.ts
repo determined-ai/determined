@@ -3539,17 +3539,17 @@ export interface V1FlatRun {
      */
     experiment?: V1FlatRunExperiment;
     /**
-     * Project level local id of run.
-     * @type {string}
-     * @memberof V1FlatRun
-     */
-    localId?: string;
-    /**
      * The arbitrary metadata of the run.
      * @type {any}
      * @memberof V1FlatRun
      */
     metadata?: any;
+    /**
+     * Project level local id of run.
+     * @type {string}
+     * @memberof V1FlatRun
+     */
+    localId?: string;
 }
 /**
  * 
