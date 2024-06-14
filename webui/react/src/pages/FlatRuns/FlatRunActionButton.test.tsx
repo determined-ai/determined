@@ -6,12 +6,14 @@ import UIProvider, { DefaultTheme } from 'hew/Theme';
 import FlatRunActionButton from 'pages/FlatRuns/FlatRunActionButton';
 import { FlatRun, RunState } from 'types';
 
-vi.mock('services/api', () => ({
+vi.mock('services/api', async (importOriginal) => ({
+  __esModule: true,
+  ...(await importOriginal<typeof import('services/api')>()),
   getWorkspaceProjects: vi.fn(() =>
     Promise.resolve({ projects: [{ id: 1, name: 'project_1', workspaceId: 1 }] }),
   ),
   killRuns: vi.fn((params: { projectId: number; runIds: number[] }) => {
-    return Promise.resolve(params.runIds.map((id) => ({ error: '', id })));
+    return Promise.resolve({ failed: [], successful: params.runIds });
   }),
 }));
 
@@ -80,11 +82,13 @@ describe('canActionFlatRun function', () => {
     });
 
     it('should kill runs', async () => {
-      const { user } = setup(flatRuns);
+      const { user, handler } = setup(flatRuns);
       const actionButton = await screen.findByText('Actions');
       await user.click(actionButton);
       await user.click(await screen.findByText('Kill'));
       expect(await screen.findByText('Confirm Batch Kill')).toBeInTheDocument();
+      await user.click(await screen.findByRole('button', { name: 'Kill' }));
+      expect(handler.onActionSuccess).toBeCalled();
     });
   });
 });
