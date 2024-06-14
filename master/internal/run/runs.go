@@ -30,7 +30,7 @@ func FlattenMetadata(
 	data map[string]any,
 ) (flatMetadata []model.RunMetadataIndex, err error) {
 	if len(data) == 0 {
-		return nil, fmt.Errorf("metadata is empty")
+		return nil, nil
 	}
 	flatMetadata, err = flattenMetadata(data)
 	if err != nil {

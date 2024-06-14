@@ -91,13 +91,15 @@ func TestFlattenMetadata(t *testing.T) {
 
 func TestFlattenMetadataEmpty(t *testing.T) {
 	data := map[string]interface{}{}
-	_, err := FlattenMetadata(data)
-	require.Error(t, err, "metadata is empty")
+	flatMetadata, err := FlattenMetadata(data)
+	require.NoError(t, err)
+	require.Empty(t, flatMetadata)
 }
 
 func TestFlattenMetadataNil(t *testing.T) {
-	_, err := FlattenMetadata(nil)
-	require.Error(t, err, "metadata is empty")
+	flatMetadata, err := FlattenMetadata(nil)
+	require.NoError(t, err)
+	require.Empty(t, flatMetadata)
 }
 
 func TestFlattenMetadataNested(t *testing.T) {
