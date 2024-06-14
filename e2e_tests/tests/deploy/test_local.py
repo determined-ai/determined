@@ -4,6 +4,7 @@ import os
 import pathlib
 import subprocess
 from typing import Dict, Iterator, List, Optional
+from unittest import mock
 
 import docker
 import pytest
@@ -253,23 +254,21 @@ def test_master_up_down() -> None:
         master_name,
         {"initial-user-password": conf.USER_PASSWORD},
         ["delete-db"],
-    ) as master_up_command:
+    ):
         client = docker.from_env()
 
         containers = client.containers.list(filters={"name": master_name})
         assert len(containers) > 0
-        assert (
-            b"The admin and determined users can log in with this password:"
-            not in master_up_command.stdout
-        )
 
     containers = client.containers.list(filters={"name": master_name})
     assert len(containers) == 0
 
 
 @pytest.mark.det_deploy_local
-def test_master_up_implicit_password() -> None:
-    cluster_name = "test_master_up_implicit_password"
+@mock.patch("getpass.getpass")
+def test_master_up_interactive_password(mock_getpass: mock.MagicMock) -> None:
+    mock_getpass.side_effect = lambda *_: "Ya7J42GtY6aXodLp"
+    cluster_name = "test_master_up_interactive_password"
     master_name = f"{cluster_name}_determined-master_1"
 
     with resource_manager(
@@ -280,7 +279,7 @@ def test_master_up_implicit_password() -> None:
         containers = client.containers.list(filters={"name": master_name})
         assert len(containers) > 0
         assert (
-            b"The admin and determined users can log in with this password:"
+            b"Determined Master was launched without a strong initial_user_password set."
             in master_up_command.stdout
         )
 
