@@ -202,7 +202,7 @@ func sortRuns(sortString *string, runQuery *bun.SelectQuery) error {
 		"experimentId":          "e.id",
 		"isExpMultitrial":       "(e.config->'searcher'->>'name' != 'single')",
 		"parentArchived":        "(w.archived OR p.archived)",
-		"localId":               "local_id",
+		"localId":               "r.local_id",
 	}
 	sortParams := strings.Split(*sortString, ",")
 	hasIDSort := false
