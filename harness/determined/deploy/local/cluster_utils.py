@@ -19,7 +19,7 @@ import docker
 from determined.common import api, constants, util
 from determined.common.api import authentication
 from determined.deploy import errors, healthcheck
-from determined.experimental.client import Determined
+from determined.experimental import client as determined
 
 AGENT_NAME_DEFAULT = f"det-agent-{socket.gethostname()}"
 MASTER_PORT_DEFAULT = 8080
@@ -339,7 +339,7 @@ def master_up(
                     if new_password != new_password_check:
                         raise ValueError("passwords did not match")
 
-                    d = Determined._from_session(sess)
+                    d = determined.Determined._from_session(sess)
                     user = d.get_user_by_name("determined")
                     user.change_password(new_password)
                     user = d.get_user_by_name("admin")
