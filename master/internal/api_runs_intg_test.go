@@ -1247,6 +1247,22 @@ func TestPostRunMetadata(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.Equal(t, rawMetadata, metadataResp.Metadata.AsMap())
+
+	// empty metadata
+	metadataResp, err = api.PostRunMetadata(ctx, &apiv1.PostRunMetadataRequest{
+		RunId:    r.Id,
+		Metadata: &structpb.Struct{},
+	})
+	require.NoError(t, err)
+	require.Empty(t, metadataResp.Metadata.AsMap())
+
+	// nil metadata
+	metadataResp, err = api.PostRunMetadata(ctx, &apiv1.PostRunMetadataRequest{
+		RunId:    r.Id,
+		Metadata: nil,
+	})
+	require.NoError(t, err)
+	require.Empty(t, metadataResp.Metadata.AsMap())
 }
 
 func TestRunMetadata(t *testing.T) {
