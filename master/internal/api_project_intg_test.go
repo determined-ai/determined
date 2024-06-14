@@ -641,3 +641,46 @@ func TestPatchProjectWithConcurrent(t *testing.T) {
 	}
 	require.NoError(t, errgrp.Wait())
 }
+
+func TestPatchProjectWithInvalidProjectKey(t *testing.T) {
+	api, _, ctx := setupAPITest(t, nil)
+	wresp, werr := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: uuid.New().String()})
+	require.NoError(t, werr)
+
+	projectName := "test-project" + uuid.New().String()
+	resp, err := api.PostProject(ctx, &apiv1.PostProjectRequest{
+		Name: projectName, WorkspaceId: wresp.Workspace.Id,
+	})
+	require.NoError(t, err)
+
+	type TestCase struct {
+		Description string
+		Key         string
+		Err         string
+	}
+	testCases := []TestCase{
+		{
+			Description: "empty key",
+			Key:         "",
+			Err:         "project key cannot be empty",
+		},
+		{
+			Description: "key with special characters",
+			Key:         "!@#$%",
+			Err:         "project key can only contain alphanumeric characters",
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.Description, func(t *testing.T) {
+			_, err := api.PatchProject(ctx, &apiv1.PatchProjectRequest{
+				Id: resp.Project.Id,
+				Project: &projectv1.PatchProject{
+					Key: wrapperspb.String(tc.Key),
+				},
+			})
+			require.Error(t, err)
+			require.ErrorContains(t, err, tc.Err)
+		})
+	}
+}

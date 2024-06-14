@@ -241,7 +241,6 @@ func ValidateProjectKey(key string) error {
 	case len(key) < 1:
 		return errors.New("project key cannot be empty")
 	case !regexp.MustCompile(ProjectKeyRegex).MatchString(key):
-		log.Errorf("project key %s does not match regex %s", key, ProjectKeyRegex)
 		return errors.Errorf(
 			"project key can only contain alphanumeric characters: %s",
 			key,
