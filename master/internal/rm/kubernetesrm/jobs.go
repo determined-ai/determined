@@ -1428,16 +1428,16 @@ func (j *jobsService) getNodeResourcePoolMapping(nodeSummaries map[string]model.
 			var selectors, affinities *k8sV1.NodeSelector
 
 			// If they're using the default RP config, use the default tolerations.
+			// Don't check for node selectors or affinities here because the pod spec
+			// isn't defined.
 			if len(j.resourcePoolConfigs) <= 1 &&
 				(tcd == nil || (tcd.CPUPodSpec == nil && tcd.GPUPodSpec == nil)) {
 				if slotType == device.CUDA {
 					//nolint:gocritic
 					poolTolerations = append(defaultTolerations, gpuTolerations...)
-					selectors, affinities = extractNodeSelectors(tcd.GPUPodSpec)
 				} else if slotType == device.CPU {
 					//nolint:gocritic
 					poolTolerations = append(defaultTolerations, cpuTolerations...)
-					selectors, affinities = extractNodeSelectors(tcd.CPUPodSpec)
 				}
 			} else if tcd != nil {
 				// Decide which poolTolerations to use based on slot device type
