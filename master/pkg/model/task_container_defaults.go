@@ -7,6 +7,7 @@ import (
 	"strings"
 
 	"github.com/jinzhu/copier"
+	"github.com/sirupsen/logrus"
 
 	k8sV1 "k8s.io/api/core/v1"
 
@@ -129,9 +130,17 @@ func (c *TaskContainerDefaultsConfig) MergeIntoExpConfig(config *expconf.Experim
 	}
 
 	// We just update config.RawResources so we know it can't be nil.
-	defaultedResources := schemas.WithDefaults(*config.RawResources)
-	podSpec := c.CPUPodSpec
-	if defaultedResources.SlotsPerTrial() > 0 {
+	// TODO CAROLINA
+	var podSpec *k8sV1.Pod
+
+	switch {
+	case c.CPUPodSpec == nil && c.GPUPodSpec != nil:
+		podSpec = c.GPUPodSpec
+	case c.CPUPodSpec != nil && c.GPUPodSpec == nil:
+		logrus.Errorf("USING CPU POD SPEC!")
+		podSpec = c.CPUPodSpec
+	default:
+		// Default to GPU Pod Spec if both or none are defined.
 		podSpec = c.GPUPodSpec
 	}
 
