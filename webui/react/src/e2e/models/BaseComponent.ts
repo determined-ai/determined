@@ -37,7 +37,7 @@ export type NamedComponentArgs =
 export class BaseComponent implements ComponentBasics {
   protected _selector: string;
   readonly _parent: CanBeParent;
-  protected _locator: Locator | undefined;
+  protected _locator?: Locator;
 
   /**
    * Constructs a BaseComponent

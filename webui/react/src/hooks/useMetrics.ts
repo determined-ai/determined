@@ -8,17 +8,27 @@ import useMetricNames from 'hooks/useMetricNames';
 import usePolling from 'hooks/usePolling';
 import usePrevious from 'hooks/usePrevious';
 import { timeSeries } from 'services/api';
-import { Metric, MetricContainer, RunState, Scale, Serie, TrialDetails, XAxisDomain } from 'types';
+import {
+  FlatRun,
+  Metric,
+  MetricContainer,
+  RunState,
+  Scale,
+  Serie,
+  TrialDetails,
+  XAxisDomain,
+} from 'types';
 import handleError, { ErrorType } from 'utils/error';
 import { metricToKey } from 'utils/metric';
+import { isRun } from 'utils/run';
 
 type MetricName = string;
-export interface TrialMetrics {
+export interface RunMetrics {
   data: Record<MetricName, Serie>;
   metrics: Metric[];
 }
 
-export interface TrialMetricData {
+export interface RunMetricData {
   data: Record<number, Record<string, Serie>>;
   isLoaded: boolean;
   metrics: Metric[];
@@ -60,7 +70,7 @@ const summarizedMetricToSeries = (
       });
     });
   });
-  const trialData: Record<string, Serie> = {};
+  const recordData: Record<string, Serie> = {};
   const metricHasData: Record<string, boolean> = {};
   selectedMetrics.forEach((metric) => {
     const metricKey = metricToKey(metric);
@@ -74,47 +84,56 @@ const summarizedMetricToSeries = (
       name: `${metric.group}.${metric.name}`,
     };
 
-    trialData[metricToKey(metric)] = series;
+    recordData[metricToKey(metric)] = series;
   });
   const xAxisOptions = Object.values(XAxisDomain);
   // Record whether or not each metric contains at least one value for any
   // xAxis option.
-  Object.keys(trialData).forEach((key) => {
+  Object.keys(recordData).forEach((key) => {
     metricHasData[key] ||= xAxisOptions.some(
-      (xAxis) => (trialData?.[key]?.data?.[xAxis]?.length ?? 0) > 0,
+      (xAxis) => (recordData?.[key]?.data?.[xAxis]?.length ?? 0) > 0,
     );
   });
-  return { data: trialData, metricHasData, selectedMetrics };
+  return { data: recordData, metricHasData, selectedMetrics };
 };
 
-export const useTrialMetrics = (trials: (TrialDetails | undefined)[]): TrialMetricData => {
-  const trialsAllTerminated = trials?.every((trial) =>
-    terminalRunStates.has(trial?.state ?? RunState.Active),
+export const useMetrics = (records: (TrialDetails | FlatRun | undefined)[]): RunMetricData => {
+  const recordsAllTerminated = records?.every((record) =>
+    terminalRunStates.has(record?.state ?? RunState.Active),
   );
-  const trialsAllNonTerminal = !trials?.find((trial) =>
-    terminalRunStates.has(trial?.state ?? RunState.Error),
+  const recordsAllNonTerminal = !records?.find((record) =>
+    terminalRunStates.has(record?.state ?? RunState.Error),
   );
   const experimentIds = useMemo(
-    () => trials?.map((t) => t?.experimentId || 0).filter((i) => i > 0),
-    [trials],
+    () =>
+      records.flatMap((r) =>
+        r === undefined
+          ? []
+          : isRun(r)
+            ? r.experiment === undefined
+              ? []
+              : [r.experiment.id]
+            : [r.experimentId],
+      ),
+    [records],
   );
   const handleMetricNamesError = useCallback(
     (e: unknown) => {
       handleError(e, {
-        publicMessage: `Failed to load metric names for trials ${trials?.map(
-          (t) => `[${t?.id}]`,
+        publicMessage: `Failed to load metric names for records ${records?.map(
+          (r) => `[${r?.id}]`,
         )}.`,
-        publicSubject: 'Experiment metric name stream failed.',
+        publicSubject: 'Metric name stream failed.',
         type: ErrorType.Api,
       });
     },
-    [trials],
+    [records],
   );
 
   const loadableMetrics = useMetricNames(
     experimentIds,
     handleMetricNamesError,
-    trialsAllNonTerminal,
+    recordsAllNonTerminal,
   );
   const metricNamesLoaded = Loadable.isLoaded(loadableMetrics);
   const metrics = useMemo(() => {
@@ -126,40 +145,40 @@ export const useTrialMetrics = (trials: (TrialDetails | undefined)[]): TrialMetr
   const [scale, setScale] = useState<Scale>(Scale.Linear);
   const [selectedMetrics, setSelectedMetrics] = useState<Metric[]>([]);
 
-  const previousTrials = usePrevious(trials, []);
+  const previousRecords = usePrevious(records, []);
 
-  const fetchTrialSummary = useCallback(async () => {
-    // If the trial ids have not changed then we do not need to
+  const fetchRecordSummary = useCallback(async () => {
+    // If the record ids have not changed then we do not need to
     // show the loading state again.
-    if (!_.isEqual(_.map(previousTrials, 'id'), _.map(trials, 'id'))) setLoadableData(NotLoaded);
+    if (!_.isEqual(_.map(previousRecords, 'id'), _.map(records, 'id'))) setLoadableData(NotLoaded);
 
-    if (trials.length === 0) {
+    if (records.length === 0) {
       // If there are no trials selected then
       // no data is available.
       setMetricHasData({});
       setLoadableData(Loaded({}));
       return;
     }
-    if (trials.length > 0) {
+    if (records.length > 0) {
       try {
         const metricsHaveData: Record<string, boolean> = {};
         const response = await timeSeries({
           maxDatapoints: screen.width > 1600 ? 1500 : 1000,
           metrics,
           startBatches: 0,
-          trialIds: trials?.map((t) => t?.id || 0).filter((i) => i > 0),
+          trialIds: records?.map((t) => t?.id || 0).filter((i) => i > 0),
         });
         const newData: Record<number, Record<string, Serie>> = {};
         response.forEach((r) => {
           const {
-            data: trialData,
+            data: recordData,
             metricHasData,
             selectedMetrics: s,
           } = summarizedMetricToSeries(r?.metrics, metrics);
           Object.keys(metricHasData).forEach((key) => {
             metricsHaveData[key] ||= metricHasData[key];
           });
-          newData[r.id] = trialData;
+          newData[r.id] = recordData;
           setSelectedMetrics((prev) => (_.isEqual(selectedMetrics, s) ? prev : s));
         });
         setLoadableData((prev) =>
@@ -174,21 +193,21 @@ export const useTrialMetrics = (trials: (TrialDetails | undefined)[]): TrialMetr
         makeToast({ severity: 'Error', title: 'Error fetching metrics' });
       }
     }
-  }, [loadableMetrics, metrics, selectedMetrics, trials, previousTrials]);
+  }, [loadableMetrics, metrics, selectedMetrics, records, previousRecords]);
 
   const fetchAll = useCallback(async () => {
-    await Promise.allSettled([fetchTrialSummary()]);
-  }, [fetchTrialSummary]);
+    await Promise.allSettled([fetchRecordSummary()]);
+  }, [fetchRecordSummary]);
 
   const { stopPolling } = usePolling(fetchAll, { interval: 2000, rerunOnNewFn: true });
 
   useEffect(() => {
-    if (trialsAllTerminated) {
+    if (recordsAllTerminated) {
       stopPolling();
     }
-  }, [trialsAllTerminated, stopPolling]);
+  }, [recordsAllTerminated, stopPolling]);
 
-  if (trialsAllTerminated) {
+  if (recordsAllTerminated) {
     stopPolling();
   }
 

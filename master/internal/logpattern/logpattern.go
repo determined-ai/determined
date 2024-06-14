@@ -18,8 +18,9 @@ import (
 const regexCacheSize = 256
 
 var (
-	defaultSingleton       *LogPatternPolicies
-	expconfigCompiledRegex = regexp.MustCompile("(.*)(\\\"log_policies\\\":)(.*)")
+	defaultSingleton *LogPatternPolicies
+	// ExpconfigCompiledRegex is used to identify user submitted config.
+	ExpconfigCompiledRegex = regexp.MustCompile("(.*)(\\\"log_policies\\\":)(.*)")
 )
 
 // LogPatternPolicies performs log pattern checks.
@@ -70,7 +71,7 @@ func (l *LogPatternPolicies) monitor(ctx context.Context,
 
 			// One of the trial logs prints expconf which has the regex pattern.
 			// We skip monitoring this line.
-			if expconfigCompiledRegex.MatchString(log.Log) {
+			if ExpconfigCompiledRegex.MatchString(log.Log) {
 				continue
 			}
 

@@ -4,6 +4,18 @@
  Troubleshooting
 #################
 
+   .. important::
+
+      TensorFlow users must configure their environment image in their :ref:`experiment
+      configuration <experiment-config-reference>` file before submitting an experiment.
+
+      .. code:: bash
+
+         environment:
+            image:
+               cpu: determinedai/tensorflow-ngc-dev:f17151a
+               gpu: determinedai/tensorflow-ngc-dev:f17151a
+
 ****************
  Error messages
 ****************

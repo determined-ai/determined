@@ -320,7 +320,7 @@ func hpToSQL(c string, filterColumnType *string, filterValue *interface{},
 			queryArgs = append(queryArgs, bun.Safe("?"), queryValue)
 			queryString = fmt.Sprintf(`(CASE
 				WHEN config->'hyperparameters'->%s->>'type' = 'const' THEN config->'hyperparameters'->%s->>'val' NOT LIKE %s
-				WHEN config->'hyperparameters'->%s->>'type' = 'categorical' THEN (config->'hyperparameters'->%s->>'vals')::jsonb %s %s) IS NOT TRUE
+				WHEN config->'hyperparameters'->%s->>'type' = 'categorical' THEN (config->'hyperparameters'->%s->>'vals')::jsonb %s %s IS NOT TRUE
 				ELSE false
 			 END)`, hpQuery, hpQuery, "?", hpQuery, hpQuery, "?", "?")
 		default:

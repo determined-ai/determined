@@ -288,8 +288,9 @@ func (j *job) podUpdatedCallback(updatedPod k8sV1.Pod) error {
 		}
 	}
 
+	allPodsFound := len(j.podStates) == j.numPods
 	allPodsAtLeastStarting := all(cproto.Starting.Before, maps.Values(j.podStates)...)
-	if allPodsAtLeastStarting && !j.sentStartingEvent {
+	if allPodsFound && allPodsAtLeastStarting && !j.sentStartingEvent {
 		// Kubernetes does not have an explicit state for pulling container images.
 		// We insert it here because our  current implementation of the trial actor requires it.
 		j.syslog.WithField("pod-name", podName).Info("pod is pulling images and starting")
@@ -318,7 +319,7 @@ func (j *job) podUpdatedCallback(updatedPod k8sV1.Pod) error {
 	}
 
 	allPodsAtLeastRunning := all(cproto.Running.Before, maps.Values(j.podStates)...)
-	if allPodsAtLeastRunning && !j.sentRunningEvent {
+	if allPodsFound && allPodsAtLeastRunning && !j.sentRunningEvent {
 		j.syslog.WithField("pod-name", podName).Info("pod is running")
 		j.container.State = cproto.Running
 		j.informTaskResourcesStarted(sproto.ResourcesStarted{NativeResourcesID: j.jobName})

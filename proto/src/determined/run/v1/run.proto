@@ -110,6 +110,8 @@ message FlatRun {
   bool parent_archived = 18;
   // Data related the the experiment associated with this run.
   optional FlatRunExperiment experiment = 19;
+  // The arbitrary metadata of the run.
+  optional google.protobuf.Struct metadata = 20;
   // Project level local id of run.
-  string local_id = 20;
+  string local_id = 21;
 }
