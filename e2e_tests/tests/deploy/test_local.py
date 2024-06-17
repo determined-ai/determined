@@ -33,14 +33,14 @@ def mksess(host: str, port: int, username: str = "determined", password: str = "
     return authentication.login(master_url, username=username, password=password)
 
 
-def det_deploy(subcommand: List, input: Optional[str] = None) -> subprocess.CompletedProcess:
+def det_deploy(subcommand: List, cmd_input: Optional[bytes] = None) -> subprocess.CompletedProcess:
     command = [
         "det",
         "deploy",
         "local",
     ] + subcommand
     print(f"Running deployment: {' '.join(command)}")
-    return subprocess.run(command, check=True, stdout=subprocess.PIPE, input=input)
+    return subprocess.run(command, check=True, stdout=subprocess.PIPE, input=cmd_input)
 
 
 def resource_up(
@@ -49,7 +49,7 @@ def resource_up(
     kwflags: Optional[Dict[str, str]] = None,
     flags: Optional[List[str]] = None,
     positional_arguments: Optional[List[str]] = None,
-    input: Optional[str] = None,
+    cmd_input: Optional[bytes] = None,
 ) -> subprocess.CompletedProcess:
     """Issue a `det deploy local` command to bring up a resource.
 
@@ -78,7 +78,7 @@ def resource_up(
     det_version = conf.DET_VERSION
     if det_version is not None:
         command += ["--det-version", det_version]
-    return det_deploy(command, input=input)
+    return det_deploy(command, cmd_input=cmd_input)
 
 
 def resource_down(resource: Resource, name: str) -> subprocess.CompletedProcess:
@@ -93,10 +93,12 @@ def resource_manager(
     kwflags: Optional[Dict[str, str]] = None,
     boolean_flags: Optional[List[str]] = None,
     positional_arguments: Optional[List[str]] = None,
-    input: Optional[str] = None,
+    cmd_input: Optional[bytes] = None,
 ) -> Iterator[subprocess.CompletedProcess]:
     """Context manager to bring resources up and down."""
-    res = resource_up(resource, name, kwflags, boolean_flags, positional_arguments, input=input)
+    res = resource_up(
+        resource, name, kwflags, boolean_flags, positional_arguments, cmd_input=cmd_input
+    )
     try:
         yield res
     finally:
@@ -275,7 +277,7 @@ def test_master_up_interactive_password() -> None:
         Resource.MASTER,
         master_name,
         boolean_flags=["delete-db"],
-        input=f"{password_input}\n{password_input}\n",
+        cmd_input=bytes(f"{password_input}\n{password_input}\n", "utf8"),
     ) as master_up_command:
         client = docker.from_env()
 
