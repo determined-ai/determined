@@ -34,7 +34,7 @@ describe('SearchDetails', () => {
   it('should have tabs', () => {
     setup();
 
-    expect(screen.getByText('Uncategorized Experiments')).toBeInTheDocument();
-    expect(screen.getByText('Notes')).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Runs' })).toBeInTheDocument();
+    expect(screen.getByRole('tab', { name: 'Notes' })).toBeInTheDocument();
   });
 });
