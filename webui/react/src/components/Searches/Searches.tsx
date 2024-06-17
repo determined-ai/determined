@@ -856,9 +856,6 @@ const Searches: React.FC<Props> = ({ project }) => {
               getHeaderMenuItems={getHeaderMenuItems}
               getRowAccentColor={getRowAccentColor}
               imperativeRef={dataGridRef}
-              isPaginated
-              page={page}
-              pageSize={PAGE_SIZE}
               pinnedColumnsCount={isLoadingSettings ? 0 : settings.pinnedColumnsCount}
               renderContextMenuComponent={({
                 cell,
@@ -886,11 +883,9 @@ const Searches: React.FC<Props> = ({ project }) => {
               selection={selection}
               sorts={sorts}
               staticColumns={STATIC_COLUMNS}
-              total={Loadable.getOrElse(PAGE_SIZE, total)}
               onColumnResize={handleColumnWidthChange}
               onColumnsOrderChange={handleColumnsOrderChange}
               onContextMenuComplete={handleContextMenuComplete}
-              onPageUpdate={setPage}
               onPinnedColumnsCountChange={handlePinnedColumnsCountChange}
               onSelectionChange={handleSelectionChange}
             />

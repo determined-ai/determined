@@ -1013,19 +1013,14 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
               getHeaderMenuItems={getHeaderMenuItems}
               getRowAccentColor={getRowAccentColor}
               imperativeRef={dataGridRef}
-              isPaginated
-              page={page}
-              pageSize={PAGE_SIZE}
               pinnedColumnsCount={isLoadingSettings ? 0 : settings.pinnedColumnsCount}
               rowHeight={rowHeightMap[globalSettings.rowHeight as RowHeight]}
               selection={selection}
               sorts={sorts}
               staticColumns={STATIC_COLUMNS}
-              total={total.getOrElse(PAGE_SIZE)}
               onColumnResize={handleColumnWidthChange}
               onColumnsOrderChange={handleColumnsOrderChange}
               onContextMenuComplete={handleContextMenuComplete}
-              onPageUpdate={setPage}
               onPinnedColumnsCountChange={handlePinnedColumnsCountChange}
               onSelectionChange={handleSelectionChange}
             />
