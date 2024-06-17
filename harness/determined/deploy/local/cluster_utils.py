@@ -11,6 +11,7 @@ import sys
 import tempfile
 import threading
 import time
+import warnings
 from typing import Any, Callable, Dict, Generator, List, Optional, Sequence, Type
 
 import appdirs
@@ -320,30 +321,33 @@ def master_up(
                 )
 
                 try:
-                    if not sys.stdin.isatty():
-                        # We can't use getpass without a TTY so fail fast
-                        raise ValueError()
-                    prompt = (
-                        "Please enter a password for the built-in `determined` and `admin` users: "
-                    )
-                    new_password = getpass.getpass(prompt)
-                    # Give one more chance if this password is too weak
-                    try:
-                        authentication.check_password_complexity(new_password)
-                    except ValueError as e:
-                        print(e)
+                    # getpass raises this warning instead of an exception if it can't find the
+                    # terminal, which almost always means we're not going to be able to receive
+                    # a password interactively and securely, so should abort quickly rather
+                    # than time out.
+                    with warnings.catch_warnings(action="error", category=getpass.GetPassWarning):
+                        prompt = (
+                            "Please enter a password for the built-in "
+                            + "`determined` and `admin` users: "
+                        )
                         new_password = getpass.getpass(prompt)
+                        # Give one more chance if this password is too weak
+                        try:
+                            authentication.check_password_complexity(new_password)
+                        except ValueError as e:
+                            print(e)
+                            new_password = getpass.getpass(prompt)
 
-                    authentication.check_password_complexity(new_password)
-                    new_password_check = getpass.getpass("Enter the password again: ")
-                    if new_password != new_password_check:
-                        raise ValueError("passwords did not match")
+                        authentication.check_password_complexity(new_password)
+                        new_password_check = getpass.getpass("Enter the password again: ")
+                        if new_password != new_password_check:
+                            raise ValueError("passwords did not match")
 
-                    d = determined.Determined._from_session(sess)
-                    user = d.get_user_by_name("determined")
-                    user.change_password(new_password)
-                    user = d.get_user_by_name("admin")
-                    user.change_password(new_password)
+                        d = determined.Determined._from_session(sess)
+                        user = d.get_user_by_name("determined")
+                        user.change_password(new_password)
+                        user = d.get_user_by_name("admin")
+                        user.change_password(new_password)
 
                 except Exception:
                     # User could exit, or might be unable to pass validation,
