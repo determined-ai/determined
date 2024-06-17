@@ -95,6 +95,22 @@ func AddTrial(ctx context.Context, trial *model.Trial, taskID model.TaskID) erro
 				return fmt.Errorf("inserting project hyperparameters: %w", err)
 			}
 		}
+
+		var isSingleTrial bool
+		err = tx.NewSelect().
+			ColumnExpr("config->'searcher'->>'name' = 'single'").
+			Table("experiments").
+			Where("id = ?", run.ExperimentID).
+			Scan(ctx, &isSingleTrial)
+		if err != nil {
+			return fmt.Errorf("getting experiment config while inserting trial: %w", err)
+		}
+		if isSingleTrial {
+			if _, err := tx.NewUpdate().Table("experiments").Set("best_trial_id = ?", run.ID).
+				Where("id = ?", run.ExperimentID).Exec(ctx); err != nil {
+				return fmt.Errorf("updating best trial id for single trial experiment: %w", err)
+			}
+		}
 		return nil
 	})
 	if err != nil {
