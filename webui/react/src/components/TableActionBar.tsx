@@ -400,7 +400,7 @@ const TableActionBar: React.FC<Props> = ({
         <Column>
           <Row>
             <TableFilter
-              bannedFilterColumns={bannedFilterColumns ?? new Set()}
+              bannedFilterColumns={bannedFilterColumns}
               formStore={formStore}
               isMobile={isMobile}
               isOpenFilter={isOpenFilter}
@@ -408,7 +408,7 @@ const TableActionBar: React.FC<Props> = ({
               onIsOpenFilterChange={onIsOpenFilterChange}
             />
             <MultiSortMenu
-              bannedSortColumns={bannedSortColumns ?? new Set()}
+              bannedSortColumns={bannedSortColumns}
               columns={projectColumns}
               isMobile={isMobile}
               sorts={sorts}

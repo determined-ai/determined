@@ -160,7 +160,7 @@ export const getColumnDefs = ({
       data: { kind: TEXT_CELL },
       kind: GridCellKind.Custom,
     }),
-    title: 'Experiment Description',
+    title: 'Search Description',
     tooltip: () => undefined,
     width:
       columnWidths.experimentDescription ??
@@ -195,7 +195,7 @@ export const getColumnDefs = ({
       kind: GridCellKind.Custom,
       readonly: true,
     }),
-    title: 'Experiment ID',
+    title: 'Search ID',
     tooltip: () => undefined,
     width: columnWidths.experimentId ?? defaultColumnWidths.experimentId ?? MIN_COLUMN_WIDTH,
   },
@@ -227,7 +227,7 @@ export const getColumnDefs = ({
       kind: GridCellKind.Custom,
       readonly: true,
     }),
-    title: 'Experiment Name',
+    title: 'Search Name',
     tooltip: () => undefined,
     width: columnWidths.experimentName ?? defaultColumnWidths.experimentName ?? MIN_COLUMN_WIDTH,
   },
@@ -333,7 +333,7 @@ export const getColumnDefs = ({
       displayData: record.experiment?.isMultitrial ? '✔️' : '',
       kind: GridCellKind.Text,
     }),
-    title: 'Part of Multi-Run Experiment',
+    title: 'Part of Search',
     tooltip: () => undefined,
     width: columnWidths.isExpMultitrial ?? defaultColumnWidths.isExpMultitrial ?? MIN_COLUMN_WIDTH,
   },
@@ -361,7 +361,7 @@ export const getColumnDefs = ({
         kind: GridCellKind.Text,
       };
     },
-    title: 'Experiment Progress',
+    title: 'Search Progress',
     tooltip: () => undefined,
     width:
       columnWidths.experimentProgress ?? defaultColumnWidths.experimentProgress ?? MIN_COLUMN_WIDTH,
