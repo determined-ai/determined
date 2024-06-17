@@ -4,7 +4,6 @@ import os
 import pathlib
 import subprocess
 from typing import Dict, Iterator, List, Optional
-from unittest import mock
 
 import docker
 import pytest
@@ -265,10 +264,8 @@ def test_master_up_down() -> None:
 
 
 @pytest.mark.det_deploy_local
-@mock.patch("getpass.getpass")
-def test_master_up_interactive_password(mock_getpass: mock.MagicMock) -> None:
-    mock_getpass.side_effect = lambda *_: "Ya7J42GtY6aXodLp"
-    cluster_name = "test_master_up_interactive_password"
+def test_master_up_without_password() -> None:
+    cluster_name = "test_master_up_without_password"
     master_name = f"{cluster_name}_determined-master_1"
 
     with resource_manager(
