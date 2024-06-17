@@ -325,7 +325,8 @@ def master_up(
                     # terminal, which almost always means we're not going to be able to receive
                     # a password interactively and securely, so should abort quickly rather
                     # than time out.
-                    with warnings.catch_warnings(action="error", category=getpass.GetPassWarning):
+                    with warnings.catch_warnings():
+                        warnings.filterwarnings(action="error", category=getpass.GetPassWarning)
                         prompt = (
                             "Please enter a password for the built-in "
                             + "`determined` and `admin` users: "
