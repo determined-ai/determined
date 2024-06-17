@@ -34,19 +34,25 @@ FOR EACH ROW
 
 -- backfill existing single-trial experiments without best_trial_id
 WITH single_run_experiments AS (
-    SELECT experiment_id
-    FROM runs r
-    GROUP BY experiment_id
-    HAVING COUNT(*) = 1),
+    SELECT 
+        id
+    FROM  
+        experiments
+    WHERE
+        e.config->'searcher'->>'name' = 'single'
+)
 br_no_validation AS (
     SELECT r.experiment_id, r.id, r.best_validation_id
     FROM 
         runs r 
         INNER JOIN single_run_experiments sre 
         ON r.experiment_id = sre.experiment_id
-    WHERE best_validation_id IS NULL
     ORDER BY searcher_metric_value_signed)
-UPDATE experiments SET best_trial_id = brnv.id FROM br_no_validation brnv
+UPDATE 
+    experiments 
+SET 
+    best_trial_id = brnv.id 
+FROM 
+    br_no_validation brnv
 WHERE 
-    experiments.best_trial_id IS NULL
-    AND experiments.id = brnv.experiment_id;
+    experiments.id = brnv.experiment_id;
