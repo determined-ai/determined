@@ -509,7 +509,7 @@ func (db *PgDB) _addTrialMetricsTx(
 	}
 	var summaryMetrics model.JSONObj
 	err = tx.QueryRowContext(ctx, `
-		SELECT summary_metrics FROM trials WHERE id = $1 FOR UPDATE;
+		SELECT summary_metrics FROM runs WHERE id = $1 FOR UPDATE;
 	`, m.TrialId).Scan(&summaryMetrics)
 	if err != nil {
 		return rollbacks, fmt.Errorf("error getting summary metrics from trials: %w", err)

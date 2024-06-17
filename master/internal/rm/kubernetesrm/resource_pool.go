@@ -253,13 +253,32 @@ func (k *kubernetesResourcePool) getResourceSummary() (*resourceSummary, error) 
 
 func (k *kubernetesResourcePool) ValidateResources(
 	msg sproto.ValidateResourcesRequest,
-) sproto.ValidateResourcesResponse {
+) error {
 	k.mu.Lock()
 	defer k.mu.Unlock()
 	k.tryAdmitPendingTasks = true
 
 	fulfillable := k.maxSlotsPerPod >= msg.Slots
-	return sproto.ValidateResourcesResponse{Fulfillable: fulfillable}
+
+	if msg.IsSingleNode {
+		if !fulfillable {
+			return fmt.Errorf(
+				"invalid resource request: slots (%d) must be < max_slots_per_pod (%d) on single pod",
+				msg.Slots,
+				k.maxSlotsPerPod,
+			)
+		}
+		return nil
+	}
+	fulfillable = fulfillable || msg.Slots%k.maxSlotsPerPod == 0
+	if !fulfillable {
+		return fmt.Errorf(
+			"invalid resource request: slots (%d) must be < or a multiple of max_slots_per_pod (%d)",
+			msg.Slots,
+			k.maxSlotsPerPod,
+		)
+	}
+	return nil
 }
 
 func (k *kubernetesResourcePool) Admit() {

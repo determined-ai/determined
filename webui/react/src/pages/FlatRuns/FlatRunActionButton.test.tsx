@@ -6,8 +6,21 @@ import UIProvider, { DefaultTheme } from 'hew/Theme';
 import FlatRunActionButton from 'pages/FlatRuns/FlatRunActionButton';
 import { FlatRun, RunState } from 'types';
 
+vi.mock('services/api', async (importOriginal) => ({
+  __esModule: true,
+  ...(await importOriginal<typeof import('services/api')>()),
+  getWorkspaceProjects: vi.fn(() =>
+    Promise.resolve({ projects: [{ id: 1, name: 'project_1', workspaceId: 1 }] }),
+  ),
+  killRuns: vi.fn((params: { projectId: number; runIds: number[] }) => {
+    return Promise.resolve({ failed: [], successful: params.runIds });
+  }),
+}));
+
 const setup = (selectedFlatRuns: ReadonlyArray<Readonly<FlatRun>>) => {
   const user = userEvent.setup();
+  const onActionSuccess = vi.fn();
+  const onActionComplete = vi.fn();
 
   render(
     <UIProvider theme={DefaultTheme.Light}>
@@ -16,12 +29,14 @@ const setup = (selectedFlatRuns: ReadonlyArray<Readonly<FlatRun>>) => {
         projectId={1}
         selectedRuns={selectedFlatRuns}
         workspaceId={1}
-        onActionComplete={vi.fn()}
+        onActionComplete={onActionComplete}
+        onActionSuccess={onActionSuccess}
       />
     </UIProvider>,
   );
 
   return {
+    handler: { onActionSuccess },
     user,
   };
 };
@@ -44,12 +59,12 @@ describe('canActionFlatRun function', () => {
       },
     ];
 
-    it('should not be appeard without selected flat runs', () => {
+    it('should not appear without selected flat runs', () => {
       setup([]);
       expect(screen.queryByText('Actions')).not.toBeInTheDocument();
     });
 
-    it('should be appeard with selected flat runs', async () => {
+    it('should appear with selected flat runs', async () => {
       setup(flatRuns);
       expect(await screen.findByText('Actions')).toBeInTheDocument();
     });
@@ -64,6 +79,16 @@ describe('canActionFlatRun function', () => {
       expect(await screen.findByText('Unarchive')).toBeInTheDocument();
       expect(await screen.findByText('Delete')).toBeInTheDocument();
       expect(await screen.findByText('Kill')).toBeInTheDocument();
+    });
+
+    it('should kill runs', async () => {
+      const { user, handler } = setup(flatRuns);
+      const actionButton = await screen.findByText('Actions');
+      await user.click(actionButton);
+      await user.click(await screen.findByText('Kill'));
+      expect(await screen.findByText('Confirm Batch Kill')).toBeInTheDocument();
+      await user.click(await screen.findByRole('button', { name: 'Kill' }));
+      expect(handler.onActionSuccess).toBeCalled();
     });
   });
 });

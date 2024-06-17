@@ -60,8 +60,8 @@
 
    CLI <cli/cli-ug>
    Commands and Shells <cli/commands-and-shells>
+   GenAI Studio <genai/_index>
    Notebooks <notebooks>
    Proxy Ports <proxy-ports>
    TensorBoard <tensorboard>
-   GenAI Studio <genai/_index>
    WebUI <webui-if>

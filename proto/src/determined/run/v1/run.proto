@@ -111,8 +111,10 @@ message FlatRun {
   bool parent_archived = 18;
   // Data related the the experiment associated with this run.
   optional FlatRunExperiment experiment = 19;
+  // The arbitrary metadata of the run.
+  optional google.protobuf.Struct metadata = 20;
   // The archived status of this run.
   // This is only looking at the archived status at the run level and not taking
   // into account whether the experiment is archived or not.
-  bool archived = 20;
+  bool archived = 21;
 }

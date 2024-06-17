@@ -89,7 +89,7 @@ def test_log_pattern_send_webhook(should_match: bool) -> None:
 
     regex = r"assert 0 <= self\.metrics_sigma"
     if not should_match:
-        regex = r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b"
+        regex = r"(.*)cuda(.*)"
 
     webhook_trigger = bindings.v1Trigger(
         triggerType=bindings.v1TriggerType.TASK_LOG,

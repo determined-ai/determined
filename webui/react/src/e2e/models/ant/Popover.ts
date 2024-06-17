@@ -22,7 +22,7 @@ type PopoverArgs = PopoverArgsWithoutChildNode | PopoverArgsWithChildNode;
  */
 export class Popover extends BaseComponent {
   readonly openMethod: () => Promise<void>;
-  readonly childNode: ComponentBasics | undefined;
+  readonly childNode?: ComponentBasics;
   constructor({ root, childNode, openMethod }: PopoverArgs) {
     super({
       parent: root,

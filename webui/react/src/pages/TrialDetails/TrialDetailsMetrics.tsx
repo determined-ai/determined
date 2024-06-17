@@ -8,6 +8,7 @@ import { closestPointPlugin } from 'components/UPlot/UPlotChart/closestPointPlug
 import { drawPointsPlugin } from 'components/UPlot/UPlotChart/drawPointsPlugin';
 import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin';
 import { useCheckpointFlow } from 'hooks/useCheckpointFlow';
+import { useMetrics } from 'hooks/useMetrics';
 import {
   CheckpointWorkloadExtended,
   ExperimentBase,
@@ -19,8 +20,6 @@ import {
 import { glasbeyColor } from 'utils/color';
 import handleError from 'utils/error';
 import { metricSorter, metricToKey } from 'utils/metric';
-
-import { useTrialMetrics } from './useTrialMetrics';
 
 export interface Props {
   experiment: ExperimentBase;
@@ -56,13 +55,7 @@ const TrialDetailsMetrics: React.FC<Props> = ({ experiment, trial }: Props) => {
 
   const trials: (TrialDetails | undefined)[] = useMemo(() => [trial], [trial]);
 
-  const {
-    metrics,
-    isLoaded: isMetricsLoaded,
-    data: allData,
-    scale,
-    setScale,
-  } = useTrialMetrics(trials);
+  const { metrics, isLoaded: isMetricsLoaded, data: allData, scale, setScale } = useMetrics(trials);
   const data = useMemo(() => allData?.[trial?.id || 0], [allData, trial?.id]);
 
   const checkpointsDict = useMemo<CheckpointsDict>(() => {

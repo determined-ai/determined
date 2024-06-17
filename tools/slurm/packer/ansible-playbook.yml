@@ -214,8 +214,7 @@
       command: sed -i '/^#ENROOT_RUNTIME_PATH/c\ENROOT_RUNTIME_PATH        /tmp/\$\(whoami\)' /etc/enroot/enroot.conf
 
     - name: Install Launcher
-      apt:
-        deb: "{{ launcher_deb }}"
+      command: dpkg -i "{{ launcher_deb }}"
 
     - name: Enable launcher.service
       systemd:

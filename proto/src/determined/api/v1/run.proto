@@ -230,3 +230,33 @@ message ResumeRunsResponse {
   // Details on success or error for each run.
   repeated RunActionResult results = 1;
 }
+
+// Request to get the metadata of a run.
+message GetRunMetadataRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "id" ] }
+  };
+  // The ID of the run to get metadata for.
+  int32 run_id = 1;
+}
+// Response to get the metadata of a run.
+message GetRunMetadataResponse {
+  // The arbitrary metadata of the run.
+  google.protobuf.Struct metadata = 1;
+}
+
+// Request to post metadata for a run.
+message PostRunMetadataRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "id", "metadata" ] }
+  };
+  // The ID of the run to post metadata for.
+  int32 run_id = 1;
+  // The arbitrary metadata to post.
+  google.protobuf.Struct metadata = 2;
+}
+// Response to post metadata for a run.
+message PostRunMetadataResponse {
+  // The new metadata of the run.
+  google.protobuf.Struct metadata = 1;
+}

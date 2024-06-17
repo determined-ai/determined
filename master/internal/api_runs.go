@@ -7,20 +7,21 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"github.com/uptrace/bun"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
-	"github.com/pkg/errors"
-
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/db/bunutils"
 	"github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
+	"github.com/determined-ai/determined/master/internal/run"
 	"github.com/determined-ai/determined/master/internal/storage"
 	"github.com/determined-ai/determined/master/internal/trials"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/protoutils"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/set"
@@ -163,7 +164,9 @@ func getRunsColumns(q *bun.SelectQuery) *bun.SelectQuery {
 			'is_multitrial', (e.config->'searcher'->>'name' != 'single'),
 			'pachyderm_integration', NULLIF(e.config#>'{integrations,pachyderm}', 'null'),
 			'id', e.id) AS experiment`).
+		ColumnExpr("rm.metadata AS metadata").
 		Join("LEFT JOIN experiments AS e ON r.experiment_id=e.id").
+		Join("LEFT JOIN runs_metadata AS rm ON r.id=rm.run_id").
 		Join("LEFT JOIN users u ON e.owner_id = u.id").
 		Join("LEFT JOIN projects p ON r.project_id = p.id").
 		Join("LEFT JOIN workspaces w ON p.workspace_id = w.id")
@@ -918,4 +921,54 @@ func pauseResumeAction(ctx context.Context, isPause bool, projectID int32,
 		}
 	}
 	return results, nil
+}
+
+// GetRunMetadata returns the metadata of a run.
+func (a *apiServer) GetRunMetadata(
+	ctx context.Context, req *apiv1.GetRunMetadataRequest,
+) (*apiv1.GetRunMetadataResponse, error) {
+	// TODO(runs) run specific RBAC.
+	if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.RunId),
+		experiment.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
+		return nil, err
+	}
+	metadata, err := db.GetRunMetadata(ctx, int(req.RunId))
+	if err != nil {
+		return nil, err
+	}
+	return &apiv1.GetRunMetadataResponse{
+		Metadata: protoutils.ToStruct(metadata),
+	}, nil
+}
+
+// PostRunMetadata updates the metadata of a run.
+func (a *apiServer) PostRunMetadata(
+	ctx context.Context, req *apiv1.PostRunMetadataRequest,
+) (*apiv1.PostRunMetadataResponse, error) {
+	// TODO(runs) run specific RBAC.
+	if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.RunId),
+		experiment.AuthZProvider.Get().CanEditExperiment); err != nil {
+		return nil, err
+	}
+
+	if len(req.Metadata.AsMap()) == 0 || req.Metadata.AsMap() == nil {
+		return nil, status.Error(codes.InvalidArgument, "metadata cannot be empty")
+	}
+
+	// Flatten Request Metadata.
+	flatMetadata, err := run.FlattenMetadata(req.Metadata.AsMap())
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	// Update the metadata in DB
+	result, err := db.UpdateRunMetadata(ctx,
+		int(req.RunId),
+		req.Metadata.AsMap(),
+		flatMetadata,
+	)
+	if err != nil {
+		return nil, errors.Wrapf(err, "error updating metadata on run(%d)", req.RunId)
+	}
+	return &apiv1.PostRunMetadataResponse{Metadata: protoutils.ToStruct(result)}, nil
 }

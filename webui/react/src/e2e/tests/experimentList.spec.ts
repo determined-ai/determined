@@ -5,8 +5,6 @@ import { test } from 'e2e/fixtures/global-fixtures';
 import { ProjectDetails } from 'e2e/models/pages/ProjectDetails';
 import { detExecSync, fullPath } from 'e2e/utils/detCLI';
 
-test.describe.configure({ mode: 'serial' });
-
 test.describe('Experiement List', () => {
   let projectDetailsPage: ProjectDetails;
   // trial click to wait for the element to be stable won't work here
@@ -59,7 +57,8 @@ test.describe('Experiement List', () => {
       try {
         await grid.headRow.selectDropdown.menuItem('select-none').select({ timeout: 1_000 });
       } catch (e) {
-        // Ignore if no selection
+        // close the dropdown by clicking elsewhere
+        await projectDetailsPage.f_experiemntList.tableActionBar.expNum.pwLocator.click();
       }
     });
     await test.step('Reset Columns', async () => {
@@ -163,6 +162,7 @@ test.describe('Experiement List', () => {
   });
 
   test('Table Filter', async () => {
+    test.slow();
     const tableFilter = projectDetailsPage.f_experiemntList.tableActionBar.tableFilter;
     const totalExperiments = await getExpNum();
 

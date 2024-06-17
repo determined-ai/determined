@@ -1,14 +1,22 @@
 /**
  * Generates a four-character random hash
+ * @param {object} obj
+ * @param {number} [obj.length] The length of the hash
  * @returns Alphanumeric hash
  */
-export const randIdAlphanumeric = (): string => Math.random().toString(36).substring(2, 6);
+export const randIdAlphanumeric = ({ length = 4 }: { length?: number } = {}): string =>
+  Math.random()
+    .toString(36)
+    .substring(2, 2 + length);
 
 /**
  * Generates a four-character numeric hash
+ * @param {object} obj
+ * @param {number} [obj.length] The length of the hash
  * @returns Numeric hash
  */
-export const randId = (): number => Math.floor(Math.random() * 10_000);
+export const randId = ({ length = 4 }: { length?: number } = {}): number =>
+  Math.floor(Math.random() * Math.pow(10, length));
 
 /**
  * Generates a naming function and a random hash to help with naming collisions.

@@ -35,7 +35,6 @@ describe('SearchDetails', () => {
     setup();
 
     expect(screen.getByText('Uncategorized Experiments')).toBeInTheDocument();
-    expect(screen.getByText('Trials')).toBeInTheDocument();
     expect(screen.getByText('Notes')).toBeInTheDocument();
   });
 });

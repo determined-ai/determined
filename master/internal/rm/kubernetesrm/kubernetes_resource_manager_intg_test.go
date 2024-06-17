@@ -736,6 +736,55 @@ func TestROCmJobsService(t *testing.T) {
 	}
 }
 
+func TestRMValidateResources(t *testing.T) {
+	resourcePool := &kubernetesResourcePool{
+		poolConfig:     &config.ResourcePoolConfig{PoolName: "test-pool"},
+		maxSlotsPerPod: 4,
+	}
+	kubernetesRM := &ResourceManager{
+		pools: map[string]*kubernetesResourcePool{
+			"test-pool": resourcePool,
+		},
+	}
+
+	cases := []struct {
+		name            string
+		validateRequest sproto.ValidateResourcesRequest
+		valid           bool
+	}{
+		{"single node, valid", sproto.ValidateResourcesRequest{
+			IsSingleNode: true,
+			Slots:        3,
+			ResourcePool: "test-pool",
+		}, true},
+		{"single node invalid, slots < max_slots_per_pod", sproto.ValidateResourcesRequest{
+			IsSingleNode: true,
+			Slots:        5,
+			ResourcePool: "test-pool",
+		}, false},
+		{"non-single node valid", sproto.ValidateResourcesRequest{
+			IsSingleNode: false,
+			Slots:        8,
+			ResourcePool: "test-pool",
+		}, true},
+		{"non-single node invalid, slots not divisible by max_slots_per_pod ", sproto.ValidateResourcesRequest{
+			IsSingleNode: false,
+			Slots:        7,
+			ResourcePool: "test-pool",
+		}, false},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			_, err := kubernetesRM.ValidateResources(c.validateRequest)
+			if c.valid {
+				require.NoError(t, err)
+			} else {
+				require.ErrorContains(t, err, "invalid resource request")
+			}
+		})
+	}
+}
+
 func testROCMGetAgents() {
 	ps := createMockJobsService(createCompNodeMap(), device.ROCM, false)
 	ps.getAgents()

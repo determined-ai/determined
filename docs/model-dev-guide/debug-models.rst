@@ -1,8 +1,8 @@
 .. _model-debug:
 
-#####################
- How to Debug Models
-#####################
+##################
+ Debugging Models
+##################
 
 Using Determined to debug models depends on your environment.
 

@@ -9,9 +9,8 @@
 .. meta::
    :description: Follow along with this batch inferencing tutorial to see how to leverage Determined and Pachyderm together to streamline complex tasks.
 
-In this guide, we'll help you create a simple batch inferencing project in `Pachyderm
-<https://docs.pachyderm.com/latest/learn/glossary/pipeline/>`__, train your model using a Determined
-cluster, and then use the model in an inferencing pipeline.
+In this guide, we'll help you create a simple batch inferencing project in Pachyderm, train your
+model using a Determined cluster, and then use the model in an inferencing pipeline.
 
 .. note::
 
@@ -23,8 +22,8 @@ cluster, and then use the model in an inferencing pipeline.
 ************
 
 After completing the steps in this tutorial, you will have a a fully-built batch inferencing
-`pipeline <https://docs.pachyderm.com/latest/learn/glossary/pipeline/>`__ with results and you will
-understand how to leverage Pachyderm when working with your Determined cluster.
+pipeline with results and you will understand how to leverage Pachyderm when working with your
+Determined cluster.
 
 By following these instructions, you will:
 
@@ -51,8 +50,9 @@ The following prerequisites are required:
    -  To set up **Determined** locally, visit the quick installation instructions: :ref:`basic`
 
    -  To set up **Pachyderm** locally, visit `First-Time Setup
-      <https://docs.pachyderm.com/latest/get-started/first-time-setup/>`__ or `Pachyderm Local
-      Deployment Guide <https://docs.pachyderm.com/latest/set-up/local-deploy/>`_
+      <https://docs.ai-solutions.ext.hpe.com/products/mldm/latest/get-started/first-time-setup/>`__
+      or `Pachyderm Local Deployment Guide
+      <https://docs.ai-solutions.ext.hpe.com/products/mldm/latest/set-up/local-deploy/>`_
 
 ************************
  Get the Tutorial Files
@@ -130,9 +130,8 @@ You are now ready to create a project repo.
  Create Repos in Pachyderm for Training Data
 *********************************************
 
-To manage our training data effectively, we'll first need to create `repos
-<https://docs.pachyderm.com/latest/learn/basic-concepts/#basic-concepts-repositories-repo>`_ for
-storing the data. We'll use a typical 80:20 train/test split.
+To manage our training data effectively, we'll first need to create repos for storing the data.
+We'll use a typical 80:20 train/test split.
 
 To create the train/test repos, run the following commands:
 

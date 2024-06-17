@@ -3,13 +3,19 @@ import Dropdown, { MenuItem } from 'hew/Dropdown';
 import Icon, { IconName } from 'hew/Icon';
 import { useModal } from 'hew/Modal';
 import { useToast } from 'hew/Toast';
+import { Loadable } from 'hew/utils/loadable';
+import { List } from 'immutable';
+import { useObservable } from 'micro-observables';
 import { useCallback, useMemo, useState } from 'react';
 
 import BatchActionConfirmModalComponent from 'components/BatchActionConfirmModal';
+import Link from 'components/Link';
 import usePermissions from 'hooks/usePermissions';
 import FlatRunMoveModalComponent from 'pages/FlatRuns/FlatRunMoveModal';
+import { paths } from 'routes/utils';
 import { archiveRuns, deleteRuns, killRuns, unarchiveRuns } from 'services/api';
-import { BulkActionResult, ExperimentAction, FlatRun } from 'types';
+import projectStore from 'stores/projects';
+import { BulkActionResult, ExperimentAction, FlatRun, Project } from 'types';
 import handleError from 'utils/error';
 import { canActionFlatRun, getActionsForFlatRunsUnion } from 'utils/flatRun';
 import { capitalizeWord } from 'utils/string';
@@ -57,6 +63,9 @@ const FlatRunActionButton = ({
   const { Component: FlatRunMoveComponentModal, open: flatRunMoveModalOpen } =
     useModal(FlatRunMoveModalComponent);
   const BatchActionConfirmModal = useModal(BatchActionConfirmModalComponent);
+  const loadableProjects: Loadable<List<Project>> = useObservable(
+    projectStore.getProjectsByWorkspace(workspaceId),
+  );
 
   const sendBatchActions = useCallback(
     async (action: BatchAction): Promise<BulkActionResult | void> => {
@@ -105,9 +114,8 @@ const FlatRunActionButton = ({
         } else if (numFailures === 0) {
           openToast({
             closeable: true,
-            description: `${action} succeeded for ${
-              results.successful.length
-            } ${LABEL_PLURAL.toLowerCase()}`,
+            description: `${action} succeeded for ${results.successful.length
+              } ${LABEL_PLURAL.toLowerCase()}`,
             title: `${action} Success`,
           });
         } else if (numSuccesses === 0) {
@@ -119,9 +127,8 @@ const FlatRunActionButton = ({
         } else {
           openToast({
             closeable: true,
-            description: `${action} succeeded for ${numSuccesses} out of ${
-              numFailures + numSuccesses
-            } eligible
+            description: `${action} succeeded for ${numSuccesses} out of ${numFailures + numSuccesses
+              } eligible
             ${LABEL_PLURAL.toLowerCase()}`,
             severity: 'Warning',
             title: `Partial ${action} Failure`,
@@ -179,6 +186,48 @@ const FlatRunActionButton = ({
     }, []);
   }, [availableBatchActions]);
 
+  const onSubmit = useCallback(
+    async (results: BulkActionResult, destinationProjectId: number) => {
+      const numSuccesses = results?.successful.length ?? 0;
+      const numFailures = results?.failed.length ?? 0;
+
+      const destinationProjectName =
+        Loadable.getOrElse(List<Project>(), loadableProjects).find(
+          (p) => p.id === destinationProjectId,
+        )?.name ?? '';
+
+      if (numSuccesses === 0 && numFailures === 0) {
+        openToast({
+          description: 'No selected runs were eligible for moving',
+          title: 'No eligible runs',
+        });
+      } else if (numFailures === 0) {
+        openToast({
+          closeable: true,
+          description: `${results.successful.length} runs moved to project ${destinationProjectName}`,
+          link: <Link path={paths.projectDetails(destinationProjectId)}>View Project</Link>,
+          title: 'Move Success',
+        });
+      } else if (numSuccesses === 0) {
+        openToast({
+          description: `Unable to move ${numFailures} runs`,
+          severity: 'Warning',
+          title: 'Move Failure',
+        });
+      } else {
+        openToast({
+          closeable: true,
+          description: `${numFailures} out of ${numFailures + numSuccesses} eligible runs failed to move to project ${destinationProjectName}`,
+          link: <Link path={paths.projectDetails(destinationProjectId)}>View Project</Link>,
+          severity: 'Warning',
+          title: 'Partial Move Failure',
+        });
+      }
+      await onActionComplete?.();
+    },
+    [loadableProjects, onActionComplete, openToast],
+  );
+
   return (
     <>
       {selectedRuns.length > 0 && (
@@ -192,6 +241,7 @@ const FlatRunActionButton = ({
         <BatchActionConfirmModal.Component
           batchAction={batchAction}
           isUnmanagedIncluded={selectedRuns.some((run) => run.experiment?.unmanaged ?? false)}
+          itemName="run"
           onConfirm={() => submitBatchAction(batchAction)}
         />
       )}
@@ -199,7 +249,7 @@ const FlatRunActionButton = ({
         flatRuns={[...selectedRuns]}
         sourceProjectId={projectId}
         sourceWorkspaceId={workspaceId}
-        onActionComplete={onActionComplete}
+        onSubmit={onSubmit}
       />
     </>
   );
