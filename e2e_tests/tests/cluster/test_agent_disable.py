@@ -92,7 +92,10 @@ def test_disable_agent_experiment_resume() -> None:
         ["--config", "max_restarts=0"],
     )
     exp.wait_for_experiment_state(
-        sess, exp_id, bindings.experimentv1State.RUNNING, max_wait_secs=600
+        sess,
+        exp_id,
+        bindings.experimentv1State.RUNNING,
+        max_wait_secs=utils.KUBERNETES_EXPERIMENT_TIMEOUT,
     )
 
     with _disable_agent(admin, agent_id):
@@ -123,7 +126,7 @@ def test_disable_agent_zero_slots() -> None:
 
     command_id = utils.run_zero_slot_command(sess, sleep=180)
     # Wait for it to run.
-    utils.wait_for_command_state(sess, command_id, "RUNNING", 600)
+    utils.wait_for_command_state(sess, command_id, "RUNNING", utils.KUBERNETES_EXPERIMENT_TIMEOUT)
 
     try:
         with _disable_agent(admin, agent_id):
@@ -155,7 +158,10 @@ def test_drain_agent() -> None:
         ["--config", "hyperparameters.training_batch_seconds=0.15"],  # Take 15 seconds.
     )
     exp.wait_for_experiment_state(
-        sess, experiment_id, bindings.experimentv1State.RUNNING, max_wait_secs=600
+        sess,
+        experiment_id,
+        bindings.experimentv1State.RUNNING,
+        max_wait_secs=utils.KUBERNETES_EXPERIMENT_TIMEOUT,
     )
     exp.wait_for_experiment_active_workload(sess, experiment_id)
     exp.wait_for_experiment_workload_progress(sess, experiment_id)
