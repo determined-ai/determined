@@ -313,3 +313,26 @@ func TestFlattenMetadataNestingTooDeep(t *testing.T) {
 		),
 	)
 }
+
+func TestFlattenMetadataEmptyNestedStructs(t *testing.T) {
+	data := map[string]interface{}{
+		"key1": map[string]interface{}{
+			"key2": map[string]interface{}{},
+			"key3": []any{},
+		},
+	}
+	flattened, err := FlattenMetadata(data)
+	require.NoError(t, err)
+	require.ElementsMatch(t, []model.RunMetadataIndex{
+		{
+			RunID:     0,
+			FlatKey:   "key1.key2",
+			ProjectID: 0,
+		},
+		{
+			RunID:     0,
+			FlatKey:   "key1.key3",
+			ProjectID: 0,
+		},
+	}, flattened)
+}
