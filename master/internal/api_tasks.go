@@ -329,14 +329,12 @@ func (a *apiServer) GetTaskAcceleratorData(
 		return nil, err
 	}
 
-	res := []*apiv1.AcceleratorData{}
+	res := []struct {
+		model.AcceleratorData
+		ResourcePool string
+	}{}
 
-	err := db.Bun().NewSelect().
-		Column("container_id").
-		ColumnExpr("alloc_acc.allocation_id").
-		Column("node_name").
-		Column("accelerator_type").
-		Column("accelerator_uuids").
+	err := db.Bun().NewSelect().ColumnExpr("alloc_acc.*").
 		Column("resource_pool").
 		TableExpr("allocation_accelerators alloc_acc").
 		Join("LEFT JOIN allocations alloc ON alloc_acc.allocation_id = alloc.allocation_id").
@@ -345,7 +343,18 @@ func (a *apiServer) GetTaskAcceleratorData(
 		return nil, fmt.Errorf("querying allocation accelerators: %w", err)
 	}
 
-	return &apiv1.GetTaskAcceleratorDataResponse{AcceleratorData: res}, nil
+	var accelerationData []*apiv1.AcceleratorData
+	for _, r := range res {
+		accelerationData = append(accelerationData, &apiv1.AcceleratorData{
+			ContainerId:      r.ContainerID,
+			AllocationId:     string(r.AllocationID),
+			NodeName:         r.NodeName,
+			AcceleratorType:  r.AcceleratorType,
+			AcceleratorUuids: r.AcceleratorUuids,
+			ResourcePool:     r.ResourcePool,
+		})
+	}
+	return &apiv1.GetTaskAcceleratorDataResponse{AcceleratorData: accelerationData}, nil
 }
 
 func (a *apiServer) PostAllocationAcceleratorData(
