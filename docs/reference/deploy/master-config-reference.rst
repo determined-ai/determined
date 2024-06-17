@@ -286,10 +286,8 @@ behavior specified here. For more on scheduling behavior in Determined, see :ref
    The scheduling policy to use when allocating resources between different tasks (experiments,
    notebooks, etc.). Defaults to ``priority``.
 
-   -  ``fair_share``: Tasks receive a proportional amount of the available resources depending on
-      the resource they require and their weight.
-
-   -  ``round_robin``: Tasks are scheduled in the order in which they arrive at the cluster.
+   -  ``fair_share``: (deprecated) Tasks receive a proportional amount of the available resources
+      depending on the resource they require and their weight.
 
    -  ``priority``: Tasks are scheduled based on their priority, which can range from the values 1
       to 99 inclusive. Lower priority numbers indicate higher-priority tasks. A lower-priority task
@@ -780,13 +778,8 @@ Notebooks, etc.). Defaults to ``fair_share``.
 ``fair_share``
 ^^^^^^^^^^^^^^
 
-   Tasks receive a proportional amount of the available resources depending on the resource they
-   require and their weight.
-
-``round_robin``
-^^^^^^^^^^^^^^^
-
-   Tasks are scheduled in the order in which they arrive at the cluster.
+   (deprecated) Tasks receive a proportional amount of the available resources depending on the
+   resource they require and their weight.
 
 ``priority``
 ^^^^^^^^^^^^
