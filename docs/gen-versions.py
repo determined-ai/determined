@@ -61,21 +61,21 @@ def main():
     try:
         repo = git.Repo(os.getcwd(), search_parent_directories=True)
     except git.exc.InvalidGitRepositoryError as e:
-        print("Invalid git repository: {}. Are you running this from a git repository?".format(e), file=sys.stderr)
+        print(f"Invalid git repository: {e}. Are you running this from a git repository?", file=sys.stderr)
         raise
     except git.exc.NoSuchPathError as e:
-        print("Path does not exist: {}.", file=sys.stderr)
+        print(f"Path does not exist: {e}.", file=sys.stderr)
         raise
 
     # Validate commit.
     try:
         repo.rev_parse(args.commit)
     except git.exc.BadName as e:
-        print("Bad revision: {}.".format(e), file=sys.stderr)
+        print(f"Bad revision: {e}.", file=sys.stderr)
         raise
 
     # git rev-list --tags --ancestry-path ^commit
-    comms_iter = repo.iter_commits("^{}".format(args.commit), ancestry_path=True, tags=True)
+    comms_iter = repo.iter_commits(f"^{args.commit}", ancestry_path=True, tags=True)
 
     # Get commits from iterator.
     commits = []
@@ -84,7 +84,7 @@ def main():
             commits.append(comm)
     except git.exc.GitCommandError as e:
         # rev_parse up above should catch these, but you never know.
-        print("Unable to list commits: {}. Is your commit ID correct?".format(e), file=sys.stderr)
+        print(f"Unable to list commits: {e}. Is your commit ID correct?", file=sys.stderr)
         raise
 
     # Map SHA hash to tag.
@@ -119,7 +119,7 @@ def main():
         for tag in tags:
             versions.append({
                 "version": tag,
-                "url": "https://docs.determined.ai/{}/".format(tag),
+                "url": f"https://docs.determined.ai/{tag}/",
             })
 
         versions.append({
@@ -134,7 +134,7 @@ def main():
             with open(args.out_file, "w") as fd:
                 json.dump(versions, fd, indent=4)
         except FileNotFoundError as e:
-            print("File not found: {}. Do all parent directories exist?".format(e), file=sys.stderr)
+            print("File not found: {e}. Do all parent directories exist?", file=sys.stderr)
             raise
     else:
         print(json.dumps(versions, indent=4))
