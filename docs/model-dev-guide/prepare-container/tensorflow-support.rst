@@ -8,18 +8,17 @@
  TensorFlow Core Models
 ************************
 
-Determined supports for TensorFlow models using the :ref:`Keras <api-keras-ug>` API. For
-models that use low-level TensorFlow Core APIs, we recommend wrapping your model in Keras as
-suggested by the official `TensorFlow <https://www.tensorflow.org/guide/basics#training_loops>`_
-documentation.
+Determined supports for TensorFlow models using the :ref:`Keras <api-keras-ug>` API. For models that
+use low-level TensorFlow Core APIs, we recommend wrapping your model in Keras as suggested by the
+official `TensorFlow <https://www.tensorflow.org/guide/basics#training_loops>`_ documentation.
 
 *******************
  TensorFlow 1 vs 2
 *******************
 
 Determined supports both TensorFlow 1 and 2. The version of TensorFlow used for a particular
-experiment is controlled by the configured container image. Determined provides prebuilt 
-Docker images that include TensorFlow 2+, 1.15, and 2.8, respectively:
+experiment is controlled by the configured container image. Determined provides prebuilt Docker
+images that include TensorFlow 2+, 1.15, and 2.8, respectively:
 
 -  ``determinedai/tensorflow-ngc-dev:e960eae``
 -  ``determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-0.21.2``
