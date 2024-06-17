@@ -696,6 +696,7 @@ func (p k8sJobResource) Start(
 		spec:         spec,
 		slots:        p.slots,
 		rank:         rri.AgentRank,
+		resourcePool: p.req.ResourcePool,
 		namespace:    p.namespace,
 		numPods:      p.numPods,
 		logContext:   logCtx,
