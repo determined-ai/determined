@@ -17,8 +17,8 @@ class ManagedK8sCluster(abstract_cluster.Cluster):
 
         # Verify we have pulled our image.
         # TODO this won't work if we have multiple nodes.
-        utils.wait_for_command_state(sess, utils.run_command(sess, 0, slots=0), "TERMINATED", 300)
-        utils.wait_for_command_state(sess, utils.run_command(sess, 0, slots=1), "TERMINATED", 300)
+        utils.wait_for_command_state(sess, utils.run_command(sess, 0, slots=0), "TERMINATED", 600)
+        utils.wait_for_command_state(sess, utils.run_command(sess, 0, slots=1), "TERMINATED", 600)
 
     def kill_master(self) -> None:
         self._scale_master(up=False)
