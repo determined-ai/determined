@@ -329,9 +329,15 @@ func (a *apiServer) GetTaskAcceleratorData(
 		return nil, err
 	}
 
-	var res []model.AcceleratorData
+	res := []*apiv1.AcceleratorData{}
+
 	err := db.Bun().NewSelect().
-		ColumnExpr("alloc_acc.*").
+		Column("container_id").
+		ColumnExpr("alloc_acc.allocation_id").
+		Column("node_name").
+		Column("accelerator_type").
+		Column("accelerator_uuids").
+		Column("resource_pool").
 		TableExpr("allocation_accelerators alloc_acc").
 		Join("LEFT JOIN allocations alloc ON alloc_acc.allocation_id = alloc.allocation_id").
 		Where("alloc.task_id = ?", req.TaskId).Scan(ctx, &res)
@@ -339,11 +345,7 @@ func (a *apiServer) GetTaskAcceleratorData(
 		return nil, fmt.Errorf("querying allocation accelerators: %w", err)
 	}
 
-	var accelerationData []*apiv1.AcceleratorData
-	for _, r := range res {
-		accelerationData = append(accelerationData, r.Proto())
-	}
-	return &apiv1.GetTaskAcceleratorDataResponse{AcceleratorData: accelerationData}, nil
+	return &apiv1.GetTaskAcceleratorDataResponse{AcceleratorData: res}, nil
 }
 
 func (a *apiServer) PostAllocationAcceleratorData(

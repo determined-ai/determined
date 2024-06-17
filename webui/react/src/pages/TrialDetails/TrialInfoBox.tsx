@@ -1,12 +1,82 @@
 import Card from 'hew/Card';
-import React, { useMemo } from 'react';
+import Column from 'hew/Column';
+import { Modal, useModal } from 'hew/Modal';
+import Row from 'hew/Row';
+import { isEqual, sumBy, uniq } from 'lodash';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
+import Link from 'components/Link';
 import OverviewStats from 'components/OverviewStats';
 import Section from 'components/Section';
 import TimeAgo from 'components/TimeAgo';
+import { pausableRunStates } from 'constants/states';
 import { useCheckpointFlow } from 'hooks/useCheckpointFlow';
+import usePolling from 'hooks/usePolling';
+import { NodeElement } from 'pages/ResourcePool/Topology';
+import { paths } from 'routes/utils';
+import { getTaskAcceleratorData } from 'services/api';
+import { V1AcceleratorData } from 'services/api-ts-sdk/api';
 import { CheckpointWorkloadExtended, ExperimentBase, TrialDetails } from 'types';
+import handleError from 'utils/error';
 import { humanReadableBytes } from 'utils/string';
+
+import css from './TrialInfoBox.module.scss';
+
+const allocationModalComponent: React.FC<{ data?: V1AcceleratorData[] }> = ({ data }) => {
+  return (
+    <Modal size="medium" title="Resource Allocation">
+      {data && (
+        <>
+          <Row wrap>
+            {data.map((d) => (
+              <NodeElement
+                key={d.nodeName}
+                name={d.nodeName || ''}
+                numOfSlots={d.acceleratorUuids?.length || 1}
+              />
+            ))}
+          </Row>
+          <Column>
+            <div className={css.dataRow}>
+              <span>Resource Pool</span>
+              <span className={css.dashline} />
+              <span className={css.pools}>
+                {uniq(data.map((d) => d.resourcePool))
+                  .filter((r) => !!r)
+                  .map((r) => (
+                    <Link key={r} path={paths.resourcePool(r!)}>
+                      {r}
+                    </Link>
+                  ))}
+              </span>
+            </div>
+            <div className={css.dataRow}>
+              <span>Accelerator</span>
+              <span className={css.dashline} />
+              <span>{uniq(data.map((d) => d.acceleratorType)).join(',')}</span>
+            </div>
+          </Column>
+          {data.map((d) => (
+            <Column key={d.nodeName}>
+              <div className={css.dataRow}>
+                <span>Node ID</span>
+                <span className={css.dashline} />
+                <span>{d.nodeName}</span>
+              </div>
+              {d.acceleratorUuids?.map((a, idx) => (
+                <div className={css.dataRow} key={idx}>
+                  <span>{`Slot ${idx + 1} ID`}</span>
+                  <span className={css.dashline} />
+                  <span>{a}</span>
+                </div>
+              ))}
+            </Column>
+          ))}
+        </>
+      )}
+    </Modal>
+  );
+};
 
 interface Props {
   experiment: ExperimentBase;
@@ -14,6 +84,35 @@ interface Props {
 }
 
 const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
+  const [canceler] = useState(new AbortController());
+  const [acceleratorData, setAcceleratorData] = useState<V1AcceleratorData[]>();
+
+  const fetchAcceleratorData = useCallback(async () => {
+    if (!trial?.taskId) return;
+    try {
+      const data = await getTaskAcceleratorData(
+        { taskId: trial.taskId },
+        { signal: canceler.signal },
+      );
+      setAcceleratorData((prev) => (isEqual(data, prev) ? prev : data));
+    } catch (e) {
+      handleError(e);
+    }
+  }, [trial, canceler]);
+
+  const { stopPolling } = usePolling(fetchAcceleratorData, { rerunOnNewFn: true });
+
+  useEffect(() => {
+    return () => {
+      canceler.abort();
+      stopPolling();
+    };
+  }, [canceler, stopPolling]);
+
+  useEffect(() => {
+    if (acceleratorData && !pausableRunStates.has(experiment.state)) stopPolling();
+  }, [experiment.state, acceleratorData, stopPolling]);
+
   const bestCheckpoint: CheckpointWorkloadExtended | undefined = useMemo(() => {
     if (!trial) return;
     const cp = trial.bestAvailableCheckpoint;
@@ -51,6 +150,12 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
     }
   }, [trial]);
 
+  const numOfSlots = useMemo(() => {
+    return sumBy(acceleratorData, (d) => d.acceleratorUuids?.length || 0);
+  }, [acceleratorData]);
+
+  const allocationModal = useModal(allocationModalComponent);
+
   return (
     <Section>
       <Card.Group size="small">
@@ -73,8 +178,21 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
             {checkpointModalComponents}
           </>
         )}
+        {acceleratorData && (
+          <OverviewStats title="Resource Allocation" onClick={allocationModal.open}>
+            <div
+              style={{
+                color: pausableRunStates.has(experiment.state)
+                  ? 'none'
+                  : 'var(--theme-status-active)',
+              }}>
+              {`${numOfSlots} Slots`}
+            </div>
+          </OverviewStats>
+        )}
         {<OverviewStats title="Log Retention Days">{logRetentionDays}</OverviewStats>}
       </Card.Group>
+      <allocationModal.Component data={acceleratorData} />
     </Section>
   );
 };

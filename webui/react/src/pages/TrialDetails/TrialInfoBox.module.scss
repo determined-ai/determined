@@ -4,3 +4,19 @@
     flex-direction: column;
   }
 }
+.dataRow {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+
+  .dashline {
+    border-bottom: 1px dashed var(--theme-ix-border-weak);
+    flex-grow: 1;
+    margin: 4px 8px;
+  }
+  .pools {
+    a {
+      margin-left: 4px;
+    }
+  }
+}
