@@ -14,7 +14,18 @@ import git.refs.tag
 # versions.json file. We specify them here to ensure we don't create links to
 # documentation that doesn't exist, and to recreate part of the original
 # versions.json file.
-EXCLUDE_VERSIONS = ["0.26.5", "0.23.4", "0.23.3", "0.23.2", "0.23.1", "0.22.2", "0.22.1", "0.21.2", "0.21.1"]
+EXCLUDE_VERSIONS = [
+    "0.26.5",
+    "0.23.4",
+    "0.23.3",
+    "0.23.2",
+    "0.23.1",
+    "0.22.2",
+    "0.22.1",
+    "0.21.2",
+    "0.21.1",
+]
+
 
 def parse_args():
     parser = argparse.ArgumentParser(
@@ -22,12 +33,15 @@ def parse_args():
         description="Generate Sphinx version switcher JSON file from git tags.",
     )
 
-    parser.add_argument("commit",
+    parser.add_argument(
+        "commit",
         help="commit to stop at while walking the graph, from each tag ref as a starting point, to look for tags, beyond which tags will be ignored. This corresponds to ^commit in git-rev-list.",
         metavar="commit",
     )
 
-    parser.add_argument("-o", "--out-file",
+    parser.add_argument(
+        "-o",
+        "--out-file",
         help="path to output file, including filename, for generated versions JSON file",
         metavar="path",
         default=None,
@@ -39,13 +53,15 @@ def parse_args():
     # because the git-rev-list tags returned are a superset of the versions
     # originally in versions.json. I.e. some of the existing tagged patch
     # release versions don't have corresponding separate doc links.
-    parser.add_argument("--exclude-versions",
+    parser.add_argument(
+        "--exclude-versions",
         help="comma-separated list of additional versions to exclude from the versions returned by walking the git DAG",
         metavar="versions",
         type=str,
     )
 
     return parser.parse_args()
+
 
 def main():
     args = parse_args()
@@ -61,7 +77,10 @@ def main():
     try:
         repo = git.Repo(os.getcwd(), search_parent_directories=True)
     except git.exc.InvalidGitRepositoryError as e:
-        print(f"Invalid git repository: {e}. Are you running this from a git repository?", file=sys.stderr)
+        print(
+            f"Invalid git repository: {e}. Are you running this from a git repository?",
+            file=sys.stderr,
+        )
         raise
     except git.exc.NoSuchPathError as e:
         print(f"Path does not exist: {e}.", file=sys.stderr)
@@ -117,15 +136,19 @@ def main():
 
         # Append all new versions that aren't the latest tag.
         for tag in tags:
-            versions.append({
-                "version": tag,
-                "url": f"https://docs.determined.ai/{tag}/",
-            })
+            versions.append(
+                {
+                    "version": tag,
+                    "url": f"https://docs.determined.ai/{tag}/",
+                }
+            )
 
-        versions.append({
-            "version": latest_tag,
-            "url": "https://docs.determined.ai/latest/",
-        })
+        versions.append(
+            {
+                "version": latest_tag,
+                "url": "https://docs.determined.ai/latest/",
+            }
+        )
 
     versions.reverse()
 
@@ -138,6 +161,7 @@ def main():
             raise
     else:
         print(json.dumps(versions, indent=4))
+
 
 if __name__ == "__main__":
     main()
