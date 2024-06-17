@@ -52,8 +52,17 @@ build/swagger.stamp: ../proto/build/swagger/determined/api/v1/api.swagger.json s
 	mkdir -p build
 	touch $@
 
+.PHONY: gen-versions
+# 0.21.0 is the epoch for tag versions, because that's as far back as our public
+# docs go. `git merge-base 0.21.0 main` gets the most recent common ancestor
+# between 0.21.0 and main, and then we rev-parse COMMIT~1 to get the commit
+# right before to avoid boundary conditions.
+gen-versions: ANCESTOR=$(shell git rev-parse $(shell git merge-base 0.21.0 main)~1)
+gen-versions:
+	python3 gen-versions.py $(ANCESTOR) -o _static/version-switcher/versions.json
+
 .PHONY: build
-build: build/sp-html.stamp
+build: gen-versions build/sp-html.stamp
 
 .PHONY: xml
 xml: build/sp-xml.stamp
