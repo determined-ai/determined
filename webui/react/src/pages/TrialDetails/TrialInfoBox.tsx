@@ -18,7 +18,7 @@ import { getTaskAcceleratorData } from 'services/api';
 import { V1AcceleratorData } from 'services/api-ts-sdk/api';
 import { CheckpointWorkloadExtended, ExperimentBase, TrialDetails } from 'types';
 import handleError from 'utils/error';
-import { humanReadableBytes } from 'utils/string';
+import { humanReadableBytes, pluralizer } from 'utils/string';
 
 import css from './TrialInfoBox.module.scss';
 
@@ -186,7 +186,7 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
                   ? 'none'
                   : 'var(--theme-status-active)',
               }}>
-              {`${numOfSlots} Slots`}
+              {`${numOfSlots} ${pluralizer(numOfSlots, 'Slot')}`}
             </div>
           </OverviewStats>
         )}
