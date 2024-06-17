@@ -164,6 +164,8 @@ test.describe('Experiement List', () => {
   test('Table Filter', async () => {
     test.slow();
     const tableFilter = projectDetailsPage.f_experiemntList.tableActionBar.tableFilter;
+    const secondFilterField = tableFilter.filterForm.filter.filterFields.nth(1);
+    secondFilterField;
     const totalExperiments = await getExpNum();
 
     const filterScenario = async (
@@ -207,31 +209,28 @@ test.describe('Experiement List', () => {
     await filterScenario(
       'Filter OR',
       async () => {
-        // This looks a little screwy with nth(1) in some places. Everything here is referring to the second filterfield row.
-        // [INFENG-715]
         await tableFilter.filterForm.addCondition.pwLocator.click();
-
-        const conjunction =
-          tableFilter.filterForm.filter.filterFields.conjunctionContainer.conjunctionSelect;
+        const secondFilterField = tableFilter.filterForm.filter.filterFields.nth(1);
+        const conjunction = secondFilterField.conjunctionContainer.conjunctionSelect;
         await conjunction.pwLocator.click();
         await conjunction._menu.pwLocator.waitFor();
         await conjunction.menuItem('or').pwLocator.click();
         await conjunction._menu.pwLocator.waitFor({ state: 'hidden' });
 
-        const columnName = tableFilter.filterForm.filter.filterFields.columnName;
-        await columnName.pwLocator.nth(1).click();
+        const columnName = secondFilterField.columnName;
+        await columnName.pwLocator.click();
         await columnName._menu.pwLocator.waitFor();
         await columnName.menuItem('ID').pwLocator.click();
         await columnName._menu.pwLocator.waitFor({ state: 'hidden' });
 
-        const operator = tableFilter.filterForm.filter.filterFields.operator;
-        await expect(operator.pwLocator.nth(1)).toHaveText('=');
-        await operator.pwLocator.nth(1).click();
+        const operator = secondFilterField.operator;
+        await expect(operator.pwLocator).toHaveText('=');
+        await operator.pwLocator.click();
         await operator._menu.pwLocator.waitFor();
         await operator.menuItem('=').pwLocator.click();
         await operator._menu.pwLocator.waitFor({ state: 'hidden' });
 
-        await tableFilter.filterForm.filter.filterFields.valueNumber.pwLocator.nth(1).fill('1');
+        await secondFilterField.valueNumber.pwLocator.fill('1');
       },
       totalExperiments,
     );
