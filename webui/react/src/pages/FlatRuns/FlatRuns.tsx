@@ -160,7 +160,6 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
 
   const [isOpenFilter, setIsOpenFilter] = useState<boolean>(false);
   const [runs, setRuns] = useState<Loadable<FlatRun>[]>(INITIAL_LOADING_RUNS);
-  const isPagedView = true;
 
   const [sorts, setSorts] = useState<Sort[]>(() => {
     if (!isLoadingSettings) {
@@ -216,11 +215,9 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
 
   const showPagination = useMemo(() => {
     return (
-      isPagedView &&
-      (!settings.compare || settings.pinnedColumnsCount !== 0) &&
-      !(isMobile && settings.compare)
+      (!settings.compare || settings.pinnedColumnsCount !== 0) && !(isMobile && settings.compare)
     );
-  }, [isMobile, isPagedView, settings.compare, settings.pinnedColumnsCount]);
+  }, [isMobile, settings.compare, settings.pinnedColumnsCount]);
 
   const [loadedSelectedRuns, loadedSelectedRunIds] = useMemo(() => {
     const selectedMap = new Map<number, { run: FlatRun; index: number }>();
@@ -480,12 +477,11 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
           kind: 'group',
         };
       }
-      const tableOffset = Math.max((page - 0.5) * PAGE_SIZE, 0);
       const response = await searchRuns(
         {
           filter: JSON.stringify(filters),
-          limit: isPagedView ? settings.pageLimit : 2 * PAGE_SIZE,
-          offset: isPagedView ? page * settings.pageLimit : tableOffset,
+          limit: settings.pageLimit,
+          offset: page * settings.pageLimit,
           projectId: projectId,
           sort: sortString || undefined,
         },
@@ -493,18 +489,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
       );
       const loadedRuns = response.runs;
 
-      setRuns((prev) => {
-        if (isPagedView) {
-          return loadedRuns.map((run) => Loaded(run));
-        }
-
-        // Update the list with the fetched results.
-        return prev.toSpliced(
-          tableOffset,
-          loadedRuns.length,
-          ...loadedRuns.map((experiment) => Loaded(experiment)),
-        );
-      });
+      setRuns(loadedRuns.map((run) => Loaded(run)));
       setTotal(
         response.pagination.total !== undefined ? Loaded(response.pagination.total) : NotLoaded,
       );
@@ -517,7 +502,6 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
     canceler.signal,
     filtersString,
     isLoadingSettings,
-    isPagedView,
     loadableFormset,
     page,
     projectId,
@@ -1029,19 +1013,14 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
               getHeaderMenuItems={getHeaderMenuItems}
               getRowAccentColor={getRowAccentColor}
               imperativeRef={dataGridRef}
-              isPaginated={isPagedView}
-              page={page}
-              pageSize={PAGE_SIZE}
               pinnedColumnsCount={isLoadingSettings ? 0 : settings.pinnedColumnsCount}
               rowHeight={rowHeightMap[globalSettings.rowHeight as RowHeight]}
               selection={selection}
               sorts={sorts}
               staticColumns={STATIC_COLUMNS}
-              total={total.getOrElse(PAGE_SIZE)}
               onColumnResize={handleColumnWidthChange}
               onColumnsOrderChange={handleColumnsOrderChange}
               onContextMenuComplete={handleContextMenuComplete}
-              onPageUpdate={setPage}
               onPinnedColumnsCountChange={handlePinnedColumnsCountChange}
               onSelectionChange={handleSelectionChange}
             />
