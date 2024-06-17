@@ -85,20 +85,20 @@ describe('FlatRunMoveModalComponent', () => {
     const { user } = setup();
 
     await user.click(screen.getByRole('button', { name: OPEN_MODAL_TEXT }));
-    expect((await screen.findAllByText('Move Runs')).length).toBe(2);
+    expect((await screen.findAllByText('Move Run')).length).toBe(2);
     expect(await screen.findByText('Workspace')).toBeInTheDocument();
     expect(await screen.findByRole('button', { name: 'Cancel' })).toBeInTheDocument();
-    expect(await screen.findByRole('button', { name: 'Move Runs' })).toBeInTheDocument();
+    expect(await screen.findByRole('button', { name: 'Move Run' })).toBeInTheDocument();
   });
 
   it('should submit modal', async () => {
     const { user, handlers } = setup();
 
     await user.click(screen.getByRole('button', { name: OPEN_MODAL_TEXT }));
-    expect((await screen.findAllByText('Move Runs')).length).toBe(2);
+    expect((await screen.findAllByText('Move Run')).length).toBe(2);
     expect(await screen.findByText('Workspace')).toBeInTheDocument();
-    expect(await screen.findByRole('button', { name: 'Move Runs' })).not.toBeDisabled();
-    await user.click(await screen.findByRole('button', { name: 'Move Runs' }));
+    expect(await screen.findByRole('button', { name: 'Move Run' })).not.toBeDisabled();
+    await user.click(await screen.findByRole('button', { name: 'Move Run' }));
     expect(handlers.onSubmit).toBeCalled();
   });
 });

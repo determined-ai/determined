@@ -175,7 +175,7 @@ const RunActionDropdown: React.FC<Props> = ({
       flatRuns={[run]}
       sourceProjectId={projectId}
       sourceWorkspaceId={run.workspaceId}
-      onActionComplete={() => onComplete?.(FlatRunAction.Move, run.id)}
+      onSubmit={() => onComplete?.(FlatRunAction.Move, run.id)}
     />
   );
 

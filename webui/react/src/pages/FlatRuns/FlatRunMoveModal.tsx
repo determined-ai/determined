@@ -127,9 +127,9 @@ const FlatRunMoveModalComponent: React.FC<Props> = ({
           form: idPrefix + FORM_ID,
           handleError,
           handler: handleSubmit,
-          text: `Move ${pluralizer(flatRuns.length, 'Runs')}`,
+          text: `Move ${pluralizer(flatRuns.length, 'Run')}`,
         }}
-        title={`Move ${pluralizer(flatRuns.length, 'Runs')}`}>
+        title={`Move ${pluralizer(flatRuns.length, 'Run')}`}>
         <Form form={form} id={idPrefix + FORM_ID} layout="vertical">
           <Form.Item
             initialValue={sourceWorkspaceId ?? 1}
