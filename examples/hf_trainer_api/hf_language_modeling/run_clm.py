@@ -367,6 +367,7 @@ def main(det_callback, tb_callback, model_args, data_args, training_args):
             cache_dir=model_args.cache_dir,
             use_auth_token=True if model_args.use_auth_token else None,
             streaming=data_args.streaming,
+            trust_remote_code=True,
         )
         if "validation" not in raw_datasets.keys():
             raw_datasets["validation"] = load_dataset(
@@ -376,6 +377,7 @@ def main(det_callback, tb_callback, model_args, data_args, training_args):
                 cache_dir=model_args.cache_dir,
                 use_auth_token=True if model_args.use_auth_token else None,
                 streaming=data_args.streaming,
+                trust_remote_code=True,
             )
             raw_datasets["train"] = load_dataset(
                 data_args.dataset_name,
@@ -384,6 +386,7 @@ def main(det_callback, tb_callback, model_args, data_args, training_args):
                 cache_dir=model_args.cache_dir,
                 use_auth_token=True if model_args.use_auth_token else None,
                 streaming=data_args.streaming,
+                trust_remote_code=True,
             )
     else:
         data_files = {}
@@ -406,6 +409,7 @@ def main(det_callback, tb_callback, model_args, data_args, training_args):
             cache_dir=model_args.cache_dir,
             use_auth_token=True if model_args.use_auth_token else None,
             **dataset_args,
+            trust_remote_code=True,
         )
         # If no validation data is there, validation_split_percentage will be used to divide the dataset.
         if "validation" not in raw_datasets.keys():
@@ -416,6 +420,7 @@ def main(det_callback, tb_callback, model_args, data_args, training_args):
                 cache_dir=model_args.cache_dir,
                 use_auth_token=True if model_args.use_auth_token else None,
                 **dataset_args,
+                trust_remote_code=True,
             )
             raw_datasets["train"] = load_dataset(
                 extension,
@@ -424,6 +429,7 @@ def main(det_callback, tb_callback, model_args, data_args, training_args):
                 cache_dir=model_args.cache_dir,
                 use_auth_token=True if model_args.use_auth_token else None,
                 **dataset_args,
+                trust_remote_code=True,
             )
 
     # See more about loading any type of standard or custom dataset (from files, python dict, pandas DataFrame, etc) at
