@@ -4,23 +4,27 @@
  Internal Task Gateway
 #######################
 
-`K8s Gateway APIs <https://gateway-api.sigs.k8s.io/>`_ allow us to expose otherwise internal
-Determined jobs running on remote K8s clusters to Determined master and proxies. This is useful for
-multi-resource manager setups.
+`Kubernetes (K8s) Gateway APIs <https://gateway-api.sigs.k8s.io/>`_ allow us to expose otherwise
+internal Determined jobs running on remote Kubernetes (K8s) clusters to Determined master and
+proxies. This is useful for multi-resource manager setups.
 
-The overall setup includes installing and configuring a Gateway controller in the K8s cluster
-external to Determined and configuring the Determined master to use the Gateway controller. Please
-refer to the sections below to see the configuration changes and controller requirements.
+The overall setup includes installing and configuring a Gateway controller in the Kubernetes (K8s)
+cluster external to Determined and configuring the Determined master to use the Gateway controller.
+Please refer to the sections below to see the configuration changes and controller requirements.
 
 .. warning::
 
-   This feature exposes Determined tasks to the outside world. Please ensure that you have the
-   necessary security measures in place to both limit access to the exposed tasks, and secure the
-   communication between the external cluster and the main one. This could include setting up a
-   firewall, using a VPN, IP white-listing, K8s Network Policies, native cloud solutions, or other
-   security measures. Some Determined tasks including JupyterLab Notebooks and shells already have
-   secure transport built-in. Tensorboards do not use TLS currently so a tunneling solution should
-   be considered.
+   Enabling this feature exposes Determined tasks to the outside world. It is crucial to implement
+   appropriate security measures to restrict access to exposed tasks and secure communication
+   between the external cluster and the main cluster. Recommended measures include:
+
+   -  Setting up a firewall
+   -  Using a VPN
+   -  Implementing IP whitelisting
+   -  Configuring Kubernetes Network Policies
+   -  Employing other security measures as needed
+   -  Some tasks including JupyterLab notebooks and shells already have secure transport built-in.
+   -  Since TensorBoards do not use TLS, you should consider a tunneling solution.
 
 Limitations:
 
@@ -53,15 +57,15 @@ provisioner provided by Project Contour.
 On a local dev machine, you can use Minikube and Contour as the controller. We provide a script to
 simplify the process. This can be found in `tools/k8s/launch-minikube-with-gateway.sh`.
 
-After you have a working K8s cluster and a Gateway controller running, configure the resource
-manager via master config and start the Determined cluster.
+After you have a working Kubernetes (K8s) cluster and a Gateway controller running, configure the
+resource manager via master config and start the Determined cluster.
 
 ###############
  Configuration
 ###############
 
-Below you'll find details on how to configure your cluster and Determined master to use the Internal
-Task Gateway.
+This section describes how to configure your cluster and Determined master to use the Internal Task
+Gateway.
 
 -  Total active proxies will be limited by: maxItems set in the Gateway CRD and the portRange
    configured for Determined (not exhaustive).
@@ -70,8 +74,8 @@ Task Gateway.
  Master Configuration
 **********************
 
-To configure the optional InternalTaskGateway for a K8s resource manager, you need to add a struct
-under `internal_task_gateway` key under each of the desired resource manager configurations.
+To configure the optional InternalTaskGateway for a Kubernetes resource manager, add a struct under
+``internal_task_gateway`` key under each desired resource manager configurations.
 
 The config is shown below.
 
@@ -103,25 +107,27 @@ The config is shown below.
  Gateway
 *********
 
-In the CRD `gateways.gateway.networking.k8s.io`
-`schema.openAPIV3Schema.properties.spec.properties.listeners.maxItems` defines a max limit of how
+In the CRD ``gateways.gateway.networking.k8s.io``
+``schema.openAPIV3Schema.properties.spec.properties.listeners.maxItems`` defines a max limit of how
 many listeners can be active on a single gateway. This limit sets the upper bound on how many tasks
 can be actively proxied. By default this limit is only 64.
 
-Note that when configuring this number you might hit K8s validation complexity thresholds checks.
-This can be configured and is dependent on each K8s cluster's requirements and setup.
+Note that when configuring this number you might hit Kubernetes (K8s) validation complexity
+thresholds checks. This can be configured and is dependent on each Kubernetes (K8s) cluster's
+requirements and setup.
 
 For example to up the number from allowed listeners to 128, you can modify the CRD at the given path
 above and `kubectl apply -f <path-to-crd>`. Make sure to set the value for the version of the spec
 that your Gateway API is going to use.
 
-################
- Other Dev Docs
-################
+###############################################
+ Running Determined Outside of the K8s Cluster
+###############################################
 
-If you're running Determined outside of the K8s cluster, for example on your local machine for
-testing and development, it's possible to test this feature using just a single K8s cluster. All
-that is needed is for Det master to be sitting external to the target cluster.
+If you're running Determined outside of the Kubernetes (K8s) cluster, for example on your local
+machine for testing and development, it's possible to test this feature using just a single
+Kubernetes (K8s) cluster. All that is needed is for Det master to be sitting external to the target
+cluster.
 
 For allowing Determined tasks to connect to master that's running locally on your machine, you can
 use services like ngrok or a reverse SSH tunnel if you have access to a public IP like so: `ssh -R

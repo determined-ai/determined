@@ -465,9 +465,8 @@ To set up multiple resource pools for Determined on your Kubernetes cluster:
 
 .. note::
 
-   If you'd like to enable north-south access to Determined proxied tasks in external-to-master
-   clusters you'd need to set up a gateway as described in the docs :doc:`Internal Task Gateway
-   <internal-task-gateway>`
+   To enable north-south access to Determined proxied tasks in external-to-master clusters, set up a
+   gateway as described in the docs :doc:`Internal Task Gateway <internal-task-gateway>`
 
 ********************
  Install Determined
