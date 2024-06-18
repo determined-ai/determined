@@ -93,24 +93,25 @@ def _init_context(
         )
         return _context
 
-
     # Construct the config.
     config = unmanaged_config or UnmanagedConfig()
 
-    config_text = util.yaml_safe_dump({
-        "name": config.name or f"unmanaged-{uuid.uuid4().hex[:8]}",
-        "data": config.data,
-        "description": config.description,
-        "labels": config.labels,
-        "searcher": config.searcher
-        or {
-            "name": "single",
-            "metric": "unmanaged",
-            "max_length": 100000000,
-        },
-        "workspace": config.workspace,
-        "project": config.project,
-    })
+    config_text = util.yaml_safe_dump(
+        {
+            "name": config.name or f"unmanaged-{uuid.uuid4().hex[:8]}",
+            "data": config.data,
+            "description": config.description,
+            "labels": config.labels,
+            "searcher": config.searcher
+            or {
+                "name": "single",
+                "metric": "unmanaged",
+                "max_length": 100000000,
+            },
+            "workspace": config.workspace,
+            "project": config.project,
+        }
+    )
     assert config_text is not None
 
     unmanaged_info = core_v2._get_or_create_experiment_and_trial(
