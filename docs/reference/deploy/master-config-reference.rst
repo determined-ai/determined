@@ -89,9 +89,12 @@ configure different container images for NVIDIA GPU tasks using the ``cuda`` key
 Determined 0.17.6), CPU tasks using ``cpu`` key, and ROCm (AMD GPU) tasks using the ``rocm`` key.
 Default values:
 
--  ``determinedai/pytorch-tensorflow-cuda-dev:8b3bea3`` for NVIDIA GPUs.
+-  ``determinedai/pytorch-ngc-dev:e960eae`` for NVIDIA GPUs and for CPUs.
 -  ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.26.4`` for ROCm.
--  ``determinedai/pytorch-tensorflow-cpu-dev:8b3bea3`` for CPUs.
+
+For TensorFlow users, we provide an image that must be referenced in the experiment configuration:
+
+-  ``determinedai/tensorflow-ngc-dev:e960eae`` for NVIDIA GPUs and for CPUs.
 
 ``environment_variables``
 =========================
@@ -283,10 +286,8 @@ behavior specified here. For more on scheduling behavior in Determined, see :ref
    The scheduling policy to use when allocating resources between different tasks (experiments,
    notebooks, etc.). Defaults to ``priority``.
 
-   -  ``fair_share``: Tasks receive a proportional amount of the available resources depending on
-      the resource they require and their weight.
-
-   -  ``round_robin``: Tasks are scheduled in the order in which they arrive at the cluster.
+   -  ``fair_share``: (deprecated) Tasks receive a proportional amount of the available resources
+      depending on the resource they require and their weight.
 
    -  ``priority``: Tasks are scheduled based on their priority, which can range from the values 1
       to 99 inclusive. Lower priority numbers indicate higher-priority tasks. A lower-priority task
@@ -777,13 +778,8 @@ Notebooks, etc.). Defaults to ``fair_share``.
 ``fair_share``
 ^^^^^^^^^^^^^^
 
-   Tasks receive a proportional amount of the available resources depending on the resource they
-   require and their weight.
-
-``round_robin``
-^^^^^^^^^^^^^^^
-
-   Tasks are scheduled in the order in which they arrive at the cluster.
+   (deprecated) Tasks receive a proportional amount of the available resources depending on the
+   resource they require and their weight.
 
 ``priority``
 ^^^^^^^^^^^^

@@ -280,6 +280,38 @@ service Determined {
       tags: "Cluster"
     };
   }
+  // Get the currently configured cluster-wide message.
+  rpc GetClusterMessage(GetClusterMessageRequest)
+      returns (GetClusterMessageResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/master/cluster_message"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Cluster"
+    };
+  }
+  // Set the cluster-wide message shown to users. Only one can be set at at
+  // time, so any existing message will be disabled.
+  rpc SetClusterMessage(SetClusterMessageRequest)
+      returns (SetClusterMessageResponse) {
+    option (google.api.http) = {
+      put: "/api/v1/master/cluster_message"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Cluster"
+    };
+  }
+  // Clear the cluster-wide message shown to all users.
+  rpc DeleteClusterMessage(DeleteClusterMessageRequest)
+      returns (DeleteClusterMessageResponse) {
+    option (google.api.http) = {
+      delete: "/api/v1/master/cluster_message"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Cluster"
+    };
+  }
   // Get a set of agents from the cluster.
   rpc GetAgents(GetAgentsRequest) returns (GetAgentsResponse) {
     option (google.api.http) = {
@@ -2625,6 +2657,28 @@ service Determined {
   rpc ResumeRuns(ResumeRunsRequest) returns (ResumeRunsResponse) {
     option (google.api.http) = {
       post: "/api/v1/runs/resume"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+
+  // Get run metadata.
+  rpc GetRunMetadata(GetRunMetadataRequest) returns (GetRunMetadataResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/runs/{run_id}/metadata"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+
+  // Update run metadata.
+  rpc PostRunMetadata(PostRunMetadataRequest)
+      returns (PostRunMetadataResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/runs/{run_id}/metadata"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {

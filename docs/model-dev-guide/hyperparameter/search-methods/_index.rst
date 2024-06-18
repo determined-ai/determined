@@ -8,8 +8,8 @@ Determined supports a :ref:`variety of hyperparameter search algorithms <hyperpa
 Aside from the ``single`` searcher, a searcher runs multiple trials and decides the hyperparameter
 values to use in each trial. Every searcher is configured with the name of the validation metric to
 optimize (via the ``metric`` field), in addition to other searcher-specific options. For example,
-the ``adaptive_asha`` searcher (`arXiv:1810.0593 <https://arxiv.org/pdf/1810.05934.pdf>`_), suitable
-for larger experiments with many trials, is configured with the maximum number of trials to run, the
+the ``adaptive_asha`` searcher (`arXiv:1810.0593 <http://arxiv.org/pdf/1810.05934>`_), suitable for
+larger experiments with many trials, is configured with the maximum number of trials to run, the
 maximum training length allowed per trial, and the maximum number of trials that can be worked on
 simultaneously:
 

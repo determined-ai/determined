@@ -1,7 +1,7 @@
 //go:build integration
 // +build integration
 
-package db
+package run
 
 import (
 	"context"
@@ -27,8 +27,9 @@ func TestMigrateTrials(t *testing.T) {
 		var currentTrialsViewData []struct {
 			TrialData map[string]any
 		}
+		// get all trial info, excluding additional fields added after the transition to runs.
 		require.NoError(t, db.Bun().NewSelect().Table("trials").
-			ColumnExpr("to_jsonb(trials.*) AS trial_data").
+			ColumnExpr("to_jsonb(trials.*)-'metadata' AS trial_data").
 			Order("id").
 			Scan(ctx, &currentTrialsViewData),
 		)

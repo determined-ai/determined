@@ -7,19 +7,24 @@ import (
 	"context"
 	"fmt"
 	"slices"
+	"strconv"
+	"sync"
 	"testing"
 	"time"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	a "github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/db"
+	runService "github.com/determined-ai/determined/master/internal/run"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/runv1"
 	"github.com/determined-ai/determined/proto/pkg/taskv1"
 )
 
@@ -81,6 +86,65 @@ func TestSearchRunsArchivedExperiment(t *testing.T) {
 	resp, err = api.SearchRuns(ctx, req)
 	require.NoError(t, err)
 	require.Empty(t, resp.Runs)
+}
+
+func TestSearchRunsSortAndFilterAllDefaultColumns(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	_, projectIDInt := createProjectAndWorkspace(ctx, t, api)
+	projectID := int32(projectIDInt)
+
+	req := &apiv1.SearchRunsRequest{
+		ProjectId: &projectID,
+		Sort:      ptrs.Ptr("id=asc"),
+	}
+
+	hyperparameters := map[string]any{"global_batch_size": 1, "test1": map[string]any{"test2": 1}}
+
+	exp := createTestExpWithProjectID(t, api, curUser, projectIDInt)
+
+	task := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
+	require.NoError(t, db.AddTask(ctx, task))
+	require.NoError(t, db.AddTrial(ctx, &model.Trial{
+		State:        model.PausedState,
+		ExperimentID: exp.ID,
+		StartTime:    time.Now(),
+		HParams:      hyperparameters,
+	}, task.TaskID))
+
+	resp, err := api.SearchRuns(ctx, req)
+	require.NoError(t, err)
+	require.Len(t, resp.Runs, 1)
+
+	hyperparameters2 := map[string]any{"global_batch_size": 2, "test1": map[string]any{"test2": 5}}
+
+	// Add second experiment
+	exp2 := createTestExpWithProjectID(t, api, curUser, projectIDInt)
+
+	task2 := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
+	require.NoError(t, db.AddTask(ctx, task2))
+	require.NoError(t, db.AddTrial(ctx, &model.Trial{
+		State:        model.PausedState,
+		ExperimentID: exp2.ID,
+		StartTime:    time.Now(),
+		HParams:      hyperparameters2,
+	}, task2.TaskID))
+
+	for _, c := range defaultRunsTableColumns {
+		if c.Column == "tags" {
+			continue
+		}
+
+		filter := fmt.Sprintf(`{"filterGroup":{"children":[{"columnName":"%s","kind":"field",`+
+			`"location":"%s","operator":"=","type":"%s","value":null}],`+
+			`"conjunction":"and","kind":"group"},"showArchived":false}`, c.Column, c.Location.String(), c.Type.String())
+		_, err = api.SearchRuns(ctx, &apiv1.SearchRunsRequest{
+			ProjectId: req.ProjectId,
+			Sort:      ptrs.Ptr(c.Column + "=asc"),
+			Filter:    ptrs.Ptr(filter),
+		})
+
+		require.NoError(t, err)
+	}
 }
 
 func TestSearchRunsSort(t *testing.T) {
@@ -1144,4 +1208,288 @@ func TestArchiveUnarchiveNoInput(t *testing.T) {
 	unarchRes, err := api.UnarchiveRuns(ctx, unarchReq)
 	require.NoError(t, err)
 	require.Empty(t, unarchRes.Results)
+}
+
+func createTestRun(ctx context.Context, t *testing.T, api *apiServer, curUser model.User) *runv1.FlatRun {
+	_, projectIDInt := createProjectAndWorkspace(ctx, t, api)
+	projectID := int32(projectIDInt)
+	exp := createTestExpWithProjectID(t, api, curUser, int(projectID))
+	task := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
+	require.NoError(t, db.AddTask(context.Background(), task))
+	require.NoError(t, db.AddTrial(context.Background(), &model.Trial{
+		State:        model.PausedState,
+		ExperimentID: exp.ID,
+		StartTime:    time.Now(),
+	}, task.TaskID))
+
+	resp, err := api.SearchRuns(ctx, &apiv1.SearchRunsRequest{ProjectId: &projectID})
+	require.NoError(t, err)
+	require.Len(t, resp.Runs, 1)
+
+	return resp.Runs[0]
+}
+
+func TestPostRunMetadata(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	r := createTestRun(ctx, t, api, curUser)
+
+	// Add metadata
+	rawMetadata := map[string]any{
+		"test_key": "test_value",
+		"nested": map[string]any{
+			"nested_key": "nested_value",
+		},
+	}
+	metadata := newProtoStruct(t, rawMetadata)
+	metadataResp, err := api.PostRunMetadata(ctx, &apiv1.PostRunMetadataRequest{
+		RunId:    r.Id,
+		Metadata: metadata,
+	})
+	require.NoError(t, err)
+	require.Equal(t, rawMetadata, metadataResp.Metadata.AsMap())
+}
+
+func TestRunMetadata(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	r := createTestRun(ctx, t, api, curUser)
+
+	// Add metadata
+	rawMetadata := map[string]any{
+		"test_key": "test_value",
+		"nested": map[string]any{
+			"nested_key": "nested_value",
+		},
+	}
+	metadata := newProtoStruct(t, rawMetadata)
+	metadataResp, err := api.PostRunMetadata(ctx, &apiv1.PostRunMetadataRequest{
+		RunId:    r.Id,
+		Metadata: metadata,
+	})
+	require.NoError(t, err)
+	require.Equal(t, rawMetadata, metadataResp.Metadata.AsMap())
+
+	// Get metadata
+	getResp, err := api.GetRunMetadata(ctx, &apiv1.GetRunMetadataRequest{RunId: r.Id})
+	require.NoError(t, err)
+	actualMetadata := getResp.Metadata.AsMap()
+	require.Equal(t, len(actualMetadata), len(rawMetadata))
+	require.Equal(t, rawMetadata, actualMetadata)
+
+	// additional metadata post.
+	rawMetadata2 := map[string]any{
+		"test_key2": "test_value2",
+		"nested2": map[string]any{
+			"nested_key2": "nested_value2",
+		},
+	}
+	metadata2 := newProtoStruct(t, rawMetadata2)
+	require.NoError(t, err)
+	metadataResp2, err := api.PostRunMetadata(ctx, &apiv1.PostRunMetadataRequest{
+		RunId:    r.Id,
+		Metadata: metadata2,
+	})
+	require.NoError(t, err)
+	require.Equal(t, rawMetadata2, metadataResp2.Metadata.AsMap())
+
+	// Get latest metadata
+	getResp, err = api.GetRunMetadata(ctx, &apiv1.GetRunMetadataRequest{RunId: r.Id})
+	require.NoError(t, err)
+	actualMetadata = getResp.Metadata.AsMap()
+	require.Equal(t, len(rawMetadata2), len(actualMetadata))
+	require.Equal(t, rawMetadata2, actualMetadata)
+}
+
+func TestConcurrentMetadataPostRequests(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	r := createTestRun(ctx, t, api, curUser)
+	numRoutines := 25
+
+	concurrentMetadataList := make([]*structpb.Struct, numRoutines)
+	for i := 0; i < numRoutines; i++ {
+		rawMetadata := map[string]interface{}{
+			fmt.Sprintf("test_key%d", i): fmt.Sprintf("test_value%d", i),
+			fmt.Sprintf("nested%d", i): map[string]interface{}{
+				fmt.Sprintf("nested_key%d", i): fmt.Sprintf("nested_value%d", i),
+			},
+		}
+		concurrentMetadataList[i] = newProtoStruct(t, rawMetadata)
+	}
+
+	wg := sync.WaitGroup{}
+	wg.Add(numRoutines)
+
+	for i := 0; i < numRoutines; i++ {
+		tempMetadata := concurrentMetadataList[i]
+		go func() {
+			defer wg.Done()
+			_, subErr := api.PostRunMetadata(ctx, &apiv1.PostRunMetadataRequest{
+				RunId:    r.Id,
+				Metadata: tempMetadata,
+			})
+			require.NoError(t, subErr)
+		}()
+	}
+	wg.Wait()
+
+	keyCount := 0
+	err := db.Bun().NewSelect().
+		Table("runs_metadata_index").
+		ColumnExpr("count(*)").
+		Where("run_id = ?", r.Id).
+		Group("run_id").
+		Scan(ctx, &keyCount)
+	require.NoError(t, err)
+	require.Equal(t, 2, keyCount) // 2 keys are added in the metadata
+}
+
+func TestConcurrentMetadataPostsMultipleRuns(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	numRuns := 5
+
+	runs := make([]*runv1.FlatRun, numRuns)
+	for i := 0; i < numRuns; i++ {
+		runs[i] = createTestRun(ctx, t, api, curUser)
+	}
+
+	rawMetadata := map[string]interface{}{
+		"test_key": "test_value",
+		"nested": map[string]interface{}{
+			"nested_key": "nested_value",
+		},
+	}
+	metadata := newProtoStruct(t, rawMetadata)
+
+	wg := sync.WaitGroup{}
+	wg.Add(numRuns)
+	for _, run := range runs {
+		rID := run.Id
+		go func() {
+			defer wg.Done()
+			_, subErr := api.PostRunMetadata(ctx, &apiv1.PostRunMetadataRequest{
+				RunId:    rID,
+				Metadata: metadata,
+			})
+			require.NoError(t, subErr)
+		}()
+	}
+	wg.Wait()
+
+	for _, run := range runs {
+		getResp, err := api.GetRunMetadata(ctx, &apiv1.GetRunMetadataRequest{RunId: run.Id})
+		require.NoError(t, err)
+		actualMetadata := getResp.Metadata.AsMap()
+		require.Equal(t, len(rawMetadata), len(actualMetadata))
+		require.Equal(t, rawMetadata, actualMetadata)
+	}
+}
+
+func TestMetadataPostRequestWithTooManyKeysInRequest(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	r := createTestRun(ctx, t, api, curUser)
+
+	rawMetadata := map[string]interface{}{}
+	for i := 0; i < runService.MaxKeyCount+1; i++ {
+		rawMetadata[fmt.Sprintf("test_key%d", i)] = fmt.Sprintf("test_value%d", i)
+	}
+	metadata := newProtoStruct(t, rawMetadata)
+
+	_, err := api.PostRunMetadata(ctx, &apiv1.PostRunMetadataRequest{
+		RunId:    r.Id,
+		Metadata: metadata,
+	})
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "request exceeds run metadata key count limit")
+}
+
+func TestPostMetadataExceedMaxDepth(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	r := createTestRun(ctx, t, api, curUser)
+
+	rawMetadata := map[string]interface{}{
+		"test_key": "test_value",
+		"nested": map[string]interface{}{
+			"nested_key": "nested_value",
+		},
+	}
+	for i := 0; i < runService.MaxMetadataDepth; i++ {
+		rawMetadata = map[string]interface{}{"nested": rawMetadata}
+	}
+	metadata := newProtoStruct(t, rawMetadata)
+
+	_, err := api.PostRunMetadata(ctx, &apiv1.PostRunMetadataRequest{
+		RunId:    r.Id,
+		Metadata: metadata,
+	})
+	require.Error(t, err)
+	require.Contains(t,
+		err.Error(),
+		fmt.Sprintf("metadata exceeds maximum nesting depth of %d", runService.MaxMetadataDepth),
+	)
+}
+
+func TestPostMetadataExceedMaxArrayLength(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	r := createTestRun(ctx, t, api, curUser)
+
+	rawMetadata := map[string]interface{}{
+		"test_key": "test_value",
+		"nested":   []interface{}{},
+	}
+	for i := 0; i < runService.MaxMetadataArrayLength+1; i++ {
+		rawMetadata["nested"] = append(rawMetadata["nested"].([]interface{}), i)
+	}
+	metadata := newProtoStruct(t, rawMetadata)
+
+	_, err := api.PostRunMetadata(ctx, &apiv1.PostRunMetadataRequest{
+		RunId:    r.Id,
+		Metadata: metadata,
+	})
+	require.Error(t, err)
+	require.Contains(
+		t,
+		err.Error(),
+		fmt.Sprintf("metadata array exceeds maximum length of %d/%d elements",
+			runService.MaxMetadataArrayLength+1,
+			runService.MaxMetadataArrayLength,
+		),
+	)
+}
+
+func TestSearchRunsWithArbitraryMetadata(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	r := createTestRun(ctx, t, api, curUser)
+
+	rawMetadata := map[string]interface{}{
+		"test_key": "test_value",
+		"nested": map[string]interface{}{
+			"nested_key": "nested_value",
+		},
+	}
+	metadata := newProtoStruct(t, rawMetadata)
+	_, err := api.PostRunMetadata(ctx, &apiv1.PostRunMetadataRequest{
+		RunId:    r.Id,
+		Metadata: metadata,
+	})
+	require.NoError(t, err)
+
+	// Search for runs with metadata
+	searchReq := &apiv1.SearchRunsRequest{
+		Filter: ptrs.Ptr(
+			`
+			{"filterGroup": { 
+				"children":[{
+					"columnName":"id",
+					"kind":"field",
+					"location":"LOCATION_TYPE_RUN",
+					"operator":"=",
+					"type":"COLUMN_TYPE_NUMBER","value":` + strconv.Itoa(int(r.Id)) + `}],
+					"conjunction":"and","kind":"group"},"showArchived":false}
+			`,
+		),
+	}
+	searchResp, err := api.SearchRuns(ctx, searchReq)
+	require.NoError(t, err)
+	require.Len(t, searchResp.Runs, 1)
+	require.Equal(t, r.Id, searchResp.Runs[0].Id)
+	require.Equal(t, rawMetadata, searchResp.Runs[0].Metadata.AsMap())
 }

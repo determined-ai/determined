@@ -253,13 +253,32 @@ func (k *kubernetesResourcePool) getResourceSummary() (*resourceSummary, error) 
 
 func (k *kubernetesResourcePool) ValidateResources(
 	msg sproto.ValidateResourcesRequest,
-) sproto.ValidateResourcesResponse {
+) error {
 	k.mu.Lock()
 	defer k.mu.Unlock()
 	k.tryAdmitPendingTasks = true
 
 	fulfillable := k.maxSlotsPerPod >= msg.Slots
-	return sproto.ValidateResourcesResponse{Fulfillable: fulfillable}
+
+	if msg.IsSingleNode {
+		if !fulfillable {
+			return fmt.Errorf(
+				"invalid resource request: slots (%d) must be < max_slots_per_pod (%d) on single pod",
+				msg.Slots,
+				k.maxSlotsPerPod,
+			)
+		}
+		return nil
+	}
+	fulfillable = fulfillable || msg.Slots%k.maxSlotsPerPod == 0
+	if !fulfillable {
+		return fmt.Errorf(
+			"invalid resource request: slots (%d) must be < or a multiple of max_slots_per_pod (%d)",
+			msg.Slots,
+			k.maxSlotsPerPod,
+		)
+	}
+	return nil
 }
 
 func (k *kubernetesResourcePool) Admit() {
@@ -639,7 +658,7 @@ func (p k8sJobResource) Summary() sproto.ResourcesSummary {
 		ResourcesType: sproto.ResourcesTypeK8sJob,
 		AgentDevices: map[aproto.ID][]device.Device{
 			// TODO: Make it more obvious k8s can't be trusted.
-			aproto.ID("pods"): make([]device.Device, p.slots),
+			aproto.ID("pods"): make([]device.Device, p.slots*p.numPods),
 		},
 
 		Started: p.started,
@@ -677,6 +696,7 @@ func (p k8sJobResource) Start(
 		spec:         spec,
 		slots:        p.slots,
 		rank:         rri.AgentRank,
+		resourcePool: p.req.ResourcePool,
 		namespace:    p.namespace,
 		numPods:      p.numPods,
 		logContext:   logCtx,

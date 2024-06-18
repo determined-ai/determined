@@ -24,7 +24,6 @@ export const dataGridGlobalSettingsConfig = t.intersection([
 
 export const dataGridGlobalSettingsDefaults = {
   rowHeight: RowHeight.MEDIUM,
-  tableViewMode: 'scroll',
 } as const;
 
 export const dataGridGlobalSettingsPath = 'globalTableSettings';

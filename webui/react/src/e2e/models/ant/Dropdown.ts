@@ -23,7 +23,7 @@ type DropdownArgs = DropdownArgsWithoutChildNode | DropdownArgsWithChildNode;
  */
 export class Dropdown extends BaseComponent {
   readonly openMethod: (args: { timeout?: number }) => Promise<void>;
-  readonly childNode: ComponentBasics | undefined;
+  readonly childNode?: ComponentBasics;
 
   /**
    * Constructs a new Dropdown component.

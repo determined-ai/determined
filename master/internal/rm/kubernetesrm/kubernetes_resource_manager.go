@@ -371,21 +371,13 @@ func (k *ResourceManager) ValidateResources(
 		return nil, nil
 	}
 
-	if msg.IsSingleNode {
-		rp, err := k.poolByName(msg.ResourcePool)
-		if err != nil {
-			return nil, fmt.Errorf(
-				"validating request for (%s, %d): %w", msg.ResourcePool, msg.Slots, err)
-		}
-		resp := rp.ValidateResources(msg)
-		if !resp.Fulfillable {
-			return nil, errors.New("request unfulfillable, please try requesting less slots")
-		}
-		return nil, nil
-	} else if err := k.resourcePoolExists(msg.ResourcePool); err != nil {
-		return nil, fmt.Errorf("%s is an invalid resource pool", msg.ResourcePool)
+	rp, err := k.poolByName(msg.ResourcePool)
+	if err != nil {
+		return nil, fmt.Errorf("could not find resource pool with name %s", msg.ResourcePool)
 	}
-	return nil, nil
+
+	err = rp.ValidateResources(msg)
+	return nil, err
 }
 
 // getResourcePoolRef gets an actor ref to a resource pool by name.

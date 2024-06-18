@@ -56,40 +56,6 @@ Prefer to use an Example Model?
 If you'd like to build off of an existing model that already runs on Determined, visit our
 :ref:`example-solutions` to see if the model you'd like to train is already available.
 
-********************
- TensorFlow Support
-********************
-
-TensorFlow Core Models
-======================
-
-Determined has support for TensorFlow models that use the :ref:`Keras <api-keras-ug>` API. For
-models that use the low-level TensorFlow Core APIs, we recommend wrapping your model in Keras, as
-recommended by the official `TensorFlow <https://www.tensorflow.org/guide/basics#training_loops>`_
-documentation.
-
-TensorFlow 1 vs 2
-=================
-
-Determined supports both TensorFlow 1 and 2. The version of TensorFlow that is used for a particular
-experiment is controlled by the container image that has been configured for that experiment.
-Determined provides prebuilt Docker images that include TensorFlow 2.11, 1.15, and 2.8,
-respectively:
-
--  ``determinedai/pytorch-tensorflow-cuda-dev:8b3bea3`` (default)
--  ``determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-0.21.2``
--  ``determinedai/environments:cuda-11.2-tf-2.8-gpu-0.29.1``
-
-We also provide lightweight CPU-only counterparts:
-
--  ``determinedai/pytorch-tensorflow-cpu-dev:8b3bea3``
--  ``determinedai/environments:py-3.8-tf-2.8-cpu-0.29.1``
-
-To change the container image used for an experiment, specify :ref:`environment.image
-<exp-environment-image>` in the experiment configuration file. Please see :ref:`container-images`
-for more details about configuring training environments and a more complete list of prebuilt Docker
-images.
-
 ******************
  AMD ROCm Support
 ******************

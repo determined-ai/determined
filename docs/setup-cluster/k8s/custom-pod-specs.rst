@@ -149,7 +149,8 @@ Example of configuring default pod specs in ``values.yaml``:
              hostPath:
                path: /data
 
-The default pod specs can also be configured on a resource pool level. GPU jobs submitted in the
+The default pod specs can also be configured on a resource pool level. Cluster administrators can
+define pools in terms of node selectors and/or node affinities here. GPU jobs submitted in the
 resource pool will have the task spec applied. If a job is submitted in a resource pool with a
 matching CPU / GPU pod spec then the top level ``taskContainerDefaults.gpuPodSpec`` or
 ``taskContainerDefaults.cpuPodSpec`` will not be applied.
@@ -167,6 +168,10 @@ Example of configuring resource pool default pod spec in ``values.yaml``.
            kind: Pod
            spec:
              affinity:
+              # Define an example node selector label.
+              nodeSelectorTerms:
+                kubernetes.io/hostname: foo
+              # Define an example node affinity.
                nodeAffinity:
                  requiredDuringSchedulingIgnoredDuringExecution:
                    nodeSelectorTerms:

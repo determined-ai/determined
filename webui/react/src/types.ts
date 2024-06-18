@@ -154,6 +154,7 @@ export const DetailedUser = t.intersection([
   User,
   t.partial({
     agentUserGroup: AgentUserGroup,
+    isPasswordWeak: t.boolean,
     remote: t.boolean,
   }),
   t.type({

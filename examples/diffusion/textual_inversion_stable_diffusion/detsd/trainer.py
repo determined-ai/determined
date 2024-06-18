@@ -678,4 +678,4 @@ class DetSDTextualInversionTrainer:
             token_embedding_layer = self.text_encoder.module.text_model.embeddings.token_embedding
         except AttributeError:
             token_embedding_layer = self.text_encoder.text_model.embeddings.token_embedding
-        return token_embedding_layer
+        return token_embedding_layer.to(self.accelerator.device)

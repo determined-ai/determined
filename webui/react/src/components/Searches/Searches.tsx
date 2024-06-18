@@ -161,7 +161,6 @@ const Searches: React.FC<Props> = ({ project }) => {
   const { settings: globalSettings, updateSettings: updateGlobalSettings } =
     useSettings<DataGridGlobalSettings>(settingsConfigGlobal);
 
-  const isPagedView = true;
   const [sorts, setSorts] = useState<Sort[]>(() => {
     if (!isLoadingSettings) {
       return parseSortString(settings.sortString);
@@ -314,18 +313,16 @@ const Searches: React.FC<Props> = ({ project }) => {
   const fetchExperiments = useCallback(async (): Promise<void> => {
     if (isLoadingSettings || Loadable.isNotLoaded(loadableFormset)) return;
     try {
-      const tableOffset = Math.max((page - 0.5) * PAGE_SIZE, 0);
-
       // always filter out single trial experiments
       const filters = JSON.parse(filtersString);
       const existingFilterGroup = { ...filters.filterGroup };
       const singleTrialFilter = {
-        columnName: 'numTrials',
+        columnName: 'searcherType',
         kind: 'field',
         location: 'LOCATION_TYPE_EXPERIMENT',
-        operator: '>',
-        type: 'COLUMN_TYPE_NUMBER',
-        value: 1,
+        operator: '!=',
+        type: 'COLUMN_TYPE_TEXT',
+        value: 'single',
       };
       filters.filterGroup = {
         children: [existingFilterGroup, singleTrialFilter],
@@ -337,32 +334,15 @@ const Searches: React.FC<Props> = ({ project }) => {
         {
           ...experimentFilters,
           filter: JSON.stringify(filters),
-          limit: isPagedView ? settings.pageLimit : 2 * PAGE_SIZE,
-          offset: isPagedView ? page * settings.pageLimit : tableOffset,
+          limit: settings.pageLimit,
+          offset: page * settings.pageLimit,
           sort: sortString || undefined,
         },
         { signal: canceler.signal },
       );
-      const total = response.pagination.total ?? 0;
       const loadedExperiments = response.experiments;
 
-      setExperiments((prev) => {
-        if (isPagedView) {
-          return loadedExperiments.map((experiment) => Loaded(experiment));
-        }
-
-        // Ensure experiments array has enough space for full result set
-        const newExperiments = prev.length !== total ? new Array(total).fill(NotLoaded) : [...prev];
-
-        // Update the list with the fetched results.
-        Array.prototype.splice.apply(newExperiments, [
-          tableOffset,
-          loadedExperiments.length,
-          ...loadedExperiments.map((experiment) => Loaded(experiment)),
-        ]);
-
-        return newExperiments;
-      });
+      setExperiments(loadedExperiments.map((experiment) => Loaded(experiment)));
       setTotal(
         response.pagination.total !== undefined ? Loaded(response.pagination.total) : NotLoaded,
       );
@@ -376,7 +356,6 @@ const Searches: React.FC<Props> = ({ project }) => {
     experimentFilters,
     filtersString,
     isLoadingSettings,
-    isPagedView,
     loadableFormset,
     page,
     sortString,
@@ -619,10 +598,6 @@ const Searches: React.FC<Props> = ({ project }) => {
     () => (isLoadingSettings ? [] : settings.columns),
     [isLoadingSettings, settings.columns],
   );
-
-  const showPagination = useMemo(() => {
-    return isPagedView && !isMobile;
-  }, [isMobile, isPagedView]);
 
   const {
     ui: { theme: appTheme },
@@ -912,9 +887,6 @@ const Searches: React.FC<Props> = ({ project }) => {
               getHeaderMenuItems={getHeaderMenuItems}
               getRowAccentColor={getRowAccentColor}
               imperativeRef={dataGridRef}
-              isPaginated={isPagedView}
-              page={page}
-              pageSize={PAGE_SIZE}
               pinnedColumnsCount={isLoadingSettings ? 0 : settings.pinnedColumnsCount}
               renderContextMenuComponent={({
                 cell,
@@ -942,15 +914,13 @@ const Searches: React.FC<Props> = ({ project }) => {
               selection={selection}
               sorts={sorts}
               staticColumns={STATIC_COLUMNS}
-              total={Loadable.getOrElse(PAGE_SIZE, total)}
               onColumnResize={handleColumnWidthChange}
               onColumnsOrderChange={handleColumnsOrderChange}
               onContextMenuComplete={handleContextMenuComplete}
-              onPageUpdate={setPage}
               onPinnedColumnsCountChange={handlePinnedColumnsCountChange}
               onSelectionChange={handleSelectionChange}
             />
-            {showPagination && (
+            {!isMobile && (
               <Row>
                 <Column align="right">
                   <Pagination

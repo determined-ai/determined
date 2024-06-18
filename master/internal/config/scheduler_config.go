@@ -63,7 +63,7 @@ func (s *SchedulerConfig) UnmarshalJSON(data []byte) error {
 
 	// Fill in the default
 	if s.FairShare == nil && s.Priority == nil && s.RoundRobin == nil {
-		s.FairShare = &FairShareSchedulerConfig{}
+		s.Priority = &PrioritySchedulerConfig{}
 	}
 	if s.Priority != nil && s.Priority.DefaultPriority == nil {
 		defaultPriority := DefaultSchedulingPriority

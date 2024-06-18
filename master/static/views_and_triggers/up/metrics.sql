@@ -23,9 +23,11 @@ CREATE VIEW trials AS
     t.seed,
     r.experiment_id,
     r.warm_start_checkpoint_id,
-    r.runner_state
+    r.runner_state,
+    rm.metadata AS metadata
    FROM trials_v2 t
-     JOIN runs r ON t.run_id = r.id;
+     JOIN runs r ON t.run_id = r.id
+     LEFT JOIN runs_metadata rm ON r.id = rm.run_id;
 
 CREATE VIEW steps AS
  SELECT raw_steps.trial_id,
@@ -109,4 +111,3 @@ BEGIN
 END;
 $$;
 CREATE TRIGGER autoupdate_exp_best_trial_metrics_on_run_delete AFTER DELETE ON runs FOR EACH ROW EXECUTE PROCEDURE autoupdate_exp_best_trial_metrics_on_delete();
-

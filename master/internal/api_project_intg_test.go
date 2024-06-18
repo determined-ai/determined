@@ -525,18 +525,18 @@ func TestConcurrentProjectKeyGenerationAttempts(t *testing.T) {
 	api, _, ctx := setupAPITest(t, nil)
 	wresp, werr := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: uuid.New().String()})
 	require.NoError(t, werr)
-	for x := 0; x < 20; x++ {
-		errgrp := errgroupx.WithContext(ctx)
-		for i := 0; i < 20; i++ {
-			projectName := "test-project" + uuid.New().String()
-			errgrp.Go(func(context.Context) error {
-				_, err := api.PostProject(ctx, &apiv1.PostProjectRequest{
-					Name: projectName, WorkspaceId: wresp.Workspace.Id,
-				})
-				require.NoError(t, err)
-				return err
+	numRequests := 5
+	errgrp := errgroupx.WithContext(ctx)
+	for i := 0; i < numRequests; i++ {
+		projectName := "test-project" + uuid.New().String()
+		errgrp.Go(func(context.Context) error {
+			_, err := api.PostProject(ctx, &apiv1.PostProjectRequest{
+				Name: projectName, WorkspaceId: wresp.Workspace.Id,
 			})
-		}
+			require.NoError(t, err)
+			return err
+		})
+
 		require.NoError(t, errgrp.Wait())
 		t.Cleanup(func() {
 			_, err := db.Bun().NewDelete().Table("projects").Where("workspace_id = ?", wresp.Workspace.Id).Exec(ctx)

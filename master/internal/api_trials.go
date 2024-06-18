@@ -1569,8 +1569,6 @@ func (a *apiServer) PostTrialRunnerMetadata(
 func (a *apiServer) isTrialTerminalFunc(trialID int, buffer time.Duration) api.TerminationCheckFn {
 	return func() (bool, error) {
 		state, endTime, err := a.m.db.TrialStatus(trialID)
-		log.Print("state, ", state)
-		log.Print("endTime", endTime)
 		if err != nil ||
 			(model.TerminalStates[state] && endTime.Add(buffer).Before(time.Now().UTC())) {
 			return true, err

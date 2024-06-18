@@ -290,7 +290,7 @@ Some constraints are due to differences in behavior between Docker and Singulari
    Unable to allocate resources: Requested node configuration is not available``.
 
    Slurm 22.05.5 through 22.05.8 are not supported due to `Slurm Bug 15857
-   <https://bugs.schedmd.com/show_bug.cgi?id=15857>`__. The bug was addressed in 22.05.09 or
+   <https://support.schedmd.com/show_bug.cgi?id=15857>`__. The bug was addressed in 22.05.09 or
    23.02.00.
 
 -  A Determined experiment remains ``QUEUEUED`` for an extended period:
