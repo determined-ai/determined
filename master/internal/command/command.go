@@ -53,16 +53,15 @@ type Command struct {
 
 	tasks.GenericCommandSpec
 
-	registeredTime time.Time
-	taskID         model.TaskID
-	taskType       model.TaskType
-	jobType        model.JobType
-	jobID          model.JobID
-	allocationID   model.AllocationID
-	lastState      task.AllocationState
-	exitStatus     *task.AllocationExited
-	restored       bool
-
+	registeredTime   time.Time
+	taskID           model.TaskID
+	taskType         model.TaskType
+	jobType          model.JobType
+	jobID            model.JobID
+	allocationID     model.AllocationID
+	lastState        task.AllocationState
+	exitStatus       *task.AllocationExited
+	restored         bool
 	contextDirectory []byte // Don't rely on this being set outsides of PreStart non restore case.
 
 	logCtx logger.Context
@@ -237,6 +236,12 @@ func (c *Command) OnExit(ae *task.AllocationExited) {
 		c.syslog.WithError(err).Errorf(
 			"failure to delete user session for task: %v", c.taskID)
 	}
+	if c.TaskType == model.TaskTypeNotebook {
+		if err := internaldb.DeleteNotebookSessionByTask(context.TODO(), c.taskID); err != nil {
+			c.syslog.WithError(err).Errorf(
+				"failure to delete notebook session for task: %v", c.taskID)
+		}
+	}
 
 	go func() {
 		time.Sleep(terminatedDuration)
@@ -324,7 +329,8 @@ func (c *Command) ToV1Notebook() *notebookv1.Notebook {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	allo := c.refreshAllocationState()
-	notebookAddress := fmt.Sprintf("%s?token=%s", c.serviceAddress(), c.Base.UserSessionToken)
+	notebookToken := c.Base.ExtraEnvVars[model.NotebookSessionEnvVar]
+	notebookAddress := fmt.Sprintf("%s?token=%s", c.serviceAddress(), notebookToken)
 	return &notebookv1.Notebook{
 		Id:             c.stringID(),
 		State:          enrichState(allo.State),

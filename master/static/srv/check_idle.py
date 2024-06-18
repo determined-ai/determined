@@ -79,7 +79,7 @@ def main():
     requests.packages.urllib3.disable_warnings()
     port = os.environ["NOTEBOOK_PORT"]
     notebook_id = os.environ["DET_TASK_ID"]
-    token = os.environ["DET_USER_TOKEN"]
+    token = os.environ["DET_NOTEBOOK_TOKEN"]
     notebook_server = f"https://127.0.0.1:{port}/proxy/{notebook_id}"
     master_url = api.canonicalize_master_url(os.environ["DET_MASTER"])
     cert = certs.default_load(master_url)
