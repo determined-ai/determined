@@ -21,7 +21,7 @@ def main():
     logging.getLogger("determined").setLevel(logging.INFO)
     distributed = core_v2.DistributedContext.from_torch_distributed()
     core_v2.init(
-        defaults=core_v2.DefaultConfig(
+        unmanaged_config=core_v2.UnmanagedConfig(
             name="unmanaged-3-torch-distributed",
         ),
         distributed=distributed,

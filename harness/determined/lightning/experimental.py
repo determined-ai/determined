@@ -13,14 +13,12 @@ class DetLogger(ptl_logger.Logger):
     def __init__(
         self,
         *,
-        defaults: Optional[core_v2.DefaultConfig] = None,
-        unmanaged: Optional[core_v2.UnmanagedConfig] = None,
+        unmanaged_config: Optional[core_v2.UnmanagedConfig] = None,
         client: Optional[experimental.Determined] = None,
     ) -> None:
         self._kwargs = {
-            "defaults": defaults,
             "client": client,
-            "unmanaged": unmanaged,
+            "unmanaged_config": unmanaged_config,
         }
         self._initialized = False
 

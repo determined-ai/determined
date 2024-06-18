@@ -21,7 +21,7 @@ class IdentityDataset(torch.utils.data.Dataset):
 
 def main():
     core_v2.init(
-        defaults=core_v2.DefaultConfig(
+        unmanaged_config=core_v2.UnmanagedConfig(
             name="unmanaged-checkpoints-advanced",
             hparams={
                 "lr": 1e-5,
@@ -29,8 +29,6 @@ def main():
             },
             labels=["some", "set", "of", "labels"],
             description="torch identity example",
-        ),
-        unmanaged=core_v2.UnmanagedConfig(
             external_experiment_id="unmanaged-checkpoints-advanced",
             external_trial_id="unmanaged-checkpoints-advanced",
         ),
