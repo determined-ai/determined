@@ -657,9 +657,7 @@ commands:
               echo "No Determined master listening on '<<parameters.master-scheme>>://<<parameters.master-host>>:<<parameters.master-port>>'"
             fi
 
-            cat /tmp/all-relevant-files | circleci tests run --command="DD_CIVISIBILITY_AGENTLESS_ENABLED=true \
-            DD_SITE='datadoghq.com' \
-            DD_ENV='ci-<<parameters.mark>>' DD_SERVICE='determined-pytest-<<parameters.mark>>' \
+            cat /tmp/all-relevant-files | circleci tests run --command="\
             DET_MASTER_CERT_FILE=<<parameters.master-cert>> \
             DET_MASTER_CERT_NAME=<<parameters.master-cert-name>> \
             IS_CIRCLECI_JOB=1 XDG_CONFIG_HOME=/tmp \
@@ -678,7 +676,10 @@ commands:
             pytest_status=$?
             echo Pytest exited with $pytest_status
             exit $pytest_status
-
+      - upload-junit-datadog:
+          service: "test-e2e-<<parameters.mark>>"
+          env: "ci-<<parameters.master-host>>"
+          path: "<<parameters.junit-path>>"
       - upload-test-job:
           only_on_branch: main
           test_results_path: <<parameters.junit-path>>
@@ -2119,8 +2120,9 @@ jobs:
           flags: "web"
           xtra_args: "-v"
       - upload-junit-datadog:
-          service:
+          service: "test-unit-react"
           env: "ci-cpu"
+          path: "webui/react/junit.xml"
       - store_test_results:
           path: webui/react/junit.xml
       - store_artifacts:
