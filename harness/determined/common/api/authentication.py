@@ -11,7 +11,7 @@ from urllib import parse
 
 import filelock
 
-from determined.common import api, constants, render, util
+from determined.common import api, constants, util
 from determined.common.api import bindings, certs
 
 PASSWORD_SALT = "GubPEmmotfiK9TMD6Zdw"
@@ -25,7 +25,7 @@ def salt_and_hash(password: str) -> str:
 
 
 def warn_about_complexity(e: ValueError) -> None:
-    render.print_warning(
+    print(
         "Warning: your password does not appear to satisfy "
         + f"recommended complexity requirements:\n{e}\n"
         + "Please change your password as soon as possible.",

@@ -284,11 +284,6 @@ def print_json(data: Union[str, Any]) -> None:
         print(data)
 
 
-def print_warning(msg: str) -> None:
-    """Print a warning message to stderr."""
-    print(termcolor.colored(msg, "yellow"), file=sys.stderr)
-
-
 def report_job_launched(_type: str, _id: str, name: str) -> None:
     msg = f"Launched {_type} (id: {_id}, name: {name})."
     print(termcolor.colored(msg, "green"))
