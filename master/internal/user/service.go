@@ -11,6 +11,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/o1egl/paseto"
+
 	log "github.com/sirupsen/logrus"
 
 	"github.com/labstack/echo/v4"
@@ -126,22 +128,14 @@ func GetService() *Service {
 	return userService
 }
 
-// The middleware looks for a token in three places (in this order):
-// 1. A token query parameter in the request URL.
-// 2. The HTTP Authorization header.
-// 3. A cookie named "auth".
+// The middleware looks for a token in two places (in this order):
+// 1. The HTTP Authorization header.
+// 2. A cookie named "auth".
 func (s *Service) extractToken(r *http.Request) (string, error) {
-	authParam := r.URL.Query().Get("token")
 	authRaw := r.Header.Get("Authorization")
-	if authParam != "" {
-		return authParam, nil
-	} else if authRaw != "" {
+	if authRaw != "" {
 		// We attempt to parse out the token, which should be
 		// transmitted as a Bearer authentication token.
-		if strings.HasPrefix(authRaw, "token ") {
-			token := strings.TrimPrefix(authRaw, "token ")
-			return token, nil
-		}
 		if !strings.HasPrefix(authRaw, "Bearer ") {
 			return "", echo.ErrUnauthorized
 		}
@@ -164,6 +158,41 @@ func (s *Service) UserAndSessionFromRequest(
 		return nil, nil, err
 	}
 	return ByToken(context.TODO(), token, s.extConfig)
+}
+
+// UserAndNotebookSessionFromToken gets the user and notebook session for a given token.
+func (s *Service) UserAndNotebookSessionFromToken(
+	token string,
+) (*model.User, *model.NotebookSession, error) {
+	var notebookSession model.NotebookSession
+	ctx := context.TODO()
+	v2 := paseto.NewV2()
+	if err := v2.Verify(token, db.GetTokenKeys().PublicKey, &notebookSession, nil); err != nil {
+		return nil, nil, db.ErrNotFound
+	}
+	var session model.UserSession
+
+	if err := db.Bun().NewSelect().
+		Model(&session).
+		Where("id = ?", notebookSession.UserSessionID).
+		Scan(ctx); err != nil {
+		return nil, nil, err
+	}
+
+	if session.Expiry.Before(time.Now()) {
+		return nil, nil, db.ErrNotFound
+	}
+
+	var user model.User
+	err := db.Bun().NewSelect().
+		Table("users").
+		ColumnExpr("users.*").
+		Join("JOIN user_sessions ON user_sessions.user_id = users.id").
+		Where("user_sessions.id = ?", session.ID).Scan(ctx, &user)
+	if err != nil {
+		return nil, nil, err
+	}
+	return &user, &notebookSession, nil
 }
 
 // getAuthLevel returns what level of authentication a request needs.

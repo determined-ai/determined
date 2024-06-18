@@ -131,6 +131,59 @@ func (cs *CommandService) LaunchGenericCommand(
 	return cmd, nil
 }
 
+// LaunchNotebookCommand creates notebook commands and persists them to the database.
+func (cs *CommandService) LaunchNotebookCommand(
+	req *CreateGeneric,
+	session *model.UserSession,
+) (*Command, error) {
+	cs.mu.Lock()
+	defer cs.mu.Unlock()
+
+	taskID := model.NewTaskID()
+	jobID := model.NewJobID()
+	req.Spec.CommandID = string(taskID)
+	req.Spec.TaskType = model.TaskTypeNotebook
+
+	logCtx := logger.Context{
+		"job-id":    jobID,
+		"task-id":   taskID,
+		"task-type": model.TaskTypeNotebook,
+	}
+
+	token, err := db.GenerateNotebookSessionToken(session.ID, taskID)
+	if err != nil {
+		return nil, err
+	}
+	req.Spec.Base.ExtraEnvVars["DET_NOTEBOOK_TOKEN"] = token
+	cmd := &Command{
+		db: cs.db,
+		rm: cs.rm,
+
+		GenericCommandSpec: *req.Spec,
+
+		taskID:           taskID,
+		taskType:         model.TaskTypeNotebook,
+		jobType:          model.JobTypeNotebook,
+		jobID:            jobID,
+		contextDirectory: req.ContextDirectory,
+		logCtx:           logCtx,
+		syslog:           logrus.WithFields(logrus.Fields{"component": "command"}).WithFields(logCtx.Fields()),
+	}
+
+	if err := cmd.Start(context.TODO()); err != nil {
+		return nil, err
+	}
+
+	if err := db.StartNotebookSession(context.TODO(), session.ID, taskID, &token); err != nil {
+		return nil, err
+	}
+
+	// Add it to the registry.
+	cs.commands[cmd.taskID] = cmd
+
+	return cmd, nil
+}
+
 func (cs *CommandService) unregisterCommand(id model.TaskID) {
 	cs.mu.Lock()
 	defer cs.mu.Unlock()
@@ -147,6 +200,9 @@ func (cs *CommandService) getNTSC(cmdID model.TaskID, cmdType model.TaskType) (*
 
 	if c.taskType != cmdType {
 		return nil, fmt.Errorf("getNTSC: type mismatch: %s/%s", cmdType, c.taskType)
+	}
+
+	if c.TaskType == model.TaskTypeNotebook {
 	}
 
 	return c, nil
