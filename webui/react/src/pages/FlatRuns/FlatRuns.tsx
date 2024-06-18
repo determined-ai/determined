@@ -54,6 +54,7 @@ import {
 } from 'components/OptionsMenu.settings';
 import useUI from 'components/ThemeProvider';
 import { useAsync } from 'hooks/useAsync';
+import { useDebouncedSettings } from 'hooks/useDebouncedSettings';
 import { useGlasbey } from 'hooks/useGlasbey';
 import useMobile from 'hooks/useMobile';
 import usePolling from 'hooks/usePolling';
@@ -86,6 +87,7 @@ import {
 } from './columns';
 import css from './FlatRuns.module.scss';
 import {
+  ColumnWidthsSlice,
   defaultFlatRunsSettings,
   FlatRunsSettings,
   ProjectUrlSettings,
@@ -147,13 +149,16 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
     (p: Partial<FlatRunsSettings>) => userSettings.setPartial(FlatRunsSettings, settingsPath, p),
     [settingsPath],
   );
+  const [columnWidths, updateColumnWidths] = useDebouncedSettings(ColumnWidthsSlice, settingsPath);
   const settings = useMemo(() => {
     const defaultSettings = { ...defaultFlatRunsSettings };
     if (searchId) {
       defaultSettings.columns = defaultSearchRunColumns;
     }
-    return flatRunsSettings.map((s) => ({ ...defaultSettings, ...s })).getOrElse(defaultSettings);
-  }, [flatRunsSettings, searchId]);
+    return Loadable.all([flatRunsSettings, columnWidths])
+      .map(([s, cw]) => ({ ...defaultSettings, ...s, ...cw }))
+      .getOrElse(defaultSettings);
+  }, [columnWidths, flatRunsSettings, searchId]);
 
   const { settings: globalSettings, updateSettings: updateGlobalSettings } =
     useSettings<DataGridGlobalSettings>(settingsConfigGlobal);
@@ -595,20 +600,20 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
             newColumnWidths[col] + widthDifference / arr.length,
           );
         });
-      updateSettings({
+      updateColumnWidths({
         columnWidths: newColumnWidths,
       });
     },
-    [updateSettings, settings.columnWidths, pinnedColumns, comparisonViewTableWidth],
+    [updateColumnWidths, settings.columnWidths, pinnedColumns, comparisonViewTableWidth],
   );
 
   const handleColumnWidthChange = useCallback(
     (columnId: string, width: number) => {
-      updateSettings({
+      updateColumnWidths({
         columnWidths: { ...settings.columnWidths, [columnId]: Math.max(MIN_COLUMN_WIDTH, width) },
       });
     },
-    [settings.columnWidths, updateSettings],
+    [settings.columnWidths, updateColumnWidths],
   );
 
   const rowRangeToIds = useCallback(
@@ -688,16 +693,18 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
           acc[col] = DEFAULT_COLUMN_WIDTH;
           return acc;
         }, {});
-      updateSettings({
-        columns: newColumnsOrder,
+      updateColumnWidths({
         columnWidths: {
           ...settings.columnWidths,
           ...newColumnWidths,
         },
+      });
+      updateSettings({
+        columns: newColumnsOrder,
         pinnedColumnsCount: pinnedCount ?? settings.pinnedColumnsCount,
       });
     },
-    [updateSettings, settings.pinnedColumnsCount, settings.columnWidths],
+    [updateColumnWidths, settings.columnWidths, settings.pinnedColumnsCount, updateSettings],
   );
 
   const handleSortChange = useCallback(

@@ -55,6 +55,7 @@ import {
 } from 'components/OptionsMenu.settings';
 import TableActionBar from 'components/TableActionBar';
 import useUI from 'components/ThemeProvider';
+import { useDebouncedSettings } from 'hooks/useDebouncedSettings';
 import { useGlasbey } from 'hooks/useGlasbey';
 import useMobile from 'hooks/useMobile';
 import usePolling from 'hooks/usePolling';
@@ -89,6 +90,7 @@ import {
 } from './expListColumns';
 import css from './F_ExperimentList.module.scss';
 import {
+  ColumnWidthsSlice,
   DEFAULT_SELECTION,
   defaultProjectSettings,
   ProjectSettings,
@@ -146,12 +148,13 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     (p: Partial<ProjectSettings>) => userSettings.setPartial(ProjectSettings, settingsPath, p),
     [settingsPath],
   );
+  const [columnWidths, setColumnWidths] = useDebouncedSettings(ColumnWidthsSlice, settingsPath);
   const settings = useMemo(
     () =>
-      projectSettings
-        .map((s) => ({ ...defaultProjectSettings, ...s }))
+      Loadable.all([projectSettings, columnWidths])
+        .map(([s, cw]) => ({ ...defaultProjectSettings, ...s, ...cw }))
         .getOrElse(defaultProjectSettings),
-    [projectSettings],
+    [projectSettings, columnWidths],
   );
 
   const { params, updateParams } = useTypedParams(ProjectUrlSettings, {});
@@ -570,16 +573,18 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
           acc[col] = DEFAULT_COLUMN_WIDTH;
           return acc;
         }, {});
-      updateSettings({
-        columns: newColumnsOrder,
+      setColumnWidths({
         columnWidths: {
           ...settings.columnWidths,
           ...newColumnWidths,
         },
+      });
+      updateSettings({
+        columns: newColumnsOrder,
         pinnedColumnsCount: isUndefined(pinnedCount) ? settings.pinnedColumnsCount : pinnedCount,
       });
     },
-    [updateSettings, settings.columnWidths, settings.pinnedColumnsCount],
+    [setColumnWidths, settings.columnWidths, settings.pinnedColumnsCount, updateSettings],
   );
 
   const handleRowHeightChange = useCallback(
@@ -656,23 +661,23 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
             newColumnWidths[col] + widthDifference / arr.length,
           );
         });
-      updateSettings({
+      setColumnWidths({
         columnWidths: newColumnWidths,
       });
     },
-    [updateSettings, settings.columnWidths, pinnedColumns, comparisonViewTableWidth],
+    [comparisonViewTableWidth, settings.columnWidths, pinnedColumns, setColumnWidths],
   );
 
   const handleColumnWidthChange = useCallback(
     (columnId: string, width: number) => {
-      updateSettings({
+      setColumnWidths({
         columnWidths: {
           ...settings.columnWidths,
           [columnId]: Math.max(MIN_COLUMN_WIDTH, width),
         },
       });
     },
-    [updateSettings, settings.columnWidths],
+    [setColumnWidths, settings.columnWidths],
   );
 
   const handleHeatmapToggle = useCallback(

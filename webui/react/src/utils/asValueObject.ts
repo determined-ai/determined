@@ -10,6 +10,8 @@ import { fst, mapSnd } from 'fp-ts/Tuple';
 import { hash } from 'immutable';
 import * as t from 'io-ts';
 
+import { getProps, isHasProps } from './iotsHelpers';
+
 // fp-ts's equality checking for nubmers fails if both values are NaN. use the
 // SameValueZero algorithm to determine equality instead
 const numberEq = fromEquals((x: number, y: number) => [x].includes(y));
@@ -20,31 +22,6 @@ export type ValueObjectOf<T> = T extends { equals?: unknown; hashCode?: unknown 
       equals: (other: unknown) => boolean;
       hashCode: () => number;
     };
-
-export const getProps = <T extends t.HasProps>(codec: T): t.Props => {
-  switch (codec._tag) {
-    case 'RefinementType':
-    case 'ReadonlyType':
-      return getProps(codec.type);
-    case 'StrictType':
-    case 'PartialType':
-    case 'InterfaceType':
-      return codec.props;
-    case 'IntersectionType':
-      return codec.types.reduce((acc, type) => ({ ...acc, ...getProps(type) }), {});
-  }
-};
-
-const isHasProps = (codec: t.Mixed): codec is t.HasProps => {
-  return (
-    codec instanceof t.StrictType ||
-    codec instanceof t.PartialType ||
-    codec instanceof t.InterfaceType ||
-    ((codec instanceof t.RefinementType || codec instanceof t.ReadonlyType) &&
-      isHasProps(codec.type)) ||
-    (codec instanceof t.IntersectionType && codec.types.every(isHasProps))
-  );
-};
 
 const wrapCodecEq = <T extends t.Mixed>(codec: T, eq: Eq<t.TypeOf<T>>) =>
   fromEquals(flow(tuple<[unknown, unknown]>, pipe(every(codec.is), pipe(eq.equals, tupled, and))));
