@@ -664,7 +664,6 @@ commands:
             xargs pytest --capture=tee-sys -vv \
             -m '<<parameters.mark>>' \
             --durations=0 \
-            --ddtrace \
             --master-scheme="<<parameters.master-scheme>>" \
             --master-host="<<parameters.master-host>>" \
             --master-port="<<parameters.master-port>>" \
