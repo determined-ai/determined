@@ -41,6 +41,7 @@ export type NamedComponentArgs =
 export class BaseComponent implements ComponentBasics {
   protected _selector: string;
   readonly _parent: CanBeParent;
+  protected _locator?: Locator;
 
   /**
    * Constructs a BaseComponent
@@ -65,7 +66,10 @@ export class BaseComponent implements ComponentBasics {
    */
   get pwLocator(): Locator {
     // Treat the locator as a readonly, but only after we've created it
-    return this._parent.pwLocator.locator(this.selector);
+    if (!Object.prototype.hasOwnProperty.call(this, '_locator') || this._locator === undefined) {
+      this._locator = this._parent.pwLocator.locator(this.selector);
+    }
+    return this._locator;
   }
 
   /**
@@ -97,7 +101,7 @@ export class BaseComponent implements ComponentBasics {
       oldParent: T2,
       newParent: T2,
     ): void => {
-      // this isn't a deep search, but i don't expect components to be intanciated
+      // this isn't a deep search, but i don't expect components to be instanciated
       // with a parent set to "this.parent". it's always set to "this" or another
       // component with "this" as a parent.
       for (const key in containerComponent) {
