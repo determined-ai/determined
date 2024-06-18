@@ -55,7 +55,6 @@ export abstract class BasePage implements ModelBasics {
 
   /**
    * Returns this so we can chain. Visits the page.
-   * ie. await expect(thePage.goto().theElement.pwLocator()).toBeVisible()
    * @param {{}} [args] - obj
    * @param {string} args.url - A URL to visit. It can be different from the URL to verify
    * @param {boolean} [args.verify] - Whether for the URL to change
