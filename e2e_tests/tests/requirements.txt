@@ -20,8 +20,6 @@ ray[default,tune]
 pyarrow
 # Pydantic V2 has changes that break existing ray tests
 pydantic<2
-# DataDog tracing and result upload utility
-ddtrace
 # Selenium for okta testing
 selenium
 # Pexpect for okta testing
