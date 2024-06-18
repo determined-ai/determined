@@ -17,10 +17,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
-// I wanted to do this all in patches, but Gateways don't yet support strategic merge patch.
-// Its pretty easy to use json patch to add the port, but removing the port is a lot harder
-// as I don't think you can remove by value. Instead just serialize reading then submitting
-// updates on the gateway.
 type gatewayService struct {
 	mu                 sync.Mutex
 	gatewayInterface   gateway.GatewayInterface
