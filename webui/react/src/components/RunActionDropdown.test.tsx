@@ -23,6 +23,7 @@ const mockNavigatorClipboard = () => {
 
 vi.mock('routes/utils', () => ({
   handlePath: vi.fn(),
+  serverAddress: () => 'http://localhost',
 }));
 
 vi.mock('services/api', () => ({
@@ -34,8 +35,8 @@ vi.mock('services/api', () => ({
 
 const mocks = vi.hoisted(() => {
   return {
-    canDeleteFlatRuns: vi.fn(),
-    canModifyExperiment: vi.fn(),
+    canDeleteFlatRun: vi.fn(),
+    canModifyFlatRun: vi.fn(),
     canMoveFlatRun: vi.fn(),
   };
 });
@@ -43,8 +44,8 @@ const mocks = vi.hoisted(() => {
 vi.mock('hooks/usePermissions', () => {
   const usePermissions = vi.fn(() => {
     return {
-      canDeleteFlatRun: mocks.canDeleteFlatRuns,
-      canModifyExperiment: mocks.canModifyExperiment,
+      canDeleteFlatRun: mocks.canDeleteFlatRun,
+      canModifyFlatRun: mocks.canModifyFlatRun,
       canMoveFlatRun: mocks.canMoveFlatRun,
     };
   });
@@ -111,7 +112,7 @@ describe('RunActionDropdown', () => {
   });
 
   it('should provide Delete option', async () => {
-    mocks.canDeleteFlatRuns.mockImplementation(() => true);
+    mocks.canDeleteFlatRun.mockImplementation(() => true);
     setup();
     await user.click(screen.getByText('Delete'));
     await user.click(screen.getByRole('button', { name: 'Delete' }));
@@ -119,13 +120,13 @@ describe('RunActionDropdown', () => {
   });
 
   it('should hide Delete option without permissions', () => {
-    mocks.canDeleteFlatRuns.mockImplementation(() => false);
+    mocks.canDeleteFlatRun.mockImplementation(() => false);
     setup();
     expect(screen.queryByText('Delete')).not.toBeInTheDocument();
   });
 
   it('should provide Kill option', async () => {
-    mocks.canModifyExperiment.mockImplementation(() => true);
+    mocks.canModifyFlatRun.mockImplementation(() => true);
     setup(undefined, RunState.Paused, undefined);
     await user.click(screen.getByText('Kill'));
     await user.click(screen.getByRole('button', { name: 'Kill' }));
@@ -133,33 +134,33 @@ describe('RunActionDropdown', () => {
   });
 
   it('should hide Kill option without permissions', () => {
-    mocks.canModifyExperiment.mockImplementation(() => false);
+    mocks.canModifyFlatRun.mockImplementation(() => false);
     setup(undefined, RunState.Paused, undefined);
     expect(screen.queryByText('Kill')).not.toBeInTheDocument();
   });
 
   it('should provide Archive option', async () => {
-    mocks.canModifyExperiment.mockImplementation(() => true);
+    mocks.canModifyFlatRun.mockImplementation(() => true);
     setup();
     await user.click(screen.getByText('Archive'));
     expect(vi.mocked(archiveRuns)).toBeCalled();
   });
 
   it('should hide Archive option without permissions', () => {
-    mocks.canModifyExperiment.mockImplementation(() => false);
+    mocks.canModifyFlatRun.mockImplementation(() => false);
     setup();
     expect(screen.queryByText('Archive')).not.toBeInTheDocument();
   });
 
   it('should provide Unarchive option', async () => {
-    mocks.canModifyExperiment.mockImplementation(() => true);
+    mocks.canModifyFlatRun.mockImplementation(() => true);
     setup(undefined, undefined, true);
     await user.click(screen.getByText('Unarchive'));
     expect(vi.mocked(unarchiveRuns)).toBeCalled();
   });
 
   it('should hide Unarchive option without permissions', () => {
-    mocks.canModifyExperiment.mockImplementation(() => false);
+    mocks.canModifyFlatRun.mockImplementation(() => false);
     setup(undefined, undefined, true);
     expect(screen.queryByText('Unarchive')).not.toBeInTheDocument();
   });
