@@ -943,10 +943,6 @@ func (a *apiServer) PostRunMetadata(
 		return nil, err
 	}
 
-	if len(req.Metadata.AsMap()) == 0 || req.Metadata.AsMap() == nil {
-		return nil, status.Error(codes.InvalidArgument, "metadata cannot be empty")
-	}
-
 	// Flatten Request Metadata.
 	flatMetadata, err := run.FlattenMetadata(req.Metadata.AsMap())
 	if err != nil {
