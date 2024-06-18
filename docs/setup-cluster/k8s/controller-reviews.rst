@@ -10,11 +10,11 @@ here <https://gateway-api.sigs.k8s.io/implementations/#haproxy-kubernetes-ingres
 Based on the documentation provided by the projects, we've categorized the implementations into
 three groups:
 
-- **Supported**: The project has implemented the TCPRoute resource and we have tested it.
-- **Support Not Tested**: The project has indicated implementation of the TCPRoute resource but we
-  have not tested it.
-- **Not Yet Supported**: The project either has not implemented the TCPRoute resource or has not
-  indicated support for it, or we have not found the documentation on it.
+-  **Supported**: The project has implemented the TCPRoute resource and we have tested it.
+-  **Support Not Tested**: The project has indicated implementation of the TCPRoute resource but we
+   have not tested it.
+-  **Not Yet Supported**: The project either has not implemented the TCPRoute resource or has not
+   indicated support for it, or we have not found the documentation on it.
 
 *********
  Contour
