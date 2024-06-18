@@ -7,7 +7,6 @@ export type CanBeParent = ComponentBasics | BasePage;
 export interface ComponentBasics extends ModelBasics {
   _parent: CanBeParent;
   get root(): BasePage;
-  directChildren(): Generator<string>;
 }
 
 function implementsComponentBasics(obj: object): obj is ComponentBasics {
@@ -42,10 +41,6 @@ export type NamedComponentArgs =
 export class BaseComponent implements ComponentBasics {
   protected _selector: string;
   readonly _parent: CanBeParent;
-  protected _locator?: Locator;
-  private indirectChildren: string[] = [];
-  // DEBUGGING
-  isNth = false;
 
   /**
    * Constructs a BaseComponent
@@ -70,10 +65,7 @@ export class BaseComponent implements ComponentBasics {
    */
   get pwLocator(): Locator {
     // Treat the locator as a readonly, but only after we've created it
-    if (this._locator === undefined) {
-      this._locator = this._parent.pwLocator.locator(this.selector);
-    }
-    return this._locator;
+    return this._parent.pwLocator.locator(this.selector);
   }
 
   /**
@@ -87,61 +79,59 @@ export class BaseComponent implements ComponentBasics {
     }
   }
 
-  *directChildren(): Generator<string> {
-    // iterate through every property in the object prototype.
-    // this isn't a deep search, but components i don't expect components to
-    // be intanciated with a parent set to "this.parent". it's always set
-    // to "this" or another component with "this" as a parent. if there are any
-    // exceptions, the components should be added to the indirectChildren array.
-    for (const key in Object.keys(this)) {
-      if (key === '_parent') continue;
-      const childComponent = Object.getPrototypeOf(this)[key];
-      if (
-        Object.prototype.hasOwnProperty.call(this, key) &&
-        childComponent instanceof Object &&
-        implementsComponentBasics(childComponent) &&
-        childComponent._parent === this
-      ) {
-        yield key;
-      }
-    }
-  }
-
-  *allChildren(): Generator<string> {
-    for (const key of this.directChildren()) {
-      yield key;
-    }
-    for (const key in this.indirectChildren) {
-      yield key;
-    }
-  }
-
   /**
    * Returns the nth component which matches the selector
    */
   nth(n: number): this {
-    // given a component, reset the parent of all children to the new component
-    const resetParent = <T extends ComponentBasics>(resetComponent: T): T => {
-      const newObj = Object.create(resetComponent);
-      newObj.isNth = true;
-      for (const key in resetComponent.directChildren()) {
-        if (key === 'columnName') {
-          key;
+    /**
+     * @param {T1} containerComponent the component to search properties for references to oldParent
+     * @param {T2} oldParent the old parent to replace
+     * @param {T2} newParent the new parent to replace with
+     *
+     * iterate through every property in the containerComponent prototype, if a
+     * property is a component and it's parent is oldParent, replace it with a
+     * new component with the same properties but a new parent.
+     */
+    const replaceParent = <T1 extends ComponentBasics, T2 extends ComponentBasics>(
+      containerComponent: T1,
+      oldParent: T2,
+      newParent: T2,
+    ): void => {
+      // this isn't a deep search, but i don't expect components to be intanciated
+      // with a parent set to "this.parent". it's always set to "this" or another
+      // component with "this" as a parent.
+      for (const key in containerComponent) {
+        // special case for _parent so we don't recurse backwards
+        if (key === '_parent') continue;
+        const childComponent = containerComponent[key];
+        if (childComponent instanceof Object && implementsComponentBasics(childComponent)) {
+          // make a copy of the component and set it's parent to resetComponent
+          if (childComponent._parent === oldParent) {
+            // create a new object with the same properties as the childComponent
+            const newChildComponent = Object.create(childComponent);
+            // update the parent of the new object
+            newChildComponent._parent = newParent;
+            // update the property in containerComponent
+            containerComponent[key] = newChildComponent;
+            // update any properties in containerComponent which have a parent of childComponent
+            replaceParent(containerComponent, childComponent, newChildComponent);
+            // update any properties in 'newChildComponent' which has a parent of childComponent
+            replaceParent(newChildComponent, childComponent, newChildComponent);
+          }
         }
-        const newChild = resetParent(newObj[key]);
-        newChild._parent = newObj;
-        newObj[key] = newChild;
       }
-      return newObj;
     };
-    const nthObj = resetParent(this);
-    Object.defineProperty(nthObj, 'pwLocator', {
-      configurable: true,
-      enumerable: true,
-      get: () => {
-        return this.pwLocator.nth(n);
+
+    const nthObj = Object.create(this, {
+      pwLocator: {
+        configurable: true,
+        enumerable: true,
+        get: () => {
+          return this.pwLocator.nth(n);
+        },
       },
     });
+    replaceParent(nthObj, this, nthObj);
     return nthObj;
   }
 }
@@ -178,26 +168,6 @@ export class BaseReactFragment implements ComponentBasics {
       return this._parent;
     } else {
       return this._parent.root;
-    }
-  }
-
-  *directChildren(): Generator<string> {
-    // iterate through every property in the object prototype.
-    // this isn't a deep search, but components i don't expect components to
-    // be intanciated with a parent set to "this.parent". it's always set
-    // to "this" or another component with "this" as a parent. if there are any
-    // exceptions, the components should be added to the indirectChildren array.
-    for (const key in Object.keys(this)) {
-      if (key === '_parent') continue;
-      const childComponent = Object.getPrototypeOf(this)[key];
-      if (
-        Object.prototype.hasOwnProperty.call(this, key) &&
-        childComponent instanceof Object &&
-        implementsComponentBasics(childComponent) &&
-        childComponent._parent === this
-      ) {
-        yield key;
-      }
     }
   }
 }

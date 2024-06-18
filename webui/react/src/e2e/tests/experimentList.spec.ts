@@ -164,8 +164,6 @@ test.describe('Experiement List', () => {
   test('Table Filter', async () => {
     test.slow();
     const tableFilter = projectDetailsPage.f_experiemntList.tableActionBar.tableFilter;
-    const secondFilterField = tableFilter.filterForm.filter.filterFields.nth(1);
-    secondFilterField;
     const totalExperiments = await getExpNum();
 
     const filterScenario = async (
@@ -177,8 +175,7 @@ test.describe('Experiement List', () => {
         await tableFilter.open();
         await scenario();
         // [ET-284] - Sometimes, closing the popover too quickly causes the filter to not apply.
-        // await waitTableStable();
-        await projectDetailsPage._page.waitForTimeout(1_000);
+        await waitTableStable();
         await expect.poll(async () => await getExpNum()).toBe(expectedValue);
         await tableFilter.close();
       });
