@@ -2,10 +2,10 @@
 
 **New Features**
 
--  Kubernetes: The Internal Task Gateway feature enables Determined tasks running on remote
-   Kubernetes clusters to be exposed to the Determined master and proxies. This feature facilitates
-   multi-resource manager setups by configuring a Gateway controller in the external Kubernetes
-   cluster.
+-  Kubernetes: The :ref:`Internal Task Gateway <internal-task-gateway>` feature enables Determined
+   tasks running on remote Kubernetes clusters to be exposed to the Determined master and proxies.
+   This feature facilitates multi-resource manager setups by configuring a Gateway controller in the
+   external Kubernetes cluster.
 
 .. important::
 
