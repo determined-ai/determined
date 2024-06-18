@@ -166,7 +166,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
 
   const { settings: globalSettings, updateSettings: updateGlobalSettings } =
     useSettings<DataGridGlobalSettings>(settingsConfigGlobal);
-  const isPagedView = true;
   const [sorts, setSorts] = useState<Sort[]>(() => {
     if (!isLoadingSettings) {
       return parseSortString(settings.sortString);
@@ -337,41 +336,19 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const fetchExperiments = useCallback(async (): Promise<void> => {
     if (isLoadingSettings || Loadable.isNotLoaded(loadableFormset)) return;
     try {
-      const tableOffset = Math.max((page - 0.5) * PAGE_SIZE, 0);
       const response = await searchExperiments(
         {
           ...experimentFilters,
           filter: filtersString,
-          limit: isPagedView ? settings.pageLimit : 2 * PAGE_SIZE,
-          offset: isPagedView ? page * settings.pageLimit : tableOffset,
+          limit: settings.pageLimit,
+          offset: page * settings.pageLimit,
           sort: sortString || undefined,
         },
         { signal: canceler.signal },
       );
-      const total = response.pagination.total ?? 0;
       const loadedExperiments = response.experiments;
 
-      setExperiments((prev) => {
-        if (isPagedView) {
-          return loadedExperiments.map((experiment) => Loaded(experiment));
-        }
-
-        let newExperiments = prev;
-
-        // Fill out the loadable experiments array with total count.
-        if (prev.length !== total) {
-          newExperiments = new Array(total).fill(NotLoaded);
-        }
-
-        // Update the list with the fetched results.
-        Array.prototype.splice.apply(newExperiments, [
-          tableOffset,
-          loadedExperiments.length,
-          ...loadedExperiments.map((experiment) => Loaded(experiment)),
-        ]);
-
-        return newExperiments;
-      });
+      setExperiments(loadedExperiments.map((experiment) => Loaded(experiment)));
       setTotal(
         response.pagination.total !== undefined ? Loaded(response.pagination.total) : NotLoaded,
       );
@@ -385,7 +362,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     experimentFilters,
     filtersString,
     isLoadingSettings,
-    isPagedView,
     loadableFormset,
     page,
     sortString,
@@ -743,11 +719,9 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
 
   const showPagination = useMemo(() => {
     return (
-      isPagedView &&
-      (!settings.compare || settings.pinnedColumnsCount !== 0) &&
-      !(isMobile && settings.compare)
+      (!settings.compare || settings.pinnedColumnsCount !== 0) && !(isMobile && settings.compare)
     );
-  }, [isMobile, isPagedView, settings.compare, settings.pinnedColumnsCount]);
+  }, [isMobile, settings.compare, settings.pinnedColumnsCount]);
 
   const {
     ui: { theme: appTheme },
@@ -1130,9 +1104,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                 getRowAccentColor={getRowAccentColor}
                 hideUnpinned={settings.compare}
                 imperativeRef={dataGridRef}
-                isPaginated={isPagedView}
-                page={page}
-                pageSize={PAGE_SIZE}
                 pinnedColumnsCount={isLoadingSettings ? 0 : settings.pinnedColumnsCount}
                 renderContextMenuComponent={({
                   cell,
@@ -1163,11 +1134,9 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
                 selection={selection}
                 sorts={sorts}
                 staticColumns={STATIC_COLUMNS}
-                total={Loadable.getOrElse(PAGE_SIZE, total)}
                 onColumnResize={handleColumnWidthChange}
                 onColumnsOrderChange={handleColumnsOrderChange}
                 onContextMenuComplete={handleContextMenuComplete}
-                onPageUpdate={setPage}
                 onPinnedColumnsCountChange={handlePinnedColumnsCountChange}
                 onSelectionChange={handleSelectionChange}
               />

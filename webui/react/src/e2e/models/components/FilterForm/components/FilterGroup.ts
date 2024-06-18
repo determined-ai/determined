@@ -70,7 +70,7 @@ export class FilterGroup extends NamedComponent {
     parent: this.#groupCard,
     selector: this.#childrenSelector,
   });
-  readonly filterGroups: FilterGroup | undefined;
+  readonly filterGroups?: FilterGroup;
   readonly filterFields = new FilterField({
     attachment: this.#notNestedSelector,
     parent: this.#children,

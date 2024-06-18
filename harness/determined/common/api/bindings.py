@@ -727,6 +727,7 @@ class trialv1Trial(Printable):
     endTime: "typing.Optional[str]" = None
     latestValidation: "typing.Optional[v1MetricsWorkload]" = None
     logRetentionDays: "typing.Optional[int]" = None
+    metadata: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     runnerState: "typing.Optional[str]" = None
     searcherMetricValue: "typing.Optional[float]" = None
     summaryMetrics: "typing.Optional[typing.Dict[str, typing.Any]]" = None
@@ -752,6 +753,7 @@ class trialv1Trial(Printable):
         endTime: "typing.Union[str, None, Unset]" = _unset,
         latestValidation: "typing.Union[v1MetricsWorkload, None, Unset]" = _unset,
         logRetentionDays: "typing.Union[int, None, Unset]" = _unset,
+        metadata: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
         runnerState: "typing.Union[str, None, Unset]" = _unset,
         searcherMetricValue: "typing.Union[float, None, Unset]" = _unset,
         summaryMetrics: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
@@ -780,6 +782,8 @@ class trialv1Trial(Printable):
             self.latestValidation = latestValidation
         if not isinstance(logRetentionDays, Unset):
             self.logRetentionDays = logRetentionDays
+        if not isinstance(metadata, Unset):
+            self.metadata = metadata
         if not isinstance(runnerState, Unset):
             self.runnerState = runnerState
         if not isinstance(searcherMetricValue, Unset):
@@ -820,6 +824,8 @@ class trialv1Trial(Printable):
             kwargs["latestValidation"] = v1MetricsWorkload.from_json(obj["latestValidation"]) if obj["latestValidation"] is not None else None
         if "logRetentionDays" in obj:
             kwargs["logRetentionDays"] = obj["logRetentionDays"]
+        if "metadata" in obj:
+            kwargs["metadata"] = obj["metadata"]
         if "runnerState" in obj:
             kwargs["runnerState"] = obj["runnerState"]
         if "searcherMetricValue" in obj:
@@ -860,6 +866,8 @@ class trialv1Trial(Printable):
             out["latestValidation"] = None if self.latestValidation is None else self.latestValidation.to_json(omit_unset)
         if not omit_unset or "logRetentionDays" in vars(self):
             out["logRetentionDays"] = self.logRetentionDays
+        if not omit_unset or "metadata" in vars(self):
+            out["metadata"] = self.metadata
         if not omit_unset or "runnerState" in vars(self):
             out["runnerState"] = self.runnerState
         if not omit_unset or "searcherMetricValue" in vars(self):
@@ -4311,6 +4319,7 @@ class v1FlatRun(Printable):
     externalRunId: "typing.Optional[int]" = None
     hyperparameters: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     labels: "typing.Optional[typing.Sequence[str]]" = None
+    metadata: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     searcherMetricValue: "typing.Optional[float]" = None
     summaryMetrics: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     userId: "typing.Optional[int]" = None
@@ -4334,6 +4343,7 @@ class v1FlatRun(Printable):
         externalRunId: "typing.Union[int, None, Unset]" = _unset,
         hyperparameters: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
         labels: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
+        metadata: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
         searcherMetricValue: "typing.Union[float, None, Unset]" = _unset,
         summaryMetrics: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
         userId: "typing.Union[int, None, Unset]" = _unset,
@@ -4360,6 +4370,8 @@ class v1FlatRun(Printable):
             self.hyperparameters = hyperparameters
         if not isinstance(labels, Unset):
             self.labels = labels
+        if not isinstance(metadata, Unset):
+            self.metadata = metadata
         if not isinstance(searcherMetricValue, Unset):
             self.searcherMetricValue = searcherMetricValue
         if not isinstance(summaryMetrics, Unset):
@@ -4393,6 +4405,8 @@ class v1FlatRun(Printable):
             kwargs["hyperparameters"] = obj["hyperparameters"]
         if "labels" in obj:
             kwargs["labels"] = obj["labels"]
+        if "metadata" in obj:
+            kwargs["metadata"] = obj["metadata"]
         if "searcherMetricValue" in obj:
             kwargs["searcherMetricValue"] = float(obj["searcherMetricValue"]) if obj["searcherMetricValue"] is not None else None
         if "summaryMetrics" in obj:
@@ -4426,6 +4440,8 @@ class v1FlatRun(Printable):
             out["hyperparameters"] = self.hyperparameters
         if not omit_unset or "labels" in vars(self):
             out["labels"] = self.labels
+        if not omit_unset or "metadata" in vars(self):
+            out["metadata"] = self.metadata
         if not omit_unset or "searcherMetricValue" in vars(self):
             out["searcherMetricValue"] = None if self.searcherMetricValue is None else dump_float(self.searcherMetricValue)
         if not omit_unset or "summaryMetrics" in vars(self):
@@ -6133,6 +6149,33 @@ class v1GetRolesByIDResponse(Printable):
         }
         if not omit_unset or "roles" in vars(self):
             out["roles"] = None if self.roles is None else [x.to_json(omit_unset) for x in self.roles]
+        return out
+
+class v1GetRunMetadataResponse(Printable):
+    """Response to get the metadata of a run."""
+    metadata: "typing.Optional[typing.Dict[str, typing.Any]]" = None
+
+    def __init__(
+        self,
+        *,
+        metadata: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
+    ):
+        if not isinstance(metadata, Unset):
+            self.metadata = metadata
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetRunMetadataResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "metadata" in obj:
+            kwargs["metadata"] = obj["metadata"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "metadata" in vars(self):
+            out["metadata"] = self.metadata
         return out
 
 class v1GetSearcherEventsResponse(Printable):
@@ -11010,6 +11053,64 @@ class v1PostProjectResponse(Printable):
         out: "typing.Dict[str, typing.Any]" = {
             "project": self.project.to_json(omit_unset),
         }
+        return out
+
+class v1PostRunMetadataRequest(Printable):
+    """Request to post metadata for a run."""
+    runId: "typing.Optional[int]" = None
+
+    def __init__(
+        self,
+        *,
+        metadata: "typing.Dict[str, typing.Any]",
+        runId: "typing.Union[int, None, Unset]" = _unset,
+    ):
+        self.metadata = metadata
+        if not isinstance(runId, Unset):
+            self.runId = runId
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PostRunMetadataRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "metadata": obj["metadata"],
+        }
+        if "runId" in obj:
+            kwargs["runId"] = obj["runId"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "metadata": self.metadata,
+        }
+        if not omit_unset or "runId" in vars(self):
+            out["runId"] = self.runId
+        return out
+
+class v1PostRunMetadataResponse(Printable):
+    """Response to post metadata for a run."""
+    metadata: "typing.Optional[typing.Dict[str, typing.Any]]" = None
+
+    def __init__(
+        self,
+        *,
+        metadata: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
+    ):
+        if not isinstance(metadata, Unset):
+            self.metadata = metadata
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PostRunMetadataResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "metadata" in obj:
+            kwargs["metadata"] = obj["metadata"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "metadata" in vars(self):
+            out["metadata"] = self.metadata
         return out
 
 class v1PostSearcherOperationsRequest(Printable):
@@ -19497,6 +19598,30 @@ def post_GetRolesByID(
         return v1GetRolesByIDResponse.from_json(_resp.json())
     raise APIHttpError("post_GetRolesByID", _resp)
 
+def get_GetRunMetadata(
+    session: "api.BaseSession",
+    *,
+    runId: int,
+) -> "v1GetRunMetadataResponse":
+    """Get run metadata.
+
+    - runId: The ID of the run to get metadata for.
+    """
+    _params = None
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/runs/{runId}/metadata",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1GetRunMetadataResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetRunMetadata", _resp)
+
 def get_GetSearcherEvents(
     session: "api.BaseSession",
     *,
@@ -22043,6 +22168,31 @@ def post_PostProject(
     if _resp.status_code == 200:
         return v1PostProjectResponse.from_json(_resp.json())
     raise APIHttpError("post_PostProject", _resp)
+
+def post_PostRunMetadata(
+    session: "api.BaseSession",
+    *,
+    body: "v1PostRunMetadataRequest",
+    runId: int,
+) -> "v1PostRunMetadataResponse":
+    """Update run metadata.
+
+    - runId: The ID of the run to post metadata for.
+    """
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/runs/{runId}/metadata",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1PostRunMetadataResponse.from_json(_resp.json())
+    raise APIHttpError("post_PostRunMetadata", _resp)
 
 def post_PostSearcherOperations(
     session: "api.BaseSession",

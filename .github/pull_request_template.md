@@ -29,10 +29,11 @@ coverage of changes.
 ## Checklist
 
 - [ ] Changes have been manually QA'd
-- [ ] User-facing API changes need the "User-facing API Change" label.
-- [ ] Release notes should be added as a separate file under `docs/release-notes/`.
+- [ ] New features have been approved by the corresponding PM
+- [ ] User-facing API changes have the "User-facing API Change" label
+- [ ] Release notes have been added as a separate file under `docs/release-notes/`
   See [Release Note](https://github.com/determined-ai/determined/blob/master/docs/release-notes/README.md) for details.
-- [ ] Licenses should be included for new code which was copied and/or modified from any external code.
+- [ ] Licenses have been included for new code which was copied and/or modified from any external code
 
 <!---
 Example Commit Body:

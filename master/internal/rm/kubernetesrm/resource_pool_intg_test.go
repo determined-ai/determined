@@ -856,6 +856,87 @@ func TestJobQueueReattach(t *testing.T) {
 	require.Equal(t, 2, reattachInfo.RequestedSlots)
 }
 
+func TestPartialJobsShowQueuedStates(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	defer cancel()
+
+	j := newTestJobsService(t)
+	rp := newTestResourcePool(j)
+
+	user := db.RequireMockUser(t, db.SingleDB())
+	task := db.RequireMockTask(t, db.SingleDB(), &user.ID)
+	alloc := db.RequireMockAllocation(t, db.SingleDB(), task.TaskID)
+	allocationID, taskID, jobID := alloc.AllocationID, task.TaskID, *task.JobID
+	startTime := task.StartTime
+
+	err := tasklist.GroupPriorityChangeRegistry.Add(jobID, func(i int) error { return nil })
+	require.NoError(t, err)
+
+	var slots int
+	for _, n := range rp.jobsService.GetAgents().Agents {
+		slots += len(n.Slots)
+	}
+
+	sub := rmevents.Subscribe(allocationID)
+	allocateReq := sproto.AllocateRequest{
+		AllocationID:      allocationID,
+		TaskID:            taskID,
+		JobID:             jobID,
+		RequestTime:       startTime,
+		JobSubmissionTime: startTime,
+		IsUserVisible:     true,
+		Name:              "test job",
+		SlotsNeeded:       2 * slots,
+		ResourcePool:      "default",
+	}
+	rp.AllocateRequest(allocateReq)
+	rp.Admit()
+
+	allocated := poll[*sproto.ResourcesAllocated](ctx, t, sub)
+	require.NotNil(t, allocated)
+	require.Len(t, allocated.Resources, 1)
+	for _, res := range allocated.Resources {
+		conf := expconf.ExperimentConfig{ //nolint:exhaustruct
+			RawEnvironment: &expconf.EnvironmentConfigV0{ //nolint:exhaustruct
+				RawImage: &expconf.EnvironmentImageMapV0{ //nolint:exhaustruct
+					RawCPU: ptrs.Ptr("ubuntu:latest"),
+				},
+			},
+		}
+		conf = schemas.WithDefaults(conf)
+
+		err := res.Start(nil, tasks.TaskSpec{
+			Description:     fmt.Sprintf("test-job-%s", uuid.NewString()[:8]),
+			Entrypoint:      []string{"sleep", "99999"},
+			AgentUserGroup:  &model.AgentUserGroup{},
+			Environment:     conf.Environment(),
+			ResourcesConfig: conf.Resources(),
+			DontShipLogs:    true,
+		}, sproto.ResourcesRuntimeInfo{})
+		defer res.Kill(nil)
+		require.NoError(t, err)
+	}
+
+	shortCtx, cancel := context.WithTimeout(ctx, 15*time.Second)
+	defer cancel()
+	for {
+		ev, err := sub.GetWithContext(shortCtx)
+		if err != nil {
+			break
+		}
+
+		res, ok := ev.(*sproto.ResourcesStateChanged)
+		if !ok {
+			continue
+		}
+		if sproto.Pulling.BeforeOrEqual(res.ResourcesState) {
+			continue
+		}
+		t.Error("state went to PULLING or beyond when all pods could not have been scheduled")
+		t.FailNow()
+	}
+}
+
 func TestNodeWorkflows(t *testing.T) {
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()

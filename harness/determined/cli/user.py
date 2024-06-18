@@ -80,6 +80,15 @@ def log_in_user(args: argparse.Namespace) -> None:
     except api.errors.UnauthenticatedException:
         raise api.errors.InvalidCredentialsException()
 
+    try:
+        authentication.check_password_complexity(password)
+    except ValueError as e:
+        print(
+            "Warning: your password does not appear to satisfy "
+            + f"recommended complexity requirements:\n{e}\n"
+            + "Please change your password as soon as possible."
+        )
+
     token_store.set_token(sess.username, sess.token)
     token_store.set_active(sess.username)
 

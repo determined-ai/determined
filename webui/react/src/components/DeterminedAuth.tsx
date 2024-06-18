@@ -14,9 +14,10 @@ import authStore from 'stores/auth';
 import determinedStore from 'stores/determinedInfo';
 import permissionStore from 'stores/permissions';
 import userStore from 'stores/users';
-import handleError, { ErrorType } from 'utils/error';
+import handleError, { ErrorLevel, ErrorType, handleWarning } from 'utils/error';
 import { useObservable } from 'utils/observable';
 import { StorageManager } from 'utils/storage';
+import { isPasswordWeak } from 'utils/user';
 
 import css from './DeterminedAuth.module.scss';
 
@@ -54,7 +55,16 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
         );
         updateDetApi({ apiKey: `Bearer ${token}` });
         authStore.setAuth({ isAuthenticated: true, token });
+        user.isPasswordWeak = isPasswordWeak(creds.password || '');
         userStore.updateCurrentUser(user);
+        handleWarning({
+          level: ErrorLevel.Warn,
+          publicMessage:
+            'Your current password is either blank or weak according to current security recommendations. Please change your password.',
+          publicSubject: 'Weak Password',
+          silent: false,
+          type: ErrorType.Input,
+        });
         if (rbacEnabled) {
           // Now that we have logged in user, fetch userAssignments and userRoles and place into store.
           permissionStore.fetch(canceler.signal);
