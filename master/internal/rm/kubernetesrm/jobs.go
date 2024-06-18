@@ -11,6 +11,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/hashicorp/go-multierror"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
 	"golang.org/x/exp/maps"
@@ -30,6 +31,9 @@ import (
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
 	"k8s.io/component-helpers/scheduling/corev1/nodeaffinity"
+	alphaGatewayTyped "sigs.k8s.io/gateway-api/apis/v1alpha2"
+	gateway "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned/typed/apis/v1"
+	alphaGateway "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned/typed/apis/v1alpha2"
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
@@ -52,6 +56,7 @@ const (
 	determinedLabel           = "determined"
 	determinedPreemptionLabel = "determined-preemption"
 	determinedSystemLabel     = "determined-system"
+	jobNameAnnotation         = "determined.ai/job-name"
 
 	kubernetesJobNameLabel = "batch.kubernetes.io/job-name"
 
@@ -92,12 +97,17 @@ type jobsService struct {
 	detMasterPort         int32
 	kubeconfigPath        string
 
+	internalTaskGWConfig *config.InternalTaskGatewayConfig
+
 	// System dependencies. Also set in initialization and never modified after.
-	syslog                     *logrus.Entry
-	clientSet                  k8sClient.Interface
-	podInterfaces              map[string]typedV1.PodInterface
-	configMapInterfaces        map[string]typedV1.ConfigMapInterface
-	jobInterfaces              map[string]typedBatchV1.JobInterface
+	syslog              *logrus.Entry
+	clientSet           k8sClient.Interface
+	podInterfaces       map[string]typedV1.PodInterface
+	configMapInterfaces map[string]typedV1.ConfigMapInterface
+	jobInterfaces       map[string]typedBatchV1.JobInterface
+	serviceInterfaces   map[string]typedV1.ServiceInterface
+	tcpRouteInterfaces  map[string]alphaGateway.TCPRouteInterface
+
 	resourceRequestQueue       *requestQueue
 	jobSchedulingStateCallback jobSchedulingStateCallback
 
@@ -111,6 +121,8 @@ type jobsService struct {
 	jobHandlerToMetadata              map[*job]jobMetadata
 	nodeToSystemResourceRequests      map[string]int64
 	currentNodes                      map[string]*k8sV1.Node
+	gatewayService                    *gatewayService
+
 	// TODO(RM-236) make one cache and make this code more straightforward.
 	summarizeCacheLock sync.RWMutex
 	summarizeCache     summarizeResult
@@ -135,6 +147,7 @@ func newJobsService(
 	detMasterPort int32,
 	kubeconfigPath string,
 	jobSchedulingStateCb jobSchedulingStateCallback,
+	internalTaskGWConfig *config.InternalTaskGatewayConfig,
 ) (*jobsService, error) {
 	p := &jobsService{
 		wg: waitgroupx.WithContext(context.Background()),
@@ -160,10 +173,13 @@ func newJobsService(
 		podInterfaces:                     make(map[string]typedV1.PodInterface),
 		configMapInterfaces:               make(map[string]typedV1.ConfigMapInterface),
 		jobInterfaces:                     make(map[string]typedBatchV1.JobInterface),
+		serviceInterfaces:                 make(map[string]typedV1.ServiceInterface),
+		tcpRouteInterfaces:                make(map[string]alphaGateway.TCPRouteInterface),
 		syslog:                            logrus.WithField("namespace", namespace),
 		jobSchedulingStateCallback:        jobSchedulingStateCb,
 
-		kubeconfigPath: kubeconfigPath,
+		internalTaskGWConfig: internalTaskGWConfig,
+		kubeconfigPath:       kubeconfigPath,
 	}
 
 	if err := p.startClientSet(); err != nil {
@@ -207,7 +223,7 @@ func newJobsService(
 		factory := informers.NewSharedInformerFactoryWithOptions(p.clientSet, time.Hour, informers.WithNamespace(namespace))
 
 		jobsInformer := factory.Batch().V1().Jobs()
-		jobsInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
+		if _, err := jobsInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 			AddFunc: func(obj interface{}) {
 				p.mu.Lock()
 				defer p.mu.Unlock()
@@ -226,11 +242,13 @@ func newJobsService(
 				defer p.mu.Unlock()
 				p.jobDeletedCallback(obj)
 			},
-		})
+		}); err != nil {
+			return nil, fmt.Errorf("adding job informer: %w", err)
+		}
 		cacheSyncs = append(cacheSyncs, jobsInformer.Informer().HasSynced)
 
 		podsInformer := factory.Core().V1().Pods()
-		podsInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
+		if _, err := podsInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 			AddFunc: func(obj interface{}) {
 				p.mu.Lock()
 				defer p.mu.Unlock()
@@ -249,7 +267,9 @@ func newJobsService(
 				defer p.mu.Unlock()
 				p.podDeletedCallback(obj)
 			},
-		})
+		}); err != nil {
+			return nil, fmt.Errorf("adding pod informer: %w", err)
+		}
 		cacheSyncs = append(cacheSyncs, podsInformer.Informer().HasSynced)
 
 		factory.Start(nil)
@@ -271,10 +291,38 @@ func (j *jobsService) startClientSet() error {
 		return fmt.Errorf("failed to initialize kubernetes clientSet: %w", err)
 	}
 
+	namespaces := append(maps.Keys(j.namespaceToPoolName), j.namespace)
 	for _, ns := range append(maps.Keys(j.namespaceToPoolName), j.namespace) {
 		j.podInterfaces[ns] = j.clientSet.CoreV1().Pods(ns)
 		j.configMapInterfaces[ns] = j.clientSet.CoreV1().ConfigMaps(ns)
 		j.jobInterfaces[ns] = j.clientSet.BatchV1().Jobs(ns)
+	}
+
+	if taskGWConfig := j.internalTaskGWConfig; taskGWConfig != nil {
+		// Using the CoreV1 RESTClient for gateway resources will cause "resource not found" errors.
+		alphaGatewayClientSet, err := alphaGateway.NewForConfig(config)
+		if err != nil {
+			return fmt.Errorf("creating Kubernetes gateway clientSet: %w", err)
+		}
+		for _, ns := range namespaces {
+			j.serviceInterfaces[ns] = j.clientSet.CoreV1().Services(ns)
+			j.tcpRouteInterfaces[ns] = alphaGatewayClientSet.TCPRoutes(ns)
+		}
+
+		// Using the alphaGateway clientSet will not work properly.
+		gatewayClientSet, err := gateway.NewForConfig(config)
+		if err != nil {
+			return fmt.Errorf("creating Kubernetes gateway clientSet: %w", err)
+		}
+		gwService, err := newGatewayService(
+			gatewayClientSet.Gateways(taskGWConfig.GatewayNamespace),
+			j.tcpRouteInterfaces,
+			*taskGWConfig,
+		)
+		if err != nil {
+			return fmt.Errorf("creating gateway service: %w", err)
+		}
+		j.gatewayService = gwService
 	}
 
 	j.syslog.Infof("kubernetes clientSet initialized")
@@ -365,9 +413,9 @@ func (j *jobsService) deleteDoomedKubernetesResources() error {
 		return fmt.Errorf("error listing existing pods: %w", err)
 	}
 
-	toKillJobs := &batchV1.JobList{}
+	var toKillJobs []batchV1.Job
 	savedJobNames := make(set.Set[string])
-	for _, job := range jobs.Items {
+	for _, job := range jobs {
 		if _, ok := j.namespaceToPoolName[job.Namespace]; !ok {
 			continue
 		}
@@ -375,14 +423,14 @@ func (j *jobsService) deleteDoomedKubernetesResources() error {
 		resourcePool := job.Labels[resourcePoolLabel]
 		if resourcePool == "" {
 			j.syslog.Warnf("deleting job '%s' without resource pool label", job.Name)
-			toKillJobs.Items = append(toKillJobs.Items, job)
+			toKillJobs = append(toKillJobs, job)
 			continue
 		}
 
 		allocationIDStr := job.Labels[allocationIDLabel]
 		if allocationIDStr == "" {
 			j.syslog.Warnf("deleting job '%s' without determined label (whose value is the allocation ID)", job.Name)
-			toKillJobs.Items = append(toKillJobs.Items, job)
+			toKillJobs = append(toKillJobs, job)
 			continue
 		}
 		allocationID := model.AllocationID(allocationIDStr)
@@ -391,32 +439,93 @@ func (j *jobsService) deleteDoomedKubernetesResources() error {
 			j.syslog.
 				WithField("allocation-id", allocationID).
 				Warnf("deleting job '%s', did not find an open allocation for it", job.Name)
-			toKillJobs.Items = append(toKillJobs.Items, job)
+			toKillJobs = append(toKillJobs, job)
 			continue
 		}
 
 		savedJobNames.Insert(job.Name)
 	}
 
+	resourceIsSaved := func(namespace, jobName string) bool {
+		if _, ok := j.namespaceToPoolName[namespace]; !ok {
+			return true
+		}
+
+		return savedJobNames.Contains(jobName)
+	}
 	configMaps, err := j.listConfigMapsInAllNamespaces(context.TODO(), listOptions)
 	if err != nil {
 		return fmt.Errorf("error listing existing config maps: %w", err)
 	}
-	toKillConfigMaps := &k8sV1.ConfigMapList{}
-	for _, cm := range configMaps.Items {
-		if _, ok := j.namespaceToPoolName[cm.Namespace]; !ok {
-			continue
-		}
-
-		if savedJobNames.Contains(cm.Name) { // Job name is same as config map name.
+	var toKillConfigMaps []k8sV1.ConfigMap
+	for _, cm := range configMaps {
+		// Config map name and job name are the same.
+		if resourceIsSaved(cm.Namespace, cm.Name) {
 			continue
 		}
 
 		j.syslog.Debugf("deleting config map '%s', did not find a matching job that will be restored", cm.Name)
-		toKillConfigMaps.Items = append(toKillConfigMaps.Items, cm)
+		toKillConfigMaps = append(toKillConfigMaps, cm)
 	}
 
-	j.deleteKubernetesResources(toKillJobs, toKillConfigMaps)
+	var toKillServices []k8sV1.Service
+	var toKillTCPRoutes []alphaGatewayTyped.TCPRoute
+	var toFreeGatewayPorts []int
+	if j.internalTaskGWConfig != nil {
+		services, err := j.listServicesInAllNamespaces(context.TODO(), listOptions)
+		if err != nil {
+			return fmt.Errorf("listing existing services: %w", err)
+		}
+		for _, s := range services {
+			if resourceIsSaved(s.Namespace, s.Annotations[jobNameAnnotation]) {
+				continue
+			}
+
+			j.syslog.Debugf("deleting service '%s', did not find a matching job that will be restored", s.Name)
+			toKillServices = append(toKillServices, s)
+		}
+
+		savedGatewayPorts := make(map[int]bool)
+		tcpRoutes, err := j.listTCPRoutesInAllNamespaces(context.TODO(), listOptions)
+		if err != nil {
+			return fmt.Errorf("listing existing services: %w", err)
+		}
+		for _, t := range tcpRoutes {
+			if resourceIsSaved(t.Namespace, t.Annotations[jobNameAnnotation]) {
+				for _, s := range t.Spec.ParentRefs {
+					if p := s.Port; p != nil {
+						savedGatewayPorts[int(*p)] = true
+					}
+				}
+
+				continue
+			}
+
+			j.syslog.Debugf("deleting TCPRoute '%s', did not find a matching job that will be restored", t.Name)
+			toKillTCPRoutes = append(toKillTCPRoutes, t)
+		}
+
+		gatewayPorts, err := j.gatewayService.getProxyPorts(nil)
+		if err != nil {
+			return fmt.Errorf("listing gateway ports: %w", err)
+		}
+		for _, p := range gatewayPorts {
+			if savedGatewayPorts[p] {
+				continue
+			}
+
+			j.syslog.Debugf("freeing Gateway port '%d', did not find a matching job that will be restored", p)
+			toFreeGatewayPorts = append(toFreeGatewayPorts, p)
+		}
+	}
+
+	j.deleteKubernetesResources(
+		toKillJobs,
+		toKillConfigMaps,
+		toKillServices,
+		toKillTCPRoutes,
+		toFreeGatewayPorts,
+	)
 	return nil
 }
 
@@ -457,6 +566,8 @@ func (j *jobsService) startJob(msg startJob) error {
 		j.slotType,
 		j.slotResourceRequests,
 		j.scheduler,
+		j.internalTaskGWConfig,
+		j.gatewayService,
 	)
 
 	if _, alreadyExists := j.jobNameToJobHandler[newJobHandler.jobName]; alreadyExists {
@@ -523,37 +634,82 @@ type reattachJobResponse struct {
 }
 
 func (j *jobsService) reattachJob(msg reattachJobRequest) (reattachJobResponse, error) {
+	// Get all expected resources for the job.
 	listOptions := metaV1.ListOptions{
 		LabelSelector: fmt.Sprintf("%s=%s", determinedLabel, msg.allocationID),
 	}
 
+	var errs *multierror.Error
 	jobs, err := j.listJobsInAllNamespaces(context.TODO(), listOptions)
-	if err != nil {
-		return reattachJobResponse{}, fmt.Errorf("error listing pods checking if they can be restored: %w", err)
-	}
+	errs = multierror.Append(errs, err)
 
 	configMaps, err := j.listConfigMapsInAllNamespaces(context.TODO(), listOptions)
-	if err != nil {
-		return reattachJobResponse{}, fmt.Errorf("error listing config maps checking if they can be restored: %w", err)
+	errs = multierror.Append(errs, err)
+
+	var services []k8sV1.Service
+	var tcpRoutes []alphaGatewayTyped.TCPRoute
+	var gatewayPorts []int
+	if j.internalTaskGWConfig != nil {
+		services, err = j.listServicesInAllNamespaces(context.TODO(), listOptions)
+		errs = multierror.Append(errs, err)
+
+		tcpRoutes, err = j.listTCPRoutesInAllNamespaces(context.TODO(), listOptions)
+		errs = multierror.Append(errs, err)
+
+		gatewayPorts, err = j.gatewayService.getProxyPorts(&msg.allocationID)
+		errs = multierror.Append(errs, err)
 	}
-	existingConfigMaps := make(set.Set[string])
-	for _, cm := range configMaps.Items {
-		if _, ok := j.namespaceToPoolName[cm.Namespace]; !ok {
-			continue
+
+	// Do a sanity check validate. Is this a job that can reattach?
+	// Err on the side of caution here.
+	if len(jobs) != 1 {
+		errs = multierror.Append(errs, fmt.Errorf("expected one job got %d", len(jobs)))
+	}
+	if len(configMaps) != 1 {
+		errs = multierror.Append(errs, fmt.Errorf("expected one config map got %d", len(configMaps)))
+	}
+	expectedProxyNum := len(msg.req.ProxyPorts)
+	if j.internalTaskGWConfig != nil && expectedProxyNum > 0 {
+		if len(services) != expectedProxyNum {
+			errs = multierror.Append(errs,
+				fmt.Errorf("expected %d services got %d", expectedProxyNum, len(services)))
 		}
-		existingConfigMaps.Insert(cm.Name)
+		if len(tcpRoutes) != expectedProxyNum {
+			errs = multierror.Append(errs,
+				fmt.Errorf("expected %d tcpRoutes got %d", expectedProxyNum, len(services)))
+		}
+		if len(gatewayPorts) != expectedProxyNum {
+			errs = multierror.Append(errs,
+				fmt.Errorf("expected %d gateway ports got %d", expectedProxyNum, len(gatewayPorts)))
+		}
 	}
 
-	if len(jobs.Items) == 0 {
-		return reattachJobResponse{}, fmt.Errorf("did not find job for allocation %s", msg.allocationID)
-	} else if len(jobs.Items) > 1 {
-		return reattachJobResponse{}, fmt.Errorf("found multiple allocation jobs for allocation %s", msg.allocationID)
+	// Cleanup the job if we don't get the format we expect.
+	cleanup := func() {
+		j.deleteKubernetesResources(jobs, configMaps, services, tcpRoutes, gatewayPorts)
 	}
-	job := jobs.Items[0]
+	if errs.Len() > 0 {
+		cleanup()
+		return reattachJobResponse{}, fmt.Errorf("reattach job: %w", errs)
+	}
 
+	job := jobs[0]
+	if len(jobs) != 1 { // Unnecessary, but we should be careful here.
+		cleanup()
+		return reattachJobResponse{}, fmt.Errorf("expected one job")
+	}
 	resourcePool, ok := job.Labels[resourcePoolLabel]
 	if !ok {
+		cleanup()
 		return reattachJobResponse{}, fmt.Errorf("could not recover resource pool for %s", msg.allocationID)
+	}
+
+	gatewayResources, err := j.recreateGatewayProxyResources(
+		msg.allocationID, services, tcpRoutes, gatewayPorts,
+	)
+	if err != nil {
+		cleanup()
+		return reattachJobResponse{}, err
 	}
 
 	resp, err := j.recreateJobHandler(
@@ -564,13 +720,65 @@ func (j *jobsService) reattachJob(msg reattachJobRequest) (reattachJobResponse, 
 		&job,
 		msg.slots,
 		msg.numPods,
+		gatewayResources,
 		msg.logContext,
 	)
 	if err != nil {
-		j.deleteKubernetesResources(jobs, configMaps)
+		cleanup()
 		return reattachJobResponse{}, fmt.Errorf("error restoring pod with allocation ID %s: %w", msg.allocationID, err)
 	}
+
 	return resp, nil
+}
+
+func (j *jobsService) recreateGatewayProxyResources(
+	allocationID model.AllocationID,
+	services []k8sV1.Service,
+	tcpRoutes []alphaGatewayTyped.TCPRoute,
+	gatewayPorts []int,
+) ([]gatewayProxyResource, error) {
+	if j.internalTaskGWConfig == nil {
+		return nil, nil
+	}
+
+	var resources []gatewayProxyResource
+	for _, port := range gatewayPorts {
+		var tcpRoute *alphaGatewayTyped.TCPRoute
+		for _, t := range tcpRoutes {
+			t := t
+			if len(t.Spec.ParentRefs) > 0 &&
+				t.Spec.ParentRefs[0].Port != nil &&
+				int(*t.Spec.ParentRefs[0].Port) == port {
+				tcpRoute = &t
+				break
+			}
+		}
+		if tcpRoute == nil {
+			return nil, fmt.Errorf("couldn't find tcpRoute for port %d", port)
+		}
+
+		var service *k8sV1.Service
+		for _, s := range services {
+			s := s
+			if s.Name == tcpRoute.Name {
+				service = &s
+				break
+			}
+		}
+		if service == nil {
+			return nil, fmt.Errorf("couldn't find service matching %s", tcpRoute.Name)
+		}
+		if len(service.Spec.Ports) != 1 {
+			return nil, fmt.Errorf("expected service to have one port got %d", len(service.Spec.Ports))
+		}
+		resources = append(resources, gatewayProxyResource{
+			serviceSpec:     service,
+			tcpRouteSpec:    tcpRoute,
+			gatewayListener: createListenerForPod(port),
+		})
+	}
+
+	return resources, nil
 }
 
 func (j *jobsService) recreateJobHandler(
@@ -581,6 +789,7 @@ func (j *jobsService) recreateJobHandler(
 	job *batchV1.Job,
 	slots int,
 	numPods int,
+	gatewayProxyResources []gatewayProxyResource,
 	logContext logger.Context,
 ) (reattachJobResponse, error) {
 	startMsg := startJob{
@@ -612,11 +821,15 @@ func (j *jobsService) recreateJobHandler(
 		j.slotType,
 		j.slotResourceRequests,
 		j.scheduler,
+		j.internalTaskGWConfig,
+		j.gatewayService,
 	)
 
 	newJobHandler.restore = true
 	newJobHandler.jobName = job.Name
 	newJobHandler.configMapName = job.Name
+
+	newJobHandler.gatewayProxyResources = gatewayProxyResources
 
 	err := newJobHandler.startPodLogStreamers()
 	if err != nil {
@@ -636,14 +849,45 @@ func (j *jobsService) recreateJobHandler(
 }
 
 func (j *jobsService) deleteKubernetesResources(
-	jobs *batchV1.JobList, configMaps *k8sV1.ConfigMapList,
+	jobs []batchV1.Job,
+	configMaps []k8sV1.ConfigMap,
+	services []k8sV1.Service,
+	tcpRoutes []alphaGatewayTyped.TCPRoute,
+	gatewayPortsToFree []int,
 ) {
-	for _, job := range jobs.Items {
-		j.resourceRequestQueue.deleteKubernetesResources(job.Namespace, job.Name, "", "")
+	for _, job := range jobs {
+		j.resourceRequestQueue.deleteKubernetesResources(deleteKubernetesResources{
+			namespace: job.Namespace,
+			jobName:   job.Name,
+		})
 	}
 
-	for _, configMap := range configMaps.Items {
-		j.resourceRequestQueue.deleteKubernetesResources(configMap.Namespace, "", configMap.Name, "")
+	for _, configMap := range configMaps {
+		j.resourceRequestQueue.deleteKubernetesResources(deleteKubernetesResources{
+			namespace:     configMap.Namespace,
+			configMapName: configMap.Name,
+		})
+	}
+
+	for _, s := range services {
+		j.resourceRequestQueue.deleteKubernetesResources(deleteKubernetesResources{
+			namespace:    s.Namespace,
+			serviceNames: []string{s.Name},
+		})
+	}
+
+	for _, r := range tcpRoutes {
+		j.resourceRequestQueue.deleteKubernetesResources(deleteKubernetesResources{
+			namespace:     r.Namespace,
+			tcpRouteNames: []string{r.Name},
+		})
+	}
+
+	if len(gatewayPortsToFree) > 0 && j.internalTaskGWConfig != nil {
+		j.resourceRequestQueue.deleteKubernetesResources(deleteKubernetesResources{
+			namespace:          j.internalTaskGWConfig.GatewayNamespace,
+			gatewayPortsToFree: gatewayPortsToFree,
+		})
 	}
 }
 
@@ -669,7 +913,7 @@ func (j *jobsService) refreshJobState(allocationID model.AllocationID) error {
 		return fmt.Errorf("error listing pods checking if they can be restored: %w", err)
 	}
 
-	for _, job := range jobs.Items {
+	for _, job := range jobs {
 		if _, ok := j.namespaceToPoolName[job.Namespace]; !ok {
 			continue
 		}
@@ -812,7 +1056,14 @@ func (j *jobsService) startPreemptionListeners() error {
 
 func (j *jobsService) startResourceRequestQueue() {
 	failures := make(chan resourcesRequestFailure, 16)
-	j.resourceRequestQueue = startRequestQueue(j.jobInterfaces, j.podInterfaces, j.configMapInterfaces, failures)
+	j.resourceRequestQueue = startRequestQueue(
+		j.jobInterfaces,
+		j.podInterfaces,
+		j.configMapInterfaces,
+		j.serviceInterfaces,
+		j.gatewayService,
+		j.tcpRouteInterfaces,
+		failures)
 	j.wg.Go(func(ctx context.Context) {
 		for {
 			select {
@@ -1744,15 +1995,15 @@ func numSlots(slots model.SlotsSummary) int {
 
 func (j *jobsService) listJobsInAllNamespaces(
 	ctx context.Context, opts metaV1.ListOptions,
-) (*batchV1.JobList, error) {
-	res := &batchV1.JobList{}
+) ([]batchV1.Job, error) {
+	var res []batchV1.Job
 	for n, i := range j.jobInterfaces {
 		pods, err := i.List(ctx, opts)
 		if err != nil {
 			return nil, fmt.Errorf("error listing pods for namespace %s: %w", n, err)
 		}
 
-		res.Items = append(res.Items, pods.Items...)
+		res = append(res, pods.Items...)
 	}
 
 	return res, nil
@@ -1776,14 +2027,44 @@ func (j *jobsService) listPodsInAllNamespaces(
 
 func (j *jobsService) listConfigMapsInAllNamespaces(
 	ctx context.Context, opts metaV1.ListOptions,
-) (*k8sV1.ConfigMapList, error) {
-	res := &k8sV1.ConfigMapList{}
+) ([]k8sV1.ConfigMap, error) {
+	var res []k8sV1.ConfigMap
 	for n, i := range j.configMapInterfaces {
 		cms, err := i.List(ctx, opts)
 		if err != nil {
 			return nil, fmt.Errorf("error listing config maps for namespace %s: %w", n, err)
 		}
-		res.Items = append(res.Items, cms.Items...)
+		res = append(res, cms.Items...)
+	}
+
+	return res, nil
+}
+
+func (j *jobsService) listServicesInAllNamespaces(
+	ctx context.Context, opts metaV1.ListOptions,
+) ([]k8sV1.Service, error) {
+	var res []k8sV1.Service
+	for n, i := range j.serviceInterfaces {
+		services, err := i.List(ctx, opts)
+		if err != nil {
+			return nil, fmt.Errorf("listing services for namespace %s: %w", n, err)
+		}
+		res = append(res, services.Items...)
+	}
+
+	return res, nil
+}
+
+func (j *jobsService) listTCPRoutesInAllNamespaces(
+	ctx context.Context, opts metaV1.ListOptions,
+) ([]alphaGatewayTyped.TCPRoute, error) {
+	var res []alphaGatewayTyped.TCPRoute
+	for n, i := range j.tcpRouteInterfaces {
+		routes, err := i.List(ctx, opts)
+		if err != nil {
+			return nil, fmt.Errorf("listing TCPRoutes for namespace %s: %w", n, err)
+		}
+		res = append(res, routes.Items...)
 	}
 
 	return res, nil

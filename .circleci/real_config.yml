@@ -3273,6 +3273,9 @@ jobs:
       collect-det-job-logs:
         type: boolean
         default: true
+      k8s-version:
+        type: string
+        default: "1.29.5"
     machine:
       image: <<pipeline.parameters.machine-image>>
     resource_class: <<parameters.resource-class>>
@@ -3304,10 +3307,12 @@ jobs:
                   curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64 && sudo install minikube-linux-amd64 /usr/local/bin/minikube
             - run:
                 name: Start defaultrm minikube
-                command: minikube start --profile defaultrm
+                command: |
+                  K8S_VERSION=<<parameters.k8s-version>> source tools/k8s/launch-minikube-with-gateway.sh defaultrm
+                  echo "export GATEWAY_IP=\"${GATEWAY_IP}\"" >> $BASH_ENV
             - run:
                 name: Start additionalrm minikube
-                command: minikube start --profile additionalrm
+                command: minikube start --profile additionalrm --kubernetes-version <<parameters.k8s-version>>
 
       - install-devcluster
       - unless:
