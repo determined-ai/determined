@@ -5,7 +5,7 @@
 1. Install Terraform following [these instructions](https://developer.hashicorp.com/terraform/downloads).
 2. Download the [GCP CLI](https://cloud.google.com/sdk/docs/install-sdk) and run `gcloud auth application-default login` to get credentials.
 3. Run `make slurmcluster` from the root of the repo and wait (up to 10 minutes) for it to start.
-   - To specify which container runtime environment to use, pass in `FLAGS="-c {container_run_type}"` to `make slurmcluster`. Choose from either `singularity` (default), `podman`, or `enroot`.
+   - To specify which container runtime environment to use, pass in `FLAGS="-c {container_run_type}"` to `make slurmcluster`. Choose from either `singularity` (default), `podman`, or `enroot`. If utilizing Slurmcluster with Determined Agents, `docker` container runtime environment is the sole available option.
    - To specify which workload manager to use, pass in `FLAGS="-w {workload_manager}"` to `make slurmcluster`. Choose from either `slurm` (default) or `pbs`. Note: in specifying the workload manager, `make slurmcluster` will automatically load the appropriate boot disk image (found in `terraform/images.conf`).
    - The default configuration yields a Slurm cluster with a single compute node and 8 CPUs (`n1-standard-8`).   You can control the machine_type, and gpus of the compute node using `FLAGS="-m {machine_type} -g {gpu_type}:{count}"`.  See below.
    - By default, all VMs created with `make slurmcluster` will be destroyed after 7200 seconds (2 hours). To specify a different amount of time, pass in `FLAGS="-t {0-9}[d|h|m|s]"` to `make slurmcluster`.
@@ -115,8 +115,6 @@ The `FLAGS="-A"` in `make slurmcluster` removes the resource_manager section in 
 Then, connect to your dev-box. This can be done with `make -C tools/slurm/terraform connect` or `gcloud compute ssh $USER-dev-box --project=determined-ai --zone=us-west1-b`. Input the following command on the devbox in order to allocate resources on slurm.
 
 `srun $HOME/determined-agent --master-host=localhost  --master-port=8080 --resource-pool=default
-
-You can also use podman by changing the value for `container-runtime` to `podman`. 
 
 This command allocates the 8-core CPU that is on the GCP machine. Unfortunately, there are currently no gpus on the VM so we can not allocate any. 
 

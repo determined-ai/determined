@@ -80,8 +80,6 @@ type Options struct {
 	// master config.
 	AgentReconnectBackoff int `json:"agent_reconnect_backoff"`
 
-	PodmanOptions PodmanOptions `json:"podman_options"`
-
 	ContainerAutoRemoveDisabled bool `json:"container_auto_remove_disabled"`
 
 	Hooks HooksOptions `json:"hooks"`
@@ -211,11 +209,6 @@ type HooksOptions struct {
 const (
 	DockerContainerRuntime = "docker"
 )
-
-// PodmanOptions configures how we interact with podman.
-type PodmanOptions struct {
-	AllowNetworkCreation bool `json:"allow_network_creation"` // review
-}
 
 // VisibleGPUsFromEnvironment returns GPU visibility information from the environment
 // if any, else "".

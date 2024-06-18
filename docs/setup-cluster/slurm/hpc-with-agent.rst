@@ -72,9 +72,9 @@ Before users can make use of Determined agents, a system administrator must prov
 
 This step may be completed either by the system administrator or the intended user. In a
 cluster-wide shared directory (examples in this section use ``$HOME``), create an ``agent.yaml``
-file. Below is a minimal example using a resource pool named for the user (``$USER``). ``docker`` is
-deafulted as a runtime. If configured using variables such as ``$HOME``, a single ``agent.yaml``
-could be shared by all users.
+file. Below is a minimal example using a resource pool named for the user (``$USER``). ``docker``
+container runtime environment is the sole available option. If configured using variables such as
+``$HOME``, a single ``agent.yaml`` could be shared by all users.
 
 .. code:: yaml
 
