@@ -56,8 +56,8 @@ Enterprise Kubernetes Ingress Controller.
  Hashicorp Consul
 ******************
 
-`Consul TCPRoute Reference
-<https://developer.hashicorp.com/consul/docs/k8s/multiport/reference/tcproute>`_
+Supports TCPRoute. `TCPRoute Configuration Reference
+<https://developer.hashicorp.com/consul/docs/connect/config-entries/tcp-route>`_
 
 *********
  Traefik
@@ -188,5 +188,4 @@ TLSRoute and TCPRoute will be added after they become stable. `Ngrok Kubernetes 
  WSO2 APK
 **********
 
-No TCPRoute support. `WSO2 Kubernetes CRDs
-<https://apk.docs.wso2.com/en/latest/catalogs/kubernetes-crds/>`_
+No TCPRoute support.
