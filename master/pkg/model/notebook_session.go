@@ -10,3 +10,5 @@ type NotebookSession struct {
 	UserSessionID SessionID `db:"user_session_id" bun:"user_session_id" json:"user_session_id"`
 	Token         *string   `db:"token" bun:"token" json:"token"`
 }
+
+const NotebookTokenEnvVar = "DET_NOTEBOOK_TOKEN"

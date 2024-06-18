@@ -329,7 +329,7 @@ func (c *Command) ToV1Notebook() *notebookv1.Notebook {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	allo := c.refreshAllocationState()
-	notebookToken := c.Base.ExtraEnvVars["DET_NOTEBOOK_TOKEN"]
+	notebookToken := c.Base.ExtraEnvVars[model.NotebookTokenEnvVar]
 	notebookAddress := fmt.Sprintf("%s?token=%s", c.serviceAddress(), notebookToken)
 	return &notebookv1.Notebook{
 		Id:             c.stringID(),

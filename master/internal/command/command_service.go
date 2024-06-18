@@ -154,7 +154,7 @@ func (cs *CommandService) LaunchNotebookCommand(
 	if err != nil {
 		return nil, err
 	}
-	req.Spec.Base.ExtraEnvVars["DET_NOTEBOOK_TOKEN"] = token
+	req.Spec.Base.ExtraEnvVars[model.NotebookTokenEnvVar] = token
 	cmd := &Command{
 		db: cs.db,
 		rm: cs.rm,
@@ -200,9 +200,6 @@ func (cs *CommandService) getNTSC(cmdID model.TaskID, cmdType model.TaskType) (*
 
 	if c.taskType != cmdType {
 		return nil, fmt.Errorf("getNTSC: type mismatch: %s/%s", cmdType, c.taskType)
-	}
-
-	if c.TaskType == model.TaskTypeNotebook {
 	}
 
 	return c, nil
