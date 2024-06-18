@@ -151,7 +151,6 @@ container_runtime: docker_runtime_env
 				NoProxy:                "determined_no_proxy",
 				AgentReconnectAttempts: 3,
 				AgentReconnectBackoff:  4,
-				ContainerRuntime:       "docker_runtime_env",
 			},
 		},
 	}

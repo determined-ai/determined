@@ -34,7 +34,6 @@ func DefaultOptions() *Options {
 		BindPort:               9090,
 		AgentReconnectAttempts: aproto.AgentReconnectAttempts,
 		AgentReconnectBackoff:  int(aproto.AgentReconnectBackoff / time.Second),
-		ContainerRuntime:       DockerContainerRuntime,
 	}
 }
 
@@ -81,8 +80,7 @@ type Options struct {
 	// master config.
 	AgentReconnectBackoff int `json:"agent_reconnect_backoff"`
 
-	ContainerRuntime string        `json:"container_runtime"`
-	PodmanOptions    PodmanOptions `json:"podman_options"`
+	PodmanOptions PodmanOptions `json:"podman_options"`
 
 	ContainerAutoRemoveDisabled bool `json:"container_auto_remove_disabled"`
 
@@ -208,9 +206,6 @@ type FluentOptions struct {
 type HooksOptions struct {
 	OnConnectionLost []string `json:"on_connection_lost"`
 }
-
-// ContainerRuntime configures which container runtime to use.
-type ContainerRuntime string
 
 // Available container runtimes.
 const (

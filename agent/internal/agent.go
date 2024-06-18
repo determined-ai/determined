@@ -118,32 +118,18 @@ func (a *Agent) run(ctx context.Context) error {
 		return fmt.Errorf("failed to detect devices: %v", devices)
 	}
 
-	a.log.Tracef("setting up %s runtime", a.opts.ContainerRuntime)
-	var cruntime container.ContainerRuntime
-	switch a.opts.ContainerRuntime {
-	case options.PodmanContainerRuntime:
-		a.log.Error("Podman Container creation has been removed, please update agent container runtime config to use Docker instead.")
-		return fmt.Errorf("Podman Container creation not available")
-	case options.ApptainerContainerRuntime:
-		a.log.Error("Apptainer Container creation has been removed, please update agent container runtime config to use Docker instead.")
-		return fmt.Errorf("Apptainer Container creation not available")
-	case options.SingularityContainerRuntime:
-		a.log.Error("Singularity Container creation has been removed, please update agent container runtime config to use Docker instead.")
-		return fmt.Errorf("Singularity Container creation not available")
-	case options.DockerContainerRuntime:
-		dcl, dErr := dclient.NewClientWithOpts(dclient.WithAPIVersionNegotiation(), dclient.FromEnv)
-		if dErr != nil {
-			return fmt.Errorf("failed to build docker client: %w", dErr)
-		}
-		defer func() {
-			a.log.Trace("cleaning up docker client")
-			if cErr := dcl.Close(); cErr != nil {
-				a.log.WithError(cErr).Error("failed to close docker client")
-			}
-		}()
-		cl := docker.NewClient(dcl)
-		cruntime = cl
+	a.log.Tracef("setting up %s runtime", options.DockerContainerRuntime)
+	dcl, dErr := dclient.NewClientWithOpts(dclient.WithAPIVersionNegotiation(), dclient.FromEnv)
+	if dErr != nil {
+		return fmt.Errorf("failed to build docker client: %w", dErr)
 	}
+	defer func() {
+		a.log.Trace("cleaning up docker client")
+		if cErr := dcl.Close(); cErr != nil {
+			a.log.WithError(cErr).Error("failed to close docker client")
+		}
+	}()
+	cruntime := docker.NewClient(dcl)
 
 	a.log.Trace("setting up container manager")
 	outbox := make(chan *aproto.MasterMessage, eventChanSize) // covers many from socket lifetimes

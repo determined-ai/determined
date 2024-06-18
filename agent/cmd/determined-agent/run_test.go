@@ -202,7 +202,6 @@ func TestMergeAgentConfigViaViperWithDefaultsEnvAndFlags(t *testing.T) {
 
 	defaultAndFlagOptions := options.DefaultOptions()
 	defaultAndFlagOptions.Security.TLS.MasterCert = masterCert
-	defaultAndFlagOptions.ContainerRuntime = "docker_container"
 	defaultAndFlagOptions.AgentReconnectAttempts = 20
 	defaultAndFlagOptions.AgentReconnectBackoff = 11
 	defaultAndFlagOptions.BindPort = 9095
