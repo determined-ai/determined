@@ -178,7 +178,8 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
             {checkpointModalComponents}
           </>
         )}
-        {acceleratorData && (
+        {/* Older experiment may not have collected accelerator data */}
+        {acceleratorData?.length && (
           <OverviewStats title="Resource Allocation" onClick={allocationModal.open}>
             <div
               style={{
