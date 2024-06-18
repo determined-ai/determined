@@ -209,10 +209,7 @@ type HooksOptions struct {
 
 // Available container runtimes.
 const (
-	ApptainerContainerRuntime   = "apptainer"
-	SingularityContainerRuntime = "singularity"
-	DockerContainerRuntime      = "docker"
-	PodmanContainerRuntime      = "podman"
+	DockerContainerRuntime = "docker"
 )
 
 // PodmanOptions configures how we interact with podman.

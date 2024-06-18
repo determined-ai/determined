@@ -4509,28 +4509,6 @@ workflows:
               only:
                 - main
 
-      # Podman over SLURM test using Agent on GCP
-      - test-e2e-hpc-gcp:
-          context:
-            # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
-            # that's required by the "gh" command for authentication.
-            - github-read
-            - gcp
-            - gcp-ci-cluster-default-user-credentials
-          matrix:
-            parameters:
-              name: [test-e2e-slurm-agent-podman-gcp]
-              agent-use: ["-A"]
-              container-run-type: ["podman"]
-              mark: ["e2e_slurm and not parallel and not gpu_required"]
-              extra-pytest-flags: ["-k 'not test_slurm_verify_home'"]
-          requires:
-            - build-go-ee
-          filters:
-            branches:
-              only:
-                - main
-
       - test-e2e:
           name: test-e2e-rbac
           context:
@@ -5411,26 +5389,6 @@ workflows:
             - build-go
             - request-hpc-tests
 
-      # Podman over SLURM test using Agent on GCP
-      - test-e2e-hpc-gcp:
-          filters: *upstream-feature-branch
-          context:
-            # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
-            # that's required by the "gh" command for authentication.
-            - github-read
-            - gcp
-            - gcp-ci-cluster-default-user-credentials
-          matrix:
-            parameters:
-              name: [test-e2e-slurm-agent-podman-gcp]
-              agent-use: ["-A"]
-              container-run-type: ["podman"]
-              mark: ["e2e_slurm and not parallel and not gpu_required"]
-              extra-pytest-flags: ["-k 'not test_slurm_verify_home'"]
-          requires:
-            - build-go
-            - request-hpc-tests
-
   nightly:
     when: << pipeline.parameters.do_nightly_tests >>
     jobs:
@@ -5614,6 +5572,7 @@ workflows:
               ld_library_path:
             security:
               initial_user_password: ${INITIAL_USER_PASSWORD}
+<<<<<<< HEAD
       - test-e2e-slurm:
             name: test-e2e-slurm-agent-singularity-znode
             context:
@@ -5647,6 +5606,8 @@ workflows:
                   password: ${HPC_DB_PASSWD}
                 security:
                   initial_user_password: ${INITIAL_USER_PASSWORD}
+=======
+>>>>>>> be845e037 (removed slurm-agent tests)
       - terminate-vpc-circleci:
             context: ["gcp"]
 

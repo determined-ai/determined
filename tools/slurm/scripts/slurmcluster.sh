@@ -76,7 +76,7 @@ while [[ $# -gt 0 ]]; do
             echo '  -A '
             echo "           Description: Invokes a slurmcluster that uses agents instead of the launcher."
             echo "           Example: $0 -A"
-            echo '  -c {enroot|podman|singularity}'
+            echo '  -c {docker}'
             echo "           Description: Invokes a slurmcluster using the specified container run type."
             echo "           Options are 'enroot', 'podman', or 'singularity'. Default is 'singularity'."
             echo "           Example: $0 -c podman"
