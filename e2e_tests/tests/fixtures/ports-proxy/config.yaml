@@ -27,3 +27,7 @@ environment:
       proxy_tcp: false
     - proxy_port: 6000
       proxy_tcp: true
+
+# Hardcode the image because the new image has a bug. TODO fix this when the image bug is fixed.
+environment:
+  image: determinedai/pytorch-tensorflow-cpu-dev:8b3bea3
