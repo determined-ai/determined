@@ -148,6 +148,7 @@ commands:
     description: Collect logs from the cluster tasks.
     steps:
       - run:
+          when: on_fail
           name: "Ensure necessary Python packages are available."
           command: |
             pkg_names="fire determined"
@@ -157,6 +158,7 @@ commands:
               fi
             done
       - run:
+          when: on_fail
           name: "Collect logs and calculate statistics"
           command: |
             target_dir="<< parameters.store_path >>"
