@@ -311,7 +311,7 @@ def set_proxy_address_kubernetes(sess: api.Session, allocation_id: str) -> None:
     # When using a gateway, we know the static IP in advance so we don't want to tell the
     # master the pod IP. Handling this on the master side gets a little tricky with restore.
     # For example we send this proxy address before master sends the allocation its address.
-    if os.environ.get("DET_PROXY_THROUGH_GATEWAY") == "true":
+    if bool(os.environ.get("DET_PROXY_THROUGH_GATEWAY", None)):
         return
 
     pod_ip_str = os.environ.get("DET_KUBERNETES_POD_IP")
