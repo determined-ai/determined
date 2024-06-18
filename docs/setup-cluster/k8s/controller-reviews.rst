@@ -56,8 +56,8 @@ Enterprise Kubernetes Ingress Controller.
  Hashicorp Consul
 ******************
 
-Supports TCPRoute.
-`TCPRoute Configuration Reference <https://developer.hashicorp.com/consul/docs/connect/config-entries/tcp-route>`_
+Supports TCPRoute. `TCPRoute Configuration Reference
+<https://developer.hashicorp.com/consul/docs/connect/config-entries/tcp-route>`_
 
 *********
  Traefik
