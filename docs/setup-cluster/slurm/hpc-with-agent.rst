@@ -72,16 +72,15 @@ Before users can make use of Determined agents, a system administrator must prov
 
 This step may be completed either by the system administrator or the intended user. In a
 cluster-wide shared directory (examples in this section use ``$HOME``), create an ``agent.yaml``
-file. Below is a minimal example using a resource pool named for the user (``$USER``) and
-``singularity`` as the container runtime platform. If configured using variables such as ``$HOME``,
-a single ``agent.yaml`` could be shared by all users.
+file. Below is a minimal example using a resource pool named for the user (``$USER``). ``docker`` is
+deafulted as a runtime. If configured using variables such as ``$HOME``, a single ``agent.yaml``
+could be shared by all users.
 
 .. code:: yaml
 
    master_host: master.mycluster.com
    master_port: 8090
    resource_pool: $USER
-   container_runtime: singularity
 
 There are several other settings commonly configured in the `agent.yaml` which are listed in the
 table below. For the full list of options, see :ref:`agent-config-reference`.
@@ -91,9 +90,6 @@ table below. For the full list of options, see :ref:`agent-config-reference`.
 +============================+================================================================+
 | ``image_root``             | To avoid multiple image downloads, configure an image cache as |
 |                            | per :ref:`singularity-image-cache`                             |
-+----------------------------+----------------------------------------------------------------+
-| ``container_runtime``      | Instead of ``singularity``, you could specify ``podman`` as    |
-|                            | the container runtime.                                         |
 +----------------------------+----------------------------------------------------------------+
 | ``security``               | Secure the communications between the master and agent using   |
 |                            | TLS. Configure the sections of the ``security`` block as per   |

@@ -114,7 +114,7 @@ The `FLAGS="-A"` in `make slurmcluster` removes the resource_manager section in 
 
 Then, connect to your dev-box. This can be done with `make -C tools/slurm/terraform connect` or `gcloud compute ssh $USER-dev-box --project=determined-ai --zone=us-west1-b`. Input the following command on the devbox in order to allocate resources on slurm.
 
-`srun $HOME/determined-agent --master-host=localhost  --master-port=8080 --resource-pool=default --container-runtime=singularity`
+`srun $HOME/determined-agent --master-host=localhost  --master-port=8080 --resource-pool=default
 
 You can also use podman by changing the value for `container-runtime` to `podman`. 
 

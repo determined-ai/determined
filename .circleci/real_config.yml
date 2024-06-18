@@ -2799,7 +2799,7 @@ jobs:
                   PROJECT=$(terraform -chdir=tools/slurm/terraform output --raw project)
                   gcloud compute scp agent/build/determined-agent "$INSTANCE_NAME":~ --zone $ZONE
                   gcloud compute ssh --zone "$ZONE" "$INSTANCE_NAME" --project "$PROJECT" -- \
-                  srun determined-agent --master-host=<<parameters.master-host>> --master-port=<<parameters.master-port>> --resource-pool=default --container-runtime=<<parameters.container-run-type>>
+                  srun determined-agent --master-host=<<parameters.master-host>> --master-port=<<parameters.master-port>> --resource-pool=default
                 background: true
             - run:
                 name: Query the job to ensure Determined Agent is running
@@ -3141,7 +3141,7 @@ jobs:
                   # Include 40 minute time limit, name the job (determined-agent-$HOSTNAME) so we can selectively kill it
                   sudo srun --uid launcher --export=ALL -N2 --gpus-per-node=4 --time=40 -Jdetermined-agent-$HOSTNAME \
                   --chdir=/scratch/launcher/.launcher.$HOSTNAME  /scratch/launcher/.launcher.$HOSTNAME/determined-agent \
-                  --master-host=$MASTER_HOST  --master-port=$MASTER_PORT --resource-pool=default --container-runtime=singularity  --slot-type=cuda \
+                  --master-host=$MASTER_HOST  --master-port=$MASTER_PORT --resource-pool=default  --slot-type=cuda \
                   --image-root=/lustre/hdd/foundation_engineering/images
                 background: true
             - run:
