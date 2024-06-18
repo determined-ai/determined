@@ -70,7 +70,6 @@ bind_ip: 0.0.0.0
 bind_port: 9090
 agent_reconnect_attempts: 5
 agent_reconnect_backoff: 5
-container_runtime: docker
 `,
 			expected: *DefaultOptions(),
 		},
@@ -111,7 +110,6 @@ ftp_proxy: determined_ftp_proxy
 no_proxy: determined_no_proxy
 agent_reconnect_attempts: 3
 agent_reconnect_backoff: 4
-container_runtime: docker_runtime_env
 `,
 			expected: Options{
 				ConfigFile: "agent_config",

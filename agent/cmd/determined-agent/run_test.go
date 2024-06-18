@@ -32,7 +32,6 @@ bind_ip: 0.0.0.0
 bind_port: 9090
 agent_reconnect_attempts: 5
 agent_reconnect_backoff: 5
-container_runtime: docker
 `
 
 func Test_visibleGPUsFromEnvironment(t *testing.T) {
@@ -112,7 +111,6 @@ bind_ip: 0.0.0.0
 bind_port: 9090
 agent_reconnect_attempts: 5
 agent_reconnect_backoff: 5
-container_runtime: docker
 `,
 			expected: options.DefaultOptions(),
 		},
@@ -169,7 +167,6 @@ bind_ip: 0.0.0.0
 bind_port: 9090
 agent_reconnect_attempts: 10
 agent_reconnect_backoff: 11
-container_runtime: docker
 `,
 			expected: defaultOptions,
 		},
@@ -224,7 +221,6 @@ bind_ip: 0.0.0.0
 bind_port: 9090
 agent_reconnect_attempts: 10
 agent_reconnect_backoff: 11
-container_runtime: docker
 `,
 			expected: defaultAndFlagOptions,
 		},
@@ -247,14 +243,12 @@ container_runtime: docker
 			require.NoError(t, err)
 
 			// Create and add flag to viper instance to override config and environment variable.
-			containerRuntimeFlag := &pflag.Flag{Name: "container_runtime_flag"}
 			bindPortFlag := &pflag.Flag{Name: "bind_port_flag"}
-			err = v.BindPFlag("container_runtime", containerRuntimeFlag)
+
 			require.NoError(t, err)
 			err = v.BindPFlag("bind_port", bindPortFlag)
 			require.NoError(t, err)
 
-			v.Set("container_runtime", "docker_container")
 			v.Set("bind_port", 9095)
 
 			bs := []byte(test.raw)
