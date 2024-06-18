@@ -684,6 +684,9 @@ commands:
       - upload-test-job:
           only_on_branch: main
           test_results_path: <<parameters.junit-path>>
+      - run:
+          name: Fail always
+          command: exit 1
       - when:
           condition: <<parameters.collect-det-job-logs>>
           steps:
