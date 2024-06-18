@@ -30,6 +30,7 @@ import (
 	"k8s.io/client-go/tools/cache"
 	"k8s.io/client-go/tools/clientcmd"
 	"k8s.io/client-go/util/homedir"
+	"k8s.io/component-helpers/scheduling/corev1/nodeaffinity"
 	alphaGatewayTyped "sigs.k8s.io/gateway-api/apis/v1alpha2"
 	gateway "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned/typed/apis/v1"
 	alphaGateway "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned/typed/apis/v1alpha2"
