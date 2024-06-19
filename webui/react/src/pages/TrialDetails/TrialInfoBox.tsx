@@ -58,13 +58,15 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
       config: { integrations },
     } = experiment;
 
-    if (!integrations) return;
+    if (integrations) return (
+      {
+        hasIntegrationData: true,
+        text: '<MLDM repo>',
+        url: createIntegrationLink(integrations),
+      }
+    )
 
-    return {
-      hasIntegrationData: true,
-      text: '<MLDM repo>',
-      url: createIntegrationLink(integrations),
-    };
+    return;
   }, [experiment]);
 
   const handleClickDataInput = useCallback(
