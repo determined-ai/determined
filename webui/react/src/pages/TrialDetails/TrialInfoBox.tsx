@@ -58,12 +58,7 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
       config: { integrations },
     } = experiment;
 
-    if (!integrations)
-      return {
-        hasIntegrationData: false,
-        text: '-',
-        url: '-',
-      };
+    if (!integrations) return;
 
     return {
       hasIntegrationData: true,
@@ -74,7 +69,7 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
 
   const handleClickDataInput = useCallback(
     (e: AnyMouseEvent) => {
-      if (integrationData.hasIntegrationData)
+      if (integrationData?.hasIntegrationData)
         handlePath(e, {
           path: integrationData.url,
         });
@@ -106,9 +101,11 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
         )}
         {<OverviewStats title="Log Retention Days">{logRetentionDays}</OverviewStats>}
         {
-          <OverviewStats title="Data input" onClick={handleClickDataInput}>
-            {integrationData.text}
-          </OverviewStats>
+          integrationData && (
+            <OverviewStats title="Data input" onClick={handleClickDataInput}>
+              {integrationData.text}
+            </OverviewStats>
+          )
         }
       </Card.Group>
     </Section>
