@@ -910,6 +910,15 @@ export interface CommandTask extends Task {
   workspaceId: number;
 }
 
+export const TaskAction = {
+  Connect: 'Connect',
+  Kill: 'Kill',
+  ViewLogs: 'View Logs',
+} as const;
+
+export type TaskAction = ValueOf<typeof TaskAction>;
+
+
 export type RecentEvent = {
   lastEvent: {
     date: string;
