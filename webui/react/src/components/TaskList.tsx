@@ -48,7 +48,6 @@ import userStore from 'stores/users';
 import workspaceStore from 'stores/workspaces';
 import {
   ExperimentAction as Action,
-  AnyTask,
   CommandState,
   CommandTask,
   CommandType,
@@ -596,7 +595,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
     }: {
       children: React.ReactNode;
       onVisibleChange?: (visible: boolean) => void;
-      record: AnyTask;
+      record: CommandTask;
     }) => (
       <TaskActionDropdown
         curUser={currentUser}
