@@ -1,7 +1,6 @@
 import os
 import shutil
 import tempfile
-import warnings
 
 import pytest
 
@@ -16,7 +15,6 @@ def test_mnist_pytorch_distributed(image_type: str) -> None:
     sess = api_utils.user_session()
     config = conf.load_config(conf.tutorials_path("mnist_pytorch/distributed.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
-
     exp.run_basic_test_with_temp_config(sess, config, conf.tutorials_path("mnist_pytorch"), 1)
 
 
