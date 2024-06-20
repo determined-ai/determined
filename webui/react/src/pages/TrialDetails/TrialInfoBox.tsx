@@ -64,7 +64,7 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
         text: '<MLDM repo>',
         url: createIntegrationLink(integrations),
       }
-    )
+    );
 
     return;
   }, [experiment]);
