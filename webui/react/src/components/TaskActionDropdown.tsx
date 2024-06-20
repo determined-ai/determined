@@ -40,7 +40,7 @@ const TaskActionDropdown: React.FC<Props> = ({ task, onComplete, children }: Pro
       case CommandType.JupyterLab:
         return [
           {
-            label: 'Connect to the running Jupyter Server in VSCode:',
+            label: 'Connect to notebook in VSCode using the remote Jupyter server address:',
             value: `${serverAddress()}${task.serviceAddress}`,
           },
         ];
