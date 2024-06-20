@@ -174,13 +174,13 @@ def set_workspace_namespace_binding(args: argparse.Namespace) -> None:
         args.namespace or args.auto_create_namespace or args.auto_create_namespace_all_clusters
     ):
         raise api.errors.BadRequestException(
-            "must provide --namespace NAMESPACE, "
-            + "--auto-create-namespace, or --auto-create-namespace-all-clusters"
+            "must provide --namespace NAMESPACE or --auto-creeate-namespace, or remove "
+            + "--cluster-name CLUSTER_NAME and specify --auto-create-namespace-all-clusters"
         )
 
     w = api.workspace_by_name(sess, args.workspace_name)
     content = bindings.v1SetWorkspaceNamespaceBindingsRequest(workspaceId=w.id)
-    cluster_name = "" if not args.cluster_name else args.cluster_name
+    cluster_name = args.cluster_name or ""
     requested_namespace = args.namespace or ""
     namespace_meta = bindings.v1WorkspaceNamespaceMeta(
         namespace=requested_namespace,
@@ -248,8 +248,8 @@ def create_workspace(args: argparse.Namespace) -> None:
         args.namespace or args.auto_create_namespace or args.auto_create_namespace_all_clusters
     ):
         raise api.errors.BadRequestException(
-            "must provide --namespace NAMESPACE, --auto-creeate-namespace, or "
-            + "--auto-create-namespace-all-clusters",
+            "must provide --namespace NAMESPACE or --auto-creeate-namespace, or remove "
+            + "--cluster-name CLUSTER_NAME and specify --auto-create-namespace-all-clusters"
         )
 
     sess = cli.setup_session(args)
