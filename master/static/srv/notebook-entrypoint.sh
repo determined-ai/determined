@@ -24,7 +24,6 @@ set +x
 JUPYTER_LAB_LOG_FORMAT="%(levelname)s: [%(name)s] %(message)s"
 READINESS_REGEX='^.*Jupyter Server .* is running.*$'
 
-
 jupyter lab --ServerApp.port=${NOTEBOOK_PORT} \
     --ServerApp.allow_origin="*" \
     --ServerApp.base_url="/proxy/${DET_TASK_ID}/" \
