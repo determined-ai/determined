@@ -153,7 +153,11 @@ func TestPostWorkspace(t *testing.T) {
 					badClusterName: {Namespace: &namespace},
 				},
 			},
-			func(mockRM *mocks.ResourceManager) {},
+			func(mockRM *mocks.ResourceManager) {
+				mockRM.On("VerifyNamespaceExists", namespace, badClusterName).
+					Return(nil).
+					Once()
+			},
 			false,
 		},
 		{
@@ -1056,8 +1060,12 @@ func testSetWkspNmspBindingsErrorCases(t *testing.T) {
 					badClusterName: {Namespace: &namespace},
 				},
 			},
-			setupMockRM: func(mockRM *mocks.ResourceManager) {},
-			multiRM:     false,
+			setupMockRM: func(mockRM *mocks.ResourceManager) {
+				mockRM.On("VerifyNamespaceExists", namespace, badClusterName).
+					Return(nil).
+					Once()
+			},
+			multiRM: false,
 		},
 		{
 			name: "no-namespace-valid-cluster-name-kubernetesRM",

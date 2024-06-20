@@ -185,7 +185,7 @@ def set_workspace_namespace_binding(args: argparse.Namespace) -> None:
     namespace_meta = bindings.v1WorkspaceNamespaceMeta(
         namespace=requested_namespace,
         autoCreateNamespace=args.auto_create_namespace,
-        autoCreateAllNamespaces=args.auto_create_all_namespaces,
+        autoCreateNamespaceAllClusters=args.auto_create_namespace_all_clusters,
     )
     content.clusterNamespaceMeta = {cluster_name: namespace_meta}
 
@@ -270,7 +270,7 @@ def create_workspace(args: argparse.Namespace) -> None:
         namespace_meta = bindings.v1WorkspaceNamespaceMeta(
             namespace=requested_namespace,
             autoCreateNamespace=args.auto_create_namespace,
-            autoCreateAllNamespaces=args.auto_create_all_namespaces,
+            autoCreateNamespaceAllClusters=args.auto_create_namespace_all_clusters,
         )
         content.clusterNamespaceMeta = {cluster_name: namespace_meta}
     resp = bindings.post_PostWorkspace(sess, body=content)

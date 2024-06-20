@@ -618,7 +618,7 @@ def test_set_workspace_namespace_bindings(
             "--namespace",
             namespace,
         ],
-        "no resource manager with cluster name",
+        "no resource manager with the given cluster name",
     )
 
     detproc.check_error(
@@ -633,7 +633,7 @@ def test_set_workspace_namespace_bindings(
             "--namespace",
             namespace,
         ],
-        "no resource manager with cluster name",
+        "no resource manager with the given cluster name",
     )
 
     # Valid namespace name, no cluster name. (Should fail for multirm but work for single
