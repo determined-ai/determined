@@ -1,5 +1,5 @@
-import { BaseComponent } from 'e2e/models/BaseComponent';
-import { BasePage } from 'e2e/models/BasePage';
+import { BaseComponent } from 'e2e/models/base/BaseComponent';
+import { BasePage } from 'e2e/models/base/BasePage';
 import { DropdownMenu } from 'e2e/models/hew/Dropdown';
 
 /**
@@ -14,7 +14,10 @@ export class OptionsMenu extends DropdownMenu {
    */
   constructor({ parent, root }: { parent: BaseComponent; root: BasePage }) {
     super({
-      childNode: new BaseComponent({ parent, selector: '[data-test-component="OptionsMenu"]' }),
+      clickThisComponentToOpen: new BaseComponent({
+        parent,
+        selector: '[data-test-component="OptionsMenu"]',
+      }),
       root,
     });
   }

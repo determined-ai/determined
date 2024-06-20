@@ -1,4 +1,4 @@
-import { BasePage } from 'e2e/models/BasePage';
+import { BasePage } from 'e2e/models/base/BasePage';
 import { Pivot } from 'e2e/models/hew/Pivot';
 
 /**

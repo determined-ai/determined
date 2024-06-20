@@ -1,4 +1,5 @@
-import { BaseComponent, BaseReactFragment } from 'e2e/models/BaseComponent';
+import { BaseComponent } from 'e2e/models/base/BaseComponent';
+import { BaseReactFragment } from 'e2e/models/base/BaseReactFragment';
 import { Select } from 'e2e/models/hew/Select';
 
 /**

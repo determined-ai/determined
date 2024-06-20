@@ -1,5 +1,6 @@
-import { BaseComponent, CanBeParent, NamedComponent } from 'e2e/models/BaseComponent';
-import { BasePage } from 'e2e/models/BasePage';
+import { BaseComponent, CanBeParent, NamedComponent } from 'e2e/models/base/BaseComponent';
+import { BaseList, BaseRow } from 'e2e/models/base/BaseList';
+import { BasePage } from 'e2e/models/base/BasePage';
 import { DropdownContent } from 'e2e/models/hew/Dropdown';
 import { Message } from 'e2e/models/hew/Message';
 import { Pivot } from 'e2e/models/hew/Pivot';
@@ -16,7 +17,7 @@ export class ColumnPickerMenu extends DropdownContent {
    */
   constructor({ parent, root }: { parent: CanBeParent; root: BasePage }) {
     super({
-      childNode: new BaseComponent({
+      clickThisComponentToOpen: new BaseComponent({
         parent,
         selector: '[data-test-component="columnPickerMenu"]',
       }),
@@ -36,7 +37,7 @@ export class ColumnPickerMenu extends DropdownContent {
 class ColumnPickerTab extends NamedComponent {
   readonly defaultSelector = '[data-test-component="columnPickerTab"]:visible';
   readonly search = new BaseComponent({ parent: this, selector: '[data-test="search"]' });
-  readonly columns = new List({ parent: this });
+  readonly columns = new List({ parent: this, rowType: Row });
   readonly noResults = new Message({ parent: this.columns });
   readonly showAll = new BaseComponent({ parent: this, selector: '[data-test="showAll"]' });
   readonly reset = new BaseComponent({ parent: this, selector: '[data-test="reset"]' });
@@ -45,42 +46,14 @@ class ColumnPickerTab extends NamedComponent {
 /**
  * Represents the List in the ColumnPickerMenu component
  */
-class List extends NamedComponent {
+class List extends BaseList<Row> {
   readonly defaultSelector = '[data-test="columns"]';
-  readonly rows = new Row({ parent: this });
-
-  /**
-   * Returns a representation of a list row with the specified testid.
-   * @param {string} [testid] - the testid of the tab, generally the name
-   */
-  public listItem(testid: string): Row {
-    return new Row({
-      attachment: `[${this.rows.keyAttribute}="${testid}"]`,
-      parent: this,
-    });
-  }
-
-  /**
-   * Returns a list of keys associated with attributes from rows from the entire table.
-   */
-  async allRowKeys(): Promise<string[]> {
-    const { pwLocator, keyAttribute } = this.rows;
-    const rows = await pwLocator.all();
-    return Promise.all(
-      rows.map(async (row) => {
-        return (
-          (await row.getAttribute(keyAttribute)) ||
-          Promise.reject(new Error(`All rows should have the attribute ${keyAttribute}`))
-        );
-      }),
-    );
-  }
 }
 
 /**
  * Represents a Row in the ColumnPickerMenu component
  */
-class Row extends NamedComponent {
+class Row extends BaseRow {
   readonly defaultSelector = '[data-test="row"]';
   readonly keyAttribute = 'data-test-id';
   readonly checkbox = new BaseComponent({ parent: this, selector: '[data-test="checkbox"]' });

@@ -1,5 +1,5 @@
 import { Switch } from 'e2e/models/ant/Switch';
-import { BaseComponent } from 'e2e/models/BaseComponent';
+import { BaseComponent } from 'e2e/models/base/BaseComponent';
 import { Modal } from 'e2e/models/hew/Modal';
 
 /**

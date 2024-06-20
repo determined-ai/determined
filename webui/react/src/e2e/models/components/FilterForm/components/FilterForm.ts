@@ -1,4 +1,4 @@
-import { BaseComponent, NamedComponent } from 'e2e/models/BaseComponent';
+import { BaseComponent, NamedComponent } from 'e2e/models/base/BaseComponent';
 import { FilterGroup } from 'e2e/models/components/FilterForm/components/FilterGroup';
 
 /**

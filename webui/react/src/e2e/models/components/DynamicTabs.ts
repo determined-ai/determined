@@ -1,4 +1,4 @@
-import { BaseReactFragment } from 'e2e/models/BaseComponent';
+import { BaseReactFragment } from 'e2e/models/base/BaseReactFragment';
 import { Pivot } from 'e2e/models/hew/Pivot';
 
 /**

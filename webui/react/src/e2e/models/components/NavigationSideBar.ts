@@ -1,4 +1,5 @@
-import { BaseComponent, BaseReactFragment } from 'e2e/models/BaseComponent';
+import { BaseComponent } from 'e2e/models/base/BaseComponent';
+import { BaseReactFragment } from 'e2e/models/base/BaseReactFragment';
 import { DropdownMenu } from 'e2e/models/hew/Dropdown';
 import { Nameplate } from 'e2e/models/hew/Nameplate';
 
@@ -20,7 +21,7 @@ export class NavigationSideBar extends BaseReactFragment {
     parent: this.header,
   });
   readonly headerDropdown = new HeaderDropdown({
-    childNode: this.header,
+    clickThisComponentToOpen: this.header,
     root: this.root,
   });
   readonly home = new BaseComponent({

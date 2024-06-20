@@ -1,6 +1,6 @@
 import { expect, Page } from '@playwright/test';
 
-import { BaseComponent } from 'e2e/models/BaseComponent';
+import { BaseComponent } from 'e2e/models/base/BaseComponent';
 import { AddUsersToGroupsModal } from 'e2e/models/components/AddUsersToGroupsModal';
 import { ChangeUserStatusModal } from 'e2e/models/components/ChangeUserStatusModal';
 import { CreateUserModal } from 'e2e/models/components/CreateUserModal';
@@ -38,7 +38,7 @@ export class UserManagement extends AdminPage {
     selector: '[data-testid="statusSelect"]',
   });
   readonly actions = new ActionDropdownMenu({
-    childNode: new BaseComponent({
+    clickThisComponentToOpen: new BaseComponent({
       parent: this.#actionRow,
       selector: '[data-testid="actions"]',
     }),
@@ -50,19 +50,22 @@ export class UserManagement extends AdminPage {
   });
 
   readonly table = new InteractiveTable({
-    headRowType: UserHeadRow,
     parent: this.pivot.tabContent,
-    rowType: UserRow,
+    tableArgs: {
+      attachment: '[data-testid="table"]',
+      headRowType: UserHeadRow,
+      rowType: UserRow,
+    },
   });
   readonly skeletonTable = new SkeletonTable({ parent: this.pivot.tabContent });
 
-  readonly createUserModal = new CreateUserModal({ parent: this });
+  readonly createUserModal = new CreateUserModal({ root: this });
   readonly changeUserStatusModal = new ChangeUserStatusModal({
-    parent: this,
+    root: this,
   });
-  readonly setUserRolesModal = new SetUserRolesModal({ parent: this });
+  readonly setUserRolesModal = new SetUserRolesModal({ root: this });
   readonly addUsersToGroupsModal = new AddUsersToGroupsModal({
-    parent: this,
+    root: this,
   });
   readonly toast = new Toast({
     attachment: Toast.selectorTopRight,
@@ -168,7 +171,7 @@ class UserRow extends Row {
     selector: '[data-testid="modified"]',
   });
   readonly actions = new UserActionDropdown({
-    childNode: new BaseComponent({
+    clickThisComponentToOpen: new BaseComponent({
       parent: this,
       selector: '[data-testid="actions"]',
     }),

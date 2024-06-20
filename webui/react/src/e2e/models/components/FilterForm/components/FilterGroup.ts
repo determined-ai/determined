@@ -1,4 +1,4 @@
-import { BaseComponent, NamedComponent, NamedComponentArgs } from 'e2e/models/BaseComponent';
+import { BaseComponent, NamedComponent, NamedComponentArgs } from 'e2e/models/base/BaseComponent';
 import { ConjunctionContainer } from 'e2e/models/components/FilterForm/components/ConjunctionContainer';
 import { FilterField } from 'e2e/models/components/FilterForm/components/FilterField';
 import { DropdownMenu } from 'e2e/models/hew/Dropdown';
@@ -52,7 +52,7 @@ export class FilterGroup extends NamedComponent {
     selector: this.selectorTemplate('[data-test="explanation"]'),
   });
   readonly addDropdown = new AddDropdown({
-    childNode: new BaseComponent({
+    clickThisComponentToOpen: new BaseComponent({
       parent: this.#header,
       selector: this.selectorTemplate('[data-test="add"]'),
     }),

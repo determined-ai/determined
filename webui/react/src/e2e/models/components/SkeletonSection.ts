@@ -1,4 +1,4 @@
-import { BaseComponent, NamedComponent } from 'e2e/models/BaseComponent';
+import { BaseComponent, NamedComponent } from 'e2e/models/base/BaseComponent';
 
 /**
  * Represents the SkeletonSection component in src/components/SkeletonSection.tsx

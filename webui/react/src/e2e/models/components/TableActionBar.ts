@@ -1,4 +1,4 @@
-import { BaseComponent, NamedComponent } from 'e2e/models/BaseComponent';
+import { BaseComponent, NamedComponent } from 'e2e/models/base/BaseComponent';
 import { ColumnPickerMenu } from 'e2e/models/components/ColumnPickerMenu';
 import { TableFilter } from 'e2e/models/components/FilterForm/TableFilter';
 import { MultiSortMenu } from 'e2e/models/components/MultiSortMenu';
@@ -15,7 +15,7 @@ export class TableActionBar extends NamedComponent {
   columnPickerMenu = new ColumnPickerMenu({ parent: this, root: this.root });
   optionsMenu = new OptionsMenu({ parent: this, root: this.root });
   actions = new ActionsDropdown({
-    childNode: new BaseComponent({
+    clickThisComponentToOpen: new BaseComponent({
       parent: this,
       selector: '[data-test="actionsDropdown"]',
     }),

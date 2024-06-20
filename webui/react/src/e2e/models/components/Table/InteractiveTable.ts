@@ -1,7 +1,16 @@
 export { HeadRow, Row } from 'e2e/models/ant/Table';
-import { HeadRow, Row, Table, TableArgs } from 'e2e/models/ant/Table';
-import { NamedComponent } from 'e2e/models/BaseComponent';
+import { HeadRow, Row, Table } from 'e2e/models/ant/Table';
+import { NamedComponent, NamedComponentArgs } from 'e2e/models/base/BaseComponent';
 import { SkeletonTable } from 'e2e/models/components/Table/SkeletonTable';
+
+type RowClass<RowType> = new (args: NamedComponentArgs) => RowType;
+type HeadRowClass<HeadRowType> = new (args: NamedComponentArgs) => HeadRowType;
+
+type InteractiveTableArgs<RowType, HeadRowType> = {
+  rowType: RowClass<RowType>;
+  headRowType: HeadRowClass<HeadRowType>;
+  attachment: string;
+};
 
 /**
  * Represents the InteractiveTable component in src/components/Table/InteractiveTable.tsx
@@ -18,9 +27,16 @@ export class InteractiveTable<
    * @param {RowType} args.rowType - Value for the RowType used to instanciate rows
    * @param {HeadRowType} args.headRowType - Value of the HeadRowType used to instanciate the head row
    */
-  constructor(args: TableArgs<RowType, HeadRowType>) {
+  constructor(
+    args: NamedComponentArgs & { tableArgs: InteractiveTableArgs<RowType, HeadRowType> },
+  ) {
     super(args);
-    this.table = new Table({ ...args, attachment: '[data-testid="table"]', parent: this });
+    this.table = new Table({
+      ...args.tableArgs,
+      bodySelector: 'tbody.ant-table-tbody',
+      headSelector: '',
+      parent: this,
+    });
   }
 
   readonly table: Table<RowType, HeadRowType>;

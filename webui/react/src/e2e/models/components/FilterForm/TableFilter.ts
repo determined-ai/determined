@@ -1,5 +1,5 @@
-import { BaseComponent, CanBeParent } from 'e2e/models/BaseComponent';
-import { BasePage } from 'e2e/models/BasePage';
+import { BaseComponent, CanBeParent } from 'e2e/models/base/BaseComponent';
+import { BasePage } from 'e2e/models/base/BasePage';
 import { FilterForm } from 'e2e/models/components/FilterForm/components/FilterForm';
 import { DropdownContent } from 'e2e/models/hew/Dropdown';
 
@@ -15,7 +15,10 @@ export class TableFilter extends DropdownContent {
    */
   constructor({ parent, root }: { parent: CanBeParent; root: BasePage }) {
     super({
-      childNode: new BaseComponent({ parent, selector: '[data-test-component="tableFilter"]' }),
+      clickThisComponentToOpen: new BaseComponent({
+        parent,
+        selector: '[data-test-component="tableFilter"]',
+      }),
       root,
     });
   }

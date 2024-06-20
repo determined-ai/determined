@@ -1,68 +1,16 @@
-import { BaseComponent, ComponentBasics } from 'e2e/models/BaseComponent';
-import { BasePage } from 'e2e/models/BasePage';
-
-interface RequiresRoot {
-  root: BasePage;
-}
-
-interface DropdownArgsWithoutChildNode extends RequiresRoot {
-  childNode?: never;
-  openMethod: () => Promise<void>;
-}
-
-interface DropdownArgsWithChildNode extends RequiresRoot {
-  childNode: ComponentBasics;
-  openMethod?: () => Promise<void>;
-}
-
-type DropdownArgs = DropdownArgsWithoutChildNode | DropdownArgsWithChildNode;
+import { BaseComponent } from 'e2e/models/base/BaseComponent';
+import { BaseOverlay, OverlayArgs } from 'e2e/models/base/BaseOverlay';
 
 /**
  * Represents the Dropdown component from antd/es/dropdown/index.js
  * Until the dropdown component supports test ids, this model will match any open dropdown.
  */
-export class Dropdown extends BaseComponent {
-  readonly openMethod: (args: { timeout?: number }) => Promise<void>;
-  readonly childNode?: ComponentBasics;
-
-  /**
-   * Constructs a new Dropdown component.
-   * The dropdown can be opened by calling the open method. By default, the open
-   * method clicks on the child node. Sometimes you might even need to provide
-   * both optional arguments, like when a child node is present but impossible to
-   * click on due to being blocked by another element behavior.
-   * @param {object} obj
-   * @param {BasePage} obj.root - root of the page
-   * @param {ComponentBasics} [obj.childNode] - optional if `openMethod` is present. It's the element we click on to open the dropdown.
-   * @param {Function} [obj.openMethod] - optional if `childNode` is present. It's the method to open the dropdown.
-   */
-  constructor({ root, childNode, openMethod }: DropdownArgs) {
+export class Dropdown extends BaseOverlay {
+  constructor(args: OverlayArgs) {
     super({
-      parent: root,
+      ...args,
       selector: '.ant-dropdown ul.ant-dropdown-menu:visible',
     });
-    if (childNode !== undefined) {
-      this.childNode = childNode;
-    }
-    this.openMethod =
-      openMethod ||
-      (async (args = {}) => {
-        if (this.childNode === undefined) {
-          // We should never be able to throw this error. In the constructor, we
-          // either provide a childNode or replace this method.
-          throw new Error('This dropdown does not have a child node to click on.');
-        }
-        await this.childNode.pwLocator.click(args); // refreshing with 10s intervals, this should give us enough time for everything to be stable even if a refresh occurs in the first 5 seconds.
-      });
-  }
-
-  /**
-   * Opens the dropdown.
-   * @returns {Promise<this>} - the dropdown for further actions
-   */
-  async open(args: { timeout?: number } = { timeout: 15_000 }): Promise<this> {
-    await this.openMethod(args);
-    return this;
   }
 
   /**
@@ -84,6 +32,13 @@ export class Dropdown extends BaseComponent {
     await this.open();
     await this.menuItem(id).pwLocator.click();
     await this.pwLocator.waitFor({ state: 'hidden' });
+  }
+
+  /**
+   * Closes the dropdown.
+   */
+  async close(): Promise<void> {
+    await this.pwLocator.press('Escape', { timeout: 500 });
   }
 }
 

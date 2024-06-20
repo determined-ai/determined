@@ -1,4 +1,4 @@
-import { BaseReactFragment } from 'e2e/models/BaseComponent';
+import { BaseReactFragment } from 'e2e/models/base/BaseReactFragment';
 
 /**
  * Represents the PageComponent component in src/components/Page.tsx

@@ -1,4 +1,4 @@
-import { BaseComponent } from 'e2e/models/BaseComponent';
+import { BaseComponent } from 'e2e/models/base/BaseComponent';
 
 /**
  * Represents the Switch component from antd/es/switch/index.js

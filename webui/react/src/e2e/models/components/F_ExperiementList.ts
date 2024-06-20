@@ -1,5 +1,5 @@
 import { Pagination } from 'e2e/models/ant/Pagination';
-import { BaseReactFragment } from 'e2e/models/BaseComponent';
+import { BaseReactFragment } from 'e2e/models/base/BaseReactFragment';
 import { ComparisonView } from 'e2e/models/components/ComparisonView';
 import { ExperimentActionDropdown } from 'e2e/models/components/ExperimentActionDropdown';
 import { TableActionBar } from 'e2e/models/components/TableActionBar';

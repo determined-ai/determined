@@ -1,4 +1,4 @@
-import { NamedComponent } from 'e2e/models/BaseComponent';
+import { NamedComponent } from 'e2e/models/base/BaseComponent';
 
 /**
  * Represents the DatePicker component from antd/es/date-picker/index.d.ts

@@ -3,7 +3,7 @@ import {
   CanBeParent,
   NamedComponent,
   NamedComponentArgs,
-} from 'e2e/models/BaseComponent';
+} from 'e2e/models/base/BaseComponent';
 import { WorkspaceActionDropdown } from 'e2e/models/components/WorkspaceActionDropdown';
 
 import { DropdownMenu } from './Dropdown';
@@ -18,7 +18,7 @@ export class Card extends NamedComponent {
 
   // default to a workspace dropdown to avoid non-null but this should be overriden if a dropdown exists
   readonly actionMenu: DropdownMenu = new WorkspaceActionDropdown({
-    childNode: new BaseComponent({
+    clickThisComponentToOpen: new BaseComponent({
       parent: this,
       selector: Card.actionMenuSelector,
     }),

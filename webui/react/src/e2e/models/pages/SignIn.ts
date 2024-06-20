@@ -1,4 +1,4 @@
-import { BasePage } from 'e2e/models/BasePage';
+import { BasePage } from 'e2e/models/base/BasePage';
 import { DeterminedAuth } from 'e2e/models/components/DeterminedAuth';
 import { PageComponent } from 'e2e/models/components/Page';
 

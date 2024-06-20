@@ -1,55 +1,14 @@
-import { BaseComponent, ComponentBasics } from 'e2e/models/BaseComponent';
-import { BasePage } from 'e2e/models/BasePage';
-
-interface requiresRoot {
-  root: BasePage;
-}
-
-interface PopoverArgsWithoutChildNode extends requiresRoot {
-  childNode?: never;
-  openMethod: () => Promise<void>;
-}
-
-interface PopoverArgsWithChildNode extends requiresRoot {
-  childNode: ComponentBasics;
-  openMethod?: () => Promise<void>;
-}
-
-type PopoverArgs = PopoverArgsWithoutChildNode | PopoverArgsWithChildNode;
+import { BaseOverlay, OverlayArgs } from 'e2e/models/base/BaseOverlay';
 
 /**
  * Represents the Popver component from antd/es/popover/index.js
  */
-export class Popover extends BaseComponent {
-  readonly openMethod: () => Promise<void>;
-  readonly childNode?: ComponentBasics;
-  constructor({ root, childNode, openMethod }: PopoverArgs) {
+export class Popover extends BaseOverlay {
+  constructor(args: OverlayArgs) {
     super({
-      parent: root,
+      ...args,
       selector: '.ant-popover .ant-popover-content .ant-popover-inner-content:visible',
     });
-    if (childNode !== undefined) {
-      this.childNode = childNode;
-    }
-    this.openMethod =
-      openMethod ||
-      (async () => {
-        if (this.childNode === undefined) {
-          // We should never be able to throw this error. In the constructor, we
-          // either provide a childNode or replace this method.
-          throw new Error('This popover does not have a child node to click on.');
-        }
-        await this.childNode.pwLocator.click();
-      });
-  }
-
-  /**
-   * Opens the popover.
-   * @returns {Promise<this>} - the popover for further actions
-   */
-  async open(): Promise<this> {
-    await this.openMethod();
-    return this;
   }
 
   /**

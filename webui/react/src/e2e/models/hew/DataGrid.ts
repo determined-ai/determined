@@ -1,8 +1,11 @@
 import { expect } from '@playwright/test';
 
-import { BaseComponent, NamedComponent, NamedComponentArgs } from 'e2e/models/BaseComponent';
+import { BaseComponent, NamedComponent, NamedComponentArgs } from 'e2e/models/base/BaseComponent';
 import { DropdownMenu } from 'e2e/models/hew/Dropdown';
 import { printMap } from 'e2e/utils/debug';
+
+class IndexNotFoundError extends Error {}
+class NameNotFoundError extends Error {}
 
 type RowClass<RowType extends Row<HeadRowType>, HeadRowType extends HeadRow<RowType>> = new (
   args: RowArgs<RowType, HeadRowType>,
@@ -59,7 +62,7 @@ export class DataGrid<
     parent: this,
     selector: 'canvas[data-testid="data-grid-canvas"] table',
   });
-  readonly #otherCanvas: BaseComponent = new BaseComponent({
+  readonly #otherCanvas = new BaseComponent({
     parent: this,
     selector: 'canvas:not([data-testid])',
   });
@@ -67,11 +70,11 @@ export class DataGrid<
   readonly #rowType: RowClass<RowType, HeadRowType>;
   readonly rows: RowType;
   readonly headRow: HeadRowType;
-  readonly #body: BaseComponent = new BaseComponent({
+  readonly #body = new BaseComponent({
     parent: this.canvasTable,
     selector: 'tbody',
   });
-  readonly #head: BaseComponent = new BaseComponent({
+  readonly #head = new BaseComponent({
     parent: this.canvasTable,
     selector: 'thead',
   });
@@ -159,8 +162,8 @@ export class DataGrid<
     try {
       return await this.scrollColumnIntoView(this.headRow.getColumnDef(s));
     } catch (e) {
-      if ((e as Error).message.indexOf('Column with index') === 0) {
-        throw new Error(`Column with name ${s} not found.`);
+      if (e instanceof IndexNotFoundError) {
+        throw new NameNotFoundError(`Column with name ${s} not found.`);
       }
     }
   }
@@ -195,7 +198,7 @@ export class DataGrid<
         return;
       }
     } while (await incrementScroll());
-    throw new Error(`Column with index ${index} not found.`);
+    throw new IndexNotFoundError(`Column with index ${index} not found.`);
   }
 
   /**
@@ -389,7 +392,7 @@ export class HeadRow<RowType extends Row<HeadRow<RowType>>> extends NamedCompone
     selector: 'th',
   });
   readonly selectDropdown = new HeaderDropdown({
-    childNode: new BaseComponent({
+    clickThisComponentToOpen: new BaseComponent({
       parent: this,
       selector: `[${DataGrid.columnIndexAttribute}="1"]`,
     }),

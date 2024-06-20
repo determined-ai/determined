@@ -1,4 +1,4 @@
-import { BaseComponent, NamedComponent } from 'e2e/models/BaseComponent';
+import { BaseComponent, NamedComponent } from 'e2e/models/base/BaseComponent';
 
 /**
  * Represents the Message component from hew/src/kit/Message.tsx

@@ -1,4 +1,4 @@
-import { BaseComponent, NamedComponent } from 'e2e/models/BaseComponent';
+import { BaseComponent, NamedComponent } from 'e2e/models/base/BaseComponent';
 import { Card } from 'e2e/models/hew/Card';
 
 import { ProjectActionDropdown } from './ProjcetActionDropdown';
@@ -15,10 +15,10 @@ export class ProjectsComponent extends NamedComponent {
     selector: '[data-testid=newProject]',
   });
   readonly createModal = new ProjectCreateModal({
-    parent: this.root,
+    root: this.root,
   });
   readonly deleteModal = new ProjectDeleteModal({
-    parent: this.root,
+    root: this.root,
   });
   readonly cardWithName = (name: string): ProjectsCard => {
     return Card.withName({ name: name, parent: this._parent }, ProjectsCard);
@@ -30,7 +30,7 @@ export class ProjectsComponent extends NamedComponent {
  */
 class ProjectsCard extends Card {
   override readonly actionMenu = new ProjectActionDropdown({
-    childNode: new BaseComponent({
+    clickThisComponentToOpen: new BaseComponent({
       parent: this,
       selector: Card.actionMenuSelector,
     }),

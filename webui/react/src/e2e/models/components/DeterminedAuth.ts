@@ -1,4 +1,4 @@
-import { BaseComponent, NamedComponent } from 'e2e/models/BaseComponent';
+import { BaseComponent, NamedComponent } from 'e2e/models/base/BaseComponent';
 import { ErrorComponent } from 'e2e/models/utils/error';
 
 /**
@@ -6,7 +6,7 @@ import { ErrorComponent } from 'e2e/models/utils/error';
  */
 export class DeterminedAuth extends NamedComponent {
   readonly defaultSelector = 'div[data-test-component="detAuth"]';
-  readonly #form: BaseComponent = new BaseComponent({ parent: this, selector: 'form' });
+  readonly #form = new BaseComponent({ parent: this, selector: 'form' });
   readonly username = new BaseComponent({
     parent: this.#form,
     selector: 'input[data-testid="username"]',

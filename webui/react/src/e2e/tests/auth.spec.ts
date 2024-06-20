@@ -1,7 +1,7 @@
 import { expect } from '@playwright/test';
 
 import { test } from 'e2e/fixtures/global-fixtures';
-import { BasePage } from 'e2e/models/BasePage';
+import { BasePage } from 'e2e/models/base/BasePage';
 import { SignIn } from 'e2e/models/pages/SignIn';
 
 test.describe('Authentication', () => {

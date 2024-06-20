@@ -1,4 +1,4 @@
-import { NamedComponent } from 'e2e/models/BaseComponent';
+import { NamedComponent } from 'e2e/models/base/BaseComponent';
 import { Pivot } from 'e2e/models/hew/Pivot';
 
 import { ModelRegistry } from './ModelRegistry';
