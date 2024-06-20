@@ -190,6 +190,18 @@ def set_workspace_namespace_binding(args: argparse.Namespace) -> None:
     return None
 
 
+def delete_workspace_namespace_binding(args: argparse.Namespace) -> None:
+    sess = cli.setup_session(args)
+    w = api.workspace_by_name(sess, args.workspace_name)
+    cluster_names = [""] if not args.cluster_name else [args.cluster_name]
+
+    bindings.delete_DeleteWorkspaceNamespaceBindings(
+        sess, workspaceId=w.id, clusterNames=cluster_names
+    )
+    print("Successfully deleted binding.")
+    return None
+
+
 def _parse_agent_user_group_args(args: argparse.Namespace) -> Optional[bindings.v1AgentUserGroup]:
     if args.agent_uid or args.agent_gid or args.agent_user or args.agent_group:
         return bindings.v1AgentUserGroup(
@@ -515,6 +527,19 @@ args_description = [
                                 type=str,
                                 help="cluster within which we create \
                                 the workspace-namespace binding",
+                            ),
+                        ],
+                    ),
+                    cli.Cmd(
+                        "delete",
+                        delete_workspace_namespace_binding,
+                        "delete workspace-namespace binding",
+                        [
+                            cli.Arg("workspace_name", type=str, help="name of the workspace"),
+                            cli.Arg(
+                                "--cluster-name",
+                                type=str,
+                                help="cluster the workspace-namespace binding belongs to",
                             ),
                         ],
                     ),

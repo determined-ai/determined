@@ -852,8 +852,6 @@ func TestVerifyNamespaceExists(t *testing.T) {
 func TestRemoveEmptyNamespace(t *testing.T) {
 	ctx := context.Background()
 	wkspID1, _ := db.RequireMockWorkspaceID(t, db.SingleDB(), "")
-	// wkspID2, _ := db.RequireMockWorkspaceID(t, db.SingleDB(), "")
-	// wkspID3, _ := db.RequireMockWorkspaceID(t, db.SingleDB(), "")
 
 	namespaceName := "anamespace"
 	clusterName := "testing_C1"
