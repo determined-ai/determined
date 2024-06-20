@@ -1,6 +1,6 @@
 import { Loadable, NotLoaded } from 'hew/utils/loadable';
 
-import { FilterFormStore } from 'components/FilterForm/components/FilterFormStore';
+import { FilterFormStore, getInitField } from 'components/FilterForm/components/FilterFormStore';
 import {
   Conjunction,
   FilterFormSet,
@@ -15,6 +15,8 @@ import { V1ColumnType, V1LocationType, V1ProjectColumn } from 'services/api-ts-s
 const jsonReplacer = (key: string, value: unknown): unknown => {
   return key === 'id' ? undefined : value;
 };
+
+const initField = JSON.parse(JSON.stringify(getInitField(), jsonReplacer));
 
 const ROOT_ID = 'ROOT';
 
@@ -186,16 +188,7 @@ describe('FilterFormStore', () => {
         let formset = getFormset(filterFormStore);
         expect(JSON.parse(JSON.stringify(formset, jsonReplacer))).toStrictEqual({
           filterGroup: {
-            children: [
-              {
-                columnName: 'name',
-                kind: FormKind.Field,
-                location: V1LocationType.EXPERIMENT,
-                operator: Operator.Contains,
-                type: V1ColumnType.TEXT,
-                value: null,
-              },
-            ],
+            children: [initField],
             conjunction: Conjunction.And,
             kind: FormKind.Group,
           },
@@ -207,24 +200,7 @@ describe('FilterFormStore', () => {
         formset = getFormset(filterFormStore);
         expect(JSON.parse(JSON.stringify(formset, jsonReplacer))).toStrictEqual({
           filterGroup: {
-            children: [
-              {
-                columnName: 'name',
-                kind: FormKind.Field,
-                location: V1LocationType.EXPERIMENT,
-                operator: Operator.Contains,
-                type: V1ColumnType.TEXT,
-                value: null,
-              },
-              {
-                columnName: 'name',
-                kind: FormKind.Field,
-                location: V1LocationType.EXPERIMENT,
-                operator: Operator.Contains,
-                type: V1ColumnType.TEXT,
-                value: null,
-              },
-            ],
+            children: [initField, initField],
             conjunction: Conjunction.And,
             kind: FormKind.Group,
           },
@@ -301,14 +277,7 @@ describe('FilterFormStore', () => {
           filterGroup: {
             children: [
               { children: [], conjunction: Conjunction.And, kind: FormKind.Group },
-              {
-                columnName: 'name',
-                kind: FormKind.Field,
-                location: V1LocationType.EXPERIMENT,
-                operator: Operator.Contains,
-                type: V1ColumnType.TEXT,
-                value: null,
-              },
+              initField,
             ],
             conjunction: Conjunction.And,
             kind: FormKind.Group,
@@ -329,25 +298,11 @@ describe('FilterFormStore', () => {
           expect(JSON.parse(JSON.stringify(formset, jsonReplacer))).toStrictEqual({
             filterGroup: {
               children: [
-                {
-                  columnName: 'name',
-                  kind: FormKind.Field,
-                  location: V1LocationType.EXPERIMENT,
-                  operator: Operator.Contains,
-                  type: V1ColumnType.TEXT,
-                  value: null,
-                },
+                initField,
                 {
                   children: [
                     { children: [], conjunction: Conjunction.And, kind: FormKind.Group },
-                    {
-                      columnName: 'name',
-                      kind: FormKind.Field,
-                      location: V1LocationType.EXPERIMENT,
-                      operator: Operator.Contains,
-                      type: V1ColumnType.TEXT,
-                      value: null,
-                    },
+                    initField,
                   ],
                   conjunction: Conjunction.And,
                   kind: FormKind.Group,
@@ -539,7 +494,7 @@ describe('FilterFormStore', () => {
         filterFormStore.addChild(ROOT_ID, FormKind.Field);
 
         let field = getField(filterFormStore);
-        expect(field).toMatchObject({ columnName: 'name' });
+        expect(field).toMatchObject({ columnName: initField.columnName });
         const col: V1ProjectColumn = {
           column: 'id',
           displayName: 'ID',

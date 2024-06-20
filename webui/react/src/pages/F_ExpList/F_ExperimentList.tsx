@@ -64,7 +64,12 @@ import useScrollbarWidth from 'hooks/useScrollbarWidth';
 import { useSettings } from 'hooks/useSettings';
 import { useTypedParams } from 'hooks/useTypedParams';
 import { getProjectColumns, getProjectNumericMetricsRange, searchExperiments } from 'services/api';
-import { V1BulkExperimentFilters, V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
+import {
+  V1BulkExperimentFilters,
+  V1ColumnType,
+  V1LocationType,
+  V1TableType,
+} from 'services/api-ts-sdk';
 import usersStore from 'stores/users';
 import userSettings from 'stores/userSettings';
 import {
@@ -108,6 +113,7 @@ type ExperimentWithIndex = { index: number; experiment: BulkExperimentItem };
 const NO_PINS_WIDTH = 200;
 
 export const BANNED_FILTER_COLUMNS = new Set(['searcherMetricsVal']);
+const BANNED_SORT_COLUMNS = new Set(['tags', 'searcherMetricsVal']);
 
 const makeSortString = (sorts: ValidSort[]): string =>
   sorts.map((s) => `${s.column}=${s.direction}`).join(',');
@@ -392,7 +398,10 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     let mounted = true;
     (async () => {
       try {
-        const columns = await getProjectColumns({ id: project.id });
+        const columns = await getProjectColumns({
+          id: project.id,
+          tableType: V1TableType.EXPERIMENT,
+        });
         columns.sort((a, b) =>
           a.location === V1LocationType.EXPERIMENT && b.location === V1LocationType.EXPERIMENT
             ? experimentColumns.indexOf(a.column as ExperimentColumn) -
@@ -752,10 +761,25 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         if (columnName === MULTISELECT) {
           return (columnDefs[columnName] = defaultSelectionColumn(selection.rows, false));
         }
-        if (columnName in columnDefs) return columnDefs[columnName];
-        if (!Loadable.isLoaded(projectColumnsMap)) return;
+
+        if (!Loadable.isLoaded(projectColumnsMap)) {
+          if (columnName in columnDefs) return columnDefs[columnName];
+          return;
+        }
+
         const currentColumn = projectColumnsMap.data[columnName];
-        if (!currentColumn) return;
+        if (!currentColumn) {
+          if (columnName in columnDefs) return columnDefs[columnName];
+          return;
+        }
+
+        // prioritize column title from getProjectColumns API response, but use static front-end definition as fallback:
+        if (columnName in columnDefs)
+          return {
+            ...columnDefs[columnName],
+            title: currentColumn.displayName ?? columnDefs[columnName].title,
+          };
+
         let dataPath: string | undefined = undefined;
         switch (currentColumn.location) {
           case V1LocationType.EXPERIMENT:
@@ -990,11 +1014,15 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
           }
         },
       },
-      { type: 'divider' as const },
+      ...(BANNED_SORT_COLUMNS.has(column.column)
+        ? []
+        : [
+            { type: 'divider' as const },
+            ...sortMenuItemsForColumn(column, sorts, handleSortChange),
+          ]),
       ...(BANNED_FILTER_COLUMNS.has(column.column)
         ? []
         : [
-            ...sortMenuItemsForColumn(column, sorts, handleSortChange),
             { type: 'divider' as const },
             {
               icon: <Icon decorative name="filter" />,
@@ -1046,6 +1074,8 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   return (
     <>
       <TableActionBar
+        bannedFilterColumns={BANNED_FILTER_COLUMNS}
+        bannedSortColumns={BANNED_SORT_COLUMNS}
         columnGroups={[
           V1LocationType.EXPERIMENT,
           [V1LocationType.VALIDATIONS, V1LocationType.TRAINING, V1LocationType.CUSTOMMETRIC],
