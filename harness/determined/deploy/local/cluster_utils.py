@@ -2,6 +2,7 @@ import contextlib
 import getpass
 import os
 import pathlib
+import random
 import re
 import secrets
 import socket
@@ -187,9 +188,15 @@ def master_up(
         )
     except ValueError:
         random_password_characters = string.ascii_uppercase + string.ascii_lowercase + string.digits
-        generated_user_password = "".join(
-            [secrets.choice(random_password_characters) for _ in range(16)]
-        )
+        random_password = [
+            secrets.choice(string.ascii_lowercase),
+            secrets.choice(string.ascii_uppercase),
+            secrets.choice(string.digits),
+        ]
+        random_password.extend([secrets.choice(random_password_characters) for _ in range(13)])
+        random.shuffle(random_password)
+        generated_user_password = "".join(random_password)
+
         master_conf["security"]["initial_user_password"] = generated_user_password
         make_temp_conf = True
 
