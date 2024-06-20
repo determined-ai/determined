@@ -869,6 +869,7 @@ func TestDeleteWorkspace(t *testing.T) {
 	namespaceName := uuid.New().String()
 	mockRM.On("VerifyNamespaceExists", namespaceName, noName).Return(nil).Once()
 	mockRM.On("DefaultNamespace", noName).Return(&defaultNamespace, nil).Once()
+	mockRM.On("RemoveEmptyNamespace", namespaceName, noName).Return(nil).Once()
 	resp, err := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{
 		Name:                  workspaceName,
 		ClusterNamespacePairs: map[string]string{noName: namespaceName},
@@ -1005,7 +1006,7 @@ func testSetWkspNmspBindingsErrorCases(t *testing.T) {
 				ClusterNamespacePairs: map[string]string{noName: badNamespace},
 			},
 			setupMockRM: func(mockRM *mocks.ResourceManager) {
-				mockRM.On("VerifyNamespaceExists", badNamespace, noName).
+				mockRM.On("VerifyNamespaceExists", badNamespace, cluster1).
 					Return(fmt.Errorf("namespace does not exist")).Once()
 			},
 			multiRM: false,

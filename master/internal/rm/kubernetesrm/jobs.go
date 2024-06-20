@@ -663,7 +663,7 @@ func (j *jobsService) VerifyNamespaceExists(namespaceName string) error {
 
 func (j *jobsService) DeleteNamespace(namespaceName string) error {
 	j.mu.Lock()
-	defer j.mu.Lock()
+	defer j.mu.Unlock()
 	return j.deleteNamespace(namespaceName)
 }
 
