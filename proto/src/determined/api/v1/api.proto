@@ -2112,7 +2112,7 @@ service Determined {
   rpc SetWorkspaceNamespaceBindings(SetWorkspaceNamespaceBindingsRequest)
       returns (SetWorkspaceNamespaceBindingsResponse) {
     option (google.api.http) = {
-      post: "/api/v1/workspaces/{workspace_id}/bind",
+      post: "/api/v1/workspaces/{workspace_id}/namespace-bindings",
       body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
@@ -2125,6 +2125,17 @@ service Determined {
       returns (ListWorkspaceNamespaceBindingsResponse) {
     option (google.api.http) = {
       get: "/api/v1/workspaces/{id}/list-namespace-bindings"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Workspaces"
+    };
+  }
+
+  // Deletes workpace namespace bindings.
+  rpc DeleteWorkspaceNamespaceBindings(DeleteWorkspaceNamespaceBindingsRequest)
+      returns (DeleteWorkspaceNamespaceBindingsResponse) {
+    option (google.api.http) = {
+      delete: "/api/v1/workspaces/{workspace_id}/namespace-bindings"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Workspaces"
