@@ -259,6 +259,21 @@ message ListWorkspaceNamespaceBindingsResponse {
   map<string, string> namespace_bindings = 1;
 }
 
+// Request for deleting workspace namespace bindings.
+message DeleteWorkspaceNamespaceBindingsRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "workspace_id", "cluster_names" ] }
+  };
+
+  // The unique id of the workspace.
+  int32 workspace_id = 1;
+  // The names of the clusters to delete the bindings for.
+  repeated string cluster_names = 2;
+}
+
+// Response to DeleteWorkspaceNamespaceBindingsRequest.
+message DeleteWorkspaceNamespaceBindingsResponse {}
+
 // Request for archiving a workspace.
 message ArchiveWorkspaceRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
