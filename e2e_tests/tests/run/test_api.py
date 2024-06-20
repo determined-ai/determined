@@ -17,7 +17,7 @@ def wait_for_run_state(
 ) -> None:
     deadline = time.time() + timeout
     while time.time() < deadline:
-        resp = bindings.get_SearchRuns(
+        resp = bindings.post_SearchRuns(
             test_session,
             limit=1,
             filter="""
@@ -53,7 +53,7 @@ def test_run_kill() -> None:
         sess, conf.fixtures_path("no_op/single.yaml"), conf.fixtures_path("no_op")
     )
 
-    searchResp = bindings.get_SearchRuns(
+    searchResp = bindings.post_SearchRuns(
         sess,
         limit=1,
         filter="""{
@@ -143,7 +143,7 @@ def test_run_kill_filter() -> None:
         sess, body=bindings.v1KillRunsRequest(runIds=[], filter=runFilter, projectId=1)
     )
 
-    searchResp = bindings.get_SearchRuns(sess, filter=runFilter)
+    searchResp = bindings.post_SearchRuns(sess, filter=runFilter)
 
     # validate response
     assert len(killResp.results) > 0, f"failed to kill runs in exp {exp_id}"
@@ -161,7 +161,7 @@ def test_run_pause_and_resume() -> None:
         sess, conf.fixtures_path("no_op/single.yaml"), conf.fixtures_path("no_op")
     )
 
-    searchResp = bindings.get_SearchRuns(
+    searchResp = bindings.post_SearchRuns(
         sess,
         limit=1,
         filter="""{"filterGroup":{"children":[{"columnName":"experimentId","kind":"field",
