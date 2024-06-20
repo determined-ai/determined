@@ -948,6 +948,40 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
     };
   }, [canceler, stopPolling]);
 
+  const selectionLabel = useMemo(() => {
+    let newSettings: SelectionState = { ...settings.selection };
+    let excludedList: number[] = [];
+    let includedList: number[] = [];
+
+    if (newSettings.type === 'ALL_EXCEPT') {
+      excludedList = newSettings.exclusions;
+    } else {
+      includedList = newSettings.selections;
+    }
+
+    const numerOfSelection = excludedList.length === 0
+      ? includedList.length
+      : excludedList.length;
+
+    return Loadable.match(total, {
+      Failed: () => null,
+      Loaded: (totalExperiments) => {
+        let label = `${totalExperiments.toLocaleString()} ${pluralizer(
+          totalExperiments,
+          'run',
+          'runs',
+        )}`;
+
+        if (numerOfSelection !== 0) {
+          label = `${numerOfSelection} of ${label} selected`;
+        }
+
+        return label;
+      },
+      NotLoaded: () => `Loading runs...`,
+    });
+  }, [total, settings.selection]);
+
   return (
     <div className={css.content} ref={contentRef}>
       <Row>
@@ -986,6 +1020,11 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
               rowHeight={globalSettings.rowHeight}
               onRowHeightChange={onRowHeightChange}
             />
+            {!isMobile && (
+              <span className={css.runSelection} data-test="runSelection">
+                {selectionLabel}
+              </span>
+            )}
           </Row>
         </Column>
         <Column align="right">
