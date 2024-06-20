@@ -723,6 +723,92 @@ def test_set_workspace_namespace_bindings(
 
 @pytest.mark.e2e_gpu
 @pytest.mark.e2e_multi_k8s
+def test_delete_workspace_namespace_bindings(
+    is_multirm_cluster: bool, namespaces_created: Tuple[str, str]
+) -> None:
+    namespace, _ = namespaces_created
+    success = "Successfully deleted binding."
+
+    # Create a workspace with a binding.
+    sess = api_utils.admin_session()
+    w_name = uuid.uuid4().hex[:8]
+    detproc.check_call(
+        sess,
+        [
+            "det",
+            "w",
+            "create",
+            w_name,
+            "--cluster-name",
+            conf.DEFAULT_RM_CLUSTER_NAME,
+            "--namespace",
+            namespace,
+        ],
+    )
+
+    # Invalid cluster name.
+    nonexistent_cluster = "nonexistentrm"
+    detproc.check_error(
+        sess,
+        [
+            "det",
+            "w",
+            "bindings",
+            "delete",
+            w_name,
+            "--cluster-name",
+            nonexistent_cluster,
+        ],
+        "no resource manager with cluster name",
+    )
+
+    # no cluster name. (Should fail for multirm but work for single kubernetes rm).
+    if is_multirm_cluster:
+        detproc.check_error(
+            sess,
+            ["det", "w", "bindings", "delete", w_name],
+            "must specify a cluster name",
+        )
+    else:
+        output = detproc.check_output(
+            sess,
+            ["det", "w", "bindings", "delete", w_name],
+        )
+        assert success in output
+
+    # valid cluster name.
+
+    # reset binding
+    detproc.check_call(
+        sess,
+        [
+            "det",
+            "w",
+            "bindings",
+            "set",
+            w_name,
+            "--cluster-name",
+            conf.DEFAULT_RM_CLUSTER_NAME,
+            "--namespace",
+            namespace,
+        ],
+    )
+    output = detproc.check_output(
+        sess,
+        ["det", "w", "bindings", "delete", w_name, "--cluster-name", conf.DEFAULT_RM_CLUSTER_NAME],
+    )
+    assert success in output
+
+    # Now that binding is deleted, try deleting default binding
+    detproc.check_error(
+        sess,
+        ["det", "w", "bindings", "delete", w_name, "--cluster-name", conf.DEFAULT_RM_CLUSTER_NAME],
+        "tried to delete default binding for cluster " + conf.DEFAULT_RM_CLUSTER_NAME,
+    )
+
+
+@pytest.mark.e2e_gpu
+@pytest.mark.e2e_multi_k8s
 def test_list_workspace_namespace_bindings(
     is_multirm_cluster: bool, namespaces_created: Tuple[str, str]
 ) -> None:

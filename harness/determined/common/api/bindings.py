@@ -17935,6 +17935,34 @@ def delete_DeleteWorkspace(
         return v1DeleteWorkspaceResponse.from_json(_resp.json())
     raise APIHttpError("delete_DeleteWorkspace", _resp)
 
+def delete_DeleteWorkspaceNamespaceBindings(
+    session: "api.BaseSession",
+    *,
+    workspaceId: int,
+    clusterNames: "typing.Optional[typing.Sequence[str]]" = None,
+) -> None:
+    """Deletes workpace namespace bindings.
+
+    - workspaceId: The unique id of the workspace.
+    - clusterNames: The names of the clusters to delete the bindings for.
+    """
+    _params = {
+        "clusterNames": clusterNames,
+    }
+    _resp = session._do_request(
+        method="DELETE",
+        path=f"/api/v1/workspaces/{workspaceId}/namespace-bindings",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("delete_DeleteWorkspaceNamespaceBindings", _resp)
+
 def post_DisableAgent(
     session: "api.BaseSession",
     *,
@@ -23319,7 +23347,7 @@ def post_SetWorkspaceNamespaceBindings(
     _params = None
     _resp = session._do_request(
         method="POST",
-        path=f"/api/v1/workspaces/{workspaceId}/bind",
+        path=f"/api/v1/workspaces/{workspaceId}/namespace-bindings",
         params=_params,
         json=body.to_json(True),
         data=None,

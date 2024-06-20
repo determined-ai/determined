@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"unicode"
 
 	"github.com/pkg/errors"
@@ -66,36 +67,50 @@ func maskStorageConfigSecrets(w *workspacev1.Workspace) error {
 	return nil
 }
 
-func (a *apiServer) validateRequestClusterName(clusterName string) error {
+func (a *apiServer) validateRequestClusterName(clusterName string) (string, error) {
 	if len(clusterName) == 0 && len(a.m.allRms) > 1 {
-		return status.Errorf(codes.InvalidArgument, "must specify a cluster name when using MultiRM")
+		return "", status.Errorf(codes.InvalidArgument, "must specify a cluster name when using MultiRM")
+	}
+
+	// Since SingleRM clusters don't have to specify the cluster name in namespace-binding requests,
+	// we populate the cluster name appropriately if it is set in the master config.
+	if len(a.m.allRms) == 1 && clusterName == "" {
+		for k := range a.m.allRms {
+			clusterName = k
+		}
 	}
 	_, ok := a.m.allRms[clusterName]
 	if !ok {
-		return status.Errorf(codes.InvalidArgument,
+		return "", status.Errorf(codes.InvalidArgument,
 			"no resource manager with cluster name %s", clusterName)
 	}
-	return nil
+	return clusterName, nil
 }
 
-func (a *apiServer) validateClusterNamespacePairs(clusterNamespacePairs map[string]string) error {
+func (a *apiServer) validateClusterNamespacePairs(clusterNamespacePairs map[string]string) (map[string]string, error) {
 	allClusters := make(map[string]int)
 	for clusterName, namespace := range clusterNamespacePairs {
 		if _, ok := allClusters[clusterName]; ok {
-			return status.Errorf(codes.InvalidArgument, `Cannot specify the same cluster name with 
+			return nil, status.Errorf(codes.InvalidArgument, `Cannot specify the same cluster name with 
 			different namespace, workspace-namespace bindings are unique per cluster per workspace.`)
 		}
 		allClusters[clusterName] = 1
 		if len(clusterName) > 0 && len(namespace) == 0 {
-			return status.Errorf(codes.InvalidArgument,
+			return nil, status.Errorf(codes.InvalidArgument,
 				"Must specify a Kubernetes namespace")
 		}
-		err := a.validateRequestClusterName(clusterName)
+		newClusterName, err := a.validateRequestClusterName(clusterName)
 		if err != nil {
-			return err
+			return nil, err
+		}
+		// This might occur when using singleRM with a cluster name defined in the master config,
+		// but not specified in a given request
+		if newClusterName != clusterName {
+			clusterNamespacePairs[newClusterName] = namespace
+			delete(clusterNamespacePairs, clusterName)
 		}
 	}
-	return nil
+	return clusterNamespacePairs, nil
 }
 
 func validateWorkspaceName(name string) error {
@@ -413,7 +428,8 @@ func (a *apiServer) PostWorkspace(
 		}
 	}
 
-	if err := a.validateClusterNamespacePairs(req.ClusterNamespacePairs); err != nil {
+	req.ClusterNamespacePairs, err = a.validateClusterNamespacePairs(req.ClusterNamespacePairs)
+	if err != nil {
 		return nil, err
 	}
 
@@ -501,6 +517,30 @@ func (a *apiServer) PostWorkspace(
 	}, nil
 }
 
+func (a *apiServer) DeleteWorkspaceNamespaceBindings(ctx context.Context,
+	req *apiv1.DeleteWorkspaceNamespaceBindingsRequest,
+) (*apiv1.DeleteWorkspaceNamespaceBindingsResponse, error) {
+	currUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	clusterNames := []string{}
+	for _, c := range req.ClusterNames {
+		newClusterName, err := a.validateRequestClusterName(c)
+		if err != nil {
+			return nil, err
+		}
+		c = newClusterName
+		clusterNames = append(clusterNames, c)
+	}
+
+	err = a.deleteWorkspaceNamespaceBinding(ctx, clusterNames, req.WorkspaceId, currUser)
+	if err != nil {
+		return nil, err
+	}
+	return &apiv1.DeleteWorkspaceNamespaceBindingsResponse{}, nil
+}
+
 func (a *apiServer) deleteWorkspaceNamespaceBinding(ctx context.Context,
 	clusterNames []string, workspaceID int32, curUser *model.User,
 ) error {
@@ -519,10 +559,29 @@ func (a *apiServer) deleteWorkspaceNamespaceBinding(ctx context.Context,
 			if err != nil {
 				return err
 			}
+			deletedClusters := map[string]int{}
 			for _, v := range deletedBindings {
+				deletedClusters[v.ClusterName] = 1
 				err = a.m.rm.RemoveEmptyNamespace(v.Namespace, v.ClusterName)
 				if err != nil {
 					return err
+				}
+			}
+			// Since bindings to the default namespace are not stored in the db, we may
+			// delete less bindings in the database than specified in the request
+			if len(deletedClusters) < len(clusterNames) {
+				switch {
+				case len(clusterNames) == 1:
+					return fmt.Errorf("tried to delete default binding for cluster %v", clusterNames[0])
+				default:
+					remainingClusters := ""
+					for _, i := range clusterNames {
+						if _, ok := deletedClusters[i]; !ok {
+							remainingClusters = remainingClusters + i + ", "
+						}
+					}
+					return fmt.Errorf("tried to delete default bindings for the following clusters: %v",
+						remainingClusters[:len(remainingClusters)-2])
 				}
 			}
 			return nil
@@ -651,7 +710,7 @@ func (a *apiServer) PatchWorkspace(
 		}
 		if len(toDelete) > 0 {
 			err = a.deleteWorkspaceNamespaceBinding(ctx, toDelete, req.Id, &currUser)
-			if err != nil {
+			if err != nil && !strings.Contains(err.Error(), "tried to delete default binding.") {
 				return nil, err
 			}
 		}
@@ -805,7 +864,8 @@ func (a *apiServer) SetWorkspaceNamespaceBindings(ctx context.Context,
 		return nil, err
 	}
 
-	if err := a.validateClusterNamespacePairs(req.ClusterNamespacePairs); err != nil {
+	req.ClusterNamespacePairs, err = a.validateClusterNamespacePairs(req.ClusterNamespacePairs)
+	if err != nil {
 		return nil, err
 	}
 
@@ -974,49 +1034,48 @@ func (a *apiServer) DeleteWorkspace(
 	if err != nil {
 		return nil, fmt.Errorf("error deleting workspace (%d) templates: %w", req.Id, err)
 	}
-	// Delete workspace-namespace bindings associated with the workspace.
-	_, err = db.Bun().NewDelete().
+	// get the workspace-namespace bindings associated with the workspace.
+	var toBeDeletedBindings []model.WorkspaceNamespace
+	err = db.Bun().NewSelect().
 		Model(&model.WorkspaceNamespace{}).
 		Where("workspace_id = ?", req.Id).
-		Exec(ctx)
+		Scan(ctx, &toBeDeletedBindings)
 	if err != nil {
-		return nil, fmt.Errorf("error deleting workspace-namespace bindings")
+		return nil, fmt.Errorf("error getting workspace-namespace bindings")
 	}
 
 	// Get the auto-generated namespace name for the workspace.
-	namespaceName, err := getAutoGeneratedNamespaceName(ctx, int(req.Id))
+	autoNamespaceName, err := getAutoGeneratedNamespaceName(ctx, int(req.Id))
 	if err != nil {
 		return nil, fmt.Errorf("error getting auto-generated namespace: %w", err)
 	}
 
-	if len(projects) == 0 {
-		err = a.m.db.QueryProto("delete_workspace", holder, req.Id)
-		if err != nil {
-			return nil, fmt.Errorf("error deleting workspace (%d): %w", req.Id, err)
-		}
-
-		// Delete the auto-generated namespace (if it exists) and its resources in Kubernetes.
-		// TODO(saloni): Cleanup request processing workers if the auto-generated namespace is not
-		// bound to any other workspaces.
-		err = a.m.rm.DeleteNamespace(*namespaceName)
-		if err != nil {
-			return nil, err
-		}
-
-		return &apiv1.DeleteWorkspaceResponse{Completed: true}, nil
-	}
+	var wg sync.WaitGroup
+	wg.Add(1)
 	go func() {
+		defer wg.Done()
 		a.deleteWorkspace(ctx, req.Id, projects)
 	}()
+	wg.Wait()
 
 	// Delete the auto-generated namespace (if it exists) and its resources in Kubernetes.
-	// TODO(saloni): Cleanup request processing workers if the auto-generated namespace is not bound
-	// to any other workspaes.
-	err = a.m.rm.DeleteNamespace(*namespaceName)
+	err = a.m.rm.DeleteNamespace(*autoNamespaceName)
 	if err != nil {
 		return nil, err
 	}
+	for _, v := range toBeDeletedBindings {
+		// Only remove the namespace if binding is not stale
+		if _, ok := a.m.allRms[v.ClusterName]; ok {
+			err = a.m.rm.RemoveEmptyNamespace(v.Namespace, v.ClusterName)
+			if err != nil {
+				return nil, err
+			}
+		}
+	}
 
+	if len(projects) == 0 {
+		return &apiv1.DeleteWorkspaceResponse{Completed: true}, nil
+	}
 	return &apiv1.DeleteWorkspaceResponse{Completed: false}, nil
 }
 
