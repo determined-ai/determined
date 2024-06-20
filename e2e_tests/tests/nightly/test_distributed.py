@@ -11,7 +11,7 @@ from tests import experiment as exp
 
 
 @pytest.mark.distributed
-def test_mnist_pytorch_distributed(image_type: str) -> None:
+def test_mnist_pytorch_distributed() -> None:
     sess = api_utils.user_session()
     config = conf.load_config(conf.tutorials_path("mnist_pytorch/distributed.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
