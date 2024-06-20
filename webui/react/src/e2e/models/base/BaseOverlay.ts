@@ -51,6 +51,7 @@ export abstract class BaseOverlay extends BaseComponent {
           throw new Error('This popover does not have a child node to click on.');
         }
         await this.clickThisComponentToOpen.pwLocator.click(args);
+        await this.pwLocator.waitFor();
       });
   }
 

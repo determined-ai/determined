@@ -68,7 +68,7 @@ import {
 } from 'pages/F_ExpList/F_ExperimentList.settings';
 import { paths } from 'routes/utils';
 import { getProjectColumns, getProjectNumericMetricsRange, searchRuns } from 'services/api';
-import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
+import { V1ColumnType, V1LocationType, V1TableType } from 'services/api-ts-sdk';
 import userStore from 'stores/users';
 import userSettings from 'stores/userSettings';
 import { DetailedUser, ExperimentAction, FlatRun, ProjectColumn } from 'types';
@@ -99,7 +99,8 @@ const INITIAL_LOADING_RUNS: Loadable<FlatRun>[] = new Array(PAGE_SIZE).fill(NotL
 
 const STATIC_COLUMNS = [MULTISELECT];
 
-const BANNED_FILTER_COLUMNS = new Set(['searcherMetricsVal']);
+const BANNED_FILTER_COLUMNS = new Set(['searcherMetricsVal', 'parentArchived', 'isExpMultitrial']);
+const BANNED_SORT_COLUMNS = new Set(['tags', 'searcherMetricsVal']);
 
 const NO_PINS_WIDTH = 200;
 
@@ -200,7 +201,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
 
   const projectColumns = useAsync(async () => {
     try {
-      const columns = await getProjectColumns({ id: projectId });
+      const columns = await getProjectColumns({ id: projectId, tableType: V1TableType.RUN });
       columns.sort((a, b) =>
         a.location === V1LocationType.EXPERIMENT && b.location === V1LocationType.EXPERIMENT
           ? runColumns.indexOf(a.column as RunColumn) - runColumns.indexOf(b.column as RunColumn)
@@ -295,11 +296,25 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
           return defaultSelectionColumn(selection.rows, false);
         }
 
-        if (columnName in columnDefs) return columnDefs[columnName];
-        const currentColumn = projectColumnsMap.getOrElse({})[columnName];
-        if (!currentColumn) return;
-        let dataPath: string | undefined = undefined;
+        if (!Loadable.isLoaded(projectColumnsMap)) {
+          if (columnName in columnDefs) return columnDefs[columnName];
+          return;
+        }
 
+        const currentColumn = projectColumnsMap.data[columnName];
+        if (!currentColumn) {
+          if (columnName in columnDefs) return columnDefs[columnName];
+          return;
+        }
+
+        // prioritize column title from getProjectColumns API response, but use static front-end definition as fallback:
+        if (columnName in columnDefs)
+          return {
+            ...columnDefs[columnName],
+            title: currentColumn.displayName ?? columnDefs[columnName].title,
+          };
+
+        let dataPath: string | undefined = undefined;
         switch (currentColumn.location) {
           case V1LocationType.EXPERIMENT:
             dataPath = `experiment.${currentColumn.column}`;
@@ -816,6 +831,18 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
         return items;
       }
 
+      if (!BANNED_SORT_COLUMNS.has(column.column)) {
+        const sortCount = sortMenuItemsForColumn(column, sorts, handleSortChange).length;
+        const sortMenuItems =
+          sortCount === 0
+            ? []
+            : [
+                { type: 'divider' as const },
+                ...sortMenuItemsForColumn(column, sorts, handleSortChange),
+              ];
+        items.push(...sortMenuItems);
+      }
+
       const filterMenuItemsForColumn = () => {
         const isSpecialColumn = (SpecialColumnNames as ReadonlyArray<string>).includes(
           column.column,
@@ -838,24 +865,8 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
         handleIsOpenFilterChange?.(true);
       };
 
-      const clearFilterForColumn = () => {
-        formStore.removeByField(column.column);
-      };
-
-      const filterCount = formStore.getFieldCount(column.column).get();
-
       if (!BANNED_FILTER_COLUMNS.has(column.column)) {
-        const sortCount = sortMenuItemsForColumn(column, sorts, handleSortChange).length;
-        const sortMenuItems =
-          sortCount === 0
-            ? []
-            : [
-                { type: 'divider' as const },
-                ...sortMenuItemsForColumn(column, sorts, handleSortChange),
-              ];
-
         items.push(
-          ...sortMenuItems,
           { type: 'divider' as const },
           {
             icon: <Icon decorative name="filter" />,
@@ -868,6 +879,12 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
         );
       }
 
+      const clearFilterForColumn = () => {
+        formStore.removeByField(column.column);
+      };
+
+      const filterCount = formStore.getFieldCount(column.column).get();
+
       if (filterCount > 0) {
         items.push({
           icon: <Icon decorative name="filter" />,
@@ -878,6 +895,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
           },
         });
       }
+
       if (
         settings.heatmapOn &&
         (column.column === 'searcherMetricsVal' ||
@@ -944,6 +962,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
               onIsOpenFilterChange={handleIsOpenFilterChange}
             />
             <MultiSortMenu
+              bannedSortColumns={BANNED_SORT_COLUMNS}
               columns={projectColumns}
               isMobile={isMobile}
               sorts={sorts}
@@ -957,9 +976,9 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
               projectColumns={projectColumns}
               projectId={projectId}
               tabs={[
-                V1LocationType.EXPERIMENT,
+                V1LocationType.RUN,
                 [V1LocationType.VALIDATIONS, V1LocationType.TRAINING, V1LocationType.CUSTOMMETRIC],
-                V1LocationType.HYPERPARAMETERS,
+                V1LocationType.RUNHYPERPARAMETERS,
               ]}
               onVisibleColumnChange={handleColumnsOrderChange}
             />

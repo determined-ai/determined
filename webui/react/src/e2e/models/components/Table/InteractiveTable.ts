@@ -34,7 +34,7 @@ export class InteractiveTable<
     this.table = new Table({
       ...args.tableArgs,
       bodySelector: 'tbody.ant-table-tbody',
-      headSelector: '',
+      headSelector: 'thead.ant-table-thead',
       parent: this,
     });
   }

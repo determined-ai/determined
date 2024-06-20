@@ -94,7 +94,6 @@ func (cs *CommandService) LaunchGenericCommand(
 ) (*Command, error) {
 	cs.mu.Lock()
 	defer cs.mu.Unlock()
-
 	taskID := model.NewTaskID()
 	jobID := model.NewJobID()
 	req.Spec.CommandID = string(taskID)
@@ -122,6 +121,59 @@ func (cs *CommandService) LaunchGenericCommand(
 	}
 
 	if err := cmd.Start(context.TODO()); err != nil {
+		return nil, err
+	}
+
+	// Add it to the registry.
+	cs.commands[cmd.taskID] = cmd
+
+	return cmd, nil
+}
+
+// LaunchNotebookCommand creates notebook commands and persists them to the database.
+func (cs *CommandService) LaunchNotebookCommand(
+	req *CreateGeneric,
+	session *model.UserSession,
+) (*Command, error) {
+	cs.mu.Lock()
+	defer cs.mu.Unlock()
+
+	taskID := model.NewTaskID()
+	jobID := model.NewJobID()
+	req.Spec.CommandID = string(taskID)
+	req.Spec.TaskType = model.TaskTypeNotebook
+
+	logCtx := logger.Context{
+		"job-id":    jobID,
+		"task-id":   taskID,
+		"task-type": model.TaskTypeNotebook,
+	}
+
+	token, err := db.GenerateNotebookSessionToken(session.ID, taskID)
+	if err != nil {
+		return nil, err
+	}
+	req.Spec.Base.ExtraEnvVars[model.NotebookSessionEnvVar] = token
+	cmd := &Command{
+		db: cs.db,
+		rm: cs.rm,
+
+		GenericCommandSpec: *req.Spec,
+
+		taskID:           taskID,
+		taskType:         model.TaskTypeNotebook,
+		jobType:          model.JobTypeNotebook,
+		jobID:            jobID,
+		contextDirectory: req.ContextDirectory,
+		logCtx:           logCtx,
+		syslog:           logrus.WithFields(logrus.Fields{"component": "command"}).WithFields(logCtx.Fields()),
+	}
+
+	if err := cmd.Start(context.TODO()); err != nil {
+		return nil, err
+	}
+
+	if err := db.StartNotebookSession(context.TODO(), session.ID, taskID, &token); err != nil {
 		return nil, err
 	}
 

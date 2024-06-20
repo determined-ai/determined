@@ -12,7 +12,7 @@ import { V1ProjectColumn } from 'services/api-ts-sdk';
 
 interface Props {
   loadableColumns: Loadable<V1ProjectColumn[]>;
-  bannedFilterColumns: Set<string>;
+  bannedFilterColumns?: Set<string>;
   formStore: FilterFormStore;
   isMobile?: boolean;
   isOpenFilter: boolean;
@@ -28,7 +28,7 @@ const TableFilter = ({
   onIsOpenFilterChange,
 }: Props): JSX.Element => {
   const columns: V1ProjectColumn[] = Loadable.getOrElse([], loadableColumns).filter(
-    (column) => !bannedFilterColumns.has(column.column),
+    (column) => !bannedFilterColumns?.has(column.column),
   );
   const fieldCount = useObservable(formStore.fieldCount);
   const formset = useObservable(formStore.formset);

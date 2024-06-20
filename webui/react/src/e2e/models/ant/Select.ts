@@ -10,7 +10,7 @@ export class Select extends BaseComponent {
     selector: '.ant-select-selection-search input',
   });
   readonly _menu = new SelectMenu({
-    clickThisComponentToOpen: this.search,
+    clickThisComponentToOpen: this,
     root: this.root,
     selector: ':not(.ant-select-dropdown-hidden).ant-select-dropdown .rc-virtual-list-holder-inner',
   });
@@ -63,7 +63,7 @@ export class Select extends BaseComponent {
     return this;
   }
 
-  menuItem = this._menu.menuItem;
+  menuItem = this._menu.menuItem.bind(this._menu);
 
   /**
    * Selects a menu item with the specified title.

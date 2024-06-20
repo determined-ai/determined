@@ -19,11 +19,11 @@ export interface ComponentArgBasics {
 
 interface NamedComponentWithDefaultSelector extends ComponentArgBasics {
   attachment?: never;
-  sleector?: never;
+  selector?: never;
 }
 interface NamedComponentWithAttachment extends ComponentArgBasics {
   attachment: string;
-  sleector?: never;
+  selector?: never;
 }
 export interface BaseComponentArgs extends ComponentArgBasics {
   attachment?: never;

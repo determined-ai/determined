@@ -38,7 +38,7 @@ var defaultRunsTableColumns = []*projectv1.ProjectColumn{
 	},
 	{
 		Column:      "experimentDescription",
-		DisplayName: "Description",
+		DisplayName: "Search Description",
 		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
 		Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
 	},
@@ -140,25 +140,25 @@ var defaultRunsTableColumns = []*projectv1.ProjectColumn{
 	},
 	{
 		Column:      "experimentProgress",
-		DisplayName: "Experiment Progress",
+		DisplayName: "Search Progress",
 		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
 		Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
 	},
 	{
 		Column:      "experimentId",
-		DisplayName: "Experiment ID",
+		DisplayName: "Search ID",
 		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
 		Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
 	},
 	{
 		Column:      "experimentName",
-		DisplayName: "Experiment Name",
+		DisplayName: "Search Name",
 		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
 		Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
 	},
 	{
 		Column:      "isExpMultitrial",
-		DisplayName: "Part of Multi-Run Experiment",
+		DisplayName: "Part of Search",
 		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
 		Type:        projectv1.ColumnType_COLUMN_TYPE_UNSPECIFIED,
 	},

@@ -358,10 +358,9 @@ func (a *apiServer) LaunchNotebook(
 	}
 
 	// Launch a Notebook.
-	genericCmd, err := command.DefaultCmdService.LaunchGenericCommand(
-		model.TaskTypeNotebook,
-		model.JobTypeNotebook,
-		launchReq)
+	genericCmd, err := command.DefaultCmdService.LaunchNotebookCommand(
+		launchReq,
+		session)
 	if err != nil {
 		return nil, err
 	}
