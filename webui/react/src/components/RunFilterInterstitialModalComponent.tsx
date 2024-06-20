@@ -126,7 +126,7 @@ export const RunFilterInterstitialModalComponent = forwardRef<ControlledModalRef
           const results = await searchRuns(
             {
               filter: JSON.stringify(filter),
-              limit: 0,
+              limit: -2,
               projectId,
             },
             { signal: mergedCanceler.signal },
