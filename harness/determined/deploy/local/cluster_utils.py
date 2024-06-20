@@ -328,8 +328,6 @@ def master_up(
                 )
 
                 try:
-                    if not sys.stdin.isatty() or sys.stdin.closed:
-                        raise EOFError
                     # getpass raises this warning instead of an exception if it can't find the
                     # terminal, which almost always means we're not going to be able to receive
                     # a password interactively and securely, so should abort quickly rather

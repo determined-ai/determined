@@ -267,17 +267,27 @@ def test_master_up_down() -> None:
     assert len(containers) == 0
 
 
+@pytest.mark.parametrize(
+    "password_input, expect_generated",
+    [
+        ("XDdOB9VUp8FLpTZ2\nXDdOB9VUp8FLpTZ2\n", False),
+        ("\n\n", True),
+        ("31BLj16hEQWmPNHR\nNotTheSamePassword1\n", True),
+    ],
+)
 @pytest.mark.det_deploy_local
-def test_master_up_interactive_password() -> None:
+def test_master_up_interactive_password(
+    password_input: Optional[str], expect_generated: Optional[bool]
+) -> None:
+    assert password_input is not None
     cluster_name = "test_master_up_interactive_password"
     master_name = f"{cluster_name}_determined-master_1"
-    password_input = "XDdOB9VUp8FLpTZ2"
 
     with resource_manager(
         Resource.MASTER,
         master_name,
         boolean_flags=["delete-db"],
-        cmd_input=bytes(f"{password_input}\n{password_input}\n", "utf8"),
+        cmd_input=bytes(password_input, "utf8"),
     ) as master_up_command:
         client = docker.from_env()
 
@@ -287,6 +297,10 @@ def test_master_up_interactive_password() -> None:
             b"Determined Master was launched without a strong initial_user_password set."
             in master_up_command.stdout
         )
+        if expect_generated:
+            assert b"A password has been created for you." in master_up_command.stdout
+        else:
+            assert b"A password has been created for you." not in master_up_command.stdout
 
     containers = client.containers.list(filters={"name": master_name})
     assert len(containers) == 0
