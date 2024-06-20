@@ -1128,24 +1128,16 @@ export const getTrialWorkloads: DetApi<
 /* Runs */
 
 export const searchRuns: DetApi<
-  Service.SearchRunsParams,
+  Api.V1SearchRunsRequest,
   Api.V1SearchRunsResponse,
   Type.SearchFlatRunPagination
 > = {
   name: 'searchRuns',
-  postProcess: (response) => ({
-    pagination: response.pagination,
-    runs: response.runs.map((e) => decoder.decodeV1FlatRun(e)),
+  postProcess: ({ pagination, runs }) => ({
+    pagination,
+    runs: runs.map((e) => decoder.decodeV1FlatRun(e)),
   }),
-  request: (params, options) =>
-    detApi.Internal.searchRuns(
-      params.projectId,
-      params.offset,
-      params.limit,
-      params.sort,
-      params.filter,
-      options,
-    ),
+  request: detApi.Internal.searchRuns,
 };
 
 export const archiveRuns: DetApi<

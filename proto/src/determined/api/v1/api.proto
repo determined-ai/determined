@@ -2580,7 +2580,8 @@ service Determined {
   // Get a list of runs.
   rpc SearchRuns(SearchRunsRequest) returns (SearchRunsResponse) {
     option (google.api.http) = {
-      get: "/api/v1/runs"
+      post: "/api/v1/runs"
+      body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Internal"
