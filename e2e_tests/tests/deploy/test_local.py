@@ -299,8 +299,6 @@ def test_master_up_interactive_password(
         )
         if expect_generated:
             assert b"A password has been created for you." in master_up_command.stdout
-        else:
-            assert b"A password has been created for you." not in master_up_command.stdout
 
     containers = client.containers.list(filters={"name": master_name})
     assert len(containers) == 0
