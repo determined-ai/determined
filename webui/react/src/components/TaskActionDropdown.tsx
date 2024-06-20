@@ -3,7 +3,7 @@ import Dropdown, { MenuItem } from 'hew/Dropdown';
 import Icon from 'hew/Icon';
 import { useModal } from 'hew/Modal';
 import useConfirm from 'hew/useConfirm';
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import css from 'components/ActionDropdown/ActionDropdown.module.scss';
@@ -26,20 +26,16 @@ interface Props {
 
 const TaskActionDropdown: React.FC<Props> = ({ task, onComplete, children }: Props) => {
   const { canModifyWorkspaceNSC } = usePermissions();
-  const isKillable = isTaskKillable(
-    task,
-    canModifyWorkspaceNSC({ workspace: { id: task.workspaceId } }),
-  );
-  const taskType = task.type;
-  const isConnectable = () => {
+
+  const isConnectable = (task: CommandTask) => {
     const connectableTaskTypes: CommandType[] = [CommandType.JupyterLab, CommandType.Shell];
-    return connectableTaskTypes.includes(taskType) && task.state === CommandState.Running;
+    return connectableTaskTypes.includes(task.type) && task.state === CommandState.Running;
   };
 
   const confirm = useConfirm();
 
-  const getTaskConnectFields = () => {
-    switch (taskType) {
+  const taskConnectFields = useMemo(() => {
+    switch (task.type) {
       case CommandType.JupyterLab:
         return [
           {
@@ -57,20 +53,25 @@ const TaskActionDropdown: React.FC<Props> = ({ task, onComplete, children }: Pro
       default:
         return [];
     }
-    return [];
-  };
+  }, [task]);
 
   const TaskConnectModal = useModal(TaskConnectModalComponent);
 
-  const menuItems: MenuItem[] = [
-    {
-      key: Action.ViewLogs,
-      label: 'View Logs',
-    },
-  ];
-
-  if (isKillable) menuItems.unshift({ key: Action.Kill, label: 'Kill' });
-  if (isConnectable()) menuItems.unshift({ key: Action.Connect, label: 'Connect' });
+  const menuItems: MenuItem[] = useMemo(() => {
+    const items: MenuItem[] = [
+      {
+        key: Action.ViewLogs,
+        label: 'View Logs',
+      },
+    ];
+    if (isTaskKillable(task, canModifyWorkspaceNSC({ workspace: { id: task.workspaceId } }))) {
+      items.push({ key: Action.Kill, label: 'Kill' });
+    }
+    if (isConnectable(task)) {
+      items.push({ key: Action.Connect, label: 'Connect' });
+    }
+    return items;
+  }, [task, canModifyWorkspaceNSC]);
 
   const navigate = useNavigate();
 
@@ -109,7 +110,6 @@ const TaskActionDropdown: React.FC<Props> = ({ task, onComplete, children }: Pro
     }
     // TODO show loading indicator when we have a button component that supports it.
   };
-  const taskConnectOptions = getTaskConnectFields();
   return children ? (
     <Dropdown isContextMenu menu={menuItems} onClick={handleDropdown}>
       {children}
@@ -123,7 +123,7 @@ const TaskActionDropdown: React.FC<Props> = ({ task, onComplete, children }: Pro
         />
       </Dropdown>
       <>
-        <TaskConnectModal.Component fields={taskConnectOptions} title={`Connect to ${task.name}`} />
+        <TaskConnectModal.Component fields={taskConnectFields} title={`Connect to ${task.name}`} />
       </>
     </div>
   );
