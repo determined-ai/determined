@@ -1,30 +1,27 @@
 import Button from 'hew/Button';
 import Dropdown, { MenuItem } from 'hew/Dropdown';
 import Icon from 'hew/Icon';
-import useConfirm from 'hew/useConfirm';
 import { useModal } from 'hew/Modal';
+import useConfirm from 'hew/useConfirm';
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import css from 'components/ActionDropdown/ActionDropdown.module.scss';
+import TaskConnectModalComponent from 'components/TaskConnectModal';
 import usePermissions from 'hooks/usePermissions';
-
-import { paths } from 'routes/utils';
+import { paths, serverAddress } from 'routes/utils';
 import { killTask } from 'services/api';
-import { TaskAction as Action, AnyTask, CommandState, CommandTask, CommandType, DetailedUser } from 'types';
+import { TaskAction as Action, CommandState, CommandTask, CommandType, DetailedUser } from 'types';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { capitalize } from 'utils/string';
 import { isTaskKillable } from 'utils/task';
-import TaskConnectModalComponent from 'components/TaskConnectModal';
-import { serverAddress } from 'routes/utils';
-
 
 interface Props {
   children?: React.ReactNode;
   curUser?: DetailedUser;
   onComplete?: (action?: Action) => void;
   onVisibleChange?: (visible: boolean) => void;
-  task: AnyTask;
+  task: CommandTask;
 }
 
 const TaskActionDropdown: React.FC<Props> = ({ task, onComplete, children }: Props) => {
@@ -33,14 +30,11 @@ const TaskActionDropdown: React.FC<Props> = ({ task, onComplete, children }: Pro
     task,
     canModifyWorkspaceNSC({ workspace: { id: task.workspaceId } }),
   );
-  const taskType = (task as CommandTask).type;
+  const taskType = task.type;
   const isConnectable = () => {
-    const connectableTaskTypes: CommandType[] = [
-      CommandType.JupyterLab,
-      CommandType.Shell,
-    ];
-    return (connectableTaskTypes.includes(taskType) && (task as CommandTask).state == CommandState.Running)
-  }
+    const connectableTaskTypes: CommandType[] = [CommandType.JupyterLab, CommandType.Shell];
+    return connectableTaskTypes.includes(taskType) && task.state === CommandState.Running;
+  };
 
   const confirm = useConfirm();
 
@@ -51,20 +45,22 @@ const TaskActionDropdown: React.FC<Props> = ({ task, onComplete, children }: Pro
           {
             label: 'Connect to the running Jupyter Server in VSCode:',
             value: `${serverAddress()}${task.serviceAddress}`,
-          }
-        ]
+          },
+        ];
       case CommandType.Shell:
         return [
           {
             label: 'Start an interactive SSH session in the terminal:',
             value: `det shell open ${task.id}`,
-          }
-        ]
+          },
+        ];
+      default:
+        return [];
     }
-    return []
-  }
+    return [];
+  };
 
-  const TaskConnectModal = useModal(TaskConnectModalComponent)
+  const TaskConnectModal = useModal(TaskConnectModalComponent);
 
   const menuItems: MenuItem[] = [
     {
@@ -82,7 +78,7 @@ const TaskActionDropdown: React.FC<Props> = ({ task, onComplete, children }: Pro
     try {
       switch (key) {
         case Action.Connect:
-          TaskConnectModal.open()
+          TaskConnectModal.open();
           break;
         case Action.Kill:
           confirm({
@@ -90,7 +86,7 @@ const TaskActionDropdown: React.FC<Props> = ({ task, onComplete, children }: Pro
             danger: true,
             okText: 'Kill',
             onConfirm: async () => {
-              await killTask(task as CommandTask);
+              await killTask(task);
               onComplete?.(key);
             },
             onError: handleError,
@@ -99,7 +95,7 @@ const TaskActionDropdown: React.FC<Props> = ({ task, onComplete, children }: Pro
           break;
         case Action.ViewLogs:
           onComplete?.(key);
-          navigate(paths.taskLogs(task as CommandTask));
+          navigate(paths.taskLogs(task));
           break;
       }
     } catch (e) {
@@ -113,7 +109,7 @@ const TaskActionDropdown: React.FC<Props> = ({ task, onComplete, children }: Pro
     }
     // TODO show loading indicator when we have a button component that supports it.
   };
-  const taskConnectOptions = getTaskConnectFields()
+  const taskConnectOptions = getTaskConnectFields();
   return children ? (
     <Dropdown isContextMenu menu={menuItems} onClick={handleDropdown}>
       {children}
@@ -127,10 +123,7 @@ const TaskActionDropdown: React.FC<Props> = ({ task, onComplete, children }: Pro
         />
       </Dropdown>
       <>
-        <TaskConnectModal.Component
-          title={`Connect to ${task.name}`}
-          fields={taskConnectOptions}
-        />
+        <TaskConnectModal.Component fields={taskConnectOptions} title={`Connect to ${task.name}`} />
       </>
     </div>
   );

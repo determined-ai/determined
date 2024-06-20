@@ -918,7 +918,6 @@ export const TaskAction = {
 
 export type TaskAction = ValueOf<typeof TaskAction>;
 
-
 export type RecentEvent = {
   lastEvent: {
     date: string;
