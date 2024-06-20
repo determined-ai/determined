@@ -167,7 +167,7 @@ def test_run_pause_and_resume() -> None:
 
     searchResp = bindings.post_SearchRuns(
         sess,
-        body=bindings.v1SeaerchRunsRequest(
+        body=bindings.v1SearchRunsRequest(
             limit=1,
             filter="""{"filterGroup":{"children":[{"columnName":"experimentId","kind":"field",
         "location":"LOCATION_TYPE_RUN","operator":"=","type":"COLUMN_TYPE_NUMBER","value":"""
