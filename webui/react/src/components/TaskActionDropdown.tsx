@@ -7,7 +7,7 @@ import React, { useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import css from 'components/ActionDropdown/ActionDropdown.module.scss';
-import TaskConnectModalComponent from 'components/TaskConnectModal';
+import TaskConnectModalComponent, { TaskConnectField } from 'components/TaskConnectModal';
 import usePermissions from 'hooks/usePermissions';
 import { paths, serverAddress } from 'routes/utils';
 import { killTask } from 'services/api';
@@ -26,15 +26,16 @@ interface Props {
 
 const TaskActionDropdown: React.FC<Props> = ({ task, onComplete, children }: Props) => {
   const { canModifyWorkspaceNSC } = usePermissions();
+  const TaskConnectModal = useModal(TaskConnectModalComponent);
 
-  const isConnectable = (task: CommandTask) => {
+  const isConnectable = (task: CommandTask): boolean => {
     const connectableTaskTypes: CommandType[] = [CommandType.JupyterLab, CommandType.Shell];
     return connectableTaskTypes.includes(task.type) && task.state === CommandState.Running;
   };
 
   const confirm = useConfirm();
 
-  const taskConnectFields = useMemo(() => {
+  const taskConnectFields: TaskConnectField[] = useMemo(() => {
     switch (task.type) {
       case CommandType.JupyterLab:
         return [
@@ -54,8 +55,6 @@ const TaskActionDropdown: React.FC<Props> = ({ task, onComplete, children }: Pro
         return [];
     }
   }, [task]);
-
-  const TaskConnectModal = useModal(TaskConnectModalComponent);
 
   const menuItems: MenuItem[] = useMemo(() => {
     const items: MenuItem[] = [
@@ -122,9 +121,7 @@ const TaskActionDropdown: React.FC<Props> = ({ task, onComplete, children }: Pro
           type="text"
         />
       </Dropdown>
-      <>
-        <TaskConnectModal.Component fields={taskConnectFields} title={`Connect to ${task.name}`} />
-      </>
+      <TaskConnectModal.Component fields={taskConnectFields} title={`Connect to ${task.name}`} />
     </div>
   );
 };
