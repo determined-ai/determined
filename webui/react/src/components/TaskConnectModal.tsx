@@ -4,7 +4,6 @@ import CodeSample from 'hew/CodeSample';
 
 import { Label } from 'hew/Typography';
 import { Modal } from 'hew/Modal';
-import css from './TaskConnectModal.module.scss';
 
 
 export interface Props {
@@ -26,16 +25,16 @@ const TaskConnectModalComponent: React.FC<Props> = ({
             size="medium"
             title={title ? title : 'Connect to Task'}
         >
-            <div className={css.base}>
+            <>
                 {fields?.map((lv) => {
                     return (
-                        <div className={css.connectItem}>
+                        <>
                             <Label>{lv.label}</Label>
                             <CodeSample text={lv.value} />
-                        </div>
+                        </>
                     )
                 })}
-            </div>
+            </>
 
         </Modal>
     );
