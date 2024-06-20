@@ -9,6 +9,7 @@ import (
 	"regexp"
 	"strconv"
 	"strings"
+	"sync"
 	"unicode"
 
 	"github.com/pkg/errors"
@@ -1049,9 +1050,13 @@ func (a *apiServer) DeleteWorkspace(
 		return nil, fmt.Errorf("error getting auto-generated namespace: %w", err)
 	}
 
+	var wg sync.WaitGroup
+	wg.Add(1)
 	go func() {
+		defer wg.Done()
 		a.deleteWorkspace(ctx, req.Id, projects)
 	}()
+	wg.Wait()
 
 	// Delete the auto-generated namespace (if it exists) and its resources in Kubernetes.
 	err = a.m.rm.DeleteNamespace(*autoNamespaceName)

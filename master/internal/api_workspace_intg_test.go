@@ -1006,7 +1006,7 @@ func testSetWkspNmspBindingsErrorCases(t *testing.T) {
 				ClusterNamespacePairs: map[string]string{noName: badNamespace},
 			},
 			setupMockRM: func(mockRM *mocks.ResourceManager) {
-				mockRM.On("VerifyNamespaceExists", badNamespace, noName).
+				mockRM.On("VerifyNamespaceExists", badNamespace, cluster1).
 					Return(fmt.Errorf("namespace does not exist")).Once()
 			},
 			multiRM: false,
