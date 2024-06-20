@@ -36,7 +36,7 @@ parameters:
   # be referenced by --ee testing.
   default-pt-gpu-hpc-image:
     type: string
-    default: determinedai/pytorch-ngc-dev:8c90e80
+    default: determinedai/pytorch-ngc-dev:e960eae
   # Some python, go, and react dependencies are cached by circleci via `save_cache`/`restore_cache`.
   # If the dependencies stay the same, but the circleci code that would produce them is changed,
   # it may be necessary to invalidate the cache by incrementing this value.
