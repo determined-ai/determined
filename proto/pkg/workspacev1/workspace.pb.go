@@ -399,7 +399,7 @@ type WorkspaceNamespaceBinding struct {
 	Namespace string `protobuf:"bytes,2,opt,name=namespace,proto3" json:"namespace,omitempty"`
 	// User cluster name.
 	ClusterName string `protobuf:"bytes,3,opt,name=cluster_name,json=clusterName,proto3" json:"cluster_name,omitempty"`
-	// Whether we want to auto-create a namespace for a workspace-namespace
+	// Whether the namespace was auto-created for a workspace-namespace
 	// binding.
 	AutoCreateNamespace bool `protobuf:"varint,4,opt,name=auto_create_namespace,json=autoCreateNamespace,proto3" json:"auto_create_namespace,omitempty"`
 }

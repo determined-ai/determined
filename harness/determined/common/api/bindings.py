@@ -5384,6 +5384,29 @@ class v1GetKubernetesResourceManagersResponse(Printable):
         }
         return out
 
+class v1GetKubernetesResourceQuotasResponse(Printable):
+    """Response for listing namespaces bound to a workspace."""
+
+    def __init__(
+        self,
+        *,
+        resourceQuotas: "typing.Dict[str, float]",
+    ):
+        self.resourceQuotas = resourceQuotas
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetKubernetesResourceQuotasResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "resourceQuotas": {k: float(v) for k, v in obj["resourceQuotas"].items()},
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "resourceQuotas": {k: dump_float(v) for k, v in self.resourceQuotas.items()},
+        }
+        return out
+
 class v1GetMasterConfigResponse(Printable):
     """Response to GetMasterRequest."""
 
@@ -19305,6 +19328,30 @@ def get_GetKubernetesResourceManagers(
     if _resp.status_code == 200:
         return v1GetKubernetesResourceManagersResponse.from_json(_resp.json())
     raise APIHttpError("get_GetKubernetesResourceManagers", _resp)
+
+def get_GetKubernetesResourceQuotas(
+    session: "api.BaseSession",
+    *,
+    id: int,
+) -> "v1GetKubernetesResourceQuotasResponse":
+    """Get Kubernetes Resource Quotas for a workspace by the cluster name.
+
+    - id: The unique id of the workspace.
+    """
+    _params = None
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/workspaces/{id}/get-k8-resource-quotas",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1GetKubernetesResourceQuotasResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetKubernetesResourceQuotas", _resp)
 
 def get_GetMaster(
     session: "api.BaseSession",

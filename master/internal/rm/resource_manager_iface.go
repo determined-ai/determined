@@ -61,6 +61,7 @@ type ResourceManager interface {
 	CreateNamespace(string, string, bool) error
 	DeleteNamespace(string) error
 	RemoveEmptyNamespace(string, string) error
+	GetNamespaceResourceQuota(string, string) (*float64, error)
 	SetResourceQuota(int, string, string) error
 }
 

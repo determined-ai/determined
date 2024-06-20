@@ -4181,6 +4181,19 @@ export interface V1GetKubernetesResourceManagersResponse {
     resourceManagers: Array<string>;
 }
 /**
+ * Response for listing namespaces bound to a workspace.
+ * @export
+ * @interface V1GetKubernetesResourceQuotasResponse
+ */
+export interface V1GetKubernetesResourceQuotasResponse {
+    /**
+     * List of workspace-namespace bindings for a given workspace.
+     * @type {{ [key: string]: number; }}
+     * @memberof V1GetKubernetesResourceQuotasResponse
+     */
+    resourceQuotas: { [key: string]: number; };
+}
+/**
  * Response to GetMasterRequest.
  * @export
  * @interface V1GetMasterConfigResponse
@@ -12439,7 +12452,7 @@ export interface V1WorkspaceNamespaceBinding {
      */
     clusterName?: string;
     /**
-     * Whether we want to auto-create a namespace for a workspace-namespace binding.
+     * Whether the namespace was auto-created for a workspace-namespace binding.
      * @type {boolean}
      * @memberof V1WorkspaceNamespaceBinding
      */
@@ -35068,6 +35081,42 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
         },
         /**
          * 
+         * @summary Get Kubernetes Resource Quotas for a workspace by the cluster name.
+         * @param {number} id The unique id of the workspace.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getKubernetesResourceQuotas(id: number, options: any = {}): FetchArgs {
+            // verify required parameter 'id' is not null or undefined
+            if (id === null || id === undefined) {
+                throw new RequiredError('id','Required parameter id was null or undefined when calling getKubernetesResourceQuotas.');
+            }
+            const localVarPath = `/api/v1/workspaces/{id}/get-k8-resource-quotas`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get the requested workspace.
          * @param {number} id The id of the workspace.
          * @param {*} [options] Override http request option.
@@ -35687,6 +35736,25 @@ export const WorkspacesApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Get Kubernetes Resource Quotas for a workspace by the cluster name.
+         * @param {number} id The unique id of the workspace.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getKubernetesResourceQuotas(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetKubernetesResourceQuotasResponse> {
+            const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).getKubernetesResourceQuotas(id, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Get the requested workspace.
          * @param {number} id The id of the workspace.
          * @param {*} [options] Override http request option.
@@ -35977,6 +36045,16 @@ export const WorkspacesApiFactory = function (configuration?: Configuration, fet
         },
         /**
          * 
+         * @summary Get Kubernetes Resource Quotas for a workspace by the cluster name.
+         * @param {number} id The unique id of the workspace.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getKubernetesResourceQuotas(id: number, options?: any) {
+            return WorkspacesApiFp(configuration).getKubernetesResourceQuotas(id, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Get the requested workspace.
          * @param {number} id The id of the workspace.
          * @param {*} [options] Override http request option.
@@ -36162,6 +36240,18 @@ export class WorkspacesApi extends BaseAPI {
      */
     public deleteWorkspaceNamespaceBindings(workspaceId: number, clusterNames?: Array<string>, options?: any) {
         return WorkspacesApiFp(this.configuration).deleteWorkspaceNamespaceBindings(workspaceId, clusterNames, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Get Kubernetes Resource Quotas for a workspace by the cluster name.
+     * @param {number} id The unique id of the workspace.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof WorkspacesApi
+     */
+    public getKubernetesResourceQuotas(id: number, options?: any) {
+        return WorkspacesApiFp(this.configuration).getKubernetesResourceQuotas(id, options)(this.fetch, this.basePath)
     }
     
     /**

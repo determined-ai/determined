@@ -504,6 +504,10 @@ export interface ListWorkspaceNamespaceBindingsParams {
   id: number;
 }
 
+export interface GetKubernetesResourceQuotasParamas {
+  id: number;
+}
+
 export interface PatchProjectParams extends Api.V1PatchProject {
   id: number;
 }

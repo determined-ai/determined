@@ -413,6 +413,15 @@ func (k *ResourceManager) CreateNamespace(namespaceName string, clusterName stri
 	return nil
 }
 
+// GetNamespaceResourceQuota gets the resource quota for the specified namespace.
+func (k *ResourceManager) GetNamespaceResourceQuota(namespaceName string, clusterName string) (*float64, error) {
+	quota, err := k.jobsService.GetNamespaceResourceQuota(namespaceName)
+	if err != nil {
+		return nil, fmt.Errorf("error deleting namespace %s: %w", namespaceName, err)
+	}
+	return quota, nil
+}
+
 // DeleteNamespace implements rm.ResourceManager.
 func (k *ResourceManager) DeleteNamespace(namespace string) error {
 	err := k.jobsService.DeleteNamespace(namespace)

@@ -9,17 +9,24 @@ import { Body } from 'hew/Typography';
 import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import yaml from 'js-yaml';
 import { pick } from 'lodash';
-import React, { useCallback, useEffect, useId, useMemo } from 'react';
+import React, { Fragment, useCallback, useEffect, useId, useMemo } from 'react';
 
 import { useAsync } from 'hooks/useAsync';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import {
   getKubernetesResourceManagers,
+  getKubernetesResourceQuotas,
   listWorkspaceNamespaceBindings,
   patchWorkspace,
+  setResourceQuotas,
 } from 'services/api';
-import { V1AgentUserGroup } from 'services/api-ts-sdk';
+import {
+  V1AgentUserGroup,
+  V1WorkspaceNamespaceBinding,
+  V1WorkspaceNamespaceMeta,
+} from 'services/api-ts-sdk';
+import determinedStore, { BrandingType } from 'stores/determinedInfo';
 import workspaceStore from 'stores/workspaces';
 import { Workspace } from 'types';
 import handleError, { DetError, ErrorLevel, ErrorType } from 'utils/error';
@@ -38,7 +45,8 @@ interface FormInputs {
   useAgentUser: boolean;
   useCheckpointStorage: boolean;
   workspaceName: string;
-  bindings?: Record<string, string>;
+  bindings?: Record<string, V1WorkspaceNamespaceBinding>;
+  resourceQuotas?: Record<string, number>;
 }
 
 interface Props {
@@ -59,10 +67,12 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
     canModifyWorkspaceCheckpointStorage,
     canSetWorkspaceNamespaceBindings,
   } = usePermissions();
+  const info = useObservable(determinedStore.info);
   const [form] = Form.useForm<FormInputs>();
   const useAgentUser = Form.useWatch('useAgentUser', form);
   const useAgentGroup = Form.useWatch('useAgentGroup', form);
   const useCheckpointStorage = Form.useWatch('useCheckpointStorage', form);
+  const watchBindings = Form.useWatch('bindings', form);
   const resourceManagers = useAsync(async (canceller) => {
     try {
       const response = await getKubernetesResourceManagers(undefined, { signal: canceller.signal });
@@ -88,12 +98,38 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
           { id: workspaceId },
           { signal: canceller.signal },
         );
-        return clusterNamespacePairs.clusterNamespacePairs;
+        return clusterNamespacePairs.namespaceBindings;
       } catch (e) {
         if (!isNonK8RMError(e)) {
           handleError(e, {
             level: ErrorLevel.Error,
             publicMessage: 'Failed to fetch list of workspace namespace bindings.',
+            silent: false,
+            type: ErrorType.Server,
+          });
+        }
+        return NotLoaded;
+      }
+    },
+    [workspaceId],
+  );
+
+  const resourceQuotasList = useAsync(
+    async (canceller) => {
+      if (workspaceId === undefined) {
+        return NotLoaded;
+      }
+      try {
+        const resp = await getKubernetesResourceQuotas(
+          { id: workspaceId },
+          { signal: canceller.signal },
+        );
+        return resp.resourceQuotas;
+      } catch (e) {
+        if (!isNonK8RMError(e)) {
+          handleError(e, {
+            level: ErrorLevel.Error,
+            publicMessage: 'Failed to fetch kubernetes resource quotas for the workspace.',
             silent: false,
             type: ErrorType.Server,
           });
@@ -128,9 +164,12 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
         namespaceBindingsList.forEach((bindingsList) => {
           form.setFieldValue('bindings', { ...bindingsList });
         });
+        resourceQuotasList.forEach((quotasList) => {
+          form.setFieldValue('resourceQuotas', { ...quotasList });
+        });
       }
     },
-    [form, namespaceBindingsList],
+    [form, namespaceBindingsList, resourceQuotasList],
   );
 
   const loadableWorkspace = useObservable(workspaceStore.getWorkspace(workspaceId || 0));
@@ -178,16 +217,42 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
         {canModifyBindings && Loadable.getOrElse([], resourceManagers).length > 0 && (
           <>
             <Divider />
-            Namespace Bindings:
+            Namespace Bindings
             <Body inactive>
               Note: If you leave the Namespace name blank, the workspace will be bound to the
               default Namespace configured in the Master Config.
             </Body>
             <>
               {Loadable.getOrElse([], resourceManagers).map((name) => (
-                <Form.Item key={name} label={name} name={['bindings', name]}>
-                  <Input maxLength={63} />
-                </Form.Item>
+                <Fragment key={name}>
+                  <Form.Item label={name} name={['bindings', name, 'namespace']}>
+                    <Input
+                      disabled={watchBindings?.[name]?.['autoCreateNamespace'] ?? false}
+                      maxLength={63}
+                    />
+                  </Form.Item>
+                  {info.branding === BrandingType.HPE && (
+                    <>
+                      <Form.Item
+                        label="Auto Create Namespace"
+                        name={['bindings', name, 'autoCreateNamespace']}
+                        valuePropName="checked">
+                        <Toggle
+                          onChange={() => form.setFieldValue(['resourceQuotas', name], undefined)}
+                        />
+                      </Form.Item>
+                      {(workspaceId !== undefined ||
+                        (watchBindings?.[name]?.['autoCreateNamespace'] ?? false)) && (
+                        <Form.Item label="Resource Quota" name={['resourceQuotas', name]}>
+                          <Input
+                            disabled={!(watchBindings?.[name]?.['autoCreateNamespace'] ?? false)}
+                            maxLength={63}
+                          />
+                        </Form.Item>
+                      )}
+                    </>
+                  )}
+                </Fragment>
               ))}
             </>
           </>
@@ -296,6 +361,7 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
     loadableWorkspace,
     form,
     idPrefix,
+    info.branding,
     canModifyBindings,
     resourceManagers,
     canModifyAUG,
@@ -303,6 +369,7 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
     useAgentGroup,
     canModifyCPS,
     useCheckpointStorage,
+    watchBindings,
   ]);
 
   const handleSubmit = useCallback(async () => {
@@ -323,14 +390,34 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
           agentUserGroup?: V1AgentUserGroup;
           checkpointStorageConfig?: unknown;
           name: string;
-          clusterNamespacePairs?: Record<string, string>;
+          clusterNamespaceMeta?: Record<string, V1WorkspaceNamespaceMeta>;
         } = {
           name: workspaceName,
         };
+        const resourceQuotaBody: {
+          id: number;
+          clusterQuotaPairs?: Record<string, number>;
+        } = {
+          id: 0,
+        };
 
-        if (values.bindings) {
-          body['clusterNamespacePairs'] = pick(values.bindings, resourceManagers.getOrElse([]));
-        }
+        const clusterNamespaceMeta = Object.keys(values.bindings ?? {}).reduce(
+          (memo: Record<string, V1WorkspaceNamespaceMeta>, name) => {
+            if (values.bindings !== undefined) {
+              const data = values.bindings[name];
+              if (data.autoCreateNamespace) {
+                data.namespace = undefined;
+                memo[name] = data;
+              } else if (data.namespace !== undefined && data.namespace !== '') {
+                data.autoCreateNamespace = false;
+                memo[name] = data;
+              }
+            }
+            return memo;
+          },
+          {},
+        );
+        body['clusterNamespaceMeta'] = clusterNamespaceMeta;
 
         if (canModifyAUG) {
           let agentUserGroup = {};
@@ -350,9 +437,19 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
         if (workspaceId) {
           await patchWorkspace({ id: workspaceId, ...body });
           workspaceStore.fetch(undefined, true);
+          resourceQuotaBody['id'] = workspaceId;
         } else {
           const response = await workspaceStore.createWorkspace(body);
           routeToReactUrl(paths.workspaceDetails(response.id));
+          resourceQuotaBody['id'] = response.id;
+        }
+
+        if (values.resourceQuotas) {
+          resourceQuotaBody['clusterQuotaPairs'] = pick(
+            values.resourceQuotas,
+            resourceManagers.getOrElse([]),
+          );
+          await setResourceQuotas(resourceQuotaBody);
         }
         form.resetFields();
       }

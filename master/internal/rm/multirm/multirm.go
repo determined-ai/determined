@@ -441,6 +441,20 @@ func (m *MultiRMRouter) DeleteNamespace(namespaceName string) error {
 	})
 }
 
+// GetNamespaceResourceQuota gets the resource quota for the specified namespace.
+func (m *MultiRMRouter) GetNamespaceResourceQuota(namespaceName string,
+	clusterName string,
+) (*float64, error) {
+	if len(clusterName) == 0 {
+		return nil, fmt.Errorf("must specify cluster name when using multiRM")
+	}
+	rm, err := m.getRM(clusterName)
+	if err != nil {
+		return nil, fmt.Errorf("error getting resource manager for cluster %s: %w", clusterName, err)
+	}
+	return rm.GetNamespaceResourceQuota(namespaceName, clusterName)
+}
+
 // RemoveEmptyNamespace removes a namespace from our interfaces in cluster if it is no
 // longer used by any workspace.
 func (m *MultiRMRouter) RemoveEmptyNamespace(namespaceName string,
