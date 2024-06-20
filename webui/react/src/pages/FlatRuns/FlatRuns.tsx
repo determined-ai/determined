@@ -959,7 +959,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
       includedList = newSettings.selections;
     }
 
-    const numOfSelection = excludedList.length === 0
+    const numberOfSelection = excludedList.length === 0
       ? includedList.length
       : excludedList.length;
 
@@ -972,8 +972,8 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
           'runs',
         )}`;
 
-        if (numOfSelection !== 0) {
-          label = `${numOfSelection} of ${label} selected`;
+        if (numberOfSelection !== 0) {
+          label = `${numberOfSelection} of ${label} selected`;
         }
 
         return label;
