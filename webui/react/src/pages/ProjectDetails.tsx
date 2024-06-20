@@ -175,22 +175,22 @@ const ProjectDetails: React.FC = () => {
   const pageBreadcrumb: BreadCrumbRoute[] =
     project.workspaceId !== 1
       ? [
-        {
-          breadcrumbName: project.workspaceName || '',
-          path: paths.workspaceDetails(project.workspaceId),
-        },
+          {
+            breadcrumbName: project.workspaceName || '',
+            path: paths.workspaceDetails(project.workspaceId),
+          },
 
-        {
-          breadcrumbName: project.name,
-          path: paths.projectDetails(project.id),
-        },
-      ]
+          {
+            breadcrumbName: project.name,
+            path: paths.projectDetails(project.id),
+          },
+        ]
       : [
-        {
-          breadcrumbName: `Uncategorized ${f_flat_runs ? 'Runs' : 'Experiments'}`,
-          path: paths.projectDetails(project.id),
-        },
-      ];
+          {
+            breadcrumbName: `Uncategorized ${f_flat_runs ? 'Runs' : 'Experiments'}`,
+            path: paths.projectDetails(project.id),
+          },
+        ];
   return (
     <Page
       breadcrumb={pageBreadcrumb}
