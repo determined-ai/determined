@@ -6119,10 +6119,10 @@ export interface V1ListRPsBoundToWorkspaceResponse {
 export interface V1ListWorkspaceNamespaceBindingsResponse {
     /**
      * List of workspace-namespace bindings for a given workspace.
-     * @type {{ [key: string]: string; }}
+     * @type {{ [key: string]: V1WorkspaceNamespaceBinding; }}
      * @memberof V1ListWorkspaceNamespaceBindingsResponse
      */
-    namespaceBindings: { [key: string]: string; };
+    namespaceBindings: { [key: string]: V1WorkspaceNamespaceBinding; };
 }
 /**
  * Response to ListWorkspacesBoundToRPRequest.

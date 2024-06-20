@@ -8355,20 +8355,20 @@ class v1ListWorkspaceNamespaceBindingsResponse(Printable):
     def __init__(
         self,
         *,
-        namespaceBindings: "typing.Dict[str, str]",
+        namespaceBindings: "typing.Dict[str, v1WorkspaceNamespaceBinding]",
     ):
         self.namespaceBindings = namespaceBindings
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1ListWorkspaceNamespaceBindingsResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
-            "namespaceBindings": obj["namespaceBindings"],
+            "namespaceBindings": {k: v1WorkspaceNamespaceBinding.from_json(v) for k, v in obj["namespaceBindings"].items()},
         }
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
-            "namespaceBindings": self.namespaceBindings,
+            "namespaceBindings": {k: v.to_json(omit_unset) for k, v in self.namespaceBindings.items()},
         }
         return out
 

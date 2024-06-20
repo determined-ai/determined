@@ -157,7 +157,7 @@ def list_workspace_namespace_bindings(args: argparse.Namespace) -> None:
         cluster_namespaces = []
         namespace_bindings = resp.namespaceBindings
         for cluster in namespace_bindings:
-            cluster_namespaces.append([cluster, namespace_bindings[cluster]])
+            cluster_namespaces.append([cluster, namespace_bindings[cluster].namespace])
         render.tabulate_or_csv(
             headers=["Cluster", "Namespace"],
             values=cluster_namespaces,
@@ -181,9 +181,8 @@ def set_workspace_namespace_binding(args: argparse.Namespace) -> None:
     w = api.workspace_by_name(sess, args.workspace_name)
     content = bindings.v1SetWorkspaceNamespaceBindingsRequest(workspaceId=w.id)
     cluster_name = args.cluster_name or ""
-    requested_namespace = args.namespace or ""
     namespace_meta = bindings.v1WorkspaceNamespaceMeta(
-        namespace=requested_namespace,
+        namespace=args.namespace,
         autoCreateNamespace=args.auto_create_namespace,
         autoCreateNamespaceAllClusters=args.auto_create_namespace_all_clusters,
     )
@@ -265,10 +264,9 @@ def create_workspace(args: argparse.Namespace) -> None:
     # value in the clusterNamespacePairs dictionary. To avoid that, we substitute the argument's
     # value with the empty string if it's null.
     cluster_name = args.cluster_name or ""
-    requested_namespace = args.namespace or ""
-    if args.namespace or args.auto_create_namespace:
+    if args.namespace or args.auto_create_namespace or args.auto_create_namespace_all_clusters:
         namespace_meta = bindings.v1WorkspaceNamespaceMeta(
-            namespace=requested_namespace,
+            namespace=args.namespace,
             autoCreateNamespace=args.auto_create_namespace,
             autoCreateNamespaceAllClusters=args.auto_create_namespace_all_clusters,
         )
@@ -281,7 +279,7 @@ def create_workspace(args: argparse.Namespace) -> None:
     else:
         render_workspaces([w])
 
-    if resp.namespaceBindings:
+    for cluster_name in resp.namespaceBindings:
         namespace_binding = resp.namespaceBindings[cluster_name]
         print(f"Workspace {w.name} is bound to namespace {namespace_binding.namespace}")
 
