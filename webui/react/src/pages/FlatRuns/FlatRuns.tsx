@@ -949,7 +949,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
   }, [canceler, stopPolling]);
 
   const selectionLabel = useMemo(() => {
-    let newSettings: SelectionState = { ...settings.selection };
+    const newSettings: SelectionState = { ...settings.selection };
     let excludedList: number[] = [];
     let includedList: number[] = [];
 
@@ -978,7 +978,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
 
         return label;
       },
-      NotLoaded: () => `Loading runs...`,
+      NotLoaded: () => 'Loading runs...',
     });
   }, [total, settings.selection]);
 
