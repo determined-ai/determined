@@ -1,5 +1,5 @@
 CREATE TABLE IF NOT EXISTS allocation_workspace_info (
-    allocation_id TEXT PRIMARY KEY REFERENCES allocations (allocation_id),
+    allocation_id TEXT PRIMARY KEY, 
     workspace_id SERIAL,
     workspace_name text,
     experiment_id INT
@@ -30,8 +30,8 @@ allocation_workspace AS (
         projects ON experiments.project_id = projects.id
 )
 -- Populate the new table with existing data based on the previous method of resolving the workspace info & experiment_id
-insert into allocation_workspace_info (allocation_id, workspace_id, workspace_name, experiment_id)
-select
+INSERT INTO allocation_workspace_info (allocation_id, workspace_id, workspace_name, experiment_id)
+SELECT
 	allocation_workspace.allocation_id,
     allocation_workspace.workspace_id,
     workspaces.name,

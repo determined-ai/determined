@@ -427,15 +427,6 @@ func (t *trial) maybeAllocateTask() error {
 			return err
 		}
 
-		// persist the allocation workspace/experiment record, in the event of moves or deletions
-		err = task.InsertTrialAllocationWorkspaceRecord(
-			context.Background(), t.experimentID, ar.AllocationID)
-		if err != nil {
-			return fmt.Errorf(
-				"failed to insert allocation workspace record when recovering allocation: %w",
-				err,
-			)
-		}
 		t.allocationID = &ar.AllocationID
 		return nil
 	}
@@ -475,6 +466,12 @@ func (t *trial) maybeAllocateTask() error {
 		Debugf("starting new trial allocation")
 
 	prom.AssociateJobExperiment(t.jobID, strconv.Itoa(t.experimentID), t.config.Labels())
+	// persist the allocation workspace/experiment record, in the event of moves or deletions
+	err = task.InsertTrialAllocationWorkspaceRecord(
+		context.Background(), t.experimentID, ar.AllocationID)
+	if err != nil {
+		return fmt.Errorf("failed to persist workspace information for trial (%d) allocation: %w", t.id, err)
+	}
 	err = task.DefaultService.StartAllocation(
 		t.logCtx, ar, t.db, t.rm, specifier,
 		t.AllocationExitedCallback,
@@ -482,12 +479,7 @@ func (t *trial) maybeAllocateTask() error {
 	if err != nil {
 		return err
 	}
-	// persist the allocation workspace/experiment record, in the event of moves or deletions
-	err = task.InsertTrialAllocationWorkspaceRecord(
-		context.Background(), t.experimentID, ar.AllocationID)
-	if err != nil {
-		return fmt.Errorf("failed to insert allocation workspace record: %w", err)
-	}
+
 	t.allocationID = &ar.AllocationID
 	return nil
 }

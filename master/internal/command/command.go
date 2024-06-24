@@ -145,7 +145,15 @@ func (c *Command) Start(ctx context.Context) error {
 		}
 	}
 
-	err := task.DefaultService.StartAllocation(c.logCtx,
+	err := task.InsertNTSCAllocationWorkspaceRecord(ctx, c.allocationID)
+	if err != nil {
+		return fmt.Errorf(
+			"failure while attempting persist workspace information for NTSC task (%s) allocation: %w",
+			c.taskID,
+			err)
+	}
+
+	err = task.DefaultService.StartAllocation(c.logCtx,
 		sproto.AllocateRequest{
 			AllocationID:        c.allocationID,
 			TaskID:              c.taskID,
@@ -170,11 +178,6 @@ func (c *Command) Start(ctx context.Context) error {
 
 	if err := c.persist(); err != nil {
 		c.syslog.WithError(err).Warnf("command persist failure")
-	}
-
-	err = task.InsertNTSCAllocationWorkspaceRecord(ctx, c.allocationID)
-	if err != nil {
-		return fmt.Errorf("failure while inserting NTSC allocation workspace record: %w", err)
 	}
 	return nil
 }
