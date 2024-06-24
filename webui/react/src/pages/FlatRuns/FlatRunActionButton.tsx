@@ -234,7 +234,7 @@ const FlatRunActionButton = ({
     <>
       {selectedRuns.length > 0 && (
         <Dropdown menu={editMenuItems} onClick={handleBatchAction}>
-          <Button hideChildren={isMobile} icon={<Icon decorative name="heat" />}>
+          <Button hideChildren={isMobile} icon={<Icon decorative name="pencil" />}>
             Actions
           </Button>
         </Dropdown>
