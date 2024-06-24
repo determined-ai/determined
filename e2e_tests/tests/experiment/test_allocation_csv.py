@@ -3,6 +3,7 @@ import datetime
 import io
 import re
 import uuid
+from typing import Optional
 
 import pytest
 import requests
@@ -15,6 +16,19 @@ from tests import experiment as exp
 from tests.cluster import utils as cluster_utils
 
 API_URL = "/resources/allocation/allocations-csv?"
+
+
+def validate_trial_csv_rows(
+    raw_text: str, experiment_id: int, workspace_name: Optional[str]
+) -> None:
+    rows = list(csv.DictReader(io.StringIO(raw_text)))
+    experiment_matches = list(filter(lambda row: row["experiment_id"] == str(experiment_id), rows))
+    assert len(experiment_matches) >= 1, f"could not find any rows for experiment {experiment_id}"
+
+    if workspace_name is None:
+        return
+    workspace_matches = list(filter(lambda row: row["workspace_name"] == str(workspace_name), rows))
+    assert len(workspace_matches) >= 1, f"could not find any rows for workspace {workspace_name}"
 
 
 # Create a No_Op experiment and Check training/validation times
@@ -47,17 +61,11 @@ def test_experiment_capture() -> None:
     )
     exp.wait_for_experiment_state(sess, experiment_id, bindings.experimentv1State.COMPLETED)
 
+    # Check if an entry exists for experiment that just ran
     end_time = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
     r = sess.get(f"{API_URL}timestamp_after={start_time}&timestamp_before={end_time}")
     assert r.status_code == requests.codes.ok, r.text
-
-    # Check if an entry exists for experiment that just ran
-    reader = csv.DictReader(io.StringIO(r.text))
-    rows = [row for row in reader]
-    experiment_matches = [row for row in rows if row["experiment_id"] == str(experiment_id)]
-    assert len(experiment_matches) >= 1, f"could not find any rows for experiment {experiment_id}"
-    workspace_matches = [row for row in rows if row["workspace_name"] == str(w1.name)]
-    assert len(workspace_matches) >= 1, f"could not find any rows for workspace {w1.name}"
+    validate_trial_csv_rows(r.text, experiment_id, w1.name)
 
     # Move project to new workspace,
     # and confirm that allocation csv still persists the old workspace id
@@ -79,26 +87,14 @@ def test_experiment_capture() -> None:
 
     r = sess.get(f"{API_URL}timestamp_after={start_time}&timestamp_before={end_time}")
     assert r.status_code == requests.codes.ok, r.text
-
-    reader = csv.DictReader(io.StringIO(r.text))
-    rows = [row for row in reader]
-    experiment_matches = [row for row in rows if row["experiment_id"] == str(experiment_id)]
-    assert len(experiment_matches) >= 1, f"could not find any rows for experiment {experiment_id}"
-    workspace_matches = [row for row in rows if row["workspace_name"] == str(w1.name)]
-    assert len(workspace_matches) >= 1, f"could not find any rows for workspace {w1.name}"
+    validate_trial_csv_rows(r.text, experiment_id, w1.name)
 
     # Delete the experiment, and confirm that allocation csv still persists the experiment id
     bindings.delete_DeleteExperiment(session=sess, experimentId=experiment_id)
 
     r = sess.get(f"{API_URL}timestamp_after={start_time}&timestamp_before={end_time}")
     assert r.status_code == requests.codes.ok, r.text
-
-    reader = csv.DictReader(io.StringIO(r.text))
-    rows = [row for row in reader]
-    experiment_matches = [row for row in rows if row["experiment_id"] == str(experiment_id)]
-    assert len(experiment_matches) >= 1, f"could not find any rows for experiment {experiment_id}"
-    workspace_matches = [row for row in rows if row["workspace_name"] == str(w1.name)]
-    assert len(workspace_matches) >= 1, f"could not find any rows for workspace {w1.name}"
+    validate_trial_csv_rows(r.text, experiment_id, w1.name)
 
 
 @pytest.mark.e2e_cpu
@@ -157,7 +153,7 @@ def test_tensorboard_experiment_capture() -> None:
 
     # Confirm Experiment is captured and valid
     reader = csv.DictReader(io.StringIO(r.text))
-    matches = [row for row in reader if row["experiment_id"] == str(experiment_id)]
+    matches = list(filter(lambda row: row["experiment_id"] == str(experiment_id), reader))
     assert len(matches) >= 1
 
     # Confirm Tensorboard task is captured
