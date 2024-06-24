@@ -62,7 +62,6 @@ def render_workspaces(
             w.agentUserGroup.agentGroup if w.agentUserGroup else None,
             w.defaultComputePool if w.defaultComputePool else None,
             w.defaultAuxPool if w.defaultAuxPool else None,
-            w.namespaceBindings if w.namespaceBindings else None,
         ]
         if not from_list_api:
             value.append(w.checkpointStorageConfig)
@@ -176,7 +175,8 @@ def set_workspace_namespace_binding(args: argparse.Namespace) -> None:
     w = api.workspace_by_name(sess, args.workspace_name)
     content = bindings.v1SetWorkspaceNamespaceBindingsRequest(workspaceId=w.id)
     cluster_name = "" if not args.cluster_name else args.cluster_name
-    content.clusterNamespacePairs = {cluster_name: args.namespace}
+    namespace_meta = bindings.v1WorkspaceNamespaceMeta(namespace=args.namespace)
+    content.clusterNamespaceMeta = {cluster_name: namespace_meta}
 
     resp = bindings.post_SetWorkspaceNamespaceBindings(sess, body=content, workspaceId=w.id)
     for cluster_name in resp.namespaceBindings:
@@ -184,8 +184,11 @@ def set_workspace_namespace_binding(args: argparse.Namespace) -> None:
         if args.cluster_name:
             cluster_details = "for cluster " + cluster_name + "."
         print(
-            f"Workspace {str(args.workspace_name)} is bound to namespace \
-              {resp.namespaceBindings[cluster_name].namespace} {cluster_details}"
+            "Workspace",
+            str(args.workspace_name),
+            "is bound to namespace",
+            resp.namespaceBindings[cluster_name].namespace,
+            cluster_details,
         )
     return None
 
@@ -246,7 +249,8 @@ def create_workspace(args: argparse.Namespace) -> None:
         # clusterNamespacePairs dictionary. To avoid that, we substitute the argument's value with
         # the empty string if it's null.
         cluster_name = args.cluster_name or ""
-        content.clusterNamespacePairs = {cluster_name: args.namespace}
+        namespace_meta = bindings.v1WorkspaceNamespaceMeta(namespace=args.namespace)
+        content.clusterNamespaceMeta = {cluster_name: namespace_meta}
     w = bindings.post_PostWorkspace(sess, body=content).workspace
 
     if args.json:

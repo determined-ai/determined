@@ -393,7 +393,7 @@ func (j *jobsService) getMasterIPAndPort() error {
 		return nil
 	}
 	masterService, err := j.clientSet.CoreV1().
-		Services(os.Getenv(ReleaseNamespaceEnvVar)).
+		Services(j.getInitialNamespace()).
 		Get(context.TODO(), j.masterServiceName, metaV1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to get master service: %w", err)
@@ -2174,6 +2174,14 @@ func (j *jobsService) removeEmptyNamespace(namespaceName string, clusterName str
 		}
 	}
 	return nil
+}
+
+func (j *jobsService) getInitialNamespace() string {
+	releaseNamespace := os.Getenv(ReleaseNamespaceEnvVar)
+	if len(releaseNamespace) > 0 {
+		return releaseNamespace
+	}
+	return j.namespace
 }
 
 func extractTCDs(resourcePoolConfigs []config.ResourcePoolConfig,
