@@ -76,6 +76,42 @@ def test_master_restart_reattach_recover_experiment_k8s(
 
 
 @pytest.mark.managed_devcluster
+def test_master_agent_restart_reattach_recover_experiment(
+    restartable_managed_cluster: managed_cluster.ManagedCluster,
+) -> None:
+    sess = api_utils.user_session()
+
+    try:
+        # Start an experiment
+        exp_id = exp.create_experiment(
+            sess,
+            conf.fixtures_path("core_api/sleep.yaml"),
+            conf.fixtures_path("core_api"),
+            None,
+        )
+
+        exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.RUNNING)
+
+        # Kill the agent & master
+        restartable_managed_cluster.kill_agent()
+        restartable_managed_cluster.kill_master()
+
+        # Restart the agent & master
+        restartable_managed_cluster.restart_master()
+        restartable_managed_cluster.restart_agent(True)
+
+        exp.wait_for_experiment_state(
+            sess, exp_id, bindings.experimentv1State.COMPLETED, max_wait_secs=60
+        )
+        trials = exp.experiment_trials(sess, exp_id)
+        assert (trials[0].trial.state) == bindings.trialv1State.COMPLETED
+    except Exception:
+        restartable_managed_cluster.restart_master()
+        restartable_managed_cluster.restart_agent()
+        raise
+
+
+@pytest.mark.managed_devcluster
 def test_master_restart_generic_task(
     managed_cluster_restarts: managed_cluster.ManagedCluster,
 ) -> None:

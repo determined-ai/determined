@@ -748,9 +748,10 @@ func (t *trial) transition(s model.StateWithReason) error {
 			})
 		default:
 			if action, ok := map[model.State]task.AllocationSignal{
-				model.StoppingCanceledState: task.TerminateAllocation,
-				model.StoppingKilledState:   task.KillAllocation,
-				model.StoppingErrorState:    task.KillAllocation,
+				model.StoppingCompletedState: task.TerminateAllocation,
+				model.StoppingCanceledState:  task.TerminateAllocation,
+				model.StoppingKilledState:    task.KillAllocation,
+				model.StoppingErrorState:     task.KillAllocation,
 			}[t.state]; ok {
 				t.syslog.Infof("decided to %s trial", action)
 				err := task.DefaultService.Signal(*t.allocationID, action, s.InformationalReason)
