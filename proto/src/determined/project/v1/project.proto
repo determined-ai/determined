@@ -80,6 +80,7 @@ message Project {
         "notes",
         "num_active_experiments",
         "num_experiments",
+        "num_runs",
         "state",
         "user_id",
         "username",
@@ -122,6 +123,8 @@ message Project {
   string error_message = 15;
   // The key of the project.
   string key = 16;
+  // Count of runs associated with this project.
+  int32 num_runs = 17;
 }
 
 // PatchProject is a partial update to a project with all optional fields.

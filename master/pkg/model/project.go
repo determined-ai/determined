@@ -25,6 +25,7 @@ type Project struct {
 	Notes                   []*projectv1.Note `bun:"notes,type:jsonb,nullzero"`
 	NumActiveExperiments    int32             `bun:"num_active_experiments,scanonly"`
 	NumExperiments          int32             `bun:"num_experiments,scanonly"`
+	NumRuns                 int32             `bun:"num_runs,scanonly"`
 	State                   WorkspaceState    `bun:"state,default:'UNSPECIFIED'::workspace_state"`
 	ErrorMessage            string            `bun:"error_message"`
 	LastExperimentStartedAt time.Time         `bun:"last_experiment_started_at,scanonly"`
@@ -53,6 +54,7 @@ func (p Project) Proto() *projectv1.Project {
 		Description:             p.Description,
 		ErrorMessage:            p.ErrorMessage,
 		NumExperiments:          p.NumExperiments,
+		NumRuns:                 p.NumRuns,
 		NumActiveExperiments:    p.NumActiveExperiments,
 		Notes:                   p.Notes,
 		LastExperimentStartedAt: lastExperimentStartedAt,
