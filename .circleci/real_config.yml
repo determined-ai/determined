@@ -1512,6 +1512,10 @@ jobs:
           path: helm/build
 
   retag-docker-images:
+    parameters:
+      release:
+        type: boolean
+        default: false
     docker:
       - image: <<pipeline.parameters.docker-image>>
     steps:
@@ -1523,7 +1527,15 @@ jobs:
           extra-requirements-file: "docs/requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
       - run: pip install python_on_whales
-      - run: python3 tools/scripts/update-docker-tags.py tools/scripts/bumpenvs.yaml
+      - when:
+          condition: << parameters.release >>
+          steps:
+            - run: python3 tools/scripts/update-docker-tags.py --release
+      - when:
+          condition:
+            not: << parameters.release >>
+          steps:
+            - run: python3 tools/scripts/update-docker-tags.py
 
   build-docs:
     parameters:
@@ -5643,7 +5655,14 @@ workflows:
           filters: *rc-filters
 
       - retag-docker-images:
-          filters: *release-and-rc-filters
+          filters: *rc-filters
+
+      - retag-docker-images:
+          parameters:
+          matrix:
+            parameters:
+              release: ['true']
+          filters: *release-filters
 
       - publish-python-package:
           name: publish-python-package-rc

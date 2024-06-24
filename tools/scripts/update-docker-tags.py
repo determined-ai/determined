@@ -1,6 +1,20 @@
 """
+Script for retagging docker images based on `old` and `new` keys found
+in bumpenvs.yaml.
+This script is intended to be used by release party to retag hashed
+images as rc-0,rc-1, and release version.
+This script assumes that the `old` image tag exists, but the `new` tag
+does not. It will use the `old`
 
+Usage:
+    python update-docker-tags.sh path/to/bumpenvs.yaml [--target_version]
 
+Args:
+    path: str
+        Path to bumpenvs.yaml file.
+Optional Args
+    target_version: str
+        Version in `old` to retag.
 """
 
 
