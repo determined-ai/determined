@@ -1,4 +1,4 @@
-import { BasePage } from 'e2e/models/BasePage';
+import { BasePage } from 'e2e/models/common/base/BasePage';
 import { DynamicTabs } from 'e2e/models/components/DynamicTabs';
 import { F_ExperiementList } from 'e2e/models/components/F_ExperiementList';
 import { PageComponent } from 'e2e/models/components/Page';

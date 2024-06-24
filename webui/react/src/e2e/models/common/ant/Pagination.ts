@@ -1,7 +1,7 @@
 import { Locator } from '@playwright/test';
 
-import { BaseComponent, NamedComponent } from 'e2e/models/BaseComponent';
-import { Select } from 'e2e/models/hew/Select';
+import { BaseComponent, NamedComponent } from 'e2e/models/common/base/BaseComponent';
+import { Select } from 'e2e/models/common/hew/Select';
 
 /**
  * Represents the Pagination component from antd/es/pagination/index.d.ts
@@ -16,7 +16,7 @@ export class Pagination extends NamedComponent {
     parent: this,
     selector: 'li.ant-pagination-next',
   });
-  readonly #options: BaseComponent = new BaseComponent({
+  readonly #options = new BaseComponent({
     parent: this,
     selector: 'li.ant-pagination-options',
   });

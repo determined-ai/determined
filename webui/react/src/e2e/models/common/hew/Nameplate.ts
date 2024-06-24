@@ -1,4 +1,4 @@
-import { BaseComponent, NamedComponent } from 'e2e/models/BaseComponent';
+import { BaseComponent, NamedComponent } from 'e2e/models/common/base/BaseComponent';
 
 /**
  * Represents the SplitPane component from hew/src/kit/Nameplate.tsx
@@ -12,7 +12,7 @@ export class Nameplate extends NamedComponent {
     parent: this,
     selector: '[id="avatar"]',
   });
-  readonly #text: BaseComponent = new BaseComponent({
+  readonly #text = new BaseComponent({
     parent: this,
     selector: '[class^="Nameplate_text"]',
   });

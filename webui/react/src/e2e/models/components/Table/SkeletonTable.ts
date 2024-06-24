@@ -1,4 +1,4 @@
-import { BaseComponent } from 'e2e/models/BaseComponent';
+import { BaseComponent } from 'e2e/models/common/base/BaseComponent';
 import { SkeletonSection } from 'e2e/models/components/SkeletonSection';
 
 /**

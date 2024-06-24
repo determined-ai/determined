@@ -1,5 +1,5 @@
-import { BaseComponent, NamedComponent } from 'e2e/models/BaseComponent';
-import { Card } from 'e2e/models/hew/Card';
+import { BaseComponent, NamedComponent } from 'e2e/models/common/base/BaseComponent';
+import { Card } from 'e2e/models/common/hew/Card';
 
 import { WorkspaceActionDropdown } from './WorkspaceActionDropdown';
 
@@ -22,7 +22,7 @@ export class WorkspacesList extends NamedComponent {
  */
 class WorkspaceCard extends Card {
   override readonly actionMenu = new WorkspaceActionDropdown({
-    childNode: new BaseComponent({
+    clickThisComponentToOpen: new BaseComponent({
       parent: this,
       selector: Card.actionMenuSelector,
     }),

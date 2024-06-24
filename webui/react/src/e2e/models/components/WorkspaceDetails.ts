@@ -1,5 +1,5 @@
-import { NamedComponent } from 'e2e/models/BaseComponent';
-import { Pivot } from 'e2e/models/hew/Pivot';
+import { NamedComponent } from 'e2e/models/common/base/BaseComponent';
+import { Pivot } from 'e2e/models/common/hew/Pivot';
 
 import { ModelRegistry } from './ModelRegistry';
 import { ProjectsComponent } from './ProjectsPage';
