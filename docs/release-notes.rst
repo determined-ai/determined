@@ -17,7 +17,7 @@ Version 0.34.0
 
 **Breaking Changes**
 
--  Images: The default environment includes images that support PyTorch. TensorFlow users must
+-  Images: The default environment includes images that support PyTorch. Therefore, TensorFlow users must
    configure their experiments to target our non-default TensorFlow images. Details on this process
    can be found at :ref:`set-environment-images`
 
