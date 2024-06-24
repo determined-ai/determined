@@ -25,12 +25,12 @@ def main():
     logging.getLogger("determined").setLevel(logging.INFO)
     distributed = core_v2.DistributedContext.from_torch_distributed()
     core_v2.init(
-        defaults=core_v2.UnmanagedConfig(
+        unmanaged_config=core_v2.UnmanagedConfig(
             name=name,
-            checkpoint_storage="/tmp/determined-cp",
             external_experiment_id=name,
             external_trial_id=name,
         ),
+        checkpoint_storage="/tmp/determined-cp",
         distributed=distributed,
     )
 
