@@ -1,4 +1,4 @@
-import { BasePage } from 'e2e/models/base/BasePage';
+import { BasePage } from 'e2e/models/common/base/BasePage';
 import { WorkspaceCreateModal } from 'e2e/models/components/WorkspaceCreateModal';
 import { WorkspaceDeleteModal } from 'e2e/models/components/WorkspaceDeleteModal';
 import { WorkspaceDetails } from 'e2e/models/components/WorkspaceDetails';

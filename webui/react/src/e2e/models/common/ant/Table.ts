@@ -1,7 +1,7 @@
-import { Pagination } from 'e2e/models/ant/Pagination';
-import { BaseComponent } from 'e2e/models/base/BaseComponent';
-import { BaseHeadRow, BaseRow, BaseTable } from 'e2e/models/base/BaseTable';
-export type { TableArgs } from 'e2e/models/base/BaseTable';
+import { Pagination } from 'e2e/models/common/ant/Pagination';
+import { BaseComponent } from 'e2e/models/common/base/BaseComponent';
+import { BaseHeadRow, BaseRow, BaseTable } from 'e2e/models/common/base/BaseTable';
+export type { TableArgs } from 'e2e/models/common/base/BaseTable';
 
 /**
  * Represents the Table component from antd/es/table/Table.d.ts.

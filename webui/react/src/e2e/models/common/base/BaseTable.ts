@@ -1,4 +1,8 @@
-import { BaseComponent, NamedComponent, NamedComponentArgs } from 'e2e/models/base/BaseComponent';
+import {
+  BaseComponent,
+  NamedComponent,
+  NamedComponentArgs,
+} from 'e2e/models/common/base/BaseComponent';
 
 import { BaseRow, BaseRowContainer } from './BaseRowContainer';
 export { BaseRow };

@@ -1,5 +1,5 @@
-import { BaseComponent, NamedComponent } from 'e2e/models/base/BaseComponent';
-import { Card } from 'e2e/models/hew/Card';
+import { BaseComponent, NamedComponent } from 'e2e/models/common/base/BaseComponent';
+import { Card } from 'e2e/models/common/hew/Card';
 
 import { WorkspaceActionDropdown } from './WorkspaceActionDropdown';
 

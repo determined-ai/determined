@@ -1,6 +1,6 @@
-import { BaseComponent } from 'e2e/models/base/BaseComponent';
-import { BasePage } from 'e2e/models/base/BasePage';
-import { DropdownMenu } from 'e2e/models/hew/Dropdown';
+import { BaseComponent } from 'e2e/models/common/base/BaseComponent';
+import { BasePage } from 'e2e/models/common/base/BasePage';
+import { DropdownMenu } from 'e2e/models/common/hew/Dropdown';
 
 /**
  * Represents the OptionsMenu component in src/components/FilterForm/OptionsMenu.tsx

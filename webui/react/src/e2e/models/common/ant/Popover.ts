@@ -1,4 +1,4 @@
-import { BaseOverlay, OverlayArgs } from 'e2e/models/base/BaseOverlay';
+import { BaseOverlay, OverlayArgs } from 'e2e/models/common/base/BaseOverlay';
 
 /**
  * Represents the Popver component from antd/es/popover/index.js

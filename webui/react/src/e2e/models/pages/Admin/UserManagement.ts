@@ -1,6 +1,9 @@
 import { expect, Page } from '@playwright/test';
 
-import { BaseComponent } from 'e2e/models/base/BaseComponent';
+import { BaseComponent } from 'e2e/models/common/base/BaseComponent';
+import { DropdownMenu } from 'e2e/models/common/hew/Dropdown';
+import { Select } from 'e2e/models/common/hew/Select';
+import { Toast } from 'e2e/models/common/hew/Toast';
 import { AddUsersToGroupsModal } from 'e2e/models/components/AddUsersToGroupsModal';
 import { ChangeUserStatusModal } from 'e2e/models/components/ChangeUserStatusModal';
 import { CreateUserModal } from 'e2e/models/components/CreateUserModal';
@@ -8,9 +11,6 @@ import { SetUserRolesModal } from 'e2e/models/components/SetUserRolesModal';
 import { HeadRow, InteractiveTable, Row } from 'e2e/models/components/Table/InteractiveTable';
 import { SkeletonTable } from 'e2e/models/components/Table/SkeletonTable';
 import { UserBadge } from 'e2e/models/components/UserBadge';
-import { DropdownMenu } from 'e2e/models/hew/Dropdown';
-import { Select } from 'e2e/models/hew/Select';
-import { Toast } from 'e2e/models/hew/Toast';
 import { AdminPage } from 'e2e/models/pages/Admin/index';
 
 /**

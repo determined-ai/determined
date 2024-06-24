@@ -1,7 +1,7 @@
-import { BaseComponent, CanBeParent } from 'e2e/models/base/BaseComponent';
-import { BasePage } from 'e2e/models/base/BasePage';
+import { BaseComponent, CanBeParent } from 'e2e/models/common/base/BaseComponent';
+import { BasePage } from 'e2e/models/common/base/BasePage';
+import { DropdownContent } from 'e2e/models/common/hew/Dropdown';
 import { FilterForm } from 'e2e/models/components/FilterForm/components/FilterForm';
-import { DropdownContent } from 'e2e/models/hew/Dropdown';
 
 /**
  * Represents the TableFilter component in src/components/FilterForm/TableFilter.tsx

@@ -1,6 +1,6 @@
-import { Switch } from 'e2e/models/ant/Switch';
-import { BaseComponent } from 'e2e/models/base/BaseComponent';
-import { Modal } from 'e2e/models/hew/Modal';
+import { Switch } from 'e2e/models/common/ant/Switch';
+import { BaseComponent } from 'e2e/models/common/base/BaseComponent';
+import { Modal } from 'e2e/models/common/hew/Modal';
 
 /**
  * Represents the WorkspaceCreateModal component in src/components/WorkspaceCreateModal.tsx

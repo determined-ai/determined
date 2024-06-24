@@ -1,5 +1,5 @@
-import { BaseComponent } from 'e2e/models/base/BaseComponent';
-import { Modal } from 'e2e/models/hew/Modal';
+import { BaseComponent } from 'e2e/models/common/base/BaseComponent';
+import { Modal } from 'e2e/models/common/hew/Modal';
 
 /**
  * Represents the CreateUserModal component in src/components/CreateUserModal.tsx

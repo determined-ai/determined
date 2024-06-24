@@ -1,7 +1,7 @@
-import { BaseComponent, CanBeParent, NamedComponent } from 'e2e/models/base/BaseComponent';
-import { BasePage } from 'e2e/models/base/BasePage';
-import { DropdownContent } from 'e2e/models/hew/Dropdown';
-import { Select } from 'e2e/models/hew/Select';
+import { BaseComponent, CanBeParent, NamedComponent } from 'e2e/models/common/base/BaseComponent';
+import { BasePage } from 'e2e/models/common/base/BasePage';
+import { DropdownContent } from 'e2e/models/common/hew/Dropdown';
+import { Select } from 'e2e/models/common/hew/Select';
 
 /**
  * Represents the MultiSortMenu component in src/components/MultiSortMenu.tsx

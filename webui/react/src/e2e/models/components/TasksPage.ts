@@ -1,4 +1,4 @@
-import { NamedComponent } from 'e2e/models/base/BaseComponent';
+import { NamedComponent } from 'e2e/models/common/base/BaseComponent';
 
 /**
  * Represents the TasksComponent in the TasksComponent component

@@ -1,7 +1,7 @@
 import { Locator } from '@playwright/test';
 
-import { BaseComponent, NamedComponent } from 'e2e/models/base/BaseComponent';
-import { Select } from 'e2e/models/hew/Select';
+import { BaseComponent, NamedComponent } from 'e2e/models/common/base/BaseComponent';
+import { Select } from 'e2e/models/common/hew/Select';
 
 /**
  * Represents the Pagination component from antd/es/pagination/index.d.ts

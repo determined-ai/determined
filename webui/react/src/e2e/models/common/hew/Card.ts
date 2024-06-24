@@ -3,7 +3,7 @@ import {
   CanBeParent,
   NamedComponent,
   NamedComponentArgs,
-} from 'e2e/models/base/BaseComponent';
+} from 'e2e/models/common/base/BaseComponent';
 import { WorkspaceActionDropdown } from 'e2e/models/components/WorkspaceActionDropdown';
 
 import { DropdownMenu } from './Dropdown';

@@ -1,7 +1,7 @@
 import { expect } from '@playwright/test';
 
 import { test } from 'e2e/fixtures/global-fixtures';
-import { BasePage } from 'e2e/models/base/BasePage';
+import { BasePage } from 'e2e/models/common/base/BasePage';
 import { UserManagement } from 'e2e/models/pages/Admin/UserManagement';
 import { Workspaces } from 'e2e/models/pages/Workspaces';
 

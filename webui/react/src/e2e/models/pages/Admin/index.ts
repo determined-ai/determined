@@ -1,5 +1,5 @@
-import { BasePage } from 'e2e/models/base/BasePage';
-import { Pivot } from 'e2e/models/hew/Pivot';
+import { BasePage } from 'e2e/models/common/base/BasePage';
+import { Pivot } from 'e2e/models/common/hew/Pivot';
 
 /**
  * Represents the admin page from src/pages/Admin/index.tsx

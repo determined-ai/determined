@@ -1,7 +1,7 @@
-import { BaseComponent } from 'e2e/models/base/BaseComponent';
-import { BaseReactFragment } from 'e2e/models/base/BaseReactFragment';
-import { DropdownMenu } from 'e2e/models/hew/Dropdown';
-import { Nameplate } from 'e2e/models/hew/Nameplate';
+import { BaseComponent } from 'e2e/models/common/base/BaseComponent';
+import { BaseReactFragment } from 'e2e/models/common/base/BaseReactFragment';
+import { DropdownMenu } from 'e2e/models/common/hew/Dropdown';
+import { Nameplate } from 'e2e/models/common/hew/Nameplate';
 
 import { WorkspaceActionDropdown } from './WorkspaceActionDropdown';
 

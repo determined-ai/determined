@@ -1,4 +1,4 @@
-import { DropdownMenu } from 'e2e/models/hew/Dropdown';
+import { DropdownMenu } from 'e2e/models/common/hew/Dropdown';
 
 /**
  * Represents the WorkspaceActionDropdown component in src/components/WorkspaceActionDropdown.tsx

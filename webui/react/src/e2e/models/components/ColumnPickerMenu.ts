@@ -1,9 +1,9 @@
-import { BaseComponent, CanBeParent, NamedComponent } from 'e2e/models/base/BaseComponent';
-import { BaseList, BaseRow } from 'e2e/models/base/BaseList';
-import { BasePage } from 'e2e/models/base/BasePage';
-import { DropdownContent } from 'e2e/models/hew/Dropdown';
-import { Message } from 'e2e/models/hew/Message';
-import { Pivot } from 'e2e/models/hew/Pivot';
+import { BaseComponent, CanBeParent, NamedComponent } from 'e2e/models/common/base/BaseComponent';
+import { BaseList, BaseRow } from 'e2e/models/common/base/BaseList';
+import { BasePage } from 'e2e/models/common/base/BasePage';
+import { DropdownContent } from 'e2e/models/common/hew/Dropdown';
+import { Message } from 'e2e/models/common/hew/Message';
+import { Pivot } from 'e2e/models/common/hew/Pivot';
 
 /**
  * Represents the ColumnPickerMenu component in src/components/ColumnPickerMenu.tsx

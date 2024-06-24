@@ -1,6 +1,6 @@
-import { BaseComponent } from 'e2e/models/base/BaseComponent';
-import { BaseReactFragment } from 'e2e/models/base/BaseReactFragment';
-import { Select } from 'e2e/models/hew/Select';
+import { BaseComponent } from 'e2e/models/common/base/BaseComponent';
+import { BaseReactFragment } from 'e2e/models/common/base/BaseReactFragment';
+import { Select } from 'e2e/models/common/hew/Select';
 
 /**
  * Represents the ConjunctionContainer component in src/components/FilterForm/components/ConjunctionContainer.tsx

@@ -1,5 +1,5 @@
-import { BaseComponent, ComponentBasics } from 'e2e/models/base/BaseComponent';
-import { BasePage } from 'e2e/models/base/BasePage';
+import { BaseComponent, ComponentBasics } from 'e2e/models/common/base/BaseComponent';
+import { BasePage } from 'e2e/models/common/base/BasePage';
 
 // typically, we would have a clickThisComponentToOpen or an openMethod, but not both
 // in exceptional cases, we might have both, like when working with canvas elements

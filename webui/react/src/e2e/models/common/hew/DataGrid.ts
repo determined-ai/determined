@@ -1,7 +1,11 @@
 import { expect } from '@playwright/test';
 
-import { BaseComponent, NamedComponent, NamedComponentArgs } from 'e2e/models/base/BaseComponent';
-import { DropdownMenu } from 'e2e/models/hew/Dropdown';
+import {
+  BaseComponent,
+  NamedComponent,
+  NamedComponentArgs,
+} from 'e2e/models/common/base/BaseComponent';
+import { DropdownMenu } from 'e2e/models/common/hew/Dropdown';
 import { printMap } from 'e2e/utils/debug';
 
 class IndexNotFoundError extends Error {}
