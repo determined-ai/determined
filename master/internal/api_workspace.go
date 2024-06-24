@@ -87,15 +87,20 @@ func (a *apiServer) validateRequestClusterName(clusterName string) (string, erro
 	return clusterName, nil
 }
 
-func (a *apiServer) validateClusterNamespacePairs(clusterNamespacePairs map[string]string) (map[string]string, error) {
+func (a *apiServer) validateClusterNamespaceMeta(
+	namespaceMeta map[string]*workspacev1.WorkspaceNamespaceMeta) (
+	map[string]*workspacev1.WorkspaceNamespaceMeta, error,
+) {
 	allClusters := make(map[string]int)
-	for clusterName, namespace := range clusterNamespacePairs {
+	for clusterName, metadata := range namespaceMeta {
+		namespace := metadata.Namespace
 		if _, ok := allClusters[clusterName]; ok {
-			return nil, status.Errorf(codes.InvalidArgument, `Cannot specify the same cluster name with 
-			different namespace, workspace-namespace bindings are unique per cluster per workspace.`)
+			return nil, status.Errorf(codes.InvalidArgument, "Cannot specify the same cluster "+
+				"name with different namespace, workspace-namespace bindings are unique per "+
+				"cluster per workspace.")
 		}
 		allClusters[clusterName] = 1
-		if len(clusterName) > 0 && len(namespace) == 0 {
+		if len(clusterName) > 0 && namespace == nil {
 			return nil, status.Errorf(codes.InvalidArgument,
 				"Must specify a Kubernetes namespace")
 		}
@@ -104,13 +109,16 @@ func (a *apiServer) validateClusterNamespacePairs(clusterNamespacePairs map[stri
 			return nil, err
 		}
 		// This might occur when using singleRM with a cluster name defined in the master config,
-		// but not specified in a given request
+		// but not specified in a given request.
 		if newClusterName != clusterName {
-			clusterNamespacePairs[newClusterName] = namespace
-			delete(clusterNamespacePairs, clusterName)
+			namespaceMeta[newClusterName] = &workspacev1.WorkspaceNamespaceMeta{
+				ClusterName: clusterName,
+				Namespace:   namespace,
+			}
+			delete(namespaceMeta, clusterName)
 		}
 	}
-	return clusterNamespacePairs, nil
+	return namespaceMeta, nil
 }
 
 func validateWorkspaceName(name string) error {
@@ -428,7 +436,7 @@ func (a *apiServer) PostWorkspace(
 		}
 	}
 
-	req.ClusterNamespacePairs, err = a.validateClusterNamespacePairs(req.ClusterNamespacePairs)
+	req.ClusterNamespaceMeta, err = a.validateClusterNamespaceMeta(req.ClusterNamespaceMeta)
 	if err != nil {
 		return nil, err
 	}
@@ -438,7 +446,7 @@ func (a *apiServer) PostWorkspace(
 		DefaultComputePool: req.DefaultComputePool, DefaultAuxPool: req.DefaultAuxPool,
 	}
 
-	wsnsBindings := make(map[string]*workspacev1.WorkspaceNamespace)
+	wsnsBindings := make(map[string]*workspacev1.WorkspaceNamespaceBinding)
 
 	err = db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		if req.AgentUserGroup != nil {
@@ -474,10 +482,10 @@ func (a *apiServer) PostWorkspace(
 
 		// If the user specifies cluster-namespace pairs, send them to the request handler for adding a
 		// workspace-namespace binding.
-		if len(req.ClusterNamespacePairs) > 0 {
+		if len(req.ClusterNamespaceMeta) > 0 {
 			newReq := &apiv1.SetWorkspaceNamespaceBindingsRequest{
-				WorkspaceId:           int32(w.ID),
-				ClusterNamespacePairs: req.ClusterNamespacePairs,
+				WorkspaceId:          int32(w.ID),
+				ClusterNamespaceMeta: req.ClusterNamespaceMeta,
 			}
 			wkspProto, err := w.ToProto()
 			if err != nil {
@@ -702,10 +710,10 @@ func (a *apiServer) PatchWorkspace(
 		insertColumns = append(insertColumns, "checkpoint_storage_config")
 
 		toDelete := []string{}
-		for cluster, ns := range req.Workspace.ClusterNamespacePairs {
-			if ns == "" {
+		for cluster, metadata := range req.Workspace.ClusterNamespaceMeta {
+			if metadata.Namespace == nil {
 				toDelete = append(toDelete, cluster)
-				delete(req.Workspace.ClusterNamespacePairs, cluster)
+				delete(req.Workspace.ClusterNamespaceMeta, cluster)
 			}
 		}
 		if len(toDelete) > 0 {
@@ -715,10 +723,10 @@ func (a *apiServer) PatchWorkspace(
 			}
 		}
 
-		if len(req.Workspace.ClusterNamespacePairs) != 0 {
+		if len(req.Workspace.ClusterNamespaceMeta) != 0 {
 			newReq := &apiv1.SetWorkspaceNamespaceBindingsRequest{
-				WorkspaceId:           req.Id,
-				ClusterNamespacePairs: req.Workspace.ClusterNamespacePairs,
+				WorkspaceId:          req.Id,
+				ClusterNamespaceMeta: req.Workspace.ClusterNamespaceMeta,
 			}
 			err = db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 				_, err := a.setWorkspaceNamespaceBindings(ctx, newReq, &tx, &currUser, currWorkspace)
@@ -769,10 +777,11 @@ func (a *apiServer) setWorkspaceNamespaceBindings(ctx context.Context,
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
-	namespaceBindings := make(map[string]*workspacev1.WorkspaceNamespace)
-	for clusterName, namespace := range req.ClusterNamespacePairs {
+	namespaceBindings := make(map[string]*workspacev1.WorkspaceNamespaceBinding)
+	for clusterName, namespaceMetadata := range req.ClusterNamespaceMeta {
+		namespace := namespaceMetadata.Namespace
 		// Verify that the namespace exists in the Kubernetes cluster for the corresponding RM.
-		err := a.m.rm.VerifyNamespaceExists(namespace, clusterName)
+		err := a.m.rm.VerifyNamespaceExists(*namespace, clusterName)
 		if err != nil {
 			return nil, fmt.Errorf("error verifying Kubernetes namespace: %w", err)
 		}
@@ -784,7 +793,7 @@ func (a *apiServer) setWorkspaceNamespaceBindings(ctx context.Context,
 		if err != nil {
 			return nil, err
 		}
-		isDefaultNamespace := namespace == *defaultNamespace
+		isDefaultNamespace := namespace == defaultNamespace
 
 		// Change the workspace-namespace binding for the given cluster if it already exists. If no
 		// namespace is bound to the workspace for the specified cluster, add one.
@@ -798,15 +807,15 @@ func (a *apiServer) setWorkspaceNamespaceBindings(ctx context.Context,
 			if err != sql.ErrNoRows {
 				return nil, fmt.Errorf("error getting the current workspace-namespace binding: %w", err)
 			}
-			namespaceBindings[clusterName] = &workspacev1.WorkspaceNamespace{
+			namespaceBindings[clusterName] = &workspacev1.WorkspaceNamespaceBinding{
 				WorkspaceId: int32(wkspID),
-				Namespace:   namespace,
+				Namespace:   *namespace,
 				ClusterName: clusterName,
 			}
 			// The workspace has no namespace binding for the specified cluster, so we add one.
 			wsns = model.WorkspaceNamespace{
 				WorkspaceID: wkspID,
-				Namespace:   namespace,
+				Namespace:   *namespace,
 				ClusterName: clusterName,
 			}
 			if !isDefaultNamespace {
@@ -815,7 +824,7 @@ func (a *apiServer) setWorkspaceNamespaceBindings(ctx context.Context,
 					return nil, err
 				}
 			}
-		} else if wsns.Namespace != namespace {
+		} else if wsns.Namespace != *namespace {
 			if !isDefaultNamespace {
 				// Update the existing workspace-namespace binding for the specified cluster.
 				_, err = tx.NewUpdate().Model(&model.WorkspaceNamespace{}).
@@ -842,9 +851,9 @@ func (a *apiServer) setWorkspaceNamespaceBindings(ctx context.Context,
 				}
 			}
 		}
-		namespaceBindings[clusterName] = &workspacev1.WorkspaceNamespace{
+		namespaceBindings[clusterName] = &workspacev1.WorkspaceNamespaceBinding{
 			WorkspaceId: w.Id,
-			Namespace:   namespace, ClusterName: clusterName,
+			Namespace:   *namespace, ClusterName: clusterName,
 		}
 	}
 	resp := &apiv1.SetWorkspaceNamespaceBindingsResponse{NamespaceBindings: namespaceBindings}
@@ -864,7 +873,7 @@ func (a *apiServer) SetWorkspaceNamespaceBindings(ctx context.Context,
 		return nil, err
 	}
 
-	req.ClusterNamespacePairs, err = a.validateClusterNamespacePairs(req.ClusterNamespacePairs)
+	req.ClusterNamespaceMeta, err = a.validateClusterNamespaceMeta(req.ClusterNamespaceMeta)
 	if err != nil {
 		return nil, err
 	}
@@ -938,7 +947,7 @@ func (a *apiServer) ListWorkspaceNamespaceBindings(
 			return nil, fmt.Errorf("error getting default namespace: %w", err)
 		}
 		var wsns model.WorkspaceNamespace
-		protoBinding := &workspacev1.WorkspaceNamespace{
+		protoBinding := &workspacev1.WorkspaceNamespaceBinding{
 			WorkspaceId: req.Id,
 			Namespace:   *defaultNamespace,
 			ClusterName: rmClusterName,

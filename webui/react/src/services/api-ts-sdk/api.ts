@@ -7585,11 +7585,11 @@ export interface V1PatchWorkspace {
      */
     defaultAuxResourcePool?: string;
     /**
-     * Optional cluster namespace map to create a workspace namespace binding for each cluster.
-     * @type {{ [key: string]: string; }}
+     * The map of clusters to workspace-namespace metadata (including the workspace-namespace binding and the resource quota placed on the namespace bound to the workspace for a given cluster).
+     * @type {{ [key: string]: V1WorkspaceNamespaceMeta; }}
      * @memberof V1PatchWorkspace
      */
-    clusterNamespacePairs?: { [key: string]: string; };
+    clusterNamespaceMeta?: { [key: string]: V1WorkspaceNamespaceMeta; };
 }
 /**
  * Response to PatchWorkspaceRequest.
@@ -7603,6 +7603,12 @@ export interface V1PatchWorkspaceResponse {
      * @memberof V1PatchWorkspaceResponse
      */
     workspace: V1Workspace;
+    /**
+     * The workspace-namespace bindings and resource quotas created.
+     * @type {{ [key: string]: V1WorkspaceNamespaceBinding; }}
+     * @memberof V1PatchWorkspaceResponse
+     */
+    namespaceBindings?: { [key: string]: V1WorkspaceNamespaceBinding; };
 }
 /**
  * Response to PauseExperimentRequest.
@@ -8291,11 +8297,11 @@ export interface V1PostWorkspaceRequest {
      */
     defaultAuxPool?: string;
     /**
-     * The cluster-namespace pairs for workspace-namespace bindings.
-     * @type {{ [key: string]: string; }}
+     * The map of clusters to workspace-namespace metadata (including the workspace-namespace binding and the resource quota placed on the namespace bound to the workspace for a given cluster).
+     * @type {{ [key: string]: V1WorkspaceNamespaceMeta; }}
      * @memberof V1PostWorkspaceRequest
      */
-    clusterNamespacePairs?: { [key: string]: string; };
+    clusterNamespaceMeta?: { [key: string]: V1WorkspaceNamespaceMeta; };
 }
 /**
  * Response to PostWorkspaceRequest.
@@ -8310,11 +8316,11 @@ export interface V1PostWorkspaceResponse {
      */
     workspace: V1Workspace;
     /**
-     * The workspace-namespace bindings created.
-     * @type {{ [key: string]: V1WorkspaceNamespace; }}
+     * The workspace-namespace bindings and resource quotas created.
+     * @type {{ [key: string]: V1WorkspaceNamespaceBinding; }}
      * @memberof V1PostWorkspaceResponse
      */
-    namespaceBindings?: { [key: string]: V1WorkspaceNamespace; };
+    namespaceBindings?: { [key: string]: V1WorkspaceNamespaceBinding; };
 }
 /**
  * Preview hyperparameter search.
@@ -10383,7 +10389,7 @@ export interface V1SetUserPasswordResponse {
     user?: V1User;
 }
 /**
- * Request for modifying a namespace binding to a workspace.
+ * Request for modifying a workspace-namespace binding.
  * @export
  * @interface V1SetWorkspaceNamespaceBindingsRequest
  */
@@ -10395,11 +10401,11 @@ export interface V1SetWorkspaceNamespaceBindingsRequest {
      */
     workspaceId: number;
     /**
-     * The cluster-namespace pairs used to create workspace=namespace bindings.
-     * @type {{ [key: string]: string; }}
+     * The cluster-namespace pairs used to create workspace-namespace bindings.
+     * @type {{ [key: string]: V1WorkspaceNamespaceMeta; }}
      * @memberof V1SetWorkspaceNamespaceBindingsRequest
      */
-    clusterNamespacePairs?: { [key: string]: string; };
+    clusterNamespaceMeta?: { [key: string]: V1WorkspaceNamespaceMeta; };
 }
 /**
  * Response for modify a namespace binding to a workspace.
@@ -10409,10 +10415,10 @@ export interface V1SetWorkspaceNamespaceBindingsRequest {
 export interface V1SetWorkspaceNamespaceBindingsResponse {
     /**
      * The added workspace-namespace bindings.
-     * @type {{ [key: string]: V1WorkspaceNamespace; }}
+     * @type {{ [key: string]: V1WorkspaceNamespaceBinding; }}
      * @memberof V1SetWorkspaceNamespaceBindingsResponse
      */
-    namespaceBindings: { [key: string]: V1WorkspaceNamespace; };
+    namespaceBindings: { [key: string]: V1WorkspaceNamespaceBinding; };
 }
 /**
  * Shell is an ssh server in a containerized environment.
@@ -12256,37 +12262,74 @@ export interface V1Workspace {
      * @memberof V1Workspace
      */
     defaultAuxPool?: string;
-    /**
-     * Namespaces to which the workspace is bound.
-     * @type {Array<string>}
-     * @memberof V1Workspace
-     */
-    namespaceBindings?: Array<string>;
 }
 /**
- * WorkspaceNamespace represents a workspace-namespace binding for a given cluster.
+ * WorkspaceNamespace represents a workspace-namespace binding for a given workspace and cluster.
  * @export
- * @interface V1WorkspaceNamespace
+ * @interface V1WorkspaceNamespaceBinding
  */
-export interface V1WorkspaceNamespace {
+export interface V1WorkspaceNamespaceBinding {
     /**
      * The id of the workspace.
      * @type {number}
-     * @memberof V1WorkspaceNamespace
+     * @memberof V1WorkspaceNamespaceBinding
      */
     workspaceId?: number;
     /**
      * The Kubernetes namespace.
      * @type {string}
-     * @memberof V1WorkspaceNamespace
+     * @memberof V1WorkspaceNamespaceBinding
      */
     namespace?: string;
     /**
      * User cluster name.
      * @type {string}
-     * @memberof V1WorkspaceNamespace
+     * @memberof V1WorkspaceNamespaceBinding
      */
     clusterName?: string;
+    /**
+     * The optional resource quota placed on the namespace (and consequentially, the workspace).
+     * @type {number}
+     * @memberof V1WorkspaceNamespaceBinding
+     */
+    resourceQuota?: number;
+}
+/**
+ * WorkspaceNamespaceMeta is the metadata associated with a workspace-namespace binding.
+ * @export
+ * @interface V1WorkspaceNamespaceMeta
+ */
+export interface V1WorkspaceNamespaceMeta {
+    /**
+     * The optional namespace of the workspace-namespace binding.
+     * @type {string}
+     * @memberof V1WorkspaceNamespaceMeta
+     */
+    namespace?: string;
+    /**
+     * Whether we want to auto-create a namespace for a workspace-namespace binding.
+     * @type {boolean}
+     * @memberof V1WorkspaceNamespaceMeta
+     */
+    autoCreateNamespace?: boolean;
+    /**
+     * Whether we want to auto-create a namespace for each cluster's workspace-namespace binding.
+     * @type {boolean}
+     * @memberof V1WorkspaceNamespaceMeta
+     */
+    autoCreateNamespaceAllClusters?: boolean;
+    /**
+     * The cluster to which we apply the workspace-namespace binding or resource quota.
+     * @type {string}
+     * @memberof V1WorkspaceNamespaceMeta
+     */
+    clusterName?: string;
+    /**
+     * The optional resource quota placed on the namespace (and consequentially, the workspace).
+     * @type {number}
+     * @memberof V1WorkspaceNamespaceMeta
+     */
+    resourceQuota?: number;
 }
 /**
  * WorkspaceState is used to track progress during a deletion.   - WORKSPACE_STATE_UNSPECIFIED: Object deletion is not in progress.  - WORKSPACE_STATE_DELETING: The object is being deleted.  - WORKSPACE_STATE_DELETE_FAILED: The object failed to delete.  - WORKSPACE_STATE_DELETED: The object finished deleting.
