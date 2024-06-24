@@ -171,8 +171,9 @@ func generateProjectKey(ctx context.Context, tx bun.Tx, projectName string) (str
 	var key string
 	found := true
 	for i := 0; i < MaxRetries && found; i++ {
-		prefixLength := min(len(projectName), MaxProjectKeyPrefixLength)
-		prefix := projectName[:prefixLength]
+		sanitizedName := strings.ToUpper(regexp.MustCompile("[^a-zA-Z0-9]").ReplaceAllString(projectName, ""))
+		prefixLength := min(len(sanitizedName), MaxProjectKeyPrefixLength)
+		prefix := sanitizedName[:prefixLength]
 		suffix := random.String(MaxProjectKeyLength - prefixLength)
 		key = strings.ToUpper(prefix + suffix)
 		err := tx.NewSelect().Model(&model.Project{}).Where("key = ?", key).For("UPDATE").Scan(ctx)
