@@ -22,7 +22,7 @@ Version 0.34.0
    can be found at :ref:`set-environment-images`
 
 -  Images: Our new default images are based on Nvidia NGC. While we provide a recommended NGC
-   version, users have the flexibility to build their own images using any NGC version that meets
+version, users can build their own images using any NGC version that meets
    their specific requirements. For more information, visit :ref:`ngc-version`
 
 **New Features**
