@@ -24,7 +24,8 @@ import pathlib
 from docker_on_whales import docker
 from ruamel import yaml
 
-def gather_images(yaml_path: str, target_version: str) -> dict:
+
+def gather_images(yaml_path: str, target_version: str) -> list:
     with open(yaml_path) as f:
         images = yaml.YAML(typ="safe", pure=True).load(f)
     valid_images = []
@@ -35,19 +36,19 @@ def gather_images(yaml_path: str, target_version: str) -> dict:
 
     return valid_images
 
+
 def main(yaml_path: str, target_version: str) -> None:
     images = gather_images(yaml_path, target_version)
     for image in images:
-        docker.buildx.imagetools.create(
-            sources = [image["old"]],
-            tags = [image["new"]]
-        )
+        docker.buildx.imagetools.create(sources=[image["old"]], tags=[image["new"]])
 
-if __name__=="__main__":
+
+if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("path", type=pathlib.Path, help="path/to/bumpenvs.yaml")
-    parser.add_argument("--target_version",
-                        help="version id (default found in environments-target.txt)")
+    parser.add_argument(
+        "--target_version", help="version id (default found in environments-target.txt)"
+    )
     args = parser.parse_args()
 
     if args.target_version is None:
@@ -57,4 +58,3 @@ if __name__=="__main__":
         target_version = args.target_version
 
     main(args.path, target_version)
-
