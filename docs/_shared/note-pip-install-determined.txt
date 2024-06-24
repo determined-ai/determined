@@ -1,3 +1,5 @@
 .. note::
     
+    When deploying locally, the system prompts you to set a strong password.
+
     The command, ``pip install determined``, installs the ``determined`` library which includes the Determined command-line interface (CLI). 

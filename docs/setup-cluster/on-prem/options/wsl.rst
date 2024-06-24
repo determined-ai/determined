@@ -145,8 +145,8 @@ To open the WebUI from WSL:
 
    explorer.exe http://localhost:8080
 
-The default username for the WebUI is ``determined`` and no password. After signing in, you'll need
-to create a :ref:`strong password <strong-password>`.
+The default username for the WebUI is ``determined`` and no password. After signing in, create a
+:ref:`strong password <strong-password>`.
 
 In the WebUI, go to the ``Cluster`` page. You should now see slots available (either CPU or GPU,
 depending on what hardware is available on the machine).
