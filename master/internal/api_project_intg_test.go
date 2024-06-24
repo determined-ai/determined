@@ -27,6 +27,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/mocks"
 	"github.com/determined-ai/determined/master/internal/project"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/random"
 	"github.com/determined-ai/determined/master/pkg/syncx/errgroupx"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
@@ -465,7 +466,7 @@ func TestCreateProjectWithProjectKey(t *testing.T) {
 	require.NoError(t, werr)
 
 	projectName := "test-project" + uuid.New().String()
-	projectKey := uuid.New().String()[:project.MaxProjectKeyLength]
+	projectKey := random.String(project.MaxProjectKeyLength)
 	resp, err := api.PostProject(ctx, &apiv1.PostProjectRequest{
 		Name: projectName, WorkspaceId: wresp.Workspace.Id, Key: &projectKey,
 	})
@@ -487,7 +488,7 @@ func TestCreateProjectWithDuplicateProjectKey(t *testing.T) {
 	require.NoError(t, werr)
 
 	projectName := "test-project" + uuid.New().String()
-	projectKey := uuid.New().String()[:project.MaxProjectKeyLength]
+	projectKey := random.String(project.MaxProjectKeyLength)
 	_, err := api.PostProject(ctx, &apiv1.PostProjectRequest{
 		Name: projectName, WorkspaceId: wresp.Workspace.Id, Key: &projectKey,
 	})
@@ -560,7 +561,7 @@ func TestPatchProject(t *testing.T) {
 
 	newName := uuid.New().String()
 	newDescription := uuid.New().String()
-	newKey := uuid.New().String()[:project.MaxProjectKeyLength]
+	newKey := random.String(project.MaxProjectKeyLength)
 	_, err = api.PatchProject(ctx, &apiv1.PatchProjectRequest{
 		Id: resp.Project.Id,
 		Project: &projectv1.PatchProject{
@@ -625,7 +626,7 @@ func TestPatchProjectWithConcurrent(t *testing.T) {
 	newDescription := "new-description"
 	errgrp := errgroupx.WithContext(ctx)
 	for i := 0; i < 20; i++ {
-		newKey := uuid.New().String()[:project.MaxProjectKeyLength]
+		newKey := random.String(project.MaxProjectKeyLength)
 		errgrp.Go(func(context.Context) error {
 			_, err := api.PatchProject(ctx, &apiv1.PatchProjectRequest{
 				Id: resp.Project.Id,
