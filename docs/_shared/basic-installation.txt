@@ -2,4 +2,4 @@
 -  Accept the default username of ``determined``.
 -  Click **Sign In**.
 
-After signing in, you'll need to create a :ref:`strong password <strong-password>`.
+After signing in, create a :ref:`strong password <strong-password>`.
