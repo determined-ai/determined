@@ -340,11 +340,23 @@ const getloadTests = (
     test(
       "search flat runs w/ hparam",
       testRequest('POST', '/api/v1/runs', JSON.stringify({
-        filter: {
+        filter: JSON.stringify({
           "filterGroup": {
             "children": [
               {
-                "columnName": "hp.global_batch_size","kind":"field","location":"LOCATION_TYPE_RUN_HYPERPARAMETERS","operator":">","type":"COLUMN_TYPE_NUMBER","value":0.1}],"conjunction":"and","kind":"group"},"showArchived":false}
+                "columnName": "hp.global_batch_size",
+                "kind": "field",
+                "location": "LOCATION_TYPE_RUN_HYPERPARAMETERS",
+                "operator": ">",
+                "type": "COLUMN_TYPE_NUMBER",
+                "value": 0.1
+              }
+            ],
+            "conjunction": "and",
+            "kind": "group"
+          },
+          "showArchived": false
+        })
       })),
       !!sD?.workspace.projectId,
     ),
