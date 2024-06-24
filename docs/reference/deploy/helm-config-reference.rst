@@ -197,13 +197,13 @@
 
    -  ``cpuImage``: Sets the default Docker image for all non-GPU tasks. If a Docker image is
       specified in the :ref:`experiment config <exp-environment-image>` this default is overriden.
-      Defaults to: ``determinedai/pytorch-ngc-dev:e960eae``.
+      Defaults to: ``determinedai/pytorch-ngc-dev:94320de``.
 
    -  ``startupHook``: An optional inline script that will be executed as part of task set up.
 
    -  ``gpuImage``: Sets the default Docker image for all GPU tasks. If a Docker image is specified
       in the :ref:`experiment config <exp-environment-image>` this default is overriden. Defaults
-      to: ``determinedai/pytorch-ngc-dev:e960eae``.
+      to: ``determinedai/pytorch-ngc-dev:94320de``.
 
    -  ``logPolicies``: Sets log policies for trials. For details, visit :ref:`log_policies
       <experiment-config-min-validation-period>`.

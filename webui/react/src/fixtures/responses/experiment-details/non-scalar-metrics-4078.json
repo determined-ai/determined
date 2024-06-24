@@ -32,8 +32,8 @@
     "name": "Fork of Fork of mnist_tp_to_estimator_const",
     "environment": {
       "image": {
-        "cpu": "determinedai/pytorch-ngc-dev:e960eae",
-        "gpu": "determinedai/pytorch-ngc-dev:e960eae"
+        "cpu": "determinedai/pytorch-ngc-dev:94320de",
+        "gpu": "determinedai/pytorch-ngc-dev:94320de"
       },
       "ports": null,
       "pod_spec": null,

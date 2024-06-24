@@ -36,7 +36,7 @@ parameters:
   # be referenced by --ee testing.
   default-pt-gpu-hpc-image:
     type: string
-    default: determinedai/pytorch-ngc-dev:e960eae
+    default: determinedai/pytorch-ngc-dev:94320de
   # Some python, go, and react dependencies are cached by circleci via `save_cache`/`restore_cache`.
   # If the dependencies stay the same, but the circleci code that would produce them is changed,
   # it may be necessary to invalidate the cache by incrementing this value.
@@ -277,7 +277,7 @@ commands:
       - when:
           condition: <<parameters.tf2>>
           steps:
-            - run: docker pull determinedai/pytorch-ngc-dev:e960eae
+            - run: docker pull determinedai/pytorch-ngc-dev:94320de
 
   login-docker:
     parameters:
@@ -2401,7 +2401,7 @@ jobs:
 
   test-unit-harness-gpu-tf:
     docker:
-      - image: determinedai/tensorflow-ngc-dev:e960eae
+      - image: determinedai/tensorflow-ngc-dev:94320de
     resource_class: determined-ai/container-runner-gpu
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
@@ -2428,7 +2428,7 @@ jobs:
 
   test-unit-harness-pytorch2-gpu:
     docker:
-      - image: determinedai/pytorch-ngc-dev:e960eae
+      - image: determinedai/pytorch-ngc-dev:94320de
     resource_class: determined-ai/container-runner-gpu
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
@@ -2455,7 +2455,7 @@ jobs:
 
   test-unit-harness-pytorch2-cpu:
     docker:
-      - image: determinedai/pytorch-ngc-dev:e960eae
+      - image: determinedai/pytorch-ngc-dev:94320de
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
       - checkout
@@ -2481,7 +2481,7 @@ jobs:
 
   test-unit-harness-gpu-parallel:
     docker:
-      - image: determinedai/pytorch-ngc-dev:e960eae
+      - image: determinedai/pytorch-ngc-dev:94320de
     resource_class: determined-ai/container-runner-multi-gpu
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
@@ -2508,7 +2508,7 @@ jobs:
 
   test-unit-harness-gpu-deepspeed:
     docker:
-      - image: determinedai/pytorch-ngc-dev:e960eae
+      - image: determinedai/pytorch-ngc-dev:94320de
     resource_class: determined-ai/container-runner-gpu
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
@@ -3747,7 +3747,7 @@ jobs:
         type: string
         default: "1"
       environment-image:
-        default: determinedai/pytorch-ngc-dev:e960eae
+        default: determinedai/pytorch-ngc-dev:94320de
         type: string
       accel-node-taints:
         type: string
@@ -4776,9 +4776,6 @@ workflows:
             - aws
             - determined-ee
             - aws-ci-cluster-default-user-credentials
-          filters:
-            branches:
-              only: main
           requires:
             - package-and-push-system-dev-ee
           matrix:

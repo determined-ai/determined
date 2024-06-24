@@ -114,9 +114,9 @@ Default Images
    -  -  Environment
       -  File Name
    -  -  CPUs
-      -  ``determinedai/pytorch-ngc-dev:e960eae``
+      -  ``determinedai/pytorch-ngc-dev:94320de``
    -  -  NVIDIA GPUs
-      -  ``determinedai/pytorch-ngc-dev:e960eae``
+      -  ``determinedai/pytorch-ngc-dev:94320de``
    -  -  AMD GPUs
       -  ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.26.4``
 
@@ -155,7 +155,7 @@ Example Dockerfile that installs custom ``conda``-, ``pip``-, and ``apt``-based 
 .. code:: bash
 
    # Determined Image
-   FROM determinedai/tensorflow-ngc-dev:e960eae
+   FROM determinedai/tensorflow-ngc-dev:94320de
 
    # Custom Configuration
    RUN apt-get update && \
@@ -216,7 +216,7 @@ environments using :ref:`custom images <custom-docker-images>`:
 .. code:: bash
 
    # Determined Image
-   FROM determinedai/pytorch-ngc-dev:e960eae
+   FROM determinedai/pytorch-ngc-dev:94320de
 
    # Create a virtual environment
    RUN conda create -n myenv python=3.8

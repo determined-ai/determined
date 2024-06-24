@@ -62,8 +62,8 @@ echo >&2 "INFO: Using image from family ${SOURCE_IMAGE_FAMILY}"
 # Other predefined variables
 
 SSH_USERNAME="packer2"
-CPU_IMAGE_NAME="determinedai/pytorch-tensorflow-cpu-dev:e960eae"
-CUDA_IMAGE_NAME="determinedai/pytorch-ngc-dev:e960eae"
+CPU_IMAGE_NAME="determinedai/pytorch-tensorflow-cpu-dev:94320de"
+CUDA_IMAGE_NAME="determinedai/pytorch-ngc-dev:94320de"
 
 cat <<EOF
 ssh_username           = "${SSH_USERNAME}"
