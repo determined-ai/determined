@@ -156,8 +156,11 @@ message PostWorkspaceRequest {
   string default_compute_pool = 14;
   // The name of the default aux pool.
   string default_aux_pool = 15;
-  // The cluster-namespace pairs for workspace-namespace bindings.
-  map<string, string> cluster_namespace_pairs = 16;
+  // The map of clusters to workspace-namespace metadata (including the
+  // workspace-namespace binding and the resource quota placed on the namespace
+  // bound to the workspace for a given cluster).
+  map<string, determined.workspace.v1.WorkspaceNamespaceMeta>
+      cluster_namespace_meta = 16;
 }
 
 // Response to PostWorkspaceRequest.
@@ -168,9 +171,9 @@ message PostWorkspaceResponse {
 
   // The workspace created.
   determined.workspace.v1.Workspace workspace = 1;
-  // The workspace-namespace bindings created.
-  map<string, determined.workspace.v1.WorkspaceNamespace> namespace_bindings =
-      2;
+  // The workspace-namespace bindings and resource quotas created.
+  map<string, determined.workspace.v1.WorkspaceNamespaceBinding>
+      namespace_bindings = 2;
 }
 
 // Request for updating a workspace.
@@ -193,6 +196,9 @@ message PatchWorkspaceResponse {
 
   // The updated workspace.
   determined.workspace.v1.Workspace workspace = 1;
+  // The workspace-namespace bindings and resource quotas created.
+  map<string, determined.workspace.v1.WorkspaceNamespaceBinding>
+      namespace_bindings = 2;
 }
 
 // Request for deleting a workspace.
@@ -215,7 +221,7 @@ message DeleteWorkspaceResponse {
   bool completed = 1;
 }
 
-// Request for modifying a namespace binding to a workspace.
+// Request for modifying a workspace-namespace binding.
 message SetWorkspaceNamespaceBindingsRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "workspace_id" ] }
@@ -223,8 +229,9 @@ message SetWorkspaceNamespaceBindingsRequest {
 
   // The unique id of the workspace.
   int32 workspace_id = 1;
-  // The cluster-namespace pairs used to create workspace=namespace bindings.
-  map<string, string> cluster_namespace_pairs = 2;
+  // The cluster-namespace pairs used to create workspace-namespace bindings.
+  map<string, determined.workspace.v1.WorkspaceNamespaceMeta>
+      cluster_namespace_meta = 2;
 }
 
 // Response for modify a namespace binding to a workspace.
@@ -234,8 +241,8 @@ message SetWorkspaceNamespaceBindingsResponse {
   };
 
   // The added workspace-namespace bindings.
-  map<string, determined.workspace.v1.WorkspaceNamespace> namespace_bindings =
-      1;
+  map<string, determined.workspace.v1.WorkspaceNamespaceBinding>
+      namespace_bindings = 1;
 }
 
 // Request for listing namespaces bound to a workspace.

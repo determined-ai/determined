@@ -117,8 +117,8 @@ type WorkspaceNamespace struct {
 }
 
 // ToProto converts a WorkspaceNamespaceBinding to its protobuf representation.
-func (wn WorkspaceNamespace) ToProto() *workspacev1.WorkspaceNamespace {
-	return &workspacev1.WorkspaceNamespace{
+func (wn WorkspaceNamespace) ToProto() *workspacev1.WorkspaceNamespaceBinding {
+	return &workspacev1.WorkspaceNamespaceBinding{
 		WorkspaceId: int32(wn.WorkspaceID),
 		Namespace:   wn.Namespace,
 		ClusterName: wn.ClusterName,
