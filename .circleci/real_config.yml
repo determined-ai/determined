@@ -5661,7 +5661,7 @@ workflows:
           parameters:
           matrix:
             parameters:
-              release: ['true']
+              release: [true]
           filters: *release-filters
 
       - publish-python-package:
