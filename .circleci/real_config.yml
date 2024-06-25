@@ -633,8 +633,10 @@ commands:
                 name: Install DataDog agent
                 command: |
                   bash -c "$(curl -L https://s3.amazonaws.com/dd-agent/scripts/install_script_agent7.sh)"
+                  sudo chmod a+rw /etc/datadog-agent/datadog.yaml
                   sudo cat .circleci/datadog/ci-local-config.yaml >> /etc/datadog-agent/datadog.yaml
                   sudo service datadog-agent restart
+                  sudo usermod -a -G docker dd-agent
                   sudo cat /etc/datadog-agent/datadog.yaml
                   sudo ls /etc/datadog-agent/conf.d/
       # Wait for master before splitting tests, since so many splits depend on
