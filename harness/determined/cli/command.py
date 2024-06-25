@@ -64,10 +64,18 @@ args_description: cli.ArgsDescription = [
                         action="store_true",
                         help="show all commands (including other users')",
                     ),
-                    cli.Arg("--ids", type=cli.string_to_list, help="command IDs"),
                     cli.Group(cli.output_format_args["json"], cli.output_format_args["csv"]),
                 ],
                 is_default=True,
+            ),
+            cli.Cmd(
+                "describe",
+                functools.partial(ntsc.describe),
+                "display command metadata",
+                [
+                    cli.Arg("command_id", type=str, help="command ID"),
+                    cli.Group(cli.output_format_args["json"], cli.output_format_args["csv"]),
+                ],
             ),
             cli.Cmd(
                 "config",

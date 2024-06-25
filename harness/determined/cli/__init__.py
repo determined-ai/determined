@@ -23,7 +23,6 @@ from determined.cli._declarative_argparse import (
     generate_aliases,
     make_prefixes,
     string_to_bool,
-    string_to_list,
     wrap_func,
 )
 from determined.cli.errors import CliError

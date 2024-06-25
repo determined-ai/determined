@@ -210,7 +210,6 @@ func (cs *CommandService) listByType(
 	reqUserIDs []int32,
 	cmdType model.TaskType,
 	workspaceID int32,
-	reqIDs *[]string,
 ) []*Command {
 	users := make(map[string]bool, len(reqUsers))
 	for _, user := range reqUsers {
@@ -220,16 +219,9 @@ func (cs *CommandService) listByType(
 	for _, user := range reqUserIDs {
 		userIds[user] = true
 	}
-	ids := make(map[model.TaskID]bool, 0)
-	if reqIDs != nil {
-		ids = make(map[model.TaskID]bool, len(*reqIDs))
-		for _, id := range *reqIDs {
-			ids[model.TaskID(id)] = true
-		}
-	}
 
 	cmds := []*Command{}
-	for id, c := range cs.commands {
+	for _, c := range cs.commands {
 		wID := int32(c.GenericCommandSpec.Metadata.WorkspaceID)
 		username := c.Base.Owner.Username
 		userID := int32(c.Base.Owner.ID)
@@ -237,9 +229,8 @@ func (cs *CommandService) listByType(
 		if workspaceID != 0 && workspaceID != wID {
 			continue
 		}
-		if c.taskType == cmdType &&
-			((len(users) == 0 && len(userIds) == 0) || users[username] || userIds[userID]) &&
-			(len(ids) == 0 || ids[id]) {
+		if c.taskType == cmdType && ((len(users) == 0 && len(userIds) == 0) ||
+			users[username] || userIds[userID]) {
 			cmds = append(cmds, c)
 		}
 	}
@@ -308,7 +299,7 @@ func (cs *CommandService) GetCommands(req *apiv1.GetCommandsRequest) (*apiv1.Get
 	defer cs.mu.Unlock()
 
 	resp := &apiv1.GetCommandsResponse{}
-	cmds := cs.listByType(req.Users, req.UserIds, model.TaskTypeCommand, req.WorkspaceId, &req.Ids)
+	cmds := cs.listByType(req.Users, req.UserIds, model.TaskTypeCommand, req.WorkspaceId)
 	for _, c := range cmds {
 		resp.Commands = append(resp.Commands, c.ToV1Command())
 	}
@@ -337,7 +328,7 @@ func (cs *CommandService) GetNotebooks(req *apiv1.GetNotebooksRequest) (*apiv1.G
 	defer cs.mu.Unlock()
 
 	resp := &apiv1.GetNotebooksResponse{}
-	cmds := cs.listByType(req.Users, req.UserIds, model.TaskTypeNotebook, req.WorkspaceId, nil)
+	cmds := cs.listByType(req.Users, req.UserIds, model.TaskTypeNotebook, req.WorkspaceId)
 	for _, c := range cmds {
 		resp.Notebooks = append(resp.Notebooks, c.ToV1Notebook())
 	}
@@ -366,7 +357,7 @@ func (cs *CommandService) GetShells(req *apiv1.GetShellsRequest) (*apiv1.GetShel
 	defer cs.mu.Unlock()
 
 	resp := &apiv1.GetShellsResponse{}
-	cmds := cs.listByType(req.Users, req.UserIds, model.TaskTypeShell, req.WorkspaceId, nil)
+	cmds := cs.listByType(req.Users, req.UserIds, model.TaskTypeShell, req.WorkspaceId)
 	for _, c := range cmds {
 		resp.Shells = append(resp.Shells, c.ToV1Shell())
 	}
@@ -395,7 +386,7 @@ func (cs *CommandService) GetTensorboards(req *apiv1.GetTensorboardsRequest) (*a
 	defer cs.mu.Unlock()
 
 	resp := &apiv1.GetTensorboardsResponse{}
-	cmds := cs.listByType(req.Users, req.UserIds, model.TaskTypeTensorboard, req.WorkspaceId, nil)
+	cmds := cs.listByType(req.Users, req.UserIds, model.TaskTypeTensorboard, req.WorkspaceId)
 	for _, c := range cmds {
 		resp.Tensorboards = append(resp.Tensorboards, c.ToV1Tensorboard())
 	}

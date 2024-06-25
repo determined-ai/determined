@@ -192,6 +192,28 @@ def expand_uuid_prefixes(
         prefixes = prefixes[0]
     return prefixes
 
+def describe(args: argparse.Namespace) -> None:
+    sess = cli.setup_session(args)
+    task_id = expand_uuid_prefixes(sess, args)
+    item = sess.get(f"api/v1/{RemoteTaskNewAPIs[args._command]}/{task_id}").json()["command"]
+
+    w_names = workspace.get_workspace_names(sess)
+    if item["state"].startswith("STATE_"):
+            item["state"] = item["state"][6:]
+    if "workspaceId" in item:
+        wId = item["workspaceId"]
+        item["workspaceName"] = (
+            w_names[wId] if wId in w_names else f"missing workspace id {wId}"
+        )
+
+    if getattr(args, "json", None):
+        render.print_json(item)
+        return
+
+    table_header = RemoteTaskListTableHeaders[args._command]
+    values = render.select_values([item], table_header)
+    render.tabulate_or_csv(table_header, values, getattr(args, "csv", False))
+
 
 def list_tasks(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
@@ -208,9 +230,6 @@ def list_tasks(args: argparse.Namespace) -> None:
 
     if not args.all:
         params["users"] = [sess.username]
-
-    if "ids" in args:
-        params["ids"] = args.ids
 
     res = sess.get(api_full_path, params=params).json()[api_path]
 
