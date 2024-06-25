@@ -192,6 +192,7 @@ def expand_uuid_prefixes(
         prefixes = prefixes[0]
     return prefixes
 
+
 def describe(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     task_id = expand_uuid_prefixes(sess, args)
@@ -199,12 +200,10 @@ def describe(args: argparse.Namespace) -> None:
 
     w_names = workspace.get_workspace_names(sess)
     if item["state"].startswith("STATE_"):
-            item["state"] = item["state"][6:]
+        item["state"] = item["state"][6:]
     if "workspaceId" in item:
         wId = item["workspaceId"]
-        item["workspaceName"] = (
-            w_names[wId] if wId in w_names else f"missing workspace id {wId}"
-        )
+        item["workspaceName"] = w_names[wId] if wId in w_names else f"missing workspace id {wId}"
 
     if getattr(args, "json", None):
         render.print_json(item)
