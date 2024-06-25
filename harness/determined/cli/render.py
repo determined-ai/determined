@@ -147,7 +147,6 @@ def tabulate_or_csv(
     outfile: Optional[pathlib.Path] = None,
 ) -> None:
     out = outfile.open("w") if outfile else sys.stdout
-    print(values)
     if as_csv or outfile:
         writer = csv.writer(out)
         writer.writerow(headers)
