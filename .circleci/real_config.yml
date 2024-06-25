@@ -634,7 +634,7 @@ commands:
                 command: |
                   sudo mkdir -p /etc/datadog-agent
                   sudo chmod -R a+rw /etc/datadog-agent
-                  host_tags="\"testSuite:<<parameters.mark>>\",\"jobName:${CIRCLE_JOB}\",\"url:${CIRCLE_BUILD_URL}\",\"totalNodes:${CIRCLE_NODE_TOTAL}\",\"nodeIdx:${CIRCLE_NODE_INDEX}\",\"branch:${CIRCLE_BRANCH}\""
+                  host_tags="testSuite:<<parameters.mark>>,jobName:${CIRCLE_JOB},url:${CIRCLE_BUILD_URL},totalNodes:${CIRCLE_NODE_TOTAL},nodeIdx:${CIRCLE_NODE_INDEX},branch:${CIRCLE_BRANCH}"
                   echo "$host_tags"
                   DD_ENV="ci-${CIRCLE_BUILD_NUM}" \
                   DD_HOST_TAGS="$host_tags" \
