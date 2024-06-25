@@ -96,6 +96,10 @@ def test_experiment_capture() -> None:
     assert r.status_code == requests.codes.ok, r.text
     validate_trial_csv_rows(r.text, experiment_id, w1.name)
 
+    # Clean up test workspaces
+    bindings.delete_DeleteWorkspace(session=sess, id=w1.id)
+    bindings.delete_DeleteWorkspace(session=sess, id=w2.id)
+
 
 @pytest.mark.e2e_cpu
 def test_notebook_capture() -> None:
