@@ -9,9 +9,7 @@ import Link from 'components/Link';
 import OverviewStats from 'components/OverviewStats';
 import Section from 'components/Section';
 import TimeAgo from 'components/TimeAgo';
-import { pausableRunStates } from 'constants/states';
 import { useCheckpointFlow } from 'hooks/useCheckpointFlow';
-import usePolling from 'hooks/usePolling';
 import { NodeElement } from 'pages/ResourcePool/Topology';
 import { paths } from 'routes/utils';
 import { getTaskAcceleratorData } from 'services/api';
@@ -28,9 +26,9 @@ const allocationModalComponent: React.FC<{ data?: V1AcceleratorData[] }> = ({ da
       {data && (
         <>
           <Row wrap>
-            {data.map((d) => (
+            {data.map((d, i) => (
               <NodeElement
-                key={d.nodeName}
+                key={i}
                 name={d.nodeName || ''}
                 numOfSlots={d.acceleratorUuids?.length || 1}
               />
@@ -56,8 +54,8 @@ const allocationModalComponent: React.FC<{ data?: V1AcceleratorData[] }> = ({ da
               <span>{uniq(data.map((d) => d.acceleratorType)).join(',')}</span>
             </div>
           </Column>
-          {data.map((d) => (
-            <Column key={d.nodeName}>
+          {data.map((d, i) => (
+            <Column key={i}>
               <div className={css.dataRow}>
                 <span>Node ID</span>
                 <span className={css.dashline} />
@@ -98,20 +96,11 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
     } catch (e) {
       handleError(e);
     }
-  }, [trial, canceler]);
-
-  const { stopPolling } = usePolling(fetchAcceleratorData, { rerunOnNewFn: true });
+  }, [trial?.taskId, canceler]);
 
   useEffect(() => {
-    return () => {
-      canceler.abort();
-      stopPolling();
-    };
-  }, [canceler, stopPolling]);
-
-  useEffect(() => {
-    if (acceleratorData && !pausableRunStates.has(experiment.state)) stopPolling();
-  }, [experiment.state, acceleratorData, stopPolling]);
+    fetchAcceleratorData();
+  }, [fetchAcceleratorData, trial?.runnerState, trial?.state]);
 
   const bestCheckpoint: CheckpointWorkloadExtended | undefined = useMemo(() => {
     if (!trial) return;
@@ -183,9 +172,7 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
           <OverviewStats title="Resource Allocation" onClick={allocationModal.open}>
             <div
               style={{
-                color: pausableRunStates.has(experiment.state)
-                  ? 'none'
-                  : 'var(--theme-status-active)',
+                color: 'var(--theme-status-active)',
               }}>
               {`${numOfSlots} ${pluralizer(numOfSlots, 'Slot')}`}
             </div>
