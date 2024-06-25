@@ -1,50 +1,29 @@
-import { Pagination } from 'e2e/models/ant/Pagination';
-import { BaseComponent, NamedComponent, NamedComponentArgs } from 'e2e/models/BaseComponent';
+import { NamedComponent, NamedComponentArgs } from './BaseComponent';
 
 type RowClass<RowType> = new (args: NamedComponentArgs) => RowType;
-type HeadRowClass<HeadRowType> = new (args: NamedComponentArgs) => HeadRowType;
 
-export type TableArgs<RowType, HeadRowType> = NamedComponentArgs & {
+export type RowContainerArgs<RowType> = NamedComponentArgs & {
   rowType: RowClass<RowType>;
-  headRowType: HeadRowClass<HeadRowType>;
 };
 
 /**
- * Represents the Table component in src/components/Table/InteractiveTable.tsx.
+ * Represents a Base List component
  */
-export class Table<RowType extends Row, HeadRowType extends HeadRow> extends NamedComponent {
-  readonly defaultSelector = '.ant-table';
+export abstract class BaseRowContainer<RowType extends BaseRow> extends NamedComponent {
+  readonly #rowType: RowClass<RowType>;
+  abstract readonly rows: RowType;
+
   /**
-   * Constructs a Table
+   * Constructs a Base List
    * @param {object} args
    * @param {RowType} args.rowType - Value for the RowType used to instanciate rows
-   * @param {HeadRowType} args.headRowType - Value of the HeadRowType used to instanciate the head row
    */
-  constructor(args: TableArgs<RowType, HeadRowType>) {
+  constructor(args: RowContainerArgs<RowType>) {
     super(args);
     this.#rowType = args.rowType;
-    this.rows = new args.rowType({ parent: this.#body });
-    this.headRow = new args.headRowType({ parent: this.#head });
-    this.getRowByDataKey = this.rowByAttributeGenerator(this.rows.keyAttribute);
   }
-  readonly #rowType: RowClass<RowType>;
-  readonly rows: RowType;
-  readonly headRow: HeadRowType;
-  readonly #body: BaseComponent = new BaseComponent({
-    parent: this,
-    selector: 'tbody.ant-table-tbody',
-  });
-  readonly noData = new BaseComponent({
-    parent: this.#body,
-    selector: '.ant-empty.ant-empty-normal',
-  });
-  readonly #head: BaseComponent = new BaseComponent({
-    parent: this,
-    selector: 'thead.ant-table-thead',
-  });
-  readonly pagination = new Pagination({
-    parent: this._parent,
-  });
+
+  abstract readonly getRowByDataKey: (value: string) => RowType;
 
   /**
    * Returns a function that gets a row by an attribute value.
@@ -58,12 +37,10 @@ export class Table<RowType extends Row, HeadRowType extends HeadRow> extends Nam
     return (value: string) => {
       return new this.#rowType({
         attachment: `[${key}="${value}"]`,
-        parent: this.#body,
+        parent: this.rows._parent,
       });
     };
   }
-
-  readonly getRowByDataKey: (value: string) => RowType;
 
   /**
    * Returns a list of keys associated with attributes from rows from the entire table.
@@ -110,16 +87,10 @@ export class Table<RowType extends Row, HeadRowType extends HeadRow> extends Nam
 }
 
 /**
- * Represents a row from the Table component
+ * Represents a Base Row component
  */
-export class Row extends NamedComponent {
-  readonly defaultSelector = 'tr.ant-table-row';
-  readonly keyAttribute = 'data-row-key';
-  readonly select = new BaseComponent({
-    parent: this,
-    selector: '.ant-table-selection-column',
-  });
-
+export abstract class BaseRow extends NamedComponent {
+  abstract readonly keyAttribute: string;
   async getId(): Promise<string> {
     const value = await this.pwLocator.getAttribute(this.keyAttribute);
     if (value === null) {
@@ -127,15 +98,4 @@ export class Row extends NamedComponent {
     }
     return value;
   }
-}
-
-/**
- * Represents the head row from the Table component
- */
-export class HeadRow extends NamedComponent {
-  readonly defaultSelector = 'tr';
-  readonly selectAll = new BaseComponent({
-    parent: this,
-    selector: '.ant-table-selection-column .ant-checkbox-input',
-  });
 }

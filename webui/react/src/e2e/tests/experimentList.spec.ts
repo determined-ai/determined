@@ -80,7 +80,6 @@ test.describe('Experiement List', () => {
 
   test.skip('Column Picker Check and Uncheck', async () => {
     // BUG [ET-287]
-    test.slow();
     const columnTitle = 'Forked From',
       columnTestid = 'forkedFrom';
     const columnPicker = projectDetailsPage.f_experiemntList.tableActionBar.columnPickerMenu;

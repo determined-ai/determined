@@ -35,7 +35,9 @@ This improvement facilitates better resource tracking and management within Kube
 
 Configuration: Introduce a DCGM Helm chart and Prometheus configuration to the
 ``tools/observability`` directory. Additionally, two new dashboards, "API Monitoring" and "Resource
-Utilization", have been added to improve observability and operational insight.
+Utilization", have been added to improve observability and operational insight. Visit `Kubernetes
+Observability <https://docs.determined.ai/latest/integrations/observability/_index.html>`__ for a
+complete setup guide.
 
 -  WebUI: Allow users to create and manage configuration templates through the WebUI.
 -  Commands: Commands now support automatically executing a ``startup-hook.sh`` script if it is

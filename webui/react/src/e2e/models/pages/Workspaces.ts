@@ -1,4 +1,4 @@
-import { BasePage } from 'e2e/models/BasePage';
+import { BasePage } from 'e2e/models/common/base/BasePage';
 import { WorkspaceCreateModal } from 'e2e/models/components/WorkspaceCreateModal';
 import { WorkspaceDeleteModal } from 'e2e/models/components/WorkspaceDeleteModal';
 import { WorkspaceDetails } from 'e2e/models/components/WorkspaceDetails';
@@ -20,9 +20,9 @@ export class Workspaces extends BasePage {
     parent: this,
   });
   readonly createModal = new WorkspaceCreateModal({
-    parent: this,
+    root: this,
   });
   readonly deleteModal = new WorkspaceDeleteModal({
-    parent: this,
+    root: this,
   });
 }

@@ -13,17 +13,17 @@ function implementsComponentBasics(obj: object): obj is ComponentBasics {
   return '_parent' in obj && 'root' in obj;
 }
 
-interface ComponentArgBasics {
+export interface ComponentArgBasics {
   parent: CanBeParent;
 }
 
 interface NamedComponentWithDefaultSelector extends ComponentArgBasics {
   attachment?: never;
-  sleector?: never;
+  selector?: never;
 }
 interface NamedComponentWithAttachment extends ComponentArgBasics {
   attachment: string;
-  sleector?: never;
+  selector?: never;
 }
 export interface BaseComponentArgs extends ComponentArgBasics {
   attachment?: never;
@@ -137,42 +137,6 @@ export class BaseComponent implements ComponentBasics {
     });
     replaceParent(nthObj, this, nthObj);
     return nthObj;
-  }
-}
-
-/**
- * BaseReactFragment will preserve the parent locator heirachy while also
- * providing a way to group components, just like the React Fragments they model.
- */
-export class BaseReactFragment implements ComponentBasics {
-  readonly _parent: CanBeParent;
-
-  /**
-   * Constructs a BaseReactFragment
-   * @param {object} obj
-   * @param {CanBeParent} obj.parent - parent component
-   */
-  constructor({ parent }: ComponentArgBasics) {
-    this._parent = parent;
-  }
-
-  /**
-   * The playwright Locator that represents this model
-   * Since this model is a fragment, we simply get the parent's locator
-   */
-  get pwLocator(): Locator {
-    return this._parent.pwLocator;
-  }
-
-  /**
-   * Returns the root of the component tree
-   */
-  get root(): BasePage {
-    if (this._parent instanceof BasePage) {
-      return this._parent;
-    } else {
-      return this._parent.root;
-    }
   }
 }
 
