@@ -2,8 +2,10 @@ import csv
 import io
 import pathlib
 import re
+import socket
 import subprocess
 import time
+from typing import Callable, Optional, Tuple
 
 import pytest
 import requests
@@ -28,19 +30,53 @@ def _experiment_task_id(sess: api.Session, exp_id: int) -> str:
     return task_id
 
 
-def _probe_tunnel(proc: "subprocess.Popen[str]", port: int = 8265) -> None:
-    max_tunnel_time = 300
-    start = time.time()
-    ctr = 0
-    while time.time() - start < max_tunnel_time:
+Check = Callable[[], bool]
+
+
+def _ray_tunnel_check(port: int = 8265) -> Check:
+    def check() -> bool:
         try:
             r = requests.get(f"http://localhost:{port}", timeout=5)
             if r.status_code == 200:
-                break
+                return True
         except requests.exceptions.ConnectionError:
             pass
         except requests.exceptions.ReadTimeout:
             pass
+        return False
+
+    return check
+
+
+def _echo_server_check(port: int) -> Check:
+    host = "127.0.0.1"
+    test_message = "Hello, Server"
+
+    def check() -> bool:
+        try:
+            with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as client_socket:
+                client_socket.connect((host, port))
+                client_socket.sendall(test_message.encode())
+                received_message = client_socket.recv(1024).decode()
+                assert (
+                    received_message == test_message
+                ), f"Expected '{test_message}', but got '{received_message}'"
+                return True
+        except ConnectionRefusedError:
+            pass
+        return False
+
+    return check
+
+
+def _probe_tunnel(
+    proc: "subprocess.Popen[str]", predicate: Check, max_tunnel_time: int = 300
+) -> None:
+    start = time.time()
+    ctr = 0
+    while time.time() - start < max_tunnel_time:
+        if predicate():
+            break
         if ctr + 1 % 10 == 0:
             print(f"Tunnel probe pending: {ctr} ticks...")
         time.sleep(1)
@@ -58,7 +94,99 @@ def _ray_job_submit(exp_path: pathlib.Path, port: int = 8265) -> None:
 
 
 @pytest.mark.e2e_cpu
+@pytest.mark.e2e_multi_k8s
 @pytest.mark.timeout(600)
+@pytest.mark.parametrize(
+    "exp_port, is_tcp",
+    [
+        (8000, False),
+        (6000, True),
+    ],
+)
+def test_experiment_proxy_simple_zero_slot(exp_port: int, is_tcp: bool) -> None:
+    port_map = (exp_port, is_tcp)
+    return _test_experiment_proxy_simple(port_map, slots=0, max_conc_trials=2)
+
+
+@pytest.mark.port_registry  # has multiple slots
+@pytest.mark.timeout(600)
+@pytest.mark.parametrize(
+    "exp_port, is_tcp, max_conc_trials",
+    [
+        (8000, False, 1),
+        (6000, True, 1),
+    ],
+)
+def test_experiment_proxy_simple_two_slots(
+    exp_port: int,
+    is_tcp: bool,
+    max_conc_trials: int,
+) -> None:
+    port_map = (exp_port, is_tcp)
+    return _test_experiment_proxy_simple(port_map, slots=2, max_conc_trials=max_conc_trials)
+
+
+def _test_experiment_proxy_simple(
+    port_map: Tuple[int, bool], slots: int, max_conc_trials: int
+) -> None:
+    exp_port, is_tcp = port_map
+    listen_port = 23424
+    sess = api_utils.user_session()
+    exp_path = pathlib.Path(conf.fixtures_path("ports-proxy"))
+    exp_id = exp.create_experiment(
+        sess,
+        str(exp_path / "config.yaml"),
+        str(exp_path),
+        [
+            "--config",
+            f"resources.slots_per_trial={slots}",
+            "--config",
+            f"searcher.max_concurrent_trials={max_conc_trials}",
+        ],
+    )
+    try:
+        exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.RUNNING)
+        task_id = _experiment_task_id(sess, exp_id)
+
+        tl: Optional[bindings.v1TaskLogsResponse] = None
+        for tl in api.task_logs(sess, task_id, follow=True):
+            if "Servers started" in tl.message:
+                break
+        assert tl is not None, "Failed to find 'Servers started' in task logs"
+        print("server ready", tl)
+        proxy_url = f"/proxy/{task_id}:{exp_port}/"
+        if is_tcp:
+            proc = detproc.Popen(
+                sess,
+                [
+                    "python",
+                    "-m",
+                    "determined.cli.tunnel",
+                    "--listener",
+                    str(listen_port),
+                    "--auth",
+                    conf.make_master_url(),
+                    f"{task_id}:{exp_port}",
+                ],
+                text=True,
+            )
+
+            try:
+                _probe_tunnel(proc, _echo_server_check(port=listen_port))
+            finally:
+                proc.terminate()
+                proc.wait(10)
+        else:
+            resp = sess.get(proxy_url)
+            resp.raise_for_status()
+            assert "Hello" in resp.text
+    finally:
+        bindings.post_KillExperiment(sess, id=exp_id)
+
+
+@pytest.mark.e2e_cpu
+@pytest.mark.timeout(600)
+@pytest.mark.e2e_multi_k8s
 def test_experiment_proxy_ray_tunnel() -> None:
     sess = api_utils.user_session()
     exp_path = conf.EXAMPLES_PATH / "features" / "ports"
@@ -88,7 +216,7 @@ def test_experiment_proxy_ray_tunnel() -> None:
         )
 
         try:
-            _probe_tunnel(proc)
+            _probe_tunnel(proc, _ray_tunnel_check(port=8265))
             _ray_job_submit(exp_path)
         finally:
             proc.terminate()
@@ -167,7 +295,7 @@ def test_experiment_proxy_ray_publish() -> None:
 
         try:
             exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.RUNNING)
-            _probe_tunnel(proc)
+            _probe_tunnel(proc, _ray_tunnel_check(port=8265))
             _ray_job_submit(exp_path)
         finally:
             bindings.post_KillExperiment(sess, id=exp_id)

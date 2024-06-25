@@ -1714,7 +1714,7 @@ export const getProjectColumns: DetApi<
 > = {
   name: 'getProjectColumns',
   postProcess: (response) => decoder.decodeProjectColumnsResponse(response).columns,
-  request: (params) => detApi.Internal.getProjectColumns(params.id),
+  request: (params) => detApi.Internal.getProjectColumns(params.id, params.tableType),
 };
 
 export const getProjectNumericMetricsRange: DetApi<

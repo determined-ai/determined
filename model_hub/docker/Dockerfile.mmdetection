@@ -13,6 +13,7 @@ ARG MMCV_VERSION
 ARG MMCV_CUDA_VERSION
 ARG TORCH_VERSION
 RUN pip install mmcv-full==${MMCV_VERSION} -f https://download.openmmlab.com/mmcv/dist/${MMCV_CUDA_VERSION}/torch${TORCH_VERSION}/index.html
+RUN pip install numpy==1.24.4
 
 # Install MMDetection
 RUN conda clean --all

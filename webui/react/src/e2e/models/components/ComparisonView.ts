@@ -1,4 +1,4 @@
-import { SplitPane } from 'e2e/models/hew/SplitPane';
+import { SplitPane } from 'e2e/models/common/hew/SplitPane';
 
 /**
  * Represents the ComparisonView component in src/components/ComparisonView.tsx

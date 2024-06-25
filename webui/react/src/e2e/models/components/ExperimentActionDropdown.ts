@@ -1,4 +1,4 @@
-import { DropdownContent } from 'e2e/models/hew/Dropdown';
+import { DropdownContent } from 'e2e/models/common/hew/Dropdown';
 
 /**
  * Represents the ExperimentActionDropdown component in src/components/ExperimentActionDropdown.tsx

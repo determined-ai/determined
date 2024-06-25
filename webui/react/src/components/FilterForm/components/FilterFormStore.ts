@@ -34,7 +34,7 @@ const getInitGroup = (): FormGroup => ({
 });
 
 export const getInitField = (): FormField => ({
-  columnName: 'name',
+  columnName: '',
   id: uuidv4(),
   kind: FormKind.Field,
   location: V1LocationType.EXPERIMENT,

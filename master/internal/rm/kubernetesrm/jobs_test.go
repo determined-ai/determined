@@ -3,6 +3,7 @@
 package kubernetesrm
 
 import (
+	"fmt"
 	"os"
 	"testing"
 
@@ -13,8 +14,11 @@ import (
 	typedV1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	_ "k8s.io/client-go/plugin/pkg/client/auth"
 
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/mocks"
 	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/pkg/device"
+	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 func TestGetNonDetPods(t *testing.T) {
@@ -227,40 +231,270 @@ func TestAllTaintsTolerated(t *testing.T) {
 	}
 }
 
-var taintFooBar = k8sV1.Taint{
-	Key:    "foo",
-	Value:  "bar",
-	Effect: k8sV1.TaintEffectNoSchedule,
+func TestPodsCanBeScheduledOnNode(t *testing.T) {
+	cases := []struct {
+		name          string
+		pod           *k8sV1.Pod
+		node          *k8sV1.Node
+		selectorMatch bool
+		affinityMatch bool
+	}{
+		{"no task containers default", nil, nil, true, true},
+		{
+			"node labels nil", &k8sV1.Pod{Spec: k8sV1.PodSpec{NodeSelector: map[string]string{"baz": "bar"}}},
+			setNodeLabels(nil), false, true,
+		},
+		{"no selector terms or node labels", &k8sV1.Pod{}, &k8sV1.Node{}, true, true},
+		{
+			" pod spec defined + no subset match", &k8sV1.Pod{Spec: k8sV1.PodSpec{
+				NodeSelector: map[string]string{"baz": "bar"},
+			}},
+			setNodeLabels(map[string]string{"foo": "bar", "baz": "boo"}), false, true,
+		},
+		{
+			" pod spec defined + match", &k8sV1.Pod{Spec: k8sV1.PodSpec{
+				NodeSelector: map[string]string{"foo": "bar"},
+			}},
+			setNodeLabels(map[string]string{"foo": "bar"}), true, true,
+		},
+		{
+			"affinity pod spec defined + no match", &k8sV1.Pod{Spec: k8sV1.PodSpec{
+				Affinity: &k8sV1.Affinity{NodeAffinity: &k8sV1.NodeAffinity{
+					RequiredDuringSchedulingIgnoredDuringExecution: &k8sV1.NodeSelector{
+						NodeSelectorTerms: []k8sV1.NodeSelectorTerm{{
+							MatchFields: []k8sV1.NodeSelectorRequirement{{
+								Key: "abc", Operator: k8sV1.NodeSelectorOpIn, Values: []string{"aaa", "bbb"},
+							}},
+						}},
+					},
+				}},
+			}}, setNodeLabels(map[string]string{"abc": "ccc"}), true, false,
+		},
+		{
+			"affinity pod spec defined + match", &k8sV1.Pod{Spec: k8sV1.PodSpec{
+				Affinity: &k8sV1.Affinity{NodeAffinity: &k8sV1.NodeAffinity{
+					RequiredDuringSchedulingIgnoredDuringExecution: &k8sV1.NodeSelector{
+						NodeSelectorTerms: []k8sV1.NodeSelectorTerm{{
+							MatchExpressions: []k8sV1.NodeSelectorRequirement{{
+								Key: "abc", Operator: k8sV1.NodeSelectorOpIn, Values: []string{"aaa", "bbb"},
+							}},
+						}},
+					},
+				}},
+			}}, setNodeLabels(map[string]string{"abc": "bbb"}), true, true,
+		},
+		{
+			"affinity + selector pod spec defined + match", &k8sV1.Pod{Spec: k8sV1.PodSpec{
+				NodeSelector: map[string]string{"foo": "bar"},
+				Affinity: &k8sV1.Affinity{NodeAffinity: &k8sV1.NodeAffinity{
+					RequiredDuringSchedulingIgnoredDuringExecution: &k8sV1.NodeSelector{
+						NodeSelectorTerms: []k8sV1.NodeSelectorTerm{{
+							MatchExpressions: []k8sV1.NodeSelectorRequirement{{
+								Key: "abc", Operator: k8sV1.NodeSelectorOpIn, Values: []string{"aaa", "bbb"},
+							}},
+						}},
+					},
+				}},
+			}}, setNodeLabels(map[string]string{"foo": "bar", "baz": "boo", "abc": "aaa"}), true, true,
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			j := newTestJobsService(t)
+			selectors, affinities := extractNodeSelectors(tt.pod)
+
+			// Make sure that the node selectors match as intended
+			require.Equal(t, tt.selectorMatch, j.podsCanBeScheduledOnNode(selectors, tt.node))
+
+			// Make sure that the node affinities match as intended
+			require.Equal(t, tt.affinityMatch, j.podsCanBeScheduledOnNode(affinities, tt.node))
+		})
+	}
 }
 
-const fakeKubeconfig = `
-apiVersion: v1
-clusters:
-- cluster:
-    extensions:
-    - extension:
-        last-update: Mon, 04 Mar 2024 18:53:00 EST
-        provider: minikube.sigs.k8s.io
-        version: v1.29.0
-      name: cluster_info
-    server: https://127.0.0.1:49216
-  name: minikube
-contexts:
-- context:
-    cluster: minikube
-    extensions:
-    - extension:
-        last-update: Mon, 04 Mar 2024 18:53:00 EST
-        provider: minikube.sigs.k8s.io
-        version: v1.29.0
-      name: context_info
-    namespace: default
-    user: minikube
-  name: minikube
-current-context: minikube
-kind: Config
-preferences: {}
-`
+func TestGetNodeResourcePoolMappingWithNodeSelectors(t *testing.T) {
+	auxNode1, auxNode2, compNode1, compNode2 := setupNodes()
+
+	// Add the following labels/node selectors to each node
+	auxNode1.SetLabels(map[string]string{
+		"labelIn": "aaa", "fieldNotIn": "ccc",
+	})
+	auxNode2.SetLabels(map[string]string{
+		"foo": "bar", "baz": "boo",
+		"labelIn": "aaa", "fieldNotIn": "bbb",
+	})
+	compNode1.SetLabels(map[string]string{
+		"foo":     "bar",
+		"labelIn": "bbb", "fieldNotIn": "bbb",
+	})
+	compNode2.SetLabels(map[string]string{
+		"foo": "bar", "abc": "def",
+		"labelIn": "aaa", "fieldNotIn": "bbb",
+	})
+
+	// Create a test job service with multiple nodes & taints/tolerations/selectors
+	gpuJobService := createMockJobsService(map[string]*k8sV1.Node{
+		auxNode1Name:  auxNode1,
+		auxNode2Name:  auxNode2,
+		compNode1Name: compNode1,
+		compNode2Name: compNode2,
+	}, device.CUDA, true)
+
+	cpuJobService := createMockJobsService(map[string]*k8sV1.Node{
+		auxNode1Name:  auxNode1,
+		auxNode2Name:  auxNode2,
+		compNode1Name: compNode1,
+		compNode2Name: compNode2,
+	}, device.CPU, true)
+
+	cases := []struct {
+		name            string
+		jobsService     *jobsService
+		rpConfigs       []config.ResourcePoolConfig
+		poolsToNodesLen map[string]int
+		nodesToPoolsLen map[string]int
+	}{
+		{
+			"empty case", cpuJobService,
+			[]config.ResourcePoolConfig{{
+				PoolName:              "default",
+				TaskContainerDefaults: &model.TaskContainerDefaultsConfig{CPUPodSpec: &k8sV1.Pod{}},
+			}},
+			map[string]int{"default": 5},
+			map[string]int{"NonDetermined": 1, "comp": 1, "comp2": 1, "aux": 1, "aux2": 1},
+		},
+		{
+			"no selectors, 1 resource pool",
+			gpuJobService,
+			[]config.ResourcePoolConfig{testRPConfig(true, "default", nil, nil)},
+			map[string]int{"default": 5},
+			map[string]int{"NonDetermined": 1, "comp": 1, "comp2": 1, "aux": 1, "aux2": 1},
+		},
+		{
+			// When only 1 resource pool config is defined, it also matches the non-Det pod.
+			"only selectors, 1 resource pool", gpuJobService,
+			[]config.ResourcePoolConfig{
+				testRPConfig(false, "pool-1", map[string]string{"abc": "def"}, nil),
+			},
+			map[string]int{"pool-1": 2},
+			map[string]int{"NonDetermined": 1, "comp2": 1},
+		},
+		{
+			"only selectors, 2 resource pools", cpuJobService,
+			[]config.ResourcePoolConfig{
+				testRPConfig(true, "pool-1", map[string]string{"abc": "def"}, nil),
+				testRPConfig(true, "pool-2", map[string]string{"foo": "bar"}, nil),
+			},
+			map[string]int{"pool-1": 1, "pool-2": 3},
+			map[string]int{"comp": 1, "comp2": 2, "aux2": 1},
+		},
+		{
+			// The nonDet pod matches to the gpu pool, with a cpu job service.
+			"selectors, gpu + cpu pod Spec, cpu job service", cpuJobService,
+			[]config.ResourcePoolConfig{
+				testRPConfig(true, "cpu-pool", map[string]string{"foo": "bar"}, nil),
+				testRPConfig(false, "gpu-pool", map[string]string{"foo": "bar"}, nil),
+			},
+			map[string]int{"cpu-pool": 3, "gpu-pool": 4},
+			map[string]int{"NonDetermined": 1, "comp": 2, "comp2": 2, "aux2": 2},
+		},
+		{
+			// The nonDet pod matches to the gpu pool, with a gpu job service.
+			"selectors, gpu + cpu pod Spec, gpu job service", gpuJobService,
+			[]config.ResourcePoolConfig{
+				testRPConfig(true, "cpu-pool", map[string]string{"foo": "bar"}, nil),
+				testRPConfig(false, "gpu-pool", map[string]string{"foo": "bar"}, nil),
+			},
+			map[string]int{"cpu-pool": 3, "gpu-pool": 4},
+			map[string]int{"NonDetermined": 1, "comp": 2, "comp2": 2, "aux2": 2},
+		},
+		{
+			// only the nonDet pod is matched, to the gpu pod service.
+			"selectors, no match", cpuJobService,
+			[]config.ResourcePoolConfig{
+				testRPConfig(true, "cpu-pool", map[string]string{"foo": "baz"}, nil),
+				testRPConfig(false, "gpu-pool", map[string]string{"foo": "abc"}, nil),
+			},
+			map[string]int{"gpu-pool": 1},
+			map[string]int{"NonDetermined": 1},
+		},
+		{
+			// mismatch between job service & rp config type, empty results.
+			"mismatch between job service & rp config type", cpuJobService, []config.ResourcePoolConfig{
+				testRPConfig(true, "cpu-pool", map[string]string{"foo": "abc"}, nil),
+			}, map[string]int{}, map[string]int{},
+		},
+		{
+			"node selectors + affinities, 1 resource pool", gpuJobService,
+			[]config.ResourcePoolConfig{
+				testRPConfig(false, "gpu-pool", map[string]string{"foo": "bar"}, []string{"aaa", "ccc"}),
+			},
+			map[string]int{"gpu-pool": 3},
+			map[string]int{"NonDetermined": 1, "comp2": 1, "aux2": 1},
+		},
+		{
+			"node selectors + affinities, 2 resource pools", gpuJobService,
+			[]config.ResourcePoolConfig{
+				testRPConfig(false, "gpu-pool1", map[string]string{"foo": "bar"}, []string{"aaa", "ccc"}),
+				testRPConfig(false, "gpu-pool2", map[string]string{"baz": "boo"}, []string{"aaa"}),
+			},
+			map[string]int{"gpu-pool1": 3, "gpu-pool2": 2},
+			map[string]int{"NonDetermined": 2, "aux2": 2, "comp2": 1},
+		},
+
+		{
+			"only node affinities, 1 resource pool", gpuJobService, []config.ResourcePoolConfig{
+				testRPConfig(false, "gpu-pool", nil, []string{"aaa"}),
+			}, map[string]int{"gpu-pool": 4}, map[string]int{"NonDetermined": 1, "aux": 1, "aux2": 1, "comp2": 1},
+		},
+		{
+			"only node affinities, 2 resource pool", gpuJobService, []config.ResourcePoolConfig{
+				testRPConfig(false, "gpu-pool1", nil, []string{"bbb"}),
+				testRPConfig(false, "gpu-pool2", nil, []string{"bbb", "aaa"}),
+			}, map[string]int{"gpu-pool1": 1, "gpu-pool2": 2}, map[string]int{"NonDetermined": 2, "aux": 1},
+		},
+		{
+			// Empty selectors won't match with anything. So this test case only matches the nonDet pod.
+			"empty selectors + node affinities, 1 resource pool", gpuJobService, []config.ResourcePoolConfig{
+				testRPConfig(false, "gpu-pool", map[string]string{}, []string{"aaa"}),
+			}, map[string]int{"gpu-pool": 1}, map[string]int{"NonDetermined": 1},
+		},
+	}
+
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			// Add the test resource pool configs to the jobs service
+			tt.jobsService.resourcePoolConfigs = tt.rpConfigs
+
+			// Set the node summaries.
+			poolsToNodes, nodesToPools := tt.jobsService.getNodeResourcePoolMapping(
+				map[string]model.AgentSummary{
+					auxNode1Name: {Slots: model.SlotsSummary{"s1": model.SlotSummary{
+						Device: device.Device{Type: device.CUDA},
+					}}}, auxNode2Name: {Slots: model.SlotsSummary{"s1": model.SlotSummary{
+						Device: device.Device{Type: device.CUDA},
+					}}}, compNode1Name: {Slots: model.SlotsSummary{"s1": model.SlotSummary{
+						Device: device.Device{Type: device.CUDA},
+					}}}, compNode2Name: {Slots: model.SlotsSummary{"s1": model.SlotSummary{
+						Device: device.Device{Type: device.CUDA},
+					}}},
+				})
+
+			require.Lenf(t, poolsToNodes, len(tt.poolsToNodesLen),
+				fmt.Sprintf("total pools found: %v", len(poolsToNodes)))
+			for poolName, nodes := range poolsToNodes {
+				require.Lenf(t, nodes, tt.poolsToNodesLen[poolName], "pool "+poolName)
+			}
+
+			require.Lenf(t, nodesToPools, len(tt.nodesToPoolsLen),
+				fmt.Sprintf("total nodes found: %v", len(nodesToPools)))
+			for nodeName, pools := range nodesToPools {
+				require.Lenf(t, pools, tt.nodesToPoolsLen[nodeName], "node "+nodeName)
+			}
+		})
+	}
+}
 
 func Test_readClientConfig(t *testing.T) {
 	customPath := "test_kube.config"
@@ -309,3 +543,75 @@ func Test_readClientConfig(t *testing.T) {
 		})
 	}
 }
+
+func setNodeLabels(labels map[string]string) *k8sV1.Node {
+	node := &k8sV1.Node{}
+	node.SetLabels(labels)
+	return node
+}
+
+func testRPConfig(cpu bool, name string, selectors map[string]string, affinitySet []string) config.ResourcePoolConfig {
+	// If affinity variables are set, define the nodeSelectorTerms
+	var ns []k8sV1.NodeSelectorTerm
+	if affinitySet != nil {
+		ns = []k8sV1.NodeSelectorTerm{{
+			MatchExpressions: []k8sV1.NodeSelectorRequirement{
+				{Key: "fieldNotIn", Operator: k8sV1.NodeSelectorOpNotIn, Values: affinitySet},
+				{Key: "labelIn", Operator: k8sV1.NodeSelectorOpIn, Values: affinitySet},
+			},
+		}}
+	}
+	pod := &k8sV1.Pod{Spec: k8sV1.PodSpec{Affinity: &k8sV1.Affinity{NodeAffinity: &k8sV1.NodeAffinity{
+		RequiredDuringSchedulingIgnoredDuringExecution: &k8sV1.NodeSelector{NodeSelectorTerms: ns},
+	}}}}
+
+	if selectors != nil {
+		pod.Spec.NodeSelector = selectors
+	}
+
+	if cpu {
+		return config.ResourcePoolConfig{
+			PoolName:              name,
+			TaskContainerDefaults: &model.TaskContainerDefaultsConfig{CPUPodSpec: pod},
+		}
+	}
+	return config.ResourcePoolConfig{
+		PoolName:              name,
+		TaskContainerDefaults: &model.TaskContainerDefaultsConfig{GPUPodSpec: pod},
+	}
+}
+
+var taintFooBar = k8sV1.Taint{
+	Key:    "foo",
+	Value:  "bar",
+	Effect: k8sV1.TaintEffectNoSchedule,
+}
+
+const fakeKubeconfig = `
+apiVersion: v1
+clusters:
+- cluster:
+    extensions:
+    - extension:
+        last-update: Mon, 04 Mar 2024 18:53:00 EST
+        provider: minikube.sigs.k8s.io
+        version: v1.29.0
+      name: cluster_info
+    server: https://127.0.0.1:49216
+  name: minikube
+contexts:
+- context:
+    cluster: minikube
+    extensions:
+    - extension:
+        last-update: Mon, 04 Mar 2024 18:53:00 EST
+        provider: minikube.sigs.k8s.io
+        version: v1.29.0
+      name: context_info
+    namespace: default
+    user: minikube
+  name: minikube
+current-context: minikube
+kind: Config
+preferences: {}
+`

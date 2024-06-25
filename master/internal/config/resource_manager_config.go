@@ -11,7 +11,11 @@ import (
 	"github.com/determined-ai/determined/master/pkg/union"
 )
 
-const defaultResourcePoolName = "default"
+const (
+	defaultResourcePoolName = "default"
+	validGWPortRangeStart   = 1025
+	validGWPortRangeEnd     = 65535
+)
 
 // ResourceManagerConfig hosts configuration fields for the resource manager.
 type ResourceManagerConfig struct {
@@ -171,8 +175,71 @@ type KubernetesResourceManagerConfig struct {
 	DefaultComputeResourcePool string `json:"default_compute_resource_pool"`
 	NoDefaultResourcePools     bool   `json:"no_default_resource_pools"`
 
+	InternalTaskGateway *InternalTaskGatewayConfig `json:"internal_task_gateway"`
+
 	Name     string            `json:"name"`
 	Metadata map[string]string `json:"metadata"`
+}
+
+// InternalTaskGatewayConfig is config for exposing Determined tasks to outside of the cluster.
+// Useful for multirm when we can only be running in a single cluster.
+type InternalTaskGatewayConfig struct {
+	// GatewayName as defined in the k8s cluster.
+	GatewayName string `json:"gateway_name"`
+	// GatewayNamespace as defined in the k8s cluster.
+	GatewayNamespace string `json:"gateway_namespace"`
+	GatewayIP        string `json:"gateway_ip"`
+	// GWPortStart denotes the inclusive start of the available and exclusive port range to
+	// MLDE for InternalTaskGateway.
+	GWPortStart int `json:"gateway_port_range_start"`
+	// GWPortEnd denotes the inclusive end of the available and exclusive port range to
+	// MLDE for InternalTaskGateway.
+	GWPortEnd int `json:"gateway_port_range_end"`
+}
+
+var defaultInternalTaskGatewayConfig = InternalTaskGatewayConfig{
+	GWPortStart: 32768,
+	GWPortEnd:   65535,
+}
+
+// UnmarshalJSON implements the json.Unmarshaler interface.
+func (i *InternalTaskGatewayConfig) UnmarshalJSON(data []byte) error {
+	*i = defaultInternalTaskGatewayConfig
+	type DefaultParser *InternalTaskGatewayConfig
+	return json.Unmarshal(data, DefaultParser(i))
+}
+
+// Validate implements the check.Validatable interface.
+func (i *InternalTaskGatewayConfig) Validate() []error {
+	var errs []error
+
+	if err := check.IsValidK8sLabel(i.GatewayName); err != nil {
+		errs = append(errs, fmt.Errorf("invalid gateway_name: %w", err))
+	}
+
+	if err := check.IsValidK8sLabel(i.GatewayNamespace); err != nil {
+		errs = append(errs, fmt.Errorf("invalid gateway_namespace: %w", err))
+	}
+
+	// Don't validate the IP just check it is not empty so hostnames and the like can be used.
+	if err := check.NotEmpty(i.GatewayIP); err != nil {
+		errs = append(errs, fmt.Errorf("invalid gateway_ip: %w", err))
+	}
+
+	if err := check.BetweenInclusive(
+		i.GWPortStart, validGWPortRangeStart, validGWPortRangeEnd); err != nil {
+		errs = append(errs, fmt.Errorf("invalid gateway_port_range_start: %w", err))
+	}
+
+	if err := check.BetweenInclusive(
+		i.GWPortEnd, validGWPortRangeStart, validGWPortRangeEnd); err != nil {
+		errs = append(errs, fmt.Errorf("invalid gateway_port_range_end: %w", err))
+	}
+
+	if i.GWPortStart >= i.GWPortEnd {
+		errs = append(errs, fmt.Errorf("gateway_port_range_start must be less than or equal to gateway_port_range_end"))
+	}
+	return errs
 }
 
 var defaultKubernetesResourceManagerConfig = KubernetesResourceManagerConfig{

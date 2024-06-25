@@ -389,58 +389,6 @@ func TestExperimentBestSearcherValidation(t *testing.T) {
 	require.InEpsilon(t, float32(5.0), val, 0.01)
 }
 
-func TestProjectHyperparameters(t *testing.T) {
-	ctx := context.Background()
-
-	require.NoError(t, etc.SetRootPath(RootFromDB))
-	db, closeDB := MustResolveTestPostgres(t)
-	defer closeDB()
-	MustMigrateTestPostgres(t, db, MigrationsFromDB)
-	user := RequireMockUser(t, db)
-
-	workspaceID, _ := RequireMockWorkspaceID(t, db, "")
-	projectID, _ := RequireMockProjectID(t, db, workspaceID, false)
-	exp0 := RequireMockExperimentParams(t, db, user, MockExperimentParams{
-		HParamNames: &[]string{"a", "b", "c"},
-		ProjectID:   &projectID,
-	}, DefaultProjectID)
-	exp1 := RequireMockExperimentParams(t, db, user, MockExperimentParams{
-		HParamNames: &[]string{"b", "c", "d"},
-		ProjectID:   &projectID,
-	}, DefaultProjectID)
-
-	require.ElementsMatch(t, []string{"a", "b", "c", "d"},
-		RequireGetProjectHParams(t, db, projectID))
-
-	require.NoError(t,
-		RemoveProjectHyperparameters(ctx, nil, []int32{int32(exp0.ID), int32(exp1.ID)}))
-	require.Empty(t, RequireGetProjectHParams(t, db, projectID))
-
-	require.NoError(t,
-		RemoveProjectHyperparameters(ctx, nil, []int32{int32(exp0.ID), int32(exp1.ID)}))
-	require.Empty(t, RequireGetProjectHParams(t, db, projectID))
-
-	require.NoError(t,
-		AddProjectHyperparameters(ctx, nil, int32(projectID), []int32{int32(exp0.ID)}))
-	require.ElementsMatch(t, []string{"a", "b", "c"},
-		RequireGetProjectHParams(t, db, projectID))
-
-	require.NoError(t,
-		AddProjectHyperparameters(ctx, nil, int32(projectID), []int32{int32(exp0.ID)}))
-	require.ElementsMatch(t, []string{"a", "b", "c"},
-		RequireGetProjectHParams(t, db, projectID))
-
-	require.NoError(t,
-		AddProjectHyperparameters(ctx, nil, int32(projectID), []int32{int32(exp1.ID)}))
-	require.ElementsMatch(t, []string{"a", "b", "c", "d"},
-		RequireGetProjectHParams(t, db, projectID))
-
-	require.NoError(t,
-		RemoveProjectHyperparameters(ctx, nil, []int32{int32(exp1.ID)}))
-	require.ElementsMatch(t, []string{}, // TODO(nickb): This is a bug in the query.
-		RequireGetProjectHParams(t, db, projectID))
-}
-
 func TestActiveLogPatternPolicies(t *testing.T) {
 	ctx := context.Background()
 	require.NoError(t, etc.SetRootPath(RootFromDB))

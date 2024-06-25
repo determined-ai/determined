@@ -1,4 +1,4 @@
-import { DropdownMenu } from 'e2e/models/hew/Dropdown';
+import { DropdownMenu } from 'e2e/models/common/hew/Dropdown';
 
 /**
  * Represents the ProjectActionDropdown component in src/components/ProjectActionDropdown.tsx
