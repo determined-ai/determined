@@ -466,11 +466,20 @@ func (t *trial) maybeAllocateTask() error {
 		Debugf("starting new trial allocation")
 
 	prom.AssociateJobExperiment(t.jobID, strconv.Itoa(t.experimentID), t.config.Labels())
+
 	// persist the allocation workspace/experiment record, in the event of moves or deletions
 	err = task.InsertTrialAllocationWorkspaceRecord(
-		context.Background(), t.experimentID, ar.AllocationID)
+		context.Background(),
+		t.experimentID,
+		ar.AllocationID,
+		t.taskSpec.Workspace,
+	)
 	if err != nil {
-		return fmt.Errorf("failed to persist workspace information for trial (%d) allocation: %w", t.id, err)
+		return fmt.Errorf(
+			"failure while attempting to persist workspace information for trial (%d) allocation: %w",
+			t.id,
+			err,
+		)
 	}
 	err = task.DefaultService.StartAllocation(
 		t.logCtx, ar, t.db, t.rm, specifier,

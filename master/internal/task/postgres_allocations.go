@@ -41,12 +41,14 @@ func InsertTrialAllocationWorkspaceRecord(
 	ctx context.Context,
 	experimentID int,
 	allocationID model.AllocationID,
+	workspaceName string,
 ) error {
-	workspaceInfo := model.Workspace{}
-	err := db.Bun().NewSelect().Model(&workspaceInfo).
-		Join("INNER JOIN projects p on workspace.id = p.workspace_id").
-		Join("INNER JOIN experiments e on p.id = e.project_id").
-		Where("e.id = ?", experimentID).Scan(ctx)
+	var workspaceID int
+	err := db.Bun().NewSelect().
+		Table("workspaces").
+		Column("id").
+		Where("name = ?", workspaceName).
+		Scan(ctx, &workspaceID)
 	if err != nil {
 		return fmt.Errorf(
 			"unable to retrieve workspace information for allocation (%s) associated with experiment %d: %w",
@@ -59,8 +61,8 @@ func InsertTrialAllocationWorkspaceRecord(
 	_, err = db.Bun().NewInsert().Model(&model.AllocationWorkspaceRecord{
 		AllocationID:  allocationID,
 		ExperimentID:  experimentID,
-		WorkspaceID:   workspaceInfo.ID,
-		WorkspaceName: workspaceInfo.Name,
+		WorkspaceID:   workspaceID,
+		WorkspaceName: workspaceName,
 	}).Exec(ctx)
 	if err != nil {
 		return fmt.Errorf("inserting allocation workspace record: %w", err)
@@ -73,25 +75,13 @@ func InsertTrialAllocationWorkspaceRecord(
 func InsertNTSCAllocationWorkspaceRecord(
 	ctx context.Context,
 	allocationID model.AllocationID,
+	workspaceID int,
+	workspaceName string,
 ) error {
-	workspaceInfo := model.Workspace{}
-	err := db.Bun().NewSelect().Model(&workspaceInfo).
-		Join("INNER JOIN command_state c ON (c.generic_command_spec->'Metadata'->>'workspace_id')::int = workspace.id").
-		Join("INNER JOIN tasks t ON c.task_id = t.task_id").
-		Join("INNER JOIN allocations a ON t.task_id = a.task_id").
-		Where("a.allocation_id = ?", allocationID).Scan(ctx)
-	if err != nil {
-		return fmt.Errorf(
-			"unable to retrieve workspace information for NTSC allocation (%s): %w",
-			allocationID,
-			err,
-		)
-	}
-
-	_, err = db.Bun().NewInsert().Model(&model.AllocationWorkspaceRecord{
+	_, err := db.Bun().NewInsert().Model(&model.AllocationWorkspaceRecord{
 		AllocationID:  allocationID,
-		WorkspaceID:   workspaceInfo.ID,
-		WorkspaceName: workspaceInfo.Name,
+		WorkspaceID:   workspaceID,
+		WorkspaceName: workspaceName,
 	}).Exec(ctx)
 	if err != nil {
 		return fmt.Errorf("inserting NTSC allocation workspace record: %w", err)
