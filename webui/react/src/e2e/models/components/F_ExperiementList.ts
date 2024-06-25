@@ -1,10 +1,10 @@
-import { Pagination } from 'e2e/models/ant/Pagination';
-import { BaseReactFragment } from 'e2e/models/BaseComponent';
+import { Pagination } from 'e2e/models/common/ant/Pagination';
+import { BaseReactFragment } from 'e2e/models/common/base/BaseReactFragment';
+import { DataGrid, HeadRow, Row, RowArgs } from 'e2e/models/common/hew/DataGrid';
+import { Message } from 'e2e/models/common/hew/Message';
 import { ComparisonView } from 'e2e/models/components/ComparisonView';
 import { ExperimentActionDropdown } from 'e2e/models/components/ExperimentActionDropdown';
 import { TableActionBar } from 'e2e/models/components/TableActionBar';
-import { DataGrid, HeadRow, Row, RowArgs } from 'e2e/models/hew/DataGrid';
-import { Message } from 'e2e/models/hew/Message';
 
 /**
  * Represents the F_ExperiementList component in src/components/F_ExperiementList.tsx

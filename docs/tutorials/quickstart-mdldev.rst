@@ -203,7 +203,7 @@ schedules to run.
 #. Enter the cluster address in the browser address bar to view experiment progress in the WebUI. If
    you installed locally using the ``det deploy local`` command, the URL is
    ``http://localhost:8080/``. Accept the default username of ``determined`` and click **Sign In**.
-   After signing in, you'll need to create a :ref:`strong password <strong-password>`.
+   After signing in, create a :ref:`strong password <strong-password>`.
 
    .. image:: /assets/images/qs01c.png
       :width: 704px

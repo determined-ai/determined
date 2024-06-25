@@ -1,5 +1,5 @@
-import { Modal } from 'e2e/models/hew/Modal';
-import { Select } from 'e2e/models/hew/Select';
+import { Modal } from 'e2e/models/common/hew/Modal';
+import { Select } from 'e2e/models/common/hew/Select';
 
 /**
  * Represents the ChangeUserStatusModal component in src/components/ChangeUserStatusModal.tsx

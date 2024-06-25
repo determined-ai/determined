@@ -57,14 +57,16 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
         authStore.setAuth({ isAuthenticated: true, token });
         user.isPasswordWeak = isPasswordWeak(creds.password || '');
         userStore.updateCurrentUser(user);
-        handleWarning({
-          level: ErrorLevel.Warn,
-          publicMessage:
-            'Your current password is either blank or weak according to current security recommendations. Please change your password.',
-          publicSubject: 'Weak Password',
-          silent: false,
-          type: ErrorType.Input,
-        });
+        if (user.isPasswordWeak) {
+          handleWarning({
+            level: ErrorLevel.Warn,
+            publicMessage:
+              'Your current password is either blank or weak according to current security recommendations. Please change your password.',
+            publicSubject: 'Weak Password',
+            silent: false,
+            type: ErrorType.Input,
+          });
+        }
         if (rbacEnabled) {
           // Now that we have logged in user, fetch userAssignments and userRoles and place into store.
           permissionStore.fetch(canceler.signal);

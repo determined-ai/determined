@@ -1,7 +1,7 @@
-import { BaseComponent, NamedComponent } from 'e2e/models/BaseComponent';
+import { BaseComponent, NamedComponent } from 'e2e/models/common/base/BaseComponent';
+import { DatePicker } from 'e2e/models/common/hew/DatePicker';
+import { Select } from 'e2e/models/common/hew/Select';
 import { ConjunctionContainer } from 'e2e/models/components/FilterForm/components/ConjunctionContainer';
-import { DatePicker } from 'e2e/models/hew/DatePicker';
-import { Select } from 'e2e/models/hew/Select';
 
 /**
  * Represents the FilterField component in src/components/FilterForm/components/FilterField.tsx

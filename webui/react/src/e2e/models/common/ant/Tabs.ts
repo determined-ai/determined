@@ -1,4 +1,8 @@
-import { BaseComponent, BaseComponentArgs, NamedComponent } from 'e2e/models/BaseComponent';
+import {
+  BaseComponent,
+  BaseComponentArgs,
+  NamedComponent,
+} from 'e2e/models/common/base/BaseComponent';
 
 /**
  * Represents the Tabs component from antd/es/tabs/index.js
