@@ -1,6 +1,4 @@
-import { expect } from '@playwright/test';
-
-import { test } from 'e2e/fixtures/global-fixtures';
+import { expect, test } from 'e2e/fixtures/global-fixtures';
 import { UserManagement } from 'e2e/models/pages/Admin/UserManagement';
 import { SignIn } from 'e2e/models/pages/SignIn';
 import { sessionRandomHash } from 'e2e/utils/naming';

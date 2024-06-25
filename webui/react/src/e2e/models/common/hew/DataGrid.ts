@@ -1,5 +1,4 @@
-import { expect } from '@playwright/test';
-
+import { expect } from 'e2e/fixtures/global-fixtures';
 import {
   BaseComponent,
   NamedComponent,

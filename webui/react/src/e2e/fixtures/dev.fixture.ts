@@ -1,5 +1,6 @@
-import { expect, Page } from '@playwright/test';
+import { Page } from '@playwright/test';
 
+import { expect } from 'e2e/fixtures/global-fixtures';
 import { BaseComponent, CanBeParent } from 'e2e/models/common/base/BaseComponent';
 import { BasePage } from 'e2e/models/common/base/BasePage';
 

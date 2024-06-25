@@ -1,5 +1,6 @@
-import { expect, Page } from '@playwright/test';
+import { Page } from '@playwright/test';
 
+import { expect } from 'e2e/fixtures/global-fixtures';
 import { SignIn } from 'e2e/models/pages/SignIn';
 
 export class AuthFixture {
@@ -40,12 +41,11 @@ export class AuthFixture {
     await detAuth.password.pwLocator.fill(password);
     await detAuth.submit.pwLocator.click();
     await this.#page.waitForURL(expectedURL);
-    // BUG [ET-239] can cause the following line to fail
   }
 
   async logout(): Promise<void> {
     await (await this.signInPage.nav.sidebar.headerDropdown.open()).signOut.pwLocator.click();
-    await expect.soft(this.#page).toHaveTitle(this.signInPage.title);
-    await expect.soft(this.#page).toHaveURL(this.signInPage.getUrlRegExp());
+    await expect.soft(this.#page).toHaveDeterminedTitle(this.signInPage.title);
+    await this.signInPage.waitForURL();
   }
 }
