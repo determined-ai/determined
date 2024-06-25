@@ -641,3 +641,22 @@ func TestPatchProjectWithConcurrent(t *testing.T) {
 	}
 	require.NoError(t, errgrp.Wait())
 }
+
+func TestGetProjectByID(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	wresp, werr := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: uuid.New().String()})
+	require.NoError(t, werr)
+
+	projectName := "test-project" + uuid.New().String()
+	randomesp, err := api.PostProject(ctx, &apiv1.PostProjectRequest{
+		Name: projectName, WorkspaceId: wresp.Workspace.Id,
+	})
+	require.NoError(t, err)
+
+	project, err := api.GetProjectByID(ctx, resp.Project.Id, curUser)
+	require.NoError(t, err)
+	require.Equal(t, wresp.Workspace.Name, project.WorkspaceName)
+	require.Equal(t, wresp.Workspace.Id, project.WorkspaceId)
+	require.Equal(t, projectName, project.Name)
+	require.Equal(t, resp.Project.Id, project.Id)
+}
