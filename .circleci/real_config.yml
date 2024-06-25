@@ -627,10 +627,9 @@ commands:
             - run:
                 name: Install DataDog agent
                 command: |
-                  DD_APM_INSTRUMENTATION_ENABLED=host \
-                  DD_ENV=ci \
-                  DD_LOGS_ENABLED=true \
                   bash -c "$(curl -L https://s3.amazonaws.com/dd-agent/scripts/install_script_agent7.sh)"
+                  cat .circleci/datadog/ci-local-config.yaml >> /etc/datadog-agent/datadog.yaml
+                  sudo service datadog-agent restart
                   sudo cat /etc/datadog-agent/datadog.yaml
                   sudo ls /etc/datadog-agent/conf.d/
       # Wait for master before splitting tests, since so many splits depend on
