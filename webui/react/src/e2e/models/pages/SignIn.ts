@@ -6,8 +6,8 @@ import { PageComponent } from 'e2e/models/components/Page';
  * Represents the SignIn page from src/pages/SignIn.tsx
  */
 export class SignIn extends BasePage {
-  readonly title: string = SignIn.getTitle('Sign In');
-  readonly url: string = 'login';
+  readonly title = 'Sign In';
+  readonly url = 'login';
   readonly pageComponent = new PageComponent({ parent: this });
   readonly detAuth = new DeterminedAuth({ parent: this.pageComponent });
   // TODO add SSO page model as well
