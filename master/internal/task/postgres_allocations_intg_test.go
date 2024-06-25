@@ -71,6 +71,14 @@ func TestPersistAllocationWorkspaceInfo(t *testing.T) {
 			if tc.isTrial {
 				require.Equal(t, expID, persistedInfo.ExperimentID)
 			}
+
+			// Clean up mock workspaces
+			t.Cleanup(func() {
+				_, err = db.Bun().NewDelete().Table("workspaces").Where("id IN (?)", workspaceID).Exec(ctx)
+				require.NoError(t, err, "error cleaning up workspace")
+				_, err = db.Bun().NewDelete().Table("allocation_workspace_info").Where("workspace_id IN (?)", workspaceID).Exec(ctx)
+			},
+			)
 		})
 	}
 }
