@@ -633,8 +633,8 @@ commands:
                   DD_HOST_TAGS="testSuite:<<parameters.mark>>,jobName:${CIRCLE_JOB},url:${CIRCLE_BUILD_URL},totalNodes:${CIRCLE_NODE_TOTAL},nodeIdx:${CIRCLE_NODE_INDEX},branch:${CIRCLE_BRANCH}," \
                   bash -c "$(curl -L https://s3.amazonaws.com/dd-agent/scripts/install_script_agent7.sh)"
                   sudo cat .circleci/datadog/ci-local-config.yaml >> /etc/datadog-agent/datadog.yaml
-                  sudo service datadog-agent restart
                   sudo usermod -a -G docker dd-agent
+                  sudo service datadog-agent restart
                   sudo cat /etc/datadog-agent/datadog.yaml
                   sudo ls /etc/datadog-agent/conf.d/
       # Wait for master before splitting tests, since so many splits depend on
