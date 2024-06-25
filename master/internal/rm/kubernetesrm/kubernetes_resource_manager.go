@@ -193,7 +193,9 @@ func (k *ResourceManager) GetAgent(msg *apiv1.GetAgentRequest) (*apiv1.GetAgentR
 
 // GetAgents implements rm.ResourceManager.
 func (k *ResourceManager) GetAgents() (*apiv1.GetAgentsResponse, error) {
-	return k.jobsService.GetAgents(), nil
+	resp := k.jobsService.GetAgents()
+	// Ensure cached response is not inadvertently modified.
+	return rm.CopyGetAgentsResponse(resp)
 }
 
 // GetAllocationSummaries implements rm.ResourceManager.
