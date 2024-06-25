@@ -170,7 +170,8 @@ func TestGetAgents(t *testing.T) {
 
 	for _, test := range agentsTests {
 		t.Run(test.Name, func(t *testing.T) {
-			agentsResp := test.jobsService.getAgents()
+			agentsResp, err := test.jobsService.getAgents()
+			require.NoError(t, err)
 			require.Equal(t, len(test.wantedAgentIDs), len(agentsResp.Agents))
 			for _, agent := range agentsResp.Agents {
 				_, ok := test.wantedAgentIDs[agent.Id]
@@ -243,7 +244,8 @@ func TestGetAgentsNodeSelectors(t *testing.T) {
 				}},
 			}}
 
-			agentsResp := js.getAgents()
+			agentsResp, err := js.getAgents()
+			require.NoError(t, err)
 			require.Equal(t, len(test.agentsMatched), len(agentsResp.Agents))
 
 			for _, agent := range agentsResp.Agents {
@@ -863,7 +865,7 @@ func TestRMValidateResources(t *testing.T) {
 
 func testROCMGetAgents() {
 	ps := createMockJobsService(createCompNodeMap(), device.ROCM, false)
-	ps.getAgents()
+	ps.getAgents() // nolint
 }
 
 func testROCMGetAgent() {
