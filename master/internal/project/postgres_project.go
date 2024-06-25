@@ -48,6 +48,8 @@ func getProjectColumns(q *bun.SelectQuery) *bun.SelectQuery {
 		ColumnExpr("(SELECT username FROM users WHERE id = p.user_id) AS username").
 		ColumnExpr("p.user_id").
 		ColumnExpr("p.key").
+		ColumnExpr("w.name as workspace_name").
+		ColumnExpr("p.created_at").
 		Join("INNER JOIN workspaces w ON w.id = p.workspace_id")
 }
 
