@@ -46,7 +46,6 @@ func TestPersistAllocationWorkspaceInfo(t *testing.T) {
 					ctx,
 					expID,
 					allocID,
-					workspaceName,
 				)
 			case false:
 				err = InsertNTSCAllocationWorkspaceRecord(
@@ -81,24 +80,4 @@ func TestPersistAllocationWorkspaceInfo(t *testing.T) {
 			)
 		})
 	}
-}
-
-func TestPersistAllocationWorkspaceInfoNonExistentWorkspace(t *testing.T) {
-	ctx := context.Background()
-	require.NoError(t, etc.SetRootPath(db.RootFromDB))
-	pgDB, cleanup := db.MustResolveTestPostgres(t)
-	defer cleanup()
-	db.MustMigrateTestPostgres(t, pgDB, db.MigrationsFromDB)
-
-	// Create dummy allocation & experiment ids.
-	allocID := model.AllocationID(uuid.Must(uuid.NewRandom()).String())
-	nonExistentWorkspaceName := uuid.Must(uuid.NewRandom()).String()
-
-	err := InsertTrialAllocationWorkspaceRecord(
-		ctx,
-		1,
-		allocID,
-		nonExistentWorkspaceName,
-	)
-	require.Error(t, err)
 }

@@ -41,14 +41,18 @@ func InsertTrialAllocationWorkspaceRecord(
 	ctx context.Context,
 	experimentID int,
 	allocationID model.AllocationID,
-	workspaceName string,
 ) error {
-	var workspaceID int
+	var workspaceInfo struct {
+		WorkspaceID   int    `bun:"id"`
+		WorkspaceName string `bun:"name"`
+	}
 	err := db.Bun().NewSelect().
 		Table("workspaces").
-		Column("id").
-		Where("name = ?", workspaceName).
-		Scan(ctx, &workspaceID)
+		Join("INNER JOIN projects ON workspaces.id = projects.workspace_id").
+		Join("INNER JOIN experiments ON projects.id = experiments.project_id").
+		Column("workspaces.id", "workspaces.name").
+		Where("experiments.id = ?", experimentID).
+		Scan(ctx, &workspaceInfo)
 	if err != nil {
 		return fmt.Errorf(
 			"unable to retrieve workspace information for allocation (%s) associated with experiment %d: %w",
@@ -61,8 +65,8 @@ func InsertTrialAllocationWorkspaceRecord(
 	_, err = db.Bun().NewInsert().Model(&model.AllocationWorkspaceRecord{
 		AllocationID:  allocationID,
 		ExperimentID:  experimentID,
-		WorkspaceID:   workspaceID,
-		WorkspaceName: workspaceName,
+		WorkspaceID:   workspaceInfo.WorkspaceID,
+		WorkspaceName: workspaceInfo.WorkspaceName,
 	}).Exec(ctx)
 	if err != nil {
 		return fmt.Errorf("inserting allocation workspace record: %w", err)

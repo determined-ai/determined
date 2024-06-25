@@ -472,7 +472,6 @@ func (t *trial) maybeAllocateTask() error {
 		context.Background(),
 		t.experimentID,
 		ar.AllocationID,
-		t.taskSpec.Workspace,
 	)
 	if err != nil {
 		return fmt.Errorf(
