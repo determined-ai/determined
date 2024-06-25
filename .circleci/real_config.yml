@@ -627,11 +627,13 @@ commands:
             - run:
                 name: Install DataDog agent
                 command: |
-                  sudo mkdir -p /etc/datadog-agent
-                  sudo cat .circleci/datadog/ci-local-config.yaml > /etc/datadog-agent/datadog.yaml
+                mkdir -p /etc/datadog-agent
+                  sudo chmod -R a+rw /etc/datadog-agent
+                  sudo cat .circleci/datadog/ci-local-config.yaml >> /etc/datadog-agent/datadog.yaml
                   DD_ENV="ci-${CIRCLE_BUILD_NUM}" \
                   DD_HOST_TAGS="testSuite:<<parameters.mark>>,jobName:${CIRCLE_JOB},url:${CIRCLE_BUILD_URL},totalNodes:${CIRCLE_NODE_TOTAL},nodeIdx:${CIRCLE_NODE_INDEX},branch:${CIRCLE_BRANCH}," \
-                  bash -c "$(curl -L https://s3.amazonaws.com/dd-agent/scripts/install_script_agent7.sh)"                  
+                  bash -c "$(curl -L https://s3.amazonaws.com/dd-agent/scripts/install_script_agent7.sh)"
+                  
                   sudo service datadog-agent restart
                   sudo usermod -a -G docker dd-agent
                   sudo cat /etc/datadog-agent/datadog.yaml
