@@ -4776,6 +4776,9 @@ workflows:
             - aws
             - determined-ee
             - aws-ci-cluster-default-user-credentials
+          filters:
+            branches:
+              only: main
           requires:
             - package-and-push-system-dev-ee
           matrix:
