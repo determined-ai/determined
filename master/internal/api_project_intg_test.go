@@ -692,7 +692,7 @@ func TestGetProjectByID(t *testing.T) {
 	require.NoError(t, werr)
 
 	projectName := "test-project" + uuid.New().String()
-	randomesp, err := api.PostProject(ctx, &apiv1.PostProjectRequest{
+	resp, err := api.PostProject(ctx, &apiv1.PostProjectRequest{
 		Name: projectName, WorkspaceId: wresp.Workspace.Id,
 	})
 	require.NoError(t, err)
