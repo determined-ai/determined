@@ -659,6 +659,12 @@ func (j *jobsService) VerifyNamespaceExists(namespaceName string) error {
 	return j.verifyNamespaceExists(namespaceName)
 }
 
+func (j *jobsService) CreateNamespace(namespaceName string) error {
+	j.mu.Lock()
+	defer j.mu.Unlock()
+	return j.createNamespace(namespaceName)
+}
+
 func (j *jobsService) DeleteNamespace(namespaceName string) error {
 	j.mu.Lock()
 	defer j.mu.Unlock()
@@ -2134,6 +2140,34 @@ func (j *jobsService) verifyNamespaceExists(namespaceName string) error {
 		worker.configMapInterfaces = j.configMapInterfaces
 		worker.jobInterface = j.jobInterfaces
 	}
+	return nil
+}
+
+func (j *jobsService) createNamespace(namespaceName string) error {
+	_, err := j.clientSet.CoreV1().Namespaces().Create(
+		context.TODO(),
+		&k8sV1.Namespace{
+			TypeMeta: metaV1.TypeMeta{
+				Kind:       "Namespace",
+				APIVersion: "v1",
+			},
+			ObjectMeta: metaV1.ObjectMeta{
+				Name:   namespaceName,
+				Labels: map[string]string{determinedLabel: namespaceName},
+			},
+		},
+		metaV1.CreateOptions{},
+	)
+	if err != nil {
+		if !strings.Contains(err.Error(), "already exists") {
+			return errors.Wrapf(err, "error creating namespace %s", namespaceName)
+		}
+	}
+
+	j.podInterfaces[namespaceName] = j.clientSet.CoreV1().Pods(namespaceName)
+	j.configMapInterfaces[namespaceName] = j.clientSet.CoreV1().ConfigMaps(namespaceName)
+	j.jobInterfaces[namespaceName] = j.clientSet.BatchV1().Jobs(namespaceName)
+
 	return nil
 }
 
