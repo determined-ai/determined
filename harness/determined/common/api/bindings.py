@@ -11534,6 +11534,7 @@ class v1Project(Printable):
         notes: "typing.Sequence[v1Note]",
         numActiveExperiments: int,
         numExperiments: int,
+        numRuns: int,
         state: "v1WorkspaceState",
         userId: int,
         username: str,
@@ -11551,6 +11552,7 @@ class v1Project(Printable):
         self.notes = notes
         self.numActiveExperiments = numActiveExperiments
         self.numExperiments = numExperiments
+        self.numRuns = numRuns
         self.state = state
         self.userId = userId
         self.username = username
@@ -11574,6 +11576,7 @@ class v1Project(Printable):
             "notes": [v1Note.from_json(x) for x in obj["notes"]],
             "numActiveExperiments": obj["numActiveExperiments"],
             "numExperiments": obj["numExperiments"],
+            "numRuns": obj["numRuns"],
             "state": v1WorkspaceState(obj["state"]),
             "userId": obj["userId"],
             "username": obj["username"],
@@ -11598,6 +11601,7 @@ class v1Project(Printable):
             "notes": [x.to_json(omit_unset) for x in self.notes],
             "numActiveExperiments": self.numActiveExperiments,
             "numExperiments": self.numExperiments,
+            "numRuns": self.numRuns,
             "state": self.state.value,
             "userId": self.userId,
             "username": self.username,
