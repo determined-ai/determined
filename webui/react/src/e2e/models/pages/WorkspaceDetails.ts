@@ -7,7 +7,7 @@ import { ResourcePoolsBound } from 'e2e/models/pages/WorkspaceDetails/ResourcePo
 import { WorkspaceProjects } from 'e2e/models/pages/WorkspaceDetails/WorkspaceProjects';
 
 /**
- * Represents the Workspaces page from src/pages/WorkspacesList.tsx
+ * Represents the WorkspaceDetails page from src/pages/WorkspacesDetails.tsx
  */
 export class WorkspaceDetails extends BasePage {
   readonly title = '';

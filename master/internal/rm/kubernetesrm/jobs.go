@@ -37,6 +37,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/rm/rmevents"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/cproto"
@@ -945,7 +946,7 @@ func (j *jobsService) refreshPodStates(allocationID model.AllocationID) error {
 	return nil
 }
 
-func (j *jobsService) GetAgents() *apiv1.GetAgentsResponse {
+func (j *jobsService) GetAgents() (*apiv1.GetAgentsResponse, error) {
 	j.mu.Lock()
 	defer j.mu.Unlock()
 	return j.getAgents()
@@ -1598,7 +1599,7 @@ func (j *jobsService) getSlot(agentID string, slotID string) *apiv1.GetSlotRespo
 
 const getAgentsCacheDuration = 15 * time.Second
 
-func (j *jobsService) getAgents() *apiv1.GetAgentsResponse {
+func (j *jobsService) getAgents() (*apiv1.GetAgentsResponse, error) {
 	j.getAgentsCacheLock.Lock()
 	defer j.getAgentsCacheLock.Unlock()
 
@@ -1615,7 +1616,8 @@ func (j *jobsService) getAgents() *apiv1.GetAgentsResponse {
 		}
 	}
 
-	return j.getAgentsCache
+	// Ensure cached response is not inadvertently modified.
+	return rm.CopyGetAgentsResponse(j.getAgentsCache)
 }
 
 func (j *jobsService) getAgent(agentID string) *apiv1.GetAgentResponse {

@@ -6,7 +6,7 @@ import { ProjectCreateModal } from 'e2e/models/components/ProjectCreateModal';
 import { ProjectDeleteModal } from 'e2e/models/components/ProjectDeleteModal';
 
 /**
- * Represents the ProjectsComponent component in src/components/ProjectsComponent.tsx
+ * Represents the WorkspaceProjects page in src/pages/WorkspaceDetails/WorkspaceProjects.tsx
  */
 export class WorkspaceProjects extends BaseReactFragment {
   readonly tab = 'projects';
@@ -32,7 +32,7 @@ export class WorkspaceProjects extends BaseReactFragment {
 }
 
 /**
- * Represents the ProjectsCard in the ProjectsComponent component
+ * Represents the ProjectsCard in the WorkspaceProjects component
  */
 class ProjectsCard extends Card {
   override readonly actionMenu = new ProjectActionDropdown({

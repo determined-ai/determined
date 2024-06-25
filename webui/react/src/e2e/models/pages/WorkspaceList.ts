@@ -5,7 +5,7 @@ import { WorkspaceDeleteModal } from 'e2e/models/components/WorkspaceDeleteModal
 import { WorkspaceCard } from 'e2e/models/pages/WorkspaceList/WorkspaceCard';
 
 /**
- * Represents the Workspaces page from src/pages/WorkspacesList.tsx
+ * Represents the WorkspaceList page from src/pages/WorkspaceList.tsx
  */
 export class WorkspaceList extends BasePage {
   readonly title = 'Workspaces';
