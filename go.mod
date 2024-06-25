@@ -57,9 +57,10 @@ require (
 	gopkg.in/guregu/null.v3 v3.4.0
 	gopkg.in/segmentio/analytics-go.v3 v3.1.0
 	gotest.tools v2.2.0+incompatible
-	k8s.io/api v0.28.3
-	k8s.io/apimachinery v0.28.3
-	k8s.io/client-go v0.28.3
+	k8s.io/api v0.28.8
+	k8s.io/apimachinery v0.28.8
+	k8s.io/client-go v0.28.8
+	sigs.k8s.io/scheduler-plugins v0.28.9
 )
 
 require (
@@ -174,7 +175,7 @@ require (
 	github.com/uptrace/bun/dialect/pgdialect v1.2.0
 	github.com/uptrace/bun/extra/bundebug v1.2.0
 	golang.org/x/exp v0.0.0-20231219180239-dc181d75b848
-	golang.org/x/tools v0.16.0
+	golang.org/x/tools v0.16.1
 )
 
 require (
@@ -219,7 +220,7 @@ require (
 	cloud.google.com/go/compute/metadata v0.2.3
 	golang.org/x/sync v0.5.0
 	google.golang.org/genproto/googleapis/api v0.0.0-20230711160842-782d3b101e98
-	k8s.io/component-helpers v0.28.3
+	k8s.io/component-helpers v0.28.8
 	sigs.k8s.io/gateway-api v1.0.0
 )
 

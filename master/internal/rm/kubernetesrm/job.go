@@ -3,6 +3,7 @@ package kubernetesrm
 import (
 	"context"
 	"fmt"
+	"math"
 	"regexp"
 	"strconv"
 	"sync"
@@ -19,6 +20,7 @@ import (
 	typedV1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	gatewayTyped "sigs.k8s.io/gateway-api/apis/v1"
 	alphaGatewayTyped "sigs.k8s.io/gateway-api/apis/v1alpha2"
+	schedulerV1 "sigs.k8s.io/scheduler-plugins/apis/scheduling/v1alpha1"
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/rm/rmevents"
@@ -574,8 +576,35 @@ func (j *job) createSpecAndSubmit(spec *tasks.TaskSpec) error {
 		return err
 	}
 
-	j.resourceRequestQueue.createKubernetesResources(jobSpec, configMapSpec, j.makeGatewayComms(spec))
+	podGroup, err := j.createPodGroup(spec)
+
+	j.resourceRequestQueue.createKubernetesResources(jobSpec, configMapSpec, j.makeGatewayComms(spec), podGroup)
 	return nil
+}
+
+func (j *job) createPodGroup(spec *tasks.TaskSpec) (*schedulerV1.PodGroup, error) {
+	if j.scheduler != coscheduler {
+		return nil, nil
+	}
+
+	resources := spec.ResourcesConfig
+	minAvailable := 0
+
+	if j.slotsPerPod > 0 {
+		minAvailable = int(math.Ceil(float64(resources.SlotsPerTrial()) / float64(j.slotsPerPod)))
+	}
+
+	podGroup := &schedulerV1.PodGroup{
+		ObjectMeta: metav1.ObjectMeta{
+			Name:      j.jobName,
+			Namespace: j.namespace,
+		},
+		PodGroupSpec: schedulerV1.PodGroupSpec{
+			MinMember: minAvailable,
+		},
+	}
+
+	return podGroup, nil
 }
 
 func (j *job) receiveResourceCreationFailed(msg resourceCreationFailed) {

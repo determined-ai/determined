@@ -12,6 +12,7 @@ import (
 	k8sV1 "k8s.io/api/core/v1"
 	typedV1 "k8s.io/client-go/kubernetes/typed/core/v1"
 	alphaGateway "sigs.k8s.io/gateway-api/pkg/client/clientset/versioned/typed/apis/v1alpha2"
+	schedulerV1 "sigs.k8s.io/scheduler-plugins/apis/scheduling/v1alpha1"
 
 	"github.com/determined-ai/determined/master/pkg/set"
 )
@@ -27,6 +28,7 @@ type (
 		jobSpec       *batchV1.Job
 		configMapSpec *k8sV1.ConfigMap
 		gw            *gatewayResourceComm
+		podGroup      *schedulerV1.PodGroup
 	}
 
 	deleteKubernetesResources struct {
@@ -226,11 +228,12 @@ func (r *requestQueue) createKubernetesResources(
 	jobSpec *batchV1.Job,
 	configMapSpec *k8sV1.ConfigMap,
 	gwResources *gatewayResourceComm,
+	podGroup *schedulerV1.PodGroup,
 ) {
 	r.mu.Lock()
 	defer r.mu.Unlock()
 
-	msg := createKubernetesResources{jobSpec, configMapSpec, gwResources}
+	msg := createKubernetesResources{jobSpec, configMapSpec, gwResources, podGroup}
 	ref := keyForCreate(msg)
 
 	if _, requestAlreadyExists := r.pendingResourceCreations[ref]; requestAlreadyExists {

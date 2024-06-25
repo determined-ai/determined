@@ -436,7 +436,7 @@ func (j *job) configureCoscheduler(
 	resources := taskSpec.ResourcesConfig
 	minAvailable := 0
 
-	if j.slotType == device.CUDA && j.slotsPerPod > 0 {
+	if j.slotsPerPod > 0 {
 		minAvailable = int(math.Ceil(float64(resources.SlotsPerTrial()) / float64(j.slotsPerPod)))
 	}
 
@@ -447,14 +447,21 @@ func (j *job) configureCoscheduler(
 		newPod.Kind = "Pod" //nolint:goconst
 	}
 
-	_, ok := newPod.ObjectMeta.Labels["pod-group.scheduling.sigs.k8s.io/name"]
-	if !ok {
-		newPod.ObjectMeta.Labels["pod-group.scheduling.sigs.k8s.io/name"] = j.jobName
-	}
-	_, ok = newPod.ObjectMeta.Labels["pod-group.scheduling.sigs.k8s.io/min-available"]
-	if !ok {
-		newPod.ObjectMeta.Labels["pod-group.scheduling.sigs.k8s.io/min-available"] = strconv.Itoa(
-			minAvailable)
+	if true {
+		_, ok := newPod.ObjectMeta.Labels["scheduling.x-k8s.io/pod-group"]
+		if !ok {
+			newPod.ObjectMeta.Labels["scheduling.x-k8s.io/pod-group"] = "group-20"
+		}
+	} else {
+		_, ok := newPod.ObjectMeta.Labels["pod-group.scheduling.sigs.k8s.io/name"]
+		if !ok {
+			newPod.ObjectMeta.Labels["pod-group.scheduling.sigs.k8s.io/name"] = j.jobName
+		}
+		_, ok = newPod.ObjectMeta.Labels["pod-group.scheduling.sigs.k8s.io/min-available"]
+		if !ok {
+			newPod.ObjectMeta.Labels["pod-group.scheduling.sigs.k8s.io/min-available"] = strconv.Itoa(
+				minAvailable)
+		}
 	}
 }
 
