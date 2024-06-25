@@ -1137,7 +1137,7 @@ export const searchRuns: DetApi<
     pagination,
     runs: runs.map((e) => decoder.decodeV1FlatRun(e)),
   }),
-  request: detApi.Internal.searchRuns,
+  request: (params, options) => detApi.Internal.searchRuns(params, options),
 };
 
 export const archiveRuns: DetApi<
