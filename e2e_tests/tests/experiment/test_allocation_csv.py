@@ -76,7 +76,7 @@ def test_experiment_capture() -> None:
             agentUserGroup=bindings.v1AgentUserGroup(agentGid=1000, agentGroup="det"),
         ),
     ).workspace
-    _ = bindings.post_MoveProject(
+    bindings.post_MoveProject(
         sess,
         projectId=p1.id,
         body=bindings.v1MoveProjectRequest(
