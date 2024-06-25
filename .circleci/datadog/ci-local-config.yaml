@@ -130,7 +130,7 @@
 ## The environment name where the agent is running. Attached in-app to every
 ## metric, event, log, trace, and service check emitted by this Agent.
 #
-# env:  set by environment variable
+env:  ci-devcluster
 
 ## @param tag_value_split_separator - map - optional
 ## @env DD_TAG_VALUE_SPLIT_SEPARATOR - list of key:value strings - optional
