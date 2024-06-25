@@ -408,11 +408,29 @@ func (m *MultiRMRouter) VerifyNamespaceExists(namespaceName string,
 	if err != nil {
 		return fmt.Errorf("error getting resource manager for cluster %s: %w", clusterName, err)
 	}
-	err = rm.VerifyNamespaceExists(namespaceName, clusterName)
-	if err != nil {
-		return err
+
+	return rm.VerifyNamespaceExists(namespaceName, clusterName)
+}
+
+// CreateNamespace deletes the given namespace (if it exists) in all Kubernetes clusters referenced
+// by resource managers in the current determined deployment.
+func (m *MultiRMRouter) CreateNamespace(namespaceName string, clusterName string,
+	fanout bool,
+) error {
+	if fanout {
+		return m.fanOutRMCommand(func(rm rm.ResourceManager) error {
+			return rm.CreateNamespace(namespaceName, clusterName, false)
+		})
 	}
-	return nil
+	if len(clusterName) == 0 {
+		return fmt.Errorf("must specify cluster name when using multiRM")
+	}
+	rm, err := m.getRM(clusterName)
+	if err != nil {
+		return fmt.Errorf("error getting resource manager for cluster %s: %w", clusterName, err)
+	}
+
+	return rm.CreateNamespace(namespaceName, clusterName, false)
 }
 
 // DeleteNamespace deletes the given namespace (if it exists) in all Kubernetes clusters referenced

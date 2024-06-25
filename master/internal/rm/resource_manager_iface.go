@@ -58,6 +58,7 @@ type ResourceManager interface {
 	// Kubernetes Namespaces.
 	DefaultNamespace(string) (*string, error)
 	VerifyNamespaceExists(string, string) error
+	CreateNamespace(string, string, bool) error
 	DeleteNamespace(string) error
 	RemoveEmptyNamespace(string, string) error
 }

@@ -621,6 +621,7 @@ def test_set_workspace_namespace_bindings(
         "no resource manager with cluster name",
     )
 
+    w_name = uuid.uuid4().hex[:8]
     detproc.check_error(
         sess,
         [
@@ -641,15 +642,18 @@ def test_set_workspace_namespace_bindings(
     if is_multirm_cluster:
         detproc.check_error(
             sess,
+            ["det", "w", "create", w_name, "--namespace", namespace],
+            "must specify a cluster name",
+        )
+        
+        detproc.check_call(sess, ["det", "w", "create", w_name])
+        
+        detproc.check_error(
+            sess,
             ["det", "w", "bindings", "set", w_name, "--namespace", namespace],
             "must specify a cluster name",
         )
 
-        detproc.check_error(
-            sess,
-            ["det", "w", "create", w_name, "--namespace", namespace],
-            "must specify a cluster name",
-        )
     else:
         output = detproc.check_output(
             sess,
