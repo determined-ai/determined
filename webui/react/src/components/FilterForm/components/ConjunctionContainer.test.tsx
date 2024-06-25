@@ -36,15 +36,21 @@ describe('ConjunctionContainer', () => {
   });
 
   it('should show Select when index is 1', async () => {
-    const { user } = setup({ conjunction: Conjunction.Or, index: 1 });
+    const onClick = vi.fn();
+    const { user } = setup({ conjunction: Conjunction.Or, index: 1, onClick });
 
     const conjunctionSelect = screen.getByRole('combobox');
     expect(screen.queryByText('Where')).not.toBeInTheDocument();
     expect(conjunctionSelect).toBeInTheDocument();
+    expect(screen.getByText(Conjunction.Or)).toBeInTheDocument();
+    expect(screen.queryByText(Conjunction.And)).not.toBeInTheDocument();
 
     expect(screen.queryByRole('listbox')).not.toBeInTheDocument();
     await user.click(conjunctionSelect);
     expect(await screen.findByRole('listbox')).toBeInTheDocument();
+    expect((await screen.findByRole('listbox')).children[0]).toHaveTextContent(Conjunction.And);
+    await user.click((await screen.findAllByText(Conjunction.And))[1]);
+    expect(onClick).toBeCalledTimes(1);
   });
 
   it('should show Conjunction text when index is more than 1', () => {
