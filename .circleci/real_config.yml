@@ -621,6 +621,18 @@ commands:
         type: boolean
         default: true
     steps:
+      - when:
+          condition: <<parameters.wait-for-master>>
+          steps:
+            - run:
+                name: Install DataDog agent
+                command: |
+                DD_APM_INSTRUMENTATION_ENABLED=host \
+                DD_ENV=ci \
+                DD_LOGS_ENABLED=true \
+                bash -c "$(curl -L https://s3.amazonaws.com/dd-agent/scripts/install_script_agent7.sh)"
+                cat /etc/datadog-agent/datadog.yaml
+                ls /etc/datadog-agent/conf.d/
       # Wait for master before splitting tests, since so many splits depend on
       # asking master for its configuration in order to apply skipifs.
       - when:
