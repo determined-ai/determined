@@ -673,7 +673,12 @@ func (*DispatcherResourceManager) VerifyNamespaceExists(string, string) error {
 	return rmerrors.ErrNotSupported
 }
 
-// DeleteNamespace is not supported.
+// CreateNamespace is unsupported.
+func (*DispatcherResourceManager) CreateNamespace(string, string, bool) error {
+	return rmerrors.ErrNotSupported
+}
+
+// DeleteNamespace is unsupported.
 func (*DispatcherResourceManager) DeleteNamespace(string) error {
 	// We don't want to error out when this gets called, because the function cannot get called
 	// because of an API request to delete the namespace. It is only used internally to clean up

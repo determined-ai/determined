@@ -394,6 +394,17 @@ func (k *ResourceManager) VerifyNamespaceExists(namespaceName string, clusterNam
 	return nil
 }
 
+// CreateNamespace implements rm.ResourceManager.
+func (k *ResourceManager) CreateNamespace(namespaceName string, clusterName string,
+	fanout bool,
+) error {
+	err := k.jobsService.CreateNamespace(namespaceName)
+	if err != nil {
+		return fmt.Errorf("error creating namespace %s: %w", namespaceName, err)
+	}
+	return nil
+}
+
 // DeleteNamespace implements rm.ResourceManager.
 func (k *ResourceManager) DeleteNamespace(namespaceName string) error {
 	err := k.jobsService.DeleteNamespace(namespaceName)

@@ -263,7 +263,8 @@ message ListWorkspaceNamespaceBindingsResponse {
   };
 
   // List of workspace-namespace bindings for a given workspace.
-  map<string, string> namespace_bindings = 1;
+  map<string, determined.workspace.v1.WorkspaceNamespaceBinding>
+      namespace_bindings = 1;
 }
 
 // Request for deleting workspace namespace bindings.

@@ -1098,7 +1098,7 @@ export interface Workspace {
 }
 
 export interface WorkspaceNamespaceBindings {
-  clusterNamespacePairs: Record<string, string>;
+  clusterNamespacePairs: Record<string, Api.V1WorkspaceNamespaceBinding>;
 }
 
 export interface WorkspacePagination extends WithPagination {
