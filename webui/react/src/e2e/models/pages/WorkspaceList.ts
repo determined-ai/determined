@@ -10,9 +10,9 @@ import { WorkspacesList } from 'e2e/models/components/WorkspacesList';
  * Represents the Workspaces page from pages/WorkspaceCreateModal.tsx
  * Represents the Workspaces page from pages/WorkspaceDeleteModal.tsx
  */
-export class Workspaces extends BasePage {
-  readonly title: string = Workspaces.getTitle('Workspaces');
-  readonly url: string = 'workspaces';
+export class WorkspaceList extends BasePage {
+  readonly title = 'Workspaces';
+  readonly url = 'workspaces';
   readonly list = new WorkspacesList({
     parent: this,
   });

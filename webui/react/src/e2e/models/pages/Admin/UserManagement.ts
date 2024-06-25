@@ -17,7 +17,7 @@ import { AdminPage } from 'e2e/models/pages/Admin/index';
  * Represents the UserManagement page from src/pages/Admin/UserManagement.tsx
  */
 export class UserManagement extends AdminPage {
-  readonly title: string = UserManagement.getTitle();
+  readonly title = '';
   readonly url: string = 'admin/user-management';
   readonly getRowById: (value: string) => UserRow;
 

@@ -1,10 +1,8 @@
-import { expect } from '@playwright/test';
 import { v4 } from 'uuid';
 
-import { test } from 'e2e/fixtures/global-fixtures';
-import { BasePage } from 'e2e/models/common/base/BasePage';
+import { expect, test } from 'e2e/fixtures/global-fixtures';
 import { WorkspaceCreateModal } from 'e2e/models/components/WorkspaceCreateModal';
-import { Workspaces } from 'e2e/models/pages/Workspaces';
+import { WorkspaceList } from 'e2e/models/pages/WorkspaceList';
 import { randId, safeName } from 'e2e/utils/naming';
 
 test.describe('Projects', () => {
@@ -38,19 +36,19 @@ test.describe('Projects', () => {
   };
 
   test.beforeEach(async ({ authedPage }) => {
-    const workspacesPage = new Workspaces(authedPage);
+    const workspacesPage = new WorkspaceList(authedPage);
 
-    await expect(authedPage).toHaveTitle(BasePage.getTitle('Home'));
+    await expect(authedPage).toHaveDeterminedTitle('Home');
     await expect(authedPage).toHaveURL(/dashboard/);
     await test.step('Navigate to Workspaces', async () => {
       await workspacesPage.nav.sidebar.workspaces.pwLocator.click();
       await authedPage.waitForURL(`**/${workspacesPage.url}?**`); // glob pattern for query params
-      await expect.soft(authedPage).toHaveTitle(workspacesPage.title);
+      await expect.soft(authedPage).toHaveDeterminedTitle(workspacesPage.title);
     });
   });
 
   test.afterEach(async ({ authedPage }) => {
-    const workspacesPage = new Workspaces(authedPage);
+    const workspacesPage = new WorkspaceList(authedPage);
     await test.step('Delete Workspace from Card', async () => {
       if (wsCreatedWithButton !== '') {
         await workspacesPage.nav.sidebar.workspaces.pwLocator.click();
@@ -82,7 +80,7 @@ test.describe('Projects', () => {
   // })
 
   test('Projects and Workspaces CRUD', async ({ authedPage }) => {
-    const workspacesPage = new Workspaces(authedPage);
+    const workspacesPage = new WorkspaceList(authedPage);
 
     await test.step('Create a Workspace from Card', async () => {
       await workspacesPage.list.newWorkspaceButton.pwLocator.click();
