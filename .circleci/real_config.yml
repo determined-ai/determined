@@ -632,6 +632,7 @@ commands:
             - run:
                 name: Install DataDog agent
                 command: |
+                  sudo mkdir -p /etc/datadog-agent
                   sudo cat .circleci/datadog/ci-local-config.yaml > /etc/datadog-agent/datadog.yaml
                   DD_ENV="ci-${CIRCLE_BUILD_NUM}" \
                   DD_HOST_TAGS="testSuite:<<parameters.mark>>,jobName:${CIRCLE_JOB},url:${CIRCLE_BUILD_URL},totalNodes:${CIRCLE_NODE_TOTAL},nodeIdx:${CIRCLE_NODE_INDEX},branch:${CIRCLE_BRANCH}," \
