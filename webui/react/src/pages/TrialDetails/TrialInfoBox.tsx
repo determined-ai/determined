@@ -179,7 +179,7 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
           </>
         )}
         {/* Older experiment may not have collected accelerator data */}
-        {acceleratorData?.length && (
+        {acceleratorData?.length ? (
           <OverviewStats title="Resource Allocation" onClick={allocationModal.open}>
             <div
               style={{
@@ -190,7 +190,7 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
               {`${numOfSlots} ${pluralizer(numOfSlots, 'Slot')}`}
             </div>
           </OverviewStats>
-        )}
+        ) : null}
         {<OverviewStats title="Log Retention Days">{logRetentionDays}</OverviewStats>}
       </Card.Group>
       <allocationModal.Component data={acceleratorData} />
