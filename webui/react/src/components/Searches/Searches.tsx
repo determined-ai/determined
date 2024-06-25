@@ -56,7 +56,12 @@ import usePolling from 'hooks/usePolling';
 import { useSettings } from 'hooks/useSettings';
 import { useTypedParams } from 'hooks/useTypedParams';
 import { getProjectColumns, searchExperiments } from 'services/api';
-import { V1BulkExperimentFilters, V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
+import {
+  V1BulkExperimentFilters,
+  V1ColumnType,
+  V1LocationType,
+  V1TableType,
+} from 'services/api-ts-sdk';
 import usersStore from 'stores/users';
 import userSettings from 'stores/userSettings';
 import {
@@ -88,6 +93,9 @@ interface Props {
 }
 
 type ExperimentWithIndex = { index: number; experiment: BulkExperimentItem };
+
+const BANNED_FILTER_COLUMNS = new Set(['searcherMetricsVal']);
+const BANNED_SORT_COLUMNS = new Set(['tags', 'searcherMetricsVal']);
 
 const makeSortString = (sorts: ValidSort[]): string =>
   sorts.map((s) => `${s.column}=${s.direction}`).join(',');
@@ -153,7 +161,6 @@ const Searches: React.FC<Props> = ({ project }) => {
   const { settings: globalSettings, updateSettings: updateGlobalSettings } =
     useSettings<DataGridGlobalSettings>(settingsConfigGlobal);
 
-  const isPagedView = true;
   const [sorts, setSorts] = useState<Sort[]>(() => {
     if (!isLoadingSettings) {
       return parseSortString(settings.sortString);
@@ -306,8 +313,6 @@ const Searches: React.FC<Props> = ({ project }) => {
   const fetchExperiments = useCallback(async (): Promise<void> => {
     if (isLoadingSettings || Loadable.isNotLoaded(loadableFormset)) return;
     try {
-      const tableOffset = Math.max((page - 0.5) * PAGE_SIZE, 0);
-
       // always filter out single trial experiments
       const filters = JSON.parse(filtersString);
       const existingFilterGroup = { ...filters.filterGroup };
@@ -329,32 +334,15 @@ const Searches: React.FC<Props> = ({ project }) => {
         {
           ...experimentFilters,
           filter: JSON.stringify(filters),
-          limit: isPagedView ? settings.pageLimit : 2 * PAGE_SIZE,
-          offset: isPagedView ? page * settings.pageLimit : tableOffset,
+          limit: settings.pageLimit,
+          offset: page * settings.pageLimit,
           sort: sortString || undefined,
         },
         { signal: canceler.signal },
       );
-      const total = response.pagination.total ?? 0;
       const loadedExperiments = response.experiments;
 
-      setExperiments((prev) => {
-        if (isPagedView) {
-          return loadedExperiments.map((experiment) => Loaded(experiment));
-        }
-
-        // Ensure experiments array has enough space for full result set
-        const newExperiments = prev.length !== total ? new Array(total).fill(NotLoaded) : [...prev];
-
-        // Update the list with the fetched results.
-        Array.prototype.splice.apply(newExperiments, [
-          tableOffset,
-          loadedExperiments.length,
-          ...loadedExperiments.map((experiment) => Loaded(experiment)),
-        ]);
-
-        return newExperiments;
-      });
+      setExperiments(loadedExperiments.map((experiment) => Loaded(experiment)));
       setTotal(
         response.pagination.total !== undefined ? Loaded(response.pagination.total) : NotLoaded,
       );
@@ -368,7 +356,6 @@ const Searches: React.FC<Props> = ({ project }) => {
     experimentFilters,
     filtersString,
     isLoadingSettings,
-    isPagedView,
     loadableFormset,
     page,
     sortString,
@@ -379,7 +366,10 @@ const Searches: React.FC<Props> = ({ project }) => {
 
   const projectColumns = useAsync(async () => {
     try {
-      const columns = await getProjectColumns({ id: project.id });
+      const columns = await getProjectColumns({
+        id: project.id,
+        tableType: V1TableType.EXPERIMENT,
+      });
       return columns.filter((c) => c.location === V1LocationType.EXPERIMENT);
     } catch (e) {
       handleError(e, { publicSubject: 'Unable to fetch project columns' });
@@ -609,10 +599,6 @@ const Searches: React.FC<Props> = ({ project }) => {
     [isLoadingSettings, settings.columns],
   );
 
-  const showPagination = useMemo(() => {
-    return isPagedView && !isMobile;
-  }, [isMobile, isPagedView]);
-
   const {
     ui: { theme: appTheme },
     isDarkMode,
@@ -638,10 +624,25 @@ const Searches: React.FC<Props> = ({ project }) => {
         if (columnName === MULTISELECT) {
           return (columnDefs[columnName] = defaultSelectionColumn(selection.rows, false));
         }
-        if (columnName in columnDefs) return columnDefs[columnName];
-        if (!Loadable.isLoaded(projectColumnsMap)) return;
+
+        if (!Loadable.isLoaded(projectColumnsMap)) {
+          if (columnName in columnDefs) return columnDefs[columnName];
+          return;
+        }
+
         const currentColumn = projectColumnsMap.data[columnName];
-        if (!currentColumn) return;
+        if (!currentColumn) {
+          if (columnName in columnDefs) return columnDefs[columnName];
+          return;
+        }
+
+        // prioritize column title from getProjectColumns API response, but use static front-end definition as fallback:
+        if (columnName in columnDefs)
+          return {
+            ...columnDefs[columnName],
+            title: currentColumn.displayName ?? columnDefs[columnName].title,
+          };
+
         let dataPath: string | undefined = undefined;
         switch (currentColumn.location) {
           case V1LocationType.EXPERIMENT:
@@ -735,7 +736,6 @@ const Searches: React.FC<Props> = ({ project }) => {
 
     const filterCount = formStore.getFieldCount(column.column).get();
 
-    const BANNED_FILTER_COLUMNS = ['searcherMetricsVal'];
     const loadableFormset = formStore.formset.get();
     const filterMenuItemsForColumn = () => {
       const isSpecialColumn = (SpecialColumnNames as ReadonlyArray<string>).includes(column.column);
@@ -809,11 +809,15 @@ const Searches: React.FC<Props> = ({ project }) => {
           }
         },
       },
-      { type: 'divider' as const },
-      ...(BANNED_FILTER_COLUMNS.includes(column.column)
+      ...(BANNED_SORT_COLUMNS.has(column.column)
         ? []
         : [
+            { type: 'divider' as const },
             ...sortMenuItemsForColumn(column, sorts, handleSortChange),
+          ]),
+      ...(BANNED_FILTER_COLUMNS.has(column.column)
+        ? []
+        : [
             { type: 'divider' as const },
             {
               icon: <Icon decorative name="filter" />,
@@ -845,6 +849,8 @@ const Searches: React.FC<Props> = ({ project }) => {
   return (
     <>
       <TableActionBar
+        bannedFilterColumns={BANNED_FILTER_COLUMNS}
+        bannedSortColumns={BANNED_SORT_COLUMNS}
         columnGroups={[V1LocationType.EXPERIMENT]}
         formStore={formStore}
         initialVisibleColumns={columnsIfLoaded}
@@ -881,9 +887,6 @@ const Searches: React.FC<Props> = ({ project }) => {
               getHeaderMenuItems={getHeaderMenuItems}
               getRowAccentColor={getRowAccentColor}
               imperativeRef={dataGridRef}
-              isPaginated={isPagedView}
-              page={page}
-              pageSize={PAGE_SIZE}
               pinnedColumnsCount={isLoadingSettings ? 0 : settings.pinnedColumnsCount}
               renderContextMenuComponent={({
                 cell,
@@ -911,15 +914,13 @@ const Searches: React.FC<Props> = ({ project }) => {
               selection={selection}
               sorts={sorts}
               staticColumns={STATIC_COLUMNS}
-              total={Loadable.getOrElse(PAGE_SIZE, total)}
               onColumnResize={handleColumnWidthChange}
               onColumnsOrderChange={handleColumnsOrderChange}
               onContextMenuComplete={handleContextMenuComplete}
-              onPageUpdate={setPage}
               onPinnedColumnsCountChange={handlePinnedColumnsCountChange}
               onSelectionChange={handleSelectionChange}
             />
-            {showPagination && (
+            {!isMobile && (
               <Row>
                 <Column align="right">
                   <Pagination

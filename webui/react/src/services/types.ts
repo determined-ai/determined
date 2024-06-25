@@ -514,6 +514,7 @@ export type UnarchiveProjectParams = ArchiveProjectParams;
 
 export interface GetProjectColumnsParams {
   id: number;
+  tableType: Api.V1TableType;
 }
 
 export interface GetProjectNumericMetricsRangeParams {

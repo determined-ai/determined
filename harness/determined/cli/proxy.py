@@ -95,7 +95,7 @@ def copy_from_websocket2(
             ):
                 if isinstance(event, lomond.events.Rejected):
                     print(event.response)
-                raise Exception("Connection failed: {}".format(event))
+                raise Exception(f"Connection {ws.url} failed: {event}")
             elif isinstance(event, (lomond.events.Closing, lomond.events.Disconnected)):
                 break
     finally:

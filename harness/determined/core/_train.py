@@ -6,7 +6,7 @@ from typing import Any, Callable, Dict, List, Optional, Set
 import determined as det
 from determined import core, tensorboard
 from determined.common import api, util
-from determined.common.api import errors
+from determined.common.api import bindings, errors
 
 logger = logging.getLogger("determined.core")
 
@@ -67,6 +67,31 @@ class TrainContext:
         steps_completed = val.get("totalBatches")
         logger.debug(f"_get_last_validation() -> {steps_completed}")
         return steps_completed
+
+    def set_metadata(self, metadata: Dict[str, Any]) -> Optional[Dict[str, Any]]:
+        """
+        Set the metadata on the current run to the Determined master, overwrite
+        existing metadata on the current run. Returns the metadata that was set.
+
+        The metadata is a dictionary of key-value pairs that can be used for analysis,
+        post-processing, or debugging.
+        """
+        logger.debug(f"set_metadata({metadata})")
+
+        body = bindings.v1PostRunMetadataRequest(metadata=metadata, runId=self._trial_id)
+        r = bindings.post_PostRunMetadata(
+            session=self._session,
+            body=body,
+            runId=self._trial_id,
+        )
+        return r.metadata
+
+    def get_metadata(self) -> Optional[Dict[str, Any]]:
+        """
+        Get the metadata of the current run from the Determined master.
+        """
+        r = bindings.get_GetRunMetadata(session=self._session, runId=self._trial_id)
+        return r.metadata
 
     def _report_trial_metrics(
         self,

@@ -109,6 +109,7 @@ func New(
 		k.config.DetMasterPort,
 		k.config.KubeconfigPath,
 		k.jobSchedulingStateCallback,
+		k.config.InternalTaskGateway,
 	)
 	if err != nil {
 		return nil, err

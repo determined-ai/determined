@@ -278,6 +278,7 @@ def main(det_callback, tb_callback, model_args, data_args, training_args):
             data_args.dataset_config_name,
             cache_dir=model_args.cache_dir,
             use_auth_token=True if model_args.use_auth_token else None,
+            trust_remote_code=True,
         )
     else:
         data_files = {}
@@ -290,6 +291,7 @@ def main(det_callback, tb_callback, model_args, data_args, training_args):
             data_files=data_files,
             cache_dir=model_args.cache_dir,
             task="image-classification",
+            trust_remote_code=True,
         )
 
     # If we don't have a validation split, split off a percentage of train as validation.
@@ -310,7 +312,7 @@ def main(det_callback, tb_callback, model_args, data_args, training_args):
         id2label[str(i)] = label
 
     # Load the accuracy metric from the datasets package
-    metric = datasets.load_metric("accuracy")
+    metric = datasets.load_metric("accuracy", trust_remote_code=True,)
 
     # Define our compute_metrics function. It takes an `EvalPrediction` object (a namedtuple with a
     # predictions and label_ids field) and has to return a dictionary string to float.

@@ -34,5 +34,5 @@ entrypoint: >-
   --save_total_limit 3
   --seed 1337
   --save_strategy epoch
-  --trust_remote_code false
+  --trust_remote_code true
 max_restarts: 0

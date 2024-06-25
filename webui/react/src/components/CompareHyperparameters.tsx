@@ -6,13 +6,13 @@ import { Title } from 'hew/Typography';
 import React, { useCallback, useEffect, useMemo } from 'react';
 
 import Section from 'components/Section';
+import { RunMetricData } from 'hooks/useMetrics';
 import { useSettings } from 'hooks/useSettings';
 import { ExperimentVisualizationType } from 'pages/ExperimentDetails/ExperimentVisualization';
 import ExperimentVisualizationFilters, {
   VisualizationFilters,
 } from 'pages/ExperimentDetails/ExperimentVisualization/ExperimentVisualizationFilters';
-import { TrialMetricData } from 'pages/TrialDetails/useTrialMetrics';
-import { ExperimentWithTrial, TrialItem } from 'types';
+import { ExperimentWithTrial, FlatRun, TrialItem, XOR } from 'types';
 
 import CompareHeatMaps from './CompareHeatMaps';
 import {
@@ -23,17 +23,22 @@ import CompareParallelCoordinates from './CompareParallelCoordinates';
 import CompareScatterPlots from './CompareScatterPlots';
 import css from './HpParallelCoordinates.module.scss';
 
-interface Props {
+interface BaseProps {
   projectId: number;
-  selectedExperiments: ExperimentWithTrial[];
-  trials: TrialItem[];
-  metricData: TrialMetricData;
+  metricData: RunMetricData;
 }
+
+type Props = XOR<
+  { selectedExperiments: ExperimentWithTrial[]; trials: TrialItem[] },
+  { selectedRuns: FlatRun[] }
+> &
+  BaseProps;
 
 export const NO_DATA_MESSAGE = 'No data available.';
 
 const CompareHyperparameters: React.FC<Props> = ({
   selectedExperiments,
+  selectedRuns,
   trials,
   projectId,
   metricData,
@@ -42,9 +47,14 @@ const CompareHyperparameters: React.FC<Props> = ({
 
   const fullHParams: string[] = useMemo(() => {
     const hpParams = new Set<string>();
-    trials.forEach((trial) => Object.keys(trial.hyperparameters).forEach((hp) => hpParams.add(hp)));
+    trials?.forEach((trial) =>
+      Object.keys(trial.hyperparameters).forEach((hp) => hpParams.add(hp)),
+    );
+    selectedRuns?.forEach((run) =>
+      Object.keys(run.hyperparameters ?? {}).forEach((hp) => hpParams.add(hp)),
+    );
     return Array.from(hpParams);
-  }, [trials]);
+  }, [selectedRuns, trials]);
 
   const settingsConfig = useMemo(
     () => settingsConfigForCompareHyperparameters(fullHParams, projectId),
@@ -120,11 +130,11 @@ const CompareHyperparameters: React.FC<Props> = ({
     return <Spinner center spinning />;
   }
 
-  if (trials.length === 0) {
+  if ((trials ?? selectedRuns).length === 0) {
     return <Message title={NO_DATA_MESSAGE} />;
   }
 
-  if (selectedExperiments.length !== 0 && metrics.length === 0) {
+  if ((selectedExperiments ?? selectedRuns).length !== 0 && metrics.length === 0) {
     return (
       <div className={css.waiting}>
         <Alert
@@ -140,35 +150,63 @@ const CompareHyperparameters: React.FC<Props> = ({
     <Section bodyBorder bodyScroll filters={visualizationFilters}>
       <div className={css.container}>
         <div className={css.chart}>
-          {selectedExperiments.length > 0 && (
+          {(selectedExperiments ?? selectedRuns).length > 0 && (
             <>
               <Title>Parallel Coordinates</Title>
-              <CompareParallelCoordinates
-                fullHParams={fullHParams}
-                metricData={metricData}
-                projectId={projectId}
-                selectedExperiments={selectedExperiments}
-                settings={settings}
-                trials={trials}
-              />
+              {selectedRuns ? (
+                <CompareParallelCoordinates
+                  fullHParams={fullHParams}
+                  metricData={metricData}
+                  projectId={projectId}
+                  selectedRuns={selectedRuns}
+                  settings={settings}
+                />
+              ) : (
+                <CompareParallelCoordinates
+                  fullHParams={fullHParams}
+                  metricData={metricData}
+                  projectId={projectId}
+                  selectedExperiments={selectedExperiments}
+                  settings={settings}
+                  trials={trials}
+                />
+              )}
               <Divider />
               <Title>Scatter Plots</Title>
-              <CompareScatterPlots
-                fullHParams={fullHParams}
-                metricData={metricData}
-                selectedExperiments={selectedExperiments}
-                settings={settings}
-                trials={trials}
-              />
+              {selectedRuns ? (
+                <CompareScatterPlots
+                  fullHParams={fullHParams}
+                  metricData={metricData}
+                  selectedRuns={selectedRuns}
+                  settings={settings}
+                />
+              ) : (
+                <CompareScatterPlots
+                  fullHParams={fullHParams}
+                  metricData={metricData}
+                  selectedExperiments={selectedExperiments}
+                  settings={settings}
+                  trials={trials}
+                />
+              )}
               <Divider />
               <Title>Heat Maps</Title>
-              <CompareHeatMaps
-                fullHParams={fullHParams}
-                metricData={metricData}
-                selectedExperiments={selectedExperiments}
-                settings={settings}
-                trials={trials}
-              />
+              {selectedRuns ? (
+                <CompareHeatMaps
+                  fullHParams={fullHParams}
+                  metricData={metricData}
+                  selectedRuns={selectedRuns}
+                  settings={settings}
+                />
+              ) : (
+                <CompareHeatMaps
+                  fullHParams={fullHParams}
+                  metricData={metricData}
+                  selectedExperiments={selectedExperiments}
+                  settings={settings}
+                  trials={trials}
+                />
+              )}
             </>
           )}
         </div>

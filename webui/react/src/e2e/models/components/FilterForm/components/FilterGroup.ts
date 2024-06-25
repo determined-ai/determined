@@ -1,7 +1,11 @@
-import { BaseComponent, NamedComponent, NamedComponentArgs } from 'e2e/models/BaseComponent';
+import {
+  BaseComponent,
+  NamedComponent,
+  NamedComponentArgs,
+} from 'e2e/models/common/base/BaseComponent';
+import { DropdownMenu } from 'e2e/models/common/hew/Dropdown';
 import { ConjunctionContainer } from 'e2e/models/components/FilterForm/components/ConjunctionContainer';
 import { FilterField } from 'e2e/models/components/FilterForm/components/FilterField';
-import { DropdownMenu } from 'e2e/models/hew/Dropdown';
 
 /**
  * Represents the FilterGroup component in src/components/FilterForm/components/FilterGroup.tsx
@@ -52,7 +56,7 @@ export class FilterGroup extends NamedComponent {
     selector: this.selectorTemplate('[data-test="explanation"]'),
   });
   readonly addDropdown = new AddDropdown({
-    childNode: new BaseComponent({
+    clickThisComponentToOpen: new BaseComponent({
       parent: this.#header,
       selector: this.selectorTemplate('[data-test="add"]'),
     }),
@@ -70,7 +74,7 @@ export class FilterGroup extends NamedComponent {
     parent: this.#groupCard,
     selector: this.#childrenSelector,
   });
-  readonly filterGroups: FilterGroup | undefined;
+  readonly filterGroups?: FilterGroup;
   readonly filterFields = new FilterField({
     attachment: this.#notNestedSelector,
     parent: this.#children,

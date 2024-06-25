@@ -126,4 +126,4 @@ resource_aggregates (
     FROM
         all_aggs,
         const
-)
+) ON CONFLICT DO NOTHING

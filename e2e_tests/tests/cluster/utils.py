@@ -15,6 +15,8 @@ from tests import command
 from tests import config as conf
 from tests import detproc
 
+KUBERNETES_EXPERIMENT_TIMEOUT = 600
+
 
 class _HTTPServerWithRequest(http.server.HTTPServer):
     def __init__(

@@ -1,63 +1,126 @@
 import { ChartGrid, ChartsProps } from 'hew/LineChart';
 import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import _ from 'lodash';
-import React, { useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 
 import MetricBadgeTag from 'components/MetricBadgeTag';
 import { MapOfIdsToColors, useGlasbey } from 'hooks/useGlasbey';
-import { TrialMetricData } from 'pages/TrialDetails/useTrialMetrics';
-import { ExperimentWithTrial, Serie, TrialItem, XAxisDomain } from 'types';
+import { RunMetricData } from 'hooks/useMetrics';
+import { ExperimentWithTrial, FlatRun, Serie, TrialItem, XAxisDomain, XOR } from 'types';
 import handleError from 'utils/error';
 import { metricToKey } from 'utils/metric';
 
-interface Props {
-  selectedExperiments: ExperimentWithTrial[];
-  trials: TrialItem[];
-  metricData: TrialMetricData;
+interface BaseProps {
+  metricData: RunMetricData;
 }
 
-const CompareMetrics: React.FC<Props> = ({ selectedExperiments, trials, metricData }) => {
-  const colorMap = useGlasbey(selectedExperiments.map((e) => e.experiment.id));
+type Props = XOR<
+  { selectedExperiments: ExperimentWithTrial[]; trials: TrialItem[] },
+  { selectedRuns: FlatRun[] }
+> &
+  BaseProps;
+
+const CompareMetrics: React.FC<Props> = ({
+  selectedExperiments,
+  trials,
+  metricData,
+  selectedRuns,
+}) => {
+  const colorMap = useGlasbey(
+    selectedRuns ? selectedRuns.map((r) => r.id) : selectedExperiments.map((e) => e.experiment.id),
+  );
   const [xAxis, setXAxis] = useState<XAxisDomain>(XAxisDomain.Batches);
   const { scale, setScale } = metricData;
 
-  const calculateChartProps = (
-    metricData: TrialMetricData,
-    experiments: ExperimentWithTrial[],
-    trials: TrialItem[],
-    xAxis: XAxisDomain,
-    colorMap: MapOfIdsToColors,
-  ): Loadable<ChartsProps> => {
-    const { metricHasData, metrics, data, isLoaded, selectedMetrics } = metricData;
-    const chartedMetrics: Record<string, boolean> = {};
-    const out: ChartsProps = [];
-    const expNameById: Record<number, string> = {};
-    experiments.forEach((e) => {
-      expNameById[e.experiment.id] = e.experiment.name;
-    });
-    metrics.forEach((metric) => {
-      const series: Serie[] = [];
-      const key = metricToKey(metric);
-      trials.forEach((t) => {
-        const m = data[t?.id || 0];
-        m?.[key] &&
-          t &&
-          series.push({
-            ...m[key],
-            color: colorMap[t.experimentId],
-            name: expNameById[t.experimentId]
-              ? `${expNameById[t.experimentId]} (${t.experimentId})`
-              : String(t.experimentId),
-          });
-        chartedMetrics[key] ||= series.length > 0;
+  const calculateExperimentChartProps = useCallback(
+    (
+      metricData: RunMetricData,
+      experiments: ExperimentWithTrial[],
+      trials: TrialItem[],
+      xAxis: XAxisDomain,
+      colorMap: MapOfIdsToColors,
+    ): { chartProps: ChartsProps; chartedMetrics: Record<string, boolean> } => {
+      const { metrics, data } = metricData;
+      const chartedMetrics: Record<string, boolean> = {};
+      const expNameById = experiments.reduce(
+        (acc, cur) => {
+          acc[cur.experiment.id] = cur.experiment.name;
+          return acc;
+        },
+        {} as Record<number, string>,
+      );
+
+      const chartProps: ChartsProps = metrics.map((metric) => {
+        const series: Serie[] = [];
+        const key = metricToKey(metric);
+
+        trials.forEach((t) => {
+          const m = data[t.id];
+          m?.[key] &&
+            series.push({
+              ...m[key],
+              color: colorMap[t.experimentId],
+              name: expNameById[t.experimentId]
+                ? `${expNameById[t.experimentId]} (${t.experimentId})`
+                : String(t.experimentId),
+            });
+          chartedMetrics[key] ||= series.length > 0;
+        });
+
+        return {
+          series: Loaded(series),
+          title: <MetricBadgeTag metric={metric} />,
+          xAxis,
+          xLabel: String(xAxis),
+        };
       });
-      out.push({
-        series: Loaded(series),
-        title: <MetricBadgeTag metric={metric} />,
-        xAxis,
-        xLabel: String(xAxis),
+
+      return { chartedMetrics, chartProps };
+    },
+    [],
+  );
+
+  const calculateRunsChartProps = useCallback(
+    (
+      metricData: RunMetricData,
+      runs: FlatRun[],
+      xAxis: XAxisDomain,
+      colorMap: MapOfIdsToColors,
+    ): { chartProps: ChartsProps; chartedMetrics: Record<string, boolean> } => {
+      const { metrics, data } = metricData;
+      const chartedMetrics: Record<string, boolean> = {};
+      const chartProps: ChartsProps = metrics.map((metric) => {
+        const series: Serie[] = [];
+        const key = metricToKey(metric);
+        runs.forEach((r) => {
+          const m = data[r.id];
+          m?.[key] &&
+            series.push({
+              ...m[key],
+              color: colorMap[r.id],
+              name: `Run (${r.id})`,
+            });
+          chartedMetrics[key] ||= series.length > 0;
+        });
+
+        return {
+          series: Loaded(series),
+          title: <MetricBadgeTag metric={metric} />,
+          xAxis,
+          xLabel: String(xAxis),
+        };
       });
-    });
+
+      return { chartedMetrics, chartProps };
+    },
+    [],
+  );
+
+  const chartsProps: Loadable<ChartsProps> = useMemo(() => {
+    const { metricHasData, metrics, isLoaded, selectedMetrics } = metricData;
+    const { chartProps, chartedMetrics } = selectedRuns
+      ? calculateRunsChartProps(metricData, selectedRuns, xAxis, colorMap)
+      : calculateExperimentChartProps(metricData, selectedExperiments, trials, xAxis, colorMap);
 
     // In order to show the spinner for each chart in the ChartGrid until
     // metrics are visible, we must determine whether the metrics have been
@@ -79,16 +142,20 @@ const CompareMetrics: React.FC<Props> = ({ selectedExperiments, trials, metricDa
 
       // returns the chartProps with a NotLoaded series which enables
       // the ChartGrid to show a spinner for the loading charts.
-      return Loaded(out.map((chartProps) => ({ ...chartProps, series: NotLoaded })));
+      return Loaded(chartProps.map((chartProps) => ({ ...chartProps, series: NotLoaded })));
     } else {
-      return Loaded(out);
+      return Loaded(chartProps);
     }
-  };
-
-  const chartsProps = useMemo(
-    () => calculateChartProps(metricData, selectedExperiments, trials, xAxis, colorMap),
-    [colorMap, trials, xAxis, metricData, selectedExperiments],
-  );
+  }, [
+    calculateExperimentChartProps,
+    calculateRunsChartProps,
+    colorMap,
+    metricData,
+    selectedExperiments,
+    selectedRuns,
+    trials,
+    xAxis,
+  ]);
 
   return (
     <ChartGrid

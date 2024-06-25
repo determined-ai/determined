@@ -1,4 +1,4 @@
-import { NamedComponent } from 'e2e/models/BaseComponent';
+import { NamedComponent } from 'e2e/models/common/base/BaseComponent';
 
 /**
  * Represents the ModelRegistry component in src/components/ModelRegistry.tsx

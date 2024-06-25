@@ -154,6 +154,7 @@ export const DetailedUser = t.intersection([
   User,
   t.partial({
     agentUserGroup: AgentUserGroup,
+    isPasswordWeak: t.boolean,
     remote: t.boolean,
   }),
   t.type({
@@ -908,6 +909,14 @@ export interface CommandTask extends Task {
   userId: number;
   workspaceId: number;
 }
+
+export const TaskAction = {
+  Connect: 'Connect',
+  Kill: 'Kill',
+  ViewLogs: 'View Logs',
+} as const;
+
+export type TaskAction = ValueOf<typeof TaskAction>;
 
 export type RecentEvent = {
   lastEvent: {

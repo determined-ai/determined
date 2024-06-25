@@ -17,6 +17,8 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	k8sClient "k8s.io/client-go/kubernetes"
 	typedV1 "k8s.io/client-go/kubernetes/typed/core/v1"
+	gatewayTyped "sigs.k8s.io/gateway-api/apis/v1"
+	alphaGatewayTyped "sigs.k8s.io/gateway-api/apis/v1alpha2"
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/rm/rmevents"
@@ -29,6 +31,26 @@ import (
 	"github.com/determined-ai/determined/master/pkg/set"
 	"github.com/determined-ai/determined/master/pkg/tasks"
 )
+
+type gatewayProxyResource struct {
+	serviceSpec     *k8sV1.Service
+	tcpRouteSpec    *alphaGatewayTyped.TCPRoute
+	gatewayListener gatewayTyped.Listener
+}
+
+func (g gatewayProxyResource) PodPort() int {
+	return int(g.serviceSpec.Spec.Ports[0].Port)
+}
+
+func (g gatewayProxyResource) GWPort() int {
+	return int(g.gatewayListener.Port)
+}
+
+func (g gatewayProxyResource) SetGWPort(port int) {
+	gwPort := gatewayTyped.PortNumber(port)
+	g.gatewayListener.Port = gwPort
+	g.tcpRouteSpec.Spec.CommonRouteSpec.ParentRefs[0].Port = &gwPort
+}
 
 var successfulExit = exitReason{}
 
@@ -63,7 +85,12 @@ type job struct {
 	masterTLSConfig model.TLSClientConfig
 	jobName         string
 	configMapName   string
-	allocationID    model.AllocationID
+
+	gatewayProxyResources []gatewayProxyResource
+	internalTaskGWConfig  *config.InternalTaskGatewayConfig
+	gatewayService        *gatewayService
+
+	allocationID model.AllocationID
 	// req.State is mutated, we should change this.
 	req *sproto.AllocateRequest
 	// Kubernetes-specific request information.
@@ -114,6 +141,8 @@ func newJob(
 	slotType device.Type,
 	slotResourceRequests config.PodSlotResourceRequests,
 	scheduler string,
+	internalTaskGWConfig *config.InternalTaskGatewayConfig,
+	gatewayService *gatewayService,
 ) *job {
 	// The lifecycle of the containers specified in this map will be monitored.
 	// As soon as one or more of them exits, the pod will be terminated.
@@ -149,6 +178,8 @@ func newJob(
 		scheduler:            scheduler,
 		slotType:             slotType,
 		slotResourceRequests: slotResourceRequests,
+		internalTaskGWConfig: internalTaskGWConfig,
+		gatewayService:       gatewayService,
 		syslog: logrus.WithField("component", "job").WithFields(
 			logger.MergeContexts(msg.logContext, logger.Context{
 				"job": name,
@@ -264,6 +295,43 @@ func (j *job) jobDeletedCallback() {
 	j.informTaskResourcesStopped()
 }
 
+func (j *job) makeGatewayComms(spec *tasks.TaskSpec) *gatewayResourceComm {
+	if j.internalTaskGWConfig == nil {
+		return nil
+	}
+
+	updateResources := func(resources []gatewayProxyResource) {
+		j.mu.Lock()
+		defer j.mu.Unlock()
+		j.gatewayProxyResources = resources
+	}
+
+	return &gatewayResourceComm{
+		resourceDescriptor: j.configureProxyResources(spec),
+		reportResources:    updateResources,
+		allocationID:       j.req.AllocationID,
+		requestedPorts:     len(j.req.ProxyPorts),
+	}
+}
+
+func (j *job) getGatewayAddresses() []cproto.Address {
+	if j.internalTaskGWConfig == nil {
+		return nil
+	}
+
+	var addresses []cproto.Address
+	for _, g := range j.gatewayProxyResources {
+		addresses = append(addresses, cproto.Address{
+			ContainerIP:   j.internalTaskGWConfig.GatewayIP,
+			HostIP:        j.internalTaskGWConfig.GatewayIP,
+			ContainerPort: g.PodPort(),
+			HostPort:      g.GWPort(),
+		})
+	}
+
+	return addresses
+}
+
 func (j *job) podUpdatedCallback(updatedPod k8sV1.Pod) error {
 	j.mu.Lock()
 	defer j.mu.Unlock()
@@ -288,8 +356,9 @@ func (j *job) podUpdatedCallback(updatedPod k8sV1.Pod) error {
 		}
 	}
 
+	allPodsFound := len(j.podStates) == j.numPods
 	allPodsAtLeastStarting := all(cproto.Starting.Before, maps.Values(j.podStates)...)
-	if allPodsAtLeastStarting && !j.sentStartingEvent {
+	if allPodsFound && allPodsAtLeastStarting && !j.sentStartingEvent {
 		// Kubernetes does not have an explicit state for pulling container images.
 		// We insert it here because our  current implementation of the trial actor requires it.
 		j.syslog.WithField("pod-name", podName).Info("pod is pulling images and starting")
@@ -318,10 +387,14 @@ func (j *job) podUpdatedCallback(updatedPod k8sV1.Pod) error {
 	}
 
 	allPodsAtLeastRunning := all(cproto.Running.Before, maps.Values(j.podStates)...)
-	if allPodsAtLeastRunning && !j.sentRunningEvent {
+	if allPodsFound && allPodsAtLeastRunning && !j.sentRunningEvent {
 		j.syslog.WithField("pod-name", podName).Info("pod is running")
 		j.container.State = cproto.Running
-		j.informTaskResourcesStarted(sproto.ResourcesStarted{NativeResourcesID: j.jobName})
+		j.informTaskResourcesStarted(sproto.ResourcesStarted{
+			NativeResourcesID: j.jobName,
+			Addresses:         j.getGatewayAddresses(),
+		})
+
 		j.sentRunningEvent = true
 	}
 
@@ -418,8 +491,23 @@ func (j *job) kill() {
 		return
 	}
 
+	var serviceNames, tcpRouteNames []string
+	var gatewayPortsToFree []int
+	for _, g := range j.gatewayProxyResources {
+		serviceNames = append(serviceNames, g.serviceSpec.Name)
+		tcpRouteNames = append(tcpRouteNames, g.tcpRouteSpec.Name)
+		gatewayPortsToFree = append(gatewayPortsToFree, int(g.gatewayListener.Port))
+	}
+
 	j.syslog.Infof("requesting to delete kubernetes resources %s", j.jobName)
-	j.resourceRequestQueue.deleteKubernetesResources(j.namespace, j.jobName, j.configMapName, "")
+	j.resourceRequestQueue.deleteKubernetesResources(deleteKubernetesResources{
+		namespace:          j.namespace,
+		jobName:            j.jobName,
+		configMapName:      j.configMapName,
+		serviceNames:       serviceNames,
+		tcpRouteNames:      tcpRouteNames,
+		gatewayPortsToFree: gatewayPortsToFree,
+	})
 }
 
 func (j *job) killPod(name string) {
@@ -428,7 +516,10 @@ func (j *job) killPod(name string) {
 	}
 
 	j.syslog.Infof("requesting to delete kubernetes resources %s", j.jobName)
-	j.resourceRequestQueue.deleteKubernetesResources(j.namespace, "", "", name)
+	j.resourceRequestQueue.deleteKubernetesResources(deleteKubernetesResources{
+		namespace: j.namespace,
+		podName:   name,
+	})
 	j.podKillSent[name] = true
 }
 
@@ -483,7 +574,7 @@ func (j *job) createSpecAndSubmit(spec *tasks.TaskSpec) error {
 		return err
 	}
 
-	j.resourceRequestQueue.createKubernetesResources(jobSpec, configMapSpec)
+	j.resourceRequestQueue.createKubernetesResources(jobSpec, configMapSpec, j.makeGatewayComms(spec))
 	return nil
 }
 

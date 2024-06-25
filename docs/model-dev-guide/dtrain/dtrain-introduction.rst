@@ -102,12 +102,11 @@ large batch sizes:
 -  Start with the ``original learning rate`` used for a single GPU and gradually increase it to
    ``number of slots`` * ``original learning rate`` throughout the first several epochs. For more
    details, see `Accurate, Large Minibatch SGD: Training ImageNet in 1 Hour
-   <https://arxiv.org/pdf/1706.02677.pdf>`_.
+   <http://arxiv.org/pdf/1706.02677>`_.
 
 -  Use custom optimizers designed for large batch training, such as `RAdam
-   <https://github.com/LiyuanLucasLiu/RAdam>`_, `LARS <https://arxiv.org/pdf/1708.03888.pdf>`_, or
-   `LAMB <https://arxiv.org/pdf/1904.00962.pdf>`_. In our experience, RAdam has been particularly
-   effective.
+   <https://github.com/LiyuanLucasLiu/RAdam>`_, `LARS <http://arxiv.org/pdf/1708.03888>`_, or `LAMB
+   <http://arxiv.org/pdf/1904.00962>`_. In our experience, RAdam has been particularly effective.
 
 Applying these techniques often requires hyperparameter modifications. To help automate this
 process, use the :ref:`hyperparameter-tuning` capabilities in Determined.

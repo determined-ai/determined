@@ -86,6 +86,8 @@ integrations:
   pachyderm:
     address: foo
 `
+	defaultPriority := DefaultSchedulingPriority
+
 	expected := Config{
 		Log: logger.Config{
 			Level: "info",
@@ -101,7 +103,9 @@ integrations:
 			RootManagerInternal: &ResourceManagerConfig{
 				AgentRM: &AgentResourceManagerConfig{
 					Scheduler: &SchedulerConfig{
-						FairShare:     &FairShareSchedulerConfig{},
+						Priority: &PrioritySchedulerConfig{
+							DefaultPriority: &defaultPriority,
+						},
 						FittingPolicy: "best",
 					},
 					DefaultComputeResourcePool: "default",
@@ -142,6 +146,60 @@ integrations:
 	err := yaml.Unmarshal([]byte(raw), &unmarshaled, yaml.DisallowUnknownFields)
 	assert.NilError(t, err)
 	assert.DeepEqual(t, unmarshaled, expected)
+}
+
+const (
+	dbConfig = `
+db:
+  user: config_file_user
+  password: password
+  host: hostname
+  port: "3000"`
+)
+
+func TestAgentRMSchedulerDeprecation(t *testing.T) {
+	noScheduler := dbConfig + `
+
+resource_manager:
+  type: agent
+`
+	roundRobinScheduler := dbConfig + `
+resource_manager:
+  type: agent
+  scheduler:
+    type: round_robin
+`
+
+	fairShareScheduler := dbConfig + `
+resource_manager:
+  type: agent
+  scheduler:
+    type: fair_share
+`
+
+	type result struct {
+		scheduler string
+		allowed   bool
+	}
+	tests := map[string]result{
+		noScheduler:         {PriorityScheduling, true},
+		roundRobinScheduler: {RoundRobinScheduling, false},
+		fairShareScheduler:  {FairShareScheduling, true},
+	}
+
+	for config, expected := range tests {
+		unmarshaled := Config{}
+		err := yaml.Unmarshal([]byte(config), &unmarshaled, yaml.DisallowUnknownFields)
+		require.NoError(t, err)
+		if expected.allowed {
+			require.NoError(t, unmarshaled.Resolve())
+		} else {
+			require.Error(t, unmarshaled.Resolve())
+		}
+		rm := unmarshaled.ResourceManagers()
+		require.Len(t, rm, 1)
+		require.Equal(t, expected.scheduler, rm[0].ResourceManager.AgentRM.Scheduler.GetType())
+	}
 }
 
 func TestUnmarshalConfigWithCPUGPUPools(t *testing.T) {

@@ -347,10 +347,10 @@ const getloadTests = (
       "search flat runs w/ hparam",
       getRequest(
         `/api/v1/runs?filter=%7B%22filterGroup%22%3A%7B%22children` +
-        `%22%3A%5B%7B%22columnName%22%3A%22hp.global_batch_size%22%2C%22` + 
-        `kind%22%3A%22field%22%2C%22location%22%3A%22LOCATION_TYPE_HYPERPARAMETERS%22` + 
-        `%2C%22operator%22%3A%22%3C%3D%22%2C%22type%22%3A%22COLUMN_TYPE_NUMBER%22%2C%22value` +
-        `%22%3A60%7D%5D%2C%22conjunction%22%3A%22and%22%2C%22kind` + 
+        `%22%3A%5B%7B%22columnName%22%3A%22hp.global_batch_size%22%2C%22kind` +
+        `%22%3A%22field%22%2C%22location%22%3A%22LOCATION_TYPE_RUN_HYPERPARAMETERS` + 
+        `%22%2C%22operator%22%3A%22%3E%22%2C%22type%22%3A%22COLUMN_TYPE_NUMBER` +
+        `%22%2C%22value%22%3A0.1%7D%5D%2C%22conjunction%22%3A%22and%22%2C%22kind` +
         `%22%3A%22group%22%7D%2C%22showArchived%22%3Afalse%7D`,
       ),
       !!sD?.workspace.projectId,

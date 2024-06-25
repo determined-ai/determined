@@ -7,16 +7,19 @@ import GalleryModalComponent from 'components/GalleryModalComponent';
 import Grid, { GridMode } from 'components/Grid';
 import { UPlotScatterProps } from 'components/UPlot/types';
 import UPlotScatter from 'components/UPlot/UPlotScatter';
+import { RunMetricData } from 'hooks/useMetrics';
 import useResize from 'hooks/useResize';
-import { TrialMetricData } from 'pages/TrialDetails/useTrialMetrics';
 import {
   ExperimentWithTrial,
+  FlatRun,
   Hyperparameter,
   HyperparameterType,
   Primitive,
   Scale,
+  TrialHyperparameters,
   TrialItem,
   XAxisDomain,
+  XOR,
 } from 'types';
 import { flattenObject, isBoolean, isString } from 'utils/data';
 import { metricToKey, metricToStr } from 'utils/metric';
@@ -25,20 +28,24 @@ import { CompareHyperparametersSettings } from './CompareHyperparameters.setting
 
 export const COMPARE_SCATTER_PLOTS = 'compare-scatterplots';
 
-interface Props {
-  selectedExperiments: ExperimentWithTrial[];
-  trials: TrialItem[];
-  metricData: TrialMetricData;
+interface BaseProps {
+  metricData: RunMetricData;
   fullHParams: string[];
   settings: CompareHyperparametersSettings;
 }
+
+type Props = XOR<
+  { selectedExperiments: ExperimentWithTrial[]; trials: TrialItem[] },
+  { selectedRuns: FlatRun[] }
+> &
+  BaseProps;
 
 interface HpMetricData {
   hpLabels: Record<string, string[]>;
   hpLogScales: Record<string, boolean>;
   hpValues: Record<string, number[]>;
   metricValues: Record<string, (number | undefined)[]>;
-  trialIds: number[];
+  recordIds: number[];
 }
 
 const CompareScatterPlots: React.FC<Props> = ({
@@ -47,6 +54,7 @@ const CompareScatterPlots: React.FC<Props> = ({
   settings,
   metricData,
   selectedExperiments,
+  selectedRuns,
 }: Props) => {
   const baseRef = useRef<HTMLDivElement>(null);
   const [chartData, setChartData] = useState<HpMetricData>();
@@ -92,7 +100,7 @@ const CompareScatterPlots: React.FC<Props> = ({
             null,
             null,
             null,
-            chartData?.trialIds || [],
+            chartData?.recordIds || [],
           ],
         ],
         options: {
@@ -107,7 +115,7 @@ const CompareScatterPlots: React.FC<Props> = ({
           cursor: { drag: { setScale: false, x: false, y: false } },
           title,
         },
-        tooltipLabels: [xLabel, yLabel, null, null, null, 'trial ID'],
+        tooltipLabels: [xLabel, yLabel, null, null, null, 'record ID'],
       };
       return acc;
     }, {});
@@ -139,7 +147,7 @@ const CompareScatterPlots: React.FC<Props> = ({
 
   const experimentHyperparameters = useMemo(() => {
     const hpMap: Record<string, Hyperparameter> = {};
-    selectedExperiments.forEach((exp) => {
+    selectedExperiments?.forEach((exp) => {
       const hps = Object.keys(exp.experiment.hyperparameters);
       hps.forEach((hp) => (hpMap[hp] = exp.experiment.hyperparameters[hp]));
     });
@@ -149,7 +157,7 @@ const CompareScatterPlots: React.FC<Props> = ({
   useEffect(() => {
     if (!selectedMetric) return;
 
-    const trialIds: number[] = [];
+    const recordIds: number[] = [];
     const hpTrialMap: Record<
       string,
       Record<number, { hp: Primitive; metric: number | undefined }>
@@ -160,22 +168,25 @@ const CompareScatterPlots: React.FC<Props> = ({
     const hpLabelMap: Record<string, string[]> = {};
     const hpLogScaleMap: Record<string, boolean> = {};
 
-    trials.forEach((trial) => {
-      const trialId = trial.id;
-      trialIds.push(trialId);
+    const recordHyperparameters: [number, TrialHyperparameters][] = selectedRuns
+      ? selectedRuns.flatMap((run) => (run.hyperparameters ? [[run.id, run.hyperparameters]] : []))
+      : trials.map((trial) => [trial.id, trial.hyperparameters]);
 
-      const flatHParams = flattenObject(trial.hyperparameters);
+    recordHyperparameters?.forEach(([recordId, recordHp]) => {
+      recordIds.push(recordId);
+
+      const flatHParams = flattenObject(recordHp);
       fullHParams.forEach((hParam: string) => {
         /**
          * TODO: filtering NaN, +/- Infinity for now, but handle it later with
          * dynamic min/max ranges via uPlot.Scales.
          */
         const key = metricToKey(selectedMetric);
-        const trialMetric = data?.[trial.id]?.[key]?.data?.[XAxisDomain.Batches]?.at(-1)?.[1];
+        const trialMetric = data?.[recordId]?.[key]?.data?.[XAxisDomain.Batches]?.at(-1)?.[1];
 
         hpTrialMap[hParam] = hpTrialMap[hParam] || {};
-        hpTrialMap[hParam][trialId] = hpTrialMap[hParam][trialId] || {};
-        hpTrialMap[hParam][trialId] = {
+        hpTrialMap[hParam][recordId] = hpTrialMap[hParam][recordId] || {};
+        hpTrialMap[hParam][recordId] = {
           hp: flatHParams[hParam],
           metric: trialMetric,
         };
@@ -185,8 +196,8 @@ const CompareScatterPlots: React.FC<Props> = ({
         hpMetricMap[hParam] = [];
         hpValueMap[hParam] = [];
         hpLabelMap[hParam] = [];
-        trialIds.forEach((trialId) => {
-          const map = hpTrialMap[hParam]?.[trialId] || {};
+        recordIds.forEach((recordId) => {
+          const map = hpTrialMap[hParam]?.[recordId] || {};
           const hpValue = isBoolean(map.hp) ? map.hp.toString() : map.hp;
 
           if (isString(hpValue)) {
@@ -211,9 +222,9 @@ const CompareScatterPlots: React.FC<Props> = ({
       hpLogScales: hpLogScaleMap,
       hpValues: hpValueMap,
       metricValues: hpMetricMap,
-      trialIds,
+      recordIds,
     });
-  }, [fullHParams, experimentHyperparameters, selectedMetric, trials, data]);
+  }, [fullHParams, experimentHyperparameters, selectedMetric, trials, data, selectedRuns]);
 
   if (!metricsLoaded || !chartData) {
     return <Spinner center spinning />;
