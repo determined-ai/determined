@@ -4,10 +4,10 @@ import pytest
 
 from tests import api_utils
 from tests import command as cmd
-from tests import detproc
 
 
 @pytest.mark.e2e_gpu
+@pytest.mark.gpu_required
 def test_nvidia_drivers_version_matching() -> None:
     sess = api_utils.user_session()
 
