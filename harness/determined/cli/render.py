@@ -34,7 +34,7 @@ _DEFAULT_VALUE = "N/A"
 OMITTED_VALUE = "***"
 
 
-def select_values(values: List[Dict[str, Any]], headers: Dict[str, str]) -> List[Dict[str, Any]]:
+def select_values(values: List[Dict[str, Any]], headers: Dict[str, str]) -> List[List[Any]]:
     return [[item.get(k, _DEFAULT_VALUE) for k in headers.keys()] for item in values]
 
 

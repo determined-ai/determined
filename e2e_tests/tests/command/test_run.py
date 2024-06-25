@@ -76,8 +76,8 @@ def test_basic_workflows(tmp_path: pathlib.Path) -> None:
     assert len(filtered_output.split("\n")) == 3  # header, record * 1, empty line
     assert id0 in filtered_output
 
-    filtered_output = detproc.check_json(sess, ["det", "cmd", "describe", id0, "--json"])
-    assert id0 == filtered_output["id"]
+    output = detproc.check_json(sess, ["det", "cmd", "describe", id0, "--json"])
+    assert id0 == output["id"]
 
 
 @pytest.mark.slow
