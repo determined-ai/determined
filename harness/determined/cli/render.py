@@ -35,7 +35,7 @@ OMITTED_VALUE = "***"
 
 
 def select_values(values: List[Dict[str, Any]], headers: Dict[str, str]) -> List[Dict[str, Any]]:
-    return [{k: item.get(k, _DEFAULT_VALUE) for k in headers.keys()} for item in values]
+    return [[item.get(k, _DEFAULT_VALUE) for k in headers.keys()] for item in values]
 
 
 def render_table(
@@ -156,6 +156,7 @@ def tabulate_or_csv(
     outfile: Optional[pathlib.Path] = None,
 ) -> None:
     out = outfile.open("w") if outfile else sys.stdout
+    print(values)
     if as_csv or outfile:
         writer = csv.writer(out)
         writer.writerow(headers)
