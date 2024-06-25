@@ -615,3 +615,47 @@ current-context: minikube
 kind: Config
 preferences: {}
 `
+
+func TestExtractSlotInfo(t *testing.T) {
+	for _, deviceType := range []device.Type{device.CPU, device.CUDA, device.ROCM} {
+		t.Run(string(deviceType), func(t *testing.T) {
+			n := model.AgentSummary{
+				Slots: model.SlotsSummary{
+					"a": model.SlotSummary{
+						Device: device.Device{
+							Type: deviceType,
+						},
+					},
+					"b": model.SlotSummary{
+						Device: device.Device{
+							Type: deviceType,
+						},
+					},
+				},
+			}
+			numSlots, actualDeviceType := extractSlotInfo(n)
+			require.Equal(t, 2, numSlots)
+			require.Equal(t, deviceType, actualDeviceType)
+		})
+	}
+}
+
+func TestNumSlots(t *testing.T) {
+	for _, deviceType := range []device.Type{device.CPU, device.CUDA, device.ROCM} {
+		t.Run(string(deviceType), func(t *testing.T) {
+			s := model.SlotsSummary{
+				"a": model.SlotSummary{
+					Device: device.Device{
+						Type: deviceType,
+					},
+				},
+				"b": model.SlotSummary{
+					Device: device.Device{
+						Type: deviceType,
+					},
+				},
+			}
+			require.Equal(t, 2, numSlots(s))
+		})
+	}
+}

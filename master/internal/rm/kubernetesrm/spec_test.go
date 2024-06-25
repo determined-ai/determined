@@ -16,6 +16,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/tasks"
 
 	k8sV1 "k8s.io/api/core/v1"
+	"k8s.io/apimachinery/pkg/api/resource"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	alphaGatewayTyped "sigs.k8s.io/gateway-api/apis/v1alpha2"
 )
@@ -430,6 +431,49 @@ func TestDetMasterEnvVar(t *testing.T) {
 			envVars, err := j.configureEnvVars(make(map[string]string), env, device.CPU)
 			require.NoError(t, err)
 			require.Contains(t, envVars, k8sV1.EnvVar{Name: "DET_MASTER", Value: c.expected})
+		})
+	}
+}
+
+func TestConfigureResourcesRequirements(t *testing.T) {
+	cases := []struct {
+		deviceType   device.Type
+		resourceName k8sV1.ResourceName
+		quantity     resource.Quantity
+	}{
+		{
+			deviceType:   device.CPU,
+			resourceName: "cpu",
+			quantity:     *resource.NewMilliQuantity(3000, resource.DecimalSI),
+		},
+		{
+			deviceType:   device.CUDA,
+			resourceName: resourceTypeNvidia,
+			quantity:     *resource.NewQuantity(3, resource.DecimalSI),
+		},
+		{
+			deviceType:   device.ROCM,
+			resourceName: resourceTypeAMD,
+			quantity:     *resource.NewQuantity(3, resource.DecimalSI),
+		},
+	}
+	for _, c := range cases {
+		t.Run(string(c.deviceType), func(t *testing.T) {
+			j := &job{
+				slotType:             c.deviceType,
+				slotsPerPod:          3,
+				slotResourceRequests: config.PodSlotResourceRequests{CPU: 1.0},
+			}
+
+			expected := k8sV1.ResourceRequirements{
+				Limits: map[k8sV1.ResourceName]resource.Quantity{
+					c.resourceName: c.quantity,
+				},
+				Requests: map[k8sV1.ResourceName]resource.Quantity{
+					c.resourceName: c.quantity,
+				},
+			}
+			require.Equal(t, expected, j.configureResourcesRequirements())
 		})
 	}
 }
