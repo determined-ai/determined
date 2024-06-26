@@ -166,6 +166,7 @@ func setup(t *testing.T) (
 		&tasks.TaskSpec{
 			AgentUserGroup: &model.AgentUserGroup{},
 			SSHRsaSize:     1024,
+			Workspace:      model.DefaultWorkspaceName,
 		},
 		ssh.PrivateAndPublicKeys{},
 		false,
