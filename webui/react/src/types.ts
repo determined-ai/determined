@@ -383,12 +383,15 @@ export const IntegrationBase = t.type({
   }),
 });
 export const Integration = t.partial({
-  pachyderm: t.intersection([IntegrationBase, t.type({
-    pachd: t.type({
-      host: t.string,
-      port: t.number,
+  pachyderm: t.intersection([
+    IntegrationBase,
+    t.type({
+      pachd: t.type({
+        host: t.string,
+        port: t.number,
+      }),
     }),
-  })]),
+  ]),
 });
 export type IntegrationType = t.TypeOf<typeof Integration>;
 export type IntegrationBaseType = t.TypeOf<typeof IntegrationBase>;

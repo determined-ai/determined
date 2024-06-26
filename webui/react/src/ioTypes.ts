@@ -7,8 +7,8 @@ import {
   CheckpointStorageType,
   ExperimentSearcherName,
   HyperparameterType,
-  LogLevel,
   Integration,
+  LogLevel,
   Primitive,
   RunState,
 } from 'types';
