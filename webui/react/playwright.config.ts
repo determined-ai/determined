@@ -8,10 +8,11 @@ import * as dotenv from 'dotenv';
 dotenv.config();
 
 const serverAddess = process.env.PW_SERVER_ADDRESS;
-if (serverAddess === undefined) {
+const frontEndServerAddess = process.env.PW_FE_SERVER_ADDRESS ?? serverAddess;
+if (frontEndServerAddess === undefined) {
   throw new Error('Expected PW_SERVER_ADDRESS to be set.');
 }
-const port = Number(new URL(serverAddess).port || 3001);
+const port = Number(new URL(frontEndServerAddess).port || 3001);
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -81,7 +82,7 @@ export default defineConfig({
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     actionTimeout: 5_000,
-    baseURL: `http://localhost:${port}/`,
+    baseURL: frontEndServerAddess,
     navigationTimeout: 10_000,
     trace: 'retain-on-failure',
     video: 'retain-on-failure',
