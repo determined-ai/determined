@@ -106,7 +106,7 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
       : [...new Set([...columnState, ...filteredColumns.map((col) => col.column)])];
     const pinnedCount = allFilteredColumnsChecked
       ? // If uncheck something pinned, reduce the pinnedColumnsCount
-      newColumns.filter((col) => columnState.indexOf(col) < pinnedColumnsCount).length
+        newColumns.filter((col) => columnState.indexOf(col) < pinnedColumnsCount).length
       : pinnedColumnsCount;
 
     onVisibleColumnChange?.(newColumns, pinnedCount);
