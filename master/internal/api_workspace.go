@@ -209,7 +209,7 @@ func generateNamespaceName(clusterID string, workspace string, wkspID int) strin
 	re := regexp.MustCompile(`[^a-z0-9]([^-a-z0-9]*[^a-z0-9])?`)
 	workspaceStripped := re.ReplaceAllString(workspace, "")
 	workspaceCap := math.Min(float64(len(workspaceStripped)), float64(31))
-	workspacePrefix := workspace[0:int(workspaceCap)]
+	workspacePrefix := workspaceStripped[0:int(workspaceCap)]
 	workspaceID := strconv.Itoa(wkspID)
 	if wkspID > 999999 {
 		workspaceID = workspaceID[0:6]
