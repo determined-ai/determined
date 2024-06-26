@@ -953,9 +953,9 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
     let runsList: number[] = [];
 
     if (newSettings.type === 'ALL_EXCEPT') {
-      runsList = newSettings.exclusions;
+      runsList = [...newSettings.exclusions];
     } else {
-      runsList = newSettings.selections;
+      runsList = [...newSettings.selections];
     }
 
     const numberOfSelection = runsList.length;
