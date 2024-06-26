@@ -58,13 +58,15 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
       config: { integrations },
     } = experiment;
 
-    if (integrations) return (
-      {
-        hasIntegrationData: true,
+    if (integrations) {
+      const url = createIntegrationLink(integrations);
+
+      return {
+        hasIntegrationData: url.length ? true : false,
         text: '<MLDM repo>',
-        url: createIntegrationLink(integrations),
-      }
-    );
+        url,
+      };
+    }
 
     return;
   }, [experiment]);
@@ -102,13 +104,11 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
           </>
         )}
         {<OverviewStats title="Log Retention Days">{logRetentionDays}</OverviewStats>}
-        {
-          integrationData && (
-            <OverviewStats title="Data input" onClick={handleClickDataInput}>
-              {integrationData.text}
-            </OverviewStats>
-          )
-        }
+        {integrationData && (
+          <OverviewStats title="Data input" onClick={handleClickDataInput}>
+            {integrationData.text}
+          </OverviewStats>
+        )}
       </Card.Group>
     </Section>
   );

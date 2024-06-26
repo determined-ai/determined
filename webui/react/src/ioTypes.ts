@@ -8,7 +8,7 @@ import {
   ExperimentSearcherName,
   HyperparameterType,
   LogLevel,
-  PachdIntegration,
+  Integration,
   Primitive,
   RunState,
 } from 'types';
@@ -216,7 +216,7 @@ export const ioExperimentConfig = io.type({
   checkpoint_storage: optional(ioCheckpointStorage),
   description: optional(io.string),
   hyperparameters: ioHyperparameters,
-  integrations: optional(PachdIntegration),
+  integrations: optional(Integration),
   labels: optional(io.array(io.string)),
   max_restarts: io.number,
   name: io.string,
