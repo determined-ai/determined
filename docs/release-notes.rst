@@ -83,9 +83,7 @@ Version 0.34.0
 -  Notebooks: Fix an issue introduced in 0.30.0 where idle notebooks were not terminated as
    expected.
 
-**ZZZ put these into an appropriate section!**
-
-Security Fixes
+**Security Fixes**
 
    -  CLI: When deploying locally using ``det deploy local`` with ``master-up`` or ``cluster-up``
       commands and no user accounts have been created yet, an initial password will be automatically
