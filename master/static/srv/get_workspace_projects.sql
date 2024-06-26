@@ -9,7 +9,7 @@ SELECT
   p.error_message,
   (w.archived OR p.archived) AS archived,
   SUM(CASE WHEN pe.project_id = p.id THEN 1 ELSE 0 END) AS num_experiments,
-  SUM(CASE WHEN pr.project_id = p.id THEN 1 ELSE 0 END) AS num_runs,
+  (SELECT COUNT(*) FROM runs r WHERE p.id = r.project_id) AS num_runs,
   SUM(
     CASE WHEN pe.project_id = p.id
     AND pe.state = 'ACTIVE' THEN 1 ELSE 0 END
@@ -24,7 +24,6 @@ FROM
   projects AS p
   LEFT JOIN workspaces AS w ON p.workspace_id = w.id
   LEFT JOIN experiments AS pe ON p.id = pe.project_id
-  LEFT JOIN runs AS pr ON p.id = pr.project_id
   LEFT JOIN users AS u ON u.id = p.user_id
 WHERE
   ($1 = 0 OR p.workspace_id = $1)
