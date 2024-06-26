@@ -95,6 +95,8 @@ func (a *apiServer) validateClusterNamespaceMeta(
 	namespaceMeta map[string]*workspacev1.WorkspaceNamespaceMeta) (
 	map[string]*workspacev1.WorkspaceNamespaceMeta, bool, error,
 ) {
+	namespaceMetaWithAllClusterNames := make(map[string]*workspacev1.WorkspaceNamespaceMeta)
+
 	allClusters := make(map[string]int)
 	autoCreateAll := false
 	for clusterName, metadata := range namespaceMeta {
@@ -133,7 +135,7 @@ func (a *apiServer) validateClusterNamespaceMeta(
 					"namespace, but cannot request both.")
 			}
 			// Verify that the namespace exists in the Kubernetes cluster for the corresponding RM.
-			err := a.m.rm.VerifyNamespaceExists(*namespace, clusterName)
+			err := a.m.rm.VerifyNamespaceExists(*namespace, newClusterName)
 			if err != nil {
 				return nil, autoCreateAll,
 					fmt.Errorf("error verifying Kubernetes namespace: %w", err)
@@ -142,15 +144,17 @@ func (a *apiServer) validateClusterNamespaceMeta(
 		// This might occur when using singleRM with a cluster name defined in the master config,
 		// but not specified in a given request.
 		if newClusterName != clusterName {
-			namespaceMeta[newClusterName] = &workspacev1.WorkspaceNamespaceMeta{
-				ClusterName: clusterName,
-				Namespace:   namespace,
+			namespaceMetaWithAllClusterNames[newClusterName] = &workspacev1.WorkspaceNamespaceMeta{
+				ClusterName:         clusterName,
+				Namespace:           namespace,
+				AutoCreateNamespace: metadata.AutoCreateNamespace,
 			}
-			delete(namespaceMeta, clusterName)
+		} else {
+			namespaceMetaWithAllClusterNames[clusterName] = metadata
 		}
 	}
 
-	return namespaceMeta, autoCreateAll, nil
+	return namespaceMetaWithAllClusterNames, autoCreateAll, nil
 }
 
 func validateWorkspaceName(name string) error {
@@ -805,11 +809,10 @@ func (a *apiServer) PatchWorkspace(
 func (a *apiServer) setWorkspaceNamespaceBindings(ctx context.Context,
 	req *apiv1.SetWorkspaceNamespaceBindingsRequest, tx *bun.Tx, curUser *model.User,
 	w *workspacev1.Workspace,
-) (*apiv1.SetWorkspaceNamespaceBindingsResponse, error) {
-	var noLicenseError error
+) (resp *apiv1.SetWorkspaceNamespaceBindingsResponse, err error) {
 	defer func() {
 		if recover() != nil {
-			noLicenseError = status.Error(codes.InvalidArgument, "Auto-creating namespaces is "+
+			err = status.Error(codes.InvalidArgument, "Auto-creating namespaces is "+
 				"an Enterprise-Edition feature")
 		}
 	}()
@@ -820,7 +823,6 @@ func (a *apiServer) setWorkspaceNamespaceBindings(ctx context.Context,
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
-	var err error
 	var autoCreateAll bool
 	req.ClusterNamespaceMeta, autoCreateAll, err = a.validateClusterNamespaceMeta(
 		req.ClusterNamespaceMeta)
@@ -939,12 +941,7 @@ func (a *apiServer) setWorkspaceNamespaceBindings(ctx context.Context,
 		}
 	}
 
-	if noLicenseError != nil {
-		return nil, noLicenseError
-	}
-
-	resp := &apiv1.SetWorkspaceNamespaceBindingsResponse{NamespaceBindings: namespaceBindings}
-	return resp, nil
+	return &apiv1.SetWorkspaceNamespaceBindingsResponse{NamespaceBindings: namespaceBindings}, nil
 }
 
 func (a *apiServer) generateClusterNamespaceMeta(
