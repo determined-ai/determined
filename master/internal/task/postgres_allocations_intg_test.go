@@ -33,18 +33,20 @@ func TestPersistAllocationWorkspaceInfo(t *testing.T) {
 
 	for _, tc := range testCases {
 		t.Run(tc.description, func(t *testing.T) {
-			workspaceID, workspaceName := db.RequireMockWorkspaceID(t, pgDB, "")
+			workspaceID := model.DefaultWorkspaceID
+			workspaceName := model.DefaultWorkspaceName
 
 			// Create dummy allocation & experiment ids.
 			allocID := model.AllocationID(uuid.Must(uuid.NewRandom()).String())
-			expID := 1
+			user := db.RequireMockUser(t, pgDB)
+			exp := db.RequireMockExperiment(t, pgDB, user)
 
 			var err error
 			switch tc.isTrial {
 			case true:
 				err = InsertTrialAllocationWorkspaceRecord(
 					ctx,
-					expID,
+					exp.ID,
 					allocID,
 				)
 			case false:
@@ -63,21 +65,14 @@ func TestPersistAllocationWorkspaceInfo(t *testing.T) {
 				Model(&persistedInfo).
 				Where("allocation_id = ?", allocID).
 				Scan(ctx)
+
 			require.NoError(t, err)
 			require.Equal(t, allocID, persistedInfo.AllocationID)
 			require.Equal(t, workspaceID, persistedInfo.WorkspaceID)
 			require.Equal(t, workspaceName, persistedInfo.WorkspaceName)
 			if tc.isTrial {
-				require.Equal(t, expID, persistedInfo.ExperimentID)
+				require.Equal(t, exp.ID, persistedInfo.ExperimentID)
 			}
-
-			// Clean up mock workspaces
-			t.Cleanup(func() {
-				_, err = db.Bun().NewDelete().Table("workspaces").Where("id IN (?)", workspaceID).Exec(ctx)
-				require.NoError(t, err, "error cleaning up workspace")
-				_, err = db.Bun().NewDelete().Table("allocation_workspace_info").Where("workspace_id IN (?)", workspaceID).Exec(ctx)
-			},
-			)
 		})
 	}
 }
