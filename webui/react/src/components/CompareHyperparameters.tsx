@@ -93,6 +93,7 @@ const CompareHyperparameters: React.FC<Props> = ({
   }, [resetSettings]);
 
   useEffect(() => {
+    if (metrics.length === 0) return;
     const activeMetricFound = metrics.find(
       (metric) =>
         metric.name === settings?.metric?.name && metric.group === settings?.metric?.group,

@@ -10,7 +10,7 @@ import { useMetrics } from 'hooks/useMetrics';
 import useMobile from 'hooks/useMobile';
 import useScrollbarWidth from 'hooks/useScrollbarWidth';
 import { TrialsComparisonTable } from 'pages/ExperimentDetails/TrialsComparisonModal';
-import { ExperimentWithTrial, FlatRun, TrialItem, XOR } from 'types';
+import { ExperimentWithTrial, FlatRun, XOR } from 'types';
 
 import CompareMetrics from './CompareMetrics';
 
@@ -47,11 +47,7 @@ const ComparisonView: React.FC<Props> = ({
   }, [fixedColumnsCount, scrollbarWidth]);
 
   const trials = useMemo(() => {
-    return (
-      selectedExperiments
-        ?.filter((exp) => !!exp.bestTrial)
-        .map((exp) => exp.bestTrial as TrialItem) ?? []
-    );
+    return selectedExperiments?.flatMap((exp) => (exp.bestTrial ? [exp.bestTrial] : [])) ?? [];
   }, [selectedExperiments]);
 
   const experiments = useMemo(

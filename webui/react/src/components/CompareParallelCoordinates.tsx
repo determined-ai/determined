@@ -2,7 +2,7 @@ import { Alert } from 'antd';
 import Hermes, { DimensionType } from 'hermes-parallel-coordinates';
 import Message from 'hew/Message';
 import Spinner from 'hew/Spinner';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import ParallelCoordinates from 'components/ParallelCoordinates';
 import { useGlasbey } from 'hooks/useGlasbey';
@@ -22,6 +22,7 @@ import {
 import { getNumericRange } from 'utils/chart';
 import { flattenObject, isPrimitive } from 'utils/data';
 import { metricToKey, metricToStr } from 'utils/metric';
+import { isRun } from 'utils/run';
 import { numericSorter } from 'utils/sort';
 
 import { CompareHyperparametersSettings } from './CompareHyperparameters.settings';
@@ -148,80 +149,71 @@ const CompareParallelCoordinates: React.FC<Props> = ({
     selectedHParams,
   ]);
 
+  const extractHyperparams = useCallback(
+    (
+      record: TrialItem | FlatRun,
+      metricsMap: Record<number, number>,
+      hpMap: Record<string, Record<number, Primitive>>,
+    ) => {
+      if (!selectedMetric) return;
+      const idKey = isRun(record) ? record.id : record.experimentId;
+      const key = metricToKey(selectedMetric);
+
+      // Choose the final metric value for each trial
+      const metricValue = data?.[record.id]?.[key]?.data?.[XAxisDomain.Batches]?.at(-1)?.[1];
+      console.log({ data: data?.[record.id], idKey });
+      if (!metricValue) return;
+      metricsMap[idKey] = metricValue;
+
+      const flatHParams = {
+        ...record.hyperparameters,
+        ...flattenObject(record.hyperparameters || {}),
+      };
+      console.log({ flatHParams, idKey });
+
+      Object.keys(flatHParams).forEach((hpKey) => {
+        const hpValue = flatHParams[hpKey];
+        hpMap[hpKey] ??= {};
+        hpMap[hpKey][idKey] = isPrimitive(hpValue) ? hpValue : JSON.stringify(hpValue);
+      });
+    },
+    [data, selectedMetric],
+  );
+
   useEffect(() => {
     if (!selectedMetric) return;
     const metricsMap: Record<number, number> = {};
     const hpMap: Record<string, Record<number, Primitive>> = {};
 
-    const hpData: Record<string, Primitive[]> = {};
+    trials?.forEach((trial) => extractHyperparams(trial, metricsMap, hpMap));
+    selectedRuns?.forEach((run) => extractHyperparams(run, metricsMap, hpMap));
 
-    if (trials) {
-      trials.forEach((trial) => {
-        const expId = trial.experimentId;
-        const key = metricToKey(selectedMetric);
-
-        // Choose the final metric value for each trial
-        const metricValue = data?.[trial.id]?.[key]?.data?.[XAxisDomain.Batches]?.at(-1)?.[1];
-
-        if (!metricValue) return;
-        metricsMap[expId] = metricValue;
-
-        const flatHParams = {
-          ...trial?.hyperparameters,
-          ...flattenObject(trial?.hyperparameters || {}),
-        };
-
-        Object.keys(flatHParams).forEach((hpKey) => {
-          const hpValue = flatHParams[hpKey];
-          hpMap[hpKey] = hpMap[hpKey] ?? {};
-          hpMap[hpKey][expId] = isPrimitive(hpValue)
-            ? (hpValue as Primitive)
-            : JSON.stringify(hpValue);
-        });
-      });
-    } else if (selectedRuns) {
-      selectedRuns.forEach((run) => {
-        const key = metricToKey(selectedMetric);
-
-        // Choose the final metric value for each trial
-        const metricValue = data?.[run.id]?.[key]?.data?.[XAxisDomain.Batches]?.at(-1)?.[1];
-
-        if (!metricValue) return;
-        metricsMap[run.id] = metricValue;
-
-        const flatHParams = {
-          ...run.hyperparameters,
-          ...flattenObject(run.hyperparameters || {}),
-        };
-
-        Object.keys(flatHParams).forEach((hpKey) => {
-          const hpValue = flatHParams[hpKey];
-          hpMap[hpKey] = hpMap[hpKey] ?? {};
-          hpMap[hpKey][run.id] = isPrimitive(hpValue)
-            ? (hpValue as Primitive)
-            : JSON.stringify(hpValue);
-        });
-      });
-    }
-
-    const trialIds = Object.keys(metricsMap)
+    const recordIds = Object.keys(metricsMap)
       .map((id) => parseInt(id))
       .sort(numericSorter);
 
-    Object.keys(hpMap).forEach((hpKey) => {
-      hpData[hpKey] = trialIds.map((trialId) => hpMap[hpKey][trialId]);
-    });
+    console.log({ recordIds });
+
+    const hpData = Object.keys(hpMap).reduce(
+      (acc, hpKey) => {
+        acc[hpKey] = recordIds.map((recordId) => hpMap[hpKey][recordId]);
+        return acc;
+      },
+      {} as Record<string, Primitive[]>,
+    );
 
     const metricKey = metricToStr(selectedMetric);
-    const metricValues = trialIds.map((id) => metricsMap[id]);
+    const metricValues = recordIds.map((id) => metricsMap[id]);
     hpData[metricKey] = metricValues;
+
+    console.log({ hpData, hpMap });
 
     const metricRange = getNumericRange(metricValues);
     setChartData({
       data: hpData,
       metricRange,
       metricValues,
-      trialIds,
+      trialIds: recordIds,
     });
   }, [
     selectedExperiments,
@@ -232,6 +224,7 @@ const CompareParallelCoordinates: React.FC<Props> = ({
     trials,
     data,
     selectedRuns,
+    extractHyperparams,
   ]);
 
   if (!isLoaded) {
