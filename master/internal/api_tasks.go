@@ -338,6 +338,7 @@ func (a *apiServer) GetTaskAcceleratorData(
 		Column("resource_pool").
 		TableExpr("allocation_accelerators alloc_acc").
 		Join("LEFT JOIN allocations alloc ON alloc_acc.allocation_id = alloc.allocation_id").
+		Order("start_time DESC").
 		Where("alloc.task_id = ?", req.TaskId).Scan(ctx, &res)
 	if err != nil {
 		return nil, fmt.Errorf("querying allocation accelerators: %w", err)

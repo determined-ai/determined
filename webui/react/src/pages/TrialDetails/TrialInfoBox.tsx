@@ -92,7 +92,14 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
         { taskId: trial.taskId },
         { signal: canceler.signal },
       );
-      setAcceleratorData((prev) => (isEqual(data, prev) ? prev : data));
+      // task accelerator data is sorted by allocation start time, so the first one is the latest allocation
+      // We only want to display slots information for the latest allocation
+      setAcceleratorData((prev) => {
+        if(isEqual(prev, data)) return prev
+        if(data.length === 0) return data
+        const latest_alloc = data[0].allocationId
+        return latest_alloc ? data.filter(d => d.allocationId === latest_alloc) : data
+      });
     } catch (e) {
       handleError(e);
     }
