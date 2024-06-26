@@ -820,7 +820,7 @@
 ## @env DD_LOGS_ENABLED - boolean - optional - default: false
 ## Enable Datadog Agent log collection by setting logs_enabled to true.
 #
-logs_enabled: false
+logs_enabled: true
 
 ## @param logs_config - custom object - optional
 ## Enter specific configurations for your Log collection.
@@ -833,7 +833,7 @@ logs_config:
   ## @env DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL - boolean - optional - default: false
   ## Enable container log collection for all the containers (see ac_exclude to filter out containers)
   #
-  container_collect_all: false
+  container_collect_all: true
 
   ## @param logs_dd_url - string - optional
   ## @env DD_LOGS_CONFIG_DD_URL - string - optional
