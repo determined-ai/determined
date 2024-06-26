@@ -434,6 +434,26 @@ func TestMoveRunsIds(t *testing.T) {
 	require.Equal(t, exp.ProjectId, destprojectID)
 }
 
+func TestMoveRunsSameIds(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	sourceprojectID := int32(1)
+
+	run1, _ := createTestTrial(t, api, curUser)
+
+	moveIds := []int32{int32(run1.ID)}
+
+	moveReq := &apiv1.MoveRunsRequest{
+		RunIds:               moveIds,
+		SourceProjectId:      sourceprojectID,
+		DestinationProjectId: sourceprojectID,
+		SkipMultitrial:       false,
+	}
+
+	moveResp, err := api.MoveRuns(ctx, moveReq)
+	require.NoError(t, err)
+	require.Len(t, moveResp.Results, 0)
+}
+
 func setUpMultiTrialExperiments(ctx context.Context, t *testing.T, api *apiServer, curUser model.User,
 ) (sourceprojectID int32, destprojectID int32, runID1 int32, runID2 int32, expID int32) {
 	_, projectIDInt := createProjectAndWorkspace(ctx, t, api)

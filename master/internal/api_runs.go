@@ -308,6 +308,10 @@ func (a *apiServer) MoveRuns(
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
+	if req.SourceProjectId == req.DestinationProjectId {
+		return &apiv1.MoveRunsResponse{Results: []*apiv1.RunActionResult{}}, nil
+	}
+
 	var runChecks []runCandidateResult
 	getQ := db.Bun().NewSelect().
 		ModelTableExpr("runs AS r").
