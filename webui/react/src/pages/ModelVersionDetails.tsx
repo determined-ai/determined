@@ -23,7 +23,7 @@ import { getModelVersion, patchModelVersion } from 'services/api';
 import workspaceStore from 'stores/workspaces';
 import { Metadata, ModelVersion, Note, ValueOf } from 'types';
 import handleError, { ErrorType } from 'utils/error';
-import { createIntegrationLink } from 'utils/integrations';
+import { createPachydermLineageLink } from 'utils/integrations';
 import { isAborted, isNotFound } from 'utils/service';
 import { humanReadableBytes } from 'utils/string';
 import { checkpointSize } from 'utils/workload';
@@ -231,14 +231,13 @@ const ModelVersionDetails: React.FC = () => {
   }, [modelVersion?.checkpoint]);
 
   if (modelVersion?.checkpoint.experimentConfig?.integrations) {
-    checkpointInfo.splice(1, 0, {
-      label: 'Data Input',
-      value: (
-        <Link path={createIntegrationLink(modelVersion.checkpoint.experimentConfig.integrations)}>
-          {'<MLDM repo>'}
-        </Link>
-      ),
-    });
+    const url = createPachydermLineageLink(modelVersion.checkpoint.experimentConfig.integrations);
+
+    if (url !== undefined)
+      checkpointInfo.splice(1, 0, {
+        label: 'Data Input',
+        value: <Link path={url}>{'<MLDM repo>'}</Link>,
+      });
   }
 
   const validationMetrics = useMemo(() => {

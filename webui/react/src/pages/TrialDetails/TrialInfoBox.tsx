@@ -7,7 +7,7 @@ import TimeAgo from 'components/TimeAgo';
 import { useCheckpointFlow } from 'hooks/useCheckpointFlow';
 import { handlePath } from 'routes/utils';
 import { CheckpointWorkloadExtended, ExperimentBase, TrialDetails } from 'types';
-import { createIntegrationLink } from 'utils/integrations';
+import { createPachydermLineageLink } from 'utils/integrations';
 import { AnyMouseEvent } from 'utils/routes';
 import { humanReadableBytes } from 'utils/string';
 
@@ -59,10 +59,10 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
     } = experiment;
 
     if (integrations) {
-      const url = createIntegrationLink(integrations);
+      const url = createPachydermLineageLink(integrations);
 
       return {
-        hasIntegrationData: url.length ? true : false,
+        hasIntegrationData: url !== undefined ? true : false,
         text: '<MLDM repo>',
         url,
       };
