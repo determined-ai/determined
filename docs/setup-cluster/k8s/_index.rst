@@ -19,11 +19,22 @@ In this topic guide, we will cover:
 ************************************
 
 :ref:`Installing Determined on Kubernetes <install-on-kubernetes>` deploys an instance of the
-Determined master and a Postgres database in the Kubernetes cluster. Once the master is up and
-running, you can launch :ref:`experiments <experiments>`, :ref:`notebooks <notebooks>`,
-:ref:`TensorBoards <tensorboards>`, :ref:`commands <commands-and-shells>`, and :ref:`shells
-<commands-and-shells>`. When new workloads are submitted to the Determined master, the master
-launches jobs and config maps on the Kubernetes cluster to execute those workloads. Users of
+Determined master and a Postgres database in the Kubernetes cluster.
+
+.. image:: /assets/images/_det-ai-sys-k8s-01-light.png
+   :class: only-dark
+   :alt: Determined AI system architecture diagram describing how the master node works on kubernetes in dark mode
+
+.. image:: /assets/images/_det-ai-sys-k8s-01-light.png
+   :class: only-light
+   :alt: Determined AI system architecture diagram describing how the master node works on kubernetes in light mode
+
+|
+
+Once the master is up and running, you can launch :ref:`experiments <experiments>`, :ref:`notebooks
+<notebooks>`, :ref:`TensorBoards <tensorboards>`, :ref:`commands <commands-and-shells>`, and
+:ref:`shells <commands-and-shells>`. When new workloads are submitted to the Determined master, the
+master launches jobs and config maps on the Kubernetes cluster to execute those workloads. Users of
 Determined shouldn't need to interact with Kubernetes directly after installation, as Determined
 handles all the necessary interaction with the Kubernetes cluster. Kubernetes creates and cleans up
 pods for all jobs that Determined may request.
