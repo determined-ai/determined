@@ -189,6 +189,8 @@ func CreateMockGenericReq(t *testing.T, pgDB *db.PgDB) *CreateGeneric {
 	cmdSpec.CommandID = uuid.New().String()
 	cmdSpec.Metadata.PrivateKey = &key
 	cmdSpec.Metadata.PublicKey = &key
+	cmdSpec.Metadata.WorkspaceID = model.DefaultWorkspaceID
+	cmdSpec.Base.Workspace = model.DefaultWorkspaceName
 	return &CreateGeneric{Spec: &cmdSpec}
 }
 

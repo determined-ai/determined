@@ -459,38 +459,13 @@ func (m *Master) getResourceAllocations(c echo.Context) error {
 		Where("ts.event_type = 'IMAGEPULL'").
 		Group("a.allocation_id")
 
-	taskWorkspaceIDs := db.Bun().NewSelect().
-		ColumnExpr("t.task_id").
-		ColumnExpr("c.generic_command_spec->'Metadata'->>'workspace_id' AS workspace_id").
-		TableExpr("tasks_in_range t").
-		Join("INNER JOIN command_state c ON t.task_id = c.task_id")
-
-	taskWorkspaceNames := db.Bun().NewSelect().
-		ColumnExpr("t.task_id").
-		ColumnExpr("w.name as workspace_name").
-		With("task_wids", taskWorkspaceIDs).
-		TableExpr("task_wids t").
-		Join("INNER JOIN workspaces w ON t.workspace_id::int=w.id")
-
-	// Get experiment info for tasks within time range
-	taskExperimentInfo := db.Bun().NewSelect().
-		ColumnExpr("t.task_id").
-		ColumnExpr("e.id as experiment_id").
-		ColumnExpr("COALESCE(w.name, task_wnames.workspace_name) as workspace_name").
-		With("task_wnames", taskWorkspaceNames).
-		TableExpr("tasks_in_range t").
-		Join("LEFT JOIN experiments e ON t.job_id = e.job_id").
-		Join("LEFT JOIN projects p ON e.project_id = p.id").
-		Join("LEFT JOIN workspaces w ON p.workspace_id = w.id").
-		Join("LEFT JOIN task_wnames ON task_wnames.task_id=t.task_id")
-
 	// Get task information row-by-row for all tasks in time range
 	rows, err := db.Bun().NewSelect().
 		ColumnExpr("a.allocation_id").
 		ColumnExpr("t.task_type").
 		ColumnExpr("t_o.username").
-		ColumnExpr("tei.workspace_name").
-		ColumnExpr("tei.experiment_id").
+		ColumnExpr("awi.workspace_name").
+		ColumnExpr("awi.experiment_id").
 		ColumnExpr("a.slots").
 		ColumnExpr("a.start_time").
 		ColumnExpr("a.end_time").
@@ -500,13 +475,12 @@ func (m *Master) getResourceAllocations(c echo.Context) error {
 		With("allocations_in_range", allocationsInRange).
 		With("task_owners", taskOwners).
 		With("image_pull_times", imagePullTimes).
-		With("task_experiment_info", taskExperimentInfo).
 		With("task_in_range", tasksInRange).
 		TableExpr("allocations_in_range a").
 		Join("LEFT JOIN task_in_range t ON a.task_id = t.task_id").
 		Join("LEFT JOIN task_owners t_o ON a.task_id = t_o.task_id").
-		Join("LEFT JOIN task_experiment_info tei ON a.task_id = tei.task_id").
 		Join("LEFT JOIN image_pull_times ip ON a.allocation_id = ip.allocation_id").
+		Join("LEFT JOIN allocation_workspace_info awi ON a.allocation_id = awi.allocation_id").
 		Order("a.start_time").
 		Rows(c.Request().Context())
 
