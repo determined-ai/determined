@@ -71,7 +71,7 @@ describe('RunMoveWarningModalComponent', () => {
     act(() => {
       lifecycle = ref.current?.open();
     });
-    const okayButton = await screen.findByText('Move independent runs');
+    const okayButton = await screen.findByText('Move runs and searches');
     await userEvent.click(okayButton);
     const closeReason = await lifecycle;
     expect(closeReason).toBe('ok');

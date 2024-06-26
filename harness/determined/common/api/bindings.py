@@ -13755,6 +13755,65 @@ class v1SearchRolesAssignableToScopeResponse(Printable):
             out["roles"] = None if self.roles is None else [x.to_json(omit_unset) for x in self.roles]
         return out
 
+class v1SearchRunsRequest(Printable):
+    """Get a list of runs."""
+    filter: "typing.Optional[str]" = None
+    limit: "typing.Optional[int]" = None
+    offset: "typing.Optional[int]" = None
+    projectId: "typing.Optional[int]" = None
+    sort: "typing.Optional[str]" = None
+
+    def __init__(
+        self,
+        *,
+        filter: "typing.Union[str, None, Unset]" = _unset,
+        limit: "typing.Union[int, None, Unset]" = _unset,
+        offset: "typing.Union[int, None, Unset]" = _unset,
+        projectId: "typing.Union[int, None, Unset]" = _unset,
+        sort: "typing.Union[str, None, Unset]" = _unset,
+    ):
+        if not isinstance(filter, Unset):
+            self.filter = filter
+        if not isinstance(limit, Unset):
+            self.limit = limit
+        if not isinstance(offset, Unset):
+            self.offset = offset
+        if not isinstance(projectId, Unset):
+            self.projectId = projectId
+        if not isinstance(sort, Unset):
+            self.sort = sort
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1SearchRunsRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "filter" in obj:
+            kwargs["filter"] = obj["filter"]
+        if "limit" in obj:
+            kwargs["limit"] = obj["limit"]
+        if "offset" in obj:
+            kwargs["offset"] = obj["offset"]
+        if "projectId" in obj:
+            kwargs["projectId"] = obj["projectId"]
+        if "sort" in obj:
+            kwargs["sort"] = obj["sort"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "filter" in vars(self):
+            out["filter"] = self.filter
+        if not omit_unset or "limit" in vars(self):
+            out["limit"] = self.limit
+        if not omit_unset or "offset" in vars(self):
+            out["offset"] = self.offset
+        if not omit_unset or "projectId" in vars(self):
+            out["projectId"] = self.projectId
+        if not omit_unset or "sort" in vars(self):
+            out["sort"] = self.sort
+        return out
+
 class v1SearchRunsResponse(Printable):
     """Response to SearchRunsResponse."""
 
@@ -23043,35 +23102,18 @@ def post_SearchRolesAssignableToScope(
         return v1SearchRolesAssignableToScopeResponse.from_json(_resp.json())
     raise APIHttpError("post_SearchRolesAssignableToScope", _resp)
 
-def get_SearchRuns(
+def post_SearchRuns(
     session: "api.BaseSession",
     *,
-    filter: "typing.Optional[str]" = None,
-    limit: "typing.Optional[int]" = None,
-    offset: "typing.Optional[int]" = None,
-    projectId: "typing.Optional[int]" = None,
-    sort: "typing.Optional[str]" = None,
+    body: "v1SearchRunsRequest",
 ) -> "v1SearchRunsResponse":
-    """Get a list of runs.
-
-    - filter: Filter expression.
-    - limit: How many results to show.
-    - offset: How many experiments to skip before including in the results.
-    - projectId: ID of the project to look at.
-    - sort: Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc).
-    """
-    _params = {
-        "filter": filter,
-        "limit": limit,
-        "offset": offset,
-        "projectId": projectId,
-        "sort": sort,
-    }
+    """Get a list of runs."""
+    _params = None
     _resp = session._do_request(
-        method="GET",
+        method="POST",
         path="/api/v1/runs",
         params=_params,
-        json=None,
+        json=body.to_json(True),
         data=None,
         headers=None,
         timeout=None,
@@ -23079,7 +23121,7 @@ def get_SearchRuns(
     )
     if _resp.status_code == 200:
         return v1SearchRunsResponse.from_json(_resp.json())
-    raise APIHttpError("get_SearchRuns", _resp)
+    raise APIHttpError("post_SearchRuns", _resp)
 
 def put_SetClusterMessage(
     session: "api.BaseSession",
