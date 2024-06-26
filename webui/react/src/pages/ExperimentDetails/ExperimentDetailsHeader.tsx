@@ -265,7 +265,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
 
   const continueExperimentOption = useMemo(
     () =>
-      experiment?.config.searcher.name === 'single'
+      ["single", 'grid', 'random'].includes(experiment?.config.searcher.name)
         ? {
           content: (
             <Dropdown
