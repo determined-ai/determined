@@ -4897,25 +4897,6 @@ workflows:
           requires:
             - package-and-push-system-dev-ee
 
-  test-e2e-gke-shared-cluster:
-    unless:
-      or:
-        - << pipeline.parameters.do_nightly_tests >>
-        - equal: [ api, << pipeline.trigger_source >> ]
-    jobs:
-      - package-and-push-system-dev-small
-
-      - test-e2e-shared-cluster:
-          name: test-e2e-shared-cluster-cpu
-          context:
-            - gcp-shared-cluster
-            - gcp-ci-cluster-default-user-credentials
-          requires:
-            - package-and-push-system-dev-small
-          parallelism: 3
-          mark: "e2e_gpu and not gpu_required"
-          test-type: cpu
-
   test-e2e-longrunning:
     <<: *do-not-run-on-manual-trigger
     jobs:
