@@ -17,9 +17,9 @@ Version 0.34.0
 
 **Breaking Changes**
 
-- Images: The default environment includes images that support PyTorch. Therefore, TensorFlow users.
-   must configure their experiments to target our non-default TensorFlow images. Details on this
-   process can be found at :ref:`set-environment-images`.
+-  Images: The default environment includes images that support PyTorch. Therefore, TensorFlow users.
+      must configure their experiments to target our non-default TensorFlow images. Details on this
+      process can be found at :ref:`set-environment-images`.
 
 -  Images: Our new default images are based on Nvidia NGC. While we provide a recommended NGC
    version, users can build their own images using any NGC version that meets their specific
@@ -80,6 +80,8 @@ Version 0.34.0
 
 -  Kubernetes: Fix an issue where where jobs would remain in "QUEUED" state until all pods were
    running. Jobs will now correctly show as "SCHEDULED" once all pods have been assigned to nodes.
+-  Notebooks: Fix an issue introduced in 0.30.0 where idle notebooks were not terminated as
+   expected.
 
 **ZZZ put these into an appropriate section!**
 
