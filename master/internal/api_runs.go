@@ -470,9 +470,10 @@ func (a *apiServer) MoveRuns(
 		}
 
 		if _, err = tx.NewRaw(`
-		INSERT INTO local_id_redirect (run_id, project_key, local_id)
+		INSERT INTO local_id_redirect (run_id, project_id, project_key, local_id)
 		SELECT 
 			r.id as runs_id,
+			p.id as project_id,
 			p.key as project_key,
 			r.local_id
 		FROM 

@@ -203,6 +203,20 @@ RetryLoop:
 				} else {
 					p.Key = *requestedKey
 				}
+				var isUsed bool
+				err = tx.NewSelect().Table("local_id_redirect").
+					ColumnExpr("COUNT(*) > 0 as is_used").
+					Where("project_key = ?", p.Key).
+					Scan(ctx, &isUsed)
+				if err != nil {
+					return fmt.Errorf("error creating new project")
+				}
+				if isUsed {
+					return status.Errorf(
+						codes.AlreadyExists,
+						"error creating new project, provided key '%s' already in use in redirect table",
+						p.Key)
+				}
 				_, err = tx.NewInsert().Model(p).Exec(ctx)
 				if err != nil && strings.Contains(err.Error(), db.CodeUniqueViolation) {
 					switch errString := err.Error(); {
@@ -348,6 +362,7 @@ func UpdateProject(
 		err = tx.NewSelect().Table("local_id_redirect").
 			ColumnExpr("COUNT(*) > 0 as is_used").
 			Where("project_key = ?", currentProject.Key).
+			Where("project_id != ?", currentProject.ID).
 			Scan(ctx, &isUsed)
 		if err != nil {
 			return fmt.Errorf("error updating project %s", currentProject.Name)
@@ -385,9 +400,9 @@ func UpdateProject(
 		}
 
 		if _, err = tx.NewRaw(`
-		INSERT INTO local_id_redirect (run_id, project_key, local_id)
+		INSERT INTO local_id_redirect (run_id, project_id, project_key, local_id)
 		SELECT
-			id, ? as project_key, local_id 
+			id, project_id, ? as project_key, local_id 
 		FROM
 			runs
 		WHERE project_id = ?
