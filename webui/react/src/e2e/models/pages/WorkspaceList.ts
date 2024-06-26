@@ -1,28 +1,33 @@
+import { BaseComponent } from 'e2e/models/common/base/BaseComponent';
 import { BasePage } from 'e2e/models/common/base/BasePage';
 import { WorkspaceCreateModal } from 'e2e/models/components/WorkspaceCreateModal';
 import { WorkspaceDeleteModal } from 'e2e/models/components/WorkspaceDeleteModal';
-import { WorkspaceDetails } from 'e2e/models/components/WorkspaceDetails';
-import { WorkspacesList } from 'e2e/models/components/WorkspacesList';
+import { WorkspaceCard } from 'e2e/models/pages/WorkspaceList/WorkspaceCard';
 
 /**
- * Represents the Workspaces page from pages/WorkspacesList.tsx
- * Represents the Workspaces page from pages/WorkspaceDetails.tsx
- * Represents the Workspaces page from pages/WorkspaceCreateModal.tsx
- * Represents the Workspaces page from pages/WorkspaceDeleteModal.tsx
+ * Represents the WorkspaceList page from src/pages/WorkspaceList.tsx
  */
 export class WorkspaceList extends BasePage {
   readonly title = 'Workspaces';
   readonly url = 'workspaces';
-  readonly list = new WorkspacesList({
-    parent: this,
-  });
-  readonly details = new WorkspaceDetails({
-    parent: this,
-  });
   readonly createModal = new WorkspaceCreateModal({
     root: this,
   });
   readonly deleteModal = new WorkspaceDeleteModal({
     root: this,
   });
+  readonly newWorkspaceButton = new BaseComponent({
+    parent: this,
+    selector: '[data-testid="newWorkspace"]',
+  });
+  readonly workspaceCards = new WorkspaceCard({
+    parent: this,
+  });
+  cardByName(name: string): WorkspaceCard {
+    return new WorkspaceCard({
+      attachment: `[data-testid="card-${name}"]`,
+      parent: this,
+    });
+  }
+  // missing stuff like workspace select, archived, sort, list view button, list view
 }

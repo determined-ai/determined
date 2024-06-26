@@ -48,7 +48,6 @@ export abstract class BasePage implements ModelBasics {
     if (verify) {
       // TODO this does nothing because we end up checking, passing, and then getting redirected
       await this._page.waitForURL(this.url);
-      // await expect(this._page).toHaveTitle(this.title);
     }
     return this;
   }

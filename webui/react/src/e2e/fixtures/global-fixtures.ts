@@ -125,7 +125,6 @@ export const test = baseTest.extend<CustomFixtures, CustomWorkerFixtures>({
 
 export const expect = baseExpect.extend({
   async toHaveDeterminedTitle(page: Page, titleOrRegExp: string | RegExp, options?: object) {
-    const actualTitle = await page.title();
     let message: () => string;
     let pass: boolean;
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -155,6 +154,7 @@ export const expect = baseExpect.extend({
     } catch (e: any) {
       matcherResult = e.matcherResult;
       pass = false;
+      const actualTitle = await page.title();
       message = () =>
         `expected page to have title matching ${titleOrRegExp}, but received ${actualTitle}`;
     }
