@@ -19,7 +19,7 @@ Version 0.34.0
 
 - Images: The default environment includes images that support PyTorch. Therefore, TensorFlow users.
    must configure their experiments to target our non-default TensorFlow images. Details on this
-   process can be found at :ref:`set-environment-images`
+   process can be found at :ref:`set-environment-images`.
 
 -  Images: Our new default images are based on Nvidia NGC. While we provide a recommended NGC
    version, users can build their own images using any NGC version that meets their specific
