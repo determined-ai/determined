@@ -50,7 +50,11 @@ describe('ConjunctionContainer', () => {
     expect(await screen.findByRole('listbox')).toBeInTheDocument();
     expect((await screen.findByRole('listbox')).children[0]).toHaveTextContent(Conjunction.And);
     await user.click((await screen.findAllByText(Conjunction.And))[1]);
-    expect(onClick).toBeCalledTimes(1);
+    expect(onClick).toBeCalledWith(Conjunction.And, {
+      children: Conjunction.And,
+      key: Conjunction.And,
+      value: Conjunction.And,
+    });
   });
 
   it('should show Conjunction text when index is more than 1', () => {
