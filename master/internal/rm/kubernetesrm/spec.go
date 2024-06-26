@@ -59,7 +59,7 @@ const (
 func (j *job) configureResourcesRequirements() k8sV1.ResourceRequirements {
 	switch j.slotType {
 	case device.CPU:
-		cpuMillisRequested := int64(j.slotResourceRequests.CPU * float32(j.slotsPerPod) * 1000)
+		cpuMillisRequested := int64(j.slotResourceRequests.CPU * float32(j.slotsPerPod) * 100)
 		return k8sV1.ResourceRequirements{
 			Limits: map[k8sV1.ResourceName]resource.Quantity{
 				"cpu": *resource.NewMilliQuantity(cpuMillisRequested, resource.DecimalSI),

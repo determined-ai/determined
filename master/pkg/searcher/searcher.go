@@ -195,11 +195,17 @@ func (s *Searcher) TrialClosed(requestID model.RequestID) ([]Operation, error) {
 
 	_, isCustom := s.method.(*customSearch)
 	// For non-custom-search methods, you can assume that trials will be created immediately.
+	fmt.Println("s.state.TrialsRequested",
+		s.state.TrialsRequested,
+		"TRIALS CLOSED",
+		len(s.state.TrialsClosed))
+	fmt.Println("IDS?", s.state.TrialsClosed)
 	if s.state.TrialsRequested == len(s.state.TrialsClosed) && !isCustom {
 		shutdown := Shutdown{
 			Cancel:  len(s.state.Cancels) >= s.state.TrialsRequested,
 			Failure: len(s.state.Failures) >= s.state.TrialsRequested,
 		}
+		fmt.Println("SENDING SHUTDOWN", shutdown)
 		s.record([]Operation{shutdown})
 		operations = append(operations, shutdown)
 	}

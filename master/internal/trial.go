@@ -191,6 +191,7 @@ func isNonRetryableError(err error) bool {
 }
 
 func (t *trial) exit(reason *model.ExitedReason) {
+	fmt.Println("TRIAL EXITING", t.id, t.searcher.Create.RequestID)
 	if err := t.close(); err != nil {
 		t.syslog.WithError(err).Error("error closing trial")
 	}

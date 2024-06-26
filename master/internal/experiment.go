@@ -662,6 +662,7 @@ func (e *internalExperiment) TrialClosed(requestID model.RequestID, reason *mode
 }
 
 func (e *internalExperiment) trialClosed(requestID model.RequestID, reason *model.ExitedReason) {
+	fmt.Println("GOT TRIAL closed", requestID)
 	if reason != nil {
 		e.trialReportEarlyExit(requestID, *reason)
 	}
