@@ -2181,7 +2181,7 @@ func (j *jobsService) createNamespace(namespaceName string) error {
 	)
 	if err != nil {
 		if !strings.Contains(err.Error(), "already exists") {
-			return errors.Wrapf(err, "error creating namespace %s", namespaceName)
+			return fmt.Errorf("error creating namespace %s: %w", namespaceName, err)
 		}
 	}
 
@@ -2231,11 +2231,11 @@ func (j *jobsService) setResourceQuota(quota int, namespace string) error {
 			},
 		})
 	if err != nil {
-		return errors.Wrapf(err, "error finding namespace %s", namespace)
+		return fmt.Errorf("error finding namespace %s: %w", namespace, err)
 	}
 
 	if _, ok := k8sNamespace.Labels[determinedLabel]; !ok {
-		return errors.Wrapf(err, "Cannot set quota on namespace %s. Namespace needs determined label",
+		return fmt.Errorf("cannot set quota on namespace %s. Namespace needs determined label",
 			namespace)
 	}
 
@@ -2275,7 +2275,7 @@ func (j *jobsService) setResourceQuota(quota int, namespace string) error {
 		// }
 		detQuotaToByteArray, err := json.Marshal(detQuota)
 		if err != nil {
-			return errors.Wrapf(err, "error marshaling quota %s", detQuota.Name)
+			return fmt.Errorf("error marshaling quota %s: %w", detQuota.Name, err)
 		}
 		_, err = j.clientSet.CoreV1().ResourceQuotas(namespace).Patch(context.TODO(),
 			quotaName,
@@ -2284,12 +2284,12 @@ func (j *jobsService) setResourceQuota(quota int, namespace string) error {
 			metaV1.PatchOptions{})
 
 		if err != nil {
-			return errors.Wrapf(err, "error applying patch to resource quota %s", quotaName)
+			return fmt.Errorf("error applying patch to resource quota %s: %w", quotaName, err)
 		}
 	} else {
 		// The given namespace does not any attached determined quotas.
 		if currentQuota < float64(quota) {
-			return errors.Wrapf(err, "Cannot set quota because there already exists a quota in "+
+			return fmt.Errorf("cannot set quota because there already exists a quota in "+
 				"namespace %s of limit %d", namespace, int(currentQuota))
 		}
 		_, err = j.clientSet.CoreV1().ResourceQuotas(namespace).Create(context.TODO(),
@@ -2309,8 +2309,8 @@ func (j *jobsService) setResourceQuota(quota int, namespace string) error {
 			metaV1.CreateOptions{},
 		)
 		if err != nil {
-			return errors.Wrapf(err, "error creating resource quota %s for namespace %s",
-				quotaName, namespace)
+			return fmt.Errorf("error creating resource quota %s for namespace %s: %w",
+				quotaName, namespace, err)
 		}
 	}
 

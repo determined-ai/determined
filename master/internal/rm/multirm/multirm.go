@@ -472,7 +472,6 @@ func (m *MultiRMRouter) SetResourceQuota(quota int, namespace, clusterName strin
 		return fmt.Errorf("error getting resource manager for cluster %s: %w", clusterName, err)
 	}
 
-	fmt.Println("we are in multirm and we are going to set the quota \n ")
 	return rm.SetResourceQuota(quota, namespace, clusterName)
 }
 
