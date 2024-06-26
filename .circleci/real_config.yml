@@ -5688,6 +5688,8 @@ workflows:
                   port: 5432
                   name: determined
                   password: ${HPC_DB_PASSWD}
+                security:
+                  initial_user_password: ${INITIAL_USER_PASSWORD}
       - terminate-vpc-circleci:
             context: ["gcp"]
 
