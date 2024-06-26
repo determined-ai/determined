@@ -1394,14 +1394,6 @@ commands:
           no_output_timeout: 30m
           command: make package-ee
 
-  make-package-small:
-    steps:
-      - attach_workspace:
-          at: .
-      - run:
-          no_output_timeout: 30m
-          command: make -C master package-small
-
   install-devcluster:
     steps:
       - run: pip install git+https://github.com/determined-ai/devcluster.git@v1.1.0#egg=devcluster
@@ -1729,39 +1721,6 @@ jobs:
                 tools/scripts/retry.sh make -C model_hub publish-docker-dev
             fi
       - run: mkdir /tmp/pkgs && cp -v */dist/*.{rpm,deb,tar.gz} /tmp/pkgs
-
-  package-and-push-system-dev-small:
-    docker:
-      - image: <<pipeline.parameters.docker-image>>
-        environment:
-          GO111MODULE: "on"
-    resource_class: xlarge
-    steps:
-      - checkout
-      - add-and-fetch-upstream
-      - skip-if-only-docs
-      - skip-if-only-github
-      - skip-if-only-webui
-      - attach_workspace:
-          at: .
-      - reinstall-go
-      - setup-python-venv:
-          install-python: false
-          determined: true
-          executor: <<pipeline.parameters.docker-image>>
-      - setup_remote_docker:
-          version: previous
-      - login-docker:
-          username: ${DOCKER_USER}
-          password: ${DOCKER_PASS}
-      - pre-package-and-push-system:
-          check: false
-      - make-package-small
-      - run: tools/scripts/retry.sh make -C master publish-dev-small
-      - persist_to_workspace:
-          root: .
-          paths:
-            - harness/dist
 
   package-and-push-system-rc:
     docker:
@@ -4896,25 +4855,6 @@ workflows:
                 - main
           requires:
             - package-and-push-system-dev-ee
-
-  test-e2e-gke-shared-cluster:
-    unless:
-      or:
-        - << pipeline.parameters.do_nightly_tests >>
-        - equal: [ api, << pipeline.trigger_source >> ]
-    jobs:
-      - package-and-push-system-dev-small
-
-      - test-e2e-shared-cluster:
-          name: test-e2e-shared-cluster-cpu
-          context:
-            - gcp-shared-cluster
-            - gcp-ci-cluster-default-user-credentials
-          requires:
-            - package-and-push-system-dev-small
-          parallelism: 3
-          mark: "e2e_gpu and not gpu_required"
-          test-type: cpu
 
   test-e2e-longrunning:
     <<: *do-not-run-on-manual-trigger
