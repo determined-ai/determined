@@ -1,6 +1,6 @@
 CREATE TABLE IF NOT EXISTS allocation_workspace_info (
     allocation_id TEXT PRIMARY KEY, 
-    workspace_id SERIAL,
+    workspace_id integer,
     workspace_name text,
     experiment_id INT
 );
