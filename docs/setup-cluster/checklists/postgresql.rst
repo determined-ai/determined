@@ -10,7 +10,7 @@ Determined uses a PostgreSQL database to store experiment and trial metadata.
 
    If you are using an existing PostgreSQL installation, we recommend confirming that
    ``max_connections`` is at least 96, which is sufficient for Determined. See: :ref:`Max
-   Connections <postgresql-max-connections-guide>`.
+   Connections <postgresql-database-tuning>`.
 
 .. _install-postgres-docker:
 
