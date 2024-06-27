@@ -1,10 +1,11 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import UIProvider, { DefaultTheme } from 'hew/Theme';
 import { ConfirmationProvider } from 'hew/useConfirm';
 
 import {} from 'stores/cluster';
 
 import { ExperimentBase, TrialDetails } from 'types';
+import { mockIntegrationData } from 'utils/integrations.test';
 
 import TrialInfoBox from './TrialInfoBox';
 
@@ -225,6 +226,28 @@ describe('Trial Info Box', () => {
       setup(mockTrial3, mockExperiment);
       expect(await screen.findByText('Log Retention Days')).toBeVisible();
       expect(await screen.findByText('Forever')).toBeVisible();
+    });
+  });
+
+  describe('Lineage card', () => {
+    it('should show Data input card with tge lineage link when pachyderm integration data is present', () => {
+      const mockExperimentWith = Object.assign(mockExperiment, {
+        config: { ...mockExperiment.config, integrations: mockIntegrationData },
+      });
+
+      setup(mockTrial1, mockExperimentWith);
+      waitFor(() => {
+        expect(screen.findByText('Data Input')).toBeVisible();
+        expect(screen.findByText('<MLDM repo>')).toBeVisible();
+      });
+    });
+
+    it('should not show Data input card when pachyderm integration is missing', () => {
+      setup(mockTrial1, mockExperiment);
+      waitFor(() => {
+        expect(screen.findByText('Data Input')).not.toBeVisible();
+        expect(screen.findByText('<MLDM repo>')).not.toBeVisible();
+      });
     });
   });
 });
