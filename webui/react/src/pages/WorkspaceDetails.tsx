@@ -101,15 +101,19 @@ const WorkspaceDetails: React.FC = () => {
   const fetchGroupsAndUsersAssignedToWorkspace = useCallback(async () => {
     if (!rbacEnabled) return;
 
-    const response = await getWorkspaceMembers({ nameFilter, workspaceId: id });
-    const activeUsers = response.usersAssignedDirectly.filter((u) => u.isActive);
-    setUsersAssignedDirectly((prev) => (_.isEqual(prev, activeUsers) ? prev : activeUsers));
-    setGroupsAssignedDirectly((prev) =>
-      _.isEqual(prev, response.groups) ? prev : response.groups,
-    );
-    setWorkspaceAssignments((prev) =>
-      _.isEqual(prev, response.assignments) ? prev : response.assignments,
-    );
+    try {
+      const response = await getWorkspaceMembers({ nameFilter, workspaceId: id });
+      const activeUsers = response.usersAssignedDirectly.filter((u) => u.isActive);
+      setUsersAssignedDirectly((prev) => (_.isEqual(prev, activeUsers) ? prev : activeUsers));
+      setGroupsAssignedDirectly((prev) =>
+        _.isEqual(prev, response.groups) ? prev : response.groups,
+      );
+      setWorkspaceAssignments((prev) =>
+        _.isEqual(prev, response.assignments) ? prev : response.assignments,
+      );
+    } catch (e) {
+      handleError(e, { silent: true });
+    }
   }, [id, nameFilter, rbacEnabled]);
 
   const fetchRolesAssignableToScope = useCallback(async (): Promise<void> => {
@@ -136,10 +140,8 @@ const WorkspaceDetails: React.FC = () => {
   const addableGroups: V1Group[] = useMemo(
     () =>
       groups
-        ? groups
-            .map((groupDetails) => groupDetails.group)
-            .filter((group) => group.groupId && !groupsAssignedDirectlyIds.has(group.groupId))
-        : [],
+        .map((groupDetails) => groupDetails.group)
+        .filter((group) => group.groupId && !groupsAssignedDirectlyIds.has(group.groupId)),
     [groups, groupsAssignedDirectlyIds],
   );
 
