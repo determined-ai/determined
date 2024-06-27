@@ -139,7 +139,11 @@ export const canExperimentContinueTrial = (
 ): boolean =>
   !experiment.archived &&
   !experiment.parentArchived &&
-  (!!trial || experiment?.numTrials === 1) &&
+  (!!trial ||
+    experiment?.numTrials === 1 ||
+    (experiment.state !== RunState.Completed &&
+      experiment.numTrials > 1 &&
+      ['random', 'grid'].includes(experiment.config?.searcher.name || ''))) &&
   terminalRunStates.has(experiment.state);
 
 const experimentCheckers: Record<ExperimentAction, ExperimentChecker> = {

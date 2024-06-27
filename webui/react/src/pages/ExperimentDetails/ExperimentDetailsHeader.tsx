@@ -62,6 +62,7 @@ import {
   getActionsForExperiment,
   isSingleTrialExperiment,
 } from 'utils/experiment';
+import { routeToReactUrl } from 'utils/routes';
 import { pluralizer } from 'utils/string';
 import { openCommandResponse } from 'utils/wait';
 
@@ -158,6 +159,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
   const [isRunningDelete, setIsRunningDelete] = useState<boolean>(
     experiment.state === RunState.Deleting,
   );
+  const [isRunningContinue, setIsRunningContinue] = useState<boolean>(false);
   const [erroredTrialCount, setErroredTrialCount] = useState<number>();
   const [canceler] = useState(new AbortController());
   const confirm = useConfirm();
@@ -263,9 +265,22 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
     setIsRunningDelete(experiment.state === RunState.Deleting);
   }, [experiment.state]);
 
+  const onClickContinueMultiTrialExp = useCallback(async () => {
+    try {
+      setIsRunningContinue(true);
+    await continueExperiment({
+      id: experiment.id,
+    });
+    const newPath = paths.experimentDetails(experiment.id);
+    routeToReactUrl(paths.reload(newPath));
+  } finally {
+    setIsRunningContinue(false);
+  }
+  }, [experiment.id]);
+
   const continueExperimentOption = useMemo(
     () =>
-      ["single", 'grid', 'random'].includes(experiment?.config.searcher.name)
+      experiment?.config.searcher.name === 'single'
         ? {
           content: (
             <Dropdown
@@ -311,17 +326,18 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
           menuOptions: [
             {
               disabled: experiment.unmanaged,
+              isLoading: isRunningContinue,
               key: 'continue-trial',
               label: experiment.unmanaged ? (
                 <Tooltip content={UNMANAGED_MESSAGE}>Continue Trial</Tooltip>
               ) : (
                 'Continue Trial'
               ),
-              onClick: ContinueTrialModal.open,
+              onClick: ['random', 'grid'].includes(experiment?.config.searcher.name) ? onClickContinueMultiTrialExp : ContinueTrialModal.open,
             },
           ],
         },
-    [experiment, ContinueExperimentModal, ContinueTrialModal.open, ReactivateExperimentModal],
+    [experiment, ContinueExperimentModal, ContinueTrialModal.open, ReactivateExperimentModal, isRunningContinue, onClickContinueMultiTrialExp],
   );
 
   useEffect(() => {
