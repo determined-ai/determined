@@ -700,7 +700,7 @@ func (j *jobsService) reattachJob(msg reattachJobRequest) (reattachJobResponse, 
 	}
 
 	gatewayResources, err := j.recreateGatewayProxyResources(
-		msg.allocationID, services, tcpRoutes, gatewayPorts,
+		services, tcpRoutes, gatewayPorts,
 	)
 	if err != nil {
 		cleanup()
@@ -727,7 +727,6 @@ func (j *jobsService) reattachJob(msg reattachJobRequest) (reattachJobResponse, 
 }
 
 func (j *jobsService) recreateGatewayProxyResources(
-	allocationID model.AllocationID,
 	services []k8sV1.Service,
 	tcpRoutes []alphaGatewayTyped.TCPRoute,
 	gatewayPorts []int,
