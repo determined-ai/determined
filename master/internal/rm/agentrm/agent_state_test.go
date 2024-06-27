@@ -146,7 +146,6 @@ func TestAgentStatePersistence(t *testing.T) {
 	require.Len(t, states, 1)
 	var restored *agentState
 	for _, s := range states {
-		s := s
 		restored = &s
 		break
 	}
@@ -312,7 +311,6 @@ func Test_agentState_checkAgentStartedDevicesMatch(t *testing.T) {
 		},
 	}
 	for _, tt := range tests {
-		tt := tt
 		t.Run(tt.name, func(t *testing.T) {
 			err := tt.state.checkAgentStartedDevicesMatch(tt.agentStarted)
 			if tt.wantErrContains == "" {

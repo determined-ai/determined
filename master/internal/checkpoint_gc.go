@@ -50,7 +50,6 @@ func runCheckpointGCForCheckpoints(
 
 	var wg errgroup.Group
 	for _, g := range groups {
-		g := g
 		wg.Go(func() error {
 			taskID := model.TaskID(fmt.Sprintf("%d.%s", expID, uuid.New()))
 			if err := runCheckpointGCTask(

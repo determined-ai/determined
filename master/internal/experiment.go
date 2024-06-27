@@ -865,7 +865,6 @@ func (e *internalExperiment) processOperations(
 	var g errgroup.Group
 	g.SetLimit(maxConcurrentTrialOps)
 	for requestID := range updatedTrials {
-		requestID := requestID
 		syslog := e.syslog.WithField("requestID", requestID)
 		t, ok := e.trials[requestID]
 		if !ok {
@@ -958,7 +957,6 @@ func (e *internalExperiment) patchTrialsState(state model.StateWithReason) {
 	var g errgroup.Group
 	g.SetLimit(maxConcurrentTrialOps)
 	for _, t := range e.trials {
-		t := t
 		g.Go(func() error {
 			err := t.PatchState(state)
 			if err != nil {
@@ -1128,7 +1126,6 @@ func (e *internalExperiment) setRP(resourcePool string) error {
 	var g errgroup.Group
 	g.SetLimit(maxConcurrentTrialOps)
 	for _, t := range e.trials {
-		t := t
 		g.Go(func() error {
 			t.PatchRP(rp.String())
 			return nil
