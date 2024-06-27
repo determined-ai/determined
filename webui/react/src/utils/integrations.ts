@@ -1,10 +1,8 @@
-import { IntegrationType } from 'types';
+import { PachydermIntegrationDataType } from 'types';
 
 export const createPachydermLineageLink = (
-  integrationData: IntegrationType,
+  pachydermIntegrationData: PachydermIntegrationDataType,
 ): string | undefined => {
-  if (integrationData.pachyderm === undefined) return undefined;
-
-  const { dataset, proxy } = integrationData.pachyderm;
+  const { dataset, proxy } = pachydermIntegrationData;
   return `${proxy.scheme}://${proxy.host}:${proxy.port}/linage/${dataset.project}/repos/${dataset.repo}/commit/${dataset.commit}/?branchId=${dataset.branch}`;
 };

@@ -58,8 +58,8 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
       config: { integrations },
     } = experiment;
 
-    if (integrations) {
-      const url = createPachydermLineageLink(integrations);
+    if (integrations?.pachyderm !== undefined) {
+      const url = createPachydermLineageLink(integrations.pachyderm);
 
       return {
         hasIntegrationData: url !== undefined ? true : false,

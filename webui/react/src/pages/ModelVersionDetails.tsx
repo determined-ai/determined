@@ -230,8 +230,10 @@ const ModelVersionDetails: React.FC = () => {
     ];
   }, [modelVersion?.checkpoint]);
 
-  if (modelVersion?.checkpoint.experimentConfig?.integrations) {
-    const url = createPachydermLineageLink(modelVersion.checkpoint.experimentConfig.integrations);
+  if (modelVersion?.checkpoint.experimentConfig?.integrations?.pachyderm !== undefined) {
+    const url = createPachydermLineageLink(
+      modelVersion.checkpoint.experimentConfig.integrations.pachyderm,
+    );
 
     if (url !== undefined)
       checkpointInfo.splice(1, 0, {

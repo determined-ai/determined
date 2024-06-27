@@ -232,7 +232,7 @@ describe('Trial Info Box', () => {
   describe('Lineage card', () => {
     it('should show Data input card with tge lineage link when pachyderm integration data is present', () => {
       const mockExperimentWith = Object.assign(mockExperiment, {
-        config: { ...mockExperiment.config, integrations: mockIntegrationData },
+        config: { ...mockExperiment.config, integrations: { pachyderm: mockIntegrationData } },
       });
 
       setup(mockTrial1, mockExperimentWith);

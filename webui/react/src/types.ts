@@ -368,7 +368,7 @@ export type Hyperparameters = {
   [keys: string]: Hyperparameters | HyperparameterBase;
 };
 
-export const IntegrationBase = t.type({
+const PachydermIntegrationData = t.type({
   dataset: t.type({
     branch: t.string,
     commit: t.string,
@@ -376,25 +376,19 @@ export const IntegrationBase = t.type({
     repo: t.string,
     token: t.string,
   }),
+  pachd: t.type({
+    host: t.string,
+    port: t.number,
+  }),
   proxy: t.type({
     host: t.string,
     port: t.number,
     scheme: t.string,
   }),
 });
-export const Integration = t.partial({
-  pachyderm: t.intersection([
-    IntegrationBase,
-    t.type({
-      pachd: t.type({
-        host: t.string,
-        port: t.number,
-      }),
-    }),
-  ]),
-});
+export const Integration = t.partial({ pachyderm: PachydermIntegrationData });
 export type IntegrationType = t.TypeOf<typeof Integration>;
-export type IntegrationBaseType = t.TypeOf<typeof IntegrationBase>;
+export type PachydermIntegrationDataType = t.TypeOf<typeof PachydermIntegrationData>;
 const Hyperparameters: t.RecursiveType<t.Type<Hyperparameters>> = t.recursion(
   'Hyperparameters',
   () => t.record(t.string, t.union([Hyperparameters, HyperparameterBase])),
