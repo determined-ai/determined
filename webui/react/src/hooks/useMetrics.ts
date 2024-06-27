@@ -130,8 +130,6 @@ export const useMetrics = (records: (TrialDetails | FlatRun | undefined)[]): Run
     [records],
   );
 
-  console.log(records);
-
   const loadableMetrics = useMetricNames(
     experimentIds,
     handleMetricNamesError,

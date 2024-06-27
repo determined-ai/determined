@@ -2,6 +2,7 @@ import { Alert } from 'antd';
 import Hermes, { DimensionType } from 'hermes-parallel-coordinates';
 import Message from 'hew/Message';
 import Spinner from 'hew/Spinner';
+import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import ParallelCoordinates from 'components/ParallelCoordinates';
@@ -161,7 +162,6 @@ const CompareParallelCoordinates: React.FC<Props> = ({
 
       // Choose the final metric value for each trial
       const metricValue = data?.[record.id]?.[key]?.data?.[XAxisDomain.Batches]?.at(-1)?.[1];
-      console.log({ data: data?.[record.id], idKey });
       if (!metricValue) return;
       metricsMap[idKey] = metricValue;
 
@@ -169,7 +169,6 @@ const CompareParallelCoordinates: React.FC<Props> = ({
         ...record.hyperparameters,
         ...flattenObject(record.hyperparameters || {}),
       };
-      console.log({ flatHParams, idKey });
 
       Object.keys(flatHParams).forEach((hpKey) => {
         const hpValue = flatHParams[hpKey];
@@ -188,32 +187,29 @@ const CompareParallelCoordinates: React.FC<Props> = ({
     trials?.forEach((trial) => extractHyperparams(trial, metricsMap, hpMap));
     selectedRuns?.forEach((run) => extractHyperparams(run, metricsMap, hpMap));
 
-    const recordIds = Object.keys(metricsMap)
+    // Hermes currently breaks if you try plotting records without values for every hyperparameter, so this filters them out.
+    const comparableIds = _.intersection<string>(...Object.values(hpMap).map(Object.keys))
       .map((id) => parseInt(id))
       .sort(numericSorter);
 
-    console.log({ recordIds });
-
     const hpData = Object.keys(hpMap).reduce(
       (acc, hpKey) => {
-        acc[hpKey] = recordIds.map((recordId) => hpMap[hpKey][recordId]);
+        acc[hpKey] = comparableIds.map((recordId) => hpMap[hpKey][recordId]);
         return acc;
       },
       {} as Record<string, Primitive[]>,
     );
 
     const metricKey = metricToStr(selectedMetric);
-    const metricValues = recordIds.map((id) => metricsMap[id]);
+    const metricValues = comparableIds.map((id) => metricsMap[id]);
     hpData[metricKey] = metricValues;
-
-    console.log({ hpData, hpMap });
 
     const metricRange = getNumericRange(metricValues);
     setChartData({
       data: hpData,
       metricRange,
       metricValues,
-      trialIds: recordIds,
+      trialIds: comparableIds,
     });
   }, [
     selectedExperiments,
