@@ -598,12 +598,6 @@ func (j *jobsService) ChangePriority(id model.AllocationID) {
 	j.changePriority(id)
 }
 
-func (j *jobsService) ChangePosition(id model.AllocationID) {
-	j.mu.Lock()
-	defer j.mu.Unlock()
-	j.changePosition(id)
-}
-
 func (j *jobsService) KillJob(id model.AllocationID) {
 	j.mu.Lock()
 	defer j.mu.Unlock()

@@ -1098,6 +1098,7 @@ func (e *internalExperiment) setWeight(weight float64) error {
 	return nil
 }
 
+// kristine - here we set rp
 func (e *internalExperiment) setRP(resourcePool string) error {
 	resources := e.activeConfig.Resources()
 	oldRP := resources.ResourcePool()
