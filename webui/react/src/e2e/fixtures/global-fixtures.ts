@@ -1,6 +1,6 @@
 import { expect as baseExpect, test as baseTest, Page } from '@playwright/test';
 
-import { apiUrl, webServerUrl } from 'e2e/utils/envVars';
+import { apiUrl } from 'e2e/utils/envVars';
 import { safeName } from 'e2e/utils/naming';
 import { V1PostUserRequest } from 'services/api-ts-sdk/api';
 
@@ -53,15 +53,15 @@ export const test = baseTest.extend<CustomFixtures, CustomWorkerFixtures>({
   },
 
   // get the existing page but with auth cookie already logged in
-  authedPage: async ({ apiAuth, auth, newAdmin }, use) => {
-    if (webServerUrl() === apiUrl()) {
-      await apiAuth.loginBrowser();
-    } else {
-      await auth.login({
-        password: newAdmin.password!,
-        username: newAdmin.user!.username,
-      });
-    }
+  authedPage: async ({ apiAuth }, use) => {
+    // if (webServerUrl() === apiUrl()) {
+    await apiAuth.loginBrowser(apiAuth.page);
+    // } else {
+    //   await auth.login({
+    //     password: newAdmin.password!,
+    //     username: newAdmin.user!.username,
+    //   });
+    // }
     await use(apiAuth.page);
   },
 

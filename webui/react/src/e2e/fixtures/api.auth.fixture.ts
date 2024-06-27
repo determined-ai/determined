@@ -36,7 +36,7 @@ export class ApiAuthFixture {
     this._page = existingPage;
   }
 
-  async getBearerToken(): Promise<string> {
+  async getBearerToken(noBearer = false): Promise<string> {
     const cookies = (await this.apiContext?.storageState())?.cookies ?? [];
     const authToken = cookies.find((cookie) => {
       return cookie.name === 'auth';
@@ -46,6 +46,7 @@ export class ApiAuthFixture {
         'Attempted to retrieve the auth token from the PW apiContext, but it does not exist. Have you called apiAuth.login() yet?',
       );
     }
+    if (noBearer) return authToken;
     return `Bearer ${authToken}`;
   }
 
@@ -58,25 +59,18 @@ export class ApiAuthFixture {
     creds = { password: this.#PASSWORD, username: this.#USERNAME },
   } = {}): Promise<void> {
     this.apiContext = this.apiContext || (await this.request.newContext({ baseURL: this.baseURL }));
-    const Host = new URL(this.baseURL).hostname + ':' + new URL(this.baseURL).port;
     const resp = await this.apiContext.post('/api/v1/auth/login', {
       data: {
         ...creds,
         isHashed: false,
       },
-      headers: {
-        Host,
-        Origin: webServerUrl(),
-        Referer: webServerUrl(),
-      },
     });
     if (resp.status() !== 200) {
-      // TODO good breakpoiont for api auth login CORS
       throw new Error(`Login API request has failed with status code ${resp.status()}`);
     }
   }
 
-  async loginBrowser(): Promise<void> {
+  async loginBrowser(page: Page): Promise<void> {
     if (this.apiContext === undefined) {
       throw new Error('Cannot login browser without first logging in API');
     }
@@ -92,7 +86,8 @@ export class ApiAuthFixture {
         }
       });
       await this.browserContext.addCookies(state.cookies);
-      // TODO good breakpoiont for api auth login CORS
+      const token = JSON.stringify(await this.getBearerToken(true));
+      await page.evaluate((token) => localStorage.setItem('global/auth-token', token), token);
     }
   }
 
