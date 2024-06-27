@@ -149,75 +149,130 @@ linters-settings:
         disabled: true
 
 linters:
-  enable-all: true
-  disable:
-    # Linters that need triaging. Put all linters here if you upgrade.
-    # Below here are new linters from upgrading to 1.57.2. Since we enable all and disable
-    # selectively, when we upgrade we get a ton of new linters. For convenience next upgrade,
-    # golangci-lint can tell you which linters are enabled:
-    #   golangci-lint linters | sed -n '/Enabled/,/Disabled/p'
-    # To maintain the same set us linters, disable those in the new set that are not in the old:
-    #   comm -13 <(cut -d : -f 1 <oldlinters.txt) <(cut -d : -f 1 <newlinters.txt)
+  enable:
+   - asasalint
+   - asciicheck
+   - bidichk
+   - bodyclose
+   - containedctx
+   - copyloopvar
+   - decorder
+   - depguard
+   - dogsled
+   - dupl
+   - dupword
+   - durationcheck
+   - errcheck
+   - errname
+   - execinquery
+   - exhaustruct
+   - exportloopref
+   - forbidigo
+   - ginkgolinter
+   - gocheckcompilerdirectives
+   - gochecksumtype
+   - goconst
+   - gocritic
+   - godot
+   - gofmt
+   - gofumpt
+   - goheader
+   - goimports
+   - gomodguard
+   - goprintffuncname
+   - gosec
+   - gosimple
+   - gosmopolitan
+   - govet
+   - grouper
+   - importas
+   - ineffassign
+   - intrange
+   - lll
+   - loggercheck
+   - makezero
+   - mirror
+   - misspell
+   - nilerr
+   - noctx
+   - nosprintfhostport
+   - perfsprint
+   - reassign
+   - revive
+   - rowserrcheck
+   - sloglint
+   - spancheck
+   - sqlclosecheck
+   - staticcheck
+   - stylecheck
+   - tenv
+   - testableexamples
+   - testifylint
+   - tparallel
+   - unconvert
+   - unused
+   - usestdlibvars
+   - whitespace
+   - zerologlint
 
     # Linters that we should probably enable. Please give each a ticket.
-    - cyclop          # TODO (RM-325)
-    - errorlint       # TODO (RM-330)
-    - forcetypeassert # TODO (RM-326)
-    - wrapcheck       # TODO (RM-222)
-    - maintidx        # TODO (RM-327)
-    - gocyclo         # TODO (RM-331)
-    - gocognit        # TODO (RM-328)
-    - funlen          # TODO (RM-332)
-    - nestif          # TODO (RM-329)
-    - nakedret        # TODO (RM-333)
-
+    # - cyclop          # TODO (RM-325)
+    # - errorlint       # TODO (RM-330)
+    # - forcetypeassert # TODO (RM-326)
+    # - wrapcheck       # TODO (RM-222)
+    # - maintidx        # TODO (RM-327)
+    # - gocyclo         # TODO (RM-331)
+    # - gocognit        # TODO (RM-328)
+    # - funlen          # TODO (RM-332)
+    # - nestif          # TODO (RM-329)
+    # - nakedret        # TODO (RM-333)
 
     # Toss up linters.
-    - predeclared
-    - promlinter
-    - thelper
-    - tagliatelle
-    - nilnil
-    - ireturn
-    - contextcheck
-    - nonamedreturns
-    - interfacebloat
-    - wsl
-    - godox
-    - gochecknoinits
-    - goerr113
-    - gomnd
-    - inamedparam # We don't enforce this now, but might be useful in the future.
+    # - predeclared
+    # - promlinter
+    # - thelper
+    # - tagliatelle
+    # - nilnil
+    # - ireturn
+    # - contextcheck
+    # - nonamedreturns
+    # - interfacebloat
+    # - wsl
+    # - godox
+    # - gochecknoinits
+    # - goerr113
+    # - gomnd
+    # - inamedparam # We don't enforce this now, but might be useful in the future.
 
     # Linters that we should probably keep disabled.
-    - errchkjson       # Requiring us to ignore errors (even if they won't be non nil) feels strange.
-    - musttag          # Really buggy now.
-    - prealloc         # Nick thinks this is premature optimization.
-    - varnamelen       # This is overally opinionated.
-    - paralleltest     # I don't understand this linter.
-    - gomoddirectives  # Seems unneeded and just going to make us make exceptions when we need to.
-    - gci              # We aren't using the gci tool.
-    - nolintlint       # Ideally should enable, but gofumpt adds leading space to // nolint for funcs.
-    - nlreturn         # This is overally opinionated.
-    - testpackage      # We don't use seperate test packages.
-    - unparam          # We have a lot of unused parameters.
-    - gochecknoglobals # We have globals currently and don't have an issue with too many.
-    - exhaustive       # We often use switch statements as if statements.
-    - protogetter      # Carolina thinks this is overkill.
-    - tagalign         # Carolina thinks this is unnecessary.
-    - exportloopref    # Language changed.
-    - intrange         # Buggy, panic with this on Go 1.22.
+    # - errchkjson       # Requiring us to ignore errors (even if they won't be non nil) feels strange.
+    # - musttag          # Really buggy now.
+    # - prealloc         # Nick thinks this is premature optimization.
+    # - varnamelen       # This is overally opinionated.
+    # - paralleltest     # I don't understand this linter.
+    # - gomoddirectives  # Seems unneeded and just going to make us make exceptions when we need to.
+    # - gci              # We aren't using the gci tool.
+    # - nolintlint       # Ideally should enable, but gofumpt adds leading space to // nolint for funcs.
+    # - nlreturn         # This is overally opinionated.
+    # - testpackage      # We don't use seperate test packages.
+    # - unparam          # We have a lot of unused parameters.
+    # - gochecknoglobals # We have globals currently and don't have an issue with too many.
+    # - exhaustive       # We often use switch statements as if statements.
+    # - protogetter      # Carolina thinks this is overkill.
+    # - tagalign         # Carolina thinks this is unnecessary.
+    # - exportloopref    # Language changed.
+    # - intrange         # Buggy, panic with this on Go 1.22.
 
-    # Linters that are deprecated / replaced / removed.
-    - nosnakecase      # Replaced by revive(var-naming).
-    - ifshort          # The repository of the linter has been deprecated by the owner.
-    - interfacer       # Linter archived since it can give bad suggestions.
-    - wastedassign     # We already have ineffassign.
-    - scopelint        # Replaced by exportloopref.
-    - exhaustivestruct # Replaced by exhaustruct.
-    - structcheck      # Replaced by unusued.
-    - varcheck         # Replaced by unusued.
-    - deadcode         # Replaced by unusued.
-    - maligned         # Replaced by govet 'fieldalignment'.
-    - golint           # Replaced by revive.
+    # # Linters that are deprecated / replaced / removed.
+    # - nosnakecase      # Replaced by revive(var-naming).
+    # - ifshort          # The repository of the linter has been deprecated by the owner.
+    # - interfacer       # Linter archived since it can give bad suggestions.
+    # - wastedassign     # We already have ineffassign.
+    # - scopelint        # Replaced by exportloopref.
+    # - exhaustivestruct # Replaced by exhaustruct.
+    # - structcheck      # Replaced by unusued.
+    # - varcheck         # Replaced by unusued.
+    # - deadcode         # Replaced by unusued.
+    # - maligned         # Replaced by govet 'fieldalignment'.
+    # - golint           # Replaced by revive.
 
