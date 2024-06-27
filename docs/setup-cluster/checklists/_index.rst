@@ -37,8 +37,8 @@ About Offline Installations
  Set Up PostgreSQL
 *******************
 
-Determined uses a PostgreSQL database to store experiment and trial metadata. Choose the
-installation method that best fits your environment and requirements.
+Determined uses a :ref:`PostgreSQL <setup-postgresql>` database to store experiment and trial
+metadata. Choose the installation method that best fits your environment and requirements.
 
 .. note::
 
