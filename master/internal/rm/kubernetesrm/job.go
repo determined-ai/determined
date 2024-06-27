@@ -470,11 +470,6 @@ func (j *job) changePriority() {
 	rmevents.Publish(j.allocationID, &sproto.ReleaseResources{Reason: "priority changed"})
 }
 
-func (j *job) changePosition() {
-	j.syslog.Info("interrupting job to change positions")
-	rmevents.Publish(j.allocationID, &sproto.ReleaseResources{Reason: "queue position changed"})
-}
-
 func (j *job) Kill() {
 	j.mu.Lock()
 	defer j.mu.Unlock()

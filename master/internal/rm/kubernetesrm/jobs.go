@@ -1510,15 +1510,6 @@ func (j *jobsService) changePriority(id model.AllocationID) {
 	ref.changePriority()
 }
 
-func (j *jobsService) changePosition(id model.AllocationID) {
-	ref, err := j.verifyJobAndGetRef(id)
-	if err != nil {
-		j.syslog.WithError(err).Debug("changing allocation position")
-		return
-	}
-	ref.changePosition()
-}
-
 func (j *jobsService) killJob(id model.AllocationID) {
 	ref, err := j.verifyJobAndGetRef(id)
 	if err != nil {
