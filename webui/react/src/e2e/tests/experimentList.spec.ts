@@ -232,13 +232,13 @@ test.describe('Experiement List', () => {
   });
 
   test('Datagrid Functionality Validations', async ({ authedPage }) => {
-    const row = await projectDetailsPage.f_experiemntList.dataGrid.getRowByColumnValue('ID', '1');
+    const row = await projectDetailsPage.f_experiemntList.dataGrid.getRowByIndex(0);
     await test.step('Select Row', async () => {
       await row.clickColumn('Select');
       expect.soft(await row.isSelected()).toBeTruthy();
     });
     await test.step('Read Cell Value', async () => {
-      await expect.soft((await row.getCellByColumnName('Checkpoints')).pwLocator).toHaveText('0');
+      await expect.soft((await row.getCellByColumnName('ID')).pwLocator).toHaveText(/\d+/);
     });
     await test.step('Select 5', async () => {
       await (
@@ -247,8 +247,10 @@ test.describe('Experiement List', () => {
     });
     await test.step('Experiement Overview Navigation', async () => {
       await projectDetailsPage.f_experiemntList.dataGrid.scrollLeft();
+      const textContent = await (await row.getCellByColumnName('ID')).pwLocator.textContent();
       await row.clickColumn('ID');
-      await authedPage.waitForURL(/overview/);
+      if (textContent === null) throw new Error('Cannot read row id');
+      await authedPage.waitForURL(new RegExp(textContent));
     });
   });
 
