@@ -4,11 +4,10 @@
  Deploy on Kubernetes
 ######################
 
-This document describes how the Determined runs on `Kubernetes <https://kubernetes.io/>`__. For
-instructions on installing Determined on Kubernetes, see the :ref:`installation guide
-<install-on-kubernetes>`.
+This document describes how Determined runs on Kubernetes. For instructions on installing Determined
+on Kubernetes, see the :ref:`installation guide <install-on-kubernetes>`.
 
-In this topic guide, we will cover:
+This guide covers:
 
 #. How Determined works on Kubernetes.
 #. Limitations of Determined on Kubernetes.
