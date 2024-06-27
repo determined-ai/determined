@@ -950,15 +950,11 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
 
   const selectionLabel = useMemo(() => {
     const newSettings: SelectionState = { ...settings.selection };
-    let runsList: number[] = [];
 
-    if (newSettings.type === 'ALL_EXCEPT') {
-      runsList = [...newSettings.exclusions];
-    } else {
-      runsList = [...newSettings.selections];
-    }
-
-    const numberOfSelection = runsList.length;
+    const numberOfSelection =
+      newSettings.type === 'ALL_EXCEPT'
+        ? newSettings.exclusions.length
+        : newSettings.selections.length;
 
     return Loadable.match(total, {
       Failed: () => null,
