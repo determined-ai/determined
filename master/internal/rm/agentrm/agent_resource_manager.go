@@ -374,15 +374,6 @@ func (*ResourceManager) IsReattachableOnlyAfterStarted() bool {
 	return true
 }
 
-// MoveJob implements rm.ResourceManager.
-func (a *ResourceManager) MoveJob(msg sproto.MoveJob) error {
-	pool, err := a.poolByName(msg.ResourcePool)
-	if err != nil {
-		return fmt.Errorf("move job found no resource pool with name %s: %w", msg.ResourcePool, err)
-	}
-	return pool.MoveJob(msg)
-}
-
 // NotifyContainerRunning implements rm.ResourceManager.
 func (*ResourceManager) NotifyContainerRunning(sproto.NotifyContainerRunning) error {
 	// Agent Resource Manager does not implement a handler for the
