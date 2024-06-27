@@ -649,9 +649,10 @@ commands:
                   DD_HOST_TAGS="$host_tags" \
                   bash -c "$(curl -L https://s3.amazonaws.com/dd-agent/scripts/install_script_agent7.sh)"
                   # config files for the agent have an expected file structure
+                  sudo mkdir -p /etc/datadog-agent/determined-master.d/
                   sudo chmod -R a+rw /etc/datadog-agent/datadog.yaml
                   sudo cat .circleci/datadog/ci-local-config.yaml >> /etc/datadog-agent/datadog.yaml
-                  sudo cat .circleci/datadog/e2e-log-settings.yaml >> /etc/datadog-agent/determined-master.d/conf.yaml
+                  sudo cat .circleci/datadog/e2e-log-settings.yaml > /etc/datadog-agent/determined-master.d/conf.yaml
                   sudo usermod -a -G docker dd-agent
                   sudo service datadog-agent restart
                   sudo cat /etc/datadog-agent/datadog.yaml
