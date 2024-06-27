@@ -1567,7 +1567,7 @@ func TestArchiveUnarchiveWithArchivedParent(t *testing.T) {
 		ProjectId: sourceprojectID,
 	})
 
-	errMsg := "Run is part of archived Search."
+	errMsg := fmt.Sprintf("Run is part of archived Search (id: '%d').", exp.ID)
 	require.NoError(t, err)
 	require.Len(t, unarchRes.Results, 2)
 	require.Equal(t, errMsg, unarchRes.Results[0].Error)
