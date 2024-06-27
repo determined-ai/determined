@@ -1103,6 +1103,7 @@ export const Project = t.intersection([
     lastExperimentStartedAt: t.string,
     numActiveExperiments: t.number,
     numExperiments: t.number,
+    numRuns: t.number,
     workspaceName: t.string,
   }),
 ]);

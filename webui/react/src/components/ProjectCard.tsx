@@ -10,6 +10,7 @@ import { isUndefined } from 'lodash';
 import React from 'react';
 
 import TimeAgo from 'components/TimeAgo';
+import useFeature from 'hooks/useFeature';
 import { handlePath, paths } from 'routes/utils';
 import { Project } from 'types';
 import { nearestCardinalNumber } from 'utils/number';
@@ -35,6 +36,8 @@ const ProjectCard: React.FC<Props> = ({
   showWorkspace,
   workspaceArchived,
 }: Props) => {
+  const f_flat_runs = useFeature().isOn('flat_runs');
+
   const { contextHolders, menu, onClick } = useProjectActionMenu({
     onDelete: onRemove,
     onEdit,
@@ -77,7 +80,19 @@ const ProjectCard: React.FC<Props> = ({
           </Row>
           <Row justifyContent="space-between" width="fill">
             <div className={css.footerContainer}>
-              {!isUndefined(project.numExperiments) && (
+              {f_flat_runs && !isUndefined(project.numRuns) && (
+                <div className={css.experiments}>
+                  <Tooltip
+                    content={
+                      `${project.numRuns?.toLocaleString()}` +
+                      ` run${project.numRuns === 1 ? '' : 's'}`
+                    }>
+                    <Icon name="experiment" size="small" title="Number of runs" />
+                    <span>{nearestCardinalNumber(project.numRuns)}</span>
+                  </Tooltip>
+                </div>
+              )}
+              {!f_flat_runs && !isUndefined(project.numExperiments) && (
                 <div className={css.experiments}>
                   <Tooltip
                     content={
