@@ -5276,6 +5276,17 @@ workflows:
               initial_user_password: ${INITIAL_USER_PASSWORD}
 
       - test-e2e-slurm:
+          name: test-e2e-slurm-restart
+          context:
+            - dev-ci-cluster-default-user-credentials
+          mark: "e2e_slurm_restart"
+          filters: *upstream-feature-branch
+          requires:
+            - package-and-push-system-local-ee
+            - request-hpc-tests
+          extra-pytest-flags: "--no-compare-stats"
+
+      - test-e2e-slurm:
           name: test-e2e-slurm-gpu
           context:
             - dev-ci-cluster-default-user-credentials
