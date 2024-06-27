@@ -38,10 +38,14 @@ Determined shouldn't need to interact with Kubernetes directly after installatio
 handles all the necessary interaction with the Kubernetes cluster. Kubernetes creates and cleans up
 pods for all jobs that Determined may request.
 
-It is also important to note that when running Determined on Kubernetes, a higher priority value
-means a higher priority (e.g. a priority 50 task will run before a priority 40 task). This is
-different from priority scheduling in non-Kubernetes deployments, where lower priority values mean a
-higher priority (e.g. a priority 40 task will run before a priority 50 task).
+*********************
+ Priority Scheduling
+*********************
+
+When running Determined on Kubernetes, a higher priority value means higher priority (e.g., a
+priority 50 task will run before a priority 40 task). This differs from non-Kubernetes deployments,
+where lower priority values mean higher priority (e.g., a priority 40 task will run before a
+priority 50 task).
 
 .. _limitations-on-kubernetes:
 
@@ -56,17 +60,19 @@ Scheduling
 
 By default, the Kubernetes scheduler does not support gang scheduling or preemption. This can be
 problematic for distributed deep learning workloads that require multiple pods to be scheduled
-before execution starts. Determined includes built-in support for the `lightweight coscheduling
-plugin <https://github.com/kubernetes-sigs/scheduler-plugins/tree/release-1.18/pkg/coscheduling>`__,
-which extends the default Kubernetes scheduler to support gang scheduling. Determined also includes
-support for priority-based preemption scheduling. Neither are enabled by default. For more details
-and instructions on how to enable the coscheduling plugin, refer to
-:ref:`gang-scheduling-on-kubernetes` and :ref:`priority-scheduling-on-kubernetes`.
+before execution starts.
+
+Determined includes built-in support for the `lightweight coscheduling plugin
+<https://github.com/kubernetes-sigs/scheduler-plugins/tree/release-1.18/pkg/coscheduling>`__, which
+extends the default Kubernetes scheduler to support gang scheduling. Determined also supports
+priority-based preemption scheduling. Neither feature is enabled by default. For more details and
+instructions on how to enable the coscheduling plugin, refer to :ref:`gang-scheduling-on-kubernetes`
+and :ref:`priority-scheduling-on-kubernetes`.
 
 Dynamic Agents
 ==============
 
-Determined is not able to autoscale your cluster, but equivalent functionality is available by using
+Determined cannot autoscale your cluster. However, equivalent functionality is available by using
 the `Kubernetes Cluster Autoscaler
 <https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler>`_, which is supported on
 `GKE <https://cloud.google.com/kubernetes-engine/docs/concepts/cluster-autoscaler>`_ and `EKS
@@ -88,7 +94,7 @@ root. For more information, see: :ref:`run-as-user`.
 
 `kubectl <https://kubernetes.io/docs/tasks/tools/>`_ is a command-line tool for interacting with a
 Kubernetes cluster. `Helm <https://helm.sh/docs/helm/helm_install/>`_ is used to install and upgrade
-Determined on Kubernetes. This section covers some of the useful kubectl and helm commands when
+Determined on Kubernetes. This section covers some useful ``kubectl`` and ``helm`` commands when
 :ref:`running Determined on Kubernetes <install-on-kubernetes>`.
 
 For all the commands listed below, include ``-n <kubernetes namespace name>`` if running Determined
