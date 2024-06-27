@@ -220,3 +220,4 @@ linters:
     - deadcode         # Replaced by unusued.
     - maligned         # Replaced by govet 'fieldalignment'.
     - golint           # Replaced by revive.
+
