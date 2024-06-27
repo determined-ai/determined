@@ -734,7 +734,7 @@ func archiveUnarchiveAction(ctx context.Context, archive bool, runIDs []int32,
 		switch {
 		case cand.ExpArchived:
 			results = append(results, &apiv1.RunActionResult{
-				Error: "Run is part of archived Search.",
+				Error: fmt.Sprintf("Run is part of archived Search (id: '%d').", *cand.ExpID),
 				Id:    cand.ID,
 			})
 		case cand.Archived && archive:
