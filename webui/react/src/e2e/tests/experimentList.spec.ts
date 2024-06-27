@@ -14,8 +14,9 @@ test.describe('Experiement List', () => {
     return parseInt(expNum);
   };
 
-  test.beforeAll(async ({ browser }) => {
+  test.beforeAll(async ({ browser, dev }) => {
     const pageSetupTeardown = await browser.newPage();
+    await dev.setServerAddress(pageSetupTeardown);
     const authFixtureSetupTeardown = new AuthFixture(pageSetupTeardown);
     const projectDetailsPageSetupTeardown = new ProjectDetails(pageSetupTeardown);
     await authFixtureSetupTeardown.login();

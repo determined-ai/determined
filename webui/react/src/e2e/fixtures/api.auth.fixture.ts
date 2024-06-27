@@ -1,12 +1,12 @@
 import { APIRequest, APIRequestContext, Browser, BrowserContext, Page } from '@playwright/test';
-import { v4 } from 'uuid';
+
+import { webServerUrl } from 'e2e/utils/envVars';
 
 export class ApiAuthFixture {
   apiContext?: APIRequestContext; // we can't get this until login, so may be undefined
   readonly request: APIRequest;
   readonly browser: Browser;
   readonly baseURL: string;
-  readonly testId = v4();
   _page?: Page;
   get page(): Page {
     if (this._page === undefined) {
@@ -14,11 +14,9 @@ export class ApiAuthFixture {
     }
     return this._page;
   }
-  readonly #STATE_FILE_SUFFIX = 'state.json';
   readonly #USERNAME: string;
   readonly #PASSWORD: string;
-  context?: BrowserContext;
-  readonly #stateFile = `${this.testId}-${this.#STATE_FILE_SUFFIX}`;
+  browserContext?: BrowserContext;
 
   constructor(request: APIRequest, browser: Browser, baseURL?: string, existingPage?: Page) {
     if (process.env.PW_USER_NAME === undefined) {
@@ -56,25 +54,45 @@ export class ApiAuthFixture {
    * fixture, the bearer token will be attached to that context. If not a new
    * browser context will be created with the cookie.
    */
-  async login({
+  async loginApi({
     creds = { password: this.#PASSWORD, username: this.#USERNAME },
   } = {}): Promise<void> {
-    this.apiContext = this.apiContext || (await this.request.newContext());
+    this.apiContext = this.apiContext || (await this.request.newContext({ baseURL: this.baseURL }));
+    const Host = new URL(this.baseURL).hostname + ':' + new URL(this.baseURL).port;
     const resp = await this.apiContext.post('/api/v1/auth/login', {
       data: {
         ...creds,
         isHashed: false,
       },
+      headers: {
+        Host,
+        Origin: webServerUrl(),
+        Referer: webServerUrl(),
+      },
     });
     if (resp.status() !== 200) {
+      // TODO good breakpoiont for api auth login CORS
       throw new Error(`Login API request has failed with status code ${resp.status()}`);
     }
+  }
+
+  async loginBrowser(): Promise<void> {
+    if (this.apiContext === undefined) {
+      throw new Error('Cannot login browser without first logging in API');
+    }
     // Save cookie state into the file.
-    const state = await this.apiContext.storageState({ path: this.#stateFile });
     if (this._page !== undefined) {
+      const state = await this.apiContext.storageState();
       // add cookies to current page's existing context
-      this.context = this._page.context();
-      await this.context.addCookies(state.cookies);
+      this.browserContext = this._page.context();
+      // replace the domain of api base url with browser base url
+      state.cookies.forEach((cookie) => {
+        if (cookie.name === 'auth' && cookie.domain === new URL(this.baseURL).hostname) {
+          cookie.domain = new URL(webServerUrl()).hostname;
+        }
+      });
+      await this.browserContext.addCookies(state.cookies);
+      // TODO good breakpoiont for api auth login CORS
     }
   }
 
@@ -86,6 +104,6 @@ export class ApiAuthFixture {
    */
   async dispose(): Promise<void> {
     await this.apiContext?.dispose();
-    await this.context?.close();
+    await this.browserContext?.close();
   }
 }

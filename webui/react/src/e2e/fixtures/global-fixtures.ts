@@ -1,10 +1,10 @@
 import { expect as baseExpect, test as baseTest, Page } from '@playwright/test';
 
+import { apiUrl, webServerUrl } from 'e2e/utils/envVars';
 import { safeName } from 'e2e/utils/naming';
 import { V1PostUserRequest } from 'services/api-ts-sdk/api';
 
 // eslint-disable-next-line no-restricted-imports
-import playwrightConfig from '../../../playwright.config';
 
 import { ApiAuthFixture } from './api.auth.fixture';
 import { ApiUserFixture } from './api.user.fixture';
@@ -14,7 +14,7 @@ import { UserFixture } from './user.fixture';
 
 type CustomFixtures = {
   dev: DevFixture;
-  devSetup: void;
+  devSetup: Page;
   auth: AuthFixture;
   apiAuth: ApiAuthFixture;
   user: UserFixture;
@@ -31,9 +31,9 @@ type CustomWorkerFixtures = {
 // https://playwright.dev/docs/test-fixtures
 export const test = baseTest.extend<CustomFixtures, CustomWorkerFixtures>({
   // get the auth but allow yourself to log in through the api manually.
-  apiAuth: async ({ playwright, browser, baseURL, newAdmin, page }, use) => {
-    const apiAuth = new ApiAuthFixture(playwright.request, browser, baseURL, page);
-    await apiAuth.login({
+  apiAuth: async ({ playwright, browser, newAdmin, devSetup }, use) => {
+    const apiAuth = new ApiAuthFixture(playwright.request, browser, apiUrl(), devSetup);
+    await apiAuth.loginApi({
       creds: {
         password: newAdmin.password!,
         username: newAdmin.user!.username,
@@ -53,7 +53,15 @@ export const test = baseTest.extend<CustomFixtures, CustomWorkerFixtures>({
   },
 
   // get the existing page but with auth cookie already logged in
-  authedPage: async ({ apiAuth }, use) => {
+  authedPage: async ({ apiAuth, auth, newAdmin }, use) => {
+    if (webServerUrl() === apiUrl()) {
+      await apiAuth.loginBrowser();
+    } else {
+      await auth.login({
+        password: newAdmin.password!,
+        username: newAdmin.user!.username,
+      });
+    }
     await use(apiAuth.page);
   },
 
@@ -64,12 +72,8 @@ export const test = baseTest.extend<CustomFixtures, CustomWorkerFixtures>({
    */
   backgroundApiAuth: [
     async ({ playwright, browser }, use) => {
-      const backgroundApiAuth = new ApiAuthFixture(
-        playwright.request,
-        browser,
-        playwrightConfig.use?.baseURL,
-      );
-      await backgroundApiAuth.login();
+      const backgroundApiAuth = new ApiAuthFixture(playwright.request, browser, apiUrl());
+      await backgroundApiAuth.loginApi();
       await use(backgroundApiAuth);
       await backgroundApiAuth.dispose();
     },
@@ -77,7 +81,7 @@ export const test = baseTest.extend<CustomFixtures, CustomWorkerFixtures>({
   ],
   /**
    * Allows calling the user api without a page so that it can run in beforeAll(). You will need to get a bearer
-   * token by calling backgroundApiUser.apiAuth.login(). This will also provision a page in the background which
+   * token by calling backgroundApiUser.apiAuth.loginAPI(). This will also provision a page in the background which
    * will be disposed of logout(). Before using the page,you need to call dev.setServerAddress() manually and
    * then login() again, since setServerAddress logs out as a side effect.
    */
@@ -94,17 +98,9 @@ export const test = baseTest.extend<CustomFixtures, CustomWorkerFixtures>({
     await use(dev);
   },
   devSetup: [
-    async ({ page }, use) => {
-      // Tells the frontend where to find the backend if built for a different url.
-      // Incidentally reloads and logs out of Determined.
-      await page.goto('/');
-      await page.evaluate(
-        `dev.setServerAddress("${process.env.DET_WEBPACK_PROXY_URL ?? process.env.PW_SERVER_ADDRESS}")`,
-      );
-      await page.reload();
-      // dev.setServerAddress fires a logout request in the background, so we will wait until no network traffic is happening.
-      await page.waitForLoadState('networkidle');
-      await use();
+    async ({ dev, page }, use) => {
+      await dev.setServerAddress(page);
+      await use(page);
     },
     { auto: true },
   ],
@@ -124,11 +120,11 @@ export const test = baseTest.extend<CustomFixtures, CustomWorkerFixtures>({
           },
         }),
       );
-      await backgroundApiUser.apiAuth.login({
+      await backgroundApiUser.apiAuth.loginApi({
         creds: { password: adminUser.password!, username: adminUser.user!.username },
       });
       await use(adminUser);
-      await backgroundApiUser.apiAuth.login();
+      await backgroundApiUser.apiAuth.loginApi();
       await backgroundApiUser.patchUser(adminUser.user!.id!, { active: false });
     },
     { scope: 'worker' },
