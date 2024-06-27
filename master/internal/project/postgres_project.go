@@ -68,6 +68,10 @@ func getProjectByIDTx(ctx context.Context, tx bun.Tx, projectID int) (*model.Pro
 			projectID,
 		).
 		ColumnExpr(
+			"(SELECT COUNT(*) FROM runs WHERE project_id = ?) AS num_runs",
+			projectID,
+		).
+		ColumnExpr(
 			"(SELECT COUNT(*) FROM experiments WHERE project_id = ? AND state = 'ACTIVE') AS num_active_experiments",
 			projectID,
 		).

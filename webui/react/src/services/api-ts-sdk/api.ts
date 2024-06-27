@@ -8455,6 +8455,12 @@ export interface V1Project {
      * @memberof V1Project
      */
     key: string;
+    /**
+     * Count of runs associated with this project.
+     * @type {number}
+     * @memberof V1Project
+     */
+    numRuns: number;
 }
 /**
  * Project Column is a description of a column used on experiments in the project.
