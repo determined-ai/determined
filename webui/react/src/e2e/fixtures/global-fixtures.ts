@@ -14,6 +14,7 @@ import { UserFixture } from './user.fixture';
 
 type CustomFixtures = {
   dev: DevFixture;
+  devSetup: void;
   auth: AuthFixture;
   apiAuth: ApiAuthFixture;
   user: UserFixture;
@@ -30,9 +31,8 @@ type CustomWorkerFixtures = {
 // https://playwright.dev/docs/test-fixtures
 export const test = baseTest.extend<CustomFixtures, CustomWorkerFixtures>({
   // get the auth but allow yourself to log in through the api manually.
-  apiAuth: async ({ playwright, browser, dev, baseURL, newAdmin }, use) => {
-    await dev.setServerAddress();
-    const apiAuth = new ApiAuthFixture(playwright.request, browser, baseURL, dev.page);
+  apiAuth: async ({ playwright, browser, baseURL, newAdmin, page }, use) => {
+    const apiAuth = new ApiAuthFixture(playwright.request, browser, baseURL, page);
     await apiAuth.login({
       creds: {
         password: newAdmin.password!,
@@ -88,10 +88,26 @@ export const test = baseTest.extend<CustomFixtures, CustomWorkerFixtures>({
     },
     { scope: 'worker' },
   ],
-  dev: async ({ page }, use) => {
-    const dev = new DevFixture(page);
+  // eslint-disable-next-line no-empty-pattern
+  dev: async ({}, use) => {
+    const dev = new DevFixture();
     await use(dev);
   },
+  devSetup: [
+    async ({ page }, use) => {
+      // Tells the frontend where to find the backend if built for a different url.
+      // Incidentally reloads and logs out of Determined.
+      await page.goto('/');
+      await page.evaluate(
+        `dev.setServerAddress("${process.env.DET_WEBPACK_PROXY_URL ?? process.env.PW_SERVER_ADDRESS}")`,
+      );
+      await page.reload();
+      // dev.setServerAddress fires a logout request in the background, so we will wait until no network traffic is happening.
+      await page.waitForLoadState('networkidle');
+      await use();
+    },
+    { auto: true },
+  ],
   /**
    * Creates an admin and logs in as that admin for the duraction of the test suite
    */

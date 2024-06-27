@@ -2,9 +2,6 @@ import { expect, test } from 'e2e/fixtures/global-fixtures';
 import { SignIn } from 'e2e/models/pages/SignIn';
 
 test.describe('Authentication', () => {
-  test.beforeEach(async ({ dev }) => {
-    await dev.setServerAddress();
-  });
   test.afterEach(async ({ page, auth }) => {
     const signInPage = new SignIn(page);
     if ((await page.title()).indexOf(signInPage.title) === -1) {
