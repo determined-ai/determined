@@ -1,5 +1,5 @@
 import Card from 'hew/Card';
-import React, { useCallback, useMemo } from 'react';
+import React, { useMemo } from 'react';
 
 import OverviewStats from 'components/OverviewStats';
 import Section from 'components/Section';
@@ -53,33 +53,28 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
         return `${trial?.logRetentionDays} days`;
     }
   }, [trial]);
-  const integrationData = useMemo(() => {
+  const LineageComponent = useMemo(() => {
     const {
       config: { integrations },
     } = experiment;
 
     if (integrations?.pachyderm !== undefined) {
       const url = createPachydermLineageLink(integrations.pachyderm);
-
-      return {
-        hasIntegrationData: url !== undefined ? true : false,
-        text: '<MLDM repo>',
-        url,
+      const handleClickDataInput = (e: AnyMouseEvent) => {
+        handlePath(e, {
+          path: url,
+        });
       };
+
+      return (
+        <OverviewStats title="Data input" onClick={handleClickDataInput}>
+          {'<MLDM repo>'}
+        </OverviewStats>
+      );
     }
 
-    return;
+    return null;
   }, [experiment]);
-
-  const handleClickDataInput = useCallback(
-    (e: AnyMouseEvent) => {
-      if (integrationData?.hasIntegrationData)
-        handlePath(e, {
-          path: integrationData.url,
-        });
-    },
-    [integrationData],
-  );
 
   return (
     <Section>
@@ -104,11 +99,7 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
           </>
         )}
         {<OverviewStats title="Log Retention Days">{logRetentionDays}</OverviewStats>}
-        {integrationData && (
-          <OverviewStats title="Data input" onClick={handleClickDataInput}>
-            {integrationData.text}
-          </OverviewStats>
-        )}
+        {LineageComponent}
       </Card.Group>
     </Section>
   );
