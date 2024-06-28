@@ -13,13 +13,7 @@ from tests import command as cmd
 from tests import config as conf
 from tests import detproc
 from tests import experiment as exp
-from tests.cluster import (
-    abstract_cluster,
-    managed_cluster,
-    managed_cluster_k8s,
-    managed_slurm_cluster,
-    utils,
-)
+from tests.cluster import abstract_cluster, managed_cluster, managed_cluster_k8s, utils
 from tests.task import task
 
 logger = logging.getLogger(__name__)
@@ -152,19 +146,9 @@ def _test_master_restart_reattach_recover_experiment(
 ) -> None:
     sess = api_utils.user_session()
     try:
-        exp_config = conf.fixtures_path("no_op/single-medium-train-step.yaml")
-
-        # This test requires images to match what is specified in
-        # tools/slurm/scripts/generate-pkr-vars.sh
-        if isinstance(restartable_managed_cluster, managed_slurm_cluster.ManagedSlurmCluster):
-            exp_config = conf.set_image(
-                exp_config,
-                "determinedai/pytorch-tensorflow-cpu-dev:e960eae",
-                "determinedai/pytorch-ngc-dev:e960eae",
-            )
         exp_id = exp.create_experiment(
             sess,
-            exp_config,
+            conf.fixtures_path("no_op/single-medium-train-step.yaml"),
             conf.fixtures_path("no_op"),
             None,
         )
