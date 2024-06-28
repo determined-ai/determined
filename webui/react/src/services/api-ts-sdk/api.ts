@@ -3545,17 +3545,17 @@ export interface V1FlatRun {
      */
     metadata?: any;
     /**
-     * Project level local id of run.
-     * @type {string}
-     * @memberof V1FlatRun
-     */
-    localId?: string;
-    /**
      * The archived status of this run. This is only looking at the archived status at the run level and not taking into account whether the experiment is archived or not.
      * @type {boolean}
      * @memberof V1FlatRun
      */
     archived: boolean;
+    /**
+     * Project level local id of run.
+     * @type {string}
+     * @memberof V1FlatRun
+     */
+    localId?: string;
 }
 /**
  * 
