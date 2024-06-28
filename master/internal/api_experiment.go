@@ -473,9 +473,7 @@ func (a *apiServer) deleteExperiments(exps []*model.Experiment, userModel *model
 
 	sema := make(chan struct{}, maxConcurrentDeletes)
 	g, _ := errgroup.WithContext(context.Background())
-	for i, e := range exps {
-		i := i
-		exp := e
+	for i, exp := range exps {
 		g.Go(func() error {
 			sema <- struct{}{}
 			defer func() { <-sema }()

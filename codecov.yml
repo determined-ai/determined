@@ -12,16 +12,16 @@ coverage:
       backend:
         target: 42%
         threshold: 3%
-        flags: 
+        flags:
           - backend
         informational: false
-    patch: 
+    patch:
       default:
         informational: true
-      backend: 
+      backend:
         target: 80%
         threshold: 5%
-        flags: 
+        flags:
           - backend
         informational: false
         only_pulls: true
@@ -29,14 +29,17 @@ coverage:
 flags:
   backend:
     carryforward: true
-    
+
 github_checks:
   annotations: false
 
-comment: 
+comment:
   layout: "diff, flags, files"
   behavior: default
 
 parsers:
   go:
     partials_as_hits: true
+
+ignore:
+  - "harness/determined/common/api/bindings.py"

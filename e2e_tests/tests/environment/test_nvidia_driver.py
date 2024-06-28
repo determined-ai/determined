@@ -1,3 +1,4 @@
+import os
 import re
 
 import pytest
@@ -8,6 +9,10 @@ from tests import command as cmd
 
 @pytest.mark.e2e_gpu
 @pytest.mark.gpu_required
+@pytest.mark.skipif(
+    os.environ["CIRCLE_JOB"] == "test-e2e-gke-single-gpu",
+    reason="gke machine image does not contain nvidia-fabricmanager",
+)
 def test_nvidia_drivers_version_matching() -> None:
     sess = api_utils.user_session()
 

@@ -65,7 +65,7 @@ export const terminalCommandStates: Set<CommandState> = new Set([
   CommandState.Terminating,
 ]);
 
-const runStateList = [
+export const runStateList = [
   RunState.Canceled,
   RunState.Completed,
   RunState.Error,

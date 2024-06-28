@@ -495,6 +495,12 @@ export const getActiveTasks = generateDetApi<
   Type.TaskCounts
 >(Config.getActiveTasks);
 
+export const getTaskAcceleratorData = generateDetApi<
+  Service.GetTaskParams,
+  Api.V1GetTaskAcceleratorDataResponse,
+  Api.V1AcceleratorData[]
+>(Config.getTaskAcceleratorData);
+
 /* Webhooks */
 
 export const createWebhook = generateDetApi<Api.V1Webhook, Api.V1PostWebhookResponse, Type.Webhook>(
@@ -756,6 +762,36 @@ export const searchRuns = generateDetApi<
   Api.V1SearchRunsResponse,
   Type.SearchFlatRunPagination
 >(Config.searchRuns);
+
+export const archiveRuns = generateDetApi<
+  Api.V1ArchiveRunsRequest,
+  Api.V1ArchiveRunsResponse,
+  Type.BulkActionResult
+>(Config.archiveRuns);
+
+export const deleteRuns = generateDetApi<
+  Api.V1DeleteRunsRequest,
+  Api.V1DeleteRunsResponse,
+  Type.BulkActionResult
+>(Config.deleteRuns);
+
+export const killRuns = generateDetApi<
+  Api.V1KillRunsRequest,
+  Api.V1KillRunsResponse,
+  Type.BulkActionResult
+>(Config.killRuns);
+
+export const moveRuns = generateDetApi<
+  Api.V1MoveRunsRequest,
+  Api.V1MoveRunsResponse,
+  Type.BulkActionResult
+>(Config.moveRuns);
+
+export const unarchiveRuns = generateDetApi<
+  Api.V1UnarchiveRunsRequest,
+  Api.V1UnarchiveRunsResponse,
+  void
+>(Config.unarchiveRuns);
 
 /* Tasks */
 

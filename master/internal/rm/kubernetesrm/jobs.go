@@ -746,7 +746,6 @@ func (j *jobsService) recreateGatewayProxyResources(
 	for _, port := range gatewayPorts {
 		var tcpRoute *alphaGatewayTyped.TCPRoute
 		for _, t := range tcpRoutes {
-			t := t
 			if len(t.Spec.ParentRefs) > 0 &&
 				t.Spec.ParentRefs[0].Port != nil &&
 				int(*t.Spec.ParentRefs[0].Port) == port {
@@ -760,7 +759,6 @@ func (j *jobsService) recreateGatewayProxyResources(
 
 		var service *k8sV1.Service
 		for _, s := range services {
-			s := s
 			if s.Name == tcpRoute.Name {
 				service = &s
 				break
@@ -918,7 +916,6 @@ func (j *jobsService) refreshJobState(allocationID model.AllocationID) error {
 		if _, ok := j.namespaceToPoolName[job.Namespace]; !ok {
 			continue
 		}
-		job := job
 		j.jobUpdatedCallback(&job)
 	}
 	return nil
@@ -940,7 +937,6 @@ func (j *jobsService) refreshPodStates(allocationID model.AllocationID) error {
 		if _, ok := j.namespaceToPoolName[pod.Namespace]; !ok {
 			continue
 		}
-		pod := pod
 		j.podStatusCallback(&pod)
 	}
 	return nil

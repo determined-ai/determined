@@ -681,6 +681,7 @@ export const decodeV1TrialToTrialItem = (data: Sdk.Trialv1Trial): types.TrialIte
     startTime: data.startTime as unknown as string,
     state: decodeExperimentState(data.state),
     summaryMetrics: data.summaryMetrics && decodeSummaryMetrics(data.summaryMetrics),
+    taskId: data.taskId,
     totalBatchesProcessed: data.totalBatchesProcessed,
     totalCheckpointSize: parseInt(data?.totalCheckpointSize || '0'),
   };
@@ -889,11 +890,11 @@ export const decodeJobStates = (
   >;
 };
 
-export const mapV1ExperimentActionResults = (
-  results: Sdk.V1ExperimentActionResult[],
+export const mapV1ActionResults = (
+  results: Sdk.V1ExperimentActionResult[] | Sdk.V1RunActionResult[],
 ): types.BulkActionResult => {
   return results.reduce(
-    (acc, cur) => {
+    (acc: types.BulkActionResult, cur) => {
       if (cur.error.length > 0) {
         acc.failed.push(cur);
       } else {
@@ -901,7 +902,7 @@ export const mapV1ExperimentActionResults = (
       }
       return acc;
     },
-    { failed: [], successful: [] } as types.BulkActionResult,
+    { failed: [], successful: [] },
   );
 };
 
