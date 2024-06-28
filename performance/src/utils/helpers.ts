@@ -1,5 +1,5 @@
 import { check, group, JSONObject } from "k6";
-import http from "k6/http";
+import http, { RefinedParams, RefinedResponse, RequestBody, ResponseType } from "k6/http";
 import { Results, TestConfiguration, TestGroup } from "./types";
 
 // k6 groups cannot be defined in the init methods of a k6 script
@@ -46,24 +46,22 @@ export const authenticateVU = (clusterURL: string): string => {
   return token;
 };
 
-export const testGetRequestor = (
+export const testRequestWithSession = (
   clusterURL: string,
-  testConfig?: TestConfiguration,
-): ((url: string) => () => void) => {
-  return (url: string) => {
-    return () => {
-      const params = {
-        headers: {
-          "Content-Type": "application/json",
-          Authorization: `${testConfig?.auth.token}`,
-        },
-      };
-      const res = http.get(generateEndpointUrl(url, clusterURL), params);
-      check(res, { "200 response": (r) => r.status == 200 });
-    };
-  };
-};
-
+  testConfig?: TestConfiguration
+) => <RT extends ResponseType | undefined>(method: string, url: string, body?: RequestBody, params?: RefinedParams<RT>): () => void => () => {
+    const { headers, ...restParams } = params || {};
+    const response = http.request(method, generateEndpointUrl(url, clusterURL), body, {
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: testConfig?.auth.token || '',
+        ...headers || {}
+      },
+      ...restParams
+    });
+    // NOTE: consider allowing callers to pass more checks here
+    check(response, { "200 response": (r) => r.status === 200 });
+  }
 const getTestName = (resultName: string): string =>
   "Test: " +
   resultName.substring(

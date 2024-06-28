@@ -1,13 +1,11 @@
-import { check, sleep } from "k6";
+import { sleep } from "k6";
 import { Options, Scenario, Threshold } from "k6/options";
-import http from "k6/http";
 import { jUnit, textSummary } from "./utils/k6-summary";
 import {
   authenticateVU,
-  generateEndpointUrl,
   generateSlackResults,
   test,
-  testGetRequestor,
+  testRequestWithSession,
 } from "./utils/helpers";
 import {
   Results,
@@ -74,7 +72,8 @@ const getloadTests = (
   inSetupPhase: boolean = false,
 ): TestGroup[] => {
   const sD = testConfig?.seededData;
-  const getRequest = testGetRequestor(CLUSTER_URL, testConfig);
+  const testRequest = testRequestWithSession(CLUSTER_URL, testConfig);
+  const getRequest = testRequest.bind(this, 'GET');
   const testSuite = [
     // Query the master endpoint
     test("get master configuration", getRequest("/api/v1/master")),
@@ -98,19 +97,17 @@ const getloadTests = (
       ),
       !!sD?.resourcePool,
     ),
-    test("login", () => {
-      const res = http.post(
-        generateEndpointUrl("/api/v1/auth/login", CLUSTER_URL),
-        JSON.stringify({
-          username: __ENV.DET_ADMIN_USERNAME,
-          password: __ENV.DET_ADMIN_PASSWORD,
-        }),
-        {
-          headers: { "Content-Type": "application/json" },
-        },
-      );
-      check(res, { "200 response": (r) => r.status == 200 });
-    }),
+    test("login", testRequest(
+      "POST",
+      "/api/v1/auth/login",
+      JSON.stringify({
+        username: __ENV.DET_ADMIN_USERNAME,
+        password: __ENV.DET_ADMIN_PASSWORD,
+      }),
+      {
+        headers: { "Authorization": "" },
+      },
+    )),
     test(
       "get workspace model labels",
       getRequest(`/api/v1/model/labels?workspaceId=${sD?.workspace.id}`),
@@ -336,23 +333,31 @@ const getloadTests = (
       getRequest(`/api/v1/roles/search/by-group/{groupId}`),
       RBAC_ENABLED,
     ),
-    test(
-      "search flat runs",
-      getRequest(
-        `/api/v1/runs?projectId=${sD?.workspace.projectId}`,
-      ),
+    test("search flat runs",
+      testRequest('POST', '/api/v1/runs', JSON.stringify({ projectId: sD?.workspace.projectId })),
       !!sD?.workspace.projectId,
     ),
     test(
       "search flat runs w/ hparam",
-      getRequest(
-        `/api/v1/runs?filter=%7B%22filterGroup%22%3A%7B%22children` +
-        `%22%3A%5B%7B%22columnName%22%3A%22hp.global_batch_size%22%2C%22kind` +
-        `%22%3A%22field%22%2C%22location%22%3A%22LOCATION_TYPE_RUN_HYPERPARAMETERS` + 
-        `%22%2C%22operator%22%3A%22%3E%22%2C%22type%22%3A%22COLUMN_TYPE_NUMBER` +
-        `%22%2C%22value%22%3A0.1%7D%5D%2C%22conjunction%22%3A%22and%22%2C%22kind` +
-        `%22%3A%22group%22%7D%2C%22showArchived%22%3Afalse%7D`,
-      ),
+      testRequest('POST', '/api/v1/runs', JSON.stringify({
+        filter: JSON.stringify({
+          "filterGroup": {
+            "children": [
+              {
+                "columnName": "hp.global_batch_size",
+                "kind": "field",
+                "location": "LOCATION_TYPE_RUN_HYPERPARAMETERS",
+                "operator": ">",
+                "type": "COLUMN_TYPE_NUMBER",
+                "value": 0.1
+              }
+            ],
+            "conjunction": "and",
+            "kind": "group"
+          },
+          "showArchived": false
+        })
+      })),
       !!sD?.workspace.projectId,
     ),
   ];
