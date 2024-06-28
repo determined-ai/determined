@@ -2221,7 +2221,7 @@ func (j *jobsService) removeEmptyNamespace(namespaceName string, clusterName str
 }
 
 func (j *jobsService) setResourceQuota(quota int, namespace string) error {
-	var k8sDeterminedLabel = map[string]string{determinedLabel: namespace}
+	k8sDeterminedLabel := map[string]string{determinedLabel: namespace}
 
 	k8sNamespace, err := j.clientSet.CoreV1().Namespaces().Get(context.TODO(), namespace,
 		metaV1.GetOptions{
@@ -2247,6 +2247,9 @@ func (j *jobsService) setResourceQuota(quota int, namespace string) error {
 	// should remove that quota from Kubernetes and then try to set a Determined quota.
 	k8sQuotas, err := j.clientSet.CoreV1().ResourceQuotas(namespace).List(context.TODO(),
 		metaV1.ListOptions{})
+	if err != nil {
+		return fmt.Errorf("error fetching resource quotas for namespace %s: %w", namespace, err)
+	}
 	quotas := k8sQuotas.Items
 	currentQuota := float64(quota)
 	var detQuota *k8sV1.ResourceQuota
@@ -2257,12 +2260,13 @@ func (j *jobsService) setResourceQuota(quota int, namespace string) error {
 				tmpQuota := quantity.AsApproximateFloat64()
 				q.Spec.Hard[name] = *resource.NewQuantity(int64(quota), resource.DecimalSI)
 				if q.Name == quotaName {
-					detQuota = &q
+					qVal := q
+					detQuota = &qVal
 				} else if tmpQuota < currentQuota {
-					return fmt.Errorf("cannot set quota %d on namespace %s, because this "+
-						"namespace consists of a Kubernetes quota with request limit %d that does not "+
-						"correspond to the auto-created namespace. Please remove this quota in "+
-						"Kubernetes before trying to raise the GPU request limit on the namespace.",
+					return fmt.Errorf("cannot set quota %d on namespace %s, because this"+
+						" namespace consists of a Kubernetes quota with request limit %d that does not"+
+						" correspond to the auto-created namespace. Please remove this quota in"+
+						" Kubernetes before trying to raise the GPU request limit on the namespace",
 						quota, namespace, int(tmpQuota))
 				}
 			}
@@ -2270,9 +2274,6 @@ func (j *jobsService) setResourceQuota(quota int, namespace string) error {
 	}
 
 	if detQuota != nil {
-		// if currentQuota < float64(quota) {
-		// 	return fmt.Errorf("Cannot set quota because there already exists a quota in namespace %s of limit %d", namespaceName, currentQuota)
-		// }
 		detQuotaToByteArray, err := json.Marshal(detQuota)
 		if err != nil {
 			return fmt.Errorf("error marshaling quota %s: %w", detQuota.Name, err)
@@ -2282,7 +2283,6 @@ func (j *jobsService) setResourceQuota(quota int, namespace string) error {
 			types.MergePatchType,
 			detQuotaToByteArray,
 			metaV1.PatchOptions{})
-
 		if err != nil {
 			return fmt.Errorf("error applying patch to resource quota %s: %w", quotaName, err)
 		}

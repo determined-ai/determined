@@ -170,7 +170,8 @@ func (a *WorkspaceAuthZBasic) CanSetWorkspaceNamespaceBindings(
 
 // CanSetResourceQuotas returns an error if the user is not a cluster admin.
 func (a *WorkspaceAuthZBasic) CanSetResourceQuotas(ctx context.Context, curUser model.User,
-	workspace *workspacev1.Workspace) error {
+	workspace *workspacev1.Workspace,
+) error {
 	if !curUser.Admin {
 		return fmt.Errorf("only admins may set workspace bindings")
 	}

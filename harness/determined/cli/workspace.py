@@ -214,7 +214,7 @@ def delete_workspace_namespace_binding(args: argparse.Namespace) -> None:
     return None
 
 
-def set_resource_quota(args: argparse.Namespace):
+def set_resource_quota(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     ws_name = str(args.workspace_name)
     w = api.workspace_by_name(sess, ws_name)
@@ -225,16 +225,17 @@ def set_resource_quota(args: argparse.Namespace):
     cluster_quota_pairs = {cluster_name: args.resource_quota}
     content = bindings.v1SetResourceQuotasRequest(
         id=w.id,
-        clusterQuotaPairs= cluster_quota_pairs,
+        clusterQuotaPairs=cluster_quota_pairs,
     )
-    
+
     bindings.post_SetResourceQuotas(sess, body=content, id=w.id)
-    
+
     cluster_details = ""
     if args.cluster_name:
         cluster_details = f"for cluster {args.cluster_name}"
-    print("Resource quota", str(args.resource_quota), "is set on workspace", str(ws_name), 
-          cluster_details)
+    print(
+        f"Resource quota {str(args.resource_quota)} is set on workspace {ws_name} {cluster_details}"
+    )
     return None
 
 
@@ -302,10 +303,10 @@ def create_workspace(args: argparse.Namespace) -> None:
         render.print_json(w.to_json())
     else:
         render_workspaces([w])
-
-    for cluster_name in resp.namespaceBindings:
-        namespace_binding = resp.namespaceBindings[cluster_name]
-        print(f"Workspace {w.name} is bound to namespace {namespace_binding.namespace}")
+    if resp.namespaceBindings:
+        for cluster_name in resp.namespaceBindings:
+            namespace_binding = resp.namespaceBindings[cluster_name]
+            print(f"Workspace {w.name} is bound to namespace {namespace_binding.namespace}")
 
 
 def describe_workspace(args: argparse.Namespace) -> None:
@@ -532,9 +533,12 @@ args_description = [
                             respective workspace-namespace binding.",
                         ),
                     ),
-                    cli.Arg("--resource-quota", type=int, help="the GPU request limit placed on \
+                    cli.Arg(
+                        "--resource-quota",
+                        type=int,
+                        help="the GPU request limit placed on \
                         the namespace bound to the workspace, inherently limiting the GPU resource \
-                        requests (within a given Kubernetes cluster) directed to a workspace."
+                        requests (within a given Kubernetes cluster) directed to a workspace.",
                     ),
                 ],
             ),
@@ -584,8 +588,12 @@ args_description = [
                         set_workspace_namespace_binding,
                         "set workspace-namespace binding",
                         [
-                            cli.Arg("workspace_name", type=str, help="name of the \
-                            workspace"),
+                            cli.Arg(
+                                "workspace_name",
+                                type=str,
+                                help="name of the \
+                            workspace",
+                            ),
                             cli.Arg(
                                 "--cluster-name",
                                 type=str,
@@ -646,14 +654,21 @@ args_description = [
                         set_resource_quota,
                         "set resource quota",
                         [
-                            cli.Arg("workspace_name", type=str, help="name of the workspace"), 
-                            cli.Arg("resource_quota", type=int, 
-                                    help="the GPU request limit placed on a \
+                            cli.Arg("workspace_name", type=str, help="name of the workspace"),
+                            cli.Arg(
+                                "resource_quota",
+                                type=int,
+                                help="the GPU request limit placed on a \
                                     workspace-bound namespace, inherently limiting the \
                                     GPU resources (belonging to a given Kubernetes \
-                                    cluster) consumable by a workspace."),
-                            cli.Arg("--cluster-name", type=str, help="cluster within which \
-                                we create the resource quota"),
+                                    cluster) consumable by a workspace.",
+                            ),
+                            cli.Arg(
+                                "--cluster-name",
+                                type=str,
+                                help="cluster within which \
+                                we create the resource quota",
+                            ),
                         ],
                     ),
                 ],

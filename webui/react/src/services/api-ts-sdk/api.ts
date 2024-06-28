@@ -35428,7 +35428,7 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
         },
         /**
          * 
-         * @summary Set a resource quota for a worksoace (within a specific cluster).
+         * @summary Set a resource quota for a workspace (within a specific cluster).
          * @param {number} id The id of the workspace.
          * @param {V1SetResourceQuotasRequest} body
          * @param {*} [options] Override http request option.
@@ -35827,7 +35827,7 @@ export const WorkspacesApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Set a resource quota for a worksoace (within a specific cluster).
+         * @summary Set a resource quota for a workspace (within a specific cluster).
          * @param {number} id The id of the workspace.
          * @param {V1SetResourceQuotasRequest} body
          * @param {*} [options] Override http request option.
@@ -36045,7 +36045,7 @@ export const WorkspacesApiFactory = function (configuration?: Configuration, fet
         },
         /**
          * 
-         * @summary Set a resource quota for a worksoace (within a specific cluster).
+         * @summary Set a resource quota for a workspace (within a specific cluster).
          * @param {number} id The id of the workspace.
          * @param {V1SetResourceQuotasRequest} body
          * @param {*} [options] Override http request option.
@@ -36250,7 +36250,7 @@ export class WorkspacesApi extends BaseAPI {
     
     /**
      * 
-     * @summary Set a resource quota for a worksoace (within a specific cluster).
+     * @summary Set a resource quota for a workspace (within a specific cluster).
      * @param {number} id The id of the workspace.
      * @param {V1SetResourceQuotasRequest} body
      * @param {*} [options] Override http request option.

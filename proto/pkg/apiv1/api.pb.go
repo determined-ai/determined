@@ -4275,7 +4275,7 @@ type DeterminedClient interface {
 	UnpinWorkspace(ctx context.Context, in *UnpinWorkspaceRequest, opts ...grpc.CallOption) (*UnpinWorkspaceResponse, error)
 	// Bind a namespace to a workspace.
 	SetWorkspaceNamespaceBindings(ctx context.Context, in *SetWorkspaceNamespaceBindingsRequest, opts ...grpc.CallOption) (*SetWorkspaceNamespaceBindingsResponse, error)
-	// Set a resource quota for a worksoace (within a specific cluster).
+	// Set a resource quota for a workspace (within a specific cluster).
 	SetResourceQuotas(ctx context.Context, in *SetResourceQuotasRequest, opts ...grpc.CallOption) (*SetResourceQuotasResponse, error)
 	// List namespaces bound to a workspace.
 	ListWorkspaceNamespaceBindings(ctx context.Context, in *ListWorkspaceNamespaceBindingsRequest, opts ...grpc.CallOption) (*ListWorkspaceNamespaceBindingsResponse, error)
@@ -7399,7 +7399,7 @@ type DeterminedServer interface {
 	UnpinWorkspace(context.Context, *UnpinWorkspaceRequest) (*UnpinWorkspaceResponse, error)
 	// Bind a namespace to a workspace.
 	SetWorkspaceNamespaceBindings(context.Context, *SetWorkspaceNamespaceBindingsRequest) (*SetWorkspaceNamespaceBindingsResponse, error)
-	// Set a resource quota for a worksoace (within a specific cluster).
+	// Set a resource quota for a workspace (within a specific cluster).
 	SetResourceQuotas(context.Context, *SetResourceQuotasRequest) (*SetResourceQuotasResponse, error)
 	// List namespaces bound to a workspace.
 	ListWorkspaceNamespaceBindings(context.Context, *ListWorkspaceNamespaceBindingsRequest) (*ListWorkspaceNamespaceBindingsResponse, error)

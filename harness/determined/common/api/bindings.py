@@ -23520,7 +23520,7 @@ def post_SetResourceQuotas(
     body: "v1SetResourceQuotasRequest",
     id: int,
 ) -> None:
-    """Set a resource quota for a worksoace (within a specific cluster).
+    """Set a resource quota for a workspace (within a specific cluster).
 
     - id: The id of the workspace.
     """

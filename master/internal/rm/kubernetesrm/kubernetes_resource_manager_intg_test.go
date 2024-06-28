@@ -812,10 +812,10 @@ func TestVerifyNamespaceExists(t *testing.T) {
 	channel := make(chan resourcesRequestFailure, 16)
 	js.requestQueueWorkers = []*requestProcessingWorker{
 		{
-			js.jobInterfaces,
-			js.podInterfaces,
-			js.configMapInterfaces,
-			channel, nil,
+			jobInterface:        js.jobInterfaces,
+			podInterface:        js.podInterfaces,
+			configMapInterfaces: js.configMapInterfaces,
+			failures:            channel,
 		},
 	}
 
@@ -875,10 +875,10 @@ func TestRemoveEmptyNamespace(t *testing.T) {
 	channel := make(chan resourcesRequestFailure, 16)
 	js.requestQueueWorkers = []*requestProcessingWorker{
 		{
-			js.jobInterfaces,
-			js.podInterfaces,
-			js.configMapInterfaces,
-			channel, nil,
+			jobInterface:        js.jobInterfaces,
+			podInterface:        js.podInterfaces,
+			configMapInterfaces: js.configMapInterfaces,
+			failures:            channel,
 		},
 	}
 	// Try removing non-empty namespace name.

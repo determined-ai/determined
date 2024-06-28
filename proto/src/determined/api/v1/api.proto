@@ -2120,8 +2120,9 @@ service Determined {
     };
   }
 
-  // Set a resource quota for a worksoace (within a specific cluster).
-  rpc SetResourceQuotas(SetResourceQuotasRequest) returns (SetResourceQuotasResponse) {
+  // Set a resource quota for a workspace (within a specific cluster).
+  rpc SetResourceQuotas(SetResourceQuotasRequest)
+      returns (SetResourceQuotasResponse) {
     option (google.api.http) = {
       post: "/api/v1/workspaces/{id}/set-resource-quota",
       body: "*"

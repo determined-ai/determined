@@ -630,8 +630,9 @@ type PostWorkspaceRequest struct {
 	// workspace-namespace binding and the resource quota placed on the namespace
 	// bound to the workspace for a given cluster).
 	ClusterNamespaceMeta map[string]*workspacev1.WorkspaceNamespaceMeta `protobuf:"bytes,16,rep,name=cluster_namespace_meta,json=clusterNamespaceMeta,proto3" json:"cluster_namespace_meta,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"bytes,2,opt,name=value,proto3"`
-	// The map of clusters to the resource quota placed on the auto-generated namespace within that
-	// cluster (inherently capping the slots available to a workspace).
+	// The map of clusters to the resource quota placed on the auto-generated
+	// namespace within that cluster (inherently capping the slots available to a
+	// workspace).
 	ClusterQuotaPairs map[string]int32 `protobuf:"bytes,3,rep,name=cluster_quota_pairs,json=clusterQuotaPairs,proto3" json:"cluster_quota_pairs,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"varint,2,opt,name=value,proto3"`
 }
 
@@ -1103,8 +1104,8 @@ type SetResourceQuotasRequest struct {
 
 	// The id of the workspace.
 	Id int32 `protobuf:"varint,1,opt,name=id,proto3" json:"id,omitempty"`
-	// A map of cluster to resource-quota pairs used to set GPU request limits on the workspace (for
-	// a specific cluster).
+	// A map of cluster to resource-quota pairs used to set GPU request limits on
+	// the workspace (for a specific cluster).
 	ClusterQuotaPairs map[string]int32 `protobuf:"bytes,2,rep,name=cluster_quota_pairs,json=clusterQuotaPairs,proto3" json:"cluster_quota_pairs,omitempty" protobuf_key:"bytes,1,opt,name=key,proto3" protobuf_val:"varint,2,opt,name=value,proto3"`
 }
 
@@ -1154,7 +1155,8 @@ func (x *SetResourceQuotasRequest) GetClusterQuotaPairs() map[string]int32 {
 	return nil
 }
 
-// Response for setting the resource quota for a workspace (for a specific cluster).
+// Response for setting the resource quota for a workspace (for a specific
+// cluster).
 type SetResourceQuotasResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

@@ -986,8 +986,8 @@ func (a *apiServer) SetWorkspaceNamespaceBindings(ctx context.Context,
 
 func (a *apiServer) setResourceQuotas(ctx context.Context,
 	req *apiv1.SetResourceQuotasRequest, tx *bun.Tx, curUser *model.User,
-	w *workspacev1.Workspace) (*apiv1.SetResourceQuotasResponse, error) {
-
+	w *workspacev1.Workspace,
+) (*apiv1.SetResourceQuotasResponse, error) {
 	license.RequireLicense("set resource quota")
 	if err := workspace.AuthZProvider.Get().
 		CanSetResourceQuotas(ctx, *curUser, w); err != nil {
@@ -1035,7 +1035,8 @@ func (a *apiServer) setResourceQuotas(ctx context.Context,
 }
 
 func (a *apiServer) SetResourceQuotas(ctx context.Context,
-	req *apiv1.SetResourceQuotasRequest) (resp *apiv1.SetResourceQuotasResponse, err error) {
+	req *apiv1.SetResourceQuotasRequest,
+) (resp *apiv1.SetResourceQuotasResponse, err error) {
 	defer func() {
 		if recover() != nil {
 			err = status.Error(codes.InvalidArgument, "Setting the resource quota on a workspace "+
