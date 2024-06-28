@@ -1167,7 +1167,7 @@ func (a *allocation) calculateExitStatus(reason string) (
 				if a.killedDaemonsGracefully {
 					return "allocation terminated daemon processes as part of normal exit", false, logrus.InfoLevel, nil
 				}
-				return fmt.Sprintf("allocation failed A: %s", err), false, logrus.ErrorLevel, err
+				return fmt.Sprintf("allocation failed: %s", err), false, logrus.ErrorLevel, err
 			case sproto.AgentError, sproto.AgentFailed:
 				return fmt.Sprintf("allocation failed due to agent failure: %s", err), false, logrus.ErrorLevel, err
 			case sproto.TaskAborted, sproto.ResourcesAborted:

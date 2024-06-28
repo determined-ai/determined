@@ -204,12 +204,11 @@ func (s *Service) applyUpdate(update *jobv1.QueueControl) error {
 		if action.ResourcePool == "" {
 			s.syslog.Error("resource pool must be set")
 		}
-		// kristine - set resoruce pool
 		return j.SetResourcePool(action.ResourcePool)
 	case *jobv1.QueueControl_AheadOf:
-		return fmt.Errorf("you shall not move")
+		return fmt.Errorf("action not supported - update priority to move job")
 	case *jobv1.QueueControl_BehindOf:
-		return fmt.Errorf("you shall not move")
+		return fmt.Errorf("action not suppoprted - update priority to move job")
 	default:
 		return fmt.Errorf("unexpected action: %v", action)
 	}
