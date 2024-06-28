@@ -395,7 +395,7 @@ func (a *apiServer) MoveRuns(
 		defer func() {
 			txErr := tx.Rollback()
 			if txErr != nil && txErr != sql.ErrTxDone {
-				log.WithError(txErr).Error("error rolling back transaction in MoveExperiments")
+				log.WithError(txErr).Error("error rolling back transaction in MoveRuns")
 			}
 		}()
 		failedExpMoveIds := []int32{-1}
