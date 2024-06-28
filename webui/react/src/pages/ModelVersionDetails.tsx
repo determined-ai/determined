@@ -230,16 +230,17 @@ const ModelVersionDetails: React.FC = () => {
     ];
   }, [modelVersion?.checkpoint]);
 
-  if (modelVersion?.checkpoint.experimentConfig?.integrations?.pachyderm !== undefined) {
-    const url = createPachydermLineageLink(
-      modelVersion.checkpoint.experimentConfig.integrations.pachyderm,
-    );
+  if (
+    modelVersion?.checkpoint.experimentConfig?.integrations?.pachyderm !== undefined &&
+    checkpointInfo.find(({ label }) => label === 'Data Input') === undefined
+  ) {
+    const pachydermData = modelVersion.checkpoint.experimentConfig.integrations.pachyderm;
+    const url = createPachydermLineageLink(pachydermData);
 
-    if (url !== undefined)
-      checkpointInfo.splice(1, 0, {
-        label: 'Data Input',
-        value: <Link path={url}>{'<MLDM repo>'}</Link>,
-      });
+    checkpointInfo.splice(1, 0, {
+      label: 'Data Input',
+      value: <Link path={url}>{pachydermData.dataset.repo}</Link>,
+    });
   }
 
   const validationMetrics = useMemo(() => {

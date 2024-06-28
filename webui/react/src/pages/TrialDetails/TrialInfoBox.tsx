@@ -153,7 +153,7 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
   }, [acceleratorData]);
 
   const allocationModal = useModal(allocationModalComponent);
-  const LineageComponent = useMemo(() => {
+  const lineageComponent = useMemo(() => {
     const {
       config: { integrations },
     } = experiment;
@@ -168,7 +168,7 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
 
       return (
         <OverviewStats title="Data input" onClick={handleClickDataInput}>
-          {'<MLDM repo>'}
+          {integrations.pachyderm.dataset.repo}
         </OverviewStats>
       );
     }
@@ -210,7 +210,7 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
           </OverviewStats>
         ) : null}
         {<OverviewStats title="Log Retention Days">{logRetentionDays}</OverviewStats>}
-        {LineageComponent}
+        {lineageComponent}
       </Card.Group>
       <allocationModal.Component data={acceleratorData} />
     </Section>

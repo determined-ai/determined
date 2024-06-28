@@ -241,7 +241,7 @@ describe('Trial Info Box', () => {
       setup(mockTrial1, mockExperimentWith);
       waitFor(() => {
         expect(screen.findByText('Data Input')).toBeVisible();
-        expect(screen.findByText('<MLDM repo>')).toBeVisible();
+        expect(screen.findByText(mockIntegrationData.dataset.repo)).toBeVisible();
       });
     });
 
@@ -249,7 +249,6 @@ describe('Trial Info Box', () => {
       setup(mockTrial1, mockExperiment);
       waitFor(() => {
         expect(screen.findByText('Data Input')).not.toBeVisible();
-        expect(screen.findByText('<MLDM repo>')).not.toBeVisible();
       });
     });
   });

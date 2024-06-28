@@ -20,7 +20,7 @@ export const mockIntegrationData: PachydermIntegrationDataType = {
     scheme: 'http',
   },
 };
-const expectedResult = `${mockIntegrationData.proxy.scheme}://${mockIntegrationData.proxy.host}:${mockIntegrationData.proxy.port}/linage/${mockIntegrationData.dataset.project}/repos/${mockIntegrationData.dataset.repo}/commit/${mockIntegrationData.dataset.commit}/?branchId=${mockIntegrationData.dataset.branch}`;
+const expectedResult = `${mockIntegrationData.proxy.scheme}://${mockIntegrationData.proxy.host}:${mockIntegrationData.proxy.port}/lineage/${mockIntegrationData.dataset.project}/repos/${mockIntegrationData.dataset.repo}/commit/${mockIntegrationData.dataset.commit}/?branchId=${mockIntegrationData.dataset.branch}`;
 
 describe('Integrations', () => {
   describe('createPachydermLineageLink', () => {

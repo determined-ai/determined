@@ -147,14 +147,17 @@ ${checkpoint?.totalBatches}? This action may complete or fail without further no
       { label: 'State', value: <Badge state={state} type={BadgeType.State} /> },
     ];
 
-    if (config.integrations?.pachyderm !== undefined) {
-      const url = createPachydermLineageLink(config.integrations.pachyderm);
+    if (
+      config.integrations?.pachyderm !== undefined &&
+      glossaryContent.find(({ label }) => label === 'Data Input') === undefined
+    ) {
+      const pachydermData = config.integrations.pachyderm;
+      const url = createPachydermLineageLink(pachydermData);
 
-      if (url !== undefined)
-        glossaryContent.splice(1, 0, {
-          label: 'Data Input',
-          value: <Link path={url}>{'<MLDM repo>'}</Link>,
-        });
+      glossaryContent.splice(1, 0, {
+        label: 'Data Input',
+        value: <Link path={url}>{pachydermData.dataset.repo}</Link>,
+      });
     }
 
     if (checkpoint.uuid) glossaryContent.push({ label: 'UUID', value: checkpoint.uuid });
