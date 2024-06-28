@@ -1027,13 +1027,6 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
               rowHeight={globalSettings.rowHeight}
               onRowHeightChange={onRowHeightChange}
             />
-<<<<<<< thiago/ET-309
-            {!isMobile && (
-              <span className={css.runSelection} data-test="runSelection">
-                {selectionLabel}
-              </span>
-            )}
-=======
             <FlatRunActionButton
               isMobile={isMobile}
               projectId={projectId}
@@ -1041,7 +1034,11 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
               workspaceId={workspaceId}
               onActionComplete={onActionComplete}
             />
->>>>>>> main
+            {!isMobile && (
+              <span className={css.runSelection} data-test="runSelection">
+                {selectionLabel}
+              </span>
+            )}
           </Row>
         </Column>
         <Column align="right">
