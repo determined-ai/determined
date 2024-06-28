@@ -126,7 +126,6 @@ func New(
 			maxSlotsPerPod = *poolConfig.TaskContainerDefaults.Kubernetes.MaxSlotsPerPod
 		}
 
-		poolConfig := poolConfig
 		rp := newResourcePool(maxSlotsPerPod, &poolConfig, k.jobsService, k.db)
 		go func() {
 			t := time.NewTicker(podSubmissionInterval)

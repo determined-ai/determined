@@ -67,8 +67,7 @@ func (c *AgentUserGroup) OwnArchive(oldArchive archive.Archive) archive.Archive 
 		return oldArchive
 	}
 	var newArchive archive.Archive
-	for _, item := range oldArchive {
-		newItem := item
+	for _, newItem := range oldArchive {
 		newItem.UserID = c.UID
 		newItem.GroupID = c.GID
 		newArchive = append(newArchive, newItem)

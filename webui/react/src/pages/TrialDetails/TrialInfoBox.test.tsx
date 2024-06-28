@@ -4,6 +4,7 @@ import { ConfirmationProvider } from 'hew/useConfirm';
 
 import {} from 'stores/cluster';
 
+import { ThemeProvider } from 'components/ThemeProvider';
 import { ExperimentBase, TrialDetails } from 'types';
 import { mockIntegrationData } from 'utils/integrations.test';
 
@@ -13,9 +14,11 @@ vi.useFakeTimers();
 const setup = (trial: TrialDetails, experiment: ExperimentBase) => {
   render(
     <UIProvider theme={DefaultTheme.Light}>
-      <ConfirmationProvider>
-        <TrialInfoBox experiment={experiment} trial={trial} />
-      </ConfirmationProvider>
+      <ThemeProvider>
+        <ConfirmationProvider>
+          <TrialInfoBox experiment={experiment} trial={trial} />
+        </ConfirmationProvider>
+      </ThemeProvider>
     </UIProvider>,
   );
 };

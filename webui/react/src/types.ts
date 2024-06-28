@@ -702,6 +702,7 @@ export interface TrialItem extends StartEndTimes {
   totalCheckpointSize: number;
   searcherMetricsVal?: number;
   logRetentionDays?: number;
+  taskId?: string;
 }
 
 export interface TrialDetails extends TrialItem {

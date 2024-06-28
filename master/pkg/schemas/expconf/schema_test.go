@@ -347,8 +347,7 @@ func RunCasesFile(t *testing.T, path string, displayPath string) {
 	err = json.Unmarshal(jbyts, &cases)
 	assert.NilError(t, err)
 
-	for _, testCase := range cases {
-		tc := testCase
+	for _, tc := range cases {
 		testName := fmt.Sprintf("%v::%v", displayPath, tc.Name)
 		t.Run(testName, func(t *testing.T) {
 			tc.CheckSaneAs(t)
