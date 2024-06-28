@@ -76,6 +76,8 @@ Modify the Job Queue using the WebUI
 #. Click the **Manage Job** option.
 #. Make your changes on the pop-up page, and click **OK**.
 
+.. _modify-job-queue-cli:
+
 Modify the Job Queue using the CLI
 ==================================
 
