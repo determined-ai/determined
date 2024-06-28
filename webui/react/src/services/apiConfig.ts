@@ -1190,56 +1190,6 @@ export const unarchiveRuns: DetApi<
   request: (params, options) => detApi.Internal.unarchiveRuns(params, options),
 };
 
-export const archiveRuns: DetApi<
-  Api.V1ArchiveRunsRequest,
-  Api.V1ArchiveRunsResponse,
-  Type.BulkActionResult
-> = {
-  name: 'archiveRuns',
-  postProcess: (response) => decoder.mapV1ActionResults(response.results),
-  request: (params, options) => detApi.Internal.archiveRuns(params, options),
-};
-
-export const deleteRuns: DetApi<
-  Api.V1DeleteRunsRequest,
-  Api.V1DeleteRunsResponse,
-  Type.BulkActionResult
-> = {
-  name: 'deleteRuns',
-  postProcess: (response) => decoder.mapV1ActionResults(response.results),
-  request: (params, options) => detApi.Internal.deleteRuns(params, options),
-};
-
-export const killRuns: DetApi<
-  Api.V1KillRunsRequest,
-  Api.V1KillRunsResponse,
-  Type.BulkActionResult
-> = {
-  name: 'killRuns',
-  postProcess: (response) => decoder.mapV1ActionResults(response.results),
-  request: (params, options) => detApi.Internal.killRuns(params, options),
-};
-
-export const moveRuns: DetApi<
-  Api.V1MoveRunsRequest,
-  Api.V1MoveRunsResponse,
-  Type.BulkActionResult
-> = {
-  name: 'moveRuns',
-  postProcess: (response) => decoder.mapV1ActionResults(response.results),
-  request: (params, options) => detApi.Internal.moveRuns(params, options),
-};
-
-export const unarchiveRuns: DetApi<
-  Api.V1UnarchiveRunsRequest,
-  Api.V1UnarchiveRunsResponse,
-  Type.BulkActionResult
-> = {
-  name: 'unarchiveRuns',
-  postProcess: (response) => decoder.mapV1ActionResults(response.results),
-  request: (params, options) => detApi.Internal.unarchiveRuns(params, options),
-};
-
 /* Tasks */
 
 export const getTask: DetApi<
