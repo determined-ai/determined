@@ -627,7 +627,7 @@ commands:
             - run:
                 name: Install DataDog agent
                 command: |
-                  host_tags=testSuite:<<parameters.mark>>,\
+                  host_tags="testSuite:<<parameters.mark>>,\
                   pipeline:${CIRCLE_PIPELINE_ID},\
                   workflow:${CIRCLE_WORKFLOW_ID},\
                   job:${CIRCLE_BUILD_NUM},\
@@ -637,7 +637,7 @@ commands:
                   totalNodes:${CIRCLE_NODE_TOTAL},\
                   nodeIdx:${CIRCLE_NODE_INDEX},\
                   repo:${CIRCLE_PROJECT_REPONAME},\
-                  pr:${CIRCLE_PR_NUMBER}
+                  pr:${CIRCLE_PR_NUMBER}"
                   
                   echo "$host_tags"
                   DD_ENV="ci-${CIRCLE_JOB}" \
@@ -688,7 +688,7 @@ commands:
             else
               echo "No Determined master listening on '<<parameters.master-scheme>>://<<parameters.master-host>>:<<parameters.master-port>>'"
             fi
-            tags=testSuite:<<parameters.mark>>,\
+            tags="testSuite:<<parameters.mark>>,\
                   pipeline:${CIRCLE_PIPELINE_ID},\
                   workflow:${CIRCLE_WORKFLOW_ID},\
                   job:${CIRCLE_BUILD_NUM},\
@@ -698,10 +698,12 @@ commands:
                   totalNodes:${CIRCLE_NODE_TOTAL},\
                   nodeIdx:${CIRCLE_NODE_INDEX},\
                   repo:${CIRCLE_PROJECT_REPONAME},\
-                  pr:${CIRCLE_PR_NUMBER}
+                  pr:${CIRCLE_PR_NUMBER}"
+
             cat /tmp/all-relevant-files | circleci tests run --command="DD_CIVISIBILITY_AGENTLESS_ENABLED=true \
-            DD_TAGS=\"${tags}\"" \
-            DD_ENV='ci-<<parameters.mark>>' DD_SERVICE='determined-pytest-<<parameters.mark>>' \
+            DD_TAGS=\"${tags}\" \
+            DD_ENV='ci-<<parameters.mark>>' \
+            DD_SERVICE='determined-pytest-<<parameters.mark>>' \
             DD_TRACE_DEBUG=true \
             DD_TRACE_LOG_FILE='/tmp/artifacts/logs/ddtrace.log'
             DET_MASTER_CERT_FILE=<<parameters.master-cert>> \
