@@ -143,8 +143,7 @@ export const canExperimentContinueTrial = (
   // single trial experiment can continue if the state is terminated.
   (((!!trial || experiment?.numTrials === 1) && terminalRunStates.has(experiment.state)) ||
     // multi trial experiment can continue if it's terminated but not completed, and the searcher type is grid or random.
-    (experiment.numTrials > 1 &&
-      ContinuableNonSingleSearcherName.has(experiment.config?.searcher.name || 'custom') &&
+    (ContinuableNonSingleSearcherName.has(experiment.config?.searcher.name || 'custom') &&
       erroredRunStates.has(experiment.state)));
 
 const experimentCheckers: Record<ExperimentAction, ExperimentChecker> = {
