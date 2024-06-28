@@ -7,7 +7,6 @@ import { handlePath } from 'routes/utils';
 import {
   archiveExperiment,
   cancelExperiment,
-  changeExperimentLogRetention,
   deleteExperiment,
   killExperiment,
   patchExperiment,
