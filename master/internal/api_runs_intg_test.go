@@ -451,7 +451,7 @@ func TestMoveRunsSameIds(t *testing.T) {
 
 	moveResp, err := api.MoveRuns(ctx, moveReq)
 	require.NoError(t, err)
-	require.Len(t, moveResp.Results, 0)
+	require.Empty(t, moveResp.Results)
 }
 
 func setUpMultiTrialExperiments(ctx context.Context, t *testing.T, api *apiServer, curUser model.User,
