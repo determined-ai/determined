@@ -52,7 +52,7 @@ func setupProjectAuthZTest(
 
 	if pAuthZ == nil {
 		pAuthZ = &mocks.ProjectAuthZ{}
-		// project.AuthZProvider.Register(mockType, pAuthZ)
+		project.AuthZProvider.Register(mockType, pAuthZ)
 	}
 	return api, pAuthZ, workspaceAuthZ, curUser, ctx
 }
