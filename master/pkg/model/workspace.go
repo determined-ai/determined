@@ -15,6 +15,8 @@ import (
 const (
 	// DefaultWorkspaceID is a special, always-existing, workspace titled "Uncategorized".
 	DefaultWorkspaceID = 1
+	// DefaultWorkspaceName is the default workspace name, which is always present, and always has ID 1.
+	DefaultWorkspaceName = "Uncategorized"
 	// DefaultProjectID is the default project ID for the default workspace.
 	DefaultProjectID = 1
 )

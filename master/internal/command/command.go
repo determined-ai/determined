@@ -125,6 +125,18 @@ func (c *Command) Start(ctx context.Context) error {
 		if err := c.persistAndEvictContextDirectoryFromMemory(); err != nil {
 			return err
 		}
+		err := task.InsertNTSCAllocationWorkspaceRecord(
+			ctx,
+			c.allocationID,
+			int(c.Metadata.WorkspaceID),
+			c.Base.Workspace,
+		)
+		if err != nil {
+			return fmt.Errorf(
+				"failure while attempting to persist workspace information for NTSC task (%s) allocation: %w",
+				c.taskID,
+				err)
+		}
 	}
 
 	priority := c.Config.Resources.Priority

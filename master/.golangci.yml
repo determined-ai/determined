@@ -1,5 +1,5 @@
 run:
-  go: "1.20"
+  go: "1.22"
 
   # Timeout for individual linters to complete by.
   timeout: 1m
@@ -90,6 +90,13 @@ linters-settings:
     enable-all-rules: true
     rules:
       # Do not enable these linters.
+      - name: range-val-address # Go language changed.
+        disabled: true
+      - name: range-val-in-closure # Go language changed.
+        disabled: true
+      - name: datarace # Go language changed.
+        disabled: true
+
       - name: function-length # We've internally decided that the char length for lines is 120, not 75.
         disabled: true
       - name: line-length-limit # Already have another linter enabled that takes care of this.
@@ -198,6 +205,8 @@ linters:
     - exhaustive       # We often use switch statements as if statements.
     - protogetter      # Carolina thinks this is overkill.
     - tagalign         # Carolina thinks this is unnecessary.
+    - exportloopref    # Language changed.
+    - intrange         # Buggy, panic with this on Go 1.22.
 
     # Linters that are deprecated / replaced / removed.
     - nosnakecase      # Replaced by revive(var-naming).

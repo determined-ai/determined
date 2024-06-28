@@ -824,7 +824,17 @@ func (a *apiServer) PatchProject(
 ) (*apiv1.PatchProjectResponse, error) {
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get user while updating project")
+		return nil, errors.New("failed to get user while updating project")
+	}
+
+	if req.Project == nil {
+		return nil, errors.New("project in request is nil while updating project")
+	}
+	if req.Project.Key != nil {
+		err = project.ValidateProjectKey(req.Project.Key.Value)
+		if err != nil {
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		}
 	}
 
 	updatedProject, err := project.UpdateProject(
@@ -1021,6 +1031,7 @@ func (a *apiServer) GetProjectsByUserActivity(
 		p.user_id,
 		'WORKSPACE_STATE_' || p.state AS state,
 		p.error_message,
+		(SELECT COUNT(*) FROM runs as r WHERE r.project_id=p.id) as num_runs,
 		COUNT(*) FILTER (WHERE e.project_id = p.id) AS num_experiments,
 		COUNT(*) FILTER (WHERE e.project_id = p.id AND e.state = 'ACTIVE') AS num_active_experiments,
 		MAX(e.start_time) FILTER (WHERE e.project_id = p.id) AS last_experiment_started_at

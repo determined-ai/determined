@@ -1,6 +1,7 @@
-import { BaseComponent, BaseReactFragment } from 'e2e/models/BaseComponent';
-import { DropdownMenu } from 'e2e/models/hew/Dropdown';
-import { Nameplate } from 'e2e/models/hew/Nameplate';
+import { BaseComponent } from 'e2e/models/common/base/BaseComponent';
+import { BaseReactFragment } from 'e2e/models/common/base/BaseReactFragment';
+import { DropdownMenu } from 'e2e/models/common/hew/Dropdown';
+import { Nameplate } from 'e2e/models/common/hew/Nameplate';
 
 import { WorkspaceActionDropdown } from './WorkspaceActionDropdown';
 
@@ -20,7 +21,7 @@ export class NavigationSideBar extends BaseReactFragment {
     parent: this.header,
   });
   readonly headerDropdown = new HeaderDropdown({
-    childNode: this.header,
+    clickThisComponentToOpen: this.header,
     root: this.root,
   });
   readonly home = new BaseComponent({
@@ -51,9 +52,14 @@ export class NavigationSideBar extends BaseReactFragment {
     parent: this.#nav,
     selector: `a[aria-label="${'Workspaces'}"]`,
   });
-  readonly createWorkspace = new BaseComponent({
+  readonly createWorkspaceFromHover = new BaseComponent({
     parent: this.#nav,
     selector: 'span[aria-label="Create workspace"]',
+  });
+  // consider this to be a rowContainer
+  readonly #pinnedWorkspaces = new BaseComponent({
+    parent: this.#nav,
+    selector: '[class*="NavigationSideBar_pinnedWorkspaces"]',
   });
   /**
    * Returns a representation of a sidebar NavigationItem with the specified label.
@@ -62,10 +68,11 @@ export class NavigationSideBar extends BaseReactFragment {
    */
   public sidebarWorkspaceItem(label: string): SidebarWorkspaceItem {
     return new SidebarWorkspaceItem({
-      parent: this.#nav,
+      parent: this.#pinnedWorkspaces,
       selector: `a[aria-label="${label}"]`,
     });
   }
+  // consider the other add workspace button
   // TODO UserSettings works as a drawer on desktop view after clicking on nav.headerDropdown.settings
   // TODO readonly userSettings= new UserSettings({ parent: this });
 }

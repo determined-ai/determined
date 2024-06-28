@@ -9,6 +9,8 @@ import userStore from 'stores/users';
 import {
   DetailedUser,
   ExperimentPermissionsArgs,
+  FlatRun,
+  FlatRunPermissionsArgs,
   ModelItem,
   ModelVersion,
   Permission,
@@ -53,10 +55,11 @@ interface MovePermissionsArgs {
   destination?: PermissionWorkspace;
 }
 
-interface PermissionsHook {
+export interface PermissionsHook {
   canAdministrateUsers: boolean;
   canAssignRoles: (arg0: WorkspacePermissionsArgs) => boolean;
   canCreateExperiment: (arg0: WorkspacePermissionsArgs) => boolean;
+  canCreateFlatRun: (arg0: WorkspacePermissionsArgs) => boolean;
   canCreateModelVersion: (arg0: ModelPermissionsArgs) => boolean;
   canCreateModelWorkspace: (arg0: ModelWorkspacePermissionsArgs) => boolean;
   canCreateModels: boolean;
@@ -67,6 +70,7 @@ interface PermissionsHook {
   canCreateWorkspace: boolean;
   canCreateWorkspaceNSC(arg0: WorkspacePermissionsArgs): boolean;
   canDeleteExperiment: (arg0: ExperimentPermissionsArgs) => boolean;
+  canDeleteFlatRun: (arg0: FlatRunPermissionsArgs) => boolean;
   canDeleteModel: (arg0: ModelPermissionsArgs) => boolean;
   canDeleteModelVersion: (arg0: ModelVersionPermissionsArgs) => boolean;
   canDeleteProjects: (arg0: ProjectPermissionsArgs) => boolean;
@@ -76,6 +80,7 @@ interface PermissionsHook {
   canEditWebhooks: boolean;
   canManageResourcePoolBindings: boolean;
   canModifyExperiment: (arg0: WorkspacePermissionsArgs) => boolean;
+  canModifyFlatRun: (arg0: WorkspacePermissionsArgs) => boolean;
   canModifyExperimentMetadata: (arg0: WorkspacePermissionsArgs) => boolean;
   canModifyGroups: boolean;
   canModifyModel: (arg0: ModelPermissionsArgs) => boolean;
@@ -88,6 +93,7 @@ interface PermissionsHook {
   canModifyWorkspaceCheckpointStorage: (arg0: WorkspacePermissionsArgs) => boolean;
   canModifyWorkspaceNSC(arg0: WorkspacePermissionsArgs): boolean;
   canMoveExperiment: (arg0: ExperimentPermissionsArgs) => boolean;
+  canMoveFlatRun: (arg0: FlatRunPermissionsArgs) => boolean;
   canMoveExperimentsTo: (arg0: MovePermissionsArgs) => boolean;
   canMoveModel: (arg0: MovePermissionsArgs) => boolean;
   canMoveProjects: (arg0: ProjectPermissionsArgs) => boolean;
@@ -128,6 +134,8 @@ const usePermissions = (): PermissionsHook => {
       canAssignRoles: (args: WorkspacePermissionsArgs) => canAssignRoles(rbacOpts, args.workspace),
       canCreateExperiment: (args: WorkspacePermissionsArgs) =>
         canCreateExperiment(rbacOpts, args.workspace),
+      canCreateFlatRun: (args: WorkspacePermissionsArgs) =>
+        canCreateFlatRun(rbacOpts, args.workspace),
       canCreateModels: canCreateModels(rbacOpts),
       canCreateModelVersion: (args: ModelPermissionsArgs) =>
         canCreateModelVersion(rbacOpts, args.model),
@@ -144,6 +152,7 @@ const usePermissions = (): PermissionsHook => {
         canCreateWorkspaceNSC(rbacOpts, args.workspace),
       canDeleteExperiment: (args: ExperimentPermissionsArgs) =>
         canDeleteExperiment(rbacOpts, args.experiment),
+      canDeleteFlatRun: (args: FlatRunPermissionsArgs) => canDeleteFlatRun(rbacOpts, args.flatRun),
       canDeleteModel: (args: ModelPermissionsArgs) => canDeleteModel(rbacOpts, args.model),
       canDeleteModelVersion: (args: ModelVersionPermissionsArgs) =>
         canDeleteModelVersion(rbacOpts, args.modelVersion),
@@ -159,6 +168,8 @@ const usePermissions = (): PermissionsHook => {
         canModifyExperiment(rbacOpts, args.workspace),
       canModifyExperimentMetadata: (args: WorkspacePermissionsArgs) =>
         canModifyExperimentMetadata(rbacOpts, args.workspace),
+      canModifyFlatRun: (args: WorkspacePermissionsArgs) =>
+        canModifyFlatRun(rbacOpts, args.workspace),
       canModifyGroups: canModifyGroups(rbacOpts),
       canModifyModel: (args: ModelPermissionsArgs) => canModifyModel(rbacOpts, args.model),
       canModifyModelVersion: (args: ModelVersionPermissionsArgs) =>
@@ -181,6 +192,7 @@ const usePermissions = (): PermissionsHook => {
         canMoveExperiment(rbacOpts, args.experiment),
       canMoveExperimentsTo: (args: MovePermissionsArgs) =>
         canMoveExperimentsTo(rbacOpts, args.destination),
+      canMoveFlatRun: (args: FlatRunPermissionsArgs) => canMoveFlatRun(rbacOpts, args.flatRun),
       canMoveModel: (args: MovePermissionsArgs) => canMoveModel(rbacOpts, args.destination),
       canMoveProjects: (args: ProjectPermissionsArgs) =>
         canMoveWorkspaceProjects(rbacOpts, args.project),
@@ -677,6 +689,50 @@ const canManageResourcePoolBindings = ({
     ? permitted.has(V1PermissionType.UPDATEMASTERCONFIG) ||
         permitted.has(V1PermissionType.UPDATEWORKSPACE)
     : !!currentUser && currentUser.isAdmin;
+};
+
+// Flat Runs
+
+// alias of canCreateExperiment
+const canCreateFlatRun = (
+  { rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
+  workspace?: PermissionWorkspace,
+): boolean => {
+  return canCreateExperiment({ rbacEnabled, userAssignments, userRoles }, workspace);
+};
+
+// alias of canModifyExperiment
+const canModifyFlatRun = (
+  { rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
+  workspace?: PermissionWorkspace,
+): boolean => {
+  return canModifyExperiment({ rbacEnabled, userAssignments, userRoles }, workspace);
+};
+
+const canDeleteFlatRun = (
+  { currentUser, rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
+  run: FlatRun,
+): boolean => {
+  const permitted = relevantPermissions(userAssignments, userRoles, run.workspaceId);
+  return (
+    !!currentUser &&
+    (rbacEnabled
+      ? permitted.has(V1PermissionType.DELETEEXPERIMENT)
+      : currentUser.isAdmin || currentUser.id === run.userId)
+  );
+};
+
+const canMoveFlatRun = (
+  { currentUser, rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
+  run: FlatRun,
+): boolean => {
+  const srcPermit = relevantPermissions(userAssignments, userRoles, run.workspaceId);
+  return (
+    !!currentUser &&
+    (rbacEnabled
+      ? srcPermit.has(V1PermissionType.DELETEEXPERIMENT)
+      : currentUser.isAdmin || currentUser.id === run.userId)
+  );
 };
 
 export default usePermissions;

@@ -1,4 +1,4 @@
-import { NamedComponent } from 'e2e/models/BaseComponent';
+import { NamedComponent } from 'e2e/models/common/base/BaseComponent';
 import { NavigationSideBar } from 'e2e/models/components/NavigationSideBar';
 
 /**

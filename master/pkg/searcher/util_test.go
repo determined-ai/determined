@@ -250,8 +250,7 @@ func checkValueSimulation(
 }
 
 func runValueSimulationTestCases(t *testing.T, testCases []valueSimulationTestCase) {
-	for _, testCase := range testCases {
-		tc := testCase
+	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			// Apply WithDefaults in one place to make tests easyto write.
 			config := schemas.WithDefaults(tc.config)
