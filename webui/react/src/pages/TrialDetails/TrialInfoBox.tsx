@@ -10,15 +10,14 @@ import OverviewStats from 'components/OverviewStats';
 import Section from 'components/Section';
 import TimeAgo from 'components/TimeAgo';
 import { useCheckpointFlow } from 'hooks/useCheckpointFlow';
-import { handlePath } from 'routes/utils';
 import { NodeElement } from 'pages/ResourcePool/Topology';
-import { paths } from 'routes/utils';
+import { handlePath, paths } from 'routes/utils';
 import { getTaskAcceleratorData } from 'services/api';
 import { V1AcceleratorData } from 'services/api-ts-sdk/api';
 import { CheckpointWorkloadExtended, ExperimentBase, TrialDetails } from 'types';
+import handleError from 'utils/error';
 import { createPachydermLineageLink } from 'utils/integrations';
 import { AnyMouseEvent } from 'utils/routes';
-import handleError from 'utils/error';
 import { humanReadableBytes, pluralizer } from 'utils/string';
 
 import css from './TrialInfoBox.module.scss';
