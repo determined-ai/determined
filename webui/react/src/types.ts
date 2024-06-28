@@ -426,6 +426,11 @@ export const ExperimentSearcherName = {
 
 export type ExperimentSearcherName = ValueOf<typeof ExperimentSearcherName>;
 
+export const ContinuableNonSingleSearcherName = new Set<ExperimentSearcherName>([
+  ExperimentSearcherName.Random,
+  ExperimentSearcherName.Grid,
+]);
+
 const Searcher = t.intersection([
   t.partial({
     max_length: t.record(

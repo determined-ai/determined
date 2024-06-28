@@ -50,6 +50,7 @@ import { Experimentv1State } from 'services/api-ts-sdk';
 import {
   ExperimentAction as Action,
   CompoundRunState,
+  ContinuableNonSingleSearcherName,
   ExperimentBase,
   JobState,
   RunState,
@@ -333,7 +334,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
               ) : (
                 'Continue Trial'
               ),
-              onClick: ['random', 'grid'].includes(experiment?.config.searcher.name) ? onClickContinueMultiTrialExp : ContinueTrialModal.open,
+              onClick: ContinuableNonSingleSearcherName.has(experiment.config.searcher.name) ? onClickContinueMultiTrialExp : ContinueTrialModal.open,
             },
           ],
         },

@@ -9,6 +9,7 @@ import {
 import {
   AnyTask,
   BulkExperimentItem,
+  ContinuableNonSingleSearcherName,
   ExperimentAction,
   ExperimentBase,
   ExperimentPermissionsArgs,
@@ -137,14 +138,15 @@ export const canExperimentContinueTrial = (
   experiment: ProjectExperiment,
   trial?: TrialDetails,
 ): boolean =>
-  !experiment.archived &&
-  !experiment.parentArchived &&
-  (!!trial ||
-    experiment?.numTrials === 1 ||
-    (experiment.state !== RunState.Completed &&
-      experiment.numTrials > 1 &&
-      ['random', 'grid'].includes(experiment.config?.searcher.name || ''))) &&
-  terminalRunStates.has(experiment.state);
+  (!experiment.archived &&
+    !experiment.parentArchived &&
+    // single trial experiment can continue if the state is terminated.
+    (!!trial || experiment?.numTrials === 1) &&
+    terminalRunStates.has(experiment.state)) ||
+  // multi trial experiment can continue if it's terminated but not completed, and the searcher type is grid or random.
+  (experiment.numTrials > 1 &&
+    ContinuableNonSingleSearcherName.has(experiment.config?.searcher.name || 'custom') &&
+    erroredRunStates.has(experiment.state));
 
 const experimentCheckers: Record<ExperimentAction, ExperimentChecker> = {
   /**
