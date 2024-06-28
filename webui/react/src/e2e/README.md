@@ -14,11 +14,13 @@ Everything you need before running tests
 
 Create `.env` file in `webui/react` like `webui/react/.env` and env variables. (`PW_` prefix stands for Playwright)
 
-- `PW_USER_NAME`: user name for determined account
-- `PW_PASSWORD`: password for determined account
-- `PW_SERVER_ADDRESS`: API server address
-- `PW_DET_PATH`: path to `det` if not already in path
-- `PW_DET_MASTER`: typically <http://localhost:8080>", used for CLI commands
+- `PW_BASE_URL`: web server tests are pointing to, typically <http://localhost:3000> or <http://localhost:3001>
+- `PW_USERNAME`: admin determined account creds
+- `PW_PASSWORD`: admin determined account creds
+- `PW_SERVER_ADDRESS`: API server address. defaults to base url
+- `PW_DET_PATH`: path to `det`. defaults to `det`
+- `PW_DET_MASTER`: used for CLI commands. defaults to <http://localhost:8080>
+- `PW_EE`: flag for `ee` or `oss`. defaults to unset for oss
 
 ### Playwright
 

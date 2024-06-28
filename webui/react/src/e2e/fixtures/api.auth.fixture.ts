@@ -1,6 +1,6 @@
 import { APIRequest, APIRequestContext, Browser, BrowserContext, Page } from '@playwright/test';
 
-import { webServerUrl } from 'e2e/utils/envVars';
+import { baseUrl, password, username } from 'e2e/utils/envVars';
 
 export class ApiAuthFixture {
   apiContext?: APIRequestContext; // we can't get this until login, so may be undefined
@@ -14,22 +14,9 @@ export class ApiAuthFixture {
     }
     return this._page;
   }
-  readonly #USERNAME: string;
-  readonly #PASSWORD: string;
   browserContext?: BrowserContext;
 
-  constructor(request: APIRequest, browser: Browser, baseURL?: string, existingPage?: Page) {
-    if (process.env.PW_USER_NAME === undefined) {
-      throw new Error('username must be defined');
-    }
-    if (process.env.PW_PASSWORD === undefined) {
-      throw new Error('password must be defined');
-    }
-    if (baseURL === undefined) {
-      throw new Error('baseURL must be defined in playwright config to use API requests.');
-    }
-    this.#USERNAME = process.env.PW_USER_NAME;
-    this.#PASSWORD = process.env.PW_PASSWORD;
+  constructor(request: APIRequest, browser: Browser, baseURL: string, existingPage?: Page) {
     this.request = request;
     this.browser = browser;
     this.baseURL = baseURL;
@@ -55,9 +42,7 @@ export class ApiAuthFixture {
    * fixture, the bearer token will be attached to that context. If not a new
    * browser context will be created with the cookie.
    */
-  async loginApi({
-    creds = { password: this.#PASSWORD, username: this.#USERNAME },
-  } = {}): Promise<void> {
+  async loginApi({ creds = { password: password(), username: username() } } = {}): Promise<void> {
     this.apiContext = this.apiContext || (await this.request.newContext({ baseURL: this.baseURL }));
     const resp = await this.apiContext.post('/api/v1/auth/login', {
       data: {
@@ -82,7 +67,7 @@ export class ApiAuthFixture {
       // replace the domain of api base url with browser base url
       state.cookies.forEach((cookie) => {
         if (cookie.name === 'auth' && cookie.domain === new URL(this.baseURL).hostname) {
-          cookie.domain = new URL(webServerUrl()).hostname;
+          cookie.domain = new URL(baseUrl()).hostname;
         }
       });
       await this.browserContext.addCookies(state.cookies);

@@ -1,6 +1,6 @@
 import { expect as baseExpect, test as baseTest, Page } from '@playwright/test';
 
-import { apiUrl } from 'e2e/utils/envVars';
+import { apiUrl, isEE } from 'e2e/utils/envVars';
 import { safeName } from 'e2e/utils/naming';
 import { V1PostUserRequest } from 'services/api-ts-sdk/api';
 
@@ -54,14 +54,7 @@ export const test = baseTest.extend<CustomFixtures, CustomWorkerFixtures>({
 
   // get the existing page but with auth cookie already logged in
   authedPage: async ({ apiAuth }, use) => {
-    // if (webServerUrl() === apiUrl()) {
     await apiAuth.loginBrowser(apiAuth.page);
-    // } else {
-    //   await auth.login({
-    //     password: newAdmin.password!,
-    //     username: newAdmin.user!.username,
-    //   });
-    // }
     await use(apiAuth.page);
   },
 
@@ -142,8 +135,7 @@ export const expect = baseExpect.extend({
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let matcherResult: any;
 
-    const isEE = Boolean(JSON.parse(process.env.PW_EE ?? '""'));
-    const appTitle = isEE ? 'HPE Machine Learning Development Environment' : 'Determined';
+    const appTitle = isEE() ? 'HPE Machine Learning Development Environment' : 'Determined';
 
     const getFullTitle = (prefix: string = '') => {
       if (prefix === '') {

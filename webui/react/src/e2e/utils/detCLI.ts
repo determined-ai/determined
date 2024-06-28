@@ -1,7 +1,7 @@
 import { execSync } from 'child_process';
 import path from 'path';
 
-import { detMasterURL } from './envVars';
+import { detMasterURL, detPath, password, username } from './envVars';
 
 export function fullPath(relativePath: string): string {
   return path.join(process.cwd(), relativePath);
@@ -9,12 +9,12 @@ export function fullPath(relativePath: string): string {
 
 export function detExecSync(detCommand: string): string {
   try {
-    return execSync(`${process.env.PW_DET_PATH || 'det'} ${detCommand}`, {
+    return execSync(`${detPath()} ${detCommand}`, {
       env: {
         ...process.env,
         DET_MASTER: detMasterURL(),
-        DET_PASS: process.env.PW_PASSWORD,
-        DET_USER: process.env.PW_USER_NAME,
+        DET_PASS: password(),
+        DET_USER: username(),
       },
       stdio: 'pipe',
       timeout: 5_000,
