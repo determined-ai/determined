@@ -137,14 +137,18 @@ const resumableSearcherTypes: ExperimentSearcherName[] = [
 export const canExperimentContinueTrial = (
   experiment: ProjectExperiment,
   trial?: TrialDetails,
-): boolean =>
-  !experiment.archived &&
-  !experiment.parentArchived &&
-  // single trial experiment can continue if the state is terminated.
-  (((!!trial || experiment?.numTrials === 1) && terminalRunStates.has(experiment.state)) ||
-    // multi trial experiment can continue if it's terminated but not completed, and the searcher type is grid or random.
-    (ContinuableNonSingleSearcherName.has(experiment.config?.searcher.name || 'custom') &&
-      erroredRunStates.has(experiment.state)));
+): boolean => {
+  if (experiment.archived || experiment.parentArchived) return false;
+  if ((!!trial || experiment?.numTrials === 1) && terminalRunStates.has(experiment.state))
+    return true;
+  // multi trial experiment can continue if it's terminated but not completed, and the searcher type is grid or random.
+  if (
+    ContinuableNonSingleSearcherName.has(experiment.config?.searcher.name || 'custom') &&
+    erroredRunStates.has(experiment.state)
+  )
+    return true;
+  return false;
+};
 
 const experimentCheckers: Record<ExperimentAction, ExperimentChecker> = {
   /**
