@@ -274,6 +274,14 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
     });
     const newPath = paths.experimentDetails(experiment.id);
     routeToReactUrl(paths.reload(newPath));
+  } catch (e) {
+    handleError(e, {
+      level: ErrorLevel.Error,
+      publicMessage: 'Please try again later.',
+      publicSubject: 'Unable to continue this experiment.',
+      silent: false,
+      type: ErrorType.Server,
+    });
   } finally {
     setIsRunningContinue(false);
   }
