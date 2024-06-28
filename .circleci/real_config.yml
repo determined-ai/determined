@@ -713,7 +713,7 @@ commands:
             -m '<<parameters.mark>>' \
             --durations=0 \
             --ddtrace \
-            --master-scheme='<<parameters.master-scheme>>'' \
+            --master-scheme='<<parameters.master-scheme>>' \
             --master-host='<<parameters.master-host>>' \
             --master-port='<<parameters.master-port>>' \
             -o junit_family=xunit1 \
