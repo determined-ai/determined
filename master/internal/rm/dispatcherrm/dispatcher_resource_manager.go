@@ -513,14 +513,6 @@ func (m *DispatcherResourceManager) getLauncherProvidedPools(
 	return result
 }
 
-// MoveJob implements rm.ResourceManager.
-func (*DispatcherResourceManager) MoveJob(req sproto.MoveJob) error {
-	// TODO(HAL-2863): We may not be able to support these specific actions, but how we
-	// let people interact with the job queue in dispatcher/slurm world.
-	// ctx.Respond(fmt.Errorf("modifying job positions is not yet supported in slurm"))
-	return rmerrors.UnsupportedError("move job unsupported in the dispatcher RM")
-}
-
 // RecoverJobPosition implements rm.ResourceManager.
 func (m *DispatcherResourceManager) RecoverJobPosition(sproto.RecoverJobPosition) {
 	m.syslog.Warn("move job unsupported in the dispatcher RM")

@@ -690,7 +690,6 @@ func mockRM(poolName rm.ResourcePoolName) *mocks.ResourceManager {
 	mockRM.On("GetJobQueueStatsRequest", mock.Anything).Return(&apiv1.GetJobQueueStatsResponse{
 		Results: []*apiv1.RPQueueStat{{ResourcePool: poolName.String()}},
 	}, nil)
-	mockRM.On("MoveJob", mock.Anything).Return(nil)
 	mockRM.On("GetExternalJobs", mock.Anything).Return([]*jobv1.Job{}, nil)
 	mockRM.On("GetAgent", mock.Anything).Return(&apiv1.GetAgentResponse{}, nil)
 	mockRM.On("EnableAgent", mock.Anything).Return(&apiv1.EnableAgentResponse{}, nil)
