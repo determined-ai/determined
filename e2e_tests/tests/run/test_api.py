@@ -266,5 +266,8 @@ def test_run_pause_and_resume_filter_skip_empty() -> None:
         wait_for_run_state(sess, res.id, bindings.trialv1State.ACTIVE)
 
     # kill run for cleanup
-    _ = bindings.post_KillRuns(sess, body=bindings.v1KillRunsRequest(runIds=[res.id], projectId=1))
-    wait_for_run_state(sess, res.id, bindings.trialv1State.CANCELED)
+    if len(resumeResp.results) > 0:
+        _ = bindings.post_KillRuns(
+            sess, body=bindings.v1KillRunsRequest(runIds=[res.id], projectId=1)
+        )
+        wait_for_run_state(sess, res.id, bindings.trialv1State.CANCELED)
