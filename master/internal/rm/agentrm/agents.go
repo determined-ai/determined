@@ -205,6 +205,7 @@ func (a *agents) createAgent(
 
 	var poolConfig *config.ResourcePoolConfig
 	for _, pc := range a.poolConfigs {
+		// The address of a loop variable is always the same. Use a temporary variable to capture the address.
 		pc := pc
 		if pc.PoolName == resourcePool {
 			poolConfig = &pc

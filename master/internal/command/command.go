@@ -53,16 +53,15 @@ type Command struct {
 
 	tasks.GenericCommandSpec
 
-	registeredTime time.Time
-	taskID         model.TaskID
-	taskType       model.TaskType
-	jobType        model.JobType
-	jobID          model.JobID
-	allocationID   model.AllocationID
-	lastState      task.AllocationState
-	exitStatus     *task.AllocationExited
-	restored       bool
-
+	registeredTime   time.Time
+	taskID           model.TaskID
+	taskType         model.TaskType
+	jobType          model.JobType
+	jobID            model.JobID
+	allocationID     model.AllocationID
+	lastState        task.AllocationState
+	exitStatus       *task.AllocationExited
+	restored         bool
 	contextDirectory []byte // Don't rely on this being set outsides of PreStart non restore case.
 
 	logCtx logger.Context
@@ -125,6 +124,18 @@ func (c *Command) Start(ctx context.Context) error {
 		}
 		if err := c.persistAndEvictContextDirectoryFromMemory(); err != nil {
 			return err
+		}
+		err := task.InsertNTSCAllocationWorkspaceRecord(
+			ctx,
+			c.allocationID,
+			int(c.Metadata.WorkspaceID),
+			c.Base.Workspace,
+		)
+		if err != nil {
+			return fmt.Errorf(
+				"failure while attempting to persist workspace information for NTSC task (%s) allocation: %w",
+				c.taskID,
+				err)
 		}
 	}
 
@@ -237,6 +248,12 @@ func (c *Command) OnExit(ae *task.AllocationExited) {
 		c.syslog.WithError(err).Errorf(
 			"failure to delete user session for task: %v", c.taskID)
 	}
+	if c.TaskType == model.TaskTypeNotebook {
+		if err := internaldb.DeleteNotebookSessionByTask(context.TODO(), c.taskID); err != nil {
+			c.syslog.WithError(err).Errorf(
+				"failure to delete notebook session for task: %v", c.taskID)
+		}
+	}
 
 	go func() {
 		time.Sleep(terminatedDuration)
@@ -323,14 +340,15 @@ func (c *Command) ToV1Command() *commandv1.Command {
 func (c *Command) ToV1Notebook() *notebookv1.Notebook {
 	c.mu.Lock()
 	defer c.mu.Unlock()
-
 	allo := c.refreshAllocationState()
+	notebookToken := c.Base.ExtraEnvVars[model.NotebookSessionEnvVar]
+	notebookAddress := fmt.Sprintf("%s?token=%s", c.serviceAddress(), notebookToken)
 	return &notebookv1.Notebook{
 		Id:             c.stringID(),
 		State:          enrichState(allo.State),
 		Description:    c.Config.Description,
 		Container:      allo.SingleContainer().ToProto(),
-		ServiceAddress: c.serviceAddress(),
+		ServiceAddress: notebookAddress,
 		StartTime:      protoutils.ToTimestamp(c.registeredTime),
 		Username:       c.Base.Owner.Username,
 		UserId:         int32(c.Base.Owner.ID),

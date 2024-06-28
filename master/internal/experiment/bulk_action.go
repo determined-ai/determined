@@ -772,15 +772,6 @@ func MoveExperiments(
 			}
 		}()
 
-		err = db.RemoveProjectHyperparameters(ctx, tx, validIDs)
-		if err != nil {
-			return nil, err
-		}
-		err = db.AddProjectHyperparameters(ctx, tx, destinationProjectID, validIDs)
-		if err != nil {
-			return nil, err
-		}
-
 		var acceptedIDs []int32
 		if _, err = tx.NewUpdate().
 			ModelTableExpr("experiments as e").

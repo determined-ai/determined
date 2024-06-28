@@ -111,18 +111,6 @@ export const getColumnDefs = ({
   users,
   appTheme,
 }: Params): ColumnDefs<FlatRun> => ({
-  archived: {
-    id: 'parentArchived',
-    renderer: (record: FlatRun) => ({
-      allowOverlay: false,
-      data: String(record.parentArchived),
-      displayData: record.parentArchived ? '📦' : '',
-      kind: GridCellKind.Text,
-    }),
-    title: 'Archived',
-    tooltip: () => undefined,
-    width: columnWidths.parentArchived ?? defaultColumnWidths.parentArchived ?? MIN_COLUMN_WIDTH,
-  },
   checkpointCount: {
     id: 'checkpointCount',
     isNumerical: true,
@@ -182,7 +170,7 @@ export const getColumnDefs = ({
       data: { kind: TEXT_CELL },
       kind: GridCellKind.Custom,
     }),
-    title: 'Searcher Description',
+    title: 'Search Description',
     tooltip: () => undefined,
     width:
       columnWidths.experimentDescription ??
@@ -217,7 +205,7 @@ export const getColumnDefs = ({
       kind: GridCellKind.Custom,
       readonly: true,
     }),
-    title: 'Searcher ID',
+    title: 'Search ID',
     tooltip: () => undefined,
     width: columnWidths.experimentId ?? defaultColumnWidths.experimentId ?? MIN_COLUMN_WIDTH,
   },
@@ -249,7 +237,7 @@ export const getColumnDefs = ({
       kind: GridCellKind.Custom,
       readonly: true,
     }),
-    title: 'Searcher Name',
+    title: 'Search Name',
     tooltip: () => undefined,
     width: columnWidths.experimentName ?? defaultColumnWidths.experimentName ?? MIN_COLUMN_WIDTH,
   },
@@ -355,9 +343,21 @@ export const getColumnDefs = ({
       displayData: record.experiment?.isMultitrial ? '✔️' : '',
       kind: GridCellKind.Text,
     }),
-    title: 'Searcher Multitrial',
+    title: 'Part of Search',
     tooltip: () => undefined,
     width: columnWidths.isExpMultitrial ?? defaultColumnWidths.isExpMultitrial ?? MIN_COLUMN_WIDTH,
+  },
+  parentArchived: {
+    id: 'parentArchived',
+    renderer: (record: FlatRun) => ({
+      allowOverlay: false,
+      data: String(record.parentArchived),
+      displayData: record.parentArchived ? '📦' : '',
+      kind: GridCellKind.Text,
+    }),
+    title: 'Parent Archived',
+    tooltip: () => undefined,
+    width: columnWidths.parentArchived ?? defaultColumnWidths.parentArchived ?? MIN_COLUMN_WIDTH,
   },
   progress: {
     id: 'experimentProgress',
@@ -371,7 +371,7 @@ export const getColumnDefs = ({
         kind: GridCellKind.Text,
       };
     },
-    title: 'Searcher Progress',
+    title: 'Search Progress',
     tooltip: () => undefined,
     width:
       columnWidths.experimentProgress ?? defaultColumnWidths.experimentProgress ?? MIN_COLUMN_WIDTH,
@@ -412,7 +412,7 @@ export const getColumnDefs = ({
       data: { kind: TEXT_CELL },
       kind: GridCellKind.Custom,
     }),
-    title: 'Searcher Type',
+    title: 'Searcher',
     tooltip: () => undefined,
     width: columnWidths.searcherType ?? defaultColumnWidths.searcherType ?? MIN_COLUMN_WIDTH,
   },

@@ -18,15 +18,28 @@ using the `Determined Helm Chart <https://helm.determined.ai/>`__.
 When the Determined Helm chart is installed, the following entities will be created:
 
 -  Deployment of the Determined master.
+
 -  ConfigMap containing configurations for the Determined master.
+
 -  LoadBalancer service to make the Determined master accessible. Later in this guide, we describe
    how it is possible to replace this with a NodePort service.
--  ServiceAcccount which will be used by the Determined master.
+
+-  ServiceAccount which will be used by the Determined master.
+
 -  Deployment of a Postgres database. Later in this guide, we describe how an external database can
    be used instead.
+
 -  PersistentVolumeClaim for the Postgres database. Omitted if using an external database.
+
 -  Service to allow the Determined master to communicate with the Postgres database. Omitted if
    using an external database.
+
+-  In case of multiple Kubernetes clusters and in each external-to-master clusters:
+
+   -  Gateway service to allow north-south access to Determined proxied tasks in external-to-master
+      clusters.
+   -  Service to expose proxied ports on Determined jobs.
+   -  TCPRoute to attach the gateway service to the proxied ports service.
 
 ***************
  Prerequisites
@@ -419,15 +432,41 @@ To set up multiple resource pools for Determined on your Kubernetes cluster:
                     operator: "Equal"
                     value: "prod"
                     effect: "NoSchedule"
+                  affinity:
+                  # Define an example node selector label.
+                     nodeSelectorTerms:
+                        kubernetes.io/hostname: "foo"
+                  # Define an example node affinity.
+                     nodeAffinity:
+                     requiredDuringSchedulingIgnoredDuringExecution:
+                        nodeSelectorTerms:
+                           - matchExpressions:
+                           - key: topology.kubernetes.io/zone
+                              operator: In
+                              values:
+                              - antarctica-west1
+                              - antarctica-east1
 
-#. Label/taint the appropriate nodes you want to include as part of each resource pool. For instance
-   you may add a taint like ``kubectl taint nodes prod_node_name pool_taint=prod:NoSchedule`` and
-   the appropriate toleration to the PodTolerationRestriction admissions controller or in
-   ``resourcePools.pool_name.task_container_defaults.gpu_pod_spec`` as above so it is automatically
-   added to the pod spec based on which namespace (and hence resource pool) a task runs in.
+#. Label/taint the appropriate nodes you want to include as part of each resource pool.
+
+   #. For instance you may add a taint like ``kubectl taint nodes prod_node_name
+   pool_taint=prod:NoSchedule`` to add the appropriate toleration to the PodTolerationRestriction
+   admissions controller or in ``resourcePools.pool_name.task_container_defaults.gpu_pod_spec`` as
+   above so it is automatically added to the pod spec based on which namespace (and hence resource
+   pool) a task runs in.
+
+   #. Adding node selector or node affinity logic to your resource pool will ensure that only nodes
+   that match this logic are selected. You may add a node selector like ``kubernetes.io/hostname =
+   foo``, or match your resource pool to any nodes that match the ``topology.kubernetes.io/zone``
+   value in the set ``{antactica-west1, antarctica-east`}``.
 
 #. Add the appropriate resource pool name to namespace mappings in the ``resourcePools`` section of
    the ``values.yaml`` file in the Helm chart.
+
+.. note::
+
+   To enable north-south access to Determined proxied tasks in external-to-master clusters, set up a
+   gateway as described in the docs :doc:`Internal Task Gateway <internal-task-gateway>`
 
 ********************
  Install Determined

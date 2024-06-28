@@ -23,8 +23,6 @@ export default defineConfig({
   /* Run tests in files in parallel */
   fullyParallel: !!process.env.CI,
 
-  /* https://playwright.dev/docs/test-timeouts#global-timeout */
-  globalTimeout: process.env.PWDEBUG ? 0 : 1_800_000,
   /* Folder for test artifacts such as screenshots, videos, traces, etc. */
   outputDir: './src/e2e/test-results',
   /* Folder for test artifacts such as screenshots, videos, traces, etc. */
@@ -78,15 +76,12 @@ export default defineConfig({
   retries: process.env.CI ? 1 : 0,
 
   testDir: './src/e2e',
-  timeout: 90_000, // TODO [INFENG-628] Users page loads slow so we extend 5 minutes and 1 minute per test until we get an isolated backend
+  timeout: 90_000, // webkit takes longer to run tests
 
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     actionTimeout: 5_000,
-    /* Base URL to use in actions like `await page.goto('/')`. */
     baseURL: `http://localhost:${port}/`,
-
-    /* Collect trace when retrying the failed test. See https://playwright.dev/docs/trace-viewer */
     navigationTimeout: 10_000,
     trace: 'retain-on-failure',
     video: 'retain-on-failure',

@@ -42,6 +42,7 @@ const (
 	auxNode2Name        = "aux2"
 	compNode1Name       = "comp"
 	compNode2Name       = "comp2"
+	compLabel           = "compLabel"
 	pod1NumSlots        = 4
 	pod2NumSlots        = 8
 	nodeNumSlots        = int64(8)
@@ -169,12 +170,89 @@ func TestGetAgents(t *testing.T) {
 
 	for _, test := range agentsTests {
 		t.Run(test.Name, func(t *testing.T) {
-			agentsResp := test.jobsService.getAgents()
+			agentsResp, err := test.jobsService.getAgents()
+			require.NoError(t, err)
 			require.Equal(t, len(test.wantedAgentIDs), len(agentsResp.Agents))
 			for _, agent := range agentsResp.Agents {
 				_, ok := test.wantedAgentIDs[agent.Id]
 				require.True(t, ok,
 					fmt.Sprintf("name %s is not present in agent id list", agent.Id))
+			}
+		})
+	}
+}
+
+// TestGetAgentsNodeSelectors adds node selectors to nodes belonging to the jobs service
+// and checks if they belong to the job service's resource pool.
+func TestGetAgentsNodeSelectors(t *testing.T) {
+	cases := []struct {
+		Name          string
+		labels        map[string]string
+		agentsMatched map[string]int
+	}{
+		{
+			Name:   "GetAgents-GPU-Two-NodeSelectors",
+			labels: map[string]string{compNode1Name: compNode1Name, compNode2Name: compNode1Name},
+			agentsMatched: map[string]int{
+				compNode1Name:  1,
+				compNode2Name:  1,
+				nonDetNodeName: 0,
+			},
+		},
+		{
+			Name:   "GetAgents-GPU-One-NodeSelectors",
+			labels: map[string]string{compNode1Name: compNode1Name, compNode2Name: compNode2Name},
+			agentsMatched: map[string]int{
+				compNode1Name:  1,
+				compNode2Name:  0,
+				nonDetNodeName: 0,
+			},
+		},
+		{
+			Name:   "GetAgents-GPU-No-NodeSelectors",
+			labels: map[string]string{},
+			agentsMatched: map[string]int{
+				compNode1Name:  0,
+				compNode2Name:  0,
+				nonDetNodeName: 0,
+			},
+		},
+	}
+
+	for _, test := range cases {
+		t.Run(test.Name, func(t *testing.T) {
+			_, _, compNode1, compNode2 := setupNodes()
+
+			if label, exists := test.labels[compNode1.Name]; exists {
+				compNode1.SetLabels(map[string]string{compLabel: label})
+			}
+
+			if label, exists := test.labels[compNode2.Name]; exists {
+				compNode2.SetLabels(map[string]string{compLabel: label})
+			}
+
+			js := createMockJobsService(map[string]*k8sV1.Node{
+				compNode1Name: compNode1,
+				compNode2Name: compNode2,
+			}, device.CUDA, true)
+
+			// Add a node selector to the job service's config.
+			js.resourcePoolConfigs = []config.ResourcePoolConfig{{
+				PoolName: "test-pool",
+				TaskContainerDefaults: &model.TaskContainerDefaultsConfig{GPUPodSpec: &k8sV1.Pod{
+					Spec: k8sV1.PodSpec{NodeSelector: map[string]string{compLabel: compNode1Name}},
+				}},
+			}}
+
+			agentsResp, err := js.getAgents()
+			require.NoError(t, err)
+			require.Equal(t, len(test.agentsMatched), len(agentsResp.Agents))
+
+			for _, agent := range agentsResp.Agents {
+				rp, ok := test.agentsMatched[agent.Id]
+				require.True(t, ok,
+					fmt.Sprintf("name %s is not present in agent id list", agent.Id))
+				require.Len(t, agent.ResourcePools, rp)
 			}
 		})
 	}
@@ -787,7 +865,7 @@ func TestRMValidateResources(t *testing.T) {
 
 func testROCMGetAgents() {
 	ps := createMockJobsService(createCompNodeMap(), device.ROCM, false)
-	ps.getAgents()
+	ps.getAgents() // nolint
 }
 
 func testROCMGetAgent() {

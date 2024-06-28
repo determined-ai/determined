@@ -555,11 +555,13 @@ def test_master_restart_notebook_k8s(
 
 def _test_master_restart_notebook(managed_cluster: abstract_cluster.Cluster, downtime: int) -> None:
     sess = api_utils.user_session()
-    with cmd.interactive_command(sess, ["notebook", "start", "--detach"]) as notebook:
-        task_id = notebook.task_id
+    with cmd.interactive_command(sess, ["notebook", "start", "--detach"]) as notebook_cmd:
+        task_id = notebook_cmd.task_id
         assert task_id is not None
         utils.wait_for_task_state(sess, "notebook", task_id, "RUNNING")
-        notebook_path = f"proxy/{task_id}/"
+        notebook = bindings.get_GetNotebook(session=sess, notebookId=task_id).notebook
+        assert notebook and notebook.serviceAddress
+        notebook_path = notebook.serviceAddress.lstrip("/")
         _check_notebook_url(sess, notebook_path)
 
         if downtime >= 0:

@@ -33,6 +33,8 @@ import (
 	"k8s.io/apimachinery/pkg/api/resource"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/util/validation"
+
+	alphaGatewayTyped "sigs.k8s.io/gateway-api/apis/v1alpha2"
 )
 
 const (
@@ -128,6 +130,10 @@ func (j *job) configureEnvVars(
 
 	envVarsMap["DET_KUBERNETES_JOB_PARALLELISM"] = strconv.Itoa(j.numPods)
 
+	if j.internalTaskGWConfig != nil {
+		envVarsMap["DET_PROXY_THROUGH_GATEWAY"] = "true"
+	}
+
 	envVars := make([]k8sV1.EnvVar, 0, len(envVarsMap))
 	for envVarKey, envVarValue := range envVarsMap {
 		envVars = append(envVars, k8sV1.EnvVar{Name: envVarKey, Value: envVarValue})
@@ -145,6 +151,102 @@ func (j *job) configureEnvVars(
 		},
 	})
 	return envVars, nil
+}
+
+// proxyResourceGenerator returns a configured list of proxy resources given a set of ports.
+// We do this lazily to make port selection easier. If we created the resource before it is
+// added to the request queue we risk that port being taken later on.
+type proxyResourceGenerator func([]int) []gatewayProxyResource
+
+func (j *job) configureProxyResources(t *tasks.TaskSpec) proxyResourceGenerator {
+	if j.internalTaskGWConfig == nil {
+		return nil
+	}
+
+	generator := proxyResourceGenerator(func(ports []int) []gatewayProxyResource {
+		var resources []gatewayProxyResource
+		if len(ports) != len(j.req.ProxyPorts) {
+			panic("proxy ports and ports must be the same length")
+		}
+
+		for i, proxyPort := range j.req.ProxyPorts {
+			sharedName := fmt.Sprintf("%s-%d", j.jobName, i)
+
+			gwPort := ports[i]
+			allocLabels := map[string]string{
+				determinedLabel: t.AllocationID,
+			}
+			annotations := map[string]string{
+				jobNameAnnotation: j.jobName,
+			}
+
+			serviceSpec := &k8sV1.Service{
+				ObjectMeta: metaV1.ObjectMeta{
+					Name:        sharedName,
+					Namespace:   j.namespace,
+					Labels:      allocLabels,
+					Annotations: annotations,
+				},
+				Spec: k8sV1.ServiceSpec{
+					Ports: []k8sV1.ServicePort{
+						{
+							Protocol: k8sV1.ProtocolTCP,
+							Port:     int32(proxyPort.Port),
+						},
+					},
+					Selector: allocLabels,
+					Type:     k8sV1.ServiceTypeClusterIP,
+				},
+			}
+
+			tcpRouteSpec := &alphaGatewayTyped.TCPRoute{
+				ObjectMeta: metaV1.ObjectMeta{
+					Name:        sharedName,
+					Namespace:   j.namespace,
+					Labels:      allocLabels,
+					Annotations: annotations,
+				},
+				Spec: alphaGatewayTyped.TCPRouteSpec{
+					CommonRouteSpec: alphaGatewayTyped.CommonRouteSpec{
+						ParentRefs: []alphaGatewayTyped.ParentReference{
+							{
+								Namespace: ptrs.Ptr(alphaGatewayTyped.Namespace(j.internalTaskGWConfig.GatewayNamespace)),
+								Name:      alphaGatewayTyped.ObjectName(j.internalTaskGWConfig.GatewayName),
+								Port:      ptrs.Ptr(alphaGatewayTyped.PortNumber(gwPort)),
+								SectionName: ptrs.Ptr(alphaGatewayTyped.SectionName(
+									generateListenerName(gwPort),
+								)),
+							},
+						},
+					},
+					Rules: []alphaGatewayTyped.TCPRouteRule{
+						{
+							BackendRefs: []alphaGatewayTyped.BackendRef{
+								{
+									BackendObjectReference: alphaGatewayTyped.BackendObjectReference{
+										Name: alphaGatewayTyped.ObjectName(serviceSpec.Name),
+										Kind: ptrs.Ptr(alphaGatewayTyped.Kind("Service")),
+										Port: ptrs.Ptr(alphaGatewayTyped.PortNumber(proxyPort.Port)),
+									},
+								},
+							},
+						},
+					},
+				},
+			}
+
+			gatewayListener := createListenerForPod(gwPort)
+
+			resources = append(resources, gatewayProxyResource{
+				serviceSpec:     serviceSpec,
+				tcpRouteSpec:    tcpRouteSpec,
+				gatewayListener: gatewayListener,
+			})
+		}
+		return resources
+	})
+
+	return generator
 }
 
 func (j *job) configureConfigMapSpec(
@@ -638,7 +740,8 @@ func configureUniqueName(t tasks.TaskSpec) string {
 		clusterIDPrefix = t.ClusterID
 	}
 	if clusterIDPrefix != "" {
-		name = fmt.Sprintf("%s-%s", clusterIDPrefix, name)
+		// Starting with clusterID is not a valid DNS name since it could be a number sometimes.
+		name = fmt.Sprintf("det-%s-%s", clusterIDPrefix, name)
 	}
 
 	return name

@@ -91,15 +91,15 @@ func TestFlattenMetadata(t *testing.T) {
 
 func TestFlattenMetadataEmpty(t *testing.T) {
 	data := map[string]interface{}{}
-	_, err := FlattenMetadata(data)
-	require.Error(t, err, "metadata is empty")
+	flatMetadata, err := FlattenMetadata(data)
+	require.NoError(t, err)
+	require.Empty(t, flatMetadata)
 }
 
-// TODO(corban): this should actually be adjusted to return an error since we don't want to
-// allow empty post requests to be made to the metadata endpoint.
 func TestFlattenMetadataNil(t *testing.T) {
-	_, err := FlattenMetadata(nil)
-	require.Error(t, err, "metadata is empty")
+	flatMetadata, err := FlattenMetadata(nil)
+	require.NoError(t, err)
+	require.Empty(t, flatMetadata)
 }
 
 func TestFlattenMetadataNested(t *testing.T) {
@@ -312,4 +312,27 @@ func TestFlattenMetadataNestingTooDeep(t *testing.T) {
 			MaxMetadataDepth,
 		),
 	)
+}
+
+func TestFlattenMetadataEmptyNestedStructs(t *testing.T) {
+	data := map[string]interface{}{
+		"key1": map[string]interface{}{
+			"key2": map[string]interface{}{},
+			"key3": []any{},
+		},
+	}
+	flattened, err := FlattenMetadata(data)
+	require.NoError(t, err)
+	require.ElementsMatch(t, []model.RunMetadataIndex{
+		{
+			RunID:     0,
+			FlatKey:   "key1.key2",
+			ProjectID: 0,
+		},
+		{
+			RunID:     0,
+			FlatKey:   "key1.key3",
+			ProjectID: 0,
+		},
+	}, flattened)
 }

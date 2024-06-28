@@ -1,7 +1,6 @@
 import os
 import shutil
 import tempfile
-import warnings
 
 import pytest
 
@@ -12,19 +11,10 @@ from tests import experiment as exp
 
 
 @pytest.mark.distributed
-@pytest.mark.parametrize("image_type", ["PT", "PT2"])
-def test_mnist_pytorch_distributed(image_type: str) -> None:
+def test_mnist_pytorch_distributed() -> None:
     sess = api_utils.user_session()
     config = conf.load_config(conf.tutorials_path("mnist_pytorch/distributed.yaml"))
     config = conf.set_max_length(config, {"batches": 200})
-
-    if image_type == "PT":
-        config = conf.set_pt_image(config)
-    elif image_type == "PT2":
-        config = conf.set_pt2_image(config)
-    else:
-        warnings.warn("Using default images", stacklevel=2)
-
     exp.run_basic_test_with_temp_config(sess, config, conf.tutorials_path("mnist_pytorch"), 1)
 
 

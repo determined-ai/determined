@@ -1,7 +1,7 @@
-import { BaseComponent, CanBeParent, NamedComponent } from 'e2e/models/BaseComponent';
-import { BasePage } from 'e2e/models/BasePage';
-import { DropdownContent } from 'e2e/models/hew/Dropdown';
-import { Select } from 'e2e/models/hew/Select';
+import { BaseComponent, CanBeParent, NamedComponent } from 'e2e/models/common/base/BaseComponent';
+import { BasePage } from 'e2e/models/common/base/BasePage';
+import { DropdownContent } from 'e2e/models/common/hew/Dropdown';
+import { Select } from 'e2e/models/common/hew/Select';
 
 /**
  * Represents the MultiSortMenu component in src/components/MultiSortMenu.tsx
@@ -15,7 +15,10 @@ export class MultiSortMenu extends DropdownContent {
    */
   constructor({ parent, root }: { parent: CanBeParent; root: BasePage }) {
     super({
-      childNode: new BaseComponent({ parent, selector: '[data-testid="sort-menu-button"]' }),
+      clickThisComponentToOpen: new BaseComponent({
+        parent,
+        selector: '[data-testid="sort-menu-button"]',
+      }),
       root,
     });
   }

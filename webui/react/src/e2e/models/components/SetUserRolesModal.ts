@@ -1,5 +1,5 @@
-import { BaseComponent } from 'e2e/models/BaseComponent';
-import { Modal } from 'e2e/models/hew/Modal';
+import { BaseComponent } from 'e2e/models/common/base/BaseComponent';
+import { Modal } from 'e2e/models/common/hew/Modal';
 
 /**
  * Represents the SetUserRolesModal component in src/components/SetUserRolesModal.tsx

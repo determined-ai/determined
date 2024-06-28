@@ -34,6 +34,7 @@ import (
 
 type runCandidateResult struct {
 	Archived     bool
+	ExpArchived  bool
 	ID           int32
 	ExpID        *int32
 	IsMultitrial bool
@@ -140,6 +141,7 @@ func getRunsColumns(q *bun.SelectQuery) *bun.SelectQuery {
 		Column("r.external_run_id").
 		Column("r.project_id").
 		Column("r.searcher_metric_value").
+		ColumnExpr("r.archived AS archived").
 		ColumnExpr("CONCAT(p.key, '-' , r.local_id::text) as local_id").
 		ColumnExpr("extract(epoch FROM coalesce(r.end_time, now()) - r.start_time)::int AS duration").
 		ColumnExpr("CASE WHEN r.hparams='null' THEN NULL ELSE r.hparams END AS hyperparameters").
@@ -783,6 +785,7 @@ func archiveUnarchiveAction(ctx context.Context, archive bool, runIDs []int32,
 		Model(&runCandidates).
 		Column("r.id").
 		Column("r.archived").
+		ColumnExpr("e.archived AS exp_archived").
 		ColumnExpr("r.experiment_id as exp_id").
 		ColumnExpr("false as is_multitrial").
 		ColumnExpr("r.state IN (?) AS is_terminal", bun.In(model.StatesToStrings(model.TerminalStates))).
@@ -818,6 +821,11 @@ func archiveUnarchiveAction(ctx context.Context, archive bool, runIDs []int32,
 	for _, cand := range runCandidates {
 		visibleIDs.Insert(cand.ID)
 		switch {
+		case cand.ExpArchived:
+			results = append(results, &apiv1.RunActionResult{
+				Error: fmt.Sprintf("Run is part of archived Search (id: '%d').", *cand.ExpID),
+				Id:    cand.ID,
+			})
 		case cand.Archived && archive:
 			results = append(results, &apiv1.RunActionResult{
 				Error: "",
@@ -1030,10 +1038,6 @@ func (a *apiServer) PostRunMetadata(
 	if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.RunId),
 		experiment.AuthZProvider.Get().CanEditExperiment); err != nil {
 		return nil, err
-	}
-
-	if len(req.Metadata.AsMap()) == 0 || req.Metadata.AsMap() == nil {
-		return nil, status.Error(codes.InvalidArgument, "metadata cannot be empty")
 	}
 
 	// Flatten Request Metadata.

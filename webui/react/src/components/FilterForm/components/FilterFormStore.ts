@@ -34,7 +34,7 @@ const getInitGroup = (): FormGroup => ({
 });
 
 export const getInitField = (): FormField => ({
-  columnName: 'name',
+  columnName: '',
   id: uuidv4(),
   kind: FormKind.Field,
   location: V1LocationType.EXPERIMENT,
@@ -69,6 +69,27 @@ export class FilterFormStore {
             JSON.stringify({ ...formset, filterGroup: sweepedForm }, replacer),
           );
           return JSON.stringify(newFormSet);
+        },
+      }),
+    );
+  }
+
+  public get filterFormSetWithoutId(): Observable<FilterFormSetWithoutId> {
+    const replacer = (key: string, value: unknown): unknown => {
+      return key === 'id' ? undefined : value;
+    };
+    return this.#formset.select((loadableFormset) =>
+      Loadable.match(loadableFormset, {
+        _: () => ({
+          filterGroup: { children: [], conjunction: Conjunction.Or, kind: FormKind.Group },
+          showArchived: true,
+        }),
+        Loaded: (formset) => {
+          const sweepedForm = this.#sweepInvalid(structuredClone(formset.filterGroup));
+          const newFormSet: FilterFormSetWithoutId = JSON.parse(
+            JSON.stringify({ ...formset, filterGroup: sweepedForm }, replacer),
+          );
+          return newFormSet;
         },
       }),
     );

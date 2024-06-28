@@ -1,7 +1,8 @@
-import { expect, Page } from '@playwright/test';
+import { Page } from '@playwright/test';
 
-import { BaseComponent, CanBeParent } from 'e2e/models/BaseComponent';
-import { BasePage } from 'e2e/models/BasePage';
+import { expect } from 'e2e/fixtures/global-fixtures';
+import { BaseComponent, CanBeParent } from 'e2e/models/common/base/BaseComponent';
+import { BasePage } from 'e2e/models/common/base/BasePage';
 
 export class DevFixture {
   readonly #page: Page;

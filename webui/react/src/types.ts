@@ -154,6 +154,7 @@ export const DetailedUser = t.intersection([
   User,
   t.partial({
     agentUserGroup: AgentUserGroup,
+    isPasswordWeak: t.boolean,
     remote: t.boolean,
   }),
   t.type({
@@ -909,6 +910,14 @@ export interface CommandTask extends Task {
   workspaceId: number;
 }
 
+export const TaskAction = {
+  Connect: 'Connect',
+  Kill: 'Kill',
+  ViewLogs: 'View Logs',
+} as const;
+
+export type TaskAction = ValueOf<typeof TaskAction>;
+
 export type RecentEvent = {
   lastEvent: {
     date: string;
@@ -1146,6 +1155,10 @@ export interface ExperimentPermissionsArgs {
   experiment: ProjectExperiment;
 }
 
+export interface FlatRunPermissionsArgs {
+  flatRun: FlatRun;
+}
+
 export interface PermissionWorkspace {
   id: number;
   userId?: number;
@@ -1233,6 +1246,7 @@ export interface FlatRun {
   projectName: string;
   workspaceId: number;
   workspaceName: string;
+  archived: boolean;
   parentArchived: boolean;
   experiment?: FlatRunExperiment;
 }
@@ -1253,3 +1267,14 @@ export interface FlatRunExperiment {
 export interface SearchFlatRunPagination extends WithPagination {
   runs: FlatRun[];
 }
+
+export const FlatRunAction = {
+  Archive: 'Archive',
+  Delete: 'Delete',
+  Kill: 'Kill',
+  Move: 'Move',
+  // Pause: 'Pause',
+  Unarchive: 'Unarchive',
+} as const;
+
+export type FlatRunAction = ValueOf<typeof FlatRunAction>;

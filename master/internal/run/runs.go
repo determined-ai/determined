@@ -30,7 +30,7 @@ func FlattenMetadata(
 	data map[string]any,
 ) (flatMetadata []model.RunMetadataIndex, err error) {
 	if len(data) == 0 {
-		return nil, fmt.Errorf("metadata is empty")
+		return nil, nil
 	}
 	flatMetadata, err = flattenMetadata(data)
 	if err != nil {
@@ -91,6 +91,14 @@ func flattenMetadata(data map[string]any) (flatMetadata []model.RunMetadataIndex
 		switch typedVal := entry.value.(type) {
 		// if the value is a map, push each key-value pair onto the stack.
 		case map[string]any:
+			if len(typedVal) == 0 {
+				// if the map is empty, treat it as a leaf node with a nil value.
+				newIndex := model.RunMetadataIndex{
+					FlatKey: entry.prefix + entry.key,
+				}
+				flatMetadata = append(flatMetadata, newIndex)
+				continue
+			}
 			for key, value := range typedVal {
 				newPrefix := entry.prefix + entry.key + "."
 				if newPrefix == "." {
@@ -106,6 +114,14 @@ func flattenMetadata(data map[string]any) (flatMetadata []model.RunMetadataIndex
 			}
 		// if the value is a slice, push each element onto the stack.
 		case []any:
+			if len(typedVal) == 0 {
+				// if the slice is empty, treat it as a leaf node with a nil value.
+				newIndex := model.RunMetadataIndex{
+					FlatKey: entry.prefix + entry.key,
+				}
+				flatMetadata = append(flatMetadata, newIndex)
+				continue
+			}
 			if len(typedVal) > MaxMetadataArrayLength {
 				return nil, fmt.Errorf(
 					"metadata array exceeds maximum length of %d/%d elements",

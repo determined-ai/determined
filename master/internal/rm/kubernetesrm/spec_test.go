@@ -7,6 +7,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 
+	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -15,6 +16,8 @@ import (
 	"github.com/determined-ai/determined/master/pkg/tasks"
 
 	k8sV1 "k8s.io/api/core/v1"
+	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	alphaGatewayTyped "sigs.k8s.io/gateway-api/apis/v1alpha2"
 )
 
 func TestGetDetContainerSecurityContext(t *testing.T) {
@@ -59,6 +62,100 @@ func TestGetDetContainerSecurityContext(t *testing.T) {
 	require.Nil(t, secContext.RunAsUser)
 	require.Nil(t, secContext.RunAsGroup)
 	require.Equal(t, expectedCaps, secContext.Capabilities.Add)
+}
+
+func TestConfigureProxyResources(t *testing.T) {
+	j := &job{
+		namespace: "podnamespace",
+		jobName:   "sharedName",
+	}
+	taskSpec := &tasks.TaskSpec{
+		AllocationID: "allocID",
+	}
+	require.Nil(t, j.configureProxyResources(taskSpec))
+
+	j.req = &sproto.AllocateRequest{
+		ProxyPorts: []*sproto.ProxyPortConfig{
+			{
+				ServiceID: "test_unused",
+				Port:      12345,
+				ProxyTCP:  false, // We still want a TCP proxy.
+			},
+		},
+	}
+	j.internalTaskGWConfig = &config.InternalTaskGatewayConfig{
+		GatewayName:      "gatewayname",
+		GatewayNamespace: "gatewaynamespace",
+	}
+
+	svc := &k8sV1.Service{
+		ObjectMeta: metaV1.ObjectMeta{
+			Name:      j.jobName + "-0",
+			Namespace: "podnamespace",
+			Labels:    map[string]string{determinedLabel: "allocID"},
+			Annotations: map[string]string{
+				jobNameAnnotation: j.jobName,
+			},
+		},
+		Spec: k8sV1.ServiceSpec{
+			Ports: []k8sV1.ServicePort{
+				{
+					Protocol: k8sV1.ProtocolTCP,
+					Port:     12345,
+				},
+			},
+			Selector: map[string]string{determinedLabel: "allocID"},
+			Type:     k8sV1.ServiceTypeClusterIP,
+		},
+	}
+
+	tcp := &alphaGatewayTyped.TCPRoute{
+		ObjectMeta: metaV1.ObjectMeta{
+			Name:      j.jobName + "-0",
+			Namespace: "podnamespace",
+			Labels:    map[string]string{determinedLabel: "allocID"},
+			Annotations: map[string]string{
+				jobNameAnnotation: j.jobName,
+			},
+		},
+		Spec: alphaGatewayTyped.TCPRouteSpec{
+			CommonRouteSpec: alphaGatewayTyped.CommonRouteSpec{
+				ParentRefs: []alphaGatewayTyped.ParentReference{
+					{
+						Namespace: ptrs.Ptr(alphaGatewayTyped.Namespace("gatewaynamespace")),
+						Name:      alphaGatewayTyped.ObjectName("gatewayname"),
+						Port:      ptrs.Ptr(alphaGatewayTyped.PortNumber(12345)),
+						SectionName: ptrs.Ptr(alphaGatewayTyped.SectionName(
+							generateListenerName(12345),
+						)),
+					},
+				},
+			},
+			Rules: []alphaGatewayTyped.TCPRouteRule{
+				{
+					BackendRefs: []alphaGatewayTyped.BackendRef{
+						{
+							BackendObjectReference: alphaGatewayTyped.BackendObjectReference{
+								Name: alphaGatewayTyped.ObjectName(j.jobName + "-0"),
+								Kind: ptrs.Ptr(alphaGatewayTyped.Kind("Service")),
+								Port: ptrs.Ptr(alphaGatewayTyped.PortNumber(12345)),
+							},
+						},
+					},
+				},
+			},
+		},
+	}
+
+	listener := createListenerForPod(12345)
+
+	require.Equal(t, []gatewayProxyResource{
+		{
+			serviceSpec:     svc,
+			tcpRouteSpec:    tcp,
+			gatewayListener: listener,
+		},
+	}, (j.configureProxyResources(taskSpec))([]int{12345}))
 }
 
 func TestAddNodeDisabledAffinityToPodSpec(t *testing.T) {
@@ -174,6 +271,38 @@ func TestAddDisallowedNodesToPodSpec(t *testing.T) {
 			NodeSelectorTerms[0].
 			MatchFields, e)
 	}
+}
+
+func TestDetProxyThroughGatewayEnv(t *testing.T) {
+	env := expconf.EnvironmentConfig{
+		RawEnvironmentVariables: &expconf.EnvironmentVariablesMap{
+			RawCPU: []string{},
+		},
+	}
+
+	t.Run("with gateway", func(t *testing.T) {
+		j := job{
+			internalTaskGWConfig: &config.InternalTaskGatewayConfig{},
+		}
+
+		actual, err := j.configureEnvVars(make(map[string]string), env, device.CPU)
+		require.NoError(t, err)
+		require.Contains(t, actual, k8sV1.EnvVar{Name: "DET_PROXY_THROUGH_GATEWAY", Value: "true"})
+	})
+
+	t.Run("without gateway", func(t *testing.T) {
+		j := job{
+			internalTaskGWConfig: nil,
+		}
+
+		actual, err := j.configureEnvVars(make(map[string]string), env, device.CPU)
+		require.NoError(t, err)
+		var keys []string
+		for _, a := range actual {
+			keys = append(keys, a.Name)
+		}
+		require.NotContains(t, keys, "DET_PROXY_THROUGH_GATEWAY")
+	})
 }
 
 func TestLaterEnvironmentVariablesGetSet(t *testing.T) {

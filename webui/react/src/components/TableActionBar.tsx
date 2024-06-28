@@ -23,7 +23,6 @@ import { OptionsMenu, RowHeight } from 'components/OptionsMenu';
 import useMobile from 'hooks/useMobile';
 import usePermissions from 'hooks/usePermissions';
 import { defaultExperimentColumns } from 'pages/F_ExpList/expListColumns';
-import { BANNED_FILTER_COLUMNS } from 'pages/F_ExpList/F_ExperimentList';
 import {
   activateExperiments,
   archiveExperiments,
@@ -109,6 +108,8 @@ interface Props {
   labelSingular: string;
   labelPlural: string;
   columnGroups: (V1LocationType | V1LocationType[])[];
+  bannedFilterColumns?: Set<string>;
+  bannedSortColumns?: Set<string>;
 }
 
 const TableActionBar: React.FC<Props> = ({
@@ -137,6 +138,8 @@ const TableActionBar: React.FC<Props> = ({
   labelSingular,
   labelPlural,
   columnGroups,
+  bannedFilterColumns,
+  bannedSortColumns,
 }) => {
   const permissions = usePermissions();
   const [batchAction, setBatchAction] = useState<BatchAction>();
@@ -397,7 +400,7 @@ const TableActionBar: React.FC<Props> = ({
         <Column>
           <Row>
             <TableFilter
-              bannedFilterColumns={BANNED_FILTER_COLUMNS}
+              bannedFilterColumns={bannedFilterColumns}
               formStore={formStore}
               isMobile={isMobile}
               isOpenFilter={isOpenFilter}
@@ -405,6 +408,7 @@ const TableActionBar: React.FC<Props> = ({
               onIsOpenFilterChange={onIsOpenFilterChange}
             />
             <MultiSortMenu
+              bannedSortColumns={bannedSortColumns}
               columns={projectColumns}
               isMobile={isMobile}
               sorts={sorts}

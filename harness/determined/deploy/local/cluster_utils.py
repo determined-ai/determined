@@ -1,20 +1,27 @@
 import contextlib
+import getpass
 import os
 import pathlib
+import random
 import re
+import secrets
 import socket
+import string
 import subprocess
 import sys
 import tempfile
 import threading
 import time
+import warnings
 from typing import Any, Callable, Dict, Generator, List, Optional, Sequence, Type
 
 import appdirs
 import docker
 
-from determined.common import constants, util
+from determined.common import api, constants, util
+from determined.common.api import authentication
 from determined.deploy import errors, healthcheck
+from determined.experimental import client as determined
 
 AGENT_NAME_DEFAULT = f"det-agent-{socket.gethostname()}"
 MASTER_PORT_DEFAULT = 8080
@@ -155,6 +162,8 @@ def master_up(
 ) -> None:
     # Some cli flags for det deploy local will cause us to write a temporary master.yaml.
     make_temp_conf = False
+    # If we have to generate a password for the user, we should print it later.
+    generated_user_password = None
 
     if master_name is None:
         master_name = f"{cluster_name}_{MASTER_NAME}"
@@ -171,6 +180,24 @@ def master_up(
 
     if initial_user_password is not None:
         master_conf["security"]["initial_user_password"] = initial_user_password
+        make_temp_conf = True
+
+    try:
+        authentication.check_password_complexity(
+            master_conf["security"].get("initial_user_password")
+        )
+    except ValueError:
+        random_password_characters = string.ascii_uppercase + string.ascii_lowercase + string.digits
+        random_password = [
+            secrets.choice(string.ascii_lowercase),
+            secrets.choice(string.ascii_uppercase),
+            secrets.choice(string.digits),
+        ]
+        random_password.extend([secrets.choice(random_password_characters) for _ in range(13)])
+        random.shuffle(random_password)
+        generated_user_password = "".join(random_password)
+
+        master_conf["security"]["initial_user_password"] = generated_user_password
         make_temp_conf = True
 
     if storage_host_path is not None:
@@ -285,6 +312,66 @@ def master_up(
         )
 
         _wait_for_master(f"http://localhost:{port}", cluster_name)
+
+        if generated_user_password is not None:
+            try:
+                sess = authentication.login(
+                    f"http://localhost:{port}", "admin", generated_user_password
+                ).with_retry(util.get_max_retries_config())
+                sess.get("/api/v1/me")
+
+                # No exception was raised, so this generated password is the way to log in.
+                print(
+                    "Determined Master was launched without a strong initial_user_password set. "
+                    + "Please set a strong password by following prompts, or by logging in "
+                    + "with generated passwords and following the password change process."
+                )
+
+                try:
+                    if not sys.stdin.isatty() or sys.stdin.closed:
+                        raise EOFError
+                    # getpass raises this warning instead of an exception if it can't find the
+                    # terminal, which almost always means we're not going to be able to receive
+                    # a password interactively and securely, so should abort quickly rather
+                    # than time out.
+                    with warnings.catch_warnings():
+                        warnings.filterwarnings(action="error", category=getpass.GetPassWarning)
+                        prompt = (
+                            "Please enter a password for the built-in "
+                            + "`determined` and `admin` users: "
+                        )
+                        new_password = getpass.getpass(prompt)
+                        # Give one more chance if this password is too weak
+                        try:
+                            authentication.check_password_complexity(new_password)
+                        except ValueError as e:
+                            print(e)
+                            new_password = getpass.getpass(prompt)
+
+                        authentication.check_password_complexity(new_password)
+                        new_password_check = getpass.getpass("Enter the password again: ")
+                        if new_password != new_password_check:
+                            raise ValueError("passwords did not match")
+
+                        d = determined.Determined._from_session(sess)
+                        user = d.get_user_by_name("determined")
+                        user.change_password(new_password)
+                        user = d.get_user_by_name("admin")
+                        user.change_password(new_password)
+
+                except Exception:
+                    # User could exit, or might be unable to pass validation,
+                    # or this might not even be interactive; none of these
+                    # are problems with the deployment itself, so just print
+                    # the password so users aren't locked out
+                    print(
+                        "A password has been created for you. The admin and determined users "
+                        + f"can log in with this password:\n\t{generated_user_password}\n"
+                    )
+
+            except api.errors.UnauthenticatedException:
+                # There was a non-generated password there already; carry on
+                pass
 
         # Remove all cleanup methods from ExitStack.
         exit_stack.pop_all()

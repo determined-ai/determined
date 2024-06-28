@@ -33,14 +33,14 @@ def mksess(host: str, port: int, username: str = "determined", password: str = "
     return authentication.login(master_url, username=username, password=password)
 
 
-def det_deploy(subcommand: List) -> None:
+def det_deploy(subcommand: List, cmd_input: Optional[bytes] = None) -> subprocess.CompletedProcess:
     command = [
         "det",
         "deploy",
         "local",
     ] + subcommand
     print(f"Running deployment: {' '.join(command)}")
-    subprocess.run(command, check=True)
+    return subprocess.run(command, check=True, stdout=subprocess.PIPE, input=cmd_input)
 
 
 def resource_up(
@@ -49,7 +49,8 @@ def resource_up(
     kwflags: Optional[Dict[str, str]] = None,
     flags: Optional[List[str]] = None,
     positional_arguments: Optional[List[str]] = None,
-) -> None:
+    cmd_input: Optional[bytes] = None,
+) -> subprocess.CompletedProcess:
     """Issue a `det deploy local` command to bring up a resource.
 
     Ex:
@@ -77,12 +78,12 @@ def resource_up(
     det_version = conf.DET_VERSION
     if det_version is not None:
         command += ["--det-version", det_version]
-    det_deploy(command)
+    return det_deploy(command, cmd_input=cmd_input)
 
 
-def resource_down(resource: Resource, name: str) -> None:
+def resource_down(resource: Resource, name: str) -> subprocess.CompletedProcess:
     command = [f"{resource}-down", f"--{resource}-name", name]
-    det_deploy(command)
+    return det_deploy(command)
 
 
 @contextlib.contextmanager
@@ -92,11 +93,14 @@ def resource_manager(
     kwflags: Optional[Dict[str, str]] = None,
     boolean_flags: Optional[List[str]] = None,
     positional_arguments: Optional[List[str]] = None,
-) -> Iterator[None]:
+    cmd_input: Optional[bytes] = None,
+) -> Iterator[subprocess.CompletedProcess]:
     """Context manager to bring resources up and down."""
-    resource_up(resource, name, kwflags, boolean_flags, positional_arguments)
+    res = resource_up(
+        resource, name, kwflags, boolean_flags, positional_arguments, cmd_input=cmd_input
+    )
     try:
-        yield
+        yield res
     finally:
         resource_down(resource, name)
 
@@ -106,7 +110,10 @@ def test_cluster_down() -> None:
     name = "test_cluster_down"
 
     with resource_manager(
-        Resource.CLUSTER, name, {"initial-user-password": conf.USER_PASSWORD}, ["no-gpu"]
+        Resource.CLUSTER,
+        name,
+        {"initial-user-password": conf.USER_PASSWORD},
+        ["no-gpu", "delete-db"],
     ):
         container_name = name + "_determined-master_1"
         client = docker.from_env()
@@ -126,7 +133,7 @@ def test_ee_cluster_up() -> None:
         Resource.CLUSTER,
         name,
         {"initial-user-password": conf.USER_PASSWORD},
-        ["no-gpu", "enterprise-edition"],
+        ["no-gpu", "enterprise-edition", "delete-db"],
     ):
         container_name = name + "_determined-master_1"
         client = docker.from_env()
@@ -148,7 +155,7 @@ def test_custom_etc() -> None:
         Resource.CLUSTER,
         name,
         {"master-config-path": etc_path, "initial-user-password": conf.USER_PASSWORD},
-        ["no-gpu"],
+        ["no-gpu", "delete-db"],
     ):
         sess = mksess("localhost", 8080)
         exp.run_basic_test(
@@ -165,7 +172,10 @@ def test_agent_config_path() -> None:
     cluster_name = "test_agent_config_path"
     master_name = f"{cluster_name}_determined-master_1"
     with resource_manager(
-        Resource.MASTER, master_name, {"initial-user-password": conf.USER_PASSWORD}
+        Resource.MASTER,
+        master_name,
+        {"initial-user-password": conf.USER_PASSWORD},
+        ["delete-db"],
     ):
         # Config makes it unmodified.
         etc_path = str(pathlib.Path(__file__).parent.joinpath("etc/agent.yaml").resolve())
@@ -208,7 +218,7 @@ def test_custom_port() -> None:
         Resource.CLUSTER,
         name,
         {"master-port": str(custom_port), "initial-user-password": conf.USER_PASSWORD},
-        ["no-gpu"],
+        ["no-gpu", "delete-db"],
     ):
         sess = mksess("localhost", custom_port)
         exp.run_basic_test(
@@ -227,7 +237,7 @@ def test_agents_made() -> None:
         Resource.CLUSTER,
         name,
         {"agents": str(num_agents), "initial-user-password": conf.USER_PASSWORD},
-        ["no-gpu"],
+        ["no-gpu", "delete-db"],
     ):
         container_names = [name + f"-agent-{i}" for i in range(0, num_agents)]
         client = docker.from_env()
@@ -243,12 +253,52 @@ def test_master_up_down() -> None:
     master_name = f"{cluster_name}_determined-master_1"
 
     with resource_manager(
-        Resource.MASTER, master_name, {"initial-user-password": conf.USER_PASSWORD}
+        Resource.MASTER,
+        master_name,
+        {"initial-user-password": conf.USER_PASSWORD},
+        ["delete-db"],
     ):
         client = docker.from_env()
 
         containers = client.containers.list(filters={"name": master_name})
         assert len(containers) > 0
+
+    containers = client.containers.list(filters={"name": master_name})
+    assert len(containers) == 0
+
+
+@pytest.mark.parametrize(
+    "password_input, expect_generated",
+    [
+        ("XDdOB9VUp8FLpTZ2\nXDdOB9VUp8FLpTZ2\n", False),
+        ("\n\n", True),
+        ("31BLj16hEQWmPNHR\nNotTheSamePassword1\n", True),
+    ],
+)
+@pytest.mark.det_deploy_local
+def test_master_up_interactive_password(
+    password_input: Optional[str], expect_generated: Optional[bool]
+) -> None:
+    assert password_input is not None
+    cluster_name = "test_master_up_interactive_password"
+    master_name = f"{cluster_name}_determined-master_1"
+
+    with resource_manager(
+        Resource.MASTER,
+        master_name,
+        boolean_flags=["delete-db"],
+        cmd_input=bytes(password_input, "utf8"),
+    ) as master_up_command:
+        client = docker.from_env()
+
+        containers = client.containers.list(filters={"name": master_name})
+        assert len(containers) > 0
+        assert (
+            b"Determined Master was launched without a strong initial_user_password set."
+            in master_up_command.stdout
+        )
+        if expect_generated:
+            assert b"A password has been created for you." in master_up_command.stdout
 
     containers = client.containers.list(filters={"name": master_name})
     assert len(containers) == 0
@@ -263,7 +313,7 @@ def test_ee_master_up() -> None:
         Resource.MASTER,
         master_name,
         {"initial-user-password": conf.USER_PASSWORD},
-        ["enterprise-edition"],
+        ["enterprise-edition", "delete-db"],
     ):
         client = docker.from_env()
 
@@ -281,7 +331,7 @@ def test_agent_up_down() -> None:
     master_name = f"{cluster_name}_determined-master_1"
 
     with resource_manager(
-        Resource.MASTER, master_name, {"initial-user-password": conf.USER_PASSWORD}
+        Resource.MASTER, master_name, {"initial-user-password": conf.USER_PASSWORD}, ["delete-db"]
     ):
         with resource_manager(Resource.AGENT, agent_name, {}, ["no-gpu"], [conf.MASTER_IP]):
             client = docker.from_env()
@@ -299,7 +349,7 @@ def test_ee_agent_up() -> None:
     master_name = f"{cluster_name}_determined-master_1"
 
     with resource_manager(
-        Resource.MASTER, master_name, {"initial-user-password": conf.USER_PASSWORD}
+        Resource.MASTER, master_name, {"initial-user-password": conf.USER_PASSWORD}, ["delete-db"]
     ):
         with resource_manager(
             Resource.AGENT, agent_name, {}, ["no-gpu", "enterprise-edition"], [conf.MASTER_IP]

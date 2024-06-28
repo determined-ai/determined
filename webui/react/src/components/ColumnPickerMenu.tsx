@@ -23,10 +23,12 @@ const removeBannedColumns = (columns: ProjectColumn[]) =>
 
 export const LOCATION_LABEL_MAP = {
   [V1LocationType.EXPERIMENT]: 'General',
+  [V1LocationType.RUN]: 'General',
   [V1LocationType.VALIDATIONS]: 'Metrics',
   [V1LocationType.TRAINING]: 'Metrics',
   [V1LocationType.CUSTOMMETRIC]: 'Metrics',
   [V1LocationType.HYPERPARAMETERS]: 'Hyperparameters',
+  [V1LocationType.RUNHYPERPARAMETERS]: 'Hyperparameters',
 } as const;
 
 export const COLUMNS_MENU_BUTTON = 'columns-menu-button';

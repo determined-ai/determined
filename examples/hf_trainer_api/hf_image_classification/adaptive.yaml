@@ -46,5 +46,5 @@ entrypoint: >-
   --seed 1337
   --save_strategy steps
   --save_steps 20
-  --trust_remote_code false
+  --trust_remote_code true
 max_restarts: 0
