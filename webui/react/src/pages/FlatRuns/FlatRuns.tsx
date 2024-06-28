@@ -56,6 +56,7 @@ import {
 import RunActionDropdown from 'components/RunActionDropdown';
 import useUI from 'components/ThemeProvider';
 import { useAsync } from 'hooks/useAsync';
+import { useDebouncedSettings } from 'hooks/useDebouncedSettings';
 import { useGlasbey } from 'hooks/useGlasbey';
 import useMobile from 'hooks/useMobile';
 import usePolling from 'hooks/usePolling';
@@ -70,7 +71,7 @@ import {
 import FlatRunActionButton from 'pages/FlatRuns/FlatRunActionButton';
 import { paths } from 'routes/utils';
 import { getProjectColumns, getProjectNumericMetricsRange, searchRuns } from 'services/api';
-import { V1ColumnType, V1LocationType } from 'services/api-ts-sdk';
+import { V1ColumnType, V1LocationType, V1TableType } from 'services/api-ts-sdk';
 import userStore from 'stores/users';
 import userSettings from 'stores/userSettings';
 import { DetailedUser, FlatRun, FlatRunAction, ProjectColumn, RunState } from 'types';
@@ -89,6 +90,7 @@ import {
 } from './columns';
 import css from './FlatRuns.module.scss';
 import {
+  ColumnWidthsSlice,
   defaultFlatRunsSettings,
   FlatRunsSettings,
   ProjectUrlSettings,
@@ -100,7 +102,8 @@ const INITIAL_LOADING_RUNS: Loadable<FlatRun>[] = new Array(PAGE_SIZE).fill(NotL
 
 const STATIC_COLUMNS = [MULTISELECT];
 
-const BANNED_FILTER_COLUMNS = new Set(['searcherMetricsVal']);
+const BANNED_FILTER_COLUMNS = new Set(['searcherMetricsVal', 'parentArchived', 'isExpMultitrial']);
+const BANNED_SORT_COLUMNS = new Set(['tags', 'searcherMetricsVal']);
 
 const NO_PINS_WIDTH = 200;
 
@@ -151,20 +154,22 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
     (p: Partial<FlatRunsSettings>) => userSettings.setPartial(FlatRunsSettings, settingsPath, p),
     [settingsPath],
   );
+  const [columnWidths, updateColumnWidths] = useDebouncedSettings(ColumnWidthsSlice, settingsPath);
   const settings = useMemo(() => {
     const defaultSettings = { ...defaultFlatRunsSettings };
     if (searchId) {
       defaultSettings.columns = defaultSearchRunColumns;
     }
-    return flatRunsSettings.map((s) => ({ ...defaultSettings, ...s })).getOrElse(defaultSettings);
-  }, [flatRunsSettings, searchId]);
+    return Loadable.all([flatRunsSettings, columnWidths])
+      .map(([s, cw]) => ({ ...defaultSettings, ...s, ...cw }))
+      .getOrElse(defaultSettings);
+  }, [columnWidths, flatRunsSettings, searchId]);
 
   const { settings: globalSettings, updateSettings: updateGlobalSettings } =
     useSettings<DataGridGlobalSettings>(settingsConfigGlobal);
 
   const [isOpenFilter, setIsOpenFilter] = useState<boolean>(false);
   const [runs, setRuns] = useState<Loadable<FlatRun>[]>(INITIAL_LOADING_RUNS);
-  const isPagedView = true;
 
   const [sorts, setSorts] = useState<Sort[]>(() => {
     if (!isLoadingSettings) {
@@ -201,7 +206,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
 
   const projectColumns = useAsync(async () => {
     try {
-      const columns = await getProjectColumns({ id: projectId });
+      const columns = await getProjectColumns({ id: projectId, tableType: V1TableType.RUN });
       columns.sort((a, b) =>
         a.location === V1LocationType.EXPERIMENT && b.location === V1LocationType.EXPERIMENT
           ? runColumns.indexOf(a.column as RunColumn) - runColumns.indexOf(b.column as RunColumn)
@@ -225,11 +230,9 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
 
   const showPagination = useMemo(() => {
     return (
-      isPagedView &&
-      (!settings.compare || settings.pinnedColumnsCount !== 0) &&
-      !(isMobile && settings.compare)
+      (!settings.compare || settings.pinnedColumnsCount !== 0) && !(isMobile && settings.compare)
     );
-  }, [isMobile, isPagedView, settings.compare, settings.pinnedColumnsCount]);
+  }, [isMobile, settings.compare, settings.pinnedColumnsCount]);
 
   const [loadedSelectedRuns, loadedSelectedRunIds] = useMemo(() => {
     const selectedMap = new Map<number, { run: FlatRun; index: number }>();
@@ -307,11 +310,25 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
           return defaultSelectionColumn(selection.rows, false);
         }
 
-        if (columnName in columnDefs) return columnDefs[columnName];
-        const currentColumn = projectColumnsMap.getOrElse({})[columnName];
-        if (!currentColumn) return;
-        let dataPath: string | undefined = undefined;
+        if (!Loadable.isLoaded(projectColumnsMap)) {
+          if (columnName in columnDefs) return columnDefs[columnName];
+          return;
+        }
 
+        const currentColumn = projectColumnsMap.data[columnName];
+        if (!currentColumn) {
+          if (columnName in columnDefs) return columnDefs[columnName];
+          return;
+        }
+
+        // prioritize column title from getProjectColumns API response, but use static front-end definition as fallback:
+        if (columnName in columnDefs)
+          return {
+            ...columnDefs[columnName],
+            title: currentColumn.displayName ?? columnDefs[columnName].title,
+          };
+
+        let dataPath: string | undefined = undefined;
         switch (currentColumn.location) {
           case V1LocationType.EXPERIMENT:
             dataPath = `experiment.${currentColumn.column}`;
@@ -353,8 +370,8 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
                 currentColumn.column,
                 currentColumn.displayName || currentColumn.column,
                 settings.columnWidths[currentColumn.column] ??
-                  defaultColumnWidths[currentColumn.column as RunColumn] ??
-                  MIN_COLUMN_WIDTH,
+                defaultColumnWidths[currentColumn.column as RunColumn] ??
+                MIN_COLUMN_WIDTH,
                 dataPath,
                 {
                   max: heatmap.max,
@@ -366,8 +383,8 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
                 currentColumn.column,
                 currentColumn.displayName || currentColumn.column,
                 settings.columnWidths[currentColumn.column] ??
-                  defaultColumnWidths[currentColumn.column as RunColumn] ??
-                  MIN_COLUMN_WIDTH,
+                defaultColumnWidths[currentColumn.column as RunColumn] ??
+                MIN_COLUMN_WIDTH,
                 dataPath,
               );
             }
@@ -378,8 +395,8 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
               currentColumn.column,
               currentColumn.displayName || currentColumn.column,
               settings.columnWidths[currentColumn.column] ??
-                defaultColumnWidths[currentColumn.column as RunColumn] ??
-                MIN_COLUMN_WIDTH,
+              defaultColumnWidths[currentColumn.column as RunColumn] ??
+              MIN_COLUMN_WIDTH,
               dataPath,
             );
             break;
@@ -390,8 +407,8 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
               currentColumn.column,
               currentColumn.displayName || currentColumn.column,
               settings.columnWidths[currentColumn.column] ??
-                defaultColumnWidths[currentColumn.column as RunColumn] ??
-                MIN_COLUMN_WIDTH,
+              defaultColumnWidths[currentColumn.column as RunColumn] ??
+              MIN_COLUMN_WIDTH,
               dataPath,
             );
         }
@@ -404,9 +421,9 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
             settings.columnWidths[currentColumn.column],
             heatmap && settings.heatmapOn && !settings.heatmapSkipped.includes(currentColumn.column)
               ? {
-                  max: heatmap.max,
-                  min: heatmap.min,
-                }
+                max: heatmap.max,
+                min: heatmap.min,
+              }
               : undefined,
           );
         }
@@ -494,12 +511,11 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
           kind: 'group',
         };
       }
-      const tableOffset = Math.max((page - 0.5) * PAGE_SIZE, 0);
       const response = await searchRuns(
         {
           filter: JSON.stringify(filters),
-          limit: isPagedView ? settings.pageLimit : 2 * PAGE_SIZE,
-          offset: isPagedView ? page * settings.pageLimit : tableOffset,
+          limit: settings.pageLimit,
+          offset: page * settings.pageLimit,
           projectId: projectId,
           sort: sortString || undefined,
         },
@@ -507,18 +523,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
       );
       const loadedRuns = response.runs;
 
-      setRuns((prev) => {
-        if (isPagedView) {
-          return loadedRuns.map((run) => Loaded(run));
-        }
-
-        // Update the list with the fetched results.
-        return prev.toSpliced(
-          tableOffset,
-          loadedRuns.length,
-          ...loadedRuns.map((experiment) => Loaded(experiment)),
-        );
-      });
+      setRuns(loadedRuns.map((run) => Loaded(run)));
       setTotal(
         response.pagination.total !== undefined ? Loaded(response.pagination.total) : NotLoaded,
       );
@@ -531,7 +536,6 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
     canceler.signal,
     filtersString,
     isLoadingSettings,
-    isPagedView,
     loadableFormset,
     page,
     projectId,
@@ -625,20 +629,20 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
             newColumnWidths[col] + widthDifference / arr.length,
           );
         });
-      updateSettings({
+      updateColumnWidths({
         columnWidths: newColumnWidths,
       });
     },
-    [updateSettings, settings.columnWidths, pinnedColumns, comparisonViewTableWidth],
+    [updateColumnWidths, settings.columnWidths, pinnedColumns, comparisonViewTableWidth],
   );
 
   const handleColumnWidthChange = useCallback(
     (columnId: string, width: number) => {
-      updateSettings({
+      updateColumnWidths({
         columnWidths: { ...settings.columnWidths, [columnId]: Math.max(MIN_COLUMN_WIDTH, width) },
       });
     },
-    [settings.columnWidths, updateSettings],
+    [settings.columnWidths, updateColumnWidths],
   );
 
   const rowRangeToIds = useCallback(
@@ -774,16 +778,18 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
           acc[col] = DEFAULT_COLUMN_WIDTH;
           return acc;
         }, {});
-      updateSettings({
-        columns: newColumnsOrder,
+      updateColumnWidths({
         columnWidths: {
           ...settings.columnWidths,
           ...newColumnWidths,
         },
+      });
+      updateSettings({
+        columns: newColumnsOrder,
         pinnedColumnsCount: pinnedCount ?? settings.pinnedColumnsCount,
       });
     },
-    [updateSettings, settings.pinnedColumnsCount, settings.columnWidths],
+    [updateColumnWidths, settings.columnWidths, settings.pinnedColumnsCount, updateSettings],
   );
 
   const handleSortChange = useCallback(
@@ -813,12 +819,12 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
         const items: MenuItem[] = [
           settings.selection.type === 'ALL_EXCEPT' || settings.selection.selections.length > 0
             ? {
-                key: 'select-none',
-                label: 'Clear selected',
-                onClick: () => {
-                  handleSelectionChange?.('remove-all');
-                },
-              }
+              key: 'select-none',
+              label: 'Clear selected',
+              onClick: () => {
+                handleSelectionChange?.('remove-all');
+              },
+            }
             : null,
           ...[5, 10, 25].map((n) => ({
             key: `select-${n}`,
@@ -847,32 +853,32 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
           ? null
           : !isPinned
             ? {
-                icon: <Icon decorative name="pin" />,
-                key: 'pin',
-                label: 'Pin column',
-                onClick: () => {
-                  const newColumnsOrder = columnsIfLoaded.filter((c) => c !== columnId);
-                  newColumnsOrder.splice(settings.pinnedColumnsCount, 0, columnId);
-                  handleColumnsOrderChange(
-                    newColumnsOrder,
-                    Math.min(settings.pinnedColumnsCount + 1, columnsIfLoaded.length),
-                  );
-                },
-              }
-            : {
-                disabled: settings.pinnedColumnsCount <= 1,
-                icon: <Icon decorative name="pin" />,
-                key: 'unpin',
-                label: 'Unpin column',
-                onClick: () => {
-                  const newColumnsOrder = columnsIfLoaded.filter((c) => c !== columnId);
-                  newColumnsOrder.splice(settings.pinnedColumnsCount - 1, 0, columnId);
-                  handleColumnsOrderChange(
-                    newColumnsOrder,
-                    Math.max(settings.pinnedColumnsCount - 1, 0),
-                  );
-                },
+              icon: <Icon decorative name="pin" />,
+              key: 'pin',
+              label: 'Pin column',
+              onClick: () => {
+                const newColumnsOrder = columnsIfLoaded.filter((c) => c !== columnId);
+                newColumnsOrder.splice(settings.pinnedColumnsCount, 0, columnId);
+                handleColumnsOrderChange(
+                  newColumnsOrder,
+                  Math.min(settings.pinnedColumnsCount + 1, columnsIfLoaded.length),
+                );
               },
+            }
+            : {
+              disabled: settings.pinnedColumnsCount <= 1,
+              icon: <Icon decorative name="pin" />,
+              key: 'unpin',
+              label: 'Unpin column',
+              onClick: () => {
+                const newColumnsOrder = columnsIfLoaded.filter((c) => c !== columnId);
+                newColumnsOrder.splice(settings.pinnedColumnsCount - 1, 0, columnId);
+                handleColumnsOrderChange(
+                  newColumnsOrder,
+                  Math.max(settings.pinnedColumnsCount - 1, 0),
+                );
+              },
+            },
         {
           icon: <Icon decorative name="eye-close" />,
           key: 'hide',
@@ -893,6 +899,18 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
 
       if (!column) {
         return items;
+      }
+
+      if (!BANNED_SORT_COLUMNS.has(column.column)) {
+        const sortCount = sortMenuItemsForColumn(column, sorts, handleSortChange).length;
+        const sortMenuItems =
+          sortCount === 0
+            ? []
+            : [
+              { type: 'divider' as const },
+              ...sortMenuItemsForColumn(column, sorts, handleSortChange),
+            ];
+        items.push(...sortMenuItems);
       }
 
       const filterMenuItemsForColumn = () => {
@@ -917,24 +935,8 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
         handleIsOpenFilterChange?.(true);
       };
 
-      const clearFilterForColumn = () => {
-        formStore.removeByField(column.column);
-      };
-
-      const filterCount = formStore.getFieldCount(column.column).get();
-
       if (!BANNED_FILTER_COLUMNS.has(column.column)) {
-        const sortCount = sortMenuItemsForColumn(column, sorts, handleSortChange).length;
-        const sortMenuItems =
-          sortCount === 0
-            ? []
-            : [
-                { type: 'divider' as const },
-                ...sortMenuItemsForColumn(column, sorts, handleSortChange),
-              ];
-
         items.push(
-          ...sortMenuItems,
           { type: 'divider' as const },
           {
             icon: <Icon decorative name="filter" />,
@@ -947,6 +949,12 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
         );
       }
 
+      const clearFilterForColumn = () => {
+        formStore.removeByField(column.column);
+      };
+
+      const filterCount = formStore.getFieldCount(column.column).get();
+
       if (filterCount > 0) {
         items.push({
           icon: <Icon decorative name="filter" />,
@@ -957,6 +965,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
           },
         });
       }
+
       if (
         settings.heatmapOn &&
         (column.column === 'searcherMetricsVal' ||
@@ -1023,6 +1032,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
               onIsOpenFilterChange={handleIsOpenFilterChange}
             />
             <MultiSortMenu
+              bannedSortColumns={BANNED_SORT_COLUMNS}
               columns={projectColumns}
               isMobile={isMobile}
               sorts={sorts}
@@ -1036,9 +1046,9 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
               projectColumns={projectColumns}
               projectId={projectId}
               tabs={[
-                V1LocationType.EXPERIMENT,
+                V1LocationType.RUN,
                 [V1LocationType.VALIDATIONS, V1LocationType.TRAINING, V1LocationType.CUSTOMMETRIC],
-                V1LocationType.HYPERPARAMETERS,
+                V1LocationType.RUNHYPERPARAMETERS,
               ]}
               onVisibleColumnChange={handleColumnsOrderChange}
             />
@@ -1106,9 +1116,6 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
               getHeaderMenuItems={getHeaderMenuItems}
               getRowAccentColor={getRowAccentColor}
               imperativeRef={dataGridRef}
-              isPaginated={isPagedView}
-              page={page}
-              pageSize={PAGE_SIZE}
               pinnedColumnsCount={isLoadingSettings ? 0 : settings.pinnedColumnsCount}
               renderContextMenuComponent={({
                 cell,
@@ -1136,11 +1143,9 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
               selection={selection}
               sorts={sorts}
               staticColumns={STATIC_COLUMNS}
-              total={total.getOrElse(PAGE_SIZE)}
               onColumnResize={handleColumnWidthChange}
               onColumnsOrderChange={handleColumnsOrderChange}
               onContextMenuComplete={handleContextMenuComplete}
-              onPageUpdate={setPage}
               onPinnedColumnsCountChange={handlePinnedColumnsCountChange}
               onSelectionChange={handleSelectionChange}
             />

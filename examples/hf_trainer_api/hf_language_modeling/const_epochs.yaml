@@ -36,5 +36,5 @@ entrypoint: >-
   --save_steps 20
   --per_device_train_batch_size 8
   --per_device_eval_batch_size 8
-  --trust_remote_code false
+  --trust_remote_code true
 max_restarts: 0

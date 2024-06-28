@@ -734,7 +734,7 @@ func archiveUnarchiveAction(ctx context.Context, archive bool, runIDs []int32,
 		switch {
 		case cand.ExpArchived:
 			results = append(results, &apiv1.RunActionResult{
-				Error: "Run is part of archived Search.",
+				Error: fmt.Sprintf("Run is part of archived Search (id: '%d').", *cand.ExpID),
 				Id:    cand.ID,
 			})
 		case cand.Archived && archive:
@@ -949,10 +949,6 @@ func (a *apiServer) PostRunMetadata(
 	if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.RunId),
 		experiment.AuthZProvider.Get().CanEditExperiment); err != nil {
 		return nil, err
-	}
-
-	if len(req.Metadata.AsMap()) == 0 || req.Metadata.AsMap() == nil {
-		return nil, status.Error(codes.InvalidArgument, "metadata cannot be empty")
 	}
 
 	// Flatten Request Metadata.

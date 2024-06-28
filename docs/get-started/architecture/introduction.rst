@@ -428,7 +428,7 @@ Here is an example master configuration illustrating the potential problem.
    resource_manager:
      type: agent
      scheduler:
-       type: round_robin
+       type: fair_share
        fitting_policy: best
      default_aux_resource_pool: pool1
      default_compute_resource_pool: pool1
@@ -438,13 +438,13 @@ Here is an example master configuration illustrating the potential problem.
        scheduler:
          fitting_policy: worst
 
-This example sets the cluster-wide scheduler defaults to use a best-fit, round robin scheduler in
+This example sets the cluster-wide scheduler defaults to use a best-fit, fair share scheduler in
 ``resource_manager.scheduler``. The scheduler settings at the pool level for ``pool1`` are then
 overwritten. Because ``scheduler.fitting_policy=worst`` is set, no settings are inherited from
-``resource_manager.scheduler`` so pool1 uses a worst-fit, fair share scheduler because for a blank
-``scheduler.type`` field, the default value is ``fair_share``.
+``resource_manager.scheduler`` so pool1 uses a worst-fit, priority scheduler because for a blank
+``scheduler.type`` field, the default value is ``priority``.
 
-If you want to have ``pool1`` use a worst-fit, round robin scheduler, you need to make sure you
+If you want to have ``pool1`` use a worst-fit, fair share scheduler, you need to make sure you
 redefine the scheduler type at the pool-specific level:
 
 .. code:: yaml
@@ -452,7 +452,7 @@ redefine the scheduler type at the pool-specific level:
    resource_manager:
      type: agent
      scheduler:
-       type: round_robin
+       type: fair_share
        fitting_policy: best
      default_aux_resource_pool: pool1
      default_compute_resource_pool: pool1
@@ -460,7 +460,7 @@ redefine the scheduler type at the pool-specific level:
    resource_pools:
      - pool_name: pool1
        scheduler:
-         type: round_robin
+         type: fair_share
          fitting_policy: worst
 
 Launch Tasks into Resource Pools

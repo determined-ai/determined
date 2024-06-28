@@ -4,7 +4,7 @@ import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'r
 import { useSearchParams } from 'react-router-dom';
 
 import { Json, JsonArray } from 'types';
-import { getProps } from 'utils/asValueObject';
+import { getProps } from 'utils/iotsHelpers';
 import { deepObservable, useObservable } from 'utils/observable';
 
 import { UserSettings } from './useSettingsProvider';

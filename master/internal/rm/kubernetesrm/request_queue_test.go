@@ -63,11 +63,15 @@ func (m *mockJob) create() {
 		Name:      m.name,
 		Namespace: "default",
 	}}
-	m.requestQueue.createKubernetesResources(&jobSpec, &cmSpec)
+	m.requestQueue.createKubernetesResources(&jobSpec, &cmSpec, nil)
 }
 
 func (m *mockJob) delete() {
-	m.requestQueue.deleteKubernetesResources("default", m.name, m.name, "")
+	m.requestQueue.deleteKubernetesResources(deleteKubernetesResources{
+		namespace:     "default",
+		jobName:       m.name,
+		configMapName: m.name,
+	})
 }
 
 func getNumberOfActiveJobs(jobInterface typedBatchV1.JobInterface) int {
@@ -113,7 +117,7 @@ func TestRequestQueueCreatingManyPod(t *testing.T) {
 		map[string]typedBatchV1.JobInterface{"default": jobInterface},
 		map[string]typedV1.PodInterface{"default": podInterface},
 		map[string]typedV1.ConfigMapInterface{"default": configMapInterface},
-		failures,
+		nil, nil, nil, failures,
 	)
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -139,7 +143,7 @@ func TestRequestQueueCreatingAndDeletingManyPod(t *testing.T) {
 		map[string]typedBatchV1.JobInterface{"default": jobInterface},
 		map[string]typedV1.PodInterface{"default": podInterface},
 		map[string]typedV1.ConfigMapInterface{"default": configMapInterface},
-		failures,
+		nil, nil, nil, failures,
 	)
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -167,7 +171,7 @@ func TestRequestQueueCreatingThenDeletingManyPods(t *testing.T) {
 		map[string]typedBatchV1.JobInterface{"default": jobInterface},
 		map[string]typedV1.PodInterface{"default": podInterface},
 		map[string]typedV1.ConfigMapInterface{"default": configMapInterface},
-		failures,
+		nil, nil, nil, failures,
 	)
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -202,7 +206,7 @@ func TestRequestQueueCreatingAndDeletingManyPodWithDelay(t *testing.T) {
 		map[string]typedBatchV1.JobInterface{"default": jobInterface},
 		map[string]typedV1.PodInterface{"default": podInterface},
 		map[string]typedV1.ConfigMapInterface{"default": configMapInterface},
-		failures,
+		nil, nil, nil, failures,
 	)
 
 	ctx, cancel := context.WithCancel(context.Background())
@@ -233,7 +237,7 @@ func TestRequestQueueCreationCancelled(t *testing.T) {
 		map[string]typedBatchV1.JobInterface{"default": jobInterface},
 		map[string]typedV1.PodInterface{"default": podInterface},
 		map[string]typedV1.ConfigMapInterface{"default": configMapInterface},
-		failures,
+		nil, nil, nil, failures,
 	)
 
 	for i := 0; i < numKubernetesWorkers; i++ {
@@ -274,7 +278,7 @@ func TestRequestQueueCreationFailed(t *testing.T) {
 		map[string]typedBatchV1.JobInterface{"default": jobInterface},
 		map[string]typedV1.PodInterface{"default": podInterface},
 		map[string]typedV1.ConfigMapInterface{"default": configMapInterface},
-		failures,
+		nil, nil, nil, failures,
 	)
 
 	var wg sync.WaitGroup
@@ -312,7 +316,7 @@ func TestRequestQueueDeletionFailed(t *testing.T) {
 		map[string]typedBatchV1.JobInterface{"default": jobInterface},
 		map[string]typedV1.PodInterface{"default": podInterface},
 		map[string]typedV1.ConfigMapInterface{"default": configMapInterface},
-		failures,
+		nil, nil, nil, failures,
 	)
 
 	var wg sync.WaitGroup

@@ -84,6 +84,10 @@ packages:
         config:
           filename: node_iface.go
           mockname: NodeInterface
+      ServiceInterface:
+        config:
+          filename: service_iface.go
+          mockname: ServiceInterface
       CoreV1Interface:
         config:
           filename: k8s_corev1_iface.go
@@ -104,3 +108,15 @@ packages:
         config:
           filename: k8s_clientset.go
           mockname: K8sClientsetInterface
+  sigs.k8s.io/gateway-api/pkg/client/clientset/versioned/typed/apis/v1:
+    interfaces:
+      GatewayInterface:
+        config:
+          filename: gateway_iface.go
+          mockname: GatewayInterface
+  sigs.k8s.io/gateway-api/pkg/client/clientset/versioned/typed/apis/v1alpha2:
+    interfaces:
+      TCPRouteInterface:
+        config:
+          filename: tcproute_iface.go
+          mockname: TCPRouteInterface

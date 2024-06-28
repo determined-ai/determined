@@ -1,4 +1,4 @@
-import { BasePage } from 'e2e/models/BasePage';
+import { BasePage } from 'e2e/models/common/base/BasePage';
 import { DynamicTabs } from 'e2e/models/components/DynamicTabs';
 import { F_ExperiementList } from 'e2e/models/components/F_ExperiementList';
 import { PageComponent } from 'e2e/models/components/Page';
@@ -7,11 +7,8 @@ import { PageComponent } from 'e2e/models/components/Page';
  * Represents the SignIn page from src/pages/ProjectDetails.tsx
  */
 export class ProjectDetails extends BasePage {
-  readonly title = new RegExp(
-    ProjectDetails.getTitle('(Uncategorized Experiments|Project Details)'),
-    'g',
-  );
-  readonly url: RegExp = /projects\/\d+/;
+  readonly title = /Uncategorized Experiments|Project Details/;
+  readonly url = /projects\/\d+/;
 
   /**
    * Visits the project details page.

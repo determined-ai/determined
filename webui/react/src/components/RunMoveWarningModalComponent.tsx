@@ -12,11 +12,12 @@ type RunMoveWarningProps = {
 const RunMoveWarningCopy = ({ onClose }: RunMoveWarningProps) => (
   <Modal
     cancel
-    submit={{ handleError, handler: () => onClose('ok'), text: 'Move independent runs' }}
+    size="small"
+    submit={{ handleError, handler: () => onClose('ok'), text: 'Move runs and searches' }}
     title="Move Run Dependency Alert"
     onClose={() => onClose('cancel')}>
-    Some runs you are trying to move belong to a Hyperparameter Search and cannot be moved
-    independently to maintain their contextual relationships. These runs will be skipped.
+    {`Some of the runs you're trying to move are part of a hyperparameter search. To preserve their
+    contextual relationships, the associated search(es) will be moved along with the selected runs.`}
   </Modal>
 );
 

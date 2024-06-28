@@ -88,34 +88,34 @@ export const RunFilterInterstitialModalComponent = forwardRef<ControlledModalRef
         const filterGroup: FilterFormSetWithoutId['filterGroup'] =
           selection.type === 'ALL_EXCEPT'
             ? {
-                children: [
-                  filterFormSet.filterGroup,
-                  {
-                    children: selection.exclusions.map(idToFilter.bind(this, '!=')),
-                    conjunction: 'and',
-                    kind: 'group',
-                  },
-                ],
-                conjunction: 'and',
-                kind: 'group',
-              }
+              children: [
+                filterFormSet.filterGroup,
+                {
+                  children: selection.exclusions.map(idToFilter.bind(this, '!=')),
+                  conjunction: 'and',
+                  kind: 'group',
+                },
+              ],
+              conjunction: 'and',
+              kind: 'group',
+            }
             : {
-                children: selection.selections.map(idToFilter.bind(this, '=')),
-                conjunction: 'or',
-                kind: 'group',
-              };
+              children: selection.selections.map(idToFilter.bind(this, '=')),
+              conjunction: 'or',
+              kind: 'group',
+            };
         const filter: FilterFormSetWithoutId = {
           ...filterFormSet,
           filterGroup: {
             children: [
               filterGroup,
               {
-                columnName: 'numTrials',
+                columnName: 'searcherType',
                 kind: 'field',
-                location: 'LOCATION_TYPE_EXPERIMENT',
-                operator: '>',
-                type: 'COLUMN_TYPE_NUMBER',
-                value: 1,
+                location: 'LOCATION_TYPE_RUN',
+                operator: '!=',
+                type: 'COLUMN_TYPE_TEXT',
+                value: 'single',
               } as const,
             ],
             conjunction: 'and',
@@ -126,7 +126,7 @@ export const RunFilterInterstitialModalComponent = forwardRef<ControlledModalRef
           const results = await searchRuns(
             {
               filter: JSON.stringify(filter),
-              limit: 0,
+              limit: -2,
               projectId,
             },
             { signal: mergedCanceler.signal },

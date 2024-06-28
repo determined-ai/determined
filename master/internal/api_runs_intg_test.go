@@ -1247,6 +1247,22 @@ func TestPostRunMetadata(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.Equal(t, rawMetadata, metadataResp.Metadata.AsMap())
+
+	// empty metadata
+	metadataResp, err = api.PostRunMetadata(ctx, &apiv1.PostRunMetadataRequest{
+		RunId:    r.Id,
+		Metadata: &structpb.Struct{},
+	})
+	require.NoError(t, err)
+	require.Empty(t, metadataResp.Metadata.AsMap())
+
+	// nil metadata
+	metadataResp, err = api.PostRunMetadata(ctx, &apiv1.PostRunMetadataRequest{
+		RunId:    r.Id,
+		Metadata: nil,
+	})
+	require.NoError(t, err)
+	require.Empty(t, metadataResp.Metadata.AsMap())
 }
 
 func TestRunMetadata(t *testing.T) {
@@ -1551,7 +1567,7 @@ func TestArchiveUnarchiveWithArchivedParent(t *testing.T) {
 		ProjectId: sourceprojectID,
 	})
 
-	errMsg := "Run is part of archived Search."
+	errMsg := fmt.Sprintf("Run is part of archived Search (id: '%d').", exp.ID)
 	require.NoError(t, err)
 	require.Len(t, unarchRes.Results, 2)
 	require.Equal(t, errMsg, unarchRes.Results[0].Error)

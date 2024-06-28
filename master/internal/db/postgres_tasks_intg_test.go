@@ -246,12 +246,11 @@ func TestAllocationState(t *testing.T) {
 		}
 		require.NoError(t, AddTask(ctx, task), "failed to add task")
 
-		s := state
 		a := &model.Allocation{
 			TaskID:       tID,
 			AllocationID: model.AllocationID(tID + "allocationID"),
 			ResourcePool: "default",
-			State:        &s,
+			State:        &state,
 		}
 		require.NoError(t, AddAllocation(ctx, a), "failed to add allocation")
 

@@ -1128,24 +1128,66 @@ export const getTrialWorkloads: DetApi<
 /* Runs */
 
 export const searchRuns: DetApi<
-  Service.SearchRunsParams,
+  Api.V1SearchRunsRequest,
   Api.V1SearchRunsResponse,
   Type.SearchFlatRunPagination
 > = {
   name: 'searchRuns',
-  postProcess: (response) => ({
-    pagination: response.pagination,
-    runs: response.runs.map((e) => decoder.decodeV1FlatRun(e)),
+  postProcess: ({ pagination, runs }) => ({
+    pagination,
+    runs: runs.map((e) => decoder.decodeV1FlatRun(e)),
   }),
-  request: (params, options) =>
-    detApi.Internal.searchRuns(
-      params.projectId,
-      params.offset,
-      params.limit,
-      params.sort,
-      params.filter,
-      options,
-    ),
+  request: (params, options) => detApi.Internal.searchRuns(params, options),
+};
+
+export const archiveRuns: DetApi<
+  Api.V1ArchiveRunsRequest,
+  Api.V1ArchiveRunsResponse,
+  Type.BulkActionResult
+> = {
+  name: 'archiveRuns',
+  postProcess: (response) => decoder.mapV1ActionResults(response.results),
+  request: (params, options) => detApi.Internal.archiveRuns(params, options),
+};
+
+export const deleteRuns: DetApi<
+  Api.V1DeleteRunsRequest,
+  Api.V1DeleteRunsResponse,
+  Type.BulkActionResult
+> = {
+  name: 'deleteRuns',
+  postProcess: (response) => decoder.mapV1ActionResults(response.results),
+  request: (params, options) => detApi.Internal.deleteRuns(params, options),
+};
+
+export const killRuns: DetApi<
+  Api.V1KillRunsRequest,
+  Api.V1KillRunsResponse,
+  Type.BulkActionResult
+> = {
+  name: 'killRuns',
+  postProcess: (response) => decoder.mapV1ActionResults(response.results),
+  request: (params, options) => detApi.Internal.killRuns(params, options),
+};
+
+export const moveRuns: DetApi<
+  Api.V1MoveRunsRequest,
+  Api.V1MoveRunsResponse,
+  Type.BulkActionResult
+> = {
+  name: 'moveRuns',
+  postProcess: (response) => decoder.mapV1ActionResults(response.results),
+  request: (params, options) => detApi.Internal.moveRuns(params, options),
+};
+
+export const unarchiveRuns: DetApi<
+  Api.V1UnarchiveRunsRequest,
+  Api.V1UnarchiveRunsResponse,
+  Type.BulkActionResult
+> = {
+  name: 'unarchiveRuns',
+  postProcess: (response) => decoder.mapV1ActionResults(response.results),
+  request: (params, options) => detApi.Internal.unarchiveRuns(params, options),
 };
 
 export const archiveRuns: DetApi<
@@ -1753,7 +1795,7 @@ export const getProjectColumns: DetApi<
 > = {
   name: 'getProjectColumns',
   postProcess: (response) => decoder.decodeProjectColumnsResponse(response).columns,
-  request: (params) => detApi.Internal.getProjectColumns(params.id),
+  request: (params) => detApi.Internal.getProjectColumns(params.id, params.tableType),
 };
 
 export const getProjectNumericMetricsRange: DetApi<

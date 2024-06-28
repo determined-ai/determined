@@ -1,4 +1,4 @@
-import { test as base, Page } from '@playwright/test';
+import { expect as baseExpect, test as baseTest, Page } from '@playwright/test';
 
 import { safeName } from 'e2e/utils/naming';
 import { V1PostUserRequest } from 'services/api-ts-sdk/api';
@@ -28,7 +28,7 @@ type CustomWorkerFixtures = {
 };
 
 // https://playwright.dev/docs/test-fixtures
-export const test = base.extend<CustomFixtures, CustomWorkerFixtures>({
+export const test = baseTest.extend<CustomFixtures, CustomWorkerFixtures>({
   // get the auth but allow yourself to log in through the api manually.
   apiAuth: async ({ playwright, browser, dev, baseURL, newAdmin }, use) => {
     await dev.setServerAddress();
@@ -120,5 +120,51 @@ export const test = base.extend<CustomFixtures, CustomWorkerFixtures>({
   user: async ({ page }, use) => {
     const user = new UserFixture(page);
     await use(user);
+  },
+});
+
+export const expect = baseExpect.extend({
+  async toHaveDeterminedTitle(page: Page, titleOrRegExp: string | RegExp, options?: object) {
+    let message: () => string;
+    let pass: boolean;
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    let matcherResult: any;
+
+    const isEE = Boolean(JSON.parse(process.env.PW_EE ?? '""'));
+    const appTitle = isEE ? 'HPE Machine Learning Development Environment' : 'Determined';
+
+    const getFullTitle = (prefix: string = '') => {
+      if (prefix === '') {
+        return appTitle;
+      }
+      return `${prefix} - ${appTitle}`;
+    };
+
+    try {
+      if (typeof titleOrRegExp === 'string') {
+        const fullTitle = getFullTitle(titleOrRegExp);
+        await baseExpect(page).toHaveTitle(fullTitle, options);
+      } else {
+        const fullTitle = new RegExp(getFullTitle(titleOrRegExp.source));
+        await baseExpect(page).toHaveTitle(fullTitle, options);
+      }
+      message = () => `expected page to have title ${titleOrRegExp}, but it did not`;
+      pass = true;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    } catch (e: any) {
+      matcherResult = e.matcherResult;
+      pass = false;
+      const actualTitle = await page.title();
+      message = () =>
+        `expected page to have title matching ${titleOrRegExp}, but received ${actualTitle}`;
+    }
+
+    return {
+      actual: matcherResult?.actual,
+      expected: titleOrRegExp,
+      message,
+      name: 'toHaveDeterminedTitle',
+      pass,
+    };
   },
 });

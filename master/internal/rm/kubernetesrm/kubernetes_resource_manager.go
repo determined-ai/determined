@@ -109,6 +109,7 @@ func New(
 		k.config.DetMasterPort,
 		k.config.KubeconfigPath,
 		k.jobSchedulingStateCallback,
+		k.config.InternalTaskGateway,
 	)
 	if err != nil {
 		return nil, err
@@ -125,7 +126,6 @@ func New(
 			maxSlotsPerPod = *poolConfig.TaskContainerDefaults.Kubernetes.MaxSlotsPerPod
 		}
 
-		poolConfig := poolConfig
 		rp := newResourcePool(maxSlotsPerPod, &poolConfig, k.jobsService, k.db)
 		go func() {
 			t := time.NewTicker(podSubmissionInterval)
@@ -192,7 +192,7 @@ func (k *ResourceManager) GetAgent(msg *apiv1.GetAgentRequest) (*apiv1.GetAgentR
 
 // GetAgents implements rm.ResourceManager.
 func (k *ResourceManager) GetAgents() (*apiv1.GetAgentsResponse, error) {
-	return k.jobsService.GetAgents(), nil
+	return k.jobsService.GetAgents()
 }
 
 // GetAllocationSummaries implements rm.ResourceManager.

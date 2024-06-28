@@ -1,27 +1,30 @@
 import * as t from 'io-ts';
+import { pick } from 'lodash';
 
 import { INIT_FORMSET } from 'components/FilterForm/components/FilterFormStore';
 import { DEFAULT_SELECTION, SelectionType } from 'pages/F_ExpList/F_ExperimentList.settings';
 
 import { defaultColumnWidths, defaultRunColumns } from './columns';
 
-// have to intersect with an empty object bc of settings store type issue
-export const FlatRunsSettings = t.intersection([
-  t.type({}),
-  t.partial({
-    columns: t.array(t.string),
-    columnWidths: t.record(t.string, t.number),
-    compare: t.boolean,
-    filterset: t.string, // save FilterFormSet as string
-    heatmapOn: t.boolean,
-    heatmapSkipped: t.array(t.string),
-    pageLimit: t.number,
-    pinnedColumnsCount: t.number,
-    selection: SelectionType,
-    sortString: t.string,
-  }),
-]);
+export const FlatRunsSettings = t.partial({
+  columns: t.array(t.string),
+  columnWidths: t.record(t.string, t.number),
+  compare: t.boolean,
+  filterset: t.string, // save FilterFormSet as string
+  heatmapOn: t.boolean,
+  heatmapSkipped: t.array(t.string),
+  pageLimit: t.number,
+  pinnedColumnsCount: t.number,
+  selection: SelectionType,
+  sortString: t.string,
+});
 export type FlatRunsSettings = t.TypeOf<typeof FlatRunsSettings>;
+
+/**
+ * Slice of FlatRunsSettings that concerns column widths -- this is extracted to
+ * allow updates to it to be debounced.
+ */
+export const ColumnWidthsSlice = t.exact(t.partial(pick(FlatRunsSettings.props, ['columnWidths'])));
 
 export const defaultFlatRunsSettings: Required<FlatRunsSettings> = {
   columns: defaultRunColumns,

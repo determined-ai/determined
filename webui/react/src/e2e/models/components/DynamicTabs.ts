@@ -1,5 +1,5 @@
-import { BaseReactFragment } from 'e2e/models/BaseComponent';
-import { Pivot } from 'e2e/models/hew/Pivot';
+import { BaseReactFragment } from 'e2e/models/common/base/BaseReactFragment';
+import { Pivot } from 'e2e/models/common/hew/Pivot';
 
 /**
  * Represents the DynamicTabs component in src/components/DynamicTabs.tsx

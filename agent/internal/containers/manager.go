@@ -248,7 +248,6 @@ func (m *Manager) SignalContainer(ctx context.Context, msg aproto.SignalContaine
 func (m *Manager) Detach() {
 	m.mu.RLock()
 	for _, c := range m.containers {
-		c := c
 		m.wg.Go(func(_ context.Context) {
 			c.Detach()
 		})
@@ -261,7 +260,6 @@ func (m *Manager) Detach() {
 func (m *Manager) Close() {
 	m.mu.RLock()
 	for _, c := range m.containers {
-		c := c
 		m.wg.Go(func(_ context.Context) {
 			c.Stop()
 		})

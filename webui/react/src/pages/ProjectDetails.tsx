@@ -99,7 +99,7 @@ const ProjectDetails: React.FC = () => {
           </div>
         ),
         key: 'runs',
-        label: id === 1 ? '' : 'Runs',
+        label: 'Runs',
       });
     } else {
       items.push({
@@ -129,11 +129,11 @@ const ProjectDetails: React.FC = () => {
           </div>
         ),
         key: 'searches',
-        label: id === 1 ? '' : 'Searches',
+        label: 'Searches',
       });
     }
 
-    if (!project.immutable && projectId) {
+    if ((f_flat_runs || !project.immutable) && projectId) {
       items.push({
         children: (
           <div className={css.tabPane}>

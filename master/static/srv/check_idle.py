@@ -43,11 +43,18 @@ def wait_for_jupyter(addr):
             i += 1
 
 
-def is_idle(request_address, mode):
+def is_idle(request_address: str, token: str, mode: IdleType):
+    auth_header = {"Authorization": f"token {token}"}
     try:
-        kernels = requests.get(request_address + "/api/kernels", verify=False).json()
-        terminals = requests.get(request_address + "/api/terminals", verify=False).json()
-        sessions = requests.get(request_address + "/api/sessions", verify=False).json()
+        kernels = requests.get(
+            f"{request_address}/api/kernels", headers=auth_header, verify=False
+        ).json()
+        terminals = requests.get(
+            f"{request_address}/api/terminals", headers=auth_header, verify=False
+        ).json()
+        sessions = requests.get(
+            f"{request_address}/api/sessions", headers=auth_header, verify=False
+        ).json()
     except Exception:
         logging.warning("Cannot get notebook kernel status", exc_info=True)
         return False
@@ -72,6 +79,7 @@ def main():
     requests.packages.urllib3.disable_warnings()
     port = os.environ["NOTEBOOK_PORT"]
     notebook_id = os.environ["DET_TASK_ID"]
+    token = os.environ["DET_NOTEBOOK_TOKEN"]
     notebook_server = f"https://127.0.0.1:{port}/proxy/{notebook_id}"
     master_url = api.canonicalize_master_url(os.environ["DET_MASTER"])
     cert = certs.default_load(master_url)
@@ -80,7 +88,8 @@ def main():
         idle_type = IdleType[os.environ["NOTEBOOK_IDLE_TYPE"].upper()]
     except KeyError:
         logging.warning(
-            "unknown idle type '%s', using default value", os.environ["NOTEBOOK_IDLE_TYPE"]
+            "unknown idle type '%s', using default value",
+            os.environ["NOTEBOOK_IDLE_TYPE"],
         )
         idle_type = IdleType.KERNELS_OR_TERMINALS
 
@@ -88,10 +97,10 @@ def main():
 
     while True:
         try:
-            idle = is_idle(notebook_server, idle_type)
+            idle = is_idle(notebook_server, token, idle_type)
             sess.put(
                 f"/api/v1/notebooks/{notebook_id}/report_idle",
-                params={"notebook_id": notebook_id, "idle": idle},
+                json={"idle": idle},
             )
         except Exception:
             logging.warning("ignoring error communicating with master", exc_info=True)

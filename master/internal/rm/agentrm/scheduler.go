@@ -3,6 +3,8 @@ package agentrm
 import (
 	"fmt"
 
+	log "github.com/sirupsen/logrus"
+
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -20,14 +22,17 @@ type Scheduler interface {
 }
 
 // MakeScheduler returns the corresponding scheduler implementation.
-func MakeScheduler(conf *config.SchedulerConfig) Scheduler {
+func MakeScheduler(conf *config.SchedulerConfig) (Scheduler, error) {
 	switch conf.GetType() {
 	case config.PriorityScheduling:
-		return NewPriorityScheduler(conf)
+		return NewPriorityScheduler(conf), nil
 	case config.FairShareScheduling:
-		return NewFairShareScheduler()
+		log.Warn("Fair-Share Scheduler has been deprecated, please update master config to use Priority Scheduler.")
+		return NewFairShareScheduler(), nil
 	case config.RoundRobinScheduling:
-		return NewRoundRobinScheduler()
+		log.Error("Round Robin Scheduler has been removed, please update master config to use Priority Scheduler.")
+		log.Info("Priority Scheduler with all priorities equal will have the same behavior as a Round Robin Scheduler.")
+		return nil, fmt.Errorf("round robin scheduler not supported")
 	default:
 		panic(fmt.Sprintf("invalid scheduler: %s", conf.GetType()))
 	}

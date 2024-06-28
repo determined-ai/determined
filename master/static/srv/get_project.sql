@@ -5,6 +5,11 @@ WITH pe AS (
         MAX(start_time) AS last_experiment_started_at
     FROM experiments
     WHERE project_id = $1
+), pr AS (
+    SELECT
+        COUNT(*) AS num_runs
+    FROM runs
+    WHERE project_id = $1
 )
 
 SELECT
@@ -23,8 +28,9 @@ SELECT
     COALESCE(MAX(pe.last_experiment_started_at), NULL) AS last_experiment_started_at,
     u.username,
     p.user_id,
-    p.key
-FROM pe, projects AS p
+    p.key,
+    MAX(pr.num_runs) AS num_runs
+FROM pe, pr, projects AS p
 LEFT JOIN users AS u ON u.id = p.user_id
 LEFT JOIN workspaces AS w ON w.id = p.workspace_id
 WHERE p.id = $1

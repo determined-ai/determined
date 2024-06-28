@@ -114,9 +114,8 @@ const FlatRunActionButton = ({
         } else if (numFailures === 0) {
           openToast({
             closeable: true,
-            description: `${action} succeeded for ${
-              results.successful.length
-            } ${LABEL_PLURAL.toLowerCase()}`,
+            description: `${action} succeeded for ${results.successful.length
+              } ${LABEL_PLURAL.toLowerCase()}`,
             title: `${action} Success`,
           });
         } else if (numSuccesses === 0) {
@@ -128,9 +127,8 @@ const FlatRunActionButton = ({
         } else {
           openToast({
             closeable: true,
-            description: `${action} succeeded for ${numSuccesses} out of ${
-              numFailures + numSuccesses
-            } eligible
+            description: `${action} succeeded for ${numSuccesses} out of ${numFailures + numSuccesses
+              } eligible
             ${LABEL_PLURAL.toLowerCase()}`,
             severity: 'Warning',
             title: `Partial ${action} Failure`,
@@ -234,7 +232,7 @@ const FlatRunActionButton = ({
     <>
       {selectedRuns.length > 0 && (
         <Dropdown menu={editMenuItems} onClick={handleBatchAction}>
-          <Button hideChildren={isMobile} icon={<Icon decorative name="heat" />}>
+          <Button hideChildren={isMobile} icon={<Icon decorative name="pencil" />}>
             Actions
           </Button>
         </Dropdown>

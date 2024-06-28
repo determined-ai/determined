@@ -592,11 +592,15 @@ func (a *ResourceManager) createResourcePool(
 		a.syslog.Infof("pool %s using global scheduling config", config.PoolName)
 	}
 
+	scheduler, err := MakeScheduler(config.Scheduler)
+	if err != nil {
+		return nil, err
+	}
 	return newResourcePool(
 		&config,
 		db,
 		cert,
-		MakeScheduler(config.Scheduler),
+		scheduler,
 		MakeFitFunction(config.Scheduler.FittingPolicy),
 		a.agentService,
 	)

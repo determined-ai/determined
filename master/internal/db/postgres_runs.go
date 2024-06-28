@@ -59,6 +59,11 @@ func UpdateRunMetadata(
 			if err != nil {
 				return fmt.Errorf("deleting run metadata indexes for run(%d): %w", runID, err)
 			}
+
+			// ignore if there is no metadata to insert.
+			if len(flatMetadata) == 0 {
+				return nil
+			}
 			_, err = tx.NewInsert().Model(&flatMetadata).Exec(ctx)
 			if err != nil {
 				return fmt.Errorf("inserting run metadata indexes for run(%d): %w", runID, err)
