@@ -7,7 +7,7 @@ import { handlePath } from 'routes/utils';
 import { archiveRuns, deleteRuns, killRuns, unarchiveRuns } from 'services/api';
 import { RunState } from 'types';
 
-import RunActionDropdown from './RunActionDropdown';
+import RunActionDropdown, { Action } from './RunActionDropdown';
 import { cell, run } from './RunActionDropdown.test.mock';
 
 const mockNavigatorClipboard = () => {
@@ -88,21 +88,21 @@ describe('RunActionDropdown', () => {
   it('should provide Copy Data option', async () => {
     setup();
     mockNavigatorClipboard();
-    await user.click(screen.getByText('Copy Value'));
+    await user.click(screen.getByText(Action.Copy));
     expect(navigator.clipboard.writeText).toHaveBeenCalledWith(cell.copyData);
   });
 
   it('should provide Link option', async () => {
     const link = 'https://www.google.com/';
     setup(link);
-    await user.click(screen.getByText('Open Link in New Tab'));
+    await user.click(screen.getByText(Action.NewTab));
     const tabClick = vi.mocked(handlePath).mock.calls[0];
     expect(tabClick[0]).toMatchObject({ type: 'click' });
     expect(tabClick[1]).toMatchObject({
       path: link,
       popout: 'tab',
     });
-    await user.click(screen.getByText('Open Link in New Window'));
+    await user.click(screen.getByText(Action.NewWindow));
     const windowClick = vi.mocked(handlePath).mock.calls[1];
     expect(windowClick[0]).toMatchObject({ type: 'click' });
     expect(windowClick[1]).toMatchObject({
@@ -114,66 +114,66 @@ describe('RunActionDropdown', () => {
   it('should provide Delete option', async () => {
     mocks.canDeleteFlatRun.mockImplementation(() => true);
     setup();
-    await user.click(screen.getByText('Delete'));
-    await user.click(screen.getByRole('button', { name: 'Delete' }));
+    await user.click(screen.getByText(Action.Delete));
+    await user.click(screen.getByRole('button', { name: Action.Delete }));
     expect(vi.mocked(deleteRuns)).toBeCalled();
   });
 
   it('should hide Delete option without permissions', () => {
     mocks.canDeleteFlatRun.mockImplementation(() => false);
     setup();
-    expect(screen.queryByText('Delete')).not.toBeInTheDocument();
+    expect(screen.queryByText(Action.Delete)).not.toBeInTheDocument();
   });
 
   it('should provide Kill option', async () => {
     mocks.canModifyFlatRun.mockImplementation(() => true);
     setup(undefined, RunState.Paused, undefined);
-    await user.click(screen.getByText('Kill'));
-    await user.click(screen.getByRole('button', { name: 'Kill' }));
+    await user.click(screen.getByText(Action.Kill));
+    await user.click(screen.getByRole('button', { name: Action.Kill }));
     expect(vi.mocked(killRuns)).toBeCalled();
   });
 
   it('should hide Kill option without permissions', () => {
     mocks.canModifyFlatRun.mockImplementation(() => false);
     setup(undefined, RunState.Paused, undefined);
-    expect(screen.queryByText('Kill')).not.toBeInTheDocument();
+    expect(screen.queryByText(Action.Kill)).not.toBeInTheDocument();
   });
 
   it('should provide Archive option', async () => {
     mocks.canModifyFlatRun.mockImplementation(() => true);
     setup();
-    await user.click(screen.getByText('Archive'));
+    await user.click(screen.getByText(Action.Archive));
     expect(vi.mocked(archiveRuns)).toBeCalled();
   });
 
   it('should hide Archive option without permissions', () => {
     mocks.canModifyFlatRun.mockImplementation(() => false);
     setup();
-    expect(screen.queryByText('Archive')).not.toBeInTheDocument();
+    expect(screen.queryByText(Action.Archive)).not.toBeInTheDocument();
   });
 
   it('should provide Unarchive option', async () => {
     mocks.canModifyFlatRun.mockImplementation(() => true);
     setup(undefined, undefined, true);
-    await user.click(screen.getByText('Unarchive'));
+    await user.click(screen.getByText(Action.Unarchive));
     expect(vi.mocked(unarchiveRuns)).toBeCalled();
   });
 
   it('should hide Unarchive option without permissions', () => {
     mocks.canModifyFlatRun.mockImplementation(() => false);
     setup(undefined, undefined, true);
-    expect(screen.queryByText('Unarchive')).not.toBeInTheDocument();
+    expect(screen.queryByText(Action.Unarchive)).not.toBeInTheDocument();
   });
 
   it('should provide Move option', () => {
     mocks.canMoveFlatRun.mockImplementation(() => true);
     setup();
-    expect(screen.getByText('Move')).toBeInTheDocument();
+    expect(screen.getByText(Action.Move)).toBeInTheDocument();
   });
 
   it('should hide Move option without permissions', () => {
     mocks.canMoveFlatRun.mockImplementation(() => false);
     setup();
-    expect(screen.queryByText('Move')).not.toBeInTheDocument();
+    expect(screen.queryByText(Action.Move)).not.toBeInTheDocument();
   });
 });

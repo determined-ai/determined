@@ -29,7 +29,7 @@ interface Props {
   projectId: number;
 }
 
-const Action = {
+export const Action = {
   Copy: 'Copy Value',
   NewTab: 'Open Link in New Tab',
   NewWindow: 'Open Link in New Window',
