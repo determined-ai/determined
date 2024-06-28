@@ -6,8 +6,12 @@ import { ConfirmationProvider } from 'hew/useConfirm';
 import { handlePath } from 'routes/utils';
 import {
   archiveExperiment,
+  cancelExperiment,
+  changeExperimentLogRetention,
   deleteExperiment,
   killExperiment,
+  patchExperiment,
+  pauseExperiment,
   unarchiveExperiment,
 } from 'services/api';
 import { RunState } from 'types';
@@ -35,9 +39,12 @@ vi.mock('routes/utils', () => ({
 
 vi.mock('services/api', () => ({
   archiveExperiment: vi.fn(),
+  cancelExperiment: vi.fn(),
   deleteExperiment: vi.fn(),
   getWorkspaces: vi.fn(() => Promise.resolve({ workspaces: [] })),
   killExperiment: vi.fn(),
+  patchExperiment: vi.fn(),
+  pauseExperiment: vi.fn(),
   unarchiveExperiment: vi.fn(),
 }));
 
@@ -190,10 +197,13 @@ describe('ExperimentActionDropdown', () => {
     expect(screen.queryByText(Action.Move)).not.toBeInTheDocument();
   });
 
-  it('should provide Edit option', () => {
+  it('should provide Edit option', async () => {
     mocks.canModifyExperimentMetadata.mockImplementation(() => true);
     setup();
-    expect(screen.getByText(Action.Edit)).toBeInTheDocument();
+    await user.click(screen.getByText(Action.Edit));
+    await user.type(screen.getByRole('textbox', { name: 'Name' }), 'edit');
+    await user.click(screen.getByText('Save'));
+    expect(vi.mocked(patchExperiment)).toBeCalled();
   });
 
   it('should hide Edit option without permissions', () => {
@@ -202,10 +212,36 @@ describe('ExperimentActionDropdown', () => {
     expect(screen.queryByText(Action.Edit)).not.toBeInTheDocument();
   });
 
+  it('should provide Pause option', async () => {
+    mocks.canModifyExperiment.mockImplementation(() => true);
+    setup(undefined, RunState.Running);
+    await user.click(screen.getByText(Action.Pause));
+    expect(vi.mocked(pauseExperiment)).toBeCalled();
+  });
+
+  it('should hide Pause option without permissions', () => {
+    mocks.canModifyExperiment.mockImplementation(() => false);
+    setup(undefined, RunState.Running);
+    expect(screen.queryByText(Action.Pause)).not.toBeInTheDocument();
+  });
+
+  it('should provide Cancel option', async () => {
+    mocks.canModifyExperiment.mockImplementation(() => true);
+    setup(undefined, RunState.Running);
+    await user.click(screen.getByText(Action.Cancel));
+    expect(vi.mocked(cancelExperiment)).toBeCalled();
+  });
+
+  it('should hide Cancel option without permissions', () => {
+    mocks.canModifyExperiment.mockImplementation(() => false);
+    setup(undefined, RunState.Running);
+    expect(screen.queryByText(Action.Cancel)).not.toBeInTheDocument();
+  });
+
   it('should provide Retain Logs option', () => {
     mocks.canModifyExperiment.mockImplementation(() => true);
     setup();
-    expect(screen.getByText(Action.RetainLogs)).toBeInTheDocument();
+    expect(screen.queryByText(Action.RetainLogs)).toBeInTheDocument();
   });
 
   it('should hide Retain Logs option without permissions', () => {
