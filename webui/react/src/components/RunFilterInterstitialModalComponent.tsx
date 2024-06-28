@@ -88,22 +88,22 @@ export const RunFilterInterstitialModalComponent = forwardRef<ControlledModalRef
         const filterGroup: FilterFormSetWithoutId['filterGroup'] =
           selection.type === 'ALL_EXCEPT'
             ? {
-              children: [
-                filterFormSet.filterGroup,
-                {
-                  children: selection.exclusions.map(idToFilter.bind(this, '!=')),
-                  conjunction: 'and',
-                  kind: 'group',
-                },
-              ],
-              conjunction: 'and',
-              kind: 'group',
-            }
+                children: [
+                  filterFormSet.filterGroup,
+                  {
+                    children: selection.exclusions.map(idToFilter.bind(this, '!=')),
+                    conjunction: 'and',
+                    kind: 'group',
+                  },
+                ],
+                conjunction: 'and',
+                kind: 'group',
+              }
             : {
-              children: selection.selections.map(idToFilter.bind(this, '=')),
-              conjunction: 'or',
-              kind: 'group',
-            };
+                children: selection.selections.map(idToFilter.bind(this, '=')),
+                conjunction: 'or',
+                kind: 'group',
+              };
         const filter: FilterFormSetWithoutId = {
           ...filterFormSet,
           filterGroup: {
