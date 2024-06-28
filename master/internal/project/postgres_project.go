@@ -29,7 +29,7 @@ const (
 	// MaxRetries is the maximum number of retries for transaction conflicts.
 	MaxRetries = 5
 	// ProjectKeyRegex is the regex pattern for a project key.
-	ProjectKeyRegex = "^[A-Z0-9]{1,5}$"
+	ProjectKeyRegex = "^[a-zA-Z0-9]{1,5}$"
 )
 
 // getProjectColumns returns a query with the columns for a project, not including experiment
@@ -48,6 +48,8 @@ func getProjectColumns(q *bun.SelectQuery) *bun.SelectQuery {
 		ColumnExpr("(SELECT username FROM users WHERE id = p.user_id) AS username").
 		ColumnExpr("p.user_id").
 		ColumnExpr("p.key").
+		ColumnExpr("w.name as workspace_name").
+		ColumnExpr("p.created_at").
 		Join("INNER JOIN workspaces w ON w.id = p.workspace_id")
 }
 
@@ -63,6 +65,10 @@ func getProjectByIDTx(ctx context.Context, tx bun.Tx, projectID int) (*model.Pro
 		).
 		ColumnExpr(
 			"(SELECT COUNT(*) FROM experiments WHERE project_id = ?) AS num_experiments",
+			projectID,
+		).
+		ColumnExpr(
+			"(SELECT COUNT(*) FROM runs WHERE project_id = ?) AS num_runs",
 			projectID,
 		).
 		ColumnExpr(
@@ -171,8 +177,9 @@ func generateProjectKey(ctx context.Context, tx bun.Tx, projectName string) (str
 	var key string
 	found := true
 	for i := 0; i < MaxRetries && found; i++ {
-		prefixLength := min(len(projectName), MaxProjectKeyPrefixLength)
-		prefix := projectName[:prefixLength]
+		sanitizedName := strings.ToUpper(regexp.MustCompile("[^a-zA-Z0-9]").ReplaceAllString(projectName, ""))
+		prefixLength := min(len(sanitizedName), MaxProjectKeyPrefixLength)
+		prefix := sanitizedName[:prefixLength]
 		suffix := random.String(MaxProjectKeyLength - prefixLength)
 		key = strings.ToUpper(prefix + suffix)
 		err := tx.NewSelect().Model(&model.Project{}).Where("key = ?", key).For("UPDATE").Scan(ctx)
@@ -241,7 +248,6 @@ func ValidateProjectKey(key string) error {
 	case len(key) < 1:
 		return errors.New("project key cannot be empty")
 	case !regexp.MustCompile(ProjectKeyRegex).MatchString(key):
-		log.Errorf("project key %s does not match regex %s", key, ProjectKeyRegex)
 		return errors.Errorf(
 			"project key can only contain alphanumeric characters: %s",
 			key,

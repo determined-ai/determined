@@ -1,14 +1,12 @@
-import { expect } from '@playwright/test';
 import { v4 } from 'uuid';
 
-import { test } from 'e2e/fixtures/global-fixtures';
-import { BasePage } from 'e2e/models/common/base/BasePage';
+import { expect, test } from 'e2e/fixtures/global-fixtures';
 import { WorkspaceCreateModal } from 'e2e/models/components/WorkspaceCreateModal';
-import { Workspaces } from 'e2e/models/pages/Workspaces';
+import { WorkspaceDetails } from 'e2e/models/pages/WorkspaceDetails';
+import { WorkspaceList } from 'e2e/models/pages/WorkspaceList';
 import { randId, safeName } from 'e2e/utils/naming';
 
 test.describe('Projects', () => {
-  test.slow();
   let wsCreatedWithButton = '';
   let wsCreatedWithSidebar = '';
   let projectOneName = '';
@@ -39,36 +37,36 @@ test.describe('Projects', () => {
   };
 
   test.beforeEach(async ({ authedPage }) => {
-    const workspacesPage = new Workspaces(authedPage);
+    const workspaceList = new WorkspaceList(authedPage);
 
-    await expect(authedPage).toHaveTitle(BasePage.getTitle('Home'));
+    await expect(authedPage).toHaveDeterminedTitle('Home');
     await expect(authedPage).toHaveURL(/dashboard/);
     await test.step('Navigate to Workspaces', async () => {
-      await workspacesPage.nav.sidebar.workspaces.pwLocator.click();
-      await authedPage.waitForURL(`**/${workspacesPage.url}?**`); // glob pattern for query params
-      await expect.soft(authedPage).toHaveTitle(workspacesPage.title);
+      await workspaceList.nav.sidebar.workspaces.pwLocator.click();
+      await authedPage.waitForURL(`**/${workspaceList.url}?**`); // glob pattern for query params
+      await expect.soft(authedPage).toHaveDeterminedTitle(workspaceList.title);
     });
   });
 
   test.afterEach(async ({ authedPage }) => {
-    const workspacesPage = new Workspaces(authedPage);
+    const workspaceList = new WorkspaceList(authedPage);
     await test.step('Delete Workspace from Card', async () => {
       if (wsCreatedWithButton !== '') {
-        await workspacesPage.nav.sidebar.workspaces.pwLocator.click();
-        const workspaceCard = workspacesPage.list.cardWithName(wsCreatedWithButton);
+        await workspaceList.nav.sidebar.workspaces.pwLocator.click();
+        const workspaceCard = workspaceList.cardByName(wsCreatedWithButton);
         await (await workspaceCard.actionMenu.open()).delete.pwLocator.click();
-        await workspacesPage.deleteModal.nameConfirmation.pwLocator.fill(wsCreatedWithButton);
-        await workspacesPage.deleteModal.footer.submit.pwLocator.click();
+        await workspaceList.deleteModal.nameConfirmation.pwLocator.fill(wsCreatedWithButton);
+        await workspaceList.deleteModal.footer.submit.pwLocator.click();
       }
     });
     await test.step('Delete Workspace from Sidebar', async () => {
       if (wsCreatedWithSidebar !== '') {
-        const workspaceItem = workspacesPage.nav.sidebar.sidebarWorkspaceItem(wsCreatedWithSidebar);
+        const workspaceItem = workspaceList.nav.sidebar.sidebarWorkspaceItem(wsCreatedWithSidebar);
         await (await workspaceItem.actionMenu.open()).delete.pwLocator.click();
-        await workspacesPage.deleteModal.nameConfirmation.pwLocator.fill(wsCreatedWithButton); // wrong name
-        await expect(workspacesPage.deleteModal.footer.submit.pwLocator).toBeDisabled();
-        await workspacesPage.deleteModal.nameConfirmation.pwLocator.fill(wsCreatedWithSidebar);
-        await workspacesPage.deleteModal.footer.submit.pwLocator.click();
+        await workspaceList.deleteModal.nameConfirmation.pwLocator.fill(wsCreatedWithButton); // wrong name
+        await expect(workspaceList.deleteModal.footer.submit.pwLocator).toBeDisabled();
+        await workspaceList.deleteModal.nameConfirmation.pwLocator.fill(wsCreatedWithSidebar);
+        await workspaceList.deleteModal.footer.submit.pwLocator.click();
       }
     });
   });
@@ -83,48 +81,46 @@ test.describe('Projects', () => {
   // })
 
   test('Projects and Workspaces CRUD', async ({ authedPage }) => {
-    const workspacesPage = new Workspaces(authedPage);
+    const workspaceList = new WorkspaceList(authedPage);
+    const workspaceDetails = new WorkspaceDetails(authedPage);
 
     await test.step('Create a Workspace from Card', async () => {
-      await workspacesPage.list.newWorkspaceButton.pwLocator.click();
-      wsCreatedWithButton = await createWorkspaceAllFields(
-        workspacesPage.createModal,
-        'fromButton',
-      );
+      await workspaceList.newWorkspaceButton.pwLocator.click();
+      wsCreatedWithButton = await createWorkspaceAllFields(workspaceList.createModal, 'fromButton');
 
       await expect(
-        workspacesPage.nav.sidebar.sidebarWorkspaceItem(wsCreatedWithButton).pwLocator,
+        workspaceList.nav.sidebar.sidebarWorkspaceItem(wsCreatedWithButton).pwLocator,
       ).toBeVisible();
-      await workspacesPage.nav.sidebar.workspaces.pwLocator.click();
-      await expect(workspacesPage.list.cardWithName(wsCreatedWithButton).pwLocator).toBeVisible();
+      await workspaceList.nav.sidebar.workspaces.pwLocator.click();
+      await workspaceList.cardByName(wsCreatedWithButton).pwLocator.waitFor();
     });
     await test.step('Create a Workspace from Sidebar', async () => {
-      await workspacesPage.nav.sidebar.workspaces.pwLocator.hover();
-      await workspacesPage.nav.sidebar.createWorkspace.pwLocator.click();
+      await workspaceList.nav.sidebar.workspaces.pwLocator.hover();
+      await workspaceList.nav.sidebar.createWorkspaceFromHover.pwLocator.click();
       wsCreatedWithSidebar = await createWorkspaceAllFields(
-        workspacesPage.createModal,
+        workspaceList.createModal,
         'fromSidebar',
       );
 
       await expect(
-        workspacesPage.nav.sidebar.sidebarWorkspaceItem(wsCreatedWithSidebar).pwLocator,
+        workspaceList.nav.sidebar.sidebarWorkspaceItem(wsCreatedWithSidebar).pwLocator,
       ).toBeVisible();
-      await workspacesPage.nav.sidebar.workspaces.pwLocator.click();
-      await expect(workspacesPage.list.cardWithName(wsCreatedWithSidebar).pwLocator).toBeVisible();
+      await workspaceList.nav.sidebar.workspaces.pwLocator.click();
+      await expect(workspaceList.cardByName(wsCreatedWithSidebar).pwLocator).toBeVisible();
     });
 
     await test.step('Create Projects', async () => {
-      await workspacesPage.nav.sidebar.sidebarWorkspaceItem(wsCreatedWithButton).pwLocator.click();
-      const projects = workspacesPage.details.projects;
-      await projects.pwLocator.click();
+      await workspaceList.nav.sidebar.sidebarWorkspaceItem(wsCreatedWithButton).pwLocator.click();
+      await workspaceDetails.projectsTab.pwLocator.click();
+      const projects = workspaceDetails.workspaceProjects;
       await projects.newProject.pwLocator.click();
       projectOneName = `test-1-${v4()}`;
       await projects.createModal.projectName.pwLocator.fill(projectOneName);
       await projects.createModal.description.pwLocator.fill(v4());
       await projects.createModal.footer.submit.pwLocator.click();
       await authedPage.waitForURL('**/projects/*/experiments');
-      await workspacesPage.nav.sidebar.sidebarWorkspaceItem(wsCreatedWithButton).pwLocator.click();
-      await expect(projects.cardWithName(projectOneName).pwLocator).toBeVisible();
+      await workspaceList.nav.sidebar.sidebarWorkspaceItem(wsCreatedWithButton).pwLocator.click();
+      await expect(projects.cardByName(projectOneName).pwLocator).toBeVisible();
     });
 
     await test.step('Navigation on Projects Page - Sorting and List', async () => {});
@@ -138,14 +134,14 @@ test.describe('Projects', () => {
     await test.step('Edit a Workspace', async () => {});
     await test.step('Delete a Model', async () => {});
     await test.step('Delete a Project', async () => {
-      await workspacesPage.nav.sidebar.sidebarWorkspaceItem(wsCreatedWithButton).pwLocator.click();
-      await workspacesPage.details.projects.pwLocator.click();
-      const projectContent = workspacesPage.details.projects;
-      const projectCard = projectContent.cardWithName(projectOneName);
+      const projects = workspaceDetails.workspaceProjects;
+      await workspaceList.nav.sidebar.sidebarWorkspaceItem(wsCreatedWithButton).pwLocator.click();
+      await workspaceDetails.projectsTab.pwLocator.click();
+      const projectCard = projects.cardByName(projectOneName);
       await projectCard.actionMenu.open();
       await projectCard.actionMenu.delete.pwLocator.click();
-      await projectContent.deleteModal.nameConfirmation.pwLocator.fill(projectOneName);
-      await projectContent.deleteModal.footer.submit.pwLocator.click();
+      await projects.deleteModal.nameConfirmation.pwLocator.fill(projectOneName);
+      await projects.deleteModal.footer.submit.pwLocator.click();
     });
   });
 });

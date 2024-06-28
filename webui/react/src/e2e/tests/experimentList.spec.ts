@@ -1,7 +1,5 @@
-import { expect } from '@playwright/test';
-
 import { AuthFixture } from 'e2e/fixtures/auth.fixture';
-import { test } from 'e2e/fixtures/global-fixtures';
+import { expect, test } from 'e2e/fixtures/global-fixtures';
 import { ProjectDetails } from 'e2e/models/pages/ProjectDetails';
 import { detExecSync, fullPath } from 'e2e/utils/detCLI';
 
@@ -80,7 +78,6 @@ test.describe('Experiement List', () => {
 
   test.skip('Column Picker Check and Uncheck', async () => {
     // BUG [ET-287]
-    test.slow();
     const columnTitle = 'Forked From',
       columnTestid = 'forkedFrom';
     const columnPicker = projectDetailsPage.f_experiemntList.tableActionBar.columnPickerMenu;

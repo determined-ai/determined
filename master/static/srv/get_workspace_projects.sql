@@ -9,6 +9,7 @@ SELECT
   p.error_message,
   (w.archived OR p.archived) AS archived,
   SUM(CASE WHEN pe.project_id = p.id THEN 1 ELSE 0 END) AS num_experiments,
+  (SELECT COUNT(*) FROM runs r WHERE p.id = r.project_id) AS num_runs,
   SUM(
     CASE WHEN pe.project_id = p.id
     AND pe.state = 'ACTIVE' THEN 1 ELSE 0 END

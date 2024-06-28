@@ -763,6 +763,36 @@ export const searchRuns = generateDetApi<
   Type.SearchFlatRunPagination
 >(Config.searchRuns);
 
+export const archiveRuns = generateDetApi<
+  Api.V1ArchiveRunsRequest,
+  Api.V1ArchiveRunsResponse,
+  Type.BulkActionResult
+>(Config.archiveRuns);
+
+export const deleteRuns = generateDetApi<
+  Api.V1DeleteRunsRequest,
+  Api.V1DeleteRunsResponse,
+  Type.BulkActionResult
+>(Config.deleteRuns);
+
+export const killRuns = generateDetApi<
+  Api.V1KillRunsRequest,
+  Api.V1KillRunsResponse,
+  Type.BulkActionResult
+>(Config.killRuns);
+
+export const moveRuns = generateDetApi<
+  Api.V1MoveRunsRequest,
+  Api.V1MoveRunsResponse,
+  Type.BulkActionResult
+>(Config.moveRuns);
+
+export const unarchiveRuns = generateDetApi<
+  Api.V1UnarchiveRunsRequest,
+  Api.V1UnarchiveRunsResponse,
+  void
+>(Config.unarchiveRuns);
+
 /* Tasks */
 
 export const getCommands = generateDetApi<

@@ -873,7 +873,9 @@ func TestPartialJobsShowQueuedStates(t *testing.T) {
 	require.NoError(t, err)
 
 	var slots int
-	for _, n := range rp.jobsService.GetAgents().Agents {
+	agents, err := rp.jobsService.GetAgents()
+	require.NoError(t, err)
+	for _, n := range agents.Agents {
 		slots += len(n.Slots)
 	}
 
@@ -944,11 +946,12 @@ func TestNodeWorkflows(t *testing.T) {
 	j := newTestJobsService(t)
 	rp := newTestResourcePool(j)
 
-	resp := j.getAgents()
+	resp, err := j.getAgents()
+	require.NoError(t, err)
 	require.Len(t, resp.Agents, 1)
 	nodeID := resp.Agents[0].Id
 
-	_, err := rp.jobsService.DisableAgent(&apiv1.DisableAgentRequest{AgentId: nodeID})
+	_, err = rp.jobsService.DisableAgent(&apiv1.DisableAgentRequest{AgentId: nodeID})
 	defer func() {
 		// Ensure we re-enable the agent, otherwise failures in this test will break others.
 		_, err := rp.jobsService.EnableAgent(&apiv1.EnableAgentRequest{AgentId: nodeID})
@@ -963,7 +966,8 @@ func TestNodeWorkflows(t *testing.T) {
 		j.getAgentsCacheTime = j.getAgentsCacheTime.Add(-time.Hour)
 		j.mu.Unlock()
 
-		resp = j.GetAgents()
+		resp, err := j.GetAgents()
+		require.NoError(t, err)
 		require.Len(t, resp.Agents, 1)
 		return !resp.Agents[0].Enabled
 	}), "GetAgents didn't say %s is disabled, but we just disabled it", nodeID)
