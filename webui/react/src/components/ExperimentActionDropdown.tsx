@@ -330,7 +330,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
     ],
   );
 
-  if (menuItems.length === 0) {
+  if (dropdownMenu.length === 0) {
     return (
       (children as JSX.Element) ?? (
         <div className={css.base} title="No actions available">
