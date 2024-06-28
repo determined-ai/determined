@@ -51,7 +51,7 @@ func setupProjectAuthZTest(
 
 	if pAuthZ == nil {
 		pAuthZ = &mocks.ProjectAuthZ{}
-		project.AuthZProvider.Register(mockType, pAuthZ)
+		// project.AuthZProvider.Register(mockType, pAuthZ)
 	}
 	return api, pAuthZ, workspaceAuthZ, curUser, ctx
 }
@@ -594,6 +594,8 @@ func TestPatchProjectRecordRedirect(t *testing.T) {
 	})
 	require.NoError(t, err)
 
+	oldKey := resp.Project.Key
+
 	exp := createTestExpWithProjectID(t, api, curUser, int(resp.Project.Id))
 	task := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
 	require.NoError(t, db.AddTask(ctx, task))
@@ -633,6 +635,32 @@ func TestPatchProjectRecordRedirect(t *testing.T) {
 		Scan(ctx, &numRunsRedirect)
 	require.NoError(t, err)
 	require.Equal(t, numRuns, numRunsRedirect)
+
+	// Allow project to go back to old key
+	_, err = api.PatchProject(ctx, &apiv1.PatchProjectRequest{
+		Id: resp.Project.Id,
+		Project: &projectv1.PatchProject{
+			Key: wrapperspb.String(oldKey),
+		},
+	})
+	require.NoError(t, err)
+
+	// Do not allow new project to take old key
+	newProjectName := "test-project-new" + uuid.New().String()
+	resp, err = api.PostProject(ctx, &apiv1.PostProjectRequest{
+		Name: newProjectName, WorkspaceId: wresp.Workspace.Id,
+	})
+	require.NoError(t, err)
+
+	_, err = api.PatchProject(ctx, &apiv1.PatchProjectRequest{
+		Id: resp.Project.Id,
+		Project: &projectv1.PatchProject{
+			Key: wrapperspb.String(oldKey),
+		},
+	})
+	require.Error(t, err)
+	require.Equal(t, status.Errorf(codes.AlreadyExists,
+		"error updating project %s, provided key '%s' already in use in redirect table", newProjectName, oldKey), err)
 }
 
 func TestPatchProjectWithDuplicateProjectKey(t *testing.T) {
