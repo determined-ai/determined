@@ -166,7 +166,6 @@ linters:
    - errname
    - execinquery
    - exhaustruct
-   - exportloopref
    - forbidigo
    - ginkgolinter
    - gocheckcompilerdirectives
@@ -187,7 +186,6 @@ linters:
    - grouper
    - importas
    - ineffassign
-   - intrange
    - lll
    - loggercheck
    - makezero
