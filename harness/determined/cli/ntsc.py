@@ -200,7 +200,7 @@ def describe(args: argparse.Namespace) -> None:
 
     w_names = workspace.get_workspace_names(sess)
     if item["state"].startswith("STATE_"):
-        item["state"] = item["state"][6:]
+        item["state"] = item["state"].replace("STATE_", "")
     if "workspaceId" in item:
         wId = item["workspaceId"]
         item["workspaceName"] = w_names[wId] if wId in w_names else f"missing workspace id {wId}"
