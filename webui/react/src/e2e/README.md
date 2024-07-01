@@ -4,7 +4,7 @@ Our goals are to keep test cases realiable, stable, maintainable, and readable.
 
 ## Framework
 
-Deteremined AI uses [Playwright 🎭](https://playwright.dev/).
+Determined AI uses [Playwright 🎭](https://playwright.dev/).
 
 ## Setup
 
@@ -65,3 +65,5 @@ Update the docker image version along with Playwright version.
 ## Appendix
 
 - [Page model Readme](./models/README.md)
+
+## Acknowledgements
