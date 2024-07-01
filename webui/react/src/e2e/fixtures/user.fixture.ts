@@ -1,6 +1,7 @@
-import { expect, Page } from '@playwright/test';
+import { Page } from '@playwright/test';
 import _ from 'lodash';
 
+import { expect } from 'e2e/fixtures/global-fixtures';
 import { UserManagement } from 'e2e/models/pages/Admin/UserManagement';
 import { safeName } from 'e2e/utils/naming';
 import { repeatWithFallback } from 'e2e/utils/polling';

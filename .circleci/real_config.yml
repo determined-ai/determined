@@ -21,7 +21,7 @@ executors:
 parameters:
   det-version:
     type: string
-    default: 0.34.0-dev0
+    default: 0.34.1-dev0
   docker-image:
     type: string
     default: determinedai/cimg-base:latest
@@ -277,7 +277,7 @@ commands:
       - when:
           condition: <<parameters.tf2>>
           steps:
-            - run: docker pull determinedai/pytorch-ngc-dev:8c90e80
+            - run: docker pull determinedai/pytorch-ngc-dev:0e43056
 
   login-docker:
     parameters:
@@ -1394,14 +1394,6 @@ commands:
           no_output_timeout: 30m
           command: make package-ee
 
-  make-package-small:
-    steps:
-      - attach_workspace:
-          at: .
-      - run:
-          no_output_timeout: 30m
-          command: make -C master package-small
-
   install-devcluster:
     steps:
       - run: pip install git+https://github.com/determined-ai/devcluster.git@v1.1.0#egg=devcluster
@@ -1729,39 +1721,6 @@ jobs:
                 tools/scripts/retry.sh make -C model_hub publish-docker-dev
             fi
       - run: mkdir /tmp/pkgs && cp -v */dist/*.{rpm,deb,tar.gz} /tmp/pkgs
-
-  package-and-push-system-dev-small:
-    docker:
-      - image: <<pipeline.parameters.docker-image>>
-        environment:
-          GO111MODULE: "on"
-    resource_class: xlarge
-    steps:
-      - checkout
-      - add-and-fetch-upstream
-      - skip-if-only-docs
-      - skip-if-only-github
-      - skip-if-only-webui
-      - attach_workspace:
-          at: .
-      - reinstall-go
-      - setup-python-venv:
-          install-python: false
-          determined: true
-          executor: <<pipeline.parameters.docker-image>>
-      - setup_remote_docker:
-          version: previous
-      - login-docker:
-          username: ${DOCKER_USER}
-          password: ${DOCKER_PASS}
-      - pre-package-and-push-system:
-          check: false
-      - make-package-small
-      - run: tools/scripts/retry.sh make -C master publish-dev-small
-      - persist_to_workspace:
-          root: .
-          paths:
-            - harness/dist
 
   package-and-push-system-rc:
     docker:
@@ -2401,7 +2360,7 @@ jobs:
 
   test-unit-harness-gpu-tf:
     docker:
-      - image: determinedai/tensorflow-ngc-dev:8c90e80
+      - image: determinedai/tensorflow-ngc-dev:0e43056
     resource_class: determined-ai/container-runner-gpu
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
@@ -2428,7 +2387,7 @@ jobs:
 
   test-unit-harness-pytorch2-gpu:
     docker:
-      - image: determinedai/pytorch-ngc-dev:8c90e80
+      - image: determinedai/pytorch-ngc-dev:0e43056
     resource_class: determined-ai/container-runner-gpu
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
@@ -2455,7 +2414,7 @@ jobs:
 
   test-unit-harness-pytorch2-cpu:
     docker:
-      - image: determinedai/pytorch-ngc-dev:8c90e80
+      - image: determinedai/pytorch-ngc-dev:0e43056
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
       - checkout
@@ -2481,7 +2440,7 @@ jobs:
 
   test-unit-harness-gpu-parallel:
     docker:
-      - image: determinedai/pytorch-ngc-dev:8c90e80
+      - image: determinedai/pytorch-ngc-dev:0e43056
     resource_class: determined-ai/container-runner-multi-gpu
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
@@ -2508,7 +2467,7 @@ jobs:
 
   test-unit-harness-gpu-deepspeed:
     docker:
-      - image: determinedai/pytorch-ngc-dev:8c90e80
+      - image: determinedai/pytorch-ngc-dev:0e43056
     resource_class: determined-ai/container-runner-gpu
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
@@ -3747,7 +3706,7 @@ jobs:
         type: string
         default: "1"
       environment-image:
-        default: determinedai/pytorch-ngc-dev:8c90e80
+        default: determinedai/pytorch-ngc-dev:0e43056
         type: string
       accel-node-taints:
         type: string
@@ -4897,25 +4856,6 @@ workflows:
           requires:
             - package-and-push-system-dev-ee
 
-  test-e2e-gke-shared-cluster:
-    unless:
-      or:
-        - << pipeline.parameters.do_nightly_tests >>
-        - equal: [ api, << pipeline.trigger_source >> ]
-    jobs:
-      - package-and-push-system-dev-small
-
-      - test-e2e-shared-cluster:
-          name: test-e2e-shared-cluster-cpu
-          context:
-            - gcp-shared-cluster
-            - gcp-ci-cluster-default-user-credentials
-          requires:
-            - package-and-push-system-dev-small
-          parallelism: 3
-          mark: "e2e_gpu and not gpu_required"
-          test-type: cpu
-
   test-e2e-longrunning:
     <<: *do-not-run-on-manual-trigger
     jobs:
@@ -5688,6 +5628,8 @@ workflows:
                   port: 5432
                   name: determined
                   password: ${HPC_DB_PASSWD}
+                security:
+                  initial_user_password: ${INITIAL_USER_PASSWORD}
       - terminate-vpc-circleci:
             context: ["gcp"]
 

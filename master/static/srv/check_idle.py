@@ -100,7 +100,7 @@ def main():
             idle = is_idle(notebook_server, token, idle_type)
             sess.put(
                 f"/api/v1/notebooks/{notebook_id}/report_idle",
-                params={"notebook_id": notebook_id, "idle": idle},
+                json={"idle": idle},
             )
         except Exception:
             logging.warning("ignoring error communicating with master", exc_info=True)

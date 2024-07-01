@@ -1,12 +1,12 @@
 import { APIRequest, APIRequestContext, Browser, BrowserContext, Page } from '@playwright/test';
-import { v4 } from 'uuid';
+
+import { baseUrl, password, username } from 'e2e/utils/envVars';
 
 export class ApiAuthFixture {
   apiContext?: APIRequestContext; // we can't get this until login, so may be undefined
   readonly request: APIRequest;
   readonly browser: Browser;
   readonly baseURL: string;
-  readonly testId = v4();
   _page?: Page;
   get page(): Page {
     if (this._page === undefined) {
@@ -14,31 +14,16 @@ export class ApiAuthFixture {
     }
     return this._page;
   }
-  readonly #STATE_FILE_SUFFIX = 'state.json';
-  readonly #USERNAME: string;
-  readonly #PASSWORD: string;
-  context?: BrowserContext;
-  readonly #stateFile = `${this.testId}-${this.#STATE_FILE_SUFFIX}`;
+  browserContext?: BrowserContext;
 
-  constructor(request: APIRequest, browser: Browser, baseURL?: string, existingPage?: Page) {
-    if (process.env.PW_USER_NAME === undefined) {
-      throw new Error('username must be defined');
-    }
-    if (process.env.PW_PASSWORD === undefined) {
-      throw new Error('password must be defined');
-    }
-    if (baseURL === undefined) {
-      throw new Error('baseURL must be defined in playwright config to use API requests.');
-    }
-    this.#USERNAME = process.env.PW_USER_NAME;
-    this.#PASSWORD = process.env.PW_PASSWORD;
+  constructor(request: APIRequest, browser: Browser, baseURL: string, existingPage?: Page) {
     this.request = request;
     this.browser = browser;
     this.baseURL = baseURL;
     this._page = existingPage;
   }
 
-  async getBearerToken(): Promise<string> {
+  async getBearerToken(noBearer = false): Promise<string> {
     const cookies = (await this.apiContext?.storageState())?.cookies ?? [];
     const authToken = cookies.find((cookie) => {
       return cookie.name === 'auth';
@@ -48,6 +33,7 @@ export class ApiAuthFixture {
         'Attempted to retrieve the auth token from the PW apiContext, but it does not exist. Have you called apiAuth.login() yet?',
       );
     }
+    if (noBearer) return authToken;
     return `Bearer ${authToken}`;
   }
 
@@ -56,10 +42,8 @@ export class ApiAuthFixture {
    * fixture, the bearer token will be attached to that context. If not a new
    * browser context will be created with the cookie.
    */
-  async login({
-    creds = { password: this.#PASSWORD, username: this.#USERNAME },
-  } = {}): Promise<void> {
-    this.apiContext = this.apiContext || (await this.request.newContext());
+  async loginApi({ creds = { password: password(), username: username() } } = {}): Promise<void> {
+    this.apiContext = this.apiContext || (await this.request.newContext({ baseURL: this.baseURL }));
     const resp = await this.apiContext.post('/api/v1/auth/login', {
       data: {
         ...creds,
@@ -69,12 +53,26 @@ export class ApiAuthFixture {
     if (resp.status() !== 200) {
       throw new Error(`Login API request has failed with status code ${resp.status()}`);
     }
+  }
+
+  async loginBrowser(page: Page): Promise<void> {
+    if (this.apiContext === undefined) {
+      throw new Error('Cannot login browser without first logging in API');
+    }
     // Save cookie state into the file.
-    const state = await this.apiContext.storageState({ path: this.#stateFile });
     if (this._page !== undefined) {
+      const state = await this.apiContext.storageState();
       // add cookies to current page's existing context
-      this.context = this._page.context();
-      await this.context.addCookies(state.cookies);
+      this.browserContext = this._page.context();
+      // replace the domain of api base url with browser base url
+      state.cookies.forEach((cookie) => {
+        if (cookie.name === 'auth' && cookie.domain === new URL(this.baseURL).hostname) {
+          cookie.domain = new URL(baseUrl()).hostname;
+        }
+      });
+      await this.browserContext.addCookies(state.cookies);
+      const token = JSON.stringify(await this.getBearerToken(true));
+      await page.evaluate((token) => localStorage.setItem('global/auth-token', token), token);
     }
   }
 
@@ -86,6 +84,6 @@ export class ApiAuthFixture {
    */
   async dispose(): Promise<void> {
     await this.apiContext?.dispose();
-    await this.context?.close();
+    await this.browserContext?.close();
   }
 }

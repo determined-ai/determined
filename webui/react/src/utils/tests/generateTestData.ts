@@ -267,6 +267,7 @@ export const generateTestExperimentData = (): {
 
 export const generateTestRunData = (): FlatRun => {
   return {
+    archived: false,
     checkpointCount: 0,
     checkpointSize: 0,
     hyperparameters: { 1: 1 },

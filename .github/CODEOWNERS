@@ -35,6 +35,7 @@
 /e2e_tests/tests/requirements.txt @determined-ai/model-dev
 /e2e_tests/tests/experiment       @determined-ai/model-dev
 /e2e_tests/tests/nightly          @determined-ai/model-dev
+/e2e_tests/tests/environment      @determined-ai/model-dev
 
 # Backend owns some e2e tests.
 /e2e_tests/tests/cluster  @determined-ai/backend

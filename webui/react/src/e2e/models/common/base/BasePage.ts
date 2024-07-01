@@ -1,4 +1,4 @@
-import { expect, Locator, type Page } from '@playwright/test';
+import { Locator, type Page } from '@playwright/test';
 
 import { Navigation } from 'e2e/models/components/Navigation';
 
@@ -12,11 +12,6 @@ export interface ModelBasics {
 export abstract class BasePage implements ModelBasics {
   readonly _page: Page;
   readonly nav = new Navigation({ parent: this });
-
-  private static isEE = Boolean(JSON.parse(process.env.PW_EE ?? '""'));
-  private static appTitle = BasePage.isEE
-    ? 'HPE Machine Learning Development Environment'
-    : 'Determined';
 
   abstract readonly url: string | RegExp;
   abstract readonly title: string | RegExp;
@@ -34,23 +29,6 @@ export abstract class BasePage implements ModelBasics {
    */
   get pwLocator(): Locator {
     return this._page.locator(':root');
-  }
-  /**
-   * The title of the page. Format of [prefix - ]appTitle
-   * @param prefix
-   */
-  public static getTitle(prefix: string = ''): string {
-    if (prefix === '') {
-      return BasePage.appTitle;
-    }
-    return `${prefix} - ${BasePage.appTitle}`;
-  }
-
-  public getUrlRegExp(): RegExp {
-    if (this.url instanceof RegExp) {
-      return this.url;
-    }
-    return new RegExp(this.url, 'g');
   }
 
   /**
@@ -70,9 +48,13 @@ export abstract class BasePage implements ModelBasics {
     if (verify) {
       // TODO this does nothing because we end up checking, passing, and then getting redirected
       await this._page.waitForURL(this.url);
-      await expect(this._page).toHaveTitle(this.title);
     }
     return this;
+  }
+
+  async waitForURL(): Promise<void> {
+    if (this.url instanceof RegExp) await this._page.waitForURL(this.url);
+    await this._page.waitForURL(new RegExp(this.url));
   }
 
   /**

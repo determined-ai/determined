@@ -6,7 +6,7 @@ import { useCallback, useEffect } from 'react';
 export type onInterstitialCloseActionType = (reason: 'ok' | 'close' | 'failed') => void;
 
 interface Props<T> {
-  onCloseAction: (reason: 'ok' | 'close' | 'failed') => void;
+  onCloseAction: onInterstitialCloseActionType;
   loadableData: Loadable<T>;
 }
 

@@ -146,6 +146,16 @@ type Allocation struct {
 	StatusCode   *int32  `db:"status_code" bun:"status_code"`
 }
 
+// AllocationWorkspaceRecord is the model for persisting the workspace and experiment
+// information associated with an allocation.
+type AllocationWorkspaceRecord struct {
+	bun.BaseModel `bun:"table:allocation_workspace_info"`
+	AllocationID  AllocationID `db:"allocation_id" bun:"allocation_id,notnull"`
+	ExperimentID  int          `db:"experiment_id" bun:"experiment_id"`
+	WorkspaceID   int          `db:"workspace_id" bun:"workspace_id,notnull"`
+	WorkspaceName string       `db:"workspace_name" bun:"workspace_name,notnull"`
+}
+
 // AcceleratorData is the model for an allocation accelerator data in the database.
 type AcceleratorData struct {
 	bun.BaseModel `bun:"table:allocation_accelerators"`

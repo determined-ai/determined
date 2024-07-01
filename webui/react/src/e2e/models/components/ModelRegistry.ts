@@ -1,8 +1,6 @@
-import { NamedComponent } from 'e2e/models/common/base/BaseComponent';
+import { BaseReactFragment } from 'e2e/models/common/base/BaseReactFragment';
 
 /**
  * Represents the ModelRegistry component in src/components/ModelRegistry.tsx
  */
-export class ModelRegistry extends NamedComponent {
-  defaultSelector: string = '[data-testid=modelRegistry]';
-}
+export class ModelRegistry extends BaseReactFragment {}

@@ -1,7 +1,5 @@
-import { expect } from '@playwright/test';
-
 import { AuthFixture } from 'e2e/fixtures/auth.fixture';
-import { test } from 'e2e/fixtures/global-fixtures';
+import { expect, test } from 'e2e/fixtures/global-fixtures';
 import { ProjectDetails } from 'e2e/models/pages/ProjectDetails';
 import { detExecSync, fullPath } from 'e2e/utils/detCLI';
 
@@ -16,8 +14,9 @@ test.describe('Experiement List', () => {
     return parseInt(expNum);
   };
 
-  test.beforeAll(async ({ browser }) => {
+  test.beforeAll(async ({ browser, dev }) => {
     const pageSetupTeardown = await browser.newPage();
+    await dev.setServerAddress(pageSetupTeardown);
     const authFixtureSetupTeardown = new AuthFixture(pageSetupTeardown);
     const projectDetailsPageSetupTeardown = new ProjectDetails(pageSetupTeardown);
     await authFixtureSetupTeardown.login();
@@ -80,7 +79,6 @@ test.describe('Experiement List', () => {
 
   test.skip('Column Picker Check and Uncheck', async () => {
     // BUG [ET-287]
-    test.slow();
     const columnTitle = 'Forked From',
       columnTestid = 'forkedFrom';
     const columnPicker = projectDetailsPage.f_experiemntList.tableActionBar.columnPickerMenu;
@@ -234,13 +232,13 @@ test.describe('Experiement List', () => {
   });
 
   test('Datagrid Functionality Validations', async ({ authedPage }) => {
-    const row = await projectDetailsPage.f_experiemntList.dataGrid.getRowByColumnValue('ID', '1');
+    const row = await projectDetailsPage.f_experiemntList.dataGrid.getRowByIndex(0);
     await test.step('Select Row', async () => {
       await row.clickColumn('Select');
       expect.soft(await row.isSelected()).toBeTruthy();
     });
     await test.step('Read Cell Value', async () => {
-      await expect.soft((await row.getCellByColumnName('Checkpoints')).pwLocator).toHaveText('0');
+      await expect.soft((await row.getCellByColumnName('ID')).pwLocator).toHaveText(/\d+/);
     });
     await test.step('Select 5', async () => {
       await (
@@ -249,8 +247,10 @@ test.describe('Experiement List', () => {
     });
     await test.step('Experiement Overview Navigation', async () => {
       await projectDetailsPage.f_experiemntList.dataGrid.scrollLeft();
+      const textContent = await (await row.getCellByColumnName('ID')).pwLocator.textContent();
       await row.clickColumn('ID');
-      await authedPage.waitForURL(/overview/);
+      if (textContent === null) throw new Error('Cannot read row id');
+      await authedPage.waitForURL(new RegExp(textContent));
     });
   });
 

@@ -1,13 +1,7 @@
-import { expect } from '@playwright/test';
-
-import { test } from 'e2e/fixtures/global-fixtures';
-import { BasePage } from 'e2e/models/common/base/BasePage';
+import { expect, test } from 'e2e/fixtures/global-fixtures';
 import { SignIn } from 'e2e/models/pages/SignIn';
 
 test.describe('Authentication', () => {
-  test.beforeEach(async ({ dev }) => {
-    await dev.setServerAddress();
-  });
   test.afterEach(async ({ page, auth }) => {
     const signInPage = new SignIn(page);
     if ((await page.title()).indexOf(signInPage.title) === -1) {
@@ -18,14 +12,14 @@ test.describe('Authentication', () => {
   test('Login and Logout', async ({ page, auth }) => {
     await test.step('Login', async () => {
       await auth.login();
-      await expect(page).toHaveTitle(BasePage.getTitle('Home'));
+      await expect(page).toHaveDeterminedTitle('Home');
       await expect(page).toHaveURL(/dashboard/);
     });
 
     await test.step('Logout', async () => {
       const signInPage = new SignIn(page);
       await auth.logout();
-      await expect(page).toHaveTitle(signInPage.title);
+      await expect(page).toHaveDeterminedTitle(signInPage.title);
       await expect(page).toHaveURL(/login/);
     });
   });
@@ -38,14 +32,14 @@ test.describe('Authentication', () => {
 
     await test.step('Login and Redirect', async () => {
       await auth.login({ expectedURL: /models/ });
-      await expect(page).toHaveTitle(BasePage.getTitle('Model Registry'));
+      await expect(page).toHaveDeterminedTitle('Model Registry');
     });
   });
 
   test('Bad Credentials', async ({ page, auth }) => {
     const signInPage = new SignIn(page);
     await auth.login({ expectedURL: /login/, password: 'superstar', username: 'jcom' });
-    await expect(page).toHaveTitle(signInPage.title);
+    await expect(page).toHaveDeterminedTitle(signInPage.title);
     await expect(page).toHaveURL(/login/);
     await expect(signInPage.detAuth.errors.pwLocator).toBeVisible();
     await expect(signInPage.detAuth.errors.alert.pwLocator).toBeVisible();

@@ -679,6 +679,7 @@ export interface TrialItem extends StartEndTimes {
   totalCheckpointSize: number;
   searcherMetricsVal?: number;
   logRetentionDays?: number;
+  taskId?: string;
 }
 
 export interface TrialDetails extends TrialItem {
@@ -1155,6 +1156,10 @@ export interface ExperimentPermissionsArgs {
   experiment: ProjectExperiment;
 }
 
+export interface FlatRunPermissionsArgs {
+  flatRun: FlatRun;
+}
+
 export interface PermissionWorkspace {
   id: number;
   userId?: number;
@@ -1242,6 +1247,7 @@ export interface FlatRun {
   projectName: string;
   workspaceId: number;
   workspaceName: string;
+  archived: boolean;
   parentArchived: boolean;
   experiment?: FlatRunExperiment;
 }
@@ -1262,3 +1268,14 @@ export interface FlatRunExperiment {
 export interface SearchFlatRunPagination extends WithPagination {
   runs: FlatRun[];
 }
+
+export const FlatRunAction = {
+  Archive: 'Archive',
+  Delete: 'Delete',
+  Kill: 'Kill',
+  Move: 'Move',
+  // Pause: 'Pause',
+  Unarchive: 'Unarchive',
+} as const;
+
+export type FlatRunAction = ValueOf<typeof FlatRunAction>;

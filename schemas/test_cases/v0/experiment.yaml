@@ -47,8 +47,8 @@
       environment_variables: {}
       force_pull_image: false
       image:
-        cpu: determinedai/pytorch-ngc-dev:8c90e80
-        cuda: determinedai/pytorch-ngc-dev:8c90e80
+        cpu: determinedai/pytorch-ngc-dev:0e43056
+        cuda: determinedai/pytorch-ngc-dev:0e43056
         rocm: determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-622d512
       pod_spec: null
       ports:

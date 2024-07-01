@@ -1,6 +1,8 @@
 package rm
 
 import (
+	"google.golang.org/protobuf/proto"
+
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/command"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -61,4 +63,18 @@ type ResourcePoolName string
 // String converts a ResourcePoolName to String.
 func (r ResourcePoolName) String() string {
 	return string(r)
+}
+
+// CopyGetAgentsResponse returns a deep copy of GetAgentsResponse struct.
+func CopyGetAgentsResponse(resp *apiv1.GetAgentsResponse) (*apiv1.GetAgentsResponse, error) {
+	respBytes, err := proto.Marshal(resp)
+	if err != nil {
+		return nil, err
+	}
+	var respCopy apiv1.GetAgentsResponse
+	err = proto.Unmarshal(respBytes, &respCopy)
+	if err != nil {
+		return nil, err
+	}
+	return &respCopy, nil
 }

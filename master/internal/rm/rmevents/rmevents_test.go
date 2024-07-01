@@ -25,14 +25,11 @@ func TestRMEvents(t *testing.T) {
 	var mu sync.Mutex
 	results := map[model.AllocationID]map[int][]sproto.ResourcesEvent{}
 	for _, topic := range topics {
-		topic := topic
-
 		mu.Lock()
 		results[topic] = map[int][]sproto.ResourcesEvent{}
 		mu.Unlock()
 
 		for subID := 0; subID < numSubsPerTopic; subID++ {
-			subID := subID
 			sub := Subscribe(topic)
 
 			wg.Add(1)

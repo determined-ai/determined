@@ -66,6 +66,7 @@ import {
   DEFAULT_SELECTION,
   SelectionType as SelectionState,
 } from 'pages/F_ExpList/F_ExperimentList.settings';
+import FlatRunActionButton from 'pages/FlatRuns/FlatRunActionButton';
 import { paths } from 'routes/utils';
 import { getProjectColumns, getProjectNumericMetricsRange, searchRuns } from 'services/api';
 import { V1ColumnType, V1LocationType, V1TableType } from 'services/api-ts-sdk';
@@ -104,10 +105,11 @@ const BANNED_SORT_COLUMNS = new Set(['tags', 'searcherMetricsVal']);
 
 const NO_PINS_WIDTH = 200;
 
-const formStore = new FilterFormStore();
+export const formStore = new FilterFormStore();
 
 interface Props {
   projectId: number;
+  workspaceId: number;
   searchId?: number;
 }
 
@@ -126,7 +128,7 @@ const parseSortString = (sortString: string): Sort[] => {
   });
 };
 
-const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
+const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
   const dataGridRef = useRef<DataGridHandle>(null);
   const contentRef = useRef<HTMLDivElement>(null);
   const { params, updateParams } = useTypedParams(ProjectUrlSettings, {});
@@ -214,6 +216,10 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
     }
   }, [projectId]);
 
+  const selectedRunIdSet = useMemo(() => {
+    return new Set(settings.selection.type === 'ONLY_IN' ? settings.selection.selections : []);
+  }, [settings.selection]);
+
   const columnsIfLoaded = useMemo(
     () => (isLoadingSettings ? [] : settings.columns),
     [isLoadingSettings, settings.columns],
@@ -231,19 +237,17 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
     if (isLoadingSettings) {
       return [selectedArray, selectedMap];
     }
-    const selectedIdSet = new Set(
-      settings.selection.type === 'ONLY_IN' ? settings.selection.selections : [],
-    );
+
     runs.forEach((r, index) => {
       Loadable.forEach(r, (run) => {
-        if (selectedIdSet.has(run.id)) {
+        if (selectedRunIdSet.has(run.id)) {
           selectedMap.set(run.id, { index, run });
           selectedArray.push(run);
         }
       });
     });
     return [selectedArray, selectedMap];
-  }, [isLoadingSettings, settings.selection, runs]);
+  }, [isLoadingSettings, runs, selectedRunIdSet]);
 
   const selection = useMemo<GridSelection>(() => {
     let rows = CompactSelection.empty();
@@ -255,6 +259,13 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
       rows,
     };
   }, [loadedSelectedRunIds]);
+
+  const selectedRuns: FlatRun[] = useMemo(() => {
+    const selected = runs.flatMap((run) => {
+      return run.isLoaded && selectedRunIdSet.has(run.data.id) ? [run.data] : [];
+    });
+    return selected;
+  }, [runs, selectedRunIdSet]);
 
   const handleIsOpenFilterChange = useCallback((newOpen: boolean) => {
     setIsOpenFilter(newOpen);
@@ -696,6 +707,11 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
     [rowRangeToIds, settings.selection, updateSettings],
   );
 
+  const onActionComplete = useCallback(async () => {
+    handleSelectionChange('remove-all');
+    await fetchRuns();
+  }, [fetchRuns, handleSelectionChange]);
+
   const handleContextMenuComplete: ContextMenuCompleteHandlerProps<ExperimentAction, FlatRun> =
     useCallback(() => {}, []);
 
@@ -985,6 +1001,13 @@ const FlatRuns: React.FC<Props> = ({ projectId, searchId }) => {
             <OptionsMenu
               rowHeight={globalSettings.rowHeight}
               onRowHeightChange={onRowHeightChange}
+            />
+            <FlatRunActionButton
+              isMobile={isMobile}
+              projectId={projectId}
+              selectedRuns={selectedRuns}
+              workspaceId={workspaceId}
+              onActionComplete={onActionComplete}
             />
           </Row>
         </Column>

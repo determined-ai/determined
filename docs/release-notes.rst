@@ -7,6 +7,98 @@
 ###############
 
 **************
+ Version 0.34
+**************
+
+Version 0.34.0
+==============
+
+**Release Date:** June 28, 2024
+
+**Breaking Changes**
+
+-  Images: The default environment includes images that support PyTorch. Therefore, TensorFlow users.
+      must configure their experiments to target our non-default TensorFlow images. Details on this
+      process can be found at :ref:`set-environment-images`.
+
+-  Images: Our new default images are based on Nvidia NGC. While we provide a recommended NGC
+   version, users can build their own images using any NGC version that meets their specific
+   requirements. For more information, visit :ref:`ngc-version`
+
+**New Features**
+
+-  Kubernetes: The system now launches Kubernetes jobs on behalf of users when they submit workloads
+   to Determined, instead of launching Kubernetes pods. This change allows Determined to work
+   properly with other Kubernetes features like resource quotas.
+
+   As a result, permissions are now required to create, get, list, delete, and watch Kubernetes job
+   resources.
+
+-  WebUI: Add the ability for administrators to use the CLI to set a message to be displayed on all
+   pages of the WebUI (for example, ``det master cluster-message set -m "Your message"``). Optional
+   flags are available for scheduling the message with a start time and an end time. Administrators
+   can clear the message anytime using ``det master cluster-message clear``. Only one message can be
+   active at a time, so setting a new message will replace the previous one.
+
+-  Kubernetes: Add a feature where Determined offers the users to provide custom Checkpoint GC pod spec.
+      This configuration is done using the ``task_container_defaults.checkpointGcPodSpec`` field
+      within your ``value.yaml`` file. User can create a custom pod specification for CheckpointGC,
+      it will override the default experiment's pod spec settings. Determined by default uses the
+      experiment's pod spec, but by providing custom pod spec users have the flexibility to
+      customize and configure the pod spec directly in this field. User can tailor the garbage
+      collection settings according to the specific GC needs.
+
+-  Kubernetes: The :ref:`Internal Task Gateway <internal-task-gateway>` feature enables Determined
+   tasks running on remote Kubernetes clusters to be exposed to the Determined master and proxies.
+   This feature facilitates multi-resource manager setups by configuring a Gateway controller in the
+   external Kubernetes cluster.
+
+.. important::
+
+   Enabling this feature exposes Determined tasks to the outside world. It is crucial to implement
+   appropriate security measures to restrict access to exposed tasks and secure communication
+   between the external cluster and the main cluster. Recommended measures include:
+
+      -  Setting up a firewall
+      -  Using a VPN
+      -  Implementing IP whitelisting
+      -  Configuring Kubernetes Network Policies
+      -  Employing other security measures as needed
+
+-  Kubernetes Configuration: Allow Cluster administrators to define Determined resource pools on
+   Kubernetes using node selectors and/or affinities. Configure these settings at the default pod
+   spec level under ``task_container_defaults.cpu_pod_spec`` or
+   ``task_container_defaults.gpu_pod_spec``. This allows a single cluster to be divided into
+   multiple resource pools using node labels.
+
+-  WebUI: Allow resource pool slot counts to reflect the state of the entire cluster. Allow slot
+   counts and scheduling to respect node selectors and affinities. This impacts Determined clusters
+   deployed on Kubernetes with multiple resource pools defined in terms of node selectors and/or
+   affinities.
+
+**Bug Fixes**
+
+-  Kubernetes: Fix an issue where where jobs would remain in "QUEUED" state until all pods were
+   running. Jobs will now correctly show as "SCHEDULED" once all pods have been assigned to nodes.
+-  Notebooks: Fix an issue introduced in 0.30.0 where idle notebooks were not terminated as
+   expected.
+
+**Security Fixes**
+
+   -  CLI: When deploying locally using ``det deploy local`` with ``master-up`` or ``cluster-up``
+      commands and no user accounts have been created yet, an initial password will be automatically
+      generated and shown to the user (with the option to change it) if neither
+      ``security.initial_user_password`` in ``master.yaml`` nor the ``--initial-user-password`` CLI
+      flag is present.
+
+**Deprecations**
+
+-  Agent Resource Manager: Round robin scheduler is removed for Agent Resource Managers. Deprecation
+   was announded in release 0.33.0. Users should transition to priority scheduler.
+-  Machine Architectures: Support for PPC64/POWER builds for all environments has been deprecated
+   and is now being removed. Users should transition to ARM64/AMD64.
+
+**************
  Version 0.33
 **************
 
@@ -35,7 +127,9 @@ This improvement facilitates better resource tracking and management within Kube
 
 Configuration: Introduce a DCGM Helm chart and Prometheus configuration to the
 ``tools/observability`` directory. Additionally, two new dashboards, "API Monitoring" and "Resource
-Utilization", have been added to improve observability and operational insight.
+Utilization", have been added to improve observability and operational insight. Visit `Kubernetes
+Observability <https://docs.determined.ai/latest/integrations/observability/_index.html>`__ for a
+complete setup guide.
 
 -  WebUI: Allow users to create and manage configuration templates through the WebUI.
 -  Commands: Commands now support automatically executing a ``startup-hook.sh`` script if it is

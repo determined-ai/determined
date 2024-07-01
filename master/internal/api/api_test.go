@@ -22,7 +22,6 @@ func TestPaginate(t *testing.T) {
 	}
 
 	for _, tb := range tables {
-		tb := tb
 		errReporter := func(msg string) {
 			t.Errorf("Failed case: %v - %s", tb, msg)
 		}

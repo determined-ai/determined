@@ -1,5 +1,6 @@
-import { expect, Page } from '@playwright/test';
+import { Page } from '@playwright/test';
 
+import { expect } from 'e2e/fixtures/global-fixtures';
 import { BaseComponent } from 'e2e/models/common/base/BaseComponent';
 import { DropdownMenu } from 'e2e/models/common/hew/Dropdown';
 import { Select } from 'e2e/models/common/hew/Select';
@@ -17,8 +18,7 @@ import { AdminPage } from 'e2e/models/pages/Admin/index';
  * Represents the UserManagement page from src/pages/Admin/UserManagement.tsx
  */
 export class UserManagement extends AdminPage {
-  readonly title: string = UserManagement.getTitle();
-  readonly url: string = 'admin/user-management';
+  readonly url = 'admin/user-management';
   readonly getRowById: (value: string) => UserRow;
 
   readonly #actionRow = new BaseComponent({

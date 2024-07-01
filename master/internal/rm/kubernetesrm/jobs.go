@@ -37,6 +37,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/rm/rmevents"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/cproto"
@@ -745,7 +746,6 @@ func (j *jobsService) recreateGatewayProxyResources(
 	for _, port := range gatewayPorts {
 		var tcpRoute *alphaGatewayTyped.TCPRoute
 		for _, t := range tcpRoutes {
-			t := t
 			if len(t.Spec.ParentRefs) > 0 &&
 				t.Spec.ParentRefs[0].Port != nil &&
 				int(*t.Spec.ParentRefs[0].Port) == port {
@@ -759,7 +759,6 @@ func (j *jobsService) recreateGatewayProxyResources(
 
 		var service *k8sV1.Service
 		for _, s := range services {
-			s := s
 			if s.Name == tcpRoute.Name {
 				service = &s
 				break
@@ -917,7 +916,6 @@ func (j *jobsService) refreshJobState(allocationID model.AllocationID) error {
 		if _, ok := j.namespaceToPoolName[job.Namespace]; !ok {
 			continue
 		}
-		job := job
 		j.jobUpdatedCallback(&job)
 	}
 	return nil
@@ -939,13 +937,12 @@ func (j *jobsService) refreshPodStates(allocationID model.AllocationID) error {
 		if _, ok := j.namespaceToPoolName[pod.Namespace]; !ok {
 			continue
 		}
-		pod := pod
 		j.podStatusCallback(&pod)
 	}
 	return nil
 }
 
-func (j *jobsService) GetAgents() *apiv1.GetAgentsResponse {
+func (j *jobsService) GetAgents() (*apiv1.GetAgentsResponse, error) {
 	j.mu.Lock()
 	defer j.mu.Unlock()
 	return j.getAgents()
@@ -1598,7 +1595,7 @@ func (j *jobsService) getSlot(agentID string, slotID string) *apiv1.GetSlotRespo
 
 const getAgentsCacheDuration = 15 * time.Second
 
-func (j *jobsService) getAgents() *apiv1.GetAgentsResponse {
+func (j *jobsService) getAgents() (*apiv1.GetAgentsResponse, error) {
 	j.getAgentsCacheLock.Lock()
 	defer j.getAgentsCacheLock.Unlock()
 
@@ -1615,7 +1612,8 @@ func (j *jobsService) getAgents() *apiv1.GetAgentsResponse {
 		}
 	}
 
-	return j.getAgentsCache
+	// Ensure cached response is not inadvertently modified.
+	return rm.CopyGetAgentsResponse(j.getAgentsCache)
 }
 
 func (j *jobsService) getAgent(agentID string) *apiv1.GetAgentResponse {

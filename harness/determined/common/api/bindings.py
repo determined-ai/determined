@@ -892,6 +892,7 @@ class v1AcceleratorData(Printable):
     allocationId: "typing.Optional[str]" = None
     containerId: "typing.Optional[str]" = None
     nodeName: "typing.Optional[str]" = None
+    resourcePool: "typing.Optional[str]" = None
     taskId: "typing.Optional[str]" = None
 
     def __init__(
@@ -902,6 +903,7 @@ class v1AcceleratorData(Printable):
         allocationId: "typing.Union[str, None, Unset]" = _unset,
         containerId: "typing.Union[str, None, Unset]" = _unset,
         nodeName: "typing.Union[str, None, Unset]" = _unset,
+        resourcePool: "typing.Union[str, None, Unset]" = _unset,
         taskId: "typing.Union[str, None, Unset]" = _unset,
     ):
         if not isinstance(acceleratorType, Unset):
@@ -914,6 +916,8 @@ class v1AcceleratorData(Printable):
             self.containerId = containerId
         if not isinstance(nodeName, Unset):
             self.nodeName = nodeName
+        if not isinstance(resourcePool, Unset):
+            self.resourcePool = resourcePool
         if not isinstance(taskId, Unset):
             self.taskId = taskId
 
@@ -931,6 +935,8 @@ class v1AcceleratorData(Printable):
             kwargs["containerId"] = obj["containerId"]
         if "nodeName" in obj:
             kwargs["nodeName"] = obj["nodeName"]
+        if "resourcePool" in obj:
+            kwargs["resourcePool"] = obj["resourcePool"]
         if "taskId" in obj:
             kwargs["taskId"] = obj["taskId"]
         return cls(**kwargs)
@@ -948,6 +954,8 @@ class v1AcceleratorData(Printable):
             out["containerId"] = self.containerId
         if not omit_unset or "nodeName" in vars(self):
             out["nodeName"] = self.nodeName
+        if not omit_unset or "resourcePool" in vars(self):
+            out["resourcePool"] = self.resourcePool
         if not omit_unset or "taskId" in vars(self):
             out["taskId"] = self.taskId
         return out
@@ -4327,6 +4335,7 @@ class v1FlatRun(Printable):
     def __init__(
         self,
         *,
+        archived: bool,
         checkpointCount: int,
         checkpointSize: str,
         id: int,
@@ -4348,6 +4357,7 @@ class v1FlatRun(Printable):
         summaryMetrics: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
         userId: "typing.Union[int, None, Unset]" = _unset,
     ):
+        self.archived = archived
         self.checkpointCount = checkpointCount
         self.checkpointSize = checkpointSize
         self.id = id
@@ -4382,6 +4392,7 @@ class v1FlatRun(Printable):
     @classmethod
     def from_json(cls, obj: Json) -> "v1FlatRun":
         kwargs: "typing.Dict[str, typing.Any]" = {
+            "archived": obj["archived"],
             "checkpointCount": obj["checkpointCount"],
             "checkpointSize": obj["checkpointSize"],
             "id": obj["id"],
@@ -4417,6 +4428,7 @@ class v1FlatRun(Printable):
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
+            "archived": self.archived,
             "checkpointCount": self.checkpointCount,
             "checkpointSize": self.checkpointSize,
             "id": self.id,
@@ -11534,6 +11546,7 @@ class v1Project(Printable):
         notes: "typing.Sequence[v1Note]",
         numActiveExperiments: int,
         numExperiments: int,
+        numRuns: int,
         state: "v1WorkspaceState",
         userId: int,
         username: str,
@@ -11551,6 +11564,7 @@ class v1Project(Printable):
         self.notes = notes
         self.numActiveExperiments = numActiveExperiments
         self.numExperiments = numExperiments
+        self.numRuns = numRuns
         self.state = state
         self.userId = userId
         self.username = username
@@ -11574,6 +11588,7 @@ class v1Project(Printable):
             "notes": [v1Note.from_json(x) for x in obj["notes"]],
             "numActiveExperiments": obj["numActiveExperiments"],
             "numExperiments": obj["numExperiments"],
+            "numRuns": obj["numRuns"],
             "state": v1WorkspaceState(obj["state"]),
             "userId": obj["userId"],
             "username": obj["username"],
@@ -11598,6 +11613,7 @@ class v1Project(Printable):
             "notes": [x.to_json(omit_unset) for x in self.notes],
             "numActiveExperiments": self.numActiveExperiments,
             "numExperiments": self.numExperiments,
+            "numRuns": self.numRuns,
             "state": self.state.value,
             "userId": self.userId,
             "username": self.username,
@@ -13749,6 +13765,65 @@ class v1SearchRolesAssignableToScopeResponse(Printable):
             out["pagination"] = None if self.pagination is None else self.pagination.to_json(omit_unset)
         if not omit_unset or "roles" in vars(self):
             out["roles"] = None if self.roles is None else [x.to_json(omit_unset) for x in self.roles]
+        return out
+
+class v1SearchRunsRequest(Printable):
+    """Get a list of runs."""
+    filter: "typing.Optional[str]" = None
+    limit: "typing.Optional[int]" = None
+    offset: "typing.Optional[int]" = None
+    projectId: "typing.Optional[int]" = None
+    sort: "typing.Optional[str]" = None
+
+    def __init__(
+        self,
+        *,
+        filter: "typing.Union[str, None, Unset]" = _unset,
+        limit: "typing.Union[int, None, Unset]" = _unset,
+        offset: "typing.Union[int, None, Unset]" = _unset,
+        projectId: "typing.Union[int, None, Unset]" = _unset,
+        sort: "typing.Union[str, None, Unset]" = _unset,
+    ):
+        if not isinstance(filter, Unset):
+            self.filter = filter
+        if not isinstance(limit, Unset):
+            self.limit = limit
+        if not isinstance(offset, Unset):
+            self.offset = offset
+        if not isinstance(projectId, Unset):
+            self.projectId = projectId
+        if not isinstance(sort, Unset):
+            self.sort = sort
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1SearchRunsRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "filter" in obj:
+            kwargs["filter"] = obj["filter"]
+        if "limit" in obj:
+            kwargs["limit"] = obj["limit"]
+        if "offset" in obj:
+            kwargs["offset"] = obj["offset"]
+        if "projectId" in obj:
+            kwargs["projectId"] = obj["projectId"]
+        if "sort" in obj:
+            kwargs["sort"] = obj["sort"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "filter" in vars(self):
+            out["filter"] = self.filter
+        if not omit_unset or "limit" in vars(self):
+            out["limit"] = self.limit
+        if not omit_unset or "offset" in vars(self):
+            out["offset"] = self.offset
+        if not omit_unset or "projectId" in vars(self):
+            out["projectId"] = self.projectId
+        if not omit_unset or "sort" in vars(self):
+            out["sort"] = self.sort
         return out
 
 class v1SearchRunsResponse(Printable):
@@ -23039,35 +23114,18 @@ def post_SearchRolesAssignableToScope(
         return v1SearchRolesAssignableToScopeResponse.from_json(_resp.json())
     raise APIHttpError("post_SearchRolesAssignableToScope", _resp)
 
-def get_SearchRuns(
+def post_SearchRuns(
     session: "api.BaseSession",
     *,
-    filter: "typing.Optional[str]" = None,
-    limit: "typing.Optional[int]" = None,
-    offset: "typing.Optional[int]" = None,
-    projectId: "typing.Optional[int]" = None,
-    sort: "typing.Optional[str]" = None,
+    body: "v1SearchRunsRequest",
 ) -> "v1SearchRunsResponse":
-    """Get a list of runs.
-
-    - filter: Filter expression.
-    - limit: How many results to show.
-    - offset: How many experiments to skip before including in the results.
-    - projectId: ID of the project to look at.
-    - sort: Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc).
-    """
-    _params = {
-        "filter": filter,
-        "limit": limit,
-        "offset": offset,
-        "projectId": projectId,
-        "sort": sort,
-    }
+    """Get a list of runs."""
+    _params = None
     _resp = session._do_request(
-        method="GET",
+        method="POST",
         path="/api/v1/runs",
         params=_params,
-        json=None,
+        json=body.to_json(True),
         data=None,
         headers=None,
         timeout=None,
@@ -23075,7 +23133,7 @@ def get_SearchRuns(
     )
     if _resp.status_code == 200:
         return v1SearchRunsResponse.from_json(_resp.json())
-    raise APIHttpError("get_SearchRuns", _resp)
+    raise APIHttpError("post_SearchRuns", _resp)
 
 def put_SetClusterMessage(
     session: "api.BaseSession",

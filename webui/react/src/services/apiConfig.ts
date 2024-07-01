@@ -717,7 +717,7 @@ export const archiveExperiments: DetApi<
   Type.BulkActionResult
 > = {
   name: 'archiveExperiments',
-  postProcess: (response) => decoder.mapV1ExperimentActionResults(response.results),
+  postProcess: (response) => decoder.mapV1ActionResults(response.results),
   request: (params: Service.BulkActionParams, options) => {
     return detApi.Experiments.archiveExperiments(params.projectId, params, options);
   },
@@ -741,7 +741,7 @@ export const deleteExperiments: DetApi<
   Type.BulkActionResult
 > = {
   name: 'deleteExperiments',
-  postProcess: (response) => decoder.mapV1ExperimentActionResults(response.results),
+  postProcess: (response) => decoder.mapV1ActionResults(response.results),
   request: (params: Service.BulkActionParams, options) => {
     return detApi.Experiments.deleteExperiments(params.projectId, params, options);
   },
@@ -765,7 +765,7 @@ export const unarchiveExperiments: DetApi<
   Type.BulkActionResult
 > = {
   name: 'unarchiveExperiments',
-  postProcess: (response) => decoder.mapV1ExperimentActionResults(response.results),
+  postProcess: (response) => decoder.mapV1ActionResults(response.results),
   request: (params: Service.BulkActionParams, options) => {
     return detApi.Experiments.unarchiveExperiments(params.projectId, params, options);
   },
@@ -789,7 +789,7 @@ export const activateExperiments: DetApi<
   Type.BulkActionResult
 > = {
   name: 'activateExperiments',
-  postProcess: (response) => decoder.mapV1ExperimentActionResults(response.results),
+  postProcess: (response) => decoder.mapV1ActionResults(response.results),
   request: (params: Service.BulkActionParams, options) => {
     return detApi.Experiments.activateExperiments(params.projectId, params, options);
   },
@@ -813,7 +813,7 @@ export const pauseExperiments: DetApi<
   Type.BulkActionResult
 > = {
   name: 'pauseExperiments',
-  postProcess: (response) => decoder.mapV1ExperimentActionResults(response.results),
+  postProcess: (response) => decoder.mapV1ActionResults(response.results),
   request: (params: Service.BulkActionParams, options) => {
     return detApi.Experiments.pauseExperiments(params.projectId, params, options);
   },
@@ -837,7 +837,7 @@ export const cancelExperiments: DetApi<
   Type.BulkActionResult
 > = {
   name: 'cancelExperiments',
-  postProcess: (response) => decoder.mapV1ExperimentActionResults(response.results),
+  postProcess: (response) => decoder.mapV1ActionResults(response.results),
   request: (params: Service.BulkActionParams, options) => {
     return detApi.Experiments.cancelExperiments(params.projectId, params, options);
   },
@@ -861,7 +861,7 @@ export const killExperiments: DetApi<
   Type.BulkActionResult
 > = {
   name: 'killExperiments',
-  postProcess: (response) => decoder.mapV1ExperimentActionResults(response.results),
+  postProcess: (response) => decoder.mapV1ActionResults(response.results),
   request: (params: Service.BulkActionParams, options) => {
     return detApi.Experiments.killExperiments(params.projectId, params, options);
   },
@@ -1014,7 +1014,7 @@ export const moveExperiments: DetApi<
   Type.BulkActionResult
 > = {
   name: 'moveExperiments',
-  postProcess: (response) => decoder.mapV1ExperimentActionResults(response.results),
+  postProcess: (response) => decoder.mapV1ActionResults(response.results),
   request: (params, options) =>
     detApi.Experiments.moveExperiments(params.projectId, params, options),
 };
@@ -1025,7 +1025,7 @@ export const changeExperimentLogRetention: DetApi<
   Type.BulkActionResult
 > = {
   name: 'changeExperimentLogRetention',
-  postProcess: (response) => decoder.mapV1ExperimentActionResults(response.results),
+  postProcess: (response) => decoder.mapV1ActionResults(response.results),
   request: (params, options) =>
     detApi.Experiments.putExperimentsRetainLogs(params.projectId, params, options),
 };
@@ -1128,24 +1128,66 @@ export const getTrialWorkloads: DetApi<
 /* Runs */
 
 export const searchRuns: DetApi<
-  Service.SearchRunsParams,
+  Api.V1SearchRunsRequest,
   Api.V1SearchRunsResponse,
   Type.SearchFlatRunPagination
 > = {
   name: 'searchRuns',
-  postProcess: (response) => ({
-    pagination: response.pagination,
-    runs: response.runs.map((e) => decoder.decodeV1FlatRun(e)),
+  postProcess: ({ pagination, runs }) => ({
+    pagination,
+    runs: runs.map((e) => decoder.decodeV1FlatRun(e)),
   }),
-  request: (params, options) =>
-    detApi.Internal.searchRuns(
-      params.projectId,
-      params.offset,
-      params.limit,
-      params.sort,
-      params.filter,
-      options,
-    ),
+  request: (params, options) => detApi.Internal.searchRuns(params, options),
+};
+
+export const archiveRuns: DetApi<
+  Api.V1ArchiveRunsRequest,
+  Api.V1ArchiveRunsResponse,
+  Type.BulkActionResult
+> = {
+  name: 'archiveRuns',
+  postProcess: (response) => decoder.mapV1ActionResults(response.results),
+  request: (params, options) => detApi.Internal.archiveRuns(params, options),
+};
+
+export const deleteRuns: DetApi<
+  Api.V1DeleteRunsRequest,
+  Api.V1DeleteRunsResponse,
+  Type.BulkActionResult
+> = {
+  name: 'deleteRuns',
+  postProcess: (response) => decoder.mapV1ActionResults(response.results),
+  request: (params, options) => detApi.Internal.deleteRuns(params, options),
+};
+
+export const killRuns: DetApi<
+  Api.V1KillRunsRequest,
+  Api.V1KillRunsResponse,
+  Type.BulkActionResult
+> = {
+  name: 'killRuns',
+  postProcess: (response) => decoder.mapV1ActionResults(response.results),
+  request: (params, options) => detApi.Internal.killRuns(params, options),
+};
+
+export const moveRuns: DetApi<
+  Api.V1MoveRunsRequest,
+  Api.V1MoveRunsResponse,
+  Type.BulkActionResult
+> = {
+  name: 'moveRuns',
+  postProcess: (response) => decoder.mapV1ActionResults(response.results),
+  request: (params, options) => detApi.Internal.moveRuns(params, options),
+};
+
+export const unarchiveRuns: DetApi<
+  Api.V1UnarchiveRunsRequest,
+  Api.V1UnarchiveRunsResponse,
+  Type.BulkActionResult
+> = {
+  name: 'unarchiveRuns',
+  postProcess: (response) => decoder.mapV1ActionResults(response.results),
+  request: (params, options) => detApi.Internal.unarchiveRuns(params, options),
 };
 
 /* Tasks */
@@ -1170,6 +1212,17 @@ export const getActiveTasks: DetApi<
   name: 'getActiveTasksCount',
   postProcess: (response) => response,
   request: (_, options) => detApi.Tasks.getActiveTasksCount(options),
+};
+
+export const getTaskAcceleratorData: DetApi<
+  Service.GetTaskParams,
+  Api.V1GetTaskAcceleratorDataResponse,
+  Api.V1AcceleratorData[]
+> = {
+  name: 'getTaskAcceleratorData',
+  postProcess: (response) => response.acceleratorData,
+  request: (params: Service.GetTaskParams, options) =>
+    detApi.Internal.getTaskAcceleratorData(params.taskId, options),
 };
 
 /* Webhooks */

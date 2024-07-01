@@ -174,8 +174,8 @@ describe('useTypedParams', () => {
         .afterEach(() => navSpy.mockClear()),
     );
   });
-  it('does not update if params are not changed', () => {
-    fc.assert(
+  it('does not update if params are not changed', async () => {
+    await fc.assert(
       fc
         .asyncProperty(sameArbPartial, async ([params, partial]) => {
           const { hookRef } = setupTest(params);
