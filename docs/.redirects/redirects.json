@@ -463,5 +463,6 @@
     "tutorials/notebook-tutorial": "../tools/notebooks.html",
     "tutorials/porting-tutorial": "pytorch-mnist-tutorial.html",
     "tutorials/quick-start": "quickstart-mdldev.html",
-    "tutorials/pytorch-mnist-local-qs": "../get-started/webui-qs.html"
+    "tutorials/pytorch-mnist-local-qs": "../get-started/webui-qs.html",
+    "setup-cluster/slurm/hpc-with-agent.rst" : "_index.html"
 }

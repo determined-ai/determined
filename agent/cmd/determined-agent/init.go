@@ -154,5 +154,4 @@ func registerAgentConfig() {
 
 	registerString(flags, name("container-runtime"), defaults.ContainerRuntime,
 		"The container runtime to use")
-
 }
