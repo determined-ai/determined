@@ -68,6 +68,8 @@ const (
 	// ReleaseNamespaceEnvVar is the name of the environment variable within a pod running the
 	// master service containing the namespace in which determined was deployed.
 	ReleaseNamespaceEnvVar = "DET_RELEASE_NAMESPACE"
+	// ResourceTypeNvidia describes the GPU resource type.
+	ResourceTypeNvidia = "nvidia.com/gpu"
 )
 
 type summarizeResult struct {
@@ -655,28 +657,34 @@ func (j *jobsService) DefaultNamespace() string {
 	return j.namespace
 }
 
-func (j *jobsService) VerifyNamespaceExists(namespaceName string) error {
+func (j *jobsService) VerifyNamespaceExists(namespace string) error {
 	j.mu.Lock()
 	defer j.mu.Unlock()
-	return j.verifyNamespaceExists(namespaceName)
+	return j.verifyNamespaceExists(namespace)
 }
 
-func (j *jobsService) CreateNamespace(namespaceName string) error {
+func (j *jobsService) CreateNamespace(namespace string) error {
 	j.mu.Lock()
 	defer j.mu.Unlock()
-	return j.createNamespace(namespaceName)
+	return j.createNamespace(namespace)
 }
 
-func (j *jobsService) DeleteNamespace(namespaceName string) error {
+func (j *jobsService) DeleteNamespace(namespace string) error {
 	j.mu.Lock()
 	defer j.mu.Unlock()
-	return j.deleteNamespace(namespaceName)
+	return j.deleteNamespace(namespace)
 }
 
 func (j *jobsService) RemoveEmptyNamespace(namespaceName string, clusterName string) error {
 	j.mu.Lock()
 	defer j.mu.Unlock()
 	return j.removeEmptyNamespace(namespaceName, clusterName)
+}
+
+func (j *jobsService) SetResourceQuota(quota int, namespace string) error {
+	j.mu.Lock()
+	defer j.mu.Unlock()
+	return j.setResourceQuota(quota, namespace)
 }
 
 type reattachJobRequest struct {
@@ -2171,7 +2179,7 @@ func (j *jobsService) createNamespace(namespaceName string) error {
 	)
 	if err != nil {
 		if !strings.Contains(err.Error(), "already exists") {
-			return errors.Wrapf(err, "error creating namespace %s", namespaceName)
+			return fmt.Errorf("error creating namespace %s: %w", namespaceName, err)
 		}
 	}
 
@@ -2207,6 +2215,103 @@ func (j *jobsService) removeEmptyNamespace(namespaceName string, clusterName str
 			worker.jobInterface = j.jobInterfaces
 		}
 	}
+	return nil
+}
+
+func (j *jobsService) setResourceQuota(quota int, namespace string) error {
+	k8sDeterminedLabel := map[string]string{determinedLabel: namespace}
+
+	k8sNamespace, err := j.clientSet.CoreV1().Namespaces().Get(context.TODO(), namespace,
+		metaV1.GetOptions{
+			TypeMeta: metaV1.TypeMeta{
+				Kind:       "Namespace",
+				APIVersion: "v1",
+			},
+		})
+	if err != nil {
+		return fmt.Errorf("error finding namespace %s: %w", namespace, err)
+	}
+
+	if _, ok := k8sNamespace.Labels[determinedLabel]; !ok {
+		return fmt.Errorf("cannot set quota on namespace %s. Namespace needs determined label",
+			namespace)
+	}
+
+	quotaName := namespace + "-quota"
+
+	// We want to patch the smallest quota if it is a determiend quota regardless of whether it's
+	// larger or smaller. If the quota does not correspond to the auto-generated namespace and is
+	// less than the current quota (the first non-Determined quota, we error out saying that they
+	// should remove that quota from Kubernetes and then try to set a Determined quota.
+	k8sQuotas, err := j.clientSet.CoreV1().ResourceQuotas(namespace).List(context.TODO(),
+		metaV1.ListOptions{})
+	if err != nil {
+		return fmt.Errorf("error fetching resource quotas for namespace %s: %w", namespace, err)
+	}
+	quotas := k8sQuotas.Items
+	currentQuota := float64(quota)
+	var detQuota *k8sV1.ResourceQuota
+	for _, q := range quotas {
+		qResources := q.Spec.Hard
+		for name, quantity := range qResources {
+			if name == "requests."+ResourceTypeNvidia {
+				tmpQuota := quantity.AsApproximateFloat64()
+				q.Spec.Hard[name] = *resource.NewQuantity(int64(quota), resource.DecimalSI)
+				if q.Name == quotaName {
+					qVal := q
+					detQuota = &qVal
+				} else if tmpQuota < currentQuota {
+					return fmt.Errorf("cannot set quota %d on namespace %s, because this"+
+						" namespace consists of a Kubernetes quota with request limit %d that does not"+
+						" correspond to the auto-created namespace. Please remove this quota in"+
+						" Kubernetes before trying to raise the GPU request limit on the namespace",
+						quota, namespace, int(tmpQuota))
+				}
+			}
+		}
+	}
+
+	if detQuota != nil {
+		detQuotaToByteArray, err := json.Marshal(detQuota)
+		if err != nil {
+			return fmt.Errorf("error marshaling quota %s: %w", detQuota.Name, err)
+		}
+		_, err = j.clientSet.CoreV1().ResourceQuotas(namespace).Patch(context.TODO(),
+			quotaName,
+			types.MergePatchType,
+			detQuotaToByteArray,
+			metaV1.PatchOptions{})
+		if err != nil {
+			return fmt.Errorf("error applying patch to resource quota %s: %w", quotaName, err)
+		}
+	} else {
+		// The given namespace does not any attached determined quotas.
+		if currentQuota < float64(quota) {
+			return fmt.Errorf("cannot set quota because there already exists a quota in "+
+				"namespace %s of limit %d", namespace, int(currentQuota))
+		}
+		_, err = j.clientSet.CoreV1().ResourceQuotas(namespace).Create(context.TODO(),
+			&k8sV1.ResourceQuota{
+				TypeMeta: metaV1.TypeMeta{
+					Kind:       "ResourceQuota",
+					APIVersion: "v1",
+				},
+				ObjectMeta: metaV1.ObjectMeta{Labels: k8sDeterminedLabel, Name: quotaName},
+				Spec: k8sV1.ResourceQuotaSpec{
+					Hard: k8sV1.ResourceList{
+						k8sV1.ResourceName("requests." + ResourceTypeNvidia): *resource.
+							NewQuantity(int64(quota), resource.DecimalSI),
+					},
+				},
+			},
+			metaV1.CreateOptions{},
+		)
+		if err != nil {
+			return fmt.Errorf("error creating resource quota %s for namespace %s: %w",
+				quotaName, namespace, err)
+		}
+	}
+
 	return nil
 }
 

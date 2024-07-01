@@ -55,12 +55,13 @@ type ResourceManager interface {
 	DisableSlot(*apiv1.DisableSlotRequest) (*apiv1.DisableSlotResponse, error)
 	HealthCheck() []model.ResourceManagerHealth
 
-	// Kubernetes Namespaces.
+	// Kubernetes Namespaces and Quotas.
 	DefaultNamespace(string) (*string, error)
 	VerifyNamespaceExists(string, string) error
 	CreateNamespace(string, string, bool) error
 	DeleteNamespace(string) error
 	RemoveEmptyNamespace(string, string) error
+	SetResourceQuota(int, string, string) error
 }
 
 // ResourcePoolName holds the name of the resource pool, and describes the input/output
