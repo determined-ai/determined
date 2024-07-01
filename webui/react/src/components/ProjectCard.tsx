@@ -15,6 +15,7 @@ import { handlePath, paths } from 'routes/utils';
 import { Project } from 'types';
 import { nearestCardinalNumber } from 'utils/number';
 import { AnyMouseEvent } from 'utils/routes';
+import { pluralizer } from 'utils/string';
 
 import { useProjectActionMenu } from './ProjectActionDropdown';
 import css from './ProjectCard.module.scss';
@@ -83,10 +84,7 @@ const ProjectCard: React.FC<Props> = ({
               {f_flat_runs && !isUndefined(project.numRuns) && (
                 <div className={css.experiments}>
                   <Tooltip
-                    content={
-                      `${project.numRuns?.toLocaleString()}` +
-                      ` run${project.numRuns === 1 ? '' : 's'}`
-                    }>
+                    content={`${project.numRuns?.toLocaleString()} ${pluralizer(project.numRuns, 'run')}`}>
                     <Icon name="experiment" size="small" title="Number of runs" />
                     <span>{nearestCardinalNumber(project.numRuns)}</span>
                   </Tooltip>
@@ -95,10 +93,7 @@ const ProjectCard: React.FC<Props> = ({
               {!f_flat_runs && !isUndefined(project.numExperiments) && (
                 <div className={css.experiments}>
                   <Tooltip
-                    content={
-                      `${project.numExperiments?.toLocaleString()}` +
-                      ` experiment${project.numExperiments === 1 ? '' : 's'}`
-                    }>
+                    content={`${project.numExperiments?.toLocaleString()} ${pluralizer(project.numExperiments, 'experiment')}`}>
                     <Icon name="experiment" size="small" title="Number of experiments" />
                     <span>{nearestCardinalNumber(project.numExperiments)}</span>
                   </Tooltip>
