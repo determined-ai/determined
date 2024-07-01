@@ -1,7 +1,7 @@
 import contextlib
 import os
 import pathlib
-from typing import Iterator, Optional, Union
+from typing import Iterator, Optional, Set, Union
 
 from determined import util
 from determined.common import storage
@@ -22,12 +22,14 @@ class CloudStorageManager(storage.StorageManager):
         finally:
             util.rmtree_nfs_safe(dst, ignore_errors=True)
 
-    def post_store_path(self, src: Union[str, os.PathLike], dst: str) -> None:
+    def post_store_path(
+        self, src: Union[str, os.PathLike], dst: str, paths: Optional[Set[str]] = None
+    ) -> None:
         """
         post_store_path uploads the checkpoint to cloud storage and deletes the original files.
         """
         try:
-            self.upload(src, dst)
+            self.upload(src, dst, paths)
         finally:
             util.rmtree_nfs_safe(src, ignore_errors=True)
 
