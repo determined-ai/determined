@@ -2723,6 +2723,13 @@ export interface V1DeleteTensorboardFilesResponse {
 export interface V1DeleteWebhookResponse {
 }
 /**
+ * Response to DeleteWorkspaceNamespaceBindingsRequest.
+ * @export
+ * @interface V1DeleteWorkspaceNamespaceBindingsResponse
+ */
+export interface V1DeleteWorkspaceNamespaceBindingsResponse {
+}
+/**
  * Response to DeleteWorkspaceRequest.
  * @export
  * @interface V1DeleteWorkspaceResponse
@@ -6162,10 +6169,10 @@ export interface V1ListRPsBoundToWorkspaceResponse {
 export interface V1ListWorkspaceNamespaceBindingsResponse {
     /**
      * List of workspace-namespace bindings for a given workspace.
-     * @type {{ [key: string]: string; }}
+     * @type {{ [key: string]: V1WorkspaceNamespaceBinding; }}
      * @memberof V1ListWorkspaceNamespaceBindingsResponse
      */
-    namespaceBindings: { [key: string]: string; };
+    namespaceBindings: { [key: string]: V1WorkspaceNamespaceBinding; };
 }
 /**
  * Response to ListWorkspacesBoundToRPRequest.
@@ -7629,11 +7636,11 @@ export interface V1PatchWorkspace {
      */
     defaultAuxResourcePool?: string;
     /**
-     * Optional cluster namespace map to create a workspace namespace binding for each cluster.
-     * @type {{ [key: string]: string; }}
+     * The map of clusters to workspace-namespace metadata (including the workspace-namespace binding and the resource quota placed on the namespace bound to the workspace for a given cluster).
+     * @type {{ [key: string]: V1WorkspaceNamespaceMeta; }}
      * @memberof V1PatchWorkspace
      */
-    clusterNamespacePairs?: { [key: string]: string; };
+    clusterNamespaceMeta?: { [key: string]: V1WorkspaceNamespaceMeta; };
 }
 /**
  * Response to PatchWorkspaceRequest.
@@ -7647,6 +7654,12 @@ export interface V1PatchWorkspaceResponse {
      * @memberof V1PatchWorkspaceResponse
      */
     workspace: V1Workspace;
+    /**
+     * The workspace-namespace bindings and resource quotas created.
+     * @type {{ [key: string]: V1WorkspaceNamespaceBinding; }}
+     * @memberof V1PatchWorkspaceResponse
+     */
+    namespaceBindings?: { [key: string]: V1WorkspaceNamespaceBinding; };
 }
 /**
  * Response to PauseExperimentRequest.
@@ -7764,7 +7777,7 @@ export interface V1Permission {
     scopeTypeMask?: V1ScopeTypeMask;
 }
 /**
- * List of permissions types. Value of the enum has 9xxxx for global only permissions. Permissions on the same object share the thousands place value like 2001 and 2002.   - PERMISSION_TYPE_UNSPECIFIED: The permission type is unknown.  - PERMISSION_TYPE_ADMINISTRATE_USER: Can create and update other users. Allows updating other users passwords making this permission give all other permissions effectively.  - PERMISSION_TYPE_ADMINISTRATE_OAUTH: Ability to manage OAuth clients and settings.  - PERMISSION_TYPE_CREATE_EXPERIMENT: Ability to create experiments.  - PERMISSION_TYPE_VIEW_EXPERIMENT_ARTIFACTS: Ability to view experiment's model code, checkpoints, trials.  - PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA: Ability to view experiment's metadata such as experiment config, progress.  - PERMISSION_TYPE_UPDATE_EXPERIMENT: Ability to update experiment and experiment's lifecycle.  - PERMISSION_TYPE_UPDATE_EXPERIMENT_METADATA: Ability to update experiment's metadata.  - PERMISSION_TYPE_DELETE_EXPERIMENT: Ability to delete experiment.  - PERMISSION_TYPE_CREATE_NSC: Ability to create Notebooks, Shells, and Commands.  - PERMISSION_TYPE_VIEW_NSC: Ability to view Notebooks, Shells, and Commands.  - PERMISSION_TYPE_UPDATE_NSC: Ability to terminate Notebooks, Shells, and Commands.  - PERMISSION_TYPE_UPDATE_GROUP: Ability to create, update, and add / remove users from groups.  - PERMISSION_TYPE_CREATE_WORKSPACE: Ability to create workspaces.  - PERMISSION_TYPE_VIEW_WORKSPACE: Ability to view workspace.  - PERMISSION_TYPE_UPDATE_WORKSPACE: Ability to update workspace.  - PERMISSION_TYPE_DELETE_WORKSPACE: Ability to delete workspace.  - PERMISSION_TYPE_SET_WORKSPACE_AGENT_USER_GROUP: Ability to set workspace agent user group config.  - PERMISSION_TYPE_SET_WORKSPACE_CHECKPOINT_STORAGE_CONFIG: Ability to set workspace checkpoint storage config.  - PERMISSION_TYPE_SET_WORKSPACE_DEFAULT_RESOURCE_POOL: Ability to set workspace default resource pool.  - PERMISSION_TYPE_CREATE_PROJECT: Ability to create projects.  - PERMISSION_TYPE_VIEW_PROJECT: Ability to view projects.  - PERMISSION_TYPE_UPDATE_PROJECT: Ability to update projects.  - PERMISSION_TYPE_DELETE_PROJECT: Ability to delete projects.  - PERMISSION_TYPE_ASSIGN_ROLES: Ability to assign roles to groups / users. If assigned at a workspace scope, can only assign roles to that workspace scope.  - PERMISSION_TYPE_VIEW_MODEL_REGISTRY: Ability to view model registry.  - PERMISSION_TYPE_EDIT_MODEL_REGISTRY: Ability to edit model registry.  - PERMISSION_TYPE_CREATE_MODEL_REGISTRY: Ability to create model registry.  - PERMISSION_TYPE_DELETE_MODEL_REGISTRY: Ability to delete model registry.  - PERMISSION_TYPE_DELETE_MODEL_VERSION: Ability to delete model version.  - PERMISSION_TYPE_DELETE_OTHER_USER_MODEL_REGISTRY: Ability to delete another user's model registry.  - PERMISSION_TYPE_DELETE_OTHER_USER_MODEL_VERSION: Ability to delete another user's model version.  - PERMISSION_TYPE_VIEW_MASTER_LOGS: Ability to view master logs.  - PERMISSION_TYPE_VIEW_CLUSTER_USAGE: Ability to view detailed cluster usage info.  - PERMISSION_TYPE_UPDATE_AGENTS: Ability to update agents.  - PERMISSION_TYPE_VIEW_SENSITIVE_AGENT_INFO: Ability to view sensitive subset of agent info.  - PERMISSION_TYPE_VIEW_MASTER_CONFIG: Ability to view master configs.  - PERMISSION_TYPE_UPDATE_MASTER_CONFIG: Ability to update master configs.  - PERMISSION_TYPE_VIEW_EXTERNAL_JOBS: Ability to view external jobs.  - PERMISSION_TYPE_CONTROL_STRICT_JOB_QUEUE: Ability to control strict job queue.  - PERMISSION_TYPE_VIEW_TEMPLATES: Ability to view templates.  - PERMISSION_TYPE_UPDATE_TEMPLATES: Ability to update templates.  - PERMISSION_TYPE_CREATE_TEMPLATES: Ability to create templates.  - PERMISSION_TYPE_DELETE_TEMPLATES: Ability to delete templates.  - PERMISSION_TYPE_UPDATE_ROLES: Ability to create and update role definitions.  - PERMISSION_TYPE_EDIT_WEBHOOKS: Ability to create and delete webhooks.  - PERMISSION_TYPE_MODIFY_RP_WORKSPACE_BINDINGS: Ability to bind, unbind or overwrite resource pool workspace bindings.  - PERMISSION_TYPE_SET_WORKSPACE_NAMESPACE_BINDINGS: Ability to bind, unbind, or overwrite namespace workspace bindings.
+ * List of permissions types. Value of the enum has 9xxxx for global only permissions. Permissions on the same object share the thousands place value like 2001 and 2002.   - PERMISSION_TYPE_UNSPECIFIED: The permission type is unknown.  - PERMISSION_TYPE_ADMINISTRATE_USER: Can create and update other users. Allows updating other users passwords making this permission give all other permissions effectively.  - PERMISSION_TYPE_ADMINISTRATE_OAUTH: Ability to manage OAuth clients and settings.  - PERMISSION_TYPE_CREATE_EXPERIMENT: Ability to create experiments.  - PERMISSION_TYPE_VIEW_EXPERIMENT_ARTIFACTS: Ability to view experiment's model code, checkpoints, trials.  - PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA: Ability to view experiment's metadata such as experiment config, progress.  - PERMISSION_TYPE_UPDATE_EXPERIMENT: Ability to update experiment and experiment's lifecycle.  - PERMISSION_TYPE_UPDATE_EXPERIMENT_METADATA: Ability to update experiment's metadata.  - PERMISSION_TYPE_DELETE_EXPERIMENT: Ability to delete experiment.  - PERMISSION_TYPE_CREATE_NSC: Ability to create Notebooks, Shells, and Commands.  - PERMISSION_TYPE_VIEW_NSC: Ability to view Notebooks, Shells, and Commands.  - PERMISSION_TYPE_UPDATE_NSC: Ability to terminate Notebooks, Shells, and Commands.  - PERMISSION_TYPE_UPDATE_GROUP: Ability to create, update, and add / remove users from groups.  - PERMISSION_TYPE_CREATE_WORKSPACE: Ability to create workspaces.  - PERMISSION_TYPE_VIEW_WORKSPACE: Ability to view workspace.  - PERMISSION_TYPE_UPDATE_WORKSPACE: Ability to update workspace.  - PERMISSION_TYPE_DELETE_WORKSPACE: Ability to delete workspace.  - PERMISSION_TYPE_SET_WORKSPACE_AGENT_USER_GROUP: Ability to set workspace agent user group config.  - PERMISSION_TYPE_SET_WORKSPACE_CHECKPOINT_STORAGE_CONFIG: Ability to set workspace checkpoint storage config.  - PERMISSION_TYPE_SET_WORKSPACE_DEFAULT_RESOURCE_POOL: Ability to set workspace default resource pool.  - PERMISSION_TYPE_CREATE_PROJECT: Ability to create projects.  - PERMISSION_TYPE_VIEW_PROJECT: Ability to view projects.  - PERMISSION_TYPE_UPDATE_PROJECT: Ability to update projects.  - PERMISSION_TYPE_DELETE_PROJECT: Ability to delete projects.  - PERMISSION_TYPE_ASSIGN_ROLES: Ability to assign roles to groups / users. If assigned at a workspace scope, can only assign roles to that workspace scope.  - PERMISSION_TYPE_VIEW_MODEL_REGISTRY: Ability to view model registry.  - PERMISSION_TYPE_EDIT_MODEL_REGISTRY: Ability to edit model registry.  - PERMISSION_TYPE_CREATE_MODEL_REGISTRY: Ability to create model registry.  - PERMISSION_TYPE_DELETE_MODEL_REGISTRY: Ability to delete model registry.  - PERMISSION_TYPE_DELETE_MODEL_VERSION: Ability to delete model version.  - PERMISSION_TYPE_DELETE_OTHER_USER_MODEL_REGISTRY: Ability to delete another user's model registry.  - PERMISSION_TYPE_DELETE_OTHER_USER_MODEL_VERSION: Ability to delete another user's model version.  - PERMISSION_TYPE_VIEW_MASTER_LOGS: Ability to view master logs.  - PERMISSION_TYPE_VIEW_CLUSTER_USAGE: Ability to view detailed cluster usage info.  - PERMISSION_TYPE_UPDATE_AGENTS: Ability to update agents.  - PERMISSION_TYPE_VIEW_SENSITIVE_AGENT_INFO: Ability to view sensitive subset of agent info.  - PERMISSION_TYPE_VIEW_MASTER_CONFIG: Ability to view master configs.  - PERMISSION_TYPE_UPDATE_MASTER_CONFIG: Ability to update master configs.  - PERMISSION_TYPE_VIEW_EXTERNAL_JOBS: Ability to view external jobs.  - PERMISSION_TYPE_CONTROL_STRICT_JOB_QUEUE: Ability to control strict job queue.  - PERMISSION_TYPE_VIEW_TEMPLATES: Ability to view templates.  - PERMISSION_TYPE_UPDATE_TEMPLATES: Ability to update templates.  - PERMISSION_TYPE_CREATE_TEMPLATES: Ability to create templates.  - PERMISSION_TYPE_DELETE_TEMPLATES: Ability to delete templates.  - PERMISSION_TYPE_UPDATE_ROLES: Ability to create and update role definitions.  - PERMISSION_TYPE_EDIT_WEBHOOKS: Ability to create and delete webhooks.  - PERMISSION_TYPE_MODIFY_RP_WORKSPACE_BINDINGS: Ability to bind, unbind or overwrite resource pool workspace bindings.  - PERMISSION_TYPE_SET_WORKSPACE_NAMESPACE_BINDINGS: Ability to bind, unbind, or overwrite namespace workspace bindings.  - PERMISSION_TYPE_SET_RESOURCE_QUOTAS: Ability to set resource quotas on workspaces.
  * @export
  * @enum {string}
  */
@@ -7817,6 +7830,7 @@ export const V1PermissionType = {
     EDITWEBHOOKS: 'PERMISSION_TYPE_EDIT_WEBHOOKS',
     MODIFYRPWORKSPACEBINDINGS: 'PERMISSION_TYPE_MODIFY_RP_WORKSPACE_BINDINGS',
     SETWORKSPACENAMESPACEBINDINGS: 'PERMISSION_TYPE_SET_WORKSPACE_NAMESPACE_BINDINGS',
+    SETRESOURCEQUOTAS: 'PERMISSION_TYPE_SET_RESOURCE_QUOTAS',
 } as const
 export type V1PermissionType = ValueOf<typeof V1PermissionType>
 /**
@@ -8367,11 +8381,17 @@ export interface V1PostWorkspaceRequest {
      */
     defaultAuxPool?: string;
     /**
-     * The cluster-namespace pairs for workspace-namespace bindings.
-     * @type {{ [key: string]: string; }}
+     * The map of clusters to workspace-namespace metadata (including the workspace-namespace binding and the resource quota placed on the namespace bound to the workspace for a given cluster).
+     * @type {{ [key: string]: V1WorkspaceNamespaceMeta; }}
      * @memberof V1PostWorkspaceRequest
      */
-    clusterNamespacePairs?: { [key: string]: string; };
+    clusterNamespaceMeta?: { [key: string]: V1WorkspaceNamespaceMeta; };
+    /**
+     * The map of clusters to the resource quota placed on the auto-generated namespace within that cluster (inherently capping the slots available to a workspace).
+     * @type {{ [key: string]: number; }}
+     * @memberof V1PostWorkspaceRequest
+     */
+    clusterQuotaPairs?: { [key: string]: number; };
 }
 /**
  * Response to PostWorkspaceRequest.
@@ -8386,11 +8406,11 @@ export interface V1PostWorkspaceResponse {
      */
     workspace: V1Workspace;
     /**
-     * The workspace-namespace bindings created.
-     * @type {{ [key: string]: V1WorkspaceNamespace; }}
+     * The workspace-namespace bindings and resource quotas created.
+     * @type {{ [key: string]: V1WorkspaceNamespaceBinding; }}
      * @memberof V1PostWorkspaceResponse
      */
-    namespaceBindings?: { [key: string]: V1WorkspaceNamespace; };
+    namespaceBindings?: { [key: string]: V1WorkspaceNamespaceBinding; };
 }
 /**
  * Preview hyperparameter search.
@@ -10406,6 +10426,32 @@ export interface V1SetNotebookPriorityResponse {
     notebook?: V1Notebook;
 }
 /**
+ * Request to set a resource quota on a workspace (for a specific cluster).
+ * @export
+ * @interface V1SetResourceQuotasRequest
+ */
+export interface V1SetResourceQuotasRequest {
+    /**
+     * The id of the workspace.
+     * @type {number}
+     * @memberof V1SetResourceQuotasRequest
+     */
+    id: number;
+    /**
+     * A map of cluster to resource-quota pairs used to set GPU request limits on the workspace (for a specific cluster).
+     * @type {{ [key: string]: number; }}
+     * @memberof V1SetResourceQuotasRequest
+     */
+    clusterQuotaPairs?: { [key: string]: number; };
+}
+/**
+ * Response for setting the resource quota for a workspace (for a specific cluster).
+ * @export
+ * @interface V1SetResourceQuotasResponse
+ */
+export interface V1SetResourceQuotasResponse {
+}
+/**
  * SetSearcherProgressOperation informs the master of the progress of the custom searcher.
  * @export
  * @interface V1SetSearcherProgressOperation
@@ -10496,7 +10542,7 @@ export interface V1SetUserPasswordResponse {
     user?: V1User;
 }
 /**
- * Request for modifying a namespace binding to a workspace.
+ * Request for setting workspace-namespace bindings.
  * @export
  * @interface V1SetWorkspaceNamespaceBindingsRequest
  */
@@ -10508,24 +10554,24 @@ export interface V1SetWorkspaceNamespaceBindingsRequest {
      */
     workspaceId: number;
     /**
-     * The cluster-namespace pairs used to create workspace=namespace bindings.
-     * @type {{ [key: string]: string; }}
+     * The cluster-namespace pairs used to create workspace-namespace bindings.
+     * @type {{ [key: string]: V1WorkspaceNamespaceMeta; }}
      * @memberof V1SetWorkspaceNamespaceBindingsRequest
      */
-    clusterNamespacePairs?: { [key: string]: string; };
+    clusterNamespaceMeta?: { [key: string]: V1WorkspaceNamespaceMeta; };
 }
 /**
- * Response for modify a namespace binding to a workspace.
+ * Response for setting workspace-namespace bindings.
  * @export
  * @interface V1SetWorkspaceNamespaceBindingsResponse
  */
 export interface V1SetWorkspaceNamespaceBindingsResponse {
     /**
      * The added workspace-namespace bindings.
-     * @type {{ [key: string]: V1WorkspaceNamespace; }}
+     * @type {{ [key: string]: V1WorkspaceNamespaceBinding; }}
      * @memberof V1SetWorkspaceNamespaceBindingsResponse
      */
-    namespaceBindings: { [key: string]: V1WorkspaceNamespace; };
+    namespaceBindings: { [key: string]: V1WorkspaceNamespaceBinding; };
 }
 /**
  * Shell is an ssh server in a containerized environment.
@@ -12369,37 +12415,74 @@ export interface V1Workspace {
      * @memberof V1Workspace
      */
     defaultAuxPool?: string;
-    /**
-     * Namespaces to which the workspace is bound.
-     * @type {Array<string>}
-     * @memberof V1Workspace
-     */
-    namespaceBindings?: Array<string>;
 }
 /**
- * WorkspaceNamespace represents a workspace-namespace binding for a given cluster.
+ * WorkspaceNamespace represents a workspace-namespace binding for a given workspace and cluster.
  * @export
- * @interface V1WorkspaceNamespace
+ * @interface V1WorkspaceNamespaceBinding
  */
-export interface V1WorkspaceNamespace {
+export interface V1WorkspaceNamespaceBinding {
     /**
      * The id of the workspace.
      * @type {number}
-     * @memberof V1WorkspaceNamespace
+     * @memberof V1WorkspaceNamespaceBinding
      */
     workspaceId?: number;
     /**
      * The Kubernetes namespace.
      * @type {string}
-     * @memberof V1WorkspaceNamespace
+     * @memberof V1WorkspaceNamespaceBinding
      */
     namespace?: string;
     /**
      * User cluster name.
      * @type {string}
-     * @memberof V1WorkspaceNamespace
+     * @memberof V1WorkspaceNamespaceBinding
      */
     clusterName?: string;
+    /**
+     * Whether we want to auto-create a namespace for a workspace-namespace binding.
+     * @type {boolean}
+     * @memberof V1WorkspaceNamespaceBinding
+     */
+    autoCreateNamespace?: boolean;
+}
+/**
+ * WorkspaceNamespaceMeta is the metadata associated with a workspace-namespace binding.
+ * @export
+ * @interface V1WorkspaceNamespaceMeta
+ */
+export interface V1WorkspaceNamespaceMeta {
+    /**
+     * The optional namespace of the workspace-namespace binding.
+     * @type {string}
+     * @memberof V1WorkspaceNamespaceMeta
+     */
+    namespace?: string;
+    /**
+     * Whether we want to auto-create a namespace for a workspace-namespace binding.
+     * @type {boolean}
+     * @memberof V1WorkspaceNamespaceMeta
+     */
+    autoCreateNamespace?: boolean;
+    /**
+     * Whether we want to auto-create a namespace for each cluster's workspace-namespace binding.
+     * @type {boolean}
+     * @memberof V1WorkspaceNamespaceMeta
+     */
+    autoCreateNamespaceAllClusters?: boolean;
+    /**
+     * The cluster to which we apply the workspace-namespace binding or resource quota.
+     * @type {string}
+     * @memberof V1WorkspaceNamespaceMeta
+     */
+    clusterName?: string;
+    /**
+     * The optional resource quota placed on the namespace (and consequentially, the workspace).
+     * @type {number}
+     * @memberof V1WorkspaceNamespaceMeta
+     */
+    resourceQuota?: number;
 }
 /**
  * WorkspaceState is used to track progress during a deletion.   - WORKSPACE_STATE_UNSPECIFIED: Object deletion is not in progress.  - WORKSPACE_STATE_DELETING: The object is being deleted.  - WORKSPACE_STATE_DELETE_FAILED: The object failed to delete.  - WORKSPACE_STATE_DELETED: The object finished deleting.
@@ -35024,6 +35107,47 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
         },
         /**
          * 
+         * @summary Deletes workpace namespace bindings.
+         * @param {number} workspaceId The unique id of the workspace.
+         * @param {Array<string>} [clusterNames] The names of the clusters to delete the bindings for.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteWorkspaceNamespaceBindings(workspaceId: number, clusterNames?: Array<string>, options: any = {}): FetchArgs {
+            // verify required parameter 'workspaceId' is not null or undefined
+            if (workspaceId === null || workspaceId === undefined) {
+                throw new RequiredError('workspaceId','Required parameter workspaceId was null or undefined when calling deleteWorkspaceNamespaceBindings.');
+            }
+            const localVarPath = `/api/v1/workspaces/{workspaceId}/namespace-bindings`
+                .replace(`{${"workspaceId"}}`, encodeURIComponent(String(workspaceId)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'DELETE', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            if (clusterNames) {
+                localVarQueryParameter['clusterNames'] = clusterNames
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get the requested workspace.
          * @param {number} id The id of the workspace.
          * @param {*} [options] Override http request option.
@@ -35416,7 +35540,51 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
         },
         /**
          * 
-         * @summary Add namespace binding to a workspace.
+         * @summary Set a resource quota for a workspace (within a specific cluster).
+         * @param {number} id The id of the workspace.
+         * @param {V1SetResourceQuotasRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        setResourceQuotas(id: number, body: V1SetResourceQuotasRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'id' is not null or undefined
+            if (id === null || id === undefined) {
+                throw new RequiredError('id','Required parameter id was null or undefined when calling setResourceQuotas.');
+            }
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling setResourceQuotas.');
+            }
+            const localVarPath = `/api/v1/workspaces/{id}/set-resource-quota`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Bind a namespace to a workspace.
          * @param {number} workspaceId The unique id of the workspace.
          * @param {V1SetWorkspaceNamespaceBindingsRequest} body
          * @param {*} [options] Override http request option.
@@ -35431,7 +35599,7 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling setWorkspaceNamespaceBindings.');
             }
-            const localVarPath = `/api/v1/workspaces/{workspaceId}/bind`
+            const localVarPath = `/api/v1/workspaces/{workspaceId}/namespace-bindings`
                 .replace(`{${"workspaceId"}}`, encodeURIComponent(String(workspaceId)));
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
@@ -35567,6 +35735,26 @@ export const WorkspacesApiFp = function (configuration?: Configuration) {
          */
         deleteWorkspace(id: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteWorkspaceResponse> {
             const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).deleteWorkspace(id, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Deletes workpace namespace bindings.
+         * @param {number} workspaceId The unique id of the workspace.
+         * @param {Array<string>} [clusterNames] The names of the clusters to delete the bindings for.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteWorkspaceNamespaceBindings(workspaceId: number, clusterNames?: Array<string>, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteWorkspaceNamespaceBindingsResponse> {
+            const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).deleteWorkspaceNamespaceBindings(workspaceId, clusterNames, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -35751,7 +35939,27 @@ export const WorkspacesApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Add namespace binding to a workspace.
+         * @summary Set a resource quota for a workspace (within a specific cluster).
+         * @param {number} id The id of the workspace.
+         * @param {V1SetResourceQuotasRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        setResourceQuotas(id: number, body: V1SetResourceQuotasRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SetResourceQuotasResponse> {
+            const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).setResourceQuotas(id, body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Bind a namespace to a workspace.
          * @param {number} workspaceId The unique id of the workspace.
          * @param {V1SetWorkspaceNamespaceBindingsRequest} body
          * @param {*} [options] Override http request option.
@@ -35835,6 +36043,17 @@ export const WorkspacesApiFactory = function (configuration?: Configuration, fet
          */
         deleteWorkspace(id: number, options?: any) {
             return WorkspacesApiFp(configuration).deleteWorkspace(id, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Deletes workpace namespace bindings.
+         * @param {number} workspaceId The unique id of the workspace.
+         * @param {Array<string>} [clusterNames] The names of the clusters to delete the bindings for.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteWorkspaceNamespaceBindings(workspaceId: number, clusterNames?: Array<string>, options?: any) {
+            return WorkspacesApiFp(configuration).deleteWorkspaceNamespaceBindings(workspaceId, clusterNames, options)(fetch, basePath);
         },
         /**
          * 
@@ -35938,7 +36157,18 @@ export const WorkspacesApiFactory = function (configuration?: Configuration, fet
         },
         /**
          * 
-         * @summary Add namespace binding to a workspace.
+         * @summary Set a resource quota for a workspace (within a specific cluster).
+         * @param {number} id The id of the workspace.
+         * @param {V1SetResourceQuotasRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        setResourceQuotas(id: number, body: V1SetResourceQuotasRequest, options?: any) {
+            return WorkspacesApiFp(configuration).setResourceQuotas(id, body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Bind a namespace to a workspace.
          * @param {number} workspaceId The unique id of the workspace.
          * @param {V1SetWorkspaceNamespaceBindingsRequest} body
          * @param {*} [options] Override http request option.
@@ -35999,6 +36229,19 @@ export class WorkspacesApi extends BaseAPI {
      */
     public deleteWorkspace(id: number, options?: any) {
         return WorkspacesApiFp(this.configuration).deleteWorkspace(id, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Deletes workpace namespace bindings.
+     * @param {number} workspaceId The unique id of the workspace.
+     * @param {Array<string>} [clusterNames] The names of the clusters to delete the bindings for.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof WorkspacesApi
+     */
+    public deleteWorkspaceNamespaceBindings(workspaceId: number, clusterNames?: Array<string>, options?: any) {
+        return WorkspacesApiFp(this.configuration).deleteWorkspaceNamespaceBindings(workspaceId, clusterNames, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -36119,7 +36362,20 @@ export class WorkspacesApi extends BaseAPI {
     
     /**
      * 
-     * @summary Add namespace binding to a workspace.
+     * @summary Set a resource quota for a workspace (within a specific cluster).
+     * @param {number} id The id of the workspace.
+     * @param {V1SetResourceQuotasRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof WorkspacesApi
+     */
+    public setResourceQuotas(id: number, body: V1SetResourceQuotasRequest, options?: any) {
+        return WorkspacesApiFp(this.configuration).setResourceQuotas(id, body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Bind a namespace to a workspace.
      * @param {number} workspaceId The unique id of the workspace.
      * @param {V1SetWorkspaceNamespaceBindingsRequest} body
      * @param {*} [options] Override http request option.

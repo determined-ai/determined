@@ -645,9 +645,9 @@ def test_set_workspace_namespace_bindings(
             ["det", "w", "create", w_name, "--namespace", namespace],
             "must specify a cluster name",
         )
-        
+
         detproc.check_call(sess, ["det", "w", "create", w_name])
-        
+
         detproc.check_error(
             sess,
             ["det", "w", "bindings", "set", w_name, "--namespace", namespace],

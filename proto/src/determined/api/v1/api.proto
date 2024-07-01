@@ -2108,11 +2108,23 @@ service Determined {
     };
   }
 
-  // Add namespace binding to a workspace.
+  // Bind a namespace to a workspace.
   rpc SetWorkspaceNamespaceBindings(SetWorkspaceNamespaceBindingsRequest)
       returns (SetWorkspaceNamespaceBindingsResponse) {
     option (google.api.http) = {
       post: "/api/v1/workspaces/{workspace_id}/namespace-bindings",
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Workspaces"
+    };
+  }
+
+  // Set a resource quota for a workspace (within a specific cluster).
+  rpc SetResourceQuotas(SetResourceQuotasRequest)
+      returns (SetResourceQuotasResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/workspaces/{id}/set-resource-quota",
       body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {

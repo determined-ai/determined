@@ -406,10 +406,20 @@ func (k *ResourceManager) CreateNamespace(namespaceName string, clusterName stri
 }
 
 // DeleteNamespace implements rm.ResourceManager.
-func (k *ResourceManager) DeleteNamespace(namespaceName string) error {
-	err := k.jobsService.DeleteNamespace(namespaceName)
+func (k *ResourceManager) DeleteNamespace(namespace string) error {
+	err := k.jobsService.DeleteNamespace(namespace)
 	if err != nil {
-		return fmt.Errorf("error deleting namespace %s: %w", namespaceName, err)
+		return fmt.Errorf("error deleting namespace %s: %w", namespace, err)
+	}
+	return nil
+}
+
+// SetResourceQuota implements rm.ResourceManager.
+func (k *ResourceManager) SetResourceQuota(quota int, namespace, clusterName string) error {
+	err := k.jobsService.SetResourceQuota(quota, namespace)
+	if err != nil {
+		return fmt.Errorf("error setting resource quota %q on namespace %s: %w", quota,
+			namespace, err)
 	}
 	return nil
 }
