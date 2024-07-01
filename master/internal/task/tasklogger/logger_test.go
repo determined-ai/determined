@@ -96,7 +96,6 @@ func TestTaskLoggerConcurrent(t *testing.T) {
 
 	var in []*model.TaskLog
 	for i := 0; i < 10000; i++ {
-		i := i
 		in = append(in, &model.TaskLog{ID: &i})
 	}
 

@@ -976,6 +976,12 @@ export interface V1AcceleratorData {
      * @memberof V1AcceleratorData
      */
     acceleratorUuids?: Array<string>;
+    /**
+     * The name of the resource pool.
+     * @type {string}
+     * @memberof V1AcceleratorData
+     */
+    resourcePool?: string;
 }
 /**
  * Acknowledge the receipt of some stop signal.

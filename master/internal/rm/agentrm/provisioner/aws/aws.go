@@ -181,8 +181,7 @@ func (c *awsCluster) Launch(instanceNum int) error {
 func (c *awsCluster) Terminate(instanceIDs []string) {
 	ids := make([]*string, 0, len(instanceIDs))
 	for _, id := range instanceIDs {
-		idCopy := id
-		ids = append(ids, &idCopy)
+		ids = append(ids, &id)
 	}
 
 	if c.config.SpotEnabled {

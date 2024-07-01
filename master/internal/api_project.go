@@ -1037,6 +1037,7 @@ func (a *apiServer) GetProjectsByUserActivity(
 		p.user_id,
 		'WORKSPACE_STATE_' || p.state AS state,
 		p.error_message,
+		(SELECT COUNT(*) FROM runs as r WHERE r.project_id=p.id) as num_runs,
 		COUNT(*) FILTER (WHERE e.project_id = p.id) AS num_experiments,
 		COUNT(*) FILTER (WHERE e.project_id = p.id AND e.state = 'ACTIVE') AS num_active_experiments,
 		MAX(e.start_time) FILTER (WHERE e.project_id = p.id) AS last_experiment_started_at
