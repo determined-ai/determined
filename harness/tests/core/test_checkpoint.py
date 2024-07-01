@@ -39,7 +39,7 @@ def make_mock_storage_manager(
         path.mkdir(exist_ok=True)
         return pathlib.Path(path)
 
-    mock_list_dir = dict([(f, i) for i, f in enumerate(dir_files)])
+    mock_list_dir = {f: i for i, f in enumerate(dir_files)}
 
     storage_manager = mock.MagicMock()
     storage_manager.store_path = mock.MagicMock(side_effect=store_path)
@@ -303,13 +303,13 @@ def test_checkpoint_upload(sharded: bool, tmp_path: pathlib.Path) -> None:
             return upload_paths
 
     assert len(upload_ckpt) == 2
-    assert sorted(list(upload_ckpt[0])) == sorted(ckpt_files[0] + all_workers_files)
+    assert sorted(upload_ckpt[0]) == sorted(ckpt_files[0] + all_workers_files)
 
     if sharded:
         # In the sharded case, expect each worker to upload unique files. Files that conflict across
         # workers should only be uploaded by the chief worker.
-        assert sorted(list(upload_ckpt[1])) == sorted(ckpt_files[1])
-        assert len(upload_ckpt[0].intersection(ckpt_files[1])) == 0
+        assert sorted(upload_ckpt[1]) == sorted(ckpt_files[1])
+        assert len(set(upload_ckpt[0]).intersection(ckpt_files[1])) == 0
     else:
         # Only the chief worker should upload files in the non-sharded case.
         assert len(list(upload_ckpt[1])) == 0
