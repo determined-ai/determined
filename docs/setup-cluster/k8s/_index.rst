@@ -30,30 +30,26 @@ Determined master and a Postgres database in the Kubernetes cluster.
 
 |
 
-Once the master is up and running, you can launch :ref:`experiments <experiments>`, :ref:`notebooks
+Once the master is running, you can launch :ref:`experiments <experiments>`, :ref:`notebooks
 <notebooks>`, :ref:`TensorBoards <tensorboards>`, :ref:`commands <commands-and-shells>`, and
 :ref:`shells <commands-and-shells>`. When new workloads are submitted to the Determined master, the
-master launches jobs and config maps on the Kubernetes cluster to execute those workloads. Users of
-Determined shouldn't need to interact with Kubernetes directly after installation, as Determined
-handles all the necessary interaction with the Kubernetes cluster. Kubernetes creates and cleans up
-pods for all jobs that Determined may request.
+master launches jobs and config maps on the Kubernetes cluster to execute those workloads. Users do
+not need to interact with Kubernetes directly after installation, as Determined handles all the
+necessary interaction with the Kubernetes cluster. Kubernetes creates and cleans up pods for all
+jobs requested by Determined.
 
-*********************
- Priority Scheduling
-*********************
+.. note::
 
-When running Determined on Kubernetes, a higher priority value means higher priority (e.g., a
-priority 50 task will run before a priority 40 task). This differs from non-Kubernetes deployments,
-where lower priority values mean higher priority (e.g., a priority 40 task will run before a
-priority 50 task).
+   When running Determined on Kubernetes, a higher priority value means a higher priority (e.g., a
+   priority 50 task will run before a priority 40 task). This is different from non-Kubernetes
+   deployments, where lower priority values mean higher priority (e.g., a priority 40 task will run
+   before a priority 50 task).
 
 .. _limitations-on-kubernetes:
 
 ***************************
  Limitations on Kubernetes
 ***************************
-
-This section outlines the current limitations of Determined on Kubernetes.
 
 Scheduling
 ==========
