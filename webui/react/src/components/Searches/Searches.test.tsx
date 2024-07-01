@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import UIProvider, { DefaultTheme } from 'hew/Theme';
 import { ConfirmationProvider } from 'hew/useConfirm';
@@ -46,20 +46,13 @@ const expectedFilterString = JSON.stringify({
   showArchived: false,
 });
 
-const searchExperimentsMock = vi.hoisted(() =>
-  vi.fn().mockReturnValue(
-    Promise.resolve({
-      experiments: [],
-      pagination: { total: 0 },
-    }),
-  ),
-);
+const searchExperiments = vi.hoisted(() => vi.fn());
 
 vi.mock('services/api', () => ({
   getProjectColumns: vi.fn().mockReturnValue([]),
   getWorkspaces: vi.fn().mockResolvedValue({ workspaces: [] }),
   resetUserSetting: () => Promise.resolve(),
-  searchExperiments: searchExperimentsMock,
+  searchExperiments,
 }));
 
 vi.mock('stores/userSettings', async (importOriginal) => {
@@ -83,7 +76,14 @@ vi.mock('hooks/useMobile', async (importOriginal) => {
 
 const user = userEvent.setup();
 
-const setup = () => {
+const setup = (numExperiments?: number) => {
+  searchExperiments.mockImplementation(() => {
+    return Promise.resolve({
+      experiments: [],
+      pagination: { total: numExperiments ?? 0 },
+    });
+  });
+
   render(
     <UIProvider theme={DefaultTheme.Light}>
       <ConfirmationProvider>
@@ -100,32 +100,49 @@ const setup = () => {
 };
 
 describe('Searches', () => {
-  it('should display with correct label', () => {
-    setup();
-
+  it('should display count', async () => {
+    setup(2);
     expect(screen.getByText('Loading searches...')).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(screen.getByText('2 searches')).toBeInTheDocument();
+    });
+  });
+
+  it('should display empty state', async () => {
+    setup();
+    expect(screen.getByText('Loading searches...')).toBeInTheDocument();
+
+    await waitFor(() => {
+      expect(screen.getByText('0 searches')).toBeInTheDocument();
+      expect(screen.getByText('No Searches')).toBeInTheDocument();
+    });
   });
 
   it('should display column picker menu without tab selection', async () => {
     setup();
 
-    await user.click(screen.getByTestId('columns-menu-button'));
-    expect(screen.queryByRole('tab')).not.toBeInTheDocument();
-    expect(screen.getByTestId('column-picker-tab')).toBeInTheDocument();
+    await waitFor(async () => {
+      await user.click(screen.getByTestId('columns-menu-button'));
+      expect(screen.queryByRole('tab')).not.toBeInTheDocument();
+      expect(screen.getByTestId('column-picker-tab')).toBeInTheDocument();
+    });
   });
 
-  it('should have hidden filter to exclude single-trial experiments', () => {
+  it('should have hidden filter to exclude single-trial experiments', async () => {
     setup();
 
-    expect(vi.mocked(searchExperimentsMock)).toHaveBeenCalledWith(
-      expect.objectContaining({
-        filter: expectedFilterString,
-        limit: defaultProjectSettings.pageLimit,
-        offset: 0,
-        projectId: projectMock.id,
-        sort: defaultProjectSettings.sortString,
-      }),
-      { signal: expect.any(AbortSignal) },
-    );
+    await waitFor(() => {
+      expect(vi.mocked(searchExperiments)).toHaveBeenCalledWith(
+        expect.objectContaining({
+          filter: expectedFilterString,
+          limit: defaultProjectSettings.pageLimit,
+          offset: 0,
+          projectId: projectMock.id,
+          sort: defaultProjectSettings.sortString,
+        }),
+        { signal: expect.any(AbortSignal) },
+      );
+    });
   });
 });
