@@ -2,6 +2,7 @@ import { Page } from '@playwright/test';
 
 import { expect } from 'e2e/fixtures/global-fixtures';
 import { SignIn } from 'e2e/models/pages/SignIn';
+import { password, username } from 'e2e/utils/envVars';
 
 export class AuthFixture {
   readonly #page: Page;
@@ -10,14 +11,8 @@ export class AuthFixture {
   readonly signInPage: SignIn;
 
   constructor(readonly page: Page) {
-    if (process.env.PW_USER_NAME === undefined) {
-      throw new Error('username must be defined');
-    }
-    if (process.env.PW_PASSWORD === undefined) {
-      throw new Error('password must be defined');
-    }
-    this.#USERNAME = process.env.PW_USER_NAME;
-    this.#PASSWORD = process.env.PW_PASSWORD;
+    this.#USERNAME = username();
+    this.#PASSWORD = password();
     this.#page = page;
     this.signInPage = new SignIn(page);
   }

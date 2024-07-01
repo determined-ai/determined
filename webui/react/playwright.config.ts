@@ -2,16 +2,17 @@
  * Read environment variables from file.
  * https://github.com/motdotla/dotenv
  */
+import path from 'path';
+
 import { defineConfig, devices } from '@playwright/test';
 import * as dotenv from 'dotenv';
 
-dotenv.config();
+import { baseUrl } from 'e2e/utils/envVars';
 
-const serverAddess = process.env.PW_SERVER_ADDRESS;
-if (serverAddess === undefined) {
-  throw new Error('Expected PW_SERVER_ADDRESS to be set.');
-}
-const port = Number(new URL(serverAddess).port || 3001);
+dotenv.config({ path: path.resolve(__dirname, '.env') });
+
+const baseURL = baseUrl();
+const port = Number(new URL(baseURL).port || 3001);
 
 /**
  * See https://playwright.dev/docs/test-configuration.
@@ -81,7 +82,7 @@ export default defineConfig({
   /* Shared settings for all the projects below. See https://playwright.dev/docs/api/class-testoptions. */
   use: {
     actionTimeout: 5_000,
-    baseURL: `http://localhost:${port}/`,
+    baseURL,
     navigationTimeout: 10_000,
     trace: 'retain-on-failure',
     video: 'retain-on-failure',
