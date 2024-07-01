@@ -600,8 +600,9 @@ func TestMoveRunsMultiTrialNoSkip(t *testing.T) {
 
 	moveResp, err := api.MoveRuns(ctx, moveReq)
 	require.NoError(t, err)
-	require.Len(t, moveResp.Results, 1)
+	require.Len(t, moveResp.Results, 2)
 	require.Equal(t, "", moveResp.Results[0].Error)
+	require.Equal(t, "", moveResp.Results[1].Error)
 
 	// runs no longer in old project
 	req := &apiv1.SearchRunsRequest{
