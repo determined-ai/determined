@@ -608,7 +608,7 @@ func TestPatchProjectRecordRedirect(t *testing.T) {
 
 	newName := uuid.New().String()
 	newDescription := uuid.New().String()
-	newKey := uuid.New().String()[:project.MaxProjectKeyLength]
+	newKey := random.String(project.MaxProjectKeyLength)
 	_, err = api.PatchProject(ctx, &apiv1.PatchProjectRequest{
 		Id: resp.Project.Id,
 		Project: &projectv1.PatchProject{
