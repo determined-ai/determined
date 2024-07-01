@@ -418,7 +418,6 @@ func (a *apiServer) CheckpointsRemoveFiles(
 
 	// Submit checkpoint GC tasks for all checkpoints.
 	for i, expIDcUUIDs := range groupCUUIDsByEIDs {
-		i := i
 		agentUserGroup, err := user.GetAgentUserGroup(ctx, curUser.ID, workspaceIDs[i])
 		if err != nil {
 			return nil, err

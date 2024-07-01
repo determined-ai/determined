@@ -307,8 +307,7 @@ func TestRbac(t *testing.T) {
 			},
 		}
 
-		for _, p := range permissionsToAdd {
-			perm := p
+		for _, perm := range permissionsToAdd {
 			_, err := db.Bun().NewInsert().Model(&perm).TableExpr("permission_assignments").Exec(ctx)
 			require.NoError(t, err, "failure inserting permission assignments in local setup")
 		}
@@ -521,8 +520,7 @@ func TestRbac(t *testing.T) {
 				"role_id":       testRole.ID,
 			},
 		}
-		for _, p := range permissionsToAdd {
-			perm := p
+		for _, perm := range permissionsToAdd {
 			_, err := db.Bun().NewInsert().Model(&perm).TableExpr("permission_assignments").Exec(ctx)
 			require.NoError(t, err, "failure inserting permission assignments in local setup")
 		}

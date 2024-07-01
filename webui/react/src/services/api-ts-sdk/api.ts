@@ -976,6 +976,12 @@ export interface V1AcceleratorData {
      * @memberof V1AcceleratorData
      */
     acceleratorUuids?: Array<string>;
+    /**
+     * The name of the resource pool.
+     * @type {string}
+     * @memberof V1AcceleratorData
+     */
+    resourcePool?: string;
 }
 /**
  * Acknowledge the receipt of some stop signal.
@@ -3544,6 +3550,12 @@ export interface V1FlatRun {
      * @memberof V1FlatRun
      */
     metadata?: any;
+    /**
+     * The archived status of this run. This is only looking at the archived status at the run level and not taking into account whether the experiment is archived or not.
+     * @type {boolean}
+     * @memberof V1FlatRun
+     */
+    archived: boolean;
 }
 /**
  * 
@@ -8455,6 +8467,12 @@ export interface V1Project {
      * @memberof V1Project
      */
     key: string;
+    /**
+     * Count of runs associated with this project.
+     * @type {number}
+     * @memberof V1Project
+     */
+    numRuns: number;
 }
 /**
  * Project Column is a description of a column used on experiments in the project.
@@ -10175,6 +10193,43 @@ export interface V1SearchRolesAssignableToScopeResponse {
      * @memberof V1SearchRolesAssignableToScopeResponse
      */
     roles?: Array<V1Role>;
+}
+/**
+ * Get a list of runs.
+ * @export
+ * @interface V1SearchRunsRequest
+ */
+export interface V1SearchRunsRequest {
+    /**
+     * ID of the project to look at
+     * @type {number}
+     * @memberof V1SearchRunsRequest
+     */
+    projectId?: number;
+    /**
+     * How many experiments to skip before including in the results
+     * @type {number}
+     * @memberof V1SearchRunsRequest
+     */
+    offset?: number;
+    /**
+     * How many results to show
+     * @type {number}
+     * @memberof V1SearchRunsRequest
+     */
+    limit?: number;
+    /**
+     * Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc)
+     * @type {string}
+     * @memberof V1SearchRunsRequest
+     */
+    sort?: string;
+    /**
+     * Filter expression
+     * @type {string}
+     * @memberof V1SearchRunsRequest
+     */
+    filter?: string;
 }
 /**
  * Response to SearchRunsResponse.
@@ -21865,18 +21920,18 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         /**
          * 
          * @summary Get a list of runs.
-         * @param {number} [projectId] ID of the project to look at.
-         * @param {number} [offset] How many experiments to skip before including in the results.
-         * @param {number} [limit] How many results to show.
-         * @param {string} [sort] Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc).
-         * @param {string} [filter] Filter expression.
+         * @param {V1SearchRunsRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        searchRuns(projectId?: number, offset?: number, limit?: number, sort?: string, filter?: string, options: any = {}): FetchArgs {
+        searchRuns(body: V1SearchRunsRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling searchRuns.');
+            }
             const localVarPath = `/api/v1/runs`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
-            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
             
@@ -21888,29 +21943,12 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            if (projectId !== undefined) {
-                localVarQueryParameter['projectId'] = projectId
-            }
-            
-            if (offset !== undefined) {
-                localVarQueryParameter['offset'] = offset
-            }
-            
-            if (limit !== undefined) {
-                localVarQueryParameter['limit'] = limit
-            }
-            
-            if (sort !== undefined) {
-                localVarQueryParameter['sort'] = sort
-            }
-            
-            if (filter !== undefined) {
-                localVarQueryParameter['filter'] = filter
-            }
+            localVarHeaderParameter['Content-Type'] = 'application/json';
             
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
             objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
             
             return {
                 url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
@@ -23777,16 +23815,12 @@ export const InternalApiFp = function (configuration?: Configuration) {
         /**
          * 
          * @summary Get a list of runs.
-         * @param {number} [projectId] ID of the project to look at.
-         * @param {number} [offset] How many experiments to skip before including in the results.
-         * @param {number} [limit] How many results to show.
-         * @param {string} [sort] Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc).
-         * @param {string} [filter] Filter expression.
+         * @param {V1SearchRunsRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        searchRuns(projectId?: number, offset?: number, limit?: number, sort?: string, filter?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SearchRunsResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).searchRuns(projectId, offset, limit, sort, filter, options);
+        searchRuns(body: V1SearchRunsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SearchRunsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).searchRuns(body, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -24771,16 +24805,12 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         /**
          * 
          * @summary Get a list of runs.
-         * @param {number} [projectId] ID of the project to look at.
-         * @param {number} [offset] How many experiments to skip before including in the results.
-         * @param {number} [limit] How many results to show.
-         * @param {string} [sort] Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc).
-         * @param {string} [filter] Filter expression.
+         * @param {V1SearchRunsRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        searchRuns(projectId?: number, offset?: number, limit?: number, sort?: string, filter?: string, options?: any) {
-            return InternalApiFp(configuration).searchRuns(projectId, offset, limit, sort, filter, options)(fetch, basePath);
+        searchRuns(body: V1SearchRunsRequest, options?: any) {
+            return InternalApiFp(configuration).searchRuns(body, options)(fetch, basePath);
         },
         /**
          * 
@@ -25831,17 +25861,13 @@ export class InternalApi extends BaseAPI {
     /**
      * 
      * @summary Get a list of runs.
-     * @param {number} [projectId] ID of the project to look at.
-     * @param {number} [offset] How many experiments to skip before including in the results.
-     * @param {number} [limit] How many results to show.
-     * @param {string} [sort] Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc).
-     * @param {string} [filter] Filter expression.
+     * @param {V1SearchRunsRequest} body
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public searchRuns(projectId?: number, offset?: number, limit?: number, sort?: string, filter?: string, options?: any) {
-        return InternalApiFp(this.configuration).searchRuns(projectId, offset, limit, sort, filter, options)(this.fetch, this.basePath)
+    public searchRuns(body: V1SearchRunsRequest, options?: any) {
+        return InternalApiFp(this.configuration).searchRuns(body, options)(this.fetch, this.basePath)
     }
     
     /**

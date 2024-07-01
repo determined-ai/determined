@@ -17,10 +17,9 @@ import (
 func generateHyperparameters(counts []int) expconf.Hyperparameters {
 	params := make(expconf.Hyperparameters, len(counts))
 	for i, count := range counts {
-		c := count
 		params[strconv.Itoa(i)] = expconf.Hyperparameter{
 			RawDoubleHyperparameter: &expconf.DoubleHyperparameter{
-				RawMinval: -1.0, RawMaxval: 1.0, RawCount: &c,
+				RawMinval: -1.0, RawMaxval: 1.0, RawCount: &count,
 			},
 		}
 	}

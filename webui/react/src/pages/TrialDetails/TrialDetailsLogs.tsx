@@ -16,6 +16,7 @@ import { readStream } from 'services/utils';
 import { ExperimentBase, TrialDetails } from 'types';
 import { downloadTrialLogs } from 'utils/browser';
 import handleError, { ErrorType } from 'utils/error';
+import mergeAbortControllers from 'utils/mergeAbortControllers';
 
 import css from './TrialDetailsLogs.module.scss';
 
@@ -25,20 +26,6 @@ export interface Props {
 }
 
 type OrderBy = 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC';
-
-const mergeAbortControllers = (...controllers: AbortController[]) => {
-  const mergedController = new AbortController();
-
-  controllers.forEach((c) => {
-    const abort = () => {
-      mergedController.abort();
-      c.signal.removeEventListener('abort', abort);
-    };
-    c.signal.addEventListener('abort', abort);
-  });
-
-  return mergedController;
-};
 
 const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
   const { ui } = useUI();

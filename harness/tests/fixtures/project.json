@@ -24,6 +24,7 @@
     "workspaceName":"",
     "state":"WORKSPACE_STATE_UNSPECIFIED",
     "errorMessage":"",
-    "key":"cap1"
+    "key":"cap1",
+    "numRuns":0
   }
 }

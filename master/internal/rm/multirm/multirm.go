@@ -407,7 +407,6 @@ func fanOutRMCall[TReturn any](m *MultiRMRouter, f func(rm.ResourceManager) (TRe
 	res := make([]TReturn, len(m.rms))
 	var eg errgroup.Group
 	for i, rm := range maps.Values(m.rms) {
-		i, rm := i, rm
 		eg.Go(func() error {
 			r, err := f(rm)
 			if err != nil {

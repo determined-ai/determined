@@ -227,9 +227,8 @@ func GetTrialProfilerAvailableSeries(
 	}
 	var seriesLabels []*trialv1.TrialProfilerMetricLabels
 	for _, m := range out {
-		for aID, aM := range m.Metrics {
+		for agentID, aM := range m.Metrics {
 			// Top-level keys are always Agent IDs.
-			agentID := aID
 			if metrics, ok := aM.(map[string]interface{}); ok {
 				for k, v := range metrics {
 					// Certain metric groups have additional labels.

@@ -6,20 +6,23 @@
  */
 import '@testing-library/jest-dom/extend-expect';
 import 'micro-observables/batchingForReactDom';
-import 'utils/prototypes';
 import 'whatwg-fetch';
 
 import Schema from 'async-validator';
 
-import { noOp } from 'utils/service';
+// this code doesn't work in node environments
+if (globalThis.window) {
+  await import('utils/prototypes');
+  const { noOp } = await import('utils/service');
 
-/**
- * To clean up the async-validator console warning that get generated during testing.
- * https://github.com/yiminghe/async-validator#how-to-avoid-global-warning
- */
-Schema.warning = noOp;
+  /**
+   * To clean up the async-validator console warning that get generated during testing.
+   * https://github.com/yiminghe/async-validator#how-to-avoid-global-warning
+   */
+  Schema.warning = noOp;
+}
 
-Object.defineProperty(window, 'matchMedia', {
+Object.defineProperty(globalThis, 'matchMedia', {
   value: () => ({
     addEventListener: vi.fn(),
     addListener: vi.fn(), // deprecated

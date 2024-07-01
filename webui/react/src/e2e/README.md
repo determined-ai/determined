@@ -65,5 +65,3 @@ Update the docker image version along with Playwright version.
 ## Appendix
 
 - [Page model Readme](./models/README.md)
-
-## Acknowledgements

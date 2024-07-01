@@ -17,28 +17,30 @@ def wait_for_run_state(
 ) -> None:
     deadline = time.time() + timeout
     while time.time() < deadline:
-        resp = bindings.get_SearchRuns(
+        resp = bindings.post_SearchRuns(
             test_session,
-            limit=1,
-            filter="""
-            {"filterGroup": {
-                "children": [
-                {
-                    "columnName": "id",
-                    "kind": "field",
-                    "location": "LOCATION_TYPE_RUN",
-                    "operator": "=",
-                    "type": "COLUMN_TYPE_NUMBER",
-                    "value": %s
+            body=bindings.v1SearchRunsRequest(
+                limit=1,
+                filter="""
+                {"filterGroup": {
+                    "children": [
+                    {
+                        "columnName": "id",
+                        "kind": "field",
+                        "location": "LOCATION_TYPE_RUN",
+                        "operator": "=",
+                        "type": "COLUMN_TYPE_NUMBER",
+                        "value": %s
+                    }
+                    ],
+                    "conjunction": "and",
+                    "kind": "group"
+                },
+                "showArchived": false
                 }
-                ],
-                "conjunction": "and",
-                "kind": "group"
-            },
-            "showArchived": false
-            }
-            """
-            % run_id,
+                """
+                % run_id,
+            ),
         )
         if expected_state == resp.runs[0].state:
             return
@@ -53,27 +55,29 @@ def test_run_kill() -> None:
         sess, conf.fixtures_path("no_op/single.yaml"), conf.fixtures_path("no_op")
     )
 
-    searchResp = bindings.get_SearchRuns(
+    searchResp = bindings.post_SearchRuns(
         sess,
-        limit=1,
-        filter="""{
-  "filterGroup": {
-    "children": [
-      {
-        "columnName": "experimentId",
-        "kind": "field",
-        "location": "LOCATION_TYPE_RUN",
-        "operator": "=",
-        "type": "COLUMN_TYPE_NUMBER",
-        "value": %s
-      }
-    ],
-    "conjunction": "and",
-    "kind": "group"
-  },
-  "showArchived": false
-}"""
-        % exp_id,
+        body=bindings.v1SearchRunsRequest(
+            limit=1,
+            filter="""{
+    "filterGroup": {
+        "children": [
+        {
+            "columnName": "experimentId",
+            "kind": "field",
+            "location": "LOCATION_TYPE_RUN",
+            "operator": "=",
+            "type": "COLUMN_TYPE_NUMBER",
+            "value": %s
+        }
+        ],
+        "conjunction": "and",
+        "kind": "group"
+    },
+    "showArchived": false
+    }"""
+            % exp_id,
+        ),
     )
     assert searchResp.runs[0].state == bindings.trialv1State.ACTIVE
 
@@ -143,7 +147,7 @@ def test_run_kill_filter() -> None:
         sess, body=bindings.v1KillRunsRequest(runIds=[], filter=runFilter, projectId=1)
     )
 
-    searchResp = bindings.get_SearchRuns(sess, filter=runFilter)
+    searchResp = bindings.post_SearchRuns(sess, body=bindings.v1SearchRunsRequest(filter=runFilter))
 
     # validate response
     assert len(killResp.results) > 0, f"failed to kill runs in exp {exp_id}"
@@ -161,13 +165,15 @@ def test_run_pause_and_resume() -> None:
         sess, conf.fixtures_path("no_op/single.yaml"), conf.fixtures_path("no_op")
     )
 
-    searchResp = bindings.get_SearchRuns(
+    searchResp = bindings.post_SearchRuns(
         sess,
-        limit=1,
-        filter="""{"filterGroup":{"children":[{"columnName":"experimentId","kind":"field",
+        body=bindings.v1SearchRunsRequest(
+            limit=1,
+            filter="""{"filterGroup":{"children":[{"columnName":"experimentId","kind":"field",
         "location":"LOCATION_TYPE_RUN","operator":"=","type":"COLUMN_TYPE_NUMBER","value":"""
-        + str(exp_id)
-        + """}],"conjunction":"and","kind":"group"},"showArchived":false}""",
+            + str(exp_id)
+            + """}],"conjunction":"and","kind":"group"},"showArchived":false}""",
+        ),
     )
 
     assert searchResp.runs[0].state == bindings.trialv1State.ACTIVE
@@ -260,5 +266,8 @@ def test_run_pause_and_resume_filter_skip_empty() -> None:
         wait_for_run_state(sess, res.id, bindings.trialv1State.ACTIVE)
 
     # kill run for cleanup
-    _ = bindings.post_KillRuns(sess, body=bindings.v1KillRunsRequest(runIds=[res.id], projectId=1))
-    wait_for_run_state(sess, res.id, bindings.trialv1State.CANCELED)
+    if len(resumeResp.results) > 0:
+        _ = bindings.post_KillRuns(
+            sess, body=bindings.v1KillRunsRequest(runIds=[res.id], projectId=1)
+        )
+        wait_for_run_state(sess, res.id, bindings.trialv1State.CANCELED)

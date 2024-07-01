@@ -423,4 +423,6 @@ func TestGetAllocationAcceleratorData(t *testing.T) {
 	require.Len(t, resp.AcceleratorData, 1, "incorrect number of allocation accelerator data returned")
 	require.Equal(t, resp.AcceleratorData[0].AllocationId,
 		aID1.String(), "failed to get the correct allocation's accelerator data")
+	require.Equal(t, resp.AcceleratorData[0].ResourcePool,
+		a1.ResourcePool, "failed to get the correct allocation's resource pool data")
 }

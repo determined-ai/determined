@@ -80,10 +80,9 @@ func TestGetAllocationSummaries(t *testing.T) {
 
 			for _, name := range tt.allocNames {
 				n := name + "0"
-				tmpName := name
 
 				require.NotNil(t, allocs[*model.NewAllocationID(&n)])
-				require.Empty(t, allocs[*model.NewAllocationID(&tmpName)])
+				require.Empty(t, allocs[*model.NewAllocationID(&name)])
 			}
 		})
 	}
