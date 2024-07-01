@@ -19,9 +19,9 @@ For more details, visit the relevant section below.
  max_connections
 *****************
 
-``max_connections`` is the most important and universal parameter to adjust. We recommend confirming that ``max_connections`` is set to at
-least 96. This setting ensures that your database can handle the number of concurrent connections
-required for Determined.
+``max_connections`` is the most important and universal parameter to adjust. We recommend confirming
+that ``max_connections`` is set to at least 96. This setting ensures that your database can handle
+the number of concurrent connections required for Determined.
 
 ****************
  shared_buffers
