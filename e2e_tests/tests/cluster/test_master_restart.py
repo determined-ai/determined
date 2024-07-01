@@ -162,7 +162,10 @@ def _test_master_restart_reattach_recover_experiment(
             restartable_managed_cluster.restart_master()
 
         exp.wait_for_experiment_state(
-            sess, exp_id, bindings.experimentv1State.COMPLETED, max_wait_secs=downtime + exp_timeout
+            sess,
+            exp_id,
+            bindings.experimentv1State.COMPLETED,
+            max_wait_secs=downtime + exp_timeout + max_workload_ticks,
         )
         trials = exp.experiment_trials(sess, exp_id)
 
