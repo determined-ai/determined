@@ -151,4 +151,8 @@ func registerAgentConfig() {
 		"Max attempts agent has to reconnect")
 	registerInt(flags, name("agent-reconnect-backoff"), defaults.AgentReconnectBackoff,
 		"Time between agent reconnect attempts")
+
+	registerString(flags, name("container-runtime"), defaults.ContainerRuntime,
+		"The container runtime to use")
+
 }

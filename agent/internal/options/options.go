@@ -34,6 +34,7 @@ func DefaultOptions() *Options {
 		BindPort:               9090,
 		AgentReconnectAttempts: aproto.AgentReconnectAttempts,
 		AgentReconnectBackoff:  int(aproto.AgentReconnectBackoff / time.Second),
+		ContainerRuntime:       DockerContainerRuntime,
 	}
 }
 
@@ -79,6 +80,8 @@ type Options struct {
 	// TODO(ilia): switch this to better parsing with `model.Duration` similar to
 	// master config.
 	AgentReconnectBackoff int `json:"agent_reconnect_backoff"`
+
+	ContainerRuntime string `json:"container_runtime"`
 
 	ContainerAutoRemoveDisabled bool `json:"container_auto_remove_disabled"`
 
@@ -204,6 +207,9 @@ type FluentOptions struct {
 type HooksOptions struct {
 	OnConnectionLost []string `json:"on_connection_lost"`
 }
+
+// ContainerRuntime configures which container runtime to use.
+type ContainerRuntime string
 
 // Available container runtimes.
 const (

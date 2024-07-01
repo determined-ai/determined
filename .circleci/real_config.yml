@@ -2782,64 +2782,6 @@ jobs:
               sleep 5
             done
 
-      # For when a user wants to use an agent instead of launcher.
-      - when:
-          condition:
-            equal: ["-A", <<parameters.agent-use>>]
-          steps:
-            - wait-for-master:
-                scheme: <<parameters.master-scheme>>
-                host: <<parameters.master-host>>
-                port: <<parameters.master-port>>
-            - run:
-                name: Transfer and Allocate agent resources on VM
-                command: |
-                  ZONE=$(terraform -chdir=tools/slurm/terraform output --raw zone)
-                  INSTANCE_NAME=$(terraform -chdir=tools/slurm/terraform output --raw instance_name)
-                  PROJECT=$(terraform -chdir=tools/slurm/terraform output --raw project)
-                  gcloud compute scp agent/build/determined-agent "$INSTANCE_NAME":~ --zone $ZONE
-                  gcloud compute ssh --zone "$ZONE" "$INSTANCE_NAME" --project "$PROJECT" -- \
-                  srun determined-agent --master-host=<<parameters.master-host>> --master-port=<<parameters.master-port>> --resource-pool=default
-                background: true
-            - run:
-                name: Query the job to ensure Determined Agent is running
-                command: |
-                  # 60 tries gives 30 minutes of tries until the query times out
-                  tries=60
-                  # squeue command gives name and state information. There must be an escape character for the gcloud command.
-                  ZONE=$(terraform -chdir=tools/slurm/terraform output --raw zone)
-                  INSTANCE_NAME=$(terraform -chdir=tools/slurm/terraform output --raw instance_name)
-                  PROJECT=$(terraform -chdir=tools/slurm/terraform output --raw project)
-                  gcloud compute ssh --zone "$ZONE" "$INSTANCE_NAME" --project "$PROJECT" -- squeue -o "%j\ %T"
-                  # Queries until the jobname is shown in a running state. The agent job must be running to run e2e tests
-                  until [[ -n $(gcloud compute ssh --zone "$ZONE" "$INSTANCE_NAME" --project "$PROJECT" -- squeue -o "%j\ %T" | grep "determined-agent" | grep "RUNNING") ]] ; do
-                      if [[ $((--tries)) -eq 0 ]]; then
-                        echo "The job determined-agent did not start. Please check if there are other jobs in the queue preventing this job from starting"
-                        exit 1
-                      fi
-                      echo "Waiting 30s to query for the job name again..."
-                      sleep 30
-                      echo "Retrying job query..."
-                      gcloud compute ssh --zone "$ZONE" "$INSTANCE_NAME" --project "$PROJECT" -- squeue -o "%j\ %T"
-                  done
-            - run:
-                name: Query the slot count to ensure slots are allocated
-                command: |
-                  tries=20
-                  export DET_USER=determined
-                  export DET_PASS=${INITIAL_USER_PASSWORD}
-                  det slot list
-                  until [[ $(det slot list | wc -l) -gt 2 ]] ; do
-                      if [[ $((--tries)) -eq 0 ]]; then
-                        echo "ERROR: determined-agent failed to register at least 2 slots. Check the 'Transfer and Allocate agent resources on VM' for any failures."
-                        exit 1
-                      fi
-                      echo "Waiting 5s to query slots again..."
-                      sleep 5
-                      echo "Retrying slot query..."
-                      det slot list
-                  done
-
       - run-e2e-tests:
           mark: <<parameters.mark>>
           wait-for-master: true
@@ -3122,62 +3064,7 @@ jobs:
                 }
               }
             EOF
-
-      - when:
-          condition:
-            equal: ["-A", <<parameters.agent-use>>]
-          steps:
-            - run:
-                name: Allocate Resources on Cluster
-                # Sed command reduces the slots to 8 to match '-N2 --gpus-per-node=4' usage below.
-                # Affects test e2e_tests/tests/cluster/test_slurm.py:test_mnist_pytorch_distributed
-                command: |
-                  DET_MASTER_HOST=<<parameters.determined_master_host>>
-                  # determined_master_host is localhost, so use actual hostname to pass to the agent
-                  MASTER_HOST=$(hostname)
-                  MASTER_PORT=$(echo $DET_MASTER_HOST | cut -d: -f2)
-                  sed -i 's/slots_per_trial: 16/slots_per_trial: 8/' examples/tutorials/mnist_pytorch/distributed.yaml
-                  sudo cp agent/dist/determined-agent_linux_amd64_v1/determined-agent /scratch/launcher/.launcher.$HOSTNAME
-                  # Include 40 minute time limit, name the job (determined-agent-$HOSTNAME) so we can selectively kill it
-                  sudo srun --uid launcher --export=ALL -N2 --gpus-per-node=4 --time=40 -Jdetermined-agent-$HOSTNAME \
-                  --chdir=/scratch/launcher/.launcher.$HOSTNAME  /scratch/launcher/.launcher.$HOSTNAME/determined-agent \
-                  --master-host=$MASTER_HOST  --master-port=$MASTER_PORT --resource-pool=default  --slot-type=cuda \
-                  --image-root=/lustre/hdd/foundation_engineering/images
-                background: true
-            - run:
-                name: Query the job to ensure Determined Agent is running
-                command: |
-                  # 60 tries gives 30 minutes of tries until the query times out
-                  tries=60
-                  squeue -u launcher -o "%j %T"
-                  # Queries until the jobname is shown in a running state. The agent job must be running to run e2e tests
-                  until [[ -n $(squeue -u launcher -o "%j %T" | grep "determined-agent-$HOSTNAME" | grep "RUNNING") ]] ; do
-                      if [[ $((--tries)) -eq 0 ]]; then
-                        echo "The job determined-agent-$HOSTNAME did not start. Please check if there are jobs in the queue preventing this job from starting"
-                        exit 1
-                      fi
-                      echo "Waiting 30s to query for the job name again..."
-                      sleep 30
-                      echo "Retrying job query..."
-                      squeue -u launcher -o "%j %T"
-                  done
-            - run:
-                name: Query the slot count to ensure slots are allocated
-                command: |
-                  tries=20
-                  export DET_PASS=${INITIAL_USER_PASSWORD}
-                  det slot list
-                  until [[ $(det slot list | wc -l) -gt 2 ]] ; do
-                      if [[ $((--tries)) -eq 0 ]]; then
-                        echo "ERROR: determined-agent failed to register at least 2 slots. Check the 'Transfer and Allocate agent resources on VM' for any failures."
-                        exit 1
-                      fi
-                      echo "Waiting 5s to query slots again..."
-                      sleep 5
-                      echo "Retrying slot query..."
-                      det slot list
-                  done
-
+            
       - run-e2e-tests:
           mark: <<parameters.mark>>
           master-host: localhost
@@ -3187,15 +3074,6 @@ jobs:
 
       - store_test_results:
           path: /tmp/test-results/
-
-      - when:
-          condition:
-            equal: ["-A", <<parameters.agent-use>>]
-          steps:
-            - run:
-                name: Deallocate Agent Resources on cluster
-                command: |
-                  scancel -u $USER --jobname=determined-agent-$HOSTNAME
 
   test-e2e:
     parameters:

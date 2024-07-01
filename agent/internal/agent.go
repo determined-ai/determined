@@ -118,18 +118,25 @@ func (a *Agent) run(ctx context.Context) error {
 		return fmt.Errorf("failed to detect devices: %v", devices)
 	}
 
-	a.log.Tracef("setting up %s runtime", options.DockerContainerRuntime)
-	dcl, dErr := dclient.NewClientWithOpts(dclient.WithAPIVersionNegotiation(), dclient.FromEnv)
-	if dErr != nil {
-		return fmt.Errorf("failed to build docker client: %w", dErr)
-	}
-	defer func() {
-		a.log.Trace("cleaning up docker client")
-		if cErr := dcl.Close(); cErr != nil {
-			a.log.WithError(cErr).Error("failed to close docker client")
+	a.log.Tracef("setting up %s runtime", a.opts.ContainerRuntime)
+	var cruntime container.ContainerRuntime
+
+	if a.opts.ContainerRuntime == options.DockerContainerRuntime {
+		dcl, dErr := dclient.NewClientWithOpts(dclient.WithAPIVersionNegotiation(), dclient.FromEnv)
+		if dErr != nil {
+			return fmt.Errorf("failed to build docker client: %w", dErr)
 		}
-	}()
-	cruntime := docker.NewClient(dcl)
+		defer func() {
+			a.log.Trace("cleaning up docker client")
+			if cErr := dcl.Close(); cErr != nil {
+				a.log.WithError(cErr).Error("failed to close docker client")
+			}
+		}()
+		cruntime = docker.NewClient(dcl)
+	} else {
+		a.log.Error("%w creation is not supported, please update agent container runtime config to use Docker instead.", a.opts.ContainerRuntime)
+		return fmt.Errorf("%v creation not available", a.opts.ContainerRuntime)
+	}
 
 	a.log.Trace("setting up container manager")
 	outbox := make(chan *aproto.MasterMessage, eventChanSize) // covers many from socket lifetimes

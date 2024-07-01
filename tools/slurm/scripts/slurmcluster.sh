@@ -12,7 +12,6 @@ VALID_WORKLOAD_MANAGERS="slurm pbs"
 export OPT_CONTAINER_RUN_TYPE="singularity"
 export OPT_WORKLOAD_MANAGER="slurm"
 export OPT_LAUNCHER_PORT=8081
-DETERMINED_AGENT=
 MACHINE_TYPE=
 GPUS=
 
@@ -33,10 +32,6 @@ while [[ $# -gt 0 ]]; do
                 exit 1
             fi
             shift 2
-            ;;
-        -A)
-            DETERMINED_AGENT=1
-            shift
             ;;
         -m)
             # This is processed already by generate-tfvars.sh
@@ -73,10 +68,7 @@ while [[ $# -gt 0 ]]; do
             echo "as always."
             echo ""
             echo "FLAGS:"
-            echo '  -A '
-            echo "           Description: Invokes a slurmcluster that uses agents instead of the launcher."
-            echo "           Example: $0 -A"
-            echo '  -c {docker}'
+            echo '  -c {enroot|podman|singularity}'
             echo "           Description: Invokes a slurmcluster using the specified container run type."
             echo "           Options are 'enroot', 'podman', or 'singularity'. Default is 'singularity'."
             echo "           Example: $0 -c podman"
@@ -100,7 +92,7 @@ while [[ $# -gt 0 ]]; do
             echo "You can also combine the flags.  When invoked via 'make slurmcluster' flags are passed"
             echo 'via the FLAGS="options" argument.'
             echo ""
-            echo '   Example: FLAGS="-A -c enroot -w pbs -g nvidia-tesla-t4:2"'
+            echo '   Example: FLAGS="-c enroot -w pbs -g nvidia-tesla-t4:2"'
             echo ""
             exit 0
             ;;
@@ -213,16 +205,6 @@ if [[ $OPT_CONTAINER_RUN_TYPE == "enroot" ]]; then
         gcloud_ssh "ENROOT_RUNTIME_PATH=/srv/enroot ENROOT_TEMP_PATH=/srv/enroot manage-enroot-cache -s /srv/enroot ${LOCAL_CUDA_IMAGE_STRING}"
     fi
 fi
-
-TEMPYAML=$TEMPDIR/slurmcluster.yaml
-envsubst <$PARENT_PATH/slurmcluster.yaml >$TEMPYAML
-if [[ -n $DETERMINED_AGENT ]]; then
-    # When deploying with the determined agent, remove the resource_manager section
-    # that would otherwise be used.   This then defaults to the agent rm and
-    # the master waits for agents to connect and provide resources.
-    sed -i -e '/resource_manager/,/resource_manager_end/d' $TEMPYAML
-fi
-echo "Generated devcluster file: $TEMPYAML"
 
 # We connect to the Slurm VM using an external IP address, but although it's a
 # single node cluster, the Determined master running on the test machine tries
