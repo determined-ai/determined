@@ -892,6 +892,7 @@ class v1AcceleratorData(Printable):
     allocationId: "typing.Optional[str]" = None
     containerId: "typing.Optional[str]" = None
     nodeName: "typing.Optional[str]" = None
+    resourcePool: "typing.Optional[str]" = None
     taskId: "typing.Optional[str]" = None
 
     def __init__(
@@ -902,6 +903,7 @@ class v1AcceleratorData(Printable):
         allocationId: "typing.Union[str, None, Unset]" = _unset,
         containerId: "typing.Union[str, None, Unset]" = _unset,
         nodeName: "typing.Union[str, None, Unset]" = _unset,
+        resourcePool: "typing.Union[str, None, Unset]" = _unset,
         taskId: "typing.Union[str, None, Unset]" = _unset,
     ):
         if not isinstance(acceleratorType, Unset):
@@ -914,6 +916,8 @@ class v1AcceleratorData(Printable):
             self.containerId = containerId
         if not isinstance(nodeName, Unset):
             self.nodeName = nodeName
+        if not isinstance(resourcePool, Unset):
+            self.resourcePool = resourcePool
         if not isinstance(taskId, Unset):
             self.taskId = taskId
 
@@ -931,6 +935,8 @@ class v1AcceleratorData(Printable):
             kwargs["containerId"] = obj["containerId"]
         if "nodeName" in obj:
             kwargs["nodeName"] = obj["nodeName"]
+        if "resourcePool" in obj:
+            kwargs["resourcePool"] = obj["resourcePool"]
         if "taskId" in obj:
             kwargs["taskId"] = obj["taskId"]
         return cls(**kwargs)
@@ -948,6 +954,8 @@ class v1AcceleratorData(Printable):
             out["containerId"] = self.containerId
         if not omit_unset or "nodeName" in vars(self):
             out["nodeName"] = self.nodeName
+        if not omit_unset or "resourcePool" in vars(self):
+            out["resourcePool"] = self.resourcePool
         if not omit_unset or "taskId" in vars(self):
             out["taskId"] = self.taskId
         return out

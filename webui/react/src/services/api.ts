@@ -495,6 +495,12 @@ export const getActiveTasks = generateDetApi<
   Type.TaskCounts
 >(Config.getActiveTasks);
 
+export const getTaskAcceleratorData = generateDetApi<
+  Service.GetTaskParams,
+  Api.V1GetTaskAcceleratorDataResponse,
+  Api.V1AcceleratorData[]
+>(Config.getTaskAcceleratorData);
+
 /* Webhooks */
 
 export const createWebhook = generateDetApi<Api.V1Webhook, Api.V1PostWebhookResponse, Type.Webhook>(

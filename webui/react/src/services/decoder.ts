@@ -681,6 +681,7 @@ export const decodeV1TrialToTrialItem = (data: Sdk.Trialv1Trial): types.TrialIte
     startTime: data.startTime as unknown as string,
     state: decodeExperimentState(data.state),
     summaryMetrics: data.summaryMetrics && decodeSummaryMetrics(data.summaryMetrics),
+    taskId: data.taskId,
     totalBatchesProcessed: data.totalBatchesProcessed,
     totalCheckpointSize: parseInt(data?.totalCheckpointSize || '0'),
   };

@@ -1214,6 +1214,17 @@ export const getActiveTasks: DetApi<
   request: (_, options) => detApi.Tasks.getActiveTasksCount(options),
 };
 
+export const getTaskAcceleratorData: DetApi<
+  Service.GetTaskParams,
+  Api.V1GetTaskAcceleratorDataResponse,
+  Api.V1AcceleratorData[]
+> = {
+  name: 'getTaskAcceleratorData',
+  postProcess: (response) => response.acceleratorData,
+  request: (params: Service.GetTaskParams, options) =>
+    detApi.Internal.getTaskAcceleratorData(params.taskId, options),
+};
+
 /* Webhooks */
 
 export const createWebhook: DetApi<Api.V1Webhook, Api.V1PostWebhookResponse, Type.Webhook> = {

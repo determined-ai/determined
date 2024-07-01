@@ -595,6 +595,8 @@ message AcceleratorData {
   string accelerator_type = 5;
   // An array of UUIDs of the accelerators associated with the allocation.
   repeated string accelerator_uuids = 6;
+  // The name of the resource pool.
+  string resource_pool = 7;
 }
 
 // Arguments to an all gather.
