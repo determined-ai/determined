@@ -450,6 +450,21 @@ func (m *MultiRMRouter) RemoveEmptyNamespace(namespaceName string,
 	return nil
 }
 
+// SetResourceQuota creates a resource quota in the given Kubernetes namespace of the specified
+// cluster.
+func (m *MultiRMRouter) SetResourceQuota(quota int, namespace, clusterName string,
+) error {
+	if len(clusterName) == 0 {
+		return fmt.Errorf("must specify cluster name when using multiRM")
+	}
+	rm, err := m.getRM(clusterName)
+	if err != nil {
+		return fmt.Errorf("error getting resource manager for cluster %s: %w", clusterName, err)
+	}
+
+	return rm.SetResourceQuota(quota, namespace, clusterName)
+}
+
 func (m *MultiRMRouter) getRMName(rpName rm.ResourcePoolName) (string, error) {
 	// If not given RP name, route to default RM.
 	if rpName == "" {

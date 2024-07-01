@@ -600,6 +600,12 @@ func (a *ResourceManager) RemoveEmptyNamespace(string, string) error {
 	return rmerrors.ErrNotSupported
 }
 
+// SetResourceQuota is not supported.
+func (a *ResourceManager) SetResourceQuota(int, string, string) error {
+	return fmt.Errorf("cannot set a resource quota resource manager type AgentRM: %w",
+		rmerrors.ErrNotSupported)
+}
+
 func (a *ResourceManager) createResourcePool(
 	db db.DB, config config.ResourcePoolConfig, cert *tls.Certificate,
 ) (*resourcePool, error) {

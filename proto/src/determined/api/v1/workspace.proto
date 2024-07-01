@@ -161,6 +161,10 @@ message PostWorkspaceRequest {
   // bound to the workspace for a given cluster).
   map<string, determined.workspace.v1.WorkspaceNamespaceMeta>
       cluster_namespace_meta = 16;
+  // The map of clusters to the resource quota placed on the auto-generated
+  // namespace within that cluster (inherently capping the slots available to a
+  // workspace).
+  map<string, int32> cluster_quota_pairs = 3;
 }
 
 // Response to PostWorkspaceRequest.
@@ -221,7 +225,7 @@ message DeleteWorkspaceResponse {
   bool completed = 1;
 }
 
-// Request for modifying a workspace-namespace binding.
+// Request for setting workspace-namespace bindings.
 message SetWorkspaceNamespaceBindingsRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "workspace_id" ] }
@@ -234,7 +238,7 @@ message SetWorkspaceNamespaceBindingsRequest {
       cluster_namespace_meta = 2;
 }
 
-// Response for modify a namespace binding to a workspace.
+// Response for setting workspace-namespace bindings.
 message SetWorkspaceNamespaceBindingsResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "namespace_bindings" ] }
@@ -244,6 +248,23 @@ message SetWorkspaceNamespaceBindingsResponse {
   map<string, determined.workspace.v1.WorkspaceNamespaceBinding>
       namespace_bindings = 1;
 }
+
+// Request to set a resource quota on a workspace (for a specific cluster).
+message SetResourceQuotasRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "id" ] }
+  };
+
+  // The id of the workspace.
+  int32 id = 1;
+  // A map of cluster to resource-quota pairs used to set GPU request limits on
+  // the workspace (for a specific cluster).
+  map<string, int32> cluster_quota_pairs = 2;
+}
+
+// Response for setting the resource quota for a workspace (for a specific
+// cluster).
+message SetResourceQuotasResponse {}
 
 // Request for listing namespaces bound to a workspace.
 message ListWorkspaceNamespaceBindingsRequest {

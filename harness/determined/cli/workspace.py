@@ -20,7 +20,6 @@ WORKSPACE_HEADERS = [
     "Agent Group",
     "Default Compute Pool",
     "Default Aux Pool",
-    "Namespace Bindings",
 ]
 
 workspace_arg: cli.Arg = cli.Arg("-w", "--workspace-name", type=str, help="workspace name")
@@ -215,6 +214,31 @@ def delete_workspace_namespace_binding(args: argparse.Namespace) -> None:
     return None
 
 
+def set_resource_quota(args: argparse.Namespace) -> None:
+    sess = cli.setup_session(args)
+    ws_name = str(args.workspace_name)
+    w = api.workspace_by_name(sess, ws_name)
+    # When args.cluster_name is unspecified, it assumes the "null" string value when placed into
+    # the clusterQuotaPairs dictionary. To avoid that, we substitute the argument's
+    # value with the empty string if it's null.
+    cluster_name = args.cluster_name or ""
+    cluster_quota_pairs = {cluster_name: args.resource_quota}
+    content = bindings.v1SetResourceQuotasRequest(
+        id=w.id,
+        clusterQuotaPairs=cluster_quota_pairs,
+    )
+
+    bindings.post_SetResourceQuotas(sess, body=content, id=w.id)
+
+    cluster_details = ""
+    if args.cluster_name:
+        cluster_details = f"for cluster {args.cluster_name}"
+    print(
+        f"Resource quota {str(args.resource_quota)} is set on workspace {ws_name} {cluster_details}"
+    )
+    return None
+
+
 def _parse_agent_user_group_args(args: argparse.Namespace) -> Optional[bindings.v1AgentUserGroup]:
     if args.agent_uid or args.agent_gid or args.agent_user or args.agent_group:
         return bindings.v1AgentUserGroup(
@@ -271,17 +295,18 @@ def create_workspace(args: argparse.Namespace) -> None:
             autoCreateNamespaceAllClusters=args.auto_create_namespace_all_clusters,
         )
         content.clusterNamespaceMeta = {cluster_name: namespace_meta}
+        if args.resource_quota:
+            content.clusterQuotaPairs = {cluster_name: args.resource_quota}
     resp = bindings.post_PostWorkspace(sess, body=content)
     w = resp.workspace
-
     if args.json:
         render.print_json(w.to_json())
     else:
         render_workspaces([w])
-
-    for cluster_name in resp.namespaceBindings:
-        namespace_binding = resp.namespaceBindings[cluster_name]
-        print(f"Workspace {w.name} is bound to namespace {namespace_binding.namespace}")
+    if resp.namespaceBindings:
+        for cluster_name in resp.namespaceBindings:
+            namespace_binding = resp.namespaceBindings[cluster_name]
+            print(f"Workspace {w.name} is bound to namespace {namespace_binding.namespace}")
 
 
 def describe_workspace(args: argparse.Namespace) -> None:
@@ -508,6 +533,13 @@ args_description = [
                             respective workspace-namespace binding.",
                         ),
                     ),
+                    cli.Arg(
+                        "--resource-quota",
+                        type=int,
+                        help="the GPU request limit placed on \
+                        the namespace bound to the workspace, inherently limiting the GPU resource \
+                        requests (within a given Kubernetes cluster) directed to a workspace.",
+                    ),
                 ],
             ),
             cli.Cmd(
@@ -556,12 +588,17 @@ args_description = [
                         set_workspace_namespace_binding,
                         "set workspace-namespace binding",
                         [
-                            cli.Arg("workspace_name", type=str, help="name of the workspace"),
+                            cli.Arg(
+                                "workspace_name",
+                                type=str,
+                                help="name of the \
+                            workspace",
+                            ),
                             cli.Arg(
                                 "--cluster-name",
                                 type=str,
-                                help="cluster within which we create \
-                                the workspace-namespace binding",
+                                help="cluster within which we create the workspace-namespace \
+                                binding",
                             ),
                             cli.Group(
                                 cli.Arg(
@@ -572,15 +609,14 @@ args_description = [
                                 cli.Arg(
                                     "--auto-create-namespace",
                                     action="store_true",
-                                    help="whether a user wants a namespace auto-created and \
-                                        used for a workspace-namespace binding.",
+                                    help="whether a user wants a namespace auto-created and used \
+                                    for a workspace-namespace binding.",
                                 ),
                                 cli.Arg(
                                     "--auto-create-namespace-all-clusters",
                                     action="store_true",
-                                    help="whether a user wants a namespace auto-created and \
-                                        used for each cluster's respective workspace-namespace \
-                                        binding.",
+                                    help="whether a user wants a namespace auto-created and used \
+                                    for each cluster's respective workspace-namespace binding.",
                                 ),
                             ),
                         ],
@@ -604,6 +640,35 @@ args_description = [
                         "list workspace-namespace bindings",
                         [
                             cli.Arg("workspace_name", type=str, help="name of the workspace"),
+                        ],
+                    ),
+                ],
+            ),
+            cli.Cmd(
+                "resource-quota",
+                None,
+                "manage resource quotas",
+                [
+                    cli.Cmd(
+                        "set",
+                        set_resource_quota,
+                        "set resource quota",
+                        [
+                            cli.Arg("workspace_name", type=str, help="name of the workspace"),
+                            cli.Arg(
+                                "resource_quota",
+                                type=int,
+                                help="the GPU request limit placed on a \
+                                    workspace-bound namespace, inherently limiting the \
+                                    GPU resources (belonging to a given Kubernetes \
+                                    cluster) consumable by a workspace.",
+                            ),
+                            cli.Arg(
+                                "--cluster-name",
+                                type=str,
+                                help="cluster within which \
+                                we create the resource quota",
+                            ),
                         ],
                     ),
                 ],
