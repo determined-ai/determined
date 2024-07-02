@@ -30,9 +30,7 @@ const setup = () => {
   render(
     <UIProvider theme={DefaultTheme.Light}>
       <ThemeProvider>
-        <ProjectCard
-          project={projectMock}
-        />
+        <ProjectCard project={projectMock} />
       </ThemeProvider>
     </UIProvider>,
   );
