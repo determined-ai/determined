@@ -8,7 +8,8 @@ import { useToast } from 'hew/Toast';
 import useConfirm from 'hew/useConfirm';
 import { copyToClipboard } from 'hew/utils/functions';
 import { Failed, Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
-import React, { MouseEvent, useCallback, useMemo, useRef, useState } from 'react';
+import { isString } from 'lodash';
+import React, { useCallback, useMemo, useRef, useState } from 'react';
 
 import css from 'components/ActionDropdown/ActionDropdown.module.scss';
 import ExperimentEditModalComponent from 'components/ExperimentEditModal';
@@ -56,7 +57,7 @@ interface Props {
   workspaceId?: number;
 }
 
-const Action = {
+export const Action = {
   Copy: 'Copy Value',
   NewTab: 'Open Link in New Tab',
   NewWindow: 'Open Link in New Window',
@@ -92,7 +93,6 @@ const ExperimentActionDropdown: React.FC<Props> = ({
   onVisibleChange,
   children,
 }: Props) => {
-  const id = experiment.id;
   const ExperimentEditModal = useModal(ExperimentEditModalComponent);
   const ExperimentMoveModal = useModal(ExperimentMoveModalComponent);
   const ExperimentRetainLogsModal = useModal(ExperimentRetainLogsModalComponent);
@@ -147,18 +147,18 @@ const ExperimentActionDropdown: React.FC<Props> = ({
 
   const handleEditComplete = useCallback(
     (data: Partial<BulkExperimentItem>) => {
-      onComplete?.(ExperimentAction.Edit, id, data);
+      onComplete?.(ExperimentAction.Edit, experiment.id, data);
     },
-    [id, onComplete],
+    [experiment.id, onComplete],
   );
 
   const handleMoveComplete = useCallback(() => {
-    onComplete?.(ExperimentAction.Move, id);
-  }, [id, onComplete]);
+    onComplete?.(ExperimentAction.Move, experiment.id);
+  }, [experiment.id, onComplete]);
 
   const handleRetainLogsComplete = useCallback(() => {
-    onComplete?.(ExperimentAction.RetainLogs, id);
-  }, [id, onComplete]);
+    onComplete?.(ExperimentAction.RetainLogs, experiment.id);
+  }, [experiment.id, onComplete]);
 
   const menuItems = getActionsForExperiment(experiment, dropdownActions, usePermissions())
     .filter((action) => action !== Action.SwitchPin)
@@ -166,49 +166,55 @@ const ExperimentActionDropdown: React.FC<Props> = ({
       return { danger: action === Action.Delete, key: action, label: action };
     });
 
+  const cellCopyData = useMemo(() => {
+    if (cell && 'displayData' in cell && isString(cell.displayData)) return cell.displayData;
+    if (cell?.copyData) return cell.copyData;
+    return undefined;
+  }, [cell]);
+
   const dropdownMenu = useMemo(() => {
-    const items: MenuItem[] = [...menuItems];
-    /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-    if (cell && (cell.copyData || (cell as any).displayData)) {
-      items.unshift({ key: Action.Copy, label: Action.Copy });
-    }
+    const items: MenuItem[] = [];
     if (link) {
-      items.unshift(
+      items.push(
         { key: Action.NewTab, label: Action.NewTab },
         { key: Action.NewWindow, label: Action.NewWindow },
         { type: 'divider' },
       );
     }
+    if (cellCopyData) {
+      items.push({ key: Action.Copy, label: Action.Copy });
+    }
+    items.push(...menuItems);
     return items;
-  }, [link, menuItems, cell]);
+  }, [link, menuItems, cellCopyData]);
 
   const handleDropdown = useCallback(
     async (action: string, e: DropdownEvent) => {
       try {
         switch (action) {
           case Action.NewTab:
-            handlePath(e as MouseEvent, { path: link, popout: 'tab' });
+            handlePath(e, { path: link, popout: 'tab' });
             await onLink?.();
             break;
           case Action.NewWindow:
-            handlePath(e as MouseEvent, { path: link, popout: 'window' });
+            handlePath(e, { path: link, popout: 'window' });
             await onLink?.();
             break;
           case Action.Activate:
-            await activateExperiment({ experimentId: id });
-            await onComplete?.(action, id);
+            await activateExperiment({ experimentId: experiment.id });
+            await onComplete?.(action, experiment.id);
             break;
           case Action.Archive:
-            await archiveExperiment({ experimentId: id });
-            await onComplete?.(action, id);
+            await archiveExperiment({ experimentId: experiment.id });
+            await onComplete?.(action, experiment.id);
             break;
           case Action.Cancel:
-            await cancelExperiment({ experimentId: id });
-            await onComplete?.(action, id);
+            await cancelExperiment({ experimentId: experiment.id });
+            await onComplete?.(action, experiment.id);
             break;
           case Action.OpenTensorBoard: {
             const commandResponse = await openOrCreateTensorBoard({
-              experimentIds: [id],
+              experimentIds: [experiment.id],
               workspaceId: experiment.workspaceId,
             });
             openCommandResponse(commandResponse);
@@ -237,33 +243,33 @@ const ExperimentActionDropdown: React.FC<Props> = ({
           }
           case Action.Kill:
             confirm({
-              content: `Are you sure you want to kill experiment ${id}?`,
+              content: `Are you sure you want to kill experiment ${experiment.id}?`,
               danger: true,
               okText: 'Kill',
               onConfirm: async () => {
-                await killExperiment({ experimentId: id });
-                await onComplete?.(action, id);
+                await killExperiment({ experimentId: experiment.id });
+                await onComplete?.(action, experiment.id);
               },
               onError: handleError,
               title: 'Confirm Experiment Kill',
             });
             break;
           case Action.Pause:
-            await pauseExperiment({ experimentId: id });
-            await onComplete?.(action, id);
+            await pauseExperiment({ experimentId: experiment.id });
+            await onComplete?.(action, experiment.id);
             break;
           case Action.Unarchive:
-            await unarchiveExperiment({ experimentId: id });
-            await onComplete?.(action, id);
+            await unarchiveExperiment({ experimentId: experiment.id });
+            await onComplete?.(action, experiment.id);
             break;
           case Action.Delete:
             confirm({
-              content: `Are you sure you want to delete experiment ${id}?`,
+              content: `Are you sure you want to delete experiment ${experiment.id}?`,
               danger: true,
               okText: 'Delete',
               onConfirm: async () => {
-                await deleteExperiment({ experimentId: id });
-                await onComplete?.(action, id);
+                await deleteExperiment({ experimentId: experiment.id });
+                await onComplete?.(action, experiment.id);
               },
               onError: handleError,
               title: 'Confirm Experiment Deletion',
@@ -283,8 +289,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
             fetchedExperimentItem();
             break;
           case Action.Copy:
-            /* eslint-disable-next-line @typescript-eslint/no-explicit-any */
-            await copyToClipboard((cell as any).displayData || cell?.copyData);
+            await copyToClipboard(cellCopyData ?? '');
             openToast({
               severity: 'Confirm',
               title: 'Value has been copied to clipboard.',
@@ -294,7 +299,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
       } catch (e) {
         handleError(e, {
           level: ErrorLevel.Error,
-          publicMessage: `Unable to ${action} experiment ${id}.`,
+          publicMessage: `Unable to ${action} experiment ${experiment.id}.`,
           publicSubject: `${capitalize(action)} failed.`,
           silent: false,
           type: ErrorType.Server,
@@ -306,7 +311,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
     [
       link,
       onLink,
-      id,
+      experiment.id,
       onComplete,
       confirm,
       ExperimentEditModal,
@@ -314,14 +319,14 @@ const ExperimentActionDropdown: React.FC<Props> = ({
       ExperimentRetainLogsModal,
       interstitialModalOpen,
       fetchedExperimentItem,
-      cell,
+      cellCopyData,
       openToast,
       experiment.workspaceId,
       onVisibleChange,
     ],
   );
 
-  if (menuItems.length === 0) {
+  if (dropdownMenu.length === 0) {
     return (
       (children as JSX.Element) ?? (
         <div className={css.base} title="No actions available">
@@ -342,13 +347,13 @@ const ExperimentActionDropdown: React.FC<Props> = ({
         onEditComplete={handleEditComplete}
       />
       <ExperimentMoveModal.Component
-        experimentIds={[id]}
+        experimentIds={[experiment.id]}
         sourceProjectId={experiment.projectId}
         sourceWorkspaceId={experiment.workspaceId}
         onSubmit={handleMoveComplete}
       />
       <ExperimentRetainLogsModal.Component
-        experimentIds={[id]}
+        experimentIds={[experiment.id]}
         projectId={experiment.projectId}
         onSubmit={handleRetainLogsComplete}
       />

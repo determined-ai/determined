@@ -4,7 +4,7 @@ Our goals are to keep test cases realiable, stable, maintainable, and readable.
 
 ## Framework
 
-Deteremined AI uses [Playwright 🎭](https://playwright.dev/).
+Determined AI uses [Playwright 🎭](https://playwright.dev/).
 
 ## Setup
 
