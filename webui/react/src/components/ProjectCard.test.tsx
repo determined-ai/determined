@@ -52,7 +52,9 @@ describe('ProjectCard', () => {
 
   it('should display experiments count', () => {
     setup();
-    expect(screen.getByText(projectMock.numExperiments?.toString() ?? 'Count undefined')).toBeInTheDocument();
+    expect(
+      screen.getByText(projectMock.numExperiments?.toString() ?? 'Count undefined'),
+    ).toBeInTheDocument();
   });
 
   it('should display archived label', () => {
