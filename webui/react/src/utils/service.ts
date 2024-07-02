@@ -12,7 +12,7 @@ export const getResponseStatus = (e: unknown): number | undefined =>
   isApiResponse(e) ? e.status : undefined;
 
 /**
- * Determines whether an exception is the result of a nework error
+ * Determines whether an exception is the result of a network error
  * due to the server not being able to authenticate the request/user.
  * If this is the case, this can lead to the client being logged out and
  * redirected to the login page.
@@ -38,6 +38,21 @@ export const isAuthFailure = (u: unknown, supportExternalAuth = false): boolean 
   ];
   if (supportExternalAuth) authFailureStatuses.push(500);
   return authFailureStatuses.includes(u.status);
+};
+
+/**
+ * Determines if whether an exception is the result of
+ * an expired remote user token, which can lead to the client
+ * being logged out and redirected to the SSO login page.
+ * @param u
+ * @returns
+ */
+export const isRemoteUserTokenExpired = (u: unknown): boolean => {
+  return (
+    u instanceof DetError &&
+    u.type !== ErrorType.Auth &&
+    (u.publicMessage?.includes('remote user token expired') ?? false)
+  );
 };
 
 export const isNotFound = (u: Response | Error | DetError): boolean => {

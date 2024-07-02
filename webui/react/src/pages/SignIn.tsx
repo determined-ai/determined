@@ -110,7 +110,13 @@ const SignIn: React.FC = () => {
    * This will prevent the form from showing for a split second when
    * accessing a page from the browser when the user is already verified.
    */
-  if (queries.has('jwt') || info.externalLoginUri || !isAuthChecked) return null;
+  if (
+    queries.has('jwt') ||
+    info.externalLoginUri ||
+    !isAuthChecked ||
+    queries.has('remote_expired')
+  )
+    return null;
 
   /*
    * An external auth error occurs when there are external auth urls,

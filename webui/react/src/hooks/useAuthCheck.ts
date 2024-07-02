@@ -2,6 +2,7 @@ import { useObservable } from 'micro-observables';
 import { useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
 
+import { samlUrl } from 'ee/SamlAuth';
 import { globalStorage } from 'globalStorage';
 import { paths, routeAll } from 'routes/utils';
 import { getCurrentUser } from 'services/api';
@@ -10,7 +11,8 @@ import authStore, { AUTH_COOKIE_KEY } from 'stores/auth';
 import determinedStore from 'stores/determinedInfo';
 import { getCookie } from 'utils/browser';
 import handleError from 'utils/error';
-import { isAuthFailure } from 'utils/service';
+import { routeToExternalUrl } from 'utils/routes';
+import { isAuthFailure, isRemoteUserTokenExpired } from 'utils/service';
 
 const useAuthCheck = (): (() => Promise<boolean>) => {
   const info = useObservable(determinedStore.info);
@@ -55,6 +57,13 @@ const useAuthCheck = (): (() => Promise<boolean>) => {
         updateBearerToken(authToken);
         authStore.setAuth({ isAuthenticated: true, token: authToken });
       } catch (e) {
+        if (isRemoteUserTokenExpired(e)) {
+          info.ssoProviders?.forEach((ssoProvider) => {
+            ssoProvider.type === 'OIDC'
+              ? routeToExternalUrl(ssoProvider.ssoUrl)
+              : routeToExternalUrl(samlUrl(ssoProvider.ssoUrl));
+          });
+        }
         // If an invalid auth token is detected we need to properly handle the auth error
         handleError(e);
       }
@@ -75,7 +84,13 @@ const useAuthCheck = (): (() => Promise<boolean>) => {
       authStore.setAuthChecked();
     }
     return authStore.isAuthenticated.get();
-  }, [info.externalLoginUri, searchParams, redirectToExternalSignin, updateBearerToken]);
+  }, [
+    info.externalLoginUri,
+    info.ssoProviders,
+    searchParams,
+    redirectToExternalSignin,
+    updateBearerToken,
+  ]);
 
   return checkAuth;
 };
