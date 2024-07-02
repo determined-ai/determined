@@ -1,6 +1,7 @@
 import crypto from 'crypto';
 import fs from 'fs';
 import path from 'path';
+import * as child from 'child_process';
 
 import { svgToReact } from '@hpe.com/vite-plugin-svg-to-jsx';
 import react from '@vitejs/plugin-react-swc';
@@ -89,7 +90,7 @@ export default defineConfig(({ mode }) => ({
     'process.env.IS_DEV': JSON.stringify(mode === 'development'),
     'process.env.PUBLIC_URL': JSON.stringify((mode !== 'test' && publicUrl) || ''),
     'process.env.SERVER_ADDRESS': JSON.stringify(process.env.SERVER_ADDRESS),
-    'process.env.VERSION': '"0.35.0-dev0"',
+    'process.env.VERSION': JSON.stringify(process.env.VERSION || child.execSync('git describe --tags --always 2>/dev/null || echo "unknown"').toString().trimEnd()),
   },
   optimizeDeps: {
     include: ['notebook'],
