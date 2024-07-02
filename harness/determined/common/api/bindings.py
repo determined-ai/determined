@@ -17599,6 +17599,25 @@ def post_BindRPToWorkspace(
         return
     raise APIHttpError("post_BindRPToWorkspace", _resp)
 
+def post_BulkAutoCreateWorkspaceNamespaceBindings(
+    session: "api.BaseSession",
+) -> None:
+    """Binds all unbound workspaces to new auto-created namespaces."""
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/workspaces/create-namespace-bindings-for-all",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("post_BulkAutoCreateWorkspaceNamespaceBindings", _resp)
+
 def post_CancelExperiment(
     session: "api.BaseSession",
     *,

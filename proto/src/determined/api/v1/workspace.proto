@@ -324,6 +324,12 @@ message DeleteWorkspaceNamespaceBindingsRequest {
 // Response to DeleteWorkspaceNamespaceBindingsRequest.
 message DeleteWorkspaceNamespaceBindingsResponse {}
 
+// Request for binding all unbound workspaces to new auto-created namespaces.
+message BulkAutoCreateWorkspaceNamespaceBindingsRequest {}
+
+// Response to BulkAutoCreateWorkspaceNamespaceBindingsRequest.
+message BulkAutoCreateWorkspaceNamespaceBindingsResponse {}
+
 // Request for archiving a workspace.
 message ArchiveWorkspaceRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {

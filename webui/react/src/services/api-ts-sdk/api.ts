@@ -1691,6 +1691,13 @@ export interface V1BindRPToWorkspaceRequest {
 export interface V1BindRPToWorkspaceResponse {
 }
 /**
+ * Response to BulkAutoCreateWorkspaceNamespaceBindingsRequest.
+ * @export
+ * @interface V1BulkAutoCreateWorkspaceNamespaceBindingsResponse
+ */
+export interface V1BulkAutoCreateWorkspaceNamespaceBindingsResponse {
+}
+/**
  * Filters to apply actions to multiple experiments.
  * @export
  * @interface V1BulkExperimentFilters
@@ -35090,6 +35097,36 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
         },
         /**
          * 
+         * @summary Binds all unbound workspaces to new auto-created namespaces.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        bulkAutoCreateWorkspaceNamespaceBindings(options: any = {}): FetchArgs {
+            const localVarPath = `/api/v1/workspaces/create-namespace-bindings-for-all`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Delete a workspace.
          * @param {number} id The id of the workspace.
          * @param {*} [options] Override http request option.
@@ -35783,6 +35820,24 @@ export const WorkspacesApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Binds all unbound workspaces to new auto-created namespaces.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        bulkAutoCreateWorkspaceNamespaceBindings(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1BulkAutoCreateWorkspaceNamespaceBindingsResponse> {
+            const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).bulkAutoCreateWorkspaceNamespaceBindings(options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Delete a workspace.
          * @param {number} id The id of the workspace.
          * @param {*} [options] Override http request option.
@@ -36110,6 +36165,15 @@ export const WorkspacesApiFactory = function (configuration?: Configuration, fet
         },
         /**
          * 
+         * @summary Binds all unbound workspaces to new auto-created namespaces.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        bulkAutoCreateWorkspaceNamespaceBindings(options?: any) {
+            return WorkspacesApiFp(configuration).bulkAutoCreateWorkspaceNamespaceBindings(options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Delete a workspace.
          * @param {number} id The id of the workspace.
          * @param {*} [options] Override http request option.
@@ -36301,6 +36365,17 @@ export class WorkspacesApi extends BaseAPI {
      */
     public archiveWorkspace(id: number, options?: any) {
         return WorkspacesApiFp(this.configuration).archiveWorkspace(id, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Binds all unbound workspaces to new auto-created namespaces.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof WorkspacesApi
+     */
+    public bulkAutoCreateWorkspaceNamespaceBindings(options?: any) {
+        return WorkspacesApiFp(this.configuration).bulkAutoCreateWorkspaceNamespaceBindings(options)(this.fetch, this.basePath)
     }
     
     /**

@@ -2143,6 +2143,18 @@ service Determined {
     };
   }
 
+  // Binds all unbound workspaces to new auto-created namespaces.
+  rpc BulkAutoCreateWorkspaceNamespaceBindings(
+      BulkAutoCreateWorkspaceNamespaceBindingsRequest)
+      returns (BulkAutoCreateWorkspaceNamespaceBindingsResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/workspaces/create-namespace-bindings-for-all",
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Workspaces"
+    };
+  }
+
   // Deletes workpace namespace bindings.
   rpc DeleteWorkspaceNamespaceBindings(DeleteWorkspaceNamespaceBindingsRequest)
       returns (DeleteWorkspaceNamespaceBindingsResponse) {
