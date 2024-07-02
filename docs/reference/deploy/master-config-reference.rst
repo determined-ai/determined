@@ -37,6 +37,106 @@ The TCP port on which the master accepts incoming connections. If TLS has been e
 Specifies defaults for all task containers. A task represents a single schedulable unit, such as a
 trial, command, or TensorBoard.
 
+.. code:: python
+
+   # TCD Task Container Defaults
+   task_container_defaults:
+     shm_size_bytes: 4294967296
+       # The size (in bytes) of /dev/shm for Determined task containers. Defaults to 4294967296.
+
+     network_mode: bridge
+       # The Docker network to use for the Determined task containers. Defaults to bridge.
+
+     dtrain_network_interface: eth11
+       # The network interface to use during distributed training. If not set, Determined automatically determines the network interface to use.
+
+     cpu_pod_spec: |
+       # Defines the default pod spec which will be applied to all CPU-only tasks when running on Kubernetes.
+       apiVersion: v1
+       kind: Pod
+       spec:
+         containers:
+           - name: determined-task
+             image: determinedai/pytorch-ngc:0.34.0
+             resources:
+               requests:
+                 cpu: "1"
+
+     gpu_pod_spec: |
+       # Defines the default pod spec which will be applied to all GPU tasks when running on Kubernetes.
+       apiVersion: v1
+       kind: Pod
+       spec:
+         containers:
+           - name: determined-task
+             image: determinedai/pytorch-ngc:0.34.0
+             resources:
+               limits:
+                 nvidia.com/gpu: "1"
+
+     image:
+       # Defines the default Docker image to use when executing the workload depending on compute resource.
+       cpu: determinedai/pytorch-ngc:0.34.0
+       cuda: determinedai/pytorch-ngc:0.34.0
+       roc: determinedai/pytorch-ngc:0.34.0
+
+     environment_variables:
+       # A list of environment variables that will be set in every task container.
+       - CUDA_VISIBLE_DEVICES=0
+       - PYTHONUNBUFFERED=1
+
+     startup_hook: |
+       # An optional inline script that will be executed as part of task set up.
+       #!/bin/bash
+       echo "Starting task setup"
+
+     log_policies: |
+       # A list of log policies that take effect when a trial reports a log that matches a pattern.
+       - pattern: "ERROR"
+         action: "notify"
+
+     force_pull_image: false
+       # Defines the default policy for forcibly pulling images from the Docker registry. Defaults to false.
+
+     registry_auth:
+       # Defines the default Docker registry credentials to use when pulling a custom base Docker image.
+       username: myusername
+       password: mypassword
+       serveraddress: myregistry.com
+
+     add_capabilities:
+       # The default list of Linux capabilities to grant to task containers.
+       - SYS_ADMIN
+
+     drop_capabilities:
+       # The default list of Linux capabilities to drop from task containers.
+       - NET_RAW
+
+     devices:
+       # The default list of devices to pass to the Docker daemon.
+       - path_on_host: /dev/nvidia0
+         path_in_container: /dev/nvidia0
+         permissions: rwm
+
+     bind_mounts:
+       # The default bind mounts to pass to the Docker container.
+       - container_path: /run/determined/workdir/shared_fs
+         host_path: /mnt/efs
+
+     kubernetes:
+       # Maximum slots per pod.
+       max_slots_per_pod: 1
+
+     slurm: |
+       # Additional Slurm options when launching trials with sbatch.
+       sbatch_options:
+         - "--gpus-per-node=4"
+
+     pbs: |
+       # Additional PBS options when launching trials with qsub.
+       qsub_options:
+         - "-l select=1:ncpus=4:ngpus=1:mem=16gb"
+
 ``shm_size_bytes``
 ==================
 
