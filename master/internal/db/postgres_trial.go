@@ -61,11 +61,12 @@ func AddTrial(ctx context.Context, trial *model.Trial, taskID model.TaskID) erro
 			ProjectID  int    `db:"project_id" bun:"project_id"`
 			ProjectKey string `db:"project_key" bun:"project_key"`
 			LocalID    int    `db:"local_id" bun:"local_id"`
-		}{}
-		redirect.RunID = run.ID
-		redirect.ProjectID = run.ProjectID
-		redirect.ProjectKey = key
-		redirect.LocalID = localID
+		}{
+			RunID: run.ID,
+			ProjectID: run.ProjectID,
+			ProjectKey: key,
+			LocalID: localID,
+		}
 		if _, err := tx.NewInsert().Model(&redirect).Exec(ctx); err != nil {
 			return fmt.Errorf("storing run_id in redirect table: %w", err)
 		}
