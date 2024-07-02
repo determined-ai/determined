@@ -167,12 +167,8 @@ const ExperimentActionDropdown: React.FC<Props> = ({
     });
 
   const cellCopyData = useMemo(() => {
-    if (cell) {
-      if ('displayData' in cell && isString(cell.displayData)) {
-        return cell.displayData;
-      }
-      if (cell.copyData) return cell.copyData;
-    }
+    if (cell && 'displayData' in cell && isString(cell.displayData)) return cell.displayData;
+    if (cell?.copyData) return cell.copyData;
     return undefined;
   }, [cell]);
 
