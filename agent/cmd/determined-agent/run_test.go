@@ -251,7 +251,6 @@ container_runtime: docker
 			containerRuntimeFlag := &pflag.Flag{Name: "container_runtime_flag"}
 			bindPortFlag := &pflag.Flag{Name: "bind_port_flag"}
 			err = v.BindPFlag("container_runtime", containerRuntimeFlag)
-
 			require.NoError(t, err)
 			err = v.BindPFlag("bind_port", bindPortFlag)
 			require.NoError(t, err)

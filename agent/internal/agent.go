@@ -119,13 +119,13 @@ func (a *Agent) run(ctx context.Context) error {
 	}
 
 	a.log.Tracef("setting up %s runtime", a.opts.ContainerRuntime)
-	var cruntime container.ContainerRuntime
 	if a.opts.ContainerRuntime != options.DockerContainerRuntime {
 		a.log.Error("%w creation is not supported, please update agent container runtime config to use Docker instead.",
 			a.opts.ContainerRuntime)
 		return fmt.Errorf("%s creation not available", a.opts.ContainerRuntime)
 	}
 
+	var cruntime container.ContainerRuntime
 	dcl, dErr := dclient.NewClientWithOpts(dclient.WithAPIVersionNegotiation(), dclient.FromEnv)
 	if dErr != nil {
 		return fmt.Errorf("failed to build docker client: %w", dErr)
