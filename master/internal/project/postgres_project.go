@@ -211,9 +211,10 @@ RetryLoop:
 					p.Key = *requestedKey
 				}
 				var isUsed bool
-				err = tx.NewSelect().Table("local_id_redirect").
-					ColumnExpr("COUNT(*) > 0 as is_used").
-					Where("project_key = ?", p.Key).
+				err = tx.NewRaw(`
+				SELECT EXISTS (
+					SELECT 1 FROM local_id_redirect WHERE project_key = ?
+				) AS is_used`, p.Key).
 					Scan(ctx, &isUsed)
 				if err != nil {
 					return fmt.Errorf("error creating new project")
