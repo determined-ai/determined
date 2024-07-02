@@ -72,7 +72,9 @@ describe('CompareHyperparameters component', () => {
     });
     it('renders Parallel Coordinates error when metrics are incompatable', () => {
       setup(type, false, false);
-      expect(screen.getByText('Records are not comparable.')).toBeInTheDocument();
+      expect(
+        screen.getByText('Records are not comparable using current parameters.'),
+      ).toBeInTheDocument();
     });
     it('renders Scatter Plots', () => {
       setup(type);

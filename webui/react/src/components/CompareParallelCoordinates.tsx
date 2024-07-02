@@ -187,6 +187,8 @@ const CompareParallelCoordinates: React.FC<Props> = ({
     trials?.forEach((trial) => extractHyperparams(trial, metricsMap, hpMap));
     selectedRuns?.forEach((run) => extractHyperparams(run, metricsMap, hpMap));
 
+    console.log({ hpMap, metricsMap });
+
     const selectedHpSet = new Set(selectedHParams);
 
     // Hermes currently breaks if you try plotting records without values for every hyperparameter, so this filters them out.
@@ -199,6 +201,8 @@ const CompareParallelCoordinates: React.FC<Props> = ({
       .filter((id) => id in metricsMap)
       .sort(numericSorter);
 
+    console.log({ comparableIds });
+
     const metricKey = metricToStr(selectedMetric);
     const metricValues = comparableIds.map((id) => metricsMap[id]);
 
@@ -209,6 +213,8 @@ const CompareParallelCoordinates: React.FC<Props> = ({
       },
       {} as Record<string, Primitive[]>,
     );
+
+    console.log({ hpData });
 
     hpData[metricKey] = metricValues;
 
@@ -244,7 +250,7 @@ const CompareParallelCoordinates: React.FC<Props> = ({
     return (
       <Alert
         description="Please modify the selected metric or hyperparameters."
-        message="Records are not comparable."
+        message="Records are not comparable using current parameters."
       />
     );
   }
