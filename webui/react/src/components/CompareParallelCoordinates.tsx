@@ -208,7 +208,10 @@ const CompareParallelCoordinates: React.FC<Props> = ({
 
     const hpData = Object.keys(hpMap).reduce(
       (acc, hpKey) => {
-        acc[hpKey] = comparableIds.map((recordId) => hpMap[hpKey][recordId]);
+        const hpArray = comparableIds.map((recordId) => hpMap[hpKey][recordId]);
+        if (selectedHpSet.has(hpKey) && hpArray.every((val) => val !== undefined)) {
+          acc[hpKey] = hpArray;
+        }
         return acc;
       },
       {} as Record<string, Primitive[]>,
