@@ -147,10 +147,7 @@ ${checkpoint?.totalBatches}? This action may complete or fail without further no
       { label: 'State', value: <Badge state={state} type={BadgeType.State} /> },
     ];
 
-    if (
-      config.integrations?.pachyderm !== undefined &&
-      glossaryContent.find(({ label }) => label === 'Data Input') === undefined
-    ) {
+    if (config.integrations?.pachyderm !== undefined) {
       const pachydermData = config.integrations.pachyderm;
       const url = createPachydermLineageLink(pachydermData);
 

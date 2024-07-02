@@ -187,7 +187,9 @@ const ModelVersionDetails: React.FC = () => {
       .sort((a, b) => checkpointResources[a] - checkpointResources[b])
       .map((key) => ({ name: key, size: humanReadableBytes(checkpointResources[key]) }));
     const hasExperiment = !!modelVersion.checkpoint.experimentId;
-    return [
+    const pachydermData = modelVersion.checkpoint.experimentConfig?.integrations?.pachyderm;
+    const url = pachydermData ? createPachydermLineageLink(pachydermData) : undefined;
+    const infoElements = [
       {
         label: 'Source',
         value: hasExperiment ? (
@@ -228,20 +230,15 @@ const ModelVersionDetails: React.FC = () => {
         value: resources.map((resource) => renderResource(resource.name, resource.size)),
       },
     ];
+
+    if (pachydermData !== undefined)
+      infoElements.splice(1, 0, {
+        label: 'Data Input',
+        value: <Link path={url}>{pachydermData?.dataset.repo}</Link>,
+      });
+
+    return infoElements;
   }, [modelVersion?.checkpoint]);
-
-  if (
-    modelVersion?.checkpoint.experimentConfig?.integrations?.pachyderm !== undefined &&
-    checkpointInfo.find(({ label }) => label === 'Data Input') === undefined
-  ) {
-    const pachydermData = modelVersion.checkpoint.experimentConfig.integrations.pachyderm;
-    const url = createPachydermLineageLink(pachydermData);
-
-    checkpointInfo.splice(1, 0, {
-      label: 'Data Input',
-      value: <Link path={url}>{pachydermData.dataset.repo}</Link>,
-    });
-  }
 
   const validationMetrics = useMemo(() => {
     if (!modelVersion?.checkpoint) return [];
