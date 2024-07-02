@@ -1,8 +1,6 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import UIProvider, { DefaultTheme } from 'hew/Theme';
-import { ConfirmationProvider } from 'hew/useConfirm';
-import { HelmetProvider } from 'react-helmet-async';
 import { BrowserRouter } from 'react-router-dom';
 
 import { ThemeProvider } from 'components/ThemeProvider';
@@ -86,15 +84,11 @@ const setup = (numExperiments?: number) => {
 
   render(
     <UIProvider theme={DefaultTheme.Light}>
-      <ConfirmationProvider>
-        <ThemeProvider>
-          <HelmetProvider>
-            <BrowserRouter>
-              <Searches project={projectMock} />
-            </BrowserRouter>
-          </HelmetProvider>
-        </ThemeProvider>
-      </ConfirmationProvider>
+      <ThemeProvider>
+        <BrowserRouter>
+          <Searches project={projectMock} />
+        </BrowserRouter>
+      </ThemeProvider>
     </UIProvider>,
   );
 };
@@ -122,27 +116,23 @@ describe('Searches', () => {
   it('should display column picker menu without tab selection', async () => {
     setup();
 
-    await waitFor(async () => {
-      await user.click(screen.getByTestId('columns-menu-button'));
-      expect(screen.queryByRole('tab')).not.toBeInTheDocument();
-      expect(screen.getByTestId('column-picker-tab')).toBeInTheDocument();
-    });
+    await user.click(screen.getByTestId('columns-menu-button'));
+    expect(screen.queryByRole('tab')).not.toBeInTheDocument();
+    expect(screen.getByTestId('column-picker-tab')).toBeInTheDocument();
   });
 
-  it('should have hidden filter to exclude single-trial experiments', async () => {
+  it('should have hidden filter to exclude single-trial experiments', () => {
     setup();
 
-    await waitFor(() => {
-      expect(vi.mocked(searchExperiments)).toHaveBeenCalledWith(
-        expect.objectContaining({
-          filter: expectedFilterString,
-          limit: defaultProjectSettings.pageLimit,
-          offset: 0,
-          projectId: projectMock.id,
-          sort: defaultProjectSettings.sortString,
-        }),
-        { signal: expect.any(AbortSignal) },
-      );
-    });
+    expect(vi.mocked(searchExperiments)).toHaveBeenCalledWith(
+      expect.objectContaining({
+        filter: expectedFilterString,
+        limit: defaultProjectSettings.pageLimit,
+        offset: 0,
+        projectId: projectMock.id,
+        sort: defaultProjectSettings.sortString,
+      }),
+      { signal: expect.any(AbortSignal) },
+    );
   });
 });
