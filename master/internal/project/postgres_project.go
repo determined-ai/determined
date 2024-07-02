@@ -366,10 +366,10 @@ func UpdateProject(
 		}
 
 		var isUsed bool
-		err = tx.NewSelect().Table("local_id_redirect").
-			ColumnExpr("COUNT(*) > 0 as is_used").
-			Where("project_key = ?", currentProject.Key).
-			Where("project_id != ?", currentProject.ID).
+		err = tx.NewRaw(`
+		SELECT EXISTS (
+			SELECT 1 FROM local_id_redirect WHERE project_key = ? AND project_id != ?
+		) AS is_used`, currentProject.Key, currentProject.ID).
 			Scan(ctx, &isUsed)
 		if err != nil {
 			return fmt.Errorf("error updating project %s", currentProject.Name)
