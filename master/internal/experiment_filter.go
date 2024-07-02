@@ -158,6 +158,7 @@ func runColumnNameToSQL(columnName string) (string, error) {
 		"externalExperimentId":  "e.external_experiment_id",
 		"externalRunId":         "r.external_run_id",
 		"experimentId":          "e.id",
+		"localId":               "CONCAT(p.key, '-' , r.local_id::text)",
 		"isExpMultitrial":       "e.config->'searcher'->>'name' != 'single'",
 		"parentArchived":        "(w.archived OR p.archived)",
 	}

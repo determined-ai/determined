@@ -117,4 +117,6 @@ message FlatRun {
   // This is only looking at the archived status at the run level and not taking
   // into account whether the experiment is archived or not.
   bool archived = 21;
+  // Project level local id of run.
+  string local_id = 22;
 }

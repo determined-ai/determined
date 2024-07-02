@@ -3556,6 +3556,12 @@ export interface V1FlatRun {
      * @memberof V1FlatRun
      */
     archived: boolean;
+    /**
+     * Project level local id of run.
+     * @type {string}
+     * @memberof V1FlatRun
+     */
+    localId?: string;
 }
 /**
  * 

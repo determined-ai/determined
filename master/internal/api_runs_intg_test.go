@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"slices"
 	"strconv"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -423,11 +424,34 @@ func TestMoveRunsIds(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, resp.Runs, 1)
 	require.Equal(t, moveIds[0], resp.Runs[0].Id)
+	i := strings.Index(resp.Runs[0].LocalId, "-")
+	localID := resp.Runs[0].LocalId[i+1:]
+	require.Equal(t, "1", localID)
 
 	// Experiment in new project
 	exp, err := api.getExperiment(ctx, curUser, run1.ExperimentID)
 	require.NoError(t, err)
 	require.Equal(t, exp.ProjectId, destprojectID)
+}
+
+func TestMoveRunsSameIds(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	sourceprojectID := int32(1)
+
+	run1, _ := createTestTrial(t, api, curUser)
+
+	moveIds := []int32{int32(run1.ID)}
+
+	moveReq := &apiv1.MoveRunsRequest{
+		RunIds:               moveIds,
+		SourceProjectId:      sourceprojectID,
+		DestinationProjectId: sourceprojectID,
+		SkipMultitrial:       false,
+	}
+
+	moveResp, err := api.MoveRuns(ctx, moveReq)
+	require.NoError(t, err)
+	require.Empty(t, moveResp.Results)
 }
 
 func setUpMultiTrialExperiments(ctx context.Context, t *testing.T, api *apiServer, curUser model.User,
@@ -555,6 +579,16 @@ func TestMoveRunsMultiTrialNoSkip(t *testing.T) {
 	api, curUser, ctx := setupAPITest(t, nil)
 	sourceprojectID, destprojectID, runID1, runID2, expID := setUpMultiTrialExperiments(ctx, t, api, curUser)
 
+	// add a run in the destination project to test local run id
+	exp := createTestExpWithProjectID(t, api, curUser, int(destprojectID))
+	task0 := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
+	require.NoError(t, db.AddTask(ctx, task0))
+	require.NoError(t, db.AddTrial(ctx, &model.Trial{
+		State:        model.CompletedState,
+		ExperimentID: exp.ID,
+		StartTime:    time.Now(),
+	}, task0.TaskID))
+
 	moveIds := []int32{runID1}
 
 	moveReq := &apiv1.MoveRunsRequest{
@@ -566,8 +600,9 @@ func TestMoveRunsMultiTrialNoSkip(t *testing.T) {
 
 	moveResp, err := api.MoveRuns(ctx, moveReq)
 	require.NoError(t, err)
-	require.Len(t, moveResp.Results, 1)
+	require.Len(t, moveResp.Results, 2)
 	require.Equal(t, "", moveResp.Results[0].Error)
+	require.Equal(t, "", moveResp.Results[1].Error)
 
 	// runs no longer in old project
 	req := &apiv1.SearchRunsRequest{
@@ -586,12 +621,23 @@ func TestMoveRunsMultiTrialNoSkip(t *testing.T) {
 
 	resp, err = api.SearchRuns(ctx, req)
 	require.NoError(t, err)
-	require.Len(t, resp.Runs, 2)
+	require.Len(t, resp.Runs, 3)
 	// Check if other run moved as well
 	require.Equal(t, runID2, resp.Runs[1].Id)
 	// Check if runs in same experiment
 	require.Equal(t, expID, resp.Runs[0].Experiment.Id)
 	require.Equal(t, expID, resp.Runs[1].Experiment.Id)
+
+	i := strings.Index(resp.Runs[0].LocalId, "-")
+	localID1 := resp.Runs[0].LocalId[i+1:]
+	i = strings.Index(resp.Runs[1].LocalId, "-")
+	localID2 := resp.Runs[1].LocalId[i+1:]
+	i = strings.Index(resp.Runs[2].LocalId, "-")
+	localID3 := resp.Runs[2].LocalId[i+1:]
+	require.Equal(t, "2", localID1)
+	require.Equal(t, "3", localID2)
+	// original run should keeps the same local id
+	require.Equal(t, "1", localID3)
 }
 
 func TestMoveRunsFilter(t *testing.T) {
@@ -680,6 +726,10 @@ func TestMoveRunsFilter(t *testing.T) {
 	require.Len(t, projHparam, 2)
 	require.True(t, slices.Contains(projHparam, "test1.test2"))
 	require.True(t, slices.Contains(projHparam, "global_batch_size"))
+
+	i := strings.Index(resp.Runs[0].LocalId, "-")
+	localID := resp.Runs[0].LocalId[i+1:]
+	require.Equal(t, "1", localID)
 }
 
 func TestDeleteRunsNonTerminal(t *testing.T) {
