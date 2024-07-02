@@ -1204,7 +1204,7 @@ export interface HpTrialData {
   data: Record<string, Primitive[]>;
   metricRange?: Range<number>;
   metricValues: number[];
-  trialIds: number[];
+  recordIds: number[];
 }
 
 /**

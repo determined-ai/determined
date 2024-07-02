@@ -6,6 +6,7 @@ import { Title } from 'hew/Typography';
 import React, { useCallback, useEffect, useMemo } from 'react';
 
 import Section from 'components/Section';
+import { MapOfIdsToColors } from 'hooks/useGlasbey';
 import { RunMetricData } from 'hooks/useMetrics';
 import { useSettings } from 'hooks/useSettings';
 import { ExperimentVisualizationType } from 'pages/ExperimentDetails/ExperimentVisualization';
@@ -24,6 +25,7 @@ import CompareScatterPlots from './CompareScatterPlots';
 import css from './HpParallelCoordinates.module.scss';
 
 interface BaseProps {
+  colorMap: MapOfIdsToColors;
   projectId: number;
   metricData: RunMetricData;
 }
@@ -39,6 +41,7 @@ export const NO_DATA_MESSAGE = 'No data available.';
 const CompareHyperparameters: React.FC<Props> = ({
   selectedExperiments,
   selectedRuns,
+  colorMap,
   trials,
   projectId,
   metricData,
@@ -156,6 +159,7 @@ const CompareHyperparameters: React.FC<Props> = ({
               <Title>Parallel Coordinates</Title>
               {selectedRuns ? (
                 <CompareParallelCoordinates
+                  colorMap={colorMap}
                   fullHParams={fullHParams}
                   metricData={metricData}
                   projectId={projectId}
@@ -164,6 +168,7 @@ const CompareHyperparameters: React.FC<Props> = ({
                 />
               ) : (
                 <CompareParallelCoordinates
+                  colorMap={colorMap}
                   fullHParams={fullHParams}
                   metricData={metricData}
                   projectId={projectId}

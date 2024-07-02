@@ -1,5 +1,6 @@
 import React from 'react';
 
+import { useGlasbey } from 'hooks/useGlasbey';
 import { RunMetricData } from 'hooks/useMetrics';
 import { Scale } from 'types';
 import { generateTestRunData } from 'utils/tests/generateTestData';
@@ -404,8 +405,10 @@ interface Props {
 export const CompareTrialHyperparametersWithMocks: React.FC<Props> = ({
   empty,
 }: Props): JSX.Element => {
+  const colorMap = useGlasbey(SELECTED_EXPERIMENTS.map((exp) => exp.experiment.id));
   return (
     <CompareHyperparameters
+      colorMap={colorMap}
       metricData={METRIC_DATA}
       projectId={1}
       // @ts-expect-error Mock data does not need type checking
@@ -419,8 +422,10 @@ export const CompareTrialHyperparametersWithMocks: React.FC<Props> = ({
 export const CompareRunHyperparametersWithMocks: React.FC<Props> = ({
   empty,
 }: Props): JSX.Element => {
+  const colorMap = useGlasbey(SELECTED_RUNS.map((run) => run.id));
   return (
     <CompareHyperparameters
+      colorMap={colorMap}
       metricData={METRIC_DATA}
       projectId={1}
       selectedRuns={empty ? [] : SELECTED_RUNS}
