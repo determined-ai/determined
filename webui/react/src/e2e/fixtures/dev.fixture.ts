@@ -3,19 +3,18 @@ import { Page } from '@playwright/test';
 import { expect } from 'e2e/fixtures/global-fixtures';
 import { BaseComponent, CanBeParent } from 'e2e/models/common/base/BaseComponent';
 import { BasePage } from 'e2e/models/common/base/BasePage';
+import { apiUrl } from 'e2e/utils/envVars';
 
 export class DevFixture {
-  readonly #page: Page;
-  constructor(readonly page: Page) {
-    this.#page = page;
-  }
-  // tells the frontend where to find the backend if built for a different url. Incidentally reloads and logs out of Determined.
-  async setServerAddress(): Promise<void> {
-    await this.#page.goto('/');
-    await this.#page.evaluate(`dev.setServerAddress("${process.env.PW_SERVER_ADDRESS}")`);
-    await this.#page.reload();
-    await this.#page.waitForLoadState('networkidle'); // dev.setServerAddress fires a logout request in the background, so we will wait until no network traffic is happening.
-  }
+  setServerAddress = async (page: Page): Promise<void> => {
+    // Tells the frontend where to find the backend if built for a different url.
+    // Incidentally reloads and logs out of Determined.
+    await page.goto('/');
+    await page.evaluate(`dev.setServerAddress("${apiUrl()}")`);
+    await page.reload();
+    // dev.setServerAddress fires a logout request in the background, so we will wait until no network traffic is happening.
+    await page.waitForLoadState('networkidle');
+  };
 
   /**
    * Attempts to locate each element in the locator tree. If there is an error at this step,
