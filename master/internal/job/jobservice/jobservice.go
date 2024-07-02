@@ -206,19 +206,9 @@ func (s *Service) applyUpdate(update *jobv1.QueueControl) error {
 		}
 		return j.SetResourcePool(action.ResourcePool)
 	case *jobv1.QueueControl_AheadOf:
-		return s.rm.MoveJob(sproto.MoveJob{
-			ID:           jobID,
-			Anchor:       model.JobID(action.AheadOf),
-			Ahead:        true,
-			ResourcePool: j.ResourcePool(),
-		})
+		return fmt.Errorf("action not supported - update priority to move job")
 	case *jobv1.QueueControl_BehindOf:
-		return s.rm.MoveJob(sproto.MoveJob{
-			ID:           jobID,
-			Anchor:       model.JobID(action.BehindOf),
-			Ahead:        false,
-			ResourcePool: j.ResourcePool(),
-		})
+		return fmt.Errorf("action not suppoprted - update priority to move job")
 	default:
 		return fmt.Errorf("unexpected action: %v", action)
 	}

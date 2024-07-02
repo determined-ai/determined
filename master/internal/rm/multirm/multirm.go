@@ -248,16 +248,6 @@ func (m *MultiRMRouter) GetJobQueueStatsRequest(req *apiv1.GetJobQueueStatsReque
 	return all, nil
 }
 
-// MoveJob routes a MoveJob call to a specified resource manager/pool.
-func (m *MultiRMRouter) MoveJob(req sproto.MoveJob) error {
-	resolvedRMName, err := m.getRMName(rm.ResourcePoolName(req.ResourcePool))
-	if err != nil {
-		return err
-	}
-
-	return m.rms[resolvedRMName].MoveJob(req)
-}
-
 // RecoverJobPosition routes a RecoverJobPosition call to a specified resource manager/pool.
 func (m *MultiRMRouter) RecoverJobPosition(req sproto.RecoverJobPosition) {
 	resolvedRMName, err := m.getRMName(rm.ResourcePoolName(req.ResourcePool))

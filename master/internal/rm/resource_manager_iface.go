@@ -40,7 +40,6 @@ type ResourceManager interface {
 	// Job queue
 	GetJobQ(ResourcePoolName) (map[model.JobID]*sproto.RMJobInfo, error)
 	GetJobQueueStatsRequest(*apiv1.GetJobQueueStatsRequest) (*apiv1.GetJobQueueStatsResponse, error)
-	MoveJob(sproto.MoveJob) error
 	RecoverJobPosition(sproto.RecoverJobPosition)
 	GetExternalJobs(ResourcePoolName) ([]*jobv1.Job, error)
 
