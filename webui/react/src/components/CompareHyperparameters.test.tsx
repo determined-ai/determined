@@ -36,7 +36,7 @@ vi.mock('hooks/useSettings', async (importOriginal) => {
   };
 });
 
-const setup = (type: 'trials' | 'runs', empty?: boolean) => {
+const setup = (type: 'trials' | 'runs', empty: boolean = false) => {
   render(
     <BrowserRouter>
       <UIProvider theme={DefaultTheme.Light}>
@@ -58,6 +58,7 @@ describe('CompareHyperparameters component', () => {
   describe.each(['trials', 'runs'] as const)('%s', (type) => {
     it('renders Parallel Coordinates', () => {
       setup(type);
+      if (type === 'runs') screen.debug();
       expect(screen.getByTestId(COMPARE_PARALLEL_COORDINATES)).toBeInTheDocument();
     });
     it('renders Scatter Plots', () => {
