@@ -165,7 +165,7 @@ def _test_master_restart_reattach_recover_experiment(
             sess,
             exp_id,
             bindings.experimentv1State.COMPLETED,
-            max_wait_secs=downtime + exp_timeout + max_workload_ticks,
+            max_wait_secs=downtime + exp_timeout,
         )
         trials = exp.experiment_trials(sess, exp_id)
 
