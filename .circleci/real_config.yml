@@ -37,6 +37,9 @@ parameters:
   default-pt-gpu-hpc-image:
     type: string
     default: determinedai/pytorch-ngc-dev:e960eae
+  default-pt-tf-cpu-hpc-image:
+    type: string
+    default: determinedai/pytorch-tensorflow-cpu-dev:e960eae
   # Some python, go, and react dependencies are cached by circleci via `save_cache`/`restore_cache`.
   # If the dependencies stay the same, but the circleci code that would produce them is changed,
   # it may be necessary to invalidate the cache by incrementing this value.
@@ -3078,8 +3081,8 @@ jobs:
                     exit 0
                 fi
             fi
-            if sudo su - launcher -c "ENROOT_RUNTIME_PATH=/tmp/launcher /etc/launcher/scripts/manage-enroot-cache -s /lustre/ssd/foundation_engineering/ <<pipeline.parameters.default-pt-gpu-hpc-image>>"; then
-                echo "Downloaded Enroot image <<pipeline.parameters.default-pt-gpu-hpc-image>> "
+            if sudo su - launcher -c "ENROOT_RUNTIME_PATH=/tmp/launcher /etc/launcher/scripts/manage-enroot-cache -s /lustre/ssd/foundation_engineering/ <<pipeline.parameters.default-pt-tf-cpu-hpc-image>>"; then
+                echo "Downloaded Enroot image <<pipeline.parameters.default-pt-tf-cpu-hpc-image>> "
             else
                 EXIT_STATUS=$?
                 echo "Failed downloading Enroot image. Received exit code $EXIT_STATUS"
@@ -5300,6 +5303,63 @@ workflows:
           requires:
             - package-and-push-system-local-ee
             - request-hpc-tests
+
+      - test-e2e-slurm:
+          name: test-e2e-slurm-enroot-znode
+          context:
+            - dev-ci-cluster-default-user-credentials
+          matrix:
+            parameters:
+              mark: ["e2e_slurm and not deepspeed"]
+          requires:
+            - package-and-push-system-local-ee
+            - request-hpc-tests
+          master_config: |
+            task_container_defaults:
+              slurm:
+                sbatch_args:
+                  - --time=04:00:00
+              # The current image must be created in the launcher account before running this test
+              # cd /lustre/ssd/foundation_engineering/
+              # enroot import docker://determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-24586f0.sqsh
+              # enroot create /lustre/ssd/foundation_engineering/determinedai+environments+cuda-11.3-pytorch-1.10-tf-2.8-gpu-24586f0.sqsh
+              # image: determinedai+environments+cuda-11.3-pytorch-1.10-tf-2.8-gpu-24586f0
+              environment_variables:
+                  # Some ports are not working, disable them so distributed jobs work.
+                  - NCCL_IB_HCA=mlx6_0:0
+                  # Workaround XDG_RUNTIME_DIR not provided by Slurm
+                  - ENROOT_RUNTIME_PATH=/tmp/launcher
+            checkpoint_storage:
+              type: shared_fs
+              host_path: /scratch/launcher/.launcher.$HOSTNAME/checkpoints
+              storage_path: determined-checkpoint
+              save_experiment_best: 0
+              save_trial_best: 1
+              save_trial_latest: 1
+            db:
+              user: postgres
+              host: localhost
+              port: 5432
+              name: determined
+              password: ${HPC_DB_PASSWD}
+            resource_manager:
+              type: slurm
+              master_host: $HOSTNAME
+              master_port: 8080
+              host: localhost
+              port: 8181
+              protocol: http
+              slot_type: cuda
+              user_name: launcher
+              container_run_type: enroot
+              group_name: hpcd
+              singularity_image_root: /lustre/hdd/foundation_engineering/images
+              job_storage_root: /scratch/launcher/.launcher.$HOSTNAME
+              auth_file: /home/launcher/.launcher.$HOSTNAME.token
+              path: /opt/singularity/bin:/usr/local/bin:${PATH}
+              ld_library_path:
+            security:
+              initial_user_password: ${INITIAL_USER_PASSWORD}
 
       # Singularity over SLURM test on GCP
       - test-e2e-hpc-gcp:
