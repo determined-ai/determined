@@ -39,10 +39,7 @@ interface FormValues {
   weight?: string;
 }
 
-const formValuesToUpdate = async (
-  values: FormValues,
-  job: Job,
-): Promise<api.V1QueueControl | undefined> => {
+const formValuesToUpdate = (values: FormValues, job: Job): api.V1QueueControl | undefined => {
   const { resourcePool } = {
     resourcePool: values.resourcePool,
   };

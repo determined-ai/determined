@@ -26,11 +26,7 @@ import * as Api from 'services/api-ts-sdk';
 import userStore from 'stores/users';
 import { DetailedUser, FullJob, Job, JobAction, JobState, JobType, ResourcePool } from 'types';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
-import {
-  canManageJob,
-  jobTypeToCommandType,
-  orderedSchedulers,
-} from 'utils/job';
+import { canManageJob, jobTypeToCommandType, orderedSchedulers } from 'utils/job';
 import { useObservable } from 'utils/observable';
 import { routeToReactUrl } from 'utils/routes';
 import { numericSorter } from 'utils/sort';
@@ -157,7 +153,7 @@ const JobQueue: React.FC<Props> = ({ rpStats, selectedRp, jobState }) => {
       });
       return triggers;
     },
-    [selectedRp, isJobOrderAvailable, topJob, fetchJobsTable],
+    [selectedRp, fetchJobsTable],
   );
 
   const onModalClose = useCallback(() => {

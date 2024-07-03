@@ -18,6 +18,4 @@ describe('Job Utilities', () => {
       expect(utils.jobTypeToCommandType(JobType.EXPERIMENT)).toBeUndefined();
     });
   });
-
-  // TODO more tests
 });
