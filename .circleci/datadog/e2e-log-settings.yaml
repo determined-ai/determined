@@ -1,6 +1,5 @@
 logs:
   - type: file
     path: "/tmp/artifacts/logs/*.log"
-    exclude_paths: "/tmp/artifacts/logs/ddtrace.log"
     service: "determined-master"
     source: "determined-master"
