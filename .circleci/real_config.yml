@@ -5285,6 +5285,7 @@ workflows:
             - package-and-push-system-local-ee
             - request-hpc-tests
           extra-pytest-flags: "--no-compare-stats"
+          collect-det-job-logs: false
 
       - test-e2e-slurm:
           name: test-e2e-slurm-gpu
@@ -5538,6 +5539,7 @@ workflows:
           requires:
             - package-and-push-system-local-ee
           extra-pytest-flags: "--no-compare-stats"
+          collect-det-job-logs: false
       - test-e2e-slurm:
           name: test-e2e-slurm-preemption
           context:
