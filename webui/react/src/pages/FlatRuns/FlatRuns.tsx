@@ -1104,6 +1104,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
       ) : (
         <>
           <ComparisonView
+            colorMap={colorMap}
             fixedColumnsCount={STATIC_COLUMNS.length + settings.pinnedColumnsCount}
             initialWidth={comparisonViewTableWidth}
             open={settings.compare}

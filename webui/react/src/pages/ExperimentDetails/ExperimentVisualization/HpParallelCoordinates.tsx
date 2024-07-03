@@ -104,7 +104,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
     if (!chartData) return;
 
     // Initialize a new trial id filter map.
-    const newFilteredTrialIdMap = chartData.trialIds.reduce(
+    const newFilteredTrialIdMap = chartData.recordIds.reduce(
       (acc, trialId) => {
         acc[trialId] = true;
         return acc;
@@ -128,7 +128,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
         });
 
         if (!isWithinFilter) {
-          const trialId = chartData.trialIds[index];
+          const trialId = chartData.recordIds[index];
           newFilteredTrialIdMap[trialId] = false;
         }
       });
@@ -159,10 +159,10 @@ const HpParallelCoordinates: React.FC<Props> = ({
         axes: { label: { placement: 'after' } },
         data: {
           series: focusedTrial?.id
-            ? new Array(chartData?.trialIds.length).fill(undefined).map((_, index) => ({
-                lineWidth: chartData?.trialIds.indexOf(focusedTrial.id) === index ? 3 : 1,
+            ? new Array(chartData?.recordIds.length).fill(undefined).map((_, index) => ({
+                lineWidth: chartData?.recordIds.indexOf(focusedTrial.id) === index ? 3 : 1,
                 strokeStyle:
-                  chartData?.trialIds.indexOf(focusedTrial.id) === index
+                  chartData?.recordIds.indexOf(focusedTrial.id) === index
                     ? ui.theme.ixOnActive
                     : rgba2str({ ...str2rgba(ui.theme.ixOn), a: 0.1 }),
               }))
@@ -179,7 +179,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
       colorScale,
       selectedMetric,
       focusedTrial?.id,
-      chartData?.trialIds,
+      chartData?.recordIds,
       ui.theme.ixOnActive,
       ui.theme.ixOn,
     ],
@@ -300,7 +300,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
           data,
           metricRange,
           metricValues,
-          trialIds,
+          recordIds: trialIds,
         });
         setHasLoaded(true);
       },

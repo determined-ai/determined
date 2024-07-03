@@ -1121,6 +1121,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         ) : (
           <div className={css.paneWrapper}>
             <ComparisonView
+              colorMap={colorMap}
               fixedColumnsCount={STATIC_COLUMNS.length + settings.pinnedColumnsCount}
               initialWidth={comparisonViewTableWidth}
               open={settings.compare}

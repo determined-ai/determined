@@ -15,7 +15,7 @@ export const isObject = (data: unknown): boolean => {
 export const isJsonObject = (json: Json): json is JsonObject => isObject(json);
 export const isJsonArray = (json: Json): json is JsonArray => Array.isArray(json);
 
-export const isPrimitive = (data: unknown): boolean =>
+export const isPrimitive = (data: unknown): data is Primitive =>
   isBigInt(data) ||
   isBoolean(data) ||
   isNullOrUndefined(data) ||
