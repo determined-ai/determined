@@ -657,7 +657,7 @@ commands:
                   sudo usermod -a -G docker dd-agent
                   sudo systemctl stop datadog-agent
                   sudo systemctl start datadog-agent
-                  sudo systemctl status datadog-agent
+                  sudo datadog-agent status
       # Wait for master before splitting tests, since so many splits depend on
       # asking master for its configuration in order to apply skipifs.
       - when:
@@ -740,14 +740,6 @@ commands:
                 master_address: "<<parameters.master-scheme>>://<<parameters.master-host>>:<<parameters.master-port>>"
       - store_artifacts:
           path: /tmp/artifacts/logs
-      - when:
-          condition: <<parameters.collect-det-job-logs>>
-          steps:
-            - run:
-                name: Check Datadog agent status
-                command: |
-                  sudo systemctl status datadog-agent
-                  sudo datadog-agent status
 
 
   run-det-deploy-tests:
