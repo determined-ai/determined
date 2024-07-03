@@ -690,17 +690,15 @@ commands:
               echo "No Determined master listening on '<<parameters.master-scheme>>://<<parameters.master-host>>:<<parameters.master-port>>'"
             fi
 
-            tags="testSuite:<<parameters.mark>>,\
-                  pipeline:${CIRCLE_PIPELINE_ID},\
-                  workflow:${CIRCLE_WORKFLOW_ID},\
-                  job:${CIRCLE_BUILD_NUM},\
-                  user:${CIRCLE_USERNAME},\
-                  tag:${CIRCLE_TAG},\
-                  commit:${CIRCLE_SHA1},\
-                  totalNodes:${CIRCLE_NODE_TOTAL},\
-                  nodeIdx:${CIRCLE_NODE_INDEX},\
-                  repo:${CIRCLE_PROJECT_REPONAME},\
-                  pr:${CIRCLE_PR_NUMBER}"
+            tags="testSuite:<<parameters.mark>>,pipeline:${CIRCLE_PIPELINE_ID},workflow:${CIRCLE_WORKFLOW_ID},
+            job:${CIRCLE_BUILD_NUM},\
+            user:${CIRCLE_USERNAME},\
+            tag:${CIRCLE_TAG},\
+            commit:${CIRCLE_SHA1},\
+            totalNodes:${CIRCLE_NODE_TOTAL},\
+            nodeIdx:${CIRCLE_NODE_INDEX},\
+            repo:${CIRCLE_PROJECT_REPONAME},\
+            pr:${CIRCLE_PR_NUMBER}"
 
             CMD="DD_CIVISIBILITY_AGENTLESS_ENABLED=true \
             DD_TAGS='${tags}' \
