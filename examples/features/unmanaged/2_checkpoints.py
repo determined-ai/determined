@@ -7,7 +7,7 @@ from determined.experimental import core_v2
 
 def main():
     core_v2.init(
-        unmanaged_config=core_v2.UnmanagedConfig(
+        config=core_v2.DefaultConfig(
             name="unmanaged-2-checkpoints",
 
             external_experiment_id="test-unmanaged-2-checkpoints",

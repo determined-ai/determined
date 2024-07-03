@@ -5,6 +5,7 @@ from determined import core
 # Import these directly to make core_v2 a complete package.
 from determined.core import DistributedContext, PreemptMode, TensorboardMode
 from determined.experimental.core_v2._core_v2 import (
+    DefaultConfig,
     UnmanagedConfig,
     init_context,
     init,

@@ -4,6 +4,7 @@ import atexit
 import dataclasses
 import logging
 import uuid
+import warnings
 from typing import Any, Dict, List, Optional, Union
 
 import determined
@@ -20,9 +21,10 @@ _atexit_registered = False  # type: bool
 
 
 @dataclasses.dataclass
-class UnmanagedConfig:
+class DefaultConfig:
     """
-    `UnmanagedConfig` values are only used in the unmanaged mode.
+    `DefaultConfig` options will be ignored when
+    running in the managed mode.
     """
 
     name: Optional[str] = None
@@ -30,10 +32,70 @@ class UnmanagedConfig:
     data: Optional[Dict] = None
     description: Optional[str] = None
     labels: Optional[List[str]] = None
+    # Also to be added:
+    # - hyperparameters: const only
+    # - checkpoint_policy: for optional gc
+    # For managed mode, workspace and project MUST be present in the exp conf for RBAC reasons.
+    workspace: Optional[str] = None
+    project: Optional[str] = None
+
+    # Unsupported:
+    # - bind_mounts
+    # - data_layer
+    # - debug
+    # - entrypoint
+    # - environment
+    # - internal
+    # - max_restarts
+    # - optimizations
+    # - profiling
+    # - reproducibility
+    # - security
+    # - slurm
+    # Searcher:
+    # - searcher
+    # - min_checkpoint_period
+    # - min_validation_period
+    # - pbs
+    # - perform_initial_validation
+    # - records_per_epoch
+    # - scheduling_unit
+    # Deprecated:
+    # - data_layer
+    # - pbs
+    # - tensorboard_storage
+    checkpoint_storage: Optional[Union[str, Dict[str, Any]]] = None
     # Searcher is currently a hack to disambiguate single trial experiments
     # and hp searches in WebUI.
     # Also searcher metric is useful for sorting in the UI and, in the future, checkpoint gc.
     searcher: Optional[Dict[str, Any]] = None
+    # TODO(ilia): later to be replaced with:
+    # Unmanaged mode only config options:
+    # multi_trial_experiment: bool = False
+    # metric: Optional[str] = None
+    # smaller_is_better: bool = True  # mode?
+    # External experiment & trial ids.
+    # `external_experiment_id` is used to uniquely identify an experiment when grouping
+    # multiple trials as one HP search, or if any trial within this experiment will be resumed.
+    # `external_trial_id` is used to uniquely identify the resumed trial within the experiment.
+    # if `external_trial_id` is specified, `external_experiment_id` MUST be passed as well.
+    #
+    # If you are going to resume trials, whether in hp search or single-trial experiments,
+    # specify both `external_experiment_id` and `external_trial_id`.
+    # If you are going to use hp search, but will not resume trials,
+    # specifing the `external_experiment_id` is sufficient.
+    # If you are not going to use either feature, omit these options.
+    external_experiment_id: Optional[str] = None
+    external_trial_id: Optional[str] = None
+
+
+@dataclasses.dataclass
+class UnmanagedConfig:
+    """
+    `UnmanagedConfig` values are only used in the unmanaged mode.
+
+    DEPRECATED: Use `DefaultConfig` as it contains unmanaged config.
+    """
 
     # For the managed mode, workspace is critical for RBAC so it cannot be easily
     # merged and patched during the experiment runtime.
@@ -75,7 +137,9 @@ def _set_globals() -> None:
 
 def _init_context(
     client: experimental.Determined,
-    unmanaged_config: Optional[UnmanagedConfig] = None,
+    config: Optional[DefaultConfig] = None,
+    defaults: Optional[DefaultConfig] = None,
+    unmanaged: Optional[UnmanagedConfig] = None,
     distributed: Optional[core.DistributedContext] = None,
     checkpoint_storage: Optional[Union[str, Dict[str, Any]]] = None,
     preempt_mode: core.PreemptMode = core.PreemptMode.WorkersAskChief,
@@ -93,23 +157,31 @@ def _init_context(
         )
         return _context
 
+    # Unmanaged trials.
+    if defaults is None and config is None:
+        raise NotImplementedError(
+            "either specify `defaults` or `config`, or run as a managed determined experiment"
+        )
+
     # Construct the config.
-    config = unmanaged_config or UnmanagedConfig()
+    defaulted_config = config or defaults or DefaultConfig()
+    unmanaged_config = config or unmanaged or UnmanagedConfig()
+    checkpoint_storage = checkpoint_storage or defaulted_config.checkpoint_storage
 
     config_text = util.yaml_safe_dump(
         {
-            "name": config.name or f"unmanaged-{uuid.uuid4().hex[:8]}",
-            "data": config.data,
-            "description": config.description,
-            "labels": config.labels,
-            "searcher": config.searcher
+            "name": defaulted_config.name or f"unmanaged-{uuid.uuid4().hex[:8]}",
+            "data": defaulted_config.data,
+            "description": defaulted_config.description,
+            "labels": defaulted_config.labels,
+            "searcher": defaulted_config.searcher
             or {
                 "name": "single",
                 "metric": "unmanaged",
                 "max_length": 100000000,
             },
-            "workspace": config.workspace,
-            "project": config.project,
+            "workspace": unmanaged_config.workspace,
+            "project": unmanaged_config.project,
         }
     )
     assert config_text is not None
@@ -117,10 +189,10 @@ def _init_context(
     unmanaged_info = core_v2._get_or_create_experiment_and_trial(
         client,
         config_text=config_text,
-        experiment_id=config.external_experiment_id,
-        trial_id=config.external_trial_id,
+        experiment_id=unmanaged_config.external_experiment_id,
+        trial_id=unmanaged_config.external_trial_id,
         distributed=distributed,
-        hparams=config.hparams,
+        hparams=defaulted_config.hparams,
     )
 
     _context = core_v2._make_v2_context(
@@ -136,7 +208,9 @@ def _init_context(
 
 def init_context(
     *,
-    unmanaged_config: Optional[UnmanagedConfig] = None,
+    config: Optional[DefaultConfig] = None,
+    defaults: Optional[DefaultConfig] = None,
+    unmanaged: Optional[UnmanagedConfig] = None,
     client: Optional[experimental.Determined] = None,
     distributed: Optional[core.DistributedContext] = None,
     checkpoint_storage: Optional[Union[str, Dict[str, Any]]] = None,
@@ -150,7 +224,9 @@ def init_context(
         client = experimental.Determined()
 
     _context = _init_context(
-        unmanaged_config=unmanaged_config,
+        config=config,
+        defaults=defaults,
+        unmanaged=unmanaged,
         client=client,
         distributed=distributed,
         checkpoint_storage=checkpoint_storage,
@@ -163,7 +239,9 @@ def init_context(
 
 def init(
     *,
-    unmanaged_config: Optional[UnmanagedConfig] = None,
+    config: Optional[DefaultConfig] = None,
+    defaults: Optional[DefaultConfig] = None,
+    unmanaged: Optional[UnmanagedConfig] = None,
     client: Optional[experimental.Determined] = None,
     # Classic core context arguments.
     distributed: Optional[core.DistributedContext] = None,
@@ -175,6 +253,15 @@ def init(
     """
     Core V2 initializer in the singleton style.
     """
+
+    if defaults is not None or unmanaged is not None:
+        warnings.warn(
+            "Determined.experimental.core_v2.init is deprecating `defaults` and `unmanaged`."
+            "Use `config` instead as it's a superset of `defaults` and `unmanaged`",
+            FutureWarning,
+            stacklevel=2,
+        )
+
     global _context
     global _client
     global _atexit_registered
@@ -187,7 +274,9 @@ def init(
     _client = client
 
     _context = _init_context(
-        unmanaged_config=unmanaged_config,
+        config=config,
+        defaults=defaults,
+        unmanaged=unmanaged,
         client=client,
         distributed=distributed,
         checkpoint_storage=checkpoint_storage,

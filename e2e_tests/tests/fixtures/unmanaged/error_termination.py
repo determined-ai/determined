@@ -14,7 +14,7 @@ def main():
 
     checkpoint_storage = tempfile.mkdtemp()
     core_v2.init(
-        unmanaged_config=core_v2.UnmanagedConfig(
+        config=core_v2.DefaultConfig(
             name=name,
             external_experiment_id=name,
             external_trial_id=name,

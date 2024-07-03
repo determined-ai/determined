@@ -19,7 +19,7 @@ class Trainable(tune.Trainable):
         print(f"experiment name: {experiment_name} trial name: {trial_name}")
 
         core_v2.init(
-            unmanaged_config=core_v2.UnmanagedConfig(
+            config=core_v2.DefaultConfig(
                 name=experiment_name,
                 hparams={
                     "hp": config["hp"],

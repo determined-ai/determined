@@ -7,7 +7,7 @@ from determined.experimental import core_v2
 
 def main() -> None:
     core_v2.init(
-        unmanaged_config=core_v2.UnmanagedConfig(
+        config=core_v2.DefaultConfig(
             name="pytorch-profiler-sync-test",
         ),
     )

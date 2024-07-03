@@ -9,7 +9,7 @@ def main():
     core_v2.init(
         # For managed experiments, will be overridden by the yaml config.
         # Future: merge this and yaml configs field-by-field at runtime.
-        unmanaged_config=core_v2.UnmanagedConfig(
+        config=core_v2.DefaultConfig(
             name="unmanaged-1-singleton",
             # labels=["some", "set", "of", "labels"],
             # description="some description",
