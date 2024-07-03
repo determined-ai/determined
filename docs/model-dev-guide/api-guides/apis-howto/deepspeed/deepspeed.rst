@@ -308,8 +308,15 @@ interleaving micro batches:
 Fully Sharded Data Parallelism (FSDP)
 =====================================
 
-To use FSDP, use the PyTorch FSDP package as usual along with the Core API. ``PytorchTrial`` API
-does not support FSDP. To find out more about the PyTorch FSDP package, visit `PyTorch tutorials
+To use FSDP, use the PyTorch FSDP package as usual along with the :ref:`Core API <core-reference>`.
+To see an example of how this works, visit the `FSDP + Core API for LLM Training example
+<https://github.com/determined-ai/determined-examples/tree/main/fsdp/minimal_fsdp>`__.
+
+.. note::
+
+   ``PytorchTrial`` API does not support FSDP.
+
+For more info about the PyTorch FSDP package, visit `PyTorch tutorials
 <https://pytorch.org/tutorials/>`__ > Getting Started with Fully Sharded Data Parallel (FSDP).
 
 ***********
