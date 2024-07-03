@@ -653,7 +653,7 @@ commands:
                   sudo chmod -R a+rw /etc/datadog-agent/datadog.yaml
                   sudo chmod -R a+rw /etc/datadog-agent/conf.d/determined-master.d/
                   sudo cat .circleci/datadog/ci-local-config.yaml >> /etc/datadog-agent/datadog.yaml
-                  sudo cat .circleci/datadog/e2e-log-settings.yaml > /etc/datadog-agent/determined-master.d/conf.yaml
+                  sudo cat .circleci/datadog/e2e-log-settings.yaml > /etc/datadog-agent/conf.d/determined-master.d/conf.yaml
                   sudo usermod -a -G docker dd-agent
                   sudo systemctl stop datadog-agent
                   sudo systemctl start datadog-agent
