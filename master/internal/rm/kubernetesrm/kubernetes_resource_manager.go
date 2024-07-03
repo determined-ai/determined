@@ -121,7 +121,6 @@ func New(
 			maxSlotsPerPod = *poolConfig.TaskContainerDefaults.Kubernetes.MaxSlotsPerPod
 		}
 
-		poolConfig := poolConfig
 		if k.config.DefaultNamespace == "" {
 			k.config.DefaultNamespace = defaultNamespace
 		}

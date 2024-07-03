@@ -857,12 +857,12 @@ func (a *apiServer) setWorkspaceNamespaceBindings(ctx context.Context,
 			if !verified { // We only want to perform these actions once.
 				license.RequireLicense("auto-create namespace")
 				verified = true
-				err = a.m.rm.CreateNamespace(*autoCreatedNamespace, clusterName, false)
-				if err != nil {
-					return nil, err
-				}
-				namespace = *autoCreatedNamespace
 			}
+			err = a.m.rm.CreateNamespace(*autoCreatedNamespace, clusterName, false)
+			if err != nil {
+				return nil, err
+			}
+			namespace = *autoCreatedNamespace
 		default:
 			namespace = *metadata.Namespace
 		}

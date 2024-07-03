@@ -243,10 +243,18 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
                       </Form.Item>
                       {(workspaceId !== undefined ||
                         (watchBindings?.[name]?.['autoCreateNamespace'] ?? false)) && (
-                        <Form.Item label="Resource Quota" name={['resourceQuotas', name]}>
-                          <Input
+                        <Form.Item
+                          label="Resource Quota"
+                          name={['resourceQuotas', name]}
+                          rules={[
+                            {
+                              message: 'Resource Quota has to be greater or equal to 0',
+                              min: 0,
+                              type: 'number',
+                            },
+                          ]}>
+                          <InputNumber
                             disabled={!(watchBindings?.[name]?.['autoCreateNamespace'] ?? false)}
-                            maxLength={63}
                           />
                         </Form.Item>
                       )}
@@ -400,7 +408,6 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
         } = {
           id: 0,
         };
-
         const clusterNamespaceMeta = Object.keys(values.bindings ?? {}).reduce(
           (memo: Record<string, V1WorkspaceNamespaceMeta>, name) => {
             if (values.bindings !== undefined) {
@@ -408,9 +415,14 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
               if (data.autoCreateNamespace) {
                 data.namespace = undefined;
                 memo[name] = data;
-              } else if (data.namespace !== undefined && data.namespace !== '') {
-                data.autoCreateNamespace = false;
-                memo[name] = data;
+              } else {
+                if (values.resourceQuotas?.[name]) {
+                  delete values.resourceQuotas[name];
+                }
+                if (data.namespace !== undefined && data.namespace !== '') {
+                  data.autoCreateNamespace = false;
+                  memo[name] = data;
+                }
               }
             }
             return memo;
