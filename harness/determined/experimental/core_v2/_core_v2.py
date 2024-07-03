@@ -148,6 +148,12 @@ def _init_context(
     info = determined.get_cluster_info()
     if info is not None and info.task_type == "TRIAL":
         # Managed trials.
+        if config is not None or defaults is not None or unmanaged is not None:
+            warnings.warn(
+                "Running experiment in managed mode ignores all config passed through `config`, `defaults` and `unmanaged`",
+                FutureWarning,
+                stacklevel=2,
+            )
         _context = core_v2._make_v2_context(
             distributed=distributed,
             checkpoint_storage=checkpoint_storage,
