@@ -655,9 +655,10 @@ commands:
                   sudo cat .circleci/datadog/ci-local-config.yaml >> /etc/datadog-agent/datadog.yaml
                   sudo cat .circleci/datadog/e2e-log-settings.yaml > /etc/datadog-agent/determined-master.d/conf.yaml
                   sudo usermod -a -G docker dd-agent
-                  sudo service datadog-agent restart
+                  sudo systemctl stop datadog-agent
+                  sudo systemctl start datadog-agent
+                  sudo systemctl status datadog-agent
                   sudo datadog-agent status
-                  sudo service datadog-agent status
       # Wait for master before splitting tests, since so many splits depend on
       # asking master for its configuration in order to apply skipifs.
       - when:
@@ -746,8 +747,8 @@ commands:
             - run:
                 name: Check Datadog agent status
                 command: |
+                  sudo systemctl status datadog-agent
                   sudo datadog-agent status
-                  sudo service datadog-agent status
 
 
   run-det-deploy-tests:
