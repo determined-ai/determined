@@ -16,8 +16,6 @@ def main():
             # external_experiment_id=f"some-prefix-{os.environ[SLURM_JOB_ID}",
             # external_trial_id=f"some-prefix-{os.environ[SLURM_JOB_ID}",
         ),
-        # We allow configuring the local checkpoint storage directory.
-        # checkpoint_storage="/tmp/determined-cp",
     )
 
     latest_checkpoint = core_v2.info.latest_checkpoint
