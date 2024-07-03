@@ -8760,13 +8760,25 @@ export interface V1QueueControl {
      */
     jobId: string;
     /**
-     * field 2 removed; do not reuse Name of the target resource_pool to move the job to.
+     * Deprecated; do not use.
+     * @type {string}
+     * @memberof V1QueueControl
+     */
+    aheadOf?: string;
+    /**
+     * Deprecated; do not use.
+     * @type {string}
+     * @memberof V1QueueControl
+     */
+    behindOf?: string;
+    /**
+     * Name of the target resource_pool to move the job to.
      * @type {string}
      * @memberof V1QueueControl
      */
     resourcePool?: string;
     /**
-     * field 4 removed; do not reuse The desired job priority in priority scheduler.
+     * The desired job priority in priority scheduler.
      * @type {number}
      * @memberof V1QueueControl
      */

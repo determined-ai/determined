@@ -12034,6 +12034,8 @@ class v1PutTrialRetainLogsRequest(Printable):
 
 class v1QueueControl(Printable):
     """Describes a message to control jobs in a queue."""
+    aheadOf: "typing.Optional[str]" = None
+    behindOf: "typing.Optional[str]" = None
     priority: "typing.Optional[int]" = None
     resourcePool: "typing.Optional[str]" = None
     weight: "typing.Optional[float]" = None
@@ -12042,11 +12044,17 @@ class v1QueueControl(Printable):
         self,
         *,
         jobId: str,
+        aheadOf: "typing.Union[str, None, Unset]" = _unset,
+        behindOf: "typing.Union[str, None, Unset]" = _unset,
         priority: "typing.Union[int, None, Unset]" = _unset,
         resourcePool: "typing.Union[str, None, Unset]" = _unset,
         weight: "typing.Union[float, None, Unset]" = _unset,
     ):
         self.jobId = jobId
+        if not isinstance(aheadOf, Unset):
+            self.aheadOf = aheadOf
+        if not isinstance(behindOf, Unset):
+            self.behindOf = behindOf
         if not isinstance(priority, Unset):
             self.priority = priority
         if not isinstance(resourcePool, Unset):
@@ -12059,6 +12067,10 @@ class v1QueueControl(Printable):
         kwargs: "typing.Dict[str, typing.Any]" = {
             "jobId": obj["jobId"],
         }
+        if "aheadOf" in obj:
+            kwargs["aheadOf"] = obj["aheadOf"]
+        if "behindOf" in obj:
+            kwargs["behindOf"] = obj["behindOf"]
         if "priority" in obj:
             kwargs["priority"] = obj["priority"]
         if "resourcePool" in obj:
@@ -12071,6 +12083,10 @@ class v1QueueControl(Printable):
         out: "typing.Dict[str, typing.Any]" = {
             "jobId": self.jobId,
         }
+        if not omit_unset or "aheadOf" in vars(self):
+            out["aheadOf"] = self.aheadOf
+        if not omit_unset or "behindOf" in vars(self):
+            out["behindOf"] = self.behindOf
         if not omit_unset or "priority" in vars(self):
             out["priority"] = self.priority
         if not omit_unset or "resourcePool" in vars(self):
