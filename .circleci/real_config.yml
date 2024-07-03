@@ -632,17 +632,17 @@ commands:
             - run:
                 name: Install DataDog agent
                 command: |
-                  host_tags="testSuite:<<parameters.mark>>,\
-                  pipeline:${CIRCLE_PIPELINE_ID},\
-                  workflow:${CIRCLE_WORKFLOW_ID},\
-                  job:${CIRCLE_BUILD_NUM},\
-                  user:${CIRCLE_USERNAME},\
-                  tag:${CIRCLE_TAG},\
-                  commit:${CIRCLE_SHA1},\
-                  totalNodes:${CIRCLE_NODE_TOTAL},\
-                  nodeIdx:${CIRCLE_NODE_INDEX},\
-                  repo:${CIRCLE_PROJECT_REPONAME},\
-                  pr:${CIRCLE_PR_NUMBER}"
+                   host_tags="test.mark:<<parameters.mark>>,\
+                   ci.pipeline_id:${CIRCLE_PIPELINE_ID},\
+                   ci.workflow_id:${CIRCLE_WORKFLOW_ID},\
+                   ci.job_num:${CIRCLE_BUILD_NUM},\
+                   ci.username:${CIRCLE_USERNAME},\
+                   git.tag:${CIRCLE_TAG},\
+                   git.commit:${CIRCLE_SHA1},\
+                   git.repo:${CIRCLE_PROJECT_REPONAME},\
+                   ci.totalNodes:${CIRCLE_NODE_TOTAL},\
+                   ci.nodeIdx:${CIRCLE_NODE_INDEX},\
+                   git.pr_num:${CIRCLE_PR_NUMBER}"
                   
                   echo "$host_tags"
                   DD_ENV="ci-${CIRCLE_JOB}" \
@@ -695,15 +695,16 @@ commands:
               echo "No Determined master listening on '<<parameters.master-scheme>>://<<parameters.master-host>>:<<parameters.master-port>>'"
             fi
 
-            tags="testSuite:<<parameters.mark>>,pipeline:${CIRCLE_PIPELINE_ID},workflow:${CIRCLE_WORKFLOW_ID},
-            job:${CIRCLE_BUILD_NUM},\
-            user:${CIRCLE_USERNAME},\
-            tag:${CIRCLE_TAG},\
-            commit:${CIRCLE_SHA1},\
-            totalNodes:${CIRCLE_NODE_TOTAL},\
-            nodeIdx:${CIRCLE_NODE_INDEX},\
-            repo:${CIRCLE_PROJECT_REPONAME},\
-            pr:${CIRCLE_PR_NUMBER}"
+            tags="test.mark:<<parameters.mark>>,\
+            ci.pipeline_id:${CIRCLE_PIPELINE_ID},\
+            ci.workflow_id:${CIRCLE_WORKFLOW_ID},\
+            ci.job_num:${CIRCLE_BUILD_NUM},\
+            ci.username:${CIRCLE_USERNAME},\
+            git.tag:${CIRCLE_TAG},\
+            git.commit:${CIRCLE_SHA1},\
+            ci.totalNodes:${CIRCLE_NODE_TOTAL},\
+            ci.nodeIdx:${CIRCLE_NODE_INDEX},\
+            git.pr_num:${CIRCLE_PR_NUMBER}"
 
             CMD="DD_CIVISIBILITY_AGENTLESS_ENABLED=true \
             DD_TAGS='${tags}' \
