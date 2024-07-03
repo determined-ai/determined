@@ -711,7 +711,6 @@ commands:
             DD_ENV='ci-<<parameters.mark>>' \
             DD_SERVICE='determined-pytest-<<parameters.mark>>' \
             DD_AGENTLESS_LOG_SUBMISSION_ENABLED=true \
-            DD_CIVISIBILITY_AGENTLESS_ENABLED=true \
             DD_LOGS_INJECTION=true \
             DET_MASTER_CERT_FILE=<<parameters.master-cert>> \
             DET_MASTER_CERT_NAME=<<parameters.master-cert-name>> \
