@@ -72,9 +72,6 @@ exclude = '(_gen.py|determined/_swagger/client/*)'
 # Path relative_to pyproject.toml. Necessary for correct git metadata parsing.
 root = "../"
 
-# Don't add the extra commit hash. PyPI complains, and it's also just noisy.
-local_scheme = "no-local-version"
-
 [tool.setuptools]
 include-package-data = true
 
