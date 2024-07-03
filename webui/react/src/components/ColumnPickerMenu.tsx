@@ -183,7 +183,7 @@ const ColumnPickerTab: React.FC<ColumnTabProps> = ({
   );
 
   return (
-    <div data-test-component="columnPickerTab">
+    <div data-test-component="columnPickerTab" data-testid="column-picker-tab">
       <Input
         allowClear
         autoFocus
