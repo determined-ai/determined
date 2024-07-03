@@ -689,6 +689,7 @@ commands:
             else
               echo "No Determined master listening on '<<parameters.master-scheme>>://<<parameters.master-host>>:<<parameters.master-port>>'"
             fi
+
             tags="testSuite:<<parameters.mark>>,\
                   pipeline:${CIRCLE_PIPELINE_ID},\
                   workflow:${CIRCLE_WORKFLOW_ID},\
@@ -701,12 +702,13 @@ commands:
                   repo:${CIRCLE_PROJECT_REPONAME},\
                   pr:${CIRCLE_PR_NUMBER}"
 
-            cat /tmp/all-relevant-files | circleci tests run --command="DD_CIVISIBILITY_AGENTLESS_ENABLED=true \
-            DD_TAGS=\"${tags}\" \
+            CMD="DD_CIVISIBILITY_AGENTLESS_ENABLED=true \
+            DD_TAGS='${tags}' \
             DD_ENV='ci-<<parameters.mark>>' \
             DD_SERVICE='determined-pytest-<<parameters.mark>>' \
-            DD_TRACE_DEBUG=true \
-            DD_TRACE_LOG_FILE='/tmp/artifacts/logs/ddtrace.log'
+            DD_AGENTLESS_LOG_SUBMISSION_ENABLED=true \
+            DD_CIVISIBILITY_AGENTLESS_ENABLED=true \
+            DD_LOGS_INJECTION=true \
             DET_MASTER_CERT_FILE=<<parameters.master-cert>> \
             DET_MASTER_CERT_NAME=<<parameters.master-cert-name>> \
             IS_CIRCLECI_JOB=1 XDG_CONFIG_HOME=/tmp \
@@ -714,12 +716,16 @@ commands:
             -m '<<parameters.mark>>' \
             --durations=0 \
             --ddtrace \
+            --ddtrace-patch-all \
             --master-scheme='<<parameters.master-scheme>>' \
             --master-host='<<parameters.master-host>>' \
             --master-port='<<parameters.master-port>>' \
             -o junit_family=xunit1 \
             --junit-xml='<<parameters.junit-path>>' \
-            <<parameters.extra-pytest-flags>>" \
+            <<parameters.extra-pytest-flags>>"
+
+            echo "$CMD"
+            cat /tmp/all-relevant-files | circleci tests run --command="$CMD" \
             --verbose --split-by=timings
 
             pytest_status=$?
