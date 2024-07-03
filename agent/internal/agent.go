@@ -120,12 +120,11 @@ func (a *Agent) run(ctx context.Context) error {
 
 	a.log.Tracef("setting up %s runtime", a.opts.ContainerRuntime)
 	if a.opts.ContainerRuntime != options.DockerContainerRuntime {
-		a.log.Error("%w creation is not supported, please update agent container runtime config to use Docker instead.",
+		a.log.Error("%w Container Runtime is not supported, please update agent container runtime config to use Docker instead.",
 			a.opts.ContainerRuntime)
-		return fmt.Errorf("%s creation not available", a.opts.ContainerRuntime)
+		return fmt.Errorf("%s Container Runtime not available", a.opts.ContainerRuntime)
 	}
 
-	var cruntime container.ContainerRuntime
 	dcl, dErr := dclient.NewClientWithOpts(dclient.WithAPIVersionNegotiation(), dclient.FromEnv)
 	if dErr != nil {
 		return fmt.Errorf("failed to build docker client: %w", dErr)
@@ -136,7 +135,7 @@ func (a *Agent) run(ctx context.Context) error {
 			a.log.WithError(cErr).Error("failed to close docker client")
 		}
 	}()
-	cruntime = docker.NewClient(dcl)
+	cruntime := docker.NewClient(dcl)
 
 	a.log.Trace("setting up container manager")
 	outbox := make(chan *aproto.MasterMessage, eventChanSize) // covers many from socket lifetimes

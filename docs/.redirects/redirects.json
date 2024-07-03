@@ -13,7 +13,7 @@
     "architecture/system-architecture": "../get-started/architecture/system-architecture.html",
     "architecture/introduction": "../get-started/architecture/introduction.html",
     "setup-cluster/deploy-cluster/slurm/install-on-slurm": "../../slurm/install-on-slurm.html",
-    "setup-cluster/deploy-cluster/slurm/hpc-with-agent": "../../slurm/hpc-with-agent.html",
+    "setup-cluster/deploy-cluster/slurm/hpc-with-agent": "../../slurm/_index.html", 
     "setup-cluster/deploy-cluster/slurm/hpc-launching-architecture": "../../slurm/hpc-launching-architecture.html",
     "setup-cluster/deploy-cluster/slurm/slurm-requirements": "../../slurm/slurm-requirements.html",
     "setup-cluster/deploy-cluster/slurm/upgrade-on-hpc": "../../slurm/upgrade-on-hpc.html",
@@ -463,6 +463,5 @@
     "tutorials/notebook-tutorial": "../tools/notebooks.html",
     "tutorials/porting-tutorial": "pytorch-mnist-tutorial.html",
     "tutorials/quick-start": "quickstart-mdldev.html",
-    "tutorials/pytorch-mnist-local-qs": "../get-started/webui-qs.html",
-    "setup-cluster/slurm/hpc-with-agent.rst" : "_index.html"
+    "tutorials/pytorch-mnist-local-qs": "../get-started/webui-qs.html"
 }

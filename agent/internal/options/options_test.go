@@ -98,7 +98,6 @@ security:
         master_cert_name: master_certificate
 debug: true
 artificial_slots: 12
-image_root: docker_image_root
 tls: true
 tls_cert: tls_certificate_file
 tls_key: tls_key_file
@@ -138,7 +137,6 @@ container_runtime: docker_runtime_env
 				},
 				Debug:                  true,
 				ArtificialSlots:        12,
-				ImageRoot:              "docker_image_root",
 				TLS:                    true,
 				TLSCertFile:            "tls_certificate_file",
 				TLSKeyFile:             "tls_key_file",

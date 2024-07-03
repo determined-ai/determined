@@ -140,15 +140,13 @@ trap 'kill $TUNNEL_PID' EXIT
 echo "Started bidirectional tunnels to $INSTANCE_NAME"
 
 # Grab launcher token.
-if [[ -z $DETERMINED_AGENT ]]; then
-    REMOTE_TOKEN_SOURCE=/opt/launcher/jetty/base/etc/.launcher.token
-    LOCAL_TOKEN_DEST=$TEMPDIR/.launcher.token
-    gcloud compute scp --quiet --zone "us-west1-b" --project "determined-ai" root@$INSTANCE_NAME:$REMOTE_TOKEN_SOURCE $LOCAL_TOKEN_DEST
-    echo "Copied launcher token to $LOCAL_TOKEN_DEST"
-    # The launcher service verifies communication with the launcher, so just have to be sure it is started.
-    # Also show the status for extra confirmaiton in the logs of the state.
-    gcloud compute ssh --zone "$ZONE" "$INSTANCE_NAME" --project "$PROJECT" -- "sudo systemctl start launcher.service ; systemctl status launcher.service --no-pager"
-fi
+REMOTE_TOKEN_SOURCE=/opt/launcher/jetty/base/etc/.launcher.token
+LOCAL_TOKEN_DEST=$TEMPDIR/.launcher.token
+gcloud compute scp --quiet --zone "us-west1-b" --project "determined-ai" root@$INSTANCE_NAME:$REMOTE_TOKEN_SOURCE $LOCAL_TOKEN_DEST
+echo "Copied launcher token to $LOCAL_TOKEN_DEST"
+# The launcher service verifies communication with the launcher, so just have to be sure it is started.
+# Also show the status for extra confirmaiton in the logs of the state.
+gcloud compute ssh --zone "$ZONE" "$INSTANCE_NAME" --project "$PROJECT" -- "sudo systemctl start launcher.service ; systemctl status launcher.service --no-pager"
 
 # Build devcluster.yaml.
 

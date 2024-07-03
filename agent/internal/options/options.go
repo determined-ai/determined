@@ -59,9 +59,8 @@ type Options struct {
 
 	Security SecurityOptions `json:"security"`
 
-	Debug           bool   `json:"debug"`
-	ArtificialSlots int    `json:"artificial_slots"`
-	ImageRoot       string `json:"image_root"`
+	Debug           bool `json:"debug"`
+	ArtificialSlots int  `json:"artificial_slots"`
 
 	TLS         bool   `json:"tls"`
 	TLSCertFile string `json:"tls_cert"`

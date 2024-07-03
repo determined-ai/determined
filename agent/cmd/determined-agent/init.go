@@ -122,8 +122,6 @@ func registerAgentConfig() {
 	registerBool(flags, name("debug"), defaults.Debug, "Enable verbose script output")
 	registerInt(flags, name("artificial-slots"), defaults.ArtificialSlots, "")
 	flags.Lookup("artificial-slots").Hidden = true
-	registerString(flags, name("image-root"), defaults.ImageRoot,
-		"Path to local container image cache")
 
 	// Endpoint TLS flags.
 	registerBool(flags, name("tls"), defaults.TLS, "Use TLS for the API server")
