@@ -2966,6 +2966,9 @@ jobs:
       agent-use:
         type: string
         default: ""
+      collect-det-job-logs:
+        type: boolean
+        default: true
     # Following https://circleci.com/docs/2.0/runner-installation-linux/index.html#start-the-service
     machine: true
     resource_class: <<parameters.runner_class>>
@@ -3180,6 +3183,7 @@ jobs:
           master-host: localhost
           managed-devcluster: false
           extra-pytest-flags: <<parameters.extra-pytest-flags>>
+          collect-det-job-logs: <<parameters.collect-det-job-logs>>
 
       - store_test_results:
           path: /tmp/test-results/
@@ -5276,6 +5280,18 @@ workflows:
               initial_user_password: ${INITIAL_USER_PASSWORD}
 
       - test-e2e-slurm:
+          name: test-e2e-slurm-restart
+          context:
+            - dev-ci-cluster-default-user-credentials
+          mark: "e2e_slurm_restart"
+          filters: *upstream-feature-branch
+          requires:
+            - package-and-push-system-local-ee
+            - request-hpc-tests
+          extra-pytest-flags: "--no-compare-stats"
+          collect-det-job-logs: false
+
+      - test-e2e-slurm:
           name: test-e2e-slurm-gpu
           context:
             - dev-ci-cluster-default-user-credentials
@@ -5527,6 +5543,7 @@ workflows:
           requires:
             - package-and-push-system-local-ee
           extra-pytest-flags: "--no-compare-stats"
+          collect-det-job-logs: false
       - test-e2e-slurm:
           name: test-e2e-slurm-preemption
           context:
