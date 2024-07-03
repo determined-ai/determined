@@ -2966,6 +2966,9 @@ jobs:
       agent-use:
         type: string
         default: ""
+      collect-det-job-logs:
+        type: boolean
+        default: true
     # Following https://circleci.com/docs/2.0/runner-installation-linux/index.html#start-the-service
     machine: true
     resource_class: <<parameters.runner_class>>
@@ -3180,6 +3183,7 @@ jobs:
           master-host: localhost
           managed-devcluster: false
           extra-pytest-flags: <<parameters.extra-pytest-flags>>
+          collect-det-job-logs: <<parameters.collect-det-job-logs>>
 
       - store_test_results:
           path: /tmp/test-results/
