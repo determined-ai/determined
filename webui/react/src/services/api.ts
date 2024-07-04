@@ -663,6 +663,18 @@ export const listWorkspaceNamespaceBindings = generateDetApi<
   Type.WorkspaceNamespaceBindings
 >(Config.listWorkspaceNamespaceBindings);
 
+export const setResourceQuotas = generateDetApi<
+  Api.V1SetResourceQuotasRequest,
+  Api.V1SetResourceQuotasResponse,
+  void
+>(Config.setResourceQuotas);
+
+export const getKubernetesResourceQuotas = generateDetApi<
+  Service.GetKubernetesResourceQuotasParamas,
+  Api.V1GetKubernetesResourceQuotasResponse,
+  Type.WorkspaceResourceQuotas
+>(Config.getKubernetesResourceQuotas);
+
 export const archiveWorkspace = generateDetApi<
   Service.ActionWorkspaceParams,
   Api.V1ArchiveWorkspaceResponse,

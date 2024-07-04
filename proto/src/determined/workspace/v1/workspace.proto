@@ -111,7 +111,7 @@ message WorkspaceNamespaceBinding {
   string namespace = 2;
   // User cluster name.
   string cluster_name = 3;
-  // Whether we want to auto-create a namespace for a workspace-namespace
+  // Whether the namespace was auto-created for a workspace-namespace
   // binding.
   bool auto_create_namespace = 4;
 }

@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"os"
 	"path/filepath"
 	"slices"
@@ -685,6 +686,12 @@ func (j *jobsService) SetResourceQuota(quota int, namespace string) error {
 	j.mu.Lock()
 	defer j.mu.Unlock()
 	return j.setResourceQuota(quota, namespace)
+}
+
+func (j *jobsService) GetNamespaceResourceQuota(namespaceName string) (*float64, error) {
+	j.mu.Lock()
+	defer j.mu.Unlock()
+	return j.getNamespaceResourceQuota(namespaceName)
 }
 
 type reattachJobRequest struct {
@@ -2313,6 +2320,30 @@ func (j *jobsService) setResourceQuota(quota int, namespace string) error {
 	}
 
 	return nil
+}
+
+func (j *jobsService) getNamespaceResourceQuota(namespaceName string) (*float64, error) {
+	k8sQuotas, err := j.clientSet.CoreV1().ResourceQuotas(namespaceName).List(context.Background(), metaV1.ListOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("error finding resource quotas for the namespace %s: %w", namespaceName, err)
+	}
+
+	quotas := k8sQuotas.Items
+	minQuota := math.Inf(1)
+	for _, q := range quotas {
+		qResources := q.Spec.Hard
+		for name, quantity := range qResources {
+			if name == "requests."+resourceTypeNvidia {
+				minQuota = math.Min(minQuota, quantity.AsApproximateFloat64())
+			}
+		}
+	}
+
+	if minQuota != math.Inf(1) {
+		return &minQuota, nil
+	}
+
+	return nil, nil
 }
 
 func (j *jobsService) getInitialNamespace() string {

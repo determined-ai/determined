@@ -1069,7 +1069,11 @@ export interface Workspace {
 }
 
 export interface WorkspaceNamespaceBindings {
-  clusterNamespacePairs: Record<string, Api.V1WorkspaceNamespaceBinding>;
+  namespaceBindings: Record<string, Api.V1WorkspaceNamespaceBinding>;
+}
+
+export interface WorkspaceResourceQuotas {
+  resourceQuotas: Record<string, number>;
 }
 
 export interface WorkspacePagination extends WithPagination {

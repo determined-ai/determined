@@ -2154,6 +2154,17 @@ service Determined {
     };
   }
 
+  // Get Kubernetes Resource Quotas for a workspace by the cluster name.
+  rpc GetKubernetesResourceQuotas(GetKubernetesResourceQuotasRequest)
+      returns (GetKubernetesResourceQuotasResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/workspaces/{id}/get-k8-resource-quotas"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Workspaces"
+    };
+  }
+
   // Get the requested project.
   rpc GetProject(GetProjectRequest) returns (GetProjectResponse) {
     option (google.api.http) = {

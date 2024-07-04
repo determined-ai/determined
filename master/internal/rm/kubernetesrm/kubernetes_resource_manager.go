@@ -121,7 +121,6 @@ func New(
 			maxSlotsPerPod = *poolConfig.TaskContainerDefaults.Kubernetes.MaxSlotsPerPod
 		}
 
-		poolConfig := poolConfig
 		if k.config.DefaultNamespace == "" {
 			k.config.DefaultNamespace = defaultNamespace
 		}
@@ -411,6 +410,15 @@ func (k *ResourceManager) CreateNamespace(namespaceName string, clusterName stri
 		return fmt.Errorf("error creating namespace %s: %w", namespaceName, err)
 	}
 	return nil
+}
+
+// GetNamespaceResourceQuota gets the resource quota for the specified namespace.
+func (k *ResourceManager) GetNamespaceResourceQuota(namespaceName string, clusterName string) (*float64, error) {
+	quota, err := k.jobsService.GetNamespaceResourceQuota(namespaceName)
+	if err != nil {
+		return nil, fmt.Errorf("error deleting namespace %s: %w", namespaceName, err)
+	}
+	return quota, nil
 }
 
 // DeleteNamespace implements rm.ResourceManager.
