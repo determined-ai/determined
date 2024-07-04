@@ -27,8 +27,7 @@ example:
 
       example with various configuration options
 
-      This sample contains comments that explain the purpose of sections and options without needing
-      to refer back to the documentation.
+      This sample contains comments that explain the purpose of various options.
 
       .. code:: yaml
 
@@ -49,6 +48,9 @@ example:
          # Environment settings specifying the runtime environment
             image:
                gpu: "determinedai/environments:cuda-11.3-pytorch-1.10-deepspeed-0.8.3-gpu-0.22.1"
+            environment_variables:
+               - CUDA_VISIBLE_DEVICES=0
+               - PYTHONUNBUFFERED=1
 
          resources:
          # Resources used by the experiment
