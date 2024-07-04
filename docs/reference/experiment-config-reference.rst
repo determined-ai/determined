@@ -13,9 +13,113 @@ The behavior of an experiment is configured via a YAML file. A configuration fil
 passed as a command-line argument when an experiment is created with the Determined CLI. For
 example:
 
-.. code::
+.. tabs::
 
-   det experiment create config-file.yaml model-directory
+   .. tab::
+
+      example
+
+      .. code::
+
+         det experiment create config-file.yaml model-directory
+
+   .. tab::
+
+      example with various configuration options
+
+      This sample contains comments that explain the purpose of various options.
+
+      .. code:: yaml
+
+         # Sample YAML configuration file for an extensive experiment setup
+
+         metadata:
+         # Metadata for the experiment for easy identification and management
+            name: sample_experiment_name
+            description: "An example experiment configuration demonstrating various options."
+            tags:
+               - deep learning
+               - experiment
+
+         max_restarts: 3
+         # Maximum number of times the experiment is allowed to restart upon failure
+
+         environment:
+         # Environment settings specifying the runtime environment
+            image:
+               gpu: "determinedai/environments:cuda-11.3-pytorch-1.10-deepspeed-0.8.3-gpu-0.22.1"
+            environment_variables:
+               - CUDA_VISIBLE_DEVICES=0
+               - PYTHONUNBUFFERED=1
+
+         resources:
+         # Resources used by the experiment
+            slots_per_trial: 4
+            max_slots: 8
+            shm_size: 4294967296 # 4 GiB, shared memory size for the trial
+
+         searcher:
+         # Searcher configuration detailing the search strategy and objective
+            name: adaptive_asha
+            metric: "validation_loss"
+            max_length:
+               epochs: 50
+            smaller_is_better: true
+
+         hyperparameters:
+         # Hyperparameters for the model training
+            learning_rate:
+               type: double
+               min: 0.001
+               max: 0.1
+            batch_size:
+               type: categorical
+               vals:
+                  - 16
+                  - 32
+                  - 64
+                  - 128
+
+         checkpoint_storage:
+         # Checkpoint storage configuration detailing where and how checkpoints are stored
+            type: shared_fs
+            host_path: "/mnt/checkpoints"
+            storage_bucket: "my-checkpoint-bucket"
+
+         data_layer:
+         # Data layer configuration for efficient data handling
+            type: local
+            local_cache_dir: "/mnt/data_cache"
+
+         arbitrary_scripts:
+         # Configuration for arbitrary scripts that can be run as part of the experiment setup
+            pre_experiment:
+               - "python prepare_data.py"
+            post_experiment:
+               - "python cleanup.py"
+
+         notifications:
+         # Notifications about the experiment status
+            email: true
+            email_addresses:
+               - "user@example.com"
+
+         training_units:
+         # Additional notes on training units and their limitations
+            description: "Details limitations or special considerations regarding training units."
+
+         external_storage:
+         # Example section showing how to configure various external storage options
+            s3:
+               bucket_name: "my-s3-bucket"
+               access_key_id: "ABCDEF123456XYZ"
+               secret_access_key: "SecretKeyHere"
+            gcs:
+               bucket_name: "my-gcs-bucket"
+               project_id: "my-google-project"
+            azure:
+               container_name: "my-azure-container"
+               connection_string: "DefaultEndpointsProtocol=https;AccountName=...;AccountKey=...;EndpointSuffix=..."
 
 ****************
  Training Units
