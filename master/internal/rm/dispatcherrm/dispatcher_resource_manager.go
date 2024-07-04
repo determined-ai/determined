@@ -696,6 +696,11 @@ func (*DispatcherResourceManager) SetResourceQuota(int, string, string) error {
 	return rmerrors.ErrNotSupported
 }
 
+// GetNamespaceResourceQuota is not supported.
+func (*DispatcherResourceManager) GetNamespaceResourceQuota(string, string) (*float64, error) {
+	return nil, status.Error(codes.NotFound, rmerrors.ErrNotSupported.Error())
+}
+
 // ResolveResourcePool returns the resolved slurm partition or an error if it doesn't exist or
 // can't be resolved due to internal errors.
 // Note to developers: this function doesn't acquire a lock and, ideally, we won't make it, since

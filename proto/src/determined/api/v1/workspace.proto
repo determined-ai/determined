@@ -267,6 +267,27 @@ message SetResourceQuotasRequest {
 message SetResourceQuotasResponse {}
 
 // Request for listing namespaces bound to a workspace.
+message GetKubernetesResourceQuotasRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "id" ] }
+  };
+
+  // The unique id of the workspace.
+  int32 id = 1;
+}
+
+// Response for listing namespaces bound to a workspace.
+message GetKubernetesResourceQuotasResponse {
+  // List of namespaces bound to the workspace.
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "resource_quotas" ] }
+  };
+
+  // List of workspace-namespace bindings for a given workspace.
+  map<string, double> resource_quotas = 1;
+}
+
+// Request for listing namespaces bound to a workspace.
 message ListWorkspaceNamespaceBindingsRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "id" ] }

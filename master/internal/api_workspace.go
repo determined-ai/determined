@@ -750,7 +750,7 @@ func (a *apiServer) PatchWorkspace(
 
 		toDelete := []string{}
 		for cluster, metadata := range req.Workspace.ClusterNamespaceMeta {
-			if metadata.Namespace == nil {
+			if metadata.Namespace == nil && !metadata.AutoCreateNamespace {
 				toDelete = append(toDelete, cluster)
 				delete(req.Workspace.ClusterNamespaceMeta, cluster)
 			}
@@ -857,12 +857,12 @@ func (a *apiServer) setWorkspaceNamespaceBindings(ctx context.Context,
 			if !verified { // We only want to perform these actions once.
 				license.RequireLicense("auto-create namespace")
 				verified = true
-				err = a.m.rm.CreateNamespace(*autoCreatedNamespace, clusterName, false)
-				if err != nil {
-					return nil, err
-				}
-				namespace = *autoCreatedNamespace
 			}
+			err = a.m.rm.CreateNamespace(*autoCreatedNamespace, clusterName, false)
+			if err != nil {
+				return nil, err
+			}
+			namespace = *autoCreatedNamespace
 		default:
 			namespace = *metadata.Namespace
 		}
@@ -891,9 +891,10 @@ func (a *apiServer) setWorkspaceNamespaceBindings(ctx context.Context,
 			// The workspace has no saved namespace binding for the specified cluster, so we add
 			// one.
 			wsns = model.WorkspaceNamespace{
-				WorkspaceID: wkspID,
-				Namespace:   namespace,
-				ClusterName: clusterName,
+				WorkspaceID:         wkspID,
+				Namespace:           namespace,
+				ClusterName:         clusterName,
+				AutoCreateNamespace: autoCreateAll || metadata.AutoCreateNamespace,
 			}
 			if !isDefaultNamespace {
 				err = workspace.AddWorkspaceNamespaceBinding(ctx, &wsns, tx)
@@ -906,6 +907,7 @@ func (a *apiServer) setWorkspaceNamespaceBindings(ctx context.Context,
 				// Update the existing workspace-namespace binding for the specified cluster.
 				_, err = tx.NewUpdate().Model(&model.WorkspaceNamespace{}).
 					Set("namespace = ?", namespace).
+					Set("auto_create_namespace = ?", autoCreateAll || metadata.AutoCreateNamespace).
 					Where("workspace_id = ?", wkspID).
 					Where("namespace = ?", wsns.Namespace).
 					Where("cluster_name = ?", clusterName).
@@ -930,9 +932,10 @@ func (a *apiServer) setWorkspaceNamespaceBindings(ctx context.Context,
 		}
 
 		namespaceBindings[clusterName] = &workspacev1.WorkspaceNamespaceBinding{
-			WorkspaceId: w.Id,
-			Namespace:   namespace,
-			ClusterName: clusterName,
+			WorkspaceId:         w.Id,
+			Namespace:           namespace,
+			ClusterName:         clusterName,
+			AutoCreateNamespace: autoCreateAll || metadata.AutoCreateNamespace,
 		}
 	}
 
@@ -1399,4 +1402,38 @@ func (a *apiServer) ListRPsBoundToWorkspace(
 		ResourcePools: rpNames,
 		Pagination:    pagination,
 	}, nil
+}
+
+func (a *apiServer) GetKubernetesResourceQuotas(
+	ctx context.Context, req *apiv1.GetKubernetesResourceQuotasRequest,
+) (*apiv1.GetKubernetesResourceQuotasResponse, error) {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	err = workspace.AuthZProvider.Get().CanGetWorkspaceID(
+		ctx, *curUser, req.Id,
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	resp, err := a.ListWorkspaceNamespaceBindings(ctx, &apiv1.ListWorkspaceNamespaceBindingsRequest{Id: req.Id})
+	if err != nil {
+		return nil, err
+	}
+
+	quotas := map[string]float64{}
+	for _, v := range resp.NamespaceBindings {
+		if _, ok := a.m.allRms[v.ClusterName]; ok {
+			q, err := a.m.rm.GetNamespaceResourceQuota(v.Namespace, v.ClusterName)
+			if err != nil {
+				return nil, err
+			}
+			if q != nil {
+				quotas[v.ClusterName] = *q
+			}
+		}
+	}
+	return &apiv1.GetKubernetesResourceQuotasResponse{ResourceQuotas: quotas}, nil
 }
