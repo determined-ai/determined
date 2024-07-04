@@ -989,6 +989,71 @@ func setupClientSetForTests(namespaceName string,
 	return jobsClientSet
 }
 
+func TestGetNamespaceResourceQuota(t *testing.T) {
+	namespaceName := "bnamespace"
+
+	js := createMockJobsService(nil, device.CPU, false)
+
+	js.clientSet = setupClientSetForResourceQuotaTests(namespaceName, []int{3, 5})
+
+	resp, err := js.getNamespaceResourceQuota(namespaceName)
+	require.NoError(t, err)
+	require.Equal(t, 3, int(*resp))
+
+	js.clientSet = setupClientSetForResourceQuotaTests(namespaceName, []int{5})
+
+	resp, err = js.getNamespaceResourceQuota(namespaceName)
+	require.NoError(t, err)
+	require.Equal(t, 5, int(*resp))
+
+	js.clientSet = setupClientSetForResourceQuotaTests(namespaceName, []int{5, 10, 15})
+
+	resp, err = js.getNamespaceResourceQuota(namespaceName)
+	require.NoError(t, err)
+	require.Equal(t, 5, int(*resp))
+
+	js.clientSet = setupClientSetForResourceQuotaTests(namespaceName, []int{})
+
+	resp, err = js.getNamespaceResourceQuota(namespaceName)
+	require.NoError(t, err)
+	require.Nil(t, resp)
+}
+
+func setupClientSetForResourceQuotaTests(namespaceName string, resourceQuotaList []int,
+) kubernetes.Interface {
+	jobsClientSet := &mocks.K8sClientsetInterface{}
+	coreV1Interface := &mocks.K8sCoreV1Interface{}
+
+	qlist := []k8sV1.ResourceQuota{}
+	for i, v := range resourceQuotaList {
+		q := k8sV1.ResourceQuota{
+			TypeMeta: metaV1.TypeMeta{
+				Kind:       "ResourceQuota",
+				APIVersion: "v1",
+			},
+			ObjectMeta: metaV1.ObjectMeta{Name: "q-" + strconv.Itoa(i)},
+			Spec: k8sV1.ResourceQuotaSpec{
+				Hard: k8sV1.ResourceList{
+					k8sV1.ResourceName("requests." + ResourceTypeNvidia): *resource.
+						NewQuantity(int64(v), resource.DecimalSI),
+				},
+			},
+		}
+		qlist = append(qlist, q)
+	}
+	resourceQuotaInterface := &mocks.ResourceQuotaInterface{}
+	k8sResourceQuota := &k8sV1.ResourceQuotaList{
+		Items: qlist,
+	}
+	resourceQuotaInterface.On("List", context.Background(), metaV1.ListOptions{}).
+		Return(k8sResourceQuota, nil).Once()
+	coreV1Interface.On("ResourceQuotas", namespaceName).Return(resourceQuotaInterface)
+
+	jobsClientSet.On("CoreV1").Return(coreV1Interface)
+
+	return jobsClientSet
+}
+
 func TestDefaultNamespace(t *testing.T) {
 	js := createMockJobsService(nil, device.CPU, false)
 

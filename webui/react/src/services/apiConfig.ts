@@ -1606,6 +1606,22 @@ export const patchWorkspace: DetApi<
   },
 };
 
+export const getKubernetesResourceQuotas: DetApi<
+  Service.GetKubernetesResourceQuotasParamas,
+  Api.V1GetKubernetesResourceQuotasResponse,
+  Type.WorkspaceResourceQuotas
+> = {
+  name: 'listWorkspaceNamespaceBindings',
+  postProcess: (response) => {
+    return {
+      resourceQuotas: response.resourceQuotas,
+    };
+  },
+  request: (params) => {
+    return detApi.Workspaces.getKubernetesResourceQuotas(params.id);
+  },
+};
+
 export const listWorkspaceNamespaceBindings: DetApi<
   Service.ListWorkspaceNamespaceBindingsParams,
   Api.V1ListWorkspaceNamespaceBindingsResponse,
@@ -1614,11 +1630,28 @@ export const listWorkspaceNamespaceBindings: DetApi<
   name: 'listWorkspaceNamespaceBindings',
   postProcess: (response) => {
     return {
-      clusterNamespacePairs: response.namespaceBindings,
+      namespaceBindings: response.namespaceBindings,
     };
   },
   request: (params) => {
     return detApi.Workspaces.listWorkspaceNamespaceBindings(params.id);
+  },
+};
+
+export const setResourceQuotas: DetApi<
+  Api.V1SetResourceQuotasRequest,
+  Api.V1SetResourceQuotasResponse,
+  void
+> = {
+  name: 'setResourceQuotas',
+  postProcess: () => {
+    return {};
+  },
+  request: (params) => {
+    return detApi.Workspaces.setResourceQuotas(params.id, {
+      clusterQuotaPairs: params.clusterQuotaPairs,
+      id: params.id,
+    });
   },
 };
 
