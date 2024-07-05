@@ -1,5 +1,3 @@
-# **** This is a partial config to insert after the auto-setup config
-
 ## @param dd_url - string - optional - default: https://app.*************
 ## @env DD_DD_URL - string - optional - default: https://app.*************
 ## @env DD_URL - string - optional - default: https://app.*************
