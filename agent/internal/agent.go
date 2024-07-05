@@ -120,8 +120,7 @@ func (a *Agent) run(ctx context.Context) error {
 
 	a.log.Tracef("setting up %s runtime", a.opts.ContainerRuntime)
 	if a.opts.ContainerRuntime != options.DockerContainerRuntime {
-		a.log.Error(
-			"%w Container Runtime is not supported, please update agent container runtime config to use Docker instead.",
+		a.log.Error("%w Container Runtime is not supported, please update runtime config to use Docker instead.",
 			a.opts.ContainerRuntime)
 		return fmt.Errorf("%s Container Runtime not available", a.opts.ContainerRuntime)
 	}
