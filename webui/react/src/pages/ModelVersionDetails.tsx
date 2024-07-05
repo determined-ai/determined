@@ -188,7 +188,6 @@ const ModelVersionDetails: React.FC = () => {
       .map((key) => ({ name: key, size: humanReadableBytes(checkpointResources[key]) }));
     const hasExperiment = !!modelVersion.checkpoint.experimentId;
     const pachydermData = modelVersion.checkpoint.experimentConfig?.integrations?.pachyderm;
-    const url = pachydermData ? createPachydermLineageLink(pachydermData) : undefined;
     const infoElements = [
       {
         label: 'Source',
@@ -231,11 +230,14 @@ const ModelVersionDetails: React.FC = () => {
       },
     ];
 
-    if (pachydermData !== undefined)
+    if (pachydermData !== undefined) {
+      const url = createPachydermLineageLink(pachydermData);
+
       infoElements.splice(1, 0, {
         label: 'Data Input',
         value: <Link path={url}>{pachydermData?.dataset.repo}</Link>,
       });
+    }
 
     return infoElements;
   }, [modelVersion?.checkpoint]);
