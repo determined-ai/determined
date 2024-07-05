@@ -53,7 +53,7 @@ const SignOut: React.FC = () => {
       } else {
         const searchParameters = [`?r=${Math.random()}`];
         if (queries.has('remote_expired')) {
-          searchParameters.push(`&remote_expired=${queries.get('remote_expired') || ''}`);
+          searchParameters.push(`&remote_expired=${queries.get('remote_expired') ?? ''}`);
         }
         if (queries.has('redirect'))
           searchParameters.push(`&redirect=${queries.get('redirect') || ''}`);
