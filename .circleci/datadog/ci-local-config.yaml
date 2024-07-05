@@ -1845,14 +1845,14 @@ process_config:
 ## Valid log levels are: trace, debug, info, warn, error, critical, and off.
 ## Note: When using the 'off' log level, quotes are mandatory.
 #
-# log_level: 'info'
+log_level: 'debug'
 
 ## @param log_file - string - optional
 ## @env DD_LOG_FILE - string - optional
 ## Path of the log file for the Datadog Agent.
 ## See https://docs.*************/agent/guide/agent-log-files/
 #
-# log_file: <AGENT_LOG_FILE_PATH>
+log_file: /tmp/test-results/logs/dd-agent-log.txt
 
 ## @param log_format_json - boolean - optional - default: false
 ## @env DD_LOG_FORMAT_JSON - boolean - optional - default: false
