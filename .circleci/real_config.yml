@@ -641,7 +641,6 @@ commands:
                   ci.nodeIdx:${CIRCLE_NODE_INDEX},\
                   git.pr_num:${CIRCLE_PR_NUMBER}"
                   
-                  echo "$host_tags"
                   DD_ENV="ci-${CIRCLE_JOB}" \
                   DD_HOST_TAGS="$host_tags" \
                   DD_SERVICE="determined-pytest-<<parameters.mark>>" \
