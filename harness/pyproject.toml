@@ -68,9 +68,9 @@ Documentation = "https://docs.determined.ai/"
 line-length = 100
 exclude = '(_gen.py|determined/_swagger/client/*)'
 
-[tool.setuptools_scm]
-# Path relative_to pyproject.toml. Necessary for correct git metadata parsing.
-root = "../"
+# [tool.setuptools_scm]
+# # Path relative_to pyproject.toml. Necessary for correct git metadata parsing.
+# root = "../"
 
 [tool.setuptools]
 include-package-data = true
