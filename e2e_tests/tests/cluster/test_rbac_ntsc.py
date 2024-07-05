@@ -342,7 +342,7 @@ def test_tsb_listed() -> None:
         assert tsbs[0].id == created_id, "should be the tensorboard we created"
 
         tsbs = bindings.get_GetTensorboards(viewer_sess, workspaceId=workspace.id).tensorboards
-        assert len(tsbs) == 1, "should be one tensorboard"
+        assert len(tsbs) == 2, "should be one tensorboard" # DNJ TODO - testing, DO NOT MERGE, set back to 1
         assert tsbs[0].id == created_id, "should be the tensorboard we created"
 
 
