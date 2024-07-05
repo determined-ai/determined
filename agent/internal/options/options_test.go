@@ -84,7 +84,6 @@ log:
 master_host: master_host_IP
 master_port: 5000
 agent_id: agent_device_name
-label: deprecated
 resource_pool: agent_rp
 container_master_host: docker_localhost
 container_master_port: 2000
