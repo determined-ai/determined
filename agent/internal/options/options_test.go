@@ -122,7 +122,6 @@ container_runtime: docker_runtime_env
 				MasterHost:          "master_host_IP",
 				MasterPort:          5000,
 				AgentID:             "agent_device_name",
-				Label:               "deprecated",
 				ResourcePool:        "agent_rp",
 				ContainerMasterHost: "docker_localhost",
 				ContainerMasterPort: 2000,
