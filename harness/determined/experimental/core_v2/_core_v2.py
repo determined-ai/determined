@@ -150,7 +150,8 @@ def _init_context(
         # Managed trials.
         if config is not None or defaults is not None or unmanaged is not None:
             warnings.warn(
-                "Running experiment in managed mode ignores all config passed through `config`, `defaults` and `unmanaged`",
+                "Running experiment in managed mode ignores all config"
+                "passed through `config`, `defaults` and `unmanaged`",
                 FutureWarning,
                 stacklevel=2,
             )
