@@ -1,4 +1,5 @@
 logs:
   - type: file
     path: "/tmp/artifacts/logs/*.log"
+    service: "<SERVICE_NAME>"
     source: "determined-task-logs"
