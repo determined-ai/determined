@@ -661,6 +661,7 @@ commands:
                   sudo systemctl stop datadog-agent
                   sudo systemctl start datadog-agent
                   sleep 5
+                  sudo datadog-agent status
       # Wait for master before splitting tests, since so many splits depend on
       # asking master for its configuration in order to apply skipifs.
       - when:
