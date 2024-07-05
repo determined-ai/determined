@@ -705,7 +705,6 @@ commands:
             DD_TAGS='${tags}' \
             DD_ENV='ci-<<parameters.mark>>' \
             DD_SERVICE='determined-pytest-<<parameters.mark>>' \
-            DD_AGENTLESS_LOG_SUBMISSION_ENABLED=true \
             DD_LOGS_INJECTION=true \
             DET_MASTER_CERT_FILE=<<parameters.master-cert>> \
             DET_MASTER_CERT_NAME=<<parameters.master-cert-name>> \
@@ -714,7 +713,6 @@ commands:
             -m '<<parameters.mark>>' \
             --durations=0 \
             --ddtrace \
-            --ddtrace-patch-all \
             --master-scheme='<<parameters.master-scheme>>' \
             --master-host='<<parameters.master-host>>' \
             --master-port='<<parameters.master-port>>' \
