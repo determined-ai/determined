@@ -1269,7 +1269,7 @@ logs_config:
   # @env DD_APM_INSTRUMENTATION_ENABLED - boolean - default: false
   # Enables Single Step Instrumentation in the cluster (in beta)
   
-  instrumentation_enabled: true
+  # instrumentation_enabled: true
 
   ## @param instrumentation_enabled_namespaces - list of strings - optional
   ## @env DD_APM_INSTRUMENTATION_ENABLED_NAMESPACES - space separated list of strings - optional
