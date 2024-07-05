@@ -1,0 +1,5 @@
+:orphan:
+
+**Improvements**
+
+-  Shells: Change default RSA key size to 2048 bits.

@@ -107,7 +107,7 @@ func DefaultConfig() *Config {
 				Group: "root",
 			},
 			SSH: SSHConfig{
-				RsaKeySize: 1024,
+				RsaKeySize: 2048,
 			},
 			AuthZ: *DefaultAuthZConfig(),
 		},
