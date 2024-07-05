@@ -1852,7 +1852,7 @@ log_level: 'debug'
 ## Path of the log file for the Datadog Agent.
 ## See https://docs.*************/agent/guide/agent-log-files/
 #
-log_file: /tmp/test-results/logs/dd-agent-log.txt
+log_file: /tmp/artifacts/logs/dd-agent-log.txt
 
 ## @param log_format_json - boolean - optional - default: false
 ## @env DD_LOG_FORMAT_JSON - boolean - optional - default: false

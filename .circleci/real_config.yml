@@ -645,7 +645,7 @@ commands:
                   ci.totalNodes:${CIRCLE_NODE_TOTAL},\
                   ci.nodeIdx:${CIRCLE_NODE_INDEX},\
                   git.pr_num:${CIRCLE_PR_NUMBER}"
-                  sudo mkdir -p /tmp/test-results/logs
+                  sudo mkdir -p /tmp/artifacts/logs
                   DD_ENV="ci-${CIRCLE_JOB}" \
                   DD_HOST_TAGS="$host_tags" \
                   DD_SERVICE="determined-pytest-<<parameters.mark>>" \
