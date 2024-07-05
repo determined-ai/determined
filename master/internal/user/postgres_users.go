@@ -25,7 +25,7 @@ const (
 	PersonalGroupPostfix = "DeterminedPersonalGroup"
 )
 
-// ErrRemoteUserTokenExpired notifies that the external user token has expired.
+// ErrRemoteUserTokenExpired notifies that the remote user's token has expired.
 var ErrRemoteUserTokenExpired = status.Error(codes.Unauthenticated, "remote user token expired")
 
 // UserSessionOption is the return type for WithInheritedClaims helper function.
