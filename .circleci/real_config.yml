@@ -149,6 +149,7 @@ commands:
     steps:
       - run:
           name: "Ensure necessary Python packages are available."
+          when: always
           command: |
             pkg_names="fire determined"
             for pkg_name in $pkg_names; do
@@ -158,6 +159,7 @@ commands:
             done
       - run:
           name: "Collect logs and calculate statistics"
+          when: always
           command: |
             target_dir="<< parameters.store_path >>"
             mkdir -p $target_dir
