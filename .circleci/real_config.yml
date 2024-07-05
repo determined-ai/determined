@@ -652,7 +652,7 @@ commands:
                   sudo usermod -a -G docker dd-agent
                   sudo systemctl stop datadog-agent
                   sudo systemctl start datadog-agent
-                  sleep 15
+                  sleep 5
                   sudo datadog-agent status
       # Wait for master before splitting tests, since so many splits depend on
       # asking master for its configuration in order to apply skipifs.
@@ -705,7 +705,6 @@ commands:
             DD_TAGS='${tags}' \
             DD_ENV='ci-<<parameters.mark>>' \
             DD_SERVICE='determined-pytest-<<parameters.mark>>' \
-            DD_LOGS_INJECTION=true \
             DET_MASTER_CERT_FILE=<<parameters.master-cert>> \
             DET_MASTER_CERT_NAME=<<parameters.master-cert-name>> \
             IS_CIRCLECI_JOB=1 XDG_CONFIG_HOME=/tmp \
