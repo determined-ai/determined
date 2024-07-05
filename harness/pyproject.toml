@@ -72,9 +72,6 @@ exclude = '(_gen.py|determined/_swagger/client/*)'
 # Path relative_to pyproject.toml. Necessary for correct git metadata parsing.
 root = "../"
 
-local_scheme = "no-local-version"
-git_describe_command = "git describe --tags --always"
-
 [tool.setuptools]
 include-package-data = true
 
