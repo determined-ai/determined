@@ -1275,7 +1275,8 @@ export const FlatRunAction = {
   Delete: 'Delete',
   Kill: 'Kill',
   Move: 'Move',
-  // Pause: 'Pause',
+  Pause: 'Pause',
+  Resume: 'Resume',
   Unarchive: 'Unarchive',
 } as const;
 
