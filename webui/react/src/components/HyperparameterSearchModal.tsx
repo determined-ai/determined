@@ -79,6 +79,7 @@ interface HyperparameterRowValues {
   min?: number;
   type: HyperparameterType;
   value?: number | string;
+  name: string;
 }
 
 const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JSX.Element => {
@@ -155,10 +156,13 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
     }
 
     // Parsing hyperparameters
+    baseConfig.hyperparameters = {};
     Object.entries(fields)
       .filter((field) => typeof field[1] === 'object')
       .forEach((hp) => {
+        // hpName is the name at the time of the form rendering, while the name field in hpInfo is the updated name.
         const hpName = hp[0];
+        if (!currentHPs?.map((h) => h.name).includes(hpName)) return;
         const hpInfo = hp[1] as HyperparameterRowValues;
         if (hpInfo.type === HyperparameterType.Categorical) return;
         else if (hpInfo.type === HyperparameterType.Constant) {
@@ -174,13 +178,13 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
           } catch (e) {
             parsedVal = hpInfo.value;
           }
-          baseConfig.hyperparameters[hpName] = {
+          baseConfig.hyperparameters[hpInfo.name] = {
             type: hpInfo.type,
             val: parsedVal,
           };
         } else {
-          const prevBase: number | undefined = baseConfig.hyperparameters[hpName]?.base;
-          baseConfig.hyperparameters[hpName] = {
+          const prevBase: number | undefined = baseConfig.hyperparameters[hpInfo.name]?.base;
+          baseConfig.hyperparameters[hpInfo.name] = {
             base: hpInfo.type === HyperparameterType.Log ? prevBase ?? DEFAULT_LOG_BASE : undefined,
             count: fields.searcher === SEARCH_METHODS.Grid.id ? hpInfo.count : undefined,
             maxval:
@@ -198,7 +202,6 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
 
     // Unflatten hyperparameters to deal with nesting
     baseConfig.hyperparameters = unflattenObject(baseConfig.hyperparameters);
-
     const newConfig = yaml.dump(baseConfig);
 
     try {
@@ -239,7 +242,7 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
       // We throw an error to prevent the modal from closing.
       throw new DetError(errorMessage, { publicMessage: errorMessage, silent: true });
     }
-  }, [experiment.configRaw, experiment.id, experiment.projectId, form]);
+  }, [experiment.configRaw, experiment.id, experiment.projectId, form, currentHPs]);
 
   const handleOk = useCallback(() => {
     if (currentPage === 0) {
@@ -700,8 +703,8 @@ const HyperparameterRow: React.FC<RowProps> = ({
   return (
     <>
       <div className={css.hyperparameterName}>
-        <Form.Item initialValue={name} name={[name, 'name']}>
-          <Input aria-labelledby="name" disabled={active} onChange={validateValue} />
+        <Form.Item initialValue={name} name={[name, 'name']} rules={[{ required: true }]}>
+          <Input aria-labelledby="name" onChange={validateValue} />
         </Form.Item>
       </div>
       <Form.Item initialValue={hyperparameter.type} name={[name, 'type']} noStyle>
