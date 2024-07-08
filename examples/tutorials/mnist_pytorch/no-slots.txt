@@ -1,0 +1,207 @@
+{
+    "agents": [
+        {
+            "id": "gke-release-party-release-party-accel-0d5a9ff2-5dcn",
+            "registeredTime": "2024-06-24T20:50:56Z",
+            "slots": {},
+            "containers": {},
+            "label": "",
+            "addresses": [
+                "10.138.0.76",
+                "34.82.254.138",
+                "gke-release-party-release-party-accel-0d5a9ff2-5dcn"
+            ],
+            "enabled": true,
+            "draining": false,
+            "version": "",
+            "resourcePools": [
+                "default"
+            ],
+            "slotStats": {
+                "typeStats": {
+                    "TYPE_CUDA": {
+                        "states": {},
+                        "draining": 0,
+                        "disabled": 0,
+                        "total": 4
+                    }
+                },
+                "brandStats": {
+                    "": {
+                        "states": {},
+                        "draining": 0,
+                        "disabled": 0,
+                        "total": 4
+                    }
+                }
+            }
+        },
+        {
+            "id": "gke-release-party-release-party-accel-0d5a9ff2-kq7q",
+            "registeredTime": "2024-06-24T20:56:27Z",
+            "slots": {},
+            "containers": {},
+            "label": "",
+            "addresses": [
+                "10.138.0.77",
+                "35.230.42.14",
+                "gke-release-party-release-party-accel-0d5a9ff2-kq7q"
+            ],
+            "enabled": true,
+            "draining": false,
+            "version": "",
+            "resourcePools": [
+                "default"
+            ],
+            "slotStats": {
+                "typeStats": {
+                    "TYPE_CUDA": {
+                        "states": {
+                            "STATE_RUNNING": 1
+                        },
+                        "draining": 0,
+                        "disabled": 0,
+                        "total": 4
+                    }
+                },
+                "brandStats": {
+                    "": {
+                        "states": {
+                            "STATE_RUNNING": 1
+                        },
+                        "draining": 0,
+                        "disabled": 0,
+                        "total": 4
+                    }
+                }
+            }
+        },
+        {
+            "id": "gke-release-party-release-party-accel-0d5a9ff2-lc92",
+            "registeredTime": "2024-06-24T19:46:46Z",
+            "slots": {},
+            "containers": {},
+            "label": "",
+            "addresses": [
+                "10.138.0.54",
+                "35.197.76.59",
+                "gke-release-party-release-party-accel-0d5a9ff2-lc92"
+            ],
+            "enabled": true,
+            "draining": false,
+            "version": "",
+            "resourcePools": [
+                "default"
+            ],
+            "slotStats": {
+                "typeStats": {
+                    "TYPE_CUDA": {
+                        "states": {
+                            "STATE_RUNNING": 1
+                        },
+                        "draining": 0,
+                        "disabled": 0,
+                        "total": 4
+                    }
+                },
+                "brandStats": {
+                    "": {
+                        "states": {
+                            "STATE_RUNNING": 1
+                        },
+                        "draining": 0,
+                        "disabled": 0,
+                        "total": 4
+                    }
+                }
+            }
+        },
+        {
+            "id": "gke-release-party-release-party-accel-0d5a9ff2-qfww",
+            "registeredTime": "2024-06-24T20:50:13Z",
+            "slots": {},
+            "containers": {},
+            "label": "",
+            "addresses": [
+                "10.138.0.74",
+                "35.197.59.174",
+                "gke-release-party-release-party-accel-0d5a9ff2-qfww"
+            ],
+            "enabled": true,
+            "draining": false,
+            "version": "",
+            "resourcePools": [
+                "default"
+            ],
+            "slotStats": {
+                "typeStats": {
+                    "TYPE_CUDA": {
+                        "states": {
+                            "STATE_RUNNING": 3
+                        },
+                        "draining": 0,
+                        "disabled": 0,
+                        "total": 4
+                    }
+                },
+                "brandStats": {
+                    "": {
+                        "states": {
+                            "STATE_RUNNING": 3
+                        },
+                        "draining": 0,
+                        "disabled": 0,
+                        "total": 4
+                    }
+                }
+            }
+        },
+        {
+            "id": "gke-release-party-release-party-accel-0d5a9ff2-zwgz",
+            "registeredTime": "2024-06-24T20:50:10Z",
+            "slots": {},
+            "containers": {},
+            "label": "",
+            "addresses": [
+                "10.138.0.73",
+                "34.105.69.198",
+                "gke-release-party-release-party-accel-0d5a9ff2-zwgz"
+            ],
+            "enabled": true,
+            "draining": false,
+            "version": "",
+            "resourcePools": [
+                "default"
+            ],
+            "slotStats": {
+                "typeStats": {
+                    "TYPE_CUDA": {
+                        "states": {
+                            "STATE_RUNNING": 2
+                        },
+                        "draining": 0,
+                        "disabled": 0,
+                        "total": 4
+                    }
+                },
+                "brandStats": {
+                    "": {
+                        "states": {
+                            "STATE_RUNNING": 2
+                        },
+                        "draining": 0,
+                        "disabled": 0,
+                        "total": 4
+                    }
+                }
+            }
+        }
+    ],
+    "pagination": {
+        "offset": 0,
+        "limit": 0,
+        "startIndex": 0,
+        "endIndex": 5,
+        "total": 5
+    }
+}
