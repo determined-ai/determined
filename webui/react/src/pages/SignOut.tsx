@@ -51,13 +51,13 @@ const SignOut: React.FC = () => {
         const isAuthenticated = await checkAuth();
         if (isAuthenticated) routeAll(info.externalLogoutUri);
       } else {
-        const searchParameters = [`?r=${Math.random()}`];
-        if (queries.has('remote_expired')) {
-          searchParameters.push(`&remote_expired=${queries.get('remote_expired') ?? ''}`);
-        }
-        if (queries.has('redirect'))
-          searchParameters.push(`&redirect=${queries.get('redirect') || ''}`);
-        navigate(paths.login() + searchParameters.join(''), { state: location.state });
+        const searchParameters = new URLSearchParams();
+        searchParameters.append('r', String(Math.random()));
+        if (queries.has('remote_expired'))
+          searchParameters.append('remote_expired', queries.get('remote_expired') ?? 'false');
+        if (queries.has('hard_logout'))
+          searchParameters.append('hard_logout', queries.get('hard_logout') ?? 'false');
+        navigate(paths.login() + '?' + searchParameters.toString(), { state: location.state });
       }
     };
 

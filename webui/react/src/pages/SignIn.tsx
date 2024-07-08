@@ -107,16 +107,17 @@ const SignIn: React.FC = () => {
    *   1. jwt query param detected
    *   2. cluster has `externalLoginUri` defined
    *   3. authentication hasn't occurred yet
+   *   4. a remote user token has expired
+   *   5. an SSO providers is set to always redirect
    * This will prevent the form from showing for a split second when
    * accessing a page from the browser when the user is already verified.
    */
-  if (
-    queries.has('jwt') ||
-    info.externalLoginUri ||
-    !isAuthChecked ||
-    queries.has('remote_expired')
-  )
-    return null;
+  const redirectToSSO =
+    !queries.get('hard_logout') &&
+    (queries.get('remote_expired') ||
+      info.ssoProviders?.some((ssoProvider) => ssoProvider.alwaysRedirect));
+
+  if (queries.has('jwt') || info.externalLoginUri || !isAuthChecked || redirectToSSO) return null;
 
   /*
    * An external auth error occurs when there are external auth urls,

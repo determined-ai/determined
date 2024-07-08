@@ -22,6 +22,9 @@ message SSOProvider {
   string sso_url = 2;
   // The type of SSO (such as SAML, OIDC).
   string type = 3;
+  // The flag to indicates if this provider should be always be redirected to,
+  // instead of showing the standard sign-in page.
+  bool always_redirect = 4;
 }
 
 // Active notice from the server admin.

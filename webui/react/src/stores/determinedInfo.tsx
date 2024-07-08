@@ -10,6 +10,7 @@ export interface SsoProvider {
   name: string;
   ssoUrl: string;
   type: string;
+  alwaysRedirect?: boolean;
 }
 
 export const BrandingType = {

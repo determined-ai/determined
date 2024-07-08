@@ -44,6 +44,9 @@ const useAuthCheck = (): (() => Promise<boolean>) => {
     const cookieToken = getCookie(AUTH_COOKIE_KEY);
     const authToken = jwtToken ?? cookieToken ?? globalStorage.authToken;
 
+    // check if the user clicked the logout button, which ignores SSO redirection
+    const hardLogout = window.location.href.includes('hard_logout=true');
+
     /*
      * If an auth token is found, validate it with the current user API, then update
      * the API bearer token and set the user as authenticated.
@@ -57,15 +60,16 @@ const useAuthCheck = (): (() => Promise<boolean>) => {
         updateBearerToken(authToken);
         authStore.setAuth({ isAuthenticated: true, token: authToken });
       } catch (e) {
+        // If an invalid auth token is detected we need to properly handle the auth error
         if (isRemoteUserTokenExpired(e)) {
           info.ssoProviders?.forEach((ssoProvider) => {
             ssoProvider.type === 'OIDC'
               ? routeToExternalUrl(ssoProvider.ssoUrl)
               : routeToExternalUrl(samlUrl(ssoProvider.ssoUrl));
           });
+        } else {
+          handleError(e);
         }
-        // If an invalid auth token is detected we need to properly handle the auth error
-        handleError(e);
       }
       authStore.setAuthChecked();
     } else if (info.externalLoginUri) {
@@ -80,6 +84,23 @@ const useAuthCheck = (): (() => Promise<boolean>) => {
       }
       authStore.setAuth({ isAuthenticated: true });
       authStore.setAuthChecked();
+    } else if (
+      !hardLogout &&
+      info.ssoProviders?.some((ssoProvider) => ssoProvider.alwaysRedirect)
+    ) {
+      try {
+        await getCurrentUser({});
+      } catch (e) {
+        if (isAuthFailure(e)) {
+          info.ssoProviders.forEach((ssoProvider) => {
+            if (ssoProvider.type === 'OIDC') {
+              routeToExternalUrl(ssoProvider.ssoUrl);
+            } else {
+              routeToExternalUrl(samlUrl(ssoProvider.ssoUrl));
+            }
+          });
+        }
+      }
     } else {
       authStore.setAuthChecked();
     }
