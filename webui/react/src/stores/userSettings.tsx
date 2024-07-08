@@ -233,9 +233,9 @@ export class UserSettingsStore extends PollingStore {
       const response = await getUserSetting({ signal: this.canceler?.signal });
       this.updateSettingsFromResponse(response);
     } catch (error) {
-      // if the error is due to an expired token, don't hide public message, to
-      // ensure a redirect to the SSO providers
       if (isRemoteUserTokenExpired(error)) {
+        // ensure a redirect to the SSO providers is triggered,
+        // by not hiding the public message.
         handleError(error);
       } else {
         handleError(error, {
