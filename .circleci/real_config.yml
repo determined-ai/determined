@@ -629,46 +629,45 @@ commands:
         default: true
     steps:
       - when:
-          condition: 
-            and:
-              - <<parameters.wait-for-master>>
-              - equal: [ true, "$AIS_DD_ENABLE_MONITORING" ]
+          condition: <<parameters.wait-for-master>>
           steps:
             - run:
                 name: Install DataDog agent
                 command: |
-                  host_tags="test.mark:<<parameters.mark>>,\
-                  ci.pipeline_id:${CIRCLE_PIPELINE_ID},\
-                  ci.workflow_id:${CIRCLE_WORKFLOW_ID},\
-                  ci.job_num:${CIRCLE_BUILD_NUM},\
-                  ci.username:${CIRCLE_USERNAME},\
-                  git.tag:${CIRCLE_TAG},\
-                  git.commit:${CIRCLE_SHA1},\
-                  git.repo:${CIRCLE_PROJECT_REPONAME},\
-                  ci.totalNodes:${CIRCLE_NODE_TOTAL},\
-                  ci.nodeIdx:${CIRCLE_NODE_INDEX},\
-                  git.pr_num:${CIRCLE_PR_NUMBER}"
+                  if [ "$AIS_DD_ENABLE_MONITORING" == "true" ]; then
+                    host_tags="test.mark:<<parameters.mark>>,\
+                    ci.pipeline_id:${CIRCLE_PIPELINE_ID},\
+                    ci.workflow_id:${CIRCLE_WORKFLOW_ID},\
+                    ci.job_num:${CIRCLE_BUILD_NUM},\
+                    ci.username:${CIRCLE_USERNAME},\
+                    git.tag:${CIRCLE_TAG},\
+                    git.commit:${CIRCLE_SHA1},\
+                    git.repo:${CIRCLE_PROJECT_REPONAME},\
+                    ci.totalNodes:${CIRCLE_NODE_TOTAL},\
+                    ci.nodeIdx:${CIRCLE_NODE_INDEX},\
+                    git.pr_num:${CIRCLE_PR_NUMBER}"
 
-                  sudo mkdir -p /tmp/artifacts/logs
-                  sudo chmod -R a+rw /tmp/artifacts/logs
+                    sudo mkdir -p /tmp/artifacts/logs
+                    sudo chmod -R a+rw /tmp/artifacts/logs
 
-                  DD_ENV="ci-${CIRCLE_JOB}" \
-                  DD_HOST_TAGS="$host_tags" \
-                  DD_SERVICE="determined-pytest-<<parameters.mark>>" \
-                  bash -c "$(curl -L https://s3.amazonaws.com/dd-agent/scripts/install_script_agent7.sh)"
-                  
-                  # config files for the agent have an expected file structure
-                  sudo mkdir -p /etc/datadog-agent/conf.d/determined-master.d/
-                  sudo chmod a+rw /etc/datadog-agent/datadog.yaml
-                  sudo chmod -R a+rw /etc/datadog-agent/conf.d/determined-master.d/
-                  sudo cat .circleci/datadog/ci-local-config.yaml >> /etc/datadog-agent/datadog.yaml
-                  sudo sed -e "s/<SERVICE_NAME>/determined-pytest-<<parameters.mark>>/g" .circleci/datadog/e2e-log-settings.yaml > /etc/datadog-agent/conf.d/determined-master.d/conf.yaml
-                  # restart agent with config
-                  sudo usermod -a -G docker dd-agent
-                  sudo systemctl stop datadog-agent
-                  sudo systemctl start datadog-agent
-                  sleep 5
-                  sudo datadog-agent status
+                    DD_ENV="ci-${CIRCLE_JOB}" \
+                    DD_HOST_TAGS="$host_tags" \
+                    DD_SERVICE="determined-pytest-<<parameters.mark>>" \
+                    bash -c "$(curl -L https://s3.amazonaws.com/dd-agent/scripts/install_script_agent7.sh)"
+                    
+                    # config files for the agent have an expected file structure
+                    sudo mkdir -p /etc/datadog-agent/conf.d/determined-master.d/
+                    sudo chmod a+rw /etc/datadog-agent/datadog.yaml
+                    sudo chmod -R a+rw /etc/datadog-agent/conf.d/determined-master.d/
+                    sudo cat .circleci/datadog/ci-local-config.yaml >> /etc/datadog-agent/datadog.yaml
+                    sudo sed -e "s/<SERVICE_NAME>/determined-pytest-<<parameters.mark>>/g" .circleci/datadog/e2e-log-settings.yaml > /etc/datadog-agent/conf.d/determined-master.d/conf.yaml
+                    # restart agent with config
+                    sudo usermod -a -G docker dd-agent
+                    sudo systemctl stop datadog-agent
+                    sudo systemctl start datadog-agent
+                    sleep 5
+                    sudo datadog-agent status
+                  fi
       # Wait for master before splitting tests, since so many splits depend on
       # asking master for its configuration in order to apply skipifs.
       - when:
@@ -761,7 +760,10 @@ commands:
             - run: # We don't know how long Circle leaves these machines running in the background. Take down the agent for safety.
                 name: Stop DataDog agent
                 when: always
-                command: sudo systemctl stop datadog-agent || true
+                command: |
+                  if [ "$AIS_DD_ENABLE_MONITORING" == "true" ]; then
+                    sudo systemctl stop datadog-agent || true
+                  fi
             
 
   run-det-deploy-tests:
