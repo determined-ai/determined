@@ -1,9 +1,22 @@
-import { DropdownContent } from 'e2e/models/common/hew/Dropdown';
+import { BaseComponent } from 'e2e/models/common/base/BaseComponent';
+import { DropdownMenu } from 'e2e/models/common/hew/Dropdown';
+import { Modal } from 'e2e/models/common/hew/Modal';
 
 /**
  * Represents the ExperimentActionDropdown component in src/components/ExperimentActionDropdown.tsx
  */
-export class ExperimentActionDropdown extends DropdownContent {
-  // TODO where is this thing? <Button icon={<Icon name="overflow-vertical" size="small" title="Action menu" />} />
-  // TODO I'm assuming it's new tab, new window, copy value, etc
+
+class ExperimentEditModal extends Modal {
+  readonly nameInput = new BaseComponent({
+    parent: this,
+    selector: 'input[id="experimentName"]',
+  });
+}
+
+export class ExperimentActionDropdown extends DropdownMenu {
+  readonly edit = this.menuItem('Edit');
+
+  readonly editModal = new ExperimentEditModal({
+    root: this.root,
+  });
 }

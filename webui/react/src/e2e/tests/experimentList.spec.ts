@@ -254,30 +254,36 @@ test.describe('Experiment List', () => {
     });
   });
 
-  // remember to unskip this test
-  test.skip('Datagrid Actions', async () => {
+  test('Datagrid Actions', async () => {
     const row = await projectDetailsPage.f_experimentList.dataGrid.getRowByIndex(0);
     await row.experimentActionDropdown.open();
     // feel free to split actions into their own test cases. this is just a starting point
-    await test.step('Pause', async () => {
-      // what happens if the experiment is already paused?
+    await test.step('Edit', async () => {
+      const editedValue = `EDITED_EXPERIMENT_NAME_${Date.now()}`;
+      await row.experimentActionDropdown.edit.pwLocator.click();
+      await row.experimentActionDropdown.editModal.nameInput.pwLocator.fill(editedValue);
+      await row.experimentActionDropdown.editModal.footer.submit.pwLocator.click();
+      await expect.soft((await row.getCellByColumnName('Name')).pwLocator).toHaveText(editedValue);
     });
-    await test.step('Stop', async () => {
-      // what happens if the experiment is already stopped?
-    });
-    await test.step('Kill', async () => {
-      // what happens if the experiment is already killed? do we need to change beforeAll logic?
-    });
-    await test.step('Move', async () => {
-      // move to where? do we need a new project? check project spec
-    });
-    await test.step('Archive / Unarchive', async () => {
-      // what happens if the experiment is already archived?
-    });
-    await test.step('View in Tensorboard', async () => {
-      // might want something like this
-      // await authedPage.waitForURL(;
-    });
-    await test.step('Hyperparameter Search', async () => {});
+    // await test.step('Pause', async () => {
+    //   // what happens if the experiment is already paused?
+    // });
+    // await test.step('Stop', async () => {
+    //   // what happens if the experiment is already stopped?
+    // });
+    // await test.step('Kill', async () => {
+    //   // what happens if the experiment is already killed? do we need to change beforeAll logic?
+    // });
+    // await test.step('Move', async () => {
+    //   // move to where? do we need a new project? check project spec
+    // });
+    // await test.step('Archive / Unarchive', async () => {
+    //   // what happens if the experiment is already archived?
+    // });
+    // await test.step('View in Tensorboard', async () => {
+    //   // might want something like this
+    //   // await authedPage.waitForURL(;
+    // });
+    // await test.step('Hyperparameter Search', async () => {});
   });
 });
