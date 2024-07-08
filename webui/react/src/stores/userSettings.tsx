@@ -235,7 +235,7 @@ export class UserSettingsStore extends PollingStore {
     } catch (error) {
       // if the error is due to an expired token, don't hide public message, to
       // ensure a redirect to the SSO providers
-      if (error instanceof DetError && isRemoteUserTokenExpired(error)) {
+      if (isRemoteUserTokenExpired(error)) {
         handleError(error);
       }
       handleError(error, {
