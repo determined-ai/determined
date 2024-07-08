@@ -165,10 +165,6 @@ In order to shut down the machine on which the agent is running, set this to ``[
 configuration may be required in order to allow the agent to execute the command from inside a
 Docker container or without the need to enter a password.
 
-***********
- ``label``
-***********
-
 Deprecated. This field has been deprecated and will be ignored. Use ``resource_pool`` instead.
 
 .. _agent-config-ref-debug:
