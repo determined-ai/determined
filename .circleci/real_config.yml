@@ -646,13 +646,14 @@ commands:
                   ci.nodeIdx:${CIRCLE_NODE_INDEX},\
                   git.pr_num:${CIRCLE_PR_NUMBER}"
                   sudo mkdir -p /tmp/artifacts/logs
+                  sudo chmod -R a+rw /etc/datadog-agent/
                   DD_ENV="ci-${CIRCLE_JOB}" \
                   DD_HOST_TAGS="$host_tags" \
                   DD_SERVICE="determined-pytest-<<parameters.mark>>" \
                   bash -c "$(curl -L https://s3.amazonaws.com/dd-agent/scripts/install_script_agent7.sh)"
                   # config files for the agent have an expected file structure
                   sudo mkdir -p /etc/datadog-agent/conf.d/determined-master.d/
-                  sudo chmod -R a+rw /etc/datadog-agent/datadog.yaml
+                  sudo chmod a+rw /etc/datadog-agent/datadog.yaml
                   sudo chmod -R a+rw /etc/datadog-agent/conf.d/determined-master.d/
                   sudo cat .circleci/datadog/ci-local-config.yaml >> /etc/datadog-agent/datadog.yaml
                   sudo sed -e "s/<SERVICE_NAME>/determined-pytest-<<parameters.mark>>/g" .circleci/datadog/e2e-log-settings.yaml > /etc/datadog-agent/conf.d/determined-master.d/conf.yaml
