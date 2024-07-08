@@ -13,7 +13,14 @@ import Link from 'components/Link';
 import usePermissions from 'hooks/usePermissions';
 import FlatRunMoveModalComponent from 'pages/FlatRuns/FlatRunMoveModal';
 import { paths } from 'routes/utils';
-import { archiveRuns, deleteRuns, killRuns, unarchiveRuns } from 'services/api';
+import {
+  archiveRuns,
+  deleteRuns,
+  killRuns,
+  pauseRuns,
+  resumeRuns,
+  unarchiveRuns,
+} from 'services/api';
 import projectStore from 'stores/projects';
 import { BulkActionResult, ExperimentAction, FlatRun, Project } from 'types';
 import handleError from 'utils/error';
@@ -24,8 +31,10 @@ const BATCH_ACTIONS = [
   ExperimentAction.Move,
   ExperimentAction.Archive,
   ExperimentAction.Unarchive,
-  ExperimentAction.Delete,
+  ExperimentAction.Pause,
+  ExperimentAction.Activate,
   ExperimentAction.Kill,
+  ExperimentAction.Delete,
 ] as const;
 
 type BatchAction = (typeof BATCH_ACTIONS)[number];
@@ -36,6 +45,8 @@ const ACTION_ICONS: Record<BatchAction, IconName> = {
   [ExperimentAction.Move]: 'workspaces',
   [ExperimentAction.Kill]: 'cancelled',
   [ExperimentAction.Delete]: 'error',
+  [ExperimentAction.Activate]: 'play',
+  [ExperimentAction.Pause]: 'pause',
 } as const;
 
 const LABEL_PLURAL = 'runs';
@@ -88,8 +99,10 @@ const FlatRunActionButton = ({
           return await unarchiveRuns(params);
         case ExperimentAction.Delete:
           return await deleteRuns(params);
-        default:
-          break;
+        case ExperimentAction.Pause:
+          return await pauseRuns(params);
+        case ExperimentAction.Activate:
+          return await resumeRuns(params);
       }
     },
     [flatRunMoveModalOpen, projectId, selectedRuns],

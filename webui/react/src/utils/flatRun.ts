@@ -24,8 +24,7 @@ const flatRunCheckers: Record<FlatRunAction, FlatRunChecker> = {
 
   [FlatRunAction.Move]: (flatRun) => !flatRun.parentArchived && !flatRun.archived,
 
-  [FlatRunAction.Pause]: (run) =>
-    pausableRunStates.has(run.state) && !(run.experiment?.isMultitrial ?? false),
+  [FlatRunAction.Pause]: (run) => pausableRunStates.has(run.state) && !run.experiment?.isMultitrial,
 
   [FlatRunAction.Resume]: (run) => run.state === RunState.Paused,
 

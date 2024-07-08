@@ -803,7 +803,7 @@ export const resumeRuns = generateDetApi<
   Api.V1ResumeRunsRequest,
   Api.V1ResumeRunsResponse,
   Type.BulkActionResult
->(Config.pauseRuns);
+>(Config.resumeRuns);
 
 /* Tasks */
 
