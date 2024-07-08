@@ -54,7 +54,7 @@ const getStorageLocation = (
           ? `file://${storagePath}`
           : `file://${hostPath}/${storagePath}`;
       } else if (hostPath) {
-        location = `file://${hostPath}`;
+        location = `file:/${hostPath}`;
       }
       break;
     case CheckpointStorageType.DIRECTORY:
