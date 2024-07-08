@@ -1095,7 +1095,7 @@ func (a *apiServer) GetMetadataValues(
 		Column("string_value").
 		Where("string_value IS NOT NULL").
 		Where("project_id=?", p.Id).
-		Where("flat_key=?", req.Key).Scan(ctx, values)
+		Where("flat_key=?", req.Key).Scan(ctx, &values)
 	if err != nil {
 		return nil, err
 	}

@@ -787,7 +787,41 @@ func TestGetProjectByID(t *testing.T) {
 
 func TestGetMetadataValues(t *testing.T) {
 	api, curUser, ctx := setupAPITest(t, nil)
-	r := createTestRun(ctx, t, api, curUser)
+	_, projectIDInt := createProjectAndWorkspace(ctx, t, api)
+	projectID := int32(projectIDInt)
+	exp := createTestExpWithProjectID(t, api, curUser, int(projectID))
+
+	task := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
+	require.NoError(t, db.AddTask(context.Background(), task))
+	require.NoError(t, db.AddTrial(context.Background(), &model.Trial{
+		State:        model.PausedState,
+		ExperimentID: exp.ID,
+		StartTime:    time.Now(),
+	}, task.TaskID))
+	task = &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
+	require.NoError(t, db.AddTask(context.Background(), task))
+	require.NoError(t, db.AddTrial(context.Background(), &model.Trial{
+		State:        model.PausedState,
+		ExperimentID: exp.ID,
+		StartTime:    time.Now(),
+	}, task.TaskID))
+	task = &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
+	require.NoError(t, db.AddTask(context.Background(), task))
+	require.NoError(t, db.AddTrial(context.Background(), &model.Trial{
+		State:        model.PausedState,
+		ExperimentID: exp.ID,
+		StartTime:    time.Now(),
+	}, task.TaskID))
+	task = &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
+	require.NoError(t, db.AddTask(context.Background(), task))
+	require.NoError(t, db.AddTrial(context.Background(), &model.Trial{
+		State:        model.PausedState,
+		ExperimentID: exp.ID,
+		StartTime:    time.Now(),
+	}, task.TaskID))
+
+	resp, err := api.SearchRuns(ctx, &apiv1.SearchRunsRequest{ProjectId: &projectID})
+	require.NoError(t, err)
 
 	// Add metadata
 	rawMetadata1 := map[string]any{
@@ -815,35 +849,35 @@ func TestGetMetadataValues(t *testing.T) {
 		},
 	}
 	metadata := newProtoStruct(t, rawMetadata1)
-	_, err := api.PostRunMetadata(ctx, &apiv1.PostRunMetadataRequest{
-		RunId:    r.Id,
+	_, err = api.PostRunMetadata(ctx, &apiv1.PostRunMetadataRequest{
+		RunId:    resp.Runs[0].Id,
 		Metadata: metadata,
 	})
 	metadata = newProtoStruct(t, rawMetadata2)
 	_, err = api.PostRunMetadata(ctx, &apiv1.PostRunMetadataRequest{
-		RunId:    r.Id,
+		RunId:    resp.Runs[1].Id,
 		Metadata: metadata,
 	})
 	metadata = newProtoStruct(t, rawMetadata3)
 	_, err = api.PostRunMetadata(ctx, &apiv1.PostRunMetadataRequest{
-		RunId:    r.Id,
+		RunId:    resp.Runs[2].Id,
 		Metadata: metadata,
 	})
 	metadata = newProtoStruct(t, rawMetadata4)
 	_, err = api.PostRunMetadata(ctx, &apiv1.PostRunMetadataRequest{
-		RunId:    r.Id,
+		RunId:    resp.Runs[3].Id,
 		Metadata: metadata,
 	})
 
-	resp, err := api.GetMetadataValues(ctx, &apiv1.GetMetadataValuesRequest{
-		Key: "test_key", ProjectId: r.ProjectId,
+	getMetadataResp, err := api.GetMetadataValues(ctx, &apiv1.GetMetadataValuesRequest{
+		Key: "test_key", ProjectId: projectID,
 	})
 	require.NoError(t, err)
-	require.Len(t, resp.Values, 3)
+	require.Len(t, getMetadataResp.Values, 3)
 
-	resp, err = api.GetMetadataValues(ctx, &apiv1.GetMetadataValuesRequest{
-		Key: "nested.nested_key", ProjectId: r.ProjectId,
+	getMetadataResp, err = api.GetMetadataValues(ctx, &apiv1.GetMetadataValuesRequest{
+		Key: "nested.nested_key", ProjectId: projectID,
 	})
 	require.NoError(t, err)
-	require.Len(t, resp.Values, 2)
+	require.Len(t, getMetadataResp.Values, 2)
 }
