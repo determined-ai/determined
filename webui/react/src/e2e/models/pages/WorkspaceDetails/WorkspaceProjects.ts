@@ -1,7 +1,7 @@
 import { BaseComponent } from 'e2e/models/common/base/BaseComponent';
 import { BaseReactFragment } from 'e2e/models/common/base/BaseReactFragment';
 import { Card } from 'e2e/models/common/hew/Card';
-import { ProjectActionDropdown } from 'e2e/models/components/ProjcetActionDropdown';
+import { ProjectActionDropdown } from 'e2e/models/components/ProjectActionDropdown';
 import { ProjectCreateModal } from 'e2e/models/components/ProjectCreateModal';
 import { ProjectDeleteModal } from 'e2e/models/components/ProjectDeleteModal';
 
