@@ -107,7 +107,7 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
     }) as unknown as Record<string, Primitive>;
   }, [trial]);
 
-  const hyperparameters = useMemo(() => {
+  const calculateInitialHyperparameters = useCallback(() => {
     return Object.entries(experiment.hyperparameters).map((hp) => {
       const hpObject = { hyperparameter: hp[1], name: hp[0] };
       if (trialHyperparameters?.[hp[0]]) {
@@ -117,11 +117,9 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
     });
   }, [experiment.hyperparameters, trialHyperparameters]);
 
-  const [currentHPs, setCurrentHPs] =
-    useState<{ hyperparameter: Hyperparameter; name: string }[]>();
-  useEffect(() => {
-    !currentHPs && hyperparameters && setCurrentHPs(hyperparameters);
-  }, [hyperparameters, currentHPs]);
+  const [currentHPs, setCurrentHPs] = useState<{ hyperparameter: Hyperparameter; name: string }[]>(
+    calculateInitialHyperparameters,
+  );
 
   const submitExperiment = useCallback(async () => {
     const fields: Record<string, Primitive | HyperparameterRowValues> = form.getFieldsValue(true);
@@ -162,7 +160,7 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
       .forEach((hp) => {
         // hpName is the name at the time of the form rendering, while the name field in hpInfo is the updated name.
         const hpName = hp[0];
-        if (!currentHPs?.map((h) => h.name).includes(hpName)) return;
+        if (!currentHPs?.some((h) => h.name === hpName)) return;
         const hpInfo = hp[1] as HyperparameterRowValues;
         if (hpInfo.type === HyperparameterType.Categorical) return;
         else if (hpInfo.type === HyperparameterType.Constant) {
@@ -637,7 +635,7 @@ const HyperparameterRow: React.FC<RowProps> = ({
 }: RowProps) => {
   const type: HyperparameterType | undefined = Form.useWatch([name, 'type']);
   const typeRef = useRef<RefSelectProps>(null);
-  const [active, setActive] = useState(hyperparameter.type !== HyperparameterType.Constant);
+  const [active, setActive] = useState<boolean>(false);
   const min: number | undefined = Form.useWatch([name, 'min']);
   const max: number | undefined = Form.useWatch([name, 'max']);
   const [valError, setValError] = useState<string>();
@@ -645,6 +643,10 @@ const HyperparameterRow: React.FC<RowProps> = ({
   const [maxError, setMaxError] = useState<string>();
   const [rangeError, setRangeError] = useState<string>();
   const [countError, setCountError] = useState<string>();
+
+  useEffect(() => {
+    setActive(hyperparameter.type !== HyperparameterType.Constant);
+  }, [hyperparameter.type]);
 
   const handleTypeChange = useCallback((value: SelectValue) => {
     setActive(value !== HyperparameterType.Constant);
