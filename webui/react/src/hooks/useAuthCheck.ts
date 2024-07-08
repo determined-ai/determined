@@ -63,9 +63,11 @@ const useAuthCheck = (): (() => Promise<boolean>) => {
         // If an invalid auth token is detected we need to properly handle the auth error
         if (isRemoteUserTokenExpired(e)) {
           info.ssoProviders?.forEach((ssoProvider) => {
-            ssoProvider.type === 'OIDC'
-              ? routeToExternalUrl(ssoProvider.ssoUrl)
-              : routeToExternalUrl(samlUrl(ssoProvider.ssoUrl));
+            if (ssoProvider.type === 'OIDC') {
+              routeToExternalUrl(ssoProvider.ssoUrl);
+            } else {
+              routeToExternalUrl(samlUrl(ssoProvider.ssoUrl));
+            }
           });
         } else {
           handleError(e);

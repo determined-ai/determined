@@ -237,12 +237,13 @@ export class UserSettingsStore extends PollingStore {
       // ensure a redirect to the SSO providers
       if (isRemoteUserTokenExpired(error)) {
         handleError(error);
+      } else {
+        handleError(error, {
+          isUserTriggered: false,
+          publicMessage: 'Unable to fetch user settings, try refreshing.',
+          type: ErrorType.Api,
+        });
       }
-      handleError(error, {
-        isUserTriggered: false,
-        publicMessage: 'Unable to fetch user settings, try refreshing.',
-        type: ErrorType.Api,
-      });
     } finally {
       this.#settings.update((settings) =>
         // If we are unable to load settings just notify the user and unblock them.

@@ -365,7 +365,8 @@ func ByID(ctx context.Context, userID model.UserID) (*model.FullUser, error) {
 	return &fu, nil
 }
 
-// ByToken returns a user session given an authentication token.
+// ByToken returns a user session given an authentication token. If a session belonging to a remote (SSO) user
+// is found but has expired, ErrRemoteUserTokenExpired will be returned.
 func ByToken(ctx context.Context, token string, ext *model.ExternalSessions) (
 	*model.User, *model.UserSession, error,
 ) {

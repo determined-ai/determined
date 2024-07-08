@@ -7,8 +7,8 @@ import (
 	"strings"
 	"time"
 
-	// TODO switch to google.golang.org/protobuf/proto/.
 	"github.com/golang-jwt/jwt/v4"
+	// TODO switch to google.golang.org/protobuf/proto/.
 	"github.com/golang/protobuf/proto" //nolint: staticcheck
 	grpc_middleware "github.com/grpc-ecosystem/go-grpc-middleware"
 	"github.com/o1egl/paseto"
@@ -156,16 +156,12 @@ func GetUser(ctx context.Context) (*model.User, *model.UserSession, error) {
 	var err error
 	userModel, session, err = user.ByToken(ctx, token, &extConfig)
 	if err != nil {
-		switch {
-		case errors.Is(err, sql.ErrNoRows):
+		if errors.Is(err, sql.ErrNoRows) ||
+			errors.Is(err, db.ErrNotFound) ||
+			errors.Is(err, jwt.ErrTokenExpired) {
 			return nil, nil, ErrInvalidCredentials
-		case errors.Is(err, db.ErrNotFound):
-			return nil, nil, ErrInvalidCredentials
-		case errors.Is(err, jwt.ErrTokenExpired):
-			return nil, nil, ErrInvalidCredentials
-		default:
-			return nil, nil, err
 		}
+		return nil, nil, err
 	}
 
 	if !userModel.Active {
