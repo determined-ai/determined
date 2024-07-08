@@ -1076,3 +1076,31 @@ func (a *apiServer) GetProjectsByUserActivity(
 
 	return &apiv1.GetProjectsByUserActivityResponse{Projects: viewableProjects}, nil
 }
+
+func (a *apiServer) GetMetadataValues(
+	ctx context.Context, req *apiv1.GetMetadataValuesRequest,
+) (*apiv1.GetMetadataValuesResponse, error) {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	p, err := a.GetProjectByID(ctx, req.ProjectId, *curUser)
+	if err != nil { // Can view project?
+		return nil, err
+	}
+
+	values := []string{}
+	err = db.Bun().NewSelect().Distinct().
+		Table("runs_metadata_index").
+		Column("string_value").
+		Where("string_value IS NOT NULL").
+		Where("project_id=?", req.ProjectId).
+		Where("flat_key=?", req.Key).Scan(ctx, values)
+	if err != nil {
+		return nil, err
+	}
+	resp := apiv1.GetMetadataValuesResponse{
+		Values: values,
+	}
+	return &resp, nil
+}

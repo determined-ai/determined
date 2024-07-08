@@ -259,3 +259,17 @@ message GetProjectsByUserActivityResponse {
   // A list of projects
   repeated determined.project.v1.Project projects = 1;
 }
+
+// Get metadata values for a given key within a project
+message GetMetadataValuesRequest {
+  // Metadata key
+  string key = 1;
+  // Project id 
+  int32 project_id = 2;
+}
+
+// Response to GetMetadataValuesRequest.
+message GetMetadataValuesResponse {
+  // A list of metadata values
+  repeated string values = 1;
+}
