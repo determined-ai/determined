@@ -945,13 +945,13 @@ logs_config:
 ## Uncomment this parameter and the one below to enable them.
 ## See https://docs.*************/agent/apm/
 #
-# apm_config:
+apm_config:
 
   ## @param enabled - boolean - optional - default: true
   ## @env DD_APM_ENABLED - boolean - optional - default: true
   ## Set to true to enable the APM Agent.
   #
-  # enabled: true
+  enabled: false
 
   ## @param env - string - optional - default: none
   ## @env DD_APM_ENV - string - optional - default: none
