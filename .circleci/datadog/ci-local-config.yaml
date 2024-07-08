@@ -1339,14 +1339,14 @@ process_config:
   process_collection:
     # @param enabled - boolean - optional - default: false
     # Enables collection of information about running processes.
-    enabled: true
+    enabled: false
 
   # @param container_collection - custom object - optional
   # Specifies settings for collecting containers.
   container_collection:
     # @param enabled - boolean - optional - default: true
     # Enables collection of information about running containers.
-    enabled: true
+    enabled: false
 
   # Deprecated - use `process_collection.enabled` and `container_collection.enabled` instead
   # @param enabled - string - optional - default: "false"
@@ -1356,7 +1356,7 @@ process_config:
   #    * "true"     : The Agent collects containers and processes information.
   #    * "disabled" : The Agent process collection is disabled.
   
-  enabled: "true"
+  enabled: "false"
 
   # @param expvar_port - string - optional - default: 6062
   # @env DD_PROCESS_CONFIG_EXPVAR_PORT - string - optional - default: 6062
@@ -1394,7 +1394,7 @@ process_config:
   process_discovery:
       # @param enabled - boolean - optional - default: true
       # Toggles the `process_discovery` check. If enabled, this check gathers information about running integrations.
-      enabled: true
+      enabled: false
 
       # @param interval - duration - optional - default: 4h - minimum: 10m
       # An interval in hours that specifies how often the process discovery check should run.
