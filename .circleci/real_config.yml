@@ -632,7 +632,7 @@ commands:
           condition: 
             and:
               - <<parameters.wait-for-master>>
-              - $AIS_DD_ENABLE_MONITORING
+              - equal: [ true, "$AIS_DD_ENABLE_MONITORING" ]
           steps:
             - run:
                 name: Install DataDog agent
@@ -648,7 +648,7 @@ commands:
                   ci.totalNodes:${CIRCLE_NODE_TOTAL},\
                   ci.nodeIdx:${CIRCLE_NODE_INDEX},\
                   git.pr_num:${CIRCLE_PR_NUMBER}"
-                  
+
                   sudo mkdir -p /tmp/artifacts/logs
                   sudo chmod -R a+rw /tmp/artifacts/logs
 
@@ -755,7 +755,7 @@ commands:
           condition:
             and:
               - <<parameters.wait-for-master>>
-              - $AIS_DD_ENABLE_MONITORING
+              - equal: [ true, "$AIS_DD_ENABLE_MONITORING" ]
           steps:
             - run: # We don't know how long Circle leaves these machines running in the background. Take down the agent for safety.
                 name: Stop DataDog agent
