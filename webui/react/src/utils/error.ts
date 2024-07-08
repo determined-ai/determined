@@ -193,10 +193,7 @@ const handleError = (error: DetError | unknown, options?: DetErrorOptions): DetE
 
   // Redirect to logout if Auth failure detected (auth token is no longer valid).`
   if (isAuthFailure(e)) {
-    let params = '';
-    if (isRemoteUserTokenExpired(e)) {
-      params = '?remote_expired=true';
-    }
+    const params = isRemoteUserTokenExpired(e) ? '?remote_expired=true' : '';
     // This check accounts for requests that had not been aborted properly prior
     // to the page dismount and end up throwing after the user is logged out.
     const path = window.location.pathname;

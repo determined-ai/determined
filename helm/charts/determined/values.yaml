@@ -119,6 +119,7 @@ useNodePortForMaster: false
 #   autoProvisionUsers:
 #   groupsAttributeName:
 #   displayNameAttributeName:
+#   alwaysRedirect:
 
 # scim (EE-only) enables System for Cross-domain Identity Management (SCIM) integration, which is
 # only available if enterpriseEdition is true. It allows administrators to easily and securely
@@ -143,6 +144,7 @@ useNodePortForMaster: false
 #   autoProvisionUsers:
 #   groupsAttributeName:
 #   displayNameAttributeName:
+#   alwaysRedirect:
 
 # db sets the configurations for the database.
 db:
