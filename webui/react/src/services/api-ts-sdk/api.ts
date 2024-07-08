@@ -6154,7 +6154,7 @@ export interface V1ListWorkspacesBoundToRPResponse {
     pagination?: V1Pagination;
 }
 /**
- * LocationType indicates where a column comes from - LOCATION_TYPE_UNSPECIFIED: Location unknown  - LOCATION_TYPE_EXPERIMENT: Column is located on the experiment  - LOCATION_TYPE_HYPERPARAMETERS: Column is located in the hyperparameter config of the experiment  - LOCATION_TYPE_VALIDATIONS: Column is located on the experiment's validation metrics  - LOCATION_TYPE_TRAINING: Column is located on the experiment's training steps  - LOCATION_TYPE_CUSTOM_METRIC: Column is located on the experiment's custom metric  - LOCATION_TYPE_RUN: Column is located on the run  - LOCATION_TYPE_RUN_HYPERPARAMETERS: Column is located in the hyperparameter of the run
+ * LocationType indicates where a column comes from - LOCATION_TYPE_UNSPECIFIED: Location unknown  - LOCATION_TYPE_EXPERIMENT: Column is located on the experiment  - LOCATION_TYPE_HYPERPARAMETERS: Column is located in the hyperparameter config of the experiment  - LOCATION_TYPE_VALIDATIONS: Column is located on the experiment's validation metrics  - LOCATION_TYPE_TRAINING: Column is located on the experiment's training steps  - LOCATION_TYPE_CUSTOM_METRIC: Column is located on the experiment's custom metric  - LOCATION_TYPE_RUN: Column is located on the run  - LOCATION_TYPE_RUN_HYPERPARAMETERS: Column is located in the hyperparameter of the run  - LOCATION_TYPE_RUN_METADATA: Column is located on the run's arbitrary metadata
  * @export
  * @enum {string}
  */
@@ -6167,6 +6167,7 @@ export const V1LocationType = {
     CUSTOMMETRIC: 'LOCATION_TYPE_CUSTOM_METRIC',
     RUN: 'LOCATION_TYPE_RUN',
     RUNHYPERPARAMETERS: 'LOCATION_TYPE_RUN_HYPERPARAMETERS',
+    RUNMETADATA: 'LOCATION_TYPE_RUN_METADATA',
 } as const
 export type V1LocationType = ValueOf<typeof V1LocationType>
 /**
