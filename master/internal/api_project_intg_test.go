@@ -853,21 +853,25 @@ func TestGetMetadataValues(t *testing.T) {
 		RunId:    resp.Runs[0].Id,
 		Metadata: metadata,
 	})
+	require.NoError(t, err)
 	metadata = newProtoStruct(t, rawMetadata2)
 	_, err = api.PostRunMetadata(ctx, &apiv1.PostRunMetadataRequest{
 		RunId:    resp.Runs[1].Id,
 		Metadata: metadata,
 	})
+	require.NoError(t, err)
 	metadata = newProtoStruct(t, rawMetadata3)
 	_, err = api.PostRunMetadata(ctx, &apiv1.PostRunMetadataRequest{
 		RunId:    resp.Runs[2].Id,
 		Metadata: metadata,
 	})
+	require.NoError(t, err)
 	metadata = newProtoStruct(t, rawMetadata4)
 	_, err = api.PostRunMetadata(ctx, &apiv1.PostRunMetadataRequest{
 		RunId:    resp.Runs[3].Id,
 		Metadata: metadata,
 	})
+	require.NoError(t, err)
 
 	getMetadataResp, err := api.GetMetadataValues(ctx, &apiv1.GetMetadataValuesRequest{
 		Key: "test_key", ProjectId: projectID,
