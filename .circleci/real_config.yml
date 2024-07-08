@@ -656,6 +656,7 @@ commands:
                   DD_HOST_TAGS="$host_tags" \
                   DD_SERVICE="determined-pytest-<<parameters.mark>>" \
                   bash -c "$(curl -L https://s3.amazonaws.com/dd-agent/scripts/install_script_agent7.sh)"
+                  
                   # config files for the agent have an expected file structure
                   sudo mkdir -p /etc/datadog-agent/conf.d/determined-master.d/
                   sudo chmod a+rw /etc/datadog-agent/datadog.yaml
