@@ -5526,6 +5526,33 @@ class v1GetMeResponse(Printable):
         }
         return out
 
+class v1GetMetadataValuesResponse(Printable):
+    """Response to GetMetadataValuesRequest."""
+    values: "typing.Optional[typing.Sequence[str]]" = None
+
+    def __init__(
+        self,
+        *,
+        values: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
+    ):
+        if not isinstance(values, Unset):
+            self.values = values
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetMetadataValuesResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "values" in obj:
+            kwargs["values"] = obj["values"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "values" in vars(self):
+            out["values"] = self.values
+        return out
+
 class v1GetMetricsResponse(Printable):
     """Response to GetMetricsRequest."""
 
@@ -19026,6 +19053,34 @@ def get_GetMe(
     if _resp.status_code == 200:
         return v1GetMeResponse.from_json(_resp.json())
     raise APIHttpError("get_GetMe", _resp)
+
+def get_GetMetadataValues(
+    session: "api.BaseSession",
+    *,
+    key: str,
+    projectId: int,
+) -> "v1GetMetadataValuesResponse":
+    """Update run metadata.
+
+    - key: Metadata key
+    - projectId: Project id
+    """
+    _params = None
+    if type(key) == str:
+        key = parse.quote(key)
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/projects/{projectId}/metadata/{key}",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1GetMetadataValuesResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetMetadataValues", _resp)
 
 def get_GetMetrics(
     session: "api.BaseSession",

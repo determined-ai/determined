@@ -264,7 +264,7 @@ message GetProjectsByUserActivityResponse {
 message GetMetadataValuesRequest {
   // Metadata key
   string key = 1;
-  // Project id 
+  // Project id
   int32 project_id = 2;
 }
 
