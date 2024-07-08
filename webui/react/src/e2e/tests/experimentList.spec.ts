@@ -2,6 +2,7 @@ import { AuthFixture } from 'e2e/fixtures/auth.fixture';
 import { expect, test } from 'e2e/fixtures/global-fixtures';
 import { ProjectDetails } from 'e2e/models/pages/ProjectDetails';
 import { detExecSync, fullPath } from 'e2e/utils/detCLI';
+import { safeName } from 'e2e/utils/naming';
 
 test.describe('Experiment List', () => {
   let projectDetailsPage: ProjectDetails;
@@ -259,7 +260,7 @@ test.describe('Experiment List', () => {
     await row.experimentActionDropdown.open();
     // feel free to split actions into their own test cases. this is just a starting point
     await test.step('Edit', async () => {
-      const editedValue = `EDITED_EXPERIMENT_NAME_${Date.now()}`;
+      const editedValue = safeName('EDITED_EXPERIMENT_NAME');
       await row.experimentActionDropdown.edit.pwLocator.click();
       await row.experimentActionDropdown.editModal.nameInput.pwLocator.fill(editedValue);
       await row.experimentActionDropdown.editModal.footer.submit.pwLocator.click();
