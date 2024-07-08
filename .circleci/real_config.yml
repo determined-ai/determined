@@ -746,7 +746,14 @@ commands:
                 master_address: "<<parameters.master-scheme>>://<<parameters.master-host>>:<<parameters.master-port>>"
       - store_artifacts:
           path: /tmp/artifacts/logs
-
+      - when:
+          condition: <<parameters.wait-for-master>>
+          steps:
+            - run: # We don't know how long Circle leaves these machines running in the background. Take down the agent for safety.
+                name: Stop DataDog agent
+                when: always
+                command: sudo systemctl stop datadog-agent || 1
+            
 
   run-det-deploy-tests:
     parameters:
