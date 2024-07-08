@@ -817,13 +817,13 @@ func TestGetMetadataValues(t *testing.T) {
 	require.NoError(t, err)
 	require.Equal(t, rawMetadata, metadataResp.Metadata.AsMap())
 
-	resp, err := api.GetMetadataValues(ctx, apiv1.PostProjectRequest{
+	resp, err := api.GetMetadataValues(ctx, apiv1.GetMetadataValuesRequest{
 		Key: "test_key", ProjectId: r.ProjectId,
 	})
 	require.NoError(t, err)
 	require.Len(t, resp.Values, 3)
 
-	resp, err := api.GetMetadataValues(ctx, apiv1.PostProjectRequest{
+	resp, err := api.GetMetadataValues(ctx, apiv1.GetMetadataValuesRequest{
 		Key: "nested.nested_key", ProjectId: r.ProjectId,
 	})
 	require.NoError(t, err)
