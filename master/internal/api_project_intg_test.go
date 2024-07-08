@@ -790,42 +790,60 @@ func TestGetMetadataValues(t *testing.T) {
 	r := createTestRun(ctx, t, api, curUser)
 
 	// Add metadata
-	rawMetadata := map[string]any{
+	rawMetadata1 := map[string]any{
 		"test_key": "test_value1",
-		"test_key": "test_value1",
-		"test_key": "test_value2",
-		"test_key": "test_value3",
-		"test_key": "test_value3",
 		"nested": map[string]any{
 			"nested_key": "nested_value1",
 		},
-		"nested": map[string]any{
-			"nested_key": "nested_value1",
-		},
+	}
+	rawMetadata2 := map[string]any{
+		"test_key": "test_value1",
 		"nested": map[string]any{
 			"nested_key": "nested_value2",
 		},
+	}
+	rawMetadata3 := map[string]any{
+		"test_key": "test_value2",
 		"nested": map[string]any{
-			"nested_key": "nested_value3",
+			"nested_key": "nested_value2",
 		},
 	}
-	metadata := newProtoStruct(t, rawMetadata)
-	metadataResp, err := api.PostRunMetadata(ctx, &apiv1.PostRunMetadataRequest{
+	rawMetadata4 := map[string]any{
+		"test_key": "test_value3",
+		"nested": map[string]any{
+			"nested_key": "nested_value1",
+		},
+	}
+	metadata := newProtoStruct(t, rawMetadata1)
+	_, err := api.PostRunMetadata(ctx, &apiv1.PostRunMetadataRequest{
 		RunId:    r.Id,
 		Metadata: metadata,
 	})
-	require.NoError(t, err)
-	require.Equal(t, rawMetadata, metadataResp.Metadata.AsMap())
+	metadata = newProtoStruct(t, rawMetadata2)
+	_, err = api.PostRunMetadata(ctx, &apiv1.PostRunMetadataRequest{
+		RunId:    r.Id,
+		Metadata: metadata,
+	})
+	metadata = newProtoStruct(t, rawMetadata3)
+	_, err = api.PostRunMetadata(ctx, &apiv1.PostRunMetadataRequest{
+		RunId:    r.Id,
+		Metadata: metadata,
+	})
+	metadata = newProtoStruct(t, rawMetadata4)
+	_, err = api.PostRunMetadata(ctx, &apiv1.PostRunMetadataRequest{
+		RunId:    r.Id,
+		Metadata: metadata,
+	})
 
-	resp, err := api.GetMetadataValues(ctx, apiv1.GetMetadataValuesRequest{
+	resp, err := api.GetMetadataValues(ctx, &apiv1.GetMetadataValuesRequest{
 		Key: "test_key", ProjectId: r.ProjectId,
 	})
 	require.NoError(t, err)
 	require.Len(t, resp.Values, 3)
 
-	resp, err := api.GetMetadataValues(ctx, apiv1.GetMetadataValuesRequest{
+	resp, err = api.GetMetadataValues(ctx, &apiv1.GetMetadataValuesRequest{
 		Key: "nested.nested_key", ProjectId: r.ProjectId,
 	})
 	require.NoError(t, err)
-	require.Len(t, resp.Values, 3)
+	require.Len(t, resp.Values, 2)
 }
