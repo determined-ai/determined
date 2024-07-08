@@ -753,9 +753,10 @@ commands:
       - store_artifacts:
           path: /tmp/artifacts/logs
       - when:
-          and:
-            - <<parameters.wait-for-master>>
-            - <<pipeline.parameters.enable-dd-monitoring>>
+          condition:
+            and:
+              - <<parameters.wait-for-master>>
+              - <<pipeline.parameters.enable-dd-monitoring>>
           steps:
             - run: # We don't know how long Circle leaves these machines running in the background. Take down the agent for safety.
                 name: Stop DataDog agent
