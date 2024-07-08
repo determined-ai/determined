@@ -5323,6 +5323,7 @@ workflows:
               # cd /lustre/ssd/foundation_engineering/
               # enroot import docker://determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-24586f0.sqsh
               # enroot create /lustre/ssd/foundation_engineering/determinedai+environments+cuda-11.3-pytorch-1.10-tf-2.8-gpu-24586f0.sqsh
+              # image: determinedai+environments+cuda-11.3-pytorch-1.10-tf-2.8-gpu-24586f0
               image:
                 cpu: determinedai/pytorch-tensorflow-cpu-dev:e960eae
                 cuda: determinedai/pytorch-ngc-dev:e960eae
@@ -5640,6 +5641,9 @@ workflows:
               # enroot import docker://determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-24586f0.sqsh
               # enroot create /lustre/ssd/foundation_engineering/determinedai+environments+cuda-11.3-pytorch-1.10-tf-2.8-gpu-24586f0.sqsh
               # image: determinedai+environments+cuda-11.3-pytorch-1.10-tf-2.8-gpu-24586f0
+              image:
+                cpu: determinedai/pytorch-tensorflow-cpu-dev:e960eae
+                cuda: determinedai/pytorch-ngc-dev:e960eae
               environment_variables:
                   # Some ports are not working, disable them so distributed jobs work.
                   - NCCL_IB_HCA=mlx6_0:0
