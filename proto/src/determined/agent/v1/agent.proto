@@ -49,7 +49,7 @@ message Agent {
   // A map of container id to all containers assigned to this agent.
   map<string, determined.container.v1.Container> containers = 4;
   // This field has been deprecated and will be empty.
-  string label = 5;
+  string label = 5 [deprecated = true];
   // The addresses of the agent.
   repeated string addresses = 7;
   // Flag notifying if containers can be scheduled on this agent.

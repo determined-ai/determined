@@ -89,7 +89,7 @@ message ResourceAllocationAggregatedEntry {
   // pool.
   map<string, float> by_resource_pool = 6;
   // This field has been deprecated and will be empty.
-  map<string, float> by_agent_label = 7;
+  map<string, float> by_agent_label = 7 [deprecated = true];
 }
 
 // The log config for Master Config

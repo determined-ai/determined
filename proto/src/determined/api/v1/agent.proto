@@ -29,7 +29,7 @@ message GetAgentsRequest {
   // Limit the number of agents. A value of 0 denotes no limit.
   int32 limit = 4;
   // This field has been deprecated and will be ignored.
-  string label = 5;
+  string label = 5 [deprecated = true];
   // exclude slots
   bool exclude_slots = 6;
   // exclude containers
