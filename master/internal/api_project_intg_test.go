@@ -784,3 +784,48 @@ func TestGetProjectByID(t *testing.T) {
 	require.Equal(t, projectName, project.Name)
 	require.Equal(t, resp.Project.Id, project.Id)
 }
+
+func TestGetMetadataValues(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	r := createTestRun(ctx, t, api, curUser)
+
+	// Add metadata
+	rawMetadata := map[string]any{
+		"test_key": "test_value1",
+		"test_key": "test_value1",
+		"test_key": "test_value2",
+		"test_key": "test_value3",
+		"test_key": "test_value3",
+		"nested": map[string]any{
+			"nested_key": "nested_value1",
+		},
+		"nested": map[string]any{
+			"nested_key": "nested_value1",
+		},
+		"nested": map[string]any{
+			"nested_key": "nested_value2",
+		},
+		"nested": map[string]any{
+			"nested_key": "nested_value3",
+		},
+	}
+	metadata := newProtoStruct(t, rawMetadata)
+	metadataResp, err := api.PostRunMetadata(ctx, &apiv1.PostRunMetadataRequest{
+		RunId:    r.Id,
+		Metadata: metadata,
+	})
+	require.NoError(t, err)
+	require.Equal(t, rawMetadata, metadataResp.Metadata.AsMap())
+
+	resp, err := api.GetMetadataValues(ctx, apiv1.PostProjectRequest{
+		Key: "test_key", ProjectId: r.ProjectId,
+	})
+	require.NoError(t, err)
+	require.Len(t, resp.Values, 3)
+
+	resp, err := api.GetMetadataValues(ctx, apiv1.PostProjectRequest{
+		Key: "nested.nested_key", ProjectId: r.ProjectId,
+	})
+	require.NoError(t, err)
+	require.Len(t, resp.Values, 3)
+}
