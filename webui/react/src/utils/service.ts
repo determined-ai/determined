@@ -51,7 +51,7 @@ export const isRemoteUserTokenExpired = (u: unknown): boolean => {
   return (
     u instanceof DetError &&
     u.type === ErrorType.Auth &&
-    (u.publicMessage?.includes('remote user token expired') ?? false)
+    u.publicMessage === 'remote user token expired'
   );
 };
 
