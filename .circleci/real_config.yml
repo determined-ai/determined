@@ -63,6 +63,9 @@ parameters:
   e2e-react:
     type: string
     default: ""
+  enable-dd-monitoring:
+    type: boolean
+    default: false
 
 release-and-rc-filters: &release-and-rc-filters
   branches:
@@ -629,7 +632,10 @@ commands:
         default: true
     steps:
       - when:
-          condition: <<parameters.wait-for-master>>
+          condition: 
+            and:
+              - <<parameters.wait-for-master>>
+              - <<pipeline.parameters.enable-dd-monitoring>>
           steps:
             - run:
                 name: Install DataDog agent

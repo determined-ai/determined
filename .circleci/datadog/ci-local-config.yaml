@@ -831,7 +831,7 @@ logs_config:
   ## @env DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL - boolean - optional - default: false
   ## Enable container log collection for all the containers (see ac_exclude to filter out containers)
   #
-  container_collect_all: false
+  container_collect_all: true
 
   ## @param logs_dd_url - string - optional
   ## @env DD_LOGS_CONFIG_DD_URL - string - optional
