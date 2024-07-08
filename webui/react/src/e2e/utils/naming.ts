@@ -15,8 +15,8 @@ export const randIdAlphanumeric = ({ length = 4 }: { length?: number } = {}): st
  * @param {number} [obj.length] The length of the hash
  * @returns Numeric hash
  */
-export const randId = ({ length = 4 }: { length?: number } = {}): number =>
-  Math.floor(Math.random() * Math.pow(10, length));
+export const randId = ({ length = 4 }: { length?: number } = {}): string =>
+  Math.floor(Math.random() * Math.pow(10, length)).toString();
 
 /**
  * Generates a naming function and a random hash to help with naming collisions.

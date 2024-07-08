@@ -15,33 +15,33 @@ test.describe('Experiement List', () => {
   };
 
   test.beforeAll(async ({ browser, dev }) => {
-    const pageSetupTeardown = await browser.newPage();
-    await dev.setServerAddress(pageSetupTeardown);
-    const authFixtureSetupTeardown = new AuthFixture(pageSetupTeardown);
-    const projectDetailsPageSetupTeardown = new ProjectDetails(pageSetupTeardown);
-    await authFixtureSetupTeardown.login();
-    await projectDetailsPageSetupTeardown.gotoProject();
+    const pageSetup = await browser.newPage();
+    await dev.setServerAddress(pageSetup);
+    const authFixtureSetup = new AuthFixture(pageSetup);
+    const projectDetailsPageSetup = new ProjectDetails(pageSetup);
+    await authFixtureSetup.login();
+    await projectDetailsPageSetup.gotoProject();
     await test.step('Create an experiment if not already present', async () => {
-      await projectDetailsPageSetupTeardown.f_experiemntList.tableActionBar.pwLocator.waitFor();
+      await projectDetailsPageSetup.f_experiemntList.tableActionBar.pwLocator.waitFor();
       await expect(
-        projectDetailsPageSetupTeardown.f_experiemntList.tableActionBar.expNum.pwLocator,
+        projectDetailsPageSetup.f_experiemntList.tableActionBar.expNum.pwLocator,
       ).toContainText('experiment');
       if (
-        await projectDetailsPageSetupTeardown.f_experiemntList.noExperimentsMessage.pwLocator.isVisible()
+        await projectDetailsPageSetup.f_experiemntList.noExperimentsMessage.pwLocator.isVisible()
       ) {
         detExecSync(
           `experiment create ${fullPath(
             '/../../examples/tutorials/mnist_pytorch/const.yaml',
           )} --paused`,
         );
-        await pageSetupTeardown.reload();
+        await pageSetup.reload();
         await expect(
-          projectDetailsPageSetupTeardown.f_experiemntList.dataGrid.rows.pwLocator,
+          projectDetailsPageSetup.f_experiemntList.dataGrid.rows.pwLocator,
         ).not.toHaveCount(0);
       }
     });
-    await authFixtureSetupTeardown.logout();
-    await pageSetupTeardown.close();
+    await authFixtureSetup.logout();
+    await pageSetup.close();
   });
 
   test.beforeEach(async ({ authedPage }) => {
