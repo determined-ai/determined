@@ -130,6 +130,7 @@ interface Props {
   // 1) displaying an abbreviated string as an Avatar and
   // 2) finding user by userId in the store and displaying string Avatar or profile image
   userId?: number;
+  isSearch?: boolean; // flag for changing 'Experiment' to 'Search' in copy
 }
 
 const headerActions = [
@@ -152,6 +153,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
   experiment,
   fetchExperimentDetails,
   trial,
+  isSearch = false,
 }: Props) => {
   const [isChangingState, setIsChangingState] = useState(false);
   const [isRunningArchive, setIsRunningArchive] = useState<boolean>(false);
@@ -216,14 +218,14 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       handleError(e, {
         level: ErrorLevel.Error,
         publicMessage: 'Please try again later.',
-        publicSubject: 'Unable to pause experiment.',
+        publicSubject: `Unable to pause ${isSearch ? 'search' : 'experiment'}.`,
         silent: false,
         type: ErrorType.Server,
       });
     } finally {
       setIsChangingState(false);
     }
-  }, [experiment.id, fetchExperimentDetails]);
+  }, [experiment.id, fetchExperimentDetails, isSearch]);
 
   const handlePlayClick = useCallback(async () => {
     setIsChangingState(true);
@@ -234,14 +236,14 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       handleError(e, {
         level: ErrorLevel.Error,
         publicMessage: 'Please try again later.',
-        publicSubject: 'Unable to activate experiment.',
+        publicSubject: `Unable to activate ${isSearch ? 'search' : 'experiment'}.`,
         silent: false,
         type: ErrorType.Server,
       });
     } finally {
       setIsChangingState(false);
     }
-  }, [experiment.id, fetchExperimentDetails]);
+  }, [experiment.id, fetchExperimentDetails, isSearch]);
 
   const fetchErroredTrial = useCallback(async () => {
     // No need to fetch errored trial count if it's single trial experiment or experiment is not completed.
@@ -295,8 +297,8 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
             <Dropdown
               menu={[
                 {
-                  key: 'Create New Experiment',
-                  label: 'Create New Experiment...',
+                  key: `Create New ${isSearch ? 'Search' : 'Experiment'}`,
+                  label: `Create New ${isSearch ? 'Search' : 'Experiment'}...`,
                 },
                 {
                   key: 'Reactivate Current Trial',
@@ -304,7 +306,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
                 },
               ]}
               onClick={(key: string) => {
-                if (key === 'Create New Experiment') ContinueExperimentModal.open();
+                if (key === `Create New ${isSearch ? 'Search' : 'Experiment'}`) ContinueExperimentModal.open();
                 if (key === 'Reactivate Current Trial') ReactivateExperimentModal.open();
               }}>
               <Button disabled={experiment.unmanaged}>Continue Trial</Button>
@@ -316,7 +318,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
               label: experiment.unmanaged ? (
                 <Tooltip content={UNMANAGED_MESSAGE}>Continue Trial</Tooltip>
               ) : (
-                'Create New Experiment'
+                `Create New ${isSearch ? 'Search' : 'Experiment'}`
               ),
               onClick: ContinueExperimentModal.open,
             },
@@ -346,7 +348,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
             },
           ],
         },
-    [experiment, ContinueExperimentModal, ContinueTrialModal.open, ReactivateExperimentModal, isRunningContinue, onClickContinueMultiTrialExp],
+    [experiment, isSearch, ContinueExperimentModal, ReactivateExperimentModal, isRunningContinue, onClickContinueMultiTrialExp, ContinueTrialModal.open],
   );
 
   useEffect(() => {
@@ -374,8 +376,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
           },
         ],
       },
-
-      [Action.ContinueTrial]: {
+      [Action.ContinueTrial]: isSearch ? undefined : {
         ...continueExperimentOption,
         key: 'continue-trial',
       },
@@ -411,7 +412,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
           {
             icon: <Icon name="download" size="small" title={Action.DownloadCode} />,
             key: 'download-model',
-            label: 'Download Experiment Code',
+            label: `Download ${isSearch ? 'Search' : 'Experiment'} Code`,
             onClick: (e) => {
               handlePath(e, { external: true, path: paths.experimentModelDef(experiment.id) });
             },
@@ -434,14 +435,14 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
                       erroredTrialCount,
                       'trial',
                     )} from their last available ${pluralizer(erroredTrialCount, 'checkpoint')}.`
-                    : 'Retry will resume the experiment from where it left off. Any previous progress will be retained.',
+                    : `Retry will resume the ${isSearch ? 'search' : 'experiment'} from where it left off. Any previous progress will be retained.`,
                 okText: 'Retry',
                 onConfirm: async () => {
                   await continueExperiment({ id: experiment.id });
                   await fetchExperimentDetails();
                 },
                 onError: handleError,
-                title: 'Retry Experiment',
+                title: `Retry ${isSearch ? 'Search' : 'Experiment'}`,
               });
             },
           },
@@ -550,24 +551,25 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       erroredTrialCount,
     );
 
-    return availableActions.map((action) => options[action]) as ActionOptions[];
+    return availableActions.map((action) => options[action]).filter((action) => action !== undefined) as ActionOptions[];
   }, [
-    expPermissions,
     isRunningArchive,
     continueExperimentOption,
     isRunningDelete,
-    ExperimentDeleteModal,
-    ForkModal,
-    ExperimentEditModal,
-    ExperimentMoveModal,
-    ExperimentRetainLogsModal,
-    HyperparameterSearchModal,
+    ExperimentDeleteModal.open,
+    experiment,
+    HyperparameterSearchModal.open,
+    isSearch,
+    erroredTrialCount,
+    ForkModal.open,
+    ExperimentEditModal.open,
+    ExperimentMoveModal.open,
+    ExperimentRetainLogsModal.open,
     isRunningTensorBoard,
     isRunningUnarchive,
-    experiment,
+    expPermissions,
     fetchExperimentDetails,
     confirm,
-    erroredTrialCount,
   ]);
 
   const jobInfoLinkText = useMemo(() => {
@@ -623,8 +625,8 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       rows.push({
         label: 'Forked from',
         value: (
-          <Link path={paths.experimentDetails(experiment.forkedFrom)}>
-            Experiment {experiment.forkedFrom}
+          <Link path={isSearch ? paths.searchDetails(experiment.forkedFrom) : paths.experimentDetails(experiment.forkedFrom)}>
+            {isSearch ? 'Search' : 'Experiment'} {experiment.forkedFrom}
           </Link>
         ),
       });
@@ -671,7 +673,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
     });
 
     return rows;
-  }, [autoRestarts, disabled, experiment, experimentTags, jobInfoLinkText, maxRestarts]);
+  }, [autoRestarts, disabled, experiment, experimentTags, isSearch, jobInfoLinkText, maxRestarts]);
 
   return (
     <>
@@ -718,7 +720,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
                 )}
               </Spinner>
             </Column>
-            <span>Experiment {experiment.id}</span>
+            <span>{isSearch ? 'Search' : 'Experiment'} {experiment.id}</span>
             <span role="experimentName">
               {experiment.name}
             </span>
@@ -753,7 +755,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
         }))}
       />
       <ExperimentHeaderProgress experiment={experiment} />
-      <ForkModal.Component experiment={experiment} type={CreateExperimentType.Fork} />
+      <ForkModal.Component experiment={experiment} isSearch={isSearch} type={CreateExperimentType.Fork} />
       <ReactivateExperimentModal.Component
         experiment={experiment}
         type={ContinueExperimentType.Reactivate}
@@ -765,33 +767,39 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       />
       <ContinueTrialModal.Component
         experiment={experiment}
+        isSearch={isSearch}
         trial={trial}
         type={CreateExperimentType.ContinueTrial}
       />
-      <ExperimentDeleteModal.Component experiment={experiment} />
+      <ExperimentDeleteModal.Component experiment={experiment} isSearch={isSearch} />
       <ExperimentMoveModal.Component
         experimentIds={isMovable ? [experiment.id] : []}
+        isSearch={isSearch}
         sourceProjectId={experiment.projectId}
         sourceWorkspaceId={experiment.workspaceId}
         onSubmit={handleModalClose}
       />
       <ExperimentRetainLogsModal.Component
         experimentIds={canModifyExp ? [experiment.id] : []}
+        isSearch={isSearch}
         projectId={experiment.projectId}
       />
       <ExperimentStopModal.Component
         experimentId={experiment.id}
+        isSearch={isSearch}
         onClose={fetchExperimentDetails}
       />
       <ExperimentEditModal.Component
         description={experiment.description ?? ''}
         experimentId={experiment.id}
         experimentName={experiment.name}
+        isSearch={isSearch}
         onEditComplete={fetchExperimentDetails}
       />
       <HyperparameterSearchModal.Component
         closeModal={HyperparameterSearchModal.close}
         experiment={experiment}
+        isSearch={isSearch}
       />
     </>
   );

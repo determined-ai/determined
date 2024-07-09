@@ -24,6 +24,7 @@ interface Props {
   projectId: number;
   filters?: V1BulkExperimentFilters;
   onSubmit?: (successfulIds?: number[]) => void;
+  isSearch?: boolean;
 }
 
 const ExperimentRetainLogsModalComponent: React.FC<Props> = ({
@@ -32,6 +33,7 @@ const ExperimentRetainLogsModalComponent: React.FC<Props> = ({
   projectId,
   filters,
   onSubmit,
+  isSearch = false,
 }: Props) => {
   const idPrefix = useId();
   const { openToast } = useToast();
@@ -79,7 +81,8 @@ const ExperimentRetainLogsModalComponent: React.FC<Props> = ({
           closeable: true,
           description: `Retained logs for ${results.successful.length} ${pluralizer(
             numSuccesses,
-            'experiment',
+            isSearch ? 'search' : 'experiment',
+            isSearch ? 'searches' : 'experiments',
           )} ${stringDays}`,
           title: 'Retain Logs Success',
         });
@@ -87,7 +90,8 @@ const ExperimentRetainLogsModalComponent: React.FC<Props> = ({
         openToast({
           description: `Unable to retain logs for ${numFailures} ${pluralizer(
             numFailures,
-            'experiment',
+            isSearch ? 'search' : 'experiment',
+            isSearch ? 'searches' : 'experiments',
           )}`,
           severity: 'Error',
           title: 'Retain Logs Failure',
@@ -95,9 +99,11 @@ const ExperimentRetainLogsModalComponent: React.FC<Props> = ({
       } else {
         openToast({
           closeable: true,
-          description: `Failed to retain logs for ${numFailures} experiments out of ${
-            numFailures + numSuccesses
-          } for ${numberDays} days.`,
+          description: `Failed to retain logs for ${numFailures} ${pluralizer(
+            numFailures,
+            isSearch ? 'search' : 'experiment',
+            isSearch ? 'searches' : 'experiments',
+          )} out of ${numFailures + numSuccesses} for ${numberDays} days.`,
           severity: 'Warning',
           title: 'Partial Retain Logs Failure',
         });
@@ -105,7 +111,16 @@ const ExperimentRetainLogsModalComponent: React.FC<Props> = ({
     } catch (e) {
       handleError(e, { publicSubject: 'Unable to retain logs' });
     }
-  }, [form, excludedExperimentIds, experimentIds, projectId, filters, onSubmit, openToast]);
+  }, [
+    form,
+    filters,
+    excludedExperimentIds,
+    experimentIds,
+    projectId,
+    onSubmit,
+    openToast,
+    isSearch,
+  ]);
 
   return (
     <Modal
@@ -119,12 +134,20 @@ const ExperimentRetainLogsModalComponent: React.FC<Props> = ({
         text:
           filters !== undefined
             ? 'Retain Logs'
-            : `Retain logs for ${pluralizer(experimentIds.length, 'Experiment')}`,
+            : `Retain logs for ${pluralizer(
+                experimentIds.length,
+                isSearch ? 'Search' : 'Experiment',
+                isSearch ? 'Searches' : 'Experiments',
+              )}`,
       }}
       title={
         filters !== undefined
           ? 'Retain Logs'
-          : `Retain Logs for ${pluralizer(experimentIds.length, 'Experiment')}`
+          : `Retain Logs for ${pluralizer(
+              experimentIds.length,
+              isSearch ? 'Search' : 'Experiment',
+              isSearch ? 'Searches' : 'Experiments',
+            )}`
       }>
       <Form form={form} id={idPrefix + FORM_ID} layout="vertical">
         <Form.Item

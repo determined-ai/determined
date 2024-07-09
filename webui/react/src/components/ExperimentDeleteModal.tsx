@@ -11,9 +11,13 @@ export const BUTTON_TEXT = 'Delete';
 
 interface Props {
   experiment: ExperimentBase;
+  isSearch?: boolean;
 }
 
-const ExperimentDeleteModalComponent: React.FC<Props> = ({ experiment }: Props) => {
+const ExperimentDeleteModalComponent: React.FC<Props> = ({
+  experiment,
+  isSearch = false,
+}: Props) => {
   const handleSubmit = async () => {
     try {
       await deleteExperiment({ experimentId: experiment.id });
@@ -22,7 +26,7 @@ const ExperimentDeleteModalComponent: React.FC<Props> = ({ experiment }: Props) 
       handleError(e, {
         level: ErrorLevel.Error,
         publicMessage: 'Please try again later.',
-        publicSubject: 'Unable to delete experiment.',
+        publicSubject: `Unable to delete ${isSearch ? 'search' : 'experiment'}.`,
         silent: false,
         type: ErrorType.Server,
       });
@@ -39,8 +43,8 @@ const ExperimentDeleteModalComponent: React.FC<Props> = ({ experiment }: Props) 
         handler: handleSubmit,
         text: BUTTON_TEXT,
       }}
-      title="Confirm Experiment Deletion">
-      Are you sure you want to delete experiment {experiment.id}?
+      title={`Confirm ${isSearch ? 'Search' : 'Experiment'} Deletion`}>
+      Are you sure you want to delete {isSearch ? 'search' : 'experiment'} {experiment.id}?
     </Modal>
   );
 };
