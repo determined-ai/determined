@@ -26,13 +26,7 @@ import * as Api from 'services/api-ts-sdk';
 import userStore from 'stores/users';
 import { DetailedUser, FullJob, Job, JobAction, JobState, JobType, ResourcePool } from 'types';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
-import {
-  canManageJob,
-  jobTypeToCommandType,
-  moveJobToTop,
-  orderedSchedulers,
-  unsupportedQPosSchedulers,
-} from 'utils/job';
+import { canManageJob, jobTypeToCommandType, orderedSchedulers } from 'utils/job';
 import { useObservable } from 'utils/observable';
 import { routeToReactUrl } from 'utils/routes';
 import { numericSorter } from 'utils/sort';
@@ -119,14 +113,6 @@ const JobQueue: React.FC<Props> = ({ rpStats, selectedRp, jobState }) => {
 
   usePolling(fetchJobsTable, { rerunOnNewFn: true });
 
-  const rpTotalJobCount = useCallback(
-    (rpName: string) => {
-      const stats = rpStats.find((rp) => rp.resourcePool === rpName)?.stats;
-      return stats ? stats.queuedCount + stats.scheduledCount : 0;
-    },
-    [rpStats],
-  );
-
   const dropDownOnTrigger = useCallback(
     (job: Job) => {
       if (!('entityId' in job)) return {};
@@ -140,17 +126,6 @@ const JobQueue: React.FC<Props> = ({ rpStats, selectedRp, jobState }) => {
         triggers[JobAction.ViewLog] = () => {
           routeToReactUrl(paths.taskLogs({ id: job.entityId, name: job.name, type: commandType }));
         };
-      }
-
-      if (
-        selectedRp &&
-        isJobOrderAvailable &&
-        !!topJob &&
-        job.summary.jobsAhead > 0 &&
-        canManageJob(job, selectedRp) &&
-        !unsupportedQPosSchedulers.has(selectedRp.schedulerType)
-      ) {
-        triggers[JobAction.MoveToTop] = () => moveJobToTop(topJob, job);
       }
 
       // if job is an experiment type add action to kill it
@@ -178,7 +153,7 @@ const JobQueue: React.FC<Props> = ({ rpStats, selectedRp, jobState }) => {
       });
       return triggers;
     },
-    [selectedRp, isJobOrderAvailable, topJob, fetchJobsTable],
+    [selectedRp, fetchJobsTable],
   );
 
   const onModalClose = useCallback(() => {
@@ -223,7 +198,6 @@ const JobQueue: React.FC<Props> = ({ rpStats, selectedRp, jobState }) => {
                     <ActionDropdown<JobAction>
                       actionOrder={[
                         JobAction.ManageJob,
-                        JobAction.MoveToTop,
                         JobAction.ViewLog,
                         JobAction.Cancel,
                         JobAction.Kill,
@@ -231,7 +205,6 @@ const JobQueue: React.FC<Props> = ({ rpStats, selectedRp, jobState }) => {
                       confirmations={{
                         [JobAction.Cancel]: { cancelText: 'Abort', onError: handleError },
                         [JobAction.Kill]: { danger: true, onError: handleError },
-                        [JobAction.MoveToTop]: { onError: handleError },
                       }}
                       id={record.name}
                       kind="job"
@@ -387,7 +360,6 @@ const JobQueue: React.FC<Props> = ({ rpStats, selectedRp, jobState }) => {
         <manageJobModal.Component
           initialPool={selectedRp.name}
           job={managingJob}
-          jobCount={rpTotalJobCount(selectedRp.name)}
           rpStats={rpStats}
           schedulerType={selectedRp.schedulerType}
           onFinish={onModalClose}
