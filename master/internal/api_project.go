@@ -1089,6 +1089,7 @@ func (a *apiServer) GetMetadataValues(
 		return nil, err
 	}
 
+	// We only want string-type metadata.
 	values := []string{}
 	err = db.Bun().NewSelect().Distinct().
 		Table("runs_metadata_index").
