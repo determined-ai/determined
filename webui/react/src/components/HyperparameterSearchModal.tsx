@@ -645,8 +645,8 @@ const HyperparameterRow: React.FC<RowProps> = ({
   const [countError, setCountError] = useState<string>();
 
   useEffect(() => {
-    setActive(hyperparameter.type !== HyperparameterType.Constant);
-  }, [hyperparameter.type]);
+    setActive(type !== HyperparameterType.Constant);
+  }, [type]);
 
   const handleTypeChange = useCallback((value: SelectValue) => {
     setActive(value !== HyperparameterType.Constant);
