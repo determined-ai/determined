@@ -4,7 +4,10 @@
 package command
 
 import (
+	"regexp"
 	"testing"
+
+	"github.com/determined-ai/determined/master/internal/user"
 
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/mock"
@@ -61,7 +64,7 @@ func TestCommandManagerLifecycle(t *testing.T) {
 
 func TestNotebookManagerLifecycle(t *testing.T) {
 	db := setupTest(t)
-
+	user.InitService(db, &model.ExternalSessions{})
 	// Launch a Notebook.
 	cmd1 := launchNotebook(t, db)
 
@@ -72,12 +75,27 @@ func TestNotebookManagerLifecycle(t *testing.T) {
 
 	// Launch another Notebook.
 	cmd2 := launchNotebook(t, db)
-
 	// Get Notebooks.
 	resp2, err := DefaultCmdService.GetNotebooks(&apiv1.GetNotebooksRequest{})
 	require.NotNil(t, resp2)
 	require.NoError(t, err)
 	require.Len(t, resp2.Notebooks, 2)
+
+	// Verify Notebooks return valid tokens.
+	for _, resp := range resp2.Notebooks {
+		re := regexp.MustCompile("^/proxy/(.*)/\\?token=(.*)")
+		addrMatches := re.FindStringSubmatch(resp.ServiceAddress)
+		require.Len(t, addrMatches, 3)
+
+		taskId, token := addrMatches[1], addrMatches[2]
+		require.NotEmpty(t, token)
+		require.NotEmpty(t, taskId)
+
+		usr, notebookSession, err := user.GetService().UserAndNotebookSessionFromToken(token)
+		require.NoError(t, err)
+		require.Equal(t, resp.UserId, int32(usr.ID))
+		require.Equal(t, taskId, string(notebookSession.TaskID))
+	}
 
 	// Kill 1 Notebook.
 	resp3, err := DefaultCmdService.KillNTSC(cmd2.Id, model.TaskTypeNotebook)
@@ -183,8 +201,9 @@ func CreateMockGenericReq(t *testing.T, pgDB *db.PgDB) *CreateGeneric {
 	cmdSpec := tasks.GenericCommandSpec{}
 	key := "pass"
 	cmdSpec.Base = tasks.TaskSpec{
-		Owner:  &model.User{ID: user.ID},
-		TaskID: string(model.NewTaskID()),
+		Owner:        &model.User{ID: user.ID},
+		TaskID:       string(model.NewTaskID()),
+		ExtraEnvVars: map[string]string{},
 	}
 	cmdSpec.CommandID = uuid.New().String()
 	cmdSpec.Metadata.PrivateKey = &key
@@ -207,10 +226,11 @@ func launchCommand(t *testing.T, db *db.PgDB) *commandv1.Command {
 }
 
 func launchNotebook(t *testing.T, db *db.PgDB) *notebookv1.Notebook {
-	cmd, err := DefaultCmdService.LaunchGenericCommand(
-		model.TaskTypeNotebook,
-		model.JobTypeNotebook,
-		CreateMockGenericReq(t, db))
+	mockReq := CreateMockGenericReq(t, db)
+	cmd, err := DefaultCmdService.LaunchNotebookCommand(
+		mockReq,
+		mockReq.Spec.Base.Owner,
+	)
 	v1nb := cmd.ToV1Notebook()
 	require.NoError(t, err)
 	require.NotNil(t, v1nb)

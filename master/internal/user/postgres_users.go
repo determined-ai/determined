@@ -413,3 +413,17 @@ func ByUsername(ctx context.Context, username string) (*model.User, error) {
 		return &user, nil
 	}
 }
+
+// BySessionID looks up a user by session ID in the database.
+func BySessionID(ctx context.Context, sessionID model.SessionID) (*model.User, error) {
+	var user model.User
+	err := db.Bun().NewSelect().
+		Table("users").
+		ColumnExpr("users.*").
+		Join("JOIN user_sessions ON user_sessions.user_id = users.id").
+		Where("user_sessions.id = ?", sessionID).Scan(ctx, &user)
+	if err != nil {
+		return nil, err
+	}
+	return &user, nil
+}
