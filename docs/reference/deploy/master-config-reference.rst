@@ -1735,6 +1735,7 @@ used for :ref:`remote user <remote-users>` management.
           auto_provision_users: true
           groups_attribute_name: "XYZ"
           display_name_attribute_name: "XYZ"
+          always_redirect: true
 
 ``enabled``
 ===========
@@ -1804,6 +1805,13 @@ The name of the attribute passed in through the claim that specifies group membe
 The name of the attribute passed in through the claim from the OIDC provider used to set the user's
 display name in Determined.
 
+``always_redirect``
+===================
+
+Determines if this OIDC provider should be redirected to for authentication, bypasses the standard
+Determined sign-in page. This redirection persists unless the user explicitly signs out within the
+WebUI.
+
 **********
  ``saml``
 **********
@@ -1825,6 +1833,7 @@ For example:
           auto_provision_users: true
           groups_attribute_name: "groups"
           display_name_attribute_name: "disp_name"
+         always_redirect: true
 
 ``enabled``
 ===========
@@ -1873,6 +1882,13 @@ The claim name that specifies group memberships in SAML.
 ===============================
 
 The claim name from the SAML provider used to set the user's display name in Determined.
+
+``always_redirect``
+===================
+
+Determines if this SAML provider should be redirected to for authentication, bypasses the standard
+Determined sign-in page. This redirection persists unless the user explicitly signs out within the
+WebUI.
 
 ********************
  ``reserved_ports``
