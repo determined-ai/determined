@@ -19,7 +19,7 @@ else
     $(cat VERSION) $(cat tools/scripts/environments-target.txt)
 fi
 
-python3 tools/scripts/bumpvens.py tools/scripts/bumpenvs.yaml
+python3 tools/scripts/bumpenvs.py tools/scripts/bumpenvs.yaml
 
 
 git add --update
