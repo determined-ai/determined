@@ -806,33 +806,32 @@ func TestGetMetadataValues(t *testing.T) {
 	require.NoError(t, err)
 
 	// Add metadata
-	rawMetadata1 := map[string]any{
-		"test_key": "test_value1",
-		"nested": map[string]any{
-			"nested_key": "nested_value1",
+	rawMetadata := []map[string]any{
+		map[string]any{
+			"test_key": "test_value1",
+			"nested": map[string]any{
+				"nested_key": "nested_value1",
+			},
+		},
+		map[string]any{
+			"test_key": "test_value1",
+			"nested": map[string]any{
+				"nested_key": "nested_value2",
+			},
+		},
+		map[string]any{
+			"test_key": "test_value2",
+			"nested": map[string]any{
+				"nested_key": "nested_value2",
+			},
+		},
+		map[string]any{
+			"test_key": "test_value3",
+			"nested": map[string]any{
+				"nested_key": "nested_value1",
+			},
 		},
 	}
-	rawMetadata2 := map[string]any{
-		"test_key": "test_value1",
-		"nested": map[string]any{
-			"nested_key": "nested_value2",
-		},
-	}
-	rawMetadata3 := map[string]any{
-		"test_key": "test_value2",
-		"nested": map[string]any{
-			"nested_key": "nested_value2",
-		},
-	}
-	rawMetadata4 := map[string]any{
-		"test_key": "test_value3",
-		"nested": map[string]any{
-			"nested_key": "nested_value1",
-		},
-	}
-
-	rawMetadata := []map[string]any{}
-	rawMetadata = append(rawMetadata, rawMetadata1, rawMetadata2, rawMetadata3, rawMetadata4)
 	for i := 0; i < numRuns; i++ {
 		metadata := newProtoStruct(t, rawMetadata[i])
 		_, err = api.PostRunMetadata(ctx, &apiv1.PostRunMetadataRequest{
