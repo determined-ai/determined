@@ -340,7 +340,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
               label: experiment.unmanaged ? (
                 <Tooltip content={UNMANAGED_MESSAGE}>Continue Trial</Tooltip>
               ) : (
-                'Continue Trial'
+                `Continue ${isSingleTrialExperiment(experiment) ? 'Trial' : 'Experiment'}`
               ),
               onClick: ContinuableNonSingleSearcherName.has(experiment.config.searcher.name) ? onClickContinueMultiTrialExp : ContinueTrialModal.open,
             },
