@@ -1,6 +1,7 @@
 import dataclasses
 import logging
 from typing import Any, Dict, List, Optional, Tuple, Union, cast
+import warnings
 
 import datasets as hf_datasets
 import torch
@@ -212,6 +213,8 @@ class BaseTransformerTrial(det_torch.PyTorchTrial):
     """
 
     def __init__(self, context: det_torch.PyTorchTrialContext) -> None:
+        warnings.warn("BaseTransformerTrial is deprecated and will be removed in the next release."
+                      "Users of huggingface can refer to the TrainerAPI examples we have provided.")
         self.context = context
         # A subclass of BaseTransformerTrial may have already set hparams and data_config
         # attributes so we only reset them if they do not exist.
