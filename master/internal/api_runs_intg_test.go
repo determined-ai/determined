@@ -269,6 +269,40 @@ func TestSearchRunsFilter(t *testing.T) {
 		HParams:      hyperparameters2,
 	}, task2.TaskID))
 
+	resp, err = api.SearchRuns(ctx, req)
+	require.NoError(t, err)
+	require.Len(t, resp.Runs, 2)
+
+	rawMetadata := map[string]any{
+		"string_key": "a",
+		"number_key": 1,
+		"nested": map[string]any{
+			"string_key": "a",
+			"number_key": 1,
+		},
+	}
+	metadata := newProtoStruct(t, rawMetadata)
+	_, err = api.PostRunMetadata(ctx, &apiv1.PostRunMetadataRequest{
+		RunId:    resp.Runs[0].Id,
+		Metadata: metadata,
+	})
+	require.NoError(t, err)
+
+	rawMetadata = map[string]any{
+		"string_key": "b",
+		"number_key": 2,
+		"nested": map[string]any{
+			"string_key": "b",
+			"number_key": 2,
+		},
+	}
+	metadata = newProtoStruct(t, rawMetadata)
+	_, err = api.PostRunMetadata(ctx, &apiv1.PostRunMetadataRequest{
+		RunId:    resp.Runs[1].Id,
+		Metadata: metadata,
+	})
+	require.NoError(t, err)
+
 	tests := map[string]struct {
 		expectedNumRuns int
 		filter          string
@@ -361,6 +395,66 @@ func TestSearchRunsFilter(t *testing.T) {
 			expectedNumRuns: 1,
 			filter: `{"filterGroup":{"children":[{"columnName":"hp.test1.test2","kind":"field",` +
 				`"location":"LOCATION_TYPE_RUN_HYPERPARAMETERS","operator":"<=","type":"COLUMN_TYPE_NUMBER","value":1}],` +
+				`"conjunction":"and","kind":"group"},"showArchived":false}`,
+		},
+		"MetadataEmpty": {
+			expectedNumRuns: 0,
+			filter: `{"filterGroup":{"children":[{"columnName":"number_key","kind":"field",` +
+				`"location":"LOCATION_TYPE_RUN_METADATA","operator":"isEmpty","type":"COLUMN_TYPE_NUMBER","value":1}],` +
+				`"conjunction":"and","kind":"group"},"showArchived":false}`,
+		},
+		"MetadataNotEmpty": {
+			expectedNumRuns: 2,
+			filter: `{"filterGroup":{"children":[{"columnName":"number_key","kind":"field",` +
+				`"location":"LOCATION_TYPE_RUN_METADATA","operator":"notEmpty","type":"COLUMN_TYPE_NUMBER","value":1}],` +
+				`"conjunction":"and","kind":"group"},"showArchived":false}`,
+		},
+		"MetadataContains": {
+			expectedNumRuns: 1,
+			filter: `{"filterGroup":{"children":[{"columnName":"string_key","kind":"field",` +
+				`"location":"LOCATION_TYPE_RUN_METADATA","operator":"contains","type":"COLUMN_TYPE_TEXT","value":"a"}],` +
+				`"conjunction":"and","kind":"group"},"showArchived":false}`,
+		},
+		"MetadataNotContains": {
+			expectedNumRuns: 1,
+			filter: `{"filterGroup":{"children":[{"columnName":"string_key","kind":"field",` +
+				`"location":"LOCATION_TYPE_RUN_METADATA","operator":"notContains","type":"COLUMN_TYPE_TEXT","value":"a"}],` +
+				`"conjunction":"and","kind":"group"},"showArchived":false}`,
+		},
+		"MetadataOperator": {
+			expectedNumRuns: 1,
+			filter: `{"filterGroup":{"children":[{"columnName":"number_key","kind":"field",` +
+				`"location":"LOCATION_TYPE_RUN_METADATA","operator":"<=","type":"COLUMN_TYPE_NUMBER","value":1}],` +
+				`"conjunction":"and","kind":"group"},"showArchived":false}`,
+		},
+		"MetadataNestedEmpty": {
+			expectedNumRuns: 0,
+			filter: `{"filterGroup":{"children":[{"columnName":"nested.number_key","kind":"field",` +
+				`"location":"LOCATION_TYPE_RUN_METADATA","operator":"isEmpty","type":"COLUMN_TYPE_NUMBER","value":1}],` +
+				`"conjunction":"and","kind":"group"},"showArchived":false}`,
+		},
+		"MetadataNestedNotEmpty": {
+			expectedNumRuns: 2,
+			filter: `{"filterGroup":{"children":[{"columnName":"nested.number_key","kind":"field",` +
+				`"location":"LOCATION_TYPE_RUN_METADATA","operator":"notEmpty","type":"COLUMN_TYPE_NUMBER","value":1}],` +
+				`"conjunction":"and","kind":"group"},"showArchived":false}`,
+		},
+		"MetadataNestedContains": {
+			expectedNumRuns: 1,
+			filter: `{"filterGroup":{"children":[{"columnName":"nested.string_key","kind":"field",` +
+				`"location":"LOCATION_TYPE_RUN_METADATA","operator":"contains","type":"COLUMN_TYPE_TEXT","value":"a"}],` +
+				`"conjunction":"and","kind":"group"},"showArchived":false}`,
+		},
+		"MetadataNestedNotContains": {
+			expectedNumRuns: 1,
+			filter: `{"filterGroup":{"children":[{"columnName":"nested.string_key","kind":"field",` +
+				`"location":"LOCATION_TYPE_RUN_METADATA","operator":"notContains","type":"COLUMN_TYPE_TEXT","value":"a"}],` +
+				`"conjunction":"and","kind":"group"},"showArchived":false}`,
+		},
+		"MetadataNestedOperator": {
+			expectedNumRuns: 1,
+			filter: `{"filterGroup":{"children":[{"columnName":"nested.number_key","kind":"field",` +
+				`"location":"LOCATION_TYPE_RUN_METADATA","operator":"<=","type":"COLUMN_TYPE_NUMBER","value":1}],` +
 				`"conjunction":"and","kind":"group"},"showArchived":false}`,
 		},
 	}
