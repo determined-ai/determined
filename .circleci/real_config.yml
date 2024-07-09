@@ -736,7 +736,6 @@ commands:
             echo "$CMD"
             cat /tmp/all-relevant-files | circleci tests run --command="$CMD" \
             --verbose --split-by=timings
-
             pytest_status=$?
             echo Pytest exited with $pytest_status
             exit $pytest_status
