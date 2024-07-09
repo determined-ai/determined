@@ -8,5 +8,6 @@
 
 **Improvements**
 
--  WebUI: Redirect SSO users to SSO provider authentication URIs when the provided session token is expired,
+- WebUI: Redirect SSO users to the SSO provider's authentication URIs when their session token has expired,
+- ```
       instead of displaying the Determined sign-in page.
