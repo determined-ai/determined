@@ -847,10 +847,15 @@ func TestGetMetadataValues(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.Len(t, getMetadataResp.Values, 3)
+	require.Equal(t, getMetadataResp.Values[0], "test_value1")
+	require.Equal(t, getMetadataResp.Values[1], "test_value2")
+	require.Equal(t, getMetadataResp.Values[2], "test_value3")
 
 	getMetadataResp, err = api.GetMetadataValues(ctx, &apiv1.GetMetadataValuesRequest{
 		Key: "nested.nested_key", ProjectId: projectID,
 	})
 	require.NoError(t, err)
 	require.Len(t, getMetadataResp.Values, 2)
+	require.Equal(t, getMetadataResp.Values[0], "nested_value1")
+	require.Equal(t, getMetadataResp.Values[1], "nested_value2")
 }
