@@ -4,7 +4,14 @@ import UIProvider, { DefaultTheme } from 'hew/Theme';
 import { ConfirmationProvider } from 'hew/useConfirm';
 
 import { handlePath } from 'routes/utils';
-import { archiveRuns, deleteRuns, killRuns, unarchiveRuns } from 'services/api';
+import {
+  archiveRuns,
+  deleteRuns,
+  killRuns,
+  pauseRuns,
+  resumeRuns,
+  unarchiveRuns,
+} from 'services/api';
 import { FlatRunExperiment, RunState } from 'types';
 
 import RunActionDropdown, { Action } from './RunActionDropdown';
@@ -30,6 +37,8 @@ vi.mock('services/api', () => ({
   archiveRuns: vi.fn(),
   deleteRuns: vi.fn(),
   killRuns: vi.fn(),
+  pauseRuns: vi.fn(),
+  resumeRuns: vi.fn(),
   unarchiveRuns: vi.fn(),
 }));
 
@@ -183,7 +192,7 @@ describe('RunActionDropdown', () => {
     expect(screen.queryByText(Action.Move)).not.toBeInTheDocument();
   });
 
-  it('should provide Pause option', () => {
+  it('should provide Pause option', async () => {
     mocks.canModifyFlatRun.mockImplementation(() => true);
     const experiment: FlatRunExperiment = {
       description: '',
@@ -199,6 +208,9 @@ describe('RunActionDropdown', () => {
     };
     setup(undefined, RunState.Active, false, experiment);
     expect(screen.getByText(Action.Pause)).toBeInTheDocument();
+    await user.click(screen.getByText(Action.Pause));
+    await user.click(screen.getByRole('button', { name: Action.Pause }));
+    expect(vi.mocked(pauseRuns)).toBeCalled();
   });
 
   it('should hide Pause option without permissions', () => {
@@ -207,10 +219,13 @@ describe('RunActionDropdown', () => {
     expect(screen.queryByText(Action.Pause)).not.toBeInTheDocument();
   });
 
-  it('should provide Resume option', () => {
+  it('should provide Resume option', async () => {
     mocks.canModifyFlatRun.mockImplementation(() => true);
     setup(undefined, RunState.Paused, false);
     expect(screen.getByText(Action.Resume)).toBeInTheDocument();
+    await user.click(screen.getByText(Action.Resume));
+    await user.click(screen.getByRole('button', { name: Action.Resume }));
+    expect(vi.mocked(resumeRuns)).toBeCalled();
   });
 
   it('should hide Resume option without permissions', () => {

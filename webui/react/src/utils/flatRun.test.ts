@@ -226,8 +226,8 @@ describe('Flat Run Utilities', () => {
           };
           expect(canActionFlatRun(FlatRunAction.Pause, flatRun)).toBeTruthy();
 
-          const flatRunWithMultitrial: FlatRun = {
-            ...BASE_FLAT_RUN,
+          const flatRunWithSingletrial: FlatRun = {
+            ...flatRun,
             experiment: {
               description: '',
               id: 1,
@@ -239,21 +239,14 @@ describe('Flat Run Utilities', () => {
               searcherType: 'adaptive_asha',
               unmanaged: false,
             },
-            state: runState,
           };
-          expect(canActionFlatRun(FlatRunAction.Pause, flatRunWithMultitrial)).toBeTruthy();
+          expect(canActionFlatRun(FlatRunAction.Pause, flatRunWithSingletrial)).toBeTruthy();
         },
       );
 
-      it.each(Object.values(RunState).filter((v) => !pausableRunStates.has(v)))(
-        'should not be pausable (%s)',
+      it.each(Object.values(RunState).filter((v) => pausableRunStates.has(v)))(
+        'should not be pausable with pausable run states (%s)',
         (runState) => {
-          const flatRun: FlatRun = {
-            ...BASE_FLAT_RUN,
-            state: runState,
-          };
-          expect(canActionFlatRun(FlatRunAction.Pause, flatRun)).toBeFalsy();
-
           const flatRunWithMultitrial: FlatRun = {
             ...BASE_FLAT_RUN,
             experiment: {
@@ -268,6 +261,49 @@ describe('Flat Run Utilities', () => {
               unmanaged: false,
             },
             state: runState,
+          };
+          expect(canActionFlatRun(FlatRunAction.Pause, flatRunWithMultitrial)).toBeFalsy();
+        },
+      );
+
+      it.each(Object.values(RunState).filter((v) => !pausableRunStates.has(v)))(
+        'should not be pausable with nonpausable run states (%s)',
+        (runState) => {
+          const flatRun: FlatRun = {
+            ...BASE_FLAT_RUN,
+            state: runState,
+          };
+          expect(canActionFlatRun(FlatRunAction.Pause, flatRun)).toBeFalsy();
+
+          const flatRunWithSingletrial: FlatRun = {
+            ...flatRun,
+            experiment: {
+              description: '',
+              id: 1,
+              isMultitrial: false,
+              name: 'name',
+              progress: 1,
+              resourcePool: 'default',
+              searcherMetric: 'validation_loss',
+              searcherType: 'single',
+              unmanaged: false,
+            },
+          };
+          expect(canActionFlatRun(FlatRunAction.Pause, flatRunWithSingletrial)).toBeFalsy();
+
+          const flatRunWithMultitrial: FlatRun = {
+            ...flatRun,
+            experiment: {
+              description: '',
+              id: 1,
+              isMultitrial: true,
+              name: 'name',
+              progress: 1,
+              resourcePool: 'default',
+              searcherMetric: 'validation_loss',
+              searcherType: 'adaptive_asha',
+              unmanaged: false,
+            },
           };
           expect(canActionFlatRun(FlatRunAction.Pause, flatRunWithMultitrial)).toBeFalsy();
         },

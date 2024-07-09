@@ -182,7 +182,7 @@ const RunActionDropdown: React.FC<Props> = ({
       } catch (e) {
         handleError(e, {
           level: ErrorLevel.Error,
-          publicMessage: `Unable to ${action} experiment ${run.id}.`,
+          publicMessage: `Unable to ${action} run ${run.id}.`,
           publicSubject: `${capitalize(action)} failed.`,
           silent: false,
           type: ErrorType.Server,
