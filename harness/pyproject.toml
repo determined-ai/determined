@@ -1,6 +1,7 @@
 [build-system]
 # Minimum requirements for the build system to execute.
-requires = ["setuptools>=64", "wheel", "setuptools_scm>=8"]
+# requires = ["setuptools>=64", "wheel", "setuptools_scm>=8"]
+requires = ["setuptools>=64", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
@@ -71,6 +72,8 @@ exclude = '(_gen.py|determined/_swagger/client/*)'
 # [tool.setuptools_scm]
 # # Path relative_to pyproject.toml. Necessary for correct git metadata parsing.
 # root = "../"
+# version_scheme = "version:git_version_scheme"
+# local_scheme = "version:git_local_version"
 
 [tool.setuptools]
 include-package-data = true
