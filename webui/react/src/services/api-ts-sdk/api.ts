@@ -1133,12 +1133,6 @@ export interface V1Agent {
      */
     containers?: { [key: string]: V1Container; };
     /**
-     * This field has been deprecated and will be empty.
-     * @type {string}
-     * @memberof V1Agent
-     */
-    label?: string;
-    /**
      * The addresses of the agent.
      * @type {Array<string>}
      * @memberof V1Agent
@@ -9021,12 +9015,6 @@ export interface V1ResourceAllocationAggregatedEntry {
      * @memberof V1ResourceAllocationAggregatedEntry
      */
     byResourcePool: { [key: string]: number; };
-    /**
-     * This field has been deprecated and will be empty.
-     * @type {{ [key: string]: number; }}
-     * @memberof V1ResourceAllocationAggregatedEntry
-     */
-    byAgentLabel: { [key: string]: number; };
 }
 /**
  * Response to ResourceAllocationAggregatedRequest.
@@ -13156,13 +13144,12 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
          * @param {V1OrderBy} [orderBy] Order agents in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of agents before returning results. Negative values denote number of agents to skip from the end before returning results.
          * @param {number} [limit] Limit the number of agents. A value of 0 denotes no limit.
-         * @param {string} [label] This field has been deprecated and will be ignored.
          * @param {boolean} [excludeSlots] exclude slots.
          * @param {boolean} [excludeContainers] exclude containers.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getAgents(sortBy?: V1GetAgentsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, label?: string, excludeSlots?: boolean, excludeContainers?: boolean, options: any = {}): FetchArgs {
+        getAgents(sortBy?: V1GetAgentsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, excludeSlots?: boolean, excludeContainers?: boolean, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/agents`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
@@ -13191,10 +13178,6 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
             
             if (limit !== undefined) {
                 localVarQueryParameter['limit'] = limit
-            }
-            
-            if (label !== undefined) {
-                localVarQueryParameter['label'] = label
             }
             
             if (excludeSlots !== undefined) {
@@ -13763,14 +13746,13 @@ export const ClusterApiFp = function (configuration?: Configuration) {
          * @param {V1OrderBy} [orderBy] Order agents in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of agents before returning results. Negative values denote number of agents to skip from the end before returning results.
          * @param {number} [limit] Limit the number of agents. A value of 0 denotes no limit.
-         * @param {string} [label] This field has been deprecated and will be ignored.
          * @param {boolean} [excludeSlots] exclude slots.
          * @param {boolean} [excludeContainers] exclude containers.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getAgents(sortBy?: V1GetAgentsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, label?: string, excludeSlots?: boolean, excludeContainers?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetAgentsResponse> {
-            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).getAgents(sortBy, orderBy, offset, limit, label, excludeSlots, excludeContainers, options);
+        getAgents(sortBy?: V1GetAgentsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, excludeSlots?: boolean, excludeContainers?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetAgentsResponse> {
+            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).getAgents(sortBy, orderBy, offset, limit, excludeSlots, excludeContainers, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -14071,14 +14053,13 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
          * @param {V1OrderBy} [orderBy] Order agents in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of agents before returning results. Negative values denote number of agents to skip from the end before returning results.
          * @param {number} [limit] Limit the number of agents. A value of 0 denotes no limit.
-         * @param {string} [label] This field has been deprecated and will be ignored.
          * @param {boolean} [excludeSlots] exclude slots.
          * @param {boolean} [excludeContainers] exclude containers.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getAgents(sortBy?: V1GetAgentsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, label?: string, excludeSlots?: boolean, excludeContainers?: boolean, options?: any) {
-            return ClusterApiFp(configuration).getAgents(sortBy, orderBy, offset, limit, label, excludeSlots, excludeContainers, options)(fetch, basePath);
+        getAgents(sortBy?: V1GetAgentsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, excludeSlots?: boolean, excludeContainers?: boolean, options?: any) {
+            return ClusterApiFp(configuration).getAgents(sortBy, orderBy, offset, limit, excludeSlots, excludeContainers, options)(fetch, basePath);
         },
         /**
          * 
@@ -14284,15 +14265,14 @@ export class ClusterApi extends BaseAPI {
      * @param {V1OrderBy} [orderBy] Order agents in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
      * @param {number} [offset] Skip the number of agents before returning results. Negative values denote number of agents to skip from the end before returning results.
      * @param {number} [limit] Limit the number of agents. A value of 0 denotes no limit.
-     * @param {string} [label] This field has been deprecated and will be ignored.
      * @param {boolean} [excludeSlots] exclude slots.
      * @param {boolean} [excludeContainers] exclude containers.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ClusterApi
      */
-    public getAgents(sortBy?: V1GetAgentsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, label?: string, excludeSlots?: boolean, excludeContainers?: boolean, options?: any) {
-        return ClusterApiFp(this.configuration).getAgents(sortBy, orderBy, offset, limit, label, excludeSlots, excludeContainers, options)(this.fetch, this.basePath)
+    public getAgents(sortBy?: V1GetAgentsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, excludeSlots?: boolean, excludeContainers?: boolean, options?: any) {
+        return ClusterApiFp(this.configuration).getAgents(sortBy, orderBy, offset, limit, excludeSlots, excludeContainers, options)(this.fetch, this.basePath)
     }
     
     /**

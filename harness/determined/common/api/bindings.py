@@ -1129,7 +1129,6 @@ class v1Agent(Printable):
     containers: "typing.Optional[typing.Dict[str, v1Container]]" = None
     draining: "typing.Optional[bool]" = None
     enabled: "typing.Optional[bool]" = None
-    label: "typing.Optional[str]" = None
     registeredTime: "typing.Optional[str]" = None
     resourcePools: "typing.Optional[typing.Sequence[str]]" = None
     slots: "typing.Optional[typing.Dict[str, v1Slot]]" = None
@@ -1144,7 +1143,6 @@ class v1Agent(Printable):
         containers: "typing.Union[typing.Dict[str, v1Container], None, Unset]" = _unset,
         draining: "typing.Union[bool, None, Unset]" = _unset,
         enabled: "typing.Union[bool, None, Unset]" = _unset,
-        label: "typing.Union[str, None, Unset]" = _unset,
         registeredTime: "typing.Union[str, None, Unset]" = _unset,
         resourcePools: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
         slots: "typing.Union[typing.Dict[str, v1Slot], None, Unset]" = _unset,
@@ -1160,8 +1158,6 @@ class v1Agent(Printable):
             self.draining = draining
         if not isinstance(enabled, Unset):
             self.enabled = enabled
-        if not isinstance(label, Unset):
-            self.label = label
         if not isinstance(registeredTime, Unset):
             self.registeredTime = registeredTime
         if not isinstance(resourcePools, Unset):
@@ -1185,8 +1181,6 @@ class v1Agent(Printable):
             kwargs["draining"] = obj["draining"]
         if "enabled" in obj:
             kwargs["enabled"] = obj["enabled"]
-        if "label" in obj:
-            kwargs["label"] = obj["label"]
         if "registeredTime" in obj:
             kwargs["registeredTime"] = obj["registeredTime"]
         if "resourcePools" in obj:
@@ -1210,8 +1204,6 @@ class v1Agent(Printable):
             out["draining"] = self.draining
         if not omit_unset or "enabled" in vars(self):
             out["enabled"] = self.enabled
-        if not omit_unset or "label" in vars(self):
-            out["label"] = self.label
         if not omit_unset or "registeredTime" in vars(self):
             out["registeredTime"] = self.registeredTime
         if not omit_unset or "resourcePools" in vars(self):
@@ -12345,7 +12337,6 @@ class v1ResourceAllocationAggregatedEntry(Printable):
     def __init__(
         self,
         *,
-        byAgentLabel: "typing.Dict[str, float]",
         byExperimentLabel: "typing.Dict[str, float]",
         byResourcePool: "typing.Dict[str, float]",
         byUsername: "typing.Dict[str, float]",
@@ -12353,7 +12344,6 @@ class v1ResourceAllocationAggregatedEntry(Printable):
         periodStart: str,
         seconds: float,
     ):
-        self.byAgentLabel = byAgentLabel
         self.byExperimentLabel = byExperimentLabel
         self.byResourcePool = byResourcePool
         self.byUsername = byUsername
@@ -12364,7 +12354,6 @@ class v1ResourceAllocationAggregatedEntry(Printable):
     @classmethod
     def from_json(cls, obj: Json) -> "v1ResourceAllocationAggregatedEntry":
         kwargs: "typing.Dict[str, typing.Any]" = {
-            "byAgentLabel": {k: float(v) for k, v in obj["byAgentLabel"].items()},
             "byExperimentLabel": {k: float(v) for k, v in obj["byExperimentLabel"].items()},
             "byResourcePool": {k: float(v) for k, v in obj["byResourcePool"].items()},
             "byUsername": {k: float(v) for k, v in obj["byUsername"].items()},
@@ -12376,7 +12365,6 @@ class v1ResourceAllocationAggregatedEntry(Printable):
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
-            "byAgentLabel": {k: dump_float(v) for k, v in self.byAgentLabel.items()},
             "byExperimentLabel": {k: dump_float(v) for k, v in self.byExperimentLabel.items()},
             "byResourcePool": {k: dump_float(v) for k, v in self.byResourcePool.items()},
             "byUsername": {k: dump_float(v) for k, v in self.byUsername.items()},
@@ -18144,7 +18132,6 @@ def get_GetAgents(
     *,
     excludeContainers: "typing.Optional[bool]" = None,
     excludeSlots: "typing.Optional[bool]" = None,
-    label: "typing.Optional[str]" = None,
     limit: "typing.Optional[int]" = None,
     offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
@@ -18154,7 +18141,6 @@ def get_GetAgents(
 
     - excludeContainers: exclude containers.
     - excludeSlots: exclude slots.
-    - label: This field has been deprecated and will be ignored.
     - limit: Limit the number of agents. A value of 0 denotes no limit.
     - offset: Skip the number of agents before returning results. Negative values
 denote number of agents to skip from the end before returning results.
@@ -18172,7 +18158,6 @@ denote number of agents to skip from the end before returning results.
     _params = {
         "excludeContainers": str(excludeContainers).lower() if excludeContainers is not None else None,
         "excludeSlots": str(excludeSlots).lower() if excludeSlots is not None else None,
-        "label": label,
         "limit": limit,
         "offset": offset,
         "orderBy": orderBy.value if orderBy is not None else None,
