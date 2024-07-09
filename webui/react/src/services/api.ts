@@ -793,6 +793,18 @@ export const unarchiveRuns = generateDetApi<
   void
 >(Config.unarchiveRuns);
 
+export const pauseRuns = generateDetApi<
+  Api.V1ResumeRunsRequest,
+  Api.V1ResumeRunsResponse,
+  Type.BulkActionResult
+>(Config.pauseRuns);
+
+export const resumeRuns = generateDetApi<
+  Api.V1ResumeRunsRequest,
+  Api.V1ResumeRunsResponse,
+  Type.BulkActionResult
+>(Config.resumeRuns);
+
 /* Tasks */
 
 export const getCommands = generateDetApi<
