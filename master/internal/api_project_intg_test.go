@@ -791,34 +791,16 @@ func TestGetMetadataValues(t *testing.T) {
 	projectID := int32(projectIDInt)
 	exp := createTestExpWithProjectID(t, api, curUser, int(projectID))
 
-	task := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
-	require.NoError(t, db.AddTask(context.Background(), task))
-	require.NoError(t, db.AddTrial(context.Background(), &model.Trial{
-		State:        model.PausedState,
-		ExperimentID: exp.ID,
-		StartTime:    time.Now(),
-	}, task.TaskID))
-	task = &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
-	require.NoError(t, db.AddTask(context.Background(), task))
-	require.NoError(t, db.AddTrial(context.Background(), &model.Trial{
-		State:        model.PausedState,
-		ExperimentID: exp.ID,
-		StartTime:    time.Now(),
-	}, task.TaskID))
-	task = &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
-	require.NoError(t, db.AddTask(context.Background(), task))
-	require.NoError(t, db.AddTrial(context.Background(), &model.Trial{
-		State:        model.PausedState,
-		ExperimentID: exp.ID,
-		StartTime:    time.Now(),
-	}, task.TaskID))
-	task = &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
-	require.NoError(t, db.AddTask(context.Background(), task))
-	require.NoError(t, db.AddTrial(context.Background(), &model.Trial{
-		State:        model.PausedState,
-		ExperimentID: exp.ID,
-		StartTime:    time.Now(),
-	}, task.TaskID))
+	numRuns := 4
+	for i := 0; i < numRuns; i++ {
+		task := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
+		require.NoError(t, db.AddTask(context.Background(), task))
+		require.NoError(t, db.AddTrial(context.Background(), &model.Trial{
+			State:        model.PausedState,
+			ExperimentID: exp.ID,
+			StartTime:    time.Now(),
+		}, task.TaskID))
+	}
 
 	resp, err := api.SearchRuns(ctx, &apiv1.SearchRunsRequest{ProjectId: &projectID})
 	require.NoError(t, err)
@@ -848,30 +830,17 @@ func TestGetMetadataValues(t *testing.T) {
 			"nested_key": "nested_value1",
 		},
 	}
-	metadata := newProtoStruct(t, rawMetadata1)
-	_, err = api.PostRunMetadata(ctx, &apiv1.PostRunMetadataRequest{
-		RunId:    resp.Runs[0].Id,
-		Metadata: metadata,
-	})
-	require.NoError(t, err)
-	metadata = newProtoStruct(t, rawMetadata2)
-	_, err = api.PostRunMetadata(ctx, &apiv1.PostRunMetadataRequest{
-		RunId:    resp.Runs[1].Id,
-		Metadata: metadata,
-	})
-	require.NoError(t, err)
-	metadata = newProtoStruct(t, rawMetadata3)
-	_, err = api.PostRunMetadata(ctx, &apiv1.PostRunMetadataRequest{
-		RunId:    resp.Runs[2].Id,
-		Metadata: metadata,
-	})
-	require.NoError(t, err)
-	metadata = newProtoStruct(t, rawMetadata4)
-	_, err = api.PostRunMetadata(ctx, &apiv1.PostRunMetadataRequest{
-		RunId:    resp.Runs[3].Id,
-		Metadata: metadata,
-	})
-	require.NoError(t, err)
+
+	rawMetadata := []map[string]any{}
+	rawMetadata = append(rawMetadata, rawMetadata1, rawMetadata2, rawMetadata3, rawMetadata4)
+	for i := 0; i < numRuns; i++ {
+		metadata := newProtoStruct(t, rawMetadata[i])
+		_, err = api.PostRunMetadata(ctx, &apiv1.PostRunMetadataRequest{
+			RunId:    resp.Runs[i].Id,
+			Metadata: metadata,
+		})
+		require.NoError(t, err)
+	}
 
 	getMetadataResp, err := api.GetMetadataValues(ctx, &apiv1.GetMetadataValuesRequest{
 		Key: "test_key", ProjectId: projectID,
