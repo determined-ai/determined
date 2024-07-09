@@ -343,6 +343,7 @@ export const CheckpointStorage = t.intersection([
     bucket: t.string,
     hostPath: t.string,
     storagePath: t.string,
+    containerPath: t.string,
     type: valueof(CheckpointStorageType),
   }),
   t.type({

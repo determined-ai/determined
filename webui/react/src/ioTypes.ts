@@ -174,6 +174,7 @@ export const ioCheckpointStorage = io.type({
   save_trial_best: io.number,
   save_trial_latest: io.number,
   storage_path: optional(io.string),
+  container_path: optional(io.string),
   type: optional(ioCheckpointStorageType),
 });
 

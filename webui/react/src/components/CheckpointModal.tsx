@@ -39,6 +39,7 @@ const getStorageLocation = (
 ): string => {
   const hostPath = config.checkpointStorage?.hostPath;
   const storagePath = config.checkpointStorage?.storagePath;
+  const container_path = config.checkpointStorage?.containerPath;
   let location = '';
   switch (config.checkpointStorage?.type) {
     case CheckpointStorageType.AWS:
@@ -54,11 +55,13 @@ const getStorageLocation = (
           ? `file://${storagePath}`
           : `file://${hostPath}/${storagePath}`;
       } else if (hostPath) {
-        location = `file:/${hostPath}`;
+        location = `file://${hostPath}`;
       }
       break;
     case CheckpointStorageType.DIRECTORY:
-      // unsupported, natch
+      if (container_path) {
+        location = `file:/${container_path}`;
+      }
       break;
     case CheckpointStorageType.AZURE:
       // type from api doesn't have azure-specific props

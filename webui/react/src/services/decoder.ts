@@ -368,6 +368,7 @@ export const ioToExperimentConfig = (
           saveTrialBest: io.checkpoint_storage.save_trial_best,
           saveTrialLatest: io.checkpoint_storage.save_trial_latest,
           storagePath: io.checkpoint_storage.storage_path || undefined,
+          containerPath: io.checkpoint_storage.container_path || undefined,
           type: (io.checkpoint_storage.type as types.CheckpointStorageType) || undefined,
         }
       : undefined,

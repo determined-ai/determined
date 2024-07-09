@@ -3,8 +3,11 @@
 import atexit
 import dataclasses
 import logging
+import pathlib
 import uuid
 from typing import Any, Dict, List, Optional, Union
+
+import appdirs
 
 import determined
 from determined import core, experimental
@@ -149,7 +152,16 @@ def _init_context(
     # Construct the config.
     defaulted_config = defaults or DefaultConfig()
     unmanaged_config = unmanaged or UnmanagedConfig()
-    checkpoint_storage = checkpoint_storage or defaulted_config.checkpoint_storage
+    checkpoint_storage = (
+        checkpoint_storage
+        or defaulted_config.checkpoint_storage
+        or {
+            "type": "directory",
+            "container_path": str(
+                pathlib.Path(appdirs.user_data_dir("determined")) / "checkpoints"
+            ),
+        }
+    )
 
     config = {
         "name": defaulted_config.name or f"unmanaged-{uuid.uuid4().hex[:8]}",
@@ -164,6 +176,7 @@ def _init_context(
         },
         "workspace": unmanaged_config.workspace,
         "project": unmanaged_config.project,
+        "checkpoint_storage": checkpoint_storage,
     }
 
     config_text = util.yaml_safe_dump(config)
