@@ -364,7 +364,10 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
       <div className={css.base}>
         {modalError && <Alert message={modalError} type="error" />}
         <div className={css.labelWithLink}>
-          <p>Select hyperparameters and define the search space.</p>
+          <p>
+            Select hyperparameters and define the search space. <br />
+            The experiment code needs to be able to handle hyperparameters for them to take effect.{' '}
+          </p>
           <Link
             external
             path={paths.docs('/training/hyperparameter/configure-hp-ranges.html')}
