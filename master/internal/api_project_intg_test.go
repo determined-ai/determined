@@ -859,3 +859,15 @@ func TestGetMetadataValues(t *testing.T) {
 	require.Equal(t, getMetadataResp.Values[0], "nested_value1")
 	require.Equal(t, getMetadataResp.Values[1], "nested_value2")
 }
+
+func TestGetMetadataValuesEmpty(t *testing.T) {
+	api, _, ctx := setupAPITest(t, nil)
+	_, projectIDInt := createProjectAndWorkspace(ctx, t, api)
+	projectID := int32(projectIDInt)
+
+	getMetadataResp, err := api.GetMetadataValues(ctx, &apiv1.GetMetadataValuesRequest{
+		Key: "test_key", ProjectId: projectID,
+	})
+	require.NoError(t, err)
+	require.Len(t, getMetadataResp.Values, 0)
+}
