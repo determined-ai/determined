@@ -169,12 +169,12 @@ const ioCheckpointStorageType = io.keyof(checkpointStorageTypes);
 
 export const ioCheckpointStorage = io.type({
   bucket: optional(io.string),
+  container_path: optional(io.string),
   host_path: optional(io.string),
   save_experiment_best: io.number,
   save_trial_best: io.number,
   save_trial_latest: io.number,
   storage_path: optional(io.string),
-  container_path: optional(io.string),
   type: optional(ioCheckpointStorageType),
 });
 

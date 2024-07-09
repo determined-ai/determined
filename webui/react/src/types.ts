@@ -341,9 +341,9 @@ export type CheckpointStorageType = ValueOf<typeof CheckpointStorageType>;
 export const CheckpointStorage = t.intersection([
   t.partial({
     bucket: t.string,
+    containerPath: t.string,
     hostPath: t.string,
     storagePath: t.string,
-    containerPath: t.string,
     type: valueof(CheckpointStorageType),
   }),
   t.type({
