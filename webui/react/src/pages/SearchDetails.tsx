@@ -20,6 +20,7 @@ import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { isAborted, isNotFound } from 'utils/service';
 
 import ExperimentCodeViewer from './ExperimentDetails/ExperimentCodeViewer';
+import ExperimentDetailsHeader from './ExperimentDetails/ExperimentDetailsHeader';
 import FlatRuns from './FlatRuns/FlatRuns';
 
 const TabType = {
@@ -217,6 +218,15 @@ const SearchDetails: React.FC = () => {
   return (
     <Page
       breadcrumb={pageBreadcrumb}
+      headerComponent={
+        experiment && (
+          <ExperimentDetailsHeader
+            experiment={experiment}
+            fetchExperimentDetails={fetchExperimentDetails}
+            isSearch
+          />
+        )
+      }
       notFound={pageError && isNotFound(pageError)}
       stickyHeader
       title={`Search ${searchId}`}>
