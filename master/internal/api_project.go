@@ -553,6 +553,37 @@ func (a *apiServer) getProjectRunColumnsByID(
 		})
 	}
 
+	metadata := []struct {
+		Metadata string
+		Type     string
+	}{}
+	// Get run metadata colums
+	err = db.Bun().NewSelect().Distinct().
+		ColumnExpr("CONCAT('metadata.', flat_key) as metadata").
+		ColumnExpr(`
+		CASE
+			WHEN string_value IS NOT NULL THEN 'string'
+			WHEN integer_value IS NOT NULL THEN 'number'
+			WHEN float_value IS NOT NULL THEN 'number'
+			WHEN timestamp_value IS NOT NULL THEN 'date'
+			WHEN boolean_value IS NOT NULL THEN 'boolean'
+			ELSE 'string'
+		END as type`).
+		TableExpr("runs_metadata_index").
+		Where("project_id = ?", id).
+		Scan(ctx, &metadata)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, data := range metadata {
+		columns = append(columns, &projectv1.ProjectColumn{
+			Column:   data.Metadata,
+			Location: projectv1.LocationType_LOCATION_TYPE_RUN_METADATA,
+			Type:     parseMetricsType(data.Type),
+		})
+	}
+
 	return &apiv1.GetProjectColumnsResponse{
 		Columns: columns,
 	}, nil
