@@ -165,10 +165,10 @@ message QueueControl {
   string job_id = 1;
   // The action to perform.
   oneof action {
-    // The desired job position in the queue in terms of another job.
-    string ahead_of = 2;
-    // The desired job position in the queue in terms of another job.
-    string behind_of = 4;
+    // Deprecated; do not use.
+    string ahead_of = 2 [deprecated = true];
+    // Deprecated; do not use.
+    string behind_of = 4 [deprecated = true];
     // Name of the target resource_pool to move the job to.
     string resource_pool = 3;
     // The desired job priority in priority scheduler.

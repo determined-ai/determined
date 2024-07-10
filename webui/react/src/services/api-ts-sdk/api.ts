@@ -8767,13 +8767,13 @@ export interface V1QueueControl {
      */
     jobId: string;
     /**
-     * The desired job position in the queue in terms of another job.
+     * Deprecated; do not use.
      * @type {string}
      * @memberof V1QueueControl
      */
     aheadOf?: string;
     /**
-     * The desired job position in the queue in terms of another job.
+     * Deprecated; do not use.
      * @type {string}
      * @memberof V1QueueControl
      */

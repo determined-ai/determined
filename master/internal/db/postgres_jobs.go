@@ -4,8 +4,6 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/pkg/errors"
-	"github.com/shopspring/decimal"
 	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -39,21 +37,4 @@ func JobByID(ctx context.Context, jobID model.JobID) (*model.Job, error) {
 		return nil, fmt.Errorf("querying job: %w", err)
 	}
 	return &j, nil
-}
-
-// UpdateJobPosition propagates the new queue position to the job.
-func UpdateJobPosition(ctx context.Context, jobID model.JobID, position decimal.Decimal) error {
-	if jobID.String() == "" {
-		return errors.Errorf("error modifying job with empty id")
-	}
-
-	j := model.Job{JobID: jobID, QPos: position}
-	_, err := Bun().NewUpdate().Model(&j).
-		Column("q_position").
-		Where("job_id = ?", jobID).
-		Exec(ctx)
-	if err != nil {
-		return fmt.Errorf("updating job position: %w", err)
-	}
-	return nil
 }
