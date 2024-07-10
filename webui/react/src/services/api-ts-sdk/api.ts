@@ -4278,6 +4278,19 @@ export interface V1GetMeResponse {
     user: V1User;
 }
 /**
+ * Response to GetMetadataValuesRequest.
+ * @export
+ * @interface V1GetMetadataValuesResponse
+ */
+export interface V1GetMetadataValuesResponse {
+    /**
+     * A list of metadata values
+     * @type {Array<string>}
+     * @memberof V1GetMetadataValuesResponse
+     */
+    values?: Array<string>;
+}
+/**
  * Response to GetMetricsRequest.
  * @export
  * @interface V1GetMetricsResponse
@@ -20023,6 +20036,48 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Retrieve run metadata values for a given string typed key within a given project.
+         * @param {number} projectId Project id
+         * @param {string} key Metadata key
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getMetadataValues(projectId: number, key: string, options: any = {}): FetchArgs {
+            // verify required parameter 'projectId' is not null or undefined
+            if (projectId === null || projectId === undefined) {
+                throw new RequiredError('projectId','Required parameter projectId was null or undefined when calling getMetadataValues.');
+            }
+            // verify required parameter 'key' is not null or undefined
+            if (key === null || key === undefined) {
+                throw new RequiredError('key','Required parameter key was null or undefined when calling getMetadataValues.');
+            }
+            const localVarPath = `/api/v1/projects/{projectId}/metadata/{key}`
+                .replace(`{${"projectId"}}`, encodeURIComponent(String(projectId)))
+                .replace(`{${"key"}}`, encodeURIComponent(String(key)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get a list of columns for experiment list table.
          * @param {number} id The id of the project.
          * @param {V1TableType} [tableType] type of table for project columns.   - TABLE_TYPE_UNSPECIFIED: Unspecified table type.  - TABLE_TYPE_EXPERIMENT: experiment table.  - TABLE_TYPE_RUN: run table.
@@ -22918,6 +22973,26 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Retrieve run metadata values for a given string typed key within a given project.
+         * @param {number} projectId Project id
+         * @param {string} key Metadata key
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getMetadataValues(projectId: number, key: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetMetadataValuesResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getMetadataValues(projectId, key, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Get a list of columns for experiment list table.
          * @param {number} id The id of the project.
          * @param {V1TableType} [tableType] type of table for project columns.   - TABLE_TYPE_UNSPECIFIED: Unspecified table type.  - TABLE_TYPE_EXPERIMENT: experiment table.  - TABLE_TYPE_RUN: run table.
@@ -24304,6 +24379,17 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Retrieve run metadata values for a given string typed key within a given project.
+         * @param {number} projectId Project id
+         * @param {string} key Metadata key
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getMetadataValues(projectId: number, key: string, options?: any) {
+            return InternalApiFp(configuration).getMetadataValues(projectId, key, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Get a list of columns for experiment list table.
          * @param {number} id The id of the project.
          * @param {V1TableType} [tableType] type of table for project columns.   - TABLE_TYPE_UNSPECIFIED: Unspecified table type.  - TABLE_TYPE_EXPERIMENT: experiment table.  - TABLE_TYPE_RUN: run table.
@@ -25268,6 +25354,19 @@ export class InternalApi extends BaseAPI {
      */
     public getJobsV2(offset?: number, limit?: number, resourcePool?: string, orderBy?: V1OrderBy, states?: Array<Jobv1State>, options?: any) {
         return InternalApiFp(this.configuration).getJobsV2(offset, limit, resourcePool, orderBy, states, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Retrieve run metadata values for a given string typed key within a given project.
+     * @param {number} projectId Project id
+     * @param {string} key Metadata key
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public getMetadataValues(projectId: number, key: string, options?: any) {
+        return InternalApiFp(this.configuration).getMetadataValues(projectId, key, options)(this.fetch, this.basePath)
     }
     
     /**
