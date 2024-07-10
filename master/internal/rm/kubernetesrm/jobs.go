@@ -281,12 +281,14 @@ func newJobsService(
 	return p, nil
 }
 
+// kristine building the client
 func (j *jobsService) startClientSet() error {
 	config, err := readClientConfig(j.kubeconfigPath)
 	if err != nil {
 		return fmt.Errorf("error building kubernetes config: %w", err)
 	}
 
+	j.syslog.Infof(" ***** config timeout: %d ms", config.Timeout.Milliseconds())
 	j.clientSet, err = k8sClient.NewForConfig(config)
 	if err != nil {
 		return fmt.Errorf("failed to initialize kubernetes clientSet: %w", err)
@@ -380,11 +382,16 @@ func (j *jobsService) getMasterIPAndPort() error {
 }
 
 func (j *jobsService) getSystemResourceRequests() error {
+	start := time.Now()
 	systemPods, err := j.podInterfaces[j.namespace].List(
 		context.TODO(), metaV1.ListOptions{LabelSelector: determinedSystemLabel})
 	if err != nil {
+		elapsed := time.Since(start)
+		j.syslog.Infof(" ***** error: List Pods: %d ms", elapsed.Milliseconds())
 		return fmt.Errorf("failed to get system pods: %w", err)
 	}
+	elapsed := time.Since(start)
+	j.syslog.Infof(" ***** List Pods: %d ms", elapsed.Milliseconds())
 
 	for _, systemPod := range systemPods.Items {
 		for _, container := range systemPod.Spec.Containers {
@@ -1902,6 +1909,7 @@ func (j *jobsService) getNonDetPods() ([]k8sV1.Pod, error) {
 	// TODO(RM-235) use a filter in metaV1.ListOptions. This change gets a lot easier after
 	// we have K8s integration tests. Using a filter means we should really talk to a real
 	// k8s server. Doing an e2e test for this is possible but would take a lot more work.
+	// kristine
 	allPods, err := j.listPodsInAllNamespaces(context.TODO(), metaV1.ListOptions{})
 	if err != nil {
 		return nil, err
@@ -1996,10 +2004,14 @@ func (j *jobsService) listJobsInAllNamespaces(
 ) ([]batchV1.Job, error) {
 	var res []batchV1.Job
 	for n, i := range j.jobInterfaces {
+		start := time.Now()
 		pods, err := i.List(ctx, opts)
+		elapsed := time.Since(start)
 		if err != nil {
+			j.syslog.Infof(" ***** List Pods in all Namespaces: %d ms", elapsed.Milliseconds())
 			return nil, fmt.Errorf("error listing pods for namespace %s: %w", n, err)
 		}
+		j.syslog.Infof(" ***** List Pods in all Namespaces: %d ms", elapsed.Milliseconds())
 
 		res = append(res, pods.Items...)
 	}
