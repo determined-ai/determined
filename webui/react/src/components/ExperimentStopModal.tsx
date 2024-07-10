@@ -14,20 +14,15 @@ export const ActionType = {
 
 export type AvalableActions = ValueOf<typeof ActionType>;
 
-export const BUTTON_TEXT = 'Stop Job';
+export const BUTTON_TEXT = 'Stop Experiment';
 export const CHECKBOX_TEXT = 'Save checkpoint before stopping';
 
 interface Props {
   experimentId: number;
   onClose?: () => void;
-  isSearch?: boolean;
 }
 
-const ExperimentStopModalComponent: React.FC<Props> = ({
-  experimentId,
-  onClose,
-  isSearch = false,
-}: Props) => {
+const ExperimentStopModalComponent: React.FC<Props> = ({ experimentId, onClose }: Props) => {
   const [type, setType] = useState<AvalableActions>(ActionType.Cancel);
 
   const handleCheckBoxChange = (event: CheckboxChangeEvent) => {
@@ -45,7 +40,7 @@ const ExperimentStopModalComponent: React.FC<Props> = ({
       handleError(e, {
         level: ErrorLevel.Error,
         publicMessage: 'Please try again later.',
-        publicSubject: `Unable to stop ${isSearch ? 'search' : 'experiment'}.`,
+        publicSubject: 'Unable to stop experiment.',
         silent: false,
         type: ErrorType.Server,
       });
@@ -62,9 +57,7 @@ const ExperimentStopModalComponent: React.FC<Props> = ({
       }}
       title="Confirm Stop"
       onClose={onClose}>
-      <div>
-        Are you sure you want to stop {isSearch ? 'search' : 'experiment'} {experimentId}?
-      </div>
+      <div>Are you sure you want to stop experiment {experimentId}?</div>
       <Checkbox checked={type === ActionType.Cancel} onChange={handleCheckBoxChange}>
         {CHECKBOX_TEXT}
       </Checkbox>

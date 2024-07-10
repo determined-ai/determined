@@ -35,7 +35,6 @@ interface Props {
   onSubmit?: (successfulIds?: number[]) => void;
   sourceProjectId: number;
   sourceWorkspaceId?: number;
-  isSearch?: boolean;
 }
 
 const ExperimentMoveModalComponent: React.FC<Props> = ({
@@ -45,7 +44,6 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
   onSubmit,
   sourceProjectId,
   sourceWorkspaceId,
-  isSearch = false,
 }: Props) => {
   const idPrefix = useId();
   const { openToast } = useToast();
@@ -104,19 +102,19 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
 
     if (numSuccesses === 0 && numFailures === 0) {
       openToast({
-        description: `No selected ${isSearch ? 'searches' : 'experiments'} were eligible for moving`,
-        title: `No eligible ${isSearch ? 'searches' : 'experimenst'}`,
+        description: 'No selected experiments were eligible for moving',
+        title: 'No eligible experiments',
       });
     } else if (numFailures === 0) {
       openToast({
         closeable: true,
-        description: `${results.successful.length} ${isSearch ? 'searches' : 'experiments'} moved to project ${destinationProjectName}`,
+        description: `${results.successful.length} experiments moved to project ${destinationProjectName}`,
         link: <Link path={paths.projectDetails(projId)}>View Project</Link>,
         title: 'Move Success',
       });
     } else if (numSuccesses === 0) {
       openToast({
-        description: `Unable to move ${numFailures} ${isSearch ? 'searches' : 'experiments'}`,
+        description: `Unable to move ${numFailures} experiments`,
         severity: 'Warning',
         title: 'Move Failure',
       });
@@ -151,13 +149,13 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
         handler: handleSubmit,
         text:
           filters !== undefined
-            ? `Move ${isSearch ? 'Searches' : 'Experiments'}`
-            : `Move ${pluralizer(experimentIds.length, isSearch ? 'Search' : 'Experiment', isSearch ? 'Searches' : 'Experiments')}`,
+            ? 'Move Experiments'
+            : `Move ${pluralizer(experimentIds.length, 'Experiment')}`,
       }}
       title={
         filters !== undefined
-          ? `Move ${isSearch ? 'Searches' : 'Experiments'}`
-          : `Move ${pluralizer(experimentIds.length, isSearch ? 'Search' : 'Experiment', isSearch ? 'Searches' : 'Experiments')}`
+          ? 'Move Experiments'
+          : `Move ${pluralizer(experimentIds.length, 'Experiment')}`
       }>
       <Form form={form} id={idPrefix + FORM_ID} layout="vertical">
         <Form.Item

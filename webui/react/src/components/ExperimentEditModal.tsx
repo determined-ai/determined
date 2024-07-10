@@ -21,7 +21,6 @@ interface Props {
   experimentId: number;
   experimentName: string;
   onEditComplete: (data: Partial<BulkExperimentItem>) => void;
-  isSearch?: boolean;
 }
 
 const FORM_ID = 'edit-experiment-form';
@@ -31,7 +30,6 @@ const ExperimentEditModalComponent: React.FC<Props> = ({
   experimentId,
   description,
   onEditComplete,
-  isSearch = false,
 }: Props) => {
   const idPrefix = useId();
   const [form] = Form.useForm<FormInputs>();
@@ -47,7 +45,7 @@ const ExperimentEditModalComponent: React.FC<Props> = ({
       onEditComplete({ description: formData.description, name: formData.experimentName });
     } catch (e) {
       handleError(e, {
-        publicMessage: `Unable to update ${isSearch ? 'search' : 'experiment'}`,
+        publicMessage: 'Unable to update experiment',
         silent: false,
       });
     }
@@ -68,7 +66,7 @@ const ExperimentEditModalComponent: React.FC<Props> = ({
         handler: handleSubmit,
         text: BUTTON_TEXT,
       }}
-      title={`Edit ${isSearch ? 'Search' : 'Experiment'}`}
+      title="Edit Experiment"
       onClose={form.resetFields}>
       <Form
         autoComplete="off"

@@ -49,7 +49,6 @@ interface Props {
   experiment: ExperimentBase;
   trial?: TrialItem;
   type: CreateExperimentType;
-  isSearch?: boolean;
 }
 
 interface ModalState {
@@ -79,7 +78,6 @@ const ExperimentCreateModalComponent = ({
   experiment,
   trial,
   type,
-  isSearch = false,
 }: Props): JSX.Element => {
   const idPrefix = useId();
   const [registryCredentials, setRegistryCredentials] = useState<RawJson>();
@@ -88,9 +86,7 @@ const ExperimentCreateModalComponent = ({
 
   const isFork = type === CreateExperimentType.Fork;
 
-  const titleLabel = isFork
-    ? `Fork ${isSearch ? 'Search' : 'Experiment'} ${experiment.id}`
-    : `Continue Trial ${trial?.id}`;
+  const titleLabel = isFork ? `Fork Experiment ${experiment.id}` : `Continue Trial ${trial?.id}`;
 
   const requiredFields = useMemo(() => [EXPERIMENT_NAME, MAX_LENGTH], []);
 
@@ -362,14 +358,9 @@ const ExperimentCreateModalComponent = ({
           onFieldsChange={handleFieldsChange}>
           <Form.Item
             initialValue={experiment.name}
-            label={`${isSearch ? 'Search' : 'Experiment'} name`}
+            label="Experiment name"
             name={EXPERIMENT_NAME}
-            rules={[
-              {
-                message: `Please provide a new ${isSearch ? 'search' : 'experiment'} name.`,
-                required: true,
-              },
-            ]}>
+            rules={[{ message: 'Please provide a new experiment name.', required: true }]}>
             <Input />
           </Form.Item>
           {!isFork && (

@@ -46,7 +46,6 @@ interface Props {
   experiment: FullExperimentItem;
   onClose?: () => void;
   trial?: TrialDetails | TrialItem;
-  isSearch?: boolean;
 }
 
 interface SearchMethod {
@@ -83,12 +82,7 @@ interface HyperparameterRowValues {
   value?: number | string;
 }
 
-const HyperparameterSearchModal = ({
-  closeModal,
-  experiment,
-  trial,
-  isSearch = false,
-}: Props): JSX.Element => {
+const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JSX.Element => {
   const idPrefix = useId();
   const [modalError, setModalError] = useState<string>();
   const [searcher, setSearcher] = useState(
@@ -230,7 +224,7 @@ const HyperparameterSearchModal = ({
       const newPath = paths.experimentDetails(newExperiment.id);
       routeToReactUrl(paths.reload(newPath));
     } catch (e) {
-      let errorMessage = `Unable to create ${isSearch ? 'search' : 'experiment'}.`;
+      let errorMessage = 'Unable to create experiment.';
       if (isDetError(e)) {
         errorMessage = e.publicMessage || e.message;
       }
@@ -240,7 +234,7 @@ const HyperparameterSearchModal = ({
       // We throw an error to prevent the modal from closing.
       throw new DetError(errorMessage, { publicMessage: errorMessage, silent: true });
     }
-  }, [experiment.configRaw, experiment.id, experiment.projectId, form, isSearch]);
+  }, [experiment.configRaw, experiment.id, experiment.projectId, form]);
 
   const handleOk = useCallback(() => {
     if (currentPage === 0) {
@@ -435,7 +429,7 @@ const HyperparameterSearchModal = ({
         </Form.Item>
         <Form.Item
           initialValue={experiment.name}
-          label={`New ${isSearch ? 'search' : 'experiment'} name`}
+          label="New experiment name"
           name="name"
           rules={[{ required: true }]}>
           <Input maxLength={80} />
@@ -480,7 +474,7 @@ const HyperparameterSearchModal = ({
           </Form.Item>
           <Form.Item
             initialValue={experiment.configRaw?.resources?.slots_per_trial || 1}
-            label={`Slots per ${isSearch ? 'run' : 'trial'}`}
+            label="Slots per trial"
             name="slots_per_trial"
             rules={[{ max: maxSlots, min: 0, required: true, type: 'number' }]}
             validateStatus={
@@ -500,7 +494,7 @@ const HyperparameterSearchModal = ({
                 <Icon
                   name="info"
                   showTooltip
-                  title={`How aggressively to perform early stopping of underperforming ${isSearch ? 'runs' : 'trials'}`}
+                  title="How aggressively to perform early stopping of underperforming trials"
                 />
               </div>
             }
@@ -520,8 +514,8 @@ const HyperparameterSearchModal = ({
             rules={[{ required: true }]}
             valuePropName="checked">
             <Checkbox>
-              Stop once - Only stop {isSearch ? 'runs' : 'trials'} one time when there is enough
-              evidence to terminate training (recommended for faster search)
+              Stop once - Only stop trials one time when there is enough evidence to terminate
+              training (recommended for faster search)
             </Checkbox>
           </Form.Item>
         )}
@@ -530,7 +524,7 @@ const HyperparameterSearchModal = ({
           <Form.Item
             hidden={searcher === SEARCH_METHODS.Grid}
             initialValue={experiment?.config?.searcher.max_trials ?? 1}
-            label={`Max ${isSearch ? 'runs' : 'trials'}`}
+            label="Max trials"
             name="max_trials"
             rules={[{ min: 1, required: true, type: 'number' }]}>
             <InputNumber min={1} precision={0} />
@@ -539,7 +533,7 @@ const HyperparameterSearchModal = ({
             initialValue={experiment.configRaw.searcher.max_concurrent_trials ?? 16}
             label={
               <div className={css.labelWithTooltip}>
-                Max concurrent {isSearch ? 'runs' : 'trials'}
+                Max concurrent trials
                 <Icon name="info" showTooltip title="Use 0 for max possible parallelism" />
               </div>
             }
@@ -561,7 +555,6 @@ const HyperparameterSearchModal = ({
     formValues?.slots_per_trial,
     handleSelectPool,
     handleSelectSearcher,
-    isSearch,
     maxLength,
     maxLengthUnit,
     maxSlots,
@@ -584,14 +577,12 @@ const HyperparameterSearchModal = ({
         <Row>
           <Button onClick={handleCancel}>Cancel</Button>
           <Button disabled={validationError} type="primary" onClick={handleOk}>
-            {currentPage === 0
-              ? 'Select Hyperparameters'
-              : `Run ${isSearch ? 'Search' : 'Experiment'}`}
+            {currentPage === 0 ? 'Select Hyperparameters' : 'Run Experiment'}
           </Button>
         </Row>
       </>
     );
-  }, [currentPage, handleBack, handleCancel, handleOk, isSearch, validationError]);
+  }, [currentPage, handleBack, handleCancel, handleOk, validationError]);
 
   return (
     <Modal footer={footer} title="Hyperparameter Search">
