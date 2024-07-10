@@ -48,7 +48,6 @@ type Options struct {
 	AgentID    string `json:"agent_id"`
 
 	// Label has been deprecated; we now use ResourcePool to classify the agent.
-	Label        string `json:"label"`
 	ResourcePool string `json:"resource_pool"`
 
 	ContainerMasterHost string `json:"container_master_host"`
