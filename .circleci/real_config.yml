@@ -5655,9 +5655,6 @@ workflows:
           filters: *rc-filters
 
       - retag-docker-images:
-          filters: *rc-filters
-
-      - retag-docker-images:
           release: true
           filters: *release-filters
 
