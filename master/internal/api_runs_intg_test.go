@@ -399,61 +399,61 @@ func TestSearchRunsFilter(t *testing.T) {
 		},
 		"MetadataEmpty": {
 			expectedNumRuns: 0,
-			filter: `{"filterGroup":{"children":[{"columnName":"number_key","kind":"field",` +
+			filter: `{"filterGroup":{"children":[{"columnName":"metadata.number_key","kind":"field",` +
 				`"location":"LOCATION_TYPE_RUN_METADATA","operator":"isEmpty","type":"COLUMN_TYPE_NUMBER","value":1}],` +
 				`"conjunction":"and","kind":"group"},"showArchived":false}`,
 		},
 		"MetadataNotEmpty": {
 			expectedNumRuns: 2,
-			filter: `{"filterGroup":{"children":[{"columnName":"number_key","kind":"field",` +
+			filter: `{"filterGroup":{"children":[{"columnName":"metadata.number_key","kind":"field",` +
 				`"location":"LOCATION_TYPE_RUN_METADATA","operator":"notEmpty","type":"COLUMN_TYPE_NUMBER","value":1}],` +
 				`"conjunction":"and","kind":"group"},"showArchived":false}`,
 		},
 		"MetadataContains": {
 			expectedNumRuns: 1,
-			filter: `{"filterGroup":{"children":[{"columnName":"string_key","kind":"field",` +
+			filter: `{"filterGroup":{"children":[{"columnName":"metadata.string_key","kind":"field",` +
 				`"location":"LOCATION_TYPE_RUN_METADATA","operator":"contains","type":"COLUMN_TYPE_TEXT","value":"a"}],` +
 				`"conjunction":"and","kind":"group"},"showArchived":false}`,
 		},
 		"MetadataNotContains": {
 			expectedNumRuns: 1,
-			filter: `{"filterGroup":{"children":[{"columnName":"string_key","kind":"field",` +
+			filter: `{"filterGroup":{"children":[{"columnName":"metadata.string_key","kind":"field",` +
 				`"location":"LOCATION_TYPE_RUN_METADATA","operator":"notContains","type":"COLUMN_TYPE_TEXT","value":"a"}],` +
 				`"conjunction":"and","kind":"group"},"showArchived":false}`,
 		},
 		"MetadataOperator": {
 			expectedNumRuns: 1,
-			filter: `{"filterGroup":{"children":[{"columnName":"number_key","kind":"field",` +
+			filter: `{"filterGroup":{"children":[{"columnName":"metadata.number_key","kind":"field",` +
 				`"location":"LOCATION_TYPE_RUN_METADATA","operator":"<=","type":"COLUMN_TYPE_NUMBER","value":1}],` +
 				`"conjunction":"and","kind":"group"},"showArchived":false}`,
 		},
 		"MetadataNestedEmpty": {
 			expectedNumRuns: 0,
-			filter: `{"filterGroup":{"children":[{"columnName":"nested.number_key","kind":"field",` +
+			filter: `{"filterGroup":{"children":[{"columnName":"metadata.nested.number_key","kind":"field",` +
 				`"location":"LOCATION_TYPE_RUN_METADATA","operator":"isEmpty","type":"COLUMN_TYPE_NUMBER","value":1}],` +
 				`"conjunction":"and","kind":"group"},"showArchived":false}`,
 		},
 		"MetadataNestedNotEmpty": {
 			expectedNumRuns: 2,
-			filter: `{"filterGroup":{"children":[{"columnName":"nested.number_key","kind":"field",` +
+			filter: `{"filterGroup":{"children":[{"columnName":"metadata.nested.number_key","kind":"field",` +
 				`"location":"LOCATION_TYPE_RUN_METADATA","operator":"notEmpty","type":"COLUMN_TYPE_NUMBER","value":1}],` +
 				`"conjunction":"and","kind":"group"},"showArchived":false}`,
 		},
 		"MetadataNestedContains": {
 			expectedNumRuns: 1,
-			filter: `{"filterGroup":{"children":[{"columnName":"nested.string_key","kind":"field",` +
+			filter: `{"filterGroup":{"children":[{"columnName":"metadata.nested.string_key","kind":"field",` +
 				`"location":"LOCATION_TYPE_RUN_METADATA","operator":"contains","type":"COLUMN_TYPE_TEXT","value":"a"}],` +
 				`"conjunction":"and","kind":"group"},"showArchived":false}`,
 		},
 		"MetadataNestedNotContains": {
 			expectedNumRuns: 1,
-			filter: `{"filterGroup":{"children":[{"columnName":"nested.string_key","kind":"field",` +
+			filter: `{"filterGroup":{"children":[{"columnName":"metadata.nested.string_key","kind":"field",` +
 				`"location":"LOCATION_TYPE_RUN_METADATA","operator":"notContains","type":"COLUMN_TYPE_TEXT","value":"a"}],` +
 				`"conjunction":"and","kind":"group"},"showArchived":false}`,
 		},
 		"MetadataNestedOperator": {
 			expectedNumRuns: 1,
-			filter: `{"filterGroup":{"children":[{"columnName":"nested.number_key","kind":"field",` +
+			filter: `{"filterGroup":{"children":[{"columnName":"metadata.nested.number_key","kind":"field",` +
 				`"location":"LOCATION_TYPE_RUN_METADATA","operator":"<=","type":"COLUMN_TYPE_NUMBER","value":1}],` +
 				`"conjunction":"and","kind":"group"},"showArchived":false}`,
 		},

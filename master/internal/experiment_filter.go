@@ -188,7 +188,7 @@ func runMetadataToSQL(c string, filterColumnType *string, filterValue *interface
 		queryColumnType = *filterColumnType
 	}
 	var queryArgs []interface{}
-	runHparam := strings.TrimPrefix(c, "hp.")
+	runHparam := strings.TrimPrefix(c, "metadata.")
 	oSQL, err := o.toSQL()
 	if err != nil {
 		return nil, err
