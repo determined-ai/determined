@@ -155,13 +155,11 @@ def _init_context(
     checkpoint_storage = (
         checkpoint_storage
         or defaulted_config.checkpoint_storage
-        or {
-            "type": "directory",
-            "container_path": str(
-                pathlib.Path(appdirs.user_data_dir("determined")) / "checkpoints"
-            ),
-        }
+        or str(pathlib.Path(appdirs.user_data_dir("determined")) / "checkpoints")
     )
+
+    if type(checkpoint_storage) == str:
+        checkpoint_storage = {"type": "directory", "container_path": checkpoint_storage}
 
     config = {
         "name": defaulted_config.name or f"unmanaged-{uuid.uuid4().hex[:8]}",

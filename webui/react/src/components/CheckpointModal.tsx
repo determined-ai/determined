@@ -16,6 +16,7 @@ import {
 } from 'types';
 import { formatDatetime } from 'utils/datetime';
 import handleError, { DetError, ErrorType } from 'utils/error';
+import { isAbsolutePath } from 'utils/routes';
 import { humanReadableBytes } from 'utils/string';
 import { checkpointSize } from 'utils/workload';
 
@@ -39,7 +40,7 @@ const getStorageLocation = (
 ): string => {
   const hostPath = config.checkpointStorage?.hostPath;
   const storagePath = config.checkpointStorage?.storagePath;
-  const container_path = config.checkpointStorage?.containerPath;
+  const containerPath = config.checkpointStorage?.containerPath;
   let location = '';
   switch (config.checkpointStorage?.type) {
     case CheckpointStorageType.AWS:
@@ -59,8 +60,10 @@ const getStorageLocation = (
       }
       break;
     case CheckpointStorageType.DIRECTORY:
-      if (container_path) {
-        location = `file:/${container_path}`;
+      if (containerPath) {
+        location = `file:${
+          isAbsolutePath(containerPath.replace(' ', '')) ? '/' : '//'
+        }${containerPath}`;
       }
       break;
     case CheckpointStorageType.AZURE:
