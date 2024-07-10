@@ -97,7 +97,7 @@ class DefaultConfig(Config):
     DEPRECATED: Use `Config` as it contains default config.
     """
 
-    def __init__(self, **kargs) -> None:
+    def __init__(self, **kargs: Any) -> None:
         warnings.warn(
             "'DefaultConfig' class have been deprecated and will be removed in a "
             "future version. Please use `Config` class instead.",
@@ -115,7 +115,7 @@ class UnmanagedConfig(Config):
     DEPRECATED: Use `Config` as it contains unmanaged config.
     """
 
-    def __init__(self, **kargs) -> None:
+    def __init__(self, **kargs: Any) -> None:
         warnings.warn(
             "'UnmanagedConfig' class have been deprecated and will be removed in a "
             "future version. Please use `Config` class instead.",
@@ -319,7 +319,7 @@ def _merge_config(
             defaults.external_experiment_id or unmanaged.external_experiment_id
         )
         defaults.external_trial_id = defaults.external_trial_id or unmanaged.external_trial_id
-    return cast(defaults, Config)
+    return cast(Config, defaults)
 
 
 def _show_deprecated_msg() -> None:
