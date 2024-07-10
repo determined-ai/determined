@@ -868,5 +868,5 @@ func TestGetMetadataValuesEmpty(t *testing.T) {
 		Key: "test_key", ProjectId: projectID,
 	})
 	require.NoError(t, err)
-	require.Len(t, getMetadataResp.Values, 0)
+	require.Empty(t, getMetadataResp.Values)
 }
