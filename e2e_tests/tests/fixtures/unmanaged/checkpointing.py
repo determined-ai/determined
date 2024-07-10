@@ -10,7 +10,7 @@ def main():
     assert "DET_TEST_EXTERNAL_EXP_ID" in os.environ
     name = os.environ["DET_TEST_EXTERNAL_EXP_ID"]
     core_v2.init(
-        config=core_v2.DefaultConfig(
+        config=core_v2.Config(
             name=name,
             external_experiment_id=name,
             external_trial_id=name,

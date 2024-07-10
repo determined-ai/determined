@@ -13,7 +13,7 @@ class DetLogger(ptl_logger.Logger):
     def __init__(
         self,
         *,
-        config: Optional[core_v2.DefaultConfig] = None,
+        config: Optional[core_v2.Config] = None,
         client: Optional[experimental.Determined] = None,
     ) -> None:
         self._kwargs = {

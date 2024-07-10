@@ -25,7 +25,7 @@ def main():
     logging.getLogger("determined").setLevel(logging.INFO)
     distributed = core_v2.DistributedContext.from_torch_distributed()
     core_v2.init(
-        config=core_v2.DefaultConfig(
+        config=core_v2.Config(
             name=name,
             external_experiment_id=name,
             external_trial_id=name,
