@@ -151,7 +151,6 @@ commands:
     description: Collect logs from the cluster tasks.
     steps:
       - run:
-          when: on_fail
           name: "Ensure necessary Python packages are available."
           when: always
           command: |
@@ -162,7 +161,6 @@ commands:
               fi
             done
       - run:
-          when: on_fail
           name: "Collect logs and calculate statistics"
           when: always
           command: |
