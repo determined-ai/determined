@@ -1,13 +1,17 @@
+import Message from 'hew/Message';
 import Spinner from 'hew/Spinner';
+import Tree, { TreeDataNode } from 'hew/Tree';
 import { Loadable } from 'hew/utils/loadable';
 import React, { useCallback, useMemo } from 'react';
 
+import Section from 'components/Section';
 import { terminalRunStates } from 'constants/states';
 import useMetricNames from 'hooks/useMetricNames';
 import usePermissions from 'hooks/usePermissions';
 import { useSettings } from 'hooks/useSettings';
 import TrialInfoBox from 'pages/TrialDetails/TrialInfoBox';
-import { ExperimentBase, Metric, MetricType, RunState, TrialDetails } from 'types';
+import { ExperimentBase, JsonObject, Metric, MetricType, RunState, TrialDetails } from 'types';
+import { isJsonObject } from 'utils/data';
 import handleError, { ErrorType } from 'utils/error';
 import { metricKeyToMetric, metricToKey } from 'utils/metric';
 
@@ -80,6 +84,26 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
     [updateSettings],
   );
 
+  const getNodes = useCallback((data: JsonObject): TreeDataNode[] => {
+    return Object
+      .entries(data)
+      .map(([key, value]) => {
+        if (isJsonObject(value)) {
+          return { children: getNodes(value), key, title: key };
+        } else if (value) {
+          const stringValue = value.toString();
+          return { children: [{ key: stringValue, title: stringValue }], key, title: key };
+        }
+        return { children: [{ key: 'undefined', title: 'undefined' }], key, title: key };
+      },
+      );
+  }, []);
+
+  const treeData: TreeDataNode[] = useMemo(() => {
+    if (!trial?.metadata) return [];
+    return getNodes(trial?.metadata);
+  }, [trial?.metadata, getNodes]);
+
   return (
     <>
       <TrialInfoBox experiment={experiment} trial={trial} />
@@ -106,6 +130,11 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
           ) : (
             <Spinner spinning />
           )}
+          <Section title="Metadata">
+            {treeData.length ? (
+              <Tree defaultExpandAll treeData={treeData} />
+            ) : <Message title="No metadata found" />}
+          </Section>
         </>
       ) : null}
     </>
