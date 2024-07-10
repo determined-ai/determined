@@ -5,7 +5,7 @@ import dataclasses
 import logging
 import uuid
 import warnings
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional, Union, cast
 
 import determined
 from determined import core, experimental
@@ -97,7 +97,7 @@ class DefaultConfig(Config):
     DEPRECATED: Use `Config` as it contains default config.
     """
 
-    def __init__(self, **kargs):
+    def __init__(self, **kargs) -> None:
         warnings.warn(
             "'DefaultConfig' class have been deprecated and will be removed in a "
             "future version. Please use `Config` class instead.",
@@ -115,7 +115,7 @@ class UnmanagedConfig(Config):
     DEPRECATED: Use `Config` as it contains unmanaged config.
     """
 
-    def __init__(self, **kargs):
+    def __init__(self, **kargs) -> None:
         warnings.warn(
             "'UnmanagedConfig' class have been deprecated and will be removed in a "
             "future version. Please use `Config` class instead.",
@@ -312,14 +312,14 @@ def _merge_config(
         raise NotImplementedError(
             "either specify `defaults` or `config`, or run as a managed determined experiment"
         )
-    if unmanaged is not None:
+    if unmanaged is not None and defaults is not None:
         defaults.project = defaults.project or unmanaged.project
         defaults.workspace = defaults.workspace or unmanaged.workspace
         defaults.external_experiment_id = (
             defaults.external_experiment_id or unmanaged.external_experiment_id
         )
         defaults.external_trial_id = defaults.external_trial_id or unmanaged.external_trial_id
-    return defaults
+    return cast(defaults, Config)
 
 
 def _show_deprecated_msg() -> None:
