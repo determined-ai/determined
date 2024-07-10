@@ -170,3 +170,10 @@ To find out how to manage remote users via the WebUI, including adding a new rem
 SSO users are redirected to the SSO provider's authentication URIs when their session token has
 expired, rather than displaying the Determined sign-in page. This ensures a continuous user
 experience without manual intervention when sessions expire.
+
+.. note::
+
+   The ``always_redirect`` option enables this behavior. If a user does not have a session token,
+   this option generally bypasses the Determined sign-in page, except when the user signs out
+   through the WebUI. If multiple SSO providers have ``always_redirect`` enabled, the system will
+   attempt to use each provider. This differs from the session expiry handling described above.
