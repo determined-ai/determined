@@ -304,12 +304,16 @@ def create_workspace(args: argparse.Namespace) -> None:
     else:
         render_workspaces([w])
 
-    namespace_bindings = resp.namespaceBindings
-    if not namespace_bindings and set_namespace:
+    if not resp.namespaceBindings and set_namespace:
         print("Failed to set workspace-namespace binding.")
 
-    for cluster_name in resp.namespaceBindings:
-        namespace_binding = resp.namespaceBindings[cluster_name]
+    # Cast namespace_bindings to a Dict (rather than an Optional[Dict]) for lint purposes.
+    namespace_bindings: Dict[str, bindings.v1WorkspaceNamespaceBinding] = cast(
+        Dict[str, bindings.v1WorkspaceNamespaceBinding], resp.namespaceBindings
+    )
+
+    for cluster_name in namespace_bindings:
+        namespace_binding = namespace_bindings[cluster_name]
         print(f"Workspace {w.name} is bound to namespace {namespace_binding.namespace}")
 
 

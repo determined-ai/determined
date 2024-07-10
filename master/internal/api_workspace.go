@@ -145,7 +145,7 @@ func (a *apiServer) validateClusterNamespaceMeta(
 		// but not specified in a given request.
 		if newClusterName != clusterName {
 			namespaceMetaWithAllClusterNames[newClusterName] = &workspacev1.WorkspaceNamespaceMeta{
-				ClusterName:         clusterName,
+				ClusterName:         newClusterName,
 				Namespace:           namespace,
 				AutoCreateNamespace: metadata.AutoCreateNamespace,
 			}
