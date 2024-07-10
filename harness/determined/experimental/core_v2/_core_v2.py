@@ -19,6 +19,7 @@ _context = None  # type: Optional[core.Context]
 _client = None  # type: Optional[experimental.Determined]
 _atexit_registered = False  # type: bool
 
+
 @dataclasses.dataclass
 class Config:
     """
@@ -95,6 +96,7 @@ class DefaultConfig(Config):
 
     DEPRECATED: Use `Config` as it contains default config.
     """
+
     def __init__(self, **kargs):
         warnings.warn(
             "'DefaultConfig' class have been deprecated and will be removed in a "
@@ -104,6 +106,7 @@ class DefaultConfig(Config):
         )
         super().__init__(**kargs)
 
+
 @dataclasses.dataclass
 class UnmanagedConfig(Config):
     """
@@ -111,6 +114,7 @@ class UnmanagedConfig(Config):
 
     DEPRECATED: Use `Config` as it contains unmanaged config.
     """
+
     def __init__(self, **kargs):
         warnings.warn(
             "'UnmanagedConfig' class have been deprecated and will be removed in a "
@@ -119,7 +123,7 @@ class UnmanagedConfig(Config):
             stacklevel=2,
         )
         super().__init__(**kargs)
-    
+
 
 def _set_globals() -> None:
     """
