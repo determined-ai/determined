@@ -65,6 +65,7 @@
       .hyperparameterContainer {
         display: grid;
         gap: 8px;
+        grid-auto-rows: max-content;
         overflow-x: auto;
 
         .hyperparameterName {
