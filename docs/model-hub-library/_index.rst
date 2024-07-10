@@ -2,6 +2,11 @@
  Model Hub Library
 ###################
 
+.. important::
+   **Deprecation Notice**: The Model Hub library is now deprecated. Users of ``MMDetTrial`` and
+   ``BaseTransformerTrial`` should switch to either the :ref:`Core API <api-core-ug>` or the
+   :ref:`PyTorch Trainer <pytorch_trainer_ug>` for integrations with ``mmcv`` and ``huggingface``.
+
 .. meta::
    :description: The Model Hub Library page contains info about Transformers and MMDetection where you can access the benefits of using Determined.
 
