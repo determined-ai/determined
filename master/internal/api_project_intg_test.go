@@ -807,25 +807,25 @@ func TestGetMetadataValues(t *testing.T) {
 
 	// Add metadata
 	rawMetadata := []map[string]any{
-		map[string]any{
+		{
 			"test_key": "test_value1",
 			"nested": map[string]any{
 				"nested_key": "nested_value1",
 			},
 		},
-		map[string]any{
+		{
 			"test_key": "test_value1",
 			"nested": map[string]any{
 				"nested_key": "nested_value2",
 			},
 		},
-		map[string]any{
+		{
 			"test_key": "test_value2",
 			"nested": map[string]any{
 				"nested_key": "nested_value2",
 			},
 		},
-		map[string]any{
+		{
 			"test_key": "test_value3",
 			"nested": map[string]any{
 				"nested_key": "nested_value1",
@@ -846,17 +846,17 @@ func TestGetMetadataValues(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.Len(t, getMetadataResp.Values, 3)
-	require.Equal(t, getMetadataResp.Values[0], "test_value1")
-	require.Equal(t, getMetadataResp.Values[1], "test_value2")
-	require.Equal(t, getMetadataResp.Values[2], "test_value3")
+	require.Equal(t, "test_value1", getMetadataResp.Values[0])
+	require.Equal(t, "test_value2", getMetadataResp.Values[1])
+	require.Equal(t, "test_value3", getMetadataResp.Values[2])
 
 	getMetadataResp, err = api.GetMetadataValues(ctx, &apiv1.GetMetadataValuesRequest{
 		Key: "nested.nested_key", ProjectId: projectID,
 	})
 	require.NoError(t, err)
 	require.Len(t, getMetadataResp.Values, 2)
-	require.Equal(t, getMetadataResp.Values[0], "nested_value1")
-	require.Equal(t, getMetadataResp.Values[1], "nested_value2")
+	require.Equal(t, "nested_value1", getMetadataResp.Values[0])
+	require.Equal(t, "nested_value2", getMetadataResp.Values[1])
 }
 
 func TestGetMetadataValuesEmpty(t *testing.T) {
