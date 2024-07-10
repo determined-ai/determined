@@ -346,7 +346,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
             },
           ],
         },
-    [experiment, ContinueExperimentModal, ContinueTrialModal.open, ReactivateExperimentModal, isRunningContinue, onClickContinueMultiTrialExp],
+    [experiment, ContinueExperimentModal, ReactivateExperimentModal, isRunningContinue, onClickContinueMultiTrialExp, ContinueTrialModal.open],
   );
 
   useEffect(() => {
@@ -374,7 +374,6 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
           },
         ],
       },
-
       [Action.ContinueTrial]: {
         ...continueExperimentOption,
         key: 'continue-trial',
@@ -552,22 +551,22 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
 
     return availableActions.map((action) => options[action]) as ActionOptions[];
   }, [
-    expPermissions,
     isRunningArchive,
     continueExperimentOption,
     isRunningDelete,
-    ExperimentDeleteModal,
-    ForkModal,
-    ExperimentEditModal,
-    ExperimentMoveModal,
-    ExperimentRetainLogsModal,
-    HyperparameterSearchModal,
+    ExperimentDeleteModal.open,
+    experiment,
+    HyperparameterSearchModal.open,
+    erroredTrialCount,
+    ForkModal.open,
+    ExperimentEditModal.open,
+    ExperimentMoveModal.open,
+    ExperimentRetainLogsModal.open,
     isRunningTensorBoard,
     isRunningUnarchive,
-    experiment,
+    expPermissions,
     fetchExperimentDetails,
     confirm,
-    erroredTrialCount,
   ]);
 
   const jobInfoLinkText = useMemo(() => {
