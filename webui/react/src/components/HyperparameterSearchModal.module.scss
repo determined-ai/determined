@@ -65,6 +65,7 @@
       .hyperparameterContainer {
         display: grid;
         gap: 8px;
+        overflow-x: auto;
 
         .hyperparameterName {
           align-items: center;
