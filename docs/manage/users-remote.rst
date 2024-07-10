@@ -50,6 +50,7 @@ enable user auto-provisioning and the remote management of any information attac
              client_id: "xx0xx0"
              client_secret: "xx0xx0"
              auto_provision_users: true
+             always_redirect: true
              display_name_attribute_name: "XYZ"
 
    .. tab::
@@ -75,6 +76,7 @@ enable user auto-provisioning and the remote management of any information attac
              idp_sso_url: "https://myorg.okta.com/app/...sso/saml"
              idp_metadata_path: "https://myorg.okta.com/app/.../sso/saml/metadata"
              auto_provision_users: true
+             always_redirect: true
 
 Determined sets the username of the user to the IdP email address. You cannot set the username
 independently.
@@ -160,3 +162,18 @@ You can also manage user groups.
 
 To find out how to manage remote users via the WebUI, including adding a new remote user, visit
 :ref:`managing RBAC via the WebUI <manage-users-groups-webui>`.
+
+*****************************
+ Handling SSO Session Expiry
+*****************************
+
+SSO users are redirected to the SSO provider's authentication URIs when their session token has
+expired, rather than displaying the Determined sign-in page. This ensures a continuous user
+experience without manual intervention when sessions expire.
+
+.. note::
+
+   The ``always_redirect`` option enables this behavior. If a user does not have a session token,
+   this option generally bypasses the Determined sign-in page, except when the user signs out
+   through the WebUI. If multiple SSO providers have ``always_redirect`` enabled, the system will
+   attempt to use each provider. This differs from the session expiry handling described above.
