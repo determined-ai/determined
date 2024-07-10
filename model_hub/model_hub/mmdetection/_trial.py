@@ -22,8 +22,8 @@ limitations under the License.
 
 import logging
 import os
-from typing import Any, Dict, List
 import warnings
+from typing import Any, Dict, List
 
 import mmcv
 import mmcv.parallel
@@ -55,8 +55,11 @@ class MMDetTrial(det_torch.PyTorchTrial):
     """
 
     def __init__(self, context: det_torch.PyTorchTrialContext) -> None:
-        warnings.warn("MMDetTrial is deprecated and will be removed in the next release."
-                      "Users of mmcv can implement training workloads with CoreAPI.")
+        warnings.warn(
+            "MMDetTrial is deprecated and will be removed in the next release."
+            "Users of mmcv can implement training workloads with CoreAPI.",
+            stacklevel=2,
+        )
         self.context = context
         self.hparams = utils.AttrDict(context.get_hparams())
         self.data_config = utils.AttrDict(context.get_data_config())
