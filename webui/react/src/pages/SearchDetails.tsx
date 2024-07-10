@@ -223,7 +223,6 @@ const SearchDetails: React.FC = () => {
           <ExperimentDetailsHeader
             experiment={experiment}
             fetchExperimentDetails={fetchExperimentDetails}
-            isSearch
           />
         )
       }
