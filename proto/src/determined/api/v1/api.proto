@@ -2687,7 +2687,8 @@ service Determined {
     };
   }
 
-  // Update run metadata.
+  // Retrieve run metadata values for a given string typed key within
+  // a given project.
   rpc GetMetadataValues(GetMetadataValuesRequest)
       returns (GetMetadataValuesResponse) {
     option (google.api.http) = {

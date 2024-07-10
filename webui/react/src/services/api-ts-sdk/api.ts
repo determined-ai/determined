@@ -20056,7 +20056,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
-         * @summary Update run metadata.
+         * @summary Retrieve run metadata values for a given string typed key within a given project.
          * @param {number} projectId Project id
          * @param {string} key Metadata key
          * @param {*} [options] Override http request option.
@@ -22993,7 +22993,7 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Update run metadata.
+         * @summary Retrieve run metadata values for a given string typed key within a given project.
          * @param {number} projectId Project id
          * @param {string} key Metadata key
          * @param {*} [options] Override http request option.
@@ -24399,7 +24399,7 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
-         * @summary Update run metadata.
+         * @summary Retrieve run metadata values for a given string typed key within a given project.
          * @param {number} projectId Project id
          * @param {string} key Metadata key
          * @param {*} [options] Override http request option.
@@ -25378,7 +25378,7 @@ export class InternalApi extends BaseAPI {
     
     /**
      * 
-     * @summary Update run metadata.
+     * @summary Retrieve run metadata values for a given string typed key within a given project.
      * @param {number} projectId Project id
      * @param {string} key Metadata key
      * @param {*} [options] Override http request option.

@@ -4310,7 +4310,8 @@ type DeterminedClient interface {
 	GetRunMetadata(ctx context.Context, in *GetRunMetadataRequest, opts ...grpc.CallOption) (*GetRunMetadataResponse, error)
 	// Update run metadata.
 	PostRunMetadata(ctx context.Context, in *PostRunMetadataRequest, opts ...grpc.CallOption) (*PostRunMetadataResponse, error)
-	// Update run metadata.
+	// Retrieve run metadata values for a given string typed key within
+	// a given project.
 	GetMetadataValues(ctx context.Context, in *GetMetadataValuesRequest, opts ...grpc.CallOption) (*GetMetadataValuesResponse, error)
 }
 
@@ -7390,7 +7391,8 @@ type DeterminedServer interface {
 	GetRunMetadata(context.Context, *GetRunMetadataRequest) (*GetRunMetadataResponse, error)
 	// Update run metadata.
 	PostRunMetadata(context.Context, *PostRunMetadataRequest) (*PostRunMetadataResponse, error)
-	// Update run metadata.
+	// Retrieve run metadata values for a given string typed key within
+	// a given project.
 	GetMetadataValues(context.Context, *GetMetadataValuesRequest) (*GetMetadataValuesResponse, error)
 }
 

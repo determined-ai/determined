@@ -19060,7 +19060,8 @@ def get_GetMetadataValues(
     key: str,
     projectId: int,
 ) -> "v1GetMetadataValuesResponse":
-    """Update run metadata.
+    """Retrieve run metadata values for a given string typed key within
+    a given project.
 
     - key: Metadata key
     - projectId: Project id
