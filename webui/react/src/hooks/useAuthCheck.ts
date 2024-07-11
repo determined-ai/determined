@@ -69,9 +69,8 @@ const useAuthCheck = (): (() => Promise<boolean>) => {
               routeToExternalUrl(samlUrl(ssoProvider.ssoUrl));
             }
           });
-        } else {
-          handleError(e);
         }
+        handleError(e);
       }
       authStore.setAuthChecked();
     } else if (info.externalLoginUri) {
@@ -102,6 +101,7 @@ const useAuthCheck = (): (() => Promise<boolean>) => {
             }
           });
         }
+        handleError(e);
       }
     } else {
       authStore.setAuthChecked();

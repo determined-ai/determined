@@ -1,5 +1,6 @@
 import { makeToast, Severity } from 'hew/Toast';
 
+import { globalStorage } from 'globalStorage';
 import { telemetryInstance } from 'hooks/useTelemetry';
 import { paths } from 'routes/utils';
 import { ValueOf } from 'types';
@@ -198,6 +199,7 @@ const handleError = (error: DetError | unknown, options?: DetErrorOptions): DetE
     // to the page dismount and end up throwing after the user is logged out.
     const path = window.location.pathname;
     if (!path.includes(paths.login()) && !path.includes(paths.logout())) {
+      globalStorage.landingRedirect = path;
       routeToReactUrl(paths.logout() + params);
     }
   }

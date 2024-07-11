@@ -15,7 +15,7 @@ import Page from 'components/Page';
 import PageMessage from 'components/PageMessage';
 import useUI from 'components/ThemeProvider';
 import { handleRelayState, samlUrl } from 'ee/SamlAuth';
-import { sessionStorage } from 'globalStorage';
+import { globalStorage, sessionStorage } from 'globalStorage';
 import useAuthCheck from 'hooks/useAuthCheck';
 import usePolling from 'hooks/usePolling';
 import { defaultRoute, rbacDefaultRoute } from 'routes';
@@ -63,7 +63,7 @@ const SignIn: React.FC = () => {
    * the user to the most recent requested page.
    */
   useEffect(() => {
-    if (location.state != null) {
+    if (location.state != null && sessionStorage.landingRedirect === '') {
       sessionStorage.landingRedirect = locationToPath(location.state) ?? '';
     }
 
@@ -81,8 +81,12 @@ const SignIn: React.FC = () => {
 
       // Reroute the authenticated user to the app.
       if (!queries.has('redirect')) {
-        const path = sessionStorage.landingRedirect;
+        let path = sessionStorage.landingRedirect;
         sessionStorage.removeLandingRedirect();
+        if (path === '') {
+          path = globalStorage.landingRedirect;
+          globalStorage.removeLandingRedirect();
+        }
         routeToReactUrl(path || (rbacEnabled ? rbacDefaultRoute.path : defaultRoute.path));
       } else {
         routeAll(queries.get('redirect') || '');
