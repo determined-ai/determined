@@ -235,6 +235,8 @@ func (a *apiServer) getExperimentTx(
 		return nil, err
 	}
 
+	authz.ObfuscateExperiments(exp)
+
 	return exp, nil
 }
 

@@ -5,11 +5,13 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/agentv1"
 	"github.com/determined-ai/determined/proto/pkg/containerv1"
 	"github.com/determined-ai/determined/proto/pkg/devicev1"
+	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
 
@@ -118,5 +120,29 @@ func ObfuscateJob(job *jobv1.Job) jobv1.LimitedJob {
 		AllocatedSlots: job.AllocatedSlots,
 		Progress:       job.Progress,
 		WorkspaceId:    job.WorkspaceId,
+	}
+}
+
+func ObfuscateExperiments(experiments ...*experimentv1.Experiment) {
+	for _, exp := range experiments {
+		data, exists := exp.Config.Fields["data"] //nolint:staticcheck
+		if !exists {
+			continue
+		}
+		dataMap := data.GetStructValue() // nil if not struct
+		if dataMap == nil {
+			continue
+		}
+		secrets, exists := dataMap.Fields["secrets"]
+		if !exists {
+			continue
+		}
+		secretsMap := secrets.GetStructValue()
+		if secretsMap == nil {
+			continue
+		}
+		for key := range secretsMap.Fields {
+			secretsMap.Fields[key] = structpb.NewStringValue(hiddenString)
+		}
 	}
 }
