@@ -43,7 +43,7 @@ Parameters:
   MasterInstanceType:
     Type: String
     Description: Instance Type of Master
-    Default: m5.large
+    Default: m6i.large
 
   AuxAgentInstanceType:
     Type: String
