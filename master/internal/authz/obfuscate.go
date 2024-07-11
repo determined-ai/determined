@@ -1,6 +1,7 @@
 package authz
 
 import (
+	"encoding/json"
 	"slices"
 
 	"github.com/google/uuid"
@@ -123,6 +124,9 @@ func ObfuscateJob(job *jobv1.Job) jobv1.LimitedJob {
 	}
 }
 
+// ObfuscateExperiments obfuscates sensitive information in experiments.
+// Currently, that is considered to be anything the user has configured
+// under a "secrets" key in the general-purpose "data" config.
 func ObfuscateExperiments(experiments ...*experimentv1.Experiment) {
 	for _, exp := range experiments {
 		data, exists := exp.Config.Fields["data"] //nolint:staticcheck
@@ -144,5 +148,35 @@ func ObfuscateExperiments(experiments ...*experimentv1.Experiment) {
 		for key := range secretsMap.Fields {
 			secretsMap.Fields[key] = structpb.NewStringValue(hiddenString)
 		}
+
+		var oConfig map[string]interface{}
+		err := json.Unmarshal([]byte(exp.OriginalConfig), &oConfig)
+		if err != nil {
+			continue
+		}
+		oData, exists := oConfig["data"]
+		if !exists {
+			continue
+		}
+		oDataMap, ok := oData.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		oSecrets, exists := oDataMap["secrets"]
+		if !exists {
+			continue
+		}
+		oSecretsMap, ok := oSecrets.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		for key := range oSecretsMap {
+			oSecretsMap[key] = hiddenString
+		}
+		pConfig, err := json.Marshal(oConfig)
+		if err != nil {
+			continue
+		}
+		exp.OriginalConfig = string(pConfig)
 	}
 }
