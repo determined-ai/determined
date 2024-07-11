@@ -66,7 +66,7 @@ func TestGenerateNamespaceName(t *testing.T) {
 		t.Run(tc.name, func(t *testing.T) {
 			a := assert.New(t)
 
-			actual := generateNamespaceName(tc.instNamespace, tc.clusterID, tc.workspaceName, tc.workspaceID)
+			actual := generateNamespaceName(tc.workspaceName, tc.instNamespace, tc.clusterID, tc.workspaceID)
 			a.Equal(tc.expectedName, actual)
 
 			// Kubernetes namespace name length cannot exceed 63 characters, so do an extra check for that.
