@@ -241,23 +241,21 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
                           onChange={() => form.setFieldValue(['resourceQuotas', name], undefined)}
                         />
                       </Form.Item>
-                      {(workspaceId !== undefined ||
-                        (watchBindings?.[name]?.['autoCreateNamespace'] ?? false)) && (
-                        <Form.Item
-                          label="Resource Quota"
-                          name={['resourceQuotas', name]}
-                          rules={[
-                            {
-                              message: 'Resource Quota has to be greater or equal to 0',
-                              min: 0,
-                              type: 'number',
-                            },
-                          ]}>
-                          <InputNumber
-                            disabled={!(watchBindings?.[name]?.['autoCreateNamespace'] ?? false)}
-                          />
-                        </Form.Item>
-                      )}
+                      <Form.Item
+                        label="Resource Quota"
+                        name={['resourceQuotas', name]}
+                        rules={[
+                          {
+                            message: 'Resource Quota has to be greater or equal to 0',
+                            min: 0,
+                            type: 'number',
+                          },
+                        ]}>
+                        <InputNumber
+                          disabled={!(watchBindings?.[name]?.['autoCreateNamespace'] ?? false)}
+                          min={0}
+                        />
+                      </Form.Item>
                     </>
                   )}
                 </Fragment>
