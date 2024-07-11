@@ -740,7 +740,7 @@ commands:
         default: ""
       aux-agent-instance-type:
         type: string
-        default: "m5.large"
+        default: "m6i.large"
       compute-agent-instance-type:
         type: string
         default: "g4dn.xlarge"
@@ -875,7 +875,7 @@ commands:
         default: "g4dn.xlarge"
       aux-agent-instance-type:
         type: string
-        default: "m5.large"
+        default: "m6i.large"
       max-dynamic-agents:
         type: integer
         default: 1
@@ -3498,7 +3498,7 @@ jobs:
         default: "g4dn.xlarge"
       aux-agent-instance-type:
         type: string
-        default: "m5.large"
+        default: "m6i.large"
       cluster-id:
         type: string
         default: determined-${CIRCLE_BRANCH////--}
@@ -3609,7 +3609,7 @@ jobs:
         default: g4dn.xlarge
       aux-agent-instance-type:
         type: string
-        default: m5.large
+        default: m6i.large
       max-dynamic-agents:
         type: integer
         default: 1
@@ -3908,7 +3908,7 @@ jobs:
         default: g4dn.xlarge
       aux-agent-instance-type:
         type: string
-        default: m5.large
+        default: m6i.large
       max-dynamic-agents:
         type: integer
         default: 1
@@ -4731,7 +4731,7 @@ workflows:
             parameters:
               parallelism: [2]
               compute-agent-instance-type: ["g4dn.metal"]
-              aux-agent-instance-type: ["m5.large"]
+              aux-agent-instance-type: ["m6i.large"]
               cluster-id-prefix: ["parallel"]
               mark: ["parallel"]
 
@@ -4926,7 +4926,7 @@ workflows:
               mark: ["distributed and not gpu_required"]
               compute-agent-instance-type: ["c5.2xlarge"]
               environment-gpu-enabled: ["0"]
-              aux-agent-instance-type: ["m5.large"]
+              aux-agent-instance-type: ["m6i.large"]
               max-dynamic-agents: [16]
 
       # DeepSpeed tests
@@ -4948,7 +4948,7 @@ workflows:
           matrix:
             parameters:
               compute-agent-instance-type: ["g4dn.12xlarge"]
-              aux-agent-instance-type: ["m5.large"]
+              aux-agent-instance-type: ["m6i.large"]
               cluster-id-prefix: ["deepspeed"]
               mark: ["deepspeed"]
               max-dynamic-agents: [2]
@@ -5065,7 +5065,7 @@ workflows:
               cluster-id-prefix: ["distributed"]
               mark: ["distributed"]
               compute-agent-instance-type: ["g4dn.metal"]
-              aux-agent-instance-type: ["m5.large"]
+              aux-agent-instance-type: ["m6i.large"]
               max-dynamic-agents: [2]
 
       # Perf tests.
@@ -5125,7 +5125,7 @@ workflows:
             parameters:
               parallelism: [2]
               compute-agent-instance-type: ["g4dn.metal"]
-              aux-agent-instance-type: ["m5.large"]
+              aux-agent-instance-type: ["m6i.large"]
               cluster-id-prefix: ["parallel"]
               mark: ["parallel"]
 
@@ -5164,7 +5164,7 @@ workflows:
           matrix:
             parameters:
               compute-agent-instance-type: ["g4dn.metal"]
-              aux-agent-instance-type: ["m5.large"]
+              aux-agent-instance-type: ["m6i.large"]
               cluster-id-prefix: ["mmdetection"]
               mark: ["model_hub_mmdetection"]
               max-dynamic-agents: [2]
@@ -5459,7 +5459,7 @@ workflows:
               cluster-id-prefix: ["distributed"]
               mark: ["distributed"]
               compute-agent-instance-type: ["g4dn.metal"]
-              aux-agent-instance-type: ["m5.large"]
+              aux-agent-instance-type: ["m6i.large"]
               max-dynamic-agents: [2]
       - test-e2e-aws:
           name: test-e2e-gpu-mmdetection
@@ -5472,7 +5472,7 @@ workflows:
               cluster-id-prefix: ["mmdet"]
               mark: ["model_hub_mmdetection"]
               compute-agent-instance-type: ["g4dn.metal"]
-              aux-agent-instance-type: ["m5.large"]
+              aux-agent-instance-type: ["m6i.large"]
               max-dynamic-agents: [2]
       - test-e2e-aws:
           name: test-e2e-gpu-deepspeed
@@ -5485,7 +5485,7 @@ workflows:
               cluster-id-prefix: ["deepspeed"]
               mark: ["deepspeed"]
               compute-agent-instance-type: ["g4dn.12xlarge"]
-              aux-agent-instance-type: ["m5.large"]
+              aux-agent-instance-type: ["m6i.large"]
               max-dynamic-agents: [2]
       - test-e2e-aws:
           name: test-e2e-cpu-distributed
@@ -5499,7 +5499,7 @@ workflows:
               mark: ["distributed and not gpu_required"]
               compute-agent-instance-type: ["c5.2xlarge"]
               environment-gpu-enabled: ["0"]
-              aux-agent-instance-type: ["m5.large"]
+              aux-agent-instance-type: ["m6i.large"]
               max-dynamic-agents: [16]
       - test-aws-fs:
           name: test-aws-fs-fsx
