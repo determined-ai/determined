@@ -233,7 +233,7 @@ test.describe('Experiment List', () => {
   });
 
   test('Datagrid Functionality Validations', async ({ authedPage }) => {
-    const row = await projectDetailsPage.f_experimentList.dataGrid.getRowByIndex(0);
+    const row = projectDetailsPage.f_experimentList.dataGrid.getRowByIndex(0);
     await test.step('Select Row', async () => {
       await row.clickColumn('Select');
       expect.soft(await row.isSelected()).toBeTruthy();
@@ -256,7 +256,7 @@ test.describe('Experiment List', () => {
   });
 
   test('Datagrid Actions', async () => {
-    const row = await projectDetailsPage.f_experimentList.dataGrid.getRowByIndex(0);
+    const row = projectDetailsPage.f_experimentList.dataGrid.getRowByIndex(0);
     await row.experimentActionDropdown.open();
     // feel free to split actions into their own test cases. this is just a starting point
     await test.step('Edit', async () => {
