@@ -1,3 +1,5 @@
+import Button from 'hew/Button';
+import Icon from 'hew/Icon';
 import Message from 'hew/Message';
 import Spinner from 'hew/Spinner';
 import Tree, { TreeDataNode } from 'hew/Tree';
@@ -11,6 +13,7 @@ import usePermissions from 'hooks/usePermissions';
 import { useSettings } from 'hooks/useSettings';
 import TrialInfoBox from 'pages/TrialDetails/TrialInfoBox';
 import { ExperimentBase, JsonObject, Metric, MetricType, RunState, TrialDetails } from 'types';
+import { downloadText } from 'utils/browser';
 import { isJsonObject } from 'utils/data';
 import handleError, { ErrorType } from 'utils/error';
 import { metricKeyToMetric, metricToKey } from 'utils/metric';
@@ -104,6 +107,10 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
     return getNodes(trial?.metadata);
   }, [trial?.metadata, getNodes]);
 
+  const downloadMetadata = () => {
+    if (trial?.metadata) downloadText(`${trial?.id}_metadata.json`, [JSON.stringify(trial?.metadata)]);
+  };
+
   return (
     <>
       <TrialInfoBox experiment={experiment} trial={trial} />
@@ -130,7 +137,7 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
           ) : (
             <Spinner spinning />
           )}
-          <Section title="Metadata">
+          <Section options={[<Button disabled={!treeData.length} icon={<Icon decorative name="download" />} key="download" onClick={downloadMetadata}>Download</Button>]} title="Metadata">
             {treeData.length ? (
               <Tree defaultExpandAll treeData={treeData} />
             ) : <Message title="No metadata found" />}
