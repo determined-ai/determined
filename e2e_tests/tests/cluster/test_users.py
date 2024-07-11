@@ -79,7 +79,7 @@ def test_post_user_api() -> None:
         sess, body=bindings.v1PostUserRequest(user=user, password=new_password)
     )
     assert resp and resp.user and resp.user.agentUserGroup
-    assert resp.user.agentUserGroup.agentUser != "username" # DNJ TODO - DO NOT MERGE testing fail reports
+    assert resp.user.agentUserGroup.agentUser == "username"
     assert resp.user.agentUserGroup.agentGroup == "groupname"
     assert resp.user.agentUserGroup.agentUid == 1000
     assert resp.user.agentUserGroup.agentGid == 1001
