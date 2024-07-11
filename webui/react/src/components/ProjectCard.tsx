@@ -51,7 +51,6 @@ const ProjectCard: React.FC<Props> = ({
   if (project.archived) classnames.push(css.archived);
   if (project.workspaceId === 1) classnames.push(css.uncategorized);
   const testId = `card-${project.name}`;
-  const f_flat_runs = useFeature().isOn('flat_runs');
 
   return (
     <Card
