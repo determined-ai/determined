@@ -10,6 +10,9 @@ workflows_to_skip = {
     # Skip test-e2e-longrunning for testing on feature branches since it won't complete on them.
     "test-e2e-longrunning",
     "send-alerts",
+    # Skip nightly tests as a temporary measure to bring this ci check back.
+    # https://hpe-aiatscale.slack.com/archives/C04C9JXB1C2/p1720448458815989
+    "nightly",
 }
 
 
