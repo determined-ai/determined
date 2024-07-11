@@ -71,9 +71,7 @@ def main() -> None:
     while failure_count < 20:
         try:
             print("Checking circleci API for jobs")
-            still_workflows_in_progress = send_alerts_for_failed_jobs(
-                sent_alerts, timeout_minutes=10
-            )
+            still_workflows_in_progress = send_alerts_for_failed_jobs(sent_alerts)
             if not still_workflows_in_progress:
                 print("all workflows complete, ending")
                 return

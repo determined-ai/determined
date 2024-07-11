@@ -4144,7 +4144,11 @@ workflows:
   send-alerts:
     <<: *do-not-run-on-manual-trigger
     jobs:
-      - send-job-level-alerts
+      - send-job-level-alerts:
+          filters:
+            branches:
+              only:
+                - main
 
   test-go:
     <<: *do-not-run-on-manual-trigger
