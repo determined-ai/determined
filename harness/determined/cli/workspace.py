@@ -1,7 +1,7 @@
 import argparse
 import json
 import time
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any, Dict, List, Optional, Sequence, cast
 
 from determined import cli
 from determined.cli import render, user
@@ -267,9 +267,9 @@ def create_workspace(args: argparse.Namespace) -> None:
     agent_user_group = _parse_agent_user_group_args(args)
     checkpoint_storage = _parse_checkpoint_storage_args(args)
 
-    if args.cluster_name and not (
-        args.namespace or args.auto_create_namespace or args.auto_create_namespace_all_clusters
-    ):
+    auto_create_namespace = args.auto_create_namespace or args.auto_create_namespace_all_clusters
+    set_namespace = args.namespace or auto_create_namespace
+    if args.cluster_name and not set_namespace:
         raise api.errors.BadRequestException(
             "must provide --namespace NAMESPACE or --auto-creeate-namespace, or remove "
             + "--cluster-name CLUSTER_NAME and specify --auto-create-namespace-all-clusters"
@@ -288,7 +288,7 @@ def create_workspace(args: argparse.Namespace) -> None:
     # value in the clusterNamespacePairs dictionary. To avoid that, we substitute the argument's
     # value with the empty string if it's null.
     cluster_name = args.cluster_name or ""
-    if args.namespace or args.auto_create_namespace or args.auto_create_namespace_all_clusters:
+    if set_namespace:
         namespace_meta = bindings.v1WorkspaceNamespaceMeta(
             namespace=args.namespace,
             autoCreateNamespace=args.auto_create_namespace,
@@ -303,10 +303,18 @@ def create_workspace(args: argparse.Namespace) -> None:
         render.print_json(w.to_json())
     else:
         render_workspaces([w])
-    if resp.namespaceBindings:
-        for cluster_name in resp.namespaceBindings:
-            namespace_binding = resp.namespaceBindings[cluster_name]
-            print(f"Workspace {w.name} is bound to namespace {namespace_binding.namespace}")
+
+    if not resp.namespaceBindings and set_namespace:
+        print("Failed to set workspace-namespace binding.")
+
+    # Cast namespace_bindings to a Dict (rather than an Optional[Dict]) for lint purposes.
+    namespace_bindings: Dict[str, bindings.v1WorkspaceNamespaceBinding] = cast(
+        Dict[str, bindings.v1WorkspaceNamespaceBinding], resp.namespaceBindings
+    )
+
+    for cluster_name in namespace_bindings:
+        namespace_binding = namespace_bindings[cluster_name]
+        print(f"Workspace {w.name} is bound to namespace {namespace_binding.namespace}")
 
 
 def describe_workspace(args: argparse.Namespace) -> None:
