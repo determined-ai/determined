@@ -1,3 +1,4 @@
+import datetime
 import json
 import logging
 import os
@@ -35,18 +36,27 @@ def send_alert(job_name: str, pipeline_number: str, workflow_id: str, job_number
     assert r.content == b"ok", r.content
 
 
-def send_alerts_for_failed_jobs(sent_alerts: Set[str]) -> bool:
+def send_alerts_for_failed_jobs(sent_alerts: Set[str], timeout_minutes: int = 120) -> bool:
     pipeline_id = os.environ["CIRCLE_PIPELINE_ID"]
     workflows = requests.get(f"https://circleci.com/api/v2/pipeline/{pipeline_id}/workflow").json()
     workflows_are_running = False
+    earliest_accepted_time = datetime.datetime.utcnow() - datetime.timedelta(
+        minutes=timeout_minutes
+    )
+
     for w in workflows["items"]:
         if w["name"] in workflows_to_skip:
             continue
 
         workflow_id = w["id"]
         if not workflows_are_running and w["stopped_at"] is None:
-            print(f"waiting for at least workflow {w['name']} to finish")
-            workflows_are_running = True
+            created_at = datetime.datetime.strptime(w["created_at"], "%Y-%m-%dT%H:%M:%SZ")
+            if created_at < earliest_accepted_time:
+                print(f"workflow {w['name']} timed out.")
+                # TODO: add support for reporting as a timeout or failure.
+            else:
+                print(f"waiting for at least workflow {w['name']} to finish")
+                workflows_are_running = True
 
         jobs = requests.get(f"https://circleci.com/api/v2/workflow/{workflow_id}/job").json()
         for j in jobs["items"]:
