@@ -6,7 +6,7 @@
 
 Determined provides insights into the usage of your cluster, measured in compute hours allocated.
 Note that this is based on allocation, not resource utilization. For example, if a user has 1 GPU
-allocated but uses only 20% of it, we still report one GPU hour.
+allocated but uses only 20% of it, we still report one slot-hour.
 
 .. warning::
 
@@ -23,11 +23,11 @@ allocated but uses only 20% of it, we still report one GPU hour.
 
 .. note::
 
-   When using the export to CSV functionality, ``gpu_hours`` reflects only the GPU hours used during
-   the export time window. This means that allocations overlapping the export window have their GPU
-   hours calculated only for the time within the window. As a result, allocations not starting and
-   ending within the export window may appear to have incorrect GPU hours when calculated manually
-   from their start and end times.
+   When using the export to CSV functionality, ``slot_hours`` reflects only the slot hours used
+   during the export time window. This means that allocations overlapping the export window have
+   their slot-hours calculated only for the time within the window. As a result, allocations not
+   starting and ending within the export window may appear to have incorrect slot-hours when
+   calculated manually from their start and end times.
 
 *********************
  WebUI Visualization

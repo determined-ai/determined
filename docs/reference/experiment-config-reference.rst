@@ -1168,11 +1168,12 @@ specifying a value greater than 1 means that multiple GPUs will be used in paral
 multiple GPUs is done using data parallelism. Configuring ``slots_per_trial`` to be greater than
 ``max_slots`` is not sensible and will result in an error.
 
-.. note::
+``slots``
+=========
 
-   Using ``slots_per_trial`` to enable data parallel training for PyTorch can alter the behavior of
-   certain models, as described in the `PyTorch documentation
-   <https://pytorch.org/docs/stable/generated/torch.nn.DataParallel.html#torch.nn.DataParallel>`__.
+For historical reasons, this field usually passes config validation steps, but has no practical
+effect when present in experiment config. Use :ref:`slots_per_trial
+<_exp-config-resources-slots-per-trial>` instead.
 
 ``max_slots``
 =============
