@@ -1,20 +1,14 @@
-import Button from 'hew/Button';
-import Icon from 'hew/Icon';
-import Message from 'hew/Message';
 import Spinner from 'hew/Spinner';
-import Tree, { TreeDataNode } from 'hew/Tree';
 import { Loadable } from 'hew/utils/loadable';
 import React, { useCallback, useMemo } from 'react';
 
-import Section from 'components/Section';
+import Metadata from 'components/Metadata';
 import { terminalRunStates } from 'constants/states';
 import useMetricNames from 'hooks/useMetricNames';
 import usePermissions from 'hooks/usePermissions';
 import { useSettings } from 'hooks/useSettings';
 import TrialInfoBox from 'pages/TrialDetails/TrialInfoBox';
-import { ExperimentBase, JsonObject, Metric, MetricType, RunState, TrialDetails } from 'types';
-import { downloadText } from 'utils/browser';
-import { isJsonObject } from 'utils/data';
+import { ExperimentBase, Metric, MetricType, RunState, TrialDetails } from 'types';
 import handleError, { ErrorType } from 'utils/error';
 import { metricKeyToMetric, metricToKey } from 'utils/metric';
 
@@ -87,28 +81,6 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
     [updateSettings],
   );
 
-  const getNodes = useCallback((data: JsonObject): TreeDataNode[] => {
-    return Object.entries(data).map(([key, value]) => {
-      if (isJsonObject(value)) {
-        return { children: getNodes(value), key, title: key };
-      } else if (value) {
-        const stringValue = value.toString();
-        return { children: [{ key: stringValue, title: stringValue }], key, title: key };
-      }
-      return { children: [{ key: 'undefined', title: 'undefined' }], key, title: key };
-    });
-  }, []);
-
-  const treeData: TreeDataNode[] = useMemo(() => {
-    if (!trial?.metadata) return [];
-    return getNodes(trial?.metadata);
-  }, [trial?.metadata, getNodes]);
-
-  const downloadMetadata = () => {
-    if (trial?.metadata)
-      downloadText(`${trial?.id}_metadata.json`, [JSON.stringify(trial?.metadata)]);
-  };
-
   return (
     <>
       <TrialInfoBox experiment={experiment} trial={trial} />
@@ -135,23 +107,7 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
           ) : (
             <Spinner spinning />
           )}
-          <Section
-            options={[
-              <Button
-                disabled={!treeData.length}
-                icon={<Icon decorative name="download" />}
-                key="download"
-                onClick={downloadMetadata}>
-                Download
-              </Button>,
-            ]}
-            title="Metadata">
-            {treeData.length ? (
-              <Tree defaultExpandAll treeData={treeData} />
-            ) : (
-              <Message title="No metadata found" />
-            )}
-          </Section>
+          <Metadata trial={trial} />
         </>
       ) : null}
     </>
