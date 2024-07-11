@@ -75,6 +75,8 @@ runs you selected.
 
 |
 
+This feature can be toggled on or off in :ref:`user settings <web-ui-user-settings>`.
+
 *************************************
  Adding Models to the Model Registry
 *************************************
@@ -122,6 +124,8 @@ visit :ref:`users`.
 
 With the Determined Enterprise Edition, you can also create and manage user groups. To learn more,
 visit :ref:`rbac`.
+
+.. _web-ui-user-settings:
 
 ************************
  Managing User Settings
