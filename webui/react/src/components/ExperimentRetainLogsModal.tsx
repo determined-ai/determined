@@ -5,6 +5,7 @@ import { Modal } from 'hew/Modal';
 import { useToast } from 'hew/Toast';
 import React, { useCallback, useId, useState } from 'react';
 
+import useFeature from 'hooks/useFeature';
 import { changeExperimentLogRetention } from 'services/api';
 import { V1BulkExperimentFilters } from 'services/api-ts-sdk';
 import handleError from 'utils/error';
@@ -38,6 +39,16 @@ const ExperimentRetainLogsModalComponent: React.FC<Props> = ({
   const [checked, setChecked] = useState<boolean>(false);
   const [form] = Form.useForm<FormInputs>();
   const inputDays = Form.useWatch('numDays', form);
+  const f_flat_runs = useFeature().isOn('flat_runs');
+
+  const pluralize = useCallback(
+    (n: number) =>
+      pluralizer.apply(null, [
+        n,
+        ...(f_flat_runs ? (['search', 'searches'] as const) : (['experiment'] as const)),
+      ]),
+    [f_flat_runs],
+  );
 
   const handleCheckBoxChange = useCallback(
     (event: CheckboxChangeEvent) => {
@@ -77,25 +88,19 @@ const ExperimentRetainLogsModalComponent: React.FC<Props> = ({
       if (numFailures === 0) {
         openToast({
           closeable: true,
-          description: `Retained logs for ${results.successful.length} ${pluralizer(
-            numSuccesses,
-            'experiment',
-          )} ${stringDays}`,
+          description: `Retained logs for ${results.successful.length} ${pluralize(numSuccesses)} ${stringDays}`,
           title: 'Retain Logs Success',
         });
       } else if (numSuccesses === 0) {
         openToast({
-          description: `Unable to retain logs for ${numFailures} ${pluralizer(
-            numFailures,
-            'experiment',
-          )}`,
+          description: `Unable to retain logs for ${numFailures} ${pluralize(numFailures)}`,
           severity: 'Error',
           title: 'Retain Logs Failure',
         });
       } else {
         openToast({
           closeable: true,
-          description: `Failed to retain logs for ${numFailures} experiments out of ${
+          description: `Failed to retain logs for ${numFailures} ${pluralize(2)} out of ${
             numFailures + numSuccesses
           } for ${numberDays} days.`,
           severity: 'Warning',
@@ -105,7 +110,19 @@ const ExperimentRetainLogsModalComponent: React.FC<Props> = ({
     } catch (e) {
       handleError(e, { publicSubject: 'Unable to retain logs' });
     }
-  }, [form, excludedExperimentIds, experimentIds, projectId, filters, onSubmit, openToast]);
+  }, [
+    form,
+    filters,
+    excludedExperimentIds,
+    experimentIds,
+    projectId,
+    onSubmit,
+    openToast,
+    pluralize,
+  ]);
+
+  const actionCopy =
+    filters !== undefined ? 'Retain Logs' : `Retain logs for ${pluralize(experimentIds.length)}`;
 
   return (
     <Modal
@@ -116,16 +133,9 @@ const ExperimentRetainLogsModalComponent: React.FC<Props> = ({
         form: idPrefix + FORM_ID,
         handleError,
         handler: handleSubmit,
-        text:
-          filters !== undefined
-            ? 'Retain Logs'
-            : `Retain logs for ${pluralizer(experimentIds.length, 'Experiment')}`,
+        text: actionCopy,
       }}
-      title={
-        filters !== undefined
-          ? 'Retain Logs'
-          : `Retain Logs for ${pluralizer(experimentIds.length, 'Experiment')}`
-      }>
+      title={actionCopy}>
       <Form form={form} id={idPrefix + FORM_ID} layout="vertical">
         <Form.Item
           label="Number of Days"

@@ -501,7 +501,7 @@ const Searches: React.FC<Props> = ({ project }) => {
           break;
         case ExperimentAction.Edit:
           if (data) updateExperiment(data);
-          openToast({ severity: 'Confirm', title: 'Experiment updated successfully' });
+          openToast({ severity: 'Confirm', title: 'Search updated successfully' });
           break;
         case ExperimentAction.Move:
         case ExperimentAction.Delete:

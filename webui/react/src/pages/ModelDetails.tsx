@@ -22,6 +22,7 @@ import {
   relativeTimeRenderer,
   userRenderer,
 } from 'components/Table/Table';
+import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import usePolling from 'hooks/usePolling';
 import { useSettings } from 'hooks/useSettings';
@@ -69,6 +70,7 @@ const ModelDetails: React.FC = () => {
     undefined,
     useObservable(workspaceStore.getWorkspace(model ? Loaded(model.workspaceId) : NotLoaded)),
   );
+  const f_flat_runs = useFeature().isOn('flat_runs');
 
   const { canModifyModel, canModifyModelVersion, loading: rbacLoading } = usePermissions();
   const [permissionsByModelVersion, setPermissionsByModelVersion] = useState<
@@ -389,7 +391,7 @@ const ModelDetails: React.FC = () => {
     pageBreadcrumb.push(
       workspace.id === 1
         ? {
-            breadcrumbName: 'Uncategorized Experiments',
+            breadcrumbName: `Uncategorized ${f_flat_runs ? 'Runs' : 'Experiments'}`,
             path: paths.projectDetails(1),
           }
         : {
@@ -431,7 +433,8 @@ const ModelDetails: React.FC = () => {
           <div className={css.noVersions}>
             <p className={css.header}>No Model Versions</p>
             <p className={css.subtext}>
-              Register a checkpoint from an experiment to add it to this model
+              Register a checkpoint from an {f_flat_runs ? 'run' : 'experiment'} to add it to this
+              model
             </p>
           </div>
         ) : (

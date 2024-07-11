@@ -7,6 +7,7 @@ import { Loadable } from 'hew/utils/loadable';
 import React, { ReactElement, ReactNode, useCallback, useMemo, useState } from 'react';
 
 import Badge, { BadgeType } from 'components/Badge';
+import useFeature from 'hooks/useFeature';
 import { columns } from 'pages/JobQueue/JobQueue.table';
 import { updateJobQueue } from 'services/api';
 import * as api from 'services/api-ts-sdk';
@@ -74,6 +75,7 @@ const ManageJobModalComponent: React.FC<Props> = ({
   const isOrderedQ = orderedSchedulers.has(schedulerType);
   const resourcePools = Loadable.getOrElse([], useObservable(clusterStore.resourcePools)); // TODO show spinner when this is loading
   const [selectedPoolName, setSelectedPoolName] = useState(initialPool);
+  const f_flat_runs = useFeature().isOn('flat_runs');
 
   const details = useMemo(() => {
     interface Item {
@@ -84,7 +86,7 @@ const ManageJobModalComponent: React.FC<Props> = ({
     const tableDetails: Record<string, Item> = {};
 
     tableKeys.forEach((td) => {
-      const col = columns.find((col) => col.key === td);
+      const col = columns(f_flat_runs).find((col) => col.key === td);
       if (!col?.render) return;
       tableDetails[td] = { label: <>{col.title}</>, value: <>{col.render(undefined, job, 0)}</> };
     });
@@ -112,7 +114,7 @@ const ManageJobModalComponent: React.FC<Props> = ({
     ];
 
     return items.filter((item) => !!item && item.value !== undefined) as Item[];
-  }, [job, isOrderedQ]);
+  }, [job, isOrderedQ, f_flat_runs]);
 
   const currentPool = useMemo(() => {
     return resourcePools.find((rp) => rp.name === selectedPoolName);

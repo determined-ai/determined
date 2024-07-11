@@ -16,6 +16,7 @@ import Link from 'components/Link';
 import MetadataCard from 'components/Metadata/MetadataCard';
 import Page, { BreadCrumbRoute } from 'components/Page';
 import PageNotFound from 'components/PageNotFound';
+import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import usePolling from 'hooks/usePolling';
 import { paths } from 'routes/utils';
@@ -61,6 +62,7 @@ const ModelVersionDetails: React.FC = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [tabKey, setTabKey] = useState(tab && TAB_KEYS.includes(tab) ? tab : DEFAULT_TAB_KEY);
+  const f_flat_runs = useFeature().isOn('flat_runs');
 
   const modelId = modelID ?? '0';
   const versionNum = versionNUM ?? '0';
@@ -322,7 +324,7 @@ const ModelVersionDetails: React.FC = () => {
   const pageBreadcrumb: BreadCrumbRoute[] = [
     isUncategorized
       ? {
-          breadcrumbName: 'Uncategorized Experiments',
+          breadcrumbName: `Uncategorized ${f_flat_runs ? 'Runs' : 'Experiments'}`,
           path: paths.projectDetails(1),
         }
       : {

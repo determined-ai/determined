@@ -15,6 +15,7 @@ import SkeletonTable from 'components/Table/SkeletonTable';
 import { defaultRowClassName, getFullPaginationConfig } from 'components/Table/Table';
 import WebhookCreateModalComponent from 'components/WebhookCreateModal';
 import WebhookDeleteModalComponent from 'components/WebhookDeleteModal';
+import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import usePolling from 'hooks/usePolling';
 import { useSettings } from 'hooks/useSettings';
@@ -43,6 +44,7 @@ const WebhooksView: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [canceler] = useState(new AbortController());
   const [selectedWebhook, setSelectedWebhook] = useState<Webhook>();
+  const f_flat_runs = useFeature().isOn('flat_runs');
 
   const pageRef = useRef<HTMLElement>(null);
 
@@ -142,7 +144,7 @@ const WebhooksView: React.FC = () => {
         defaultWidth: DEFAULT_COLUMN_WIDTHS['triggers'],
         key: 'triggers',
         render: webhookTriggerRenderer,
-        title: 'Experiment State Triggers',
+        title: `${f_flat_runs ? 'Search' : 'Experiment'} State Triggers`,
       },
       {
         dataIndex: 'webhookType',
@@ -164,7 +166,7 @@ const WebhooksView: React.FC = () => {
         width: DEFAULT_COLUMN_WIDTHS['action'],
       },
     ] as ColumnDef<Webhook>[];
-  }, [handleDropdown]);
+  }, [f_flat_runs, handleDropdown]);
 
   const handleTableChange = useCallback(
     (
@@ -210,7 +212,7 @@ const WebhooksView: React.FC = () => {
       title="Webhooks">
       {webhooks.length === 0 && !isLoading ? (
         <Message
-          description="Call external services when experiments complete or throw errors."
+          description={`Call external services when ${f_flat_runs ? 'searches' : 'experiments'} complete or throw errors.`}
           icon="webhooks"
           title="No Webhooks Registered"
         />

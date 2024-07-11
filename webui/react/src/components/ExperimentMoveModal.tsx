@@ -11,6 +11,7 @@ import { useObservable } from 'micro-observables';
 import React, { useEffect, useId, useState } from 'react';
 
 import Link from 'components/Link';
+import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { moveExperiments } from 'services/api';
@@ -19,7 +20,7 @@ import projectStore from 'stores/projects';
 import workspaceStore from 'stores/workspaces';
 import { Project } from 'types';
 import handleError from 'utils/error';
-import { pluralizer } from 'utils/string';
+import { capitalize, pluralizer } from 'utils/string';
 
 const FORM_ID = 'move-experiment-form';
 
@@ -51,6 +52,9 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
   const [form] = Form.useForm<FormInputs>();
   const workspaceId = Form.useWatch('workspaceId', form);
   const projectId = Form.useWatch('projectId', form);
+  const f_flat_runs = useFeature().isOn('flat_runs');
+
+  const entityName = f_flat_runs ? 'searches' : 'experiments';
 
   useEffect(() => {
     setDisabled(workspaceId !== 1 && !projectId);
@@ -102,19 +106,19 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
 
     if (numSuccesses === 0 && numFailures === 0) {
       openToast({
-        description: 'No selected experiments were eligible for moving',
-        title: 'No eligible experiments',
+        description: `No selected ${entityName} were eligible for moving`,
+        title: `No eligible ${entityName}`,
       });
     } else if (numFailures === 0) {
       openToast({
         closeable: true,
-        description: `${results.successful.length} experiments moved to project ${destinationProjectName}`,
+        description: `${results.successful.length} ${entityName} moved to project ${destinationProjectName}`,
         link: <Link path={paths.projectDetails(projId)}>View Project</Link>,
         title: 'Move Success',
       });
     } else if (numSuccesses === 0) {
       openToast({
-        description: `Unable to move ${numFailures} experiments`,
+        description: `Unable to move ${numFailures} ${entityName}`,
         severity: 'Warning',
         title: 'Move Failure',
       });
@@ -123,7 +127,7 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
         closeable: true,
         description: `${numFailures} out of ${
           numFailures + numSuccesses
-        } eligible experiments failed to move
+        } eligible ${entityName} failed to move
       to project ${destinationProjectName}`,
         link: <Link path={paths.projectDetails(projId)}>View Project</Link>,
         severity: 'Warning',
@@ -138,6 +142,11 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
     form.setFieldValue('workspaceId', sourceWorkspaceId ?? 1);
   }, [form, sourceProjectId, sourceWorkspaceId]);
 
+  const actionCopy =
+    filters !== undefined
+      ? `Move ${capitalize(entityName)}`
+      : `Move ${capitalize(pluralizer.apply(null, [experimentIds.length, ...(f_flat_runs ? (['search', 'searches'] as const) : (['experiment'] as const))]))}`;
+
   return (
     <Modal
       cancel
@@ -147,16 +156,9 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
         form: idPrefix + FORM_ID,
         handleError,
         handler: handleSubmit,
-        text:
-          filters !== undefined
-            ? 'Move Experiments'
-            : `Move ${pluralizer(experimentIds.length, 'Experiment')}`,
+        text: actionCopy,
       }}
-      title={
-        filters !== undefined
-          ? 'Move Experiments'
-          : `Move ${pluralizer(experimentIds.length, 'Experiment')}`
-      }>
+      title={actionCopy}>
       <Form form={form} id={idPrefix + FORM_ID} layout="vertical">
         <Form.Item
           label="Workspace"

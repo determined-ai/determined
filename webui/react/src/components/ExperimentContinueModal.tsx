@@ -13,6 +13,7 @@ import yaml from 'js-yaml';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useId, useMemo, useState } from 'react';
 
+import useFeature from 'hooks/useFeature';
 import { paths } from 'routes/utils';
 import { continueExperiment, createExperiment } from 'services/api';
 import { V1LaunchWarning } from 'services/api-ts-sdk';
@@ -35,17 +36,42 @@ import {
   upgradeConfig,
 } from 'utils/experiment';
 import { routeToReactUrl } from 'utils/routes';
-import { capitalizeWord } from 'utils/string';
+import { capitalize, capitalizeWord } from 'utils/string';
 
 import css from './ExperimentContinueModal.module.scss';
 const FORM_ID = 'continue-experiment-form';
 
 export const ContinueExperimentType = {
-  Continue: 'Continue Trial in New Experiment',
-  Reactivate: 'Reactivate Current Trial',
+  Continue: 'CONTINUE',
+  Reactivate: 'REACTIVATE',
 } as const;
 
 export type ContinueExperimentType = ValueOf<typeof ContinueExperimentType>;
+
+const ExperimentCopyMapping: Record<ContinueExperimentType, string> = {
+  [ContinueExperimentType.Continue]: 'Continue Trial in New Experiment',
+  [ContinueExperimentType.Reactivate]: 'Reactivate Current Trial',
+} satisfies Record<ContinueExperimentType, string>;
+
+const SearchCopyMapping: Record<ContinueExperimentType, string> = {
+  [ContinueExperimentType.Continue]: 'Continue as New Run',
+  [ContinueExperimentType.Reactivate]: 'Reactivate Current Run',
+};
+
+type EntityCopyMap = {
+  experiment: string;
+  trial: string;
+};
+
+const experimentEntityCopyMap: EntityCopyMap = {
+  experiment: 'experiment',
+  trial: 'trial',
+};
+
+const flatRunsEntityCopyMap: EntityCopyMap = {
+  experiment: 'search',
+  trial: 'run',
+};
 
 const EXPERIMENT_NAME = 'name';
 const MAX_LENGTH = 'maxLength';
@@ -91,7 +117,13 @@ const ExperimentContinueModalComponent = ({
   const [modalState, setModalState] = useState<ModalState>(DEFAULT_MODAL_STATE);
   const [disabled, setDisabled] = useState<boolean>(true);
   const [originalConfig, setOriginalConfig] = useState(experiment.configRaw);
+  const f_flat_runs = useFeature().isOn('flat_runs');
+
   const isReactivate = type === ContinueExperimentType.Reactivate;
+  const [actionCopyMap, entityCopyMap] = f_flat_runs
+    ? [SearchCopyMapping, flatRunsEntityCopyMap]
+    : [ExperimentCopyMapping, experimentEntityCopyMap];
+  const actionCopy = actionCopyMap[modalState.type];
 
   useEffect(() => setOriginalConfig(experiment.configRaw), [experiment]);
 
@@ -242,8 +274,8 @@ const ExperimentContinueModalComponent = ({
     async (newConfig: string) => {
       const isReactivate = modalState.type === ContinueExperimentType.Reactivate;
       if (!modalState.experiment || (!isReactivate && !modalState.trial)) return;
-      if (!isReactivate) {
-        try {
+      try {
+        if (!isReactivate) {
           const { experiment: newExperiment, warnings } = await createExperiment({
             activate: true,
             experimentConfig: newConfig,
@@ -265,42 +297,28 @@ const ExperimentContinueModalComponent = ({
           // Route to reload path to forcibly remount experiment page.
           const newPath = paths.experimentDetails(newExperiment.id);
           routeToReactUrl(paths.reload(newPath));
-        } catch (e) {
-          let errorMessage = `Unable to ${modalState.type.toLowerCase()} with the provided config.`;
-          if (isError(e) && e.name === 'YAMLException') {
-            errorMessage = e.message;
-          } else if (isDetError(e)) {
-            errorMessage = e.publicMessage || e.message;
-          }
-
-          setModalState((prev) => ({ ...prev, error: errorMessage }));
-
-          // We throw an error to prevent the modal from closing.
-          throw new DetError(errorMessage, { publicMessage: errorMessage, silent: true });
-        }
-      } else {
-        try {
+        } else {
           await continueExperiment({
             id: modalState.experiment.id,
             overrideConfig: newConfig,
           });
           const newPath = paths.experimentDetails(experiment.id);
           routeToReactUrl(paths.reload(newPath));
-        } catch (e) {
-          let errorMessage = `Unable to ${modalState.type.toLowerCase()} with the provided config.`;
-          if (isError(e) && e.name === 'YAMLException') {
-            errorMessage = e.message;
-          } else if (isDetError(e)) {
-            errorMessage = e.publicMessage || e.message;
-          }
-          setModalState((prev) => ({ ...prev, error: errorMessage }));
-
-          // We throw an error to prevent the modal from closing.
-          throw new DetError(errorMessage, { publicMessage: errorMessage, silent: true });
         }
+      } catch (e) {
+        let errorMessage = `Unable to ${actionCopy.toLowerCase()} with the provided config.`;
+        if (isError(e) && e.name === 'YAMLException') {
+          errorMessage = e.message;
+        } else if (isDetError(e)) {
+          errorMessage = e.publicMessage || e.message;
+        }
+        setModalState((prev) => ({ ...prev, error: errorMessage }));
+
+        // We throw an error to prevent the modal from closing.
+        throw new DetError(errorMessage, { publicMessage: errorMessage, silent: true });
       }
     },
-    [experiment.id, modalState],
+    [actionCopy, experiment.id, modalState.experiment, modalState.trial, modalState.type],
   );
 
   const handleSubmit = async () => {
@@ -351,7 +369,7 @@ const ExperimentContinueModalComponent = ({
         experiment.projectName,
       );
       config.description =
-        `Continuation of trial ${trial.id}, experiment ${experiment.id}` +
+        `Continuation of ${entityCopyMap.trial} ${trial.id}, ${entityCopyMap.experiment} ${experiment.id}` +
         (config.description ? ` (${config.description})` : '');
     } else if (isReactivate) {
       if (config.description) config.description = `Fork of ${config.description}`;
@@ -384,7 +402,7 @@ const ExperimentContinueModalComponent = ({
       return _.isEqual(prev, newModalState) ? prev : newModalState;
     });
     form.validateFields(requiredFields); // initial disabled state set here, gets updated later in handleFieldsChange
-  }, [experiment, trial, type, isReactivate, form, requiredFields]);
+  }, [entityCopyMap, experiment, trial, type, isReactivate, form, requiredFields]);
 
   if (!experiment || (!isReactivate && !trial)) return <></>;
 
@@ -409,7 +427,9 @@ const ExperimentContinueModalComponent = ({
         form: idPrefix + FORM_ID,
         handleError,
         handler: handleSubmit,
-        text: isReactivate ? 'Reactivate Trial' : 'Launch Experiment',
+        text: isReactivate
+          ? `Reactivate ${capitalize(entityCopyMap.trial)}`
+          : 'Launch ${capitalize(entityCopyMap)}',
       }}
       title={type}
       onClose={handleModalClose}>
@@ -429,12 +449,15 @@ const ExperimentContinueModalComponent = ({
             />
           </React.Suspense>
         )}
-        {!isReactivate && !modalIsInAdvancedMode && (
-          <Body>Start a new experiment from the current trial&rsquo;s latest checkpoint.</Body>
-        )}
-        {isReactivate && !modalIsInAdvancedMode && (
-          <Body>Reactivate and continue the current trial from the latest checkpoint.</Body>
-        )}
+        <Body>
+          {!modalIsInAdvancedMode
+            ? isReactivate
+              ? `Reactivate and continue the current ${entityCopyMap.trial} from the latest checkpoint`
+              : f_flat_runs
+                ? "Start a new run from the current run's latest checkpoint"
+                : "Start a new experiment from the current trial's latest checkpoint"
+            : undefined}
+        </Body>
         <Form
           form={form}
           hidden={modalState.isAdvancedMode}
@@ -445,9 +468,14 @@ const ExperimentContinueModalComponent = ({
           {!isReactivate && (
             <Form.Item
               initialValue={experiment.name}
-              label="Experiment name"
+              label={`${capitalize(entityCopyMap.experiment)} name`}
               name={EXPERIMENT_NAME}
-              rules={[{ message: 'Please provide a new experiment name.', required: true }]}>
+              rules={[
+                {
+                  message: `Please provide a new ${entityCopyMap.experiment} name.`,
+                  required: true,
+                },
+              ]}>
               <Input />
             </Form.Item>
           )}
@@ -477,7 +505,7 @@ const ExperimentContinueModalComponent = ({
                   <Icon
                     name="info"
                     showTooltip
-                    title="Add additional training to the current trial."
+                    title={`Add additional training to the current ${entityCopyMap.trial}.`}
                   />
                 </Row>
               }

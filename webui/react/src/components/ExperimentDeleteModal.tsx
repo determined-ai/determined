@@ -1,6 +1,7 @@
 import { Modal } from 'hew/Modal';
 import React from 'react';
 
+import useFeature from 'hooks/useFeature';
 import { paths } from 'routes/utils';
 import { deleteExperiment } from 'services/api';
 import { ExperimentBase } from 'types';
@@ -14,6 +15,8 @@ interface Props {
 }
 
 const ExperimentDeleteModalComponent: React.FC<Props> = ({ experiment }: Props) => {
+  const f_flat_runs = useFeature().isOn('flat_runs');
+  const entityCopy = f_flat_runs ? 'search' : 'experiment';
   const handleSubmit = async () => {
     try {
       await deleteExperiment({ experimentId: experiment.id });
@@ -22,7 +25,7 @@ const ExperimentDeleteModalComponent: React.FC<Props> = ({ experiment }: Props) 
       handleError(e, {
         level: ErrorLevel.Error,
         publicMessage: 'Please try again later.',
-        publicSubject: 'Unable to delete experiment.',
+        publicSubject: `Unable to delete ${entityCopy}.`,
         silent: false,
         type: ErrorType.Server,
       });
@@ -40,7 +43,7 @@ const ExperimentDeleteModalComponent: React.FC<Props> = ({ experiment }: Props) 
         text: BUTTON_TEXT,
       }}
       title="Confirm Experiment Deletion">
-      Are you sure you want to delete experiment {experiment.id}?
+      Are you sure you want to delete {entityCopy} {experiment.id}?
     </Modal>
   );
 };

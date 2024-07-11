@@ -10,6 +10,7 @@ import OverviewStats from 'components/OverviewStats';
 import Section from 'components/Section';
 import TimeAgo from 'components/TimeAgo';
 import { useCheckpointFlow } from 'hooks/useCheckpointFlow';
+import useFeature from 'hooks/useFeature';
 import { NodeElement } from 'pages/ResourcePool/Topology';
 import { handlePath, paths } from 'routes/utils';
 import { getTaskAcceleratorData } from 'services/api';
@@ -122,11 +123,12 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
       trialId: trial.id,
     };
   }, [trial]);
+  const f_flat_runs = useFeature().isOn('flat_runs');
 
   const { openCheckpoint, checkpointModalComponents } = useCheckpointFlow({
     checkpoint: bestCheckpoint,
     config: experiment.config,
-    title: `Best checkpoint for Trial ${trial?.id}`,
+    title: `Best checkpoint for ${f_flat_runs ? 'run' : 'trial'} ${trial?.id}`,
   });
 
   const totalCheckpointsSize = useMemo(() => {

@@ -51,6 +51,7 @@ const ProjectCard: React.FC<Props> = ({
   if (project.archived) classnames.push(css.archived);
   if (project.workspaceId === 1) classnames.push(css.uncategorized);
   const testId = `card-${project.name}`;
+  const f_flat_runs = useFeature().isOn('flat_runs');
 
   return (
     <Card
@@ -105,7 +106,7 @@ const ProjectCard: React.FC<Props> = ({
                 project.lastExperimentStartedAt && (
                   <TimeAgo
                     datetime={project.lastExperimentStartedAt}
-                    tooltipFormat="[Last experiment started: \n]MMM D, YYYY - h:mm a"
+                    tooltipFormat={`[Last ${f_flat_runs ? 'search' : 'experiment'} started: \n]MMM D, YYYY - h:mm a`}
                   />
                 )
               )}

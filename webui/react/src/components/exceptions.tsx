@@ -3,9 +3,14 @@ import Message from 'hew/Message';
 import React from 'react';
 
 import Link from 'components/Link';
+import useFeature from 'hooks/useFeature';
 import { paths } from 'routes/utils';
+import { capitalize } from 'utils/string';
 
 export const NoExperiments: React.FC = () => {
+  const f_flat_runs = useFeature().isOn('flat_runs');
+  const entityCopy = f_flat_runs ? 'experiments' : 'searches';
+
   return (
     <Message
       action={
@@ -13,9 +18,9 @@ export const NoExperiments: React.FC = () => {
           Quick Start Guide
         </Link>
       }
-      description="Keep track of experiments you run in a project by connecting up your code."
+      description={`Keep track of ${entityCopy} you run in a project by connecting up your code.`}
       icon="experiment"
-      title="No Experiments"
+      title={`No ${capitalize(entityCopy)}`}
     />
   );
 };

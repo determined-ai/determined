@@ -13,6 +13,7 @@ import Section from 'components/Section';
 import ResponsiveTable from 'components/Table/ResponsiveTable';
 import { defaultRowClassName, getFullPaginationConfig } from 'components/Table/Table';
 import { useCheckpointFlow } from 'hooks/useCheckpointFlow';
+import useFeature from 'hooks/useFeature';
 import { useFetchModels } from 'hooks/useFetchModels';
 import usePolling from 'hooks/usePolling';
 import { getTrialWorkloads } from 'services/api';
@@ -64,6 +65,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
     models,
     title: `Checkpoint for Batch ${checkpoint?.totalBatches}`,
   });
+  const f_flat_runs = useFeature().isOn('flat_runs');
 
   const hasFiltersApplied = useMemo(() => {
     const metricsApplied = !_.isEqual(metrics, defaultMetrics);
@@ -173,13 +175,14 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
       }
     } catch (e) {
       handleError(e, {
-        publicMessage: 'Failed to load recent trial workloads.',
-        publicSubject: 'Unable to fetch Trial Workloads.',
+        publicMessage: `Failed to load recent ${f_flat_runs ? 'run' : 'trial'} workloads.`,
+        publicSubject: `Unable to fetch ${f_flat_runs ? 'Run' : 'trial'} Workloads.`,
         silent: false,
         type: ErrorType.Api,
       });
     }
   }, [
+    f_flat_runs,
     trial?.id,
     settings.sortDesc,
     settings.sortKey,

@@ -9,6 +9,7 @@ import Section from 'components/Section';
 import UPlotChart, { Options } from 'components/UPlot/UPlotChart';
 import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin';
 import { trackAxis } from 'components/UPlot/UPlotChart/trackAxis';
+import useFeature from 'hooks/useFeature';
 import usePolling from 'hooks/usePolling';
 import css from 'pages/TrialDetails/TrialChart.module.scss';
 import { timeSeries } from 'services/api';
@@ -37,6 +38,7 @@ const TrialChart: React.FC<Props> = ({
 }: Props) => {
   const [scale, setScale] = useState<Scale>(Scale.Linear);
   const [trialSummary, setTrialSummary] = useState<Loadable<MetricContainer[]>>(NotLoaded);
+  const f_flat_runs = useFeature().isOn('flat_runs');
 
   const fetchTrialSummary = useCallback(async () => {
     if (trialId) {
@@ -50,14 +52,14 @@ const TrialChart: React.FC<Props> = ({
         setTrialSummary(Loaded(summary[0].metrics));
       } catch (e) {
         handleError(e, {
-          publicMessage: `Failed to load trial summary for trial ${trialId}.`,
-          publicSubject: 'Trial summary fail to load.',
+          publicMessage: `Failed to load ${f_flat_runs ? 'run' : 'trial'} summary for trial ${trialId}.`,
+          publicSubject: `${f_flat_runs ? 'Run' : 'Trial'} summary failed to load.`,
           type: ErrorType.Api,
         });
         setTrialSummary(Loaded([]));
       }
     }
-  }, [metricNames, trialId]);
+  }, [f_flat_runs, metricNames, trialId]);
 
   const { stopPolling } = usePolling(fetchTrialSummary, { interval: 2000, rerunOnNewFn: true });
 

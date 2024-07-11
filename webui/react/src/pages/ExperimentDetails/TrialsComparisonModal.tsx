@@ -17,6 +17,7 @@ import Link from 'components/Link';
 import MetricBadgeTag from 'components/MetricBadgeTag';
 import MetricSelect from 'components/MetricSelect';
 import { useAsync } from 'hooks/useAsync';
+import useFeature from 'hooks/useFeature';
 import useMetricNames from 'hooks/useMetricNames';
 import { paths } from 'routes/utils';
 import { getTrialDetails } from 'services/api';
@@ -32,7 +33,7 @@ import {
 import { isNumber } from 'utils/data';
 import handleError, { ErrorType } from 'utils/error';
 import { isRun } from 'utils/run';
-import { humanReadableBytes, pluralizer } from 'utils/string';
+import { capitalize, humanReadableBytes, pluralizer } from 'utils/string';
 
 import css from './TrialsComparisonModal.module.scss';
 
@@ -65,6 +66,8 @@ const TrialsComparisonModalComponent: React.FC<ModalProps> = ({
     if (props.trialIds?.length === 0 || props.trials?.length === 0 || props.runs?.length === 0)
       onCancel?.();
   }, [onCancel, props.runs?.length, props.trialIds?.length, props.trials?.length]);
+  const f_flat_runs = useFeature().isOn('flat_runs');
+  const trialCopy = f_flat_runs ? 'Run' : 'Trial';
 
   return (
     <Modal
@@ -76,8 +79,8 @@ const TrialsComparisonModalComponent: React.FC<ModalProps> = ({
       }}
       title={
         props.experiment !== undefined && !Array.isArray(props.experiment)
-          ? `Experiment ${props.experiment.id} Trial Comparison`
-          : 'Trial Comparison'
+          ? `${f_flat_runs ? 'Search' : 'Experiment'} ${props.experiment.id} ${trialCopy} Comparison`
+          : `${trialCopy} Comparison'`
       }
       onClose={onCancel}>
       <TrialsComparisonTable {...props} />
@@ -95,6 +98,7 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
   const [selectedHyperparameters, setSelectedHyperparameters] = useState<string[]>([]);
   const [selectedMetrics, setSelectedMetrics] = useState<Metric[]>([]);
   const colSpan = (Array.isArray(experiment) ? experiment.length : trialIds?.length ?? 0) + 1;
+  const f_flat_runs = useFeature().isOn('flat_runs');
 
   // the loadable has the flat run type here to make the getOrElse later on succeed.
   const trialDetailsRequest = useAsync<TrialDetails[] | FlatRun[]>(
@@ -157,16 +161,18 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
 
   const handleMetricNamesError = useCallback(
     (e: unknown) => {
+      const entityName = f_flat_runs ? 'search' : 'experiment';
       handleError(e, {
         publicMessage: `Failed to load metric names for ${pluralizer(
           experimentIds.length,
-          'experiment',
+          entityName,
+          f_flat_runs ? 'searches' : undefined,
         )} ${experimentIds.join(', ')}.`,
-        publicSubject: 'Experiment metric name stream failed.',
+        publicSubject: `${capitalize(entityName)} metric name stream failed.`,
         type: ErrorType.Api,
       });
     },
-    [experimentIds],
+    [experimentIds, f_flat_runs],
   );
 
   const loadableMetrics = useMetricNames(experimentIds, handleMetricNamesError);
@@ -302,7 +308,7 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
               {Array.isArray(experiment) && (
                 <>
                   <tr>
-                    <th scope="row">Experiment ID</th>
+                    <th scope="row">{f_flat_runs ? 'Search' : 'Experiment'} ID</th>
                     {trialsDetails.map((trial) => (
                       <td key={trial.id}>
                         <Label truncate={{ tooltip: true }}>
@@ -312,7 +318,7 @@ export const TrialsComparisonTable: React.FC<TableProps> = ({
                     ))}
                   </tr>
                   <tr>
-                    <th scope="row">Trial ID</th>
+                    <th scope="row">{f_flat_runs ? 'Run' : 'Trial'} ID</th>
                     {trialsDetails.map((trial) => (
                       <td key={trial.id}>
                         <Label truncate={{ tooltip: true }}>{trial.id}</Label>

@@ -30,6 +30,7 @@ import handleError, { ErrorType } from 'utils/error';
 import { isSingleTrialExperiment } from 'utils/experiment';
 import { useObservable } from 'utils/observable';
 import { isAborted, isNotFound } from 'utils/service';
+import { capitalize } from 'utils/string';
 
 import MultiTrialDetailsHyperparameters from './TrialDetails/MultiTrialDetailsHyperparameters';
 
@@ -48,6 +49,16 @@ type Params = {
   experimentId?: string;
   tab?: TabType;
   trialId: string;
+};
+
+const ExperimentCopyMap = {
+  experiment: 'experiment',
+  trial: 'trial',
+};
+
+const RunCopyMap = {
+  experiment: 'search',
+  trial: 'run',
 };
 
 const TAB_KEYS = Object.values(TabType);
@@ -72,6 +83,8 @@ const TrialDetailsComp: React.FC = () => {
   const trial = trialDetails.data;
   const [remainingLogDays, setRemainingLogDays] = useState<Loadable<number | undefined>>(NotLoaded);
 
+  const copyMap = f_flat_runs ? RunCopyMap : ExperimentCopyMap;
+
   const showExperimentArtifacts = usePermissions().canViewExperimentArtifacts({
     workspace: { id: experiment?.workspaceId ?? 0 },
   });
@@ -93,15 +106,15 @@ const TrialDetailsComp: React.FC = () => {
       }
     } catch (e) {
       handleError(e, {
-        publicMessage: 'Failed to load experiment details.',
-        publicSubject: 'Unable to fetch Trial Experiment Detail',
+        publicMessage: `Failed to load ${copyMap.experiment} details.`,
+        publicSubject: `Unable to fetch ${copyMap.experiment} ${copyMap.trial} detail`,
         silent: false,
         type: ErrorType.Api,
       });
     } finally {
       setIsFetching(false);
     }
-  }, [canceler, navigate, experimentId, trial]);
+  }, [canceler, copyMap, navigate, experimentId, trial]);
 
   const fetchTrialData = useCallback(async () => {
     try {
@@ -216,16 +229,21 @@ const TrialDetailsComp: React.FC = () => {
   }, [canceler]);
 
   if (isNaN(trialId)) {
-    return <Message title={`Invalid Trial ID ${trialId}`} />;
+    return <Message title={`Invalid ${capitalize(copyMap.trial)} ID ${trialID}`} />;
   }
 
   if (trialDetails.error !== undefined && !isNotFound(trialDetails.error)) {
-    const message = `Unable to fetch Trial ${trialId}`;
+    const message = `Unable to fetch ${capitalize(copyMap.trial)} ${trialId}`;
     return <Message description={trialDetails.error.message} icon="warning" title={message} />;
   }
 
   if (!trial || !experiment) {
-    return <Spinner spinning tip={`Fetching ${trial ? 'experiment' : 'trial'} information...`} />;
+    return (
+      <Spinner
+        spinning
+        tip={`Fetching ${trial ? copyMap.experiment : copyMap.trial} information...`}
+      />
+    );
   }
 
   const workspaceName = workspaces.find((ws: Workspace) => ws.id === experiment?.workspaceId)?.name;
@@ -239,7 +257,7 @@ const TrialDetailsComp: React.FC = () => {
               path: paths.workspaceDetails(experiment?.workspaceId ?? 1),
             }
           : {
-              breadcrumbName: 'Uncategorized Experiments',
+              breadcrumbName: `Uncategorized ${f_flat_runs ? 'Experiments' : 'Runs'}`,
               path: paths.projectDetails(1),
             },
         {
@@ -247,7 +265,7 @@ const TrialDetailsComp: React.FC = () => {
           path: paths.experimentDetails(experiment.id),
         },
         {
-          breadcrumbName: `Trial ${trial.id}`,
+          breadcrumbName: `${capitalize(copyMap.trial)} ${trial.id}`,
           path: paths.trialDetails(trial.id),
         },
       ]}
@@ -261,7 +279,7 @@ const TrialDetailsComp: React.FC = () => {
       }
       notFound={trialDetails.error && isNotFound(trialDetails.error)}
       stickyHeader
-      title={`Trial ${trialId}`}>
+      title={`${capitalize(copyMap.trial)} ${trialId}`}>
       <TrialLogPreview
         hidePreview={tabKey === TabType.Logs}
         trial={trial}
@@ -275,7 +293,7 @@ const TrialDetailsComp: React.FC = () => {
               <RoutePagination
                 currentId={trialId}
                 ids={experiment.trialIds ?? []}
-                tooltipLabel="Trial"
+                tooltipLabel={capitalize(copyMap.trial)}
                 onSelectId={(selectedTrialId) => {
                   navigate(paths.trialDetails(selectedTrialId, experiment?.id));
                 }}

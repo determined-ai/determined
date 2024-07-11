@@ -34,6 +34,7 @@ import TimeDuration from 'components/TimeDuration';
 import { UNMANAGED_MESSAGE } from 'constant';
 import { pausableRunStates, stateToLabel, terminalRunStates } from 'constants/states';
 import useExperimentTags from 'hooks/useExperimentTags';
+import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import ExperimentHeaderProgress from 'pages/ExperimentDetails/Header/ExperimentHeaderProgress';
 import { handlePath, paths } from 'routes/utils';
@@ -64,7 +65,7 @@ import {
   isSingleTrialExperiment,
 } from 'utils/experiment';
 import { routeToReactUrl } from 'utils/routes';
-import { pluralizer } from 'utils/string';
+import { capitalize, pluralizer } from 'utils/string';
 import { openCommandResponse } from 'utils/wait';
 
 import css from './ExperimentDetailsHeader.module.scss';
@@ -147,6 +148,16 @@ const headerActions = [
   Action.Delete,
 ];
 
+const ExperimentEntityCopyMap = {
+  experiment: 'experiment',
+  trial: 'trial',
+};
+
+const RunEntityCopyMap = {
+  experiment: 'search',
+  trial: 'run',
+};
+
 // prettier-ignore
 const ExperimentDetailsHeader: React.FC<Props> = ({
   experiment,
@@ -164,6 +175,8 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
   const [erroredTrialCount, setErroredTrialCount] = useState<number>();
   const [canceler] = useState(new AbortController());
   const confirm = useConfirm();
+  const f_flat_runs = useFeature().isOn('flat_runs');
+  const copyMap = f_flat_runs ? RunEntityCopyMap : ExperimentEntityCopyMap;
 
   const maxRestarts = experiment.config.maxRestarts;
   const autoRestarts = trial?.autoRestarts ?? 0;
@@ -216,14 +229,14 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       handleError(e, {
         level: ErrorLevel.Error,
         publicMessage: 'Please try again later.',
-        publicSubject: 'Unable to pause experiment.',
+        publicSubject: `Unable to pause ${copyMap.experiment}.`,
         silent: false,
         type: ErrorType.Server,
       });
     } finally {
       setIsChangingState(false);
     }
-  }, [experiment.id, fetchExperimentDetails]);
+  }, [copyMap, experiment.id, fetchExperimentDetails]);
 
   const handlePlayClick = useCallback(async () => {
     setIsChangingState(true);
@@ -234,14 +247,14 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
       handleError(e, {
         level: ErrorLevel.Error,
         publicMessage: 'Please try again later.',
-        publicSubject: 'Unable to activate experiment.',
+        publicSubject: `Unable to activate ${copyMap.experiment}.`,
         silent: false,
         type: ErrorType.Server,
       });
     } finally {
       setIsChangingState(false);
     }
-  }, [experiment.id, fetchExperimentDetails]);
+  }, [copyMap, experiment.id, fetchExperimentDetails]);
 
   const fetchErroredTrial = useCallback(async () => {
     // No need to fetch errored trial count if it's single trial experiment or experiment is not completed.
@@ -296,36 +309,37 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
               menu={[
                 {
                   key: 'Create New Experiment',
-                  label: 'Create New Experiment...',
+                  label: f_flat_runs
+                    ? 'Create New Run'
+                    : 'Create New Experiment...',
                 },
                 {
                   key: 'Reactivate Current Trial',
-                  label: 'Reactivate Current Trial...',
+                  label: `Reactivate Current ${capitalize(copyMap.trial)}...`,
                 },
               ]}
               onClick={(key: string) => {
                 if (key === 'Create New Experiment') ContinueExperimentModal.open();
                 if (key === 'Reactivate Current Trial') ReactivateExperimentModal.open();
               }}>
-              <Button disabled={experiment.unmanaged}>Continue Trial</Button>
+              <Button disabled={experiment.unmanaged}>Continue {capitalize(copyMap.trial)}</Button>
             </Dropdown>
           ),
           menuOptions: [
             {
               key: 'create-new-experiment',
               label: experiment.unmanaged ? (
-                <Tooltip content={UNMANAGED_MESSAGE}>Continue Trial</Tooltip>
-              ) : (
-                'Create New Experiment'
-              ),
+                <Tooltip content={UNMANAGED_MESSAGE}>Continue {capitalize(copyMap.trial)}</Tooltip>
+              ) : f_flat_runs ? 'Create New Run' : 'Create New Experiment'
+              ,
               onClick: ContinueExperimentModal.open,
             },
             {
               key: 'reactivate-current-trial',
               label: experiment.unmanaged ? (
-                <Tooltip content={UNMANAGED_MESSAGE}>Reactivate Current Trial</Tooltip>
+                <Tooltip content={UNMANAGED_MESSAGE}>Reactivate Current {capitalize(copyMap.trial)}</Tooltip>
               ) : (
-                'Reactivate Current Trial'
+                `Reactivate Current ${capitalize(copyMap.trial)}`
               ),
               onClick: ReactivateExperimentModal.open,
             },
@@ -338,15 +352,15 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
               isLoading: isRunningContinue,
               key: 'continue-trial',
               label: experiment.unmanaged ? (
-                <Tooltip content={UNMANAGED_MESSAGE}>Continue Trial</Tooltip>
+                <Tooltip content={UNMANAGED_MESSAGE}>Continue {capitalize(copyMap.trial)}</Tooltip>
               ) : (
-                `Continue ${isSingleTrialExperiment(experiment) ? 'Trial' : 'Experiment'}`
+                `Continue ${capitalize(isSingleTrialExperiment(experiment) ? copyMap.trial : copyMap.experiment)}`
               ),
               onClick: ContinuableNonSingleSearcherName.has(experiment.config.searcher.name) ? onClickContinueMultiTrialExp : ContinueTrialModal.open,
             },
           ],
         },
-    [experiment, ContinueExperimentModal, ReactivateExperimentModal, isRunningContinue, onClickContinueMultiTrialExp, ContinueTrialModal.open],
+    [copyMap, experiment, ContinueExperimentModal, f_flat_runs, ReactivateExperimentModal, isRunningContinue, onClickContinueMultiTrialExp, ContinueTrialModal.open],
   );
 
   useEffect(() => {
@@ -431,16 +445,16 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
                   erroredTrialCount && erroredTrialCount > 0
                     ? `Retry will attempt to complete ${erroredTrialCount} errored ${pluralizer(
                       erroredTrialCount,
-                      'trial',
+                      copyMap.trial,
                     )} from their last available ${pluralizer(erroredTrialCount, 'checkpoint')}.`
-                    : 'Retry will resume the experiment from where it left off. Any previous progress will be retained.',
+                    : `Retry will resume the ${copyMap.experiment} from where it left off. Any previous progress will be retained.`,
                 okText: 'Retry',
                 onConfirm: async () => {
                   await continueExperiment({ id: experiment.id });
                   await fetchExperimentDetails();
                 },
                 onError: handleError,
-                title: 'Retry Experiment',
+                title: `Retry ${capitalize(copyMap.experiment)}`,
               });
             },
           },
@@ -551,6 +565,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
 
     return availableActions.map((action) => options[action]) as ActionOptions[];
   }, [
+    copyMap,
     isRunningArchive,
     continueExperimentOption,
     isRunningDelete,
@@ -613,7 +628,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
         value: (
           <Link
             path={paths.trialDetails(experiment.config.searcher.sourceTrialId)}>
-            Trial {experiment.config.searcher.sourceTrialId}
+            {capitalize(copyMap.trial)} {experiment.config.searcher.sourceTrialId}
           </Link>
         ),
       });
@@ -623,7 +638,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
         label: 'Forked from',
         value: (
           <Link path={paths.experimentDetails(experiment.forkedFrom)}>
-            Experiment {experiment.forkedFrom}
+            {capitalize(copyMap.experiment)} {experiment.forkedFrom}
           </Link>
         ),
       });
@@ -670,7 +685,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
     });
 
     return rows;
-  }, [autoRestarts, disabled, experiment, experimentTags, jobInfoLinkText, maxRestarts]);
+  }, [autoRestarts, copyMap, disabled, experiment, experimentTags, jobInfoLinkText, maxRestarts]);
 
   return (
     <>
@@ -728,8 +743,8 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
             )}
             {trial ? (
               <>
-                <Icon name="arrow-right" size="tiny" title="Trial" />
-                <span>Trial {trial.id}</span>
+                <Icon name="arrow-right" size="tiny" title={capitalize(copyMap.trial)} />
+                <span>{capitalize(copyMap.trial)} {trial.id}</span>
               </>
             ) : null}
           </Row>
