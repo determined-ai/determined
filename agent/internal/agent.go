@@ -121,8 +121,8 @@ func (a *Agent) run(ctx context.Context) error {
 	a.log.Tracef("setting up %s runtime", a.opts.ContainerRuntime)
 	if a.opts.ContainerRuntime != options.DockerContainerRuntime {
 		a.log.Error(a.opts.ContainerRuntime,
-			" Container Runtime is not supported, please update runtime config to use Docker instead.")
-		return fmt.Errorf("%s Container Runtime not available", a.opts.ContainerRuntime)
+			" container runtime is not supported, please update runtime config to use docker instead.")
+		return fmt.Errorf("container runtime not available: %s", a.opts.ContainerRuntime)
 	}
 
 	dcl, dErr := dclient.NewClientWithOpts(dclient.WithAPIVersionNegotiation(), dclient.FromEnv)

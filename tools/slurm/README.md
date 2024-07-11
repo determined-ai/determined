@@ -102,7 +102,7 @@ One can load a developer launcher on their dev box created by `make slurmcluster
 3. In the [hpc-ard-capsules-core repository]([d.com](https://github.hpe.com/hpe/hpc-ard-capsules-core)), run `./loadDevLauncher.sh -g [$USER]@[EXTERNAL_IP]` which will spin up a developer launcher on port 18080 on the specified VM.
 4. From the root of this repository, run `make slurmcluster FLAGS="-d"` which will start a devcluster pointing at port 18080 on the instance.
 
-### Note: We no longer support Slurmcluster with Determined Agents
+### Note: Slurmcluster with Determined Agents is no longer supported.
  
 # Running pytest Suites
 
