@@ -357,6 +357,12 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
     [form],
   );
 
+  const getNextHPName = useCallback((names: string[]) => {
+    let counter = names.length;
+    while (names.includes(`hp_${counter}`)) counter++;
+    return `hp_${counter}`;
+  }, []);
+
   const hyperparameterPage = useMemo((): React.ReactNode => {
     const emptyHP: Hyperparameter = { type: 'const' };
     // We always render the form regardless of mode to provide a reference to it.
@@ -366,7 +372,7 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
         <div className={css.labelWithLink}>
           <p>
             Select hyperparameters and define the search space. <br />
-            The experiment code needs to be able to handle hyperparameters for them to take effect.{' '}
+            The experiment code needs to be able to handle hyperparameters for them to take effect.
           </p>
           <Link
             external
@@ -415,11 +421,10 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
           <label id="add">
             <Button
               onClick={() =>
-                setCurrentHPs((prev) =>
-                  prev
-                    ? [...prev, { hyperparameter: emptyHP, name: `hp_${prev.length}` }]
-                    : [{ hyperparameter: emptyHP, name: 'hp_0' }],
-                )
+                setCurrentHPs((prev) => [
+                  ...(prev ?? []),
+                  { hyperparameter: emptyHP, name: getNextHPName(prev.map((p) => p.name)) },
+                ])
               }>
               Add Hyperparameter
             </Button>
@@ -427,7 +432,7 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
         </div>
       </div>
     );
-  }, [currentHPs, modalError, searcher]);
+  }, [currentHPs, modalError, searcher, getNextHPName]);
 
   const searcherPage = useMemo((): React.ReactNode => {
     // We always render the form regardless of mode to provide a reference to it.
