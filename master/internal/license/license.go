@@ -64,3 +64,15 @@ func IsEE() bool {
 	}
 	return false
 }
+
+// SetLicenseAndKey populates the license key and public key used for EE
+// license checks. This is primarily useful for testing.
+func SetLicenseAndKey(newLicenseKey, newPublicKey string) {
+	// TODO: decide whether this should no-op when they're already populated and update doc comment
+	if licenseKey != "" || publicKey != "" {
+		return
+	}
+
+	licenseKey = newLicenseKey
+	publicKey = newPublicKey
+}
