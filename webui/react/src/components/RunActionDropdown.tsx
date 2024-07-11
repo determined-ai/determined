@@ -11,7 +11,14 @@ import React, { useCallback, useMemo } from 'react';
 import usePermissions from 'hooks/usePermissions';
 import FlatRunMoveModalComponent from 'pages/FlatRuns/FlatRunMoveModal';
 import { handlePath } from 'routes/utils';
-import { archiveRuns, deleteRuns, killRuns, unarchiveRuns } from 'services/api';
+import {
+  archiveRuns,
+  deleteRuns,
+  killRuns,
+  pauseRuns,
+  resumeRuns,
+  unarchiveRuns,
+} from 'services/api';
 import { FlatRun, FlatRunAction, ValueOf } from 'types';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { getActionsForFlatRun } from 'utils/flatRun';
@@ -38,7 +45,15 @@ export const Action = {
 
 type Action = ValueOf<typeof Action>;
 
-const dropdownActions = [Action.Archive, Action.Unarchive, Action.Kill, Action.Move, Action.Delete];
+const dropdownActions = [
+  Action.Archive,
+  Action.Unarchive,
+  Action.Kill,
+  Action.Move,
+  Action.Pause,
+  Action.Resume,
+  Action.Delete,
+];
 
 const RunActionDropdown: React.FC<Props> = ({
   run,
@@ -132,6 +147,30 @@ const RunActionDropdown: React.FC<Props> = ({
           case Action.Move:
             flatRunMoveModalOpen();
             break;
+          case Action.Pause:
+            confirm({
+              content: `Are you sure you want to pause run ${run.id}?`,
+              okText: 'Pause',
+              onConfirm: async () => {
+                await pauseRuns({ projectId, runIds: [run.id] });
+                await onComplete?.(action, run.id);
+              },
+              onError: handleError,
+              title: 'Confirm Run Pause',
+            });
+            break;
+          case Action.Resume:
+            confirm({
+              content: `Are you sure you want to resume run ${run.id}?`,
+              okText: 'Resume',
+              onConfirm: async () => {
+                await resumeRuns({ projectId, runIds: [run.id] });
+                await onComplete?.(action, run.id);
+              },
+              onError: handleError,
+              title: 'Confirm Run Resume',
+            });
+            break;
           case Action.Copy:
             await copyToClipboard(cellCopyData ?? '');
             openToast({
@@ -143,7 +182,7 @@ const RunActionDropdown: React.FC<Props> = ({
       } catch (e) {
         handleError(e, {
           level: ErrorLevel.Error,
-          publicMessage: `Unable to ${action} experiment ${run.id}.`,
+          publicMessage: `Unable to ${action} run ${run.id}.`,
           publicSubject: `${capitalize(action)} failed.`,
           silent: false,
           type: ErrorType.Server,

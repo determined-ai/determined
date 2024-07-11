@@ -19,6 +19,8 @@ message GetAgentsRequest {
     // Returns agents sorted by time.
     SORT_BY_TIME = 2;
   }
+  reserved 5;
+  reserved "label";
   // Sort agents by the given field.
   SortBy sort_by = 1;
   // Order agents in either ascending or descending order.
@@ -28,8 +30,6 @@ message GetAgentsRequest {
   int32 offset = 3;
   // Limit the number of agents. A value of 0 denotes no limit.
   int32 limit = 4;
-  // This field has been deprecated and will be ignored.
-  string label = 5;
   // exclude slots
   bool exclude_slots = 6;
   // exclude containers

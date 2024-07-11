@@ -1389,6 +1389,113 @@ func (x *GetProjectsByUserActivityResponse) GetProjects() []*projectv1.Project {
 	return nil
 }
 
+// Get metadata values for a given key within a project
+type GetMetadataValuesRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// Metadata key
+	Key string `protobuf:"bytes,1,opt,name=key,proto3" json:"key,omitempty"`
+	// Project id
+	ProjectId int32 `protobuf:"varint,2,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
+}
+
+func (x *GetMetadataValuesRequest) Reset() {
+	*x = GetMetadataValuesRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_determined_api_v1_project_proto_msgTypes[26]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetMetadataValuesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetMetadataValuesRequest) ProtoMessage() {}
+
+func (x *GetMetadataValuesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_determined_api_v1_project_proto_msgTypes[26]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetMetadataValuesRequest.ProtoReflect.Descriptor instead.
+func (*GetMetadataValuesRequest) Descriptor() ([]byte, []int) {
+	return file_determined_api_v1_project_proto_rawDescGZIP(), []int{26}
+}
+
+func (x *GetMetadataValuesRequest) GetKey() string {
+	if x != nil {
+		return x.Key
+	}
+	return ""
+}
+
+func (x *GetMetadataValuesRequest) GetProjectId() int32 {
+	if x != nil {
+		return x.ProjectId
+	}
+	return 0
+}
+
+// Response to GetMetadataValuesRequest.
+type GetMetadataValuesResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// A list of metadata values
+	Values []string `protobuf:"bytes,1,rep,name=values,proto3" json:"values,omitempty"`
+}
+
+func (x *GetMetadataValuesResponse) Reset() {
+	*x = GetMetadataValuesResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_determined_api_v1_project_proto_msgTypes[27]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetMetadataValuesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetMetadataValuesResponse) ProtoMessage() {}
+
+func (x *GetMetadataValuesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_determined_api_v1_project_proto_msgTypes[27]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetMetadataValuesResponse.ProtoReflect.Descriptor instead.
+func (*GetMetadataValuesResponse) Descriptor() ([]byte, []int) {
+	return file_determined_api_v1_project_proto_rawDescGZIP(), []int{27}
+}
+
+func (x *GetMetadataValuesResponse) GetValues() []string {
+	if x != nil {
+		return x.Values
+	}
+	return nil
+}
+
 var File_determined_api_v1_project_proto protoreflect.FileDescriptor
 
 var file_determined_api_v1_project_proto_rawDesc = []byte{
@@ -1545,16 +1652,24 @@ var file_determined_api_v1_project_proto_rawDesc = []byte{
 	0x65, 0x63, 0x74, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x1e, 0x2e, 0x64, 0x65, 0x74,
 	0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x70, 0x72, 0x6f, 0x6a, 0x65, 0x63, 0x74, 0x2e,
 	0x76, 0x31, 0x2e, 0x50, 0x72, 0x6f, 0x6a, 0x65, 0x63, 0x74, 0x52, 0x08, 0x70, 0x72, 0x6f, 0x6a,
-	0x65, 0x63, 0x74, 0x73, 0x2a, 0x56, 0x0a, 0x09, 0x54, 0x61, 0x62, 0x6c, 0x65, 0x54, 0x79, 0x70,
-	0x65, 0x12, 0x1a, 0x0a, 0x16, 0x54, 0x41, 0x42, 0x4c, 0x45, 0x5f, 0x54, 0x59, 0x50, 0x45, 0x5f,
-	0x55, 0x4e, 0x53, 0x50, 0x45, 0x43, 0x49, 0x46, 0x49, 0x45, 0x44, 0x10, 0x00, 0x12, 0x19, 0x0a,
-	0x15, 0x54, 0x41, 0x42, 0x4c, 0x45, 0x5f, 0x54, 0x59, 0x50, 0x45, 0x5f, 0x45, 0x58, 0x50, 0x45,
-	0x52, 0x49, 0x4d, 0x45, 0x4e, 0x54, 0x10, 0x01, 0x12, 0x12, 0x0a, 0x0e, 0x54, 0x41, 0x42, 0x4c,
-	0x45, 0x5f, 0x54, 0x59, 0x50, 0x45, 0x5f, 0x52, 0x55, 0x4e, 0x10, 0x02, 0x42, 0x35, 0x5a, 0x33,
-	0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x64, 0x65, 0x74, 0x65, 0x72,
-	0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2d, 0x61, 0x69, 0x2f, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69,
-	0x6e, 0x65, 0x64, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x70, 0x6b, 0x67, 0x2f, 0x61, 0x70,
-	0x69, 0x76, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x65, 0x63, 0x74, 0x73, 0x22, 0x4b, 0x0a, 0x18, 0x47, 0x65, 0x74, 0x4d, 0x65, 0x74, 0x61, 0x64,
+	0x61, 0x74, 0x61, 0x56, 0x61, 0x6c, 0x75, 0x65, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
+	0x12, 0x10, 0x0a, 0x03, 0x6b, 0x65, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x03, 0x6b,
+	0x65, 0x79, 0x12, 0x1d, 0x0a, 0x0a, 0x70, 0x72, 0x6f, 0x6a, 0x65, 0x63, 0x74, 0x5f, 0x69, 0x64,
+	0x18, 0x02, 0x20, 0x01, 0x28, 0x05, 0x52, 0x09, 0x70, 0x72, 0x6f, 0x6a, 0x65, 0x63, 0x74, 0x49,
+	0x64, 0x22, 0x33, 0x0a, 0x19, 0x47, 0x65, 0x74, 0x4d, 0x65, 0x74, 0x61, 0x64, 0x61, 0x74, 0x61,
+	0x56, 0x61, 0x6c, 0x75, 0x65, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x16,
+	0x0a, 0x06, 0x76, 0x61, 0x6c, 0x75, 0x65, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x09, 0x52, 0x06,
+	0x76, 0x61, 0x6c, 0x75, 0x65, 0x73, 0x2a, 0x56, 0x0a, 0x09, 0x54, 0x61, 0x62, 0x6c, 0x65, 0x54,
+	0x79, 0x70, 0x65, 0x12, 0x1a, 0x0a, 0x16, 0x54, 0x41, 0x42, 0x4c, 0x45, 0x5f, 0x54, 0x59, 0x50,
+	0x45, 0x5f, 0x55, 0x4e, 0x53, 0x50, 0x45, 0x43, 0x49, 0x46, 0x49, 0x45, 0x44, 0x10, 0x00, 0x12,
+	0x19, 0x0a, 0x15, 0x54, 0x41, 0x42, 0x4c, 0x45, 0x5f, 0x54, 0x59, 0x50, 0x45, 0x5f, 0x45, 0x58,
+	0x50, 0x45, 0x52, 0x49, 0x4d, 0x45, 0x4e, 0x54, 0x10, 0x01, 0x12, 0x12, 0x0a, 0x0e, 0x54, 0x41,
+	0x42, 0x4c, 0x45, 0x5f, 0x54, 0x59, 0x50, 0x45, 0x5f, 0x52, 0x55, 0x4e, 0x10, 0x02, 0x42, 0x35,
+	0x5a, 0x33, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x64, 0x65, 0x74,
+	0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2d, 0x61, 0x69, 0x2f, 0x64, 0x65, 0x74, 0x65, 0x72,
+	0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x70, 0x6b, 0x67, 0x2f,
+	0x61, 0x70, 0x69, 0x76, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -1570,7 +1685,7 @@ func file_determined_api_v1_project_proto_rawDescGZIP() []byte {
 }
 
 var file_determined_api_v1_project_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_determined_api_v1_project_proto_msgTypes = make([]protoimpl.MessageInfo, 26)
+var file_determined_api_v1_project_proto_msgTypes = make([]protoimpl.MessageInfo, 28)
 var file_determined_api_v1_project_proto_goTypes = []interface{}{
 	(TableType)(0),                                // 0: determined.api.v1.TableType
 	(*GetProjectRequest)(nil),                     // 1: determined.api.v1.GetProjectRequest
@@ -1599,26 +1714,28 @@ var file_determined_api_v1_project_proto_goTypes = []interface{}{
 	(*UnarchiveProjectResponse)(nil),              // 24: determined.api.v1.UnarchiveProjectResponse
 	(*GetProjectsByUserActivityRequest)(nil),      // 25: determined.api.v1.GetProjectsByUserActivityRequest
 	(*GetProjectsByUserActivityResponse)(nil),     // 26: determined.api.v1.GetProjectsByUserActivityResponse
-	(*projectv1.Project)(nil),                     // 27: determined.project.v1.Project
-	(*projectv1.ProjectColumn)(nil),               // 28: determined.project.v1.ProjectColumn
-	(*projectv1.MetricsRange)(nil),                // 29: determined.project.v1.MetricsRange
-	(*projectv1.Note)(nil),                        // 30: determined.project.v1.Note
-	(*projectv1.PatchProject)(nil),                // 31: determined.project.v1.PatchProject
+	(*GetMetadataValuesRequest)(nil),              // 27: determined.api.v1.GetMetadataValuesRequest
+	(*GetMetadataValuesResponse)(nil),             // 28: determined.api.v1.GetMetadataValuesResponse
+	(*projectv1.Project)(nil),                     // 29: determined.project.v1.Project
+	(*projectv1.ProjectColumn)(nil),               // 30: determined.project.v1.ProjectColumn
+	(*projectv1.MetricsRange)(nil),                // 31: determined.project.v1.MetricsRange
+	(*projectv1.Note)(nil),                        // 32: determined.project.v1.Note
+	(*projectv1.PatchProject)(nil),                // 33: determined.project.v1.PatchProject
 }
 var file_determined_api_v1_project_proto_depIdxs = []int32{
-	27, // 0: determined.api.v1.GetProjectResponse.project:type_name -> determined.project.v1.Project
-	27, // 1: determined.api.v1.GetProjectByKeyResponse.project:type_name -> determined.project.v1.Project
+	29, // 0: determined.api.v1.GetProjectResponse.project:type_name -> determined.project.v1.Project
+	29, // 1: determined.api.v1.GetProjectByKeyResponse.project:type_name -> determined.project.v1.Project
 	0,  // 2: determined.api.v1.GetProjectColumnsRequest.table_type:type_name -> determined.api.v1.TableType
-	28, // 3: determined.api.v1.GetProjectColumnsResponse.columns:type_name -> determined.project.v1.ProjectColumn
-	29, // 4: determined.api.v1.GetProjectNumericMetricsRangeResponse.ranges:type_name -> determined.project.v1.MetricsRange
-	27, // 5: determined.api.v1.PostProjectResponse.project:type_name -> determined.project.v1.Project
-	30, // 6: determined.api.v1.AddProjectNoteRequest.note:type_name -> determined.project.v1.Note
-	30, // 7: determined.api.v1.AddProjectNoteResponse.notes:type_name -> determined.project.v1.Note
-	30, // 8: determined.api.v1.PutProjectNotesRequest.notes:type_name -> determined.project.v1.Note
-	30, // 9: determined.api.v1.PutProjectNotesResponse.notes:type_name -> determined.project.v1.Note
-	31, // 10: determined.api.v1.PatchProjectRequest.project:type_name -> determined.project.v1.PatchProject
-	27, // 11: determined.api.v1.PatchProjectResponse.project:type_name -> determined.project.v1.Project
-	27, // 12: determined.api.v1.GetProjectsByUserActivityResponse.projects:type_name -> determined.project.v1.Project
+	30, // 3: determined.api.v1.GetProjectColumnsResponse.columns:type_name -> determined.project.v1.ProjectColumn
+	31, // 4: determined.api.v1.GetProjectNumericMetricsRangeResponse.ranges:type_name -> determined.project.v1.MetricsRange
+	29, // 5: determined.api.v1.PostProjectResponse.project:type_name -> determined.project.v1.Project
+	32, // 6: determined.api.v1.AddProjectNoteRequest.note:type_name -> determined.project.v1.Note
+	32, // 7: determined.api.v1.AddProjectNoteResponse.notes:type_name -> determined.project.v1.Note
+	32, // 8: determined.api.v1.PutProjectNotesRequest.notes:type_name -> determined.project.v1.Note
+	32, // 9: determined.api.v1.PutProjectNotesResponse.notes:type_name -> determined.project.v1.Note
+	33, // 10: determined.api.v1.PatchProjectRequest.project:type_name -> determined.project.v1.PatchProject
+	29, // 11: determined.api.v1.PatchProjectResponse.project:type_name -> determined.project.v1.Project
+	29, // 12: determined.api.v1.GetProjectsByUserActivityResponse.projects:type_name -> determined.project.v1.Project
 	13, // [13:13] is the sub-list for method output_type
 	13, // [13:13] is the sub-list for method input_type
 	13, // [13:13] is the sub-list for extension type_name
@@ -1944,6 +2061,30 @@ func file_determined_api_v1_project_proto_init() {
 				return nil
 			}
 		}
+		file_determined_api_v1_project_proto_msgTypes[26].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetMetadataValuesRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_determined_api_v1_project_proto_msgTypes[27].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetMetadataValuesResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	file_determined_api_v1_project_proto_msgTypes[4].OneofWrappers = []interface{}{}
 	file_determined_api_v1_project_proto_msgTypes[8].OneofWrappers = []interface{}{}
@@ -1953,7 +2094,7 @@ func file_determined_api_v1_project_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_determined_api_v1_project_proto_rawDesc,
 			NumEnums:      1,
-			NumMessages:   26,
+			NumMessages:   28,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

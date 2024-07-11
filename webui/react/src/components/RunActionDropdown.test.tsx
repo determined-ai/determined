@@ -4,8 +4,15 @@ import UIProvider, { DefaultTheme } from 'hew/Theme';
 import { ConfirmationProvider } from 'hew/useConfirm';
 
 import { handlePath } from 'routes/utils';
-import { archiveRuns, deleteRuns, killRuns, unarchiveRuns } from 'services/api';
-import { RunState } from 'types';
+import {
+  archiveRuns,
+  deleteRuns,
+  killRuns,
+  pauseRuns,
+  resumeRuns,
+  unarchiveRuns,
+} from 'services/api';
+import { FlatRunExperiment, RunState } from 'types';
 
 import RunActionDropdown, { Action } from './RunActionDropdown';
 import { cell, run } from './RunActionDropdown.test.mock';
@@ -30,6 +37,8 @@ vi.mock('services/api', () => ({
   archiveRuns: vi.fn(),
   deleteRuns: vi.fn(),
   killRuns: vi.fn(),
+  pauseRuns: vi.fn(),
+  resumeRuns: vi.fn(),
   unarchiveRuns: vi.fn(),
 }));
 
@@ -54,7 +63,12 @@ vi.mock('hooks/usePermissions', () => {
   };
 });
 
-const setup = (link?: string, state?: RunState, archived?: boolean) => {
+const setup = (
+  link?: string,
+  state?: RunState,
+  archived?: boolean,
+  experiment?: FlatRunExperiment,
+) => {
   const onComplete = vi.fn();
   const onVisibleChange = vi.fn();
   render(
@@ -68,6 +82,7 @@ const setup = (link?: string, state?: RunState, archived?: boolean) => {
           run={{
             ...run,
             archived: archived === undefined ? run.archived : archived,
+            experiment: experiment === undefined ? run.experiment : experiment,
             state: state === undefined ? run.state : state,
           }}
           onComplete={onComplete}
@@ -175,5 +190,47 @@ describe('RunActionDropdown', () => {
     mocks.canMoveFlatRun.mockImplementation(() => false);
     setup();
     expect(screen.queryByText(Action.Move)).not.toBeInTheDocument();
+  });
+
+  it('should provide Pause option', async () => {
+    mocks.canModifyFlatRun.mockImplementation(() => true);
+    const experiment: FlatRunExperiment = {
+      description: '',
+      forkedFrom: 6634,
+      id: 6833,
+      isMultitrial: false,
+      name: 'iris_tf_keras_adaptive_search',
+      progress: 0.9444444,
+      resourcePool: 'compute-pool',
+      searcherMetric: 'val_categorical_accuracy',
+      searcherType: 'single',
+      unmanaged: false,
+    };
+    setup(undefined, RunState.Active, false, experiment);
+    expect(screen.getByText(Action.Pause)).toBeInTheDocument();
+    await user.click(screen.getByText(Action.Pause));
+    await user.click(screen.getByRole('button', { name: Action.Pause }));
+    expect(vi.mocked(pauseRuns)).toBeCalled();
+  });
+
+  it('should hide Pause option without permissions', () => {
+    mocks.canModifyFlatRun.mockImplementation(() => false);
+    setup();
+    expect(screen.queryByText(Action.Pause)).not.toBeInTheDocument();
+  });
+
+  it('should provide Resume option', async () => {
+    mocks.canModifyFlatRun.mockImplementation(() => true);
+    setup(undefined, RunState.Paused, false);
+    expect(screen.getByText(Action.Resume)).toBeInTheDocument();
+    await user.click(screen.getByText(Action.Resume));
+    await user.click(screen.getByRole('button', { name: Action.Resume }));
+    expect(vi.mocked(resumeRuns)).toBeCalled();
+  });
+
+  it('should hide Resume option without permissions', () => {
+    mocks.canModifyFlatRun.mockImplementation(() => false);
+    setup();
+    expect(screen.queryByText(Action.Resume)).not.toBeInTheDocument();
   });
 });

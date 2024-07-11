@@ -12,7 +12,6 @@ When using the HPC Launcher, Determined delegates all job scheduling and priorit
 workload manager (either Slurm or PBS) and the following experiment configuration options are
 ignored.
 
--  ``resources.agent_label``
 -  ``resources.max_slots``
 -  ``resources.priority``
 -  ``resources.weight``

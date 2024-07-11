@@ -2686,4 +2686,16 @@ service Determined {
       tags: "Internal"
     };
   }
+
+  // Retrieve run metadata values for a given string typed key within
+  // a given project.
+  rpc GetMetadataValues(GetMetadataValuesRequest)
+      returns (GetMetadataValuesResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/projects/{project_id}/metadata/{key}"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
 }
