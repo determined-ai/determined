@@ -205,15 +205,21 @@ func generateNamespaceName(detInstallationNamespace, clusterID, workspaceName st
 		4))
 	clusterIDPrefix := clusterID[0:clusterIDCap]
 
-	// Kubernetes namespaces names must follow the regex pattern [a-z0-9]([-a-z0-9]*[a-z0-9])? and
+	// Kubernetes namespaces names must follow the regex pattern ^[a-z0-9]([-a-z0-9]*[a-z0-9])?$ and
 	// therefore cannot contain any capital letters or special characters other than "-".
 	// When deriving part of the auto-generated namespace from the workspace name, ensure it is
 	// lowercased and stripped of all characters that are out of compliance with the acceptable
 	// regex pattern for namespace names.
-	workspaceName = strings.ToLower(workspaceName)
-	workspaceStripped := k8sNamespaceNegativeRegexp.ReplaceAllString(workspaceName, "")
-	workspaceCap := math.Min(float64(len(workspaceStripped)), float64(31))
-	workspacePrefix := workspaceStripped[0:int(workspaceCap)]
+	var workspacePrefix string
+	if workspaceName == "" {
+		workspacePrefix = "null"
+	} else {
+		workspaceName = strings.ToLower(workspaceName)
+		workspaceStripped := k8sNamespaceNegativeRegexp.ReplaceAllString(workspaceName, "")
+		workspaceCap := math.Min(float64(len(workspaceStripped)), float64(31))
+		workspacePrefix = workspaceStripped[0:int(workspaceCap)]
+	}
+
 	workspaceID := strconv.Itoa(int(wkspID))
 	if wkspID > 999999 {
 		workspaceID = workspaceID[0:6]

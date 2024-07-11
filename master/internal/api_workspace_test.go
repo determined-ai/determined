@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"regexp"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -29,7 +30,7 @@ func TestGenerateNamespaceName(t *testing.T) {
 		clusterID:     "bar",
 		workspaceName: "",
 		workspaceID:   742_915,
-		expectedName:  "-foo-bar-742915",
+		expectedName:  "null-foo-bar-742915",
 	}, {
 		name:          "empty install namespace",
 		instNamespace: "",
@@ -60,6 +61,7 @@ func TestGenerateNamespaceName(t *testing.T) {
 		expectedName:  "baz-foo-bar-3",
 	}}
 
+	k8sNamespaceConstraint := regexp.MustCompile("^[a-z0-9]([-a-z0-9]*[a-z0-9])?$")
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
 			a := assert.New(t)
@@ -68,7 +70,9 @@ func TestGenerateNamespaceName(t *testing.T) {
 			a.Equal(tc.expectedName, actual)
 
 			// Kubernetes namespace name length cannot exceed 63 characters, so do an extra check for that.
-			a.LessOrEqual(len(actual), 63)
+			a.LessOrEqual(len(actual), 63, "generated name was too long to be a valid k8s namespace name")
+			// Kubernetes namespace name must match the above regex, so also check that.
+			a.Regexp(k8sNamespaceConstraint, actual, "generated name was not a valid k8s namespace name")
 		})
 	}
 }
