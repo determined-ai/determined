@@ -2,4 +2,4 @@
 
 **New Features**
 
--  Experiments: In experiment config, subfields of ``data.secrets`` are obfuscated.
+- Experiments: Obfuscate subfields of ``data.secrets`` in the  :ref:`experiment configuration <experiment-config-data>`.
