@@ -88,18 +88,15 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
   );
 
   const getNodes = useCallback((data: JsonObject): TreeDataNode[] => {
-    return Object
-      .entries(data)
-      .map(([key, value]) => {
-        if (isJsonObject(value)) {
-          return { children: getNodes(value), key, title: key };
-        } else if (value) {
-          const stringValue = value.toString();
-          return { children: [{ key: stringValue, title: stringValue }], key, title: key };
-        }
-        return { children: [{ key: 'undefined', title: 'undefined' }], key, title: key };
-      },
-      );
+    return Object.entries(data).map(([key, value]) => {
+      if (isJsonObject(value)) {
+        return { children: getNodes(value), key, title: key };
+      } else if (value) {
+        const stringValue = value.toString();
+        return { children: [{ key: stringValue, title: stringValue }], key, title: key };
+      }
+      return { children: [{ key: 'undefined', title: 'undefined' }], key, title: key };
+    });
   }, []);
 
   const treeData: TreeDataNode[] = useMemo(() => {
@@ -108,7 +105,8 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
   }, [trial?.metadata, getNodes]);
 
   const downloadMetadata = () => {
-    if (trial?.metadata) downloadText(`${trial?.id}_metadata.json`, [JSON.stringify(trial?.metadata)]);
+    if (trial?.metadata)
+      downloadText(`${trial?.id}_metadata.json`, [JSON.stringify(trial?.metadata)]);
   };
 
   return (
@@ -137,10 +135,22 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
           ) : (
             <Spinner spinning />
           )}
-          <Section options={[<Button disabled={!treeData.length} icon={<Icon decorative name="download" />} key="download" onClick={downloadMetadata}>Download</Button>]} title="Metadata">
+          <Section
+            options={[
+              <Button
+                disabled={!treeData.length}
+                icon={<Icon decorative name="download" />}
+                key="download"
+                onClick={downloadMetadata}>
+                Download
+              </Button>,
+            ]}
+            title="Metadata">
             {treeData.length ? (
               <Tree defaultExpandAll treeData={treeData} />
-            ) : <Message title="No metadata found" />}
+            ) : (
+              <Message title="No metadata found" />
+            )}
           </Section>
         </>
       ) : null}
