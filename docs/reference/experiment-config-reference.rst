@@ -128,6 +128,20 @@ whatever configuration is needed for loading data for use by the experiment's mo
 example, if your experiment loads data from Amazon S3, the ``data`` field might contain the S3
 bucket name, object prefix, and AWS authentication credentials.
 
+As a special case, values found under a subfield named ``secrets`` will be obfuscated when
+experiment details are reviewed. For example, given the following configuration:
+
+.. code:: yaml
+
+   name: mnist_tf_const
+   data:
+      base_url: https://s3-us-west-2.amazonaws.com/determined-ai-datasets/mnist/
+      secrets:
+         auth_token: f020572a-a847-4cc6-9c2b-625c43515759
+
+The value of ``data["secrets"]["auth_token"]`` will be usable during the experiment run, but not
+when users view the experiment configuration.
+
 ``workspace``
 =============
 
