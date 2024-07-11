@@ -2266,6 +2266,7 @@ jobs:
       - setup-go-intg-deps
       - run: curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64 && sudo install minikube-linux-amd64 /usr/local/bin/minikube
       - run: minikube start
+      - license-gen
       - run: make -C master test-intg
       - codecov/upload:
           flags: "backend"
@@ -4093,7 +4094,11 @@ workflows:
     <<: *do-not-run-on-manual-trigger
     jobs:
       - test-intg-master:
-          context: storage-unit-tests
+          context:
+            - storage-unit-tests
+            # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
+            # that's required by the "gh" command for authentication.
+            - github-read
       - test-intg-agent
       - go-coverage:
           requires:

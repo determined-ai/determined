@@ -23,7 +23,6 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/wrapperspb"
 
-	// "github.com/determined-ai/determined/master/test/testutils".
 	apiPkg "github.com/determined-ai/determined/master/internal/api"
 	authz2 "github.com/determined-ai/determined/master/internal/authz"
 	"github.com/determined-ai/determined/master/internal/command"
@@ -36,6 +35,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/workspace"
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/test/testutils"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/projectv1"
 	"github.com/determined-ai/determined/proto/pkg/rbacv1"
@@ -1668,7 +1668,7 @@ func TestSetResourceQuotas(t *testing.T) {
 	mockRM1 := MockRM()
 	api, _, ctx := setupAPITest(t, nil, mockRM1)
 
-	// err := testutils.LoadLicenseAndKeyFromFilesystem()
+	testutils.MustLoadLicenseAndKeyFromFilesystem("../../")
 
 	resp, err := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: uuid.NewString()})
 	require.NoError(t, err)
