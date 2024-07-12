@@ -978,7 +978,6 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
         const totalCount = `${totalExperiments.toLocaleString()} ${pluralizer(
           totalExperiments,
           'run',
-          'runs',
         )}`;
         const label =
           numberOfSelection !== 0 ? `${numberOfSelection} of ${totalCount} selected` : totalCount;
@@ -1035,7 +1034,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
               onActionComplete={onActionComplete}
             />
             {!isMobile && (
-              <span className={css.runSelection} data-test="runSelection">
+              <span className={css.runSelection} data-test-id="runSelection">
                 {selectionLabel}
               </span>
             )}
