@@ -2,7 +2,8 @@ import Button from 'hew/Button';
 import Icon from 'hew/Icon';
 import Message from 'hew/Message';
 import Tree, { TreeDataNode } from 'hew/Tree';
-import { useCallback, useMemo } from 'react';
+import { isArray } from 'lodash';
+import { useMemo } from 'react';
 
 import { JsonObject, TrialDetails } from 'types';
 import { downloadText } from 'utils/browser';
@@ -16,23 +17,36 @@ export interface Props {
 
 export const EMPTY_MESSAGE = 'No metadata found';
 
-const Metadata: React.FC<Props> = ({ trial }: Props) => {
-  const getNodes = useCallback((data: JsonObject): TreeDataNode[] => {
-    return Object.entries(data).map(([key, value]) => {
-      if (isJsonObject(value)) {
-        return { children: getNodes(value), key, title: key };
-      } else if (value) {
-        const stringValue = value.toString();
-        return { children: [{ key: stringValue, title: stringValue }], key, title: key };
+const getNodes = (data: JsonObject): TreeDataNode[] => {
+  return Object.entries(data).map(([key, value]) => {
+    if (isJsonObject(value)) {
+      return { children: getNodes(value), key, title: <strong>{key}</strong> };
+    } else {
+      let stringValue = '';
+      if (value === null || value === undefined) {
+        stringValue = 'undefined';
+      } else if (isArray(value)) {
+        stringValue = `[${value.join(', ')}]`;
+      } else {
+        stringValue = value.toString();
       }
-      return { children: [{ key: 'undefined', title: 'undefined' }], key, title: key };
-    });
-  }, []);
+      return {
+        key,
+        title: (
+          <>
+            <strong>{key}:</strong> {stringValue}
+          </>
+        ),
+      };
+    }
+  });
+};
 
+const Metadata: React.FC<Props> = ({ trial }: Props) => {
   const treeData: TreeDataNode[] = useMemo(() => {
     if (!trial?.metadata) return [];
     return getNodes(trial?.metadata);
-  }, [trial?.metadata, getNodes]);
+  }, [trial?.metadata]);
 
   const downloadMetadata = () => {
     if (trial?.metadata)

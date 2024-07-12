@@ -1,6 +1,7 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import UIProvider, { DefaultTheme } from 'hew/Theme';
+import { isArray } from 'lodash';
 
 import { JsonObject, TrialDetails } from 'types';
 import { downloadText } from 'utils/browser';
@@ -115,11 +116,19 @@ describe('Metadata', () => {
     const treeValues: string[] = [];
     const extractTreeValuesFromObject = (object: JsonObject) => {
       for (const [key, value] of Object.entries(object)) {
-        treeValues.push(key);
+        if (value === null) continue;
         if (isJsonObject(value)) {
-          if (value !== null) extractTreeValuesFromObject(value);
+          extractTreeValuesFromObject(value);
+          treeValues.push(key);
         } else {
-          if (value !== null) treeValues.push(value.toString());
+          let stringValue = '';
+          if (isArray(value)) {
+            stringValue = `[${value.join(', ')}]`;
+          } else {
+            stringValue = value.toString();
+          }
+          treeValues.push(`${key}:`);
+          treeValues.push(stringValue);
         }
       }
     };
