@@ -5450,7 +5450,7 @@ workflows:
               ld_library_path:
             security:
               initial_user_password: ${INITIAL_USER_PASSWORD}
-        - test-e2e-slurm:
+      - test-e2e-slurm:
             name: test-e2e-slurm-agent-singularity-znode
             context:
               - dev-ci-cluster-default-user-credentials
