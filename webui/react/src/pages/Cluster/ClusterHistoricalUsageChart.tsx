@@ -34,7 +34,11 @@ const ClusterHistoricalUsageChart: React.FC<ClusterHistoricalUsageChartProps> = 
   const data: Serie[] = Object.keys(hoursByLabel).map((label) => ({
     data: {
       // convert Unix times from milliseconds to seconds
-      [XAxisDomain.Time]: hoursByLabel[label].map((pt, idx) => [Date.parse(time[idx]) / 1000, pt]),
+      // HACK: ensure that the time is treated as the local time to prevent uPlot from shifting the data
+      [XAxisDomain.Time]: hoursByLabel[label].map((pt, idx) => [
+        Date.parse(time[idx] + ' ') / 1000,
+        pt,
+      ]),
     },
     name: label,
   }));
