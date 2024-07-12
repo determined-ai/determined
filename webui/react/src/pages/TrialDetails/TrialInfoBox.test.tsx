@@ -240,7 +240,7 @@ describe('Trial Info Box', () => {
 
       setup(mockTrial1, mockExperimentWith);
       waitFor(() => {
-        expect(screen.findByText('Data Input')).toBeVisible();
+        expect(screen.findByTestId('lineageCard')).toBeVisible();
         expect(screen.findByText(mockIntegrationData.dataset.repo)).toBeVisible();
       });
     });
@@ -248,7 +248,7 @@ describe('Trial Info Box', () => {
     it('should not show Data input card when pachyderm integration is missing', () => {
       setup(mockTrial1, mockExperiment);
       waitFor(() => {
-        expect(screen.findByText('Data Input')).not.toBeVisible();
+        expect(screen.findByTestId('lineageCard')).not.toBeVisible();
       });
     });
   });
