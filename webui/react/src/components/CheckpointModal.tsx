@@ -53,10 +53,10 @@ const getStorageLocation = (
     case CheckpointStorageType.SharedFS:
       if (hostPath && storagePath) {
         location = storagePath.startsWith('/')
-          ? `file://${storagePath}`
+          ? `file:/${storagePath}`
           : `file://${hostPath}/${storagePath}`;
       } else if (hostPath) {
-        location = `file://${hostPath}`;
+        location = `file:${isAbsolutePath(hostPath.replace(' ', '')) ? '/' : '//'}${hostPath}`;
       }
       break;
     case CheckpointStorageType.DIRECTORY:

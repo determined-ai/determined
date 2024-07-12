@@ -11,7 +11,7 @@ import appdirs
 
 import determined
 from determined import core, experimental
-from determined.common import util
+from determined.common import storage, util
 from determined.experimental import core_v2
 
 logger = logging.getLogger("determined.core")
@@ -158,9 +158,6 @@ def _init_context(
         or str(pathlib.Path(appdirs.user_data_dir("determined")) / "checkpoints")
     )
 
-    if type(checkpoint_storage) == str:
-        checkpoint_storage = {"type": "directory", "container_path": checkpoint_storage}
-
     config = {
         "name": defaulted_config.name or f"unmanaged-{uuid.uuid4().hex[:8]}",
         "data": defaulted_config.data,
@@ -174,7 +171,9 @@ def _init_context(
         },
         "workspace": unmanaged_config.workspace,
         "project": unmanaged_config.project,
-        "checkpoint_storage": checkpoint_storage,
+        "checkpoint_storage": storage.shared._shortcut_to_config(checkpoint_storage)
+        if type(checkpoint_storage) == str
+        else checkpoint_storage,
     }
 
     config_text = util.yaml_safe_dump(config)
