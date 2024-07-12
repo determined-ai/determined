@@ -167,7 +167,7 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
       };
 
       return (
-        <OverviewStats data-testid="lineageCard" title="Data input" onClick={handleClickDataInput}>
+        <OverviewStats title="Data input" onClick={handleClickDataInput}>
           {integrations.pachyderm.dataset.repo}
         </OverviewStats>
       );

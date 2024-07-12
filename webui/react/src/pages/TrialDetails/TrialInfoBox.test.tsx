@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import UIProvider, { DefaultTheme } from 'hew/Theme';
 import { ConfirmationProvider } from 'hew/useConfirm';
 
@@ -233,23 +233,19 @@ describe('Trial Info Box', () => {
   });
 
   describe('Lineage card', () => {
-    it('should show Data input card with tge lineage link when pachyderm integration data is present', () => {
-      const mockExperimentWith = Object.assign(mockExperiment, {
+    it('should show Data input card with tge lineage link when pachyderm integration data is present', async () => {
+      const mockExperimentWith = Object.assign({...mockExperiment}, {
         config: { ...mockExperiment.config, integrations: { pachyderm: mockIntegrationData } },
       });
 
       setup(mockTrial1, mockExperimentWith);
-      waitFor(() => {
-        expect(screen.findByTestId('lineageCard')).toBeVisible();
-        expect(screen.findByText(mockIntegrationData.dataset.repo)).toBeVisible();
-      });
+      expect(await screen.findByText('Data input')).toBeVisible();
+      expect(await screen.findByText(mockIntegrationData.dataset.repo)).toBeVisible();
     });
 
-    it('should not show Data input card when pachyderm integration is missing', () => {
+    it('should not show Data input card when pachyderm integration is missing', async () => {
       setup(mockTrial1, mockExperiment);
-      waitFor(() => {
-        expect(screen.findByTestId('lineageCard')).not.toBeVisible();
-      });
+      expect(await screen.queryByText('Data input')).not.toBeInTheDocument();
     });
   });
 });
