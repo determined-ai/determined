@@ -166,7 +166,7 @@ def _init_context(
 
     # Unmanaged trials.
     # Construct the config.
-
+    checkpoint_storage = checkpoint_storage or config.checkpoint_storage
     config_text = util.yaml_safe_dump(
         {
             "name": config.name or f"unmanaged-{uuid.uuid4().hex[:8]}",
