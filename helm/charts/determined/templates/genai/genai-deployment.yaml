@@ -76,6 +76,10 @@ spec:
             value: genai-backend-service-{{ .Release.Name }}.{{ .Release.Namespace }}
           - name: GENAI_HOST_PORT
             value: {{ .Values.genai.port | quote }}
+          {{- if .Values.genai.imagePullSecretName}}
+          - name: GENAI_IMAGE_PULL_SECRET_NAME
+            value: {{ .Values.genai.imagePullSecretName }}
+          {{- end}}
         volumeMounts:
           {{- if .Values.genai.sharedFSHostPath }}
           - name: genai-shared-host-path
@@ -106,9 +110,9 @@ spec:
             memory: {{ .Values.genai.memLimit  | quote }}
             {{- end}}
           {{- end}}
-      {{- if .Values.imagePullSecretName}}
+      {{- if .Values.genai.imagePullSecretName}}
       imagePullSecrets:
-        - name: {{ .Values.imagePullSecretName }}
+        - name: {{ .Values.genai.imagePullSecretName }}
       {{- end}}
       volumes:
         {{- if .Values.genai.sharedFSHostPath }}
