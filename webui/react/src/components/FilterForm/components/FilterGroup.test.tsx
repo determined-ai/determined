@@ -12,6 +12,7 @@ import FilterGroup from './FilterGroup';
 import { FormKind } from './type';
 
 const filterFormStore = new FilterFormStore();
+window.HTMLElement.prototype.scrollIntoView = vi.fn();
 
 const Component = ({ filterFormStore }: { filterFormStore: FilterFormStore }): JSX.Element => {
   const loadableFormData = useObservable(filterFormStore.formset);
