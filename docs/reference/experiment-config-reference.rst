@@ -1248,11 +1248,6 @@ equivalent to a ``--device DEVICE`` command-line argument to ``docker run``. ``d
 by resource managers of type ``agent`` but is ignored by resource managers of type ``kubernetes``.
 See :ref:`master configuration <master-config-reference>` for details about resource managers.
 
-``agent_label``
-===============
-
-Optional. This field has been deprecated and will be ignored. Use ``resource_pool`` instead.
-
 .. _exp-bind-mounts:
 
 *************

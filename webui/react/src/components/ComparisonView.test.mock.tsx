@@ -1,5 +1,6 @@
 import React from 'react';
 
+import { useGlasbey } from 'hooks/useGlasbey';
 import { RunMetricData } from 'hooks/useMetrics';
 import { ExperimentWithTrial, Scale } from 'types';
 import { generateTestRunData } from 'utils/tests/generateTestData';
@@ -258,8 +259,10 @@ export const ExperimentComparisonViewWithMocks: React.FC<Props> = ({
   onWidthChange,
   open,
 }: Props): JSX.Element => {
+  const colorMap = useGlasbey(SELECTED_EXPERIMENTS.map((exp) => exp.experiment.id));
   return (
     <ComparisonView
+      colorMap={colorMap}
       fixedColumnsCount={2}
       initialWidth={200}
       open={open}
@@ -277,8 +280,10 @@ export const RunComparisonViewWithMocks: React.FC<Props> = ({
   onWidthChange,
   open,
 }: Props): JSX.Element => {
+  const colorMap = useGlasbey(SELECTED_RUNS.map((run) => run.id));
   return (
     <ComparisonView
+      colorMap={colorMap}
       fixedColumnsCount={2}
       initialWidth={200}
       open={open}

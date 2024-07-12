@@ -65,6 +65,20 @@ def test_basic_workflows(tmp_path: pathlib.Path) -> None:
         "non-existent-path' doesn't exist",
     )
 
+    output = detproc.check_json(sess, ["det", "cmd", "list", "--json"])
+
+    id0 = output[0]["id"]
+    filtered_output = detproc.check_output(sess, ["det", "cmd", "describe", id0])
+    assert len(filtered_output.split("\n")) == 4  # header, divider, record * 1, empty line
+    assert id0 in filtered_output
+
+    filtered_output = detproc.check_output(sess, ["det", "cmd", "describe", id0, "--csv"])
+    assert len(filtered_output.split("\n")) == 3  # header, record * 1, empty line
+    assert id0 in filtered_output
+
+    output = detproc.check_json(sess, ["det", "cmd", "describe", id0, "--json"])
+    assert id0 == output["id"]
+
 
 @pytest.mark.slow
 @pytest.mark.e2e_cpu

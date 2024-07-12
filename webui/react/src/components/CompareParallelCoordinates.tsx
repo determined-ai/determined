@@ -2,10 +2,11 @@ import { Alert } from 'antd';
 import Hermes, { DimensionType } from 'hermes-parallel-coordinates';
 import Message from 'hew/Message';
 import Spinner from 'hew/Spinner';
-import React, { useEffect, useMemo, useState } from 'react';
+import _ from 'lodash';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import ParallelCoordinates from 'components/ParallelCoordinates';
-import { useGlasbey } from 'hooks/useGlasbey';
+import { MapOfIdsToColors } from 'hooks/useGlasbey';
 import { RunMetricData } from 'hooks/useMetrics';
 import {
   ExperimentWithTrial,
@@ -22,6 +23,7 @@ import {
 import { getNumericRange } from 'utils/chart';
 import { flattenObject, isPrimitive } from 'utils/data';
 import { metricToKey, metricToStr } from 'utils/metric';
+import { isRun } from 'utils/run';
 import { numericSorter } from 'utils/sort';
 
 import { CompareHyperparametersSettings } from './CompareHyperparameters.settings';
@@ -30,6 +32,7 @@ import css from './HpParallelCoordinates.module.scss';
 export const COMPARE_PARALLEL_COORDINATES = 'compare-parallel-coordinates';
 
 interface BaseProps {
+  colorMap: MapOfIdsToColors;
   projectId: number;
   metricData: RunMetricData;
   settings: CompareHyperparametersSettings;
@@ -43,6 +46,7 @@ type Props = XOR<
   BaseProps;
 
 const CompareParallelCoordinates: React.FC<Props> = ({
+  colorMap,
   selectedExperiments,
   trials,
   settings,
@@ -55,11 +59,6 @@ const CompareParallelCoordinates: React.FC<Props> = ({
 
   const { metrics, data, isLoaded, setScale } = metricData;
 
-  const colorMap = useGlasbey(
-    selectedExperiments
-      ? selectedExperiments.map((e) => e.experiment.id)
-      : selectedRuns.map((r) => r.id),
-  );
   const selectedScale = settings.scale;
 
   useEffect(() => {
@@ -90,9 +89,9 @@ const CompareParallelCoordinates: React.FC<Props> = ({
       style: {
         axes: { label: { placement: 'after' } },
         data: {
-          series: chartData?.trialIds.map((trial) => ({
+          series: chartData?.recordIds.map((id) => ({
             lineWidth: 1,
-            strokeStyle: colorMap[trial],
+            strokeStyle: colorMap[id],
           })),
           targetDimensionKey: selectedMetric ? metricToStr(selectedMetric) : '',
         },
@@ -100,7 +99,7 @@ const CompareParallelCoordinates: React.FC<Props> = ({
         padding: [4, 120, 4, 16],
       },
     }),
-    [colorMap, hermesCreatedFilters, selectedMetric, chartData?.trialIds],
+    [colorMap, hermesCreatedFilters, selectedMetric, chartData?.recordIds],
   );
 
   const dimensions = useMemo(() => {
@@ -148,72 +147,69 @@ const CompareParallelCoordinates: React.FC<Props> = ({
     selectedHParams,
   ]);
 
+  const extractHyperparams = useCallback(
+    (
+      record: TrialItem | FlatRun,
+      metricsMap: Record<number, number>,
+      hpMap: Record<string, Record<number, Primitive>>,
+    ) => {
+      if (!selectedMetric) return;
+      const idKey = isRun(record) ? record.id : record.experimentId;
+      const key = metricToKey(selectedMetric);
+
+      // Choose the final metric value for each trial
+      const metricValue = data?.[record.id]?.[key]?.data?.[XAxisDomain.Batches]?.at(-1)?.[1];
+      if (!metricValue) return;
+      metricsMap[idKey] = metricValue;
+
+      const flatHParams = {
+        ...record.hyperparameters,
+        ...flattenObject(record.hyperparameters || {}),
+      };
+
+      Object.keys(flatHParams).forEach((hpKey) => {
+        const hpValue = flatHParams[hpKey];
+        hpMap[hpKey] ??= {};
+        hpMap[hpKey][idKey] = isPrimitive(hpValue) ? hpValue : JSON.stringify(hpValue);
+      });
+    },
+    [data, selectedMetric],
+  );
+
   useEffect(() => {
     if (!selectedMetric) return;
     const metricsMap: Record<number, number> = {};
-    const hpMap: Record<string, Record<number, Primitive>> = {};
+    const hpMap: Record<string, Record<number, Primitive>> = selectedHParams.reduce(
+      (acc, cur) => Object.assign(acc, { [cur]: {} }),
+      {},
+    );
 
-    const hpData: Record<string, Primitive[]> = {};
+    trials?.forEach((trial) => extractHyperparams(trial, metricsMap, hpMap));
+    selectedRuns?.forEach((run) => extractHyperparams(run, metricsMap, hpMap));
 
-    if (trials) {
-      trials.forEach((trial) => {
-        const expId = trial.experimentId;
-        const key = metricToKey(selectedMetric);
+    const selectedHpSet = new Set(selectedHParams);
 
-        // Choose the final metric value for each trial
-        const metricValue = data?.[trial.id]?.[key]?.data?.[XAxisDomain.Batches]?.at(-1)?.[1];
-
-        if (!metricValue) return;
-        metricsMap[expId] = metricValue;
-
-        const flatHParams = {
-          ...trial?.hyperparameters,
-          ...flattenObject(trial?.hyperparameters || {}),
-        };
-
-        Object.keys(flatHParams).forEach((hpKey) => {
-          const hpValue = flatHParams[hpKey];
-          hpMap[hpKey] = hpMap[hpKey] ?? {};
-          hpMap[hpKey][expId] = isPrimitive(hpValue)
-            ? (hpValue as Primitive)
-            : JSON.stringify(hpValue);
-        });
-      });
-    } else if (selectedRuns) {
-      selectedRuns.forEach((run) => {
-        const key = metricToKey(selectedMetric);
-
-        // Choose the final metric value for each trial
-        const metricValue = data?.[run.id]?.[key]?.data?.[XAxisDomain.Batches]?.at(-1)?.[1];
-
-        if (!metricValue) return;
-        metricsMap[run.id] = metricValue;
-
-        const flatHParams = {
-          ...run.hyperparameters,
-          ...flattenObject(run.hyperparameters || {}),
-        };
-
-        Object.keys(flatHParams).forEach((hpKey) => {
-          const hpValue = flatHParams[hpKey];
-          hpMap[hpKey] = hpMap[hpKey] ?? {};
-          hpMap[hpKey][run.id] = isPrimitive(hpValue)
-            ? (hpValue as Primitive)
-            : JSON.stringify(hpValue);
-        });
-      });
-    }
-
-    const trialIds = Object.keys(metricsMap)
+    // Hermes currently breaks if you try plotting records without values for every hyperparameter, so this filters them out.
+    const comparableIds = _.intersection<string>(
+      ...Object.entries(hpMap)
+        .filter(([hpName]) => selectedHpSet.has(hpName))
+        .map(([, hpRecords]) => Object.keys(hpRecords)),
+    )
       .map((id) => parseInt(id))
+      .filter((id) => id in metricsMap)
       .sort(numericSorter);
 
-    Object.keys(hpMap).forEach((hpKey) => {
-      hpData[hpKey] = trialIds.map((trialId) => hpMap[hpKey][trialId]);
-    });
-
     const metricKey = metricToStr(selectedMetric);
-    const metricValues = trialIds.map((id) => metricsMap[id]);
+    const metricValues = comparableIds.map((id) => metricsMap[id]);
+
+    const hpData = Object.keys(hpMap).reduce((acc: Record<string, Primitive[]>, hpKey) => {
+      const hpArray = comparableIds.map((recordId) => hpMap[hpKey][recordId]);
+      if (selectedHpSet.has(hpKey) && hpArray.every((val) => val !== undefined)) {
+        acc[hpKey] = hpArray;
+      }
+      return acc;
+    }, {});
+
     hpData[metricKey] = metricValues;
 
     const metricRange = getNumericRange(metricValues);
@@ -221,7 +217,7 @@ const CompareParallelCoordinates: React.FC<Props> = ({
       data: hpData,
       metricRange,
       metricValues,
-      trialIds,
+      recordIds: comparableIds,
     });
   }, [
     selectedExperiments,
@@ -232,6 +228,8 @@ const CompareParallelCoordinates: React.FC<Props> = ({
     trials,
     data,
     selectedRuns,
+    extractHyperparams,
+    selectedHParams,
   ]);
 
   if (!isLoaded) {
@@ -240,6 +238,15 @@ const CompareParallelCoordinates: React.FC<Props> = ({
 
   if ((trials ?? selectedRuns).length === 0) {
     return <Message title="No data available." />;
+  }
+
+  if (chartData?.recordIds.length === 0 && (selectedExperiments ?? selectedRuns).length !== 0) {
+    return (
+      <Alert
+        description="Please modify the selected metric or hyperparameters."
+        message="Records are not comparable using current parameters."
+      />
+    );
   }
 
   if (!chartData || ((selectedExperiments ?? selectedRuns).length !== 0 && metrics.length === 0)) {

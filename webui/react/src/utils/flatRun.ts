@@ -1,6 +1,11 @@
-import { deletableRunStates, killableRunStates, terminalRunStates } from 'constants/states';
+import {
+  deletableRunStates,
+  killableRunStates,
+  pausableRunStates,
+  terminalRunStates,
+} from 'constants/states';
 import { PermissionsHook } from 'hooks/usePermissions';
-import { FlatRun, FlatRunAction } from 'types';
+import { FlatRun, FlatRunAction, RunState } from 'types';
 
 type FlatRunChecker = (flatRun: Readonly<FlatRun>) => boolean;
 
@@ -19,7 +24,9 @@ const flatRunCheckers: Record<FlatRunAction, FlatRunChecker> = {
 
   [FlatRunAction.Move]: (flatRun) => !flatRun.parentArchived && !flatRun.archived,
 
-  // [FlatRunAction.Pause]: (run) => pausableRunStates.has(run.state),
+  [FlatRunAction.Pause]: (run) => pausableRunStates.has(run.state) && !run.experiment?.isMultitrial,
+
+  [FlatRunAction.Resume]: (run) => run.state === RunState.Paused,
 
   [FlatRunAction.Unarchive]: (flatRun) => terminalRunStates.has(flatRun.state) && flatRun.archived,
 };
@@ -46,6 +53,8 @@ export const getActionsForFlatRun = (
         case FlatRunAction.Archive:
         case FlatRunAction.Unarchive:
           return permissions.canModifyFlatRun({ workspace });
+        case FlatRunAction.Pause:
+        case FlatRunAction.Resume:
         case FlatRunAction.Kill:
           return permissions.canModifyFlatRun({ workspace }) && !flatRun.experiment?.unmanaged;
         default:

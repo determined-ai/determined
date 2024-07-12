@@ -88,10 +88,6 @@ func registerAgentConfig() {
 	registerInt(flags, name("master-port"), defaults.MasterPort, "Port of the master")
 	registerString(flags, name("agent-id"), defaults.AgentID, "Unique ID of this Determined agent")
 
-	// Label flags.
-	registerString(flags, name("label"), defaults.Label,
-		"This field has been deprecated and will be ignored, use ``resource_pool`` instead.")
-
 	// ResourcePool flags.
 	registerString(flags, name("resource-pool"), defaults.ResourcePool,
 		"Resource Pool the agent belongs to")

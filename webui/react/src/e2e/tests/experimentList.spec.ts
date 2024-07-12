@@ -2,31 +2,33 @@ import { AuthFixture } from 'e2e/fixtures/auth.fixture';
 import { expect, test } from 'e2e/fixtures/global-fixtures';
 import { ProjectDetails } from 'e2e/models/pages/ProjectDetails';
 import { detExecSync, fullPath } from 'e2e/utils/detCLI';
+import { safeName } from 'e2e/utils/naming';
 
-test.describe('Experiement List', () => {
+test.describe('Experiment List', () => {
   let projectDetailsPage: ProjectDetails;
   // trial click to wait for the element to be stable won't work here
   const waitTableStable = async () => await projectDetailsPage._page.waitForTimeout(2_000);
   const getExpNum = async () => {
     const expNum =
-      await projectDetailsPage.f_experiemntList.tableActionBar.expNum.pwLocator.textContent();
+      await projectDetailsPage.f_experimentList.tableActionBar.expNum.pwLocator.textContent();
     if (expNum === null) throw new Error('Experiment number is null');
     return parseInt(expNum);
   };
 
-  test.beforeAll(async ({ browser }) => {
+  test.beforeAll(async ({ browser, dev }) => {
     const pageSetupTeardown = await browser.newPage();
+    await dev.setServerAddress(pageSetupTeardown);
     const authFixtureSetupTeardown = new AuthFixture(pageSetupTeardown);
     const projectDetailsPageSetupTeardown = new ProjectDetails(pageSetupTeardown);
     await authFixtureSetupTeardown.login();
     await projectDetailsPageSetupTeardown.gotoProject();
     await test.step('Create an experiment if not already present', async () => {
-      await projectDetailsPageSetupTeardown.f_experiemntList.tableActionBar.pwLocator.waitFor();
+      await projectDetailsPageSetupTeardown.f_experimentList.tableActionBar.pwLocator.waitFor();
       await expect(
-        projectDetailsPageSetupTeardown.f_experiemntList.tableActionBar.expNum.pwLocator,
+        projectDetailsPageSetupTeardown.f_experimentList.tableActionBar.expNum.pwLocator,
       ).toContainText('experiment');
       if (
-        await projectDetailsPageSetupTeardown.f_experiemntList.noExperimentsMessage.pwLocator.isVisible()
+        await projectDetailsPageSetupTeardown.f_experimentList.noExperimentsMessage.pwLocator.isVisible()
       ) {
         detExecSync(
           `experiment create ${fullPath(
@@ -35,7 +37,7 @@ test.describe('Experiement List', () => {
         );
         await pageSetupTeardown.reload();
         await expect(
-          projectDetailsPageSetupTeardown.f_experiemntList.dataGrid.rows.pwLocator,
+          projectDetailsPageSetupTeardown.f_experimentList.dataGrid.rows.pwLocator,
         ).not.toHaveCount(0);
       }
     });
@@ -45,10 +47,10 @@ test.describe('Experiement List', () => {
 
   test.beforeEach(async ({ authedPage }) => {
     projectDetailsPage = new ProjectDetails(authedPage);
-    const grid = projectDetailsPage.f_experiemntList.dataGrid;
+    const grid = projectDetailsPage.f_experimentList.dataGrid;
 
     await projectDetailsPage.gotoProject();
-    await expect(projectDetailsPage.f_experiemntList.dataGrid.rows.pwLocator).not.toHaveCount(0, {
+    await expect(projectDetailsPage.f_experimentList.dataGrid.rows.pwLocator).not.toHaveCount(0, {
       timeout: 10_000,
     });
     await test.step('Deselect', async () => {
@@ -56,18 +58,18 @@ test.describe('Experiement List', () => {
         await grid.headRow.selectDropdown.menuItem('select-none').select({ timeout: 1_000 });
       } catch (e) {
         // close the dropdown by clicking elsewhere
-        await projectDetailsPage.f_experiemntList.tableActionBar.expNum.pwLocator.click();
+        await projectDetailsPage.f_experimentList.tableActionBar.expNum.pwLocator.click();
       }
     });
     await test.step('Reset Columns', async () => {
       const columnPicker =
-        await projectDetailsPage.f_experiemntList.tableActionBar.columnPickerMenu.open();
+        await projectDetailsPage.f_experimentList.tableActionBar.columnPickerMenu.open();
       await columnPicker.columnPickerTab.reset.pwLocator.click();
       await columnPicker.close();
     });
     await test.step('Reset Filters', async () => {
       const tableFilter =
-        await projectDetailsPage.f_experiemntList.tableActionBar.tableFilter.open();
+        await projectDetailsPage.f_experimentList.tableActionBar.tableFilter.open();
       await tableFilter.filterForm.clearFilters.pwLocator.click();
       await tableFilter.close();
     });
@@ -80,9 +82,9 @@ test.describe('Experiement List', () => {
     // BUG [ET-287]
     const columnTitle = 'Forked From',
       columnTestid = 'forkedFrom';
-    const columnPicker = projectDetailsPage.f_experiemntList.tableActionBar.columnPickerMenu;
+    const columnPicker = projectDetailsPage.f_experimentList.tableActionBar.columnPickerMenu;
     const checkbox = columnPicker.columnPickerTab.columns.listItem(columnTestid).checkbox;
-    const grid = projectDetailsPage.f_experiemntList.dataGrid;
+    const grid = projectDetailsPage.f_experimentList.dataGrid;
 
     await test.step('Check', async () => {
       await columnPicker.open();
@@ -106,8 +108,8 @@ test.describe('Experiement List', () => {
 
   test('Column Picker Show All and Hide All', async () => {
     test.slow();
-    const columnPicker = projectDetailsPage.f_experiemntList.tableActionBar.columnPickerMenu;
-    const grid = projectDetailsPage.f_experiemntList.dataGrid;
+    const columnPicker = projectDetailsPage.f_experimentList.tableActionBar.columnPickerMenu;
+    const grid = projectDetailsPage.f_experimentList.dataGrid;
     let previousTabs = grid.headRow.columnDefs.size;
 
     await test.step('General Tab Show All', async () => {
@@ -160,7 +162,7 @@ test.describe('Experiement List', () => {
 
   test('Table Filter', async () => {
     test.slow();
-    const tableFilter = projectDetailsPage.f_experiemntList.tableActionBar.tableFilter;
+    const tableFilter = projectDetailsPage.f_experimentList.tableActionBar.tableFilter;
     const totalExperiments = await getExpNum();
 
     const filterScenario = async (
@@ -231,50 +233,58 @@ test.describe('Experiement List', () => {
   });
 
   test('Datagrid Functionality Validations', async ({ authedPage }) => {
-    const row = await projectDetailsPage.f_experiemntList.dataGrid.getRowByColumnValue('ID', '1');
+    const row = projectDetailsPage.f_experimentList.dataGrid.getRowByIndex(0);
     await test.step('Select Row', async () => {
       await row.clickColumn('Select');
       expect.soft(await row.isSelected()).toBeTruthy();
     });
     await test.step('Read Cell Value', async () => {
-      await expect.soft((await row.getCellByColumnName('Checkpoints')).pwLocator).toHaveText('0');
+      await expect.soft((await row.getCellByColumnName('ID')).pwLocator).toHaveText(/\d+/);
     });
     await test.step('Select 5', async () => {
       await (
-        await projectDetailsPage.f_experiemntList.dataGrid.headRow.selectDropdown.open()
+        await projectDetailsPage.f_experimentList.dataGrid.headRow.selectDropdown.open()
       ).select5.pwLocator.click();
     });
-    await test.step('Experiement Overview Navigation', async () => {
-      await projectDetailsPage.f_experiemntList.dataGrid.scrollLeft();
+    await test.step('Experiment Overview Navigation', async () => {
+      await projectDetailsPage.f_experimentList.dataGrid.scrollLeft();
+      const textContent = await (await row.getCellByColumnName('ID')).pwLocator.textContent();
       await row.clickColumn('ID');
-      await authedPage.waitForURL(/overview/);
+      if (textContent === null) throw new Error('Cannot read row id');
+      await authedPage.waitForURL(new RegExp(textContent));
     });
   });
 
-  // remember to unskip this test
-  test.skip('Datagrid Actions', async () => {
-    const row = await projectDetailsPage.f_experiemntList.dataGrid.getRowByColumnValue('ID', '1');
+  test('Datagrid Actions', async () => {
+    const row = projectDetailsPage.f_experimentList.dataGrid.getRowByIndex(0);
     await row.experimentActionDropdown.open();
     // feel free to split actions into their own test cases. this is just a starting point
-    await test.step('Pause', async () => {
-      // what happens if the experiment is already paused?
+    await test.step('Edit', async () => {
+      const editedValue = safeName('EDITED_EXPERIMENT_NAME');
+      await row.experimentActionDropdown.edit.pwLocator.click();
+      await row.experimentActionDropdown.editModal.nameInput.pwLocator.fill(editedValue);
+      await row.experimentActionDropdown.editModal.footer.submit.pwLocator.click();
+      await expect.soft((await row.getCellByColumnName('Name')).pwLocator).toHaveText(editedValue);
     });
-    await test.step('Stop', async () => {
-      // what happens if the experiment is already stopped?
-    });
-    await test.step('Kill', async () => {
-      // what happens if the experiment is already killed? do we need to change beforeAll logic?
-    });
-    await test.step('Move', async () => {
-      // move to where? do we need a new project? check project spec
-    });
-    await test.step('Archive / Unarchive', async () => {
-      // what happens if the experiment is already archived?
-    });
-    await test.step('View in Tensorboard', async () => {
-      // might want something like this
-      // await authedPage.waitForURL(;
-    });
-    await test.step('Hyperparameter Search', async () => {});
+    // await test.step('Pause', async () => {
+    //   // what happens if the experiment is already paused?
+    // });
+    // await test.step('Stop', async () => {
+    //   // what happens if the experiment is already stopped?
+    // });
+    // await test.step('Kill', async () => {
+    //   // what happens if the experiment is already killed? do we need to change beforeAll logic?
+    // });
+    // await test.step('Move', async () => {
+    //   // move to where? do we need a new project? check project spec
+    // });
+    // await test.step('Archive / Unarchive', async () => {
+    //   // what happens if the experiment is already archived?
+    // });
+    // await test.step('View in Tensorboard', async () => {
+    //   // might want something like this
+    //   // await authedPage.waitForURL(;
+    // });
+    // await test.step('Hyperparameter Search', async () => {});
   });
 });

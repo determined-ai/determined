@@ -302,15 +302,6 @@ func (k *ResourceManager) GetSlots(msg *apiv1.GetSlotsRequest) (*apiv1.GetSlotsR
 	return k.jobsService.GetSlots(msg), nil
 }
 
-// MoveJob implements rm.ResourceManager.
-func (k *ResourceManager) MoveJob(msg sproto.MoveJob) error {
-	rp, err := k.poolByName(msg.ResourcePool)
-	if err != nil {
-		return fmt.Errorf("move job found no resource pool with name %s: %w", msg.ResourcePool, err)
-	}
-	return rp.MoveJob(msg)
-}
-
 // RecoverJobPosition implements rm.ResourceManager.
 func (k *ResourceManager) RecoverJobPosition(msg sproto.RecoverJobPosition) {
 	rp, err := k.poolByName(msg.ResourcePool)

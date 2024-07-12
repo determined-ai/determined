@@ -10,10 +10,12 @@ import { isUndefined } from 'lodash';
 import React from 'react';
 
 import TimeAgo from 'components/TimeAgo';
+import useFeature from 'hooks/useFeature';
 import { handlePath, paths } from 'routes/utils';
 import { Project } from 'types';
 import { nearestCardinalNumber } from 'utils/number';
 import { AnyMouseEvent } from 'utils/routes';
+import { pluralizer } from 'utils/string';
 
 import { useProjectActionMenu } from './ProjectActionDropdown';
 import css from './ProjectCard.module.scss';
@@ -35,6 +37,8 @@ const ProjectCard: React.FC<Props> = ({
   showWorkspace,
   workspaceArchived,
 }: Props) => {
+  const f_flat_runs = useFeature().isOn('flat_runs');
+
   const { contextHolders, menu, onClick } = useProjectActionMenu({
     onDelete: onRemove,
     onEdit,
@@ -77,13 +81,19 @@ const ProjectCard: React.FC<Props> = ({
           </Row>
           <Row justifyContent="space-between" width="fill">
             <div className={css.footerContainer}>
-              {!isUndefined(project.numExperiments) && (
+              {f_flat_runs && !isUndefined(project.numRuns) && (
                 <div className={css.experiments}>
                   <Tooltip
-                    content={
-                      `${project.numExperiments?.toLocaleString()}` +
-                      ` experiment${project.numExperiments === 1 ? '' : 's'}`
-                    }>
+                    content={`${project.numRuns?.toLocaleString()} ${pluralizer(project.numRuns, 'run')}`}>
+                    <Icon name="experiment" size="small" title="Number of runs" />
+                    <span>{nearestCardinalNumber(project.numRuns)}</span>
+                  </Tooltip>
+                </div>
+              )}
+              {!f_flat_runs && !isUndefined(project.numExperiments) && (
+                <div className={css.experiments}>
+                  <Tooltip
+                    content={`${project.numExperiments?.toLocaleString()} ${pluralizer(project.numExperiments, 'experiment')}`}>
                     <Icon name="experiment" size="small" title="Number of experiments" />
                     <span>{nearestCardinalNumber(project.numExperiments)}</span>
                   </Tooltip>

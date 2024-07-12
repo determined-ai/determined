@@ -311,7 +311,7 @@ def test_trial_time_series(group: str) -> None:
     metric_names = ["lossx"]
 
     trial_metrics = bindings.v1TrialMetrics(
-        metrics=bindings.v1Metrics(avgMetrics={name: 3.3 for name in metric_names}),
+        metrics=bindings.v1Metrics(avgMetrics=dict.fromkeys(metric_names, 3.3)),
         stepsCompleted=10,
         trialId=trial_id,
         trialRunId=0,
