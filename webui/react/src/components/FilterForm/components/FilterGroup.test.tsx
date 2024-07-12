@@ -79,5 +79,21 @@ describe('FilterGroup', () => {
       expect(screen.queryByTestId('custom-spinner')).not.toBeInTheDocument();
       expect(screen.queryByText('All of the following are true...')).not.toBeInTheDocument();
     });
+
+    it('should add a field in a group', async () => {
+      const { user } = setup();
+      filterFormStore.addChild(ROOT_ID, FormKind.Group);
+      await user.click((await screen.findAllByRole('button'))[0]);
+      await user.click(await screen.findByText('Add condition'));
+      expect((await screen.findAllByText('Where')).length).toBe(2);
+    });
+
+    it('should add a group in a group', async () => {
+      const { user } = setup();
+      filterFormStore.addChild(ROOT_ID, FormKind.Group);
+      await user.click((await screen.findAllByRole('button'))[0]);
+      await user.click(await screen.findByText('Add condition group'));
+      expect((await screen.findAllByText('All of the following are true...')).length).toBe(2);
+    });
   });
 });
