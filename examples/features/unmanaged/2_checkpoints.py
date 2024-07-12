@@ -9,7 +9,8 @@ def main():
     core_v2.init(
         config=core_v2.Config(
             name="unmanaged-2-checkpoints",
-
+            # We allow configuring the local checkpoint storage directory.
+            # checkpoint_storage="/tmp/determined-cp",
             external_experiment_id="test-unmanaged-2-checkpoints",
             external_trial_id="test-unmanaged-2-checkpoints",
             # e.g., requeued jobs on slurm:
