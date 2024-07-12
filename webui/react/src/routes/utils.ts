@@ -102,6 +102,9 @@ export const paths = {
   experimentModelDef: (experimentId: number | string): string => {
     return `/experiments/${experimentId}/model_def`;
   },
+  flatRunSearches: (projectId: number | string): string => {
+    return `/projects/${projectId}/searches`;
+  },
   interactive: (command: CommandTask, maxSlotsExceeded = false): string => {
     const path = [
       'interactive',

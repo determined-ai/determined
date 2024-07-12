@@ -56,7 +56,14 @@ const ProjectCard: React.FC<Props> = ({
     <Card
       actionMenu={!project.immutable && !hideActionMenu ? menu : undefined}
       testId={testId}
-      onClick={(e: AnyMouseEvent) => handlePath(e, { path: paths.projectDetails(project.id) })}
+      onClick={(e: AnyMouseEvent) => {
+        if (f_flat_runs) {
+          handlePath(e, { path: paths.flatRunSearches(project.id) });
+          return;
+        }
+
+        handlePath(e, { path: paths.projectDetails(project.id) });
+      }}
       onDropdown={onClick}>
       <div className={classnames.join(' ')}>
         <Column>
