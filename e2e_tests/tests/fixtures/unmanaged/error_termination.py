@@ -18,8 +18,8 @@ def main():
             name=name,
             external_experiment_id=name,
             external_trial_id=name,
+            checkpoint_storage=checkpoint_storage,
         ),
-        checkpoint_storage=checkpoint_storage,
     )
 
     for i in range(100):

@@ -29,8 +29,8 @@ def main():
             name=name,
             external_experiment_id=name,
             external_trial_id=name,
+            checkpoint_storage="/tmp/determined-cp",
         ),
-        checkpoint_storage="/tmp/determined-cp",
         distributed=distributed,
     )
 

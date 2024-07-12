@@ -97,14 +97,14 @@ class DefaultConfig(Config):
     DEPRECATED: Use `Config` as it contains default config.
     """
 
-    def __init__(self, **kargs: Any) -> None:
+    def __init__(self, **kwargs: Any) -> None:
         warnings.warn(
             "'DefaultConfig' class have been deprecated and will be removed in a "
             "future version. Please use `Config` class instead.",
             FutureWarning,
             stacklevel=2,
         )
-        super().__init__(**kargs)
+        super().__init__(**kwargs)
 
 
 @dataclasses.dataclass
@@ -115,14 +115,14 @@ class UnmanagedConfig(Config):
     DEPRECATED: Use `Config` as it contains unmanaged config.
     """
 
-    def __init__(self, **kargs: Any) -> None:
+    def __init__(self, **kwargs: Any) -> None:
         warnings.warn(
             "'UnmanagedConfig' class have been deprecated and will be removed in a "
             "future version. Please use `Config` class instead.",
             FutureWarning,
             stacklevel=2,
         )
-        super().__init__(**kargs)
+        super().__init__(**kwargs)
 
 
 def _set_globals() -> None:
@@ -309,7 +309,7 @@ def _merge_config(
         return config
     info = determined.get_cluster_info()
     if defaults is None and info is None:
-        raise NotImplementedError(
+        raise ValueError(
             "either specify `defaults` or `config`, or run as a managed determined experiment"
         )
     if unmanaged is not None and defaults is not None:
