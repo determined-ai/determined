@@ -1,3 +1,4 @@
+import dayjs from 'dayjs';
 import LineChart from 'hew/LineChart';
 import React from 'react';
 
@@ -34,9 +35,8 @@ const ClusterHistoricalUsageChart: React.FC<ClusterHistoricalUsageChartProps> = 
   const data: Serie[] = Object.keys(hoursByLabel).map((label) => ({
     data: {
       // convert Unix times from milliseconds to seconds
-      // HACK: ensure that the time is treated as the local time to prevent uPlot from shifting the data
       [XAxisDomain.Time]: hoursByLabel[label].map((pt, idx) => [
-        Date.parse(time[idx] + ' ') / 1000,
+        dayjs(time[idx]).valueOf() / 1000,
         pt,
       ]),
     },
