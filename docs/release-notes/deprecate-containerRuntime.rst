@@ -2,7 +2,7 @@
 
 **Deprecations**
 
--  AgentRM: Support for Singularity, Podman, and Apptainer has been deprecated in 0.33.0 and is now
+-  AgentRM: Support for Singularity, Podman, and Apptainer was deprecated in 0.33.0 and is now
    removed. Docker is the only container runtime supported by Agent resource manager (AgentRM). It
    is still possible to use podman with AgentRM by using the podman emulation layer. For detailed
    instructions, visit: `Emulating Docker CLI with Podman

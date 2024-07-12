@@ -204,6 +204,10 @@ if [[ $OPT_CONTAINER_RUN_TYPE == "enroot" ]]; then
     fi
 fi
 
+TEMPYAML=$TEMPDIR/slurmcluster.yaml
+envsubst <$PARENT_PATH/slurmcluster.yaml >$TEMPYAML
+echo "Generated devcluster file: $TEMPYAML"
+
 # We connect to the Slurm VM using an external IP address, but although it's a
 # single node cluster, the Determined master running on the test machine tries
 # to connect to the shell container using its private 10.X.X.X address.
