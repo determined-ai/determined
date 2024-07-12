@@ -81,7 +81,7 @@ const ClusterHistoricalUsageFilters: React.FC<ClusterHistoricalUsageFiltersProps
       val.fromDate = toDate.clone().subtract(MAX_RANGE_MONTH - 1, 'month');
     }
 
-    onChange({ ...val, toDate: toDate });
+    onChange({ ...val, toDate });
   };
 
   const isFromDateDisabled = (currentDate: Dayjs) => {
