@@ -4,13 +4,16 @@ import Spinner from 'hew/Spinner';
 import UIProvider, { DefaultTheme } from 'hew/Theme';
 import { Loadable } from 'hew/utils/loadable';
 import { useObservable } from 'micro-observables';
+import { DndProvider } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
 
-import { FilterFormStore } from './FilterFormStore';
+import { FilterFormStore, ROOT_ID } from './FilterFormStore';
 import FilterGroup from './FilterGroup';
+import { FormKind } from './type';
 
 const filterFormStore = new FilterFormStore();
 
-const Component = (): JSX.Element => {
+const Component = ({ filterFormStore }: { filterFormStore: FilterFormStore }): JSX.Element => {
   const loadableFormData = useObservable(filterFormStore.formset);
 
   return (
@@ -41,7 +44,9 @@ const setup = () => {
 
   render(
     <UIProvider theme={DefaultTheme.Light}>
-      <Component />
+      <DndProvider backend={HTML5Backend}>
+        <Component filterFormStore={filterFormStore} />
+      </DndProvider>
     </UIProvider>,
   );
 
@@ -49,8 +54,30 @@ const setup = () => {
 };
 
 describe('FilterGroup', () => {
-  it('should display spinner', async () => {
-    setup();
-    expect(await screen.findByTestId('custom-spinner')).toBeInTheDocument();
+  describe('before init', () => {
+    it('should display spinner', async () => {
+      setup();
+      expect(await screen.findByTestId('custom-spinner')).toBeInTheDocument();
+    });
+  });
+
+  describe('after init', () => {
+    beforeEach(() => {
+      filterFormStore.init();
+    });
+
+    it('should display group', async () => {
+      setup();
+      filterFormStore.addChild(ROOT_ID, FormKind.Group);
+      expect(screen.queryByTestId('custom-spinner')).not.toBeInTheDocument();
+      expect(await screen.findByText('All of the following are true...')).toBeInTheDocument();
+    });
+
+    it('should not display group when field is added', () => {
+      setup();
+      filterFormStore.addChild(ROOT_ID, FormKind.Field);
+      expect(screen.queryByTestId('custom-spinner')).not.toBeInTheDocument();
+      expect(screen.queryByText('All of the following are true...')).not.toBeInTheDocument();
+    });
   });
 });
