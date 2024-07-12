@@ -15,21 +15,21 @@ vi.mock('services/api', () => ({
   getProjectNumericMetricsRange: vi.fn(),
   searchRuns: vi.fn(),
 }));
-
-vi.mock('hooks/useSettings', async (importOriginal) => {
-  const useSettings = vi.fn(() => {
-    const settings = {
-      selections: [],
-    };
-    const updateSettings = vi.fn();
-
-    return { isLoading: false, settings, updateSettings };
-  });
+vi.mock('stores/userSettings', async (importOriginal) => {
+  const userSettings = await import('stores/userSettings');
+  const store = new userSettings.UserSettingsStore();
+  store.clear();
 
   return {
-    __esModule: true,
-    ...(await importOriginal<typeof import('hooks/useSettings')>()),
-    useSettings,
+    ...(await importOriginal<typeof import('stores/userSettings')>()),
+    default: store,
+  };
+});
+
+vi.mock('hooks/useMobile', async (importOriginal) => {
+  return {
+    ...(await importOriginal<typeof import('hooks/useMobile')>()),
+    default: () => false,
   };
 });
 
@@ -182,15 +182,9 @@ describe('Flat Runs', () => {
   describe('Runs count', () => {
     it('should show the runs count', async () => {
       setup();
-      const runsCount = await screen.findByText(`${RESPONSE.runs.length} runs`);
+      const runsCount = await screen.queryByTestId('runSelection');
       expect(runsCount).toBeVisible();
-      expect(runsCount.innerText).toBe(`${RESPONSE.runs.length} runs`);
+      expect(runsCount?.innerText).toBe(`${RESPONSE.runs.length} runs`);
     });
-    // it('should change the runs count when selecting runs', async () => {
-    //   await setup();
-    //   const runsCount = await screen.findByTestId('runSelection');
-    //   expect(runsCount).toBeVisible();
-    //   expect(runsCount.innerText).toBe(`${RESPONSE.runs.length} runs`);
-    // });
   });
 });
