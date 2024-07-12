@@ -63,6 +63,7 @@
         width: 100%;
       }
       .hyperparameterContainer {
+        align-items: center;
         display: grid;
         gap: 8px;
         grid-auto-rows: max-content;
@@ -86,6 +87,9 @@
           font-size: 1rem;
           font-weight: normal;
           margin: 0;
+        }
+        .delete {
+          cursor: pointer;
         }
       }
       p {
