@@ -129,7 +129,10 @@ const FilterGroup = ({
           conjunction={conjunction}
           index={index}
           onClick={(value) => {
-            formStore.setFieldConjunction(parentId, (value?.toString() ?? 'and') as Conjunction);
+            formStore.setFieldConjunction(
+              parentId,
+              (value?.toString() ?? Conjunction.And) as Conjunction,
+            );
           }}
         />
       )}
