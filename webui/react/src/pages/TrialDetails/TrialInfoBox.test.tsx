@@ -234,9 +234,12 @@ describe('Trial Info Box', () => {
 
   describe('Lineage card', () => {
     it('should show Data input card with tge lineage link when pachyderm integration data is present', async () => {
-      const mockExperimentWith = Object.assign({...mockExperiment}, {
-        config: { ...mockExperiment.config, integrations: { pachyderm: mockIntegrationData } },
-      });
+      const mockExperimentWith = Object.assign(
+        { ...mockExperiment },
+        {
+          config: { ...mockExperiment.config, integrations: { pachyderm: mockIntegrationData } },
+        },
+      );
 
       setup(mockTrial1, mockExperimentWith);
       expect(await screen.findByText('Data input')).toBeVisible();
