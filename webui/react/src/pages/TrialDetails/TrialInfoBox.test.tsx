@@ -246,9 +246,9 @@ describe('Trial Info Box', () => {
       expect(await screen.findByText(mockIntegrationData.dataset.repo)).toBeVisible();
     });
 
-    it('should not show Data input card when pachyderm integration is missing', async () => {
+    it('should not show Data input card when pachyderm integration is missing', () => {
       setup(mockTrial1, mockExperiment);
-      expect(await screen.queryByText('Data input')).not.toBeInTheDocument();
+      expect(screen.queryByText('Data input')).not.toBeInTheDocument();
     });
   });
 });
