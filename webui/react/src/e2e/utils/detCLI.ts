@@ -1,19 +1,20 @@
 import { execSync } from 'child_process';
 import path from 'path';
 
+import { detMasterURL, detPath, password, username } from './envVars';
+
 export function fullPath(relativePath: string): string {
   return path.join(process.cwd(), relativePath);
 }
 
 export function detExecSync(detCommand: string): string {
   try {
-    return execSync(`${process.env.PW_DET_PATH || 'det'} ${detCommand}`, {
+    return execSync(`${detPath()} ${detCommand}`, {
       env: {
         ...process.env,
-        DET_MASTER:
-          process.env.PW_DET_MASTER || process.env.DET_WEBPACK_PROXY_URL || 'http://localhost:8080',
-        DET_PASS: process.env.PW_PASSWORD,
-        DET_USER: process.env.PW_USER_NAME,
+        DET_MASTER: detMasterURL(),
+        DET_PASS: password(),
+        DET_USER: username(),
       },
       stdio: 'pipe',
       timeout: 5_000,

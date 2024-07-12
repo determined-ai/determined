@@ -58,15 +58,12 @@ Available operations include:
 
 -  Changing priorities for resource pools (priority scheduler)
 -  Changing weights for resource pools (fair share scheduler)
--  Changing the order of queued jobs
 -  Changing resource pools
 
 Constraints:
 
 -  The priority and fair share fields are mutually exclusive. The priority field is active only for
    the priority scheduler, and the fair share field is active only for the fair share scheduler.
--  The ``ahead-of``, ``behind-of``, and WebUI **Move to Top** operations are available only for the
-   priority scheduler and are not supported for the Kubernetes priority scheduler.
 -  The change resource pool operation can only be performed on experiments. For other tasks, cancel
    and resubmit the task to change the resource pool.
 
@@ -79,6 +76,8 @@ Modify the Job Queue using the WebUI
 #. Click the **Manage Job** option.
 #. Make your changes on the pop-up page, and click **OK**.
 
+.. _modify-job-queue-cli:
+
 Modify the Job Queue using the CLI
 ==================================
 
@@ -89,25 +88,16 @@ To modify the job queue using the CLI, use the ``det job update`` command. Run `
 
    $ det job update jobID --priority 10
    $ det job update jobID --resource-pool a100
-   $ det job update jobID --ahead-of jobID-2
 
 To update multiple jobs in a batch, provide updates as shown:
 
 .. code::
 
-   $ det job update-batch job1.priority=1 job2.resource-pool="compute" job3.ahead-of=job1
+   $ det job update-batch job1.priority=1 job2.resource-pool="compute"
 
 Example workflow:
 
 .. code::
-
-   $ det job list
-      # | ID       | Type            | Job Name   | Priority | Submitted            | Slots (acquired/needed) | Status          | User
-   -----+--------------------------------------+-----------------+--------------------------+------------+---------------------------+---------
-      0 | 0d714127 | TYPE_EXPERIMENT | first_job  |       42 | 2022-01-01 00:01:00  | 1/1                     | STATE_SCHEDULED | user1
-      1 | 73853c5c | TYPE_EXPERIMENT | second_job |       42 | 2022-01-01 00:01:01  | 0/1                     | STATE_QUEUED    | user1
-
-   $ det job update 73853c5c --ahead-of 0d714127
 
    $ det job list
       # | ID       | Type            | Job Name   | Priority | Submitted            | Slots (acquired/needed) | Status          | User

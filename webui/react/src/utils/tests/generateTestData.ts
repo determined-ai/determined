@@ -8,6 +8,7 @@ import {
   HyperparameterType,
   Project,
   RunState,
+  SummaryMetrics,
   TrialDetails,
   Workspace,
   WorkspaceState,
@@ -265,20 +266,54 @@ export const generateTestExperimentData = (): {
   return { checkpoint, experiment, trial };
 };
 
-export const generateTestRunData = (): FlatRun => {
+export const generateTestRunData = (id: number = 1, summaryMetrics: boolean = true): FlatRun => {
   return {
     archived: false,
     checkpointCount: 0,
     checkpointSize: 0,
-    hyperparameters: { 1: 1 },
-    id: 1,
+    hyperparameters: { learning_rate: Math.random() },
+    id,
     parentArchived: false,
     projectId: 1,
     projectName: 'Uncategorized',
     startTime: new Date(),
     state: RunState.Active,
+    summaryMetrics: summaryMetrics ? generateSummaryMetricsData() : undefined,
     workspaceId: 1,
     workspaceName: 'Uncategorized',
+  };
+};
+
+export const generateSummaryMetricsData = (): SummaryMetrics => {
+  return {
+    avgMetrics: {
+      loss: {
+        count: 1,
+        last: 0.5823304653167725,
+        max: 0.582330465316772,
+        min: 0.582330465316772,
+        sum: 0.582330465316772,
+        type: 'number',
+      },
+    },
+    validationMetrics: {
+      accuracy: {
+        count: 1,
+        last: 0.8522093949044586,
+        max: 0.852209394904459,
+        min: 0.852209394904459,
+        sum: 0.852209394904459,
+        type: 'number',
+      },
+      validation_loss: {
+        count: 1,
+        last: 0.49773818169050155,
+        max: 0.497738181690502,
+        min: 0.497738181690502,
+        sum: 0.497738181690502,
+        type: 'number',
+      },
+    },
   };
 };
 

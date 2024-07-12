@@ -1,6 +1,6 @@
 import { BasePage } from 'e2e/models/common/base/BasePage';
 import { DynamicTabs } from 'e2e/models/components/DynamicTabs';
-import { F_ExperiementList } from 'e2e/models/components/F_ExperiementList';
+import { F_ExperimentList } from 'e2e/models/components/F_ExperimentList';
 import { PageComponent } from 'e2e/models/components/Page';
 
 /**
@@ -24,6 +24,6 @@ export class ProjectDetails extends BasePage {
   readonly experimentsTab = this.dynamicTabs.pivot.tab('experiments');
   readonly searchesTab = this.dynamicTabs.pivot.tab('searches');
   readonly notesTab = this.dynamicTabs.pivot.tab('notes');
-  readonly f_experiemntList = new F_ExperiementList({ parent: this.dynamicTabs.pivot.tabContent });
+  readonly f_experimentList = new F_ExperimentList({ parent: this.dynamicTabs.pivot.tabContent });
   // TODO add models for other tabs
 }

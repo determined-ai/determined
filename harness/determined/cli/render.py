@@ -34,17 +34,8 @@ _DEFAULT_VALUE = "N/A"
 OMITTED_VALUE = "***"
 
 
-def select_values(values: List[Dict[str, Any]], headers: Dict[str, str]) -> List[Dict[str, Any]]:
-    return [{k: item.get(k, _DEFAULT_VALUE) for k in headers.keys()} for item in values]
-
-
-def render_table(
-    values: List[Dict[str, Any]], headers: Dict[str, str], table_fmt: str = _FORMAT
-) -> None:
-    # Only display selected columns
-    values = select_values(values, headers)
-
-    print(tabulate.tabulate(values, headers, tablefmt=table_fmt), flush=False)
+def select_values(values: List[Dict[str, Any]], headers: Dict[str, str]) -> List[List[Any]]:
+    return [[item.get(k, _DEFAULT_VALUE) for k in headers.keys()] for item in values]
 
 
 def unmarshal(

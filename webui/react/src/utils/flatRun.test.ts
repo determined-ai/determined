@@ -3,6 +3,7 @@ import dayjs from 'dayjs';
 import {
   deletableRunStates,
   killableRunStates,
+  pausableRunStates,
   runStateList,
   terminalRunStates,
 } from 'constants/states';
@@ -213,6 +214,100 @@ describe('Flat Run Utilities', () => {
         };
         expect(canActionFlatRun(FlatRunAction.Move, bothArchivedFlatRun)).toBeFalsy();
       });
+    });
+
+    describe('Pause Action', () => {
+      it.each(Object.values(RunState).filter((v) => pausableRunStates.has(v)))(
+        'should be pausable (%s)',
+        (runState) => {
+          const flatRun: FlatRun = {
+            ...BASE_FLAT_RUN,
+            state: runState,
+          };
+          expect(canActionFlatRun(FlatRunAction.Pause, flatRun)).toBeTruthy();
+
+          const flatRunWithSingletrial: FlatRun = {
+            ...flatRun,
+            experiment: {
+              description: '',
+              id: 1,
+              isMultitrial: false,
+              name: 'name',
+              progress: 1,
+              resourcePool: 'default',
+              searcherMetric: 'validation_loss',
+              searcherType: 'adaptive_asha',
+              unmanaged: false,
+            },
+          };
+          expect(canActionFlatRun(FlatRunAction.Pause, flatRunWithSingletrial)).toBeTruthy();
+        },
+      );
+
+      it.each(Object.values(RunState).filter((v) => pausableRunStates.has(v)))(
+        'should not be pausable with pausable run states (%s)',
+        (runState) => {
+          const flatRunWithMultitrial: FlatRun = {
+            ...BASE_FLAT_RUN,
+            experiment: {
+              description: '',
+              id: 1,
+              isMultitrial: true,
+              name: 'name',
+              progress: 1,
+              resourcePool: 'default',
+              searcherMetric: 'validation_loss',
+              searcherType: 'adaptive_asha',
+              unmanaged: false,
+            },
+            state: runState,
+          };
+          expect(canActionFlatRun(FlatRunAction.Pause, flatRunWithMultitrial)).toBeFalsy();
+        },
+      );
+
+      it.each(Object.values(RunState).filter((v) => !pausableRunStates.has(v)))(
+        'should not be pausable with nonpausable run states (%s)',
+        (runState) => {
+          const flatRun: FlatRun = {
+            ...BASE_FLAT_RUN,
+            state: runState,
+          };
+          expect(canActionFlatRun(FlatRunAction.Pause, flatRun)).toBeFalsy();
+
+          const flatRunWithSingletrial: FlatRun = {
+            ...flatRun,
+            experiment: {
+              description: '',
+              id: 1,
+              isMultitrial: false,
+              name: 'name',
+              progress: 1,
+              resourcePool: 'default',
+              searcherMetric: 'validation_loss',
+              searcherType: 'single',
+              unmanaged: false,
+            },
+          };
+          expect(canActionFlatRun(FlatRunAction.Pause, flatRunWithSingletrial)).toBeFalsy();
+
+          const flatRunWithMultitrial: FlatRun = {
+            ...flatRun,
+            experiment: {
+              description: '',
+              id: 1,
+              isMultitrial: true,
+              name: 'name',
+              progress: 1,
+              resourcePool: 'default',
+              searcherMetric: 'validation_loss',
+              searcherType: 'adaptive_asha',
+              unmanaged: false,
+            },
+          };
+          expect(canActionFlatRun(FlatRunAction.Pause, flatRunWithMultitrial)).toBeFalsy();
+        },
+      );
     });
   });
 });

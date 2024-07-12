@@ -11,7 +11,17 @@ from determined.common import util
 def _fetch_vcpu_mapping() -> Iterable[Tuple[str, Dict]]:
     # Price List api is only available in us-east-1 and ap-southeast-1.
     client = boto3.client("pricing", region_name="us-east-1")
-    for page in client.get_paginator("get_products").paginate(ServiceCode="AmazonEC2"):
+    for page in client.get_paginator("get_products").paginate(
+        ServiceCode="AmazonEC2",
+        MaxResults=100,
+        Filters=[
+            {
+                "Field": "regionCode",
+                "Type": "TERM_MATCH",
+                "Value": "us-east-1",
+            }
+        ],
+    ):
         for sku_str in page["PriceList"]:
             sku_data = json.loads(sku_str)
             try:

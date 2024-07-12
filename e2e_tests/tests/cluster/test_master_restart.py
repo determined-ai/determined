@@ -139,7 +139,10 @@ def test_master_restart_generic_task_pause(
 
 @pytest.mark.managed_devcluster
 def _test_master_restart_reattach_recover_experiment(
-    restartable_managed_cluster: abstract_cluster.Cluster, downtime: int, exp_timeout: int = 60
+    restartable_managed_cluster: abstract_cluster.Cluster,
+    downtime: int,
+    exp_timeout: int = 60,
+    max_workload_ticks: int = conf.MAX_TRIAL_BUILD_SECS,
 ) -> None:
     sess = api_utils.user_session()
     try:
@@ -151,7 +154,7 @@ def _test_master_restart_reattach_recover_experiment(
         )
 
         # TODO(ilia): don't wait for progress.
-        exp.wait_for_experiment_workload_progress(sess, exp_id)
+        exp.wait_for_experiment_workload_progress(sess, exp_id, max_workload_ticks)
 
         if downtime >= 0:
             restartable_managed_cluster.kill_master()
@@ -159,7 +162,10 @@ def _test_master_restart_reattach_recover_experiment(
             restartable_managed_cluster.restart_master()
 
         exp.wait_for_experiment_state(
-            sess, exp_id, bindings.experimentv1State.COMPLETED, max_wait_secs=downtime + exp_timeout
+            sess,
+            exp_id,
+            bindings.experimentv1State.COMPLETED,
+            max_wait_secs=downtime + exp_timeout,
         )
         trials = exp.experiment_trials(sess, exp_id)
 

@@ -39,7 +39,7 @@ def create_group_assignment_request(
 
 
 def usernames_to_user_ids(session: api.Session, usernames: List[str]) -> List[int]:
-    usernames_to_ids: Dict[str, Optional[int]] = {u: None for u in usernames}
+    usernames_to_ids: Dict[str, Optional[int]] = dict.fromkeys(usernames, None)
     users = bindings.get_GetUsers(session).users or []
     for user in users:
         if user.username in usernames_to_ids:

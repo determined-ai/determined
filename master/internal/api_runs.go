@@ -142,6 +142,7 @@ func getRunsColumns(q *bun.SelectQuery) *bun.SelectQuery {
 		Column("r.project_id").
 		Column("r.searcher_metric_value").
 		ColumnExpr("r.archived AS archived").
+		ColumnExpr("CONCAT(p.key, '-' , r.local_id::text) as local_id").
 		ColumnExpr("extract(epoch FROM coalesce(r.end_time, now()) - r.start_time)::int AS duration").
 		ColumnExpr("CASE WHEN r.hparams='null' THEN NULL ELSE r.hparams END AS hyperparameters").
 		ColumnExpr("r.summary_metrics AS summary_metrics").
@@ -203,6 +204,7 @@ func sortRuns(sortString *string, runQuery *bun.SelectQuery) error {
 		"experimentId":          "e.id",
 		"isExpMultitrial":       "(e.config->'searcher'->>'name' != 'single')",
 		"parentArchived":        "(w.archived OR p.archived)",
+		"localId":               "r.local_id",
 	}
 	sortParams := strings.Split(*sortString, ",")
 	hasIDSort := false
@@ -308,6 +310,10 @@ func (a *apiServer) MoveRuns(
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
+	if req.SourceProjectId == req.DestinationProjectId {
+		return &apiv1.MoveRunsResponse{Results: []*apiv1.RunActionResult{}}, nil
+	}
+
 	var runChecks []runCandidateResult
 	getQ := db.Bun().NewSelect().
 		ModelTableExpr("runs AS r").
@@ -384,41 +390,106 @@ func (a *apiServer) MoveRuns(
 		if err != nil {
 			return nil, err
 		}
-		failedExpMoveIds := []int32{-1}
-		for _, res := range expMoveResults {
-			if res.Error != nil {
-				failedExpMoveIds = append(failedExpMoveIds, res.ID)
-			}
-		}
-		err = db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-			var acceptedIDs []int32
-			if _, err = tx.NewUpdate().Table("runs").
-				Set("project_id = ?", req.DestinationProjectId).
-				Where("runs.id IN (?)", bun.In(validIDs)).
-				Where("runs.experiment_id NOT IN (?)", bun.In(failedExpMoveIds)).
-				Returning("runs.id").
-				Model(&acceptedIDs).
-				Exec(ctx); err != nil {
-				return fmt.Errorf("updating run's project IDs: %w", err)
-			}
-
-			for _, acceptID := range acceptedIDs {
-				results = append(results, &apiv1.RunActionResult{
-					Error: "",
-					Id:    acceptID,
-				})
-			}
-
-			if err = db.AddProjectHparams(ctx, tx, int(req.DestinationProjectId), acceptedIDs); err != nil {
-				return err
-			}
-			return db.RemoveOutdatedProjectHparams(ctx, tx, int(req.SourceProjectId))
-		})
+		tx, err := db.Bun().BeginTx(ctx, nil)
 		if err != nil {
 			return nil, err
 		}
+		defer func() {
+			txErr := tx.Rollback()
+			if txErr != nil && txErr != sql.ErrTxDone {
+				log.WithError(txErr).Error("error rolling back transaction in MoveRuns")
+			}
+		}()
+		failedExpMoveIds := []int32{-1}
+		successExpMoveIds := []int32{-1}
+		for _, res := range expMoveResults {
+			if res.Error != nil {
+				failedExpMoveIds = append(failedExpMoveIds, res.ID)
+			} else {
+				successExpMoveIds = append(successExpMoveIds, res.ID)
+			}
+		}
+		var acceptedIDs []int32
+		if _, err = tx.NewUpdate().Table("runs").
+			Set("project_id = ?", req.DestinationProjectId).
+			Where("runs.id IN (?)", bun.In(validIDs)).
+			Where("runs.experiment_id NOT IN (?)", bun.In(failedExpMoveIds)).
+			Where("runs.experiment_id NOT IN (?)", bun.In(successExpMoveIds)).
+			Returning("runs.id").
+			Model(&acceptedIDs).
+			Exec(ctx); err != nil {
+			return nil, fmt.Errorf("updating run's project IDs: %w", err)
+		}
+
+		for _, acceptID := range acceptedIDs {
+			results = append(results, &apiv1.RunActionResult{
+				Error: "",
+				Id:    acceptID,
+			})
+		}
+
+		if err = db.AddProjectHparams(ctx, tx, int(req.DestinationProjectId), acceptedIDs); err != nil {
+			return nil, err
+		}
+		if err = db.RemoveOutdatedProjectHparams(ctx, tx, int(req.SourceProjectId)); err != nil {
+			return nil, err
+		}
+
+		if _, err = tx.NewRaw(`
+		UPDATE runs SET local_id=s.local_id
+		FROM
+			(
+				SELECT
+					r.id as id,
+					(p.max_local_id + ROW_NUMBER() OVER(PARTITION BY p.id ORDER BY r.id)) as local_id
+				FROM
+					projects p
+					JOIN runs r ON r.project_id=p.id
+				WHERE r.id IN (?)
+			) as s 
+		WHERE s.id=runs.id
+		`,
+			bun.In(acceptedIDs)).Exec(ctx); err != nil {
+			return nil, fmt.Errorf("updating run's local IDs: %w", err)
+		}
+
+		if _, err = tx.NewRaw(`
+		UPDATE projects SET max_local_id=s.max_local_id
+		FROM 
+			(
+				SELECT 
+					project_id,
+					COALESCE(MAX(local_id), 1) as max_local_id
+				FROM 
+					runs
+				GROUP BY
+					project_id
+				HAVING project_id=?
+			) as s
+		WHERE projects.id=?
+		`, req.DestinationProjectId, req.DestinationProjectId).Exec(ctx); err != nil {
+			return nil, fmt.Errorf("updating projects max local id: %w", err)
+		}
+
+		if _, err = tx.NewRaw(`
+		INSERT INTO local_id_redirect (run_id, project_id, project_key, local_id)
+		SELECT 
+			r.id as runs_id,
+			p.id as project_id,
+			p.key as project_key,
+			r.local_id
+		FROM 
+			projects p
+			JOIN runs r 
+			ON r.project_id=p.id
+		WHERE r.id IN (?)
+		`, bun.In(acceptedIDs)).Exec(ctx); err != nil {
+			return nil, fmt.Errorf("adding local id redirect: %w", err)
+		}
+
 		var failedRunIDs []int32
-		if err = db.Bun().NewSelect().Table("runs").
+		if err = tx.NewSelect().Table("runs").
+			Column("id").
 			Where("runs.id IN (?)", bun.In(validIDs)).
 			Where("runs.experiment_id IN (?)", bun.In(failedExpMoveIds)).
 			Scan(ctx, &failedRunIDs); err != nil {
@@ -429,6 +500,23 @@ func (a *apiServer) MoveRuns(
 				Error: "Failed to move associated experiment",
 				Id:    failedRunID,
 			})
+		}
+
+		var successRunIDs []int32
+		if err = tx.NewSelect().Table("runs").
+			Column("id").
+			Where("runs.experiment_id IN (?)", bun.In(successExpMoveIds)).
+			Scan(ctx, &successRunIDs); err != nil {
+			return nil, fmt.Errorf("getting failed experiment move run IDs: %w", err)
+		}
+		for _, successRunID := range successRunIDs {
+			results = append(results, &apiv1.RunActionResult{
+				Error: "",
+				Id:    successRunID,
+			})
+		}
+		if err = tx.Commit(); err != nil {
+			return nil, err
 		}
 	}
 	return &apiv1.MoveRunsResponse{Results: results}, nil

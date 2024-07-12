@@ -94,9 +94,6 @@ type ResourcesConfig struct {
 	IsSingleNode   *bool        `json:"is_single_node"`
 
 	Devices DevicesConfig `json:"devices"`
-
-	// Deprecated: Use ResourcePool instead.
-	AgentLabel string `json:"agent_label,omitempty"`
 }
 
 // StorageSize is a named type for custom marshaling behavior for shm_size.

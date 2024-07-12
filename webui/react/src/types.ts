@@ -426,6 +426,11 @@ export const ExperimentSearcherName = {
 
 export type ExperimentSearcherName = ValueOf<typeof ExperimentSearcherName>;
 
+export const ContinuableNonSingleSearcherName = new Set<ExperimentSearcherName>([
+  ExperimentSearcherName.Random,
+  ExperimentSearcherName.Grid,
+]);
+
 const Searcher = t.intersection([
   t.partial({
     max_length: t.record(
@@ -1104,6 +1109,7 @@ export const Project = t.intersection([
     lastExperimentStartedAt: t.string,
     numActiveExperiments: t.number,
     numExperiments: t.number,
+    numRuns: t.number,
     workspaceName: t.string,
   }),
 ]);
@@ -1203,7 +1209,7 @@ export interface HpTrialData {
   data: Record<string, Primitive[]>;
   metricRange?: Range<number>;
   metricValues: number[];
-  trialIds: number[];
+  recordIds: number[];
 }
 
 /**
@@ -1274,7 +1280,8 @@ export const FlatRunAction = {
   Delete: 'Delete',
   Kill: 'Kill',
   Move: 'Move',
-  // Pause: 'Pause',
+  Pause: 'Pause',
+  Resume: 'Resume',
   Unarchive: 'Unarchive',
 } as const;
 

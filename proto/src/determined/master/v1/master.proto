@@ -75,6 +75,8 @@ message ResourceAllocationAggregatedEntry {
       ]
     }
   };
+  reserved 7;
+  reserved "by_agent_label";
   // The date of this entry.
   string period_start = 1;
   // The period over which aggregation occurred.
@@ -88,8 +90,6 @@ message ResourceAllocationAggregatedEntry {
   // The seconds in the cluster used by experiments assigned to each resource
   // pool.
   map<string, float> by_resource_pool = 6;
-  // This field has been deprecated and will be empty.
-  map<string, float> by_agent_label = 7;
 }
 
 // The log config for Master Config

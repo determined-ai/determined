@@ -69,6 +69,15 @@ args_description: cli.ArgsDescription = [
                 is_default=True,
             ),
             cli.Cmd(
+                "describe",
+                functools.partial(ntsc.describe),
+                "display command metadata",
+                [
+                    cli.Arg("command_id", type=str, help="command ID"),
+                    cli.Group(cli.output_format_args["json"], cli.output_format_args["csv"]),
+                ],
+            ),
+            cli.Cmd(
                 "config",
                 functools.partial(ntsc.config),
                 "display command config",

@@ -21,7 +21,7 @@ executors:
 parameters:
   det-version:
     type: string
-    default: 0.34.0-dev0
+    default: 0.34.1-dev0
   docker-image:
     type: string
     default: determinedai/cimg-base:latest
@@ -148,6 +148,7 @@ commands:
     description: Collect logs from the cluster tasks.
     steps:
       - run:
+          when: on_fail
           name: "Ensure necessary Python packages are available."
           command: |
             pkg_names="fire determined"
@@ -157,6 +158,7 @@ commands:
               fi
             done
       - run:
+          when: on_fail
           name: "Collect logs and calculate statistics"
           command: |
             target_dir="<< parameters.store_path >>"
@@ -738,7 +740,7 @@ commands:
         default: ""
       aux-agent-instance-type:
         type: string
-        default: "m5.large"
+        default: "m6i.large"
       compute-agent-instance-type:
         type: string
         default: "g4dn.xlarge"
@@ -873,7 +875,7 @@ commands:
         default: "g4dn.xlarge"
       aux-agent-instance-type:
         type: string
-        default: "m5.large"
+        default: "m6i.large"
       max-dynamic-agents:
         type: integer
         default: 1
@@ -2966,6 +2968,9 @@ jobs:
       agent-use:
         type: string
         default: ""
+      collect-det-job-logs:
+        type: boolean
+        default: true
     # Following https://circleci.com/docs/2.0/runner-installation-linux/index.html#start-the-service
     machine: true
     resource_class: <<parameters.runner_class>>
@@ -3180,6 +3185,7 @@ jobs:
           master-host: localhost
           managed-devcluster: false
           extra-pytest-flags: <<parameters.extra-pytest-flags>>
+          collect-det-job-logs: <<parameters.collect-det-job-logs>>
 
       - store_test_results:
           path: /tmp/test-results/
@@ -3492,7 +3498,7 @@ jobs:
         default: "g4dn.xlarge"
       aux-agent-instance-type:
         type: string
-        default: "m5.large"
+        default: "m6i.large"
       cluster-id:
         type: string
         default: determined-${CIRCLE_BRANCH////--}
@@ -3603,7 +3609,7 @@ jobs:
         default: g4dn.xlarge
       aux-agent-instance-type:
         type: string
-        default: m5.large
+        default: m6i.large
       max-dynamic-agents:
         type: integer
         default: 1
@@ -3902,7 +3908,7 @@ jobs:
         default: g4dn.xlarge
       aux-agent-instance-type:
         type: string
-        default: m5.large
+        default: m6i.large
       max-dynamic-agents:
         type: integer
         default: 1
@@ -4725,7 +4731,7 @@ workflows:
             parameters:
               parallelism: [2]
               compute-agent-instance-type: ["g4dn.metal"]
-              aux-agent-instance-type: ["m5.large"]
+              aux-agent-instance-type: ["m6i.large"]
               cluster-id-prefix: ["parallel"]
               mark: ["parallel"]
 
@@ -4920,7 +4926,7 @@ workflows:
               mark: ["distributed and not gpu_required"]
               compute-agent-instance-type: ["c5.2xlarge"]
               environment-gpu-enabled: ["0"]
-              aux-agent-instance-type: ["m5.large"]
+              aux-agent-instance-type: ["m6i.large"]
               max-dynamic-agents: [16]
 
       # DeepSpeed tests
@@ -4942,7 +4948,7 @@ workflows:
           matrix:
             parameters:
               compute-agent-instance-type: ["g4dn.12xlarge"]
-              aux-agent-instance-type: ["m5.large"]
+              aux-agent-instance-type: ["m6i.large"]
               cluster-id-prefix: ["deepspeed"]
               mark: ["deepspeed"]
               max-dynamic-agents: [2]
@@ -5059,7 +5065,7 @@ workflows:
               cluster-id-prefix: ["distributed"]
               mark: ["distributed"]
               compute-agent-instance-type: ["g4dn.metal"]
-              aux-agent-instance-type: ["m5.large"]
+              aux-agent-instance-type: ["m6i.large"]
               max-dynamic-agents: [2]
 
       # Perf tests.
@@ -5119,7 +5125,7 @@ workflows:
             parameters:
               parallelism: [2]
               compute-agent-instance-type: ["g4dn.metal"]
-              aux-agent-instance-type: ["m5.large"]
+              aux-agent-instance-type: ["m6i.large"]
               cluster-id-prefix: ["parallel"]
               mark: ["parallel"]
 
@@ -5158,7 +5164,7 @@ workflows:
           matrix:
             parameters:
               compute-agent-instance-type: ["g4dn.metal"]
-              aux-agent-instance-type: ["m5.large"]
+              aux-agent-instance-type: ["m6i.large"]
               cluster-id-prefix: ["mmdetection"]
               mark: ["model_hub_mmdetection"]
               max-dynamic-agents: [2]
@@ -5274,6 +5280,18 @@ workflows:
               ld_library_path:
             security:
               initial_user_password: ${INITIAL_USER_PASSWORD}
+
+      - test-e2e-slurm:
+          name: test-e2e-slurm-restart
+          context:
+            - dev-ci-cluster-default-user-credentials
+          mark: "e2e_slurm_restart"
+          filters: *upstream-feature-branch
+          requires:
+            - package-and-push-system-local-ee
+            - request-hpc-tests
+          extra-pytest-flags: "--no-compare-stats"
+          collect-det-job-logs: false
 
       - test-e2e-slurm:
           name: test-e2e-slurm-gpu
@@ -5441,7 +5459,7 @@ workflows:
               cluster-id-prefix: ["distributed"]
               mark: ["distributed"]
               compute-agent-instance-type: ["g4dn.metal"]
-              aux-agent-instance-type: ["m5.large"]
+              aux-agent-instance-type: ["m6i.large"]
               max-dynamic-agents: [2]
       - test-e2e-aws:
           name: test-e2e-gpu-mmdetection
@@ -5454,7 +5472,7 @@ workflows:
               cluster-id-prefix: ["mmdet"]
               mark: ["model_hub_mmdetection"]
               compute-agent-instance-type: ["g4dn.metal"]
-              aux-agent-instance-type: ["m5.large"]
+              aux-agent-instance-type: ["m6i.large"]
               max-dynamic-agents: [2]
       - test-e2e-aws:
           name: test-e2e-gpu-deepspeed
@@ -5467,7 +5485,7 @@ workflows:
               cluster-id-prefix: ["deepspeed"]
               mark: ["deepspeed"]
               compute-agent-instance-type: ["g4dn.12xlarge"]
-              aux-agent-instance-type: ["m5.large"]
+              aux-agent-instance-type: ["m6i.large"]
               max-dynamic-agents: [2]
       - test-e2e-aws:
           name: test-e2e-cpu-distributed
@@ -5481,7 +5499,7 @@ workflows:
               mark: ["distributed and not gpu_required"]
               compute-agent-instance-type: ["c5.2xlarge"]
               environment-gpu-enabled: ["0"]
-              aux-agent-instance-type: ["m5.large"]
+              aux-agent-instance-type: ["m6i.large"]
               max-dynamic-agents: [16]
       - test-aws-fs:
           name: test-aws-fs-fsx
@@ -5527,6 +5545,7 @@ workflows:
           requires:
             - package-and-push-system-local-ee
           extra-pytest-flags: "--no-compare-stats"
+          collect-det-job-logs: false
       - test-e2e-slurm:
           name: test-e2e-slurm-preemption
           context:

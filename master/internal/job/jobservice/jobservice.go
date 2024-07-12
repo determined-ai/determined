@@ -205,20 +205,6 @@ func (s *Service) applyUpdate(update *jobv1.QueueControl) error {
 			s.syslog.Error("resource pool must be set")
 		}
 		return j.SetResourcePool(action.ResourcePool)
-	case *jobv1.QueueControl_AheadOf:
-		return s.rm.MoveJob(sproto.MoveJob{
-			ID:           jobID,
-			Anchor:       model.JobID(action.AheadOf),
-			Ahead:        true,
-			ResourcePool: j.ResourcePool(),
-		})
-	case *jobv1.QueueControl_BehindOf:
-		return s.rm.MoveJob(sproto.MoveJob{
-			ID:           jobID,
-			Anchor:       model.JobID(action.BehindOf),
-			Ahead:        false,
-			ResourcePool: j.ResourcePool(),
-		})
 	default:
 		return fmt.Errorf("unexpected action: %v", action)
 	}

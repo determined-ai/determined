@@ -21,6 +21,7 @@ import DataGrid, {
 } from 'hew/DataGrid/DataGrid';
 import { MenuItem } from 'hew/Dropdown';
 import Icon from 'hew/Icon';
+import Link from 'hew/Link';
 import Message from 'hew/Message';
 import Pagination from 'hew/Pagination';
 import Row from 'hew/Row';
@@ -31,7 +32,7 @@ import { useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
-import { Error, NoExperiments } from 'components/exceptions';
+import { Error } from 'components/exceptions';
 import ExperimentActionDropdown from 'components/ExperimentActionDropdown';
 import { FilterFormStore, ROOT_ID } from 'components/FilterForm/components/FilterFormStore';
 import {
@@ -55,6 +56,7 @@ import useMobile from 'hooks/useMobile';
 import usePolling from 'hooks/usePolling';
 import { useSettings } from 'hooks/useSettings';
 import { useTypedParams } from 'hooks/useTypedParams';
+import { paths } from 'routes/utils';
 import { getProjectColumns, searchExperiments } from 'services/api';
 import {
   V1BulkExperimentFilters,
@@ -873,7 +875,16 @@ const Searches: React.FC<Props> = ({ project }) => {
       <div className={css.content} ref={contentRef}>
         {!isLoading && experiments.length === 0 ? (
           numFilters === 0 ? (
-            <NoExperiments />
+            <Message
+              action={
+                <Link external href={paths.docs('/get-started/webui-qs.html')}>
+                  Quick Start Guide
+                </Link>
+              }
+              description="Keep track of searches in a project by connecting up your code."
+              icon="experiment"
+              title="No Searches"
+            />
           ) : (
             <Message description="No results matching your filters" icon="search" />
           )

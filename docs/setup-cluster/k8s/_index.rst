@@ -4,11 +4,10 @@
  Deploy on Kubernetes
 ######################
 
-This document describes how the Determined runs on `Kubernetes <https://kubernetes.io/>`__. For
-instructions on installing Determined on Kubernetes, see the :ref:`installation guide
-<install-on-kubernetes>`.
+This document describes how Determined runs on Kubernetes. For instructions on installing Determined
+on Kubernetes, see the :ref:`installation guide <install-on-kubernetes>`.
 
-In this topic guide, we will cover:
+This guide covers:
 
 #. How Determined works on Kubernetes.
 #. Limitations of Determined on Kubernetes.
@@ -19,19 +18,32 @@ In this topic guide, we will cover:
 ************************************
 
 :ref:`Installing Determined on Kubernetes <install-on-kubernetes>` deploys an instance of the
-Determined master and a Postgres database in the Kubernetes cluster. Once the master is up and
-running, you can launch :ref:`experiments <experiments>`, :ref:`notebooks <notebooks>`,
-:ref:`TensorBoards <tensorboards>`, :ref:`commands <commands-and-shells>`, and :ref:`shells
-<commands-and-shells>`. When new workloads are submitted to the Determined master, the master
-launches jobs and config maps on the Kubernetes cluster to execute those workloads. Users of
-Determined shouldn't need to interact with Kubernetes directly after installation, as Determined
-handles all the necessary interaction with the Kubernetes cluster. Kubernetes creates and cleans up
-pods for all jobs that Determined may request.
+Determined master and a Postgres database in the Kubernetes cluster.
 
-It is also important to note that when running Determined on Kubernetes, a higher priority value
-means a higher priority (e.g. a priority 50 task will run before a priority 40 task). This is
-different from priority scheduling in non-Kubernetes deployments, where lower priority values mean a
-higher priority (e.g. a priority 40 task will run before a priority 50 task).
+.. image:: /assets/images/_det-ai-sys-k8s-01-light.png
+   :class: only-dark
+   :alt: Determined AI system architecture diagram describing how the master node works on kubernetes in dark mode
+
+.. image:: /assets/images/_det-ai-sys-k8s-01-light.png
+   :class: only-light
+   :alt: Determined AI system architecture diagram describing how the master node works on kubernetes in light mode
+
+|
+
+Once the master is running, you can launch :ref:`experiments <experiments>`, :ref:`notebooks
+<notebooks>`, :ref:`TensorBoards <tensorboards>`, :ref:`commands <commands-and-shells>`, and
+:ref:`shells <commands-and-shells>`. When new workloads are submitted to the Determined master, the
+master launches jobs and config maps on the Kubernetes cluster to execute those workloads. Users do
+not need to interact with Kubernetes directly after installation, as Determined handles all the
+necessary interaction with the Kubernetes cluster. Kubernetes creates and cleans up pods for all
+jobs requested by Determined.
+
+.. note::
+
+   When running Determined on Kubernetes, a higher priority value means a higher priority (e.g., a
+   priority 50 task will run before a priority 40 task). This is different from non-Kubernetes
+   deployments, where lower priority values mean higher priority (e.g., a priority 40 task will run
+   before a priority 50 task).
 
 .. _limitations-on-kubernetes:
 
@@ -39,24 +51,24 @@ higher priority (e.g. a priority 40 task will run before a priority 50 task).
  Limitations on Kubernetes
 ***************************
 
-This section outlines the current limitations of Determined on Kubernetes.
-
 Scheduling
 ==========
 
 By default, the Kubernetes scheduler does not support gang scheduling or preemption. This can be
 problematic for distributed deep learning workloads that require multiple pods to be scheduled
-before execution starts. Determined includes built-in support for the `lightweight coscheduling
-plugin <https://github.com/kubernetes-sigs/scheduler-plugins/tree/release-1.18/pkg/coscheduling>`__,
-which extends the default Kubernetes scheduler to support gang scheduling. Determined also includes
-support for priority-based preemption scheduling. Neither are enabled by default. For more details
-and instructions on how to enable the coscheduling plugin, refer to
-:ref:`gang-scheduling-on-kubernetes` and :ref:`priority-scheduling-on-kubernetes`.
+before execution starts.
+
+Determined includes built-in support for the `lightweight coscheduling plugin
+<https://github.com/kubernetes-sigs/scheduler-plugins/tree/release-1.18/pkg/coscheduling>`__, which
+extends the default Kubernetes scheduler to support gang scheduling. Determined also supports
+priority-based preemption scheduling. Neither feature is enabled by default. For more details and
+instructions on how to enable the coscheduling plugin, refer to :ref:`gang-scheduling-on-kubernetes`
+and :ref:`priority-scheduling-on-kubernetes`.
 
 Dynamic Agents
 ==============
 
-Determined is not able to autoscale your cluster, but equivalent functionality is available by using
+Determined cannot autoscale your cluster. However, equivalent functionality is available by using
 the `Kubernetes Cluster Autoscaler
 <https://github.com/kubernetes/autoscaler/tree/master/cluster-autoscaler>`_, which is supported on
 `GKE <https://cloud.google.com/kubernetes-engine/docs/concepts/cluster-autoscaler>`_ and `EKS
@@ -78,7 +90,7 @@ root. For more information, see: :ref:`run-as-user`.
 
 `kubectl <https://kubernetes.io/docs/tasks/tools/>`_ is a command-line tool for interacting with a
 Kubernetes cluster. `Helm <https://helm.sh/docs/helm/helm_install/>`_ is used to install and upgrade
-Determined on Kubernetes. This section covers some of the useful kubectl and helm commands when
+Determined on Kubernetes. This section covers some useful ``kubectl`` and ``helm`` commands when
 :ref:`running Determined on Kubernetes <install-on-kubernetes>`.
 
 For all the commands listed below, include ``-n <kubernetes namespace name>`` if running Determined

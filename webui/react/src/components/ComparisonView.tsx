@@ -6,11 +6,12 @@ import SplitPane, { Pane } from 'hew/SplitPane';
 import React, { useMemo } from 'react';
 
 import CompareHyperparameters from 'components/CompareHyperparameters';
+import { MapOfIdsToColors } from 'hooks/useGlasbey';
 import { useMetrics } from 'hooks/useMetrics';
 import useMobile from 'hooks/useMobile';
 import useScrollbarWidth from 'hooks/useScrollbarWidth';
 import { TrialsComparisonTable } from 'pages/ExperimentDetails/TrialsComparisonModal';
-import { ExperimentWithTrial, FlatRun, TrialItem, XOR } from 'types';
+import { ExperimentWithTrial, FlatRun, XOR } from 'types';
 
 import CompareMetrics from './CompareMetrics';
 
@@ -18,6 +19,7 @@ export const EMPTY_MESSAGE = 'No items selected.';
 
 interface BaseProps {
   children: React.ReactElement;
+  colorMap: MapOfIdsToColors;
   open: boolean;
   initialWidth: number;
   onWidthChange: (width: number) => void;
@@ -30,6 +32,7 @@ type Props = XOR<{ selectedExperiments: ExperimentWithTrial[] }, { selectedRuns:
 
 const ComparisonView: React.FC<Props> = ({
   children,
+  colorMap,
   open,
   initialWidth,
   onWidthChange,
@@ -47,11 +50,7 @@ const ComparisonView: React.FC<Props> = ({
   }, [fixedColumnsCount, scrollbarWidth]);
 
   const trials = useMemo(() => {
-    return (
-      selectedExperiments
-        ?.filter((exp) => !!exp.bestTrial)
-        .map((exp) => exp.bestTrial as TrialItem) ?? []
-    );
+    return selectedExperiments?.flatMap((exp) => (exp.bestTrial ? [exp.bestTrial] : [])) ?? [];
   }, [selectedExperiments]);
 
   const experiments = useMemo(
@@ -79,12 +78,14 @@ const ComparisonView: React.FC<Props> = ({
       {
         children: selectedRuns ? (
           <CompareHyperparameters
+            colorMap={colorMap}
             metricData={metricData}
             projectId={projectId}
             selectedRuns={selectedRuns}
           />
         ) : (
           <CompareHyperparameters
+            colorMap={colorMap}
             metricData={metricData}
             projectId={projectId}
             selectedExperiments={selectedExperiments}
@@ -104,7 +105,7 @@ const ComparisonView: React.FC<Props> = ({
         label: 'Details',
       },
     ];
-  }, [metricData, selectedExperiments, selectedRuns, trials, projectId, experiments]);
+  }, [selectedRuns, metricData, selectedExperiments, trials, colorMap, projectId, experiments]);
 
   const leftPane =
     open && !hasPinnedColumns ? (
