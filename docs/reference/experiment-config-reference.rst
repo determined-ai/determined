@@ -1174,6 +1174,13 @@ multiple GPUs is done using data parallelism. Configuring ``slots_per_trial`` to
    certain models, as described in the `PyTorch documentation
    <https://pytorch.org/docs/stable/generated/torch.nn.DataParallel.html#torch.nn.DataParallel>`__.
 
+``slots``
+=========
+
+For historical reasons, this field usually passes config validation steps, but has no practical
+effect when present in experiment config. Use :ref:`slots_per_trial
+<exp-config-resources-slots-per-trial>` instead.
+
 ``max_slots``
 =============
 
