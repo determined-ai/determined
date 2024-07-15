@@ -8,6 +8,8 @@
 # Consider the following git DAG representing a hypothetical Determined git
 # tree:
 #
+#                     HEAD
+#                      |
 #                  I---J (feat-behind-latest-tag)
 #                /
 #...A---B---C---D---E---F---M---N---O
