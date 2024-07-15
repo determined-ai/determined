@@ -67,7 +67,7 @@ context:
        dist.init_process_group("gloo")
        distributed = core_v2.DistributedContext.from_torch_distributed()
        core_v2.init(
-           defaults=core_v2.DefaultConfig(
+           config=core_v2.Config(
                name="unmanaged-3-torch-distributed",
            ),
            distributed=distributed,

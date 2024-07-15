@@ -8,17 +8,13 @@ from determined.experimental import core_v2
 def main():
     core_v2.init(
         # For managed experiments, will be overridden by the yaml config.
-        # Future: merge this and yaml configs field-by-field at runtime.
-        defaults=core_v2.DefaultConfig(
+        config=core_v2.Config(
             name="unmanaged-1-singleton",
             # labels=["some", "set", "of", "labels"],
             # description="some description",
+            # workspace="...",
+            # project="...",
         ),
-        # `UnmanagedConfig` values will not get merged, and will only be used in the unmanaged mode.
-        # unmanaged=core_v2.UnmanagedConfig(
-        #   workspace="...",
-        #   project="...",
-        # )
     )
 
     for i in range(100):

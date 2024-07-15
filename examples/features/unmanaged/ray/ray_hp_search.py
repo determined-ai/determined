@@ -17,7 +17,7 @@ def objective(config):
     print(f"experiment name: {experiment_name} trial name: {trial_name}")
 
     core_v2.init(
-        defaults=core_v2.DefaultConfig(
+        config=core_v2.Config(
             name=experiment_name,
             hparams={
                 "hp": config["hp"],
@@ -29,8 +29,6 @@ def objective(config):
                 "metric": "loss",
                 "smaller_is_better": True,
             },
-        ),
-        unmanaged=core_v2.UnmanagedConfig(
             external_experiment_id=experiment_name,
             external_trial_id=trial_name,
         ),

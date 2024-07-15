@@ -25,15 +25,13 @@ def main():
     logging.getLogger("determined").setLevel(logging.INFO)
     distributed = core_v2.DistributedContext.from_torch_distributed()
     core_v2.init(
-        defaults=core_v2.DefaultConfig(
+        config=core_v2.Config(
             name=name,
+            external_experiment_id=name,
+            external_trial_id=name,
             checkpoint_storage="/tmp/determined-cp",
         ),
         distributed=distributed,
-        unmanaged=core_v2.UnmanagedConfig(
-            external_experiment_id=name,
-            external_trial_id=name,
-        ),
     )
 
     # Use framework-native dtrain utilities, as normal.
