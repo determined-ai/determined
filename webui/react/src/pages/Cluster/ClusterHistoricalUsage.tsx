@@ -43,30 +43,30 @@ const ClusterHistoricalUsage: React.FC = () => {
 
   const filters = useMemo(() => {
     const filters: ClusterHistoricalUsageFiltersInterface = {
-      afterDate: dayjs().subtract(1 + DEFAULT_RANGE_DAY, 'day'),
-      beforeDate: dayjs().subtract(1, 'day'),
+      fromDate: dayjs().subtract(1 + DEFAULT_RANGE_DAY, 'day'),
       groupBy: GroupBy.Day,
+      toDate: dayjs().subtract(1, 'day'),
     };
 
-    if (settings.after) {
-      const after = dayjs(settings.after || '');
-      if (after.isValid() && after.isBefore(dayjs())) filters.afterDate = after;
+    if (settings.from) {
+      const after = dayjs(settings.from || '');
+      if (after.isValid() && after.isBefore(dayjs())) filters.fromDate = after;
     }
-    if (settings.before) {
-      const before = dayjs(settings.before || '');
-      if (before.isValid() && before.isBefore(dayjs())) filters.beforeDate = before;
+    if (settings.to) {
+      const before = dayjs(settings.to || '');
+      if (before.isValid() && before.isBefore(dayjs())) filters.toDate = before;
     }
     if (settings.groupBy && Object.values(GroupBy).includes(settings.groupBy as GroupBy)) {
       filters.groupBy = settings.groupBy as GroupBy;
     }
 
     // Validate filter dates.
-    const dateDiff = filters.beforeDate.diff(filters.afterDate, filters.groupBy);
+    const dateDiff = filters.toDate.diff(filters.fromDate, filters.groupBy);
     if (filters.groupBy === GroupBy.Day && (dateDiff >= MAX_RANGE_DAY || dateDiff < 1)) {
-      filters.afterDate = filters.beforeDate.clone().subtract(MAX_RANGE_DAY - 1, 'day');
+      filters.fromDate = filters.toDate.clone().subtract(MAX_RANGE_DAY - 1, 'day');
     }
     if (filters.groupBy === GroupBy.Month && (dateDiff >= MAX_RANGE_MONTH || dateDiff < 1)) {
-      filters.afterDate = filters.beforeDate.clone().subtract(MAX_RANGE_MONTH - 1, 'month');
+      filters.fromDate = filters.toDate.clone().subtract(MAX_RANGE_MONTH - 1, 'month');
     }
 
     return filters;
@@ -76,9 +76,9 @@ const ClusterHistoricalUsage: React.FC = () => {
     (newFilter: ClusterHistoricalUsageFiltersInterface) => {
       const dateFormat = 'YYYY-MM' + (newFilter.groupBy === GroupBy.Day ? '-DD' : '');
       updateSettings({
-        after: newFilter.afterDate.format(dateFormat),
-        before: newFilter.beforeDate.format(dateFormat),
+        from: newFilter.fromDate.format(dateFormat),
         groupBy: newFilter.groupBy,
+        to: newFilter.toDate.format(dateFormat),
       });
     },
     [updateSettings],
@@ -87,31 +87,31 @@ const ClusterHistoricalUsage: React.FC = () => {
   /**
    * When grouped by month force csv modal to display start/end of month.
    */
-  let csvAfterDate = filters.afterDate;
-  let csvBeforeDate = filters.beforeDate;
+  let csvAfterDate = filters.fromDate;
+  let csvtoDate = filters.toDate;
   if (filters.groupBy === GroupBy.Month) {
     csvAfterDate = csvAfterDate.startOf('month');
-    csvBeforeDate = csvBeforeDate.endOf('month');
-    if (csvBeforeDate.isAfter(dayjs())) {
-      csvBeforeDate = dayjs().startOf('day');
+    csvtoDate = csvtoDate.endOf('month');
+    if (csvtoDate.isAfter(dayjs())) {
+      csvtoDate = dayjs().startOf('day');
     }
   }
 
   const fetchResourceAllocationAggregated = useCallback(async () => {
     try {
       const response = await getResourceAllocationAggregated({
-        endDate: filters.beforeDate,
+        endDate: filters.toDate,
         period:
           filters.groupBy === GroupBy.Month
             ? 'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_MONTHLY'
             : 'RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY',
-        startDate: filters.afterDate,
+        startDate: filters.fromDate,
       });
       setAggRes(Loaded(response));
     } catch (e) {
       handleError(e);
     }
-  }, [filters.afterDate, filters.beforeDate, filters.groupBy]);
+  }, [filters.fromDate, filters.toDate, filters.groupBy]);
 
   const chartSeries = useMemo(() => {
     return Loadable.map(aggRes, (response) => {
@@ -141,8 +141,8 @@ const ClusterHistoricalUsage: React.FC = () => {
           Failed: () => null, // TODO inform user if chart fails to load
           Loaded: (series) => (
             <ClusterHistoricalUsageChart
-              chartKey={filters.afterDate.unix() + filters.beforeDate.unix()}
-              dateRange={[filters.afterDate.unix(), filters.beforeDate.unix()]}
+              chartKey={filters.fromDate.unix() + filters.toDate.unix()}
+              dateRange={[filters.fromDate.unix(), filters.toDate.unix()]}
               groupBy={series.groupedBy}
               hoursByLabel={series.hoursTotal}
               time={series.time}
@@ -159,8 +159,8 @@ const ClusterHistoricalUsage: React.FC = () => {
           Failed: () => null, // TODO inform user if chart fails to load
           Loaded: (series) => (
             <ClusterHistoricalUsageChart
-              chartKey={filters.afterDate.unix() + filters.beforeDate.unix()}
-              dateRange={[filters.afterDate.unix(), filters.beforeDate.unix()]}
+              chartKey={filters.fromDate.unix() + filters.toDate.unix()}
+              dateRange={[filters.fromDate.unix(), filters.toDate.unix()]}
               groupBy={series.groupedBy}
               hoursByLabel={{
                 ...series.hoursByUsername,
@@ -180,8 +180,8 @@ const ClusterHistoricalUsage: React.FC = () => {
           Failed: () => null, // TODO inform user if chart fails to load
           Loaded: (series) => (
             <ClusterHistoricalUsageChart
-              chartKey={filters.afterDate.unix() + filters.beforeDate.unix()}
-              dateRange={[filters.afterDate.unix(), filters.beforeDate.unix()]}
+              chartKey={filters.fromDate.unix() + filters.toDate.unix()}
+              dateRange={[filters.fromDate.unix(), filters.toDate.unix()]}
               groupBy={series.groupedBy}
               hoursByLabel={{
                 ...series.hoursByExperimentLabel,
@@ -201,8 +201,8 @@ const ClusterHistoricalUsage: React.FC = () => {
           Failed: () => null, // TODO inform user if chart fails to load
           Loaded: (series) => (
             <ClusterHistoricalUsageChart
-              chartKey={filters.afterDate.unix() + filters.beforeDate.unix()}
-              dateRange={[filters.afterDate.unix(), filters.beforeDate.unix()]}
+              chartKey={filters.fromDate.unix() + filters.toDate.unix()}
+              dateRange={[filters.fromDate.unix(), filters.toDate.unix()]}
               groupBy={series.groupedBy}
               hoursByLabel={{
                 ...series.hoursByResourcePool,
@@ -216,9 +216,9 @@ const ClusterHistoricalUsage: React.FC = () => {
       </Section>
       {isCsvModalVisible && (
         <clusterHistoricalUsageCsvModal.Component
-          afterDate={csvAfterDate}
-          beforeDate={csvBeforeDate}
+          fromDate={csvAfterDate}
           groupBy={CSVGroupBy.Workloads}
+          toDate={csvtoDate}
           onVisibleChange={setIsCsvModalVisible}
         />
       )}

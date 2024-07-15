@@ -22,8 +22,8 @@ const GroupBy = {
 type GroupBy = ValueOf<typeof GroupBy>;
 
 export interface ClusterHistoricalUsageFiltersInterface {
-  afterDate: Dayjs;
-  beforeDate: Dayjs;
+  fromDate: Dayjs;
+  toDate: Dayjs;
   groupBy: GroupBy;
 }
 
@@ -39,57 +39,57 @@ const ClusterHistoricalUsageFilters: React.FC<ClusterHistoricalUsageFiltersProps
   const handleGroupBySelect = (groupBy: SelectValue) => {
     if (groupBy === GroupBy.Month) {
       onChange({
-        afterDate: dayjs().subtract(DEFAULT_RANGE_MONTH, 'month'),
-        beforeDate: dayjs(),
+        fromDate: dayjs().subtract(DEFAULT_RANGE_MONTH, 'month'),
         groupBy: GroupBy.Month,
+        toDate: dayjs(),
       });
     } else {
       onChange({
-        afterDate: dayjs().subtract(1 + DEFAULT_RANGE_DAY, 'day'),
-        beforeDate: dayjs().subtract(1, 'day'),
+        fromDate: dayjs().subtract(1 + DEFAULT_RANGE_DAY, 'day'),
         groupBy: GroupBy.Day,
+        toDate: dayjs().subtract(1, 'day'),
       });
     }
   };
 
-  const handleAfterDateSelect = (afterDate: Dayjs | null) => {
-    if (!afterDate) return;
+  const handleFromDateSelect = (fromDate: Dayjs | null) => {
+    if (!fromDate) return;
     const val = _.cloneDeep(value);
 
-    const dateDiff = val.beforeDate.diff(afterDate, val.groupBy);
+    const dateDiff = val.toDate.diff(fromDate, val.groupBy);
 
     if (val.groupBy === GroupBy.Day && dateDiff >= MAX_RANGE_DAY) {
-      val.beforeDate = afterDate.clone().add(MAX_RANGE_DAY - 1, 'day');
+      val.toDate = fromDate.clone().add(MAX_RANGE_DAY - 1, 'day');
     }
     if (val.groupBy === GroupBy.Month && dateDiff >= MAX_RANGE_MONTH) {
-      val.beforeDate = afterDate.clone().add(MAX_RANGE_MONTH - 1, 'month');
+      val.toDate = fromDate.clone().add(MAX_RANGE_MONTH - 1, 'month');
     }
 
-    onChange({ ...val, afterDate });
+    onChange({ ...val, fromDate: fromDate });
   };
 
-  const handleBeforeDateSelect = (beforeDate: Dayjs | null) => {
-    if (!beforeDate) return;
+  const handleToDateSelect = (toDate: Dayjs | null) => {
+    if (!toDate) return;
     const val = _.cloneDeep(value);
 
-    const dateDiff = beforeDate.diff(val.afterDate, val.groupBy);
+    const dateDiff = toDate.diff(val.fromDate, val.groupBy);
 
     if (val.groupBy === GroupBy.Day && dateDiff >= MAX_RANGE_DAY) {
-      val.afterDate = beforeDate.clone().subtract(MAX_RANGE_DAY - 1, 'day');
+      val.fromDate = toDate.clone().subtract(MAX_RANGE_DAY - 1, 'day');
     }
     if (val.groupBy === GroupBy.Month && dateDiff >= MAX_RANGE_MONTH) {
-      val.afterDate = beforeDate.clone().subtract(MAX_RANGE_MONTH - 1, 'month');
+      val.fromDate = toDate.clone().subtract(MAX_RANGE_MONTH - 1, 'month');
     }
 
-    onChange({ ...val, beforeDate });
+    onChange({ ...val, toDate });
   };
 
-  const isAfterDateDisabled = (currentDate: Dayjs) => {
-    return currentDate.isAfter(value.beforeDate);
+  const isFromDateDisabled = (currentDate: Dayjs) => {
+    return currentDate.isAfter(value.toDate);
   };
 
-  const isBeforeDateDisabled = (currentDate: Dayjs) => {
-    return currentDate.isBefore(value.afterDate) || currentDate.isAfter(dayjs());
+  const isToDateDisabled = (currentDate: Dayjs) => {
+    return currentDate.isBefore(value.fromDate) || currentDate.isAfter(dayjs());
   };
 
   let periodFilters: React.ReactNode = undefined;
@@ -98,19 +98,19 @@ const ClusterHistoricalUsageFilters: React.FC<ClusterHistoricalUsageFiltersProps
       <>
         <DatePicker
           allowClear={false}
-          disabledDate={isAfterDateDisabled}
+          disabledDate={isFromDateDisabled}
           label="From"
-          value={value.afterDate}
+          value={value.fromDate}
           width={130}
-          onChange={handleAfterDateSelect}
+          onChange={handleFromDateSelect}
         />
         <DatePicker
           allowClear={false}
-          disabledDate={isBeforeDateDisabled}
+          disabledDate={isToDateDisabled}
           label="To"
-          value={value.beforeDate}
+          value={value.toDate}
           width={130}
-          onChange={handleBeforeDateSelect}
+          onChange={handleToDateSelect}
         />
       </>
     );
@@ -120,21 +120,21 @@ const ClusterHistoricalUsageFilters: React.FC<ClusterHistoricalUsageFiltersProps
       <>
         <DatePicker
           allowClear={false}
-          disabledDate={isAfterDateDisabled}
+          disabledDate={isFromDateDisabled}
           label="From"
           picker="month"
-          value={value.afterDate}
+          value={value.fromDate}
           width={130}
-          onChange={handleAfterDateSelect}
+          onChange={handleFromDateSelect}
         />
         <DatePicker
           allowClear={false}
-          disabledDate={isBeforeDateDisabled}
+          disabledDate={isToDateDisabled}
           label="To"
           picker="month"
-          value={value.beforeDate}
+          value={value.toDate}
           width={130}
-          onChange={handleBeforeDateSelect}
+          onChange={handleToDateSelect}
         />
       </>
     );
