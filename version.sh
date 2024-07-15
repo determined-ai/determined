@@ -65,9 +65,13 @@ if [ -z ${VERSION} ]; then
                   )
     fi
 
-    # Munge the tag into the form we want.
+    # Munge the tag into the form we want. Note: we always append a SHA hash,
+    # even if we're on the commit with the tag. This is partially because I feel
+    # like it will be more consistent and result in fewer surprises, but also it
+    # might help indicate that this is a local version.
     echo -n "${MAYBE_TAG}-${SHA}"
 else
-    # Use existing VERSION, which is much easier.
+    # Use existing VERSION, which is much easier. This should be the default
+    # case for CI, as VERSION will already be set.
     echo -n "${VERSION}"
 fi
