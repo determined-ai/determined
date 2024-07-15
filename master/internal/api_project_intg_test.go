@@ -823,3 +823,89 @@ func TestGetProjectByID(t *testing.T) {
 	require.Equal(t, projectName, project.Name)
 	require.Equal(t, resp.Project.Id, project.Id)
 }
+
+func TestGetMetadataValues(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	_, projectIDInt := createProjectAndWorkspace(ctx, t, api)
+	projectID := int32(projectIDInt)
+	exp := createTestExpWithProjectID(t, api, curUser, int(projectID))
+
+	numRuns := 4
+	for i := 0; i < numRuns; i++ {
+		task := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
+		require.NoError(t, db.AddTask(context.Background(), task))
+		require.NoError(t, db.AddTrial(context.Background(), &model.Trial{
+			State:        model.PausedState,
+			ExperimentID: exp.ID,
+			StartTime:    time.Now(),
+		}, task.TaskID))
+	}
+
+	resp, err := api.SearchRuns(ctx, &apiv1.SearchRunsRequest{ProjectId: &projectID})
+	require.NoError(t, err)
+
+	// Add metadata
+	rawMetadata := []map[string]any{
+		{
+			"test_key": "test_value1",
+			"nested": map[string]any{
+				"nested_key": "nested_value1",
+			},
+		},
+		{
+			"test_key": "test_value1",
+			"nested": map[string]any{
+				"nested_key": "nested_value2",
+			},
+		},
+		{
+			"test_key": "test_value2",
+			"nested": map[string]any{
+				"nested_key": "nested_value2",
+			},
+		},
+		{
+			"test_key": "test_value3",
+			"nested": map[string]any{
+				"nested_key": "nested_value1",
+			},
+		},
+	}
+	for i := 0; i < numRuns; i++ {
+		metadata := newProtoStruct(t, rawMetadata[i])
+		_, err = api.PostRunMetadata(ctx, &apiv1.PostRunMetadataRequest{
+			RunId:    resp.Runs[i].Id,
+			Metadata: metadata,
+		})
+		require.NoError(t, err)
+	}
+
+	getMetadataResp, err := api.GetMetadataValues(ctx, &apiv1.GetMetadataValuesRequest{
+		Key: "test_key", ProjectId: projectID,
+	})
+	require.NoError(t, err)
+	require.Len(t, getMetadataResp.Values, 3)
+	require.Equal(t, "test_value1", getMetadataResp.Values[0])
+	require.Equal(t, "test_value2", getMetadataResp.Values[1])
+	require.Equal(t, "test_value3", getMetadataResp.Values[2])
+
+	getMetadataResp, err = api.GetMetadataValues(ctx, &apiv1.GetMetadataValuesRequest{
+		Key: "nested.nested_key", ProjectId: projectID,
+	})
+	require.NoError(t, err)
+	require.Len(t, getMetadataResp.Values, 2)
+	require.Equal(t, "nested_value1", getMetadataResp.Values[0])
+	require.Equal(t, "nested_value2", getMetadataResp.Values[1])
+}
+
+func TestGetMetadataValuesEmpty(t *testing.T) {
+	api, _, ctx := setupAPITest(t, nil)
+	_, projectIDInt := createProjectAndWorkspace(ctx, t, api)
+	projectID := int32(projectIDInt)
+
+	getMetadataResp, err := api.GetMetadataValues(ctx, &apiv1.GetMetadataValuesRequest{
+		Key: "test_key", ProjectId: projectID,
+	})
+	require.NoError(t, err)
+	require.Empty(t, getMetadataResp.Values)
+}

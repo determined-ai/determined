@@ -1039,6 +1039,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
               onChange={handleSortChange}
             />
             <ColumnPickerMenu
+              compare={settings.compare}
               defaultVisibleColumns={searchId ? defaultSearchRunColumns : defaultRunColumns}
               initialVisibleColumns={columnsIfLoaded}
               isMobile={isMobile}

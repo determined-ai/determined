@@ -391,25 +391,6 @@ func TestGetJobQueueStatsRequest(t *testing.T) {
 	}
 }
 
-func TestMoveJob(t *testing.T) {
-	cases := []struct {
-		name string
-		req  sproto.MoveJob
-		err  error
-	}{
-		{"empty RP name will default", sproto.MoveJob{ResourcePool: ""}, nil},
-		{"defined RP in default", sproto.MoveJob{ResourcePool: defaultRMName}, nil},
-		{"defined RP in additional RM", sproto.MoveJob{ResourcePool: additionalRMName}, nil},
-		{"undefined RP", sproto.MoveJob{ResourcePool: "bogus"}, ErrRPNotDefined("bogus")},
-	}
-	for _, tt := range cases {
-		t.Run(tt.name, func(t *testing.T) {
-			err := testMultiRM.MoveJob(tt.req)
-			require.Equal(t, tt.err, err)
-		})
-	}
-}
-
 func TestGetExternalJobs(t *testing.T) {
 	cases := []struct {
 		name   string
@@ -708,7 +689,6 @@ func mockRM(poolName rm.ResourcePoolName) *mocks.ResourceManager {
 	mockRM.On("GetJobQueueStatsRequest", mock.Anything).Return(&apiv1.GetJobQueueStatsResponse{
 		Results: []*apiv1.RPQueueStat{{ResourcePool: poolName.String()}},
 	}, nil)
-	mockRM.On("MoveJob", mock.Anything).Return(nil)
 	mockRM.On("GetExternalJobs", mock.Anything).Return([]*jobv1.Job{}, nil)
 	mockRM.On("GetAgent", mock.Anything).Return(&apiv1.GetAgentResponse{}, nil)
 	mockRM.On("EnableAgent", mock.Anything).Return(&apiv1.EnableAgentResponse{}, nil)

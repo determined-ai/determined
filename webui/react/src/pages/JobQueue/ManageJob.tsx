@@ -8,20 +8,18 @@ import React, { ReactElement, ReactNode, useCallback, useMemo, useState } from '
 
 import Badge, { BadgeType } from 'components/Badge';
 import { columns } from 'pages/JobQueue/JobQueue.table';
-import { getJobQ, updateJobQueue } from 'services/api';
+import { updateJobQueue } from 'services/api';
 import * as api from 'services/api-ts-sdk';
 import clusterStore from 'stores/cluster';
 import { Job, JobType } from 'types';
 import handleError, { ErrorType } from 'utils/error';
-import { moveJobToPositionUpdate, orderedSchedulers, unsupportedQPosSchedulers } from 'utils/job';
+import { orderedSchedulers } from 'utils/job';
 import { useObservable } from 'utils/observable';
 import { floatToPercent, truncate } from 'utils/string';
 
 interface Props {
   initialPool: string;
   job: Job;
-  /** total number of jobs */
-  jobCount: number;
   onFinish?: () => void;
   rpStats: api.V1RPQueueStat[];
   schedulerType: api.V1SchedulerType;
@@ -41,22 +39,14 @@ interface FormValues {
   weight?: string;
 }
 
-const formValuesToUpdate = async (
-  values: FormValues,
-  job: Job,
-): Promise<api.V1QueueControl | undefined> => {
-  const { position, resourcePool } = {
-    position: parseInt(values.position, 10),
+const formValuesToUpdate = (values: FormValues, job: Job): api.V1QueueControl | undefined => {
+  const { resourcePool } = {
     resourcePool: values.resourcePool,
   };
   const update: api.V1QueueControl = { jobId: job.jobId };
 
   if (resourcePool !== job.resourcePool) {
     return { ...update, resourcePool };
-  }
-  if (position !== job.summary.jobsAhead + 1) {
-    const allJobs = await getJobQ({ resourcePool }, {});
-    return moveJobToPositionUpdate(allJobs.jobs, job.jobId, position);
   }
   if (values.priority !== undefined) {
     const priority = parseInt(values.priority, 10);
@@ -79,7 +69,6 @@ const ManageJobModalComponent: React.FC<Props> = ({
   job,
   schedulerType,
   initialPool,
-  jobCount,
 }) => {
   const [form] = Form.useForm();
   const isOrderedQ = orderedSchedulers.has(schedulerType);
@@ -213,12 +202,6 @@ const ManageJobModalComponent: React.FC<Props> = ({
           label="Priority"
           name="priority">
           <Input max={99} min={1} type="number" />
-        </Form.Item>
-        <Form.Item
-          hidden={unsupportedQPosSchedulers.has(schedulerType)}
-          label="Position in Queue"
-          name="position">
-          <Input addonAfter={`out of ${jobCount}`} max={jobCount} min={1} type="number" />
         </Form.Item>
         <Form.Item
           hidden={schedulerType !== api.V1SchedulerType.FAIRSHARE}

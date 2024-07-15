@@ -1133,12 +1133,6 @@ export interface V1Agent {
      */
     containers?: { [key: string]: V1Container; };
     /**
-     * This field has been deprecated and will be empty.
-     * @type {string}
-     * @memberof V1Agent
-     */
-    label?: string;
-    /**
      * The addresses of the agent.
      * @type {Array<string>}
      * @memberof V1Agent
@@ -4282,6 +4276,19 @@ export interface V1GetMeResponse {
      * @memberof V1GetMeResponse
      */
     user: V1User;
+}
+/**
+ * Response to GetMetadataValuesRequest.
+ * @export
+ * @interface V1GetMetadataValuesResponse
+ */
+export interface V1GetMetadataValuesResponse {
+    /**
+     * A list of metadata values
+     * @type {Array<string>}
+     * @memberof V1GetMetadataValuesResponse
+     */
+    values?: Array<string>;
 }
 /**
  * Response to GetMetricsRequest.
@@ -8761,13 +8768,13 @@ export interface V1QueueControl {
      */
     jobId: string;
     /**
-     * The desired job position in the queue in terms of another job.
+     * Deprecated; do not use.
      * @type {string}
      * @memberof V1QueueControl
      */
     aheadOf?: string;
     /**
-     * The desired job position in the queue in terms of another job.
+     * Deprecated; do not use.
      * @type {string}
      * @memberof V1QueueControl
      */
@@ -9022,12 +9029,6 @@ export interface V1ResourceAllocationAggregatedEntry {
      * @memberof V1ResourceAllocationAggregatedEntry
      */
     byResourcePool: { [key: string]: number; };
-    /**
-     * This field has been deprecated and will be empty.
-     * @type {{ [key: string]: number; }}
-     * @memberof V1ResourceAllocationAggregatedEntry
-     */
-    byAgentLabel: { [key: string]: number; };
 }
 /**
  * Response to ResourceAllocationAggregatedRequest.
@@ -13157,13 +13158,12 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
          * @param {V1OrderBy} [orderBy] Order agents in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of agents before returning results. Negative values denote number of agents to skip from the end before returning results.
          * @param {number} [limit] Limit the number of agents. A value of 0 denotes no limit.
-         * @param {string} [label] This field has been deprecated and will be ignored.
          * @param {boolean} [excludeSlots] exclude slots.
          * @param {boolean} [excludeContainers] exclude containers.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getAgents(sortBy?: V1GetAgentsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, label?: string, excludeSlots?: boolean, excludeContainers?: boolean, options: any = {}): FetchArgs {
+        getAgents(sortBy?: V1GetAgentsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, excludeSlots?: boolean, excludeContainers?: boolean, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/agents`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
@@ -13192,10 +13192,6 @@ export const ClusterApiFetchParamCreator = function (configuration?: Configurati
             
             if (limit !== undefined) {
                 localVarQueryParameter['limit'] = limit
-            }
-            
-            if (label !== undefined) {
-                localVarQueryParameter['label'] = label
             }
             
             if (excludeSlots !== undefined) {
@@ -13764,14 +13760,13 @@ export const ClusterApiFp = function (configuration?: Configuration) {
          * @param {V1OrderBy} [orderBy] Order agents in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of agents before returning results. Negative values denote number of agents to skip from the end before returning results.
          * @param {number} [limit] Limit the number of agents. A value of 0 denotes no limit.
-         * @param {string} [label] This field has been deprecated and will be ignored.
          * @param {boolean} [excludeSlots] exclude slots.
          * @param {boolean} [excludeContainers] exclude containers.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getAgents(sortBy?: V1GetAgentsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, label?: string, excludeSlots?: boolean, excludeContainers?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetAgentsResponse> {
-            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).getAgents(sortBy, orderBy, offset, limit, label, excludeSlots, excludeContainers, options);
+        getAgents(sortBy?: V1GetAgentsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, excludeSlots?: boolean, excludeContainers?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetAgentsResponse> {
+            const localVarFetchArgs = ClusterApiFetchParamCreator(configuration).getAgents(sortBy, orderBy, offset, limit, excludeSlots, excludeContainers, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -14072,14 +14067,13 @@ export const ClusterApiFactory = function (configuration?: Configuration, fetch?
          * @param {V1OrderBy} [orderBy] Order agents in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of agents before returning results. Negative values denote number of agents to skip from the end before returning results.
          * @param {number} [limit] Limit the number of agents. A value of 0 denotes no limit.
-         * @param {string} [label] This field has been deprecated and will be ignored.
          * @param {boolean} [excludeSlots] exclude slots.
          * @param {boolean} [excludeContainers] exclude containers.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getAgents(sortBy?: V1GetAgentsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, label?: string, excludeSlots?: boolean, excludeContainers?: boolean, options?: any) {
-            return ClusterApiFp(configuration).getAgents(sortBy, orderBy, offset, limit, label, excludeSlots, excludeContainers, options)(fetch, basePath);
+        getAgents(sortBy?: V1GetAgentsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, excludeSlots?: boolean, excludeContainers?: boolean, options?: any) {
+            return ClusterApiFp(configuration).getAgents(sortBy, orderBy, offset, limit, excludeSlots, excludeContainers, options)(fetch, basePath);
         },
         /**
          * 
@@ -14285,15 +14279,14 @@ export class ClusterApi extends BaseAPI {
      * @param {V1OrderBy} [orderBy] Order agents in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
      * @param {number} [offset] Skip the number of agents before returning results. Negative values denote number of agents to skip from the end before returning results.
      * @param {number} [limit] Limit the number of agents. A value of 0 denotes no limit.
-     * @param {string} [label] This field has been deprecated and will be ignored.
      * @param {boolean} [excludeSlots] exclude slots.
      * @param {boolean} [excludeContainers] exclude containers.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ClusterApi
      */
-    public getAgents(sortBy?: V1GetAgentsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, label?: string, excludeSlots?: boolean, excludeContainers?: boolean, options?: any) {
-        return ClusterApiFp(this.configuration).getAgents(sortBy, orderBy, offset, limit, label, excludeSlots, excludeContainers, options)(this.fetch, this.basePath)
+    public getAgents(sortBy?: V1GetAgentsRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, excludeSlots?: boolean, excludeContainers?: boolean, options?: any) {
+        return ClusterApiFp(this.configuration).getAgents(sortBy, orderBy, offset, limit, excludeSlots, excludeContainers, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -20044,6 +20037,48 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Retrieve run metadata values for a given string typed key within a given project.
+         * @param {number} projectId Project id
+         * @param {string} key Metadata key
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getMetadataValues(projectId: number, key: string, options: any = {}): FetchArgs {
+            // verify required parameter 'projectId' is not null or undefined
+            if (projectId === null || projectId === undefined) {
+                throw new RequiredError('projectId','Required parameter projectId was null or undefined when calling getMetadataValues.');
+            }
+            // verify required parameter 'key' is not null or undefined
+            if (key === null || key === undefined) {
+                throw new RequiredError('key','Required parameter key was null or undefined when calling getMetadataValues.');
+            }
+            const localVarPath = `/api/v1/projects/{projectId}/metadata/{key}`
+                .replace(`{${"projectId"}}`, encodeURIComponent(String(projectId)))
+                .replace(`{${"key"}}`, encodeURIComponent(String(key)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get a list of columns for experiment list table.
          * @param {number} id The id of the project.
          * @param {V1TableType} [tableType] type of table for project columns.   - TABLE_TYPE_UNSPECIFIED: Unspecified table type.  - TABLE_TYPE_EXPERIMENT: experiment table.  - TABLE_TYPE_RUN: run table.
@@ -22939,6 +22974,26 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Retrieve run metadata values for a given string typed key within a given project.
+         * @param {number} projectId Project id
+         * @param {string} key Metadata key
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getMetadataValues(projectId: number, key: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetMetadataValuesResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getMetadataValues(projectId, key, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Get a list of columns for experiment list table.
          * @param {number} id The id of the project.
          * @param {V1TableType} [tableType] type of table for project columns.   - TABLE_TYPE_UNSPECIFIED: Unspecified table type.  - TABLE_TYPE_EXPERIMENT: experiment table.  - TABLE_TYPE_RUN: run table.
@@ -24325,6 +24380,17 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Retrieve run metadata values for a given string typed key within a given project.
+         * @param {number} projectId Project id
+         * @param {string} key Metadata key
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getMetadataValues(projectId: number, key: string, options?: any) {
+            return InternalApiFp(configuration).getMetadataValues(projectId, key, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Get a list of columns for experiment list table.
          * @param {number} id The id of the project.
          * @param {V1TableType} [tableType] type of table for project columns.   - TABLE_TYPE_UNSPECIFIED: Unspecified table type.  - TABLE_TYPE_EXPERIMENT: experiment table.  - TABLE_TYPE_RUN: run table.
@@ -25289,6 +25355,19 @@ export class InternalApi extends BaseAPI {
      */
     public getJobsV2(offset?: number, limit?: number, resourcePool?: string, orderBy?: V1OrderBy, states?: Array<Jobv1State>, options?: any) {
         return InternalApiFp(this.configuration).getJobsV2(offset, limit, resourcePool, orderBy, states, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Retrieve run metadata values for a given string typed key within a given project.
+     * @param {number} projectId Project id
+     * @param {string} key Metadata key
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public getMetadataValues(projectId: number, key: string, options?: any) {
+        return InternalApiFp(this.configuration).getMetadataValues(projectId, key, options)(this.fetch, this.basePath)
     }
     
     /**

@@ -13,8 +13,6 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
 
-var invalidJobQPos = decimal.NewFromInt(0)
-
 // ReduceToJobQInfo takes a list of AllocateRequest and reduces it to a summary of the Job Queue.
 func ReduceToJobQInfo(reqs AllocReqs) map[model.JobID]*sproto.RMJobInfo {
 	isAdded := make(map[model.JobID]*sproto.RMJobInfo)
@@ -93,37 +91,6 @@ func AssignmentIsScheduled(allocatedResources *sproto.ResourcesAllocated) bool {
 // JobSortState models a job queue, and the positions of all jobs within it.
 type JobSortState map[model.JobID]decimal.Decimal
 
-// SetJobPosition sets the job position in the queue, relative to the anchors.
-func (j JobSortState) SetJobPosition(
-	jobID model.JobID,
-	anchor1 model.JobID,
-	anchor2 model.JobID,
-	aheadOf bool,
-	isK8s bool,
-) (decimal.Decimal, error) {
-	newPos, err := computeNewJobPos(jobID, anchor1, anchor2, j)
-	if err != nil {
-		return decimal.Decimal{}, err
-	}
-	// if the calculated position results in the wrong order
-	// we subtract a minimal decimal amount instead.
-	minDecimal := decimal.New(1, sproto.DecimalExp)
-
-	if isK8s {
-		minDecimal = decimal.New(1, sproto.K8sExp)
-	}
-	if aheadOf && newPos.GreaterThanOrEqual(j[anchor1]) {
-		newPos = j[anchor1].Sub(minDecimal)
-	} else if !aheadOf && newPos.LessThanOrEqual(j[anchor1]) {
-		newPos = j[anchor1].Add(minDecimal)
-	}
-
-	j[sproto.TailAnchor] = InitializeQueuePosition(time.Now(), isK8s)
-	j[jobID] = newPos
-
-	return newPos, nil
-}
-
 // RecoverJobPosition explicitly sets the position of a job.
 func (j JobSortState) RecoverJobPosition(jobID model.JobID, position decimal.Decimal) {
 	j[jobID] = position
@@ -139,48 +106,6 @@ func InitializeJobSortState(isK8s bool) JobSortState {
 	}
 	state[sproto.TailAnchor] = InitializeQueuePosition(time.Now(), isK8s)
 	return state
-}
-
-func computeNewJobPos(
-	jobID model.JobID,
-	anchor1 model.JobID,
-	anchor2 model.JobID,
-	qPositions JobSortState,
-) (decimal.Decimal, error) {
-	if anchor1 == jobID || anchor2 == jobID {
-		return invalidJobQPos, fmt.Errorf("cannot move job relative to itself")
-	}
-
-	qPos1, ok := qPositions[anchor1]
-	if !ok {
-		return invalidJobQPos, fmt.Errorf("could not find anchor job %s", anchor1)
-	}
-
-	qPos2, ok := qPositions[anchor2]
-	if !ok {
-		return invalidJobQPos, fmt.Errorf("could not find anchor job %s", anchor2)
-	}
-
-	qPos3, ok := qPositions[jobID]
-	if !ok {
-		return invalidJobQPos, fmt.Errorf("could not find job %s", jobID)
-	}
-
-	// check if qPos3 is between qPos1 and qPos2
-	smallPos := decimal.Min(qPos1, qPos2)
-	bigPos := decimal.Max(qPos1, qPos2)
-	if qPos3.GreaterThan(smallPos) && qPos3.LessThan(bigPos) {
-		return qPos3, nil // no op. Job is already in the correct position.
-	}
-
-	newPos := decimal.Avg(qPos1, qPos2)
-
-	if newPos.Equal(qPos1) || newPos.Equal(qPos2) {
-		return invalidJobQPos, fmt.Errorf("unable to compute a new job position for job %s",
-			jobID)
-	}
-
-	return newPos, nil
 }
 
 // InitializeQueuePosition constructs a new queue position from time and RM type.
@@ -202,76 +127,6 @@ func GetJobSubmissionTime(taskList *TaskList, jobID model.JobID) (time.Time, err
 		}
 	}
 	return time.Time{}, fmt.Errorf("could not find an active job with id %s", jobID)
-}
-
-// FindAnchor finds a second anchor and its priority and determines if the moving job needs a
-// priority change to move ahead or behind the anchor.
-func FindAnchor(
-	jobID model.JobID,
-	anchorID model.JobID,
-	aheadOf bool,
-	taskList *TaskList,
-	groups map[model.JobID]*Group,
-	queuePositions JobSortState,
-	k8s bool,
-) (bool, model.JobID, int) {
-	var secondAnchor model.JobID
-	targetPriority := 0
-	anchorPriority := 0
-	anchorIdx := 0
-	prioChange := false
-
-	sortedReqs := SortTasksWithPosition(taskList, groups, queuePositions, k8s)
-
-	for i, req := range sortedReqs {
-		if req.JobID == jobID {
-			targetPriority = *groups[req.JobID].Priority
-		} else if req.JobID == anchorID {
-			anchorPriority = *groups[req.JobID].Priority
-			anchorIdx = i
-		}
-	}
-
-	if aheadOf {
-		if anchorIdx == 0 {
-			secondAnchor = sproto.HeadAnchor
-		} else {
-			secondAnchor = sortedReqs[anchorIdx-1].JobID
-		}
-	} else {
-		if anchorIdx >= len(sortedReqs)-1 {
-			secondAnchor = sproto.TailAnchor
-		} else {
-			secondAnchor = sortedReqs[anchorIdx+1].JobID
-		}
-	}
-
-	if targetPriority != anchorPriority {
-		prioChange = true
-	}
-
-	return prioChange, secondAnchor, anchorPriority
-}
-
-// NeedMove returns true if the jobPos indicates a job needs a move to be ahead of or behind
-// the anchorPos.
-func NeedMove(
-	jobPos decimal.Decimal,
-	anchorPos decimal.Decimal,
-	secondPos decimal.Decimal,
-	aheadOf bool,
-) bool {
-	if aheadOf {
-		if jobPos.LessThan(anchorPos) && jobPos.GreaterThan(secondPos) {
-			return false
-		}
-		return true
-	}
-	if jobPos.GreaterThan(anchorPos) && jobPos.LessThan(secondPos) {
-		return false
-	}
-
-	return true
 }
 
 // SortTasksWithPosition returns a sorted view of the sproto.AllocateRequest's that make up

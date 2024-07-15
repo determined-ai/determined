@@ -1,7 +1,6 @@
 package kubernetesrm
 
 import (
-	"context"
 	"fmt"
 	"sync"
 
@@ -188,14 +187,6 @@ func (k *kubernetesResourcePool) SetGroupPriority(msg sproto.SetGroupPriority) e
 	return nil
 }
 
-func (k *kubernetesResourcePool) MoveJob(msg sproto.MoveJob) error {
-	k.mu.Lock()
-	defer k.mu.Unlock()
-	k.tryAdmitPendingTasks = true
-
-	return k.moveJob(msg.ID, msg.Anchor, msg.Ahead)
-}
-
 func (k *kubernetesResourcePool) DeleteJob(msg sproto.DeleteJob) sproto.DeleteJobResponse {
 	k.mu.Lock()
 	defer k.mu.Unlock()
@@ -335,89 +326,6 @@ func (k *kubernetesResourcePool) addTask(msg sproto.AllocateRequest) {
 		k.allocationIDToRunningPods[msg.AllocationID] = 0
 	}
 	k.reqList.AddTask(&msg)
-}
-
-func (k *kubernetesResourcePool) moveJob(
-	jobID model.JobID,
-	anchorID model.JobID,
-	aheadOf bool,
-) error {
-	for it := k.reqList.Iterator(); it.Next(); {
-		if it.Value().JobID == jobID {
-			if req := it.Value(); !req.Preemptible {
-				return fmt.Errorf(
-					"move job for %s unsupported in k8s because it may be destructive",
-					req.Name,
-				)
-			}
-		}
-	}
-
-	if anchorID == "" || jobID == "" || anchorID == jobID {
-		return nil
-	}
-
-	if _, ok := k.queuePositions[jobID]; !ok {
-		return nil
-	}
-
-	if _, ok := k.groups[jobID]; !ok {
-		return sproto.ErrJobNotFound(jobID)
-	}
-	if _, ok := k.queuePositions[anchorID]; !ok {
-		return sproto.ErrJobNotFound(anchorID)
-	}
-
-	prioChange, secondAnchor, anchorPriority := tasklist.FindAnchor(
-		jobID,
-		anchorID,
-		aheadOf,
-		k.reqList,
-		k.groups,
-		k.queuePositions,
-		true,
-	)
-
-	if secondAnchor == "" {
-		return fmt.Errorf("unable to move job with ID %s", jobID)
-	}
-
-	if secondAnchor == jobID {
-		return nil
-	}
-
-	if prioChange {
-		g := k.getOrCreateGroup(jobID)
-		oldPriority := g.Priority
-		g.Priority = &anchorPriority
-
-		priorityChanger, ok := tasklist.GroupPriorityChangeRegistry.Load(jobID)
-		if !ok {
-			return fmt.Errorf("unable to move job with ID %s", jobID)
-		}
-		if priorityChanger != nil {
-			if err := priorityChanger(anchorPriority); err != nil {
-				g.Priority = oldPriority
-				return err
-			}
-		}
-	}
-
-	jobPosition, err := k.queuePositions.SetJobPosition(jobID, anchorID, secondAnchor, aheadOf, true)
-	if err != nil {
-		return err
-	}
-	if err := db.UpdateJobPosition(context.TODO(), jobID, jobPosition); err != nil {
-		return err
-	}
-
-	allocationID, ok := k.jobIDToAllocationID[jobID]
-	if !ok {
-		return fmt.Errorf("job with ID %s has no valid task address", jobID)
-	}
-
-	k.jobsService.ChangePosition(allocationID)
-	return nil
 }
 
 func (k *kubernetesResourcePool) correctJobQInfo(

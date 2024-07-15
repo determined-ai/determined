@@ -7,9 +7,9 @@ import { ExperimentActionDropdown } from 'e2e/models/components/ExperimentAction
 import { TableActionBar } from 'e2e/models/components/TableActionBar';
 
 /**
- * Represents the F_ExperiementList component in src/components/F_ExperiementList.tsx
+ * Represents the F_ExperimentList component in src/components/F_ExperimentList.tsx
  */
-export class F_ExperiementList extends BaseReactFragment {
+export class F_ExperimentList extends BaseReactFragment {
   readonly tableActionBar = new TableActionBar({ parent: this });
   readonly noExperimentsMessage = new Message({ parent: this });
   // TODO no filtered experiments
@@ -24,12 +24,12 @@ export class F_ExperiementList extends BaseReactFragment {
 }
 
 /**
- * Represents the ExperimentHeadRow in the F_ExperiementList component
+ * Represents the ExperimentHeadRow in the F_ExperimentList component
  */
 class ExperimentHeadRow extends HeadRow<ExperimentRow> {}
 
 /**
- * Represents the ExperimentRow in the F_ExperiementList component
+ * Represents the ExperimentRow in the F_ExperimentList component
  */
 class ExperimentRow extends Row<ExperimentHeadRow> {
   constructor(args: RowArgs<ExperimentRow, ExperimentHeadRow>) {

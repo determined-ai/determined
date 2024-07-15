@@ -598,12 +598,6 @@ func (j *jobsService) ChangePriority(id model.AllocationID) {
 	j.changePriority(id)
 }
 
-func (j *jobsService) ChangePosition(id model.AllocationID) {
-	j.mu.Lock()
-	defer j.mu.Unlock()
-	j.changePosition(id)
-}
-
 func (j *jobsService) KillJob(id model.AllocationID) {
 	j.mu.Lock()
 	defer j.mu.Unlock()
@@ -706,7 +700,7 @@ func (j *jobsService) reattachJob(msg reattachJobRequest) (reattachJobResponse, 
 	}
 
 	gatewayResources, err := j.recreateGatewayProxyResources(
-		msg.allocationID, services, tcpRoutes, gatewayPorts,
+		services, tcpRoutes, gatewayPorts,
 	)
 	if err != nil {
 		cleanup()
@@ -733,7 +727,6 @@ func (j *jobsService) reattachJob(msg reattachJobRequest) (reattachJobResponse, 
 }
 
 func (j *jobsService) recreateGatewayProxyResources(
-	allocationID model.AllocationID,
 	services []k8sV1.Service,
 	tcpRoutes []alphaGatewayTyped.TCPRoute,
 	gatewayPorts []int,
@@ -1510,15 +1503,6 @@ func (j *jobsService) changePriority(id model.AllocationID) {
 		return
 	}
 	ref.changePriority()
-}
-
-func (j *jobsService) changePosition(id model.AllocationID) {
-	ref, err := j.verifyJobAndGetRef(id)
-	if err != nil {
-		j.syslog.WithError(err).Debug("changing allocation position")
-		return
-	}
-	ref.changePosition()
 }
 
 func (j *jobsService) killJob(id model.AllocationID) {

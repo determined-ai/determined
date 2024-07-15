@@ -30,8 +30,8 @@ setuptools.setup(
         "pyzmq>=18.1.0",
         # Common:
         "certifi",
+        "docker>=7.1.0",
         "filelock",
-        "requests<2.32.0",  # TODO(MD-415) remove this pin.
         "google-cloud-storage",
         "lomond>=0.3.3",
         "pathspec>=0.6.0",

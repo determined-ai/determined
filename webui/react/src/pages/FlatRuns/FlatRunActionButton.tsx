@@ -13,19 +13,28 @@ import Link from 'components/Link';
 import usePermissions from 'hooks/usePermissions';
 import FlatRunMoveModalComponent from 'pages/FlatRuns/FlatRunMoveModal';
 import { paths } from 'routes/utils';
-import { archiveRuns, deleteRuns, killRuns, unarchiveRuns } from 'services/api';
+import {
+  archiveRuns,
+  deleteRuns,
+  killRuns,
+  pauseRuns,
+  resumeRuns,
+  unarchiveRuns,
+} from 'services/api';
 import projectStore from 'stores/projects';
 import { BulkActionResult, ExperimentAction, FlatRun, Project } from 'types';
 import handleError from 'utils/error';
 import { canActionFlatRun, getActionsForFlatRunsUnion } from 'utils/flatRun';
-import { capitalizeWord } from 'utils/string';
+import { capitalizeWord, pluralizer } from 'utils/string';
 
 const BATCH_ACTIONS = [
   ExperimentAction.Move,
   ExperimentAction.Archive,
   ExperimentAction.Unarchive,
-  ExperimentAction.Delete,
+  ExperimentAction.Pause,
+  ExperimentAction.Activate,
   ExperimentAction.Kill,
+  ExperimentAction.Delete,
 ] as const;
 
 type BatchAction = (typeof BATCH_ACTIONS)[number];
@@ -36,6 +45,8 @@ const ACTION_ICONS: Record<BatchAction, IconName> = {
   [ExperimentAction.Move]: 'workspaces',
   [ExperimentAction.Kill]: 'cancelled',
   [ExperimentAction.Delete]: 'error',
+  [ExperimentAction.Activate]: 'play',
+  [ExperimentAction.Pause]: 'pause',
 } as const;
 
 const LABEL_PLURAL = 'runs';
@@ -88,8 +99,10 @@ const FlatRunActionButton = ({
           return await unarchiveRuns(params);
         case ExperimentAction.Delete:
           return await deleteRuns(params);
-        default:
-          break;
+        case ExperimentAction.Pause:
+          return await pauseRuns(params);
+        case ExperimentAction.Activate:
+          return await resumeRuns(params);
       }
     },
     [flatRunMoveModalOpen, projectId, selectedRuns],
@@ -114,24 +127,20 @@ const FlatRunActionButton = ({
         } else if (numFailures === 0) {
           openToast({
             closeable: true,
-            description: `${action} succeeded for ${
-              results.successful.length
-            } ${LABEL_PLURAL.toLowerCase()}`,
+            description: `${action} succeeded for ${results.successful.length} ${pluralizer(results.successful.length, 'run')}`,
             title: `${action} Success`,
           });
         } else if (numSuccesses === 0) {
           openToast({
-            description: `Unable to ${action.toLowerCase()} ${numFailures} ${LABEL_PLURAL.toLowerCase()}`,
+            description: `Unable to ${action.toLowerCase()} ${numFailures} ${pluralizer(numFailures, 'run')}`,
             severity: 'Warning',
             title: `${action} Failure`,
           });
         } else {
           openToast({
             closeable: true,
-            description: `${action} succeeded for ${numSuccesses} out of ${
-              numFailures + numSuccesses
-            } eligible
-            ${LABEL_PLURAL.toLowerCase()}`,
+            description: `${action} succeeded for ${numSuccesses} out of ${numFailures + numSuccesses} eligible
+            ${pluralizer(numFailures + numSuccesses, 'run')}`,
             severity: 'Warning',
             title: `Partial ${action} Failure`,
           });
@@ -206,20 +215,20 @@ const FlatRunActionButton = ({
       } else if (numFailures === 0) {
         openToast({
           closeable: true,
-          description: `${results.successful.length} runs moved to project ${destinationProjectName}`,
+          description: `${results.successful.length} ${pluralizer(results.successful.length, 'run')} moved to project ${destinationProjectName}`,
           link: <Link path={paths.projectDetails(destinationProjectId)}>View Project</Link>,
           title: 'Move Success',
         });
       } else if (numSuccesses === 0) {
         openToast({
-          description: `Unable to move ${numFailures} runs`,
+          description: `Unable to move ${numFailures} ${pluralizer(numFailures, 'run')}`,
           severity: 'Warning',
           title: 'Move Failure',
         });
       } else {
         openToast({
           closeable: true,
-          description: `${numFailures} out of ${numFailures + numSuccesses} eligible runs failed to move to project ${destinationProjectName}`,
+          description: `${numFailures} out of ${numFailures + numSuccesses} eligible ${pluralizer(numFailures + numSuccesses, 'run')} failed to move to project ${destinationProjectName}`,
           link: <Link path={paths.projectDetails(destinationProjectId)}>View Project</Link>,
           severity: 'Warning',
           title: 'Partial Move Failure',

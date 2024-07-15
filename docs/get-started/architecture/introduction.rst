@@ -333,7 +333,7 @@ Here are some scenarios where it can be valuable to use multiple resource pools:
 -  *Use GPU for training while using CPUs for TensorBoard.*
 
    You create one pool, ``aws-v100``, that provisions ``p3dn.24xlarge`` instances (large V100 EC2
-   instances) and another pool, ``aws-cpu`` that provisions ``m5.large`` instances (small and cheap
+   instances) and another pool, ``aws-cpu`` that provisions ``m6i.large`` instances (small and cheap
    CPU instances). You train your experiments using the ``aws-v100`` pool, while you run your
    TensorBoards in the ``aws-cpu`` pool. When your experiments complete, the ``aws-v100 pool`` can
    scale down to zero to save money, but you can continue to run your TensorBoard. Without resource
