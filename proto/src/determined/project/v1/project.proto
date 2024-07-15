@@ -27,6 +27,8 @@ enum LocationType {
   LOCATION_TYPE_RUN = 6;
   // Column is located in the hyperparameter of the run
   LOCATION_TYPE_RUN_HYPERPARAMETERS = 7;
+  // Column is located on the run's arbitrary metadata
+  LOCATION_TYPE_RUN_METADATA = 8;
 }
 
 // ColumnType indicates the type of data under the column
