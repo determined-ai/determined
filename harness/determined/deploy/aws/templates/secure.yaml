@@ -118,6 +118,7 @@ Parameters:
     Type: String
     Description: Docker password to pull images that need authentication
     Default: ""
+    NoEcho: true
 
   Version:
     Type: String
