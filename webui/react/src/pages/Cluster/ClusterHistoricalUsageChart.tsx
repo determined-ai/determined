@@ -1,3 +1,4 @@
+import dayjs from 'dayjs';
 import LineChart from 'hew/LineChart';
 import React from 'react';
 
@@ -34,7 +35,10 @@ const ClusterHistoricalUsageChart: React.FC<ClusterHistoricalUsageChartProps> = 
   const data: Serie[] = Object.keys(hoursByLabel).map((label) => ({
     data: {
       // convert Unix times from milliseconds to seconds
-      [XAxisDomain.Time]: hoursByLabel[label].map((pt, idx) => [Date.parse(time[idx]) / 1000, pt]),
+      [XAxisDomain.Time]: hoursByLabel[label].map((pt, idx) => [
+        dayjs(time[idx]).valueOf() / 1000,
+        pt,
+      ]),
     },
     name: label,
   }));

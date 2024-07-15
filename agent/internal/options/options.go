@@ -48,7 +48,6 @@ type Options struct {
 	AgentID    string `json:"agent_id"`
 
 	// Label has been deprecated; we now use ResourcePool to classify the agent.
-	Label        string `json:"label"`
 	ResourcePool string `json:"resource_pool"`
 
 	ContainerMasterHost string `json:"container_master_host"`
@@ -59,9 +58,8 @@ type Options struct {
 
 	Security SecurityOptions `json:"security"`
 
-	Debug           bool   `json:"debug"`
-	ArtificialSlots int    `json:"artificial_slots"`
-	ImageRoot       string `json:"image_root"`
+	Debug           bool `json:"debug"`
+	ArtificialSlots int  `json:"artificial_slots"`
 
 	TLS         bool   `json:"tls"`
 	TLSCertFile string `json:"tls_cert"`
@@ -81,9 +79,7 @@ type Options struct {
 	// master config.
 	AgentReconnectBackoff int `json:"agent_reconnect_backoff"`
 
-	ContainerRuntime   string             `json:"container_runtime"`
-	SingularityOptions SingularityOptions `json:"singularity_options"`
-	PodmanOptions      PodmanOptions      `json:"podman_options"`
+	ContainerRuntime string `json:"container_runtime"`
 
 	ContainerAutoRemoveDisabled bool `json:"container_auto_remove_disabled"`
 
@@ -215,24 +211,8 @@ type ContainerRuntime string
 
 // Available container runtimes.
 const (
-	ApptainerContainerRuntime   = "apptainer"
-	SingularityContainerRuntime = "singularity"
-	DockerContainerRuntime      = "docker"
-	PodmanContainerRuntime      = "podman"
+	DockerContainerRuntime = "docker"
 )
-
-// SingularityOptions configures how we interact with Singularity.
-type SingularityOptions struct {
-	// AllowNetworkCreation allows the agent to use `singularity run`'s `--net` option, which sets
-	// up and launches containers into a new network namespace. Disabled by default since this
-	// requires root or a suid installation with /etc/subuid --fakeroot.
-	AllowNetworkCreation bool `json:"allow_network_creation"`
-}
-
-// PodmanOptions configures how we interact with podman.
-type PodmanOptions struct {
-	AllowNetworkCreation bool `json:"allow_network_creation"` // review
-}
 
 // VisibleGPUsFromEnvironment returns GPU visibility information from the environment
 // if any, else "".

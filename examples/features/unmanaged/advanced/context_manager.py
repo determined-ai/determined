@@ -7,7 +7,7 @@ from determined.experimental import core_v2
 
 def main():
     with core_v2.init_context(
-        defaults=core_v2.DefaultConfig(
+        config=core_v2.Config(
             name="unmanaged-context-manager",
         ),
     ) as core_context:

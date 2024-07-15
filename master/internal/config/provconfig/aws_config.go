@@ -394,6 +394,13 @@ var ec2InstanceSlots = map[Ec2InstanceType]int{
 	"m5zn.3xlarge":  0,
 	"m5zn.6xlarge":  0,
 	"m5zn.12xlarge": 0,
+	"m6i.large":     0,
+	"m6i.xlarge":    0,
+	"m6i.2xlarge":   0,
+	"m6i.4xlarge":   0,
+	"m6i.8xlarge":   0,
+	"m6i.12xlarge":  0,
+	"m6i.16xlarge":  0,
 }
 
 func getEC2MetadataSess() (*ec2metadata.EC2Metadata, error) {

@@ -7,6 +7,7 @@ import {
   CheckpointStorageType,
   ExperimentSearcherName,
   HyperparameterType,
+  Integration,
   LogLevel,
   Primitive,
   RunState,
@@ -216,6 +217,7 @@ export const ioExperimentConfig = io.type({
   checkpoint_storage: optional(ioCheckpointStorage),
   description: optional(io.string),
   hyperparameters: ioHyperparameters,
+  integrations: optional(Integration),
   labels: optional(io.array(io.string)),
   max_restarts: io.number,
   name: io.string,
@@ -295,6 +297,7 @@ export const ioLocationType: io.Type<V1LocationType> = io.keyof({
   [V1LocationType.UNSPECIFIED]: null,
   [V1LocationType.RUN]: null,
   [V1LocationType.RUNHYPERPARAMETERS]: null,
+  [V1LocationType.RUNMETADATA]: null,
 });
 export const ioColumnType: io.Type<V1ColumnType> = io.keyof({
   [V1ColumnType.DATE]: null,

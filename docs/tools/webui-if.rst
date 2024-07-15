@@ -53,6 +53,30 @@ configuring an experiment via a YAML file, visit :ref:`experiment-config-referen
 You can access training and validation performance information via the WebUI. To see model
 evaluation in action, follow the steps described in the :ref:`pytorch-mnist-tutorial`.
 
+******************************************
+ Evaluating and Comparing Experiment Runs
+******************************************
+
+You can compare single trials with various datasets, parameters and settings so that you can choose
+the best model. This simplified flat trials view lets you perform a quick metric evaluation by
+selecting two or more runs to compare. To do this, select two or more runs and then select
+**Compare**:
+
+.. image:: /assets/images/webui-runs.png
+   :alt: WebUI showing list of runs for comparison
+
+|
+
+In the compare view, choose a tab for comparing metrics, hyperparameters and other details of the
+runs you selected.
+
+.. image:: /assets/images/webui-runs-compared.png
+   :alt: WebUI showing selected runs with hyperparameters compared
+
+|
+
+This feature can be toggled on or off in :ref:`user settings <web-ui-user-settings>`.
+
 *************************************
  Adding Models to the Model Registry
 *************************************
@@ -100,6 +124,8 @@ visit :ref:`users`.
 
 With the Determined Enterprise Edition, you can also create and manage user groups. To learn more,
 visit :ref:`rbac`.
+
+.. _web-ui-user-settings:
 
 ************************
  Managing User Settings

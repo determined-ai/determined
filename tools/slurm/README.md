@@ -5,7 +5,7 @@
 1. Install Terraform following [these instructions](https://developer.hashicorp.com/terraform/downloads).
 2. Download the [GCP CLI](https://cloud.google.com/sdk/docs/install-sdk) and run `gcloud auth application-default login` to get credentials.
 3. Run `make slurmcluster` from the root of the repo and wait (up to 10 minutes) for it to start.
-   - To specify which container runtime environment to use, pass in `FLAGS="-c {container_run_type}"` to `make slurmcluster`. Choose from either `singularity` (default), `podman`, or `enroot`.
+   - To specify which container runtime environment to use, pass in `FLAGS="-c {container_run_type}"` to `make slurmcluster`. You can choose from ``singularity`` (default), ``podman``, or ``enroot``. We no longer support Slurmcluster with Determined Agents.
    - To specify which workload manager to use, pass in `FLAGS="-w {workload_manager}"` to `make slurmcluster`. Choose from either `slurm` (default) or `pbs`. Note: in specifying the workload manager, `make slurmcluster` will automatically load the appropriate boot disk image (found in `terraform/images.conf`).
    - The default configuration yields a Slurm cluster with a single compute node and 8 CPUs (`n1-standard-8`).   You can control the machine_type, and gpus of the compute node using `FLAGS="-m {machine_type} -g {gpu_type}:{count}"`.  See below.
    - By default, all VMs created with `make slurmcluster` will be destroyed after 7200 seconds (2 hours). To specify a different amount of time, pass in `FLAGS="-t {0-9}[d|h|m|s]"` to `make slurmcluster`.
@@ -102,27 +102,8 @@ One can load a developer launcher on their dev box created by `make slurmcluster
 3. In the [hpc-ard-capsules-core repository]([d.com](https://github.hpe.com/hpe/hpc-ard-capsules-core)), run `./loadDevLauncher.sh -g [$USER]@[EXTERNAL_IP]` which will spin up a developer launcher on port 18080 on the specified VM.
 4. From the root of this repository, run `make slurmcluster FLAGS="-d"` which will start a devcluster pointing at port 18080 on the instance.
 
-## Using Slurmcluster with Determined Agents
-
-`make slurmcluster` supports using Determined agents to run jobs. To do this with `make slurmcluster` do the following steps from the `determined-ee/` directory:
-
-1. `make -C agent build package`
-2. `make slurmcluster FLAGS="-A"`
-3. `gcloud compute scp agent/dist/determined-agent_linux_amd64_v1/determined-agent $USER-dev-box:/home/$USER --zone us-west1-b`
-
-The `FLAGS="-A"` in `make slurmcluster` removes the resource_manager section in the slurmcluster.yaml that would otherwise be used. This then defaults to the agent rm and the master waits for agents to connect and provide resources. The scp command brings the determined-agent to the dev-box. `$USER` will be replaced with your username when initiating GCP.
-
-Then, connect to your dev-box. This can be done with `make -C tools/slurm/terraform connect` or `gcloud compute ssh $USER-dev-box --project=determined-ai --zone=us-west1-b`. Input the following command on the devbox in order to allocate resources on slurm.
-
-`srun $HOME/determined-agent --master-host=localhost  --master-port=8080 --resource-pool=default --container-runtime=singularity`
-
-You can also use podman by changing the value for `container-runtime` to `podman`. 
-
-This command allocates the 8-core CPU that is on the GCP machine. Unfortunately, there are currently no gpus on the VM so we can not allocate any. 
-
-Now, you can launch jobs like normal using the Determined CLI. You can check the status of the allocated resources using `det slot list`.
-
-If you encounter an issue with jobs failing due to `ModuleNotFoundError: No module named 'determined'` run `make clean all` to rebuild determined. 
+### Note: Slurmcluster with Determined Agents is no longer supported.
+ 
 # Running pytest Suites
 
 ## In Development

@@ -17,7 +17,7 @@ Parameters:
   MasterInstanceType:
     Type: String
     Description: Instance Type of Master
-    Default: m5.large
+    Default: m6i.large
 
   AuxAgentInstanceType:
     Type: String
@@ -63,6 +63,7 @@ Parameters:
     Type: String
     Description: Docker password to pull images that need authentication
     Default: ""
+    NoEcho: true
 
   Version:
     Type: String

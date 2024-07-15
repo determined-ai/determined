@@ -114,9 +114,6 @@ The following configuration settings are supported:
       ``kubernetes``. See :ref:`master configuration <master-config-reference>` for details about
       resource managers.
 
-   -  ``agent_label``: This field has been deprecated and will be ignored. Use ``resource_pool``
-      instead.
-
 -  ``bind_mounts``: Specifies a collection of directories that are bind-mounted into the Docker
    containers for execution. This can be used to allow commands to access additional data that is
    not contained in the command context. This field should consist of an array of entries. Note that

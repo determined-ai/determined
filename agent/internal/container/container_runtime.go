@@ -13,7 +13,7 @@ import (
 	"github.com/docker/docker/api/types/filters"
 )
 
-// ContainerRuntime is our interface for interacting with runtimes like Docker or Singularity.
+// ContainerRuntime is our interface for interacting with runtimes like Docker.
 type ContainerRuntime interface {
 	ReattachContainer(
 		ctx context.Context,

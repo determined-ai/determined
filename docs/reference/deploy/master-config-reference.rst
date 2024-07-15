@@ -14,8 +14,6 @@ To inspect the configuration of an active master, use the Determined CLI and exe
 
 The master supports the following configuration settings:
 
-----
-
 *****************
  ``config_file``
 *****************
@@ -23,31 +21,12 @@ The master supports the following configuration settings:
 Path to the master configuration file. Normally this should only be set via an environment variable
 or command-line option. Defaults to ``/etc/determined/master.yaml``.
 
-.. code:: python
-
-   # config_file
-   # Path to the master configuration file.
-   # Normally this should only be set via an environment variable or command-line option.
-   # Defaults to /etc/determined/master.yaml.
-   config_file: "/etc/determined/master.yaml"
-
-----
-
 **********
  ``port``
 **********
 
-Specifies the TCP port for incoming connections to the master. Defaults to ``8443`` if TLS is
-enabled, otherwise defaults to ``8080``.
-
-.. code:: python
-
-   # port
-   # Specifies the TCP port for incoming connections to the master.
-   # Defaults to 8443 if TLS is enabled, otherwise defaults to 8080.
-   port: 8080
-
-----
+The TCP port on which the master accepts incoming connections. If TLS has been enabled, defaults to
+``8443``; otherwise defaults to ``8080``.
 
 .. _master-task-container-defaults:
 
@@ -56,128 +35,7 @@ enabled, otherwise defaults to ``8080``.
 *****************************
 
 Specifies defaults for all task containers. A task represents a single schedulable unit, such as a
-trial, command, or TensorBoard. This setting includes the following fields:
-
--  ``shm_size_bytes``
--  ``network_mode``
--  ``dtrain_network_interface``
--  ``cpu_pod_spec``
--  ``gpu_pod_spec``
--  ``image``
--  ``environment_variables``
--  ``startup_hook``
--  ``log_policies``
--  ``force_pull_image``
--  ``registry_auth``
--  ``add_capabilities``
--  ``drop_capabilities``
--  ``devices``
--  ``bind_mounts``
--  ``kubernetes``
--  ``slurm``
--  ``pbs``
-
-.. code:: python
-
-   # task_container_defaults
-   # Specifies defaults for all task containers.
-   # A task represents a single schedulable unit, such as a trial, command, or TensorBoard.
-   task_container_defaults:
-     shm_size_bytes: 4294967296
-       # The size (in bytes) of /dev/shm for Determined task containers. Defaults to 4294967296.
-
-     network_mode: bridge
-       # The Docker network to use for the Determined task containers. Defaults to bridge.
-
-     dtrain_network_interface: eth11
-       # The network interface to use during distributed training. If not set, Determined automatically determines the network interface to use.
-
-     cpu_pod_spec: |
-       # Defines the default pod spec which will be applied to all CPU-only tasks when running on Kubernetes.
-       apiVersion: v1
-       kind: Pod
-       spec:
-         containers:
-           - name: determined-task
-             image: determinedai/pytorch-ngc:0.34.0
-             resources:
-               requests:
-                 cpu: "1"
-
-     gpu_pod_spec: |
-       # Defines the default pod spec which will be applied to all GPU tasks when running on Kubernetes.
-       apiVersion: v1
-       kind: Pod
-       spec:
-         containers:
-           - name: determined-task
-             image: determinedai/pytorch-ngc:0.34.0
-             resources:
-               limits:
-                 nvidia.com/gpu: "1"
-
-     image:
-       # Defines the default Docker image to use when executing the workload depending on compute resource.
-       cpu: determinedai/pytorch-ngc:0.34.0
-       cuda: determinedai/pytorch-ngc:0.34.0
-       roc: determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.26.4
-
-     environment_variables:
-       # A list of environment variables that will be set in every task container.
-       - CUDA_VISIBLE_DEVICES=0
-       - PYTHONUNBUFFERED=1
-
-     startup_hook: |
-       # An optional inline script that will be executed as part of task set up.
-       #!/bin/bash
-       echo "Starting task setup"
-
-     log_policies: |
-       # A list of log policies that take effect when a trial reports a log that matches a pattern.
-       - pattern: "ERROR"
-         action: "notify"
-
-     force_pull_image: false
-       # Defines the default policy for forcibly pulling images from the Docker registry. Defaults to false.
-
-     registry_auth:
-       # Defines the default Docker registry credentials to use when pulling a custom base Docker image.
-       username: myusername
-       password: mypassword
-       serveraddress: myregistry.com
-
-     add_capabilities:
-       # The default list of Linux capabilities to grant to task containers.
-       - SYS_ADMIN
-
-     drop_capabilities:
-       # The default list of Linux capabilities to drop from task containers.
-       - NET_RAW
-
-     devices:
-       # The default list of devices to pass to the Docker daemon.
-       - path_on_host: /dev/nvidia0
-         path_in_container: /dev/nvidia0
-         permissions: rwm
-
-     bind_mounts:
-       # The default bind mounts to pass to the Docker container.
-       - container_path: /run/determined/workdir/shared_fs
-         host_path: /mnt/efs
-
-     kubernetes:
-       # Maximum slots per pod.
-       max_slots_per_pod: 1
-
-     slurm: |
-       # Additional Slurm options when launching trials with sbatch.
-       sbatch_options:
-         - "--gpus-per-node=4"
-
-     pbs: |
-       # Additional PBS options when launching trials with qsub.
-       qsub_options:
-         - "-l select=1:ncpus=4:ngpus=1:mem=16gb"
+trial, command, or TensorBoard.
 
 ``shm_size_bytes``
 ==================
@@ -327,22 +185,11 @@ Additional Slurm options when launching trials with ``sbatch``. See :ref:`enviro
 Additional PBS options when launching trials with ``qsub``. See :ref:`environment.pbs <pbs-config>`
 for more details.
 
-----
-
 **********
  ``root``
 **********
 
 Specifies the root directory of the state files. Defaults to ``/usr/share/determined/master``.
-
-.. code:: python
-
-   # root
-   # Specifies the root directory of the state files.
-   # Defaults to /usr/share/determined/master.
-   root: /usr/share/determined/master
-
-----
 
 ***********
  ``cache``
@@ -356,50 +203,19 @@ Configuration for file cache.
 Specifies the root directory for file cache. Defaults to ``/var/cache/determined``. Note that the
 master would break on startup if it does not have access to create this default directory.
 
-.. code:: python
-
-   # cache
-   # Configuration for file cache.
-   cache:
-     cache_dir: /var/cache/determined
-       # Specifies the root directory for file cache.
-       # Defaults to /var/cache/determined.
-       # Note that the master would break on startup if it does not have access to create this default directory.
-
-----
-
 ******************
  ``launch_error``
 ******************
 
-Optional. Specifies whether to refuse an experiment or task if the slots requested exceed the
+Optional. Specifies whether to refuse an experiment or task if the slots requested exceeds the
 cluster capacity. This option has no effect for Kubernetes or Slurm clusters. If ``false``, only a
 warning is returned. The default value is ``true``.
-
-.. code:: python
-
-   # launch_error
-   # Specifies whether to refuse an experiment or task if the slots requested exceed the cluster capacity.
-   # This option has no effect for Kubernetes or Slurm clusters.
-   # If false, only a warning is returned.
-   # Defaults to true.
-   launch_error: true
-
-----
 
 ******************
  ``cluster_name``
 ******************
 
 Optional. Specify a human-readable name for this cluster.
-
-.. code:: python
-
-   # cluster_name
-   # Specify a human-readable name for this cluster.
-   cluster_name: "MyCluster"
-
-----
 
 *************************
  ``tensorboard_timeout``
@@ -408,16 +224,6 @@ Optional. Specify a human-readable name for this cluster.
 Specifies the duration in seconds before idle TensorBoard instances are automatically terminated. A
 TensorBoard instance is considered to be idle if it does not receive any HTTP traffic. The default
 timeout is ``300`` (5 minutes).
-
-.. code:: python
-
-   # tensorboard_timeout
-   # Specifies the duration in seconds before idle TensorBoard instances are automatically terminated.
-   # A TensorBoard instance is considered to be idle if it does not receive any HTTP traffic.
-   # Defaults to 300 (5 minutes).
-   tensorboard_timeout: 300
-
-----
 
 .. _master-config-notebook-timeout:
 
@@ -430,17 +236,6 @@ notebook instance is considered to be idle if it is not receiving any HTTP traff
 otherwise active (as defined by the ``notebook_idle_type`` option in the :ref:`task configuration
 <command-notebook-configuration>`). Defaults to ``null``, i.e. disabled.
 
-.. code:: python
-
-   # notebook_timeout
-   # Specifies the duration in seconds before idle notebook instances are automatically terminated.
-   # A notebook instance is considered to be idle if it is not receiving any HTTP traffic and it is not otherwise active
-   # (as defined by the notebook_idle_type option in the task configuration).
-   # Defaults to null, i.e. disabled.
-   notebook_timeout: null
-
-----
-
 .. _master-config-resource-manager:
 
 **********************
@@ -451,92 +246,6 @@ The resource manager used to acquire resources. Defaults to ``agent``.
 
 For Kubernetes installations, if you define additional resource managers, the resource manager
 specified under the primary resource_manager key here is considered the default.
-
-Example:
-
-.. code:: python
-
-   resource_manager:
-     # The resource manager used to acquire resources. Defaults to agent.
-
-     name: default
-       # Optional. Specifies the resource manager’s name. Defaults to default if not specified.
-       # For Kubernetes installations with additional resource managers, ensure unique names for all resource managers in the cluster.
-
-     metadata:
-       region: us-west1
-       zone: us-west1-a
-       # Optional. Stores additional information about the resource manager in a yaml map, such as the zone, region, or location.
-
-     type: agent
-       # The agent resource manager includes static and dynamic agents.
-
-     scheduler:
-       # Specifies how Determined schedules tasks to agents on resource pools.
-
-       type: priority
-         # The scheduling policy to use when allocating resources between different tasks (experiments, notebooks, etc.). Defaults to priority.
-
-       preemption: true
-         # Specifies whether lower-priority tasks should be preempted to schedule higher priority tasks. Tasks are preempted in order of lowest priority first.
-
-       default_priority: 42
-         # The priority that is assigned to tasks that do not specify a priority. Can be configured to 1 to 99 inclusively. Defaults to 42.
-
-     fitting_policy: best
-       # The scheduling policy to use when assigning tasks to agents in the cluster. Defaults to best.
-
-     allow_heterogeneous_fits: true
-       # Fit distributed jobs onto agents of different sizes.
-
-     default_aux_resource_pool: default
-       # The default resource pool to use for tasks that do not need dedicated compute resources, auxiliary, or systems tasks. Defaults to default if no resource pool is specified.
-
-     default_compute_resource_pool: default
-       # The default resource pool to use for tasks that require compute resources, e.g. GPUs or dedicated CPUs. Defaults to default if no resource pool is specified.
-
-     require_authentication: true
-       # Whether to require that agent connections be verified using mutual TLS.
-
-     client_ca: /path/to/ca.crt
-       # Certificate authority file to use for verifying agent certificates.
-
-     kubernetes:
-       # The kubernetes resource manager launches tasks on a Kubernetes cluster.
-
-       namespace: default
-         # The namespace where Determined will deploy Pods and ConfigMaps.
-
-       max_slots_per_pod: 4
-         # Each multi-slot (distributed training) task will be scheduled as a set of slots_per_task / max_slots_per_pod separate pods, with each pod assigned up to max_slots_per_pod slots.
-
-       slot_type: cuda
-         # Resource type used for compute tasks. Defaults to cuda.
-
-       slot_resource_requests:
-         cpu: 4
-         # The number of Kubernetes CPUs to request per compute slot.
-
-       master_service_name: determined-master
-         # The service account Determined uses to interact with the Kubernetes API.
-
-     slurm:
-       # The HPC launcher submits tasks to a Slurm/PBS cluster.
-
-       master_host: determined-master
-         # The hostname for the Determined master by which tasks will communicate with its API server.
-
-       master_port: 8080
-         # The port for the Determined master.
-
-       host: launcher-host
-         # The hostname for the Launcher, which Determined communicates with to launch and monitor jobs.
-
-       port: 1234
-         # The port for the Launcher.
-
-       protocol: https
-         # The protocol for communicating with the Launcher.
 
 ``name``
 ========
@@ -1000,8 +709,6 @@ are:
    that ``prefix`` is configured to match a single label to enable use of the workload manager
    reporting tools that summarize usage by each WCKey/Project value.
 
-----
-
 .. _cluster-resource-pools:
 
 ********************
@@ -1011,105 +718,7 @@ are:
 A list of resource pools. A resource pool is a collection of identical computational resources. You
 can specify which resource pool a job should be assigned to when the job is submitted. Refer to the
 documentation on :ref:`resource-pools` for more information. Defaults to a resource pool with a name
-``default``. This setting includes the following fields:
-
--  ``pool_name``
--  ``description``
--  ``max_aux_containers_per_agent``
--  ``agent_reconnect_wait``
--  ``agent_reattach_enabled``
--  ``task_container_defaults``
--  ``kubernetes_namespace``
--  ``scheduler``
--  ``provider``
-
-Example:
-
-.. code:: yaml
-
-   resource_pools:
-     # A list of resource pools. A resource pool is a collection of identical computational resources.
-
-     - pool_name: default
-       # Specifies the name of the resource pool, which must be unique among all defined resource pools.
-
-       description: Default resource pool
-       # The description of the resource pool.
-
-       max_aux_containers_per_agent: 5
-       # The maximum number of auxiliary or system containers that can be scheduled on each agent in this pool.
-
-       agent_reconnect_wait: 10m
-       # Maximum time the master should wait for a disconnected agent before considering it dead.
-
-       agent_reattach_enabled: true
-       # Whether master & agent try to recover running containers after a restart.
-
-       task_container_defaults:
-         shm_size_bytes: 4294967296
-         network_mode: bridge
-         dtrain_network_interface: eth11
-         image: determinedai/pytorch-ngc:0.34.0
-         environment_variables:
-           - CUDA_VISIBLE_DEVICES=0
-           - PYTHONUNBUFFERED=1
-         startup_hook: |
-           #!/bin/bash
-           echo "Starting task setup"
-         log_policies: |
-           - pattern: "ERROR"
-             action: "notify"
-         force_pull_image: false
-         registry_auth:
-           username: myusername
-           password: mypassword
-           serveraddress: myregistry.com
-         add_capabilities:
-           - SYS_ADMIN
-         drop_capabilities:
-           - NET_RAW
-         devices:
-           - path_on_host: /dev/nvidia0
-             path_in_container: /dev/nvidia0
-             permissions: rwm
-         bind_mounts:
-           - container_path: /run/determined/workdir/shared_fs
-             host_path: /mnt/efs
-         kubernetes:
-           max_slots_per_pod: 4
-
-       kubernetes_namespace: default
-       # When the Kubernetes resource manager is in use, this specifies a namespace that tasks in this resource pool will be launched into.
-
-       scheduler:
-         type: priority
-         preemption: true
-         default_priority: 42
-
-       provider:
-         type: aws
-         region: us-west-2
-         root_volume_size: 200
-         image_id: ami-12345678
-         tag_key: managed-by
-         tag_value: determined-ai-determined
-         custom_tags:
-           - key: my_team
-             value: name
-           - key: owner
-             value: bob_lastname
-         instance_name: determined-ai-agent
-         ssh_key_name: my-ssh-key
-         iam_instance_profile_arn: arn:aws:iam::123456:instance-profile/DeterminedInstanceProfile
-         network_interface:
-           public_ip: true
-           security_group_id: sg-12345678
-           subnet_id: subnet-12345678
-         instance_type: p4d.24xlarge
-         instance_slots: 8
-         cpu_slots_allowed: true
-         spot: false
-         spot_max_price: "2.50"
+``default``.
 
 ``pool_name``
 =============
@@ -1583,8 +1192,6 @@ those partitions/queues.
    the HPC partition named ``defq_GPU`` with the ``gpu_type`` property set, and Slurm constraint
    associated with the feature ``XL675d`` used to identify the model type of the compute node.
 
-----
-
 .. _master-config-additional-resource-managers:
 
 **********************************
@@ -1636,8 +1243,6 @@ Optional. Defines 'n'-many (multiple) resource managers under the ``additional_r
 key, following the existing resource manager configuration pattern. Each additional resource manager
 requires a name and a nested ``resource_pools`` section.
 
-----
-
 ************************
  ``checkpoint_storage``
 ************************
@@ -1646,42 +1251,6 @@ Specifies where model checkpoints will be stored. This can be overridden on a pe
 in the :ref:`experiment-configuration`. A checkpoint contains the architecture and weights of the
 model being trained. Determined currently supports several kinds of checkpoint storage, ``gcs``,
 ``s3``, ``azure``, ``shared_fs``, and ``directory``, identified by the ``type`` subfield.
-
-Example:
-
-.. code:: yaml
-
-   checkpoint_storage:
-     type: gcs
-     bucket: my-gcs-bucket
-     prefix: checkpoints
-     # Checkpoints are stored on Google Cloud Storage (GCS). Authentication is done using GCP’s “Application Default Credentials” approach.
-     # Example for GCS storage.
-
-     type: s3
-     bucket: my-s3-bucket
-     access_key: my-access-key
-     secret_key: my-secret-key
-     prefix: checkpoints
-     endpoint_url: http://127.0.0.1:8080/
-     # Checkpoints are stored in Amazon S3. Example for S3 storage.
-
-     type: azure
-     container: my-azure-container
-     connection_string: my-connection-string
-     account_url: my-account-url
-     credential: my-credential
-     # Checkpoints are stored in Microsoft’s Azure Blob Storage. Example for Azure storage.
-
-     type: shared_fs
-     host_path: /mnt/shared_fs
-     storage_path: /mnt/shared_fs/checkpoints
-     propagation: rprivate
-     # Checkpoints are written to a directory on the agent’s file system. Example for shared file system storage.
-
-     type: directory
-     container_path: /mnt/local_checkpoints
-     # Checkpoints are written to a local directory. Example for directory storage.
 
 ``type: gcs``
 =============
@@ -1831,26 +1400,11 @@ when the container exits.
 
 Required. The file system path to use.
 
-----
-
 ********
  ``db``
 ********
 
 Specifies the configuration of the database.
-
-Example:
-
-.. code:: yaml
-
-   db:
-     user: dbuser
-     password: dbpassword
-     host: localhost
-     port: 5432
-     name: determined
-     ssl_mode: require
-     ssl_root_cert: ~/.postgresql/root.crt
 
 ``user``
 ========
@@ -1893,32 +1447,11 @@ The location of the root certificate file to use for verifying the server's cert
 <https://www.postgresql.org/docs/current/libpq-ssl.html#LIBQ-SSL-CERTIFICATES>`__ for more
 information about certificate verification. Defaults to ``~/.postgresql/root.crt``.
 
-----
-
 **************
  ``security``
 **************
 
 Specifies security-related configuration settings.
-
-Example:
-
-.. code:: yaml
-
-   security:
-     tls:
-       cert: /path/to/cert.crt
-       key: /path/to/key.key
-     ssh:
-       rsa_key_size: 2048
-     authz:
-       type: rbac
-       rbac_ui_enabled: true
-       workspace_creator_assign_role:
-         enabled: true
-         role_id: 2
-       strict_job_queue_control: true
-     initial_user_password: your_initial_password
 
 ``tls``
 =======
@@ -1991,38 +1524,20 @@ Integer identifier of a role to be assigned. Defaults to ``2``, which is the rol
 Initial password for the built-in ``determined`` and ``admin`` users. Applies on first launch when a
 cluster's database is bootstrapped, otherwise it is ignored.
 
-----
-
 **************
  ``webhooks``
 **************
 
 Specifies configuration settings related to webhooks.
 
-Example:
-
-.. code:: yaml
-
-   webhooks:
-     signing_key: your_signing_key
-     base_url: https://your.determined.url
-
-----
+``signing_key``: The key used to sign outgoing webhooks. ``base_url``: The URL users use to access
+Determined, for generating hyperlinks.
 
 ***************
  ``telemetry``
 ***************
 
 Specifies configuration settings related to telemetry collection and tracing.
-
-Example:
-
-.. code:: yaml
-
-   telemetry:
-     enabled: true
-     otel_enabled: false
-     otel_endpoint: localhost:4317
 
 ``enabled``
 ===========
@@ -2040,8 +1555,6 @@ Whether OpenTelemetry is enabled. Defaults to ``false``.
 
 OpenTelemetry endpoint to use. Defaults to ``localhost:4317``.
 
-----
-
 *******************
  ``observability``
 *******************
@@ -2049,45 +1562,16 @@ OpenTelemetry endpoint to use. Defaults to ``localhost:4317``.
 Specifies whether Determined enables Prometheus monitoring routes. See :ref:`Prometheus
 <prometheus>` for details.
 
-Example:
-
-.. code:: yaml
-
-   observability:
-     enable_prometheus: true
-
 ``enable_prometheus``
 =====================
 
 Whether Prometheus endpoints are present. Defaults to ``true``.
-
-----
 
 *************
  ``logging``
 *************
 
 Specifies configuration settings for the logging backend for trial logs.
-
-Example:
-
-.. code:: yaml
-
-   logging:
-     type: default
-     # Trial logs are shipped to the master and stored in Postgres. If nothing is set, this is the default.
-
-     elastic:
-       # Trial logs are shipped to the Elasticsearch cluster described by the configuration settings in the section.
-       host: localhost
-       port: 9200
-       security:
-         username: myusername
-         password: mypassword
-         tls:
-           enabled: true
-           skip_verify: false
-           certificate: /path/to/certificate.crt
 
 ``type: default``
 =================
@@ -2138,26 +1622,11 @@ Security-related configuration settings.
       certificate is not signed by a well-known CA; cannot be specified if ``skip_verify`` is
       enabled.
 
-----
-
 **********************
  ``retention_policy``
 **********************
 
 Specifies configuration settings for the retention of trial logs.
-
-Example:
-
-.. code:: yaml
-
-   retention_policy:
-     log_retention_days: 90
-     # Number of days to retain logs for by default. This can be overridden on a per-experiment basis in the experiment configuration.
-     # Values should be between -1 and 32767. The default value is -1, retaining logs indefinitely. If set to 0, logs will be deleted during the next cleanup.
-
-     schedule: "0 0 * * *"
-     # Schedule for cleaning up logs. Can be provided as a cron expression or a duration string. If this value is not set, det task cleanup-logs can be called to manually run retention.
-     # For example, to schedule cleanup for midnight every day, use "0 0 * * *". To schedule cleanup every 24 hours from start, use "24h".
 
 ``log_retention_days``
 ======================
@@ -2188,8 +1657,6 @@ or to schedule cleanup every 24 hours from start:
       retention_policy:
         log_retention_days: 90
         schedule: "24h"
-
-----
 
 **********
  ``scim``
@@ -2243,8 +1710,6 @@ The username for HTTP basic authentication (only allowed with ``type: basic``).
 ------------
 
 The password for HTTP basic authentication (only allowed with ``type: basic``).
-
-----
 
 **********
  ``oidc``
@@ -2339,8 +1804,6 @@ The name of the attribute passed in through the claim that specifies group membe
 The name of the attribute passed in through the claim from the OIDC provider used to set the user's
 display name in Determined.
 
-----
-
 **********
  ``saml``
 **********
@@ -2410,8 +1873,6 @@ The claim name that specifies group memberships in SAML.
 ===============================
 
 The claim name from the SAML provider used to set the user's display name in Determined.
-
-----
 
 ********************
  ``reserved_ports``

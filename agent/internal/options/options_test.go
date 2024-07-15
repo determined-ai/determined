@@ -84,7 +84,6 @@ log:
 master_host: master_host_IP
 master_port: 5000
 agent_id: agent_device_name
-label: deprecated
 resource_pool: agent_rp
 container_master_host: docker_localhost
 container_master_port: 2000
@@ -98,7 +97,6 @@ security:
         master_cert_name: master_certificate
 debug: true
 artificial_slots: 12
-image_root: docker_image_root
 tls: true
 tls_cert: tls_certificate_file
 tls_key: tls_key_file
@@ -122,7 +120,6 @@ container_runtime: docker_runtime_env
 				MasterHost:          "master_host_IP",
 				MasterPort:          5000,
 				AgentID:             "agent_device_name",
-				Label:               "deprecated",
 				ResourcePool:        "agent_rp",
 				ContainerMasterHost: "docker_localhost",
 				ContainerMasterPort: 2000,
@@ -138,7 +135,6 @@ container_runtime: docker_runtime_env
 				},
 				Debug:                  true,
 				ArtificialSlots:        12,
-				ImageRoot:              "docker_image_root",
 				TLS:                    true,
 				TLSCertFile:            "tls_certificate_file",
 				TLSKeyFile:             "tls_key_file",

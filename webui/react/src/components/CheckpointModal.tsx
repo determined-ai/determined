@@ -17,6 +17,7 @@ import {
 import { formatDatetime } from 'utils/datetime';
 import handleError, { DetError, ErrorType } from 'utils/error';
 import { isAbsolutePath } from 'utils/routes';
+import { createPachydermLineageLink } from 'utils/integrations';
 import { humanReadableBytes } from 'utils/string';
 import { checkpointSize } from 'utils/workload';
 
@@ -151,6 +152,16 @@ ${checkpoint?.totalBatches}? This action may complete or fail without further no
       },
       { label: 'State', value: <Badge state={state} type={BadgeType.State} /> },
     ];
+
+    if (config.integrations?.pachyderm !== undefined) {
+      const pachydermData = config.integrations.pachyderm;
+      const url = createPachydermLineageLink(pachydermData);
+
+      glossaryContent.splice(1, 0, {
+        label: 'Data Input',
+        value: <Link path={url}>{pachydermData.dataset.repo}</Link>,
+      });
+    }
 
     if (checkpoint.uuid) glossaryContent.push({ label: 'UUID', value: checkpoint.uuid });
     glossaryContent.push({ label: 'Location', value: getStorageLocation(config, checkpoint) });

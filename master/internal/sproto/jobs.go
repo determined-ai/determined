@@ -70,13 +70,6 @@ type (
 		ResourcePool string
 		JobID        model.JobID
 	}
-	// MoveJob requests the job to be moved within a priority queue relative to another job.
-	MoveJob struct {
-		ID           model.JobID
-		Anchor       model.JobID
-		Ahead        bool
-		ResourcePool string
-	}
 )
 
 // RecoverJobPosition gets sent from the experiment or command actor to the resource pool.

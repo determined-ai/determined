@@ -2523,5 +2523,290 @@
         "source_trial_id": null
       }
     }
+  },
+  {
+    "experiment": {
+      "id": 7230,
+      "description": "",
+      "labels": [],
+      "startTime": "2024-06-26T19:00:17.969118Z",
+      "endTime": "2024-06-26T19:06:30.861340Z",
+      "state": "STATE_COMPLETED",
+      "archived": false,
+      "numTrials": 1,
+      "trialIds": [49301],
+      "displayName": "",
+      "userId": 1262,
+      "username": "thiago.menezes-dallacqua-admin",
+      "resourcePool": "compute-pool",
+      "searcherType": "\"single\"",
+      "searcherMetric": "",
+      "hyperparameters": null,
+      "name": "core-api-stage-2",
+      "notes": "",
+      "jobId": "4f75ae18-b425-4b3c-a9f6-8b6bc69d5403",
+      "forkedFrom": 7129,
+      "progress": 1,
+      "projectId": 2014,
+      "projectName": "test integration 1",
+      "workspaceId": 1816,
+      "workspaceName": "test integration",
+      "parentArchived": false,
+      "config": {
+        "bind_mounts": [],
+        "checkpoint_policy": "best",
+        "checkpoint_storage": {
+          "access_key": null,
+          "bucket": "det-determined-main-us-west-2-573932760021",
+          "endpoint_url": null,
+          "prefix": null,
+          "save_experiment_best": 0,
+          "save_trial_best": 1,
+          "save_trial_latest": 1,
+          "secret_key": null,
+          "type": "s3"
+        },
+        "data": {},
+        "debug": false,
+        "description": null,
+        "entrypoint": "python3 2_checkpoints.py",
+        "environment": {
+          "add_capabilities": [],
+          "drop_capabilities": [],
+          "environment_variables": {
+            "cpu": [],
+            "cuda": [],
+            "rocm": []
+          },
+          "force_pull_image": false,
+          "image": {
+            "cpu": "determinedai/pytorch-ngc-dev:e960eae",
+            "cuda": "determinedai/pytorch-ngc-dev:e960eae",
+            "rocm": "determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-622d512"
+          },
+          "pod_spec": null,
+          "ports": {},
+          "proxy_ports": [],
+          "registry_auth": null
+        },
+        "hyperparameters": {},
+        "integrations": {
+          "pachyderm": {
+            "dataset": {
+              "branch": "master",
+              "commit": "1d2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b",
+              "project": "test-project",
+              "repo": "test-data",
+              "token": "1234567890abcdef1234567890abcdef"
+            },
+            "pachd": {
+              "host": "localhost",
+              "port": 30650
+            },
+            "proxy": {
+              "host": "localhost",
+              "port": 80,
+              "scheme": "http"
+            }
+          }
+        },
+        "labels": [],
+        "log_policies": [],
+        "max_restarts": 0,
+        "min_checkpoint_period": {
+          "batches": 0
+        },
+        "min_validation_period": {
+          "batches": 0
+        },
+        "name": "core-api-stage-2",
+        "optimizations": {
+          "aggregation_frequency": 1,
+          "auto_tune_tensor_fusion": false,
+          "average_aggregated_gradients": true,
+          "average_training_metrics": true,
+          "grad_updates_size_file": null,
+          "gradient_compression": false,
+          "mixed_precision": "O0",
+          "tensor_fusion_cycle_time": 1,
+          "tensor_fusion_threshold": 64
+        },
+        "pbs": {},
+        "perform_initial_validation": false,
+        "profiling": {
+          "begin_on_batch": 0,
+          "enabled": false,
+          "end_after_batch": null,
+          "sync_timings": true
+        },
+        "project": "test integration 1",
+        "records_per_epoch": 0,
+        "reproducibility": {
+          "experiment_seed": 1718898986
+        },
+        "resources": {
+          "devices": [],
+          "is_single_node": null,
+          "max_slots": null,
+          "native_parallel": false,
+          "priority": null,
+          "resource_pool": "compute-pool",
+          "shm_size": null,
+          "slots_per_trial": 1,
+          "weight": 1
+        },
+        "scheduling_unit": 100,
+        "searcher": {
+          "max_length": 1,
+          "metric": "x",
+          "name": "single",
+          "smaller_is_better": true,
+          "source_checkpoint_uuid": null,
+          "source_trial_id": null
+        },
+        "slurm": {},
+        "workspace": "test integration"
+      },
+      "originalConfig": "environment:\n  add_capabilities: []\n  drop_capabilities: []\n  environment_variables:\n    cpu: []\n    cuda: []\n    rocm: []\n  force_pull_image: false\n  image:\n    cpu: determinedai/pytorch-ngc-dev:e960eae\n    cuda: determinedai/pytorch-ngc-dev:e960eae\n    rocm: determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-622d512\n  pod_spec: null\n  ports: {}\n  proxy_ports: []\nproject: test integration 1\nworkspace: test integration\nbind_mounts: []\ncheckpoint_policy: best\ncheckpoint_storage:\n  access_key: null\n  bucket: det-determined-main-us-west-2-573932760021\n  endpoint_url: null\n  prefix: null\n  save_experiment_best: 0\n  save_trial_best: 1\n  save_trial_latest: 1\n  secret_key: null\n  type: s3\ndata: {}\ndebug: false\ndescription: null\nentrypoint: python3 2_checkpoints.py\nhyperparameters: {}\nintegrations:\n  pachyderm:\n    dataset:\n      branch: master\n      commit: 1d2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b\n      project: test-project\n      repo: test-data\n      token: 1234567890abcdef1234567890abcdef\n    pachd:\n      host: localhost\n      port: 30650\n    proxy:\n      host: localhost\n      port: 80\n      scheme: http\nlabels: []\nlog_policies: []\nmax_restarts: 0\nmin_checkpoint_period:\n  batches: 0\nmin_validation_period:\n  batches: 0\nname: core-api-stage-2\noptimizations:\n  aggregation_frequency: 1\n  auto_tune_tensor_fusion: false\n  average_aggregated_gradients: true\n  average_training_metrics: true\n  grad_updates_size_file: null\n  gradient_compression: false\n  mixed_precision: O0\n  tensor_fusion_cycle_time: 1\n  tensor_fusion_threshold: 64\npbs: {}\nperform_initial_validation: false\nprofiling:\n  begin_on_batch: 0\n  enabled: false\n  end_after_batch: null\n  sync_timings: true\nrecords_per_epoch: 0\nreproducibility:\n  experiment_seed: 1718898986\nresources:\n  devices: []\n  is_single_node: null\n  max_slots: null\n  native_parallel: false\n  priority: null\n  resource_pool: compute-pool\n  shm_size: null\n  slots_per_trial: 1\n  weight: 1\nscheduling_unit: 100\nsearcher:\n  max_length: 1\n  metric: x\n  name: single\n  smaller_is_better: true\n  source_checkpoint_uuid: null\n  source_trial_id: null\nslurm: {}\n",
+      "projectOwnerId": 1262,
+      "checkpointSize": "79",
+      "checkpointCount": 2,
+      "unmanaged": false,
+      "modelDefinitionSize": 5717,
+      "pachydermIntegration": {
+        "dataset": {
+          "branch": "master",
+          "commit": "1d2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b",
+          "project": "test-project",
+          "repo": "test-data",
+          "token": "1234567890abcdef1234567890abcdef"
+        },
+        "pachd": {
+          "host": "localhost",
+          "port": 30650
+        },
+        "proxy": {
+          "host": "localhost",
+          "port": 80,
+          "scheme": "http"
+        }
+      }
+    },
+    "jobSummary": null,
+    "config": {
+      "bind_mounts": [],
+      "checkpoint_policy": "best",
+      "checkpoint_storage": {
+        "access_key": null,
+        "bucket": "det-determined-main-us-west-2-573932760021",
+        "endpoint_url": null,
+        "prefix": null,
+        "save_experiment_best": 0,
+        "save_trial_best": 1,
+        "save_trial_latest": 1,
+        "secret_key": null,
+        "type": "s3"
+      },
+      "data": {},
+      "debug": false,
+      "description": null,
+      "entrypoint": "python3 2_checkpoints.py",
+      "environment": {
+        "add_capabilities": [],
+        "drop_capabilities": [],
+        "environment_variables": {
+          "cpu": [],
+          "cuda": [],
+          "rocm": []
+        },
+        "force_pull_image": false,
+        "image": {
+          "cpu": "determinedai/pytorch-ngc-dev:e960eae",
+          "cuda": "determinedai/pytorch-ngc-dev:e960eae",
+          "rocm": "determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-622d512"
+        },
+        "pod_spec": null,
+        "ports": {},
+        "proxy_ports": [],
+        "registry_auth": null
+      },
+      "hyperparameters": {},
+      "integrations": {
+        "pachyderm": {
+          "dataset": {
+            "branch": "master",
+            "commit": "1d2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b",
+            "project": "test-project",
+            "repo": "test-data",
+            "token": "1234567890abcdef1234567890abcdef"
+          },
+          "pachd": {
+            "host": "localhost",
+            "port": 30650
+          },
+          "proxy": {
+            "host": "localhost",
+            "port": 80,
+            "scheme": "http"
+          }
+        }
+      },
+      "labels": [],
+      "log_policies": [],
+      "max_restarts": 0,
+      "min_checkpoint_period": {
+        "batches": 0
+      },
+      "min_validation_period": {
+        "batches": 0
+      },
+      "name": "core-api-stage-2",
+      "optimizations": {
+        "aggregation_frequency": 1,
+        "auto_tune_tensor_fusion": false,
+        "average_aggregated_gradients": true,
+        "average_training_metrics": true,
+        "grad_updates_size_file": null,
+        "gradient_compression": false,
+        "mixed_precision": "O0",
+        "tensor_fusion_cycle_time": 1,
+        "tensor_fusion_threshold": 64
+      },
+      "pbs": {},
+      "perform_initial_validation": false,
+      "profiling": {
+        "begin_on_batch": 0,
+        "enabled": false,
+        "end_after_batch": null,
+        "sync_timings": true
+      },
+      "project": "test integration 1",
+      "records_per_epoch": 0,
+      "reproducibility": {
+        "experiment_seed": 1718898986
+      },
+      "resources": {
+        "devices": [],
+        "is_single_node": null,
+        "max_slots": null,
+        "native_parallel": false,
+        "priority": null,
+        "resource_pool": "compute-pool",
+        "shm_size": null,
+        "slots_per_trial": 1,
+        "weight": 1
+      },
+      "scheduling_unit": 100,
+      "searcher": {
+        "max_length": 1,
+        "metric": "x",
+        "name": "single",
+        "smaller_is_better": true,
+        "source_checkpoint_uuid": null,
+        "source_trial_id": null
+      },
+      "slurm": {},
+      "workspace": "test integration"
+    }
   }
 ]

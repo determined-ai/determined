@@ -55,11 +55,9 @@ metrics to:
 
    def main():
        core_v2.init(
-           defaults=core_v2.DefaultConfig(
+           config=core_v2.Config(
                name="unmanaged-2-checkpoints",
                checkpoint_storage="/path/to/checkpoint",
-           ),
-           unmanaged=core_v2.UnmanagedConfig(
                external_experiment_id="my-existing-experiment",
                external_trial_id="my-existing-trial",
            ),
