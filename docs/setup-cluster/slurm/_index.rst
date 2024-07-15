@@ -58,4 +58,3 @@ follow the steps in the :ref:`install-on-slurm` document.
    upgrade-on-hpc
    singularity
    slurm-known-issues
-   hpc-with-agent
