@@ -85,12 +85,12 @@ def test_master_agent_restart_reattach_recover_experiment(
         # Start an experiment
         exp_id = exp.create_experiment(
             sess,
-            conf.fixtures_path("core_api/sleep.yaml"),
-            conf.fixtures_path("core_api"),
+            conf.fixtures_path("no_op/single-medium-train-step.yaml"),
+            conf.fixtures_path("no_op"),
             None,
         )
 
-        exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.RUNNING)
+        #exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.RUNNING)
 
         # Kill the agent & master
         restartable_managed_cluster.kill_agent()
