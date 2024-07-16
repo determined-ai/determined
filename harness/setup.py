@@ -1,3 +1,4 @@
+import os
 import setuptools
 
 def readme():
