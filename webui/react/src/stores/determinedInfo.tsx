@@ -14,6 +14,7 @@ export interface SsoProvider {
 }
 
 export const BrandingType = {
+  // Custom: 'custom',
   Determined: 'determined',
   HPE: 'hpe',
 } as const;
