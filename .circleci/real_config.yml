@@ -2658,9 +2658,6 @@ jobs:
       container-run-type:
         type: string
         default: singularity
-      agent-use:
-        type: string
-        default: ""
       workload-manager:
         type: string
         default: slurm
@@ -2766,7 +2763,7 @@ jobs:
             sudo apt-get update
             sudo apt-get install gettext
             sudo apt-get install iproute2
-            yes yes | PATH=$HOME/.local/bin:$PATH make slurmcluster FLAGS="-c <<parameters.container-run-type>> -w <<parameters.workload-manager>> <<parameters.agent-use>>" TF_LOCK=false | tee output.log
+            yes yes | PATH=$HOME/.local/bin:$PATH make slurmcluster FLAGS="-c <<parameters.container-run-type>> -w <<parameters.workload-manager>>" TF_LOCK=false | tee output.log
           background: true
 
       - run:
@@ -2794,20 +2791,6 @@ jobs:
           master-host: <<parameters.master-host>>
           master-port: <<parameters.master-port>>
           extra-pytest-flags: <<parameters.extra-pytest-flags>>
-
-      # Must cancel the srun command to prevent a ssh error
-      - when:
-          condition:
-            equal: ["-A", <<parameters.agent-use>>]
-          steps:
-            - run:
-                name: Deallocate the Resources on VM
-                command: |
-                  ZONE=$(terraform -chdir=tools/slurm/terraform output --raw zone)
-                  INSTANCE_NAME=$(terraform -chdir=tools/slurm/terraform output --raw instance_name)
-                  PROJECT=$(terraform -chdir=tools/slurm/terraform output --raw project)
-                  gcloud compute ssh --zone "$ZONE" "$INSTANCE_NAME" --project "$PROJECT" -- \
-                  scancel -u $USER
 
       - run:
           name: Make unslurmcluster
@@ -2908,9 +2891,6 @@ jobs:
         type: string
         default: launcher
       extra-pytest-flags:
-        type: string
-        default: ""
-      agent-use:
         type: string
         default: ""
       collect-det-job-logs:
@@ -5518,39 +5498,6 @@ workflows:
               ld_library_path:
             security:
               initial_user_password: ${INITIAL_USER_PASSWORD}
-      - test-e2e-slurm:
-            name: test-e2e-slurm-agent-singularity-znode
-            context:
-              - dev-ci-cluster-default-user-credentials
-            requires:
-              - package-and-push-system-local-ee
-            agent-use: "-A"
-            extra-pytest-flags: "-k 'not node_not_available'"
-            # For now we must skip node_not_available. There is a inconsistency with the agent where
-            # the error is "failed to create experiment: slots requested exceeds cluster capacity" instead of the expected message.
-            master_config: |
-                task_container_defaults:
-                  slurm:
-                    sbatch_args:
-                      - --time=04:00:00
-                  environment_variables:
-                    # Some ports are not working, disable them so distributed jobs work.
-                    - NCCL_IB_HCA=mlx6_0:0
-                checkpoint_storage:
-                  type: shared_fs
-                  host_path: /scratch/launcher/.launcher.$HOSTNAME/checkpoints
-                  storage_path: determined-checkpoint
-                  save_experiment_best: 0
-                  save_trial_best: 1
-                  save_trial_latest: 1
-                db:
-                  user: postgres
-                  host: localhost
-                  port: 5432
-                  name: determined
-                  password: ${HPC_DB_PASSWD}
-                security:
-                  initial_user_password: ${INITIAL_USER_PASSWORD}
       - terminate-vpc-circleci:
             context: ["gcp"]
 
