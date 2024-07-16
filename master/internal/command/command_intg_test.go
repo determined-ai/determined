@@ -83,18 +83,18 @@ func TestNotebookManagerLifecycle(t *testing.T) {
 
 	// Verify Notebooks return valid tokens.
 	for _, resp := range resp2.Notebooks {
-		re := regexp.MustCompile("^/proxy/(.*)/\\?token=(.*)")
+		re := regexp.MustCompile(`^/proxy/(.*)/\?token=(.*)`)
 		addrMatches := re.FindStringSubmatch(resp.ServiceAddress)
 		require.Len(t, addrMatches, 3)
 
-		taskId, token := addrMatches[1], addrMatches[2]
+		taskID, token := addrMatches[1], addrMatches[2]
 		require.NotEmpty(t, token)
-		require.NotEmpty(t, taskId)
+		require.NotEmpty(t, taskID)
 
 		usr, notebookSession, err := user.GetService().UserAndNotebookSessionFromToken(token)
 		require.NoError(t, err)
 		require.Equal(t, resp.UserId, int32(usr.ID))
-		require.Equal(t, taskId, string(notebookSession.TaskID))
+		require.Equal(t, taskID, string(notebookSession.TaskID))
 	}
 
 	// Kill 1 Notebook.

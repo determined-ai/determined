@@ -423,7 +423,7 @@ func BySessionID(ctx context.Context, sessionID model.SessionID) (*model.User, e
 		Join("JOIN user_sessions ON user_sessions.user_id = users.id").
 		Where("user_sessions.id = ?", sessionID).Scan(ctx, &user)
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "error fetching session (%d)", sessionID)
 	}
 	return &user, nil
 }
