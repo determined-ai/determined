@@ -109,6 +109,7 @@ export const mapV1MasterInfo = (data: Sdk.V1GetMasterResponse): DeterminedInfo =
     clusterId: data.clusterId,
     clusterMessage: clustMsg,
     clusterName: data.clusterName,
+    customLogo: data.customLogo,
     externalLoginUri: data.externalLoginUri,
     externalLogoutUri: data.externalLogoutUri,
     featureSwitches: data.featureSwitches || [],

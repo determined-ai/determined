@@ -5467,6 +5467,7 @@ class v1GetMasterResponse(Printable):
         *,
         clusterId: str,
         clusterName: str,
+        customLogo: bool,
         masterId: str,
         strictJobQueueControl: bool,
         version: str,
@@ -5483,6 +5484,7 @@ class v1GetMasterResponse(Printable):
     ):
         self.clusterId = clusterId
         self.clusterName = clusterName
+        self.customLogo = customLogo
         self.masterId = masterId
         self.strictJobQueueControl = strictJobQueueControl
         self.version = version
@@ -5512,6 +5514,7 @@ class v1GetMasterResponse(Printable):
         kwargs: "typing.Dict[str, typing.Any]" = {
             "clusterId": obj["clusterId"],
             "clusterName": obj["clusterName"],
+            "customLogo": obj["customLogo"],
             "masterId": obj["masterId"],
             "strictJobQueueControl": obj["strictJobQueueControl"],
             "version": obj["version"],
@@ -5542,6 +5545,7 @@ class v1GetMasterResponse(Printable):
         out: "typing.Dict[str, typing.Any]" = {
             "clusterId": self.clusterId,
             "clusterName": self.clusterName,
+            "customLogo": self.customLogo,
             "masterId": self.masterId,
             "strictJobQueueControl": self.strictJobQueueControl,
             "version": self.version,
