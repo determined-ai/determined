@@ -264,16 +264,16 @@ class DetCallback(transformers.TrainerCallback):  # type: ignore
     def _check_searcher_compatibility(self, args: transformers.TrainingArguments) -> None:
         if self.searcher_unit == "batches":
             if args.max_steps == -1:
-                self._check_config_mismatch("epochs", args.num_train_epochs)
+                self._raise_config_mismatch("epochs", args.num_train_epochs)
             elif args.max_steps != self.searcher_max_length:
-                self._check_config_mismatch("batches", args.max_steps)
+                self._raise_config_mismatch("batches", args.max_steps)
         elif self.searcher_unit == "epochs":
             if args.max_steps != -1:
-                self._check_config_mismatch("batches", args.max_steps)
+                self._raise_config_mismatch("batches", args.max_steps)
             elif args.num_train_epochs != self.searcher_max_length:
-                self._check_config_mismatch("epochs", args.num_train_epochs)
+                self._raise_config_mismatch("epochs", args.num_train_epochs)
 
-    def _check_config_mismatch(
+    def _raise_config_mismatch(
         self,
         trainer_units: str,
         trainer_len: float,
