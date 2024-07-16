@@ -188,7 +188,7 @@ def _init_context(
             },
             "workspace": config.workspace,
             "project": config.project,
-            "checkpoint_storage": storage.shared._shortcut_to_config(checkpoint_storage)
+            "checkpoint_storage": storage.shared._shortcut_to_config(checkpoint_storage, False)
             if type(checkpoint_storage) == str
             else checkpoint_storage,
         }
