@@ -2,14 +2,12 @@
 
 **Deprecations**
 
--  AgentRM: Support for Singularity, Podman, and Apptainer was deprecated in 0.33.0 and is now
-   removed. Docker is the only container runtime supported by Agent resource manager (AgentRM). It
-   is still possible to use podman with AgentRM by using the podman emulation layer. For detailed
-   instructions, visit: `Emulating Docker CLI with Podman
-   <https://podman-desktop.io/docs/migrating-from-docker/emulating-docker-cli-with-podman>`. You
-   might need to also configure checkpoint_storage in experiment or master configurations: `Master
-   Config Reference
-   https://docs.determined.ai/latest/reference/deploy/master-config-reference.html#checkpoint-storage`
+-  AgentRM: As of version 0.33.0, support for Singularity, Podman, and Apptainer has been deprecated
+   and is now officially removed. Docker is the only container runtime supported by Agent resource
+   manager (AgentRM). However, you can still use Podman with AgentRM by utilizing the Podman
+   emulation layer. For instructions, visit the Podman Desktop documentation and search for
+   "Emulating Docker CLI with Podman". Additionally, you may need to configure
+   ``checkpoint_storage`` in your experiment configuration or :ref:`master-config-reference`.
 
-In enterprise edition, Slurm resource manager still supports Singularity, Podman, or Apptainer use.
-For detailed instructions, visit :ref:deploy-on-slurm-pbs.
+   In the enterprise edition, the Slurm Resource Manager continues to support Singularity, Podman,
+   and Apptainer.
