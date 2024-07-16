@@ -126,8 +126,8 @@ that your Gateway API is going to use.
 
 If you're running Determined outside of the Kubernetes (K8s) cluster, for example on your local
 machine for testing and development, it's possible to test this feature using just a single
-Kubernetes (K8s) cluster. All that is needed is for Det master to be sitting external to the target
-cluster.
+Kubernetes (K8s) cluster. All that is needed is for Determined master to be sitting external to the
+target cluster.
 
 For allowing Determined tasks to connect to master that's running locally on your machine, you can
 use services like ngrok or a reverse SSH tunnel if you have access to a public IP like so: `ssh -R
