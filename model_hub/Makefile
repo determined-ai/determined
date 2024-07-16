@@ -1,5 +1,5 @@
 SHELL := /bin/bash
-VERSION := $(shell ../version.sh)
+export VERSION := $(shell ../version.sh)
 SHORT_GIT_HASH := $(shell git rev-parse --short HEAD)
 
 ARTIFACTS_DIR := /tmp/artifacts
