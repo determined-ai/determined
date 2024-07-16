@@ -6,7 +6,7 @@ import (
 	"github.com/pkg/errors"
 )
 
-// MediaAssetVariations allow varitions of a media asset to be defined.
+// MediaAssetVariations allow variations of a media asset to be defined.
 type MediaAssetVariations struct {
 	DarkHorizontal  string `json:"dark_horizontal"`
 	DarkVeritical   string `json:"dark_vertical"`
@@ -52,6 +52,7 @@ func (m MediaAssetVariations) PickVariation(mode, orientation string) string {
 }
 
 type UICustomizationConfig struct {
+	// LogoPath is the path to variation of custom logo to use in the web UI.
 	LogoPath MediaAssetVariations `json:"logo_path"`
 }
 
