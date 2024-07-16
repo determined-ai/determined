@@ -1401,10 +1401,9 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 		if !m.config.UICustomization.HasCustomLogo() {
 			return echo.NewHTTPError(http.StatusNotFound)
 		}
-		// mode := c.QueryParam("mode")
-		// orientation := c.QueryParam("orientation")
-		// TODO: map to the right variation with fallbacks.
-		logoPath := m.config.UICustomization.LogoPath.LightHorizontal
+		mode := c.QueryParam("mode")
+		orientation := c.QueryParam("orientation")
+		logoPath := m.config.UICustomization.LogoPath.PickVariation(mode, orientation)
 		file, err := os.Open(logoPath)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, "Unable to open logo file")
