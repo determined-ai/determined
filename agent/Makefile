@@ -1,7 +1,7 @@
 .DEFAULT_GOAL := build
 SHELL := bash
 
-export VERSION:=$(shell cat ../VERSION)
+export VERSION:=$(shell ../version.sh)
 export GO111MODULE := on
 export DOCKER_REPO ?= determinedai
 

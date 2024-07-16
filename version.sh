@@ -36,9 +36,8 @@
 # So, in our diagram, if run from B, C, D, E, F, I, J, or K, the script will return
 # 1.1.0. If run from L, M, N, or O, it will return 1.2.0. And so on.
 
-set -x
-
-# If VERSION is unset or the empty string, ""
+# If VERSION is unset or the empty string, "". This will be the default case for
+# local builds.
 if [ -z ${VERSION} ]; then
     # Check if this branch has any tags (typically, only release branches will
     # have tags).
@@ -53,8 +52,7 @@ if [ -z ${VERSION} ]; then
         # tags beginning with 'v', and all tags that end in '-ee'. Then, use
         # head to grab the first one, since the list is sorted in descending
         # order, handling -rc tags correctly courtesy of
-        # versionsort.suffix. Finally, use sed to remove the 'v' prefix to get
-        # the bare version string.
+        # versionsort.suffix.
         MAYBE_TAG=$(git \
                         -c versionsort.suffix='-rc' \
                         tag \
@@ -62,18 +60,21 @@ if [ -z ${VERSION} ]; then
                         --format='%(refname:short)' \
                         --no-contains=$(git merge-base HEAD main) | \
                     grep -E -v 'v0.12|-ee' | \
-                    head -n 1 | \
-                    sed -e 's/v//g'
+                    head -n 1
                   )
     fi
 
     # Munge the tag into the form we want. Note: we always append a SHA hash,
     # even if we're on the commit with the tag. This is partially because I feel
     # like it will be more consistent and result in fewer surprises, but also it
-    # might help indicate that this is a local version.
-    echo -n "${MAYBE_TAG}-${SHA}"
+    # might help indicate that this is a local version. Additionally, remove the
+    # 'v' from the final version string.
+    echo -n "${MAYBE_TAG}+${SHA}" | tr -d 'v'
 else
     # Use existing VERSION, which is much easier. This should be the default
-    # case for CI, as VERSION will already be set.
-    echo -n "${VERSION}"
+    # case for CI, as VERSION will already be set. We also remove the 'v' from
+    # the tag for the version string, as that is what the current CI
+    # functionality expects. Finally, use tr to remove the 'v' prefix to get the
+    # bare version string.
+    echo -n "${VERSION}" | tr -d 'v'
 fi

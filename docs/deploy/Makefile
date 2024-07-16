@@ -1,4 +1,4 @@
-export TF_VAR_det_version := $(shell cat ../../VERSION)
+export TF_VAR_det_version := $(shell ../../version.sh)
 export DET_VARIANT ?= OSS
 export TF_VAR_det_variant := ${DET_VARIANT}
 export TF_CLI_ARGS_init :=  "-backend-config=backend_${DET_VARIANT}.conf"

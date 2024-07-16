@@ -2,6 +2,8 @@ TEST_RESULTS_DIR=/tmp/test-results
 py_bindings_dest=determined/common/api/bindings.py
 cuda_available=$(shell python -c "import torch; print(torch.cuda.is_available())") \
 
+export VERSION:=$(shell ../version.sh)
+
 .PHONY: build
 build:
 	PYTHONWARNINGS=ignore:Normalizing:UserWarning:setuptools.dist \
