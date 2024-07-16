@@ -60,8 +60,7 @@ type GenericCommandSpec struct {
 	WatchProxyIdleTimeout  bool
 	WatchRunnerIdleTimeout bool
 
-	TaskType             model.TaskType
-	NotebookSessionToken string
+	TaskType model.TaskType
 }
 
 // ToTaskSpec generates a TaskSpec.
