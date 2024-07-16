@@ -24,6 +24,7 @@ type Orientation = ValueOf<typeof Orientation>;
 interface Props {
   branding?: BrandingType;
   orientation?: Orientation;
+  customLogo?: boolean;
 }
 
 const logos: Record<BrandingType, Record<Orientation, Record<string, string>>> = {
@@ -52,6 +53,7 @@ const logos: Record<BrandingType, Record<Orientation, Record<string, string>>> =
 const Logo: React.FC<Props> = ({
   branding = BrandingType.Determined,
   orientation = Orientation.Vertical,
+  customLogo = false,
 }: Props) => {
   const { isDarkMode } = useUI();
   const classes = [css[branding], css[orientation]];
@@ -68,27 +70,16 @@ const Logo: React.FC<Props> = ({
   }, [branding]);
 
   useEffect(() => {
-    const checkImageUrl = async () => {
-      const mode = isDarkMode ? 'dark' : 'light';
-      const imageUrl = serverAddress(
-        `/det/customer-assets/logo?orientation=${orientation}&mode=${mode}`,
-      );
-      try {
-        const response = await fetch(imageUrl);
-        if (response.ok) {
-          setImageSrc(imageUrl);
-        } else {
-          setImageSrc(logos[branding][orientation][mode]);
-        }
-      } catch {
-        setImageSrc(logos[branding][orientation][mode]);
-      }
-    };
+    const mode = isDarkMode ? 'dark' : 'light';
+    const imageUrl = `/det/customer-assets/logo?orientation=${orientation}&mode=${mode}`;
+    if (customLogo) {
+      setImageSrc(imageUrl);
+    } else {
+      setImageSrc(logos[branding][orientation][mode]);
+    }
+  }, [branding, orientation, isDarkMode, customLogo]);
 
-    checkImageUrl();
-  }, [branding, orientation, isDarkMode]);
-
-  return <img alt={alt + 'hi'} className={classes.join(' ')} src={logoSrc} />;
+  return <img alt={alt} className={classes.join(' ')} src={logoSrc} />;
 };
 
 export default Logo;

@@ -48,6 +48,7 @@ func (a *apiServer) GetMaster(
 		ClusterId:             a.m.ClusterID,
 		ClusterName:           a.m.config.ClusterName,
 		TelemetryEnabled:      a.m.config.Telemetry.Enabled && a.m.config.Telemetry.SegmentWebUIKey != "",
+		CustomLogo:            a.m.config.UICustomization.HasCustomLogo(),
 		ExternalLoginUri:      a.m.config.InternalConfig.ExternalSessions.LoginURI,
 		ExternalLogoutUri:     a.m.config.InternalConfig.ExternalSessions.LogoutURI,
 		Branding:              brand,
