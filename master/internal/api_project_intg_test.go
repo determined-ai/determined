@@ -27,6 +27,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/mocks"
 	"github.com/determined-ai/determined/master/internal/project"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/random"
 	"github.com/determined-ai/determined/master/pkg/syncx/errgroupx"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
@@ -444,6 +445,44 @@ func TestGetProjectColumnsRuns(t *testing.T) {
 		Type:     projectv1.ColumnType_COLUMN_TYPE_TEXT,
 	}
 	require.Equal(t, expectedHparam, getColumnsResp.Columns[len(getColumnsResp.Columns)-1])
+
+	req := &apiv1.SearchRunsRequest{
+		ProjectId: ptrs.Ptr(int32(projectIDInt)),
+		Sort:      ptrs.Ptr("id=asc"),
+	}
+	searchResp, err := api.SearchRuns(ctx, req)
+	require.NoError(t, err)
+
+	rawMetadata := map[string]any{
+		"string_key": "a",
+		"nested": map[string]any{
+			"string_key": "a",
+		},
+	}
+	metadata := newProtoStruct(t, rawMetadata)
+	_, err = api.PostRunMetadata(ctx, &apiv1.PostRunMetadataRequest{
+		RunId:    searchResp.Runs[0].Id,
+		Metadata: metadata,
+	})
+	require.NoError(t, err)
+
+	getColumnsResp, err = api.GetProjectColumns(ctx, getColumnsReq)
+	require.NoError(t, err)
+	require.Len(t, getColumnsResp.Columns, len(defaultRunsTableColumns)+4)
+
+	expectedMetadata := &projectv1.ProjectColumn{
+		Column:   "metadata.string_key",
+		Location: projectv1.LocationType_LOCATION_TYPE_RUN_METADATA,
+		Type:     projectv1.ColumnType_COLUMN_TYPE_TEXT,
+	}
+	require.Equal(t, expectedMetadata, getColumnsResp.Columns[len(getColumnsResp.Columns)-1])
+
+	expectedMetadata = &projectv1.ProjectColumn{
+		Column:   "metadata.nested.string_key",
+		Location: projectv1.LocationType_LOCATION_TYPE_RUN_METADATA,
+		Type:     projectv1.ColumnType_COLUMN_TYPE_TEXT,
+	}
+	require.Equal(t, expectedMetadata, getColumnsResp.Columns[len(getColumnsResp.Columns)-2])
 }
 
 func TestCreateProjectWithoutProjectKey(t *testing.T) {
