@@ -1447,7 +1447,19 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 		if mode == "dark" {
 			destUrl = m.config.UICustomization.LogoURLDark
 		}
-		return c.Redirect(http.StatusTemporaryRedirect, destUrl)
+
+		resp, err := http.Get(destUrl)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "Unable to fetch logo from URL")
+		}
+		defer resp.Body.Close()
+		if resp.StatusCode != http.StatusOK {
+			return echo.NewHTTPError(http.StatusNotFound, "Logo not found at the provided URL")
+		}
+
+		contentType := resp.Header.Get("Content-Type")
+		c.Response().Header().Set("cache-control", "public, max-age=3600")
+		return c.Stream(http.StatusOK, contentType, resp.Body)
 	})
 	webuiGroup.File("/design", designIndex)
 	webuiGroup.File("/design/", designIndex)
