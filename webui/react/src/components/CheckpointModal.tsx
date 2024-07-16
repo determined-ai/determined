@@ -16,8 +16,8 @@ import {
 } from 'types';
 import { formatDatetime } from 'utils/datetime';
 import handleError, { DetError, ErrorType } from 'utils/error';
-import { isAbsolutePath } from 'utils/routes';
 import { createPachydermLineageLink } from 'utils/integrations';
+import { isAbsolutePath } from 'utils/routes';
 import { humanReadableBytes } from 'utils/string';
 import { checkpointSize } from 'utils/workload';
 
