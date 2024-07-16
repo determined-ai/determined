@@ -142,9 +142,15 @@ func DefaultConfig() *Config {
 	}
 }
 
+type LogoVariations struct {
+	DarkVeritical   string `json:"dark_vertical"`
+	LightVeritical  string `json:"light_vertical"`
+	DarkHorizontal  string `json:"dark_horizontal"`
+	LightHorizontal string `json:"light_horizontal"`
+}
+
 type UICustomizationConfig struct {
-	LogoURLDark  string `json:"logo_url_dark"`
-	LogoURLLight string `json:"logo_url_light"`
+	LogoURL LogoVariations `json:"logo_url"`
 }
 
 func (u UICustomizationConfig) Validate() []error {
@@ -153,7 +159,8 @@ func (u UICustomizationConfig) Validate() []error {
 
 // HasCustomLogo returns whether the UI customization has a custom logo.
 func (u UICustomizationConfig) HasCustomLogo() bool {
-	return u.LogoURLDark != "" || u.LogoURLLight != ""
+	// TODO.
+	return u.LogoURL.LightHorizontal != ""
 }
 
 // Config is the configuration of the master.

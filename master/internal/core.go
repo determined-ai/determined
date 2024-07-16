@@ -1401,13 +1401,10 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 		if !m.config.UICustomization.HasCustomLogo() {
 			return echo.NewHTTPError(http.StatusNotFound)
 		}
-		mode := c.QueryParam("mode")
+		// mode := c.QueryParam("mode")
 		// orientation := c.QueryParam("orientation")
-		destUrl := m.config.UICustomization.LogoURLLight
-		if mode == "dark" {
-			destUrl = m.config.UICustomization.LogoURLDark
-		}
-
+		// TODO: map to the right variation with fallbacks.
+		destUrl := m.config.UICustomization.LogoURL.LightHorizontal
 		resp, err := http.Get(destUrl)
 		if err != nil {
 			return echo.NewHTTPError(http.StatusInternalServerError, "Unable to fetch logo from URL")
