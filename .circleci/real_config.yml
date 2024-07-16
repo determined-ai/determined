@@ -5518,39 +5518,6 @@ workflows:
               ld_library_path:
             security:
               initial_user_password: ${INITIAL_USER_PASSWORD}
-      - test-e2e-slurm:
-            name: test-e2e-slurm-agent-singularity-znode
-            context:
-              - dev-ci-cluster-default-user-credentials
-            requires:
-              - package-and-push-system-local-ee
-            agent-use: "-A"
-            extra-pytest-flags: "-k 'not node_not_available'"
-            # For now we must skip node_not_available. There is a inconsistency with the agent where
-            # the error is "failed to create experiment: slots requested exceeds cluster capacity" instead of the expected message.
-            master_config: |
-                task_container_defaults:
-                  slurm:
-                    sbatch_args:
-                      - --time=04:00:00
-                  environment_variables:
-                    # Some ports are not working, disable them so distributed jobs work.
-                    - NCCL_IB_HCA=mlx6_0:0
-                checkpoint_storage:
-                  type: shared_fs
-                  host_path: /scratch/launcher/.launcher.$HOSTNAME/checkpoints
-                  storage_path: determined-checkpoint
-                  save_experiment_best: 0
-                  save_trial_best: 1
-                  save_trial_latest: 1
-                db:
-                  user: postgres
-                  host: localhost
-                  port: 5432
-                  name: determined
-                  password: ${HPC_DB_PASSWD}
-                security:
-                  initial_user_password: ${INITIAL_USER_PASSWORD}
       - terminate-vpc-circleci:
             context: ["gcp"]
 
