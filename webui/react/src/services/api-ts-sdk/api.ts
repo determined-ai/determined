@@ -4321,7 +4321,7 @@ export interface V1GetMasterResponse {
      * @type {boolean}
      * @memberof V1GetMasterResponse
      */
-    customLogo: boolean;
+    hasCustomLogo: boolean;
 }
 /**
  * Response to GetMeRequest.

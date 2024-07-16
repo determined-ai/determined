@@ -55,7 +55,7 @@ message GetMasterResponse {
         "cluster_id",
         "cluster_name",
         "strict_job_queue_control",
-        "custom_logo"
+        "has_custom_logo"
       ]
     }
   };
@@ -97,7 +97,7 @@ message GetMasterResponse {
   // Active server cluster-wide message if any.
   optional ClusterMessage cluster_message = 15;
   // Whether the cluster has a user-submitted custom logo.
-  bool custom_logo = 16;
+  bool has_custom_logo = 16;
 }
 
 // Get telemetry information.
