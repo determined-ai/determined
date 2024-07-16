@@ -56,8 +56,8 @@ const Logo: React.FC<Props> = ({
   hasCustomLogo = false,
 }: Props) => {
   const { isDarkMode } = useUI();
-  const classes = [css[branding], css[orientation]];
   const [logoSrc, setImageSrc] = useState<string>('');
+  const [classes, setClasses] = useState<string[]>([css[branding], css[orientation]]);
 
   const alt = useMemo(() => {
     const isDetermined = branding === BrandingType.Determined;
@@ -71,9 +71,10 @@ const Logo: React.FC<Props> = ({
 
   useEffect(() => {
     const mode = isDarkMode ? 'dark' : 'light';
-    const imageUrl = `/det/customer-assets/logo?orientation=${orientation}&mode=${mode}`;
     if (hasCustomLogo) {
+      const imageUrl = `/det/customer-assets/logo?orientation=${orientation}&mode=${mode}`;
       setImageSrc(imageUrl);
+      setClasses([css.customLogo]);
     } else {
       setImageSrc(logos[branding][orientation][mode]);
     }
