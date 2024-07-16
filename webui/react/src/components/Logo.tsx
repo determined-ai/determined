@@ -76,7 +76,7 @@ const Logo: React.FC<Props> = ({
       try {
         const response = await fetch(imageUrl);
         if (response.ok) {
-          setImageSrc(response.url);
+          setImageSrc(imageUrl);
         } else {
           setImageSrc(logos[branding][orientation][mode]);
         }
