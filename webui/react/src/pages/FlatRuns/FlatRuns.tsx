@@ -558,8 +558,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
     if (!isLoadingSettings && settings.sortString) {
       setSorts(parseSortString(settings.sortString));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoadingSettings]);
+  }, [isLoadingSettings, settings.sortString]);
 
   useEffect(() => {
     let cleanup: () => void;
