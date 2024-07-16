@@ -937,3 +937,95 @@ func TestMultiRMPreemptionAndPriority(t *testing.T) {
 	priority = ReadPriority("nil-rp", model.CommandConfig{})
 	require.Equal(t, KubernetesDefaultPriority, priority)
 }
+
+func TestPickVariation(t *testing.T) {
+	tests := []struct {
+		name        string
+		variations  MediaAssetVariations
+		mode        string
+		orientation string
+		expected    string
+	}{
+		{
+			name: "Light Horizontal prioritized",
+			variations: MediaAssetVariations{
+				LightHorizontal: "light-horizontal",
+				LightVeritical:  "light-vertical",
+				DarkHorizontal:  "dark-horizontal",
+				DarkVeritical:   "dark-vertical",
+			},
+			mode:        "",
+			orientation: "",
+			expected:    "light-horizontal",
+		},
+		{
+			name: "Light Vertical when Light Horizontal is empty",
+			variations: MediaAssetVariations{
+				LightHorizontal: "",
+				LightVeritical:  "light-vertical",
+				DarkHorizontal:  "dark-horizontal",
+				DarkVeritical:   "dark-vertical",
+			},
+			mode:        "",
+			orientation: "vertical",
+			expected:    "light-vertical",
+		},
+		{
+			name: "Dark Horizontal when mode is dark",
+			variations: MediaAssetVariations{
+				LightHorizontal: "light-horizontal",
+				LightVeritical:  "light-vertical",
+				DarkHorizontal:  "dark-horizontal",
+				DarkVeritical:   "dark-vertical",
+			},
+			mode:        "dark",
+			orientation: "",
+			expected:    "dark-horizontal",
+		},
+		{
+			name: "Dark Vertical when mode is dark and orientation is vertical",
+			variations: MediaAssetVariations{
+				LightHorizontal: "light-horizontal",
+				LightVeritical:  "light-vertical",
+				DarkHorizontal:  "dark-horizontal",
+				DarkVeritical:   "dark-vertical",
+			},
+			mode:        "dark",
+			orientation: "vertical",
+			expected:    "dark-vertical",
+		},
+		{
+			name: "Fallback to Light Horizontal if no matches",
+			variations: MediaAssetVariations{
+				LightHorizontal: "light-horizontal",
+				LightVeritical:  "",
+				DarkHorizontal:  "",
+				DarkVeritical:   "",
+			},
+			mode:        "dark",
+			orientation: "vertical",
+			expected:    "light-horizontal",
+		},
+		{
+			name: "Empty variations fallback to empty string",
+			variations: MediaAssetVariations{
+				LightHorizontal: "",
+				LightVeritical:  "",
+				DarkHorizontal:  "",
+				DarkVeritical:   "",
+			},
+			mode:        "",
+			orientation: "",
+			expected:    "",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result := tt.variations.PickVariation(tt.mode, tt.orientation)
+			if result != tt.expected {
+				t.Errorf("PickVariation(%v, %v) = %v; want %v", tt.mode, tt.orientation, result, tt.expected)
+			}
+		})
+	}
+}
