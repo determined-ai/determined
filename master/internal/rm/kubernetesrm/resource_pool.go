@@ -111,6 +111,7 @@ func (k *kubernetesResourcePool) JobSchedulingStateChanged(msg jobSchedulingStat
 	defer k.mu.Unlock()
 	k.tryAdmitPendingTasks = true
 
+	fmt.Printf("Called: %s \n \n \n ", msg.AllocationID)
 	for it := k.reqList.Iterator(); it.Next(); {
 		req := it.Value()
 		if req.AllocationID == msg.AllocationID {
