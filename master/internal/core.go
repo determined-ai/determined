@@ -1404,19 +1404,23 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 		// mode := c.QueryParam("mode")
 		// orientation := c.QueryParam("orientation")
 		// TODO: map to the right variation with fallbacks.
-		destUrl := m.config.UICustomization.LogoURL.LightHorizontal
-		resp, err := http.Get(destUrl)
+		logoPath := m.config.UICustomization.LogoPath.LightHorizontal
+		file, err := os.Open(logoPath)
 		if err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, "Unable to fetch logo from URL")
+			return echo.NewHTTPError(http.StatusInternalServerError, "Unable to open logo file")
 		}
-		defer resp.Body.Close()
-		if resp.StatusCode != http.StatusOK {
-			return echo.NewHTTPError(http.StatusNotFound, "Logo not found at the provided URL")
-		}
+		defer file.Close()
 
-		contentType := resp.Header.Get("Content-Type")
-		c.Response().Header().Set("cache-control", "public, max-age=3600")
-		return c.Stream(http.StatusOK, contentType, resp.Body)
+		// Read the first 512 bytes to detect the content type
+		buffer := make([]byte, 512)
+		_, err = file.Read(buffer)
+		if err != nil {
+			return echo.NewHTTPError(http.StatusInternalServerError, "Unable to read logo file")
+		}
+		contentType := http.DetectContentType(buffer)
+		file.Seek(0, 0)
+		c.Response().Header().Set("Cache-Control", "public, max-age=3600")
+		return c.Stream(http.StatusOK, contentType, file)
 	})
 	webuiGroup.File("/design", designIndex)
 	webuiGroup.File("/design/", designIndex)
