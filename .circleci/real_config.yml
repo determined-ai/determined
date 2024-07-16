@@ -2658,9 +2658,6 @@ jobs:
       container-run-type:
         type: string
         default: singularity
-      agent-use:
-        type: string
-        default: ""
       workload-manager:
         type: string
         default: slurm
@@ -2766,7 +2763,7 @@ jobs:
             sudo apt-get update
             sudo apt-get install gettext
             sudo apt-get install iproute2
-            yes yes | PATH=$HOME/.local/bin:$PATH make slurmcluster FLAGS="-c <<parameters.container-run-type>> -w <<parameters.workload-manager>> <<parameters.agent-use>>" TF_LOCK=false | tee output.log
+            yes yes | PATH=$HOME/.local/bin:$PATH make slurmcluster FLAGS="-c <<parameters.container-run-type>> -w <<parameters.workload-manager>>" TF_LOCK=false | tee output.log
           background: true
 
       - run:
@@ -2794,20 +2791,6 @@ jobs:
           master-host: <<parameters.master-host>>
           master-port: <<parameters.master-port>>
           extra-pytest-flags: <<parameters.extra-pytest-flags>>
-
-      # Must cancel the srun command to prevent a ssh error
-      - when:
-          condition:
-            equal: ["-A", <<parameters.agent-use>>]
-          steps:
-            - run:
-                name: Deallocate the Resources on VM
-                command: |
-                  ZONE=$(terraform -chdir=tools/slurm/terraform output --raw zone)
-                  INSTANCE_NAME=$(terraform -chdir=tools/slurm/terraform output --raw instance_name)
-                  PROJECT=$(terraform -chdir=tools/slurm/terraform output --raw project)
-                  gcloud compute ssh --zone "$ZONE" "$INSTANCE_NAME" --project "$PROJECT" -- \
-                  scancel -u $USER
 
       - run:
           name: Make unslurmcluster
@@ -2908,9 +2891,6 @@ jobs:
         type: string
         default: launcher
       extra-pytest-flags:
-        type: string
-        default: ""
-      agent-use:
         type: string
         default: ""
       collect-det-job-logs:
