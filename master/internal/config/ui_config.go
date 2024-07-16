@@ -26,6 +26,9 @@ func (m MediaAssetVariations) PickVariation(mode, orientation string) string {
 			if m.LightVeritical != "" {
 				return m.LightVeritical
 			}
+			if m.LightHorizontal != "" {
+				return m.LightHorizontal
+			}
 		}
 	}
 
@@ -38,6 +41,9 @@ func (m MediaAssetVariations) PickVariation(mode, orientation string) string {
 		if orientation == "" || orientation == "vertical" {
 			if m.DarkVeritical != "" {
 				return m.DarkVeritical
+			}
+			if m.DarkHorizontal != "" {
+				return m.DarkHorizontal
 			}
 		}
 	}
