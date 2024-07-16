@@ -5,7 +5,6 @@ See the documentation: http://www.sphinx-doc.org/en/master/config
 
 import json
 import os
-import pathlib
 import sys
 import time
 
