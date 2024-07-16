@@ -250,7 +250,6 @@ resource_manager:
 additional_resource_managers:
   - resource_manager:
       type: kubernetes
-      cluster_name: b
       max_slots_per_pod: 12
     resource_pools:
     - pool_name: a`, nil, "Check Failed! 1 errors found:\n\terror found at " +
@@ -266,6 +265,7 @@ additional_resource_managers:
   - resource_manager:
       type: kubernetes
       name: test
+      cluster_name: test
       max_slots_per_pod: 12`, nil, "Check Failed! 2 errors found:\n\terror found at " +
 			"root.ResourceConfig: for additional_resource_managers, you must specify at " +
 			"least one resource pool\n\terror found at root: for additional_resource_managers, " +
@@ -358,7 +358,7 @@ func TestResolveConfig(t *testing.T) {
 			ResourceConfig: ResourceConfig{
 				RootManagerInternal: &ResourceManagerConfig{
 					AgentRM: &AgentResourceManagerConfig{
-						Name:                       DefaultRMName,
+						ClusterName:                DefaultRMName,
 						DefaultAuxResourcePool:     "default",
 						DefaultComputeResourcePool: "default",
 						Scheduler:                  DefaultSchedulerConfig(),
@@ -381,7 +381,7 @@ resource_manager:
 			ResourceConfig: ResourceConfig{
 				RootManagerInternal: &ResourceManagerConfig{
 					AgentRM: &AgentResourceManagerConfig{
-						Name:                       DefaultRMName,
+						ClusterName:                DefaultRMName,
 						DefaultAuxResourcePool:     "default",
 						DefaultComputeResourcePool: "default",
 						Scheduler:                  DefaultSchedulerConfig(),
@@ -406,7 +406,7 @@ resource_manager:
 			ResourceConfig: ResourceConfig{
 				RootManagerInternal: &ResourceManagerConfig{
 					AgentRM: &AgentResourceManagerConfig{
-						Name:                       DefaultRMName,
+						ClusterName:                DefaultRMName,
 						DefaultAuxResourcePool:     "default",
 						DefaultComputeResourcePool: "default",
 						Scheduler: &SchedulerConfig{
@@ -437,7 +437,7 @@ resource_pools:
 			ResourceConfig: ResourceConfig{
 				RootManagerInternal: &ResourceManagerConfig{
 					AgentRM: &AgentResourceManagerConfig{
-						Name:                       DefaultRMName,
+						ClusterName:                DefaultRMName,
 						DefaultAuxResourcePool:     "default",
 						DefaultComputeResourcePool: "default",
 						Scheduler: &SchedulerConfig{

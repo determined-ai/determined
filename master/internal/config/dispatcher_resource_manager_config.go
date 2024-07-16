@@ -55,7 +55,7 @@ type DispatcherResourceManagerConfig struct {
 	DefaultComputeResourcePool *string `json:"default_compute_resource_pool"`
 	JobProjectSource           *string `json:"job_project_source"`
 
-	// Deprecated, use ClusterName.
+	// Deprecated: use ClusterName.
 	Name     string            `json:"name"`
 	Metadata map[string]string `json:"metadata"`
 

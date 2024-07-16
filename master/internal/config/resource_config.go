@@ -69,7 +69,7 @@ func (r *ResourceConfig) GetKubernetesClusterNames() []string {
 
 func defaultAgentRM() *AgentResourceManagerConfig {
 	return &AgentResourceManagerConfig{
-		Name:                       DefaultRMName,
+		ClusterName:                DefaultRMName,
 		DefaultComputeResourcePool: defaultResourcePoolName,
 		DefaultAuxResourcePool:     defaultResourcePoolName,
 	}

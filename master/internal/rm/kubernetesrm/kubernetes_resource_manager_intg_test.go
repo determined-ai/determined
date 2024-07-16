@@ -647,7 +647,7 @@ func TestGetResourcePools(t *testing.T) {
 	cfg := &config.ResourceConfig{
 		RootManagerInternal: &config.ResourceManagerConfig{
 			KubernetesRM: &config.KubernetesResourceManagerConfig{
-				Name:                       expectedName,
+				ClusterName:                expectedName,
 				Metadata:                   expectedMetadata,
 				MaxSlotsPerPod:             ptrs.Ptr(5),
 				DefaultAuxResourcePool:     "cpu-pool",
@@ -770,7 +770,7 @@ func TestHealthCheck(t *testing.T) {
 	mockPodInterface := &mocks.PodInterface{}
 	kubernetesRM := &ResourceManager{
 		config: &config.KubernetesResourceManagerConfig{
-			Name: "testname",
+			ClusterName: "testname",
 		},
 		jobsService: &jobsService{
 			podInterfaces: map[string]typedV1.PodInterface{
@@ -784,8 +784,8 @@ func TestHealthCheck(t *testing.T) {
 		mockPodInterface.On("List", mock.Anything, mock.Anything).Return(nil, nil).Once()
 		require.Equal(t, []model.ResourceManagerHealth{
 			{
-				Name:   "testname",
-				Status: model.Healthy,
+				ClusterName: "testname",
+				Status:      model.Healthy,
 			},
 		}, kubernetesRM.HealthCheck())
 	})
@@ -795,8 +795,8 @@ func TestHealthCheck(t *testing.T) {
 			Return(nil, fmt.Errorf("error")).Once()
 		require.Equal(t, []model.ResourceManagerHealth{
 			{
-				Name:   "testname",
-				Status: model.Unhealthy,
+				ClusterName: "testname",
+				Status:      model.Unhealthy,
 			},
 		}, kubernetesRM.HealthCheck())
 	})

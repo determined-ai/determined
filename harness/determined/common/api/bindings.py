@@ -268,17 +268,17 @@ class PatchExperimentPatchResources(Printable):
         return out
 
 class ResourceManagerHealth(Printable):
-    name: "typing.Optional[str]" = None
+    cluster_name: "typing.Optional[str]" = None
     status: "typing.Optional[HealthStatus]" = None
 
     def __init__(
         self,
         *,
-        name: "typing.Union[str, None, Unset]" = _unset,
+        cluster_name: "typing.Union[str, None, Unset]" = _unset,
         status: "typing.Union[HealthStatus, None, Unset]" = _unset,
     ):
-        if not isinstance(name, Unset):
-            self.name = name
+        if not isinstance(cluster_name, Unset):
+            self.cluster_name = cluster_name
         if not isinstance(status, Unset):
             self.status = status
 
@@ -286,8 +286,8 @@ class ResourceManagerHealth(Printable):
     def from_json(cls, obj: Json) -> "ResourceManagerHealth":
         kwargs: "typing.Dict[str, typing.Any]" = {
         }
-        if "name" in obj:
-            kwargs["name"] = obj["name"]
+        if "cluster_name" in obj:
+            kwargs["cluster_name"] = obj["cluster_name"]
         if "status" in obj:
             kwargs["status"] = HealthStatus(obj["status"]) if obj["status"] is not None else None
         return cls(**kwargs)
@@ -295,8 +295,8 @@ class ResourceManagerHealth(Printable):
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
         }
-        if not omit_unset or "name" in vars(self):
-            out["name"] = self.name
+        if not omit_unset or "cluster_name" in vars(self):
+            out["cluster_name"] = self.cluster_name
         if not omit_unset or "status" in vars(self):
             out["status"] = None if self.status is None else self.status.value
         return out

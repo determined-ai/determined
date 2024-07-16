@@ -435,16 +435,16 @@ func TestHealthCheck(t *testing.T) {
 	rmA := &mocks.ResourceManager{}
 	rmA.On("HealthCheck").Return([]model.ResourceManagerHealth{
 		{
-			Name:   "a",
-			Status: model.Healthy,
+			ClusterName: "a",
+			Status:      model.Healthy,
 		},
 	}).Once()
 
 	rmB := &mocks.ResourceManager{}
 	rmB.On("HealthCheck").Return([]model.ResourceManagerHealth{
 		{
-			Name:   "b",
-			Status: model.Unhealthy,
+			ClusterName: "b",
+			Status:      model.Unhealthy,
 		},
 	})
 
@@ -454,12 +454,12 @@ func TestHealthCheck(t *testing.T) {
 	}}
 	require.ElementsMatch(t, []model.ResourceManagerHealth{
 		{
-			Name:   "a",
-			Status: model.Healthy,
+			ClusterName: "a",
+			Status:      model.Healthy,
 		},
 		{
-			Name:   "b",
-			Status: model.Unhealthy,
+			ClusterName: "b",
+			Status:      model.Unhealthy,
 		},
 	}, m.HealthCheck())
 }

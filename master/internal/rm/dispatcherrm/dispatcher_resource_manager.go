@@ -274,8 +274,8 @@ func (m *DispatcherResourceManager) HealthCheck() []model.ResourceManagerHealth 
 
 	return []model.ResourceManagerHealth{
 		{
-			Name:   m.rmConfig.ClusterName,
-			Status: status,
+			ClusterName: m.rmConfig.ClusterName,
+			Status:      status,
 		},
 	}
 }

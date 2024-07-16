@@ -390,7 +390,7 @@ export interface ResourceManagerHealth {
      * @type {string}
      * @memberof ResourceManagerHealth
      */
-    name?: string;
+    cluster_name?: string;
     /**
      * 
      * @type {HealthStatus}

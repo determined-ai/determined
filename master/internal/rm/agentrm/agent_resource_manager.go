@@ -152,8 +152,8 @@ func (a *ResourceManager) DisableAgent(msg *apiv1.DisableAgentRequest) (*apiv1.D
 func (a *ResourceManager) HealthCheck() []model.ResourceManagerHealth {
 	return []model.ResourceManagerHealth{
 		{
-			Name:   a.config.ClusterName,
-			Status: model.Healthy,
+			ClusterName: a.config.ClusterName,
+			Status:      model.Healthy,
 		},
 	}
 }

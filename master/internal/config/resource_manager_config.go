@@ -115,7 +115,7 @@ type AgentResourceManagerConfig struct {
 	RequireAuthentication bool   `json:"require_authentication"`
 	ClientCA              string `json:"client_ca"`
 
-	// Deprecated, use ClusterName.
+	// Deprecated: use ClusterName.
 	Name     string            `json:"name"`
 	Metadata map[string]string `json:"metadata"`
 }
@@ -179,6 +179,7 @@ type KubernetesResourceManagerConfig struct {
 
 	MaxSlotsPerPod *int `json:"max_slots_per_pod"`
 
+	ClusterName              string                  `json:"cluster_name"`
 	MasterServiceName        string                  `json:"master_service_name"`
 	LeaveKubernetesResources bool                    `json:"leave_kubernetes_resources"`
 	DefaultScheduler         string                  `json:"default_scheduler"`
@@ -196,9 +197,10 @@ type KubernetesResourceManagerConfig struct {
 
 	InternalTaskGateway *InternalTaskGatewayConfig `json:"internal_task_gateway"`
 
-	Name        string            `json:"name"`
-	ClusterName string            `json:"cluster_name"`
-	Metadata    map[string]string `json:"metadata"`
+	// Deprecated: use ClusterName.
+	Name string `json:"name"`
+
+	Metadata map[string]string `json:"metadata"`
 }
 
 // InternalTaskGatewayConfig is config for exposing Determined tasks to outside of the cluster.

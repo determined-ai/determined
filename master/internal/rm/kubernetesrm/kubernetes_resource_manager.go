@@ -178,8 +178,8 @@ func (ResourceManager) ExternalPreemptionPending(sproto.PendingPreemption) error
 func (k *ResourceManager) HealthCheck() []model.ResourceManagerHealth {
 	return []model.ResourceManagerHealth{
 		{
-			Name:   k.config.ClusterName,
-			Status: k.jobsService.HealthStatus(),
+			ClusterName: k.config.ClusterName,
+			Status:      k.jobsService.HealthStatus(),
 		},
 	}
 }
