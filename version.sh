@@ -12,7 +12,7 @@
 #                      |
 #                  I---J (feat-behind-latest-tag)
 #                /
-#...A---B---C---D---E---F---M---N---O
+#...A---B---C---D---E---F---M---N---O - main
 #    \                   \
 #     G---H (1.1.x)       K---L (1.2.x)
 #         |                   |
