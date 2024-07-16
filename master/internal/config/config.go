@@ -142,6 +142,20 @@ func DefaultConfig() *Config {
 	}
 }
 
+type UICustomizationConfig struct {
+	LogoURLDark  string `json:"logo_url_dark"`
+	LogoURLLight string `json:"logo_url_light"`
+}
+
+func (u UICustomizationConfig) Validate() []error {
+	return nil
+}
+
+// HasCustomLogo returns whether the UI customization has a custom logo.
+func (u UICustomizationConfig) HasCustomLogo() bool {
+	return u.LogoURLDark != "" || u.LogoURLLight != ""
+}
+
 // Config is the configuration of the master.
 //
 // It is populated, in the following order, by the master configuration file,
@@ -161,6 +175,7 @@ type Config struct {
 	EnableCors            bool                              `json:"enable_cors"`
 	LaunchError           bool                              `json:"launch_error"`
 	ClusterName           string                            `json:"cluster_name"`
+	UICustomization       UICustomizationConfig             `json:"ui_customization"`
 	Logging               model.LoggingConfig               `json:"logging"`
 	RetentionPolicy       model.LogRetentionPolicy          `json:"retention_policy"`
 	Observability         ObservabilityConfig               `json:"observability"`

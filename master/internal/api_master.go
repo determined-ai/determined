@@ -42,7 +42,6 @@ func (a *apiServer) GetMaster(
 	if license.IsEE() {
 		brand = "hpe"
 	}
-
 	masterResp := &apiv1.GetMasterResponse{
 		Version:               version.Version,
 		MasterId:              a.m.MasterID,

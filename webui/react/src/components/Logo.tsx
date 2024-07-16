@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 
 import logoDeterminedOnDarkHorizontal from 'assets/images/logo-determined-on-dark-horizontal.svg?url';
 import logoDeterminedOnDarkVertical from 'assets/images/logo-determined-on-dark-vertical.svg?url';
@@ -55,6 +55,7 @@ const Logo: React.FC<Props> = ({
 }: Props) => {
   const { isDarkMode } = useUI();
   const classes = [css[branding], css[orientation]];
+  const [logoSrc, setImageSrc] = useState<string>('');
 
   const alt = useMemo(() => {
     const isDetermined = branding === BrandingType.Determined;
@@ -66,13 +67,28 @@ const Logo: React.FC<Props> = ({
     ].join();
   }, [branding]);
 
-  return (
-    <img
-      alt={alt}
-      className={classes.join(' ')}
-      src={logos[branding][orientation][isDarkMode ? 'dark' : 'light']}
-    />
-  );
+  useEffect(() => {
+    const checkImageUrl = async () => {
+      const mode = isDarkMode ? 'dark' : 'light';
+      const imageUrl = serverAddress(
+        `/det/customer-assets/logo?orientation=${orientation}&mode=${mode}`,
+      );
+      try {
+        const response = await fetch(imageUrl);
+        if (response.ok) {
+          setImageSrc(response.url);
+        } else {
+          setImageSrc(logos[branding][orientation][mode]);
+        }
+      } catch {
+        setImageSrc(logos[branding][orientation][mode]);
+      }
+    };
+
+    checkImageUrl();
+  }, [branding, orientation, isDarkMode]);
+
+  return <img alt={alt + 'hi'} className={classes.join(' ')} src={logoSrc} />;
 };
 
 export default Logo;
