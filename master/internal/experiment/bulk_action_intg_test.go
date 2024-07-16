@@ -7,10 +7,11 @@ import (
 	"context"
 	"testing"
 
-	"github.com/determined-ai/determined/master/internal/db"
-	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
+
+	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
 func TestActivateExperiments(t *testing.T) {
