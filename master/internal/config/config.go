@@ -142,27 +142,6 @@ func DefaultConfig() *Config {
 	}
 }
 
-type AssetVariations struct {
-	DarkVeritical   string `json:"dark_vertical"`
-	LightVeritical  string `json:"light_vertical"`
-	DarkHorizontal  string `json:"dark_horizontal"`
-	LightHorizontal string `json:"light_horizontal"`
-}
-
-type UICustomizationConfig struct {
-	LogoPath AssetVariations `json:"logo_path"`
-}
-
-func (u UICustomizationConfig) Validate() []error {
-	return nil
-}
-
-// HasCustomLogo returns whether the UI customization has a custom logo.
-func (u UICustomizationConfig) HasCustomLogo() bool {
-	// TODO.
-	return u.LogoPath.LightHorizontal != ""
-}
-
 // Config is the configuration of the master.
 //
 // It is populated, in the following order, by the master configuration file,
