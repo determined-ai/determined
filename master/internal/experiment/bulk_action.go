@@ -129,7 +129,7 @@ func FilterToExperimentIds(ctx context.Context, filters *apiv1.BulkExperimentFil
 	return experimentIDList, nil
 }
 
-// modifiable unexported func, exposed to allow for unit testing
+// experimentsEditableByUser is a modifiable unexported func, exposed to allow for unit testing.
 var experimentsEditableByUser = getExperimentsEditableByCurrentUser
 
 func getExperimentsEditableByCurrentUser(

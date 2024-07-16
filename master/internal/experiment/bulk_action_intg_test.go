@@ -7,13 +7,14 @@ import (
 	"context"
 	"testing"
 
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/require"
+	"google.golang.org/protobuf/types/known/wrapperspb"
+
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
-	"github.com/google/uuid"
-	"github.com/stretchr/testify/require"
-	"google.golang.org/protobuf/types/known/wrapperspb"
 )
 
 func TestGetExperimentsEditableByUser(t *testing.T) {
@@ -56,7 +57,7 @@ func TestGetExperimentsEditableByUser(t *testing.T) {
 	}
 
 	defer func(ids []int) {
-		db.SingleDB().DeleteExperiments(ctx, ids)
+		_ = db.SingleDB().DeleteExperiments(ctx, ids)
 	}(allExperimentIds)
 
 	tests := []struct {
@@ -147,7 +148,9 @@ func TestGetExperimentsEditableByUser(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			actual, err := getExperimentsEditableByUser(ctx, &testUser, tt.args.projectID, tt.args.experimentIDs, tt.args.filters)
+			actual, err := getExperimentsEditableByUser(
+				ctx, &testUser, tt.args.projectID, tt.args.experimentIDs, tt.args.filters,
+			)
 			if (err != nil) != tt.expectedErr {
 				t.Errorf("getExperimentsEditableByUser() error = %v, expectedErr %v", err, tt.expectedErr)
 				return

@@ -31,7 +31,7 @@ func (m *bulkActorMock) experimentsEditableByUser(
 
 // experimentMock inherits all the methods of the Experiment
 // interface, but only implements the ones we care about
-// for testing
+// for testing.
 type experimentMock struct {
 	mock.Mock
 	Experiment
@@ -89,24 +89,24 @@ func TestActivateExperiments(t *testing.T) {
 			name: "three experiments selected, one found",
 			args: args{
 				projectID:     1,
-				experimentIds: []int32{32, 42, 52},
+				experimentIds: []int32{132, 142, 152},
 			},
 			experimentsEditable: experimentsEditable{
-				expIDs: []int32{32, 42},
+				expIDs: []int32{132, 142},
 			},
-			registeredExperiments: []int{42, 62},
-			expectedActivates:     []int{42},
+			registeredExperiments: []int{142, 162},
+			expectedActivates:     []int{142},
 			expectedResults: []ExperimentActionResult{
 				{
-					Error: status.Error(codes.NotFound, "experiment '52' not found"),
-					ID:    52,
+					Error: status.Error(codes.NotFound, "experiment '152' not found"),
+					ID:    152,
 				},
 				{
 					Error: status.Errorf(codes.FailedPrecondition, "experiment in terminal state"),
-					ID:    32,
+					ID:    132,
 				},
 				{
-					ID: 42,
+					ID: 142,
 				},
 			},
 		},
@@ -114,7 +114,7 @@ func TestActivateExperiments(t *testing.T) {
 			name: "filters are used",
 			args: args{
 				projectID:     1,
-				experimentIds: []int32{32, 42, 52},
+				experimentIds: []int32{132, 142, 152},
 				filters: &apiv1.BulkExperimentFilters{
 					Description: "default",
 					Name:        "test_default",
@@ -122,16 +122,16 @@ func TestActivateExperiments(t *testing.T) {
 				},
 			},
 			experimentsEditable: experimentsEditable{
-				expIDs: []int32{101, 102},
+				expIDs: []int32{1101, 1102},
 			},
-			registeredExperiments: []int{101, 102},
-			expectedActivates:     []int{101, 102},
+			registeredExperiments: []int{1101, 1102},
+			expectedActivates:     []int{1101, 1102},
 			expectedResults: []ExperimentActionResult{
 				{
-					ID: 101,
+					ID: 1101,
 				},
 				{
-					ID: 102,
+					ID: 1102,
 				},
 			},
 		},
@@ -158,9 +158,9 @@ func TestActivateExperiments(t *testing.T) {
 				if slices.Contains(tt.expectedActivates, expID) {
 					exp.On("ActivateExperiment").Return(nil)
 				}
-				ExperimentRegistry.Add(expID, &exp)
+				require.NoError(t, ExperimentRegistry.Add(expID, &exp))
 				defer exp.AssertExpectations(t)
-				defer ExperimentRegistry.Delete(expID)
+				defer ExperimentRegistry.Delete(expID) //nolint:errcheck
 			}
 
 			actual, err := ActivateExperiments(ctx, tt.args.projectID, tt.args.experimentIds,
@@ -206,23 +206,23 @@ func TestCancelExperiments(t *testing.T) {
 			name: "three experiments selected, one found",
 			args: args{
 				projectID:     1,
-				experimentIds: []int32{32, 42, 52},
+				experimentIds: []int32{232, 242, 252},
 			},
 			experimentsEditable: experimentsEditable{
-				expIDs: []int32{32, 42},
+				expIDs: []int32{232, 242},
 			},
-			registeredExperiments: []int{42, 62},
-			expectedCancels:       []int{32, 42},
+			registeredExperiments: []int{242, 262},
+			expectedCancels:       []int{232, 242},
 			expectedResults: []ExperimentActionResult{
 				{
-					Error: status.Error(codes.NotFound, "experiment '52' not found"),
-					ID:    52,
+					Error: status.Error(codes.NotFound, "experiment '252' not found"),
+					ID:    252,
 				},
 				{
-					ID: 32,
+					ID: 232,
 				},
 				{
-					ID: 42,
+					ID: 242,
 				},
 			},
 		},
@@ -230,7 +230,7 @@ func TestCancelExperiments(t *testing.T) {
 			name: "filters are used",
 			args: args{
 				projectID:     1,
-				experimentIds: []int32{32, 42, 52},
+				experimentIds: []int32{232, 242, 252},
 				filters: &apiv1.BulkExperimentFilters{
 					Description: "default",
 					Name:        "test_default",
@@ -238,16 +238,16 @@ func TestCancelExperiments(t *testing.T) {
 				},
 			},
 			experimentsEditable: experimentsEditable{
-				expIDs: []int32{101, 102},
+				expIDs: []int32{2101, 2102},
 			},
-			registeredExperiments: []int{101, 102},
-			expectedCancels:       []int{101, 102},
+			registeredExperiments: []int{2101, 2102},
+			expectedCancels:       []int{2101, 2102},
 			expectedResults: []ExperimentActionResult{
 				{
-					ID: 101,
+					ID: 2101,
 				},
 				{
-					ID: 102,
+					ID: 2102,
 				},
 			},
 		},
@@ -274,9 +274,9 @@ func TestCancelExperiments(t *testing.T) {
 				if slices.Contains(tt.expectedCancels, expID) {
 					exp.On("CancelExperiment").Return(nil)
 				}
-				ExperimentRegistry.Add(expID, &exp)
+				require.NoError(t, ExperimentRegistry.Add(expID, &exp))
 				defer exp.AssertExpectations(t)
-				defer ExperimentRegistry.Delete(expID)
+				defer ExperimentRegistry.Delete(expID) //nolint:errcheck
 			}
 
 			actual, err := CancelExperiments(ctx, tt.args.projectID, tt.args.experimentIds,
@@ -319,26 +319,30 @@ func TestKillExperiments(t *testing.T) {
 			expectedErr:         true,
 		},
 		{
-			name: "three experiments selected, one found",
+			name: "four experiments selected, one found",
 			args: args{
 				projectID:     1,
-				experimentIds: []int32{32, 42, 52},
+				experimentIds: []int32{332, 342, 352, 362},
 			},
 			experimentsEditable: experimentsEditable{
-				expIDs: []int32{32, 42},
+				expIDs: []int32{332, 342},
 			},
-			registeredExperiments: []int{42, 62},
-			expectedKills:         []int{32, 42},
+			registeredExperiments: []int{342, 372},
+			expectedKills:         []int{332, 342},
 			expectedResults: []ExperimentActionResult{
 				{
-					Error: status.Error(codes.NotFound, "experiment '52' not found"),
-					ID:    52,
+					Error: status.Error(codes.NotFound, "experiment '352' not found"),
+					ID:    352,
 				},
 				{
-					ID: 32,
+					Error: status.Error(codes.NotFound, "experiment '362' not found"),
+					ID:    362,
 				},
 				{
-					ID: 42,
+					ID: 332,
+				},
+				{
+					ID: 342,
 				},
 			},
 		},
@@ -346,7 +350,7 @@ func TestKillExperiments(t *testing.T) {
 			name: "filters are used",
 			args: args{
 				projectID:     1,
-				experimentIds: []int32{32, 42, 52},
+				experimentIds: []int32{332, 342, 352},
 				filters: &apiv1.BulkExperimentFilters{
 					Description: "default",
 					Name:        "test_default",
@@ -354,16 +358,16 @@ func TestKillExperiments(t *testing.T) {
 				},
 			},
 			experimentsEditable: experimentsEditable{
-				expIDs: []int32{101, 102},
+				expIDs: []int32{3101, 3102},
 			},
-			registeredExperiments: []int{101, 102},
-			expectedKills:         []int{101, 102},
+			registeredExperiments: []int{3101, 3102},
+			expectedKills:         []int{3101, 3102},
 			expectedResults: []ExperimentActionResult{
 				{
-					ID: 101,
+					ID: 3101,
 				},
 				{
-					ID: 102,
+					ID: 3102,
 				},
 			},
 		},
@@ -390,9 +394,9 @@ func TestKillExperiments(t *testing.T) {
 				if slices.Contains(tt.expectedKills, expID) {
 					exp.On("KillExperiment").Return(nil)
 				}
-				ExperimentRegistry.Add(expID, &exp)
+				require.NoError(t, ExperimentRegistry.Add(expID, &exp))
 				defer exp.AssertExpectations(t)
-				defer ExperimentRegistry.Delete(expID)
+				defer ExperimentRegistry.Delete(expID) //nolint:errcheck
 			}
 
 			actual, err := KillExperiments(ctx, tt.args.projectID, tt.args.experimentIds,
@@ -435,27 +439,31 @@ func TestPauseExperiments(t *testing.T) {
 			expectedErr:         true,
 		},
 		{
-			name: "three experiments selected, one found",
+			name: "four experiments selected, one found",
 			args: args{
 				projectID:     1,
-				experimentIds: []int32{32, 42, 52},
+				experimentIds: []int32{432, 442, 452, 462},
 			},
 			experimentsEditable: experimentsEditable{
-				expIDs: []int32{32, 42},
+				expIDs: []int32{432, 442},
 			},
-			registeredExperiments: []int{42, 62},
-			expectedPauses:        []int{42},
+			registeredExperiments: []int{442, 472},
+			expectedPauses:        []int{442},
 			expectedResults: []ExperimentActionResult{
 				{
-					Error: status.Error(codes.NotFound, "experiment '52' not found"),
-					ID:    52,
+					Error: status.Error(codes.NotFound, "experiment '452' not found"),
+					ID:    452,
+				},
+				{
+					Error: status.Error(codes.NotFound, "experiment '462' not found"),
+					ID:    462,
 				},
 				{
 					Error: status.Errorf(codes.FailedPrecondition, "experiment in terminal state"),
-					ID:    32,
+					ID:    432,
 				},
 				{
-					ID: 42,
+					ID: 442,
 				},
 			},
 		},
@@ -463,7 +471,7 @@ func TestPauseExperiments(t *testing.T) {
 			name: "filters are used",
 			args: args{
 				projectID:     1,
-				experimentIds: []int32{32, 42, 52},
+				experimentIds: []int32{432, 442, 452},
 				filters: &apiv1.BulkExperimentFilters{
 					Description: "default",
 					Name:        "test_default",
@@ -471,16 +479,16 @@ func TestPauseExperiments(t *testing.T) {
 				},
 			},
 			experimentsEditable: experimentsEditable{
-				expIDs: []int32{101, 102},
+				expIDs: []int32{4101, 4102},
 			},
-			registeredExperiments: []int{101, 102},
-			expectedPauses:        []int{101, 102},
+			registeredExperiments: []int{4101, 4102},
+			expectedPauses:        []int{4101, 4102},
 			expectedResults: []ExperimentActionResult{
 				{
-					ID: 101,
+					ID: 4101,
 				},
 				{
-					ID: 102,
+					ID: 4102,
 				},
 			},
 		},
@@ -507,9 +515,9 @@ func TestPauseExperiments(t *testing.T) {
 				if slices.Contains(tt.expectedPauses, expID) {
 					exp.On("PauseExperiment").Return(nil)
 				}
-				ExperimentRegistry.Add(expID, &exp)
+				require.NoError(t, ExperimentRegistry.Add(expID, &exp))
 				defer exp.AssertExpectations(t)
-				defer ExperimentRegistry.Delete(expID)
+				defer ExperimentRegistry.Delete(expID) //nolint:errcheck
 			}
 
 			actual, err := PauseExperiments(ctx, tt.args.projectID, tt.args.experimentIds,
