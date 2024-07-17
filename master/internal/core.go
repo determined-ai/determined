@@ -1398,28 +1398,7 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 
 	webuiGroup := m.echo.Group(webuiBaseRoute)
 	webuiGroup.GET("/customer-assets/logo", func(c echo.Context) error {
-		if !m.config.UICustomization.HasCustomLogo() {
-			return echo.NewHTTPError(http.StatusNotFound)
-		}
-		mode := c.QueryParam("mode")
-		orientation := c.QueryParam("orientation")
-		logoPath := m.config.UICustomization.LogoPath.PickVariation(mode, orientation)
-		file, err := os.Open(logoPath)
-		if err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, "Unable to open logo file")
-		}
-		defer file.Close()
-
-		// Read the first 512 bytes to detect the content type
-		buffer := make([]byte, 512)
-		_, err = file.Read(buffer)
-		if err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, "Unable to read logo file")
-		}
-		contentType := http.DetectContentType(buffer)
-		file.Seek(0, 0)
-		c.Response().Header().Set("Cache-Control", "public, max-age=3600")
-		return c.Stream(http.StatusOK, contentType, file)
+		return serveCustomLogo(&m.config.UICustomization)(c)
 	})
 	webuiGroup.File("/design", designIndex)
 	webuiGroup.File("/design/", designIndex)
