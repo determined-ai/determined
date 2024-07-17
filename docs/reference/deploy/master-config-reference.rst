@@ -221,7 +221,7 @@ Optional. Specify a human-readable name for this cluster.
  ``ui_customization``
 **********************
 
-Optional. Customize the Determined web UI. See :ref:`ui-customization` for more details.
+Optional. Customize Determined UI.
 
 ``logo_path``
 =============
