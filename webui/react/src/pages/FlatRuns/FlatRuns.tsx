@@ -842,7 +842,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
             key: 'select-all',
             label: 'Select all',
             onClick: () => {
-              handleSelectionChange?.('set', [0, settings.pageLimit]);
+              handleSelectionChange?.('add', [0, settings.pageLimit]);
             },
           },
         ];

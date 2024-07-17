@@ -2,9 +2,25 @@ import * as t from 'io-ts';
 import { pick } from 'lodash';
 
 import { INIT_FORMSET } from 'components/FilterForm/components/FilterFormStore';
-import { DEFAULT_SELECTION, SelectionType } from 'pages/F_ExpList/F_ExperimentList.settings';
 
 import { defaultColumnWidths, defaultRunColumns } from './columns';
+
+const SelectAllType = t.type({
+  exclusions: t.array(t.number),
+  type: t.literal('ALL_EXCEPT'),
+});
+
+const RegularSelectionType = t.type({
+  selections: t.array(t.number),
+  type: t.literal('ONLY_IN'),
+});
+
+export const SelectionType = t.union([RegularSelectionType, SelectAllType]);
+export type SelectionType = t.TypeOf<typeof SelectionType>;
+export const DEFAULT_SELECTION: t.TypeOf<typeof RegularSelectionType> = {
+  selections: [],
+  type: 'ONLY_IN',
+};
 
 export const FlatRunsSettings = t.partial({
   columns: t.array(t.string),
@@ -44,5 +60,7 @@ export const ProjectUrlSettings = t.partial({
   page: t.number,
 });
 
-export const settingsPathForProject = (projectId: number, searchId?: number): string =>
-  `flatRunsForProject${projectId}-${searchId}`;
+export const settingsPathForProject = (projectId: number, searchId?: number): string => {
+  if (searchId) return `flatRunsForProject${projectId}-${searchId}`;
+  return `flatRunsForProject${projectId}`;
+};
