@@ -24,6 +24,8 @@ stages:
         cache: 
           cache_dir: /tmp/determined-cache
         launch_error: false
+        telemetry:
+          enabled: false
         task_container_defaults: 
             network_mode: host 
 

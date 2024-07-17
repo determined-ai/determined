@@ -43,6 +43,8 @@ stages:
           idp_sso_descriptor_url: "https://dev-2564556.okta.com/app/exkganmj6yr61bML65d7/sso/saml/metadata"
           idp_metadata_url: "https://dev-2564556.okta.com/app/exkganmj6yr61bML65d7/sso/saml/metadata"
           auto_provision_users: true
+        telemetry:
+          enabled: false
 
   - agent:
       name: agent1
