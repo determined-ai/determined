@@ -4838,6 +4838,30 @@ workflows:
               accel-node-taints: ["accel=truth:NoSchedule"]
               max-slots-per-pod: [1]
 
+      - test-e2e-aks:
+          name: test-e2e-aks-k8s
+          context:
+            - aks-ci
+            - determined-ee
+            - aks-ci-cluster-default-user-credentials
+          filters:
+            branches:
+              only: main
+            requires:
+              - package-and-push-system-dev-ee
+            matrix:
+              parameters:
+                cluster-id-prefix: ["e2e-k8s-aks"]
+                mark: ["e2e_k8s_aks"]
+                parallelism: [1]
+                machine-type: ["n1-standard-8"]
+                gpus-per-machine: [0]
+                environment-gpu-enabled: ["0"]
+                slot-type: ["cpu"]
+                slot-resource-requests-cpu: [7]
+                accel-node-taints: ["accel=truth:NoSchedule"]
+                max-slots-per-pod: [1]
+
       - test-det-deploy:
           name: test-det-deploy-local
           context:
