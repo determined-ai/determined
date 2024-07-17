@@ -46,6 +46,7 @@ import {
   SpecialColumnNames,
 } from 'components/FilterForm/components/type';
 import TableFilter from 'components/FilterForm/TableFilter';
+import LoadableCount from 'components/LoadableCount';
 import MultiSortMenu, { EMPTY_SORT, sortMenuItemsForColumn } from 'components/MultiSortMenu';
 import { OptionsMenu, RowHeight } from 'components/OptionsMenu';
 import {
@@ -233,6 +234,10 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
       (!settings.compare || settings.pinnedColumnsCount !== 0) && !(isMobile && settings.compare)
     );
   }, [isMobile, settings.compare, settings.pinnedColumnsCount]);
+
+  const allSelectedRunIds = useMemo(() => {
+    return settings.selection.type === 'ONLY_IN' ? settings.selection.selections : [];
+  }, [settings.selection]);
 
   const [loadedSelectedRuns, loadedSelectedRunIds] = useMemo(() => {
     const selectedMap = new Map<number, { run: FlatRun; index: number }>();
@@ -704,7 +709,6 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
 
           break;
       }
-
       updateSettings({ selection: newSettings });
     },
     [rowRangeToIds, settings.selection, updateSettings],
@@ -1063,6 +1067,12 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
               selectedRuns={selectedRuns}
               workspaceId={workspaceId}
               onActionComplete={onActionComplete}
+            />
+            <LoadableCount
+              labelPlural="runs"
+              labelSingular="run"
+              selectedCount={allSelectedRunIds.length}
+              total={total}
             />
           </Row>
         </Column>
