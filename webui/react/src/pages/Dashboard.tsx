@@ -3,9 +3,11 @@ import Card from 'hew/Card';
 import Icon from 'hew/Icon';
 import Message from 'hew/Message';
 import Spinner from 'hew/Spinner';
+import { Label } from 'hew/Typography';
 import { Loadable } from 'hew/utils/loadable';
 import React, { useCallback, useEffect, useState } from 'react';
 
+import Badge from 'components/Badge';
 import ExperimentIcons from 'components/ExperimentIcons';
 import JupyterLabButton from 'components/JupyterLabButton';
 import Link from 'components/Link';
@@ -13,12 +15,8 @@ import Page, { BreadCrumbRoute } from 'components/Page';
 import ProjectCard from 'components/ProjectCard';
 import Section from 'components/Section';
 import ResponsiveTable from 'components/Table/ResponsiveTable';
-import {
-  experimentNameRenderer,
-  relativeTimeRenderer,
-  taskNameRenderer,
-  taskTypeRenderer,
-} from 'components/Table/Table';
+import { relativeTimeRenderer, taskNameRenderer, taskTypeRenderer } from 'components/Table/Table';
+import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import usePolling from 'hooks/usePolling';
 import { paths } from 'routes/utils';
@@ -55,6 +53,8 @@ const Dashboard: React.FC = () => {
   const workspaces = Loadable.getOrElse([], useObservable(workspaceStore.workspaces));
   const { canCreateNSC } = usePermissions();
   type Submission = BulkExperimentItem & CommandTask;
+
+  const f_flat_runs = useFeature().isOn('flat_runs');
 
   const fetchTasks = useCallback(
     async (user: DetailedUser) => {
@@ -225,8 +225,22 @@ const Dashboard: React.FC = () => {
                 dataIndex: 'name',
                 render: (name, row, index) => {
                   if (row.projectId) {
+                    const path = f_flat_runs
+                      ? paths.searchDetails(row.id)
+                      : paths.experimentDetails(row.id);
                     // only for Experiments, not Tasks:
-                    return experimentNameRenderer(name, row);
+                    return (
+                      <Label truncate={{ tooltip: true }}>
+                        <Link path={path}>
+                          {name === undefined ? '' : name}&nbsp;&nbsp;
+                          {row.unmanaged && (
+                            <Badge tooltip="Workload not managed by Determined" type="Header">
+                              Unmanaged
+                            </Badge>
+                          )}
+                        </Link>
+                      </Label>
+                    );
                   } else {
                     return taskNameRenderer(row.id, row, index);
                   }
