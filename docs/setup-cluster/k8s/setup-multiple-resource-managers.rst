@@ -153,8 +153,10 @@ the same as the “cluster name” for a given cluster.
    default Determined deployment, all that's necessary is to upgrade the Helm deployment with that
    value as the master IP for the additional clusters.
 
-   If the external Kubernetes cluster is going to connect to the Determined master through a gateway
-   ``resource_manager.determined_master_scheme`` should be set to ``https``.
+   If an additional resource manager needs to connect to the Determined master through a gateway
+   requiring TLS, ``resource_manager.determined_master_scheme`` should be set to ``https``. If
+   ``resource_manager.determined_master_scheme`` is not set ``determined_master_ip`` will assume
+   ``https`` if the master is terminating TLS and ``http`` otherwise.
 
 *******
  WebUI
