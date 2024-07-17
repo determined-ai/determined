@@ -8,11 +8,11 @@ test.describe('Experiment List', () => {
   let projectDetailsPage: ProjectDetails;
   // trial click to wait for the element to be stable won't work here
   const waitTableStable = async () => await projectDetailsPage._page.waitForTimeout(2_000);
-  const getExpNum = async () => {
-    const expNum =
-      await projectDetailsPage.f_experimentList.tableActionBar.expNum.pwLocator.textContent();
-    if (expNum === null) throw new Error('Experiment number is null');
-    return parseInt(expNum);
+  const getCount = async () => {
+    const count =
+      await projectDetailsPage.f_experimentList.tableActionBar.count.pwLocator.textContent();
+    if (count === null) throw new Error('Count is null');
+    return parseInt(count);
   };
 
   test.beforeAll(async ({ browser, dev }) => {
@@ -25,7 +25,7 @@ test.describe('Experiment List', () => {
     await test.step('Create an experiment if not already present', async () => {
       await projectDetailsPageSetupTeardown.f_experimentList.tableActionBar.pwLocator.waitFor();
       await expect(
-        projectDetailsPageSetupTeardown.f_experimentList.tableActionBar.expNum.pwLocator,
+        projectDetailsPageSetupTeardown.f_experimentList.tableActionBar.count.pwLocator,
       ).toContainText('experiment');
       if (
         await projectDetailsPageSetupTeardown.f_experimentList.noExperimentsMessage.pwLocator.isVisible()
@@ -58,7 +58,7 @@ test.describe('Experiment List', () => {
         await grid.headRow.selectDropdown.menuItem('select-none').select({ timeout: 1_000 });
       } catch (e) {
         // close the dropdown by clicking elsewhere
-        await projectDetailsPage.f_experimentList.tableActionBar.expNum.pwLocator.click();
+        await projectDetailsPage.f_experimentList.tableActionBar.count.pwLocator.click();
       }
     });
     await test.step('Reset Columns', async () => {
@@ -163,7 +163,7 @@ test.describe('Experiment List', () => {
   test('Table Filter', async () => {
     test.slow();
     const tableFilter = projectDetailsPage.f_experimentList.tableActionBar.tableFilter;
-    const totalExperiments = await getExpNum();
+    const totalExperiments = await getCount();
 
     const filterScenario = async (
       name: string,
@@ -175,7 +175,7 @@ test.describe('Experiment List', () => {
         await scenario();
         // [ET-284] - Sometimes, closing the popover too quickly causes the filter to not apply.
         await waitTableStable();
-        await expect.poll(async () => await getExpNum()).toBe(expectedValue);
+        await expect.poll(async () => await getCount()).toBe(expectedValue);
         await tableFilter.close();
       });
     };
