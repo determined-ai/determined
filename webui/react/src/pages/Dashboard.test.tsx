@@ -8,13 +8,39 @@ import userStore from 'stores/users';
 import { DetailedUser } from 'types';
 
 import Dashboard from './Dashboard';
+
 vi.mock('services/api', () => ({
   getCommands: () => Promise.resolve([]),
   getExperiments: () => Promise.resolve({
     experiments: [],
   }),
   getJupyterLabs: () => Promise.resolve([]),
-  getProjectsByUserActivity: () => Promise.resolve([]),
+  getProjectsByUserActivity: () => Promise.resolve([
+    {
+      archived: false,
+      description: '',
+      errorMessage: '',
+      id: 1,
+      immutable: true,
+      key: '',
+      lastExperimentStartedAt: '2024-07-17T16:18:56.813686Z',
+      name: 'Uncategorized',
+      notes: [
+        {
+          contents: '',
+          name: 'Untitled',
+        },
+      ],
+      numActiveExperiments: 0,
+      numExperiments: 1297,
+      numRuns: 41995,
+      state: 'UNSPECIFIED',
+      userId: 1,
+      username: 'admin',
+      workspaceId: 1,
+      workspaceName: 'Uncategorized',
+    },
+  ]),
   getShells: () => Promise.resolve([]),
   getTensorBoards: () => Promise.resolve([]),
 }));
@@ -44,10 +70,28 @@ const setup = () => {
 };
 
 describe('Dashboard', () => {
-  it('renders', async () => {
+  beforeEach(() => {
     setup();
+  });
+
+  it('renders with correct titles', async () => {
     await waitFor(() => {
+      expect(screen.getByText('Recently Viewed Projects')).toBeInTheDocument();
       expect(screen.getByText('Your Recent Submissions')).toBeInTheDocument();
+    });
+  });
+
+  it('renders ProjectCards with project data', async () => {
+    await waitFor(() => {
+      expect(screen.getByText('Uncategorized')).toBeInTheDocument();
+    });
+  });
+
+  it('renders empty state for submissions', async () => {
+    await waitFor(() => {
+      expect(screen.getByText('No submissions')).toBeInTheDocument();
+      expect(screen.getByText('Your recent experiments and tasks will show up here.')).toBeInTheDocument();
+      expect(screen.getByText('Get started')).toBeInTheDocument();
     });
   });
 });
