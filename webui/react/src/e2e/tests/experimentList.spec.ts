@@ -22,22 +22,6 @@ test.describe('Experiment List', () => {
     const projectDetailsPageSetupTeardown = new ProjectDetails(pageSetupTeardown);
     await authFixtureSetupTeardown.login();
     await projectDetailsPageSetupTeardown.gotoProject();
-    await test.step('Sort by most recent first', async () => {
-      // reset
-      const content =
-        await projectDetailsPageSetupTeardown.f_experimentList.tableActionBar.multiSortMenu.open();
-      await content.multiSort.reset.pwLocator.click();
-      // the menu doesn't close in automation, but it works with mouse events manually
-      // await projectDetailsPageSetupTeardown.f_experimentList.tableActionBar.multiSortMenu.open();
-
-      // set sort
-      const firstRow = content.multiSort.rows.nth(0);
-      await firstRow.column.selectMenuOption('Start time');
-      await firstRow.order.selectMenuOption('Oldest → Newest');
-      // [ET-284] wait before popover close or else it'll flake
-      await pageSetupTeardown.waitForTimeout(1_000);
-      await projectDetailsPageSetupTeardown.f_experimentList.tableActionBar.expNum.pwLocator.click();
-    });
     await test.step('Create an experiment if not already present', async () => {
       await projectDetailsPageSetupTeardown.f_experimentList.tableActionBar.pwLocator.waitFor();
       await expect(
@@ -88,6 +72,21 @@ test.describe('Experiment List', () => {
         await projectDetailsPage.f_experimentList.tableActionBar.tableFilter.open();
       await tableFilter.filterForm.clearFilters.pwLocator.click();
       await tableFilter.close();
+    });
+    await test.step('Sort Oldest → Newest', async () => {
+      // reset
+      const content = await projectDetailsPage.f_experimentList.tableActionBar.multiSortMenu.open();
+      await content.multiSort.reset.pwLocator.click();
+      // the menu doesn't close in automation, but it works with mouse events manually
+      // await projectDetailsPage.f_experimentList.tableActionBar.multiSortMenu.open();
+
+      // set sort
+      const firstRow = content.multiSort.rows.nth(0);
+      await firstRow.column.selectMenuOption('Start time');
+      await firstRow.order.selectMenuOption('Oldest → Newest');
+      // [ET-284] wait before popover close or else it'll flake
+      await authedPage.waitForTimeout(1_000);
+      await projectDetailsPage.f_experimentList.tableActionBar.expNum.pwLocator.click();
     });
     await waitTableStable();
     await grid.setColumnHeight();
