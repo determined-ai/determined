@@ -24,7 +24,9 @@ const OverviewStats: React.FC<Props> = (props: Props) => {
       </Row>
       <Row width="fill">
         <Label strong truncate={{ tooltip: true }}>
-          {props.children}
+          <span style={{ color: props.onClick ? 'var(--theme-status-active)' : 'inherit' }}>
+            {props.children}
+          </span>
         </Label>
       </Row>
     </Column>
