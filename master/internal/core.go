@@ -1438,7 +1438,12 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 
 	webuiGroup := m.echo.Group(webuiBaseRoute)
 	webuiGroup.GET("/customer-assets/logo", func(c echo.Context) error {
-		return serveCustomLogo(&m.config.UICustomization)(c)
+		if !m.config.UICustomization.HasCustomLogo() {
+			return echo.NewHTTPError(http.StatusNotFound)
+		}
+		return c.File(m.config.UICustomization.LogoPath.PickVariation(
+			c.QueryParam("mode"), c.QueryParam("orientation"),
+		))
 	})
 	webuiGroup.File("/design", designIndex)
 	webuiGroup.File("/design/", designIndex)
