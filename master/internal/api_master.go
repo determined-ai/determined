@@ -6,7 +6,6 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
-	"os"
 	"time"
 
 	structpb "github.com/golang/protobuf/ptypes/struct"
@@ -33,30 +32,14 @@ import (
 
 var masterLogsBatchMissWaitTime = time.Second
 
-func serveCustomLogo(uiConfig config.UICustomizationConfig) func(echo.Context) error {
+func serveCustomLogo(uiConfig *config.UICustomizationConfig) func(echo.Context) error {
 	return func(c echo.Context) error {
 		if !uiConfig.HasCustomLogo() {
 			return echo.NewHTTPError(http.StatusNotFound)
 		}
-		mode := c.QueryParam("mode")
-		orientation := c.QueryParam("orientation")
-		logoPath := uiConfig.LogoPath.PickVariation(mode, orientation)
-		file, err := os.Open(logoPath)
-		if err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, "Unable to open logo file")
-		}
-		defer file.Close()
-
-		// Read the first 512 bytes to detect the content type
-		buffer := make([]byte, 512)
-		_, err = file.Read(buffer)
-		if err != nil {
-			return echo.NewHTTPError(http.StatusInternalServerError, "Unable to read logo file")
-		}
-		contentType := http.DetectContentType(buffer)
-		file.Seek(0, 0)
-		c.Response().Header().Set("Cache-Control", "public, max-age=3600")
-		return c.Stream(http.StatusOK, contentType, file)
+		return c.File(uiConfig.LogoPath.PickVariation(
+			c.QueryParam("mode"), c.QueryParam("orientation"),
+		))
 	}
 }
 
