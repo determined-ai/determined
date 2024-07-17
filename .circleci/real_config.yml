@@ -629,7 +629,7 @@ commands:
       - when:
           condition: 
             and:
-              - not: <<parameters.managed-devcluster>>
+              - eq: [<<parameters.master-host>>,'localhost']
               - <<parameters.wait-for-master>>
           steps:
             - run:
@@ -754,7 +754,7 @@ commands:
       - when:
           condition:
             and:
-              - not: <<parameters.managed-devcluster>>
+              - eq: [<<parameters.master-host>>,'localhost']
               - <<parameters.wait-for-master>>
           steps:
             - run: # We don't know how long Circle leaves these machines running in the background. Take down the agent for safety.
