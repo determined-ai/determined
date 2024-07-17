@@ -16,13 +16,17 @@ type MediaAssetVariations struct {
 
 // PickVariation returns the best variation for the given mode and orientation.
 func (m MediaAssetVariations) PickVariation(mode, orientation string) string {
+	const (
+		orientationHorizontal = "horizontal"
+		orientationVertical   = "vertical"
+	)
 	if mode == "" || mode == "light" {
-		if orientation == "" || orientation == "horizontal" {
+		if orientation == "" || orientation == orientationHorizontal {
 			if m.LightHorizontal != "" {
 				return m.LightHorizontal
 			}
 		}
-		if orientation == "" || orientation == "vertical" {
+		if orientation == "" || orientation == orientationVertical {
 			if m.LightVeritical != "" {
 				return m.LightVeritical
 			}
@@ -33,12 +37,12 @@ func (m MediaAssetVariations) PickVariation(mode, orientation string) string {
 	}
 
 	if mode == "dark" {
-		if orientation == "" || orientation == "horizontal" {
+		if orientation == "" || orientation == orientationHorizontal {
 			if m.DarkHorizontal != "" {
 				return m.DarkHorizontal
 			}
 		}
-		if orientation == "" || orientation == "vertical" {
+		if orientation == "" || orientation == orientationVertical {
 			if m.DarkVeritical != "" {
 				return m.DarkVeritical
 			}
@@ -51,6 +55,7 @@ func (m MediaAssetVariations) PickVariation(mode, orientation string) string {
 	return m.LightHorizontal
 }
 
+// UICustomizationConfig holds the configuration for customizing the UI.
 type UICustomizationConfig struct {
 	// LogoPath is the path to variation of custom logo to use in the web UI.
 	LogoPath MediaAssetVariations `json:"logo_path"`
