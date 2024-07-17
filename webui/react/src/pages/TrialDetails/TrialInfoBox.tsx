@@ -167,8 +167,13 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
       };
 
       return (
-        <OverviewStats title="Data input" onClick={handleClickDataInput}>
-          {integrations.pachyderm.dataset.repo}
+        <OverviewStats title="Data Input" onClick={handleClickDataInput}>
+          <div
+            style={{
+              color: 'var(--theme-status-active)',
+            }}>
+            {integrations.pachyderm.dataset.repo}
+          </div>
         </OverviewStats>
       );
     }
