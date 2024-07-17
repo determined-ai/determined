@@ -217,6 +217,18 @@ warning is returned. The default value is ``true``.
 
 Optional. Specify a human-readable name for this cluster.
 
+**********************
+ ``ui_customization``
+**********************
+
+Optional. Customize the Determined web UI. See :ref:`ui-customization` for more details.
+
+``logo_path``
+=============
+
+Path to variations of a user provided logo to be shown in the UI. This path should be availalbe and
+reachable to the master and a valid image file.
+
 *************************
  ``tensorboard_timeout``
 *************************
