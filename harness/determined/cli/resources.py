@@ -12,6 +12,13 @@ def print_response(r: requests.Response) -> None:
         sys.stdout.buffer.write(chunk)
 
 
+def csv(args: argparse.Namespace) -> None:
+    sess = cli.setup_session(args)
+    params = {"timestamp_after": args.timestamp_after, "timestamp_before": args.timestamp_before}
+    path = "resources/allocation/allocations-csv"
+    print_response(sess.get(path, params=params))
+
+
 def raw(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     params = {"timestamp_after": args.timestamp_after, "timestamp_before": args.timestamp_before}
@@ -40,6 +47,15 @@ args_description: cli.ArgsDescription = [
         None,
         "query historical resource allocation",
         [
+            cli.Cmd(
+                "all|ocations",
+                csv,
+                "get a detailed csv of resource allocation at an allocation level",
+                [
+                    cli.Arg("timestamp_after"),
+                    cli.Arg("timestamp_before"),
+                ],
+            ),
             cli.Cmd(
                 "raw",
                 raw,

@@ -1514,3 +1514,37 @@ retention_policy:
 		require.NoError(t, err)
 	}
 }
+
+func TestRunLocalID(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	_, projectID := createProjectAndWorkspace(ctx, t, api)
+
+	exp := createTestExpWithProjectID(t, api, curUser, projectID)
+	task := &model.Task{
+		TaskType:   model.TaskTypeTrial,
+		LogVersion: model.TaskLogVersion1,
+		StartTime:  time.Now(),
+		TaskID:     model.TaskID(fmt.Sprintf("backported.%d", exp.ID)),
+	}
+	require.NoError(t, db.AddTask(ctx, task))
+
+	for i := 1; i <= 5; i++ {
+		trial := &model.Trial{
+			StartTime:    time.Now(),
+			State:        model.PausedState,
+			ExperimentID: exp.ID,
+		}
+		require.NoError(t, db.AddTrial(ctx, trial, task.TaskID))
+
+		// validate local_run_id and max id is correct
+		var localID int
+		err := db.Bun().NewSelect().Table("runs").Column("local_id").Where("id = ?", trial.ID).Scan(ctx, &localID)
+		require.NoError(t, err)
+		require.Equal(t, i, localID)
+
+		var maxLocalID int
+		err = db.Bun().NewSelect().Table("projects").Column("max_local_id").Where("id = ?", projectID).Scan(ctx, &maxLocalID)
+		require.NoError(t, err)
+		require.Equal(t, i, maxLocalID)
+	}
+}

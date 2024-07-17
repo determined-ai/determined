@@ -10,13 +10,11 @@ def main():
     assert "DET_TEST_EXTERNAL_EXP_ID" in os.environ
     name = os.environ["DET_TEST_EXTERNAL_EXP_ID"]
     core_v2.init(
-        defaults=core_v2.DefaultConfig(
+        config=core_v2.Config(
             name=name,
-            checkpoint_storage="/tmp/determined-cp",
-        ),
-        unmanaged=core_v2.UnmanagedConfig(
             external_experiment_id=name,
             external_trial_id=name,
+            checkpoint_storage="/tmp/determined-cp",
         ),
     )
 

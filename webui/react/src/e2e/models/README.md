@@ -251,3 +251,13 @@ When creating page models, you'll most likely want to author test hooks into the
 | `data-test-id={something dynamic}`   | Test Hook for dynamic data. Consider having many `data-test='row'`s and looking for the attachemnt `data-test-id='my-test-user'` |
 
 Not every component needs a data-test, but, in general, more is better. It's better to select for _"a duck named Hoffman"_ rather than "a duck" or "Hoffman". In situations where adding a top-level test hook (`data-test-component`) could be more trouble than it's worth, it's okay to use other unique identifiers, like `.ant-table`.
+
+## Appendix
+
+### Appreciation and Inspiration
+
+I'm writing as Justin Comins. The direction I took when developing this page model framework is what I believe to be the best that I can offer from the experience and intuition I gained from my time at Splunk. When I was working at Splunk, I used a special page model framework designed by my manager, George Louie (Glouie). The test framework used Python, Selenium, and a lot of custom packages to interact with Splunk. Selenium was flaky on it's own, so we wrapped the selenium elements with python classes.
+
+Glouie's page models had a few important properties that I brought to this framework. Glouie's elements could all be instantiated with subelements, perfect for modeling complex component hierarchies. The component files had a 1-to-1 mapping with source code files. His framework achieved the same **maintainability** and **stability** as the components it modeled. Glouie instilled two other import characteristics into his framework in **reliability** and **readability**. Those two characteristics shone best through the plentiful error handling and messages through the rest of his framework, and I want to bring those characteristics to this framework as well!
+
+I was very fortunate to have learned from Glouie and his framework, so I wanted to show my appreciation for him and for Splunk in this section. Thank you for being a great inspiration and mentor, Glouie!

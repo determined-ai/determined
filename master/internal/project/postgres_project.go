@@ -210,6 +210,21 @@ RetryLoop:
 				} else {
 					p.Key = *requestedKey
 				}
+				var isUsed bool
+				err = tx.NewRaw(`
+				SELECT EXISTS (
+					SELECT 1 FROM local_id_redirect WHERE project_key = ?
+				) AS is_used`, p.Key).
+					Scan(ctx, &isUsed)
+				if err != nil {
+					return fmt.Errorf("error creating new project")
+				}
+				if isUsed {
+					return status.Errorf(
+						codes.AlreadyExists,
+						"error creating new project, provided key '%s' already in use in redirect table",
+						p.Key)
+				}
 				_, err = tx.NewInsert().Model(p).Exec(ctx)
 				if err != nil && strings.Contains(err.Error(), db.CodeUniqueViolation) {
 					switch errString := err.Error(); {
@@ -350,6 +365,21 @@ func UpdateProject(
 			return nil
 		}
 
+		var isUsed bool
+		err = tx.NewRaw(`
+		SELECT EXISTS (
+			SELECT 1 FROM local_id_redirect WHERE project_key = ? AND project_id != ?
+		) AS is_used`, currentProject.Key, currentProject.ID).
+			Scan(ctx, &isUsed)
+		if err != nil {
+			return fmt.Errorf("error updating project %s", currentProject.Name)
+		}
+		if isUsed {
+			return status.Errorf(
+				codes.AlreadyExists,
+				"error updating project %s, provided key '%s' already in use in redirect table",
+				currentProject.Name, currentProject.Key)
+		}
 		_, err = tx.NewUpdate().Table("projects").
 			Set("name = ?", currentProject.Name).
 			Set("description = ?", currentProject.Description).
@@ -374,6 +404,17 @@ func UpdateProject(
 				}
 			}
 			return errors.Wrapf(db.MatchSentinelError(err), "error updating project %s", currentProject.Name)
+		}
+
+		if _, err = tx.NewRaw(`
+		INSERT INTO local_id_redirect (run_id, project_id, project_key, local_id)
+		SELECT
+			id, project_id, ? as project_key, local_id 
+		FROM
+			runs
+		WHERE project_id = ?
+		`, currentProject.Key, currentProject.ID).Exec(ctx); err != nil {
+			return fmt.Errorf("adding local id redirect: %w for project %s", err, currentProject.Name)
 		}
 
 		// no need to lock the project since it's already been locked above

@@ -1,5 +1,6 @@
 import React from 'react';
 
+import { useGlasbey } from 'hooks/useGlasbey';
 import { RunMetricData } from 'hooks/useMetrics';
 import { Scale } from 'types';
 import { generateTestRunData } from 'utils/tests/generateTestData';
@@ -7,7 +8,59 @@ import { generateTestRunData } from 'utils/tests/generateTestData';
 import CompareHyperparameters from './CompareHyperparameters';
 export const METRIC_DATA: RunMetricData = {
   data: {
-    3400: {
+    1: {
+      '{"group":"training","name":"loss"}': {
+        data: {
+          Batches: [[2, 0.5823304653167725]],
+          Epoch: [],
+          Time: [[1656260140.728, 0.5823304653167725]],
+        },
+        name: 'training.loss',
+      },
+      '{"group":"validation","name":"accuracy"}': {
+        data: {
+          Batches: [[2, 0.8522093949044586]],
+          Epoch: [],
+          Time: [[1656260146.436, 0.8522093949044586]],
+        },
+        name: 'validation.accuracy',
+      },
+      '{"group":"validation","name":"validation_loss"}': {
+        data: {
+          Batches: [[2, 0.49773818169050155]],
+          Epoch: [],
+          Time: [[1656260146.436, 0.49773818169050155]],
+        },
+        name: 'validation.validation_loss',
+      },
+    },
+    2: {
+      '{"group":"training","name":"loss"}': {
+        data: {
+          Batches: [[2, 0.5823304653167725]],
+          Epoch: [],
+          Time: [[1656260140.728, 0.5823304653167725]],
+        },
+        name: 'training.loss',
+      },
+      '{"group":"validation","name":"accuracy"}': {
+        data: {
+          Batches: [[2, 0.8522093949044586]],
+          Epoch: [],
+          Time: [[1656260146.436, 0.8522093949044586]],
+        },
+        name: 'validation.accuracy',
+      },
+      '{"group":"validation","name":"validation_loss"}': {
+        data: {
+          Batches: [[2, 0.49773818169050155]],
+          Epoch: [],
+          Time: [[1656260146.436, 0.49773818169050155]],
+        },
+        name: 'validation.validation_loss',
+      },
+    },
+    3: {
       '{"group":"training","name":"loss"}': {
         data: {
           Batches: [[2, 0.5823304653167725]],
@@ -346,7 +399,145 @@ export const TRIALS = [
       n_filters1: 54,
       n_filters2: 70,
     },
-    id: 3400,
+    id: 1,
+    latestValidationMetric: {
+      endTime: '2022-06-26T16:15:46.436495Z',
+      metrics: {
+        accuracy: 0.8522093949044586,
+        validation_loss: 0.49773818169050155,
+      },
+      totalBatches: 2,
+    },
+    searcherMetricsVal: 1,
+    startTime: '2022-06-26T16:08:36.678225Z',
+    state: 'COMPLETED',
+    summaryMetrics: {
+      avgMetrics: {
+        loss: {
+          count: 1,
+          last: 0.5823304653167725,
+          max: 0.582330465316772,
+          mean: 0.582330465316772,
+          min: 0.582330465316772,
+          sum: 0.582330465316772,
+          type: 'number',
+        },
+      },
+      validationMetrics: {
+        accuracy: {
+          count: 1,
+          last: 0.8522093949044586,
+          max: 0.852209394904459,
+          mean: 0.852209394904459,
+          min: 0.852209394904459,
+          sum: 0.852209394904459,
+          type: 'number',
+        },
+        validation_loss: {
+          count: 1,
+          last: 0.49773818169050155,
+          max: 0.497738181690502,
+          mean: 0.497738181690502,
+          min: 0.497738181690502,
+          sum: 0.497738181690502,
+          type: 'number',
+        },
+      },
+    },
+    totalBatchesProcessed: 100,
+    totalCheckpointSize: 83008221,
+  },
+  {
+    autoRestarts: 0,
+    bestAvailableCheckpoint: null,
+    bestValidationMetric: {
+      endTime: '2023-04-20T16:20:22.902226Z',
+      metrics: {
+        loss: 1,
+      },
+      totalBatches: 1,
+    },
+    checkpointCount: 1,
+    endTime: '2022-06-26T16:16:04.171606Z',
+    experimentId: 1156,
+    hyperparameters: {
+      dropout1: 0.532803505916605,
+      dropout2: 0.39400711778394015,
+      global_batch_size: 64,
+      learning_rate: 0.06716139157036664,
+      n_filters1: 54,
+      n_filters2: 70,
+    },
+    id: 2,
+    latestValidationMetric: {
+      endTime: '2022-06-26T16:15:46.436495Z',
+      metrics: {
+        accuracy: 0.8522093949044586,
+        validation_loss: 0.49773818169050155,
+      },
+      totalBatches: 2,
+    },
+    searcherMetricsVal: 1,
+    startTime: '2022-06-26T16:08:36.678225Z',
+    state: 'COMPLETED',
+    summaryMetrics: {
+      avgMetrics: {
+        loss: {
+          count: 1,
+          last: 0.5823304653167725,
+          max: 0.582330465316772,
+          mean: 0.582330465316772,
+          min: 0.582330465316772,
+          sum: 0.582330465316772,
+          type: 'number',
+        },
+      },
+      validationMetrics: {
+        accuracy: {
+          count: 1,
+          last: 0.8522093949044586,
+          max: 0.852209394904459,
+          mean: 0.852209394904459,
+          min: 0.852209394904459,
+          sum: 0.852209394904459,
+          type: 'number',
+        },
+        validation_loss: {
+          count: 1,
+          last: 0.49773818169050155,
+          max: 0.497738181690502,
+          mean: 0.497738181690502,
+          min: 0.497738181690502,
+          sum: 0.497738181690502,
+          type: 'number',
+        },
+      },
+    },
+    totalBatchesProcessed: 100,
+    totalCheckpointSize: 83008221,
+  },
+  {
+    autoRestarts: 0,
+    bestAvailableCheckpoint: null,
+    bestValidationMetric: {
+      endTime: '2023-04-20T16:20:22.902226Z',
+      metrics: {
+        loss: 1,
+      },
+      totalBatches: 1,
+    },
+    checkpointCount: 1,
+    endTime: '2022-06-26T16:16:04.171606Z',
+    experimentId: 1156,
+    hyperparameters: {
+      dropout1: 0.532803505916605,
+      dropout2: 0.39400711778394015,
+      global_batch_size: 64,
+      learning_rate: 0.06716139157036664,
+      n_filters1: 54,
+      n_filters2: 70,
+    },
+    id: 3,
     latestValidationMetric: {
       endTime: '2022-06-26T16:15:46.436495Z',
       metrics: {
@@ -396,17 +587,25 @@ export const TRIALS = [
   },
 ];
 
-export const SELECTED_RUNS = [generateTestRunData(), generateTestRunData(), generateTestRunData()];
+export const SELECTED_RUNS = [
+  generateTestRunData(1),
+  generateTestRunData(2),
+  generateTestRunData(3),
+];
 
 interface Props {
   empty?: boolean;
+  comparableMetrics?: boolean;
 }
 export const CompareTrialHyperparametersWithMocks: React.FC<Props> = ({
   empty,
+  comparableMetrics = true,
 }: Props): JSX.Element => {
+  const colorMap = useGlasbey(SELECTED_EXPERIMENTS.map((exp) => exp.experiment.id));
   return (
     <CompareHyperparameters
-      metricData={METRIC_DATA}
+      colorMap={colorMap}
+      metricData={comparableMetrics ? METRIC_DATA : { ...METRIC_DATA, data: {} }}
       projectId={1}
       // @ts-expect-error Mock data does not need type checking
       selectedExperiments={empty ? [] : SELECTED_EXPERIMENTS}
@@ -418,10 +617,13 @@ export const CompareTrialHyperparametersWithMocks: React.FC<Props> = ({
 
 export const CompareRunHyperparametersWithMocks: React.FC<Props> = ({
   empty,
+  comparableMetrics = true,
 }: Props): JSX.Element => {
+  const colorMap = useGlasbey(SELECTED_RUNS.map((run) => run.id));
   return (
     <CompareHyperparameters
-      metricData={METRIC_DATA}
+      colorMap={colorMap}
+      metricData={comparableMetrics ? METRIC_DATA : { ...METRIC_DATA, data: {} }}
       projectId={1}
       selectedRuns={empty ? [] : SELECTED_RUNS}
     />

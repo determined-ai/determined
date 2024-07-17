@@ -362,12 +362,13 @@ type AllocationMetadata struct {
 	TaskType         model.TaskType
 	Username         string
 	WorkspaceName    string
+	ResourcePool     string
 	ExperimentID     int
 	Slots            int
 	StartTime        time.Time
 	EndTime          time.Time
 	ImagepullingTime float64
-	GPUHours         float64
+	SlotHours        float64
 }
 
 // canGetUsageDetails checks if the user has permission to get cluster usage details.
@@ -438,7 +439,8 @@ func (m *Master) getResourceAllocations(c echo.Context) error {
 		ColumnExpr("a.start_time").
 		ColumnExpr("a.end_time").
 		ColumnExpr("a.slots").
-		ColumnExpr("CASE WHEN a.start_time is NULL THEN 0.0 ELSE extract(epoch FROM (LEAST(GREATEST(coalesce(a.end_time, now()), a.start_time), ? :: timestamptz) - GREATEST(a.start_time, ? :: timestamptz))) * a.slots END AS gpu_seconds", end, start).
+		ColumnExpr("a.resource_pool").
+		ColumnExpr("CASE WHEN a.start_time is NULL THEN 0.0 ELSE extract(epoch FROM (LEAST(GREATEST(coalesce(a.end_time, now()), a.start_time), ? :: timestamptz) - GREATEST(a.start_time, ? :: timestamptz))) * a.slots END AS slot_seconds", end, start).
 		TableExpr("allocations a").
 		Where("tstzrange(start_time - interval '1 microsecond', greatest(start_time, coalesce(end_time, now()))) && tstzrange(? :: timestamptz, ? :: timestamptz)", start, end)
 
@@ -470,7 +472,8 @@ func (m *Master) getResourceAllocations(c echo.Context) error {
 		ColumnExpr("a.start_time").
 		ColumnExpr("a.end_time").
 		ColumnExpr("ip.imagepulling_time").
-		ColumnExpr("a.gpu_seconds / 3600.0 AS gpu_hours").
+		ColumnExpr("a.slot_seconds / 3600.0 AS slot_hours").
+		ColumnExpr("a.resource_pool").
 		With("tasks_in_range", tasksInRange).
 		With("allocations_in_range", allocationsInRange).
 		With("task_owners", taskOwners).
@@ -500,7 +503,8 @@ func (m *Master) getResourceAllocations(c echo.Context) error {
 		"start_time",
 		"end_time",
 		"imagepulling_time",
-		"gpu_hours",
+		"slot_hours",
+		"resource_pool",
 	}
 
 	formatTimestamp := func(t time.Time) string {
@@ -545,7 +549,8 @@ func (m *Master) getResourceAllocations(c echo.Context) error {
 			formatTimestamp(allocationMetadata.StartTime),
 			formatTimestamp(allocationMetadata.EndTime),
 			formatDuration(allocationMetadata.ImagepullingTime),
-			formatDuration(allocationMetadata.GPUHours),
+			formatDuration(allocationMetadata.SlotHours),
+			allocationMetadata.ResourcePool,
 		}
 		if err := csvWriter.Write(fields); err != nil {
 			return err

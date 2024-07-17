@@ -5,10 +5,12 @@ import Row from 'hew/Row';
 import { Label, TypographySize } from 'hew/Typography';
 import React from 'react';
 
+import { AnyMouseEvent } from 'utils/routes';
+
 interface Props {
   children: React.ReactNode;
   focused?: boolean;
-  onClick?: () => void;
+  onClick?: (e: AnyMouseEvent) => void;
   title: string;
 }
 

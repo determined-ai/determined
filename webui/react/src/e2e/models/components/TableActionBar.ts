@@ -21,7 +21,7 @@ export class TableActionBar extends NamedComponent {
     }),
     root: this.root,
   });
-  expNum = new BaseComponent({ parent: this, selector: '[data-test="expNum"]' });
+  count = new BaseComponent({ parent: this, selector: '[data-test="count"]' });
   heatmapToggle = new BaseComponent({ parent: this, selector: '[data-test="heatmapToggle"]' });
   compare = new BaseComponent({ parent: this, selector: '[data-test="compare"]' });
   // TODO a bunch of modals

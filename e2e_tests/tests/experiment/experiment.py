@@ -412,7 +412,7 @@ def wait_for_at_least_n_trials(
 def wait_for_experiment_workload_progress(
     sess: api.Session, experiment_id: int, max_ticks: int = conf.MAX_TRIAL_BUILD_SECS
 ) -> None:
-    for _ in range(conf.MAX_TRIAL_BUILD_SECS):
+    for _ in range(max_ticks):
         trials = experiment_trials(sess, experiment_id)
         if len(trials) > 0:
             only_trial = trials[0]

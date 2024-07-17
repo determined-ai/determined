@@ -7,12 +7,10 @@ from determined.experimental import core_v2
 
 def main():
     core_v2.init(
-        defaults=core_v2.DefaultConfig(
+        config=core_v2.Config(
             name="unmanaged-2-checkpoints",
             # We allow configuring the local checkpoint storage directory.
             # checkpoint_storage="/tmp/determined-cp",
-        ),
-        unmanaged=core_v2.UnmanagedConfig(
             external_experiment_id="test-unmanaged-2-checkpoints",
             external_trial_id="test-unmanaged-2-checkpoints",
             # e.g., requeued jobs on slurm:

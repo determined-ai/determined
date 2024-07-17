@@ -817,6 +817,58 @@ func MoveExperiments(
 			}
 		}
 
+		if _, err = tx.NewRaw(`
+		UPDATE runs SET local_id=s.local_id
+		FROM
+			(
+				SELECT
+					r.id as id,
+					(p.max_local_id + ROW_NUMBER() OVER(PARTITION BY p.id ORDER BY r.id)) as local_id
+				FROM
+					projects p
+					JOIN runs r ON r.project_id=p.id
+				WHERE r.experiment_id IN (?)
+			) as s 
+		WHERE s.id=runs.id
+		`,
+			bun.In(acceptedIDs)).Exec(ctx); err != nil {
+			return nil, fmt.Errorf("updating run's local IDs: %w", err)
+		}
+
+		if _, err = tx.NewRaw(`
+		UPDATE projects SET max_local_id=s.max_local_id
+		FROM 
+			(
+				SELECT 
+					project_id,
+					COALESCE(MAX(local_id), 1) as max_local_id
+				FROM 
+					runs
+				GROUP BY
+					project_id
+				HAVING project_id=?
+			) as s
+		WHERE projects.id=?`,
+			destinationProjectID, destinationProjectID).Exec(ctx); err != nil {
+			return nil, fmt.Errorf("updating projects max local id: %w", err)
+		}
+
+		if _, err = tx.NewRaw(`
+		INSERT INTO local_id_redirect (run_id, project_id, project_key, local_id)
+		SELECT 
+			r.id as run_id,
+			p.id as project_id,
+			p.key as project_key,
+			r.local_id
+		FROM 
+			projects p
+			JOIN runs r 
+			ON r.project_id=p.id
+		WHERE r.experiment_id IN (?)
+		`, bun.In(acceptedIDs)).Exec(ctx); err != nil {
+			return nil, fmt.Errorf("adding local id redirect: %w", err)
+		}
+
 		for _, acceptID := range acceptedIDs {
 			results = append(results, ExperimentActionResult{
 				Error: nil,

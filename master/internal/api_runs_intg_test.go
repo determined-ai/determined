@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"slices"
 	"strconv"
+	"strings"
 	"sync"
 	"testing"
 	"time"
@@ -268,6 +269,40 @@ func TestSearchRunsFilter(t *testing.T) {
 		HParams:      hyperparameters2,
 	}, task2.TaskID))
 
+	resp, err = api.SearchRuns(ctx, req)
+	require.NoError(t, err)
+	require.Len(t, resp.Runs, 2)
+
+	rawMetadata := map[string]any{
+		"string_key": "a",
+		"number_key": 1,
+		"nested": map[string]any{
+			"string_key": "a",
+			"number_key": 1,
+		},
+	}
+	metadata := newProtoStruct(t, rawMetadata)
+	_, err = api.PostRunMetadata(ctx, &apiv1.PostRunMetadataRequest{
+		RunId:    resp.Runs[0].Id,
+		Metadata: metadata,
+	})
+	require.NoError(t, err)
+
+	rawMetadata = map[string]any{
+		"string_key": "b",
+		"number_key": 2,
+		"nested": map[string]any{
+			"string_key": "b",
+			"number_key": 2,
+		},
+	}
+	metadata = newProtoStruct(t, rawMetadata)
+	_, err = api.PostRunMetadata(ctx, &apiv1.PostRunMetadataRequest{
+		RunId:    resp.Runs[1].Id,
+		Metadata: metadata,
+	})
+	require.NoError(t, err)
+
 	tests := map[string]struct {
 		expectedNumRuns int
 		filter          string
@@ -362,6 +397,66 @@ func TestSearchRunsFilter(t *testing.T) {
 				`"location":"LOCATION_TYPE_RUN_HYPERPARAMETERS","operator":"<=","type":"COLUMN_TYPE_NUMBER","value":1}],` +
 				`"conjunction":"and","kind":"group"},"showArchived":false}`,
 		},
+		"MetadataEmpty": {
+			expectedNumRuns: 0,
+			filter: `{"filterGroup":{"children":[{"columnName":"metadata.number_key","kind":"field",` +
+				`"location":"LOCATION_TYPE_RUN_METADATA","operator":"isEmpty","type":"COLUMN_TYPE_NUMBER","value":1}],` +
+				`"conjunction":"and","kind":"group"},"showArchived":false}`,
+		},
+		"MetadataNotEmpty": {
+			expectedNumRuns: 2,
+			filter: `{"filterGroup":{"children":[{"columnName":"metadata.number_key","kind":"field",` +
+				`"location":"LOCATION_TYPE_RUN_METADATA","operator":"notEmpty","type":"COLUMN_TYPE_NUMBER","value":1}],` +
+				`"conjunction":"and","kind":"group"},"showArchived":false}`,
+		},
+		"MetadataContains": {
+			expectedNumRuns: 1,
+			filter: `{"filterGroup":{"children":[{"columnName":"metadata.string_key","kind":"field",` +
+				`"location":"LOCATION_TYPE_RUN_METADATA","operator":"contains","type":"COLUMN_TYPE_TEXT","value":"a"}],` +
+				`"conjunction":"and","kind":"group"},"showArchived":false}`,
+		},
+		"MetadataNotContains": {
+			expectedNumRuns: 1,
+			filter: `{"filterGroup":{"children":[{"columnName":"metadata.string_key","kind":"field",` +
+				`"location":"LOCATION_TYPE_RUN_METADATA","operator":"notContains","type":"COLUMN_TYPE_TEXT","value":"a"}],` +
+				`"conjunction":"and","kind":"group"},"showArchived":false}`,
+		},
+		"MetadataOperator": {
+			expectedNumRuns: 1,
+			filter: `{"filterGroup":{"children":[{"columnName":"metadata.number_key","kind":"field",` +
+				`"location":"LOCATION_TYPE_RUN_METADATA","operator":"<=","type":"COLUMN_TYPE_NUMBER","value":1}],` +
+				`"conjunction":"and","kind":"group"},"showArchived":false}`,
+		},
+		"MetadataNestedEmpty": {
+			expectedNumRuns: 0,
+			filter: `{"filterGroup":{"children":[{"columnName":"metadata.nested.number_key","kind":"field",` +
+				`"location":"LOCATION_TYPE_RUN_METADATA","operator":"isEmpty","type":"COLUMN_TYPE_NUMBER","value":1}],` +
+				`"conjunction":"and","kind":"group"},"showArchived":false}`,
+		},
+		"MetadataNestedNotEmpty": {
+			expectedNumRuns: 2,
+			filter: `{"filterGroup":{"children":[{"columnName":"metadata.nested.number_key","kind":"field",` +
+				`"location":"LOCATION_TYPE_RUN_METADATA","operator":"notEmpty","type":"COLUMN_TYPE_NUMBER","value":1}],` +
+				`"conjunction":"and","kind":"group"},"showArchived":false}`,
+		},
+		"MetadataNestedContains": {
+			expectedNumRuns: 1,
+			filter: `{"filterGroup":{"children":[{"columnName":"metadata.nested.string_key","kind":"field",` +
+				`"location":"LOCATION_TYPE_RUN_METADATA","operator":"contains","type":"COLUMN_TYPE_TEXT","value":"a"}],` +
+				`"conjunction":"and","kind":"group"},"showArchived":false}`,
+		},
+		"MetadataNestedNotContains": {
+			expectedNumRuns: 1,
+			filter: `{"filterGroup":{"children":[{"columnName":"metadata.nested.string_key","kind":"field",` +
+				`"location":"LOCATION_TYPE_RUN_METADATA","operator":"notContains","type":"COLUMN_TYPE_TEXT","value":"a"}],` +
+				`"conjunction":"and","kind":"group"},"showArchived":false}`,
+		},
+		"MetadataNestedOperator": {
+			expectedNumRuns: 1,
+			filter: `{"filterGroup":{"children":[{"columnName":"metadata.nested.number_key","kind":"field",` +
+				`"location":"LOCATION_TYPE_RUN_METADATA","operator":"<=","type":"COLUMN_TYPE_NUMBER","value":1}],` +
+				`"conjunction":"and","kind":"group"},"showArchived":false}`,
+		},
 	}
 
 	for testCase, testVars := range tests {
@@ -423,11 +518,34 @@ func TestMoveRunsIds(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, resp.Runs, 1)
 	require.Equal(t, moveIds[0], resp.Runs[0].Id)
+	i := strings.Index(resp.Runs[0].LocalId, "-")
+	localID := resp.Runs[0].LocalId[i+1:]
+	require.Equal(t, "1", localID)
 
 	// Experiment in new project
 	exp, err := api.getExperiment(ctx, curUser, run1.ExperimentID)
 	require.NoError(t, err)
 	require.Equal(t, exp.ProjectId, destprojectID)
+}
+
+func TestMoveRunsSameIds(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	sourceprojectID := int32(1)
+
+	run1, _ := createTestTrial(t, api, curUser)
+
+	moveIds := []int32{int32(run1.ID)}
+
+	moveReq := &apiv1.MoveRunsRequest{
+		RunIds:               moveIds,
+		SourceProjectId:      sourceprojectID,
+		DestinationProjectId: sourceprojectID,
+		SkipMultitrial:       false,
+	}
+
+	moveResp, err := api.MoveRuns(ctx, moveReq)
+	require.NoError(t, err)
+	require.Empty(t, moveResp.Results)
 }
 
 func setUpMultiTrialExperiments(ctx context.Context, t *testing.T, api *apiServer, curUser model.User,
@@ -555,6 +673,16 @@ func TestMoveRunsMultiTrialNoSkip(t *testing.T) {
 	api, curUser, ctx := setupAPITest(t, nil)
 	sourceprojectID, destprojectID, runID1, runID2, expID := setUpMultiTrialExperiments(ctx, t, api, curUser)
 
+	// add a run in the destination project to test local run id
+	exp := createTestExpWithProjectID(t, api, curUser, int(destprojectID))
+	task0 := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
+	require.NoError(t, db.AddTask(ctx, task0))
+	require.NoError(t, db.AddTrial(ctx, &model.Trial{
+		State:        model.CompletedState,
+		ExperimentID: exp.ID,
+		StartTime:    time.Now(),
+	}, task0.TaskID))
+
 	moveIds := []int32{runID1}
 
 	moveReq := &apiv1.MoveRunsRequest{
@@ -566,8 +694,9 @@ func TestMoveRunsMultiTrialNoSkip(t *testing.T) {
 
 	moveResp, err := api.MoveRuns(ctx, moveReq)
 	require.NoError(t, err)
-	require.Len(t, moveResp.Results, 1)
+	require.Len(t, moveResp.Results, 2)
 	require.Equal(t, "", moveResp.Results[0].Error)
+	require.Equal(t, "", moveResp.Results[1].Error)
 
 	// runs no longer in old project
 	req := &apiv1.SearchRunsRequest{
@@ -586,12 +715,23 @@ func TestMoveRunsMultiTrialNoSkip(t *testing.T) {
 
 	resp, err = api.SearchRuns(ctx, req)
 	require.NoError(t, err)
-	require.Len(t, resp.Runs, 2)
+	require.Len(t, resp.Runs, 3)
 	// Check if other run moved as well
 	require.Equal(t, runID2, resp.Runs[1].Id)
 	// Check if runs in same experiment
 	require.Equal(t, expID, resp.Runs[0].Experiment.Id)
 	require.Equal(t, expID, resp.Runs[1].Experiment.Id)
+
+	i := strings.Index(resp.Runs[0].LocalId, "-")
+	localID1 := resp.Runs[0].LocalId[i+1:]
+	i = strings.Index(resp.Runs[1].LocalId, "-")
+	localID2 := resp.Runs[1].LocalId[i+1:]
+	i = strings.Index(resp.Runs[2].LocalId, "-")
+	localID3 := resp.Runs[2].LocalId[i+1:]
+	require.Equal(t, "2", localID1)
+	require.Equal(t, "3", localID2)
+	// original run should keeps the same local id
+	require.Equal(t, "1", localID3)
 }
 
 func TestMoveRunsFilter(t *testing.T) {
@@ -680,6 +820,10 @@ func TestMoveRunsFilter(t *testing.T) {
 	require.Len(t, projHparam, 2)
 	require.True(t, slices.Contains(projHparam, "test1.test2"))
 	require.True(t, slices.Contains(projHparam, "global_batch_size"))
+
+	i := strings.Index(resp.Runs[0].LocalId, "-")
+	localID := resp.Runs[0].LocalId[i+1:]
+	require.Equal(t, "1", localID)
 }
 
 func TestDeleteRunsNonTerminal(t *testing.T) {

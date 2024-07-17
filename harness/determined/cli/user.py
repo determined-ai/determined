@@ -83,11 +83,7 @@ def log_in_user(args: argparse.Namespace) -> None:
     try:
         authentication.check_password_complexity(password)
     except ValueError as e:
-        print(
-            "Warning: your password does not appear to satisfy "
-            + f"recommended complexity requirements:\n{e}\n"
-            + "Please change your password as soon as possible."
-        )
+        authentication.warn_about_complexity(e)
 
     token_store.set_token(sess.username, sess.token)
     token_store.set_active(sess.username)

@@ -2,7 +2,7 @@
  Deployment Reference
 ######################
 
-Deloyment Reference includes reference documentation for configuring Determined deployment.
+Deployment Reference includes reference documentation for configuring Determined deployment.
 
 +----------------------------------------+-------------------------------------------------------+
 | Title                                  | Description                                           |

@@ -88,10 +88,6 @@ func registerAgentConfig() {
 	registerInt(flags, name("master-port"), defaults.MasterPort, "Port of the master")
 	registerString(flags, name("agent-id"), defaults.AgentID, "Unique ID of this Determined agent")
 
-	// Label flags.
-	registerString(flags, name("label"), defaults.Label,
-		"This field has been deprecated and will be ignored, use ``resource_pool`` instead.")
-
 	// ResourcePool flags.
 	registerString(flags, name("resource-pool"), defaults.ResourcePool,
 		"Resource Pool the agent belongs to")
@@ -122,8 +118,6 @@ func registerAgentConfig() {
 	registerBool(flags, name("debug"), defaults.Debug, "Enable verbose script output")
 	registerInt(flags, name("artificial-slots"), defaults.ArtificialSlots, "")
 	flags.Lookup("artificial-slots").Hidden = true
-	registerString(flags, name("image-root"), defaults.ImageRoot,
-		"Path to local container image cache")
 
 	// Endpoint TLS flags.
 	registerBool(flags, name("tls"), defaults.TLS, "Use TLS for the API server")

@@ -5,6 +5,7 @@ import json
 import os
 import pathlib
 import re
+import sys
 from typing import Any, Dict, Iterator, List, Optional, Tuple
 from urllib import parse
 
@@ -21,6 +22,15 @@ def salt_and_hash(password: str) -> str:
         return hashlib.sha512((PASSWORD_SALT + password).encode()).hexdigest()
     else:
         return password
+
+
+def warn_about_complexity(e: ValueError) -> None:
+    print(
+        "Warning: your password does not appear to satisfy "
+        + f"recommended complexity requirements:\n{e}\n"
+        + "Please change your password as soon as possible.",
+        file=sys.stderr,
+    )
 
 
 def check_password_complexity(password: Optional[str]) -> None:
@@ -239,11 +249,7 @@ def login_with_cache(
     try:
         check_password_complexity(password)
     except ValueError as e:
-        print(
-            "Warning: your password does not appear to satisfy "
-            + f"recommended complexity requirements:\n{e}\n"
-            + "Please change your password as soon as possible."
-        )
+        warn_about_complexity(e)
 
     token_store.set_token(user, token)
 

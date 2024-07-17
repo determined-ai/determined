@@ -1,0 +1,13 @@
+logs:
+  - type: file
+    path: "/tmp/artifacts/logs/*.log"
+    service: "<SERVICE_NAME>"
+    source: "determined-task-logs"
+  - type: file
+    path: "/tmp/devcluster/*.log"
+    service: "<SERVICE_NAME>"
+    source: "devcluster-logs"
+  - type: file
+    path: "/tmp/priority_scheduler/*.log"
+    service: "<SERVICE_NAME>"
+    source: "devcluster-priority-scheduler-logs"

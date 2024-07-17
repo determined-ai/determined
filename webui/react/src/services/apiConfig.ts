@@ -1190,6 +1190,26 @@ export const unarchiveRuns: DetApi<
   request: (params, options) => detApi.Internal.unarchiveRuns(params, options),
 };
 
+export const pauseRuns: DetApi<
+  Api.V1PauseRunsRequest,
+  Api.V1PauseRunsResponse,
+  Type.BulkActionResult
+> = {
+  name: 'pauseRuns',
+  postProcess: (response) => decoder.mapV1ActionResults(response.results),
+  request: (params, options) => detApi.Internal.pauseRuns(params, options),
+};
+
+export const resumeRuns: DetApi<
+  Api.V1ResumeRunsRequest,
+  Api.V1ResumeRunsResponse,
+  Type.BulkActionResult
+> = {
+  name: 'resumeRuns',
+  postProcess: (response) => decoder.mapV1ActionResults(response.results),
+  request: (params, options) => detApi.Internal.resumeRuns(params, options),
+};
+
 /* Tasks */
 
 export const getTask: DetApi<

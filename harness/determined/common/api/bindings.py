@@ -1129,7 +1129,6 @@ class v1Agent(Printable):
     containers: "typing.Optional[typing.Dict[str, v1Container]]" = None
     draining: "typing.Optional[bool]" = None
     enabled: "typing.Optional[bool]" = None
-    label: "typing.Optional[str]" = None
     registeredTime: "typing.Optional[str]" = None
     resourcePools: "typing.Optional[typing.Sequence[str]]" = None
     slots: "typing.Optional[typing.Dict[str, v1Slot]]" = None
@@ -1144,7 +1143,6 @@ class v1Agent(Printable):
         containers: "typing.Union[typing.Dict[str, v1Container], None, Unset]" = _unset,
         draining: "typing.Union[bool, None, Unset]" = _unset,
         enabled: "typing.Union[bool, None, Unset]" = _unset,
-        label: "typing.Union[str, None, Unset]" = _unset,
         registeredTime: "typing.Union[str, None, Unset]" = _unset,
         resourcePools: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
         slots: "typing.Union[typing.Dict[str, v1Slot], None, Unset]" = _unset,
@@ -1160,8 +1158,6 @@ class v1Agent(Printable):
             self.draining = draining
         if not isinstance(enabled, Unset):
             self.enabled = enabled
-        if not isinstance(label, Unset):
-            self.label = label
         if not isinstance(registeredTime, Unset):
             self.registeredTime = registeredTime
         if not isinstance(resourcePools, Unset):
@@ -1185,8 +1181,6 @@ class v1Agent(Printable):
             kwargs["draining"] = obj["draining"]
         if "enabled" in obj:
             kwargs["enabled"] = obj["enabled"]
-        if "label" in obj:
-            kwargs["label"] = obj["label"]
         if "registeredTime" in obj:
             kwargs["registeredTime"] = obj["registeredTime"]
         if "resourcePools" in obj:
@@ -1210,8 +1204,6 @@ class v1Agent(Printable):
             out["draining"] = self.draining
         if not omit_unset or "enabled" in vars(self):
             out["enabled"] = self.enabled
-        if not omit_unset or "label" in vars(self):
-            out["label"] = self.label
         if not omit_unset or "registeredTime" in vars(self):
             out["registeredTime"] = self.registeredTime
         if not omit_unset or "resourcePools" in vars(self):
@@ -4327,6 +4319,7 @@ class v1FlatRun(Printable):
     externalRunId: "typing.Optional[int]" = None
     hyperparameters: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     labels: "typing.Optional[typing.Sequence[str]]" = None
+    localId: "typing.Optional[str]" = None
     metadata: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     searcherMetricValue: "typing.Optional[float]" = None
     summaryMetrics: "typing.Optional[typing.Dict[str, typing.Any]]" = None
@@ -4352,6 +4345,7 @@ class v1FlatRun(Printable):
         externalRunId: "typing.Union[int, None, Unset]" = _unset,
         hyperparameters: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
         labels: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
+        localId: "typing.Union[str, None, Unset]" = _unset,
         metadata: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
         searcherMetricValue: "typing.Union[float, None, Unset]" = _unset,
         summaryMetrics: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
@@ -4380,6 +4374,8 @@ class v1FlatRun(Printable):
             self.hyperparameters = hyperparameters
         if not isinstance(labels, Unset):
             self.labels = labels
+        if not isinstance(localId, Unset):
+            self.localId = localId
         if not isinstance(metadata, Unset):
             self.metadata = metadata
         if not isinstance(searcherMetricValue, Unset):
@@ -4416,6 +4412,8 @@ class v1FlatRun(Printable):
             kwargs["hyperparameters"] = obj["hyperparameters"]
         if "labels" in obj:
             kwargs["labels"] = obj["labels"]
+        if "localId" in obj:
+            kwargs["localId"] = obj["localId"]
         if "metadata" in obj:
             kwargs["metadata"] = obj["metadata"]
         if "searcherMetricValue" in obj:
@@ -4452,6 +4450,8 @@ class v1FlatRun(Printable):
             out["hyperparameters"] = self.hyperparameters
         if not omit_unset or "labels" in vars(self):
             out["labels"] = self.labels
+        if not omit_unset or "localId" in vars(self):
+            out["localId"] = self.localId
         if not omit_unset or "metadata" in vars(self):
             out["metadata"] = self.metadata
         if not omit_unset or "searcherMetricValue" in vars(self):
@@ -5516,6 +5516,33 @@ class v1GetMeResponse(Printable):
         out: "typing.Dict[str, typing.Any]" = {
             "user": self.user.to_json(omit_unset),
         }
+        return out
+
+class v1GetMetadataValuesResponse(Printable):
+    """Response to GetMetadataValuesRequest."""
+    values: "typing.Optional[typing.Sequence[str]]" = None
+
+    def __init__(
+        self,
+        *,
+        values: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
+    ):
+        if not isinstance(values, Unset):
+            self.values = values
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetMetadataValuesResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "values" in obj:
+            kwargs["values"] = obj["values"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "values" in vars(self):
+            out["values"] = self.values
         return out
 
 class v1GetMetricsResponse(Printable):
@@ -8426,6 +8453,7 @@ class v1LocationType(DetEnum):
     - LOCATION_TYPE_CUSTOM_METRIC: Column is located on the experiment's custom metric
     - LOCATION_TYPE_RUN: Column is located on the run
     - LOCATION_TYPE_RUN_HYPERPARAMETERS: Column is located in the hyperparameter of the run
+    - LOCATION_TYPE_RUN_METADATA: Column is located on the run's arbitrary metadata
     """
     UNSPECIFIED = "LOCATION_TYPE_UNSPECIFIED"
     EXPERIMENT = "LOCATION_TYPE_EXPERIMENT"
@@ -8435,6 +8463,7 @@ class v1LocationType(DetEnum):
     CUSTOM_METRIC = "LOCATION_TYPE_CUSTOM_METRIC"
     RUN = "LOCATION_TYPE_RUN"
     RUN_HYPERPARAMETERS = "LOCATION_TYPE_RUN_HYPERPARAMETERS"
+    RUN_METADATA = "LOCATION_TYPE_RUN_METADATA"
 
 class v1LogConfig(Printable):
     color: "typing.Optional[bool]" = None
@@ -12337,7 +12366,6 @@ class v1ResourceAllocationAggregatedEntry(Printable):
     def __init__(
         self,
         *,
-        byAgentLabel: "typing.Dict[str, float]",
         byExperimentLabel: "typing.Dict[str, float]",
         byResourcePool: "typing.Dict[str, float]",
         byUsername: "typing.Dict[str, float]",
@@ -12345,7 +12373,6 @@ class v1ResourceAllocationAggregatedEntry(Printable):
         periodStart: str,
         seconds: float,
     ):
-        self.byAgentLabel = byAgentLabel
         self.byExperimentLabel = byExperimentLabel
         self.byResourcePool = byResourcePool
         self.byUsername = byUsername
@@ -12356,7 +12383,6 @@ class v1ResourceAllocationAggregatedEntry(Printable):
     @classmethod
     def from_json(cls, obj: Json) -> "v1ResourceAllocationAggregatedEntry":
         kwargs: "typing.Dict[str, typing.Any]" = {
-            "byAgentLabel": {k: float(v) for k, v in obj["byAgentLabel"].items()},
             "byExperimentLabel": {k: float(v) for k, v in obj["byExperimentLabel"].items()},
             "byResourcePool": {k: float(v) for k, v in obj["byResourcePool"].items()},
             "byUsername": {k: float(v) for k, v in obj["byUsername"].items()},
@@ -12368,7 +12394,6 @@ class v1ResourceAllocationAggregatedEntry(Printable):
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
-            "byAgentLabel": {k: dump_float(v) for k, v in self.byAgentLabel.items()},
             "byExperimentLabel": {k: dump_float(v) for k, v in self.byExperimentLabel.items()},
             "byResourcePool": {k: dump_float(v) for k, v in self.byResourcePool.items()},
             "byUsername": {k: dump_float(v) for k, v in self.byUsername.items()},
@@ -18136,7 +18161,6 @@ def get_GetAgents(
     *,
     excludeContainers: "typing.Optional[bool]" = None,
     excludeSlots: "typing.Optional[bool]" = None,
-    label: "typing.Optional[str]" = None,
     limit: "typing.Optional[int]" = None,
     offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
@@ -18146,7 +18170,6 @@ def get_GetAgents(
 
     - excludeContainers: exclude containers.
     - excludeSlots: exclude slots.
-    - label: This field has been deprecated and will be ignored.
     - limit: Limit the number of agents. A value of 0 denotes no limit.
     - offset: Skip the number of agents before returning results. Negative values
 denote number of agents to skip from the end before returning results.
@@ -18164,7 +18187,6 @@ denote number of agents to skip from the end before returning results.
     _params = {
         "excludeContainers": str(excludeContainers).lower() if excludeContainers is not None else None,
         "excludeSlots": str(excludeSlots).lower() if excludeSlots is not None else None,
-        "label": label,
         "limit": limit,
         "offset": offset,
         "orderBy": orderBy.value if orderBy is not None else None,
@@ -19018,6 +19040,35 @@ def get_GetMe(
     if _resp.status_code == 200:
         return v1GetMeResponse.from_json(_resp.json())
     raise APIHttpError("get_GetMe", _resp)
+
+def get_GetMetadataValues(
+    session: "api.BaseSession",
+    *,
+    key: str,
+    projectId: int,
+) -> "v1GetMetadataValuesResponse":
+    """Retrieve run metadata values for a given string typed key within
+    a given project.
+
+    - key: Metadata key
+    - projectId: Project id
+    """
+    _params = None
+    if type(key) == str:
+        key = parse.quote(key)
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/projects/{projectId}/metadata/{key}",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1GetMetadataValuesResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetMetadataValues", _resp)
 
 def get_GetMetrics(
     session: "api.BaseSession",

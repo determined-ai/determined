@@ -318,8 +318,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     if (!isLoadingSettings && settings.sortString) {
       setSorts(parseSortString(settings.sortString));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoadingSettings]);
+  }, [isLoadingSettings, settings.sortString]);
 
   useEffect(() => {
     return eagerSubscribe(projectSettingsObs, (ps, prevPs) => {
@@ -1121,6 +1120,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
         ) : (
           <div className={css.paneWrapper}>
             <ComparisonView
+              colorMap={colorMap}
               fixedColumnsCount={STATIC_COLUMNS.length + settings.pinnedColumnsCount}
               initialWidth={comparisonViewTableWidth}
               open={settings.compare}

@@ -92,8 +92,6 @@ def update(args: argparse.Namespace) -> None:
         priority=args.priority,
         weight=args.weight,
         resourcePool=args.resource_pool,
-        behindOf=args.behind_of,
-        aheadOf=args.ahead_of,
     )
     bindings.post_UpdateJobQueue(sess, body=bindings.v1UpdateJobQueueRequest(updates=[update]))
 
@@ -111,16 +109,12 @@ def _single_update(
     priority: str = "",
     weight: str = "",
     resource_pool: str = "",
-    behind_of: str = "",
-    ahead_of: str = "",
 ) -> None:
     update = bindings.v1QueueControl(
         jobId=job_id,
         priority=int(priority) if priority != "" else None,
         weight=int(weight) if weight != "" else None,
         resourcePool=resource_pool if resource_pool != "" else None,
-        behindOf=behind_of if behind_of != "" else None,
-        aheadOf=ahead_of if ahead_of != "" else None,
     )
     bindings.post_UpdateJobQueue(session, body=bindings.v1UpdateJobQueueRequest(updates=[update]))
 
@@ -136,11 +130,9 @@ def check_is_priority(pools: bindings.v1GetResourcePoolsResponse, resource_pool:
 
 
 def validate_operation_args(operation: str) -> dict:
-    valid_cmds = ("priority", "weight", "resource_pool", "ahead_of", "behind_of")
+    valid_cmds = ("priority", "weight", "resource_pool")
     replacements = {
         "resource-pool": "resource_pool",
-        "ahead-of": "ahead_of",
-        "behind-of": "behind_of",
     }
     args = {}
     values = operation.split(".")
@@ -219,16 +211,6 @@ args_description = [
                             type=str,
                             help="The target resource pool to move the job to.",
                         ),
-                        cli.Arg(
-                            "--ahead-of",
-                            type=str,
-                            help="The job ID of the job to be put ahead of in the queue.",
-                        ),
-                        cli.Arg(
-                            "--behind-of",
-                            type=str,
-                            help="The job ID of the job to be put behind in the queue.",
-                        ),
                     ),
                 ],
             ),
@@ -242,8 +224,8 @@ args_description = [
                         nargs=argparse.ONE_OR_MORE,
                         type=str,
                         help="The target job ID(s) and target operation(s), formatted as "
-                        "<jobID>.<operation>=<value>. Operations include priority, weight, "
-                        "resource-pool, ahead-of, and behind-of.",
+                        "<jobID>.<operation>=<value>. Operations include priority, weight, and "
+                        "resource-pool.",
                     )
                 ],
             ),

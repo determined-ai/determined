@@ -116,7 +116,6 @@
         "experiment_seed": 1661188515
       },
       "resources": {
-        "agent_label": "",
         "devices": [],
         "max_slots": null,
         "native_parallel": false,

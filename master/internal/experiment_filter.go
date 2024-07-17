@@ -158,6 +158,7 @@ func runColumnNameToSQL(columnName string) (string, error) {
 		"externalExperimentId":  "e.external_experiment_id",
 		"externalRunId":         "r.external_run_id",
 		"experimentId":          "e.id",
+		"localId":               "CONCAT(p.key, '-' , r.local_id::text)",
 		"isExpMultitrial":       "e.config->'searcher'->>'name' != 'single'",
 		"parentArchived":        "(w.archived OR p.archived)",
 	}
@@ -167,6 +168,98 @@ func runColumnNameToSQL(columnName string) (string, error) {
 		return "", fmt.Errorf("invalid run column %s", columnName)
 	}
 	return col, nil
+}
+
+func runMetadataToSQL(c string, filterColumnType *string, filterValue *interface{},
+	op *operator, q *bun.SelectQuery,
+	fc *filterConjunction,
+) (*bun.SelectQuery, error) {
+	queryColumnType := projectv1.ColumnType_COLUMN_TYPE_UNSPECIFIED.String()
+	var o operator
+	var queryValue interface{}
+	if filterValue == nil && op != nil && *op != empty && *op != notEmpty {
+		return nil, fmt.Errorf("metadata field defined without value and without a valid operator")
+	}
+	o = *op
+	if o != empty && o != notEmpty {
+		queryValue = *filterValue
+	}
+	if filterColumnType != nil {
+		queryColumnType = *filterColumnType
+	}
+	var queryArgs []interface{}
+	runHparam := strings.TrimPrefix(c, "metadata.")
+	oSQL, err := o.toSQL()
+	if err != nil {
+		return nil, err
+	}
+	var queryString string
+	switch o {
+	case empty:
+		queryString = fmt.Sprintf(`r.id NOT IN (SELECT run_id FROM runs_metadata_index WHERE flat_key='%s')`, runHparam)
+	case notEmpty:
+		queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM runs_metadata_index WHERE flat_key='%s')`, runHparam)
+	case contains:
+		queryArgs = append(queryArgs, queryValue)
+		switch queryColumnType {
+		case projectv1.ColumnType_COLUMN_TYPE_NUMBER.String():
+			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM runs_metadata_index WHERE flat_key='%s'
+			AND (number_value=%s OR float_value=%s))`,
+				runHparam, "?", "?")
+			queryArgs = append(queryArgs, queryValue)
+		case projectv1.ColumnType_COLUMN_TYPE_TEXT.String():
+			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM runs_metadata_index WHERE flat_key='%s'
+			AND string_value LIKE %s)`,
+				runHparam, "?")
+		default:
+			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM runs_metadata_index WHERE flat_key='%s'
+			AND boolean_value=%s)`,
+				runHparam, "?")
+		}
+	case doesNotContain:
+		queryArgs = append(queryArgs, queryValue)
+		switch queryColumnType {
+		case projectv1.ColumnType_COLUMN_TYPE_NUMBER.String():
+			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM runs_metadata_index WHERE flat_key='%s'
+			AND (number_value!=%s AND float_value!=%s))`,
+				runHparam, "?", "?")
+			queryArgs = append(queryArgs, queryValue)
+		case projectv1.ColumnType_COLUMN_TYPE_TEXT.String():
+			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM runs_metadata_index WHERE flat_key='%s'
+			AND string_value NOT LIKE %s)`,
+				runHparam, "?")
+		default:
+			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM runs_metadata_index WHERE flat_key='%s'
+			AND boolean_value!=%s)`,
+				runHparam, "?")
+		}
+	default:
+		queryArgs = append(queryArgs, bun.Safe(oSQL), queryValue)
+		switch queryColumnType {
+		case projectv1.ColumnType_COLUMN_TYPE_NUMBER.String():
+			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM runs_metadata_index WHERE flat_key='%s'
+			AND (integer_value %s %s OR float_value %s %s))`,
+				runHparam, "?", "?", "?", "?")
+			queryArgs = append(queryArgs, bun.Safe(oSQL), queryValue)
+		case projectv1.ColumnType_COLUMN_TYPE_TEXT.String():
+			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM runs_metadata_index WHERE flat_key='%s'
+			AND string_value %s %s)`,
+				runHparam, "?", "?")
+		case projectv1.ColumnType_COLUMN_TYPE_DATE.String():
+			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM runs_metadata_index WHERE flat_key='%s'
+			AND timestamp_value %s %s)`,
+				runHparam, "?", "?")
+		default:
+			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM runs_metadata_index WHERE flat_key='%s'
+			AND boolean_value %s %s)`,
+				runHparam, "?", "?")
+		}
+	}
+
+	if fc != nil && *fc == or {
+		return q.WhereOr(queryString, queryArgs...), nil
+	}
+	return q.Where(queryString, queryArgs...), nil
 }
 
 func runHpToSQL(c string, filterColumnType *string, filterValue *interface{},
@@ -556,6 +649,8 @@ func (e experimentFilter) toSQL(q *bun.SelectQuery,
 			return hpToSQL(e.ColumnName, e.Type, e.Value, e.Operator, q, c)
 		case projectv1.LocationType_LOCATION_TYPE_RUN_HYPERPARAMETERS.String():
 			return runHpToSQL(e.ColumnName, e.Type, e.Value, e.Operator, q, c)
+		case projectv1.LocationType_LOCATION_TYPE_RUN_METADATA.String():
+			return runMetadataToSQL(e.ColumnName, e.Type, e.Value, e.Operator, q, c)
 		}
 	case group:
 		var co string

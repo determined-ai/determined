@@ -32,7 +32,7 @@ import (
 var defaultRunsTableColumns = []*projectv1.ProjectColumn{
 	{
 		Column:      "id",
-		DisplayName: "ID",
+		DisplayName: "Global Run ID",
 		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
 		Type:        projectv1.ColumnType_COLUMN_TYPE_NUMBER,
 	},
@@ -167,6 +167,12 @@ var defaultRunsTableColumns = []*projectv1.ProjectColumn{
 		DisplayName: "Parent Archived",
 		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
 		Type:        projectv1.ColumnType_COLUMN_TYPE_UNSPECIFIED,
+	},
+	{
+		Column:      "localId",
+		DisplayName: "Run ID",
+		Location:    projectv1.LocationType_LOCATION_TYPE_RUN,
+		Type:        projectv1.ColumnType_COLUMN_TYPE_TEXT,
 	},
 }
 
@@ -544,6 +550,37 @@ func (a *apiServer) getProjectRunColumnsByID(
 			Column:   fmt.Sprintf("hp.%s", hparam.Hparam),
 			Location: projectv1.LocationType_LOCATION_TYPE_RUN_HYPERPARAMETERS,
 			Type:     parseMetricsType(hparam.Type),
+		})
+	}
+
+	metadata := []struct {
+		Metadata string
+		Type     string
+	}{}
+	// Get run metadata colums
+	err = db.Bun().NewSelect().Distinct().
+		ColumnExpr("CONCAT('metadata.', flat_key) as metadata").
+		ColumnExpr(`
+		CASE
+			WHEN string_value IS NOT NULL THEN 'string'
+			WHEN integer_value IS NOT NULL THEN 'number'
+			WHEN float_value IS NOT NULL THEN 'number'
+			WHEN timestamp_value IS NOT NULL THEN 'date'
+			WHEN boolean_value IS NOT NULL THEN 'boolean'
+			ELSE 'string'
+		END as type`).
+		TableExpr("runs_metadata_index").
+		Where("project_id = ?", id).
+		Scan(ctx, &metadata)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, data := range metadata {
+		columns = append(columns, &projectv1.ProjectColumn{
+			Column:   data.Metadata,
+			Location: projectv1.LocationType_LOCATION_TYPE_RUN_METADATA,
+			Type:     parseMetricsType(data.Type),
 		})
 	}
 
@@ -1069,4 +1106,33 @@ func (a *apiServer) GetProjectsByUserActivity(
 	}
 
 	return &apiv1.GetProjectsByUserActivityResponse{Projects: viewableProjects}, nil
+}
+
+func (a *apiServer) GetMetadataValues(
+	ctx context.Context, req *apiv1.GetMetadataValuesRequest,
+) (*apiv1.GetMetadataValuesResponse, error) {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	p, err := a.GetProjectByID(ctx, req.ProjectId, *curUser)
+	if err != nil { // Can view project?
+		return nil, err
+	}
+
+	// We only want string-type metadata.
+	values := []string{}
+	err = db.Bun().NewSelect().Distinct().
+		Table("runs_metadata_index").
+		Column("string_value").
+		Where("string_value IS NOT NULL").
+		Where("project_id=?", p.Id).
+		Where("flat_key=?", req.Key).Scan(ctx, &values)
+	if err != nil {
+		return nil, err
+	}
+	resp := apiv1.GetMetadataValuesResponse{
+		Values: values,
+	}
+	return &resp, nil
 }

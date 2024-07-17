@@ -36,7 +36,7 @@ def test_master_restart_reattach_recover_experiment_slurm(
     managed_slurm_cluster_restarts: managed_slurm_cluster.ManagedSlurmCluster, downtime: int
 ) -> None:
     test_master_restart._test_master_restart_reattach_recover_experiment(
-        managed_slurm_cluster_restarts, downtime
+        managed_slurm_cluster_restarts, downtime, max_workload_ticks=500
     )
 
 

@@ -1,0 +1,119 @@
+# Config file taken from https://github.com/DataDog/datadog-agent/blob/main/pkg/config/config_template.yaml
+# These values are overridden by environment variables: 
+# api_key
+# dd_site
+# dd_url
+# DD_TAGS
+# DD_EXTRA_TAGS
+# DD_ENV
+# apm is explicitly disabled here for cost reasons
+
+
+##################################
+## Log collection Configuration ##
+##################################
+
+## @param logs_enabled - boolean - optional - default: false
+## @env DD_LOGS_ENABLED - boolean - optional - default: false
+## Enable Datadog Agent log collection by setting logs_enabled to true.
+#
+logs_enabled: true
+
+## @param logs_config - custom object - optional
+## Enter specific configurations for your Log collection.
+## Uncomment this parameter and the one below to enable them.
+## See https://docs.*************/agent/logs/
+#
+logs_config:
+
+  ## @param container_collect_all - boolean - optional - default: false
+  ## @env DD_LOGS_CONFIG_CONTAINER_COLLECT_ALL - boolean - optional - default: false
+  ## Enable container log collection for all the containers (see ac_exclude to filter out containers)
+  #
+  container_collect_all: true
+
+  
+####################################
+## Trace Collection Configuration ##
+####################################
+
+## @param apm_config - custom object - optional
+## Enter specific configurations for your trace collection.
+## Uncomment this parameter and the one below to enable them.
+## See https://docs.*************/agent/apm/
+#
+apm_config:
+
+  ## @param enabled - boolean - optional - default: true
+  ## @env DD_APM_ENABLED - boolean - optional - default: true
+  ## Set to true to enable the APM Agent.
+  #
+  enabled: false
+
+######################################
+## Process Collection Configuration ##
+######################################
+
+# @param process_config - custom object - optional
+# Enter specific configurations for your Process data collection.
+# Uncomment this parameter and the one below to enable them.
+# See https://docs.*************/graphing/infrastructure/process/
+
+process_config:
+
+  # @param process_collection - custom object - optional
+  # Specifies settings for collecting processes.
+  process_collection:
+    # @param enabled - boolean - optional - default: false
+    # Enables collection of information about running processes.
+    enabled: false
+
+  # @param container_collection - custom object - optional
+  # Specifies settings for collecting containers.
+  container_collection:
+    # @param enabled - boolean - optional - default: true
+    # Enables collection of information about running containers.
+    enabled: false
+
+  # Deprecated - use `process_collection.enabled` and `container_collection.enabled` instead
+  # @param enabled - string - optional - default: "false"
+  # @env DD_PROCESS_CONFIG_ENABLED - string - optional - default: "false"
+  #  A string indicating the enabled state of the Process Agent:
+  #    * "false"    : The Agent collects only containers information.
+  #    * "true"     : The Agent collects containers and processes information.
+  #    * "disabled" : The Agent process collection is disabled.
+  
+  enabled: "false"
+
+  # @param process_discovery - custom object - optional
+  # Specifies custom settings for the `process_discovery` object.
+  process_discovery:
+      # @param enabled - boolean - optional - default: true
+      # Toggles the `process_discovery` check. If enabled, this check gathers information about running integrations.
+      enabled: false
+
+      # @param interval - duration - optional - default: 4h - minimum: 10m
+      # An interval in hours that specifies how often the process discovery check should run.
+      interval: 10m
+
+
+###########################
+## Logging Configuration ##
+###########################
+
+## @param log_level - string - optional - default: info
+## @env DD_LOG_LEVEL - string - optional - default: info
+## Minimum log level of the Datadog Agent.
+## Valid log levels are: trace, debug, info, warn, error, critical, and off.
+## Note: When using the 'off' log level, quotes are mandatory.
+#
+log_level: 'debug'
+
+## @param log_file - string - optional
+## @env DD_LOG_FILE - string - optional
+## Path of the log file for the Datadog Agent.
+## See https://docs.*************/agent/guide/agent-log-files/
+#
+log_file: /tmp/artifacts/logs/dd-agent-log.txt
+
+

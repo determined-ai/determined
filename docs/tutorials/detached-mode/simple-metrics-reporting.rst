@@ -68,7 +68,7 @@ function:
 
    def main():
        core_v2.init(
-           defaults=core_v2.DefaultConfig(
+           config=core_v2.Config(
                name="detached_mode_example",
            ),
        )
