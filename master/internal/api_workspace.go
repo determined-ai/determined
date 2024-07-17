@@ -23,7 +23,8 @@ import (
 	"github.com/determined-ai/determined/master/internal/command"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
-	"github.com/determined-ai/determined/master/internal/license"
+
+	// "github.com/determined-ai/determined/master/internal/license".
 	"github.com/determined-ai/determined/master/internal/rm/kubernetesrm"
 	"github.com/determined-ai/determined/master/internal/templates"
 	"github.com/determined-ai/determined/master/internal/workspace"
@@ -822,12 +823,12 @@ func (a *apiServer) setWorkspaceNamespaceBindings(ctx context.Context,
 	req *apiv1.SetWorkspaceNamespaceBindingsRequest, tx *bun.Tx, curUser *model.User,
 	w *workspacev1.Workspace,
 ) (resp *apiv1.SetWorkspaceNamespaceBindingsResponse, err error) {
-	defer func() {
-		if recover() != nil {
-			err = status.Error(codes.InvalidArgument, "Auto-creating namespaces is "+
-				"an Enterprise-Edition feature")
-		}
-	}()
+	// defer func() {
+	// 	if recover() != nil {
+	// 		err = status.Error(codes.InvalidArgument, "Auto-creating namespaces is "+
+	// 			"an Enterprise-Edition feature")
+	// 	}
+	// }()
 
 	wkspID := int(w.Id)
 	if err := workspace.AuthZProvider.Get().
@@ -860,7 +861,7 @@ func (a *apiServer) setWorkspaceNamespaceBindings(ctx context.Context,
 		case metadata.AutoCreateNamespaceAllClusters:
 			if !verified {
 				verified = true
-				license.RequireLicense("auto-create namespace")
+				// license.RequireLicense("auto-create namespace")
 				namespace = *autoCreatedNamespace
 				err = a.m.rm.CreateNamespace(*autoCreatedNamespace, clusterName, true)
 				if err != nil {
@@ -869,7 +870,7 @@ func (a *apiServer) setWorkspaceNamespaceBindings(ctx context.Context,
 			}
 		case metadata.AutoCreateNamespace:
 			if !verified { // We only want to perform these actions once.
-				license.RequireLicense("auto-create namespace")
+				// license.RequireLicense("auto-create namespace")
 				verified = true
 			}
 			err = a.m.rm.CreateNamespace(*autoCreatedNamespace, clusterName, false)
@@ -1004,7 +1005,7 @@ func (a *apiServer) setResourceQuotas(ctx context.Context,
 	req *apiv1.SetResourceQuotasRequest, tx *bun.Tx, curUser *model.User,
 	w *workspacev1.Workspace,
 ) (*apiv1.SetResourceQuotasResponse, error) {
-	license.RequireLicense("set resource quota")
+	// license.RequireLicense("set resource quota")
 	if err := workspace.AuthZProvider.Get().
 		CanSetResourceQuotas(ctx, *curUser, w); err != nil {
 		return nil, status.Error(codes.PermissionDenied, err.Error())
@@ -1058,13 +1059,13 @@ func (a *apiServer) setResourceQuotas(ctx context.Context,
 func (a *apiServer) SetResourceQuotas(ctx context.Context,
 	req *apiv1.SetResourceQuotasRequest,
 ) (resp *apiv1.SetResourceQuotasResponse, err error) {
-	defer func() {
-		if recover() != nil {
-			err = status.Error(codes.InvalidArgument, "Setting the resource quota on a workspace "+
-				"is an Enterprise-Edition feature")
-		}
-	}()
-	license.RequireLicense("set resource quota")
+	// defer func() {
+	// 	if recover() != nil {
+	// 		err = status.Error(codes.InvalidArgument, "Setting the resource quota on a workspace "+
+	// 			"is an Enterprise-Edition feature")
+	// 	}
+	// }()
+	// license.RequireLicense("set resource quota")
 
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {

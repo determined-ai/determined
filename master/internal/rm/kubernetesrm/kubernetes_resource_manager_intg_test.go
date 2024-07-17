@@ -22,6 +22,7 @@ import (
 	k8sV1 "k8s.io/api/core/v1"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/apimachinery/pkg/types"
 	"k8s.io/client-go/kubernetes"
 	typedBatchV1 "k8s.io/client-go/kubernetes/typed/batch/v1"
 	typedV1 "k8s.io/client-go/kubernetes/typed/core/v1"
@@ -995,32 +996,33 @@ func TestGetNamespaceResourceQuota(t *testing.T) {
 
 	js := createMockJobsService(nil, device.CPU, false)
 
-	js.clientSet = setupClientSetForResourceQuotaTests(namespaceName, []int{3, 5})
+	js.clientSet = setupClientSetForResourceQuotaTests(namespaceName, nil, []int{3, 5}, nil, nil, nil)
 
 	resp, err := js.getNamespaceResourceQuota(namespaceName)
 	require.NoError(t, err)
 	require.Equal(t, 3, int(*resp))
 
-	js.clientSet = setupClientSetForResourceQuotaTests(namespaceName, []int{5})
+	js.clientSet = setupClientSetForResourceQuotaTests(namespaceName, nil, []int{5}, nil, nil, nil)
 
 	resp, err = js.getNamespaceResourceQuota(namespaceName)
 	require.NoError(t, err)
 	require.Equal(t, 5, int(*resp))
 
-	js.clientSet = setupClientSetForResourceQuotaTests(namespaceName, []int{5, 10, 15})
+	js.clientSet = setupClientSetForResourceQuotaTests(namespaceName, nil, []int{5, 10, 15}, nil, nil, nil)
 
 	resp, err = js.getNamespaceResourceQuota(namespaceName)
 	require.NoError(t, err)
 	require.Equal(t, 5, int(*resp))
 
-	js.clientSet = setupClientSetForResourceQuotaTests(namespaceName, []int{})
+	js.clientSet = setupClientSetForResourceQuotaTests(namespaceName, nil, []int{}, nil, nil, nil)
 
 	resp, err = js.getNamespaceResourceQuota(namespaceName)
 	require.NoError(t, err)
 	require.Nil(t, resp)
 }
 
-func setupClientSetForResourceQuotaTests(namespaceName string, resourceQuotaList []int,
+func setupClientSetForResourceQuotaTests(namespaceName string, k8sNamespace *k8sV1.Namespace,
+	resourceQuotaList []int, addExtraDetRQ *int, patchByteArray *[]byte, rqToCreate *k8sV1.ResourceQuota,
 ) kubernetes.Interface {
 	jobsClientSet := &mocks.K8sClientsetInterface{}
 	coreV1Interface := &mocks.K8sCoreV1Interface{}
@@ -1042,13 +1044,57 @@ func setupClientSetForResourceQuotaTests(namespaceName string, resourceQuotaList
 		}
 		qlist = append(qlist, q)
 	}
+	if addExtraDetRQ != nil {
+		q := &k8sV1.ResourceQuota{
+			TypeMeta: metaV1.TypeMeta{
+				Kind:       "ResourceQuota",
+				APIVersion: "v1",
+			},
+			ObjectMeta: metaV1.ObjectMeta{
+				Labels: map[string]string{determinedLabel: namespaceName},
+				Name:   namespaceName + "-quota",
+			},
+			Spec: k8sV1.ResourceQuotaSpec{
+				Hard: k8sV1.ResourceList{
+					k8sV1.ResourceName("requests." + ResourceTypeNvidia): *resource.
+						NewQuantity(int64(*addExtraDetRQ), resource.DecimalSI),
+				},
+			},
+		}
+		qlist = append(qlist, *q)
+	}
 	resourceQuotaInterface := &mocks.ResourceQuotaInterface{}
 	k8sResourceQuota := &k8sV1.ResourceQuotaList{
 		Items: qlist,
 	}
-	resourceQuotaInterface.On("List", context.Background(), metaV1.ListOptions{}).
+	resourceQuotaInterface.On("List", context.TODO(), metaV1.ListOptions{}).
 		Return(k8sResourceQuota, nil).Once()
+	if rqToCreate != nil {
+		resourceQuotaInterface.On("Create", context.TODO(), rqToCreate, metaV1.CreateOptions{}).
+			Return(rqToCreate, nil).Once()
+	}
+	if patchByteArray != nil {
+		resourceQuotaInterface.On(
+			"Patch", context.TODO(),
+			namespaceName+"-quota",
+			types.MergePatchType,
+			*patchByteArray,
+			metaV1.PatchOptions{},
+		).Return(rqToCreate, nil).Once()
+	}
 	coreV1Interface.On("ResourceQuotas", namespaceName).Return(resourceQuotaInterface)
+
+	if k8sNamespace != nil {
+		namespaceInterface := &mocks.NamespaceInterface{}
+		namespaceInterface.On("Get", context.TODO(), namespaceName, metaV1.GetOptions{
+			TypeMeta: metaV1.TypeMeta{
+				Kind:       "Namespace",
+				APIVersion: "v1",
+			},
+		}).
+			Return(k8sNamespace, nil).Once()
+		coreV1Interface.On("Namespaces").Return(namespaceInterface)
+	}
 
 	jobsClientSet.On("CoreV1").Return(coreV1Interface)
 
@@ -1062,6 +1108,112 @@ func TestDefaultNamespace(t *testing.T) {
 	js.namespace = newDefaultNamespace
 	ns := js.DefaultNamespace()
 	require.Equal(t, newDefaultNamespace, ns)
+}
+
+func TestSetResourceQuota(t *testing.T) {
+	namespaceName := "NamespaceC"
+	js := createMockJobsService(nil, device.CPU, false)
+
+	k8sDeterminedLabel := map[string]string{determinedLabel: namespaceName}
+
+	k8sNamespace := &k8sV1.Namespace{
+		TypeMeta: metaV1.TypeMeta{
+			Kind:       "Namespace",
+			APIVersion: "v1",
+		},
+		ObjectMeta: metaV1.ObjectMeta{
+			Name:   namespaceName,
+			Labels: k8sDeterminedLabel,
+		},
+	}
+	// No existing Resource Quota
+	newRQ := 5
+	js.clientSet = setupClientSetForResourceQuotaTests(
+		namespaceName, k8sNamespace, []int{}, nil, nil, &k8sV1.ResourceQuota{
+			TypeMeta: metaV1.TypeMeta{
+				Kind:       "ResourceQuota",
+				APIVersion: "v1",
+			},
+			ObjectMeta: metaV1.ObjectMeta{Labels: k8sDeterminedLabel, Name: namespaceName + "-quota"},
+			Spec: k8sV1.ResourceQuotaSpec{
+				Hard: k8sV1.ResourceList{
+					k8sV1.ResourceName("requests." + ResourceTypeNvidia): *resource.
+						NewQuantity(int64(newRQ), resource.DecimalSI),
+				},
+			},
+		})
+	err := js.setResourceQuota(newRQ, namespaceName)
+	require.NoError(t, err)
+
+	// 1 existing non determined Resource Quota that is more than the quota we are trying to set.
+	newRQ = 2
+	js.clientSet = setupClientSetForResourceQuotaTests(
+		namespaceName, k8sNamespace, []int{5}, nil, nil, &k8sV1.ResourceQuota{
+			TypeMeta: metaV1.TypeMeta{
+				Kind:       "ResourceQuota",
+				APIVersion: "v1",
+			},
+			ObjectMeta: metaV1.ObjectMeta{
+				Labels: k8sDeterminedLabel,
+				Name:   namespaceName + "-quota",
+			},
+			Spec: k8sV1.ResourceQuotaSpec{
+				Hard: k8sV1.ResourceList{
+					k8sV1.ResourceName("requests." + ResourceTypeNvidia): *resource.
+						NewQuantity(int64(newRQ), resource.DecimalSI),
+				},
+			},
+		})
+	err = js.setResourceQuota(newRQ, namespaceName)
+	require.NoError(t, err)
+
+	// 1 existing non determined Resource Quota that is less than the quota we are trying to set.
+	newRQ = 7
+	js.clientSet = setupClientSetForResourceQuotaTests(
+		namespaceName, k8sNamespace, []int{2}, nil, nil, &k8sV1.ResourceQuota{
+			TypeMeta: metaV1.TypeMeta{
+				Kind:       "ResourceQuota",
+				APIVersion: "v1",
+			},
+			ObjectMeta: metaV1.ObjectMeta{
+				Labels: k8sDeterminedLabel,
+				Name:   namespaceName + "-quota",
+			},
+			Spec: k8sV1.ResourceQuotaSpec{
+				Hard: k8sV1.ResourceList{
+					k8sV1.ResourceName("requests." + ResourceTypeNvidia): *resource.
+						NewQuantity(int64(newRQ), resource.DecimalSI),
+				},
+			},
+		})
+	err = js.setResourceQuota(newRQ, namespaceName)
+	require.ErrorContains(t, err, "namespace consists of a Kubernetes quota with request limit")
+
+	// 1 existing determined Resource Quota.
+	detQVal := 2
+	newRQ = 9
+	detQuota := &k8sV1.ResourceQuota{
+		TypeMeta: metaV1.TypeMeta{
+			Kind:       "ResourceQuota",
+			APIVersion: "v1",
+		},
+		ObjectMeta: metaV1.ObjectMeta{
+			Labels: map[string]string{determinedLabel: namespaceName},
+			Name:   namespaceName + "-quota",
+		},
+		Spec: k8sV1.ResourceQuotaSpec{
+			Hard: k8sV1.ResourceList{
+				k8sV1.ResourceName("requests." + ResourceTypeNvidia): *resource.
+					NewQuantity(int64(newRQ), resource.DecimalSI),
+			},
+		},
+	}
+	detQuotaToByteArray, err := json.Marshal(detQuota)
+	require.NoError(t, err)
+	js.clientSet = setupClientSetForResourceQuotaTests(
+		namespaceName, k8sNamespace, []int{}, &detQVal, &detQuotaToByteArray, nil)
+	err = js.setResourceQuota(newRQ, namespaceName)
+	require.NoError(t, err)
 }
 
 func TestROCmJobsService(t *testing.T) {
