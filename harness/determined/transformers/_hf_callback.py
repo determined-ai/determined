@@ -278,18 +278,12 @@ class DetCallback(transformers.TrainerCallback):  # type: ignore
         trainer_units: str,
         trainer_len: float,
     ) -> None:
-        logger.error(
-            f"Searcher configuration does not match HF Trainer configuration. "
-            f"Searcher uses {self.searcher_unit}={self.searcher_max_length}, "
-            f"while HF Trainer uses {trainer_units}={trainer_len}. "
-            f"Continuing this run may cause Searcher not to behave correctly. "
-            f"Make sure to match the units between HF Trainer and Searcher: "
-            f"use (--num_train_epochs and searcher.max_length.epochs) OR "
-            f"(--max_steps and searcher.max_length.batches)."
-        )
         raise ValueError(
-            f"HF trainer units {trainer_units}={trainer_len} do not match searcher config "
-            f"{self.searcher_unit}={self.searcher_max_length}"
+            f"HF trainer units {trainer_units}={trainer_len} MUST match searcher config "
+            f"{self.searcher_unit}={self.searcher_max_length}. "
+            f"Modify either --num_train_epochs for the training script or "
+            f"searcher.max_length.epochs in the experiment config so they are the same value "
+            f"(--max_steps and searcher.max_length.batches if using batches)."
         )
 
 
