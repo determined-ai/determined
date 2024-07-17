@@ -66,12 +66,14 @@ test.describe('Experiment List', () => {
         await projectDetailsPage.f_experimentList.tableActionBar.columnPickerMenu.open();
       await columnPicker.columnPickerTab.reset.pwLocator.click();
       await columnPicker.close();
+      await waitTableStable();
     });
     await test.step('Reset Filters', async () => {
       const tableFilter =
         await projectDetailsPage.f_experimentList.tableActionBar.tableFilter.open();
       await tableFilter.filterForm.clearFilters.pwLocator.click();
       await tableFilter.close();
+      await waitTableStable();
     });
     await test.step('Sort Oldest → Newest', async () => {
       // reset
@@ -87,8 +89,8 @@ test.describe('Experiment List', () => {
       // [ET-284] wait before popover close or else it'll flake
       await authedPage.waitForTimeout(1_000);
       await projectDetailsPage.f_experimentList.tableActionBar.expNum.pwLocator.click();
+      await waitTableStable();
     });
-    await waitTableStable();
     await grid.setColumnHeight();
     await grid.headRow.setColumnDefs();
   });
