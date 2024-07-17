@@ -139,48 +139,62 @@ const SearchDetails: React.FC = () => {
     [id, fetchExperimentDetails],
   );
 
-  const tabItems: PivotProps['items'] = [
-    {
-      children: experiment?.projectId && (
-        <FlatRuns
-          projectId={experiment.projectId}
-          searchId={id}
-          workspaceId={experiment.workspaceId}
-        />
-      ),
-      key: TabType.Runs,
-      label: 'Runs',
-    },
-  ];
+  const tabItems: PivotProps['items'] = useMemo(() => {
+    if (!experiment) return [];
 
-  if (showExperimentArtifacts && experiment.modelDefinitionSize !== 0) {
+    const tabItems: PivotProps['items'] = [
+      {
+        children: experiment?.projectId && (
+          <FlatRuns
+            projectId={experiment.projectId}
+            searchId={id}
+            workspaceId={experiment.workspaceId}
+          />
+        ),
+        key: TabType.Runs,
+        label: 'Runs',
+      },
+    ];
+
+    if (showExperimentArtifacts && experiment.modelDefinitionSize !== 0) {
+      tabItems.push({
+        children: experiment && showExperimentArtifacts && (
+          <ExperimentCodeViewer
+            experiment={experiment}
+            selectedFilePath={settings.filePath}
+            onSelectFile={handleSelectFile}
+          />
+        ),
+        key: TabType.Code,
+        label: 'Code',
+      });
+    }
+
     tabItems.push({
-      children: experiment && showExperimentArtifacts && (
-        <ExperimentCodeViewer
-          experiment={experiment}
-          selectedFilePath={settings.filePath}
-          onSelectFile={handleSelectFile}
+      children: (
+        <Notes
+          disabled={!editableNotes}
+          disableTitle
+          docs={{ contents: experiment?.notes ?? '', name: 'Notes' }}
+          onError={handleError}
+          onPageUnloadHook={unstable_useBlocker}
+          onSave={handleNotesUpdate}
         />
       ),
-      key: TabType.Code,
-      label: 'Code',
+      key: TabType.Notes,
+      label: 'Notes',
     });
-  }
 
-  tabItems.push({
-    children: (
-      <Notes
-        disabled={!editableNotes}
-        disableTitle
-        docs={{ contents: experiment?.notes ?? '', name: 'Notes' }}
-        onError={handleError}
-        onPageUnloadHook={unstable_useBlocker}
-        onSave={handleNotesUpdate}
-      />
-    ),
-    key: TabType.Notes,
-    label: 'Notes',
-  });
+    return tabItems;
+  }, [
+    editableNotes,
+    experiment,
+    handleSelectFile,
+    handleNotesUpdate,
+    id,
+    settings.filePath,
+    showExperimentArtifacts,
+  ]);
 
   const { stopPolling } = usePolling(fetchExperimentDetails, { rerunOnNewFn: true });
 

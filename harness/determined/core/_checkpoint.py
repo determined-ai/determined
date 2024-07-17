@@ -537,7 +537,6 @@ class CheckpointContext:
 
         path = self._storage_manager.pre_store_path(storage_id)
         yield path, storage_id
-
         ckpt_dir = os.fspath(path)
 
         if self._storage_manager.store_path_is_direct_access():
@@ -567,20 +566,19 @@ class CheckpointContext:
             resources = self._storage_manager._list_directory(ckpt_dir)
         else:
             resources = {}
-
         # Merge resources, detect conflicts.
         all_resources = self._dist.allgather(resources)
-
         merged_resources, conflicts = merge_resources(all_resources)
-        self._resolve_conflicts(resources, conflicts, ckpt_dir)
+        resources = self._resolve_conflicts(resources, conflicts, ckpt_dir)
 
         all_metadata = self._merge_metadata(metadata)
         if self._dist.rank == 0:
             self._write_metadata_file(ckpt_dir, all_metadata)
 
         if want_upload:
+            paths = set(resources.keys())
             # Use post_store_path to upload and clean up ckpt_dir after uploading.
-            self._storage_manager.post_store_path(src=ckpt_dir, dst=storage_id)
+            self._storage_manager.post_store_path(src=ckpt_dir, dst=storage_id, paths=paths)
 
         if self._dist.rank == 0:
             self._report_checkpoint(storage_id, merged_resources, all_metadata)

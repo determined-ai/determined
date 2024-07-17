@@ -80,7 +80,9 @@ class StorageManager(metaclass=abc.ABCMeta):
         return pathlib.Path(storage_dir)
 
     @abc.abstractmethod
-    def post_store_path(self, src: Union[str, os.PathLike], dst: str) -> None:
+    def post_store_path(
+        self, src: Union[str, os.PathLike], dst: str, paths: Optional[Set[str]] = None
+    ) -> None:
         """
         Subclasses typically push to persistent storage if necessary, then delete the src directory,
         if necessary.

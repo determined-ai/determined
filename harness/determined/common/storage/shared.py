@@ -5,7 +5,7 @@ import os
 import pathlib
 import shutil
 import urllib
-from typing import Any, Callable, Dict, Iterator, List, Optional, Union
+from typing import Any, Callable, Dict, Iterator, List, Optional, Set, Union
 
 from determined import errors, util
 from determined.common import check, storage
@@ -178,7 +178,9 @@ class SharedFSStorageManager(storage.StorageManager):
         )
         return cls(base_path)
 
-    def post_store_path(self, src: Union[str, os.PathLike], dst: str) -> None:
+    def post_store_path(
+        self, src: Union[str, os.PathLike], dst: str, paths: Optional[Set[str]] = None
+    ) -> None:
         """
         Nothing to clean up after writing directly to shared_fs.
         """
