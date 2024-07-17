@@ -627,7 +627,10 @@ commands:
         default: true
     steps:
       - when:
-          condition: <<parameters.wait-for-master>>
+          condition: 
+            and:
+              - not: <<parameters.managed-devcluster>>
+              - <<parameters.wait-for-master>>
           steps:
             - run:
                 name: Install DataDog agent
@@ -751,6 +754,7 @@ commands:
       - when:
           condition:
             and:
+              - not: <<parameters.managed-devcluster>>
               - <<parameters.wait-for-master>>
           steps:
             - run: # We don't know how long Circle leaves these machines running in the background. Take down the agent for safety.
