@@ -55,15 +55,15 @@ export class ApiAuthFixture {
     }
   }
 
-  async loginBrowser(page: Page): Promise<void> {
+  async loginBrowser(page: Page | undefined = this._page): Promise<void> {
     if (this.apiContext === undefined) {
       throw new Error('Cannot login browser without first logging in API');
     }
     // Save cookie state into the file.
-    if (this._page !== undefined) {
+    if (page !== undefined) {
       const state = await this.apiContext.storageState();
       // add cookies to current page's existing context
-      this.browserContext = this._page.context();
+      this.browserContext = page.context();
       // replace the domain of api base url with browser base url
       state.cookies.forEach((cookie) => {
         if (cookie.name === 'auth' && cookie.domain === new URL(this.baseURL).hostname) {

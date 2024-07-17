@@ -1,4 +1,3 @@
-import { AuthFixture } from 'e2e/fixtures/auth.fixture';
 import { expect, test } from 'e2e/fixtures/global-fixtures';
 import { ProjectDetails } from 'e2e/models/pages/ProjectDetails';
 import { detExecSync, fullPath } from 'e2e/utils/detCLI';
@@ -14,12 +13,8 @@ test.describe('Experiement List', () => {
     return parseInt(expNum);
   };
 
-  test.beforeAll(async ({ browser, dev }) => {
-    const pageSetup = await browser.newPage();
-    await dev.setServerAddress(pageSetup);
-    const authFixtureSetup = new AuthFixture(pageSetup);
-    const projectDetailsPageSetup = new ProjectDetails(pageSetup);
-    await authFixtureSetup.login();
+  test.beforeAll(async ({ backgroundAuthedPage }) => {
+    const projectDetailsPageSetup = new ProjectDetails(backgroundAuthedPage);
     await projectDetailsPageSetup.gotoProject();
     await test.step('Create an experiment if not already present', async () => {
       await projectDetailsPageSetup.f_experiemntList.tableActionBar.pwLocator.waitFor();
@@ -34,14 +29,12 @@ test.describe('Experiement List', () => {
             '/../../examples/tutorials/mnist_pytorch/const.yaml',
           )} --paused`,
         );
-        await pageSetup.reload();
+        await backgroundAuthedPage.reload();
         await expect(
           projectDetailsPageSetup.f_experiemntList.dataGrid.rows.pwLocator,
         ).not.toHaveCount(0);
       }
     });
-    await authFixtureSetup.logout();
-    await pageSetup.close();
   });
 
   test.beforeEach(async ({ authedPage }) => {
