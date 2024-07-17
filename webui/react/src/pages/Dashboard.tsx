@@ -5,7 +5,7 @@ import Message from 'hew/Message';
 import Spinner from 'hew/Spinner';
 import { Label } from 'hew/Typography';
 import { Loadable } from 'hew/utils/loadable';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import Badge from 'components/Badge';
 import ExperimentIcons from 'components/ExperimentIcons';
@@ -41,7 +41,11 @@ const SUBMISSIONS_FETCH_LIMIT = 25;
 const PROJECTS_FETCH_LIMIT = 5;
 const DISPLAY_LIMIT = 25;
 
-const Dashboard: React.FC = () => {
+interface Props {
+  testWithoutPage?: boolean
+}
+
+const Dashboard: React.FC<Props> = ({ testWithoutPage }) => {
   const [experiments, setExperiments] = useState<BulkExperimentItem[]>([]);
   const [tasks, setTasks] = useState<CommandTask[]>([]);
   const [projects, setProjects] = useState<Project[]>([]);
@@ -172,148 +176,159 @@ const Dashboard: React.FC = () => {
   }, [canceler, stopPolling]);
 
   const pageBreadCrumb: BreadCrumbRoute[] = [{ breadcrumbName: 'Home', path: paths.dashboard() }];
+
+  const pageContent = useMemo(() => {
+    return (
+      <>
+        {projectsLoading ? (
+          <Section>
+            <Spinner center spinning />
+          </Section>
+        ) : projects.length > 0 ? (
+          // hide Projects header when empty:
+          <Section title="Recently Viewed Projects">
+            <Card.Group size="small" wrap={false}>
+              {projects.map((project) => (
+                <ProjectCard hideActionMenu key={project.id} project={project} showWorkspace />
+              ))}
+            </Card.Group>
+          </Section>
+        ) : null}
+        {/* show Submissions header even when empty: */}
+        <Section title="Your Recent Submissions">
+          {submissionsLoading ? (
+            <Spinner center spinning />
+          ) : submissions.length > 0 ? (
+            <ResponsiveTable<Submission>
+              className={css.table}
+              columns={[
+                {
+                  dataIndex: 'state',
+                  render: (state) => {
+                    return <ExperimentIcons state={state} />;
+                  },
+                  width: 1,
+                },
+                {
+                  dataIndex: 'projectId',
+                  render: (projectId, row, index) => {
+                    if (projectId) {
+                      return <Icon name="experiment" title="Experiment" />;
+                    } else {
+                      return taskTypeRenderer(row.type, row, index);
+                    }
+                  },
+                  width: 1,
+                },
+                {
+                  dataIndex: 'name',
+                  render: (name, row, index) => {
+                    if (row.projectId) {
+                      const path = f_flat_runs
+                        ? paths.searchDetails(row.id)
+                        : paths.experimentDetails(row.id);
+                      // only for Experiments, not Tasks:
+                      return (
+                        <Label truncate={{ tooltip: true }}>
+                          <Link path={path}>
+                            {name === undefined ? '' : name}&nbsp;&nbsp;
+                            {row.unmanaged && (
+                              <Badge tooltip="Workload not managed by Determined" type="Header">
+                                Unmanaged
+                              </Badge>
+                            )}
+                          </Link>
+                        </Label>
+                      );
+                    } else {
+                      return taskNameRenderer(row.id, row, index);
+                    }
+                  },
+                },
+                {
+                  dataIndex: 'projectId',
+                  render: (projectId, row) => {
+                    if (row.workspaceId && !row.projectId) {
+                      // Tasks
+                      return (
+                        <Breadcrumb>
+                          <Breadcrumb.Item>
+                            <Link path={paths.workspaceDetails(row.workspaceId)}>
+                              {workspaces.find((w) => w.id === row.workspaceId)?.name ||
+                                String(row.workspaceId)}
+                            </Link>
+                          </Breadcrumb.Item>
+                        </Breadcrumb>
+                      );
+                    } else if (row.workspaceId && row.projectId !== 1) {
+                      return (
+                        <Breadcrumb>
+                          <Breadcrumb.Item>
+                            <Link path={paths.workspaceDetails(row.workspaceId)}>
+                              {row.workspaceName}
+                            </Link>
+                          </Breadcrumb.Item>
+                          <Breadcrumb.Item>
+                            <Link path={paths.projectDetails(projectId)}>{row.projectName}</Link>
+                          </Breadcrumb.Item>
+                        </Breadcrumb>
+                      );
+                    }
+                    if (row.projectName) {
+                      return (
+                        <Breadcrumb>
+                          <Breadcrumb.Item>
+                            <Link path={paths.projectDetails(projectId)}>{row.projectName}</Link>
+                          </Breadcrumb.Item>
+                        </Breadcrumb>
+                      );
+                    }
+                    return <></>;
+                  },
+                },
+                {
+                  dataIndex: 'startTime',
+                  render: relativeTimeRenderer,
+                },
+              ]}
+              dataSource={submissions}
+              loading={submissionsLoading}
+              pagination={false}
+              rowKey="id"
+              showHeader={false}
+              size="middle"
+            />
+          ) : (
+            <Message
+              description={
+                <>
+                  Your recent experiments and tasks will show up here.{' '}
+                  <Link external path={paths.docs('/quickstart-mdldev.html')}>
+                    Get started
+                  </Link>
+                </>
+              }
+              icon="experiment"
+              title="No submissions"
+            />
+          )}
+        </Section>
+      </>
+    );
+  }, [f_flat_runs, projects, projectsLoading, submissions, submissionsLoading, workspaces]);
+
   if (projectsLoading && submissionsLoading) {
     return null;
   }
+
+  if (testWithoutPage) return pageContent;
 
   return (
     <Page
       breadcrumb={pageBreadCrumb}
       options={<JupyterLabButton enabled={canCreateNSC} />}
       title="Home">
-      {projectsLoading ? (
-        <Section>
-          <Spinner center spinning />
-        </Section>
-      ) : projects.length > 0 ? (
-        // hide Projects header when empty:
-        <Section title="Recently Viewed Projects">
-          <Card.Group size="small" wrap={false}>
-            {projects.map((project) => (
-              <ProjectCard hideActionMenu key={project.id} project={project} showWorkspace />
-            ))}
-          </Card.Group>
-        </Section>
-      ) : null}
-      {/* show Submissions header even when empty: */}
-      <Section title="Your Recent Submissions">
-        {submissionsLoading ? (
-          <Spinner center spinning />
-        ) : submissions.length > 0 ? (
-          <ResponsiveTable<Submission>
-            className={css.table}
-            columns={[
-              {
-                dataIndex: 'state',
-                render: (state) => {
-                  return <ExperimentIcons state={state} />;
-                },
-                width: 1,
-              },
-              {
-                dataIndex: 'projectId',
-                render: (projectId, row, index) => {
-                  if (projectId) {
-                    return <Icon name="experiment" title="Experiment" />;
-                  } else {
-                    return taskTypeRenderer(row.type, row, index);
-                  }
-                },
-                width: 1,
-              },
-              {
-                dataIndex: 'name',
-                render: (name, row, index) => {
-                  if (row.projectId) {
-                    const path = f_flat_runs
-                      ? paths.searchDetails(row.id)
-                      : paths.experimentDetails(row.id);
-                    // only for Experiments, not Tasks:
-                    return (
-                      <Label truncate={{ tooltip: true }}>
-                        <Link path={path}>
-                          {name === undefined ? '' : name}&nbsp;&nbsp;
-                          {row.unmanaged && (
-                            <Badge tooltip="Workload not managed by Determined" type="Header">
-                              Unmanaged
-                            </Badge>
-                          )}
-                        </Link>
-                      </Label>
-                    );
-                  } else {
-                    return taskNameRenderer(row.id, row, index);
-                  }
-                },
-              },
-              {
-                dataIndex: 'projectId',
-                render: (projectId, row) => {
-                  if (row.workspaceId && !row.projectId) {
-                    // Tasks
-                    return (
-                      <Breadcrumb>
-                        <Breadcrumb.Item>
-                          <Link path={paths.workspaceDetails(row.workspaceId)}>
-                            {workspaces.find((w) => w.id === row.workspaceId)?.name ||
-                              String(row.workspaceId)}
-                          </Link>
-                        </Breadcrumb.Item>
-                      </Breadcrumb>
-                    );
-                  } else if (row.workspaceId && row.projectId !== 1) {
-                    return (
-                      <Breadcrumb>
-                        <Breadcrumb.Item>
-                          <Link path={paths.workspaceDetails(row.workspaceId)}>
-                            {row.workspaceName}
-                          </Link>
-                        </Breadcrumb.Item>
-                        <Breadcrumb.Item>
-                          <Link path={paths.projectDetails(projectId)}>{row.projectName}</Link>
-                        </Breadcrumb.Item>
-                      </Breadcrumb>
-                    );
-                  }
-                  if (row.projectName) {
-                    return (
-                      <Breadcrumb>
-                        <Breadcrumb.Item>
-                          <Link path={paths.projectDetails(projectId)}>{row.projectName}</Link>
-                        </Breadcrumb.Item>
-                      </Breadcrumb>
-                    );
-                  }
-                  return <></>;
-                },
-              },
-              {
-                dataIndex: 'startTime',
-                render: relativeTimeRenderer,
-              },
-            ]}
-            dataSource={submissions}
-            loading={submissionsLoading}
-            pagination={false}
-            rowKey="id"
-            showHeader={false}
-            size="middle"
-          />
-        ) : (
-          <Message
-            description={
-              <>
-                Your recent experiments and tasks will show up here.{' '}
-                <Link external path={paths.docs('/quickstart-mdldev.html')}>
-                  Get started
-                </Link>
-              </>
-            }
-            icon="experiment"
-            title="No submissions"
-          />
-        )}
-      </Section>
+      {pageContent}
     </Page>
   );
 };
