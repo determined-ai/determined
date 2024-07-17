@@ -151,8 +151,8 @@ commands:
     description: Collect logs from the cluster tasks.
     steps:
       - run:
-          when: on_fail
           name: "Ensure necessary Python packages are available."
+          when: always
           command: |
             pkg_names="fire determined"
             for pkg_name in $pkg_names; do
@@ -161,8 +161,8 @@ commands:
               fi
             done
       - run:
-          when: on_fail
           name: "Collect logs and calculate statistics"
+          when: always
           command: |
             target_dir="<< parameters.store_path >>"
             mkdir -p $target_dir
@@ -626,6 +626,50 @@ commands:
         type: boolean
         default: true
     steps:
+      - when:
+          condition: 
+            and:
+              - equal: [<<parameters.master-host>>,'localhost']
+              - <<parameters.wait-for-master>>
+              - not: <<parameters.managed-devcluster>>
+          steps:
+            - run:
+                name: Install DataDog agent
+                command: |
+                  if [ "$AIS_DD_ENABLE_MONITORING" == "true" ]; then
+                    host_tags="test.mark:<<parameters.mark>>,\
+                    ci.pipeline_id:${CIRCLE_PIPELINE_ID},\
+                    ci.workflow_id:${CIRCLE_WORKFLOW_ID},\
+                    ci.job_num:${CIRCLE_BUILD_NUM},\
+                    ci.username:${CIRCLE_USERNAME},\
+                    git.tag:${CIRCLE_TAG},\
+                    git.commit:${CIRCLE_SHA1},\
+                    git.repo:${CIRCLE_PROJECT_REPONAME},\
+                    ci.totalNodes:${CIRCLE_NODE_TOTAL},\
+                    ci.nodeIdx:${CIRCLE_NODE_INDEX},\
+                    git.pr_num:${CIRCLE_PR_NUMBER}"
+
+                    sudo mkdir -p /tmp/artifacts/logs
+                    sudo chmod -R a+rw /tmp/artifacts/logs
+
+                    DD_ENV="ci-${CIRCLE_JOB}" \
+                    DD_HOST_TAGS="$host_tags" \
+                    DD_SERVICE="determined-pytest-<<parameters.mark>>" \
+                    bash -c "$(curl -L https://s3.amazonaws.com/dd-agent/scripts/install_script_agent7.sh)"
+                    
+                    # config files for the agent have an expected file structure
+                    sudo mkdir -p /etc/datadog-agent/conf.d/determined-master.d/
+                    sudo chmod a+rw /etc/datadog-agent/datadog.yaml
+                    sudo chmod -R a+rw /etc/datadog-agent/conf.d/determined-master.d/
+                    sudo cat .circleci/datadog/ci-local-config.yaml >> /etc/datadog-agent/datadog.yaml
+                    sudo sed -e "s/<SERVICE_NAME>/determined-pytest-<<parameters.mark>>/g" .circleci/datadog/e2e-log-settings.yaml > /etc/datadog-agent/conf.d/determined-master.d/conf.yaml
+                    # restart agent with config
+                    sudo usermod -a -G docker dd-agent
+                    sudo systemctl stop datadog-agent
+                    sudo systemctl start datadog-agent
+                    sleep 5
+                    sudo datadog-agent status
+                  fi
       # Wait for master before splitting tests, since so many splits depend on
       # asking master for its configuration in order to apply skipifs.
       - when:
@@ -662,9 +706,21 @@ commands:
               echo "No Determined master listening on '<<parameters.master-scheme>>://<<parameters.master-host>>:<<parameters.master-port>>'"
             fi
 
-            cat /tmp/all-relevant-files | circleci tests run --command="DD_CIVISIBILITY_AGENTLESS_ENABLED=true \
-            DD_SITE='datadoghq.com' \
-            DD_ENV='ci-<<parameters.mark>>' DD_SERVICE='determined-pytest-<<parameters.mark>>' \
+            tags="test.mark:<<parameters.mark>>,\
+            ci.pipeline_id:${CIRCLE_PIPELINE_ID},\
+            ci.workflow_id:${CIRCLE_WORKFLOW_ID},\
+            ci.job_num:${CIRCLE_BUILD_NUM},\
+            ci.username:${CIRCLE_USERNAME},\
+            git.tag:${CIRCLE_TAG},\
+            git.commit:${CIRCLE_SHA1},\
+            ci.totalNodes:${CIRCLE_NODE_TOTAL},\
+            ci.nodeIdx:${CIRCLE_NODE_INDEX},\
+            git.pr_num:${CIRCLE_PR_NUMBER}"
+
+            CMD="DD_CIVISIBILITY_AGENTLESS_ENABLED=true \
+            DD_TAGS='${tags}' \
+            DD_ENV='ci-<<parameters.mark>>' \
+            DD_SERVICE='determined-pytest-<<parameters.mark>>' \
             DET_MASTER_CERT_FILE=<<parameters.master-cert>> \
             DET_MASTER_CERT_NAME=<<parameters.master-cert-name>> \
             IS_CIRCLECI_JOB=1 XDG_CONFIG_HOME=/tmp \
@@ -672,14 +728,16 @@ commands:
             -m '<<parameters.mark>>' \
             --durations=0 \
             --ddtrace \
-            --master-scheme="<<parameters.master-scheme>>" \
-            --master-host="<<parameters.master-host>>" \
-            --master-port="<<parameters.master-port>>" \
+            --master-scheme='<<parameters.master-scheme>>' \
+            --master-host='<<parameters.master-host>>' \
+            --master-port='<<parameters.master-port>>' \
             -o junit_family=xunit1 \
-            --junit-xml="<<parameters.junit-path>>" \
-            <<parameters.extra-pytest-flags>>" \
-            --verbose --split-by=timings
+            --junit-xml='<<parameters.junit-path>>' \
+            <<parameters.extra-pytest-flags>>"
 
+            echo "$CMD"
+            cat /tmp/all-relevant-files | circleci tests run --command="$CMD" \
+            --verbose --split-by=timings
             pytest_status=$?
             echo Pytest exited with $pytest_status
             exit $pytest_status
@@ -694,6 +752,21 @@ commands:
                 master_address: "<<parameters.master-scheme>>://<<parameters.master-host>>:<<parameters.master-port>>"
       - store_artifacts:
           path: /tmp/artifacts/logs
+      - when:
+          condition:
+            and:
+              - equal: [<<parameters.master-host>>,'localhost']
+              - <<parameters.wait-for-master>>
+              - not: <<parameters.managed-devcluster>>
+          steps:
+            - run: # We don't know how long Circle leaves these machines running in the background. Take down the agent for safety.
+                name: Stop DataDog agent
+                when: always
+                command: |
+                  if [ "$AIS_DD_ENABLE_MONITORING" == "true" ]; then
+                    sudo systemctl stop datadog-agent || true
+                  fi
+            
 
   run-det-deploy-tests:
     parameters:
