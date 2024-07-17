@@ -98,7 +98,6 @@ export const test = baseTest.extend<CustomFixtures, CustomWorkerFixtures>({
       await backgroundApiAuth.loginBrowser(page);
       await use(page);
       await page.close();
-      await backgroundApiAuth.dispose();
     },
     { scope: 'worker' },
   ],
