@@ -11,36 +11,38 @@ import Dashboard from './Dashboard';
 
 vi.mock('services/api', () => ({
   getCommands: () => Promise.resolve([]),
-  getExperiments: () => Promise.resolve({
-    experiments: [],
-  }),
+  getExperiments: () =>
+    Promise.resolve({
+      experiments: [],
+    }),
   getJupyterLabs: () => Promise.resolve([]),
-  getProjectsByUserActivity: () => Promise.resolve([
-    {
-      archived: false,
-      description: '',
-      errorMessage: '',
-      id: 1,
-      immutable: true,
-      key: '',
-      lastExperimentStartedAt: '2024-07-17T16:18:56.813686Z',
-      name: 'Uncategorized',
-      notes: [
-        {
-          contents: '',
-          name: 'Untitled',
-        },
-      ],
-      numActiveExperiments: 0,
-      numExperiments: 1297,
-      numRuns: 41995,
-      state: 'UNSPECIFIED',
-      userId: 1,
-      username: 'admin',
-      workspaceId: 1,
-      workspaceName: 'Uncategorized',
-    },
-  ]),
+  getProjectsByUserActivity: () =>
+    Promise.resolve([
+      {
+        archived: false,
+        description: '',
+        errorMessage: '',
+        id: 1,
+        immutable: true,
+        key: '',
+        lastExperimentStartedAt: '2024-07-17T16:18:56.813686Z',
+        name: 'Uncategorized',
+        notes: [
+          {
+            contents: '',
+            name: 'Untitled',
+          },
+        ],
+        numActiveExperiments: 0,
+        numExperiments: 1297,
+        numRuns: 41995,
+        state: 'UNSPECIFIED',
+        userId: 1,
+        username: 'admin',
+        workspaceId: 1,
+        workspaceName: 'Uncategorized',
+      },
+    ]),
   getShells: () => Promise.resolve([]),
   getTensorBoards: () => Promise.resolve([]),
 }));
@@ -54,9 +56,7 @@ const Container: React.FC = () => {
     userStore.updateCurrentUser(CURRENT_USER);
   }, []);
 
-  return (
-    <Dashboard testWithoutPage />
-  );
+  return <Dashboard testWithoutPage />;
 };
 
 const setup = () => {
@@ -90,7 +90,9 @@ describe('Dashboard', () => {
   it('renders empty state for submissions', async () => {
     await waitFor(() => {
       expect(screen.getByText('No submissions')).toBeInTheDocument();
-      expect(screen.getByText('Your recent experiments and tasks will show up here.')).toBeInTheDocument();
+      expect(
+        screen.getByText('Your recent experiments and tasks will show up here.'),
+      ).toBeInTheDocument();
       expect(screen.getByText('Get started')).toBeInTheDocument();
     });
   });

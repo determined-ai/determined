@@ -42,7 +42,7 @@ const PROJECTS_FETCH_LIMIT = 5;
 const DISPLAY_LIMIT = 25;
 
 interface Props {
-  testWithoutPage?: boolean
+  testWithoutPage?: boolean;
 }
 
 const Dashboard: React.FC<Props> = ({ testWithoutPage }) => {
