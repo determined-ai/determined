@@ -235,10 +235,6 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
     );
   }, [isMobile, settings.compare, settings.pinnedColumnsCount]);
 
-  const allSelectedRunIds = useMemo(() => {
-    return settings.selection.type === 'ONLY_IN' ? settings.selection.selections : [];
-  }, [settings.selection]);
-
   const [loadedSelectedRuns, loadedSelectedRunIds] = useMemo(() => {
     const selectedMap = new Map<number, { run: FlatRun; index: number }>();
     const selectedArray: FlatRun[] = [];
@@ -1071,7 +1067,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
             <LoadableCount
               labelPlural="runs"
               labelSingular="run"
-              selectedCount={allSelectedRunIds.length}
+              selectedCount={selectedRunIdSet.size}
               total={total}
             />
           </Row>
