@@ -48,19 +48,27 @@ describe('LoadableCount', () => {
   it('shows singular count', () => {
     const totalCount = 1;
     setup(totalCount, 0, true);
-    expect(screen.getByText(`${totalCount.toLocaleString()} ${LABEL_SINGULAR.toLowerCase()}`)).toBeInTheDocument();
+    expect(
+      screen.getByText(`${totalCount.toLocaleString()} ${LABEL_SINGULAR.toLowerCase()}`),
+    ).toBeInTheDocument();
   });
 
   it('shows plural count', () => {
     const totalCount = 2;
     setup(totalCount, 0, true);
-    expect(screen.getByText(`${totalCount.toLocaleString()} ${LABEL_PLURAL.toLowerCase()}`)).toBeInTheDocument();
+    expect(
+      screen.getByText(`${totalCount.toLocaleString()} ${LABEL_PLURAL.toLowerCase()}`),
+    ).toBeInTheDocument();
   });
 
   it('shows selected count', () => {
     const totalCount = 2;
     const selectedCount = 1;
     setup(totalCount, selectedCount, true);
-    expect(screen.getByText(`${selectedCount.toLocaleString()} of ${totalCount.toLocaleString()} ${LABEL_PLURAL.toLowerCase()} selected`)).toBeInTheDocument();
+    expect(
+      screen.getByText(
+        `${selectedCount.toLocaleString()} of ${totalCount.toLocaleString()} ${LABEL_PLURAL.toLowerCase()} selected`,
+      ),
+    ).toBeInTheDocument();
   });
 });
