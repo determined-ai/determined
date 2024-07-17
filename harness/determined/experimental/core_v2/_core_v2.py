@@ -174,8 +174,8 @@ def _init_context(
         or config.checkpoint_storage
         or str(pathlib.Path(appdirs.user_data_dir("determined")) / "checkpoints")
     )
-    checkpoint_storage_dict: Dict[str, Any] = ( 
-        storage.shared._shortcut_to_config(checkpoint_storage, False) # type: ignore
+    checkpoint_storage_dict: Dict[str, Any] = (
+        storage.shared._shortcut_to_config(checkpoint_storage, False)  # type: ignore
         if type(checkpoint_storage) == str
         else checkpoint_storage
     )
