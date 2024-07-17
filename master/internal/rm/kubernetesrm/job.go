@@ -82,6 +82,7 @@ type job struct {
 	clusterID       string
 	masterIP        string
 	masterPort      int32
+	masterScheme    string
 	masterTLSConfig model.TLSClientConfig
 	jobName         string
 	configMapName   string
@@ -134,6 +135,7 @@ func newJob(
 	namespace string,
 	masterIP string,
 	masterPort int32,
+	masterScheme string,
 	masterTLSConfig model.TLSClientConfig,
 	podInterface typedV1.PodInterface,
 	configMapInterface typedV1.ConfigMapInterface,
@@ -156,6 +158,7 @@ func newJob(
 		namespace:             namespace,
 		masterIP:              masterIP,
 		masterPort:            masterPort,
+		masterScheme:          masterScheme,
 		masterTLSConfig:       masterTLSConfig,
 		numPods:               msg.numPods,
 		slotsPerPod:           msg.slots,

@@ -96,6 +96,7 @@ type jobsService struct {
 	masterTLSConfig       model.TLSClientConfig
 	detMasterIP           string
 	detMasterPort         int32
+	detMasterScheme       string
 	kubeconfigPath        string
 
 	internalTaskGWConfig *config.InternalTaskGatewayConfig
@@ -146,6 +147,7 @@ func newJobsService(
 	taskContainerDefaults *model.TaskContainerDefaultsConfig,
 	detMasterIP string,
 	detMasterPort int32,
+	detMasterScheme string,
 	kubeconfigPath string,
 	jobSchedulingStateCb jobSchedulingStateCallback,
 	internalTaskGWConfig *config.InternalTaskGatewayConfig,
@@ -157,6 +159,7 @@ func newJobsService(
 		namespaceToPoolName:               namespaceToPoolName,
 		masterServiceName:                 masterServiceName,
 		masterTLSConfig:                   masterTLSConfig,
+		detMasterScheme:                   detMasterScheme,
 		scheduler:                         scheduler,
 		jobNameToJobHandler:               make(map[string]*job),
 		jobNameToResourcePool:             make(map[string]string),
@@ -560,6 +563,7 @@ func (j *jobsService) startJob(msg startJob) error {
 		msg.namespace,
 		j.detMasterIP,
 		j.detMasterPort,
+		j.detMasterScheme,
 		j.masterTLSConfig,
 		j.podInterfaces[msg.namespace],
 		j.configMapInterfaces[msg.namespace],
@@ -806,6 +810,7 @@ func (j *jobsService) recreateJobHandler(
 		job.Namespace,
 		j.detMasterIP,
 		j.detMasterPort,
+		j.detMasterScheme,
 		j.masterTLSConfig,
 		j.podInterfaces[job.Namespace],
 		j.configMapInterfaces[job.Namespace],

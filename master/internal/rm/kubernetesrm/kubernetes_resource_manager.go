@@ -107,6 +107,7 @@ func New(
 		k.taskContainerDefaults,
 		k.config.DetMasterIP,
 		k.config.DetMasterPort,
+		k.config.DetMasterScheme,
 		k.config.KubeconfigPath,
 		k.jobSchedulingStateCallback,
 		k.config.InternalTaskGateway,

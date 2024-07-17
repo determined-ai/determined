@@ -1279,6 +1279,7 @@ func newTestJobsService(t *testing.T) *jobsService {
 		&model.TaskContainerDefaultsConfig{},
 		"localhost",
 		8080,
+		"",
 		"~/.kube/config",
 		nil,
 		nil,
