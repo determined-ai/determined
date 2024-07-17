@@ -28,11 +28,11 @@ const LoadableCount: React.FC<Props> = ({
         let label = `${loadedTotal.toLocaleString()} ${pluralizer(
           loadedTotal,
           labelSingular.toLowerCase(),
-          labelPlural,
+          labelPlural.toLowerCase(),
         )}`;
 
         if (selectedCount) {
-          label = `${selectedCount} of ${label} selected`;
+          label = `${selectedCount.toLocaleString()} of ${label} selected`;
         }
 
         return label;
@@ -43,7 +43,7 @@ const LoadableCount: React.FC<Props> = ({
 
   if (!isMobile) {
     return (
-      <span className={css.expNum} data-test="expNum">
+      <span className={css.base} data-test="count">
         {selectionLabel}
       </span>
     );
