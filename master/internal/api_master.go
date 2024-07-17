@@ -5,11 +5,9 @@ import (
 	"database/sql"
 	"errors"
 	"fmt"
-	"net/http"
 	"time"
 
 	structpb "github.com/golang/protobuf/ptypes/struct"
-	"github.com/labstack/echo/v4"
 	"github.com/sirupsen/logrus"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -31,17 +29,6 @@ import (
 )
 
 var masterLogsBatchMissWaitTime = time.Second
-
-func serveCustomLogo(uiConfig *config.UICustomizationConfig) func(echo.Context) error {
-	return func(c echo.Context) error {
-		if !uiConfig.HasCustomLogo() {
-			return echo.NewHTTPError(http.StatusNotFound)
-		}
-		return c.File(uiConfig.LogoPath.PickVariation(
-			c.QueryParam("mode"), c.QueryParam("orientation"),
-		))
-	}
-}
 
 func (a *apiServer) GetMaster(
 	ctx context.Context, _ *apiv1.GetMasterRequest,
