@@ -24,14 +24,12 @@ const OverviewStats: React.FC<Props> = (props: Props) => {
       </Row>
       <Row width="fill">
         <Label strong truncate={{ tooltip: true }}>
-          <span style={{ color: props.onClick ? 'var(--theme-status-active)' : 'inherit' }}>
-            {props.children}
-          </span>
+          {props.onClick ? <Link onClick={props.onClick}> {props.children} </Link> : props.children}
         </Label>
       </Row>
     </Column>
   );
-  return <Card>{props.onClick ? <Link onClick={props.onClick}>{column}</Link> : column}</Card>;
+  return <Card>{column}</Card>;
 };
 
 export default OverviewStats;
