@@ -28,10 +28,14 @@ test.describe('Authentication', () => {
   test('Login Redirect', async ({ page, auth }) => {
     await test.step('Attempt to Visit a Page', async () => {
       await page.goto('/models');
-      var landingRedirect = await page.evaluate(() => sessionStorage.getItem('session/landing-redirect'));
+      let landingRedirect = await page.evaluate(() =>
+        sessionStorage.getItem('session/landing-redirect'),
+      );
       console.log('Landing Redirect 1:', landingRedirect);
       await expect(page).toHaveURL(/login/);
-      landingRedirect = await page.evaluate(() => sessionStorage.getItem('session/landing-redirect'));
+      landingRedirect = await page.evaluate(() =>
+        sessionStorage.getItem('session/landing-redirect'),
+      );
       console.log('Landing Redirect 2:', landingRedirect);
       // const checkSessionStorageForRedirect = async (key: string, expectedValue: string, attempts = 10, interval = 500) => {
       //   for (let i = 0; i < attempts; i++) {

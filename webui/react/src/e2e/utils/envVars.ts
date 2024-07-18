@@ -15,5 +15,5 @@ export const apiUrl = (): string => process.env.PW_SERVER_ADDRESS ?? baseUrl();
 export const detMasterURL = (): string => process.env.PW_DET_MASTER ?? 'localhost:8080';
 export const detPath = (): string => process.env.PW_DET_PATH || 'det';
 
-export const defaultLandingURL = (): RegExp => isEE() ? /workspaces/ : /dashboard/;
-export const defaultLandingTitle = (): string => isEE() ? 'Workspaces' : 'Home';
+export const defaultLandingURL = (): RegExp => (isEE() ? /workspaces/ : /dashboard/);
+export const defaultLandingTitle = (): string => (isEE() ? 'Workspaces' : 'Home');
