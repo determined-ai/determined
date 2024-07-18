@@ -1,38 +1,5 @@
 #!/usr/bin/env python
 
-import pathlib
-import random
-import socket
-import subprocess
-import time
-from dataclasses import dataclass
-from typing import Optional, Tuple
-
-import kubernetes as k8s
-import kubernetes.client.exceptions as client_exceptions
-import yaml
-
-
-@dataclass
-class Config:
-    # TODO: set up a shared ec2 instance for this usage.
-    reverse_proxy_host: str
-    k8s_context: str
-    ssh_key_path: pathlib.Path
-    determined_root: pathlib.Path
-    ssh_user: str = "ubuntu"
-    # base_devcluster_path: pathlib.Path
-    local_master_port: int = 8080
-    remote_port_range: Tuple[int, int] = (8000, 9000)
-
-
-@dataclass
-class Gateway:
-    ip: Optional[str]
-    name: str
-    namespace: str
-
-
 """
 - set up reverse proxy
     - port collision
@@ -43,6 +10,79 @@ class Gateway:
 - updated devcluster config
 
 """
+
+
+import pathlib
+import random
+import socket
+import subprocess
+import time
+from dataclasses import dataclass
+from typing import Optional, Tuple
+
+import kubernetes as k8s
+import kubernetes.client.exceptions as client_exceptions
+import tempdir
+import yaml
+from kubernetes.client.api_client import tempfile
+
+
+@dataclass
+class Config:
+    # TODO: set up a shared ec2 instance for this usage.
+    reverse_proxy_host: str
+    k8s_context: str
+    ssh_key_path: pathlib.Path
+    determined_root: pathlib.Path
+    ssh_user: str = "ubuntu"
+    base_devcluster_path: pathlib.Path = pathlib.Path("tools/k8s/devcluster.yaml")
+    local_master_port: int = 8080
+    remote_port_range: Tuple[int, int] = (8000, 9000)
+
+
+@dataclass
+class Gateway:
+    ip: Optional[str]
+    name: str
+    namespace: str
+
+    def to_config(self) -> dict:
+        return {
+            "internal_task_gateway": {
+                "gateway_name": self.name,
+                "gateway_namespace": self.namespace,
+                "gateway_ip": self.ip,
+            }
+        }
+
+
+class DevClusterConf:
+    def __init__(self, data: dict):
+        self.original_data = data
+        self.data = data
+
+    @classmethod
+    def from_yaml(cls, path: pathlib.Path) -> "DevClusterConf":
+        with open(path) as f:
+            data = yaml.safe_load(f)
+        return cls(data)
+
+    def save(self, path: pathlib.Path):
+        with open(path, "w") as f:
+            yaml.safe_dump(self.data, f)
+
+    def get_stage(self, stage_name: str) -> dict:
+        matching_stages = [stage for stage in self.data["stages"] if (stage_name in stage)]
+        assert len(matching_stages) == 1
+        return matching_stages[0]
+
+    def set_stage(self, stage_name: str, new_data: dict):
+        for stage in self.data["stages"]:
+            if stage_name in stage:
+                stage.update(new_data)
+                break
+        else:
+            self.data["stages"].append(new_data)
 
 
 def is_port_listening(host: str, port: int) -> bool:
@@ -61,7 +101,7 @@ def wait_for_tunnel(remote_host: str, remote_port: int, timeout: int = 30) -> bo
     return False
 
 
-def setup_reverse_proxy(cfg: Config) -> subprocess.Popen:
+def setup_reverse_proxy(cfg: Config) -> Tuple[subprocess.Popen, int]:
     """
     Set up a reverse proxy to open access to a local process, eg master.
     """
@@ -92,7 +132,7 @@ def setup_reverse_proxy(cfg: Config) -> subprocess.Popen:
         proc.terminate()
         raise Exception("Failed to establish tunnel")
     print("Reverse proxy is up")
-    return proc
+    return proc, remote_port
 
 
 def get_gateway_info(cfg: Config) -> Optional[Gateway]:
@@ -163,6 +203,31 @@ def provision_gateway(cfg: Config) -> Gateway:
     if not gateway:
         raise Exception("Failed to provision gateway")
     return gateway
+
+
+def update_devcluster(cfg: Config, gateway: Gateway, remote_port: int):
+    """
+    Update the devcluster config to use the gateway.
+    - create a backup before changing
+    - add/update gateway config
+    - add/update master address and port
+    - save the updated formatted conf somewhere and share the path
+
+
+    for each resource_manager with type: kubernetes as if it needs updating
+    """
+    devc = DevClusterConf.from_yaml(cfg.base_devcluster_path)
+    master_stage = devc.get_stage("master")
+    resource_manager = master_stage["resource_manager"]
+    assert resource_manager["type"] == "kubernetes"
+    resource_manager["determined_master_ip"] = cfg.reverse_proxy_host
+    resource_manager["determined_master_port"] = remote_port
+    assert gateway.ip is not None, "Gateway IP is not set"
+    resource_manager.update(gateway.to_config())
+    master_stage["resource_manager"] = resource_manager
+    devc.set_stage("master", master_stage)
+    temp_conf_path = pathlib.Path(tempfile.mkdtemp()) / "devcluster.yaml"
+    devc.save(temp_conf_path)
 
 
 cfg = Config(
