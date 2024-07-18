@@ -16,15 +16,14 @@ import pathlib
 import random
 import socket
 import subprocess
+import tempfile
 import time
 from dataclasses import dataclass
 from typing import Optional, Tuple
 
 import kubernetes as k8s
 import kubernetes.client.exceptions as client_exceptions
-import tempdir
 import yaml
-from kubernetes.client.api_client import tempfile
 
 
 @dataclass
@@ -205,7 +204,7 @@ def provision_gateway(cfg: Config) -> Gateway:
     return gateway
 
 
-def update_devcluster(cfg: Config, gateway: Gateway, remote_port: int):
+def update_devcluster(cfg: Config, gateway: Gateway, remote_port: int) -> pathlib.Path:
     """
     Update the devcluster config to use the gateway.
     - create a backup before changing
@@ -228,24 +227,26 @@ def update_devcluster(cfg: Config, gateway: Gateway, remote_port: int):
     devc.set_stage("master", master_stage)
     temp_conf_path = pathlib.Path(tempfile.mkdtemp()) / "devcluster.yaml"
     devc.save(temp_conf_path)
-
-
-cfg = Config(
-    reverse_proxy_host="aws-dev.prv",
-    k8s_context="gw",
-    determined_root=pathlib.Path("$HOME/projects/da/determined"),
-    ssh_key_path=pathlib.Path("~/.ssh/id_ed25519").expanduser(),
-    ssh_user="hmd",
-)
+    print(f"Updated devcluster config saved to {temp_conf_path}")
+    return temp_conf_path
 
 
 def main():
-    proc = setup_reverse_proxy(cfg)
-    print("ready")
-    time.sleep(10)
-    proc.terminate()
+    cfg = Config(
+        reverse_proxy_host="aws-dev.prv",
+        k8s_context="gw",
+        determined_root=pathlib.Path("$HOME/projects/da/determined"),
+        ssh_key_path=pathlib.Path("~/.ssh/id_ed25519").expanduser(),
+        ssh_user="hmd",
+    )
+
+    rev_proxy, proxy_port = setup_reverse_proxy(cfg)
+    rev_proxy.terminate()
+    gateway = get_gateway_info(cfg)
+    if not gateway:
+        gateway = provision_gateway(cfg)
+    update_devcluster(cfg, gateway, proxy_port)
 
 
 if __name__ == "__main__":
-    # main()
-    print(get_gateway_info(cfg))
+    main()
