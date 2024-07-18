@@ -4531,6 +4531,19 @@ workflows:
           run-minikubes: true
 
       - test-e2e:
+          name: test-e2e-single-k8s
+          context:
+            - dev-ci-cluster-default-user-credentials
+          requires:
+            - build-go-ee
+          parallelism: 1
+          tf2: true
+          mark: e2e_multi_k8s
+          target-stage: master
+          devcluster-config: single-k8s.devcluster.yaml
+          run-minikubes: true
+
+      - test-e2e:
           name: test-e2e-port-registry
           context:
             - dev-ci-cluster-default-user-credentials
