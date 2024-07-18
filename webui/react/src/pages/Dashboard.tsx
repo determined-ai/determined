@@ -5,9 +5,10 @@ import Message from 'hew/Message';
 import Spinner from 'hew/Spinner';
 import { Label } from 'hew/Typography';
 import { Loadable } from 'hew/utils/loadable';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 
 import Badge from 'components/Badge';
+import { ConditionalWrapper } from 'components/ConditionalWrapper';
 import ExperimentIcons from 'components/ExperimentIcons';
 import JupyterLabButton from 'components/JupyterLabButton';
 import Link from 'components/Link';
@@ -177,8 +178,20 @@ const Dashboard: React.FC<Props> = ({ testWithoutPage }) => {
 
   const pageBreadCrumb: BreadCrumbRoute[] = [{ breadcrumbName: 'Home', path: paths.dashboard() }];
 
-  const pageContent = useMemo(() => {
-    return (
+  if (projectsLoading && submissionsLoading) {
+    return null;
+  }
+
+  return (
+    <ConditionalWrapper
+      condition={!testWithoutPage}
+      wrapper={(children) => (
+        <Page
+          breadcrumb={pageBreadCrumb}
+          options={<JupyterLabButton enabled={canCreateNSC} />}
+          title="Home">
+          {children}
+        </Page>)}>
       <>
         {projectsLoading ? (
           <Section>
@@ -314,22 +327,7 @@ const Dashboard: React.FC<Props> = ({ testWithoutPage }) => {
           )}
         </Section>
       </>
-    );
-  }, [f_flat_runs, projects, projectsLoading, submissions, submissionsLoading, workspaces]);
-
-  if (projectsLoading && submissionsLoading) {
-    return null;
-  }
-
-  if (testWithoutPage) return pageContent;
-
-  return (
-    <Page
-      breadcrumb={pageBreadCrumb}
-      options={<JupyterLabButton enabled={canCreateNSC} />}
-      title="Home">
-      {pageContent}
-    </Page>
+    </ConditionalWrapper>
   );
 };
 
