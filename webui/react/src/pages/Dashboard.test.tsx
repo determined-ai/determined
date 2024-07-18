@@ -16,6 +16,7 @@ const mocks = vi.hoisted(() => {
         experiments: [],
       }),
     ),
+    getJupyterLabs: vi.fn().mockImplementation(() => Promise.resolve([])),
     getProjectsByUserActivity: vi.fn().mockImplementation(() => Promise.resolve([])),
   };
 });
@@ -23,7 +24,7 @@ const mocks = vi.hoisted(() => {
 vi.mock('services/api', () => ({
   getCommands: () => Promise.resolve([]),
   getExperiments: mocks.getExperiments,
-  getJupyterLabs: () => Promise.resolve([]),
+  getJupyterLabs: mocks.getJupyterLabs,
   getProjectsByUserActivity: mocks.getProjectsByUserActivity,
   getShells: () => Promise.resolve([]),
   getTensorBoards: () => Promise.resolve([]),
@@ -104,6 +105,23 @@ describe('Dashboard', () => {
     });
   });
   it('renders submissions', async () => {
+    mocks.getJupyterLabs.mockImplementation(() =>
+      Promise.resolve([
+        {
+          displayName: 'Test',
+          id: 'dbf259fa-611a-4940-85c5-92463b289835',
+          name: 'JupyterLab (eminently-moving-oryx)',
+          resourcePool: 'aux-pool',
+          serviceAddress:
+            '/proxy/dbf259fa-611a-4940-85c5-92463b289835/?token=v2.public.eyJpZCI6MCwidGFza19pZCI6ImRiZjI1OWZhLTYxMWEtNDk0MC04NWM1LTkyNDYzYjI4OTgzNSIsInVzZXJfc2Vzc2lvbl9pZCI6bnVsbCwidXNlcl9pZCI6MTM1NH2nxyzr1aMT2lECxRF3FQDUW6I3O5EYY62JJSP_hcaiDCcRZN5EML1csdVZm76xXer8hsia0osi1DqNqmqW6eUG.bnVsbA',
+          startTime: '2024-07-18T15:13:07.401Z',
+          state: 'RUNNING',
+          type: 'jupyter-lab',
+          userId: 1354,
+          workspaceId: 1,
+        },
+      ]),
+    );
     mocks.getExperiments.mockImplementation(() =>
       Promise.resolve({
         experiments: [
@@ -294,6 +312,7 @@ describe('Dashboard', () => {
     setup();
 
     await waitFor(() => {
+      expect(screen.getByText('JupyterLab (eminently-moving-oryx)')).toBeInTheDocument();
       expect(screen.getByText('mnist_pytorch_dist_random_search')).toBeInTheDocument();
     });
   });
