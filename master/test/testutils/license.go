@@ -12,9 +12,10 @@ import (
 // the local filesystem. If found, it sets them. Returns an error if the files are
 // not found or there is an error reading from them.
 func LoadLicenseAndKeyFromFilesystem() error {
+	// TODO: read these from environment but default to this when env vars unset
 	const (
-		licenseKeyPath = "license.txt"
-		publicKeyPath  = "public.txt"
+		licenseKeyPath = "license.txt" // TODO: maybe "../license.txt"?
+		publicKeyPath  = "public.txt"  // TODO: maybe "../public.txt"?
 	)
 
 	// Check for the existence of license key file
