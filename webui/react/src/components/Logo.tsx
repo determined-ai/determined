@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 
 import logoDeterminedOnDarkHorizontal from 'assets/images/logo-determined-on-dark-horizontal.svg?url';
 import logoDeterminedOnDarkVertical from 'assets/images/logo-determined-on-dark-vertical.svg?url';
@@ -56,8 +56,6 @@ const Logo: React.FC<Props> = ({
   hasCustomLogo = false,
 }: Props) => {
   const { isDarkMode } = useUI();
-  const [logoSrc, setImageSrc] = useState<string>('');
-  const [classes, setClasses] = useState<string[]>([css[branding], css[orientation]]);
 
   const alt = useMemo(() => {
     const isDetermined = branding === BrandingType.Determined;
@@ -69,18 +67,15 @@ const Logo: React.FC<Props> = ({
     ].join();
   }, [branding]);
 
-  useEffect(() => {
-    const mode = isDarkMode ? 'dark' : 'light';
-    if (hasCustomLogo) {
-      const imageUrl = `/det/customer-assets/logo?orientation=${orientation}&mode=${mode}`;
-      setImageSrc(imageUrl);
-      setClasses([css.customLogo]);
-    } else {
-      setImageSrc(logos[branding][orientation][mode]);
-    }
-  }, [branding, orientation, isDarkMode, hasCustomLogo]);
+  const mode = isDarkMode ? 'dark' : 'light';
+  let imageSrc = logos[branding][orientation][mode];
+  let classes = [css[branding], css[orientation]];
+  if (hasCustomLogo) {
+    imageSrc = `/det/customer-assets/logo?orientation=${orientation}&mode=${mode}`;
+    classes = [css.customLogo];
+  }
 
-  return <img alt={alt} className={classes.join(' ')} src={logoSrc} />;
+  return <img alt={alt} className={classes.join(' ')} src={imageSrc} />;
 };
 
 export default Logo;
