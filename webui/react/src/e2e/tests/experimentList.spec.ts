@@ -73,8 +73,10 @@ test.describe('Experiment List', () => {
       const sortContent =
         await projectDetailsPage.f_experimentList.tableActionBar.multiSortMenu.open();
       await sortContent.multiSort.reset.pwLocator.click();
-      // the menu doesn't close in automation, but it works with mouse events manually
-      // await projectDetailsPage.f_experimentList.tableActionBar.multiSortMenu.open();
+      // the menu doesn't close in local automation, but it works with mouse events
+      // manually and sometimes on ci. let's just close it manually
+      await sortContent.close();
+      await sortContent.open();
       // set sort
       const firstRow = sortContent.multiSort.rows.nth(0);
       await firstRow.column.selectMenuOption('Start time');
