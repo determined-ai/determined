@@ -363,8 +363,8 @@ const JupyterLabForm: React.FC<{
 
   const boundResourcePools: ResourcePool[] = useMemo(() => {
     if (!Loadable.isLoaded(resourcePools) || !selectedWorkspaceId) return [];
-    return resourcePools.data.filter((rp) =>
-      boundResourcePoolsMap.get(selectedWorkspaceId)?.includes(rp.name),
+    return resourcePools.data.filter(
+      (rp) => boundResourcePoolsMap.get(selectedWorkspaceId)?.includes(rp.name),
     );
   }, [resourcePools, boundResourcePoolsMap, selectedWorkspaceId]);
 
@@ -456,7 +456,7 @@ const JupyterLabForm: React.FC<{
       </Form.Item>
       <Form.Item
         extra={templatesOn && <Link path={paths.templates()}>Manage Templates</Link>}
-        initialValue={defaults?.template}
+        initialValue={templates.find((t) => t.name === defaults.template)?.name}
         label="Template"
         name="template">
         <Select allowClear placeholder="No template (optional)">
