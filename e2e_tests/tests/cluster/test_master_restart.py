@@ -90,8 +90,6 @@ def test_master_agent_restart_reattach_recover_experiment(
             None,
         )
 
-        # exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.RUNNING)
-
         # Kill the agent & master
         restartable_managed_cluster.kill_agent()
         restartable_managed_cluster.kill_master()
