@@ -62,6 +62,16 @@ Update the docker image version along with Playwright version.
 - DET_WEBPACK_PROXY_URL=<http://localhost:8082>"
 - DET_WEBSOCKET_PROXY_URL=ws://localhost:8082"
 
+### Running tests manually
+
+Tests trigger automatically on commits with relevant changes, but if you want to run tests manually, click `Trigger Pipeline` on circle CI, and provide these arguments:
+
+| ci variable (doesn't change) | cli args for playwright |
+| ---------------------------- | ----------------------- |
+| `e2e-react`                  | `-g "Login Redirect"`   |
+
+![manual test](docs/images/circle-ci-manual-test-run.png)
+
 ## Appendix
 
 - [Page model Readme](./models/README.md)
