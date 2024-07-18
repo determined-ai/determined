@@ -111,9 +111,11 @@ func New(
 		return nil, err
 	}
 
-	err = k.jobsService.VerifyNamespaceExists(k.config.DefaultNamespace)
-	if err != nil {
-		return nil, fmt.Errorf("error verifying default namespace existence for cluster '%s': %w", k.config.Name, err)
+	if len(k.config.DefaultNamespace) > 0 {
+		err = k.jobsService.VerifyNamespaceExists(k.config.DefaultNamespace)
+		if err != nil {
+			return nil, fmt.Errorf("error verifying default namespace existence for cluster '%s': %w", k.config.Name, err)
+		}
 	}
 
 	for _, poolConfig := range k.poolsConfig {
