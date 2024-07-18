@@ -722,12 +722,10 @@ func (a *allocation) resourcesAllocated(msg *sproto.ResourcesAllocated) error {
 func (a *allocation) resourcesStateChanged(msg *sproto.ResourcesStateChanged) {
 	if _, ok := a.resources[msg.ResourcesID]; !ok {
 		a.syslog.
-			WithField("container", msg.Container).
 			WithError(StaleResourcesError{ID: msg.ResourcesID}).Warnf("old state change")
 		return
 	}
 
-	a.resources[msg.ResourcesID].Container = msg.Container
 	a.syslog.Debugf("resources state changed: %s", msg)
 	switch msg.ResourcesState {
 	case sproto.Pulling:
@@ -768,10 +766,8 @@ func (a *allocation) resourcesStateChanged(msg *sproto.ResourcesStateChanged) {
 			a.closers = append(a.closers, a.unregisterProxies)
 		}
 
-		containerID := coalesceString(msg.ContainerIDStr(), "")
 		a.sendTaskLog(&model.TaskLog{
-			ContainerID: &containerID,
-			Log:         fmt.Sprintf("Resources for %s have started", a.req.Name),
+			Log: fmt.Sprintf("Resources for %s have started", a.req.Name),
 		})
 
 		prom.AssociateAllocationTask(a.req.AllocationID, a.req.TaskID, a.req.Name, a.req.JobID)
@@ -807,8 +803,7 @@ func (a *allocation) resourcesStateChanged(msg *sproto.ResourcesStateChanged) {
 		switch {
 		case a.killedWhileRunning:
 			a.sendTaskLog(&model.TaskLog{
-				ContainerID: msg.ContainerIDStr(),
-				Log:         fmt.Sprintf("killed: %s", msg.ResourcesStopped.String()),
+				Log: fmt.Sprintf("killed: %s", msg.ResourcesStopped.String()),
 			})
 			a.tryExit("resources were killed")
 		case msg.ResourcesStopped.Failure != nil:
@@ -818,23 +813,20 @@ func (a *allocation) resourcesStateChanged(msg *sproto.ResourcesStateChanged) {
 			// failed messages for these resources.
 			if a.killedDaemonsGracefully {
 				a.sendTaskLog(&model.TaskLog{
-					ContainerID: msg.ContainerIDStr(),
-					Log:         fmt.Sprintf("daemon killed: %s", msg.ResourcesStopped.String()),
+					Log: fmt.Sprintf("daemon killed: %s", msg.ResourcesStopped.String()),
 				})
 				a.tryExit("remaining resources terminated")
 			} else {
 				a.sendTaskLog(&model.TaskLog{
-					ContainerID: msg.ContainerIDStr(),
-					Log:         fmt.Sprintf("crashed: %s", msg.ResourcesStopped.String()),
-					Level:       ptrs.Ptr(model.LogLevelError),
+					Log:   fmt.Sprintf("crashed: %s", msg.ResourcesStopped.String()),
+					Level: ptrs.Ptr(model.LogLevelError),
 				})
 				a.crash(*msg.ResourcesStopped.Failure)
 			}
 		default:
 			a.sendTaskLog(&model.TaskLog{
-				ContainerID: msg.ContainerIDStr(),
-				Log:         msg.ResourcesStopped.String(),
-				Level:       ptrs.Ptr(model.LogLevelInfo),
+				Log:   msg.ResourcesStopped.String(),
+				Level: ptrs.Ptr(model.LogLevelInfo),
 			})
 			a.tryExit(msg.ResourcesStopped.String())
 		}
@@ -1308,13 +1300,6 @@ func (a *allocation) getModelState() model.AllocationState {
 }
 
 func coalesceBool(x *bool, fallback bool) bool {
-	if x == nil {
-		return fallback
-	}
-	return *x
-}
-
-func coalesceString(x *string, fallback string) string {
 	if x == nil {
 		return fallback
 	}
