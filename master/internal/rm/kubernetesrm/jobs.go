@@ -2244,8 +2244,8 @@ func (j *jobsService) startNamespaceInformers(namespace string) error {
 		namespace,
 		j.clientSet.CoreV1().Pods(namespace),
 		func(event watch.Event) {
-			// j.mu.Lock()
-			// defer j.mu.Unlock()
+			j.mu.Lock()
+			defer j.mu.Unlock()
 			j.preemptionCallback(event)
 		})
 	if err != nil {
@@ -2258,21 +2258,21 @@ func (j *jobsService) startNamespaceInformers(namespace string) error {
 	jobsInformer := factory.Batch().V1().Jobs()
 	if _, err := jobsInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 		AddFunc: func(obj interface{}) {
-			// j.mu.Lock()
-			// defer j.mu.Unlock()
+			j.mu.Lock()
+			defer j.mu.Unlock()
 			j.jobUpdatedCallback(obj)
 		},
 		UpdateFunc: func(_, obj interface{}) {
-			// j.mu.Lock()
-			// defer j.mu.Unlock()
+			j.mu.Lock()
+			defer j.mu.Unlock()
 			j.jobUpdatedCallback(obj)
 		},
 
 		// If a job is deleted out from under us, this is the only hook we have to not
 		// leave our workloads running or pending forever.
 		DeleteFunc: func(obj interface{}) {
-			// j.mu.Lock()
-			// defer j.mu.Unlock()
+			j.mu.Lock()
+			defer j.mu.Unlock()
 			j.jobDeletedCallback(obj)
 		},
 	}); err != nil {
