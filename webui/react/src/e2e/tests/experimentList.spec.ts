@@ -68,27 +68,25 @@ test.describe('Experiment List', () => {
       await columnPicker.close();
       await waitTableStable();
     });
+    await test.step('Sort Oldest → Newest', async () => {
+      // reset
+      const sortContent =
+        await projectDetailsPage.f_experimentList.tableActionBar.multiSortMenu.open();
+      await sortContent.multiSort.reset.pwLocator.click();
+      // the menu doesn't close in automation, but it works with mouse events manually
+      // await projectDetailsPage.f_experimentList.tableActionBar.multiSortMenu.open();
+      // set sort
+      const firstRow = sortContent.multiSort.rows.nth(0);
+      await firstRow.column.selectMenuOption('Start time');
+      await firstRow.order.selectMenuOption('Oldest → Newest');
+      await sortContent.close();
+      await waitTableStable();
+    });
     await test.step('Reset Filters', async () => {
       const tableFilter =
         await projectDetailsPage.f_experimentList.tableActionBar.tableFilter.open();
       await tableFilter.filterForm.clearFilters.pwLocator.click();
       await tableFilter.close();
-      await waitTableStable();
-    });
-    await test.step('Sort Oldest → Newest', async () => {
-      // reset
-      const content = await projectDetailsPage.f_experimentList.tableActionBar.multiSortMenu.open();
-      await content.multiSort.reset.pwLocator.click();
-      // the menu doesn't close in automation, but it works with mouse events manually
-      // await projectDetailsPage.f_experimentList.tableActionBar.multiSortMenu.open();
-
-      // set sort
-      const firstRow = content.multiSort.rows.nth(0);
-      await firstRow.column.selectMenuOption('Start time');
-      await firstRow.order.selectMenuOption('Oldest → Newest');
-      // [ET-284] wait before popover close or else it'll flake
-      await authedPage.waitForTimeout(1_000);
-      await projectDetailsPage.f_experimentList.tableActionBar.expNum.pwLocator.click();
       await waitTableStable();
     });
     await grid.setColumnHeight();
