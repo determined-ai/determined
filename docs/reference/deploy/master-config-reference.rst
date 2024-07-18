@@ -221,13 +221,15 @@ Optional. Specify a human-readable name for this cluster.
  ``ui_customization``
 **********************
 
-Optional. Customize Determined UI.
+Optional. Applies only to Determined Enterprise Edition. This section houses options to customize
+the UI.
 
 ``logo_path``
 =============
 
-Path to variations of a user provided logo to be shown in the UI. This path should be availalbe and
-reachable to the master and a valid image file.
+Path to variations of a user provided logo to be shown in the UI. This path should be available and
+reachable to the master and a valid image file. SVG format is recommended but other common web image
+formats are supported as well.
 
 *************************
  ``tensorboard_timeout``
