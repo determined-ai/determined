@@ -594,7 +594,6 @@ func (j *job) informTaskResourcesState() {
 	rmevents.Publish(j.allocationID, &sproto.ResourcesStateChanged{
 		ResourcesID:    sproto.FromContainerID(j.container.ID),
 		ResourcesState: sproto.FromContainerState(j.container.State),
-		Container:      j.container.DeepCopy(),
 	})
 }
 
@@ -603,7 +602,6 @@ func (j *job) informTaskResourcesStarted(rs sproto.ResourcesStarted) {
 		ResourcesID:      sproto.FromContainerID(j.container.ID),
 		ResourcesState:   sproto.FromContainerState(j.container.State),
 		ResourcesStarted: &rs,
-		Container:        j.container.DeepCopy(),
 	})
 }
 
@@ -616,7 +614,6 @@ func (j *job) informTaskResourcesStopped() {
 		ResourcesID:      sproto.FromContainerID(j.container.ID),
 		ResourcesState:   sproto.FromContainerState(j.container.State),
 		ResourcesStopped: &sproto.ResourcesStopped{Failure: j.exitCause()},
-		Container:        j.container.DeepCopy(),
 	})
 	j.sentTerminationEvent = true
 }
