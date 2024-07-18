@@ -53,14 +53,13 @@ const useAuthCheck = (): (() => Promise<boolean>) => {
      * If an external login URL is provided, redirect there.
      * Otherwise mark that we checked the auth and skip auth token validation.
      */
-
     if (authToken) {
       try {
         await getCurrentUser({});
         updateBearerToken(authToken);
         authStore.setAuth({ isAuthenticated: true, token: authToken });
       } catch (e) {
-        // If an invalid auth token is detected we need to properly handle the auth error
+        // check if this is a remote user token expiration error, and redirect to SSO
         if (isRemoteUserTokenExpired(e)) {
           info.ssoProviders?.forEach((ssoProvider) => {
             if (ssoProvider.type === 'OIDC') {

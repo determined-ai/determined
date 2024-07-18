@@ -1,5 +1,6 @@
 import { expect, test } from 'e2e/fixtures/global-fixtures';
 import { SignIn } from 'e2e/models/pages/SignIn';
+import { defaultLandingTitle, defaultLandingURL } from 'e2e/utils/envVars';
 
 test.describe('Authentication', () => {
   test.afterEach(async ({ page, auth }) => {
@@ -12,8 +13,8 @@ test.describe('Authentication', () => {
   test('Login and Logout', async ({ page, auth }) => {
     await test.step('Login', async () => {
       await auth.login();
-      await expect(page).toHaveDeterminedTitle('Home');
-      await expect(page).toHaveURL(/dashboard/);
+      await expect(page).toHaveDeterminedTitle(defaultLandingTitle());
+      await expect(page).toHaveURL(defaultLandingURL());
     });
 
     await test.step('Logout', async () => {
@@ -26,8 +27,22 @@ test.describe('Authentication', () => {
 
   test('Login Redirect', async ({ page, auth }) => {
     await test.step('Attempt to Visit a Page', async () => {
-      await page.goto('./models');
+      await page.goto('/models');
+      var landingRedirect = await page.evaluate(() => sessionStorage.getItem('session/landing-redirect'));
+      console.log('Landing Redirect 1:', landingRedirect);
       await expect(page).toHaveURL(/login/);
+      landingRedirect = await page.evaluate(() => sessionStorage.getItem('session/landing-redirect'));
+      console.log('Landing Redirect 2:', landingRedirect);
+      // const checkSessionStorageForRedirect = async (key: string, expectedValue: string, attempts = 10, interval = 500) => {
+      //   for (let i = 0; i < attempts; i++) {
+      //     const value = await page.evaluate((key) => sessionStorage.getItem(key), key);
+      //     if (value === expectedValue) return true;
+      //     await page.waitForTimeout(interval); // Wait for a bit before checking again
+      //   }
+      //   return false; // Value not found within the given attempts
+      // };
+      // const hasRedirectPath = await checkSessionStorageForRedirect('session/landing-redirect', '/models');
+      // if (!hasRedirectPath) throw new Error('landingRedirect not set to /models within the expected time');
     });
 
     await test.step('Login and Redirect', async () => {
