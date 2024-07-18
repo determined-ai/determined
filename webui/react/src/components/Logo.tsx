@@ -7,7 +7,7 @@ import logoDeterminedOnLightVertical from 'assets/images/logo-determined-on-ligh
 import logoHpeOnDarkHorizontal from 'assets/images/logo-hpe-on-dark-horizontal.svg?url';
 import logoHpeOnLightHorizontal from 'assets/images/logo-hpe-on-light-horizontal.svg?url';
 import useUI from 'components/ThemeProvider';
-import { serverAddress } from 'routes/utils';
+import { linkPath, paths, serverAddress } from 'routes/utils';
 import { BrandingType } from 'stores/determinedInfo';
 import { ValueOf } from 'types';
 import { reactHostAddress } from 'utils/routes';
@@ -71,7 +71,7 @@ const Logo: React.FC<Props> = ({
   let imageSrc = logos[branding][orientation][mode];
   let classes = [css[branding], css[orientation]];
   if (hasCustomLogo) {
-    imageSrc = `/det/customer-assets/logo?orientation=${orientation}&mode=${mode}`;
+    imageSrc = linkPath(paths.customerAsset('logo', orientation, mode), false);
     classes = [css.customLogo];
   }
 
