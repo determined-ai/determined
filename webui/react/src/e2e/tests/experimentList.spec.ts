@@ -46,6 +46,7 @@ test.describe('Experiment List', () => {
   });
 
   test.beforeEach(async ({ authedPage }) => {
+    test.slow();
     projectDetailsPage = new ProjectDetails(authedPage);
     const grid = projectDetailsPage.f_experimentList.dataGrid;
 
@@ -124,7 +125,6 @@ test.describe('Experiment List', () => {
   });
 
   test('Column Picker Show All and Hide All', async () => {
-    test.slow();
     const columnPicker = projectDetailsPage.f_experimentList.tableActionBar.columnPickerMenu;
     const grid = projectDetailsPage.f_experimentList.dataGrid;
     let previousTabs = grid.headRow.columnDefs.size;
@@ -178,7 +178,6 @@ test.describe('Experiment List', () => {
   });
 
   test('Table Filter', async () => {
-    test.slow();
     const tableFilter = projectDetailsPage.f_experimentList.tableActionBar.tableFilter;
     const totalExperiments = await getExpNum();
 
