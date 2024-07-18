@@ -137,12 +137,13 @@ type jobsService struct {
 	gatewayService                    *gatewayService
 
 	// TODO(RM-236) make one cache and make this code more straightforward.
-	summarizeCacheLock sync.RWMutex
-	summarizeCache     summarizeResult
-	summarizeCacheTime time.Time
-	getAgentsCacheLock sync.Mutex
-	getAgentsCache     *apiv1.GetAgentsResponse
-	getAgentsCacheTime time.Time
+	summarizeCacheLock      sync.RWMutex
+	summarizeCache          summarizeResult
+	summarizeCacheTime      time.Time
+	getAgentsCacheLock      sync.Mutex
+	getAgentsCache          *apiv1.GetAgentsResponse
+	getAgentsCacheTime      time.Time
+	namespacesWithInformers map[string]bool
 }
 
 func (j *jobsService) GetAllNamespacesForRM() ([]string, error) {
@@ -205,8 +206,9 @@ func newJobsService(
 		syslog:                            logrus.WithField("namespace", namespace),
 		jobSchedulingStateCallback:        jobSchedulingStateCb,
 
-		internalTaskGWConfig: internalTaskGWConfig,
-		kubeconfigPath:       kubeconfigPath,
+		internalTaskGWConfig:    internalTaskGWConfig,
+		kubeconfigPath:          kubeconfigPath,
+		namespacesWithInformers: make(map[string]bool),
 	}
 
 	ns, err := p.GetAllNamespacesForRM()
@@ -240,75 +242,87 @@ func newJobsService(
 		return nil, err
 	}
 
-	err = p.startEventListeners(ns)
+	err = p.syncNamespaces(ns)
 	if err != nil {
 		return nil, err
 	}
+	return p, nil
+}
 
-	err = p.startPreemptionListeners(ns)
+func (j *jobsService) syncNamespaces(ns []string) error {
+	err := j.startEventListeners(ns)
 	if err != nil {
-		return nil, err
+		return err
+	}
+
+	err = j.startPreemptionListeners(ns)
+	if err != nil {
+		return err
 	}
 
 	for _, namespace := range ns {
-		factory := informers.NewSharedInformerFactoryWithOptions(p.clientSet, time.Hour, informers.WithNamespace(namespace))
+		j.namespacesWithInformers[namespace] = true
+		factory := informers.NewSharedInformerFactoryWithOptions(j.clientSet, time.Hour,
+			informers.WithNamespace(namespace))
 
 		jobsInformer := factory.Batch().V1().Jobs()
 		if _, err := jobsInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 			AddFunc: func(obj interface{}) {
-				p.mu.Lock()
-				defer p.mu.Unlock()
-				p.jobUpdatedCallback(obj)
+				j.mu.Lock()
+				defer j.mu.Unlock()
+				j.jobUpdatedCallback(obj)
 			},
 			UpdateFunc: func(_, obj interface{}) {
-				p.mu.Lock()
-				defer p.mu.Unlock()
-				p.jobUpdatedCallback(obj)
+				j.mu.Lock()
+				defer j.mu.Unlock()
+				j.jobUpdatedCallback(obj)
 			},
 
 			// If a job is deleted out from under us, this is the only hook we have to not
 			// leave our workloads running or pending forever.
 			DeleteFunc: func(obj interface{}) {
-				p.mu.Lock()
-				defer p.mu.Unlock()
-				p.jobDeletedCallback(obj)
+				j.mu.Lock()
+				defer j.mu.Unlock()
+				j.jobDeletedCallback(obj)
 			},
 		}); err != nil {
-			return nil, fmt.Errorf("adding job informer: %w", err)
+			return fmt.Errorf("adding job informer: %w", err)
 		}
+
 		cacheSyncs = append(cacheSyncs, jobsInformer.Informer().HasSynced)
 
 		podsInformer := factory.Core().V1().Pods()
 		if _, err := podsInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 			AddFunc: func(obj interface{}) {
-				p.mu.Lock()
-				defer p.mu.Unlock()
-				p.podStatusCallback(obj)
+				j.mu.Lock()
+				defer j.mu.Unlock()
+				j.podStatusCallback(obj)
 			},
 			UpdateFunc: func(_, obj interface{}) {
-				p.mu.Lock()
-				defer p.mu.Unlock()
-				p.podStatusCallback(obj)
+				j.mu.Lock()
+				defer j.mu.Unlock()
+				j.podStatusCallback(obj)
 			},
 
 			// If a pod is deleted out from under us, it is nice to let the user know that
 			// is what happened.
 			DeleteFunc: func(obj interface{}) {
-				p.mu.Lock()
-				defer p.mu.Unlock()
-				p.podDeletedCallback(obj)
+				j.mu.Lock()
+				defer j.mu.Unlock()
+				j.podDeletedCallback(obj)
 			},
 		}); err != nil {
-			return nil, fmt.Errorf("adding pod informer: %w", err)
+			return fmt.Errorf("adding pod informer: %w", err)
 		}
 		cacheSyncs = append(cacheSyncs, podsInformer.Informer().HasSynced)
 
 		factory.Start(nil)
 	}
+
 	if !cache.WaitForCacheSync(nil, cacheSyncs...) {
-		return nil, errors.New("failed to wait for cache sync for jobs informer")
+		return errors.New("failed to wait for cache sync for jobs informer")
 	}
-	return p, nil
+	return nil
 }
 
 func (j *jobsService) startClientSet(namespaces []string) error {
@@ -1498,7 +1512,6 @@ func (j *jobsService) nodeStatusCallback(event watch.Event) {
 }
 
 func (j *jobsService) newEventCallback(event watch.Event) {
-	fmt.Println("we come to new event callback \n \n ")
 	newEvent, ok := event.Object.(*k8sV1.Event)
 	if !ok {
 		j.syslog.Warnf("error converting object type %T to *k8sV1.Event: %+v", event, event)
@@ -2152,17 +2165,16 @@ func (j *jobsService) listTCPRoutesInAllNamespaces(
 	return res, nil
 }
 
-func (j *jobsService) verifyNamespaceExists(namespaceName string) error {
-	fmt.Println("comes to verify namespae exists \n \n ")
-	_, err := j.clientSet.CoreV1().Namespaces().Get(context.Background(), namespaceName,
+func (j *jobsService) verifyNamespaceExists(namespace string) error {
+	_, err := j.clientSet.CoreV1().Namespaces().Get(context.Background(), namespace,
 		metaV1.GetOptions{})
 	if err != nil {
-		return fmt.Errorf("error finding namespace %s: %w", namespaceName, err)
+		return fmt.Errorf("error finding namespace %s: %w", namespace, err)
 	}
 
-	j.podInterfaces[namespaceName] = j.clientSet.CoreV1().Pods(namespaceName)
-	j.configMapInterfaces[namespaceName] = j.clientSet.CoreV1().ConfigMaps(namespaceName)
-	j.jobInterfaces[namespaceName] = j.clientSet.BatchV1().Jobs(namespaceName)
+	j.podInterfaces[namespace] = j.clientSet.CoreV1().Pods(namespace)
+	j.configMapInterfaces[namespace] = j.clientSet.CoreV1().ConfigMaps(namespace)
+	j.jobInterfaces[namespace] = j.clientSet.BatchV1().Jobs(namespace)
 
 	for _, worker := range j.requestQueueWorkers {
 		worker.podInterface = j.podInterfaces
@@ -2170,16 +2182,19 @@ func (j *jobsService) verifyNamespaceExists(namespaceName string) error {
 		worker.jobInterface = j.jobInterfaces
 	}
 
-	// err = j.startNamespaceInformers(namespaceName)
-	// if err != nil {
-	// 	return err
-	// }
+	// Since we don't know whether the namespace exists yet, and we don't want to do duplicate
+	// namespace informers, add all non-auto-created namespaces bound to a workspace with a map.
+	if _, ok := j.namespacesWithInformers[namespace]; !ok {
+		err = j.syncNamespaces([]string{namespace})
+		if err != nil {
+			return err
+		}
+	}
 
 	return nil
 }
 
 func (j *jobsService) createNamespace(namespaceName string) error {
-	fmt.Println("comes to create namespace \n \n ")
 	_, err := j.clientSet.CoreV1().Namespaces().Create(
 		context.TODO(),
 		&k8sV1.Namespace{
@@ -2195,9 +2210,10 @@ func (j *jobsService) createNamespace(namespaceName string) error {
 		metaV1.CreateOptions{},
 	)
 	if err != nil {
-		if !strings.Contains(err.Error(), "already exists") {
+		if !k8error.IsAlreadyExists(err) {
 			return fmt.Errorf("error creating namespace %s: %w", namespaceName, err)
 		}
+		return nil
 	}
 
 	j.podInterfaces[namespaceName] = j.clientSet.CoreV1().Pods(namespaceName)
@@ -2210,108 +2226,10 @@ func (j *jobsService) createNamespace(namespaceName string) error {
 		worker.jobInterface = j.jobInterfaces
 	}
 
-	err = j.startNamespaceInformers(namespaceName)
+	err = j.syncNamespaces([]string{namespaceName})
 	if err != nil {
 		return err
 	}
-	return nil
-}
-
-func (j *jobsService) startNamespaceInformers(namespace string) error {
-	// channels used by the informers can be causing blocks.
-	fmt.Println("started namesapce informers again \n \n ")
-	// event listeners
-	l, err := newEventInformer(
-		context.TODO(),
-		j.clientSet.CoreV1().Events(namespace),
-		namespace,
-		func(event watch.Event) {
-			// j.mu.Lock()
-			// defer fmt.Println("we are going to release the lock \n \n ")
-			// defer j.mu.Unlock()
-			j.newEventCallback(event)
-		})
-	if err != nil {
-		return err
-	}
-	go l.run(context.TODO())
-
-	// preemption listeners
-	l, err = newPodInformer(
-		context.TODO(),
-		determinedPreemptionLabel,
-		"preemption",
-		namespace,
-		j.clientSet.CoreV1().Pods(namespace),
-		func(event watch.Event) {
-			j.mu.Lock()
-			defer j.mu.Unlock()
-			j.preemptionCallback(event)
-		})
-	if err != nil {
-		return err
-	}
-	go l.run(context.TODO())
-
-	factory := informers.NewSharedInformerFactoryWithOptions(j.clientSet, time.Hour, informers.WithNamespace(namespace))
-
-	jobsInformer := factory.Batch().V1().Jobs()
-	if _, err := jobsInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
-		AddFunc: func(obj interface{}) {
-			j.mu.Lock()
-			defer j.mu.Unlock()
-			j.jobUpdatedCallback(obj)
-		},
-		UpdateFunc: func(_, obj interface{}) {
-			j.mu.Lock()
-			defer j.mu.Unlock()
-			j.jobUpdatedCallback(obj)
-		},
-
-		// If a job is deleted out from under us, this is the only hook we have to not
-		// leave our workloads running or pending forever.
-		DeleteFunc: func(obj interface{}) {
-			j.mu.Lock()
-			defer j.mu.Unlock()
-			j.jobDeletedCallback(obj)
-		},
-	}); err != nil {
-		return fmt.Errorf("adding job informer: %w", err)
-	}
-
-	cacheSyncs = append(cacheSyncs, jobsInformer.Informer().HasSynced)
-
-	podsInformer := factory.Core().V1().Pods()
-	if _, err := podsInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
-		AddFunc: func(obj interface{}) {
-			// j.mu.Lock()
-			// defer j.mu.Unlock()
-			j.podStatusCallback(obj)
-		},
-		UpdateFunc: func(_, obj interface{}) {
-			j.mu.Lock()
-			defer j.mu.Unlock()
-			j.podStatusCallback(obj)
-		},
-
-		// If a pod is deleted out from under us, it is nice to let the user know that
-		// is what happened.
-		DeleteFunc: func(obj interface{}) {
-			// j.mu.Lock()
-			// defer j.mu.Unlock()
-			j.podDeletedCallback(obj)
-		},
-	}); err != nil {
-		return fmt.Errorf("adding pod informer: %w", err)
-	}
-	cacheSyncs = append(cacheSyncs, podsInformer.Informer().HasSynced)
-
-	factory.Start(nil)
-
-	if !cache.WaitForCacheSync(nil, cacheSyncs...) {
-		return errors.New("failed to wait for cache sync for jobs informer")
-	}
-	fmt.Println("we made it to the end of the function \n \n ")
 	return nil
 }
 
@@ -2397,7 +2315,6 @@ func (j *jobsService) setResourceQuota(quota int, namespace string) error {
 	}
 
 	if detQuota != nil {
-		fmt.Println("we found an existing quota \n \n ")
 		detQuotaToByteArray, err := json.Marshal(detQuota)
 		if err != nil {
 			return fmt.Errorf("error marshaling quota %s: %w", detQuota.Name, err)
@@ -2410,9 +2327,7 @@ func (j *jobsService) setResourceQuota(quota int, namespace string) error {
 		if err != nil {
 			return fmt.Errorf("error applying patch to resource quota %s: %w", quotaName, err)
 		}
-		fmt.Println("able to update the resource quota \n \n ")
 	} else {
-		fmt.Println("found no or different quota \n \n ")
 		// The given namespace does not any attached determined quotas.
 		if currentQuota < float64(quota) {
 			return fmt.Errorf("cannot set quota because there already exists a quota in "+

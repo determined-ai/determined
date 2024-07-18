@@ -111,7 +111,6 @@ func (k *kubernetesResourcePool) JobSchedulingStateChanged(msg jobSchedulingStat
 	defer k.mu.Unlock()
 	k.tryAdmitPendingTasks = true
 
-	fmt.Printf("Called: %s \n \n \n ", msg.AllocationID)
 	for it := k.reqList.Iterator(); it.Next(); {
 		req := it.Value()
 		if req.AllocationID == msg.AllocationID {
@@ -709,6 +708,7 @@ func (p k8sJobResource) Start(
 		return fmt.Errorf("getting namespace for workspace: %w", err)
 	}
 
+	// Check slots allocate
 	return p.jobsService.StartJob(startJob{
 		req:          p.req,
 		allocationID: p.req.AllocationID,
