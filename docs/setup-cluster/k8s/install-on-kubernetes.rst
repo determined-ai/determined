@@ -307,6 +307,8 @@ by default:
 To see information about using AWS Load Balancer instead of nginx visit :ref:`Using AWS Load
 Balancer <aws-lb>`.
 
+.. _kubernetes-default-scheduler:
+
 Default Scheduler (Optional)
 ============================
 
