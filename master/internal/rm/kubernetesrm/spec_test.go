@@ -379,6 +379,61 @@ func TestValidatePodLabelValues(t *testing.T) {
 	}
 }
 
+func TestDetMasterEnvVar(t *testing.T) {
+	cases := []struct {
+		name            string
+		masterTLSConfig model.TLSClientConfig
+		masterScheme    string
+		expected        string
+	}{
+		{
+			"tls off",
+			model.TLSClientConfig{Enabled: false},
+			"", "http://example.com:1234",
+		},
+		{
+			"tls on",
+			model.TLSClientConfig{Enabled: true},
+			"", "https://example.com:1234",
+		},
+		{
+			"tls off scheme https",
+			model.TLSClientConfig{Enabled: false},
+			"https", "https://example.com:1234",
+		},
+		{
+			"tls on scheme https",
+			model.TLSClientConfig{Enabled: true},
+			"https", "https://example.com:1234",
+		},
+		{
+			"tls on scheme http",
+			model.TLSClientConfig{Enabled: true},
+			"http", "http://example.com:1234",
+		},
+	}
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			env := expconf.EnvironmentConfig{
+				RawEnvironmentVariables: &expconf.EnvironmentVariablesMap{
+					RawCPU: []string{},
+				},
+			}
+
+			j := &job{
+				masterIP:        "example.com",
+				masterPort:      1234,
+				masterScheme:    c.masterScheme,
+				masterTLSConfig: c.masterTLSConfig,
+			}
+
+			envVars, err := j.configureEnvVars(make(map[string]string), env, device.CPU)
+			require.NoError(t, err)
+			require.Contains(t, envVars, k8sV1.EnvVar{Name: "DET_MASTER", Value: c.expected})
+		})
+	}
+}
+
 func TestDeterminedLabels(t *testing.T) {
 	// Fill out task spec.
 	taskSpec := tasks.TaskSpec{

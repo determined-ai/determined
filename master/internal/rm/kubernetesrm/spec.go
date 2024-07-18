@@ -112,6 +112,14 @@ func (j *job) configureEnvVars(
 	if j.masterTLSConfig.Enabled {
 		masterScheme = "https"
 	}
+
+	// For multi rm support add an override to our defaulting logic because it is possible the
+	// external cluster connects to master through a gateway with TLS
+	// while the other does not use TLS.
+	if j.masterScheme != "" {
+		masterScheme = j.masterScheme
+	}
+
 	envVarsMap["DET_CLUSTER_ID"] = j.clusterID
 	envVarsMap["DET_MASTER"] = fmt.Sprintf("%s://%s:%d", masterScheme, j.masterIP, j.masterPort)
 	envVarsMap["DET_MASTER_HOST"] = j.masterIP
