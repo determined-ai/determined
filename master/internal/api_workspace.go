@@ -881,6 +881,10 @@ func (a *apiServer) setWorkspaceNamespaceBindings(ctx context.Context,
 			namespace = *metadata.Namespace
 		}
 
+		if namespace == *autoCreatedNamespace {
+			metadata.AutoCreateNamespace = true
+		}
+
 		// Since workspace-namespace bindings for the default namespace of a given cluster are not
 		// automatically saved in the database, maintain constistency by not saving default
 		// namespace bindings to the db if a user tries to set them.
