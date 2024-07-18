@@ -60,6 +60,10 @@ const isNonK8RMError = (e: unknown): boolean => {
   return e instanceof DetError && e.sourceErr instanceof Response && e.sourceErr['status'] === 404;
 };
 
+const isNotAuthorizedErr = (e: unknown): boolean => {
+  return e instanceof DetError && e.sourceErr instanceof Response && e.sourceErr['status'] === 403;
+};
+
 const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }: Props = {}) => {
   const idPrefix = useId();
   const {
@@ -78,12 +82,14 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
       const response = await getKubernetesResourceManagers(undefined, { signal: canceller.signal });
       return response.names;
     } catch (e) {
-      handleError(e, {
-        level: ErrorLevel.Error,
-        publicMessage: 'Failed to fetch Resource Managers.',
-        silent: false,
-        type: ErrorType.Server,
-      });
+      if (!isNotAuthorizedErr(e)) {
+        handleError(e, {
+          level: ErrorLevel.Error,
+          publicMessage: 'Failed to fetch Resource Managers.',
+          silent: false,
+          type: ErrorType.Server,
+        });
+      }
       return NotLoaded;
     }
   }, []);
