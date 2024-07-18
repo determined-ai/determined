@@ -21,13 +21,13 @@ import { eagerSubscribe } from 'utils/observable';
  *
  * - handles the hand-off between local and server state (that is, server state
  *   wins until the initial load, at which point local state wins)
- * - provides local state and a partial update function which debounces sending
+ * - provides local state and an update function which debounces sending
  *   state to the store/server
  */
 export function useDebouncedSettings<T extends t.HasProps | t.ExactC<t.HasProps>>(
   type: T,
   path: string,
-): [Loadable<t.TypeOf<T> | null>, (p: Partial<t.TypeOf<T>>) => void] {
+): [Loadable<t.TypeOf<T> | null>, (p: t.TypeOf<T>) => void] {
   const settingsObs = useMemo(() => userSettings.get(type, path), [type, path]);
   const [localState, updateLocalState] = useState<Loadable<T | null>>(NotLoaded);
 
@@ -47,12 +47,12 @@ export function useDebouncedSettings<T extends t.HasProps | t.ExactC<t.HasProps>
   );
 
   const updateSettings = useCallback(
-    (partial: Partial<T>) => {
+    (partial: T) => {
       // don't send settings to server if they haven't loaded yet
       settingsObs.get().forEach(() => {
         updateLocalState((localStateLoadable) => {
           return localStateLoadable.flatMap((ls) => {
-            const newState = ls && { ...ls, ...partial };
+            const newState = { ...ls, ...partial };
             if (isEqual(newState, ls)) {
               return localStateLoadable;
             }
