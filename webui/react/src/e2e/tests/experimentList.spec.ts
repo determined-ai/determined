@@ -1,4 +1,3 @@
-import { AuthFixture } from 'e2e/fixtures/auth.fixture';
 import { expect, test } from 'e2e/fixtures/global-fixtures';
 import { ProjectDetails } from 'e2e/models/pages/ProjectDetails';
 import { detExecSync, fullPath } from 'e2e/utils/detCLI';
@@ -15,34 +14,28 @@ test.describe('Experiment List', () => {
     return parseInt(count);
   };
 
-  test.beforeAll(async ({ browser, dev }) => {
-    const pageSetupTeardown = await browser.newPage();
-    await dev.setServerAddress(pageSetupTeardown);
-    const authFixtureSetupTeardown = new AuthFixture(pageSetupTeardown);
-    const projectDetailsPageSetupTeardown = new ProjectDetails(pageSetupTeardown);
-    await authFixtureSetupTeardown.login();
-    await projectDetailsPageSetupTeardown.gotoProject();
+  test.beforeAll(async ({ backgroundAuthedPage }) => {
+    const projectDetailsPageSetup = new ProjectDetails(backgroundAuthedPage);
+    await projectDetailsPageSetup.gotoProject();
     await test.step('Create an experiment if not already present', async () => {
-      await projectDetailsPageSetupTeardown.f_experimentList.tableActionBar.pwLocator.waitFor();
+      await projectDetailsPageSetup.f_experimentList.tableActionBar.pwLocator.waitFor();
       await expect(
-        projectDetailsPageSetupTeardown.f_experimentList.tableActionBar.count.pwLocator,
+        projectDetailsPageSetup.f_experimentList.tableActionBar.count.pwLocator,
       ).toContainText('experiment');
       if (
-        await projectDetailsPageSetupTeardown.f_experimentList.noExperimentsMessage.pwLocator.isVisible()
+        await projectDetailsPageSetup.f_experimentList.noExperimentsMessage.pwLocator.isVisible()
       ) {
         detExecSync(
           `experiment create ${fullPath(
             '/../../examples/tutorials/mnist_pytorch/const.yaml',
           )} --paused`,
         );
-        await pageSetupTeardown.reload();
+        await backgroundAuthedPage.reload();
         await expect(
-          projectDetailsPageSetupTeardown.f_experimentList.dataGrid.rows.pwLocator,
+          projectDetailsPageSetup.f_experimentList.dataGrid.rows.pwLocator,
         ).not.toHaveCount(0);
       }
     });
-    await authFixtureSetupTeardown.logout();
-    await pageSetupTeardown.close();
   });
 
   test.beforeEach(async ({ authedPage }) => {
