@@ -44,8 +44,6 @@ func TestTrial(t *testing.T) {
 		Complete: false,
 		Closed:   true,
 	}))
-	require.True(t, alloc.AssertExpectations(t))
-	require.NotNil(t, tr.allocationID)
 
 	// Running stage.
 	require.NoError(t, tr.PatchSearcherState(experiment.TrialSearcherState{
@@ -57,6 +55,8 @@ func TestTrial(t *testing.T) {
 		Complete: true,
 		Closed:   true,
 	}))
+	require.True(t, alloc.AssertExpectations(t))
+	require.NotNil(t, tr.allocationID)
 
 	dbTrial, err := internaldb.TrialByID(context.TODO(), tr.id)
 	require.NoError(t, err)
@@ -135,6 +135,7 @@ func setup(t *testing.T) (
 		"StartAllocation", mock.Anything, mock.Anything, mock.Anything,
 		mock.Anything, mock.Anything, mock.Anything, mock.Anything,
 	).Return(nil)
+	as.On("Signal", mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 	a, _, _ := setupAPITest(t, nil)
 	j := &model.Job{JobID: model.NewJobID(), JobType: model.JobTypeExperiment}
