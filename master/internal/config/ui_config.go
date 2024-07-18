@@ -4,6 +4,8 @@ import (
 	"os"
 
 	"github.com/pkg/errors"
+
+	"github.com/determined-ai/determined/master/internal/license"
 )
 
 // MediaAssetVariations allow variations of a media asset to be defined.
@@ -76,8 +78,15 @@ func (u UICustomizationConfig) Validate() []error {
 		if path == "" {
 			continue
 		}
-		if _, err := os.Stat(path); os.IsNotExist(err) {
+		license.RequireLicense("UI Customization")
+		info, err := os.Stat(path)
+		switch {
+		case os.IsNotExist(err):
 			errs = append(errs, errors.New(name+" path is not reachable: "+path))
+		case err != nil:
+			errs = append(errs, errors.New(name+" path error: "+err.Error()))
+		case info.IsDir():
+			errs = append(errs, errors.New(name+" path is a directory, not a file: "+path))
 		}
 	}
 
