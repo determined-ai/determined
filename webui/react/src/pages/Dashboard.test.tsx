@@ -33,6 +33,17 @@ vi.mock('services/api', () => ({
 
 const CURRENT_USER: DetailedUser = { id: 1, isActive: true, isAdmin: false, username: 'bunny' };
 
+vi.mock('hooks/usePermissions', () => {
+  const usePermissions = vi.fn(() => {
+    return {
+      canCreateNSC: false,
+    };
+  });
+  return {
+    default: usePermissions,
+  };
+});
+
 // for JupyterLabButton:
 vi.mock('hooks/useSettings', async (importOriginal) => {
   const useSettings = vi.fn(() => {
@@ -52,17 +63,6 @@ vi.mock('hooks/useSettings', async (importOriginal) => {
     __esModule: true,
     ...(await importOriginal<typeof import('hooks/useSettings')>()),
     useSettings,
-  };
-});
-
-vi.mock('hooks/usePermissions', () => {
-  const usePermissions = vi.fn(() => {
-    return {
-      canCreateNSC: false,
-    };
-  });
-  return {
-    default: usePermissions,
   };
 });
 
