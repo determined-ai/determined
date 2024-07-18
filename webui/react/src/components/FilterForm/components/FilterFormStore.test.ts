@@ -512,7 +512,7 @@ describe('FilterFormStore', () => {
         filterFormStore.addChild(ROOT_ID, FormKind.Field);
 
         let field = getField(filterFormStore);
-        expect(field).toMatchObject({ operator: Operator.Contains });
+        expect(field).toMatchObject({ operator: Operator.Eq });
         filterFormStore.setFieldOperator(field.id, Operator.GreaterEq);
         field = getField(filterFormStore);
         expect(field).toMatchObject({ operator: Operator.GreaterEq });

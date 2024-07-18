@@ -34,12 +34,12 @@ const getInitGroup = (): FormGroup => ({
 });
 
 export const getInitField = (): FormField => ({
-  columnName: '',
+  columnName: 'id',
   id: uuidv4(),
   kind: FormKind.Field,
   location: V1LocationType.EXPERIMENT,
-  operator: AvailableOperators[V1ColumnType.TEXT][0],
-  type: V1ColumnType.TEXT,
+  operator: AvailableOperators[V1ColumnType.NUMBER][0],
+  type: V1ColumnType.NUMBER,
   value: null,
 });
 
