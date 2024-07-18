@@ -247,12 +247,21 @@ The resource manager used to acquire resources. Defaults to ``agent``.
 For Kubernetes installations, if you define additional resource managers, the resource manager
 specified under the primary resource_manager key here is considered the default.
 
-``name``
-========
+``cluster_name``
+================
 
-Optional. Specifies the resource manager's name. Defaults to ``default`` if not specified. For
-Kubernetes installations with additional resource managers, ensure unique names for all resource
-managers in the cluster.
+Optional for singleRM Determined. Required for multiRM Determined. Specifies the resource manager's
+associated cluster name. This references the cluster on which a Determined deployment is running.
+Defaults to ``default`` if not specified. For Kubernetes installations with additional resource
+managers, ensure unique names for all resource managers in the cluster.
+
+**NOTE:** ``resource_manager.cluster_name`` is separate from the ``cluster_name`` field of the
+master config that provides a readable name for the Determined deployment.
+
+``name``
+--------
+
+(deprecated) Specifies the resource manager’s name. ``cluster_name`` should be specified instead.
 
 ``metadata``
 ============

@@ -358,7 +358,7 @@ func TestResolveConfig(t *testing.T) {
 			ResourceConfig: ResourceConfig{
 				RootManagerInternal: &ResourceManagerConfig{
 					AgentRM: &AgentResourceManagerConfig{
-						ClusterName:                DefaultRMName,
+						ClusterName:                DefaultClusterName,
 						DefaultAuxResourcePool:     "default",
 						DefaultComputeResourcePool: "default",
 						Scheduler:                  DefaultSchedulerConfig(),
@@ -381,7 +381,7 @@ resource_manager:
 			ResourceConfig: ResourceConfig{
 				RootManagerInternal: &ResourceManagerConfig{
 					AgentRM: &AgentResourceManagerConfig{
-						ClusterName:                DefaultRMName,
+						ClusterName:                DefaultClusterName,
 						DefaultAuxResourcePool:     "default",
 						DefaultComputeResourcePool: "default",
 						Scheduler:                  DefaultSchedulerConfig(),
@@ -406,7 +406,7 @@ resource_manager:
 			ResourceConfig: ResourceConfig{
 				RootManagerInternal: &ResourceManagerConfig{
 					AgentRM: &AgentResourceManagerConfig{
-						ClusterName:                DefaultRMName,
+						ClusterName:                DefaultClusterName,
 						DefaultAuxResourcePool:     "default",
 						DefaultComputeResourcePool: "default",
 						Scheduler: &SchedulerConfig{
@@ -437,7 +437,7 @@ resource_pools:
 			ResourceConfig: ResourceConfig{
 				RootManagerInternal: &ResourceManagerConfig{
 					AgentRM: &AgentResourceManagerConfig{
-						ClusterName:                DefaultRMName,
+						ClusterName:                DefaultClusterName,
 						DefaultAuxResourcePool:     "default",
 						DefaultComputeResourcePool: "default",
 						Scheduler: &SchedulerConfig{
@@ -486,7 +486,7 @@ additional_resource_managers:
 			ResourceConfig: ResourceConfig{
 				RootManagerInternal: &ResourceManagerConfig{
 					AgentRM: &AgentResourceManagerConfig{
-						Name:                       DefaultRMName,
+						Name:                       DefaultClusterName,
 						ClusterName:                "c1",
 						DefaultAuxResourcePool:     "default",
 						DefaultComputeResourcePool: "default",

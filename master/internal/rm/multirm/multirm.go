@@ -23,17 +23,17 @@ func ErrRPNotDefined(rp rm.ResourcePoolName) error {
 
 // MultiRMRouter tracks all resource managers in the system.
 type MultiRMRouter struct {
-	defaultRMName string
-	rms           map[string]rm.ResourceManager
-	syslog        *logrus.Entry
+	defaultClusterName string
+	rms                map[string]rm.ResourceManager
+	syslog             *logrus.Entry
 }
 
 // New returns a new MultiRM.
-func New(defaultRMName string, rms map[string]rm.ResourceManager) *MultiRMRouter {
+func New(defaultClusterName string, rms map[string]rm.ResourceManager) *MultiRMRouter {
 	return &MultiRMRouter{
-		defaultRMName: defaultRMName,
-		rms:           rms,
-		syslog:        logrus.WithField("component", "resource-router"),
+		defaultClusterName: defaultClusterName,
+		rms:                rms,
+		syslog:             logrus.WithField("component", "resource-router"),
 	}
 }
 
@@ -493,7 +493,7 @@ func (m *MultiRMRouter) getRMName(rpName rm.ResourcePoolName) (string, error) {
 	// If not given RP name, route to default RM.
 	if rpName == "" {
 		m.syslog.Tracef("RM undefined, routing to default resource manager")
-		return m.defaultRMName, nil
+		return m.defaultClusterName, nil
 	}
 
 	for name, r := range m.rms {
@@ -513,7 +513,7 @@ func (m *MultiRMRouter) getRMName(rpName rm.ResourcePoolName) (string, error) {
 
 func (m *MultiRMRouter) getRM(clusterName string) (rm.ResourceManager, error) {
 	if clusterName == "" {
-		return m.rms[m.defaultRMName], nil
+		return m.rms[m.defaultClusterName], nil
 	}
 	resourceManager, ok := m.rms[clusterName]
 	if !ok {

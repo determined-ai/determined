@@ -325,7 +325,7 @@ func (k KubernetesResourceManagerConfig) Validate() []error {
 	return []error{
 		checkSlotType,
 		checkCPUResource,
-		check.NotEmpty(k.ClusterName, "name is required"),
+		check.NotEmpty(k.ClusterName, "cluster_name is required"),
 		checkRMNamespace,
 	}
 }

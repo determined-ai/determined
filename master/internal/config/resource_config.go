@@ -4,8 +4,9 @@ import (
 	"fmt"
 )
 
-// DefaultRMName is the default resource manager name when a user does not provide one.
-const DefaultRMName = "default"
+// DefaultClusterName is the default resource manager's cluster name when a user does not provide
+// one.
+const DefaultClusterName = "default"
 
 // DefaultRMIndex is the default resource manager index given a list of Resources().
 const DefaultRMIndex = 0
@@ -69,7 +70,7 @@ func (r *ResourceConfig) GetKubernetesClusterNames() []string {
 
 func defaultAgentRM() *AgentResourceManagerConfig {
 	return &AgentResourceManagerConfig{
-		ClusterName:                DefaultRMName,
+		ClusterName:                DefaultClusterName,
 		DefaultComputeResourcePool: defaultResourcePoolName,
 		DefaultAuxResourcePool:     defaultResourcePoolName,
 	}
@@ -103,7 +104,7 @@ func (r *ResourceConfig) ResolveResource() error {
 
 	// Default the name but only for the root level field.
 	if r.RootManagerInternal.ClusterName() == "" {
-		r.RootManagerInternal.setClusterName(DefaultRMName)
+		r.RootManagerInternal.setClusterName(DefaultClusterName)
 	}
 
 	// Add a default resource pool for nonslurm default resource managers.

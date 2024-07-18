@@ -1103,7 +1103,7 @@ func (m *Master) buildRM(
 	license.RequireLicense("multiple resource managers")
 
 	// Set the default RM name for the multi-rm, from the default RM index.
-	defaultRMName := rmConfigs[config.DefaultRMIndex].ResourceManager.ClusterName()
+	defaultClusterName := rmConfigs[config.DefaultRMIndex].ResourceManager.ClusterName()
 	rms := map[string]rm.ResourceManager{}
 	clusterNames := map[string]int{}
 
@@ -1142,7 +1142,7 @@ func (m *Master) buildRM(
 		return nil, fmt.Errorf("resource managers must all have distinct cluster names")
 	}
 	m.allRms = rms
-	return multirm.New(defaultRMName, rms), nil
+	return multirm.New(defaultClusterName, rms), nil
 }
 
 // Run causes the Determined master to connect the database and begin listening for HTTP requests.
