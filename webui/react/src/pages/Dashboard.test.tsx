@@ -1,6 +1,7 @@
 import { render, screen, waitFor } from '@testing-library/react';
 import UIProvider, { DefaultTheme } from 'hew/Theme';
 import { useEffect } from 'react';
+import { HelmetProvider } from 'react-helmet-async';
 
 import { ThemeProvider } from 'components/ThemeProvider';
 import authStore from 'stores/auth';
@@ -32,6 +33,39 @@ vi.mock('services/api', () => ({
 
 const CURRENT_USER: DetailedUser = { id: 1, isActive: true, isAdmin: false, username: 'bunny' };
 
+// for JupyterLabButton:
+vi.mock('hooks/useSettings', async (importOriginal) => {
+  const useSettings = vi.fn(() => {
+    const settings = {
+      jupyterLab: {
+        alt: false,
+        ctrl: false,
+        key: 'L',
+        meta: true,
+        shift: true,
+      },
+    };
+    return { isLoading: false, settings };
+  });
+
+  return {
+    __esModule: true,
+    ...(await importOriginal<typeof import('hooks/useSettings')>()),
+    useSettings,
+  };
+});
+
+vi.mock('hooks/usePermissions', () => {
+  const usePermissions = vi.fn(() => {
+    return {
+      canCreateNSC: false,
+    };
+  });
+  return {
+    default: usePermissions,
+  };
+});
+
 const Container: React.FC = () => {
   useEffect(() => {
     authStore.setAuth({ isAuthenticated: true });
@@ -39,14 +73,16 @@ const Container: React.FC = () => {
     userStore.updateCurrentUser(CURRENT_USER);
   }, []);
 
-  return <Dashboard testWithoutPage />;
+  return <Dashboard />;
 };
 
 const setup = () => {
   render(
     <UIProvider theme={DefaultTheme.Light}>
       <ThemeProvider>
-        <Container />
+        <HelmetProvider>
+          <Container />
+        </HelmetProvider>
       </ThemeProvider>
     </UIProvider>,
   );
