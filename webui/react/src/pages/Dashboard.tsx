@@ -191,7 +191,8 @@ const Dashboard: React.FC<Props> = ({ testWithoutPage }) => {
           options={<JupyterLabButton enabled={canCreateNSC} />}
           title="Home">
           {children}
-        </Page>)}>
+        </Page>
+      )}>
       <>
         {projectsLoading ? (
           <Section>

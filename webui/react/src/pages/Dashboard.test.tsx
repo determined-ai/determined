@@ -11,16 +11,12 @@ import Dashboard from './Dashboard';
 
 const mocks = vi.hoisted(() => {
   return {
-    getExperiments: vi.fn().mockImplementation(
-      () =>
-        Promise.resolve({
-          experiments: [],
-        }),
+    getExperiments: vi.fn().mockImplementation(() =>
+      Promise.resolve({
+        experiments: [],
+      }),
     ),
-    getProjectsByUserActivity: vi.fn().mockImplementation(
-      () =>
-        Promise.resolve([]),
-    ),
+    getProjectsByUserActivity: vi.fn().mockImplementation(() => Promise.resolve([])),
   };
 });
 
@@ -71,8 +67,8 @@ describe('Dashboard', () => {
   });
 
   it('renders ProjectCards with project data', async () => {
-    mocks.getProjectsByUserActivity.mockImplementation(
-      () => Promise.resolve([
+    mocks.getProjectsByUserActivity.mockImplementation(() =>
+      Promise.resolve([
         {
           archived: false,
           description: '',
@@ -108,8 +104,8 @@ describe('Dashboard', () => {
     });
   });
   it('renders submissions', async () => {
-    mocks.getExperiments.mockImplementation(
-      () => Promise.resolve({
+    mocks.getExperiments.mockImplementation(() =>
+      Promise.resolve({
         experiments: [
           {
             archived: false,
