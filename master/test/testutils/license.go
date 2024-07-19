@@ -11,7 +11,7 @@ import (
 // LoadLicenseAndKeyFromFilesystem attempts to find a license key and public key in
 // the local filesystem. If found, it sets them. Returns an error if the files are
 // not found or there is an error reading from them.
-func LoadLicenseAndKeyFromFilesystem() error {
+func LoadLicenseAndKeyFromFilesystem() (err error) {
 	// TODO: read these from environment but default to this when env vars unset
 	const (
 		licenseKeyPath = "license.txt" // TODO: maybe "../license.txt"?
@@ -22,23 +22,19 @@ func LoadLicenseAndKeyFromFilesystem() error {
 	licenseKeyFile, licenseKeyErr := os.Open(licenseKeyPath)
 	if licenseKeyErr != nil {
 		return fmt.Errorf("error opening %s: %w", licenseKeyPath, licenseKeyErr)
-	} else {
-		_, statErr := licenseKeyFile.Stat()
-		if statErr != nil {
-			return fmt.Errorf("error opening %s: %w", licenseKeyPath, statErr)
-		}
+	} else if _, statErr := licenseKeyFile.Stat(); statErr != nil {
+		return fmt.Errorf("error opening %s: %w", licenseKeyPath, statErr)
 	}
+	defer closeOrOverwriteError(licenseKeyFile, &err)
 
 	// Check for the existence of public key file
 	publicKeyFile, publicKeyErr := os.Open(publicKeyPath)
 	if publicKeyErr != nil {
 		return fmt.Errorf("error opening %s: %w", publicKeyPath, publicKeyErr)
-	} else {
-		_, statErr := publicKeyFile.Stat()
-		if statErr != nil {
-			return fmt.Errorf("error opening %s: %w", publicKeyPath, statErr)
-		}
+	} else if _, statErr := publicKeyFile.Stat(); statErr != nil {
+		return fmt.Errorf("error opening %s: %w", publicKeyPath, statErr)
 	}
+	defer closeOrOverwriteError(publicKeyFile, &err)
 
 	// Since they exist, read their contents
 	licenseKeyContent, licenseKeyErr := io.ReadAll(licenseKeyFile)
@@ -52,6 +48,7 @@ func LoadLicenseAndKeyFromFilesystem() error {
 
 	// No errors have been encountered, so set the keys.
 	license.SetLicenseAndKey(string(licenseKeyContent), string(publicKeyContent))
+	return nil
 }
 
 // MustLoadLicenseAndKeyFromFilesystem attempts to find a license key and public key in
@@ -61,5 +58,12 @@ func MustLoadLicenseAndKeyFromFilesystem() {
 	err := LoadLicenseAndKeyFromFilesystem()
 	if err != nil {
 		panic(err)
+	}
+}
+
+func closeOrOverwriteError(c io.Closer, err *error) {
+	closeErr := c.Close()
+	if err != nil && *err == nil && closeErr != nil {
+		*err = closeErr
 	}
 }
