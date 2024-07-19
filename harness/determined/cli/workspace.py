@@ -46,6 +46,37 @@ def get_workspace_names(session: api.Session) -> Dict[int, str]:
     return mapping
 
 
+def render_user_group_rolenames(
+    resp: Sequence[bindings.v1GetGroupsAndUsersAssignedToWorkspaceResponse]
+) -> None:
+    group_map = {}
+    user_map = {}
+    values = []
+
+    if resp.groups.count != 0:
+        for g in resp.groups:
+            group_map[g.groupId] = g.name
+
+    if resp.usersAssignedDirectly.count != 0:
+        for u in resp.usersAssignedDirectly:
+            user_map[u.id] = u.username
+
+    if resp.assignments.count != 0:
+        for assignment in resp.assignments:
+            role_name = assignment.role.name
+
+            for group_assignment in assignment.groupRoleAssignments:
+                value = [group_map[group_assignment.groupId], role_name]
+                values.append(value)
+
+            for user_assignment in assignment.userRoleAssignments:
+                value = [user_map[user_assignment.userId], role_name]
+                values.append(value)
+
+    headers = ["User/Group Name", "Role Name"]
+    render.tabulate_or_csv(headers, values, False)
+
+
 def render_workspaces(
     workspaces: Sequence[bindings.v1Workspace], from_list_api: bool = False
 ) -> None:
@@ -145,6 +176,17 @@ def list_pools(args: argparse.Namespace) -> None:
         values=[[args.workspace_name, pools_str]],
         as_csv=False,
     )
+
+
+def list_workspace_members(args: argparse.Namespace) -> None:
+    sess = cli.setup_session(args)
+    w = api.workspace_by_name(sess, args.workspace_name)
+    resp = bindings.get_GetGroupsAndUsersAssignedToWorkspace(sess, workspaceId=w.id)
+
+    if args.json:
+        render.print_json(resp.to_json())
+    else:
+        render_user_group_rolenames(resp)
 
 
 def _parse_agent_user_group_args(args: argparse.Namespace) -> Optional[bindings.v1AgentUserGroup]:
@@ -373,6 +415,15 @@ args_description = [
                 "list the resource pools available to a workspace",
                 [
                     cli.Arg("workspace_name", type=str, help="name of the workspace"),
+                ],
+            ),
+            cli.Cmd(
+                "list-members",
+                list_workspace_members,
+                "list users/user-groups members of a workspace and their permissions",
+                [
+                    cli.Arg("workspace_name", type=str, help="name of the workspace"),
+                    cli.Arg("--json", action="store_true", help="print as JSON"),
                 ],
             ),
             cli.Cmd(
