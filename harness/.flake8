@@ -1,6 +1,6 @@
 # Note: This should be kept in sync with the .flake8 file in the root of the repo.
 [flake8]
-jobs = 2
+jobs = 4
 max-line-length = 100
 exclude =
     .git,
