@@ -10,7 +10,6 @@ import RemainingRetentionDaysLabel from 'components/RemainingRetentionDaysLabelC
 import RoutePagination from 'components/RoutePagination';
 import TrialLogPreview from 'components/TrialLogPreview';
 import { terminalRunStates } from 'constants/states';
-import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import usePolling from 'hooks/usePolling';
 import TrialDetailsHeader from 'pages/TrialDetails/TrialDetailsHeader';
@@ -72,7 +71,6 @@ const TrialDetailsComp: React.FC = () => {
   const basePath = paths.trialDetails(trialId, experimentId);
   const trial = trialDetails.data;
   const [remainingLogDays, setRemainingLogDays] = useState<Loadable<number | undefined>>(NotLoaded);
-  const f_flat_runs = useFeature().isOn('flat_runs');
 
   const showExperimentArtifacts = usePermissions().canViewExperimentArtifacts({
     workspace: { id: experiment?.workspaceId ?? 0 },
@@ -246,9 +244,7 @@ const TrialDetailsComp: React.FC = () => {
             },
         {
           breadcrumbName: experiment?.name ?? '',
-          path: f_flat_runs
-            ? paths.searchDetails(experiment.id)
-            : paths.experimentDetails(experiment.id),
+          path: paths.experimentDetails(experiment.id),
         },
         {
           breadcrumbName: `Trial ${trial.id}`,

@@ -3,10 +3,11 @@ import Spinner from 'hew/Spinner';
 import { Loadable } from 'hew/utils/loadable';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useNavigate, useParams } from 'react-router-dom';
 
 import Page, { BreadCrumbRoute } from 'components/Page';
 import { terminalRunStates } from 'constants/states';
+import useFeature from 'hooks/useFeature';
 import usePolling from 'hooks/usePolling';
 import ExperimentDetailsHeader from 'pages/ExperimentDetails/ExperimentDetailsHeader';
 import ExperimentMultiTrialTabs from 'pages/ExperimentDetails/ExperimentMultiTrialTabs';
@@ -37,6 +38,10 @@ const ExperimentDetails: React.FC = () => {
   const canceler = useRef<AbortController>();
   const workspaces = Loadable.getOrElse([], useObservable(workspaceStore.workspaces));
   const id = parseInt(experimentId ?? '');
+  const navigate = useNavigate();
+  const f_flat_runs = useFeature().isOn('flat_runs');
+
+  if (f_flat_runs) navigate(paths.searchDetails(id), { replace: true });
 
   const fetchExperimentDetails = useCallback(async () => {
     try {
