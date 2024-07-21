@@ -164,7 +164,7 @@ func TestObfuscateExperiments(t *testing.T) {
 				Config:         config,
 			}
 
-			ObfuscateExperiments(&exp)
+			require.NoError(t, ObfuscateExperiments(&exp))
 
 			require.Equal(t, expectedConfig, exp.Config.AsMap()) //nolint:staticcheck
 			mustUnmarshalString := func(s string) interface{} {

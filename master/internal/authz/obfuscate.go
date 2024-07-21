@@ -2,6 +2,7 @@ package authz
 
 import (
 	"encoding/json"
+	"fmt"
 	"slices"
 
 	"github.com/google/uuid"
@@ -127,7 +128,7 @@ func ObfuscateJob(job *jobv1.Job) jobv1.LimitedJob {
 // ObfuscateExperiments obfuscates sensitive information in experiments.
 // Currently, that is considered to be anything the user has configured
 // under a "secrets" key in the general-purpose "data" config.
-func ObfuscateExperiments(experiments ...*experimentv1.Experiment) {
+func ObfuscateExperiments(experiments ...*experimentv1.Experiment) error {
 	for _, exp := range experiments {
 		data, exists := exp.Config.Fields["data"] //nolint:staticcheck
 		if !exists {
@@ -152,7 +153,7 @@ func ObfuscateExperiments(experiments ...*experimentv1.Experiment) {
 		var oConfig map[string]interface{}
 		err := json.Unmarshal([]byte(exp.OriginalConfig), &oConfig)
 		if err != nil {
-			continue
+			return fmt.Errorf("error unmarshaling original experiment config: %w", err)
 		}
 		oData, exists := oConfig["data"]
 		if !exists {
@@ -175,8 +176,9 @@ func ObfuscateExperiments(experiments ...*experimentv1.Experiment) {
 		}
 		pConfig, err := json.Marshal(oConfig)
 		if err != nil {
-			continue
+			return fmt.Errorf("error remarshaling experiment config: %w", err)
 		}
 		exp.OriginalConfig = string(pConfig)
 	}
+	return nil
 }
