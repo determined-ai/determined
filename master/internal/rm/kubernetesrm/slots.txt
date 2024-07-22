@@ -1,0 +1,190 @@
+{
+    "agents": [
+        {
+            "id": "minikube",
+            "registeredTime": "2024-07-10T18:33:38Z",
+            "slots": {
+                "000": {
+                    "id": "000",
+                    "device": {
+                        "id": 0,
+                        "brand": "",
+                        "uuid": "",
+                        "type": "TYPE_CPU"
+                    },
+                    "enabled": true,
+                    "container": null,
+                    "draining": false
+                },
+                "001": {
+                    "id": "001",
+                    "device": {
+                        "id": 0,
+                        "brand": "",
+                        "uuid": "",
+                        "type": "TYPE_CPU"
+                    },
+                    "enabled": true,
+                    "container": null,
+                    "draining": false
+                },
+                "002": {
+                    "id": "002",
+                    "device": {
+                        "id": 0,
+                        "brand": "",
+                        "uuid": "",
+                        "type": "TYPE_CPU"
+                    },
+                    "enabled": true,
+                    "container": null,
+                    "draining": false
+                },
+                "003": {
+                    "id": "003",
+                    "device": {
+                        "id": 0,
+                        "brand": "",
+                        "uuid": "",
+                        "type": "TYPE_CPU"
+                    },
+                    "enabled": true,
+                    "container": null,
+                    "draining": false
+                },
+                "004": {
+                    "id": "004",
+                    "device": {
+                        "id": 0,
+                        "brand": "",
+                        "uuid": "",
+                        "type": "TYPE_CPU"
+                    },
+                    "enabled": true,
+                    "container": null,
+                    "draining": false
+                },
+                "005": {
+                    "id": "005",
+                    "device": {
+                        "id": 0,
+                        "brand": "",
+                        "uuid": "",
+                        "type": "TYPE_CPU"
+                    },
+                    "enabled": true,
+                    "container": null,
+                    "draining": false
+                },
+                "006": {
+                    "id": "006",
+                    "device": {
+                        "id": 0,
+                        "brand": "",
+                        "uuid": "",
+                        "type": "TYPE_CPU"
+                    },
+                    "enabled": true,
+                    "container": null,
+                    "draining": false
+                },
+                "007": {
+                    "id": "007",
+                    "device": {
+                        "id": 0,
+                        "brand": "",
+                        "uuid": "",
+                        "type": "TYPE_CPU"
+                    },
+                    "enabled": true,
+                    "container": null,
+                    "draining": false
+                },
+                "008": {
+                    "id": "008",
+                    "device": {
+                        "id": 0,
+                        "brand": "",
+                        "uuid": "",
+                        "type": "TYPE_CPU"
+                    },
+                    "enabled": true,
+                    "container": null,
+                    "draining": false
+                },
+                "009": {
+                    "id": "009",
+                    "device": {
+                        "id": 0,
+                        "brand": "",
+                        "uuid": "",
+                        "type": "TYPE_CPU"
+                    },
+                    "enabled": true,
+                    "container": null,
+                    "draining": false
+                },
+                "010": {
+                    "id": "010",
+                    "device": {
+                        "id": 0,
+                        "brand": "",
+                        "uuid": "",
+                        "type": "TYPE_CPU"
+                    },
+                    "enabled": true,
+                    "container": null,
+                    "draining": false
+                },
+                "011": {
+                    "id": "011",
+                    "device": {
+                        "id": 0,
+                        "brand": "",
+                        "uuid": "",
+                        "type": "TYPE_CPU"
+                    },
+                    "enabled": true,
+                    "container": null,
+                    "draining": false
+                }
+            },
+            "containers": {},
+            "addresses": [
+                "192.168.58.2",
+                "minikube"
+            ],
+            "enabled": true,
+            "draining": false,
+            "version": "",
+            "resourcePools": [
+                "default"
+            ],
+            "slotStats": {
+                "typeStats": {
+                    "TYPE_CPU": {
+                        "states": {},
+                        "draining": 0,
+                        "disabled": 0,
+                        "total": 12
+                    }
+                },
+                "brandStats": {
+                    "": {
+                        "states": {},
+                        "draining": 0,
+                        "disabled": 0,
+                        "total": 12
+                    }
+                }
+            }
+        }
+    ],
+    "pagination": {
+        "offset": 0,
+        "limit": 0,
+        "startIndex": 0,
+        "endIndex": 1,
+        "total": 1
+    }
+}

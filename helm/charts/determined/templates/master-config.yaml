@@ -119,6 +119,18 @@ stringData:
       {{- if .Values.oidc.displayNameAttributeName }}
       display_name_attribute_name: {{ .Values.oidc.displayNameAttributeName }}
       {{- end }}
+      {{- if .Values.oidc.agentUid }}
+      agent_uid: {{ .Values.oidc.agentUid }}
+      {{- end }}
+      {{- if .Values.oidc.agentGid }}
+      agent_gid: {{ .Values.oidc.agentGid }}
+      {{- end }}
+      {{- if .Values.oidc.agentUserName }}
+      agent_user_name: {{ .Values.oidc.agentUserName }}
+      {{- end }}
+      {{- if .Values.oidc.agentGroupName }}
+      agent_group_name: {{ .Values.oidc.agentGroupName }}
+      {{- end }}
     {{- end }}
 
     {{- if .Values.scim }}
@@ -148,6 +160,18 @@ stringData:
       {{- end }}
       {{- if .Values.saml.displayNameAttributeName }}
       display_name_attribute_name: {{ .Values.saml.displayNameAttributeName }}
+      {{- end }}
+      {{- if .Values.saml.agentUid }}
+      agent_uid: {{ .Values.saml.agentUid }}
+      {{- end }}
+      {{- if .Values.saml.agentGid }}
+      agent_gid: {{ .Values.saml.agentGid }}
+      {{- end }}
+      {{- if .Values.saml.agentUserName }}
+      agent_user_name: {{ .Values.saml.agentUserName }}
+      {{- end }}
+      {{- if .Values.saml.agentGroupName }}
+      agent_group_name: {{ .Values.saml.agentGroupName }}
       {{- end }}
     {{- end }}
     {{- end }}

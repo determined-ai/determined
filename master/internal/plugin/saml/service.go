@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strconv"
 
 	"github.com/crewjam/saml"
 	"github.com/crewjam/saml/samlsp"
@@ -48,6 +49,10 @@ type userConfig struct {
 	autoProvisionUsers       bool
 	groupsAttributeName      string
 	displayNameAttributeName string
+	agentUid                 int
+	agentGid                 int
+	agentUserName            string
+	agentGroupName           string
 }
 
 // New constructs a new SAML service that is capable of sending SAML requests and consuming
@@ -57,6 +62,10 @@ func New(db *db.PgDB, c config.SAMLConfig) (*Service, error) {
 		autoProvisionUsers:       c.AutoProvisionUsers,
 		groupsAttributeName:      c.GroupsAttributeName,
 		displayNameAttributeName: c.DisplayNameAttributeName,
+		agentUid:                 c.AgentUid,
+		agentGid:                 c.AgentGid,
+		agentUserName:            c.AgentUserName,
+		agentGroupName:           c.AgentGroupName,
 	}
 
 	key, cert, err := proxy.GenSignedCert()
@@ -149,7 +158,10 @@ func (s *Service) consumeAssertion(c echo.Context) error {
 		return err
 	}
 
-	userAttr := s.toUserAttributes(xmlResponse)
+	userAttr, err := s.toUserAttributes(xmlResponse)
+	if err != nil {
+		return err
+	}
 	if userAttr == nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "SAML attribute identifier userName missing")
 	}
@@ -208,27 +220,40 @@ func (s *Service) consumeAssertion(c echo.Context) error {
 
 // userAttributes represents the set of user attributes from SAML authentication that we're concerned with.
 type userAttributes struct {
-	userName    string
-	displayName string
-	groups      []string
+	userName       string
+	displayName    string
+	agentUid       int
+	agentGid       int
+	agentUserName  string
+	agentGroupName string
+	groups         []string
 }
 
-func (s *Service) toUserAttributes(response *saml.Assertion) *userAttributes {
+func (s *Service) toUserAttributes(response *saml.Assertion) (*userAttributes, error) {
 	uName := getSAMLAttribute(response, "userName")
 	if uName == "" {
-		return nil
+		return nil, nil
 	}
 
+	fmt.Printf("displayNameAttributeName: %s\n", s.userConfig.displayNameAttributeName)
+	fmt.Printf("uid: %d\n", s.userConfig.agentUid)
+	fmt.Printf("gid: %d\n", s.userConfig.agentGid)
+	fmt.Printf("username: %s\n", s.userConfig.agentUserName)
+	fmt.Printf("groupname: %s\n", s.userConfig.agentGroupName)
+
+	//uid, err := getSAMLAttributeInt(response, s.userConfig.agentUid)
+	//gid, err := getSAMLAttributeInt(response, s.userConfig.agentGid)
 	return &userAttributes{
 		userName:    uName,
 		displayName: getSAMLAttribute(response, s.userConfig.displayNameAttributeName),
 		groups:      getAttributeValues(response, s.userConfig.groupsAttributeName),
-	}
+	}, nil
 }
 
 // getSAMLAttribute is similar to a function provided by the previously used saml library.
 func getSAMLAttribute(r *saml.Assertion, name string) string {
 	for _, statement := range r.AttributeStatements {
+		fmt.Println(statement.Attributes)
 		for _, attr := range statement.Attributes {
 			if attr.Name == name || attr.FriendlyName == name {
 				return attr.Values[0].Value
@@ -236,6 +261,30 @@ func getSAMLAttribute(r *saml.Assertion, name string) string {
 		}
 	}
 	return ""
+}
+
+// TODO Kristine
+/*
+Need to understand how this name works. It appears to be the variable name, but how is it set? In practice,
+it looks like "name" is the user input data.
+
+My problem is, I don't know how the information is set, stored, or retrieved. Looking at master config made
+that clear. I don't know the purpose of "displa name attribute name vs. display name"
+*/
+// getSAMLAttributeInt is similar to a function provided by the previously used saml library.
+func getSAMLAttributeInt(r *saml.Assertion, name string) (int, error) {
+	for _, statement := range r.AttributeStatements {
+		for _, attr := range statement.Attributes {
+			if attr.Name == name || attr.FriendlyName == name {
+				val, err := strconv.Atoi(attr.Values[0].Value)
+				if err != nil {
+					return 0, fmt.Errorf("error reading %s: expected int received %s", name, attr.Values[0].Value)
+				}
+				return val, nil
+			}
+		}
+	}
+	return 0, nil
 }
 
 // getAttributeValues is similar to a function provided by the previously used saml library.
