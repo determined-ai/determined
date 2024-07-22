@@ -13,6 +13,7 @@ import (
 	"golang.org/x/exp/slices"
 
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/saas"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
@@ -366,7 +367,7 @@ func ByToken(ctx context.Context, token string, ext *model.ExternalSessions) (
 	var session model.UserSession
 
 	if ext.JwtKey != "" {
-		return ByExternalToken(ctx, token, ext)
+		return saas.GetAndMaybeProvisionUserByToken(ctx, token, ext)
 	}
 
 	v2 := paseto.NewV2()
