@@ -17,13 +17,16 @@ TODO:
 """
 
 
+import argparse
 import copy
 import os
 import pathlib
 import random
+import shutil
 import socket
 import string
 import subprocess
+import sys
 import tempfile
 import time
 from dataclasses import dataclass
@@ -32,6 +35,8 @@ from typing import Any, Dict, List, Optional, Tuple
 import kubernetes as k8s
 import kubernetes.client.exceptions as client_exceptions
 import yaml
+
+DET_ROOT = pathlib.Path("~/projects/da/determined").expanduser()
 
 
 def expand_env(value: Any, env: Dict[str, str]) -> Any:
@@ -138,9 +143,10 @@ def setup_reverse_proxy(cfg: Config) -> Tuple[subprocess.Popen, int]:
     while is_port_listening(cfg.reverse_proxy_host, remote_port):
         remote_port = random.randint(*cfg.remote_port_range)
         print("trying a different port", remote_port)
-    print(f"Using remote port {remote_port}")
-
-    print(f"Setting up reverse proxy..")
+    print(
+        f"Setting up reverse proxy on {cfg.reverse_proxy_host}:{remote_port}"
+        + f" to localhost:{cfg.local_master_port}"
+    )
     proc = subprocess.Popen(
         [
             "ssh",
@@ -154,13 +160,14 @@ def setup_reverse_proxy(cfg: Config) -> Tuple[subprocess.Popen, int]:
             "ServerAliveInterval=60",
             "-o",
             "ServerAliveCountMax=10",
-        ]
+        ],
+        stderr=subprocess.PIPE,
     )
     if not wait_for_tunnel(cfg.reverse_proxy_host, remote_port):
         print("Failed to establish tunnel")
         proc.terminate()
         raise Exception("Failed to establish tunnel")
-    print("Reverse proxy is up")
+    print("Reverse proxy is up.")
     return proc, remote_port
 
 
@@ -190,21 +197,13 @@ def get_gateway_info(cfg: Config) -> Optional[Gateway]:
                             name=gateway["metadata"]["name"],
                             namespace=gateway["metadata"]["namespace"],
                         )
-                        print(f"Found gateway: {gw}")
+                        print(f"Found active gateway: {gw}")
                         return gw
     except client_exceptions.ApiException as e:
         print(f"Exception when calling CoreV1Api->list_service_for_all_namespaces: {e}")
         return None
     print("No gateway service found.")
     return None
-
-
-def load_yamls_from_url(url: str) -> List[dict]:
-    import requests
-
-    response = requests.get(url)
-    response.raise_for_status()
-    return [doc for doc in yaml.safe_load_all(response.text) if isinstance(doc, dict)]
 
 
 def provision_gateway(cfg: Config) -> Gateway:
@@ -241,11 +240,7 @@ def warn(msg: str, *args, **kwargs):
 
 def update_devcluster(cfg: Config, gateway: Gateway, remote_port: int) -> pathlib.Path:
     """
-    Update the devcluster config to use the gateway.
-    - create a backup before changing
-    - add/update gateway config
-    - add/update master address and port
-    - save the updated formatted conf somewhere and share the path
+    Update the devcluster config to use the gateway and a reverse proxy.
     """
     devc = DevClusterConf.from_yaml(pathlib.Path(cfg.base_devcluster_path))
     master_stage = devc.get_stage("master")
@@ -264,7 +259,6 @@ def update_devcluster(cfg: Config, gateway: Gateway, remote_port: int) -> pathli
     devc.set_stage("master", master_stage)
     temp_conf_path = pathlib.Path(tempfile.mkdtemp()) / "devcluster.yaml"
     devc.save(temp_conf_path)
-    print(f"Updated devcluster config saved to {temp_conf_path}")
     return temp_conf_path
 
 
@@ -275,18 +269,28 @@ def workflow_1(cfg: Config):
         if not gateway:
             gateway = provision_gateway(cfg)
         config_path = update_devcluster(cfg, gateway, proxy_port)
-        # TODO: run devc?
         print("Workflow 1 ready.")
-        print(f"devcluster -c {config_path}")
-        input("Press Enter to terminate and cleanup once done.")
+        devc_run_cmd = ["devcluster", "-c", config_path]
+        if shutil.which("devcluster"):
+            print("Running devcluster...")
+            subprocess.run(devc_run_cmd)
+        else:
+            print(f"devcluster -c {config_path}")
+            input("Press Enter to terminate and cleanup once done.")
     finally:
         rev_proxy.terminate()
 
 
 def main():
-    DET_ROOT = pathlib.Path("~/projects/da/determined").expanduser()
-    print(f"DETERMINED_ROOT: {DET_ROOT.expanduser()}")
-    cfg = Config.from_yaml(DET_ROOT / "tools" / "k8s" / "remote_connect.yaml")
+    parser = argparse.ArgumentParser(description="Set the configuration file path.")
+    parser.add_argument(
+        "--config",
+        type=pathlib.Path,
+        default=DET_ROOT / "tools" / "k8s" / "remote_connect.yaml",
+        help="Path to the configuration file.",
+    )
+    args = parser.parse_args()
+    cfg = Config.from_yaml(args.config)
     workflow_1(cfg)
 
 
