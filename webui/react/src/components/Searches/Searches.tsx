@@ -51,6 +51,7 @@ import { DataGridGlobalSettings, settingsConfigGlobal } from 'components/Options
 import TableActionBar from 'components/TableActionBar';
 import useUI from 'components/ThemeProvider';
 import { useAsync } from 'hooks/useAsync';
+import { useDebouncedSettings } from 'hooks/useDebouncedSettings';
 import { useGlasbey } from 'hooks/useGlasbey';
 import useMobile from 'hooks/useMobile';
 import usePolling from 'hooks/usePolling';
@@ -82,6 +83,7 @@ import { pluralizer } from 'utils/string';
 import { getColumnDefs, searcherMetricsValColumn } from './columns';
 import css from './Searches.module.scss';
 import {
+  ColumnWidthsSlice,
   DEFAULT_SELECTION,
   defaultProjectSettings,
   ProjectSettings,
@@ -145,12 +147,13 @@ const Searches: React.FC<Props> = ({ project }) => {
     (p: Partial<ProjectSettings>) => userSettings.setPartial(ProjectSettings, settingsPath, p),
     [settingsPath],
   );
+  const [columnWidths, setColumnWidths] = useDebouncedSettings(ColumnWidthsSlice, settingsPath);
   const settings = useMemo(
     () =>
-      projectSettings
-        .map((s) => ({ ...defaultProjectSettings, ...s }))
+      Loadable.all([projectSettings, columnWidths])
+        .map(([s, cw]) => ({ ...defaultProjectSettings, ...s, ...cw }))
         .getOrElse(defaultProjectSettings),
-    [projectSettings],
+    [projectSettings, columnWidths],
   );
 
   const { params, updateParams } = useTypedParams(ProjectUrlSettings, {});
@@ -540,16 +543,18 @@ const Searches: React.FC<Props> = ({ project }) => {
           acc[col] = DEFAULT_COLUMN_WIDTH;
           return acc;
         }, {});
-      updateSettings({
-        columns: newColumnsOrder,
+      setColumnWidths({
         columnWidths: {
           ...settings.columnWidths,
           ...newColumnWidths,
         },
+      });
+      updateSettings({
+        columns: newColumnsOrder,
         pinnedColumnsCount: isUndefined(pinnedCount) ? settings.pinnedColumnsCount : pinnedCount,
       });
     },
-    [updateSettings, settings.pinnedColumnsCount, settings.columnWidths],
+    [setColumnWidths, updateSettings, settings.pinnedColumnsCount, settings.columnWidths],
   );
 
   const handleRowHeightChange = useCallback(
@@ -586,14 +591,14 @@ const Searches: React.FC<Props> = ({ project }) => {
 
   const handleColumnWidthChange = useCallback(
     (columnId: string, width: number) => {
-      updateSettings({
+      setColumnWidths({
         columnWidths: {
           ...settings.columnWidths,
           [columnId]: width,
         },
       });
     },
-    [updateSettings, settings.columnWidths],
+    [setColumnWidths, settings.columnWidths],
   );
 
   const columnsIfLoaded = useMemo(
