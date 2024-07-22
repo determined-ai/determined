@@ -5,8 +5,7 @@ stages:
   - master:
       pre:
         - sh: make -C tools prep-root
-        # Slice our kubeconfig up into two different kube configs. Determined should use whatever context is set.
-        - sh: cp ~/.kube/config /tmp/defaultrm-kubeconf && kubectl config use-context defaultrm --kubeconfig=/tmp/defaultrm-kubeconf
+        - sh: kubectl config use-context defaultrm
       config_file:
         security:
           initial_user_password: $INITIAL_USER_PASSWORD
@@ -34,7 +33,7 @@ stages:
           slot_type: "cpu"
           slot_resource_requests:
             cpu: 1
-          kubeconfig_path: /tmp/defaultrm-kubeconf
+          kubeconfig_path: ~/.kube/config
           determined_master_ip: $DOCKER_LOCALHOST
           determined_master_port: 8080
           internal_task_gateway:

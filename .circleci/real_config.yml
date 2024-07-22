@@ -3166,6 +3166,9 @@ jobs:
       run-minikubes:
         type: boolean
         default: false
+      multi-k8s:
+        type: boolean
+        default: false
       resource-class:
         type: string
         default: xlarge
@@ -3209,10 +3212,12 @@ jobs:
                 command: |
                   K8S_VERSION=<<parameters.k8s-version>> source tools/k8s/launch-minikube-with-gateway.sh defaultrm
                   echo "export GATEWAY_IP=\"${GATEWAY_IP}\"" >> $BASH_ENV
-            - run:
-                name: Start additionalrm minikube
-                command: minikube start --profile additionalrm --kubernetes-version <<parameters.k8s-version>>
-
+            - when:
+                condition: <<parameters.multi-k8s>>
+                steps:
+                  - run:
+                      name: Start additionalrm minikube
+                      command: minikube start --profile additionalrm --kubernetes-version <<parameters.k8s-version>>
       - install-devcluster
       - unless:
           condition: <<parameters.managed-devcluster>>
@@ -4529,6 +4534,7 @@ workflows:
           target-stage: master
           devcluster-config: multi-k8s.devcluster.yaml
           run-minikubes: true
+          multi-k8s: true
 
       - test-e2e:
           name: test-e2e-single-k8s
