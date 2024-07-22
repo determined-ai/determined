@@ -250,10 +250,11 @@ specified under the primary resource_manager key here is considered the default.
 ``cluster_name``
 ================
 
-Optional for singleRM Determined. Required for multiRM Determined. Specifies the resource manager's
-associated cluster name. This references the cluster on which a Determined deployment is running.
-Defaults to ``default`` if not specified. For Kubernetes installations with additional resource
-managers, ensure unique names for all resource managers in the cluster.
+Optional for single resource manager configurations. Required for multiple resource manager
+(Multi-RM) configurations. Specifies the resource manager'sassociated cluster name. This references
+the cluster on which a Determined deployment is running. Defaults to ``default`` if not specified.
+For Kubernetes installations with additional resource managers, ensure unique names for all resource
+managers in the cluster.
 
 **NOTE:** ``resource_manager.cluster_name`` is separate from the ``cluster_name`` field of the
 master config that provides a readable name for the Determined deployment.

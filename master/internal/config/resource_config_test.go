@@ -254,7 +254,7 @@ additional_resource_managers:
     resource_pools:
     - pool_name: a`, nil, "Check Failed! 1 errors found:\n\terror found at " +
 			"root.ResourceConfig.AdditionalResourceManagersInternal[0]." +
-			"ResourceManager.KubernetesRM: name is required:  must be non-empty"},
+			"ResourceManager.KubernetesRM: cluster_name is required:  must be non-empty"},
 
 		{"additional rm not giving pools", `
 resource_manager:
