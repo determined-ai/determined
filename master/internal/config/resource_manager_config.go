@@ -25,34 +25,47 @@ type ResourceManagerConfig struct {
 	PbsRM        *DispatcherResourceManagerConfig `union:"type,pbs" json:"-"`
 }
 
-// ClusterName returns the name for the resource manager.
+// ClusterName returns the cluster name associated with the resource manager. If the cluster name
+// is empty, it gets assigned to the (possibly) assigned resource manager name.
 func (r ResourceManagerConfig) ClusterName() string {
 	if agentRM := r.AgentRM; agentRM != nil {
+		if len(agentRM.ClusterName) == 0 {
+			agentRM.ClusterName = agentRM.Name
+		}
 		return agentRM.ClusterName
 	}
 	if k8RM := r.KubernetesRM; k8RM != nil {
+		if len(k8RM.ClusterName) == 0 {
+			k8RM.ClusterName = k8RM.Name
+		}
 		return k8RM.ClusterName
 	}
 	if dis := r.DispatcherRM; dis != nil {
+		if len(dis.ClusterName) == 0 {
+			dis.ClusterName = dis.Name
+		}
 		return dis.ClusterName
 	}
 	if pbs := r.PbsRM; pbs != nil {
+		if len(pbs.ClusterName) == 0 {
+			pbs.ClusterName = pbs.Name
+		}
 		return pbs.ClusterName
 	}
 
 	panic(fmt.Sprintf("unknown rm type %+v", r))
 }
 
-func (r *ResourceManagerConfig) setName(name string) {
+func (r *ResourceManagerConfig) setClusterName(clusterName string) {
 	switch {
 	case r.AgentRM != nil:
-		r.AgentRM.Name = name
+		r.AgentRM.ClusterName = clusterName
 	case r.KubernetesRM != nil:
-		r.KubernetesRM.Name = name
+		r.KubernetesRM.ClusterName = clusterName
 	case r.DispatcherRM != nil:
-		r.DispatcherRM.Name = name
+		r.DispatcherRM.ClusterName = clusterName
 	case r.PbsRM != nil:
-		r.PbsRM.Name = name
+		r.PbsRM.ClusterName = clusterName
 	default:
 		panic(fmt.Sprintf("unknown rm type %+v", r))
 	}
@@ -89,6 +102,7 @@ func (r *ResourceManagerConfig) UnmarshalJSON(data []byte) error {
 
 // AgentResourceManagerConfig hosts configuration fields for the determined resource manager.
 type AgentResourceManagerConfig struct {
+	ClusterName                string           `json:"cluster_name"`
 	Scheduler                  *SchedulerConfig `json:"scheduler"`
 	DefaultAuxResourcePool     string           `json:"default_aux_resource_pool"`
 	DefaultComputeResourcePool string           `json:"default_compute_resource_pool"`
@@ -101,9 +115,9 @@ type AgentResourceManagerConfig struct {
 	RequireAuthentication bool   `json:"require_authentication"`
 	ClientCA              string `json:"client_ca"`
 
-	Name        string            `json:"name"`
-	ClusterName string            `json:"cluster_name"`
-	Metadata    map[string]string `json:"metadata"`
+	// Deprecated: use ClusterName.
+	Name     string            `json:"name"`
+	Metadata map[string]string `json:"metadata"`
 }
 
 // UnmarshalJSON implements the json.Unmarshaler interface.
@@ -151,7 +165,7 @@ func (a AgentResourceManagerConfig) Validate() []error {
 	return append(errors,
 		check.NotEmpty(a.DefaultAuxResourcePool, "default_aux_resource_pool should be non-empty"),
 		check.NotEmpty(a.DefaultComputeResourcePool, "default_compute_resource_pool should be non-empty"),
-		check.NotEmpty(a.Name, "name is required"),
+		check.NotEmpty(a.ClusterName, "cluster_name is required"),
 	)
 }
 
@@ -165,6 +179,7 @@ type KubernetesResourceManagerConfig struct {
 
 	MaxSlotsPerPod *int `json:"max_slots_per_pod"`
 
+	ClusterName              string                  `json:"cluster_name"`
 	MasterServiceName        string                  `json:"master_service_name"`
 	LeaveKubernetesResources bool                    `json:"leave_kubernetes_resources"`
 	DefaultScheduler         string                  `json:"default_scheduler"`
@@ -184,9 +199,10 @@ type KubernetesResourceManagerConfig struct {
 
 	InternalTaskGateway *InternalTaskGatewayConfig `json:"internal_task_gateway"`
 
-	Name        string            `json:"name"`
-	ClusterName string            `json:"cluster_name"`
-	Metadata    map[string]string `json:"metadata"`
+	// Deprecated: use ClusterName.
+	Name string `json:"name"`
+
+	Metadata map[string]string `json:"metadata"`
 }
 
 // InternalTaskGatewayConfig is config for exposing Determined tasks to outside of the cluster.
@@ -311,7 +327,7 @@ func (k KubernetesResourceManagerConfig) Validate() []error {
 	return []error{
 		checkSlotType,
 		checkCPUResource,
-		check.NotEmpty(k.Name, "name is required"),
+		check.NotEmpty(k.ClusterName, "cluster_name is required"),
 		checkRMNamespace,
 	}
 }

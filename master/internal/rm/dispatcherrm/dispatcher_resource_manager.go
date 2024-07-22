@@ -274,8 +274,8 @@ func (m *DispatcherResourceManager) HealthCheck() []model.ResourceManagerHealth 
 
 	return []model.ResourceManagerHealth{
 		{
-			Name:   m.rmConfig.Name,
-			Status: status,
+			ClusterName: m.rmConfig.ClusterName,
+			Status:      status,
 		},
 	}
 }
@@ -470,7 +470,7 @@ func (m *DispatcherResourceManager) GetResourcePools() (
 			InstanceType:                 "",
 			Details:                      &resourcepoolv1.ResourcePoolDetail{},
 			Accelerator:                  v.Accelerator,
-			ResourceManagerName:          m.rmConfig.Name,
+			ClusterName:                  m.rmConfig.ClusterName,
 			ResourceManagerMetadata:      m.rmConfig.Metadata,
 		}
 		poolNameMap[pool.Name] = &pool
