@@ -12,7 +12,6 @@ import (
 	"time"
 
 	"github.com/pkg/errors"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
 	"github.com/google/uuid"
@@ -95,7 +94,6 @@ func TestSAMLWorkflowUserNotProvisioned(t *testing.T) {
 	resp := getUserResponse(username, username+"123", []string{"abc", "bcd"})
 
 	userAttr := s.toUserAttributes(resp.Assertion)
-	assert.True(t, false)
 	require.Equal(t, username, userAttr.userName)
 
 	_, err := user.ByUsername(ctx, userAttr.userName)
@@ -209,7 +207,6 @@ func processResponseProvisioned(ctx context.Context, t *testing.T,
 	response *saml.Assertion, username string, dispName string, s *Service,
 ) *model.User {
 	userAttr := s.toUserAttributes(response)
-	assert.True(t, false)
 	require.Equal(t, username, userAttr.userName)
 
 	u, err := user.ByUsername(ctx, userAttr.userName)
