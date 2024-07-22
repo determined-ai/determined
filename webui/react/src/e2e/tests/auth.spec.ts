@@ -28,25 +28,7 @@ test.describe('Authentication', () => {
   test('Login Redirect', async ({ page, auth }) => {
     await test.step('Attempt to Visit a Page', async () => {
       await page.goto('/models');
-      let landingRedirect = await page.evaluate(() =>
-        sessionStorage.getItem('session/landing-redirect'),
-      );
-      console.log('Landing Redirect 1:', landingRedirect);
       await expect(page).toHaveURL(/login/);
-      landingRedirect = await page.evaluate(() =>
-        sessionStorage.getItem('session/landing-redirect'),
-      );
-      console.log('Landing Redirect 2:', landingRedirect);
-      // const checkSessionStorageForRedirect = async (key: string, expectedValue: string, attempts = 10, interval = 500) => {
-      //   for (let i = 0; i < attempts; i++) {
-      //     const value = await page.evaluate((key) => sessionStorage.getItem(key), key);
-      //     if (value === expectedValue) return true;
-      //     await page.waitForTimeout(interval); // Wait for a bit before checking again
-      //   }
-      //   return false; // Value not found within the given attempts
-      // };
-      // const hasRedirectPath = await checkSessionStorageForRedirect('session/landing-redirect', '/models');
-      // if (!hasRedirectPath) throw new Error('landingRedirect not set to /models within the expected time');
     });
 
     await test.step('Login and Redirect', async () => {

@@ -63,10 +63,7 @@ const SignIn: React.FC = () => {
    * the user to the most recent requested page.
    */
   useEffect(() => {
-    if (location.state != null && sessionStorage.landingRedirect === '') {
-      console.log('location state is ', location.state);
-      console.log('sessionStorage.landingRedirect is "', sessionStorage.landingRedirect, '"');
-      console.log('Setting landing redirect to:', locationToPath(location.state));
+    if (location.state != null) {
       sessionStorage.landingRedirect = locationToPath(location.state) ?? '';
     }
 

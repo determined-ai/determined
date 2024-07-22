@@ -57,7 +57,6 @@ const SignOut: React.FC = () => {
           searchParameters.append('remote_expired', queries.get('remote_expired') ?? 'false');
         if (queries.has('hard_logout'))
           searchParameters.append('hard_logout', queries.get('hard_logout') ?? 'false');
-        console.log(">>>>> We're going from SignOut to Login, the state is: ", location.state);
         navigate(paths.login() + '?' + searchParameters.toString(), { state: location.state });
       }
     };

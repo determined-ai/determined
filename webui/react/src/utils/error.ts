@@ -200,7 +200,6 @@ const handleError = (error: DetError | unknown, options?: DetErrorOptions): DetE
     const path = window.location.pathname;
     if (!path.includes(paths.login()) && !path.includes(paths.logout())) {
       sessionStorage.landingRedirect = window.location.pathname;
-      // console.log('Landing Redirect 3:', sessionStorage.landingRedirect);
       globalStorage.landingRedirect = path;
       routeToReactUrl(paths.logout() + params);
     }
