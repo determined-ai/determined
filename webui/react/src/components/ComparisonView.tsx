@@ -17,8 +17,11 @@ import { TrialsComparisonTable } from 'pages/ExperimentDetails/TrialsComparisonM
 import { searchExperiments, searchRuns } from 'services/api';
 import { ExperimentWithTrial, FlatRun, XOR } from 'types';
 import handleError from 'utils/error';
+import { getIdsFilter as getExperimentIdsFilter } from 'utils/experiment';
+import { getIdsFilter as getRunIdsFilter } from 'utils/flatRun';
 
 import CompareMetrics from './CompareMetrics';
+import { INIT_FORMSET } from './FilterForm/components/FilterFormStore';
 
 export const EMPTY_MESSAGE = 'No items selected.';
 
@@ -51,24 +54,12 @@ const ComparisonView: React.FC<Props> = ({
 
   const loadableSelectedExperiments = useAsync(async () => {
     if (selectedExperimentIds?.length) {
+      const filterFormSet = INIT_FORMSET;
       try {
-        const filter = {
-          filterGroup: {
-            children: [
-              {
-                columnName: 'id',
-                kind: 'field',
-                location: 'LOCATION_TYPE_EXPERIMENT',
-                operator: 'includes',
-                type: 'COLUMN_TYPE_NUMBER',
-                value: selectedExperimentIds,
-              },
-            ],
-            conjunction: 'and',
-            kind: 'group',
-          },
-          showArchived: false,
-        };
+        const filter = getExperimentIdsFilter(filterFormSet, {
+          selections: selectedExperimentIds,
+          type: 'ONLY_IN',
+        });
         const response = await searchExperiments({
           filter: JSON.stringify(filter),
           limit: 50,
@@ -89,24 +80,12 @@ const ComparisonView: React.FC<Props> = ({
 
   const loadableSelectedRuns = useAsync(async () => {
     if (selectedRunIds?.length) {
-      const filter = {
-        filterGroup: {
-          children: [
-            {
-              columnName: 'id',
-              kind: 'field',
-              location: 'LOCATION_TYPE_RUN',
-              operator: 'includes',
-              type: 'COLUMN_TYPE_NUMBER',
-              value: selectedRunIds,
-            },
-          ],
-          conjunction: 'and',
-          kind: 'group',
-        },
-        showArchived: false,
-      };
+      const filterFormSet = INIT_FORMSET;
       try {
+        const filter = getRunIdsFilter(filterFormSet, {
+          selections: selectedRunIds,
+          type: 'ONLY_IN',
+        });
         const response = await searchRuns({
           filter: JSON.stringify(filter),
           limit: 50,

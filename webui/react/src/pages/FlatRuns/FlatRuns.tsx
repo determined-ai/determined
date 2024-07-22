@@ -65,17 +65,21 @@ import useResize from 'hooks/useResize';
 import useScrollbarWidth from 'hooks/useScrollbarWidth';
 import { useSettings } from 'hooks/useSettings';
 import useTypedParams from 'hooks/useTypedParams';
-import {
-  DEFAULT_SELECTION,
-  SelectionType as SelectionState,
-} from 'pages/F_ExpList/F_ExperimentList.settings';
+import { DEFAULT_SELECTION } from 'pages/F_ExpList/F_ExperimentList.settings';
 import FlatRunActionButton from 'pages/FlatRuns/FlatRunActionButton';
 import { paths } from 'routes/utils';
 import { getProjectColumns, getProjectNumericMetricsRange, searchRuns } from 'services/api';
 import { V1ColumnType, V1LocationType, V1TableType } from 'services/api-ts-sdk';
 import userStore from 'stores/users';
 import userSettings from 'stores/userSettings';
-import { DetailedUser, FlatRun, FlatRunAction, ProjectColumn, RunState } from 'types';
+import {
+  DetailedUser,
+  FlatRun,
+  FlatRunAction,
+  ProjectColumn,
+  RunState,
+  SelectionType as SelectionState,
+} from 'types';
 import handleError from 'utils/error';
 import { eagerSubscribe } from 'utils/observable';
 import { pluralizer } from 'utils/string';

@@ -1,3 +1,4 @@
+import { FilterFormSetWithoutId, Operator } from 'components/FilterForm/components/type';
 import {
   deletableRunStates,
   killableRunStates,
@@ -5,7 +6,7 @@ import {
   terminalRunStates,
 } from 'constants/states';
 import { PermissionsHook } from 'hooks/usePermissions';
-import { FlatRun, FlatRunAction, RunState } from 'types';
+import { FlatRun, FlatRunAction, RunState, SelectionType } from 'types';
 
 type FlatRunChecker = (flatRun: Readonly<FlatRun>) => boolean;
 
@@ -73,4 +74,59 @@ export const getActionsForFlatRunsUnion = (
   return targets.filter((action) =>
     actionsForRuns.some((runActions) => runActions.includes(action)),
   );
+};
+
+const idToFilter = (operator: Operator, id: number) =>
+  ({
+    columnName: 'id',
+    kind: 'field',
+    location: 'LOCATION_TYPE_RUN',
+    operator,
+    type: 'COLUMN_TYPE_NUMBER',
+    value: id,
+  }) as const;
+
+export const getIdsFilter = (
+  filterFormSet: FilterFormSetWithoutId,
+  selection: SelectionType,
+): FilterFormSetWithoutId | undefined => {
+  const filterGroup: FilterFormSetWithoutId['filterGroup'] =
+    selection.type === 'ALL_EXCEPT'
+      ? {
+          children: [
+            filterFormSet.filterGroup,
+            {
+              children: selection.exclusions.map(idToFilter.bind(this, '!=')),
+              conjunction: 'and',
+              kind: 'group',
+            },
+          ],
+          conjunction: 'and',
+          kind: 'group',
+        }
+      : {
+          children: selection.selections.map(idToFilter.bind(this, '=')),
+          conjunction: 'or',
+          kind: 'group',
+        };
+
+  const filter: FilterFormSetWithoutId = {
+    ...filterFormSet,
+    filterGroup: {
+      children: [
+        filterGroup,
+        {
+          columnName: 'searcherType',
+          kind: 'field',
+          location: 'LOCATION_TYPE_RUN',
+          operator: '!=',
+          type: 'COLUMN_TYPE_TEXT',
+          value: 'single',
+        } as const,
+      ],
+      conjunction: 'and',
+      kind: 'group',
+    },
+  };
+  return filter;
 };
