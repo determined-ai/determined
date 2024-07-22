@@ -1,9 +1,11 @@
 import pathlib
+import subprocess
 import time
 
 import pytest
 
 from determined.common import api
+from determined.common.api import bindings
 from tests import api_utils
 from tests import config as conf
 from tests import detproc
@@ -47,3 +49,32 @@ def test_delete_experiment_removes_tensorboard_files() -> None:
             return
 
     pytest.fail(f"experiment failed to be deleted after {ticks} seconds")
+
+
+@pytest.mark.e2e_k8s
+@pytest.mark.e2e_single_k8s
+def test_cancel_experiment_remove_k8s_pod() -> None:
+    # Start a random experiment.
+    sess = api_utils.user_session()
+
+    experiment_id = exp.create_experiment(
+        sess,
+        conf.fixtures_path("no_op/single-one-short-step.yaml"),
+        conf.fixtures_path("no_op"),
+    )
+    exp.wait_for_experiment_state(
+        sess,
+        experiment_id,
+        bindings.experimentv1State.RUNNING,
+    )
+
+    # Find the trial, and kill the pod.
+    cmd = f'kubectl delete $(kubectl get pods -o name | grep -i "exp-{experiment_id}")'
+    subprocess.run(cmd, shell=True)
+
+    # Cancel the experiment
+    command = ["det", "-m", conf.make_master_url(), "e", "cancel", str(experiment_id)]
+    detproc.check_call(sess, command)
+
+    # Assert that the experiment fails.
+    assert exp.experiment_state(sess, experiment_id) == bindings.experimentv1State.ERROR
