@@ -128,6 +128,8 @@ whatever configuration is needed for loading data for use by the experiment's mo
 example, if your experiment loads data from Amazon S3, the ``data`` field might contain the S3
 bucket name, object prefix, and AWS authentication credentials.
 
+See also: :ref:`det API Reference <det-reference>` > ``user_data`` property.
+
 ``workspace``
 =============
 
