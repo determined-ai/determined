@@ -9,9 +9,15 @@
     - record ip
 - updated devcluster config
 
+TODO:
+- what if there are multiple gateways on the cluster?
+- gateway cleanup if we provision it
+- run devcluster here for you?
+- or migrate some of this into devcluster stages?
 """
 
 
+import copy
 import os
 import pathlib
 import random
@@ -21,8 +27,7 @@ import subprocess
 import tempfile
 import time
 from dataclasses import dataclass
-from sys import path
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import kubernetes as k8s
 import kubernetes.client.exceptions as client_exceptions
@@ -94,20 +99,19 @@ class DevClusterConf:
 
     def save(self, path: pathlib.Path):
         with open(path, "w") as f:
-            yaml.safe_dump(self.data, f)
+            yaml.dump(self.data, f, default_flow_style=False, sort_keys=False, indent=2)
 
     def get_stage(self, stage_name: str) -> dict:
         matching_stages = [stage for stage in self.data["stages"] if (stage_name in stage)]
         assert len(matching_stages) == 1
-        return matching_stages[0]
+        return copy.deepcopy(matching_stages[0][stage_name])
 
     def set_stage(self, stage_name: str, new_data: dict):
         for stage in self.data["stages"]:
             if stage_name in stage:
-                stage.update(new_data)
-                break
-        else:
-            self.data["stages"].append(new_data)
+                stage[stage_name] = new_data
+                return
+        raise NotImplementedError(f"Stage {stage_name} not found in devcluster config.")
 
 
 def is_port_listening(host: str, port: int) -> bool:
@@ -165,54 +169,55 @@ def get_gateway_info(cfg: Config) -> Optional[Gateway]:
     Check if the cluster has a gateway set up.
     """
     k8s.config.load_kube_config(context=cfg.k8s_context)
-    v1 = k8s.client.CoreV1Api()
+    custom_api = k8s.client.CustomObjectsApi()
+
+    group = "gateway.networking.k8s.io"
+    version = "v1"  # or the appropriate version for your setup
+    plural = "gateways"
+
     try:
-        services = v1.list_service_for_all_namespaces(watch=False)
-        for svc in services.items:
-            if svc.status.load_balancer and svc.status.load_balancer.ingress:
-                ingress = svc.status.load_balancer.ingress
-                if ingress:
-                    ip = ingress[0].ip or ingress[0].hostname
+        gateways = custom_api.list_cluster_custom_object(
+            group=group, version=version, plural=plural
+        )
+        for gateway in gateways.get("items", []):
+            if "status" in gateway and "addresses" in gateway["status"]:
+                addresses = gateway["status"]["addresses"]
+                if addresses:
+                    ip = addresses[0].get("value")
                     if ip:
-                        print(
-                            f"Found gateway service: {svc.metadata.name} in namespace: {svc.metadata.namespace}"
+                        gw = Gateway(
+                            ip=ip,
+                            name=gateway["metadata"]["name"],
+                            namespace=gateway["metadata"]["namespace"],
                         )
-                        return Gateway(
-                            ip=ip, name=svc.metadata.name, namespace=svc.metadata.namespace
-                        )
+                        print(f"Found gateway: {gw}")
+                        return gw
     except client_exceptions.ApiException as e:
         print(f"Exception when calling CoreV1Api->list_service_for_all_namespaces: {e}")
         return None
-
     print("No gateway service found.")
     return None
 
 
-def load_yaml_from_url(url: str) -> dict:
+def load_yamls_from_url(url: str) -> List[dict]:
     import requests
 
     response = requests.get(url)
     response.raise_for_status()
-    return yaml.safe_load(response.text)
+    return [doc for doc in yaml.safe_load_all(response.text) if isinstance(doc, dict)]
 
 
 def provision_gateway(cfg: Config) -> Gateway:
     """
     Provision a gateway service in the cluster.
     """
-    k8s.config.load_kube_config(context=cfg.k8s_context)
-    k8s_client = k8s.client.ApiClient()
-
     contour_provisioner_url = "https://raw.githubusercontent.com/projectcontour/contour/release-1.29/examples/render/contour-gateway-provisioner.yaml"
-    contour_yaml_path = cfg.determined_root / "tools" / "k8s" / "contour.yaml"
+    contour_yaml_path = pathlib.Path(cfg.determined_root) / "tools" / "k8s" / "contour.yaml"
 
+    kctl = ["kubectl", "--context", cfg.k8s_context]
     try:
-        provisioner_yaml = load_yaml_from_url(contour_provisioner_url)
-        k8s.utils.create_from_yaml(k8s_client, yaml_objects=provisioner_yaml)
-        with open(contour_yaml_path) as f:
-            contour_yaml = yaml.safe_load(f)
-        k8s.utils.create_from_yaml(k8s_client, yaml_objects=contour_yaml)
-        print("Contour Gateway Provisioner applied successfully.")
+        subprocess.run(kctl + ["apply", "-f", contour_provisioner_url], check=True)
+        subprocess.run(kctl + ["apply", "-f", contour_yaml_path], check=True)
     except Exception as e:
         print(f"Failed to apply Contour Gateway: {e}")
         raise e
@@ -244,7 +249,7 @@ def update_devcluster(cfg: Config, gateway: Gateway, remote_port: int) -> pathli
     """
     devc = DevClusterConf.from_yaml(pathlib.Path(cfg.base_devcluster_path))
     master_stage = devc.get_stage("master")
-    resource_manager = master_stage["resource_manager"]
+    resource_manager = master_stage["config_file"]["resource_manager"]
     if "additional_resource_managers" in master_stage:
         warn(
             "setting up additional resource managers are not supported yet."
@@ -255,7 +260,7 @@ def update_devcluster(cfg: Config, gateway: Gateway, remote_port: int) -> pathli
     resource_manager["determined_master_port"] = remote_port
     assert gateway.ip is not None, "Gateway IP is not set"
     resource_manager.update(gateway.to_config())
-    master_stage["resource_manager"] = resource_manager
+    master_stage["config_file"]["resource_manager"] = resource_manager
     devc.set_stage("master", master_stage)
     temp_conf_path = pathlib.Path(tempfile.mkdtemp()) / "devcluster.yaml"
     devc.save(temp_conf_path)
@@ -265,15 +270,17 @@ def update_devcluster(cfg: Config, gateway: Gateway, remote_port: int) -> pathli
 
 def workflow_1(cfg: Config):
     rev_proxy, proxy_port = setup_reverse_proxy(cfg)
-    gateway = get_gateway_info(cfg)
-    if not gateway:
-        gateway = provision_gateway(cfg)
-    config_path = update_devcluster(cfg, gateway, proxy_port)
-    # TODO: run devc?
-    print("Workflow 1 ready.")
-    print(f"devcluster -c {config_path}")
-    input("Press Enter to terminate and cleanup once done.")
-    rev_proxy.terminate()
+    try:
+        gateway = get_gateway_info(cfg)
+        if not gateway:
+            gateway = provision_gateway(cfg)
+        config_path = update_devcluster(cfg, gateway, proxy_port)
+        # TODO: run devc?
+        print("Workflow 1 ready.")
+        print(f"devcluster -c {config_path}")
+        input("Press Enter to terminate and cleanup once done.")
+    finally:
+        rev_proxy.terminate()
 
 
 def main():
