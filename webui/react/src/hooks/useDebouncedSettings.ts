@@ -47,17 +47,17 @@ export function useDebouncedSettings<T extends t.HasProps | t.ExactC<t.HasProps>
   );
 
   const updateSettings = useCallback(
-    (partial: T) => {
+    (update: T) => {
       // don't send settings to server if they haven't loaded yet
       settingsObs.get().forEach(() => {
         updateLocalState((localStateLoadable) => {
           return localStateLoadable.flatMap((ls) => {
-            const newState = { ...ls, ...partial };
+            const newState = { ...ls, ...update };
             if (isEqual(newState, ls)) {
               return localStateLoadable;
             }
             if (newState) {
-              debouncedPartialUpdate(partial);
+              debouncedPartialUpdate(update);
             }
             return Loaded(newState);
           });
