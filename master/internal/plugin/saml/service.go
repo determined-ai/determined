@@ -59,8 +59,8 @@ func New(db *db.PgDB, c config.SAMLConfig) (*Service, error) {
 		autoProvisionUsers:       c.AutoProvisionUsers,
 		groupsAttributeName:      c.GroupsAttributeName,
 		displayNameAttributeName: c.DisplayNameAttributeName,
-		agentUid:                 c.AgentUid,
-		agentGid:                 c.AgentGid,
+		agentUid:                 c.AgentUID,
+		agentGid:                 c.AgentGID,
 		agentUserName:            c.AgentUserName,
 		agentGroupName:           c.AgentGroupName,
 	}
@@ -238,7 +238,6 @@ func (s *Service) toUserAttributes(response *saml.Assertion) *userAttributes {
 // getSAMLAttribute is similar to a function provided by the previously used saml library.
 func getSAMLAttribute(r *saml.Assertion, name string) string {
 	for _, statement := range r.AttributeStatements {
-		fmt.Println(statement.Attributes)
 		for _, attr := range statement.Attributes {
 			if attr.Name == name || attr.FriendlyName == name {
 				return attr.Values[0].Value

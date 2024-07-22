@@ -17,8 +17,8 @@ type SAMLConfig struct {
 	AutoProvisionUsers       bool   `json:"auto_provision_users"`
 	GroupsAttributeName      string `json:"groups_attribute_name"`
 	DisplayNameAttributeName string `json:"display_name_attribute_name"`
-	AgentUid                 int    `json:"agent_uid"`
-	AgentGid                 int    `json:"agent_gid"`
+	AgentUID                 int    `json:"agent_uid"`
+	AgentGID                 int    `json:"agent_gid"`
 	AgentUserName            string `json:"agent_user_name"`
 	AgentGroupName           string `json:"agent_group_name"`
 }
