@@ -1244,7 +1244,7 @@ func TestSearchExperimentsNoDeleting(t *testing.T) {
 	api, curUser, ctx := setupAPITest(t, nil)
 	_, projectIDInt := createProjectAndWorkspace(ctx, t, api)
 
-	exp := createTestExpWithProjectID(t, api, curUser, projectIDInt)
+	shownExp := createTestExpWithProjectID(t, api, curUser, projectIDInt)
 
 	// Add deleting experiment
 	experimentConfig := expconf.ExperimentConfig{
@@ -1254,7 +1254,7 @@ func TestSearchExperimentsNoDeleting(t *testing.T) {
 
 	activeConfig := schemas.WithDefaults(schemas.Merge(minExpConfig, experimentConfig))
 
-	exp = &model.Experiment{
+	hiddenExp := &model.Experiment{
 		JobID:     model.JobID(uuid.New().String()),
 		State:     model.DeletingState,
 		OwnerID:   &curUser.ID,
@@ -1262,7 +1262,7 @@ func TestSearchExperimentsNoDeleting(t *testing.T) {
 		StartTime: time.Now(),
 		Config:    activeConfig.AsLegacy(),
 	}
-	require.NoError(t, api.m.db.AddExperiment(exp, []byte{10, 11, 12}, activeConfig))
+	require.NoError(t, api.m.db.AddExperiment(hiddenExp, []byte{10, 11, 12}, activeConfig))
 
 	projectID := int32(projectIDInt)
 
@@ -1277,7 +1277,7 @@ func TestSearchExperimentsNoDeleting(t *testing.T) {
 	// Deleting experiment should not be in the response
 	require.Len(t, resp.Experiments, 1)
 	require.Nil(t, resp.Experiments[0].BestTrial)
-	require.Equal(t, int32(exp.ID), resp.Experiments[0].Experiment.Id)
+	require.Equal(t, int32(shownExp.ID), resp.Experiments[0].Experiment.Id)
 }
 
 // Test that endpoints don't puke when running against old experiments.
