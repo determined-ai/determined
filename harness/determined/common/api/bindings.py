@@ -268,17 +268,17 @@ class PatchExperimentPatchResources(Printable):
         return out
 
 class ResourceManagerHealth(Printable):
-    name: "typing.Optional[str]" = None
+    cluster_name: "typing.Optional[str]" = None
     status: "typing.Optional[HealthStatus]" = None
 
     def __init__(
         self,
         *,
-        name: "typing.Union[str, None, Unset]" = _unset,
+        cluster_name: "typing.Union[str, None, Unset]" = _unset,
         status: "typing.Union[HealthStatus, None, Unset]" = _unset,
     ):
-        if not isinstance(name, Unset):
-            self.name = name
+        if not isinstance(cluster_name, Unset):
+            self.cluster_name = cluster_name
         if not isinstance(status, Unset):
             self.status = status
 
@@ -286,8 +286,8 @@ class ResourceManagerHealth(Printable):
     def from_json(cls, obj: Json) -> "ResourceManagerHealth":
         kwargs: "typing.Dict[str, typing.Any]" = {
         }
-        if "name" in obj:
-            kwargs["name"] = obj["name"]
+        if "cluster_name" in obj:
+            kwargs["cluster_name"] = obj["cluster_name"]
         if "status" in obj:
             kwargs["status"] = HealthStatus(obj["status"]) if obj["status"] is not None else None
         return cls(**kwargs)
@@ -295,8 +295,8 @@ class ResourceManagerHealth(Printable):
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
         }
-        if not omit_unset or "name" in vars(self):
-            out["name"] = self.name
+        if not omit_unset or "cluster_name" in vars(self):
+            out["cluster_name"] = self.cluster_name
         if not omit_unset or "status" in vars(self):
             out["status"] = None if self.status is None else self.status.value
         return out
@@ -12671,6 +12671,7 @@ class v1ResourceAllocationRawResponse(Printable):
 class v1ResourcePool(Printable):
     """A Resource Pool is a pool of resources where containers are run."""
     accelerator: "typing.Optional[str]" = None
+    resourceManagerName: "typing.Optional[str]" = None
     slotsPerAgent: "typing.Optional[int]" = None
     stats: "typing.Optional[v1QueueStats]" = None
 
@@ -12684,6 +12685,7 @@ class v1ResourcePool(Printable):
         auxContainerCapacity: int,
         auxContainerCapacityPerAgent: int,
         auxContainersRunning: int,
+        clusterName: str,
         containerStartupScript: str,
         defaultAuxPool: bool,
         defaultComputePool: bool,
@@ -12702,7 +12704,6 @@ class v1ResourcePool(Printable):
         numAgents: int,
         preemptible: bool,
         resourceManagerMetadata: "typing.Dict[str, str]",
-        resourceManagerName: str,
         schedulerFittingPolicy: "v1FittingPolicy",
         schedulerType: "v1SchedulerType",
         slotType: "devicev1Type",
@@ -12711,6 +12712,7 @@ class v1ResourcePool(Printable):
         startupScript: str,
         type: "v1ResourcePoolType",
         accelerator: "typing.Union[str, None, Unset]" = _unset,
+        resourceManagerName: "typing.Union[str, None, Unset]" = _unset,
         slotsPerAgent: "typing.Union[int, None, Unset]" = _unset,
         stats: "typing.Union[v1QueueStats, None, Unset]" = _unset,
     ):
@@ -12721,6 +12723,7 @@ class v1ResourcePool(Printable):
         self.auxContainerCapacity = auxContainerCapacity
         self.auxContainerCapacityPerAgent = auxContainerCapacityPerAgent
         self.auxContainersRunning = auxContainersRunning
+        self.clusterName = clusterName
         self.containerStartupScript = containerStartupScript
         self.defaultAuxPool = defaultAuxPool
         self.defaultComputePool = defaultComputePool
@@ -12739,7 +12742,6 @@ class v1ResourcePool(Printable):
         self.numAgents = numAgents
         self.preemptible = preemptible
         self.resourceManagerMetadata = resourceManagerMetadata
-        self.resourceManagerName = resourceManagerName
         self.schedulerFittingPolicy = schedulerFittingPolicy
         self.schedulerType = schedulerType
         self.slotType = slotType
@@ -12749,6 +12751,8 @@ class v1ResourcePool(Printable):
         self.type = type
         if not isinstance(accelerator, Unset):
             self.accelerator = accelerator
+        if not isinstance(resourceManagerName, Unset):
+            self.resourceManagerName = resourceManagerName
         if not isinstance(slotsPerAgent, Unset):
             self.slotsPerAgent = slotsPerAgent
         if not isinstance(stats, Unset):
@@ -12764,6 +12768,7 @@ class v1ResourcePool(Printable):
             "auxContainerCapacity": obj["auxContainerCapacity"],
             "auxContainerCapacityPerAgent": obj["auxContainerCapacityPerAgent"],
             "auxContainersRunning": obj["auxContainersRunning"],
+            "clusterName": obj["clusterName"],
             "containerStartupScript": obj["containerStartupScript"],
             "defaultAuxPool": obj["defaultAuxPool"],
             "defaultComputePool": obj["defaultComputePool"],
@@ -12782,7 +12787,6 @@ class v1ResourcePool(Printable):
             "numAgents": obj["numAgents"],
             "preemptible": obj["preemptible"],
             "resourceManagerMetadata": obj["resourceManagerMetadata"],
-            "resourceManagerName": obj["resourceManagerName"],
             "schedulerFittingPolicy": v1FittingPolicy(obj["schedulerFittingPolicy"]),
             "schedulerType": v1SchedulerType(obj["schedulerType"]),
             "slotType": devicev1Type(obj["slotType"]),
@@ -12793,6 +12797,8 @@ class v1ResourcePool(Printable):
         }
         if "accelerator" in obj:
             kwargs["accelerator"] = obj["accelerator"]
+        if "resourceManagerName" in obj:
+            kwargs["resourceManagerName"] = obj["resourceManagerName"]
         if "slotsPerAgent" in obj:
             kwargs["slotsPerAgent"] = obj["slotsPerAgent"]
         if "stats" in obj:
@@ -12808,6 +12814,7 @@ class v1ResourcePool(Printable):
             "auxContainerCapacity": self.auxContainerCapacity,
             "auxContainerCapacityPerAgent": self.auxContainerCapacityPerAgent,
             "auxContainersRunning": self.auxContainersRunning,
+            "clusterName": self.clusterName,
             "containerStartupScript": self.containerStartupScript,
             "defaultAuxPool": self.defaultAuxPool,
             "defaultComputePool": self.defaultComputePool,
@@ -12826,7 +12833,6 @@ class v1ResourcePool(Printable):
             "numAgents": self.numAgents,
             "preemptible": self.preemptible,
             "resourceManagerMetadata": self.resourceManagerMetadata,
-            "resourceManagerName": self.resourceManagerName,
             "schedulerFittingPolicy": self.schedulerFittingPolicy.value,
             "schedulerType": self.schedulerType.value,
             "slotType": self.slotType.value,
@@ -12837,6 +12843,8 @@ class v1ResourcePool(Printable):
         }
         if not omit_unset or "accelerator" in vars(self):
             out["accelerator"] = self.accelerator
+        if not omit_unset or "resourceManagerName" in vars(self):
+            out["resourceManagerName"] = self.resourceManagerName
         if not omit_unset or "slotsPerAgent" in vars(self):
             out["slotsPerAgent"] = self.slotsPerAgent
         if not omit_unset or "stats" in vars(self):

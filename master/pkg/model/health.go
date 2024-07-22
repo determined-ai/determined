@@ -19,6 +19,6 @@ type HealthCheck struct {
 
 // ResourceManagerHealth is a pair of resource manager name and health status.
 type ResourceManagerHealth struct {
-	Name   string       `json:"name"`
-	Status HealthStatus `json:"status"`
+	ClusterName string       `json:"cluster_name"`
+	Status      HealthStatus `json:"status"`
 }

@@ -207,7 +207,7 @@ func TestPostWorkspace(t *testing.T) {
 		multiRM              bool
 		expectedWksp         *workspacev1.Workspace
 		expectedWsNsBindings map[string]*workspacev1.WorkspaceNamespaceBinding
-		defaultRMName        string
+		defaultClusterName   string
 	}
 
 	successCases := []SuccessCase{
@@ -277,7 +277,7 @@ func TestPostWorkspace(t *testing.T) {
 					ClusterName: cluster1,
 				},
 			},
-			defaultRMName: cluster1,
+			defaultClusterName: cluster1,
 		},
 		{
 			name: "valid-cluster-name-valid-namespace-kubernetesRM",
@@ -303,7 +303,7 @@ func TestPostWorkspace(t *testing.T) {
 					ClusterName: cluster1,
 				},
 			},
-			defaultRMName: cluster1,
+			defaultClusterName: cluster1,
 		},
 		{
 			name: "valid-namespace-no-cluster-name-kubernetesRM",
@@ -336,7 +336,7 @@ func TestPostWorkspace(t *testing.T) {
 		t.Run(test.name, func(t *testing.T) {
 			mockRM := MockRM()
 			test.setupMockRM(mockRM)
-			setMasterRms(api, mockRM, test.defaultRMName, test.multiRM)
+			setMasterRms(api, mockRM, test.defaultClusterName, test.multiRM)
 
 			resp, err := api.PostWorkspace(ctx, test.req)
 			require.NoError(t, err, "Test %s failed", test.name)

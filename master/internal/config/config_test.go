@@ -870,7 +870,7 @@ func TestMultiRMPreemptionAndPriority(t *testing.T) {
 	cfg := DefaultConfig()
 	cfg.ResourceConfig = ResourceConfig{
 		RootManagerInternal: &ResourceManagerConfig{AgentRM: &AgentResourceManagerConfig{
-			Name: DefaultRMName, Scheduler: &SchedulerConfig{
+			Name: DefaultClusterName, Scheduler: &SchedulerConfig{
 				Priority: &PrioritySchedulerConfig{
 					Preemption:      false,
 					DefaultPriority: &prio1,

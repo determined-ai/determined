@@ -402,6 +402,30 @@ func (c *Config) Deprecations() (errs []error) {
 				))
 			}
 		}
+		rm := r.ResourceManager
+		nameDeprecatedWarning := "name is set for resource manager %s, but this field is " +
+			"deprecated and will be ignored unless cluster_name is left empty. Please specify " +
+			"cluster_name instead of name in future master deployments."
+		switch {
+		case rm.AgentRM != nil:
+			if len(rm.AgentRM.Name) > 0 {
+				errs = append(errs, fmt.Errorf(nameDeprecatedWarning, rm.AgentRM.ClusterName))
+			}
+		case rm.KubernetesRM != nil:
+			if len(rm.KubernetesRM.Name) > 0 {
+				errs = append(errs, fmt.Errorf(nameDeprecatedWarning, rm.KubernetesRM.ClusterName))
+			}
+		case rm.DispatcherRM != nil:
+			if len(rm.DispatcherRM.Name) > 0 {
+				errs = append(errs, fmt.Errorf(nameDeprecatedWarning, rm.DispatcherRM.ClusterName))
+			}
+		case rm.PbsRM != nil:
+			if len(rm.PbsRM.Name) > 0 {
+				errs = append(errs, fmt.Errorf(nameDeprecatedWarning, rm.PbsRM.ClusterName))
+			}
+		default:
+			panic(fmt.Sprintf("unknown rm type %+v", r))
+		}
 	}
 	return errs
 }
