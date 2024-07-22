@@ -1264,6 +1264,14 @@ func TestSearchExperimentsNoDeleting(t *testing.T) {
 	}
 	require.NoError(t, api.m.db.AddExperiment(exp, []byte{10, 11, 12}, activeConfig))
 
+	projectID := int32(projectIDInt)
+
+	// Empty response causes no errors.
+	req := &apiv1.SearchExperimentsRequest{
+		ProjectId: &projectID,
+		Sort:      ptrs.Ptr("id=asc"),
+	}
+
 	resp, err := api.SearchExperiments(ctx, req)
 	require.NoError(t, err)
 	// Deleting experiment should not be in the response
