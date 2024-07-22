@@ -2,16 +2,21 @@ import Alert from 'hew/Alert';
 import { MIN_COLUMN_WIDTH } from 'hew/DataGrid/columns';
 import Message from 'hew/Message';
 import Pivot, { PivotProps } from 'hew/Pivot';
+import Spinner from 'hew/Spinner';
 import SplitPane, { Pane } from 'hew/SplitPane';
+import { Loadable, NotLoaded } from 'hew/utils/loadable';
 import React, { useMemo } from 'react';
 
 import CompareHyperparameters from 'components/CompareHyperparameters';
+import { useAsync } from 'hooks/useAsync';
 import { MapOfIdsToColors } from 'hooks/useGlasbey';
 import { useMetrics } from 'hooks/useMetrics';
 import useMobile from 'hooks/useMobile';
 import useScrollbarWidth from 'hooks/useScrollbarWidth';
 import { TrialsComparisonTable } from 'pages/ExperimentDetails/TrialsComparisonModal';
+import { searchExperiments, searchRuns } from 'services/api';
 import { ExperimentWithTrial, FlatRun, XOR } from 'types';
+import handleError from 'utils/error';
 
 import CompareMetrics from './CompareMetrics';
 
@@ -27,8 +32,7 @@ interface BaseProps {
   projectId: number;
 }
 
-type Props = XOR<{ selectedExperiments: ExperimentWithTrial[] }, { selectedRuns: FlatRun[] }> &
-  BaseProps;
+type Props = XOR<{ selectedExperimentIds: number[] }, { selectedRunIds: number[] }> & BaseProps;
 
 const ComparisonView: React.FC<Props> = ({
   children,
@@ -38,12 +42,85 @@ const ComparisonView: React.FC<Props> = ({
   onWidthChange,
   fixedColumnsCount,
   projectId,
-  selectedExperiments,
-  selectedRuns,
+  selectedExperimentIds,
+  selectedRunIds,
 }) => {
   const scrollbarWidth = useScrollbarWidth();
   const hasPinnedColumns = fixedColumnsCount > 1;
   const isMobile = useMobile();
+
+  const loadableSelectedExperiments = useAsync(async () => {
+    if (selectedExperimentIds?.length) {
+      try {
+        const filter = {
+          filterGroup: {
+            children: [
+              {
+                columnName: 'id',
+                kind: 'field',
+                location: 'LOCATION_TYPE_EXPERIMENT',
+                operator: 'includes',
+                type: 'COLUMN_TYPE_NUMBER',
+                value: selectedExperimentIds,
+              },
+            ],
+            conjunction: 'and',
+            kind: 'group',
+          },
+          showArchived: false,
+        };
+        const response = await searchExperiments({
+          filter: JSON.stringify(filter),
+          limit: 50,
+        });
+        return response.experiments;
+      } catch (e) {
+        handleError(e, { publicSubject: 'Unable to fetch experiments for comparison' });
+        return NotLoaded;
+      }
+    }
+    return NotLoaded;
+  }, [selectedExperimentIds]);
+
+  const selectedExperiments: ExperimentWithTrial[] | undefined = Loadable.getOrElse(
+    undefined,
+    loadableSelectedExperiments,
+  );
+
+  const loadableSelectedRuns = useAsync(async () => {
+    if (selectedRunIds?.length) {
+      const filter = {
+        filterGroup: {
+          children: [
+            {
+              columnName: 'id',
+              kind: 'field',
+              location: 'LOCATION_TYPE_RUN',
+              operator: 'includes',
+              type: 'COLUMN_TYPE_NUMBER',
+              value: selectedRunIds,
+            },
+          ],
+          conjunction: 'and',
+          kind: 'group',
+        },
+        showArchived: false,
+      };
+      try {
+        const response = await searchRuns({
+          filter: JSON.stringify(filter),
+          limit: 50,
+        });
+        return response.runs;
+      } catch (e) {
+        handleError(e, { publicSubject: 'Unable to fetch runs for comparison' });
+        return NotLoaded;
+      }
+    }
+    return NotLoaded;
+  }, [selectedRunIds]);
+
+  const selectedRuns: FlatRun[] | undefined = Loadable.getOrElse(undefined, loadableSelectedRuns);
 
   const minWidths: [number, number] = useMemo(() => {
     return [fixedColumnsCount * MIN_COLUMN_WIDTH + scrollbarWidth, 100];
@@ -68,7 +145,7 @@ const ComparisonView: React.FC<Props> = ({
         ) : (
           <CompareMetrics
             metricData={metricData}
-            selectedExperiments={selectedExperiments}
+            selectedExperiments={selectedExperiments ?? []}
             trials={trials}
           />
         ),
@@ -88,7 +165,7 @@ const ComparisonView: React.FC<Props> = ({
             colorMap={colorMap}
             metricData={metricData}
             projectId={projectId}
-            selectedExperiments={selectedExperiments}
+            selectedExperiments={selectedExperiments ?? []}
             trials={trials}
           />
         ),
@@ -115,7 +192,10 @@ const ComparisonView: React.FC<Props> = ({
     );
 
   const rightPane =
-    selectedExperiments?.length === 0 || selectedRuns?.length === 0 ? (
+    (selectedExperimentIds?.length && selectedExperiments === undefined) ||
+    (selectedRunIds?.length && selectedRuns === undefined) ? (
+      <Spinner />
+    ) : selectedExperimentIds?.length === 0 || selectedRunIds?.length === 0 ? (
       <Alert description="Select records you would like to compare." message={EMPTY_MESSAGE} />
     ) : (
       <Pivot items={tabs} />

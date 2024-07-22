@@ -267,7 +267,7 @@ export const ExperimentComparisonViewWithMocks: React.FC<Props> = ({
       initialWidth={200}
       open={open}
       projectId={1}
-      selectedExperiments={empty ? [] : SELECTED_EXPERIMENTS}
+      selectedExperimentIds={empty ? [] : SELECTED_EXPERIMENTS.map((exp) => exp.experiment.id)}
       onWidthChange={onWidthChange}>
       {children}
     </ComparisonView>
@@ -288,7 +288,7 @@ export const RunComparisonViewWithMocks: React.FC<Props> = ({
       initialWidth={200}
       open={open}
       projectId={1}
-      selectedRuns={empty ? [] : SELECTED_RUNS}
+      selectedRunIds={empty ? [] : SELECTED_RUNS.map((run) => run.id)}
       onWidthChange={onWidthChange}>
       {children}
     </ComparisonView>

@@ -235,11 +235,11 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
     );
   }, [isMobile, settings.compare, settings.pinnedColumnsCount]);
 
-  const [loadedSelectedRuns, loadedSelectedRunIds] = useMemo(() => {
+  const loadedSelectedRunIds = useMemo(() => {
     const selectedMap = new Map<number, { run: FlatRun; index: number }>();
     const selectedArray: FlatRun[] = [];
     if (isLoadingSettings) {
-      return [selectedArray, selectedMap];
+      return selectedMap;
     }
 
     runs.forEach((r, index) => {
@@ -250,7 +250,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
         }
       });
     });
-    return [selectedArray, selectedMap];
+    return selectedMap;
   }, [isLoadingSettings, runs, selectedRunIdSet]);
 
   const selection = useMemo<GridSelection>(() => {
@@ -1115,7 +1115,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
             initialWidth={comparisonViewTableWidth}
             open={settings.compare}
             projectId={projectId}
-            selectedRuns={loadedSelectedRuns}
+            selectedRunIds={Array.from(selectedRunIdSet)}
             onWidthChange={handleCompareWidthChange}>
             <DataGrid<FlatRun, FlatRunAction>
               columns={columns}

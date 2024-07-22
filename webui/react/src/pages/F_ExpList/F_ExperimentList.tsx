@@ -713,13 +713,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     );
   }, [settings.columns, projectColumns, settings.pinnedColumnsCount, settings.compare]);
 
-  const selectedExperiments: ExperimentWithTrial[] = useMemo(() => {
-    if (loadedSelectedExperimentIds.size === 0) return [];
-    return Loadable.filterNotLoaded(experiments, (experiment) =>
-      loadedSelectedExperimentIds.has(experiment.experiment.id),
-    );
-  }, [experiments, loadedSelectedExperimentIds]);
-
   const columnsIfLoaded = useMemo(
     () => (isLoadingSettings ? [] : settings.columns),
     [isLoadingSettings, settings.columns],
@@ -1125,7 +1118,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
               initialWidth={comparisonViewTableWidth}
               open={settings.compare}
               projectId={project.id}
-              selectedExperiments={selectedExperiments}
+              selectedExperimentIds={allSelectedExperimentIds}
               onWidthChange={handleCompareWidthChange}>
               <DataGrid<ExperimentWithTrial, ExperimentAction, BulkExperimentItem>
                 columns={columns}

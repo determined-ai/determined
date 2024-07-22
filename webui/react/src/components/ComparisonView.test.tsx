@@ -9,8 +9,23 @@ import {
   ExperimentComparisonViewWithMocks,
   METRIC_DATA,
   RunComparisonViewWithMocks,
+  SELECTED_EXPERIMENTS,
+  SELECTED_RUNS,
 } from './ComparisonView.test.mock';
 import { ThemeProvider } from './ThemeProvider';
+
+vi.mock('services/api', () => ({
+  searchExperiments: () => {
+    return {
+      experiments: SELECTED_EXPERIMENTS,
+    };
+  },
+  searchRuns: () => {
+    return {
+      runs: SELECTED_RUNS,
+    };
+  },
+}));
 
 vi.mock('hooks/useSettings', async (importOriginal) => {
   const useSettings = vi.fn(() => {
