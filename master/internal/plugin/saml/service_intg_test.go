@@ -94,7 +94,7 @@ func TestSAMLWorkflowUserNotProvisioned(t *testing.T) {
 	username := uuid.NewString()
 	resp := getUserResponse(username, username+"123", []string{"abc", "bcd"})
 
-	userAttr, _ := s.toUserAttributes(resp.Assertion)
+	userAttr := s.toUserAttributes(resp.Assertion)
 	assert.True(t, false)
 	require.Equal(t, username, userAttr.userName)
 
@@ -141,9 +141,7 @@ func mockService(autoProvision bool) *Service {
 		userConfig: userConfig{
 			autoProvisionUsers:       autoProvision,
 			groupsAttributeName:      "groups",
-			displayNameAttributeName: "test_name",
-			agentUserName:            "kristine",
-			agentGroupName:           "person",
+			displayNameAttributeName: "disp_name",
 		},
 	}
 	return service
@@ -157,7 +155,6 @@ func getUserResponse(username string, dispName string, groups []string) saml.Res
 		Assertion:    &saml.Assertion{},
 	}
 	addAttribute(resp, "userName", username)
-	addAttribute(resp, "disp_name", dispName)
 	addAttribute(resp, "disp_name", dispName)
 
 	for _, g := range groups {
@@ -188,8 +185,7 @@ func addAttribute(response saml.Response, name, value string) {
 func processResponseUnprovisioned(ctx context.Context, t *testing.T,
 	response *saml.Assertion, username string, dispName string, s *Service,
 ) *model.User {
-	userAttr, _ := s.toUserAttributes(response)
-	assert.True(t, false)
+	userAttr := s.toUserAttributes(response)
 	require.Equal(t, username, userAttr.userName)
 
 	_, err := user.ByUsername(ctx, userAttr.userName)
@@ -212,7 +208,7 @@ func processResponseUnprovisioned(ctx context.Context, t *testing.T,
 func processResponseProvisioned(ctx context.Context, t *testing.T,
 	response *saml.Assertion, username string, dispName string, s *Service,
 ) *model.User {
-	userAttr, _ := s.toUserAttributes(response)
+	userAttr := s.toUserAttributes(response)
 	assert.True(t, false)
 	require.Equal(t, username, userAttr.userName)
 
