@@ -6,6 +6,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
+// Provisioner is an interface for provisioning external users by token.
 type Provisioner interface {
 	GetAndMaybeProvisionUserByToken(ctx context.Context, tokenText string,
 		ext *model.ExternalSessions,
@@ -14,10 +15,12 @@ type Provisioner interface {
 
 var provisioners = map[string]Provisioner{}
 
+// RegisterProvisioner registers an external user provisioner.
 func RegisterProvisioner(s string, p Provisioner) {
 	provisioners[s] = p
 }
 
+// GetAndMaybeProvisionUserByToken returns a user session derived from an external authentication token.
 func GetAndMaybeProvisionUserByToken(ctx context.Context, tokenText string,
 	ext *model.ExternalSessions,
 ) (*model.User, *model.UserSession, error) {

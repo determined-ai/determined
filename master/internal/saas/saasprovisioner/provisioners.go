@@ -1,4 +1,4 @@
-package saas_provisioner
+package saasprovisioner
 
 import (
 	"context"
@@ -8,17 +8,19 @@ import (
 	"sync"
 	"time"
 
+	"github.com/uptrace/bun"
+
 	"github.com/determined-ai/determined/master/internal/rbac"
 	"github.com/determined-ai/determined/master/internal/saas"
 	"github.com/determined-ai/determined/master/internal/usergroup"
 	"github.com/determined-ai/determined/proto/pkg/rbacv1"
-	"github.com/uptrace/bun"
 
-	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/golang-jwt/jwt/v4"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
 	"gopkg.in/guregu/null.v3"
+
+	"github.com/determined-ai/determined/master/internal/config"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/user"
@@ -27,9 +29,10 @@ import (
 
 var scimLock sync.Mutex
 
+// SAASProvisioner is a struct for provisioning saas users.
 type SAASProvisioner struct{}
 
-func ProvisionUserRBAC(ctx context.Context, scimUser *model.SCIMUser, clusterRole model.Role) error {
+func provisionUserRBAC(ctx context.Context, scimUser *model.SCIMUser, clusterRole model.Role) error {
 	err := db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		// AddSCIMUser calls AddUserTx, which creates the user's personal group
 		// We will probably want to get the group ID back, or we can just search for it
@@ -60,8 +63,8 @@ func ProvisionUserRBAC(ctx context.Context, scimUser *model.SCIMUser, clusterRol
 				// ScopeWorkspaceId: &scopeID,
 			},
 		}
-		rbac.AddGroupAssignmentsTx(ctx, tx, []*rbacv1.GroupRoleAssignment{groupRoleAssignment})
-		return nil
+		err = rbac.AddGroupAssignmentsTx(ctx, tx, []*rbacv1.GroupRoleAssignment{groupRoleAssignment})
+		return err
 	})
 	if err != nil {
 		return errors.WithStack(err)
@@ -69,13 +72,13 @@ func ProvisionUserRBAC(ctx context.Context, scimUser *model.SCIMUser, clusterRol
 	return nil
 }
 
-func ProvisionUserBasic(ctx context.Context, scimUser *model.SCIMUser) error {
+func provisionUserBasic(ctx context.Context, scimUser *model.SCIMUser) error {
 	// Legacy user was not found, so creating...
 	_, err := user.AddSCIMUser(ctx, scimUser)
 	return err
 }
 
-// ByExternalToken returns a user session derived from an external authentication token.
+// GetAndMaybeProvisionUserByToken returns a user session derived from an external authentication token.
 func (p *SAASProvisioner) GetAndMaybeProvisionUserByToken(ctx context.Context, tokenText string,
 	ext *model.ExternalSessions,
 ) (*model.User, *model.UserSession, error) {
@@ -101,7 +104,7 @@ func (p *SAASProvisioner) GetAndMaybeProvisionUserByToken(ctx context.Context, t
 		return nil, nil, jwt.ErrTokenExpired
 	}
 
-	clusterRole := model.NoRole
+	var clusterRole model.Role
 	active := false
 
 	orgRoles, ok := claims.OrgRoles[ext.OrgID]
@@ -158,9 +161,9 @@ func (p *SAASProvisioner) GetAndMaybeProvisionUserByToken(ctx context.Context, t
 			}
 
 			if rbacEnabled {
-				ProvisionUserRBAC(ctx, scimUser, clusterRole)
+				err = provisionUserRBAC(ctx, scimUser, clusterRole)
 			} else {
-				ProvisionUserBasic(ctx, scimUser)
+				err = provisionUserBasic(ctx, scimUser)
 			}
 
 			if err != nil {
@@ -221,6 +224,7 @@ func (p *SAASProvisioner) GetAndMaybeProvisionUserByToken(ctx context.Context, t
 	return u, session, nil
 }
 
+// Register initialized the external user provisioner.
 func Register() {
 	saas.RegisterProvisioner("saas", &SAASProvisioner{})
 }
