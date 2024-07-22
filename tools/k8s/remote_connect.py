@@ -12,18 +12,35 @@
 """
 
 
+import os
 import pathlib
 import random
 import socket
+import string
 import subprocess
 import tempfile
 import time
 from dataclasses import dataclass
-from typing import Optional, Tuple
+from sys import path
+from typing import Any, Dict, Optional, Tuple
 
 import kubernetes as k8s
 import kubernetes.client.exceptions as client_exceptions
 import yaml
+
+
+def expand_env(value: Any, env: Dict[str, str]) -> Any:
+    """
+    Expand string variables in the config file.
+    Borrowed from devcluster.
+    """
+    if isinstance(value, str):
+        return string.Template(value).safe_substitute(env)
+    if isinstance(value, dict):
+        return {k: expand_env(v, env) for k, v in value.items()}
+    if isinstance(value, list):
+        return [expand_env(l, env) for l in value]
+    return value
 
 
 @dataclass
@@ -31,12 +48,21 @@ class Config:
     # TODO: set up a shared ec2 instance for this usage.
     reverse_proxy_host: str
     k8s_context: str
-    ssh_key_path: pathlib.Path
-    determined_root: pathlib.Path
+    ssh_key_path: str
+    determined_root: str
+    base_devcluster_path: str
     ssh_user: str = "ubuntu"
-    base_devcluster_path: pathlib.Path = pathlib.Path("tools/k8s/devcluster.yaml")
     local_master_port: int = 8080
     remote_port_range: Tuple[int, int] = (8000, 9000)
+
+    @classmethod
+    def from_yaml(cls, path: pathlib.Path) -> "Config":
+        with open(path, "r") as f:
+            data = yaml.safe_load(f)
+            data = expand_env(data, env=dict(os.environ))
+        cfg = cls(**data)
+        print(f"Config loaded: {cfg}")
+        return cfg
 
 
 @dataclass
@@ -216,7 +242,7 @@ def update_devcluster(cfg: Config, gateway: Gateway, remote_port: int) -> pathli
     - add/update master address and port
     - save the updated formatted conf somewhere and share the path
     """
-    devc = DevClusterConf.from_yaml(cfg.base_devcluster_path)
+    devc = DevClusterConf.from_yaml(pathlib.Path(cfg.base_devcluster_path))
     master_stage = devc.get_stage("master")
     resource_manager = master_stage["resource_manager"]
     if "additional_resource_managers" in master_stage:
@@ -237,21 +263,24 @@ def update_devcluster(cfg: Config, gateway: Gateway, remote_port: int) -> pathli
     return temp_conf_path
 
 
-def main():
-    cfg = Config(
-        reverse_proxy_host="aws-dev.prv",
-        k8s_context="gw",
-        determined_root=pathlib.Path("$HOME/projects/da/determined"),
-        ssh_key_path=pathlib.Path("~/.ssh/id_ed25519").expanduser(),
-        ssh_user="hmd",
-    )
-
+def workflow_1(cfg: Config):
     rev_proxy, proxy_port = setup_reverse_proxy(cfg)
-    rev_proxy.terminate()
     gateway = get_gateway_info(cfg)
     if not gateway:
         gateway = provision_gateway(cfg)
-    update_devcluster(cfg, gateway, proxy_port)
+    config_path = update_devcluster(cfg, gateway, proxy_port)
+    # TODO: run devc?
+    print("Workflow 1 ready.")
+    print(f"devcluster -c {config_path}")
+    input("Press Enter to terminate and cleanup once done.")
+    rev_proxy.terminate()
+
+
+def main():
+    DET_ROOT = pathlib.Path("~/projects/da/determined").expanduser()
+    print(f"DETERMINED_ROOT: {DET_ROOT.expanduser()}")
+    cfg = Config.from_yaml(DET_ROOT / "tools" / "k8s" / "remote_connect.yaml")
+    workflow_1(cfg)
 
 
 if __name__ == "__main__":
