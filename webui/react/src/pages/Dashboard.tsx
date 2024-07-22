@@ -172,6 +172,7 @@ const Dashboard: React.FC = () => {
   }, [canceler, stopPolling]);
 
   const pageBreadCrumb: BreadCrumbRoute[] = [{ breadcrumbName: 'Home', path: paths.dashboard() }];
+
   if (projectsLoading && submissionsLoading) {
     return null;
   }
@@ -225,7 +226,6 @@ const Dashboard: React.FC = () => {
                 dataIndex: 'name',
                 render: (name, row, index) => {
                   if (row.projectId) {
-                    // only for Experiments, not Tasks:
                     return experimentNameRenderer(name, row);
                   } else {
                     return taskNameRenderer(row.id, row, index);
