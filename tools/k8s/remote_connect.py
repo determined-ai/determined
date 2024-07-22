@@ -204,6 +204,10 @@ def provision_gateway(cfg: Config) -> Gateway:
     return gateway
 
 
+def warn(msg: str, *args, **kwargs):
+    print(f"Warning: {msg}", *args, **kwargs, file=sys.stderr)
+
+
 def update_devcluster(cfg: Config, gateway: Gateway, remote_port: int) -> pathlib.Path:
     """
     Update the devcluster config to use the gateway.
@@ -211,13 +215,15 @@ def update_devcluster(cfg: Config, gateway: Gateway, remote_port: int) -> pathli
     - add/update gateway config
     - add/update master address and port
     - save the updated formatted conf somewhere and share the path
-
-
-    for each resource_manager with type: kubernetes as if it needs updating
     """
     devc = DevClusterConf.from_yaml(cfg.base_devcluster_path)
     master_stage = devc.get_stage("master")
     resource_manager = master_stage["resource_manager"]
+    if "additional_resource_managers" in master_stage:
+        warn(
+            "setting up additional resource managers are not supported yet."
+            + "These will be ignored."
+        )
     assert resource_manager["type"] == "kubernetes"
     resource_manager["determined_master_ip"] = cfg.reverse_proxy_host
     resource_manager["determined_master_port"] = remote_port
