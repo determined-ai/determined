@@ -4538,7 +4538,7 @@ workflows:
             - build-go-ee
           parallelism: 1
           tf2: true
-          mark: e2e_multi_k8s
+          mark: e2e_cpu and e2e_multi_k8s
           target-stage: master
           devcluster-config: single-k8s.devcluster.yaml
           run-minikubes: true
