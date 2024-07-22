@@ -41,7 +41,9 @@ type Service struct {
 	db           *db.PgDB
 	samlProvider *samlsp.Middleware
 	userConfig   userConfig
-} // userConfig represents the user defined configurations for SAML integration.
+}
+
+// userConfig represents the user defined configurations for SAML integration.
 type userConfig struct {
 	autoProvisionUsers       bool
 	groupsAttributeName      string
