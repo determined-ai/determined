@@ -592,6 +592,7 @@ def test_workspaceid_set() -> None:
 
 @pytest.mark.e2e_gpu
 @pytest.mark.e2e_multi_k8s
+@pytest.mark.e2e_single_k8s
 def test_set_workspace_namespace_bindings(
     is_multirm_cluster: bool, namespaces_created: Tuple[str, str]
 ) -> None:
@@ -727,6 +728,7 @@ def test_set_workspace_namespace_bindings(
 
 @pytest.mark.e2e_gpu
 @pytest.mark.e2e_multi_k8s
+@pytest.mark.e2e_single_k8s
 def test_delete_workspace_namespace_bindings(
     is_multirm_cluster: bool, namespaces_created: Tuple[str, str]
 ) -> None:
@@ -813,6 +815,7 @@ def test_delete_workspace_namespace_bindings(
 
 @pytest.mark.e2e_gpu
 @pytest.mark.e2e_multi_k8s
+@pytest.mark.e2e_single_k8s
 def test_list_workspace_namespace_bindings(
     is_multirm_cluster: bool, namespaces_created: Tuple[str, str]
 ) -> None:
