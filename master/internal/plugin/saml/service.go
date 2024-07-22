@@ -48,8 +48,8 @@ type userConfig struct {
 	autoProvisionUsers       bool
 	groupsAttributeName      string
 	displayNameAttributeName string
-	agentUid                 int
-	agentGid                 int
+	agentUID                 int
+	agentGID                 int
 	agentUserName            string
 	agentGroupName           string
 }
@@ -61,8 +61,8 @@ func New(db *db.PgDB, c config.SAMLConfig) (*Service, error) {
 		autoProvisionUsers:       c.AutoProvisionUsers,
 		groupsAttributeName:      c.GroupsAttributeName,
 		displayNameAttributeName: c.DisplayNameAttributeName,
-		agentUid:                 c.AgentUID,
-		agentGid:                 c.AgentGID,
+		agentUID:                 c.AgentUID,
+		agentGID:                 c.AgentGID,
 		agentUserName:            c.AgentUserName,
 		agentGroupName:           c.AgentGroupName,
 	}
@@ -158,9 +158,6 @@ func (s *Service) consumeAssertion(c echo.Context) error {
 	}
 
 	userAttr := s.toUserAttributes(xmlResponse)
-	if err != nil {
-		return err
-	}
 	if userAttr == nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "SAML attribute identifier userName missing")
 	}
