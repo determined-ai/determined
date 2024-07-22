@@ -363,8 +363,8 @@ const JupyterLabForm: React.FC<{
 
   const boundResourcePools: ResourcePool[] = useMemo(() => {
     if (!Loadable.isLoaded(resourcePools) || !selectedWorkspaceId) return [];
-    return resourcePools.data.filter(
-      (rp) => boundResourcePoolsMap.get(selectedWorkspaceId)?.includes(rp.name),
+    return resourcePools.data.filter((rp) =>
+      boundResourcePoolsMap.get(selectedWorkspaceId)?.includes(rp.name),
     );
   }, [resourcePools, boundResourcePoolsMap, selectedWorkspaceId]);
 
