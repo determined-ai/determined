@@ -1243,7 +1243,6 @@ func TestSearchExperimentsMalformed(t *testing.T) {
 func TestSearchExperimentsNoDeleting(t *testing.T) {
 	api, curUser, ctx := setupAPITest(t, nil)
 	_, projectIDInt := createProjectAndWorkspace(ctx, t, api)
-	projectID := int32(projectIDInt)
 
 	exp := createTestExpWithProjectID(t, api, curUser, projectIDInt)
 
@@ -1259,13 +1258,13 @@ func TestSearchExperimentsNoDeleting(t *testing.T) {
 		JobID:     model.JobID(uuid.New().String()),
 		State:     model.DeletingState,
 		OwnerID:   &curUser.ID,
-		ProjectID: projectID,
+		ProjectID: projectIDInt,
 		StartTime: time.Now(),
 		Config:    activeConfig.AsLegacy(),
 	}
 	require.NoError(t, api.m.db.AddExperiment(exp, []byte{10, 11, 12}, activeConfig))
 
-	resp, err = api.SearchExperiments(ctx, req)
+	resp, err := api.SearchExperiments(ctx, req)
 	require.NoError(t, err)
 	// Deleting experiment should not be in the response
 	require.Len(t, resp.Experiments, 1)
