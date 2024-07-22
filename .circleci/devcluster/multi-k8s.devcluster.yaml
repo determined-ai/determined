@@ -26,6 +26,8 @@ stages:
           level: debug
         enable_cors: true
         root: tools/build
+        telemetry:
+          enabled: false
 
         resource_manager:
           type: kubernetes
