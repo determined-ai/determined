@@ -47,7 +47,7 @@ def get_workspace_names(session: api.Session) -> Dict[int, str]:
 
 
 def render_user_group_rolenames(
-    resp: Sequence[bindings.v1GetGroupsAndUsersAssignedToWorkspaceResponse]
+    resp: Sequence[bindings.v1GetGroupsAndUsersAssignedToWorkspaceResponse], is_csv: bool
 ) -> None:
     group_map = {}
     user_map = {}
@@ -66,15 +66,15 @@ def render_user_group_rolenames(
             role_name = assignment.role.name
 
             for group_assignment in assignment.groupRoleAssignments:
-                value = [group_map[group_assignment.groupId], role_name]
+                value = [group_map[group_assignment.groupId], "G", role_name]
                 values.append(value)
 
             for user_assignment in assignment.userRoleAssignments:
-                value = [user_map[user_assignment.userId], role_name]
+                value = [user_map[user_assignment.userId], "U", role_name]
                 values.append(value)
 
-    headers = ["User/Group Name", "Role Name"]
-    render.tabulate_or_csv(headers, values, False)
+    headers = ["User/Group Name", "U/G", "Role Name"]
+    render.tabulate_or_csv(headers, values, is_csv)
 
 
 def render_workspaces(
@@ -185,8 +185,12 @@ def list_workspace_members(args: argparse.Namespace) -> None:
 
     if args.json:
         render.print_json(resp.to_json())
+    elif args.yaml:
+        print(util.yaml_safe_dump(resp.to_json(), default_flow_style=False))
+    elif args.csv:
+        render_user_group_rolenames(resp, True)
     else:
-        render_user_group_rolenames(resp)
+        render_user_group_rolenames(resp, False)
 
 
 def _parse_agent_user_group_args(args: argparse.Namespace) -> Optional[bindings.v1AgentUserGroup]:
@@ -420,10 +424,16 @@ args_description = [
             cli.Cmd(
                 "list-members",
                 list_workspace_members,
-                "list users/user-groups members of a workspace and their permissions",
+                "list users/user-groups members of a workspace and their roles",
                 [
                     cli.Arg("workspace_name", type=str, help="name of the workspace"),
-                    cli.Arg("--json", action="store_true", help="print as JSON"),
+                    cli.Group(
+                        cli.output_format_args["json"],
+                        cli.output_format_args["yaml"],
+                        cli.output_format_args["table"],
+                        cli.output_format_args["csv"],
+                    ),
+                    *cli.make_pagination_args(limit=1000),
                 ],
             ),
             cli.Cmd(
