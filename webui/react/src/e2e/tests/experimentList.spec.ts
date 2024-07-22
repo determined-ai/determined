@@ -39,6 +39,7 @@ test.describe('Experiment List', () => {
   });
 
   test.beforeEach(async ({ authedPage }) => {
+    test.slow();
     projectDetailsPage = new ProjectDetails(authedPage);
     const grid = projectDetailsPage.f_experimentList.dataGrid;
 
@@ -59,14 +60,31 @@ test.describe('Experiment List', () => {
         await projectDetailsPage.f_experimentList.tableActionBar.columnPickerMenu.open();
       await columnPicker.columnPickerTab.reset.pwLocator.click();
       await columnPicker.close();
+      await waitTableStable();
+    });
+    await test.step('Sort Oldest → Newest', async () => {
+      // reset
+      const sortContent =
+        await projectDetailsPage.f_experimentList.tableActionBar.multiSortMenu.open();
+      await sortContent.multiSort.reset.pwLocator.click();
+      // the menu doesn't close in local automation, but it works with mouse events
+      // manually and sometimes on ci. let's just close it manually
+      await sortContent.close();
+      await sortContent.open();
+      // set sort
+      const firstRow = sortContent.multiSort.rows.nth(0);
+      await firstRow.column.selectMenuOption('Start time');
+      await firstRow.order.selectMenuOption('Oldest → Newest');
+      await sortContent.close();
+      await waitTableStable();
     });
     await test.step('Reset Filters', async () => {
       const tableFilter =
         await projectDetailsPage.f_experimentList.tableActionBar.tableFilter.open();
       await tableFilter.filterForm.clearFilters.pwLocator.click();
       await tableFilter.close();
+      await waitTableStable();
     });
-    await waitTableStable();
     await grid.setColumnHeight();
     await grid.headRow.setColumnDefs();
   });
@@ -100,7 +118,6 @@ test.describe('Experiment List', () => {
   });
 
   test('Column Picker Show All and Hide All', async () => {
-    test.slow();
     const columnPicker = projectDetailsPage.f_experimentList.tableActionBar.columnPickerMenu;
     const grid = projectDetailsPage.f_experimentList.dataGrid;
     let previousTabs = grid.headRow.columnDefs.size;
@@ -154,7 +171,6 @@ test.describe('Experiment List', () => {
   });
 
   test('Table Filter', async () => {
-    test.slow();
     const tableFilter = projectDetailsPage.f_experimentList.tableActionBar.tableFilter;
     const totalExperiments = await getCount();
 

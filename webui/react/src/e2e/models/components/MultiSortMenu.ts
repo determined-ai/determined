@@ -32,7 +32,7 @@ class MultiSort extends NamedComponent {
   readonly defaultSelector = '[data-test-component="multiSort"]';
   readonly add = new BaseComponent({ parent: this, selector: '[data-test="add"]' });
   readonly reset = new BaseComponent({ parent: this, selector: '[data-test="reset"]' });
-  readonly rows = new MultiSortRow({ parent: this, selector: '[data-test="reset"]' });
+  readonly rows = new MultiSortRow({ parent: this, selector: '[data-test="rows"]' });
 }
 
 /**
@@ -41,7 +41,7 @@ class MultiSort extends NamedComponent {
 class MultiSortRow extends NamedComponent {
   readonly defaultSelector = '[data-test-component="multiSortRow"]';
   readonly column = new ColumnOptions({ parent: this, selector: '[data-test="column"]' });
-  readonly order = new DirectionOptions({ parent: this, selector: '[data-test="order"]' });
+  readonly order = new DirectionOptions({ parent: this, selector: '[data-test="direction"]' });
   readonly remove = new BaseComponent({ parent: this, selector: '[data-test="remove"]' });
 }
 
