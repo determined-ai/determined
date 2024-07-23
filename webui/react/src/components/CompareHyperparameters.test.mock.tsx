@@ -594,38 +594,47 @@ export const SELECTED_RUNS = [
 ];
 
 interface Props {
-  empty?: boolean;
-  comparableMetrics?: boolean;
+  state: 'empty' | 'uncomparable_metrics' | 'no_metrics' | 'normal';
 }
 export const CompareTrialHyperparametersWithMocks: React.FC<Props> = ({
-  empty,
-  comparableMetrics = true,
+  state,
 }: Props): JSX.Element => {
   const colorMap = useGlasbey(SELECTED_EXPERIMENTS.map((exp) => exp.experiment.id));
+  const metricData =
+    state === 'uncomparable_metrics'
+      ? { ...METRIC_DATA, data: {} }
+      : state === 'no_metrics'
+        ? { ...METRIC_DATA, metrics: [] }
+        : METRIC_DATA;
   return (
     <CompareHyperparameters
       colorMap={colorMap}
-      metricData={comparableMetrics ? METRIC_DATA : { ...METRIC_DATA, data: {} }}
+      metricData={metricData}
       projectId={1}
       // @ts-expect-error Mock data does not need type checking
-      selectedExperiments={empty ? [] : SELECTED_EXPERIMENTS}
+      selectedExperiments={state === 'empty' ? [] : SELECTED_EXPERIMENTS}
       // @ts-expect-error Mock data does not need type checking
-      trials={empty ? [] : TRIALS}
+      trials={state === 'empty' ? [] : TRIALS}
     />
   );
 };
 
 export const CompareRunHyperparametersWithMocks: React.FC<Props> = ({
-  empty,
-  comparableMetrics = true,
+  state,
 }: Props): JSX.Element => {
   const colorMap = useGlasbey(SELECTED_RUNS.map((run) => run.id));
+  const metricData =
+    state === 'uncomparable_metrics'
+      ? { ...METRIC_DATA, data: {} }
+      : state === 'no_metrics'
+        ? { ...METRIC_DATA, metrics: [] }
+        : METRIC_DATA;
   return (
     <CompareHyperparameters
       colorMap={colorMap}
-      metricData={comparableMetrics ? METRIC_DATA : { ...METRIC_DATA, data: {} }}
+      metricData={metricData}
       projectId={1}
-      selectedRuns={empty ? [] : SELECTED_RUNS}
+      selectedRuns={state === 'empty' ? [] : SELECTED_RUNS}
     />
   );
 };
