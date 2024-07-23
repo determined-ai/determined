@@ -45,26 +45,26 @@ type Service struct {
 
 // userConfig represents the user defined configurations for SAML integration.
 type userConfig struct {
-	autoProvisionUsers       bool
-	groupsAttributeName      string
-	displayNameAttributeName string
-	agentUID                 int
-	agentGID                 int
-	agentUserName            string
-	agentGroupName           string
+	autoProvisionUsers          bool
+	groupsAttributeName         string
+	displayNameAttributeName    string
+	agentUIDAttributeName       int
+	agentGIDAttributeName       int
+	agentUserNameAttributeName  string
+	agentGroupNameAttributeName string
 }
 
 // New constructs a new SAML service that is capable of sending SAML requests and consuming
 // responses.
 func New(db *db.PgDB, c config.SAMLConfig) (*Service, error) {
 	uc := userConfig{
-		autoProvisionUsers:       c.AutoProvisionUsers,
-		groupsAttributeName:      c.GroupsAttributeName,
-		displayNameAttributeName: c.DisplayNameAttributeName,
-		agentUID:                 c.AgentUID,
-		agentGID:                 c.AgentGID,
-		agentUserName:            c.AgentUserName,
-		agentGroupName:           c.AgentGroupName,
+		autoProvisionUsers:          c.AutoProvisionUsers,
+		groupsAttributeName:         c.GroupsAttributeName,
+		displayNameAttributeName:    c.DisplayNameAttributeName,
+		agentUIDAttributeName:       c.AgentUIDAttributeName,
+		agentGIDAttributeName:       c.AgentGIDAttributeName,
+		agentUserNameAttributeName:  c.AgentUserNameAttributeName,
+		agentGroupNameAttributeName: c.AgentGroupNameAttributeName,
 	}
 
 	key, cert, err := proxy.GenSignedCert()

@@ -119,17 +119,17 @@ stringData:
       {{- if .Values.oidc.displayNameAttributeName }}
       display_name_attribute_name: {{ .Values.oidc.displayNameAttributeName }}
       {{- end }}
-      {{- if .Values.oidc.agentUid }}
-      agent_uid: {{ .Values.oidc.agentUid }}
+      {{- if .Values.oidc.agentUidAttributeName }}
+      agent_uid: {{ .Values.oidc.agentUidAttributeName }}
       {{- end }}
-      {{- if .Values.oidc.agentGid }}
-      agent_gid: {{ .Values.oidc.agentGid }}
+      {{- if .Values.oidc.agentGidAttributeName }}
+      agent_gid: {{ .Values.oidc.agentGidAttributeName }}
       {{- end }}
-      {{- if .Values.oidc.agentUserName }}
-      agent_user_name: {{ .Values.oidc.agentUserName }}
+      {{- if .Values.oidc.agentUserNameAttributeName }}
+      agent_user_name: {{ .Values.oidc.agentUserNameAttributeName }}
       {{- end }}
-      {{- if .Values.oidc.agentGroupName }}
-      agent_group_name: {{ .Values.oidc.agentGroupName }}
+      {{- if .Values.oidc.agentGroupNameAttributeName }}
+      agent_group_name: {{ .Values.oidc.agentGroupNameAttributeName }}
       {{- end }}
     {{- end }}
 
@@ -161,17 +161,17 @@ stringData:
       {{- if .Values.saml.displayNameAttributeName }}
       display_name_attribute_name: {{ .Values.saml.displayNameAttributeName }}
       {{- end }}
-      {{- if .Values.saml.agentUid }}
-      agent_uid: {{ .Values.saml.agentUid }}
+      {{- if .Values.saml.agentUidAttributeName }}
+      agent_uid: {{ .Values.saml.agentUidAttributeName }}
       {{- end }}
-      {{- if .Values.saml.agentGid }}
-      agent_gid: {{ .Values.saml.agentGid }}
+      {{- if .Values.saml.agentGidAttributeName }}
+      agent_gid: {{ .Values.saml.agentGidAttributeName }}
       {{- end }}
-      {{- if .Values.saml.agentUserName }}
-      agent_user_name: {{ .Values.saml.agentUserName }}
+      {{- if .Values.saml.agentUserNameAttributeName }}
+      agent_user_name: {{ .Values.saml.agentUserNameAttributeName }}
       {{- end }}
-      {{- if .Values.saml.agentGroupName }}
-      agent_group_name: {{ .Values.saml.agentGroupName }}
+      {{- if .Values.saml.agentGroupNameAttributeName }}
+      agent_group_name: {{ .Values.saml.agentGroupNameAttributeName }}
       {{- end }}
     {{- end }}
     {{- end }}
