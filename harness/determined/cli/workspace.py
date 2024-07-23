@@ -295,8 +295,8 @@ def create_workspace(args: argparse.Namespace) -> None:
             autoCreateNamespaceAllClusters=args.auto_create_namespace_all_clusters,
         )
         content.clusterNamespaceMeta = {cluster_name: namespace_meta}
-        if args.resource_quota:
-            content.clusterQuotaPairs = {cluster_name: args.resource_quota}
+    if args.resource_quota:
+        content.clusterQuotaPairs = {cluster_name: args.resource_quota}
     resp = bindings.post_PostWorkspace(sess, body=content)
     w = resp.workspace
     if args.json:
