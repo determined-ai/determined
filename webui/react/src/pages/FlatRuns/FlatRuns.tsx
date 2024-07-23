@@ -65,7 +65,6 @@ import useResize from 'hooks/useResize';
 import useScrollbarWidth from 'hooks/useScrollbarWidth';
 import { useSettings } from 'hooks/useSettings';
 import useTypedParams from 'hooks/useTypedParams';
-import { DEFAULT_SELECTION } from 'pages/F_ExpList/F_ExperimentList.settings';
 import FlatRunActionButton from 'pages/FlatRuns/FlatRunActionButton';
 import { paths } from 'routes/utils';
 import { getProjectColumns, getProjectNumericMetricsRange, searchRuns } from 'services/api';
@@ -96,6 +95,7 @@ import {
 import css from './FlatRuns.module.scss';
 import {
   ColumnWidthsSlice,
+  DEFAULT_SELECTION,
   defaultFlatRunsSettings,
   FlatRunsSettings,
   ProjectUrlSettings,
