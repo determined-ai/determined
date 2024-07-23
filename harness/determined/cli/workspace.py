@@ -523,11 +523,11 @@ args_description = [
                             "-n",
                             "--namespace",
                             type=str,
-                            help="existing namespace to which \
+                            help='existing namespace to which \
                             the workspace is bound. When neither --namespace NAMESPACE nor \
                             --auto-create-namespace are specified, this defaults to your helm \
-                            value of resource_manager.default_namespace. If that's not specified, \
-                            this defaults to the default Kubernetes namespace, \"default\".",
+                            value of resource_manager.default_namespace. If that\'s not specified, \
+                            this defaults to the default Kubernetes namespace, "default".',
                         ),
                         cli.Arg(
                             "--auto-create-namespace",
@@ -615,12 +615,12 @@ args_description = [
                                 cli.Arg(
                                     "--namespace",
                                     type=str,
-                                    help="existing namespace to which the workspace is bound. When \
+                                    help='existing namespace to which the workspace is bound. When \
                                     neither --namespace NAMESPACE nor --auto-create-namespace are \
                                     specified, this defaults to your helm value of \
-                                    resource_manager.default_namespace. If that's not specified, \
+                                    resource_manager.default_namespace. If that\'s not specified, \
                                     this defaults to the default Kubernetes namespace, \
-                                    \"default\".",
+                                    "default".',
                                 ),
                                 cli.Arg(
                                     "--auto-create-namespace",

@@ -592,6 +592,7 @@ def test_workspaceid_set() -> None:
 
 @pytest.mark.e2e_gpu
 @pytest.mark.e2e_multi_k8s
+@pytest.mark.e2e_single_k8s
 def test_set_workspace_namespace_bindings(
     is_multirm_cluster: bool, namespaces_created: Tuple[str, str]
 ) -> None:
@@ -655,16 +656,15 @@ def test_set_workspace_namespace_bindings(
         )
 
     else:
-        output = detproc.check_output(
-            sess,
-            ["det", "w", "bindings", "set", w_name, "--namespace", namespace],
-        )
-        assert bound_to_namespace in output
-
         w_name = uuid.uuid4().hex[:8]
         output = detproc.check_output(
             sess,
             ["det", "w", "create", w_name, "--namespace", namespace],
+        )
+
+        output = detproc.check_output(
+            sess,
+            ["det", "w", "bindings", "set", w_name, "--namespace", namespace],
         )
         assert bound_to_namespace in output
 
@@ -727,6 +727,7 @@ def test_set_workspace_namespace_bindings(
 
 @pytest.mark.e2e_gpu
 @pytest.mark.e2e_multi_k8s
+@pytest.mark.e2e_single_k8s
 def test_delete_workspace_namespace_bindings(
     is_multirm_cluster: bool, namespaces_created: Tuple[str, str]
 ) -> None:
@@ -813,6 +814,7 @@ def test_delete_workspace_namespace_bindings(
 
 @pytest.mark.e2e_gpu
 @pytest.mark.e2e_multi_k8s
+@pytest.mark.e2e_single_k8s
 def test_list_workspace_namespace_bindings(
     is_multirm_cluster: bool, namespaces_created: Tuple[str, str]
 ) -> None:

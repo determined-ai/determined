@@ -29,6 +29,7 @@ _INTEG_MARKERS = {
     "e2e_cpu_rbac",
     "e2e_gpu",
     "e2e_multi_k8s",
+    "e2e_single_k8s",
     "e2e_k8s",
     "e2e_pbs",
     "e2e_saml",
