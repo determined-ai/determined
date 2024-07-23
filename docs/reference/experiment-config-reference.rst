@@ -140,7 +140,9 @@ experiment details are reviewed. For example, given the following configuration:
          auth_token: f020572a-a847-4cc6-9c2b-625c43515759
 
 The value of ``data["secrets"]["auth_token"]`` will be usable during the experiment run, but not
-when users view the experiment configuration.
+when users view the experiment configuration. Note these values may still be visible in the
+configuration file itself; to hide this file from model context, add it to a ``.detignore`` file
+(see :ref:`Creating an Experiment <creating-an-experiment>`).
 
 See also: :ref:`det API Reference <det-reference>` > ``user_data`` property.
 
