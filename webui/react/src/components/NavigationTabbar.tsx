@@ -161,7 +161,7 @@ const NavigationTabbar: React.FC = () => {
     {
       icon: 'user',
       label: 'Sign out',
-      onClick: (e: AnyMouseEvent) => handlePathUpdate(e, paths.logout()),
+      onClick: (e: AnyMouseEvent) => handlePathUpdate(e, paths.logout() + '?hard_logout=true'),
     },
     {
       external: true,

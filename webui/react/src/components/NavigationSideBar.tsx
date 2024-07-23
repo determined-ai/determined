@@ -242,7 +242,7 @@ const NavigationSideBar: React.FC = () => {
         label: <Link onClick={() => setShowSettings(true)}>User Settings</Link>,
       },
       { key: 'theme-toggle', label: <ThemeToggle /> },
-      { key: 'sign-out', label: <Link path={paths.logout()}>Sign Out</Link> },
+      { key: 'sign-out', label: <Link path={paths.logout() + '?hard_logout=true'}>Sign Out</Link> },
     ];
     if (canAdministrateUsers) {
       items.unshift({

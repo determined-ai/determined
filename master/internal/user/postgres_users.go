@@ -11,16 +11,22 @@ import (
 	"github.com/pkg/errors"
 	"github.com/uptrace/bun"
 	"golang.org/x/exp/slices"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
-// SessionDuration is how long a newly created session is valid.
-const SessionDuration = 7 * 24 * time.Hour
+const (
+	// SessionDuration is how long a newly created session is valid.
+	SessionDuration = 7 * 24 * time.Hour
+	// PersonalGroupPostfix is the system postfix appended to the username of all personal groups.
+	PersonalGroupPostfix = "DeterminedPersonalGroup"
+)
 
-// PersonalGroupPostfix is the system postfix appended to the username of all personal groups.
-const PersonalGroupPostfix = "DeterminedPersonalGroup"
+// ErrRemoteUserTokenExpired notifies that the remote user's token has expired.
+var ErrRemoteUserTokenExpired = status.Error(codes.Unauthenticated, "remote user token expired")
 
 // UserSessionOption is the return type for WithInheritedClaims helper function.
 type UserSessionOption func(f *model.UserSession)
@@ -359,7 +365,8 @@ func ByID(ctx context.Context, userID model.UserID) (*model.FullUser, error) {
 	return &fu, nil
 }
 
-// ByToken returns a user session given an authentication token.
+// ByToken returns a user session given an authentication token. If a session belonging to a remote (SSO) user
+// is found but has expired, ErrRemoteUserTokenExpired will be returned.
 func ByToken(ctx context.Context, token string, ext *model.ExternalSessions) (
 	*model.User, *model.UserSession, error,
 ) {
@@ -382,6 +389,21 @@ func ByToken(ctx context.Context, token string, ext *model.ExternalSessions) (
 	}
 
 	if session.Expiry.Before(time.Now()) {
+		var isRemote bool
+		if err := db.Bun().NewSelect().
+			Model(&model.User{}).
+			Column("remote").
+			Where("id = ?", session.UserID).
+			Scan(ctx, &isRemote); err != nil {
+			return nil, nil, db.ErrNotFound
+		}
+
+		// flag remote users as expired, so they are redirected to the SSO login page
+		// instead of returning an error
+		if isRemote {
+			return nil, nil, ErrRemoteUserTokenExpired
+		}
+
 		return nil, nil, db.ErrNotFound
 	}
 

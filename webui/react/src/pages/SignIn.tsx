@@ -15,7 +15,7 @@ import Page from 'components/Page';
 import PageMessage from 'components/PageMessage';
 import useUI from 'components/ThemeProvider';
 import { handleRelayState, samlUrl } from 'ee/SamlAuth';
-import { sessionStorage } from 'globalStorage';
+import { globalStorage, sessionStorage } from 'globalStorage';
 import useAuthCheck from 'hooks/useAuthCheck';
 import usePolling from 'hooks/usePolling';
 import { defaultRoute, rbacDefaultRoute } from 'routes';
@@ -81,8 +81,12 @@ const SignIn: React.FC = () => {
 
       // Reroute the authenticated user to the app.
       if (!queries.has('redirect')) {
-        const path = sessionStorage.landingRedirect;
+        let path = sessionStorage.landingRedirect;
         sessionStorage.removeLandingRedirect();
+        if (path === '') {
+          path = globalStorage.landingRedirect;
+          globalStorage.removeLandingRedirect();
+        }
         routeToReactUrl(path || (rbacEnabled ? rbacDefaultRoute.path : defaultRoute.path));
       } else {
         routeAll(queries.get('redirect') || '');
@@ -107,10 +111,17 @@ const SignIn: React.FC = () => {
    *   1. jwt query param detected
    *   2. cluster has `externalLoginUri` defined
    *   3. authentication hasn't occurred yet
+   *   4. a remote user token has expired
+   *   5. an SSO providers is set to always redirect
    * This will prevent the form from showing for a split second when
    * accessing a page from the browser when the user is already verified.
    */
-  if (queries.has('jwt') || info.externalLoginUri || !isAuthChecked) return null;
+  const redirectToSSO =
+    !queries.get('hard_logout') &&
+    (queries.get('remote_expired') ||
+      info.ssoProviders?.some((ssoProvider) => ssoProvider.alwaysRedirect));
+
+  if (queries.has('jwt') || info.externalLoginUri || !isAuthChecked || redirectToSSO) return null;
 
   /*
    * An external auth error occurs when there are external auth urls,

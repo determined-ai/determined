@@ -10652,6 +10652,12 @@ export interface V1SSOProvider {
      * @memberof V1SSOProvider
      */
     type: string;
+    /**
+     * The flag to indicate if this provider should be always be redirected to, instead of showing the standard sign-in page.
+     * @type {boolean}
+     * @memberof V1SSOProvider
+     */
+    alwaysRedirect?: boolean;
 }
 /**
  * Start a trial.
