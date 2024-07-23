@@ -7,32 +7,27 @@ import { ThemeProvider } from 'components/ThemeProvider';
 import TrialDetails from './TrialDetails';
 
 const mockUseFeature = vi.hoisted(() => vi.fn());
-const mockGetExperimentDetails = vi.hoisted(() => vi.fn(() => new Promise(() => {})));
-const mockGetTrialDetails = vi.hoisted(() => vi.fn(() => new Promise(() => {})));
-const mockGetTrialRemainingLogRetentionDays = vi.hoisted(() => vi.fn(() => new Promise(() => {})));
 vi.mock('hooks/useFeature', () => ({
   default: () => ({
     isOn: mockUseFeature,
   }),
 }));
 
-vi.mock('servicses/api', () => {
-  const baseObject = {
+const mockUseParams = vi.hoisted(() => vi.fn(() => ({ experimentId: 1, trialId: 1 })));
+vi.mock('react-router-dom', async (importOriginal) => ({
+  ...(await importOriginal<typeof import('react-router-dom')>()),
+  useParams: mockUseParams,
+}));
+
+const mockGetExperimentDetails = vi.hoisted(() => vi.fn(() => new Promise(() => {})));
+const mockGetTrialDetails = vi.hoisted(() => vi.fn(() => new Promise(() => {})));
+const mockGetTrialRemainingLogRetentionDays = vi.hoisted(() => vi.fn(() => new Promise(() => {})));
+vi.mock('services/api', () => {
+  return {
     getExperimentDetails: mockGetExperimentDetails,
     getTrialDetails: mockGetTrialDetails,
     getTrialRemainingLogRetentionDays: mockGetTrialRemainingLogRetentionDays,
   };
-  return new Proxy(baseObject, {
-    get(target, prop) {
-      if (prop in target) {
-        return target[prop];
-      }
-      return () => {
-        console.error(`unhandled request: ${prop.toString()}`);
-        return new Promise(() => {});
-      };
-    },
-  });
 });
 
 const setup = () => {
