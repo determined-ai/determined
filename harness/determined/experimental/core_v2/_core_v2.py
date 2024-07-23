@@ -3,13 +3,16 @@
 import atexit
 import dataclasses
 import logging
+import pathlib
 import uuid
 import warnings
 from typing import Any, Dict, List, Optional, Union, cast
 
+import appdirs
+
 import determined
 from determined import core, experimental
-from determined.common import util
+from determined.common import storage, util
 from determined.experimental import core_v2
 
 logger = logging.getLogger("determined.core")
@@ -166,7 +169,16 @@ def _init_context(
 
     # Unmanaged trials.
     # Construct the config.
-    checkpoint_storage = checkpoint_storage or config.checkpoint_storage
+    checkpoint_storage = (
+        checkpoint_storage
+        or config.checkpoint_storage
+        or str(pathlib.Path(appdirs.user_data_dir("determined")) / "checkpoints")
+    )
+    checkpoint_storage_dict: Dict[str, Any] = (
+        storage.shared._shortcut_to_config(checkpoint_storage, False)  # type: ignore
+        if type(checkpoint_storage) == str
+        else checkpoint_storage
+    )
     config_text = util.yaml_safe_dump(
         {
             "name": config.name or f"unmanaged-{uuid.uuid4().hex[:8]}",
@@ -181,6 +193,7 @@ def _init_context(
             },
             "workspace": config.workspace,
             "project": config.project,
+            "checkpoint_storage": checkpoint_storage_dict,
         }
     )
     assert config_text is not None
@@ -196,7 +209,7 @@ def _init_context(
 
     _context = core_v2._make_v2_context(
         distributed=distributed,
-        checkpoint_storage=checkpoint_storage,
+        checkpoint_storage=checkpoint_storage_dict,
         preempt_mode=preempt_mode,
         tensorboard_mode=tensorboard_mode,
         unmanaged_info=unmanaged_info,

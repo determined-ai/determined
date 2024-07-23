@@ -363,6 +363,7 @@ export const ioToExperimentConfig = (
     checkpointStorage: io.checkpoint_storage
       ? {
           bucket: io.checkpoint_storage.bucket || undefined,
+          containerPath: io.checkpoint_storage.container_path || undefined,
           hostPath: io.checkpoint_storage.host_path || undefined,
           saveExperimentBest: io.checkpoint_storage.save_experiment_best,
           saveTrialBest: io.checkpoint_storage.save_trial_best,
