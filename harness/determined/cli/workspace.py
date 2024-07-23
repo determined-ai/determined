@@ -524,7 +524,10 @@ args_description = [
                             "--namespace",
                             type=str,
                             help="existing namespace to which \
-                            the workspace is bound",
+                            the workspace is bound. When neither --namespace NAMESPACE nor \
+                            --auto-create-namespace are specified, this defaults to your helm \
+                            value of resource_manager.default_namespace. If that's not specified, \
+                            this defaults to the default Kubernetes namespace, \"default\".",
                         ),
                         cli.Arg(
                             "--auto-create-namespace",
@@ -612,7 +615,12 @@ args_description = [
                                 cli.Arg(
                                     "--namespace",
                                     type=str,
-                                    help="existing namespace to which the workspace is bound.",
+                                    help="existing namespace to which the workspace is bound. When \
+                                    neither --namespace NAMESPACE nor --auto-create-namespace are \
+                                    specified, this defaults to your helm value of \
+                                    resource_manager.default_namespace. If that's not specified, \
+                                    this defaults to the default Kubernetes namespace, \
+                                    \"default\".",
                                 ),
                                 cli.Arg(
                                     "--auto-create-namespace",
@@ -643,7 +651,7 @@ args_description = [
                         ],
                     ),
                     cli.Cmd(
-                        "l|ist",
+                        "list ls",
                         list_workspace_namespace_bindings,
                         "list workspace-namespace bindings",
                         [
