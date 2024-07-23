@@ -1906,6 +1906,33 @@ class v1BindRPToWorkspaceRequest(Printable):
             out["workspaceNames"] = self.workspaceNames
         return out
 
+class v1BulkAutoCreateWorkspaceNamespaceBindingsRequest(Printable):
+    """Request for binding the given workpaces to new auto-created namespaces."""
+    workspaceIds: "typing.Optional[typing.Sequence[int]]" = None
+
+    def __init__(
+        self,
+        *,
+        workspaceIds: "typing.Union[typing.Sequence[int], None, Unset]" = _unset,
+    ):
+        if not isinstance(workspaceIds, Unset):
+            self.workspaceIds = workspaceIds
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1BulkAutoCreateWorkspaceNamespaceBindingsRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "workspaceIds" in obj:
+            kwargs["workspaceIds"] = obj["workspaceIds"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "workspaceIds" in vars(self):
+            out["workspaceIds"] = self.workspaceIds
+        return out
+
 class v1BulkExperimentFilters(Printable):
     """Filters to apply actions to multiple experiments."""
     archived: "typing.Optional[bool]" = None
@@ -7184,6 +7211,33 @@ class v1GetWorkspacesResponse(Printable):
             "pagination": self.pagination.to_json(omit_unset),
             "workspaces": [x.to_json(omit_unset) for x in self.workspaces],
         }
+        return out
+
+class v1GetWorkspacesWithDefaultNamespaceBindingsResponse(Printable):
+    """Response to GetUnboundWorkspacesRequest."""
+    workspaceIds: "typing.Optional[typing.Sequence[int]]" = None
+
+    def __init__(
+        self,
+        *,
+        workspaceIds: "typing.Union[typing.Sequence[int], None, Unset]" = _unset,
+    ):
+        if not isinstance(workspaceIds, Unset):
+            self.workspaceIds = workspaceIds
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetWorkspacesWithDefaultNamespaceBindingsResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "workspaceIds" in obj:
+            kwargs["workspaceIds"] = obj["workspaceIds"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "workspaceIds" in vars(self):
+            out["workspaceIds"] = self.workspaceIds
         return out
 
 class v1Group(Printable):
@@ -17601,14 +17655,16 @@ def post_BindRPToWorkspace(
 
 def post_BulkAutoCreateWorkspaceNamespaceBindings(
     session: "api.BaseSession",
+    *,
+    body: "v1BulkAutoCreateWorkspaceNamespaceBindingsRequest",
 ) -> None:
-    """Binds all unbound workspaces to new auto-created namespaces."""
+    """Binds the given workpaces to new auto-created namespaces."""
     _params = None
     _resp = session._do_request(
         method="POST",
-        path="/api/v1/workspaces/create-namespace-bindings-for-all",
+        path="/api/v1/namespace-bindings/bulk-auto-create",
         params=_params,
-        json=None,
+        json=body.to_json(True),
         data=None,
         headers=None,
         timeout=None,
@@ -21352,6 +21408,27 @@ denote number of workspaces to skip from the end before returning results.
     if _resp.status_code == 200:
         return v1GetWorkspacesResponse.from_json(_resp.json())
     raise APIHttpError("get_GetWorkspaces", _resp)
+
+def get_GetWorkspacesWithDefaultNamespaceBindings(
+    session: "api.BaseSession",
+) -> "v1GetWorkspacesWithDefaultNamespaceBindingsResponse":
+    """Gets the ids of all workspaces that are bound to the default namespace for
+    atleast one cluster.
+    """
+    _params = None
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/namespace-bindings/workspace-ids-with-default-bindings",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1GetWorkspacesWithDefaultNamespaceBindingsResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetWorkspacesWithDefaultNamespaceBindings", _resp)
 
 def put_IdleNotebook(
     session: "api.BaseSession",

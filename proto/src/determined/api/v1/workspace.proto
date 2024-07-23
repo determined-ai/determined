@@ -324,8 +324,21 @@ message DeleteWorkspaceNamespaceBindingsRequest {
 // Response to DeleteWorkspaceNamespaceBindingsRequest.
 message DeleteWorkspaceNamespaceBindingsResponse {}
 
-// Request for binding all unbound workspaces to new auto-created namespaces.
-message BulkAutoCreateWorkspaceNamespaceBindingsRequest {}
+// Request the ids of all workspaces that are bound to the
+// default namespace for atleast one cluster.
+message GetWorkspacesWithDefaultNamespaceBindingsRequest {}
+
+// Response to GetUnboundWorkspacesRequest.
+message GetWorkspacesWithDefaultNamespaceBindingsResponse {
+  // The list of returned workspace ids.
+  repeated int32 workspace_ids = 1;
+}
+
+// Request for binding the given workpaces to new auto-created namespaces.
+message BulkAutoCreateWorkspaceNamespaceBindingsRequest {
+  // The list of workspace ids.
+  repeated int32 workspace_ids = 1;
+}
 
 // Response to BulkAutoCreateWorkspaceNamespaceBindingsRequest.
 message BulkAutoCreateWorkspaceNamespaceBindingsResponse {}

@@ -1790,6 +1790,8 @@ func TestSetResourceQuotas(t *testing.T) {
 }
 
 func TestBulkAutoCreateWorkspaceNamespaceBindingsHelper(t *testing.T) {
+	testutils.MustLoadLicenseAndKeyFromFilesystem("../../")
+
 	cluster1 := uuid.NewString()
 	cluster2 := uuid.NewString()
 
@@ -1826,7 +1828,7 @@ func TestBulkAutoCreateWorkspaceNamespaceBindingsHelper(t *testing.T) {
 	// Workspace-namespace binding exists in the database?
 	createdBindings := []model.WorkspaceNamespace{}
 	err = db.Bun().NewSelect().
-		Model(&model.WorkspaceNamespace{}).
+		Table("workspace_namespace_bindings").
 		Where("workspace_id = ?", wkspID2).
 		Scan(ctx, &createdBindings)
 	require.NoError(t, err)
@@ -1836,6 +1838,7 @@ func TestBulkAutoCreateWorkspaceNamespaceBindingsHelper(t *testing.T) {
 			{WorkspaceID: wkspID2, Namespace: namespace1, ClusterName: cluster1},
 		},
 		createdBindings,
+		"wrong bindings found for wkspID2 after setting namespace bindings",
 	)
 
 	// Set a workspace-namespace binding for wksp2 for all clusters.
@@ -1856,7 +1859,7 @@ func TestBulkAutoCreateWorkspaceNamespaceBindingsHelper(t *testing.T) {
 	require.NoError(t, err)
 	// Workspace-namespace binding exists in the database?
 	err = db.Bun().NewSelect().
-		Model(&model.WorkspaceNamespace{}).
+		Table("workspace_namespace_bindings").
 		Where("workspace_id = ?", wkspID3).
 		Scan(ctx, &createdBindings)
 	require.NoError(t, err)
@@ -1867,6 +1870,7 @@ func TestBulkAutoCreateWorkspaceNamespaceBindingsHelper(t *testing.T) {
 			{WorkspaceID: wkspID3, Namespace: namespace2, ClusterName: cluster2},
 		},
 		createdBindings,
+		"wrong bindings found for wkspID3 after setting namespace bindings",
 	)
 
 	err = db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
@@ -1888,35 +1892,36 @@ func TestBulkAutoCreateWorkspaceNamespaceBindingsHelper(t *testing.T) {
 
 	err = api.bulkAutoCreateWorkspaceNamespaceBindingsHelper(
 		ctx,
-		[]int{wkspID1, wkspID2, wkspID3},
-		map[int][]string{wkspID2: {cluster1}, wkspID3: {cluster1, cluster2}},
+		[]int32{int32(wkspID1), int32(wkspID2), int32(wkspID3)},
+		map[int32][]string{int32(wkspID2): {cluster1}, int32(wkspID3): {cluster1, cluster2}},
 	)
 	require.NoError(t, err)
 
 	// Verify that 2 bindings were created for wkspID1
 	numBindings, err := db.Bun().NewSelect().
-		Model(&model.WorkspaceNamespace{}).
+		Table("workspace_namespace_bindings").
 		Where("workspace_id = ?", wkspID1).
 		Count(ctx)
 	require.NoError(t, err)
-	require.Equal(t, 2, numBindings)
+	require.Equal(t, 2, numBindings, "wrong number of bindings found for wkspID1 after bulk creation")
 
 	// Verify that there are now 2 bindings for wkspID2 and still contains the original binding.
 	err = db.Bun().NewSelect().
-		Model(&model.WorkspaceNamespace{}).
+		Table("workspace_namespace_bindings").
 		Where("workspace_id = ?", wkspID2).
 		Scan(ctx, &createdBindings)
 	require.NoError(t, err)
-	require.Len(t, createdBindings, 2)
+	require.Len(t, createdBindings, 2, "wrong number of bindings found for wkspID2 after bulk creation")
 	require.Contains(
 		t,
 		createdBindings,
 		model.WorkspaceNamespace{WorkspaceID: wkspID2, Namespace: namespace1, ClusterName: cluster1},
+		"wrong bindings found for wkspID2 after bulk creation",
 	)
 
 	// Verify that the bindings were not modified for wkspID3.
 	err = db.Bun().NewSelect().
-		Model(&model.WorkspaceNamespace{}).
+		Table("workspace_namespace_bindings").
 		Where("workspace_id = ?", wkspID3).
 		Scan(ctx, &createdBindings)
 	require.NoError(t, err)
@@ -1927,5 +1932,6 @@ func TestBulkAutoCreateWorkspaceNamespaceBindingsHelper(t *testing.T) {
 			{WorkspaceID: wkspID3, Namespace: namespace2, ClusterName: cluster2},
 		},
 		createdBindings,
+		"wrong bindings found for wkspID3 after bulk creation",
 	)
 }
