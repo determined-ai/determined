@@ -263,7 +263,7 @@ test.describe('Experiment List', () => {
   });
 
   test('Datagrid Actions', async () => {
-    let row = projectDetailsPage.f_experimentList.dataGrid.getRowByIndex(0);
+    const row = projectDetailsPage.f_experimentList.dataGrid.getRowByIndex(0);
     await row.experimentActionDropdown.open();
 
     // feel free to split actions into their own test cases. this is just a starting point
@@ -295,26 +295,25 @@ test.describe('Experiment List', () => {
   });
 
   test('DataGrid Action Pause', async () => {
+    const initNumRows = await getCount();
     // create paused experiment
     detExecSync(
       `experiment create ${fullPath('examples/tutorials/mnist_pytorch/adaptive.yaml')}  --paused`,
     );
-    await waitTableStable();
+    await expect
+      .soft(projectDetailsPage.f_experimentList.tableActionBar.count.pwLocator)
+      .toContainText(`${initNumRows + 1}`);
 
     // experiment should initially be paused
     const row = projectDetailsPage.f_experimentList.dataGrid.getRowByIndex(0);
     await expect.soft((await row.getCellByColumnName('State')).pwLocator).toHaveText('paused');
 
     // resume experiment
-    await row.experimentActionDropdown.open();
-    await waitTableStable();
-    await row.experimentActionDropdown.resume.pwLocator.click();
+    await (await row.experimentActionDropdown.open()).resume.pwLocator.click();
     await expect.soft((await row.getCellByColumnName('State')).pwLocator).toHaveText('queued');
 
     // pause experiment again
-    await row.experimentActionDropdown.open();
-    await waitTableStable();
-    await row.experimentActionDropdown.pause.pwLocator.click();
+    await (await row.experimentActionDropdown.open()).pause.pwLocator.click();
     await expect.soft((await row.getCellByColumnName('State')).pwLocator).toHaveText('paused');
   });
 });
