@@ -25,12 +25,6 @@ if __name__ == "__main__":
         help="whether the upload should go under the short-lived /previews path",
     )
     parser.add_argument(
-        "--version-file",
-        type=str,
-        default=HERE / ".." / ".." / "VERSION",
-        help="file containing version string for local docs build",
-    )
-    parser.add_argument(
         "--bucket-id",
         type=str,
         default="determined-ai-docs",
@@ -68,9 +62,16 @@ if __name__ == "__main__":
     )
     args = parser.parse_args()
 
-    # check version file to determine upload path
-    with args.version_file.open() as f:
-        version = f.read().strip()
+    # Read the application version string from the VERSION environment
+    # variable to determine upload path. Previously, this was read
+    # from a static VERSION file at the root of the repository. Now,
+    # we read it from an environment variable set by a Makefile,
+    # generated from version.sh in the repository root.
+    version = os.environ.get("VERSION")
+
+    if version is None:
+        print("Please ensure VERSION environment variable is set.")
+        os.exit(1)
 
     # ya know, jic
     if version == "latest":

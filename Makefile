@@ -1,3 +1,5 @@
+export VERSION := $(shell ./version.sh)
+
 .PHONY: all
 all:
 	$(MAKE) get-deps
