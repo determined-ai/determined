@@ -1,4 +1,4 @@
-export VERSION:=$(shell cat ../VERSION)
+export VERSION:=$(shell ../version.sh)
 
 build/stamp: $(shell find charts -type f)
 	mkdir -p build
