@@ -8,7 +8,7 @@ metadata:
     determined.ai/master-service: "true"
     release: {{ .Release.Name }}
   {{- if (.Values.masterService).annotations }}
-  annotations: {{- toYaml (.Values.masterService).annotations | nindent 4 }}
+  annotations: {{- toYaml .Values.masterService.annotations | nindent 4 }}
   {{- end }}
 spec:
   ports:
