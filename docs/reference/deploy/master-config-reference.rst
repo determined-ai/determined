@@ -1808,9 +1808,10 @@ display name in Determined.
 ``always_redirect``
 ===================
 
-Specifies if this OIDC provider should be used for authentication, bypassing the standard
-Determined sign-in page. This redirection persists unless the user explicitly signs out within the
-WebUI. If an SSO user attempts to use an expired session token, they are directly redirected to the SSO provider and returned to the requested page after authentication.
+Specifies if this OIDC provider should be used for authentication, bypassing the standard Determined
+sign-in page. This redirection persists unless the user explicitly signs out within the WebUI. If an
+SSO user attempts to use an expired session token, they are directly redirected to the SSO provider
+and returned to the requested page after authentication.
 
 **********
  ``saml``
@@ -1886,9 +1887,10 @@ The claim name from the SAML provider used to set the user's display name in Det
 ``always_redirect``
 ===================
 
-Specifies if this SAML provider should be used for authentication, bypassing the standard
-Determined sign-in page. This redirection persists unless the user explicitly signs out within the
-WebUI. If a SSO user attempts to use an expired session token, they are directly redirected to the SAML provider and returned to the requested page after authentication.
+Specifies if this SAML provider should be used for authentication, bypassing the standard Determined
+sign-in page. This redirection persists unless the user explicitly signs out within the WebUI. If a
+SSO user attempts to use an expired session token, they are directly redirected to the SAML provider
+and returned to the requested page after authentication.
 
 ********************
  ``reserved_ports``
