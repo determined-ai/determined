@@ -737,7 +737,7 @@ def test_set_workspace_namespace_bindings(
                 "--cluster-name",
                 conf.DEFAULT_RM_CLUSTER_NAME,
                 "--auto-create-namespace",
-                "--set_resource_quota-quota",
+                "--resource-quota",
                 "1",
             ],
         )
@@ -753,7 +753,7 @@ def test_set_workspace_namespace_bindings(
                 "create",
                 w_name,
                 "--auto-create-namespace",
-                "--set_resource_quota-quota",
+                "--resource-quota",
                 "1",
             ],
         )
@@ -763,7 +763,7 @@ def test_set_workspace_namespace_bindings(
     w_name = uuid.uuid4().hex[:8]
     detproc.check_error(
         sess,
-        ["det", "w", "create", w_name, "--set_resource_quota-quota", "1"],
+        ["det", "w", "create", w_name, "--resource-quota", "1"],
         "cannot set resource quota on a namespace that was not auto-created by Determined.",
     )
 
