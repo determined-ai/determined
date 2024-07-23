@@ -1,6 +1,7 @@
 import contextlib
 import http
 import os
+import re
 import tempfile
 import uuid
 from typing import Generator, List, Optional, Tuple
@@ -742,6 +743,21 @@ def test_set_workspace_namespace_bindings(
             ],
         )
         assert bound_to_namespace in output
+
+        output = detproc.check_output(
+            sess,
+            [
+                "det",
+                "w",
+                "resource-quota",
+                "set",
+                w_name,
+                "5",
+                "--cluster-name",
+                conf.DEFAULT_RM_CLUSTER_NAME,
+            ],
+        )
+        assert re.search(r"Resource quota .* is set on workspace", output)
     # SingleRM: No cluster name, no namespace name, auto-create namespace & resource quota.
     else:
         w_name = uuid.uuid4().hex[:8]
@@ -758,6 +774,19 @@ def test_set_workspace_namespace_bindings(
             ],
         )
         assert bound_to_namespace in output
+
+        output = detproc.check_output(
+            sess,
+            [
+                "det",
+                "w",
+                "resource-quota",
+                "set",
+                w_name,
+                "5",
+            ],
+        )
+        assert re.search(r"Resource quota .* is set on workspace", output)
 
     # MultiRM & SingleRM: fail to set resource quota on a workspace without a namespace binding.
     w_name = uuid.uuid4().hex[:8]
