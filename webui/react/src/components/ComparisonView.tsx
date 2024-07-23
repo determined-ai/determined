@@ -15,7 +15,7 @@ import useMobile from 'hooks/useMobile';
 import useScrollbarWidth from 'hooks/useScrollbarWidth';
 import { TrialsComparisonTable } from 'pages/ExperimentDetails/TrialsComparisonModal';
 import { searchExperiments, searchRuns } from 'services/api';
-import { ExperimentWithTrial, FlatRun, XOR } from 'types';
+import { ExperimentWithTrial, FlatRun, SelectionType, XOR } from 'types';
 import handleError from 'utils/error';
 import { getIdsFilter as getExperimentIdsFilter } from 'utils/experiment';
 import { getIdsFilter as getRunIdsFilter } from 'utils/flatRun';
@@ -35,7 +35,8 @@ interface BaseProps {
   projectId: number;
 }
 
-type Props = XOR<{ selectedExperimentIds: number[] }, { selectedRunIds: number[] }> & BaseProps;
+type Props = XOR<{ experimentSelection: SelectionType }, { runSelection: SelectionType }> &
+  BaseProps;
 
 const ComparisonView: React.FC<Props> = ({
   children,
@@ -45,21 +46,18 @@ const ComparisonView: React.FC<Props> = ({
   onWidthChange,
   fixedColumnsCount,
   projectId,
-  selectedExperimentIds,
-  selectedRunIds,
+  experimentSelection,
+  runSelection,
 }) => {
   const scrollbarWidth = useScrollbarWidth();
   const hasPinnedColumns = fixedColumnsCount > 1;
   const isMobile = useMobile();
 
   const loadableSelectedExperiments = useAsync(async () => {
-    if (selectedExperimentIds?.length) {
-      const filterFormSet = INIT_FORMSET;
+    if (experimentSelection) {
       try {
-        const filter = getExperimentIdsFilter(filterFormSet, {
-          selections: selectedExperimentIds,
-          type: 'ONLY_IN',
-        });
+        const filterFormSet = INIT_FORMSET;
+        const filter = getExperimentIdsFilter(filterFormSet, experimentSelection);
         const response = await searchExperiments({
           filter: JSON.stringify(filter),
           limit: 50,
@@ -71,7 +69,7 @@ const ComparisonView: React.FC<Props> = ({
       }
     }
     return NotLoaded;
-  }, [selectedExperimentIds]);
+  }, [experimentSelection]);
 
   const selectedExperiments: ExperimentWithTrial[] | undefined = Loadable.getOrElse(
     undefined,
@@ -79,13 +77,10 @@ const ComparisonView: React.FC<Props> = ({
   );
 
   const loadableSelectedRuns = useAsync(async () => {
-    if (selectedRunIds?.length) {
+    if (runSelection) {
       const filterFormSet = INIT_FORMSET;
       try {
-        const filter = getRunIdsFilter(filterFormSet, {
-          selections: selectedRunIds,
-          type: 'ONLY_IN',
-        });
+        const filter = getRunIdsFilter(filterFormSet, runSelection);
         const response = await searchRuns({
           filter: JSON.stringify(filter),
           limit: 50,
@@ -97,7 +92,7 @@ const ComparisonView: React.FC<Props> = ({
       }
     }
     return NotLoaded;
-  }, [selectedRunIds]);
+  }, [runSelection]);
 
   const selectedRuns: FlatRun[] | undefined = Loadable.getOrElse(undefined, loadableSelectedRuns);
 
@@ -170,15 +165,29 @@ const ComparisonView: React.FC<Props> = ({
       children
     );
 
-  const rightPane =
-    (selectedExperimentIds?.length && selectedExperiments === undefined) ||
-    (selectedRunIds?.length && selectedRuns === undefined) ? (
-      <Spinner />
-    ) : selectedExperimentIds?.length === 0 || selectedRunIds?.length === 0 ? (
-      <Alert description="Select records you would like to compare." message={EMPTY_MESSAGE} />
-    ) : (
-      <Pivot items={tabs} />
-    );
+  const getRightPaneContent = () => {
+    if (experimentSelection) {
+      if (experimentSelection.type === 'ONLY_IN' && experimentSelection.selections.length === 0) {
+        return (
+          <Alert description="Select records you would like to compare." message={EMPTY_MESSAGE} />
+        );
+      }
+      if (selectedExperiments === undefined) {
+        return <Spinner spinning />;
+      }
+    }
+    if (runSelection) {
+      if (runSelection.type === 'ONLY_IN' && runSelection.selections.length === 0) {
+        return (
+          <Alert description="Select records you would like to compare." message={EMPTY_MESSAGE} />
+        );
+      }
+      if (selectedRuns === undefined) {
+        return <Spinner spinning />;
+      }
+    }
+    return <Pivot items={tabs} />;
+  };
 
   return (
     <SplitPane
@@ -186,7 +195,7 @@ const ComparisonView: React.FC<Props> = ({
       initialWidth={initialWidth}
       leftPane={leftPane}
       minimumWidths={{ left: minWidths[0], right: minWidths[1] }}
-      rightPane={rightPane}
+      rightPane={getRightPaneContent()}
       onChange={onWidthChange}
     />
   );

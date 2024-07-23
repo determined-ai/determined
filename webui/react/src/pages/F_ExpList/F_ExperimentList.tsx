@@ -1114,11 +1114,11 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
           <div className={css.paneWrapper}>
             <ComparisonView
               colorMap={colorMap}
+              experimentSelection={settings.selection}
               fixedColumnsCount={STATIC_COLUMNS.length + settings.pinnedColumnsCount}
               initialWidth={comparisonViewTableWidth}
               open={settings.compare}
               projectId={project.id}
-              selectedExperimentIds={allSelectedExperimentIds}
               onWidthChange={handleCompareWidthChange}>
               <DataGrid<ExperimentWithTrial, ExperimentAction, BulkExperimentItem>
                 columns={columns}

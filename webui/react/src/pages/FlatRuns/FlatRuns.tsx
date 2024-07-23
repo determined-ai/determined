@@ -1119,7 +1119,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
             initialWidth={comparisonViewTableWidth}
             open={settings.compare}
             projectId={projectId}
-            selectedRunIds={Array.from(selectedRunIdSet)}
+            runSelection={settings.selection}
             onWidthChange={handleCompareWidthChange}>
             <DataGrid<FlatRun, FlatRunAction>
               columns={columns}
