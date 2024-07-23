@@ -1,7 +1,7 @@
 .. _k8s-resource-caps:
 
 #####################################
- Manage Workspace Namespace Bindings
+ Manage Workspace-Namespace Bindings
 #####################################
 
 .. note::
@@ -38,6 +38,17 @@ bindings and resource quotas using either the WebUI or the CLI.
 When completed, save your changes to apply the namespace bindings and resource quotas. Any submitted
 workloads that would cause workspace resource use to exceed the defined quota will stay pending
 until resources are available or the quota is increased.
+
+.. note::
+
+   The resource quotas set and displayed in Determined specifically apply to Kubernetes GPU request
+   limits. You can cap the GPU requests placed on a given workspace. Other Kubernetes resources like
+   CPU or memory request limits are not managed by Determined.
+
+.. important::
+
+   If a job is pending due to lack of resources (not resource quota) and you change the resource
+   quota, the job will be scheduled regardless of any new, more restrictive resource quota.
 
 Configure Additional Resource Managers
 ======================================
