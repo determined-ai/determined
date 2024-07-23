@@ -1,0 +1,43 @@
+stages:
+  - db:
+      name: db
+
+  - master:
+      pre:
+        - sh: make -C tools prep-root
+        - sh: kubectl config use-context defaultrm
+      config_file:
+        security:
+          initial_user_password: $INITIAL_USER_PASSWORD
+        db:
+          host: localhost
+          port: 5432
+          password: postgres
+          user: postgres
+          name: determined
+        checkpoint_storage:
+          type: shared_fs
+          host_path: /tmp/determined-cp
+        cache:
+          cache_dir: /tmp/determined-cache
+        log:
+          level: debug
+        enable_cors: true
+        root: tools/build
+
+        resource_manager:
+          type: kubernetes
+          cluster_name: defaultrm
+          max_slots_per_pod: 1
+          slot_type: "cpu"
+          slot_resource_requests:
+            cpu: 1
+          kubeconfig_path: ~/.kube/config
+          determined_master_ip: $DOCKER_LOCALHOST
+          determined_master_port: 8080
+          internal_task_gateway:
+            gateway_name: contour
+            gateway_namespace: projectcontour
+            gateway_ip: $GATEWAY_IP
+            gateway_port_range_start: 49152
+            gateway_port_range_end: 65535
