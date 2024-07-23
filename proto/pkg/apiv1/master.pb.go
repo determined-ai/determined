@@ -85,7 +85,7 @@ type SSOProvider struct {
 	SsoUrl string `protobuf:"bytes,2,opt,name=sso_url,json=ssoUrl,proto3" json:"sso_url,omitempty"`
 	// The type of SSO (such as SAML, OIDC).
 	Type string `protobuf:"bytes,3,opt,name=type,proto3" json:"type,omitempty"`
-	// The flag to indicates if this provider should be always be redirected to,
+	// The flag to indicate if this provider should be always be redirected to,
 	// instead of showing the standard sign-in page.
 	AlwaysRedirect bool `protobuf:"varint,4,opt,name=always_redirect,json=alwaysRedirect,proto3" json:"always_redirect,omitempty"`
 }

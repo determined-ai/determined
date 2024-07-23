@@ -10653,7 +10653,7 @@ export interface V1SSOProvider {
      */
     type: string;
     /**
-     * The flag to indicates if this provider should be always be redirected to, instead of showing the standard sign-in page.
+     * The flag to indicate if this provider should be always be redirected to, instead of showing the standard sign-in page.
      * @type {boolean}
      * @memberof V1SSOProvider
      */
