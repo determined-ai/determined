@@ -114,7 +114,7 @@ func New(
 	if len(k.config.DefaultNamespace) > 0 {
 		err = k.jobsService.VerifyNamespaceExists(k.config.DefaultNamespace)
 		if err != nil {
-			return nil, fmt.Errorf("error verifying default namespace existence for cluster '%s': %w", k.config.Name, err)
+			return nil, fmt.Errorf("error verifying default namespace existence for cluster '%s': %w", k.config.ClusterName, err)
 		}
 	}
 
