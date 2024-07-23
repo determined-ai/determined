@@ -1886,7 +1886,7 @@ The claim name from the SAML provider used to set the user's display name in Det
 ``always_redirect``
 ===================
 
-Determines if this SAML provider should be redirected to for authentication, bypasses the standard
+Specifies if this SAML provider should be used for authentication, bypassing the standard
 Determined sign-in page. This redirection persists unless the user explicitly signs out within the
 WebUI.
 
