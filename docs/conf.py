@@ -5,7 +5,6 @@ See the documentation: http://www.sphinx-doc.org/en/master/config
 
 import json
 import os
-import pathlib
 import sys
 import time
 
@@ -20,7 +19,16 @@ project = "Determined"
 html_title = "Determined AI Documentation"
 copyright = time.strftime("%Y, Determined AI")
 author = "ai-open-source@hpe.com"
-version = pathlib.Path(__file__).parents[1].joinpath("VERSION").read_text().strip()
+
+# Read the application version string from the VERSION environment
+# variable. Previously, this was read from a static VERSION file at the root of
+# the repository. Now, we read it from an environment variable set by a
+# Makefile, generated from version.sh in the repository root.
+version = os.environ.get("VERSION")
+if version is None:
+    print("Please ensure VERSION environment variable is set.")
+    os.exit(1)
+
 release = version
 language = "en"
 
