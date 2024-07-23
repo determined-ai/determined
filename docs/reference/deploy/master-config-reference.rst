@@ -221,7 +221,7 @@ Optional. Specify a human-readable name for this cluster.
  ``ui_customization``
 **********************
 
-Optional. Applies only to Determined Enterprise Edition. This section houses options to customize
+Optional. Applies only to the Determined Enterprise Edition. This section houses options to customize
 the UI.
 
 ``logo_path``
