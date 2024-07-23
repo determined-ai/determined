@@ -3,8 +3,10 @@ import path from 'path';
 
 import { detMasterURL, detPath, password, username } from './envVars';
 
+const baseDir = execSync('git rev-parse --show-toplevel').toString().trim();
+
 export function fullPath(relativePath: string): string {
-  return path.join(process.cwd(), relativePath);
+  return path.join(baseDir, relativePath);
 }
 
 export function detExecSync(detCommand: string): string {
