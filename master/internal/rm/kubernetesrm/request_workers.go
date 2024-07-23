@@ -149,44 +149,54 @@ func (r *requestProcessingWorker) receiveDeleteKubernetesResources(
 	// If resource creation failed, we will still try to delete those resources which
 	// will also result in a failure.
 	if len(msg.jobName) > 0 {
-		err = r.jobInterface[msg.namespace].Delete(context.TODO(), msg.jobName, metaV1.DeleteOptions{
-			GracePeriodSeconds: &gracePeriod,
-			PropagationPolicy:  ptrs.Ptr(metaV1.DeletePropagationBackground),
-		})
-		switch {
-		case k8serrors.IsNotFound(err):
-			r.syslog.Infof("job %s is already deleted", msg.jobName)
-		case err != nil:
-			r.syslog.WithError(err).Errorf("failed to delete job %s", msg.jobName)
-		default:
-			r.syslog.Infof("deleted job %s", msg.jobName)
+		_, ok := r.jobInterface[msg.namespace]
+		if ok {
+			err = r.jobInterface[msg.namespace].Delete(context.TODO(), msg.jobName,
+				metaV1.DeleteOptions{
+					GracePeriodSeconds: &gracePeriod,
+					PropagationPolicy:  ptrs.Ptr(metaV1.DeletePropagationBackground),
+				})
+			switch {
+			case k8serrors.IsNotFound(err):
+				r.syslog.Infof("job %s is already deleted", msg.jobName)
+			case err != nil:
+				r.syslog.WithError(err).Errorf("failed to delete job %s", msg.jobName)
+			default:
+				r.syslog.Infof("deleted job %s", msg.jobName)
+			}
 		}
 	}
 
 	if len(msg.podName) > 0 {
-		err = r.podInterface[msg.namespace].Delete(
-			context.TODO(), msg.podName, metaV1.DeleteOptions{GracePeriodSeconds: &gracePeriod})
-		switch {
-		case k8serrors.IsNotFound(err):
-			r.syslog.Infof("pod %s is already deleted", msg.jobName)
-		case err != nil:
-			r.syslog.WithError(err).Errorf("failed to delete pod %s", msg.jobName)
-		default:
-			r.syslog.Infof("deleted pod %s", msg.podName)
+		_, ok := r.podInterface[msg.namespace]
+		if ok {
+			err = r.podInterface[msg.namespace].Delete(
+				context.TODO(), msg.podName, metaV1.DeleteOptions{GracePeriodSeconds: &gracePeriod})
+			switch {
+			case k8serrors.IsNotFound(err):
+				r.syslog.Infof("pod %s is already deleted", msg.jobName)
+			case err != nil:
+				r.syslog.WithError(err).Errorf("failed to delete pod %s", msg.jobName)
+			default:
+				r.syslog.Infof("deleted pod %s", msg.podName)
+			}
 		}
 	}
 
 	if len(msg.configMapName) > 0 {
-		err = r.configMapInterfaces[msg.namespace].Delete(
-			context.TODO(), msg.configMapName,
-			metaV1.DeleteOptions{GracePeriodSeconds: &gracePeriod})
-		switch {
-		case k8serrors.IsNotFound(err):
-			r.syslog.Infof("configMap %s is already deleted", msg.jobName)
-		case err != nil:
-			r.syslog.WithError(err).Errorf("failed to delete configMap %s", msg.jobName)
-		default:
-			r.syslog.Infof("deleted configMap %s", msg.configMapName)
+		_, ok := r.configMapInterfaces[msg.namespace]
+		if ok {
+			err = r.configMapInterfaces[msg.namespace].Delete(
+				context.TODO(), msg.configMapName,
+				metaV1.DeleteOptions{GracePeriodSeconds: &gracePeriod})
+			switch {
+			case k8serrors.IsNotFound(err):
+				r.syslog.Infof("configMap %s is already deleted", msg.jobName)
+			case err != nil:
+				r.syslog.WithError(err).Errorf("failed to delete configMap %s", msg.jobName)
+			default:
+				r.syslog.Infof("deleted configMap %s", msg.configMapName)
+			}
 		}
 	}
 
