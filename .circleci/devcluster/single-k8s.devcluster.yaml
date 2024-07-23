@@ -27,8 +27,7 @@ stages:
 
         resource_manager:
           type: kubernetes
-          name: default
-          namespace: default
+          cluster_name: defaultrm
           max_slots_per_pod: 1
           slot_type: "cpu"
           slot_resource_requests:
