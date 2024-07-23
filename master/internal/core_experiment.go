@@ -271,7 +271,7 @@ func (m *Master) parseCreateExperiment(ctx context.Context, req *apiv1.CreateExp
 	if err != nil {
 		return nil, nil, config, nil, nil, errors.Wrap(err, "invalid experiment configuration")
 	}
-	if config.RawResources.Slots() != nil {
+	if config.RawResources != nil && config.RawResources.Slots() != nil {
 		return nil, nil, config, nil, nil, fmt.Errorf("<config>.resources: additionalProperties \"slots\" not allowed")
 	}
 
