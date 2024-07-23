@@ -10,6 +10,7 @@ import RemainingRetentionDaysLabel from 'components/RemainingRetentionDaysLabelC
 import RoutePagination from 'components/RoutePagination';
 import TrialLogPreview from 'components/TrialLogPreview';
 import { terminalRunStates } from 'constants/states';
+import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import usePolling from 'hooks/usePolling';
 import TrialDetailsHeader from 'pages/TrialDetails/TrialDetailsHeader';
@@ -82,6 +83,7 @@ const TrialDetailsComp: React.FC = () => {
   const basePath = paths.trialDetails(trialId, experimentId);
   const trial = trialDetails.data;
   const [remainingLogDays, setRemainingLogDays] = useState<Loadable<number | undefined>>(NotLoaded);
+  const f_flat_runs = useFeature().isOn('flat_runs');
 
   const copyMap = f_flat_runs ? RunCopyMap : ExperimentCopyMap;
 
