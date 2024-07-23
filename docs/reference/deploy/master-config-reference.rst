@@ -227,9 +227,8 @@ the UI.
 ``logo_path``
 =============
 
-Path to variations of a user provided logo to be shown in the UI. This path should be available and
-reachable to the master and a valid image file. SVG format is recommended but other common web image
-formats are supported as well.
+Specifies the path to a user-provided logo to be shown in the UI. Ensure the path is accessible and
+reachable by the master service. The logo file should be a valid image format, with SVG recommended.
 
 *************************
  ``tensorboard_timeout``
