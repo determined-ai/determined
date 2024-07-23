@@ -2,5 +2,5 @@
 
 **New Features**
 
--  Add a set of configuration options to master config to allow providing a custom logo to be shown
+- Add configuration options to the master config for specifying a custom logo to be displayed
    in the WebUI.
