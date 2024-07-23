@@ -724,6 +724,30 @@ def test_set_workspace_namespace_bindings(
     output = detproc.check_output(sess, set_binding_cmd + ["--namespace", namespace])
     assert bound_to_namespace in output
 
+    # Auto-Create namespace
+    if is_multirm_cluster:
+        w_name = uuid.uuid4().hex[:8]
+        output = detproc.check_output(
+            sess,
+            [
+                "det",
+                "w",
+                "create",
+                w_name,
+                "--cluster-name",
+                conf.DEFAULT_RM_CLUSTER_NAME,
+                "--auto-create-namespace",
+            ],
+        )
+        assert bound_to_namespace in output
+    else:
+        w_name = uuid.uuid4().hex[:8]
+        output = detproc.check_output(
+            sess,
+            ["det", "w", "create", w_name, "--auto-create-namespace"],
+        )
+        assert bound_to_namespace in output
+
 
 @pytest.mark.e2e_gpu
 @pytest.mark.e2e_multi_k8s
