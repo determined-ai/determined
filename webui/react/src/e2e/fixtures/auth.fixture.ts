@@ -26,6 +26,8 @@ export class AuthFixture {
     username?: string;
     password?: string;
   } = {}): Promise<void> {
+    // eslint-disable-next-line no-console
+    console.log('Expected URL: ', expectedURL);
     const detAuth = this.signInPage.detAuth;
     if (!(await detAuth.pwLocator.isVisible())) {
       await this.#page.goto('/');
