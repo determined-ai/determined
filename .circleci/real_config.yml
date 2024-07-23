@@ -2684,13 +2684,15 @@ jobs:
       executor-name:
         type: string
     executor: << parameters.executor-name >>
+    environment:
+      VERSION: "<< pipeline.parameters.det-version >>"
     steps:
       - checkout
       - python-report
       # Running the pip executable causes an error with the win/default executor for some reason.
       - run: python -m pip install --upgrade --user pip
-      - run: pip install wheel setuptools
-      - run: cd harness; python setup.py bdist_wheel -d ../build
+      - run: pip install wheel setuptools build
+      - run: cd harness; python -m build --wheel --outdir ../build
       - run: pip install --find-links build determined==<< pipeline.parameters.det-version >>
       - run: pip freeze --all
       # Allow this to fail, but it is useful for debugging.

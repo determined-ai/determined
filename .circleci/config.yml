@@ -27,7 +27,20 @@ all-filters: &all-filters
       - /.*/
   tags:
     only:
+      # Matches:
+      # - v1.2.3
+      # - v1.2.3+a1b2c3
+      - /v\d+\.\d+\.\d+(\+[1-9a-f]+)?/
+
+branch-filter: &branch-filter
+  branches:
+    only:
       - /.*/
+
+tag-filter: &tag-filter
+  tags:
+    only:
+      - /v\d+\.\d+\.\d+(\+[1-9a-f]+)?/
 
 workflows:
   determined_ai:
@@ -86,6 +99,14 @@ jobs:
               jq '. += {"do_nightly_tests": true}' < "<<pipeline.parameters.params_basename>>" > tmpfile
               mv -v tmpfile "<<pipeline.parameters.params_basename>>"
             fi
+
+      - run:
+          name: Set det-version parameter.
+          command: |
+            VERSION=$(./version.sh)
+            jq --arg version "${VERSION}" '. += {"det-version": $version}' < "<<pipeline.parameters.params_basename>>" > tmpfile
+            mv -v tmpfile "<<pipeline.parameters.params_basename>>"
+            cat "<<pipeline.parameters.params_basename>>"
 
       # this must be last; persist the file to the workspace
       - persist_to_workspace:
