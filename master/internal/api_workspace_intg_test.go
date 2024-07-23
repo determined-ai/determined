@@ -758,6 +758,8 @@ func TestAuthzWorkspaceGetThenActionRoutes(t *testing.T) {
 	api, workspaceAuthZ, _, ctx := setupWorkspaceAuthZTest(t, nil)
 	clusterName := uuid.NewString()
 	namespace := uuid.NewString()
+	testutils.MustLoadLicenseAndKeyFromFilesystem("../../")
+
 	cases := []struct {
 		DenyFuncName string
 		IDToReqCall  func(id int) error
@@ -820,6 +822,17 @@ func TestAuthzWorkspaceGetThenActionRoutes(t *testing.T) {
 					WorkspaceId: int32(id),
 					ClusterNamespaceMeta: map[string]*workspacev1.WorkspaceNamespaceMeta{
 						clusterName: {Namespace: &namespace},
+					},
+				})
+			return err
+		}},
+		{"CanSetResourceQuotas", func(id int) error {
+			api.m.allRms = map[string]rm.ResourceManager{clusterName: api.m.rm}
+			_, err := api.SetResourceQuotas(ctx,
+				&apiv1.SetResourceQuotasRequest{
+					Id: int32(id),
+					ClusterQuotaPairs: map[string]int32{
+						clusterName: 5,
 					},
 				})
 			return err
@@ -1607,9 +1620,12 @@ func TestBasicRBACWorkspacePerms(t *testing.T) {
 	namespace := uuid.NewString()
 	clusterName := uuid.NewString()
 
+	testutils.MustLoadLicenseAndKeyFromFilesystem("../../")
+
 	resp, err := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: uuid.New().String()})
 	require.NoError(t, err)
 	wkspID := resp.Workspace.Id
+	rq := int32(5)
 
 	cases := []struct {
 		name          string
@@ -1647,6 +1663,40 @@ func TestBasicRBACWorkspacePerms(t *testing.T) {
 						Name: uuid.NewString(),
 						ClusterNamespaceMeta: map[string]*workspacev1.WorkspaceNamespaceMeta{
 							clusterName: {Namespace: &namespace},
+						},
+					})
+				return err
+			},
+		},
+		{
+			"set-resource-quota",
+			func(mockRM *mocks.ResourceManager) {
+				mockRM.On("DefaultNamespace", clusterName).Return(&defaultNamespace, nil).Once()
+			},
+			func() error {
+				api.m.allRms = map[string]rm.ResourceManager{clusterName: api.m.rm}
+				_, err := api.SetResourceQuotas(ctx,
+					&apiv1.SetResourceQuotasRequest{
+						Id: wkspID,
+						ClusterQuotaPairs: map[string]int32{
+							clusterName: int32(5),
+						},
+					})
+				return err
+			},
+		},
+		{
+			"create-wksp-with-resource-quota",
+			func(mockRM *mocks.ResourceManager) {
+				mockRM.On("DefaultNamespace", clusterName).Return(&defaultNamespace, nil).Once()
+			},
+			func() error {
+				api.m.allRms = map[string]rm.ResourceManager{clusterName: api.m.rm}
+				_, err := api.PostWorkspace(ctx,
+					&apiv1.PostWorkspaceRequest{
+						Name: uuid.NewString(),
+						ClusterNamespaceMeta: map[string]*workspacev1.WorkspaceNamespaceMeta{
+							clusterName: {AutoCreateNamespace: true, ResourceQuota: &rq},
 						},
 					})
 				return err

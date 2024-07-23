@@ -1065,7 +1065,6 @@ func (a *apiServer) SetResourceQuotas(ctx context.Context,
 				"is an Enterprise-Edition feature")
 		}
 	}()
-	license.RequireLicense("set resource quota")
 
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
