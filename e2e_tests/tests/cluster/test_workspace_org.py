@@ -737,8 +737,8 @@ def test_set_workspace_namespace_bindings(
                 "--cluster-name",
                 conf.DEFAULT_RM_CLUSTER_NAME,
                 "--auto-create-namespace",
-                "--resource-quota",
-                "cpu=1,memory=1G",
+                "--set_resource_quota-quota",
+                "1",
             ],
         )
         assert bound_to_namespace in output
@@ -753,30 +753,18 @@ def test_set_workspace_namespace_bindings(
                 "create",
                 w_name,
                 "--auto-create-namespace",
-                "--resource-quota",
-                "cpu=1,memory=1G",
+                "--set_resource_quota-quota",
+                "1",
             ],
         )
         assert bound_to_namespace in output
 
-    # MultiRM & SingleRM: fail to set resource quota, if namespace is not created by determined.
+    # MultiRM & SingleRM: fail to set resource quota on a workspace without a namespace binding.
     w_name = uuid.uuid4().hex[:8]
     detproc.check_error(
         sess,
-        [
-            "det",
-            "w",
-            "bindings",
-            "set",
-            w_name,
-            "--cluster-name",
-            conf.DEFAULT_RM_CLUSTER_NAME,
-            "--namespace",
-            namespace,
-            "--resource-quota",
-            "cpu=1,memory=1G",
-        ],
-        "error setting resource quota",
+        ["det", "w", "create", w_name, "--set_resource_quota-quota", "1"],
+        "cannot set resource quota on a namespace that was not auto-created by Determined.",
     )
 
 
