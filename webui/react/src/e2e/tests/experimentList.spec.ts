@@ -18,7 +18,6 @@ test.describe('Experiment List', () => {
     const projectDetailsPageSetup = new ProjectDetails(backgroundAuthedPage);
     await projectDetailsPageSetup.gotoProject();
     await test.step('Create an experiment if not already present', async () => {
-      await projectDetailsPageSetup.f_experimentList.tableActionBar.pwLocator.waitFor();
       await expect(
         projectDetailsPageSetup.f_experimentList.tableActionBar.count.pwLocator,
       ).toContainText('experiment');
