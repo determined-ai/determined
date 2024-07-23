@@ -724,7 +724,7 @@ def test_set_workspace_namespace_bindings(
     output = detproc.check_output(sess, set_binding_cmd + ["--namespace", namespace])
     assert bound_to_namespace in output
 
-    # Auto-Create namespace
+    # MultiRM: Valid cluster name, no namespace name, auto-create namespace & resource_quota.
     if is_multirm_cluster:
         w_name = uuid.uuid4().hex[:8]
         output = detproc.check_output(
@@ -737,16 +737,47 @@ def test_set_workspace_namespace_bindings(
                 "--cluster-name",
                 conf.DEFAULT_RM_CLUSTER_NAME,
                 "--auto-create-namespace",
+                "--resource-quota",
+                "cpu=1,memory=1G",
             ],
         )
         assert bound_to_namespace in output
+    # SingleRM: No cluster name, no namespace name, auto-create namespace & resource quota.
     else:
         w_name = uuid.uuid4().hex[:8]
         output = detproc.check_output(
             sess,
-            ["det", "w", "create", w_name, "--auto-create-namespace"],
+            [
+                "det",
+                "w",
+                "create",
+                w_name,
+                "--auto-create-namespace",
+                "--resource-quota",
+                "cpu=1,memory=1G",
+            ],
         )
         assert bound_to_namespace in output
+
+    # MultiRM & SingleRM: fail to set resource quota, if namespace is not created by determined.
+    w_name = uuid.uuid4().hex[:8]
+    detproc.check_error(
+        sess,
+        [
+            "det",
+            "w",
+            "bindings",
+            "set",
+            w_name,
+            "--cluster-name",
+            conf.DEFAULT_RM_CLUSTER_NAME,
+            "--namespace",
+            namespace,
+            "--resource-quota",
+            "cpu=1,memory=1G",
+        ],
+        "error setting resource quota",
+    )
 
 
 @pytest.mark.e2e_gpu
