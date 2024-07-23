@@ -12,14 +12,12 @@ import (
 // StartNotebookSession persists a new notebook session row into the database.
 func StartNotebookSession(
 	ctx context.Context,
-	userSessionID model.SessionID,
+	userID model.UserID,
 	taskID model.TaskID,
-	token *string,
 ) error {
 	notebookSession := &model.NotebookSession{
-		UserSessionID: userSessionID,
-		TaskID:        taskID,
-		Token:         token,
+		UserID: userID,
+		TaskID: taskID,
 	}
 
 	if _, err := Bun().NewInsert().Model(notebookSession).
@@ -32,12 +30,12 @@ func StartNotebookSession(
 
 // GenerateNotebookSessionToken generates a token for a notebook session.
 func GenerateNotebookSessionToken(
-	userSessionID model.SessionID,
+	userID model.UserID,
 	taskID model.TaskID,
 ) (string, error) {
 	notebookSession := &model.NotebookSession{
-		UserSessionID: userSessionID,
-		TaskID:        taskID,
+		UserID: userID,
+		TaskID: taskID,
 	}
 
 	v2 := paseto.NewV2()

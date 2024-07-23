@@ -70,6 +70,8 @@ stages:
         cache: 
           cache_dir: /tmp/determined-cache
         launch_error: false
+        telemetry:
+          enabled: false
 
   - agent:
       name: agent

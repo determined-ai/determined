@@ -14,13 +14,11 @@ def main():
 
     checkpoint_storage = tempfile.mkdtemp()
     core_v2.init(
-        defaults=core_v2.DefaultConfig(
+        config=core_v2.Config(
             name=name,
-        ),
-        checkpoint_storage=checkpoint_storage,
-        unmanaged=core_v2.UnmanagedConfig(
             external_experiment_id=name,
             external_trial_id=name,
+            checkpoint_storage=checkpoint_storage,
         ),
     )
 

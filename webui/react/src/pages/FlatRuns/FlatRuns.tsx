@@ -46,6 +46,7 @@ import {
   SpecialColumnNames,
 } from 'components/FilterForm/components/type';
 import TableFilter from 'components/FilterForm/TableFilter';
+import LoadableCount from 'components/LoadableCount';
 import MultiSortMenu, { EMPTY_SORT, sortMenuItemsForColumn } from 'components/MultiSortMenu';
 import { OptionsMenu, RowHeight } from 'components/OptionsMenu';
 import {
@@ -558,8 +559,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
     if (!isLoadingSettings && settings.sortString) {
       setSorts(parseSortString(settings.sortString));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoadingSettings]);
+  }, [isLoadingSettings, settings.sortString]);
 
   useEffect(() => {
     let cleanup: () => void;
@@ -704,7 +704,6 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
 
           break;
       }
-
       updateSettings({ selection: newSettings });
     },
     [rowRangeToIds, settings.selection, updateSettings],
@@ -838,7 +837,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
             key: 'select-all',
             label: 'Select all',
             onClick: () => {
-              handleSelectionChange?.('set', [0, settings.pageLimit]);
+              handleSelectionChange?.('add', [0, settings.pageLimit]);
             },
           },
         ];
@@ -1063,6 +1062,12 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
               selectedRuns={selectedRuns}
               workspaceId={workspaceId}
               onActionComplete={onActionComplete}
+            />
+            <LoadableCount
+              labelPlural="runs"
+              labelSingular="run"
+              selectedCount={selectedRunIdSet.size}
+              total={total}
             />
           </Row>
         </Column>

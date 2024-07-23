@@ -145,7 +145,7 @@ Spinning up or updating the Cluster
 
    -  -  ``--master-instance-type``
       -  AWS instance type to use for the master.
-      -  m5.large
+      -  m6i.large
 
    -  -  ``--aux-agent-instance-type``
 

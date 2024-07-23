@@ -14,3 +14,6 @@ db:
   # password: database_password
 
 launch_error: false
+
+telemetry:
+  enabled: false

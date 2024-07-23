@@ -5,10 +5,12 @@ import Row from 'hew/Row';
 import { Label, TypographySize } from 'hew/Typography';
 import React from 'react';
 
+import { AnyMouseEvent } from 'utils/routes';
+
 interface Props {
   children: React.ReactNode;
   focused?: boolean;
-  onClick?: () => void;
+  onClick?: (e: AnyMouseEvent) => void;
   title: string;
 }
 
@@ -22,12 +24,12 @@ const OverviewStats: React.FC<Props> = (props: Props) => {
       </Row>
       <Row width="fill">
         <Label strong truncate={{ tooltip: true }}>
-          {props.children}
+          {props.onClick ? <Link onClick={props.onClick}> {props.children} </Link> : props.children}
         </Label>
       </Row>
     </Column>
   );
-  return <Card>{props.onClick ? <Link onClick={props.onClick}>{column}</Link> : column}</Card>;
+  return <Card>{column}</Card>;
 };
 
 export default OverviewStats;

@@ -168,8 +168,10 @@ type KubernetesResourceManagerConfig struct {
 	// deprecated, no longer in use.
 	Fluent         FluentConfig `json:"fluent"`
 	KubeconfigPath string       `json:"kubeconfig_path"`
-	DetMasterIP    string       `json:"determined_master_ip,omitempty"`
-	DetMasterPort  int32        `json:"determined_master_port,omitempty"`
+
+	DetMasterScheme string `json:"determined_master_scheme,omitempty"`
+	DetMasterIP     string `json:"determined_master_ip,omitempty"`
+	DetMasterPort   int32  `json:"determined_master_port,omitempty"`
 
 	DefaultAuxResourcePool     string `json:"default_aux_resource_pool"`
 	DefaultComputeResourcePool string `json:"default_compute_resource_pool"`

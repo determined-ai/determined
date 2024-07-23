@@ -33,6 +33,8 @@ stages:
             type: basic
             username: determined
             password: password
+        telemetry:
+          enabled: false
 
   - custom:
       name: proxy

@@ -37,6 +37,9 @@ parameters:
   default-pt-gpu-hpc-image:
     type: string
     default: determinedai/pytorch-ngc-dev:e960eae
+  default-pt-tf-cpu-hpc-image:
+    type: string
+    default: determinedai/pytorch-tensorflow-cpu-dev:e960eae
   # Some python, go, and react dependencies are cached by circleci via `save_cache`/`restore_cache`.
   # If the dependencies stay the same, but the circleci code that would produce them is changed,
   # it may be necessary to invalidate the cache by incrementing this value.
@@ -148,8 +151,8 @@ commands:
     description: Collect logs from the cluster tasks.
     steps:
       - run:
-          when: on_fail
           name: "Ensure necessary Python packages are available."
+          when: always
           command: |
             pkg_names="fire determined"
             for pkg_name in $pkg_names; do
@@ -158,8 +161,8 @@ commands:
               fi
             done
       - run:
-          when: on_fail
           name: "Collect logs and calculate statistics"
+          when: always
           command: |
             target_dir="<< parameters.store_path >>"
             mkdir -p $target_dir
@@ -279,7 +282,7 @@ commands:
       - when:
           condition: <<parameters.tf2>>
           steps:
-            - run: docker pull determinedai/pytorch-ngc-dev:0e43056
+            - run: docker pull determinedai/pytorch-ngc-dev:f20b027
 
   login-docker:
     parameters:
@@ -623,6 +626,50 @@ commands:
         type: boolean
         default: true
     steps:
+      - when:
+          condition: 
+            and:
+              - equal: [<<parameters.master-host>>,'localhost']
+              - <<parameters.wait-for-master>>
+              - not: <<parameters.managed-devcluster>>
+          steps:
+            - run:
+                name: Install DataDog agent
+                command: |
+                  if [ "$AIS_DD_ENABLE_MONITORING" == "true" ]; then
+                    host_tags="test.mark:<<parameters.mark>>,\
+                    ci.pipeline_id:${CIRCLE_PIPELINE_ID},\
+                    ci.workflow_id:${CIRCLE_WORKFLOW_ID},\
+                    ci.job_num:${CIRCLE_BUILD_NUM},\
+                    ci.username:${CIRCLE_USERNAME},\
+                    git.tag:${CIRCLE_TAG},\
+                    git.commit:${CIRCLE_SHA1},\
+                    git.repo:${CIRCLE_PROJECT_REPONAME},\
+                    ci.totalNodes:${CIRCLE_NODE_TOTAL},\
+                    ci.nodeIdx:${CIRCLE_NODE_INDEX},\
+                    git.pr_num:${CIRCLE_PR_NUMBER}"
+
+                    sudo mkdir -p /tmp/artifacts/logs
+                    sudo chmod -R a+rw /tmp/artifacts/logs
+
+                    DD_ENV="ci-${CIRCLE_JOB}" \
+                    DD_HOST_TAGS="$host_tags" \
+                    DD_SERVICE="determined-pytest-<<parameters.mark>>" \
+                    bash -c "$(curl -L https://s3.amazonaws.com/dd-agent/scripts/install_script_agent7.sh)"
+                    
+                    # config files for the agent have an expected file structure
+                    sudo mkdir -p /etc/datadog-agent/conf.d/determined-master.d/
+                    sudo chmod a+rw /etc/datadog-agent/datadog.yaml
+                    sudo chmod -R a+rw /etc/datadog-agent/conf.d/determined-master.d/
+                    sudo cat .circleci/datadog/ci-local-config.yaml >> /etc/datadog-agent/datadog.yaml
+                    sudo sed -e "s/<SERVICE_NAME>/determined-pytest-<<parameters.mark>>/g" .circleci/datadog/e2e-log-settings.yaml > /etc/datadog-agent/conf.d/determined-master.d/conf.yaml
+                    # restart agent with config
+                    sudo usermod -a -G docker dd-agent
+                    sudo systemctl stop datadog-agent
+                    sudo systemctl start datadog-agent
+                    sleep 5
+                    sudo datadog-agent status
+                  fi
       # Wait for master before splitting tests, since so many splits depend on
       # asking master for its configuration in order to apply skipifs.
       - when:
@@ -659,9 +706,21 @@ commands:
               echo "No Determined master listening on '<<parameters.master-scheme>>://<<parameters.master-host>>:<<parameters.master-port>>'"
             fi
 
-            cat /tmp/all-relevant-files | circleci tests run --command="DD_CIVISIBILITY_AGENTLESS_ENABLED=true \
-            DD_SITE='datadoghq.com' \
-            DD_ENV='ci-<<parameters.mark>>' DD_SERVICE='determined-pytest-<<parameters.mark>>' \
+            tags="test.mark:<<parameters.mark>>,\
+            ci.pipeline_id:${CIRCLE_PIPELINE_ID},\
+            ci.workflow_id:${CIRCLE_WORKFLOW_ID},\
+            ci.job_num:${CIRCLE_BUILD_NUM},\
+            ci.username:${CIRCLE_USERNAME},\
+            git.tag:${CIRCLE_TAG},\
+            git.commit:${CIRCLE_SHA1},\
+            ci.totalNodes:${CIRCLE_NODE_TOTAL},\
+            ci.nodeIdx:${CIRCLE_NODE_INDEX},\
+            git.pr_num:${CIRCLE_PR_NUMBER}"
+
+            CMD="DD_CIVISIBILITY_AGENTLESS_ENABLED=true \
+            DD_TAGS='${tags}' \
+            DD_ENV='ci-<<parameters.mark>>' \
+            DD_SERVICE='determined-pytest-<<parameters.mark>>' \
             DET_MASTER_CERT_FILE=<<parameters.master-cert>> \
             DET_MASTER_CERT_NAME=<<parameters.master-cert-name>> \
             IS_CIRCLECI_JOB=1 XDG_CONFIG_HOME=/tmp \
@@ -669,14 +728,16 @@ commands:
             -m '<<parameters.mark>>' \
             --durations=0 \
             --ddtrace \
-            --master-scheme="<<parameters.master-scheme>>" \
-            --master-host="<<parameters.master-host>>" \
-            --master-port="<<parameters.master-port>>" \
+            --master-scheme='<<parameters.master-scheme>>' \
+            --master-host='<<parameters.master-host>>' \
+            --master-port='<<parameters.master-port>>' \
             -o junit_family=xunit1 \
-            --junit-xml="<<parameters.junit-path>>" \
-            <<parameters.extra-pytest-flags>>" \
-            --verbose --split-by=timings
+            --junit-xml='<<parameters.junit-path>>' \
+            <<parameters.extra-pytest-flags>>"
 
+            echo "$CMD"
+            cat /tmp/all-relevant-files | circleci tests run --command="$CMD" \
+            --verbose --split-by=timings
             pytest_status=$?
             echo Pytest exited with $pytest_status
             exit $pytest_status
@@ -691,6 +752,21 @@ commands:
                 master_address: "<<parameters.master-scheme>>://<<parameters.master-host>>:<<parameters.master-port>>"
       - store_artifacts:
           path: /tmp/artifacts/logs
+      - when:
+          condition:
+            and:
+              - equal: [<<parameters.master-host>>,'localhost']
+              - <<parameters.wait-for-master>>
+              - not: <<parameters.managed-devcluster>>
+          steps:
+            - run: # We don't know how long Circle leaves these machines running in the background. Take down the agent for safety.
+                name: Stop DataDog agent
+                when: always
+                command: |
+                  if [ "$AIS_DD_ENABLE_MONITORING" == "true" ]; then
+                    sudo systemctl stop datadog-agent || true
+                  fi
+            
 
   run-det-deploy-tests:
     parameters:
@@ -740,7 +816,7 @@ commands:
         default: ""
       aux-agent-instance-type:
         type: string
-        default: "m5.large"
+        default: "m6i.large"
       compute-agent-instance-type:
         type: string
         default: "g4dn.xlarge"
@@ -875,7 +951,7 @@ commands:
         default: "g4dn.xlarge"
       aux-agent-instance-type:
         type: string
-        default: "m5.large"
+        default: "m6i.large"
       max-dynamic-agents:
         type: integer
         default: 1
@@ -2362,7 +2438,7 @@ jobs:
 
   test-unit-harness-gpu-tf:
     docker:
-      - image: determinedai/tensorflow-ngc-dev:0e43056
+      - image: determinedai/tensorflow-ngc-dev:f20b027
     resource_class: determined-ai/container-runner-gpu
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
@@ -2389,7 +2465,7 @@ jobs:
 
   test-unit-harness-pytorch2-gpu:
     docker:
-      - image: determinedai/pytorch-ngc-dev:0e43056
+      - image: determinedai/pytorch-ngc-dev:f20b027
     resource_class: determined-ai/container-runner-gpu
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
@@ -2416,7 +2492,7 @@ jobs:
 
   test-unit-harness-pytorch2-cpu:
     docker:
-      - image: determinedai/pytorch-ngc-dev:0e43056
+      - image: determinedai/pytorch-ngc-dev:f20b027
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
       - checkout
@@ -2442,7 +2518,7 @@ jobs:
 
   test-unit-harness-gpu-parallel:
     docker:
-      - image: determinedai/pytorch-ngc-dev:0e43056
+      - image: determinedai/pytorch-ngc-dev:f20b027
     resource_class: determined-ai/container-runner-multi-gpu
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
@@ -2469,7 +2545,7 @@ jobs:
 
   test-unit-harness-gpu-deepspeed:
     docker:
-      - image: determinedai/pytorch-ngc-dev:0e43056
+      - image: determinedai/pytorch-ngc-dev:f20b027
     resource_class: determined-ai/container-runner-gpu
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
@@ -2655,9 +2731,6 @@ jobs:
       container-run-type:
         type: string
         default: singularity
-      agent-use:
-        type: string
-        default: ""
       workload-manager:
         type: string
         default: slurm
@@ -2763,7 +2836,7 @@ jobs:
             sudo apt-get update
             sudo apt-get install gettext
             sudo apt-get install iproute2
-            yes yes | PATH=$HOME/.local/bin:$PATH make slurmcluster FLAGS="-c <<parameters.container-run-type>> -w <<parameters.workload-manager>> <<parameters.agent-use>>" TF_LOCK=false | tee output.log
+            yes yes | PATH=$HOME/.local/bin:$PATH make slurmcluster FLAGS="-c <<parameters.container-run-type>> -w <<parameters.workload-manager>>" TF_LOCK=false | tee output.log
           background: true
 
       - run:
@@ -2784,64 +2857,6 @@ jobs:
               sleep 5
             done
 
-      # For when a user wants to use an agent instead of launcher.
-      - when:
-          condition:
-            equal: ["-A", <<parameters.agent-use>>]
-          steps:
-            - wait-for-master:
-                scheme: <<parameters.master-scheme>>
-                host: <<parameters.master-host>>
-                port: <<parameters.master-port>>
-            - run:
-                name: Transfer and Allocate agent resources on VM
-                command: |
-                  ZONE=$(terraform -chdir=tools/slurm/terraform output --raw zone)
-                  INSTANCE_NAME=$(terraform -chdir=tools/slurm/terraform output --raw instance_name)
-                  PROJECT=$(terraform -chdir=tools/slurm/terraform output --raw project)
-                  gcloud compute scp agent/build/determined-agent "$INSTANCE_NAME":~ --zone $ZONE
-                  gcloud compute ssh --zone "$ZONE" "$INSTANCE_NAME" --project "$PROJECT" -- \
-                  srun determined-agent --master-host=<<parameters.master-host>> --master-port=<<parameters.master-port>> --resource-pool=default --container-runtime=<<parameters.container-run-type>>
-                background: true
-            - run:
-                name: Query the job to ensure Determined Agent is running
-                command: |
-                  # 60 tries gives 30 minutes of tries until the query times out
-                  tries=60
-                  # squeue command gives name and state information. There must be an escape character for the gcloud command.
-                  ZONE=$(terraform -chdir=tools/slurm/terraform output --raw zone)
-                  INSTANCE_NAME=$(terraform -chdir=tools/slurm/terraform output --raw instance_name)
-                  PROJECT=$(terraform -chdir=tools/slurm/terraform output --raw project)
-                  gcloud compute ssh --zone "$ZONE" "$INSTANCE_NAME" --project "$PROJECT" -- squeue -o "%j\ %T"
-                  # Queries until the jobname is shown in a running state. The agent job must be running to run e2e tests
-                  until [[ -n $(gcloud compute ssh --zone "$ZONE" "$INSTANCE_NAME" --project "$PROJECT" -- squeue -o "%j\ %T" | grep "determined-agent" | grep "RUNNING") ]] ; do
-                      if [[ $((--tries)) -eq 0 ]]; then
-                        echo "The job determined-agent did not start. Please check if there are other jobs in the queue preventing this job from starting"
-                        exit 1
-                      fi
-                      echo "Waiting 30s to query for the job name again..."
-                      sleep 30
-                      echo "Retrying job query..."
-                      gcloud compute ssh --zone "$ZONE" "$INSTANCE_NAME" --project "$PROJECT" -- squeue -o "%j\ %T"
-                  done
-            - run:
-                name: Query the slot count to ensure slots are allocated
-                command: |
-                  tries=20
-                  export DET_USER=determined
-                  export DET_PASS=${INITIAL_USER_PASSWORD}
-                  det slot list
-                  until [[ $(det slot list | wc -l) -gt 2 ]] ; do
-                      if [[ $((--tries)) -eq 0 ]]; then
-                        echo "ERROR: determined-agent failed to register at least 2 slots. Check the 'Transfer and Allocate agent resources on VM' for any failures."
-                        exit 1
-                      fi
-                      echo "Waiting 5s to query slots again..."
-                      sleep 5
-                      echo "Retrying slot query..."
-                      det slot list
-                  done
-
       - run-e2e-tests:
           mark: <<parameters.mark>>
           wait-for-master: true
@@ -2849,20 +2864,6 @@ jobs:
           master-host: <<parameters.master-host>>
           master-port: <<parameters.master-port>>
           extra-pytest-flags: <<parameters.extra-pytest-flags>>
-
-      # Must cancel the srun command to prevent a ssh error
-      - when:
-          condition:
-            equal: ["-A", <<parameters.agent-use>>]
-          steps:
-            - run:
-                name: Deallocate the Resources on VM
-                command: |
-                  ZONE=$(terraform -chdir=tools/slurm/terraform output --raw zone)
-                  INSTANCE_NAME=$(terraform -chdir=tools/slurm/terraform output --raw instance_name)
-                  PROJECT=$(terraform -chdir=tools/slurm/terraform output --raw project)
-                  gcloud compute ssh --zone "$ZONE" "$INSTANCE_NAME" --project "$PROJECT" -- \
-                  scancel -u $USER
 
       - run:
           name: Make unslurmcluster
@@ -2963,9 +2964,6 @@ jobs:
         type: string
         default: launcher
       extra-pytest-flags:
-        type: string
-        default: ""
-      agent-use:
         type: string
         default: ""
       collect-det-job-logs:
@@ -3080,8 +3078,8 @@ jobs:
                     exit 0
                 fi
             fi
-            if sudo su - launcher -c "ENROOT_RUNTIME_PATH=/tmp/launcher /etc/launcher/scripts/manage-enroot-cache -s /lustre/ssd/foundation_engineering/ <<pipeline.parameters.default-pt-gpu-hpc-image>>"; then
-                echo "Downloaded Enroot image <<pipeline.parameters.default-pt-gpu-hpc-image>> "
+            if sudo su - launcher -c "ENROOT_RUNTIME_PATH=/tmp/launcher /etc/launcher/scripts/manage-enroot-cache -s /lustre/ssd/foundation_engineering/ <<pipeline.parameters.default-pt-tf-cpu-hpc-image>>"; then
+                echo "Downloaded Enroot image <<pipeline.parameters.default-pt-tf-cpu-hpc-image>> "
             else
                 EXIT_STATUS=$?
                 echo "Failed downloading Enroot image. Received exit code $EXIT_STATUS"
@@ -3124,62 +3122,7 @@ jobs:
                 }
               }
             EOF
-
-      - when:
-          condition:
-            equal: ["-A", <<parameters.agent-use>>]
-          steps:
-            - run:
-                name: Allocate Resources on Cluster
-                # Sed command reduces the slots to 8 to match '-N2 --gpus-per-node=4' usage below.
-                # Affects test e2e_tests/tests/cluster/test_slurm.py:test_mnist_pytorch_distributed
-                command: |
-                  DET_MASTER_HOST=<<parameters.determined_master_host>>
-                  # determined_master_host is localhost, so use actual hostname to pass to the agent
-                  MASTER_HOST=$(hostname)
-                  MASTER_PORT=$(echo $DET_MASTER_HOST | cut -d: -f2)
-                  sed -i 's/slots_per_trial: 16/slots_per_trial: 8/' examples/tutorials/mnist_pytorch/distributed.yaml
-                  sudo cp agent/dist/determined-agent_linux_amd64_v1/determined-agent /scratch/launcher/.launcher.$HOSTNAME
-                  # Include 40 minute time limit, name the job (determined-agent-$HOSTNAME) so we can selectively kill it
-                  sudo srun --uid launcher --export=ALL -N2 --gpus-per-node=4 --time=40 -Jdetermined-agent-$HOSTNAME \
-                  --chdir=/scratch/launcher/.launcher.$HOSTNAME  /scratch/launcher/.launcher.$HOSTNAME/determined-agent \
-                  --master-host=$MASTER_HOST  --master-port=$MASTER_PORT --resource-pool=default --container-runtime=singularity  --slot-type=cuda \
-                  --image-root=/lustre/hdd/foundation_engineering/images
-                background: true
-            - run:
-                name: Query the job to ensure Determined Agent is running
-                command: |
-                  # 60 tries gives 30 minutes of tries until the query times out
-                  tries=60
-                  squeue -u launcher -o "%j %T"
-                  # Queries until the jobname is shown in a running state. The agent job must be running to run e2e tests
-                  until [[ -n $(squeue -u launcher -o "%j %T" | grep "determined-agent-$HOSTNAME" | grep "RUNNING") ]] ; do
-                      if [[ $((--tries)) -eq 0 ]]; then
-                        echo "The job determined-agent-$HOSTNAME did not start. Please check if there are jobs in the queue preventing this job from starting"
-                        exit 1
-                      fi
-                      echo "Waiting 30s to query for the job name again..."
-                      sleep 30
-                      echo "Retrying job query..."
-                      squeue -u launcher -o "%j %T"
-                  done
-            - run:
-                name: Query the slot count to ensure slots are allocated
-                command: |
-                  tries=20
-                  export DET_PASS=${INITIAL_USER_PASSWORD}
-                  det slot list
-                  until [[ $(det slot list | wc -l) -gt 2 ]] ; do
-                      if [[ $((--tries)) -eq 0 ]]; then
-                        echo "ERROR: determined-agent failed to register at least 2 slots. Check the 'Transfer and Allocate agent resources on VM' for any failures."
-                        exit 1
-                      fi
-                      echo "Waiting 5s to query slots again..."
-                      sleep 5
-                      echo "Retrying slot query..."
-                      det slot list
-                  done
-
+            
       - run-e2e-tests:
           mark: <<parameters.mark>>
           master-host: localhost
@@ -3189,15 +3132,6 @@ jobs:
 
       - store_test_results:
           path: /tmp/test-results/
-
-      - when:
-          condition:
-            equal: ["-A", <<parameters.agent-use>>]
-          steps:
-            - run:
-                name: Deallocate Agent Resources on cluster
-                command: |
-                  scancel -u $USER --jobname=determined-agent-$HOSTNAME
 
   test-e2e:
     parameters:
@@ -3498,7 +3432,7 @@ jobs:
         default: "g4dn.xlarge"
       aux-agent-instance-type:
         type: string
-        default: "m5.large"
+        default: "m6i.large"
       cluster-id:
         type: string
         default: determined-${CIRCLE_BRANCH////--}
@@ -3609,7 +3543,7 @@ jobs:
         default: g4dn.xlarge
       aux-agent-instance-type:
         type: string
-        default: m5.large
+        default: m6i.large
       max-dynamic-agents:
         type: integer
         default: 1
@@ -3712,7 +3646,7 @@ jobs:
         type: string
         default: "1"
       environment-image:
-        default: determinedai/pytorch-ngc-dev:0e43056
+        default: determinedai/pytorch-ngc-dev:f20b027
         type: string
       accel-node-taints:
         type: string
@@ -3908,7 +3842,7 @@ jobs:
         default: g4dn.xlarge
       aux-agent-instance-type:
         type: string
-        default: m5.large
+        default: m6i.large
       max-dynamic-agents:
         type: integer
         default: 1
@@ -4511,28 +4445,6 @@ workflows:
               only:
                 - main
 
-      # Podman over SLURM test using Agent on GCP
-      - test-e2e-hpc-gcp:
-          context:
-            # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
-            # that's required by the "gh" command for authentication.
-            - github-read
-            - gcp
-            - gcp-ci-cluster-default-user-credentials
-          matrix:
-            parameters:
-              name: [test-e2e-slurm-agent-podman-gcp]
-              agent-use: ["-A"]
-              container-run-type: ["podman"]
-              mark: ["e2e_slurm and not parallel and not gpu_required"]
-              extra-pytest-flags: ["-k 'not test_slurm_verify_home'"]
-          requires:
-            - build-go-ee
-          filters:
-            branches:
-              only:
-                - main
-
       - test-e2e:
           name: test-e2e-rbac
           context:
@@ -4731,7 +4643,7 @@ workflows:
             parameters:
               parallelism: [2]
               compute-agent-instance-type: ["g4dn.metal"]
-              aux-agent-instance-type: ["m5.large"]
+              aux-agent-instance-type: ["m6i.large"]
               cluster-id-prefix: ["parallel"]
               mark: ["parallel"]
 
@@ -4926,7 +4838,7 @@ workflows:
               mark: ["distributed and not gpu_required"]
               compute-agent-instance-type: ["c5.2xlarge"]
               environment-gpu-enabled: ["0"]
-              aux-agent-instance-type: ["m5.large"]
+              aux-agent-instance-type: ["m6i.large"]
               max-dynamic-agents: [16]
 
       # DeepSpeed tests
@@ -4948,7 +4860,7 @@ workflows:
           matrix:
             parameters:
               compute-agent-instance-type: ["g4dn.12xlarge"]
-              aux-agent-instance-type: ["m5.large"]
+              aux-agent-instance-type: ["m6i.large"]
               cluster-id-prefix: ["deepspeed"]
               mark: ["deepspeed"]
               max-dynamic-agents: [2]
@@ -5065,7 +4977,7 @@ workflows:
               cluster-id-prefix: ["distributed"]
               mark: ["distributed"]
               compute-agent-instance-type: ["g4dn.metal"]
-              aux-agent-instance-type: ["m5.large"]
+              aux-agent-instance-type: ["m6i.large"]
               max-dynamic-agents: [2]
 
       # Perf tests.
@@ -5125,7 +5037,7 @@ workflows:
             parameters:
               parallelism: [2]
               compute-agent-instance-type: ["g4dn.metal"]
-              aux-agent-instance-type: ["m5.large"]
+              aux-agent-instance-type: ["m6i.large"]
               cluster-id-prefix: ["parallel"]
               mark: ["parallel"]
 
@@ -5164,7 +5076,7 @@ workflows:
           matrix:
             parameters:
               compute-agent-instance-type: ["g4dn.metal"]
-              aux-agent-instance-type: ["m5.large"]
+              aux-agent-instance-type: ["m6i.large"]
               cluster-id-prefix: ["mmdetection"]
               mark: ["model_hub_mmdetection"]
               max-dynamic-agents: [2]
@@ -5303,6 +5215,66 @@ workflows:
             - package-and-push-system-local-ee
             - request-hpc-tests
 
+      - test-e2e-slurm:
+          name: test-e2e-slurm-enroot-znode
+          context:
+            - dev-ci-cluster-default-user-credentials
+          matrix:
+            parameters:
+              mark: ["e2e_slurm and not deepspeed"]
+          requires:
+            - package-and-push-system-local-ee
+            - request-hpc-tests
+          master_config: |
+            task_container_defaults:
+              slurm:
+                sbatch_args:
+                  - --time=04:00:00
+              # The current image must be created in the launcher account before running this test
+              # cd /lustre/ssd/foundation_engineering/
+              # enroot import docker://determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-24586f0.sqsh
+              # enroot create /lustre/ssd/foundation_engineering/determinedai+environments+cuda-11.3-pytorch-1.10-tf-2.8-gpu-24586f0.sqsh
+              # image: determinedai+environments+cuda-11.3-pytorch-1.10-tf-2.8-gpu-24586f0
+              image:
+                cpu: <<pipeline.parameters.default-pt-tf-cpu-hpc-image>>
+                cuda: <<pipeline.parameters.default-pt-gpu-hpc-image>>
+              environment_variables:
+                  # Some ports are not working, disable them so distributed jobs work.
+                  - NCCL_IB_HCA=mlx6_0:0
+                  # Workaround XDG_RUNTIME_DIR not provided by Slurm
+                  - ENROOT_RUNTIME_PATH=/tmp/launcher
+            checkpoint_storage:
+              type: shared_fs
+              host_path: /scratch/launcher/.launcher.$HOSTNAME/checkpoints
+              storage_path: determined-checkpoint
+              save_experiment_best: 0
+              save_trial_best: 1
+              save_trial_latest: 1
+            db:
+              user: postgres
+              host: localhost
+              port: 5432
+              name: determined
+              password: ${HPC_DB_PASSWD}
+            resource_manager:
+              type: slurm
+              master_host: $HOSTNAME
+              master_port: 8080
+              host: localhost
+              port: 8181
+              protocol: http
+              slot_type: cuda
+              user_name: launcher
+              container_run_type: enroot
+              group_name: hpcd
+              singularity_image_root: /lustre/hdd/foundation_engineering/images
+              job_storage_root: /scratch/launcher/.launcher.$HOSTNAME
+              auth_file: /home/launcher/.launcher.$HOSTNAME.token
+              path: /opt/singularity/bin:/usr/local/bin:${PATH}
+              ld_library_path:
+            security:
+              initial_user_password: ${INITIAL_USER_PASSWORD}
+
       # Singularity over SLURM test on GCP
       - test-e2e-hpc-gcp:
           filters: *upstream-feature-branch
@@ -5413,26 +5385,6 @@ workflows:
             - build-go
             - request-hpc-tests
 
-      # Podman over SLURM test using Agent on GCP
-      - test-e2e-hpc-gcp:
-          filters: *upstream-feature-branch
-          context:
-            # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
-            # that's required by the "gh" command for authentication.
-            - github-read
-            - gcp
-            - gcp-ci-cluster-default-user-credentials
-          matrix:
-            parameters:
-              name: [test-e2e-slurm-agent-podman-gcp]
-              agent-use: ["-A"]
-              container-run-type: ["podman"]
-              mark: ["e2e_slurm and not parallel and not gpu_required"]
-              extra-pytest-flags: ["-k 'not test_slurm_verify_home'"]
-          requires:
-            - build-go
-            - request-hpc-tests
-
   nightly:
     when: << pipeline.parameters.do_nightly_tests >>
     jobs:
@@ -5459,7 +5411,7 @@ workflows:
               cluster-id-prefix: ["distributed"]
               mark: ["distributed"]
               compute-agent-instance-type: ["g4dn.metal"]
-              aux-agent-instance-type: ["m5.large"]
+              aux-agent-instance-type: ["m6i.large"]
               max-dynamic-agents: [2]
       - test-e2e-aws:
           name: test-e2e-gpu-mmdetection
@@ -5472,7 +5424,7 @@ workflows:
               cluster-id-prefix: ["mmdet"]
               mark: ["model_hub_mmdetection"]
               compute-agent-instance-type: ["g4dn.metal"]
-              aux-agent-instance-type: ["m5.large"]
+              aux-agent-instance-type: ["m6i.large"]
               max-dynamic-agents: [2]
       - test-e2e-aws:
           name: test-e2e-gpu-deepspeed
@@ -5485,7 +5437,7 @@ workflows:
               cluster-id-prefix: ["deepspeed"]
               mark: ["deepspeed"]
               compute-agent-instance-type: ["g4dn.12xlarge"]
-              aux-agent-instance-type: ["m5.large"]
+              aux-agent-instance-type: ["m6i.large"]
               max-dynamic-agents: [2]
       - test-e2e-aws:
           name: test-e2e-cpu-distributed
@@ -5499,7 +5451,7 @@ workflows:
               mark: ["distributed and not gpu_required"]
               compute-agent-instance-type: ["c5.2xlarge"]
               environment-gpu-enabled: ["0"]
-              aux-agent-instance-type: ["m5.large"]
+              aux-agent-instance-type: ["m6i.large"]
               max-dynamic-agents: [16]
       - test-aws-fs:
           name: test-aws-fs-fsx
@@ -5580,6 +5532,9 @@ workflows:
               # enroot import docker://determinedai/environments:cuda-11.3-pytorch-1.10-tf-2.8-gpu-24586f0.sqsh
               # enroot create /lustre/ssd/foundation_engineering/determinedai+environments+cuda-11.3-pytorch-1.10-tf-2.8-gpu-24586f0.sqsh
               # image: determinedai+environments+cuda-11.3-pytorch-1.10-tf-2.8-gpu-24586f0
+              image:
+                cpu: <<pipeline.parameters.default-pt-tf-cpu-hpc-image>>
+                cuda: <<pipeline.parameters.default-pt-gpu-hpc-image>>
               environment_variables:
                   # Some ports are not working, disable them so distributed jobs work.
                   - NCCL_IB_HCA=mlx6_0:0
@@ -5616,39 +5571,6 @@ workflows:
               ld_library_path:
             security:
               initial_user_password: ${INITIAL_USER_PASSWORD}
-      - test-e2e-slurm:
-            name: test-e2e-slurm-agent-singularity-znode
-            context:
-              - dev-ci-cluster-default-user-credentials
-            requires:
-              - package-and-push-system-local-ee
-            agent-use: "-A"
-            extra-pytest-flags: "-k 'not node_not_available'"
-            # For now we must skip node_not_available. There is a inconsistency with the agent where
-            # the error is "failed to create experiment: slots requested exceeds cluster capacity" instead of the expected message.
-            master_config: |
-                task_container_defaults:
-                  slurm:
-                    sbatch_args:
-                      - --time=04:00:00
-                  environment_variables:
-                    # Some ports are not working, disable them so distributed jobs work.
-                    - NCCL_IB_HCA=mlx6_0:0
-                checkpoint_storage:
-                  type: shared_fs
-                  host_path: /scratch/launcher/.launcher.$HOSTNAME/checkpoints
-                  storage_path: determined-checkpoint
-                  save_experiment_best: 0
-                  save_trial_best: 1
-                  save_trial_latest: 1
-                db:
-                  user: postgres
-                  host: localhost
-                  port: 5432
-                  name: determined
-                  password: ${HPC_DB_PASSWD}
-                security:
-                  initial_user_password: ${INITIAL_USER_PASSWORD}
       - terminate-vpc-circleci:
             context: ["gcp"]
 

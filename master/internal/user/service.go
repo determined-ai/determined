@@ -170,25 +170,21 @@ func (s *Service) UserAndNotebookSessionFromToken(
 	if err := v2.Verify(token, db.GetTokenKeys().PublicKey, &notebookSession, nil); err != nil {
 		return nil, nil, db.ErrNotFound
 	}
-	var session model.UserSession
-
-	if err := db.Bun().NewSelect().
-		Model(&session).
-		Where("id = ?", notebookSession.UserSessionID).
-		Scan(ctx); err != nil {
-		return nil, nil, err
-	}
-
-	if session.Expiry.Before(time.Now()) {
-		return nil, nil, db.ErrNotFound
-	}
-
 	var user model.User
+
+	// Check if the user session ID exists; some notebooks launched before the change to use
+	// user IDs may still have the session ID on the token.
+	if notebookSession.SessionID != nil {
+		user, err := BySessionID(context.TODO(), *notebookSession.SessionID)
+		if err != nil {
+			return nil, nil, err
+		}
+		return user, &notebookSession, nil
+	}
+
 	err := db.Bun().NewSelect().
 		Table("users").
-		ColumnExpr("users.*").
-		Join("JOIN user_sessions ON user_sessions.user_id = users.id").
-		Where("user_sessions.id = ?", session.ID).Scan(ctx, &user)
+		Where("id = ?", notebookSession.UserID).Scan(ctx, &user)
 	if err != nil {
 		return nil, nil, err
 	}

@@ -61,7 +61,7 @@ describe('ConjunctionContainer', () => {
     setup({ conjunction: Conjunction.Or, index: 2 });
 
     expect(screen.queryByText('Where')).not.toBeInTheDocument();
-    expect(screen.queryByText('combobox')).not.toBeInTheDocument();
+    expect(screen.queryByRole('combobox')).not.toBeInTheDocument();
     expect(screen.getByText(Conjunction.Or)).toHaveAttribute('data-test', 'conjunctionContinued');
   });
 });

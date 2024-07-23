@@ -11,11 +11,13 @@ import Section from 'components/Section';
 import TimeAgo from 'components/TimeAgo';
 import { useCheckpointFlow } from 'hooks/useCheckpointFlow';
 import { NodeElement } from 'pages/ResourcePool/Topology';
-import { paths } from 'routes/utils';
+import { handlePath, paths } from 'routes/utils';
 import { getTaskAcceleratorData } from 'services/api';
 import { V1AcceleratorData } from 'services/api-ts-sdk/api';
 import { CheckpointWorkloadExtended, ExperimentBase, TrialDetails } from 'types';
 import handleError from 'utils/error';
+import { createPachydermLineageLink } from 'utils/integrations';
+import { AnyMouseEvent } from 'utils/routes';
 import { humanReadableBytes, pluralizer } from 'utils/string';
 
 import css from './TrialInfoBox.module.scss';
@@ -151,6 +153,28 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
   }, [acceleratorData]);
 
   const allocationModal = useModal(allocationModalComponent);
+  const lineageComponent = useMemo(() => {
+    const {
+      config: { integrations },
+    } = experiment;
+
+    if (integrations?.pachyderm !== undefined) {
+      const url = createPachydermLineageLink(integrations.pachyderm);
+      const handleClickDataInput = (e: AnyMouseEvent) => {
+        handlePath(e, {
+          path: url,
+        });
+      };
+
+      return (
+        <OverviewStats title="Data Input" onClick={handleClickDataInput}>
+          {integrations.pachyderm.dataset.repo}
+        </OverviewStats>
+      );
+    }
+
+    return null;
+  }, [experiment]);
 
   return (
     <Section>
@@ -177,15 +201,11 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
         {/* Older experiment may not have collected accelerator data */}
         {acceleratorData?.length ? (
           <OverviewStats title="Resource Allocation" onClick={allocationModal.open}>
-            <div
-              style={{
-                color: 'var(--theme-status-active)',
-              }}>
-              {`${numOfSlots} ${pluralizer(numOfSlots, 'Slot')}`}
-            </div>
+            {`${numOfSlots} ${pluralizer(numOfSlots, 'Slot')}`}
           </OverviewStats>
         ) : null}
         {<OverviewStats title="Log Retention Days">{logRetentionDays}</OverviewStats>}
+        {lineageComponent}
       </Card.Group>
       <allocationModal.Component data={acceleratorData} />
     </Section>

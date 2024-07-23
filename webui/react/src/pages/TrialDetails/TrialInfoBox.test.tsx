@@ -6,6 +6,7 @@ import {} from 'stores/cluster';
 
 import { ThemeProvider } from 'components/ThemeProvider';
 import { ExperimentBase, TrialDetails } from 'types';
+import { mockIntegrationData } from 'utils/integrations.test';
 
 import TrialInfoBox from './TrialInfoBox';
 
@@ -228,6 +229,26 @@ describe('Trial Info Box', () => {
       setup(mockTrial3, mockExperiment);
       expect(await screen.findByText('Log Retention Days')).toBeVisible();
       expect(await screen.findByText('Forever')).toBeVisible();
+    });
+  });
+
+  describe('Lineage card', () => {
+    it('should show Data input card with tge lineage link when pachyderm integration data is present', async () => {
+      const mockExperimentWith = Object.assign(
+        { ...mockExperiment },
+        {
+          config: { ...mockExperiment.config, integrations: { pachyderm: mockIntegrationData } },
+        },
+      );
+
+      setup(mockTrial1, mockExperimentWith);
+      expect(await screen.findByText('Data Input')).toBeVisible();
+      expect(await screen.findByText(mockIntegrationData.dataset.repo)).toBeVisible();
+    });
+
+    it('should not show Data input card when pachyderm integration is missing', () => {
+      setup(mockTrial1, mockExperiment);
+      expect(screen.queryByText('Data input')).not.toBeInTheDocument();
     });
   });
 });

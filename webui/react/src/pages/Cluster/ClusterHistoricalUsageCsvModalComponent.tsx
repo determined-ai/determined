@@ -17,28 +17,28 @@ export const CSVGroupBy = {
 export type CSVGroupBy = ValueOf<typeof CSVGroupBy>;
 
 interface Props {
-  afterDate: Dayjs;
-  beforeDate: Dayjs;
+  fromDate: Dayjs;
+  toDate: Dayjs;
   groupBy: CSVGroupBy;
   onVisibleChange: (visible: boolean) => void;
 }
 
 const ClusterHistoricalUsageCsvModalComponent: React.FC<Props> = ({
-  afterDate,
-  beforeDate,
+  fromDate,
+  toDate,
   groupBy,
   onVisibleChange,
 }: Props) => {
   const [form] = Form.useForm();
 
   const handleOk = (event: React.MouseEvent): void => {
-    const formAfterDate = form.getFieldValue('afterDate');
-    const formBeforeDate = form.getFieldValue('beforeDate');
+    const formFromDate = form.getFieldValue('fromDate');
+    const formToDate = form.getFieldValue('toDate');
     const groupByEndpoint = form.getFieldValue('groupBy');
     const searchParams = new URLSearchParams();
 
-    searchParams.append('timestamp_after', formAfterDate.startOf('day').toISOString());
-    searchParams.append('timestamp_before', formBeforeDate.endOf('day').toISOString());
+    searchParams.append('timestamp_from', formFromDate.startOf('day').toISOString());
+    searchParams.append('timestamp_to', formToDate.endOf('day').toISOString());
     handlePath(event, {
       external: true,
       path: serverAddress(groupByEndpoint + searchParams.toString()),
@@ -46,14 +46,14 @@ const ClusterHistoricalUsageCsvModalComponent: React.FC<Props> = ({
     onVisibleChange(false);
   };
 
-  const isAfterDateDisabled = (currentDate: Dayjs) => {
-    const formBeforeDate = form.getFieldValue('beforeDate');
-    return currentDate.isAfter(formBeforeDate);
+  const isfromDateDisabled = (currentDate: Dayjs) => {
+    const formtoDate = form.getFieldValue('toDate');
+    return currentDate.isAfter(formtoDate);
   };
 
-  const isBeforeDateDisabled = (currentDate: Dayjs) => {
-    const formAfterDate = form.getFieldValue('afterDate');
-    return currentDate.isBefore(formAfterDate) || currentDate.isAfter(dayjs());
+  const istoDateDisabled = (currentDate: Dayjs) => {
+    const formfromDate = form.getFieldValue('fromDate');
+    return currentDate.isBefore(formfromDate) || currentDate.isAfter(dayjs());
   };
 
   return (
@@ -66,12 +66,12 @@ const ClusterHistoricalUsageCsvModalComponent: React.FC<Props> = ({
       }}
       title="Download Resource Usage Data in CSV"
       onClose={() => onVisibleChange(false)}>
-      <Form form={form} initialValues={{ afterDate, beforeDate, groupBy }} labelCol={{ span: 8 }}>
-        <Form.Item label="Start" name="afterDate">
-          <DatePicker allowClear={false} disabledDate={isAfterDateDisabled} width={150} />
+      <Form form={form} initialValues={{ fromDate, groupBy, toDate }} labelCol={{ span: 8 }}>
+        <Form.Item label="Start" name="fromDate">
+          <DatePicker allowClear={false} disabledDate={isfromDateDisabled} width={150} />
         </Form.Item>
-        <Form.Item label="End" name="beforeDate">
-          <DatePicker allowClear={false} disabledDate={isBeforeDateDisabled} width={150} />
+        <Form.Item label="End" name="toDate">
+          <DatePicker allowClear={false} disabledDate={istoDateDisabled} width={150} />
         </Form.Item>
         <Form.Item label="Group by" name="groupBy">
           <Select searchable={false} width={'150px'}>

@@ -26,6 +26,8 @@ stages:
           authz:
             rbac_ui_enabled: true
             type: rbac
+        telemetry:
+          enabled: false
 
   - agent:
       name: agent1

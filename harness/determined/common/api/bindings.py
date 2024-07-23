@@ -8453,6 +8453,7 @@ class v1LocationType(DetEnum):
     - LOCATION_TYPE_CUSTOM_METRIC: Column is located on the experiment's custom metric
     - LOCATION_TYPE_RUN: Column is located on the run
     - LOCATION_TYPE_RUN_HYPERPARAMETERS: Column is located in the hyperparameter of the run
+    - LOCATION_TYPE_RUN_METADATA: Column is located on the run's arbitrary metadata
     """
     UNSPECIFIED = "LOCATION_TYPE_UNSPECIFIED"
     EXPERIMENT = "LOCATION_TYPE_EXPERIMENT"
@@ -8462,6 +8463,7 @@ class v1LocationType(DetEnum):
     CUSTOM_METRIC = "LOCATION_TYPE_CUSTOM_METRIC"
     RUN = "LOCATION_TYPE_RUN"
     RUN_HYPERPARAMETERS = "LOCATION_TYPE_RUN_HYPERPARAMETERS"
+    RUN_METADATA = "LOCATION_TYPE_RUN_METADATA"
 
 class v1LogConfig(Printable):
     color: "typing.Optional[bool]" = None

@@ -22,11 +22,11 @@ Determined uses a PostgreSQL database to store experiment and trial metadata.
    GPUs, ensure that the :ref:`NVIDIA Container Toolkit <validate-nvidia-container-toolkit>` on each
    one is working as expected.
 
-#. Pull the official Docker image for PostgreSQL. We recommend using the version listed below.
+#. Pull the official Docker image for PostgreSQL. PostgreSQL version 10 and later is supported.
 
    .. code::
 
-      docker pull postgres:10
+      docker pull postgres:14
 
    This image is not provided by Determined AI; visit `its Docker Hub page
    <https://hub.docker.com/_/postgres>`_ for more information.
@@ -54,7 +54,7 @@ Determined uses a PostgreSQL database to store experiment and trial metadata.
           -v determined_db:/var/lib/postgresql/data \
           -e POSTGRES_DB=determined \
           -e POSTGRES_PASSWORD=<Database password> \
-          postgres:10
+          postgres:14
 
    If the master will connect to PostgreSQL via Docker networking, exposing port 5432 via the ``-p``
    argument isn't necessary; however, you may still want to expose it for administrative or

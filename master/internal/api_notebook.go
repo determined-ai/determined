@@ -360,7 +360,7 @@ func (a *apiServer) LaunchNotebook(
 	// Launch a Notebook.
 	genericCmd, err := command.DefaultCmdService.LaunchNotebookCommand(
 		launchReq,
-		session)
+		user)
 	if err != nil {
 		return nil, err
 	}

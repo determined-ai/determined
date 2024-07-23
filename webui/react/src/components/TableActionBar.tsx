@@ -49,9 +49,10 @@ import {
   getActionsForExperimentsUnion,
   getProjectExperimentForExperimentItem,
 } from 'utils/experiment';
-import { capitalizeWord, pluralizer } from 'utils/string';
+import { capitalizeWord } from 'utils/string';
 import { openCommandResponse } from 'utils/wait';
 
+import LoadableCount from './LoadableCount';
 import css from './TableActionBar.module.scss';
 
 const batchActions = [
@@ -372,26 +373,6 @@ const TableActionBar: React.FC<Props> = ({
     }, [] as MenuItem[]);
   }, [availableBatchActions]);
 
-  const selectionLabel = useMemo(() => {
-    return Loadable.match(total, {
-      Failed: () => null,
-      Loaded: (totalExperiments) => {
-        let label = `${totalExperiments.toLocaleString()} ${pluralizer(
-          totalExperiments,
-          labelSingular.toLowerCase(),
-          labelPlural,
-        )}`;
-
-        if (selectedExperimentIds.length) {
-          label = `${selectedExperimentIds.length} of ${label} selected`;
-        }
-
-        return label;
-      },
-      NotLoaded: () => `Loading ${labelPlural.toLowerCase()}...`,
-    });
-  }, [total, labelPlural, labelSingular, selectedExperimentIds]);
-
   const handleAction = useCallback((key: string) => handleBatchAction(key), [handleBatchAction]);
 
   return (
@@ -434,11 +415,12 @@ const TableActionBar: React.FC<Props> = ({
                 </Button>
               </Dropdown>
             )}
-            {!isMobile && (
-              <span className={css.expNum} data-test="expNum">
-                {selectionLabel}
-              </span>
-            )}
+            <LoadableCount
+              labelPlural={labelPlural}
+              labelSingular={labelSingular}
+              selectedCount={selectedExperimentIds.length}
+              total={total}
+            />
           </Row>
         </Column>
         <Column align="right">

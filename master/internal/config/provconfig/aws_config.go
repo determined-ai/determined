@@ -50,16 +50,16 @@ type AWSClusterConfig struct {
 }
 
 var defaultAWSImageID = map[string]string{
-	"ap-northeast-1": "ami-0d5ce4472d6286746",
-	"ap-northeast-2": "ami-0090f68a647f10126",
-	"ap-southeast-1": "ami-048be732b76a4679e",
-	"ap-southeast-2": "ami-05c05ba492caa1c68",
-	"us-east-2":      "ami-07517c67a90714250",
-	"us-east-1":      "ami-0b25b64346732d0b5",
-	"us-west-2":      "ami-083f8147aeeba1eb2",
-	"eu-central-1":   "ami-0ebd39eab325463c0",
-	"eu-west-2":      "ami-0d3b65b9d8e18b354",
-	"eu-west-1":      "ami-05c7e44456501d01d",
+	"ap-northeast-1": "ami-0afb46883c38208a7",
+	"ap-northeast-2": "ami-0684df210044c21d5",
+	"ap-southeast-1": "ami-0b3d9c646837892ad",
+	"ap-southeast-2": "ami-0db21a1ffe9fb8fd7",
+	"us-east-2":      "ami-07966023b5496e611",
+	"us-east-1":      "ami-039387004119ccf40",
+	"us-west-2":      "ami-002e87c2da1a565c9",
+	"eu-central-1":   "ami-08ce183d559b307c8",
+	"eu-west-2":      "ami-0ee850bb0d3dd97f0",
+	"eu-west-1":      "ami-0cfbb4cbdf8e76b4b",
 }
 
 var defaultAWSClusterConfig = AWSClusterConfig{
@@ -394,6 +394,13 @@ var ec2InstanceSlots = map[Ec2InstanceType]int{
 	"m5zn.3xlarge":  0,
 	"m5zn.6xlarge":  0,
 	"m5zn.12xlarge": 0,
+	"m6i.large":     0,
+	"m6i.xlarge":    0,
+	"m6i.2xlarge":   0,
+	"m6i.4xlarge":   0,
+	"m6i.8xlarge":   0,
+	"m6i.12xlarge":  0,
+	"m6i.16xlarge":  0,
 }
 
 func getEC2MetadataSess() (*ec2metadata.EC2Metadata, error) {
