@@ -767,7 +767,16 @@ def test_set_workspace_namespace_bindings(
 
         detproc.check_error(
             sess,
-            ["det", "w", "resource-quota", "set", w_name, "-5"],
+            [
+                "det",
+                "w",
+                "resource-quota",
+                "set",
+                w_name,
+                "-5",
+                "--cluster-name",
+                conf.DEFAULT_RM_CLUSTER_NAME,
+            ],
             "must be greater than or equal to 0",
         )
 
