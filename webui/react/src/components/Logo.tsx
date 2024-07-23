@@ -69,8 +69,8 @@ const Logo: React.FC<Props> = ({
 
   const mode = isDarkMode ? 'dark' : 'light';
   const imageSrc = hasCustomLogo
-    ? logos[branding][orientation][mode]
-    : linkPath(paths.customerAsset('logo', orientation, mode), false);
+    ? linkPath(paths.customerAsset('logo', orientation, mode), false)
+    : logos[branding][orientation][mode];
   return <img alt={alt} className={css.logo} src={imageSrc} />;
 };
 

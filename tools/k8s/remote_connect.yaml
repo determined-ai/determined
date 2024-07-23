@@ -1,0 +1,24 @@
+# @dataclass
+# class Config:
+#     # TODO: set up a shared ec2 instance for this usage.
+#     reverse_proxy_host: str
+#     k8s_context: str
+#     ssh_key_path: pathlib.Path
+#     determined_root: pathlib.Path
+#     ssh_user: str = "ubuntu"
+#     base_devcluster_path: pathlib.Path = pathlib.Path("tools/k8s/devcluster.yaml")
+#     local_master_port: int = 8080
+#     remote_port_range: Tuple[int, int] = (8000, 9000)
+
+#     @classmethod
+#     def from_yaml(cls, path: pathlib.Path) -> "Config":
+#         with open(path) as f:
+#             data = yaml.safe_load(f)
+#         return cls(**data)
+
+reverse_proxy_host: 34.219.58.49 # aws-dev.prv
+k8s_context: gke_determined-ai_us-west1_hz-remotegke-cluster
+determined_root: $HOME/projects/da/determined
+ssh_user: hmd
+ssh_key_path: $HOME/.ssh/id_ed25519
+base_devcluster_path: $HOME/projects/da/determined/tools/k8s/devcluster.yaml
