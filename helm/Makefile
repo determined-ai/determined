@@ -3,7 +3,7 @@ export VERSION:=$(shell ../version.sh)
 build/stamp: $(shell find charts -type f)
 	mkdir -p build
 	rm -rf build/*.tgz
-	helm package --destination build charts/determined
+	helm package --destination build charts/determined --version $(VERSION) --app-version $(VERSION)
 	cd build/ && ln -s determined-*.tgz determined-latest.tgz && cd ..
 	touch $@
 
