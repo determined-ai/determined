@@ -120,16 +120,16 @@ stringData:
       display_name_attribute_name: {{ .Values.oidc.displayNameAttributeName }}
       {{- end }}
       {{- if .Values.oidc.agentUidAttributeName }}
-      agent_uid: {{ .Values.oidc.agentUidAttributeName }}
+      agent_uid_attribute_name: {{ .Values.oidc.agentUidAttributeName }}
       {{- end }}
       {{- if .Values.oidc.agentGidAttributeName }}
-      agent_gid: {{ .Values.oidc.agentGidAttributeName }}
+      agent_gid_attribute_name: {{ .Values.oidc.agentGidAttributeName }}
       {{- end }}
       {{- if .Values.oidc.agentUserNameAttributeName }}
-      agent_user_name: {{ .Values.oidc.agentUserNameAttributeName }}
+      agent_user_name_attribute_name: {{ .Values.oidc.agentUserNameAttributeName }}
       {{- end }}
       {{- if .Values.oidc.agentGroupNameAttributeName }}
-      agent_group_name: {{ .Values.oidc.agentGroupNameAttributeName }}
+      agent_group_name_attribute_name: {{ .Values.oidc.agentGroupNameAttributeName }}
       {{- end }}
     {{- end }}
 
@@ -162,16 +162,16 @@ stringData:
       display_name_attribute_name: {{ .Values.saml.displayNameAttributeName }}
       {{- end }}
       {{- if .Values.saml.agentUidAttributeName }}
-      agent_uid: {{ .Values.saml.agentUidAttributeName }}
+      agent_uid_attribute_name: {{ .Values.saml.agentUidAttributeName }}
       {{- end }}
       {{- if .Values.saml.agentGidAttributeName }}
-      agent_gid: {{ .Values.saml.agentGidAttributeName }}
+      agent_gid_attribute_name: {{ .Values.saml.agentGidAttributeName }}
       {{- end }}
       {{- if .Values.saml.agentUserNameAttributeName }}
-      agent_user_name: {{ .Values.saml.agentUserNameAttributeName }}
+      agent_user_name_attribute_name: {{ .Values.saml.agentUserNameAttributeName }}
       {{- end }}
       {{- if .Values.saml.agentGroupNameAttributeName }}
-      agent_group_name: {{ .Values.saml.agentGroupNameAttributeName }}
+      agent_group_name_attribute_name: {{ .Values.saml.agentGroupNameAttributeName }}
       {{- end }}
     {{- end }}
     {{- end }}
