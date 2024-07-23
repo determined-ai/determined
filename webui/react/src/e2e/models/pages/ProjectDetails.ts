@@ -1,3 +1,4 @@
+import { expect } from 'e2e/fixtures/global-fixtures';
 import { BasePage } from 'e2e/models/common/base/BasePage';
 import { DynamicTabs } from 'e2e/models/components/DynamicTabs';
 import { F_ExperimentList } from 'e2e/models/components/F_ExperimentList';
@@ -15,7 +16,16 @@ export class ProjectDetails extends BasePage {
    * @param {string} [projectID] - The Project to visit. Defaults to '1' for uncategorized
    */
   async gotoProject(projectID: string = '1', args = {}): Promise<this> {
-    return await this.goto({ ...args, url: `projects/${projectID}` });
+    const retVal = await this.goto({ ...args, url: `projects/${projectID}` });
+    await this.f_experimentList.tableActionBar.pwLocator.waitFor({ timeout: 10_000 });
+    await expect(
+      this.f_experimentList.dataGrid.rows.pwLocator.or(
+        this.f_experimentList.noExperimentsMessage.pwLocator,
+      ),
+    ).not.toHaveCount(0, {
+      timeout: 10_000,
+    });
+    return retVal;
   }
 
   readonly pageComponent = new PageComponent({ parent: this });
