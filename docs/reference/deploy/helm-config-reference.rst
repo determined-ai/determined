@@ -220,6 +220,11 @@
 -  ``imagePullSecretName``: Specifies the image pull secret for pulling the Determined master image.
    Required when using the enterprise edition.
 
+-  ``masterService``: Specifies configuration applied to the service for the Determined master.
+
+   -  ``annotations``: Allows specifying annotations to be applied to the service for the Determined
+      master.
+
 -  ``telemetry``: Specifies whether we collect anonymous information about the usage of Determined.
 
    -  ``enabled``: Whether collection is enabled. Defaults to ``true``.
