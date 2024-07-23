@@ -96,18 +96,21 @@ func TestObfuscateExperiments(t *testing.T) {
 	tests := [...]struct {
 		name                   string
 		config                 string
+		configUnmarshaler      func([]byte, interface{}) error
 		expectedOriginalConfig string
 		expectedConfig         map[string]interface{}
 	}{
 		{
 			name:                   "no data defined",
 			config:                 "{}",
+			configUnmarshaler:      json.Unmarshal,
 			expectedOriginalConfig: "{}",
 			expectedConfig:         map[string]interface{}{},
 		},
 		{
 			name:                   "no secrets defined",
 			config:                 `{"data": {"public_values": {"key1": "baef4876-7ff8-4aea-a022-9480606cb467"}}}`,
+			configUnmarshaler:      json.Unmarshal,
 			expectedOriginalConfig: `{"data": {"public_values": {"key1": "baef4876-7ff8-4aea-a022-9480606cb467"}}}`,
 			expectedConfig: map[string]interface{}{
 				"data": map[string]interface{}{
@@ -130,6 +133,7 @@ func TestObfuscateExperiments(t *testing.T) {
 					},
 				},
 			}),
+			configUnmarshaler: json.Unmarshal,
 			expectedOriginalConfig: mustMarshalJSONString(map[string]interface{}{
 				"data": map[string]interface{}{
 					"public_values": map[string]interface{}{
@@ -166,6 +170,7 @@ func TestObfuscateExperiments(t *testing.T) {
 					},
 				},
 			}),
+			configUnmarshaler: yaml.Unmarshal,
 			expectedOriginalConfig: mustMarshalJSONString(map[string]interface{}{
 				"data": map[string]interface{}{
 					"public_values": map[string]interface{}{
@@ -197,7 +202,7 @@ func TestObfuscateExperiments(t *testing.T) {
 		expectedOriginalConfig := tt.expectedOriginalConfig
 		t.Run(tt.name, func(t *testing.T) {
 			var configMap map[string]interface{}
-			err := json.Unmarshal([]byte(originalConfig), &configMap)
+			err := tt.configUnmarshaler([]byte(originalConfig), &configMap)
 			require.NoError(t, err)
 			config, err := structpb.NewStruct(configMap)
 			require.NoError(t, err)
