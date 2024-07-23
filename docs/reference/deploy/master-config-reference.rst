@@ -1808,7 +1808,7 @@ display name in Determined.
 ``always_redirect``
 ===================
 
-Determines if this OIDC provider should be redirected to for authentication, bypasses the standard
+Specifies if this OIDC provider should be used for authentication, bypassing the standard
 Determined sign-in page. This redirection persists unless the user explicitly signs out within the
 WebUI.
 
