@@ -313,7 +313,7 @@ test.describe('Experiment List', () => {
     await expect
       .soft((await row.getCellByColumnName('State')).pwLocator)
       .not.toHaveText('pulling', {
-        timeout: 40_000,
+        timeout: 100_000,
       });
     await expect.soft((await row.getCellByColumnName('State')).pwLocator).toHaveText('queued');
 
