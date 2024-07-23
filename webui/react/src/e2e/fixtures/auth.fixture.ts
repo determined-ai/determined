@@ -2,7 +2,7 @@ import { Page } from '@playwright/test';
 
 import { expect } from 'e2e/fixtures/global-fixtures';
 import { SignIn } from 'e2e/models/pages/SignIn';
-import { defaultLandingURL, password, username } from 'e2e/utils/envVars';
+import { password, username } from 'e2e/utils/envVars';
 
 export class AuthFixture {
   readonly #page: Page;
@@ -18,7 +18,7 @@ export class AuthFixture {
   }
 
   async login({
-    expectedURL = defaultLandingURL(),
+    expectedURL = /dashboard/,
     username = this.#USERNAME,
     password = this.#PASSWORD,
   }: {
@@ -26,8 +26,6 @@ export class AuthFixture {
     username?: string;
     password?: string;
   } = {}): Promise<void> {
-    // eslint-disable-next-line no-console
-    console.log('Expected URL: ', expectedURL);
     const detAuth = this.signInPage.detAuth;
     if (!(await detAuth.pwLocator.isVisible())) {
       await this.#page.goto('/');

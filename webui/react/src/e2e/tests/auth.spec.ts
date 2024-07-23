@@ -1,6 +1,5 @@
 import { expect, test } from 'e2e/fixtures/global-fixtures';
 import { SignIn } from 'e2e/models/pages/SignIn';
-import { defaultLandingTitle, defaultLandingURL } from 'e2e/utils/envVars';
 
 test.describe('Authentication', () => {
   test.afterEach(async ({ page, auth }) => {
@@ -13,8 +12,8 @@ test.describe('Authentication', () => {
   test('Login and Logout', async ({ page, auth }) => {
     await test.step('Login', async () => {
       await auth.login();
-      await expect(page).toHaveDeterminedTitle(defaultLandingTitle());
-      await expect(page).toHaveURL(defaultLandingURL());
+      await expect(page).toHaveDeterminedTitle('Home');
+      await expect(page).toHaveURL(/dashboard/);
     });
 
     await test.step('Logout', async () => {
@@ -27,7 +26,7 @@ test.describe('Authentication', () => {
 
   test('Login Redirect', async ({ page, auth }) => {
     await test.step('Attempt to Visit a Page', async () => {
-      await page.goto('/models');
+      await page.goto('./models');
       await expect(page).toHaveURL(/login/);
     });
 
