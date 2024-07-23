@@ -1,15 +1,20 @@
 package authz
 
 import (
+	"encoding/json"
+	"fmt"
 	"slices"
 
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
+	"google.golang.org/protobuf/types/known/structpb"
+	"gopkg.in/yaml.v3"
 
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/agentv1"
 	"github.com/determined-ai/determined/proto/pkg/containerv1"
 	"github.com/determined-ai/determined/proto/pkg/devicev1"
+	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
 
@@ -119,4 +124,65 @@ func ObfuscateJob(job *jobv1.Job) jobv1.LimitedJob {
 		Progress:       job.Progress,
 		WorkspaceId:    job.WorkspaceId,
 	}
+}
+
+// ObfuscateExperiments obfuscates sensitive information in experiments.
+// Currently, that is considered to be anything the user has configured
+// under a "secrets" key in the general-purpose "data" config.
+func ObfuscateExperiments(experiments ...*experimentv1.Experiment) error {
+	for _, exp := range experiments {
+		data, exists := exp.Config.Fields["data"] //nolint:staticcheck
+		if !exists {
+			continue
+		}
+		dataMap := data.GetStructValue() // nil if not struct
+		if dataMap == nil {
+			continue
+		}
+		secrets, exists := dataMap.Fields["secrets"]
+		if !exists {
+			continue
+		}
+		secretsMap := secrets.GetStructValue()
+		if secretsMap == nil {
+			continue
+		}
+		for key := range secretsMap.Fields {
+			secretsMap.Fields[key] = structpb.NewStringValue(hiddenString)
+		}
+
+		var oConfig map[string]interface{}
+		err := json.Unmarshal([]byte(exp.OriginalConfig), &oConfig)
+		if err != nil {
+			err = yaml.Unmarshal([]byte(exp.OriginalConfig), &oConfig)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling original experiment config: %w", err)
+			}
+		}
+		oData, exists := oConfig["data"]
+		if !exists {
+			continue
+		}
+		oDataMap, ok := oData.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		oSecrets, exists := oDataMap["secrets"]
+		if !exists {
+			continue
+		}
+		oSecretsMap, ok := oSecrets.(map[string]interface{})
+		if !ok {
+			continue
+		}
+		for key := range oSecretsMap {
+			oSecretsMap[key] = hiddenString
+		}
+		pConfig, err := json.Marshal(oConfig)
+		if err != nil {
+			return fmt.Errorf("error remarshaling experiment config: %w", err)
+		}
+		exp.OriginalConfig = string(pConfig)
+	}
+	return nil
 }

@@ -204,6 +204,8 @@ Example:
 
    dlprof --mode=simple python3 -m determined.launch.torch_distributed --trial model_def:MnistTrial
 
+.. _creating-an-experiment:
+
 ************************
  Creating an Experiment
 ************************
