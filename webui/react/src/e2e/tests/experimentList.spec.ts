@@ -300,9 +300,9 @@ test.describe('Experiment List', () => {
     detExecSync(
       `experiment create ${fullPath('examples/tutorials/mnist_pytorch/adaptive.yaml')}  --paused`,
     );
-    await expect
-      .soft(projectDetailsPage.f_experimentList.tableActionBar.count.pwLocator)
-      .toContainText(`${initNumRows + 1}`);
+    await expect(projectDetailsPage.f_experimentList.tableActionBar.count.pwLocator).toContainText(
+      `${initNumRows + 1}`,
+    );
 
     // experiment should initially be paused
     const row = projectDetailsPage.f_experimentList.dataGrid.getRowByIndex(0);
