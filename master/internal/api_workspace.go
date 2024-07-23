@@ -1017,6 +1017,11 @@ func (a *apiServer) setResourceQuotas(ctx context.Context,
 	}
 
 	for clusterName, quota := range req.ClusterQuotaPairs {
+		clusterName, err := a.validateRequestClusterName(clusterName, false)
+		if err != nil {
+			return nil, err
+		}
+
 		var wsns model.WorkspaceNamespace
 		err = tx.NewSelect().
 			Model(&model.WorkspaceNamespace{}).
