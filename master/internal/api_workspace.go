@@ -886,7 +886,7 @@ func (a *apiServer) setWorkspaceNamespaceBindings(ctx context.Context,
 		}
 
 		// Since workspace-namespace bindings for the default namespace of a given cluster are not
-		// automatically saved in the database, maintain constistency by not saving default
+		// automatically saved in the database, maintain consistency by not saving default
 		// namespace bindings to the db if a user tries to set them.
 		defaultNamespace, err := a.m.rm.DefaultNamespace(clusterName)
 		if err != nil {
