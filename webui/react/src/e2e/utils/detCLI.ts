@@ -17,7 +17,7 @@ export function detExecSync(detCommand: string): string {
         DET_USER: username(),
       },
       stdio: 'pipe',
-      timeout: 5_000,
+      timeout: 10_000,
     }).toString();
   } catch (e: unknown) {
     if (typeof e === 'object' && e !== null && 'stderr' in e && typeof e.stderr === 'string') {
