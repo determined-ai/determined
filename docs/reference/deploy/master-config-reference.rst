@@ -1810,7 +1810,7 @@ display name in Determined.
 
 Specifies if this OIDC provider should be used for authentication, bypassing the standard
 Determined sign-in page. This redirection persists unless the user explicitly signs out within the
-WebUI.
+WebUI. If an SSO user attempts to use an expired session token, they are directly redirected to the SSO provider and returned to the requested page after authentication.
 
 **********
  ``saml``
