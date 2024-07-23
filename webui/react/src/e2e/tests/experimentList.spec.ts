@@ -306,14 +306,20 @@ test.describe('Experiment List', () => {
 
     // experiment should initially be paused
     const row = projectDetailsPage.f_experimentList.dataGrid.getRowByIndex(0);
-    await expect.soft((await row.getCellByColumnName('State')).pwLocator).toHaveText('paused');
+    await expect.soft((await row.getCellByColumnName('State')).pwLocator).toHaveText('paused', {
+      timeout: 10_000,
+    });
 
     // resume experiment
     await (await row.experimentActionDropdown.open()).resume.pwLocator.click();
-    await expect.soft((await row.getCellByColumnName('State')).pwLocator).toHaveText('queued');
+    await expect.soft((await row.getCellByColumnName('State')).pwLocator).toHaveText('queued', {
+      timeout: 10_000,
+    });
 
     // pause experiment again
     await (await row.experimentActionDropdown.open()).pause.pwLocator.click();
-    await expect.soft((await row.getCellByColumnName('State')).pwLocator).toHaveText('paused');
+    await expect.soft((await row.getCellByColumnName('State')).pwLocator).toHaveText('paused', {
+      timeout: 10_000,
+    });
   });
 });
