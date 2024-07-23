@@ -1,4 +1,4 @@
-export VERSION := $(shell cat ../VERSION)
+export VERSION := $(shell ../version.sh)
 .DEFAULT_GOAL := build
 
 SPHINXOPTS    = -W

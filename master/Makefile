@@ -8,7 +8,8 @@ STREAM_TS_CLIENT = ../webui/react/src/services/stream/wire.ts
 MOCK_INPUTS = ./internal/sproto/task.go ./internal/db/database.go ./internal/command/authz_iface.go ../go.mod ../go.sum ./internal/rm/resource_manager_iface.go ./internal/task/allocation_service_iface.go
 GORELEASER = goreleaser
 
-export VERSION := $(shell cat ../VERSION)
+export VERSION := $(shell ../version.sh)
+
 export GO111MODULE := on
 export DOCKER_REPO ?= determinedai
 
