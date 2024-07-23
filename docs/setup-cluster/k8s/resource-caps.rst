@@ -166,8 +166,12 @@ Bulk Auto-Create Namespace Bindings
 ===================================
 
 -  Endpoint: ``/api/v1/namespace-bindings/bulk-auto-create``
+
 -  Description: Use this endpoint to auto-create namespace bindings for all specified workspaces.
--  Details: Pass the workspace IDs fetched from the previous endpoint into this endpoint. It will
-   auto-create namespace bindings for clusters that do not have an explicit binding.
+
+-  Details: Pass the workspace IDs fetched from the previous endpoint into this endpoint. For each
+   workspace, it will auto-create namespace bindings for clusters that do not have an explicit
+   binding.
+
 -  Example: If workspace W1 has a default binding for cluster A and is bound to namespace N1 for
    cluster B, this endpoint will only auto-create a namespace and bind it for cluster A.
