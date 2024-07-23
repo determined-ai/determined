@@ -1266,6 +1266,11 @@ func (a *apiServer) DeleteWorkspace(
 	}()
 	wg.Wait()
 
+	// Delete the auto-generated namespace (if it exists) and its resources in Kubernetes.
+	err = a.m.rm.DeleteNamespace(*autoCreatedNamespace)
+	if err != nil {
+		return nil, err
+	}
 	for _, v := range toBeDeletedBindings {
 		// Only remove the namespace if binding is not stale
 		if _, ok := a.m.allRms[v.ClusterName]; ok {
@@ -1274,12 +1279,6 @@ func (a *apiServer) DeleteWorkspace(
 				return nil, err
 			}
 		}
-	}
-
-	// Delete the auto-generated namespace (if it exists) and its resources in Kubernetes.
-	err = a.m.rm.DeleteNamespace(*autoCreatedNamespace)
-	if err != nil {
-		return nil, err
 	}
 
 	if len(projects) == 0 {

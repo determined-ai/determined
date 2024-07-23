@@ -708,7 +708,6 @@ func (p k8sJobResource) Start(
 		return fmt.Errorf("getting namespace for workspace: %w", err)
 	}
 
-	// Check slots allocate
 	return p.jobsService.StartJob(startJob{
 		req:          p.req,
 		allocationID: p.req.AllocationID,
