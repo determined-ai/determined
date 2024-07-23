@@ -8,6 +8,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
 	"google.golang.org/protobuf/types/known/structpb"
+	"gopkg.in/yaml.v3"
 
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/agentv1"
@@ -153,7 +154,10 @@ func ObfuscateExperiments(experiments ...*experimentv1.Experiment) error {
 		var oConfig map[string]interface{}
 		err := json.Unmarshal([]byte(exp.OriginalConfig), &oConfig)
 		if err != nil {
-			return fmt.Errorf("error unmarshaling original experiment config: %w", err)
+			err = yaml.Unmarshal([]byte(exp.OriginalConfig), &oConfig)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling original experiment config: %w", err)
+			}
 		}
 		oData, exists := oConfig["data"]
 		if !exists {

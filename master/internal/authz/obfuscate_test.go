@@ -6,6 +6,7 @@ import (
 
 	"github.com/stretchr/testify/require"
 	"google.golang.org/protobuf/types/known/structpb"
+	"gopkg.in/yaml.v3"
 
 	"github.com/determined-ai/determined/proto/pkg/agentv1"
 	"github.com/determined-ai/determined/proto/pkg/containerv1"
@@ -82,8 +83,13 @@ func TestObfuscateAgentSlots(t *testing.T) {
 }
 
 func TestObfuscateExperiments(t *testing.T) {
-	mustMarshalString := func(v interface{}) string {
+	mustMarshalJSONString := func(v interface{}) string {
 		p, err := json.Marshal(v)
+		require.NoError(t, err)
+		return string(p)
+	}
+	mustMarshalYAMLString := func(v interface{}) string {
+		p, err := yaml.Marshal(v)
 		require.NoError(t, err)
 		return string(p)
 	}
@@ -112,8 +118,8 @@ func TestObfuscateExperiments(t *testing.T) {
 			},
 		},
 		{
-			name: "some secrets defined",
-			config: mustMarshalString(map[string]interface{}{
+			name: "secrets defined in json config",
+			config: mustMarshalJSONString(map[string]interface{}{
 				"data": map[string]interface{}{
 					"public_values": map[string]interface{}{
 						"key2": "03d43c5b-d227-433d-aee6-0121500ac0bb",
@@ -124,7 +130,43 @@ func TestObfuscateExperiments(t *testing.T) {
 					},
 				},
 			}),
-			expectedOriginalConfig: mustMarshalString(map[string]interface{}{
+			expectedOriginalConfig: mustMarshalJSONString(map[string]interface{}{
+				"data": map[string]interface{}{
+					"public_values": map[string]interface{}{
+						"key2": "03d43c5b-d227-433d-aee6-0121500ac0bb",
+					},
+					"secrets": map[string]interface{}{
+						"key3": hiddenString,
+						"key4": hiddenString,
+					},
+				},
+			}),
+			expectedConfig: map[string]interface{}{
+				"data": map[string]interface{}{
+					"public_values": map[string]interface{}{
+						"key2": "03d43c5b-d227-433d-aee6-0121500ac0bb",
+					},
+					"secrets": map[string]interface{}{
+						"key3": hiddenString,
+						"key4": hiddenString,
+					},
+				},
+			},
+		},
+		{
+			name: "secrets defined in yaml config",
+			config: mustMarshalYAMLString(map[string]interface{}{
+				"data": map[string]interface{}{
+					"public_values": map[string]interface{}{
+						"key2": "03d43c5b-d227-433d-aee6-0121500ac0bb",
+					},
+					"secrets": map[string]interface{}{
+						"key3": "58cb0887-c717-4b63-b274-2656f2fc4f2d",
+						"key4": "7bba99b0-0227-4565-834d-8ca547c309f6",
+					},
+				},
+			}),
+			expectedOriginalConfig: mustMarshalJSONString(map[string]interface{}{
 				"data": map[string]interface{}{
 					"public_values": map[string]interface{}{
 						"key2": "03d43c5b-d227-433d-aee6-0121500ac0bb",
