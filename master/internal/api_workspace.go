@@ -518,8 +518,9 @@ func (a *apiServer) PostWorkspace(
 
 		err = workspace.AddWorkspace(ctx, w, &tx)
 		if err != nil {
-			if strings.Contains(err.Error(), db.CodeUniqueViolation) {
-				return status.Errorf(codes.AlreadyExists, "avoid names equal to other workspaces (case-insensitive)")
+			if errors.Is(err, db.ErrDuplicateRecord) {
+				return status.Errorf(codes.AlreadyExists, "avoid names equal to other "+
+					"workspaces (case-insensitive)")
 			}
 			return err
 		}
@@ -636,7 +637,9 @@ func (a *apiServer) deleteWorkspaceNamespaceBinding(ctx context.Context,
 			if len(deletedClusters) < len(clusterNames) {
 				switch {
 				case len(clusterNames) == 1:
-					return fmt.Errorf("tried to delete default binding for cluster %v", clusterNames[0])
+					deleteDefaultBindingError := fmt.Sprintf("tried to delete default binding "+
+						"for cluster %v", clusterNames[0])
+					return errors.Wrap(db.ErrDeleteDefaultBinding, deleteDefaultBindingError)
 				default:
 					remainingClusters := ""
 					for _, i := range clusterNames {
@@ -644,8 +647,9 @@ func (a *apiServer) deleteWorkspaceNamespaceBinding(ctx context.Context,
 							remainingClusters = remainingClusters + i + ", "
 						}
 					}
-					return fmt.Errorf("tried to delete default bindings for the following clusters: %v",
-						remainingClusters[:len(remainingClusters)-2])
+					deleteDefaultBindingError := fmt.Sprintf("tried to delete default binding for "+
+						"clusters: %v", remainingClusters[:len(remainingClusters)-2])
+					return errors.Wrap(db.ErrDeleteDefaultBinding, deleteDefaultBindingError)
 				}
 			}
 			return nil
@@ -774,7 +778,7 @@ func (a *apiServer) PatchWorkspace(
 		}
 		if len(toDelete) > 0 {
 			err = a.deleteWorkspaceNamespaceBinding(ctx, toDelete, req.Id, &currUser)
-			if err != nil && !strings.Contains(err.Error(), "tried to delete default binding.") {
+			if errors.Is(err, db.ErrDeleteDefaultBinding) {
 				return nil, err
 			}
 		}
@@ -1075,12 +1079,26 @@ func (a *apiServer) SetResourceQuotas(ctx context.Context,
 	if err != nil {
 		return nil, err
 	}
+	defer func() {
+		if err = tx.Rollback(); err != nil && err != sql.ErrTxDone {
+			log.WithError(err).Error("error rolling back transaction in set resource quota")
+		}
+	}()
+
 	w, err := a.GetWorkspaceByID(ctx, req.Id, *curUser, false)
 	if err != nil {
 		return nil, err
 	}
 
-	return a.setResourceQuotas(ctx, req, &tx, curUser, w)
+	resp, err = a.setResourceQuotas(ctx, req, &tx, curUser, w)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = tx.Commit(); err != nil {
+		return nil, fmt.Errorf("could not commit set resource quota transaction: %w", err)
+	}
+	return resp, nil
 }
 
 func (a *apiServer) deleteWorkspace(

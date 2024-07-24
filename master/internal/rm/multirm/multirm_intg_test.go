@@ -4,13 +4,14 @@ import (
 	"fmt"
 	"os"
 	"strconv"
-	"strings"
 	"testing"
 
 	"github.com/google/uuid"
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	k8error "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/determined-ai/determined/master/internal/mocks"
 	"github.com/determined-ai/determined/master/internal/rm"
@@ -653,7 +654,7 @@ func TestVerifyNamespaceExists(t *testing.T) {
 			rm2ClusterName,
 			func() {
 				rm2.On("VerifyNamespaceExists", invalidNamespaceName, rm2ClusterName).
-					Return(fmt.Errorf("namespace %s does not exist", invalidNamespaceName)).Once()
+					Return(k8error.NewNotFound(schema.GroupResource{}, "")).Once()
 			},
 			fmt.Errorf("namespace %s does not exist", invalidNamespaceName),
 		},
@@ -666,7 +667,7 @@ func TestVerifyNamespaceExists(t *testing.T) {
 			if err == nil {
 				require.Equal(t, test.err, err)
 			} else {
-				require.True(t, strings.Contains(err.Error(), "does not exist"))
+				require.True(t, k8error.IsNotFound(err))
 			}
 		})
 	}

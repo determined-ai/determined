@@ -18,12 +18,14 @@ func AddWorkspace(ctx context.Context, workspace *model.Workspace, tx *bun.Tx) e
 	if tx != nil {
 		_, err := tx.NewInsert().Model(workspace).Exec(ctx)
 		if err != nil {
-			return fmt.Errorf("failed adding workspace %s to the database: %w", workspace.Name, err)
+			return fmt.Errorf("failed adding workspace %s to the database: %w: %w", workspace.Name,
+				db.ErrDuplicateRecord, err)
 		}
 	} else {
 		_, err := db.Bun().NewInsert().Model(workspace).Exec(ctx)
 		if err != nil {
-			return fmt.Errorf("failed adding workspace %s to the database: %w", workspace.Name, err)
+			return fmt.Errorf("failed adding workspace %s to the database: %w: %w", workspace.Name,
+				db.ErrDuplicateRecord, err)
 		}
 	}
 	return nil

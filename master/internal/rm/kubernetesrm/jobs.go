@@ -2225,7 +2225,7 @@ func (j *jobsService) createNamespace(namespaceName string) error {
 func (j *jobsService) deleteNamespace(namespaceName string) error {
 	err := j.clientSet.CoreV1().Namespaces().Delete(context.TODO(), namespaceName,
 		metaV1.DeleteOptions{})
-	if err != nil && !strings.Contains(err.Error(), "not found") {
+	if err != nil && !k8error.IsNotFound(err) {
 		return err
 	}
 	return nil
