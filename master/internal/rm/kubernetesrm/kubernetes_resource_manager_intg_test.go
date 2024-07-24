@@ -6,6 +6,7 @@ package kubernetesrm
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"log"
 	"os"
@@ -20,6 +21,7 @@ import (
 	"github.com/stretchr/testify/require"
 	batchV1 "k8s.io/api/batch/v1"
 	k8sV1 "k8s.io/api/core/v1"
+	k8error "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/api/resource"
 	metaV1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/types"
@@ -849,6 +851,142 @@ func TestVerifyNamespaceExists(t *testing.T) {
 	// Test that a non-existent namespace name.
 	err = js.verifyNamespaceExists(nonexistentNamespaceName)
 	require.Error(t, err)
+}
+
+func TestCreateNamespaceHelper(t *testing.T) {
+	js := createMockJobsService(nil, device.CPU, false)
+
+	validNamespace := "valNamespace"
+	existentNamespace := "nonexistentNamespace"
+	erroneousNamespace := "erroneousNamespace"
+
+	validk8sNamespace := &k8sV1.Namespace{
+		TypeMeta: metaV1.TypeMeta{
+			Kind:       "Namespace",
+			APIVersion: "v1",
+		},
+		ObjectMeta: metaV1.ObjectMeta{
+			Name:   validNamespace,
+			Labels: map[string]string{determinedLabel: validNamespace},
+		},
+	}
+
+	existentk8sNamespace := &k8sV1.Namespace{
+		TypeMeta: metaV1.TypeMeta{
+			Kind:       "Namespace",
+			APIVersion: "v1",
+		},
+		ObjectMeta: metaV1.ObjectMeta{
+			Name:   existentNamespace,
+			Labels: map[string]string{determinedLabel: existentNamespace},
+		},
+	}
+
+	erroneousk8sNamespace := &k8sV1.Namespace{
+		TypeMeta: metaV1.TypeMeta{
+			Kind:       "Namespace",
+			APIVersion: "v1",
+		},
+		ObjectMeta: metaV1.ObjectMeta{
+			Name:   erroneousNamespace,
+			Labels: map[string]string{determinedLabel: erroneousNamespace},
+		},
+	}
+
+	jobsClientSet := &mocks.K8sClientsetInterface{}
+	coreV1Interface := &mocks.K8sCoreV1Interface{}
+	namespaceInterface := &mocks.NamespaceInterface{}
+	namespaceInterface.On("Create", context.TODO(), validk8sNamespace, metaV1.CreateOptions{}).
+		Return(validk8sNamespace, nil).Once()
+	namespaceInterface.On("Create", context.TODO(), existentk8sNamespace, metaV1.CreateOptions{}).
+		Return(nil, &k8error.StatusError{ErrStatus: metaV1.Status{Reason: metaV1.StatusReasonAlreadyExists}}).Once()
+	namespaceInterface.On("Create", context.TODO(), erroneousk8sNamespace, metaV1.CreateOptions{}).
+		Return(nil, errors.New("random error")).Once()
+	coreV1Interface.On("Namespaces").Return(namespaceInterface)
+	configMapInterace := &mocks.ConfigMapInterface{}
+	coreV1Interface.On("ConfigMaps", validNamespace).Return(configMapInterace)
+	podsInterface := &mocks.PodInterface{}
+	coreV1Interface.On("Pods", validNamespace).Return(podsInterface)
+	jobsClientSet.On("CoreV1").Return(coreV1Interface)
+	batchV1Interface := &mocks.K8sBatchV1Interface{}
+	jobsInterface := &mocks.JobInterface{}
+	batchV1Interface.On("Jobs", validNamespace).Return(jobsInterface)
+	jobsClientSet.On("BatchV1").Return(batchV1Interface)
+	js.clientSet = jobsClientSet
+
+	js.podInterfaces = make(map[string]typedV1.PodInterface)
+	js.configMapInterfaces = make(map[string]typedV1.ConfigMapInterface)
+	js.jobInterfaces = make(map[string]typedBatchV1.JobInterface)
+	channel := make(chan resourcesRequestFailure, 16)
+	js.requestQueueWorkers = []*requestProcessingWorker{
+		{
+			jobInterface:        js.jobInterfaces,
+			podInterface:        js.podInterfaces,
+			configMapInterfaces: js.configMapInterfaces,
+			failures:            channel,
+		},
+	}
+
+	// test with valid namespace
+	err := js.createNamespaceHelper(validNamespace)
+	require.NoError(t, err)
+
+	// test with non-existent namespace
+	err = js.createNamespaceHelper(existentNamespace)
+	require.NoError(t, err)
+
+	// verify that all necessary components have resgistered the namespace
+	_, ok := js.podInterfaces[validNamespace]
+	require.True(t, ok)
+	_, ok = js.podInterfaces[validNamespace]
+	require.True(t, ok)
+	_, ok = js.podInterfaces[validNamespace]
+	require.True(t, ok)
+	for _, worker := range js.requestQueueWorkers {
+		_, ok := worker.podInterface[validNamespace]
+		require.True(t, ok)
+		_, ok = worker.jobInterface[validNamespace]
+		require.True(t, ok)
+		_, ok = worker.configMapInterfaces[validNamespace]
+		require.True(t, ok)
+	}
+
+	// test with erroneous namespace
+	err = js.createNamespace(erroneousNamespace)
+	require.ErrorContains(t, err, "random error")
+}
+
+func TestDeleteNamespace(t *testing.T) {
+	js := createMockJobsService(nil, device.CPU, false)
+
+	validNamespace := "validNs"
+	nonexistentNamespace := "nonExistentNs"
+	erroneousNamespace := "erroneousNs"
+
+	jobsClientSet := &mocks.K8sClientsetInterface{}
+	coreV1Interface := &mocks.K8sCoreV1Interface{}
+	namespaceInterface := &mocks.NamespaceInterface{}
+	namespaceInterface.On("Delete", context.TODO(), validNamespace, metaV1.DeleteOptions{}).
+		Return(nil).Once()
+	namespaceInterface.On("Delete", context.TODO(), nonexistentNamespace, metaV1.DeleteOptions{}).
+		Return(&k8error.StatusError{ErrStatus: metaV1.Status{Reason: metaV1.StatusReasonNotFound, Code: 404}}).Once()
+	namespaceInterface.On("Delete", context.TODO(), erroneousNamespace, metaV1.DeleteOptions{}).
+		Return(errors.New("random error")).Once()
+	coreV1Interface.On("Namespaces").Return(namespaceInterface)
+	jobsClientSet.On("CoreV1").Return(coreV1Interface)
+	js.clientSet = jobsClientSet
+
+	// test with valid namespace
+	err := js.deleteNamespace(validNamespace)
+	require.NoError(t, err)
+
+	// test with non-existent namespace
+	err = js.deleteNamespace(nonexistentNamespace)
+	require.NoError(t, err)
+
+	// test with erroneous namespace
+	err = js.deleteNamespace(erroneousNamespace)
+	require.ErrorContains(t, err, "random error")
 }
 
 func TestRemoveEmptyNamespace(t *testing.T) {
