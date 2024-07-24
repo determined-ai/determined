@@ -116,7 +116,7 @@ export const mapV1MasterInfo = (data: Sdk.V1GetMasterResponse): DeterminedInfo =
     masterId: data.masterId,
     rbacEnabled: !!data.rbacEnabled,
     ssoProviders: data.ssoProviders,
-    userManagementEnabled: !!data.userManagementEnabled,
+    patchUserEnabled: !!data.userManagementEnabled,
     version: data.version,
   };
 };

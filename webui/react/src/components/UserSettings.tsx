@@ -161,7 +161,7 @@ const UserSettings: React.FC<Props> = ({ show, onClose }: Props) => {
                 {currentUser?.remote && (
                   <label>Remote user cannot change password from WebUI</label>
                 )}
-                {info.userManagementEnabled && !currentUser?.remote && (
+                {info.patchUserEnabled && !currentUser?.remote && (
                   <>
                     <InlineForm<string>
                       initialValue={newPassword}

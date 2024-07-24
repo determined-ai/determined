@@ -40,7 +40,7 @@ export interface DeterminedInfo {
   masterId: string;
   rbacEnabled: boolean;
   ssoProviders?: SsoProvider[];
-  userManagementEnabled: boolean;
+  patchUserEnabled: boolean;
   version: string;
 }
 
@@ -60,7 +60,7 @@ const initInfo: DeterminedInfo = {
   masterId: '',
   rbacEnabled: false,
   ssoProviders: [],
-  userManagementEnabled: true,
+  patchUserEnabled: true,
   version: process.env.VERSION || '',
 };
 

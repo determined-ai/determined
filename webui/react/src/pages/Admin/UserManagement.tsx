@@ -117,21 +117,19 @@ const UserActionDropdown = ({ fetchUsers, user, groups, userManagementEnabled }:
     }
   }, [fetchUsers, openToast, user]);
 
-  const menuItems =
-    userManagementEnabled && canModifyUsers
-      ? rbacEnabled
-        ? [
-            { key: MenuKey.Edit, label: 'Edit User' },
-            { key: MenuKey.Groups, label: 'Manage Groups' },
-            { key: MenuKey.Agent, label: 'Link with Agent UID/GID' },
-            { key: MenuKey.State, label: `${user.isActive ? 'Deactivate' : 'Activate'}` },
-          ]
-        : [
-            { key: MenuKey.Edit, label: 'Edit User' },
-            { key: MenuKey.Agent, label: 'Link with Agent UID/GID' },
-            { key: MenuKey.State, label: `${user.isActive ? 'Deactivate' : 'Activate'}` },
-          ]
+  const menuItems = useMemo(() => {
+    const items: MenuItem[] = canModifyUsers
+      ? [{ key: MenuKey.Edit, label: 'Edit User' }]
       : [{ key: MenuKey.View, label: 'View User' }];
+
+    if (rbacEnabled) items.push({ key: MenuKey.Groups, label: 'Manage Groups' });
+    if (userManagementEnabled)
+      items.push(
+        { key: MenuKey.Agent, label: 'Link with Agent UID/GID' },
+        { key: MenuKey.State, label: `${user.isActive ? 'Deactivate' : 'Activate'}` },
+      );
+    return items;
+  }, [canModifyUsers, rbacEnabled, user.isActive, userManagementEnabled]);
 
   const handleDropdown = useCallback(
     async (key: string) => {
@@ -376,7 +374,7 @@ const UserManagement: React.FC = () => {
           fetchUsers={fetchUsers}
           groups={groups}
           user={record}
-          userManagementEnabled={info.userManagementEnabled}
+          userManagementEnabled={info.patchUserEnabled}
         />
       );
     };
@@ -467,7 +465,7 @@ const UserManagement: React.FC = () => {
     return rbacEnabled
       ? columns.filter((c) => c.dataIndex !== 'isAdmin')
       : columns.filter((c) => c.dataIndex !== 'remote');
-  }, [fetchUsers, groups, info.userManagementEnabled, rbacEnabled, settings]);
+  }, [fetchUsers, groups, info.patchUserEnabled, rbacEnabled, settings]);
 
   return (
     <>
@@ -513,7 +511,7 @@ const UserManagement: React.FC = () => {
                 <Button
                   aria-label={CREATE_USER_LABEL}
                   data-testid="addUser"
-                  disabled={!info.userManagementEnabled || !canModifyUsers}
+                  disabled={!info.patchUserEnabled || !canModifyUsers}
                   onClick={CreateUserModal.open}>
                   {CREATE_USER}
                 </Button>
