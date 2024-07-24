@@ -591,7 +591,6 @@ def test_workspaceid_set() -> None:
         assert cmd.workspaceId == workspace.id
 
 
-@pytest.mark.e2e_gpu
 @pytest.mark.e2e_multi_k8s
 @pytest.mark.e2e_single_k8s
 def test_set_workspace_namespace_bindings(
