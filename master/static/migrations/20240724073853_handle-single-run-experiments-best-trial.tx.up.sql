@@ -3,16 +3,16 @@ WITH single_run_experiments AS (
     SELECT 
         id
     FROM  
-        experiments
+        experiments e
     WHERE
         e.config->'searcher'->>'name' = 'single'
-)
+),
 br_no_validation AS (
     SELECT r.experiment_id, r.id, r.best_validation_id
     FROM 
         runs r 
         INNER JOIN single_run_experiments sre 
-        ON r.experiment_id = sre.experiment_id
+        ON r.experiment_id = sre.id
     ORDER BY searcher_metric_value_signed)
 UPDATE 
     experiments 
