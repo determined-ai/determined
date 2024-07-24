@@ -60,7 +60,8 @@ const ComparisonView: React.FC<Props> = ({
   const isSelectionLimitReached = () => {
     if (experimentSelection) {
       if (
-        (experimentSelection.type === 'ONLY_IN' && experimentSelection.selections.length >= SELECTION_LIMIT) ||
+        (experimentSelection.type === 'ONLY_IN' &&
+          experimentSelection.selections.length >= SELECTION_LIMIT) ||
         (experimentSelection.type === 'ALL_EXCEPT' &&
           total &&
           total - experimentSelection.exclusions.length >= SELECTION_LIMIT)
@@ -218,7 +219,9 @@ const ComparisonView: React.FC<Props> = ({
     }
     return (
       <>
-        {isSelectionLimitReached() && <Alert message={`Only up to ${SELECTION_LIMIT} records can be compared`} />}
+        {isSelectionLimitReached() && (
+          <Alert message={`Only up to ${SELECTION_LIMIT} records can be compared`} />
+        )}
         <Pivot items={tabs} />
       </>
     );
