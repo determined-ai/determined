@@ -1076,23 +1076,21 @@ func (a *apiServer) SetResourceQuotas(ctx context.Context,
 		return nil, err
 	}
 
-	tx, err := db.Bun().BeginTx(ctx, nil)
+	w, err := a.GetWorkspaceByID(ctx, req.Id, *curUser, false)
 	if err != nil {
 		return nil, err
 	}
-	defer func() {
-		if err = tx.Rollback(); err != nil && err != sql.ErrTxDone {
-			log.WithError(err).Error("error rolling back transaction in set resource quota")
-		}
-	}()
 
-	w, err := a.GetWorkspaceByID(ctx, req.Id, *curUser, false)
+	tx, err := db.Bun().BeginTx(ctx, nil)
 	if err != nil {
 		return nil, err
 	}
 
 	resp, err = a.setResourceQuotas(ctx, req, &tx, curUser, w)
 	if err != nil {
+		if rbErr := tx.Rollback(); rbErr != nil && rbErr != sql.ErrTxDone {
+			log.WithError(rbErr).Errorf("error rolling back transaction in set resource quota")
+		}
 		return nil, err
 	}
 
