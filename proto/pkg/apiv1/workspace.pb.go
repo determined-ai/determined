@@ -1488,6 +1488,183 @@ func (*DeleteWorkspaceNamespaceBindingsResponse) Descriptor() ([]byte, []int) {
 	return file_determined_api_v1_workspace_proto_rawDescGZIP(), []int{21}
 }
 
+// Request the ids of all workspaces that are bound to the
+// default namespace for atleast one cluster.
+type GetWorkspacesWithDefaultNamespaceBindingsRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *GetWorkspacesWithDefaultNamespaceBindingsRequest) Reset() {
+	*x = GetWorkspacesWithDefaultNamespaceBindingsRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_determined_api_v1_workspace_proto_msgTypes[22]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetWorkspacesWithDefaultNamespaceBindingsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetWorkspacesWithDefaultNamespaceBindingsRequest) ProtoMessage() {}
+
+func (x *GetWorkspacesWithDefaultNamespaceBindingsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_determined_api_v1_workspace_proto_msgTypes[22]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetWorkspacesWithDefaultNamespaceBindingsRequest.ProtoReflect.Descriptor instead.
+func (*GetWorkspacesWithDefaultNamespaceBindingsRequest) Descriptor() ([]byte, []int) {
+	return file_determined_api_v1_workspace_proto_rawDescGZIP(), []int{22}
+}
+
+// Response to GetUnboundWorkspacesRequest.
+type GetWorkspacesWithDefaultNamespaceBindingsResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// The list of returned workspace ids.
+	WorkspaceIds []int32 `protobuf:"varint,1,rep,packed,name=workspace_ids,json=workspaceIds,proto3" json:"workspace_ids,omitempty"`
+}
+
+func (x *GetWorkspacesWithDefaultNamespaceBindingsResponse) Reset() {
+	*x = GetWorkspacesWithDefaultNamespaceBindingsResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_determined_api_v1_workspace_proto_msgTypes[23]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetWorkspacesWithDefaultNamespaceBindingsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetWorkspacesWithDefaultNamespaceBindingsResponse) ProtoMessage() {}
+
+func (x *GetWorkspacesWithDefaultNamespaceBindingsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_determined_api_v1_workspace_proto_msgTypes[23]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetWorkspacesWithDefaultNamespaceBindingsResponse.ProtoReflect.Descriptor instead.
+func (*GetWorkspacesWithDefaultNamespaceBindingsResponse) Descriptor() ([]byte, []int) {
+	return file_determined_api_v1_workspace_proto_rawDescGZIP(), []int{23}
+}
+
+func (x *GetWorkspacesWithDefaultNamespaceBindingsResponse) GetWorkspaceIds() []int32 {
+	if x != nil {
+		return x.WorkspaceIds
+	}
+	return nil
+}
+
+// Request for binding the given workpaces to new auto-created namespaces.
+type BulkAutoCreateWorkspaceNamespaceBindingsRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// The list of workspace ids.
+	WorkspaceIds []int32 `protobuf:"varint,1,rep,packed,name=workspace_ids,json=workspaceIds,proto3" json:"workspace_ids,omitempty"`
+}
+
+func (x *BulkAutoCreateWorkspaceNamespaceBindingsRequest) Reset() {
+	*x = BulkAutoCreateWorkspaceNamespaceBindingsRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_determined_api_v1_workspace_proto_msgTypes[24]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *BulkAutoCreateWorkspaceNamespaceBindingsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BulkAutoCreateWorkspaceNamespaceBindingsRequest) ProtoMessage() {}
+
+func (x *BulkAutoCreateWorkspaceNamespaceBindingsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_determined_api_v1_workspace_proto_msgTypes[24]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BulkAutoCreateWorkspaceNamespaceBindingsRequest.ProtoReflect.Descriptor instead.
+func (*BulkAutoCreateWorkspaceNamespaceBindingsRequest) Descriptor() ([]byte, []int) {
+	return file_determined_api_v1_workspace_proto_rawDescGZIP(), []int{24}
+}
+
+func (x *BulkAutoCreateWorkspaceNamespaceBindingsRequest) GetWorkspaceIds() []int32 {
+	if x != nil {
+		return x.WorkspaceIds
+	}
+	return nil
+}
+
+// Response to BulkAutoCreateWorkspaceNamespaceBindingsRequest.
+type BulkAutoCreateWorkspaceNamespaceBindingsResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *BulkAutoCreateWorkspaceNamespaceBindingsResponse) Reset() {
+	*x = BulkAutoCreateWorkspaceNamespaceBindingsResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_determined_api_v1_workspace_proto_msgTypes[25]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *BulkAutoCreateWorkspaceNamespaceBindingsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*BulkAutoCreateWorkspaceNamespaceBindingsResponse) ProtoMessage() {}
+
+func (x *BulkAutoCreateWorkspaceNamespaceBindingsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_determined_api_v1_workspace_proto_msgTypes[25]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use BulkAutoCreateWorkspaceNamespaceBindingsResponse.ProtoReflect.Descriptor instead.
+func (*BulkAutoCreateWorkspaceNamespaceBindingsResponse) Descriptor() ([]byte, []int) {
+	return file_determined_api_v1_workspace_proto_rawDescGZIP(), []int{25}
+}
+
 // Request for archiving a workspace.
 type ArchiveWorkspaceRequest struct {
 	state         protoimpl.MessageState
@@ -1501,7 +1678,7 @@ type ArchiveWorkspaceRequest struct {
 func (x *ArchiveWorkspaceRequest) Reset() {
 	*x = ArchiveWorkspaceRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_workspace_proto_msgTypes[22]
+		mi := &file_determined_api_v1_workspace_proto_msgTypes[26]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1514,7 +1691,7 @@ func (x *ArchiveWorkspaceRequest) String() string {
 func (*ArchiveWorkspaceRequest) ProtoMessage() {}
 
 func (x *ArchiveWorkspaceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_workspace_proto_msgTypes[22]
+	mi := &file_determined_api_v1_workspace_proto_msgTypes[26]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1527,7 +1704,7 @@ func (x *ArchiveWorkspaceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ArchiveWorkspaceRequest.ProtoReflect.Descriptor instead.
 func (*ArchiveWorkspaceRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_workspace_proto_rawDescGZIP(), []int{22}
+	return file_determined_api_v1_workspace_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *ArchiveWorkspaceRequest) GetId() int32 {
@@ -1547,7 +1724,7 @@ type ArchiveWorkspaceResponse struct {
 func (x *ArchiveWorkspaceResponse) Reset() {
 	*x = ArchiveWorkspaceResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_workspace_proto_msgTypes[23]
+		mi := &file_determined_api_v1_workspace_proto_msgTypes[27]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1560,7 +1737,7 @@ func (x *ArchiveWorkspaceResponse) String() string {
 func (*ArchiveWorkspaceResponse) ProtoMessage() {}
 
 func (x *ArchiveWorkspaceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_workspace_proto_msgTypes[23]
+	mi := &file_determined_api_v1_workspace_proto_msgTypes[27]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1573,7 +1750,7 @@ func (x *ArchiveWorkspaceResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ArchiveWorkspaceResponse.ProtoReflect.Descriptor instead.
 func (*ArchiveWorkspaceResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_workspace_proto_rawDescGZIP(), []int{23}
+	return file_determined_api_v1_workspace_proto_rawDescGZIP(), []int{27}
 }
 
 // Request for un-archiving a workspace.
@@ -1589,7 +1766,7 @@ type UnarchiveWorkspaceRequest struct {
 func (x *UnarchiveWorkspaceRequest) Reset() {
 	*x = UnarchiveWorkspaceRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_workspace_proto_msgTypes[24]
+		mi := &file_determined_api_v1_workspace_proto_msgTypes[28]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1602,7 +1779,7 @@ func (x *UnarchiveWorkspaceRequest) String() string {
 func (*UnarchiveWorkspaceRequest) ProtoMessage() {}
 
 func (x *UnarchiveWorkspaceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_workspace_proto_msgTypes[24]
+	mi := &file_determined_api_v1_workspace_proto_msgTypes[28]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1615,7 +1792,7 @@ func (x *UnarchiveWorkspaceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UnarchiveWorkspaceRequest.ProtoReflect.Descriptor instead.
 func (*UnarchiveWorkspaceRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_workspace_proto_rawDescGZIP(), []int{24}
+	return file_determined_api_v1_workspace_proto_rawDescGZIP(), []int{28}
 }
 
 func (x *UnarchiveWorkspaceRequest) GetId() int32 {
@@ -1635,7 +1812,7 @@ type UnarchiveWorkspaceResponse struct {
 func (x *UnarchiveWorkspaceResponse) Reset() {
 	*x = UnarchiveWorkspaceResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_workspace_proto_msgTypes[25]
+		mi := &file_determined_api_v1_workspace_proto_msgTypes[29]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1648,7 +1825,7 @@ func (x *UnarchiveWorkspaceResponse) String() string {
 func (*UnarchiveWorkspaceResponse) ProtoMessage() {}
 
 func (x *UnarchiveWorkspaceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_workspace_proto_msgTypes[25]
+	mi := &file_determined_api_v1_workspace_proto_msgTypes[29]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1661,7 +1838,7 @@ func (x *UnarchiveWorkspaceResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UnarchiveWorkspaceResponse.ProtoReflect.Descriptor instead.
 func (*UnarchiveWorkspaceResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_workspace_proto_rawDescGZIP(), []int{25}
+	return file_determined_api_v1_workspace_proto_rawDescGZIP(), []int{29}
 }
 
 // Request for pinning a workspace.
@@ -1677,7 +1854,7 @@ type PinWorkspaceRequest struct {
 func (x *PinWorkspaceRequest) Reset() {
 	*x = PinWorkspaceRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_workspace_proto_msgTypes[26]
+		mi := &file_determined_api_v1_workspace_proto_msgTypes[30]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1690,7 +1867,7 @@ func (x *PinWorkspaceRequest) String() string {
 func (*PinWorkspaceRequest) ProtoMessage() {}
 
 func (x *PinWorkspaceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_workspace_proto_msgTypes[26]
+	mi := &file_determined_api_v1_workspace_proto_msgTypes[30]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1703,7 +1880,7 @@ func (x *PinWorkspaceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PinWorkspaceRequest.ProtoReflect.Descriptor instead.
 func (*PinWorkspaceRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_workspace_proto_rawDescGZIP(), []int{26}
+	return file_determined_api_v1_workspace_proto_rawDescGZIP(), []int{30}
 }
 
 func (x *PinWorkspaceRequest) GetId() int32 {
@@ -1723,7 +1900,7 @@ type PinWorkspaceResponse struct {
 func (x *PinWorkspaceResponse) Reset() {
 	*x = PinWorkspaceResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_workspace_proto_msgTypes[27]
+		mi := &file_determined_api_v1_workspace_proto_msgTypes[31]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1736,7 +1913,7 @@ func (x *PinWorkspaceResponse) String() string {
 func (*PinWorkspaceResponse) ProtoMessage() {}
 
 func (x *PinWorkspaceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_workspace_proto_msgTypes[27]
+	mi := &file_determined_api_v1_workspace_proto_msgTypes[31]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1749,7 +1926,7 @@ func (x *PinWorkspaceResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PinWorkspaceResponse.ProtoReflect.Descriptor instead.
 func (*PinWorkspaceResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_workspace_proto_rawDescGZIP(), []int{27}
+	return file_determined_api_v1_workspace_proto_rawDescGZIP(), []int{31}
 }
 
 // Request for un-pinning a workspace.
@@ -1765,7 +1942,7 @@ type UnpinWorkspaceRequest struct {
 func (x *UnpinWorkspaceRequest) Reset() {
 	*x = UnpinWorkspaceRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_workspace_proto_msgTypes[28]
+		mi := &file_determined_api_v1_workspace_proto_msgTypes[32]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1778,7 +1955,7 @@ func (x *UnpinWorkspaceRequest) String() string {
 func (*UnpinWorkspaceRequest) ProtoMessage() {}
 
 func (x *UnpinWorkspaceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_workspace_proto_msgTypes[28]
+	mi := &file_determined_api_v1_workspace_proto_msgTypes[32]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1791,7 +1968,7 @@ func (x *UnpinWorkspaceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UnpinWorkspaceRequest.ProtoReflect.Descriptor instead.
 func (*UnpinWorkspaceRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_workspace_proto_rawDescGZIP(), []int{28}
+	return file_determined_api_v1_workspace_proto_rawDescGZIP(), []int{32}
 }
 
 func (x *UnpinWorkspaceRequest) GetId() int32 {
@@ -1811,7 +1988,7 @@ type UnpinWorkspaceResponse struct {
 func (x *UnpinWorkspaceResponse) Reset() {
 	*x = UnpinWorkspaceResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_workspace_proto_msgTypes[29]
+		mi := &file_determined_api_v1_workspace_proto_msgTypes[33]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1824,7 +2001,7 @@ func (x *UnpinWorkspaceResponse) String() string {
 func (*UnpinWorkspaceResponse) ProtoMessage() {}
 
 func (x *UnpinWorkspaceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_workspace_proto_msgTypes[29]
+	mi := &file_determined_api_v1_workspace_proto_msgTypes[33]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1837,7 +2014,7 @@ func (x *UnpinWorkspaceResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UnpinWorkspaceResponse.ProtoReflect.Descriptor instead.
 func (*UnpinWorkspaceResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_workspace_proto_rawDescGZIP(), []int{29}
+	return file_determined_api_v1_workspace_proto_rawDescGZIP(), []int{33}
 }
 
 // List the resource pools bound to a workspace.
@@ -1857,7 +2034,7 @@ type ListRPsBoundToWorkspaceRequest struct {
 func (x *ListRPsBoundToWorkspaceRequest) Reset() {
 	*x = ListRPsBoundToWorkspaceRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_workspace_proto_msgTypes[30]
+		mi := &file_determined_api_v1_workspace_proto_msgTypes[34]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1870,7 +2047,7 @@ func (x *ListRPsBoundToWorkspaceRequest) String() string {
 func (*ListRPsBoundToWorkspaceRequest) ProtoMessage() {}
 
 func (x *ListRPsBoundToWorkspaceRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_workspace_proto_msgTypes[30]
+	mi := &file_determined_api_v1_workspace_proto_msgTypes[34]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1883,7 +2060,7 @@ func (x *ListRPsBoundToWorkspaceRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListRPsBoundToWorkspaceRequest.ProtoReflect.Descriptor instead.
 func (*ListRPsBoundToWorkspaceRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_workspace_proto_rawDescGZIP(), []int{30}
+	return file_determined_api_v1_workspace_proto_rawDescGZIP(), []int{34}
 }
 
 func (x *ListRPsBoundToWorkspaceRequest) GetWorkspaceId() int32 {
@@ -1922,7 +2099,7 @@ type ListRPsBoundToWorkspaceResponse struct {
 func (x *ListRPsBoundToWorkspaceResponse) Reset() {
 	*x = ListRPsBoundToWorkspaceResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_workspace_proto_msgTypes[31]
+		mi := &file_determined_api_v1_workspace_proto_msgTypes[35]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -1935,7 +2112,7 @@ func (x *ListRPsBoundToWorkspaceResponse) String() string {
 func (*ListRPsBoundToWorkspaceResponse) ProtoMessage() {}
 
 func (x *ListRPsBoundToWorkspaceResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_workspace_proto_msgTypes[31]
+	mi := &file_determined_api_v1_workspace_proto_msgTypes[35]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1948,7 +2125,7 @@ func (x *ListRPsBoundToWorkspaceResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListRPsBoundToWorkspaceResponse.ProtoReflect.Descriptor instead.
 func (*ListRPsBoundToWorkspaceResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_workspace_proto_rawDescGZIP(), []int{31}
+	return file_determined_api_v1_workspace_proto_rawDescGZIP(), []int{35}
 }
 
 func (x *ListRPsBoundToWorkspaceResponse) GetResourcePools() []string {
@@ -2310,49 +2487,66 @@ var file_determined_api_v1_workspace_proto_rawDesc = []byte{
 	0x73, 0x74, 0x65, 0x72, 0x5f, 0x6e, 0x61, 0x6d, 0x65, 0x73, 0x22, 0x2a, 0x0a, 0x28, 0x44, 0x65,
 	0x6c, 0x65, 0x74, 0x65, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x4e, 0x61, 0x6d,
 	0x65, 0x73, 0x70, 0x61, 0x63, 0x65, 0x42, 0x69, 0x6e, 0x64, 0x69, 0x6e, 0x67, 0x73, 0x52, 0x65,
-	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x35, 0x0a, 0x17, 0x41, 0x72, 0x63, 0x68, 0x69, 0x76,
-	0x65, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
+	0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x32, 0x0a, 0x30, 0x47, 0x65, 0x74, 0x57, 0x6f, 0x72,
+	0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x73, 0x57, 0x69, 0x74, 0x68, 0x44, 0x65, 0x66, 0x61, 0x75,
+	0x6c, 0x74, 0x4e, 0x61, 0x6d, 0x65, 0x73, 0x70, 0x61, 0x63, 0x65, 0x42, 0x69, 0x6e, 0x64, 0x69,
+	0x6e, 0x67, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x22, 0x58, 0x0a, 0x31, 0x47, 0x65,
+	0x74, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x73, 0x57, 0x69, 0x74, 0x68, 0x44,
+	0x65, 0x66, 0x61, 0x75, 0x6c, 0x74, 0x4e, 0x61, 0x6d, 0x65, 0x73, 0x70, 0x61, 0x63, 0x65, 0x42,
+	0x69, 0x6e, 0x64, 0x69, 0x6e, 0x67, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12,
+	0x23, 0x0a, 0x0d, 0x77, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x5f, 0x69, 0x64, 0x73,
+	0x18, 0x01, 0x20, 0x03, 0x28, 0x05, 0x52, 0x0c, 0x77, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63,
+	0x65, 0x49, 0x64, 0x73, 0x22, 0x56, 0x0a, 0x2f, 0x42, 0x75, 0x6c, 0x6b, 0x41, 0x75, 0x74, 0x6f,
+	0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x4e,
+	0x61, 0x6d, 0x65, 0x73, 0x70, 0x61, 0x63, 0x65, 0x42, 0x69, 0x6e, 0x64, 0x69, 0x6e, 0x67, 0x73,
+	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x23, 0x0a, 0x0d, 0x77, 0x6f, 0x72, 0x6b, 0x73,
+	0x70, 0x61, 0x63, 0x65, 0x5f, 0x69, 0x64, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x05, 0x52, 0x0c,
+	0x77, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x49, 0x64, 0x73, 0x22, 0x32, 0x0a, 0x30,
+	0x42, 0x75, 0x6c, 0x6b, 0x41, 0x75, 0x74, 0x6f, 0x43, 0x72, 0x65, 0x61, 0x74, 0x65, 0x57, 0x6f,
+	0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x4e, 0x61, 0x6d, 0x65, 0x73, 0x70, 0x61, 0x63, 0x65,
+	0x42, 0x69, 0x6e, 0x64, 0x69, 0x6e, 0x67, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
+	0x22, 0x35, 0x0a, 0x17, 0x41, 0x72, 0x63, 0x68, 0x69, 0x76, 0x65, 0x57, 0x6f, 0x72, 0x6b, 0x73,
+	0x70, 0x61, 0x63, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x0e, 0x0a, 0x02, 0x69,
+	0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x02, 0x69, 0x64, 0x3a, 0x0a, 0x92, 0x41, 0x07,
+	0x0a, 0x05, 0xd2, 0x01, 0x02, 0x69, 0x64, 0x22, 0x1a, 0x0a, 0x18, 0x41, 0x72, 0x63, 0x68, 0x69,
+	0x76, 0x65, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f,
+	0x6e, 0x73, 0x65, 0x22, 0x37, 0x0a, 0x19, 0x55, 0x6e, 0x61, 0x72, 0x63, 0x68, 0x69, 0x76, 0x65,
+	0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
+	0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x02, 0x69, 0x64,
+	0x3a, 0x0a, 0x92, 0x41, 0x07, 0x0a, 0x05, 0xd2, 0x01, 0x02, 0x69, 0x64, 0x22, 0x1c, 0x0a, 0x1a,
+	0x55, 0x6e, 0x61, 0x72, 0x63, 0x68, 0x69, 0x76, 0x65, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61,
+	0x63, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x31, 0x0a, 0x13, 0x50, 0x69,
+	0x6e, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
 	0x74, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x02, 0x69,
-	0x64, 0x3a, 0x0a, 0x92, 0x41, 0x07, 0x0a, 0x05, 0xd2, 0x01, 0x02, 0x69, 0x64, 0x22, 0x1a, 0x0a,
-	0x18, 0x41, 0x72, 0x63, 0x68, 0x69, 0x76, 0x65, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63,
-	0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x37, 0x0a, 0x19, 0x55, 0x6e, 0x61,
-	0x72, 0x63, 0x68, 0x69, 0x76, 0x65, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x52,
-	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01,
-	0x28, 0x05, 0x52, 0x02, 0x69, 0x64, 0x3a, 0x0a, 0x92, 0x41, 0x07, 0x0a, 0x05, 0xd2, 0x01, 0x02,
-	0x69, 0x64, 0x22, 0x1c, 0x0a, 0x1a, 0x55, 0x6e, 0x61, 0x72, 0x63, 0x68, 0x69, 0x76, 0x65, 0x57,
-	0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
-	0x22, 0x31, 0x0a, 0x13, 0x50, 0x69, 0x6e, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65,
-	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20,
-	0x01, 0x28, 0x05, 0x52, 0x02, 0x69, 0x64, 0x3a, 0x0a, 0x92, 0x41, 0x07, 0x0a, 0x05, 0xd2, 0x01,
-	0x02, 0x69, 0x64, 0x22, 0x16, 0x0a, 0x14, 0x50, 0x69, 0x6e, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70,
-	0x61, 0x63, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x33, 0x0a, 0x15, 0x55,
-	0x6e, 0x70, 0x69, 0x6e, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x52, 0x65, 0x71,
-	0x75, 0x65, 0x73, 0x74, 0x12, 0x0e, 0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05,
-	0x52, 0x02, 0x69, 0x64, 0x3a, 0x0a, 0x92, 0x41, 0x07, 0x0a, 0x05, 0xd2, 0x01, 0x02, 0x69, 0x64,
-	0x22, 0x18, 0x0a, 0x16, 0x55, 0x6e, 0x70, 0x69, 0x6e, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61,
-	0x63, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x8f, 0x01, 0x0a, 0x1e, 0x4c,
-	0x69, 0x73, 0x74, 0x52, 0x50, 0x73, 0x42, 0x6f, 0x75, 0x6e, 0x64, 0x54, 0x6f, 0x57, 0x6f, 0x72,
-	0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x21, 0x0a,
-	0x0c, 0x77, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20,
-	0x01, 0x28, 0x05, 0x52, 0x0b, 0x77, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x49, 0x64,
-	0x12, 0x16, 0x0a, 0x06, 0x6f, 0x66, 0x66, 0x73, 0x65, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x05,
-	0x52, 0x06, 0x6f, 0x66, 0x66, 0x73, 0x65, 0x74, 0x12, 0x14, 0x0a, 0x05, 0x6c, 0x69, 0x6d, 0x69,
-	0x74, 0x18, 0x03, 0x20, 0x01, 0x28, 0x05, 0x52, 0x05, 0x6c, 0x69, 0x6d, 0x69, 0x74, 0x3a, 0x1c,
-	0x92, 0x41, 0x19, 0x0a, 0x17, 0xd2, 0x01, 0x0c, 0x77, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63,
-	0x65, 0x5f, 0x69, 0x64, 0xd2, 0x01, 0x05, 0x6c, 0x69, 0x6d, 0x69, 0x74, 0x22, 0x87, 0x01, 0x0a,
-	0x1f, 0x4c, 0x69, 0x73, 0x74, 0x52, 0x50, 0x73, 0x42, 0x6f, 0x75, 0x6e, 0x64, 0x54, 0x6f, 0x57,
-	0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
-	0x12, 0x25, 0x0a, 0x0e, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x5f, 0x70, 0x6f, 0x6f,
-	0x6c, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x09, 0x52, 0x0d, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72,
-	0x63, 0x65, 0x50, 0x6f, 0x6f, 0x6c, 0x73, 0x12, 0x3d, 0x0a, 0x0a, 0x70, 0x61, 0x67, 0x69, 0x6e,
-	0x61, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1d, 0x2e, 0x64, 0x65,
-	0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e,
-	0x50, 0x61, 0x67, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x0a, 0x70, 0x61, 0x67, 0x69,
-	0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x42, 0x35, 0x5a, 0x33, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62,
-	0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2d,
-	0x61, 0x69, 0x2f, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2f, 0x70, 0x72,
-	0x6f, 0x74, 0x6f, 0x2f, 0x70, 0x6b, 0x67, 0x2f, 0x61, 0x70, 0x69, 0x76, 0x31, 0x62, 0x06, 0x70,
-	0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x64, 0x3a, 0x0a, 0x92, 0x41, 0x07, 0x0a, 0x05, 0xd2, 0x01, 0x02, 0x69, 0x64, 0x22, 0x16, 0x0a,
+	0x14, 0x50, 0x69, 0x6e, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x52, 0x65, 0x73,
+	0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x33, 0x0a, 0x15, 0x55, 0x6e, 0x70, 0x69, 0x6e, 0x57, 0x6f,
+	0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x0e,
+	0x0a, 0x02, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x02, 0x69, 0x64, 0x3a, 0x0a,
+	0x92, 0x41, 0x07, 0x0a, 0x05, 0xd2, 0x01, 0x02, 0x69, 0x64, 0x22, 0x18, 0x0a, 0x16, 0x55, 0x6e,
+	0x70, 0x69, 0x6e, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x52, 0x65, 0x73, 0x70,
+	0x6f, 0x6e, 0x73, 0x65, 0x22, 0x8f, 0x01, 0x0a, 0x1e, 0x4c, 0x69, 0x73, 0x74, 0x52, 0x50, 0x73,
+	0x42, 0x6f, 0x75, 0x6e, 0x64, 0x54, 0x6f, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65,
+	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x21, 0x0a, 0x0c, 0x77, 0x6f, 0x72, 0x6b, 0x73,
+	0x70, 0x61, 0x63, 0x65, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x0b, 0x77,
+	0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x49, 0x64, 0x12, 0x16, 0x0a, 0x06, 0x6f, 0x66,
+	0x66, 0x73, 0x65, 0x74, 0x18, 0x02, 0x20, 0x01, 0x28, 0x05, 0x52, 0x06, 0x6f, 0x66, 0x66, 0x73,
+	0x65, 0x74, 0x12, 0x14, 0x0a, 0x05, 0x6c, 0x69, 0x6d, 0x69, 0x74, 0x18, 0x03, 0x20, 0x01, 0x28,
+	0x05, 0x52, 0x05, 0x6c, 0x69, 0x6d, 0x69, 0x74, 0x3a, 0x1c, 0x92, 0x41, 0x19, 0x0a, 0x17, 0xd2,
+	0x01, 0x0c, 0x77, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61, 0x63, 0x65, 0x5f, 0x69, 0x64, 0xd2, 0x01,
+	0x05, 0x6c, 0x69, 0x6d, 0x69, 0x74, 0x22, 0x87, 0x01, 0x0a, 0x1f, 0x4c, 0x69, 0x73, 0x74, 0x52,
+	0x50, 0x73, 0x42, 0x6f, 0x75, 0x6e, 0x64, 0x54, 0x6f, 0x57, 0x6f, 0x72, 0x6b, 0x73, 0x70, 0x61,
+	0x63, 0x65, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x25, 0x0a, 0x0e, 0x72, 0x65,
+	0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x5f, 0x70, 0x6f, 0x6f, 0x6c, 0x73, 0x18, 0x01, 0x20, 0x03,
+	0x28, 0x09, 0x52, 0x0d, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x50, 0x6f, 0x6f, 0x6c,
+	0x73, 0x12, 0x3d, 0x0a, 0x0a, 0x70, 0x61, 0x67, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x18,
+	0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1d, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e,
+	0x65, 0x64, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x50, 0x61, 0x67, 0x69, 0x6e, 0x61,
+	0x74, 0x69, 0x6f, 0x6e, 0x52, 0x0a, 0x70, 0x61, 0x67, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e,
+	0x42, 0x35, 0x5a, 0x33, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x64,
+	0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2d, 0x61, 0x69, 0x2f, 0x64, 0x65, 0x74,
+	0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x70, 0x6b,
+	0x67, 0x2f, 0x61, 0x70, 0x69, 0x76, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -2368,96 +2562,100 @@ func file_determined_api_v1_workspace_proto_rawDescGZIP() []byte {
 }
 
 var file_determined_api_v1_workspace_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_determined_api_v1_workspace_proto_msgTypes = make([]protoimpl.MessageInfo, 41)
+var file_determined_api_v1_workspace_proto_msgTypes = make([]protoimpl.MessageInfo, 45)
 var file_determined_api_v1_workspace_proto_goTypes = []interface{}{
-	(GetWorkspaceProjectsRequest_SortBy)(0),          // 0: determined.api.v1.GetWorkspaceProjectsRequest.SortBy
-	(GetWorkspacesRequest_SortBy)(0),                 // 1: determined.api.v1.GetWorkspacesRequest.SortBy
-	(*GetWorkspaceRequest)(nil),                      // 2: determined.api.v1.GetWorkspaceRequest
-	(*GetWorkspaceResponse)(nil),                     // 3: determined.api.v1.GetWorkspaceResponse
-	(*GetWorkspaceProjectsRequest)(nil),              // 4: determined.api.v1.GetWorkspaceProjectsRequest
-	(*GetWorkspaceProjectsResponse)(nil),             // 5: determined.api.v1.GetWorkspaceProjectsResponse
-	(*GetWorkspacesRequest)(nil),                     // 6: determined.api.v1.GetWorkspacesRequest
-	(*GetWorkspacesResponse)(nil),                    // 7: determined.api.v1.GetWorkspacesResponse
-	(*PostWorkspaceRequest)(nil),                     // 8: determined.api.v1.PostWorkspaceRequest
-	(*PostWorkspaceResponse)(nil),                    // 9: determined.api.v1.PostWorkspaceResponse
-	(*PatchWorkspaceRequest)(nil),                    // 10: determined.api.v1.PatchWorkspaceRequest
-	(*PatchWorkspaceResponse)(nil),                   // 11: determined.api.v1.PatchWorkspaceResponse
-	(*DeleteWorkspaceRequest)(nil),                   // 12: determined.api.v1.DeleteWorkspaceRequest
-	(*DeleteWorkspaceResponse)(nil),                  // 13: determined.api.v1.DeleteWorkspaceResponse
-	(*SetWorkspaceNamespaceBindingsRequest)(nil),     // 14: determined.api.v1.SetWorkspaceNamespaceBindingsRequest
-	(*SetWorkspaceNamespaceBindingsResponse)(nil),    // 15: determined.api.v1.SetWorkspaceNamespaceBindingsResponse
-	(*SetResourceQuotasRequest)(nil),                 // 16: determined.api.v1.SetResourceQuotasRequest
-	(*SetResourceQuotasResponse)(nil),                // 17: determined.api.v1.SetResourceQuotasResponse
-	(*GetKubernetesResourceQuotasRequest)(nil),       // 18: determined.api.v1.GetKubernetesResourceQuotasRequest
-	(*GetKubernetesResourceQuotasResponse)(nil),      // 19: determined.api.v1.GetKubernetesResourceQuotasResponse
-	(*ListWorkspaceNamespaceBindingsRequest)(nil),    // 20: determined.api.v1.ListWorkspaceNamespaceBindingsRequest
-	(*ListWorkspaceNamespaceBindingsResponse)(nil),   // 21: determined.api.v1.ListWorkspaceNamespaceBindingsResponse
-	(*DeleteWorkspaceNamespaceBindingsRequest)(nil),  // 22: determined.api.v1.DeleteWorkspaceNamespaceBindingsRequest
-	(*DeleteWorkspaceNamespaceBindingsResponse)(nil), // 23: determined.api.v1.DeleteWorkspaceNamespaceBindingsResponse
-	(*ArchiveWorkspaceRequest)(nil),                  // 24: determined.api.v1.ArchiveWorkspaceRequest
-	(*ArchiveWorkspaceResponse)(nil),                 // 25: determined.api.v1.ArchiveWorkspaceResponse
-	(*UnarchiveWorkspaceRequest)(nil),                // 26: determined.api.v1.UnarchiveWorkspaceRequest
-	(*UnarchiveWorkspaceResponse)(nil),               // 27: determined.api.v1.UnarchiveWorkspaceResponse
-	(*PinWorkspaceRequest)(nil),                      // 28: determined.api.v1.PinWorkspaceRequest
-	(*PinWorkspaceResponse)(nil),                     // 29: determined.api.v1.PinWorkspaceResponse
-	(*UnpinWorkspaceRequest)(nil),                    // 30: determined.api.v1.UnpinWorkspaceRequest
-	(*UnpinWorkspaceResponse)(nil),                   // 31: determined.api.v1.UnpinWorkspaceResponse
-	(*ListRPsBoundToWorkspaceRequest)(nil),           // 32: determined.api.v1.ListRPsBoundToWorkspaceRequest
-	(*ListRPsBoundToWorkspaceResponse)(nil),          // 33: determined.api.v1.ListRPsBoundToWorkspaceResponse
-	nil,                                              // 34: determined.api.v1.PostWorkspaceRequest.ClusterNamespaceMetaEntry
-	nil,                                              // 35: determined.api.v1.PostWorkspaceRequest.ClusterQuotaPairsEntry
-	nil,                                              // 36: determined.api.v1.PostWorkspaceResponse.NamespaceBindingsEntry
-	nil,                                              // 37: determined.api.v1.PatchWorkspaceResponse.NamespaceBindingsEntry
-	nil,                                              // 38: determined.api.v1.SetWorkspaceNamespaceBindingsRequest.ClusterNamespaceMetaEntry
-	nil,                                              // 39: determined.api.v1.SetWorkspaceNamespaceBindingsResponse.NamespaceBindingsEntry
-	nil,                                              // 40: determined.api.v1.SetResourceQuotasRequest.ClusterQuotaPairsEntry
-	nil,                                              // 41: determined.api.v1.GetKubernetesResourceQuotasResponse.ResourceQuotasEntry
-	nil,                                              // 42: determined.api.v1.ListWorkspaceNamespaceBindingsResponse.NamespaceBindingsEntry
-	(*workspacev1.Workspace)(nil),                    // 43: determined.workspace.v1.Workspace
-	(OrderBy)(0),                                     // 44: determined.api.v1.OrderBy
-	(*wrappers.BoolValue)(nil),                       // 45: google.protobuf.BoolValue
-	(*projectv1.Project)(nil),                        // 46: determined.project.v1.Project
-	(*Pagination)(nil),                               // 47: determined.api.v1.Pagination
-	(*userv1.AgentUserGroup)(nil),                    // 48: determined.user.v1.AgentUserGroup
-	(*_struct.Struct)(nil),                           // 49: google.protobuf.Struct
-	(*workspacev1.PatchWorkspace)(nil),               // 50: determined.workspace.v1.PatchWorkspace
-	(*workspacev1.WorkspaceNamespaceMeta)(nil),       // 51: determined.workspace.v1.WorkspaceNamespaceMeta
-	(*workspacev1.WorkspaceNamespaceBinding)(nil),    // 52: determined.workspace.v1.WorkspaceNamespaceBinding
+	(GetWorkspaceProjectsRequest_SortBy)(0),                   // 0: determined.api.v1.GetWorkspaceProjectsRequest.SortBy
+	(GetWorkspacesRequest_SortBy)(0),                          // 1: determined.api.v1.GetWorkspacesRequest.SortBy
+	(*GetWorkspaceRequest)(nil),                               // 2: determined.api.v1.GetWorkspaceRequest
+	(*GetWorkspaceResponse)(nil),                              // 3: determined.api.v1.GetWorkspaceResponse
+	(*GetWorkspaceProjectsRequest)(nil),                       // 4: determined.api.v1.GetWorkspaceProjectsRequest
+	(*GetWorkspaceProjectsResponse)(nil),                      // 5: determined.api.v1.GetWorkspaceProjectsResponse
+	(*GetWorkspacesRequest)(nil),                              // 6: determined.api.v1.GetWorkspacesRequest
+	(*GetWorkspacesResponse)(nil),                             // 7: determined.api.v1.GetWorkspacesResponse
+	(*PostWorkspaceRequest)(nil),                              // 8: determined.api.v1.PostWorkspaceRequest
+	(*PostWorkspaceResponse)(nil),                             // 9: determined.api.v1.PostWorkspaceResponse
+	(*PatchWorkspaceRequest)(nil),                             // 10: determined.api.v1.PatchWorkspaceRequest
+	(*PatchWorkspaceResponse)(nil),                            // 11: determined.api.v1.PatchWorkspaceResponse
+	(*DeleteWorkspaceRequest)(nil),                            // 12: determined.api.v1.DeleteWorkspaceRequest
+	(*DeleteWorkspaceResponse)(nil),                           // 13: determined.api.v1.DeleteWorkspaceResponse
+	(*SetWorkspaceNamespaceBindingsRequest)(nil),              // 14: determined.api.v1.SetWorkspaceNamespaceBindingsRequest
+	(*SetWorkspaceNamespaceBindingsResponse)(nil),             // 15: determined.api.v1.SetWorkspaceNamespaceBindingsResponse
+	(*SetResourceQuotasRequest)(nil),                          // 16: determined.api.v1.SetResourceQuotasRequest
+	(*SetResourceQuotasResponse)(nil),                         // 17: determined.api.v1.SetResourceQuotasResponse
+	(*GetKubernetesResourceQuotasRequest)(nil),                // 18: determined.api.v1.GetKubernetesResourceQuotasRequest
+	(*GetKubernetesResourceQuotasResponse)(nil),               // 19: determined.api.v1.GetKubernetesResourceQuotasResponse
+	(*ListWorkspaceNamespaceBindingsRequest)(nil),             // 20: determined.api.v1.ListWorkspaceNamespaceBindingsRequest
+	(*ListWorkspaceNamespaceBindingsResponse)(nil),            // 21: determined.api.v1.ListWorkspaceNamespaceBindingsResponse
+	(*DeleteWorkspaceNamespaceBindingsRequest)(nil),           // 22: determined.api.v1.DeleteWorkspaceNamespaceBindingsRequest
+	(*DeleteWorkspaceNamespaceBindingsResponse)(nil),          // 23: determined.api.v1.DeleteWorkspaceNamespaceBindingsResponse
+	(*GetWorkspacesWithDefaultNamespaceBindingsRequest)(nil),  // 24: determined.api.v1.GetWorkspacesWithDefaultNamespaceBindingsRequest
+	(*GetWorkspacesWithDefaultNamespaceBindingsResponse)(nil), // 25: determined.api.v1.GetWorkspacesWithDefaultNamespaceBindingsResponse
+	(*BulkAutoCreateWorkspaceNamespaceBindingsRequest)(nil),   // 26: determined.api.v1.BulkAutoCreateWorkspaceNamespaceBindingsRequest
+	(*BulkAutoCreateWorkspaceNamespaceBindingsResponse)(nil),  // 27: determined.api.v1.BulkAutoCreateWorkspaceNamespaceBindingsResponse
+	(*ArchiveWorkspaceRequest)(nil),                           // 28: determined.api.v1.ArchiveWorkspaceRequest
+	(*ArchiveWorkspaceResponse)(nil),                          // 29: determined.api.v1.ArchiveWorkspaceResponse
+	(*UnarchiveWorkspaceRequest)(nil),                         // 30: determined.api.v1.UnarchiveWorkspaceRequest
+	(*UnarchiveWorkspaceResponse)(nil),                        // 31: determined.api.v1.UnarchiveWorkspaceResponse
+	(*PinWorkspaceRequest)(nil),                               // 32: determined.api.v1.PinWorkspaceRequest
+	(*PinWorkspaceResponse)(nil),                              // 33: determined.api.v1.PinWorkspaceResponse
+	(*UnpinWorkspaceRequest)(nil),                             // 34: determined.api.v1.UnpinWorkspaceRequest
+	(*UnpinWorkspaceResponse)(nil),                            // 35: determined.api.v1.UnpinWorkspaceResponse
+	(*ListRPsBoundToWorkspaceRequest)(nil),                    // 36: determined.api.v1.ListRPsBoundToWorkspaceRequest
+	(*ListRPsBoundToWorkspaceResponse)(nil),                   // 37: determined.api.v1.ListRPsBoundToWorkspaceResponse
+	nil,                                                       // 38: determined.api.v1.PostWorkspaceRequest.ClusterNamespaceMetaEntry
+	nil,                                                       // 39: determined.api.v1.PostWorkspaceRequest.ClusterQuotaPairsEntry
+	nil,                                                       // 40: determined.api.v1.PostWorkspaceResponse.NamespaceBindingsEntry
+	nil,                                                       // 41: determined.api.v1.PatchWorkspaceResponse.NamespaceBindingsEntry
+	nil,                                                       // 42: determined.api.v1.SetWorkspaceNamespaceBindingsRequest.ClusterNamespaceMetaEntry
+	nil,                                                       // 43: determined.api.v1.SetWorkspaceNamespaceBindingsResponse.NamespaceBindingsEntry
+	nil,                                                       // 44: determined.api.v1.SetResourceQuotasRequest.ClusterQuotaPairsEntry
+	nil,                                                       // 45: determined.api.v1.GetKubernetesResourceQuotasResponse.ResourceQuotasEntry
+	nil,                                                       // 46: determined.api.v1.ListWorkspaceNamespaceBindingsResponse.NamespaceBindingsEntry
+	(*workspacev1.Workspace)(nil),                             // 47: determined.workspace.v1.Workspace
+	(OrderBy)(0),                                              // 48: determined.api.v1.OrderBy
+	(*wrappers.BoolValue)(nil),                                // 49: google.protobuf.BoolValue
+	(*projectv1.Project)(nil),                                 // 50: determined.project.v1.Project
+	(*Pagination)(nil),                                        // 51: determined.api.v1.Pagination
+	(*userv1.AgentUserGroup)(nil),                             // 52: determined.user.v1.AgentUserGroup
+	(*_struct.Struct)(nil),                                    // 53: google.protobuf.Struct
+	(*workspacev1.PatchWorkspace)(nil),                        // 54: determined.workspace.v1.PatchWorkspace
+	(*workspacev1.WorkspaceNamespaceMeta)(nil),                // 55: determined.workspace.v1.WorkspaceNamespaceMeta
+	(*workspacev1.WorkspaceNamespaceBinding)(nil),             // 56: determined.workspace.v1.WorkspaceNamespaceBinding
 }
 var file_determined_api_v1_workspace_proto_depIdxs = []int32{
-	43, // 0: determined.api.v1.GetWorkspaceResponse.workspace:type_name -> determined.workspace.v1.Workspace
+	47, // 0: determined.api.v1.GetWorkspaceResponse.workspace:type_name -> determined.workspace.v1.Workspace
 	0,  // 1: determined.api.v1.GetWorkspaceProjectsRequest.sort_by:type_name -> determined.api.v1.GetWorkspaceProjectsRequest.SortBy
-	44, // 2: determined.api.v1.GetWorkspaceProjectsRequest.order_by:type_name -> determined.api.v1.OrderBy
-	45, // 3: determined.api.v1.GetWorkspaceProjectsRequest.archived:type_name -> google.protobuf.BoolValue
-	46, // 4: determined.api.v1.GetWorkspaceProjectsResponse.projects:type_name -> determined.project.v1.Project
-	47, // 5: determined.api.v1.GetWorkspaceProjectsResponse.pagination:type_name -> determined.api.v1.Pagination
+	48, // 2: determined.api.v1.GetWorkspaceProjectsRequest.order_by:type_name -> determined.api.v1.OrderBy
+	49, // 3: determined.api.v1.GetWorkspaceProjectsRequest.archived:type_name -> google.protobuf.BoolValue
+	50, // 4: determined.api.v1.GetWorkspaceProjectsResponse.projects:type_name -> determined.project.v1.Project
+	51, // 5: determined.api.v1.GetWorkspaceProjectsResponse.pagination:type_name -> determined.api.v1.Pagination
 	1,  // 6: determined.api.v1.GetWorkspacesRequest.sort_by:type_name -> determined.api.v1.GetWorkspacesRequest.SortBy
-	44, // 7: determined.api.v1.GetWorkspacesRequest.order_by:type_name -> determined.api.v1.OrderBy
-	45, // 8: determined.api.v1.GetWorkspacesRequest.archived:type_name -> google.protobuf.BoolValue
-	45, // 9: determined.api.v1.GetWorkspacesRequest.pinned:type_name -> google.protobuf.BoolValue
-	43, // 10: determined.api.v1.GetWorkspacesResponse.workspaces:type_name -> determined.workspace.v1.Workspace
-	47, // 11: determined.api.v1.GetWorkspacesResponse.pagination:type_name -> determined.api.v1.Pagination
-	48, // 12: determined.api.v1.PostWorkspaceRequest.agent_user_group:type_name -> determined.user.v1.AgentUserGroup
-	49, // 13: determined.api.v1.PostWorkspaceRequest.checkpoint_storage_config:type_name -> google.protobuf.Struct
-	34, // 14: determined.api.v1.PostWorkspaceRequest.cluster_namespace_meta:type_name -> determined.api.v1.PostWorkspaceRequest.ClusterNamespaceMetaEntry
-	35, // 15: determined.api.v1.PostWorkspaceRequest.cluster_quota_pairs:type_name -> determined.api.v1.PostWorkspaceRequest.ClusterQuotaPairsEntry
-	43, // 16: determined.api.v1.PostWorkspaceResponse.workspace:type_name -> determined.workspace.v1.Workspace
-	36, // 17: determined.api.v1.PostWorkspaceResponse.namespace_bindings:type_name -> determined.api.v1.PostWorkspaceResponse.NamespaceBindingsEntry
-	50, // 18: determined.api.v1.PatchWorkspaceRequest.workspace:type_name -> determined.workspace.v1.PatchWorkspace
-	43, // 19: determined.api.v1.PatchWorkspaceResponse.workspace:type_name -> determined.workspace.v1.Workspace
-	37, // 20: determined.api.v1.PatchWorkspaceResponse.namespace_bindings:type_name -> determined.api.v1.PatchWorkspaceResponse.NamespaceBindingsEntry
-	38, // 21: determined.api.v1.SetWorkspaceNamespaceBindingsRequest.cluster_namespace_meta:type_name -> determined.api.v1.SetWorkspaceNamespaceBindingsRequest.ClusterNamespaceMetaEntry
-	39, // 22: determined.api.v1.SetWorkspaceNamespaceBindingsResponse.namespace_bindings:type_name -> determined.api.v1.SetWorkspaceNamespaceBindingsResponse.NamespaceBindingsEntry
-	40, // 23: determined.api.v1.SetResourceQuotasRequest.cluster_quota_pairs:type_name -> determined.api.v1.SetResourceQuotasRequest.ClusterQuotaPairsEntry
-	41, // 24: determined.api.v1.GetKubernetesResourceQuotasResponse.resource_quotas:type_name -> determined.api.v1.GetKubernetesResourceQuotasResponse.ResourceQuotasEntry
-	42, // 25: determined.api.v1.ListWorkspaceNamespaceBindingsResponse.namespace_bindings:type_name -> determined.api.v1.ListWorkspaceNamespaceBindingsResponse.NamespaceBindingsEntry
-	47, // 26: determined.api.v1.ListRPsBoundToWorkspaceResponse.pagination:type_name -> determined.api.v1.Pagination
-	51, // 27: determined.api.v1.PostWorkspaceRequest.ClusterNamespaceMetaEntry.value:type_name -> determined.workspace.v1.WorkspaceNamespaceMeta
-	52, // 28: determined.api.v1.PostWorkspaceResponse.NamespaceBindingsEntry.value:type_name -> determined.workspace.v1.WorkspaceNamespaceBinding
-	52, // 29: determined.api.v1.PatchWorkspaceResponse.NamespaceBindingsEntry.value:type_name -> determined.workspace.v1.WorkspaceNamespaceBinding
-	51, // 30: determined.api.v1.SetWorkspaceNamespaceBindingsRequest.ClusterNamespaceMetaEntry.value:type_name -> determined.workspace.v1.WorkspaceNamespaceMeta
-	52, // 31: determined.api.v1.SetWorkspaceNamespaceBindingsResponse.NamespaceBindingsEntry.value:type_name -> determined.workspace.v1.WorkspaceNamespaceBinding
-	52, // 32: determined.api.v1.ListWorkspaceNamespaceBindingsResponse.NamespaceBindingsEntry.value:type_name -> determined.workspace.v1.WorkspaceNamespaceBinding
+	48, // 7: determined.api.v1.GetWorkspacesRequest.order_by:type_name -> determined.api.v1.OrderBy
+	49, // 8: determined.api.v1.GetWorkspacesRequest.archived:type_name -> google.protobuf.BoolValue
+	49, // 9: determined.api.v1.GetWorkspacesRequest.pinned:type_name -> google.protobuf.BoolValue
+	47, // 10: determined.api.v1.GetWorkspacesResponse.workspaces:type_name -> determined.workspace.v1.Workspace
+	51, // 11: determined.api.v1.GetWorkspacesResponse.pagination:type_name -> determined.api.v1.Pagination
+	52, // 12: determined.api.v1.PostWorkspaceRequest.agent_user_group:type_name -> determined.user.v1.AgentUserGroup
+	53, // 13: determined.api.v1.PostWorkspaceRequest.checkpoint_storage_config:type_name -> google.protobuf.Struct
+	38, // 14: determined.api.v1.PostWorkspaceRequest.cluster_namespace_meta:type_name -> determined.api.v1.PostWorkspaceRequest.ClusterNamespaceMetaEntry
+	39, // 15: determined.api.v1.PostWorkspaceRequest.cluster_quota_pairs:type_name -> determined.api.v1.PostWorkspaceRequest.ClusterQuotaPairsEntry
+	47, // 16: determined.api.v1.PostWorkspaceResponse.workspace:type_name -> determined.workspace.v1.Workspace
+	40, // 17: determined.api.v1.PostWorkspaceResponse.namespace_bindings:type_name -> determined.api.v1.PostWorkspaceResponse.NamespaceBindingsEntry
+	54, // 18: determined.api.v1.PatchWorkspaceRequest.workspace:type_name -> determined.workspace.v1.PatchWorkspace
+	47, // 19: determined.api.v1.PatchWorkspaceResponse.workspace:type_name -> determined.workspace.v1.Workspace
+	41, // 20: determined.api.v1.PatchWorkspaceResponse.namespace_bindings:type_name -> determined.api.v1.PatchWorkspaceResponse.NamespaceBindingsEntry
+	42, // 21: determined.api.v1.SetWorkspaceNamespaceBindingsRequest.cluster_namespace_meta:type_name -> determined.api.v1.SetWorkspaceNamespaceBindingsRequest.ClusterNamespaceMetaEntry
+	43, // 22: determined.api.v1.SetWorkspaceNamespaceBindingsResponse.namespace_bindings:type_name -> determined.api.v1.SetWorkspaceNamespaceBindingsResponse.NamespaceBindingsEntry
+	44, // 23: determined.api.v1.SetResourceQuotasRequest.cluster_quota_pairs:type_name -> determined.api.v1.SetResourceQuotasRequest.ClusterQuotaPairsEntry
+	45, // 24: determined.api.v1.GetKubernetesResourceQuotasResponse.resource_quotas:type_name -> determined.api.v1.GetKubernetesResourceQuotasResponse.ResourceQuotasEntry
+	46, // 25: determined.api.v1.ListWorkspaceNamespaceBindingsResponse.namespace_bindings:type_name -> determined.api.v1.ListWorkspaceNamespaceBindingsResponse.NamespaceBindingsEntry
+	51, // 26: determined.api.v1.ListRPsBoundToWorkspaceResponse.pagination:type_name -> determined.api.v1.Pagination
+	55, // 27: determined.api.v1.PostWorkspaceRequest.ClusterNamespaceMetaEntry.value:type_name -> determined.workspace.v1.WorkspaceNamespaceMeta
+	56, // 28: determined.api.v1.PostWorkspaceResponse.NamespaceBindingsEntry.value:type_name -> determined.workspace.v1.WorkspaceNamespaceBinding
+	56, // 29: determined.api.v1.PatchWorkspaceResponse.NamespaceBindingsEntry.value:type_name -> determined.workspace.v1.WorkspaceNamespaceBinding
+	55, // 30: determined.api.v1.SetWorkspaceNamespaceBindingsRequest.ClusterNamespaceMetaEntry.value:type_name -> determined.workspace.v1.WorkspaceNamespaceMeta
+	56, // 31: determined.api.v1.SetWorkspaceNamespaceBindingsResponse.NamespaceBindingsEntry.value:type_name -> determined.workspace.v1.WorkspaceNamespaceBinding
+	56, // 32: determined.api.v1.ListWorkspaceNamespaceBindingsResponse.NamespaceBindingsEntry.value:type_name -> determined.workspace.v1.WorkspaceNamespaceBinding
 	33, // [33:33] is the sub-list for method output_type
 	33, // [33:33] is the sub-list for method input_type
 	33, // [33:33] is the sub-list for extension type_name
@@ -2737,7 +2935,7 @@ func file_determined_api_v1_workspace_proto_init() {
 			}
 		}
 		file_determined_api_v1_workspace_proto_msgTypes[22].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ArchiveWorkspaceRequest); i {
+			switch v := v.(*GetWorkspacesWithDefaultNamespaceBindingsRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2749,7 +2947,7 @@ func file_determined_api_v1_workspace_proto_init() {
 			}
 		}
 		file_determined_api_v1_workspace_proto_msgTypes[23].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ArchiveWorkspaceResponse); i {
+			switch v := v.(*GetWorkspacesWithDefaultNamespaceBindingsResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2761,7 +2959,7 @@ func file_determined_api_v1_workspace_proto_init() {
 			}
 		}
 		file_determined_api_v1_workspace_proto_msgTypes[24].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UnarchiveWorkspaceRequest); i {
+			switch v := v.(*BulkAutoCreateWorkspaceNamespaceBindingsRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2773,7 +2971,7 @@ func file_determined_api_v1_workspace_proto_init() {
 			}
 		}
 		file_determined_api_v1_workspace_proto_msgTypes[25].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UnarchiveWorkspaceResponse); i {
+			switch v := v.(*BulkAutoCreateWorkspaceNamespaceBindingsResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2785,7 +2983,7 @@ func file_determined_api_v1_workspace_proto_init() {
 			}
 		}
 		file_determined_api_v1_workspace_proto_msgTypes[26].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*PinWorkspaceRequest); i {
+			switch v := v.(*ArchiveWorkspaceRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2797,7 +2995,7 @@ func file_determined_api_v1_workspace_proto_init() {
 			}
 		}
 		file_determined_api_v1_workspace_proto_msgTypes[27].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*PinWorkspaceResponse); i {
+			switch v := v.(*ArchiveWorkspaceResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2809,7 +3007,7 @@ func file_determined_api_v1_workspace_proto_init() {
 			}
 		}
 		file_determined_api_v1_workspace_proto_msgTypes[28].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UnpinWorkspaceRequest); i {
+			switch v := v.(*UnarchiveWorkspaceRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2821,7 +3019,7 @@ func file_determined_api_v1_workspace_proto_init() {
 			}
 		}
 		file_determined_api_v1_workspace_proto_msgTypes[29].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*UnpinWorkspaceResponse); i {
+			switch v := v.(*UnarchiveWorkspaceResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2833,7 +3031,7 @@ func file_determined_api_v1_workspace_proto_init() {
 			}
 		}
 		file_determined_api_v1_workspace_proto_msgTypes[30].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*ListRPsBoundToWorkspaceRequest); i {
+			switch v := v.(*PinWorkspaceRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -2845,6 +3043,54 @@ func file_determined_api_v1_workspace_proto_init() {
 			}
 		}
 		file_determined_api_v1_workspace_proto_msgTypes[31].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*PinWorkspaceResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_determined_api_v1_workspace_proto_msgTypes[32].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*UnpinWorkspaceRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_determined_api_v1_workspace_proto_msgTypes[33].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*UnpinWorkspaceResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_determined_api_v1_workspace_proto_msgTypes[34].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*ListRPsBoundToWorkspaceRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_determined_api_v1_workspace_proto_msgTypes[35].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*ListRPsBoundToWorkspaceResponse); i {
 			case 0:
 				return &v.state
@@ -2864,7 +3110,7 @@ func file_determined_api_v1_workspace_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_determined_api_v1_workspace_proto_rawDesc,
 			NumEnums:      2,
-			NumMessages:   41,
+			NumMessages:   45,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

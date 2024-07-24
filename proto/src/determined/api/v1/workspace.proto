@@ -324,6 +324,25 @@ message DeleteWorkspaceNamespaceBindingsRequest {
 // Response to DeleteWorkspaceNamespaceBindingsRequest.
 message DeleteWorkspaceNamespaceBindingsResponse {}
 
+// Request the ids of all workspaces that are bound to the
+// default namespace for atleast one cluster.
+message GetWorkspacesWithDefaultNamespaceBindingsRequest {}
+
+// Response to GetUnboundWorkspacesRequest.
+message GetWorkspacesWithDefaultNamespaceBindingsResponse {
+  // The list of returned workspace ids.
+  repeated int32 workspace_ids = 1;
+}
+
+// Request for binding the given workpaces to new auto-created namespaces.
+message BulkAutoCreateWorkspaceNamespaceBindingsRequest {
+  // The list of workspace ids.
+  repeated int32 workspace_ids = 1;
+}
+
+// Response to BulkAutoCreateWorkspaceNamespaceBindingsRequest.
+message BulkAutoCreateWorkspaceNamespaceBindingsResponse {}
+
 // Request for archiving a workspace.
 message ArchiveWorkspaceRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {

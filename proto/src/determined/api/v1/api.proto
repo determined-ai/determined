@@ -2049,6 +2049,7 @@ service Determined {
       tags: "Workspaces"
     };
   }
+
   // Update a workspace.
   rpc PatchWorkspace(PatchWorkspaceRequest) returns (PatchWorkspaceResponse) {
     option (google.api.http) = {
@@ -2137,6 +2138,32 @@ service Determined {
       returns (ListWorkspaceNamespaceBindingsResponse) {
     option (google.api.http) = {
       get: "/api/v1/workspaces/{id}/list-namespace-bindings"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Workspaces"
+    };
+  }
+
+  // Gets the ids of all workspaces that are bound to the default namespace for
+  // atleast one cluster.
+  rpc GetWorkspacesWithDefaultNamespaceBindings(
+      GetWorkspacesWithDefaultNamespaceBindingsRequest)
+      returns (GetWorkspacesWithDefaultNamespaceBindingsResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/namespace-bindings/workspace-ids-with-default-bindings"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Workspaces"
+    };
+  }
+
+  // Binds the given workpaces to new auto-created namespaces.
+  rpc BulkAutoCreateWorkspaceNamespaceBindings(
+      BulkAutoCreateWorkspaceNamespaceBindingsRequest)
+      returns (BulkAutoCreateWorkspaceNamespaceBindingsResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/namespace-bindings/bulk-auto-create",
+      body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Workspaces"
