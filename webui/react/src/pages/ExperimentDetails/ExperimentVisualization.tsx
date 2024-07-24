@@ -115,7 +115,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
   const [typeKey, setTypeKey] = useState(() => {
     return type && TYPE_KEYS.includes(type) ? type : DEFAULT_TYPE_KEY;
   });
-  const [batches, setBatches] = useState<number[]>();
+  const [batches, setBatches] = useState<number[]>([]);
   const [pageError, setPageError] = useState<PageError>();
 
   const handleMetricNamesError = useCallback(() => {
