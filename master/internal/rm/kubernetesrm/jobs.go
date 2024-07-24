@@ -2348,7 +2348,7 @@ func (j *jobsService) setResourceQuota(quota int, namespace string) error {
 }
 
 func (j *jobsService) getNamespaceResourceQuota(namespaceName string) (*float64, error) {
-	k8sQuotas, err := j.clientSet.CoreV1().ResourceQuotas(namespaceName).List(context.Background(), metaV1.ListOptions{})
+	k8sQuotas, err := j.clientSet.CoreV1().ResourceQuotas(namespaceName).List(context.TODO(), metaV1.ListOptions{})
 	if err != nil {
 		return nil, fmt.Errorf("error finding resource quotas for the namespace %s: %w", namespaceName, err)
 	}

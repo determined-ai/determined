@@ -10,23 +10,23 @@ import (
 	"strings"
 	"testing"
 
-	"github.com/determined-ai/determined/master/pkg/aproto"
-	"github.com/determined-ai/determined/master/pkg/ws"
-	"github.com/determined-ai/determined/master/test/testutils"
-	"github.com/determined-ai/determined/proto/pkg/apiv1"
-
 	"github.com/gorilla/websocket"
 	"github.com/pkg/errors"
 	"github.com/stretchr/testify/require"
+
+	"github.com/determined-ai/determined/master/pkg/aproto"
+	"github.com/determined-ai/determined/master/pkg/ws"
+	"github.com/determined-ai/determined/master/test/testutils/fixtures"
+	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
 func TestAgentsDuplicateConnectionIdHandling(t *testing.T) {
 	testAgentID := "test-agent0"
 
-	masterCfg, err := testutils.DefaultMasterConfig()
+	masterCfg, err := fixtures.DefaultMasterConfig()
 	require.NoError(t, err, "failed to obtain master config")
 	ctx, cancel := context.WithCancel(context.Background())
-	_, _, cl, creds, err := testutils.RunMaster(ctx, nil)
+	_, _, cl, creds, err := fixtures.RunMaster(ctx, nil)
 	defer cancel()
 	require.NoError(t, err, "failed to start master")
 

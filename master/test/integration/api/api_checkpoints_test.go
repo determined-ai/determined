@@ -10,29 +10,25 @@ import (
 	"testing"
 	"time"
 
+	"github.com/google/uuid"
 	"google.golang.org/protobuf/types/known/structpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
-
-	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
-	"github.com/determined-ai/determined/proto/pkg/commonv1"
-
-	"github.com/determined-ai/determined/master/internal/db"
-	"github.com/determined-ai/determined/master/test/testutils"
-	"github.com/determined-ai/determined/proto/pkg/trialv1"
-
-	"github.com/google/uuid"
-
 	"gotest.tools/assert"
 
+	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils/protoconverter"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
+	"github.com/determined-ai/determined/master/test/testutils/fixtures"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
+	"github.com/determined-ai/determined/proto/pkg/commonv1"
+	"github.com/determined-ai/determined/proto/pkg/trialv1"
 )
 
 func TestGetCheckpoint(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
-	_, _, cl, creds, err := testutils.RunMaster(ctx, nil)
+	_, _, cl, creds, err := fixtures.RunMaster(ctx, nil)
 	defer cancel()
 	assert.NilError(t, err, "failed to start master")
 	testGetCheckpoint(creds, t, cl, pgDB)
@@ -40,7 +36,7 @@ func TestGetCheckpoint(t *testing.T) {
 
 func TestGetExperimentCheckpoints(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
-	_, _, cl, creds, err := testutils.RunMaster(ctx, nil)
+	_, _, cl, creds, err := fixtures.RunMaster(ctx, nil)
 	defer cancel()
 	assert.NilError(t, err, "failed to start master")
 	testGetExperimentCheckpoints(creds, t, cl, pgDB)
@@ -48,7 +44,7 @@ func TestGetExperimentCheckpoints(t *testing.T) {
 
 func TestGetTrialCheckpoints(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
-	_, _, cl, creds, err := testutils.RunMaster(ctx, nil)
+	_, _, cl, creds, err := fixtures.RunMaster(ctx, nil)
 	defer cancel()
 	assert.NilError(t, err, "failed to start master")
 	testGetTrialCheckpoints(creds, t, cl, pgDB)
