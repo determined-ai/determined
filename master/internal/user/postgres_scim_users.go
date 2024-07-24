@@ -13,9 +13,9 @@ import (
 	"github.com/determined-ai/determined/master/pkg/set"
 )
 
-// retrofitSCIMUser "upgrades" an existing user to one tracked in the SCIM table. This is a
+// RetrofitSCIMUser "upgrades" an existing user to one tracked in the SCIM table. This is a
 // temporary measure for SaaS clusters to migrate existing users to SCIM users.
-func retrofitSCIMUser(ctx context.Context, suser *model.SCIMUser, userID model.UserID) (*model.SCIMUser, error) {
+func RetrofitSCIMUser(ctx context.Context, suser *model.SCIMUser, userID model.UserID) (*model.SCIMUser, error) {
 	suser.UserID = userID
 	id, err := addSCIMUserTx(ctx, db.Bun(), suser)
 	if err != nil {
@@ -34,7 +34,7 @@ func AddSCIMUser(ctx context.Context, suser *model.SCIMUser) (*model.SCIMUser, e
 		userID, err := AddUserTx(ctx, tx, &model.User{
 			Username:     suser.Username,
 			DisplayName:  suser.DisplayName,
-			Active:       true,
+			Active:       suser.Active,
 			PasswordHash: suser.PasswordHash,
 			Remote:       true,
 		})
@@ -138,8 +138,8 @@ func SCIMUserByID(ctx context.Context, tx bun.IDB, id model.UUID) (*model.SCIMUs
 	return &suser, nil
 }
 
-// scimUserByAttribute returns the SCIM user with the given value for the given attribute.
-func scimUserByAttribute(ctx context.Context, name string, value string) (*model.SCIMUser, error) {
+// ScimUserByAttribute returns the SCIM user with the given value for the given attribute.
+func ScimUserByAttribute(ctx context.Context, name string, value string) (*model.SCIMUser, error) {
 	var suser model.SCIMUser
 	if err := db.Bun().NewSelect().TableExpr("users u, scim.users s").
 		ColumnExpr("s.id, u.username, u.display_name, s.external_id, s.name, s.emails, u.active, s.raw_attributes").

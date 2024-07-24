@@ -31,6 +31,7 @@ type OrgRoleClaims struct {
 	Role               Role
 	DefaultClusterRole Role
 	ClusterRoles       map[ClusterID]Role
+	ClusterActivations map[ClusterID]bool
 }
 
 // JWT defines the claims that are serialized and signed to make a bearer token.
