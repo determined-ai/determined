@@ -138,7 +138,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
         ExperimentSearcherName.Pbt === experiment.config.searcher.name
       ),
     };
-  }, [batches, experiment, loadableMetrics, metrics]);
+  }, [experiment, loadableMetrics, metrics]);
 
   const handleFiltersChange = useCallback(
     (newFilters: Partial<VisualizationFilters>) => {
