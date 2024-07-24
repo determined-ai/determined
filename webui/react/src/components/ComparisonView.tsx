@@ -146,9 +146,10 @@ const ComparisonView: React.FC<Props> = ({
     return [
       {
         children: selectedRuns ? (
-          <CompareMetrics metricData={metricData} selectedRuns={selectedRuns} />
+          <CompareMetrics colorMap={colorMap} metricData={metricData} selectedRuns={selectedRuns} />
         ) : (
           <CompareMetrics
+            colorMap={colorMap}
             metricData={metricData}
             selectedExperiments={selectedExperiments ?? []}
             trials={trials}
