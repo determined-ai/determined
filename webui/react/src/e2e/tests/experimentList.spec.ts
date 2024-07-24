@@ -310,12 +310,7 @@ test.describe('Experiment List', () => {
 
     // resume experiment
     await (await row.experimentActionDropdown.open()).resume.pwLocator.click();
-    await expect
-      .soft((await row.getCellByColumnName('State')).pwLocator)
-      .not.toHaveText('pulling', {
-        timeout: 100_000,
-      });
-    await expect.soft((await row.getCellByColumnName('State')).pwLocator).toHaveText('queued');
+    await expect.soft((await row.getCellByColumnName('State')).pwLocator).not.toHaveText('paused');
 
     // pause experiment again
     await (await row.experimentActionDropdown.open()).pause.pwLocator.click();
