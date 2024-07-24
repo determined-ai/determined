@@ -21,6 +21,7 @@ type OIDCConfig struct {
 	AgentGIDAttributeName       int    `json:"agent_gid_attribute_name"`
 	AgentUserNameAttributeName  string `json:"agent_user_name_attribute_name"`
 	AgentGroupNameAttributeName string `json:"agent_group_name_attribute_name"`
+	AlwaysRedirect              bool   `json:"always_redirect"`
 }
 
 // Validate implements the check.Validatable interface.

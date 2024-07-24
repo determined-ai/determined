@@ -6,8 +6,9 @@ import (
 
 // DetCloudConfig allows det-cloud specific configuration.
 type DetCloudConfig struct {
-	Enabled  bool   `json:"enabled"`
-	LoginURL string `json:"login_url"`
+	Enabled        bool   `json:"enabled"`
+	LoginURL       string `json:"login_url"`
+	AlwaysRedirect bool   `json:"always_redirect"`
 }
 
 // Validate implements the check.Validatable interface.

@@ -72,7 +72,7 @@ def _make_v2_context(
 
     storage_manager = core._get_storage_manager(checkpoint_storage)
 
-    if checkpoint_storage is None:
+    if checkpoint_storage is None and not unmanaged:
         checkpoint_storage = info.trial._config.get("checkpoint_storage")
     # TODO(ilia): When checkpoint_storage is not specified, do this instead:
     # - if on-cluster: try using cluster storage, then appdirs

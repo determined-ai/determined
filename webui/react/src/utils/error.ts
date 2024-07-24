@@ -1,11 +1,12 @@
 import { makeToast, Severity } from 'hew/Toast';
 
+import { globalStorage } from 'globalStorage';
 import { telemetryInstance } from 'hooks/useTelemetry';
 import { paths } from 'routes/utils';
 import { ValueOf } from 'types';
 import rootLogger, { LoggerInterface } from 'utils/Logger';
 import { routeToReactUrl } from 'utils/routes';
-import { isAborted, isAuthFailure } from 'utils/service';
+import { isAborted, isAuthFailure, isRemoteUserTokenExpired } from 'utils/service';
 import { listToStr } from 'utils/string';
 
 import { isObject, isString } from './data';
@@ -193,11 +194,14 @@ const handleError = (error: DetError | unknown, options?: DetErrorOptions): DetE
 
   // Redirect to logout if Auth failure detected (auth token is no longer valid).`
   if (isAuthFailure(e)) {
+    const params = isRemoteUserTokenExpired(e) ? '?remote_expired=true' : '';
     // This check accounts for requests that had not been aborted properly prior
     // to the page dismount and end up throwing after the user is logged out.
     const path = window.location.pathname;
     if (!path.includes(paths.login()) && !path.includes(paths.logout())) {
-      routeToReactUrl(paths.logout());
+      sessionStorage.landingRedirect = window.location.pathname;
+      globalStorage.landingRedirect = path;
+      routeToReactUrl(paths.logout() + params);
     }
   }
 

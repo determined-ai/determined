@@ -1112,7 +1112,7 @@ func TestSearchExperiments(t *testing.T) {
 	require.Nil(t, resp.Experiments[0].BestTrial)
 	require.Equal(t, int32(exp.ID), resp.Experiments[0].Experiment.Id)
 
-	require.Nil(t, resp.Experiments[1].BestTrial) // Still nil since no validations reported.
+	require.NotNil(t, resp.Experiments[1].BestTrial) // Now has a best trial, since it's the only one.
 	require.Equal(t, int32(noValidationsExp.ID), resp.Experiments[1].Experiment.Id)
 
 	// Validations returned properly.
@@ -1147,7 +1147,7 @@ func TestSearchExperiments(t *testing.T) {
 	require.Nil(t, resp.Experiments[0].BestTrial)
 	require.Equal(t, int32(exp.ID), resp.Experiments[0].Experiment.Id)
 
-	require.Nil(t, resp.Experiments[1].BestTrial)
+	require.NotNil(t, resp.Experiments[1].BestTrial)
 	require.Equal(t, int32(noValidationsExp.ID), resp.Experiments[1].Experiment.Id)
 
 	require.NotNil(t, resp.Experiments[2].BestTrial)
@@ -1169,6 +1169,18 @@ func TestSearchExperiments(t *testing.T) {
 	require.Equal(t, string(latestExpected), string(latestActual))
 
 	require.Equal(t, int32(5), resp.Experiments[2].BestTrial.Restarts)
+
+	// when single-trial experiment with no validation metrics completes
+	// ensure that the only trial is the best trial.
+	_, err = db.Bun().NewUpdate().Table("experiments").
+		Set("state = ?", model.CompletedState).
+		Where("id = ?", noValidationsExp.ID).
+		Exec(ctx)
+	require.NoError(t, err)
+	resp, err = api.SearchExperiments(ctx, req)
+	require.NoError(t, err)
+	require.NotNil(t, resp.Experiments[1].BestTrial)
+	require.Equal(t, int32(noValidationsExp.ID), resp.Experiments[1].Experiment.Id)
 }
 
 func TestSearchExperimentsFilters(t *testing.T) {
@@ -1238,6 +1250,46 @@ func TestSearchExperimentsMalformed(t *testing.T) {
 	require.Len(t, resp.Experiments, 1)
 	require.Nil(t, resp.Experiments[0].BestTrial)
 	require.Equal(t, int32(exp.ID), resp.Experiments[0].Experiment.Id)
+}
+
+func TestSearchExperimentsNoDeleting(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	_, projectIDInt := createProjectAndWorkspace(ctx, t, api)
+
+	shownExp := createTestExpWithProjectID(t, api, curUser, projectIDInt)
+
+	// Add deleting experiment
+	experimentConfig := expconf.ExperimentConfig{
+		RawDescription: ptrs.Ptr("desc"),
+		RawName:        expconf.Name{RawString: ptrs.Ptr("name")},
+	}
+
+	activeConfig := schemas.WithDefaults(schemas.Merge(minExpConfig, experimentConfig))
+
+	hiddenExp := &model.Experiment{
+		JobID:     model.JobID(uuid.New().String()),
+		State:     model.DeletingState,
+		OwnerID:   &curUser.ID,
+		ProjectID: projectIDInt,
+		StartTime: time.Now(),
+		Config:    activeConfig.AsLegacy(),
+	}
+	require.NoError(t, api.m.db.AddExperiment(hiddenExp, []byte{10, 11, 12}, activeConfig))
+
+	projectID := int32(projectIDInt)
+
+	// Empty response causes no errors.
+	req := &apiv1.SearchExperimentsRequest{
+		ProjectId: &projectID,
+		Sort:      ptrs.Ptr("id=asc"),
+	}
+
+	resp, err := api.SearchExperiments(ctx, req)
+	require.NoError(t, err)
+	// Deleting experiment should not be in the response
+	require.Len(t, resp.Experiments, 1)
+	require.Nil(t, resp.Experiments[0].BestTrial)
+	require.Equal(t, int32(shownExp.ID), resp.Experiments[0].Experiment.Id)
 }
 
 // Test that endpoints don't puke when running against old experiments.

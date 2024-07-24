@@ -13580,6 +13580,7 @@ class v1RunnableType(DetEnum):
 
 class v1SSOProvider(Printable):
     """Describe one SSO provider."""
+    alwaysRedirect: "typing.Optional[bool]" = None
 
     def __init__(
         self,
@@ -13587,10 +13588,13 @@ class v1SSOProvider(Printable):
         name: str,
         ssoUrl: str,
         type: str,
+        alwaysRedirect: "typing.Union[bool, None, Unset]" = _unset,
     ):
         self.name = name
         self.ssoUrl = ssoUrl
         self.type = type
+        if not isinstance(alwaysRedirect, Unset):
+            self.alwaysRedirect = alwaysRedirect
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1SSOProvider":
@@ -13599,6 +13603,8 @@ class v1SSOProvider(Printable):
             "ssoUrl": obj["ssoUrl"],
             "type": obj["type"],
         }
+        if "alwaysRedirect" in obj:
+            kwargs["alwaysRedirect"] = obj["alwaysRedirect"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -13607,6 +13613,8 @@ class v1SSOProvider(Printable):
             "ssoUrl": self.ssoUrl,
             "type": self.type,
         }
+        if not omit_unset or "alwaysRedirect" in vars(self):
+            out["alwaysRedirect"] = self.alwaysRedirect
         return out
 
 class v1SchedulerType(DetEnum):

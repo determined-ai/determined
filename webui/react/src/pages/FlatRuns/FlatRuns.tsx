@@ -40,6 +40,9 @@ import { Error } from 'components/exceptions';
 import { FilterFormStore, ROOT_ID } from 'components/FilterForm/components/FilterFormStore';
 import {
   AvailableOperators,
+  FilterFormSet,
+  FormField,
+  FormGroup,
   FormKind,
   IOFilterFormSet,
   Operator,
@@ -180,6 +183,10 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
   });
   const sortString = useMemo(() => makeSortString(sorts.filter(validSort.is)), [sorts]);
   const loadableFormset = useObservable(formStore.formset);
+  const rootFilterChildren: Array<FormGroup | FormField> = Loadable.match(loadableFormset, {
+    _: () => [],
+    Loaded: (formset: FilterFormSet) => formset.filterGroup.children,
+  });
   const filtersString = useObservable(formStore.asJsonString);
   const [total, setTotal] = useState<Loadable<number>>(NotLoaded);
   const isMobile = useMobile();
@@ -547,7 +554,9 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
 
   const { stopPolling } = usePolling(fetchRuns, { rerunOnNewFn: true });
 
-  const numFilters = 0;
+  const numFilters = useMemo(() => {
+    return rootFilterChildren.length;
+  }, [rootFilterChildren.length]);
 
   const resetPagination = useCallback(() => {
     setIsLoading(true);
@@ -917,10 +926,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
           column.column,
         );
         formStore.addChild(ROOT_ID, FormKind.Field, {
-          index: Loadable.match(loadableFormset, {
-            _: () => 0,
-            Loaded: (formset) => formset.filterGroup.children.length,
-          }),
+          index: rootFilterChildren.length,
           item: {
             columnName: column.column,
             id: uuidv4(),
@@ -1002,7 +1008,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
       handleSelectionChange,
       columnsIfLoaded,
       handleColumnsOrderChange,
-      loadableFormset,
+      rootFilterChildren,
       handleIsOpenFilterChange,
       sorts,
       handleSortChange,

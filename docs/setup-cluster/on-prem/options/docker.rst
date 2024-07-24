@@ -14,11 +14,11 @@ This user guide provides step-by-step instructions for installing Determined usi
    GPUs, ensure that the :ref:`NVIDIA Container Toolkit <validate-nvidia-container-toolkit>` on each
    one is working as expected.
 
-#. Pull the official Docker image for PostgreSQL. We recommend using the version listed below.
+#. Pull the official Docker image for PostgreSQL. PostgreSQL version 10 and later is supported.
 
    .. code::
 
-      docker pull postgres:10
+      docker pull postgres:14
 
    This image is not provided by Determined AI; please see `its Docker Hub page
    <https://hub.docker.com/_/postgres>`_ for more information.
@@ -51,7 +51,7 @@ Run the following command to start the PostgreSQL container:
        -v determined_db:/var/lib/postgresql/data \
        -e POSTGRES_DB=determined \
        -e POSTGRES_PASSWORD=<DB password> \
-       postgres:10
+       postgres:14
 
 In order to expose the port only on the master machine's loopback network interface, pass ``-p
 127.0.0.1:5432:5432`` instead of ``-p 5432:5432``. If you choose to run in host networking mode,

@@ -517,4 +517,11 @@ def mask_config_dict(d: Dict) -> Dict:
     except (KeyError, AttributeError):
         pass
 
+    try:
+        if new_dict["data"]["secrets"] is not None:
+            for k in new_dict["data"]["secrets"].keys():
+                new_dict["data"]["secrets"][k] = mask
+    except (KeyError, AttributeError, IndexError):
+        pass
+
     return new_dict

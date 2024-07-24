@@ -11,5 +11,5 @@
    Config Reference
    https://docs.determined.ai/latest/reference/deploy/master-config-reference.html#checkpoint-storage`
 
-In enterprise edition, Slurm resource manager still supports Singularity, Podman, or Apptainer use.
-For detailed instructions, visit :ref:deploy-on-slurm-pbs.
+In the enterprise edition, Slurm resource manager still supports Singularity, Podman, or Apptainer
+use. For detailed instructions, visit :ref:deploy-on-slurm-pbs.

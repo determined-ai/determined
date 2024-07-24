@@ -62,6 +62,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/rm/kubernetesrm"
 	"github.com/determined-ai/determined/master/internal/rm/multirm"
 	"github.com/determined-ai/determined/master/internal/rm/tasklist"
+	"github.com/determined-ai/determined/master/internal/saas/saasprovisioner"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/internal/stream"
 	"github.com/determined-ai/determined/master/internal/task"
@@ -1537,6 +1538,8 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 	if err := sso.RegisterAPIHandlers(m.config, m.db, m.echo); err != nil {
 		return err
 	}
+
+	saasprovisioner.Register()
 
 	webhooks.Init()
 	defer webhooks.Deinit()

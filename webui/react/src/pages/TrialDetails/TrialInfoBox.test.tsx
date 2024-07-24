@@ -242,7 +242,7 @@ describe('Trial Info Box', () => {
       );
 
       setup(mockTrial1, mockExperimentWith);
-      expect(await screen.findByText('Data input')).toBeVisible();
+      expect(await screen.findByText('Data Input')).toBeVisible();
       expect(await screen.findByText(mockIntegrationData.dataset.repo)).toBeVisible();
     });
 

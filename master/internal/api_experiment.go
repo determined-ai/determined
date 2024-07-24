@@ -235,6 +235,10 @@ func (a *apiServer) getExperimentTx(
 		return nil, err
 	}
 
+	if err = authz.ObfuscateExperiments(exp); err != nil {
+		return nil, err
+	}
+
 	return exp, nil
 }
 
@@ -2570,6 +2574,7 @@ func (a *apiServer) SearchExperiments(
 		Model(&experiments).
 		ModelTableExpr("experiments as e").
 		Column("e.best_trial_id").
+		Where("e.state != ?", model.DeletingState).
 		Apply(getExperimentColumns)
 
 	curUser, _, err := grpcutil.GetUser(ctx)

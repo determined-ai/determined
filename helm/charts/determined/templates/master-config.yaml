@@ -130,6 +130,8 @@ stringData:
       {{- end }}
       {{- if .Values.oidc.agentGroupNameAttributeName }}
       agent_group_name_attribute_name: {{ .Values.oidc.agentGroupNameAttributeName }}
+      {{- if .Values.oidc.alwaysRedirect }}
+      always_redirect: {{ .Values.oidc.alwaysRedirect }}
       {{- end }}
     {{- end }}
 
@@ -172,6 +174,8 @@ stringData:
       {{- end }}
       {{- if .Values.saml.agentGroupNameAttributeName }}
       agent_group_name_attribute_name: {{ .Values.saml.agentGroupNameAttributeName }}
+      {{- if .Values.saml.alwaysRedirect }}
+      always_redirect: {{ .Values.saml.alwaysRedirect }}
       {{- end }}
     {{- end }}
     {{- end }}

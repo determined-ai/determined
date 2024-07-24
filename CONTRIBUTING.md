@@ -197,7 +197,7 @@ the Determined master host:
 docker run -it --rm \
   --network determined \
   -e PGPASSWORD=my-postgres-password \
-  postgres:10 psql -h determined-db -U postgres -d determined
+  postgres:14 psql -h determined-db -U postgres -d determined
 ```
 
 ### Get profiling information
