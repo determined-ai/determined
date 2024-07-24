@@ -37,7 +37,6 @@ def test_allocation_resources_incremental_release() -> None:
         ) as config_file:
             # Launch an experiment that has one resource (docker container) that exits immediately.
             config_obj = conf.load_config(conf.fixtures_path("no_op/single.yaml"))
-            config_obj["resources"] = {**config_obj.get("resources", {})}
             config_obj["hyperparameters"] = {
                 **config_obj.get("hyperparameters", {}),
                 **{"non_chief_exit_immediately": True},
