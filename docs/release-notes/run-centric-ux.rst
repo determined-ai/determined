@@ -2,23 +2,19 @@
 
 **New Features**
 
--  WebUI: Turn on new run-centric search view
+- WebUI: In the Experimental features, Flat Runs View is now "on" by default in the :ref:`WebUI
+<web-ui-if>`. Users can still toggle this feature "off".
 
-   -  This replaces the existing experiment search and multi-trial experiment views with views that
-      allow comparison between arbitrary trials.
+- This update improves the ability to compare model performance between different trials, based on user feedback that most Determined users run single-trial experiments.
 
-   -  We recieved user feedback indicating that users of Determined run primarily single-trial
-      experiments, and the preexisting views made comparing model performance between different
-      trials difficult.
 
-   -  We are renaming experiments to searches and trials to runs to make the difference between the
-      two easier to understand.
+- "Experiments" is now renamed to "searches" and "trials" is now renamed to "runs" for better clarity.
 
-   -  The experiment list is now the run list, which shows all trials from experiments in the
-      project. It should function similar to the previous new experiment list.
+- The "experiment list" is renamed the "run list", showing all trials from experiments in the
+      project. It functions similarly to the previous new experiment list.
 
    -  Multi-trial experiments can be viewed in the new searches view, which allows for sorting,
-      filtering and navigation of the multi-trial experiments in the project.
+      filtering and navigating multi-trial experiments.
 
-   -  When viewing a multi-trial experiment, we now show a list of trials in the experiment to allow
-      for sorting, filtering and arbitrary comparison.
+- When viewing a multi-trial experiment, a list of trials is displayed, allowing
+      for sorting, filtering and arbitrary comparison between trials.
