@@ -1120,6 +1120,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
             open={settings.compare}
             projectId={projectId}
             runSelection={settings.selection}
+            total={Loadable.getOrElse(undefined, total)}
             onWidthChange={handleCompareWidthChange}>
             <DataGrid<FlatRun, FlatRunAction>
               columns={columns}

@@ -33,10 +33,13 @@ interface BaseProps {
   onWidthChange: (width: number) => void;
   fixedColumnsCount: number;
   projectId: number;
+  total?: number;
 }
 
 type Props = XOR<{ experimentSelection: SelectionType }, { runSelection: SelectionType }> &
   BaseProps;
+
+const SELECTION_LIMIT = 50;
 
 const ComparisonView: React.FC<Props> = ({
   children,
@@ -48,10 +51,37 @@ const ComparisonView: React.FC<Props> = ({
   projectId,
   experimentSelection,
   runSelection,
+  total,
 }) => {
   const scrollbarWidth = useScrollbarWidth();
   const hasPinnedColumns = fixedColumnsCount > 1;
   const isMobile = useMobile();
+
+  const isSelectionLimitReached = () => {
+    if (experimentSelection) {
+      if (
+        (experimentSelection.type === 'ONLY_IN' && experimentSelection.selections.length >= SELECTION_LIMIT) ||
+        (experimentSelection.type === 'ALL_EXCEPT' &&
+          total &&
+          total - experimentSelection.exclusions.length >= SELECTION_LIMIT)
+      ) {
+        return true;
+      }
+      return false;
+    }
+    if (runSelection) {
+      if (
+        (runSelection.type === 'ONLY_IN' && runSelection.selections.length >= SELECTION_LIMIT) ||
+        (runSelection.type === 'ALL_EXCEPT' &&
+          total &&
+          total - runSelection.exclusions.length >= SELECTION_LIMIT)
+      ) {
+        return true;
+      }
+      return false;
+    }
+    return false;
+  };
 
   const loadableSelectedExperiments = useAsync(async () => {
     if (experimentSelection) {
@@ -60,7 +90,7 @@ const ComparisonView: React.FC<Props> = ({
         const filter = getExperimentIdsFilter(filterFormSet, experimentSelection);
         const response = await searchExperiments({
           filter: JSON.stringify(filter),
-          limit: 50,
+          limit: SELECTION_LIMIT,
         });
         return response.experiments;
       } catch (e) {
@@ -186,7 +216,12 @@ const ComparisonView: React.FC<Props> = ({
         return <Spinner spinning />;
       }
     }
-    return <Pivot items={tabs} />;
+    return (
+      <>
+        {isSelectionLimitReached() && <Alert message={`Only up to ${SELECTION_LIMIT} records can be compared`} />}
+        <Pivot items={tabs} />
+      </>
+    );
   };
 
   return (

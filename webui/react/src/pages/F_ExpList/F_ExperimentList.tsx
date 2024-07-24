@@ -1119,6 +1119,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
               initialWidth={comparisonViewTableWidth}
               open={settings.compare}
               projectId={project.id}
+              total={Loadable.getOrElse(undefined, total)}
               onWidthChange={handleCompareWidthChange}>
               <DataGrid<ExperimentWithTrial, ExperimentAction, BulkExperimentItem>
                 columns={columns}
