@@ -1691,6 +1691,26 @@ export interface V1BindRPToWorkspaceRequest {
 export interface V1BindRPToWorkspaceResponse {
 }
 /**
+ * Request for binding the given workpaces to new auto-created namespaces.
+ * @export
+ * @interface V1BulkAutoCreateWorkspaceNamespaceBindingsRequest
+ */
+export interface V1BulkAutoCreateWorkspaceNamespaceBindingsRequest {
+    /**
+     * The list of workspace ids.
+     * @type {Array<number>}
+     * @memberof V1BulkAutoCreateWorkspaceNamespaceBindingsRequest
+     */
+    workspaceIds?: Array<number>;
+}
+/**
+ * Response to BulkAutoCreateWorkspaceNamespaceBindingsRequest.
+ * @export
+ * @interface V1BulkAutoCreateWorkspaceNamespaceBindingsResponse
+ */
+export interface V1BulkAutoCreateWorkspaceNamespaceBindingsResponse {
+}
+/**
  * Filters to apply actions to multiple experiments.
  * @export
  * @interface V1BulkExperimentFilters
@@ -5300,6 +5320,19 @@ export interface V1GetWorkspacesResponse {
      * @memberof V1GetWorkspacesResponse
      */
     pagination: V1Pagination;
+}
+/**
+ * Response to GetUnboundWorkspacesRequest.
+ * @export
+ * @interface V1GetWorkspacesWithDefaultNamespaceBindingsResponse
+ */
+export interface V1GetWorkspacesWithDefaultNamespaceBindingsResponse {
+    /**
+     * The list of returned workspace ids.
+     * @type {Array<number>}
+     * @memberof V1GetWorkspacesWithDefaultNamespaceBindingsResponse
+     */
+    workspaceIds?: Array<number>;
 }
 /**
  * 
@@ -35090,6 +35123,44 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
         },
         /**
          * 
+         * @summary Binds the given workpaces to new auto-created namespaces.
+         * @param {V1BulkAutoCreateWorkspaceNamespaceBindingsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        bulkAutoCreateWorkspaceNamespaceBindings(body: V1BulkAutoCreateWorkspaceNamespaceBindingsRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling bulkAutoCreateWorkspaceNamespaceBindings.');
+            }
+            const localVarPath = `/api/v1/namespace-bindings/bulk-auto-create`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Delete a workspace.
          * @param {number} id The id of the workspace.
          * @param {*} [options] Override http request option.
@@ -35382,6 +35453,36 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
             
             if (nameCaseSensitive !== undefined) {
                 localVarQueryParameter['nameCaseSensitive'] = nameCaseSensitive
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Gets the ids of all workspaces that are bound to the default namespace for atleast one cluster.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getWorkspacesWithDefaultNamespaceBindings(options: any = {}): FetchArgs {
+            const localVarPath = `/api/v1/namespace-bindings/workspace-ids-with-default-bindings`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
@@ -35783,6 +35884,25 @@ export const WorkspacesApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Binds the given workpaces to new auto-created namespaces.
+         * @param {V1BulkAutoCreateWorkspaceNamespaceBindingsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        bulkAutoCreateWorkspaceNamespaceBindings(body: V1BulkAutoCreateWorkspaceNamespaceBindingsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1BulkAutoCreateWorkspaceNamespaceBindingsResponse> {
+            const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).bulkAutoCreateWorkspaceNamespaceBindings(body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Delete a workspace.
          * @param {number} id The id of the workspace.
          * @param {*} [options] Override http request option.
@@ -35903,6 +36023,24 @@ export const WorkspacesApiFp = function (configuration?: Configuration) {
          */
         getWorkspaces(sortBy?: V1GetWorkspacesRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, userIds?: Array<number>, pinned?: boolean, nameCaseSensitive?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetWorkspacesResponse> {
             const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).getWorkspaces(sortBy, orderBy, offset, limit, name, archived, users, userIds, pinned, nameCaseSensitive, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Gets the ids of all workspaces that are bound to the default namespace for atleast one cluster.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getWorkspacesWithDefaultNamespaceBindings(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetWorkspacesWithDefaultNamespaceBindingsResponse> {
+            const localVarFetchArgs = WorkspacesApiFetchParamCreator(configuration).getWorkspacesWithDefaultNamespaceBindings(options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -36110,6 +36248,16 @@ export const WorkspacesApiFactory = function (configuration?: Configuration, fet
         },
         /**
          * 
+         * @summary Binds the given workpaces to new auto-created namespaces.
+         * @param {V1BulkAutoCreateWorkspaceNamespaceBindingsRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        bulkAutoCreateWorkspaceNamespaceBindings(body: V1BulkAutoCreateWorkspaceNamespaceBindingsRequest, options?: any) {
+            return WorkspacesApiFp(configuration).bulkAutoCreateWorkspaceNamespaceBindings(body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Delete a workspace.
          * @param {number} id The id of the workspace.
          * @param {*} [options] Override http request option.
@@ -36185,6 +36333,15 @@ export const WorkspacesApiFactory = function (configuration?: Configuration, fet
          */
         getWorkspaces(sortBy?: V1GetWorkspacesRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, userIds?: Array<number>, pinned?: boolean, nameCaseSensitive?: string, options?: any) {
             return WorkspacesApiFp(configuration).getWorkspaces(sortBy, orderBy, offset, limit, name, archived, users, userIds, pinned, nameCaseSensitive, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Gets the ids of all workspaces that are bound to the default namespace for atleast one cluster.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getWorkspacesWithDefaultNamespaceBindings(options?: any) {
+            return WorkspacesApiFp(configuration).getWorkspacesWithDefaultNamespaceBindings(options)(fetch, basePath);
         },
         /**
          * 
@@ -36305,6 +36462,18 @@ export class WorkspacesApi extends BaseAPI {
     
     /**
      * 
+     * @summary Binds the given workpaces to new auto-created namespaces.
+     * @param {V1BulkAutoCreateWorkspaceNamespaceBindingsRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof WorkspacesApi
+     */
+    public bulkAutoCreateWorkspaceNamespaceBindings(body: V1BulkAutoCreateWorkspaceNamespaceBindingsRequest, options?: any) {
+        return WorkspacesApiFp(this.configuration).bulkAutoCreateWorkspaceNamespaceBindings(body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
      * @summary Delete a workspace.
      * @param {number} id The id of the workspace.
      * @param {*} [options] Override http request option.
@@ -36391,6 +36560,17 @@ export class WorkspacesApi extends BaseAPI {
      */
     public getWorkspaces(sortBy?: V1GetWorkspacesRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, archived?: boolean, users?: Array<string>, userIds?: Array<number>, pinned?: boolean, nameCaseSensitive?: string, options?: any) {
         return WorkspacesApiFp(this.configuration).getWorkspaces(sortBy, orderBy, offset, limit, name, archived, users, userIds, pinned, nameCaseSensitive, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Gets the ids of all workspaces that are bound to the default namespace for atleast one cluster.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof WorkspacesApi
+     */
+    public getWorkspacesWithDefaultNamespaceBindings(options?: any) {
+        return WorkspacesApiFp(this.configuration).getWorkspacesWithDefaultNamespaceBindings(options)(this.fetch, this.basePath)
     }
     
     /**
