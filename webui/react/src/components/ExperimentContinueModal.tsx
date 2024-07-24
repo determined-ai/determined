@@ -77,7 +77,7 @@ const EXPERIMENT_NAME = 'name';
 const MAX_LENGTH = 'maxLength';
 const ADDITIONAL_LENGTH = 'additionalLength';
 
-interface Props {
+export interface Props {
   onClose?: () => void;
   experiment: ExperimentBase;
   trial?: TrialItem;
@@ -429,9 +429,9 @@ const ExperimentContinueModalComponent = ({
         handler: handleSubmit,
         text: isReactivate
           ? `Reactivate ${capitalize(entityCopyMap.trial)}`
-          : 'Launch ${capitalize(entityCopyMap)}',
+          : `Launch ${capitalize(entityCopyMap.experiment)}`,
       }}
-      title={type}
+      title={actionCopy}
       onClose={handleModalClose}>
       <>
         {modalState.error && <Alert message={modalState.error} showIcon type="error" />}
@@ -449,15 +449,15 @@ const ExperimentContinueModalComponent = ({
             />
           </React.Suspense>
         )}
-        <Body>
-          {!modalIsInAdvancedMode
-            ? isReactivate
+        {!modalIsInAdvancedMode && (
+          <Body>
+            {isReactivate
               ? `Reactivate and continue the current ${entityCopyMap.trial} from the latest checkpoint`
               : f_flat_runs
                 ? "Start a new run from the current run's latest checkpoint"
-                : "Start a new experiment from the current trial's latest checkpoint"
-            : undefined}
-        </Body>
+                : "Start a new experiment from the current trial's latest checkpoint"}
+          </Body>
+        )}
         <Form
           form={form}
           hidden={modalState.isAdvancedMode}

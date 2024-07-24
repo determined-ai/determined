@@ -1,19 +1,29 @@
-import { render } from '@testing-library/react';
-import HewUIProvider, { DefaultTheme } from 'hew/Theme';
-import { useInitApi } from 'hew/Toast';
-import { ConfirmationProvider } from 'hew/useConfirm';
-import { HelmetProvider } from 'react-helmet-async';
-import { BrowserRouter } from 'react-router-dom';
+import { act, render } from '@testing-library/react';
+import { useModal } from 'hew/Modal';
+import UIProvider, { DefaultTheme } from 'hew/Theme';
+import { useLayoutEffect } from 'react';
 
-import { ThemeProvider } from 'components/ThemeProvider';
 import {
   decodeTrialResponseToTrialDetails,
   mapV1GetExperimentDetailsResponse,
 } from 'services/decoder';
 
-import TrialDetails from './TrialDetails';
+import ExperimentContinueModalComponent, {
+  ContinueExperimentType,
+  Props,
+} from './ExperimentContinueModal';
+import { ThemeProvider } from './ThemeProvider';
 
-const mockTrialResponse = decodeTrialResponseToTrialDetails({
+const mockUseFeature = vi.hoisted(() => vi.fn());
+vi.mock('hooks/useFeature', () => {
+  return {
+    default: () => ({
+      isOn: mockUseFeature,
+    }),
+  };
+});
+
+const mockTrial = decodeTrialResponseToTrialDetails({
   trial: {
     bestCheckpoint: {
       endTime: '2024-07-18T15:32:05.859962Z',
@@ -82,7 +92,7 @@ const mockTrialResponse = decodeTrialResponseToTrialDetails({
   },
 });
 
-const mockExperimentResponse = mapV1GetExperimentDetailsResponse({
+const mockExperiment = mapV1GetExperimentDetailsResponse({
   config: {
     bind_mounts: [],
     checkpoint_policy: 'best',
@@ -342,97 +352,56 @@ const mockExperimentResponse = mapV1GetExperimentDetailsResponse({
   },
 });
 
-const mockLogRetentionResponse = {
-  remainingLogRetentionDays: -1,
-};
+const setupTest = (props: Partial<Props> = {}) => {
+  const outerRef: { current: null | (() => void) } = { current: null };
+  const Wrapper = () => {
+    const { Component, open } = useModal(ExperimentContinueModalComponent);
 
-const mockUseFeature = vi.hoisted(() => vi.fn());
-vi.mock('hooks/useFeature', () => ({
-  default: () => ({
-    isOn: mockUseFeature,
-  }),
-}));
-
-const mockUseParams = vi.hoisted(() => vi.fn(() => ({ experimentId: 7823, trialId: 54176 })));
-vi.mock('react-router-dom', async (importOriginal) => ({
-  ...(await importOriginal<typeof import('react-router-dom')>()),
-  useParams: mockUseParams,
-}));
-
-const mockGetExperimentDetails = vi.hoisted(() => vi.fn(() => new Promise(() => {})));
-const mockGetTrialDetails = vi.hoisted(() => vi.fn(() => new Promise(() => {})));
-const mockGetTrialRemainingLogRetentionDays = vi.hoisted(() => vi.fn(() => new Promise(() => {})));
-const mockGetTrialWorkloads = vi.hoisted(() => vi.fn(() => new Promise(() => {})));
-vi.mock('services/api', () => {
-  return {
-    getExperimentDetails: mockGetExperimentDetails,
-    getTrialDetails: mockGetTrialDetails,
-    getTrialRemainingLogRetentionDays: mockGetTrialRemainingLogRetentionDays,
-    getTrialWorkloads: mockGetTrialWorkloads,
-  };
-});
-
-const Wrapper = () => {
-  useInitApi();
-  return <TrialDetails />;
-};
-
-const setup = () => {
-  return render(
-    <BrowserRouter>
-      <HelmetProvider>
-        <ThemeProvider>
-          <HewUIProvider theme={DefaultTheme.Light}>
-            <ConfirmationProvider>
-              <Wrapper />
-            </ConfirmationProvider>
-          </HewUIProvider>
-        </ThemeProvider>
-      </HelmetProvider>
-    </BrowserRouter>,
-  );
-};
-
-describe('TrialDetails', () => {
-  afterEach(() => {
-    vi.restoreAllMocks();
-  });
-  it('renders loading state', () => {
-    const container = setup();
-
-    expect(container.getByText(/Fetching/)).toBeInTheDocument();
-  });
-  it('shows page when requests load', async () => {
-    mockGetTrialDetails.mockReturnValue(Promise.resolve(mockTrialResponse));
-    mockGetExperimentDetails.mockReturnValue(Promise.resolve(mockExperimentResponse));
-    mockGetTrialRemainingLogRetentionDays.mockReturnValue(
-      Promise.resolve(mockLogRetentionResponse),
-    );
-
-    const container = setup();
-
-    expect(await container.findByText(/Uncategorized/)).toBeInTheDocument();
-  });
-
-  describe.each([true, false])('when f_flat_runs is %s', (f_flat_runs) => {
-    it('shows proper copy', async () => {
-      mockGetTrialDetails.mockReturnValue(Promise.resolve(mockTrialResponse));
-      mockGetExperimentDetails.mockReturnValue(Promise.resolve(mockExperimentResponse));
-      mockGetTrialRemainingLogRetentionDays.mockReturnValue(
-        Promise.resolve(mockLogRetentionResponse),
-      );
-      mockUseFeature.mockReturnValue(f_flat_runs);
-
-      const container = setup();
-      expect(
-        container.getByText(new RegExp(`Fetching ${f_flat_runs ? 'run' : 'trial'}`)),
-      ).toBeInTheDocument();
-
-      expect(
-        await container.findByText(
-          new RegExp(`Uncategorized ${f_flat_runs ? 'Runs' : 'Experiments'}`),
-        ),
-      ).toBeInTheDocument();
+    useLayoutEffect(() => {
+      outerRef.current = open;
     });
+
+    return (
+      <ThemeProvider>
+        <UIProvider theme={DefaultTheme.Light} themeIsDark>
+          <Component
+            experiment={mockExperiment}
+            trial={mockTrial}
+            type={ContinueExperimentType.Continue}
+            {...props}
+          />
+        </UIProvider>
+      </ThemeProvider>
+    );
+  };
+
+  const container = render(<Wrapper />);
+
+  return { container, openRef: outerRef };
+};
+
+describe('ExperimentContinueModal', () => {
+  afterEach(() => {
+    mockUseFeature.mockReset();
+  });
+  it('should render', () => {
+    const { container, openRef } = setupTest();
+
+    act(() => {
+      openRef.current?.();
+    });
+
+    expect(container.queryByText('Continue Trial in New Experiment')).toBeInTheDocument();
+  });
+
+  it('should show proper copy when f_flat_runs is on', () => {
+    mockUseFeature.mockReturnValue(true);
+    const { container, openRef } = setupTest();
+
+    act(() => {
+      openRef.current?.();
+    });
+
+    expect(container.queryByText('Continue as New Run')).toBeInTheDocument();
   });
 });
