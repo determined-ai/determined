@@ -269,13 +269,27 @@ func TestPermissionMatch(t *testing.T) {
 		require.IsType(t, authz.PermissionDeniedError{}, err,
 			"user should not have permission to add workspace-namespace bindings")
 
+		err = DoesPermissionMatch(ctx, userIDViewer, &workspaceID,
+			rbacv1.PermissionType_PERMISSION_TYPE_SET_RESOURCE_QUOTAS)
+		require.IsType(t, authz.PermissionDeniedError{}, err,
+			"user should not have permission to set resource quotas")
+
 		err = DoesPermissionMatch(ctx, userIDEditor, &workspaceID,
 			rbacv1.PermissionType_PERMISSION_TYPE_SET_WORKSPACE_NAMESPACE_BINDINGS)
 		require.IsType(t, authz.PermissionDeniedError{}, err,
 			"user should not have permission to add workspace-namespace bindings")
 
+		err = DoesPermissionMatch(ctx, userIDEditor, &workspaceID,
+			rbacv1.PermissionType_PERMISSION_TYPE_SET_RESOURCE_QUOTAS)
+		require.IsType(t, authz.PermissionDeniedError{}, err,
+			"user should not have permission to set resource quotas")
+
 		err = DoesPermissionMatch(ctx, userIDClusterAdmin, &workspaceID,
 			rbacv1.PermissionType_PERMISSION_TYPE_SET_WORKSPACE_NAMESPACE_BINDINGS)
+		require.NoError(t, err)
+
+		err = DoesPermissionMatch(ctx, userIDClusterAdmin, &workspaceID,
+			rbacv1.PermissionType_PERMISSION_TYPE_SET_RESOURCE_QUOTAS)
 		require.NoError(t, err)
 
 		err = DoesPermissionMatch(ctx, userIDEditor, &workspaceID,
@@ -316,8 +330,17 @@ func TestPermissionMatch(t *testing.T) {
 		require.IsType(t, authz.PermissionDeniedError{}, err,
 			"user should not have permission to add workspace-namespace bindings")
 
+		err = DoesPermissionMatchAll(ctx, userIDEditor,
+			rbacv1.PermissionType_PERMISSION_TYPE_SET_RESOURCE_QUOTAS, workspaceID)
+		require.IsType(t, authz.PermissionDeniedError{}, err,
+			"user should not have permission to set resource quotas")
+
 		err = DoesPermissionMatchAll(ctx, userIDClusterAdmin,
 			rbacv1.PermissionType_PERMISSION_TYPE_SET_WORKSPACE_NAMESPACE_BINDINGS, workspaceID)
+		require.NoError(t, err)
+
+		err = DoesPermissionMatchAll(ctx, userIDClusterAdmin,
+			rbacv1.PermissionType_PERMISSION_TYPE_SET_RESOURCE_QUOTAS, workspaceID)
 		require.NoError(t, err)
 	})
 
@@ -333,6 +356,10 @@ func TestPermissionMatch(t *testing.T) {
 
 		err = DoesPermissionMatchAll(ctx, userIDClusterAdmin,
 			rbacv1.PermissionType_PERMISSION_TYPE_SET_WORKSPACE_NAMESPACE_BINDINGS, workspaceIDs...)
+		require.NoError(t, err, "error when searching for permissions")
+
+		err = DoesPermissionMatchAll(ctx, userIDClusterAdmin,
+			rbacv1.PermissionType_PERMISSION_TYPE_SET_RESOURCE_QUOTAS, workspaceIDs...)
 		require.NoError(t, err, "error when searching for permissions")
 	})
 
@@ -364,6 +391,12 @@ func TestPermissionMatch(t *testing.T) {
 		workspaceIDs = []int32{int32(wsIDs[0]), int32(wsIDs[1]), badWorkspaceID}
 		err = DoesPermissionMatchAll(ctx, userIDClusterAdmin,
 			rbacv1.PermissionType_PERMISSION_TYPE_SET_WORKSPACE_NAMESPACE_BINDINGS, workspaceIDs...)
+		require.IsType(t, authz.PermissionDeniedError{}, err,
+			"error should have been returned when searching for permissions")
+
+		workspaceIDs = []int32{int32(wsIDs[0]), int32(wsIDs[1]), badWorkspaceID}
+		err = DoesPermissionMatchAll(ctx, userIDClusterAdmin,
+			rbacv1.PermissionType_PERMISSION_TYPE_SET_RESOURCE_QUOTAS, workspaceIDs...)
 		require.IsType(t, authz.PermissionDeniedError{}, err,
 			"error should have been returned when searching for permissions")
 	})
@@ -400,6 +433,10 @@ func TestPermissionMatch(t *testing.T) {
 			rbacv1.PermissionType_PERMISSION_TYPE_SET_WORKSPACE_NAMESPACE_BINDINGS)
 		require.NoError(t, err)
 
+		err = DoPermissionsExist(ctx, userIDClusterAdmin,
+			rbacv1.PermissionType_PERMISSION_TYPE_SET_RESOURCE_QUOTAS)
+		require.NoError(t, err)
+
 		err = DoPermissionsExist(ctx, userIDEditorRestricted,
 			rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_NSC)
 		require.IsType(t, authz.PermissionDeniedError{}, err,
@@ -412,6 +449,11 @@ func TestPermissionMatch(t *testing.T) {
 
 		err = DoPermissionsExist(ctx, userIDEditor,
 			rbacv1.PermissionType_PERMISSION_TYPE_SET_WORKSPACE_NAMESPACE_BINDINGS)
+		require.IsType(t, authz.PermissionDeniedError{}, err,
+			"error should have been returned when searching for permissions")
+
+		err = DoPermissionsExist(ctx, userIDEditor,
+			rbacv1.PermissionType_PERMISSION_TYPE_SET_RESOURCE_QUOTAS)
 		require.IsType(t, authz.PermissionDeniedError{}, err,
 			"error should have been returned when searching for permissions")
 	})
@@ -434,8 +476,18 @@ func TestPermissionMatch(t *testing.T) {
 		require.NoError(t, err, "error when searching for permissions")
 		require.Equal(t, workspaceIDs, workspaces)
 
+		workspaces, err = GetNonGlobalWorkspacesWithPermission(ctx, userIDClusterAdmin,
+			rbacv1.PermissionType_PERMISSION_TYPE_SET_RESOURCE_QUOTAS)
+		require.NoError(t, err, "error when searching for permissions")
+		require.Equal(t, workspaceIDs, workspaces)
+
 		workspaces, err = GetNonGlobalWorkspacesWithPermission(ctx, userIDEditorRestricted,
 			rbacv1.PermissionType_PERMISSION_TYPE_SET_WORKSPACE_NAMESPACE_BINDINGS)
+		require.NoError(t, err, "error when searching for permissions")
+		require.Equal(t, noWorkspaces, workspaces)
+
+		workspaces, err = GetNonGlobalWorkspacesWithPermission(ctx, userIDEditorRestricted,
+			rbacv1.PermissionType_PERMISSION_TYPE_SET_RESOURCE_QUOTAS)
 		require.NoError(t, err, "error when searching for permissions")
 		require.Equal(t, noWorkspaces, workspaces)
 	})

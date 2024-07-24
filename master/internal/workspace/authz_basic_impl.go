@@ -173,7 +173,7 @@ func (a *WorkspaceAuthZBasic) CanSetResourceQuotas(ctx context.Context, curUser 
 	workspace *workspacev1.Workspace,
 ) error {
 	if !curUser.Admin {
-		return fmt.Errorf("only admins may set workspace bindings")
+		return fmt.Errorf("only admins may set resource quotas")
 	}
 	return nil
 }
