@@ -131,7 +131,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
   const { hasData, hasLoaded, isExperimentTerminal, isSupported } = useMemo(() => {
     return {
       hasData: !!metrics?.length,
-      hasLoaded: Loadable.isLoaded(loadableMetrics) && !!batches,
+      hasLoaded: Loadable.isLoaded(loadableMetrics),
       isExperimentTerminal: terminalRunStates.has(experiment.state),
       isSupported: !(
         ExperimentSearcherName.Single === experiment.config.searcher.name ||
@@ -165,7 +165,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
   const handleFiltersReset = useCallback(() => {
     store.set(VisualizationFilters, storagePath, {
       ...defaultFilters,
-      batch: batches?.first() || DEFAULT_BATCH,
+      batch: batches.first() || DEFAULT_BATCH,
       hParams: fullHParams.current.slice(0, MAX_HPARAM_COUNT),
       metric: getDefaultMetrics(),
     });
@@ -186,7 +186,7 @@ const ExperimentVisualization: React.FC<Props> = ({ basePath, experiment }: Prop
   const visualizationFilters = useMemo(() => {
     return (
       <ExperimentVisualizationFilters
-        batches={batches || []}
+        batches={batches}
         filters={filters}
         fullHParams={fullHParams.current}
         metrics={metrics}
