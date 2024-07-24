@@ -650,14 +650,7 @@ export const searchExperiments: DetApi<
     };
   },
   request: (params: Service.SearchExperimentsParams, options) => {
-    return detApi.Experiments.searchExperiments(
-      params.projectId,
-      params.offset,
-      params.limit,
-      params.sort,
-      params.filter,
-      options,
-    );
+    return detApi.Experiments.searchExperiments(params, options);
   },
 };
 

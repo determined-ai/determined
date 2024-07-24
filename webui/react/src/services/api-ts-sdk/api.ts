@@ -10259,6 +10259,43 @@ export interface V1SearchExperimentExperiment {
 /**
  * 
  * @export
+ * @interface V1SearchExperimentsRequest
+ */
+export interface V1SearchExperimentsRequest {
+    /**
+     * ID of the project to look at
+     * @type {number}
+     * @memberof V1SearchExperimentsRequest
+     */
+    projectId?: number;
+    /**
+     * How many experiments to skip before including in the results
+     * @type {number}
+     * @memberof V1SearchExperimentsRequest
+     */
+    offset?: number;
+    /**
+     * How many results to show
+     * @type {number}
+     * @memberof V1SearchExperimentsRequest
+     */
+    limit?: number;
+    /**
+     * Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc)
+     * @type {string}
+     * @memberof V1SearchExperimentsRequest
+     */
+    sort?: string;
+    /**
+     * Filter expression
+     * @type {string}
+     * @memberof V1SearchExperimentsRequest
+     */
+    filter?: string;
+}
+/**
+ * 
+ * @export
  * @interface V1SearchExperimentsResponse
  */
 export interface V1SearchExperimentsResponse {
@@ -16860,18 +16897,18 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
         /**
          * 
          * @summary Get experiments with grouping and search syntax
-         * @param {number} [projectId] ID of the project to look at.
-         * @param {number} [offset] How many experiments to skip before including in the results.
-         * @param {number} [limit] How many results to show.
-         * @param {string} [sort] Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc).
-         * @param {string} [filter] Filter expression.
+         * @param {V1SearchExperimentsRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        searchExperiments(projectId?: number, offset?: number, limit?: number, sort?: string, filter?: string, options: any = {}): FetchArgs {
+        searchExperiments(body: V1SearchExperimentsRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling searchExperiments.');
+            }
             const localVarPath = `/api/v1/experiments-search`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
-            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
             
@@ -16883,29 +16920,12 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            if (projectId !== undefined) {
-                localVarQueryParameter['projectId'] = projectId
-            }
-            
-            if (offset !== undefined) {
-                localVarQueryParameter['offset'] = offset
-            }
-            
-            if (limit !== undefined) {
-                localVarQueryParameter['limit'] = limit
-            }
-            
-            if (sort !== undefined) {
-                localVarQueryParameter['sort'] = sort
-            }
-            
-            if (filter !== undefined) {
-                localVarQueryParameter['filter'] = filter
-            }
+            localVarHeaderParameter['Content-Type'] = 'application/json';
             
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
             objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
             
             return {
                 url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
@@ -17897,16 +17917,12 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
         /**
          * 
          * @summary Get experiments with grouping and search syntax
-         * @param {number} [projectId] ID of the project to look at.
-         * @param {number} [offset] How many experiments to skip before including in the results.
-         * @param {number} [limit] How many results to show.
-         * @param {string} [sort] Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc).
-         * @param {string} [filter] Filter expression.
+         * @param {V1SearchExperimentsRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        searchExperiments(projectId?: number, offset?: number, limit?: number, sort?: string, filter?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SearchExperimentsResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).searchExperiments(projectId, offset, limit, sort, filter, options);
+        searchExperiments(body: V1SearchExperimentsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SearchExperimentsResponse> {
+            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).searchExperiments(body, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -18451,16 +18467,12 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
         /**
          * 
          * @summary Get experiments with grouping and search syntax
-         * @param {number} [projectId] ID of the project to look at.
-         * @param {number} [offset] How many experiments to skip before including in the results.
-         * @param {number} [limit] How many results to show.
-         * @param {string} [sort] Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc).
-         * @param {string} [filter] Filter expression.
+         * @param {V1SearchExperimentsRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        searchExperiments(projectId?: number, offset?: number, limit?: number, sort?: string, filter?: string, options?: any) {
-            return ExperimentsApiFp(configuration).searchExperiments(projectId, offset, limit, sort, filter, options)(fetch, basePath);
+        searchExperiments(body: V1SearchExperimentsRequest, options?: any) {
+            return ExperimentsApiFp(configuration).searchExperiments(body, options)(fetch, basePath);
         },
         /**
          * 
@@ -19033,17 +19045,13 @@ export class ExperimentsApi extends BaseAPI {
     /**
      * 
      * @summary Get experiments with grouping and search syntax
-     * @param {number} [projectId] ID of the project to look at.
-     * @param {number} [offset] How many experiments to skip before including in the results.
-     * @param {number} [limit] How many results to show.
-     * @param {string} [sort] Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc).
-     * @param {string} [filter] Filter expression.
+     * @param {V1SearchExperimentsRequest} body
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof ExperimentsApi
      */
-    public searchExperiments(projectId?: number, offset?: number, limit?: number, sort?: string, filter?: string, options?: any) {
-        return ExperimentsApiFp(this.configuration).searchExperiments(projectId, offset, limit, sort, filter, options)(this.fetch, this.basePath)
+    public searchExperiments(body: V1SearchExperimentsRequest, options?: any) {
+        return ExperimentsApiFp(this.configuration).searchExperiments(body, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -22186,18 +22194,18 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         /**
          * 
          * @summary Get experiments with grouping and search syntax
-         * @param {number} [projectId] ID of the project to look at.
-         * @param {number} [offset] How many experiments to skip before including in the results.
-         * @param {number} [limit] How many results to show.
-         * @param {string} [sort] Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc).
-         * @param {string} [filter] Filter expression.
+         * @param {V1SearchExperimentsRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        searchExperiments(projectId?: number, offset?: number, limit?: number, sort?: string, filter?: string, options: any = {}): FetchArgs {
+        searchExperiments(body: V1SearchExperimentsRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling searchExperiments.');
+            }
             const localVarPath = `/api/v1/experiments-search`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
-            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
             const localVarQueryParameter = {} as any;
             
@@ -22209,29 +22217,12 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
-            if (projectId !== undefined) {
-                localVarQueryParameter['projectId'] = projectId
-            }
-            
-            if (offset !== undefined) {
-                localVarQueryParameter['offset'] = offset
-            }
-            
-            if (limit !== undefined) {
-                localVarQueryParameter['limit'] = limit
-            }
-            
-            if (sort !== undefined) {
-                localVarQueryParameter['sort'] = sort
-            }
-            
-            if (filter !== undefined) {
-                localVarQueryParameter['filter'] = filter
-            }
+            localVarHeaderParameter['Content-Type'] = 'application/json';
             
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
             objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
             
             return {
                 url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
@@ -24151,16 +24142,12 @@ export const InternalApiFp = function (configuration?: Configuration) {
         /**
          * 
          * @summary Get experiments with grouping and search syntax
-         * @param {number} [projectId] ID of the project to look at.
-         * @param {number} [offset] How many experiments to skip before including in the results.
-         * @param {number} [limit] How many results to show.
-         * @param {string} [sort] Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc).
-         * @param {string} [filter] Filter expression.
+         * @param {V1SearchExperimentsRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        searchExperiments(projectId?: number, offset?: number, limit?: number, sort?: string, filter?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SearchExperimentsResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).searchExperiments(projectId, offset, limit, sort, filter, options);
+        searchExperiments(body: V1SearchExperimentsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1SearchExperimentsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).searchExperiments(body, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -25170,16 +25157,12 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         /**
          * 
          * @summary Get experiments with grouping and search syntax
-         * @param {number} [projectId] ID of the project to look at.
-         * @param {number} [offset] How many experiments to skip before including in the results.
-         * @param {number} [limit] How many results to show.
-         * @param {string} [sort] Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc).
-         * @param {string} [filter] Filter expression.
+         * @param {V1SearchExperimentsRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        searchExperiments(projectId?: number, offset?: number, limit?: number, sort?: string, filter?: string, options?: any) {
-            return InternalApiFp(configuration).searchExperiments(projectId, offset, limit, sort, filter, options)(fetch, basePath);
+        searchExperiments(body: V1SearchExperimentsRequest, options?: any) {
+            return InternalApiFp(configuration).searchExperiments(body, options)(fetch, basePath);
         },
         /**
          * 
@@ -26248,17 +26231,13 @@ export class InternalApi extends BaseAPI {
     /**
      * 
      * @summary Get experiments with grouping and search syntax
-     * @param {number} [projectId] ID of the project to look at.
-     * @param {number} [offset] How many experiments to skip before including in the results.
-     * @param {number} [limit] How many results to show.
-     * @param {string} [sort] Sort parameters in the format <col1>=(asc|desc),<col2>=(asc|desc).
-     * @param {string} [filter] Filter expression.
+     * @param {V1SearchExperimentsRequest} body
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public searchExperiments(projectId?: number, offset?: number, limit?: number, sort?: string, filter?: string, options?: any) {
-        return InternalApiFp(this.configuration).searchExperiments(projectId, offset, limit, sort, filter, options)(this.fetch, this.basePath)
+    public searchExperiments(body: V1SearchExperimentsRequest, options?: any) {
+        return InternalApiFp(this.configuration).searchExperiments(body, options)(this.fetch, this.basePath)
     }
     
     /**
