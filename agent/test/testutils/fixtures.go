@@ -9,7 +9,7 @@ import (
 	"github.com/determined-ai/determined/agent/internal/options"
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/test/testutils"
+	"github.com/determined-ai/determined/master/test/testutils/fixtures"
 )
 
 const (
@@ -45,7 +45,7 @@ func DefaultMasterSetAgentConfig() aproto.MasterSetAgentOptions {
 func ElasticMasterSetAgentConfig() aproto.MasterSetAgentOptions {
 	return aproto.MasterSetAgentOptions{
 		MasterInfo:     aproto.MasterInfo{},
-		LoggingOptions: testutils.DefaultElasticConfig(),
+		LoggingOptions: fixtures.DefaultElasticConfig(),
 	}
 }
 

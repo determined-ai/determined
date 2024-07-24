@@ -23,6 +23,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/command"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
+
 	"github.com/determined-ai/determined/master/internal/license"
 	"github.com/determined-ai/determined/master/internal/rm/kubernetesrm"
 	"github.com/determined-ai/determined/master/internal/templates"
@@ -823,7 +824,7 @@ func (a *apiServer) setWorkspaceNamespaceBindings(ctx context.Context,
 	w *workspacev1.Workspace,
 ) (resp *apiv1.SetWorkspaceNamespaceBindingsResponse, err error) {
 	defer func() {
-		if recover() != nil {
+		if v := recover(); v != nil {
 			err = status.Error(codes.InvalidArgument, "Auto-creating namespaces is "+
 				"an Enterprise-Edition feature")
 		}
@@ -1059,7 +1060,7 @@ func (a *apiServer) SetResourceQuotas(ctx context.Context,
 	req *apiv1.SetResourceQuotasRequest,
 ) (resp *apiv1.SetResourceQuotasResponse, err error) {
 	defer func() {
-		if recover() != nil {
+		if v := recover(); v != nil {
 			err = status.Error(codes.InvalidArgument, "Setting the resource quota on a workspace "+
 				"is an Enterprise-Edition feature")
 		}
