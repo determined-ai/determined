@@ -2184,6 +2184,18 @@ func (j *jobsService) verifyNamespaceExists(namespace string) error {
 }
 
 func (j *jobsService) createNamespace(namespaceName string) error {
+	err := j.createNamespaceHelper(namespaceName)
+	if err != nil {
+		return err
+	}
+	err = j.syncNamespaces([]string{namespaceName})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (j *jobsService) createNamespaceHelper(namespaceName string) error {
 	_, err := j.clientSet.CoreV1().Namespaces().Create(
 		context.TODO(),
 		&k8sV1.Namespace{
@@ -2215,10 +2227,6 @@ func (j *jobsService) createNamespace(namespaceName string) error {
 		worker.jobInterface = j.jobInterfaces
 	}
 
-	err = j.syncNamespaces([]string{namespaceName})
-	if err != nil {
-		return err
-	}
 	return nil
 }
 
