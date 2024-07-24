@@ -28,7 +28,7 @@ while [[ $# -gt 0 ]]; do
         -w | --workload-manager)
             export OPT_WORKLOAD_MANAGER=$2
             if [[ ! " $VALID_WORKLOAD_MANAGERS " =~ " $OPT_WORKLOAD_MANAGER " ]]; then
-                echo >&2 "usage $0: Missing or invalid workload manager specified for the '-r' option.  Valid values are: ${VALID_WORKLOAD_MANAGERS}"
+                echo >&2 "usage $0: Missing or invalid workload manager specified for the '-w' option.  Valid values are: ${VALID_WORKLOAD_MANAGERS}"
                 exit 1
             fi
             shift 2
