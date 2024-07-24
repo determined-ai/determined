@@ -68,15 +68,16 @@ at a time. To get help for setting workspace namespace bindings, run the followi
 
    det w bindings -h
 
-Create a Workspace with Bindings and Quotas
-===========================================
+Create a Workspace-Namespace Binding
+====================================
 
-You can add bindings and set quotas during workspace creation using the following command where
-``cluster-name`` is the ``resource_manager.cluster_name`` specified in the master configuration:
+You can create a workspace-namespace binding during workspace creation using the following command
+where ``cluster-name`` is the ``resource_manager.cluster_name`` specified in the master
+configuration:
 
 .. code:: bash
 
-   det w create <workspace-name> --cluster-name <cluster-name> --namespace <namespace-name> --resource-quota <resource-quota>
+   det w create <workspace-name> --cluster-name <cluster-name> --namespace <namespace-name>
 
 Additional arguments such as ``--auto-create-namespace`` and
 ``--auto-create-namespace-all-clusters`` are also valid.
