@@ -18,7 +18,7 @@ and on-premise installations.
 -  To view your Pachyderm repo when running a trial or when viewing checkpoints derived from your
    Pachyderm data, click the data hyperlink. For more information about Pachyderm repo input files,
    visit the `documentation
-   <https://docs.ai-solutions.ext.hpe.com/products/mldm/latest/learn/console-guide/repo-actions/view-inputs/>`_.
+   <https://docs.pachyderm.com/products/mldm/latest/learn/console-guide/repo-actions/view-inputs//>`_.
 
    .. image:: /assets/images/webui-data-link.png
       :alt: Determined trial run showing link to Pachyderm data repo
