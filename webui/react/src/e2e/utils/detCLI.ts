@@ -3,8 +3,10 @@ import path from 'path';
 
 import { detMasterURL, detPath, password, username } from './envVars';
 
+const baseDir = execSync('git rev-parse --show-toplevel').toString().trim();
+
 export function fullPath(relativePath: string): string {
-  return path.join(process.cwd(), relativePath);
+  return path.join(baseDir, relativePath);
 }
 
 export function detExecSync(detCommand: string): string {
@@ -17,7 +19,7 @@ export function detExecSync(detCommand: string): string {
         DET_USER: username(),
       },
       stdio: 'pipe',
-      timeout: 5_000,
+      timeout: 10_000,
     }).toString();
   } catch (e: unknown) {
     if (typeof e === 'object' && e !== null && 'stderr' in e && typeof e.stderr === 'string') {

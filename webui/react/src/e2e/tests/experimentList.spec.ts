@@ -25,9 +25,7 @@ test.describe('Experiment List', () => {
         await projectDetailsPageSetup.f_experimentList.noExperimentsMessage.pwLocator.isVisible()
       ) {
         detExecSync(
-          `experiment create ${fullPath(
-            '/../../examples/tutorials/mnist_pytorch/const.yaml',
-          )} --paused`,
+          `experiment create ${fullPath('examples/tutorials/mnist_pytorch/const.yaml')} --paused`,
         );
         await backgroundAuthedPage.reload();
         await expect(
@@ -57,6 +55,7 @@ test.describe('Experiment List', () => {
     await test.step('Reset Columns', async () => {
       const columnPicker =
         await projectDetailsPage.f_experimentList.tableActionBar.columnPickerMenu.open();
+      await waitTableStable();
       await columnPicker.columnPickerTab.reset.pwLocator.click();
       await columnPicker.close();
       await waitTableStable();
@@ -266,17 +265,16 @@ test.describe('Experiment List', () => {
   test('Datagrid Actions', async () => {
     const row = projectDetailsPage.f_experimentList.dataGrid.getRowByIndex(0);
     await row.experimentActionDropdown.open();
+
     // feel free to split actions into their own test cases. this is just a starting point
     await test.step('Edit', async () => {
       const editedValue = safeName('EDITED_EXPERIMENT_NAME');
       await row.experimentActionDropdown.edit.pwLocator.click();
       await row.experimentActionDropdown.editModal.nameInput.pwLocator.fill(editedValue);
       await row.experimentActionDropdown.editModal.footer.submit.pwLocator.click();
+      await waitTableStable();
       await expect.soft((await row.getCellByColumnName('Name')).pwLocator).toHaveText(editedValue);
     });
-    // await test.step('Pause', async () => {
-    //   // what happens if the experiment is already paused?
-    // });
     // await test.step('Stop', async () => {
     //   // what happens if the experiment is already stopped?
     // });
@@ -294,5 +292,28 @@ test.describe('Experiment List', () => {
     //   // await authedPage.waitForURL(;
     // });
     // await test.step('Hyperparameter Search', async () => {});
+  });
+
+  test('DataGrid Action Pause', async () => {
+    const initNumRows = await getCount();
+    // create paused experiment
+    detExecSync(
+      `experiment create ${fullPath('examples/tutorials/mnist_pytorch/adaptive.yaml')}  --paused`,
+    );
+    await expect(projectDetailsPage.f_experimentList.tableActionBar.count.pwLocator).toContainText(
+      `${initNumRows + 1}`,
+    );
+
+    // experiment should initially be paused
+    const row = projectDetailsPage.f_experimentList.dataGrid.getRowByIndex(0);
+    await expect.soft((await row.getCellByColumnName('State')).pwLocator).toHaveText('paused');
+
+    // resume experiment
+    await (await row.experimentActionDropdown.open()).resume.pwLocator.click();
+    await expect.soft((await row.getCellByColumnName('State')).pwLocator).not.toHaveText('paused');
+
+    // pause experiment again
+    await (await row.experimentActionDropdown.open()).pause.pwLocator.click();
+    await expect.soft((await row.getCellByColumnName('State')).pwLocator).toHaveText('paused');
   });
 });
