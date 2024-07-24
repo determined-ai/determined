@@ -1,6 +1,7 @@
 import contextlib
 import http
 import os
+import re
 import tempfile
 import uuid
 from typing import Generator, List, Optional, Tuple
@@ -668,6 +669,12 @@ def test_set_workspace_namespace_bindings(
         )
         assert bound_to_namespace in output
 
+        detproc.check_error(
+            sess,
+            ["det", "w", "resource-quota", "set", w_name, "5"],
+            "cannot set quota on a workspace that is not bound to an auto-created namespace",
+        )
+
     # MultiRM: Valid cluster name, no namespace name.
     if is_multirm_cluster:
         w_name = uuid.uuid4().hex[:8]
@@ -723,6 +730,102 @@ def test_set_workspace_namespace_bindings(
 
     output = detproc.check_output(sess, set_binding_cmd + ["--namespace", namespace])
     assert bound_to_namespace in output
+
+    # MultiRM: Valid cluster name, no namespace name, auto-create namespace & resource_quota.
+    if is_multirm_cluster:
+        w_name = uuid.uuid4().hex[:8]
+        output = detproc.check_output(
+            sess,
+            [
+                "det",
+                "w",
+                "create",
+                w_name,
+                "--cluster-name",
+                conf.DEFAULT_RM_CLUSTER_NAME,
+                "--auto-create-namespace",
+                "--resource-quota",
+                "1",
+            ],
+        )
+        assert bound_to_namespace in output
+
+        output = detproc.check_output(
+            sess,
+            [
+                "det",
+                "w",
+                "resource-quota",
+                "set",
+                w_name,
+                "5",
+                "--cluster-name",
+                conf.DEFAULT_RM_CLUSTER_NAME,
+            ],
+        )
+        assert re.search(r"Resource quota .* is set on workspace", output)
+
+        detproc.check_error(
+            sess,
+            [
+                "det",
+                "w",
+                "resource-quota",
+                "set",
+                w_name,
+                "-5",
+                "--cluster-name",
+                conf.DEFAULT_RM_CLUSTER_NAME,
+            ],
+            "must be greater than or equal to 0",
+        )
+
+    # SingleRM: No cluster name, no namespace name, auto-create namespace & resource quota.
+    else:
+        w_name = uuid.uuid4().hex[:8]
+        output = detproc.check_output(
+            sess,
+            [
+                "det",
+                "w",
+                "create",
+                w_name,
+                "--auto-create-namespace",
+                "--resource-quota",
+                "1",
+            ],
+        )
+        assert bound_to_namespace in output
+
+        output = detproc.check_output(
+            sess,
+            [
+                "det",
+                "w",
+                "resource-quota",
+                "set",
+                w_name,
+                "5",
+            ],
+        )
+        assert re.search(r"Resource quota .* is set on workspace", output)
+
+    # MultiRM & SingleRM: fail to set resource quota on a workspace without a namespace binding.
+    w_name = uuid.uuid4().hex[:8]
+    detproc.check_error(
+        sess,
+        [
+            "det",
+            "w",
+            "create",
+            w_name,
+            "--resource-quota",
+            "1",
+            "--cluster-name",
+            conf.DEFAULT_RM_CLUSTER_NAME,
+        ],
+        "Failed to create workspace: must provide --namespace NAMESPACE or --auto-create-namespace",
+    )
 
 
 @pytest.mark.e2e_gpu
