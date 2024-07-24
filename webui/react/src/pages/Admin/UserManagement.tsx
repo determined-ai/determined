@@ -59,7 +59,7 @@ interface DropdownProps {
   fetchUsers: () => void;
   groups: V1GroupSearchResult[];
   user: DetailedUser;
-  userManagementEnabled: boolean;
+  patchUserEnabled: boolean;
 }
 
 const MenuKey = {
@@ -76,7 +76,7 @@ const ActionMenuKey = {
   SetRoles: 'set-roles',
 } as const;
 
-const UserActionDropdown = ({ fetchUsers, user, groups, userManagementEnabled }: DropdownProps) => {
+const UserActionDropdown = ({ fetchUsers, user, groups, patchUserEnabled }: DropdownProps) => {
   const EditUserModal = useModal(CreateUserModalComponent);
   const ViewUserModal = useModal(CreateUserModalComponent);
   const ManageGroupsModal = useModal(ManageGroupsModalComponent);
@@ -118,18 +118,18 @@ const UserActionDropdown = ({ fetchUsers, user, groups, userManagementEnabled }:
   }, [fetchUsers, openToast, user]);
 
   const menuItems = useMemo(() => {
-    const items: MenuItem[] = canModifyUsers
-      ? [{ key: MenuKey.Edit, label: 'Edit User' }]
-      : [{ key: MenuKey.View, label: 'View User' }];
+    if (!canModifyUsers) return [{ key: MenuKey.View, label: 'View User' }];
+
+    const items: MenuItem[] = [{ key: MenuKey.Edit, label: 'Edit User' }];
 
     if (rbacEnabled) items.push({ key: MenuKey.Groups, label: 'Manage Groups' });
-    if (userManagementEnabled)
+    if (patchUserEnabled)
       items.push(
         { key: MenuKey.Agent, label: 'Link with Agent UID/GID' },
         { key: MenuKey.State, label: `${user.isActive ? 'Deactivate' : 'Activate'}` },
       );
     return items;
-  }, [canModifyUsers, rbacEnabled, user.isActive, userManagementEnabled]);
+  }, [canModifyUsers, rbacEnabled, user.isActive, patchUserEnabled]);
 
   const handleDropdown = useCallback(
     async (key: string) => {
@@ -373,8 +373,8 @@ const UserManagement: React.FC = () => {
         <UserActionDropdown
           fetchUsers={fetchUsers}
           groups={groups}
+          patchUserEnabled={info.patchUserEnabled}
           user={record}
-          userManagementEnabled={info.patchUserEnabled}
         />
       );
     };
