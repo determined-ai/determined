@@ -259,7 +259,7 @@ const TrialDetailsComp: React.FC = () => {
               path: paths.workspaceDetails(experiment?.workspaceId ?? 1),
             }
           : {
-              breadcrumbName: `Uncategorized ${f_flat_runs ? 'Experiments' : 'Runs'}`,
+              breadcrumbName: `Uncategorized ${f_flat_runs ? 'Runs' : 'Experiments'}`,
               path: paths.projectDetails(1),
             },
         {

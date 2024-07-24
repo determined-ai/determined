@@ -1,4 +1,4 @@
-import { render, waitFor } from '@testing-library/react';
+import { render } from '@testing-library/react';
 import HewUIProvider, { DefaultTheme } from 'hew/Theme';
 import { useInitApi } from 'hew/Toast';
 import { ConfirmationProvider } from 'hew/useConfirm';
@@ -401,7 +401,7 @@ describe('TrialDetails', () => {
   it('renders loading state', () => {
     const container = setup();
 
-    expect(container.getByText(/Fetching .* information/)).toBeInTheDocument();
+    expect(container.getByText(/Fetching/)).toBeInTheDocument();
   });
   it('shows page when requests load', async () => {
     mockGetTrialDetails.mockReturnValue(Promise.resolve(mockTrialResponse));
@@ -412,8 +412,28 @@ describe('TrialDetails', () => {
 
     const container = setup();
 
-    await waitFor(async () => {
-      expect(await container.queryByText(/Uncategorized/)).toBeInTheDocument();
+    expect(await container.findByText(/Uncategorized/)).toBeInTheDocument();
+  });
+
+  describe.each([true, false])('when f_flat_runs is %s', (f_flat_runs) => {
+    it('shows proper copy', async () => {
+      mockGetTrialDetails.mockReturnValue(Promise.resolve(mockTrialResponse));
+      mockGetExperimentDetails.mockReturnValue(Promise.resolve(mockExperimentResponse));
+      mockGetTrialRemainingLogRetentionDays.mockReturnValue(
+        Promise.resolve(mockLogRetentionResponse),
+      );
+      mockUseFeature.mockReturnValue(f_flat_runs);
+
+      const container = setup();
+      expect(
+        container.getByText(new RegExp(`Fetching ${f_flat_runs ? 'run' : 'trial'}`)),
+      ).toBeInTheDocument();
+
+      expect(
+        await container.findByText(
+          new RegExp(`Uncategorized ${f_flat_runs ? 'Runs' : 'Experiments'}`),
+        ),
+      ).toBeInTheDocument();
     });
   });
 });
