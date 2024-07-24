@@ -1081,8 +1081,14 @@ func (a *apiServer) SetResourceQuotas(ctx context.Context,
 		return nil, err
 	}
 	defer func() {
+		oldError := err
 		if err = tx.Rollback(); err != nil && err != sql.ErrTxDone {
 			log.WithError(err).Error("error rolling back transaction in set resource quota")
+		} else if err == sql.ErrTxDone {
+			err = nil
+		}
+		if err == nil {
+			err = oldError
 		}
 	}()
 
