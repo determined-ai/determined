@@ -61,10 +61,10 @@ const ComparisonView: React.FC<Props> = ({
     if (experimentSelection) {
       if (
         (experimentSelection.type === 'ONLY_IN' &&
-          experimentSelection.selections.length >= SELECTION_LIMIT) ||
+          experimentSelection.selections.length > SELECTION_LIMIT) ||
         (experimentSelection.type === 'ALL_EXCEPT' &&
           total &&
-          total - experimentSelection.exclusions.length >= SELECTION_LIMIT)
+          total - experimentSelection.exclusions.length > SELECTION_LIMIT)
       ) {
         return true;
       }
@@ -72,10 +72,10 @@ const ComparisonView: React.FC<Props> = ({
     }
     if (runSelection) {
       if (
-        (runSelection.type === 'ONLY_IN' && runSelection.selections.length >= SELECTION_LIMIT) ||
+        (runSelection.type === 'ONLY_IN' && runSelection.selections.length > SELECTION_LIMIT) ||
         (runSelection.type === 'ALL_EXCEPT' &&
           total &&
-          total - runSelection.exclusions.length >= SELECTION_LIMIT)
+          total - runSelection.exclusions.length > SELECTION_LIMIT)
       ) {
         return true;
       }
