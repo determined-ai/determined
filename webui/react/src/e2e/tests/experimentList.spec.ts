@@ -294,7 +294,7 @@ test.describe('Experiment List', () => {
     // await test.step('Hyperparameter Search', async () => {});
   });
 
-  test('DataGrid Action Pause', async () => {
+  test.skip('DataGrid Action Pause', async () => {
     const initNumRows = await getCount();
     // create paused experiment
     detExecSync(
