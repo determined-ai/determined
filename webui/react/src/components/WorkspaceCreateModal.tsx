@@ -61,7 +61,7 @@ const isNonK8RMError = (e: unknown): boolean => {
 };
 
 const isNotAuthorizedErr = (e: unknown): boolean => {
-  return e instanceof DetError && e.sourceErr instanceof Response && e.sourceErr['status'] === 403;
+  return e instanceof DetError && e.sourceErr instanceof Response && (e.sourceErr['status'] === 403 || e.sourceErr['status'] === 401);
 };
 
 const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }: Props = {}) => {
@@ -110,7 +110,7 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
           handleError(e, {
             level: ErrorLevel.Error,
             publicMessage: 'Failed to fetch list of workspace namespace bindings.',
-            silent: false,
+            silent: true,
             type: ErrorType.Server,
           });
         }
