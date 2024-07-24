@@ -1147,7 +1147,7 @@ func TestSearchExperiments(t *testing.T) {
 	require.Nil(t, resp.Experiments[0].BestTrial)
 	require.Equal(t, int32(exp.ID), resp.Experiments[0].Experiment.Id)
 
-	require.Nil(t, resp.Experiments[1].BestTrial)
+	require.NotNil(t, resp.Experiments[1].BestTrial)
 	require.Equal(t, int32(noValidationsExp.ID), resp.Experiments[1].Experiment.Id)
 
 	require.NotNil(t, resp.Experiments[2].BestTrial)
