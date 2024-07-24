@@ -247,12 +247,22 @@ The resource manager used to acquire resources. Defaults to ``agent``.
 For Kubernetes installations, if you define additional resource managers, the resource manager
 specified under the primary resource_manager key here is considered the default.
 
-``name``
-========
+``cluster_name``
+================
 
-Optional. Specifies the resource manager's name. Defaults to ``default`` if not specified. For
-Kubernetes installations with additional resource managers, ensure unique names for all resource
+Optional for single resource manager configurations. Required for multiple resource manager
+(Multi-RM) configurations. Specifies the resource manager'sassociated cluster name. This references
+the cluster on which a Determined deployment is running. Defaults to ``default`` if not specified.
+For Kubernetes installations with additional resource managers, ensure unique names for all resource
 managers in the cluster.
+
+**NOTE:** ``resource_manager.cluster_name`` is separate from the ``cluster_name`` field of the
+master config that provides a readable name for the Determined deployment.
+
+``name``
+--------
+
+(deprecated) Specifies the resource manager’s name. ``cluster_name`` should be specified instead.
 
 ``metadata``
 ============
@@ -353,7 +363,13 @@ on using Determined with Kubernetes, see the :ref:`documentation <determined-on-
 ``namespace``
 -------------
 
-The namespace where Determined will deploy Pods and ConfigMaps.
+This field has been deprecated, use ``default_namespace`` instead.
+
+``default_namespace``
+---------------------
+
+Optional. Specifies the default namespace where Determined will deploy namespaced resources if the
+workspace is not bound to a specific namespace.
 
 .. _master-config-reference-max-slots-per-pod:
 

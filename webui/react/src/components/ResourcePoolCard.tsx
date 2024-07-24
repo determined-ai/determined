@@ -67,7 +67,7 @@ const poolAttributes = [
   { key: 'slotsPerAgent', label: 'Slots Per Agent' },
   { key: 'auxContainerCapacityPerAgent', label: 'Aux Containers Per Agent' },
   { key: 'schedulerType', label: 'Scheduler Type' },
-  { key: 'resourceManagerName', label: 'Resource Manager Name' },
+  { key: 'clusterName', label: 'Cluster Name' },
 ];
 
 /** Resource pool logo based on resource pool type */
@@ -142,8 +142,8 @@ const ResourcePoolCard: React.FC<Props> = ({
       if (!isAux && attribute.key === 'auxContainerCapacityPerAgent') delete acc[attribute.label];
       if (
         (pool.type === V1ResourcePoolType.K8S &&
-          !['type', 'resourceManagerName'].includes(attribute.key)) ||
-        (attribute.key === 'resourceManagerName' && !multiResourceManagers.getOrElse(false))
+          !['type', 'clusterName'].includes(attribute.key)) ||
+        (attribute.key === 'clusterName' && !multiResourceManagers.getOrElse(false))
       ) {
         delete acc[attribute.label];
       }

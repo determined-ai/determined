@@ -1977,6 +1977,17 @@ service Determined {
     };
   }
 
+  // Get a list of all Kubernetes cluster names.
+  rpc GetKubernetesResourceManagers(GetKubernetesResourceManagersRequest)
+      returns (GetKubernetesResourceManagersResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/k8-resource-managers"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Internal"
+    };
+  }
+
   // Get a detailed view of resource allocation during the given time period.
   rpc ResourceAllocationRaw(ResourceAllocationRawRequest)
       returns (ResourceAllocationRawResponse) {
@@ -2038,6 +2049,7 @@ service Determined {
       tags: "Workspaces"
     };
   }
+
   // Update a workspace.
   rpc PatchWorkspace(PatchWorkspaceRequest) returns (PatchWorkspaceResponse) {
     option (google.api.http) = {
@@ -2091,6 +2103,89 @@ service Determined {
   rpc UnpinWorkspace(UnpinWorkspaceRequest) returns (UnpinWorkspaceResponse) {
     option (google.api.http) = {
       post: "/api/v1/workspaces/{id}/unpin"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Workspaces"
+    };
+  }
+
+  // Bind a namespace to a workspace.
+  rpc SetWorkspaceNamespaceBindings(SetWorkspaceNamespaceBindingsRequest)
+      returns (SetWorkspaceNamespaceBindingsResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/workspaces/{workspace_id}/namespace-bindings",
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Workspaces"
+    };
+  }
+
+  // Set a resource quota for a workspace (within a specific cluster).
+  rpc SetResourceQuotas(SetResourceQuotasRequest)
+      returns (SetResourceQuotasResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/workspaces/{id}/set-resource-quota",
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Workspaces"
+    };
+  }
+
+  // List namespaces bound to a workspace.
+  rpc ListWorkspaceNamespaceBindings(ListWorkspaceNamespaceBindingsRequest)
+      returns (ListWorkspaceNamespaceBindingsResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/workspaces/{id}/list-namespace-bindings"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Workspaces"
+    };
+  }
+
+  // Gets the ids of all workspaces that are bound to the default namespace for
+  // atleast one cluster.
+  rpc GetWorkspacesWithDefaultNamespaceBindings(
+      GetWorkspacesWithDefaultNamespaceBindingsRequest)
+      returns (GetWorkspacesWithDefaultNamespaceBindingsResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/namespace-bindings/workspace-ids-with-default-bindings"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Workspaces"
+    };
+  }
+
+  // Binds the given workpaces to new auto-created namespaces.
+  rpc BulkAutoCreateWorkspaceNamespaceBindings(
+      BulkAutoCreateWorkspaceNamespaceBindingsRequest)
+      returns (BulkAutoCreateWorkspaceNamespaceBindingsResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/namespace-bindings/bulk-auto-create",
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Workspaces"
+    };
+  }
+
+  // Deletes workpace namespace bindings.
+  rpc DeleteWorkspaceNamespaceBindings(DeleteWorkspaceNamespaceBindingsRequest)
+      returns (DeleteWorkspaceNamespaceBindingsResponse) {
+    option (google.api.http) = {
+      delete: "/api/v1/workspaces/{workspace_id}/namespace-bindings"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Workspaces"
+    };
+  }
+
+  // Get Kubernetes Resource Quotas for a workspace by the cluster name.
+  rpc GetKubernetesResourceQuotas(GetKubernetesResourceQuotasRequest)
+      returns (GetKubernetesResourceQuotasResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/workspaces/{id}/get-k8-resource-quotas"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Workspaces"

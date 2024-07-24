@@ -4,8 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"math"
 	"os"
 	"path/filepath"
+	"slices"
 	"strconv"
 	"strings"
 	"sync"
@@ -40,6 +42,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/rm/rmevents"
 	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/internal/workspace"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/logger"
@@ -62,7 +65,15 @@ const (
 	kubernetesJobNameLabel = "batch.kubernetes.io/job-name"
 
 	resourceTypeNvidia = "nvidia.com/gpu"
+	defaultNamespace   = "default"
+	// ReleaseNamespaceEnvVar is the name of the environment variable within a pod running the
+	// master service containing the namespace in which determined was deployed.
+	ReleaseNamespaceEnvVar = "DET_RELEASE_NAMESPACE"
+	// ResourceTypeNvidia describes the GPU resource type.
+	ResourceTypeNvidia = "nvidia.com/gpu"
 )
+
+var cacheSyncs []cache.InformerSynced
 
 type summarizeResult struct {
 	summary map[string]model.AgentSummary
@@ -86,7 +97,7 @@ type jobMetadata struct {
 type jobsService struct {
 	// Configuration details. Set in initialization (the `newJobService` constructor) and never modified after.
 	namespace             string
-	namespaceToPoolName   map[string]string
+	clusterName           string
 	scheduler             string
 	slotType              device.Type
 	slotResourceRequests  config.PodSlotResourceRequests
@@ -111,6 +122,7 @@ type jobsService struct {
 	tcpRouteInterfaces  map[string]alphaGateway.TCPRouteInterface
 
 	resourceRequestQueue       *requestQueue
+	requestQueueWorkers        []*requestProcessingWorker
 	jobSchedulingStateCallback jobSchedulingStateCallback
 
 	// Internal state. Access should be protected.
@@ -126,18 +138,33 @@ type jobsService struct {
 	gatewayService                    *gatewayService
 
 	// TODO(RM-236) make one cache and make this code more straightforward.
-	summarizeCacheLock sync.RWMutex
-	summarizeCache     summarizeResult
-	summarizeCacheTime time.Time
-	getAgentsCacheLock sync.Mutex
-	getAgentsCache     *apiv1.GetAgentsResponse
-	getAgentsCacheTime time.Time
+	summarizeCacheLock      sync.RWMutex
+	summarizeCache          summarizeResult
+	summarizeCacheTime      time.Time
+	getAgentsCacheLock      sync.Mutex
+	getAgentsCache          *apiv1.GetAgentsResponse
+	getAgentsCacheTime      time.Time
+	namespacesWithInformers map[string]bool
+}
+
+func (j *jobsService) GetAllNamespacesForRM() ([]string, error) {
+	ns, err := workspace.GetAllNamespacesForRM(context.Background(), j.clusterName)
+	if err != nil {
+		return ns, err
+	}
+	if j.namespace == "" {
+		j.namespace = defaultNamespace
+	}
+	if !slices.Contains(ns, j.namespace) {
+		ns = append(ns, j.namespace)
+	}
+	return ns, nil
 }
 
 // newJobsService creates a new pod service for launching, querying and interacting with k8s pods.
 func newJobsService(
 	namespace string,
-	namespaceToPoolName map[string]string,
+	clusterName string,
 	masterServiceName string,
 	masterTLSConfig model.TLSClientConfig,
 	scheduler string,
@@ -156,7 +183,7 @@ func newJobsService(
 		wg: waitgroupx.WithContext(context.Background()),
 
 		namespace:                         namespace,
-		namespaceToPoolName:               namespaceToPoolName,
+		clusterName:                       clusterName,
 		masterServiceName:                 masterServiceName,
 		masterTLSConfig:                   masterTLSConfig,
 		detMasterScheme:                   detMasterScheme,
@@ -182,11 +209,17 @@ func newJobsService(
 		syslog:                            logrus.WithField("namespace", namespace),
 		jobSchedulingStateCallback:        jobSchedulingStateCb,
 
-		internalTaskGWConfig: internalTaskGWConfig,
-		kubeconfigPath:       kubeconfigPath,
+		internalTaskGWConfig:    internalTaskGWConfig,
+		kubeconfigPath:          kubeconfigPath,
+		namespacesWithInformers: make(map[string]bool),
 	}
 
-	if err := p.startClientSet(); err != nil {
+	ns, err := p.GetAllNamespacesForRM()
+	if err != nil {
+		panic(fmt.Errorf("failed to get namespaces for resource manager: %w", err))
+	}
+
+	if err := p.startClientSet(ns); err != nil {
 		return nil, err
 	}
 	if err := p.getMasterIPAndPort(); err != nil {
@@ -198,11 +231,11 @@ func newJobsService(
 
 	p.startResourceRequestQueue()
 
-	if err := p.deleteDoomedKubernetesResources(); err != nil {
+	if err := p.deleteDoomedKubernetesResources(ns); err != nil {
 		return nil, err
 	}
 
-	err := p.startNodeInformer()
+	err = p.startNodeInformer()
 	switch {
 	case err != nil && k8error.IsForbidden(err):
 		p.syslog.Warnf("unable to start node informer due to permission error,"+
@@ -212,79 +245,90 @@ func newJobsService(
 		return nil, err
 	}
 
-	err = p.startEventListeners()
+	err = p.syncNamespaces(ns)
 	if err != nil {
 		return nil, err
 	}
+	return p, nil
+}
 
-	err = p.startPreemptionListeners()
+func (j *jobsService) syncNamespaces(ns []string) error {
+	err := j.startEventListeners(ns)
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	var cacheSyncs []cache.InformerSynced
-	for namespace := range p.namespaceToPoolName {
-		factory := informers.NewSharedInformerFactoryWithOptions(p.clientSet, time.Hour, informers.WithNamespace(namespace))
+	err = j.startPreemptionListeners(ns)
+	if err != nil {
+		return err
+	}
+
+	for _, namespace := range ns {
+		j.namespacesWithInformers[namespace] = true
+		factory := informers.NewSharedInformerFactoryWithOptions(j.clientSet, time.Hour,
+			informers.WithNamespace(namespace))
 
 		jobsInformer := factory.Batch().V1().Jobs()
 		if _, err := jobsInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 			AddFunc: func(obj interface{}) {
-				p.mu.Lock()
-				defer p.mu.Unlock()
-				p.jobUpdatedCallback(obj)
+				j.mu.Lock()
+				defer j.mu.Unlock()
+				j.jobUpdatedCallback(obj)
 			},
 			UpdateFunc: func(_, obj interface{}) {
-				p.mu.Lock()
-				defer p.mu.Unlock()
-				p.jobUpdatedCallback(obj)
+				j.mu.Lock()
+				defer j.mu.Unlock()
+				j.jobUpdatedCallback(obj)
 			},
 
 			// If a job is deleted out from under us, this is the only hook we have to not
 			// leave our workloads running or pending forever.
 			DeleteFunc: func(obj interface{}) {
-				p.mu.Lock()
-				defer p.mu.Unlock()
-				p.jobDeletedCallback(obj)
+				j.mu.Lock()
+				defer j.mu.Unlock()
+				j.jobDeletedCallback(obj)
 			},
 		}); err != nil {
-			return nil, fmt.Errorf("adding job informer: %w", err)
+			return fmt.Errorf("adding job informer: %w", err)
 		}
+
 		cacheSyncs = append(cacheSyncs, jobsInformer.Informer().HasSynced)
 
 		podsInformer := factory.Core().V1().Pods()
 		if _, err := podsInformer.Informer().AddEventHandler(cache.ResourceEventHandlerFuncs{
 			AddFunc: func(obj interface{}) {
-				p.mu.Lock()
-				defer p.mu.Unlock()
-				p.podStatusCallback(obj)
+				j.mu.Lock()
+				defer j.mu.Unlock()
+				j.podStatusCallback(obj)
 			},
 			UpdateFunc: func(_, obj interface{}) {
-				p.mu.Lock()
-				defer p.mu.Unlock()
-				p.podStatusCallback(obj)
+				j.mu.Lock()
+				defer j.mu.Unlock()
+				j.podStatusCallback(obj)
 			},
 
 			// If a pod is deleted out from under us, it is nice to let the user know that
 			// is what happened.
 			DeleteFunc: func(obj interface{}) {
-				p.mu.Lock()
-				defer p.mu.Unlock()
-				p.podDeletedCallback(obj)
+				j.mu.Lock()
+				defer j.mu.Unlock()
+				j.podDeletedCallback(obj)
 			},
 		}); err != nil {
-			return nil, fmt.Errorf("adding pod informer: %w", err)
+			return fmt.Errorf("adding pod informer: %w", err)
 		}
 		cacheSyncs = append(cacheSyncs, podsInformer.Informer().HasSynced)
 
 		factory.Start(nil)
 	}
+
 	if !cache.WaitForCacheSync(nil, cacheSyncs...) {
-		return nil, errors.New("failed to wait for cache sync for jobs informer")
+		return errors.New("failed to wait for cache sync for jobs informer")
 	}
-	return p, nil
+	return nil
 }
 
-func (j *jobsService) startClientSet() error {
+func (j *jobsService) startClientSet(namespaces []string) error {
 	config, err := readClientConfig(j.kubeconfigPath)
 	if err != nil {
 		return fmt.Errorf("error building kubernetes config: %w", err)
@@ -295,8 +339,7 @@ func (j *jobsService) startClientSet() error {
 		return fmt.Errorf("failed to initialize kubernetes clientSet: %w", err)
 	}
 
-	namespaces := append(maps.Keys(j.namespaceToPoolName), j.namespace)
-	for _, ns := range append(maps.Keys(j.namespaceToPoolName), j.namespace) {
+	for _, ns := range namespaces {
 		j.podInterfaces[ns] = j.clientSet.CoreV1().Pods(ns)
 		j.configMapInterfaces[ns] = j.clientSet.CoreV1().ConfigMaps(ns)
 		j.jobInterfaces[ns] = j.clientSet.BatchV1().Jobs(ns)
@@ -370,8 +413,9 @@ func (j *jobsService) getMasterIPAndPort() error {
 		// outside of this cluster (happens in development or when we spread across multiple k8s clusters).
 		return nil
 	}
-	masterService, err := j.clientSet.CoreV1().Services(j.namespace).Get(
-		context.TODO(), j.masterServiceName, metaV1.GetOptions{})
+	masterService, err := j.clientSet.CoreV1().
+		Services(j.getInitialNamespace()).
+		Get(context.TODO(), j.masterServiceName, metaV1.GetOptions{})
 	if err != nil {
 		return fmt.Errorf("failed to get master service: %w", err)
 	}
@@ -398,7 +442,7 @@ func (j *jobsService) getSystemResourceRequests() error {
 	return nil
 }
 
-func (j *jobsService) deleteDoomedKubernetesResources() error {
+func (j *jobsService) deleteDoomedKubernetesResources(namespaces []string) error {
 	var openAllocations []model.Allocation
 	if err := db.Bun().NewSelect().Model(&openAllocations).
 		Where("end_time IS NULL").
@@ -420,7 +464,7 @@ func (j *jobsService) deleteDoomedKubernetesResources() error {
 	var toKillJobs []batchV1.Job
 	savedJobNames := make(set.Set[string])
 	for _, job := range jobs {
-		if _, ok := j.namespaceToPoolName[job.Namespace]; !ok {
+		if !slices.Contains(namespaces, job.Namespace) {
 			continue
 		}
 
@@ -451,7 +495,7 @@ func (j *jobsService) deleteDoomedKubernetesResources() error {
 	}
 
 	resourceIsSaved := func(namespace, jobName string) bool {
-		if _, ok := j.namespaceToPoolName[namespace]; !ok {
+		if !slices.Contains(namespaces, namespace) {
 			return true
 		}
 
@@ -620,6 +664,49 @@ func (j *jobsService) ReattachJob(msg reattachJobRequest) (reattachJobResponse, 
 	return j.reattachJob(msg)
 }
 
+func (j *jobsService) DefaultNamespace() string {
+	j.mu.Lock()
+	defer j.mu.Unlock()
+
+	return j.namespace
+}
+
+func (j *jobsService) VerifyNamespaceExists(namespace string) error {
+	j.mu.Lock()
+	defer j.mu.Unlock()
+	return j.verifyNamespaceExists(namespace)
+}
+
+func (j *jobsService) CreateNamespace(namespace string) error {
+	j.mu.Lock()
+	defer j.mu.Unlock()
+	return j.createNamespace(namespace)
+}
+
+func (j *jobsService) DeleteNamespace(namespace string) error {
+	j.mu.Lock()
+	defer j.mu.Unlock()
+	return j.deleteNamespace(namespace)
+}
+
+func (j *jobsService) RemoveEmptyNamespace(namespaceName string, clusterName string) error {
+	j.mu.Lock()
+	defer j.mu.Unlock()
+	return j.removeEmptyNamespace(namespaceName, clusterName)
+}
+
+func (j *jobsService) SetResourceQuota(quota int, namespace string) error {
+	j.mu.Lock()
+	defer j.mu.Unlock()
+	return j.setResourceQuota(quota, namespace)
+}
+
+func (j *jobsService) GetNamespaceResourceQuota(namespaceName string) (*float64, error) {
+	j.mu.Lock()
+	defer j.mu.Unlock()
+	return j.getNamespaceResourceQuota(namespaceName)
+}
+
 type reattachJobRequest struct {
 	req          *sproto.AllocateRequest
 	numPods      int
@@ -697,6 +784,7 @@ func (j *jobsService) reattachJob(msg reattachJobRequest) (reattachJobResponse, 
 		cleanup()
 		return reattachJobResponse{}, fmt.Errorf("expected one job")
 	}
+
 	resourcePool, ok := job.Labels[resourcePoolLabel]
 	if !ok {
 		cleanup()
@@ -910,8 +998,13 @@ func (j *jobsService) refreshJobState(allocationID model.AllocationID) error {
 		return fmt.Errorf("error listing pods checking if they can be restored: %w", err)
 	}
 
+	ns, err := j.GetAllNamespacesForRM()
+	if err != nil {
+		return fmt.Errorf("failed to get namespaces for resource manager: %w", err)
+	}
+
 	for _, job := range jobs {
-		if _, ok := j.namespaceToPoolName[job.Namespace]; !ok {
+		if !slices.Contains(ns, job.Namespace) {
 			continue
 		}
 		j.jobUpdatedCallback(&job)
@@ -930,9 +1023,13 @@ func (j *jobsService) refreshPodStates(allocationID model.AllocationID) error {
 	if err != nil {
 		return fmt.Errorf("error listing pods checking if they can be restored: %w", err)
 	}
+	ns, err := j.GetAllNamespacesForRM()
+	if err != nil {
+		return fmt.Errorf("failed to get namespaces for resource manager: %w", err)
+	}
 
 	for _, pod := range pods.Items {
-		if _, ok := j.namespaceToPoolName[pod.Namespace]; !ok {
+		if !slices.Contains(ns, pod.Namespace) {
 			continue
 		}
 		j.podStatusCallback(&pod)
@@ -1009,8 +1106,8 @@ func (j *jobsService) startNodeInformer() error {
 	return nil
 }
 
-func (j *jobsService) startEventListeners() error {
-	for namespace := range j.namespaceToPoolName {
+func (j *jobsService) startEventListeners(namespaces []string) error {
+	for _, namespace := range namespaces {
 		l, err := newEventInformer(
 			context.TODO(),
 			j.clientSet.CoreV1().Events(namespace),
@@ -1028,8 +1125,8 @@ func (j *jobsService) startEventListeners() error {
 	return nil
 }
 
-func (j *jobsService) startPreemptionListeners() error {
-	for namespace := range j.namespaceToPoolName {
+func (j *jobsService) startPreemptionListeners(namespaces []string) error {
+	for _, namespace := range namespaces {
 		l, err := newPodInformer(
 			context.TODO(),
 			determinedPreemptionLabel,
@@ -1051,7 +1148,7 @@ func (j *jobsService) startPreemptionListeners() error {
 
 func (j *jobsService) startResourceRequestQueue() {
 	failures := make(chan resourcesRequestFailure, 16)
-	j.resourceRequestQueue = startRequestQueue(
+	j.resourceRequestQueue, j.requestQueueWorkers = startRequestQueue(
 		j.jobInterfaces,
 		j.podInterfaces,
 		j.configMapInterfaces,
@@ -1655,8 +1752,8 @@ func (j *jobsService) getNodeResourcePoolMapping(nodeSummaries map[string]model.
 		Operator: k8sV1.TolerationOpEqual,
 	}}
 	cpuTolerations, gpuTolerations := extractTolerations(j.baseContainerDefaults)
-	poolsToNodes := make(map[string][]*k8sV1.Node, len(j.namespaceToPoolName))
-	nodesToPools := make(map[string][]string, len(j.namespaceToPoolName))
+	poolsToNodes := make(map[string][]*k8sV1.Node)
+	nodesToPools := make(map[string][]string)
 
 	for _, node := range j.currentNodes {
 		_, slotType := extractSlotInfo(nodeSummaries[node.Name])
@@ -1721,7 +1818,7 @@ func (j *jobsService) computeSummary() (map[string]model.AgentSummary, error) {
 
 	// Build the set of summaries for each resource pool
 	containers := j.containersPerResourcePool()
-	summaries := make(map[string]model.AgentSummary, len(j.namespaceToPoolName))
+	summaries := make(map[string]model.AgentSummary)
 	for poolName, nodes := range poolsToNodes {
 		slots := model.SlotsSummary{}
 		numContainersInPool := containers[poolName]
@@ -1955,7 +2052,7 @@ func (j *jobsService) getCPUReqs(c k8sV1.Container) int64 {
 }
 
 func (j *jobsService) containersPerResourcePool() map[string]int {
-	counts := make(map[string]int, len(j.namespaceToPoolName))
+	counts := make(map[string]int)
 	for name, pool := range j.jobNameToResourcePool {
 		handler, ok := j.jobNameToJobHandler[name]
 		if !ok {
@@ -2055,6 +2152,239 @@ func (j *jobsService) listTCPRoutesInAllNamespaces(
 	}
 
 	return res, nil
+}
+
+func (j *jobsService) verifyNamespaceExists(namespace string) error {
+	_, err := j.clientSet.CoreV1().Namespaces().Get(context.Background(), namespace,
+		metaV1.GetOptions{})
+	if err != nil {
+		return fmt.Errorf("error finding namespace %s: %w", namespace, err)
+	}
+
+	j.podInterfaces[namespace] = j.clientSet.CoreV1().Pods(namespace)
+	j.configMapInterfaces[namespace] = j.clientSet.CoreV1().ConfigMaps(namespace)
+	j.jobInterfaces[namespace] = j.clientSet.BatchV1().Jobs(namespace)
+
+	for _, worker := range j.requestQueueWorkers {
+		worker.podInterface = j.podInterfaces
+		worker.configMapInterfaces = j.configMapInterfaces
+		worker.jobInterface = j.jobInterfaces
+	}
+
+	// Since we don't know whether the namespace exists yet, and we don't want to do duplicate
+	// namespace informers, add all non-auto-created namespaces bound to a workspace with a map.
+	if _, ok := j.namespacesWithInformers[namespace]; !ok {
+		err = j.syncNamespaces([]string{namespace})
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func (j *jobsService) createNamespace(namespaceName string) error {
+	err := j.createNamespaceHelper(namespaceName)
+	if err != nil {
+		return err
+	}
+	err = j.syncNamespaces([]string{namespaceName})
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (j *jobsService) createNamespaceHelper(namespaceName string) error {
+	_, err := j.clientSet.CoreV1().Namespaces().Create(
+		context.TODO(),
+		&k8sV1.Namespace{
+			TypeMeta: metaV1.TypeMeta{
+				Kind:       "Namespace",
+				APIVersion: "v1",
+			},
+			ObjectMeta: metaV1.ObjectMeta{
+				Name:   namespaceName,
+				Labels: map[string]string{determinedLabel: namespaceName},
+			},
+		},
+		metaV1.CreateOptions{},
+	)
+	if err != nil {
+		if !k8error.IsAlreadyExists(err) {
+			return fmt.Errorf("error creating namespace %s: %w", namespaceName, err)
+		}
+		return nil
+	}
+
+	j.podInterfaces[namespaceName] = j.clientSet.CoreV1().Pods(namespaceName)
+	j.configMapInterfaces[namespaceName] = j.clientSet.CoreV1().ConfigMaps(namespaceName)
+	j.jobInterfaces[namespaceName] = j.clientSet.BatchV1().Jobs(namespaceName)
+
+	for _, worker := range j.requestQueueWorkers {
+		worker.podInterface = j.podInterfaces
+		worker.configMapInterfaces = j.configMapInterfaces
+		worker.jobInterface = j.jobInterfaces
+	}
+
+	return nil
+}
+
+func (j *jobsService) deleteNamespace(namespaceName string) error {
+	err := j.clientSet.CoreV1().Namespaces().Delete(context.TODO(), namespaceName,
+		metaV1.DeleteOptions{})
+	if err != nil && !k8error.IsNotFound(err) {
+		return err
+	}
+	return nil
+}
+
+func (j *jobsService) removeEmptyNamespace(namespaceName string, clusterName string) error {
+	count, err := workspace.GetNumWorkspacesUsingNamespaceInCluster(context.Background(), clusterName, namespaceName)
+	if err != nil {
+		return err
+	}
+	if count == 0 {
+		delete(j.podInterfaces, namespaceName)
+		delete(j.configMapInterfaces, namespaceName)
+		delete(j.jobInterfaces, namespaceName)
+
+		for _, worker := range j.requestQueueWorkers {
+			worker.podInterface = j.podInterfaces
+			worker.configMapInterfaces = j.configMapInterfaces
+			worker.jobInterface = j.jobInterfaces
+		}
+	}
+	return nil
+}
+
+func (j *jobsService) setResourceQuota(quota int, namespace string) error {
+	k8sDeterminedLabel := map[string]string{determinedLabel: namespace}
+
+	k8sNamespace, err := j.clientSet.CoreV1().Namespaces().Get(context.TODO(), namespace,
+		metaV1.GetOptions{
+			TypeMeta: metaV1.TypeMeta{
+				Kind:       "Namespace",
+				APIVersion: "v1",
+			},
+		})
+	if err != nil {
+		return fmt.Errorf("error finding namespace %s: %w", namespace, err)
+	}
+
+	if _, ok := k8sNamespace.Labels[determinedLabel]; !ok {
+		return fmt.Errorf("cannot set quota on namespace %s. Namespace needs determined label",
+			namespace)
+	}
+
+	quotaName := namespace + "-quota"
+
+	// We want to patch the smallest quota if it is a determiend quota regardless of whether it's
+	// larger or smaller. If the quota does not correspond to the auto-generated namespace and is
+	// less than the current quota (the first non-Determined quota, we error out saying that they
+	// should remove that quota from Kubernetes and then try to set a Determined quota.
+	k8sQuotas, err := j.clientSet.CoreV1().ResourceQuotas(namespace).List(context.TODO(),
+		metaV1.ListOptions{})
+	if err != nil {
+		return fmt.Errorf("error fetching resource quotas for namespace %s: %w", namespace, err)
+	}
+	quotas := k8sQuotas.Items
+	currentQuota := float64(quota)
+	var detQuota *k8sV1.ResourceQuota
+	for _, q := range quotas {
+		qResources := q.Spec.Hard
+		for name, quantity := range qResources {
+			if name == "requests."+ResourceTypeNvidia {
+				tmpQuota := quantity.AsApproximateFloat64()
+				q.Spec.Hard[name] = *resource.NewQuantity(int64(quota), resource.DecimalSI)
+				if q.Name == quotaName {
+					qVal := q
+					detQuota = &qVal
+				} else if tmpQuota < currentQuota {
+					return fmt.Errorf("cannot set quota %d on namespace %s, because this"+
+						" namespace consists of a Kubernetes quota with request limit %d that does not"+
+						" correspond to the auto-created namespace. Please remove this quota in"+
+						" Kubernetes before trying to raise the GPU request limit on the namespace",
+						quota, namespace, int(tmpQuota))
+				}
+			}
+		}
+	}
+
+	if detQuota != nil {
+		detQuotaToByteArray, err := json.Marshal(detQuota)
+		if err != nil {
+			return fmt.Errorf("error marshaling quota %s: %w", detQuota.Name, err)
+		}
+		_, err = j.clientSet.CoreV1().ResourceQuotas(namespace).Patch(context.TODO(),
+			quotaName,
+			types.MergePatchType,
+			detQuotaToByteArray,
+			metaV1.PatchOptions{})
+		if err != nil {
+			return fmt.Errorf("error applying patch to resource quota %s: %w", quotaName, err)
+		}
+	} else {
+		// The given namespace does not any attached determined quotas.
+		if currentQuota < float64(quota) {
+			return fmt.Errorf("cannot set quota because there already exists a quota in "+
+				"namespace %s of limit %d", namespace, int(currentQuota))
+		}
+		_, err = j.clientSet.CoreV1().ResourceQuotas(namespace).Create(context.TODO(),
+			&k8sV1.ResourceQuota{
+				TypeMeta: metaV1.TypeMeta{
+					Kind:       "ResourceQuota",
+					APIVersion: "v1",
+				},
+				ObjectMeta: metaV1.ObjectMeta{Labels: k8sDeterminedLabel, Name: quotaName},
+				Spec: k8sV1.ResourceQuotaSpec{
+					Hard: k8sV1.ResourceList{
+						k8sV1.ResourceName("requests." + ResourceTypeNvidia): *resource.
+							NewQuantity(int64(quota), resource.DecimalSI),
+					},
+				},
+			},
+			metaV1.CreateOptions{},
+		)
+		if err != nil {
+			return fmt.Errorf("error creating resource quota %s for namespace %s: %w",
+				quotaName, namespace, err)
+		}
+	}
+
+	return nil
+}
+
+func (j *jobsService) getNamespaceResourceQuota(namespaceName string) (*float64, error) {
+	k8sQuotas, err := j.clientSet.CoreV1().ResourceQuotas(namespaceName).List(context.TODO(), metaV1.ListOptions{})
+	if err != nil {
+		return nil, fmt.Errorf("error finding resource quotas for the namespace %s: %w", namespaceName, err)
+	}
+
+	quotas := k8sQuotas.Items
+	minQuota := math.Inf(1)
+	for _, q := range quotas {
+		qResources := q.Spec.Hard
+		for name, quantity := range qResources {
+			if name == "requests."+resourceTypeNvidia {
+				minQuota = math.Min(minQuota, quantity.AsApproximateFloat64())
+			}
+		}
+	}
+
+	if minQuota != math.Inf(1) {
+		return &minQuota, nil
+	}
+
+	return nil, nil
+}
+
+func (j *jobsService) getInitialNamespace() string {
+	releaseNamespace := os.Getenv(ReleaseNamespaceEnvVar)
+	if len(releaseNamespace) > 0 {
+		return releaseNamespace
+	}
+	return j.namespace
 }
 
 func extractTCDs(resourcePoolConfigs []config.ResourcePoolConfig,

@@ -29,6 +29,7 @@ var (
 	userModelViewer           model.User
 	userModelEditor           model.User
 	userModelEditorRestricted model.User
+	userModelClusterAdmin     model.User
 )
 
 var roles = map[string]int{
@@ -44,14 +45,15 @@ var roles = map[string]int{
 var wsIDs,
 	viewerGroupIDs,
 	editorGroupIDs,
-	editorRestrictedGroupIDs []int
+	editorRestrictedGroupIDs,
+	clusterAdminGroupIDs []int
 
 func setup(t *testing.T, pgDB *PgDB) {
 	ctx := context.TODO()
 	raData := map[string]interface{}{}
 
-	// Create workspaces and groups with viewer, editor, and editor-restricted privileges in
-	// each workspace.
+	// Create workspaces and groups with viewer, editor, editor-restricted, and cluster admin
+	// privileges in each workspace.
 	for i := 0; i < iters; i++ {
 		nameExt, err := uuid.NewRandom()
 		require.NoError(t, err)
@@ -60,6 +62,7 @@ func setup(t *testing.T, pgDB *PgDB) {
 		editorGroupName := fmt.Sprintf("test_group_editor_%s", nameExt)
 		editorRestrictedGroupName := fmt.Sprintf("test_group_editor_restricted_%s",
 			nameExt)
+		clusterAdminGroupName := fmt.Sprintf("test_group_cluster_admin_%s", nameExt)
 
 		wsName := fmt.Sprintf("test_workspace_permissions_%s", nameExt)
 		wsID, _ := RequireMockWorkspaceID(t, pgDB, wsName)
@@ -105,10 +108,21 @@ func setup(t *testing.T, pgDB *PgDB) {
 		raData["scope_id"] = scopeID
 		_, err = Bun().NewInsert().Model(&raData).Table("role_assignments").Exec(ctx)
 		require.NoError(t, err, "error inserting editor-restricted role assignment")
+
+		grp = &model.Group{Name: clusterAdminGroupName}
+		_, err = Bun().NewInsert().Model(grp).Returning("id").Exec(ctx)
+		require.NoError(t, err, "error inserting cluster admin group")
+		clusterAdminGroupIDs = append(clusterAdminGroupIDs, grp.ID)
+
+		raData["group_id"] = grp.ID
+		raData["role_id"] = roles["ClusterAdmin"]
+		raData["scope_id"] = scopeID
+		_, err = Bun().NewInsert().Model(&raData).Table("role_assignments").Exec(ctx)
+		require.NoError(t, err, "error inserting editor-restricted role assignment")
 	}
 
-	// Create 3 users and add each user to a group with viewer, editor, or editor-restricted
-	// privileges within their respective workspaces.
+	// Create 4 users and add each user to a group with viewer, editor, editor-restricted, or
+	// cluster admin privileges within their respective workspaces.
 	userModelViewer = model.User{Username: uuid.New().String(), Active: true}
 	_, err := HackAddUser(context.TODO(), &userModelViewer)
 	require.NoError(t, err)
@@ -119,6 +133,10 @@ func setup(t *testing.T, pgDB *PgDB) {
 
 	userModelEditorRestricted = model.User{Username: uuid.New().String(), Active: true}
 	_, err = HackAddUser(context.TODO(), &userModelEditorRestricted)
+	require.NoError(t, err)
+
+	userModelClusterAdmin = model.User{Username: uuid.New().String(), Active: true}
+	_, err = HackAddUser(context.TODO(), &userModelClusterAdmin)
 	require.NoError(t, err)
 
 	for i := range []int{0, 1, 2} {
@@ -149,6 +167,15 @@ func setup(t *testing.T, pgDB *PgDB) {
 			Exec(ctx)
 		require.NoError(t, err, "error inserting user group membership "+
 			strconv.Itoa(editorRestrictedGID))
+
+		clusterAdminGID := clusterAdminGroupIDs[i]
+		groupMembership["user_id"] = userModelClusterAdmin.ID
+		groupMembership["group_id"] = clusterAdminGID
+
+		_, err = Bun().NewInsert().Model(&groupMembership).Table("user_group_membership").
+			Exec(ctx)
+		require.NoError(t, err, "error inserting user group membership "+
+			strconv.Itoa(clusterAdminGID))
 	}
 }
 
@@ -166,6 +193,10 @@ func cleanUp(t *testing.T) {
 		Exec(ctx)
 	require.NoError(t, err)
 
+	_, err = Bun().NewDelete().Table("users").Where("id = ?", userModelClusterAdmin.ID).
+		Exec(ctx)
+	require.NoError(t, err)
+
 	// Remove workspaces.
 	_, err = Bun().NewDelete().Table("workspaces").Where("id IN (?)", bun.In(wsIDs)).Exec(ctx)
 	require.NoError(t, err, "error cleaning up workspace")
@@ -180,6 +211,10 @@ func cleanUp(t *testing.T) {
 	_, err = Bun().NewDelete().Table("groups").Where("id IN (?)", bun.In(editorRestrictedGroupIDs)).
 		Exec(ctx)
 	require.NoError(t, err, "error deleting editor-restricted groups")
+
+	_, err = Bun().NewDelete().Table("groups").Where("id IN (?)", bun.In(clusterAdminGroupIDs)).
+		Exec(ctx)
+	require.NoError(t, err, "error deleting cluster admin groups")
 }
 
 func TestPermissionMatch(t *testing.T) {
@@ -195,6 +230,7 @@ func TestPermissionMatch(t *testing.T) {
 	userIDViewer := userModelViewer.ID
 	userIDEditor := userModelEditor.ID
 	userIDEditorRestricted := userModelEditorRestricted.ID
+	userIDClusterAdmin := userModelClusterAdmin.ID
 
 	badWorkspaceID := int32(maxWsID) + 10
 
@@ -225,6 +261,36 @@ func TestPermissionMatch(t *testing.T) {
 			rbacv1.PermissionType_PERMISSION_TYPE_CREATE_NSC)
 		require.IsType(t, authz.PermissionDeniedError{}, err,
 			"user should not have permission to create NSC tasks")
+
+		// Verify that a user who has ClusterAdmin privileges can add workspace-namespace bindings,
+		// while a user with Editor privileges and below cannot.
+		err = DoesPermissionMatch(ctx, userIDViewer, &workspaceID,
+			rbacv1.PermissionType_PERMISSION_TYPE_SET_WORKSPACE_NAMESPACE_BINDINGS)
+		require.IsType(t, authz.PermissionDeniedError{}, err,
+			"user should not have permission to add workspace-namespace bindings")
+
+		err = DoesPermissionMatch(ctx, userIDViewer, &workspaceID,
+			rbacv1.PermissionType_PERMISSION_TYPE_SET_RESOURCE_QUOTAS)
+		require.IsType(t, authz.PermissionDeniedError{}, err,
+			"user should not have permission to set resource quotas")
+
+		err = DoesPermissionMatch(ctx, userIDEditor, &workspaceID,
+			rbacv1.PermissionType_PERMISSION_TYPE_SET_WORKSPACE_NAMESPACE_BINDINGS)
+		require.IsType(t, authz.PermissionDeniedError{}, err,
+			"user should not have permission to add workspace-namespace bindings")
+
+		err = DoesPermissionMatch(ctx, userIDEditor, &workspaceID,
+			rbacv1.PermissionType_PERMISSION_TYPE_SET_RESOURCE_QUOTAS)
+		require.IsType(t, authz.PermissionDeniedError{}, err,
+			"user should not have permission to set resource quotas")
+
+		err = DoesPermissionMatch(ctx, userIDClusterAdmin, &workspaceID,
+			rbacv1.PermissionType_PERMISSION_TYPE_SET_WORKSPACE_NAMESPACE_BINDINGS)
+		require.NoError(t, err)
+
+		err = DoesPermissionMatch(ctx, userIDClusterAdmin, &workspaceID,
+			rbacv1.PermissionType_PERMISSION_TYPE_SET_RESOURCE_QUOTAS)
+		require.NoError(t, err)
 
 		err = DoesPermissionMatch(ctx, userIDEditor, &workspaceID,
 			rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_NSC)
@@ -258,6 +324,24 @@ func TestPermissionMatch(t *testing.T) {
 			rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_NSC, workspaceID)
 		require.IsType(t, authz.PermissionDeniedError{}, err,
 			"user should not have permission to update experiments")
+
+		err = DoesPermissionMatchAll(ctx, userIDEditor,
+			rbacv1.PermissionType_PERMISSION_TYPE_SET_WORKSPACE_NAMESPACE_BINDINGS, workspaceID)
+		require.IsType(t, authz.PermissionDeniedError{}, err,
+			"user should not have permission to add workspace-namespace bindings")
+
+		err = DoesPermissionMatchAll(ctx, userIDEditor,
+			rbacv1.PermissionType_PERMISSION_TYPE_SET_RESOURCE_QUOTAS, workspaceID)
+		require.IsType(t, authz.PermissionDeniedError{}, err,
+			"user should not have permission to set resource quotas")
+
+		err = DoesPermissionMatchAll(ctx, userIDClusterAdmin,
+			rbacv1.PermissionType_PERMISSION_TYPE_SET_WORKSPACE_NAMESPACE_BINDINGS, workspaceID)
+		require.NoError(t, err)
+
+		err = DoesPermissionMatchAll(ctx, userIDClusterAdmin,
+			rbacv1.PermissionType_PERMISSION_TYPE_SET_RESOURCE_QUOTAS, workspaceID)
+		require.NoError(t, err)
 	})
 
 	t.Run("test DoesPermissionMatchAll multiple inputs no failure", func(t *testing.T) {
@@ -268,6 +352,14 @@ func TestPermissionMatch(t *testing.T) {
 
 		err = DoesPermissionMatchAll(ctx, userIDEditor,
 			rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_NSC, workspaceIDs...)
+		require.NoError(t, err, "error when searching for permissions")
+
+		err = DoesPermissionMatchAll(ctx, userIDClusterAdmin,
+			rbacv1.PermissionType_PERMISSION_TYPE_SET_WORKSPACE_NAMESPACE_BINDINGS, workspaceIDs...)
+		require.NoError(t, err, "error when searching for permissions")
+
+		err = DoesPermissionMatchAll(ctx, userIDClusterAdmin,
+			rbacv1.PermissionType_PERMISSION_TYPE_SET_RESOURCE_QUOTAS, workspaceIDs...)
 		require.NoError(t, err, "error when searching for permissions")
 	})
 
@@ -293,6 +385,18 @@ func TestPermissionMatch(t *testing.T) {
 		workspaceIDs = []int32{int32(wsIDs[0]), int32(wsIDs[1])}
 		err = DoesPermissionMatchAll(ctx, userIDEditorRestricted,
 			rbacv1.PermissionType_PERMISSION_TYPE_CREATE_NSC, workspaceIDs...)
+		require.IsType(t, authz.PermissionDeniedError{}, err,
+			"error should have been returned when searching for permissions")
+
+		workspaceIDs = []int32{int32(wsIDs[0]), int32(wsIDs[1]), badWorkspaceID}
+		err = DoesPermissionMatchAll(ctx, userIDClusterAdmin,
+			rbacv1.PermissionType_PERMISSION_TYPE_SET_WORKSPACE_NAMESPACE_BINDINGS, workspaceIDs...)
+		require.IsType(t, authz.PermissionDeniedError{}, err,
+			"error should have been returned when searching for permissions")
+
+		workspaceIDs = []int32{int32(wsIDs[0]), int32(wsIDs[1]), badWorkspaceID}
+		err = DoesPermissionMatchAll(ctx, userIDClusterAdmin,
+			rbacv1.PermissionType_PERMISSION_TYPE_SET_RESOURCE_QUOTAS, workspaceIDs...)
 		require.IsType(t, authz.PermissionDeniedError{}, err,
 			"error should have been returned when searching for permissions")
 	})
@@ -325,8 +429,31 @@ func TestPermissionMatch(t *testing.T) {
 			rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_EXPERIMENT)
 		require.NoError(t, err)
 
+		err = DoPermissionsExist(ctx, userIDClusterAdmin,
+			rbacv1.PermissionType_PERMISSION_TYPE_SET_WORKSPACE_NAMESPACE_BINDINGS)
+		require.NoError(t, err)
+
+		err = DoPermissionsExist(ctx, userIDClusterAdmin,
+			rbacv1.PermissionType_PERMISSION_TYPE_SET_RESOURCE_QUOTAS)
+		require.NoError(t, err)
+
 		err = DoPermissionsExist(ctx, userIDEditorRestricted,
 			rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_NSC)
+		require.IsType(t, authz.PermissionDeniedError{}, err,
+			"error should have been returned when searching for permissions")
+
+		err = DoPermissionsExist(ctx, userIDViewer,
+			rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_NSC)
+		require.IsType(t, authz.PermissionDeniedError{}, err,
+			"error should have been returned when searching for permissions")
+
+		err = DoPermissionsExist(ctx, userIDEditor,
+			rbacv1.PermissionType_PERMISSION_TYPE_SET_WORKSPACE_NAMESPACE_BINDINGS)
+		require.IsType(t, authz.PermissionDeniedError{}, err,
+			"error should have been returned when searching for permissions")
+
+		err = DoPermissionsExist(ctx, userIDEditor,
+			rbacv1.PermissionType_PERMISSION_TYPE_SET_RESOURCE_QUOTAS)
 		require.IsType(t, authz.PermissionDeniedError{}, err,
 			"error should have been returned when searching for permissions")
 	})
@@ -341,6 +468,26 @@ func TestPermissionMatch(t *testing.T) {
 
 		workspaces, err = GetNonGlobalWorkspacesWithPermission(ctx, userIDEditorRestricted,
 			rbacv1.PermissionType_PERMISSION_TYPE_CREATE_NSC)
+		require.NoError(t, err, "error when searching for permissions")
+		require.Equal(t, noWorkspaces, workspaces)
+
+		workspaces, err = GetNonGlobalWorkspacesWithPermission(ctx, userIDClusterAdmin,
+			rbacv1.PermissionType_PERMISSION_TYPE_SET_WORKSPACE_NAMESPACE_BINDINGS)
+		require.NoError(t, err, "error when searching for permissions")
+		require.Equal(t, workspaceIDs, workspaces)
+
+		workspaces, err = GetNonGlobalWorkspacesWithPermission(ctx, userIDClusterAdmin,
+			rbacv1.PermissionType_PERMISSION_TYPE_SET_RESOURCE_QUOTAS)
+		require.NoError(t, err, "error when searching for permissions")
+		require.Equal(t, workspaceIDs, workspaces)
+
+		workspaces, err = GetNonGlobalWorkspacesWithPermission(ctx, userIDEditorRestricted,
+			rbacv1.PermissionType_PERMISSION_TYPE_SET_WORKSPACE_NAMESPACE_BINDINGS)
+		require.NoError(t, err, "error when searching for permissions")
+		require.Equal(t, noWorkspaces, workspaces)
+
+		workspaces, err = GetNonGlobalWorkspacesWithPermission(ctx, userIDEditorRestricted,
+			rbacv1.PermissionType_PERMISSION_TYPE_SET_RESOURCE_QUOTAS)
 		require.NoError(t, err, "error when searching for permissions")
 		require.Equal(t, noWorkspaces, workspaces)
 	})

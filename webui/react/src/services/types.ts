@@ -300,7 +300,6 @@ export interface LaunchJupyterLabParams {
   templateName?: string;
   workspaceId?: number;
 }
-
 export interface GetResourcePoolsParams extends PaginationParams {
   unbound?: boolean;
 }
@@ -499,6 +498,13 @@ export interface DeleteProjectParams {
 }
 
 export interface PatchWorkspaceParams extends Api.V1PatchWorkspace {
+  id: number;
+}
+export interface ListWorkspaceNamespaceBindingsParams {
+  id: number;
+}
+
+export interface GetKubernetesResourceQuotasParamas {
   id: number;
 }
 

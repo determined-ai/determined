@@ -92,6 +92,18 @@ packages:
         config:
           filename: k8s_corev1_iface.go
           mockname: K8sCoreV1Interface
+      NamespaceInterface:
+        config:
+          filename: namespace_iface.go
+          mockname: NamespaceInterface
+      ConfigMapInterface:
+        config:
+          filename: configmap_iface.go
+          mockname: ConfigMapInterface
+      ResourceQuotaInterface:
+        config:
+          filename: resource_quota_iface.go
+          mockname: ResourceQuotaInterface
   k8s.io/client-go/kubernetes/typed/batch/v1:
     interfaces:
       JobInterface:

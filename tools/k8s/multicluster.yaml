@@ -54,7 +54,7 @@ stages:
 
         resource_manager:
           type: kubernetes
-          namespace: default
+          default_namespace: default
           max_slots_per_pod: 1
           slot_type: "cpu"
           slot_resource_requests:
@@ -76,4 +76,3 @@ stages:
               determined_master_port: 8080
             resource_pools:
               - pool_name: extra
-                kubernetes_namespace: default

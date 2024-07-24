@@ -86,18 +86,13 @@ func New(
 		db: db,
 	}
 
-	poolNamespaces := make(map[string]string)
-	for i := range k.poolsConfig {
-		if k.poolsConfig[i].KubernetesNamespace == "" {
-			k.poolsConfig[i].KubernetesNamespace = k.config.Namespace
-		}
-
-		poolNamespaces[k.poolsConfig[i].KubernetesNamespace] = k.poolsConfig[i].PoolName
+	if len(k.config.Namespace) > 0 {
+		k.config.DefaultNamespace = k.config.Namespace
 	}
 
 	k.jobsService, err = newJobsService(
-		k.config.Namespace,
-		poolNamespaces,
+		k.config.DefaultNamespace,
+		k.config.ClusterName,
 		k.config.MasterServiceName,
 		k.masterTLSConfig,
 		k.config.DefaultScheduler,
@@ -116,6 +111,13 @@ func New(
 		return nil, err
 	}
 
+	if len(k.config.DefaultNamespace) > 0 {
+		err = k.jobsService.VerifyNamespaceExists(k.config.DefaultNamespace)
+		if err != nil {
+			return nil, fmt.Errorf("error verifying default namespace existence for cluster '%s': %w", k.config.ClusterName, err)
+		}
+	}
+
 	for _, poolConfig := range k.poolsConfig {
 		maxSlotsPerPod := 0
 		if m := k.config.MaxSlotsPerPod; m != nil {
@@ -127,7 +129,11 @@ func New(
 			maxSlotsPerPod = *poolConfig.TaskContainerDefaults.Kubernetes.MaxSlotsPerPod
 		}
 
-		rp := newResourcePool(maxSlotsPerPod, &poolConfig, k.jobsService, k.db)
+		if k.config.DefaultNamespace == "" {
+			k.config.DefaultNamespace = defaultNamespace
+		}
+		rp := newResourcePool(maxSlotsPerPod, &poolConfig, k.jobsService, k.db,
+			k.config.DefaultNamespace, k.config.ClusterName)
 		go func() {
 			t := time.NewTicker(podSubmissionInterval)
 			defer t.Stop()
@@ -180,8 +186,8 @@ func (ResourceManager) ExternalPreemptionPending(sproto.PendingPreemption) error
 func (k *ResourceManager) HealthCheck() []model.ResourceManagerHealth {
 	return []model.ResourceManagerHealth{
 		{
-			Name:   k.config.Name,
-			Status: k.jobsService.HealthStatus(),
+			ClusterName: k.config.ClusterName,
+			Status:      k.jobsService.HealthStatus(),
 		},
 	}
 }
@@ -370,6 +376,79 @@ func (k *ResourceManager) ValidateResources(
 
 	err = rp.ValidateResources(msg)
 	return nil, err
+}
+
+// DefaultNamespace implements rm.ResourceManager.
+func (k *ResourceManager) DefaultNamespace(clusterName string) (*string, error) {
+	if clusterName != k.config.ClusterName {
+		return nil, fmt.Errorf("invalid cluster name %s", clusterName)
+	}
+	namespace := k.jobsService.DefaultNamespace()
+	return &namespace, nil
+}
+
+// VerifyNamespaceExists implements rm.ResourceManager.
+func (k *ResourceManager) VerifyNamespaceExists(namespaceName string, clusterName string) error {
+	configClusterName := rm.ClusterName(k.config.ClusterName)
+	if configClusterName != rm.ClusterName(clusterName) {
+		return fmt.Errorf("invalid cluster name %s", clusterName)
+	}
+	err := k.jobsService.VerifyNamespaceExists(namespaceName)
+	if err != nil {
+		return fmt.Errorf("error verifying namespace existence %s: %w", namespaceName, err)
+	}
+	return nil
+}
+
+// CreateNamespace implements rm.ResourceManager.
+func (k *ResourceManager) CreateNamespace(namespaceName string, clusterName string,
+	fanout bool,
+) error {
+	err := k.jobsService.CreateNamespace(namespaceName)
+	if err != nil {
+		return fmt.Errorf("error creating namespace %s: %w", namespaceName, err)
+	}
+	return nil
+}
+
+// GetNamespaceResourceQuota gets the resource quota for the specified namespace.
+func (k *ResourceManager) GetNamespaceResourceQuota(namespaceName string, clusterName string) (*float64, error) {
+	quota, err := k.jobsService.GetNamespaceResourceQuota(namespaceName)
+	if err != nil {
+		return nil, fmt.Errorf("error deleting namespace %s: %w", namespaceName, err)
+	}
+	return quota, nil
+}
+
+// DeleteNamespace implements rm.ResourceManager.
+func (k *ResourceManager) DeleteNamespace(namespace string) error {
+	err := k.jobsService.DeleteNamespace(namespace)
+	if err != nil {
+		return fmt.Errorf("error deleting namespace %s: %w", namespace, err)
+	}
+	return nil
+}
+
+// SetResourceQuota implements rm.ResourceManager.
+func (k *ResourceManager) SetResourceQuota(quota int, namespace, clusterName string) error {
+	err := k.jobsService.SetResourceQuota(quota, namespace)
+	if err != nil {
+		return fmt.Errorf("error setting resource quota %q on namespace %s: %w", quota,
+			namespace, err)
+	}
+	return nil
+}
+
+// RemoveEmptyNamespace removes a namespace from our interfaces in cluster if it is no
+// longer used by any workspace.
+func (k *ResourceManager) RemoveEmptyNamespace(namespaceName string,
+	clusterName string,
+) error {
+	err := k.jobsService.RemoveEmptyNamespace(namespaceName, clusterName)
+	if err != nil {
+		return fmt.Errorf("error removing namespace %s: %w", namespaceName, err)
+	}
+	return nil
 }
 
 // getResourcePoolRef gets an actor ref to a resource pool by name.
@@ -573,7 +652,7 @@ func (k *ResourceManager) createResourcePoolSummary(
 		InstanceType:                 instanceType,
 		Details:                      &resourcepoolv1.ResourcePoolDetail{},
 		Accelerator:                  accelerator,
-		ResourceManagerName:          k.config.Name,
+		ClusterName:                  k.config.ClusterName,
 		ResourceManagerMetadata:      k.config.Metadata,
 	}
 

@@ -44,8 +44,8 @@ func TestHealthCheck(t *testing.T) {
 		api.m.rm = mockRM
 		mockRM.On("HealthCheck").Return([]model.ResourceManagerHealth{
 			{
-				Name:   "TEST",
-				Status: model.Healthy,
+				ClusterName: "TEST",
+				Status:      model.Healthy,
 			},
 		}).Once()
 
@@ -54,8 +54,8 @@ func TestHealthCheck(t *testing.T) {
 			Database: model.Healthy,
 			ResourceManagers: []model.ResourceManagerHealth{
 				{
-					Name:   "TEST",
-					Status: model.Healthy,
+					ClusterName: "TEST",
+					Status:      model.Healthy,
 				},
 			},
 		})
@@ -66,8 +66,8 @@ func TestHealthCheck(t *testing.T) {
 		api.m.rm = mockRM
 		mockRM.On("HealthCheck").Return([]model.ResourceManagerHealth{
 			{
-				Name:   "TEST",
-				Status: model.Unhealthy,
+				ClusterName: "TEST",
+				Status:      model.Unhealthy,
 			},
 		}).Once()
 
@@ -79,8 +79,8 @@ func TestHealthCheck(t *testing.T) {
 			Database: model.Unhealthy,
 			ResourceManagers: []model.ResourceManagerHealth{
 				{
-					Name:   "TEST",
-					Status: model.Unhealthy,
+					ClusterName: "TEST",
+					Status:      model.Unhealthy,
 				},
 			},
 		})

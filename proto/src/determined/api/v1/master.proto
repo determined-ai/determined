@@ -250,3 +250,15 @@ message CleanupLogsResponse {
   // How many row of logs were removed.
   int64 removed_count = 1;
 }
+
+// Get list of all Kubernetes Cluster Names.
+message GetKubernetesResourceManagersRequest {}
+
+// Response to GetKubernetesResourceManagersRequest.
+message GetKubernetesResourceManagersResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "resource_managers" ] }
+  };
+  // List of clusters
+  repeated string resource_managers = 1;
+}

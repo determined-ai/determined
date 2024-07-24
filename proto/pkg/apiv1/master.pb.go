@@ -1436,6 +1436,94 @@ func (x *CleanupLogsResponse) GetRemovedCount() int64 {
 	return 0
 }
 
+// Get list of all Kubernetes Cluster Names.
+type GetKubernetesResourceManagersRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *GetKubernetesResourceManagersRequest) Reset() {
+	*x = GetKubernetesResourceManagersRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_determined_api_v1_master_proto_msgTypes[24]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetKubernetesResourceManagersRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetKubernetesResourceManagersRequest) ProtoMessage() {}
+
+func (x *GetKubernetesResourceManagersRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_determined_api_v1_master_proto_msgTypes[24]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetKubernetesResourceManagersRequest.ProtoReflect.Descriptor instead.
+func (*GetKubernetesResourceManagersRequest) Descriptor() ([]byte, []int) {
+	return file_determined_api_v1_master_proto_rawDescGZIP(), []int{24}
+}
+
+// Response to GetKubernetesResourceManagersRequest.
+type GetKubernetesResourceManagersResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// List of clusters
+	ResourceManagers []string `protobuf:"bytes,1,rep,name=resource_managers,json=resourceManagers,proto3" json:"resource_managers,omitempty"`
+}
+
+func (x *GetKubernetesResourceManagersResponse) Reset() {
+	*x = GetKubernetesResourceManagersResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_determined_api_v1_master_proto_msgTypes[25]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetKubernetesResourceManagersResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetKubernetesResourceManagersResponse) ProtoMessage() {}
+
+func (x *GetKubernetesResourceManagersResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_determined_api_v1_master_proto_msgTypes[25]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetKubernetesResourceManagersResponse.ProtoReflect.Descriptor instead.
+func (*GetKubernetesResourceManagersResponse) Descriptor() ([]byte, []int) {
+	return file_determined_api_v1_master_proto_rawDescGZIP(), []int{25}
+}
+
+func (x *GetKubernetesResourceManagersResponse) GetResourceManagers() []string {
+	if x != nil {
+		return x.ResourceManagers
+	}
+	return nil
+}
+
 var File_determined_api_v1_master_proto protoreflect.FileDescriptor
 
 var file_determined_api_v1_master_proto_rawDesc = []byte{
@@ -1666,10 +1754,20 @@ var file_determined_api_v1_master_proto_rawDesc = []byte{
 	0x5f, 0x63, 0x6f, 0x75, 0x6e, 0x74, 0x18, 0x01, 0x20, 0x01, 0x28, 0x03, 0x52, 0x0c, 0x72, 0x65,
 	0x6d, 0x6f, 0x76, 0x65, 0x64, 0x43, 0x6f, 0x75, 0x6e, 0x74, 0x3a, 0x15, 0x92, 0x41, 0x12, 0x0a,
 	0x10, 0xd2, 0x01, 0x0d, 0x72, 0x65, 0x6d, 0x6f, 0x76, 0x65, 0x64, 0x5f, 0x63, 0x6f, 0x75, 0x6e,
-	0x74, 0x42, 0x35, 0x5a, 0x33, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f,
-	0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2d, 0x61, 0x69, 0x2f, 0x64, 0x65,
-	0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x70,
-	0x6b, 0x67, 0x2f, 0x61, 0x70, 0x69, 0x76, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x74, 0x22, 0x26, 0x0a, 0x24, 0x47, 0x65, 0x74, 0x4b, 0x75, 0x62, 0x65, 0x72, 0x6e, 0x65, 0x74,
+	0x65, 0x73, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x4d, 0x61, 0x6e, 0x61, 0x67, 0x65,
+	0x72, 0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x22, 0x6f, 0x0a, 0x25, 0x47, 0x65, 0x74,
+	0x4b, 0x75, 0x62, 0x65, 0x72, 0x6e, 0x65, 0x74, 0x65, 0x73, 0x52, 0x65, 0x73, 0x6f, 0x75, 0x72,
+	0x63, 0x65, 0x4d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
+	0x73, 0x65, 0x12, 0x2b, 0x0a, 0x11, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x5f, 0x6d,
+	0x61, 0x6e, 0x61, 0x67, 0x65, 0x72, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x09, 0x52, 0x10, 0x72,
+	0x65, 0x73, 0x6f, 0x75, 0x72, 0x63, 0x65, 0x4d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72, 0x73, 0x3a,
+	0x19, 0x92, 0x41, 0x16, 0x0a, 0x14, 0xd2, 0x01, 0x11, 0x72, 0x65, 0x73, 0x6f, 0x75, 0x72, 0x63,
+	0x65, 0x5f, 0x6d, 0x61, 0x6e, 0x61, 0x67, 0x65, 0x72, 0x73, 0x42, 0x35, 0x5a, 0x33, 0x67, 0x69,
+	0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69,
+	0x6e, 0x65, 0x64, 0x2d, 0x61, 0x69, 0x2f, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65,
+	0x64, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x70, 0x6b, 0x67, 0x2f, 0x61, 0x70, 0x69, 0x76,
+	0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -1685,7 +1783,7 @@ func file_determined_api_v1_master_proto_rawDescGZIP() []byte {
 }
 
 var file_determined_api_v1_master_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_determined_api_v1_master_proto_msgTypes = make([]protoimpl.MessageInfo, 24)
+var file_determined_api_v1_master_proto_msgTypes = make([]protoimpl.MessageInfo, 26)
 var file_determined_api_v1_master_proto_goTypes = []interface{}{
 	(GetMasterResponse_Product)(0),                     // 0: determined.api.v1.GetMasterResponse.Product
 	(*SSOProvider)(nil),                                // 1: determined.api.v1.SSOProvider
@@ -1712,34 +1810,36 @@ var file_determined_api_v1_master_proto_goTypes = []interface{}{
 	(*ResourceAllocationAggregatedResponse)(nil),       // 22: determined.api.v1.ResourceAllocationAggregatedResponse
 	(*CleanupLogsRequest)(nil),                         // 23: determined.api.v1.CleanupLogsRequest
 	(*CleanupLogsResponse)(nil),                        // 24: determined.api.v1.CleanupLogsResponse
-	(*timestamp.Timestamp)(nil),                        // 25: google.protobuf.Timestamp
-	(*_struct.Struct)(nil),                             // 26: google.protobuf.Struct
-	(*masterv1.Config)(nil),                            // 27: determined.master.v1.Config
-	(*field_mask.FieldMask)(nil),                       // 28: google.protobuf.FieldMask
-	(*logv1.LogEntry)(nil),                             // 29: determined.log.v1.LogEntry
-	(*masterv1.ResourceAllocationRawEntry)(nil),        // 30: determined.master.v1.ResourceAllocationRawEntry
-	(masterv1.ResourceAllocationAggregationPeriod)(0),  // 31: determined.master.v1.ResourceAllocationAggregationPeriod
-	(*masterv1.ResourceAllocationAggregatedEntry)(nil), // 32: determined.master.v1.ResourceAllocationAggregatedEntry
+	(*GetKubernetesResourceManagersRequest)(nil),       // 25: determined.api.v1.GetKubernetesResourceManagersRequest
+	(*GetKubernetesResourceManagersResponse)(nil),      // 26: determined.api.v1.GetKubernetesResourceManagersResponse
+	(*timestamp.Timestamp)(nil),                        // 27: google.protobuf.Timestamp
+	(*_struct.Struct)(nil),                             // 28: google.protobuf.Struct
+	(*masterv1.Config)(nil),                            // 29: determined.master.v1.Config
+	(*field_mask.FieldMask)(nil),                       // 30: google.protobuf.FieldMask
+	(*logv1.LogEntry)(nil),                             // 31: determined.log.v1.LogEntry
+	(*masterv1.ResourceAllocationRawEntry)(nil),        // 32: determined.master.v1.ResourceAllocationRawEntry
+	(masterv1.ResourceAllocationAggregationPeriod)(0),  // 33: determined.master.v1.ResourceAllocationAggregationPeriod
+	(*masterv1.ResourceAllocationAggregatedEntry)(nil), // 34: determined.master.v1.ResourceAllocationAggregatedEntry
 }
 var file_determined_api_v1_master_proto_depIdxs = []int32{
-	25, // 0: determined.api.v1.ClusterMessage.start_time:type_name -> google.protobuf.Timestamp
-	25, // 1: determined.api.v1.ClusterMessage.end_time:type_name -> google.protobuf.Timestamp
-	25, // 2: determined.api.v1.ClusterMessage.created_time:type_name -> google.protobuf.Timestamp
+	27, // 0: determined.api.v1.ClusterMessage.start_time:type_name -> google.protobuf.Timestamp
+	27, // 1: determined.api.v1.ClusterMessage.end_time:type_name -> google.protobuf.Timestamp
+	27, // 2: determined.api.v1.ClusterMessage.created_time:type_name -> google.protobuf.Timestamp
 	1,  // 3: determined.api.v1.GetMasterResponse.sso_providers:type_name -> determined.api.v1.SSOProvider
 	0,  // 4: determined.api.v1.GetMasterResponse.product:type_name -> determined.api.v1.GetMasterResponse.Product
 	2,  // 5: determined.api.v1.GetMasterResponse.cluster_message:type_name -> determined.api.v1.ClusterMessage
-	26, // 6: determined.api.v1.GetMasterConfigResponse.config:type_name -> google.protobuf.Struct
-	27, // 7: determined.api.v1.PatchMasterConfigRequest.config:type_name -> determined.master.v1.Config
-	28, // 8: determined.api.v1.PatchMasterConfigRequest.field_mask:type_name -> google.protobuf.FieldMask
+	28, // 6: determined.api.v1.GetMasterConfigResponse.config:type_name -> google.protobuf.Struct
+	29, // 7: determined.api.v1.PatchMasterConfigRequest.config:type_name -> determined.master.v1.Config
+	30, // 8: determined.api.v1.PatchMasterConfigRequest.field_mask:type_name -> google.protobuf.FieldMask
 	2,  // 9: determined.api.v1.GetClusterMessageResponse.cluster_message:type_name -> determined.api.v1.ClusterMessage
-	25, // 10: determined.api.v1.SetClusterMessageRequest.start_time:type_name -> google.protobuf.Timestamp
-	25, // 11: determined.api.v1.SetClusterMessageRequest.end_time:type_name -> google.protobuf.Timestamp
-	29, // 12: determined.api.v1.MasterLogsResponse.log_entry:type_name -> determined.log.v1.LogEntry
-	25, // 13: determined.api.v1.ResourceAllocationRawRequest.timestamp_after:type_name -> google.protobuf.Timestamp
-	25, // 14: determined.api.v1.ResourceAllocationRawRequest.timestamp_before:type_name -> google.protobuf.Timestamp
-	30, // 15: determined.api.v1.ResourceAllocationRawResponse.resource_entries:type_name -> determined.master.v1.ResourceAllocationRawEntry
-	31, // 16: determined.api.v1.ResourceAllocationAggregatedRequest.period:type_name -> determined.master.v1.ResourceAllocationAggregationPeriod
-	32, // 17: determined.api.v1.ResourceAllocationAggregatedResponse.resource_entries:type_name -> determined.master.v1.ResourceAllocationAggregatedEntry
+	27, // 10: determined.api.v1.SetClusterMessageRequest.start_time:type_name -> google.protobuf.Timestamp
+	27, // 11: determined.api.v1.SetClusterMessageRequest.end_time:type_name -> google.protobuf.Timestamp
+	31, // 12: determined.api.v1.MasterLogsResponse.log_entry:type_name -> determined.log.v1.LogEntry
+	27, // 13: determined.api.v1.ResourceAllocationRawRequest.timestamp_after:type_name -> google.protobuf.Timestamp
+	27, // 14: determined.api.v1.ResourceAllocationRawRequest.timestamp_before:type_name -> google.protobuf.Timestamp
+	32, // 15: determined.api.v1.ResourceAllocationRawResponse.resource_entries:type_name -> determined.master.v1.ResourceAllocationRawEntry
+	33, // 16: determined.api.v1.ResourceAllocationAggregatedRequest.period:type_name -> determined.master.v1.ResourceAllocationAggregationPeriod
+	34, // 17: determined.api.v1.ResourceAllocationAggregatedResponse.resource_entries:type_name -> determined.master.v1.ResourceAllocationAggregatedEntry
 	18, // [18:18] is the sub-list for method output_type
 	18, // [18:18] is the sub-list for method input_type
 	18, // [18:18] is the sub-list for extension type_name
@@ -2041,6 +2141,30 @@ func file_determined_api_v1_master_proto_init() {
 				return nil
 			}
 		}
+		file_determined_api_v1_master_proto_msgTypes[24].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetKubernetesResourceManagersRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_determined_api_v1_master_proto_msgTypes[25].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetKubernetesResourceManagersResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	file_determined_api_v1_master_proto_msgTypes[1].OneofWrappers = []interface{}{}
 	file_determined_api_v1_master_proto_msgTypes[3].OneofWrappers = []interface{}{}
@@ -2052,7 +2176,7 @@ func file_determined_api_v1_master_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_determined_api_v1_master_proto_rawDesc,
 			NumEnums:      1,
-			NumMessages:   24,
+			NumMessages:   26,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

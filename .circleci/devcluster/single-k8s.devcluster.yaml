@@ -5,9 +5,7 @@ stages:
   - master:
       pre:
         - sh: make -C tools prep-root
-        # Slice our kubeconfig up into two different kube configs. Determined should use whatever context is set.
-        - sh: cp ~/.kube/config /tmp/defaultrm-kubeconf && kubectl config use-context defaultrm --kubeconfig=/tmp/defaultrm-kubeconf
-        - sh: cp ~/.kube/config /tmp/additionalrm-kubeconf && kubectl config use-context additionalrm --kubeconfig=/tmp/additionalrm-kubeconf
+        - sh: kubectl config use-context defaultrm
       config_file:
         security:
           initial_user_password: $INITIAL_USER_PASSWORD
@@ -26,19 +24,15 @@ stages:
           level: debug
         enable_cors: true
         root: tools/build
-        telemetry:
-          enabled: false
 
         resource_manager:
           type: kubernetes
-          name: default
           cluster_name: defaultrm
-          default_namespace: default
           max_slots_per_pod: 1
           slot_type: "cpu"
           slot_resource_requests:
             cpu: 1
-          kubeconfig_path: /tmp/defaultrm-kubeconf
+          kubeconfig_path: ~/.kube/config
           determined_master_ip: $DOCKER_LOCALHOST
           determined_master_port: 8080
           internal_task_gateway:
@@ -47,20 +41,3 @@ stages:
             gateway_ip: $GATEWAY_IP
             gateway_port_range_start: 49152
             gateway_port_range_end: 65535
-
-
-        additional_resource_managers:
-        - resource_manager:
-            type: kubernetes
-            name: additionalrm
-            cluster_name: additionalrm
-            default_namespace: default
-            max_slots_per_pod: 1
-            slot_type: "cpu"
-            slot_resource_requests:
-              cpu: 1
-            kubeconfig_path: /tmp/additionalrm-kubeconf
-            determined_master_ip: $DOCKER_LOCALHOST
-            determined_master_port: 8080
-          resource_pools:
-            - pool_name: additional_pool

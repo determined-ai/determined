@@ -1,6 +1,7 @@
 package multirm
 
 import (
+	"fmt"
 	"os"
 	"strconv"
 	"testing"
@@ -9,6 +10,8 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
+	k8error "k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/runtime/schema"
 
 	"github.com/determined-ai/determined/master/internal/mocks"
 	"github.com/determined-ai/determined/master/internal/rm"
@@ -22,19 +25,19 @@ import (
 )
 
 const (
-	additionalRMName = "additional"
-	defaultRMName    = "default"
-	emptyRPName      = rm.ResourcePoolName("")
+	additionalRMName   = "additional"
+	defaultClusterName = "default"
+	emptyRPName        = rm.ResourcePoolName("")
 )
 
 var testMultiRM *MultiRMRouter
 
 func TestMain(m *testing.M) {
 	testMultiRM = &MultiRMRouter{
-		defaultRMName: defaultRMName,
+		defaultClusterName: defaultClusterName,
 		rms: map[string]rm.ResourceManager{
-			defaultRMName:   mockRM(rm.ResourcePoolName(defaultRMName)),
-			"additional-rm": mockRM(rm.ResourcePoolName(additionalRMName)),
+			defaultClusterName: mockRM(rm.ResourcePoolName(defaultClusterName)),
+			"additional-rm":    mockRM(rm.ResourcePoolName(additionalRMName)),
 		},
 		syslog: logrus.WithField("component", "resource-router"),
 	}
@@ -98,7 +101,7 @@ func TestAllocate(t *testing.T) {
 		{"empty RP name will default", sproto.AllocateRequest{}, &sproto.ResourcesSubscription{}, nil},
 		{
 			"defined RP in default",
-			sproto.AllocateRequest{ResourcePool: defaultRMName},
+			sproto.AllocateRequest{ResourcePool: defaultClusterName},
 			&sproto.ResourcesSubscription{}, nil,
 		},
 		{
@@ -124,7 +127,7 @@ func TestValidateResources(t *testing.T) {
 		err  error
 	}{
 		{"empty RP name will default", sproto.ValidateResourcesRequest{}, nil},
-		{"defined RP in default", sproto.ValidateResourcesRequest{ResourcePool: defaultRMName}, nil},
+		{"defined RP in default", sproto.ValidateResourcesRequest{ResourcePool: defaultClusterName}, nil},
 		{"defined RP in additional RM", sproto.ValidateResourcesRequest{ResourcePool: additionalRMName}, nil},
 		{"undefined RP", sproto.ValidateResourcesRequest{ResourcePool: "bogus"}, ErrRPNotDefined("bogus")},
 	}
@@ -175,7 +178,7 @@ func TestSetGroupWeight(t *testing.T) {
 		err  error
 	}{
 		{"empty RP name will default", sproto.SetGroupWeight{}, nil},
-		{"defined RP in default", sproto.SetGroupWeight{ResourcePool: defaultRMName}, nil},
+		{"defined RP in default", sproto.SetGroupWeight{ResourcePool: defaultClusterName}, nil},
 		{"defined RP in additional RM", sproto.SetGroupWeight{ResourcePool: additionalRMName}, nil},
 		{"undefined RP", sproto.SetGroupWeight{ResourcePool: "bogus"}, ErrRPNotDefined("bogus")},
 	}
@@ -194,7 +197,7 @@ func TestSetGroupPriority(t *testing.T) {
 		err  error
 	}{
 		{"empty RP name will default", sproto.SetGroupPriority{}, nil},
-		{"defined RP in default", sproto.SetGroupPriority{ResourcePool: defaultRMName}, nil},
+		{"defined RP in default", sproto.SetGroupPriority{ResourcePool: defaultClusterName}, nil},
 		{"defined RP in additional RM", sproto.SetGroupPriority{ResourcePool: additionalRMName}, nil},
 		{"undefined RP", sproto.SetGroupPriority{ResourcePool: "bogus"}, ErrRPNotDefined("bogus")},
 	}
@@ -292,7 +295,7 @@ func TestValidateResourcePool(t *testing.T) {
 		err    error
 	}{
 		{"empty RP name will default", "", nil},
-		{"defined RP in default", defaultRMName, nil},
+		{"defined RP in default", defaultClusterName, nil},
 		{"defined RP in additional RM", additionalRMName, nil},
 		{"undefined RP", "bogus", ErrRPNotDefined("bogus")},
 	}
@@ -311,7 +314,7 @@ func TestResolveResourcePool(t *testing.T) {
 		err    error
 	}{
 		{"empty RP name will default", emptyRPName, nil},
-		{"defined RP in default", defaultRMName, nil},
+		{"defined RP in default", defaultClusterName, nil},
 		{"defined RP in additional RM", additionalRMName, nil},
 		{"undefined RP", "bogus", ErrRPNotDefined("bogus")},
 	}
@@ -331,7 +334,7 @@ func TestTaskContainerDefaults(t *testing.T) {
 		err    error
 	}{
 		{"empty RP name will default", emptyRPName, nil},
-		{"defined RP in default", defaultRMName, nil},
+		{"defined RP in default", defaultClusterName, nil},
 		{"defined RP in additional RM", additionalRMName, nil},
 		{"undefined RP", "bogus", ErrRPNotDefined("bogus")},
 	}
@@ -350,7 +353,7 @@ func TestGetJobQ(t *testing.T) {
 		err    error
 	}{
 		{"empty RP name will default", emptyRPName, nil},
-		{"defined RP in default", defaultRMName, nil},
+		{"defined RP in default", defaultClusterName, nil},
 		{"defined RP in additional RM", additionalRMName, nil},
 		{"undefined RP", "bogus", ErrRPNotDefined("bogus")},
 	}
@@ -373,12 +376,12 @@ func TestGetJobQueueStatsRequest(t *testing.T) {
 		// the fan-out call to all RMs.
 		{"empty request", &apiv1.GetJobQueueStatsRequest{}, nil, 2},
 		{"empty RP name will default", &apiv1.GetJobQueueStatsRequest{ResourcePools: []string{""}}, nil, 2},
-		{"defined RP in default", &apiv1.GetJobQueueStatsRequest{ResourcePools: []string{defaultRMName}}, nil, 2},
+		{"defined RP in default", &apiv1.GetJobQueueStatsRequest{ResourcePools: []string{defaultClusterName}}, nil, 2},
 		{"defined RP in additional RM", &apiv1.GetJobQueueStatsRequest{ResourcePools: []string{additionalRMName}}, nil, 2},
 		{"undefined RP", &apiv1.GetJobQueueStatsRequest{ResourcePools: []string{"bogus"}}, nil, 2},
 		{
 			"undefined RP + defined RP",
-			&apiv1.GetJobQueueStatsRequest{ResourcePools: []string{"bogus", defaultRMName}},
+			&apiv1.GetJobQueueStatsRequest{ResourcePools: []string{"bogus", defaultClusterName}},
 			nil, 2,
 		},
 	}
@@ -398,7 +401,7 @@ func TestGetExternalJobs(t *testing.T) {
 		err    error
 	}{
 		{"empty RP name will default", "", nil},
-		{"defined RP in default", defaultRMName, nil},
+		{"defined RP in default", defaultClusterName, nil},
 		{"defined RP in additional RM", additionalRMName, nil},
 		{"undefined RP", "bogus", ErrRPNotDefined("bogus")},
 	}
@@ -414,16 +417,16 @@ func TestHealthCheck(t *testing.T) {
 	rmA := &mocks.ResourceManager{}
 	rmA.On("HealthCheck").Return([]model.ResourceManagerHealth{
 		{
-			Name:   "a",
-			Status: model.Healthy,
+			ClusterName: "a",
+			Status:      model.Healthy,
 		},
 	}).Once()
 
 	rmB := &mocks.ResourceManager{}
 	rmB.On("HealthCheck").Return([]model.ResourceManagerHealth{
 		{
-			Name:   "b",
-			Status: model.Unhealthy,
+			ClusterName: "b",
+			Status:      model.Unhealthy,
 		},
 	})
 
@@ -433,12 +436,12 @@ func TestHealthCheck(t *testing.T) {
 	}}
 	require.ElementsMatch(t, []model.ResourceManagerHealth{
 		{
-			Name:   "a",
-			Status: model.Healthy,
+			ClusterName: "a",
+			Status:      model.Healthy,
 		},
 		{
-			Name:   "b",
-			Status: model.Unhealthy,
+			ClusterName: "b",
+			Status:      model.Unhealthy,
 		},
 	}, m.HealthCheck())
 }
@@ -487,7 +490,7 @@ func TestGetAgent(t *testing.T) {
 		err  error
 	}{
 		{"empty RP name will default", &apiv1.GetAgentRequest{}, nil},
-		{"defined RP in default", &apiv1.GetAgentRequest{AgentId: defaultRMName}, nil},
+		{"defined RP in default", &apiv1.GetAgentRequest{AgentId: defaultClusterName}, nil},
 		{"defined RP in additional RM", &apiv1.GetAgentRequest{AgentId: additionalRMName}, nil},
 		{"undefined RP", &apiv1.GetAgentRequest{AgentId: "bogus"}, ErrRPNotDefined("bogus")},
 	}
@@ -506,7 +509,7 @@ func TestEnableAgent(t *testing.T) {
 		err  error
 	}{
 		{"empty RP name will default", &apiv1.EnableAgentRequest{}, nil},
-		{"defined RP in default", &apiv1.EnableAgentRequest{AgentId: defaultRMName}, nil},
+		{"defined RP in default", &apiv1.EnableAgentRequest{AgentId: defaultClusterName}, nil},
 		{"defined RP in additional RM", &apiv1.EnableAgentRequest{AgentId: additionalRMName}, nil},
 		{"undefined RP", &apiv1.EnableAgentRequest{AgentId: "bogus"}, ErrRPNotDefined("bogus")},
 	}
@@ -525,7 +528,7 @@ func TestDisableAgent(t *testing.T) {
 		err  error
 	}{
 		{"empty RP name will default", &apiv1.DisableAgentRequest{}, nil},
-		{"defined RP in default", &apiv1.DisableAgentRequest{AgentId: defaultRMName}, nil},
+		{"defined RP in default", &apiv1.DisableAgentRequest{AgentId: defaultClusterName}, nil},
 		{"defined RP in additional RM", &apiv1.DisableAgentRequest{AgentId: additionalRMName}, nil},
 		{"undefined RP", &apiv1.DisableAgentRequest{AgentId: "bogus"}, ErrRPNotDefined("bogus")},
 	}
@@ -544,7 +547,7 @@ func TestGetSlots(t *testing.T) {
 		err  error
 	}{
 		{"empty RP name will default", &apiv1.GetSlotsRequest{}, nil},
-		{"defined RP in default", &apiv1.GetSlotsRequest{AgentId: defaultRMName}, nil},
+		{"defined RP in default", &apiv1.GetSlotsRequest{AgentId: defaultClusterName}, nil},
 		{"defined RP in additional RM", &apiv1.GetSlotsRequest{AgentId: additionalRMName}, nil},
 		{"undefined RP", &apiv1.GetSlotsRequest{AgentId: "bogus"}, ErrRPNotDefined("bogus")},
 	}
@@ -563,7 +566,7 @@ func TestGetSlot(t *testing.T) {
 		err  error
 	}{
 		{"empty RP name will default", &apiv1.GetSlotRequest{}, nil},
-		{"defined RP in default", &apiv1.GetSlotRequest{AgentId: defaultRMName}, nil},
+		{"defined RP in default", &apiv1.GetSlotRequest{AgentId: defaultClusterName}, nil},
 		{"defined RP in additional RM", &apiv1.GetSlotRequest{AgentId: additionalRMName}, nil},
 		{"undefined RP", &apiv1.GetSlotRequest{AgentId: "bogus"}, ErrRPNotDefined("bogus")},
 	}
@@ -582,7 +585,7 @@ func TestEnableSlot(t *testing.T) {
 		err  error
 	}{
 		{"empty RP name will default", &apiv1.EnableSlotRequest{}, nil},
-		{"defined RP in default", &apiv1.EnableSlotRequest{AgentId: defaultRMName}, nil},
+		{"defined RP in default", &apiv1.EnableSlotRequest{AgentId: defaultClusterName}, nil},
 		{"defined RP in additional RM", &apiv1.EnableSlotRequest{AgentId: additionalRMName}, nil},
 		{"undefined RP", &apiv1.EnableSlotRequest{AgentId: "bogus"}, ErrRPNotDefined("bogus")},
 	}
@@ -601,7 +604,7 @@ func TestDisableSlot(t *testing.T) {
 		err  error
 	}{
 		{"empty RP name will default", &apiv1.DisableSlotRequest{}, nil},
-		{"defined RP in default", &apiv1.DisableSlotRequest{AgentId: defaultRMName}, nil},
+		{"defined RP in default", &apiv1.DisableSlotRequest{AgentId: defaultClusterName}, nil},
 		{"defined RP in additional RM", &apiv1.DisableSlotRequest{AgentId: additionalRMName}, nil},
 		{"undefined RP", &apiv1.DisableSlotRequest{AgentId: "bogus"}, ErrRPNotDefined("bogus")},
 	}
@@ -609,6 +612,63 @@ func TestDisableSlot(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			_, err := testMultiRM.DisableSlot(tt.req)
 			require.Equal(t, tt.err, err)
+		})
+	}
+}
+
+func TestVerifyNamespaceExists(t *testing.T) {
+	rm1 := mocks.ResourceManager{}
+	rm1ClusterName := "cluster1"
+	rm2ClusterName := "cluster2"
+	rm2 := mocks.ResourceManager{}
+	mockMultiRM := MultiRMRouter{
+		rms: map[string]rm.ResourceManager{
+			rm1ClusterName: &rm1,
+			rm2ClusterName: &rm2,
+		},
+		syslog: logrus.WithField("component", "resource-router"),
+	}
+
+	validNamespaceName := "good-namespace"
+	invalidNamespaceName := "bad-namespace"
+	cases := []struct {
+		name          string
+		namespaceName string
+		clusterName   string
+		setupMockRM   func()
+		err           error
+	}{
+		{
+			"valid-namespace",
+			validNamespaceName,
+			rm1ClusterName,
+			func() {
+				rm1.On("VerifyNamespaceExists", validNamespaceName, rm1ClusterName).
+					Return(nil).Once()
+			},
+			nil,
+		},
+		{
+			"invalid-namespace-name",
+			invalidNamespaceName,
+			rm2ClusterName,
+			func() {
+				rm2.On("VerifyNamespaceExists", invalidNamespaceName, rm2ClusterName).
+					Return(k8error.NewNotFound(schema.GroupResource{}, "")).Once()
+			},
+			fmt.Errorf("namespace %s does not exist", invalidNamespaceName),
+		},
+	}
+
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			test.setupMockRM()
+			err := mockMultiRM.VerifyNamespaceExists(test.namespaceName, test.clusterName)
+			if err == nil {
+				require.Equal(t, test.err, err)
+			} else {
+				require.True(t, k8error.IsNotFound(err))
+			}
 		})
 	}
 }
@@ -636,7 +696,7 @@ func TestGetRMName(t *testing.T) {
 	}, nil)
 
 	mockMultiRM := MultiRMRouter{
-		defaultRMName: "default",
+		defaultClusterName: "default",
 		rms: map[string]rm.ResourceManager{
 			"default": &def,
 			"gcp":     &gcp,
@@ -651,7 +711,7 @@ func TestGetRMName(t *testing.T) {
 		err            error
 		expectedRMName string
 	}{
-		{"RP undefined, will default", "", nil, mockMultiRM.defaultRMName},
+		{"RP undefined, will default", "", nil, mockMultiRM.defaultClusterName},
 		{"RP defined in default", "def1", nil, "default"},
 		{"RP defined in aws", "aws1", nil, "aws"},
 		{"RP doesn't exist", "aws123", ErrRPNotDefined("aws123"), ""},
@@ -662,6 +722,57 @@ func TestGetRMName(t *testing.T) {
 			rmName, err := mockMultiRM.getRMName(tt.rpName)
 			require.Equal(t, tt.expectedRMName, rmName)
 			require.Equal(t, tt.err, err)
+		})
+	}
+}
+
+func TestGetRM(t *testing.T) {
+	defaultRM := &mocks.ResourceManager{}
+	otherRM := &mocks.ResourceManager{}
+
+	m := &MultiRMRouter{
+		defaultClusterName: defaultClusterName,
+		rms: map[string]rm.ResourceManager{
+			defaultClusterName: defaultRM,
+			"rm1":              otherRM,
+		},
+	}
+
+	cases := []struct {
+		name          string
+		rmClusterName string
+		err           error
+		expectedRM    *mocks.ResourceManager
+	}{
+		{
+			"get-default-rm",
+			"",
+			nil,
+			defaultRM,
+		},
+		{
+			"get-existing-rm",
+			"rm1",
+			nil,
+			otherRM,
+		},
+		{
+			"get-nonexistent-rm",
+			"badRM",
+			rmerrors.ErrResourceManagerDNE,
+			nil,
+		},
+	}
+
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			rmToUse, err := m.getRM(test.rmClusterName)
+			require.Equal(t, test.err, err)
+			if test.expectedRM != nil {
+				require.Equal(t, test.expectedRM, rmToUse)
+			} else {
+				require.Nil(t, rmToUse)
+			}
 		})
 	}
 }
@@ -697,6 +808,7 @@ func mockRM(poolName rm.ResourcePoolName) *mocks.ResourceManager {
 	mockRM.On("GetSlot", mock.Anything).Return(&apiv1.GetSlotResponse{}, nil)
 	mockRM.On("EnableSlot", mock.Anything).Return(&apiv1.EnableSlotResponse{}, nil)
 	mockRM.On("DisableSlot", mock.Anything).Return(&apiv1.DisableSlotResponse{}, nil)
-
+	mockRM.On("DefaultNamespace", mock.Anything).Return("default", nil)
+	mockRM.On("VerifyNamespaceExists", mock.Anything).Return(nil)
 	return &mockRM
 }

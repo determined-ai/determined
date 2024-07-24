@@ -2266,6 +2266,7 @@ jobs:
       - setup-go-intg-deps
       - run: curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64 && sudo install minikube-linux-amd64 /usr/local/bin/minikube
       - run: minikube start
+      - license-gen
       - run: make -C master test-intg
       - codecov/upload:
           flags: "backend"
@@ -3166,6 +3167,9 @@ jobs:
       run-minikubes:
         type: boolean
         default: false
+      multi-k8s:
+        type: boolean
+        default: false
       resource-class:
         type: string
         default: xlarge
@@ -3209,10 +3213,12 @@ jobs:
                 command: |
                   K8S_VERSION=<<parameters.k8s-version>> source tools/k8s/launch-minikube-with-gateway.sh defaultrm
                   echo "export GATEWAY_IP=\"${GATEWAY_IP}\"" >> $BASH_ENV
-            - run:
-                name: Start additionalrm minikube
-                command: minikube start --profile additionalrm --kubernetes-version <<parameters.k8s-version>>
-
+            - when:
+                condition: <<parameters.multi-k8s>>
+                steps:
+                  - run:
+                      name: Start additionalrm minikube
+                      command: minikube start --profile additionalrm --kubernetes-version <<parameters.k8s-version>>
       - install-devcluster
       - unless:
           condition: <<parameters.managed-devcluster>>
@@ -4088,7 +4094,11 @@ workflows:
     <<: *do-not-run-on-manual-trigger
     jobs:
       - test-intg-master:
-          context: storage-unit-tests
+          context:
+            - storage-unit-tests
+            # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
+            # that's required by the "gh" command for authentication.
+            - github-read
       - test-intg-agent
       - go-coverage:
           requires:
@@ -4528,6 +4538,19 @@ workflows:
           mark: e2e_multi_k8s
           target-stage: master
           devcluster-config: multi-k8s.devcluster.yaml
+          run-minikubes: true
+          multi-k8s: true
+
+      - test-e2e:
+          name: test-e2e-single-k8s
+          context:
+            - dev-ci-cluster-default-user-credentials
+          requires:
+            - build-go-ee
+          parallelism: 1
+          mark: e2e_single_k8s
+          target-stage: master
+          devcluster-config: single-k8s.devcluster.yaml
           run-minikubes: true
 
       - test-e2e:

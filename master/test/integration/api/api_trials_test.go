@@ -13,31 +13,24 @@ import (
 	"testing"
 	"time"
 
-	"github.com/golang/protobuf/ptypes/timestamp"
-
 	structpb "github.com/golang/protobuf/ptypes/struct"
-
+	"github.com/golang/protobuf/ptypes/timestamp"
 	"google.golang.org/protobuf/encoding/protojson"
-
 	"google.golang.org/protobuf/types/known/timestamppb"
-
-	"github.com/determined-ai/determined/proto/pkg/commonv1"
-	"github.com/determined-ai/determined/proto/pkg/trialv1"
-
-	"github.com/determined-ai/determined/master/internal/db"
-	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
-
-	"github.com/determined-ai/determined/master/test/testutils"
-
 	"gotest.tools/assert"
 
+	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
+	"github.com/determined-ai/determined/master/test/testutils/fixtures"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/proto/pkg/commonv1"
+	"github.com/determined-ai/determined/proto/pkg/trialv1"
 )
 
 func TestTrialDetail(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
-	_, _, cl, creds, err := testutils.RunMaster(ctx, nil)
+	_, _, cl, creds, err := fixtures.RunMaster(ctx, nil)
 	defer cancel()
 	assert.NilError(t, err, "failed to start master")
 
@@ -46,7 +39,7 @@ func TestTrialDetail(t *testing.T) {
 
 func TestTrialProfilerMetrics(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
-	_, _, cl, creds, err := testutils.RunMaster(ctx, nil)
+	_, _, cl, creds, err := fixtures.RunMaster(ctx, nil)
 	defer cancel()
 	assert.NilError(t, err, "failed to start master")
 
@@ -126,7 +119,7 @@ func trialDetailAPITests(
 
 func TestTrialWorkloadsHugeMetrics(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
-	_, _, cl, creds, err := testutils.RunMaster(ctx, nil)
+	_, _, cl, creds, err := fixtures.RunMaster(ctx, nil)
 	defer cancel()
 	assert.NilError(t, err, "failed to start master")
 
