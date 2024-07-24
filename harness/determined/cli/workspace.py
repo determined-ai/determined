@@ -271,7 +271,7 @@ def create_workspace(args: argparse.Namespace) -> None:
     set_namespace = args.namespace or auto_create_namespace
     if args.cluster_name and not set_namespace:
         raise api.errors.BadRequestException(
-            "must provide --namespace NAMESPACE or --auto-creeate-namespace, or remove "
+            "must provide --namespace NAMESPACE or --auto-create-namespace, or remove "
             + "--cluster-name CLUSTER_NAME and specify --auto-create-namespace-all-clusters"
         )
 
