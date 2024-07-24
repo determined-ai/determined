@@ -53,7 +53,7 @@ describe('ProjectCard', () => {
   it('should display experiments count', () => {
     setup();
     expect(
-      screen.getByText(projectMock.numExperiments?.toString() ?? 'Count undefined'),
+      screen.getByText(projectMock.numRuns?.toString() ?? 'Count undefined'),
     ).toBeInTheDocument();
   });
 
