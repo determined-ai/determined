@@ -596,8 +596,8 @@ def test_workspaceid_set() -> None:
 @pytest.mark.e2e_cpu
 def test_workspace_members() -> None:
     """set up workspace with users, user-groups, and roles, and test list-member cli command"""
-    test_user: List[bindings.v1Users] = []
-    test_groups: List[bindings.v1Groups] = []
+    test_user: List[str] = []
+    test_groups: List[str] = []
     test_exp: List[str] = ["User/Group Name | User/Group | Role Name"]
 
     try:
