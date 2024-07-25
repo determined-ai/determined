@@ -2,7 +2,7 @@ import Button from 'hew/Button';
 import Dropdown, { MenuItem } from 'hew/Dropdown';
 import Icon from 'hew/Icon';
 import { useModal } from 'hew/Modal';
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 
 import css from 'components/ActionDropdown/ActionDropdown.module.scss';
 import WorkspaceCreateModalComponent from 'components/WorkspaceCreateModal';
@@ -41,6 +41,13 @@ export const useWorkspaceActionMenu: (props: WorkspaceMenuPropsIn) => WorkspaceM
 }: WorkspaceMenuPropsIn) => {
   const WorkspaceDeleteModal = useModal(WorkspaceDeleteModalComponent);
   const WorkspaceEditModal = useModal(WorkspaceCreateModalComponent);
+  const [openModal, setOpenModal] = useState(false);
+
+  const openWorkspaceEditModal = () => {
+    console.log('coming from drop down');
+    setOpenModal(true);
+    WorkspaceEditModal.open();
+  };
 
   const contextHolders = useMemo(() => {
     return (
@@ -52,12 +59,12 @@ export const useWorkspaceActionMenu: (props: WorkspaceMenuPropsIn) => WorkspaceM
               workspace={workspace}
               onClose={onComplete}
             />
-            <WorkspaceEditModal.Component workspaceId={workspace.id} onClose={onComplete} />
+            <WorkspaceEditModal.Component open={openModal} workspaceId={workspace.id} onClose={onComplete} />
           </>
         )}
       </>
     );
-  }, [WorkspaceDeleteModal, WorkspaceEditModal, onComplete, workspace, returnIndexOnDelete]);
+  }, [workspace, WorkspaceDeleteModal, returnIndexOnDelete, onComplete, WorkspaceEditModal, openModal]);
 
   const { canDeleteWorkspace, canModifyWorkspace } = usePermissions();
 
@@ -102,7 +109,7 @@ export const useWorkspaceActionMenu: (props: WorkspaceMenuPropsIn) => WorkspaceM
   const handleDropdown = (key: string) => {
     switch (key) {
       case MenuKey.Edit:
-        WorkspaceEditModal.open();
+        openWorkspaceEditModal();
         break;
       case MenuKey.Delete:
         WorkspaceDeleteModal.open();

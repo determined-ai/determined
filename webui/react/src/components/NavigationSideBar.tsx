@@ -134,6 +134,7 @@ const NavigationSideBar: React.FC = () => {
   } = useSettings<ShortcutSettings>(shortCutSettingsConfig);
 
   const WorkspaceCreateModal = useModal(WorkspaceCreateModalComponent);
+  const [openModal, setOpenModal] = useState(false);
 
   const showNavigation = isAuthenticated && ui.showChrome;
   const version = process.env.VERSION || '';
@@ -255,6 +256,12 @@ const NavigationSideBar: React.FC = () => {
 
   if (!showNavigation) return null;
 
+  const openWorkspaceCreateModal = () => {
+    console.log('coming from side bar');
+    setOpenModal(true);
+    WorkspaceCreateModal.open();
+  };
+
   return (
     <>
       <CSSTransition
@@ -308,7 +315,7 @@ const NavigationSideBar: React.FC = () => {
                       <Button
                         icon={<Icon name="add" size="tiny" title="Create workspace" />}
                         type="text"
-                        onClick={WorkspaceCreateModal.open}
+                        onClick={openWorkspaceCreateModal}
                       />
                     )}
                   </div>
@@ -353,7 +360,7 @@ const NavigationSideBar: React.FC = () => {
                           }
                           label="New Workspace"
                           tooltip={settings.navbarCollapsed}
-                          onClick={WorkspaceCreateModal.open}
+                          onClick={openWorkspaceCreateModal}
                         />
                       </li>
                     )}
@@ -389,7 +396,7 @@ const NavigationSideBar: React.FC = () => {
               )}
             </div>
           </footer>
-          <WorkspaceCreateModal.Component />
+          <WorkspaceCreateModal.Component open={openModal} />
         </nav>
       </CSSTransition>
       <UserSettings show={showSettings} onClose={() => setShowSettings(false)} />

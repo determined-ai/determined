@@ -10,7 +10,7 @@ stages:
       password: postgres
       container_name: determined_db
       image_name: "postgres:10.14"
-      data_dir: det-postgres
+      data_dir: ~/.postgres-minikube
 
   - master:
       pre:

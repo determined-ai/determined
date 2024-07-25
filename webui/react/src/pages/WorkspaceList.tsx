@@ -62,8 +62,15 @@ const WorkspaceList: React.FC = () => {
   const { canCreateWorkspace } = usePermissions();
 
   const WorkspaceCreateModal = useModal(WorkspaceCreateModalComponent);
+  const [openModal, setOpenModal] = useState(false);
 
   const { settings, updateSettings } = useSettings<WorkspaceListSettings>(settingsConfig);
+
+  const openWorkspaceCreateModal = () => {
+    console.log('coming from workspace list');
+    setOpenModal(true);
+    WorkspaceCreateModal.open();
+  };
 
   const fetchWorkspaces = useCallback(async () => {
     if (!settings) return;
@@ -343,7 +350,7 @@ const WorkspaceList: React.FC = () => {
         <Button
           data-testid="newWorkspace"
           disabled={!canCreateWorkspace}
-          onClick={WorkspaceCreateModal.open}>
+          onClick={openWorkspaceCreateModal}>
           New Workspace
         </Button>
       }
@@ -386,7 +393,7 @@ const WorkspaceList: React.FC = () => {
           <Message icon="warning" title="No workspaces matching the current filters" />
         )}
       </Spinner>
-      <WorkspaceCreateModal.Component />
+      <WorkspaceCreateModal.Component open={openModal} />
     </Page>
   );
 };

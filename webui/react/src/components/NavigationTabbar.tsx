@@ -71,6 +71,7 @@ const NavigationTabbar: React.FC = () => {
   const gasLinkOn = useFeature().isOn('genai');
 
   const WorkspaceCreateModal = useModal(WorkspaceCreateModalComponent);
+  const [openModal, setOpenModal] = useState(false);
 
   const [showSettings, setShowSettings] = useState<boolean>(false);
 
@@ -111,6 +112,12 @@ const NavigationTabbar: React.FC = () => {
       ),
   );
 
+  const openWorkspaceCreateModal = () => {
+    console.log('coming from tab bar');
+    setOpenModal(true);
+    WorkspaceCreateModal.open();
+  };
+
   if (canCreateWorkspace) {
     workspaceActions.push({
       icon: (
@@ -119,7 +126,7 @@ const NavigationTabbar: React.FC = () => {
         </div>
       ),
       label: 'New Workspace',
-      onClick: WorkspaceCreateModal.open,
+      onClick: openWorkspaceCreateModal,
     });
   }
 
@@ -235,7 +242,7 @@ const NavigationTabbar: React.FC = () => {
           show={isShowingOverflow}
           onCancel={handleActionSheetCancel}
         />
-        <WorkspaceCreateModal.Component />
+        <WorkspaceCreateModal.Component open={openModal} />
       </nav>
       <UserSettings show={showSettings} onClose={() => setShowSettings(false)} />
     </>
