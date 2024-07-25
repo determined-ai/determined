@@ -18,6 +18,7 @@ const projectMock: Project = {
   notes: [],
   numActiveExperiments: 1,
   numExperiments: 16,
+  numRuns: 16,
   state: 'UNSPECIFIED',
   userId: 1354,
   workspaceId: 1684,
@@ -53,7 +54,7 @@ describe('ProjectCard', () => {
   it('should display experiments count', () => {
     setup();
     expect(
-      screen.getByText(projectMock.numExperiments?.toString() ?? 'Count undefined'),
+      screen.getByText(projectMock.numRuns?.toString() ?? 'Count undefined'),
     ).toBeInTheDocument();
   });
 

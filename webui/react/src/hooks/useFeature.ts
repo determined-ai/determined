@@ -29,7 +29,7 @@ export const FEATURES: Record<ValidFeature, FeatureDescription> = {
     friendlyName: 'New Experiment List',
   },
   flat_runs: {
-    defaultValue: false,
+    defaultValue: true,
     description:
       'Presents all runs in a project in a single view, rather than grouped into experiments',
     friendlyName: 'Flat Runs View',
