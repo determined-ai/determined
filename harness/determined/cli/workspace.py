@@ -49,31 +49,23 @@ def get_workspace_names(session: api.Session) -> Dict[int, str]:
 def render_user_group_rolenames(
     resp: Sequence[bindings.v1GetGroupsAndUsersAssignedToWorkspaceResponse], is_csv: bool
 ) -> None:
-    group_map = {}
-    user_map = {}
     values = []
 
-    if resp.groups.count != 0:
-        for g in resp.groups:
-            group_map[g.groupId] = g.name
+    group_map = {g.groupId: g.name for g in resp.groups}
+    user_map = {u.id: u.username for u in resp.usersAssignedDirectly}
 
-    if resp.usersAssignedDirectly.count != 0:
-        for u in resp.usersAssignedDirectly:
-            user_map[u.id] = u.username
+    for assignment in resp.assignments:
+        role_name = assignment.role.name
 
-    if resp.assignments.count != 0:
-        for assignment in resp.assignments:
-            role_name = assignment.role.name
+        for group_assignment in assignment.groupRoleAssignments:
+            value = [group_map[group_assignment.groupId], "G", role_name]
+            values.append(value)
 
-            for group_assignment in assignment.groupRoleAssignments:
-                value = [group_map[group_assignment.groupId], "G", role_name]
-                values.append(value)
+        for user_assignment in assignment.userRoleAssignments:
+            value = [user_map[user_assignment.userId], "U", role_name]
+            values.append(value)
 
-            for user_assignment in assignment.userRoleAssignments:
-                value = [user_map[user_assignment.userId], "U", role_name]
-                values.append(value)
-
-    headers = ["User/Group Name", "U/G", "Role Name"]
+    headers = ["User/Group Name", "User/Group", "Role Name"]
     render.tabulate_or_csv(headers, values, is_csv)
 
 
@@ -433,7 +425,6 @@ args_description = [
                         cli.output_format_args["table"],
                         cli.output_format_args["csv"],
                     ),
-                    *cli.make_pagination_args(limit=1000),
                 ],
             ),
             cli.Cmd(
