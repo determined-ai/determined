@@ -253,18 +253,22 @@ func newJobsService(
 }
 
 func (j *jobsService) syncNamespaces(ns []string) error {
-	err := j.startEventListeners(ns)
-	if err != nil {
-		return err
-	}
-
-	err = j.startPreemptionListeners(ns)
-	if err != nil {
-		return err
-	}
-
 	for _, namespace := range ns {
+		if _, ok := j.namespacesWithInformers[namespace]; ok {
+			continue
+		}
 		j.namespacesWithInformers[namespace] = true
+
+		err := j.startEventListeners(namespace)
+		if err != nil {
+			return err
+		}
+
+		err = j.startPreemptionListeners(namespace)
+		if err != nil {
+			return err
+		}
+
 		factory := informers.NewSharedInformerFactoryWithOptions(j.clientSet, time.Hour,
 			informers.WithNamespace(namespace))
 
@@ -1106,43 +1110,40 @@ func (j *jobsService) startNodeInformer() error {
 	return nil
 }
 
-func (j *jobsService) startEventListeners(namespaces []string) error {
-	for _, namespace := range namespaces {
-		l, err := newEventInformer(
-			context.TODO(),
-			j.clientSet.CoreV1().Events(namespace),
-			namespace,
-			func(event watch.Event) {
-				j.mu.Lock()
-				defer j.mu.Unlock()
-				j.newEventCallback(event)
-			})
-		if err != nil {
-			return err
-		}
-		go l.run(context.TODO())
+func (j *jobsService) startEventListeners(namespace string) error {
+	l, err := newEventInformer(
+		context.TODO(),
+		j.clientSet.CoreV1().Events(namespace),
+		namespace,
+		func(event watch.Event) {
+			j.mu.Lock()
+			defer j.mu.Unlock()
+			j.newEventCallback(event)
+		})
+	if err != nil {
+		return err
 	}
+	go l.run(context.TODO())
 	return nil
 }
 
-func (j *jobsService) startPreemptionListeners(namespaces []string) error {
-	for _, namespace := range namespaces {
-		l, err := newPodInformer(
-			context.TODO(),
-			determinedPreemptionLabel,
-			"preemption",
-			namespace,
-			j.clientSet.CoreV1().Pods(namespace),
-			func(event watch.Event) {
-				j.mu.Lock()
-				defer j.mu.Unlock()
-				j.preemptionCallback(event)
-			})
-		if err != nil {
-			return err
-		}
-		go l.run(context.TODO())
+func (j *jobsService) startPreemptionListeners(namespace string) error {
+	l, err := newPodInformer(
+		context.TODO(),
+		determinedPreemptionLabel,
+		"preemption",
+		namespace,
+		j.clientSet.CoreV1().Pods(namespace),
+		func(event watch.Event) {
+			j.mu.Lock()
+			defer j.mu.Unlock()
+			j.preemptionCallback(event)
+		})
+	if err != nil {
+		return err
 	}
+	go l.run(context.TODO())
+
 	return nil
 }
 
@@ -2173,11 +2174,9 @@ func (j *jobsService) verifyNamespaceExists(namespace string) error {
 
 	// Since we don't know whether the namespace exists yet, and we don't want to do duplicate
 	// namespace informers, add all non-auto-created namespaces bound to a workspace with a map.
-	if _, ok := j.namespacesWithInformers[namespace]; !ok {
-		err = j.syncNamespaces([]string{namespace})
-		if err != nil {
-			return err
-		}
+	err = j.syncNamespaces([]string{namespace})
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -2188,10 +2187,12 @@ func (j *jobsService) createNamespace(namespaceName string) error {
 	if err != nil {
 		return err
 	}
+
 	err = j.syncNamespaces([]string{namespaceName})
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
