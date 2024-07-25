@@ -2,4 +2,4 @@
 
 **New Features**
 
--  WebUI: Allow user to add/remove hyperparamters when doing hyperparamter search.
+-  WebUI: Allow users to add/remove hyperparameters when performing hyperparameter search.
