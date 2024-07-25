@@ -5,7 +5,7 @@ import Pivot, { PivotProps } from 'hew/Pivot';
 import Spinner from 'hew/Spinner';
 import SplitPane, { Pane } from 'hew/SplitPane';
 import { Loadable, NotLoaded } from 'hew/utils/loadable';
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 
 import CompareHyperparameters from 'components/CompareHyperparameters';
 import { useAsync } from 'hooks/useAsync';
@@ -33,7 +33,6 @@ interface BaseProps {
   onWidthChange: (width: number) => void;
   fixedColumnsCount: number;
   projectId: number;
-  total?: number;
 }
 
 type Props = XOR<{ experimentSelection: SelectionType }, { runSelection: SelectionType }> &
@@ -51,38 +50,12 @@ const ComparisonView: React.FC<Props> = ({
   projectId,
   experimentSelection,
   runSelection,
-  total,
 }) => {
   const scrollbarWidth = useScrollbarWidth();
   const hasPinnedColumns = fixedColumnsCount > 1;
   const isMobile = useMobile();
 
-  const isSelectionLimitReached = () => {
-    if (experimentSelection) {
-      if (
-        (experimentSelection.type === 'ONLY_IN' &&
-          experimentSelection.selections.length > SELECTION_LIMIT) ||
-        (experimentSelection.type === 'ALL_EXCEPT' &&
-          total &&
-          total - experimentSelection.exclusions.length > SELECTION_LIMIT)
-      ) {
-        return true;
-      }
-      return false;
-    }
-    if (runSelection) {
-      if (
-        (runSelection.type === 'ONLY_IN' && runSelection.selections.length > SELECTION_LIMIT) ||
-        (runSelection.type === 'ALL_EXCEPT' &&
-          total &&
-          total - runSelection.exclusions.length > SELECTION_LIMIT)
-      ) {
-        return true;
-      }
-      return false;
-    }
-    return false;
-  };
+  const [isSelectionLimitReached, setIsSelectionLimitReached] = useState(false);
 
   const loadableSelectedExperiments = useAsync(async () => {
     if (experimentSelection) {
@@ -93,6 +66,11 @@ const ComparisonView: React.FC<Props> = ({
           filter: JSON.stringify(filter),
           limit: SELECTION_LIMIT,
         });
+        if (response?.pagination?.total && response?.pagination?.total > SELECTION_LIMIT) {
+          setIsSelectionLimitReached(true);
+        } else {
+          setIsSelectionLimitReached(false);
+        }
         return response.experiments;
       } catch (e) {
         handleError(e, { publicSubject: 'Unable to fetch experiments for comparison' });
@@ -114,8 +92,13 @@ const ComparisonView: React.FC<Props> = ({
         const filter = getRunIdsFilter(filterFormSet, runSelection);
         const response = await searchRuns({
           filter: JSON.stringify(filter),
-          limit: 50,
+          limit: SELECTION_LIMIT,
         });
+        if (response?.pagination?.total && response?.pagination?.total > SELECTION_LIMIT) {
+          setIsSelectionLimitReached(true);
+        } else {
+          setIsSelectionLimitReached(false);
+        }
         return response.runs;
       } catch (e) {
         handleError(e, { publicSubject: 'Unable to fetch runs for comparison' });
@@ -220,7 +203,7 @@ const ComparisonView: React.FC<Props> = ({
     }
     return (
       <>
-        {isSelectionLimitReached() && (
+        {isSelectionLimitReached && (
           <Alert message={`Only up to ${SELECTION_LIMIT} records can be compared`} />
         )}
         <Pivot items={tabs} />
