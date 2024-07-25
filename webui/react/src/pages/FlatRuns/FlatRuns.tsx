@@ -68,17 +68,20 @@ import useResize from 'hooks/useResize';
 import useScrollbarWidth from 'hooks/useScrollbarWidth';
 import { useSettings } from 'hooks/useSettings';
 import useTypedParams from 'hooks/useTypedParams';
-import {
-  DEFAULT_SELECTION,
-  SelectionType as SelectionState,
-} from 'pages/F_ExpList/F_ExperimentList.settings';
 import FlatRunActionButton from 'pages/FlatRuns/FlatRunActionButton';
 import { paths } from 'routes/utils';
 import { getProjectColumns, getProjectNumericMetricsRange, searchRuns } from 'services/api';
 import { V1ColumnType, V1LocationType, V1TableType } from 'services/api-ts-sdk';
 import userStore from 'stores/users';
 import userSettings from 'stores/userSettings';
-import { DetailedUser, FlatRun, FlatRunAction, ProjectColumn, RunState } from 'types';
+import {
+  DetailedUser,
+  FlatRun,
+  FlatRunAction,
+  ProjectColumn,
+  RunState,
+  SelectionType as SelectionState,
+} from 'types';
 import handleError from 'utils/error';
 import { eagerSubscribe } from 'utils/observable';
 import { pluralizer } from 'utils/string';
@@ -95,6 +98,7 @@ import {
 import css from './FlatRuns.module.scss';
 import {
   ColumnWidthsSlice,
+  DEFAULT_SELECTION,
   defaultFlatRunsSettings,
   FlatRunsSettings,
   ProjectUrlSettings,
@@ -242,11 +246,11 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
     );
   }, [isMobile, settings.compare, settings.pinnedColumnsCount]);
 
-  const [loadedSelectedRuns, loadedSelectedRunIds] = useMemo(() => {
+  const loadedSelectedRunIds = useMemo(() => {
     const selectedMap = new Map<number, { run: FlatRun; index: number }>();
     const selectedArray: FlatRun[] = [];
     if (isLoadingSettings) {
-      return [selectedArray, selectedMap];
+      return selectedMap;
     }
 
     runs.forEach((r, index) => {
@@ -257,7 +261,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
         }
       });
     });
-    return [selectedArray, selectedMap];
+    return selectedMap;
   }, [isLoadingSettings, runs, selectedRunIdSet]);
 
   const selection = useMemo<GridSelection>(() => {
@@ -1121,7 +1125,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
             initialWidth={comparisonViewTableWidth}
             open={settings.compare}
             projectId={projectId}
-            selectedRuns={loadedSelectedRuns}
+            runSelection={settings.selection}
             onWidthChange={handleCompareWidthChange}>
             <DataGrid<FlatRun, FlatRunAction>
               columns={columns}

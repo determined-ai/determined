@@ -73,6 +73,7 @@ import {
   Project,
   ProjectColumn,
   RunState,
+  SelectionType as SelectionState,
 } from 'types';
 import handleError from 'utils/error';
 import { getProjectExperimentForExperimentItem } from 'utils/experiment';
@@ -86,7 +87,6 @@ import {
   defaultProjectSettings,
   ProjectSettings,
   ProjectUrlSettings,
-  SelectionType as SelectionState,
   settingsPathForProject,
 } from './Searches.settings';
 

@@ -80,6 +80,7 @@ import {
   ProjectColumn,
   ProjectMetricsRange,
   RunState,
+  SelectionType as SelectionState,
 } from 'types';
 import handleError from 'utils/error';
 import { getProjectExperimentForExperimentItem } from 'utils/experiment';
@@ -100,7 +101,6 @@ import {
   defaultProjectSettings,
   ProjectSettings,
   ProjectUrlSettings,
-  SelectionType as SelectionState,
   settingsPathForProject,
 } from './F_ExperimentList.settings';
 
@@ -713,13 +713,6 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     );
   }, [settings.columns, projectColumns, settings.pinnedColumnsCount, settings.compare]);
 
-  const selectedExperiments: ExperimentWithTrial[] = useMemo(() => {
-    if (loadedSelectedExperimentIds.size === 0) return [];
-    return Loadable.filterNotLoaded(experiments, (experiment) =>
-      loadedSelectedExperimentIds.has(experiment.experiment.id),
-    );
-  }, [experiments, loadedSelectedExperimentIds]);
-
   const columnsIfLoaded = useMemo(
     () => (isLoadingSettings ? [] : settings.columns),
     [isLoadingSettings, settings.columns],
@@ -1121,11 +1114,11 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
           <div className={css.paneWrapper}>
             <ComparisonView
               colorMap={colorMap}
+              experimentSelection={settings.selection}
               fixedColumnsCount={STATIC_COLUMNS.length + settings.pinnedColumnsCount}
               initialWidth={comparisonViewTableWidth}
               open={settings.compare}
               projectId={project.id}
-              selectedExperiments={selectedExperiments}
               onWidthChange={handleCompareWidthChange}>
               <DataGrid<ExperimentWithTrial, ExperimentAction, BulkExperimentItem>
                 columns={columns}

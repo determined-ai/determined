@@ -1321,3 +1321,16 @@ export const FlatRunAction = {
 } as const;
 
 export type FlatRunAction = ValueOf<typeof FlatRunAction>;
+
+export const SelectAllType = t.type({
+  exclusions: t.array(t.number),
+  type: t.literal('ALL_EXCEPT'),
+});
+
+export const RegularSelectionType = t.type({
+  selections: t.array(t.number),
+  type: t.literal('ONLY_IN'),
+});
+
+export const SelectionType = t.union([RegularSelectionType, SelectAllType]);
+export type SelectionType = t.TypeOf<typeof SelectionType>;
