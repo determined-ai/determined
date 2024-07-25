@@ -74,6 +74,7 @@ const getloadTests = (
   const sD = testConfig?.seededData;
   const testRequest = testRequestWithSession(CLUSTER_URL, testConfig);
   const getRequest = testRequest.bind(this, 'GET');
+  const postRequest = testRequest.bind(this, 'POST');
   const testSuite = [
     // Query the master endpoint
     test("get master configuration", getRequest("/api/v1/master")),
@@ -187,7 +188,7 @@ const getloadTests = (
     //),
     test(
       "search experiments",
-      getRequest(
+      postRequest(
         `/api/v1/experiments-search?projectId=${sD?.workspace.projectId}`,
       ),
       !!sD?.workspace.projectId,
