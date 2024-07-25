@@ -30,7 +30,7 @@ import sys
 import tempfile
 import time
 from dataclasses import dataclass
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, Optional, Tuple
 
 import kubernetes as k8s
 import kubernetes.client.exceptions as client_exceptions
@@ -55,14 +55,12 @@ def expand_env(value: Any, env: Dict[str, str]) -> Any:
 
 @dataclass
 class Config:
-    # TODO: set up a shared ec2 instance for this usage.
-    reverse_proxy_host: str
     k8s_context: str
     ssh_key_path: str
     determined_root: str
     base_devcluster_path: str
     ssh_user: str = "ubuntu"
-    local_master_port: int = 8080
+    reverse_proxy_host: str = "18.218.13.18"  # shared reverse proxy server
     remote_port_range: Tuple[int, int] = (8000, 9000)
 
     @classmethod
@@ -92,19 +90,23 @@ class Gateway:
 
 
 class DevClusterConf:
-    def __init__(self, data: dict):
-        self.original_data = data
+    def __init__(self, data: dict, path: Optional[pathlib.Path] = None):
+        self.original_data = copy.deepcopy(data)
+        self.original_path = path
         self.data = data
 
     @classmethod
     def from_yaml(cls, path: pathlib.Path) -> "DevClusterConf":
         with open(path) as f:
             data = yaml.safe_load(f)
-        return cls(data)
+        return cls(data=data, path=path)
 
-    def save(self, path: pathlib.Path):
+    def save(self, path: Optional[pathlib.Path] = None) -> pathlib.Path:
+        if path is None:
+            path = pathlib.Path(tempfile.mkdtemp()) / "devcluster.yaml"
         with open(path, "w") as f:
             yaml.dump(self.data, f, default_flow_style=False, sort_keys=False, indent=2)
+        return path
 
     def get_stage(self, stage_name: str) -> dict:
         matching_stages = [stage for stage in self.data["stages"] if (stage_name in stage)]
@@ -117,6 +119,20 @@ class DevClusterConf:
                 stage[stage_name] = new_data
                 return
         raise NotImplementedError(f"Stage {stage_name} not found in devcluster config.")
+
+    def master_port(self) -> int:
+        master_config = self.get_stage("master")["config_file"]
+        return master_config.get("port", 8080)
+
+    def run(self) -> Optional[subprocess.Popen]:
+        run_path = self.save(pathlib.Path(tempfile.mkdtemp()) / "devcluster.yaml")
+        devc_run_cmd = ["devcluster", "-c", run_path]
+        if not shutil.which("devcluster"):
+            print("`devcluster` not found in PATH.")
+            print(f"run using {' '.join(devc_run_cmd)}")
+            return None
+        print("Running devcluster...")
+        return subprocess.Popen(devc_run_cmd)
 
 
 def is_port_listening(host: str, port: int) -> bool:
@@ -140,12 +156,15 @@ def setup_reverse_proxy(cfg: Config) -> Tuple[subprocess.Popen, int]:
     Set up a reverse proxy to open access to a local process, eg master.
     """
     remote_port = random.randint(*cfg.remote_port_range)
+    local_master_port = DevClusterConf.from_yaml(
+        pathlib.Path(cfg.base_devcluster_path)
+    ).master_port()
     while is_port_listening(cfg.reverse_proxy_host, remote_port):
         remote_port = random.randint(*cfg.remote_port_range)
         print("trying a different port", remote_port)
     print(
         f"Setting up reverse proxy on {cfg.reverse_proxy_host}:{remote_port}"
-        + f" to localhost:{cfg.local_master_port}"
+        + f" to localhost:{local_master_port}"
     )
     proc = subprocess.Popen(
         [
@@ -153,7 +172,7 @@ def setup_reverse_proxy(cfg: Config) -> Tuple[subprocess.Popen, int]:
             "-i",
             cfg.ssh_key_path,
             "-R",
-            f"{remote_port}:localhost:{cfg.local_master_port}",
+            f"{remote_port}:localhost:{local_master_port}",
             cfg.ssh_user + "@" + cfg.reverse_proxy_host,
             "-N",
             "-o",
@@ -270,13 +289,11 @@ def workflow_1(cfg: Config):
             gateway = provision_gateway(cfg)
         config_path = update_devcluster(cfg, gateway, proxy_port)
         print("Workflow 1 ready.")
-        devc_run_cmd = ["devcluster", "-c", config_path]
-        if shutil.which("devcluster"):
-            print("Running devcluster...")
-            subprocess.run(devc_run_cmd)
-        else:
-            print(f"devcluster -c {config_path}")
+        proc = DevClusterConf.from_yaml(config_path).run()
+        if proc is None:
             input("Press Enter to terminate and cleanup once done.")
+        else:
+            proc.wait()
     finally:
         rev_proxy.terminate()
 
