@@ -52,6 +52,7 @@ interface FormInputs {
 interface Props {
   onClose?: () => void;
   workspaceId?: number;
+  open?: boolean;
 }
 
 const CodeEditor = React.lazy(() => import('hew/CodeEditor'));
@@ -64,7 +65,7 @@ const isNotAuthorizedErr = (e: unknown): boolean => {
   return e instanceof DetError && e.sourceErr instanceof Response && e.sourceErr['status'] === 403;
 };
 
-const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }: Props = {}) => {
+const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId, open }: Props = {}) => {
   const idPrefix = useId();
   const {
     canModifyWorkspaceAgentUserGroup,
@@ -77,6 +78,15 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
   const useAgentGroup = Form.useWatch('useAgentGroup', form);
   const useCheckpointStorage = Form.useWatch('useCheckpointStorage', form);
   const watchBindings = Form.useWatch('bindings', form);
+
+  const [resourceManagers, setResourceManagers] = useState();
+
+  useEffect(() => {
+    console.log(open, 'opening from Sidebar');
+
+    // API requests
+  }, [open]);
+
   const resourceManagers = useAsync(async (canceller) => {
     try {
       const response = await getKubernetesResourceManagers(undefined, { signal: canceller.signal });
@@ -345,8 +355,7 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
                         } catch (err: unknown) {
                           return Promise.reject(
                             new Error(
-                              `Invalid YAML on line ${
-                                (err as { mark: { line: string } }).mark.line
+                              `Invalid YAML on line ${(err as { mark: { line: string } }).mark.line
                               }.`,
                             ),
                           );
