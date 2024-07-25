@@ -23,7 +23,9 @@ vi.mock('services/api', () => ({
 const mockUseFeature = vi.hoisted(() => vi.fn(() => false));
 vi.mock('hooks/useFeature', () => {
   return {
-    isOn: mockUseFeature(),
+    default: () => ({
+      isOn: mockUseFeature,
+    }),
   };
 });
 
