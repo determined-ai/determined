@@ -40,6 +40,17 @@ export const test = baseTest.extend<CustomFixtures, CustomWorkerFixtures>({
         username: newAdmin.user!.username,
       },
     });
+    await apiAuth.apiContext?.post('/api/v1/users/setting', {
+      data: {
+        settings: [
+          {
+            key: 'flat_runs',
+            storagePath: 'global-features',
+            value: 'false',
+          },
+        ],
+      },
+    });
     await use(apiAuth);
   },
 
@@ -68,6 +79,17 @@ export const test = baseTest.extend<CustomFixtures, CustomWorkerFixtures>({
     async ({ playwright, browser }, use) => {
       const backgroundApiAuth = new ApiAuthFixture(playwright.request, browser, apiUrl());
       await backgroundApiAuth.loginApi();
+      await backgroundApiAuth.apiContext?.post('/api/v1/users/setting', {
+        data: {
+          settings: [
+            {
+              key: 'flat_runs',
+              storagePath: 'global-features',
+              value: 'false',
+            },
+          ],
+        },
+      });
       await use(backgroundApiAuth);
       await backgroundApiAuth.dispose();
     },

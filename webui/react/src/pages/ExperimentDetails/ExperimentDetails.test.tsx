@@ -31,6 +31,16 @@ vi.mock('react-router-dom', async (importOriginal) => ({
   useParams: vi.fn(),
 }));
 
+vi.mock('hooks/useFeature', () => {
+  return {
+    default: () => ({
+      isOn() {
+        return false;
+      },
+    }),
+  };
+});
+
 vi.mock('services/api', () => ({
   getExperimentDetails: vi.fn(),
   getExpTrials: vi.fn(),
