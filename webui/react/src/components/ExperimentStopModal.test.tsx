@@ -5,10 +5,7 @@ import { useModal } from 'hew/Modal';
 import UIProvider, { DefaultTheme } from 'hew/Theme';
 import React from 'react';
 
-import ExperimentStopModalComponent, {
-  BUTTON_TEXT,
-  CHECKBOX_TEXT,
-} from 'components/ExperimentStopModal';
+import ExperimentStopModalComponent, { CHECKBOX_TEXT } from 'components/ExperimentStopModal';
 import { ThemeProvider } from 'components/ThemeProvider';
 import {
   cancelExperiment as mockCancelExperiment,
@@ -22,6 +19,13 @@ vi.mock('services/api', () => ({
   cancelExperiment: vi.fn(),
   killExperiment: vi.fn(),
 }));
+
+const mockUseFeature = vi.hoisted(() => vi.fn(() => false));
+vi.mock('hooks/useFeature', () => {
+  return {
+    isOn: mockUseFeature(),
+  };
+});
 
 const { experiment } = generateTestExperimentData();
 
@@ -48,10 +52,13 @@ const setup = async () => {
 };
 
 describe('Stop Experiment Modal', () => {
+  afterEach(() => {
+    mockUseFeature.mockClear();
+  });
   it('submits a valid cancel experiment request', async () => {
     await setup();
 
-    await user.click(screen.getByRole('button', { name: BUTTON_TEXT }));
+    await user.click(screen.getByRole('button', { name: 'Stop Experiment' }));
 
     expect(mockCancelExperiment).toHaveBeenCalledWith({ experimentId: experiment.id });
   });
@@ -60,7 +67,7 @@ describe('Stop Experiment Modal', () => {
     await setup();
 
     await user.click(screen.getByRole('checkbox', { name: CHECKBOX_TEXT }));
-    await user.click(screen.getByRole('button', { name: BUTTON_TEXT }));
+    await user.click(screen.getByRole('button', { name: 'Stop Experiment' }));
 
     expect(mockKillExperiment).toHaveBeenCalledWith({ experimentId: experiment.id });
   });

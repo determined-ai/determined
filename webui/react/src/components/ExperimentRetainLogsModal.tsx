@@ -100,7 +100,7 @@ const ExperimentRetainLogsModalComponent: React.FC<Props> = ({
       } else {
         openToast({
           closeable: true,
-          description: `Failed to retain logs for ${numFailures} ${pluralize(2)} out of ${
+          description: `Failed to retain logs for ${numFailures} ${pluralize(numFailures)} out of ${
             numFailures + numSuccesses
           } for ${numberDays} days.`,
           severity: 'Warning',

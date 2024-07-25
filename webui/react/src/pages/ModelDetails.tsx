@@ -433,7 +433,7 @@ const ModelDetails: React.FC = () => {
           <div className={css.noVersions}>
             <p className={css.header}>No Model Versions</p>
             <p className={css.subtext}>
-              Register a checkpoint from an {f_flat_runs ? 'run' : 'experiment'} to add it to this
+              Register a checkpoint from {f_flat_runs ? 'a run' : 'an experiment'} to add it to this
               model
             </p>
           </div>

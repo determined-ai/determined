@@ -142,10 +142,14 @@ const ExperimentMoveModalComponent: React.FC<Props> = ({
     form.setFieldValue('workspaceId', sourceWorkspaceId ?? 1);
   }, [form, sourceProjectId, sourceWorkspaceId]);
 
-  const actionCopy =
-    filters !== undefined
-      ? `Move ${capitalize(entityName)}`
-      : `Move ${capitalize(pluralizer.apply(null, [experimentIds.length, ...(f_flat_runs ? (['search', 'searches'] as const) : (['experiment'] as const))]))}`;
+  // use plurals for indeterminate case
+  const entityCount = filters !== undefined ? 2 : experimentIds.length;
+  const pluralizerArgs = f_flat_runs
+    ? (['search', 'searches'] as const)
+    : (['experiment'] as const);
+  // we use apply instead of a direct call here because typescript errors when you spread a tuple into arguments
+  const plural = pluralizer.apply(null, [entityCount, ...pluralizerArgs]);
+  const actionCopy = `Move ${capitalize(plural)}`;
 
   return (
     <Modal

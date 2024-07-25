@@ -310,7 +310,7 @@ const ExperimentDetailsHeader: React.FC<Props> = ({
                 {
                   key: 'Create New Experiment',
                   label: f_flat_runs
-                    ? 'Create New Run'
+                    ? 'Create New Run...'
                     : 'Create New Experiment...',
                 },
                 {

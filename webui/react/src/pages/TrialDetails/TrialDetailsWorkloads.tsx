@@ -176,7 +176,7 @@ const TrialDetailsWorkloads: React.FC<Props> = ({
     } catch (e) {
       handleError(e, {
         publicMessage: `Failed to load recent ${f_flat_runs ? 'run' : 'trial'} workloads.`,
-        publicSubject: `Unable to fetch ${f_flat_runs ? 'Run' : 'trial'} Workloads.`,
+        publicSubject: `Unable to fetch ${f_flat_runs ? 'run' : 'trial'} Workloads.`,
         silent: false,
         type: ErrorType.Api,
       });

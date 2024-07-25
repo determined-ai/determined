@@ -15,7 +15,6 @@ export const ActionType = {
 
 export type AvalableActions = ValueOf<typeof ActionType>;
 
-export const BUTTON_TEXT = 'Stop Experiment';
 export const CHECKBOX_TEXT = 'Save checkpoint before stopping';
 
 interface Props {
@@ -27,7 +26,7 @@ const ExperimentStopModalComponent: React.FC<Props> = ({ experimentId, onClose }
   const [type, setType] = useState<AvalableActions>(ActionType.Cancel);
   const f_flat_runs = useFeature().isOn('flat_runs');
 
-  const buttonText = f_flat_runs ? 'Stop Search' : BUTTON_TEXT;
+  const buttonText = f_flat_runs ? 'Stop Search' : 'Stop Experiment';
 
   const handleCheckBoxChange = (event: CheckboxChangeEvent) => {
     setType(event.target.checked ? ActionType.Cancel : ActionType.Kill);

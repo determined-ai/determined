@@ -52,7 +52,7 @@ const TrialChart: React.FC<Props> = ({
         setTrialSummary(Loaded(summary[0].metrics));
       } catch (e) {
         handleError(e, {
-          publicMessage: `Failed to load ${f_flat_runs ? 'run' : 'trial'} summary for trial ${trialId}.`,
+          publicMessage: `Failed to load summary for ${f_flat_runs ? 'run' : 'trial'} ${trialId}.`,
           publicSubject: `${f_flat_runs ? 'Run' : 'Trial'} summary failed to load.`,
           type: ErrorType.Api,
         });
