@@ -9,10 +9,12 @@
     - record ip
 - updated devcluster config
 
+There is a default reverse proxy provided for which you'd need the shared
+aws eng dev key available in determined-ai/secrets.
+
 TODO:
 - what if there are multiple gateways on the cluster?
 - gateway cleanup if we provision it
-- run devcluster here for you?
 - or migrate some of this into devcluster stages?
 """
 
@@ -55,12 +57,16 @@ def expand_env(value: Any, env: Dict[str, str]) -> Any:
 
 @dataclass
 class Config:
+    """
+    Configuration for the remote connection setup.
+    """
+
     k8s_context: str
     ssh_key_path: str
     determined_root: str
     base_devcluster_path: str
     ssh_user: str = "ubuntu"
-    reverse_proxy_host: str = "18.218.13.18"  # shared reverse proxy server
+    reverse_proxy_host: str = "18.218.13.18"
     remote_port_range: Tuple[int, int] = (8000, 9000)
 
     @classmethod
