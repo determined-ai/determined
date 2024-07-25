@@ -37,8 +37,8 @@ const ClusterHistoricalUsageCsvModalComponent: React.FC<Props> = ({
     const groupByEndpoint = form.getFieldValue('groupBy');
     const searchParams = new URLSearchParams();
 
-    searchParams.append('timestamp_from', formFromDate.startOf('day').toISOString());
-    searchParams.append('timestamp_to', formToDate.endOf('day').toISOString());
+    searchParams.append('timestamp_after', formFromDate.startOf('day').toISOString());
+    searchParams.append('timestamp_before', formToDate.endOf('day').toISOString());
     handlePath(event, {
       external: true,
       path: serverAddress(groupByEndpoint + searchParams.toString()),
