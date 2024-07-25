@@ -47,7 +47,7 @@ def get_workspace_names(session: api.Session) -> Dict[int, str]:
 
 
 def render_user_group_rolenames(
-    resp: Sequence[bindings.v1GetGroupsAndUsersAssignedToWorkspaceResponse], is_csv: bool
+    resp: bindings.v1GetGroupsAndUsersAssignedToWorkspaceResponse, is_csv: bool
 ) -> None:
     values = []
 
@@ -55,15 +55,18 @@ def render_user_group_rolenames(
     user_map = {u.id: u.username for u in resp.usersAssignedDirectly}
 
     for assignment in resp.assignments:
-        role_name = assignment.role.name
+        if assignment.role:
+            role_name = assignment.role.name
 
-        for group_assignment in assignment.groupRoleAssignments:
-            value = [group_map[group_assignment.groupId], "G", role_name]
-            values.append(value)
+            if assignment.groupRoleAssignments:
+                for group_assignment in assignment.groupRoleAssignments:
+                    value = [group_map[group_assignment.groupId], "G", role_name]
+                    values.append(value)
 
-        for user_assignment in assignment.userRoleAssignments:
-            value = [user_map[user_assignment.userId], "U", role_name]
-            values.append(value)
+            if assignment.userRoleAssignments:
+                for user_assignment in assignment.userRoleAssignments:
+                    value = [user_map[user_assignment.userId], "U", role_name]
+                    values.append(value)
 
     headers = ["User/Group Name", "User/Group", "Role Name"]
     render.tabulate_or_csv(headers, values, is_csv)
