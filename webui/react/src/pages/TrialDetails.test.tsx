@@ -1,4 +1,6 @@
 import { render } from '@testing-library/react';
+import { getOrElseW } from 'fp-ts/lib/Either';
+import { flow } from 'fp-ts/lib/function';
 import HewUIProvider, { DefaultTheme } from 'hew/Theme';
 import { useInitApi } from 'hew/Toast';
 import { ConfirmationProvider } from 'hew/useConfirm';
@@ -6,6 +8,7 @@ import { HelmetProvider } from 'react-helmet-async';
 import { BrowserRouter } from 'react-router-dom';
 
 import { ThemeProvider } from 'components/ThemeProvider';
+import { DateString } from 'ioTypes';
 import {
   decodeTrialResponseToTrialDetails,
   mapV1GetExperimentDetailsResponse,
@@ -13,10 +16,17 @@ import {
 
 import TrialDetails from './TrialDetails';
 
+const decodeDateString = flow(
+  DateString.decode,
+  getOrElseW((l) => {
+    throw l;
+  }),
+);
+
 const mockTrialResponse = decodeTrialResponseToTrialDetails({
   trial: {
     bestCheckpoint: {
-      endTime: '2024-07-18T15:32:05.859962Z',
+      endTime: decodeDateString('2024-07-18T15:32:05.859962Z'),
       metadata: null,
       resources: {
         'metadata.json': '26',
@@ -27,7 +37,7 @@ const mockTrialResponse = decodeTrialResponseToTrialDetails({
       uuid: '71109b0b-7306-4be1-bfc1-4f5980695f7d',
     },
     bestValidation: {
-      endTime: '2024-07-18T15:32:05.576988Z',
+      endTime: decodeDateString('2024-07-18T15:32:05.576988Z'),
       metrics: {
         avgMetrics: {
           x: 2,
@@ -38,14 +48,14 @@ const mockTrialResponse = decodeTrialResponseToTrialDetails({
       totalBatches: 1,
     },
     checkpointCount: 1,
-    endTime: '2024-07-18T15:32:06.853844Z',
+    endTime: decodeDateString('2024-07-18T15:32:06.853844Z'),
     experimentId: 7823,
     hparams: {
       increment_by: 2,
     },
     id: 54176,
     latestValidation: {
-      endTime: '2024-07-18T15:32:05.576988Z',
+      endTime: decodeDateString('2024-07-18T15:32:05.576988Z'),
       metrics: {
         avgMetrics: {
           x: 2,
@@ -58,7 +68,7 @@ const mockTrialResponse = decodeTrialResponseToTrialDetails({
     restarts: 0,
     runnerState: '',
     searcherMetricValue: 0,
-    startTime: '2024-07-18T15:31:01.793136Z',
+    startTime: decodeDateString('2024-07-18T15:31:01.793136Z'),
     state: 'STATE_COMPLETED',
     summaryMetrics: {
       validation_metrics: {

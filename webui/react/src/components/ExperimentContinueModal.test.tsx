@@ -1,8 +1,11 @@
 import { act, render } from '@testing-library/react';
+import { getOrElseW } from 'fp-ts/lib/Either';
+import { flow } from 'fp-ts/lib/function';
 import { useModal } from 'hew/Modal';
 import UIProvider, { DefaultTheme } from 'hew/Theme';
 import { useLayoutEffect } from 'react';
 
+import { DateString } from 'ioTypes';
 import {
   decodeTrialResponseToTrialDetails,
   mapV1GetExperimentDetailsResponse,
@@ -23,10 +26,17 @@ vi.mock('hooks/useFeature', () => {
   };
 });
 
+const decodeDateString = flow(
+  DateString.decode,
+  getOrElseW((l) => {
+    throw l;
+  }),
+);
+
 const mockTrial = decodeTrialResponseToTrialDetails({
   trial: {
     bestCheckpoint: {
-      endTime: '2024-07-18T15:32:05.859962Z',
+      endTime: decodeDateString('2024-07-18T15:32:05.859962Z'),
       metadata: null,
       resources: {
         'metadata.json': '26',
@@ -37,7 +47,7 @@ const mockTrial = decodeTrialResponseToTrialDetails({
       uuid: '71109b0b-7306-4be1-bfc1-4f5980695f7d',
     },
     bestValidation: {
-      endTime: '2024-07-18T15:32:05.576988Z',
+      endTime: decodeDateString('2024-07-18T15:32:05.576988Z'),
       metrics: {
         avgMetrics: {
           x: 2,
@@ -48,14 +58,14 @@ const mockTrial = decodeTrialResponseToTrialDetails({
       totalBatches: 1,
     },
     checkpointCount: 1,
-    endTime: '2024-07-18T15:32:06.853844Z',
+    endTime: decodeDateString('2024-07-18T15:32:06.853844Z'),
     experimentId: 7823,
     hparams: {
       increment_by: 2,
     },
     id: 54176,
     latestValidation: {
-      endTime: '2024-07-18T15:32:05.576988Z',
+      endTime: decodeDateString('2024-07-18T15:32:05.576988Z'),
       metrics: {
         avgMetrics: {
           x: 2,
@@ -68,7 +78,7 @@ const mockTrial = decodeTrialResponseToTrialDetails({
     restarts: 0,
     runnerState: '',
     searcherMetricValue: 0,
-    startTime: '2024-07-18T15:31:01.793136Z',
+    startTime: decodeDateString('2024-07-18T15:31:01.793136Z'),
     state: 'STATE_COMPLETED',
     summaryMetrics: {
       validation_metrics: {
@@ -321,7 +331,7 @@ const mockExperiment = mapV1GetExperimentDetailsResponse({
     },
     description: '',
     displayName: '',
-    endTime: '2024-07-18T15:32:51.133795Z',
+    endTime: decodeDateString('2024-07-18T15:32:51.133795Z'),
     forkedFrom: 7591,
     hyperparameters: null,
     id: 7823,
@@ -341,7 +351,7 @@ const mockExperiment = mapV1GetExperimentDetailsResponse({
     resourcePool: 'compute-pool',
     searcherMetric: '',
     searcherType: '"adaptive_asha"',
-    startTime: '2024-07-18T15:31:01.441050Z',
+    startTime: decodeDateString('2024-07-18T15:31:01.441050Z'),
     state: 'STATE_COMPLETED',
     trialIds: [54170, 54171, 54172, 54173, 54174, 54175, 54176, 54177, 54178, 54179],
     unmanaged: false,
