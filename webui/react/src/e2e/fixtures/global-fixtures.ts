@@ -2,12 +2,21 @@ import { expect as baseExpect, test as baseTest, Page } from '@playwright/test';
 
 import { apiUrl, isEE } from 'e2e/utils/envVars';
 import { safeName } from 'e2e/utils/naming';
-import { V1PostUserRequest } from 'services/api-ts-sdk/api';
+import {
+  V1PostProjectRequest,
+  V1PostProjectResponse,
+  V1PostUserRequest,
+  V1PostUserResponse,
+  V1PostWorkspaceRequest,
+  V1PostWorkspaceResponse,
+} from 'services/api-ts-sdk/api';
 
 // eslint-disable-next-line no-restricted-imports
 
 import { ApiAuthFixture } from './api.auth.fixture';
+import { ApiProjectFixture } from './api.project.fixture';
 import { ApiUserFixture } from './api.user.fixture';
+import { ApiWorkspaceFixture } from './api.workspace.fixture';
 import { AuthFixture } from './auth.fixture';
 import { DevFixture } from './dev.fixture';
 import { UserFixture } from './user.fixture';
@@ -18,14 +27,20 @@ type CustomFixtures = {
   apiAuth: ApiAuthFixture;
   user: UserFixture;
   apiUser: ApiUserFixture;
+  apiWorkspace: ApiWorkspaceFixture;
+  apiProject: ApiProjectFixture;
   authedPage: Page;
 };
 
 type CustomWorkerFixtures = {
   dev: DevFixture;
-  newAdmin: V1PostUserRequest;
+  newAdmin: { request: V1PostUserRequest; response: V1PostUserResponse };
+  newWorkspace: { request: V1PostWorkspaceRequest; response: V1PostWorkspaceResponse };
+  newProject: { request: V1PostProjectRequest; response: V1PostProjectResponse };
   backgroundApiAuth: ApiAuthFixture;
   backgroundApiUser: ApiUserFixture;
+  backgroundApiWorkspace: ApiWorkspaceFixture;
+  backgroundApiProject: ApiProjectFixture;
   backgroundAuthedPage: Page;
 };
 
@@ -36,8 +51,8 @@ export const test = baseTest.extend<CustomFixtures, CustomWorkerFixtures>({
     const apiAuth = new ApiAuthFixture(playwright.request, browser, apiUrl(), devSetup);
     await apiAuth.loginApi({
       creds: {
-        password: newAdmin.password!,
-        username: newAdmin.user!.username,
+        password: newAdmin.request.password!,
+        username: newAdmin.response.user!.username,
       },
     });
     await apiAuth.apiContext?.post('/api/v1/users/setting', {
@@ -54,9 +69,19 @@ export const test = baseTest.extend<CustomFixtures, CustomWorkerFixtures>({
     await use(apiAuth);
   },
 
+  apiProject: async ({ apiAuth }, use) => {
+    const apiProject = new ApiProjectFixture(apiAuth);
+    await use(apiProject);
+  },
+
   apiUser: async ({ apiAuth }, use) => {
     const apiUser = new ApiUserFixture(apiAuth);
     await use(apiUser);
+  },
+
+  apiWorkspace: async ({ apiAuth }, use) => {
+    const apiWorkspace = new ApiWorkspaceFixture(apiAuth);
+    await use(apiWorkspace);
   },
 
   auth: async ({ page }, use) => {
@@ -96,6 +121,13 @@ export const test = baseTest.extend<CustomFixtures, CustomWorkerFixtures>({
     { scope: 'worker' },
   ],
 
+  backgroundApiProject: [
+    async ({ backgroundApiAuth }, use) => {
+      const backgroundApiProject = new ApiProjectFixture(backgroundApiAuth);
+      await use(backgroundApiProject);
+    },
+    { scope: 'worker' },
+  ],
   /**
    * Allows calling the user api without a page so that it can run in beforeAll(). You will need to get a bearer
    * token by calling backgroundApiUser.apiAuth.loginAPI(). This will also provision a page in the background which
@@ -106,6 +138,13 @@ export const test = baseTest.extend<CustomFixtures, CustomWorkerFixtures>({
     async ({ backgroundApiAuth }, use) => {
       const backgroundApiUser = new ApiUserFixture(backgroundApiAuth);
       await use(backgroundApiUser);
+    },
+    { scope: 'worker' },
+  ],
+  backgroundApiWorkspace: [
+    async ({ backgroundApiAuth }, use) => {
+      const backgroundApiWorkspace = new ApiWorkspaceFixture(backgroundApiAuth);
+      await use(backgroundApiWorkspace);
     },
     { scope: 'worker' },
   ],
@@ -143,23 +182,58 @@ export const test = baseTest.extend<CustomFixtures, CustomWorkerFixtures>({
    */
   newAdmin: [
     async ({ backgroundApiUser }, use, workerInfo) => {
-      const adminUser = await backgroundApiUser.createUser(
-        backgroundApiUser.new({
-          userProps: {
-            user: {
-              active: true,
-              admin: true,
-              username: safeName(`test-admin-${workerInfo.workerIndex}`),
-            },
+      const request = backgroundApiUser.new({
+        userProps: {
+          user: {
+            active: true,
+            admin: true,
+            username: safeName(`test-admin-${workerInfo.workerIndex}`),
           },
-        }),
-      );
-      await backgroundApiUser.apiAuth.loginApi({
-        creds: { password: adminUser.password!, username: adminUser.user!.username },
+        },
       });
-      await use(adminUser);
+      const adminUser = await backgroundApiUser.createUser(request);
+      await backgroundApiUser.apiAuth.loginApi({
+        creds: { password: request.password!, username: adminUser.user!.username },
+      });
+      await use({ request, response: adminUser });
       await backgroundApiUser.apiAuth.loginApi();
       await backgroundApiUser.patchUser(adminUser.user!.id!, { active: false });
+    },
+    { scope: 'worker' },
+  ],
+
+  /**
+   * Creates a project and deletes it after the test suite
+   */
+  newProject: [
+    async ({ backgroundApiProject, newWorkspace }, use, workerInfo) => {
+      const workspaceId = newWorkspace.response.workspace!.id!;
+      const request = backgroundApiProject.new({
+        projectProps: {
+          name: safeName(`test-project-${workerInfo.workerIndex}`),
+          workspaceId,
+        },
+      });
+      const newProject = await backgroundApiProject.createProject(workspaceId, request);
+      await use({ request, response: newProject });
+      await backgroundApiProject.deleteProject(newProject.project!.id!);
+    },
+    { scope: 'worker' },
+  ],
+
+  /**
+   * Creates a workspace and deletes it after the test suite
+   */
+  newWorkspace: [
+    async ({ backgroundApiWorkspace }, use, workerInfo) => {
+      const request = backgroundApiWorkspace.new({
+        workspaceProps: {
+          name: safeName(`test-workspace-${workerInfo.workerIndex}`),
+        },
+      });
+      const newWorkspace = await backgroundApiWorkspace.createWorkspace(request);
+      await use({ request, response: newWorkspace });
+      await backgroundApiWorkspace.deleteWorkspace(newWorkspace.workspace!.id!);
     },
     { scope: 'worker' },
   ],

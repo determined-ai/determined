@@ -14,33 +14,28 @@ test.describe('Experiment List', () => {
     return parseInt(count);
   };
 
-  test.beforeAll(async ({ backgroundAuthedPage }) => {
+  test.beforeAll(async ({ backgroundAuthedPage, newProject }) => {
     const projectDetailsPageSetup = new ProjectDetails(backgroundAuthedPage);
-    await projectDetailsPageSetup.gotoProject();
-    await test.step('Create an experiment if not already present', async () => {
+    await projectDetailsPageSetup.gotoProject(newProject.response.project.id);
+    await test.step('Create an experiment', async () => {
       await expect(
         projectDetailsPageSetup.f_experimentList.tableActionBar.count.pwLocator,
       ).toContainText('experiment');
-      if (
-        await projectDetailsPageSetup.f_experimentList.noExperimentsMessage.pwLocator.isVisible()
-      ) {
-        detExecSync(
-          `experiment create ${fullPath('examples/tutorials/mnist_pytorch/const.yaml')} --paused`,
-        );
-        await backgroundAuthedPage.reload();
-        await expect(
-          projectDetailsPageSetup.f_experimentList.dataGrid.rows.pwLocator,
-        ).not.toHaveCount(0);
-      }
+      detExecSync(
+        `experiment create ${fullPath('examples/tutorials/mnist_pytorch/const.yaml')} --paused --project_id ${newProject.response.project.id}`,
+      );
+      await expect(
+        projectDetailsPageSetup.f_experimentList.dataGrid.rows.pwLocator,
+      ).not.toHaveCount(0, { timeout: 10_000 });
     });
   });
 
-  test.beforeEach(async ({ authedPage }) => {
+  test.beforeEach(async ({ authedPage, newProject }) => {
     test.slow();
     projectDetailsPage = new ProjectDetails(authedPage);
     const grid = projectDetailsPage.f_experimentList.dataGrid;
 
-    await projectDetailsPage.gotoProject();
+    await projectDetailsPage.gotoProject(newProject.response.project.id);
     await expect(projectDetailsPage.f_experimentList.dataGrid.rows.pwLocator).not.toHaveCount(0, {
       timeout: 10_000,
     });
@@ -187,13 +182,17 @@ test.describe('Experiment List', () => {
       });
     };
 
+    const row = projectDetailsPage.f_experimentList.dataGrid.getRowByIndex(0);
+    const id = await (await row.getCellByColumnName('ID')).pwLocator.textContent();
+    if (id === null) throw new Error('ID is null');
+
     await filterScenario(
       'Filter With ID',
       async () => {
         await tableFilter.filterForm.filter.filterFields.columnName.selectMenuOption('ID');
         await expect(tableFilter.filterForm.filter.filterFields.operator.pwLocator).toHaveText('=');
         await tableFilter.filterForm.filter.filterFields.operator.selectMenuOption('=');
-        await tableFilter.filterForm.filter.filterFields.valueNumber.pwLocator.fill('1');
+        await tableFilter.filterForm.filter.filterFields.valueNumber.pwLocator.fill(id);
       },
       1,
     );
@@ -233,7 +232,7 @@ test.describe('Experiment List', () => {
         await operator.menuItem('=').pwLocator.click();
         await operator._menu.pwLocator.waitFor({ state: 'hidden' });
 
-        await secondFilterField.valueNumber.pwLocator.fill('1');
+        await secondFilterField.valueNumber.pwLocator.fill(id);
       },
       totalExperiments,
     );
