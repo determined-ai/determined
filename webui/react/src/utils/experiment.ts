@@ -1,3 +1,4 @@
+import { FilterFormSetWithoutId, Operator } from 'components/FilterForm/components/type';
 import {
   cancellableRunStates,
   deletableRunStates,
@@ -21,6 +22,7 @@ import {
   ProjectExperiment,
   RawJson,
   RunState,
+  SelectionType,
   TrialDetails,
   TrialHyperparameters,
   WorkspacePermissionsArgs,
@@ -357,4 +359,59 @@ export const trialContinueConfig = (
     },
     workspace: workspaceName,
   };
+};
+
+const idToFilter = (operator: Operator, id: number) =>
+  ({
+    columnName: 'id',
+    kind: 'field',
+    location: 'LOCATION_TYPE_EXPERIMENT',
+    operator,
+    type: 'COLUMN_TYPE_NUMBER',
+    value: id,
+  }) as const;
+
+export const getIdsFilter = (
+  filterFormSet: FilterFormSetWithoutId,
+  selection: SelectionType,
+): FilterFormSetWithoutId | undefined => {
+  const filterGroup: FilterFormSetWithoutId['filterGroup'] =
+    selection.type === 'ALL_EXCEPT'
+      ? {
+          children: [
+            filterFormSet.filterGroup,
+            {
+              children: selection.exclusions.map(idToFilter.bind(this, '!=')),
+              conjunction: 'and',
+              kind: 'group',
+            },
+          ],
+          conjunction: 'and',
+          kind: 'group',
+        }
+      : {
+          children: selection.selections.map(idToFilter.bind(this, '=')),
+          conjunction: 'or',
+          kind: 'group',
+        };
+
+  const filter: FilterFormSetWithoutId = {
+    ...filterFormSet,
+    filterGroup: {
+      children: [
+        filterGroup,
+        {
+          columnName: 'searcherType',
+          kind: 'field',
+          location: 'LOCATION_TYPE_EXPERIMENT',
+          operator: '!=',
+          type: 'COLUMN_TYPE_TEXT',
+          value: 'single',
+        } as const,
+      ],
+      conjunction: 'and',
+      kind: 'group',
+    },
+  };
+  return filter;
 };

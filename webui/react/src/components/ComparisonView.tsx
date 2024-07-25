@@ -2,18 +2,26 @@ import Alert from 'hew/Alert';
 import { MIN_COLUMN_WIDTH } from 'hew/DataGrid/columns';
 import Message from 'hew/Message';
 import Pivot, { PivotProps } from 'hew/Pivot';
+import Spinner from 'hew/Spinner';
 import SplitPane, { Pane } from 'hew/SplitPane';
-import React, { useMemo } from 'react';
+import { Loadable, NotLoaded } from 'hew/utils/loadable';
+import React, { useMemo, useState } from 'react';
 
 import CompareHyperparameters from 'components/CompareHyperparameters';
+import { useAsync } from 'hooks/useAsync';
 import { MapOfIdsToColors } from 'hooks/useGlasbey';
 import { useMetrics } from 'hooks/useMetrics';
 import useMobile from 'hooks/useMobile';
 import useScrollbarWidth from 'hooks/useScrollbarWidth';
 import { TrialsComparisonTable } from 'pages/ExperimentDetails/TrialsComparisonModal';
-import { ExperimentWithTrial, FlatRun, XOR } from 'types';
+import { searchExperiments, searchRuns } from 'services/api';
+import { ExperimentWithTrial, FlatRun, SelectionType, XOR } from 'types';
+import handleError from 'utils/error';
+import { getIdsFilter as getExperimentIdsFilter } from 'utils/experiment';
+import { getIdsFilter as getRunIdsFilter } from 'utils/flatRun';
 
 import CompareMetrics from './CompareMetrics';
+import { INIT_FORMSET } from './FilterForm/components/FilterFormStore';
 
 export const EMPTY_MESSAGE = 'No items selected.';
 
@@ -27,8 +35,10 @@ interface BaseProps {
   projectId: number;
 }
 
-type Props = XOR<{ selectedExperiments: ExperimentWithTrial[] }, { selectedRuns: FlatRun[] }> &
+type Props = XOR<{ experimentSelection: SelectionType }, { runSelection: SelectionType }> &
   BaseProps;
+
+const SELECTION_LIMIT = 50;
 
 const ComparisonView: React.FC<Props> = ({
   children,
@@ -38,12 +48,67 @@ const ComparisonView: React.FC<Props> = ({
   onWidthChange,
   fixedColumnsCount,
   projectId,
-  selectedExperiments,
-  selectedRuns,
+  experimentSelection,
+  runSelection,
 }) => {
   const scrollbarWidth = useScrollbarWidth();
   const hasPinnedColumns = fixedColumnsCount > 1;
   const isMobile = useMobile();
+
+  const [isSelectionLimitReached, setIsSelectionLimitReached] = useState(false);
+
+  const loadableSelectedExperiments = useAsync(async () => {
+    if (experimentSelection) {
+      try {
+        const filterFormSet = INIT_FORMSET;
+        const filter = getExperimentIdsFilter(filterFormSet, experimentSelection);
+        const response = await searchExperiments({
+          filter: JSON.stringify(filter),
+          limit: SELECTION_LIMIT,
+        });
+        if (response?.pagination?.total && response?.pagination?.total > SELECTION_LIMIT) {
+          setIsSelectionLimitReached(true);
+        } else {
+          setIsSelectionLimitReached(false);
+        }
+        return response.experiments;
+      } catch (e) {
+        handleError(e, { publicSubject: 'Unable to fetch experiments for comparison' });
+        return NotLoaded;
+      }
+    }
+    return NotLoaded;
+  }, [experimentSelection]);
+
+  const selectedExperiments: ExperimentWithTrial[] | undefined = Loadable.getOrElse(
+    undefined,
+    loadableSelectedExperiments,
+  );
+
+  const loadableSelectedRuns = useAsync(async () => {
+    if (runSelection) {
+      const filterFormSet = INIT_FORMSET;
+      try {
+        const filter = getRunIdsFilter(filterFormSet, runSelection);
+        const response = await searchRuns({
+          filter: JSON.stringify(filter),
+          limit: SELECTION_LIMIT,
+        });
+        if (response?.pagination?.total && response?.pagination?.total > SELECTION_LIMIT) {
+          setIsSelectionLimitReached(true);
+        } else {
+          setIsSelectionLimitReached(false);
+        }
+        return response.runs;
+      } catch (e) {
+        handleError(e, { publicSubject: 'Unable to fetch runs for comparison' });
+        return NotLoaded;
+      }
+    }
+    return NotLoaded;
+  }, [runSelection]);
+
+  const selectedRuns: FlatRun[] | undefined = Loadable.getOrElse(undefined, loadableSelectedRuns);
 
   const minWidths: [number, number] = useMemo(() => {
     return [fixedColumnsCount * MIN_COLUMN_WIDTH + scrollbarWidth, 100];
@@ -64,11 +129,12 @@ const ComparisonView: React.FC<Props> = ({
     return [
       {
         children: selectedRuns ? (
-          <CompareMetrics metricData={metricData} selectedRuns={selectedRuns} />
+          <CompareMetrics colorMap={colorMap} metricData={metricData} selectedRuns={selectedRuns} />
         ) : (
           <CompareMetrics
+            colorMap={colorMap}
             metricData={metricData}
-            selectedExperiments={selectedExperiments}
+            selectedExperiments={selectedExperiments ?? []}
             trials={trials}
           />
         ),
@@ -88,7 +154,7 @@ const ComparisonView: React.FC<Props> = ({
             colorMap={colorMap}
             metricData={metricData}
             projectId={projectId}
-            selectedExperiments={selectedExperiments}
+            selectedExperiments={selectedExperiments ?? []}
             trials={trials}
           />
         ),
@@ -114,12 +180,36 @@ const ComparisonView: React.FC<Props> = ({
       children
     );
 
-  const rightPane =
-    selectedExperiments?.length === 0 || selectedRuns?.length === 0 ? (
-      <Alert description="Select records you would like to compare." message={EMPTY_MESSAGE} />
-    ) : (
-      <Pivot items={tabs} />
+  const getRightPaneContent = () => {
+    if (experimentSelection) {
+      if (experimentSelection.type === 'ONLY_IN' && experimentSelection.selections.length === 0) {
+        return (
+          <Alert description="Select records you would like to compare." message={EMPTY_MESSAGE} />
+        );
+      }
+      if (selectedExperiments === undefined) {
+        return <Spinner spinning />;
+      }
+    }
+    if (runSelection) {
+      if (runSelection.type === 'ONLY_IN' && runSelection.selections.length === 0) {
+        return (
+          <Alert description="Select records you would like to compare." message={EMPTY_MESSAGE} />
+        );
+      }
+      if (selectedRuns === undefined) {
+        return <Spinner spinning />;
+      }
+    }
+    return (
+      <>
+        {isSelectionLimitReached && (
+          <Alert message={`Only up to ${SELECTION_LIMIT} records can be compared`} />
+        )}
+        <Pivot items={tabs} />
+      </>
     );
+  };
 
   return (
     <SplitPane
@@ -127,7 +217,7 @@ const ComparisonView: React.FC<Props> = ({
       initialWidth={initialWidth}
       leftPane={leftPane}
       minimumWidths={{ left: minWidths[0], right: minWidths[1] }}
-      rightPane={rightPane}
+      rightPane={getRightPaneContent()}
       onChange={onWidthChange}
     />
   );

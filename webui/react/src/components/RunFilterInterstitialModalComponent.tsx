@@ -2,14 +2,15 @@ import { useModal } from 'hew/Modal';
 import { Failed, NotLoaded } from 'hew/utils/loadable';
 import { forwardRef, useCallback, useImperativeHandle, useRef, useState } from 'react';
 
-import { FilterFormSetWithoutId, Operator } from 'components/FilterForm/components/type';
+import { FilterFormSetWithoutId } from 'components/FilterForm/components/type';
 import InterstitialModalComponent, {
   onInterstitialCloseActionType,
 } from 'components/InterstitialModalComponent';
-import { SelectionType } from 'components/Searches/Searches.settings';
 import { useAsync } from 'hooks/useAsync';
 import { searchRuns } from 'services/api';
+import { SelectionType } from 'types';
 import { DetError } from 'utils/error';
+import { getIdsFilter } from 'utils/flatRun';
 import mergeAbortControllers from 'utils/mergeAbortControllers';
 import { observable } from 'utils/observable';
 
@@ -76,52 +77,7 @@ export const RunFilterInterstitialModalComponent = forwardRef<ControlledModalRef
       async (canceler) => {
         if (!isOpen) return NotLoaded;
         const mergedCanceler = mergeAbortControllers(canceler, closeController.current);
-        const idToFilter = (operator: Operator, id: number) =>
-          ({
-            columnName: 'id',
-            kind: 'field',
-            location: 'LOCATION_TYPE_RUN',
-            operator,
-            type: 'COLUMN_TYPE_NUMBER',
-            value: id,
-          }) as const;
-        const filterGroup: FilterFormSetWithoutId['filterGroup'] =
-          selection.type === 'ALL_EXCEPT'
-            ? {
-                children: [
-                  filterFormSet.filterGroup,
-                  {
-                    children: selection.exclusions.map(idToFilter.bind(this, '!=')),
-                    conjunction: 'and',
-                    kind: 'group',
-                  },
-                ],
-                conjunction: 'and',
-                kind: 'group',
-              }
-            : {
-                children: selection.selections.map(idToFilter.bind(this, '=')),
-                conjunction: 'or',
-                kind: 'group',
-              };
-        const filter: FilterFormSetWithoutId = {
-          ...filterFormSet,
-          filterGroup: {
-            children: [
-              filterGroup,
-              {
-                columnName: 'searcherType',
-                kind: 'field',
-                location: 'LOCATION_TYPE_RUN',
-                operator: '!=',
-                type: 'COLUMN_TYPE_TEXT',
-                value: 'single',
-              } as const,
-            ],
-            conjunction: 'and',
-            kind: 'group',
-          },
-        };
+        const filter = getIdsFilter(filterFormSet, selection);
         try {
           const results = await searchRuns(
             {

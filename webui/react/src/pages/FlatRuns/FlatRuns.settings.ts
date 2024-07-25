@@ -2,21 +2,10 @@ import * as t from 'io-ts';
 import { pick } from 'lodash';
 
 import { INIT_FORMSET } from 'components/FilterForm/components/FilterFormStore';
+import { RegularSelectionType, SelectionType } from 'types';
 
 import { defaultColumnWidths, defaultRunColumns } from './columns';
 
-const SelectAllType = t.type({
-  exclusions: t.array(t.number),
-  type: t.literal('ALL_EXCEPT'),
-});
-
-const RegularSelectionType = t.type({
-  selections: t.array(t.number),
-  type: t.literal('ONLY_IN'),
-});
-
-export const SelectionType = t.union([RegularSelectionType, SelectAllType]);
-export type SelectionType = t.TypeOf<typeof SelectionType>;
 export const DEFAULT_SELECTION: t.TypeOf<typeof RegularSelectionType> = {
   selections: [],
   type: 'ONLY_IN',

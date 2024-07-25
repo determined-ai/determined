@@ -4,7 +4,7 @@ import _ from 'lodash';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import MetricBadgeTag from 'components/MetricBadgeTag';
-import { MapOfIdsToColors, useGlasbey } from 'hooks/useGlasbey';
+import { MapOfIdsToColors } from 'hooks/useGlasbey';
 import { RunMetricData } from 'hooks/useMetrics';
 import { ExperimentWithTrial, FlatRun, Serie, TrialItem, XAxisDomain, XOR } from 'types';
 import handleError from 'utils/error';
@@ -12,6 +12,7 @@ import { metricToKey } from 'utils/metric';
 
 interface BaseProps {
   metricData: RunMetricData;
+  colorMap: MapOfIdsToColors;
 }
 
 type Props = XOR<
@@ -25,10 +26,8 @@ const CompareMetrics: React.FC<Props> = ({
   trials,
   metricData,
   selectedRuns,
+  colorMap,
 }) => {
-  const colorMap = useGlasbey(
-    selectedRuns ? selectedRuns.map((r) => r.id) : selectedExperiments.map((e) => e.experiment.id),
-  );
   const [xAxis, setXAxis] = useState<XAxisDomain>(XAxisDomain.Batches);
   const { scale, setScale } = metricData;
 
