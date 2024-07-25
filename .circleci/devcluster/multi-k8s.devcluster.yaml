@@ -26,11 +26,14 @@ stages:
           level: debug
         enable_cors: true
         root: tools/build
+        telemetry:
+          enabled: false
 
         resource_manager:
           type: kubernetes
           name: default
-          namespace: default
+          cluster_name: defaultrm
+          default_namespace: default
           max_slots_per_pod: 1
           slot_type: "cpu"
           slot_resource_requests:
@@ -50,7 +53,8 @@ stages:
         - resource_manager:
             type: kubernetes
             name: additionalrm
-            namespace: default
+            cluster_name: additionalrm
+            default_namespace: default
             max_slots_per_pod: 1
             slot_type: "cpu"
             slot_resource_requests:

@@ -53,6 +53,15 @@ type ResourceManager interface {
 	EnableSlot(*apiv1.EnableSlotRequest) (*apiv1.EnableSlotResponse, error)
 	DisableSlot(*apiv1.DisableSlotRequest) (*apiv1.DisableSlotResponse, error)
 	HealthCheck() []model.ResourceManagerHealth
+
+	// Kubernetes Namespaces and Quotas.
+	DefaultNamespace(string) (*string, error)
+	VerifyNamespaceExists(string, string) error
+	CreateNamespace(string, string, bool) error
+	DeleteNamespace(string) error
+	RemoveEmptyNamespace(string, string) error
+	GetNamespaceResourceQuota(string, string) (*float64, error)
+	SetResourceQuota(int, string, string) error
 }
 
 // ResourcePoolName holds the name of the resource pool, and describes the input/output
@@ -76,4 +85,11 @@ func CopyGetAgentsResponse(resp *apiv1.GetAgentsResponse) (*apiv1.GetAgentsRespo
 		return nil, err
 	}
 	return &respCopy, nil
+}
+
+// ClusterName is the name of the cluster within which we want to send a request.
+type ClusterName string
+
+func (c ClusterName) String() string {
+	return string(c)
 }

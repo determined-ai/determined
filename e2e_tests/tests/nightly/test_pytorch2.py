@@ -15,7 +15,6 @@ def test_pytorch2_hf_language_modeling_distributed() -> None:
     config = conf.load_config(conf.hf_trainer_examples_path(f"{test_dir}/distributed.yaml"))
     config = conf.set_pt2_image(config)
     config = conf.set_slots_per_trial(config, 4)
-    config["searcher"]["max_length"]["batches"] = 50
 
     # Our hardware GPUs have only 16gb memory, lower memory use with smaller batches.
     config = conf.set_entrypoint(

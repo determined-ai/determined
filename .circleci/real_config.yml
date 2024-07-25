@@ -21,7 +21,7 @@ executors:
 parameters:
   det-version:
     type: string
-    default: 0.34.1-dev0
+    default: 0.35.0-dev0
   docker-image:
     type: string
     default: determinedai/cimg-base:latest
@@ -151,8 +151,8 @@ commands:
     description: Collect logs from the cluster tasks.
     steps:
       - run:
-          when: on_fail
           name: "Ensure necessary Python packages are available."
+          when: always
           command: |
             pkg_names="fire determined"
             for pkg_name in $pkg_names; do
@@ -161,8 +161,8 @@ commands:
               fi
             done
       - run:
-          when: on_fail
           name: "Collect logs and calculate statistics"
+          when: always
           command: |
             target_dir="<< parameters.store_path >>"
             mkdir -p $target_dir
@@ -282,7 +282,7 @@ commands:
       - when:
           condition: <<parameters.tf2>>
           steps:
-            - run: docker pull determinedai/pytorch-ngc-dev:0e43056
+            - run: docker pull determinedai/pytorch-ngc-dev:f20b027
 
   login-docker:
     parameters:
@@ -626,6 +626,50 @@ commands:
         type: boolean
         default: true
     steps:
+      - when:
+          condition: 
+            and:
+              - equal: [<<parameters.master-host>>,'localhost']
+              - <<parameters.wait-for-master>>
+              - not: <<parameters.managed-devcluster>>
+          steps:
+            - run:
+                name: Install DataDog agent
+                command: |
+                  if [ "$AIS_DD_ENABLE_MONITORING" == "true" ]; then
+                    host_tags="test.mark:<<parameters.mark>>,\
+                    ci.pipeline_id:${CIRCLE_PIPELINE_ID},\
+                    ci.workflow_id:${CIRCLE_WORKFLOW_ID},\
+                    ci.job_num:${CIRCLE_BUILD_NUM},\
+                    ci.username:${CIRCLE_USERNAME},\
+                    git.tag:${CIRCLE_TAG},\
+                    git.commit:${CIRCLE_SHA1},\
+                    git.repo:${CIRCLE_PROJECT_REPONAME},\
+                    ci.totalNodes:${CIRCLE_NODE_TOTAL},\
+                    ci.nodeIdx:${CIRCLE_NODE_INDEX},\
+                    git.pr_num:${CIRCLE_PR_NUMBER}"
+
+                    sudo mkdir -p /tmp/artifacts/logs
+                    sudo chmod -R a+rw /tmp/artifacts/logs
+
+                    DD_ENV="ci-${CIRCLE_JOB}" \
+                    DD_HOST_TAGS="$host_tags" \
+                    DD_SERVICE="determined-pytest-<<parameters.mark>>" \
+                    bash -c "$(curl -L https://s3.amazonaws.com/dd-agent/scripts/install_script_agent7.sh)"
+                    
+                    # config files for the agent have an expected file structure
+                    sudo mkdir -p /etc/datadog-agent/conf.d/determined-master.d/
+                    sudo chmod a+rw /etc/datadog-agent/datadog.yaml
+                    sudo chmod -R a+rw /etc/datadog-agent/conf.d/determined-master.d/
+                    sudo cat .circleci/datadog/ci-local-config.yaml >> /etc/datadog-agent/datadog.yaml
+                    sudo sed -e "s/<SERVICE_NAME>/determined-pytest-<<parameters.mark>>/g" .circleci/datadog/e2e-log-settings.yaml > /etc/datadog-agent/conf.d/determined-master.d/conf.yaml
+                    # restart agent with config
+                    sudo usermod -a -G docker dd-agent
+                    sudo systemctl stop datadog-agent
+                    sudo systemctl start datadog-agent
+                    sleep 5
+                    sudo datadog-agent status
+                  fi
       # Wait for master before splitting tests, since so many splits depend on
       # asking master for its configuration in order to apply skipifs.
       - when:
@@ -662,9 +706,21 @@ commands:
               echo "No Determined master listening on '<<parameters.master-scheme>>://<<parameters.master-host>>:<<parameters.master-port>>'"
             fi
 
-            cat /tmp/all-relevant-files | circleci tests run --command="DD_CIVISIBILITY_AGENTLESS_ENABLED=true \
-            DD_SITE='datadoghq.com' \
-            DD_ENV='ci-<<parameters.mark>>' DD_SERVICE='determined-pytest-<<parameters.mark>>' \
+            tags="test.mark:<<parameters.mark>>,\
+            ci.pipeline_id:${CIRCLE_PIPELINE_ID},\
+            ci.workflow_id:${CIRCLE_WORKFLOW_ID},\
+            ci.job_num:${CIRCLE_BUILD_NUM},\
+            ci.username:${CIRCLE_USERNAME},\
+            git.tag:${CIRCLE_TAG},\
+            git.commit:${CIRCLE_SHA1},\
+            ci.totalNodes:${CIRCLE_NODE_TOTAL},\
+            ci.nodeIdx:${CIRCLE_NODE_INDEX},\
+            git.pr_num:${CIRCLE_PR_NUMBER}"
+
+            CMD="DD_CIVISIBILITY_AGENTLESS_ENABLED=true \
+            DD_TAGS='${tags}' \
+            DD_ENV='ci-<<parameters.mark>>' \
+            DD_SERVICE='determined-pytest-<<parameters.mark>>' \
             DET_MASTER_CERT_FILE=<<parameters.master-cert>> \
             DET_MASTER_CERT_NAME=<<parameters.master-cert-name>> \
             IS_CIRCLECI_JOB=1 XDG_CONFIG_HOME=/tmp \
@@ -672,14 +728,16 @@ commands:
             -m '<<parameters.mark>>' \
             --durations=0 \
             --ddtrace \
-            --master-scheme="<<parameters.master-scheme>>" \
-            --master-host="<<parameters.master-host>>" \
-            --master-port="<<parameters.master-port>>" \
+            --master-scheme='<<parameters.master-scheme>>' \
+            --master-host='<<parameters.master-host>>' \
+            --master-port='<<parameters.master-port>>' \
             -o junit_family=xunit1 \
-            --junit-xml="<<parameters.junit-path>>" \
-            <<parameters.extra-pytest-flags>>" \
-            --verbose --split-by=timings
+            --junit-xml='<<parameters.junit-path>>' \
+            <<parameters.extra-pytest-flags>>"
 
+            echo "$CMD"
+            cat /tmp/all-relevant-files | circleci tests run --command="$CMD" \
+            --verbose --split-by=timings
             pytest_status=$?
             echo Pytest exited with $pytest_status
             exit $pytest_status
@@ -694,6 +752,21 @@ commands:
                 master_address: "<<parameters.master-scheme>>://<<parameters.master-host>>:<<parameters.master-port>>"
       - store_artifacts:
           path: /tmp/artifacts/logs
+      - when:
+          condition:
+            and:
+              - equal: [<<parameters.master-host>>,'localhost']
+              - <<parameters.wait-for-master>>
+              - not: <<parameters.managed-devcluster>>
+          steps:
+            - run: # We don't know how long Circle leaves these machines running in the background. Take down the agent for safety.
+                name: Stop DataDog agent
+                when: always
+                command: |
+                  if [ "$AIS_DD_ENABLE_MONITORING" == "true" ]; then
+                    sudo systemctl stop datadog-agent || true
+                  fi
+            
 
   run-det-deploy-tests:
     parameters:
@@ -2193,6 +2266,7 @@ jobs:
       - setup-go-intg-deps
       - run: curl -LO https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64 && sudo install minikube-linux-amd64 /usr/local/bin/minikube
       - run: minikube start
+      - license-gen
       - run: make -C master test-intg
       - codecov/upload:
           flags: "backend"
@@ -2365,7 +2439,7 @@ jobs:
 
   test-unit-harness-gpu-tf:
     docker:
-      - image: determinedai/tensorflow-ngc-dev:0e43056
+      - image: determinedai/tensorflow-ngc-dev:f20b027
     resource_class: determined-ai/container-runner-gpu
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
@@ -2392,7 +2466,7 @@ jobs:
 
   test-unit-harness-pytorch2-gpu:
     docker:
-      - image: determinedai/pytorch-ngc-dev:0e43056
+      - image: determinedai/pytorch-ngc-dev:f20b027
     resource_class: determined-ai/container-runner-gpu
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
@@ -2419,7 +2493,7 @@ jobs:
 
   test-unit-harness-pytorch2-cpu:
     docker:
-      - image: determinedai/pytorch-ngc-dev:0e43056
+      - image: determinedai/pytorch-ngc-dev:f20b027
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
       - checkout
@@ -2445,7 +2519,7 @@ jobs:
 
   test-unit-harness-gpu-parallel:
     docker:
-      - image: determinedai/pytorch-ngc-dev:0e43056
+      - image: determinedai/pytorch-ngc-dev:f20b027
     resource_class: determined-ai/container-runner-multi-gpu
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
@@ -2472,7 +2546,7 @@ jobs:
 
   test-unit-harness-gpu-deepspeed:
     docker:
-      - image: determinedai/pytorch-ngc-dev:0e43056
+      - image: determinedai/pytorch-ngc-dev:f20b027
     resource_class: determined-ai/container-runner-gpu
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
@@ -2658,9 +2732,6 @@ jobs:
       container-run-type:
         type: string
         default: singularity
-      agent-use:
-        type: string
-        default: ""
       workload-manager:
         type: string
         default: slurm
@@ -2766,7 +2837,7 @@ jobs:
             sudo apt-get update
             sudo apt-get install gettext
             sudo apt-get install iproute2
-            yes yes | PATH=$HOME/.local/bin:$PATH make slurmcluster FLAGS="-c <<parameters.container-run-type>> -w <<parameters.workload-manager>> <<parameters.agent-use>>" TF_LOCK=false | tee output.log
+            yes yes | PATH=$HOME/.local/bin:$PATH make slurmcluster FLAGS="-c <<parameters.container-run-type>> -w <<parameters.workload-manager>>" TF_LOCK=false | tee output.log
           background: true
 
       - run:
@@ -2794,20 +2865,6 @@ jobs:
           master-host: <<parameters.master-host>>
           master-port: <<parameters.master-port>>
           extra-pytest-flags: <<parameters.extra-pytest-flags>>
-
-      # Must cancel the srun command to prevent a ssh error
-      - when:
-          condition:
-            equal: ["-A", <<parameters.agent-use>>]
-          steps:
-            - run:
-                name: Deallocate the Resources on VM
-                command: |
-                  ZONE=$(terraform -chdir=tools/slurm/terraform output --raw zone)
-                  INSTANCE_NAME=$(terraform -chdir=tools/slurm/terraform output --raw instance_name)
-                  PROJECT=$(terraform -chdir=tools/slurm/terraform output --raw project)
-                  gcloud compute ssh --zone "$ZONE" "$INSTANCE_NAME" --project "$PROJECT" -- \
-                  scancel -u $USER
 
       - run:
           name: Make unslurmcluster
@@ -2908,9 +2965,6 @@ jobs:
         type: string
         default: launcher
       extra-pytest-flags:
-        type: string
-        default: ""
-      agent-use:
         type: string
         default: ""
       collect-det-job-logs:
@@ -3113,6 +3167,9 @@ jobs:
       run-minikubes:
         type: boolean
         default: false
+      multi-k8s:
+        type: boolean
+        default: false
       resource-class:
         type: string
         default: xlarge
@@ -3156,10 +3213,12 @@ jobs:
                 command: |
                   K8S_VERSION=<<parameters.k8s-version>> source tools/k8s/launch-minikube-with-gateway.sh defaultrm
                   echo "export GATEWAY_IP=\"${GATEWAY_IP}\"" >> $BASH_ENV
-            - run:
-                name: Start additionalrm minikube
-                command: minikube start --profile additionalrm --kubernetes-version <<parameters.k8s-version>>
-
+            - when:
+                condition: <<parameters.multi-k8s>>
+                steps:
+                  - run:
+                      name: Start additionalrm minikube
+                      command: minikube start --profile additionalrm --kubernetes-version <<parameters.k8s-version>>
       - install-devcluster
       - unless:
           condition: <<parameters.managed-devcluster>>
@@ -3593,7 +3652,7 @@ jobs:
         type: string
         default: "1"
       environment-image:
-        default: determinedai/pytorch-ngc-dev:0e43056
+        default: determinedai/pytorch-ngc-dev:f20b027
         type: string
       accel-node-taints:
         type: string
@@ -4035,7 +4094,11 @@ workflows:
     <<: *do-not-run-on-manual-trigger
     jobs:
       - test-intg-master:
-          context: storage-unit-tests
+          context:
+            - storage-unit-tests
+            # Provides the GITHUB_USERNAME and GITHUB_TOKEN enviroment variable
+            # that's required by the "gh" command for authentication.
+            - github-read
       - test-intg-agent
       - go-coverage:
           requires:
@@ -4475,6 +4538,19 @@ workflows:
           mark: e2e_multi_k8s
           target-stage: master
           devcluster-config: multi-k8s.devcluster.yaml
+          run-minikubes: true
+          multi-k8s: true
+
+      - test-e2e:
+          name: test-e2e-single-k8s
+          context:
+            - dev-ci-cluster-default-user-credentials
+          requires:
+            - build-go-ee
+          parallelism: 1
+          mark: e2e_single_k8s
+          target-stage: master
+          devcluster-config: single-k8s.devcluster.yaml
           run-minikubes: true
 
       - test-e2e:
@@ -5518,39 +5594,6 @@ workflows:
               ld_library_path:
             security:
               initial_user_password: ${INITIAL_USER_PASSWORD}
-      - test-e2e-slurm:
-            name: test-e2e-slurm-agent-singularity-znode
-            context:
-              - dev-ci-cluster-default-user-credentials
-            requires:
-              - package-and-push-system-local-ee
-            agent-use: "-A"
-            extra-pytest-flags: "-k 'not node_not_available'"
-            # For now we must skip node_not_available. There is a inconsistency with the agent where
-            # the error is "failed to create experiment: slots requested exceeds cluster capacity" instead of the expected message.
-            master_config: |
-                task_container_defaults:
-                  slurm:
-                    sbatch_args:
-                      - --time=04:00:00
-                  environment_variables:
-                    # Some ports are not working, disable them so distributed jobs work.
-                    - NCCL_IB_HCA=mlx6_0:0
-                checkpoint_storage:
-                  type: shared_fs
-                  host_path: /scratch/launcher/.launcher.$HOSTNAME/checkpoints
-                  storage_path: determined-checkpoint
-                  save_experiment_best: 0
-                  save_trial_best: 1
-                  save_trial_latest: 1
-                db:
-                  user: postgres
-                  host: localhost
-                  port: 5432
-                  name: determined
-                  password: ${HPC_DB_PASSWD}
-                security:
-                  initial_user_password: ${INITIAL_USER_PASSWORD}
       - terminate-vpc-circleci:
             context: ["gcp"]
 

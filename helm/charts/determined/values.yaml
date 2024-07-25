@@ -31,8 +31,8 @@ defaultImages:
   kubeSchedulerPreemption: "determinedai/kube-scheduler:0.17.0"
 
   # default images for CPU and GPU environments
-  cpuImage: "determinedai/pytorch-ngc-dev:0e43056"
-  gpuImage: "determinedai/pytorch-ngc-dev:0e43056"
+  cpuImage: "determinedai/pytorch-ngc-dev:f20b027"
+  gpuImage: "determinedai/pytorch-ngc-dev:f20b027"
 
 # Install Determined enterprise edition.
 enterpriseEdition: false
@@ -119,6 +119,7 @@ useNodePortForMaster: false
 #   autoProvisionUsers:
 #   groupsAttributeName:
 #   displayNameAttributeName:
+#   alwaysRedirect:
 
 # scim (EE-only) enables System for Cross-domain Identity Management (SCIM) integration, which is
 # only available if enterpriseEdition is true. It allows administrators to easily and securely
@@ -143,6 +144,7 @@ useNodePortForMaster: false
 #   autoProvisionUsers:
 #   groupsAttributeName:
 #   displayNameAttributeName:
+#   alwaysRedirect:
 
 # db sets the configurations for the database.
 db:
@@ -357,7 +359,7 @@ resourcePools:
 #       type: kubernetes
 #       max_slots_per_pod: 1
 #       name: carolina-multirm-1
-#       namespace: default
+#       default_namespace: default
 #       kubeconfig_secret_name: additionalrm
 #       kubeconfig_secret_value: config
 #       determined_master_ip: 10.11.12.13
@@ -371,3 +373,6 @@ resourcePools:
   # logRetentionDays: 7
   # Schedule for cleaning up logs. This also accepts a cron expression. For example to run retention every Sunday at 2 am, use "0 2 * * 0"
   # schedule: "24h"
+
+# The default namespace to be referenced by each resource manager.
+# defaultNamespace:

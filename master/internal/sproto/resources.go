@@ -378,10 +378,6 @@ type ResourcesStateChanged struct {
 
 	ResourcesStarted *ResourcesStarted
 	ResourcesStopped *ResourcesStopped
-
-	// More granular information about specific resource types.
-	// TODO(DET-9700): This can be removed now.
-	Container *cproto.Container
 }
 
 func (r ResourcesStateChanged) String() string {
@@ -400,15 +396,5 @@ func FromContainerStateChanged(sc aproto.ContainerStateChanged) *ResourcesStateC
 		ResourcesState:   FromContainerState(sc.Container.State),
 		ResourcesStarted: FromContainerStarted(sc.ContainerStarted),
 		ResourcesStopped: FromContainerStopped(sc.ContainerStopped),
-		Container:        &sc.Container,
 	}
-}
-
-// ContainerIDStr returns the associated container ID str if there is one or nil.
-func (r *ResourcesStateChanged) ContainerIDStr() *string {
-	if r.Container == nil {
-		return nil
-	}
-
-	return (*string)(&r.Container.ID)
 }

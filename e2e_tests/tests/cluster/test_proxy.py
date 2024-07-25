@@ -194,7 +194,7 @@ def test_experiment_proxy_ray_tunnel() -> None:
         sess,
         str(exp_path / "ray_launcher.yaml"),
         str(exp_path),
-        ["--config", "max_restarts=0", "--config", "resources.slots=1"],
+        ["--config", "max_restarts=0"],
     )
     try:
         exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.RUNNING)
@@ -276,8 +276,6 @@ def test_experiment_proxy_ray_publish() -> None:
             str(exp_path),
             "--config",
             "max_restarts=0",
-            "--config",
-            "resources.slots=1",
             "-f",
             "-p",
             "8265",

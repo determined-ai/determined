@@ -557,6 +557,9 @@ func (a *apiServer) PatchUser(
 func (a *apiServer) PatchUsers(
 	ctx context.Context, req *apiv1.PatchUsersRequest,
 ) (*apiv1.PatchUsersResponse, error) {
+	if a.m.config.InternalConfig.ExternalSessions.Enabled() {
+		return nil, errExternalSessions
+	}
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
@@ -621,9 +624,6 @@ func (a *apiServer) GetUserSetting(
 func (a *apiServer) PostUserSetting(
 	ctx context.Context, req *apiv1.PostUserSettingRequest,
 ) (*apiv1.PostUserSettingResponse, error) {
-	if a.m.config.InternalConfig.ExternalSessions.Enabled() {
-		return nil, errExternalSessions
-	}
 	if req.Settings == nil {
 		req.Settings = make([]*userv1.UserWebSetting, 0)
 	}

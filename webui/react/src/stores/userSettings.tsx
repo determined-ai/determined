@@ -12,6 +12,7 @@ import { isJsonObject, isObject } from 'utils/data';
 import handleError, { DetError, ErrorType } from 'utils/error';
 import { getProps } from 'utils/iotsHelpers';
 import { observable, Observable, WritableObservable } from 'utils/observable';
+import { isRemoteUserTokenExpired } from 'utils/service';
 
 import PollingStore from './polling';
 
@@ -232,11 +233,17 @@ export class UserSettingsStore extends PollingStore {
       const response = await getUserSetting({ signal: this.canceler?.signal });
       this.updateSettingsFromResponse(response);
     } catch (error) {
-      handleError(error, {
-        isUserTriggered: false,
-        publicMessage: 'Unable to fetch user settings, try refreshing.',
-        type: ErrorType.Api,
-      });
+      if (isRemoteUserTokenExpired(error)) {
+        // ensure a redirect to the SSO providers is triggered,
+        // by not hiding the public message.
+        handleError(error);
+      } else {
+        handleError(error, {
+          isUserTriggered: false,
+          publicMessage: 'Unable to fetch user settings, try refreshing.',
+          type: ErrorType.Api,
+        });
+      }
     } finally {
       this.#settings.update((settings) =>
         // If we are unable to load settings just notify the user and unblock them.

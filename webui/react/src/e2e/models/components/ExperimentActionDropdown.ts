@@ -8,6 +8,8 @@ import ExperimentEditModal from './ExperimentEditModal';
 
 export class ExperimentActionDropdown extends DropdownMenu {
   readonly edit = this.menuItem('Edit');
+  readonly pause = this.menuItem('Pause');
+  readonly resume = this.menuItem('Resume');
 
   readonly editModal = new ExperimentEditModal({
     root: this.root,

@@ -82,6 +82,7 @@ type job struct {
 	clusterID       string
 	masterIP        string
 	masterPort      int32
+	masterScheme    string
 	masterTLSConfig model.TLSClientConfig
 	jobName         string
 	configMapName   string
@@ -134,6 +135,7 @@ func newJob(
 	namespace string,
 	masterIP string,
 	masterPort int32,
+	masterScheme string,
 	masterTLSConfig model.TLSClientConfig,
 	podInterface typedV1.PodInterface,
 	configMapInterface typedV1.ConfigMapInterface,
@@ -156,6 +158,7 @@ func newJob(
 		namespace:             namespace,
 		masterIP:              masterIP,
 		masterPort:            masterPort,
+		masterScheme:          masterScheme,
 		masterTLSConfig:       masterTLSConfig,
 		numPods:               msg.numPods,
 		slotsPerPod:           msg.slots,
@@ -591,7 +594,6 @@ func (j *job) informTaskResourcesState() {
 	rmevents.Publish(j.allocationID, &sproto.ResourcesStateChanged{
 		ResourcesID:    sproto.FromContainerID(j.container.ID),
 		ResourcesState: sproto.FromContainerState(j.container.State),
-		Container:      j.container.DeepCopy(),
 	})
 }
 
@@ -600,7 +602,6 @@ func (j *job) informTaskResourcesStarted(rs sproto.ResourcesStarted) {
 		ResourcesID:      sproto.FromContainerID(j.container.ID),
 		ResourcesState:   sproto.FromContainerState(j.container.State),
 		ResourcesStarted: &rs,
-		Container:        j.container.DeepCopy(),
 	})
 }
 
@@ -613,7 +614,6 @@ func (j *job) informTaskResourcesStopped() {
 		ResourcesID:      sproto.FromContainerID(j.container.ID),
 		ResourcesState:   sproto.FromContainerState(j.container.State),
 		ResourcesStopped: &sproto.ResourcesStopped{Failure: j.exitCause()},
-		Container:        j.container.DeepCopy(),
 	})
 	j.sentTerminationEvent = true
 }

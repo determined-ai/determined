@@ -16,6 +16,8 @@ import (
 	"github.com/sirupsen/logrus"
 	"github.hpe.com/hpe/hpc-ard-launcher-go/launcher"
 	"golang.org/x/exp/maps"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/proto"
 
 	"github.com/determined-ai/determined/master/internal/api/apiutils"
@@ -272,8 +274,8 @@ func (m *DispatcherResourceManager) HealthCheck() []model.ResourceManagerHealth 
 
 	return []model.ResourceManagerHealth{
 		{
-			Name:   m.rmConfig.Name,
-			Status: status,
+			ClusterName: m.rmConfig.ClusterName,
+			Status:      status,
 		},
 	}
 }
@@ -468,7 +470,7 @@ func (m *DispatcherResourceManager) GetResourcePools() (
 			InstanceType:                 "",
 			Details:                      &resourcepoolv1.ResourcePoolDetail{},
 			Accelerator:                  v.Accelerator,
-			ResourceManagerName:          m.rmConfig.Name,
+			ClusterName:                  m.rmConfig.ClusterName,
 			ResourceManagerMetadata:      m.rmConfig.Metadata,
 		}
 		poolNameMap[pool.Name] = &pool
@@ -659,6 +661,44 @@ func (*DispatcherResourceManager) GetSlot(*apiv1.GetSlotRequest) (*apiv1.GetSlot
 // GetSlots is unsupported.
 func (*DispatcherResourceManager) GetSlots(*apiv1.GetSlotsRequest) (*apiv1.GetSlotsResponse, error) {
 	return nil, rmerrors.ErrNotSupported
+}
+
+// DefaultNamespace is unsupported.
+func (*DispatcherResourceManager) DefaultNamespace(string) (*string, error) {
+	return nil, status.Error(codes.NotFound, rmerrors.ErrNotSupported.Error())
+}
+
+// VerifyNamespaceExists is unsupported.
+func (*DispatcherResourceManager) VerifyNamespaceExists(string, string) error {
+	return rmerrors.ErrNotSupported
+}
+
+// CreateNamespace is unsupported.
+func (*DispatcherResourceManager) CreateNamespace(string, string, bool) error {
+	return rmerrors.ErrNotSupported
+}
+
+// DeleteNamespace is unsupported.
+func (*DispatcherResourceManager) DeleteNamespace(string) error {
+	// We don't want to error out when this gets called, because the function cannot get called
+	// because of an API request to delete the namespace. It is only used internally to clean up
+	// namespaces created for workspaces that no longer exist.
+	return nil
+}
+
+// RemoveEmptyNamespace is not supported.
+func (*DispatcherResourceManager) RemoveEmptyNamespace(string, string) error {
+	return rmerrors.ErrNotSupported
+}
+
+// SetResourceQuota is unsupported.
+func (*DispatcherResourceManager) SetResourceQuota(int, string, string) error {
+	return rmerrors.ErrNotSupported
+}
+
+// GetNamespaceResourceQuota is not supported.
+func (*DispatcherResourceManager) GetNamespaceResourceQuota(string, string) (*float64, error) {
+	return nil, status.Error(codes.NotFound, rmerrors.ErrNotSupported.Error())
 }
 
 // ResolveResourcePool returns the resolved slurm partition or an error if it doesn't exist or

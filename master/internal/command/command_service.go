@@ -133,7 +133,7 @@ func (cs *CommandService) LaunchGenericCommand(
 // LaunchNotebookCommand creates notebook commands and persists them to the database.
 func (cs *CommandService) LaunchNotebookCommand(
 	req *CreateGeneric,
-	session *model.UserSession,
+	user *model.User,
 ) (*Command, error) {
 	cs.mu.Lock()
 	defer cs.mu.Unlock()
@@ -149,7 +149,7 @@ func (cs *CommandService) LaunchNotebookCommand(
 		"task-type": model.TaskTypeNotebook,
 	}
 
-	token, err := db.GenerateNotebookSessionToken(session.ID, taskID)
+	token, err := db.GenerateNotebookSessionToken(user.ID, taskID)
 	if err != nil {
 		return nil, err
 	}
@@ -173,7 +173,7 @@ func (cs *CommandService) LaunchNotebookCommand(
 		return nil, err
 	}
 
-	if err := db.StartNotebookSession(context.TODO(), session.ID, taskID, &token); err != nil {
+	if err := db.StartNotebookSession(context.TODO(), user.ID, taskID); err != nil {
 		return nil, err
 	}
 

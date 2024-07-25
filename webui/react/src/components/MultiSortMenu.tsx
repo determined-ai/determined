@@ -131,6 +131,7 @@ export const sortMenuItemsForColumn = (
 
 const DirectionOptions: React.FC<DirectionOptionsProps> = ({ onChange, type, value }) => (
   <Select
+    data-test="direction"
     options={optionsByColumnType[type]}
     placeholder="Select direction"
     value={value}
@@ -147,6 +148,7 @@ const ColumnOptions: React.FC<ColumnOptionsProps> = ({
 }) => (
   <Select
     autoFocus
+    data-test="column"
     dropdownMatchSelectWidth={300}
     loading={Loadable.isNotLoaded(columns)}
     options={Loadable.getOrElse([], columns)
@@ -173,7 +175,7 @@ const MultiSortRow: React.FC<MultiSortRowProps> = ({
     Loadable.getOrElse([], columns).find((c) => c.column === sort.column)?.type ||
     V1ColumnType.UNSPECIFIED;
   return (
-    <div className={css.sortRow}>
+    <div className={css.sortRow} data-test-component="multiSortRow">
       <div className={css.select}>
         <ColumnOptions
           bannedSortColumns={bannedSortColumns}
@@ -191,6 +193,7 @@ const MultiSortRow: React.FC<MultiSortRowProps> = ({
       </div>
       <div>
         <Button
+          data-test="remove"
           icon={<Icon name="close" title={REMOVE_SORT_TITLE} />}
           size="small"
           type="text"
@@ -222,9 +225,9 @@ const MultiSort: React.FC<MultiSortProps> = ({ sorts, columns, onChange, bannedS
   };
 
   return (
-    <div className={css.base}>
+    <div className={css.base} data-test-component="multiSort">
       <div>{SORT_MENU_TITLE}</div>
-      <div className={css.rows}>
+      <div className={css.rows} data-test="rows">
         {sorts.map((sort, idx) => {
           const seenColumns = sorts.slice(0, idx).map((s) => s.column);
           const columnOptions = Loadable.map(columns, (cols) =>
@@ -243,10 +246,14 @@ const MultiSort: React.FC<MultiSortProps> = ({ sorts, columns, onChange, bannedS
         })}
       </div>
       <div className={css.actions}>
-        <Button icon={<Icon decorative name="add" size="tiny" />} type="text" onClick={addRow}>
+        <Button
+          data-test="add"
+          icon={<Icon decorative name="add" size="tiny" />}
+          type="text"
+          onClick={addRow}>
           {ADD_SORT_TEXT}
         </Button>
-        <Button type="text" onClick={clearAll}>
+        <Button data-test="reset" type="text" onClick={clearAll}>
           {RESET_SORT_TEXT}
         </Button>
       </div>

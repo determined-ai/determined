@@ -13,7 +13,6 @@ import { DevFixture } from './dev.fixture';
 import { UserFixture } from './user.fixture';
 
 type CustomFixtures = {
-  dev: DevFixture;
   devSetup: Page;
   auth: AuthFixture;
   apiAuth: ApiAuthFixture;
@@ -23,9 +22,11 @@ type CustomFixtures = {
 };
 
 type CustomWorkerFixtures = {
+  dev: DevFixture;
   newAdmin: V1PostUserRequest;
   backgroundApiAuth: ApiAuthFixture;
   backgroundApiUser: ApiUserFixture;
+  backgroundAuthedPage: Page;
 };
 
 // https://playwright.dev/docs/test-fixtures
@@ -37,6 +38,17 @@ export const test = baseTest.extend<CustomFixtures, CustomWorkerFixtures>({
       creds: {
         password: newAdmin.password!,
         username: newAdmin.user!.username,
+      },
+    });
+    await apiAuth.apiContext?.post('/api/v1/users/setting', {
+      data: {
+        settings: [
+          {
+            key: 'flat_runs',
+            storagePath: 'global-features',
+            value: 'false',
+          },
+        ],
       },
     });
     await use(apiAuth);
@@ -67,11 +79,23 @@ export const test = baseTest.extend<CustomFixtures, CustomWorkerFixtures>({
     async ({ playwright, browser }, use) => {
       const backgroundApiAuth = new ApiAuthFixture(playwright.request, browser, apiUrl());
       await backgroundApiAuth.loginApi();
+      await backgroundApiAuth.apiContext?.post('/api/v1/users/setting', {
+        data: {
+          settings: [
+            {
+              key: 'flat_runs',
+              storagePath: 'global-features',
+              value: 'false',
+            },
+          ],
+        },
+      });
       await use(backgroundApiAuth);
       await backgroundApiAuth.dispose();
     },
     { scope: 'worker' },
   ],
+
   /**
    * Allows calling the user api without a page so that it can run in beforeAll(). You will need to get a bearer
    * token by calling backgroundApiUser.apiAuth.loginAPI(). This will also provision a page in the background which
@@ -85,11 +109,28 @@ export const test = baseTest.extend<CustomFixtures, CustomWorkerFixtures>({
     },
     { scope: 'worker' },
   ],
-  // eslint-disable-next-line no-empty-pattern
-  dev: async ({}, use) => {
-    const dev = new DevFixture();
-    await use(dev);
-  },
+
+  /**
+   * API authenticated page for use in beforeAll()
+   */
+  backgroundAuthedPage: [
+    async ({ browser, dev, backgroundApiAuth }, use) => {
+      const page = await browser.newPage();
+      await dev.setServerAddress(page);
+      await backgroundApiAuth.loginBrowser(page);
+      await use(page);
+      await page.close();
+    },
+    { scope: 'worker' },
+  ],
+  dev: [
+    // eslint-disable-next-line no-empty-pattern
+    async ({}, use) => {
+      const dev = new DevFixture();
+      await use(dev);
+    },
+    { scope: 'worker' },
+  ],
   devSetup: [
     async ({ dev, page }, use) => {
       await dev.setServerAddress(page);

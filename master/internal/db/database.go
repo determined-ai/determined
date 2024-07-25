@@ -103,4 +103,8 @@ var (
 	// ErrInvalidInput is returned when the data passed to a function is invalid for semantic or
 	// syntactic reasons.
 	ErrInvalidInput = errors.New("invalid input")
+
+	// ErrDeleteDefaultBinding is returned when trying to delete a workspace bound to its default
+	// namespace.
+	ErrDeleteDefaultBinding = errors.New("cannot delete the default namespace binding")
 )

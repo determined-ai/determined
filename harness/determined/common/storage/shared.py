@@ -5,7 +5,7 @@ import os
 import pathlib
 import shutil
 import urllib
-from typing import Any, Callable, Dict, Iterator, List, Optional, Union
+from typing import Any, Callable, Dict, Iterator, List, Optional, Set, Union
 
 from determined import errors, util
 from determined.common import check, storage
@@ -98,7 +98,7 @@ def copytree(
     )
 
 
-def _shortcut_to_config(shortcut: str) -> Dict[str, Any]:
+def _shortcut_to_config(shortcut: str, on_cluster: bool = True) -> Dict[str, Any]:
     p: urllib.parse.ParseResult = urllib.parse.urlparse(shortcut)
     if any((p.params, p.query, p.fragment)):
         raise ValueError(f'Malformed checkpoint_storage string "{shortcut}"')
@@ -106,10 +106,17 @@ def _shortcut_to_config(shortcut: str) -> Dict[str, Any]:
     scheme = p.scheme.lower()
 
     if scheme in ["", "file"]:
-        return {
-            "type": "shared_fs",
-            "host_path": p.path,
-        }
+        return (
+            {
+                "type": "shared_fs",
+                "host_path": p.path,
+            }
+            if on_cluster
+            else {
+                "type": "directory",
+                "container_path": p.path,
+            }
+        )
     elif scheme in ["s3", "gs"]:
         bucket = p.netloc
         prefix = p.path.lstrip("/")
@@ -171,7 +178,9 @@ class SharedFSStorageManager(storage.StorageManager):
         )
         return cls(base_path)
 
-    def post_store_path(self, src: Union[str, os.PathLike], dst: str) -> None:
+    def post_store_path(
+        self, src: Union[str, os.PathLike], dst: str, paths: Optional[Set[str]] = None
+    ) -> None:
         """
         Nothing to clean up after writing directly to shared_fs.
         """

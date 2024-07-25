@@ -5,10 +5,10 @@ Mappings:
   RegionMap:
     us-gov-east-1:
       Master: ami-04ef693ebcf519dc3
-      Agent: ami-0cc63f942a6c1e5fd
+      Agent: ami-079d6ccabd0db16a2
     us-gov-west-1:
       Master: ami-08bd15d820a3c087e
-      Agent: ami-0707563a683a19ed2
+      Agent: ami-0752d25f0f3d4e3c2
 Parameters:
   Keypair:
     Type: AWS::EC2::KeyPair::KeyName
@@ -68,7 +68,7 @@ Parameters:
   Version:
     Type: String
     Description: Determined version or commit for master docker image
-    Default: 0.34.1-dev0
+    Default: 0.35.0-dev0
 
   DBPassword:
     Type: String

@@ -40,12 +40,16 @@ import { Error } from 'components/exceptions';
 import { FilterFormStore, ROOT_ID } from 'components/FilterForm/components/FilterFormStore';
 import {
   AvailableOperators,
+  FilterFormSet,
+  FormField,
+  FormGroup,
   FormKind,
   IOFilterFormSet,
   Operator,
   SpecialColumnNames,
 } from 'components/FilterForm/components/type';
 import TableFilter from 'components/FilterForm/TableFilter';
+import LoadableCount from 'components/LoadableCount';
 import MultiSortMenu, { EMPTY_SORT, sortMenuItemsForColumn } from 'components/MultiSortMenu';
 import { OptionsMenu, RowHeight } from 'components/OptionsMenu';
 import {
@@ -179,6 +183,10 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
   });
   const sortString = useMemo(() => makeSortString(sorts.filter(validSort.is)), [sorts]);
   const loadableFormset = useObservable(formStore.formset);
+  const rootFilterChildren: Array<FormGroup | FormField> = Loadable.match(loadableFormset, {
+    _: () => [],
+    Loaded: (formset: FilterFormSet) => formset.filterGroup.children,
+  });
   const filtersString = useObservable(formStore.asJsonString);
   const [total, setTotal] = useState<Loadable<number>>(NotLoaded);
   const isMobile = useMobile();
@@ -546,7 +554,9 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
 
   const { stopPolling } = usePolling(fetchRuns, { rerunOnNewFn: true });
 
-  const numFilters = 0;
+  const numFilters = useMemo(() => {
+    return rootFilterChildren.length;
+  }, [rootFilterChildren.length]);
 
   const resetPagination = useCallback(() => {
     setIsLoading(true);
@@ -558,8 +568,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
     if (!isLoadingSettings && settings.sortString) {
       setSorts(parseSortString(settings.sortString));
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoadingSettings]);
+  }, [isLoadingSettings, settings.sortString]);
 
   useEffect(() => {
     let cleanup: () => void;
@@ -704,7 +713,6 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
 
           break;
       }
-
       updateSettings({ selection: newSettings });
     },
     [rowRangeToIds, settings.selection, updateSettings],
@@ -838,7 +846,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
             key: 'select-all',
             label: 'Select all',
             onClick: () => {
-              handleSelectionChange?.('set', [0, settings.pageLimit]);
+              handleSelectionChange?.('add', [0, settings.pageLimit]);
             },
           },
         ];
@@ -918,10 +926,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
           column.column,
         );
         formStore.addChild(ROOT_ID, FormKind.Field, {
-          index: Loadable.match(loadableFormset, {
-            _: () => 0,
-            Loaded: (formset) => formset.filterGroup.children.length,
-          }),
+          index: rootFilterChildren.length,
           item: {
             columnName: column.column,
             id: uuidv4(),
@@ -1003,7 +1008,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
       handleSelectionChange,
       columnsIfLoaded,
       handleColumnsOrderChange,
-      loadableFormset,
+      rootFilterChildren,
       handleIsOpenFilterChange,
       sorts,
       handleSortChange,
@@ -1063,6 +1068,12 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
               selectedRuns={selectedRuns}
               workspaceId={workspaceId}
               onActionComplete={onActionComplete}
+            />
+            <LoadableCount
+              labelPlural="runs"
+              labelSingular="run"
+              selectedCount={selectedRunIdSet.size}
+              total={total}
             />
           </Row>
         </Column>

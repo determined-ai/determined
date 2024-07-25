@@ -167,7 +167,7 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
       };
 
       return (
-        <OverviewStats title="Data input" onClick={handleClickDataInput}>
+        <OverviewStats title="Data Input" onClick={handleClickDataInput}>
           {integrations.pachyderm.dataset.repo}
         </OverviewStats>
       );
@@ -201,12 +201,7 @@ const TrialInfoBox: React.FC<Props> = ({ trial, experiment }: Props) => {
         {/* Older experiment may not have collected accelerator data */}
         {acceleratorData?.length ? (
           <OverviewStats title="Resource Allocation" onClick={allocationModal.open}>
-            <div
-              style={{
-                color: 'var(--theme-status-active)',
-              }}>
-              {`${numOfSlots} ${pluralizer(numOfSlots, 'Slot')}`}
-            </div>
+            {`${numOfSlots} ${pluralizer(numOfSlots, 'Slot')}`}
           </OverviewStats>
         ) : null}
         {<OverviewStats title="Log Retention Days">{logRetentionDays}</OverviewStats>}

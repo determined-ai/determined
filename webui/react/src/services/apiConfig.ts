@@ -505,6 +505,20 @@ export const disableAgent: DetApi<string, Api.V1DisableAgentResponse, Type.Agent
   request: (agentId) => detApi.Cluster.disableAgent(agentId, {}),
 };
 
+export const getKubernetesResourceManagers: DetApi<
+  void,
+  Api.V1GetKubernetesResourceManagersResponse,
+  Type.KubernetesResourceManagers
+> = {
+  name: 'getKubernetesResourceManagers',
+  postProcess: (response) => {
+    return {
+      names: response.resourceManagers,
+    };
+  },
+  request: () => detApi.Internal.getKubernetesResourceManagers(),
+};
+
 export const getResourcePools: DetApi<
   Service.GetResourcePoolsParams,
   Api.V1GetResourcePoolsResponse,
@@ -636,14 +650,7 @@ export const searchExperiments: DetApi<
     };
   },
   request: (params: Service.SearchExperimentsParams, options) => {
-    return detApi.Experiments.searchExperiments(
-      params.projectId,
-      params.offset,
-      params.limit,
-      params.sort,
-      params.filter,
-      options,
-    );
+    return detApi.Experiments.searchExperiments(params, options);
   },
 };
 
@@ -1589,6 +1596,55 @@ export const patchWorkspace: DetApi<
       },
       options,
     );
+  },
+};
+
+export const getKubernetesResourceQuotas: DetApi<
+  Service.GetKubernetesResourceQuotasParamas,
+  Api.V1GetKubernetesResourceQuotasResponse,
+  Type.WorkspaceResourceQuotas
+> = {
+  name: 'listWorkspaceNamespaceBindings',
+  postProcess: (response) => {
+    return {
+      resourceQuotas: response.resourceQuotas,
+    };
+  },
+  request: (params) => {
+    return detApi.Workspaces.getKubernetesResourceQuotas(params.id);
+  },
+};
+
+export const listWorkspaceNamespaceBindings: DetApi<
+  Service.ListWorkspaceNamespaceBindingsParams,
+  Api.V1ListWorkspaceNamespaceBindingsResponse,
+  Type.WorkspaceNamespaceBindings
+> = {
+  name: 'listWorkspaceNamespaceBindings',
+  postProcess: (response) => {
+    return {
+      namespaceBindings: response.namespaceBindings,
+    };
+  },
+  request: (params) => {
+    return detApi.Workspaces.listWorkspaceNamespaceBindings(params.id);
+  },
+};
+
+export const setResourceQuotas: DetApi<
+  Api.V1SetResourceQuotasRequest,
+  Api.V1SetResourceQuotasResponse,
+  void
+> = {
+  name: 'setResourceQuotas',
+  postProcess: () => {
+    return {};
+  },
+  request: (params) => {
+    return detApi.Workspaces.setResourceQuotas(params.id, {
+      clusterQuotaPairs: params.clusterQuotaPairs,
+      id: params.id,
+    });
   },
 };
 

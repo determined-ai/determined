@@ -169,14 +169,14 @@ func TestUserByAttribute(t *testing.T) {
 			require.NoError(t, err)
 
 			if tt.errString != "" {
-				_, err := scimUserByAttribute(ctx, "user_id", "bogus-value")
+				_, err := ScimUserByAttribute(ctx, "user_id", "bogus-value")
 				require.Contains(t, err.Error(), tt.errString)
 
 				_, err = UserBySCIMAttribute(ctx, "user_id", "bogus-value")
 				require.Contains(t, err.Error(), tt.errString)
 			} else {
-				// test scimUserByAttribute
-				scimUser, err := scimUserByAttribute(ctx, "id", fmt.Sprint(val))
+				// test ScimUserByAttribute
+				scimUser, err := ScimUserByAttribute(ctx, "id", fmt.Sprint(val))
 				require.NoError(t, err)
 				require.Equal(t, addedUser.Username, scimUser.Username)
 

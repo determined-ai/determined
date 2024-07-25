@@ -511,11 +511,13 @@ db:
 
 resource_manager:
   type: kubernetes
+  cluster_name: c1 
   max_slots_per_pod: 5
 
 additional_resource_managers:
  - resource_manager:
      name: test
+     cluster_name: c2
      type: kubernetes
 `
 
@@ -526,8 +528,8 @@ task_container_defaults:
 `
 
 	expectedMaxSlots := map[string]int{
-		"default": 5,
-		"test":    65,
+		"c1": 5,
+		"c2": 65,
 	}
 
 	testCases := map[string]struct {
@@ -562,7 +564,7 @@ task_container_defaults:
 				require.NoError(t, unmarshaled.Resolve())
 				actualRMs := unmarshaled.ResourceConfig.ResourceManagers()
 				for _, r := range actualRMs {
-					require.Equal(t, expectedMaxSlots[r.ResourceManager.Name()], *r.ResourceManager.KubernetesRM.MaxSlotsPerPod)
+					require.Equal(t, expectedMaxSlots[r.ResourceManager.ClusterName()], *r.ResourceManager.KubernetesRM.MaxSlotsPerPod)
 				}
 			} else {
 				require.Error(t, unmarshaled.Resolve(), test.expectedError)
@@ -868,7 +870,7 @@ func TestMultiRMPreemptionAndPriority(t *testing.T) {
 	cfg := DefaultConfig()
 	cfg.ResourceConfig = ResourceConfig{
 		RootManagerInternal: &ResourceManagerConfig{AgentRM: &AgentResourceManagerConfig{
-			Name: DefaultRMName, Scheduler: &SchedulerConfig{
+			Name: DefaultClusterName, Scheduler: &SchedulerConfig{
 				Priority: &PrioritySchedulerConfig{
 					Preemption:      false,
 					DefaultPriority: &prio1,

@@ -212,7 +212,7 @@ func TestHealthCheck(t *testing.T) {
 	m := &DispatcherResourceManager{
 		syslog: logrus.WithField("component", "dispatcherrm"),
 		rmConfig: &config.DispatcherResourceManagerConfig{
-			Name: "testname",
+			ClusterName: "testname",
 		},
 	}
 
@@ -222,8 +222,8 @@ func TestHealthCheck(t *testing.T) {
 
 	require.Equal(t, []model.ResourceManagerHealth{
 		{
-			Name:   "testname",
-			Status: model.Unhealthy, // Unhealthy since launcher API client isn't set up properly.
+			ClusterName: "testname",
+			Status:      model.Unhealthy, // Unhealthy since launcher API client isn't set up properly.
 		},
 	}, m.HealthCheck())
 }
@@ -499,7 +499,7 @@ func Test_summarizeResourcePool(t *testing.T) {
 			expectedMetadata := map[string]string{"abc": "dce"}
 			overrides := make(map[string]config.DispatcherPartitionOverrideConfigs)
 			rmConfig := &config.DispatcherResourceManagerConfig{
-				Name:               expectedName,
+				ClusterName:        expectedName,
 				Metadata:           expectedMetadata,
 				PartitionOverrides: overrides,
 			}
@@ -551,7 +551,7 @@ func Test_summarizeResourcePool(t *testing.T) {
 				require.Empty(t, pool.Location)
 				require.Empty(t, pool.InstanceType)
 				require.Empty(t, pool.ImageId)
-				require.Equal(t, expectedName, pool.ResourceManagerName)
+				require.Equal(t, expectedName, pool.ClusterName)
 				require.Equal(t, expectedMetadata, pool.ResourceManagerMetadata)
 			}
 		})

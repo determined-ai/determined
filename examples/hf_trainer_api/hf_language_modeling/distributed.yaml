@@ -23,7 +23,7 @@ entrypoint: >-
   --dataset_config_name wikitext-2-raw-v1
   --do_train
   --do_eval
-  --num_train_epochs 5
+  --max_steps 100
   --logging_strategy steps
   --logging_steps 10
   --output_dir /tmp/test-clm

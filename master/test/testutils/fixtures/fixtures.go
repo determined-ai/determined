@@ -1,7 +1,7 @@
 //go:build integration
 // +build integration
 
-package testutils
+package fixtures
 
 import (
 	"context"
@@ -11,25 +11,22 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/ghodss/yaml"
 	"github.com/jackc/pgconn"
 	"github.com/pkg/errors"
-	"gopkg.in/guregu/null.v3"
-
-	"github.com/determined-ai/determined/master/internal/config"
-	"github.com/determined-ai/determined/master/internal/db"
-	"github.com/determined-ai/determined/master/internal/elastic"
-	"github.com/determined-ai/determined/master/pkg/model"
-
 	"github.com/sirupsen/logrus"
-
-	"github.com/ghodss/yaml"
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/metadata"
+	"gopkg.in/guregu/null.v3"
 
 	"github.com/determined-ai/determined/master/internal"
+	"github.com/determined-ai/determined/master/internal/config"
+	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/elastic"
 	"github.com/determined-ai/determined/master/pkg/check"
 	"github.com/determined-ai/determined/master/pkg/logger"
+	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 

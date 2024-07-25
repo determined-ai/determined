@@ -4,8 +4,9 @@ import (
 	"fmt"
 )
 
-// DefaultRMName is the default resource manager name when a user does not provide one.
-const DefaultRMName = "default"
+// DefaultClusterName is the default resource manager's cluster name when a user does not provide
+// one.
+const DefaultClusterName = "default"
 
 // DefaultRMIndex is the default resource manager index given a list of Resources().
 const DefaultRMIndex = 0
@@ -56,9 +57,20 @@ func (r *ResourceConfig) GetAgentRMConfig() (*ResourceManagerWithPoolsConfig, bo
 	return nil, false
 }
 
+// GetKubernetesClusterNames gets the list of Kubernetes Cluster names.
+func (r *ResourceConfig) GetKubernetesClusterNames() []string {
+	rms := []string{}
+	for _, c := range r.ResourceManagers() {
+		if c.ResourceManager.KubernetesRM != nil {
+			rms = append(rms, c.ResourceManager.KubernetesRM.ClusterName)
+		}
+	}
+	return rms
+}
+
 func defaultAgentRM() *AgentResourceManagerConfig {
 	return &AgentResourceManagerConfig{
-		Name:                       DefaultRMName,
+		ClusterName:                DefaultClusterName,
 		DefaultComputeResourcePool: defaultResourcePoolName,
 		DefaultAuxResourcePool:     defaultResourcePoolName,
 	}
@@ -91,8 +103,8 @@ func (r *ResourceConfig) ResolveResource() error {
 	}
 
 	// Default the name but only for the root level field.
-	if r.RootManagerInternal.Name() == "" {
-		r.RootManagerInternal.setName(DefaultRMName)
+	if r.RootManagerInternal.ClusterName() == "" {
+		r.RootManagerInternal.setClusterName(DefaultClusterName)
 	}
 
 	// Add a default resource pool for nonslurm default resource managers.
@@ -121,7 +133,7 @@ func (r ResourceConfig) Validate() []error {
 				"for additional_resource_managers, you must specify at least one resource pool"))
 		}
 
-		name := r.ResourceManager.Name()
+		name := r.ResourceManager.ClusterName()
 		if _, ok := seenResourceManagerNames[name]; ok {
 			errs = append(errs, fmt.Errorf("resource manager has a duplicate name: %s", name))
 		}

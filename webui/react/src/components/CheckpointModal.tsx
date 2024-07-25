@@ -17,6 +17,7 @@ import {
 import { formatDatetime } from 'utils/datetime';
 import handleError, { DetError, ErrorType } from 'utils/error';
 import { createPachydermLineageLink } from 'utils/integrations';
+import { isAbsolutePath } from 'utils/routes';
 import { humanReadableBytes } from 'utils/string';
 import { checkpointSize } from 'utils/workload';
 
@@ -40,6 +41,7 @@ const getStorageLocation = (
 ): string => {
   const hostPath = config.checkpointStorage?.hostPath;
   const storagePath = config.checkpointStorage?.storagePath;
+  const containerPath = config.checkpointStorage?.containerPath;
   let location = '';
   switch (config.checkpointStorage?.type) {
     case CheckpointStorageType.AWS:
@@ -52,14 +54,18 @@ const getStorageLocation = (
     case CheckpointStorageType.SharedFS:
       if (hostPath && storagePath) {
         location = storagePath.startsWith('/')
-          ? `file://${storagePath}`
+          ? `file:/${storagePath}`
           : `file://${hostPath}/${storagePath}`;
       } else if (hostPath) {
-        location = `file://${hostPath}`;
+        location = `file:${isAbsolutePath(hostPath.replace(' ', '')) ? '/' : '//'}${hostPath}`;
       }
       break;
     case CheckpointStorageType.DIRECTORY:
-      // unsupported, natch
+      if (containerPath) {
+        location = `file:${
+          isAbsolutePath(containerPath.replace(' ', '')) ? '/' : '//'
+        }${containerPath}`;
+      }
       break;
     case CheckpointStorageType.AZURE:
       // type from api doesn't have azure-specific props

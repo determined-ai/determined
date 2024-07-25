@@ -22,6 +22,9 @@ message SSOProvider {
   string sso_url = 2;
   // The type of SSO (such as SAML, OIDC).
   string type = 3;
+  // The flag to indicate if this provider should be always be redirected to,
+  // instead of showing the standard sign-in page.
+  bool always_redirect = 4;
 }
 
 // Active notice from the server admin.
@@ -246,4 +249,16 @@ message CleanupLogsResponse {
   };
   // How many row of logs were removed.
   int64 removed_count = 1;
+}
+
+// Get list of all Kubernetes Cluster Names.
+message GetKubernetesResourceManagersRequest {}
+
+// Response to GetKubernetesResourceManagersRequest.
+message GetKubernetesResourceManagersResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "resource_managers" ] }
+  };
+  // List of clusters
+  repeated string resource_managers = 1;
 }

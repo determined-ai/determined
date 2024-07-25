@@ -112,6 +112,14 @@ func (j *job) configureEnvVars(
 	if j.masterTLSConfig.Enabled {
 		masterScheme = "https"
 	}
+
+	// For multi rm support add an override to our defaulting logic because it is possible the
+	// external cluster connects to master through a gateway with TLS
+	// while the other does not use TLS.
+	if j.masterScheme != "" {
+		masterScheme = j.masterScheme
+	}
+
 	envVarsMap["DET_CLUSTER_ID"] = j.clusterID
 	envVarsMap["DET_MASTER"] = fmt.Sprintf("%s://%s:%d", masterScheme, j.masterIP, j.masterPort)
 	envVarsMap["DET_MASTER_HOST"] = j.masterIP
@@ -630,6 +638,7 @@ func (j *job) configureJobSpec(
 	podSpec.Spec.HostNetwork = taskSpec.TaskContainerDefaults.NetworkMode.IsHost()
 	podSpec.Spec.InitContainers = append(podSpec.Spec.InitContainers, determinedInitContainers)
 	podSpec.Spec.RestartPolicy = k8sV1.RestartPolicyNever
+	podSpec.ObjectMeta.Namespace = j.namespace
 
 	return &batchV1.Job{
 		ObjectMeta: podSpec.ObjectMeta,

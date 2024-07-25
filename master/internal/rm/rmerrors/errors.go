@@ -19,3 +19,7 @@ var ErrNotSupported = errors.New("operation not supported")
 // ErrNoDefaultResourcePool is returned when a default resource pool is requested but no
 // default resource pool is set.
 var ErrNoDefaultResourcePool = errors.New("no default resource pool set")
+
+// ErrResourceManagerDNE is returned when none of the resource managers have the specified cluster
+// name.
+var ErrResourceManagerDNE = errors.New("no resource manager exists with the given cluster name")

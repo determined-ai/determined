@@ -14,12 +14,12 @@ MAX_TASK_SCHEDULED_SECS = 30
 MAX_TRIAL_BUILD_SECS = 90
 
 
-DEFAULT_TF2_CPU_IMAGE = "determinedai/tensorflow-ngc-dev:0e43056"
-DEFAULT_TF2_GPU_IMAGE = "determinedai/tensorflow-ngc-dev:0e43056"
-DEFAULT_PT_CPU_IMAGE = "determinedai/pytorch-tensorflow-cpu-dev:0e43056"
-DEFAULT_PT_GPU_IMAGE = "determinedai/pytorch-tensorflow-cuda-dev:0e43056"
-DEFAULT_PT2_CPU_IMAGE = "determinedai/pytorch-ngc-dev:0e43056"
-DEFAULT_PT2_GPU_IMAGE = "determinedai/pytorch-ngc-dev:0e43056"
+DEFAULT_TF2_CPU_IMAGE = "determinedai/tensorflow-ngc-dev:f20b027"
+DEFAULT_TF2_GPU_IMAGE = "determinedai/tensorflow-ngc-dev:f20b027"
+DEFAULT_PT_CPU_IMAGE = "determinedai/pytorch-tensorflow-cpu-dev:f20b027"
+DEFAULT_PT_GPU_IMAGE = "determinedai/pytorch-tensorflow-cuda-dev:f20b027"
+DEFAULT_PT2_CPU_IMAGE = "determinedai/pytorch-ngc-dev:f20b027"
+DEFAULT_PT2_GPU_IMAGE = "determinedai/pytorch-ngc-dev:f20b027"
 
 TF2_CPU_IMAGE = os.environ.get("TF2_CPU_IMAGE") or DEFAULT_TF2_CPU_IMAGE
 TF2_GPU_IMAGE = os.environ.get("TF2_GPU_IMAGE") or DEFAULT_TF2_GPU_IMAGE
@@ -37,6 +37,13 @@ SCIM_PASSWORD = "password"
 
 ALL_NTSC = set(api.NTSC_Kind.__members__.values())
 PROXIED_NTSC = {api.NTSC_Kind.notebook, api.NTSC_Kind.tensorboard}
+
+DEFAULT_RM_CLUSTER_NAME = "defaultrm"
+DEFAULT_RM_KUBECONFIG = "/tmp/defaultrm-kubeconf"
+ADDITIONAL_RM_CLUSTER_NAME = "additionalrm"
+ADDITIONAL_RM_KUBECONFIG = "/tmp/additionalrm-kubeconf"
+DEFAULT_KUBECONFIG = "~/.kube/config"
+DEFAULT_KUBERNETES_NAMESPACE = "default"
 
 
 def fixtures_path(path: str) -> str:

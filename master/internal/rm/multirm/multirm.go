@@ -23,17 +23,17 @@ func ErrRPNotDefined(rp rm.ResourcePoolName) error {
 
 // MultiRMRouter tracks all resource managers in the system.
 type MultiRMRouter struct {
-	defaultRMName string
-	rms           map[string]rm.ResourceManager
-	syslog        *logrus.Entry
+	defaultClusterName string
+	rms                map[string]rm.ResourceManager
+	syslog             *logrus.Entry
 }
 
 // New returns a new MultiRM.
-func New(defaultRMName string, rms map[string]rm.ResourceManager) *MultiRMRouter {
+func New(defaultClusterName string, rms map[string]rm.ResourceManager) *MultiRMRouter {
 	return &MultiRMRouter{
-		defaultRMName: defaultRMName,
-		rms:           rms,
-		syslog:        logrus.WithField("component", "resource-router"),
+		defaultClusterName: defaultClusterName,
+		rms:                rms,
+		syslog:             logrus.WithField("component", "resource-router"),
 	}
 }
 
@@ -371,11 +371,119 @@ func (m *MultiRMRouter) DisableSlot(req *apiv1.DisableSlotRequest) (*apiv1.Disab
 	return m.rms[resolvedRMName].DisableSlot(req)
 }
 
+// DefaultNamespace is the default namespace used within a given Kubernetes RpM's Kubernetes cluster.
+func (m *MultiRMRouter) DefaultNamespace(clusterName string) (*string, error) {
+	if len(clusterName) == 0 {
+		return nil, fmt.Errorf("must specify cluster name when using multiRM")
+	}
+	rm, err := m.getRM(clusterName)
+	if err != nil {
+		return nil, fmt.Errorf("error getting resource manager for cluster %s: %w", clusterName, err)
+	}
+	namespace, err := rm.DefaultNamespace(clusterName)
+	if err != nil {
+		return nil, fmt.Errorf("error getting default namespace: %w", err)
+	}
+	return namespace, nil
+}
+
+// VerifyNamespaceExists verifies the existence of a Kubernetes namespace within a given cluster.
+func (m *MultiRMRouter) VerifyNamespaceExists(namespaceName string,
+	clusterName string,
+) error {
+	if len(clusterName) == 0 {
+		return fmt.Errorf("must specify cluster name when using multiRM")
+	}
+	rm, err := m.getRM(clusterName)
+	if err != nil {
+		return fmt.Errorf("error getting resource manager for cluster %s: %w", clusterName, err)
+	}
+
+	return rm.VerifyNamespaceExists(namespaceName, clusterName)
+}
+
+// CreateNamespace deletes the given namespace (if it exists) in all Kubernetes clusters referenced
+// by resource managers in the current determined deployment.
+func (m *MultiRMRouter) CreateNamespace(namespaceName string, clusterName string,
+	fanout bool,
+) error {
+	if fanout {
+		return m.fanOutRMCommand(func(rm rm.ResourceManager) error {
+			return rm.CreateNamespace(namespaceName, clusterName, false)
+		})
+	}
+	if len(clusterName) == 0 {
+		return fmt.Errorf("must specify cluster name when using multiRM")
+	}
+	rm, err := m.getRM(clusterName)
+	if err != nil {
+		return fmt.Errorf("error getting resource manager for cluster %s: %w", clusterName, err)
+	}
+
+	return rm.CreateNamespace(namespaceName, clusterName, false)
+}
+
+// DeleteNamespace deletes the given namespace (if it exists) in all Kubernetes clusters referenced
+// by resource managers in the current determined deployment.
+func (m *MultiRMRouter) DeleteNamespace(namespaceName string) error {
+	return m.fanOutRMCommand(func(rm rm.ResourceManager) error {
+		return rm.DeleteNamespace(namespaceName)
+	})
+}
+
+// GetNamespaceResourceQuota gets the resource quota for the specified namespace.
+func (m *MultiRMRouter) GetNamespaceResourceQuota(namespaceName string,
+	clusterName string,
+) (*float64, error) {
+	if len(clusterName) == 0 {
+		return nil, fmt.Errorf("must specify cluster name when using multiRM")
+	}
+	rm, err := m.getRM(clusterName)
+	if err != nil {
+		return nil, fmt.Errorf("error getting resource manager for cluster %s: %w", clusterName, err)
+	}
+	return rm.GetNamespaceResourceQuota(namespaceName, clusterName)
+}
+
+// RemoveEmptyNamespace removes a namespace from our interfaces in cluster if it is no
+// longer used by any workspace.
+func (m *MultiRMRouter) RemoveEmptyNamespace(namespaceName string,
+	clusterName string,
+) error {
+	if len(clusterName) == 0 {
+		return fmt.Errorf("must specify cluster name when using multiRM")
+	}
+	rm, err := m.getRM(clusterName)
+	if err != nil {
+		return fmt.Errorf("error getting resource manager for cluster %s: %w", clusterName, err)
+	}
+	err = rm.RemoveEmptyNamespace(namespaceName, clusterName)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// SetResourceQuota creates a resource quota in the given Kubernetes namespace of the specified
+// cluster.
+func (m *MultiRMRouter) SetResourceQuota(quota int, namespace, clusterName string,
+) error {
+	if len(clusterName) == 0 {
+		return fmt.Errorf("must specify cluster name when using multiRM")
+	}
+	rm, err := m.getRM(clusterName)
+	if err != nil {
+		return fmt.Errorf("error getting resource manager for cluster %s: %w", clusterName, err)
+	}
+
+	return rm.SetResourceQuota(quota, namespace, clusterName)
+}
+
 func (m *MultiRMRouter) getRMName(rpName rm.ResourcePoolName) (string, error) {
 	// If not given RP name, route to default RM.
 	if rpName == "" {
 		m.syslog.Tracef("RM undefined, routing to default resource manager")
-		return m.defaultRMName, nil
+		return m.defaultClusterName, nil
 	}
 
 	for name, r := range m.rms {
@@ -391,6 +499,17 @@ func (m *MultiRMRouter) getRMName(rpName rm.ResourcePoolName) (string, error) {
 		}
 	}
 	return "", ErrRPNotDefined(rpName)
+}
+
+func (m *MultiRMRouter) getRM(clusterName string) (rm.ResourceManager, error) {
+	if clusterName == "" {
+		return m.rms[m.defaultClusterName], nil
+	}
+	resourceManager, ok := m.rms[clusterName]
+	if !ok {
+		return nil, rmerrors.ErrResourceManagerDNE
+	}
+	return resourceManager, nil
 }
 
 func fanOutRMCall[TReturn any](m *MultiRMRouter, f func(rm.ResourceManager) (TReturn, error)) ([]TReturn, error) {
@@ -410,4 +529,21 @@ func fanOutRMCall[TReturn any](m *MultiRMRouter, f func(rm.ResourceManager) (TRe
 		return nil, err
 	}
 	return res, nil
+}
+
+func (m *MultiRMRouter) fanOutRMCommand(f func(rm.ResourceManager) error) error {
+	var eg errgroup.Group
+	for _, rm := range maps.Values(m.rms) {
+		eg.Go(func() error {
+			err := f(rm)
+			if err != nil {
+				return err
+			}
+			return nil
+		})
+	}
+	if err := eg.Wait(); err != nil {
+		return err
+	}
+	return nil
 }

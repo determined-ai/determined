@@ -128,6 +128,24 @@ whatever configuration is needed for loading data for use by the experiment's mo
 example, if your experiment loads data from Amazon S3, the ``data`` field might contain the S3
 bucket name, object prefix, and AWS authentication credentials.
 
+As a special case, values found under a subfield named ``secrets`` will be obfuscated when
+experiment details are reviewed. For example, given the following configuration:
+
+.. code:: yaml
+
+   name: mnist_tf_const
+   data:
+      base_url: https://s3-us-west-2.amazonaws.com/determined-ai-datasets/mnist/
+      secrets:
+         auth_token: f020572a-a847-4cc6-9c2b-625c43515759
+
+The value of ``data["secrets"]["auth_token"]`` will be usable during the experiment run, but not
+when users view the experiment configuration. Note these values may still be visible in the
+configuration file itself; to hide this file from model context, add it to a ``.detignore`` file
+(see :ref:`Creating an Experiment <creating-an-experiment>`).
+
+See also: :ref:`det API Reference <det-reference>` > ``user_data`` property.
+
 ``workspace``
 =============
 
@@ -1335,12 +1353,12 @@ Optional. The Docker image to use when executing the workload. This image must b
 container images for NVIDIA GPU tasks using ``cuda`` key (``gpu`` prior to 0.17.6), CPU tasks using
 ``cpu`` key, and ROCm (AMD GPU) tasks using ``rocm`` key. Default values:
 
--  ``determinedai/pytorch-ngc-dev:0e43056`` for NVIDIA GPUs and for CPUs.
+-  ``determinedai/pytorch-ngc-dev:f20b027`` for NVIDIA GPUs and for CPUs.
 -  ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.26.4`` for ROCm.
 
 For TensorFlow users, we provide an image that must be referenced in the experiment configuration:
 
--  ``determinedai/tensorflow-ngc-dev:0e43056`` for NVIDIA GPUs and for CPUs.
+-  ``determinedai/tensorflow-ngc-dev:f20b027`` for NVIDIA GPUs and for CPUs.
 
 When the cluster is configured with :ref:`resource_manager.type: slurm
 <cluster-configuration-slurm>` and ``container_run_type: singularity``, images are executed using

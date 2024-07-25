@@ -156,6 +156,15 @@ message PostWorkspaceRequest {
   string default_compute_pool = 14;
   // The name of the default aux pool.
   string default_aux_pool = 15;
+  // The map of clusters to workspace-namespace metadata (including the
+  // workspace-namespace binding and the resource quota placed on the namespace
+  // bound to the workspace for a given cluster).
+  map<string, determined.workspace.v1.WorkspaceNamespaceMeta>
+      cluster_namespace_meta = 16;
+  // The map of clusters to the resource quota placed on the auto-generated
+  // namespace within that cluster (inherently capping the slots available to a
+  // workspace).
+  map<string, int32> cluster_quota_pairs = 3;
 }
 
 // Response to PostWorkspaceRequest.
@@ -166,6 +175,9 @@ message PostWorkspaceResponse {
 
   // The workspace created.
   determined.workspace.v1.Workspace workspace = 1;
+  // The workspace-namespace bindings and resource quotas created.
+  map<string, determined.workspace.v1.WorkspaceNamespaceBinding>
+      namespace_bindings = 2;
 }
 
 // Request for updating a workspace.
@@ -188,6 +200,9 @@ message PatchWorkspaceResponse {
 
   // The updated workspace.
   determined.workspace.v1.Workspace workspace = 1;
+  // The workspace-namespace bindings and resource quotas created.
+  map<string, determined.workspace.v1.WorkspaceNamespaceBinding>
+      namespace_bindings = 2;
 }
 
 // Request for deleting a workspace.
@@ -209,6 +224,124 @@ message DeleteWorkspaceResponse {
   // Status of deletion.
   bool completed = 1;
 }
+
+// Request for setting workspace-namespace bindings.
+message SetWorkspaceNamespaceBindingsRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "workspace_id" ] }
+  };
+
+  // The unique id of the workspace.
+  int32 workspace_id = 1;
+  // The cluster-namespace pairs used to create workspace-namespace bindings.
+  map<string, determined.workspace.v1.WorkspaceNamespaceMeta>
+      cluster_namespace_meta = 2;
+}
+
+// Response for setting workspace-namespace bindings.
+message SetWorkspaceNamespaceBindingsResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "namespace_bindings" ] }
+  };
+
+  // The added workspace-namespace bindings.
+  map<string, determined.workspace.v1.WorkspaceNamespaceBinding>
+      namespace_bindings = 1;
+}
+
+// Request to set a resource quota on a workspace (for a specific cluster).
+message SetResourceQuotasRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "id" ] }
+  };
+
+  // The id of the workspace.
+  int32 id = 1;
+  // A map of cluster to resource-quota pairs used to set GPU request limits on
+  // the workspace (for a specific cluster).
+  map<string, int32> cluster_quota_pairs = 2;
+}
+
+// Response for setting the resource quota for a workspace (for a specific
+// cluster).
+message SetResourceQuotasResponse {}
+
+// Request for listing namespaces bound to a workspace.
+message GetKubernetesResourceQuotasRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "id" ] }
+  };
+
+  // The unique id of the workspace.
+  int32 id = 1;
+}
+
+// Response for listing namespaces bound to a workspace.
+message GetKubernetesResourceQuotasResponse {
+  // List of namespaces bound to the workspace.
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "resource_quotas" ] }
+  };
+
+  // List of workspace-namespace bindings for a given workspace.
+  map<string, double> resource_quotas = 1;
+}
+
+// Request for listing namespaces bound to a workspace.
+message ListWorkspaceNamespaceBindingsRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "id" ] }
+  };
+
+  // The unique id of the workspace.
+  int32 id = 1;
+}
+
+// Response for listing namespaces bound to a workspace.
+message ListWorkspaceNamespaceBindingsResponse {
+  // List of namespaces bound to the workspace.
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "namespace_bindings" ] }
+  };
+
+  // List of workspace-namespace bindings for a given workspace.
+  map<string, determined.workspace.v1.WorkspaceNamespaceBinding>
+      namespace_bindings = 1;
+}
+
+// Request for deleting workspace namespace bindings.
+message DeleteWorkspaceNamespaceBindingsRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "workspace_id", "cluster_names" ] }
+  };
+
+  // The unique id of the workspace.
+  int32 workspace_id = 1;
+  // The names of the clusters to delete the bindings for.
+  repeated string cluster_names = 2;
+}
+
+// Response to DeleteWorkspaceNamespaceBindingsRequest.
+message DeleteWorkspaceNamespaceBindingsResponse {}
+
+// Request the ids of all workspaces that are bound to the
+// default namespace for atleast one cluster.
+message GetWorkspacesWithDefaultNamespaceBindingsRequest {}
+
+// Response to GetUnboundWorkspacesRequest.
+message GetWorkspacesWithDefaultNamespaceBindingsResponse {
+  // The list of returned workspace ids.
+  repeated int32 workspace_ids = 1;
+}
+
+// Request for binding the given workpaces to new auto-created namespaces.
+message BulkAutoCreateWorkspaceNamespaceBindingsRequest {
+  // The list of workspace ids.
+  repeated int32 workspace_ids = 1;
+}
+
+// Response to BulkAutoCreateWorkspaceNamespaceBindingsRequest.
+message BulkAutoCreateWorkspaceNamespaceBindingsResponse {}
 
 // Request for archiving a workspace.
 message ArchiveWorkspaceRequest {

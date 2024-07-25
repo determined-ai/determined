@@ -89,12 +89,12 @@ configure different container images for NVIDIA GPU tasks using the ``cuda`` key
 Determined 0.17.6), CPU tasks using ``cpu`` key, and ROCm (AMD GPU) tasks using the ``rocm`` key.
 Default values:
 
--  ``determinedai/pytorch-ngc-dev:0e43056`` for NVIDIA GPUs and for CPUs.
+-  ``determinedai/pytorch-ngc-dev:f20b027`` for NVIDIA GPUs and for CPUs.
 -  ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.26.4`` for ROCm.
 
 For TensorFlow users, we provide an image that must be referenced in the experiment configuration:
 
--  ``determinedai/tensorflow-ngc-dev:0e43056`` for NVIDIA GPUs and for CPUs.
+-  ``determinedai/tensorflow-ngc-dev:f20b027`` for NVIDIA GPUs and for CPUs.
 
 ``environment_variables``
 =========================
@@ -247,12 +247,22 @@ The resource manager used to acquire resources. Defaults to ``agent``.
 For Kubernetes installations, if you define additional resource managers, the resource manager
 specified under the primary resource_manager key here is considered the default.
 
-``name``
-========
+``cluster_name``
+================
 
-Optional. Specifies the resource manager's name. Defaults to ``default`` if not specified. For
-Kubernetes installations with additional resource managers, ensure unique names for all resource
+Optional for single resource manager configurations. Required for multiple resource manager
+(Multi-RM) configurations. Specifies the resource manager'sassociated cluster name. This references
+the cluster on which a Determined deployment is running. Defaults to ``default`` if not specified.
+For Kubernetes installations with additional resource managers, ensure unique names for all resource
 managers in the cluster.
+
+**NOTE:** ``resource_manager.cluster_name`` is separate from the ``cluster_name`` field of the
+master config that provides a readable name for the Determined deployment.
+
+``name``
+--------
+
+(deprecated) Specifies the resource manager’s name. ``cluster_name`` should be specified instead.
 
 ``metadata``
 ============
@@ -353,7 +363,13 @@ on using Determined with Kubernetes, see the :ref:`documentation <determined-on-
 ``namespace``
 -------------
 
-The namespace where Determined will deploy Pods and ConfigMaps.
+This field has been deprecated, use ``default_namespace`` instead.
+
+``default_namespace``
+---------------------
+
+Optional. Specifies the default namespace where Determined will deploy namespaced resources if the
+workspace is not bound to a specific namespace.
 
 .. _master-config-reference-max-slots-per-pod:
 
@@ -1735,6 +1751,7 @@ used for :ref:`remote user <remote-users>` management.
           auto_provision_users: true
           groups_attribute_name: "XYZ"
           display_name_attribute_name: "XYZ"
+          always_redirect: true
 
 ``enabled``
 ===========
@@ -1804,6 +1821,14 @@ The name of the attribute passed in through the claim that specifies group membe
 The name of the attribute passed in through the claim from the OIDC provider used to set the user's
 display name in Determined.
 
+``always_redirect``
+===================
+
+Specifies if this OIDC provider should be used for authentication, bypassing the standard Determined
+sign-in page. This redirection persists unless the user explicitly signs out within the WebUI. If an
+SSO user attempts to use an expired session token, they are directly redirected to the SSO provider
+and returned to the requested page after authentication.
+
 **********
  ``saml``
 **********
@@ -1825,6 +1850,7 @@ For example:
           auto_provision_users: true
           groups_attribute_name: "groups"
           display_name_attribute_name: "disp_name"
+         always_redirect: true
 
 ``enabled``
 ===========
@@ -1873,6 +1899,14 @@ The claim name that specifies group memberships in SAML.
 ===============================
 
 The claim name from the SAML provider used to set the user's display name in Determined.
+
+``always_redirect``
+===================
+
+Specifies if this SAML provider should be used for authentication, bypassing the standard Determined
+sign-in page. This redirection persists unless the user explicitly signs out within the WebUI. If a
+SSO user attempts to use an expired session token, they are directly redirected to the SAML provider
+and returned to the requested page after authentication.
 
 ********************
  ``reserved_ports``

@@ -12,6 +12,8 @@ import (
 	"github.com/labstack/echo/v4"
 	"github.com/pkg/errors"
 	"github.com/sirupsen/logrus"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/config"
@@ -150,8 +152,8 @@ func (a *ResourceManager) DisableAgent(msg *apiv1.DisableAgentRequest) (*apiv1.D
 func (a *ResourceManager) HealthCheck() []model.ResourceManagerHealth {
 	return []model.ResourceManagerHealth{
 		{
-			Name:   a.config.Name,
-			Status: model.Healthy,
+			ClusterName: a.config.ClusterName,
+			Status:      model.Healthy,
 		},
 	}
 }
@@ -568,6 +570,47 @@ func (a *ResourceManager) ValidateResourcePool(name rm.ResourcePoolName) error {
 	return nil
 }
 
+// DefaultNamespace is not supported.
+func (a *ResourceManager) DefaultNamespace(string) (*string, error) {
+	return nil, status.Error(codes.NotFound, rmerrors.ErrNotSupported.Error())
+}
+
+// VerifyNamespaceExists is not supported.
+func (a *ResourceManager) VerifyNamespaceExists(string, string) error {
+	return fmt.Errorf("cannot verify namespace existence with resource manager type AgentRM: %w",
+		rmerrors.ErrNotSupported)
+}
+
+// CreateNamespace is not supported.
+func (a *ResourceManager) CreateNamespace(string, string, bool) error {
+	return fmt.Errorf("cannot create a namespace with resource manager type AgentRM: %w",
+		rmerrors.ErrNotSupported)
+}
+
+// DeleteNamespace is not supported.
+func (a *ResourceManager) DeleteNamespace(namespaceName string) error {
+	// We don't want to error out when this gets called, because the function cannot get called
+	// because of an API request to delete the namespace. It is only used internally to clean up
+	// namespaces created for workspaces that no longer exist.
+	return nil
+}
+
+// RemoveEmptyNamespace is not supported.
+func (a *ResourceManager) RemoveEmptyNamespace(string, string) error {
+	return rmerrors.ErrNotSupported
+}
+
+// GetNamespaceResourceQuota is not supported.
+func (a *ResourceManager) GetNamespaceResourceQuota(string, string) (*float64, error) {
+	return nil, status.Error(codes.NotFound, rmerrors.ErrNotSupported.Error())
+}
+
+// SetResourceQuota is not supported.
+func (a *ResourceManager) SetResourceQuota(int, string, string) error {
+	return fmt.Errorf("cannot set a resource quota resource manager type AgentRM: %w",
+		rmerrors.ErrNotSupported)
+}
+
 func (a *ResourceManager) createResourcePool(
 	db db.DB, config config.ResourcePoolConfig, cert *tls.Certificate,
 ) (*resourcePool, error) {
@@ -709,7 +752,7 @@ func (a *ResourceManager) createResourcePoolSummary(
 		Details:                      &resourcepoolv1.ResourcePoolDetail{},
 		SlotType:                     slotType.Proto(),
 		Accelerator:                  accelerator,
-		ResourceManagerName:          a.config.Name,
+		ClusterName:                  a.config.ClusterName,
 		ResourceManagerMetadata:      a.config.Metadata,
 	}
 	if pool.Provider != nil {
