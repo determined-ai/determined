@@ -3398,6 +3398,9 @@ jobs:
           name: Run REST API read-only test
           command: ./performance/daist/run.py daist.rest_api.test_locust.TestRO
 
+      - store_artifacts:
+          path: ./performance/daist/daist/results
+
       - run:
           name: Delete RDS instance
           when: always

@@ -7,6 +7,9 @@ from locust import events
 from locust.env import Environment as LocustEnvironment
 from locust.env import LocalRunner
 from locust.stats import StatsEntry
+from requests.exceptions import HTTPError
+from requests.models import Response
+
 
 from . import locust_utils, tasks
 from .resources import get_resource_profile, Resources
@@ -25,13 +28,23 @@ from ..utils.misc import parse_class_and_method_name_from_test_id
 logger = logging.getLogger(__name__)
 
 
+# noinspection PyUnusedLocal
+@events.request.add_listener
+def my_request_handler(request_type, name, response_time, response_length, response: Response,
+                       context, exception, start_time, url, **kwargs):
+    if exception:
+        logger.error(f'Locust request error:\n'
+                     f'Exception: {exception}\n'
+                     f'Response text: {response.text}\n')
+
+
 class TestRO(TestCase):
     _env: LocustEnvironment = None
     _resources: Resources = None
     _tasks: locust_utils.LocustTasksWithMeta = None
     _runner: LocalRunner = None
     _stop_timeout = 60.0
-    _TEST_LENGTH_SEC = 300
+    _TEST_LENGTH_SEC = 60  # meyere
     _USERS = 10
 
     @classmethod
