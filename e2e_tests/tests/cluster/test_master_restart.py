@@ -307,7 +307,7 @@ def _test_master_restart_stopping(managed_cluster_restarts: abstract_cluster.Clu
                 assert s.container is None, s.container.to_json()
 
 
-@pytest.mark.e2e_single_k8s
+@pytest.mark.e2e_k8s_managed_devcluster
 def test_master_restart_wksp_running_task(
 managed_minikube_cluster,
 ) -> None:
@@ -331,7 +331,7 @@ def _test_master_restart_wksp_running_task(managed_minikube_cluster: managed_clu
             sess,
             body=bindings.v1LaunchNotebookRequest(workspaceId=wksp.id),
         ).notebook.id
-    
+
      # Wait for task to start or run.
     task.wait_for_task_start_or_run(sess, notebook_id)
     managed_minikube_cluster.kill_master()
