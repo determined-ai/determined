@@ -56,54 +56,57 @@ class Host(BaseDict):
         self[self.Key.DETERMINED] = value
 
 
+def _adding_to(method):
+    """
+    With python 3.9 or greater, this could be made a static method of Result. Prior to that,
+    method decorators cannot reference a static method implementation.
+    """
+    def wrap(*args, meta: Optional['FileMeta'] = None):
+        self: Result = args[0]
+        src: Union[None, str, Path, BaseObj]
+        rel_dst: Union[str, Path]
+
+        try:
+            src = args[1]
+            rel_dst = args[2]
+        except IndexError:
+            src = None
+            rel_dst = args[1]
+
+        # Type-hinting and casting
+        rel_dst = Path(rel_dst)
+
+        # Destination directory resolution
+        if rel_dst.is_dir():
+            if isinstance(src, BaseObj):
+                dst = self.dir() / rel_dst / src.get_filename()
+            else:
+                dst = self.dir() / rel_dst / src.name
+        else:
+            dst = self.dir() / rel_dst
+
+        # Destination directory prep
+        dst.parent.mkdir(parents=True, exist_ok=True)
+
+        # Call the wrapped method
+        if src is None:
+            ret = method(self, dst)
+        else:
+            ret = method(self, src, dst)
+
+        # Create meta-data as necessary
+        if meta is None:
+            meta = FileMeta()
+
+        # Cache map the metadata to the destination path.
+        self.files[dst.relative_to(self.dir())] = meta
+
+        return ret
+
+    return wrap
+
+
 class Result(BaseDict):
-
-    @staticmethod
-    def _adding_to(method):
-        def wrap(*args, meta: Optional['FileMeta'] = None):
-            self: Result = args[0]
-            src: Union[None, str, Path, BaseObj]
-            rel_dst: Union[str, Path]
-
-            try:
-                src = args[1]
-                rel_dst = args[2]
-            except IndexError:
-                src = None
-                rel_dst = args[1]
-
-            # Type-hinting and casting
-            rel_dst = Path(rel_dst)
-
-            # Destination directory resolution
-            if rel_dst.is_dir():
-                if isinstance(src, BaseObj):
-                    dst = self.dir() / rel_dst / src.get_filename()
-                else:
-                    dst = self.dir() / rel_dst / src.name
-            else:
-                dst = self.dir() / rel_dst
-
-            # Destination directory prep
-            dst.parent.mkdir(parents=True, exist_ok=True)
-
-            # Call the wrapped method
-            if src is None:
-                ret = method(self, dst)
-            else:
-                ret = method(self, src, dst)
-
-            # Create meta-data as necessary
-            if meta is None:
-                meta = FileMeta()
-
-            # Cache map the metadata to the destination path.
-            self.files[dst.relative_to(self.dir())] = meta
-
-            return ret
-
-        return wrap
-
     class Key:
         type_ = NewType('Results.Key', str)
         CLASSNAME: type_ = 'classname'

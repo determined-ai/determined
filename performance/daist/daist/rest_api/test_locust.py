@@ -1,3 +1,4 @@
+from typing import List
 from unittest import TestCase, skipIf
 import logging
 import time
@@ -57,7 +58,7 @@ class TestRO(TestCase):
     def tearDown(self):
         self._save_to_results(self._env.stats.serialize_stats(), self._get_task_list())
 
-    def _save_to_results(self, locust_stats: list[StatsEntry],
+    def _save_to_results(self, locust_stats: List[StatsEntry],
                          locust_tasks_with_meta: locust_utils.LocustTasksWithMeta):
         # Save the source data
         locust_stats = LocustStatsList(locust_stats, locust_tasks_with_meta)

@@ -1,5 +1,5 @@
 from pathlib import Path
-from typing import Iterable, NewType, Optional, Union
+from typing import Dict, Iterable, NewType, Optional, Union
 
 from .base import BaseDict, BaseList, Format
 from ..rest_api.locust_utils import LocustTasksWithMeta
@@ -142,7 +142,7 @@ class LocustStats(LocustBaseStats):
         self[self.Key.TOTAL_CONTENT_LENGTH] = value
 
     @property
-    def response_times(self) -> dict[int, int]:
+    def response_times(self) -> Dict[int, int]:
         return self[self.Key.RESPONSE_TIMES]
 
     @response_times.setter
@@ -150,7 +150,7 @@ class LocustStats(LocustBaseStats):
         self[self.Key.RESPONSE_TIMES] = value
 
     @property
-    def num_reqs_per_sec(self) -> dict[int, int]:
+    def num_reqs_per_sec(self) -> Dict[int, int]:
         return self[self.Key.NUM_REQS_PER_SEC]
 
     @num_reqs_per_sec.setter
@@ -158,7 +158,7 @@ class LocustStats(LocustBaseStats):
         self[self.Key.NUM_REQS_PER_SEC] = value
 
     @property
-    def num_fail_per_sec(self) -> dict[int, int]:
+    def num_fail_per_sec(self) -> Dict[int, int]:
         return self[self.Key.NUM_FAIL_PER_SEC]
 
     @num_fail_per_sec.setter
