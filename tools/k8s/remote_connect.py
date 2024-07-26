@@ -39,6 +39,10 @@ import kubernetes.client.exceptions as client_exceptions
 import yaml
 
 DET_ROOT = pathlib.Path("~/projects/da/determined").expanduser()
+CONFIG_DIR = (
+    pathlib.Path(os.getenv("XDG_CONFIG_HOME", pathlib.Path.home() / ".config")) / "determined"
+)
+CONFIG_DIR.mkdir(parents=True, exist_ok=True)
 
 
 def expand_env(value: Any, env: Dict[str, str]) -> Any:
@@ -309,7 +313,7 @@ def main():
     parser.add_argument(
         "--config",
         type=pathlib.Path,
-        default=DET_ROOT / "tools" / "k8s" / "remote_connect.yaml",
+        default=CONFIG_DIR / "remote_connect.yaml",
         help="Path to the configuration file.",
     )
     args = parser.parse_args()
