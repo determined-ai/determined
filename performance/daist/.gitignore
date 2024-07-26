@@ -1,0 +1,15 @@
+*.pyc
+
+# Virtual environment
+__venv__
+
+# IDEs
+# pycharm
+.idea
+
+# Distribution / packaging
+__build__/
+__dist__/
+*.egg-info/
+
+daist/results/
