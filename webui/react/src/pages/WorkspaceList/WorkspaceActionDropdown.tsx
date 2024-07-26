@@ -60,7 +60,13 @@ export const useWorkspaceActionMenu: (props: WorkspaceMenuPropsIn) => WorkspaceM
               workspace={workspace}
               onClose={onComplete}
             />
-            <WorkspaceEditModal.Component workspaceId={editingWorkspaceId} onClose={onComplete} />
+            <WorkspaceEditModal.Component
+              workspaceId={editingWorkspaceId}
+              onClose={() => {
+                onComplete?.();
+                setEditingWorkspaceId(undefined);
+              }}
+            />
           </>
         )}
       </>

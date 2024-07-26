@@ -86,7 +86,7 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
         handleError(e, {
           level: ErrorLevel.Error,
           publicMessage: 'Failed to fetch list of workspace namespace bindings.',
-          silent: true,
+          silent: false,
           type: ErrorType.Server,
         });
         return NotLoaded;
@@ -109,7 +109,7 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
         handleError(e, {
           level: ErrorLevel.Error,
           publicMessage: 'Failed to fetch kubernetes resource quotas for the workspace.',
-          silent: true,
+          silent: false,
           type: ErrorType.Server,
         });
         return NotLoaded;
