@@ -7,6 +7,7 @@ import useFeature from 'hooks/useFeature';
 import { cancelExperiment, killExperiment } from 'services/api';
 import { ExperimentAction, ValueOf } from 'types';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
+import { capitalize } from 'utils/string';
 
 export const ActionType = {
   Cancel: ExperimentAction.Cancel,
@@ -26,7 +27,7 @@ const ExperimentStopModalComponent: React.FC<Props> = ({ experimentId, onClose }
   const [type, setType] = useState<AvalableActions>(ActionType.Cancel);
   const f_flat_runs = useFeature().isOn('flat_runs');
 
-  const buttonText = f_flat_runs ? 'Stop Search' : 'Stop Experiment';
+  const actionCopy = f_flat_runs ? 'stop search' : 'stop experiment';
 
   const handleCheckBoxChange = (event: CheckboxChangeEvent) => {
     setType(event.target.checked ? ActionType.Cancel : ActionType.Kill);
@@ -43,7 +44,7 @@ const ExperimentStopModalComponent: React.FC<Props> = ({ experimentId, onClose }
       handleError(e, {
         level: ErrorLevel.Error,
         publicMessage: 'Please try again later.',
-        publicSubject: `Unable to stop ${f_flat_runs ? 'search' : 'experiment'}.`,
+        publicSubject: `Unable to ${actionCopy}.`,
         silent: false,
         type: ErrorType.Server,
       });
@@ -56,12 +57,12 @@ const ExperimentStopModalComponent: React.FC<Props> = ({ experimentId, onClose }
       submit={{
         handleError,
         handler: handleSubmit,
-        text: buttonText,
+        text: capitalize(actionCopy),
       }}
       title="Confirm Stop"
       onClose={onClose}>
       <div>
-        Are you sure you want to stop {f_flat_runs ? 'search' : 'experiment'} {experimentId}?
+        Are you sure you want to {actionCopy} {experimentId}?
       </div>
       <Checkbox checked={type === ActionType.Cancel} onChange={handleCheckBoxChange}>
         {CHECKBOX_TEXT}

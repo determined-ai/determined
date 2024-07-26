@@ -60,7 +60,7 @@ describe('Stop Experiment Modal', () => {
   it('submits a valid cancel experiment request', async () => {
     await setup();
 
-    await user.click(screen.getByRole('button', { name: 'Stop Experiment' }));
+    await user.click(screen.getByRole('button', { name: /Stop/ }));
 
     expect(mockCancelExperiment).toHaveBeenCalledWith({ experimentId: experiment.id });
   });
@@ -69,7 +69,7 @@ describe('Stop Experiment Modal', () => {
     await setup();
 
     await user.click(screen.getByRole('checkbox', { name: CHECKBOX_TEXT }));
-    await user.click(screen.getByRole('button', { name: 'Stop Experiment' }));
+    await user.click(screen.getByRole('button', { name: /Stop/ }));
 
     expect(mockKillExperiment).toHaveBeenCalledWith({ experimentId: experiment.id });
   });
