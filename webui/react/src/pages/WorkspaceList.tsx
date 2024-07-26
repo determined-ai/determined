@@ -63,13 +63,11 @@ const WorkspaceList: React.FC = () => {
   const { canCreateWorkspace } = usePermissions();
 
   const WorkspaceCreateModal = useModal(WorkspaceCreateModalComponent);
-  const [openModal, setOpenModal] = useState(false);
 
   const { settings, updateSettings } = useSettings<WorkspaceListSettings>(settingsConfig);
 
   const openWorkspaceCreateModal = () => {
     clusterStore.fetchKubernetesResourceManagers();
-    setOpenModal(true);
     WorkspaceCreateModal.open();
   };
 
@@ -394,7 +392,7 @@ const WorkspaceList: React.FC = () => {
           <Message icon="warning" title="No workspaces matching the current filters" />
         )}
       </Spinner>
-      <WorkspaceCreateModal.Component open={openModal} />
+      <WorkspaceCreateModal.Component />
     </Page>
   );
 };

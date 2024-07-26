@@ -134,7 +134,6 @@ const NavigationSideBar: React.FC = () => {
   } = useSettings<ShortcutSettings>(shortCutSettingsConfig);
 
   const WorkspaceCreateModal = useModal(WorkspaceCreateModalComponent);
-  const [openModal, setOpenModal] = useState(false);
 
   const showNavigation = isAuthenticated && ui.showChrome;
   const version = process.env.VERSION || '';
@@ -258,7 +257,6 @@ const NavigationSideBar: React.FC = () => {
 
   const openWorkspaceCreateModal = () => {
     clusterStore.fetchKubernetesResourceManagers();
-    setOpenModal(true);
     WorkspaceCreateModal.open();
   };
 
@@ -396,7 +394,7 @@ const NavigationSideBar: React.FC = () => {
               )}
             </div>
           </footer>
-          <WorkspaceCreateModal.Component open={openModal} />
+          <WorkspaceCreateModal.Component />
         </nav>
       </CSSTransition>
       <UserSettings show={showSettings} onClose={() => setShowSettings(false)} />

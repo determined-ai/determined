@@ -71,7 +71,6 @@ const NavigationTabbar: React.FC = () => {
   const gasLinkOn = useFeature().isOn('genai');
 
   const WorkspaceCreateModal = useModal(WorkspaceCreateModalComponent);
-  const [openModal, setOpenModal] = useState(false);
 
   const [showSettings, setShowSettings] = useState<boolean>(false);
 
@@ -114,7 +113,6 @@ const NavigationTabbar: React.FC = () => {
 
   const openWorkspaceCreateModal = () => {
     clusterStore.fetchKubernetesResourceManagers();
-    setOpenModal(true);
     WorkspaceCreateModal.open();
   };
 
@@ -242,7 +240,7 @@ const NavigationTabbar: React.FC = () => {
           show={isShowingOverflow}
           onCancel={handleActionSheetCancel}
         />
-        <WorkspaceCreateModal.Component open={openModal} />
+        <WorkspaceCreateModal.Component />
       </nav>
       <UserSettings show={showSettings} onClose={() => setShowSettings(false)} />
     </>

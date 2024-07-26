@@ -9,8 +9,9 @@ import { Body } from 'hew/Typography';
 import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import yaml from 'js-yaml';
 import { pick } from 'lodash';
-import React, { Fragment, useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
+import React, { Fragment, useCallback, useEffect, useId, useMemo } from 'react';
 
+import { useAsync } from 'hooks/useAsync';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import {
@@ -51,20 +52,11 @@ interface FormInputs {
 interface Props {
   onClose?: () => void;
   workspaceId?: number;
-  open?: boolean;
 }
 
 const CodeEditor = React.lazy(() => import('hew/CodeEditor'));
 
-const isNonK8RMError = (e: unknown): boolean => {
-  return e instanceof DetError && e.sourceErr instanceof Response && e.sourceErr['status'] === 404;
-};
-
-const WorkspaceCreateModalComponent: React.FC<Props> = ({
-  onClose,
-  workspaceId,
-  open,
-}: Props = {}) => {
+const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }: Props = {}) => {
   const idPrefix = useId();
   const {
     canModifyWorkspaceAgentUserGroup,
@@ -77,78 +69,54 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({
   const useAgentGroup = Form.useWatch('useAgentGroup', form);
   const useCheckpointStorage = Form.useWatch('useCheckpointStorage', form);
   const watchBindings = Form.useWatch('bindings', form);
-  const canceler = useRef(new AbortController());
   const resourceManagers = useObservable(clusterStore.kubernetesResourceManagers);
-  const [namespaceBindingsList, setNamespaceBindingsList] =
-    useState<Loadable<Record<string, V1WorkspaceNamespaceBinding>>>(NotLoaded);
-  const [resourceQuotasList, setResourceQuotasList] =
-    useState<Loadable<Record<string, number>>>(NotLoaded);
 
-  const fetchNamespaceBindingsList = useCallback(async (): Promise<void> => {
-    if (workspaceId === undefined) {
-      setNamespaceBindingsList(NotLoaded);
-      return;
-    }
-    try {
-      const clusterNamespacePairs = await listWorkspaceNamespaceBindings(
-        { id: workspaceId },
-        { signal: canceler.current.signal },
-      );
-      setNamespaceBindingsList(Loaded(clusterNamespacePairs.namespaceBindings));
-    } catch (e) {
-      if (!isNonK8RMError(e)) {
+  const namespaceBindingsList = useAsync(
+    async (canceller) => {
+      if (workspaceId === undefined || Loadable.getOrElse([], resourceManagers).length <= 0) {
+        return NotLoaded;
+      }
+      try {
+        const clusterNamespacePairs = await listWorkspaceNamespaceBindings(
+          { id: workspaceId },
+          { signal: canceller.signal },
+        );
+        return clusterNamespacePairs.namespaceBindings;
+      } catch (e) {
         handleError(e, {
           level: ErrorLevel.Error,
           publicMessage: 'Failed to fetch list of workspace namespace bindings.',
-          silent: false,
+          silent: true,
           type: ErrorType.Server,
         });
+        return NotLoaded;
       }
-      setNamespaceBindingsList(NotLoaded);
-      return;
-    }
-  }, [setNamespaceBindingsList, workspaceId]);
-
-  const fetchResourceQuotasList = useCallback(async (): Promise<void> => {
-    if (workspaceId === undefined) {
-      setResourceQuotasList(NotLoaded);
-      return;
-    }
-    try {
-      const resp = await getKubernetesResourceQuotas(
-        { id: workspaceId },
-        { signal: canceler.current.signal },
-      );
-      setResourceQuotasList(Loaded(resp.resourceQuotas));
-    } catch (e) {
-      if (!isNonK8RMError(e)) {
+    },
+    [resourceManagers, workspaceId],
+  );
+  const resourceQuotasList = useAsync(
+    async (canceller) => {
+      if (workspaceId === undefined || Loadable.getOrElse([], resourceManagers).length <= 0) {
+        return NotLoaded;
+      }
+      try {
+        const resp = await getKubernetesResourceQuotas(
+          { id: workspaceId },
+          { signal: canceller.signal },
+        );
+        return resp.resourceQuotas;
+      } catch (e) {
         handleError(e, {
           level: ErrorLevel.Error,
           publicMessage: 'Failed to fetch kubernetes resource quotas for the workspace.',
-          silent: false,
+          silent: true,
           type: ErrorType.Server,
         });
+        return NotLoaded;
       }
-      setResourceQuotasList(NotLoaded);
-      return;
-    }
-  }, [setResourceQuotasList, workspaceId]);
-
-  useEffect(() => {
-    if (open) {
-      if (Loadable.getOrElse([], resourceManagers).length > 0) {
-        fetchNamespaceBindingsList();
-        fetchResourceQuotasList();
-      }
-    }
-    return;
-  }, [
-    fetchNamespaceBindingsList,
-    resourceManagers,
-    fetchResourceQuotasList,
-    open,
-    setNamespaceBindingsList,
-  ]);
+    },
+    [resourceManagers, workspaceId],
+  );
 
   const initFields = useCallback(
     (ws?: Workspace) => {

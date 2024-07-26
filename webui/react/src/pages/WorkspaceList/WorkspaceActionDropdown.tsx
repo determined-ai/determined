@@ -42,11 +42,11 @@ export const useWorkspaceActionMenu: (props: WorkspaceMenuPropsIn) => WorkspaceM
 }: WorkspaceMenuPropsIn) => {
   const WorkspaceDeleteModal = useModal(WorkspaceDeleteModalComponent);
   const WorkspaceEditModal = useModal(WorkspaceCreateModalComponent);
-  const [openModal, setOpenModal] = useState(false);
+  const [editingWorkspaceId, setEditingWorkspaceId] = useState<number | undefined>(undefined);
 
   const openWorkspaceEditModal = () => {
     clusterStore.fetchKubernetesResourceManagers();
-    setOpenModal(true);
+    setEditingWorkspaceId(workspace?.id);
     WorkspaceEditModal.open();
   };
 
@@ -60,11 +60,7 @@ export const useWorkspaceActionMenu: (props: WorkspaceMenuPropsIn) => WorkspaceM
               workspace={workspace}
               onClose={onComplete}
             />
-            <WorkspaceEditModal.Component
-              open={openModal}
-              workspaceId={workspace.id}
-              onClose={onComplete}
-            />
+            <WorkspaceEditModal.Component workspaceId={editingWorkspaceId} onClose={onComplete} />
           </>
         )}
       </>
@@ -75,7 +71,7 @@ export const useWorkspaceActionMenu: (props: WorkspaceMenuPropsIn) => WorkspaceM
     returnIndexOnDelete,
     onComplete,
     WorkspaceEditModal,
-    openModal,
+    editingWorkspaceId,
   ]);
 
   const { canDeleteWorkspace, canModifyWorkspace } = usePermissions();

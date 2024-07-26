@@ -19,7 +19,7 @@ import {
   ResourcePool,
   ResourceType,
 } from 'types';
-import handleError, { DetError, ErrorLevel, ErrorType } from 'utils/error';
+import handleError, { ErrorLevel, ErrorType } from 'utils/error';
 import { percent } from 'utils/number';
 import { deepObservable, immutableObservable, Observable } from 'utils/observable';
 
@@ -250,20 +250,12 @@ class ClusterStore extends PollingStore {
         this.#kubernetesResourceManagers.set(Loaded(response.names));
       })
       .catch((e) => {
-        if (
-          !(
-            e instanceof DetError &&
-            e.sourceErr instanceof Response &&
-            e.sourceErr['status'] === 403
-          )
-        ) {
-          handleError(e, {
-            level: ErrorLevel.Error,
-            publicMessage: 'Failed to fetch Resource Managers.',
-            silent: true,
-            type: ErrorType.Server,
-          });
-        }
+        handleError(e, {
+          level: ErrorLevel.Error,
+          publicMessage: 'Failed to fetch Resource Managers.',
+          silent: true,
+          type: ErrorType.Server,
+        });
       });
     return () => canceler.abort();
   }
