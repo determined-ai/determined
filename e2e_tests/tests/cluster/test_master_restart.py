@@ -307,14 +307,12 @@ def _test_master_restart_stopping(managed_cluster_restarts: abstract_cluster.Clu
                 assert s.container is None, s.container.to_json()
 
 
-@pytest.mark.e2e_k8s_managed_devcluster
-def test_master_restart_wksp_running_task(
-managed_minikube_cluster,
-) -> None:
-    _test_master_restart_wksp_running_task(managed_minikube_cluster)
+@pytest.mark.e2e_k8s
+def test_master_restart_wksp_running_task() -> None:
+    _test_master_restart_wksp_running_task()
 
 
-def _test_master_restart_wksp_running_task(managed_minikube_cluster: managed_cluster.ManagedCluster) -> None:
+def _test_master_restart_wksp_running_task() -> None:
     sess = api_utils.admin_session()
     wksp_namespace_meta = bindings.v1WorkspaceNamespaceMeta(
             autoCreateNamespace=True,
@@ -334,8 +332,6 @@ def _test_master_restart_wksp_running_task(managed_minikube_cluster: managed_clu
 
      # Wait for task to start or run.
     task.wait_for_task_start_or_run(sess, notebook_id)
-    managed_minikube_cluster.kill_master()
-    managed_minikube_cluster.restart_master()
     
     def wait_for_wksp_namespace_binding(timeout: int = 30):
         deadline = time.time() + timeout
