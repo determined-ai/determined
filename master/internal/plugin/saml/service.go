@@ -263,6 +263,7 @@ func getAttributeValues(r *saml.Assertion, name string) []string {
 
 // [ kristine ] is this where we update db with user info from master config?
 // syncUser syncs the mutable user fields parsed from the claim, only if there are non-null changes.
+// TODO add a usergroup field for posix updates
 func (s *Service) syncUser(ctx context.Context, u *model.User, uAttr *userAttributes) (*model.User, error) {
 	err := db.Bun().RunInTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable},
 		func(ctx context.Context, tx bun.Tx) error {

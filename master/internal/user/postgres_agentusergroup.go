@@ -49,6 +49,8 @@ func getAgentUserGroupFromWorkspaceID(
 	return &aug, err
 }
 
+// kristine - use this to get agent user group info?
+// workspace is optional because if workspaceid=0, then no results are returned
 // GetAgentUserGroup returns AgentUserGroup for a user + (optional) workspace.
 func GetAgentUserGroup(
 	ctx context.Context,
