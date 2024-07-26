@@ -89,6 +89,12 @@ class Config:
     @classmethod
     def from_args(cls) -> "Config":
         parser = argparse.ArgumentParser(description="Configure remote connection settings.")
+        parser.add_argument(
+            "--config-file, -c",
+            type=pathlib.Path,
+            help="Path to a YAML config file. CLI args will override values in the file.",
+        )
+
         for field in fields(cls):
             field_name = field.name
             field_type = field.type
@@ -97,12 +103,25 @@ class Config:
             parser.add_argument(
                 f"--{field_name}", type=field_type, default=default_value, help=help_text
             )
+
         args = parser.parse_args()
         arg_dict = vars(args)
+
+        config_data = {}
+        if arg_dict.get("config_file"):
+            config_path = arg_dict.pop("config_file")
+            if config_path.exists():
+                config_data = yaml.safe_load(config_path.read_text())
+
+        for key, value in arg_dict.items():
+            if value is not None:
+                config_data[key] = value
+
         for field in fields(cls):
-            if isinstance(arg_dict[field.name], str) and field.type == Tuple[int, int]:
-                arg_dict[field.name] = tuple(map(int, arg_dict[field.name].split(",")))
-        return cls._from_arg_dict(arg_dict)
+            if isinstance(config_data.get(field.name), str) and field.type == Tuple[int, int]:
+                config_data[field.name] = tuple(map(int, config_data[field.name].split(",")))
+
+        return cls._from_arg_dict(config_data)
 
 
 @dataclass
