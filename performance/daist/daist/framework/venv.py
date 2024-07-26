@@ -28,5 +28,11 @@ def make_for_build():
 
 
 def _create():
-    subprocess.run(shlex.split(f'python -m venv {VenvPath.PATH} --clear --system-site-packages '
-                               f'--upgrade-deps'), check=True)
+    if sys.version_info.major >= 3 and sys.version_info.minor >= 9:
+        subprocess.run(shlex.split(
+            f'python -m venv {VenvPath.PATH} --clear --system-site-packages --upgrade-deps'),
+            check=True)
+    else:
+        subprocess.run(shlex.split(
+            f'python -m venv {VenvPath.PATH} --clear --system-site-packages'),
+            check=True)
