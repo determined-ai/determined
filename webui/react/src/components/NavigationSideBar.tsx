@@ -257,7 +257,7 @@ const NavigationSideBar: React.FC = () => {
   if (!showNavigation) return null;
 
   const openWorkspaceCreateModal = () => {
-    console.log('coming from side bar');
+    clusterStore.fetchKubernetesResourceManagers();
     setOpenModal(true);
     WorkspaceCreateModal.open();
   };

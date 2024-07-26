@@ -113,7 +113,7 @@ const NavigationTabbar: React.FC = () => {
   );
 
   const openWorkspaceCreateModal = () => {
-    console.log('coming from tab bar');
+    clusterStore.fetchKubernetesResourceManagers();
     setOpenModal(true);
     WorkspaceCreateModal.open();
   };

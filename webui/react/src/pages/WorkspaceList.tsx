@@ -34,6 +34,7 @@ import { useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { getWorkspaces } from 'services/api';
 import { V1GetWorkspacesRequestSortBy } from 'services/api-ts-sdk';
+import clusterStore from 'stores/cluster';
 import userStore from 'stores/users';
 import { Workspace } from 'types';
 import { useObservable } from 'utils/observable';
@@ -67,7 +68,7 @@ const WorkspaceList: React.FC = () => {
   const { settings, updateSettings } = useSettings<WorkspaceListSettings>(settingsConfig);
 
   const openWorkspaceCreateModal = () => {
-    console.log('coming from workspace list');
+    clusterStore.fetchKubernetesResourceManagers();
     setOpenModal(true);
     WorkspaceCreateModal.open();
   };

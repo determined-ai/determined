@@ -8,6 +8,7 @@ import css from 'components/ActionDropdown/ActionDropdown.module.scss';
 import WorkspaceCreateModalComponent from 'components/WorkspaceCreateModal';
 import WorkspaceDeleteModalComponent from 'components/WorkspaceDeleteModal';
 import usePermissions from 'hooks/usePermissions';
+import clusterStore from 'stores/cluster';
 import workspaceStore from 'stores/workspaces';
 import { Workspace } from 'types';
 import handleError from 'utils/error';
@@ -44,7 +45,7 @@ export const useWorkspaceActionMenu: (props: WorkspaceMenuPropsIn) => WorkspaceM
   const [openModal, setOpenModal] = useState(false);
 
   const openWorkspaceEditModal = () => {
-    console.log('coming from drop down');
+    clusterStore.fetchKubernetesResourceManagers();
     setOpenModal(true);
     WorkspaceEditModal.open();
   };
@@ -59,12 +60,23 @@ export const useWorkspaceActionMenu: (props: WorkspaceMenuPropsIn) => WorkspaceM
               workspace={workspace}
               onClose={onComplete}
             />
-            <WorkspaceEditModal.Component open={openModal} workspaceId={workspace.id} onClose={onComplete} />
+            <WorkspaceEditModal.Component
+              open={openModal}
+              workspaceId={workspace.id}
+              onClose={onComplete}
+            />
           </>
         )}
       </>
     );
-  }, [workspace, WorkspaceDeleteModal, returnIndexOnDelete, onComplete, WorkspaceEditModal, openModal]);
+  }, [
+    workspace,
+    WorkspaceDeleteModal,
+    returnIndexOnDelete,
+    onComplete,
+    WorkspaceEditModal,
+    openModal,
+  ]);
 
   const { canDeleteWorkspace, canModifyWorkspace } = usePermissions();
 

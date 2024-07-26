@@ -14,7 +14,6 @@ import React, { Fragment, useCallback, useEffect, useId, useMemo, useRef, useSta
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import {
-  getKubernetesResourceManagers,
   getKubernetesResourceQuotas,
   listWorkspaceNamespaceBindings,
   patchWorkspace,
@@ -25,6 +24,7 @@ import {
   V1WorkspaceNamespaceBinding,
   V1WorkspaceNamespaceMeta,
 } from 'services/api-ts-sdk';
+import clusterStore from 'stores/cluster';
 import determinedStore, { BrandingType } from 'stores/determinedInfo';
 import workspaceStore from 'stores/workspaces';
 import { Workspace } from 'types';
@@ -60,11 +60,11 @@ const isNonK8RMError = (e: unknown): boolean => {
   return e instanceof DetError && e.sourceErr instanceof Response && e.sourceErr['status'] === 404;
 };
 
-const isNotAuthorizedErr = (e: unknown): boolean => {
-  return e instanceof DetError && e.sourceErr instanceof Response && e.sourceErr['status'] === 403;
-};
-
-const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId, open }: Props = {}) => {
+const WorkspaceCreateModalComponent: React.FC<Props> = ({
+  onClose,
+  workspaceId,
+  open,
+}: Props = {}) => {
   const idPrefix = useId();
   const {
     canModifyWorkspaceAgentUserGroup,
@@ -78,28 +78,13 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId, 
   const useCheckpointStorage = Form.useWatch('useCheckpointStorage', form);
   const watchBindings = Form.useWatch('bindings', form);
   const canceler = useRef(new AbortController());
-  const [resourceManagers, setResourceManagers] = useState<Loadable<string[]>>(NotLoaded);
-  const [namespaceBindingsList, setNamespaceBindingsList] = useState<Loadable<Record<string, V1WorkspaceNamespaceBinding>>>(NotLoaded);
-  const [resourceQuotasList, setResourceQuotasList] = useState<Loadable<Record<string, number>>>(NotLoaded);
-  console.log('create modal ', open);
-  const fetchResourceManagers = useCallback(async(): Promise<void> => {
-    try {
-      const response = await getKubernetesResourceManagers(undefined, { signal: canceler.current.signal });
-      setResourceManagers(Loaded(response.names));
-    } catch (e) {
-      if (!isNotAuthorizedErr(e)) {
-        handleError(e, {
-          level: ErrorLevel.Error,
-          publicMessage: 'Failed to fetch Resource Managers.',
-          silent: false,
-          type: ErrorType.Server,
-        });
-      }
-      setResourceManagers(NotLoaded);
-    }
-  }, [setResourceManagers]);
+  const resourceManagers = useObservable(clusterStore.kubernetesResourceManagers);
+  const [namespaceBindingsList, setNamespaceBindingsList] =
+    useState<Loadable<Record<string, V1WorkspaceNamespaceBinding>>>(NotLoaded);
+  const [resourceQuotasList, setResourceQuotasList] =
+    useState<Loadable<Record<string, number>>>(NotLoaded);
 
-  const fetchNamespaceBindingsList = useCallback(async(): Promise<void> => {
+  const fetchNamespaceBindingsList = useCallback(async (): Promise<void> => {
     if (workspaceId === undefined) {
       setNamespaceBindingsList(NotLoaded);
       return;
@@ -124,7 +109,7 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId, 
     }
   }, [setNamespaceBindingsList, workspaceId]);
 
-  const fetchResourceQuotasList = useCallback(async(): Promise<void> => {
+  const fetchResourceQuotasList = useCallback(async (): Promise<void> => {
     if (workspaceId === undefined) {
       setResourceQuotasList(NotLoaded);
       return;
@@ -150,18 +135,20 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId, 
   }, [setResourceQuotasList, workspaceId]);
 
   useEffect(() => {
-    // API requests
     if (open) {
-      fetchResourceManagers();
-      fetchNamespaceBindingsList();
-      fetchResourceQuotasList();
-      // if (Loadable.getOrElse([], resourceManagers).length > 0) {
-      //   fetchNamespaceBindingsList();
-      //   fetchResourceQuotasList();
-      // }
+      if (Loadable.getOrElse([], resourceManagers).length > 0) {
+        fetchNamespaceBindingsList();
+        fetchResourceQuotasList();
+      }
     }
     return;
-  }, [fetchNamespaceBindingsList, fetchResourceManagers, fetchResourceQuotasList, open, resourceManagers, setNamespaceBindingsList]);
+  }, [
+    fetchNamespaceBindingsList,
+    resourceManagers,
+    fetchResourceQuotasList,
+    open,
+    setNamespaceBindingsList,
+  ]);
 
   const initFields = useCallback(
     (ws?: Workspace) => {
