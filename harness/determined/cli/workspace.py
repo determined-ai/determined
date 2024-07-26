@@ -551,7 +551,6 @@ args_description = [
                     cli.Group(
                         cli.output_format_args["json"],
                         cli.output_format_args["yaml"],
-                        cli.output_format_args["table"],
                         cli.output_format_args["csv"],
                     ),
                 ],
