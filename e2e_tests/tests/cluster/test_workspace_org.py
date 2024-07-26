@@ -1,6 +1,7 @@
 import contextlib
 import http
 import os
+import random
 import re
 import tempfile
 import uuid
@@ -589,6 +590,69 @@ def test_workspaceid_set() -> None:
 
         cmd = bindings.get_GetCommand(admin_session, commandId=cmd.id).command
         assert cmd.workspaceId == workspace.id
+
+
+@pytest.mark.e2e_cpu_rbac
+@pytest.mark.e2e_cpu
+def test_workspace_members() -> None:
+    """set up workspace with users, user-groups, and roles, and test list-member cli command"""
+    test_user: List[str] = []
+    test_groups: List[str] = []
+    test_exp: List[str] = ["User/Group Name | User/Group | Role Name"]
+
+    try:
+        admin_sess = api_utils.admin_session()
+
+        # Add a test workspace.
+        workspace_name = api_utils.get_random_string()
+        create_workspace_cmd = ["det", "workspace", "create", workspace_name]
+        detproc.check_call(admin_sess, create_workspace_cmd)
+
+        # Create test users (3) and groups (2) and assign to workspace.
+        roles = ["Editor", "Viewer", "WorkspaceAdmin", "EditorRestricted", "ModelRegistryViewer"]
+        count = 3
+        for _ in range(count):
+            user_name = api_utils.get_random_string()
+            detproc.check_call(
+                admin_sess, ["det", "user", "create", user_name, "--password", "Test@123"]
+            )
+            test_user.append(user_name)
+
+            role_name = random.choice(roles)
+            api_utils.assign_user_role(admin_sess, user_name, role_name, workspace_name)
+            test_exp.append(f"{user_name} | U | {role_name}")
+
+        count = 2
+        for _ in range(count):
+            group_name = api_utils.get_random_string()
+            detproc.check_call(admin_sess, ["det", "user-group", "create", group_name])
+            test_groups.append(group_name)
+
+            role_name = random.choice(roles)
+            api_utils.assign_group_role(admin_sess, group_name, role_name, workspace_name)
+            test_exp.append(f"{group_name} | G | {role_name}")
+
+        # List the members, and test the cli tabular output
+        list_members_tab = detproc.check_output(
+            admin_sess, ["det", "workspace", "list-members", workspace_name]
+        )
+
+        # Split the table output into lines
+        lines = list_members_tab.strip().split("\n")
+        # Process each line to remove extra whitespace and rejoin with a single space
+        result_members = [" ".join(line.split()) for line in lines]
+
+        assert all(i in result_members for i in test_exp)
+
+    finally:
+        # Clean out workspaces and all dependencies.
+        for user_name in test_user:
+            detproc.check_call(admin_sess, ["det", "user", "deactivate", user_name])
+
+        for group_name in test_groups:
+            detproc.check_call(admin_sess, ["det", "user-group", "delete", "--yes", group_name])
+
+        detproc.check_call(admin_sess, ["det", "workspace", "delete", "--yes", workspace_name])
 
 
 @pytest.mark.e2e_multi_k8s
