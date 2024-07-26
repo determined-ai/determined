@@ -3,6 +3,7 @@ import Input from 'hew/Input';
 import { Modal } from 'hew/Modal';
 import React, { useId, useState } from 'react';
 
+import useFeature from 'hooks/useFeature';
 import { patchExperiment } from 'services/api';
 import { BulkExperimentItem } from 'types';
 import handleError from 'utils/error';
@@ -34,6 +35,7 @@ const ExperimentEditModalComponent: React.FC<Props> = ({
   const idPrefix = useId();
   const [form] = Form.useForm<FormInputs>();
   const [disabled, setDisabled] = useState<boolean>(true);
+  const f_flat_runs = useFeature().isOn('flat_runs');
 
   const handleSubmit = async () => {
     const formData = await form.validateFields();
@@ -45,7 +47,7 @@ const ExperimentEditModalComponent: React.FC<Props> = ({
       onEditComplete({ description: formData.description, name: formData.experimentName });
     } catch (e) {
       handleError(e, {
-        publicMessage: 'Unable to update experiment',
+        publicMessage: `Unable to update ${f_flat_runs ? 'search' : 'experiment'}`,
         silent: false,
       });
     }
@@ -66,7 +68,7 @@ const ExperimentEditModalComponent: React.FC<Props> = ({
         handler: handleSubmit,
         text: BUTTON_TEXT,
       }}
-      title="Edit Experiment"
+      title={`Edit ${f_flat_runs ? 'Search' : 'Experiment'}`}
       onClose={form.resetFields}>
       <Form
         autoComplete="off"

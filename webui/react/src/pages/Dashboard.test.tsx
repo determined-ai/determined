@@ -96,7 +96,7 @@ describe('Dashboard', () => {
       expect(screen.getByText('Your Recent Submissions')).toBeInTheDocument();
       expect(screen.getByText('No submissions')).toBeInTheDocument();
       expect(
-        screen.getByText('Your recent experiments and tasks will show up here.'),
+        screen.getByText('Your recent searches and tasks will show up here.'),
       ).toBeInTheDocument();
       expect(screen.getByText('Get started')).toBeInTheDocument();
       expect(screen.queryByText('Recently Viewed Projects')).not.toBeInTheDocument();

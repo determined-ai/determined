@@ -15,6 +15,7 @@ import RemainingRetentionDaysLabel from 'components/RemainingRetentionDaysLabelC
 import TrialLogPreview from 'components/TrialLogPreview';
 import { UNMANAGED_MESSAGE } from 'constant';
 import { terminalRunStates } from 'constants/states';
+import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import usePolling from 'hooks/usePolling';
 import usePrevious from 'hooks/usePrevious';
@@ -84,6 +85,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
   const [trialDetails, setTrialDetails] = useState<TrialDetails>();
   const [tabKey, setTabKey] = useState(tab && TAB_KEYS.includes(tab) ? tab : DEFAULT_TAB_KEY);
   const [remainingLogDays, setRemainingLogDays] = useState<Loadable<number | undefined>>(NotLoaded);
+  const f_flat_runs = useFeature().isOn('flat_runs');
 
   const waitingForTrials = !trialId && !wontHaveTrials;
 
@@ -131,12 +133,12 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
     } catch (e) {
       handleError(e, {
         level: ErrorLevel.Error,
-        publicMessage: 'Failed to fetch experiment trials.',
+        publicMessage: `Failed to fetch ${f_flat_runs ? 'run' : 'experiment trials'}.`,
         silent: true,
         type: ErrorType.Server,
       });
     }
-  }, [canceler, experiment.id, experiment.state, onTrialUpdate]);
+  }, [canceler, experiment.id, experiment.state, f_flat_runs, onTrialUpdate]);
 
   const fetchTrialData = useCallback(async () => {
     if (!trialId) return;
@@ -151,12 +153,12 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
     } catch (e) {
       handleError(e, {
         level: ErrorLevel.Error,
-        publicMessage: 'Failed to fetch experiment trials.',
+        publicMessage: `Failed to fetch ${f_flat_runs ? 'run' : 'experiment trials'}.`,
         silent: true,
         type: ErrorType.Server,
       });
     }
-  }, [canceler.signal, onTrialUpdate, trialId]);
+  }, [canceler.signal, f_flat_runs, onTrialUpdate, trialId]);
 
   const { stopPolling } = usePolling(fetchTrialData, { rerunOnNewFn: true });
   const { stopPolling: stopPollingFirstTrialId } = usePolling(fetchFirstTrialId, {
@@ -219,13 +221,13 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
         handleError(e, {
           level: ErrorLevel.Error,
           publicMessage: 'Please try again later.',
-          publicSubject: 'Unable to update experiment notes.',
+          publicSubject: `Unable to update ${f_flat_runs ? 'run' : 'experiment'} notes.`,
           silent: false,
           type: ErrorType.Server,
         });
       }
     },
-    [experiment.id, fetchExperimentDetails],
+    [experiment.id, f_flat_runs, fetchExperimentDetails],
   );
 
   const { canCreateExperiment, canModifyExperimentMetadata, canViewExperimentArtifacts } =
@@ -239,7 +241,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
     const items: PivotProps['items'] = [
       {
         children: waitingForTrials ? (
-          <Spinner spinning tip="Waiting for trials..." />
+          <Spinner spinning tip={`Waiting for ${f_flat_runs ? 'run' : 'trial'}s...`} />
         ) : wontHaveTrials ? (
           <NeverTrials />
         ) : (
@@ -339,6 +341,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
   }, [
     editableNotes,
     experiment,
+    f_flat_runs,
     handleNotesUpdate,
     handleSelectFile,
     pageRef,

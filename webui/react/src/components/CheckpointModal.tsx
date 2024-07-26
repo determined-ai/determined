@@ -5,6 +5,7 @@ import { Modal, ModalCloseReason } from 'hew/Modal';
 import useConfirm from 'hew/useConfirm';
 import React, { useCallback, useMemo } from 'react';
 
+import useFeature from 'hooks/useFeature';
 import { paths } from 'routes/utils';
 import { deleteCheckpoints } from 'services/api';
 import {
@@ -89,6 +90,7 @@ const CheckpointModalComponent: React.FC<Props> = ({
   const handleCancel = useCallback(() => onClose?.('Cancel'), [onClose]);
 
   const handleOk = useCallback(() => onClose?.('Ok'), [onClose]);
+  const f_flat_runs = useFeature().isOn('flat_runs');
 
   const handleDelete = useCallback(async () => {
     if (!checkpoint?.uuid) return;
@@ -136,13 +138,13 @@ ${checkpoint?.totalBatches}? This action may complete or fail without further no
           <Breadcrumb>
             <Breadcrumb.Item>
               <Link path={paths.experimentDetails(checkpoint.experimentId)}>
-                Experiment {checkpoint.experimentId}
+                {f_flat_runs ? 'Search' : 'Experiment'} {checkpoint.experimentId}
               </Link>
             </Breadcrumb.Item>
             {checkpoint.trialId && (
               <Breadcrumb.Item>
                 <Link path={paths.trialDetails(checkpoint.trialId, checkpoint.experimentId)}>
-                  Trial {checkpoint.trialId}
+                  {f_flat_runs ? 'Run' : 'Trial'} {checkpoint.trialId}
                 </Link>
               </Breadcrumb.Item>
             )}
@@ -198,7 +200,7 @@ ${checkpoint?.totalBatches}? This action may complete or fail without further no
         ),
       });
     return glossaryContent;
-  }, [checkpoint, config, props.searcherValidation, onClickDelete]);
+  }, [checkpoint, config, f_flat_runs, props.searcherValidation, onClickDelete]);
 
   return (
     <Modal

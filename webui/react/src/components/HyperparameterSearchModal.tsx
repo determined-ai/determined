@@ -14,6 +14,7 @@ import yaml from 'js-yaml';
 import React, { useCallback, useEffect, useId, useMemo, useRef, useState } from 'react';
 
 import Link from 'components/Link';
+import useFeature from 'hooks/useFeature';
 import { paths } from 'routes/utils';
 import { createExperiment } from 'services/api';
 import { V1LaunchWarning } from 'services/api-ts-sdk';
@@ -34,7 +35,7 @@ import { DetError, ErrorLevel, ErrorType, handleWarning, isDetError } from 'util
 import { roundToPrecision } from 'utils/number';
 import { useObservable } from 'utils/observable';
 import { routeToReactUrl } from 'utils/routes';
-import { validateLength } from 'utils/string';
+import { capitalize, validateLength } from 'utils/string';
 
 import css from './HyperparameterSearchModal.module.scss';
 
@@ -82,6 +83,16 @@ interface HyperparameterRowValues {
   name: string;
 }
 
+const ExperimentEntityCopyMap = {
+  experiment: 'experiment',
+  trial: 'trial',
+};
+
+const RunEntityCopyMap = {
+  experiment: 'search',
+  trial: 'run',
+};
+
 const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JSX.Element => {
   const idPrefix = useId();
   const [modalError, setModalError] = useState<string>();
@@ -98,6 +109,9 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
   const [currentPage, setCurrentPage] = useState(0);
   const [validationError, setValidationError] = useState(false);
   const formValues = Form.useWatch([], form);
+  const f_flat_runs = useFeature().isOn('flat_runs');
+
+  const entityCopy = f_flat_runs ? RunEntityCopyMap : ExperimentEntityCopyMap;
 
   const trialHyperparameters = useMemo(() => {
     if (!trial) return;
@@ -230,7 +244,7 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
       const newPath = paths.experimentDetails(newExperiment.id);
       routeToReactUrl(paths.reload(newPath));
     } catch (e) {
-      let errorMessage = 'Unable to create experiment.';
+      let errorMessage = `Unable to create ${entityCopy.experiment}.`;
       if (isDetError(e)) {
         errorMessage = e.publicMessage || e.message;
       }
@@ -240,7 +254,7 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
       // We throw an error to prevent the modal from closing.
       throw new DetError(errorMessage, { publicMessage: errorMessage, silent: true });
     }
-  }, [experiment.configRaw, experiment.id, experiment.projectId, form, currentHPs]);
+  }, [entityCopy, experiment.configRaw, experiment.id, experiment.projectId, form, currentHPs]);
 
   const handleOk = useCallback(() => {
     if (currentPage === 0) {
@@ -464,7 +478,7 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
         </Form.Item>
         <Form.Item
           initialValue={experiment.name}
-          label="New experiment name"
+          label={`New ${entityCopy.experiment} name`}
           name="name"
           rules={[{ required: true }]}>
           <Input maxLength={80} />
@@ -509,7 +523,7 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
           </Form.Item>
           <Form.Item
             initialValue={experiment.configRaw?.resources?.slots_per_trial || 1}
-            label="Slots per trial"
+            label={`Slots per ${entityCopy.trial}`}
             name="slots_per_trial"
             rules={[{ max: maxSlots, min: 0, required: true, type: 'number' }]}
             validateStatus={
@@ -559,7 +573,7 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
           <Form.Item
             hidden={searcher === SEARCH_METHODS.Grid}
             initialValue={experiment?.config?.searcher.max_trials ?? 1}
-            label="Max trials"
+            label={`Max ${entityCopy.trial}s`}
             name="max_trials"
             rules={[{ min: 1, required: true, type: 'number' }]}>
             <InputNumber min={1} precision={0} />
@@ -580,6 +594,7 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
       </div>
     );
   }, [
+    entityCopy,
     experiment?.config?.searcher.max_trials,
     experiment.configRaw?.records_per_epoch,
     experiment.configRaw?.resources?.slots_per_trial,
@@ -612,12 +627,14 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
         <Row>
           <Button onClick={handleCancel}>Cancel</Button>
           <Button disabled={validationError} type="primary" onClick={handleOk}>
-            {currentPage === 0 ? 'Select Hyperparameters' : 'Run Experiment'}
+            {currentPage === 0
+              ? 'Select Hyperparameters'
+              : `Run ${capitalize(entityCopy.experiment)}`}
           </Button>
         </Row>
       </>
     );
-  }, [currentPage, handleBack, handleCancel, handleOk, validationError]);
+  }, [currentPage, entityCopy, handleBack, handleCancel, handleOk, validationError]);
 
   return (
     <Modal footer={footer} title="Hyperparameter Search">

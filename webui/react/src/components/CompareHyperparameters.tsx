@@ -6,6 +6,7 @@ import { Title } from 'hew/Typography';
 import React, { useCallback, useEffect, useMemo } from 'react';
 
 import Section from 'components/Section';
+import useFeature from 'hooks/useFeature';
 import { MapOfIdsToColors } from 'hooks/useGlasbey';
 import { RunMetricData } from 'hooks/useMetrics';
 import { useSettings } from 'hooks/useSettings';
@@ -63,6 +64,7 @@ const CompareHyperparameters: React.FC<Props> = ({
     () => settingsConfigForCompareHyperparameters(fullHParams, projectId),
     [fullHParams, projectId],
   );
+  const f_flat_runs = useFeature().isOn('flat_runs');
 
   const {
     settings,
@@ -139,10 +141,11 @@ const CompareHyperparameters: React.FC<Props> = ({
   }
 
   if ((selectedExperiments ?? selectedRuns).length !== 0 && metrics.length === 0) {
+    const entityName = f_flat_runs ? 'searches' : 'experiments';
     return (
       <div className={css.waiting}>
         <Alert
-          description="Please wait until the experiments are further along."
+          description={`Please wait until the ${entityName} are further along.`}
           message="Not enough data points to plot."
         />
         <Spinner center spinning />
