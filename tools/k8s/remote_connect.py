@@ -40,7 +40,7 @@ def expand_env(value: Any, env: Dict[str, str]) -> Any:
     if isinstance(value, dict):
         return {k: expand_env(v, env) for k, v in value.items()}
     if isinstance(value, list):
-        return [expand_env(l, env) for l in value]
+        return [expand_env(item, env) for item in value]
     return value
 
 
@@ -272,7 +272,10 @@ def provision_gateway(cfg: Config) -> Gateway:
     """
     Provision a gateway service in the cluster.
     """
-    contour_provisioner_url = "https://raw.githubusercontent.com/projectcontour/contour/release-1.29/examples/render/contour-gateway-provisioner.yaml"
+    contour_provisioner_url = (
+        "https://raw.githubusercontent.com/projectcontour/contour"
+        + "/release-1.29/examples/render/contour-gateway-provisioner.yaml"
+    )
     contour_yaml_path = pathlib.Path(cfg.determined_root) / "tools" / "k8s" / "contour.yaml"
 
     kctl = ["kubectl", "--context", cfg.k8s_context]
