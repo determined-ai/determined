@@ -1,5 +1,6 @@
 import logging
 import time
+import uuid
 
 import docker
 import pytest
@@ -15,7 +16,6 @@ from tests import detproc
 from tests import experiment as exp
 from tests.cluster import abstract_cluster, managed_cluster, managed_cluster_k8s, utils
 from tests.task import task
-import uuid
 
 logger = logging.getLogger(__name__)
 
@@ -307,46 +307,45 @@ def _test_master_restart_stopping(managed_cluster_restarts: abstract_cluster.Clu
                 assert s.container is None, s.container.to_json()
 
 
-@pytest.mark.e2e_k8s
-def test_master_restart_wksp_running_task() -> None:
-    _test_master_restart_wksp_running_task()
+@pytest.mark.e2e_single_k8s
+def test_wksp_running_task_check_namespace() -> None:
+    _test_wksp_running_task_check_namespace()
 
 
-def _test_master_restart_wksp_running_task() -> None:
+def _test_wksp_running_task_check_namespace() -> None:
     sess = api_utils.admin_session()
     wksp_namespace_meta = bindings.v1WorkspaceNamespaceMeta(
-            autoCreateNamespace=True,
+        autoCreateNamespace=True,
     )
     sess._max_retries = urllib3.util.retry.Retry(total=5, backoff_factor=0.5)
     cluster_name = conf.DEFAULT_RM_CLUSTER_NAME
 
     # Create a workspace bound to an auto-created namespace.
     body = bindings.v1PostWorkspaceRequest(name=f"workspace_{uuid.uuid4().hex[:8]}")
-    body.cluster_namespace_meta = {cluster_name: wksp_namespace_meta}
+    body.clusterNamespaceMeta = {cluster_name: wksp_namespace_meta}
     resp = bindings.post_PostWorkspace(sess, body=body)
     wksp = resp.workspace
     notebook_id = bindings.post_LaunchNotebook(
-            sess,
-            body=bindings.v1LaunchNotebookRequest(workspaceId=wksp.id),
-        ).notebook.id
+        sess,
+        body=bindings.v1LaunchNotebookRequest(workspaceId=wksp.id),
+    ).notebook.id
 
-     # Wait for task to start or run.
+    # Wait for task to start or run.
     task.wait_for_task_start_or_run(sess, notebook_id)
-    
-    def wait_for_wksp_namespace_binding(timeout: int = 30):
+
+    def wait_for_wksp_namespace_binding(timeout: int = 30) -> None:
         deadline = time.time() + timeout
         while time.time() < deadline:
             content = bindings.v1SetWorkspaceNamespaceBindingsRequest(workspaceId=wksp.id)
             namespace_meta = bindings.v1WorkspaceNamespaceMeta(
-            autoCreateNamespace=True,
+                autoCreateNamespace=True,
             )
             content.clusterNamespaceMeta = {cluster_name: namespace_meta}
 
             bindings.post_SetWorkspaceNamespaceBindings(sess, body=content, workspaceId=wksp.id)
             time.sleep(1)
         pytest.fail(f"request failed to complete after {timeout} seconds")
-    
-    
+
     wait_for_wksp_namespace_binding()
 
 

@@ -144,7 +144,7 @@ class ManagedCluster(abstract_cluster.Cluster):
         return float(s.rstrip("s"))
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope="session")
 def managed_cluster_session(request: Any) -> Iterator[ManagedCluster]:
     config = str(DEVCLUSTER_REATTACH_ON_CONFIG_PATH)
     with ManagedCluster(config) as mc:
