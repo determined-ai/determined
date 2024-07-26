@@ -1,22 +1,6 @@
 #!/usr/bin/env python
 
-"""
-- set up reverse proxy
-    - port collision
-    - err handling
-    - clean up
-- check and set up gateway
-    - record ip
-- updated devcluster config
-
-There is a default reverse proxy provided for which you'd need the shared
-aws eng dev key available in determined-ai/secrets.
-
-TODO:
-- what if there are multiple gateways on the cluster?
-- gateway cleanup if we provision it
-- or migrate some of this into devcluster stages?
-"""
+# README: ./remote_connect.md
 
 
 import argparse

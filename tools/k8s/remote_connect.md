@@ -1,10 +1,26 @@
 # Remote K8s Dev
 
-## Reverse Proxy
+This document describes the remote dev tooling for connecting devcluster to a kubernetes
+cluster running in the cloud.
 
-- The firewall needs to have the configured port range open.
-- There is a shared server prepared for engineers to use.
+Overview of how this works:
+- set up reverse proxy
+    - port collision
+    - err handling
+    - clean up
+- ensure there is a Gateway running the target cluster
+    - launch if necessary
+    - grab its configuration
+- updated the given devcluster config based on the collected and launched services
+- run devcluster
 
+## Reverse Proxy Server
+A public facing server is used as a reverse proxy to forward traffic to the internal Determined master running on your local machine to make it accessible to Determined workloads running on the target cluster.
+
+- Ensure that the firewall is configured to allow traffic on the given port range.
+- A shared server might be available for engineers to use for reverse proxy purposes.
+
+### SSH Server Configuration
 ```ini
 # Enable TCP forwarding to allow reverse proxy setups.
 AllowTcpForwarding yes
@@ -26,3 +42,8 @@ MaxSessions 20
 ClientAliveInterval 60  # Time in seconds for sending keepalive messages to the client.
 ClientAliveCountMax 10  # Number of keepalive messages sent without receiving any message back from the client.
 ```
+
+## TODO
+- Determine how to handle multiple gateways on the cluster.
+- Develop a cleanup protocol for gateways if they are dynamically provisioned.
+- Can we migrate some of these tasks into the `devcluster` setup stages? It would need dynamic configuration of next stages.
