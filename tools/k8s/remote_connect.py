@@ -328,6 +328,12 @@ def update_devcluster(cfg: Config, gateway: Gateway, remote_port: int) -> pathli
 
 
 def workflow_1(cfg: Config):
+    master_port = DevClusterConf.from_yaml(pathlib.Path(cfg.base_devcluster_path)).master_port()
+    if is_port_listening("localhost", master_port):
+        print(f"Another process is listening on localhost:{master_port}.")
+        print("Please stop the existing process before running this script.")
+        sys.exit(1)
+
     rev_proxy, proxy_port = setup_reverse_proxy(cfg)
     try:
         gateway = get_gateway_info(cfg)
