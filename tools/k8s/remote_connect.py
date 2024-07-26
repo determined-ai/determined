@@ -70,8 +70,8 @@ class Config:
     ssh_key_path: str
     determined_root: str
     base_devcluster_path: str
+    reverse_proxy_host: str
     ssh_user: str = "ubuntu"
-    reverse_proxy_host: str = "18.218.13.18"
     remote_port_range: Tuple[int, int] = (8000, 9000)
 
     @classmethod
@@ -188,10 +188,14 @@ class DevClusterConf:
         return subprocess.Popen(devc_run_cmd)
 
 
-def is_port_listening(host: str, port: int) -> bool:
+def is_port_listening(host: str, port: int, timeout: float = 1.0) -> bool:
     with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as sock:
-        result = sock.connect_ex((host, port))
-        return result == 0
+        sock.settimeout(timeout)
+        try:
+            result = sock.connect_ex((host, port))
+            return result == 0
+        except socket.timeout:
+            return False
 
 
 def wait_for_tunnel(remote_host: str, remote_port: int, timeout: int = 30) -> bool:
@@ -219,27 +223,29 @@ def setup_reverse_proxy(cfg: Config) -> Tuple[subprocess.Popen, int]:
         f"Setting up reverse proxy on {cfg.reverse_proxy_host}:{remote_port}"
         + f" to localhost:{local_master_port}"
     )
-    proc = subprocess.Popen(
-        [
-            "ssh",
-            "-i",
-            cfg.ssh_key_path,
-            "-R",
-            f"{remote_port}:localhost:{local_master_port}",
-            cfg.ssh_user + "@" + cfg.reverse_proxy_host,
-            "-N",
-            "-o",
-            "ServerAliveInterval=60",
-            "-o",
-            "ServerAliveCountMax=10",
-        ],
-        stderr=subprocess.PIPE,
-    )
-    if not wait_for_tunnel(cfg.reverse_proxy_host, remote_port):
+    rev_proxy_cmd = [
+        "ssh",
+        "-i",
+        cfg.ssh_key_path,
+        "-R",
+        f"{remote_port}:localhost:{local_master_port}",
+        cfg.ssh_user + "@" + cfg.reverse_proxy_host,
+        "-N",
+        "-o",
+        "ServerAliveInterval=60",
+        "-o",
+        "ServerAliveCountMax=10",
+        "-v",
+    ]
+    proc = subprocess.Popen(rev_proxy_cmd, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+    success_msg = "forward success"
+    for line in iter(proc.stderr.readline, ""):
+        if success_msg in line.decode("utf-8"):
+            break
+    if not wait_for_tunnel(cfg.reverse_proxy_host, remote_port, timeout=1000):
         print("Failed to establish tunnel")
         proc.terminate()
         raise Exception("Failed to establish tunnel")
-    print("Reverse proxy is up.")
     return proc, remote_port
 
 
