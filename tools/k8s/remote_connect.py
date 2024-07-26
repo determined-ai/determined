@@ -31,7 +31,7 @@ import subprocess
 import sys
 import tempfile
 import time
-from dataclasses import dataclass
+from dataclasses import MISSING, dataclass, fields
 from typing import Any, Dict, Optional, Tuple
 
 import kubernetes as k8s
@@ -74,13 +74,35 @@ class Config:
     remote_port_range: Tuple[int, int] = (8000, 9000)
 
     @classmethod
-    def from_yaml(cls, path: pathlib.Path) -> "Config":
-        with open(path, "r") as f:
-            data = yaml.safe_load(f)
-            data = expand_env(data, env=dict(os.environ))
+    def _from_arg_dict(cls, data) -> "Config":
+        data = expand_env(data, env=dict(os.environ))
         cfg = cls(**data)
         print(f"Config loaded: {cfg}")
         return cfg
+
+    @classmethod
+    def from_yaml(cls, path: pathlib.Path) -> "Config":
+        with open(path, "r") as f:
+            data = yaml.safe_load(f)
+        return cls._from_arg_dict(data)
+
+    @classmethod
+    def from_args(cls) -> "Config":
+        parser = argparse.ArgumentParser(description="Configure remote connection settings.")
+        for field in fields(cls):
+            field_name = field.name
+            field_type = field.type
+            default_value = field.default if field.default != MISSING else None
+            help_text = f"(default: {default_value})" if default_value is not None else None
+            parser.add_argument(
+                f"--{field_name}", type=field_type, default=default_value, help=help_text
+            )
+        args = parser.parse_args()
+        arg_dict = vars(args)
+        for field in fields(cls):
+            if isinstance(arg_dict[field.name], str) and field.type == Tuple[int, int]:
+                arg_dict[field.name] = tuple(map(int, arg_dict[field.name].split(",")))
+        return cls._from_arg_dict(arg_dict)
 
 
 @dataclass
@@ -309,15 +331,16 @@ def workflow_1(cfg: Config):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Set the configuration file path.")
-    parser.add_argument(
-        "--config",
-        type=pathlib.Path,
-        default=CONFIG_DIR / "remote_connect.yaml",
-        help="Path to the configuration file.",
-    )
-    args = parser.parse_args()
-    cfg = Config.from_yaml(args.config)
+    # parser = argparse.ArgumentParser(description="Set the configuration file path.")
+    # parser.add_argument(
+    #     "--config",
+    #     type=pathlib.Path,
+    #     default=CONFIG_DIR / "remote_connect.yaml",
+    #     help="Path to the configuration file.",
+    # )
+    # args = parser.parse_args()
+    # cfg = Config.from_yaml(args.config)
+    cfg = Config.from_args()
     workflow_1(cfg)
 
 
