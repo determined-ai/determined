@@ -21,7 +21,7 @@ import {
   TrialDetails,
   TrialWorkloadFilter,
 } from 'types';
-import { canActionExperiment } from 'utils/experiment';
+import { canActionExperiment, isSingleTrialExperiment } from 'utils/experiment';
 import { openCommandResponse } from 'utils/wait';
 interface Props {
   experiment: ExperimentBase;
@@ -84,7 +84,7 @@ const TrialDetailsHeader: React.FC<Props> = ({ experiment, fetchTrialDetails, tr
       });
     }
 
-    if (canActionExperiment(ExperimentAction.ContinueTrial, experiment, trial)) {
+    if (canActionExperiment(ExperimentAction.ContinueTrial, experiment, trial) && isSingleTrialExperiment(experiment)) {
       const menuOption: ActionOptions['menuOptions'][number] = {
         disabled: experiment.unmanaged,
         icon: <Icon decorative name="fork" size="small" />,
