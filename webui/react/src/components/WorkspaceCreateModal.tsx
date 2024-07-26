@@ -62,6 +62,7 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
     canModifyWorkspaceAgentUserGroup,
     canModifyWorkspaceCheckpointStorage,
     canSetWorkspaceNamespaceBindings,
+    canSetResourceQuotas,
   } = usePermissions();
   const info = useObservable(determinedStore.info);
   const [form] = Form.useForm<FormInputs>();
@@ -70,7 +71,6 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
   const useCheckpointStorage = Form.useWatch('useCheckpointStorage', form);
   const watchBindings = Form.useWatch('bindings', form);
   const resourceManagers = useObservable(clusterStore.kubernetesResourceManagers);
-
   const namespaceBindingsList = useAsync(
     async (canceller) => {
       if (workspaceId === undefined || Loadable.getOrElse([], resourceManagers).length <= 0) {
@@ -157,19 +157,13 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
     initFields(workspace || undefined);
   }, [workspace, initFields]);
 
-  const [canModifyAUG, canModifyCPS, canModifyBindings] = useMemo(() => {
+  const [canModifyAUG, canModifyCPS] = useMemo(() => {
     const workspace = workspaceId ? { id: workspaceId } : undefined;
     return [
       canModifyWorkspaceAgentUserGroup({ workspace }),
       canModifyWorkspaceCheckpointStorage({ workspace }),
-      canSetWorkspaceNamespaceBindings({ workspace }),
     ];
-  }, [
-    canModifyWorkspaceAgentUserGroup,
-    canModifyWorkspaceCheckpointStorage,
-    canSetWorkspaceNamespaceBindings,
-    workspaceId,
-  ]);
+  }, [canModifyWorkspaceAgentUserGroup, canModifyWorkspaceCheckpointStorage, workspaceId]);
 
   const modalContent = useMemo(() => {
     if (workspaceId && loadableWorkspace === NotLoaded) return <Spinner spinning />;
@@ -192,55 +186,58 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
           ]}>
           <Input maxLength={80} />
         </Form.Item>
-        {canModifyBindings && Loadable.getOrElse([], resourceManagers).length > 0 && (
-          <>
-            <Divider />
-            Namespace Bindings
-            <Body inactive>
-              Note: If you leave the Namespace name blank, the workspace will be bound to the
-              default Namespace configured in the Master Config.
-            </Body>
+        {canSetWorkspaceNamespaceBindings &&
+          Loadable.getOrElse([], resourceManagers).length > 0 && (
             <>
-              {Loadable.getOrElse([], resourceManagers).map((name) => (
-                <Fragment key={name}>
-                  <Form.Item label={name} name={['bindings', name, 'namespace']}>
-                    <Input
-                      disabled={watchBindings?.[name]?.['autoCreateNamespace'] ?? false}
-                      maxLength={63}
-                    />
-                  </Form.Item>
-                  {info.branding === BrandingType.HPE && (
-                    <>
-                      <Form.Item
-                        label="Auto Create Namespace"
-                        name={['bindings', name, 'autoCreateNamespace']}
-                        valuePropName="checked">
-                        <Toggle
-                          onChange={() => form.setFieldValue(['resourceQuotas', name], undefined)}
-                        />
-                      </Form.Item>
-                      <Form.Item
-                        label="Resource Quota"
-                        name={['resourceQuotas', name]}
-                        rules={[
-                          {
-                            message: 'Resource Quota has to be greater or equal to 0',
-                            min: 0,
-                            type: 'number',
-                          },
-                        ]}>
-                        <InputNumber
-                          disabled={!(watchBindings?.[name]?.['autoCreateNamespace'] ?? false)}
-                          min={0}
-                        />
-                      </Form.Item>
-                    </>
-                  )}
-                </Fragment>
-              ))}
+              <Divider />
+              Namespace Bindings
+              <Body inactive>
+                Note: If you leave the Namespace name blank, the workspace will be bound to the
+                default Namespace configured in the Master Config.
+              </Body>
+              <>
+                {Loadable.getOrElse([], resourceManagers).map((name) => (
+                  <Fragment key={name}>
+                    <Form.Item label={name} name={['bindings', name, 'namespace']}>
+                      <Input
+                        disabled={watchBindings?.[name]?.['autoCreateNamespace'] ?? false}
+                        maxLength={63}
+                      />
+                    </Form.Item>
+                    {info.branding === BrandingType.HPE && (
+                      <>
+                        <Form.Item
+                          label="Auto Create Namespace"
+                          name={['bindings', name, 'autoCreateNamespace']}
+                          valuePropName="checked">
+                          <Toggle
+                            onChange={() => form.setFieldValue(['resourceQuotas', name], undefined)}
+                          />
+                        </Form.Item>
+                        {canSetResourceQuotas && (
+                          <Form.Item
+                            label="Resource Quota"
+                            name={['resourceQuotas', name]}
+                            rules={[
+                              {
+                                message: 'Resource Quota has to be greater or equal to 0',
+                                min: 0,
+                                type: 'number',
+                              },
+                            ]}>
+                            <InputNumber
+                              disabled={!(watchBindings?.[name]?.['autoCreateNamespace'] ?? false)}
+                              min={0}
+                            />
+                          </Form.Item>
+                        )}
+                      </>
+                    )}
+                  </Fragment>
+                ))}
+              </>
             </>
-          </>
-        )}
+          )}
         {canModifyAUG && (
           <>
             <Divider />
@@ -345,8 +342,7 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
     loadableWorkspace,
     form,
     idPrefix,
-    info.branding,
-    canModifyBindings,
+    canSetWorkspaceNamespaceBindings,
     resourceManagers,
     canModifyAUG,
     useAgentUser,
@@ -354,6 +350,8 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
     canModifyCPS,
     useCheckpointStorage,
     watchBindings,
+    info.branding,
+    canSetResourceQuotas,
   ]);
 
   const handleSubmit = useCallback(async () => {

@@ -253,7 +253,7 @@ class ClusterStore extends PollingStore {
         handleError(e, {
           level: ErrorLevel.Error,
           publicMessage: 'Failed to fetch Resource Managers.',
-          silent: true,
+          silent: false,
           type: ErrorType.Server,
         });
       });

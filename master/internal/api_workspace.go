@@ -610,17 +610,12 @@ func (a *apiServer) DeleteWorkspaceNamespaceBindings(ctx context.Context,
 func (a *apiServer) deleteWorkspaceNamespaceBinding(ctx context.Context,
 	clusterNames []string, workspaceID int32, curUser *model.User,
 ) error {
-	w, err := a.GetWorkspaceByID(ctx, workspaceID, *curUser, true)
-	if err != nil {
-		return err
-	}
-
 	if err := workspace.AuthZProvider.Get().
-		CanSetWorkspaceNamespaceBindings(ctx, *curUser, w); err != nil {
+		CanSetWorkspaceNamespaceBindings(ctx, *curUser); err != nil {
 		return status.Error(codes.PermissionDenied, err.Error())
 	}
 	if len(clusterNames) > 0 {
-		err = db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		err := db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 			deletedBindings, err := workspace.DeleteWorkspaceNamespaceBindings(ctx, int(workspaceID), clusterNames, &tx)
 			if err != nil {
 				return err
@@ -837,7 +832,7 @@ func (a *apiServer) setWorkspaceNamespaceBindings(ctx context.Context,
 
 	wkspID := int(w.Id)
 	if err := workspace.AuthZProvider.Get().
-		CanSetWorkspaceNamespaceBindings(ctx, *curUser, w); err != nil {
+		CanSetWorkspaceNamespaceBindings(ctx, *curUser); err != nil {
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
@@ -1012,7 +1007,7 @@ func (a *apiServer) setResourceQuotas(ctx context.Context,
 ) (*apiv1.SetResourceQuotasResponse, error) {
 	license.RequireLicense("set resource quota")
 	if err := workspace.AuthZProvider.Get().
-		CanSetResourceQuotas(ctx, *curUser, w); err != nil {
+		CanSetResourceQuotas(ctx, *curUser); err != nil {
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 

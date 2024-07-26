@@ -44,10 +44,8 @@ type WorkspaceAuthZ interface {
 	CanCreateWorkspace(ctx context.Context, curUser model.User) error
 	CanCreateWorkspaceWithAgentUserGroup(ctx context.Context, curUser model.User) error
 	CanCreateWorkspaceWithCheckpointStorageConfig(ctx context.Context, curUser model.User) error
-	CanSetWorkspaceNamespaceBindings(ctx context.Context, curUser model.User,
-		workspace *workspacev1.Workspace) error
-	CanSetResourceQuotas(ctx context.Context, curUser model.User,
-		workspace *workspacev1.Workspace) error
+	CanSetWorkspaceNamespaceBindings(ctx context.Context, curUser model.User) error
+	CanSetResourceQuotas(ctx context.Context, curUser model.User) error
 
 	// PATCH /api/v1/workspaces/:workspace_id
 	CanSetWorkspacesName(
