@@ -47,10 +47,11 @@ CONFIG_DIR.mkdir(parents=True, exist_ok=True)
 
 def expand_env(value: Any, env: Dict[str, str]) -> Any:
     """
-    Expand string variables in the config file.
+    Expand string and user variables in the config file.
     Borrowed from devcluster.
     """
     if isinstance(value, str):
+        value = os.path.expanduser(value)
         return string.Template(value).safe_substitute(env)
     if isinstance(value, dict):
         return {k: expand_env(v, env) for k, v in value.items()}
@@ -90,13 +91,14 @@ class Config:
     def from_args(cls) -> "Config":
         parser = argparse.ArgumentParser(description="Configure remote connection settings.")
         parser.add_argument(
-            "--config-file, -c",
+            "--config-file",
+            "-c",
             type=pathlib.Path,
             help="Path to a YAML config file. CLI args will override values in the file.",
         )
 
         for field in fields(cls):
-            field_name = field.name
+            field_name = field.name.replace("_", "-")
             field_type = field.type
             default_value = field.default if field.default != MISSING else None
             help_text = f"(default: {default_value})" if default_value is not None else None
@@ -350,15 +352,6 @@ def workflow_1(cfg: Config):
 
 
 def main():
-    # parser = argparse.ArgumentParser(description="Set the configuration file path.")
-    # parser.add_argument(
-    #     "--config",
-    #     type=pathlib.Path,
-    #     default=CONFIG_DIR / "remote_connect.yaml",
-    #     help="Path to the configuration file.",
-    # )
-    # args = parser.parse_args()
-    # cfg = Config.from_yaml(args.config)
     cfg = Config.from_args()
     workflow_1(cfg)
 
