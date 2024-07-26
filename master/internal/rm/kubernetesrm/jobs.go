@@ -254,15 +254,20 @@ func newJobsService(
 
 func (j *jobsService) syncNamespaces(ns []string) error {
 	for _, namespace := range ns {
+		// Since we don't want to do duplicate namespace informers, don't start any
+		// listeners or informers that have already been added to namespacesWithInformers.
 		if _, ok := j.namespacesWithInformers[namespace]; ok {
 			continue
 		}
-		j.namespacesWithInformers[namespace] = true
 
 		err := j.startEventListeners(namespace)
 		if err != nil {
 			return err
 		}
+
+		// Once we have started event listeners for a namespace, track these synced namespaces in
+		// namespacesWithInformers.
+		j.namespacesWithInformers[namespace] = true
 
 		err = j.startPreemptionListeners(namespace)
 		if err != nil {
@@ -2172,8 +2177,6 @@ func (j *jobsService) verifyNamespaceExists(namespace string) error {
 		worker.jobInterface = j.jobInterfaces
 	}
 
-	// Since we don't know whether the namespace exists yet, and we don't want to do duplicate
-	// namespace informers, add all non-auto-created namespaces bound to a workspace with a map.
 	err = j.syncNamespaces([]string{namespace})
 	if err != nil {
 		return err

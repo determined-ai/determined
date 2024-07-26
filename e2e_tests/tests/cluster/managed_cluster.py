@@ -15,6 +15,7 @@ DEVCLUSTER_CONFIG_ROOT_PATH = conf.PROJECT_ROOT_PATH.joinpath(".circleci/devclus
 DEVCLUSTER_REATTACH_OFF_CONFIG_PATH = DEVCLUSTER_CONFIG_ROOT_PATH / "double.devcluster.yaml"
 DEVCLUSTER_REATTACH_ON_CONFIG_PATH = DEVCLUSTER_CONFIG_ROOT_PATH / "double-reattach.devcluster.yaml"
 DEVCLUSTER_PRIORITY_SCHEDULER_CONFIG_PATH = DEVCLUSTER_CONFIG_ROOT_PATH / "priority.devcluster.yaml"
+DEVCLUSTER_REATTACH_MINIKUBE = DEVCLUSTER_CONFIG_ROOT_PATH / "single-k8s.devcluster.yaml"
 
 
 def get_agent_data(sess: api.Session) -> List[Dict[str, Any]]:
@@ -46,6 +47,9 @@ class ManagedCluster(abstract_cluster.Cluster):
 
     def initial_startup(self) -> None:
         self.dc.set_target("agent1", wait=True, timeout=3 * 60)
+    
+    def initial_startup_minikube(self) -> None:
+         self.dc.set_target("master", wait=True, timeout=3 * 60)
 
     def kill_master(self) -> None:
         self.dc.kill_stage("master")
@@ -150,6 +154,28 @@ def managed_cluster_session(request: Any) -> Iterator[ManagedCluster]:
     with ManagedCluster(config) as mc:
         mc.initial_startup()
         yield mc
+
+
+@pytest.fixture(scope="session")
+def managed_minikube_cluster_session(request: Any) -> Iterator[ManagedCluster]:
+    config = str(DEVCLUSTER_REATTACH_MINIKUBE)
+    with ManagedCluster(config) as mc:
+        mc.initial_startup_minikube()
+        yield mc
+
+
+@pytest.fixture
+def managed_minikube_cluster(managed_minikube_cluster_session: ManagedCluster, request: Any):
+    config = str(DEVCLUSTER_REATTACH_MINIKUBE)
+    utils.set_master_port(config)
+    nodeid = request.node.nodeid
+    managed_minikube_cluster_session.log_marker(
+        f"pytest [{utils.now_ts()}] {nodeid} setup\n"
+    )
+    yield managed_minikube_cluster_session
+    managed_minikube_cluster_session.log_marker(
+        f"pytest [{utils.now_ts()}] {nodeid} teardown\n"
+    )
 
 
 @pytest.fixture(scope="session")
