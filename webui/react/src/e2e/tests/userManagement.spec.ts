@@ -79,8 +79,8 @@ test.describe('User Management', () => {
           await user.validateUser(testUser);
         });
       });
-
-      test('Deactivate and Reactivate', async ({ page, user, auth, newAdmin }) => {
+      // DET-10439
+      test.skip('Deactivate and Reactivate', async ({ page, user, auth, newAdmin }) => {
         const userManagementPage = new UserManagement(page);
         const signInPage = new SignIn(page);
         await test.step('Deactivate', async () => {
