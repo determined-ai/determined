@@ -2,5 +2,5 @@
 
 **Bug Fixes**
 
--  WebUI: Fix endless metrics fetching for cancelled experiments, without metrics, on the
-   "Visualization" tab in the experiments detials page.
+-  WebUI: Fix endless metrics fetching in "Visualization" tab in experiment details page for
+   cancelled experiments that do not have metrics.
