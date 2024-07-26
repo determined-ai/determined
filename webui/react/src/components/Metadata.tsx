@@ -29,12 +29,17 @@ const getNodes = (data: JsonObject): TreeDataNode[] => {
         selectable: false,
         title: <span className={css.node}>{key}</span>,
       };
+    } else if (isArray(value)) {
+      return {
+        children: getNodes(JSON.parse(JSON.stringify(Object.assign({}, value)))),
+        key,
+        selectable: false,
+        title: <span className={css.node}>{key}</span>,
+      };
     } else {
       let stringValue = '';
       if (value === null || value === undefined) {
         stringValue = 'undefined';
-      } else if (isArray(value)) {
-        stringValue = `[${value.join(', ')}]`;
       } else {
         stringValue = value.toString();
       }
