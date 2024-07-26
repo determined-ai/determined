@@ -21,6 +21,7 @@ import {
 import TableBatch from 'components/Table/TableBatch';
 import TableFilterDropdown from 'components/Table/TableFilterDropdown';
 import { useCheckpointFlow } from 'hooks/useCheckpointFlow';
+import useFeature from 'hooks/useFeature';
 import { useFetchModels } from 'hooks/useFetchModels';
 import usePolling from 'hooks/usePolling';
 import { useSettings } from 'hooks/useSettings';
@@ -60,6 +61,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
   const [selectedModelName, setSelectedModelName] = useState<string>();
   const [canceler] = useState(new AbortController());
   const models = useFetchModels();
+  const f_flat_runs = useFeature().isOn('flat_runs');
 
   const config = useMemo(() => configForExperiment(experiment.id), [experiment.id]);
   const { settings, updateSettings } = useSettings<Settings>(config);
@@ -286,14 +288,14 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
       }
     } catch (e) {
       handleError(e, {
-        publicSubject: `Unable to fetch experiment ${experiment.id} checkpoints.`,
+        publicSubject: `Unable to fetch ${f_flat_runs ? 'search' : 'experiment'} ${experiment.id} checkpoints.`,
         silent: true,
         type: ErrorType.Api,
       });
     } finally {
       setIsLoading(false);
     }
-  }, [settings, experiment.id, canceler.signal, checkpoints]);
+  }, [f_flat_runs, settings, experiment.id, canceler.signal, checkpoints]);
 
   const submitBatchAction = useCallback(
     async (action: CheckpointAction) => {

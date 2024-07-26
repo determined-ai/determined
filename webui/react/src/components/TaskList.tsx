@@ -39,6 +39,7 @@ import settingsConfig, {
   Settings,
 } from 'components/TaskList.settings';
 import { commandTypeToLabel } from 'constants/states';
+import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import usePolling from 'hooks/usePolling';
 import { useSettings } from 'hooks/useSettings';
@@ -51,7 +52,6 @@ import {
   CommandState,
   CommandTask,
   CommandType,
-  ValueOf,
   Workspace,
 } from 'types';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
@@ -65,21 +65,18 @@ import css from './TaskList.module.scss';
 import TaskListModalComponent, { SourceInfo } from './TaskListModalComponent';
 import WorkspaceFilter from './WorkspaceFilter';
 
-const TensorBoardSourceType = {
+const ExperimentEntityCopyMap = {
   Experiment: 'Experiment',
   Trial: 'Trial',
 } as const;
 
-type TensorBoardSourceType = ValueOf<typeof TensorBoardSourceType>;
+const RunEntityCopyMap = {
+  Experiment: 'Search',
+  Trial: 'Run',
+} as const;
 
 interface Props {
   workspace?: Workspace;
-}
-
-interface TensorBoardSource {
-  id: number;
-  path: string;
-  type: TensorBoardSourceType;
 }
 
 const filterKeys: Array<keyof Settings> = ['search', 'state', 'type', 'user', 'workspace'];
@@ -99,6 +96,8 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
   const { canModifyWorkspaceNSC } = usePermissions();
   const taskListModal = useModal(TaskListModalComponent);
   const canceler = useRef(new AbortController());
+  const f_flat_runs = useFeature().isOn('flat_runs');
+  const entityCopyMap = f_flat_runs ? RunEntityCopyMap : ExperimentEntityCopyMap;
 
   const BatchActionConfirmModal = useModal(BatchActionConfirmModalComponent);
 
@@ -339,26 +338,26 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
         return taskNameRenderer(_, record, index);
       }
 
-      const info = {
+      const info: SourceInfo = {
         path: '',
         plural: '',
-        sources: [] as TensorBoardSource[],
+        sources: [],
       };
       record.misc.experimentIds.forEach((id) => {
         info.sources.push({
           id,
           path: paths.experimentDetails(id),
-          type: TensorBoardSourceType.Experiment,
+          type: entityCopyMap.Experiment,
         });
       });
       record.misc.trialIds.forEach((id) => {
         info.sources.push({
           id,
           path: paths.trialDetails(id),
-          type: TensorBoardSourceType.Trial,
+          type: entityCopyMap.Trial,
         });
       });
-      info.plural = info.sources.length > 1 ? 's' : '';
+      info.sources.length > 1 && (info.plural = 's');
       info.sources.sort((a, b) => {
         if (a.type !== b.type) return alphaNumericSorter(a.type, b.type);
         return numericSorter(a.id, b.id);
@@ -504,6 +503,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
 
     return cols;
   }, [
+    entityCopyMap,
     handleActionComplete,
     handleSourceShow,
     nameFilterSearch,

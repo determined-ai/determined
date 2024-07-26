@@ -105,7 +105,7 @@ const ProjectCard: React.FC<Props> = ({
                 project.lastExperimentStartedAt && (
                   <TimeAgo
                     datetime={project.lastExperimentStartedAt}
-                    tooltipFormat="[Last experiment started: \n]MMM D, YYYY - h:mm a"
+                    tooltipFormat={`[Last ${f_flat_runs ? 'search' : 'experiment'} started: \n]MMM D, YYYY - h:mm a`}
                   />
                 )
               )}

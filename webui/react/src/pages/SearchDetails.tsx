@@ -130,7 +130,7 @@ const SearchDetails: React.FC = () => {
         handleError(e, {
           level: ErrorLevel.Error,
           publicMessage: 'Please try again later.',
-          publicSubject: 'Unable to update experiment notes.',
+          publicSubject: 'Unable to update search notes.',
           silent: false,
           type: ErrorType.Server,
         });
@@ -213,7 +213,7 @@ const SearchDetails: React.FC = () => {
           path: paths.workspaceDetails(experiment?.workspaceId ?? 1),
         }
       : {
-          breadcrumbName: 'Uncategorized Experiments',
+          breadcrumbName: 'Uncategorized Runs',
           path: paths.projectDetails(1),
         },
   ];

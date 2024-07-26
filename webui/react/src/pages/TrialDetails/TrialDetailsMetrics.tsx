@@ -8,6 +8,7 @@ import { closestPointPlugin } from 'components/UPlot/UPlotChart/closestPointPlug
 import { drawPointsPlugin } from 'components/UPlot/UPlotChart/drawPointsPlugin';
 import { tooltipsPlugin } from 'components/UPlot/UPlotChart/tooltipsPlugin';
 import { useCheckpointFlow } from 'hooks/useCheckpointFlow';
+import useFeature from 'hooks/useFeature';
 import { useMetrics } from 'hooks/useMetrics';
 import {
   CheckpointWorkloadExtended,
@@ -38,6 +39,7 @@ const stripPrefix = (metricName: string): string => {
 
 const TrialDetailsMetrics: React.FC<Props> = ({ experiment, trial }: Props) => {
   const [xAxis, setXAxis] = useState<XAxisDomain>(XAxisDomain.Batches);
+  const f_flat_runs = useFeature().isOn('flat_runs');
 
   const checkpoint: CheckpointWorkloadExtended | undefined = useMemo(
     () =>
@@ -50,7 +52,7 @@ const TrialDetailsMetrics: React.FC<Props> = ({ experiment, trial }: Props) => {
   const { openCheckpoint, checkpointModalComponents } = useCheckpointFlow({
     checkpoint,
     config: experiment.config,
-    title: `Best checkpoint for Trial ${trial?.id}`,
+    title: `Best checkpoint for ${f_flat_runs ? 'Run' : 'Trial'} ${trial?.id}`,
   });
 
   const trials: (TrialDetails | undefined)[] = useMemo(() => [trial], [trial]);

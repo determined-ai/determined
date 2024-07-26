@@ -27,6 +27,7 @@ import {
   userRenderer,
 } from 'components/Table/Table';
 import WorkspaceCreateModalComponent from 'components/WorkspaceCreateModal';
+import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import usePolling from 'hooks/usePolling';
 import usePrevious from 'hooks/usePrevious';
@@ -58,6 +59,7 @@ const WorkspaceList: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const pageRef = useRef<HTMLElement>(null);
   const canceler = useRef<AbortController>();
+  const f_flat_runs = useFeature().isOn('flat_runs');
 
   const { canCreateWorkspace } = usePermissions();
 
@@ -378,7 +380,7 @@ const WorkspaceList: React.FC = () => {
           workspacesList
         ) : settings.whose === WhoseWorkspaces.All && settings.archived && !isLoading ? (
           <Message
-            description="Create a workspace to keep track of related projects and experiments."
+            description={`Create a workspace to keep track of related projects and ${f_flat_runs ? 'searches' : 'experiments'}.`}
             icon="workspaces"
             title="No Workspaces"
           />

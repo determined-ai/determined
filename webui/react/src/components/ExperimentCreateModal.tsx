@@ -9,6 +9,7 @@ import yaml from 'js-yaml';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useId, useMemo, useState } from 'react';
 
+import useFeature from 'hooks/useFeature';
 import { paths } from 'routes/utils';
 import { createExperiment } from 'services/api';
 import { V1LaunchWarning } from 'services/api-ts-sdk';
@@ -31,13 +32,34 @@ import {
   upgradeConfig,
 } from 'utils/experiment';
 import { routeToReactUrl } from 'utils/routes';
+import { capitalize } from 'utils/string';
 
 const FORM_ID = 'create-experiment-form';
 
 export const CreateExperimentType = {
-  ContinueTrial: 'Continue Trial',
-  Fork: 'Fork',
+  ContinueTrial: 'CONTINUE',
+  Fork: 'FORK',
 } as const;
+
+const ExperimentActionCopyMap = {
+  [CreateExperimentType.ContinueTrial]: 'Continue Trial',
+  [CreateExperimentType.Fork]: 'Fork',
+};
+
+const ExperimentEntityCopyMap = {
+  experiment: 'experiment',
+  trial: 'trial',
+};
+
+const RunActionCopyMap = {
+  [CreateExperimentType.ContinueTrial]: 'Continue Run',
+  [CreateExperimentType.Fork]: 'Fork',
+};
+
+const RunEntityCopyMap = {
+  experiment: 'search',
+  trial: 'run',
+};
 
 export type CreateExperimentType = ValueOf<typeof CreateExperimentType>;
 
@@ -83,10 +105,20 @@ const ExperimentCreateModalComponent = ({
   const [registryCredentials, setRegistryCredentials] = useState<RawJson>();
   const [modalState, setModalState] = useState<ModalState>(DEFAULT_MODAL_STATE);
   const [disabled, setDisabled] = useState<boolean>(true);
+  const f_flat_runs = useFeature().isOn('flat_runs');
+
+  const [actionCopy, entityCopy] = useMemo(() => {
+    const [actionCopyMap, entityCopyMap] = f_flat_runs
+      ? [RunActionCopyMap, RunEntityCopyMap]
+      : [ExperimentActionCopyMap, ExperimentEntityCopyMap];
+    return [actionCopyMap[modalState.type], entityCopyMap];
+  }, [f_flat_runs, modalState.type]);
 
   const isFork = type === CreateExperimentType.Fork;
 
-  const titleLabel = isFork ? `Fork Experiment ${experiment.id}` : `Continue Trial ${trial?.id}`;
+  const titleLabel = isFork
+    ? `Fork ${capitalize(entityCopy.experiment)} ${experiment.id}`
+    : `Continue ${capitalize(entityCopy.trial)} ${trial?.id}`;
 
   const requiredFields = useMemo(() => [EXPERIMENT_NAME, MAX_LENGTH], []);
 
@@ -226,7 +258,7 @@ const ExperimentCreateModalComponent = ({
         const newPath = paths.experimentDetails(newExperiment.id);
         routeToReactUrl(paths.reload(newPath));
       } catch (e) {
-        let errorMessage = `Unable to ${modalState.type.toLowerCase()} with the provided config.`;
+        let errorMessage = `Unable to ${actionCopy.toLowerCase()} with the provided config.`;
         if (isError(e) && e.name === 'YAMLException') {
           errorMessage = e.message;
         } else if (isDetError(e)) {
@@ -239,7 +271,7 @@ const ExperimentCreateModalComponent = ({
         throw new DetError(errorMessage, { publicMessage: errorMessage, silent: true });
       }
     },
-    [modalState],
+    [actionCopy, modalState],
   );
 
   const handleSubmit = async () => {
@@ -282,7 +314,7 @@ const ExperimentCreateModalComponent = ({
         experiment.projectName,
       );
       config.description =
-        `Continuation of trial ${trial.id}, experiment ${experiment.id}` +
+        `Continuation of ${entityCopy.trial} ${trial.id}, ${entityCopy.experiment} ${experiment.id}` +
         (config.description ? ` (${config.description})` : '');
     } else if (isFork) {
       if (config.description) config.description = `Fork of ${config.description}`;
@@ -315,7 +347,7 @@ const ExperimentCreateModalComponent = ({
       return _.isEqual(prev, newModalState) ? prev : newModalState;
     });
     form.validateFields(requiredFields); // initial disabled state set here, gets updated later in handleFieldsChange
-  }, [experiment, trial, type, isFork, form, requiredFields]);
+  }, [entityCopy, experiment, trial, type, isFork, form, requiredFields]);
 
   if (!experiment || (!isFork && !trial)) return <></>;
 
@@ -358,9 +390,11 @@ const ExperimentCreateModalComponent = ({
           onFieldsChange={handleFieldsChange}>
           <Form.Item
             initialValue={experiment.name}
-            label="Experiment name"
+            label={`${entityCopy.experiment} name`}
             name={EXPERIMENT_NAME}
-            rules={[{ message: 'Please provide a new experiment name.', required: true }]}>
+            rules={[
+              { message: `Please provide a new ${entityCopy.experiment} name.`, required: true },
+            ]}>
             <Input />
           </Form.Item>
           {!isFork && (
