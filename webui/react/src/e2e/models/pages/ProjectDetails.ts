@@ -9,7 +9,7 @@ import { PageComponent } from 'e2e/models/components/Page';
  */
 export class ProjectDetails extends BasePage {
   readonly title = /Uncategorized Experiments|Project Details/;
-  readonly url = /projects\/\d+/;
+  readonly url = /projects\/(\d+)/;
 
   /**
    * Visits the project details page.
@@ -26,6 +26,13 @@ export class ProjectDetails extends BasePage {
       timeout: 10_000,
     });
     return retVal;
+  }
+
+  async getIdFromUrl(): Promise<number> {
+    await this._page.waitForURL(this.url);
+    const matches = new URL(this._page.url()).pathname.match(this.url);
+    if (matches === null) throw new Error('No ID found in the URL');
+    return Number(matches[1]);
   }
 
   readonly pageComponent = new PageComponent({ parent: this });

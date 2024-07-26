@@ -1,12 +1,13 @@
 import { BaseComponent } from 'e2e/models/common/base/BaseComponent';
 import { Card } from 'e2e/models/common/hew/Card';
-import { WorkspaceActionDropdown } from 'e2e/models/components/WorkspaceActionDropdown';
+
+import { ProjectActionDropdown } from './ProjectActionDropdown';
 
 /**
- * Represents the WorkspaceCard src/pages/WorkspaceList/WorkspaceCard.tsx
+ * Represents the ProjectsCard in the WorkspaceProjects component
  */
-export class WorkspaceCard extends Card {
-  override readonly actionMenu = new WorkspaceActionDropdown({
+export class ProjectsCard extends Card {
+  override readonly actionMenu = new ProjectActionDropdown({
     clickThisComponentToOpen: this.actionMenuContainer,
     root: this.root,
   });

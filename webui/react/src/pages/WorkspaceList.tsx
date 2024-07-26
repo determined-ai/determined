@@ -353,7 +353,11 @@ const WorkspaceList: React.FC = () => {
       <Section>
         <Row wrap>
           <Column>
-            <Select value={settings.whose} width={180} onSelect={handleWhoseSelect}>
+            <Select
+              data-testid="whose"
+              value={settings.whose}
+              width={180}
+              onSelect={handleWhoseSelect}>
               <Option value={WhoseWorkspaces.All}>All Workspaces</Option>
               <Option value={WhoseWorkspaces.Mine}>My Workspaces</Option>
               <Option value={WhoseWorkspaces.Others}>Others&apos; Workspaces</Option>
@@ -366,7 +370,11 @@ const WorkspaceList: React.FC = () => {
                 label="Show Archived"
                 onChange={switchShowArchived}
               />
-              <Select value={settings.sortKey} width={170} onSelect={handleSortSelect}>
+              <Select
+                data-testid="sort"
+                value={settings.sortKey}
+                width={170}
+                onSelect={handleSortSelect}>
                 <Option value={V1GetWorkspacesRequestSortBy.NAME}>Alphabetical</Option>
                 <Option value={V1GetWorkspacesRequestSortBy.ID}>Newest to Oldest</Option>
               </Select>
@@ -380,12 +388,17 @@ const WorkspaceList: React.FC = () => {
           workspacesList
         ) : settings.whose === WhoseWorkspaces.All && settings.archived && !isLoading ? (
           <Message
+            data-testid="noWorkspaces"
             description={`Create a workspace to keep track of related projects and ${f_flat_runs ? 'searches' : 'experiments'}.`}
             icon="workspaces"
             title="No Workspaces"
           />
         ) : (
-          <Message icon="warning" title="No workspaces matching the current filters" />
+          <Message
+            data-testid="noMatchingWorkspaces"
+            icon="warning"
+            title="No workspaces matching the current filters"
+          />
         )}
       </Spinner>
       <WorkspaceCreateModal.Component />

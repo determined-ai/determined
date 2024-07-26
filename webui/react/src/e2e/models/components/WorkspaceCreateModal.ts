@@ -1,6 +1,6 @@
-import { Switch } from 'e2e/models/common/ant/Switch';
 import { BaseComponent } from 'e2e/models/common/base/BaseComponent';
 import { Modal } from 'e2e/models/common/hew/Modal';
+import { Toggle } from 'e2e/models/common/hew/Toggle';
 
 /**
  * Represents the WorkspaceCreateModal component in src/components/WorkspaceCreateModal.tsx
@@ -11,7 +11,7 @@ export class WorkspaceCreateModal extends Modal {
     selector: 'input[id="workspaceName"]',
   });
 
-  readonly useAgentUser = new Switch({
+  readonly useAgentUser = new Toggle({
     parent: this.body,
     selector: '[data-testid="useAgentUser"]',
   });
@@ -24,7 +24,7 @@ export class WorkspaceCreateModal extends Modal {
     selector: 'input[id="agentUser"]',
   });
 
-  readonly useAgentGroup = new Switch({
+  readonly useAgentGroup = new Toggle({
     parent: this.body,
     selector: '[data-testid="useAgentGroup"]',
   });
@@ -37,7 +37,7 @@ export class WorkspaceCreateModal extends Modal {
     selector: 'input[id="agentGroup"]',
   });
 
-  readonly useCheckpointStorage = new Switch({
+  readonly useCheckpointStorage = new Toggle({
     parent: this.body,
     selector: '[data-testid="useCheckpointStorage"]',
   });
