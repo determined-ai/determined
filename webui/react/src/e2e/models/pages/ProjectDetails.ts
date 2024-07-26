@@ -15,7 +15,7 @@ export class ProjectDetails extends BasePage {
    * Visits the project details page.
    * @param {string} [projectID] - The Project to visit. Defaults to '1' for uncategorized
    */
-  async gotoProject(projectID: string = '1', args = {}): Promise<this> {
+  async gotoProject(projectID: number = 1, args = {}): Promise<this> {
     const retVal = await this.goto({ ...args, url: `projects/${projectID}` });
     await this.f_experimentList.tableActionBar.pwLocator.waitFor({ timeout: 10_000 });
     await expect(
