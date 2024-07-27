@@ -1,6 +1,5 @@
-.key {
-  color: var(--theme-surface-border-strong);
-}
-.node {
-  color: var(--theme-surface-on);
+.base {
+  :global(.ant-tree-node-content-wrapper-close) {
+    font-weight: bold;
+  }
 }
