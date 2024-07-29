@@ -205,7 +205,7 @@ def load_trial_from_checkpoint_path(
 
     trial = trial_class(trial_context, **trial_kwargs)  # type: ignore
 
-    checkpoint = torch.load(  # type: ignore
+    checkpoint = torch.load(
         str(ckpt_dir.joinpath("state_dict.pth")), **torch_load_kwargs
     )
 

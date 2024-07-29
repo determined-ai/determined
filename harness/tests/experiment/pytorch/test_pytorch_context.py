@@ -52,6 +52,6 @@ class TestPyTorchContext:
             self.context._should_communicate_and_update()
 
     def test_wrap_scaler(self) -> None:
-        scaler = torch.cuda.amp.GradScaler()  # type: ignore # GradScaler.__init__ is untyped
+        scaler = torch.cuda.amp.GradScaler()  # GradScaler.__init__ is untyped
         assert scaler == self.context.wrap_scaler(scaler)
         assert scaler == self.context._scaler
