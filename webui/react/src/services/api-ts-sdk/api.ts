@@ -3501,10 +3501,10 @@ export interface V1FlatRun {
     searcherMetricValue?: number;
     /**
      * The id of external run
-     * @type {number}
+     * @type {string}
      * @memberof V1FlatRun
      */
-    externalRunId?: number;
+    externalRunId?: string;
     /**
      * Trial hyperparameters.
      * @type {any}
