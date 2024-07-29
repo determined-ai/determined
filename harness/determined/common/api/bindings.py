@@ -19480,7 +19480,7 @@ def get_GetKubernetesResourceManagers(
     _params = None
     _resp = session._do_request(
         method="GET",
-        path="/api/v1/k8-resource-managers",
+        path="/api/v1/k8s-resource-managers",
         params=_params,
         json=None,
         data=None,
@@ -19504,7 +19504,7 @@ def get_GetKubernetesResourceQuotas(
     _params = None
     _resp = session._do_request(
         method="GET",
-        path=f"/api/v1/workspaces/{id}/get-k8-resource-quotas",
+        path=f"/api/v1/workspaces/{id}/get-k8s-resource-quotas",
         params=_params,
         json=None,
         data=None,
