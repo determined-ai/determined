@@ -120,7 +120,7 @@ const ExperimentSingleTrialTabs: React.FC<Props> = ({
       // make sure the experiment is in terminal state before the request is made.
       const isTerminalExp = terminalRunStates.has(experiment.state);
       const expTrials = await getExpTrials(
-        { id: experiment.id, limit: 2 },
+        { id: experiment.id, limit: 1 },
         { signal: canceler.signal },
       );
       const firstTrial = expTrials.trials[0];
