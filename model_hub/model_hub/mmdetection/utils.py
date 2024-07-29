@@ -64,7 +64,7 @@ def get_pretrained_ckpt_path(download_directory: str, config_file: str) -> Tuple
         ckpt_path = model_hub.utils.download_url(
             download_directory, CONFIG_TO_PRETRAINED[config_file]
         )
-        return ckpt_path, torch.load(ckpt_path)  # type: ignore
+        return ckpt_path, torch.load(ckpt_path)
     return None, None
 
 
@@ -93,11 +93,11 @@ def build_fp16_loss_scaler(loss_scale: mmcv.Config) -> Any:
         ... )
     """
     if loss_scale == "dynamic":
-        loss_scaler = torch.cuda.amp.GradScaler()  # type: ignore
+        loss_scaler = torch.cuda.amp.GradScaler()
     elif isinstance(loss_scale, float):
-        loss_scaler = torch.cuda.amp.GradScaler(init_scale=loss_scale)  # type: ignore
+        loss_scaler = torch.cuda.amp.GradScaler(init_scale=loss_scale)
     elif isinstance(loss_scale, dict):
-        loss_scaler = torch.cuda.amp.GradScaler(**loss_scale)  # type: ignore
+        loss_scaler = torch.cuda.amp.GradScaler(**loss_scale)
     else:
         raise Exception(
             "Cannot parse fp16 configuration.  Expected cfg to be str(dynamic), float or dict."
