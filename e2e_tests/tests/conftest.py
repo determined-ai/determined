@@ -224,7 +224,7 @@ def is_multirm_cluster() -> bool:
 
 
 @pytest.fixture(scope="session")
-def namespaces_created(is_multirm_cluster: bool) -> Tuple[str, str]:
+def namespaces_created(is_multirm_cluster: bool) -> Iterator[Tuple[str, str]]:
     defaultrm_namespace = uuid.uuid4().hex[:8]
     additionalrm_namespace = uuid.uuid4().hex[:8]
 
@@ -246,8 +246,9 @@ def namespaces_created(is_multirm_cluster: bool) -> Tuple[str, str]:
     subprocess.run(create_namespace_defaultrm_cmd, check=True)
 
     default_kubeconfig = []
+    additionalrm_kubeconfig = ["--kubeconfig", conf.ADDITIONAL_RM_KUBECONFIG]
     if is_multirm_cluster:
-        get_namespace(additionalrm_namespace, ["--kubeconfig", conf.ADDITIONAL_RM_KUBECONFIG])
+        get_namespace(additionalrm_namespace, additionalrm_kubeconfig)
         default_kubeconfig += ["--kubeconfig", conf.DEFAULT_RM_KUBECONFIG]
 
     get_namespace(defaultrm_namespace, default_kubeconfig)
@@ -261,7 +262,7 @@ def namespaces_created(is_multirm_cluster: bool) -> Tuple[str, str]:
 
     delete_namespace(defaultrm_namespace, kubeconfig=default_kubeconfig)
     if is_multirm_cluster:
-        delete_namespace(additionalrm_namespace, kubeconfig=conf.ADDITIONAL_RM_KUBECONFIG)
+        delete_namespace(additionalrm_namespace, kubeconfig=additionalrm_kubeconfig)
 
 
 def get_namespace(namespace: str, kubeconfig: List[str]) -> None:
