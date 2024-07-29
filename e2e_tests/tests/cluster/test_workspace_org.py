@@ -736,13 +736,13 @@ def test_set_workspace_namespace_bindings(
         )
 
     else:
-        w_name = uuid.uuid4().hex[:8]
         output = detproc.check_output(
             sess,
-            ["det", "w", "create", w_name, "--namespace", namespace],
+            ["det", "w", "create", uuid.uuid4().hex[:8], "--namespace", namespace],
         )
         assert bound_to_namespace in output
 
+        w_name = uuid.uuid4().hex[:8]
         output = detproc.check_output(
             sess,
             [

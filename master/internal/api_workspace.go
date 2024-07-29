@@ -845,7 +845,7 @@ func (a *apiServer) setWorkspaceNamespaceBindings(ctx context.Context,
 ) (resp *apiv1.SetWorkspaceNamespaceBindingsResponse, err error) {
 	defer func() {
 		if v := recover(); v != nil {
-			err = status.Errorf(codes.InvalidArgument, "Auto-creating namespaces is "+
+			err = status.Error(codes.InvalidArgument, "Auto-creating namespaces is "+
 				"an Enterprise-Edition feature")
 		}
 	}()
