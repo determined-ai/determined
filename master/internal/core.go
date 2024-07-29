@@ -1277,6 +1277,9 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 	portregistry.InitPortRegistry(config.GetMasterConfig().ReservedPorts)
 
 	go periodicallyAggregateResourceAllocation(m.db)
+	if err := m.db.UpdateResourceAllocationAggregation(); err != nil {
+		panic(err)
+	}
 
 	// Initialize the HTTP server and listen for incoming requests.
 	m.echo = echo.New()

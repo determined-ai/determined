@@ -118,12 +118,14 @@ func (db *PgDB) UpdateResourceAllocationAggregation() error {
 		periodStart = lastDatePtr.UTC().AddDate(0, 0, 1)
 	}
 
+	tomorrow := time.Now().UTC().AddDate(0, 0, 1)
+	today := tomorrow
 	// targetDate is some time during the day before today, which is the last full day that has ended
 	// and can therefore be aggregated; the Before check means that the last value of periodStart is
 	// midnight at the beginning of that day.
-	targetDate := time.Now().UTC().AddDate(0, 0, -1)
+	targetDate := today.UTC().AddDate(0, 0, -1)
 	for ; periodStart.Before(targetDate); periodStart = periodStart.AddDate(0, 0, 1) {
-		t0 := time.Now()
+		t0 := today
 
 		if _, err := db.sql.Exec(
 			db.queries.GetOrLoad("update_aggregated_allocation"), periodStart,
