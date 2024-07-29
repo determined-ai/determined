@@ -89,7 +89,7 @@ message FlatRun {
   // Signed searcher metrics value.
   optional double searcher_metric_value = 8;
   // The id of external run
-  optional int32 external_run_id = 9;
+  optional string external_run_id = 9;
   // Trial hyperparameters.
   optional google.protobuf.Struct hyperparameters = 10;
   // summary metrics.
