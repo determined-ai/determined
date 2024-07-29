@@ -257,13 +257,30 @@ def namespaces_created(is_multirm_cluster: bool) -> Tuple[str, str]:
     if is_multirm_cluster:
         namespaces.append(additionalrm_namespace)
 
-    return defaultrm_namespace, additionalrm_namespace
+    yield defaultrm_namespace, additionalrm_namespace
+
+    delete_namespace(defaultrm_namespace, kubeconfig=default_kubeconfig)
+    if is_multirm_cluster:
+        delete_namespace(additionalrm_namespace, kubeconfig=conf.ADDITIONAL_RM_KUBECONFIG)
 
 
 def get_namespace(namespace: str, kubeconfig: List[str]) -> None:
     for _ in range(150):
         try:
             p = subprocess.run(["kubectl", "get", "namespace", namespace] + kubeconfig, check=True)
+            if not p.returncode:
+                break
+        except subprocess.CalledProcessError:
+            pass
+        time.sleep(2)
+
+
+def delete_namespace(namespace: str, kubeconfig: List[str]) -> None:
+    for _ in range(150):
+        try:
+            p = subprocess.run(
+                ["kubectl", "delete", "namespace", namespace] + kubeconfig, check=True
+            )
             if not p.returncode:
                 break
         except subprocess.CalledProcessError:

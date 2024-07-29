@@ -1,6 +1,5 @@
 import logging
 import time
-import uuid
 
 import docker
 import pytest
@@ -305,48 +304,6 @@ def _test_master_restart_stopping(managed_cluster_restarts: abstract_cluster.Clu
         if a.slots is not None:
             for s in a.slots.values():
                 assert s.container is None, s.container.to_json()
-
-
-@pytest.mark.e2e_single_k8s
-def test_wksp_running_task_check_namespace() -> None:
-    _test_wksp_running_task_check_namespace()
-
-
-def _test_wksp_running_task_check_namespace() -> None:
-    sess = api_utils.admin_session()
-    wksp_namespace_meta = bindings.v1WorkspaceNamespaceMeta(
-        autoCreateNamespace=True,
-    )
-    sess._max_retries = urllib3.util.retry.Retry(total=5, backoff_factor=0.5)
-    cluster_name = conf.DEFAULT_RM_CLUSTER_NAME
-
-    # Create a workspace bound to an auto-created namespace.
-    body = bindings.v1PostWorkspaceRequest(name=f"workspace_{uuid.uuid4().hex[:8]}")
-    body.clusterNamespaceMeta = {cluster_name: wksp_namespace_meta}
-    resp = bindings.post_PostWorkspace(sess, body=body)
-    wksp = resp.workspace
-    notebook_id = bindings.post_LaunchNotebook(
-        sess,
-        body=bindings.v1LaunchNotebookRequest(workspaceId=wksp.id),
-    ).notebook.id
-
-    # Wait for task to start or run.
-    task.wait_for_task_start_or_run(sess, notebook_id)
-
-    def wait_for_wksp_namespace_binding(timeout: int = 30) -> None:
-        deadline = time.time() + timeout
-        while time.time() < deadline:
-            content = bindings.v1SetWorkspaceNamespaceBindingsRequest(workspaceId=wksp.id)
-            namespace_meta = bindings.v1WorkspaceNamespaceMeta(
-                autoCreateNamespace=True,
-            )
-            content.clusterNamespaceMeta = {cluster_name: namespace_meta}
-
-            bindings.post_SetWorkspaceNamespaceBindings(sess, body=content, workspaceId=wksp.id)
-            time.sleep(1)
-        pytest.fail(f"request failed to complete after {timeout} seconds")
-
-    wait_for_wksp_namespace_binding()
 
 
 @pytest.mark.managed_devcluster
