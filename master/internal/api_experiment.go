@@ -509,11 +509,11 @@ func (a *apiServer) deleteExperiments(exps []*model.Experiment, userModel *model
 				JobID: exp.JobID,
 			})
 			if err != nil {
-				log.WithError(err).Errorf("requesting cleanup of resource mananger resources")
+				log.WithError(err).Errorf("requesting cleanup of resource manager resources")
 				return err
 			}
 			if err = <-resp.Err; err != nil {
-				log.WithError(err).Errorf("cleaning up resource mananger resources")
+				log.WithError(err).Errorf("cleaning up resource manager resources")
 				return err
 			}
 			return nil
