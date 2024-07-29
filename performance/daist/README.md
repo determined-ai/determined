@@ -35,9 +35,8 @@ By default, results are output to `daist/results/<hostname>/<ISO 8061 UTC timest
 be configured via `config.conf[exec][output]`. The manifest for the results is found in a 
 `Result-<tags>.json` file. 
 
-The `daist.models.base` module defined the base for serializing/deserializing data to/from the 
-file system and python classes. Files associated with serializing/deserializing classes have the 
-form:
+The `daist.models.base` module defines the base classes for data `daist` serialization. Artifacts 
+associated with `daist` serialization classes take the following form: 
 
     <classname>-<zero or more tags>-<ISO 8061 UTC timestamp>.<extension>
 
@@ -49,7 +48,6 @@ form:
     <ISO 8061 UTC timestamp>: example - 2024-07-29T18-49-42Z
     <extension>: A extension that will indicate the file type, for example: .json, .yaml, .txt, .png
  
-The `daist` logging will be found in `test_run.log` within the associated results' directory.
+The `daist` log will be `test_run.log` within the associated results' directory.
 
-The configuration file that was used in collecting a set of results is included in the 
-associated results' directory.
+The session configuration file is saved to the associated results' directory.

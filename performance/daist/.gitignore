@@ -12,4 +12,5 @@ __build__/
 __dist__/
 *.egg-info/
 
+# Artifacts
 daist/results/

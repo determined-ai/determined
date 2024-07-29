@@ -44,7 +44,7 @@ class TestRO(TestCase):
     _tasks: locust_utils.LocustTasksWithMeta = None
     _runner: LocalRunner = None
     _stop_timeout = 60.0
-    _TEST_LENGTH_SEC = 60  # meyere
+    _TEST_LENGTH_SEC = 300
     _USERS = 10
 
     @classmethod

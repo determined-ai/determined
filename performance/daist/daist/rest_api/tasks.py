@@ -54,9 +54,6 @@ def read_only_tasks(resources: Resources) -> LocustTasksWithMeta:
 
     start_date = "2000-01-01"
     end_date = datetime.date.today().isoformat()
-    # start_time = "2000-01-01T00:00:00.000000Z"
-    # end_time = datetime.datetime.today().isoformat() + "Z"
-
     tasks.append(LocustGetTaskWithMeta(
         "/api/v1/resources/allocation/aggregated", test_name="get resource allocations",
         params={
@@ -64,31 +61,6 @@ def read_only_tasks(resources: Resources) -> LocustTasksWithMeta:
             "end_date": end_date,
             "period": "RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY"
         }))
-
-    # tasks.append(locust_utils.getTask(
-    #     "/resources/allocation/aggregated", params={
-    #         "start_date": start_date,
-    #         "end_date": end_date,
-    #         "period": "RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY",
-    # }))
-    # tasks.append(locust_utils.getTask(
-    #     "/api/v1/resources/allocation/raw", params={
-    #         "timestamp_after": start_time,
-    #         "timestamp_before": end_time,
-    #         "period": "RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY",
-    # }))
-    # tasks.append(locust_utils.getTask(
-    #     "/resources/allocation/allocations-csv", params={
-    #         "timestamp_after": start_time,
-    #         "timestamp_before": end_time,
-    #         "period": "RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY",
-    # }))
-    # tasks.append(locust_utils.getTask(
-    #     "/resources/allocation/raw", params={
-    #         "timestamp_after": start_time,
-    #         "timestamp_before": end_time,
-    #         "period": "RESOURCE_ALLOCATION_AGGREGATION_PERIOD_DAILY",
-    # }))
 
     if resources.user_id is not None:
         tasks.append(LocustGetTaskWithMeta(f"/api/v1/users/{resources.user_id}",

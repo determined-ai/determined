@@ -4633,8 +4633,6 @@ workflows:
             branches:
               only:
                 - main
-                # meyere - remove the following line before merge to main.
-                - SCALE-29-integrate_daist_with_determined
 
       - test-e2e-aws:
           name: test-e2e-gpu-parallel
