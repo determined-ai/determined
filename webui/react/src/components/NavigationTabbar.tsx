@@ -111,6 +111,11 @@ const NavigationTabbar: React.FC = () => {
       ),
   );
 
+  const openWorkspaceCreateModal = () => {
+    clusterStore.fetchKubernetesResourceManagers();
+    WorkspaceCreateModal.open();
+  };
+
   if (canCreateWorkspace) {
     workspaceActions.push({
       icon: (
@@ -119,7 +124,7 @@ const NavigationTabbar: React.FC = () => {
         </div>
       ),
       label: 'New Workspace',
-      onClick: WorkspaceCreateModal.open,
+      onClick: openWorkspaceCreateModal,
     });
   }
 
