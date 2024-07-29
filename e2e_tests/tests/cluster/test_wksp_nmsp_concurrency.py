@@ -14,8 +14,9 @@ from tests.task import task
 # a thread that locks the jobsService tries to reacquire the lock during the execution of a callback
 # function that only gets called when a job is running in the namespace that we want to bind to the
 # workspace. Verify that we don't run into this deadlock when triggering multiple calls to the
-# API handler that binds a workspace to an auto-created namespace, as this request can trigger the
-# deadlock if the namespace (or verify the existence of for the first time) is running a job.
+# API handler that binds a workspace to an auto-created namespace (or verifies the existence of a
+# namespace for the first time), as this request can trigger the deadlock if the namespace is
+# running a job.
 @pytest.mark.e2e_single_k8s
 @pytest.mark.timeout(3 * 60)
 def test_wksp_running_task_check_namespace(namespaces_created: Tuple[str, str]) -> None:

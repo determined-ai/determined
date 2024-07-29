@@ -702,13 +702,29 @@ def test_set_workspace_namespace_bindings(
         "no resource manager with cluster name",
     )
 
-    # Valid namespace name, no cluster name. (Should fail for multirm but work for single
-    # kubernetes rm).
+    # The following test commands should fail for multirm but succeed for single kubernetes rm.
+    #   * Valid namespace name, no cluster name.
+    #   * Set resource quota when --auto-create-namespace-all-clusters is specified.
     if is_multirm_cluster:
         detproc.check_error(
             sess,
             ["det", "w", "create", w_name, "--namespace", namespace],
             "must specify a cluster name",
+        )
+
+        detproc.check_error(
+            sess,
+            [
+                "det",
+                "w",
+                "create",
+                w_name,
+                "--auto-create-namespace-all-clusters",
+                "--resource-quota",
+                "10",
+            ],
+            "When using multiple resource managers, cannot set a resource quota when you request "
+            + "to auto-create a namespace for all clusters.",
         )
 
         detproc.check_call(sess, ["det", "w", "create", w_name])
@@ -725,6 +741,21 @@ def test_set_workspace_namespace_bindings(
             sess,
             ["det", "w", "create", w_name, "--namespace", namespace],
         )
+        assert bound_to_namespace in output
+
+        output = detproc.check_output(
+            sess,
+            [
+                "det",
+                "w",
+                "create",
+                w_name,
+                "--auto-create-namespace-all-clusters",
+                "--resource-quota",
+                "2",
+            ],
+        )
+        assert bound_to_namespace in output
 
         output = detproc.check_output(
             sess,
@@ -738,11 +769,11 @@ def test_set_workspace_namespace_bindings(
             "cannot set quota on a workspace that is not bound to an auto-created namespace",
         )
 
-    # MultiRM: Valid cluster name, no namespace name.
     if is_multirm_cluster:
         w_name = uuid.uuid4().hex[:8]
         detproc.check_call(sess, ["det", "w", "create", w_name])
 
+        # MultiRM: Valid cluster name, no namespace name.
         set_binding_cmd = ["det", "w", "bindings", "set", w_name]
         create_wksp_with_binding_cmd = ["det", "w", "create", w_name]
 
@@ -755,7 +786,33 @@ def test_set_workspace_namespace_bindings(
             "must provide --namespace",
         )
 
-        detproc.check_error(sess, create_wksp_with_binding_cmd, "must provide --namespace")
+    w_name = uuid.uuid4().hex[:8]
+    detproc.check_error(
+        sess,
+        ["det", "w", "create", w_name]
+        + ["--auto-create-namespace-all-clusters", "--cluster-name", "defaultrm"],
+        "cannot specify a cluster name when you request to auto-create a namespace for "
+        + "all clusters",
+    )
+
+    detproc.check_call(sess, ["det", "w", "create", w_name])
+
+    # Workspace-namespace binding with no specifed namespace and no auto-create namespace.
+    detproc.check_error(
+        sess,
+        ["det", "w", "bindings", "set", w_name],
+        "must provide --namespace NAMESPACE or --auto-create-namespace, or specify "
+        + "--auto-create-namespace-all-clusters",
+    )
+
+    # Auto-create namespace for all clusters and valid cluster name set.
+    detproc.check_error(
+        sess,
+        ["det", "w", "bindings", "set", w_name]
+        + ["--auto-create-namespace-all-clusters", "--cluster-name", "additionalrm"],
+        "cannot specify a cluster name when you request to auto-create a namespace for "
+        + "all clusters",
+    )
 
     # MultiRM: Valid cluster name, invalid namespace name.
     # Single KubernetesRM: No cluster name, invalid namespace name.

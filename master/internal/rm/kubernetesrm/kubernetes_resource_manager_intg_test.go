@@ -1325,7 +1325,7 @@ func TestSetResourceQuota(t *testing.T) {
 			},
 		})
 	err = js.setResourceQuota(newRQ, namespaceName)
-	require.ErrorContains(t, err, "namespace consists of a Kubernetes quota with request limit")
+	require.ErrorContains(t, err, "lower than the request limit you wish to set on this namespace")
 
 	// 1 existing determined Resource Quota.
 	detQVal := 2
