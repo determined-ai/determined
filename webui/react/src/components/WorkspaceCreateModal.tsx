@@ -70,10 +70,11 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
   const useAgentGroup = Form.useWatch('useAgentGroup', form);
   const useCheckpointStorage = Form.useWatch('useCheckpointStorage', form);
   const watchBindings = Form.useWatch('bindings', form);
-  const resourceManagers = useObservable(clusterStore.kubernetesResourceManagers);
+  const loadableResourceManagers = useObservable(clusterStore.kubernetesResourceManagers);
+  const resourceManagers = Loadable.getOrElse([], loadableResourceManagers);
   const namespaceBindingsList = useAsync(
     async (canceller) => {
-      if (workspaceId === undefined || Loadable.getOrElse([], resourceManagers).length <= 0) {
+      if (workspaceId === undefined || resourceManagers.length === 0) {
         return NotLoaded;
       }
       try {
@@ -96,7 +97,7 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
   );
   const resourceQuotasList = useAsync(
     async (canceller) => {
-      if (workspaceId === undefined || Loadable.getOrElse([], resourceManagers).length <= 0) {
+      if (workspaceId === undefined || resourceManagers.length === 0) {
         return NotLoaded;
       }
       try {
@@ -186,58 +187,57 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
           ]}>
           <Input maxLength={80} />
         </Form.Item>
-        {canSetWorkspaceNamespaceBindings &&
-          Loadable.getOrElse([], resourceManagers).length > 0 && (
+        {canSetWorkspaceNamespaceBindings && resourceManagers.length > 0 && (
+          <>
+            <Divider />
+            Namespace Bindings
+            <Body inactive>
+              Note: If you leave the Namespace name blank, the workspace will be bound to the
+              default Namespace configured in the Master Config.
+            </Body>
             <>
-              <Divider />
-              Namespace Bindings
-              <Body inactive>
-                Note: If you leave the Namespace name blank, the workspace will be bound to the
-                default Namespace configured in the Master Config.
-              </Body>
-              <>
-                {Loadable.getOrElse([], resourceManagers).map((name) => (
-                  <Fragment key={name}>
-                    <Form.Item label={name} name={['bindings', name, 'namespace']}>
-                      <Input
-                        disabled={watchBindings?.[name]?.['autoCreateNamespace'] ?? false}
-                        maxLength={63}
-                      />
-                    </Form.Item>
-                    {info.branding === BrandingType.HPE && (
-                      <>
+              {resourceManagers.map((name) => (
+                <Fragment key={name}>
+                  <Form.Item label={name} name={['bindings', name, 'namespace']}>
+                    <Input
+                      disabled={watchBindings?.[name]?.['autoCreateNamespace'] ?? false}
+                      maxLength={63}
+                    />
+                  </Form.Item>
+                  {info.branding === BrandingType.HPE && (
+                    <>
+                      <Form.Item
+                        label="Auto Create Namespace"
+                        name={['bindings', name, 'autoCreateNamespace']}
+                        valuePropName="checked">
+                        <Toggle
+                          onChange={() => form.setFieldValue(['resourceQuotas', name], undefined)}
+                        />
+                      </Form.Item>
+                      {canSetResourceQuotas && (
                         <Form.Item
-                          label="Auto Create Namespace"
-                          name={['bindings', name, 'autoCreateNamespace']}
-                          valuePropName="checked">
-                          <Toggle
-                            onChange={() => form.setFieldValue(['resourceQuotas', name], undefined)}
+                          label="Resource Quota"
+                          name={['resourceQuotas', name]}
+                          rules={[
+                            {
+                              message: 'Resource Quota has to be greater or equal to 0',
+                              min: 0,
+                              type: 'number',
+                            },
+                          ]}>
+                          <InputNumber
+                            disabled={!(watchBindings?.[name]?.['autoCreateNamespace'] ?? false)}
+                            min={0}
                           />
                         </Form.Item>
-                        {canSetResourceQuotas && (
-                          <Form.Item
-                            label="Resource Quota"
-                            name={['resourceQuotas', name]}
-                            rules={[
-                              {
-                                message: 'Resource Quota has to be greater or equal to 0',
-                                min: 0,
-                                type: 'number',
-                              },
-                            ]}>
-                            <InputNumber
-                              disabled={!(watchBindings?.[name]?.['autoCreateNamespace'] ?? false)}
-                              min={0}
-                            />
-                          </Form.Item>
-                        )}
-                      </>
-                    )}
-                  </Fragment>
-                ))}
-              </>
+                      )}
+                    </>
+                  )}
+                </Fragment>
+              ))}
             </>
-          )}
+          </>
+        )}
         {canModifyAUG && (
           <>
             <Divider />
@@ -431,10 +431,7 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
         }
 
         if (values.resourceQuotas) {
-          resourceQuotaBody['clusterQuotaPairs'] = pick(
-            values.resourceQuotas,
-            resourceManagers.getOrElse([]),
-          );
+          resourceQuotaBody['clusterQuotaPairs'] = pick(values.resourceQuotas, resourceManagers);
           await setResourceQuotas(resourceQuotaBody);
         }
         form.resetFields();
