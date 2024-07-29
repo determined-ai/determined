@@ -7,7 +7,7 @@ import Tooltip from 'hew/Tooltip';
 import Tree, { TreeDataNode } from 'hew/Tree';
 import { isArray } from 'lodash';
 
-import { JsonObject, TrialDetails } from 'types';
+import { RawJson, TrialDetails } from 'types';
 import { downloadText } from 'utils/browser';
 import { isJsonObject } from 'utils/data';
 
@@ -23,40 +23,25 @@ export const EMPTY_MESSAGE = 'No metadata found';
 const Metadata: React.FC<Props> = ({ trial }: Props) => {
   const { tokens } = useTheme();
 
-  const getNodes = (data: JsonObject): TreeDataNode[] => {
+  const getNodes = (data: RawJson): TreeDataNode[] => {
     return Object.entries(data).map(([key, value]) => {
-      if (isJsonObject(value)) {
+      if (isJsonObject(value) || isArray(value)) {
         return {
           children: getNodes(value),
           key,
           selectable: false,
           title: <span style={{ color: tokens.colorTextDescription }}>{key}</span>,
         };
-      } else if (isArray(value)) {
-        return {
-          children: getNodes(JSON.parse(JSON.stringify(Object.assign({}, value)))),
-          key,
-          selectable: false,
-          title: <span style={{ color: tokens.colorTextDescription }}>{key}</span>,
-        };
-      } else {
-        let stringValue = '';
-        if (value === null || value === undefined) {
-          stringValue = 'undefined';
-        } else {
-          stringValue = value.toString();
-        }
-        return {
-          key,
-          selectable: false,
-          title: (
-            <>
-              <span style={{ color: tokens.colorTextDescription }}>{key}:</span>{' '}
-              <span>{stringValue}</span>
-            </>
-          ),
-        };
       }
+      return {
+        key,
+        selectable: false,
+        title: (
+          <>
+            <span style={{ color: tokens.colorTextDescription }}>{key}:</span> <span>{value}</span>
+          </>
+        ),
+      };
     });
   };
 
