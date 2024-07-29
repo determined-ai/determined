@@ -1,7 +1,8 @@
 import { BaseComponent } from 'e2e/models/common/base/BaseComponent';
 import { BaseReactFragment } from 'e2e/models/common/base/BaseReactFragment';
-import { Card } from 'e2e/models/common/hew/Card';
-import { ProjectActionDropdown } from 'e2e/models/components/ProjectActionDropdown';
+import { Select } from 'e2e/models/common/hew/Select';
+import { Toggle } from 'e2e/models/common/hew/Toggle';
+import { ProjectsCard } from 'e2e/models/components/ProjectCard';
 import { ProjectCreateModal } from 'e2e/models/components/ProjectCreateModal';
 import { ProjectDeleteModal } from 'e2e/models/components/ProjectDeleteModal';
 
@@ -11,11 +12,23 @@ import { ProjectDeleteModal } from 'e2e/models/components/ProjectDeleteModal';
 export class WorkspaceProjects extends BaseReactFragment {
   readonly tab = 'projects';
   readonly url = /workspaces\/\d+\/projects/;
-
+  readonly whoseSelect = new Select({
+    parent: this,
+    selector: '[data-testid="whose"]',
+  });
+  readonly showArchived = new Toggle({
+    parent: this,
+    selector: '[class^="Column"] [class^="Row"] [class^="Row"]',
+  });
+  readonly sortSelect = new Select({
+    parent: this,
+    selector: '[data-testid="sort"]',
+  });
   readonly newProject = new BaseComponent({
     parent: this,
     selector: '[data-testid="newProject"]',
   });
+  // TODO missing grid toggle
   readonly createModal = new ProjectCreateModal({
     root: this.root,
   });
@@ -28,15 +41,4 @@ export class WorkspaceProjects extends BaseReactFragment {
       parent: this,
     });
   }
-  // missing templates, archived, sort, list view button, list view button, list view, new project button
-}
-
-/**
- * Represents the ProjectsCard in the WorkspaceProjects component
- */
-class ProjectsCard extends Card {
-  override readonly actionMenu = new ProjectActionDropdown({
-    clickThisComponentToOpen: this.actionMenuContainer,
-    root: this.root,
-  });
 }

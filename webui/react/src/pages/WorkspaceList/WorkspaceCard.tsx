@@ -64,7 +64,11 @@ const WorkspaceCard: React.FC<Props> = ({ workspace, fetchWorkspaces }: Props) =
                   {Loadable.isLoaded(loadableUser) && <UserAvatar user={user} />}
                 </Spinner>
                 {workspace.archived && (
-                  <Badge backgroundColor={{ h: 0, l: 40, s: 0 }} text="Archived" />
+                  <Badge
+                    backgroundColor={{ h: 0, l: 40, s: 0 }}
+                    data-testid="archived"
+                    text="Archived"
+                  />
                 )}
               </Row>
             </Column>
