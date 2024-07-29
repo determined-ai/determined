@@ -826,7 +826,7 @@ func TestVerifyNamespaceExists(t *testing.T) {
 	}
 
 	// Valid namespace name.
-	err := js.verifyNamespaceExists(validNamespace)
+	err := js.verifyNamespaceExists(validNamespace, true)
 	require.NoError(t, err)
 
 	invalidNamespace := "invalidNamespace"
@@ -849,7 +849,7 @@ func TestVerifyNamespaceExists(t *testing.T) {
 	}
 
 	// Test that a non-existent namespace name.
-	err = js.verifyNamespaceExists(nonexistentNamespaceName)
+	err = js.verifyNamespaceExists(nonexistentNamespaceName, true)
 	require.Error(t, err)
 }
 
@@ -952,7 +952,7 @@ func TestCreateNamespaceHelper(t *testing.T) {
 	}
 
 	// test with erroneous namespace
-	err = js.createNamespace(erroneousNamespace)
+	err = js.createNamespace(erroneousNamespace, true)
 	require.ErrorContains(t, err, "random error")
 }
 
@@ -1325,7 +1325,7 @@ func TestSetResourceQuota(t *testing.T) {
 			},
 		})
 	err = js.setResourceQuota(newRQ, namespaceName)
-	require.ErrorContains(t, err, "namespace consists of a Kubernetes quota with request limit")
+	require.ErrorContains(t, err, "lower than the request limit you wish to set on this namespace")
 
 	// 1 existing determined Resource Quota.
 	detQVal := 2

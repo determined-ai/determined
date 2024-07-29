@@ -14,6 +14,7 @@ import useUI from 'components/ThemeProvider';
 import { UPlotScatterProps } from 'components/UPlot/types';
 import UPlotScatter from 'components/UPlot/UPlotScatter';
 import { terminalRunStates } from 'constants/states';
+import useFeature from 'hooks/useFeature';
 import useResize from 'hooks/useResize';
 import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
@@ -89,6 +90,7 @@ const HpHeatMaps: React.FC<Props> = ({
   const galleryModal = useModal(GalleryModalComponent);
   const isExperimentTerminal = terminalRunStates.has(experiment.state);
   const isListView = selectedView === ViewType.List;
+  const f_flat_runs = useFeature().isOn('flat_runs');
 
   useEffect(() => {
     if (activeHParam) {
@@ -188,13 +190,20 @@ const HpHeatMaps: React.FC<Props> = ({
             series: [{}, { fill, stroke }],
             title,
           },
-          tooltipLabels: [xLabel, yLabel, null, metricToStr(selectedMetric), null, 'trial ID'],
+          tooltipLabels: [
+            xLabel,
+            yLabel,
+            null,
+            metricToStr(selectedMetric),
+            null,
+            `${f_flat_runs ? 'Run' : 'Trial'} ID`,
+          ],
         };
       });
     });
 
     return props;
-  }, [chartData, colorScale, selectedHParams, selectedMetric, selectedScale]);
+  }, [chartData, colorScale, f_flat_runs, selectedHParams, selectedMetric, selectedScale]);
 
   const handleChartClick = useCallback((hParam1: string, hParam2: string) => {
     setActiveHParam(generateHpKey(hParam1, hParam2));
@@ -367,7 +376,7 @@ const HpHeatMaps: React.FC<Props> = ({
     ) : (
       <div>
         <Alert
-          description="Please wait until the experiment is further along."
+          description={`Please wait until the ${f_flat_runs ? 'search' : 'experiment'} is further along.`}
           message="Not enough data points to plot."
         />
         <Spinner spinning />

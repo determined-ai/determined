@@ -6,6 +6,7 @@ import React, { ReactNode, useEffect, useMemo } from 'react';
 import OverviewStats from 'components/OverviewStats';
 import Section from 'components/Section';
 import { activeRunStates } from 'constants/states';
+import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import { GetExperimentsParams } from 'services/types';
 import clusterStore, { maxClusterSlotCapacity } from 'stores/cluster';
@@ -24,6 +25,7 @@ const ACTIVE_EXPERIMENTS_PARAMS: Readonly<GetExperimentsParams> = {
 export const ClusterOverallStats: React.FC = () => {
   const agents = useObservable(clusterStore.agents);
   const resourcePools = useObservable(clusterStore.resourcePools);
+  const f_flat_runs = useFeature().isOn('flat_runs');
 
   const activeTasks = useObservable(taskStore.activeTasks);
   const activeExperiments = useObservable(
@@ -89,7 +91,7 @@ export const ClusterOverallStats: React.FC = () => {
               _: () => null,
               Loaded: (activeExperiments) =>
                 (activeExperiments.pagination?.total ?? 0) > 0 && (
-                  <OverviewStats title="Active Experiments">
+                  <OverviewStats title={`Active ${f_flat_runs ? 'Searches' : 'Experiments'}`}>
                     {activeExperiments.pagination?.total}
                   </OverviewStats>
                 ),

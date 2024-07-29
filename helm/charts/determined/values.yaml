@@ -76,6 +76,11 @@ createNonNamespacedObjects: true
 # load-balancer.
 useNodePortForMaster: false
 
+# Allow specifying annotations that will be put on the master service.
+# masterService:
+  # annotations:
+  #   a: b
+
 # Enable route support for Openshift by setting enabled to true. Configure tls termination (i.e edge) if needed.
 # openshiftRoute:
   # enabled:

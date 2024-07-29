@@ -19,6 +19,7 @@ import {
   taskNameRenderer,
   taskTypeRenderer,
 } from 'components/Table/Table';
+import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import usePolling from 'hooks/usePolling';
 import { paths } from 'routes/utils';
@@ -54,6 +55,7 @@ const Dashboard: React.FC = () => {
   const currentUser = Loadable.getOrElse(undefined, useObservable(userStore.currentUser));
   const workspaces = Loadable.getOrElse([], useObservable(workspaceStore.workspaces));
   const { canCreateNSC } = usePermissions();
+  const f_flat_runs = useFeature().isOn('flat_runs');
   type Submission = BulkExperimentItem & CommandTask;
 
   const fetchTasks = useCallback(
@@ -114,13 +116,13 @@ const Dashboard: React.FC = () => {
         setExperiments(response.experiments);
       } catch (e) {
         handleError(e, {
-          publicSubject: 'Error fetching experiments for dashboard',
+          publicSubject: `Error fetching ${f_flat_runs ? 'searches' : 'experiments'} for dashboard`,
           silent: false,
           type: ErrorType.Api,
         });
       }
     },
-    [canceler],
+    [f_flat_runs, canceler],
   );
 
   const fetchProjects = useCallback(async () => {
@@ -215,7 +217,7 @@ const Dashboard: React.FC = () => {
                 dataIndex: 'projectId',
                 render: (projectId, row, index) => {
                   if (projectId) {
-                    return <Icon name="experiment" title="Experiment" />;
+                    return <Icon name="experiment" title={f_flat_runs ? 'Experiment' : 'Search'} />;
                   } else {
                     return taskTypeRenderer(row.type, row, index);
                   }
@@ -289,7 +291,7 @@ const Dashboard: React.FC = () => {
           <Message
             description={
               <>
-                Your recent experiments and tasks will show up here.{' '}
+                Your recent {f_flat_runs ? 'searches' : 'experiments'} and tasks will show up here.{' '}
                 <Link external path={paths.docs('/quickstart-mdldev.html')}>
                   Get started
                 </Link>

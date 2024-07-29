@@ -241,6 +241,7 @@ export const getColumnDefs = ({
     tooltip: () => undefined,
     width: columnWidths.experimentName ?? defaultColumnWidths.experimentName ?? MIN_COLUMN_WIDTH,
   },
+  // TODO: should this change to search?
   externalExperimentId: {
     id: 'externalExperimentId',
     renderer: (record: FlatRun) => ({

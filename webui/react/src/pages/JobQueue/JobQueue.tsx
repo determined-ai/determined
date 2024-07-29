@@ -17,9 +17,10 @@ import {
   userRenderer,
 } from 'components/Table/Table';
 import { V1SchedulerTypeToLabel } from 'constants/states';
+import useFeature from 'hooks/useFeature';
 import usePolling from 'hooks/usePolling';
 import { useSettings } from 'hooks/useSettings';
-import { columns as defaultColumns, SCHEDULING_VAL_KEY } from 'pages/JobQueue/JobQueue.table';
+import { columns as columnsFunc, SCHEDULING_VAL_KEY } from 'pages/JobQueue/JobQueue.table';
 import { paths } from 'routes/utils';
 import { cancelExperiment, getJobQ, killExperiment, killTask } from 'services/api';
 import * as Api from 'services/api-ts-sdk';
@@ -52,6 +53,9 @@ const JobQueue: React.FC<Props> = ({ rpStats, selectedRp, jobState }) => {
   const [pageState, setPageState] = useState<{ isLoading: boolean }>({ isLoading: true });
   const manageJobModal = useModal(ManageJobModalComponent);
   const pageRef = useRef<HTMLElement>(null);
+  const f_flat_runs = useFeature().isOn('flat_runs');
+
+  const defaultColumns = useMemo(() => columnsFunc(f_flat_runs), [f_flat_runs]);
 
   useEffect(() => {
     if (managingJob) {

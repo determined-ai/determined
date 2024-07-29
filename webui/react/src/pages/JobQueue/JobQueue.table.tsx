@@ -62,7 +62,7 @@ const linkToEntityPage = (job: Job, label: ReactNode): ReactNode => {
   }
 };
 
-export const columns: ColumnDef<Job>[] = [
+export const columns: (f_flat_runs: boolean) => ColumnDef<Job>[] = (f_flat_runs) => [
   {
     align: 'center',
     dataIndex: 'preemptible',
@@ -99,7 +99,9 @@ export const columns: ColumnDef<Job>[] = [
           label = (
             <div>
               {record.name}
-              <Tooltip content="Experiment ID">{` (${record.entityId})`}</Tooltip>
+              <Tooltip content={`${f_flat_runs ? 'Search' : 'Experiment'} ID`}>
+                {` (${record.entityId})`}
+              </Tooltip>
             </div>
           );
           break;
