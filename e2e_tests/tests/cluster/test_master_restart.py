@@ -40,6 +40,9 @@ def test_queued_time_restore(restartable_managed_cluster: managed_cluster.Manage
     )
 
     def check_queued_aggregates_for_today():
+        exps = bindings.get_GetExperiments(sess).experiments
+        assert len(exps) == 1
+        assert exps[0].id == exp_id
         aggregates = [
             res.aggregates for res in bindings.get_GetJobQueueStats(sess).results if res.aggregates
         ]
