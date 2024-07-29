@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strconv"
 
 	"github.com/crewjam/saml"
 	"github.com/crewjam/saml/samlsp"
@@ -45,9 +46,13 @@ type Service struct {
 
 // userConfig represents the user defined configurations for SAML integration.
 type userConfig struct {
-	autoProvisionUsers       bool
-	groupsAttributeName      string
-	displayNameAttributeName string
+	autoProvisionUsers          bool
+	groupsAttributeName         string
+	displayNameAttributeName    string
+	agentUIDAttributeName       string
+	agentGIDAttributeName       string
+	agentUserNameAttributeName  string
+	agentGroupNameAttributeName string
 }
 
 // New constructs a new SAML service that is capable of sending SAML requests and consuming
@@ -170,7 +175,11 @@ func (s *Service) consumeAssertion(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "unable to look up user")
 	}
 
-	u, err = s.syncUser(ctx, u, userAttr)
+	ug, err := user.GetAgentUserGroup(ctx, u.ID, 0)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "unable to look up user group")
+	}
+	u, err = s.syncUser(ctx, u, userAttr, ug)
 	if err != nil {
 		logrus.WithError(err).WithField("user", userAttr.userName).Error("error syncing user")
 		return echo.NewHTTPError(http.StatusInternalServerError, "error syncing user")
@@ -208,9 +217,13 @@ func (s *Service) consumeAssertion(c echo.Context) error {
 
 // userAttributes represents the set of user attributes from SAML authentication that we're concerned with.
 type userAttributes struct {
-	userName    string
-	displayName string
-	groups      []string
+	userName       string
+	displayName    string
+	agentUID       int
+	agentGID       int
+	agentUserName  string
+	agentGroupName string
+	groups         []string
 }
 
 func (s *Service) toUserAttributes(response *saml.Assertion) *userAttributes {
@@ -219,10 +232,25 @@ func (s *Service) toUserAttributes(response *saml.Assertion) *userAttributes {
 		return nil
 	}
 
+	strAgentUID := getSAMLAttribute(response, string(s.userConfig.agentUIDAttributeName))
+	tempAgentUID, err := strconv.Atoi(strAgentUID)
+	if err != nil {
+		logrus.WithError(err).WithField("agentUID", strAgentUID).Error("unable to convert to integer")
+	}
+	strAgentGID := getSAMLAttribute(response, string(s.userConfig.agentGIDAttributeName))
+	tempAgentGID, err := strconv.Atoi(strAgentGID)
+	if err != nil {
+		logrus.WithError(err).WithField("agentGID", strAgentGID).Error("unable to convert to integer")
+	}
+
 	return &userAttributes{
-		userName:    uName,
-		displayName: getSAMLAttribute(response, s.userConfig.displayNameAttributeName),
-		groups:      getAttributeValues(response, s.userConfig.groupsAttributeName),
+		userName:       uName,
+		displayName:    getSAMLAttribute(response, s.userConfig.displayNameAttributeName),
+		agentUID:       tempAgentUID,
+		agentGID:       tempAgentGID,
+		agentUserName:  getSAMLAttribute(response, s.userConfig.agentUserNameAttributeName),
+		agentGroupName: getSAMLAttribute(response, s.userConfig.agentGroupNameAttributeName),
+		groups:         getAttributeValues(response, s.userConfig.groupsAttributeName),
 	}
 }
 
@@ -253,8 +281,37 @@ func getAttributeValues(r *saml.Assertion, name string) []string {
 	return values
 }
 
+func mergeUserGroups(sessionData userAttributes, dbData *model.AgentUserGroup) *model.AgentUserGroup {
+	result := model.AgentUserGroup{
+		UID:   dbData.UID,
+		GID:   dbData.GID,
+		User:  dbData.User,
+		Group: dbData.Group,
+	}
+
+	if sessionData.agentUID != 0 {
+		result.UID = sessionData.agentUID
+	}
+	if sessionData.agentGID != 0 {
+		result.GID = sessionData.agentGID
+	}
+	if sessionData.agentUserName != "" {
+		result.User = sessionData.agentUserName
+	}
+	if sessionData.agentGroupName != "" {
+		result.Group = sessionData.agentGroupName
+	}
+
+	return &result
+}
+
 // syncUser syncs the mutable user fields parsed from the claim, only if there are non-null changes.
-func (s *Service) syncUser(ctx context.Context, u *model.User, uAttr *userAttributes) (*model.User, error) {
+func (s *Service) syncUser(ctx context.Context, u *model.User, uAttr *userAttributes, ug *model.AgentUserGroup) (*model.User, error) {
+	ugUpdate := mergeUserGroups(*uAttr, ug)
+	if ugUpdate.UID == ug.UID && ugUpdate.GID == ug.GID && ugUpdate.User == ug.User && ugUpdate.Group == ug.Group {
+		// nothing in user group uto update
+		ugUpdate = nil
+	}
 	err := db.Bun().RunInTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable},
 		func(ctx context.Context, tx bun.Tx) error {
 			// If the config is set to auto-provision users, sync the display name.
@@ -265,7 +322,7 @@ func (s *Service) syncUser(ctx context.Context, u *model.User, uAttr *userAttrib
 							ID:          u.ID,
 							Username:    uAttr.userName,
 							DisplayName: null.NewString(uAttr.displayName, true),
-						}, []string{"display_name"}, nil)
+						}, []string{"display_name"}, ugUpdate)
 					if err != nil {
 						return fmt.Errorf("error setting display name of %q: %s", u.Username, err)
 					}
