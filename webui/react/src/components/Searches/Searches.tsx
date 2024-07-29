@@ -8,6 +8,7 @@ import {
   defaultNumberColumn,
   defaultSelectionColumn,
   defaultTextColumn,
+  MIN_COLUMN_WIDTH,
   MULTISELECT,
 } from 'hew/DataGrid/columns';
 import DataGrid, {
@@ -594,7 +595,7 @@ const Searches: React.FC<Props> = ({ project }) => {
       setColumnWidths({
         columnWidths: {
           ...settings.columnWidths,
-          [columnId]: width,
+          [columnId]: Math.max(MIN_COLUMN_WIDTH, width),
         },
       });
     },
