@@ -24,11 +24,19 @@ def wait_for_task_start(
     test_session: api.Session,
     task_id: str,
     timeout: int = 30,
+    start_or_run: bool = False,
 ) -> None:
     deadline = time.time() + timeout
     while time.time() < deadline:
         resp = api.bindings.get_GetTask(test_session, taskId=task_id)
-        if resp.task.allocations[0].state == api.bindings.taskv1State.RUNNING:
+        state = resp.task.allocations[0].state
+        if start_or_run:
+            if (
+                state == api.bindings.taskv1State.STARTING
+                or state == api.bindings.taskv1State.RUNNING
+            ):
+                return
+        elif state == api.bindings.taskv1State.RUNNING:
             return
         time.sleep(0.1)
-    pytest.fail(f"task failed to start after {timeout} seconds")
+    pytest.fail(f"task failed to run after {timeout} seconds")
