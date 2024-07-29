@@ -169,18 +169,24 @@ def list_workspace_namespace_bindings(args: argparse.Namespace) -> None:
 
 def set_workspace_namespace_binding(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
-    if args.cluster_name and not (
+    if not (
         args.namespace or args.auto_create_namespace or args.auto_create_namespace_all_clusters
     ):
+        remove_cluster_name = ""
+        if args.cluster_name:
+            remove_cluster_name = "remove --cluster-name CLUSTER_NAME and "
+
         raise api.errors.BadRequestException(
-            "must provide --namespace NAMESPACE or --auto-create-namespace, or remove "
-            + "--cluster-name CLUSTER_NAME and specify --auto-create-namespace-all-clusters"
+            "must provide --namespace NAMESPACE or --auto-create-namespace, or "
+            + remove_cluster_name
+            + "specify --auto-create-namespace-all-clusters"
         )
 
     w = api.workspace_by_name(sess, args.workspace_name)
     content = bindings.v1SetWorkspaceNamespaceBindingsRequest(workspaceId=w.id)
     cluster_name = args.cluster_name or ""
     namespace_meta = bindings.v1WorkspaceNamespaceMeta(
+        clusterName=cluster_name,
         namespace=args.namespace,
         autoCreateNamespace=args.auto_create_namespace,
         autoCreateNamespaceAllClusters=args.auto_create_namespace_all_clusters,
@@ -290,9 +296,11 @@ def create_workspace(args: argparse.Namespace) -> None:
     cluster_name = args.cluster_name or ""
     if set_namespace:
         namespace_meta = bindings.v1WorkspaceNamespaceMeta(
+            clusterName=cluster_name,
             namespace=args.namespace,
             autoCreateNamespace=args.auto_create_namespace,
             autoCreateNamespaceAllClusters=args.auto_create_namespace_all_clusters,
+            resourceQuota=args.resource_quota,
         )
         content.clusterNamespaceMeta = {cluster_name: namespace_meta}
     if args.resource_quota:
@@ -516,7 +524,8 @@ args_description = [
                         type=str,
                         help="cluster within which we create the workspace-namespace binding. This \
                         argument is optional for single Kubernetes RM, but is required when \
-                            using multiple resource managers",
+                        using multiple resource managers unless \
+                        --auto-create-namespace-all-clusters is specified",
                     ),
                     cli.Group(
                         cli.Arg(
@@ -541,7 +550,8 @@ args_description = [
                             action="store_true",
                             help="whether \
                             a user wants a namespace auto-created and used for each cluster's \
-                            respective workspace-namespace binding.",
+                            respective workspace-namespace binding. Mutually exclusive with \
+                            --cluster-name CLUSTER_NAME",
                         ),
                     ),
                     cli.Arg(
@@ -609,7 +619,9 @@ args_description = [
                                 "--cluster-name",
                                 type=str,
                                 help="cluster within which we create the workspace-namespace \
-                                binding",
+                                binding. This argument is optional for single Kubernetes RM, but \
+                                is required when using multiple resource managers if \
+                                --auto-create-namespace-all-clusters is also specified",
                             ),
                             cli.Group(
                                 cli.Arg(
@@ -632,7 +644,8 @@ args_description = [
                                     "--auto-create-namespace-all-clusters",
                                     action="store_true",
                                     help="whether a user wants a namespace auto-created and used \
-                                    for each cluster's respective workspace-namespace binding.",
+                                    for each cluster's respective workspace-namespace binding. \
+                                    Mutually exclusive with --cluster-name CLUSTER_NAME",
                                 ),
                             ),
                         ],

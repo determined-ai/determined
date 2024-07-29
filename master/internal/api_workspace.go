@@ -104,13 +104,31 @@ func (a *apiServer) validateClusterNamespaceMeta(
 	for clusterName, metadata := range namespaceMeta {
 		if metadata.AutoCreateNamespaceAllClusters {
 			autoCreateAll = true
+			if metadata.ResourceQuota != nil && len(a.m.allRms) > 1 {
+				return nil, autoCreateAll, status.Errorf(codes.InvalidArgument, "When using "+
+					"multiple resource managers, cannot set a resource quota when you request to "+
+					"auto-create a namespace for all clusters.")
+			}
+			if metadata.AutoCreateNamespace && len(a.m.allRms) > 1 {
+				return nil, autoCreateAll, status.Errorf(codes.InvalidArgument, "when using "+
+					"multiple resource managers, the auto-create namespace and auto-create "+
+					"namespace for all clusters arguments are mututall exclusive.")
+			}
+			if metadata.Namespace != nil {
+				return nil, autoCreateAll, status.Errorf(codes.InvalidArgument, "cannot specify "+
+					"a namespace")
+			}
+			if len(clusterName) > 0 {
+				return nil, autoCreateAll, status.Errorf(codes.InvalidArgument, "cannot specify "+
+					"a cluster name when you request to auto-create a namespace for all clusters")
+			}
 		}
 		namespace := metadata.Namespace
 		if _, ok := allClusters[clusterName]; ok {
 			return nil, autoCreateAll,
 				status.Errorf(codes.InvalidArgument, "cannot specify the same cluster "+
 					"name with different namespace, workspace-namespace bindings are unique per "+
-					"cluster per workspace.")
+					"cluster per workspace")
 		}
 
 		allClusters[clusterName] = 1
@@ -121,10 +139,6 @@ func (a *apiServer) validateClusterNamespaceMeta(
 						"auto-created namespace.")
 		}
 
-		if len(clusterName) > 0 && autoCreateAll {
-			return nil, autoCreateAll, status.Errorf(codes.InvalidArgument, "if you wish to "+
-				"auto-create a namespace for each cluster, do not specify a cluster name")
-		}
 		newClusterName, err := a.validateRequestClusterName(clusterName,
 			metadata.AutoCreateNamespaceAllClusters)
 		if err != nil {
@@ -550,6 +564,7 @@ func (a *apiServer) PostWorkspace(
 				Id:                int32(w.ID),
 				ClusterQuotaPairs: req.ClusterQuotaPairs,
 			}
+
 			_, err := a.setResourceQuotas(ctx, newReq, &tx, curUser, wkspProto)
 			if err != nil {
 				return fmt.Errorf("failed to set resource quota: %w", err)
@@ -834,7 +849,6 @@ func (a *apiServer) setWorkspaceNamespaceBindings(ctx context.Context,
 				"an Enterprise-Edition feature")
 		}
 	}()
-
 	wkspID := int(w.Id)
 	if err := workspace.AuthZProvider.Get().
 		CanSetWorkspaceNamespaceBindings(ctx, *curUser, w); err != nil {
@@ -884,6 +898,10 @@ func (a *apiServer) setWorkspaceNamespaceBindings(ctx context.Context,
 			}
 			namespace = *autoCreatedNamespace
 		default:
+			if metadata.Namespace == nil {
+				return nil, fmt.Errorf("must specify either an existing namespace or indicate " +
+					"that you would like a namespace to be auto-created")
+			}
 			namespace = *metadata.Namespace
 		}
 
