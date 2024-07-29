@@ -75,7 +75,7 @@ entries:
     version: 1.0.1-dev34
   - apiVersion: v2
     appVersion: dev
-    created: "2024-07-29T19:00:38.483873715Z"
+    created: "2024-07-29T20:04:42.601031111Z"
     dependencies:
     - condition: oidc.enabled
       name: dex
@@ -98,7 +98,7 @@ entries:
       repository: https://prometheus-community.github.io/helm-charts
       version: '>=25.8.1'
     description: A Helm chart for AI On-Line Inferencing (Aioli)
-    digest: 7da77f44f44ddbbcb68ed2c5ade5430d964b172ad6526bbca2a40496bda946de
+    digest: 643e23b2a75644d8a4afb53123f22766379ad6c9d071df789d02f4c988fbd146
     home: https://github.com/determined-ai/aioli.git
     icon: https://github.com/determined-ai/aioli/blob/main/aioli-logo.png?raw=true
     name: aioli
@@ -2862,4 +2862,4 @@ entries:
     urls:
     - https://github.com/determined-ai/determined/releases/download/0.18.2/determined-helm-chart_0.18.2.tgz
     version: 0.18.2
-generated: "2024-07-29T19:00:38.460968073Z"
+generated: "2024-07-29T20:04:42.578187441Z"
