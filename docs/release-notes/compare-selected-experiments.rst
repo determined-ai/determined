@@ -2,5 +2,5 @@
 
 **Bug Fixes**
 
--  WebUI: Fix for the Compare view on the Project Details page to allow comparison of experiments
-   even if they were selected on a different page.
+-  WebUI: Fix a bug where the Compare view on the Project Details page did not allow comparison of
+   experiments selected from different pages.
