@@ -2320,11 +2320,13 @@ func (j *jobsService) setResourceQuota(quota int, namespace string) error {
 					qVal := q
 					detQuota = &qVal
 				} else if tmpQuota < currentQuota {
-					return fmt.Errorf("cannot set quota %d on namespace %s, because this"+
-						" namespace consists of a Kubernetes quota with request limit %d that does not"+
-						" correspond to the auto-created namespace. Please remove this quota in"+
-						" Kubernetes before trying to raise the GPU request limit on the namespace",
-						quota, namespace, int(tmpQuota))
+					lowerQuotaName := q.Name
+					return fmt.Errorf("cannot set quota %d on namespace %s because this"+
+						" namespace contains resource quota %s with GPU request limit %d, which is"+
+						" lower than the request limit you wish to set on this namespace. Please"+
+						" remove this quota in Kubernetes before trying to raise the GPU request"+
+						" limit on the namespace",
+						quota, namespace, lowerQuotaName, int(tmpQuota))
 				}
 			}
 		}

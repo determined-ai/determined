@@ -433,7 +433,7 @@ func (k *ResourceManager) DeleteNamespace(namespace string) error {
 func (k *ResourceManager) SetResourceQuota(quota int, namespace, clusterName string) error {
 	err := k.jobsService.SetResourceQuota(quota, namespace)
 	if err != nil {
-		return fmt.Errorf("error setting resource quota %q on namespace %s: %w", quota,
+		return fmt.Errorf("error setting resource quota %d on namespace %s: %w", quota,
 			namespace, err)
 	}
 	return nil
