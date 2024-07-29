@@ -48,9 +48,10 @@ def test_queued_time_restore(restartable_managed_cluster: managed_cluster.Manage
         day_stats = aggregates[0][0]
         assert day_stats.periodStart == time.strftime("%Y-%m-%d"), "day stats should be for today"
         seconds_since_start = time.time() - start_time
-        # could GC job affect this?
+        # CM-404: checkpoint GC adds to the aggregation.
+        checkpoint_gc_factor = 5
         assert (
-            day_stats.seconds <= seconds_since_start
+            day_stats.seconds <= seconds_since_start * checkpoint_gc_factor
         ), "queued seconds should be less than when test started"
 
     check_queued_aggregates_for_today()
