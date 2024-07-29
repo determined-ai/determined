@@ -4343,7 +4343,7 @@ class v1FlatRun(Printable):
     duration: "typing.Optional[int]" = None
     endTime: "typing.Optional[str]" = None
     experiment: "typing.Optional[v1FlatRunExperiment]" = None
-    externalRunId: "typing.Optional[int]" = None
+    externalRunId: "typing.Optional[str]" = None
     hyperparameters: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     labels: "typing.Optional[typing.Sequence[str]]" = None
     localId: "typing.Optional[str]" = None
@@ -4369,7 +4369,7 @@ class v1FlatRun(Printable):
         duration: "typing.Union[int, None, Unset]" = _unset,
         endTime: "typing.Union[str, None, Unset]" = _unset,
         experiment: "typing.Union[v1FlatRunExperiment, None, Unset]" = _unset,
-        externalRunId: "typing.Union[int, None, Unset]" = _unset,
+        externalRunId: "typing.Union[str, None, Unset]" = _unset,
         hyperparameters: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
         labels: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
         localId: "typing.Union[str, None, Unset]" = _unset,

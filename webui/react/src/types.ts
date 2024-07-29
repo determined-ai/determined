@@ -1279,7 +1279,7 @@ export interface FlatRun {
   checkpointSize: number;
   checkpointCount: number;
   searcherMetricValue?: number;
-  externalRunId?: number;
+  externalRunId?: string;
   hyperparameters?: TrialHyperparameters;
   summaryMetrics?: SummaryMetrics;
   userId?: number;
