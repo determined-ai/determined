@@ -198,7 +198,7 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
             <>
               {resourceManagers.map((name) => (
                 <Fragment key={name}>
-                  <Form.Item label={name} name={['bindings', name, 'namespace']}>
+                  <Form.Item label={'Cluster Name: ' + name} name={['bindings', name, 'namespace']}>
                     <Input
                       disabled={watchBindings?.[name]?.['autoCreateNamespace'] ?? false}
                       maxLength={63}
