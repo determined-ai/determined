@@ -528,6 +528,7 @@ export function mapV1Experiment(
     projectId: data.projectId,
     projectName: data.projectName,
     resourcePool: data.resourcePool || '',
+    searcherMetric: data.searcherMetric,
     searcherMetricValue: data.bestTrialSearcherMetric,
     searcherType: data.searcherType,
     startTime: data.startTime as unknown as string,
