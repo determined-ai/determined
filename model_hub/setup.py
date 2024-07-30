@@ -2,6 +2,7 @@ import os
 import setuptools
 import subprocess
 
+
 def version():
     version = os.environ.get("VERSION")
 

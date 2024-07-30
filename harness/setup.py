@@ -2,6 +2,7 @@ import os
 import setuptools
 import subprocess
 
+
 def readme():
     with open("../README.md", "r") as fd:
         return fd.read()
