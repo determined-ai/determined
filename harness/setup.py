@@ -1,5 +1,3 @@
-import importlib.metadata
-
 import os
 import setuptools
 import subprocess
