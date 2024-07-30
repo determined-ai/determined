@@ -3395,28 +3395,11 @@ jobs:
                     --db-snapshot-identifier="ci-snapshot-commit-${COMMIT}"
                   echo "Snapshot completed"
       - run:
-          name: Build performance test Docker image
-          command: make -C performance build
-      - run:
-          name: Run performance test
-          command: |
-            export PERF_DOCKER_FLAGS="--network=host"
-            export PERF_K6_FLAGS='-e DET_ADMIN_USERNAME="admin" \
-              -e DET_ADMIN_PASSWORD="${INITIAL_USER_PASSWORD}" \
-              -e model_name="tnjpuojqzbluqiyyqilftulsw" \
-              -e model_version_number="1" \
-              -e trial_id="8282" \
-              -e experiment_id="100" \
-              -e task_id="backported.8282" \
-              -e metric_name="85c9" \
-              -e metric_type="METRIC_TYPE_TRAINING" \
-              -e batches="1800" \
-              -e batches_margin="99" \
-              -e resource_pool="default"'
-            make -C performance run
-      - run:
-          name: Upload result of performance test to Postgres result db
-          command: python .circleci/scripts/upload_perf_results.py ./performance/reports/latest.results.json
+          name: Run REST API read-only test
+          command: ./performance/daist/run.py daist.rest_api.test_locust.TestRO
+
+      - store_artifacts:
+          path: ./performance/daist/daist/results
 
       - run:
           name: Delete RDS instance
