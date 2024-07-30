@@ -302,6 +302,7 @@ test.describe('Experiment List', () => {
     await row.experimentActionDropdown.open();
     await row.experimentActionDropdown.resume.pwLocator.click();
     await expect.soft((await row.getCellByColumnName('State')).pwLocator).not.toHaveText('paused');
+    await waitTableStable();
 
     // pause experiment again
     await row.experimentActionDropdown.open();
