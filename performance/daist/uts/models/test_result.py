@@ -1,10 +1,10 @@
+import time
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from unittest import TestCase
-import time
 
-from daist.models.session import session
 from daist.models.result import FileMeta, Result
+from daist.models.session import session
 from daist.models.timestamp import UnixTime
 
 

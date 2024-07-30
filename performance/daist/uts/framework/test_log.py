@@ -1,13 +1,13 @@
-from contextlib import contextmanager, redirect_stdout, redirect_stderr
+import io
+import logging
+from contextlib import contextmanager, redirect_stderr, redirect_stdout
 from pathlib import Path
 from tempfile import TemporaryDirectory
 from typing import Tuple
 from unittest import TestCase
-import io
-import logging
 
-from daist.framework.paths import PkgPath
 from daist.framework import log
+from daist.framework.paths import PkgPath
 
 
 class Test(TestCase):

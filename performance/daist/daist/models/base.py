@@ -1,11 +1,26 @@
+import json
+import pickle
 from abc import ABC, abstractmethod
 from collections import UserDict, UserList
 from configparser import ConfigParser
 from pathlib import Path
-from typing import (Any, AnyStr, cast, Generic, IO, Iterable, Mapping, MutableMapping,
-                    MutableSequence, NewType, Optional, Type,  Tuple, TypeVar, Union)
-import json
-import pickle
+from typing import (
+    IO,
+    Any,
+    AnyStr,
+    Generic,
+    Iterable,
+    Mapping,
+    MutableMapping,
+    MutableSequence,
+    NewType,
+    Optional,
+    Tuple,
+    Type,
+    TypeVar,
+    Union,
+    cast,
+)
 
 JSON_INDENT = 2
 _TItem = TypeVar('_TItem')

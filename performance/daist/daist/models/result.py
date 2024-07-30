@@ -1,16 +1,17 @@
-from packaging.version import Version as PyVersion
+import shlex
+import shutil
+import sys
 from pathlib import Path
 from typing import Iterable, Mapping, MutableMapping, NewType, Optional, Union
 from urllib.parse import urlparse
-import shutil
-import shlex
-import sys
 
+from packaging.version import Version as PyVersion
+
+from ..framework.paths import PkgPath
+from ..framework.typelib import TestId_t, Url_t
 from .base import BaseDict, BaseObj, Format
 from .environment import Environment
 from .timestamp import UnixTime, UnixTimeWithStamp
-from ..framework.paths import PkgPath
-from ..framework.typelib import TestId_t, Url_t
 
 
 class DeterminedVersion(BaseDict):

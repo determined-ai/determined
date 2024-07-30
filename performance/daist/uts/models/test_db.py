@@ -2,11 +2,10 @@ import unittest
 from pathlib import Path
 from unittest import TestCase
 
+import daist
 from daist.models.db import PerfTestRun, PerfTestRunsTable
 from daist.models.environment import environment
 from daist.models.locust import LocustStatsList
-import daist
-
 
 PATH_TO_SAMPLES = Path(__file__).parent / 'samples'
 PATH_TO_SAMPLE_INPUT = (PATH_TO_SAMPLES /

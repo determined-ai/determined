@@ -1,8 +1,8 @@
 from pathlib import Path
 from typing import MutableMapping, NewType, Optional, Union
 
-from .base import BaseDict
 from ..framework.typelib import Url_t
+from .base import BaseDict
 
 
 class Config(BaseDict):

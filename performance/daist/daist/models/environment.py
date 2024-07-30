@@ -1,10 +1,10 @@
-from pathlib import Path
-from typing import Optional, NewType
 import os
+from pathlib import Path
+from typing import NewType, Optional
 
-from .base import BaseDict
 from ..framework.paths import ConfigDPath
 from ..framework.typelib import Url_t
+from .base import BaseDict
 
 
 class Environment(BaseDict):

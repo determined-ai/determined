@@ -4,6 +4,7 @@ import sys
 import threading
 import time
 from typing import NewType
+
 import numpy as np
 
 import determined as det

@@ -1,20 +1,19 @@
-from typing import Dict, ItemsView, List, Optional, NewType, Union, Iterable
+from pathlib import Path
+from typing import Dict, ItemsView, Iterable, List, NewType, Optional, Union
 
-from matplotlib import ticker
-from matplotlib.axes import Axes
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib import ticker
+from matplotlib.axes import Axes
 from numpy import ndarray
 from numpy.typing import ArrayLike
-from pathlib import Path
 
-
-from .base import BaseDict, Format
-from .config import Determined
-from .session import session
-from .result import FileMeta
 from ..framework.paths import PkgPath
 from ..utils.misc import to_snake_case
+from .base import BaseDict, Format
+from .config import Determined
+from .result import FileMeta
+from .session import session
 
 try:
     import tkinter

@@ -1,7 +1,7 @@
-from typing import List
-from unittest import TestCase, skipIf
 import logging
 import time
+from typing import List
+from unittest import TestCase, skipIf
 
 from locust import events
 from locust.env import Environment as LocustEnvironment
@@ -10,9 +10,6 @@ from locust.stats import StatsEntry
 from requests.exceptions import HTTPError
 from requests.models import Response
 
-
-from . import locust_utils, tasks
-from .resources import get_resource_profile, Resources
 from ..models.db import PerfTestRun
 from ..models.environment import environment
 from ..models.locust import LocustStatsList
@@ -20,7 +17,8 @@ from ..models.result import FileMeta
 from ..models.session import session
 from ..utils import flags
 from ..utils.misc import parse_class_and_method_name_from_test_id
-
+from . import locust_utils, tasks
+from .resources import Resources, get_resource_profile
 
 # NOTE: uncomment below to debug logging of HTTP
 # locust_utils.debug_http()

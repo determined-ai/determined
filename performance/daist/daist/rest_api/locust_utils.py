@@ -1,7 +1,7 @@
+import logging
 from abc import abstractmethod
 from collections import UserList
-import logging
-from typing import Callable, Dict, Iterator, List, Optional, Union, Type
+from typing import Callable, Dict, Iterator, List, Optional, Type, Union
 from urllib.parse import urlencode
 
 from locust import HttpUser, TaskSet

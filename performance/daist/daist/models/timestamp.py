@@ -1,8 +1,8 @@
 from datetime import datetime
 from typing import NewType, Optional
 
-from .base import BaseDict
 from ..utils import timestamp
+from .base import BaseDict
 
 
 class UnixTime(BaseDict):
