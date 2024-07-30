@@ -121,7 +121,6 @@ func (s *Service) callback(c echo.Context) error {
 		return fmt.Errorf("failed to get user info from oidc provider: %w", err)
 	}
 
-	// kristine - we populate claims here, I think
 	claims, err := s.toIDTokenClaim(userInfo)
 	if err != nil {
 		return err
@@ -330,9 +329,10 @@ func mergeUserGroups(sessionData *IDTokenClaims, dbData *model.AgentUserGroup) *
 	return &result
 }
 
-// kristine - TODO update syncUser
 // syncUser syncs the mutable user fields parsed from the claim, only if there are non-null changes.
-func (s *Service) syncUser(ctx context.Context, u *model.User, claims *IDTokenClaims, ug *model.AgentUserGroup) (*model.User, error) {
+func (s *Service) syncUser(ctx context.Context, u *model.User, claims *IDTokenClaims,
+	ug *model.AgentUserGroup,
+) (*model.User, error) {
 	ugUpdate := mergeUserGroups(claims, ug)
 	if ugUpdate.UID == ug.UID && ugUpdate.GID == ug.GID && ugUpdate.User == ug.User && ugUpdate.Group == ug.Group {
 		// nothing in user group uto update

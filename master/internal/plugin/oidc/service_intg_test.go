@@ -174,7 +174,6 @@ func TestFailToExtractClaims(t *testing.T) {
 	require.Nil(t, claims)
 }
 
-// kristine - config needs to have our fields that we're testing
 func mockService(t *testing.T, url string) *Service {
 	clientID := "123456"
 	clientSecret := "abcdefgh"
