@@ -54,8 +54,10 @@ func TestSAMLWorkflowAutoProvision(t *testing.T) {
 	ctx := context.Background()
 
 	username := uuid.NewString()
-	resp := getUserResponse(username, username+"123", 42, 37, username+"group", []string{"abc", "bcd"})
-	u := processResponseUnprovisioned(ctx, t, resp.Assertion, username, username+"123", s)
+	uid := 42
+	gid := 37
+	resp := getUserResponse(username, username+"123", uid, gid, username+"group", []string{"abc", "bcd"})
+	u := processResponseUnprovisioned(ctx, t, resp.Assertion, username, username+"123", uid, gid, username+"group", s)
 
 	require.True(t, u.Remote)
 
@@ -69,8 +71,8 @@ func TestSAMLWorkflowAutoProvision(t *testing.T) {
 	require.NoError(t, err)
 
 	// test Update User fields based on SAML response
-	resp = getUserResponse(username, username+"123", 42, 37, username+"group", []string{"abc"})
-	u = processResponseProvisioned(ctx, t, resp.Assertion, username, username+"456", s)
+	resp = getUserResponse(username, username+"123", uid, gid, username+"group", []string{"abc"})
+	u = processResponseProvisioned(ctx, t, resp.Assertion, username, username+"456", uid, gid, username+"group", s)
 
 	require.True(t, u.Remote)
 
@@ -124,8 +126,10 @@ func TestSAMLWorkflowUserProvisioned(t *testing.T) {
 	_, err := user.Add(ctx, initialUser, nil)
 	require.NoError(t, err)
 
-	resp := getUserResponse(username, username+"123", 42, 37, username+"group", []string{"abc", "bcd"})
-	u := processResponseProvisioned(ctx, t, resp.Assertion, username, username+"123", s)
+	uid := 42
+	gid := 37
+	resp := getUserResponse(username, username+"123", uid, gid, username+"group", []string{"abc", "bcd"})
+	u := processResponseProvisioned(ctx, t, resp.Assertion, username, username+"123", uid, gid, username+"group", s)
 
 	require.False(t, u.Remote)
 
@@ -196,7 +200,7 @@ func addAttribute(response saml.Response, name, value string) {
 }
 
 func processResponseUnprovisioned(ctx context.Context, t *testing.T,
-	response *saml.Assertion, username string, dispName string, s *Service,
+	response *saml.Assertion, username string, dispName string, uid int, gid int, groupname string, s *Service,
 ) *model.User {
 	userAttr := s.toUserAttributes(response)
 	require.Equal(t, username, userAttr.userName)
@@ -214,6 +218,10 @@ func processResponseUnprovisioned(ctx context.Context, t *testing.T,
 
 	require.Equal(t, dispName, u.DisplayName.String)
 	require.Equal(t, username, u.Username)
+	require.Equal(t, uid, userAttr.agentUID)
+	require.Equal(t, gid, userAttr.agentGID)
+	require.Equal(t, username, userAttr.agentUserName)
+	require.Equal(t, groupname, userAttr.agentGroupName)
 
 	require.True(t, u.Active)
 
@@ -221,7 +229,7 @@ func processResponseUnprovisioned(ctx context.Context, t *testing.T,
 }
 
 func processResponseProvisioned(ctx context.Context, t *testing.T,
-	response *saml.Assertion, username string, dispName string, s *Service,
+	response *saml.Assertion, username string, dispName string, uid int, gid int, groupname string, s *Service,
 ) *model.User {
 	userAttr := s.toUserAttributes(response)
 	require.Equal(t, username, userAttr.userName)
@@ -237,6 +245,10 @@ func processResponseProvisioned(ctx context.Context, t *testing.T,
 
 	require.Equal(t, dispName, u.DisplayName.String)
 	require.Equal(t, username, u.Username)
+	require.Equal(t, uid, userAttr.agentUID)
+	require.Equal(t, gid, userAttr.agentGID)
+	require.Equal(t, username, userAttr.agentUserName)
+	require.Equal(t, groupname, userAttr.agentGroupName)
 
 	require.True(t, u.Active)
 
