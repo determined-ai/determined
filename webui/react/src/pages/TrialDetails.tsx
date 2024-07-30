@@ -36,7 +36,7 @@ import { isAborted, isNotFound } from 'utils/service';
 import { capitalize } from 'utils/string';
 
 import ExperimentCodeViewer from './ExperimentDetails/ExperimentCodeViewer';
-import ExperimentCheckpoints from './ExperimentDetails/ExperimentCheckpoints';
+import TrialCheckpoints from './ExperimentDetails/TrialCheckpoints';
 import MultiTrialDetailsHyperparameters from './TrialDetails/MultiTrialDetailsHyperparameters';
 
 const TabType = {
@@ -231,7 +231,7 @@ const TrialDetailsComp: React.FC = () => {
         return item.key === TabType.Hyperparameters;
       });
       tabs.splice(hyperparameterTabPosition + 1, 0, {
-        children: <ExperimentCheckpoints experiment={experiment} pageRef={pageRef} />,
+        children: <TrialCheckpoints experiment={experiment} pageRef={pageRef} trial={trial} />,
         key: TabType.Checkpoints,
         label: 'Checkpoints',
       });
