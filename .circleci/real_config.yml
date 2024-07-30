@@ -282,7 +282,7 @@ commands:
       - when:
           condition: <<parameters.tf2>>
           steps:
-            - run: docker pull determinedai/pytorch-ngc-dev:5432424
+            - run: docker pull determinedai/pytorch-ngc-dev:f20b027
 
   login-docker:
     parameters:
@@ -2439,7 +2439,7 @@ jobs:
 
   test-unit-harness-gpu-tf:
     docker:
-      - image: determinedai/tensorflow-ngc-dev:5432424
+      - image: determinedai/tensorflow-ngc-dev:f20b027
     resource_class: determined-ai/container-runner-gpu
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
@@ -2466,7 +2466,7 @@ jobs:
 
   test-unit-harness-pytorch2-gpu:
     docker:
-      - image: determinedai/pytorch-ngc-dev:5432424
+      - image: determinedai/pytorch-ngc-dev:f20b027
     resource_class: determined-ai/container-runner-gpu
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
@@ -2493,7 +2493,7 @@ jobs:
 
   test-unit-harness-pytorch2-cpu:
     docker:
-      - image: determinedai/pytorch-ngc-dev:5432424
+      - image: determinedai/pytorch-ngc-dev:f20b027
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
       - checkout
@@ -2519,7 +2519,7 @@ jobs:
 
   test-unit-harness-gpu-parallel:
     docker:
-      - image: determinedai/pytorch-ngc-dev:5432424
+      - image: determinedai/pytorch-ngc-dev:f20b027
     resource_class: determined-ai/container-runner-multi-gpu
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
@@ -2546,7 +2546,7 @@ jobs:
 
   test-unit-harness-gpu-deepspeed:
     docker:
-      - image: determinedai/pytorch-ngc-dev:5432424
+      - image: determinedai/pytorch-ngc-dev:f20b027
     resource_class: determined-ai/container-runner-gpu
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
@@ -3395,28 +3395,11 @@ jobs:
                     --db-snapshot-identifier="ci-snapshot-commit-${COMMIT}"
                   echo "Snapshot completed"
       - run:
-          name: Build performance test Docker image
-          command: make -C performance build
-      - run:
-          name: Run performance test
-          command: |
-            export PERF_DOCKER_FLAGS="--network=host"
-            export PERF_K6_FLAGS='-e DET_ADMIN_USERNAME="admin" \
-              -e DET_ADMIN_PASSWORD="${INITIAL_USER_PASSWORD}" \
-              -e model_name="tnjpuojqzbluqiyyqilftulsw" \
-              -e model_version_number="1" \
-              -e trial_id="8282" \
-              -e experiment_id="100" \
-              -e task_id="backported.8282" \
-              -e metric_name="85c9" \
-              -e metric_type="METRIC_TYPE_TRAINING" \
-              -e batches="1800" \
-              -e batches_margin="99" \
-              -e resource_pool="default"'
-            make -C performance run
-      - run:
-          name: Upload result of performance test to Postgres result db
-          command: python .circleci/scripts/upload_perf_results.py ./performance/reports/latest.results.json
+          name: Run REST API read-only test
+          command: ./performance/daist/run.py daist.rest_api.test_locust.TestRO
+
+      - store_artifacts:
+          path: ./performance/daist/daist/results
 
       - run:
           name: Delete RDS instance
@@ -3652,7 +3635,7 @@ jobs:
         type: string
         default: "1"
       environment-image:
-        default: determinedai/pytorch-ngc-dev:5432424
+        default: determinedai/pytorch-ngc-dev:f20b027
         type: string
       accel-node-taints:
         type: string
@@ -4650,6 +4633,8 @@ workflows:
             branches:
               only:
                 - main
+                # meyere - remove the following line before merge to main.
+                - SCALE-29-integrate_daist_with_determined
 
       - test-e2e-aws:
           name: test-e2e-gpu-parallel
