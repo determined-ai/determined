@@ -709,6 +709,7 @@ export interface TrialItem extends StartEndTimes {
   searcherMetricsVal?: number;
   logRetentionDays?: number;
   taskId?: string;
+  metadata?: JsonObject;
 }
 
 export interface TrialDetails extends TrialItem {
