@@ -2,7 +2,7 @@ name: torchvision dsat deepspeed_trial
 max_restarts: 0
 environment:
   image:
-    gpu: determinedai/pytorch-ngc-dev:5432424
+    gpu: determinedai/pytorch-ngc:0.35.0
 resources:
   slots_per_trial: 2
   shm_size: 4294967296 # 4 GiB.
