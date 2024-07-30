@@ -79,21 +79,21 @@ func TestFlattenMetadata(t *testing.T) {
 			FlatKey:        "key7.key8",
 			IntegerValue:   ptrs.Ptr(3),
 			ProjectID:      0,
-			IsArrayElement: false,
+			IsArrayElement: true,
 		},
 		{
 			RunID:          0,
 			FlatKey:        "key7",
 			StringValue:    ptrs.Ptr("string_1"),
 			ProjectID:      0,
-			IsArrayElement: false,
+			IsArrayElement: true,
 		},
 		{
 			RunID:          0,
 			FlatKey:        "key7",
 			StringValue:    ptrs.Ptr("string_2"),
 			ProjectID:      0,
-			IsArrayElement: false,
+			IsArrayElement: true,
 		},
 	}, flattened)
 }
@@ -145,14 +145,14 @@ func TestFlattenMetadataArray(t *testing.T) {
 			FlatKey:        "key1",
 			IntegerValue:   ptrs.Ptr(1),
 			ProjectID:      0,
-			IsArrayElement: false,
+			IsArrayElement: true,
 		},
 		{
 			RunID:          0,
 			FlatKey:        "key1",
 			IntegerValue:   ptrs.Ptr(2),
 			ProjectID:      0,
-			IsArrayElement: false,
+			IsArrayElement: true,
 		},
 	}, flattened)
 }
@@ -173,7 +173,7 @@ func TestFlattenMetadataArrayNested(t *testing.T) {
 			FlatKey:        "key1.key2",
 			IntegerValue:   ptrs.Ptr(1),
 			ProjectID:      0,
-			IsArrayElement: false,
+			IsArrayElement: true,
 		},
 	}, flattened)
 }
