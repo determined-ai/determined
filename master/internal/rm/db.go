@@ -38,6 +38,8 @@ func FetchAvgQueuedTime(pool string) (
 	err = db.Bun().NewSelect().TableExpr("task_stats").ColumnExpr(
 		"avg(extract(epoch FROM end_time - start_time))",
 	).Where("event_type = ?", "QUEUED").
+		// treat task stats with missing start time the same as aggregations bb7020a404b.
+		Where("start_time IS NOT NULL AND start_time != ?", "0001-01-01").
 		Where("end_time >= CURRENT_DATE AND allocation_id IN (?) ", subq).
 		Scan(context.TODO(), &today)
 	if err != nil {
