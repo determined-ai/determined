@@ -132,6 +132,7 @@ export const AvailableOperators = {
     Operator.Less,
     Operator.LessEq,
   ],
+  [V1ColumnType.ARRAY]: [Operator.Eq],
   [V1ColumnType.UNSPECIFIED]: Object.values(Operator), // show all of operators
 } as const;
 
