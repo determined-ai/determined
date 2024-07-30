@@ -299,11 +299,13 @@ test.describe('Experiment List', () => {
     await expect.soft((await row.getCellByColumnName('State')).pwLocator).toHaveText('paused');
 
     // resume experiment
-    await (await row.experimentActionDropdown.open()).resume.pwLocator.click();
+    await row.experimentActionDropdown.open();
+    await row.experimentActionDropdown.resume.pwLocator.click();
     await expect.soft((await row.getCellByColumnName('State')).pwLocator).not.toHaveText('paused');
 
     // pause experiment again
-    await (await row.experimentActionDropdown.open()).pause.pwLocator.click();
+    await row.experimentActionDropdown.open();
+    await row.experimentActionDropdown.pause.pwLocator.click();
     await expect.soft((await row.getCellByColumnName('State')).pwLocator).toHaveText('paused');
   });
 });
