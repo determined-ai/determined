@@ -3501,10 +3501,10 @@ export interface V1FlatRun {
     searcherMetricValue?: number;
     /**
      * The id of external run
-     * @type {number}
+     * @type {string}
      * @memberof V1FlatRun
      */
-    externalRunId?: number;
+    externalRunId?: string;
     /**
      * Trial hyperparameters.
      * @type {any}
@@ -9449,12 +9449,6 @@ export interface V1ResourcePool {
      * @memberof V1ResourcePool
      */
     stats?: V1QueueStats;
-    /**
-     * Deprecated, use cluster_name instead.
-     * @type {string}
-     * @memberof V1ResourcePool
-     */
-    resourceManagerName?: string;
     /**
      * Resource manager's metadata.
      * @type {{ [key: string]: string; }}
@@ -20299,7 +20293,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @throws {RequiredError}
          */
         getKubernetesResourceManagers(options: any = {}): FetchArgs {
-            const localVarPath = `/api/v1/k8-resource-managers`;
+            const localVarPath = `/api/v1/k8s-resource-managers`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
@@ -35233,7 +35227,7 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
             if (id === null || id === undefined) {
                 throw new RequiredError('id','Required parameter id was null or undefined when calling getKubernetesResourceQuotas.');
             }
-            const localVarPath = `/api/v1/workspaces/{id}/get-k8-resource-quotas`
+            const localVarPath = `/api/v1/workspaces/{id}/get-k8s-resource-quotas`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)));
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };

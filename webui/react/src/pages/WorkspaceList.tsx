@@ -35,6 +35,7 @@ import { useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { getWorkspaces } from 'services/api';
 import { V1GetWorkspacesRequestSortBy } from 'services/api-ts-sdk';
+import clusterStore from 'stores/cluster';
 import userStore from 'stores/users';
 import { Workspace } from 'types';
 import { useObservable } from 'utils/observable';
@@ -66,6 +67,11 @@ const WorkspaceList: React.FC = () => {
   const WorkspaceCreateModal = useModal(WorkspaceCreateModalComponent);
 
   const { settings, updateSettings } = useSettings<WorkspaceListSettings>(settingsConfig);
+
+  const openWorkspaceCreateModal = () => {
+    clusterStore.fetchKubernetesResourceManagers();
+    WorkspaceCreateModal.open();
+  };
 
   const fetchWorkspaces = useCallback(async () => {
     if (!settings) return;
@@ -345,7 +351,7 @@ const WorkspaceList: React.FC = () => {
         <Button
           data-testid="newWorkspace"
           disabled={!canCreateWorkspace}
-          onClick={WorkspaceCreateModal.open}>
+          onClick={openWorkspaceCreateModal}>
           New Workspace
         </Button>
       }

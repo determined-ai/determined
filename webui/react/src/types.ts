@@ -709,6 +709,7 @@ export interface TrialItem extends StartEndTimes {
   searcherMetricsVal?: number;
   logRetentionDays?: number;
   taskId?: string;
+  metadata?: JsonObject;
 }
 
 export interface TrialDetails extends TrialItem {
@@ -1279,7 +1280,7 @@ export interface FlatRun {
   checkpointSize: number;
   checkpointCount: number;
   searcherMetricValue?: number;
-  externalRunId?: number;
+  externalRunId?: string;
   hyperparameters?: TrialHyperparameters;
   summaryMetrics?: SummaryMetrics;
   userId?: number;

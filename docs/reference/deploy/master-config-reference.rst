@@ -89,12 +89,12 @@ configure different container images for NVIDIA GPU tasks using the ``cuda`` key
 Determined 0.17.6), CPU tasks using ``cpu`` key, and ROCm (AMD GPU) tasks using the ``rocm`` key.
 Default values:
 
--  ``determinedai/pytorch-ngc-dev:f20b027`` for NVIDIA GPUs and for CPUs.
+-  ``determinedai/pytorch-ngc-dev:5432424`` for NVIDIA GPUs and for CPUs.
 -  ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.26.4`` for ROCm.
 
 For TensorFlow users, we provide an image that must be referenced in the experiment configuration:
 
--  ``determinedai/tensorflow-ngc-dev:f20b027`` for NVIDIA GPUs and for CPUs.
+-  ``determinedai/tensorflow-ngc-dev:5432424`` for NVIDIA GPUs and for CPUs.
 
 ``environment_variables``
 =========================
@@ -251,7 +251,7 @@ specified under the primary resource_manager key here is considered the default.
 ================
 
 Optional for single resource manager configurations. Required for multiple resource manager
-(Multi-RM) configurations. Specifies the resource manager'sassociated cluster name. This references
+(Multi-RM) configurations. Specifies the resource manager's associated cluster name. This references
 the cluster on which a Determined deployment is running. Defaults to ``default`` if not specified.
 For Kubernetes installations with additional resource managers, ensure unique names for all resource
 managers in the cluster.
@@ -1221,7 +1221,8 @@ workloads that require proxying on remote clusters is under development.
 To define a single resource manager or designate the default resource manager, do not define it
 under ``additional_resource_manager``; instead, use the primary ``resource_manager`` key.
 
-Resource manager names must be unique among all defined resource managers.
+Resource managers' cluster names (``resource_manager.cluster_name``) must be unique among all
+defined resource managers.
 
 Any additional resource managers must have at least one resource pool assigned to them. These
 resource pool names must be defined and must be distinct among all resource pools across all

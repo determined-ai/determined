@@ -157,18 +157,18 @@ func (p *WorkspaceAuthZPermissive) CanSetWorkspacesDefaultPools(
 
 // CanSetWorkspaceNamespaceBindings calls RBAC authz but enforces basic authz.
 func (p *WorkspaceAuthZPermissive) CanSetWorkspaceNamespaceBindings(
-	ctx context.Context, curUser model.User, workspace *workspacev1.Workspace,
+	ctx context.Context, curUser model.User,
 ) error {
-	_ = (&WorkspaceAuthZRBAC{}).CanSetWorkspaceNamespaceBindings(ctx, curUser, workspace)
-	return (&WorkspaceAuthZBasic{}).CanSetWorkspaceNamespaceBindings(ctx, curUser, workspace)
+	_ = (&WorkspaceAuthZRBAC{}).CanSetWorkspaceNamespaceBindings(ctx, curUser)
+	return (&WorkspaceAuthZBasic{}).CanSetWorkspaceNamespaceBindings(ctx, curUser)
 }
 
 // CanSetResourceQuotas calls RBAC authz but enforces basic authz.
 func (p *WorkspaceAuthZPermissive) CanSetResourceQuotas(
-	ctx context.Context, curUser model.User, workspace *workspacev1.Workspace,
+	ctx context.Context, curUser model.User,
 ) error {
-	_ = (&WorkspaceAuthZRBAC{}).CanSetResourceQuotas(ctx, curUser, workspace)
-	return (&WorkspaceAuthZBasic{}).CanSetResourceQuotas(ctx, curUser, workspace)
+	_ = (&WorkspaceAuthZRBAC{}).CanSetResourceQuotas(ctx, curUser)
+	return (&WorkspaceAuthZBasic{}).CanSetResourceQuotas(ctx, curUser)
 }
 
 func init() {

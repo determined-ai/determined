@@ -1981,7 +1981,7 @@ service Determined {
   rpc GetKubernetesResourceManagers(GetKubernetesResourceManagersRequest)
       returns (GetKubernetesResourceManagersResponse) {
     option (google.api.http) = {
-      get: "/api/v1/k8-resource-managers"
+      get: "/api/v1/k8s-resource-managers"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Internal"
@@ -2185,7 +2185,7 @@ service Determined {
   rpc GetKubernetesResourceQuotas(GetKubernetesResourceQuotasRequest)
       returns (GetKubernetesResourceQuotasResponse) {
     option (google.api.http) = {
-      get: "/api/v1/workspaces/{id}/get-k8-resource-quotas"
+      get: "/api/v1/workspaces/{id}/get-k8s-resource-quotas"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Workspaces"

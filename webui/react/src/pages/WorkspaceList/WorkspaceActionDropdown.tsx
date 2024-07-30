@@ -2,12 +2,13 @@ import Button from 'hew/Button';
 import Dropdown, { MenuItem } from 'hew/Dropdown';
 import Icon from 'hew/Icon';
 import { useModal } from 'hew/Modal';
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 
 import css from 'components/ActionDropdown/ActionDropdown.module.scss';
 import WorkspaceCreateModalComponent from 'components/WorkspaceCreateModal';
 import WorkspaceDeleteModalComponent from 'components/WorkspaceDeleteModal';
 import usePermissions from 'hooks/usePermissions';
+import clusterStore from 'stores/cluster';
 import workspaceStore from 'stores/workspaces';
 import { Workspace } from 'types';
 import handleError from 'utils/error';
@@ -41,6 +42,13 @@ export const useWorkspaceActionMenu: (props: WorkspaceMenuPropsIn) => WorkspaceM
 }: WorkspaceMenuPropsIn) => {
   const WorkspaceDeleteModal = useModal(WorkspaceDeleteModalComponent);
   const WorkspaceEditModal = useModal(WorkspaceCreateModalComponent);
+  const [editingWorkspaceId, setEditingWorkspaceId] = useState<number | undefined>(undefined);
+
+  const openWorkspaceEditModal = () => {
+    clusterStore.fetchKubernetesResourceManagers();
+    setEditingWorkspaceId(workspace?.id);
+    WorkspaceEditModal.open();
+  };
 
   const contextHolders = useMemo(() => {
     return (
@@ -52,12 +60,25 @@ export const useWorkspaceActionMenu: (props: WorkspaceMenuPropsIn) => WorkspaceM
               workspace={workspace}
               onClose={onComplete}
             />
-            <WorkspaceEditModal.Component workspaceId={workspace.id} onClose={onComplete} />
+            <WorkspaceEditModal.Component
+              workspaceId={editingWorkspaceId}
+              onClose={() => {
+                onComplete?.();
+                setEditingWorkspaceId(undefined);
+              }}
+            />
           </>
         )}
       </>
     );
-  }, [WorkspaceDeleteModal, WorkspaceEditModal, onComplete, workspace, returnIndexOnDelete]);
+  }, [
+    workspace,
+    WorkspaceDeleteModal,
+    returnIndexOnDelete,
+    onComplete,
+    WorkspaceEditModal,
+    editingWorkspaceId,
+  ]);
 
   const { canDeleteWorkspace, canModifyWorkspace } = usePermissions();
 
@@ -102,7 +123,7 @@ export const useWorkspaceActionMenu: (props: WorkspaceMenuPropsIn) => WorkspaceM
   const handleDropdown = (key: string) => {
     switch (key) {
       case MenuKey.Edit:
-        WorkspaceEditModal.open();
+        openWorkspaceEditModal();
         break;
       case MenuKey.Delete:
         WorkspaceDeleteModal.open();

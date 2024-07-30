@@ -679,6 +679,7 @@ export const decodeV1TrialToTrialItem = (data: Sdk.Trialv1Trial): types.TrialIte
     id: data.id,
     latestValidationMetric: data.latestValidation && decodeMetricsWorkload(data.latestValidation),
     logRetentionDays: data.logRetentionDays,
+    metadata: data.metadata,
     searcherMetricsVal: data.searcherMetricValue,
     startTime: data.startTime as unknown as string,
     state: decodeExperimentState(data.state),
