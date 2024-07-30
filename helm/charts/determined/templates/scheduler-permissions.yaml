@@ -1,6 +1,5 @@
 {{- if .Values.defaultScheduler}}
-{{- $schedulerType := .Values.defaultScheduler | trim}}
-{{- if or (eq $schedulerType "coscheduler") (eq $schedulerType "preemption")}}
+{{- if eq (.Values.defaultScheduler | trim ) "coscheduler"}}
 apiVersion: v1
 kind: ServiceAccount
 metadata:

@@ -595,10 +595,10 @@ func readRMPreemptionStatus(config *ResourceManagerWithPoolsConfig, rpName strin
 			panic("scheduler not configured")
 		}
 		return config.ResourceManager.AgentRM.Scheduler.GetPreemption()
-	case config.ResourceManager.KubernetesRM != nil:
-		return config.ResourceManager.KubernetesRM.GetPreemption()
-	case config.ResourceManager.DispatcherRM != nil,
+	case config.ResourceManager.KubernetesRM != nil,
+		config.ResourceManager.DispatcherRM != nil,
 		config.ResourceManager.PbsRM != nil:
+		// KubernetesRM priority scheduler with preemption is deprecated as of 0.36.0.
 		return false
 	default:
 		panic("unexpected resource configuration")

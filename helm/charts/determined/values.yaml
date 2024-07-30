@@ -346,8 +346,8 @@ telemetry:
       # certificate: <certificate contents>
 
 ## Configure the default Determined scheduler
-## Currently supports "coscheduler" for gang scheduling and "preemption" for priority based
-## scheduling with preemption
+## Currently supports "coscheduler" for gang scheduling.
+## "preemption" for priority based scheduling with preemption is deprecated as of 0.36.0.
 # defaultScheduler: preemption
 
 ## Configure the resource pools in the Determined cluster.
