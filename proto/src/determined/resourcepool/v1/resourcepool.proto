@@ -190,12 +190,10 @@ message ResourcePool {
   // Job queue stats
   determined.job.v1.QueueStats stats = 34;
 
-  // Deprecated, use cluster_name instead.
-  string resource_manager_name = 35;
   // Resource manager's metadata.
-  map<string, string> resource_manager_metadata = 36;
+  map<string, string> resource_manager_metadata = 35;
   // Resource manager's associated cluster name.
-  string cluster_name = 37;
+  string cluster_name = 36;
 }
 
 // Detailed information about the resource pool
