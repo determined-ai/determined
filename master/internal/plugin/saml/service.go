@@ -281,7 +281,7 @@ func getAttributeValues(r *saml.Assertion, name string) []string {
 	return values
 }
 
-func mergeUserGroups(sessionData userAttributes, dbData *model.AgentUserGroup) *model.AgentUserGroup {
+func mergeUserGroups(sessionData *userAttributes, dbData *model.AgentUserGroup) *model.AgentUserGroup {
 	result := model.AgentUserGroup{
 		UID:   dbData.UID,
 		GID:   dbData.GID,
@@ -307,7 +307,7 @@ func mergeUserGroups(sessionData userAttributes, dbData *model.AgentUserGroup) *
 
 // syncUser syncs the mutable user fields parsed from the claim, only if there are non-null changes.
 func (s *Service) syncUser(ctx context.Context, u *model.User, uAttr *userAttributes, ug *model.AgentUserGroup) (*model.User, error) {
-	ugUpdate := mergeUserGroups(*uAttr, ug)
+	ugUpdate := mergeUserGroups(uAttr, ug)
 	if ugUpdate.UID == ug.UID && ugUpdate.GID == ug.GID && ugUpdate.User == ug.User && ugUpdate.Group == ug.Group {
 		// nothing in user group uto update
 		ugUpdate = nil
