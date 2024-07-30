@@ -1753,7 +1753,7 @@ used for :ref:`remote user <remote-users>` management.
           scim_authentication_attribute: "string"
           auto_provision_users: true
           groups_attribute_name: "XYZ"
-          display_name_attribute_name: "string"
+          display_name_attribute_name: "XYZ"
           agent_uid_attribute_name: "string"
           agent_gid_attribute_name: "string"
           agent_user_name_attribute_name: "string"
