@@ -2,16 +2,24 @@ import os
 import setuptools
 
 def version():
-    # VERSION should be set by the harness Makefile, obtained from running
-    # version.sh at the repository root. This means either the build has to be
-    # done via make, or VERSION has to be explicitly set to run python -m build
-    # directly. Given the intended use cases, though, this should be fine. It's
-    # also more consistent, as it doesn't rely on duplicating version-finding
-    # behavior in Python, which has the possibility of drifting if we update one
-    # version discovery script but not the other.
     version = os.environ.get("VERSION")
+
     if version is None:
-        raise Exception("VERSION environment variable must be set.")
+        try:
+            # This feels more disgusting than it is. Numpy does something similar,
+            # although they generate a version.py file from their Meson build file
+            # that returns a static version string. I'm not thrilled about calling a
+            # shell script during Determined's __init__.py (i.e. on import), but I'm
+            # running out of ideas to make editable installs work comfortably, and
+            # this shouldn't ever run for end users anyway.
+            output = subprocess.run(["../version.sh"], capture_output=True)
+        except subprocess.CalledProcessError:
+            # version.sh failed for whatever reason. Return an unknown version with
+            # epoch set to 1 so at least pip dependency resolution should succeed.
+            version = "1!0.0.0+unknown"
+        else:
+            # version.sh succeeded. Collect the output.
+            version = output.stdout.decode("utf-8")
 
     return version
 
