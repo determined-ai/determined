@@ -4,8 +4,8 @@ data:
   test_url: http://download.tensorflow.org/data/iris_test.csv
 environment:
   image:
-    cpu: determinedai/tensorflow-ngc:0.35.0
-    gpu: determinedai/tensorflow-ngc:0.35.0
+    cpu: determinedai/tensorflow-ngc-dev:f20b027
+    gpu: determinedai/tensorflow-ngc-dev:f20b027
 resources:
   slots_per_trial: 8
   resource_pool: defq_GPU_cancelable

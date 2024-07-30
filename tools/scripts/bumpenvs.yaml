@@ -14,7 +14,7 @@ deepspeed_0_hashed: {new: determinedai/environments:cuda-11.3-pytorch-1.10-deeps
   old: determinedai/environments:cuda-11.3-pytorch-1.10-deepspeed-0.8.3-gpu-079eb6d}
 deepspeed_0_versioned: {new: determinedai/environments:cuda-11.3-pytorch-1.10-deepspeed-0.8.3-gpu-0.31.1,
   old: determinedai/environments:cuda-11.3-pytorch-1.10-deepspeed-0.8.3-gpu-0.30.1}
-deepspeed_gpt_neox_0_hashed: {new: determinedai/deepspeed-cuda-gpt-neox:0.35.0, old: determinedai/deepspeed-cuda-gpt-neox:f20b027}
+deepspeed_gpt_neox_0_hashed: {new: determinedai/deepspeed-cuda-gpt-neox:f20b027, old: determinedai/deepspeed-cuda-gpt-neox:0e43056}
 deepspeed_gpu_0_hashed: {new: determinedai/environments:cuda-11.3-pytorch-1.10-deepspeed-0.8.3-gpu-2196775,
   old: determinedai/environments:cuda-11.3-pytorch-1.10-deepspeed-0.8.3-gpu-f66cbce}
 deepspeed_gpu_0_versioned: {new: determinedai/environments:cuda-11.3-pytorch-1.10-deepspeed-0.8.3-gpu-0.29.1,
@@ -103,18 +103,21 @@ pytorch20_tf210_rocm56_1_hashed: {new: determinedai/environments:rocm-5.6-pytorc
   old: determinedai/environments:rocm-5.6-pytorch-2.0-tf-2.10-rocm-ompi-f66cbce}
 pytorch20_tf210_rocm56_1_versioned: {new: determinedai/environments:rocm-5.6-pytorch-2.0-tf-2.10-rocm-ompi-0.29.1,
   old: determinedai/environments:rocm-5.6-pytorch-2.0-tf-2.10-rocm-ompi-0.27.1}
-pytorch_cpu_0_hashed: {new: determinedai/pytorch-cpu:0.35.0, old: determinedai/pytorch-cpu-dev:f20b027}
-pytorch_cpu_1_hashed: {new: determinedai/pytorch-cpu-hpc:0.35.0, old: determinedai/pytorch-cpu-hpc-dev:f20b027}
-pytorch_cuda_0_hashed: {new: determinedai/pytorch-cuda:0.35.0, old: determinedai/pytorch-cuda-dev:f20b027}
-pytorch_cuda_1_hashed: {new: determinedai/pytorch-cuda-hpc:0.35.0, old: determinedai/pytorch-cuda-hpc-dev:f20b027}
-pytorch_ngc_hashed: {new: determinedai/pytorch-ngc:0.35.0, old: determinedai/pytorch-ngc-dev:f20b027}
-pytorch_ngc_hpc_hashed: {new: determinedai/pytorch-ngc-hpc:0.35.0, old: determinedai/pytorch-ngc-hpc-dev:f20b027}
-tensorflow_cpu_0_hashed: {new: determinedai/pytorch-tensorflow-cpu:0.35.0, old: determinedai/pytorch-tensorflow-cpu-dev:f20b027}
-tensorflow_cpu_1_hashed: {new: determinedai/pytorch-tensorflow-cpu-hpc:0.35.0, old: determinedai/pytorch-tensorflow-cpu-hpc-dev:f20b027}
-tensorflow_cuda_0_hashed: {new: determinedai/pytorch-tensorflow-cuda:0.35.0, old: determinedai/pytorch-tensorflow-cuda-dev:f20b027}
-tensorflow_cuda_1_hashed: {new: determinedai/pytorch-tensorflow-cuda-hpc:0.35.0, old: determinedai/pytorch-tensorflow-cuda-hpc-dev:f20b027}
-tensorflow_ngc_hashed: {new: determinedai/tensorflow-ngc:0.35.0, old: determinedai/tensorflow-ngc-dev:f20b027}
-tensorflow_ngc_hpc_hashed: {new: determinedai/tensorflow-ngc-hpc:0.35.0, old: determinedai/tensorflow-ngc-hpc-dev:f20b027}
+pytorch_cpu_0_hashed: {new: determinedai/pytorch-cpu-dev:f20b027, old: determinedai/pytorch-cpu-dev:0e43056}
+pytorch_cpu_1_hashed: {new: determinedai/pytorch-cpu-hpc-dev:f20b027, old: determinedai/pytorch-cpu-hpc-dev:0e43056}
+pytorch_cuda_0_hashed: {new: determinedai/pytorch-cuda-dev:f20b027, old: determinedai/pytorch-cuda-dev:0e43056}
+pytorch_cuda_1_hashed: {new: determinedai/pytorch-cuda-hpc-dev:f20b027, old: determinedai/pytorch-cuda-hpc-dev:0e43056}
+pytorch_ngc_hashed: {new: determinedai/pytorch-ngc-dev:f20b027, old: determinedai/pytorch-ngc-dev:0e43056}
+pytorch_ngc_hpc_hashed: {new: determinedai/pytorch-ngc-hpc-dev:f20b027, old: determinedai/pytorch-ngc-hpc-dev:0e43056}
+tensorflow_cpu_0_hashed: {new: determinedai/pytorch-tensorflow-cpu-dev:f20b027, old: determinedai/pytorch-tensorflow-cpu-dev:0e43056}
+tensorflow_cpu_1_hashed: {new: determinedai/pytorch-tensorflow-cpu-hpc-dev:f20b027,
+  old: determinedai/pytorch-tensorflow-cpu-hpc-dev:0e43056}
+tensorflow_cuda_0_hashed: {new: determinedai/pytorch-tensorflow-cuda-dev:f20b027,
+  old: determinedai/pytorch-tensorflow-cuda-dev:0e43056}
+tensorflow_cuda_1_hashed: {new: determinedai/pytorch-tensorflow-cuda-hpc-dev:f20b027,
+  old: determinedai/pytorch-tensorflow-cuda-hpc-dev:0e43056}
+tensorflow_ngc_hashed: {new: determinedai/tensorflow-ngc-dev:f20b027, old: determinedai/tensorflow-ngc-dev:0e43056}
+tensorflow_ngc_hpc_hashed: {new: determinedai/tensorflow-ngc-hpc-dev:f20b027, old: determinedai/tensorflow-ngc-hpc-dev:0e43056}
 tf24_cpu_0_hashed: {new: determinedai/environments:py-3.8-pytorch-1.9-tf-2.4-cpu-24586f0,
   old: determinedai/environments-dev:py-3.8-pytorch-1.9-tf-2.4-cpu-1c769fb}
 tf24_cpu_0_versioned: {new: determinedai/environments:py-3.8-pytorch-1.9-tf-2.4-cpu-0.19.10,

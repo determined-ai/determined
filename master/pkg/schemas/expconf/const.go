@@ -8,7 +8,7 @@ const (
 
 // Default task environment docker image names.
 const (
-	CPUImage  = "determinedai/pytorch-ngc:0.35.0"
-	CUDAImage = "determinedai/pytorch-ngc:0.35.0"
+	CPUImage  = "determinedai/pytorch-ngc-dev:f20b027"
+	CUDAImage = "determinedai/pytorch-ngc-dev:f20b027"
 	ROCMImage = "determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-622d512"
 )
