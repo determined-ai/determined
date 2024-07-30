@@ -121,6 +121,9 @@ class ManagedCluster(abstract_cluster.Cluster):
         assert agent_data[0]["draining"] is False
 
     def wait_for_agent_ok(self, ticks: int) -> None:
+        """
+        Each tick is >= 1 second
+        """
         sess = api_utils.user_session()
         for _i in range(ticks):
             agent_data = get_agent_data(sess)
