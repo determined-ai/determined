@@ -677,51 +677,8 @@ a higher priority (e.g. a priority 50 task will run before a priority 40 task).
 Priority Scheduling with Preemption
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Determined also makes available a priority scheduler that extends the Kubernetes scheduler to
-support preemption with backfilling. This plugin will preempt existing pods if higher priority pods
-are submitted. If there is still space in the cluster, backfilling will attempt to fill the nodes by
-scheduling lower priority jobs. Additionally, if there are leftover slots on partially-filled nodes,
-the scheduler will attempt to assign single-slot tasks until the space is filled. This packing
-behavior only occurs with single-slot tasks.
-
-This plugin is also in beta and is not enabled by default. To enable it, edit ``values.yaml`` in the
-Determined Helm chart to set the ``defaultScheduler`` field to ``preemption``. Autoscaling is not
-supported and Determined can only automatically set labels for GPU experiments.
-
-Determined provides a default priority class, ``determined-medium-priority`` that has a priority of
-``50`` and is used for all tasks. If users want to set a different priority level for an experiment,
-they may either specify a priority in the ``resources`` field of the experiment config or create a
-priorityClass and specify it in the ``pod_spec`` of the config. If both are specified, the specified
-priorityClass will take precedence over the priority field. In Kubernetes, a higher priority value
-means a higher priority (e.g. a priority 50 task will run before a priority 40 task).
-
-Additionally, if using a cluster with tainted nodes or labels, users must specify the tolerations or
-node selectors in the ``pod_spec``. It is recommended that you use both tolerations and node
-selectors to better constrain where your experiments can run, especially on clusters that contain
-multiple GPU types.
-
-Below is an example that illustrates how to set priorities, tolerations, and node selectors.
-
-.. code:: yaml
-
-   resources:
-      priority: 42 # priorityClass, if set, takes precedence over this value
-   environment:
-      pod_spec:
-         apiVersion: v1
-         kind: Pod
-         spec:
-            priorityClassName: determined-medium-priority # don't set if using priority value
-            nodeSelector:
-               key: value
-            tolerations:
-            -  key: "key1"
-               operator: "Equal"
-               value: "value"
-               effect: "NoSchedule"
-
-The Kubernetes priority scheduler can be used with the Determined job queue feature, which allows
-more insight into scheduling decisions.
+Determined has deprecated a priority scheduler that extends the Kubernetes scheduler to support
+preemption with backfilling as of version 0.36.0.
 
 .. _concept-trial:
 
