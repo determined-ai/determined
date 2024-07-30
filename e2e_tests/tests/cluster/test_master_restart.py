@@ -39,7 +39,7 @@ def test_queued_time_restore(restartable_managed_cluster: managed_cluster.Manage
         sess, exp_id, bindings.experimentv1State.RUNNING, max_wait_secs=60
     )
 
-    def check_queued_aggregates_for_today():
+    def check_queued_aggregates_for_today() -> None:
         exps = bindings.get_GetExperiments(sess).experiments
         assert len(exps) == 1
         assert exps[0].id == exp_id
