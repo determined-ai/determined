@@ -160,7 +160,9 @@ func mockService(autoProvision bool) *Service {
 	return service
 }
 
-func getUserResponse(username string, dispName string, uid int, gid int, groupname string, groups []string) saml.Response {
+func getUserResponse(username string, dispName string, uid int, gid int, groupname string,
+	groups []string,
+) saml.Response {
 	resp := saml.Response{
 		XMLName:      xml.Name{},
 		IssueInstant: time.Time{},

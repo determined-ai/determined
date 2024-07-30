@@ -232,12 +232,12 @@ func (s *Service) toUserAttributes(response *saml.Assertion) *userAttributes {
 		return nil
 	}
 
-	strAgentUID := getSAMLAttribute(response, string(s.userConfig.agentUIDAttributeName))
+	strAgentUID := getSAMLAttribute(response, s.userConfig.agentUIDAttributeName)
 	tempAgentUID, err := strconv.Atoi(strAgentUID)
 	if err != nil {
 		logrus.WithError(err).WithField("agentUID", strAgentUID).Error("unable to convert to integer")
 	}
-	strAgentGID := getSAMLAttribute(response, string(s.userConfig.agentGIDAttributeName))
+	strAgentGID := getSAMLAttribute(response, s.userConfig.agentGIDAttributeName)
 	tempAgentGID, err := strconv.Atoi(strAgentGID)
 	if err != nil {
 		logrus.WithError(err).WithField("agentGID", strAgentGID).Error("unable to convert to integer")
@@ -306,7 +306,9 @@ func mergeUserGroups(sessionData *userAttributes, dbData *model.AgentUserGroup) 
 }
 
 // syncUser syncs the mutable user fields parsed from the claim, only if there are non-null changes.
-func (s *Service) syncUser(ctx context.Context, u *model.User, uAttr *userAttributes, ug *model.AgentUserGroup) (*model.User, error) {
+func (s *Service) syncUser(ctx context.Context, u *model.User, uAttr *userAttributes,
+	ug *model.AgentUserGroup,
+) (*model.User, error) {
 	ugUpdate := mergeUserGroups(uAttr, ug)
 	if ugUpdate.UID == ug.UID && ugUpdate.GID == ug.GID && ugUpdate.User == ug.User && ugUpdate.Group == ug.Group {
 		// nothing in user group uto update
