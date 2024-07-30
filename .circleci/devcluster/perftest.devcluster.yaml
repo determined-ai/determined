@@ -28,7 +28,7 @@ stages:
             rbac_ui_enabled: true
         resource_manager:
           type: agent
-          default_aux_resource_pool: default
-          default_compute_resource_pool: default
+          default_aux_resource_pool: compute-pool
+          default_compute_resource_pool: compute-pool
         resource_pools:
-          - pool_name: default
+          - pool_name: compute-pool
