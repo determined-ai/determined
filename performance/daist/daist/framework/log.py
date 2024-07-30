@@ -1,10 +1,10 @@
-from pathlib import Path
 import logging
 import sys
 import time
+from pathlib import Path
 
-from .paths import PkgPath
 from ..utils import timestamp
+from .paths import PkgPath
 
 FILENAME = 'test_run.log'
 

@@ -1,14 +1,13 @@
 import datetime
-import logging
 import json
+import logging
 import random
 from urllib import parse
 
-from . import locust_utils
-from .locust_utils import LocustTasksWithMeta, LocustGetTaskWithMeta, LocustPostTaskWithMeta
-from .resources import Resources
 from ..utils import flags
-
+from . import locust_utils
+from .locust_utils import LocustGetTaskWithMeta, LocustPostTaskWithMeta, LocustTasksWithMeta
+from .resources import Resources
 
 logger = logging.getLogger(__name__)
 

@@ -1,6 +1,6 @@
 from pathlib import Path
-from unittest import TestCase
 from tempfile import TemporaryDirectory
+from unittest import TestCase
 
 from daist.models.base import BaseObj, Format
 

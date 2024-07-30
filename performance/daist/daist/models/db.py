@@ -1,16 +1,16 @@
 from pathlib import Path
-from typing import Iterable, NewType, Optional, Union, Any
+from typing import Any, Iterable, NewType, Optional, Union
 
+import psycopg2
 from locust.stats import calculate_response_time_percentile, median_from_dict
 from prettytable import PrettyTable
-import psycopg2
 from psycopg2 import sql
 
-from .base import BaseDict, BaseList, BaseObj, Format
-from .locust import LocustStatsList
 from ..framework import repo
 from ..models.environment import environment
-from ..utils.timestamp import BASE_FMT, TS_t, get_utc_iso_ts_str, UTC_Z
+from ..utils.timestamp import BASE_FMT, UTC_Z, TS_t, get_utc_iso_ts_str
+from .base import BaseDict, BaseList, BaseObj, Format
+from .locust import LocustStatsList
 
 
 class PerfTestRun(BaseObj):

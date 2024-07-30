@@ -1,17 +1,18 @@
+import logging
+import shlex
+import subprocess
 from typing import Optional, Tuple
 from urllib.parse import urlparse
-import logging
-import subprocess
-import shlex
 
-from .config import Config
-from .environment import environment
-from .result import Result, FileMeta
-from .timestamp import UnixTimeWithStamp
+import daist
+
 from ..framework import log
 from ..framework.paths import PkgPath, VenvPath
 from ..framework.typelib import Url_t
-import daist
+from .config import Config
+from .environment import environment
+from .result import FileMeta, Result
+from .timestamp import UnixTimeWithStamp
 
 
 class Session:

@@ -1,8 +1,8 @@
 from pathlib import Path
 from typing import Dict, Iterable, NewType, Optional, Union
 
-from .base import BaseDict, BaseList, Format
 from ..rest_api.locust_utils import LocustTasksWithMeta
+from .base import BaseDict, BaseList, Format
 
 
 class LocustStatsList(BaseList):

@@ -1,6 +1,6 @@
+import time
 from datetime import datetime, timezone
 from typing import Optional, Union
-import time
 
 UTC_Z = 'Z'
 

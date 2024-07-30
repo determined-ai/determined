@@ -1,10 +1,10 @@
-from typing import List
 import logging
+from typing import List
 
+from ..models.metric_latency import Hist, MetricLatencyOpHist
 from . import model_def
 from .base import BaseMetricsTest
 from .model_def import MetricKey
-from ..models.metric_latency import MetricLatencyOpHist, Hist
 
 logger = logging.getLogger(__name__)
 

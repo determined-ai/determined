@@ -1,9 +1,9 @@
+import sys
 from unittest import TextTestResult, TextTestRunner
 from unittest.main import TestProgram
-import sys
 
-from . import venv
 from ..models.session import session
+from . import venv
 
 
 class TestProgramWithConfig(TestProgram):

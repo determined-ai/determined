@@ -1,15 +1,14 @@
-from contextlib import redirect_stdout, redirect_stderr
-from pathlib import Path
-from tempfile import NamedTemporaryFile
-from typing import cast, IO
-from unittest import TestCase
 import logging
 import time
+from contextlib import redirect_stderr, redirect_stdout
+from pathlib import Path
+from tempfile import NamedTemporaryFile
+from typing import IO, cast
+from unittest import TestCase
 
 from determined.common.api import bindings
 from determined.common.api.errors import APIException
-from determined.experimental import client, Experiment
-
+from determined.experimental import Experiment, client
 
 from ..models.session import session
 from ..utils.stream_to_logger import StreamToLogger

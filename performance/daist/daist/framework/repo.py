@@ -1,13 +1,13 @@
-from importlib import metadata
-from typing import Optional, Tuple
 import os
 import shlex
 import subprocess
+from importlib import metadata
+from typing import Optional, Tuple
 
-from .paths import RootPath
-from ..models.environment import environment
 import daist
 
+from ..models.environment import environment
+from .paths import RootPath
 
 DIRTY_TAG = '.dirty'
 VERSION_COMMIT_DELIMITER = '+'
