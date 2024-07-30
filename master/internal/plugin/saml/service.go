@@ -45,18 +45,26 @@ type Service struct {
 
 // userConfig represents the user defined configurations for SAML integration.
 type userConfig struct {
-	autoProvisionUsers       bool
-	groupsAttributeName      string
-	displayNameAttributeName string
+	autoProvisionUsers          bool
+	groupsAttributeName         string
+	displayNameAttributeName    string
+	agentUIDAttributeName       int
+	agentGIDAttributeName       int
+	agentUserNameAttributeName  string
+	agentGroupNameAttributeName string
 }
 
 // New constructs a new SAML service that is capable of sending SAML requests and consuming
 // responses.
 func New(db *db.PgDB, c config.SAMLConfig) (*Service, error) {
 	uc := userConfig{
-		autoProvisionUsers:       c.AutoProvisionUsers,
-		groupsAttributeName:      c.GroupsAttributeName,
-		displayNameAttributeName: c.DisplayNameAttributeName,
+		autoProvisionUsers:          c.AutoProvisionUsers,
+		groupsAttributeName:         c.GroupsAttributeName,
+		displayNameAttributeName:    c.DisplayNameAttributeName,
+		agentUIDAttributeName:       c.AgentUIDAttributeName,
+		agentGIDAttributeName:       c.AgentGIDAttributeName,
+		agentUserNameAttributeName:  c.AgentUserNameAttributeName,
+		agentGroupNameAttributeName: c.AgentGroupNameAttributeName,
 	}
 
 	key, cert, err := proxy.GenSignedCert()
@@ -253,7 +261,9 @@ func getAttributeValues(r *saml.Assertion, name string) []string {
 	return values
 }
 
+// [ kristine ] is this where we update db with user info from master config?
 // syncUser syncs the mutable user fields parsed from the claim, only if there are non-null changes.
+// TODO add a usergroup field for posix updates
 func (s *Service) syncUser(ctx context.Context, u *model.User, uAttr *userAttributes) (*model.User, error) {
 	err := db.Bun().RunInTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable},
 		func(ctx context.Context, tx bun.Tx) error {

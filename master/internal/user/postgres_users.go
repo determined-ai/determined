@@ -101,12 +101,13 @@ func Add(
 		})
 }
 
+// kristine - we want to ensure that an AgentUserGroup is fully populated since we don't update, we replace
 // Update updates an existing user.  `toUpdate` names the fields to update.
 func Update(
 	ctx context.Context,
 	updated *model.User,
 	toUpdate []string,
-	ug *model.AgentUserGroup,
+	ug *model.AgentUserGroup, // AgentUserGroup has all the fields we want to update; do we just use this?
 ) error {
 	return db.Bun().RunInTx(ctx, &sql.TxOptions{}, func(ctx context.Context, tx bun.Tx) error {
 		if len(toUpdate) > 0 {
@@ -345,6 +346,8 @@ func List(ctx context.Context) (values []model.FullUser, err error) {
 }
 
 // ByID returns the full user for a given ID.
+// kristine - actually, fulluser gets info from users and agent_user_groups
+// we want to update posix items in agent_user_groups
 func ByID(ctx context.Context, userID model.UserID) (*model.FullUser, error) {
 	var fu model.FullUser
 	err := db.Bun().NewSelect().TableExpr("users AS u").

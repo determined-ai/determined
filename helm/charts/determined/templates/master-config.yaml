@@ -119,6 +119,17 @@ stringData:
       {{- if .Values.oidc.displayNameAttributeName }}
       display_name_attribute_name: {{ .Values.oidc.displayNameAttributeName }}
       {{- end }}
+      {{- if .Values.oidc.agentUidAttributeName }}
+      agent_uid_attribute_name: {{ .Values.oidc.agentUidAttributeName }}
+      {{- end }}
+      {{- if .Values.oidc.agentGidAttributeName }}
+      agent_gid_attribute_name: {{ .Values.oidc.agentGidAttributeName }}
+      {{- end }}
+      {{- if .Values.oidc.agentUserNameAttributeName }}
+      agent_user_name_attribute_name: {{ .Values.oidc.agentUserNameAttributeName }}
+      {{- end }}
+      {{- if .Values.oidc.agentGroupNameAttributeName }}
+      agent_group_name_attribute_name: {{ .Values.oidc.agentGroupNameAttributeName }}
       {{- if .Values.oidc.alwaysRedirect }}
       always_redirect: {{ .Values.oidc.alwaysRedirect }}
       {{- end }}
@@ -152,6 +163,17 @@ stringData:
       {{- if .Values.saml.displayNameAttributeName }}
       display_name_attribute_name: {{ .Values.saml.displayNameAttributeName }}
       {{- end }}
+      {{- if .Values.saml.agentUidAttributeName }}
+      agent_uid_attribute_name: {{ .Values.saml.agentUidAttributeName }}
+      {{- end }}
+      {{- if .Values.saml.agentGidAttributeName }}
+      agent_gid_attribute_name: {{ .Values.saml.agentGidAttributeName }}
+      {{- end }}
+      {{- if .Values.saml.agentUserNameAttributeName }}
+      agent_user_name_attribute_name: {{ .Values.saml.agentUserNameAttributeName }}
+      {{- end }}
+      {{- if .Values.saml.agentGroupNameAttributeName }}
+      agent_group_name_attribute_name: {{ .Values.saml.agentGroupNameAttributeName }}
       {{- if .Values.saml.alwaysRedirect }}
       always_redirect: {{ .Values.saml.alwaysRedirect }}
       {{- end }}

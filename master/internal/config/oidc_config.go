@@ -17,6 +17,10 @@ type OIDCConfig struct {
 	AutoProvisionUsers          bool   `json:"auto_provision_users"`
 	GroupsAttributeName         string `json:"groups_attribute_name"`
 	DisplayNameAttributeName    string `json:"display_name_attribute_name"`
+	AgentUIDAttributeName       int    `json:"agent_uid_attribute_name"`
+	AgentGIDAttributeName       int    `json:"agent_gid_attribute_name"`
+	AgentUserNameAttributeName  string `json:"agent_user_name_attribute_name"`
+	AgentGroupNameAttributeName string `json:"agent_group_name_attribute_name"`
 	AlwaysRedirect              bool   `json:"always_redirect"`
 }
 

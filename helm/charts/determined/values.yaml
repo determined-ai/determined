@@ -124,6 +124,10 @@ useNodePortForMaster: false
 #   autoProvisionUsers:
 #   groupsAttributeName:
 #   displayNameAttributeName:
+#   agentUidAttributeName:
+#   agentGidAttributeName:
+#   agentUserNameAttributeName:
+#   agentGroupNameAttributeName:
 #   alwaysRedirect:
 
 # scim (EE-only) enables System for Cross-domain Identity Management (SCIM) integration, which is
@@ -149,6 +153,10 @@ useNodePortForMaster: false
 #   autoProvisionUsers:
 #   groupsAttributeName:
 #   displayNameAttributeName:
+#   agentUidAttributeName:
+#   agentGidAttributeName:
+#   agentUserNameAttributeName:
+#   agentGroupNameAttributeName:
 #   alwaysRedirect:
 
 # db sets the configurations for the database.
