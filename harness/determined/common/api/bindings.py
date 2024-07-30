@@ -2405,11 +2405,13 @@ class v1ColumnType(DetEnum):
     - COLUMN_TYPE_TEXT: data type is textual
     - COLUMN_TYPE_NUMBER: data type is numeric
     - COLUMN_TYPE_DATE: data type is a date
+    - COLUMN_TYPE_ARRAY: data type is an array
     """
     UNSPECIFIED = "COLUMN_TYPE_UNSPECIFIED"
     TEXT = "COLUMN_TYPE_TEXT"
     NUMBER = "COLUMN_TYPE_NUMBER"
     DATE = "COLUMN_TYPE_DATE"
+    ARRAY = "COLUMN_TYPE_ARRAY"
 
 class v1Command(Printable):
     """Command is a single container running the configured command."""

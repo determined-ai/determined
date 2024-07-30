@@ -61,8 +61,9 @@ func flattenMetadata(data map[string]any) (flatMetadata []model.RunMetadataIndex
 		key    string
 		value  any
 		depth  int
+		array  bool
 	}
-	stack := []metadataEntry{{prefix: "", key: "", value: data, depth: 0}}
+	stack := []metadataEntry{{prefix: "", key: "", value: data, depth: 0, array: false}}
 
 	// terminate early if we exceed the key count.
 	for len(stack) > 0 && len(flatMetadata) <= MaxKeyCount {
@@ -94,7 +95,8 @@ func flattenMetadata(data map[string]any) (flatMetadata []model.RunMetadataIndex
 			if len(typedVal) == 0 {
 				// if the map is empty, treat it as a leaf node with a nil value.
 				newIndex := model.RunMetadataIndex{
-					FlatKey: entry.prefix + entry.key,
+					FlatKey:        entry.prefix + entry.key,
+					IsArrayElement: entry.array,
 				}
 				flatMetadata = append(flatMetadata, newIndex)
 				continue
@@ -110,6 +112,7 @@ func flattenMetadata(data map[string]any) (flatMetadata []model.RunMetadataIndex
 					key:    key,
 					value:  value,
 					depth:  entry.depth + 1,
+					array:  entry.array,
 				})
 			}
 		// if the value is a slice, push each element onto the stack.
@@ -117,7 +120,8 @@ func flattenMetadata(data map[string]any) (flatMetadata []model.RunMetadataIndex
 			if len(typedVal) == 0 {
 				// if the slice is empty, treat it as a leaf node with a nil value.
 				newIndex := model.RunMetadataIndex{
-					FlatKey: entry.prefix + entry.key,
+					FlatKey:        entry.prefix + entry.key,
+					IsArrayElement: true,
 				}
 				flatMetadata = append(flatMetadata, newIndex)
 				continue
@@ -135,12 +139,14 @@ func flattenMetadata(data map[string]any) (flatMetadata []model.RunMetadataIndex
 					key:    entry.key,
 					value:  value,
 					depth:  entry.depth + 1,
+					array:  true,
 				})
 			}
 		// if the value is a primitive or an unknown type, treat it as a leaf node.
 		default:
 			newIndex := model.RunMetadataIndex{
-				FlatKey: entry.prefix + entry.key,
+				FlatKey:        entry.prefix + entry.key,
+				IsArrayElement: entry.array,
 			}
 			// parse the value and set the appropriate field.
 			switch v := entry.value.(type) {
