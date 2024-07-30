@@ -162,12 +162,12 @@ the same as the “cluster name” for a given cluster.
  WebUI
 *******
 
-In the WebUI, the resource manager name is visible for each resource pool.
+In the WebUI, the resource manager's associated cluster name is visible for each resource pool.
 
 To view resource managers:
 
 -  In the WebUI, navigate to the cluster view.
--  Each resource pool card displays **Resource Manager Name**.
+-  Each resource pool card displays **Cluster Name**.
 
 This field helps identify whether a resource pool is managed locally or by another manager, tagged
 as “Remote” if defined in the :ref:`master-config-reference` file.
@@ -177,11 +177,11 @@ as “Remote” if defined in the :ref:`master-config-reference` file.
 Let's say your environment contains a resource manager and a resource pool that have both adopted
 the name "default" due to their unnamed status, and you configure an additional resource pool named
 "additional-rm” with a resource pool named "test". When you sign in to the WebUI, you'll see both
-the default and test resource pools. The resource manager name for the default pool will display
-“default”, while the test pool displays "additional-rm" (or the name you specified).
+the default and test resource pools. The resource manager's cluster name for the default pool will
+display “default”, while the test pool displays "additional-rm" (or the name you specified).
 
 **Visibility and Access**
 
-**Resource Manager Name** is only visible to administrators or users with permissions to define
-multiple resource managers. Users can view all resource pools along with each resource pool's
-manager name to help distinguish between local and remote resource pools.
+**Cluster Name** is only visible to administrators or users with permissions to define multiple
+resource managers. Users can view all resource pools along with the cluster name of each resource
+pool's manager to help distinguish between local and remote resource pools.
