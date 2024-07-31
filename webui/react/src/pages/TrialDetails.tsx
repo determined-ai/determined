@@ -103,7 +103,7 @@ const TrialDetailsComp: React.FC = () => {
         type: string,
       },
     },
-    storagePath: `selected-file-${runId}`,
+    storagePath: `selected-file-run-${runId}`,
   });
   const config: SettingsConfig<{ filePath: string }> = useMemo(() => {
     return configForRun(parseInt(trialID ?? '0'));
@@ -230,7 +230,6 @@ const TrialDetailsComp: React.FC = () => {
     if (
       showExperimentArtifacts &&
       experiment.modelDefinitionSize !== 0 &&
-      isSingleTrialExperiment(experiment) &&
       f_flat_runs
     ) {
       tabs.splice(-1, 0, {
