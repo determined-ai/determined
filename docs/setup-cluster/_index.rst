@@ -29,7 +29,6 @@ Ideal for getting started with Determined.
 
 -  :ref:`basic`
 -  :ref:`install-using-deploy`
--  :ref:`install-using-homebrew`
 -  :ref:`install-using-wsl`
 
 .. note::
