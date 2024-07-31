@@ -362,8 +362,6 @@ def workflow_1(cfg: Config):
 
 def main():
     cfg = Config.from_args()
-    print(cfg.determined_root)
-    exit(0)
     workflow_1(cfg)
 
 
