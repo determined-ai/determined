@@ -32,11 +32,9 @@ We welcome outside contributions. If you'd like to make a contribution, please:
 
 ### Setting up
 
-Determined can be developed and run on both Linux and macOS (Linux is strongly
-recommended for production deployments). Determined has been tested with Ubuntu
-16.04 LTS, Ubuntu 18.04 LTS, Arch Linux, CentOS 7, and macOS. Ubuntu is
-recommended; on AWS, a good AMI to use is a recent version of "Deep Learning
-Base AMI (Ubuntu)".
+Determined can be developed and run on Linux. Determined has been tested with Ubuntu
+16.04 LTS, Ubuntu 18.04 LTS, Arch Linux, CentOS 7. Ubuntu is recommended; on AWS, a 
+good AMI to use is a recent version of "Deep Learning Base AMI (Ubuntu)".
 
 Start by cloning the Determined repository:
 
