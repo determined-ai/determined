@@ -4,12 +4,12 @@ import subprocess
 import setuptools
 
 
-def readme():
+def readme() -> str:
     with open("../README.md", "r") as fd:
         return fd.read()
 
 
-def version():
+def version() -> str:
     version = os.environ.get("VERSION")
 
     if version is None:
