@@ -230,11 +230,9 @@ def setup_reverse_proxy(cfg: Config) -> Tuple[subprocess.Popen, int]:
             break
         exist_code = proc.poll()
         if exist_code is not None:
-            print("Failed to establish tunnel")
             print("".join(ssh_stderr), file=sys.stderr)
             raise Exception("Failed to establish tunnel")
     if not wait_for_tunnel(cfg.reverse_proxy_host, remote_port, timeout=1000):
-        print("Failed to establish tunnel")
         proc.terminate()
         raise Exception("Failed to establish tunnel")
     return proc, remote_port
