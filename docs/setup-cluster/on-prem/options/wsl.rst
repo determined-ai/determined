@@ -20,6 +20,8 @@ master and agent running on the same machine within WSL.
 
 -  Windows 10 version 1903, or later.
 
+-  Intel/AMD64 architecture device. Arm64 devices are not supported.
+
 -  WSL 2 `installed and enabled <https://learn.microsoft.com/en-us/windows/wsl/install>`_ on your
    Windows machine.
 
