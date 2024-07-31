@@ -283,9 +283,9 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
         { signal: canceler.signal },
       );
       setTotal(response.pagination.total ?? 0);
-      if (!isEqual(response.checkpoints, checkpoints)) {
-        setCheckpoints(response.checkpoints);
-      }
+      setCheckpoints((cps) => {
+        return isEqual(response.checkpoints, cps) ? response.checkpoints : cps;
+      });
     } catch (e) {
       handleError(e, {
         publicSubject: `Unable to fetch ${f_flat_runs ? 'search' : 'experiment'} ${experiment.id} checkpoints.`,
@@ -295,7 +295,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
     } finally {
       setIsLoading(false);
     }
-  }, [f_flat_runs, settings, experiment.id, canceler.signal, checkpoints]);
+  }, [f_flat_runs, settings, experiment.id, canceler.signal]);
 
   const submitBatchAction = useCallback(
     async (action: CheckpointAction) => {
