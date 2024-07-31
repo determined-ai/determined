@@ -30,7 +30,7 @@ try:
     # includes pip editable installations.
     __version__ = importlib.metadata.version(__name__)
 except importlib.metadata.PackageNotFoundError:
-    __version__ = "1!0.0.0+unknown"
+    __version__ = "2!0.0.0+unknown"
 
 # LOG_FORMAT is the standard format for use with the logging module, which is required for the
 # WebUI's log viewer to filter logs by log level.
