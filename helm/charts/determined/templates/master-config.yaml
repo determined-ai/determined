@@ -122,6 +122,9 @@ stringData:
       {{- if .Values.oidc.alwaysRedirect }}
       always_redirect: {{ .Values.oidc.alwaysRedirect }}
       {{- end }}
+      {{- if .Values.oidc.isGroupsSupported }}
+      is_groups_supported: {{ .Values.oidc.isGroupsSupported }}
+      {{- end }}
     {{- end }}
 
     {{- if .Values.scim }}

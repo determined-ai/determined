@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
+	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -80,7 +81,11 @@ func New(db *db.PgDB, config config.OIDCConfig, pachEnabled bool) (*Service, err
 		return nil, fmt.Errorf("client secret has not been set")
 	}
 
-	scope := []string{oidc.ScopeOpenID, "profile", "email", "groups"}
+	scope := []string{oidc.ScopeOpenID, "profile", "email"}
+	log.Print("config.IsGroupsSupported ", config.IsGroupsSupported)
+	if config.IsGroupsSupported {
+		scope = append(scope, "groups")
+	}
 	if pachEnabled {
 		scope = append(scope, "audience:server:client_id:pachd")
 	}

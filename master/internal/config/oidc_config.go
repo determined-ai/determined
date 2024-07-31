@@ -18,6 +18,7 @@ type OIDCConfig struct {
 	GroupsAttributeName         string `json:"groups_attribute_name"`
 	DisplayNameAttributeName    string `json:"display_name_attribute_name"`
 	AlwaysRedirect              bool   `json:"always_redirect"`
+	IsGroupsSupported           bool   `json:"is_groups_supported"`
 }
 
 // Validate implements the check.Validatable interface.
