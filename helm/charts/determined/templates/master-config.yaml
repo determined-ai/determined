@@ -122,6 +122,9 @@ stringData:
       {{- if .Values.oidc.alwaysRedirect }}
       always_redirect: {{ .Values.oidc.alwaysRedirect }}
       {{- end }}
+      {{- if .Values.oidc.excludeGroupsScope }}
+      exclude_groups_scope: {{ .Values.oidc.excludeGroupsScope }}
+      {{- end }}
     {{- end }}
 
     {{- if .Values.scim }}
