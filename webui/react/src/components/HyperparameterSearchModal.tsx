@@ -108,6 +108,7 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
   const [form] = Form.useForm();
   const [currentPage, setCurrentPage] = useState(0);
   const [validationError, setValidationError] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const formValues = Form.useWatch([], form);
   const f_flat_runs = useFeature().isOn('flat_runs');
 
@@ -217,6 +218,7 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
     const newConfig = yaml.dump(baseConfig);
 
     try {
+      setIsSubmitting(true);
       const { experiment: newExperiment, warnings } = await createExperiment(
         {
           activate: true,
@@ -253,6 +255,8 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
 
       // We throw an error to prevent the modal from closing.
       throw new DetError(errorMessage, { publicMessage: errorMessage, silent: true });
+    } finally {
+      setIsSubmitting(false);
     }
   }, [entityCopy, experiment.configRaw, experiment.id, experiment.projectId, form, currentHPs]);
 
@@ -626,7 +630,11 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
         <div className={css.spacer} />
         <Row>
           <Button onClick={handleCancel}>Cancel</Button>
-          <Button disabled={validationError} type="primary" onClick={handleOk}>
+          <Button
+            disabled={validationError}
+            loading={isSubmitting}
+            type="primary"
+            onClick={handleOk}>
             {currentPage === 0
               ? 'Select Hyperparameters'
               : `Run ${capitalize(entityCopy.experiment)}`}
@@ -634,7 +642,7 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
         </Row>
       </>
     );
-  }, [currentPage, entityCopy, handleBack, handleCancel, handleOk, validationError]);
+  }, [currentPage, entityCopy, handleBack, handleCancel, handleOk, validationError, isSubmitting]);
 
   return (
     <Modal footer={footer} title="Hyperparameter Search">
