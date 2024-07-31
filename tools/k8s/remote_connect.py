@@ -347,6 +347,7 @@ def workflow_1(cfg: Config):
     try:
         gateway = get_gateway_info(cfg)
         if not gateway:
+            input(f"Press Enter to provision a gateway service in the cluster: {cfg.k8s_context}.")
             gateway = provision_gateway(cfg)
         config_path = update_devcluster(cfg, gateway, proxy_port)
         print("Workflow 1 ready.")
