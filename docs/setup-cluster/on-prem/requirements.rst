@@ -127,24 +127,6 @@ Install on Linux
       sudo systemd-tmpfiles --create --prefix /var/log/journal
       sudo systemctl restart systemd-journald
 
-.. _install-docker-on-macos:
-
-Install on macOS
-================
-
-#. Install Docker for macOS by following the `Docker documentation
-   <https://docs.docker.com/desktop/install/mac-install/>`__. The Docker documentation describes
-   system requirements, chipset dependencies, and installation steps.
-
-#. Start Docker:
-
-   .. code:: bash
-
-      open /Applications/Docker.app
-
-Docker on macOS does not support containers that use GPUs. Because of this, macOS Determined agents
-are only able to run CPU-based workloads.
-
 .. _install-docker-on-wsl:
 
 Install on Windows Subsystem for Linux (WSL)
