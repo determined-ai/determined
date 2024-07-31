@@ -1834,9 +1834,9 @@ and returned to the requested page after authentication.
 ``exclude_groups_scope``
 ========================
 
-Specifies if the groups scope should be excluded for this OIDC Provider. For most OIDC providers
-like Okta, this should be false (or blank) if you'd like to provision group memberships. But for
-some providers like Azure, which do not support groups scope, this should be set to true.
+Specifies if the groups scope should be excluded for this OIDC provider. For most OIDC providers
+such as Okta, this should be false (or blank) if you'd like to provision group memberships. But for
+some providers such as Azure, that do not support groups scope, this should be set to true.
 
 **********
  ``saml``
