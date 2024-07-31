@@ -12,7 +12,7 @@ data:
     leaderElection:
       leaderElect: false
     profiles:
-    - schedulerName: {{ $schedulerType }}
+    - schedulerName: {{ .Values.defaultScheduler }}
       plugins:
         queueSort:
           enabled:

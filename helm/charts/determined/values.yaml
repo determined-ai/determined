@@ -348,7 +348,7 @@ telemetry:
 ## Configure the default Determined scheduler
 ## Currently supports "coscheduler" for gang scheduling.
 ## "preemption" for priority based scheduling with preemption is deprecated as of 0.36.0.
-# defaultScheduler: preemption
+defaultScheduler: preemption
 
 ## Configure the resource pools in the Determined cluster.
 resourcePools:
@@ -357,7 +357,7 @@ resourcePools:
 # defaultComputeResourcePool: default
 
 ## Configure the initial user password for the cluster
-# initialUserPassword:
+initialUserPassword: Abcd1234
 
 # additional_resource_managers:
 #   - resource_manager:

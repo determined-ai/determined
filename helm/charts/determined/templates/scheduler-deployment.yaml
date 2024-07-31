@@ -1,6 +1,6 @@
 {{- if .Values.defaultScheduler}}
-{{- if eq (.Values.defaultScheduler | trim ) "coscheduler"}}
-apiVersion: apps/v1
+{{- $schedulerType := .Values.defaultScheduler | trim}}
+{{- if (eq $schedulerType "coscheduler") }}apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
