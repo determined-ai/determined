@@ -227,11 +227,7 @@ const TrialDetailsComp: React.FC = () => {
       });
     }
 
-    if (
-      showExperimentArtifacts &&
-      experiment.modelDefinitionSize !== 0 &&
-      f_flat_runs
-    ) {
+    if (showExperimentArtifacts && experiment.modelDefinitionSize !== 0 && f_flat_runs) {
       tabs.splice(-1, 0, {
         children: (
           <ExperimentCodeViewer
