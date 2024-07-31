@@ -347,7 +347,7 @@ export const getTrialCheckpoints = generateDetApi<
   Service.getExperimentCheckpointsParams,
   Api.V1GetTrialCheckpointsResponse,
   Type.CheckpointPagination
->(Config.getExperimentCheckpoints);
+>(Config.getTrialCheckpoints);
 
 export const getTrialWorkloads = generateDetApi<
   Service.TrialWorkloadsParams,
