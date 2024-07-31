@@ -16,7 +16,7 @@ import sys
 import tempfile
 import time
 from dataclasses import MISSING, dataclass, fields
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 import kubernetes as k8s
 import kubernetes.client.exceptions as client_exceptions
@@ -222,10 +222,17 @@ def setup_reverse_proxy(cfg: Config) -> Tuple[subprocess.Popen, int]:
         "-v",
     ]
     proc = subprocess.Popen(rev_proxy_cmd, stderr=subprocess.PIPE, stdout=subprocess.PIPE)
+    ssh_stderr: List[str] = []
     success_msg = "forward success"
     for line in iter(proc.stderr.readline, ""):
+        ssh_stderr.append(line.decode("utf-8"))
         if success_msg in line.decode("utf-8"):
             break
+        exist_code = proc.poll()
+        if exist_code is not None:
+            print("Failed to establish tunnel")
+            print("".join(ssh_stderr), file=sys.stderr)
+            raise Exception("Failed to establish tunnel")
     if not wait_for_tunnel(cfg.reverse_proxy_host, remote_port, timeout=1000):
         print("Failed to establish tunnel")
         proc.terminate()
