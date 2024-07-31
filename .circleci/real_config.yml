@@ -19,8 +19,6 @@ executors:
       - image: python:3.9-slim-bookworm
 
 parameters:
-  det-version:
-    type: string
   docker-image:
     type: string
     default: determinedai/cimg-base:latest
