@@ -4316,6 +4316,12 @@ export interface V1GetMasterResponse {
      * @memberof V1GetMasterResponse
      */
     clusterMessage?: V1ClusterMessage;
+    /**
+     * Whether the cluster has a user-submitted custom logo.
+     * @type {boolean}
+     * @memberof V1GetMasterResponse
+     */
+    hasCustomLogo: boolean;
 }
 /**
  * Response to GetMeRequest.

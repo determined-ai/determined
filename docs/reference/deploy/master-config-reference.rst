@@ -217,6 +217,19 @@ warning is returned. The default value is ``true``.
 
 Optional. Specify a human-readable name for this cluster.
 
+**********************
+ ``ui_customization``
+**********************
+
+Optional. Applies only to the Determined Enterprise Edition. This section contains options to
+customize the UI.
+
+``logo_path``
+=============
+
+Specifies the path to a user-provided logo to be shown in the UI. Ensure the path is accessible and
+reachable by the master service. The logo file should be a valid image format, with SVG recommended.
+
 *************************
  ``tensorboard_timeout``
 *************************

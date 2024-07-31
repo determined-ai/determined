@@ -42,13 +42,13 @@ func (a *apiServer) GetMaster(
 	if license.IsEE() {
 		brand = "hpe"
 	}
-
 	masterResp := &apiv1.GetMasterResponse{
 		Version:               version.Version,
 		MasterId:              a.m.MasterID,
 		ClusterId:             a.m.ClusterID,
 		ClusterName:           a.m.config.ClusterName,
 		TelemetryEnabled:      a.m.config.Telemetry.Enabled && a.m.config.Telemetry.SegmentWebUIKey != "",
+		HasCustomLogo:         a.m.config.UICustomization.HasCustomLogo(),
 		ExternalLoginUri:      a.m.config.InternalConfig.ExternalSessions.LoginURI,
 		ExternalLogoutUri:     a.m.config.InternalConfig.ExternalSessions.LogoutURI,
 		Branding:              brand,
