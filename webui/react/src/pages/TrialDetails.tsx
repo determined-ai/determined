@@ -40,8 +40,8 @@ import TrialCheckpoints from './ExperimentDetails/TrialCheckpoints';
 import MultiTrialDetailsHyperparameters from './TrialDetails/MultiTrialDetailsHyperparameters';
 
 const TabType = {
-  Code: 'code',
   Checkpoints: 'checkpoints',
+  Code: 'code',
   Hyperparameters: 'hyperparameters',
   Logs: 'logs',
   Metrics: 'metrics',
