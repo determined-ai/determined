@@ -125,7 +125,7 @@ useNodePortForMaster: false
 #   groupsAttributeName:
 #   displayNameAttributeName:
 #   alwaysRedirect:
-#   isGroupsSupported:
+#   excludeGroupsScope:
 
 # scim (EE-only) enables System for Cross-domain Identity Management (SCIM) integration, which is
 # only available if enterpriseEdition is true. It allows administrators to easily and securely

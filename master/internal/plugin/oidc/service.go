@@ -7,7 +7,6 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"net/url"
 	"os"
@@ -82,8 +81,7 @@ func New(db *db.PgDB, config config.OIDCConfig, pachEnabled bool) (*Service, err
 	}
 
 	scope := []string{oidc.ScopeOpenID, "profile", "email"}
-	log.Print("config.IsGroupsSupported ", config.IsGroupsSupported)
-	if config.IsGroupsSupported {
+	if !config.ExcludeGroupsScope {
 		scope = append(scope, "groups")
 	}
 	if pachEnabled {
