@@ -286,7 +286,7 @@ const TrialCheckpoints: React.FC<Props> = ({ experiment, trial, pageRef }: Props
       );
       setTotal(response.pagination.total ?? 0);
       setCheckpoints((cps) => {
-        return isEqual(response.checkpoints, cps) ? response.checkpoints : cps;
+        return isEqual(response.checkpoints, cps) ? cps : response.checkpoints;
       });
     } catch (e) {
       handleError(e, {
