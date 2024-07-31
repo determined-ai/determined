@@ -14,7 +14,7 @@ import (
 // ExperimentAuthZ describes authz methods for experiments.
 type ExperimentAuthZ interface {
 	// GET /api/v1/experiments/:exp_id
-	// GET /tasks
+	//  /tasks
 	CanGetExperiment(
 		ctx context.Context, curUser model.User, e *model.Experiment,
 	) error

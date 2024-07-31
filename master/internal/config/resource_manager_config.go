@@ -319,11 +319,20 @@ func (k KubernetesResourceManagerConfig) Validate() []error {
 		checkRMNamespace = nil
 	}
 
+	var checkRMScheduler error
+	if k.DefaultScheduler == PriorityScheduling {
+		checkRMScheduler = fmt.Errorf("the ``priority`` scheduler was deprecated, please " +
+			"use the default Kubernetes scheduler or coscheduler")
+	} else if k.DefaultScheduler != "" && k.DefaultScheduler != "coscheduler" {
+		checkRMScheduler = fmt.Errorf("only blank or ``coscheduler`` values allowed for Kubernetes scheduler")
+	}
+
 	return []error{
 		checkSlotType,
 		checkCPUResource,
 		check.NotEmpty(k.ClusterName, "cluster_name is required"),
 		checkRMNamespace,
+		checkRMScheduler,
 	}
 }
 
