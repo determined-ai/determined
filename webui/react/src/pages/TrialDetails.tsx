@@ -227,14 +227,16 @@ const TrialDetailsComp: React.FC = () => {
         key: TabType.Metrics,
         label: 'Metrics',
       });
-      const hyperparameterTabPosition = tabs.findIndex((item) => {
-        return item.key === TabType.Hyperparameters;
-      });
-      tabs.splice(hyperparameterTabPosition + 1, 0, {
-        children: <TrialCheckpoints experiment={experiment} pageRef={pageRef} trial={trial} />,
-        key: TabType.Checkpoints,
-        label: 'Checkpoints',
-      });
+      if (f_flat_runs) {
+        const hyperparameterTabPosition = tabs.findIndex((item) => {
+          return item.key === TabType.Hyperparameters;
+        });
+        tabs.splice(hyperparameterTabPosition + 1, 0, {
+          children: <TrialCheckpoints experiment={experiment} pageRef={pageRef} trial={trial} />,
+          key: TabType.Checkpoints,
+          label: 'Checkpoints',
+        });
+      }
     }
 
     if (showExperimentArtifacts && experiment.modelDefinitionSize !== 0 && f_flat_runs) {
