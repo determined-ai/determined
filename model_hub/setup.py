@@ -4,7 +4,7 @@ import subprocess
 import setuptools
 
 
-def version():
+def version() -> str:
     version = os.environ.get("VERSION")
 
     if version is None:
@@ -26,6 +26,4 @@ def version():
 
     return version
 
-setuptools.setup(
-    version=version()
-)
+setuptools.setup(version=version())
