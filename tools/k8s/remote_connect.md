@@ -14,6 +14,10 @@ Overview of how this works:
 - updated the given devcluster config based on the collected and launched services
 - run devcluster
 
+## Configuring the tool
+
+This tool can be configured via a configuration file which can be passed in using the `--config or -c` flag. The same arguments can also be passed in directly via CLI in the kabob-case format. CLI arguments take precedence over the configuration file.
+
 ## Reverse Proxy Server
 A public facing server is used as a reverse proxy to forward traffic to the internal Determined master running on your local machine to make it accessible to Determined workloads running on the target cluster.
 

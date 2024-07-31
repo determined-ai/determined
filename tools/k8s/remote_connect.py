@@ -22,11 +22,15 @@ import kubernetes as k8s
 import kubernetes.client.exceptions as client_exceptions
 import yaml
 
-DET_ROOT = pathlib.Path("~/projects/da/determined").expanduser()
+DET_ROOT = pathlib.Path(__file__).resolve().parents[1]
 CONFIG_DIR = (
     pathlib.Path(os.getenv("XDG_CONFIG_HOME", pathlib.Path.home() / ".config")) / "determined"
 )
 CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+
+
+def current_k8s_context() -> str:
+    return subprocess.check_output(["kubectl", "config", "current-context"], text=True).strip()
 
 
 def expand_env(value: Any, env: Dict[str, str]) -> Any:
@@ -50,11 +54,11 @@ class Config:
     Configuration for the remote connection setup.
     """
 
-    k8s_context: str
     ssh_key_path: str
-    determined_root: str
-    base_devcluster_path: str
     reverse_proxy_host: str
+    k8s_context: str = current_k8s_context()
+    determined_root: str = str(DET_ROOT)
+    base_devcluster_path: str = str(DET_ROOT / "tools" / "k8s" / "devcluster.yaml")
     ssh_user: str = "ubuntu"
     remote_port_range: Tuple[int, int] = (8000, 9000)
 
@@ -357,6 +361,8 @@ def workflow_1(cfg: Config):
 
 def main():
     cfg = Config.from_args()
+    print(cfg.determined_root)
+    exit(0)
     workflow_1(cfg)
 
 
