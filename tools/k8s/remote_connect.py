@@ -48,55 +48,19 @@ def expand_env(value: Any, env: Dict[str, str]) -> Any:
     return value
 
 
-def fetch_files_from_repo(branch: str, file_paths: List[str]) -> List[pathlib.Path]:
-    temp_dir = pathlib.Path(tempfile.mkdtemp())
-    archive_file = temp_dir / "files.tar"
-    requested_files = []
-    owner = "determined-ai"
-    repo_name = "secrets"
-    urls = [f"git@github.com:{owner}/{repo_name}", f"https://github.com/{owner}/{repo_name}"]
-
-    for url in urls:
-        try:
-            subprocess.run(
-                ["git", "archive", "--remote", url, branch, "--output", archive_file] + file_paths,
-                check=True,
-                stderr=subprocess.PIPE,
-            )
-
-            subprocess.run(["tar", "-xf", archive_file, "-C", temp_dir], check=True)
-
-            for file_path in file_paths:
-                full_file_path = temp_dir / file_path
-                if full_file_path.exists():
-                    requested_files.append(full_file_path)
-            break
-        except subprocess.CalledProcessError as e:
-            requested_files = []
-            print(f"Failed to fetch from {url}: {e.stderr.decode()}")
-            if url == urls[-1]:  # If it's the last URL and failed
-                raise
-    return requested_files
-
-
 @dataclass
 class Config:
     """
     Configuration for the remote connection setup.
     """
 
-    ssh_key_path: Optional[str] = None
-    reverse_proxy_host: Optional[str] = None
+    ssh_key_path: str
+    reverse_proxy_host: str
     k8s_context: str = current_k8s_context()
     determined_root: str = str(DET_ROOT)
     base_devcluster_path: str = str(DET_ROOT / "tools" / "k8s" / "devcluster.yaml")
     ssh_user: str = "ubuntu"
     remote_port_range: Tuple[int, int] = (8000, 9000)
-
-    def __post_init__(self):
-        if self.ssh_key_path is None and self.reverse_proxy_host is None:
-            print("reverse proxy configs are not set. fetching defaults from the shared service.")
-            self.set_from_shared_config()
 
     @classmethod
     def _from_arg_dict(cls, data) -> "Config":
@@ -148,15 +112,6 @@ class Config:
                 config_data[field.name] = tuple(map(int, config_data[field.name].split(",")))
 
         return cls._from_arg_dict(config_data)
-
-    def set_from_shared_config(self) -> None:
-        files = fetch_files_from_repo(
-            "hamid", ["aws/ssh-keys/shared-eng-dev.pem", "aws/reverse_proxy_host.txt"]
-        )
-        self.ssh_key_path = str(files[0])
-        self.reverse_proxy_host = files[1].read_text().strip()
-        print(files)
-        exit(1)
 
 
 @dataclass
@@ -245,8 +200,6 @@ def setup_reverse_proxy(cfg: Config) -> Tuple[subprocess.Popen, int]:
     """
     Set up a reverse proxy to open access to a local process, eg master.
     """
-    if cfg.ssh_key_path is None or cfg.reverse_proxy_host is None:
-        raise ValueError("SSH key path and reverse proxy host must be set.")
     remote_port = random.randint(*cfg.remote_port_range)
     local_master_port = DevClusterConf.from_yaml(
         pathlib.Path(cfg.base_devcluster_path)
