@@ -920,6 +920,26 @@ export const getExperimentCheckpoints: DetApi<
     ),
 };
 
+export const getTrialCheckpoints: DetApi<
+  Service.getExperimentCheckpointsParams,
+  Api.V1GetTrialCheckpointsResponse,
+  Type.CheckpointPagination
+> = {
+  name: 'getTrialCheckpoints',
+  postProcess: (response) => decoder.decodeCheckpoints(response),
+  request: (params, options) =>
+    detApi.Experiments.getTrialCheckpoints(
+      params.id,
+      params.sortBy,
+      undefined,
+      params.orderBy,
+      params.offset,
+      params.limit,
+      params.states,
+      options,
+    ),
+};
+
 export const getExpValidationHistory: DetApi<
   SingleEntityParams,
   Api.V1GetExperimentValidationHistoryResponse,
