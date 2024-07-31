@@ -1,4 +1,4 @@
-import { BaseReactFragment } from 'e2e/models/common/base/BaseReactFragment';
+import { BaseReactFragment } from 'playwright-page-model-base/BaseReactFragment';
 
 /**
  * Represents the ResourcePoolsBound component in src/pages/WorkspaceDetails/ResourcePoolsBound.tsx

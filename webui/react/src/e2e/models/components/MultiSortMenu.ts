@@ -1,4 +1,9 @@
-import { BaseComponent, CanBeParent, NamedComponent } from 'e2e/models/common/base/BaseComponent';
+import {
+  BaseComponent,
+  CanBeParent,
+  NamedComponent,
+} from 'playwright-page-model-base/BaseComponent';
+
 import { BasePage } from 'e2e/models/common/base/BasePage';
 import { DropdownContent } from 'e2e/models/common/hew/Dropdown';
 import { Select } from 'e2e/models/common/hew/Select';

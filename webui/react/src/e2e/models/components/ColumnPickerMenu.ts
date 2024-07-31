@@ -1,5 +1,10 @@
-import { BaseComponent, CanBeParent, NamedComponent } from 'e2e/models/common/base/BaseComponent';
-import { BaseList, BaseRow } from 'e2e/models/common/base/BaseList';
+import {
+  BaseComponent,
+  CanBeParent,
+  NamedComponent,
+} from 'playwright-page-model-base/BaseComponent';
+import { BaseList, BaseRow } from 'playwright-page-model-base/BaseList';
+
 import { BasePage } from 'e2e/models/common/base/BasePage';
 import { DropdownContent } from 'e2e/models/common/hew/Dropdown';
 import { Message } from 'e2e/models/common/hew/Message';

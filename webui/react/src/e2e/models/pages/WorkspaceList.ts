@@ -1,4 +1,5 @@
-import { BaseComponent } from 'e2e/models/common/base/BaseComponent';
+import { BaseComponent } from 'playwright-page-model-base/BaseComponent';
+
 import { BasePage } from 'e2e/models/common/base/BasePage';
 import { Message } from 'e2e/models/common/hew/Message';
 import { Select } from 'e2e/models/common/hew/Select';

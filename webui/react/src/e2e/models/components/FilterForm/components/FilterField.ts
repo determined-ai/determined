@@ -1,4 +1,5 @@
-import { BaseComponent, NamedComponent } from 'e2e/models/common/base/BaseComponent';
+import { BaseComponent, NamedComponent } from 'playwright-page-model-base/BaseComponent';
+
 import { DatePicker } from 'e2e/models/common/hew/DatePicker';
 import { Select } from 'e2e/models/common/hew/Select';
 import { ConjunctionContainer } from 'e2e/models/components/FilterForm/components/ConjunctionContainer';

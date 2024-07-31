@@ -2,7 +2,8 @@ import {
   BaseComponent,
   NamedComponent,
   NamedComponentArgs,
-} from 'e2e/models/common/base/BaseComponent';
+} from 'playwright-page-model-base/BaseComponent';
+
 import { DropdownMenu } from 'e2e/models/common/hew/Dropdown';
 import { ConjunctionContainer } from 'e2e/models/components/FilterForm/components/ConjunctionContainer';
 import { FilterField } from 'e2e/models/components/FilterForm/components/FilterField';

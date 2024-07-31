@@ -1,5 +1,5 @@
-import { BaseComponent, NamedComponent } from 'e2e/models/common/base/BaseComponent';
-import { BaseOverlay } from 'e2e/models/common/base/BaseOverlay';
+import { BaseComponent, NamedComponent } from 'playwright-page-model-base/BaseComponent';
+import { BaseOverlay } from 'playwright-page-model-base/BaseOverlay';
 
 /**
  * Represents the Select component from antd/es/select/index.js

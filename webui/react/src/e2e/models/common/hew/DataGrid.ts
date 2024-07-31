@@ -1,9 +1,10 @@
-import { expect } from 'e2e/fixtures/global-fixtures';
 import {
   BaseComponent,
   NamedComponent,
   NamedComponentArgs,
-} from 'e2e/models/common/base/BaseComponent';
+} from 'playwright-page-model-base/BaseComponent';
+
+import { expect } from 'e2e/fixtures/global-fixtures';
 import { DropdownMenu } from 'e2e/models/common/hew/Dropdown';
 import { printMap } from 'e2e/utils/debug';
 

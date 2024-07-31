@@ -1,7 +1,7 @@
 import { Page } from '@playwright/test';
+import { BaseComponent, CanBeParent } from 'playwright-page-model-base/BaseComponent';
 
 import { expect } from 'e2e/fixtures/global-fixtures';
-import { BaseComponent, CanBeParent } from 'e2e/models/common/base/BaseComponent';
 import { BasePage } from 'e2e/models/common/base/BasePage';
 import { apiUrl } from 'e2e/utils/envVars';
 
