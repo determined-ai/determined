@@ -1753,6 +1753,7 @@ used for :ref:`remote user <remote-users>` management.
           groups_attribute_name: "XYZ"
           display_name_attribute_name: "XYZ"
           always_redirect: true
+          exclude_groups_scope: false
 
 ``enabled``
 ===========
@@ -1829,6 +1830,13 @@ Specifies if this OIDC provider should be used for authentication, bypassing the
 sign-in page. This redirection persists unless the user explicitly signs out within the WebUI. If an
 SSO user attempts to use an expired session token, they are directly redirected to the SSO provider
 and returned to the requested page after authentication.
+
+``exclude_groups_scope``
+========================
+
+Specifies if the groups scope should be excluded for this OIDC Provider. For most OIDC providers
+like Okta, this should be false (or blank) if you'd like to provision group memberships. But for
+some providers like Azure, which do not support groups scope, this should be set to true.
 
 **********
  ``saml``
