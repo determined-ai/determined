@@ -22,7 +22,7 @@ This tool can be configured via a configuration file which can be passed in usin
 A public facing server is used as a reverse proxy to forward traffic to the internal Determined master running on your local machine to make it accessible to Determined workloads running on the target cluster.
 
 - Ensure that the firewall is configured to allow traffic on the given port range.
-- A shared server might be available for engineers to use for reverse proxy purposes.
+- A shared server might be available for engineers to use for reverse proxy purposes. [Check here for more info](https://hpe-aiatscale.slack.com/archives/C02PV33GSN5/p1722019350962399)
 
 ### SSH Server Configuration
 ```ini
