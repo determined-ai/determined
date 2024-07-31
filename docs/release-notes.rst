@@ -17,13 +17,13 @@ Version 0.34.0
 
 **Breaking Changes**
 
--  Images: The default environment includes images that support PyTorch. Therefore, TensorFlow users.
-      must configure their experiments to target our non-default TensorFlow images. Details on this
-      process can be found at :ref:`set-environment-images`.
+-  Images: The default environment includes images that support PyTorch. Therefore, TensorFlow users
+   must configure their experiments to target our non-default TensorFlow images. Details on this
+   process can be found at :ref:`set-environment-images`.
 
--  Images: Our new default images are based on Nvidia NGC. While we provide a recommended NGC
-   version, users can build their own images using any NGC version that meets their specific
-   requirements. For more information, visit :ref:`ngc-version`
+-  Images: The default environment images are now based on the Nvidia NGC container. While we
+   provide a recommended NGC version, users can build their own images using any NGC version that
+   meets their specific requirements. For more information, visit :ref:`ngc-version`.
 
 **New Features**
 
@@ -95,8 +95,15 @@ Version 0.34.0
 
 -  Agent Resource Manager: Round robin scheduler is removed for Agent Resource Managers. Deprecation
    was announded in release 0.33.0. Users should transition to priority scheduler.
--  Machine Architectures: Support for PPC64/POWER builds for all environments has been deprecated
-   and is now being removed. Users should transition to ARM64/AMD64.
+
+-  Machine Architectures: The default environment images now based on the Nvidia NGC container are
+   only available for amd64. Users on arm64 can use the :ref:`set-environment-images` feature to
+   leverage the legacy environment containers, e.g. ``determinedai/pytorch-cpu``, which are
+   currently available for both amd64 and arm64, however arm64 is not supported and users should
+   transition to amd64.
+
+-  Machine Architectures: Support for ppc64 builds for all environments has been deprecated and is
+   now being removed. Users should transition to amd64.
 
 **************
  Version 0.33
