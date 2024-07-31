@@ -61,13 +61,11 @@ If you are installing prerequisites from your Linux distribution's package
 repository, ensure that they meet the version requirements above, particularly
 Python and Node.
 
-#### Install Prerequisites with Homebrew for Linux and macOS
+#### Install Prerequisites with Homebrew for Linux
 
 Because the versions of prerequisites from Linux distribution package
 repositories can vary widely, we recommend installing the Determined build
 prerequisites with [Homebrew](https://brew.sh/).
-
-The following instructions are also applicable for building Determined on macOS.
 
 Install a compiler and build tools:
 
