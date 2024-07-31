@@ -343,6 +343,12 @@ export const timeSeries = generateDetApi<
   Type.TrialSummary[]
 >(Config.timeSeries);
 
+export const getTrialCheckpoints = generateDetApi<
+  Service.getExperimentCheckpointsParams,
+  Api.V1GetTrialCheckpointsResponse,
+  Type.CheckpointPagination
+>(Config.getTrialCheckpoints);
+
 export const getTrialWorkloads = generateDetApi<
   Service.TrialWorkloadsParams,
   Api.V1GetTrialWorkloadsResponse,

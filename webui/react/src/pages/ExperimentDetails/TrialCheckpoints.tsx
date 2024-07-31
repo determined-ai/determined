@@ -25,16 +25,17 @@ import useFeature from 'hooks/useFeature';
 import { useFetchModels } from 'hooks/useFetchModels';
 import usePolling from 'hooks/usePolling';
 import { useSettings } from 'hooks/useSettings';
-import { deleteCheckpoints, getExperimentCheckpoints } from 'services/api';
+import { deleteCheckpoints, getTrialCheckpoints } from 'services/api';
 import { Checkpointv1SortBy, Checkpointv1State } from 'services/api-ts-sdk';
 import { encodeCheckpointState } from 'services/decoder';
 import {
-  checkpointAction,
   CheckpointAction,
+  checkpointAction,
   CheckpointState,
   CoreApiGenericCheckpoint,
   ExperimentBase,
   RecordKey,
+  TrialDetails,
 } from 'types';
 import { canActionCheckpoint, getActionsForCheckpointsUnion } from 'utils/checkpoint';
 import { ensureArray } from 'utils/data';
@@ -42,17 +43,18 @@ import handleError, { DetError, ErrorLevel, ErrorType } from 'utils/error';
 import { validateDetApiEnum, validateDetApiEnumList } from 'utils/service';
 import { pluralizer } from 'utils/string';
 
-import { configForExperiment, Settings } from './ExperimentCheckpoints.settings';
+import { configForTrial, Settings } from './ExperimentCheckpoints.settings';
 import { columns as defaultColumns } from './ExperimentCheckpoints.table';
 
 interface Props {
   experiment: ExperimentBase;
+  trial: TrialDetails;
   pageRef: React.RefObject<HTMLElement>;
 }
 
 const batchActions = [checkpointAction.Register, checkpointAction.Delete];
 
-const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) => {
+const TrialCheckpoints: React.FC<Props> = ({ experiment, trial, pageRef }: Props) => {
   const confirm = useConfirm();
   const [total, setTotal] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -63,7 +65,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
   const models = useFetchModels();
   const f_flat_runs = useFeature().isOn('flat_runs');
 
-  const config = useMemo(() => configForExperiment(experiment.id), [experiment.id]);
+  const config = useMemo(() => configForTrial(trial.id), [trial.id]);
   const { settings, updateSettings } = useSettings<Settings>(config);
 
   const [checkpoint, setCheckpoint] = useState<CoreApiGenericCheckpoint>();
@@ -266,14 +268,14 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
     stateFilterDropdown,
   ]);
 
-  const fetchExperimentCheckpoints = useCallback(async () => {
+  const fetchTrialCheckpoints = useCallback(async () => {
     if (!settings) return;
 
     const states = settings.state?.map((state) => encodeCheckpointState(state as CheckpointState));
     try {
-      const response = await getExperimentCheckpoints(
+      const response = await getTrialCheckpoints(
         {
-          id: experiment.id,
+          id: trial.id,
           limit: settings.tableLimit,
           offset: settings.tableOffset,
           orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
@@ -288,14 +290,14 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
       });
     } catch (e) {
       handleError(e, {
-        publicSubject: `Unable to fetch ${f_flat_runs ? 'search' : 'experiment'} ${experiment.id} checkpoints.`,
+        publicSubject: `Unable to fetch ${f_flat_runs ? 'run' : 'trial'} ${trial.id} checkpoints.`,
         silent: true,
         type: ErrorType.Api,
       });
     } finally {
       setIsLoading(false);
     }
-  }, [f_flat_runs, settings, experiment.id, canceler.signal]);
+  }, [f_flat_runs, settings, trial.id, canceler.signal]);
 
   const submitBatchAction = useCallback(
     async (action: CheckpointAction) => {
@@ -304,7 +306,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
         dropDownOnTrigger(settings.row)[action]();
 
         // Refetch experiment list to get updates based on batch action.
-        await fetchExperimentCheckpoints();
+        await fetchTrialCheckpoints();
       } catch (e) {
         const publicSubject = `Unable to ${action} Selected Checkpoints`;
         handleError(e, {
@@ -316,10 +318,10 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
         });
       }
     },
-    [dropDownOnTrigger, fetchExperimentCheckpoints, settings.row],
+    [dropDownOnTrigger, fetchTrialCheckpoints, settings.row],
   );
 
-  usePolling(fetchExperimentCheckpoints, { rerunOnNewFn: true });
+  usePolling(fetchTrialCheckpoints, { rerunOnNewFn: true });
 
   useEffect(() => {
     return () => {
@@ -405,4 +407,4 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
   );
 };
 
-export default ExperimentCheckpoints;
+export default TrialCheckpoints;

@@ -36,9 +36,11 @@ import { isAborted, isNotFound } from 'utils/service';
 import { capitalize } from 'utils/string';
 
 import ExperimentCodeViewer from './ExperimentDetails/ExperimentCodeViewer';
+import TrialCheckpoints from './ExperimentDetails/TrialCheckpoints';
 import MultiTrialDetailsHyperparameters from './TrialDetails/MultiTrialDetailsHyperparameters';
 
 const TabType = {
+  Checkpoints: 'checkpoints',
   Code: 'code',
   Hyperparameters: 'hyperparameters',
   Logs: 'logs',
@@ -225,6 +227,16 @@ const TrialDetailsComp: React.FC = () => {
         key: TabType.Metrics,
         label: 'Metrics',
       });
+      if (f_flat_runs) {
+        const hyperparameterTabPosition = tabs.findIndex((item) => {
+          return item.key === TabType.Hyperparameters;
+        });
+        tabs.splice(hyperparameterTabPosition + 1, 0, {
+          children: <TrialCheckpoints experiment={experiment} pageRef={pageRef} trial={trial} />,
+          key: TabType.Checkpoints,
+          label: 'Checkpoints',
+        });
+      }
     }
 
     if (showExperimentArtifacts && experiment.modelDefinitionSize !== 0 && f_flat_runs) {
