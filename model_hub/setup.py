@@ -26,4 +26,5 @@ def version() -> str:
 
     return version
 
+
 setuptools.setup(version=version())
