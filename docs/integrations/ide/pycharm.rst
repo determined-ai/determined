@@ -31,7 +31,7 @@ For existing shells, use the following:
 As of the current version, PyCharm lacks support for custom options in SSH commands via the UI.
 
 Therefore, you must provide via an entry in your ``ssh_config`` file, typically located at
-``~/.ssh/config`` on Linux and macOS systems. The Determined SSH command line follow this pattern:
+``~/.ssh/config`` on Linux systems. The Determined SSH command line follow this pattern:
 
 .. code::
 
