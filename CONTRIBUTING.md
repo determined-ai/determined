@@ -71,7 +71,6 @@ The following instructions are also applicable for building Determined on macOS.
 
 Install a compiler and build tools:
 
-- macOS: Install the [Command Line Tools for Xcode](https://developer.apple.com/) from Apple
 - Debian and Ubuntu: `sudo apt install build-essential`
 - Red Hat, CentOS, and Fedora: `sudo yum install gcc make perl-devel`
 - SUSE and openSUSE: `sudo zypper install -t pattern devel_basis`
