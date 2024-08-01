@@ -346,6 +346,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
             dataPath = `experiment.${currentColumn.column}`;
             break;
           case V1LocationType.RUN:
+          case V1LocationType.RUNMETADATA:
             dataPath = currentColumn.column;
             break;
           case V1LocationType.HYPERPARAMETERS:
@@ -363,9 +364,6 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
             break;
           case V1LocationType.CUSTOMMETRIC:
             dataPath = `summaryMetrics.${currentColumn.column}`;
-            break;
-          case V1LocationType.RUNMETADATA:
-            dataPath = currentColumn.column;
             break;
           case V1LocationType.UNSPECIFIED:
           default:
