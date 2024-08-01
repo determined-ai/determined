@@ -53,15 +53,16 @@ if [ -z ${VERSION} ]; then
         # head to grab the first one, since the list is sorted in descending
         # order, handling -rc tags correctly courtesy of
         # versionsort.suffix.
-        MAYBE_TAG=$(git \
-                        -c versionsort.suffix='-rc' \
-                        tag \
-                        --sort='-v:refname:short' \
-                        --format='%(refname:short)' \
-                        --no-contains=$(git merge-base HEAD main) | \
-                    grep -E -v 'v0.12|-ee' | \
-                    head -n 1
-                  )
+        MAYBE_TAG=$(
+            git \
+                -c versionsort.suffix='-rc' \
+                tag \
+                --sort='-v:refname:short' \
+                --format='%(refname:short)' \
+                --no-contains=$(git merge-base HEAD main) \
+                | grep -E -v 'v0.12|-ee' \
+                | head -n 1
+        )
     fi
 
     # Munge the tag into the form we want. Note: we always append a SHA hash,
