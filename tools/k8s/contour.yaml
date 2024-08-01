@@ -1,0 +1,21 @@
+kind: GatewayClass
+apiVersion: gateway.networking.k8s.io/v1
+metadata:
+  name: contour
+spec:
+  controllerName: projectcontour.io/gateway-controller
+---
+kind: Gateway
+apiVersion: gateway.networking.k8s.io/v1
+metadata:
+  name: contour
+  namespace: projectcontour
+spec:
+  gatewayClassName: contour
+  listeners:
+    - name: tcp
+      protocol: TCP
+      port: 52335 # Need at least one listener on a gateway. Master will add and patch to it.
+      allowedRoutes:
+        namespaces:
+          from: All
