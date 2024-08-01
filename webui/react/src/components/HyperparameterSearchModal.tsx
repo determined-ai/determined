@@ -137,6 +137,7 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
   );
 
   const submitExperiment = useCallback(async () => {
+    if (isSubmitting) return;
     const fields: Record<string, Primitive | HyperparameterRowValues> = form.getFieldsValue(true);
 
     // Deep cloning parent experiment's config
@@ -258,7 +259,15 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
     } finally {
       setIsSubmitting(false);
     }
-  }, [entityCopy, experiment.configRaw, experiment.id, experiment.projectId, form, currentHPs]);
+  }, [
+    entityCopy,
+    experiment.configRaw,
+    experiment.id,
+    experiment.projectId,
+    form,
+    currentHPs,
+    isSubmitting,
+  ]);
 
   const handleOk = useCallback(() => {
     if (currentPage === 0) {
