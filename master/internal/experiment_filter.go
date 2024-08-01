@@ -188,7 +188,8 @@ func runMetadataToSQL(c string, filterColumnType *string, filterValue *interface
 		queryColumnType = *filterColumnType
 	}
 	var queryArgs []interface{}
-	runHparam := strings.TrimPrefix(c, "metadata.")
+	runMetadata := strings.TrimPrefix(c, "metadata.")
+	queryArgs = append(queryArgs, runMetadata)
 	oSQL, err := o.toSQL()
 	if err != nil {
 		return nil, err
@@ -196,65 +197,65 @@ func runMetadataToSQL(c string, filterColumnType *string, filterValue *interface
 	var queryString string
 	switch o {
 	case empty:
-		queryString = fmt.Sprintf(`r.id NOT IN (SELECT run_id FROM runs_metadata_index WHERE flat_key='%s')`, runHparam)
+		queryString = fmt.Sprintf(`r.id NOT IN (SELECT run_id FROM runs_metadata_index WHERE flat_key=%s)`, "?")
 	case notEmpty:
-		queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM runs_metadata_index WHERE flat_key='%s')`, runHparam)
+		queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM runs_metadata_index WHERE flat_key=%s)`, "?")
 	case contains:
 		queryLikeValue := `%` + queryValue.(string) + `%`
 		queryArgs = append(queryArgs, queryLikeValue)
 		switch queryColumnType {
 		case projectv1.ColumnType_COLUMN_TYPE_NUMBER.String():
-			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM runs_metadata_index WHERE flat_key='%s'
+			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM runs_metadata_index WHERE flat_key=%s
 			AND (number_value=%s OR float_value=%s))`,
-				runHparam, "?", "?")
+				"?", "?", "?")
 			queryArgs = append(queryArgs, queryValue)
 		case projectv1.ColumnType_COLUMN_TYPE_TEXT.String():
-			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM runs_metadata_index WHERE flat_key='%s'
+			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM runs_metadata_index WHERE flat_key=%s
 			AND string_value LIKE %s)`,
-				runHparam, "?")
+				"?", "?")
 		default:
-			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM runs_metadata_index WHERE flat_key='%s'
+			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM runs_metadata_index WHERE flat_key=%s
 			AND boolean_value=%s)`,
-				runHparam, "?")
+				"?", "?")
 		}
 	case doesNotContain:
 		queryLikeValue := `%` + queryValue.(string) + `%`
 		queryArgs = append(queryArgs, queryLikeValue)
 		switch queryColumnType {
 		case projectv1.ColumnType_COLUMN_TYPE_NUMBER.String():
-			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM runs_metadata_index WHERE flat_key='%s'
+			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM runs_metadata_index WHERE flat_key=%s
 			AND (number_value!=%s AND float_value!=%s))`,
-				runHparam, "?", "?")
+				"?", "?", "?")
 			queryArgs = append(queryArgs, queryValue)
 		case projectv1.ColumnType_COLUMN_TYPE_TEXT.String():
-			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM runs_metadata_index WHERE flat_key='%s'
+			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM runs_metadata_index WHERE flat_key=%s
 			AND string_value NOT LIKE %s)`,
-				runHparam, "?")
+				"?", "?")
 		default:
-			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM runs_metadata_index WHERE flat_key='%s'
+			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM runs_metadata_index WHERE flat_key=%s
 			AND boolean_value!=%s)`,
-				runHparam, "?")
+				"?", "?")
 		}
 	default:
 		queryArgs = append(queryArgs, bun.Safe(oSQL), queryValue)
 		switch queryColumnType {
 		case projectv1.ColumnType_COLUMN_TYPE_NUMBER.String():
-			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM runs_metadata_index WHERE flat_key='%s'
+			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM runs_metadata_index WHERE flat_key=%s
 			AND (integer_value %s %s OR float_value %s %s))`,
-				runHparam, "?", "?", "?", "?")
+				"?", "?", "?", "?", "?")
 			queryArgs = append(queryArgs, bun.Safe(oSQL), queryValue)
 		case projectv1.ColumnType_COLUMN_TYPE_TEXT.String():
-			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM runs_metadata_index WHERE flat_key='%s'
+			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM runs_metadata_index WHERE flat_key=%s
 			AND string_value %s %s)`,
-				runHparam, "?", "?")
+				"?", "?", "?")
 		case projectv1.ColumnType_COLUMN_TYPE_DATE.String():
-			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM runs_metadata_index WHERE flat_key='%s'
+			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM runs_metadata_index WHERE flat_key=%s
 			AND timestamp_value %s %s)`,
-				runHparam, "?", "?")
+				"?", "?", "?")
 		default:
-			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM runs_metadata_index WHERE flat_key='%s'
+			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM runs_metadata_index WHERE flat_key=%s
 			AND boolean_value %s %s)`,
-				runHparam, "?", "?")
+				"?", "?", "?")
 		}
 	}
 
@@ -283,6 +284,7 @@ func runHpToSQL(c string, filterColumnType *string, filterValue *interface{},
 	}
 	var queryArgs []interface{}
 	runHparam := strings.TrimPrefix(c, "hp.")
+	queryArgs = append(queryArgs, runHparam)
 	oSQL, err := o.toSQL()
 	if err != nil {
 		return nil, err
@@ -290,49 +292,49 @@ func runHpToSQL(c string, filterColumnType *string, filterValue *interface{},
 	var queryString string
 	switch o {
 	case empty:
-		queryString = fmt.Sprintf(`r.id NOT IN (SELECT run_id FROM run_hparams WHERE hparam='%s')`, runHparam)
+		queryString = fmt.Sprintf(`r.id NOT IN (SELECT run_id FROM run_hparams WHERE hparam=%s)`, "?")
 	case notEmpty:
-		queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM run_hparams WHERE hparam='%s')`, runHparam)
+		queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM run_hparams WHERE hparam=%s)`, "?")
 	case contains:
 		queryLikeValue := `%` + queryValue.(string) + `%`
 		queryArgs = append(queryArgs, queryLikeValue)
 		switch queryColumnType {
 		case projectv1.ColumnType_COLUMN_TYPE_NUMBER.String():
-			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM run_hparams WHERE hparam='%s' AND number_val=%s)`,
-				runHparam, "?")
+			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM run_hparams WHERE hparam=%s AND number_val=%s)`,
+				"?", "?")
 		case projectv1.ColumnType_COLUMN_TYPE_TEXT.String():
-			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM run_hparams WHERE hparam='%s' AND text_val LIKE %s)`,
-				runHparam, "?")
+			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM run_hparams WHERE hparam=%s AND text_val LIKE %s)`,
+				"?", "?")
 		default:
-			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM run_hparams WHERE hparam='%s' AND bool_val=%s)`,
-				runHparam, "?")
+			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM run_hparams WHERE hparam=%s AND bool_val=%s)`,
+				"?", "?")
 		}
 	case doesNotContain:
 		queryLikeValue := `%` + queryValue.(string) + `%`
 		queryArgs = append(queryArgs, queryLikeValue)
 		switch queryColumnType {
 		case projectv1.ColumnType_COLUMN_TYPE_NUMBER.String():
-			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM run_hparams WHERE hparam='%s' AND number_val!=%s)`,
-				runHparam, "?")
+			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM run_hparams WHERE hparam=%s AND number_val!=%s)`,
+				"?", "?")
 		case projectv1.ColumnType_COLUMN_TYPE_TEXT.String():
-			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM run_hparams WHERE hparam='%s' AND text_val NOT LIKE %s)`,
-				runHparam, "?")
+			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM run_hparams WHERE hparam=%s AND text_val NOT LIKE %s)`,
+				"?", "?")
 		default:
-			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM run_hparams WHERE hparam='%s' AND bool_val!=%s)`,
-				runHparam, "?")
+			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM run_hparams WHERE hparam=%s AND bool_val!=%s)`,
+				"?", "?")
 		}
 	default:
 		queryArgs = append(queryArgs, bun.Safe(oSQL), queryValue)
 		switch queryColumnType {
 		case projectv1.ColumnType_COLUMN_TYPE_NUMBER.String():
-			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM run_hparams WHERE hparam='%s' AND number_val %s %s)`,
-				runHparam, "?", "?")
+			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM run_hparams WHERE hparam=%s AND number_val %s %s)`,
+				"?", "?", "?")
 		case projectv1.ColumnType_COLUMN_TYPE_TEXT.String():
-			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM run_hparams WHERE hparam='%s' AND text_val %s %s)`,
-				runHparam, "?", "?")
+			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM run_hparams WHERE hparam=%s AND text_val %s %s)`,
+				"?", "?", "?")
 		default:
-			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM run_hparams WHERE hparam='%s' AND bool_val %s %s)`,
-				runHparam, "?", "?")
+			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM run_hparams WHERE hparam=%s AND bool_val %s %s)`,
+				"?", "?", "?")
 		}
 	}
 
