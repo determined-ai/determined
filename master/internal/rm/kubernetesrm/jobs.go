@@ -85,6 +85,12 @@ type jobMetadata struct {
 	allocationID model.AllocationID
 }
 
+type namespaceListener struct {
+	event      bool
+	preemption bool
+	cache      bool
+}
+
 // High lever overview of the actors within the kubernetes package:
 //
 //	jobsService
@@ -144,7 +150,7 @@ type jobsService struct {
 	getAgentsCacheLock      sync.Mutex
 	getAgentsCache          *apiv1.GetAgentsResponse
 	getAgentsCacheTime      time.Time
-	namespacesWithInformers map[string]bool
+	namespacesWithInformers map[string]namespaceListener
 }
 
 func (j *jobsService) GetAllNamespacesForRM() ([]string, error) {
@@ -211,7 +217,7 @@ func newJobsService(
 
 		internalTaskGWConfig:    internalTaskGWConfig,
 		kubeconfigPath:          kubeconfigPath,
-		namespacesWithInformers: make(map[string]bool),
+		namespacesWithInformers: make(map[string]namespaceListener),
 	}
 
 	ns, err := p.GetAllNamespacesForRM()
@@ -256,23 +262,35 @@ func (j *jobsService) syncNamespaces(ns []string, hasJSLock bool) error {
 	for _, namespace := range ns {
 		// Since we don't want to do duplicate namespace informers, don't start any
 		// listeners or informers that have already been added to namespacesWithInformers.
-		if _, ok := j.namespacesWithInformers[namespace]; ok {
-			continue
+		if listener, ok := j.namespacesWithInformers[namespace]; ok {
+			if listener.event && listener.preemption && listener.cache {
+				continue
+			}
+		} else {
+			j.namespacesWithInformers[namespace] = namespaceListener{}
 		}
 
-		err := j.startEventListeners(namespace, hasJSLock)
-		if err != nil {
-			return err
+		nsListener := j.namespacesWithInformers[namespace]
+
+		if !nsListener.event {
+			err := j.startEventListeners(namespace, hasJSLock)
+			if err != nil {
+				return err
+			}
 		}
 
 		// Once we have started event listeners for a namespace, track these synced namespaces in
 		// namespacesWithInformers.
-		j.namespacesWithInformers[namespace] = true
+		nsListener.event = true
 
-		err = j.startPreemptionListeners(namespace, hasJSLock)
-		if err != nil {
-			return err
+		if !nsListener.preemption {
+			err := j.startPreemptionListeners(namespace, hasJSLock)
+			if err != nil {
+				return err
+			}
 		}
+
+		nsListener.preemption = true
 
 		factory := informers.NewSharedInformerFactoryWithOptions(j.clientSet, time.Hour,
 			informers.WithNamespace(namespace))
@@ -329,6 +347,7 @@ func (j *jobsService) syncNamespaces(ns []string, hasJSLock bool) error {
 		cacheSyncs = append(cacheSyncs, podsInformer.Informer().HasSynced)
 
 		factory.Start(nil)
+		nsListener.cache = true
 	}
 
 	if !cache.WaitForCacheSync(nil, cacheSyncs...) {
