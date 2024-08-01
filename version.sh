@@ -69,12 +69,12 @@ if [ -z ${VERSION} ]; then
     # like it will be more consistent and result in fewer surprises, but also it
     # might help indicate that this is a local version. Additionally, remove the
     # 'v' from the final version string.
-    echo -n "${MAYBE_TAG}+${SHA}" | tr -d 'v'
+    echo -n "${MAYBE_TAG}+${SHA}" | sed -e 's/^v//'
 else
     # Use existing VERSION, which is much easier. This should be the default
     # case for CI, as VERSION will already be set. We also remove the 'v' from
     # the tag for the version string, as that is what the current CI
     # functionality expects. Finally, use tr to remove the 'v' prefix to get the
     # bare version string.
-    echo -n "${VERSION}" | tr -d 'v'
+    echo -n "${VERSION}" | sed -e 's/^v//'
 fi
