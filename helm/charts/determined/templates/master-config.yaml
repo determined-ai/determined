@@ -119,9 +119,6 @@ stringData:
       {{- if .Values.oidc.displayNameAttributeName }}
       display_name_attribute_name: {{ .Values.oidc.displayNameAttributeName }}
       {{- end }}
-      {{- if .Values.oidc.alwaysRedirect }}
-      always_redirect: {{ .Values.oidc.alwaysRedirect }}
-      {{- end }}
       {{- if .Values.oidc.excludeGroupsScope }}
       exclude_groups_scope: {{ .Values.oidc.excludeGroupsScope }}
       {{- end }}
@@ -155,9 +152,6 @@ stringData:
       {{- if .Values.saml.displayNameAttributeName }}
       display_name_attribute_name: {{ .Values.saml.displayNameAttributeName }}
       {{- end }}
-      {{- if .Values.saml.alwaysRedirect }}
-      always_redirect: {{ .Values.saml.alwaysRedirect }}
-      {{- end }}
     {{- end }}
     {{- end }}
 
@@ -178,9 +172,7 @@ stringData:
 
     resource_manager:
       type: "kubernetes"
-      {{- if .Values.defaultNamespace }}
-      default_namespace: {{ .Values.defaultNamespace }}
-      {{- end }}
+      namespace: {{ .Release.Namespace }}
       max_slots_per_pod: {{ required "A valid Values.maxSlotsPerPod entry is required!" .Values.maxSlotsPerPod }}
       master_service_name: determined-master-service-{{ .Release.Name }}
       {{- if .Values.defaultScheduler}}

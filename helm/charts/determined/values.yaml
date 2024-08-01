@@ -124,7 +124,6 @@ useNodePortForMaster: false
 #   autoProvisionUsers:
 #   groupsAttributeName:
 #   displayNameAttributeName:
-#   alwaysRedirect:
 #   excludeGroupsScope:
 
 # scim (EE-only) enables System for Cross-domain Identity Management (SCIM) integration, which is
@@ -150,7 +149,6 @@ useNodePortForMaster: false
 #   autoProvisionUsers:
 #   groupsAttributeName:
 #   displayNameAttributeName:
-#   alwaysRedirect:
 
 # db sets the configurations for the database.
 db:
@@ -365,7 +363,7 @@ resourcePools:
 #       type: kubernetes
 #       max_slots_per_pod: 1
 #       name: carolina-multirm-1
-#       default_namespace: default
+#       namespace: default
 #       kubeconfig_secret_name: additionalrm
 #       kubeconfig_secret_value: config
 #       determined_master_ip: 10.11.12.13
@@ -379,6 +377,3 @@ resourcePools:
   # logRetentionDays: 7
   # Schedule for cleaning up logs. This also accepts a cron expression. For example to run retention every Sunday at 2 am, use "0 2 * * 0"
   # schedule: "24h"
-
-# The default namespace to be referenced by each resource manager.
-# defaultNamespace:
