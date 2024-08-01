@@ -17,6 +17,8 @@ type OIDCConfig struct {
 	AutoProvisionUsers          bool   `json:"auto_provision_users"`
 	GroupsAttributeName         string `json:"groups_attribute_name"`
 	DisplayNameAttributeName    string `json:"display_name_attribute_name"`
+	AlwaysRedirect              bool   `json:"always_redirect"`
+	ExcludeGroupsScope          bool   `json:"exclude_groups_scope"`
 }
 
 // Validate implements the check.Validatable interface.
