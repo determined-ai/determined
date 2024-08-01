@@ -397,9 +397,7 @@ def test_master_restart_stopping_container_gone(
     restartable_managed_cluster.restart_master()
     restartable_managed_cluster.restart_agent(wait_for_amnesia=False)
 
-    # exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.ERROR)
-    # If this passes then something weird is going on
-    exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.CANCELED)
+    exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.ERROR)
 
     trials = exp.experiment_trials(sess, exp_id)
     assert len(trials) == 1
