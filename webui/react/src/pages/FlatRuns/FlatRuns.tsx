@@ -180,12 +180,8 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
   const [runs, setRuns] = useState<Loadable<FlatRun>[]>(INITIAL_LOADING_RUNS);
 
   const sorts = useMemo(() => {
-    return (
-      flatRunsSettings
-        .map((s) => s?.sortString && parseSortString(s?.sortString))
-        .getOrElse(undefined) || [EMPTY_SORT]
-    );
-  }, [flatRunsSettings]);
+    return parseSortString(settings.sortString);
+  }, [settings.sortString]);
 
   const sortString = useMemo(() => makeSortString(sorts.filter(validSort.is)), [sorts]);
   const loadableFormset = useObservable(formStore.formset);

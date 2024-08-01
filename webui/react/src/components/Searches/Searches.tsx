@@ -168,12 +168,8 @@ const Searches: React.FC<Props> = ({ project }) => {
     useSettings<DataGridGlobalSettings>(settingsConfigGlobal);
 
   const sorts = useMemo(() => {
-    return (
-      projectSettings
-        .map((s) => s?.sortString && parseSortString(s?.sortString))
-        .getOrElse(undefined) || [EMPTY_SORT]
-    );
-  }, [projectSettings]);
+    return parseSortString(settings.sortString);
+  }, [settings.sortString]);
   const sortString = useMemo(() => makeSortString(sorts.filter(validSort.is)), [sorts]);
   const [experiments, setExperiments] = useState<Loadable<ExperimentWithTrial>[]>(
     INITIAL_LOADING_EXPERIMENTS,
