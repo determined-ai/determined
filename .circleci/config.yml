@@ -27,20 +27,7 @@ all-filters: &all-filters
       - /.*/
   tags:
     only:
-      # Matches:
-      # - v1.2.3
-      # - v1.2.3+a1b2c3
-      - /v\d+\.\d+\.\d+(\+[1-9a-f]+)?/
-
-branch-filter: &branch-filter
-  branches:
-    only:
       - /.*/
-
-tag-filter: &tag-filter
-  tags:
-    only:
-      - /v\d+\.\d+\.\d+(\+[1-9a-f]+)?/
 
 workflows:
   determined_ai:
