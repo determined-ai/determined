@@ -762,7 +762,7 @@ func (e *internalExperiment) processOperations(
 ) {
 	// Only continue for experiments in stopping states if the searcher operations are all
 	// type Shutdown failures.
-	if _, ok := model.StoppingStates[e.State]; ok {
+	if _, ok := model.StoppingStates[e.State]; ok && onlySearcherShutdownOperations(ops) {
 		return
 	}
 
