@@ -200,7 +200,8 @@ func runMetadataToSQL(c string, filterColumnType *string, filterValue *interface
 	case notEmpty:
 		queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM runs_metadata_index WHERE flat_key='%s')`, runHparam)
 	case contains:
-		queryArgs = append(queryArgs, queryValue)
+		queryLikeValue := `%` + queryValue.(string) + `%`
+		queryArgs = append(queryArgs, queryLikeValue)
 		switch queryColumnType {
 		case projectv1.ColumnType_COLUMN_TYPE_NUMBER.String():
 			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM runs_metadata_index WHERE flat_key='%s'
@@ -217,7 +218,8 @@ func runMetadataToSQL(c string, filterColumnType *string, filterValue *interface
 				runHparam, "?")
 		}
 	case doesNotContain:
-		queryArgs = append(queryArgs, queryValue)
+		queryLikeValue := `%` + queryValue.(string) + `%`
+		queryArgs = append(queryArgs, queryLikeValue)
 		switch queryColumnType {
 		case projectv1.ColumnType_COLUMN_TYPE_NUMBER.String():
 			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM runs_metadata_index WHERE flat_key='%s'
@@ -292,7 +294,8 @@ func runHpToSQL(c string, filterColumnType *string, filterValue *interface{},
 	case notEmpty:
 		queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM run_hparams WHERE hparam='%s')`, runHparam)
 	case contains:
-		queryArgs = append(queryArgs, queryValue)
+		queryLikeValue := `%` + queryValue.(string) + `%`
+		queryArgs = append(queryArgs, queryLikeValue)
 		switch queryColumnType {
 		case projectv1.ColumnType_COLUMN_TYPE_NUMBER.String():
 			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM run_hparams WHERE hparam='%s' AND number_val=%s)`,
@@ -305,7 +308,8 @@ func runHpToSQL(c string, filterColumnType *string, filterValue *interface{},
 				runHparam, "?")
 		}
 	case doesNotContain:
-		queryArgs = append(queryArgs, queryValue)
+		queryLikeValue := `%` + queryValue.(string) + `%`
+		queryArgs = append(queryArgs, queryLikeValue)
 		switch queryColumnType {
 		case projectv1.ColumnType_COLUMN_TYPE_NUMBER.String():
 			queryString = fmt.Sprintf(`r.id IN (SELECT run_id FROM run_hparams WHERE hparam='%s' AND number_val!=%s)`,
