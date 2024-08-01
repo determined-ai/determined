@@ -255,9 +255,8 @@
 
 -  ``defaultScheduler``: Configures the default scheduler that Determined will use. Currently
    supports the ``coscheduler`` option, which enables the `lightweight coscheduling plugin
-   <https://github.com/kubernetes-sigs/scheduler-plugins/tree/release-1.18/pkg/coscheduling>`__, and
-   the ``preemption`` option, which enables a priority-based preemption scheduler. Unless specified
-   as ``coscheduler``, Determined will use the default Kubernetes scheduler.
+   <https://github.com/kubernetes-sigs/scheduler-plugins/tree/release-1.18/pkg/coscheduling>`__.
+   Unless specified as ``coscheduler``, Determined will use the default Kubernetes scheduler.
 
 -  ``resourcePools``: This section contains the names of the resource pools and their linked
    namespaces. Maps to the ``resource_pools`` section from the :ref:`master configuration

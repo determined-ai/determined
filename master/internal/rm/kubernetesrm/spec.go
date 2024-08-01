@@ -12,8 +12,6 @@ import (
 
 	batchV1 "k8s.io/api/batch/v1"
 
-	"github.com/determined-ai/determined/master/internal/config"
-
 	"github.com/docker/docker/api/types/mount"
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -337,7 +335,7 @@ func (j *job) modifyPodSpec(
 			)
 		}
 		newPod.Spec.PriorityClassName = "determined-system-priority"
-	} else if scheduler == coscheduler || scheduler == config.PreemptionScheduler {
+	} else if scheduler == coscheduler {
 		if newPod.Spec.SchedulerName == "" {
 			newPod.Spec.SchedulerName = scheduler
 		}
