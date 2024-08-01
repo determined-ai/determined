@@ -7,6 +7,196 @@
 ###############
 
 **************
+ Version 0.35
+**************
+
+Version 0.35.0
+==============
+
+**Release Date:** August 01, 2024
+
+**Breaking Changes**
+
+-  **Cluster:** The ``kubernetes_namespace`` field in the resource pool configuration is no longer
+   supported. Users can now submit workloads to specific namespaces by binding workspaces to
+   namespaces using the CLI or API.
+
+-  Master Configuration: ``resource_manager.name`` field is replaced by
+      ``resource_manager.cluster_name`` for better clarity and to support multiple resource
+      managers.
+
+      -  Resource managers operate relative to the specific cluster providing resources for
+            Determined tasks, so changing the cluster will affect the resource manager's responses.
+      -  The ``cluster_name`` must be unique for all resource managers when deploying multiple
+            resource managers in Determined.
+      -  During upgrade, replace ``name`` with ``cluster_name`` in the ``resource_manager`` section
+            of your master configuration YAML.
+
+-  Tasks: The :ref:`historical usage <historical-cluster-usage-data>` CSV file has been updated. The
+   header row for slot-hours is now named ``slot_hours`` instead of ``gpu_hours`` to accurately
+   reflect the allocation time for resource pools including those without GPUs. In addition, a new
+   column, ``resource_pool``, has been added to provide the resource pool for each allocation.
+
+-  Cluster: ``resources.agent_label`` task option and agent config ``label`` option have been
+   removed. Beginning with 0.20.0 release, these options have been ignored. Please remove any
+   remaining references from configuration files and use ``resource_pool`` instead.
+
+**New Features**
+
+-  WebUI: Add a "Namespace Bindings" section to the Create and Edit Workspace modals.
+
+   -  Users can input a namespace for a Kubernetes cluster. If no namespace is specified, the
+      workspace will use the ``resource_manager.default_namespace`` from the master configuration
+      YAML or default to the Kubernetes "default" namespace.
+
+   -  In the enterprise edition, users can auto-create namespaces and set resource quotas, limiting
+      GPU requests for that workspace. The Edit Workspace modal displays the lowest GPU limit
+      resource quota within the bound namespace.
+
+   -  Once saved, all workloads in the workspace will be sent to the bound namespace. Changing the
+      binding will affect future workloads, while in-progress workloads remain in their original
+      namespace.
+
+-  CLI: Add new commands for creating and managing workspace namespace bindings.
+
+-  Allow creating namespace bindings during workspace creation with ``det w create <workspace-id>
+   --namespace <namespace-name>`` or later with ``det w bindings set <workspace-id> --namespace
+   <namespace-name>``.
+
+-  In the enterprise edition, users can use additional arguments ``--auto-create-namespace`` and
+   ``--auto-create-namespace-all-clusters`` for auto-created namespaces. Set resource quotas during
+   workspace creation with ``det w create <workspace-name> --cluster-name <cluster-name>
+   --auto-create-namespace --resource-quota <resource-quota>``, or later with ``det w resource-quota
+   set <workspace-id> <quota> --cluster-name <cluster-name>``.
+
+-  Add command to delete namespace bindings with ``det w bindings delete <workspace-id>
+   --cluster-name <cluster-name>``.
+
+-  Add command to list bindings for a workspace with ``det w bindings list <workspace-name>``. The
+   ``--cluster-name`` field is required only for MultiRM setups.
+
+-  WebUI: Allow users to add/remove hyperparameters when performing hyperparameter search.
+
+-  **Cluster:** The ``namespace`` field in the Kubernetes Resource Manager configuration has been
+   deprecated. Add a new field, ``default_namespace``. This field serves as the default namespace
+   for deploying namespaced resources when the workspace associated with a workload is not bound to
+   a specific namespace. The master configuration will accept either ``namespace`` or
+   ``default_namespace`` fields; however, providing both fields will result in an error.
+
+-  CLI: Add a feature where Determined offers the users to delete a workspace namespace binding by
+   using the command ``det w bindings delete <workspace-id> --cluster-name <cluster-name>``. An
+   error will be thrown if the user tries to delete a default binding.
+
+-  API: Add a feature where Determined offers the users to delete a workspace namespace binding by
+   using the api endpoint ``api/v1/workspaces/1/namespace-bindings`` which takes in the workspace ID
+   and string array of cluster names as parameters. An error will be thrown if the user tries to
+   delete a default binding.
+
+-  WebUI: View Pachyderm data lineage
+
+-  Experiments with configured Pachyderm data integration now display a link to the Pachyderm repo
+   in the trial view page. The link is also available when viewing checkpoints derived from the
+   Pachyderm data.
+
+-  Experiments: Obfuscate subfields of ``data.secrets`` in the :ref:`experiment configuration
+   <experiment-config-data>`.
+
+-  WebUI: In the Experimental features, Flat Runs View is now "on" by default in the :ref:`WebUI
+   <web-ui-if>`\. Users can still toggle this feature "off".
+
+-  This update improves the ability to compare model performance between different trials, based on
+   user feedback that most Determined users run single-trial experiments.
+
+-  "Experiments" is now renamed to "searches" and "trials" is now renamed to "runs" for better
+   clarity.
+
+-  The "experiment list" is renamed the "run list", showing all trials from experiments in the
+   project. It functions similarly to the previous new experiment list.
+
+-  Multi-trial experiments can be viewed in the new searches view, which allows for sorting,
+   filtering and navigating multi-trial experiments.
+
+-  When viewing a multi-trial experiment, a list of trials is displayed, allowing for sorting,
+   filtering and arbitrary comparison between trials.
+
+-  WebUI: Add resource allocation information to trial details page.
+
+-  CLI: Add a new command, ``det cmd describe COMMAND_ID`` to allow users to fetch the metadata of a
+   single command.
+
+-  WebUI: Allow users to continue a canceled or errored multi-trial experiment for searcher type
+   ``random`` or ``grid``.
+
+**Improvements**
+
+-  Switch default AWS instance type from ``m5.large`` to ``m6i.large``. This change does not affect
+   the cost, but improves performance.
+-  WebUI: Redirect SSO users to the SSO provider's authentication URIs when their session token has expired,
+      instead of displaying the Determined sign-in page.
+
+**Bug Fixes**
+
+-  WebUI: Fix a bug where the Compare view on the Project Details page did not allow comparison of
+   experiments selected from different pages.
+-  WebUI: Fix endless metrics fetching in "Visualization" tab in experiment details page for
+   cancelled experiments that do not have metrics.
+-  Fix two places where aggregated queued stats could have shown inflated values. The total queued
+   aggregated time and today's queued aggregated time calculations were both affected.
+-  CLI: Fix an error related to ``det cmd list --csv``
+-  WebUI: Fix missing data in Historic Usage Charts due to erroneous date parsing.
+
+**API:**
+
+-  API: Add new endpoints for creating and managing workspace namespace bindings.
+-  Add POST and DELETE endpoints to ``/api/v1/workspaces/{workspace_id}/namespace-bindings`` for
+   setting and deleting workspace namespace bindings.
+-  Add a GET endpoint ``/api/v1/workspaces/{id}/list-namespace-bindings`` to list namespace bindings
+   for a workspace.
+-  Add a POST endpoint ``/api/v1/workspaces/{id}/set-resource-quota`` to set resource quotas on
+   workspaces bound to auto-created namespaces.
+-  Add a GET endpoint ``/api/v1/workspaces/{id}/get-k8-resource-quotas`` to retrieve enforced
+   Kubernetes resource quotas for bound namespaces
+
+**Deprecations**
+
+-  Detached mode: The ``defaults`` and ``unmanaged`` parameters of the ``init`` function for
+   unmanaged experiment have been deprecated and will be removed in a future version. Please use
+   ``config`` instead.
+
+-  Agent and Kubernetes Resource Manager: Jobs can no longer be moved within the same priority
+   group. To reposition a job, update its priority using the CLI or WebUI. For detailed
+   instructions, visit :ref:`modify-job-queue-cli`. This change was announced in version 0.33.0.
+
+-  AgentRM: Support for Singularity, Podman, and Apptainer was deprecated in 0.33.0 and is now
+   removed. Docker is the only container runtime supported by Agent resource manager (AgentRM). It
+   is still possible to use podman with AgentRM by using the podman emulation layer. For detailed
+   instructions, visit: `Emulating Docker CLI with Podman
+   <https://podman-desktop.io/docs/migrating-from-docker/emulating-docker-cli-with-podman>`. You
+   might need to also configure checkpoint_storage in experiment or master configurations: `Master
+   Config Reference
+   https://docs.determined.ai/latest/reference/deploy/master-config-reference.html#checkpoint-storage`
+
+In the enterprise edition, Slurm resource manager still supports Singularity, Podman, or Apptainer
+use. For detailed instructions, visit :ref:deploy-on-slurm-pbs.
+
+Kubernetes Scheduling: Support for the priority scheduler for Kubernetes Resource Managers is
+discontinued and may be removed in a future release due to limited usage. Users should transition to
+the default scheduler. Visit :ref:`Kubernetes Default Scheduler <kubernetes-default-scheduler>` for
+details.
+
+**Deprecation**
+
+-  API: The ``model_hub`` library is now deprecated. Users of MMDetTrial and BaseTransformerTrial
+   should switch to :ref:`Core API <api-core-ug>` or the :ref:`PyTorch Trainer <pytorch_trainer_ug>`
+   for integrations with ``mmcv`` and ``huggingface``.
+
+** New Features**
+
+-  Master Configuration: Add an ``always_redirect`` option to OIDC and SAML configurations. When enabled, this option
+      bypasses the standard Determined sign-in page and routes users directly to the configured SSO
+      provider. This redirection persists unless the user explicitly signs out within the WebUI.
+
+**************
  Version 0.34
 **************
 
