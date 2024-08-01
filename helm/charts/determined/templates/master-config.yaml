@@ -119,6 +119,9 @@ stringData:
       {{- if .Values.oidc.displayNameAttributeName }}
       display_name_attribute_name: {{ .Values.oidc.displayNameAttributeName }}
       {{- end }}
+      {{- if .Values.oidc.excludeGroupsScope }}
+      exclude_groups_scope: {{ .Values.oidc.excludeGroupsScope }}
+      {{- end }}
     {{- end }}
 
     {{- if .Values.scim }}

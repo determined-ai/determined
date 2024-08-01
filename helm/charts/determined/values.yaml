@@ -31,8 +31,8 @@ defaultImages:
   kubeSchedulerPreemption: "determinedai/kube-scheduler:0.17.0"
 
   # default images for CPU and GPU environments
-  cpuImage: "determinedai/pytorch-ngc:0.34.0"
-  gpuImage: "determinedai/pytorch-ngc:0.34.0"
+  cpuImage: "determinedai/pytorch-ngc-dev:5432424"
+  gpuImage: "determinedai/pytorch-ngc-dev:5432424"
 
 # Install Determined enterprise edition.
 enterpriseEdition: false
@@ -75,6 +75,11 @@ createNonNamespacedObjects: true
 # outside the cluster. NodePort service is recommended when configuring TLS termination in a
 # load-balancer.
 useNodePortForMaster: false
+
+# Allow specifying annotations that will be put on the master service.
+# masterService:
+  # annotations:
+  #   a: b
 
 # Enable route support for Openshift by setting enabled to true. Configure tls termination (i.e edge) if needed.
 # openshiftRoute:
@@ -119,6 +124,7 @@ useNodePortForMaster: false
 #   autoProvisionUsers:
 #   groupsAttributeName:
 #   displayNameAttributeName:
+#   excludeGroupsScope:
 
 # scim (EE-only) enables System for Cross-domain Identity Management (SCIM) integration, which is
 # only available if enterpriseEdition is true. It allows administrators to easily and securely
