@@ -358,7 +358,7 @@ resourcePools:
 #   - resource_manager:
 #       type: kubernetes
 #       max_slots_per_pod: 1
-#       name: carolina-multirm-1
+#       cluster_name: additional-cluster
 #       default_namespace: default
 #       kubeconfig_secret_name: additionalrm
 #       kubeconfig_secret_value: config
