@@ -17,7 +17,7 @@ export class FilterGroup extends NamedComponent {
   /**
    * Constructs a FilterGroup
    * @param {object} args
-   * @param {CanBeParent} args.parent - The parent used to locate this FilterGroup
+   * @param {ComponentContainer} args.parent - The parent used to locate this FilterGroup
    * @param {string} args.selector - Used instead of `defaultSelector`
    * @param {number} [args.level] - Level of the FilterGroup. Max depth is 2.
    */

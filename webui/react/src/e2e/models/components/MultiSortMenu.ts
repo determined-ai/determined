@@ -1,10 +1,10 @@
 import {
   BaseComponent,
-  CanBeParent,
+  ComponentContainer,
   NamedComponent,
 } from 'playwright-page-model-base/BaseComponent';
+import { BasePage } from 'playwright-page-model-base/BasePage';
 
-import { BasePage } from 'e2e/models/common/base/BasePage';
 import { DropdownContent } from 'e2e/models/common/hew/Dropdown';
 import { Select } from 'e2e/models/common/hew/Select';
 
@@ -15,10 +15,10 @@ export class MultiSortMenu extends DropdownContent {
   /**
    * Constructs a MultiSortMenu
    * @param {object} obj
-   * @param {CanBeParent} obj.parent - parent component
+   * @param {ComponentContainer} obj.parent - parent component
    * @param {BasePage} obj.root - root page
    */
-  constructor({ parent, root }: { parent: CanBeParent; root: BasePage }) {
+  constructor({ parent, root }: { parent: ComponentContainer; root: BasePage }) {
     super({
       clickThisComponentToOpen: new BaseComponent({
         parent,

@@ -287,7 +287,7 @@ export class Row<HeadRowType extends HeadRow<Row<HeadRowType>>> extends NamedCom
   /**
    * Constructs a Row
    * @param {object} args
-   * @param {CanBeParent} args.parent - The parent used to locate this Row
+   * @param {ComponentContainer} args.parent - The parent used to locate this Row
    * @param {string} args.selector - Used as a selector uesd to locate this object
    * @param {DataGrid<RowType, HeadRowType>} [args.parentTable] - Reference to the original table
    */
@@ -383,7 +383,7 @@ export class HeadRow<RowType extends Row<HeadRow<RowType>>> extends NamedCompone
   /**
    * Constructs a HeadRow
    * @param {object} args
-   * @param {CanBeParent} args.parent - The parent used to locate this HeadRow
+   * @param {ComponentContainer} args.parent - The parent used to locate this HeadRow
    * @param {string} args.selector - Used as a selector uesd to locate this object
    */
   constructor(args: HeadRowArgs<RowType, HeadRow<RowType>>) {
