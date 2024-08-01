@@ -238,8 +238,10 @@ func TestSearchRunsFilter(t *testing.T) {
 	require.NoError(t, err)
 	require.Empty(t, resp.Runs)
 
-	hyperparameters := map[string]any{"global_batch_size": 1, "test1": map[string]any{"test2": 1},
-		"stringVal": "apple", "test3": map[string]any{"stringVal": "apple"}}
+	hyperparameters := map[string]any{
+		"global_batch_size": 1, "test1": map[string]any{"test2": 1},
+		"stringVal": "apple", "test3": map[string]any{"stringVal": "apple"},
+	}
 
 	exp := createTestExpWithProjectID(t, api, curUser, projectIDInt)
 
@@ -256,8 +258,10 @@ func TestSearchRunsFilter(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, resp.Runs, 1)
 
-	hyperparameters2 := map[string]any{"global_batch_size": 2, "test1": map[string]any{"test2": 5},
-		"stringVal": "bright", "test3": map[string]any{"stringVal": "bright"}}
+	hyperparameters2 := map[string]any{
+		"global_batch_size": 2, "test1": map[string]any{"test2": 5},
+		"stringVal": "bright", "test3": map[string]any{"stringVal": "bright"},
+	}
 
 	// Add second experiment
 	exp2 := createTestExpWithProjectID(t, api, curUser, projectIDInt)
