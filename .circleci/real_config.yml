@@ -32,8 +32,6 @@ parameters:
     type: string
     default: linux-cuda-12:default
   # DEFAULT_PT_GPU_IMAGE: Pytorch training image reference used by the tests
-  # Inject here as a parameter so that it is updated by bumpversion, and can
-  # be referenced by --ee testing.
   default-pt-gpu-hpc-image:
     type: string
     default: determinedai/pytorch-ngc-dev:e960eae
