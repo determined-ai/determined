@@ -179,12 +179,14 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
   const [isOpenFilter, setIsOpenFilter] = useState<boolean>(false);
   const [runs, setRuns] = useState<Loadable<FlatRun>[]>(INITIAL_LOADING_RUNS);
 
-  const [sorts, setSorts] = useState<Sort[]>(() => {
-    if (!isLoadingSettings) {
-      return parseSortString(settings.sortString);
-    }
-    return [EMPTY_SORT];
-  });
+  const sorts = useMemo(() => {
+    return (
+      flatRunsSettings
+        .map((s) => s?.sortString && parseSortString(s?.sortString))
+        .getOrElse(undefined) || [EMPTY_SORT]
+    );
+  }, [flatRunsSettings]);
+
   const sortString = useMemo(() => makeSortString(sorts.filter(validSort.is)), [sorts]);
   const loadableFormset = useObservable(formStore.formset);
   const rootFilterChildren: Array<FormGroup | FormField> = Loadable.match(loadableFormset, {
@@ -569,12 +571,6 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
   }, [setPage]);
 
   useEffect(() => {
-    if (!isLoadingSettings && settings.sortString) {
-      setSorts(parseSortString(settings.sortString));
-    }
-  }, [isLoadingSettings, settings.sortString]);
-
-  useEffect(() => {
     let cleanup: () => void;
     // eagerSubscribe is like subscribe but it runs once before the observed value changes.
     cleanup = eagerSubscribe(flatRunsSettingsObs, (ps, prevPs) => {
@@ -806,7 +802,6 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
 
   const handleSortChange = useCallback(
     (sorts: Sort[]) => {
-      setSorts(sorts);
       const newSortString = makeSortString(sorts.filter(validSort.is));
       if (newSortString !== sortString) {
         resetPagination();

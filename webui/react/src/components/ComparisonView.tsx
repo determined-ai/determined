@@ -58,27 +58,31 @@ const ComparisonView: React.FC<Props> = ({
   const [isSelectionLimitReached, setIsSelectionLimitReached] = useState(false);
 
   const loadableSelectedExperiments = useAsync(async () => {
-    if (experimentSelection) {
-      try {
-        const filterFormSet = INIT_FORMSET;
-        const filter = getExperimentIdsFilter(filterFormSet, experimentSelection);
-        const response = await searchExperiments({
-          filter: JSON.stringify(filter),
-          limit: SELECTION_LIMIT,
-        });
-        if (response?.pagination?.total && response?.pagination?.total > SELECTION_LIMIT) {
-          setIsSelectionLimitReached(true);
-        } else {
-          setIsSelectionLimitReached(false);
-        }
-        return response.experiments;
-      } catch (e) {
-        handleError(e, { publicSubject: 'Unable to fetch experiments for comparison' });
-        return NotLoaded;
-      }
+    if (
+      !open ||
+      !experimentSelection ||
+      (experimentSelection.type === 'ONLY_IN' && experimentSelection.selections.length === 0)
+    ) {
+      return NotLoaded;
     }
-    return NotLoaded;
-  }, [experimentSelection]);
+    try {
+      const filterFormSet = INIT_FORMSET;
+      const filter = getExperimentIdsFilter(filterFormSet, experimentSelection);
+      const response = await searchExperiments({
+        filter: JSON.stringify(filter),
+        limit: SELECTION_LIMIT,
+      });
+      if (response?.pagination?.total && response?.pagination?.total > SELECTION_LIMIT) {
+        setIsSelectionLimitReached(true);
+      } else {
+        setIsSelectionLimitReached(false);
+      }
+      return response.experiments;
+    } catch (e) {
+      handleError(e, { publicSubject: 'Unable to fetch experiments for comparison' });
+      return NotLoaded;
+    }
+  }, [experimentSelection, open]);
 
   const selectedExperiments: ExperimentWithTrial[] | undefined = Loadable.getOrElse(
     undefined,
@@ -86,27 +90,31 @@ const ComparisonView: React.FC<Props> = ({
   );
 
   const loadableSelectedRuns = useAsync(async () => {
-    if (runSelection) {
-      const filterFormSet = INIT_FORMSET;
-      try {
-        const filter = getRunIdsFilter(filterFormSet, runSelection);
-        const response = await searchRuns({
-          filter: JSON.stringify(filter),
-          limit: SELECTION_LIMIT,
-        });
-        if (response?.pagination?.total && response?.pagination?.total > SELECTION_LIMIT) {
-          setIsSelectionLimitReached(true);
-        } else {
-          setIsSelectionLimitReached(false);
-        }
-        return response.runs;
-      } catch (e) {
-        handleError(e, { publicSubject: 'Unable to fetch runs for comparison' });
-        return NotLoaded;
-      }
+    if (
+      !open ||
+      !runSelection ||
+      (runSelection.type === 'ONLY_IN' && runSelection.selections.length === 0)
+    ) {
+      return NotLoaded;
     }
-    return NotLoaded;
-  }, [runSelection]);
+    const filterFormSet = INIT_FORMSET;
+    try {
+      const filter = getRunIdsFilter(filterFormSet, runSelection);
+      const response = await searchRuns({
+        filter: JSON.stringify(filter),
+        limit: SELECTION_LIMIT,
+      });
+      if (response?.pagination?.total && response?.pagination?.total > SELECTION_LIMIT) {
+        setIsSelectionLimitReached(true);
+      } else {
+        setIsSelectionLimitReached(false);
+      }
+      return response.runs;
+    } catch (e) {
+      handleError(e, { publicSubject: 'Unable to fetch runs for comparison' });
+      return NotLoaded;
+    }
+  }, [open, runSelection]);
 
   const selectedRuns: FlatRun[] | undefined = Loadable.getOrElse(undefined, loadableSelectedRuns);
 

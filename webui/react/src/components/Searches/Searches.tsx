@@ -167,12 +167,13 @@ const Searches: React.FC<Props> = ({ project }) => {
   const { settings: globalSettings, updateSettings: updateGlobalSettings } =
     useSettings<DataGridGlobalSettings>(settingsConfigGlobal);
 
-  const [sorts, setSorts] = useState<Sort[]>(() => {
-    if (!isLoadingSettings) {
-      return parseSortString(settings.sortString);
-    }
-    return [EMPTY_SORT];
-  });
+  const sorts = useMemo(() => {
+    return (
+      projectSettings
+        .map((s) => s?.sortString && parseSortString(s?.sortString))
+        .getOrElse(undefined) || [EMPTY_SORT]
+    );
+  }, [projectSettings]);
   const sortString = useMemo(() => makeSortString(sorts.filter(validSort.is)), [sorts]);
   const [experiments, setExperiments] = useState<Loadable<ExperimentWithTrial>[]>(
     INITIAL_LOADING_EXPERIMENTS,
@@ -299,7 +300,6 @@ const Searches: React.FC<Props> = ({ project }) => {
 
   const handleSortChange = useCallback(
     (sorts: Sort[]) => {
-      setSorts(sorts);
       const newSortString = makeSortString(sorts.filter(validSort.is));
       if (newSortString !== sortString) {
         resetPagination();
@@ -308,13 +308,6 @@ const Searches: React.FC<Props> = ({ project }) => {
     },
     [resetPagination, sortString, updateSettings],
   );
-
-  useEffect(() => {
-    if (!isLoadingSettings && settings.sortString) {
-      setSorts(parseSortString(settings.sortString));
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoadingSettings]);
 
   const fetchExperiments = useCallback(async (): Promise<void> => {
     if (isLoadingSettings || Loadable.isNotLoaded(loadableFormset)) return;
