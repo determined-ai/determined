@@ -42,7 +42,7 @@ Version 0.35.0
 
 **New Features**
 
--  WebUI/CLI/API: Allow admins to manage resource quotas for auto-created namespaces directly.
+-  WebUI/CLI/API: Allow admins to bind namespaces to workspaces and manage resource quotas for auto-created namespaces directly.
 
    -  WebUI: Add a "Namespace Bindings" section to the Create and Edit Workspace modals.
 
