@@ -380,7 +380,7 @@ resourcePools:
   # Schedule for cleaning up logs. This also accepts a cron expression. For example to run retention every Sunday at 2 am, use "0 2 * * 0"
   # schedule: "24h"
 
-# resourceManager:
+resourceManager:
   # Specifies the namespace where all workloads for that RM will be sent by default.
-  # defaultNamespace: default
-  # clusterName: c1
+  defaultNamespace:
+  clusterName:
