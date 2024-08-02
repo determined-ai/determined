@@ -111,7 +111,7 @@ For help with workspace-namespace bindings, visit :ref:`Manage Workspace-Namespa
 - "Experiments" are now called "searches" and "trials" are now called "runs" for better
    clarity.
 
--  The "experiment list" is renamed the "run list", showing all trials from experiments in the
+- The "experiment list" is now called the "run list", showing all trials from experiments in the
    project. It functions similarly to the previous new experiment list.
 
 -  Multi-trial experiments can be viewed in the new searches view, which allows for sorting,
