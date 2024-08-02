@@ -46,7 +46,7 @@ Version 0.35.0
 -  WebUI: Add a "Namespace Bindings" section to the Create and Edit Workspace modals.
 
    -  Users can input a namespace for a Kubernetes cluster. If no namespace is specified, the
-      workspace will use the ``resource_manager.default_namespace`` from the master configuration
+workspace will be bound to the ``resource_manager.default_namespace`` field in the master configuration
         YAML or the default Kubernetes namespace.
 
    -  In the enterprise edition, users can auto-create namespaces and set resource quotas, limiting
