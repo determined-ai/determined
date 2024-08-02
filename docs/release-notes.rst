@@ -48,7 +48,7 @@ Version 0.35.0
 
       -  Users can input a namespace for a Kubernetes cluster. If no namespace is specified, the
          workspace will be bound to the ``resource_manager.default_namespace`` field in the master
-         configuration YAML or the default Kubernetes namespace.
+         configuration YAML or the "default" Kubernetes namespace.
 
       -  In the enterprise edition, users can auto-create namespaces and set resource quotas,
          limiting GPU requests for that workspace. The Edit Workspace modal displays the lowest GPU
