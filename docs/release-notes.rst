@@ -68,10 +68,10 @@ Version 0.35.0
          <workspace-id> --namespace <namespace-name>``.
 
       -  In the enterprise edition, users can use additional arguments ``--auto-create-namespace``
-         and ``--auto-create-namespace-all-clusters`` for auto-created namespaces. Set resource
+         and ``--auto-create-namespace-all-clusters`` to bind workspaces to auto-created namespaces. Users can set resource
          quotas during workspace creation with ``det w create <workspace-name> --cluster-name
          <cluster-name> --auto-create-namespace --resource-quota <resource-quota>``, or later with
-         ``det w resource-quota set <workspace-id> <quota> --cluster-name <cluster-name>``.
+         ``det w resource-quota set <workspace-id> <quota> --cluster-name <cluster-name>`` if their workspace is bound to an auto-created namespace.
 
       -  Add a command to delete namespace bindings with ``det w bindings delete <workspace-id>
          --cluster-name <cluster-name>``.
