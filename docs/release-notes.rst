@@ -85,7 +85,7 @@ For help with workspace-namespace bindings, visit :ref:`Manage Workspace-Namespa
    ``default_namespace`` fields; however, providing both fields will result in an error.
 
 -  CLI: Add a feature where Determined offers the users to delete a workspace namespace binding by
-   using the command ``det w bindings delete <workspace-id> --cluster-name <cluster-name>``. An
+ ``det w bindings delete <workspace-id> --cluster-name <cluster-name>``. An
    error will be thrown if the user tries to delete a default binding.
 
 -  API: Add a feature where Determined offers the users to delete a workspace namespace binding by
