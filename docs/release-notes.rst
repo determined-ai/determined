@@ -75,6 +75,7 @@ Version 0.35.0
 -  Add command to list bindings for a workspace with ``det w bindings list <workspace-name>``. The
    ``--cluster-name`` field is required only for MultiRM setups.
 
+For help with workspace-namespace bindings, visit :ref:`Manage Workspace-Namespace Bindings <k8s-resource-caps>`.
 -  WebUI: Enable users to add or remove hyperparameters during hyperparameter searches.
 
 -  **Cluster:** The ``namespace`` field in the Kubernetes Resource Manager configuration has been
