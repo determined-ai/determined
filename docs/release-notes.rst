@@ -37,7 +37,7 @@ Version 0.35.0
    reflect the allocation time for resource pools including those without GPUs. In addition, a new
    column, ``resource_pool``, has been added to provide the resource pool for each allocation.
 
--  Cluster: ``resources.agent_label`` task option and agent config ``label`` option have been
+- Cluster: The ``resources.agent_label`` task option and the ``label`` option in the agent config have been
    removed. Beginning with 0.20.0 release, these options have been ignored. Please remove any
    remaining references from configuration files and use ``resource_pool`` instead.
 
