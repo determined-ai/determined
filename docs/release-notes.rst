@@ -86,7 +86,7 @@ For help with workspace-namespace bindings, visit :ref:`Manage Workspace-Namespa
 
 - CLI: Add a command to delete a workspace-namespace binding:
  ``det w bindings delete <workspace-id> --cluster-name <cluster-name>``. An
-   error will be thrown if the user tries to delete a default binding.
+error will occur if attempting to delete a default binding.
 
 - API: Add an endpoint to delete a workspace-namespace binding:
  ``api/v1/workspaces/1/namespace-bindings``. This endpoint takes the workspace ID
