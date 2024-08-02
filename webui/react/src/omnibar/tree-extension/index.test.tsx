@@ -1,5 +1,6 @@
 import { render } from '@testing-library/react';
 
+import dev from './trees/dev';
 import { LeafNode, NonLeafNode, TreePath } from './types';
 
 import { absPathToAddress, onAction, parseInput, queryTree } from '.';
@@ -33,12 +34,18 @@ describe('parseInput', () => {
       query: 'node',
     });
   });
+  it('throws on bad input', async () => {
+    await expect(parseInput('this is a bad input', NON_LEAF_NODE())).rejects.toThrow('bad path');
+  });
 });
 
 describe('absPathToAddress', () => {
-  it('ahould return an absolute path', () => {
+  it('should return an absolute path', () => {
     const path = generateTreePath();
     expect(absPathToAddress(path)).toEqual(['1', '2', '3', '4']);
+  });
+  it('should work with real `dev` tree', () => {
+    expect(absPathToAddress(dev)).toEqual(['resetLocalStorage', 'resetUserPreferences']);
   });
 });
 
