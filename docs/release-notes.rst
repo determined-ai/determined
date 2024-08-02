@@ -87,7 +87,7 @@ Version 0.35.0
          bindings for a workspace.
       -  Add a POST endpoint ``/api/v1/workspaces/{id}/set-resource-quota`` to set resource quotas
          on workspaces bound to auto-created namespaces.
-      -  Add a GET endpoint ``/api/v1/workspaces/{id}/get-k8-resource-quotas`` to retrieve enforced
+      -  Add a GET endpoint ``/api/v1/workspaces/{id}/get-k8s-resource-quotas`` to retrieve enforced Kubernetes resource quotas for workspace bound namespaces
          Kubernetes resource quotas for bound namespaces
 
 -  WebUI: Enable users to add or remove hyperparameters during hyperparameter searches.
