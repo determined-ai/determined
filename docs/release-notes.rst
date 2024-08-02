@@ -42,7 +42,8 @@ Version 0.35.0
 
 **New Features**
 
--  WebUI/CLI/API: Allow admins to bind namespaces to workspaces and manage resource quotas for auto-created namespaces directly.
+-  WebUI/CLI/API: Allow admins to bind namespaces to workspaces and manage resource quotas for
+   auto-created namespaces directly.
 
    -  WebUI: Add a "Namespace Bindings" section to the Create and Edit Workspace modals.
 
@@ -68,27 +69,34 @@ Version 0.35.0
          <workspace-id> --namespace <namespace-name>``.
 
       -  In the enterprise edition, users can use additional arguments ``--auto-create-namespace``
-         and ``--auto-create-namespace-all-clusters`` to bind workspaces to auto-created namespaces. Users can set resource
-         quotas during workspace creation with ``det w create <workspace-name> --cluster-name
-         <cluster-name> --auto-create-namespace --resource-quota <resource-quota>``, or later with
-         ``det w resource-quota set <workspace-id> <quota> --cluster-name <cluster-name>`` if their workspace is bound to an auto-created namespace.
+         and ``--auto-create-namespace-all-clusters`` to bind workspaces to auto-created namespaces.
+         Users can set resource quotas during workspace creation with ``det w create
+         <workspace-name> --cluster-name <cluster-name> --auto-create-namespace --resource-quota
+         <resource-quota>``, or later with ``det w resource-quota set <workspace-id> <quota>
+         --cluster-name <cluster-name>`` if their workspace is bound to an auto-created namespace.
 
       -  Add a command to delete namespace bindings with ``det w bindings delete <workspace-id>
          --cluster-name <cluster-name>``.
 
       -  Add a command to list bindings for a workspace with ``det w bindings list
-         <workspace-name>``. The ``--cluster-name`` field is required only for MultiRM setups.
+         <workspace-name>``.
+
+      -  The ``--cluster-name`` field is required only for MultiRM setups.
 
    -  API: Add new endpoints for creating and managing workspace namespace bindings.
 
       -  Add POST and DELETE endpoints to ``/api/v1/workspaces/{workspace_id}/namespace-bindings``
          for setting and deleting workspace namespace bindings.
+
       -  Add a GET endpoint ``/api/v1/workspaces/{id}/list-namespace-bindings`` to list namespace
          bindings for a workspace.
+
       -  Add a POST endpoint ``/api/v1/workspaces/{id}/set-resource-quota`` to set resource quotas
          on workspaces bound to auto-created namespaces.
-      -  Add a GET endpoint ``/api/v1/workspaces/{id}/get-k8s-resource-quotas`` to retrieve enforced Kubernetes resource quotas for workspace bound namespaces
-         Kubernetes resource quotas for bound namespaces
+
+      -  Add a GET endpoint ``/api/v1/workspaces/{id}/get-k8s-resource-quotas`` to retrieve enforced
+         Kubernetes resource quotas for workspace bound namespaces Kubernetes resource quotas for
+         bound namespaces
 
 -  WebUI: Enable users to add or remove hyperparameters during hyperparameter searches.
 
