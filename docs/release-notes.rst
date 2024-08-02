@@ -75,7 +75,7 @@ Version 0.35.0
 -  Add command to list bindings for a workspace with ``det w bindings list <workspace-name>``. The
    ``--cluster-name`` field is required only for MultiRM setups.
 
--  WebUI: Allow users to add/remove hyperparameters when performing hyperparameter search.
+-  WebUI: Enable users to add or remove hyperparameters during hyperparameter searches.
 
 -  **Cluster:** The ``namespace`` field in the Kubernetes Resource Manager configuration has been
    deprecated. Add a new field, ``default_namespace``. This field serves as the default namespace
