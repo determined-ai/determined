@@ -78,17 +78,21 @@ export const RunFilterInterstitialModalComponent = forwardRef<ControlledModalRef
       async (canceler) => {
         if (!isOpen) return NotLoaded;
         const mergedCanceler = mergeAbortControllers(canceler, closeController.current);
-        const filter: FilterFormSetWithoutId = {
-          ...filterFormSet,
-          filterGroup: combine(getIdsFilter(filterFormSet, selection).filterGroup, 'and', {
-            columnName: 'searcherType',
-            kind: 'field',
-            location: 'LOCATION_TYPE_RUN',
-            operator: '!=',
-            type: 'COLUMN_TYPE_TEXT',
-            value: 'single',
-          }),
-        };
+        const filterWithSingleFilter = combine(filterFormSet.filterGroup, 'and', {
+          columnName: 'searcherType',
+          kind: 'field',
+          location: 'LOCATION_TYPE_RUN',
+          operator: '!=',
+          type: 'COLUMN_TYPE_TEXT',
+          value: 'single',
+        });
+        const filter: FilterFormSetWithoutId = getIdsFilter(
+          {
+            ...filterFormSet,
+            filterGroup: filterWithSingleFilter,
+          },
+          selection,
+        );
 
         try {
           const results = await searchRuns(
