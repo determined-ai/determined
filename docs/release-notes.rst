@@ -120,7 +120,7 @@ For help with workspace-namespace bindings, visit :ref:`Manage Workspace-Namespa
 -  When viewing a multi-trial experiment, a list of trials is displayed, allowing for sorting,
    filtering and arbitrary comparison between trials.
 
--  WebUI: Add resource allocation information to trial details page.
+- WebUI: Add resource allocation information to the trial details page.
 
 -  CLI: Add a new command, ``det cmd describe COMMAND_ID`` to allow users to fetch the metadata of a
    single command.
