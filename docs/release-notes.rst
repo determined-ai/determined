@@ -17,7 +17,7 @@ Version 0.35.0
 
 **Breaking Changes**
 
--  **Cluster:** The ``kubernetes_namespace`` field in the resource pool configuration is no longer
+-  Cluster: The ``kubernetes_namespace`` field in the resource pool configuration is no longer
    supported. Users can now submit workloads to specific namespaces by binding workspaces to
    namespaces using the CLI or API.
 
@@ -76,10 +76,12 @@ Version 0.35.0
    ``--cluster-name`` field is required only for MultiRM setups.
 
 For help with workspace-namespace bindings, visit :ref:`Manage Workspace-Namespace Bindings
-<k8s-resource-caps>`. - WebUI: Enable users to add or remove hyperparameters during hyperparameter
+<k8s-resource-caps>`. 
+
+-  WebUI: Enable users to add or remove hyperparameters during hyperparameter
 searches.
 
--  **Cluster:** The ``namespace`` field in the Kubernetes Resource Manager configuration has been
+-  Cluster: The ``namespace`` field in the Kubernetes Resource Manager configuration has been
    deprecated and replaced by ``default_namespace``. This field serves as the default namespace for
    deploying namespaced resources when the workspace associated with a workload is not bound to a
    specific namespace. The master configuration will accept either ``namespace`` or
