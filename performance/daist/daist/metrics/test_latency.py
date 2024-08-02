@@ -1,10 +1,15 @@
 import logging
+import math
+import numpy as np
+import random
 import time
-from typing import List, Tuple
+from typing import List
+from unittest import skipIf
 
 from determined.experimental import Experiment
 
-from ..models.metric_latency import Hist, MetricLatencyOpHist
+from ..models.metric_latency import Hist, MetricLatencyOpHist, OpHist, SeqSweep
+from ..utils import flags
 from . import model_def
 from .base import BaseMetricsTest
 from .model_def import MetricKey
@@ -61,25 +66,60 @@ class Test(BaseMetricsTest):
         return metrics
 
     def test_concurrency(self):
+        debug = False
         concurrency_to_test = (32, 16, 8, 4, 2, 1)
-        samples = 1024
+        samples = 128
         op_hist = MetricLatencyOpHist()
+
         for concurrency in concurrency_to_test:
-            experiment = self._run_latency_experiment(
-                MetricLatencyOpHist.TestParamVal.METRIC_COUNT, concurrency, samples)
-            write_latencies = self._read_experiment_validation_metrics(experiment, MetricKey.WRITE)
+            if debug:
+                write_latencies = np.random.normal(loc=10, scale=.5, size=samples * concurrency)
+                read_latencies = np.random.normal(loc=8, scale=.5, size=samples * concurrency)
+                write_hist = Hist(samples=write_latencies)
+                write_hist.save_plot(MetricKey.WRITE, concurrency, self.id())
+                read_hist = Hist(samples=read_latencies)
+                read_hist.save_plot(MetricKey.READ, concurrency, self.id())
+                op_hist.write[concurrency] = write_hist
+                op_hist.read[concurrency] = read_hist
+            else:
+                experiment = self._run_latency_experiment(
+                    MetricLatencyOpHist.TestParamVal.METRIC_COUNT, concurrency, samples)
+                write_latencies = self._read_experiment_validation_metrics(experiment,
+                                                                           MetricKey.WRITE)
 
-            # write_latencies = np.random.normal(loc=10, scale=.5, size=1024*concurrency)
-            # read_latencies = np.random.normal(loc=8, scale=.5, size=1024*concurrency)
+                write_hist = Hist(samples=write_latencies)
+                write_hist.save_plot(OpHist.Key.WRITE, concurrency, self.id())
+                op_hist.write[concurrency] = write_hist
 
-            op_hist.write[concurrency] = Hist(samples=write_latencies)
-            # op_hist.read[concurrency] = Hist(samples=read_latencies)
-        # .. todo:: save the plots as they become available to capture partial data on test error.
-        op_hist.make_plots(self.id())
-        op_hist.show()
         op_hist.save_to_results(self.id())
+        self.assertFalse(debug)
 
     def test_sequential(self):
+        # A sequence from 1 byte to 256KiB with 11 logarithmically equally spaced metric counts
+        metric_counts = self._log_range(1, 256*1024, 11)
+        self._test_sequential(metric_counts)
+
+    @skipIf(not flags.SCALE_36, 'Flagged off.')
+    def test_scale_36(self):
+        """
+        The metric counts being
+        """
+        self._test_sequential([1024*1024, 2*1024*1024, 4*1024*1024])
+
+    @staticmethod
+    def _log_range(low: int, high: int, count: int) -> List[int]:
+        """
+        Credit: https://stackoverflow.com/a/17674783/1144204
+        """
+        values = list()
+        gap = (math.log(high) - math.log(low)) / count
+        values.append(low*math.exp(gap))
+        for ii in range(count)[1:]:
+            values.append(values[ii-1]*math.exp(gap))
+
+        return [int(value) for value in values]
+
+    def _test_sequential(self, metric_counts: List[int]):
         """
         .. todo:: Hit the following error when attempting 2097152 metric floats (at 8 bytes per
             float, that comes to 16MiB of user metrics)::
@@ -95,40 +135,23 @@ class Test(BaseMetricsTest):
                 (154078479 vs. 134217728)
 
             Also, the server was in a hang state.
-
-
         """
-        # A sweep of [1 byte,  1MiB] where each step multiplies the previous step by 4.
-        metric_counts_to_test = (1, 4, 16, 64, 256, 1024, 4096, 65536, 262144)
-        # metric_counts_to_test = (1, 8, 64)
+        debug = False
         read_latencies = list()
         write_latencies = list()
-        for metric_count in metric_counts_to_test:
-            experiment = self._run_latency_experiment(metric_count, concurrency=1, samples=1)
-            write_latencies.extend(
-                self._read_experiment_validation_metrics(experiment, MetricKey.WRITE))
-            start_seconds = time.time()
-            training_metrics = self._read_experiment_training_metrics(experiment)
-            read_latencies.append(time.time() - start_seconds)
+        if debug:
+            write_latencies = [random.random() for _ in metric_counts]
+            read_latencies = [random.random() for _ in metric_counts]
+        else:
+            for metric_count in metric_counts:
+                experiment = self._run_latency_experiment(metric_count, concurrency=1, samples=1)
+                write_latencies.extend(
+                    self._read_experiment_validation_metrics(experiment, MetricKey.WRITE))
+                start_seconds = time.time()
+                _ = self._read_experiment_training_metrics(experiment)
+                read_latencies.append(time.time() - start_seconds)
 
-        # write_latencies = [0.0011074542999267578, 0.0012280941009521484, 0.0026731491088867188]
-        # read_latencies = [0.010850667953491211, 0.014742612838745117, 0.01394796371459961]
-
-        import matplotlib.pyplot as plt
-        from matplotlib.axes import Axes
-
-        fig, axs = plt.subplots(2, constrained_layout=True, sharex=True)
-        axs: List[Axes]
-        ax: Axes = axs[0]
-        ax.plot(metric_counts_to_test, write_latencies, marker='.')
-        ax.set_xticks(metric_counts_to_test)
-        ax.set_title('Write Latency by Metric Count')
-        ax.set_ylabel('Time (seconds)')
-
-        ax: Axes = axs[1]
-        ax.plot(metric_counts_to_test, read_latencies, marker='.')
-        ax.set_xticks(metric_counts_to_test)
-        ax.set_title('Read Latency by Metric Count')
-        ax.set_xlabel('Metric Count (floats)')
-
-        plt.show()
+        seq_sweep = SeqSweep(metric_counts=metric_counts,
+                             write=write_latencies, read=read_latencies)
+        seq_sweep.save_to_results(self.id())
+        self.assertFalse(debug)
