@@ -96,7 +96,7 @@ func flattenMetadata(data map[string]any) (flatMetadata []model.RunMetadataIndex
 				// if the map is empty, treat it as a leaf node with a nil value.
 				newIndex := model.RunMetadataIndex{
 					FlatKey:        entry.prefix + entry.key,
-					IsArrayElement: entry.array,
+					IsArrayElement: false,
 				}
 				flatMetadata = append(flatMetadata, newIndex)
 				continue
