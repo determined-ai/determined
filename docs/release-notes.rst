@@ -89,7 +89,7 @@ For help with workspace-namespace bindings, visit :ref:`Manage Workspace-Namespa
    error will be thrown if the user tries to delete a default binding.
 
 -  API: Add a feature where Determined offers the users to delete a workspace namespace binding by
-   using the api endpoint ``api/v1/workspaces/1/namespace-bindings`` which takes in the workspace ID
+ ``api/v1/workspaces/1/namespace-bindings``. This endpoint takes the workspace ID
    and string array of cluster names as parameters. An error will be thrown if the user tries to
    delete a default binding.
 
