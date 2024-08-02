@@ -103,7 +103,7 @@ WebUI: View :ref:`Pachyderm<pachyderm-integration>` data lineage.
    <experiment-config-data>`.
 
 -  WebUI: In the Experimental features, Flat Runs View is now "on" by default in the :ref:`WebUI
-   <web-ui-if>`\. Users can still toggle this feature "off".
+<web-ui-if>`. Users can still toggle this feature "off".
 
 -  This update improves the ability to compare model performance between different trials, based on
    user feedback that most Determined users run single-trial experiments.
