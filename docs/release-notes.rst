@@ -21,7 +21,7 @@ Version 0.35.0
    supported. Users can now submit workloads to specific namespaces by binding workspaces to
    namespaces using the CLI or API.
 
--  Master Configuration: ``resource_manager.name`` field is replaced by
+- Master Configuration: Replace ``resource_manager.name`` with
       ``resource_manager.cluster_name`` for better clarity and to support multiple resource
       managers.
 
