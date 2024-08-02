@@ -41,6 +41,8 @@ enum ColumnType {
   COLUMN_TYPE_NUMBER = 2;
   // data type is a date
   COLUMN_TYPE_DATE = 3;
+  // data type is an array
+  COLUMN_TYPE_ARRAY = 4;
 }
 
 // Project Column is a description of a column used on experiments in the

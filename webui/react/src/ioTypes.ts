@@ -303,6 +303,7 @@ export const ioColumnType: io.Type<V1ColumnType> = io.keyof({
   [V1ColumnType.DATE]: null,
   [V1ColumnType.NUMBER]: null,
   [V1ColumnType.TEXT]: null,
+  [V1ColumnType.ARRAY]: null,
   [V1ColumnType.UNSPECIFIED]: null,
 });
 const ioProjectColumnRequired = io.type({

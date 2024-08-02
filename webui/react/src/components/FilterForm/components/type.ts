@@ -103,6 +103,7 @@ export const ReadableOperator: Record<V1ColumnType, Record<Operator, string>> = 
   [V1ColumnType.TEXT]: READABLE_TEXT_OPERATOR,
   [V1ColumnType.NUMBER]: READABLE_NUMBER_OPERATOR,
   [V1ColumnType.DATE]: READABLE_DATE_OPERATOR,
+  [V1ColumnType.ARRAY]: READABLE_TEXT_OPERATOR,
   [V1ColumnType.UNSPECIFIED]: READABLE_TEXT_OPERATOR,
 } as const;
 
@@ -132,6 +133,7 @@ export const AvailableOperators = {
     Operator.Less,
     Operator.LessEq,
   ],
+  [V1ColumnType.ARRAY]: [Operator.Eq],
   [V1ColumnType.UNSPECIFIED]: Object.values(Operator), // show all of operators
 } as const;
 
