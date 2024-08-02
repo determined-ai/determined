@@ -21,13 +21,13 @@ const NON_LEAF_NODE = (title?: string): NonLeafNode => ({
 const generateTreePath = (length: number = 5) => {
   const treePath: TreePath = [];
   for (let i = 0; i < length; i++) {
-    treePath.push(Math.random() > 0.5 ? LEAF_NODE(`${i}`) : NON_LEAF_NODE(`${i}`));
+    treePath.push(i % 2 === 0 ? LEAF_NODE(`${i}`) : NON_LEAF_NODE(`${i}`));
   }
   return treePath;
 };
 
 describe('parseInput', () => {
-  it('Parsing input', async () => {
+  it('should parse input', async () => {
     expect(await parseInput('node', NON_LEAF_NODE())).toEqual({
       path: [NON_LEAF_NODE()],
       query: 'node',
@@ -36,24 +36,24 @@ describe('parseInput', () => {
 });
 
 describe('absPathToAddress', () => {
-  it('Absolute Path', () => {
+  it('ahould return an absolute path', () => {
     const path = generateTreePath();
     expect(absPathToAddress(path)).toEqual(['1', '2', '3', '4']);
   });
 });
 
 describe('queryTree', () => {
-  it('Leaf Node child', async () => {
+  it('should return Leaf Node child', async () => {
     const rootNode = NON_LEAF_NODE();
     expect(await queryTree('node', rootNode)).toEqual(rootNode.options);
   });
 
-  it('Non-leaf Node child', async () => {
+  it('should return Non-leaf Node child', async () => {
     const rootNode = { ...NON_LEAF_NODE(), options: [NON_LEAF_NODE()] };
     expect(await queryTree('node', rootNode)).toEqual(rootNode.options);
   });
 
-  it('Multiple children', async () => {
+  it('should return multiple children', async () => {
     const rootNode = {
       ...NON_LEAF_NODE(),
       options: [NON_LEAF_NODE(), NON_LEAF_NODE(), LEAF_NODE()],
@@ -71,7 +71,7 @@ describe('onAction', () => {
     const view = render(<input />);
     return { view };
   };
-  it('Leaf Node', async () => {
+  it('should call handleAction when passed Leaf Node', async () => {
     const { view } = setup();
     const inputEl = view.getByRole('textbox') as HTMLInputElement;
     const node = LEAF_NODE();
@@ -81,7 +81,7 @@ describe('onAction', () => {
     expect(queryFn).not.toHaveBeenCalled();
     expect(handleAction).toHaveBeenCalled();
   });
-  it('Non-leaf Node', async () => {
+  it('should call queryFn when passed Non-leaf Node', async () => {
     const { view } = setup();
     const inputEl = view.getByRole('textbox') as HTMLInputElement;
     const node = NON_LEAF_NODE();
