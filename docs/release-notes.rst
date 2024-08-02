@@ -132,7 +132,7 @@ For help with workspace-namespace bindings, visit :ref:`Manage Workspace-Namespa
 
 -  Switch default AWS instance type from ``m5.large`` to ``m6i.large``. This change does not affect
    the cost, but improves performance.
--  WebUI: Redirect SSO users to the SSO provider's authentication URIs when their session token has expired,
+- WebUI: In the enterprise edition, redirect SSO users to the SSO provider's authentication URIs when their session token has expired,
       instead of displaying the Determined sign-in page.
 
 **Bug Fixes**
