@@ -108,7 +108,7 @@ For help with workspace-namespace bindings, visit :ref:`Manage Workspace-Namespa
 -  This update improves the ability to compare model performance between different trials, based on
    user feedback that most Determined users run single-trial experiments.
 
--  "Experiments" is now renamed to "searches" and "trials" is now renamed to "runs" for better
+- "Experiments" are now called "searches" and "trials" are now called "runs" for better
    clarity.
 
 -  The "experiment list" is renamed the "run list", showing all trials from experiments in the
