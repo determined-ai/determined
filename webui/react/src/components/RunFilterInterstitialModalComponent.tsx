@@ -10,6 +10,7 @@ import { useAsync } from 'hooks/useAsync';
 import { searchRuns } from 'services/api';
 import { SelectionType } from 'types';
 import { DetError } from 'utils/error';
+import { combine } from 'utils/filterFormSet';
 import { getIdsFilter } from 'utils/flatRun';
 import mergeAbortControllers from 'utils/mergeAbortControllers';
 import { observable } from 'utils/observable';
@@ -77,7 +78,18 @@ export const RunFilterInterstitialModalComponent = forwardRef<ControlledModalRef
       async (canceler) => {
         if (!isOpen) return NotLoaded;
         const mergedCanceler = mergeAbortControllers(canceler, closeController.current);
-        const filter = getIdsFilter(filterFormSet, selection);
+        const filter: FilterFormSetWithoutId = {
+          ...filterFormSet,
+          filterGroup: combine(getIdsFilter(filterFormSet, selection).filterGroup, 'and', {
+            columnName: 'searcherType',
+            kind: 'field',
+            location: 'LOCATION_TYPE_RUN',
+            operator: '!=',
+            type: 'COLUMN_TYPE_TEXT',
+            value: 'single',
+          }),
+        };
+
         try {
           const results = await searchRuns(
             {
