@@ -399,7 +399,7 @@ resource_manager:
 			ResourceConfig: ResourceConfig{
 				RootManagerInternal: &ResourceManagerConfig{
 					KubernetesRM: &KubernetesResourceManagerConfig{
-						Name:                       DefaultRMName,
+						ClusterName:                DefaultClusterName,
 						DefaultAuxResourcePool:     "default",
 						DefaultComputeResourcePool: "default",
 						SlotType:                   device.ROCM,
