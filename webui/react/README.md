@@ -106,7 +106,7 @@ To generate a code coverage report
 
 ```sh
 npm run test:coverage
-```sh
+```
 
 ## Deployment
 
