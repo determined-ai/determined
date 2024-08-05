@@ -38,6 +38,10 @@ while [[ $# -gt 0 ]]; do
             MACHINE_TYPE=$2
             shift 2
             ;;
+        -l)
+            # This is processed already by generate-tfvars.sh
+            shift 2
+            ;;
         -g)
             # This is processed already by generate-tfvars.sh
             GPUS=$2
