@@ -3,7 +3,7 @@ import { render } from '@testing-library/react';
 import dev from './trees/dev';
 import { LeafNode, NonLeafNode, TreePath } from './types';
 
-import { absPathToAddress, onAction, parseInput, queryTree } from '.';
+import { absPathToAddress, extension, onAction, parseInput, queryTree } from '.';
 
 vi.mock('hew/Toast', () => ({
   makeToast: vi.fn(),
@@ -66,6 +66,18 @@ describe('queryTree', () => {
       options: [NON_LEAF_NODE(), NON_LEAF_NODE(), LEAF_NODE()],
     };
     expect(await queryTree('node', rootNode)).toEqual(expect.arrayContaining(rootNode.options));
+  });
+});
+
+describe('extension', () => {
+  it('should accept valid input', async () => {
+    expect(await extension('dev serverAddress')).toEqual(
+      dev.filter((node) => node.title === 'serverAddress'),
+    );
+  });
+
+  it('should handle errors', async () => {
+    expect(await extension('bad input')).toEqual([]);
   });
 });
 
