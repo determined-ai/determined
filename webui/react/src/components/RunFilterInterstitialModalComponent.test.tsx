@@ -109,14 +109,23 @@ describe('RunFilterInterstitialModalComponent', () => {
     expect(filterFormSetString).toBeDefined();
     const filterFormSet = JSON.parse(filterFormSetString || '');
 
-    // TODO: is there a better way to test this expectation?
+    // TODO: is there a better way to test these expectations?
     expect(filterFormSet.showArchived).toBeTruthy();
-    const [filterGroup, idFilterGroup] = filterFormSet.filterGroup.children?.[0].children || [];
-    expect(filterGroup).toEqual(expectedFilterGroup);
+    const [, , idFilter] = filterFormSet.filterGroup.children;
+    for (const child of expectedFilterGroup.children) {
+      expect(filterFormSet.filterGroup.children).toContainEqual(child);
+    }
 
-    const idFilters = idFilterGroup.children;
-    expect(idFilters.every((f: FormField) => f.operator === '!=')).toBeTruthy();
-    expect(idFilters.map((f: FormField) => f.value)).toEqual(expectedExclusions);
+    for (const exclusion of expectedExclusions) {
+      expect(idFilter?.children[0].children).toContainEqual({
+        columnName: 'id',
+        kind: 'field',
+        location: 'LOCATION_TYPE_RUN',
+        operator: '!=',
+        type: 'COLUMN_TYPE_NUMBER',
+        value: exclusion,
+      });
+    }
   });
 
   it('calls server with filter describing visual selection', () => {
@@ -139,7 +148,7 @@ describe('RunFilterInterstitialModalComponent', () => {
     const filterFormSet = JSON.parse(filterFormSetString || '');
 
     expect(filterFormSet.showArchived).toBe(false);
-    const idFilters = filterFormSet.filterGroup.children?.[0].children || [];
+    const idFilters = filterFormSet.filterGroup.children || [];
     expect(idFilters.every((f: FormField) => f.operator === '=')).toBe(true);
     expect(idFilters.map((f: FormField) => f.value)).toEqual(expectedSelection);
   });
