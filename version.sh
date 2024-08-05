@@ -53,28 +53,30 @@ if [ -z ${VERSION} ]; then
         # head to grab the first one, since the list is sorted in descending
         # order, handling -rc tags correctly courtesy of
         # versionsort.suffix.
-        MAYBE_TAG=$(git \
-                        -c versionsort.suffix='-rc' \
-                        tag \
-                        --sort='-v:refname:short' \
-                        --format='%(refname:short)' \
-                        --no-contains=$(git merge-base HEAD main) | \
-                    grep -E -v 'v0.12|-ee' | \
-                    head -n 1
-                  )
+        MAYBE_TAG=$(
+            git \
+                -c versionsort.suffix='-rc' \
+                tag \
+                --sort='-v:refname:short' \
+                --format='%(refname:short)' \
+                --no-contains=$(git merge-base HEAD main) \
+                | grep -E -v 'v0.12|-ee' \
+                | head -n 1
+        )
     fi
 
     # Munge the tag into the form we want. Note: we always append a SHA hash,
     # even if we're on the commit with the tag. This is partially because I feel
     # like it will be more consistent and result in fewer surprises, but also it
-    # might help indicate that this is a local version. Additionally, remove the
-    # 'v' from the final version string.
-    echo -n "${MAYBE_TAG}+${SHA}" | tr -d 'v'
+    # might help indicate that this is a local version. Additionally, use shell
+    # parameter expansion to remove the initial 'v' from the final version
+    # string.
+    echo -n "${MAYBE_TAG#v}+${SHA}"
 else
     # Use existing VERSION, which is much easier. This should be the default
     # case for CI, as VERSION will already be set. We also remove the 'v' from
     # the tag for the version string, as that is what the current CI
-    # functionality expects. Finally, use tr to remove the 'v' prefix to get the
-    # bare version string.
-    echo -n "${VERSION}" | tr -d 'v'
+    # functionality expects. Finally, use shell parameter expansion to remove
+    # the initial 'v' prefix to get the bare version string.
+    echo -n "${VERSION#v}"
 fi
