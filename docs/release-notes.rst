@@ -13,7 +13,7 @@
 Version 0.35.0
 ==============
 
-**Release Date:** August 05, 2024
+**Release Date:** August 02, 2024
 
 **Breaking Changes**
 
@@ -26,6 +26,16 @@ Version 0.35.0
       managers in Determined.
    -  During upgrade, replace ``name`` with ``cluster_name`` in the ``resource_manager`` section of
       your master configuration YAML.
+
+-  Master Configuration: Replace ``resource_manager.namespace`` with
+   ``resource_manager.default_namespace``.
+
+   -  The namespace field in the Kubernetes Resource Manager configuration is no longer supported
+      and is replaced by ``default_namespace``.
+   -  This field serves as the default namespace for deploying namespaced resources when the
+      workspace associated with a workload is not bound to a specific namespace.
+   -  If unset, the workloads will be sent to the release namespace, or the default Kubernetes
+      namespace, "default", during non-helm determined deployments.
 
 -  Tasks: The :ref:`historical usage <historical-cluster-usage-data>` CSV file has been updated. The
    header row for slot-hours is now named ``slot_hours`` instead of ``gpu_hours`` to accurately
@@ -49,7 +59,7 @@ Version 0.35.0
 
       -  Users can input a namespace for a Kubernetes cluster. If no namespace is specified, the
          workspace will be bound to the ``resource_manager.default_namespace`` field in the master
-         configuration YAML when set or the release namespace. We fall back to the default Kubernetes namespace, "default", during non-helm determined deployments.
+         configuration YAML or the "default" Kubernetes namespace.
 
       -  In the enterprise edition, users can auto-create namespaces and set resource quotas,
          limiting GPU requests for that workspace. The Edit Workspace modal displays the lowest GPU
@@ -81,7 +91,8 @@ Version 0.35.0
       -  Add a command to list bindings for a workspace with ``det w bindings list
          <workspace-name>``.
 
-      -  The ``--cluster-name`` field is required only for MultiRM setups.
+      -  The ``--cluster-name`` field is required only for MultiRM setups when
+         --auto-create-namespace-all-clusters is omitted.
 
    -  API: Add new endpoints for creating and managing workspace namespace bindings.
 
@@ -121,12 +132,6 @@ Version 0.35.0
 
 -  WebUI: Allow users to continue a canceled or errored multi-trial experiment for searcher type
    ``random`` or ``grid``.
-
--  Cluster: The ``namespace`` field in the Kubernetes Resource Manager configuration has been
-   deprecated and replaced by ``default_namespace``. This field serves as the default namespace for
-   deploying namespaced resources when the workspace associated with a workload is not bound to a
-   specific namespace. The master configuration will accept either ``namespace`` or
-   ``default_namespace`` fields; however, providing both fields will result in an error.
 
 -  Master Configuration: Add an ``always_redirect`` option to OIDC and SAML configurations. When
    enabled, this option bypasses the standard Determined sign-in page and routes users directly to
