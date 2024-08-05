@@ -4,6 +4,7 @@ import (
 	"context"
 	"crypto/tls"
 	"fmt"
+	"log"
 	"maps"
 	"slices"
 	"time"
@@ -86,10 +87,6 @@ func New(
 		db: db,
 	}
 
-	if len(k.config.Namespace) > 0 {
-		k.config.DefaultNamespace = k.config.Namespace
-	}
-
 	k.jobsService, err = newJobsService(
 		k.config.DefaultNamespace,
 		k.config.ClusterName,
@@ -110,7 +107,7 @@ func New(
 	if err != nil {
 		return nil, err
 	}
-
+	log.Print(k.config.DefaultNamespace)
 	if len(k.config.DefaultNamespace) > 0 {
 		err = k.jobsService.VerifyNamespaceExists(k.config.DefaultNamespace)
 		if err != nil {

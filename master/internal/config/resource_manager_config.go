@@ -316,19 +316,10 @@ func (k KubernetesResourceManagerConfig) Validate() []error {
 			k.SlotResourceRequests.CPU, float32(0), "slot_resource_requests.cpu must be > 0")
 	}
 
-	var checkRMNamespace error
-	if len(k.DefaultNamespace) > 0 && len(k.Namespace) > 0 {
-		checkRMNamespace = errors.Errorf("Both ``namespace`` and ``default_namespace`` provided. " +
-			"Please provide only ``default_namespace`` as ``namespace`` has been deprecated.")
-	} else {
-		checkRMNamespace = nil
-	}
-
 	return []error{
 		checkSlotType,
 		checkCPUResource,
 		check.NotEmpty(k.ClusterName, "cluster_name is required"),
-		checkRMNamespace,
 	}
 }
 
