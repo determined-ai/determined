@@ -45,23 +45,16 @@ const ProjectMoveModalComponent: React.FC<Props> = ({ onMove, project }: Props) 
       });
       onMove?.();
     } catch (e) {
-      if (e instanceof DetError && e.type === ErrorType.Server) {
-        handleError(e, {
-          level: ErrorLevel.Error,
-          publicMessage: e.publicMessage,
-          publicSubject: 'Unable to move project.',
-          silent: false,
-          type: ErrorType.Server,
-        });
-      } else {
-        handleError(e, {
-          level: ErrorLevel.Error,
-          publicMessage: 'Please try again later.',
-          publicSubject: 'Unable to move project.',
-          silent: false,
-          type: ErrorType.Server,
-        });
-      }
+      handleError(e, {
+        level: ErrorLevel.Error,
+        publicMessage:
+          e instanceof DetError && e.type === ErrorType.Server
+            ? e.publicMessage
+            : 'Please try again later.',
+        publicSubject: 'Unable to move project.',
+        silent: false,
+        type: ErrorType.Server,
+      });
     }
   }, [destinationWorkspaceId, onMove, openToast, project.id, project.name, workspaces]);
 
