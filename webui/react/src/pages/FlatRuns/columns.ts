@@ -288,9 +288,10 @@ export const getColumnDefs = ({
             : undefined,
         navigateOn: 'click',
         onClick: (e: CellClickedEventArgs) => {
-          if (record.experiment?.forkedFrom) {
+          const forkedFrom = record.experiment?.forkedFrom;
+          if (forkedFrom) {
             handlePath(e as unknown as AnyMouseEvent, {
-              path: String(record.experiment.forkedFrom),
+              path: paths.experimentDetails(forkedFrom),
             });
           }
         },
