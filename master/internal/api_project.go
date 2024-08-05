@@ -984,9 +984,12 @@ func (a *apiServer) MoveProject(
 	err = db.Bun().NewSelect().TableExpr("projects").ColumnExpr("1").
 		Where("workspace_id=?", req.DestinationWorkspaceId).
 		Where("name=?", p.Name).Scan(ctx, &hits)
+	if err != nil {
+		return nil, err
+	}
 
 	if len(hits) > 0 {
-		return nil, fmt.Errorf("Project with name '%s' already exists in target workspace", p.Name)
+		return nil, fmt.Errorf("project with name '%s' already exists in target workspace", p.Name)
 	}
 
 	holder := &projectv1.Project{}
