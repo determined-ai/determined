@@ -102,6 +102,12 @@ To skip the interactive mode and run all unit tests.
 npm run test -- --watchAll=false
 ```
 
+To generate a code coverage report
+
+```sh
+npm run test:coverage
+```sh
+
 ## Deployment
 
 Generally the deployment process from the project repo will handle all of the project build steps including the **React** webapp. However, if you are looking to build a production webapp and seeing it served from the **master** directly, you can follow these steps to manually build production code.
