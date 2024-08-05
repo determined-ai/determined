@@ -25,9 +25,9 @@ export type FilterFormSet = {
   showArchived: boolean;
 };
 
-type FormFieldWithoutId = Omit<FormField, 'id'>;
+export type FormFieldWithoutId = Omit<FormField, 'id'>;
 
-type FormGroupWithoutId = {
+export type FormGroupWithoutId = {
   readonly kind: typeof FormKind.Group;
   conjunction: Conjunction;
   children: (FormGroupWithoutId | FormFieldWithoutId)[];
