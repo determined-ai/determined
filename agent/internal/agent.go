@@ -6,6 +6,7 @@ import (
 	"crypto/x509"
 	"fmt"
 	"io"
+	"net/url"
 	"os"
 	"strings"
 	"time"
@@ -241,7 +242,7 @@ func (a *Agent) connect(ctx context.Context, reconnect bool) (*MasterWebsocket, 
 
 	masterAddr := fmt.Sprintf(
 		"%s://%s:%d/agents?id=%s&version=%s&resource_pool=%s&reconnect=%v&hostname=%s",
-		masterProto, a.opts.MasterHost, a.opts.MasterPort, a.opts.AgentID, a.version,
+		masterProto, a.opts.MasterHost, a.opts.MasterPort, a.opts.AgentID, url.QueryEscape(a.version),
 		a.opts.ResourcePool, reconnect, hostname,
 	)
 	a.log.Infof("connecting to master at: %s", masterAddr)

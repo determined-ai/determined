@@ -87,6 +87,15 @@ jobs:
               mv -v tmpfile "<<pipeline.parameters.params_basename>>"
             fi
 
+      - run:
+          name: Set det-version parameter.
+          command: |
+            VERSION=$(./version.sh)
+            echo "Version is: [${VERSION}]"
+            jq --arg version "${VERSION}" '. += {"det-version": $version}' < "<<pipeline.parameters.params_basename>>" > tmpfile
+            mv -v tmpfile "<<pipeline.parameters.params_basename>>"
+            cat "<<pipeline.parameters.params_basename>>"
+
       # this must be last; persist the file to the workspace
       - persist_to_workspace:
           root: .
