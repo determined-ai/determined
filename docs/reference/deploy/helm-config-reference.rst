@@ -155,6 +155,12 @@
    distributed experiments will launch with 4 GPUs per pod (with two pods on 8-GPU nodes).
    (*Required*)
 
+-  ``slotType``: Specifies the type of the slot that Determined will deploy. Valid options are
+   ``cpu`` for CPU training, ``gpu`` or ``cuda`` for Nvidia GPUs, and ``rocm`` for AMD GPUs.
+   Defaults to ``gpu``.
+
+   The ``rocm`` slot type is an experimental feature.
+
 -  ``masterCpuRequest``: The CPU requirements for the Determined master.
 
 -  ``masterMemRequest``: The memory requirements for the Determined master.
