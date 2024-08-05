@@ -102,11 +102,11 @@ To skip the interactive mode and run all unit tests.
 npm run test -- --watchAll=false
 ```
 
-For codecov
+To generate a code coverage report
 
 ```sh
-npm run test -- --ui --coverage --changed
-```
+npm run test:coverage
+```sh
 
 ## Deployment
 
