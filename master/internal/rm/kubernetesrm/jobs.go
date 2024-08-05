@@ -66,6 +66,13 @@ const (
 
 	resourceTypeNvidia = "nvidia.com/gpu"
 	resourceTypeAMD    = "amd.com/gpu"
+
+	defaultNamespace = "default"
+	// ReleaseNamespaceEnvVar is the name of the environment variable within a pod running the
+	// master service containing the namespace in which determined was deployed.
+	ReleaseNamespaceEnvVar = "DET_RELEASE_NAMESPACE"
+	// ResourceTypeNvidia describes the GPU resource type.
+	ResourceTypeNvidia = "nvidia.com/gpu"
 )
 
 var cacheSyncs []cache.InformerSynced
@@ -2060,11 +2067,12 @@ func (j *jobsService) getNonDetSlots(deviceType device.Type) (map[string][]strin
 		}
 		reqs := int64(0)
 		for _, c := range pod.Spec.Containers {
-			if deviceType == device.CPU {
+			switch deviceType {
+			case device.CPU:
 				reqs += j.getCPUReqs(c)
-			} else if deviceType == device.CUDA {
+			case device.CUDA:
 				reqs += c.Resources.Requests.Name(resourceTypeNvidia, resource.DecimalSI).Value()
-			} else if deviceType == device.ROCM {
+			case device.ROCM:
 				reqs += c.Resources.Requests.Name(resourceTypeAMD, resource.DecimalSI).Value()
 			}
 		}
