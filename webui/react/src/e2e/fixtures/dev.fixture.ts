@@ -6,7 +6,7 @@ import {
 } from 'playwright-page-model-base/BaseComponent';
 
 import { expect } from 'e2e/fixtures/global-fixtures';
-import { BasePage } from 'e2e/models/common/base/BasePage';
+import { DeterminedPage } from 'e2e/models/common/base/BasePage';
 import { apiUrl } from 'e2e/utils/envVars';
 
 export class DevFixture {
@@ -30,7 +30,7 @@ export class DevFixture {
   debugComponentVisible(component: BaseComponent): void {
     const componentTree: ComponentContainer[] = [];
     let root: ComponentContainer = component;
-    while (!(root instanceof BasePage)) {
+    while (!(root instanceof DeterminedPage)) {
       componentTree.unshift(root);
       root = (root as ComponentBasics)._parent;
     }

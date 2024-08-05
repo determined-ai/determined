@@ -1,6 +1,6 @@
 import { BaseComponent } from 'playwright-page-model-base/BaseComponent';
 
-import { BasePage } from 'e2e/models/common/base/BasePage';
+import { DeterminedPage } from 'e2e/models/common/base/BasePage';
 import { Message } from 'e2e/models/common/hew/Message';
 import { Select } from 'e2e/models/common/hew/Select';
 import { Toggle } from 'e2e/models/common/hew/Toggle';
@@ -11,7 +11,7 @@ import { WorkspaceCard } from 'e2e/models/pages/WorkspaceList/WorkspaceCard';
 /**
  * Represents the WorkspaceList page from src/pages/WorkspaceList.tsx
  */
-export class WorkspaceList extends BasePage {
+export class WorkspaceList extends DeterminedPage {
   readonly title = 'Workspaces';
   readonly url = 'workspaces';
   readonly createModal = new WorkspaceCreateModal({

@@ -1,5 +1,5 @@
 import { expect } from 'e2e/fixtures/global-fixtures';
-import { BasePage } from 'e2e/models/common/base/BasePage';
+import { DeterminedPage } from 'e2e/models/common/base/BasePage';
 import { DynamicTabs } from 'e2e/models/components/DynamicTabs';
 import { F_ExperimentList } from 'e2e/models/components/F_ExperimentList';
 import { PageComponent } from 'e2e/models/components/Page';
@@ -7,7 +7,7 @@ import { PageComponent } from 'e2e/models/components/Page';
 /**
  * Represents the SignIn page from src/pages/ProjectDetails.tsx
  */
-export class ProjectDetails extends BasePage {
+export class ProjectDetails extends DeterminedPage {
   readonly title = /Uncategorized Experiments|Project Details/;
   readonly url = /projects\/(\d+)/;
 
