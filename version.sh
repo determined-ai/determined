@@ -68,14 +68,15 @@ if [ -z ${VERSION} ]; then
     # Munge the tag into the form we want. Note: we always append a SHA hash,
     # even if we're on the commit with the tag. This is partially because I feel
     # like it will be more consistent and result in fewer surprises, but also it
-    # might help indicate that this is a local version. Additionally, remove the
-    # 'v' from the final version string.
-    echo -n "${MAYBE_TAG}+${SHA}" | sed -e 's/^v//'
+    # might help indicate that this is a local version. Additionally, use shell
+    # parameter expansion to remove the initial 'v' from the final version
+    # string.
+    echo -n "${MAYBE_TAG#v}+${SHA}"
 else
     # Use existing VERSION, which is much easier. This should be the default
     # case for CI, as VERSION will already be set. We also remove the 'v' from
     # the tag for the version string, as that is what the current CI
-    # functionality expects. Finally, use tr to remove the 'v' prefix to get the
-    # bare version string.
-    echo -n "${VERSION}" | sed -e 's/^v//'
+    # functionality expects. Finally, use shell parameter expansion to remove
+    # the initial 'v' prefix to get the bare version string.
+    echo -n "${VERSION#v}"
 fi
