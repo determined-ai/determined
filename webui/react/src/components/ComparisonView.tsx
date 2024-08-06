@@ -72,11 +72,9 @@ const ComparisonView: React.FC<Props> = ({
         filter: JSON.stringify(filter),
         limit: SELECTION_LIMIT,
       });
-      if (response?.pagination?.total && response?.pagination?.total > SELECTION_LIMIT) {
-        setIsSelectionLimitReached(true);
-      } else {
-        setIsSelectionLimitReached(false);
-      }
+      setIsSelectionLimitReached(
+        !!response?.pagination?.total && response?.pagination?.total > SELECTION_LIMIT,
+      );
       return response.experiments;
     } catch (e) {
       handleError(e, { publicSubject: 'Unable to fetch experiments for comparison' });
@@ -104,11 +102,9 @@ const ComparisonView: React.FC<Props> = ({
         filter: JSON.stringify(filter),
         limit: SELECTION_LIMIT,
       });
-      if (response?.pagination?.total && response?.pagination?.total > SELECTION_LIMIT) {
-        setIsSelectionLimitReached(true);
-      } else {
-        setIsSelectionLimitReached(false);
-      }
+      setIsSelectionLimitReached(
+        !!response?.pagination?.total && response?.pagination?.total > SELECTION_LIMIT,
+      );
       return response.runs;
     } catch (e) {
       handleError(e, { publicSubject: 'Unable to fetch runs for comparison' });
