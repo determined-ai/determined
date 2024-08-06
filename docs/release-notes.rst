@@ -34,8 +34,7 @@ Version 0.35.0
       and is replaced by ``default_namespace``.
    -  This field serves as the default namespace for deploying namespaced resources when the
       workspace associated with a workload is not bound to a specific namespace.
-   -  If unset, the workloads will be sent to the release namespace, or the default Kubernetes
-      namespace, "default", during non-helm determined deployments.
+   -  If unset, the workloads will be sent to the release namespace during determined helm installs or upgrades and will be sent to the default Kubernetes namespace, "default", during non-helm determined deployments.
 
 -  Tasks: The :ref:`historical usage <historical-cluster-usage-data>` CSV file has been updated. The
    header row for slot-hours is now named ``slot_hours`` instead of ``gpu_hours`` to accurately
