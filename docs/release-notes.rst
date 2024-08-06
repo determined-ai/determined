@@ -24,8 +24,8 @@ Version 0.35.0
       tasks, so changing the cluster will affect the resource manager's responses.
    -  The ``cluster_name`` must be unique for all resource managers when deploying multiple resource
       managers in Determined.
-   -  During upgrade, replace ``name`` with ``cluster_name`` in the ``resource_manager`` section of
-      your master configuration YAML.
+   -  When upgrading, specify `resourceManager.clusterName` in your `values.yaml` to override `resource_manager.name` and/or remove the `name` field from your `resource_manager` config altogether.
+- For additional resource managers, you must change `additional_resource_manager[i].name` to `additional_resource_manager[i].cluster_name` in your `values.yaml`.
 
 -  Master Configuration: Replace ``resource_manager.namespace`` with
    ``resource_manager.default_namespace``.
