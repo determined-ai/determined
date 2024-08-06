@@ -1,4 +1,5 @@
-import { BaseComponent } from 'e2e/models/common/base/BaseComponent';
+import { BaseComponent } from 'playwright-page-model-base/BaseComponent';
+
 import { SkeletonSection } from 'e2e/models/components/SkeletonSection';
 
 /**

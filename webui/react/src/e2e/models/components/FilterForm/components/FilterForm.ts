@@ -1,4 +1,5 @@
-import { BaseComponent, NamedComponent } from 'e2e/models/common/base/BaseComponent';
+import { BaseComponent, NamedComponent } from 'playwright-page-model-base/BaseComponent';
+
 import { FilterGroup } from 'e2e/models/components/FilterForm/components/FilterGroup';
 
 /**

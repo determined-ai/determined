@@ -1,4 +1,5 @@
-import { BaseComponent, NamedComponent } from 'e2e/models/common/base/BaseComponent';
+import { BaseComponent, NamedComponent } from 'playwright-page-model-base/BaseComponent';
+
 import { ErrorComponent } from 'e2e/models/utils/error';
 
 /**
