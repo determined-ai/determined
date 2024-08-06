@@ -58,7 +58,9 @@ func GetAgentUserGroup(
 ) (*model.AgentUserGroup, error) {
 	workspaceAug, err := getAgentUserGroupFromWorkspaceID(ctx, workspaceID)
 	if err == sql.ErrNoRows {
-		logrus.WithError(err).Warnf("no agent user group results from workspaceID=%d", workspaceID)
+		if workspaceID != 0 {
+			logrus.WithError(err).Warnf("no agent user group results from workspaceID=%d", workspaceID)
+		}
 	} else if err != nil {
 		return nil, fmt.Errorf("failed to get agent user group from experiment: %w", err)
 	}
