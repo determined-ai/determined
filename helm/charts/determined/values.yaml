@@ -375,6 +375,6 @@ resourcePools:
   # schedule: "24h"
 
 resourceManager:
-  # Specifies the namespace where all workloads for that RM will be sent by default.
+  # Specifies the namespace in a given Kubernetes compute cluster where all workload pods will be sent by default.
   defaultNamespace:
   clusterName:
