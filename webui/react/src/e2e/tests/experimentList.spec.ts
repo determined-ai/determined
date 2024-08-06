@@ -294,7 +294,7 @@ test.describe('Experiment List', () => {
   });
 
   test('DataGrid Action Pause', async () => {
-    // datagrid can be slow
+    // datagrid can be slow, perhaps related to [ET-677]
     projectDetailsPage._page.setDefaultTimeout(10000);
 
     // experiment should initially be paused
