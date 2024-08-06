@@ -158,9 +158,9 @@ func (s *Service) consumeAssertion(c echo.Context) error {
 		return err
 	}
 
-	userAttr := s.toUserAttributes(xmlResponse)
-	if userAttr == nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "SAML attribute identifier userName missing")
+	userAttr, err := s.toUserAttributes(xmlResponse)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
 	ctx := c.Request().Context()
@@ -230,21 +230,23 @@ type userAttributes struct {
 	groups         []string
 }
 
-func (s *Service) toUserAttributes(response *saml.Assertion) *userAttributes {
+func (s *Service) toUserAttributes(response *saml.Assertion) (*userAttributes, error) {
 	uName := getSAMLAttribute(response, "userName")
 	if uName == "" {
-		return nil
+		return nil, fmt.Errorf("SAML attribute identifier userName missing")
 	}
 
 	strAgentUID := getSAMLAttribute(response, s.userConfig.agentUIDAttributeName)
 	tempAgentUID, err := strconv.Atoi(strAgentUID)
 	if err != nil && strAgentUID != "" {
-		logrus.WithError(err).WithField("agentUID", strAgentUID).Error("unable to convert to integer")
+		//logrus.WithError(err).WithField("agentUID", strAgentUID).Error("unable to convert to integer")
+		return nil, fmt.Errorf("SAML attribute identifier agentUID is not an integer: %s", strAgentUID)
 	}
 	strAgentGID := getSAMLAttribute(response, s.userConfig.agentGIDAttributeName)
 	tempAgentGID, err := strconv.Atoi(strAgentGID)
 	if err != nil && strAgentGID != "" {
-		logrus.WithError(err).WithField("agentGID", strAgentGID).Error("unable to convert to integer")
+		//logrus.WithError(err).WithField("agentGID", strAgentGID).Error("unable to convert to integer")
+		return nil, fmt.Errorf("SAML attribute identifier agentGID is not an integer: %s", strAgentGID)
 	}
 
 	return &userAttributes{
@@ -255,7 +257,7 @@ func (s *Service) toUserAttributes(response *saml.Assertion) *userAttributes {
 		agentUserName:  getSAMLAttribute(response, s.userConfig.agentUserNameAttributeName),
 		agentGroupName: getSAMLAttribute(response, s.userConfig.agentGroupNameAttributeName),
 		groups:         getAttributeValues(response, s.userConfig.groupsAttributeName),
-	}
+	}, nil
 }
 
 // getSAMLAttribute is similar to a function provided by the previously used saml library.
