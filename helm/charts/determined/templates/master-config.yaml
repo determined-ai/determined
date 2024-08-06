@@ -178,7 +178,7 @@ stringData:
 
     resource_manager:
       type: "kubernetes"
-      {{- if $defaultNamespace := coalesce .Values.resourceManager.defaultNamespace .Release.namespace }}
+      {{- if $defaultNamespace := coalesce .Values.resourceManager.defaultNamespace .Release.Namespace }}
       default_namespace: {{ quote $defaultNamespace }}
       {{- end }}
       {{- if .Values.resourceManager.clusterName }}

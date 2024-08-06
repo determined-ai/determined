@@ -23,8 +23,8 @@ bindings and resource quotas using either the WebUI or the CLI.
    specify a namespace in the namespace field, the workspace is bound to that namespace. If the
    field is left blank, the workspace is bound to the namespace specified in the
    ``resource_manager.default_namespace`` section of your master configuration (when set), and is
-   otherwise bound to the release namespace. We fall back to the default Kubernetes namespace,
-   "default", during non-helm determined deployments.
+   otherwise bound to the release namespace. For non-helm Determined deployments, it falls back to
+   the default Kubernetes namespace, ``default``.
 
 #. Toggle the "Auto Create Namespace" option on or off. When enabled, the system automatically
    creates a namespace in the cluster, allowing you to edit the resource quota directly in

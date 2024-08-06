@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log"
 	"math"
 	"os"
 	"path/filepath"
@@ -2404,7 +2403,6 @@ func (j *jobsService) getNamespaceResourceQuota(namespaceName string) (*float64,
 func (j *jobsService) getInitialNamespace() string {
 	releaseNamespace := os.Getenv(ReleaseNamespaceEnvVar)
 	if len(releaseNamespace) > 0 {
-		log.Print("releaseNamespace: ", releaseNamespace)
 		return releaseNamespace
 	}
 	return j.namespace
