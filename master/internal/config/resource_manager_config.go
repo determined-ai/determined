@@ -171,8 +171,6 @@ func (a AgentResourceManagerConfig) Validate() []error {
 
 // KubernetesResourceManagerConfig hosts configuration fields for the kubernetes resource manager.
 type KubernetesResourceManagerConfig struct {
-	// deprecated, no longer in use.
-	Namespace string `json:"namespace"`
 	// Changed from "Namespace" to "DefaultNamespace". DefaultNamespace is an optional field that
 	// allows the user to specify the default namespace to bind a workspace to, for each RM.
 	DefaultNamespace string `json:"default_namespace"`
