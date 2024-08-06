@@ -351,6 +351,7 @@ export class Row<HeadRowType extends HeadRow<Row<HeadRowType>>> extends NamedCom
     await this.parentTable.pwLocator.click({
       button: 'right',
       position: { x: 5, y: this.getY(await this.getIndex()) },
+      timeout: 10_000,
     });
   }
 

@@ -51,6 +51,14 @@ Use the [VS Code extension](https://marketplace.visualstudio.com/items?itemName=
 
 CI is setup as `test-e2e-react` in `.circleci/config.yml`.
 
+### Manual CI
+
+Run individual tests on ci with `e2e-react` `-g [your test]`.
+
+![trigger pipeline](./docs/images/trigger-pipeline.png)
+
+### Environment
+
 We use `mcr.microsoft.com/playwright` for [docker container](https://playwright.dev/docs/docker).
 Update the docker image version along with Playwright version.
 
