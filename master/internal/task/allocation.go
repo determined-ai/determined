@@ -627,7 +627,7 @@ func (a *allocation) resourcesAllocated(msg *sproto.ResourcesAllocated) error {
 
 	now := time.Now().UTC()
 	taskStatStartTime := msg.JobSubmissionTime
-	if msg.JobSubmissionTime.IsZero() && a.req.Restore {
+	if !a.req.RequestTime.IsZero() && a.req.Restore {
 		taskStatStartTime = a.req.RequestTime
 	}
 	err = db.RecordTaskStats(context.TODO(), &model.TaskStats{
