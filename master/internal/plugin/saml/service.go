@@ -239,13 +239,11 @@ func (s *Service) toUserAttributes(response *saml.Assertion) (*userAttributes, e
 	strAgentUID := getSAMLAttribute(response, s.userConfig.agentUIDAttributeName)
 	tempAgentUID, err := strconv.Atoi(strAgentUID)
 	if err != nil && strAgentUID != "" {
-		//logrus.WithError(err).WithField("agentUID", strAgentUID).Error("unable to convert to integer")
 		return nil, fmt.Errorf("SAML attribute identifier agentUID is not an integer: %s", strAgentUID)
 	}
 	strAgentGID := getSAMLAttribute(response, s.userConfig.agentGIDAttributeName)
 	tempAgentGID, err := strconv.Atoi(strAgentGID)
 	if err != nil && strAgentGID != "" {
-		//logrus.WithError(err).WithField("agentGID", strAgentGID).Error("unable to convert to integer")
 		return nil, fmt.Errorf("SAML attribute identifier agentGID is not an integer: %s", strAgentGID)
 	}
 

@@ -98,14 +98,15 @@ func TestSAMLWorkflowUserNotProvisioned(t *testing.T) {
 	gid := 37
 	resp := getUserResponse(username, username+"123", uid, gid, username+"group", []string{"abc", "bcd"})
 
-	userAttr := s.toUserAttributes(resp.Assertion)
+	userAttr, err := s.toUserAttributes(resp.Assertion)
+	require.NoError(t, err)
 	require.Equal(t, username, userAttr.userName)
 	require.Equal(t, uid, userAttr.agentUID)
 	require.Equal(t, gid, userAttr.agentGID)
 	require.Equal(t, username, userAttr.agentUserName)
 	require.Equal(t, username+"group", userAttr.agentGroupName)
 
-	_, err := user.ByUsername(ctx, userAttr.userName)
+	_, err = user.ByUsername(ctx, userAttr.userName)
 	log.Print(err)
 	require.ErrorContains(t, err, "not found")
 }
@@ -204,10 +205,11 @@ func addAttribute(response saml.Response, name, value string) {
 func processResponseUnprovisioned(ctx context.Context, t *testing.T,
 	response *saml.Assertion, username string, dispName string, uid int, gid int, groupname string, s *Service,
 ) *model.User {
-	userAttr := s.toUserAttributes(response)
+	userAttr, err := s.toUserAttributes(response)
+	require.NoError(t, err)
 	require.Equal(t, username, userAttr.userName)
 
-	_, err := user.ByUsername(ctx, userAttr.userName)
+	_, err = user.ByUsername(ctx, userAttr.userName)
 	log.Print(err)
 	require.True(t, errors.Is(err, db.ErrNotFound), true)
 	u, err := s.provisionUser(ctx, userAttr.userName, userAttr.groups)
@@ -233,7 +235,8 @@ func processResponseUnprovisioned(ctx context.Context, t *testing.T,
 func processResponseProvisioned(ctx context.Context, t *testing.T,
 	response *saml.Assertion, username string, dispName string, uid int, gid int, groupname string, s *Service,
 ) *model.User {
-	userAttr := s.toUserAttributes(response)
+	userAttr, err := s.toUserAttributes(response)
+	require.NoError(t, err)
 	require.Equal(t, username, userAttr.userName)
 
 	u, err := user.ByUsername(ctx, userAttr.userName)
