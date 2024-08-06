@@ -418,7 +418,11 @@ def delete_workspace(name: str) -> None:
 
 @_require_singleton
 def create_model(
-    name: str, description: Optional[str] = "", metadata: Optional[Dict[str, Any]] = None
+    name: str,
+    description: Optional[str] = "",
+    metadata: Optional[Dict[str, Any]] = None,
+    labels: Optional[List[str]] = None,
+    workspace_name: Optional[str] = None,
 ) -> Model:
     """Add a model to the model registry.
 
@@ -426,12 +430,15 @@ def create_model(
         name: The name of the model. This name must be unique.
         description: A description of the model.
         metadata: Dictionary of metadata to add to the model.
+        labels: List of labels to add to the model.
+        workspace_name: The name of the workspace to add the model to. If no workspace is
+            passed, the model will be created in the "Uncategorized" workspace.
 
     Returns:
         A :class:`~determined.experimental.client.Model` of the created model.
     """
     assert _determined is not None
-    return _determined.create_model(name, description, metadata)
+    return _determined.create_model(name, description, metadata, labels, workspace_name)
 
 
 @_require_singleton
