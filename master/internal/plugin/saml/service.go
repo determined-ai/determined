@@ -59,9 +59,13 @@ type userConfig struct {
 // responses.
 func New(db *db.PgDB, c config.SAMLConfig) (*Service, error) {
 	uc := userConfig{
-		autoProvisionUsers:       c.AutoProvisionUsers,
-		groupsAttributeName:      c.GroupsAttributeName,
-		displayNameAttributeName: c.DisplayNameAttributeName,
+		autoProvisionUsers:          c.AutoProvisionUsers,
+		groupsAttributeName:         c.GroupsAttributeName,
+		displayNameAttributeName:    c.DisplayNameAttributeName,
+		agentUIDAttributeName:       c.AgentUIDAttributeName,
+		agentGIDAttributeName:       c.AgentGIDAttributeName,
+		agentUserNameAttributeName:  c.AgentUserNameAttributeName,
+		agentGroupNameAttributeName: c.AgentGroupNameAttributeName,
 	}
 
 	key, cert, err := proxy.GenSignedCert()
@@ -185,12 +189,6 @@ func (s *Service) consumeAssertion(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "error syncing user")
 	}
 
-	logrus.Error(" ****** printing user posix info")
-	logrus.Errorf("uid: %s, %d\n", s.userConfig.agentUIDAttributeName, userAttr.agentUID)
-	logrus.Errorf("gid: %s, %d\n", s.userConfig.agentGIDAttributeName, userAttr.agentGID)
-	logrus.Errorf("user: %s, %s\n", s.userConfig.agentUserNameAttributeName, userAttr.agentUserName)
-	logrus.Errorf("group: %s, %s\n", s.userConfig.agentGroupNameAttributeName, userAttr.agentGroupName)
-
 	logrus.WithFields(logrus.Fields{
 		"userName": userAttr.userName,
 		"userId":   u.ID,
@@ -240,12 +238,12 @@ func (s *Service) toUserAttributes(response *saml.Assertion) *userAttributes {
 
 	strAgentUID := getSAMLAttribute(response, s.userConfig.agentUIDAttributeName)
 	tempAgentUID, err := strconv.Atoi(strAgentUID)
-	if err != nil {
+	if err != nil && strAgentUID != "" {
 		logrus.WithError(err).WithField("agentUID", strAgentUID).Error("unable to convert to integer")
 	}
 	strAgentGID := getSAMLAttribute(response, s.userConfig.agentGIDAttributeName)
 	tempAgentGID, err := strconv.Atoi(strAgentGID)
-	if err != nil {
+	if err != nil && strAgentGID != "" {
 		logrus.WithError(err).WithField("agentGID", strAgentGID).Error("unable to convert to integer")
 	}
 
