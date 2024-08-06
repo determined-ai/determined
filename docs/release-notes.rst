@@ -43,7 +43,7 @@ Version 0.35.0
 
 -  Cluster: The ``kubernetes_namespace`` field in the resource pool configuration is no longer
    supported. Users can now submit workloads to specific namespaces by binding workspaces to
-   namespaces using the CLI or API.
+   namespaces using the CLI, WebUI, or API.
 
 -  Cluster: The ``resources.agent_label`` task option and the ``label`` option in the agent config
    have been removed. Beginning with 0.20.0 release, these options have been ignored. Please remove
