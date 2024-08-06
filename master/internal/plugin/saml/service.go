@@ -185,6 +185,12 @@ func (s *Service) consumeAssertion(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "error syncing user")
 	}
 
+	logrus.Error(" ****** printing user posix info")
+	logrus.Errorf("uid: %s, %d\n", s.userConfig.agentUIDAttributeName, userAttr.agentUID)
+	logrus.Errorf("gid: %s, %d\n", s.userConfig.agentGIDAttributeName, userAttr.agentGID)
+	logrus.Errorf("user: %s, %s\n", s.userConfig.agentUserNameAttributeName, userAttr.agentUserName)
+	logrus.Errorf("group: %s, %s\n", s.userConfig.agentGroupNameAttributeName, userAttr.agentGroupName)
+
 	logrus.WithFields(logrus.Fields{
 		"userName": userAttr.userName,
 		"userId":   u.ID,
@@ -318,7 +324,8 @@ func (s *Service) syncUser(ctx context.Context, u *model.User, uAttr *userAttrib
 		func(ctx context.Context, tx bun.Tx) error {
 			// If the config is set to auto-provision users, sync the display name.
 			if s.userConfig.autoProvisionUsers {
-				if uAttr.displayName != "" && uAttr.displayName != u.DisplayName.String {
+				updateDisplayName := uAttr.displayName != "" && uAttr.displayName != u.DisplayName.String
+				if updateDisplayName || ugUpdate != nil {
 					err := user.Update(ctx,
 						&model.User{
 							ID:          u.ID,

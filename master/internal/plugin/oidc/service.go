@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
 	"net/url"
 	"os"
@@ -246,18 +247,18 @@ func (s *Service) toIDTokenClaim(userInfo *oidc.UserInfo) (*IDTokenClaims, error
 		c.DisplayName = displayName
 	}
 	if cs[s.config.AgentUIDAttributeName] != nil {
-		agentUID, ok := cs[s.config.AgentUIDAttributeName].(int)
+		agentUID, ok := cs[s.config.AgentUIDAttributeName].(float64)
 		if !ok {
-			return nil, fmt.Errorf("user info agentUID value was not an integer")
+			return nil, fmt.Errorf("user info agentUID value was not a valid number")
 		}
-		c.AgentUID = agentUID
+		c.AgentUID = int(math.Round(agentUID))
 	}
 	if cs[s.config.AgentGIDAttributeName] != nil {
-		agentGID, ok := cs[s.config.AgentGIDAttributeName].(int)
+		agentGID, ok := cs[s.config.AgentGIDAttributeName].(float64)
 		if !ok {
-			return nil, fmt.Errorf("user info agentGID value was not an integer")
+			return nil, fmt.Errorf("user info agentGID value was not a valid number")
 		}
-		c.AgentUID = agentGID
+		c.AgentGID = int(math.Round(agentGID))
 	}
 	if cs[s.config.AgentUserNameAttributeName] != nil {
 		agentUserName, ok := cs[s.config.AgentUserNameAttributeName].(string)
@@ -338,7 +339,7 @@ func (s *Service) syncUser(ctx context.Context, u *model.User, claims *IDTokenCl
 ) (*model.User, error) {
 	ugUpdate := mergeUserGroups(claims, ug)
 	if ugUpdate.UID == ug.UID && ugUpdate.GID == ug.GID && ugUpdate.User == ug.User && ugUpdate.Group == ug.Group {
-		// nothing in user group uto update
+		// nothing in user group to update
 		ugUpdate = nil
 	}
 
@@ -346,7 +347,8 @@ func (s *Service) syncUser(ctx context.Context, u *model.User, claims *IDTokenCl
 		func(ctx context.Context, tx bun.Tx) error {
 			// If the config is set to auto-provision users, sync the display name.
 			if s.config.AutoProvisionUsers {
-				if claims.DisplayName != "" && claims.DisplayName != u.DisplayName.String {
+				updateDisplayName := claims.DisplayName != "" && claims.DisplayName != u.DisplayName.String
+				if updateDisplayName || ugUpdate != nil {
 					err := user.Update(ctx,
 						&model.User{
 							ID:          u.ID,
