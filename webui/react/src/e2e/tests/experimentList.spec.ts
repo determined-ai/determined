@@ -293,7 +293,7 @@ test.describe('Experiment List', () => {
     // await test.step('Hyperparameter Search', async () => {});
   });
 
-  test.skip('DataGrid Action Pause', async () => {
+  test('DataGrid Action Pause', async () => {
     // experiment should initially be paused
     const row = projectDetailsPage.f_experimentList.dataGrid.getRowByIndex(0);
     await expect.soft((await row.getCellByColumnName('State')).pwLocator).toHaveText('paused');
