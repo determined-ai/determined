@@ -86,10 +86,6 @@ func New(
 		db: db,
 	}
 
-	if len(k.config.Namespace) > 0 {
-		k.config.DefaultNamespace = k.config.Namespace
-	}
-
 	k.jobsService, err = newJobsService(
 		k.config.DefaultNamespace,
 		k.config.ClusterName,

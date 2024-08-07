@@ -2839,7 +2839,7 @@ jobs:
             sudo apt-get install iproute2
             yes yes | PATH=$HOME/.local/bin:$PATH make slurmcluster \
               FLAGS="-c <<parameters.container-run-type>> -w <<parameters.workload-manager>> -l '{owner=\\\"determined_ci\\\", gh_team=\\\"machine-user\\\"}'" \
-              TF_LOCK=false || circleci-agent step halt | tee output.log
+              TF_LOCK=false | tee output.log || circleci-agent step halt
           background: true
 
       - run:

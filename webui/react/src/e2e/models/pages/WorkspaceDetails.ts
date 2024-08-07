@@ -1,4 +1,4 @@
-import { BasePage } from 'e2e/models/common/base/BasePage';
+import { DeterminedPage } from 'e2e/models/common/base/BasePage';
 import { Pivot } from 'e2e/models/common/hew/Pivot';
 import { ModelRegistry } from 'e2e/models/components/ModelRegistry';
 import { TaskList } from 'e2e/models/components/TaskList';
@@ -9,7 +9,7 @@ import { WorkspaceProjects } from 'e2e/models/pages/WorkspaceDetails/WorkspacePr
 /**
  * Represents the WorkspaceDetails page from src/pages/WorkspacesDetails.tsx
  */
-export class WorkspaceDetails extends BasePage {
+export class WorkspaceDetails extends DeterminedPage {
   readonly title = '';
   readonly url = /workspaces\/(\d+)\//;
 

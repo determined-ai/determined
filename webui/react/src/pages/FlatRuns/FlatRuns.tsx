@@ -31,7 +31,7 @@ import Row from 'hew/Row';
 import { useToast } from 'hew/Toast';
 import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import { useObservable } from 'micro-observables';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
 import ColumnPickerMenu from 'components/ColumnPickerMenu';
@@ -179,12 +179,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
   const [isOpenFilter, setIsOpenFilter] = useState<boolean>(false);
   const [runs, setRuns] = useState<Loadable<FlatRun>[]>(INITIAL_LOADING_RUNS);
 
-  const [sorts, setSorts] = useState<Sort[]>(() => {
-    if (!isLoadingSettings) {
-      return parseSortString(settings.sortString);
-    }
-    return [EMPTY_SORT];
-  });
+  const [sorts, setSorts] = useState<Sort[]>([EMPTY_SORT]);
   const sortString = useMemo(() => makeSortString(sorts.filter(validSort.is)), [sorts]);
   const loadableFormset = useObservable(formStore.formset);
   const rootFilterChildren: Array<FormGroup | FormField> = Loadable.match(loadableFormset, {
@@ -569,11 +564,20 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
     setRuns(INITIAL_LOADING_RUNS);
   }, [setPage]);
 
-  useEffect(() => {
-    if (!isLoadingSettings && settings.sortString) {
-      setSorts(parseSortString(settings.sortString));
-    }
-  }, [isLoadingSettings, settings.sortString]);
+  useLayoutEffect(() => {
+    let cleanup: () => void;
+    // eslint-disable-next-line prefer-const
+    cleanup = eagerSubscribe(flatRunsSettingsObs, (ps, prevPs) => {
+      if (!prevPs?.isLoaded) {
+        ps.forEach((s) => {
+          const { sortString } = { ...defaultFlatRunsSettings, ...s };
+          setSorts(parseSortString(sortString));
+          cleanup?.();
+        });
+      }
+    });
+    return cleanup;
+  }, [flatRunsSettingsObs]);
 
   useEffect(() => {
     let cleanup: () => void;
@@ -809,12 +813,12 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
     (sorts: Sort[]) => {
       setSorts(sorts);
       const newSortString = makeSortString(sorts.filter(validSort.is));
-      if (newSortString !== sortString) {
+      if (newSortString !== settings.sortString) {
         resetPagination();
       }
       updateSettings({ sortString: newSortString });
     },
-    [resetPagination, sortString, updateSettings],
+    [resetPagination, settings.sortString, updateSettings],
   );
 
   const getRowAccentColor = (rowData: FlatRun) => {

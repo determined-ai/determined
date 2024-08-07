@@ -1,4 +1,5 @@
-import { NamedComponent } from 'e2e/models/common/base/BaseComponent';
+import { NamedComponent } from 'playwright-page-model-base/BaseComponent';
+
 import { NavigationSideBar } from 'e2e/models/components/NavigationSideBar';
 
 /**

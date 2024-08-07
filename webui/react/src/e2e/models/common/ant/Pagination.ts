@@ -1,6 +1,6 @@
 import { Locator } from '@playwright/test';
+import { BaseComponent, NamedComponent } from 'playwright-page-model-base/BaseComponent';
 
-import { BaseComponent, NamedComponent } from 'e2e/models/common/base/BaseComponent';
 import { Select } from 'e2e/models/common/hew/Select';
 
 /**
