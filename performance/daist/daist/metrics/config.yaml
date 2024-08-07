@@ -1,0 +1,34 @@
+name: Sequential Metrics Count Sweep
+entrypoint: python3 model_def.py launcher
+
+environment:
+  image: determinedai/environments:py-3.9-pytorch-1.12-tf-2.11-cpu-0.27.1
+
+# Currently this only does anything for PyTorchTrials, which this isn't
+profiling:
+  enabled: true
+
+resources:
+  slots_per_trial: 1
+
+hyperparameters:
+  delay: 0 # Seconds to sleep during each batch
+  checkpoint_size: 4096 # Size of checkpoint data
+
+  batch_metric_count:
+    type: int
+    minval: 1
+    # As of 2024_05_15, determined 0.32.1, a metrics count about this value causes greater than a
+    # one-second lag in the web app
+    maxval: 1048576
+    count: 32
+
+searcher:
+  name: grid
+  metric: "metrics_count"
+  # this is the number of batches. 2 are required because we are measuring the thing that is
+  # storing the metrics in the first pass
+  max_length: 2
+  max_concurrent_trials: 1
+
+max_restarts: 0
