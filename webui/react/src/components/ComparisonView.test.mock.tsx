@@ -57,20 +57,6 @@ export const METRIC_DATA: RunMetricData = {
     },
   ],
   scale: 'linear',
-  selectedMetrics: [
-    {
-      group: 'training',
-      name: 'loss',
-    },
-    {
-      group: 'validation',
-      name: 'accuracy',
-    },
-    {
-      group: 'validation',
-      name: 'validation_loss',
-    },
-  ],
   setScale: (): Scale => {
     return Scale.Linear;
   },

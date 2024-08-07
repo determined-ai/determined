@@ -1,12 +1,11 @@
 import { makeToast } from 'hew/Toast';
 import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import _ from 'lodash';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { terminalRunStates } from 'constants/states';
 import useMetricNames from 'hooks/useMetricNames';
 import usePolling from 'hooks/usePolling';
-import usePrevious from 'hooks/usePrevious';
 import { timeSeries } from 'services/api';
 import {
   FlatRun,
@@ -16,6 +15,7 @@ import {
   Scale,
   Serie,
   TrialDetails,
+  TrialSummary,
   XAxisDomain,
 } from 'types';
 import handleError, { ErrorType } from 'utils/error';
@@ -35,7 +35,6 @@ export interface RunMetricData {
   scale: Scale;
   setScale: React.Dispatch<React.SetStateAction<Scale>>;
   metricHasData: Record<string, boolean>;
-  selectedMetrics: Metric[];
 }
 
 const summarizedMetricToSeries = (
@@ -44,7 +43,6 @@ const summarizedMetricToSeries = (
 ): {
   data: Record<MetricName, Serie>;
   metricHasData: Record<MetricName, boolean>;
-  selectedMetrics: Metric[];
 } => {
   const rawBatchValuesMap: Record<string, [number, number][]> = {};
   const rawBatchTimesMap: Record<string, [number, number][]> = {};
@@ -94,8 +92,11 @@ const summarizedMetricToSeries = (
       (xAxis) => (recordData?.[key]?.data?.[xAxis]?.length ?? 0) > 0,
     );
   });
-  return { data: recordData, metricHasData, selectedMetrics };
+  return { data: recordData, metricHasData };
 };
+
+// consistent reference to prevent extra calls
+const EMPTY_METRICS: Metric[] = [];
 
 export const useMetrics = (records: (TrialDetails | FlatRun | undefined)[]): RunMetricData => {
   const recordsAllTerminated = records?.every((record) =>
@@ -135,65 +136,75 @@ export const useMetrics = (records: (TrialDetails | FlatRun | undefined)[]): Run
     handleMetricNamesError,
     recordsAllNonTerminal,
   );
-  const metricNamesLoaded = Loadable.isLoaded(loadableMetrics);
   const metrics = useMemo(() => {
-    return Loadable.getOrElse([], loadableMetrics);
+    return loadableMetrics
+      .map((m) => (m.length === 0 ? EMPTY_METRICS : m))
+      .getOrElse(EMPTY_METRICS);
   }, [loadableMetrics]);
-  const [loadableData, setLoadableData] =
-    useState<Loadable<Record<number, Record<string, Serie>>>>(NotLoaded);
-  const [metricHasData, setMetricHasData] = useState<Record<string, boolean>>({});
   const [scale, setScale] = useState<Scale>(Scale.Linear);
-  const [selectedMetrics, setSelectedMetrics] = useState<Metric[]>([]);
+  const [curResponse, setCurResponse] = useState<Loadable<TrialSummary[]>>(NotLoaded);
 
-  const previousRecords = usePrevious(records, []);
+  // don't replace this with usePrevious -- we need the ref to prevent
+  // fetchRecordSummary from regenerating when the previous value is detected
+  const recordIdsRef = useRef<number[]>([]);
+  const curRecordIds = useMemo(() => {
+    const ids = records
+      ?.map((t) => t?.id)
+      .filter(<T>(i: T): i is Exclude<T, undefined> => i !== undefined);
+    return _.isEqual(ids, recordIdsRef.current) ? recordIdsRef.current : ids;
+  }, [records]);
 
   const fetchRecordSummary = useCallback(async () => {
-    // If the record ids have not changed then we do not need to
-    // show the loading state again.
-    if (!_.isEqual(_.map(previousRecords, 'id'), _.map(records, 'id'))) setLoadableData(NotLoaded);
-
-    if (records.length === 0) {
+    if (loadableMetrics.isNotLoaded) return;
+    if (curRecordIds.length === 0) {
       // If there are no trials selected then
       // no data is available.
-      setMetricHasData({});
-      setLoadableData(Loaded({}));
+      setCurResponse(Loaded([]));
       return;
     }
-    if (records.length > 0) {
+    if (curRecordIds.length > 0) {
+      const prevRecordIds = recordIdsRef.current;
+      // If the record ids have not changed then we do not need to
+      // show the loading state again.
+      if (curRecordIds !== prevRecordIds) setCurResponse(NotLoaded);
       try {
-        const metricsHaveData: Record<string, boolean> = {};
         const response = await timeSeries({
           maxDatapoints: screen.width > 1600 ? 1500 : 1000,
           metrics,
           startBatches: 0,
-          trialIds: records?.map((t) => t?.id || 0).filter((i) => i > 0),
+          trialIds: curRecordIds,
         });
-        const newData: Record<number, Record<string, Serie>> = {};
-        response.forEach((r) => {
-          const {
-            data: recordData,
-            metricHasData,
-            selectedMetrics: s,
-          } = summarizedMetricToSeries(r?.metrics, metrics);
-          Object.keys(metricHasData).forEach((key) => {
-            metricsHaveData[key] ||= metricHasData[key];
-          });
-          newData[r.id] = recordData;
-          setSelectedMetrics((prev) => (_.isEqual(selectedMetrics, s) ? prev : s));
+        setCurResponse((prev) => {
+          const loadedData = Loaded(response);
+          return _.isEqual(loadedData, prev) ? prev : loadedData;
         });
-        setLoadableData((prev) =>
-          _.isEqual(Loadable.getOrElse([], prev), newData) ? prev : Loaded(newData),
-        );
-        // Wait until the metric names are loaded
-        // to determine if trials have data for any metric
-        if (Loadable.isLoaded(loadableMetrics)) {
-          setMetricHasData(metricsHaveData);
-        }
       } catch (e) {
         makeToast({ severity: 'Error', title: 'Error fetching metrics' });
       }
     }
-  }, [loadableMetrics, metrics, selectedMetrics, records, previousRecords]);
+  }, [loadableMetrics, metrics, curRecordIds]);
+  useEffect(() => {
+    recordIdsRef.current = curRecordIds;
+  });
+  const requestData = useMemo(() => {
+    return Loadable.all([curResponse, loadableMetrics]);
+  }, [curResponse, loadableMetrics]);
+  const [metricHasData, data] = useMemo(() => {
+    return requestData
+      .map(([response, metrics]) => {
+        const metricsHaveData: Record<string, boolean> = {};
+        const newData: Record<number, Record<string, Serie>> = {};
+        response.forEach((r) => {
+          const { data: recordData, metricHasData } = summarizedMetricToSeries(r?.metrics, metrics);
+          Object.keys(metricHasData).forEach((key) => {
+            metricsHaveData[key] ||= metricHasData[key];
+          });
+          newData[r.id] = recordData;
+        });
+        return [metricsHaveData, newData] as const;
+      })
+      .getOrElse([{}, {}]);
+  }, [requestData]);
 
   const fetchAll = useCallback(async () => {
     await Promise.allSettled([fetchRecordSummary()]);
@@ -212,12 +223,11 @@ export const useMetrics = (records: (TrialDetails | FlatRun | undefined)[]): Run
   }
 
   return {
-    data: Loadable.getOrElse({}, loadableData),
-    isLoaded: metricNamesLoaded && Loadable.isLoaded(loadableData),
+    data,
+    isLoaded: requestData.isLoaded,
     metricHasData,
     metrics,
     scale,
-    selectedMetrics,
     setScale,
   };
 };
