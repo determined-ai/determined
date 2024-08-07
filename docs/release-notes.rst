@@ -97,7 +97,7 @@ Version 0.35.0
          <workspace-name>``.
 
       -  The ``--cluster-name`` field is required only for MultiRM setups when
-         --auto-create-namespace-all-clusters is omitted.
+ ``--auto-create-namespace-all-clusters`` is omitted.
 
    -  API: Add new endpoints for creating and managing workspace namespace bindings.
 
