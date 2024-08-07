@@ -12,8 +12,9 @@ from determined.core import Context
 
 
 class MetricKey:
-    READ = 'read'
-    WRITE = 'write'
+    type_ = NewType('MetricKey', str)
+    READ: type_ = 'read'
+    WRITE: type_ = 'write'
 
     all_ = (READ, WRITE)
 

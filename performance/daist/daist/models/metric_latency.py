@@ -5,12 +5,13 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib import ticker
 from matplotlib.axes import Axes
+from matplotlib.ticker import ScalarFormatter
 from numpy import ndarray
 from numpy.typing import ArrayLike
 
 from ..framework.paths import PkgPath
 from ..utils.misc import to_snake_case
-from .base import BaseDict, Format
+from .base import BaseDict, BaseList, Format
 from .config import Determined
 from .result import FileMeta
 from .session import session
@@ -27,6 +28,15 @@ METRIC_RESULTS_DIR = 'metrics'
 
 
 class BaseDictWithNumpy(BaseDict):
+    @staticmethod
+    def _serialize_to_list(value: Iterable) -> list:
+        if isinstance(value, ndarray):
+            return value.tolist()
+        else:
+            return BaseDict._serialize_to_list(value)
+
+
+class BaseListWithNumpy(BaseList):
     @staticmethod
     def _serialize_to_list(value: Iterable) -> list:
         if isinstance(value, ndarray):
@@ -96,9 +106,6 @@ class OpHist(BaseDictWithNumpy):
 
         for op, conc_hist in self.items():
             conc_hist.save_plot(op, test_id, test_params=test_params)
-            for conc, hist in conc_hist.items():
-                if isinstance(hist, Hist):
-                    hist.save_plot(op, conc, test_id, test_params=test_params)
 
     def save_to_results(self, test_id: str, test_params: Optional[Dict] = None):
         self.make_plots(test_id, test_params=test_params)
@@ -120,7 +127,7 @@ class MetricLatencyOpHist(OpHist):
         METRIC_COUNT = 'metric_count'
 
     class TestParamVal:
-        METRIC_COUNT = 256
+        METRIC_COUNT = 1024
 
     TestParams = {
         TestParamKey.METRIC_COUNT: TestParamVal.METRIC_COUNT
@@ -375,7 +382,8 @@ class Hist(BaseDictWithNumpy):
 
         return fig, axs
 
-    def save_plot(self, title: str, concurrency: ConcurrencyHist.Key.type_, test_id: str,
+    def save_plot(self, title: str, concurrency: Union[ConcurrencyHist.Key.type_, int],
+                  test_id: str,
                   path: Union[str, Path, None] = None,
                   test_params: Optional[Dict] = None):
         meta = FileMeta({FileMeta.Key.TEST_ID: test_id})
@@ -394,3 +402,104 @@ class Hist(BaseDictWithNumpy):
     @classmethod
     def _serialize(cls, key, value):
         return super()._serialize(key, cls._serialize_to_list(value))
+
+
+class SeqSweep(BaseDictWithNumpy):
+    TITLE = 'Sequential Metric Count Sweep'
+
+    class Key:
+        METRIC_COUNTS = 'metric_counts'
+        READ = 'read'
+        WRITE = 'write'
+
+    def __init__(self, dict_=None, /,
+                 metric_counts: List[int] = None,
+                 read: ArrayLike = None,
+                 write: ArrayLike = None,
+                 **kw):
+        super().__init__(dict_, metric_counts=metric_counts, read=read, write=write, **kw)
+
+    @property
+    def metric_counts(self) -> List[int]:
+        return self[self.Key.METRIC_COUNTS]
+
+    @property
+    def read(self) -> List[float]:
+        return self[self.Key.READ]
+
+    @property
+    def write(self) -> List[float]:
+        return self[self.Key.WRITE]
+
+    def make_plot(self, notes: Optional[str] = None):
+        fig, axs = plt.subplots(3, constrained_layout=True)
+        axs: List[Axes]
+        ax: Axes = axs[0]
+        ctx = \
+            (f'{self.TITLE}\n'
+             f'-----------------------------\n'
+             f'context:\n'
+             f'  {Determined.Key.DET_MASTER}: {session.determined.host}\n'
+             '{notes}'
+             f'  versions:\n'
+             f'    determined\n'
+             f'      client: {session.result.version.determined.client}\n'
+             f'      server: {session.result.version.determined.server}\n'
+             f'    {PkgPath.PATH.name}: {session.result.version.daist}\n')
+
+        if notes is None:
+            notes = ''
+        else:
+            str_list = ['  Notes:']
+            for line in notes.splitlines():
+                str_list.append(f'    {line}')
+            str_list.append('')
+            notes = '\n'.join(str_list)
+        ctx = ctx.format(notes=notes)
+        ax.text(0, 0, ctx, font='courier', wrap=True)
+        ax.set_axis_off()
+
+        ax: Axes = axs[1]
+        ax.plot(self.metric_counts, self.write, marker='.')
+        ax.set_xscale('log')
+        ax.xaxis.set_major_formatter(ScalarFormatter())
+        ax.minorticks_off()
+        ax.set_xticks(self.metric_counts)
+        ax.set_xticklabels([])
+
+        ax.set_title('Write Latency')
+        ax.set_ylabel('Time (seconds)')
+
+        ax: Axes = axs[2]
+        ax.plot(self.metric_counts, self.read, marker='.')
+        ax.set_xscale('log')
+        ax.xaxis.set_major_formatter(ScalarFormatter())
+        ax.minorticks_off()
+        ax.set_xticks(self.metric_counts)
+        ax.set_xticklabels(ax.get_xticklabels(), rotation=45, fontsize=8)
+        ax.set_title('Read Latency')
+        ax.set_ylabel('Time (seconds)')
+        ax.set_xlabel('Metric Count (floats)')
+
+        return fig, axs
+
+    def save_to_results(self, test_id: str, notes: Optional[str] = None):
+        self.save_plot(test_id, notes, )
+        session.result.add_obj(self,
+                               METRIC_RESULTS_DIR / self.get_filename(),
+                               meta=FileMeta({FileMeta.Key.TEST_ID: test_id}))
+
+    def save_plot(self, test_id: str, notes: Optional[str],
+                  path: Union[str, Path, None] = None,):
+        meta = FileMeta({FileMeta.Key.TEST_ID: test_id})
+        fig, _ = self.make_plot(notes=notes)
+        if path is None:
+            path = METRIC_RESULTS_DIR / self.get_filename(
+                fmt=Format.PNG,
+                tags=(f'{to_snake_case(self.TITLE)}',))
+        path_to_save_to = session.result.touch(path, meta=meta)
+        fig.savefig(path_to_save_to)
+
+    @staticmethod
+    def show():
+        plt.show()
