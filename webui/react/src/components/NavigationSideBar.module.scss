@@ -19,13 +19,7 @@
     flex-direction: column;
     flex-grow: 1;
     min-height: 0;
-    overflow: auto;
-  }
-  section.launch {
-    align-items: center;
-    display: flex;
-    justify-content: center;
-    padding: 16px 0;
+    overflow: hidden auto;
     width: var(--nav-side-bar-width-max);
   }
   section.workspaces {
@@ -34,6 +28,7 @@
     flex-grow: 1;
     min-height: calc(48px * 2);
     overflow: hidden;
+    transition: height var(--animation-curve);
 
     .actionButtons {
       // action buttons are hidden when the cursor is not hovered on buttons
@@ -111,7 +106,7 @@
     background-color: var(--theme-stage);
     display: flex;
     flex-wrap: nowrap;
-    width: var(--nav-side-bar-width-max);
+    width: 100%;
 
     &.active {
       background-color: var(--theme-stage-strong);
@@ -238,7 +233,7 @@
   flex-basis: var(--nav-side-bar-width-min);
   transition: flex-basis var(--animation-curve);
 
-  section.launch {
+  & > section {
     transition: width var(--animation-curve);
     width: var(--nav-side-bar-width-min);
   }
@@ -293,10 +288,7 @@
   }
   .navItemContainer {
     flex-direction: column;
-    transition:
-      height var(--animation-curve),
-      width var(--animation-curve);
-    width: var(--nav-side-bar-width-min);
+    transition: width var(--animation-curve);
 
     .action,
     .label {
@@ -332,8 +324,17 @@
 .collapsedEnterDone {
   flex-basis: var(--nav-side-bar-width-min);
 
-  section.launch {
+  & > section {
     width: var(--nav-side-bar-width-min);
+  }
+  section.workspaces {
+    flex-shrink: 0;
+    overflow-y: visible;
+    transition: height var(--animation-curve);
+
+    .pinnedWorkspaces {
+      overflow-y: visible;
+    }
   }
   .logo {
     height: 24px;
@@ -367,7 +368,6 @@
   }
   .navItemContainer {
     flex-direction: column;
-    width: var(--nav-side-bar-width-min);
 
     .action,
     .label {
@@ -419,7 +419,7 @@
   flex-basis: var(--nav-side-bar-width-max);
   transition: flex-basis var(--animation-curve);
 
-  section.launch {
+  & > section {
     transition: width var(--animation-curve);
     width: var(--nav-side-bar-width-max);
   }
@@ -476,7 +476,7 @@
     transition:
       height var(--animation-curve),
       width var(--animation-curve);
-    width: var(--nav-side-bar-width-max);
+    width: 100%;
 
     .action,
     .label {
