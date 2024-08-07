@@ -29,7 +29,7 @@ import { useToast } from 'hew/Toast';
 import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import { isUndefined } from 'lodash';
 import { useObservable } from 'micro-observables';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
 import ComparisonView from 'components/ComparisonView';
@@ -172,12 +172,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
 
   const { settings: globalSettings, updateSettings: updateGlobalSettings } =
     useSettings<DataGridGlobalSettings>(settingsConfigGlobal);
-  const [sorts, setSorts] = useState<Sort[]>(() => {
-    if (!isLoadingSettings) {
-      return parseSortString(settings.sortString);
-    }
-    return [EMPTY_SORT];
-  });
+  const [sorts, setSorts] = useState<Sort[]>([EMPTY_SORT]);
   const sortString = useMemo(() => makeSortString(sorts.filter(validSort.is)), [sorts]);
   const [experiments, setExperiments] = useState<Loadable<ExperimentWithTrial>[]>(
     INITIAL_LOADING_EXPERIMENTS,
@@ -314,11 +309,20 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
     [resetPagination, sortString, updateSettings],
   );
 
-  useEffect(() => {
-    if (!isLoadingSettings && settings.sortString) {
-      setSorts(parseSortString(settings.sortString));
-    }
-  }, [isLoadingSettings, settings.sortString]);
+  useLayoutEffect(() => {
+    let cleanup: () => void;
+    // eslint-disable-next-line prefer-const
+    cleanup = eagerSubscribe(projectSettingsObs, (ps, prevPs) => {
+      if (!prevPs?.isLoaded) {
+        ps.forEach((s) => {
+          const { sortString } = { ...defaultProjectSettings, ...s };
+          setSorts(parseSortString(sortString));
+          cleanup?.();
+        });
+      }
+    });
+    return cleanup;
+  }, [projectSettingsObs]);
 
   useEffect(() => {
     return eagerSubscribe(projectSettingsObs, (ps, prevPs) => {
