@@ -1,6 +1,5 @@
 import { ChartGrid, ChartsProps } from 'hew/LineChart';
 import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
-import _ from 'lodash';
 import React, { useCallback, useMemo, useState } from 'react';
 
 import MetricBadgeTag from 'components/MetricBadgeTag';
@@ -116,7 +115,7 @@ const CompareMetrics: React.FC<Props> = ({
   );
 
   const chartsProps: Loadable<ChartsProps> = useMemo(() => {
-    const { metricHasData, metrics, isLoaded, selectedMetrics } = metricData;
+    const { metricHasData, metrics, isLoaded } = metricData;
     const { chartProps, chartedMetrics } = selectedRuns
       ? calculateRunsChartProps(metricData, selectedRuns, xAxis, colorMap)
       : calculateExperimentChartProps(metricData, selectedExperiments, trials, xAxis, colorMap);
@@ -134,11 +133,7 @@ const CompareMetrics: React.FC<Props> = ({
     if (!isLoaded) {
       // When trial metrics hasn't loaded metric names or individual trial metrics.
       return NotLoaded;
-    } else if (!chartDataIsLoaded || !_.isEqual(selectedMetrics, metrics)) {
-      // In some cases the selectedMetrics returned may not be up to date
-      // with the metrics selected by the user. In this case we want to
-      // show a loading state until the metrics match.
-
+    } else if (!chartDataIsLoaded) {
       // returns the chartProps with a NotLoaded series which enables
       // the ChartGrid to show a spinner for the loading charts.
       return Loaded(chartProps.map((chartProps) => ({ ...chartProps, series: NotLoaded })));
