@@ -56,6 +56,8 @@ type IDTokenClaims struct {
 	AgentGID            int      `json:"agent_gid"`
 	AgentUserName       string   `json:"agent_user_name"`
 	AgentGroupName      string   `json:"agent_group_name"`
+	AgentUIDSet         bool     `json:"agent_uid_set"`
+	AgentGIDSet         bool     `json:"agent_gid_set"`
 	Groups              []string `json:"groups"`
 }
 
@@ -252,6 +254,7 @@ func (s *Service) toIDTokenClaim(userInfo *oidc.UserInfo) (*IDTokenClaims, error
 			return nil, fmt.Errorf("user info agentUID value was not a valid number")
 		}
 		c.AgentUID = int(math.Round(agentUID))
+		c.AgentUIDSet = true
 	}
 	if cs[s.config.AgentGIDAttributeName] != nil {
 		agentGID, ok := cs[s.config.AgentGIDAttributeName].(float64)
@@ -259,6 +262,7 @@ func (s *Service) toIDTokenClaim(userInfo *oidc.UserInfo) (*IDTokenClaims, error
 			return nil, fmt.Errorf("user info agentGID value was not a valid number")
 		}
 		c.AgentGID = int(math.Round(agentGID))
+		c.AgentGIDSet = true
 	}
 	if cs[s.config.AgentUserNameAttributeName] != nil {
 		agentUserName, ok := cs[s.config.AgentUserNameAttributeName].(string)
@@ -317,10 +321,10 @@ func mergeUserGroups(sessionData *IDTokenClaims, dbData *model.AgentUserGroup) *
 		Group: dbData.Group,
 	}
 
-	if sessionData.AgentUID != 0 {
+	if sessionData.AgentUIDSet {
 		result.UID = sessionData.AgentUID
 	}
-	if sessionData.AgentGID != 0 {
+	if sessionData.AgentGIDSet {
 		result.GID = sessionData.AgentGID
 	}
 	if sessionData.AgentUserName != "" {
