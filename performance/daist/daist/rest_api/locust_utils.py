@@ -27,6 +27,10 @@ def debug_http():
 
 
 class LocustTasksWithMeta(UserList):
+    """
+    .. note:: Mentioned in PR 9726 (https://github.com/determined-ai/determined/pull/9762),
+        if this were to be made a dict, instead of a list, weighting could be applied to the tasks.
+    """
     def __init__(self, initlist: Optional[List['BaseLocustTaskWithMeta']] = None):
         super().__init__(initlist)
 
