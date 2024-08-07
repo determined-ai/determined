@@ -4,8 +4,6 @@ import typing
 import swagger_parser
 from typing_extensions import assert_never
 
-SWAGGER = "proto/build/swagger/determined/api/v1/api.swagger.json"
-SWAGGER = os.path.join(os.path.dirname(__file__), "..", SWAGGER)
 TAB = "    "
 
 Code = str
@@ -205,10 +203,9 @@ def gen_function(func: swagger_parser.Function) -> Code:
     out = [f"def {func.operation_name_sc()}("]
 
     # Function parameters.
-    out += ['    session: "api.BaseSession",']
+    out += ['    session: "RequestHandler",']
     if func.params:
         out += ["    *,"]
-
 
     required = sorted((k, v) for k, v in func.params.items() if v.required)
     optional = sorted((k, v) for k, v in func.params.items() if not v.required)
@@ -442,9 +439,6 @@ from urllib import parse
 
 import requests
 
-if typing.TYPE_CHECKING:
-    from determined.common import api
-
 # flake8: noqa
 Json = typing.Any
 
@@ -453,6 +447,20 @@ Json = typing.Any
 class Unset:
     pass
 
+
+class RequestHandler(typing.Protocol):
+    def _do_request(
+        self,
+        method: str,
+        path: str,
+        params: typing.Optional[typing.Dict[str, typing.Any]],
+        json: typing.Any,
+        data: typing.Optional[str],
+        headers: typing.Optional[typing.Dict[str, typing.Any]],
+        timeout: typing.Optional[int],
+        stream: bool,
+    ) -> requests.Response:
+        raise NotImplementedError
 
 _unset = Unset()
 
@@ -543,7 +551,7 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--input", "-i", action="store", default=SWAGGER, help="input swagger file")
+    parser.add_argument("--input", "-i", action="store", required=True, help="input swagger file")
     parser.add_argument("--output", "-o", action="store", required=True, help="output file")
     args = parser.parse_args()
 
