@@ -312,7 +312,10 @@ def main(det_callback, tb_callback, model_args, data_args, training_args):
         id2label[str(i)] = label
 
     # Load the accuracy metric from the datasets package
-    metric = datasets.load_metric("accuracy", trust_remote_code=True,)
+    metric = datasets.load_metric(
+        "accuracy",
+        trust_remote_code=True,
+    )
 
     # Define our compute_metrics function. It takes an `EvalPrediction` object (a namedtuple with a
     # predictions and label_ids field) and has to return a dictionary string to float.
