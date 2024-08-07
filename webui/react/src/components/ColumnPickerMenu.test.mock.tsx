@@ -1555,6 +1555,12 @@ export const projectColumns: ProjectColumn[] = [
     location: 'LOCATION_TYPE_HYPERPARAMETERS',
     type: 'COLUMN_TYPE_NUMBER',
   },
+  {
+    column: 'metadata.hello',
+    displayName: '',
+    location: 'LOCATION_TYPE_RUN_METADATA',
+    type: 'COLUMN_TYPE_TEXT',
+  },
 ];
 
 export const initialVisibleColumns = [

@@ -42,6 +42,7 @@ export interface DeterminedInfo {
   ssoProviders?: SsoProvider[];
   userManagementEnabled: boolean;
   version: string;
+  hasCustomLogo: boolean;
 }
 
 export interface Telemetry {
@@ -56,6 +57,7 @@ const initInfo: DeterminedInfo = {
   clusterMessage: undefined,
   clusterName: '',
   featureSwitches: [],
+  hasCustomLogo: false,
   isTelemetryEnabled: false,
   masterId: '',
   rbacEnabled: false,

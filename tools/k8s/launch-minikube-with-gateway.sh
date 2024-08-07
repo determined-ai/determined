@@ -14,29 +14,7 @@ fi
 minikube start --profile $minikube_profile --kubernetes-version $K8S_VERSION
 kubectl apply -f https://raw.githubusercontent.com/projectcontour/contour/release-1.29/examples/render/contour-gateway-provisioner.yaml
 
-kubectl apply -f - <<EOF
-kind: GatewayClass
-apiVersion: gateway.networking.k8s.io/v1
-metadata:
-  name: contour
-spec:
-  controllerName: projectcontour.io/gateway-controller
----
-kind: Gateway
-apiVersion: gateway.networking.k8s.io/v1
-metadata:
-  name: contour
-  namespace: projectcontour
-spec:
-  gatewayClassName: contour
-  listeners:
-    - name: tcp
-      protocol: TCP
-      port: 52335 # Need at least one listener on a gateway. Master will add and patch to it.
-      allowedRoutes:
-        namespaces:
-          from: All
-EOF
+kubectl apply -f $tools_k8s_dir/contour.yaml
 
 if sudo -n true 2>/dev/null; then
     # Either like have a smaller subnet so we don't conflict. Or like don't start it for the second one.

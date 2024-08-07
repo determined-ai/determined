@@ -8,6 +8,8 @@ import {
 import { PermissionsHook } from 'hooks/usePermissions';
 import { FlatRun, FlatRunAction, RunState, SelectionType } from 'types';
 
+import { combine } from './filterFormSet';
+
 type FlatRunChecker = (flatRun: Readonly<FlatRun>) => boolean;
 
 type FlatRunPermissionSet = Pick<
@@ -89,12 +91,11 @@ const idToFilter = (operator: Operator, id: number) =>
 export const getIdsFilter = (
   filterFormSet: FilterFormSetWithoutId,
   selection: SelectionType,
-): FilterFormSetWithoutId | undefined => {
+): FilterFormSetWithoutId => {
   const filterGroup: FilterFormSetWithoutId['filterGroup'] =
     selection.type === 'ALL_EXCEPT'
-      ? {
+      ? combine(filterFormSet.filterGroup, 'and', {
           children: [
-            filterFormSet.filterGroup,
             {
               children: selection.exclusions.map(idToFilter.bind(this, '!=')),
               conjunction: 'and',
@@ -103,30 +104,15 @@ export const getIdsFilter = (
           ],
           conjunction: 'and',
           kind: 'group',
-        }
+        })
       : {
           children: selection.selections.map(idToFilter.bind(this, '=')),
           conjunction: 'or',
           kind: 'group',
         };
 
-  const filter: FilterFormSetWithoutId = {
+  return {
     ...filterFormSet,
-    filterGroup: {
-      children: [
-        filterGroup,
-        {
-          columnName: 'searcherType',
-          kind: 'field',
-          location: 'LOCATION_TYPE_RUN',
-          operator: '!=',
-          type: 'COLUMN_TYPE_TEXT',
-          value: 'single',
-        } as const,
-      ],
-      conjunction: 'and',
-      kind: 'group',
-    },
+    filterGroup,
   };
-  return filter;
 };

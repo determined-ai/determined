@@ -18,6 +18,7 @@ type OIDCConfig struct {
 	GroupsAttributeName         string `json:"groups_attribute_name"`
 	DisplayNameAttributeName    string `json:"display_name_attribute_name"`
 	AlwaysRedirect              bool   `json:"always_redirect"`
+	ExcludeGroupsScope          bool   `json:"exclude_groups_scope"`
 }
 
 // Validate implements the check.Validatable interface.

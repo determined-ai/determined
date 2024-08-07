@@ -51,6 +51,7 @@ export const optionsByColumnType = {
     { label: 'Newest → Oldest', value: 'desc' },
     { label: 'Oldest → Newest', value: 'asc' },
   ],
+  [V1ColumnType.ARRAY]: [],
   [V1ColumnType.UNSPECIFIED]: [
     { label: 'Ascending', value: 'asc' },
     { label: 'Descending', value: 'desc' },

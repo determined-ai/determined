@@ -562,6 +562,7 @@ func (a *apiServer) getProjectRunColumnsByID(
 		ColumnExpr("CONCAT('metadata.', flat_key) as metadata").
 		ColumnExpr(`
 		CASE
+			WHEN is_array_element=true THEN 'array'
 			WHEN string_value IS NOT NULL THEN 'string'
 			WHEN integer_value IS NOT NULL THEN 'number'
 			WHEN float_value IS NOT NULL THEN 'number'
@@ -599,6 +600,8 @@ func parseMetricsType(metricType string) projectv1.ColumnType {
 		return projectv1.ColumnType_COLUMN_TYPE_DATE
 	case db.MetricTypeBool:
 		return projectv1.ColumnType_COLUMN_TYPE_TEXT
+	case db.MetricTypeArray:
+		return projectv1.ColumnType_COLUMN_TYPE_ARRAY
 	default:
 		// unsure of how to treat arrays/objects/nulls
 		return projectv1.ColumnType_COLUMN_TYPE_UNSPECIFIED

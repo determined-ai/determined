@@ -54,11 +54,14 @@ resource "google_compute_instance" "vm_instance" {
     ssh-keys = "${var.ssh_user}:${file(var.ssh_key_pub)}"
   }
 
+  labels = var.vm_labels
+
   machine_type = var.machine_type
 
   boot_disk {
     initialize_params {
       image = var.boot_disk
+      labels = var.vm_labels
     }
   }
 
@@ -89,7 +92,7 @@ resource "google_compute_instance" "vm_instance" {
     on_host_maintenance = "TERMINATE"
   }
 
-  
+
 
   metadata_startup_script = templatefile("${path.module}/scripts/startup-script.sh", { WORKLOAD_MANAGER = var.workload_manager })
 }

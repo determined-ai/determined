@@ -346,6 +346,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
             dataPath = `experiment.${currentColumn.column}`;
             break;
           case V1LocationType.RUN:
+          case V1LocationType.RUNMETADATA:
             dataPath = currentColumn.column;
             break;
           case V1LocationType.HYPERPARAMETERS:
@@ -1059,6 +1060,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
                 V1LocationType.RUN,
                 [V1LocationType.VALIDATIONS, V1LocationType.TRAINING, V1LocationType.CUSTOMMETRIC],
                 V1LocationType.RUNHYPERPARAMETERS,
+                V1LocationType.RUNMETADATA,
               ]}
               onVisibleColumnChange={handleColumnsOrderChange}
             />
