@@ -161,6 +161,7 @@ type Config struct {
 	EnableCors            bool                              `json:"enable_cors"`
 	LaunchError           bool                              `json:"launch_error"`
 	ClusterName           string                            `json:"cluster_name"`
+	UICustomization       UICustomizationConfig             `json:"ui_customization"`
 	Logging               model.LoggingConfig               `json:"logging"`
 	RetentionPolicy       model.LogRetentionPolicy          `json:"retention_policy"`
 	Observability         ObservabilityConfig               `json:"observability"`

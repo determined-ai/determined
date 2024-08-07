@@ -112,6 +112,7 @@ export const mapV1MasterInfo = (data: Sdk.V1GetMasterResponse): DeterminedInfo =
     externalLoginUri: data.externalLoginUri,
     externalLogoutUri: data.externalLogoutUri,
     featureSwitches: data.featureSwitches || [],
+    hasCustomLogo: data.hasCustomLogo,
     isTelemetryEnabled: data.telemetryEnabled === true,
     masterId: data.masterId,
     rbacEnabled: !!data.rbacEnabled,

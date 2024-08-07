@@ -11,6 +11,8 @@ MACHINE_TYPE=
 GPU_TYPE=
 # Number of GPUs
 GPU_COUNT=
+# Instance labels
+LABELS=
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -76,6 +78,13 @@ while [[ $# -gt 0 ]]; do
                 shift
             fi
             ;;
+        -l)
+            shift
+            if [[ -n $1 && $1 != -* ]]; then
+                LABELS="$1"
+                shift
+            fi
+            ;;
         *)
             echo "Invalid option: $1. Skipping..." >&2
             shift
@@ -118,4 +127,7 @@ if [[ -n $GPU_TYPE ]]; then
     echo "   count: $GPU_COUNT"
     echo "}"
     echo "allow_stopping_for_update        = true"
+fi
+if [[ -n $LABELS ]]; then
+    echo "vm_labels = $LABELS"
 fi

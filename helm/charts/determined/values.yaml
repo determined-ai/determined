@@ -125,6 +125,7 @@ useNodePortForMaster: false
 #   groupsAttributeName:
 #   displayNameAttributeName:
 #   alwaysRedirect:
+#   excludeGroupsScope:
 
 # scim (EE-only) enables System for Cross-domain Identity Management (SCIM) integration, which is
 # only available if enterpriseEdition is true. It allows administrators to easily and securely
@@ -363,7 +364,7 @@ resourcePools:
 #   - resource_manager:
 #       type: kubernetes
 #       max_slots_per_pod: 1
-#       name: carolina-multirm-1
+#       cluster_name: additional-cluster
 #       default_namespace: default
 #       kubeconfig_secret_name: additionalrm
 #       kubeconfig_secret_value: config
@@ -379,5 +380,7 @@ resourcePools:
   # Schedule for cleaning up logs. This also accepts a cron expression. For example to run retention every Sunday at 2 am, use "0 2 * * 0"
   # schedule: "24h"
 
-# The default namespace to be referenced by each resource manager.
-# defaultNamespace:
+resourceManager:
+  # Specifies the namespace in a given Kubernetes compute cluster where all workload pods will be sent by default.
+  defaultNamespace:
+  clusterName:

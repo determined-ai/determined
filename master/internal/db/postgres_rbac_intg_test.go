@@ -26,26 +26,29 @@ var (
 )
 
 var (
-	userModelViewer           model.User
-	userModelEditor           model.User
-	userModelEditorRestricted model.User
-	userModelClusterAdmin     model.User
+	userModelViewer                  model.User
+	userModelEditor                  model.User
+	userModelEditorRestricted        model.User
+	userModelEditorProjectRestricted model.User
+	userModelClusterAdmin            model.User
 )
 
 var roles = map[string]int{
-	"ClusterAdmin":        1,
-	"WorkspaceAdmin":      2,
-	"WorkspaceCreator":    3,
-	"Viewer":              4,
-	"Editor":              5,
-	"ModelRegistryViewer": 6,
-	"EditorRestricted":    7,
+	"ClusterAdmin":            1,
+	"WorkspaceAdmin":          2,
+	"WorkspaceCreator":        3,
+	"Viewer":                  4,
+	"Editor":                  5,
+	"ModelRegistryViewer":     6,
+	"EditorRestricted":        7,
+	"EditorProjectRestricted": 9,
 }
 
 var wsIDs,
 	viewerGroupIDs,
 	editorGroupIDs,
 	editorRestrictedGroupIDs,
+	editorProjectRestrictedGroupIDs,
 	clusterAdminGroupIDs []int
 
 func setup(t *testing.T, pgDB *PgDB) {
@@ -61,6 +64,8 @@ func setup(t *testing.T, pgDB *PgDB) {
 		viewerGroupName := fmt.Sprintf("test_group_viewer_%s", nameExt)
 		editorGroupName := fmt.Sprintf("test_group_editor_%s", nameExt)
 		editorRestrictedGroupName := fmt.Sprintf("test_group_editor_restricted_%s",
+			nameExt)
+		editorProjectRestrictedGroupName := fmt.Sprintf("test_group_editor_project_restricted_%s",
 			nameExt)
 		clusterAdminGroupName := fmt.Sprintf("test_group_cluster_admin_%s", nameExt)
 
@@ -109,6 +114,17 @@ func setup(t *testing.T, pgDB *PgDB) {
 		_, err = Bun().NewInsert().Model(&raData).Table("role_assignments").Exec(ctx)
 		require.NoError(t, err, "error inserting editor-restricted role assignment")
 
+		grp = &model.Group{Name: editorProjectRestrictedGroupName}
+		_, err = Bun().NewInsert().Model(grp).Returning("id").Exec(ctx)
+		require.NoError(t, err, "error inserting editor-project-restricted group")
+		editorProjectRestrictedGroupIDs = append(editorProjectRestrictedGroupIDs, grp.ID)
+
+		raData["group_id"] = grp.ID
+		raData["role_id"] = roles["EditorProjectRestricted"]
+		raData["scope_id"] = scopeID
+		_, err = Bun().NewInsert().Model(&raData).Table("role_assignments").Exec(ctx)
+		require.NoError(t, err, "error inserting editor-project-restricted role assignment")
+
 		grp = &model.Group{Name: clusterAdminGroupName}
 		_, err = Bun().NewInsert().Model(grp).Returning("id").Exec(ctx)
 		require.NoError(t, err, "error inserting cluster admin group")
@@ -133,6 +149,10 @@ func setup(t *testing.T, pgDB *PgDB) {
 
 	userModelEditorRestricted = model.User{Username: uuid.New().String(), Active: true}
 	_, err = HackAddUser(context.TODO(), &userModelEditorRestricted)
+	require.NoError(t, err)
+
+	userModelEditorProjectRestricted = model.User{Username: uuid.New().String(), Active: true}
+	_, err = HackAddUser(context.TODO(), &userModelEditorProjectRestricted)
 	require.NoError(t, err)
 
 	userModelClusterAdmin = model.User{Username: uuid.New().String(), Active: true}
@@ -168,6 +188,15 @@ func setup(t *testing.T, pgDB *PgDB) {
 		require.NoError(t, err, "error inserting user group membership "+
 			strconv.Itoa(editorRestrictedGID))
 
+		editorProjectRestrictedGID := editorProjectRestrictedGroupIDs[i]
+		groupMembership["user_id"] = userModelEditorProjectRestricted.ID
+		groupMembership["group_id"] = editorProjectRestrictedGID
+
+		_, err = Bun().NewInsert().Model(&groupMembership).Table("user_group_membership").
+			Exec(ctx)
+		require.NoError(t, err, "error inserting user group membership "+
+			strconv.Itoa(editorProjectRestrictedGID))
+
 		clusterAdminGID := clusterAdminGroupIDs[i]
 		groupMembership["user_id"] = userModelClusterAdmin.ID
 		groupMembership["group_id"] = clusterAdminGID
@@ -193,6 +222,10 @@ func cleanUp(t *testing.T) {
 		Exec(ctx)
 	require.NoError(t, err)
 
+	_, err = Bun().NewDelete().Table("users").Where("id = ?", userModelEditorProjectRestricted.ID).
+		Exec(ctx)
+	require.NoError(t, err)
+
 	_, err = Bun().NewDelete().Table("users").Where("id = ?", userModelClusterAdmin.ID).
 		Exec(ctx)
 	require.NoError(t, err)
@@ -212,6 +245,10 @@ func cleanUp(t *testing.T) {
 		Exec(ctx)
 	require.NoError(t, err, "error deleting editor-restricted groups")
 
+	_, err = Bun().NewDelete().Table("groups").Where("id IN (?)", bun.In(editorProjectRestrictedGroupIDs)).
+		Exec(ctx)
+	require.NoError(t, err, "error deleting editor-project-restricted groups")
+
 	_, err = Bun().NewDelete().Table("groups").Where("id IN (?)", bun.In(clusterAdminGroupIDs)).
 		Exec(ctx)
 	require.NoError(t, err, "error deleting cluster admin groups")
@@ -230,6 +267,7 @@ func TestPermissionMatch(t *testing.T) {
 	userIDViewer := userModelViewer.ID
 	userIDEditor := userModelEditor.ID
 	userIDEditorRestricted := userModelEditorRestricted.ID
+	userIDEditorProjectRestricted := userModelEditorProjectRestricted.ID
 	userIDClusterAdmin := userModelClusterAdmin.ID
 
 	badWorkspaceID := int32(maxWsID) + 10
@@ -261,6 +299,18 @@ func TestPermissionMatch(t *testing.T) {
 			rbacv1.PermissionType_PERMISSION_TYPE_CREATE_NSC)
 		require.IsType(t, authz.PermissionDeniedError{}, err,
 			"user should not have permission to create NSC tasks")
+
+		// Verify that the user assigned to the groups with EditorProjectRestricted privileges within the
+		// given workspace cannot create or update Projects.
+		err = DoesPermissionMatch(ctx, userIDEditorProjectRestricted, &workspaceID,
+			rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_PROJECT)
+		require.IsType(t, authz.PermissionDeniedError{}, err,
+			"user should not have permission to update Projects")
+
+		err = DoesPermissionMatch(ctx, userIDEditorProjectRestricted, &workspaceID,
+			rbacv1.PermissionType_PERMISSION_TYPE_CREATE_PROJECT)
+		require.IsType(t, authz.PermissionDeniedError{}, err,
+			"user should not have permission to create Projects")
 
 		// Verify that a user who has ClusterAdmin privileges can add workspace-namespace bindings,
 		// while a user with Editor privileges and below cannot.
@@ -324,6 +374,16 @@ func TestPermissionMatch(t *testing.T) {
 			rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_NSC, workspaceID)
 		require.IsType(t, authz.PermissionDeniedError{}, err,
 			"user should not have permission to update experiments")
+
+		err = DoesPermissionMatchAll(ctx, userIDEditorProjectRestricted,
+			rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_PROJECT, workspaceID)
+		require.IsType(t, authz.PermissionDeniedError{}, err,
+			"user should not have permission to update Projects")
+
+		err = DoesPermissionMatchAll(ctx, userIDEditorProjectRestricted,
+			rbacv1.PermissionType_PERMISSION_TYPE_CREATE_PROJECT, workspaceID)
+		require.IsType(t, authz.PermissionDeniedError{}, err,
+			"user should not have permission to create Projects")
 
 		err = DoesPermissionMatchAll(ctx, userIDEditor,
 			rbacv1.PermissionType_PERMISSION_TYPE_SET_WORKSPACE_NAMESPACE_BINDINGS, workspaceID)
@@ -515,6 +575,34 @@ func TestEditorVSEditorRestricted(t *testing.T) {
 	num, err := Bun().NewSelect().Table("permission_assignments").
 		Where("role_id = ?", roles["EditorRestricted"]).
 		Where("permission_id = 3001 OR permission_id = 3003").
+		Count(ctx)
+	require.NoError(t, err)
+
+	require.Zero(t, num)
+}
+
+func TestEditorVSEditorProjectRestricted(t *testing.T) {
+	// Verify that the EditorProjectRestricted role only has two less permissions than Editor and that
+	// it does not have the create or update projects permissions.
+	ctx := context.Background()
+	pgDB, closeDB := MustResolveTestPostgres(t)
+	defer closeDB()
+	MustMigrateTestPostgres(t, pgDB, MigrationsFromDB)
+
+	numEditorProjectRestrictedPermissions, err := Bun().NewSelect().Table("permission_assignments").
+		Where("role_id = ?", roles["EditorProjectRestricted"]).Count(ctx)
+	require.NoError(t, err)
+
+	numEditorPermissions, err := Bun().NewSelect().Table("permission_assignments").
+		Where("role_id = ?", roles["Editor"]).Count(ctx)
+	require.NoError(t, err)
+
+	require.Equal(t, numEditorPermissions-2, numEditorProjectRestrictedPermissions)
+
+	// Verify that EditorProjectRestricted role does not have create/update project permissions
+	num, err := Bun().NewSelect().Table("permission_assignments").
+		Where("role_id = ?", roles["EditorProjectRestricted"]).
+		Where("permission_id = 4001 OR permission_id = 4003").
 		Count(ctx)
 	require.NoError(t, err)
 

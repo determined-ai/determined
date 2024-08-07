@@ -311,7 +311,7 @@ commands:
   install-codecov:
     steps:
       - run: pip install codecov
-      
+
   upload-junit-datadog:
     parameters:
       service:
@@ -627,7 +627,7 @@ commands:
         default: true
     steps:
       - when:
-          condition: 
+          condition:
             and:
               - equal: [<<parameters.master-host>>,'localhost']
               - <<parameters.wait-for-master>>
@@ -656,7 +656,7 @@ commands:
                     DD_HOST_TAGS="$host_tags" \
                     DD_SERVICE="determined-pytest-<<parameters.mark>>" \
                     bash -c "$(curl -L https://s3.amazonaws.com/dd-agent/scripts/install_script_agent7.sh)"
-                    
+
                     # config files for the agent have an expected file structure
                     sudo mkdir -p /etc/datadog-agent/conf.d/determined-master.d/
                     sudo chmod a+rw /etc/datadog-agent/datadog.yaml
@@ -766,7 +766,7 @@ commands:
                   if [ "$AIS_DD_ENABLE_MONITORING" == "true" ]; then
                     sudo systemctl stop datadog-agent || true
                   fi
-            
+
 
   run-det-deploy-tests:
     parameters:
@@ -2429,7 +2429,7 @@ jobs:
       - run: codecov -v -t $CODECOV_TOKEN -F harness
       - upload-junit-datadog:
           service: test-unit-harness-cpu
-          env: ci-cpu 
+          env: ci-cpu
       - persist_to_workspace:
           root: .
           paths:
@@ -2456,7 +2456,7 @@ jobs:
       - run: codecov -v -t $CODECOV_TOKEN -F harness
       - upload-junit-datadog:
           service: test-unit-harness-gpu
-          env: ci-gpu 
+          env: ci-gpu
       - persist_to_workspace:
           root: .
           paths:
@@ -2483,7 +2483,7 @@ jobs:
       - run: codecov -v -t $CODECOV_TOKEN -F harness
       - upload-junit-datadog:
           service: test-unit-harness-pytorch2-gpu
-          env: ci-gpu 
+          env: ci-gpu
       - persist_to_workspace:
           root: .
           paths:
@@ -2509,7 +2509,7 @@ jobs:
       - run: codecov -v -t $CODECOV_TOKEN -F harness
       - upload-junit-datadog:
           service: test-unit-harness-pytorch2-cpu
-          env: ci-cpu 
+          env: ci-cpu
       - persist_to_workspace:
           root: .
           paths:
@@ -2536,7 +2536,7 @@ jobs:
       - run: codecov -v -t $CODECOV_TOKEN -F harness
       - upload-junit-datadog:
           service: test-unit-harness-gpu-parallel
-          env: ci-gpu 
+          env: ci-gpu
       - persist_to_workspace:
           root: .
           paths:
@@ -2563,7 +2563,7 @@ jobs:
       - run: codecov -v -t $CODECOV_TOKEN -F harness
       - upload-junit-datadog:
           service: test-unit-harness-gpu-deepseed
-          env: ci-gpu 
+          env: ci-gpu
       - persist_to_workspace:
           root: .
           paths:
@@ -2589,7 +2589,7 @@ jobs:
       - run: codecov -v -t $CODECOV_TOKEN -F harness
       - upload-junit-datadog:
           service: test-unit-harness-tf2
-          env: ci-cpu 
+          env: ci-cpu
       - persist_to_workspace:
           root: .
           paths:
@@ -2617,7 +2617,7 @@ jobs:
       - run: codecov -v -t $CODECOV_TOKEN -F harness
       - upload-junit-datadog:
           service: test-unit-storage
-          env: ci-cpu 
+          env: ci-cpu
       - persist_to_workspace:
           root: .
           paths:
@@ -2648,7 +2648,7 @@ jobs:
       - run: codecov -v -t $CODECOV_TOKEN -F harness
       - upload-junit-datadog:
           service: test-unit-model-hub
-          env: ci-cpu 
+          env: ci-cpu
       - persist_to_workspace:
           root: .
           paths:
@@ -2837,7 +2837,9 @@ jobs:
             sudo apt-get update
             sudo apt-get install gettext
             sudo apt-get install iproute2
-            yes yes | PATH=$HOME/.local/bin:$PATH make slurmcluster FLAGS="-c <<parameters.container-run-type>> -w <<parameters.workload-manager>>" TF_LOCK=false | tee output.log
+            yes yes | PATH=$HOME/.local/bin:$PATH make slurmcluster \
+              FLAGS="-c <<parameters.container-run-type>> -w <<parameters.workload-manager>> -l '{owner=\\\"determined_ci\\\", gh_team=\\\"machine-user\\\"}'" \
+              TF_LOCK=false | tee output.log || circleci-agent step halt
           background: true
 
       - run:
@@ -3123,7 +3125,7 @@ jobs:
                 }
               }
             EOF
-            
+
       - run-e2e-tests:
           mark: <<parameters.mark>>
           master-host: localhost

@@ -1,4 +1,5 @@
-import { BaseComponent } from 'e2e/models/common/base/BaseComponent';
+import { BaseComponent } from 'playwright-page-model-base/BaseComponent';
+
 import { Modal } from 'e2e/models/common/hew/Modal';
 import { Toggle } from 'e2e/models/common/hew/Toggle';
 

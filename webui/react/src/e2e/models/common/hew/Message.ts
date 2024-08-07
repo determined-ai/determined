@@ -1,4 +1,4 @@
-import { BaseComponent, NamedComponent } from 'e2e/models/common/base/BaseComponent';
+import { BaseComponent, NamedComponent } from 'playwright-page-model-base/BaseComponent';
 
 /**
  * Represents the Message component from hew/src/kit/Message.tsx

@@ -35,7 +35,7 @@ class Test(BaseMetricsTest):
         return self._run_experiment(cfg)
 
     @staticmethod
-    def _read_experiment_validation_metrics(experiment: Experiment, metric_key: MetricKey.type_)\
+    def _read_experiment_validation_metrics(experiment:  Experiment, metric_key: MetricKey.type_)\
             -> List[float]:
         metrics = list()
 

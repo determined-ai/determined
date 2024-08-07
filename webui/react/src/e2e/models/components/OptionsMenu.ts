@@ -1,5 +1,6 @@
-import { BaseComponent } from 'e2e/models/common/base/BaseComponent';
-import { BasePage } from 'e2e/models/common/base/BasePage';
+import { BaseComponent } from 'playwright-page-model-base/BaseComponent';
+import { BasePage } from 'playwright-page-model-base/BasePage';
+
 import { DropdownMenu } from 'e2e/models/common/hew/Dropdown';
 
 /**
@@ -9,7 +10,7 @@ export class OptionsMenu extends DropdownMenu {
   /**
    * Constructs a OptionsMenu
    * @param {object} obj
-   * @param {CanBeParent} obj.parent - parent component
+   * @param {ComponentContainer} obj.parent - parent component
    * @param {BasePage} obj.root - root page
    */
   constructor({ parent, root }: { parent: BaseComponent; root: BasePage }) {

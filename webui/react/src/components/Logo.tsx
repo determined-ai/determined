@@ -7,7 +7,7 @@ import logoDeterminedOnLightVertical from 'assets/images/logo-determined-on-ligh
 import logoHpeOnDarkHorizontal from 'assets/images/logo-hpe-on-dark-horizontal.svg?url';
 import logoHpeOnLightHorizontal from 'assets/images/logo-hpe-on-light-horizontal.svg?url';
 import useUI from 'components/ThemeProvider';
-import { serverAddress } from 'routes/utils';
+import { linkPath, paths, serverAddress } from 'routes/utils';
 import { BrandingType } from 'stores/determinedInfo';
 import { ValueOf } from 'types';
 import { reactHostAddress } from 'utils/routes';
@@ -24,6 +24,7 @@ type Orientation = ValueOf<typeof Orientation>;
 interface Props {
   branding?: BrandingType;
   orientation?: Orientation;
+  hasCustomLogo?: boolean;
 }
 
 const logos: Record<BrandingType, Record<Orientation, Record<string, string>>> = {
@@ -52,9 +53,9 @@ const logos: Record<BrandingType, Record<Orientation, Record<string, string>>> =
 const Logo: React.FC<Props> = ({
   branding = BrandingType.Determined,
   orientation = Orientation.Vertical,
+  hasCustomLogo = false,
 }: Props) => {
   const { isDarkMode } = useUI();
-  const classes = [css[branding], css[orientation]];
 
   const alt = useMemo(() => {
     const isDetermined = branding === BrandingType.Determined;
@@ -66,13 +67,15 @@ const Logo: React.FC<Props> = ({
     ].join();
   }, [branding]);
 
-  return (
-    <img
-      alt={alt}
-      className={classes.join(' ')}
-      src={logos[branding][orientation][isDarkMode ? 'dark' : 'light']}
-    />
-  );
+  const mode = isDarkMode ? 'dark' : 'light';
+  let imageSrc = logos[branding][orientation][mode];
+  let classes = [css[branding], css[orientation]];
+  if (hasCustomLogo) {
+    imageSrc = linkPath(paths.customerAsset('logo', orientation, mode), false);
+    classes = [css.customLogo];
+  }
+
+  return <img alt={alt} className={classes.join(' ')} src={imageSrc} />;
 };
 
 export default Logo;
