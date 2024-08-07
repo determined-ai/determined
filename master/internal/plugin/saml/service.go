@@ -227,6 +227,8 @@ type userAttributes struct {
 	agentGID       int
 	agentUserName  string
 	agentGroupName string
+	agentUIDSet    bool
+	agentGIDSet    bool
 	groups         []string
 }
 
@@ -236,26 +238,35 @@ func (s *Service) toUserAttributes(response *saml.Assertion) (*userAttributes, e
 		return nil, fmt.Errorf("SAML attribute identifier userName missing")
 	}
 
-	strAgentUID := getSAMLAttribute(response, s.userConfig.agentUIDAttributeName)
-	tempAgentUID, err := strconv.Atoi(strAgentUID)
-	if err != nil && strAgentUID != "" {
-		return nil, fmt.Errorf("SAML attribute identifier agentUID is not an integer: %s", strAgentUID)
-	}
-	strAgentGID := getSAMLAttribute(response, s.userConfig.agentGIDAttributeName)
-	tempAgentGID, err := strconv.Atoi(strAgentGID)
-	if err != nil && strAgentGID != "" {
-		return nil, fmt.Errorf("SAML attribute identifier agentGID is not an integer: %s", strAgentGID)
+	result := userAttributes{}
+
+	if s.userConfig.agentUIDAttributeName != "" {
+		strAgentUID := getSAMLAttribute(response, s.userConfig.agentUIDAttributeName)
+		tempAgentUID, err := strconv.Atoi(strAgentUID)
+		if err != nil && strAgentUID != "" {
+			return nil, fmt.Errorf("SAML attribute identifier agentUID is not an integer: %s", strAgentUID)
+		}
+		result.agentUID = tempAgentUID
+		result.agentUIDSet = !(strAgentUID == "")
 	}
 
-	return &userAttributes{
-		userName:       uName,
-		displayName:    getSAMLAttribute(response, s.userConfig.displayNameAttributeName),
-		agentUID:       tempAgentUID,
-		agentGID:       tempAgentGID,
-		agentUserName:  getSAMLAttribute(response, s.userConfig.agentUserNameAttributeName),
-		agentGroupName: getSAMLAttribute(response, s.userConfig.agentGroupNameAttributeName),
-		groups:         getAttributeValues(response, s.userConfig.groupsAttributeName),
-	}, nil
+	if s.userConfig.agentGIDAttributeName != "" {
+		strAgentGID := getSAMLAttribute(response, s.userConfig.agentGIDAttributeName)
+		tempAgentGID, err := strconv.Atoi(strAgentGID)
+		if err != nil && strAgentGID != "" {
+			return nil, fmt.Errorf("SAML attribute identifier agentGID is not an integer: %s", strAgentGID)
+		}
+		result.agentGID = tempAgentGID
+		result.agentGIDSet = !(strAgentGID == "")
+	}
+
+	result.userName = uName
+	result.displayName = getSAMLAttribute(response, s.userConfig.displayNameAttributeName)
+	result.agentUserName = getSAMLAttribute(response, s.userConfig.agentUserNameAttributeName)
+	result.agentGroupName = getSAMLAttribute(response, s.userConfig.agentGroupNameAttributeName)
+	result.groups = getAttributeValues(response, s.userConfig.groupsAttributeName)
+
+	return &result, nil
 }
 
 // getSAMLAttribute is similar to a function provided by the previously used saml library.
@@ -293,10 +304,10 @@ func mergeUserGroups(sessionData *userAttributes, dbData *model.AgentUserGroup) 
 		Group: dbData.Group,
 	}
 
-	if sessionData.agentUID != 0 {
+	if sessionData.agentUIDSet {
 		result.UID = sessionData.agentUID
 	}
-	if sessionData.agentGID != 0 {
+	if sessionData.agentGIDSet {
 		result.GID = sessionData.agentGID
 	}
 	if sessionData.agentUserName != "" {
