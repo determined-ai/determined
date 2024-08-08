@@ -1354,21 +1354,6 @@ func TestSetResourceQuota(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestROCmJobsService(t *testing.T) {
-	tests := []struct {
-		name     string
-		testFunc func()
-	}{
-		{name: "GetAgentsROCM", testFunc: testROCMGetAgents},
-		{name: "GetAgentROCM", testFunc: testROCMGetAgent},
-		{name: "GetSlotsROCM", testFunc: testROCMGetSlots},
-		{name: "GetSlotROCM", testFunc: testROCMGetSlot},
-	}
-	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) { require.Panics(t, test.testFunc) })
-	}
-}
-
 func TestRMValidateResources(t *testing.T) {
 	resourcePool := &kubernetesResourcePool{
 		poolConfig:     &config.ResourcePoolConfig{PoolName: "test-pool"},
@@ -1418,28 +1403,39 @@ func TestRMValidateResources(t *testing.T) {
 	}
 }
 
-func testROCMGetAgents() {
+func TestROCMGetAgents(t *testing.T) {
 	ps := createMockJobsService(createCompNodeMap(), device.ROCM, false)
-	ps.getAgents() // nolint
+
+	resp, err := ps.getAgents()
+	require.NoError(t, err)
+	require.Len(t, resp.Agents, 1)
+	require.Equal(t, compNode1Name, resp.Agents[0].Id)
+	require.Len(t, resp.Agents[0].Slots, int(nodeNumSlots))
 }
 
-func testROCMGetAgent() {
+func TestROCMGetAgent(t *testing.T) {
 	nodes := createCompNodeMap()
 	ps := createMockJobsService(nodes, device.ROCM, false)
-	ps.getAgent(compNode1Name)
+
+	resp := ps.getAgent(compNode1Name)
+	require.Equal(t, compNode1Name, resp.Agent.Id)
+	require.Len(t, resp.Agent.Slots, int(nodeNumSlots))
 }
 
-func testROCMGetSlots() {
+func TestROCMGetSlots(t *testing.T) {
 	nodes := createCompNodeMap()
 	ps := createMockJobsService(nodes, device.ROCM, false)
-	ps.getSlots(compNode1Name)
+
+	resp := ps.getSlots(compNode1Name)
+	require.Len(t, resp.Slots, int(nodeNumSlots))
 }
 
-func testROCMGetSlot() {
+func TestROCMGetSlot(t *testing.T) {
 	nodes := createCompNodeMap()
 	ps := createMockJobsService(nodes, device.ROCM, false)
 	for i := 0; i < int(nodeNumSlots); i++ {
-		ps.getSlot(compNode1Name, strconv.Itoa(i))
+		resp := ps.getSlot(compNode1Name, strconv.Itoa(i))
+		require.Equal(t, device.ROCM.Proto(), resp.Slot.Device.Type)
 	}
 }
 
@@ -1491,7 +1487,7 @@ func setupNodes() (*k8sV1.Node, *k8sV1.Node, *k8sV1.Node, *k8sV1.Node) {
 
 func createCompNodeMap() map[string]*k8sV1.Node {
 	resourceList := map[k8sV1.ResourceName]resource.Quantity{
-		k8sV1.ResourceName(device.ROCM): *resource.NewQuantity(nodeNumSlots, resource.DecimalSI),
+		k8sV1.ResourceName(resourceTypeAMD): *resource.NewQuantity(nodeNumSlots, resource.DecimalSI),
 	}
 
 	compNode := k8sV1.Node{

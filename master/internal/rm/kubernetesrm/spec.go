@@ -69,10 +69,26 @@ func (j *job) configureResourcesRequirements() k8sV1.ResourceRequirements {
 			},
 		}
 	case device.ROCM:
-		panic("ROCm is not supported on k8s yet")
+		if j.slotsPerPod > 0 {
+			return k8sV1.ResourceRequirements{
+				Limits: map[k8sV1.ResourceName]resource.Quantity{
+					resourceTypeAMD: *resource.NewQuantity(int64(j.slotsPerPod), resource.DecimalSI),
+				},
+				Requests: map[k8sV1.ResourceName]resource.Quantity{
+					resourceTypeAMD: *resource.NewQuantity(int64(j.slotsPerPod), resource.DecimalSI),
+				},
+			}
+		}
+
+		return k8sV1.ResourceRequirements{
+			Limits:   map[k8sV1.ResourceName]resource.Quantity{},
+			Requests: map[k8sV1.ResourceName]resource.Quantity{},
+		}
 	case device.CUDA: // default to CUDA-backed slots.
 		fallthrough
 	default:
+		// Don't request "nvidia.com/gpu=0" in zero slot case because then the job won't run on
+		// CPU only nodes.
 		if j.slotsPerPod > 0 {
 			return k8sV1.ResourceRequirements{
 				Limits: map[k8sV1.ResourceName]resource.Quantity{

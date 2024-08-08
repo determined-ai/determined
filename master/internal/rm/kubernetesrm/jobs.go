@@ -65,7 +65,9 @@ const (
 	kubernetesJobNameLabel = "batch.kubernetes.io/job-name"
 
 	resourceTypeNvidia = "nvidia.com/gpu"
-	defaultNamespace   = "default"
+	resourceTypeAMD    = "amd.com/gpu"
+
+	defaultNamespace = "default"
 	// ReleaseNamespaceEnvVar is the name of the environment variable within a pod running the
 	// master service containing the namespace in which determined was deployed.
 	ReleaseNamespaceEnvVar = "DET_RELEASE_NAMESPACE"
@@ -1759,6 +1761,10 @@ func (j *jobsService) summarize() (map[string]model.AgentSummary, error) {
 	return j.summarizeCache.summary, j.summarizeCache.err
 }
 
+func isSlotTypeGPU(slotType device.Type) bool {
+	return slotType == device.CUDA || slotType == device.ROCM
+}
+
 // Get the mapping of many-to-many relationship between nodes and resource pools.
 func (j *jobsService) getNodeResourcePoolMapping(nodeSummaries map[string]model.AgentSummary) (
 	map[string][]*k8sV1.Node, map[string][]string,
@@ -1767,11 +1773,18 @@ func (j *jobsService) getNodeResourcePoolMapping(nodeSummaries map[string]model.
 
 	// Nvidia automatically taints nodes, so we should tolerate that when users don't customize
 	// their resource pool config.
-	defaultTolerations := []k8sV1.Toleration{{
-		Key:      resourceTypeNvidia,
-		Value:    "present",
-		Operator: k8sV1.TolerationOpEqual,
-	}}
+	defaultTolerations := []k8sV1.Toleration{
+		{
+			Key:      resourceTypeNvidia,
+			Value:    "present",
+			Operator: k8sV1.TolerationOpEqual,
+		},
+		{
+			Key:      resourceTypeAMD,
+			Value:    "present",
+			Operator: k8sV1.TolerationOpEqual,
+		},
+	}
 	cpuTolerations, gpuTolerations := extractTolerations(j.baseContainerDefaults)
 	poolsToNodes := make(map[string][]*k8sV1.Node)
 	nodesToPools := make(map[string][]string)
@@ -1788,7 +1801,7 @@ func (j *jobsService) getNodeResourcePoolMapping(nodeSummaries map[string]model.
 			// isn't defined.
 			if len(j.resourcePoolConfigs) <= 1 &&
 				(tcd == nil || (tcd.CPUPodSpec == nil && tcd.GPUPodSpec == nil)) {
-				if slotType == device.CUDA {
+				if isSlotTypeGPU(slotType) {
 					//nolint:gocritic
 					poolTolerations = append(defaultTolerations, gpuTolerations...)
 				} else if slotType == device.CPU {
@@ -1797,7 +1810,7 @@ func (j *jobsService) getNodeResourcePoolMapping(nodeSummaries map[string]model.
 				}
 			} else if tcd != nil {
 				// Decide which poolTolerations to use based on slot device type
-				if slotType == device.CUDA && tcd.GPUPodSpec != nil {
+				if isSlotTypeGPU(slotType) && tcd.GPUPodSpec != nil {
 					//nolint:gocritic
 					poolTolerations = append(tcd.GPUPodSpec.Spec.Tolerations, gpuTolerations...)
 					selectors, affinities = extractNodeSelectors(tcd.GPUPodSpec)
@@ -1920,7 +1933,9 @@ func (j *jobsService) summarizeClusterByNodes() map[string]model.AgentSummary {
 			numSlots = int64(float32(milliCPUs) / (1000. * j.slotResourceRequests.CPU))
 			deviceType = device.CPU
 		case device.ROCM:
-			panic("ROCm is not supported on k8s yet")
+			resources := node.Status.Allocatable[resourceTypeAMD]
+			deviceType = device.ROCM
+			numSlots = resources.Value()
 		case device.CUDA:
 			fallthrough
 		default:
@@ -2052,10 +2067,13 @@ func (j *jobsService) getNonDetSlots(deviceType device.Type) (map[string][]strin
 		}
 		reqs := int64(0)
 		for _, c := range pod.Spec.Containers {
-			if deviceType == device.CPU {
+			switch deviceType {
+			case device.CPU:
 				reqs += j.getCPUReqs(c)
-			} else if deviceType == device.CUDA {
+			case device.CUDA:
 				reqs += c.Resources.Requests.Name(resourceTypeNvidia, resource.DecimalSI).Value()
+			case device.ROCM:
+				reqs += c.Resources.Requests.Name(resourceTypeAMD, resource.DecimalSI).Value()
 			}
 		}
 		if reqs > 0 {
@@ -2093,6 +2111,9 @@ func numSlots(slots model.SlotsSummary) int {
 
 	if slotCountsByType[device.CUDA] > 0 {
 		return slotCountsByType[device.CUDA]
+	}
+	if slotCountsByType[device.ROCM] > 0 {
+		return slotCountsByType[device.ROCM]
 	}
 
 	return slotCountsByType[device.CPU]
@@ -2482,18 +2503,24 @@ func extractNodeSelectors(pod *k8sV1.Pod) (selectors, affinities *k8sV1.NodeSele
 }
 
 func extractSlotInfo(node model.AgentSummary) (numSlots int, devType device.Type) {
-	var gpuSlots, cpuSlots int
+	var cudaSlots, rocmSlots, cpuSlots int
 
 	for _, slot := range node.Slots {
-		if slot.Device.Type == device.CPU {
+		switch slot.Device.Type {
+		case device.CPU:
 			cpuSlots++
-		} else if slot.Device.Type == device.CUDA {
-			gpuSlots++
+		case device.CUDA:
+			cudaSlots++
+		case device.ROCM:
+			rocmSlots++
 		}
 	}
 
-	if gpuSlots > 0 {
-		return gpuSlots, device.CUDA
+	if cudaSlots > 0 {
+		return cudaSlots, device.CUDA
+	}
+	if rocmSlots > 0 {
+		return rocmSlots, device.ROCM
 	}
 
 	return cpuSlots, device.CPU
