@@ -5,6 +5,7 @@ import Column from 'hew/Column';
 import {
   ColumnDef,
   DEFAULT_COLUMN_WIDTH,
+  defaultArrayColumn,
   defaultDateColumn,
   defaultNumberColumn,
   defaultSelectionColumn,
@@ -226,6 +227,22 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
     }
   }, [projectId]);
 
+  const arrayTypeColumns = useMemo(() => {
+    const arrayTypeColumns = projectColumns
+      .getOrElse([])
+      .filter((col) => col.type === V1ColumnType.ARRAY)
+      .map((col) => col.column);
+    return arrayTypeColumns;
+  }, [projectColumns]);
+
+  const bannedFilterColumns: Set<string> = useMemo(() => {
+    return new Set([...BANNED_FILTER_COLUMNS, ...arrayTypeColumns]);
+  }, [arrayTypeColumns]);
+
+  const bannedSortColumns: Set<string> = useMemo(() => {
+    return new Set([...BANNED_SORT_COLUMNS, ...arrayTypeColumns]);
+  }, [arrayTypeColumns]);
+
   const selectedRunIdSet = useMemo(() => {
     return new Set(settings.selection.type === 'ONLY_IN' ? settings.selection.selections : []);
   }, [settings.selection]);
@@ -400,6 +417,16 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
           }
           case V1ColumnType.DATE:
             columnDefs[currentColumn.column] = defaultDateColumn(
+              currentColumn.column,
+              currentColumn.displayName || currentColumn.column,
+              settings.columnWidths[currentColumn.column] ??
+                defaultColumnWidths[currentColumn.column as RunColumn] ??
+                MIN_COLUMN_WIDTH,
+              dataPath,
+            );
+            break;
+          case V1ColumnType.ARRAY:
+            columnDefs[currentColumn.column] = defaultArrayColumn(
               currentColumn.column,
               currentColumn.displayName || currentColumn.column,
               settings.columnWidths[currentColumn.column] ??
@@ -918,7 +945,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
         return items;
       }
 
-      if (!BANNED_SORT_COLUMNS.has(column.column)) {
+      if (!bannedSortColumns.has(column.column)) {
         const sortCount = sortMenuItemsForColumn(column, sorts, handleSortChange).length;
         const sortMenuItems =
           sortCount === 0
@@ -949,7 +976,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
         handleIsOpenFilterChange?.(true);
       };
 
-      if (!BANNED_FILTER_COLUMNS.has(column.column)) {
+      if (!bannedFilterColumns.has(column.column)) {
         items.push(
           { type: 'divider' as const },
           {
@@ -1007,6 +1034,8 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
       return items;
     },
     [
+      bannedFilterColumns,
+      bannedSortColumns,
       projectColumns,
       settings.pinnedColumnsCount,
       settings.selection,
@@ -1038,7 +1067,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
         <Column>
           <Row>
             <TableFilter
-              bannedFilterColumns={BANNED_FILTER_COLUMNS}
+              bannedFilterColumns={bannedFilterColumns}
               formStore={formStore}
               isMobile={isMobile}
               isOpenFilter={isOpenFilter}
@@ -1046,7 +1075,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
               onIsOpenFilterChange={handleIsOpenFilterChange}
             />
             <MultiSortMenu
-              bannedSortColumns={BANNED_SORT_COLUMNS}
+              bannedSortColumns={bannedSortColumns}
               columns={projectColumns}
               isMobile={isMobile}
               sorts={sorts}
