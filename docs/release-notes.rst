@@ -13,7 +13,7 @@
 Version 0.35.0
 ==============
 
-**Release Date:** August 09, 2024
+**Release Date:** August 08, 2024
 
 **Breaking Changes**
 
@@ -22,26 +22,38 @@ Version 0.35.0
 
    -  Resource managers operate relative to the specific cluster providing resources for Determined
       tasks, so changing the cluster will affect the resource manager's responses.
+
    -  The ``cluster_name`` must be unique for all resource managers when deploying multiple resource
       managers in Determined.
-   -  When upgrading, specify `resourceManager.clusterName` in your `values.yaml` to override `resource_manager.name` and/or remove the `name` field from your `resource_manager` config altogether.
-- For additional resource managers, you must change `additional_resource_manager[i].name` to `additional_resource_manager[i].cluster_name` in your `values.yaml`.
+
+   -  When upgrading, specify `resourceManager.clusterName` in your `values.yaml` to override
+      `resource_manager.name` and/or remove the `name` field from your `resource_manager` config
+      altogether.
+
+-  For additional resource managers, you must change `additional_resource_manager[i].name` to
+   `additional_resource_manager[i].cluster_name` in your `values.yaml`.
 
 -  Master Configuration: Replace ``resource_manager.namespace`` with
    ``resource_manager.default_namespace``.
 
    -  The namespace field in the Kubernetes Resource Manager configuration is no longer supported
       and is replaced by ``default_namespace``.
+
    -  This field serves as the default namespace for deploying namespaced resources when the
       workspace associated with a workload is not bound to a specific namespace.
-   -  If unset, the workloads will be sent to the release namespace during determined helm installs or upgrades and will be sent to the default Kubernetes namespace, "default", during non-helm determined deployments.
 
--  Master Configuration: Replace ``resource_manager.namespace`` with ``resource_manager.default_namespace``.
-   The namespace field in the Kubernetes Resource Manager configuration is no longer supported and is replaced 
-   by ``default_namespace``. This field serves as the default namespace for deploying namespaced resources 
-   when the workspace associated with a workload is not bound to a specific namespace. If unset, the workloads 
-   will be sent to the release namespace, or the default Kubernetes namespace, "default", during 
-   non-helm determined deployments.
+   -  If unset, the workloads will be sent to the release namespace during determined helm installs
+      or upgrades and will be sent to the default Kubernetes namespace, "default", during non-helm
+      determined deployments.
+
+-  Master Configuration: Replace ``resource_manager.namespace`` with
+   ``resource_manager.default_namespace``. The namespace field in the Kubernetes Resource Manager
+   configuration is no longer supported and is replaced by ``default_namespace``. This field serves
+   as the default namespace for deploying namespaced resources when the workspace associated with a
+   workload is not bound to a specific namespace. If unset, the workloads will be sent to the
+   release namespace, or the default Kubernetes namespace, "default", during non-helm determined
+   deployments.
+
 -  Tasks: The :ref:`historical usage <historical-cluster-usage-data>` CSV file has been updated. The
    header row for slot-hours is now named ``slot_hours`` instead of ``gpu_hours`` to accurately
    reflect the allocation time for resource pools including those without GPUs. In addition, a new
@@ -97,7 +109,7 @@ Version 0.35.0
          <workspace-name>``.
 
       -  The ``--cluster-name`` field is required only for MultiRM setups when
- ``--auto-create-namespace-all-clusters`` is omitted.
+         ``--auto-create-namespace-all-clusters`` is omitted.
 
    -  API: Add new endpoints for creating and managing workspace namespace bindings.
 
@@ -283,7 +295,7 @@ Version 0.34.0
 **Deprecations**
 
 -  Agent Resource Manager: Round robin scheduler is removed for Agent Resource Managers. Deprecation
-   was announded in release 0.33.0. Users should transition to priority scheduler.
+   was announced in release 0.33.0. Users should transition to priority scheduler.
 -  Machine Architectures: Support for PPC64/POWER builds for all environments has been deprecated
    and is now being removed. Users should transition to ARM64/AMD64.
 
