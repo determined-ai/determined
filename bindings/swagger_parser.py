@@ -164,7 +164,7 @@ class ApiInfo:
     title: str
     description: str
     version: str
-    contact: str
+    contact: typing.Optional[str]
 
 
 @dataclass
@@ -430,7 +430,7 @@ def parse(path: str) -> ParseResult:
     info = ApiInfo(
         **{
             **{k: info_json[k] for k in info_keys if k in info_json},
-            **{"contact": info_json["contact"]["email"]},
+            **{"contact": info_json.get("contact", {}).get("email")},
         }
     )
 
