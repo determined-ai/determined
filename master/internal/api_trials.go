@@ -902,27 +902,36 @@ func (a *apiServer) CompareTrials(ctx context.Context,
 	req *apiv1.CompareTrialsRequest,
 ) (*apiv1.CompareTrialsResponse, error) {
 	trialsList := make([]*apiv1.ComparableTrial, 0, len(req.TrialIds))
-	for _, trialID := range req.TrialIds {
-		if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(ctx, int(trialID),
+	//nolint:staticcheck // SA1019: backward compatibility
+	metricGroup, err := a.parseMetricGroupArgs(req.MetricType, model.MetricGroup(req.Group))
+	if err != nil {
+		return nil, err
+	}
+
+	trialsObjList := []*trialv1.Trial{}
+
+	trialIds := make([]string, 0, len(req.TrialIds))
+	for _, userID := range req.TrialIds {
+		trialIds = append(trialIds, strconv.Itoa(int(userID)))
+	}
+	trialIDFilterExpr := strings.Join(trialIds, ",")
+
+	switch err := a.m.db.QueryProto("get_trials_basic", &trialsObjList, trialIDFilterExpr); {
+	case err == db.ErrNotFound:
+		return nil, status.Errorf(codes.NotFound, "trial not found")
+	case err != nil:
+		return nil, errors.Wrapf(err, "failed to get trials")
+	}
+
+	for _, trialObj := range trialsObjList {
+		if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(ctx, int(trialObj.Id),
 			experiment.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 			return nil, err
 		}
 
-		container := &apiv1.ComparableTrial{Trial: &trialv1.Trial{}}
-		switch err := a.m.db.QueryProto("get_trial_basic", container.Trial, trialID); {
-		case err == db.ErrNotFound:
-			return nil, status.Errorf(codes.NotFound, "trial %d not found:", trialID)
-		case err != nil:
-			return nil, errors.Wrapf(err, "failed to get trial %d", trialID)
-		}
+		container := &apiv1.ComparableTrial{Trial: trialObj}
 
-		//nolint:staticcheck // SA1019: backward compatibility
-		metricGroup, err := a.parseMetricGroupArgs(req.MetricType, model.MetricGroup(req.Group))
-		if err != nil {
-			return nil, err
-		}
-
-		tsample, err := a.multiTrialSample(trialID, req.MetricNames, metricGroup,
+		tsample, err := a.multiTrialSample(trialObj.Id, req.MetricNames, metricGroup,
 			int(req.MaxDatapoints), int(req.StartBatches), int(req.EndBatches),
 			req.TimeSeriesFilter, req.MetricIds)
 		if err != nil {
