@@ -124,6 +124,10 @@ useNodePortForMaster: false
 #   autoProvisionUsers:
 #   groupsAttributeName:
 #   displayNameAttributeName:
+#   agentUidAttributeName:
+#   agentGidAttributeName:
+#   agentUserNameAttributeName:
+#   agentGroupNameAttributeName:
 #   alwaysRedirect:
 #   excludeGroupsScope:
 
@@ -150,6 +154,10 @@ useNodePortForMaster: false
 #   autoProvisionUsers:
 #   groupsAttributeName:
 #   displayNameAttributeName:
+#   agentUidAttributeName:
+#   agentGidAttributeName:
+#   agentUserNameAttributeName:
+#   agentGroupNameAttributeName:
 #   alwaysRedirect:
 
 # db sets the configurations for the database.

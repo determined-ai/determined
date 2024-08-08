@@ -8,6 +8,7 @@ import (
 	"encoding/xml"
 	"log"
 	"os"
+	"strconv"
 	"testing"
 	"time"
 
@@ -53,8 +54,10 @@ func TestSAMLWorkflowAutoProvision(t *testing.T) {
 	ctx := context.Background()
 
 	username := uuid.NewString()
-	resp := getUserResponse(username, username+"123", []string{"abc", "bcd"})
-	u := processResponseUnprovisioned(ctx, t, resp.Assertion, username, username+"123", s)
+	uid := 42
+	gid := 37
+	resp := getUserResponse(username, username+"123", uid, gid, username+"group", []string{"abc", "bcd"})
+	u := processResponseUnprovisioned(ctx, t, resp.Assertion, username, username+"123", uid, gid, username+"group", s)
 
 	require.True(t, u.Remote)
 
@@ -68,8 +71,8 @@ func TestSAMLWorkflowAutoProvision(t *testing.T) {
 	require.NoError(t, err)
 
 	// test Update User fields based on SAML response
-	resp = getUserResponse(username, username+"456", []string{"abc"})
-	u = processResponseProvisioned(ctx, t, resp.Assertion, username, username+"456", s)
+	resp = getUserResponse(username, username+"123", uid, gid, username+"group", []string{"abc"})
+	u = processResponseProvisioned(ctx, t, resp.Assertion, username, username+"456", uid, gid, username+"group", s)
 
 	require.True(t, u.Remote)
 
@@ -91,12 +94,19 @@ func TestSAMLWorkflowUserNotProvisioned(t *testing.T) {
 	ctx := context.Background()
 
 	username := uuid.NewString()
-	resp := getUserResponse(username, username+"123", []string{"abc", "bcd"})
+	uid := 42
+	gid := 37
+	resp := getUserResponse(username, username+"123", uid, gid, username+"group", []string{"abc", "bcd"})
 
-	userAttr := s.toUserAttributes(resp.Assertion)
+	userAttr, err := s.toUserAttributes(resp.Assertion)
+	require.NoError(t, err)
 	require.Equal(t, username, userAttr.userName)
+	require.Equal(t, uid, userAttr.agentUID)
+	require.Equal(t, gid, userAttr.agentGID)
+	require.Equal(t, username, userAttr.agentUserName)
+	require.Equal(t, username+"group", userAttr.agentGroupName)
 
-	_, err := user.ByUsername(ctx, userAttr.userName)
+	_, err = user.ByUsername(ctx, userAttr.userName)
 	log.Print(err)
 	require.ErrorContains(t, err, "not found")
 }
@@ -117,8 +127,10 @@ func TestSAMLWorkflowUserProvisioned(t *testing.T) {
 	_, err := user.Add(ctx, initialUser, nil)
 	require.NoError(t, err)
 
-	resp := getUserResponse(username, username+"123", []string{"abc", "bcd"})
-	u := processResponseProvisioned(ctx, t, resp.Assertion, username, username+"123", s)
+	uid := 42
+	gid := 37
+	resp := getUserResponse(username, username+"123", uid, gid, username+"group", []string{"abc", "bcd"})
+	u := processResponseProvisioned(ctx, t, resp.Assertion, username, username+"123", uid, gid, username+"group", s)
 
 	require.False(t, u.Remote)
 
@@ -137,15 +149,21 @@ func mockService(autoProvision bool) *Service {
 		db:           db.SingleDB(),
 		samlProvider: nil,
 		userConfig: userConfig{
-			autoProvisionUsers:       autoProvision,
-			groupsAttributeName:      "groups",
-			displayNameAttributeName: "disp_name",
+			autoProvisionUsers:          autoProvision,
+			groupsAttributeName:         "groups",
+			displayNameAttributeName:    "disp_name",
+			agentUIDAttributeName:       "uid",
+			agentGIDAttributeName:       "gid",
+			agentUserNameAttributeName:  "agent_user_name",
+			agentGroupNameAttributeName: "agent_group_name",
 		},
 	}
 	return service
 }
 
-func getUserResponse(username string, dispName string, groups []string) saml.Response {
+func getUserResponse(username string, dispName string, uid int, gid int, groupname string,
+	groups []string,
+) saml.Response {
 	resp := saml.Response{
 		XMLName:      xml.Name{},
 		IssueInstant: time.Time{},
@@ -154,6 +172,10 @@ func getUserResponse(username string, dispName string, groups []string) saml.Res
 	}
 	addAttribute(resp, "userName", username)
 	addAttribute(resp, "disp_name", dispName)
+	addAttribute(resp, "uid", strconv.Itoa(uid))
+	addAttribute(resp, "gid", strconv.Itoa(gid))
+	addAttribute(resp, "agent_user_name", username)
+	addAttribute(resp, "agent_group_name", groupname)
 
 	for _, g := range groups {
 		addAttribute(resp, "groups", g)
@@ -181,22 +203,29 @@ func addAttribute(response saml.Response, name, value string) {
 }
 
 func processResponseUnprovisioned(ctx context.Context, t *testing.T,
-	response *saml.Assertion, username string, dispName string, s *Service,
+	response *saml.Assertion, username string, dispName string, uid int, gid int, groupname string, s *Service,
 ) *model.User {
-	userAttr := s.toUserAttributes(response)
+	userAttr, err := s.toUserAttributes(response)
+	require.NoError(t, err)
 	require.Equal(t, username, userAttr.userName)
 
-	_, err := user.ByUsername(ctx, userAttr.userName)
+	_, err = user.ByUsername(ctx, userAttr.userName)
 	log.Print(err)
 	require.True(t, errors.Is(err, db.ErrNotFound), true)
 	u, err := s.provisionUser(ctx, userAttr.userName, userAttr.groups)
 	require.NoError(t, err)
+	ug, err := user.GetAgentUserGroup(ctx, u.ID, 0)
+	require.NoError(t, err)
 
-	u, err = s.syncUser(ctx, u, userAttr)
+	u, err = s.syncUser(ctx, u, userAttr, ug)
 	require.NoError(t, err)
 
 	require.Equal(t, dispName, u.DisplayName.String)
 	require.Equal(t, username, u.Username)
+	require.Equal(t, uid, userAttr.agentUID)
+	require.Equal(t, gid, userAttr.agentGID)
+	require.Equal(t, username, userAttr.agentUserName)
+	require.Equal(t, groupname, userAttr.agentGroupName)
 
 	require.True(t, u.Active)
 
@@ -204,19 +233,27 @@ func processResponseUnprovisioned(ctx context.Context, t *testing.T,
 }
 
 func processResponseProvisioned(ctx context.Context, t *testing.T,
-	response *saml.Assertion, username string, dispName string, s *Service,
+	response *saml.Assertion, username string, dispName string, uid int, gid int, groupname string, s *Service,
 ) *model.User {
-	userAttr := s.toUserAttributes(response)
+	userAttr, err := s.toUserAttributes(response)
+	require.NoError(t, err)
 	require.Equal(t, username, userAttr.userName)
 
 	u, err := user.ByUsername(ctx, userAttr.userName)
 	require.NoError(t, err)
 
-	u, err = s.syncUser(ctx, u, userAttr)
+	ug, err := user.GetAgentUserGroup(ctx, u.ID, 0)
+	require.NoError(t, err)
+
+	u, err = s.syncUser(ctx, u, userAttr, ug)
 	require.NoError(t, err)
 
 	require.Equal(t, dispName, u.DisplayName.String)
 	require.Equal(t, username, u.Username)
+	require.Equal(t, uid, userAttr.agentUID)
+	require.Equal(t, gid, userAttr.agentGID)
+	require.Equal(t, username, userAttr.agentUserName)
+	require.Equal(t, groupname, userAttr.agentGroupName)
 
 	require.True(t, u.Active)
 

@@ -11,6 +11,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"os"
+	"strconv"
 	"testing"
 
 	"github.com/coreos/go-oidc/v3/oidc"
@@ -52,18 +53,23 @@ func TestOIDCWorkflow(t *testing.T) {
 
 	ctx := context.Background()
 
+	user1 := uuid.NewString()
+	user2 := uuid.NewString()
 	cases := []struct {
 		name            string
 		userName        string
+		uid             int
+		gid             int
+		groupName       string
 		groups          []string
 		createDuplicate bool
 	}{
-		{"user-provisioned", uuid.NewString(), []string{"abc"}, false},
-		{"user-exists", uuid.NewString(), []string{"abc"}, true},
+		{"user-provisioned", user1, 12, 15, user1 + "group", []string{"abc"}, false},
+		{"user-exists", user2, 22, 25, user2 + "group", []string{"abc"}, true},
 	}
 	for _, tt := range cases {
 		t.Run(tt.name, func(t *testing.T) {
-			svr := newHTTPTestServer(t, tt.userName+"@hpe.com", "1234567", tt.userName, tt.groups)
+			svr := newHTTPTestServer(t, tt.userName+"@hpe.com", "1234567", tt.userName, tt.uid, tt.gid, tt.userName, tt.groups)
 			defer svr.Close()
 
 			// Add a fake user to the db with the same email but DIFFERENT display name.
@@ -100,7 +106,10 @@ func TestOIDCWorkflow(t *testing.T) {
 
 			require.True(t, u.Remote)
 
-			u, err = s.syncUser(ctx, u, claims)
+			ug, err := user.GetAgentUserGroup(ctx, u.ID, 0)
+			require.NoError(t, err)
+
+			u, err = s.syncUser(ctx, u, claims, ug)
 			require.NoError(t, err)
 
 			require.True(t, u.Active)
@@ -108,6 +117,15 @@ func TestOIDCWorkflow(t *testing.T) {
 			// Now check that all user fields match the response.
 			require.Equal(t, tt.userName, u.DisplayName.String)
 			require.Equal(t, tt.userName+"@hpe.com", u.Username)
+
+			ug, err = user.GetAgentUserGroup(ctx, u.ID, 0)
+			require.NoError(t, err)
+
+			// Check that user group fields match response.
+			require.Equal(t, tt.uid, ug.UID)
+			require.Equal(t, tt.gid, ug.GID)
+			require.Equal(t, tt.userName, ug.User)
+			require.Equal(t, tt.groupName, ug.Group)
 
 			actualGroups := []string{}
 			err = db.Bun().NewSelect().TableExpr("user_group_membership AS ug").ColumnExpr("g.group_name").
@@ -124,7 +142,7 @@ func TestOIDCWorkflow(t *testing.T) {
 }
 
 func TestFailOauthToken(t *testing.T) {
-	svr := newHTTPTestServer(t, "", "", "", []string{})
+	svr := newHTTPTestServer(t, "", "", "", 0, 0, "", []string{})
 	defer svr.Close()
 
 	s := mockService(t, svr.URL)
@@ -136,7 +154,7 @@ func TestFailOauthToken(t *testing.T) {
 }
 
 func TestFailToExtractClaims(t *testing.T) {
-	svr := newHTTPTestServer(t, "", "1234567", "", []string{})
+	svr := newHTTPTestServer(t, "", "1234567", "", 0, 0, "", []string{})
 	defer svr.Close()
 
 	s := mockService(t, svr.URL)
@@ -176,6 +194,10 @@ func mockService(t *testing.T, url string) *Service {
 			AutoProvisionUsers:          true,           // Hard-coding these variables
 			GroupsAttributeName:         "groups",       // for testing purposes,
 			DisplayNameAttributeName:    "display_name", // but they can be customized.
+			AgentUIDAttributeName:       "uid",
+			AgentGIDAttributeName:       "gid",
+			AgentUserNameAttributeName:  "user",
+			AgentGroupNameAttributeName: "group",
 		},
 		provider: p,
 		oauth2Config: oauth2.Config{
@@ -208,13 +230,13 @@ func mockContext(url string) echo.Context {
 }
 
 func newHTTPTestServer(t *testing.T, email string, accessToken string,
-	dispName string, groups []string,
+	dispName string, uid int, gid int, username string, groups []string,
 ) *httptest.Server {
 	var svr *httptest.Server
 	svr = httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set(echo.HeaderContentType, "application/json")
 		w.WriteHeader(http.StatusOK)
-		_, err := w.Write(writeResponse(t, svr.URL, email, accessToken, dispName, groups))
+		_, err := w.Write(writeResponse(t, svr.URL, email, accessToken, dispName, uid, gid, username, groups))
 		require.NoError(t, err)
 	}))
 
@@ -222,7 +244,7 @@ func newHTTPTestServer(t *testing.T, email string, accessToken string,
 }
 
 func writeResponse(t *testing.T, url string, email string, accessToken string,
-	dispName string, groups []string,
+	dispName string, uid int, gid int, username string, groups []string,
 ) []byte {
 	groupResponse := map[string][]string{
 		"groups": groups,
@@ -246,6 +268,19 @@ func writeResponse(t *testing.T, url string, email string, accessToken string,
 
 	if dispName != "" {
 		strResponse["display_name"] = dispName
+	}
+
+	if uid != 0 {
+		strResponse["uid"] = strconv.Itoa(uid)
+	}
+
+	if gid != 0 {
+		strResponse["gid"] = strconv.Itoa(gid)
+	}
+
+	if username != "" {
+		strResponse["user"] = username
+		strResponse["group"] = username + "group"
 	}
 
 	b, err := json.Marshal(strResponse)

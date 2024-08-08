@@ -11,6 +11,7 @@ import (
 	"fmt"
 	"net/http"
 	"net/url"
+	"strconv"
 
 	"github.com/crewjam/saml"
 	"github.com/crewjam/saml/samlsp"
@@ -45,18 +46,26 @@ type Service struct {
 
 // userConfig represents the user defined configurations for SAML integration.
 type userConfig struct {
-	autoProvisionUsers       bool
-	groupsAttributeName      string
-	displayNameAttributeName string
+	autoProvisionUsers          bool
+	groupsAttributeName         string
+	displayNameAttributeName    string
+	agentUIDAttributeName       string
+	agentGIDAttributeName       string
+	agentUserNameAttributeName  string
+	agentGroupNameAttributeName string
 }
 
 // New constructs a new SAML service that is capable of sending SAML requests and consuming
 // responses.
 func New(db *db.PgDB, c config.SAMLConfig) (*Service, error) {
 	uc := userConfig{
-		autoProvisionUsers:       c.AutoProvisionUsers,
-		groupsAttributeName:      c.GroupsAttributeName,
-		displayNameAttributeName: c.DisplayNameAttributeName,
+		autoProvisionUsers:          c.AutoProvisionUsers,
+		groupsAttributeName:         c.GroupsAttributeName,
+		displayNameAttributeName:    c.DisplayNameAttributeName,
+		agentUIDAttributeName:       c.AgentUIDAttributeName,
+		agentGIDAttributeName:       c.AgentGIDAttributeName,
+		agentUserNameAttributeName:  c.AgentUserNameAttributeName,
+		agentGroupNameAttributeName: c.AgentGroupNameAttributeName,
 	}
 
 	key, cert, err := proxy.GenSignedCert()
@@ -149,9 +158,9 @@ func (s *Service) consumeAssertion(c echo.Context) error {
 		return err
 	}
 
-	userAttr := s.toUserAttributes(xmlResponse)
-	if userAttr == nil {
-		return echo.NewHTTPError(http.StatusBadRequest, "SAML attribute identifier userName missing")
+	userAttr, err := s.toUserAttributes(xmlResponse)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusBadRequest, err)
 	}
 
 	ctx := c.Request().Context()
@@ -170,7 +179,11 @@ func (s *Service) consumeAssertion(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusInternalServerError, "unable to look up user")
 	}
 
-	u, err = s.syncUser(ctx, u, userAttr)
+	ug, err := user.GetAgentUserGroup(ctx, u.ID, 0)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "unable to look up user group")
+	}
+	u, err = s.syncUser(ctx, u, userAttr, ug)
 	if err != nil {
 		logrus.WithError(err).WithField("user", userAttr.userName).Error("error syncing user")
 		return echo.NewHTTPError(http.StatusInternalServerError, "error syncing user")
@@ -208,22 +221,52 @@ func (s *Service) consumeAssertion(c echo.Context) error {
 
 // userAttributes represents the set of user attributes from SAML authentication that we're concerned with.
 type userAttributes struct {
-	userName    string
-	displayName string
-	groups      []string
+	userName       string
+	displayName    string
+	agentUID       int
+	agentGID       int
+	agentUserName  string
+	agentGroupName string
+	agentUIDSet    bool
+	agentGIDSet    bool
+	groups         []string
 }
 
-func (s *Service) toUserAttributes(response *saml.Assertion) *userAttributes {
+func (s *Service) toUserAttributes(response *saml.Assertion) (*userAttributes, error) {
 	uName := getSAMLAttribute(response, "userName")
 	if uName == "" {
-		return nil
+		return nil, fmt.Errorf("SAML attribute identifier userName missing")
 	}
 
-	return &userAttributes{
-		userName:    uName,
-		displayName: getSAMLAttribute(response, s.userConfig.displayNameAttributeName),
-		groups:      getAttributeValues(response, s.userConfig.groupsAttributeName),
+	result := userAttributes{}
+
+	if s.userConfig.agentUIDAttributeName != "" {
+		strAgentUID := getSAMLAttribute(response, s.userConfig.agentUIDAttributeName)
+		tempAgentUID, err := strconv.Atoi(strAgentUID)
+		if err != nil && strAgentUID != "" {
+			return nil, fmt.Errorf("SAML attribute identifier agentUID is not an integer: %s", strAgentUID)
+		}
+		result.agentUID = tempAgentUID
+		result.agentUIDSet = !(strAgentUID == "")
 	}
+
+	if s.userConfig.agentGIDAttributeName != "" {
+		strAgentGID := getSAMLAttribute(response, s.userConfig.agentGIDAttributeName)
+		tempAgentGID, err := strconv.Atoi(strAgentGID)
+		if err != nil && strAgentGID != "" {
+			return nil, fmt.Errorf("SAML attribute identifier agentGID is not an integer: %s", strAgentGID)
+		}
+		result.agentGID = tempAgentGID
+		result.agentGIDSet = !(strAgentGID == "")
+	}
+
+	result.userName = uName
+	result.displayName = getSAMLAttribute(response, s.userConfig.displayNameAttributeName)
+	result.agentUserName = getSAMLAttribute(response, s.userConfig.agentUserNameAttributeName)
+	result.agentGroupName = getSAMLAttribute(response, s.userConfig.agentGroupNameAttributeName)
+	result.groups = getAttributeValues(response, s.userConfig.groupsAttributeName)
+
+	return &result, nil
 }
 
 // getSAMLAttribute is similar to a function provided by the previously used saml library.
@@ -253,19 +296,51 @@ func getAttributeValues(r *saml.Assertion, name string) []string {
 	return values
 }
 
+func mergeUserGroups(sessionData *userAttributes, dbData *model.AgentUserGroup) *model.AgentUserGroup {
+	result := model.AgentUserGroup{
+		UID:   dbData.UID,
+		GID:   dbData.GID,
+		User:  dbData.User,
+		Group: dbData.Group,
+	}
+
+	if sessionData.agentUIDSet {
+		result.UID = sessionData.agentUID
+	}
+	if sessionData.agentGIDSet {
+		result.GID = sessionData.agentGID
+	}
+	if sessionData.agentUserName != "" {
+		result.User = sessionData.agentUserName
+	}
+	if sessionData.agentGroupName != "" {
+		result.Group = sessionData.agentGroupName
+	}
+
+	return &result
+}
+
 // syncUser syncs the mutable user fields parsed from the claim, only if there are non-null changes.
-func (s *Service) syncUser(ctx context.Context, u *model.User, uAttr *userAttributes) (*model.User, error) {
+func (s *Service) syncUser(ctx context.Context, u *model.User, uAttr *userAttributes,
+	ug *model.AgentUserGroup,
+) (*model.User, error) {
+	ugUpdate := mergeUserGroups(uAttr, ug)
+	if ugUpdate.UID == ug.UID && ugUpdate.GID == ug.GID && ugUpdate.User == ug.User && ugUpdate.Group == ug.Group {
+		// nothing in user group uto update
+		ugUpdate = nil
+	}
 	err := db.Bun().RunInTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable},
 		func(ctx context.Context, tx bun.Tx) error {
 			// If the config is set to auto-provision users, sync the display name.
 			if s.userConfig.autoProvisionUsers {
-				if uAttr.displayName != "" && uAttr.displayName != u.DisplayName.String {
+				updateDisplayName := uAttr.displayName != "" && uAttr.displayName != u.DisplayName.String
+				if updateDisplayName || ugUpdate != nil {
 					err := user.Update(ctx,
 						&model.User{
 							ID:          u.ID,
 							Username:    uAttr.userName,
 							DisplayName: null.NewString(uAttr.displayName, true),
-						}, []string{"display_name"}, nil)
+						}, []string{"display_name"}, ugUpdate)
 					if err != nil {
 						return fmt.Errorf("error setting display name of %q: %s", u.Username, err)
 					}
