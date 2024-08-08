@@ -7,11 +7,11 @@ import (
 	"reflect"
 	"time"
 
+	"github.com/pkg/errors"
+
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/check"
-	"github.com/determined-ai/determined/master/pkg/logger"
-
-	"github.com/pkg/errors"
+	"github.com/determined-ai/determined/master/pkg/config"
 )
 
 const (
@@ -24,7 +24,7 @@ const (
 // DefaultOptions returns the default configurable options for the Determined agent.
 func DefaultOptions() *Options {
 	return &Options{
-		Log: logger.Config{
+		Log: config.LoggerConfig{
 			Level: "trace",
 			Color: true,
 		},
@@ -40,8 +40,8 @@ func DefaultOptions() *Options {
 
 // Options stores all the configurable options for the Determined agent.
 type Options struct {
-	ConfigFile string        `json:"config_file"`
-	Log        logger.Config `json:"log"`
+	ConfigFile string              `json:"config_file"`
+	Log        config.LoggerConfig `json:"log"`
 
 	MasterHost string `json:"master_host"`
 	MasterPort int    `json:"master_port"`
