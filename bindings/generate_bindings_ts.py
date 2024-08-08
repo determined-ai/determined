@@ -8,8 +8,6 @@ import swagger_parser
 from typing_extensions import Literal, assert_never
 
 DIRNAME = os.path.dirname(__file__)
-SWAGGER = "proto/build/swagger/determined/api/v1/api.swagger.json"
-SWAGGER = os.path.join(DIRNAME, "..", SWAGGER)
 STATIC_FOLDER = os.path.join(DIRNAME, "static_ts_files")
 
 Code = str
@@ -597,7 +595,7 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--input", "-i", action="store", default=SWAGGER, help="input swagger file")
+    parser.add_argument("--input", "-i", action="store", required=True, help="input swagger file")
     parser.add_argument("--output", "-o", action="store", required=True, help="output folder")
     args = parser.parse_args()
 
