@@ -27,11 +27,11 @@ Version 0.35.0
       managers in Determined.
 
    -  When upgrading, specify ``resourceManager.clusterName`` in your ``values.yaml`` to override
-      ``resource_manager.name`` and/or remove the ``name`` field from your ``resource_manager`` config
-      altogether.
+      ``resource_manager.name`` and/or remove the ``name`` field from your ``resource_manager``
+      config altogether.
 
--  For additional resource managers, you must change ``additional_resource_manager[i].name`` to
-   ``additional_resource_manager[i].cluster_name`` in your ``values.yaml``.
+   -  For additional resource managers, you must change ``additional_resource_manager[i].name`` to
+      ``additional_resource_manager[i].cluster_name`` in your ``values.yaml``.
 
 -  Master Configuration: Replace ``resource_manager.namespace`` with
    ``resource_manager.default_namespace``.
@@ -107,16 +107,12 @@ Version 0.35.0
 
       -  Add POST and DELETE endpoints to ``/api/v1/workspaces/{workspace_id}/namespace-bindings``
          for setting and deleting workspace namespace bindings.
-
       -  Add a GET endpoint ``/api/v1/workspaces/{id}/list-namespace-bindings`` to list namespace
          bindings for a workspace.
-
       -  Add a POST endpoint ``/api/v1/workspaces/{id}/set-resource-quota`` to set resource quotas
          on workspaces bound to auto-created namespaces.
-
       -  Add a GET endpoint ``/api/v1/workspaces/{id}/get-k8s-resource-quotas`` to retrieve enforced
-         Kubernetes resource quotas for workspace bound namespaces Kubernetes resource quotas for
-         bound namespaces
+         Kubernetes GPU resource quotas for workspace bound namespaces.
 
 -  WebUI: Enable users to add or remove hyperparameters during hyperparameter searches.
 
