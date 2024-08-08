@@ -26,12 +26,12 @@ Version 0.35.0
    -  The ``cluster_name`` must be unique for all resource managers when deploying multiple resource
       managers in Determined.
 
-   -  When upgrading, specify `resourceManager.clusterName` in your `values.yaml` to override
-      `resource_manager.name` and/or remove the `name` field from your `resource_manager` config
+   -  When upgrading, specify ``resourceManager.clusterName`` in your ``values.yaml`` to override
+      ``resource_manager.name`` and/or remove the ``name`` field from your ``resource_manager`` config
       altogether.
 
--  For additional resource managers, you must change `additional_resource_manager[i].name` to
-   `additional_resource_manager[i].cluster_name` in your `values.yaml`.
+-  For additional resource managers, you must change ``additional_resource_manager[i].name`` to
+   ``additional_resource_manager[i].cluster_name`` in your ``values.yaml``.
 
 -  Master Configuration: Replace ``resource_manager.namespace`` with
    ``resource_manager.default_namespace``.
@@ -45,14 +45,6 @@ Version 0.35.0
    -  If unset, the workloads will be sent to the release namespace during determined helm installs
       or upgrades and will be sent to the default Kubernetes namespace, "default", during non-helm
       determined deployments.
-
--  Master Configuration: Replace ``resource_manager.namespace`` with
-   ``resource_manager.default_namespace``. The namespace field in the Kubernetes Resource Manager
-   configuration is no longer supported and is replaced by ``default_namespace``. This field serves
-   as the default namespace for deploying namespaced resources when the workspace associated with a
-   workload is not bound to a specific namespace. If unset, the workloads will be sent to the
-   release namespace, or the default Kubernetes namespace, "default", during non-helm determined
-   deployments.
 
 -  Tasks: The :ref:`historical usage <historical-cluster-usage-data>` CSV file has been updated. The
    header row for slot-hours is now named ``slot_hours`` instead of ``gpu_hours`` to accurately
