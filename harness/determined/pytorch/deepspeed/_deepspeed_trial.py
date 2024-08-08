@@ -498,7 +498,7 @@ class DeepSpeedTrialController(det.TrialController):
 
         return metrics
 
-    @torch.no_grad()  # type: ignore
+    @torch.no_grad()
     def _compute_validation_metrics(self) -> workload.Response:
         self.context.reset_reducers()
         # Set the behavior of certain layers (e.g., dropout) that are
@@ -617,7 +617,7 @@ class DeepSpeedTrialController(det.TrialController):
         if not maybe_ckpt.exists():
             return
 
-        checkpoint = torch.load(str(maybe_ckpt), map_location="cpu")  # type: ignore
+        checkpoint = torch.load(str(maybe_ckpt), map_location="cpu")
         if not isinstance(checkpoint, dict):
             raise det.errors.InvalidExperimentException(
                 f"Expected checkpoint at {maybe_ckpt} to be a dict "

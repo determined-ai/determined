@@ -292,9 +292,9 @@ class _PyTorchTrialController:
             hvd.init()
         if distributed_backend.use_torch():
             if torch.cuda.is_available():
-                dist.init_process_group(backend="nccl")  # type: ignore
+                dist.init_process_group(backend="nccl")
             else:
-                dist.init_process_group(backend="gloo")  # type: ignore
+                dist.init_process_group(backend="gloo")
 
         cls._set_random_seeds(trial_seed)
 
@@ -912,7 +912,7 @@ class _PyTorchTrialController:
 
         return training_metrics
 
-    @torch.no_grad()  # type: ignore
+    @torch.no_grad()
     def _validate(self, searcher_op: Optional[core.SearcherOperation] = None) -> Dict[str, Any]:
         # Report a validation step is starting.
         if self.is_chief:
@@ -1103,7 +1103,7 @@ class _PyTorchTrialController:
         for ckpt_path in potential_paths:
             maybe_ckpt = load_path.joinpath(*ckpt_path)
             if maybe_ckpt.exists():
-                checkpoint = torch.load(str(maybe_ckpt), map_location="cpu")  # type: ignore
+                checkpoint = torch.load(str(maybe_ckpt), map_location="cpu")
                 break
 
         if checkpoint is None or not isinstance(checkpoint, dict):

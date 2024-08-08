@@ -164,9 +164,9 @@ def _initialize_distributed_backend() -> Optional[core.DistributedContext]:
     distributed_backend = det._DistributedBackend()
     if distributed_backend.use_torch():
         if torch.cuda.is_available():
-            dist.init_process_group(backend="nccl")  # type: ignore
+            dist.init_process_group(backend="nccl")
         else:
-            dist.init_process_group(backend="gloo")  # type: ignore
+            dist.init_process_group(backend="gloo")
         return core.DistributedContext.from_torch_distributed()
 
     info = det.get_cluster_info()
