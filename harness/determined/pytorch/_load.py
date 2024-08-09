@@ -205,9 +205,7 @@ def load_trial_from_checkpoint_path(
 
     trial = trial_class(trial_context, **trial_kwargs)  # type: ignore
 
-    checkpoint = torch.load(  # type: ignore
-        str(ckpt_dir.joinpath("state_dict.pth")), **torch_load_kwargs
-    )
+    checkpoint = torch.load(str(ckpt_dir.joinpath("state_dict.pth")), **torch_load_kwargs)
 
     # We are still backwards compatible with checkpoints saved in the pre-0.12.13 PyTorchTrial API,
     # but when we can guarantee that the pre-0.12.13 API was not in use, we avoid checking for a

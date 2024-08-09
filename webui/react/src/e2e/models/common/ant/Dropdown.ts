@@ -1,5 +1,5 @@
-import { BaseComponent } from 'e2e/models/common/base/BaseComponent';
-import { BaseOverlay, OverlayArgs } from 'e2e/models/common/base/BaseOverlay';
+import { BaseComponent } from 'playwright-page-model-base/BaseComponent';
+import { BaseOverlay, OverlayArgs } from 'playwright-page-model-base/BaseOverlay';
 
 /**
  * Represents the Dropdown component from antd/es/dropdown/index.js

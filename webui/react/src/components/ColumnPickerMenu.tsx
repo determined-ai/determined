@@ -21,7 +21,7 @@ const BANNED_COLUMNS: Set<string> = new Set([]);
 const removeBannedColumns = (columns: ProjectColumn[]) =>
   columns.filter((col) => !BANNED_COLUMNS.has(col.column));
 
-export const LOCATION_LABEL_MAP = {
+export const LOCATION_LABEL_MAP: Record<V1LocationType, string> = {
   [V1LocationType.EXPERIMENT]: 'General',
   [V1LocationType.RUN]: 'General',
   [V1LocationType.VALIDATIONS]: 'Metrics',
@@ -29,6 +29,8 @@ export const LOCATION_LABEL_MAP = {
   [V1LocationType.CUSTOMMETRIC]: 'Metrics',
   [V1LocationType.HYPERPARAMETERS]: 'Hyperparameters',
   [V1LocationType.RUNHYPERPARAMETERS]: 'Hyperparameters',
+  [V1LocationType.RUNMETADATA]: 'Metadata',
+  [V1LocationType.UNSPECIFIED]: 'Unspecified',
 } as const;
 
 export const COLUMNS_MENU_BUTTON = 'columns-menu-button';
@@ -278,7 +280,7 @@ const ColumnPickerMenu: React.FC<ColumnMenuProps> = ({
                   ),
                   forceRender: true,
                   key: canonicalTab,
-                  label: LOCATION_LABEL_MAP[canonicalTab as keyof typeof LOCATION_LABEL_MAP],
+                  label: LOCATION_LABEL_MAP[canonicalTab],
                 };
               })}
             />

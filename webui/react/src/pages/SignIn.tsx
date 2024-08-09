@@ -138,7 +138,11 @@ const SignIn: React.FC = () => {
     <Page breadcrumb={[]} docTitle="Sign In" ignorePermissions noScroll>
       <div className={css.base}>
         <div className={css.content}>
-          <Logo branding={info.branding} orientation="vertical" />
+          <Logo
+            branding={info.branding}
+            hasCustomLogo={info.hasCustomLogo}
+            orientation="vertical"
+          />
           <DeterminedAuth canceler={canceler} />
           {info.ssoProviders && info.ssoProviders.length > 0 && (
             <>

@@ -81,6 +81,13 @@ export const paths = {
   clusters: (): string => {
     return '/clusters';
   },
+  customerAsset: (
+    name: 'logo',
+    orientation: 'vertical' | 'horizontal',
+    mode: 'dark' | 'light',
+  ): string => {
+    return `/customer-assets/${name}?orientation=${orientation}&mode=${mode}`;
+  },
   dashboard: (): string => {
     return '/dashboard';
   },

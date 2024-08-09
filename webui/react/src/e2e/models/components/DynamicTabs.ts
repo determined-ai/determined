@@ -1,4 +1,5 @@
-import { BaseReactFragment } from 'e2e/models/common/base/BaseReactFragment';
+import { BaseReactFragment } from 'playwright-page-model-base/BaseReactFragment';
+
 import { Pivot } from 'e2e/models/common/hew/Pivot';
 
 /**

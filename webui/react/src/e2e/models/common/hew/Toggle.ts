@@ -1,5 +1,6 @@
+import { NamedComponent } from 'playwright-page-model-base/BaseComponent';
+
 import { Switch } from 'e2e/models/common/ant/Switch';
-import { NamedComponent } from 'e2e/models/common/base/BaseComponent';
 import { Label } from 'e2e/models/common/hew/Label';
 
 /**

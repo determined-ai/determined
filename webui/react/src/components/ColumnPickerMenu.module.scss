@@ -1,5 +1,5 @@
 .base {
-  width: 300px;
+  width: 380px;
 
   .columns {
     display: flex;
@@ -16,5 +16,11 @@
   .rows {
     text-wrap: nowrap;
     white-space: nowrap;
+  }
+}
+
+@media only screen and (width <= 390px) {
+  .base {
+    width: 320px;
   }
 }

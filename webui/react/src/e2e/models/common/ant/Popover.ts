@@ -1,4 +1,6 @@
-import { BaseOverlay, OverlayArgs } from 'e2e/models/common/base/BaseOverlay';
+import { BaseOverlay, OverlayArgs } from 'playwright-page-model-base/BaseOverlay';
+
+import { DeterminedPage } from 'e2e/models/common/base/BasePage';
 
 /**
  * Represents the Popver component from antd/es/popover/index.js
@@ -18,7 +20,7 @@ export class Popover extends BaseOverlay {
     // [ET-284] Popover click handle doesn't work unless we wait
     await this.root._page.waitForTimeout(500);
     // Popover has no close button and doesn't respect Escape key
-    await this.root.nav.sidebar.header.pwLocator.click();
+    await (this.root as DeterminedPage).nav.sidebar.header.pwLocator.click();
     await this.pwLocator.waitFor({ state: 'hidden' });
   }
 }

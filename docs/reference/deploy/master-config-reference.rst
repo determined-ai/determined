@@ -217,6 +217,19 @@ warning is returned. The default value is ``true``.
 
 Optional. Specify a human-readable name for this cluster.
 
+**********************
+ ``ui_customization``
+**********************
+
+Optional. Applies only to the Determined Enterprise Edition. This section contains options to
+customize the UI.
+
+``logo_path``
+=============
+
+Specifies the path to a user-provided logo to be shown in the UI. Ensure the path is accessible and
+reachable by the master service. The logo file should be a valid image format, with SVG recommended.
+
 *************************
  ``tensorboard_timeout``
 *************************
@@ -363,7 +376,7 @@ on using Determined with Kubernetes, see the :ref:`documentation <determined-on-
 ``namespace``
 -------------
 
-This field has been deprecated, use ``default_namespace`` instead.
+This field is no longer supported, use ``default_namespace`` instead.
 
 ``default_namespace``
 ---------------------
@@ -1753,6 +1766,7 @@ used for :ref:`remote user <remote-users>` management.
           groups_attribute_name: "XYZ"
           display_name_attribute_name: "XYZ"
           always_redirect: true
+          exclude_groups_scope: false
 
 ``enabled``
 ===========
@@ -1829,6 +1843,13 @@ Specifies if this OIDC provider should be used for authentication, bypassing the
 sign-in page. This redirection persists unless the user explicitly signs out within the WebUI. If an
 SSO user attempts to use an expired session token, they are directly redirected to the SSO provider
 and returned to the requested page after authentication.
+
+``exclude_groups_scope``
+========================
+
+Specifies if the groups scope should be excluded for this OIDC provider. For most OIDC providers
+such as Okta, this should be false (or blank) if you'd like to provision group memberships. But for
+some providers such as Azure, that do not support groups scope, this should be set to true.
 
 **********
  ``saml``

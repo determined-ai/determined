@@ -1,4 +1,5 @@
-import { BaseComponent, NamedComponent } from 'e2e/models/common/base/BaseComponent';
+import { BaseComponent, NamedComponent } from 'playwright-page-model-base/BaseComponent';
+
 import { DropdownMenu } from 'e2e/models/common/hew/Dropdown';
 import { ColumnPickerMenu } from 'e2e/models/components/ColumnPickerMenu';
 import { TableFilter } from 'e2e/models/components/FilterForm/TableFilter';

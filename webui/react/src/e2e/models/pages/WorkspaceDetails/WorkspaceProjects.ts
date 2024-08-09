@@ -1,5 +1,6 @@
-import { BaseComponent } from 'e2e/models/common/base/BaseComponent';
-import { BaseReactFragment } from 'e2e/models/common/base/BaseReactFragment';
+import { BaseComponent } from 'playwright-page-model-base/BaseComponent';
+import { BaseReactFragment } from 'playwright-page-model-base/BaseReactFragment';
+
 import { Select } from 'e2e/models/common/hew/Select';
 import { Toggle } from 'e2e/models/common/hew/Toggle';
 import { ProjectsCard } from 'e2e/models/components/ProjectCard';

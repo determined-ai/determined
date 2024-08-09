@@ -23,4 +23,5 @@ type RunMetadataIndex struct {
 	BooleanValue   *bool    `bun:"boolean_value"`
 	TimestampValue *string  `bun:"timestamp_value"`
 	ProjectID      int      `bun:"project_id"`
+	IsArrayElement bool     `bun:"is_array_element"`
 }

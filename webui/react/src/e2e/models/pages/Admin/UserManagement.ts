@@ -1,7 +1,7 @@
 import { Page } from '@playwright/test';
+import { BaseComponent } from 'playwright-page-model-base/BaseComponent';
 
 import { expect } from 'e2e/fixtures/global-fixtures';
-import { BaseComponent } from 'e2e/models/common/base/BaseComponent';
 import { DropdownMenu } from 'e2e/models/common/hew/Dropdown';
 import { Select } from 'e2e/models/common/hew/Select';
 import { Toast } from 'e2e/models/common/hew/Toast';

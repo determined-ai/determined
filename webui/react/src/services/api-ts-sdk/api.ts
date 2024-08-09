@@ -2047,7 +2047,7 @@ export interface V1ClusterMessage {
     createdTime?: Date | DateString;
 }
 /**
- * ColumnType indicates the type of data under the column - COLUMN_TYPE_UNSPECIFIED: data type is unknown/mixed  - COLUMN_TYPE_TEXT: data type is textual  - COLUMN_TYPE_NUMBER: data type is numeric  - COLUMN_TYPE_DATE: data type is a date
+ * ColumnType indicates the type of data under the column - COLUMN_TYPE_UNSPECIFIED: data type is unknown/mixed  - COLUMN_TYPE_TEXT: data type is textual  - COLUMN_TYPE_NUMBER: data type is numeric  - COLUMN_TYPE_DATE: data type is a date  - COLUMN_TYPE_ARRAY: data type is an array
  * @export
  * @enum {string}
  */
@@ -2056,6 +2056,7 @@ export const V1ColumnType = {
     TEXT: 'COLUMN_TYPE_TEXT',
     NUMBER: 'COLUMN_TYPE_NUMBER',
     DATE: 'COLUMN_TYPE_DATE',
+    ARRAY: 'COLUMN_TYPE_ARRAY',
 } as const
 export type V1ColumnType = ValueOf<typeof V1ColumnType>
 /**
@@ -4316,6 +4317,12 @@ export interface V1GetMasterResponse {
      * @memberof V1GetMasterResponse
      */
     clusterMessage?: V1ClusterMessage;
+    /**
+     * Whether the cluster has a user-submitted custom logo.
+     * @type {boolean}
+     * @memberof V1GetMasterResponse
+     */
+    hasCustomLogo: boolean;
 }
 /**
  * Response to GetMeRequest.

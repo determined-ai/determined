@@ -2,6 +2,7 @@ import Message from 'hew/Message';
 import Pivot, { PivotProps } from 'hew/Pivot';
 import Spinner from 'hew/Spinner';
 import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
+import { string } from 'io-ts';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
@@ -13,6 +14,7 @@ import { terminalRunStates } from 'constants/states';
 import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import usePolling from 'hooks/usePolling';
+import { SettingsConfig, useSettings } from 'hooks/useSettings';
 import TrialDetailsHeader from 'pages/TrialDetails/TrialDetailsHeader';
 import TrialDetailsHyperparameters from 'pages/TrialDetails/TrialDetailsHyperparameters';
 import TrialDetailsLogs from 'pages/TrialDetails/TrialDetailsLogs';
@@ -33,9 +35,13 @@ import { useObservable } from 'utils/observable';
 import { isAborted, isNotFound } from 'utils/service';
 import { capitalize } from 'utils/string';
 
+import ExperimentCodeViewer from './ExperimentDetails/ExperimentCodeViewer';
+import TrialCheckpoints from './ExperimentDetails/TrialCheckpoints';
 import MultiTrialDetailsHyperparameters from './TrialDetails/MultiTrialDetailsHyperparameters';
 
 const TabType = {
+  Checkpoints: 'checkpoints',
+  Code: 'code',
   Hyperparameters: 'hyperparameters',
   Logs: 'logs',
   Metrics: 'metrics',
@@ -90,6 +96,27 @@ const TrialDetailsComp: React.FC = () => {
   const showExperimentArtifacts = usePermissions().canViewExperimentArtifacts({
     workspace: { id: experiment?.workspaceId ?? 0 },
   });
+
+  const configForRun = (runId: number): SettingsConfig<{ filePath: string }> => ({
+    settings: {
+      filePath: {
+        defaultValue: '',
+        storageKey: 'filePath',
+        type: string,
+      },
+    },
+    storagePath: `selected-file-run-${runId}`,
+  });
+  const config: SettingsConfig<{ filePath: string }> = useMemo(() => {
+    return configForRun(parseInt(trialID ?? '0'));
+  }, [trialID]);
+  const { settings, updateSettings } = useSettings<{ filePath: string }>(config);
+  const handleSelectFile = useCallback(
+    (filePath: string) => {
+      updateSettings({ filePath });
+    },
+    [updateSettings],
+  );
 
   const fetchExperimentDetails = useCallback(async () => {
     if (!trial) return;
@@ -200,10 +227,42 @@ const TrialDetailsComp: React.FC = () => {
         key: TabType.Metrics,
         label: 'Metrics',
       });
+      if (f_flat_runs) {
+        const hyperparameterTabPosition = tabs.findIndex((item) => {
+          return item.key === TabType.Hyperparameters;
+        });
+        tabs.splice(hyperparameterTabPosition + 1, 0, {
+          children: <TrialCheckpoints experiment={experiment} pageRef={pageRef} trial={trial} />,
+          key: TabType.Checkpoints,
+          label: 'Checkpoints',
+        });
+      }
+    }
+
+    if (showExperimentArtifacts && experiment.modelDefinitionSize !== 0 && f_flat_runs) {
+      tabs.splice(-1, 0, {
+        children: (
+          <ExperimentCodeViewer
+            experiment={experiment}
+            selectedFilePath={settings.filePath}
+            onSelectFile={handleSelectFile}
+          />
+        ),
+        key: TabType.Code,
+        label: 'Code',
+      });
     }
 
     return tabs;
-  }, [experiment, trial, remainingLogDays, showExperimentArtifacts]);
+  }, [
+    experiment,
+    trial,
+    remainingLogDays,
+    showExperimentArtifacts,
+    f_flat_runs,
+    settings.filePath,
+    handleSelectFile,
+  ]);
 
   const { stopPolling } = usePolling(fetchTrialData);
 

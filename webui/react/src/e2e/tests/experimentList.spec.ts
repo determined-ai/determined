@@ -22,7 +22,7 @@ test.describe('Experiment List', () => {
         projectDetailsPageSetup.f_experimentList.tableActionBar.count.pwLocator,
       ).toContainText('experiment');
       detExecSync(
-        `experiment create ${fullPath('examples/tutorials/mnist_pytorch/const.yaml')} --paused --project_id ${newProject.response.project.id}`,
+        `experiment create ${fullPath('examples/tutorials/mnist_pytorch/adaptive.yaml')} --paused --project_id ${newProject.response.project.id}`,
       );
       await expect(
         projectDetailsPageSetup.f_experimentList.dataGrid.rows.pwLocator,
@@ -293,26 +293,22 @@ test.describe('Experiment List', () => {
     // await test.step('Hyperparameter Search', async () => {});
   });
 
-  test.skip('DataGrid Action Pause', async () => {
-    const initNumRows = await getCount();
-    // create paused experiment
-    detExecSync(
-      `experiment create ${fullPath('examples/tutorials/mnist_pytorch/adaptive.yaml')}  --paused`,
-    );
-    await expect(projectDetailsPage.f_experimentList.tableActionBar.count.pwLocator).toContainText(
-      `${initNumRows + 1}`,
-    );
+  test('DataGrid Action Pause', async () => {
+    // datagrid can be slow, perhaps related to [ET-677]
+    projectDetailsPage._page.setDefaultTimeout(10000);
 
     // experiment should initially be paused
     const row = projectDetailsPage.f_experimentList.dataGrid.getRowByIndex(0);
     await expect.soft((await row.getCellByColumnName('State')).pwLocator).toHaveText('paused');
 
     // resume experiment
-    await (await row.experimentActionDropdown.open()).resume.pwLocator.click();
+    await row.experimentActionDropdown.open();
+    await row.experimentActionDropdown.resume.pwLocator.click();
     await expect.soft((await row.getCellByColumnName('State')).pwLocator).not.toHaveText('paused');
 
     // pause experiment again
-    await (await row.experimentActionDropdown.open()).pause.pwLocator.click();
+    await row.experimentActionDropdown.open();
+    await row.experimentActionDropdown.pause.pwLocator.click();
     await expect.soft((await row.getCellByColumnName('State')).pwLocator).toHaveText('paused');
   });
 });

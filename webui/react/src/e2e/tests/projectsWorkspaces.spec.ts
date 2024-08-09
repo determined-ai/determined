@@ -283,11 +283,9 @@ test.describe('With a Workspace', () => {
 
     test('Create a Project', async ({ authedPage, newWorkspace }) => {
       const projectName = safeName('test-project');
-      const workspaceList = new WorkspaceList(authedPage);
       const workspaceDetails = new WorkspaceDetails(authedPage);
       const projectDetails = new ProjectDetails(authedPage);
 
-      const sidebar = workspaceList.nav.sidebar;
       const projects = workspaceDetails.workspaceProjects;
 
       await test.step('Create a Project', async () => {
@@ -301,7 +299,7 @@ test.describe('With a Workspace', () => {
       });
 
       await test.step('Delete a Project', async () => {
-        await sidebar.sidebarWorkspaceItem(newWorkspace.response.workspace.name).pwLocator.click();
+        await workspaceDetails.gotoWorkspace(newWorkspace.response.workspace.id);
         await workspaceDetails.projectsTab.pwLocator.click();
         const projectCard = projects.cardByName(projectName);
         await projectCard.actionMenu.open();
