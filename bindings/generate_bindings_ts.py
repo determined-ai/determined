@@ -309,7 +309,7 @@ def generate_function(api: str, phase: Phase, function: swagger_parser.Function)
         code += jsdoc
         code.end_comment()
 
-        success_response = function.responses.get("200")
+        success_response = function.responses.get("200") or function.responses.get("101")
         assert success_response, function
 
         code += f"{function_name}({function_args}options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<{annotation(success_response)}> {{"
@@ -561,12 +561,12 @@ export class RequiredError extends Error {{
     out = [prelude]
 
     # workaround for streaming function behavior
-    runtime_stream_error = swagger.defs["runtimeStreamError"]
-    assert runtime_stream_error
-    runtime_stream_error_ref = swagger_parser.Ref(name="RuntimeStreamError")
-    swagger_parser.Ref.all_refs.append(runtime_stream_error_ref)
-    runtime_stream_error_ref.defn = runtime_stream_error
-    runtime_stream_error_ref.linked = True
+    # runtime_stream_error = swagger.defs["runtimeStreamError"]
+    # assert runtime_stream_error
+    # runtime_stream_error_ref = swagger_parser.Ref(name="RuntimeStreamError")
+    # swagger_parser.Ref.all_refs.append(runtime_stream_error_ref)
+    # runtime_stream_error_ref.defn = runtime_stream_error
+    # runtime_stream_error_ref.linked = True
 
     ops_by_tag = {}
     for defn in swagger.ops.values():
