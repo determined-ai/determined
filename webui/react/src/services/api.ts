@@ -785,6 +785,12 @@ export const getProjectNumericMetricsRange = generateDetApi<
   Type.ProjectMetricsRange[]
 >(Config.getProjectNumericMetricsRange);
 
+export const getMetadataValues = generateDetApi<
+  Service.GetMetadataValuesParams,
+  Api.V1GetMetadataValuesResponse,
+  string[]
+>(Config.getMetadataValues);
+
 /* Runs */
 
 export const searchRuns = generateDetApi<

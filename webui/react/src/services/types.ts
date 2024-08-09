@@ -527,6 +527,11 @@ export interface GetProjectNumericMetricsRangeParams {
   id: number;
 }
 
+export interface GetMetadataValuesParams {
+  projectId: number;
+  key: string;
+}
+
 export interface ActionWorkspaceParams {
   workspaceId: number;
 }

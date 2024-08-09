@@ -1865,6 +1865,16 @@ export const getProjectNumericMetricsRange: DetApi<
   request: (params) => detApi.Internal.getProjectNumericMetricsRange(params.id),
 };
 
+export const getMetadataValues: DetApi<
+  Service.GetMetadataValuesParams,
+  Api.V1GetMetadataValuesResponse,
+  string[]
+> = {
+  name: 'getMetadataValues',
+  postProcess: (response) => response.values ?? [],
+  request: (params) => detApi.Internal.getMetadataValues(params.projectId, params.key),
+};
+
 /* Tasks */
 
 const TASK_LIMIT = 1000;
