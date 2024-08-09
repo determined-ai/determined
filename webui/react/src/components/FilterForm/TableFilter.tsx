@@ -16,6 +16,7 @@ interface Props {
   formStore: FilterFormStore;
   isMobile?: boolean;
   isOpenFilter: boolean;
+  projectId?: number;
   onIsOpenFilterChange?: (value: boolean) => void;
 }
 
@@ -25,6 +26,7 @@ const TableFilter = ({
   formStore,
   isMobile = false,
   isOpenFilter,
+  projectId,
   onIsOpenFilterChange,
 }: Props): JSX.Element => {
   const columns: V1ProjectColumn[] = Loadable.getOrElse([], loadableColumns).filter(
@@ -66,7 +68,12 @@ const TableFilter = ({
               }
             }}
             onMouseMove={(e) => e.stopPropagation()}>
-            <FilterForm columns={columns} formStore={formStore} onHidePopOver={onHidePopOver} />
+            <FilterForm
+              columns={columns}
+              formStore={formStore}
+              projectId={projectId}
+              onHidePopOver={onHidePopOver}
+            />
           </div>
         }
         open={isOpenFilter}

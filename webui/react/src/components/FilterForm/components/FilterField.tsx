@@ -4,8 +4,9 @@ import DatePicker, { DatePickerProps } from 'hew/DatePicker';
 import Icon from 'hew/Icon';
 import Input from 'hew/Input';
 import InputNumber from 'hew/InputNumber';
+import InputSelect from 'hew/InputSelect';
 import Select, { SelectProps, SelectValue } from 'hew/Select';
-import { Loadable } from 'hew/utils/loadable';
+import { Loadable, NotLoaded } from 'hew/utils/loadable';
 import { Observable, useObservable } from 'micro-observables';
 import { useCallback, useState } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
@@ -26,7 +27,9 @@ import {
   SEARCHER_TYPE,
   SpecialColumnNames,
 } from 'components/FilterForm/components/type';
-import { V1ColumnType, V1ProjectColumn } from 'services/api-ts-sdk';
+import { useAsync } from 'hooks/useAsync';
+import { getMetadataValues } from 'services/api';
+import { V1ColumnType, V1LocationType, V1ProjectColumn } from 'services/api-ts-sdk';
 import clusterStore from 'stores/cluster';
 import userStore from 'stores/users';
 import { alphaNumericSorter } from 'utils/sort';
@@ -45,6 +48,7 @@ interface Props {
   formStore: FilterFormStore;
   level: number; // start from 0
   columns: V1ProjectColumn[];
+  projectId?: number;
 }
 
 const FilterField = ({
@@ -55,12 +59,17 @@ const FilterField = ({
   parentId,
   level,
   columns,
+  projectId,
 }: Props): JSX.Element => {
   const users = Loadable.getOrElse([], useObservable(userStore.getUsers()));
   const resourcePools = Loadable.getOrElse([], useObservable(clusterStore.resourcePools));
 
   const currentColumn = columns.find((c) => c.column === field.columnName);
-  const isSpecialColumn = (SpecialColumnNames as ReadonlyArray<string>).includes(field.columnName);
+  const isSpecialMetadataColumn =
+    field.location === V1LocationType.RUNMETADATA && field.type === V1ColumnType.TEXT;
+  const isSpecialColumn =
+    (SpecialColumnNames as ReadonlyArray<string>).includes(field.columnName) ||
+    isSpecialMetadataColumn;
 
   const [inputOpen, setInputOpen] = useState(false);
   const [fieldValue, setFieldValue] = useState<FormFieldValue>(field.value);
@@ -97,6 +106,21 @@ const FilterField = ({
       });
     }
   };
+
+  const metadataValues = useAsync(async () => {
+    try {
+      if (projectId !== undefined && isSpecialMetadataColumn) {
+        const metadataValues = await getMetadataValues({
+          key: field.columnName.replace(/^metadata\./, ''),
+          projectId,
+        });
+        return metadataValues;
+      }
+      return [];
+    } catch (e) {
+      return NotLoaded;
+    }
+  }, [field.columnName, isSpecialMetadataColumn, projectId]);
 
   const getSpecialOptions = (columnName: SpecialColumnNames): SelectProps['options'] => {
     switch (columnName) {
@@ -204,7 +228,9 @@ const FilterField = ({
         <Select
           data-test="operator"
           options={(isSpecialColumn
-            ? [Operator.Eq, Operator.NotEq] // just Eq and NotEq for Special column
+            ? isSpecialMetadataColumn
+              ? [Operator.Contains, Operator.Eq, Operator.NotEq] // just Contain, Eq and NotEq for Special metadata column
+              : [Operator.Eq, Operator.NotEq] // just Eq and NotEq for Special column
             : AvailableOperators[currentColumn?.type ?? V1ColumnType.UNSPECIFIED]
           ).map((op) => ({
             label: ReadableOperator[field.type][op],
@@ -223,19 +249,37 @@ const FilterField = ({
           }}
         />
         {isSpecialColumn ? (
-          <div onKeyDownCapture={captureEnterKeyDown}>
-            <Select
-              data-test="special"
-              options={getSpecialOptions(field.columnName as SpecialColumnNames)}
-              value={fieldValue ?? undefined}
-              width={'100%'}
-              onChange={(value) => {
-                const val = value?.toString() ?? null;
-                updateFieldValue(field.id, val);
-              }}
-              onDropdownVisibleChange={setInputOpen}
-            />
-          </div>
+          <>
+            {isSpecialMetadataColumn ? (
+              <InputSelect
+                customFilter={(options, filterValue) =>
+                  options.filter((opt) => opt.includes(filterValue))
+                }
+                data-test="special"
+                options={metadataValues.getOrElse([])}
+                value={typeof fieldValue === 'string' ? fieldValue : undefined}
+                width={'100%'}
+                onChange={(value) => {
+                  updateFieldValue(field.id, value);
+                }}
+                onDropdownVisibleChange={setInputOpen}
+              />
+            ) : (
+              <div onKeyDownCapture={captureEnterKeyDown}>
+                <Select
+                  data-test="special"
+                  options={getSpecialOptions(field.columnName as SpecialColumnNames)}
+                  value={fieldValue ?? undefined}
+                  width={'100%'}
+                  onChange={(value) => {
+                    const val = value?.toString() ?? null;
+                    updateFieldValue(field.id, val);
+                  }}
+                  onDropdownVisibleChange={setInputOpen}
+                />
+              </div>
+            )}
+          </>
         ) : (
           <>
             {(currentColumn?.type === V1ColumnType.TEXT ||

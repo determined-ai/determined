@@ -15,10 +15,11 @@ import css from './FilterForm.module.scss';
 interface Props {
   formStore: FilterFormStore;
   columns: V1ProjectColumn[];
+  projectId?: number;
   onHidePopOver: () => void;
 }
 
-const FilterForm = ({ formStore, columns, onHidePopOver }: Props): JSX.Element => {
+const FilterForm = ({ formStore, columns, projectId, onHidePopOver }: Props): JSX.Element => {
   const scrollBottomRef = useRef<HTMLDivElement>(null);
   const loadableData = useObservable(formStore.formset);
   const isButtonDisabled = Loadable.match(loadableData, {
@@ -58,6 +59,7 @@ const FilterForm = ({ formStore, columns, onHidePopOver }: Props): JSX.Element =
                 index={0}
                 level={0}
                 parentId={data.filterGroup.id}
+                projectId={projectId}
               />
               <div ref={scrollBottomRef} />
             </div>

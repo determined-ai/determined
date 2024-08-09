@@ -1072,6 +1072,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
               isMobile={isMobile}
               isOpenFilter={isOpenFilter}
               loadableColumns={projectColumns}
+              projectId={projectId}
               onIsOpenFilterChange={handleIsOpenFilterChange}
             />
             <MultiSortMenu
