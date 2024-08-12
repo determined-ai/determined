@@ -126,7 +126,8 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
       setSelectedCheckpoints(checkpoints);
       registerModal.open();
     },
-    [registerModal],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
   );
 
   const handleDelete = useCallback(async (checkpointUuids: string[]) => {
@@ -205,8 +206,8 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
     [openCheckpoint],
   );
 
-  const columns = useMemo(() => {
-    const actionRenderer = (_: string, record: CoreApiGenericCheckpoint): React.ReactNode => (
+  const actionRenderer = useCallback(
+    (_: string, record: CoreApiGenericCheckpoint): React.ReactNode => (
       <ActionDropdown<CheckpointAction>
         actionOrder={batchActions}
         danger={{ [checkpointAction.Delete]: true }}
@@ -219,8 +220,11 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
         onError={handleError}
         onTrigger={dropDownOnTrigger(record.uuid)}
       />
-    );
+    ),
+    [dropDownOnTrigger],
+  );
 
+  const columns = useMemo(() => {
     const checkpointRenderer = (_: string, record: CoreApiGenericCheckpoint): React.ReactNode => {
       return (
         <Button
@@ -258,7 +262,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
 
     return newColumns;
   }, [
-    dropDownOnTrigger,
+    actionRenderer,
     experiment.config.searcher.metric,
     handleOpenCheckpoint,
     settings.sortDesc,
