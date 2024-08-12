@@ -8,7 +8,7 @@ import InputSelect from 'hew/InputSelect';
 import Select, { SelectProps, SelectValue } from 'hew/Select';
 import { Loadable, NotLoaded } from 'hew/utils/loadable';
 import { Observable, useObservable } from 'micro-observables';
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useDrag, useDrop } from 'react-dnd';
 import { debounce } from 'throttle-debounce';
 
@@ -40,6 +40,12 @@ const debounceFunc = debounce(1000, (func: () => void) => {
   func();
 });
 
+const COLUMN_TYPE = {
+  NormalColumnType: 'NormalColumnType',
+  SpecialColumnType: 'SpecialColumnType',
+  StringMetadataColumnType: 'StringMetadataColumn',
+} as const;
+
 interface Props {
   index: number; // start from 0
   field: FormField;
@@ -63,13 +69,16 @@ const FilterField = ({
 }: Props): JSX.Element => {
   const users = Loadable.getOrElse([], useObservable(userStore.getUsers()));
   const resourcePools = Loadable.getOrElse([], useObservable(clusterStore.resourcePools));
-
   const currentColumn = columns.find((c) => c.column === field.columnName);
-  const isStringMetadataColumn =
-    field.location === V1LocationType.RUNMETADATA && field.type === V1ColumnType.TEXT;
-  const isSpecialColumn =
-    (SpecialColumnNames as ReadonlyArray<string>).includes(field.columnName) ||
-    isStringMetadataColumn;
+
+  const columnType = useMemo(() => {
+    if (field.location === V1LocationType.RUNMETADATA && field.type === V1ColumnType.TEXT) {
+      return COLUMN_TYPE.StringMetadataColumnType;
+    } else if ((SpecialColumnNames as ReadonlyArray<string>).includes(field.columnName)) {
+      return COLUMN_TYPE.SpecialColumnType;
+    }
+    return COLUMN_TYPE.NormalColumnType;
+  }, [field.columnName, field.location, field.type]);
 
   const [inputOpen, setInputOpen] = useState(false);
   const [fieldValue, setFieldValue] = useState<FormFieldValue>(field.value);
@@ -109,7 +118,7 @@ const FilterField = ({
 
   const metadataValues = useAsync(async () => {
     try {
-      if (projectId !== undefined && isStringMetadataColumn) {
+      if (projectId !== undefined && columnType === COLUMN_TYPE.StringMetadataColumnType) {
         const metadataValues = await getMetadataValues({
           key: field.columnName.replace(/^metadata\./, ''),
           projectId,
@@ -120,7 +129,7 @@ const FilterField = ({
     } catch (e) {
       return NotLoaded;
     }
-  }, [field.columnName, isStringMetadataColumn, projectId]);
+  }, [columnType, field.columnName, projectId]);
 
   const getSpecialOptions = (columnName: SpecialColumnNames): SelectProps['options'] => {
     switch (columnName) {
@@ -194,12 +203,16 @@ const FilterField = ({
       if (e.key === 'Enter' && !inputOpen && !e.nativeEvent.isComposing && e.keyCode !== 229) {
         formStore.addChild(parentId, FormKind.Field, { index: index + 1, item: getInitField() });
         // stop panel flashing for selects and dates
-        if (field.type === 'COLUMN_TYPE_DATE' || isSpecialColumn) {
+        if (
+          field.type === 'COLUMN_TYPE_DATE' ||
+          columnType === COLUMN_TYPE.SpecialColumnType ||
+          columnType === COLUMN_TYPE.StringMetadataColumnType
+        ) {
           e.stopPropagation();
         }
       }
     },
-    [field.type, formStore, index, inputOpen, isSpecialColumn, parentId],
+    [columnType, field.type, formStore, index, inputOpen, parentId],
   );
 
   return (
@@ -227,9 +240,9 @@ const FilterField = ({
         />
         <Select
           data-test="operator"
-          options={(isSpecialColumn
-            ? isStringMetadataColumn
-              ? [Operator.Contains, Operator.Eq, Operator.NotEq] // just Contain, Eq and NotEq for Special metadata column
+          options={(columnType !== COLUMN_TYPE.NormalColumnType
+            ? columnType === COLUMN_TYPE.StringMetadataColumnType
+              ? [Operator.Contains, Operator.Eq, Operator.NotEq] // just Contain, Eq and NotEq for String metadata column
               : [Operator.Eq, Operator.NotEq] // just Eq and NotEq for Special column
             : AvailableOperators[currentColumn?.type ?? V1ColumnType.UNSPECIFIED]
           ).map((op) => ({
@@ -248,9 +261,10 @@ const FilterField = ({
             });
           }}
         />
-        {isSpecialColumn ? (
+        {columnType !== COLUMN_TYPE.NormalColumnType ? (
           <>
-            {isStringMetadataColumn ? (
+            {columnType === COLUMN_TYPE.StringMetadataColumnType ? (
+              // StringMetadataColumnType
               <InputSelect
                 customFilter={(options, filterValue) =>
                   options.filter((opt) => opt.includes(filterValue))
@@ -265,6 +279,7 @@ const FilterField = ({
                 onDropdownVisibleChange={setInputOpen}
               />
             ) : (
+              // SpecialColumnType
               <div onKeyDownCapture={captureEnterKeyDown}>
                 <Select
                   data-test="special"
