@@ -40,83 +40,25 @@ type Props = XOR<{ experimentSelection: SelectionType }, { runSelection: Selecti
 
 const SELECTION_LIMIT = 50;
 
-const ComparisonView: React.FC<Props> = ({
-  children,
+interface TabsProps {
+  colorMap: MapOfIdsToColors;
+  loadableSelectedExperiments: Loadable<ExperimentWithTrial[]>;
+  loadableSelectedRuns: Loadable<FlatRun[]>;
+  projectId: number;
+}
+
+const Tabs = ({
   colorMap,
-  open,
-  initialWidth,
-  onWidthChange,
-  fixedColumnsCount,
+  loadableSelectedExperiments,
+  loadableSelectedRuns,
   projectId,
-  experimentSelection,
-  runSelection,
-}) => {
-  const scrollbarWidth = useScrollbarWidth();
-  const hasPinnedColumns = fixedColumnsCount > 1;
-  const isMobile = useMobile();
-
-  const [isSelectionLimitReached, setIsSelectionLimitReached] = useState(false);
-
-  const loadableSelectedExperiments = useAsync(async () => {
-    if (
-      !open ||
-      !experimentSelection ||
-      (experimentSelection.type === 'ONLY_IN' && experimentSelection.selections.length === 0)
-    ) {
-      return NotLoaded;
-    }
-    try {
-      const filterFormSet = INIT_FORMSET;
-      const filter = getExperimentIdsFilter(filterFormSet, experimentSelection);
-      const response = await searchExperiments({
-        filter: JSON.stringify(filter),
-        limit: SELECTION_LIMIT,
-      });
-      setIsSelectionLimitReached(
-        !!response?.pagination?.total && response?.pagination?.total > SELECTION_LIMIT,
-      );
-      return response.experiments;
-    } catch (e) {
-      handleError(e, { publicSubject: 'Unable to fetch experiments for comparison' });
-      return NotLoaded;
-    }
-  }, [experimentSelection, open]);
-
+}: TabsProps) => {
   const selectedExperiments: ExperimentWithTrial[] | undefined = Loadable.getOrElse(
     undefined,
     loadableSelectedExperiments,
   );
 
-  const loadableSelectedRuns = useAsync(async () => {
-    if (
-      !open ||
-      !runSelection ||
-      (runSelection.type === 'ONLY_IN' && runSelection.selections.length === 0)
-    ) {
-      return NotLoaded;
-    }
-    const filterFormSet = INIT_FORMSET;
-    try {
-      const filter = getRunIdsFilter(filterFormSet, runSelection);
-      const response = await searchRuns({
-        filter: JSON.stringify(filter),
-        limit: SELECTION_LIMIT,
-      });
-      setIsSelectionLimitReached(
-        !!response?.pagination?.total && response?.pagination?.total > SELECTION_LIMIT,
-      );
-      return response.runs;
-    } catch (e) {
-      handleError(e, { publicSubject: 'Unable to fetch runs for comparison' });
-      return NotLoaded;
-    }
-  }, [open, runSelection]);
-
   const selectedRuns: FlatRun[] | undefined = Loadable.getOrElse(undefined, loadableSelectedRuns);
-
-  const minWidths: [number, number] = useMemo(() => {
-    return [fixedColumnsCount * MIN_COLUMN_WIDTH + scrollbarWidth, 100];
-  }, [fixedColumnsCount, scrollbarWidth]);
 
   const trials = useMemo(() => {
     return selectedExperiments?.flatMap((exp) => (exp.bestTrial ? [exp.bestTrial] : [])) ?? [];
@@ -177,6 +119,80 @@ const ComparisonView: React.FC<Props> = ({
     ];
   }, [selectedRuns, metricData, selectedExperiments, trials, colorMap, projectId, experiments]);
 
+  return <Pivot items={tabs} />;
+};
+
+const ComparisonView: React.FC<Props> = ({
+  children,
+  colorMap,
+  open,
+  initialWidth,
+  onWidthChange,
+  fixedColumnsCount,
+  projectId,
+  experimentSelection,
+  runSelection,
+}) => {
+  const scrollbarWidth = useScrollbarWidth();
+  const hasPinnedColumns = fixedColumnsCount > 1;
+  const isMobile = useMobile();
+
+  const [isSelectionLimitReached, setIsSelectionLimitReached] = useState(false);
+
+  const loadableSelectedExperiments = useAsync(async () => {
+    if (
+      !open ||
+      !experimentSelection ||
+      (experimentSelection.type === 'ONLY_IN' && experimentSelection.selections.length === 0)
+    ) {
+      return NotLoaded;
+    }
+    try {
+      const filterFormSet = INIT_FORMSET;
+      const filter = getExperimentIdsFilter(filterFormSet, experimentSelection);
+      const response = await searchExperiments({
+        filter: JSON.stringify(filter),
+        limit: SELECTION_LIMIT,
+      });
+      setIsSelectionLimitReached(
+        !!response?.pagination?.total && response?.pagination?.total > SELECTION_LIMIT,
+      );
+      return response.experiments;
+    } catch (e) {
+      handleError(e, { publicSubject: 'Unable to fetch experiments for comparison' });
+      return NotLoaded;
+    }
+  }, [experimentSelection, open]);
+
+  const loadableSelectedRuns = useAsync(async () => {
+    if (
+      !open ||
+      !runSelection ||
+      (runSelection.type === 'ONLY_IN' && runSelection.selections.length === 0)
+    ) {
+      return NotLoaded;
+    }
+    const filterFormSet = INIT_FORMSET;
+    try {
+      const filter = getRunIdsFilter(filterFormSet, runSelection);
+      const response = await searchRuns({
+        filter: JSON.stringify(filter),
+        limit: SELECTION_LIMIT,
+      });
+      setIsSelectionLimitReached(
+        !!response?.pagination?.total && response?.pagination?.total > SELECTION_LIMIT,
+      );
+      return response.runs;
+    } catch (e) {
+      handleError(e, { publicSubject: 'Unable to fetch runs for comparison' });
+      return NotLoaded;
+    }
+  }, [open, runSelection]);
+
+  const minWidths: [number, number] = useMemo(() => {
+    return [fixedColumnsCount * MIN_COLUMN_WIDTH + scrollbarWidth, 100];
+  }, [fixedColumnsCount, scrollbarWidth]);
+
   const leftPane =
     open && !hasPinnedColumns ? (
       <Message icon="info" title='Pin columns to see them in "Compare View"' />
@@ -191,7 +207,7 @@ const ComparisonView: React.FC<Props> = ({
           <Alert description="Select records you would like to compare." message={EMPTY_MESSAGE} />
         );
       }
-      if (selectedExperiments === undefined) {
+      if (loadableSelectedExperiments.isNotLoaded) {
         return <Spinner spinning />;
       }
     }
@@ -201,7 +217,7 @@ const ComparisonView: React.FC<Props> = ({
           <Alert description="Select records you would like to compare." message={EMPTY_MESSAGE} />
         );
       }
-      if (selectedRuns === undefined) {
+      if (loadableSelectedRuns.isNotLoaded) {
         return <Spinner spinning />;
       }
     }
@@ -210,7 +226,12 @@ const ComparisonView: React.FC<Props> = ({
         {isSelectionLimitReached && (
           <Alert message={`Only up to ${SELECTION_LIMIT} records can be compared`} />
         )}
-        <Pivot items={tabs} />
+        <Tabs
+          colorMap={colorMap}
+          loadableSelectedExperiments={loadableSelectedExperiments}
+          loadableSelectedRuns={loadableSelectedRuns}
+          projectId={projectId}
+        />
       </>
     );
   };

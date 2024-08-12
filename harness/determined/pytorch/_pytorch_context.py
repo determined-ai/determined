@@ -897,7 +897,7 @@ class PyTorchTrialContext(pytorch._PyTorchReducerContext):
                 scaler.step(optimizer)  # type: ignore
 
         else:
-            step_fn = optimizer.step  # type: ignore
+            step_fn = optimizer.step
 
         # In the case of PyTorch DDP, losses are synchronized automatically on the backwards() pass
         if self.distributed.size > 1 and self._distributed_backend.use_horovod():
