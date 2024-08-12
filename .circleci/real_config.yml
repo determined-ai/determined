@@ -64,10 +64,6 @@ parameters:
 
 release-and-rc-filters: &release-and-rc-filters
   branches:
-    only:
-      # Temporary branch name for testing without merging.
-      # TODO(davidfluck-hpe): remove.
-      - /INFENG-809-circleci-tag/
     ignore:
       - /.*/
   tags:
@@ -76,10 +72,6 @@ release-and-rc-filters: &release-and-rc-filters
 
 rc-filters: &rc-filters
   branches:
-    only:
-      # Temporary branch name for testing without merging.
-      # TODO(davidfluck-hpe): remove.
-      - /INFENG-809-circleci-tag/
     ignore:
       - /.*/
   tags:
@@ -88,10 +80,6 @@ rc-filters: &rc-filters
 
 release-filters: &release-filters
   branches:
-    only:
-      # Temporary branch name for testing without merging.
-      # TODO(davidfluck-hpe): remove.
-      - /INFENG-809-circleci-tag/
     ignore:
       - /.*/
   tags:
