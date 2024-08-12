@@ -65,11 +65,11 @@ const FilterField = ({
   const resourcePools = Loadable.getOrElse([], useObservable(clusterStore.resourcePools));
 
   const currentColumn = columns.find((c) => c.column === field.columnName);
-  const isSpecialMetadataColumn =
+  const isStringMetadataColumn =
     field.location === V1LocationType.RUNMETADATA && field.type === V1ColumnType.TEXT;
   const isSpecialColumn =
     (SpecialColumnNames as ReadonlyArray<string>).includes(field.columnName) ||
-    isSpecialMetadataColumn;
+    isStringMetadataColumn;
 
   const [inputOpen, setInputOpen] = useState(false);
   const [fieldValue, setFieldValue] = useState<FormFieldValue>(field.value);
@@ -109,7 +109,7 @@ const FilterField = ({
 
   const metadataValues = useAsync(async () => {
     try {
-      if (projectId !== undefined && isSpecialMetadataColumn) {
+      if (projectId !== undefined && isStringMetadataColumn) {
         const metadataValues = await getMetadataValues({
           key: field.columnName.replace(/^metadata\./, ''),
           projectId,
@@ -120,7 +120,7 @@ const FilterField = ({
     } catch (e) {
       return NotLoaded;
     }
-  }, [field.columnName, isSpecialMetadataColumn, projectId]);
+  }, [field.columnName, isStringMetadataColumn, projectId]);
 
   const getSpecialOptions = (columnName: SpecialColumnNames): SelectProps['options'] => {
     switch (columnName) {
@@ -228,7 +228,7 @@ const FilterField = ({
         <Select
           data-test="operator"
           options={(isSpecialColumn
-            ? isSpecialMetadataColumn
+            ? isStringMetadataColumn
               ? [Operator.Contains, Operator.Eq, Operator.NotEq] // just Contain, Eq and NotEq for Special metadata column
               : [Operator.Eq, Operator.NotEq] // just Eq and NotEq for Special column
             : AvailableOperators[currentColumn?.type ?? V1ColumnType.UNSPECIFIED]
@@ -250,7 +250,7 @@ const FilterField = ({
         />
         {isSpecialColumn ? (
           <>
-            {isSpecialMetadataColumn ? (
+            {isStringMetadataColumn ? (
               <InputSelect
                 customFilter={(options, filterValue) =>
                   options.filter((opt) => opt.includes(filterValue))
