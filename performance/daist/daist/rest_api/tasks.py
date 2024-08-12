@@ -88,6 +88,10 @@ def read_only_tasks(resources: Resources) -> LocustTasksWithMeta:
         tasks.append(LocustPostTaskWithMeta(
             "/api/v1/experiments-search", test_name="search experiments",
             body={"projectId": resources.project_id}))
+
+        tasks.append(LocustGetTaskWithMeta(
+            f"/api/v1/projects/{resources.project_id}/columns?table_type=TABLE_TYPE_RUN",
+            test_name="get project columns for runs table"))
         if flags.SCALE_33:
             tasks.append(LocustGetTaskWithMeta(
                 f"/api/v1/projects/{resources.project_id}/columns",
