@@ -240,12 +240,16 @@ const FilterField = ({
         />
         <Select
           data-test="operator"
-          options={(columnType !== COLUMN_TYPE.NormalColumnType
-            ? columnType === COLUMN_TYPE.StringMetadataColumnType
-              ? [Operator.Contains, Operator.Eq, Operator.NotEq] // just Contain, Eq and NotEq for String metadata column
-              : [Operator.Eq, Operator.NotEq] // just Eq and NotEq for Special column
-            : AvailableOperators[currentColumn?.type ?? V1ColumnType.UNSPECIFIED]
-          ).map((op) => ({
+          options={{
+            [COLUMN_TYPE.StringMetadataColumnType]: [
+              Operator.Contains,
+              Operator.Eq,
+              Operator.NotEq,
+            ],
+            [COLUMN_TYPE.SpecialColumnType]: [Operator.Eq, Operator.NotEq],
+            [COLUMN_TYPE.NormalColumnType]:
+              AvailableOperators[currentColumn?.type ?? V1ColumnType.UNSPECIFIED],
+          }[columnType].map((op) => ({
             label: ReadableOperator[field.type][op],
             value: op,
           }))}
@@ -262,39 +266,37 @@ const FilterField = ({
           }}
         />
         {columnType !== COLUMN_TYPE.NormalColumnType ? (
-          <>
-            {columnType === COLUMN_TYPE.StringMetadataColumnType ? (
-              // StringMetadataColumnType
-              <InputSelect
-                customFilter={(options, filterValue) =>
-                  options.filter((opt) => opt.includes(filterValue))
-                }
+          columnType === COLUMN_TYPE.StringMetadataColumnType ? (
+            // StringMetadataColumnType
+            <InputSelect
+              customFilter={(options, filterValue) =>
+                options.filter((opt) => opt.includes(filterValue))
+              }
+              data-test="special"
+              options={metadataValues.getOrElse([])}
+              value={typeof fieldValue === 'string' ? fieldValue : undefined}
+              width={'100%'}
+              onChange={(value) => {
+                updateFieldValue(field.id, value);
+              }}
+              onDropdownVisibleChange={setInputOpen}
+            />
+          ) : (
+            // SpecialColumnType
+            <div onKeyDownCapture={captureEnterKeyDown}>
+              <Select
                 data-test="special"
-                options={metadataValues.getOrElse([])}
-                value={typeof fieldValue === 'string' ? fieldValue : undefined}
+                options={getSpecialOptions(field.columnName as SpecialColumnNames)}
+                value={fieldValue ?? undefined}
                 width={'100%'}
                 onChange={(value) => {
-                  updateFieldValue(field.id, value);
+                  const val = value?.toString() ?? null;
+                  updateFieldValue(field.id, val);
                 }}
                 onDropdownVisibleChange={setInputOpen}
               />
-            ) : (
-              // SpecialColumnType
-              <div onKeyDownCapture={captureEnterKeyDown}>
-                <Select
-                  data-test="special"
-                  options={getSpecialOptions(field.columnName as SpecialColumnNames)}
-                  value={fieldValue ?? undefined}
-                  width={'100%'}
-                  onChange={(value) => {
-                    const val = value?.toString() ?? null;
-                    updateFieldValue(field.id, val);
-                  }}
-                  onDropdownVisibleChange={setInputOpen}
-                />
-              </div>
-            )}
-          </>
+            </div>
+          )
         ) : (
           <>
             {(currentColumn?.type === V1ColumnType.TEXT ||
