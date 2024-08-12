@@ -64,28 +64,39 @@ parameters:
 
 release-and-rc-filters: &release-and-rc-filters
   branches:
+    only:
+      # Temporary branch name for testing without merging.
+      # TODO(davidfluck-hpe): remove.
+      - /INFENG-809-circleci-tag/
     ignore:
       - /.*/
   tags:
     only:
-      - /(\d)+(\.(\d)+)+/
-      - /((\d)+(\.(\d)+)+)(-rc)(\d)+/
+      - /v\d+\.\d+\.\d+(rc\d+)?/
 
 rc-filters: &rc-filters
   branches:
+    only:
+      # Temporary branch name for testing without merging.
+      # TODO(davidfluck-hpe): remove.
+      - /INFENG-809-circleci-tag/
     ignore:
       - /.*/
   tags:
     only:
-      - /((\d)+(\.(\d)+)+)(-rc)(\d)+/
+      - /v\d+\.\d+\.\d+rc\d+/
 
 release-filters: &release-filters
   branches:
+    only:
+      # Temporary branch name for testing without merging.
+      # TODO(davidfluck-hpe): remove.
+      - /INFENG-809-circleci-tag/
     ignore:
       - /.*/
   tags:
     only:
-      - /(\d)+(\.(\d)+)+/
+      - /v\d+\.\d+\.\d+/
 
 upstream-feature-branch: &upstream-feature-branch
   branches:
