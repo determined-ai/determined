@@ -36,6 +36,10 @@
 # So, in our diagram, if run from B, C, D, E, F, I, J, or K, the script will return
 # 1.1.0. If run from L, M, N, or O, it will return 1.2.0. And so on.
 
+# Set VERSION to CIRCLE_TAG in case we're running in CircleCI. This makes it
+# easier to avoid fiddling with environment variables there.
+VERSION=${CIRCLE_TAG}
+
 # If VERSION is unset or the empty string, "". This will be the default case for
 # local builds.
 if [ -z ${VERSION} ]; then
