@@ -52,7 +52,7 @@ if __name__ == "__main__":
     args = parser.parse_args()
 
     if args.target_version is None:
-        with open("tools/scripts/environments_target.txt") as f:
+        with open("VERSION") as f:
             target_version = f.readline()
     else:
         target_version = args.target_version
