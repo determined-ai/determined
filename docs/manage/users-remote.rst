@@ -94,10 +94,10 @@ relevant field, e.g. ``agent_uid_attribute_name: "custom_uid_attribute_name"``.
 
 .. note::
 
-Once this feature is enabled and an agent UID/GID is set for a user, the UID/GID can only be reset
-manually. In order to have have the UID or GID revert back to using the
-security.default_task.uid(gid), an admin needs to manually remove the agent UID/GID settings for
-that user.
+   Once this feature is enabled and an agent UID/GID is set for a user, the UID/GID can only be
+   reset manually. In order to have have the UID or GID revert back to using the
+   security.default_task.uid(gid), an admin needs to manually remove the agent UID/GID settings for
+   that user.
 
 Set the Groups Claim Name Option
 ================================
