@@ -871,7 +871,7 @@ resource_manager:
 	}
 	tests := map[string]result{
 		noScheduler:       {"", true},
-		priorityScheduler: {"priority", false},
+		priorityScheduler: {"preemption", false},
 	}
 
 	for config, expected := range tests {
