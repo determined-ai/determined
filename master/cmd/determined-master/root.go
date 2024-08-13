@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"os"
+	"time"
 
 	"github.com/ghodss/yaml"
 	"github.com/pkg/errors"
@@ -184,6 +185,23 @@ func getConfig(configMap map[string]interface{}) (*config.Config, error) {
 }
 
 func applyBackwardsCompatibility(configMap map[string]interface{}) (map[string]interface{}, error) {
+	// Preemption timeout moved from __internal to task_container_defaults
+	if internalMap, ok := configMap["__internal"].(map[string]interface{}); ok {
+		if oldPreemptTimeout, ok := internalMap["preemption_timeout"]; ok && oldPreemptTimeout != nil {
+			if preemptionDuration, err := time.ParseDuration(oldPreemptTimeout.(string)); err == nil {
+				preemptionTimeoutSeconds := int(preemptionDuration.Seconds())
+				if taskContainerMap, ok := configMap["task_container_defaults"].(map[string]interface{}); ok {
+					// Only set task_container_defaults from __internal if nil
+					if taskContainerTimeout, ok := taskContainerMap["preemption_timeout"]; !ok || taskContainerTimeout == nil {
+						taskContainerMap["preemption_timeout"] = preemptionTimeoutSeconds
+						configMap["task_container_defaults"] = taskContainerMap
+					}
+				}
+			}
+		}
+		delete(internalMap, "preemption_timeout")
+	}
+
 	const (
 		defaultVal    = "default"
 		agentVal      = "agent"

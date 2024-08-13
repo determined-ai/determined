@@ -175,7 +175,7 @@ func (k *kubernetesResourcePool) SetGroupPriority(msg sproto.SetGroupPriority) e
 	// priority is immutable. If so, respond with an error.
 	for it := k.reqList.Iterator(); it.Next(); {
 		if it.Value().JobID == msg.JobID {
-			if req := it.Value(); !req.Preemptible {
+			if req := it.Value(); !req.Preemption.Preemptible {
 				return rmerrors.UnsupportedError(fmt.Sprintf(
 					"priority is immutable for %s in k8s because it may be destructive",
 					req.Name,

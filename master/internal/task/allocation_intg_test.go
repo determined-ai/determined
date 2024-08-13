@@ -192,7 +192,9 @@ func setup(t *testing.T) (
 		TaskID:       task.TaskID,
 		AllocationID: model.AllocationID(fmt.Sprintf("%s.0", task.TaskID)),
 		SlotsNeeded:  2,
-		Preemptible:  true,
+		Preemption: sproto.PreemptionConfig{
+			Preemptible: true,
+		},
 		// ...
 	}
 	q := queue.New[sproto.ResourcesEvent]()

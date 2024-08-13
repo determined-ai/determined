@@ -1,6 +1,8 @@
 package preemptible
 
 import (
+	"time"
+
 	"github.com/google/uuid"
 
 	"github.com/determined-ai/determined/master/pkg/syncx/mapx"
@@ -67,10 +69,10 @@ func Acknowledged(id string) bool {
 // Preempt preempts all watchers, marks us as preempted and begins the preemption deadline.
 // The preemption deadline callback can fire until Close is called.
 // ID must be a globally unique identifier for the preemptible.
-func Preempt(id string, timeoutCallback TimeoutFn) {
+func Preempt(id string, timeoutDuration time.Duration, timeoutCallback TimeoutFn) {
 	p, ok := preemptibles.Load(id)
 	if !ok {
 		return
 	}
-	p.Preempt(timeoutCallback)
+	p.Preempt(timeoutDuration, timeoutCallback)
 }

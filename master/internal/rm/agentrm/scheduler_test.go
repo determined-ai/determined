@@ -105,7 +105,9 @@ func newFakeAgentState(
 	if slotsUsed > 0 {
 		req := &sproto.AllocateRequest{
 			SlotsNeeded: slotsUsed,
-			Preemptible: true,
+			Preemption: sproto.PreemptionConfig{
+				Preemptible: true,
+			},
 		}
 		if _, err := state.allocateFreeDevices(req.SlotsNeeded, cproto.NewID()); err != nil {
 			panic(err)

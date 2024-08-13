@@ -313,6 +313,14 @@ func (e *ExperimentConfigV0) SetPbsConfig(val PbsConfigV0) {
 	e.RawPbsConfig = &val
 }
 
+func (e ExperimentConfigV0) PreemptionTimeout() *int {
+	return e.RawPreemptionTimeout
+}
+
+func (e *ExperimentConfigV0) SetPreemptionTimeout(val *int) {
+	e.RawPreemptionTimeout = val
+}
+
 func (e ExperimentConfigV0) ParsedSchema() interface{} {
 	return schemas.ParsedExperimentConfigV0()
 }
