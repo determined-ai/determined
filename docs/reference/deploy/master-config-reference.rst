@@ -1394,7 +1394,7 @@ and read from the ``host_path``.
 ---------------
 
 (Advanced users only) Optional `propagation behavior
-<https://docs.docker.com/engine/storage/bind-mounts/#configure-bind-propagation>`_ for replicas of
+<https://docs.docker.com/engine/storage/bind-mounts/#configure-bind-propagation>`__ for replicas of
 the bind-mount. Defaults to ``rprivate``.
 
 When an experiment finishes, the system will optionally delete some checkpoints to reclaim space.
