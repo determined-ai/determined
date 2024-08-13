@@ -1,11 +1,11 @@
 import logging
 import math
-import numpy as np
 import random
 import time
 from typing import List
 from unittest import skipIf
 
+import numpy as np
 from determined.experimental import Experiment
 
 from ..models.metric_latency import Hist, MetricLatencyOpHist, OpHist, SeqSweep
