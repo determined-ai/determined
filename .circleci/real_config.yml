@@ -24,7 +24,7 @@ parameters:
     default: 0.35.1-dev0
   docker-image:
     type: string
-    default: determinedai/cimg-base:latest
+    default: determinedai/cimg-base:503d5c071dcccfc4d3f64e69cfb0511e0d5a021f
   machine-image:
     type: string
     default: ubuntu-2004:2024.01.1
