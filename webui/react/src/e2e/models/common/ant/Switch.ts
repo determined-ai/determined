@@ -1,5 +1,6 @@
+import { NamedComponent } from 'playwright-page-model-base/BaseComponent';
+
 import { expect } from 'e2e/fixtures/global-fixtures';
-import { NamedComponent } from 'e2e/models/common/base/BaseComponent';
 
 /**
  * Represents the Switch component from antd/es/switch/index.js

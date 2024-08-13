@@ -1,8 +1,12 @@
 import { Page } from '@playwright/test';
+import {
+  BaseComponent,
+  ComponentBasics,
+  ComponentContainer,
+} from 'playwright-page-model-base/BaseComponent';
 
 import { expect } from 'e2e/fixtures/global-fixtures';
-import { BaseComponent, CanBeParent } from 'e2e/models/common/base/BaseComponent';
-import { BasePage } from 'e2e/models/common/base/BasePage';
+import { DeterminedPage } from 'e2e/models/common/base/BasePage';
 import { apiUrl } from 'e2e/utils/envVars';
 
 export class DevFixture {
@@ -24,11 +28,11 @@ export class DevFixture {
    * @param {BaseComponent} component - The component to debug
    */
   debugComponentVisible(component: BaseComponent): void {
-    const componentTree: CanBeParent[] = [];
-    let root: CanBeParent = component;
-    while (!(root instanceof BasePage)) {
+    const componentTree: ComponentContainer[] = [];
+    let root: ComponentContainer = component;
+    while (!(root instanceof DeterminedPage)) {
       componentTree.unshift(root);
-      root = root._parent;
+      root = (root as ComponentBasics)._parent;
     }
     componentTree.forEach(async (node) => {
       await expect(node.pwLocator).toBeVisible();

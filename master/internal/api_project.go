@@ -979,6 +979,19 @@ func (a *apiServer) MoveProject(
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
+	// Check if name already in destination workspace
+	hits := []string{}
+	err = db.Bun().NewSelect().TableExpr("projects").ColumnExpr("1").
+		Where("workspace_id=?", req.DestinationWorkspaceId).
+		Where("name=?", p.Name).Scan(ctx, &hits)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(hits) > 0 {
+		return nil, fmt.Errorf("project with name '%s' already exists in target workspace", p.Name)
+	}
+
 	holder := &projectv1.Project{}
 	err = a.m.db.QueryProto("move_project", holder, req.ProjectId, req.DestinationWorkspaceId)
 	if err != nil {

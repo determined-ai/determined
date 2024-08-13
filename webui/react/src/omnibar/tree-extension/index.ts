@@ -7,19 +7,19 @@ import { getNodeChildren, isLeafNode, isNLNode, traverseTree } from 'omnibar/tre
 import handleError, { ErrorType } from 'utils/error';
 import { noOp } from 'utils/service';
 
-const SEPARATOR = ' ';
+export const SEPARATOR = ' ';
 
-interface TreeRequest {
+export interface TreeRequest {
   path: TreePath;
   query: string;
 }
 
-const parseInput = async (input: string, root: NonLeafNode): Promise<TreeRequest> => {
+export const parseInput = async (input: string, root: NonLeafNode): Promise<TreeRequest> => {
   const repeatedSeparator = new RegExp(SEPARATOR + '+', 'g');
   const cleanedInput = input.replace(repeatedSeparator, SEPARATOR);
   const sections = cleanedInput.split(SEPARATOR);
-  const query = sections[sections.length - 1];
-  const address = sections.slice(0, sections.length - 1);
+  const query = sections[sections.length - 1]; // Last element of sections array
+  const address = sections.slice(0, sections.length - 1); // All but the last element of sections array
   const path = await traverseTree(address, root);
   return {
     path,
@@ -27,7 +27,7 @@ const parseInput = async (input: string, root: NonLeafNode): Promise<TreeRequest
   };
 };
 
-const absPathToAddress = (path: TreePath): string[] => path.map((tn) => tn.title).slice(1);
+export const absPathToAddress = (path: TreePath): string[] => path.map((tn) => tn.title).slice(1);
 
 const noResultsNode: LeafNode = {
   closeBar: true,
@@ -36,7 +36,7 @@ const noResultsNode: LeafNode = {
   title: 'Exit',
 };
 
-const queryTree = async (input: string, root: NonLeafNode): Promise<Children> => {
+export const queryTree = async (input: string, root: NonLeafNode): Promise<Children> => {
   const { path, query } = await parseInput(input, root);
   const node = path[path.length - 1];
   const children = await getNodeChildren(node);

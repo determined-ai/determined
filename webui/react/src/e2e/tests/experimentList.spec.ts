@@ -293,7 +293,10 @@ test.describe('Experiment List', () => {
     // await test.step('Hyperparameter Search', async () => {});
   });
 
-  test.skip('DataGrid Action Pause', async () => {
+  test('DataGrid Action Pause', async () => {
+    // datagrid can be slow, perhaps related to [ET-677]
+    projectDetailsPage._page.setDefaultTimeout(10000);
+
     // experiment should initially be paused
     const row = projectDetailsPage.f_experimentList.dataGrid.getRowByIndex(0);
     await expect.soft((await row.getCellByColumnName('State')).pwLocator).toHaveText('paused');
@@ -302,7 +305,6 @@ test.describe('Experiment List', () => {
     await row.experimentActionDropdown.open();
     await row.experimentActionDropdown.resume.pwLocator.click();
     await expect.soft((await row.getCellByColumnName('State')).pwLocator).not.toHaveText('paused');
-    await waitTableStable();
 
     // pause experiment again
     await row.experimentActionDropdown.open();
