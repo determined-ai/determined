@@ -1140,7 +1140,7 @@ func (e *internalExperiment) setRP(resourcePool string) error {
 
 func allSearcherShutdowns(ops []searcher.Operation) bool {
 	for _, operation := range ops {
-		if _, ok := operation.(searcher.Shutdown); ok {
+		if _, ok := operation.(searcher.Shutdown); !ok {
 			return false
 		}
 	}
