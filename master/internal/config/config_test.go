@@ -862,7 +862,7 @@ resource_manager:
 resource_manager:
   type: kubernetes
   max_slots_per_pod: 1
-  default_scheduler: priority
+  default_scheduler: preemption
 `
 
 	type result struct {
