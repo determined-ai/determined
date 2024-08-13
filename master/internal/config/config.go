@@ -350,7 +350,7 @@ func (c *Config) Resolve() error {
 				return err
 			}
 			if r.ResourceManager.KubernetesRM.DefaultScheduler == preemptionScheduler {
-				log.Info("pqriority with preemption scheduler has been deprecated as of 0.36.0, and this field will be ignored")
+				log.Info("priority with preemption scheduler has been deprecated as of 0.36.0, and this field will be ignored")
 				return fmt.Errorf("scheduler not available")
 			}
 		}
