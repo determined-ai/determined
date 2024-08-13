@@ -89,14 +89,16 @@ enable user auto-provisioning and the remote management of any information attac
 Determined sets the username of the user to the IdP email address. You cannot set the username
 independently.
 
-Custom claims can be recognized and automatically linked by configuring the attribute name with the
-relevant field, e.g. ``agent_uid_attribute_name: "custom_uid_attribute_name"``.
+To automatically link custom claims, you can configure the attribute name with the relevant field.
+For example:
+
+``agent_uid_attribute_name: "custom_uid_attribute_name"``
 
 .. note::
 
-   Once this feature is enabled and an agent UID/GID is set for a user, the UID/GID can only be
-   reset manually. In order to have have the UID or GID revert back to using the
-   security.default_task.uid(gid), an admin needs to manually remove the agent UID/GID settings for
+   Once this feature is enabled and an agent UID/GID is assigned to a user, it can only be reset
+   manually. To revert the UID or GID back to the default value specified by
+   ``security.default_task.uid(gid)``, an admin must manually remove the agent UID/GID settings for
    that user.
 
 Set the Groups Claim Name Option
