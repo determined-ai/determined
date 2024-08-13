@@ -1393,8 +1393,9 @@ and read from the ``host_path``.
 ``propagation``
 ---------------
 
-(Advanced users only) Optional propagation behavior for replicas of the `bind-mount
-<https://docs.docker.com/engine/storage/bind-mounts/>`__. Defaults to ``rprivate``.
+(Advanced users only) Optional `propagation behavior
+<https://docs.docker.com/engine/storage/bind-mounts/#configure-bind-propagation>`_ for replicas of
+the bind-mount. Defaults to ``rprivate``.
 
 When an experiment finishes, the system will optionally delete some checkpoints to reclaim space.
 The ``save_experiment_best``, ``save_trial_best`` and ``save_trial_latest`` parameters specify which
