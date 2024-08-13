@@ -129,10 +129,10 @@ func FilterToExperimentIds(ctx context.Context, filters *apiv1.BulkExperimentFil
 	return experimentIDList, nil
 }
 
-// experimentsEditableByUser returns a list of experiment ids which are editable by
-// the user found in ctx.
-// If filters are provided, experimentIds are ignored.
-func experimentsEditableByUser(
+// experimentsEditableByUser is a modifiable unexported func, exposed to allow for unit testing.
+var experimentsEditableByUser = getExperimentsEditableByCurrentUser
+
+func getExperimentsEditableByCurrentUser(
 	ctx context.Context,
 	projectID int32,
 	experimentIDs []int32,
@@ -142,8 +142,23 @@ func experimentsEditableByUser(
 	if err != nil {
 		return nil, err
 	}
+	return getExperimentsEditableByUser(
+		ctx, curUser, projectID, experimentIDs, filters,
+	)
+}
 
+// getExperimentsEditableByUser returns a list of experiment ids which are editable by
+// the provided user.
+// If filters are provided, experimentIds are ignored.
+func getExperimentsEditableByUser(
+	ctx context.Context,
+	user *model.User,
+	projectID int32,
+	experimentIDs []int32,
+	filters *apiv1.BulkExperimentFilters,
+) ([]int32, error) {
 	var filteredExperimentIDs []int32
+	var err error
 	if filters == nil {
 		filteredExperimentIDs = experimentIDs
 	} else {
@@ -167,7 +182,7 @@ func experimentsEditableByUser(
 	query = query.Where("e.id IN (?)", bun.In(filteredExperimentIDs))
 
 	if query, err = AuthZProvider.Get().
-		FilterExperimentsQuery(ctx, *curUser, nil, query,
+		FilterExperimentsQuery(ctx, *user, nil, query,
 			[]rbacv1.PermissionType{rbacv1.PermissionType_PERMISSION_TYPE_UPDATE_EXPERIMENT}); err != nil {
 		return nil, err
 	}
@@ -915,9 +930,9 @@ func changeExperimentConfigLogRetention(ctx context.Context, database db.DB,
 	return nil
 }
 
-// BulkUpdateLogRentention retains logs for the given list of experiments.
+// BulkUpdateLogRetention retains logs for the given list of experiments.
 // If filters are provided, experimentIds are ignored.
-func BulkUpdateLogRentention(
+func BulkUpdateLogRetention(
 	ctx context.Context,
 	database db.DB,
 	projectID int32,
