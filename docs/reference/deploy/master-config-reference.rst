@@ -46,7 +46,7 @@ The size (in bytes) of ``/dev/shm`` for Determined task containers. Defaults to 
 ================
 
 The Docker network to use for the Determined task containers. If this is set to ``host``, `Docker
-host-mode networking <https://docs.docker.com/network/drivers/host/>`__ will be used instead.
+host-mode networking <https://docs.docker.com/engine/network/drivers/host/>`__ will be used instead.
 Defaults to ``bridge``.
 
 .. _master-config-reference-dtrain-network-interface:
@@ -1394,8 +1394,8 @@ and read from the ``host_path``.
 ---------------
 
 (Advanced users only) Optional `propagation behavior
-<https://docs.docker.com/storage/bind-mounts/#configure-bind-propagation>`__ for replicas of the
-bind-mount. Defaults to ``rprivate``.
+<https://docs.docker.com/engine/storage/bind-mounts/#configure-bind-propagation>`__ for replicas of
+the bind-mount. Defaults to ``rprivate``.
 
 When an experiment finishes, the system will optionally delete some checkpoints to reclaim space.
 The ``save_experiment_best``, ``save_trial_best`` and ``save_trial_latest`` parameters specify which
