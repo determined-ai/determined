@@ -39,6 +39,7 @@ var (
 const (
 	KubernetesDefaultPriority = 50
 	sslModeDisable            = "disable"
+	preemptionScheduler       = "preemption"
 )
 
 type (
@@ -348,8 +349,8 @@ func (c *Config) Resolve() error {
 			if err != nil {
 				return err
 			}
-			if r.ResourceManager.KubernetesRM.DefaultScheduler == PriorityScheduling {
-				log.Info("Priority Scheduler has been deprecated as of 0.36.0, and this field will be ignored.")
+			if r.ResourceManager.KubernetesRM.DefaultScheduler == preemptionScheduler {
+				log.Info("pqriority with preemption scheduler has been deprecated as of 0.36.0, and this field will be ignored")
 				return fmt.Errorf("scheduler not available")
 			}
 		}
@@ -420,8 +421,8 @@ func (c *Config) Deprecations() (errs []error) {
 			if len(rm.KubernetesRM.Name) > 0 {
 				errs = append(errs, fmt.Errorf(nameDeprecatedWarning, rm.KubernetesRM.ClusterName))
 			}
-			if rm.KubernetesRM.DefaultScheduler == "priority" {
-				errs = append(errs, fmt.Errorf("the priority scheduler for Kubernetes is deprecated, "+
+			if rm.KubernetesRM.DefaultScheduler == preemptionScheduler {
+				errs = append(errs, fmt.Errorf("the priority with preemption scheduler for Kubernetes is deprecated, "+
 					"and this field will be ignored"))
 			}
 		case rm.DispatcherRM != nil:
