@@ -289,6 +289,20 @@ func (a *agentState) checkAgentStartedDevicesMatch(
 	return nil
 }
 
+func (a *agentState) checkAgentResourcePoolMatch(
+	agentStarted *aproto.AgentStarted,
+) error {
+	// We need to compare the resource pool configurations between the agent and the master.
+	// Ideally, the master doesn't request new resource pool information if the agent reconnects
+	// within the designated reconnection period, while the agent should read from its updated configuration.
+	// If there's a mismatch, an error will be thrown, causing the agent to stop and require a restart.
+	if a.resourcePoolName != agentStarted.ResourcePoolName {
+		return fmt.Errorf("resource pool has changed: %s -> %s", a.resourcePoolName, agentStarted.ResourcePoolName)
+	}
+
+	return nil
+}
+
 func (a *agentState) containerStateChanged(msg aproto.ContainerStateChanged) {
 	for _, d := range msg.Container.Devices {
 		s, ok := a.slotStates[d.ID]
