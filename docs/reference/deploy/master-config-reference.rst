@@ -46,7 +46,7 @@ The size (in bytes) of ``/dev/shm`` for Determined task containers. Defaults to 
 ================
 
 The Docker network to use for the Determined task containers. If this is set to ``host``, `Docker
-host-mode networking <https://docs.docker.com/network/drivers/host/>`__ will be used instead.
+host-mode networking <https://docs.docker.com/engine/network/drivers/host/>`__ will be used instead.
 Defaults to ``bridge``.
 
 .. _master-config-reference-dtrain-network-interface:
