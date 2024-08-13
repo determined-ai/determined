@@ -762,7 +762,7 @@ func (e *internalExperiment) processOperations(
 ) {
 	// Only continue for experiments in stopping states if the searcher operations are all
 	// type Shutdown failures.
-	if _, ok := model.StoppingStates[e.State]; ok && notASearcherShutdown(ops) {
+	if _, ok := model.StoppingStates[e.State]; ok && !allSearcherShutdowns(ops) {
 		return
 	}
 
@@ -1138,11 +1138,11 @@ func (e *internalExperiment) setRP(resourcePool string) error {
 	return nil
 }
 
-func notASearcherShutdown(ops []searcher.Operation) bool {
+func allSearcherShutdowns(ops []searcher.Operation) bool {
 	for _, operation := range ops {
-		if _, ok := operation.(searcher.Shutdown); !ok {
-			return true
+		if _, ok := operation.(searcher.Shutdown); ok {
+			return false
 		}
 	}
-	return false
+	return true
 }
