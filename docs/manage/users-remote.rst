@@ -90,7 +90,7 @@ Determined sets the username of the user to the IdP email address. You cannot se
 independently.
 
 Custom claims can be recognized and automatically linked by configuring the attribute name with the
-relevant field, e.g. `agent_uid_attribute_name: "custom_uid_attribute_name"`.
+relevant field, e.g. ``agent_uid_attribute_name: "custom_uid_attribute_name"``.
 
 .. note::
 
