@@ -31,8 +31,9 @@ Pachyderm data.
       Pachyderm after which you'll have created a batch inferencing pipeline with editable
       experiment configuration files.
 
--  The most recent commit ID from your Pachyderm repo (you can find this by visiting Repo Actions).
-   For more information about Pachyderm repo input files, visit the `documentation
+-  The most recent commit ID from your Pachyderm repo (you can find this by visiting Repo Actions or
+   by running ``pachctl find commit``). For more information about Pachyderm repo input files, visit
+   the `documentation
    <https://docs.pachyderm.com/products/mldm/latest/learn/console-guide/repo-actions/view-inputs//>`_.
 
 **Add an Integrations Section to Your Experiment Configuration File**
