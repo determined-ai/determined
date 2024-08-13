@@ -677,8 +677,7 @@ a higher priority (e.g. a priority 50 task will run before a priority 40 task).
 Priority Scheduling with Preemption
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 
-Determined has deprecated a priority scheduler that extends the Kubernetes scheduler to support
-preemption with backfilling as of version 0.36.0.
+This extension to the Kubernetes scheduler has been deprecated and removed as of version 0.36.0.
 
 .. _concept-trial:
 
