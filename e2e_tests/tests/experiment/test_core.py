@@ -1,5 +1,6 @@
 import subprocess
 import tempfile
+import time
 
 import pytest
 
@@ -480,6 +481,19 @@ def test_core_api_distributed_tutorial() -> None:
     exp.run_basic_test(
         sess, conf.tutorials_path("core_api/4_distributed.yaml"), conf.tutorials_path("core_api"), 1
     )
+
+
+def test_core_api_metrics_tutorial() -> None:
+    sess = api_utils.user_session()
+    exp_id = exp.run_basic_test(
+        sess, conf.tutorials_path("core_api/1_metrics.yaml"), conf.tutorials_path("core_api"), 1
+    )
+    while True:
+        exp = bindings.get_GetExperiment(sess, experimentId=exp_id).experiment
+        if exp.progress == 1:
+            return
+        assert exp.progress < 1
+        time.sleep(0.1)
 
 
 @pytest.mark.e2e_cpu

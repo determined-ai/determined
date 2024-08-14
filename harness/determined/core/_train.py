@@ -270,7 +270,7 @@ class TrainContext:
         logger.debug("report_progress()")
         self._session.post(
             f"/api/v1/trials/{self._trial_id}/progress",
-            data=det.util.json_encode({"progress": progress, "isRaw": True}),
+            data=det.util.json_encode({"progress": progress, "is_raw": True}),
         )
 
     def get_experiment_best_validation(self) -> Optional[float]:
