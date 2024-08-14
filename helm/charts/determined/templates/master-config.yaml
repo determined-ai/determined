@@ -255,7 +255,7 @@ stringData:
         {{- if .Values.taskContainerDefaults.gpuImage }}
          gpu: {{ .Values.taskContainerDefaults.gpuImage | quote }}
         {{- else }}
-         gpu: {{ .Values.defaultImages.gpuImage | quote }}s
+         gpu: {{ .Values.defaultImages.gpuImage | quote }}
         {{- end }}
         {{- if .Values.taskContainerDefaults.rocmImage }}
          rocm: {{ .Values.taskContainerDefaults.rocmImage | quote }}
