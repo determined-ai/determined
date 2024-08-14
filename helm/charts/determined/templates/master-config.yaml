@@ -246,18 +246,22 @@ stringData:
       log_policies:
         {{- toYaml .Values.taskContainerDefaults.logPolicies | nindent 8}}
       {{- end }}
-      {{- if and .Values.taskContainerDefaults.cpuImage .Values.taskContainerDefaults.gpuImage }}
       image:
+        {{- if .Values.taskContainerDefaults.cpuImage }}
          cpu: {{ .Values.taskContainerDefaults.cpuImage | quote }}
-         gpu: {{ .Values.taskContainerDefaults.gpuImage | quote }}
-      {{- else }}
-      image:
+        {{- else }}
          cpu: {{ .Values.defaultImages.cpuImage | quote }}
-         gpu: {{ .Values.defaultImages.gpuImage | quote }}
-      {{- if or .Values.taskContainerDefaults.cpuImage .Values.taskContainerDefaults.gpuImage }}
-        {{ required "A valid .Values.taskContainerDefaults.cpuImage entry is required if setting .Values.taskContainerDefaults.gpuImage!" .Values.taskContainerDefaults.cpuImage }}
-        {{ required "A valid .Values.taskContainerDefaults.gpuImage entry is required if setting .Values.taskContainerDefaults.cpuImage!" .Values.taskContainerDefaults.gpuImage }}
-      {{- end }}
+        {{- end }}
+        {{- if .Values.taskContainerDefaults.gpuImage }}
+         gpu: {{ .Values.taskContainerDefaults.gpuImage | quote }}
+        {{- else }}
+         gpu: {{ .Values.defaultImages.gpuImage | quote }}s
+        {{- end }}
+        {{- if .Values.taskContainerDefaults.rocmImage }}
+         rocm: {{ .Values.taskContainerDefaults.rocmImage | quote }}
+        {{- else }}
+         rocm: {{ .Values.defaultImages.rocmImage | quote }}
+        {{- end }}
       {{- end }}
       {{- if .Values.taskContainerDefaults.forcePullImage }}
       force_pull_image: {{ .Values.taskContainerDefaults.forcePullImage }}
@@ -267,6 +271,7 @@ stringData:
       image:
          cpu: {{ .Values.defaultImages.cpuImage | quote }}
          gpu: {{ .Values.defaultImages.gpuImage | quote }}
+         rocm: {{ .Values.defaultImages.rocmImage | quote }}
     {{ end }}
 
     {{- if .Values.telemetry }}
