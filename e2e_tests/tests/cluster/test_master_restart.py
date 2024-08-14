@@ -710,3 +710,26 @@ def test_master_restart_with_queued(
     for cmd_id in [running_command_id, queued_command_id]:
         utils.wait_for_command_state(sess, cmd_id, "TERMINATED", 90)
         utils.assert_command_succeeded(sess, cmd_id)
+
+
+@pytest.mark.managed_devcluster
+def test_agent_resource_pool_change(
+    restartable_managed_cluster: managed_cluster.ManagedCluster,
+) -> None:
+    admin = api_utils.admin_session()
+    try:
+        restartable_managed_cluster.kill_agent()
+        restartable_managed_cluster.dc.restart_stage("agent20")
+
+        for _i in range(5):
+            agent_data = managed_cluster.get_agent_data(admin)
+            if len(agent_data) == 0:
+                # Agent has exploded and been wiped due to resource pool mismatch, as expected.
+                break
+        else:
+            pytest.fail(
+                f"agent with different resource pool is still present after {_i} ticks:{agent_data}"
+            )
+    finally:
+        restartable_managed_cluster.dc.kill_stage("agent20")
+        restartable_managed_cluster.restart_agent()
