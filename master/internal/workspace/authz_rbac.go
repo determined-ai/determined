@@ -397,6 +397,21 @@ func (r *WorkspaceAuthZRBAC) CanSetResourceQuotas(ctx context.Context,
 		rbacv1.PermissionType_PERMISSION_TYPE_SET_RESOURCE_QUOTAS)
 }
 
+// CanViewResourceQuotas determines whether a user can view resource quotas on a workspace.
+func (r *WorkspaceAuthZRBAC) CanViewResourceQuotas(ctx context.Context,
+	curUser model.User,
+) (err error) {
+	fields := audit.ExtractLogFields(ctx)
+	addInfoWithoutWorkspace(curUser, fields,
+		rbacv1.PermissionType_PERMISSION_TYPE_VIEW_RESOURCE_QUOTAS)
+	defer func() {
+		audit.LogFromErr(fields, err)
+	}()
+
+	return db.DoesPermissionMatch(ctx, curUser.ID, nil,
+		rbacv1.PermissionType_PERMISSION_TYPE_VIEW_RESOURCE_QUOTAS)
+}
+
 func hasPermissionOnWorkspace(ctx context.Context, uid model.UserID,
 	workspace *workspacev1.Workspace, permID rbacv1.PermissionType,
 ) error {

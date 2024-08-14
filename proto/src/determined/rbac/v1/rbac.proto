@@ -174,6 +174,9 @@ enum PermissionType {
 
   // Ability to set resource quotas on workspaces.
   PERMISSION_TYPE_SET_RESOURCE_QUOTAS = 11002;
+
+  // Ability to view resource quotas on workspaces.
+  PERMISSION_TYPE_VIEW_RESOURCE_QUOTAS = 11003;
 }
 
 // RoleAssignmentSummary is used to describe permissions a user has.

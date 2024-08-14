@@ -153,6 +153,10 @@ export const useWorkspaceActionMenu: (props: WorkspaceMenuPropsIn) => WorkspaceM
         key: MenuKey.SwitchArchived,
         label: workspace.archived ? 'Unarchive' : 'Archive',
       });
+    } else {
+      if (!workspace.archived) {
+        menuItems.push({ key: MenuKey.Edit, label: 'Config' });
+      }
     }
     if (canDeleteWorkspace({ workspace }) && workspace.numExperiments === 0) {
       menuItems.push({ type: 'divider' });

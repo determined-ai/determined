@@ -106,6 +106,7 @@ export interface PermissionsHook {
   canViewModelRegistry: (arg0: WorkspacePermissionsArgs) => boolean;
   canViewWorkspace: (arg0: WorkspacePermissionsArgs) => boolean;
   canViewWorkspaces: boolean;
+  canViewResourceQuotas: boolean;
   loading: boolean;
 }
 
@@ -208,6 +209,7 @@ const usePermissions = (): PermissionsHook => {
       canViewGroups: canViewGroups(rbacOpts),
       canViewModelRegistry: (args: WorkspacePermissionsArgs) =>
         canViewModelRegistry(rbacOpts, args.workspace),
+      canViewResourceQuotas: canViewResourceQuotas(rbacOpts),
       canViewWorkspace: (args: WorkspacePermissionsArgs) =>
         canViewWorkspace(rbacOpts, args.workspace),
       canViewWorkspaces: canViewWorkspaces(rbacOpts),
@@ -623,6 +625,19 @@ const canSetResourceQuotas = ({
   return (
     !!currentUser &&
     (rbacEnabled ? permitted.has(V1PermissionType.SETRESOURCEQUOTAS) : currentUser.isAdmin)
+  );
+};
+
+const canViewResourceQuotas = ({
+  currentUser,
+  rbacEnabled,
+  userAssignments,
+  userRoles,
+}: RbacOptsProps): boolean => {
+  const permitted = relevantPermissions(userAssignments, userRoles);
+  return (
+    !!currentUser &&
+    (rbacEnabled ? permitted.has(V1PermissionType.VIEWRESOURCEQUOTAS) : currentUser.isAdmin)
   );
 };
 
