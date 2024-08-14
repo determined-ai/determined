@@ -109,3 +109,14 @@ stages:
         agent_reconnect_backoff: 5
         container_auto_remove_disabled: true
         resource_pool: pool1
+  
+  - agent:
+      name: agent30 # Copy of agent1, but with empty(default) resource pool.
+      config_file:
+        master_host: 127.0.0.1
+        master_port: 8081
+        agent_id: agent1
+        container_master_host: $DOCKER_LOCALHOST
+        agent_reconnect_attempts: 24
+        agent_reconnect_backoff: 5
+        container_auto_remove_disabled: true

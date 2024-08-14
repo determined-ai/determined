@@ -20,6 +20,8 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
+const defaultResourcePoolName = "default"
+
 type slotEnabled struct {
 	deviceAdded  bool
 	agentEnabled bool
@@ -289,14 +291,18 @@ func (a *agentState) checkAgentStartedDevicesMatch(
 	return nil
 }
 
+// We need to compare the resource pool configurations between the agent and the master.
+// Ideally, the master doesn't request new resource pool information if the agent reconnects
+// within the designated reconnection period, while the agent should read from its updated configuration.
+// If there's a mismatch, an error will be thrown, causing the agent to stop and require a restart.
 func (a *agentState) checkAgentResourcePoolMatch(
 	agentStarted *aproto.AgentStarted,
 ) error {
-	// We need to compare the resource pool configurations between the agent and the master.
-	// Ideally, the master doesn't request new resource pool information if the agent reconnects
-	// within the designated reconnection period, while the agent should read from its updated configuration.
-	// If there's a mismatch, an error will be thrown, causing the agent to stop and require a restart.
-	if a.resourcePoolName != agentStarted.ResourcePoolName {
+	// If the agent's resource pool is empty in the configuration and the master has it set to default,
+	// the agent should not be restarted. However, if the agent's resource pool differs from the master's record,
+	// the agent should be restarted.
+	if !(agentStarted.ResourcePoolName == "" && a.resourcePoolName == defaultResourcePoolName) &&
+		(a.resourcePoolName != agentStarted.ResourcePoolName) {
 		return fmt.Errorf("resource pool has changed: %s -> %s", a.resourcePoolName, agentStarted.ResourcePoolName)
 	}
 

@@ -779,3 +779,23 @@ def test_agent_resource_pool_change(
     finally:
         restartable_managed_cluster.dc.kill_stage("agent20")
         restartable_managed_cluster.restart_agent()
+
+
+@pytest.mark.managed_devcluster
+def test_agent_resource_pool_unchanged(
+    restartable_managed_cluster: managed_cluster.ManagedCluster,
+) -> None:
+    admin = api_utils.admin_session()
+    try:
+        restartable_managed_cluster.kill_agent()
+        restartable_managed_cluster.dc.restart_stage("agent30")
+
+        for _i in range(5):
+            agent_data = managed_cluster.get_agent_data(admin)
+            if len(agent_data) == 0:
+                # Agent has exploded and been wiped due to resource pool mismatch,
+                # which is not expected.
+                pytest.fail("agent exploded even with the same resource pool")
+    finally:
+        restartable_managed_cluster.dc.kill_stage("agent30")
+        restartable_managed_cluster.restart_agent()

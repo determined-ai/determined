@@ -341,11 +341,37 @@ func Test_agentState_checkAgentResourcePoolMatch(t *testing.T) {
 			wantErrContains: "",
 		},
 		{
+			name: "resource pool name match",
+			state: agentState{
+				resourcePoolName: "default",
+			},
+			agentStarted: &aproto.AgentStarted{
+				ResourcePoolName: "",
+			},
+			wantErrContains: "",
+		},
+		{
 			name: "resource pool name is missing",
 			state: agentState{
 				resourcePoolName: "pool1",
 			},
 			agentStarted:    &aproto.AgentStarted{ResourcePoolName: ""},
+			wantErrContains: "resource pool has changed",
+		},
+		{
+			name: "resource pool name is missing",
+			state: agentState{
+				resourcePoolName: "default",
+			},
+			agentStarted:    &aproto.AgentStarted{ResourcePoolName: "pool1"},
+			wantErrContains: "resource pool has changed",
+		},
+		{
+			name: "resource pool name is missing",
+			state: agentState{
+				resourcePoolName: "",
+			},
+			agentStarted:    &aproto.AgentStarted{ResourcePoolName: "pool1"},
 			wantErrContains: "resource pool has changed",
 		},
 		{
