@@ -26,10 +26,6 @@ defaultImages:
   # default Kube Scheduler image
   kubeScheduler: "k8s.gcr.io/scheduler-plugins/kube-scheduler:v0.18.9"
 
-  # Kube Scheduler used when the K8s default scheduler is set to preemption
-  # when, defaultScheduler: preemption
-  kubeSchedulerPreemption: "determinedai/kube-scheduler:0.17.0"
-
   # default images for CPU and GPU environments
   cpuImage: "determinedai/pytorch-ngc-dev:5432424"
   gpuImage: "determinedai/pytorch-ngc-dev:5432424"
@@ -347,9 +343,8 @@ telemetry:
       # certificate: <certificate contents>
 
 ## Configure the default Determined scheduler
-## Currently supports "coscheduler" for gang scheduling and "preemption" for priority based
-## scheduling with preemption
-# defaultScheduler: preemption
+## Currently supports "coscheduler" for gang scheduling.
+# defaultScheduler: coscheduler
 
 ## Configure the resource pools in the Determined cluster.
 resourcePools:

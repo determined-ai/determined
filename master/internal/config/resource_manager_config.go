@@ -268,11 +268,6 @@ var defaultKubernetesResourceManagerConfig = KubernetesResourceManagerConfig{
 	SlotType: device.CUDA, // default to CUDA-backed slots.
 }
 
-// GetPreemption returns whether the RM is set to preempt.
-func (k *KubernetesResourceManagerConfig) GetPreemption() bool {
-	return k.DefaultScheduler == PreemptionScheduler
-}
-
 // UnmarshalJSON implements the json.Unmarshaler interface.
 func (k *KubernetesResourceManagerConfig) UnmarshalJSON(data []byte) error {
 	*k = defaultKubernetesResourceManagerConfig
@@ -314,10 +309,19 @@ func (k KubernetesResourceManagerConfig) Validate() []error {
 			k.SlotResourceRequests.CPU, float32(0), "slot_resource_requests.cpu must be > 0")
 	}
 
+	var checkRMScheduler error
+	if k.DefaultScheduler == PriorityScheduling {
+		checkRMScheduler = fmt.Errorf("the ``priority`` scheduler was deprecated, please " +
+			"use the default Kubernetes scheduler or coscheduler")
+	} else if k.DefaultScheduler != "" && k.DefaultScheduler != "coscheduler" {
+		checkRMScheduler = fmt.Errorf("only blank or ``coscheduler`` values allowed for Kubernetes scheduler")
+	}
+
 	return []error{
 		checkSlotType,
 		checkCPUResource,
 		check.NotEmpty(k.ClusterName, "cluster_name is required"),
+		checkRMScheduler,
 	}
 }
 
@@ -332,8 +336,3 @@ type FluentConfig struct {
 	UID   int    `json:"uid"`
 	GID   int    `json:"gid"`
 }
-
-// PreemptionScheduler is the name of the preemption scheduler for k8.
-// HACK(Brad): Here because circular imports; Kubernetes probably needs its own
-// configuration package.
-const PreemptionScheduler = "preemption"

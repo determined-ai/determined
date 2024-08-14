@@ -623,7 +623,6 @@ func (k *ResourceManager) createResourcePoolSummary(
 	const na = "n/a"
 
 	poolType := resourcepoolv1.ResourcePoolType_RESOURCE_POOL_TYPE_K8S
-	preemptible := k.config.GetPreemption()
 	location := na
 	imageID := ""
 	instanceType := na
@@ -638,7 +637,7 @@ func (k *ResourceManager) createResourcePoolSummary(
 		SlotType:                     k.config.SlotType.Proto(),
 		DefaultAuxPool:               k.config.DefaultAuxResourcePool == poolName,
 		DefaultComputePool:           k.config.DefaultComputeResourcePool == poolName,
-		Preemptible:                  preemptible,
+		Preemptible:                  false,
 		SlotsPerAgent:                int32(slotsPerAgent),
 		AuxContainerCapacityPerAgent: int32(pool.MaxAuxContainersPerAgent),
 		SchedulerType:                schedulerType,
