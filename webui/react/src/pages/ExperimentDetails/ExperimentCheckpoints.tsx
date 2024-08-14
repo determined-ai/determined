@@ -75,16 +75,20 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
   });
 
   const modelCreateModal = useModal(ModelCreateModal);
-  const registerModal = useModal(RegisterCheckpointModal);
+  const {
+    Component: RegisterModalComponent,
+    open: registerModalOpen,
+    close: registerModalClose,
+  } = useModal(RegisterCheckpointModal);
 
   const handleOnCloseCreateModel = useCallback(
     (modelName?: string) => {
       if (modelName) {
         setSelectedModelName(modelName);
-        registerModal.open();
+        registerModalOpen();
       }
     },
-    [setSelectedModelName, registerModal],
+    [registerModalOpen],
   );
 
   const clearSelected = useCallback(() => {
@@ -124,10 +128,9 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
   const handleRegisterCheckpoint = useCallback(
     (checkpoints: string[]) => {
       setSelectedCheckpoints(checkpoints);
-      registerModal.open();
+      registerModalOpen();
     },
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [],
+    [registerModalOpen],
   );
 
   const handleDelete = useCallback(async (checkpointUuids: string[]) => {
@@ -397,9 +400,9 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
         )}
       </Section>
       <modelCreateModal.Component onClose={handleOnCloseCreateModel} />
-      <registerModal.Component
+      <RegisterModalComponent
         checkpoints={selectedCheckpoints ?? []}
-        closeModal={registerModal.close}
+        closeModal={registerModalClose}
         modelName={selectedModelName}
         models={models}
         openModelModal={modelCreateModal.open}
