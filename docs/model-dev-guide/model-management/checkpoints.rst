@@ -432,7 +432,9 @@ Via the REST API
 ================
 
 Finally, you can also retrieve the list of files in a checkpoint via the REST API by calling the
-``GetExperimentCheckpoints`` endpoint.
+`GetExperimentCheckpoints
+<https://docs.determined.ai/latest/rest-api/index.html#/Experiments/GetExperimentCheckpoints>`__
+endpoint.
 
 ************
  Next Steps
