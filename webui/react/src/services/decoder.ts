@@ -877,6 +877,7 @@ export const mapV1Webhook = (data: Sdk.V1Webhook): types.Webhook => {
     mode: {
       [Sdk.V1WebhookMode.WORKSPACE]: 'Workspace',
       [Sdk.V1WebhookMode.SPECIFIC]: 'Specific',
+      [Sdk.V1WebhookMode.UNSPECIFIED]: 'Workspace',
     }[data.mode],
     name: data.name,
     triggers: data.triggers || [],
