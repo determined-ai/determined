@@ -1,6 +1,5 @@
 import Button from 'hew/Button';
 import Icon from 'hew/Icon';
-import Message from 'hew/Message';
 import Surface from 'hew/Surface';
 import { useTheme } from 'hew/Theme';
 import Tooltip from 'hew/Tooltip';
@@ -51,6 +50,11 @@ const Metadata: React.FC<Props> = ({ trial }: Props) => {
 
   const treeData = (trial?.metadata && getNodes(trial?.metadata)) ?? [];
 
+  if (treeData.length === 0) {
+    // dont show metadata section when there's no metadata
+    return null;
+  }
+
   return (
     <Section
       options={[
@@ -65,13 +69,9 @@ const Metadata: React.FC<Props> = ({ trial }: Props) => {
       ]}
       title="Metadata">
       <Surface>
-        {treeData.length ? (
-          <div className={css.base}>
-            <Tree defaultExpandAll treeData={treeData} />
-          </div>
-        ) : (
-          <Message title={EMPTY_MESSAGE} />
-        )}
+        <div className={css.base}>
+          <Tree defaultExpandAll treeData={treeData} />
+        </div>
       </Surface>
     </Section>
   );

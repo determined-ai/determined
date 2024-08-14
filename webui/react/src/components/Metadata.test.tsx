@@ -7,7 +7,7 @@ import { JsonObject, TrialDetails } from 'types';
 import { downloadText } from 'utils/browser';
 import { isJsonObject } from 'utils/data';
 
-import Metadata, { EMPTY_MESSAGE } from './Metadata';
+import Metadata from './Metadata';
 import { ThemeProvider } from './ThemeProvider';
 
 const mockMetadata = {
@@ -97,12 +97,6 @@ const setup = (empty?: boolean) => {
 };
 
 describe('Metadata', () => {
-  it('should display empty state', () => {
-    setup(true);
-    expect(screen.getByText(EMPTY_MESSAGE)).toBeInTheDocument();
-    expect(screen.getByRole('button')).toBeDisabled();
-  });
-
   it('should allow metadata download', async () => {
     setup();
     await user.click(screen.getByRole('button'));
