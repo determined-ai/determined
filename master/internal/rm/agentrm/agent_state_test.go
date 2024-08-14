@@ -70,7 +70,7 @@ func TestAgentStatePersistence(t *testing.T) {
 		Version:              "",
 		Devices:              devices,
 		ContainersReattached: []aproto.ContainerReattachAck{},
-		ResourcePoolName:     "",
+		ResourcePoolName:     defaultResourcePoolName,
 	}
 	state.agentStarted(started)
 	require.Len(t, state.getSlotsSummary("/myagent"), 2)
@@ -341,35 +341,17 @@ func Test_agentState_checkAgentResourcePoolMatch(t *testing.T) {
 			wantErrContains: "",
 		},
 		{
-			name: "resource pool name match",
-			state: agentState{
-				resourcePoolName: "default",
-			},
-			agentStarted: &aproto.AgentStarted{
-				ResourcePoolName: "",
-			},
-			wantErrContains: "",
-		},
-		{
 			name: "resource pool name is missing",
 			state: agentState{
 				resourcePoolName: "pool1",
 			},
-			agentStarted:    &aproto.AgentStarted{ResourcePoolName: ""},
+			agentStarted:    &aproto.AgentStarted{ResourcePoolName: defaultResourcePoolName},
 			wantErrContains: "resource pool has changed",
 		},
 		{
 			name: "resource pool name is missing",
 			state: agentState{
-				resourcePoolName: "default",
-			},
-			agentStarted:    &aproto.AgentStarted{ResourcePoolName: "pool1"},
-			wantErrContains: "resource pool has changed",
-		},
-		{
-			name: "resource pool name is missing",
-			state: agentState{
-				resourcePoolName: "",
+				resourcePoolName: defaultResourcePoolName,
 			},
 			agentStarted:    &aproto.AgentStarted{ResourcePoolName: "pool1"},
 			wantErrContains: "resource pool has changed",
@@ -420,7 +402,7 @@ func TestSlotStates(t *testing.T) {
 		Version:              "",
 		Devices:              devices,
 		ContainersReattached: []aproto.ContainerReattachAck{},
-		ResourcePoolName:     "",
+		ResourcePoolName:     defaultResourcePoolName,
 	}
 	state.agentStarted(started)
 	slots := state.getSlotsSummary("/")

@@ -298,11 +298,7 @@ func (a *agentState) checkAgentStartedDevicesMatch(
 func (a *agentState) checkAgentResourcePoolMatch(
 	agentStarted *aproto.AgentStarted,
 ) error {
-	// If the agent's resource pool is empty in the configuration and the master has it set to default,
-	// the agent should not be restarted. However, if the agent's resource pool differs from the master's record,
-	// the agent should be restarted.
-	if !(agentStarted.ResourcePoolName == "" && a.resourcePoolName == defaultResourcePoolName) &&
-		(a.resourcePoolName != agentStarted.ResourcePoolName) {
+	if a.resourcePoolName != agentStarted.ResourcePoolName {
 		return fmt.Errorf("resource pool has changed: %s -> %s", a.resourcePoolName, agentStarted.ResourcePoolName)
 	}
 
