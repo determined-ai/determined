@@ -28,7 +28,7 @@ def test_slack_webhook() -> None:
         triggers=[webhook_trigger],
         mode=bindings.v1WebhookMode.Workspace,
         name="",
-        workspace=None,
+        workspaceId=None,
     )
 
     result = bindings.post_PostWebhook(sess, body=webhook_request)
@@ -108,7 +108,7 @@ def test_log_pattern_send_webhook(should_match: bool) -> None:
             triggers=[webhook_trigger],
             mode=bindings.v1WebhookMode.Workspace,
             name="",
-            workspace=None,
+            workspaceId=None,
         ),
     )
 
@@ -121,7 +121,7 @@ def test_log_pattern_send_webhook(should_match: bool) -> None:
             triggers=[webhook_trigger],
             mode=bindings.v1WebhookMode.Workspace,
             name="",
-            workspace=None,
+            workspaceId=None,
         ),
     )
 
