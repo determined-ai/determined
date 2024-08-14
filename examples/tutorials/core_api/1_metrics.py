@@ -24,6 +24,8 @@ def main(core_context, increment_by):
             core_context.train.report_training_metrics(
                 steps_completed=steps_completed, metrics={"x": x}
             )
+            # NEW: report training progress.
+            core_context.train.report_progress(batch/100.0)
     # NEW: report a "validation" metric at the end.
     core_context.train.report_validation_metrics(steps_completed=steps_completed, metrics={"x": x})
 

@@ -1406,6 +1406,7 @@ func (a *apiServer) ReportTrialProgress(
 	msg := experiment.TrialReportProgress{
 		RequestID: rID,
 		Progress:  searcher.PartialUnits(req.Progress),
+		IsRaw:     req.IsRaw,
 	}
 	if err := e.TrialReportProgress(msg); err != nil {
 		return nil, err

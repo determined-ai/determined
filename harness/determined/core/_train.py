@@ -260,6 +260,19 @@ class TrainContext:
         if r.status_code == 400:
             logger.warn("early exit has already been reported for this trial, ignoring new value")
 
+    def report_progress(self, progress: float) -> None:
+        """
+        ``report_progress()`` reports the training progress to the Determined master so the WebUI
+        can show accurate progress to users.
+
+        The ``progress`` should be the actual progress.
+        """
+        logger.debug("report_progress()")
+        self._session.post(
+            f"/api/v1/trials/{self._trial_id}/progress",
+            data=det.util.json_encode({"progress": progress, "isRaw": True}),
+        )
+
     def get_experiment_best_validation(self) -> Optional[float]:
         """
         Get the best reported validation metric reported so far, across the whole experiment.
