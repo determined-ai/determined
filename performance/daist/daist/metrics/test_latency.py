@@ -6,6 +6,7 @@ from typing import List
 from unittest import skipIf
 
 import numpy as np
+
 from determined.experimental import Experiment
 
 from ..models.metric_latency import Hist, MetricLatencyOpHist, OpHist, SeqSweep
