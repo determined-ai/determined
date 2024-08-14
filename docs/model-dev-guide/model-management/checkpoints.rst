@@ -1,3 +1,5 @@
+.. _checkpoints:
+
 .. _use-trained-models:
 
 #############
@@ -9,7 +11,7 @@
    :keywords: checkpoints, Python, checkpoint APIs
 
 Determined provides APIs for downloading checkpoints and loading them into memory in a Python
-process.
+process. You can also get a list of files in a checkpoint without downloading the files.
 
 This guide discusses:
 
@@ -17,6 +19,7 @@ This guide discusses:
 #. Loading model checkpoints in Python.
 #. Storing additional user-defined metadata in a checkpoint.
 #. Using the Determined CLI to download checkpoints to disk.
+#. Getting a list of files in a checkpoint without downloading the files.
 
 The Checkpoint Export API is a subset of the features found in the
 :mod:`~determined.experimental.client` module.
