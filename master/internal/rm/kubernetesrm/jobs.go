@@ -245,26 +245,35 @@ func newJobsService(
 		return nil, err
 	}
 
-	err = p.syncNamespaces(ns)
+	err = p.syncNamespaces(ns, false)
 	if err != nil {
 		return nil, err
 	}
 	return p, nil
 }
 
-func (j *jobsService) syncNamespaces(ns []string) error {
-	err := j.startEventListeners(ns)
-	if err != nil {
-		return err
-	}
-
-	err = j.startPreemptionListeners(ns)
-	if err != nil {
-		return err
-	}
-
+func (j *jobsService) syncNamespaces(ns []string, hasJSLock bool) error {
 	for _, namespace := range ns {
+		// Since we don't want to do duplicate namespace informers, don't start any
+		// listeners or informers that have already been added to namespacesWithInformers.
+		if _, ok := j.namespacesWithInformers[namespace]; ok {
+			continue
+		}
+
+		err := j.startEventListeners(namespace, hasJSLock)
+		if err != nil {
+			return err
+		}
+
+		// Once we have started event listeners for a namespace, track these synced namespaces in
+		// namespacesWithInformers.
 		j.namespacesWithInformers[namespace] = true
+
+		err = j.startPreemptionListeners(namespace, hasJSLock)
+		if err != nil {
+			return err
+		}
+
 		factory := informers.NewSharedInformerFactoryWithOptions(j.clientSet, time.Hour,
 			informers.WithNamespace(namespace))
 
@@ -674,13 +683,13 @@ func (j *jobsService) DefaultNamespace() string {
 func (j *jobsService) VerifyNamespaceExists(namespace string) error {
 	j.mu.Lock()
 	defer j.mu.Unlock()
-	return j.verifyNamespaceExists(namespace)
+	return j.verifyNamespaceExists(namespace, true)
 }
 
 func (j *jobsService) CreateNamespace(namespace string) error {
 	j.mu.Lock()
 	defer j.mu.Unlock()
-	return j.createNamespace(namespace)
+	return j.createNamespace(namespace, true)
 }
 
 func (j *jobsService) DeleteNamespace(namespace string) error {
@@ -1106,43 +1115,55 @@ func (j *jobsService) startNodeInformer() error {
 	return nil
 }
 
-func (j *jobsService) startEventListeners(namespaces []string) error {
-	for _, namespace := range namespaces {
-		l, err := newEventInformer(
-			context.TODO(),
-			j.clientSet.CoreV1().Events(namespace),
-			namespace,
-			func(event watch.Event) {
-				j.mu.Lock()
-				defer j.mu.Unlock()
-				j.newEventCallback(event)
-			})
-		if err != nil {
-			return err
-		}
-		go l.run(context.TODO())
+func (j *jobsService) startEventListeners(namespace string, hasJSLock bool) error {
+	callback := func(event watch.Event) {
+		j.mu.Lock()
+		defer j.mu.Unlock()
+		j.newEventCallback(event)
 	}
+	if hasJSLock {
+		callback = func(event watch.Event) {
+			j.newEventCallback(event)
+		}
+	}
+
+	l, err := newEventInformer(
+		context.TODO(),
+		j.clientSet.CoreV1().Events(namespace),
+		namespace,
+		callback,
+	)
+	if err != nil {
+		return err
+	}
+	go l.run(context.TODO())
+
 	return nil
 }
 
-func (j *jobsService) startPreemptionListeners(namespaces []string) error {
-	for _, namespace := range namespaces {
-		l, err := newPodInformer(
-			context.TODO(),
-			determinedPreemptionLabel,
-			"preemption",
-			namespace,
-			j.clientSet.CoreV1().Pods(namespace),
-			func(event watch.Event) {
-				j.mu.Lock()
-				defer j.mu.Unlock()
-				j.preemptionCallback(event)
-			})
-		if err != nil {
-			return err
-		}
-		go l.run(context.TODO())
+func (j *jobsService) startPreemptionListeners(namespace string, hasJSLock bool) error {
+	callback := func(event watch.Event) {
+		j.mu.Lock()
+		defer j.mu.Unlock()
+		j.preemptionCallback(event)
 	}
+	if hasJSLock {
+		callback = func(event watch.Event) {
+			j.preemptionCallback(event)
+		}
+	}
+	l, err := newPodInformer(
+		context.TODO(),
+		determinedPreemptionLabel,
+		"preemption",
+		namespace,
+		j.clientSet.CoreV1().Pods(namespace),
+		callback,
+	)
+	if err != nil {
+		return err
+	}
+	go l.run(context.TODO())
 	return nil
 }
 
@@ -2154,7 +2175,7 @@ func (j *jobsService) listTCPRoutesInAllNamespaces(
 	return res, nil
 }
 
-func (j *jobsService) verifyNamespaceExists(namespace string) error {
+func (j *jobsService) verifyNamespaceExists(namespace string, hasJSLock bool) error {
 	_, err := j.clientSet.CoreV1().Namespaces().Get(context.Background(), namespace,
 		metaV1.GetOptions{})
 	if err != nil {
@@ -2171,27 +2192,25 @@ func (j *jobsService) verifyNamespaceExists(namespace string) error {
 		worker.jobInterface = j.jobInterfaces
 	}
 
-	// Since we don't know whether the namespace exists yet, and we don't want to do duplicate
-	// namespace informers, add all non-auto-created namespaces bound to a workspace with a map.
-	if _, ok := j.namespacesWithInformers[namespace]; !ok {
-		err = j.syncNamespaces([]string{namespace})
-		if err != nil {
-			return err
-		}
+	err = j.syncNamespaces([]string{namespace}, true)
+	if err != nil {
+		return err
 	}
 
 	return nil
 }
 
-func (j *jobsService) createNamespace(namespaceName string) error {
+func (j *jobsService) createNamespace(namespaceName string, hasJSLock bool) error {
 	err := j.createNamespaceHelper(namespaceName)
 	if err != nil {
 		return err
 	}
-	err = j.syncNamespaces([]string{namespaceName})
+
+	err = j.syncNamespaces([]string{namespaceName}, true)
 	if err != nil {
 		return err
 	}
+
 	return nil
 }
 
@@ -2301,11 +2320,13 @@ func (j *jobsService) setResourceQuota(quota int, namespace string) error {
 					qVal := q
 					detQuota = &qVal
 				} else if tmpQuota < currentQuota {
-					return fmt.Errorf("cannot set quota %d on namespace %s, because this"+
-						" namespace consists of a Kubernetes quota with request limit %d that does not"+
-						" correspond to the auto-created namespace. Please remove this quota in"+
-						" Kubernetes before trying to raise the GPU request limit on the namespace",
-						quota, namespace, int(tmpQuota))
+					lowerQuotaName := q.Name
+					return fmt.Errorf("cannot set quota %d on namespace %s because this"+
+						" namespace contains resource quota %s with GPU request limit %d, which is"+
+						" lower than the request limit you wish to set on this namespace. Please"+
+						" remove this quota in Kubernetes before trying to raise the GPU request"+
+						" limit on the namespace",
+						quota, namespace, lowerQuotaName, int(tmpQuota))
 				}
 			}
 		}

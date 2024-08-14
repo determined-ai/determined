@@ -5,7 +5,7 @@ SHORT_GIT_HASH := $(shell git rev-parse --short HEAD)
 ARTIFACTS_DIR := /tmp/artifacts
 
 # Model-hub library environments will be built on top of the default GPU and CPU images in master/pkg/model/defaults.go
-DEFAULT_GPU_IMAGE := determinedai/pytorch-tensorflow-cuda-dev:f20b027
+DEFAULT_GPU_IMAGE := determinedai/pytorch-tensorflow-cuda-dev:5432424
 
 ############REMINDER############
 # When bumping third-party library versions, remember to bump versions in

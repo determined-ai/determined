@@ -709,6 +709,7 @@ export interface TrialItem extends StartEndTimes {
   searcherMetricsVal?: number;
   logRetentionDays?: number;
   taskId?: string;
+  metadata?: JsonObject;
 }
 
 export interface TrialDetails extends TrialItem {
@@ -1279,7 +1280,7 @@ export interface FlatRun {
   checkpointSize: number;
   checkpointCount: number;
   searcherMetricValue?: number;
-  externalRunId?: number;
+  externalRunId?: string;
   hyperparameters?: TrialHyperparameters;
   summaryMetrics?: SummaryMetrics;
   userId?: number;
@@ -1321,3 +1322,16 @@ export const FlatRunAction = {
 } as const;
 
 export type FlatRunAction = ValueOf<typeof FlatRunAction>;
+
+export const SelectAllType = t.type({
+  exclusions: t.array(t.number),
+  type: t.literal('ALL_EXCEPT'),
+});
+
+export const RegularSelectionType = t.type({
+  selections: t.array(t.number),
+  type: t.literal('ONLY_IN'),
+});
+
+export const SelectionType = t.union([RegularSelectionType, SelectAllType]);
+export type SelectionType = t.TypeOf<typeof SelectionType>;

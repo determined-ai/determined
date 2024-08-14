@@ -369,7 +369,7 @@ func (r *WorkspaceAuthZRBAC) CanSetWorkspacesDefaultPools(
 
 // CanSetWorkspaceNamespaceBindings determines whether a user can set a workspace namespace bindng.
 func (r *WorkspaceAuthZRBAC) CanSetWorkspaceNamespaceBindings(ctx context.Context,
-	curUser model.User, workspace *workspacev1.Workspace,
+	curUser model.User,
 ) (err error) {
 	fields := audit.ExtractLogFields(ctx)
 	addInfoWithoutWorkspace(curUser, fields,
@@ -378,13 +378,13 @@ func (r *WorkspaceAuthZRBAC) CanSetWorkspaceNamespaceBindings(ctx context.Contex
 		audit.LogFromErr(fields, err)
 	}()
 
-	return db.DoesPermissionMatch(ctx, curUser.ID, &workspace.Id,
+	return db.DoesPermissionMatch(ctx, curUser.ID, nil,
 		rbacv1.PermissionType_PERMISSION_TYPE_SET_WORKSPACE_NAMESPACE_BINDINGS)
 }
 
 // CanSetResourceQuotas determines whether a user can set a resource quota on a workspace.
 func (r *WorkspaceAuthZRBAC) CanSetResourceQuotas(ctx context.Context,
-	curUser model.User, workspace *workspacev1.Workspace,
+	curUser model.User,
 ) (err error) {
 	fields := audit.ExtractLogFields(ctx)
 	addInfoWithoutWorkspace(curUser, fields,
@@ -393,7 +393,7 @@ func (r *WorkspaceAuthZRBAC) CanSetResourceQuotas(ctx context.Context,
 		audit.LogFromErr(fields, err)
 	}()
 
-	return db.DoesPermissionMatch(ctx, curUser.ID, &workspace.Id,
+	return db.DoesPermissionMatch(ctx, curUser.ID, nil,
 		rbacv1.PermissionType_PERMISSION_TYPE_SET_RESOURCE_QUOTAS)
 }
 

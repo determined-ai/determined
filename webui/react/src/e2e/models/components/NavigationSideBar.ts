@@ -1,5 +1,6 @@
-import { BaseComponent } from 'e2e/models/common/base/BaseComponent';
-import { BaseReactFragment } from 'e2e/models/common/base/BaseReactFragment';
+import { BaseComponent } from 'playwright-page-model-base/BaseComponent';
+import { BaseReactFragment } from 'playwright-page-model-base/BaseReactFragment';
+
 import { DropdownMenu } from 'e2e/models/common/hew/Dropdown';
 import { Nameplate } from 'e2e/models/common/hew/Nameplate';
 

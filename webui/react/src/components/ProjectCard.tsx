@@ -100,12 +100,16 @@ const ProjectCard: React.FC<Props> = ({
                 </div>
               )}
               {project.archived ? (
-                <Badge backgroundColor={{ h: 0, l: 40, s: 0 }} text="Archived" />
+                <Badge
+                  backgroundColor={{ h: 0, l: 40, s: 0 }}
+                  data-testid="archived"
+                  text="Archived"
+                />
               ) : (
                 project.lastExperimentStartedAt && (
                   <TimeAgo
                     datetime={project.lastExperimentStartedAt}
-                    tooltipFormat="[Last experiment started: \n]MMM D, YYYY - h:mm a"
+                    tooltipFormat={`[Last ${f_flat_runs ? 'search' : 'experiment'} started: \n]MMM D, YYYY - h:mm a`}
                   />
                 )
               )}

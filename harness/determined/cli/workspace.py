@@ -46,6 +46,32 @@ def get_workspace_names(session: api.Session) -> Dict[int, str]:
     return mapping
 
 
+def render_user_group_rolenames(
+    resp: bindings.v1GetGroupsAndUsersAssignedToWorkspaceResponse, is_csv: bool
+) -> None:
+    values = []
+
+    group_map = {g.groupId: g.name for g in resp.groups}
+    user_map = {u.id: u.username for u in resp.usersAssignedDirectly}
+
+    for assignment in resp.assignments:
+        if assignment.role:
+            role_name = assignment.role.name
+
+            if assignment.groupRoleAssignments:
+                for group_assignment in assignment.groupRoleAssignments:
+                    value = [group_map[group_assignment.groupId], "G", role_name]
+                    values.append(value)
+
+            if assignment.userRoleAssignments:
+                for user_assignment in assignment.userRoleAssignments:
+                    value = [user_map[user_assignment.userId], "U", role_name]
+                    values.append(value)
+
+    headers = ["User/Group Name", "User/Group", "Role Name"]
+    render.tabulate_or_csv(headers, values, is_csv)
+
+
 def render_workspaces(
     workspaces: Sequence[bindings.v1Workspace], from_list_api: bool = False
 ) -> None:
@@ -147,6 +173,21 @@ def list_pools(args: argparse.Namespace) -> None:
     )
 
 
+def list_workspace_members(args: argparse.Namespace) -> None:
+    sess = cli.setup_session(args)
+    w = api.workspace_by_name(sess, args.workspace_name)
+    resp = bindings.get_GetGroupsAndUsersAssignedToWorkspace(sess, workspaceId=w.id)
+
+    if args.json:
+        render.print_json(resp.to_json())
+    elif args.yaml:
+        print(util.yaml_safe_dump(resp.to_json(), default_flow_style=False))
+    elif args.csv:
+        render_user_group_rolenames(resp, True)
+    else:
+        render_user_group_rolenames(resp, False)
+
+
 def list_workspace_namespace_bindings(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     w = api.workspace_by_name(sess, args.workspace_name)
@@ -169,18 +210,24 @@ def list_workspace_namespace_bindings(args: argparse.Namespace) -> None:
 
 def set_workspace_namespace_binding(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
-    if args.cluster_name and not (
+    if not (
         args.namespace or args.auto_create_namespace or args.auto_create_namespace_all_clusters
     ):
+        remove_cluster_name = ""
+        if args.cluster_name:
+            remove_cluster_name = "remove --cluster-name CLUSTER_NAME and "
+
         raise api.errors.BadRequestException(
-            "must provide --namespace NAMESPACE or --auto-create-namespace, or remove "
-            + "--cluster-name CLUSTER_NAME and specify --auto-create-namespace-all-clusters"
+            "must provide --namespace NAMESPACE or --auto-create-namespace, or "
+            + remove_cluster_name
+            + "specify --auto-create-namespace-all-clusters"
         )
 
     w = api.workspace_by_name(sess, args.workspace_name)
     content = bindings.v1SetWorkspaceNamespaceBindingsRequest(workspaceId=w.id)
     cluster_name = args.cluster_name or ""
     namespace_meta = bindings.v1WorkspaceNamespaceMeta(
+        clusterName=cluster_name,
         namespace=args.namespace,
         autoCreateNamespace=args.auto_create_namespace,
         autoCreateNamespaceAllClusters=args.auto_create_namespace_all_clusters,
@@ -290,9 +337,11 @@ def create_workspace(args: argparse.Namespace) -> None:
     cluster_name = args.cluster_name or ""
     if set_namespace:
         namespace_meta = bindings.v1WorkspaceNamespaceMeta(
+            clusterName=cluster_name,
             namespace=args.namespace,
             autoCreateNamespace=args.auto_create_namespace,
             autoCreateNamespaceAllClusters=args.auto_create_namespace_all_clusters,
+            resourceQuota=args.resource_quota,
         )
         content.clusterNamespaceMeta = {cluster_name: namespace_meta}
     if args.resource_quota:
@@ -502,6 +551,19 @@ args_description = [
                 ],
             ),
             cli.Cmd(
+                "list-members",
+                list_workspace_members,
+                "list users/user-groups members of a workspace and their roles",
+                [
+                    cli.Arg("workspace_name", type=str, help="name of the workspace"),
+                    cli.Group(
+                        cli.output_format_args["json"],
+                        cli.output_format_args["yaml"],
+                        cli.output_format_args["csv"],
+                    ),
+                ],
+            ),
+            cli.Cmd(
                 "create",
                 create_workspace,
                 "create workspace",
@@ -516,7 +578,8 @@ args_description = [
                         type=str,
                         help="cluster within which we create the workspace-namespace binding. This \
                         argument is optional for single Kubernetes RM, but is required when \
-                            using multiple resource managers",
+                        using multiple resource managers unless \
+                        --auto-create-namespace-all-clusters is specified",
                     ),
                     cli.Group(
                         cli.Arg(
@@ -541,7 +604,8 @@ args_description = [
                             action="store_true",
                             help="whether \
                             a user wants a namespace auto-created and used for each cluster's \
-                            respective workspace-namespace binding.",
+                            respective workspace-namespace binding. Mutually exclusive with \
+                            --cluster-name CLUSTER_NAME",
                         ),
                     ),
                     cli.Arg(
@@ -609,7 +673,9 @@ args_description = [
                                 "--cluster-name",
                                 type=str,
                                 help="cluster within which we create the workspace-namespace \
-                                binding",
+                                binding. This argument is optional for single Kubernetes RM, but \
+                                is required when using multiple resource managers if \
+                                --auto-create-namespace-all-clusters is also specified",
                             ),
                             cli.Group(
                                 cli.Arg(
@@ -632,7 +698,8 @@ args_description = [
                                     "--auto-create-namespace-all-clusters",
                                     action="store_true",
                                     help="whether a user wants a namespace auto-created and used \
-                                    for each cluster's respective workspace-namespace binding.",
+                                    for each cluster's respective workspace-namespace binding. \
+                                    Mutually exclusive with --cluster-name CLUSTER_NAME",
                                 ),
                             ),
                         ],

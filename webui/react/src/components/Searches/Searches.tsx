@@ -8,6 +8,7 @@ import {
   defaultNumberColumn,
   defaultSelectionColumn,
   defaultTextColumn,
+  MIN_COLUMN_WIDTH,
   MULTISELECT,
 } from 'hew/DataGrid/columns';
 import DataGrid, {
@@ -29,7 +30,7 @@ import { useToast } from 'hew/Toast';
 import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import { isUndefined } from 'lodash';
 import { useObservable } from 'micro-observables';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
 import { Error } from 'components/exceptions';
@@ -51,6 +52,7 @@ import { DataGridGlobalSettings, settingsConfigGlobal } from 'components/Options
 import TableActionBar from 'components/TableActionBar';
 import useUI from 'components/ThemeProvider';
 import { useAsync } from 'hooks/useAsync';
+import { useDebouncedSettings } from 'hooks/useDebouncedSettings';
 import { useGlasbey } from 'hooks/useGlasbey';
 import useMobile from 'hooks/useMobile';
 import usePolling from 'hooks/usePolling';
@@ -73,6 +75,7 @@ import {
   Project,
   ProjectColumn,
   RunState,
+  SelectionType as SelectionState,
 } from 'types';
 import handleError from 'utils/error';
 import { getProjectExperimentForExperimentItem } from 'utils/experiment';
@@ -82,11 +85,11 @@ import { pluralizer } from 'utils/string';
 import { getColumnDefs, searcherMetricsValColumn } from './columns';
 import css from './Searches.module.scss';
 import {
+  ColumnWidthsSlice,
   DEFAULT_SELECTION,
   defaultProjectSettings,
   ProjectSettings,
   ProjectUrlSettings,
-  SelectionType as SelectionState,
   settingsPathForProject,
 } from './Searches.settings';
 
@@ -145,12 +148,13 @@ const Searches: React.FC<Props> = ({ project }) => {
     (p: Partial<ProjectSettings>) => userSettings.setPartial(ProjectSettings, settingsPath, p),
     [settingsPath],
   );
+  const [columnWidths, setColumnWidths] = useDebouncedSettings(ColumnWidthsSlice, settingsPath);
   const settings = useMemo(
     () =>
-      projectSettings
-        .map((s) => ({ ...defaultProjectSettings, ...s }))
+      Loadable.all([projectSettings, columnWidths])
+        .map(([s, cw]) => ({ ...defaultProjectSettings, ...s, ...cw }))
         .getOrElse(defaultProjectSettings),
-    [projectSettings],
+    [projectSettings, columnWidths],
   );
 
   const { params, updateParams } = useTypedParams(ProjectUrlSettings, {});
@@ -163,12 +167,7 @@ const Searches: React.FC<Props> = ({ project }) => {
   const { settings: globalSettings, updateSettings: updateGlobalSettings } =
     useSettings<DataGridGlobalSettings>(settingsConfigGlobal);
 
-  const [sorts, setSorts] = useState<Sort[]>(() => {
-    if (!isLoadingSettings) {
-      return parseSortString(settings.sortString);
-    }
-    return [EMPTY_SORT];
-  });
+  const [sorts, setSorts] = useState<Sort[]>([EMPTY_SORT]);
   const sortString = useMemo(() => makeSortString(sorts.filter(validSort.is)), [sorts]);
   const [experiments, setExperiments] = useState<Loadable<ExperimentWithTrial>[]>(
     INITIAL_LOADING_EXPERIMENTS,
@@ -305,12 +304,20 @@ const Searches: React.FC<Props> = ({ project }) => {
     [resetPagination, sortString, updateSettings],
   );
 
-  useEffect(() => {
-    if (!isLoadingSettings && settings.sortString) {
-      setSorts(parseSortString(settings.sortString));
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isLoadingSettings]);
+  useLayoutEffect(() => {
+    let cleanup: () => void;
+    // eslint-disable-next-line prefer-const
+    cleanup = eagerSubscribe(projectSettingsObs, (ps, prevPs) => {
+      if (!prevPs?.isLoaded) {
+        ps.forEach((s) => {
+          const { sortString } = { ...defaultProjectSettings, ...s };
+          setSorts(parseSortString(sortString));
+          cleanup?.();
+        });
+      }
+    });
+    return cleanup;
+  }, [projectSettingsObs]);
 
   const fetchExperiments = useCallback(async (): Promise<void> => {
     if (isLoadingSettings || Loadable.isNotLoaded(loadableFormset)) return;
@@ -501,7 +508,7 @@ const Searches: React.FC<Props> = ({ project }) => {
           break;
         case ExperimentAction.Edit:
           if (data) updateExperiment(data);
-          openToast({ severity: 'Confirm', title: 'Experiment updated successfully' });
+          openToast({ severity: 'Confirm', title: 'Search updated successfully' });
           break;
         case ExperimentAction.Move:
         case ExperimentAction.Delete:
@@ -540,16 +547,18 @@ const Searches: React.FC<Props> = ({ project }) => {
           acc[col] = DEFAULT_COLUMN_WIDTH;
           return acc;
         }, {});
-      updateSettings({
-        columns: newColumnsOrder,
+      setColumnWidths({
         columnWidths: {
           ...settings.columnWidths,
           ...newColumnWidths,
         },
+      });
+      updateSettings({
+        columns: newColumnsOrder,
         pinnedColumnsCount: isUndefined(pinnedCount) ? settings.pinnedColumnsCount : pinnedCount,
       });
     },
-    [updateSettings, settings.pinnedColumnsCount, settings.columnWidths],
+    [setColumnWidths, updateSettings, settings.pinnedColumnsCount, settings.columnWidths],
   );
 
   const handleRowHeightChange = useCallback(
@@ -586,14 +595,14 @@ const Searches: React.FC<Props> = ({ project }) => {
 
   const handleColumnWidthChange = useCallback(
     (columnId: string, width: number) => {
-      updateSettings({
+      setColumnWidths({
         columnWidths: {
           ...settings.columnWidths,
-          [columnId]: width,
+          [columnId]: Math.max(MIN_COLUMN_WIDTH, width),
         },
       });
     },
-    [updateSettings, settings.columnWidths],
+    [setColumnWidths, settings.columnWidths],
   );
 
   const columnsIfLoaded = useMemo(

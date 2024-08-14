@@ -48,7 +48,7 @@ args_description: cli.ArgsDescription = [
         "query historical resource allocation",
         [
             cli.Cmd(
-                "all|ocations",
+                "alloc|ations",
                 csv,
                 "get a detailed csv of resource allocation at an allocation level",
                 [

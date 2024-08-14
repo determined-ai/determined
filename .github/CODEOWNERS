@@ -10,7 +10,7 @@
 /go.sum         @determined-ai/backend
 /agent          @determined-ai/backend
 /proto          @determined-ai/backend
-/performance    @determined-ai/web
+/performance    @determined-ai/scalability
 
 # CI is a mix
 /.circleci            @determined-ai/infrastructure

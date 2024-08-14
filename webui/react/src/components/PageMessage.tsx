@@ -17,7 +17,13 @@ const PageMessage: React.FC<Props> = ({ title, children }: Props) => {
     <Page breadcrumb={[]} docTitle={title} noScroll>
       <Message
         description={children}
-        icon={<Logo branding={info.branding} orientation="vertical" />}
+        icon={
+          <Logo
+            branding={info.branding}
+            hasCustomLogo={info.hasCustomLogo}
+            orientation="vertical"
+          />
+        }
         title={title}
       />
     </Page>

@@ -2405,11 +2405,13 @@ class v1ColumnType(DetEnum):
     - COLUMN_TYPE_TEXT: data type is textual
     - COLUMN_TYPE_NUMBER: data type is numeric
     - COLUMN_TYPE_DATE: data type is a date
+    - COLUMN_TYPE_ARRAY: data type is an array
     """
     UNSPECIFIED = "COLUMN_TYPE_UNSPECIFIED"
     TEXT = "COLUMN_TYPE_TEXT"
     NUMBER = "COLUMN_TYPE_NUMBER"
     DATE = "COLUMN_TYPE_DATE"
+    ARRAY = "COLUMN_TYPE_ARRAY"
 
 class v1Command(Printable):
     """Command is a single container running the configured command."""
@@ -4343,7 +4345,7 @@ class v1FlatRun(Printable):
     duration: "typing.Optional[int]" = None
     endTime: "typing.Optional[str]" = None
     experiment: "typing.Optional[v1FlatRunExperiment]" = None
-    externalRunId: "typing.Optional[int]" = None
+    externalRunId: "typing.Optional[str]" = None
     hyperparameters: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     labels: "typing.Optional[typing.Sequence[str]]" = None
     localId: "typing.Optional[str]" = None
@@ -4369,7 +4371,7 @@ class v1FlatRun(Printable):
         duration: "typing.Union[int, None, Unset]" = _unset,
         endTime: "typing.Union[str, None, Unset]" = _unset,
         experiment: "typing.Union[v1FlatRunExperiment, None, Unset]" = _unset,
-        externalRunId: "typing.Union[int, None, Unset]" = _unset,
+        externalRunId: "typing.Union[str, None, Unset]" = _unset,
         hyperparameters: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
         labels: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
         localId: "typing.Union[str, None, Unset]" = _unset,
@@ -5467,6 +5469,7 @@ class v1GetMasterResponse(Printable):
         *,
         clusterId: str,
         clusterName: str,
+        hasCustomLogo: bool,
         masterId: str,
         strictJobQueueControl: bool,
         version: str,
@@ -5483,6 +5486,7 @@ class v1GetMasterResponse(Printable):
     ):
         self.clusterId = clusterId
         self.clusterName = clusterName
+        self.hasCustomLogo = hasCustomLogo
         self.masterId = masterId
         self.strictJobQueueControl = strictJobQueueControl
         self.version = version
@@ -5512,6 +5516,7 @@ class v1GetMasterResponse(Printable):
         kwargs: "typing.Dict[str, typing.Any]" = {
             "clusterId": obj["clusterId"],
             "clusterName": obj["clusterName"],
+            "hasCustomLogo": obj["hasCustomLogo"],
             "masterId": obj["masterId"],
             "strictJobQueueControl": obj["strictJobQueueControl"],
             "version": obj["version"],
@@ -5542,6 +5547,7 @@ class v1GetMasterResponse(Printable):
         out: "typing.Dict[str, typing.Any]" = {
             "clusterId": self.clusterId,
             "clusterName": self.clusterName,
+            "hasCustomLogo": self.hasCustomLogo,
             "masterId": self.masterId,
             "strictJobQueueControl": self.strictJobQueueControl,
             "version": self.version,
@@ -12725,7 +12731,6 @@ class v1ResourceAllocationRawResponse(Printable):
 class v1ResourcePool(Printable):
     """A Resource Pool is a pool of resources where containers are run."""
     accelerator: "typing.Optional[str]" = None
-    resourceManagerName: "typing.Optional[str]" = None
     slotsPerAgent: "typing.Optional[int]" = None
     stats: "typing.Optional[v1QueueStats]" = None
 
@@ -12766,7 +12771,6 @@ class v1ResourcePool(Printable):
         startupScript: str,
         type: "v1ResourcePoolType",
         accelerator: "typing.Union[str, None, Unset]" = _unset,
-        resourceManagerName: "typing.Union[str, None, Unset]" = _unset,
         slotsPerAgent: "typing.Union[int, None, Unset]" = _unset,
         stats: "typing.Union[v1QueueStats, None, Unset]" = _unset,
     ):
@@ -12805,8 +12809,6 @@ class v1ResourcePool(Printable):
         self.type = type
         if not isinstance(accelerator, Unset):
             self.accelerator = accelerator
-        if not isinstance(resourceManagerName, Unset):
-            self.resourceManagerName = resourceManagerName
         if not isinstance(slotsPerAgent, Unset):
             self.slotsPerAgent = slotsPerAgent
         if not isinstance(stats, Unset):
@@ -12851,8 +12853,6 @@ class v1ResourcePool(Printable):
         }
         if "accelerator" in obj:
             kwargs["accelerator"] = obj["accelerator"]
-        if "resourceManagerName" in obj:
-            kwargs["resourceManagerName"] = obj["resourceManagerName"]
         if "slotsPerAgent" in obj:
             kwargs["slotsPerAgent"] = obj["slotsPerAgent"]
         if "stats" in obj:
@@ -12897,8 +12897,6 @@ class v1ResourcePool(Printable):
         }
         if not omit_unset or "accelerator" in vars(self):
             out["accelerator"] = self.accelerator
-        if not omit_unset or "resourceManagerName" in vars(self):
-            out["resourceManagerName"] = self.resourceManagerName
         if not omit_unset or "slotsPerAgent" in vars(self):
             out["slotsPerAgent"] = self.slotsPerAgent
         if not omit_unset or "stats" in vars(self):
@@ -19480,7 +19478,7 @@ def get_GetKubernetesResourceManagers(
     _params = None
     _resp = session._do_request(
         method="GET",
-        path="/api/v1/k8-resource-managers",
+        path="/api/v1/k8s-resource-managers",
         params=_params,
         json=None,
         data=None,
@@ -19504,7 +19502,7 @@ def get_GetKubernetesResourceQuotas(
     _params = None
     _resp = session._do_request(
         method="GET",
-        path=f"/api/v1/workspaces/{id}/get-k8-resource-quotas",
+        path=f"/api/v1/workspaces/{id}/get-k8s-resource-quotas",
         params=_params,
         json=None,
         data=None,

@@ -10,6 +10,7 @@ import HyperparameterSearchModalComponent from 'components/HyperparameterSearchM
 import PageHeaderFoldable, { renderOptionLabel } from 'components/PageHeaderFoldable';
 import { UNMANAGED_MESSAGE } from 'constant';
 import { terminalRunStates } from 'constants/states';
+import useFeature from 'hooks/useFeature';
 import { ActionOptions } from 'pages/ExperimentDetails/ExperimentDetailsHeader';
 import TrialHeaderLeft from 'pages/TrialDetails/Header/TrialHeaderLeft';
 import { getTrialWorkloads, openOrCreateTensorBoard } from 'services/api';
@@ -32,6 +33,7 @@ interface Props {
 const TrialDetailsHeader: React.FC<Props> = ({ experiment, fetchTrialDetails, trial }: Props) => {
   const [isRunningTensorBoard, setIsRunningTensorBoard] = useState<boolean>(false);
   const [trialNeverData, setTrialNeverData] = useState<boolean>(false);
+  const f_flat_runs = useFeature().isOn('flat_runs');
 
   const handleModalClose = useCallback(() => fetchTrialDetails(), [fetchTrialDetails]);
 
@@ -83,34 +85,22 @@ const TrialDetailsHeader: React.FC<Props> = ({ experiment, fetchTrialDetails, tr
     }
 
     if (canActionExperiment(ExperimentAction.ContinueTrial, experiment, trial)) {
-      if (trial.bestAvailableCheckpoint !== undefined) {
-        options.push({
-          key: Action.ContinueTrial,
-          menuOptions: [
-            {
-              disabled: experiment.unmanaged,
-              icon: <Icon decorative name="fork" size="small" />,
-              key: Action.ContinueTrial,
-              label: 'Continue Trial',
-              onClick: ExperimentCreateModal.open,
-              tooltip: experiment.unmanaged ? UNMANAGED_MESSAGE : undefined,
-            },
-          ],
-        });
+      const menuOption: ActionOptions['menuOptions'][number] = {
+        disabled: experiment.unmanaged,
+        icon: <Icon decorative name="fork" size="small" />,
+        key: Action.ContinueTrial,
+        label: `Continue ${f_flat_runs ? 'Run' : 'Trial'}`,
+      };
+      if (!trial.bestAvailableCheckpoint) {
+        menuOption.tooltip = `No checkpoints found. Cannot continue ${f_flat_runs ? 'run' : 'trial'}`;
       } else {
-        options.push({
-          key: Action.ContinueTrial,
-          menuOptions: [
-            {
-              disabled: experiment.unmanaged,
-              icon: <Icon decorative name="fork" size="small" />,
-              key: Action.ContinueTrial,
-              label: 'Continue Trial',
-              tooltip: 'No checkpoints found. Cannot continue trial',
-            },
-          ],
-        });
+        menuOption.onClick = ExperimentCreateModal.open,
+        experiment.unmanaged && (menuOption.tooltip = UNMANAGED_MESSAGE);
       }
+      options.push({
+        key: Action.ContinueTrial,
+        menuOptions: [ menuOption ],
+      });
     }
 
     if (
@@ -132,6 +122,7 @@ const TrialDetailsHeader: React.FC<Props> = ({ experiment, fetchTrialDetails, tr
     return options;
   }, [
     experiment,
+    f_flat_runs,
     fetchTrialDetails,
     ExperimentCreateModal,
     handleHyperparameterSearch,

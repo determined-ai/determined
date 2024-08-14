@@ -3,7 +3,13 @@ import streamConsumers from 'stream/consumers';
 import _ from 'lodash';
 
 import { randIdAlphanumeric, safeName } from 'e2e/utils/naming';
-import { UsersApi, V1PatchUser, V1PostUserRequest, V1User } from 'services/api-ts-sdk/api';
+import {
+  UsersApi,
+  V1PatchUser,
+  V1PostUserRequest,
+  V1PostUserResponse,
+  V1User,
+} from 'services/api-ts-sdk/api';
 
 import { ApiAuthFixture } from './api.auth.fixture';
 
@@ -52,7 +58,7 @@ export class ApiUserFixture {
    * password is not stored on the V1User object and it is not returned in the response. However the Request is a
    * strict superset of the Response, so no info is lost.
    */
-  async createUser(req: V1PostUserRequest): Promise<V1PostUserRequest> {
+  async createUser(req: V1PostUserRequest): Promise<V1PostUserResponse> {
     const userResp = await (await this.startUserRequest())
       .postUser(req, {})
       .catch(async function (error) {

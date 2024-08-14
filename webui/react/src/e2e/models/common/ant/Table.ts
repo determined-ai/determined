@@ -1,7 +1,8 @@
+import { BaseComponent } from 'playwright-page-model-base/BaseComponent';
+import { BaseHeadRow, BaseRow, BaseTable } from 'playwright-page-model-base/BaseTable';
+
 import { Pagination } from 'e2e/models/common/ant/Pagination';
-import { BaseComponent } from 'e2e/models/common/base/BaseComponent';
-import { BaseHeadRow, BaseRow, BaseTable } from 'e2e/models/common/base/BaseTable';
-export type { TableArgs } from 'e2e/models/common/base/BaseTable';
+export type { TableArgs } from 'playwright-page-model-base/BaseTable';
 
 /**
  * Represents the Table component from antd/es/table/Table.d.ts.

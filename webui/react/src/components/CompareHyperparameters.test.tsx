@@ -35,11 +35,16 @@ vi.mock('hooks/useSettings', async (importOriginal) => {
     useSettings,
   };
 });
+const mockFlatRunsFeatureCheck = vi.hoisted(() => vi.fn());
+vi.mock('hooks/useFeature', () => ({
+  default: () => ({
+    isOn: mockFlatRunsFeatureCheck,
+  }),
+}));
 
 const setup = (
   type: 'trials' | 'runs',
-  empty: boolean = false,
-  comparableMetrics: boolean = true,
+  state: 'empty' | 'uncomparable_metrics' | 'no_metrics' | 'normal' = 'normal',
 ) => {
   render(
     <BrowserRouter>
@@ -47,15 +52,9 @@ const setup = (
         <ThemeProvider>
           <SettingsProvider>
             {type === 'trials' ? (
-              <CompareTrialHyperparametersWithMocks
-                comparableMetrics={comparableMetrics}
-                empty={empty}
-              />
+              <CompareTrialHyperparametersWithMocks state={state} />
             ) : (
-              <CompareRunHyperparametersWithMocks
-                comparableMetrics={comparableMetrics}
-                empty={empty}
-              />
+              <CompareRunHyperparametersWithMocks state={state} />
             )}
           </SettingsProvider>
         </ThemeProvider>
@@ -71,7 +70,7 @@ describe('CompareHyperparameters component', () => {
       expect(screen.getByTestId(COMPARE_PARALLEL_COORDINATES)).toBeInTheDocument();
     });
     it('renders Parallel Coordinates error when metrics are incompatable', () => {
-      setup(type, false, false);
+      setup(type, 'uncomparable_metrics');
       expect(
         screen.getByText('Records are not comparable using current parameters.'),
       ).toBeInTheDocument();
@@ -85,11 +84,31 @@ describe('CompareHyperparameters component', () => {
       expect(screen.getByTestId(COMPARE_HEAT_MAPS)).toBeInTheDocument();
     });
     it('renders no data state', () => {
-      setup(type, true);
+      setup(type, 'empty');
       expect(screen.queryByTestId(COMPARE_PARALLEL_COORDINATES)).not.toBeInTheDocument();
       expect(screen.queryByTestId(COMPARE_SCATTER_PLOTS)).not.toBeInTheDocument();
       expect(screen.queryByTestId(COMPARE_HEAT_MAPS)).not.toBeInTheDocument();
       expect(screen.queryByText(NO_DATA_MESSAGE)).toBeInTheDocument();
+    });
+
+    describe.each([true, false])('when f_flat_runs is %s', (featureIsOn) => {
+      afterEach(() => {
+        mockFlatRunsFeatureCheck.mockReset();
+      });
+      it('renders no metrics state', () => {
+        mockFlatRunsFeatureCheck.mockReturnValue(featureIsOn);
+        setup(type, 'no_metrics');
+        expect(screen.getByText('Not enough data points to plot.')).toBeInTheDocument();
+        if (featureIsOn) {
+          expect(
+            screen.getByText('Please wait until the searches are further along.'),
+          ).toBeInTheDocument();
+        } else {
+          expect(
+            screen.getByText('Please wait until the experiments are further along.'),
+          ).toBeInTheDocument();
+        }
+      });
     });
   });
 });

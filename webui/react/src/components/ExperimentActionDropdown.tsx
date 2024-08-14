@@ -19,6 +19,7 @@ import HyperparameterSearchModalComponent from 'components/HyperparameterSearchM
 import InterstitialModalComponent, {
   type onInterstitialCloseActionType,
 } from 'components/InterstitialModalComponent';
+import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import { handlePath } from 'routes/utils';
 import {
@@ -110,6 +111,9 @@ const ExperimentActionDropdown: React.FC<Props> = ({
   const canceler = useRef<AbortController>(new AbortController());
   const confirm = useConfirm();
   const { openToast } = useToast();
+  const f_flat_runs = useFeature().isOn('flat_runs');
+
+  const entityName = f_flat_runs ? 'search' : 'experiment';
 
   // this is required when experiment does not contain `config`.
   // since we removed config. See #8765 on GitHub
@@ -122,10 +126,10 @@ const ExperimentActionDropdown: React.FC<Props> = ({
       );
       setExperimentItem(Loaded(response));
     } catch (e) {
-      handleError(e, { publicSubject: 'Unable to fetch experiment data.' });
+      handleError(e, { publicSubject: `Unable to fetch ${entityName} data.` });
       setExperimentItem(Failed(new Error('experiment data failure')));
     }
-  }, [experiment.id]);
+  }, [entityName, experiment.id]);
 
   const onInterstitalClose: onInterstitialCloseActionType = useCallback(
     (reason) => {
@@ -243,7 +247,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
           }
           case Action.Kill:
             confirm({
-              content: `Are you sure you want to kill experiment ${experiment.id}?`,
+              content: `Are you sure you want to kill ${entityName} ${experiment.id}?`,
               danger: true,
               okText: 'Kill',
               onConfirm: async () => {
@@ -251,7 +255,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
                 await onComplete?.(action, experiment.id);
               },
               onError: handleError,
-              title: 'Confirm Experiment Kill',
+              title: `Confirm ${capitalize(entityName)} Kill`,
             });
             break;
           case Action.Pause:
@@ -264,7 +268,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
             break;
           case Action.Delete:
             confirm({
-              content: `Are you sure you want to delete experiment ${experiment.id}?`,
+              content: `Are you sure you want to delete ${entityName} ${experiment.id}?`,
               danger: true,
               okText: 'Delete',
               onConfirm: async () => {
@@ -272,7 +276,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
                 await onComplete?.(action, experiment.id);
               },
               onError: handleError,
-              title: 'Confirm Experiment Deletion',
+              title: `Confirm ${capitalize(entityName)} Deletion`,
             });
             break;
           case Action.Edit:
@@ -299,7 +303,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
       } catch (e) {
         handleError(e, {
           level: ErrorLevel.Error,
-          publicMessage: `Unable to ${action} experiment ${experiment.id}.`,
+          publicMessage: `Unable to ${action} ${entityName} ${experiment.id}.`,
           publicSubject: `${capitalize(action)} failed.`,
           silent: false,
           type: ErrorType.Server,
@@ -309,6 +313,7 @@ const ExperimentActionDropdown: React.FC<Props> = ({
       }
     },
     [
+      entityName,
       link,
       onLink,
       experiment.id,

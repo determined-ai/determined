@@ -69,3 +69,8 @@ variable "allow_stopping_for_update" {
 variable "boot_disk" {
   type    = string
 }
+
+variable "vm_labels" {
+  type    = map(string)
+  default = {}
+}

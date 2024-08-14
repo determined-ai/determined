@@ -12,7 +12,7 @@ import { paths } from 'routes/utils';
 import { moveProject } from 'services/api';
 import workspaceStore from 'stores/workspaces';
 import { Project, Workspace } from 'types';
-import handleError, { ErrorLevel, ErrorType } from 'utils/error';
+import handleError, { DetError, ErrorLevel, ErrorType } from 'utils/error';
 import { useObservable } from 'utils/observable';
 
 import css from './ProjectMoveModal.module.scss';
@@ -47,7 +47,10 @@ const ProjectMoveModalComponent: React.FC<Props> = ({ onMove, project }: Props) 
     } catch (e) {
       handleError(e, {
         level: ErrorLevel.Error,
-        publicMessage: 'Please try again later.',
+        publicMessage:
+          e instanceof DetError && e.type === ErrorType.Server
+            ? e.publicMessage
+            : 'Please try again later.',
         publicSubject: 'Unable to move project.',
         silent: false,
         type: ErrorType.Server,

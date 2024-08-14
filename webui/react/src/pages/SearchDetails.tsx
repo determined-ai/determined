@@ -1,6 +1,6 @@
 import Pivot, { PivotProps } from 'hew/Pivot';
 import Notes from 'hew/RichTextEditor';
-import { Loadable } from 'hew/utils/loadable';
+import { Loadable, NotLoaded } from 'hew/utils/loadable';
 import { string } from 'io-ts';
 import _ from 'lodash';
 import { useObservable } from 'micro-observables';
@@ -9,14 +9,16 @@ import { unstable_useBlocker, useLocation, useNavigate, useParams } from 'react-
 
 import Page, { BreadCrumbRoute } from 'components/Page';
 import { terminalRunStates } from 'constants/states';
+import { useAsync } from 'hooks/useAsync';
 import usePermissions from 'hooks/usePermissions';
 import usePolling from 'hooks/usePolling';
 import { SettingsConfig, useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
-import { getExperimentDetails, patchExperiment } from 'services/api';
+import { getExperimentDetails, getExpTrials, patchExperiment } from 'services/api';
 import workspaceStore from 'stores/workspaces';
-import { ExperimentBase, Note, ValueOf, Workspace } from 'types';
+import { ExperimentBase, Note, TrialItem, ValueOf, Workspace } from 'types';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
+import { isSingleTrialExperiment } from 'utils/experiment';
 import { isAborted, isNotFound } from 'utils/service';
 
 import ExperimentCodeViewer from './ExperimentDetails/ExperimentCodeViewer';
@@ -120,6 +122,32 @@ const SearchDetails: React.FC = () => {
     }
   }, [pageError, searchId]);
 
+  const singleTrialData = useAsync<TrialItem | undefined>(
+    async (canceler) => {
+      if (!experiment || !isSingleTrialExperiment(experiment)) {
+        return NotLoaded;
+      }
+      try {
+        const trialsResponse = await getExpTrials(
+          { id: experiment.id, limit: 2 },
+          { signal: canceler.signal },
+        );
+        return trialsResponse.trials[0];
+      } catch (e) {
+        if (!canceler.signal.aborted) {
+          handleError(e, {
+            level: ErrorLevel.Error,
+            publicMessage: 'Failed to fetch run information for search',
+            silent: false,
+            type: ErrorType.Server,
+          });
+        }
+      }
+      return NotLoaded;
+    },
+    [experiment],
+  );
+
   const handleNotesUpdate = useCallback(
     async (notes: Note) => {
       const editedNotes = notes.contents;
@@ -130,7 +158,7 @@ const SearchDetails: React.FC = () => {
         handleError(e, {
           level: ErrorLevel.Error,
           publicMessage: 'Please try again later.',
-          publicSubject: 'Unable to update experiment notes.',
+          publicSubject: 'Unable to update search notes.',
           silent: false,
           type: ErrorType.Server,
         });
@@ -213,7 +241,7 @@ const SearchDetails: React.FC = () => {
           path: paths.workspaceDetails(experiment?.workspaceId ?? 1),
         }
       : {
-          breadcrumbName: 'Uncategorized Experiments',
+          breadcrumbName: 'Uncategorized Runs',
           path: paths.projectDetails(1),
         },
   ];
@@ -237,6 +265,7 @@ const SearchDetails: React.FC = () => {
           <ExperimentDetailsHeader
             experiment={experiment}
             fetchExperimentDetails={fetchExperimentDetails}
+            trial={singleTrialData.getOrElse(undefined)}
           />
         )
       }

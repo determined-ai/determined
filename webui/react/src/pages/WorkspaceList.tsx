@@ -27,6 +27,7 @@ import {
   userRenderer,
 } from 'components/Table/Table';
 import WorkspaceCreateModalComponent from 'components/WorkspaceCreateModal';
+import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import usePolling from 'hooks/usePolling';
 import usePrevious from 'hooks/usePrevious';
@@ -34,6 +35,7 @@ import { useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { getWorkspaces } from 'services/api';
 import { V1GetWorkspacesRequestSortBy } from 'services/api-ts-sdk';
+import clusterStore from 'stores/cluster';
 import userStore from 'stores/users';
 import { Workspace } from 'types';
 import { useObservable } from 'utils/observable';
@@ -58,12 +60,18 @@ const WorkspaceList: React.FC = () => {
   const [isLoading, setIsLoading] = useState(true);
   const pageRef = useRef<HTMLElement>(null);
   const canceler = useRef<AbortController>();
+  const f_flat_runs = useFeature().isOn('flat_runs');
 
   const { canCreateWorkspace } = usePermissions();
 
   const WorkspaceCreateModal = useModal(WorkspaceCreateModalComponent);
 
   const { settings, updateSettings } = useSettings<WorkspaceListSettings>(settingsConfig);
+
+  const openWorkspaceCreateModal = () => {
+    clusterStore.fetchKubernetesResourceManagers();
+    WorkspaceCreateModal.open();
+  };
 
   const fetchWorkspaces = useCallback(async () => {
     if (!settings) return;
@@ -343,7 +351,7 @@ const WorkspaceList: React.FC = () => {
         <Button
           data-testid="newWorkspace"
           disabled={!canCreateWorkspace}
-          onClick={WorkspaceCreateModal.open}>
+          onClick={openWorkspaceCreateModal}>
           New Workspace
         </Button>
       }
@@ -351,7 +359,11 @@ const WorkspaceList: React.FC = () => {
       <Section>
         <Row wrap>
           <Column>
-            <Select value={settings.whose} width={180} onSelect={handleWhoseSelect}>
+            <Select
+              data-testid="whose"
+              value={settings.whose}
+              width={180}
+              onSelect={handleWhoseSelect}>
               <Option value={WhoseWorkspaces.All}>All Workspaces</Option>
               <Option value={WhoseWorkspaces.Mine}>My Workspaces</Option>
               <Option value={WhoseWorkspaces.Others}>Others&apos; Workspaces</Option>
@@ -364,7 +376,11 @@ const WorkspaceList: React.FC = () => {
                 label="Show Archived"
                 onChange={switchShowArchived}
               />
-              <Select value={settings.sortKey} width={170} onSelect={handleSortSelect}>
+              <Select
+                data-testid="sort"
+                value={settings.sortKey}
+                width={170}
+                onSelect={handleSortSelect}>
                 <Option value={V1GetWorkspacesRequestSortBy.NAME}>Alphabetical</Option>
                 <Option value={V1GetWorkspacesRequestSortBy.ID}>Newest to Oldest</Option>
               </Select>
@@ -378,12 +394,17 @@ const WorkspaceList: React.FC = () => {
           workspacesList
         ) : settings.whose === WhoseWorkspaces.All && settings.archived && !isLoading ? (
           <Message
-            description="Create a workspace to keep track of related projects and experiments."
+            data-testid="noWorkspaces"
+            description={`Create a workspace to keep track of related projects and ${f_flat_runs ? 'searches' : 'experiments'}.`}
             icon="workspaces"
             title="No Workspaces"
           />
         ) : (
-          <Message icon="warning" title="No workspaces matching the current filters" />
+          <Message
+            data-testid="noMatchingWorkspaces"
+            icon="warning"
+            title="No workspaces matching the current filters"
+          />
         )}
       </Spinner>
       <WorkspaceCreateModal.Component />

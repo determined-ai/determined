@@ -5,6 +5,7 @@ import Column from 'hew/Column';
 import {
   ColumnDef,
   DEFAULT_COLUMN_WIDTH,
+  defaultArrayColumn,
   defaultDateColumn,
   defaultNumberColumn,
   defaultSelectionColumn,
@@ -31,7 +32,7 @@ import Row from 'hew/Row';
 import { useToast } from 'hew/Toast';
 import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import { useObservable } from 'micro-observables';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 
 import ColumnPickerMenu from 'components/ColumnPickerMenu';
@@ -68,17 +69,20 @@ import useResize from 'hooks/useResize';
 import useScrollbarWidth from 'hooks/useScrollbarWidth';
 import { useSettings } from 'hooks/useSettings';
 import useTypedParams from 'hooks/useTypedParams';
-import {
-  DEFAULT_SELECTION,
-  SelectionType as SelectionState,
-} from 'pages/F_ExpList/F_ExperimentList.settings';
 import FlatRunActionButton from 'pages/FlatRuns/FlatRunActionButton';
 import { paths } from 'routes/utils';
 import { getProjectColumns, getProjectNumericMetricsRange, searchRuns } from 'services/api';
 import { V1ColumnType, V1LocationType, V1TableType } from 'services/api-ts-sdk';
 import userStore from 'stores/users';
 import userSettings from 'stores/userSettings';
-import { DetailedUser, FlatRun, FlatRunAction, ProjectColumn, RunState } from 'types';
+import {
+  DetailedUser,
+  FlatRun,
+  FlatRunAction,
+  ProjectColumn,
+  RunState,
+  SelectionType as SelectionState,
+} from 'types';
 import handleError from 'utils/error';
 import { eagerSubscribe } from 'utils/observable';
 import { pluralizer } from 'utils/string';
@@ -95,6 +99,7 @@ import {
 import css from './FlatRuns.module.scss';
 import {
   ColumnWidthsSlice,
+  DEFAULT_SELECTION,
   defaultFlatRunsSettings,
   FlatRunsSettings,
   ProjectUrlSettings,
@@ -175,12 +180,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
   const [isOpenFilter, setIsOpenFilter] = useState<boolean>(false);
   const [runs, setRuns] = useState<Loadable<FlatRun>[]>(INITIAL_LOADING_RUNS);
 
-  const [sorts, setSorts] = useState<Sort[]>(() => {
-    if (!isLoadingSettings) {
-      return parseSortString(settings.sortString);
-    }
-    return [EMPTY_SORT];
-  });
+  const [sorts, setSorts] = useState<Sort[]>([EMPTY_SORT]);
   const sortString = useMemo(() => makeSortString(sorts.filter(validSort.is)), [sorts]);
   const loadableFormset = useObservable(formStore.formset);
   const rootFilterChildren: Array<FormGroup | FormField> = Loadable.match(loadableFormset, {
@@ -227,6 +227,22 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
     }
   }, [projectId]);
 
+  const arrayTypeColumns = useMemo(() => {
+    const arrayTypeColumns = projectColumns
+      .getOrElse([])
+      .filter((col) => col.type === V1ColumnType.ARRAY)
+      .map((col) => col.column);
+    return arrayTypeColumns;
+  }, [projectColumns]);
+
+  const bannedFilterColumns: Set<string> = useMemo(() => {
+    return new Set([...BANNED_FILTER_COLUMNS, ...arrayTypeColumns]);
+  }, [arrayTypeColumns]);
+
+  const bannedSortColumns: Set<string> = useMemo(() => {
+    return new Set([...BANNED_SORT_COLUMNS, ...arrayTypeColumns]);
+  }, [arrayTypeColumns]);
+
   const selectedRunIdSet = useMemo(() => {
     return new Set(settings.selection.type === 'ONLY_IN' ? settings.selection.selections : []);
   }, [settings.selection]);
@@ -242,11 +258,11 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
     );
   }, [isMobile, settings.compare, settings.pinnedColumnsCount]);
 
-  const [loadedSelectedRuns, loadedSelectedRunIds] = useMemo(() => {
+  const loadedSelectedRunIds = useMemo(() => {
     const selectedMap = new Map<number, { run: FlatRun; index: number }>();
     const selectedArray: FlatRun[] = [];
     if (isLoadingSettings) {
-      return [selectedArray, selectedMap];
+      return selectedMap;
     }
 
     runs.forEach((r, index) => {
@@ -257,7 +273,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
         }
       });
     });
-    return [selectedArray, selectedMap];
+    return selectedMap;
   }, [isLoadingSettings, runs, selectedRunIdSet]);
 
   const selection = useMemo<GridSelection>(() => {
@@ -342,6 +358,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
             dataPath = `experiment.${currentColumn.column}`;
             break;
           case V1LocationType.RUN:
+          case V1LocationType.RUNMETADATA:
             dataPath = currentColumn.column;
             break;
           case V1LocationType.HYPERPARAMETERS:
@@ -400,6 +417,16 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
           }
           case V1ColumnType.DATE:
             columnDefs[currentColumn.column] = defaultDateColumn(
+              currentColumn.column,
+              currentColumn.displayName || currentColumn.column,
+              settings.columnWidths[currentColumn.column] ??
+                defaultColumnWidths[currentColumn.column as RunColumn] ??
+                MIN_COLUMN_WIDTH,
+              dataPath,
+            );
+            break;
+          case V1ColumnType.ARRAY:
+            columnDefs[currentColumn.column] = defaultArrayColumn(
               currentColumn.column,
               currentColumn.displayName || currentColumn.column,
               settings.columnWidths[currentColumn.column] ??
@@ -564,11 +591,20 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
     setRuns(INITIAL_LOADING_RUNS);
   }, [setPage]);
 
-  useEffect(() => {
-    if (!isLoadingSettings && settings.sortString) {
-      setSorts(parseSortString(settings.sortString));
-    }
-  }, [isLoadingSettings, settings.sortString]);
+  useLayoutEffect(() => {
+    let cleanup: () => void;
+    // eslint-disable-next-line prefer-const
+    cleanup = eagerSubscribe(flatRunsSettingsObs, (ps, prevPs) => {
+      if (!prevPs?.isLoaded) {
+        ps.forEach((s) => {
+          const { sortString } = { ...defaultFlatRunsSettings, ...s };
+          setSorts(parseSortString(sortString));
+          cleanup?.();
+        });
+      }
+    });
+    return cleanup;
+  }, [flatRunsSettingsObs]);
 
   useEffect(() => {
     let cleanup: () => void;
@@ -804,12 +840,12 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
     (sorts: Sort[]) => {
       setSorts(sorts);
       const newSortString = makeSortString(sorts.filter(validSort.is));
-      if (newSortString !== sortString) {
+      if (newSortString !== settings.sortString) {
         resetPagination();
       }
       updateSettings({ sortString: newSortString });
     },
-    [resetPagination, sortString, updateSettings],
+    [resetPagination, settings.sortString, updateSettings],
   );
 
   const getRowAccentColor = (rowData: FlatRun) => {
@@ -909,7 +945,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
         return items;
       }
 
-      if (!BANNED_SORT_COLUMNS.has(column.column)) {
+      if (!bannedSortColumns.has(column.column)) {
         const sortCount = sortMenuItemsForColumn(column, sorts, handleSortChange).length;
         const sortMenuItems =
           sortCount === 0
@@ -940,7 +976,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
         handleIsOpenFilterChange?.(true);
       };
 
-      if (!BANNED_FILTER_COLUMNS.has(column.column)) {
+      if (!bannedFilterColumns.has(column.column)) {
         items.push(
           { type: 'divider' as const },
           {
@@ -998,6 +1034,8 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
       return items;
     },
     [
+      bannedFilterColumns,
+      bannedSortColumns,
       projectColumns,
       settings.pinnedColumnsCount,
       settings.selection,
@@ -1029,15 +1067,16 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
         <Column>
           <Row>
             <TableFilter
-              bannedFilterColumns={BANNED_FILTER_COLUMNS}
+              bannedFilterColumns={bannedFilterColumns}
               formStore={formStore}
               isMobile={isMobile}
               isOpenFilter={isOpenFilter}
               loadableColumns={projectColumns}
+              projectId={projectId}
               onIsOpenFilterChange={handleIsOpenFilterChange}
             />
             <MultiSortMenu
-              bannedSortColumns={BANNED_SORT_COLUMNS}
+              bannedSortColumns={bannedSortColumns}
               columns={projectColumns}
               isMobile={isMobile}
               sorts={sorts}
@@ -1055,6 +1094,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
                 V1LocationType.RUN,
                 [V1LocationType.VALIDATIONS, V1LocationType.TRAINING, V1LocationType.CUSTOMMETRIC],
                 V1LocationType.RUNHYPERPARAMETERS,
+                V1LocationType.RUNMETADATA,
               ]}
               onVisibleColumnChange={handleColumnsOrderChange}
             />
@@ -1121,7 +1161,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
             initialWidth={comparisonViewTableWidth}
             open={settings.compare}
             projectId={projectId}
-            selectedRuns={loadedSelectedRuns}
+            runSelection={settings.selection}
             onWidthChange={handleCompareWidthChange}>
             <DataGrid<FlatRun, FlatRunAction>
               columns={columns}

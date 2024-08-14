@@ -14,6 +14,7 @@ const locations = [
   V1LocationType.EXPERIMENT,
   [V1LocationType.VALIDATIONS, V1LocationType.TRAINING, V1LocationType.CUSTOMMETRIC],
   V1LocationType.HYPERPARAMETERS,
+  V1LocationType.RUNMETADATA,
 ];
 
 const PINNED_COLUMNS_COUNT = 0;
@@ -95,7 +96,9 @@ describe('ColumnPickerMenu', () => {
       const displayName = column.displayName?.length ? column.displayName : column.column;
       expect(await screen.findByText(displayName)).toBeInTheDocument();
     };
-    for (const tab of Array.from(tabs)) {
+
+    const availableTabs = Array.from(tabs).filter((tab) => tab !== 'Unspecified');
+    for (const tab of availableTabs) {
       await testTab(tab);
     }
   });

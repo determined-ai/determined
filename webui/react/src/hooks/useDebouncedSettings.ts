@@ -1,7 +1,7 @@
 import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import * as t from 'io-ts';
 import { debounce, isEqual } from 'lodash';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useLayoutEffect, useMemo, useState } from 'react';
 
 import userSettings from 'stores/userSettings';
 import { eagerSubscribe } from 'utils/observable';
@@ -31,7 +31,7 @@ export function useDebouncedSettings<T extends t.HasProps | t.ExactC<t.HasProps>
   const settingsObs = useMemo(() => userSettings.get(type, path), [type, path]);
   const [localState, updateLocalState] = useState<Loadable<T | null>>(NotLoaded);
 
-  useEffect(() => {
+  useLayoutEffect(() => {
     return eagerSubscribe(settingsObs, (curSettings, prevSettings) => {
       if (!prevSettings?.isLoaded) {
         curSettings.forEach((s) => {

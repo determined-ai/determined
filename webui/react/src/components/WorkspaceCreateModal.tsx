@@ -15,7 +15,6 @@ import { useAsync } from 'hooks/useAsync';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import {
-  getKubernetesResourceManagers,
   getKubernetesResourceQuotas,
   listWorkspaceNamespaceBindings,
   patchWorkspace,
@@ -26,6 +25,7 @@ import {
   V1WorkspaceNamespaceBinding,
   V1WorkspaceNamespaceMeta,
 } from 'services/api-ts-sdk';
+import clusterStore from 'stores/cluster';
 import determinedStore, { BrandingType } from 'stores/determinedInfo';
 import workspaceStore from 'stores/workspaces';
 import { Workspace } from 'types';
@@ -56,20 +56,13 @@ interface Props {
 
 const CodeEditor = React.lazy(() => import('hew/CodeEditor'));
 
-const isNonK8RMError = (e: unknown): boolean => {
-  return e instanceof DetError && e.sourceErr instanceof Response && e.sourceErr['status'] === 404;
-};
-
-const isNotAuthorizedErr = (e: unknown): boolean => {
-  return e instanceof DetError && e.sourceErr instanceof Response && e.sourceErr['status'] === 403;
-};
-
 const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }: Props = {}) => {
   const idPrefix = useId();
   const {
     canModifyWorkspaceAgentUserGroup,
     canModifyWorkspaceCheckpointStorage,
     canSetWorkspaceNamespaceBindings,
+    canSetResourceQuotas,
   } = usePermissions();
   const info = useObservable(determinedStore.info);
   const [form] = Form.useForm<FormInputs>();
@@ -77,26 +70,11 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
   const useAgentGroup = Form.useWatch('useAgentGroup', form);
   const useCheckpointStorage = Form.useWatch('useCheckpointStorage', form);
   const watchBindings = Form.useWatch('bindings', form);
-  const resourceManagers = useAsync(async (canceller) => {
-    try {
-      const response = await getKubernetesResourceManagers(undefined, { signal: canceller.signal });
-      return response.names;
-    } catch (e) {
-      if (!isNotAuthorizedErr(e)) {
-        handleError(e, {
-          level: ErrorLevel.Error,
-          publicMessage: 'Failed to fetch Resource Managers.',
-          silent: false,
-          type: ErrorType.Server,
-        });
-      }
-      return NotLoaded;
-    }
-  }, []);
-
+  const loadableResourceManagers = useObservable(clusterStore.kubernetesResourceManagers);
+  const resourceManagers = Loadable.getOrElse([], loadableResourceManagers);
   const namespaceBindingsList = useAsync(
     async (canceller) => {
-      if (workspaceId === undefined) {
+      if (workspaceId === undefined || resourceManagers.length === 0) {
         return NotLoaded;
       }
       try {
@@ -106,23 +84,20 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
         );
         return clusterNamespacePairs.namespaceBindings;
       } catch (e) {
-        if (!isNonK8RMError(e)) {
-          handleError(e, {
-            level: ErrorLevel.Error,
-            publicMessage: 'Failed to fetch list of workspace namespace bindings.',
-            silent: false,
-            type: ErrorType.Server,
-          });
-        }
+        handleError(e, {
+          level: ErrorLevel.Error,
+          publicMessage: 'Failed to fetch list of workspace namespace bindings.',
+          silent: false,
+          type: ErrorType.Server,
+        });
         return NotLoaded;
       }
     },
-    [workspaceId],
+    [resourceManagers, workspaceId],
   );
-
   const resourceQuotasList = useAsync(
     async (canceller) => {
-      if (workspaceId === undefined) {
+      if (workspaceId === undefined || resourceManagers.length === 0) {
         return NotLoaded;
       }
       try {
@@ -132,18 +107,16 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
         );
         return resp.resourceQuotas;
       } catch (e) {
-        if (!isNonK8RMError(e)) {
-          handleError(e, {
-            level: ErrorLevel.Error,
-            publicMessage: 'Failed to fetch kubernetes resource quotas for the workspace.',
-            silent: false,
-            type: ErrorType.Server,
-          });
-        }
+        handleError(e, {
+          level: ErrorLevel.Error,
+          publicMessage: 'Failed to fetch kubernetes resource quotas for the workspace.',
+          silent: false,
+          type: ErrorType.Server,
+        });
         return NotLoaded;
       }
     },
-    [workspaceId],
+    [resourceManagers, workspaceId],
   );
 
   const initFields = useCallback(
@@ -185,19 +158,13 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
     initFields(workspace || undefined);
   }, [workspace, initFields]);
 
-  const [canModifyAUG, canModifyCPS, canModifyBindings] = useMemo(() => {
+  const [canModifyAUG, canModifyCPS] = useMemo(() => {
     const workspace = workspaceId ? { id: workspaceId } : undefined;
     return [
       canModifyWorkspaceAgentUserGroup({ workspace }),
       canModifyWorkspaceCheckpointStorage({ workspace }),
-      canSetWorkspaceNamespaceBindings({ workspace }),
     ];
-  }, [
-    canModifyWorkspaceAgentUserGroup,
-    canModifyWorkspaceCheckpointStorage,
-    canSetWorkspaceNamespaceBindings,
-    workspaceId,
-  ]);
+  }, [canModifyWorkspaceAgentUserGroup, canModifyWorkspaceCheckpointStorage, workspaceId]);
 
   const modalContent = useMemo(() => {
     if (workspaceId && loadableWorkspace === NotLoaded) return <Spinner spinning />;
@@ -220,7 +187,7 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
           ]}>
           <Input maxLength={80} />
         </Form.Item>
-        {canModifyBindings && Loadable.getOrElse([], resourceManagers).length > 0 && (
+        {canSetWorkspaceNamespaceBindings && resourceManagers.length > 0 && (
           <>
             <Divider />
             Namespace Bindings
@@ -229,9 +196,9 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
               default Namespace configured in the Master Config.
             </Body>
             <>
-              {Loadable.getOrElse([], resourceManagers).map((name) => (
+              {resourceManagers.map((name) => (
                 <Fragment key={name}>
-                  <Form.Item label={name} name={['bindings', name, 'namespace']}>
+                  <Form.Item label={`Cluster Name: ${name}`} name={['bindings', name, 'namespace']}>
                     <Input
                       disabled={watchBindings?.[name]?.['autoCreateNamespace'] ?? false}
                       maxLength={63}
@@ -247,21 +214,23 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
                           onChange={() => form.setFieldValue(['resourceQuotas', name], undefined)}
                         />
                       </Form.Item>
-                      <Form.Item
-                        label="Resource Quota"
-                        name={['resourceQuotas', name]}
-                        rules={[
-                          {
-                            message: 'Resource Quota has to be greater or equal to 0',
-                            min: 0,
-                            type: 'number',
-                          },
-                        ]}>
-                        <InputNumber
-                          disabled={!(watchBindings?.[name]?.['autoCreateNamespace'] ?? false)}
-                          min={0}
-                        />
-                      </Form.Item>
+                      {canSetResourceQuotas && (
+                        <Form.Item
+                          label="Resource Quota"
+                          name={['resourceQuotas', name]}
+                          rules={[
+                            {
+                              message: 'Resource Quota has to be greater or equal to 0',
+                              min: 0,
+                              type: 'number',
+                            },
+                          ]}>
+                          <InputNumber
+                            disabled={!(watchBindings?.[name]?.['autoCreateNamespace'] ?? false)}
+                            min={0}
+                          />
+                        </Form.Item>
+                      )}
                     </>
                   )}
                 </Fragment>
@@ -373,8 +342,7 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
     loadableWorkspace,
     form,
     idPrefix,
-    info.branding,
-    canModifyBindings,
+    canSetWorkspaceNamespaceBindings,
     resourceManagers,
     canModifyAUG,
     useAgentUser,
@@ -382,6 +350,8 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
     canModifyCPS,
     useCheckpointStorage,
     watchBindings,
+    info.branding,
+    canSetResourceQuotas,
   ]);
 
   const handleSubmit = useCallback(async () => {
@@ -461,10 +431,7 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
         }
 
         if (values.resourceQuotas) {
-          resourceQuotaBody['clusterQuotaPairs'] = pick(
-            values.resourceQuotas,
-            resourceManagers.getOrElse([]),
-          );
+          resourceQuotaBody['clusterQuotaPairs'] = pick(values.resourceQuotas, resourceManagers);
           await setResourceQuotas(resourceQuotaBody);
         }
         form.resetFields();

@@ -2,7 +2,9 @@ import Spinner from 'hew/Spinner';
 import { Loadable } from 'hew/utils/loadable';
 import React, { useCallback, useMemo } from 'react';
 
+import Metadata from 'components/Metadata';
 import { terminalRunStates } from 'constants/states';
+import useFeature from 'hooks/useFeature';
 import useMetricNames from 'hooks/useMetricNames';
 import usePermissions from 'hooks/usePermissions';
 import { useSettings } from 'hooks/useSettings';
@@ -10,6 +12,7 @@ import TrialInfoBox from 'pages/TrialDetails/TrialInfoBox';
 import { ExperimentBase, Metric, MetricType, RunState, TrialDetails } from 'types';
 import handleError, { ErrorType } from 'utils/error';
 import { metricKeyToMetric, metricToKey } from 'utils/metric';
+import { capitalize } from 'utils/string';
 
 import TrialChart from './TrialChart';
 import { Settings, settingsConfigForExperiment } from './TrialDetailsOverview.settings';
@@ -26,6 +29,8 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
   const { settings, updateSettings } = useSettings<Settings>(
     Object.assign(settingsConfig, { storagePath }),
   );
+  const f_flat_runs = useFeature().isOn('flat_runs');
+  const entityCopy = f_flat_runs ? 'search' : 'experiment';
 
   const showExperimentArtifacts = usePermissions().canViewExperimentArtifacts({
     workspace: { id: experiment.workspaceId },
@@ -34,12 +39,12 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
   const handleMetricNamesError = useCallback(
     (e: unknown) => {
       handleError(e, {
-        publicMessage: `Failed to load metric names for experiment ${experiment.id}.`,
-        publicSubject: 'Experiment metric name stream failed.',
+        publicMessage: `Failed to load metric names for ${entityCopy} ${experiment.id}.`,
+        publicSubject: `${capitalize(entityCopy)} metric name stream failed.`,
         type: ErrorType.Api,
       });
     },
-    [experiment.id],
+    [entityCopy, experiment.id],
   );
 
   const trialNonTerminal = !terminalRunStates.has(experiment.state ?? RunState.Error);
@@ -106,6 +111,7 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
           ) : (
             <Spinner spinning />
           )}
+          <Metadata trial={trial} />
         </>
       ) : null}
     </>

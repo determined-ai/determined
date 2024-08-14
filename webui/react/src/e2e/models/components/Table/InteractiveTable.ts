@@ -1,6 +1,7 @@
 export { HeadRow, Row } from 'e2e/models/common/ant/Table';
+import { NamedComponent, NamedComponentArgs } from 'playwright-page-model-base/BaseComponent';
+
 import { HeadRow, Row, Table } from 'e2e/models/common/ant/Table';
-import { NamedComponent, NamedComponentArgs } from 'e2e/models/common/base/BaseComponent';
 import { SkeletonTable } from 'e2e/models/components/Table/SkeletonTable';
 
 type RowClass<RowType> = new (args: NamedComponentArgs) => RowType;

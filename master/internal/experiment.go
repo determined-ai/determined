@@ -760,9 +760,12 @@ func (e *internalExperiment) handleContinueExperiment(reqID model.RequestID) (*i
 func (e *internalExperiment) processOperations(
 	ops []searcher.Operation, err error,
 ) {
-	if _, ok := model.StoppingStates[e.State]; ok {
+	// Only continue for experiments in stopping states if the searcher operations are all
+	// type Shutdown failures.
+	if _, ok := model.StoppingStates[e.State]; ok && !allSearcherShutdowns(ops) {
 		return
 	}
+
 	if err != nil {
 		e.syslog.Error(err)
 		e.updateState(model.StateWithReason{
@@ -832,7 +835,6 @@ func (e *internalExperiment) processOperations(
 			if err := e.searcher.SetCustomSearcherProgress(op.Progress); err != nil {
 				e.syslog.WithError(err).Error("failed to set searcher progress")
 			}
-
 		case searcher.Close:
 			state := e.TrialSearcherState[op.RequestID]
 			state.Closed = true
@@ -1134,4 +1136,13 @@ func (e *internalExperiment) setRP(resourcePool string) error {
 	_ = g.Wait() // Errors handled in g.Go.
 
 	return nil
+}
+
+func allSearcherShutdowns(ops []searcher.Operation) bool {
+	for _, operation := range ops {
+		if _, ok := operation.(searcher.Shutdown); !ok {
+			return false
+		}
+	}
+	return true
 }

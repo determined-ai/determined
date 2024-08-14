@@ -57,20 +57,6 @@ export const METRIC_DATA: RunMetricData = {
     },
   ],
   scale: 'linear',
-  selectedMetrics: [
-    {
-      group: 'training',
-      name: 'loss',
-    },
-    {
-      group: 'validation',
-      name: 'accuracy',
-    },
-    {
-      group: 'validation',
-      name: 'validation_loss',
-    },
-  ],
   setScale: (): Scale => {
     return Scale.Linear;
   },
@@ -263,11 +249,15 @@ export const ExperimentComparisonViewWithMocks: React.FC<Props> = ({
   return (
     <ComparisonView
       colorMap={colorMap}
+      experimentSelection={
+        empty
+          ? { selections: [], type: 'ONLY_IN' }
+          : { selections: SELECTED_EXPERIMENTS.map((exp) => exp.experiment.id), type: 'ONLY_IN' }
+      }
       fixedColumnsCount={2}
       initialWidth={200}
       open={open}
       projectId={1}
-      selectedExperiments={empty ? [] : SELECTED_EXPERIMENTS}
       onWidthChange={onWidthChange}>
       {children}
     </ComparisonView>
@@ -288,7 +278,11 @@ export const RunComparisonViewWithMocks: React.FC<Props> = ({
       initialWidth={200}
       open={open}
       projectId={1}
-      selectedRuns={empty ? [] : SELECTED_RUNS}
+      runSelection={
+        empty
+          ? { selections: [], type: 'ONLY_IN' }
+          : { selections: SELECTED_RUNS.map((run) => run.id), type: 'ONLY_IN' }
+      }
       onWidthChange={onWidthChange}>
       {children}
     </ComparisonView>

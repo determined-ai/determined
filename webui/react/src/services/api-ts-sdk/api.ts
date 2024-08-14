@@ -2047,7 +2047,7 @@ export interface V1ClusterMessage {
     createdTime?: Date | DateString;
 }
 /**
- * ColumnType indicates the type of data under the column - COLUMN_TYPE_UNSPECIFIED: data type is unknown/mixed  - COLUMN_TYPE_TEXT: data type is textual  - COLUMN_TYPE_NUMBER: data type is numeric  - COLUMN_TYPE_DATE: data type is a date
+ * ColumnType indicates the type of data under the column - COLUMN_TYPE_UNSPECIFIED: data type is unknown/mixed  - COLUMN_TYPE_TEXT: data type is textual  - COLUMN_TYPE_NUMBER: data type is numeric  - COLUMN_TYPE_DATE: data type is a date  - COLUMN_TYPE_ARRAY: data type is an array
  * @export
  * @enum {string}
  */
@@ -2056,6 +2056,7 @@ export const V1ColumnType = {
     TEXT: 'COLUMN_TYPE_TEXT',
     NUMBER: 'COLUMN_TYPE_NUMBER',
     DATE: 'COLUMN_TYPE_DATE',
+    ARRAY: 'COLUMN_TYPE_ARRAY',
 } as const
 export type V1ColumnType = ValueOf<typeof V1ColumnType>
 /**
@@ -3501,10 +3502,10 @@ export interface V1FlatRun {
     searcherMetricValue?: number;
     /**
      * The id of external run
-     * @type {number}
+     * @type {string}
      * @memberof V1FlatRun
      */
-    externalRunId?: number;
+    externalRunId?: string;
     /**
      * Trial hyperparameters.
      * @type {any}
@@ -4316,6 +4317,12 @@ export interface V1GetMasterResponse {
      * @memberof V1GetMasterResponse
      */
     clusterMessage?: V1ClusterMessage;
+    /**
+     * Whether the cluster has a user-submitted custom logo.
+     * @type {boolean}
+     * @memberof V1GetMasterResponse
+     */
+    hasCustomLogo: boolean;
 }
 /**
  * Response to GetMeRequest.
@@ -9449,12 +9456,6 @@ export interface V1ResourcePool {
      * @memberof V1ResourcePool
      */
     stats?: V1QueueStats;
-    /**
-     * Deprecated, use cluster_name instead.
-     * @type {string}
-     * @memberof V1ResourcePool
-     */
-    resourceManagerName?: string;
     /**
      * Resource manager's metadata.
      * @type {{ [key: string]: string; }}
@@ -20299,7 +20300,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @throws {RequiredError}
          */
         getKubernetesResourceManagers(options: any = {}): FetchArgs {
-            const localVarPath = `/api/v1/k8-resource-managers`;
+            const localVarPath = `/api/v1/k8s-resource-managers`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
@@ -35233,7 +35234,7 @@ export const WorkspacesApiFetchParamCreator = function (configuration?: Configur
             if (id === null || id === undefined) {
                 throw new RequiredError('id','Required parameter id was null or undefined when calling getKubernetesResourceQuotas.');
             }
-            const localVarPath = `/api/v1/workspaces/{id}/get-k8-resource-quotas`
+            const localVarPath = `/api/v1/workspaces/{id}/get-k8s-resource-quotas`
                 .replace(`{${"id"}}`, encodeURIComponent(String(id)));
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };

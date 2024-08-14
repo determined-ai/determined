@@ -509,11 +509,11 @@ func (a *apiServer) deleteExperiments(exps []*model.Experiment, userModel *model
 				JobID: exp.JobID,
 			})
 			if err != nil {
-				log.WithError(err).Errorf("requesting cleanup of resource mananger resources")
+				log.WithError(err).Errorf("requesting cleanup of resource manager resources")
 				return err
 			}
 			if err = <-resp.Err; err != nil {
-				log.WithError(err).Errorf("cleaning up resource mananger resources")
+				log.WithError(err).Errorf("cleaning up resource manager resources")
 				return err
 			}
 			return nil
@@ -1729,7 +1729,7 @@ func (a *apiServer) CreateExperiment(
 func (a *apiServer) PutExperimentRetainLogs(
 	ctx context.Context, req *apiv1.PutExperimentRetainLogsRequest,
 ) (*apiv1.PutExperimentRetainLogsResponse, error) {
-	results, err := experiment.BulkUpdateLogRentention(
+	results, err := experiment.BulkUpdateLogRetention(
 		ctx,
 		a.m.db,
 		experiment.GlobalProjectID,
@@ -1751,7 +1751,7 @@ func (a *apiServer) PutExperimentRetainLogs(
 func (a *apiServer) PutExperimentsRetainLogs(
 	ctx context.Context, req *apiv1.PutExperimentsRetainLogsRequest,
 ) (*apiv1.PutExperimentsRetainLogsResponse, error) {
-	results, err := experiment.BulkUpdateLogRentention(
+	results, err := experiment.BulkUpdateLogRetention(
 		ctx,
 		a.m.db,
 		req.ProjectId,

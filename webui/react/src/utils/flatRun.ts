@@ -1,3 +1,4 @@
+import { FilterFormSetWithoutId, Operator } from 'components/FilterForm/components/type';
 import {
   deletableRunStates,
   killableRunStates,
@@ -5,7 +6,9 @@ import {
   terminalRunStates,
 } from 'constants/states';
 import { PermissionsHook } from 'hooks/usePermissions';
-import { FlatRun, FlatRunAction, RunState } from 'types';
+import { FlatRun, FlatRunAction, RunState, SelectionType } from 'types';
+
+import { combine } from './filterFormSet';
 
 type FlatRunChecker = (flatRun: Readonly<FlatRun>) => boolean;
 
@@ -73,4 +76,43 @@ export const getActionsForFlatRunsUnion = (
   return targets.filter((action) =>
     actionsForRuns.some((runActions) => runActions.includes(action)),
   );
+};
+
+const idToFilter = (operator: Operator, id: number) =>
+  ({
+    columnName: 'id',
+    kind: 'field',
+    location: 'LOCATION_TYPE_RUN',
+    operator,
+    type: 'COLUMN_TYPE_NUMBER',
+    value: id,
+  }) as const;
+
+export const getIdsFilter = (
+  filterFormSet: FilterFormSetWithoutId,
+  selection: SelectionType,
+): FilterFormSetWithoutId => {
+  const filterGroup: FilterFormSetWithoutId['filterGroup'] =
+    selection.type === 'ALL_EXCEPT'
+      ? combine(filterFormSet.filterGroup, 'and', {
+          children: [
+            {
+              children: selection.exclusions.map(idToFilter.bind(this, '!=')),
+              conjunction: 'and',
+              kind: 'group',
+            },
+          ],
+          conjunction: 'and',
+          kind: 'group',
+        })
+      : {
+          children: selection.selections.map(idToFilter.bind(this, '=')),
+          conjunction: 'or',
+          kind: 'group',
+        };
+
+  return {
+    ...filterFormSet,
+    filterGroup,
+  };
 };

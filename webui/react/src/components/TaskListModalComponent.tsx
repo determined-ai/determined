@@ -4,14 +4,13 @@ import React from 'react';
 
 import Grid from 'components/Grid';
 import Link from 'components/Link';
-import { ValueOf } from 'types';
 
 import css from './TaskListModalComponent.module.scss';
 
 export interface TensorBoardSource {
   id: number;
   path: string;
-  type: TensorBoardSourceType;
+  type: string;
 }
 
 export interface SourceInfo {
@@ -19,13 +18,6 @@ export interface SourceInfo {
   plural: string;
   sources: TensorBoardSource[];
 }
-
-const TensorBoardSourceType = {
-  Experiment: 'Experiment',
-  Trial: 'Trial',
-} as const;
-
-type TensorBoardSourceType = ValueOf<typeof TensorBoardSourceType>;
 
 interface Props {
   title: string;

@@ -111,8 +111,8 @@ test.describe('User Management', () => {
           await expect(page).toHaveURL(/login/);
           await auth.login({
             expectedURL: userManagementPage.url,
-            password: newAdmin.password,
-            username: newAdmin.user?.username,
+            password: newAdmin.request.password,
+            username: newAdmin.response.user?.username,
           });
           testUser = await user.changeStatusUser(testUser, true);
           saveTestUser(testUser, testUsers);

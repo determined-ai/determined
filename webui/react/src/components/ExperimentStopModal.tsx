@@ -3,9 +3,11 @@ import Checkbox, { CheckboxChangeEvent } from 'hew/Checkbox';
 import { Modal } from 'hew/Modal';
 import React, { useState } from 'react';
 
+import useFeature from 'hooks/useFeature';
 import { cancelExperiment, killExperiment } from 'services/api';
 import { ExperimentAction, ValueOf } from 'types';
 import handleError, { ErrorLevel, ErrorType } from 'utils/error';
+import { capitalize } from 'utils/string';
 
 export const ActionType = {
   Cancel: ExperimentAction.Cancel,
@@ -14,7 +16,6 @@ export const ActionType = {
 
 export type AvalableActions = ValueOf<typeof ActionType>;
 
-export const BUTTON_TEXT = 'Stop Experiment';
 export const CHECKBOX_TEXT = 'Save checkpoint before stopping';
 
 interface Props {
@@ -24,6 +25,9 @@ interface Props {
 
 const ExperimentStopModalComponent: React.FC<Props> = ({ experimentId, onClose }: Props) => {
   const [type, setType] = useState<AvalableActions>(ActionType.Cancel);
+  const f_flat_runs = useFeature().isOn('flat_runs');
+
+  const actionCopy = f_flat_runs ? 'stop search' : 'stop experiment';
 
   const handleCheckBoxChange = (event: CheckboxChangeEvent) => {
     setType(event.target.checked ? ActionType.Cancel : ActionType.Kill);
@@ -40,7 +44,7 @@ const ExperimentStopModalComponent: React.FC<Props> = ({ experimentId, onClose }
       handleError(e, {
         level: ErrorLevel.Error,
         publicMessage: 'Please try again later.',
-        publicSubject: 'Unable to stop experiment.',
+        publicSubject: `Unable to ${actionCopy}.`,
         silent: false,
         type: ErrorType.Server,
       });
@@ -53,11 +57,13 @@ const ExperimentStopModalComponent: React.FC<Props> = ({ experimentId, onClose }
       submit={{
         handleError,
         handler: handleSubmit,
-        text: BUTTON_TEXT,
+        text: capitalize(actionCopy),
       }}
       title="Confirm Stop"
       onClose={onClose}>
-      <div>Are you sure you want to stop experiment {experimentId}?</div>
+      <div>
+        Are you sure you want to {actionCopy} {experimentId}?
+      </div>
       <Checkbox checked={type === ActionType.Cancel} onChange={handleCheckBoxChange}>
         {CHECKBOX_TEXT}
       </Checkbox>

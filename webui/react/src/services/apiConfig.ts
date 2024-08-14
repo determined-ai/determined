@@ -920,6 +920,26 @@ export const getExperimentCheckpoints: DetApi<
     ),
 };
 
+export const getTrialCheckpoints: DetApi<
+  Service.getExperimentCheckpointsParams,
+  Api.V1GetTrialCheckpointsResponse,
+  Type.CheckpointPagination
+> = {
+  name: 'getTrialCheckpoints',
+  postProcess: (response) => decoder.decodeCheckpoints(response),
+  request: (params, options) =>
+    detApi.Experiments.getTrialCheckpoints(
+      params.id,
+      params.sortBy,
+      undefined,
+      params.orderBy,
+      params.offset,
+      params.limit,
+      params.states,
+      options,
+    ),
+};
+
 export const getExpValidationHistory: DetApi<
   SingleEntityParams,
   Api.V1GetExperimentValidationHistoryResponse,
@@ -1843,6 +1863,16 @@ export const getProjectNumericMetricsRange: DetApi<
   name: 'getProjectNumericMetricsRange',
   postProcess: (response) => response.ranges || [],
   request: (params) => detApi.Internal.getProjectNumericMetricsRange(params.id),
+};
+
+export const getMetadataValues: DetApi<
+  Service.GetMetadataValuesParams,
+  Api.V1GetMetadataValuesResponse,
+  string[]
+> = {
+  name: 'getMetadataValues',
+  postProcess: (response) => response.values ?? [],
+  request: (params) => detApi.Internal.getMetadataValues(params.projectId, params.key),
 };
 
 /* Tasks */

@@ -69,6 +69,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
   const config = useMemo(() => configForWorkspace(id), [id]);
   const { settings, updateSettings } = useSettings<WorkspaceDetailsSettings>(config);
   const streamingUpdatesOn = useFeature().isOn('streaming_updates');
+  const f_flat_runs = useFeature().isOn('flat_runs');
 
   const loadableProjects: Loadable<List<Project>> = useObservable(
     projectStore.getProjectsByWorkspace(id),
@@ -269,7 +270,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
           record.lastExperimentStartedAt
             ? relativeTimeRenderer(new Date(record.lastExperimentStartedAt))
             : null,
-        title: 'Last Experiment Started',
+        title: `Last ${f_flat_runs ? 'Run' : 'Experiment'} Started`,
       },
       {
         dataIndex: 'userId',
@@ -302,7 +303,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
         title: '',
       },
     ] as ColumnDef<Project>[];
-  }, [saveProjectDescription, workspace?.archived, users, onEdit, onRemove]);
+  }, [f_flat_runs, workspace?.archived, onRemove, onEdit, saveProjectDescription, users]);
 
   const switchShowArchived = useCallback(
     (showArchived: boolean) => {

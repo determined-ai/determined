@@ -25,6 +25,52 @@ def test_master_restart_ok(restartable_managed_cluster: managed_cluster.ManagedC
     restartable_managed_cluster.restart_agent(wait_for_amnesia=False)
 
 
+@pytest.mark.managed_devcluster
+def test_queued_time_restore(restartable_managed_cluster: managed_cluster.ManagedCluster) -> None:
+    sess = api_utils.user_session()
+    exp_id = exp.create_experiment(
+        sess,
+        conf.fixtures_path("no_op/single.yaml"),
+        conf.fixtures_path("no_op"),
+        None,
+    )
+    start_time = time.time()
+    exp.wait_for_experiment_state(
+        sess, exp_id, bindings.experimentv1State.RUNNING, max_wait_secs=60
+    )
+
+    def check_queued_aggregates_for_today() -> None:
+        exps = bindings.get_GetExperiments(sess).experiments
+        assert len(exps) == 1
+        assert exps[0].id == exp_id
+        aggregates = [
+            res.aggregates for res in bindings.get_GetJobQueueStats(sess).results if res.aggregates
+        ]
+        assert len(aggregates) == 1, "only a single rp of aggregates should be present"
+        assert len(aggregates[0]) == 1, "one day of aggregates should be present"
+        day_stats = aggregates[0][0]
+        assert day_stats.periodStart == time.strftime("%Y-%m-%d"), "day stats should be for today"
+        seconds_since_start = time.time() - start_time
+        # CM-404: checkpoint GC adds to the aggregation.
+        checkpoint_gc_factor = 5
+        assert (
+            day_stats.seconds <= seconds_since_start * checkpoint_gc_factor
+        ), "queued seconds should be less than when test started"
+
+    check_queued_aggregates_for_today()
+
+    restartable_managed_cluster.kill_agent()
+    restartable_managed_cluster.kill_master()
+
+    restartable_managed_cluster.restart_master()
+    restartable_managed_cluster.restart_agent(True)
+
+    exp.wait_for_experiment_state(
+        sess, exp_id, bindings.experimentv1State.COMPLETED, max_wait_secs=60
+    )
+    check_queued_aggregates_for_today()
+
+
 @pytest.mark.e2e_k8s
 def test_master_restart_ok_k8s(k8s_managed_cluster: managed_cluster_k8s.ManagedK8sCluster) -> None:
     _test_master_restart_ok(k8s_managed_cluster)
@@ -351,8 +397,8 @@ def test_master_restart_stopping_container_gone(
     restartable_managed_cluster.restart_master()
     restartable_managed_cluster.restart_agent(wait_for_amnesia=False)
 
-    # TODO(RM-70) make this state be an error.
-    exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.CANCELED)
+    exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.ERROR)
+
     trials = exp.experiment_trials(sess, exp_id)
     assert len(trials) == 1
     assert trials[0].trial.state == bindings.trialv1State.ERROR

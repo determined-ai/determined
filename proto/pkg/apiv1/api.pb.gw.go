@@ -23481,7 +23481,7 @@ var (
 
 	pattern_Determined_GetResourcePools_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "v1", "resource-pools"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Determined_GetKubernetesResourceManagers_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "v1", "k8-resource-managers"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Determined_GetKubernetesResourceManagers_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2}, []string{"api", "v1", "k8s-resource-managers"}, "", runtime.AssumeColonVerbOpt(true)))
 
 	pattern_Determined_ResourceAllocationRaw_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 2, 3, 2, 4}, []string{"api", "v1", "resources", "allocation", "raw"}, "", runtime.AssumeColonVerbOpt(true)))
 
@@ -23519,7 +23519,7 @@ var (
 
 	pattern_Determined_DeleteWorkspaceNamespaceBindings_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"api", "v1", "workspaces", "workspace_id", "namespace-bindings"}, "", runtime.AssumeColonVerbOpt(true)))
 
-	pattern_Determined_GetKubernetesResourceQuotas_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"api", "v1", "workspaces", "id", "get-k8-resource-quotas"}, "", runtime.AssumeColonVerbOpt(true)))
+	pattern_Determined_GetKubernetesResourceQuotas_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3, 2, 4}, []string{"api", "v1", "workspaces", "id", "get-k8s-resource-quotas"}, "", runtime.AssumeColonVerbOpt(true)))
 
 	pattern_Determined_GetProject_0 = runtime.MustPattern(runtime.NewPattern(1, []int{2, 0, 2, 1, 2, 2, 1, 0, 4, 1, 5, 3}, []string{"api", "v1", "projects", "id"}, "", runtime.AssumeColonVerbOpt(true)))
 

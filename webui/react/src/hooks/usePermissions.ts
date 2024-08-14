@@ -91,7 +91,8 @@ export interface PermissionsHook {
   canModifyWorkspace: (arg0: WorkspacePermissionsArgs) => boolean;
   canModifyWorkspaceAgentUserGroup: (arg0: WorkspacePermissionsArgs) => boolean;
   canModifyWorkspaceCheckpointStorage: (arg0: WorkspacePermissionsArgs) => boolean;
-  canSetWorkspaceNamespaceBindings: (arg0: WorkspacePermissionsArgs) => boolean;
+  canSetWorkspaceNamespaceBindings: boolean;
+  canSetResourceQuotas: boolean;
   canModifyWorkspaceNSC(arg0: WorkspacePermissionsArgs): boolean;
   canMoveExperiment: (arg0: ExperimentPermissionsArgs) => boolean;
   canMoveFlatRun: (arg0: FlatRunPermissionsArgs) => boolean;
@@ -199,8 +200,8 @@ const usePermissions = (): PermissionsHook => {
         canMoveWorkspaceProjects(rbacOpts, args.project),
       canMoveProjectsTo: (args: MovePermissionsArgs) =>
         canMoveProjectsTo(rbacOpts, args.destination),
-      canSetWorkspaceNamespaceBindings: (args: WorkspacePermissionsArgs) =>
-        canSetWorkspaceNamespaceBindings(rbacOpts, args.workspace),
+      canSetResourceQuotas: canSetResourceQuotas(rbacOpts),
+      canSetWorkspaceNamespaceBindings: canSetWorkspaceNamespaceBindings(rbacOpts),
       canUpdateRoles: (args: WorkspacePermissionsArgs) => canUpdateRoles(rbacOpts, args.workspace),
       canViewExperimentArtifacts: (args: WorkspacePermissionsArgs) =>
         canViewExperimentArtifacts(rbacOpts, args.workspace),
@@ -606,7 +607,22 @@ const canSetWorkspaceNamespaceBindings = (
   const permitted = relevantPermissions(userAssignments, userRoles, workspace?.id);
   return (
     !!currentUser &&
-    (rbacEnabled ? permitted.has(V1PermissionType.MODIFYRPWORKSPACEBINDINGS) : currentUser.isAdmin)
+    (rbacEnabled
+      ? permitted.has(V1PermissionType.SETWORKSPACENAMESPACEBINDINGS)
+      : currentUser.isAdmin)
+  );
+};
+
+const canSetResourceQuotas = ({
+  currentUser,
+  rbacEnabled,
+  userAssignments,
+  userRoles,
+}: RbacOptsProps): boolean => {
+  const permitted = relevantPermissions(userAssignments, userRoles);
+  return (
+    !!currentUser &&
+    (rbacEnabled ? permitted.has(V1PermissionType.SETRESOURCEQUOTAS) : currentUser.isAdmin)
   );
 };
 

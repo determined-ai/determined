@@ -255,6 +255,11 @@ const NavigationSideBar: React.FC = () => {
 
   if (!showNavigation) return null;
 
+  const openWorkspaceCreateModal = () => {
+    clusterStore.fetchKubernetesResourceManagers();
+    WorkspaceCreateModal.open();
+  };
+
   return (
     <>
       <CSSTransition
@@ -308,7 +313,7 @@ const NavigationSideBar: React.FC = () => {
                       <Button
                         icon={<Icon name="add" size="tiny" title="Create workspace" />}
                         type="text"
-                        onClick={WorkspaceCreateModal.open}
+                        onClick={openWorkspaceCreateModal}
                       />
                     )}
                   </div>
@@ -353,7 +358,7 @@ const NavigationSideBar: React.FC = () => {
                           }
                           label="New Workspace"
                           tooltip={settings.navbarCollapsed}
-                          onClick={WorkspaceCreateModal.open}
+                          onClick={openWorkspaceCreateModal}
                         />
                       </li>
                     )}

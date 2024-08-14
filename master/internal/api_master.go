@@ -42,13 +42,13 @@ func (a *apiServer) GetMaster(
 	if license.IsEE() {
 		brand = "hpe"
 	}
-
 	masterResp := &apiv1.GetMasterResponse{
 		Version:               version.Version,
 		MasterId:              a.m.MasterID,
 		ClusterId:             a.m.ClusterID,
 		ClusterName:           a.m.config.ClusterName,
 		TelemetryEnabled:      a.m.config.Telemetry.Enabled && a.m.config.Telemetry.SegmentWebUIKey != "",
+		HasCustomLogo:         a.m.config.UICustomization.HasCustomLogo(),
 		ExternalLoginUri:      a.m.config.InternalConfig.ExternalSessions.LoginURI,
 		ExternalLogoutUri:     a.m.config.InternalConfig.ExternalSessions.LogoutURI,
 		Branding:              brand,
@@ -370,16 +370,5 @@ func (a *apiServer) GetKubernetesResourceManagers(
 	ctx context.Context,
 	req *apiv1.GetKubernetesResourceManagersRequest,
 ) (*apiv1.GetKubernetesResourceManagersResponse, error) {
-	u, _, err := grpcutil.GetUser(ctx)
-	if err != nil {
-		return nil, err
-	}
-	permErr, err := cluster.AuthZProvider.Get().CanGetMasterConfig(ctx, u)
-	if err != nil {
-		return nil, err
-	} else if permErr != nil {
-		return nil, permErr
-	}
-
 	return &apiv1.GetKubernetesResourceManagersResponse{ResourceManagers: a.m.config.GetKubernetesClusterNames()}, nil
 }

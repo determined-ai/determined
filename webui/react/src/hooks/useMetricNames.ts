@@ -1,6 +1,6 @@
 import { Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import _ from 'lodash';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 
 import { V1ExpMetricNamesResponse } from 'services/api-ts-sdk';
 import { detApi } from 'services/apiConfig';
@@ -8,31 +8,33 @@ import { readStream } from 'services/utils';
 import { Metric, XAxisDomain } from 'types';
 import { metricKeyToMetric, metricSorter, metricToKey } from 'utils/metric';
 
-import usePrevious from './usePrevious';
-
-// DO NOT pass a raw object for experimentIds param
-// That causes unwanted API call
 const useMetricNames = (
   experimentIds: number[],
   errorHandler?: (e: unknown) => void,
   quickPoll?: boolean,
 ): Loadable<Metric[]> => {
   const [metrics, setMetrics] = useState<Loadable<Metric[]>>(NotLoaded);
-  const previousExpIds = usePrevious(experimentIds, []);
+  // Do not replace with usePrevious here -- it restarts the stream erroneously;
+  const idsRef = useRef(experimentIds);
+  const curExperimentIds = useMemo(() => {
+    return _.isEqual(experimentIds, idsRef.current) ? idsRef.current : experimentIds;
+  }, [experimentIds]);
 
   useEffect(() => {
-    if (experimentIds.length === 0) {
+    const previousExpIds = idsRef.current;
+    if (curExperimentIds.length === 0) {
       setMetrics(Loaded([]));
       return;
     }
-    if (!_.isEqual(experimentIds, previousExpIds)) setMetrics(NotLoaded);
+    if (curExperimentIds !== previousExpIds) setMetrics(NotLoaded);
+
     const canceler = new AbortController();
 
     // We do not want to plot any x-axis metric values as y-axis data
     const xAxisMetrics = Object.values(XAxisDomain).map((v) => v.toLowerCase());
 
     readStream<V1ExpMetricNamesResponse>(
-      detApi.StreamingInternal.expMetricNames(experimentIds, quickPoll ? 5 : undefined, {
+      detApi.StreamingInternal.expMetricNames(curExperimentIds, quickPoll ? 5 : undefined, {
         signal: canceler.signal,
       }),
       (event: V1ExpMetricNamesResponse) => {
@@ -79,7 +81,10 @@ const useMetricNames = (
       errorHandler,
     );
     return () => canceler.abort();
-  }, [experimentIds, previousExpIds, errorHandler, quickPoll]);
+  }, [curExperimentIds, errorHandler, quickPoll]);
+  useEffect(() => {
+    idsRef.current = experimentIds;
+  });
 
   return metrics;
 };

@@ -1,5 +1,6 @@
+import { BaseReactFragment } from 'playwright-page-model-base/BaseReactFragment';
+
 import { Pagination } from 'e2e/models/common/ant/Pagination';
-import { BaseReactFragment } from 'e2e/models/common/base/BaseReactFragment';
 import { DataGrid, HeadRow, Row, RowArgs } from 'e2e/models/common/hew/DataGrid';
 import { Message } from 'e2e/models/common/hew/Message';
 import { ComparisonView } from 'e2e/models/components/ComparisonView';

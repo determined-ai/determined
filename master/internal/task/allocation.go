@@ -626,10 +626,14 @@ func (a *allocation) resourcesAllocated(msg *sproto.ResourcesAllocated) error {
 	}
 
 	now := time.Now().UTC()
+	taskStatStartTime := msg.JobSubmissionTime
+	if msg.JobSubmissionTime.IsZero() && a.req.Restore {
+		taskStatStartTime = a.req.RequestTime
+	}
 	err = db.RecordTaskStats(context.TODO(), &model.TaskStats{
 		AllocationID: msg.ID,
 		EventType:    "QUEUED",
-		StartTime:    &msg.JobSubmissionTime,
+		StartTime:    &taskStatStartTime,
 		EndTime:      &now,
 	})
 	if err != nil {

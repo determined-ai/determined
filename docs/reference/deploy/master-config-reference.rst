@@ -46,7 +46,7 @@ The size (in bytes) of ``/dev/shm`` for Determined task containers. Defaults to 
 ================
 
 The Docker network to use for the Determined task containers. If this is set to ``host``, `Docker
-host-mode networking <https://docs.docker.com/network/drivers/host/>`__ will be used instead.
+host-mode networking <https://docs.docker.com/engine/network/drivers/host/>`__ will be used instead.
 Defaults to ``bridge``.
 
 .. _master-config-reference-dtrain-network-interface:
@@ -89,12 +89,12 @@ configure different container images for NVIDIA GPU tasks using the ``cuda`` key
 Determined 0.17.6), CPU tasks using ``cpu`` key, and ROCm (AMD GPU) tasks using the ``rocm`` key.
 Default values:
 
--  ``determinedai/pytorch-ngc-dev:f20b027`` for NVIDIA GPUs and for CPUs.
+-  ``determinedai/pytorch-ngc-dev:5432424`` for NVIDIA GPUs and for CPUs.
 -  ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.26.4`` for ROCm.
 
 For TensorFlow users, we provide an image that must be referenced in the experiment configuration:
 
--  ``determinedai/tensorflow-ngc-dev:f20b027`` for NVIDIA GPUs and for CPUs.
+-  ``determinedai/tensorflow-ngc-dev:5432424`` for NVIDIA GPUs and for CPUs.
 
 ``environment_variables``
 =========================
@@ -217,6 +217,19 @@ warning is returned. The default value is ``true``.
 
 Optional. Specify a human-readable name for this cluster.
 
+**********************
+ ``ui_customization``
+**********************
+
+Optional. Applies only to the Determined Enterprise Edition. This section contains options to
+customize the UI.
+
+``logo_path``
+=============
+
+Specifies the path to a user-provided logo to be shown in the UI. Ensure the path is accessible and
+reachable by the master service. The logo file should be a valid image format, with SVG recommended.
+
 *************************
  ``tensorboard_timeout``
 *************************
@@ -251,7 +264,7 @@ specified under the primary resource_manager key here is considered the default.
 ================
 
 Optional for single resource manager configurations. Required for multiple resource manager
-(Multi-RM) configurations. Specifies the resource manager'sassociated cluster name. This references
+(Multi-RM) configurations. Specifies the resource manager's associated cluster name. This references
 the cluster on which a Determined deployment is running. Defaults to ``default`` if not specified.
 For Kubernetes installations with additional resource managers, ensure unique names for all resource
 managers in the cluster.
@@ -363,7 +376,7 @@ on using Determined with Kubernetes, see the :ref:`documentation <determined-on-
 ``namespace``
 -------------
 
-This field has been deprecated, use ``default_namespace`` instead.
+This field is no longer supported, use ``default_namespace`` instead.
 
 ``default_namespace``
 ---------------------
@@ -1221,7 +1234,8 @@ workloads that require proxying on remote clusters is under development.
 To define a single resource manager or designate the default resource manager, do not define it
 under ``additional_resource_manager``; instead, use the primary ``resource_manager`` key.
 
-Resource manager names must be unique among all defined resource managers.
+Resource managers' cluster names (``resource_manager.cluster_name``) must be unique among all
+defined resource managers.
 
 Any additional resource managers must have at least one resource pool assigned to them. These
 resource pool names must be defined and must be distinct among all resource pools across all
@@ -1380,8 +1394,8 @@ and read from the ``host_path``.
 ---------------
 
 (Advanced users only) Optional `propagation behavior
-<https://docs.docker.com/storage/bind-mounts/#configure-bind-propagation>`__ for replicas of the
-bind-mount. Defaults to ``rprivate``.
+<https://docs.docker.com/engine/storage/bind-mounts/#configure-bind-propagation>`__ for replicas of
+the bind-mount. Defaults to ``rprivate``.
 
 When an experiment finishes, the system will optionally delete some checkpoints to reclaim space.
 The ``save_experiment_best``, ``save_trial_best`` and ``save_trial_latest`` parameters specify which
@@ -1752,6 +1766,7 @@ used for :ref:`remote user <remote-users>` management.
           groups_attribute_name: "XYZ"
           display_name_attribute_name: "XYZ"
           always_redirect: true
+          exclude_groups_scope: false
 
 ``enabled``
 ===========
@@ -1828,6 +1843,13 @@ Specifies if this OIDC provider should be used for authentication, bypassing the
 sign-in page. This redirection persists unless the user explicitly signs out within the WebUI. If an
 SSO user attempts to use an expired session token, they are directly redirected to the SSO provider
 and returned to the requested page after authentication.
+
+``exclude_groups_scope``
+========================
+
+Specifies if the groups scope should be excluded for this OIDC provider. For most OIDC providers
+such as Okta, this should be false (or blank) if you'd like to provision group memberships. But for
+some providers such as Azure, that do not support groups scope, this should be set to true.
 
 **********
  ``saml``

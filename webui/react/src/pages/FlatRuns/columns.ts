@@ -241,6 +241,7 @@ export const getColumnDefs = ({
     tooltip: () => undefined,
     width: columnWidths.experimentName ?? defaultColumnWidths.experimentName ?? MIN_COLUMN_WIDTH,
   },
+  // TODO: should this change to search?
   externalExperimentId: {
     id: 'externalExperimentId',
     renderer: (record: FlatRun) => ({
@@ -287,9 +288,10 @@ export const getColumnDefs = ({
             : undefined,
         navigateOn: 'click',
         onClick: (e: CellClickedEventArgs) => {
-          if (record.experiment?.forkedFrom) {
+          const forkedFrom = record.experiment?.forkedFrom;
+          if (forkedFrom !== undefined) {
             handlePath(e as unknown as AnyMouseEvent, {
-              path: String(record.experiment.forkedFrom),
+              path: paths.experimentDetails(forkedFrom),
             });
           }
         },

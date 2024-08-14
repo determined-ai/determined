@@ -1,0 +1,1 @@
+ALTER TABLE runs_metadata_index ADD is_array_element boolean

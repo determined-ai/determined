@@ -10,6 +10,7 @@ import Section from 'components/Section';
 import TableBatch from 'components/Table/TableBatch';
 import useUI from 'components/ThemeProvider';
 import { terminalRunStates } from 'constants/states';
+import useFeature from 'hooks/useFeature';
 import TrialsComparisonModalComponent from 'pages/ExperimentDetails/TrialsComparisonModal';
 import { openOrCreateTensorBoard } from 'services/api';
 import { V1TrialsSnapshotResponse } from 'services/api-ts-sdk';
@@ -75,6 +76,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
   const [selectedRowKeys, setSelectedRowKeys] = useState<number[]>([]);
   const [hermesCreatedFilters, setHermesCreatedFilters] = useState<Hermes.Filters>({});
   const trialsComparisonModal = useModal(TrialsComparisonModalComponent);
+  const f_flat_runs = useFeature().isOn('flat_runs');
 
   const hyperparameters = useMemo(() => {
     return fullHParams.reduce(
@@ -342,10 +344,11 @@ const HpParallelCoordinates: React.FC<Props> = ({
           openCommandResponse(result as CommandResponse);
         }
       } catch (e) {
+        const entityName = f_flat_runs ? 'Runs' : 'Trials';
         const publicSubject =
           action === Action.OpenTensorBoard
-            ? 'Unable to View TensorBoard for Selected Trials'
-            : `Unable to ${action} Selected Trials`;
+            ? `Unable to View TensorBoard for Selected ${entityName}'`
+            : `Unable to ${action} Selected ${entityName}`;
         handleError(e, {
           level: ErrorLevel.Error,
           publicMessage: 'Please try again later.',
@@ -355,7 +358,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
         });
       }
     },
-    [sendBatchActions],
+    [f_flat_runs, sendBatchActions],
   );
 
   const handleTableRowSelect = useCallback(
@@ -380,7 +383,7 @@ const HpParallelCoordinates: React.FC<Props> = ({
     ) : (
       <div className={css.waiting}>
         <Alert
-          description="Please wait until the experiment is further along."
+          description={`Please wait until the ${f_flat_runs ? 'search' : 'experiment'} is further along.`}
           message="Not enough data points to plot."
         />
         <Spinner spinning />
