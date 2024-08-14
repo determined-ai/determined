@@ -1708,6 +1708,23 @@ jobs:
       - make-package
       - run: tools/scripts/retry.sh make -C master publish-dev
       - run: tools/scripts/retry.sh make -C agent publish-dev
+      - run:
+          name: Build and publish model_hub docker images
+          command: |
+            # Match on either "main", or any branch beginning with
+            # "release-". Note: because of Bash quoting rules, the start-of-line
+            # caret in our regex must be outside of the quotes.
+            if [[ ${CIRCLE_BRANCH} == "main" ]] || [[ ${CIRCLE_BRANCH} =~ ^"release-" ]]; then
+                # For main and release branches, we will tag and publish both the environment
+                # with the git hash as well as the version.  This will make that image available
+                # immediately for nightly tests.
+                make -C model_hub build-docker
+                tools/scripts/retry.sh make -C model_hub publish-docker
+            else
+                # Otherwise, only tag and publish the environment with the git hash.
+                make -C model_hub build-docker-dev
+                tools/scripts/retry.sh make -C model_hub publish-docker-dev
+            fi
       - run: mkdir /tmp/pkgs && cp -v */dist/*.{rpm,deb,tar.gz} /tmp/pkgs
       - store_artifacts:
           path: /tmp/pkgs
@@ -1738,6 +1755,23 @@ jobs:
       - make-package-ee
       - run: tools/scripts/retry.sh make -C master publish-dev-ee
       - run: tools/scripts/retry.sh make -C agent publish-dev-ee
+      - run:
+          name: Build and publish model_hub docker images
+          command: |
+            # Match on either "main", or any branch beginning with
+            # "release-". Note: because of Bash quoting rules, the start-of-line
+            # caret in our regex must be outside of the quotes.
+            if [[ ${CIRCLE_BRANCH} == "main" ]] || [[ ${CIRCLE_BRANCH} =~ ^"release-" ]]; then
+                # For main and release branches, we will tag and publish both the environment
+                # with the git hash as well as the version.  This will make that image available
+                # immediately for nightly tests.
+                make -C model_hub build-docker
+                tools/scripts/retry.sh make -C model_hub publish-docker
+            else
+                # Otherwise, only tag and publish the environment with the git hash.
+                make -C model_hub build-docker-dev
+                tools/scripts/retry.sh make -C model_hub publish-docker-dev
+            fi
       - run: mkdir /tmp/pkgs && cp -v */dist/*.{rpm,deb,tar.gz} /tmp/pkgs
 
   package-and-push-system-rc:
