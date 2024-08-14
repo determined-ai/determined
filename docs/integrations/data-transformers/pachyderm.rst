@@ -77,8 +77,8 @@ For example:
    export PACH_PROXY_HOST="your-proxy-host"
    export PACH_PROXY_PORT=8080
 
-After running your training script, go to the Determined WebUI and visit the experiment's **Overview** tab. Select the data
-hyperlink to view your Pachyderm repo.
+After running your training script, go to the Determined WebUI and visit the experiment's
+**Overview** tab. Select the data hyperlink to view your Pachyderm repo.
 
    .. image:: /assets/images/webui-data-link.png
       :alt: Determined trial run showing link to Pachyderm data repo
