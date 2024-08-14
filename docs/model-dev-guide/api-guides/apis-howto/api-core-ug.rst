@@ -191,9 +191,9 @@ script to report checkpoints.
  Step 3: Checkpointing
 ***********************
 
-Checkpointing periodically during training and reporting the checkpoints to the master gives us the
-ability to stop and restart training. In this section, we’ll modify our script for the purpose of
-checkpointing.
+Checkpointing periodically during training and reporting the :ref:`checkpoints <checkpoints>` to the
+master gives us the ability to stop and restart training. In this section, we’ll modify our script
+for the purpose of checkpointing.
 
 In this step, we’ll run our experiment using the ``model_def_checkpoints.py`` script and its
 accompanying ``checkpoints.yaml`` experiment configuration file.
