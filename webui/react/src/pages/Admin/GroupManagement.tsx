@@ -41,6 +41,7 @@ interface DropdownProps {
   fetchGroups: () => void;
   group: V1GroupSearchResult;
   availabeUsers: DetailedUser[];
+  onUpdate: () => void;
 }
 
 const MenuKey = {
@@ -59,6 +60,7 @@ const GroupActionDropdown = ({
   expanded,
   fetchGroups,
   fetchGroup,
+  onUpdate,
   group,
   availabeUsers,
 }: DropdownProps) => {
@@ -110,12 +112,16 @@ const GroupActionDropdown = ({
       </Dropdown>
       <AddUsersToGroupModal.Component group={group} users={availabeUsers} onClose={onFinishEdit} />
       <EditGroupModal.Component group={group} groupRoles={groupRoles} onClose={onFinishEdit} />
-      <DeleteGroupModal.Component group={group} onClose={fetchGroups} />
+      <DeleteGroupModal.Component group={group} onClose={onUpdate} />
     </div>
   );
 };
 
-const GroupManagement: React.FC = () => {
+interface Props {
+  onUpdate: () => void;
+}
+
+const GroupManagement: React.FC<Props> = ({ onUpdate }: Props) => {
   const { rbacEnabled } = useObservable(determinedStore.info);
   const [groups, setGroups] = useState<V1GroupSearchResult[]>([]);
   const [groupUsers, setGroupUsers] = useState<V1GroupDetails[]>([]);
@@ -251,6 +257,11 @@ const GroupManagement: React.FC = () => {
     [groupUsers, canModifyGroups, RemoveUserFromGroupModal],
   );
 
+  const handleUpdate = useCallback(() => {
+    fetchGroups();
+    onUpdate();
+  }, [fetchGroups, onUpdate]);
+
   const columns = useMemo(() => {
     const actionRenderer = (_: string, record: V1GroupSearchResult) => {
       const userGroup = groupUsers.find((gr) => gr.groupId === record.group.groupId);
@@ -267,6 +278,7 @@ const GroupManagement: React.FC = () => {
           fetchGroup={fetchGroup}
           fetchGroups={fetchGroups}
           group={record}
+          onUpdate={handleUpdate}
         />
       ) : null;
     };
@@ -303,7 +315,7 @@ const GroupManagement: React.FC = () => {
         width: DEFAULT_COLUMN_WIDTHS['action'],
       },
     ];
-  }, [canModifyGroups, expandedKeys, fetchGroup, fetchGroups, groupUsers, users]);
+  }, [canModifyGroups, expandedKeys, fetchGroup, fetchGroups, groupUsers, users, handleUpdate]);
 
   const table = useMemo(() => {
     return settings ? (
@@ -348,7 +360,7 @@ const GroupManagement: React.FC = () => {
         title="Groups">
         {canViewGroups && <div className={css.usersTable}>{table}</div>}
       </Section>
-      <CreateGroupModal.Component onClose={fetchGroups} />
+      <CreateGroupModal.Component onClose={handleUpdate} />
       {groupResult && (
         <RemoveUserFromGroupModal.Component
           fetchGroups={fetchGroups}

@@ -45,7 +45,7 @@ const SettingsContent: React.FC = () => {
   const getGroupTotal = useCallback(async () => {
     const response = await getGroups(
       {
-        limit: 1,
+        limit: 0,
         offset: 0,
       },
       { signal: canceler.current.signal },
@@ -65,6 +65,14 @@ const SettingsContent: React.FC = () => {
     [navigate],
   );
 
+  const handleUserCreate = () => {
+    userStore.fetchUsers();
+  };
+
+  const handleGroupsUpdate = useCallback(() => {
+    getGroupTotal();
+  }, [getGroupTotal]);
+
   const tabItems: PivotProps['items'] = useMemo(() => {
     const items: PivotProps['items'] = [];
 
@@ -73,7 +81,7 @@ const SettingsContent: React.FC = () => {
         _: () => null,
         Loaded: (users) => {
           items.push({
-            children: <UserManagement />,
+            children: <UserManagement onUserCreate={handleUserCreate} />,
             key: TAB_KEYS[TabType.UserManagement],
             label: `${TabType.UserManagement} (${users.length})`,
           });
@@ -83,14 +91,14 @@ const SettingsContent: React.FC = () => {
 
     if (rbacEnabled) {
       items.push({
-        children: <GroupManagement />,
+        children: <GroupManagement onUpdate={handleGroupsUpdate} />,
         key: TAB_KEYS[TabType.GroupManagement],
         label: `${TabType.GroupManagement} ${totalGroup !== undefined ? `(${totalGroup})` : ''}`,
       });
     }
 
     return items;
-  }, [canAdministrateUsers, rbacEnabled, totalGroup, loadableUsers]);
+  }, [canAdministrateUsers, rbacEnabled, totalGroup, loadableUsers, handleGroupsUpdate]);
 
   return (
     <Pivot
