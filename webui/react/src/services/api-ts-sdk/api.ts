@@ -12392,11 +12392,12 @@ export interface V1Webhook {
     mode: V1WebhookMode;
 }
 /**
- * Enum values for webhook mode.   - WEBHOOK_MODE_WORKSPACE: Webhook will be triggered by all experiment in the workspace  - WEBHOOK_MODE_SPECIFIC: Webhook will only be triggered by experiment with matching configuration in the same workspace as the web hook
+ * Enum values for webhook mode.   - WEBHOOK_MODE_UNSPECIFIED: Default value  - WEBHOOK_MODE_WORKSPACE: Webhook will be triggered by all experiment in the workspace  - WEBHOOK_MODE_SPECIFIC: Webhook will only be triggered by experiment with matching configuration in the same workspace as the web hook
  * @export
  * @enum {string}
  */
 export const V1WebhookMode = {
+    UNSPECIFIED: 'WEBHOOK_MODE_UNSPECIFIED',
     WORKSPACE: 'WEBHOOK_MODE_WORKSPACE',
     SPECIFIC: 'WEBHOOK_MODE_SPECIFIC',
 } as const

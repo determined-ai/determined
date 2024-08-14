@@ -86,10 +86,11 @@ func TestWebhooks(t *testing.T) {
 		err := AddWebhook(ctx, &testWebhookOne)
 		require.NoError(t, err, "failed to create webhook")
 		webhooks, err := GetWebhooks(ctx)
+		require.NoError(t, err, "unable to get webhooks")
 		webhookOneResponse := getWebhookByID(webhooks, testWebhookOne.ID)
-		require.Equal(t, webhookOneResponse.Name, "test-name")
-		require.Equal(t, *webhookOneResponse.WorkspaceID, workspaceID)
-		require.Equal(t, testWebhookOne.Mode, WebhookModeSpecific)
+		require.Equal(t, "test-name", webhookOneResponse.Name)
+		require.Equal(t, workspaceID, *webhookOneResponse.WorkspaceID)
+		require.Equal(t, WebhookModeSpecific, testWebhookOne.Mode)
 	})
 
 	t.Run("webhook creation with multiple triggers should work", func(t *testing.T) {

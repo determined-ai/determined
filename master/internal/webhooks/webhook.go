@@ -78,7 +78,7 @@ type WebhookID int
 // WebhookType is type for the WebhookType enum.
 type WebhookType string
 
-// WebhookType is type for the WebhookMode enum.
+// WebhookMode is mode for the WebhookMode enum.
 type WebhookMode string
 
 // Triggers is a slice of Trigger objects—primarily useful for its methods.
@@ -166,12 +166,14 @@ const (
 )
 
 const (
-	// WebhookTypeDefault represents the webhook will be triggered by all experiment in the workspace.
+	// WebhookModeWorkspace represents the webhook will be triggered by all experiment in the workspace.
 	WebhookModeWorkspace WebhookMode = "WORKSPACE"
-	// WebhookModeSpecific represents the webhook will only be triggered by experiment with matching configuration in the same workspace as the web hook
+	// WebhookModeSpecific represents the webhook will only be triggered by experiment with
+	// matching configuration in the same workspace as the web hook.
 	WebhookModeSpecific WebhookMode = "SPECIFIC"
 )
 
+// WebhookModeFromProto returns a WebhookMode from a proto.
 func WebhookModeFromProto(w webhookv1.WebhookMode) WebhookMode {
 	switch w {
 	case webhookv1.WebhookMode_WEBHOOK_MODE_SPECIFIC:
@@ -221,6 +223,7 @@ func (w WebhookType) Proto() webhookv1.WebhookType {
 	}
 }
 
+// Proto returns a proto from a WebhookMode.
 func (w WebhookMode) Proto() webhookv1.WebhookMode {
 	switch w {
 	case WebhookModeSpecific:

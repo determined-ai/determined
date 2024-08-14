@@ -17,10 +17,13 @@ enum WebhookType {
 
 // Enum values for webhook mode.
 enum WebhookMode {
+  // Default value
+  WEBHOOK_MODE_UNSPECIFIED = 0;
   // Webhook will be triggered by all experiment in the workspace
-  WEBHOOK_MODE_WORKSPACE = 0;
-  // Webhook will only be triggered by experiment with matching configuration in the same workspace as the web hook
-  WEBHOOK_MODE_SPECIFIC = 1;
+  WEBHOOK_MODE_WORKSPACE = 1;
+  // Webhook will only be triggered by experiment with matching configuration in
+  // the same workspace as the web hook
+  WEBHOOK_MODE_SPECIFIC = 2;
 }
 
 // Enum values for expected trigger types.
