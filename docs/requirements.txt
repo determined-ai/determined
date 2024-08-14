@@ -28,7 +28,7 @@ algoliasearch>=2.0,<3.0
 boto3>=1.24.4,<2.0
 
 # build requirements
-tensorflow==2.12.0; sys_platform != 'darwin' or platform_machine != 'arm64'
+tensorflow==2.12.1; sys_platform != 'darwin' or platform_machine != 'arm64'
 tensorflow-macos==2.11.0; sys_platform == 'darwin' and platform_machine == 'arm64'
 # Intel MAC only supports torch <= 2.2.2
 torch==2.2.2; sys_platform == 'darwin' and platform_machine == 'x86_64'
