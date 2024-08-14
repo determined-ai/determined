@@ -403,13 +403,20 @@ resource pool ``max_slots_per_pod``.
 ``slot_type``
 -------------
 
-Resource type used for compute tasks. Defaults to ``cuda``.
+Resource type used for compute tasks. Valid options are ``gpu``, ``cuda``, ``cpu``, or ``rocm``.
+Defaults to ``cuda``.
 
 ``slot_type: cuda``
 ^^^^^^^^^^^^^^^^^^^
 
    One NVIDIA GPU will be requested per compute slot. Prior to Determined 0.17.6, this option was
    called ``gpu``.
+
+``slot_type: rocm``
+^^^^^^^^^^^^^^^^^^^
+
+   One AMD GPU will be requested per compute slot. The ``rocm`` slot type is an experimental
+   feature.
 
 ``slot_type: cpu``
 ^^^^^^^^^^^^^^^^^^
