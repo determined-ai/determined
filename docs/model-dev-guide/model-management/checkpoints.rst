@@ -381,6 +381,56 @@ checkpoints.
               |                                      |     }
               |                                      | }
 
+*****************************************
+ Getting a List of Files in a Checkpoint
+*****************************************
+
+To quickly inspect the contents of a checkpoint directory without downloading large files, use the
+:ref:`Checkpoint.resources <python-sdk-checkpoint>` attribute. This provides a simple map of
+filenames to their sizes, allowing you to view what's inside a checkpoint without triggering a
+download.
+
+You can achieve this using the SDK, CLI, or API.
+
+Via the CLI
+===========
+
+The CLI provides a straightforward way to list the files in a checkpoint without downloading them:
+
+.. code:: bash
+
+   det experiment list-checkpoints <experiment_id> --include-resources
+
+Via the SDK
+===========
+
+You can also list the files within a checkpoint using the Determined SDK:
+
+.. code:: python
+
+   from determined.experimental import client
+
+   # Replace 'your_experiment_id' with the actual experiment ID
+   exp_id = your_experiment_id
+
+   checkpoints = client.get_experiment(exp_id).list_checkpoints()
+
+   for checkpoint in checkpoints:
+       print(f"Experiment ID: {exp_id}, Checkpoint UUID: {checkpoint.uuid}")
+
+       for filepath, size_in_bytes in checkpoint.resources.items():
+           print(f"Filepath: {filepath}, Size: {size_in_bytes} bytes")
+
+In this example, ``checkpoint.resources`` is a dictionary where the keys are file paths within the
+checkpoint and the values are the sizes of those files in bytes. This allows you to inspect the
+contents of the checkpoint without downloading the files.
+
+Via the REST API
+================
+
+Finally, you can also retrieve the list of files in a checkpoint via the REST API by calling the
+``GetExperimentCheckpoints`` endpoint.
+
 ************
  Next Steps
 ************
