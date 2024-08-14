@@ -33,7 +33,7 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v5
         with:
-          python-version: 3.8.16
+          python-version: 3.9.19
           cache: pip
           cache-dependency-path: |
             harness/setup.py
