@@ -291,9 +291,8 @@ def read_only_tasks(resources: Resources) -> LocustTasksWithMeta:
         "&trialIds=315&trialIds=316&trialIds=317&trialIds=318&trialIds=319&trialIds=320" +
         "&trialIds=321&trialIds=322&trialIds=323&trialIds=324&trialIds=325&trialIds=326" +
         "&trialIds=327&trialIds=328&trialIds=329&trialIds=330&maxDatapoints=1500" +
-        "&startBatches=0&metricType=METRIC_TYPE_UNSPECIFIED&metricIds=training.categorical_accuracy" +
-        "&metricIds=training.loss&metricIds=validation.val_categorical_accuracy" +
-        "&metricIds=validation.val_loss", test_name="compare runs"))
+        "&startBatches=0&metricType=METRIC_TYPE_TRAINING&metricIds=avg_metrics.c747a" +
+        "&metricIds=avg_metrics.f0", test_name="compare runs"))
     if resources.project_id is not None:
         tasks.append(LocustPostTaskWithMeta(f"/api/v1/runs", test_name="search flat runs",
                                             body={"projectId": resources.project_id}))
