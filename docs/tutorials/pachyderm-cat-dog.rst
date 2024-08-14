@@ -58,9 +58,9 @@ The following prerequisites are required:
  Get the Tutorial Files
 ************************
 
--  Before starting this tutorial, ensure you have copied the files from the `Github repository
-   <https://github.com/pachyderm/examples/tree/master/determined-pachyderm-batch-inferencing>`_ to
-   your local directory.
+-  Before starting this tutorial, ensure you have copied the
+   ``determined-pachyderm-batch-inferencing`` files from the `Pachyderm examples repository
+   <https://github.com/pachyderm/examples/tree/master/>`_ to your local directory.
 
 .. note::
 
