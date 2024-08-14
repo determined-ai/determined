@@ -16899,25 +16899,35 @@ class v1ValidationHistoryEntry(Printable):
 class v1Webhook(Printable):
     id: "typing.Optional[int]" = None
     triggers: "typing.Optional[typing.Sequence[v1Trigger]]" = None
+    workspaceId: "typing.Optional[int]" = None
 
     def __init__(
         self,
         *,
+        mode: "v1WebhookMode",
+        name: str,
         url: str,
         webhookType: "v1WebhookType",
         id: "typing.Union[int, None, Unset]" = _unset,
         triggers: "typing.Union[typing.Sequence[v1Trigger], None, Unset]" = _unset,
+        workspaceId: "typing.Union[int, None, Unset]" = _unset,
     ):
+        self.mode = mode
+        self.name = name
         self.url = url
         self.webhookType = webhookType
         if not isinstance(id, Unset):
             self.id = id
         if not isinstance(triggers, Unset):
             self.triggers = triggers
+        if not isinstance(workspaceId, Unset):
+            self.workspaceId = workspaceId
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Webhook":
         kwargs: "typing.Dict[str, typing.Any]" = {
+            "mode": v1WebhookMode(obj["mode"]),
+            "name": obj["name"],
             "url": obj["url"],
             "webhookType": v1WebhookType(obj["webhookType"]),
         }
@@ -16925,10 +16935,14 @@ class v1Webhook(Printable):
             kwargs["id"] = obj["id"]
         if "triggers" in obj:
             kwargs["triggers"] = [v1Trigger.from_json(x) for x in obj["triggers"]] if obj["triggers"] is not None else None
+        if "workspaceId" in obj:
+            kwargs["workspaceId"] = obj["workspaceId"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
+            "mode": self.mode.value,
+            "name": self.name,
             "url": self.url,
             "webhookType": self.webhookType.value,
         }
@@ -16936,7 +16950,17 @@ class v1Webhook(Printable):
             out["id"] = self.id
         if not omit_unset or "triggers" in vars(self):
             out["triggers"] = None if self.triggers is None else [x.to_json(omit_unset) for x in self.triggers]
+        if not omit_unset or "workspaceId" in vars(self):
+            out["workspaceId"] = self.workspaceId
         return out
+
+class v1WebhookMode(DetEnum):
+    """Enum values for webhook mode.
+    - WEBHOOK_MODE_WORKSPACE: Webhook will be triggered by all experiment in the workspace
+    - WEBHOOK_MODE_SPECIFIC: Webhook will only be triggered by experiment with matching configuration in the same workspace as the web hook
+    """
+    WORKSPACE = "WEBHOOK_MODE_WORKSPACE"
+    SPECIFIC = "WEBHOOK_MODE_SPECIFIC"
 
 class v1WebhookType(DetEnum):
     """Enum values for expected webhook types.

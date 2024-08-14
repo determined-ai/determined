@@ -1,16 +1,19 @@
 import Form from 'hew/Form';
 import Input from 'hew/Input';
 import { Modal } from 'hew/Modal';
-import Select from 'hew/Select';
+import Select, { Option } from 'hew/Select';
+import { Loadable } from 'hew/utils/loadable';
 import React, { useCallback, useEffect, useId, useState } from 'react';
 
+import useFeature from 'hooks/useFeature';
 import { paths } from 'routes/utils';
 import { createWebhook } from 'services/api';
-import { V1TriggerType, V1WebhookType } from 'services/api-ts-sdk/api';
-import { RunState } from 'types';
+import { V1TriggerType, V1WebhookMode, V1WebhookType } from 'services/api-ts-sdk/api';
+import workspaceStore from 'stores/workspaces';
+import { RunState, Workspace } from 'types';
 import handleError, { DetError, ErrorLevel, ErrorType } from 'utils/error';
+import { useObservable } from 'utils/observable';
 import { routeToReactUrl } from 'utils/routes';
-
 interface Props {
   onSuccess?: () => void;
 }
@@ -24,6 +27,9 @@ interface FormInputs {
   triggerEvents: (typeof triggerEvents)[number][];
   url: string;
   webhookType: V1WebhookType;
+  name: string;
+  workspaceId: number;
+  mode: V1WebhookMode;
 }
 
 const typeOptions = [
@@ -50,11 +56,26 @@ const triggerOptions = [
     value: V1TriggerType.TASKLOG,
   },
 ];
+const modeOptions = [
+  {
+    label: 'All experiments in Workspace',
+    value: V1WebhookMode.WORKSPACE,
+  },
+  {
+    label: 'Specific experiment with matching configuration',
+    value: V1WebhookMode.SPECIFIC,
+  },
+];
 const WebhookCreateModalComponent: React.FC<Props> = ({ onSuccess }: Props) => {
   const idPrefix = useId();
   const [form] = Form.useForm<FormInputs>();
   const [disabled, setDisabled] = useState<boolean>(true);
   const triggers = Form.useWatch('triggerEvents', form);
+  const f_webhook = useFeature().isOn('webhook_improvement');
+  const workspaces = Loadable.match(useObservable(workspaceStore.workspaces), {
+    _: () => [],
+    Loaded: (ws) => ws,
+  });
 
   const onChange = useCallback(() => {
     const fields = form.getFieldsError();
@@ -74,6 +95,8 @@ const WebhookCreateModalComponent: React.FC<Props> = ({ onSuccess }: Props) => {
     try {
       if (values) {
         await createWebhook({
+          mode: values.mode,
+          name: values.name,
           triggers: values.triggerEvents.map((state) => {
             if (state === 'TRIGGER_TYPE_TASK_LOG') {
               return {
@@ -88,6 +111,7 @@ const WebhookCreateModalComponent: React.FC<Props> = ({ onSuccess }: Props) => {
           }),
           url: values.url,
           webhookType: values.webhookType,
+          workspaceId: values.workspaceId,
         });
         onSuccess?.();
         routeToReactUrl(paths.webhooks());
@@ -111,13 +135,14 @@ const WebhookCreateModalComponent: React.FC<Props> = ({ onSuccess }: Props) => {
           type: ErrorType.Server,
         });
       }
+      throw e;
     }
   }, [form, onSuccess]);
 
   return (
     <Modal
       cancel
-      size="small"
+      size="medium"
       submit={{
         disabled,
         form: idPrefix + FORM_ID,
@@ -132,6 +157,25 @@ const WebhookCreateModalComponent: React.FC<Props> = ({ onSuccess }: Props) => {
         id={idPrefix + FORM_ID}
         layout="vertical"
         onFieldsChange={onChange}>
+        {f_webhook && (
+          <>
+            <Form.Item label="Workspace" name="workspaceId">
+              <Select allowClear placeholder="Workspace (required)">
+                {workspaces.map((workspace: Workspace) => (
+                  <Option key={workspace.id} value={workspace.id}>
+                    {workspace.name}
+                  </Option>
+                ))}
+              </Select>
+            </Form.Item>
+            <Form.Item
+              label="Name"
+              name="name"
+              rules={[{ message: 'Name is required.', required: true }]}>
+              <Input />
+            </Form.Item>
+          </>
+        )}
         <Form.Item
           label="URL"
           name="url"
@@ -141,7 +185,17 @@ const WebhookCreateModalComponent: React.FC<Props> = ({ onSuccess }: Props) => {
           ]}>
           <Input />
         </Form.Item>
+        {f_webhook && (
+          <Form.Item
+            initialValue={V1WebhookMode.WORKSPACE}
+            label="Trigger by"
+            name="mode"
+            rules={[{ message: 'Webhook mode is required ', required: true }]}>
+            <Select options={modeOptions} placeholder="Select mode of Webhook" />
+          </Form.Item>
+        )}
         <Form.Item
+          initialValue={V1WebhookType.DEFAULT}
           label="Type"
           name="webhookType"
           rules={[{ message: 'Webhook type is required ', required: true }]}>

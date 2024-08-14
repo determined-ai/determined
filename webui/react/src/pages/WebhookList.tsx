@@ -1,10 +1,16 @@
-import { FilterValue, SorterResult, TablePaginationConfig } from 'antd/lib/table/interface';
+import {
+  FilterDropdownProps,
+  FilterValue,
+  SorterResult,
+  TablePaginationConfig,
+} from 'antd/lib/table/interface';
 import Button from 'hew/Button';
 import Dropdown from 'hew/Dropdown';
 import Icon from 'hew/Icon';
 import Message from 'hew/Message';
 import { useModal } from 'hew/Modal';
 import Row from 'hew/Row';
+import { Loadable } from 'hew/utils/loadable';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -12,9 +18,15 @@ import Badge, { BadgeType } from 'components/Badge';
 import Page from 'components/Page';
 import InteractiveTable, { ColumnDef } from 'components/Table/InteractiveTable';
 import SkeletonTable from 'components/Table/SkeletonTable';
-import { defaultRowClassName, getFullPaginationConfig } from 'components/Table/Table';
+import {
+  defaultRowClassName,
+  getFullPaginationConfig,
+  taskWorkspaceRenderer,
+} from 'components/Table/Table';
+import TableFilterDropdown from 'components/Table/TableFilterDropdown';
 import WebhookCreateModalComponent from 'components/WebhookCreateModal';
 import WebhookDeleteModalComponent from 'components/WebhookDeleteModal';
+import WorkspaceFilter from 'components/WorkspaceFilter';
 import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import usePolling from 'hooks/usePolling';
@@ -22,8 +34,10 @@ import { useSettings } from 'hooks/useSettings';
 import { paths } from 'routes/utils';
 import { getWebhooks, testWebhook } from 'services/api';
 import { V1Trigger, V1TriggerType } from 'services/api-ts-sdk/api';
+import workspaceStore from 'stores/workspaces';
 import { Webhook } from 'types';
 import handleError, { ErrorType } from 'utils/error';
+import { useObservable } from 'utils/observable';
 import { alphaNumericSorter } from 'utils/sort';
 
 import css from './WebhookList.module.scss';
@@ -41,14 +55,20 @@ const DROPDOWN_MENU = [
 
 const WebhooksView: React.FC = () => {
   const [webhooks, setWebhooks] = useState<Webhook[]>([]);
+  const [filteredWebhooks, setFilteredWebhooks] = useState<Webhook[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [canceler] = useState(new AbortController());
   const [selectedWebhook, setSelectedWebhook] = useState<Webhook>();
   const f_flat_runs = useFeature().isOn('flat_runs');
-
+  const f_webhook = useFeature().isOn('webhook_improvement');
   const pageRef = useRef<HTMLElement>(null);
 
   const { canEditWebhooks } = usePermissions();
+
+  const workspaces = Loadable.match(useObservable(workspaceStore.workspaces), {
+    _: () => [],
+    Loaded: (ws) => ws,
+  });
 
   const WebhookCreateModal = useModal(WebhookCreateModalComponent);
   const WebhookDeleteModal = useModal(WebhookDeleteModalComponent);
@@ -83,6 +103,14 @@ const WebhooksView: React.FC = () => {
     fetchWebhooks();
   }, [fetchWebhooks]);
 
+  useEffect(() => {
+    if (settings.workspace?.length) {
+      setFilteredWebhooks(webhooks.filter((w) => settings.workspace?.includes(w.workspaceId)));
+    } else {
+      setFilteredWebhooks(webhooks);
+    }
+  }, [webhooks, settings.workspace]);
+
   const handleDropdown = useCallback(
     async (key: string, record: Webhook) => {
       switch (key) {
@@ -103,6 +131,35 @@ const WebhooksView: React.FC = () => {
       }
     },
     [WebhookDeleteModal],
+  );
+
+  const handleWorkspaceFilterApply = useCallback(
+    (workspaces: string[]) => {
+      updateSettings({
+        tableOffset: 0,
+        workspace:
+          workspaces.length !== 0 ? workspaces.map((workspace) => Number(workspace)) : undefined,
+      });
+    },
+    [updateSettings],
+  );
+
+  const handleWorkspaceFilterReset = useCallback(() => {
+    updateSettings({ tableOffset: 0, workspace: undefined });
+  }, [updateSettings]);
+
+  const workspaceFilterDropdown = useCallback(
+    (filterProps: FilterDropdownProps) => (
+      <TableFilterDropdown
+        {...filterProps}
+        multiple
+        values={settings.workspace?.map((ws) => ws.toString())}
+        width={220}
+        onFilter={handleWorkspaceFilterApply}
+        onReset={handleWorkspaceFilterReset}
+      />
+    ),
+    [handleWorkspaceFilterApply, handleWorkspaceFilterReset, settings.workspace],
   );
 
   const columns = useMemo(() => {
@@ -131,7 +188,35 @@ const WebhooksView: React.FC = () => {
         return <></>;
       });
 
-    return [
+    const columns = [
+      {
+        dataIndex: 'name',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['name'],
+        key: 'name',
+        sorter: (a: Webhook, b: Webhook): number => alphaNumericSorter(a.name, b.name),
+        title: 'Name',
+      },
+      {
+        align: 'center',
+        dataIndex: 'workspace',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['workspace'],
+        filterDropdown: workspaceFilterDropdown,
+        filters: workspaces.map((ws) => ({
+          text: <WorkspaceFilter workspace={ws} />,
+          value: ws.id,
+        })),
+        isFiltered: (settings: Settings) => !!settings.workspace?.length,
+        key: 'workspaceId',
+        render: (_v: string, record: Webhook) => taskWorkspaceRenderer(record, workspaces),
+        title: 'Workspace',
+      },
+      {
+        dataIndex: 'mode',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['mode'],
+        key: 'mode',
+        render: (m: string, record: Webhook) => (record.workspaceId > 0 ? m : 'Global'),
+        title: 'Mode',
+      },
       {
         dataIndex: 'url',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['url'],
@@ -166,7 +251,15 @@ const WebhooksView: React.FC = () => {
         width: DEFAULT_COLUMN_WIDTHS['action'],
       },
     ] as ColumnDef<Webhook>[];
-  }, [f_flat_runs, handleDropdown]);
+
+    if (!f_webhook) {
+      columns.shift();
+      columns.shift();
+      columns.shift();
+    }
+
+    return columns;
+  }, [f_flat_runs, handleDropdown, workspaces, workspaceFilterDropdown, f_webhook]);
 
   const handleTableChange = useCallback(
     (
@@ -220,7 +313,7 @@ const WebhooksView: React.FC = () => {
         <InteractiveTable<Webhook, Settings>
           columns={columns}
           containerRef={pageRef}
-          dataSource={webhooks}
+          dataSource={filteredWebhooks}
           loading={isLoading}
           pagination={getFullPaginationConfig(
             {

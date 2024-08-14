@@ -15,6 +15,14 @@ enum WebhookType {
   WEBHOOK_TYPE_SLACK = 2;
 }
 
+// Enum values for webhook mode.
+enum WebhookMode {
+  // Webhook will be triggered by all experiment in the workspace
+  WEBHOOK_MODE_WORKSPACE = 0;
+  // Webhook will only be triggered by experiment with matching configuration in the same workspace as the web hook
+  WEBHOOK_MODE_SPECIFIC = 1;
+}
+
 // Enum values for expected trigger types.
 enum TriggerType {
   // Default value
@@ -30,7 +38,7 @@ enum TriggerType {
 // Representation of a Webhook
 message Webhook {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "url", "webhook_type" ] }
+    json_schema: { required: [ "url", "webhook_type", "name", "mode" ] }
   };
   // The id of the webhook.
   int32 id = 1;
@@ -40,6 +48,12 @@ message Webhook {
   repeated Trigger triggers = 3;
   // The type of the webhook.
   WebhookType webhook_type = 4;
+  // The name of the webhook.
+  string name = 5;
+  // The workspace of the webhook.
+  int32 workspace_id = 6;
+  // The mode of the webhook.
+  WebhookMode mode = 7;
 }
 
 // Representation for a Trigger for a Webhook

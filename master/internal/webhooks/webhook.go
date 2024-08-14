@@ -32,26 +32,43 @@ type Webhook struct {
 	ID          WebhookID   `bun:"id,pk,autoincrement"`
 	WebhookType WebhookType `bun:"webhook_type,notnull"`
 	URL         string      `bun:"url,notnull"`
+	Mode        WebhookMode `bun:"mode,notnull"`
+	WorkspaceID *int32      `bun:"workspace_id"`
+	Name        string      `bun:"name,notnull"`
 
 	Triggers Triggers `bun:"rel:has-many,join:id=webhook_id"`
 }
 
 // WebhookFromProto returns a model Webhook from a proto definition.
 func WebhookFromProto(w *webhookv1.Webhook) Webhook {
+	var workspaceID *int32
+	if w.WorkspaceId != 0 {
+		workspaceID = &(w.WorkspaceId)
+	}
 	return Webhook{
 		URL:         w.Url,
 		Triggers:    TriggersFromProto(w.Triggers),
 		WebhookType: WebhookTypeFromProto(w.WebhookType),
+		Name:        w.Name,
+		WorkspaceID: workspaceID,
+		Mode:        WebhookModeFromProto(w.Mode),
 	}
 }
 
 // Proto converts a webhook to its protobuf representation.
 func (w *Webhook) Proto() *webhookv1.Webhook {
+	var workspaceID int32
+	if w.WorkspaceID != nil {
+		workspaceID = *(w.WorkspaceID)
+	}
 	return &webhookv1.Webhook{
 		Id:          int32(w.ID),
 		Url:         w.URL,
 		Triggers:    w.Triggers.Proto(),
 		WebhookType: w.WebhookType.Proto(),
+		Name:        w.Name,
+		Mode:        w.Mode.Proto(),
+		WorkspaceId: workspaceID,
 	}
 }
 
@@ -60,6 +77,9 @@ type WebhookID int
 
 // WebhookType is type for the WebhookType enum.
 type WebhookType string
+
+// WebhookType is type for the WebhookMode enum.
+type WebhookMode string
 
 // Triggers is a slice of Trigger objects—primarily useful for its methods.
 type Triggers []*Trigger
@@ -145,6 +165,22 @@ const (
 	WebhookTypeSlack WebhookType = "SLACK"
 )
 
+const (
+	// WebhookTypeDefault represents the webhook will be triggered by all experiment in the workspace.
+	WebhookModeWorkspace WebhookMode = "WORKSPACE"
+	// WebhookModeSpecific represents the webhook will only be triggered by experiment with matching configuration in the same workspace as the web hook
+	WebhookModeSpecific WebhookMode = "SPECIFIC"
+)
+
+func WebhookModeFromProto(w webhookv1.WebhookMode) WebhookMode {
+	switch w {
+	case webhookv1.WebhookMode_WEBHOOK_MODE_SPECIFIC:
+		return WebhookModeSpecific
+	default:
+		return WebhookModeWorkspace
+	}
+}
+
 // WebhookTypeFromProto returns a WebhookType from a proto.
 func WebhookTypeFromProto(w webhookv1.WebhookType) WebhookType {
 	switch w {
@@ -182,6 +218,15 @@ func (w WebhookType) Proto() webhookv1.WebhookType {
 		return webhookv1.WebhookType_WEBHOOK_TYPE_SLACK
 	default:
 		return webhookv1.WebhookType_WEBHOOK_TYPE_UNSPECIFIED
+	}
+}
+
+func (w WebhookMode) Proto() webhookv1.WebhookMode {
+	switch w {
+	case WebhookModeSpecific:
+		return webhookv1.WebhookMode_WEBHOOK_MODE_SPECIFIC
+	default:
+		return webhookv1.WebhookMode_WEBHOOK_MODE_WORKSPACE
 	}
 }
 
