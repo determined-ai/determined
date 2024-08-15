@@ -18,7 +18,8 @@ class SingleSearchMethod(searcher.SearchMethod):
     def __init__(self, experiment_config: dict, max_length: int) -> None:
         warnings.warn(
             "`SingleSearchMethod` and all custom searchers have been deprecated. "
-            "This feature will be removed in a future release.",
+            "This feature will be removed in a future release. Consider configuring a preset "
+            "searcher instead (see Determined docs for details).",
             FutureWarning,
             stacklevel=2,
         )
@@ -83,7 +84,8 @@ class RandomSearchMethod(searcher.SearchMethod):
     ) -> None:
         warnings.warn(
             "`RandomSearchMethod` and all custom searchers have been deprecated. "
-            "This feature will be removed in a future release.",
+            "This feature will be removed in a future release. Consider configuring a preset "
+            "searcher instead (see Determined docs for details).",
             FutureWarning,
             stacklevel=2,
         )
@@ -378,7 +380,8 @@ class ASHASearchMethod(searcher.SearchMethod):
     ) -> None:
         warnings.warn(
             "`ASHASearchMethod` and all custom searchers have been deprecated. "
-            "This feature will be removed in a future release.",
+            "This feature will be removed in a future release. Consider configuring a preset "
+            "searcher instead (see Determined docs for details).",
             FutureWarning,
             stacklevel=2,
         )

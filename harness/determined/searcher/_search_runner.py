@@ -259,7 +259,8 @@ class LocalSearchRunner(SearchRunner):
     ):
         warnings.warn(
             "`LocalSearchRunner` and all custom searchers have been deprecated. "
-            "This feature will be removed in a future release.",
+            "This feature will be removed in a future release. Consider configuring a preset "
+            "searcher instead (see Determined docs for details).",
             FutureWarning,
             stacklevel=2,
         )
