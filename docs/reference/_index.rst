@@ -28,12 +28,6 @@
              </a>
          </div>
          <div class="tile-container">
-             <a class="tile" href="model-hub/index.html">
-                 <h2 class="tile-title">Model Hub Reference</h2>
-                 <p class="tile-description">Reference documentation for the Model Hub APIs.</p>
-             </a>
-         </div>
-         <div class="tile-container">
              <a class="tile" href="deploy/index.html">
                  <h2 class="tile-title">Deployment Reference</h2>
                  <p class="tile-description">Reference documentation for configuring Determined deployment.</p>
@@ -77,5 +71,4 @@
    Python SDK <python-sdk/_index>
    REST API <rest-api>
    Determined CLI Reference <cli-reference>
-   Model Hub APIs <model-hub/_index>
    Customer Searcher Reference <custom-searcher-reference>

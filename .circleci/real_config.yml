@@ -401,9 +401,6 @@ commands:
       determined:
         type: boolean
         default: false
-      model-hub:
-        type: boolean
-        default: false
       install-python:
         type: boolean
         default: true
@@ -426,9 +423,6 @@ commands:
             pip freeze --all >> /tmp/cachefile
             if [ "<<parameters.determined>>" = "true" ]; then
               cat harness/setup.py >> /tmp/cachefile
-            fi
-            if [ "<<parameters.model-hub>>" = "true" ]; then
-              cat model_hub/setup.py >> /tmp/cachefile
             fi
             echo <<parameters.extras-requires>> >> /tmp/cachefile
             if [ -n <<parameters.extra-requirements-file>> ]; then
@@ -497,34 +491,15 @@ commands:
             echo 'export PATH=/tmp/venv/bin:$PATH' >> $BASH_ENV
             /tmp/venv/bin/python -m pip install --upgrade pip wheel setuptools
 
-      # Either of make -C {harness,model_hub} build require pypa's build module.
       - when:
-          condition:
-            or:
-              - <<parameters.determined>>
-              - <<parameters.model-hub>>
+          condition: <<parameters.determined>>
           steps:
             - run:
                 name: Install pypa builder
                 command: python3 -m pip install build
-
-      - when:
-          condition: <<parameters.determined>>
-          steps:
             - install-wheel:
                 package-name: determined
                 package-location: ./harness
-      - when:
-          condition: <<parameters.model-hub>>
-          steps:
-            - run:
-                name: Install mmdetection dependencies
-                command: |
-                  sudo apt-get update
-                  sudo apt-get install -y ffmpeg libsm6 libxext6
-            - install-wheel:
-                package-name: model-hub
-                package-location: ./model_hub
       - run:
           name: Install <<parameters.extras-requires>>
           command: |
@@ -1524,7 +1499,6 @@ jobs:
       - setup-python-venv:
           install-python: false
           determined: true
-          model-hub: true
           extra-requirements-file: "docs/requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
       - run: make -C examples build
@@ -1557,7 +1531,6 @@ jobs:
       - setup-python-venv:
           install-python: false
           determined: true
-          model-hub: true
           extra-requirements-file: "docs/requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
       - attach_workspace:
@@ -1572,7 +1545,6 @@ jobs:
       - setup-python-venv:
           install-python: false
           determined: true
-          model-hub: true
           extra-requirements-file: "docs/requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
       - attach_workspace:
@@ -1633,7 +1605,6 @@ jobs:
       - setup-python-venv:
           install-python: false
           determined: true
-          model-hub: true
           extra-requirements-file: "docs/requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
       - when:
@@ -2400,7 +2371,6 @@ jobs:
       - setup-python-venv:
           install-python: false
           determined: true
-          model-hub: true
           extra-requirements-file: "requirements.txt model_hub/tests/requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
       - run: make -C harness check
@@ -2625,35 +2595,6 @@ jobs:
       - store_test_results:
           path: /tmp/test-results
 
-  test-unit-model-hub:
-    docker:
-      - image: <<pipeline.parameters.docker-image>>
-    resource_class: medium+
-    steps:
-      - checkout
-      - add-and-fetch-upstream
-      - skip-if-only-docs
-      - skip-if-only-github
-      - skip-if-only-webui
-      - install-codecov
-      - setup-python-venv:
-          install-python: false
-          determined: true
-          model-hub: true
-          extras-requires: "torch==1.9.0 torchvision==0.10.0"
-          extra-requirements-file: "model_hub/tests/requirements.txt"
-          executor: <<pipeline.parameters.docker-image>>
-      - run: COVERAGE_FILE=$PWD/test-model-hub-pycov make -C model_hub test
-      - run: coverage xml -i --data-file=./test-model-hub-pycov
-      - run: codecov -v -t $CODECOV_TOKEN -F harness
-      - upload-junit-datadog:
-          service: test-unit-model-hub
-          env: ci-cpu
-      - persist_to_workspace:
-          root: .
-          paths:
-            - test-model-hub-pycov
-
   python-coverage:
     docker:
       - image: <<pipeline.parameters.docker-image>>
@@ -2666,7 +2607,6 @@ jobs:
       - setup-python-venv:
           install-python: false
           determined: false
-          model-hub: false
           extras-requires: "coverage"
           executor: <<pipeline.parameters.docker-image>>
       - attach_workspace:
@@ -4051,7 +3991,6 @@ workflows:
           name: f-test-unit-harness-gpu-parallel
           filters: *any-fork
 
-      - test-unit-model-hub
       - test-unit-storage:
           context: storage-unit-tests
           filters: *any-upstream
@@ -4063,7 +4002,6 @@ workflows:
             - test-unit-harness-tf2
             - test-unit-harness-pytorch2-cpu
             - test-unit-harness-pytorch2-gpu
-            - test-unit-model-hub
             - test-unit-storage
 
   send-alerts:
