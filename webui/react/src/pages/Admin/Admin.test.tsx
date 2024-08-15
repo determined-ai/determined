@@ -12,7 +12,7 @@ import authStore from 'stores/auth';
 import userStore from 'stores/users';
 import { DetailedUser } from 'types';
 
-import UserManagement, { CREATE_USER } from './UserManagement';
+import Admin from '.';
 
 const DISPLAY_NAME = 'Test Name';
 const USERNAME = 'test_username1';
@@ -24,22 +24,56 @@ const CURRENT_USER: DetailedUser = {
   isAdmin: true,
   username: USERNAME,
 };
+
+const mocks = vi.hoisted(() => {
+  return {
+    canAdministrateUsers: false,
+    canAssignRoles: vi.fn(),
+  };
+});
+
+vi.mock('stores/determinedInfo', async (importOriginal) => {
+  const observable = await import('utils/observable');
+  const store = {
+    info: observable.observable({
+      rbacEnabled: true,
+    }),
+  };
+  return {
+    ...(await importOriginal<typeof import('stores/determinedInfo')>()),
+    default: store,
+  };
+});
+
+vi.mock('hooks/usePermissions', () => {
+  const usePermissions = vi.fn(() => {
+    return {
+      canAdministrateUsers: mocks.canAdministrateUsers,
+      canAssignRoles: mocks.canAssignRoles,
+    };
+  });
+  return {
+    default: usePermissions,
+  };
+});
+
 vi.mock('services/api', () => ({
-  getGroups: () => Promise.resolve({ groups: [] }),
-  getUserRoles: () => Promise.resolve([]),
+  getGroups: () =>
+    Promise.resolve({
+      groups: [],
+      pagination: {
+        endIndex: 10,
+        limit: 0,
+        offset: 0,
+        startIndex: 0,
+        total: 10,
+      },
+    }),
   getUsers: () => {
     const users: Array<DetailedUser> = [CURRENT_USER];
     return Promise.resolve({ pagination: { total: 1 }, users });
   },
-  getUserSetting: () => Promise.resolve({ settings: [] }),
-}));
-
-vi.mock('hooks/useTelemetry', () => ({
-  telemetryInstance: {
-    track: vi.fn(),
-    trackPage: vi.fn(),
-    updateTelemetry: vi.fn(),
-  },
+  listRoles: () => Promise.resolve([]),
 }));
 
 const Container: React.FC = () => {
@@ -58,7 +92,7 @@ const Container: React.FC = () => {
     <SettingsProvider>
       <HelmetProvider>
         <BrowserRouter>
-          <UserManagement onUserCreate={() => {}} />;
+          <Admin />;
         </BrowserRouter>
       </HelmetProvider>
     </SettingsProvider>
@@ -70,36 +104,23 @@ const setup = () =>
     <UIProvider theme={DefaultTheme.Light}>
       <ThemeProvider>
         <DndProvider backend={HTML5Backend}>
-          <Container />
+          <Container />;
         </DndProvider>
       </ThemeProvider>
     </UIProvider>,
   );
 
-describe('UserManagement', () => {
-  afterEach(() => {
-    vi.clearAllTimers();
-  });
-  it('should render table/button correct values', async () => {
+describe('Admin page', () => {
+  it('should hide users tab without permissions', () => {
     setup();
-
-    expect(await screen.findByText(CREATE_USER)).toBeInTheDocument();
-
-    expect(await screen.findByText(DISPLAY_NAME)).toBeInTheDocument();
-    expect(await screen.findByText(USERNAME)).toBeInTheDocument();
-    // await waitFor(() => {
-    //   expect(screen.getByText(DISPLAY_NAME)).toBeInTheDocument();
-    //   expect(screen.getByText(USERNAME)).toBeInTheDocument();
-    // });
+    expect(screen.getByText('Admin Settings')).toBeInTheDocument();
+    expect(screen.queryByText('Users')).not.toBeInTheDocument();
   });
 
-  // TODO: make this test case work
-  // it('should render modal for create user when click the button', async () => {
-  //   setup();
-  //   const user = userEvent.setup();
-  //   await user.click(await screen.findByLabelText(CREATE_USER_LABEL));
-  //   await waitFor(() => {
-  //     expect(screen.getByRole('heading', { name: MODAL_HEADER_LABEL_CREATE })).toBeInTheDocument();
-  //   });
-  // });
+  it('should render users tab with permissions', async () => {
+    mocks.canAdministrateUsers = true;
+    setup();
+    expect(screen.getByText('Admin Settings')).toBeInTheDocument();
+    expect(await screen.findByText('Users (1)')).toBeInTheDocument();
+  });
 });

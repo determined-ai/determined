@@ -57,7 +57,7 @@ interface Props {
   user?: DetailedUser;
   viewOnly?: boolean;
   userRoles?: Loadable<UserRole[]>;
-  onClose?: () => void;
+  onSuccess?: () => void;
 }
 
 interface FormInputs {
@@ -71,7 +71,7 @@ interface FormInputs {
 }
 
 const CreateUserModalComponent: React.FC<Props> = ({
-  onClose,
+  onSuccess,
   user,
   userRoles,
   viewOnly,
@@ -149,7 +149,7 @@ const CreateUserModalComponent: React.FC<Props> = ({
         });
         form.resetFields();
       }
-      onClose?.();
+      onSuccess?.();
     } catch (e) {
       openToast({
         severity: 'Error',

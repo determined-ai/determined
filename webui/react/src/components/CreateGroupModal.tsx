@@ -53,10 +53,10 @@ const EDIT_VALUES: Messages = {
 interface Props {
   group?: V1GroupSearchResult;
   groupRoles?: UserRole[];
-  onClose?: () => void;
+  onSuccess?: () => void;
 }
 
-const CreateGroupModalComponent: React.FC<Props> = ({ onClose, group, groupRoles }: Props) => {
+const CreateGroupModalComponent: React.FC<Props> = ({ onSuccess, group, groupRoles }: Props) => {
   const idPrefix = useId();
   const [form] = Form.useForm();
   const { rbacEnabled } = useObservable(determinedStore.info);
@@ -124,7 +124,7 @@ const CreateGroupModalComponent: React.FC<Props> = ({ onClose, group, groupRoles
       }
       openToast({ severity: 'Confirm', title: messages.API_SUCCESS_MESSAGE });
       form.resetFields();
-      onClose?.();
+      onSuccess?.();
     } catch (e) {
       openToast({ severity: 'Error', title: messages.API_FAILURE_MESSAGE });
       handleError(e, { silent: true, type: ErrorType.Input });
