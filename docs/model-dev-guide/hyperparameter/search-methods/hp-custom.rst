@@ -7,7 +7,7 @@
 .. important::
 
    **Deprecation Notice**: Support for all custom search methods have been deprecated and will be
-   removed in a future release. Please see :ref:`Search Methods <_search-methods>` for details on
+   removed in a future release. Please see :ref:`search-methods` for details on
    supported preset searchers.
 
 +----------------------------------------------------------------+
