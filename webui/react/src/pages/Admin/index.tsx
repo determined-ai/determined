@@ -91,7 +91,7 @@ const SettingsContent: React.FC = () => {
 
     if (rbacEnabled) {
       items.push({
-        children: <GroupManagement onUpdate={handleGroupsUpdate} />,
+        children: <GroupManagement onGroupsUpdate={handleGroupsUpdate} />,
         key: TAB_KEYS[TabType.GroupManagement],
         label: `${TabType.GroupManagement} ${totalGroup !== undefined ? `(${totalGroup})` : ''}`,
       });

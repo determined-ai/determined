@@ -11,10 +11,10 @@ export const MODAL_HEADER = 'Delete Group';
 
 interface Props {
   group: V1GroupSearchResult;
-  onClose?: () => void;
+  onSuccess?: () => void;
 }
 
-const DeleteGroupModalComponent: React.FC<Props> = ({ onClose, group }: Props) => {
+const DeleteGroupModalComponent: React.FC<Props> = ({ onSuccess, group }: Props) => {
   const { openToast } = useToast();
 
   const handleSubmit = async () => {
@@ -22,7 +22,7 @@ const DeleteGroupModalComponent: React.FC<Props> = ({ onClose, group }: Props) =
     try {
       await deleteGroup({ groupId: group.group.groupId });
       openToast({ severity: 'Confirm', title: API_SUCCESS_MESSAGE });
-      onClose?.();
+      onSuccess?.();
     } catch (e) {
       openToast({ severity: 'Error', title: 'error deleting group' });
       handleError(e, { silent: true, type: ErrorType.Input });

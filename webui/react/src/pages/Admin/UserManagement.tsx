@@ -173,8 +173,8 @@ const UserActionDropdown = ({ fetchUsers, user, groups, userManagementEnabled }:
       <Dropdown menu={menuItems} placement="bottomRight" onClick={handleDropdown}>
         <Button icon={<Icon name="overflow-vertical" size="small" title="Action menu" />} />
       </Dropdown>
-      <ViewUserModal.Component user={user} userRoles={userRoles} viewOnly onClose={fetchUsers} />
-      <EditUserModal.Component user={user} userRoles={userRoles} onClose={fetchUsers} />
+      <ViewUserModal.Component user={user} userRoles={userRoles} viewOnly onSuccess={fetchUsers} />
+      <EditUserModal.Component user={user} userRoles={userRoles} onSuccess={fetchUsers} />
       <ManageGroupsModal.Component
         groupOptions={groups}
         user={user}
@@ -233,7 +233,7 @@ const UserManagement: React.FC<Props> = ({ onUserCreate }: Props) => {
     [],
   );
 
-  const handleCreateModalClose = () => {
+  const handleUserCreate = () => {
     onUserCreate();
     fetchUsers();
   };
@@ -570,7 +570,7 @@ const UserManagement: React.FC<Props> = ({ onUserCreate }: Props) => {
           <SkeletonTable columns={columns.length} />
         )}
       </Section>
-      <CreateUserModal.Component onClose={handleCreateModalClose} />
+      <CreateUserModal.Component onSuccess={handleUserCreate} />
       <ChangeUserStatusModal.Component
         clearTableSelection={clearTableSelection}
         fetchUsers={fetchUsers}
