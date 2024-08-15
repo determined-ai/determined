@@ -1,4 +1,5 @@
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { DefaultTheme, UIProvider } from 'hew/Theme';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
@@ -13,16 +14,11 @@ import GroupManagement from './GroupManagement';
 const GROUP_NAME = 'test_group_name';
 const GROUP_MEMBER_COUNT = 5;
 
-const mocks = vi.hoisted(() => {
-  return {
-    canViewGroups: vi.fn(),
-  };
-});
-
 vi.mock('hooks/usePermissions', () => {
   const usePermissions = vi.fn(() => {
     return {
-      canViewGroups: mocks.canViewGroups,
+      canModifyGroups: true,
+      canViewGroups: true,
     };
   });
   return {
@@ -31,6 +27,7 @@ vi.mock('hooks/usePermissions', () => {
 });
 
 vi.mock('services/api', () => ({
+  getGroupRoles: () => Promise.resolve([]),
   getGroups: () =>
     Promise.resolve({
       groups: [
@@ -69,9 +66,10 @@ const setup = () =>
     </UIProvider>,
   );
 
+const user = userEvent.setup();
+
 describe('GroupManagement', () => {
   it('should render with correct group data', async () => {
-    mocks.canViewGroups.mockImplementation(() => true);
     setup();
 
     expect(await screen.findByTestId('Group')).toBeInTheDocument();
@@ -79,5 +77,22 @@ describe('GroupManagement', () => {
 
     expect(await screen.findByText(GROUP_NAME)).toBeInTheDocument();
     expect(await screen.findByText(GROUP_MEMBER_COUNT)).toBeInTheDocument();
+  });
+
+  it('should open action menu for a group', async () => {
+    setup();
+    expect(await screen.findByTestId('Group')).toBeInTheDocument();
+    expect(await screen.findByTestId('Members')).toBeInTheDocument();
+
+    expect(await screen.findByText(GROUP_NAME)).toBeInTheDocument();
+    expect(await screen.findByText(GROUP_MEMBER_COUNT)).toBeInTheDocument();
+
+    const buttons = await screen.queryAllByRole('button');
+    const menuButton = buttons[2];
+    await user.click(menuButton);
+
+    expect(screen.getByText('Add Members to Group')).toBeInTheDocument();
+    expect(screen.getByText('Edit Group')).toBeInTheDocument();
+    expect(screen.getByText('Delete Group')).toBeInTheDocument();
   });
 });
