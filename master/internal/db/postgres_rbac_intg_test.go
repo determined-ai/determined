@@ -622,9 +622,10 @@ func TestPermissionMatch(t *testing.T) {
 		require.NoError(t, err, "error when searching for permissions")
 		require.Equal(t, noWorkspaces, workspaces)
 
-		_, err = GetNonGlobalWorkspacesWithPermission(ctx, userIDEditorRestricted,
+		workspaces, err = GetNonGlobalWorkspacesWithPermission(ctx, userIDEditorRestricted,
 			rbacv1.PermissionType_PERMISSION_TYPE_SET_RESOURCE_QUOTAS)
 		require.NoError(t, err, "error when searching for permissions")
+		require.Equal(t, noWorkspaces, workspaces)
 	})
 }
 
