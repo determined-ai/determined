@@ -100,7 +100,7 @@ class LocustPostTaskWithMeta(BaseLocustTaskWithMeta):
 def get_task(endpoint, params=None) -> HttpTask_t:
     query_string = ""
     if params is not None:
-        query_string = f"?{urlencode(params)}"
+        query_string = f"?{urlencode(params, True)}"
 
     def task(user: HttpUser):
         return user.client.get(f"{endpoint}{query_string}")
