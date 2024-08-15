@@ -73,7 +73,7 @@ class LocustGetTaskWithMeta(BaseLocustTaskWithMeta):
         self.params = params
         self._url = endpoint
         if params is not None:
-            self._url += f'?{urlencode(params)}'
+            self._url += f'?{urlencode(params, doseq=True)}'
 
     @property
     def url(self) -> Url_t:
@@ -100,7 +100,7 @@ class LocustPostTaskWithMeta(BaseLocustTaskWithMeta):
 def get_task(endpoint, params=None) -> HttpTask_t:
     query_string = ""
     if params is not None:
-        query_string = f"?{urlencode(params, doseq=True)}"
+        query_string = f"?{urlencode(params)}"
 
     def task(user: HttpUser):
         return user.client.get(f"{endpoint}{query_string}")
