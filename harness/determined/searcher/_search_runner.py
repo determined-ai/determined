@@ -5,8 +5,8 @@ import pathlib
 import pickle
 import time
 import uuid
-from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union
 import warnings
+from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union
 
 from determined import searcher
 from determined.common import api

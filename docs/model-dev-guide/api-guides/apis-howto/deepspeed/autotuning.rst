@@ -6,7 +6,8 @@
 
 .. important::
 
-   **Deprecation Notice**: DeepSpeed Autotune is deprecated and will be removed in an upcoming release. For information on supported search methods, please visit :ref:`search-methods`.
+   **Deprecation Notice**: DeepSpeed Autotune is deprecated and will be removed in an upcoming
+   release. For information on supported search methods, please visit :ref:`search-methods`.
 
 .. meta::
    :description: This user guide demonstrates how to optimize DeepSpeed parameters in order to take full advantage of the user's hardware and model.

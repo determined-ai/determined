@@ -2,8 +2,8 @@ import logging
 import os
 import pathlib
 import pickle
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 import warnings
+from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 import determined as det
 from determined import searcher
