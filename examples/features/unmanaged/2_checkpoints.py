@@ -21,6 +21,7 @@ def main():
 
     latest_checkpoint = core_v2.info.latest_checkpoint
     initial_i = 0
+    max_length = 100
     if latest_checkpoint is not None:
         with core_v2.checkpoint.restore_path(latest_checkpoint) as path:
             with (path / "state").open() as fin:
@@ -32,11 +33,12 @@ def main():
 
     print("determined experiment id: ", core_v2.info._trial_info.experiment_id)
     print("initial step:", initial_i)
-    for i in range(initial_i, initial_i + 100):
+    for i in range(initial_i, initial_i + max_length):
         core_v2.train.report_training_metrics(steps_completed=i, metrics={"loss": random.random()})
         if (i + 1) % 10 == 0:
             loss = random.random()
             core_v2.train.report_validation_metrics(steps_completed=i, metrics={"loss": loss})
+            core_v2.train.report_progress((i - initial_i) / float(max_length))
 
             with core_v2.checkpoint.store_path({"steps_completed": i}) as (path, uuid):
                 with (path / "state").open("w") as fout:
