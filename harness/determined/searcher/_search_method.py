@@ -225,7 +225,7 @@ class SearchMethod:
         Do not modify ``searcher_state`` passed into event handlers.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         warnings.warn(
             "`SearchMethod` and all custom searchers have been deprecated. "
             "This feature will be removed in a future release. Consider configuring a preset "
