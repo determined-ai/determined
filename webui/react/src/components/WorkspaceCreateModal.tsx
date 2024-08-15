@@ -252,11 +252,12 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
               Resource Quotas
               <>
                 {resourceManagers.map((name) => (
-                  <Fragment key={name}>
-                    <Form.Item label={`Cluster Name: ${name}`} name={['resourceQuotas', name]}>
-                      <Input disabled={true} />
-                    </Form.Item>
-                  </Fragment>
+                  <Form.Item
+                    key={name}
+                    label={`Cluster Name: ${name}`}
+                    name={['resourceQuotas', name]}>
+                    <Input disabled />
+                  </Form.Item>
                 ))}
               </>
             </>
