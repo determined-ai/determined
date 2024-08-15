@@ -6,9 +6,28 @@
 
 .. meta::
    :description: Learn how to run your first experiment in Determined.
-   :keywords: PyTorch API,MNIST,model developer,quickstart
+   :keywords: PyTorch API,MNIST,model developer,quickstart,search,run
 
 Follow these steps to see how to run your first experiment.
+
+**************
+ Key Concepts
+**************
+
+Single-Trial Experiment (Run)
+
+-  A single-trial experiment (or run) allows you to establish a baseline performance for your model.
+
+-  Running a single trial is useful for understanding how your model performs with a fixed set of
+   hyperparameters. It serves as a benchmark against which you can compare results from more complex
+   searches.
+
+Multi-Trial Experiment (Search)
+
+-  A multi-trial experiment (or search) allows you to optimize your model by exploring different
+   configurations of hyperparameters automatically.
+-  A search systematically tests various hyperparameter combinations to find the best-performing
+   configuration. This is more efficient than manually tuning each parameter.
 
 ***************
  Prerequisites
@@ -20,9 +39,13 @@ You must have a running Determined cluster with the CLI installed.
 -  To set up a remote cluster, visit the :ref:`Installation Guide <installation-guide>` where you'll
    find options for On Prem, AWS, GCP, Kubernetes, and Slurm.
 
-*******************
- Run an Experiment
-*******************
+****************************
+ Execute a Single-Trial Run
+****************************
+
+Before running a search, it's important to establish a baseline performance using a single-trial
+experiment (also known as a "run"). This gives you a reference point to compare the results of your
+multi-trial searches.
 
 .. tabs::
 
@@ -36,8 +59,8 @@ You must have a running Determined cluster with the CLI installed.
 
       .. note::
 
-         To run an experiment in a local training environment, your Determined cluster requires only
-         a single CPU or GPU. A cluster is made up of a master and one or more agents. A single
+         To execute an experiment in a local training environment, your Determined cluster requires
+         only a single CPU or GPU. A cluster is made up of a master and one or more agents. A single
          machine can serve as both a master and an agent.
 
       **Create the Experiment**
@@ -61,9 +84,9 @@ You must have a running Determined cluster with the CLI installed.
          *context directory* for your model. Determined copies the model context directory contents
          to the trial container working directory.
 
-      **View the Experiment**
+      **View the Run**
 
-      #. To view the experiment in your browser:
+      #. To view the run in your browser:
 
          -  Enter the following URL: **http://localhost:8080/**. This is the cluster address for
             your local training environment.
@@ -153,6 +176,91 @@ You must have a running Determined cluster with the CLI installed.
 
          .. image:: /assets/images/qswebui-metrics-remote.png
             :alt: Determined AI WebUI Dashboard showing details for a remote distributed experiment
+
+******************************
+ Execute a Multi-Trial Search
+******************************
+
+Once you have have established a baseline performance by creating your single-trial experiment (or
+"run"), you can create a multi-trial experiment (or "search") and compare the outcome with the
+baseline.
+
+To do this, create a ``search.yaml`` configuration file for executing the multi-trial search.
+
+#. Prepare the configuration file.
+
+   -  To convert the ``const.yaml`` file we used to configure our single-trial experiment into a
+      multi-trial search, you will need to modify the hyperparameters section and the searcher
+      configuration. Copy the following code and save the file as ``search.yaml`` in the same
+      directory as your ``const.yaml`` file:
+
+      .. code:: yaml
+
+         name: mnist_pytorch_search
+         hyperparameters:
+           learning_rate:
+             type: log
+             base: 10
+             minval: 1e-4
+             maxval: 1.0
+           n_filters1:
+             type: int
+             minval: 16
+             maxval: 64
+           n_filters2:
+             type: int
+             minval: 32
+             maxval: 128
+           dropout1:
+             type: double
+             minval: 0.2
+             maxval: 0.5
+           dropout2:
+             type: double
+             minval: 0.3
+             maxval: 0.6
+
+         searcher:
+           name: random
+           metric: validation_loss
+           max_trials: 20
+           max_length:
+             batches: 1000
+           smaller_is_better: true
+
+         entrypoint: python3 train.py
+
+#. Create the Search
+
+   Once you've created the new configuration file, you can create and run the search using the
+   following command:
+
+   .. code:: bash
+
+      det experiment create search.yaml .
+
+   This will start the search, and Determined will run multiple trials, each with a different
+   combination of hyperparameters from the defined ranges.
+
+#. Monitor the Search
+
+   In the WebUI, navigate to the **Searches** tab to monitor the progress of your search. You’ll be
+   able to see the different trials running, their status, and their performance metrics. Determined
+   also offers built-in visualizations to help you understand the results.
+
+   .. image:: /assets/images/qswebui-multi-trial-search.png
+      :alt: Determined AI WebUI Dashboard showing a user's recent multi-trial search
+
+#. Analyze the Results
+
+   After the search is complete, you can review the best-performing trials and the hyperparameter
+   configurations that led to them. This will help you identify the optimal settings for your model.
+
+   Select **mnist_pytorch_search** to view all runs including single-trial experiments. Then choose
+   which runs you want to compare.
+
+   .. image:: /assets/images/qswebui-mnist-pytorch-search.png
+      :alt: Determined AI WebUI Dashboard with mnist pytorch search selected and ready to compare
 
 ************
  Learn More
