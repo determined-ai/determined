@@ -1,6 +1,6 @@
 import Pivot, { PivotProps } from 'hew/Pivot';
 import { Loadable } from 'hew/utils/loadable';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import Page from 'components/Page';
@@ -69,11 +69,7 @@ const SettingsContent: React.FC = () => {
     userStore.fetchUsers();
   };
 
-  const handleGroupsUpdate = useCallback(() => {
-    getGroupTotal();
-  }, [getGroupTotal]);
-
-  const tabItems: PivotProps['items'] = useMemo(() => {
+  const tabItems: () => PivotProps['items'] = () => {
     const items: PivotProps['items'] = [];
 
     if (canAdministrateUsers) {
@@ -91,21 +87,21 @@ const SettingsContent: React.FC = () => {
 
     if (rbacEnabled) {
       items.push({
-        children: <GroupManagement onGroupsUpdate={handleGroupsUpdate} />,
+        children: <GroupManagement onGroupsUpdate={getGroupTotal} />,
         key: TAB_KEYS[TabType.GroupManagement],
         label: `${TabType.GroupManagement} ${totalGroup !== undefined ? `(${totalGroup})` : ''}`,
       });
     }
 
     return items;
-  }, [canAdministrateUsers, rbacEnabled, totalGroup, loadableUsers, handleGroupsUpdate]);
+  };
 
   return (
     <Pivot
       activeKey={tab}
       defaultActiveKey={tabKey}
       destroyInactiveTabPane
-      items={tabItems}
+      items={tabItems()}
       onChange={handleTabChange}
     />
   );

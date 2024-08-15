@@ -146,6 +146,7 @@ const GroupManagement: React.FC<Props> = ({ onGroupsUpdate }: Props) => {
       updateSettings({
         tableOffset: settings.tableOffset - settings.tableLimit,
       });
+      return;
     }
     try {
       const response = await getGroups(
