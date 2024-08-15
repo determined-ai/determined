@@ -635,10 +635,7 @@ const canViewResourceQuotas = ({
   userRoles,
 }: RbacOptsProps): boolean => {
   const permitted = relevantPermissions(userAssignments, userRoles);
-  return (
-    !!currentUser &&
-    (rbacEnabled ? permitted.has(V1PermissionType.VIEWRESOURCEQUOTAS) : currentUser.isAdmin)
-  );
+  return !!currentUser && (!rbacEnabled || permitted.has(V1PermissionType.VIEWRESOURCEQUOTAS));
 };
 
 const canViewWorkspace = (

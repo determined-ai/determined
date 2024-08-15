@@ -177,12 +177,9 @@ func (a *WorkspaceAuthZBasic) CanSetResourceQuotas(ctx context.Context, curUser 
 	return nil
 }
 
-// CanViewResourceQuotas returns an error if the user is not a cluster admin.
+// CanViewResourceQuotas returns a nil error.
 func (a *WorkspaceAuthZBasic) CanViewResourceQuotas(ctx context.Context, curUser model.User,
 ) error {
-	if !curUser.Admin {
-		return fmt.Errorf("only admins may set resource quotas")
-	}
 	return nil
 }
 

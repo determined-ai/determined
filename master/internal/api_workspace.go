@@ -1558,8 +1558,8 @@ func (a *apiServer) GetKubernetesResourceQuotas(
 	if err != nil {
 		return nil, err
 	}
-	err = workspace.AuthZProvider.Get().CanGetWorkspaceID(
-		ctx, *curUser, req.Id,
+	err = workspace.AuthZProvider.Get().CanViewResourceQuotas(
+		ctx, *curUser,
 	)
 	if err != nil {
 		return nil, err
