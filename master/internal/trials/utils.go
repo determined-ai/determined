@@ -43,6 +43,8 @@ func CanGetTrialsExperimentAndCheckCanDoAction(ctx context.Context,
 	return nil
 }
 
+// CanGetTrialsExperimentAndCheckCanDoActionBulk functions the same as
+// CanGetTrialsExperimentAndCheckCanDoAction but takes in multiple trial ids
 func CanGetTrialsExperimentAndCheckCanDoActionBulk(ctx context.Context,
 	trialIDs []int, actionFunc func(context.Context, model.User, *model.Experiment) error,
 ) error {
