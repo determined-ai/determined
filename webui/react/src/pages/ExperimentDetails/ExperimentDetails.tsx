@@ -15,6 +15,7 @@ import ExperimentSingleTrialTabs from 'pages/ExperimentDetails/ExperimentSingleT
 import { TrialInfoBoxMultiTrial } from 'pages/TrialDetails/TrialInfoBox';
 import { paths } from 'routes/utils';
 import { getExperimentDetails } from 'services/api';
+import userSettings from 'stores/userSettings';
 import workspaceStore from 'stores/workspaces';
 import { ExperimentBase, TrialItem, Workspace } from 'types';
 import { isSingleTrialExperiment } from 'utils/experiment';
@@ -28,6 +29,8 @@ type Params = {
 export const INVALID_ID_MESSAGE = 'Invalid Experiment ID';
 export const ERROR_MESSAGE = 'Unable to fetch Experiment';
 
+const settingsLoadedObs = userSettings.getAll().select((l) => l.isLoaded);
+
 const ExperimentDetails: React.FC = () => {
   const { experimentId } = useParams<Params>();
   const [experiment, setExperiment] = useState<ExperimentBase>();
@@ -40,8 +43,11 @@ const ExperimentDetails: React.FC = () => {
   const id = parseInt(experimentId ?? '');
   const navigate = useNavigate();
   const f_flat_runs = useFeature().isOn('flat_runs');
+  const isSettingsLoaded = useObservable(settingsLoadedObs);
 
-  if (f_flat_runs) navigate(paths.searchDetails(id), { replace: true });
+  if (isSettingsLoaded && f_flat_runs) {
+    navigate(paths.searchDetails(id), { replace: true });
+  }
 
   const fetchExperimentDetails = useCallback(async () => {
     try {
