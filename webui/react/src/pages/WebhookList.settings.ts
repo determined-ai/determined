@@ -10,12 +10,12 @@ export type WebhookColumnName =
   | 'url'
   | 'webhookType'
   | 'name'
-  | 'workspace'
+  | 'workspaceIds'
   | 'mode';
 
 export const DEFAULT_COLUMNS: WebhookColumnName[] = [
   'name',
-  'workspace',
+  'workspaceIds',
   'url',
   'webhookType',
   'mode',
@@ -29,12 +29,12 @@ export const DEFAULT_COLUMN_WIDTHS: Record<WebhookColumnName, number> = {
   triggers: 150,
   url: 150,
   webhookType: 60,
-  workspace: 80,
+  workspaceIds: 80,
 };
 
 export interface Settings extends InteractiveTableSettings {
   columns: WebhookColumnName[];
-  workspace?: number[];
+  workspaceIds?: number[];
 }
 
 const config: SettingsConfig<Settings> = {
@@ -49,7 +49,7 @@ const config: SettingsConfig<Settings> = {
           literal('triggers'),
           literal('url'),
           literal('webhookType'),
-          literal('workspace'),
+          literal('workspaceIds'),
           literal('name'),
           literal('mode'),
         ]),
@@ -81,9 +81,9 @@ const config: SettingsConfig<Settings> = {
       storageKey: 'tableOffset',
       type: number,
     },
-    workspace: {
-      defaultValue: [],
-      storageKey: 'workspace',
+    workspaceIds: {
+      defaultValue: undefined,
+      storageKey: 'workspaceIds',
       type: union([undefinedType, array(number)]),
     },
   },

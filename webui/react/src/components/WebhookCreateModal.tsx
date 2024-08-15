@@ -2,7 +2,6 @@ import Form from 'hew/Form';
 import Input from 'hew/Input';
 import { Modal } from 'hew/Modal';
 import Select, { Option } from 'hew/Select';
-import { Loadable } from 'hew/utils/loadable';
 import React, { useCallback, useEffect, useId, useState } from 'react';
 
 import useFeature from 'hooks/useFeature';
@@ -62,7 +61,7 @@ const modeOptions = [
     value: V1WebhookMode.WORKSPACE,
   },
   {
-    label: 'Specific experiment with matching configuration',
+    label: 'Specific experiment(s) with matching configuration',
     value: V1WebhookMode.SPECIFIC,
   },
 ];
@@ -72,10 +71,7 @@ const WebhookCreateModalComponent: React.FC<Props> = ({ onSuccess }: Props) => {
   const [disabled, setDisabled] = useState<boolean>(true);
   const triggers = Form.useWatch('triggerEvents', form);
   const f_webhook = useFeature().isOn('webhook_improvement');
-  const workspaces = Loadable.match(useObservable(workspaceStore.workspaces), {
-    _: () => [],
-    Loaded: (ws) => ws,
-  });
+  const workspaces = useObservable(workspaceStore.workspaces).getOrElse([]);
 
   const onChange = useCallback(() => {
     const fields = form.getFieldsError();
@@ -159,7 +155,10 @@ const WebhookCreateModalComponent: React.FC<Props> = ({ onSuccess }: Props) => {
         onFieldsChange={onChange}>
         {f_webhook && (
           <>
-            <Form.Item label="Workspace" name="workspaceId">
+            <Form.Item
+              label="Workspace"
+              name="workspaceId"
+              rules={[{ message: 'Workspace is required', required: true }]}>
               <Select allowClear placeholder="Workspace (required)">
                 {workspaces.map((workspace: Workspace) => (
                   <Option key={workspace.id} value={workspace.id}>
@@ -190,8 +189,8 @@ const WebhookCreateModalComponent: React.FC<Props> = ({ onSuccess }: Props) => {
             initialValue={V1WebhookMode.WORKSPACE}
             label="Trigger by"
             name="mode"
-            rules={[{ message: 'Webhook mode is required ', required: true }]}>
-            <Select options={modeOptions} placeholder="Select mode of Webhook" />
+            rules={[{ message: 'Webhook mode is required', required: true }]}>
+            <Select options={modeOptions} placeholder="Select webhook mode" />
           </Form.Item>
         )}
         <Form.Item

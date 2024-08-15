@@ -58,8 +58,8 @@ export const FEATURES: Record<ValidFeature, FeatureDescription> = {
   },
   webhook_improvement: {
     defaultValue: false,
-    description: 'Webhook improvement',
-    friendlyName: 'Webhook improvement',
+    description: 'Allow webhooks to monitor experiments by workspace',
+    friendlyName: 'Webhook Improvement',
   },
 } as const;
 export const FEATURE_SETTINGS_PATH = 'global-features';

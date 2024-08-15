@@ -10,7 +10,6 @@ import Icon from 'hew/Icon';
 import Message from 'hew/Message';
 import { useModal } from 'hew/Modal';
 import Row from 'hew/Row';
-import { Loadable } from 'hew/utils/loadable';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -65,10 +64,7 @@ const WebhooksView: React.FC = () => {
 
   const { canEditWebhooks } = usePermissions();
 
-  const workspaces = Loadable.match(useObservable(workspaceStore.workspaces), {
-    _: () => [],
-    Loaded: (ws) => ws,
-  });
+  const workspaces = useObservable(workspaceStore.workspaces).getOrElse([]);
 
   const WebhookCreateModal = useModal(WebhookCreateModalComponent);
   const WebhookDeleteModal = useModal(WebhookDeleteModalComponent);
@@ -104,12 +100,13 @@ const WebhooksView: React.FC = () => {
   }, [fetchWebhooks]);
 
   useEffect(() => {
-    if (settings.workspace?.length) {
-      setFilteredWebhooks(webhooks.filter((w) => settings.workspace?.includes(w.workspaceId)));
+    if (Array.isArray(settings.workspaceIds)) {
+      const idSet = new Set(settings.workspaceIds);
+      setFilteredWebhooks(webhooks.filter((w) => idSet.has(w.workspaceId)));
     } else {
       setFilteredWebhooks(webhooks);
     }
-  }, [webhooks, settings.workspace]);
+  }, [webhooks, settings.workspaceIds]);
 
   const handleDropdown = useCallback(
     async (key: string, record: Webhook) => {
@@ -137,7 +134,7 @@ const WebhooksView: React.FC = () => {
     (workspaces: string[]) => {
       updateSettings({
         tableOffset: 0,
-        workspace:
+        workspaceIds:
           workspaces.length !== 0 ? workspaces.map((workspace) => Number(workspace)) : undefined,
       });
     },
@@ -145,7 +142,7 @@ const WebhooksView: React.FC = () => {
   );
 
   const handleWorkspaceFilterReset = useCallback(() => {
-    updateSettings({ tableOffset: 0, workspace: undefined });
+    updateSettings({ tableOffset: 0, workspaceIds: undefined });
   }, [updateSettings]);
 
   const workspaceFilterDropdown = useCallback(
@@ -153,13 +150,13 @@ const WebhooksView: React.FC = () => {
       <TableFilterDropdown
         {...filterProps}
         multiple
-        values={settings.workspace?.map((ws) => ws.toString())}
+        values={settings.workspaceIds?.map((ws) => ws.toString())}
         width={220}
         onFilter={handleWorkspaceFilterApply}
         onReset={handleWorkspaceFilterReset}
       />
     ),
-    [handleWorkspaceFilterApply, handleWorkspaceFilterReset, settings.workspace],
+    [handleWorkspaceFilterApply, handleWorkspaceFilterReset, settings.workspaceIds],
   );
 
   const columns = useMemo(() => {
@@ -198,14 +195,14 @@ const WebhooksView: React.FC = () => {
       },
       {
         align: 'center',
-        dataIndex: 'workspace',
-        defaultWidth: DEFAULT_COLUMN_WIDTHS['workspace'],
+        dataIndex: 'workspaceIds',
+        defaultWidth: DEFAULT_COLUMN_WIDTHS['workspaceIds'],
         filterDropdown: workspaceFilterDropdown,
         filters: workspaces.map((ws) => ({
           text: <WorkspaceFilter workspace={ws} />,
           value: ws.id,
         })),
-        isFiltered: (settings: Settings) => !!settings.workspace?.length,
+        isFiltered: (settings: Settings) => !!settings.workspaceIds?.length,
         key: 'workspaceId',
         render: (_v: string, record: Webhook) => taskWorkspaceRenderer(record, workspaces),
         title: 'Workspace',
@@ -253,9 +250,7 @@ const WebhooksView: React.FC = () => {
     ] as ColumnDef<Webhook>[];
 
     if (!f_webhook) {
-      columns.shift();
-      columns.shift();
-      columns.shift();
+      return columns.slice(3);
     }
 
     return columns;
