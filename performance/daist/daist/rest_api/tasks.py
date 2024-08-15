@@ -154,10 +154,20 @@ def read_only_tasks(resources: Resources) -> LocustTasksWithMeta:
         tasks.append(LocustGetTaskWithMeta(
             "/api/v1/trials/time-series", test_name="get trials time series large payload",
             params={
-                "trialIds": [216,218,219,220,221,223,225,226,227,228,229,230,231,232,233,234,235,236,239,240,
-                242,246,247,249,275,276,277,278,279,280,281,282,283,284,285,286,287,288,289,290,291,
-                292,293,294,295,296,297,298,299,300,301,302,303,304,305,306,307,308,309,310,
-                311,312,313,314,315,316,317,318,319,320,321,322,323,324,325,326,327,328,329,330],
+                "trialIds": "trialIds=216&trialIds=218&trialIds=219&trialIds=220" +
+                "&trialIds=221&trialIds=223&trialIds=225&trialIds=226&trialIds=227&trialIds=228" +
+                "&trialIds=229&trialIds=230&trialIds=231&trialIds=232&trialIds=233&trialIds=234" +
+                "&trialIds=235&trialIds=236&trialIds=239&trialIds=240&trialIds=242&trialIds=246" +
+                "&trialIds=247&trialIds=249&trialIds=275&trialIds=276&trialIds=277&trialIds=278" +
+                "&trialIds=279&trialIds=280&trialIds=281&trialIds=282&trialIds=283&trialIds=284" +
+                "&trialIds=285&trialIds=286&trialIds=287&trialIds=288&trialIds=289&trialIds=290" +
+                "&trialIds=291&trialIds=292&trialIds=293&trialIds=294&trialIds=295&trialIds=296" +
+                "&trialIds=297&trialIds=298&trialIds=299&trialIds=300&trialIds=301&trialIds=302" +
+                "&trialIds=303&trialIds=304&trialIds=305&trialIds=306&trialIds=307&trialIds=308" +
+                "&trialIds=309&trialIds=310&trialIds=311&trialIds=312&trialIds=313&trialIds=314" +
+                "&trialIds=315&trialIds=316&trialIds=317&trialIds=318&trialIds=319&trialIds=320" +
+                "&trialIds=321&trialIds=322&trialIds=323&trialIds=324&trialIds=325&trialIds=326" +
+                "&trialIds=327&trialIds=328&trialIds=329&trialIds=330",
                 "startBatches": 0,
                 "metricType": "METRIC_TYPE_UNSPECIFIED"}))
 
