@@ -905,13 +905,13 @@ func (a *apiServer) CompareTrials(ctx context.Context,
 	for _, trialID := range req.TrialIds {
 		if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(ctx, int(trialID),
 			experiment.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
-			return nil, err
+			return nil, errors.Wrapf(err, "failed validate permissions")
 		}
 	}
 	//nolint:staticcheck // SA1019: backward compatibility
 	metricGroup, err := a.parseMetricGroupArgs(req.MetricType, model.MetricGroup(req.Group))
 	if err != nil {
-		return nil, err
+		return nil, errors.Wrapf(err, "failed to parse metric group args")
 	}
 
 	trialsObjList := []*trialv1.Trial{}
