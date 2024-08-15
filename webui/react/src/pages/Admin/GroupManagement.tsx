@@ -141,6 +141,12 @@ const GroupManagement: React.FC<Props> = ({ onUpdate }: Props) => {
 
   const fetchGroups = useCallback(async (): Promise<void> => {
     if (!('tableLimit' in settings) || !('tableOffset' in settings)) return;
+    if (settings.tableOffset > 0 && settings.tableOffset === total) {
+      // handle when last group is deleted on a page
+      updateSettings({
+        tableOffset: settings.tableOffset - settings.tableLimit,
+      });
+    }
     try {
       const response = await getGroups(
         {
@@ -160,7 +166,7 @@ const GroupManagement: React.FC<Props> = ({ onUpdate }: Props) => {
     } finally {
       setIsLoading(false);
     }
-  }, [settings]);
+  }, [settings, total, updateSettings]);
 
   const fetchGroup = useCallback(
     async (groupId: number): Promise<void> => {
