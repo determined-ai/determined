@@ -10,24 +10,31 @@
 
 Follow these steps to see how to run your first experiment.
 
-**************
- Key Concepts
-**************
+*******************
+ Runs vs. Searches
+*******************
 
-Single-Trial Experiment (Run)
+.. tabs::
 
--  A single-trial experiment (or run) allows you to establish a baseline performance for your model.
+   .. tab::
 
--  Running a single trial is useful for understanding how your model performs with a fixed set of
-   hyperparameters. It serves as a benchmark against which you can compare results from more complex
-   searches.
+      Single-Trial Run
 
-Multi-Trial Experiment (Search)
+      -  A single-trial experiment (or run) allows you to establish a baseline performance for your
+         model.
 
--  A multi-trial experiment (or search) allows you to optimize your model by exploring different
-   configurations of hyperparameters automatically.
--  A search systematically tests various hyperparameter combinations to find the best-performing
-   configuration. This is more efficient than manually tuning each parameter.
+      -  Running a single trial is useful for understanding how your model performs with a fixed set
+         of hyperparameters. It serves as a benchmark against which you can compare results from
+         more complex searches.
+
+   .. tab::
+
+      Multi-Trial Search
+
+      -  A multi-trial experiment (or search) allows you to optimize your model by exploring
+         different configurations of hyperparameters automatically.
+      -  A search systematically tests various hyperparameter combinations to find the
+         best-performing configuration. This is more efficient than manually tuning each parameter.
 
 ***************
  Prerequisites
