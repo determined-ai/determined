@@ -902,11 +902,15 @@ func (a *apiServer) CompareTrials(ctx context.Context,
 	req *apiv1.CompareTrialsRequest,
 ) (*apiv1.CompareTrialsResponse, error) {
 	trialsList := make([]*apiv1.ComparableTrial, 0, len(req.TrialIds))
+	trialIds := make([]string, 0, len(req.TrialIds))
+	trialIntList := make([]int, 0, len(req.TrialIds))
 	for _, trialID := range req.TrialIds {
-		if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(ctx, int(trialID),
-			experiment.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
-			return nil, errors.Wrapf(err, "failed validate permissions")
-		}
+		trialIds = append(trialIds, strconv.Itoa(int(trialID)))
+		trialIntList = append(trialIntList, int(trialID))
+	}
+	if err := trials.CanGetTrialsExperimentAndCheckCanDoActionBulk(ctx, trialIntList,
+		experiment.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
+		return nil, errors.Wrapf(err, "failed validate permissions")
 	}
 	//nolint:staticcheck // SA1019: backward compatibility
 	metricGroup, err := a.parseMetricGroupArgs(req.MetricType, model.MetricGroup(req.Group))
@@ -916,10 +920,6 @@ func (a *apiServer) CompareTrials(ctx context.Context,
 
 	trialsObjList := []*trialv1.Trial{}
 
-	trialIds := make([]string, 0, len(req.TrialIds))
-	for _, trialID := range req.TrialIds {
-		trialIds = append(trialIds, strconv.Itoa(int(trialID)))
-	}
 	trialIDFilterExpr := strings.Join(trialIds, ",")
 
 	err = a.m.db.QueryProto("get_trials_basic", &trialsObjList, trialIDFilterExpr)

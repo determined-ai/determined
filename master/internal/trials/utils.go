@@ -42,3 +42,30 @@ func CanGetTrialsExperimentAndCheckCanDoAction(ctx context.Context,
 	}
 	return nil
 }
+
+func CanGetTrialsExperimentAndCheckCanDoActionBulk(ctx context.Context,
+	trialIDs []int, actionFunc func(context.Context, model.User, *model.Experiment) error,
+) error {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return err
+	}
+
+	trialNotFound := api.NotFoundErrs("trial", "(multi-trial search)", true)
+	exps, err := db.ExperimentsByTrialID(ctx, trialIDs)
+	if errors.Is(err, db.ErrNotFound) {
+		return trialNotFound
+	} else if err != nil {
+		return err
+	}
+	for _, exp := range exps {
+		if err = experiment.AuthZProvider.Get().CanGetExperiment(ctx, *curUser, exp); err != nil {
+			return authz.SubIfUnauthorized(err, trialNotFound)
+		}
+
+		if err = actionFunc(ctx, *curUser, exp); err != nil {
+			return status.Error(codes.PermissionDenied, err.Error())
+		}
+	}
+	return nil
+}

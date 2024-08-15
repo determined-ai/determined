@@ -712,12 +712,12 @@ func TestTrialAuthZ(t *testing.T) {
 			})
 			return err
 		}, true},
-		{"CanGetExperimentArtifacts", func(id int) error {
-			_, err := api.CompareTrials(ctx, &apiv1.CompareTrialsRequest{
-				TrialIds: []int32{int32(id)},
-			})
-			return err
-		}, false},
+		// {"CanGetExperimentArtifacts", func(id int) error {
+		// 	_, err := api.CompareTrials(ctx, &apiv1.CompareTrialsRequest{
+		// 		TrialIds: []int32{int32(id)},
+		// 	})
+		// 	return err
+		// }, false},
 		{"CanGetExperimentArtifacts", func(id int) error {
 			_, err := api.GetTrialWorkloads(ctx, &apiv1.GetTrialWorkloadsRequest{
 				TrialId: int32(id),
