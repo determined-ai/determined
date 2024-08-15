@@ -2,6 +2,7 @@ import math
 import subprocess
 import tempfile
 import time
+import typing
 
 import pytest
 
@@ -491,9 +492,10 @@ def test_core_api_metrics_tutorial() -> None:
     )
     while True:
         res = bindings.get_GetExperiment(sess, experimentId=exp_id).experiment
-        if math.isclose(res.progress, 1):
-            return
-        assert res is None or 1 - res.progress > 0
+        if res is not None:
+            if math.isclose(typing.cast(float, res.progress), 1):
+                return
+            assert 1 - typing.cast(float, res.progress) > 0
         time.sleep(0.1)
 
 
