@@ -51,7 +51,7 @@ func TestLegacyConfig(t *testing.T) {
                   image:
                     cpu: determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-aaa3750
                     gpu: determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-aaa3750
-                    rocm: determinedai/environments:rocm-5.6-pytorch-1.3-tf-2.10-rocm-mpich-0736b6d
+                    rocm: "determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-622d512
                   ports: null
                 hyperparameters:
                   global_batch_size:
@@ -161,7 +161,7 @@ func TestLegacyConfig(t *testing.T) {
                   image:
                     cpu: determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-067db2b
                     gpu: determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-067db2b
-                    rocm: determinedai/environments:rocm-5.6-pytorch-1.3-tf-2.10-rocm-mpich-0736b6d
+                    rocm: determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-622d512
                   pod_spec:
                     apiVersion: v1
                     kind: Pod
@@ -336,7 +336,7 @@ func TestLegacyConfig(t *testing.T) {
                   image:
                     cpu: determinedai/environments:py-3.7-pytorch-1.7-tf-1.15-cpu-6eceaca
                     gpu: determinedai/environments:cuda-10.2-pytorch-1.7-tf-1.15-gpu-6eceaca
-                    rocm: determinedai/environments:rocm-5.6-pytorch-1.3-tf-2.10-rocm-mpich-0736b6d
+                    rocm: determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-622d512
                   ports: {}
                   registry_auth: null
                 hyperparameters:
