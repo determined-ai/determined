@@ -9,8 +9,9 @@
 .. meta::
    :description: Follow along with this batch inferencing tutorial to see how to leverage Determined and Pachyderm together to streamline complex tasks.
 
-In this guide, we'll help you create a simple batch inferencing project in Pachyderm, train your
-model using a Determined cluster, and then use the model in an inferencing pipeline.
+In this guide, we'll help you create a simple batch inferencing project in :ref:`Pachyderm
+<pachyderm-integration>`, train your model using a Determined cluster, and then use the model in an
+inferencing pipeline.
 
 .. note::
 

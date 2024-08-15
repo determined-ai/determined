@@ -26,9 +26,10 @@ and on-premise installations.
  Viewing Pachyderm Data from Determined
 ****************************************
 
-Determined provides a basic data lineage to your Pachyderm repo. This allows you to view your
-Pachyderm repo when running an experiment or when viewing checkpoints derived from your Pachyderm
-data.
+Determined provides a basic data lineage to your Pachyderm repo. When configured, you will be able
+to select a hyperlink from the Determined WebUI that opens your Pachyderm repo in a separate browser
+tab. This allows you to view your Pachyderm repo when running an experiment or when viewing
+checkpoints derived from your Pachyderm data.
 
 To enable basic data lineage, add an ``integrations`` section to your :ref:`experiment configuration
 <experiment-config-reference>` file. This section should include your Pachyderm repo ``dataset``,
@@ -78,7 +79,7 @@ For example:
    export PACH_PROXY_PORT=8080
 
 After running your training script, go to the Determined WebUI and visit the experiment's
-**Overview** tab. Select the data hyperlink to view your Pachyderm repo.
+**Overview** tab. Select the data hyperlink to go to your Pachyderm repo.
 
    .. image:: /assets/images/webui-data-link.png
       :alt: Determined trial run showing link to Pachyderm data repo
