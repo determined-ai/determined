@@ -7,6 +7,7 @@ import Nameplate from 'hew/Nameplate';
 import Row from 'hew/Row';
 import Spinner from 'hew/Spinner';
 import Tags, { tagsActionHelper } from 'hew/Tags';
+import { Title } from 'hew/Typography';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 
 import ModelDownloadModal from 'components/ModelDownloadModal';
@@ -155,14 +156,14 @@ const ModelVersionHeader: React.FC<Props> = ({
   return (
     <header className={css.base}>
       <div className={css.headerContent}>
-        <div className={css.mainRow}>
-          <div className={css.title}>
+        <Row justifyContent="space-between" wrap>
+          <div className={css.mainRow}>
             <div className={css.versionBox}>V{modelVersion.version}</div>
-            <h1 className={css.versionName}>
-              {modelVersion.name ? modelVersion.name : `Version ${modelVersion.version}`}
-            </h1>
+            <Title truncate={{ tooltip: true }}>
+              {modelVersion.name ?? `Version ${modelVersion.version}`}
+            </Title>
           </div>
-          <div className={css.buttons}>
+          <Row wrap>
             {menu.slice(0, 2).map((item) => (
               <Button
                 danger={item.danger}
@@ -178,8 +179,8 @@ const ModelVersionHeader: React.FC<Props> = ({
                 type="text"
               />
             </Dropdown>
-          </div>
-        </div>
+          </Row>
+        </Row>
         <Glossary content={infoRows} />
       </div>
       <modelDownloadModal.Component modelVersion={modelVersion} />
