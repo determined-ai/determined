@@ -17,8 +17,6 @@ interface Props {
   trial: TrialDetails;
 }
 
-export const EMPTY_MESSAGE = 'No metadata found';
-
 const Metadata: React.FC<Props> = ({ trial }: Props) => {
   const { tokens } = useTheme();
 
