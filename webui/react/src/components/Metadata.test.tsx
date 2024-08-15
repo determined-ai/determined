@@ -86,11 +86,11 @@ vi.mock('utils/browser', () => ({
 
 const user = userEvent.setup();
 
-const setup = (empty?: boolean) => {
+const setup = () => {
   render(
     <UIProvider theme={DefaultTheme.Light}>
       <ThemeProvider>
-        <Metadata trial={empty ? undefined : mockTrial} />,
+        <Metadata trial={mockTrial} />,
       </ThemeProvider>
     </UIProvider>,
   );

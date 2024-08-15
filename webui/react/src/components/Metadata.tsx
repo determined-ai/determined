@@ -14,7 +14,7 @@ import css from './Metadata.module.scss';
 import Section from './Section';
 
 interface Props {
-  trial?: TrialDetails;
+  trial: TrialDetails;
 }
 
 export const EMPTY_MESSAGE = 'No metadata found';
@@ -45,10 +45,10 @@ const Metadata: React.FC<Props> = ({ trial }: Props) => {
   };
 
   const downloadMetadata = () => {
-    downloadText(`${trial?.id}_metadata.json`, [JSON.stringify(trial?.metadata)]);
+    downloadText(`${trial.id}_metadata.json`, [JSON.stringify(trial.metadata)]);
   };
 
-  const treeData = (trial?.metadata && getNodes(trial?.metadata)) ?? [];
+  const treeData = (trial.metadata && getNodes(trial.metadata)) ?? [];
 
   return (
     <Section
