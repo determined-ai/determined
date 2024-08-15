@@ -7,7 +7,7 @@
 .. important::
 
    **Deprecation Notice**: Custom Searcher is deprecated and will be removed in a future release.
-
+   Please see :ref:`Search Methods <_search-methods>` for details on supported preset searchers.
 
 *******************************************
  ``determined.searcher.LocalSearchRunner``
