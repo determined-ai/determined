@@ -181,7 +181,7 @@ trial ID in the checkpoint and use it to distinguish the two types of continues.
    .. literalinclude:: ../../../../examples/tutorials/core_api/2_checkpoints.py
       :language: python
       :start-at: def main
-      :end-at: for batch in range(starting_batch, 100)
+      :end-at: for batch in range(starting_batch, max_length)
 
 #. You can checkpoint your model as frequently as you like. For this exercise, save a checkpoint
    after each training report, and check for a preemption signal after each checkpoint:
