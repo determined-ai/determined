@@ -6,8 +6,8 @@ import pickle
 import random
 import sys
 import uuid
-from typing import Any, Dict, List, Optional, Set
 import warnings
+from typing import Any, Dict, List, Optional, Set
 
 from urllib3 import connectionpool
 
