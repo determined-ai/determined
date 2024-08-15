@@ -489,10 +489,10 @@ def test_core_api_metrics_tutorial() -> None:
         sess, conf.tutorials_path("core_api/1_metrics.yaml"), conf.tutorials_path("core_api"), 1
     )
     while True:
-        exp = bindings.get_GetExperiment(sess, experimentId=exp_id).experiment
-        if exp.progress == 1:
+        res = bindings.get_GetExperiment(sess, experimentId=exp_id).experiment
+        if res.progress == 1:
             return
-        assert exp.progress < 1
+        assert res.progress < 1
         time.sleep(0.1)
 
 
