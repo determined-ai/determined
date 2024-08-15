@@ -1,0 +1,83 @@
+import { render, screen } from '@testing-library/react';
+import { DefaultTheme, UIProvider } from 'hew/Theme';
+import { DndProvider } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
+import { HelmetProvider } from 'react-helmet-async';
+import { BrowserRouter } from 'react-router-dom';
+
+import { ThemeProvider } from 'components/ThemeProvider';
+import { SettingsProvider } from 'hooks/useSettingsProvider';
+
+import GroupManagement from './GroupManagement';
+
+const GROUP_NAME = 'test_group_name';
+const GROUP_MEMBER_COUNT = 5;
+
+const mocks = vi.hoisted(() => {
+  return {
+    canViewGroups: vi.fn(),
+  };
+});
+
+vi.mock('hooks/usePermissions', () => {
+  const usePermissions = vi.fn(() => {
+    return {
+      canViewGroups: mocks.canViewGroups,
+    };
+  });
+  return {
+    default: usePermissions,
+  };
+});
+
+vi.mock('services/api', () => ({
+  getGroups: () =>
+    Promise.resolve({
+      groups: [
+        {
+          group: {
+            groupId: 5,
+            name: GROUP_NAME,
+          },
+          numMembers: GROUP_MEMBER_COUNT,
+        },
+      ],
+      pagination: {
+        endIndex: 10,
+        limit: 10,
+        offset: 0,
+        startIndex: 0,
+        total: 10,
+      },
+    }),
+}));
+
+const setup = () =>
+  render(
+    <UIProvider theme={DefaultTheme.Light}>
+      <ThemeProvider>
+        <DndProvider backend={HTML5Backend}>
+          <SettingsProvider>
+            <HelmetProvider>
+              <BrowserRouter>
+                <GroupManagement onGroupsUpdate={() => {}} />;
+              </BrowserRouter>
+            </HelmetProvider>
+          </SettingsProvider>
+        </DndProvider>
+      </ThemeProvider>
+    </UIProvider>,
+  );
+
+describe('GroupManagement', () => {
+  it('should render with correct group data', async () => {
+    mocks.canViewGroups.mockImplementation(() => true);
+    setup();
+
+    expect(await screen.findByTestId('Group')).toBeInTheDocument();
+    expect(await screen.findByTestId('Members')).toBeInTheDocument();
+
+    expect(await screen.findByText(GROUP_NAME)).toBeInTheDocument();
+    expect(await screen.findByText(GROUP_MEMBER_COUNT)).toBeInTheDocument();
+  });
+});
