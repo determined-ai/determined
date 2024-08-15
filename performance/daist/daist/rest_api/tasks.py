@@ -153,14 +153,16 @@ def read_only_tasks(resources: Resources) -> LocustTasksWithMeta:
         
         tasks.append(LocustGetTaskWithMeta(
             "/api/v1/trials/time-series", test_name="get trials time series large payload",
-            params={
-                "trialIds": [216,218,219,220,221,223,225,226,227,228,229,230,231,232,233,234,235,236,239,240,
-                242,246,247,249,275,276,277,278,279,280,281,282,283,284,285,286,287,288,289,290,291,
-                292,293,294,295,296,297,298,299,300,301,302,303,304,305,306,307,308,309,310,
-                311,312,313,314,315,316,317,318,319,320,321,322,323,324,325,326,327,328,329,330],
-                "startBatches": 0,
-                "metricType": "METRIC_TYPE_UNSPECIFIED"}))
-
+            params={     
+                "trialIds": [8283,8284,8285,8286,8287,8288,8289,8290,8291,8292,8293,8294,8295,
+                             8296,8297,8298,8299,8300,8301,8302,8303,8304,8305,8306,8307,8308,
+                             8309,8310,8311,8312,8313,8314,8315,8316,8317,8318,8319,8320,8321,
+                             8322,8323,8324,8325,8326,8327,8328,8329,8330,8331,8332,8333,8334,
+                             8335,8336,8337,8338,8339,8340,8341,8342,8343,8344,8345,8346,8347,
+                             8348,8349,8350,8351,8352,8353,8354,8355,8356,8357,8358,8359,8360,
+                             8361,8362],
+                "startBatches": 0,          
+                "metricType": "METRIC_TYPE_UNSPECIFIED"}
         tasks.append(LocustGetTaskWithMeta(f"/api/v1/trials/{resources.trial_id}/checkpoints",
                                            test_name="get trial checkpoints"))
         tasks.append(LocustGetTaskWithMeta(f"/api/v1/trials/{resources.trial_id}/profiler/metrics",
