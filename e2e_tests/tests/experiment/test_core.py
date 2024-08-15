@@ -1,3 +1,4 @@
+import math
 import subprocess
 import tempfile
 import time
@@ -490,9 +491,9 @@ def test_core_api_metrics_tutorial() -> None:
     )
     while True:
         res = bindings.get_GetExperiment(sess, experimentId=exp_id).experiment
-        if res.progress == 1:
+        if math.isclose(res.progress, 1):
             return
-        assert res.progress < 1
+        assert res is None or 1 - res.progress > 0
         time.sleep(0.1)
 
 
