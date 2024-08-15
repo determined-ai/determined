@@ -162,7 +162,7 @@ def read_only_tasks(resources: Resources) -> LocustTasksWithMeta:
                              8348,8349,8350,8351,8352,8353,8354,8355,8356,8357,8358,8359,8360,
                              8361,8362],
                 "startBatches": 0,          
-                "metricType": "METRIC_TYPE_UNSPECIFIED"}
+                "metricType": "METRIC_TYPE_UNSPECIFIED"}))
         tasks.append(LocustGetTaskWithMeta(f"/api/v1/trials/{resources.trial_id}/checkpoints",
                                            test_name="get trial checkpoints"))
         tasks.append(LocustGetTaskWithMeta(f"/api/v1/trials/{resources.trial_id}/profiler/metrics",
