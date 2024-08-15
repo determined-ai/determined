@@ -50,11 +50,6 @@ const Metadata: React.FC<Props> = ({ trial }: Props) => {
 
   const treeData = (trial?.metadata && getNodes(trial?.metadata)) ?? [];
 
-  if (treeData.length === 0) {
-    // dont show metadata section when there's no metadata
-    return null;
-  }
-
   return (
     <Section
       options={[
