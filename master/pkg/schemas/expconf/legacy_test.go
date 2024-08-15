@@ -51,7 +51,7 @@ func TestLegacyConfig(t *testing.T) {
                   image:
                     cpu: determinedai/environments:py-3.6.9-pytorch-1.4-tf-1.15-cpu-aaa3750
                     gpu: determinedai/environments:cuda-10.0-pytorch-1.4-tf-1.15-gpu-aaa3750
-                    rocm: "determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-622d512
+                    rocm: determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-622d512
                   ports: null
                 hyperparameters:
                   global_batch_size:
