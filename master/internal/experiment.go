@@ -362,8 +362,7 @@ func (e *internalExperiment) TrialReportProgress(msg experiment.TrialReportProgr
 		progress = e.searcher.Progress()
 	}
 	if progress < 0 || progress > 1 {
-		e.syslog.Errorf("Invalid progress value: %f", progress)
-		return nil
+		return errors.Errorf("Invalid progress value: %f", progress)
 	}
 	if err := e.db.SaveExperimentProgress(e.ID, &progress); err != nil {
 		e.syslog.WithError(err).Error("failed to save experiment progress")

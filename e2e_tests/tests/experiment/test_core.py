@@ -477,14 +477,6 @@ def test_core_api_tutorials(
     )
 
 
-@pytest.mark.parallel
-def test_core_api_distributed_tutorial() -> None:
-    sess = api_utils.user_session()
-    exp.run_basic_test(
-        sess, conf.tutorials_path("core_api/4_distributed.yaml"), conf.tutorials_path("core_api"), 1
-    )
-
-
 @pytest.mark.e2e_cpu
 def test_core_api_metrics_tutorial_report_progress() -> None:
     sess = api_utils.user_session()

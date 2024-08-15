@@ -262,12 +262,23 @@ class TrainContext:
 
     def report_progress(self, progress: float) -> None:
         """
-        ``report_progress()`` reports the training progress to the Determined master so the WebUI
-        can show accurate progress to users.
+        Report training progress to the master.
 
-        The ``progress`` should be the actual progress.
+        This is optional for training, but will be used by the WebUI to render completion status.
+
+        Progress must be reported as a float between 0 and 1.0, where 1.0 is 100% completion. It
+        should represent the current iteration step as a fraction of maximum training steps
+        (i.e.: `report_progress(step_num / max_steps)`).
+
+        Note that for hyperparameter search, progress should be reported through
+        ``SearcherOperation.report_progress()`` in the Searcher API instead.
+
+        Arguments:
+            progress (float): completion progress in the range [0, 1.0].
         """
-        logger.debug("report_progress()")
+        logger.debug(f"report_progres with progress={progress}")
+        if progress < 0 or progress > 1:
+            raise ValueError(f"Progress should be between 0 and 1, not {progress}")
         self._session.post(
             f"/api/v1/trials/{self._trial_id}/progress",
             data=det.util.json_encode({"progress": progress, "is_raw": True}),
@@ -324,6 +335,9 @@ class DummyTrainContext(TrainContext):
 
     def report_early_exit(self, reason: EarlyExitReason) -> None:
         logger.info(f"report_early_exit({reason})")
+
+    def report_progress(self, progress: float) -> None:
+        logger.info(f"report_progres with progress={progress}")
 
     def get_experiment_best_validation(self) -> Optional[float]:
         return None

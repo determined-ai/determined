@@ -14,7 +14,8 @@ import determined as det
 
 def main(core_context, increment_by):
     x = 0
-    for batch in range(100):
+    max_length=100
+    for batch in range(max_length):
         x += increment_by
         steps_completed = batch + 1
         time.sleep(0.1)
@@ -25,7 +26,7 @@ def main(core_context, increment_by):
                 steps_completed=steps_completed, metrics={"x": x}
             )
             # NEW: report training progress.
-            core_context.train.report_progress(batch/100.0)
+            core_context.train.report_progress(steps_completed/float(max_length))
     # NEW: report a "validation" metric at the end.
     core_context.train.report_validation_metrics(steps_completed=steps_completed, metrics={"x": x})
 
