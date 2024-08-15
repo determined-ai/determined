@@ -4,6 +4,11 @@
  DeepSpeed Autotune: User Guide
 ################################
 
+.. important::
+
+   **Deprecation Notice**: DeepSpeed Autotune has been deprecated. This feature will be removed in a future release.
+
+
 .. meta::
    :description: This user guide demonstrates how to optimize DeepSpeed parameters in order to take full advantage of the user's hardware and model.
 

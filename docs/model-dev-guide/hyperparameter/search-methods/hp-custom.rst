@@ -4,6 +4,10 @@
  Custom Search Methods
 #######################
 
+.. important::
+
+   **Deprecation Notice**: Support for all custom search methods have been deprecated and will be removed in a future release.
+
 +----------------------------------------------------------------+
 | API reference                                                  |
 +================================================================+

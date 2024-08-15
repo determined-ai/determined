@@ -4,6 +4,7 @@ import enum
 import json
 import pathlib
 import uuid
+import warnings
 from typing import Any, Dict, List, Optional, Set, Tuple
 
 from determined import experimental
@@ -223,6 +224,14 @@ class SearchMethod:
 
         Do not modify ``searcher_state`` passed into event handlers.
     """
+
+    def __init__(self):
+        warnings.warn(
+            "`SearchMethod` and all custom searchers have been deprecated. "
+            "This feature will be removed in a future release.",
+            FutureWarning,
+            stacklevel=2,
+        )
 
     @abc.abstractmethod
     def initial_operations(self, searcher_state: SearcherState) -> List[Operation]:
