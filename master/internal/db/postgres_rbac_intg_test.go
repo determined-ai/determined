@@ -423,24 +423,24 @@ func TestPermissionMatch(t *testing.T) {
 			rbacv1.PermissionType_PERMISSION_TYPE_SET_RESOURCE_QUOTAS, workspaceID)
 		require.NoError(t, err)
 
-		err = DoesPermissionMatch(ctx, userIDClusterAdmin, &workspaceID,
-			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_RESOURCE_QUOTAS)
+		err = DoesPermissionMatchAll(ctx, userIDClusterAdmin,
+			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_RESOURCE_QUOTAS, workspaceID)
 		require.NoError(t, err)
 
-		err = DoesPermissionMatch(ctx, userIDEditor, &workspaceID,
-			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_RESOURCE_QUOTAS)
+		err = DoesPermissionMatchAll(ctx, userIDEditor,
+			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_RESOURCE_QUOTAS, workspaceID)
 		require.NoError(t, err)
 
-		err = DoesPermissionMatch(ctx, userIDViewer, &workspaceID,
-			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_RESOURCE_QUOTAS)
+		err = DoesPermissionMatchAll(ctx, userIDViewer,
+			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_RESOURCE_QUOTAS, workspaceID)
 		require.NoError(t, err)
 
-		err = DoesPermissionMatch(ctx, userIDEditorProjectRestricted, &workspaceID,
-			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_RESOURCE_QUOTAS)
+		err = DoesPermissionMatchAll(ctx, userIDEditorProjectRestricted,
+			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_RESOURCE_QUOTAS, workspaceID)
 		require.NoError(t, err)
 
-		err = DoesPermissionMatch(ctx, userIDEditorRestricted, &workspaceID,
-			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_RESOURCE_QUOTAS)
+		err = DoesPermissionMatchAll(ctx, userIDEditorRestricted,
+			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_RESOURCE_QUOTAS, workspaceID)
 		require.NoError(t, err)
 	})
 
