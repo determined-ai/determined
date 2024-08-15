@@ -484,7 +484,7 @@ def test_core_api_distributed_tutorial() -> None:
         sess, conf.tutorials_path("core_api/4_distributed.yaml"), conf.tutorials_path("core_api"), 1
     )
 
-
+@pytest.mark.e2e_cpu
 def test_core_api_metrics_tutorial() -> None:
     sess = api_utils.user_session()
     exp_id = exp.run_basic_test(
