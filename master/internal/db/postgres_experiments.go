@@ -521,7 +521,7 @@ WHERE t.id = ?`, trialID).Scan(ctx, &experiment); err != nil {
 	return &experiment, nil
 }
 
-// ExperimenstByTrialID looks up an experiment by a given list of trialIDs, returning
+// ExperimentsByTrialID looks up an experiment by a given list of trialIDs, returning
 // an error if none exists.
 func ExperimentsByTrialID(ctx context.Context, trialIDs []int) ([]*model.Experiment, error) {
 	var experiment []*model.Experiment
