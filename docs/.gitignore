@@ -2,5 +2,3 @@ site/
 examples/
 .doctrees
 attributions.rst
-Makefile.local
-

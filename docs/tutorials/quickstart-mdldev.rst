@@ -210,11 +210,11 @@ schedules to run.
       :align: center
       :alt: Dashboard
 
-   The figure shows two experiments. Experiment **11** has **COMPLETED** and experiment **12** is
+   The figure shows all runs. Experiment **55989** has **COMPLETED** and experiment **55990** is
    still **ACTIVE**. Your experiment number and status can differ depending on how many times you
    run the examples.
 
-#. While an experiment is in the ACTIVE, training state, click the experiment name to see the
+#. While an experiment is in the ACTIVE, training state, click the experiment ID to see the
    **Metrics** graph update for your currently defined metrics:
 
    .. image:: /assets/images/qs04.png
@@ -225,11 +225,6 @@ schedules to run.
    In this example, the graph displays the loss.
 
 #. After the experiment completes, click the experiment name to view the trial page:
-
-   .. image:: /assets/images/qs03.png
-      :width: 704px
-      :align: center
-      :alt: Trial page
 
 Now that you have a fundamental understanding of Determined, follow the next example to learn how to
 scale to distributed training.
@@ -277,11 +272,12 @@ the number of GPUs per machine. You can change the value to match your hardware 
       det -m http://<ipAddress>:8080 experiment create distributed.yaml .
 
 #. To view the WebUI dashboard, enter the cluster address in your browser address bar, accept
-   ``determined`` as the default username, and click **Sign In**. A password is not required.
+   ``determined`` as the default username, and click **Sign In**. You'll need to set a :ref:`strong
+   password <strong-password>`.
 
-#. Click the **Experiment** name to view the experiment’s trial display. The loss curve is similar
-   to the single-GPU experiment in the previous exercise but the time to complete the trial is
-   reduced by about half.
+#. Click the experiment's ID to view the experiment’s trial display. The loss curve is similar to
+   the single-GPU experiment in the previous exercise but the time to complete the trial is reduced
+   by about half.
 
 *********************************
  Run a Hyperparameter Tuning Job
