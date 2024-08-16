@@ -181,11 +181,16 @@ Run the following command to run the experiment:
 
    det e create metrics.yaml .
 
-Open the Determined WebUI again and go to the **Overview** tab.
+Open the Determined WebUI again, select your experiment, and go to the experiment's **Overview**
+tab. The WebUI now displays metrics.
 
-The WebUI now displays metrics. In this step, you learned how to add a few new lines of code in
-order to report training and validation metrics to the Determined master. Next, we’ll modify our
-script to report checkpoints.
+.. image:: /assets/images/api-core-ug-metrics.png
+   :alt: Determined AI WebUI Dashboard showing experiment metrics
+
+|
+
+In this step, you learned how to add a few new lines of code in order to report training and
+validation metrics to the Determined master. Next, we’ll modify our script to report checkpoints.
 
 ***********************
  Step 3: Checkpointing
@@ -290,7 +295,7 @@ Run the following command to run the experiment:
 
    det e create checkpoints.yaml . -f
 
-In the Determined WebUI, nagivate to the **Checkpoints** tab.
+In the Determined WebUI, nagivate to the experiment's **Checkpoints** tab.
 
 Checkpoints are saved and deleted according to the default
 :ref:`experiment-config-checkpoint-policy`. You can modify the checkpoint policy in the experiment
@@ -377,10 +382,15 @@ Run the following command to run the experiment:
 
    det e create adaptive.yaml .
 
-In the Determined WebUI, navigate to the **Hyperparameters** tab.
+In the Determined WebUI, navigate to the experiment's **Hyperparameters** tab.
 
 You should see a graph in the WebUI that displays the various trials initiated by the Adaptive ASHA
 hyperparameter search algorithm.
+
+.. image:: /assets/images/api-core-ug-hp.png
+   :alt: Determined AI WebUI Dashboard showing experiment hyperparameters
+
+|
 
 ******************************
  Step 5: Distributed Training
@@ -503,7 +513,7 @@ Run the following command to run the experiment:
 
    det e create distributed.yaml .
 
-In the Determined WebUI, go to the **Cluster** pane.
+In the Determined WebUI, go to the **Cluster** pane in the left navigation.
 
 You should be able to see multiple slots active corresponding to the value you set for
 ``slots_per_trial`` you set in ``distributed.yaml``, as well as logs appearing from multiple ranks.
