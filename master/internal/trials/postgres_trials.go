@@ -333,6 +333,11 @@ func UpdateUnmanagedExperimentStatesTx(
 				endTime = ptrs.Ptr(time.Now())
 			}
 			exp.EndTime = endTime
+
+			if exp.State == model.CompletedState {
+				columns = append(columns, "progress")
+				exp.Progress = ptrs.Ptr(1.0)
+			}
 		}
 
 		if _, err := tx.NewUpdate().Model(exp).Column(columns...).WherePK().Exec(ctx); err != nil {

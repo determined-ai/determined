@@ -276,7 +276,7 @@ class TrainContext:
         Arguments:
             progress (float): completion progress in the range [0, 1.0].
         """
-        logger.debug(f"report_progres with progress={progress}")
+        logger.debug(f"report_progress with progress={progress}")
         if progress < 0 or progress > 1:
             raise ValueError(f"Progress should be between 0 and 1, not {progress}")
         self._session.post(
@@ -337,7 +337,7 @@ class DummyTrainContext(TrainContext):
         logger.info(f"report_early_exit({reason})")
 
     def report_progress(self, progress: float) -> None:
-        logger.info(f"report_progres with progress={progress}")
+        logger.info(f"report_progress with progress={progress}")
 
     def get_experiment_best_validation(self) -> Optional[float]:
         return None

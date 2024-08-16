@@ -1,8 +1,5 @@
-import math
 import subprocess
 import tempfile
-import time
-import typing
 
 import pytest
 
@@ -477,20 +474,12 @@ def test_core_api_tutorials(
     )
 
 
-@pytest.mark.e2e_cpu
-def test_core_api_metrics_tutorial_report_progress() -> None:
+@pytest.mark.parallel
+def test_core_api_distributed_tutorial() -> None:
     sess = api_utils.user_session()
-    exp_id = exp.create_experiment(
-        sess, conf.tutorials_path("core_api/1_metrics.yaml"), conf.tutorials_path("core_api")
+    exp.run_basic_test(
+        sess, conf.tutorials_path("core_api/4_distributed.yaml"), conf.tutorials_path("core_api"), 1
     )
-
-    while True:
-        res = bindings.get_GetExperiment(sess, experimentId=exp_id).experiment
-        if res is not None:
-            if math.isclose(typing.cast(float, res.progress), 1):
-                return
-            assert 1 - typing.cast(float, res.progress) > 0
-        time.sleep(1)
 
 
 @pytest.mark.e2e_cpu
