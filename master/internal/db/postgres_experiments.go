@@ -809,7 +809,7 @@ EXISTS(
 // SaveExperimentProgress stores the progress for an experiment in the database.
 func (db *PgDB) SaveExperimentProgress(id int, progress *float64) error {
 	if progress != nil && (*progress < 0 || *progress > 1) {
-		return errors.Errorf("Invalid progress value: %f. Progress value should be between 0 and 1.", *progress)
+		return errors.Errorf("invalid progress value: %f. Progress value should be between 0 and 1", *progress)
 	}
 	res, err := db.sql.Exec(`UPDATE experiments SET progress = $1 WHERE id = $2`, progress, id)
 	if err != nil {
