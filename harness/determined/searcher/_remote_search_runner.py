@@ -2,6 +2,7 @@ import logging
 import os
 import pathlib
 import pickle
+import warnings
 from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
 
 import determined as det
@@ -21,6 +22,13 @@ class RemoteSearchRunner(searcher.SearchRunner):
     """
 
     def __init__(self, search_method: searcher.SearchMethod, context: det.core.Context) -> None:
+        warnings.warn(
+            "`RemoteSearchRunner` and all custom searchers have been deprecated. "
+            "This feature will be removed in a future release. Consider configuring a preset "
+            "searcher instead (see Determined docs for details).",
+            FutureWarning,
+            stacklevel=2,
+        )
         super().__init__(search_method)
         self.context = context
         info = det.get_cluster_info()

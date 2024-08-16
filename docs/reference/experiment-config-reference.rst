@@ -868,9 +868,7 @@ points in the grid for this hyperparameter. Grid points are evenly spaced betwee
 The ``searcher`` section defines how the experiment's hyperparameter space will be explored. To run
 an experiment that trains a single trial with fixed hyperparameters, specify the ``single`` searcher
 and specify constant values for the model's hyperparameters. Otherwise, Determined supports three
-different hyperparameter search algorithms: ``adaptive_asha``, ``random``, and ``grid``. To define
-your own hyperparameter search algorithm, specify the ``custom`` searcher. For more information
-about custom search algorithms, see :ref:`topic-guides_hp-tuning-det_custom`.
+different hyperparameter search algorithms: ``adaptive_asha``, ``random``, and ``grid``.
 
 The name of the hyperparameter search algorithm to use is configured via the ``name`` field; the
 remaining fields configure the behavior of the searcher and depend on the searcher being used. For

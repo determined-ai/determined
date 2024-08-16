@@ -4,6 +4,12 @@
  Custom Search Methods
 #######################
 
+.. important::
+
+   **Deprecation Notice**: Support for all custom search methods have been deprecated and will be
+   removed in a future release. Please see :ref:`search-methods` for details on supported preset
+   searchers.
+
 +----------------------------------------------------------------+
 | API reference                                                  |
 +================================================================+
