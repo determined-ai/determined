@@ -23,21 +23,22 @@ const (
 
 // Workspace is the bun model of a workspace.
 type Workspace struct {
-	bun.BaseModel           `bun:"table:workspaces"`
-	ID                      int                              `bun:"id,pk,autoincrement"`
-	Name                    string                           `bun:"name"`
-	Archived                bool                             `bun:"archived"`
-	CreatedAt               time.Time                        `bun:"created_at,scanonly"`
-	UserID                  UserID                           `bun:"user_id"`
-	Immutable               bool                             `bun:"immutable"`
-	State                   *WorkspaceState                  `bun:"state"`
-	AgentUID                *int32                           `bun:"uid"`
-	AgentUser               *string                          `bun:"user_"`
-	AgentGID                *int32                           `bun:"gid"`
-	AgentGroup              *string                          `bun:"group_"`
-	CheckpointStorageConfig *expconf.CheckpointStorageConfig `bun:"checkpoint_storage_config"`
-	DefaultComputePool      string                           `bun:"default_compute_pool"`
-	DefaultAuxPool          string                           `bun:"default_aux_pool"`
+	bun.BaseModel            `bun:"table:workspaces"`
+	ID                       int                              `bun:"id,pk,autoincrement"`
+	Name                     string                           `bun:"name"`
+	Archived                 bool                             `bun:"archived"`
+	CreatedAt                time.Time                        `bun:"created_at,scanonly"`
+	UserID                   UserID                           `bun:"user_id"`
+	Immutable                bool                             `bun:"immutable"`
+	State                    *WorkspaceState                  `bun:"state"`
+	AgentUID                 *int32                           `bun:"uid"`
+	AgentUser                *string                          `bun:"user_"`
+	AgentGID                 *int32                           `bun:"gid"`
+	AgentGroup               *string                          `bun:"group_"`
+	CheckpointStorageConfig  *expconf.CheckpointStorageConfig `bun:"checkpoint_storage_config"`
+	DefaultComputePool       string                           `bun:"default_compute_pool"`
+	DefaultAuxPool           string                           `bun:"default_aux_pool"`
+	AutoCreatedNamespaceName *string                          `bun:"auto_created_namespace_name"`
 }
 
 // ToProto converts a bun model of a workspace to a proto object.

@@ -115,6 +115,7 @@ func setupAPITest(t *testing.T, pgdb *db.PgDB,
 				ResourceConfig:        *config.DefaultResourceConfig(),
 			},
 			taskSpec: &tasks.TaskSpec{SSHRsaSize: 1024},
+			allRms:   map[string]rm.ResourceManager{"": mockRM},
 		},
 	}
 	config.GetMasterConfig().Security.AuthZ = config.AuthZConfig{Type: "basic"}
