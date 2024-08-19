@@ -231,3 +231,17 @@ def managed_cluster_multi_resource_pools(
     managed_cluster_session_multi_resource_pools.log_marker(
         f"pytest [{utils.now_ts()}] {nodeid} teardown\n"
     )
+
+
+@pytest.fixture
+def restartable_managed_cluster_multi_resource_pools(
+    managed_cluster_multi_resource_pools: ManagedCluster,
+) -> Iterator[ManagedCluster]:
+    managed_cluster_multi_resource_pools.wait_for_agent_ok(20)
+    try:
+        yield managed_cluster_multi_resource_pools
+        managed_cluster_multi_resource_pools.wait_for_agent_ok(20)
+    except Exception:
+        managed_cluster_multi_resource_pools.restart_master()
+        managed_cluster_multi_resource_pools.restart_agent()
+        raise
