@@ -2,7 +2,9 @@ package trials
 
 import (
 	"context"
+	"encoding/json"
 	"strconv"
+	"strings"
 
 	"github.com/pkg/errors"
 	"google.golang.org/grpc/codes"
@@ -53,7 +55,11 @@ func CanGetTrialsExperimentAndCheckCanDoActionBulk(ctx context.Context,
 		return err
 	}
 
-	trialNotFound := api.NotFoundErrs("trial", "(multi-trial search)", true)
+	idString, err := json.Marshal(trialIDs)
+	if err != nil {
+		return err
+	}
+	trialNotFound := api.NotFoundErrs("trial", strings.Trim(string(idString), "[]"), true)
 	exps, err := db.ExperimentsByTrialID(ctx, trialIDs)
 	if errors.Is(err, db.ErrNotFound) {
 		return trialNotFound
