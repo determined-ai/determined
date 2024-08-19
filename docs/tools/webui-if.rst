@@ -5,10 +5,11 @@
 #######################
 
 .. meta::
-   :description: Discover how to create and monitor experiment progress, organize your experiments into projects and workspaces, start a Jupyter Notebook, and more using the Determined WebUI.
+   :description: Discover how to create and monitor experiment progress, track experiments, evaluate model performance, and organize your experiments into projects and workspaces using the Determined WebUI.
 
-You can use the WebUI to create and monitor experiment progress, organize your experiments into
-projects and workspaces, start a Jupyter Notebook, and more.
+You can use the WebUI to create and monitor experiment progress, track experiments, evaluate model
+performance, organize your experiments into projects and workspaces, start a Jupyter Notebook, and
+more.
 
 *****************
  Getting Started
@@ -32,6 +33,10 @@ If you have an existing experiment or trial, you can use the WebUI to create an 
 need to use the CLI to create a new experiment. To learn how to create a new experiment, visit
 :ref:`experiments`.
 
+After creating an experiment, you can use the WebUI to track its progress in real-time. The WebUI
+allows you to monitor metrics, analyze results, and maintain full oversight of your experiments,
+providing a clear and detailed view of the entire process.
+
 **********************************************************
  Organizing Your Experiments into Projects and Workspaces
 **********************************************************
@@ -46,36 +51,32 @@ Projects and Workspaces, visit :ref:`workspaces`.
 Many experiment configuration settings can be performed via the WebUI. To learn more about
 configuring an experiment via a YAML file, visit :ref:`experiment-config-reference`.
 
-***************************************
- Evaluating the Performance of a Model
-***************************************
+**************************************************
+ Evaluating Model Performance and Experiment Runs
+**************************************************
 
-You can access training and validation performance information via the WebUI. To see model
-evaluation in action, follow the steps described in the :ref:`pytorch-mnist-tutorial`.
+You can access training and validation performance information via the WebUI to evaluate your model.
+To see model evaluation in action, follow the steps described in the :ref:`pytorch-mnist-tutorial`.
 
-******************************************
- Evaluating and Comparing Experiment Runs
-******************************************
+You can also compare single trials with various datasets, parameters, and settings so that you can
+choose the best model. This simplified flat trials view lets you perform a quick metric evaluation
+by selecting two or more runs to compare. This feature can be toggled on or off in :ref:`user
+settings <web-ui-user-settings>`.
 
-You can compare single trials with various datasets, parameters and settings so that you can choose
-the best model. This simplified flat trials view lets you perform a quick metric evaluation by
-selecting two or more runs to compare. To do this, select two or more runs and then select
-**Compare**:
+To start, select two or more runs and then select **Compare**:
 
 .. image:: /assets/images/webui-runs.png
    :alt: WebUI showing list of runs for comparison
 
 |
 
-In the compare view, choose a tab for comparing metrics, hyperparameters and other details of the
+In the compare view, choose a tab for comparing metrics, hyperparameters, and other details of the
 runs you selected.
 
 .. image:: /assets/images/webui-runs-compared.png
    :alt: WebUI showing selected runs with hyperparameters compared
 
 |
-
-This feature can be toggled on or off in :ref:`user settings <web-ui-user-settings>`.
 
 *************************************
  Adding Models to the Model Registry
