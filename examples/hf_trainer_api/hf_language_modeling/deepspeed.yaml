@@ -6,7 +6,7 @@ environment:
     # You may need to modify this to match your network configuration.
     - NCCL_SOCKET_IFNAME=ens,eth,ib
   image:
-    gpu: determinedai/pytorch-ngc-dev:5432424
+    gpu: determinedai/pytorch-ngc-dev:0736b6d
 resources:
   slots_per_trial: 2
 searcher:
