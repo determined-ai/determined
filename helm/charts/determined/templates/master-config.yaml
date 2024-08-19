@@ -272,7 +272,7 @@ stringData:
          cpu: {{ .Values.defaultImages.cpuImage | quote }}
          gpu: {{ .Values.defaultImages.gpuImage | quote }}
          rocm: {{ .Values.defaultImages.rocmImage | quote }}
-    {{ end }}
+    {{- end }}
 
     {{- if .Values.telemetry }}
     telemetry:
