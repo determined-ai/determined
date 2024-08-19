@@ -266,7 +266,7 @@ stringData:
       {{- if .Values.taskContainerDefaults.forcePullImage }}
       force_pull_image: {{ .Values.taskContainerDefaults.forcePullImage }}
       {{- end }}
-    {{ else }}
+    {{- else }}
     task_container_defaults:
       image:
          cpu: {{ .Values.defaultImages.cpuImage | quote }}
