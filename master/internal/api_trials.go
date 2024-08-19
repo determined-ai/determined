@@ -1393,6 +1393,7 @@ func (a *apiServer) ReportTrialProgress(
 		experiment.AuthZProvider.Get().CanEditExperiment); err != nil {
 		return nil, err
 	}
+
 	eID, rID, err := a.m.db.TrialExperimentAndRequestID(int(req.TrialId))
 	if err != nil {
 		return nil, err
@@ -1400,12 +1401,17 @@ func (a *apiServer) ReportTrialProgress(
 
 	e, ok := experiment.ExperimentRegistry.Load(eID)
 	if !ok {
-		return nil, api.NotFoundErrs("experiment", strconv.Itoa(eID), true)
+		// Unmanaged experiment is not included in ExperimentRegistry
+		if err := a.m.db.SaveExperimentProgress(eID, &req.Progress); err != nil {
+			return nil, err
+		}
+		return &apiv1.ReportTrialProgressResponse{}, nil
 	}
 
 	msg := experiment.TrialReportProgress{
 		RequestID: rID,
 		Progress:  searcher.PartialUnits(req.Progress),
+		IsRaw:     req.IsRaw,
 	}
 	if err := e.TrialReportProgress(msg); err != nil {
 		return nil, err

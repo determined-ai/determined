@@ -9040,6 +9040,31 @@ export interface V1ReportTrialMetricsRequest {
 export interface V1ReportTrialMetricsResponse {
 }
 /**
+ * For bookkeeping, updates the progress of the trial as a percent torwards the training length requested of it by the searcher.
+ * @export
+ * @interface V1ReportTrialProgressRequest
+ */
+export interface V1ReportTrialProgressRequest {
+    /**
+     * The id of the trial.
+     * @type {number}
+     * @memberof V1ReportTrialProgressRequest
+     */
+    trialId: number;
+    /**
+     * Total units completed by the trial, in terms of the unit used to configure the searcher.
+     * @type {number}
+     * @memberof V1ReportTrialProgressRequest
+     */
+    progress: number;
+    /**
+     * Indicator for if the passed progress is raw and we want to skip any calculation by searcher. Default to false.
+     * @type {boolean}
+     * @memberof V1ReportTrialProgressRequest
+     */
+    isRaw?: boolean;
+}
+/**
  * 
  * @export
  * @interface V1ReportTrialProgressResponse
@@ -21907,11 +21932,11 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * 
          * @summary For bookkeeping, updates the progress towards to current requested searcher training length.
          * @param {number} trialId The id of the trial.
-         * @param {number} body Total units completed by the trial, in terms of the unit used to configure the searcher.
+         * @param {V1ReportTrialProgressRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        reportTrialProgress(trialId: number, body: number, options: any = {}): FetchArgs {
+        reportTrialProgress(trialId: number, body: V1ReportTrialProgressRequest, options: any = {}): FetchArgs {
             // verify required parameter 'trialId' is not null or undefined
             if (trialId === null || trialId === undefined) {
                 throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling reportTrialProgress.');
@@ -24008,11 +24033,11 @@ export const InternalApiFp = function (configuration?: Configuration) {
          * 
          * @summary For bookkeeping, updates the progress towards to current requested searcher training length.
          * @param {number} trialId The id of the trial.
-         * @param {number} body Total units completed by the trial, in terms of the unit used to configure the searcher.
+         * @param {V1ReportTrialProgressRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        reportTrialProgress(trialId: number, body: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ReportTrialProgressResponse> {
+        reportTrialProgress(trialId: number, body: V1ReportTrialProgressRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1ReportTrialProgressResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).reportTrialProgress(trialId, body, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
@@ -25086,11 +25111,11 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * 
          * @summary For bookkeeping, updates the progress towards to current requested searcher training length.
          * @param {number} trialId The id of the trial.
-         * @param {number} body Total units completed by the trial, in terms of the unit used to configure the searcher.
+         * @param {V1ReportTrialProgressRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        reportTrialProgress(trialId: number, body: number, options?: any) {
+        reportTrialProgress(trialId: number, body: V1ReportTrialProgressRequest, options?: any) {
             return InternalApiFp(configuration).reportTrialProgress(trialId, body, options)(fetch, basePath);
         },
         /**
@@ -26146,12 +26171,12 @@ export class InternalApi extends BaseAPI {
      * 
      * @summary For bookkeeping, updates the progress towards to current requested searcher training length.
      * @param {number} trialId The id of the trial.
-     * @param {number} body Total units completed by the trial, in terms of the unit used to configure the searcher.
+     * @param {V1ReportTrialProgressRequest} body
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public reportTrialProgress(trialId: number, body: number, options?: any) {
+    public reportTrialProgress(trialId: number, body: V1ReportTrialProgressRequest, options?: any) {
         return InternalApiFp(this.configuration).reportTrialProgress(trialId, body, options)(this.fetch, this.basePath)
     }
     

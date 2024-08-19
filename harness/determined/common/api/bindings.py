@@ -12485,6 +12485,43 @@ class v1ReportTrialMetricsRequest(Printable):
         }
         return out
 
+class v1ReportTrialProgressRequest(Printable):
+    """For bookkeeping, updates the progress of the trial as a percent torwards
+    the training length requested of it by the searcher.
+    """
+    isRaw: "typing.Optional[bool]" = None
+
+    def __init__(
+        self,
+        *,
+        progress: float,
+        trialId: int,
+        isRaw: "typing.Union[bool, None, Unset]" = _unset,
+    ):
+        self.progress = progress
+        self.trialId = trialId
+        if not isinstance(isRaw, Unset):
+            self.isRaw = isRaw
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1ReportTrialProgressRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "progress": float(obj["progress"]),
+            "trialId": obj["trialId"],
+        }
+        if "isRaw" in obj:
+            kwargs["isRaw"] = obj["isRaw"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "progress": dump_float(self.progress),
+            "trialId": self.trialId,
+        }
+        if not omit_unset or "isRaw" in vars(self):
+            out["isRaw"] = self.isRaw
+        return out
+
 class v1ReportTrialSourceInfoRequest(Printable):
 
     def __init__(
@@ -23426,14 +23463,12 @@ def post_ReportTrialMetrics(
 def post_ReportTrialProgress(
     session: "api.BaseSession",
     *,
-    body: float,
+    body: "v1ReportTrialProgressRequest",
     trialId: int,
 ) -> None:
     """For bookkeeping, updates the progress towards to current requested searcher
     training length.
 
-    - body: Total units completed by the trial, in terms of the unit used to configure
-the searcher.
     - trialId: The id of the trial.
     """
     _params = None
@@ -23441,7 +23476,7 @@ the searcher.
         method="POST",
         path=f"/api/v1/trials/{trialId}/progress",
         params=_params,
-        json=dump_float(body),
+        json=body.to_json(True),
         data=None,
         headers=None,
         timeout=None,
