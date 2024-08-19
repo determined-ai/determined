@@ -16,4 +16,4 @@ release:
   # the "include" functionality is only in the pro version
   header: |
     ## Release Notes
-    [{{ .Tag }}](https://github.com/determined-ai/determined/blob/{{ .Tag }}/docs/release-notes.rst)
+    [{{ .Tag }}](https://github.com/determined-ai/determined-dryrun/blob/{{ .Tag }}/docs/release-notes.rst)

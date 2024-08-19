@@ -31,7 +31,7 @@ release-gh-dryrun: export GORELEASER_PREVIOUS_TAG := $(shell git tag --sort=-cre
 release-gh-dryrun:
 	go install github.com/goreleaser/goreleaser@v1.14.1
 	git clean -df
-	goreleaser --rm-dist
+	goreleaser --rm-dist -f ./.goreleaser_dryrun.yml
 
 .PHONY: release-gh-ee
 release-gh-ee: export GORELEASER_CURRENT_TAG := $(VERSION)-ee
