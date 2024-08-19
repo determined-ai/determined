@@ -270,6 +270,36 @@ func TestExperimentByIDs(t *testing.T) {
 	}
 }
 
+func TestExperimentsByTrialID(t *testing.T) {
+	ctx := context.Background()
+
+	require.NoError(t, etc.SetRootPath(RootFromDB))
+	db, closeDB := MustResolveTestPostgres(t)
+	defer closeDB()
+	MustMigrateTestPostgres(t, db, MigrationsFromDB)
+	user := RequireMockUser(t, db)
+
+	externalID := uuid.New().String()
+	exp1 := RequireMockExperimentParams(t, db, user, MockExperimentParams{
+		ExternalExperimentID: &externalID,
+	}, DefaultProjectID)
+	trial1, _ := RequireMockTrial(t, db, exp1)
+	trial2, _ := RequireMockTrial(t, db, exp1)
+
+	externalID = uuid.New().String()
+	exp2 := RequireMockExperimentParams(t, db, user, MockExperimentParams{
+		ExternalExperimentID: &externalID,
+	}, DefaultProjectID)
+	trial3, _ := RequireMockTrial(t, db, exp2)
+
+	actual, err := ExperimentsByTrialID(ctx, []int{trial1.ID, trial2.ID, trial3.ID})
+	require.NoError(t, err)
+	require.ElementsMatch(t, []int{exp1.ID, exp2.ID}, []int{actual[0].ID, actual[1].ID})
+
+	_, err = ExperimentsByTrialID(ctx, []int{-999})
+	require.ErrorIs(t, err, ErrNotFound)
+}
+
 func TestTerminateExperimentInRestart(t *testing.T) {
 	ctx := context.Background()
 

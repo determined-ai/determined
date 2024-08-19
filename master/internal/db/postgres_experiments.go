@@ -527,7 +527,7 @@ func ExperimentsByTrialID(ctx context.Context, trialIDs []int) ([]*model.Experim
 	var experiment []*model.Experiment
 
 	if err := Bun().NewRaw(`
-SELECT e.id, e.state, e.config, e.start_time, e.end_time, e.archived,
+SELECT DISTINCT e.id, e.state, e.config, e.start_time, e.end_time, e.archived,
        e.owner_id, e.notes, e.job_id, u.username as username, e.project_id, unmanaged, external_experiment_id
 FROM experiments e
 JOIN trials t ON e.id = t.experiment_id
