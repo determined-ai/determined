@@ -5742,7 +5742,7 @@ workflows:
           matrix:
             parameters:
               path: ["harness", "model_hub"]
-              dryrun: true
+              dryrun: [true]
           context: determined-production
           filters: *rc-filters
           requires:
