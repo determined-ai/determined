@@ -5753,7 +5753,7 @@ workflows:
           matrix:
             parameters:
               path: ["harness", "model_hub"]
-              dryrun: true
+              dryrun: [true]
           context: determined-production
           filters: *release-filters
           requires:
@@ -5762,9 +5762,6 @@ workflows:
       - publish-docs:
           dryrun: true
           name: publish-docs-rc
-          matrix:
-            parameters:
-              dryrun: [true]
           requires:
             - build-docs
           context: determined-production
@@ -5774,6 +5771,12 @@ workflows:
           dryrun: true
           requires:
             - build-docs
+          context: determined-production
+          filters: *release-filters
+
+      - publish-helm-gh:
+          requires:
+            - build-helm
           context: determined-production
           filters: *release-filters
 
