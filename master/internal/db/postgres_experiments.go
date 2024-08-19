@@ -536,6 +536,9 @@ WHERE t.id IN (?)`, bun.In(trialIDs)).Scan(ctx, &experiment); err != nil {
 		return nil, MatchSentinelError(err)
 	}
 
+	if len(experiment) == 0 {
+		return nil, ErrNotFound
+	}
 	return experiment, nil
 }
 
