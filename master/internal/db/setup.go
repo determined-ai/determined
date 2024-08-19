@@ -87,7 +87,7 @@ func checkPostgresVersion(db *PgDB) error {
 	// TODO (CM-443): Bump this to 12 once Postgres 12 has reached EOL.
 	if version <= "11" {
 		log.Errorf(
-			"Postgres %s has reached it's end of life. Upgrading to a supported version is strongly recommended.",
+			"Postgres %s has reached its end of life. Upgrading to a supported version is strongly recommended.",
 			version,
 		)
 	} else if version == "12" {
