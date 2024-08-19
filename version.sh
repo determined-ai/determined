@@ -36,20 +36,39 @@
 # So, in our diagram, if run from B, C, D, E, F, I, J, or K, the script will return
 # 1.1.0. If run from L, M, N, or O, it will return 1.2.0. And so on.
 
+OPTSTRING=":t"
+
+# Options parsing
+# -t will output the full git tag, necessary for some build steps. The default
+# case strips the leading 'v'.
+while getopts ${OPTSTRING} opt; do
+    case ${opt} in
+        t)
+            TAG_OUTPUT=1
+            ;;
+        ?)
+            echo "Invalid option: -${OPTARG}."
+            exit 1
+            ;;
+    esac
+done
+
 # Set VERSION to CIRCLE_TAG in case we're running in CircleCI. This makes it
 # easier to avoid fiddling with environment variables there.
-VERSION=${CIRCLE_TAG}
+if [[ ! -z ${CIRCLE_TAG} ]]; then
+	VERSION=${CIRCLE_TAG}
+fi
 
 # If VERSION is unset or the empty string, "". This will be the default case for
 # local builds.
-if [ -z ${VERSION} ]; then
+if [[ -z ${VERSION} ]]; then
     # Check if this branch has any tags (typically, only release branches will
     # have tags).
     MAYBE_TAG=$(git describe --tags --abbrev=0 2>/dev/null)
     SHA=$(git rev-parse --short HEAD)
 
     # No tag on current branch.
-    if [ -z ${MAYBE_TAG} ]; then
+    if [[ -z ${MAYBE_TAG} ]]; then
         # Use git to find the merge base between the current branch and main,
         # and then find the closest tag behind that, using --no-contains. Then,
         # use grep to remove some special cases, namely: old Determined version
@@ -72,15 +91,26 @@ if [ -z ${VERSION} ]; then
     # Munge the tag into the form we want. Note: we always append a SHA hash,
     # even if we're on the commit with the tag. This is partially because I feel
     # like it will be more consistent and result in fewer surprises, but also it
-    # might help indicate that this is a local version. Additionally, use shell
-    # parameter expansion to remove the initial 'v' from the final version
-    # string.
-    echo -n "${MAYBE_TAG#v}+${SHA}"
+    # might help indicate that this is a local version. Some build steps expect
+    # the version string to be the full tag, so check for a -t flag and return
+    # the full tag version string if it's set. Otherwise, return the version
+    # string without the 'v'.
+    if [[ -z ${TAG_OUTPUT} ]]; then
+        echo -n "${MAYBE_TAG#v}+${SHA}"
+    else
+        echo -n "${MAYBE_TAG}+${SHA}"
+    fi
 else
     # Use existing VERSION, which is much easier. This should be the default
     # case for CI, as VERSION will already be set. We also remove the 'v' from
     # the tag for the version string, as that is what the current CI
-    # functionality expects. Finally, use shell parameter expansion to remove
-    # the initial 'v' prefix to get the bare version string.
-    echo -n "${VERSION#v}"
+    # functionality expects. Some build steps expect
+    # the version string to be the full tag, so check for a -t flag and return
+    # the full tag version string if it's set. Otherwise, return the version
+    # string without the 'v'.
+    if [[ -z ${TAG_OUTPUT} ]]; then
+        echo -n "${VERSION#v}"
+    else
+        echo -n "${VERSION}"
+    fi
 fi
