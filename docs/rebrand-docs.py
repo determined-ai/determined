@@ -74,13 +74,12 @@ class Formatters(OrigFormatters):
         exclude_types = (docutils.nodes.literal_block, docutils.nodes.literal)
         if isinstance(node.parent, exclude_types) or isinstance(node.parent.parent, exclude_types):
             yield node.astext()
-        # The rawsource attribute tends not to be set for text nodes not directly under paragraphs.
         elif isinstance(node.parent, docutils.nodes.paragraph):
             # Any instance of "\ " disappears in the parsing. It may have an effect if it separates
             # this text from adjacent inline markup, but in that case it will be replaced by the
             # wrapping algorithm. Other backslashes may be unnecessary (e.g., "a\` b" or "a\b"), but
             # finding all of those is future work.
-            yield rewrite_text(node.rawsource.replace(r"\ ", ""))
+            yield rewrite_text(node.replace(r"\ ", ""))
         else:
             yield rewrite_text(node.astext())
 
