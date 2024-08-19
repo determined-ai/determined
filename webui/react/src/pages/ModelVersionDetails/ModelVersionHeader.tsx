@@ -160,7 +160,7 @@ const ModelVersionHeader: React.FC<Props> = ({
           <div className={css.mainRow}>
             <div className={css.versionBox}>V{modelVersion.version}</div>
             <Title truncate={{ tooltip: true }}>
-              {modelVersion.name ?? `Version ${modelVersion.version}`}
+              {modelVersion.name || `Version ${modelVersion.version}`}
             </Title>
           </div>
           <Row wrap>
