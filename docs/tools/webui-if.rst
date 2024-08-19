@@ -60,8 +60,8 @@ To see model evaluation in action, follow the steps described in the :ref:`pytor
 
 You can also compare single trials with various datasets, parameters, and settings so that you can
 choose the best model. This simplified flat trials view lets you perform a quick metric evaluation
-by selecting two or more runs to compare. This feature can be toggled on or off in :ref:`user settings <web-ui-user-settings>`.
-
+by selecting two or more runs to compare. This feature can be toggled on or off in :ref:`user
+settings <web-ui-user-settings>`.
 
 To start, select two or more runs and then select **Compare**:
 
