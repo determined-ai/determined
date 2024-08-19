@@ -262,7 +262,6 @@ stringData:
         {{- else }}
          rocm: {{ .Values.defaultImages.rocmImage | quote }}
         {{- end }}
-      {{- end }}
       {{- if .Values.taskContainerDefaults.forcePullImage }}
       force_pull_image: {{ .Values.taskContainerDefaults.forcePullImage }}
       {{- end }}
