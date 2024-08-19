@@ -43,6 +43,10 @@ stages:
             pool_name: default
             provider: null
             task_container_defaults: null
+          - pool_name: pool1
+            max_slots: 8
+            scheduler:
+              type: priority
         scim:
           enabled: true
           auth:
@@ -83,7 +87,7 @@ stages:
         container_auto_remove_disabled: true
 
   - agent:
-      name: agent10  # Copy of agent1, but with different slots.
+      name: agent10 # Copy of agent1, but with different resource pool.
       config_file:
         master_host: 127.0.0.1
         master_port: 8081
@@ -92,4 +96,15 @@ stages:
         agent_reconnect_attempts: 24
         agent_reconnect_backoff: 5
         container_auto_remove_disabled: true
-        artificial_slots: 4
+        resource_pool: pool1
+  
+  - agent:
+      name: agent20 # Copy of agent1, but with empty(default) resource pool.
+      config_file:
+        master_host: 127.0.0.1
+        master_port: 8081
+        agent_id: agent1
+        container_master_host: $DOCKER_LOCALHOST
+        agent_reconnect_attempts: 24
+        agent_reconnect_backoff: 5
+        container_auto_remove_disabled: true
