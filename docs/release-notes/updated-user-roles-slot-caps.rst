@@ -2,6 +2,6 @@
 
 **New Features**
 
--  WebUI: Allow users with roles Viewer, Editor (and variations), Gen AI and Workspace Admin to be
-   able to view resource quotas for each workspace in the WebUI when RBAC is enabled. When RBAC is
-   disabled, all users can view resource quotas.
+-  WebUI: In the enterprise edition of Determined, give users with Viewer, Editor, GenAI, and
+   Workspace Admin permissions the ability to view resource quotas for each workspace in the WebUI
+   when RBAC is enabled. If RBAC is disabled, all users have access to resource quota information.
