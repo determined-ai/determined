@@ -1989,6 +1989,9 @@ jobs:
       ee:
         type: boolean
         default: false
+      dryrun:
+        type: boolean
+        default: false
     docker:
       - image: <<pipeline.parameters.docker-image>>
         environment:
@@ -5783,6 +5786,7 @@ workflows:
           filters: *release-filters
 
       - publish-helm-gh:
+          dryrun: true
           requires:
             - build-helm
           context: determined-production
