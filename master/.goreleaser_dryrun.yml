@@ -1,0 +1,199 @@
+project_name: determined-master-dryrun
+
+before:
+  hooks:
+    - make pre-package
+
+snapshot:
+  name_template: "{{ .Tag }}"
+
+builds:
+  - main: ./cmd/determined-master
+    ldflags:
+      - -X github.com/determined-ai/determined/master/version.Version={{.Env.VERSION}}
+      - -X github.com/determined-ai/determined/master/internal/config.DefaultSegmentMasterKey={{.Env.DET_SEGMENT_MASTER_KEY}}
+      - -X github.com/determined-ai/determined/master/internal/config.DefaultSegmentWebUIKey={{.Env.DET_SEGMENT_WEBUI_KEY}}
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+  - main: ./cmd/determined-gotmpl
+    id: determined-gotmpl
+    binary: determined-gotmpl
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+
+archives:
+  - wrap_in_directory: "true"
+    rlcp: true
+    files:
+      - src: "packaging/master.yaml"
+        dst: "etc/determined/"
+        strip_parent: true
+
+      - src: "packaging/determined-master.service"
+        dst: "lib/systemd/system/"
+        strip_parent: true
+      - src: "packaging/determined-master.socket"
+        dst: "lib/systemd/system/"
+        strip_parent: true
+      - src: "packaging/LICENSE"
+        strip_parent: true
+      - src: "static/**/*"
+        dst: "share/static"
+      - src: "build/**/*"
+        dst: "share"
+
+brews:
+  - name: determined-master
+    tap:
+      owner: determined-ai
+      name: homebrew-determined-dryrun
+    url_template: "https://github.com/determined-ai/determined-dryrun/releases/download/{{ .Tag }}/{{ .ArtifactName }}"
+    caveats: |
+      Determined master config is located at #{etc}/determined/master.yaml
+
+      Make sure to setup the determined database:
+        brew services start postgresql@14
+        createuser postgres
+        createdb determined
+
+      Checkpoints are stored in #{var}/determined/data by default.
+      Make sure to configure it as a shared path for Docker for Mac in
+      Docker -> Preferences... -> Resources -> File Sharing.
+    homepage: "https://github.com/determined-ai/determined-dryrun"
+    license: "Apache-2.0"
+    folder: Formula
+    dependencies:
+      - "postgresql@14"
+    install: |
+      bin.install "determined-master"
+
+      doc.install "LICENSE"
+      pkgshare.install Dir["share/*"]
+
+      (var/"cache/determined").mkpath
+      (var/"determined/data").mkpath
+      (var/"log/determined").mkpath
+
+      (etc/"determined").mkpath
+      inreplace "etc/determined/master.yaml" do |s|
+        s.gsub! "  host_path: /tmp", "  host_path: #{var}/determined/data"
+      end
+      Pathname("etc/determined/master.yaml").append_lines <<~EOS
+        root: #{opt_pkgshare}
+        cache:
+          cache_dir: #{var}/cache/determined
+      EOS
+      etc.install "etc/determined/master.yaml" => "determined/master.yaml"
+    service: |
+      run [opt_bin/"determined-master", "--config-file", etc/"determined/master.yaml"]
+      keep_alive false
+      error_log_path var/"log/determined/master-stderr.log"
+      log_path var/"log/determined/master-stdout.log"
+
+nfpms:
+  - maintainer: "Determined AI <ai-open-source@hpe.com>"
+    formats:
+      - deb
+      - rpm
+    contents:
+      - src: "packaging/master.yaml"
+        dst: "/etc/determined/master.yaml"
+        type: config|noreplace
+        file_info:
+            mode: 0600
+      - src: "build/**/*"
+        dst: "/usr/share/determined/master"
+      - src: "static/**/*"
+        dst: "/usr/share/determined/master/static"
+      - src: "packaging/determined-master.service"
+        dst: "/lib/systemd/system/determined-master.service"
+      - src: "packaging/determined-master.socket"
+        dst: "/lib/systemd/system/determined-master.socket"
+
+      - src: "packaging/LICENSE"
+        dst: "/usr/share/doc/determined-master/copyright"
+        packager: deb
+
+      - src: "packaging/LICENSE"
+        dst: "/usr/share/licenses/determined-master/LICENSE"
+        packager: rpm
+
+    overrides:
+      deb:
+        scripts:
+          postinstall: packaging/debian/master.postinst
+          preremove: packaging/debian/master.prerm
+          postremove: packaging/debian/master.postrm
+
+release:
+  github:
+    owner: determined-ai
+    name: determined-dryrun
+
+  # be sure to keep this in sync between agent/master/helm
+  # the "include" functionality is only in the pro version
+  header: |
+    ## Release Notes
+    [{{ .Tag }}](https://github.com/determined-ai/determined-dryrun/blob/{{ .Tag }}/docs/release-notes.rst)
+
+dockers:
+  # amd64
+  - goos: linux
+    goarch: amd64
+    use: buildx
+    build_flag_templates:
+      - --platform=linux/amd64
+      - --builder=buildx-build
+    image_templates:
+      - "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:{{.FullCommit}}-amd64"
+    extra_files:
+      - "packaging/master.yaml"
+      - "packaging/LICENSE"
+      - "build"
+      - "static"
+    ids:
+      - determined-master
+      - determined-gotmpl
+  # arm64
+  - goos: linux
+    goarch: arm64
+    use: buildx
+    build_flag_templates:
+      - --platform=linux/arm64
+      - --builder=buildx-build
+    image_templates:
+      - "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:{{.FullCommit}}-arm64"
+    extra_files:
+      - "packaging/master.yaml"
+      - "packaging/LICENSE"
+      - "build"
+      - "static"
+    ids:
+      - determined-master
+      - determined-gotmpl
+
+docker_manifests:
+  - name_template: "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:{{.FullCommit}}"
+    image_templates:
+      - "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:{{.FullCommit}}-amd64"
+      - "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:{{.FullCommit}}-arm64"
+  - name_template: "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:{{.ShortCommit}}"
+    image_templates:
+      - "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:{{.FullCommit}}-amd64"
+      - "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:{{.FullCommit}}-arm64"
+  - name_template: "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:{{.Env.VERSION}}"
+    image_templates:
+      - "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:{{.FullCommit}}-amd64"
+      - "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:{{.FullCommit}}-arm64"
+  - name_template: "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:latest"
+    image_templates:
+      - "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:{{.FullCommit}}-amd64"
+      - "{{.Env.DOCKER_REPO}}/{{.ProjectName}}:{{.FullCommit}}-arm64"

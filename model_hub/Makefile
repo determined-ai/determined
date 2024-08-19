@@ -16,12 +16,14 @@ DEFAULT_GPU_IMAGE := determinedai/pytorch-tensorflow-cuda-dev:5432424
 TRANSFORMERS_VERSION := 4.8.2
 DATASETS_VERSION := 1.9.0
 TRANSFORMERS_ENVIRONMENT_ROOT := determinedai/model-hub-transformers
+TRANSFORMERS_DRYRUN_ENVIRONMENT_ROOT := determinedai/model-hub-transformers-dryrun
 # MMDetection Args
 MMCV_CUDA_VERSION := cu113 # Needs to match DEFAULT_GPU_IMAGE
 TORCH_VERSION := 1.12.0 # Needs to match DEFAULT_GPU_IMAGE
 MMCV_VERSION := 1.7.1 # Needs to support the above Torch version
 MMDETECTION_VERSION := 2.27.0
 MMDETECTION_ENVIRONMENT_ROOT := determinedai/model-hub-mmdetection
+MMDETECTION_DRYRUN_ENVIRONMENT_ROOT := determinedai/model-hub-mmdetection-dryrun
 
 .PHONY: clean
 clean:
@@ -43,6 +45,10 @@ build:
 .PHONY: publish
 publish:
 	twine upload --verbose --non-interactive dist/*
+
+.PHONY: publish-dryrun
+publish-dryrun:
+	twine upload --verbose --non-interactive --repository testpypi dist/*
 
 .PHONY: fmt
 fmt:
@@ -110,10 +116,26 @@ build-transformers:
 		-t $(TRANSFORMERS_ENVIRONMENT_ROOT):$(VERSION) \
 		.
 
+.PHONY: build-transformers-dryrun
+build-transformers-dryrun:
+	docker build -f docker/Dockerfile.transformers \
+		--build-arg BASE_IMAGE=$(DEFAULT_GPU_IMAGE) \
+		--build-arg TRANSFORMERS_VERSION=$(TRANSFORMERS_VERSION) \
+		--build-arg DATASETS_VERSION=$(DATASETS_VERSION) \
+		--build-arg MODEL_HUB_VERSION=$(VERSION) \
+		-t $(TRANSFORMERS_DRYRUN_ENVIRONMENT_ROOT):$(SHORT_GIT_HASH) \
+		-t $(TRANSFORMERS_DRYRUN_ENVIRONMENT_ROOT):$(VERSION) \
+		.
+
 .PHONY: publish-transformers
 publish-transformers:
 	./docker/publish-docker.sh transformers-gpu-hash $(TRANSFORMERS_ENVIRONMENT_ROOT):$(SHORT_GIT_HASH) $(ARTIFACTS_DIR)
 	./docker/publish-docker.sh transformers-gpu-version $(TRANSFORMERS_ENVIRONMENT_ROOT):$(VERSION) $(ARTIFACTS_DIR)
+
+.PHONY: publish-transformers-dryrun
+publish-transformers-dryrun:
+	./docker/publish-docker.sh transformers-gpu-hash $(TRANSFORMERS_DRYRUN_ENVIRONMENT_ROOT):$(SHORT_GIT_HASH) $(ARTIFACTS_DIR)
+	./docker/publish-docker.sh transformers-gpu-version $(TRANSFORMERS_DRYRUN_ENVIRONMENT_ROOT):$(VERSION) $(ARTIFACTS_DIR)
 
 .PHONY: build-mmdetection
 build-mmdetection:
@@ -128,13 +150,37 @@ build-mmdetection:
 		-t $(MMDETECTION_ENVIRONMENT_ROOT):$(VERSION) \
 		.
 
+.PHONY: build-mmdetection-dryrun
+build-mmdetection-dryrun:
+	docker build -f docker/Dockerfile.mmdetection \
+		--build-arg BASE_IMAGE=$(DEFAULT_GPU_IMAGE) \
+		--build-arg MMCV_CUDA_VERSION=$(MMCV_CUDA_VERSION) \
+		--build-arg TORCH_VERSION=$(TORCH_VERSION) \
+		--build-arg MMCV_VERSION=$(MMCV_VERSION) \
+		--build-arg MMDETECTION_VERSION=$(MMDETECTION_VERSION) \
+		--build-arg MODEL_HUB_VERSION=$(VERSION) \
+		-t $(MMDETECTION_DRYRUN_ENVIRONMENT_ROOT):$(SHORT_GIT_HASH) \
+		-t $(MMDETECTION_DRYRUN_ENVIRONMENT_ROOT):$(VERSION) \
+		.
+
 .PHONY: publish-mmdetection
 publish-mmdetection:
 	./docker/publish-docker.sh mmdetection-gpu-hash $(MMDETECTION_ENVIRONMENT_ROOT):$(SHORT_GIT_HASH) $(ARTIFACTS_DIR)
 	./docker/publish-docker.sh mmdetection-gpu-version $(MMDETECTION_ENVIRONMENT_ROOT):$(VERSION) $(ARTIFACTS_DIR)
 
+.PHONY: publish-mmdetection-dryrun
+publish-mmdetection-dryrun:
+	./docker/publish-docker.sh mmdetection-gpu-hash $(MMDETECTION_DRYRUN_ENVIRONMENT_ROOT):$(SHORT_GIT_HASH) $(ARTIFACTS_DIR)
+	./docker/publish-docker.sh mmdetection-gpu-version $(MMDETECTION_DRYRUN_ENVIRONMENT_ROOT):$(VERSION) $(ARTIFACTS_DIR)
+
 .PHONY: build-docker
 build-docker: build-transformers build-mmdetection
 
+.PHONY: build-docker-dryrun
+build-docker-dryrun: build-transformers-dryrun build-mmdetection-dryrun
+
 .PHONY: publish-docker
 publish-docker: publish-transformers publish-mmdetection
+
+.PHONY: publish-docker-dryrun
+publish-docker-dryrun: publish-transformers-dryrun publish-mmdetection-dryrun
