@@ -2000,9 +2000,17 @@ jobs:
       - reinstall-go
       - run: |
           if <<parameters.ee>>; then
-            make -C helm release-gh-ee
+            if <<parameters.dryrun>>; then
+              make -C helm release-gh-ee-dryrun
+            else
+              make -C helm release-gh-ee
+            fi
           else
-            make -C helm release-gh
+            if <<parameters.dryrun>>; then
+              make -C helm release-gh-dryrun
+            else
+              make -C helm release-gh
+            fi
           fi
 
   publish-python-package:

@@ -40,3 +40,5 @@ release-gh-ee:
 	go install github.com/goreleaser/goreleaser@v1.14.1
 	git clean -df
 	goreleaser --rm-dist
+
+release-gh-ee-dryrun: ;
