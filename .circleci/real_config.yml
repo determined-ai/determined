@@ -5736,7 +5736,7 @@ workflows:
       - package-and-push-system-rc:
           dryrun: true
           requires:
-            - build-recat
+            - build-react
             - build-docs
           context: determined-production
           filters: *rc-filters
