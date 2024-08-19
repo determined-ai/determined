@@ -114,7 +114,7 @@ func Connect(opts *config.DBConfig) (*PgDB, error) {
 
 	err = checkPostgresVersion(db)
 	if err != nil {
-		return nil, fmt.Errorf("error checking Postgres version: %s", err)
+		log.Errorf("error checking Postgres version: %s", err)
 	}
 
 	return db, nil
