@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"runtime/trace"
 	"sync"
 
 	"github.com/google/uuid"
@@ -127,11 +128,16 @@ func (k *kubernetesResourcePool) PendingPreemption(msg sproto.PendingPreemption)
 }
 
 func (k *kubernetesResourcePool) GetJobQ() map[model.JobID]*sproto.RMJobInfo {
+	// waiting on this lock
 	k.mu.Lock()
 	defer k.mu.Unlock()
 	k.tryAdmitPendingTasks = true
 
-	return k.jobQInfo()
+	var resp map[model.JobID]*sproto.RMJobInfo
+	trace.WithRegion(context.Background(), "resourcepool.k8s.jobQInfo", func() {
+		resp = k.jobQInfo()
+	})
+	return resp
 }
 
 func (k *kubernetesResourcePool) GetJobQStats() *jobv1.QueueStats {

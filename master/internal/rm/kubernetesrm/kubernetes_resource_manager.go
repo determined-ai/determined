@@ -5,6 +5,7 @@ import (
 	"crypto/tls"
 	"fmt"
 	"maps"
+	"runtime/trace"
 	"slices"
 	"time"
 
@@ -239,7 +240,10 @@ func (k *ResourceManager) GetJobQ(rpName rm.ResourcePoolName) (map[model.JobID]*
 	if err != nil {
 		return nil, err
 	}
-	resp := rp.GetJobQ()
+	var resp map[model.JobID]*sproto.RMJobInfo
+	trace.WithRegion(context.Background(), "resourcepool.GetJobQ", func() {
+		resp = rp.GetJobQ()
+	})
 	return resp, nil
 }
 
