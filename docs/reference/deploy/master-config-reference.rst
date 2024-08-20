@@ -906,7 +906,7 @@ to ``determinedai/determined-agent:<master version>``.
 ------------------------
 
 The Docker network to use for the Determined agent and task containers. If this is set to ``host``,
-`Docker host-mode networking <https://docs.docker.com/network/drivers/host/>`__ will be used
+`Docker host-mode networking <https://docs.docker.com/engine/network/drivers/host/>`__ will be used
 instead. The default value is ``determined``.
 
 ``agent_docker_runtime``
