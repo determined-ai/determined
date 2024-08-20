@@ -106,7 +106,7 @@ The following websites provide more information about installing snapd and Certb
 -  `Installing snap on Red Hat Enterprise Linux (RHEL)
    <https://snapcraft.io/docs/installing-snap-on-red-hat>`_
 -  `Installing snap on CentOS <https://snapcraft.io/docs/installing-snap-on-centos>`_
--  `certbot instructions <https://certbot.eff.org/instructions?ws=other&os=centosrhel8>`_
+-  `certbot instructions <https://certbot.eff.org/instructions?ws=other&os=snap>`_
 
 Adding EPEL to RHEL 8
 ---------------------
@@ -335,5 +335,5 @@ the following command:
    Most Certbot installations come with automatic renewal. Visit `Setting up automated renewals
    <https://eff-certbot.readthedocs.io/en/stable/using.html#automated-renewals>`__ to find out more.
    To learn how to test automatic renewal, visit the Certbot instructions (`CentOS
-   <https://certbot.eff.org/instructions?ws=other&os=centosrhel8>`__ or `Debian/Ubuntu
-   <https://certbot.eff.org/instructions?ws=apache&os=ubuntufocal>`__).
+   <https://certbot.eff.org/instructions?ws=other&os=snap>`__ or `Debian/Ubuntu
+   <https://certbot.eff.org/instructions?ws=apache&os=snap>`__).
