@@ -1818,6 +1818,10 @@ var (
 func (a *apiServer) ExpMetricNames(req *apiv1.ExpMetricNamesRequest,
 	resp apiv1.Determined_ExpMetricNamesServer,
 ) error {
+	// remove duplicate ids to improve performance
+	slices.Sort(req.Ids)
+	req.Ids = slices.Compact(req.Ids)
+
 	if len(req.Ids) == 0 {
 		return status.Error(codes.InvalidArgument, "must specify at least one experiment id")
 	}
