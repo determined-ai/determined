@@ -5004,29 +5004,6 @@ workflows:
               enable-tls: [true]
               mark: ["e2e_gpu"]
 
-      # mmdetection tests
-      - request-mmdetection-tests:
-          type: approval
-          filters: *upstream-feature-branch
-
-      - test-e2e-aws:
-          name: test-e2e-mmdetection
-          context:
-            - aws
-            - aws-ci-cluster-default-user-credentials
-            - determined-ee
-          filters: *upstream-feature-branch
-          requires:
-            - request-mmdetection-tests
-            - package-and-push-system-dev-ee
-          matrix:
-            parameters:
-              compute-agent-instance-type: ["g4dn.metal"]
-              aux-agent-instance-type: ["m6i.large"]
-              cluster-id-prefix: ["mmdetection"]
-              mark: ["model_hub_mmdetection"]
-              max-dynamic-agents: [2]
-
       # packaging tests
       - request-packaging-tests:
           type: approval
@@ -5356,19 +5333,6 @@ workflows:
             parameters:
               cluster-id-prefix: ["distributed"]
               mark: ["distributed"]
-              compute-agent-instance-type: ["g4dn.metal"]
-              aux-agent-instance-type: ["m6i.large"]
-              max-dynamic-agents: [2]
-      - test-e2e-aws:
-          name: test-e2e-gpu-mmdetection
-          context:
-            - aws
-            - aws-ci-cluster-default-user-credentials
-            - determined-ee
-          matrix:
-            parameters:
-              cluster-id-prefix: ["mmdet"]
-              mark: ["model_hub_mmdetection"]
               compute-agent-instance-type: ["g4dn.metal"]
               aux-agent-instance-type: ["m6i.large"]
               max-dynamic-agents: [2]
