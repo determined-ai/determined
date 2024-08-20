@@ -5,6 +5,8 @@ snapshot:
 
 builds:
   - main: ./cmd/determined-agent
+    id: determined-agent
+    binary: determined-agent
     goos:
       - linux
       - darwin
@@ -15,6 +17,7 @@ builds:
 archives:
   - wrap_in_directory: "true"
     rlcp: true
+    name_template: "determined_agent_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}{{ with .Mips }}_{{ . }}{{ end }}{{ if not (eq .Amd64 \"v1\") }}{{ .Amd64 }}{{ end }}"
     files:
       - src: "packaging/agent.yaml"
         dst: "etc/determined/"
