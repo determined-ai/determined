@@ -1046,8 +1046,9 @@ class TFKerasTrial(det.LegacyTrial):
             a tuple of either ``(inputs, targets)`` or ``(inputs, targets, sample_weights)``.
 
             4) A `keras.utils.Sequence
-            <https://www.tensorflow.org/api_docs/python/tf/keras/utils/PyDataset>`__ returning a
-            tuple of either ``(inputs, targets)`` or ``(inputs, targets, sample weights)``.
+            <https://www.tensorflow.org/versions/r2.15/api_docs/python/tf/keras/utils/Sequence>`__
+            returning a tuple of either ``(inputs, targets)``
+            or ``(inputs, targets, sample weights)``.
 
         When using ``tf.data.Dataset``, you must wrap the dataset using
         :meth:`determined.keras.TFKerasTrialContext.wrap_dataset`. This wrapper is used
@@ -1081,8 +1082,9 @@ class TFKerasTrial(det.LegacyTrial):
             a tuple of either ``(inputs, targets)`` or ``(inputs, targets, sample_weights)``.
 
             4) A `keras.utils.Sequence
-            <https://www.tensorflow.org/api_docs/python/tf/keras/utils/PyDataset>`__ returning a
-            tuple of either ``(inputs, targets)`` or ``(inputs, targets, sample weights)``.
+            <https://www.tensorflow.org/versions/r2.15/api_docs/python/tf/keras/utils/Sequence>`__
+            returning a tuple of either ``(inputs, targets)``
+            or ``(inputs, targets, sample weights)``.
 
         When using ``tf.data.Dataset``, you must wrap the dataset using
         :meth:`determined.keras.TFKerasTrialContext.wrap_dataset`. This wrapper is used
