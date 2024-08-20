@@ -1,46 +1,38 @@
 .base {
-  background-color: var(--theme-colors-monochrome-17);
   margin: 0;
   padding: 12px;
   width: 100%;
 
-  .breadcrumbs {
-    border-bottom: 1px solid var(--theme-colors-monochrome-12);
-    padding-bottom: 8px;
-  }
   .headerContent {
     margin: 0 12px;
 
     .mainRow {
       align-items: center;
       display: flex;
+      flex-shrink: 1;
+      gap: 8px;
       justify-content: space-between;
       margin: 12px 0;
+      max-width: 100%;
 
-      .title {
-        align-items: center;
-        display: flex;
-        gap: 12px;
-
-        .versionBox {
-          background-color: var(--theme-colors-monochrome-14);
-          border-radius: 15%;
-          height: min-content;
-          padding: 8px;
-          width: min-content;
-        }
-        .versionName {
-          font-size: 24px;
-          margin: 0;
-        }
+      .versionBox {
+        background-color: var(--theme-surface-strong);
+        border-radius: 15%;
+        height: min-content;
+        padding: 8px;
+        width: min-content;
       }
-      .buttons {
-        display: flex;
-        gap: 4px;
+      .versionName {
+        font-size: 24px;
+        margin: 0;
+      }
+    }
+    .buttons {
+      display: flex;
+      gap: 4px;
 
-        .overflowAction {
-          display: block;
-        }
+      .overflowAction {
+        display: block;
       }
     }
   }
