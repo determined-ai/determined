@@ -863,6 +863,7 @@ const Searches: React.FC<Props> = ({ project }) => {
         bannedFilterColumns={BANNED_FILTER_COLUMNS}
         bannedSortColumns={BANNED_SORT_COLUMNS}
         columnGroups={[V1LocationType.EXPERIMENT]}
+        entityCopy="Show searches…"
         formStore={formStore}
         initialVisibleColumns={columnsIfLoaded}
         isOpenFilter={isOpenFilter}

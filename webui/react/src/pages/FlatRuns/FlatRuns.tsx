@@ -1068,6 +1068,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
           <Row>
             <TableFilter
               bannedFilterColumns={bannedFilterColumns}
+              entityCopy="Show runs…"
               formStore={formStore}
               isMobile={isMobile}
               isOpenFilter={isOpenFilter}

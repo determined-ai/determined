@@ -8,7 +8,6 @@ import { useRef } from 'react';
 import { FilterFormStore, ITEM_LIMIT } from 'components/FilterForm/components/FilterFormStore';
 import FilterGroup from 'components/FilterForm/components/FilterGroup';
 import { FormKind } from 'components/FilterForm/components/type';
-import useFeature from 'hooks/useFeature';
 import { V1ProjectColumn } from 'services/api-ts-sdk';
 
 import css from './FilterForm.module.scss';
@@ -17,10 +16,17 @@ interface Props {
   formStore: FilterFormStore;
   columns: V1ProjectColumn[];
   projectId?: number;
+  entityCopy?: string;
   onHidePopOver: () => void;
 }
 
-const FilterForm = ({ formStore, columns, projectId, onHidePopOver }: Props): JSX.Element => {
+const FilterForm = ({
+  formStore,
+  columns,
+  projectId,
+  entityCopy,
+  onHidePopOver,
+}: Props): JSX.Element => {
   const scrollBottomRef = useRef<HTMLDivElement>(null);
   const loadableData = useObservable(formStore.formset);
   const isButtonDisabled = Loadable.match(loadableData, {
@@ -37,8 +43,6 @@ const FilterForm = ({ formStore, columns, projectId, onHidePopOver }: Props): JS
     });
   };
 
-  const f_flat_runs = useFeature().isOn('flat_runs');
-
   return (
     <div className={css.base} data-test-component="FilterForm">
       {Loadable.match(loadableData, {
@@ -46,7 +50,7 @@ const FilterForm = ({ formStore, columns, projectId, onHidePopOver }: Props): JS
         Loaded: (data) => (
           <>
             <div className={css.header} data-test="header">
-              <div>{f_flat_runs ? 'Show runs…' : 'Show experiments…'}</div>
+              <div>{entityCopy ?? 'Show experiments…'}</div>
               <Toggle
                 checked={data.showArchived}
                 label="Show Archived"
