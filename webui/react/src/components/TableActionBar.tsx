@@ -111,6 +111,7 @@ interface Props {
   columnGroups: (V1LocationType | V1LocationType[])[];
   bannedFilterColumns?: Set<string>;
   bannedSortColumns?: Set<string>;
+  entityCopy?: string;
 }
 
 const TableActionBar: React.FC<Props> = ({
@@ -141,6 +142,7 @@ const TableActionBar: React.FC<Props> = ({
   columnGroups,
   bannedFilterColumns,
   bannedSortColumns,
+  entityCopy,
 }) => {
   const permissions = usePermissions();
   const [batchAction, setBatchAction] = useState<BatchAction>();
@@ -382,6 +384,7 @@ const TableActionBar: React.FC<Props> = ({
           <Row>
             <TableFilter
               bannedFilterColumns={bannedFilterColumns}
+              entityCopy={entityCopy}
               formStore={formStore}
               isMobile={isMobile}
               isOpenFilter={isOpenFilter}
