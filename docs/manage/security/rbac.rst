@@ -455,7 +455,6 @@ To list all existing cluster roles and the concrete permissions they include:
 
    det rbac list-roles
 
-
 ``ModelRegistryViewer``
 =======================
 
