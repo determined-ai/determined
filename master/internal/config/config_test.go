@@ -959,6 +959,66 @@ func TestPickVariation(t *testing.T) {
 			expected:    "light-horizontal",
 		},
 		{
+			name: "Fallback to Light Horizontal if no matches",
+			variations: MediaAssetVariations{
+				LightHorizontal: "",
+				LightVeritical:  "light-vertical",
+				DarkHorizontal:  "",
+				DarkVeritical:   "",
+			},
+			mode:        "",
+			orientation: "",
+			expected:    "light-vertical",
+		},
+		{
+			name: "Fallback to Light Horizontal if no matches",
+			variations: MediaAssetVariations{
+				LightHorizontal: "",
+				LightVeritical:  "light-vertical",
+				DarkHorizontal:  "",
+				DarkVeritical:   "",
+			},
+			mode:        "light",
+			orientation: "",
+			expected:    "light-vertical",
+		},
+		{
+			name: "Fallback to Light Horizontal if no matches",
+			variations: MediaAssetVariations{
+				LightHorizontal: "",
+				LightVeritical:  "light-vertical",
+				DarkHorizontal:  "",
+				DarkVeritical:   "",
+			},
+			mode:        "dark",
+			orientation: "",
+			expected:    "light-vertical",
+		},
+		{
+			name: "Fallback to Light Horizontal if no matches",
+			variations: MediaAssetVariations{
+				LightHorizontal: "",
+				LightVeritical:  "light-vertical",
+				DarkHorizontal:  "",
+				DarkVeritical:   "",
+			},
+			mode:        "light",
+			orientation: "vertical",
+			expected:    "light-vertical",
+		},
+		{
+			name: "Fallback to Light Horizontal if no matches",
+			variations: MediaAssetVariations{
+				LightHorizontal: "",
+				LightVeritical:  "light-vertical",
+				DarkHorizontal:  "",
+				DarkVeritical:   "",
+			},
+			mode:        "light",
+			orientation: "",
+			expected:    "light-vertical",
+		},
+		{
 			name: "Empty variations fallback to empty string",
 			variations: MediaAssetVariations{
 				LightHorizontal: "",
