@@ -232,10 +232,10 @@ reachable by the master service. The logo file should be a valid image format, w
 
 Logo path is defined in four variations:
 
--  dark_horizontal: The logo to be shown in the dark theme in the horizontal layout.
--  dark_vertical: The logo to be shown in the dark theme in the vertical layout.
--  light_horizontal: The logo to be shown in the light theme in the horizontal layout.
--  light_vertical: The logo to be shown in the light theme in the vertical layout.
+-  ``dark_horizontal``: The logo to be shown in the dark theme in the horizontal layout.
+-  ``dark_vertical``: The logo to be shown in the dark theme in the vertical layout.
+-  ``light_horizontal``: The logo to be shown in the light theme in the horizontal layout.
+-  ``light_vertical``: The logo to be shown in the light theme in the vertical layout.
 
 *************************
  ``tensorboard_timeout``
