@@ -983,7 +983,8 @@ func (a *apiServer) setWorkspaceNamespaceBindings(ctx context.Context,
 // auto-created namespace is generated and saved in the database, it is immutable. Therefore,
 // changing the workspace's name will not generate a new auto-created namespace.
 func getAutoCreatedNamespace(ctx context.Context, wksp *workspacev1.Workspace,
-	tx *bun.Tx) (*string, error) {
+	tx *bun.Tx,
+) (*string, error) {
 	wkspID := int(wksp.Id)
 	var nmsp string
 	err := tx.NewSelect().

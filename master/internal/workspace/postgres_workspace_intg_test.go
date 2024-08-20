@@ -403,3 +403,56 @@ func TestGetNumWorkspacesUsingNamespaceInCluster(t *testing.T) {
 		Exec(ctx)
 	require.NoError(t, err)
 }
+
+func TestAbortUpdateAutoCreateNamespaceNameTrigger(t *testing.T) {
+	// Create a workspace with an auto-created namespace name.
+	ctx := context.Background()
+	userID, err := db.HackAddUser(ctx, &model.User{Username: uuid.NewString()})
+	require.NoError(t, err)
+	wkspName := uuid.NewString()
+	wkspAutoNmsp := wkspName + "-auto"
+	wksp := &model.Workspace{
+		Name:                     wkspName,
+		UserID:                   userID,
+		AutoCreatedNamespaceName: &wkspAutoNmsp,
+	}
+	err = AddWorkspace(ctx, wksp, nil)
+	require.NoError(t, err)
+
+	// Verify that we cannot update the workspace's auto-created namespace name.
+	wkspAutoNmsp += "-diff"
+	_, err = db.Bun().NewUpdate().Model(wksp).Where("id = ?", wksp.ID).Exec(ctx)
+	require.NoError(t, err)
+	var wkspNmsp string
+	err = db.Bun().NewSelect().
+		Model(&model.Workspace{}).
+		Column("auto_created_namespace_name").
+		Where("id = ?", wksp.ID).
+		Scan(ctx, &wkspNmsp)
+	require.NoError(t, err)
+	require.NotEqual(t, wkspAutoNmsp, wkspNmsp)
+	require.Equal(t, wkspName+"-auto", wkspNmsp)
+
+	// Create a workspace with no auto-created namespace name.
+	wksp, userID = createWorkspace(ctx, t)
+
+	// Verify that we can set the workspace's auto-created namespace name.
+	wkspAutoNmsp = wksp.Name + "-auto"
+	wksp.AutoCreatedNamespaceName = &wkspAutoNmsp
+	_, err = db.Bun().NewUpdate().Model(wksp).Where("id = ?", wksp.ID).Exec(ctx)
+	require.NoError(t, err)
+
+	// Verify that we cannot update the workspace's auto-created namespace name.
+	wkspAutoNmsp += "-diff"
+	_, err = db.Bun().NewUpdate().Model(wksp).Where("id = ?", wksp.ID).Exec(ctx)
+	require.NoError(t, err)
+
+	err = db.Bun().NewSelect().
+		Model(&model.Workspace{}).
+		Column("auto_created_namespace_name").
+		Where("id = ?", wksp.ID).
+		Scan(ctx, &wkspNmsp)
+	require.NoError(t, err)
+	require.NotEqual(t, wkspAutoNmsp, wkspNmsp)
+	require.Equal(t, wksp.Name+"-auto", wkspNmsp)
+}
