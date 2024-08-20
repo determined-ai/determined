@@ -7,6 +7,7 @@ import (
 	"math"
 	"os"
 	"path/filepath"
+	"runtime/trace"
 	"slices"
 	"strconv"
 	"strings"
@@ -1049,9 +1050,15 @@ func (j *jobsService) refreshPodStates(allocationID model.AllocationID) error {
 }
 
 func (j *jobsService) GetAgents() (*apiv1.GetAgentsResponse, error) {
+	// waiting on this lock
 	j.mu.Lock()
 	defer j.mu.Unlock()
-	return j.getAgents()
+	var resp *apiv1.GetAgentsResponse
+	var err error
+	trace.WithRegion(context.Background(), "jobsService.GetAgents", func() {
+		resp, err = j.getAgents()
+	})
+	return resp, err
 }
 
 func (j *jobsService) GetAgent(msg *apiv1.GetAgentRequest) *apiv1.GetAgentResponse {

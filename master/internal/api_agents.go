@@ -2,6 +2,7 @@ package internal
 
 import (
 	"context"
+	"runtime/trace"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -20,7 +21,14 @@ import (
 func (a *apiServer) GetAgents(
 	ctx context.Context, req *apiv1.GetAgentsRequest,
 ) (*apiv1.GetAgentsResponse, error) {
-	resp, err := a.m.rm.GetAgents()
+	ctx, task := trace.NewTask(ctx, "GetAgents")
+	defer task.End()
+
+	var resp *apiv1.GetAgentsResponse
+	var err error
+	trace.WithRegion(ctx, "resourceManager.GetAgents", func() {
+		resp, err = a.m.rm.GetAgents()
+	})
 	if err != nil {
 		return nil, err
 	}

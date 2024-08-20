@@ -2,6 +2,7 @@ package internal
 
 import (
 	"context"
+	"runtime/trace"
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/job/jobservice"
@@ -49,11 +50,17 @@ func (a *apiServer) GetJobs(
 func (a *apiServer) GetJobsV2(
 	ctx context.Context, req *apiv1.GetJobsV2Request,
 ) (resp *apiv1.GetJobsV2Response, err error) {
-	jobs, err := jobservice.DefaultService.GetJobs(
-		rm.ResourcePoolName(req.ResourcePool),
-		req.OrderBy == apiv1.OrderBy_ORDER_BY_DESC,
-		req.States,
-	)
+	ctx, task := trace.NewTask(ctx, "GetJobsV2")
+	defer task.End()
+
+	var jobs []*jobv1.Job
+	trace.WithRegion(ctx, "jobservice.GetJobs", func() {
+		jobs, err = jobservice.DefaultService.GetJobs(
+			rm.ResourcePoolName(req.ResourcePool),
+			req.OrderBy == apiv1.OrderBy_ORDER_BY_DESC,
+			req.States,
+		)
+	})
 	if err != nil {
 		return nil, err
 	}
