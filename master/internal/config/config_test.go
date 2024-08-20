@@ -891,6 +891,12 @@ resource_manager:
 }
 
 func TestPickVariation(t *testing.T) {
+	userConfig := MediaAssetVariations{
+		LightHorizontal: "light-horizontal",
+		LightVeritical:  "light-vertical",
+		DarkHorizontal:  "dark-horizontal",
+		DarkVeritical:   "dark-vertical",
+	}
 	tests := []struct {
 		name        string
 		variations  MediaAssetVariations
@@ -899,136 +905,46 @@ func TestPickVariation(t *testing.T) {
 		expected    string
 	}{
 		{
-			name: "Light Horizontal prioritized",
-			variations: MediaAssetVariations{
-				LightHorizontal: "light-horizontal",
-				LightVeritical:  "light-vertical",
-				DarkHorizontal:  "dark-horizontal",
-				DarkVeritical:   "dark-vertical",
-			},
+			name:        "Light Horizontal prioritized",
+			variations:  userConfig,
 			mode:        "",
 			orientation: "",
 			expected:    "light-horizontal",
 		},
 		{
-			name: "Light Vertical when Light Horizontal is empty",
-			variations: MediaAssetVariations{
-				LightHorizontal: "",
-				LightVeritical:  "light-vertical",
-				DarkHorizontal:  "dark-horizontal",
-				DarkVeritical:   "dark-vertical",
-			},
+			name:        "Light Horizontal prioritized",
+			variations:  userConfig,
+			mode:        "",
+			orientation: "horizontal",
+			expected:    "light-horizontal",
+		},
+		{
+			name:        "Light Horizontal prioritized",
+			variations:  userConfig,
 			mode:        "",
 			orientation: "vertical",
 			expected:    "light-vertical",
 		},
 		{
-			name: "Dark Horizontal when mode is dark",
-			variations: MediaAssetVariations{
-				LightHorizontal: "light-horizontal",
-				LightVeritical:  "light-vertical",
-				DarkHorizontal:  "dark-horizontal",
-				DarkVeritical:   "dark-vertical",
-			},
+			name:        "Light Horizontal prioritized",
+			variations:  userConfig,
+			mode:        "light",
+			orientation: "",
+			expected:    "light-horizontal",
+		},
+		{
+			name:        "Light Horizontal prioritized",
+			variations:  userConfig,
 			mode:        "dark",
 			orientation: "",
 			expected:    "dark-horizontal",
 		},
 		{
-			name: "Dark Vertical when mode is dark and orientation is vertical",
-			variations: MediaAssetVariations{
-				LightHorizontal: "light-horizontal",
-				LightVeritical:  "light-vertical",
-				DarkHorizontal:  "dark-horizontal",
-				DarkVeritical:   "dark-vertical",
-			},
+			name:        "Light Horizontal prioritized",
+			variations:  userConfig,
 			mode:        "dark",
 			orientation: "vertical",
 			expected:    "dark-vertical",
-		},
-		{
-			name: "Fallback to Light Horizontal if no matches",
-			variations: MediaAssetVariations{
-				LightHorizontal: "light-horizontal",
-				LightVeritical:  "",
-				DarkHorizontal:  "",
-				DarkVeritical:   "",
-			},
-			mode:        "dark",
-			orientation: "vertical",
-			expected:    "light-horizontal",
-		},
-		{
-			name: "Fallback to Light Horizontal if no matches",
-			variations: MediaAssetVariations{
-				LightHorizontal: "",
-				LightVeritical:  "light-vertical",
-				DarkHorizontal:  "",
-				DarkVeritical:   "",
-			},
-			mode:        "",
-			orientation: "",
-			expected:    "light-vertical",
-		},
-		{
-			name: "Fallback to Light Horizontal if no matches",
-			variations: MediaAssetVariations{
-				LightHorizontal: "",
-				LightVeritical:  "light-vertical",
-				DarkHorizontal:  "",
-				DarkVeritical:   "",
-			},
-			mode:        "light",
-			orientation: "",
-			expected:    "light-vertical",
-		},
-		{
-			name: "Fallback to Light Horizontal if no matches",
-			variations: MediaAssetVariations{
-				LightHorizontal: "",
-				LightVeritical:  "light-vertical",
-				DarkHorizontal:  "",
-				DarkVeritical:   "",
-			},
-			mode:        "dark",
-			orientation: "",
-			expected:    "light-vertical",
-		},
-		{
-			name: "Fallback to Light Horizontal if no matches",
-			variations: MediaAssetVariations{
-				LightHorizontal: "",
-				LightVeritical:  "light-vertical",
-				DarkHorizontal:  "",
-				DarkVeritical:   "",
-			},
-			mode:        "light",
-			orientation: "vertical",
-			expected:    "light-vertical",
-		},
-		{
-			name: "Fallback to Light Horizontal if no matches",
-			variations: MediaAssetVariations{
-				LightHorizontal: "",
-				LightVeritical:  "light-vertical",
-				DarkHorizontal:  "",
-				DarkVeritical:   "",
-			},
-			mode:        "light",
-			orientation: "",
-			expected:    "light-vertical",
-		},
-		{
-			name: "Empty variations fallback to empty string",
-			variations: MediaAssetVariations{
-				LightHorizontal: "",
-				LightVeritical:  "",
-				DarkHorizontal:  "",
-				DarkVeritical:   "",
-			},
-			mode:        "",
-			orientation: "",
-			expected:    "",
 		},
 	}
 
