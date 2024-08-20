@@ -58,7 +58,7 @@ const Container: React.FC = () => {
     <SettingsProvider>
       <HelmetProvider>
         <BrowserRouter>
-          <UserManagement />;
+          <UserManagement onUserCreate={() => {}} />;
         </BrowserRouter>
       </HelmetProvider>
     </SettingsProvider>

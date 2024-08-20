@@ -187,9 +187,8 @@ stringData:
       max_slots_per_pod: {{ required "A valid Values.maxSlotsPerPod entry is required!" .Values.maxSlotsPerPod }}
       master_service_name: determined-master-service-{{ .Release.Name }}
       {{- if .Values.defaultScheduler}}
-      {{- $schedulerType := .Values.defaultScheduler | trim}}
-      {{- if or (eq $schedulerType "coscheduler") (eq $schedulerType "preemption")}}
-      default_scheduler: {{ $schedulerType }}
+      {{- if eq (.Values.defaultScheduler | trim ) "coscheduler"}}
+      default_scheduler: "coscheduler"
       {{- end }}
       {{- end }}
       {{- if (ne (default "gpu" .Values.slotType) "gpu") }}
@@ -246,28 +245,32 @@ stringData:
       log_policies:
         {{- toYaml .Values.taskContainerDefaults.logPolicies | nindent 8}}
       {{- end }}
-      {{- if and .Values.taskContainerDefaults.cpuImage .Values.taskContainerDefaults.gpuImage }}
       image:
+        {{- if .Values.taskContainerDefaults.cpuImage }}
          cpu: {{ .Values.taskContainerDefaults.cpuImage | quote }}
-         gpu: {{ .Values.taskContainerDefaults.gpuImage | quote }}
-      {{- else }}
-      image:
+        {{- else }}
          cpu: {{ .Values.defaultImages.cpuImage | quote }}
+        {{- end }}
+        {{- if .Values.taskContainerDefaults.gpuImage }}
+         gpu: {{ .Values.taskContainerDefaults.gpuImage | quote }}
+        {{- else }}
          gpu: {{ .Values.defaultImages.gpuImage | quote }}
-      {{- if or .Values.taskContainerDefaults.cpuImage .Values.taskContainerDefaults.gpuImage }}
-        {{ required "A valid .Values.taskContainerDefaults.cpuImage entry is required if setting .Values.taskContainerDefaults.gpuImage!" .Values.taskContainerDefaults.cpuImage }}
-        {{ required "A valid .Values.taskContainerDefaults.gpuImage entry is required if setting .Values.taskContainerDefaults.cpuImage!" .Values.taskContainerDefaults.gpuImage }}
-      {{- end }}
-      {{- end }}
+        {{- end }}
+        {{- if .Values.taskContainerDefaults.rocmImage }}
+         rocm: {{ .Values.taskContainerDefaults.rocmImage | quote }}
+        {{- else }}
+         rocm: {{ .Values.defaultImages.rocmImage | quote }}
+        {{- end }}
       {{- if .Values.taskContainerDefaults.forcePullImage }}
       force_pull_image: {{ .Values.taskContainerDefaults.forcePullImage }}
       {{- end }}
-    {{ else }}
+    {{- else }}
     task_container_defaults:
       image:
          cpu: {{ .Values.defaultImages.cpuImage | quote }}
          gpu: {{ .Values.defaultImages.gpuImage | quote }}
-    {{ end }}
+         rocm: {{ .Values.defaultImages.rocmImage | quote }}
+    {{- end }}
 
     {{- if .Values.telemetry }}
     telemetry:

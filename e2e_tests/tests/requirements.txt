@@ -2,8 +2,11 @@ appdirs
 # pytest 6.0 has linter-breaking changes
 pytest>=6.0.1
 pytest-timeout
-torch==2.3.0
-torchvision==0.18.0
+# Intel MAC only supports torch <= 2.2.2
+torch==2.2.2; sys_platform == 'darwin' and platform_machine == 'x86_64'
+torch==2.3.0; sys_platform != 'darwin' or platform_machine != 'x86_64'
+torchvision==0.17.2; sys_platform == 'darwin' and platform_machine == 'x86_64'
+torchvision==0.18.0; sys_platform != 'darwin' or platform_machine != 'x86_64'
 tensorflow==2.12.0; sys_platform != 'darwin' or platform_machine != 'arm64'
 tensorflow-macos==2.11.0; sys_platform == 'darwin' and platform_machine == 'arm64'
 pandas

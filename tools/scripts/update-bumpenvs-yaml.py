@@ -46,7 +46,7 @@ JOB_SUFFIXES = [
 JOB_SUFFIXES_WITHOUT_MPI = [
     "deepspeed-gpt-neox",
     "pytorch13-tf210-rocm56",
-    "pytorch20-tf210-rocm56",
+    "pytorch20-tf210-rocm61",
 ]
 
 JOB_SUFFIXES_NO_MPI = [

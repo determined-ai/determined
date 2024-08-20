@@ -111,7 +111,7 @@ const TrialDetailsOverview: React.FC<Props> = ({ experiment, trial }: Props) => 
           ) : (
             <Spinner spinning />
           )}
-          <Metadata trial={trial} />
+          {trial?.metadata !== undefined && <Metadata trial={trial} />}
         </>
       ) : null}
     </>

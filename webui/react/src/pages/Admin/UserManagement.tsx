@@ -173,8 +173,8 @@ const UserActionDropdown = ({ fetchUsers, user, groups, userManagementEnabled }:
       <Dropdown menu={menuItems} placement="bottomRight" onClick={handleDropdown}>
         <Button icon={<Icon name="overflow-vertical" size="small" title="Action menu" />} />
       </Dropdown>
-      <ViewUserModal.Component user={user} userRoles={userRoles} viewOnly onClose={fetchUsers} />
-      <EditUserModal.Component user={user} userRoles={userRoles} onClose={fetchUsers} />
+      <ViewUserModal.Component user={user} userRoles={userRoles} viewOnly onSuccess={fetchUsers} />
+      <EditUserModal.Component user={user} userRoles={userRoles} onSuccess={fetchUsers} />
       <ManageGroupsModal.Component
         groupOptions={groups}
         user={user}
@@ -207,7 +207,12 @@ const columnSettings = {
 };
 
 const userManagementSettings = userSettings.get(UserManagementSettings, 'user-management');
-const UserManagement: React.FC = () => {
+
+interface Props {
+  onUserCreate: () => void;
+}
+
+const UserManagement: React.FC<Props> = ({ onUserCreate }: Props) => {
   const [selectedUserIds, setSelectedUserIds] = useState<React.Key[]>([]);
   const [refresh, setRefresh] = useState<Record<string, never>>({});
   const [nameFilter, setNameFilter] = useState<string>('');
@@ -227,6 +232,11 @@ const UserManagement: React.FC = () => {
       userSettings.setPartial(UserManagementSettings, 'user-management', p),
     [],
   );
+
+  const handleUserCreate = () => {
+    onUserCreate();
+    fetchUsers();
+  };
 
   const userResponse = useAsync(async () => {
     try {
@@ -560,7 +570,7 @@ const UserManagement: React.FC = () => {
           <SkeletonTable columns={columns.length} />
         )}
       </Section>
-      <CreateUserModal.Component onClose={fetchUsers} />
+      <CreateUserModal.Component onSuccess={handleUserCreate} />
       <ChangeUserStatusModal.Component
         clearTableSelection={clearTableSelection}
         fetchUsers={fetchUsers}

@@ -868,9 +868,7 @@ points in the grid for this hyperparameter. Grid points are evenly spaced betwee
 The ``searcher`` section defines how the experiment's hyperparameter space will be explored. To run
 an experiment that trains a single trial with fixed hyperparameters, specify the ``single`` searcher
 and specify constant values for the model's hyperparameters. Otherwise, Determined supports three
-different hyperparameter search algorithms: ``adaptive_asha``, ``random``, and ``grid``. To define
-your own hyperparameter search algorithm, specify the ``custom`` searcher. For more information
-about custom search algorithms, see :ref:`topic-guides_hp-tuning-det_custom`.
+different hyperparameter search algorithms: ``adaptive_asha``, ``random``, and ``grid``.
 
 The name of the hyperparameter search algorithm to use is configured via the ``name`` field; the
 remaining fields configure the behavior of the searcher and depend on the searcher being used. For
@@ -1353,12 +1351,12 @@ Optional. The Docker image to use when executing the workload. This image must b
 container images for NVIDIA GPU tasks using ``cuda`` key (``gpu`` prior to 0.17.6), CPU tasks using
 ``cpu`` key, and ROCm (AMD GPU) tasks using ``rocm`` key. Default values:
 
--  ``determinedai/pytorch-ngc-dev:5432424`` for NVIDIA GPUs and for CPUs.
+-  ``determinedai/pytorch-ngc-dev:0736b6d`` for NVIDIA GPUs and for CPUs.
 -  ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.26.4`` for ROCm.
 
 For TensorFlow users, we provide an image that must be referenced in the experiment configuration:
 
--  ``determinedai/tensorflow-ngc-dev:5432424`` for NVIDIA GPUs and for CPUs.
+-  ``determinedai/tensorflow-ngc-dev:0736b6d`` for NVIDIA GPUs and for CPUs.
 
 When the cluster is configured with :ref:`resource_manager.type: slurm
 <cluster-configuration-slurm>` and ``container_run_type: singularity``, images are executed using

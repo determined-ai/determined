@@ -9,6 +9,7 @@
     "setup-cluster/deploy-cluster/firewall-rules": "../checklists/adv-requirements.html",
     "articles/index": "../tutorials/_index.html",
     "example-solutions/examples": "../get-started/example-solutions/_index.html",
+    "get-started/webui-qs-multi": "webui-qs.html",
     "setup-cluster/basic": "../get-started/basic.html",
     "architecture/system-architecture": "../get-started/architecture/system-architecture.html",
     "architecture/introduction": "../get-started/architecture/introduction.html",

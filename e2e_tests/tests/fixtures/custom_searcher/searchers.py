@@ -6,6 +6,7 @@ import pickle
 import random
 import sys
 import uuid
+import warnings
 from typing import Any, Dict, List, Optional, Set
 
 from urllib3 import connectionpool
@@ -15,6 +16,13 @@ from determined import searcher
 
 class SingleSearchMethod(searcher.SearchMethod):
     def __init__(self, experiment_config: dict, max_length: int) -> None:
+        warnings.warn(
+            "`SingleSearchMethod` and all custom searchers have been deprecated. "
+            "This feature will be removed in a future release. Consider configuring a preset "
+            "searcher instead (see Determined docs for details).",
+            FutureWarning,
+            stacklevel=2,
+        )
         # since this is a single trial the hyperparameter space comprises a single point
         self.hyperparameters = experiment_config["hyperparameters"]
         self.max_length = max_length
@@ -74,6 +82,13 @@ class RandomSearchMethod(searcher.SearchMethod):
         exception_points: Optional[List[str]] = None,
         metric_as_dict: bool = False,
     ) -> None:
+        warnings.warn(
+            "`RandomSearchMethod` and all custom searchers have been deprecated. "
+            "This feature will be removed in a future release. Consider configuring a preset "
+            "searcher instead (see Determined docs for details).",
+            FutureWarning,
+            stacklevel=2,
+        )
         self.max_trials = max_trials
         self.max_concurrent_trials = max_concurrent_trials
         self.max_length = max_length
@@ -363,6 +378,13 @@ class ASHASearchMethod(searcher.SearchMethod):
         max_concurrent_trials: int = 16,
         exception_points: Optional[List[str]] = None,
     ) -> None:
+        warnings.warn(
+            "`ASHASearchMethod` and all custom searchers have been deprecated. "
+            "This feature will be removed in a future release. Consider configuring a preset "
+            "searcher instead (see Determined docs for details).",
+            FutureWarning,
+            stacklevel=2,
+        )
         self.asha_search_state = ASHASearchMethodState(
             max_length, max_trials, num_rungs, divisor, max_concurrent_trials
         )

@@ -140,9 +140,10 @@ the :download:`core_api.tgz </examples/core_api.tgz>` download or in the `Github
  Report Checkpoints
 ********************
 
-By checkpointing periodically during training and reporting those checkpoints to the master, you can
-stop and restart training in two different ways: either by pausing and reactivating training using
-the WebUI, or by clicking the Continue Trial button after the experiment completes.
+By checkpointing periodically during training and reporting those :ref:`checkpoints <checkpoints>`
+to the master, you can stop and restart training in two different ways: either by pausing and
+reactivating training using the WebUI, or by clicking the Continue Trial button after the experiment
+completes.
 
 These two types of continuations have different behaviors. While you always want to preserve the
 value you are incrementing (the "model weight"), you do not always want to preserve the batch index.
@@ -181,7 +182,7 @@ trial ID in the checkpoint and use it to distinguish the two types of continues.
    .. literalinclude:: ../../../../examples/tutorials/core_api/2_checkpoints.py
       :language: python
       :start-at: def main
-      :end-at: for batch in range(starting_batch, 100)
+      :end-at: for batch in range(starting_batch, max_length)
 
 #. You can checkpoint your model as frequently as you like. For this exercise, save a checkpoint
    after each training report, and check for a preemption signal after each checkpoint:

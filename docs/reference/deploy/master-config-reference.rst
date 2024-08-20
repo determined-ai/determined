@@ -46,7 +46,7 @@ The size (in bytes) of ``/dev/shm`` for Determined task containers. Defaults to 
 ================
 
 The Docker network to use for the Determined task containers. If this is set to ``host``, `Docker
-host-mode networking <https://docs.docker.com/network/drivers/host/>`__ will be used instead.
+host-mode networking <https://docs.docker.com/engine/network/drivers/host/>`__ will be used instead.
 Defaults to ``bridge``.
 
 .. _master-config-reference-dtrain-network-interface:
@@ -89,12 +89,12 @@ configure different container images for NVIDIA GPU tasks using the ``cuda`` key
 Determined 0.17.6), CPU tasks using ``cpu`` key, and ROCm (AMD GPU) tasks using the ``rocm`` key.
 Default values:
 
--  ``determinedai/pytorch-ngc-dev:5432424`` for NVIDIA GPUs and for CPUs.
+-  ``determinedai/pytorch-ngc-dev:0736b6d`` for NVIDIA GPUs and for CPUs.
 -  ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.26.4`` for ROCm.
 
 For TensorFlow users, we provide an image that must be referenced in the experiment configuration:
 
--  ``determinedai/tensorflow-ngc-dev:5432424`` for NVIDIA GPUs and for CPUs.
+-  ``determinedai/tensorflow-ngc-dev:0736b6d`` for NVIDIA GPUs and for CPUs.
 
 ``environment_variables``
 =========================
@@ -403,13 +403,20 @@ resource pool ``max_slots_per_pod``.
 ``slot_type``
 -------------
 
-Resource type used for compute tasks. Defaults to ``cuda``.
+Resource type used for compute tasks. Valid options are ``gpu``, ``cuda``, ``cpu``, or ``rocm``.
+Defaults to ``cuda``.
 
 ``slot_type: cuda``
 ^^^^^^^^^^^^^^^^^^^
 
    One NVIDIA GPU will be requested per compute slot. Prior to Determined 0.17.6, this option was
    called ``gpu``.
+
+``slot_type: rocm``
+^^^^^^^^^^^^^^^^^^^
+
+   One AMD GPU will be requested per compute slot. The ``rocm`` slot type is an experimental
+   feature.
 
 ``slot_type: cpu``
 ^^^^^^^^^^^^^^^^^^
@@ -1394,8 +1401,8 @@ and read from the ``host_path``.
 ---------------
 
 (Advanced users only) Optional `propagation behavior
-<https://docs.docker.com/storage/bind-mounts/#configure-bind-propagation>`__ for replicas of the
-bind-mount. Defaults to ``rprivate``.
+<https://docs.docker.com/engine/storage/bind-mounts/#configure-bind-propagation>`__ for replicas of
+the bind-mount. Defaults to ``rprivate``.
 
 When an experiment finishes, the system will optionally delete some checkpoints to reclaim space.
 The ``save_experiment_best``, ``save_trial_best`` and ``save_trial_latest`` parameters specify which

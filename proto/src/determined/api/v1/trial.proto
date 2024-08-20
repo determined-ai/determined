@@ -704,6 +704,9 @@ message ReportTrialProgressRequest {
   // Total units completed by the trial, in terms of the unit used to configure
   // the searcher.
   double progress = 2;
+  // Indicator for if the passed progress is raw and we want to skip any
+  // calculation by searcher. Default to false.
+  bool is_raw = 3;
 }
 // Response to ReportTrialProgressRequest
 message ReportTrialProgressResponse {}
