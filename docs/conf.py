@@ -171,6 +171,7 @@ linkcheck_anchors_ignore = [
     "join-metrics",
     "exposed-metrics",
     "L139-L169",
+    "/Experiments/GetExperimentCheckpoints",
 ]
 
 # Some pages block python requests. Set user-agent to appear as a browser.
