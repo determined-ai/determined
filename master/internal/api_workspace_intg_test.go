@@ -2035,6 +2035,7 @@ func TestGetAutoCreatedNamespace(t *testing.T) {
 
 	// Change workspace name.
 	_, err = api.PatchWorkspace(ctx, &apiv1.PatchWorkspaceRequest{
+		Id: w.Id,
 		Workspace: &workspacev1.PatchWorkspace{
 			Name: &wrapperspb.StringValue{Value: uuid.NewString()},
 		},
