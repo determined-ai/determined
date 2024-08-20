@@ -410,6 +410,7 @@ func TestAbortUpdateAutoCreateNamespaceNameTrigger(t *testing.T) {
 	userID, err := db.HackAddUser(ctx, &model.User{Username: uuid.NewString()})
 	require.NoError(t, err)
 	wkspName := uuid.NewString()
+	diff := "-diff"
 	wkspAutoNmsp := wkspName + "-auto"
 	wksp := &model.Workspace{
 		Name:                     wkspName,
@@ -420,7 +421,7 @@ func TestAbortUpdateAutoCreateNamespaceNameTrigger(t *testing.T) {
 	require.NoError(t, err)
 
 	// Verify that we cannot update the workspace's auto-created namespace name.
-	wkspAutoNmsp += "-diff"
+	wkspAutoNmsp += diff
 	_, err = db.Bun().NewUpdate().Model(wksp).Where("id = ?", wksp.ID).Exec(ctx)
 	require.NoError(t, err)
 	var wkspNmsp string
@@ -434,7 +435,7 @@ func TestAbortUpdateAutoCreateNamespaceNameTrigger(t *testing.T) {
 	require.Equal(t, wkspName+"-auto", wkspNmsp)
 
 	// Create a workspace with no auto-created namespace name.
-	wksp, userID = createWorkspace(ctx, t)
+	wksp, _ = createWorkspace(ctx, t)
 
 	// Verify that we can set the workspace's auto-created namespace name.
 	wkspAutoNmsp = wksp.Name + "-auto"
@@ -443,7 +444,7 @@ func TestAbortUpdateAutoCreateNamespaceNameTrigger(t *testing.T) {
 	require.NoError(t, err)
 
 	// Verify that we cannot update the workspace's auto-created namespace name.
-	wkspAutoNmsp += "-diff"
+	wkspAutoNmsp += diff
 	_, err = db.Bun().NewUpdate().Model(wksp).Where("id = ?", wksp.ID).Exec(ctx)
 	require.NoError(t, err)
 

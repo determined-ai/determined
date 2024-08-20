@@ -2039,6 +2039,7 @@ func TestGetAutoCreatedNamespace(t *testing.T) {
 			Name: &wrapperspb.StringValue{Value: uuid.NewString()},
 		},
 	})
+	require.NoError(t, err)
 
 	expectedAutoCreatedNmsp := autoCreatedNamespace
 	// Bind the workspace to an auto-created namespace.
