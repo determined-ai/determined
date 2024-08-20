@@ -707,8 +707,8 @@ written to and read from the ``host_path``.
 ---------------
 
 Optional. `Propagation behavior
-<https://docs.docker.com/storage/bind-mounts/#configure-bind-propagation>`__ for replicas of the
-bind-mount. Defaults to ``rprivate``.
+<https://docs.docker.com/engine/storage/bind-mounts/#configure-bind-propagation>`__ for replicas of
+the bind-mount. Defaults to ``rprivate``.
 
 Local Directory
 ===============

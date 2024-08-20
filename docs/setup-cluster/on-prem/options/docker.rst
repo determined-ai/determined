@@ -211,5 +211,5 @@ By default, ``docker run`` will run in the foreground, so that a container can b
 pressing Control-C. If you wish to keep Determined running for the long term, consider running the
 containers `detached <ttps://docs.docker.com/engine/reference/commandline/container_run/#detach>`_
 and/or with `restart policies
-<https://docs.docker.com/config/containers/start-containers-automatically/>`_. Using :ref:`our
+<https://docs.docker.com/engine/containers/start-containers-automatically/>`_. Using :ref:`our
 deployment tool <install-using-deploy>` is also an option.

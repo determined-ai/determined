@@ -101,8 +101,8 @@ to use spot instances:
 
    AWS error while launching spot instances, AuthFailure.ServiceLinkedRoleCreationNotPermitted, The provided credentials do not have permission to create the service-linked role for EC2 Spot Instances.
 
-When this error occurs, please check the `AWS documentation
-<https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/spot-requests.html#service-linked-roles-spot-instance-requests>`__.
+For more information, visit the `AWS documentation
+<https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/service-linked-roles-spot-instance-requests.html>`__.
 Most likely, you will need to use the AWS CLI to create the ``AWSServiceRoleForEC2Spot`` role:
 
 .. code::
