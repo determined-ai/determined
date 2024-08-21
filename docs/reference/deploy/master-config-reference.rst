@@ -224,11 +224,19 @@ Optional. Specify a human-readable name for this cluster.
 Optional. Applies only to the Determined Enterprise Edition. This section contains options to
 customize the UI.
 
-``logo_path``
-=============
+``logo_paths``
+==============
 
-Specifies the path to a user-provided logo to be shown in the UI. Ensure the path is accessible and
-reachable by the master service. The logo file should be a valid image format, with SVG recommended.
+Specifies the paths to variations of the user-provided logo to be shown in the UI. Ensure these are
+accessible and reachable by the master service. The logo file should be a valid image format, with
+SVG recommended.
+
+Logo is defined in four variations, all need to be provided.
+
+-  ``dark_horizontal``: The logo to be shown in the dark theme in the horizontal layout.
+-  ``dark_vertical``: The logo to be shown in the dark theme in the vertical layout.
+-  ``light_horizontal``: The logo to be shown in the light theme in the horizontal layout.
+-  ``light_vertical``: The logo to be shown in the light theme in the vertical layout.
 
 *************************
  ``tensorboard_timeout``
