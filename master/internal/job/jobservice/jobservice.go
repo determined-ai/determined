@@ -1,10 +1,8 @@
 package jobservice
 
 import (
-	"context"
 	"database/sql"
 	"fmt"
-	"runtime/trace"
 	"sort"
 	"strings"
 	"sync"
@@ -98,15 +96,10 @@ func (s *Service) GetJobs(
 	desc bool,
 	states []jobv1.State,
 ) ([]*jobv1.Job, error) {
-	// waiting on this lock
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	var jobQ map[model.JobID]*sproto.RMJobInfo
-	var err error
-	trace.WithRegion(context.Background(), "resourceManager.GetJobQ", func() {
-		jobQ, err = s.rm.GetJobQ(resourcePool)
-	})
+	jobQ, err := s.rm.GetJobQ(resourcePool)
 	if err != nil {
 		s.syslog.WithError(err).Error("getting job queue info from RM")
 		return nil, err
