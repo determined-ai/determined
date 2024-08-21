@@ -62,7 +62,7 @@ brews:
 
 nfpms:
   - maintainer: "Determined AI <ai-open-source@hpe.com>"
-    file_name_template: "determined-agent_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}{{ with .Mips }}_{{ . }}{{ end }}{{ if not (eq .Amd64 "v1") }}{{ .Amd64 }}{{ end }}"
+    file_name_template: "determined-agent_{{ .Version }}_{{ .Os }}_{{ .Arch }}{{ with .Arm }}v{{ . }}{{ end }}{{ with .Mips }}_{{ . }}{{ end }}{{ if not (eq .Amd64 \"v1\") }}{{ .Amd64 }}{{ end }}"
     formats:
       - deb
       - rpm
