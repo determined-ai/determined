@@ -898,50 +898,36 @@ func TestPickVariation(t *testing.T) {
 		DarkVeritical:   "dark-vertical",
 	}
 	tests := []struct {
-		name        string
-		variations  MediaAssetVariations
 		mode        string
 		orientation string
 		expected    string
 	}{
 		{
-			name:        "Light Horizontal prioritized",
-			variations:  userConfig,
 			mode:        "",
 			orientation: "",
 			expected:    "light-horizontal",
 		},
 		{
-			name:        "Light Horizontal prioritized",
-			variations:  userConfig,
 			mode:        "",
 			orientation: "horizontal",
 			expected:    "light-horizontal",
 		},
 		{
-			name:        "Light Horizontal prioritized",
-			variations:  userConfig,
 			mode:        "",
 			orientation: "vertical",
 			expected:    "light-vertical",
 		},
 		{
-			name:        "Light Horizontal prioritized",
-			variations:  userConfig,
 			mode:        "light",
 			orientation: "",
 			expected:    "light-horizontal",
 		},
 		{
-			name:        "Light Horizontal prioritized",
-			variations:  userConfig,
 			mode:        "dark",
 			orientation: "",
 			expected:    "dark-horizontal",
 		},
 		{
-			name:        "Light Horizontal prioritized",
-			variations:  userConfig,
 			mode:        "dark",
 			orientation: "vertical",
 			expected:    "dark-vertical",
@@ -949,8 +935,9 @@ func TestPickVariation(t *testing.T) {
 	}
 
 	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			result := tt.variations.PickVariation(tt.mode, tt.orientation)
+		name := fmt.Sprintf("mode=%s, orientation=%s", tt.mode, tt.orientation)
+		t.Run(name, func(t *testing.T) {
+			result := userConfig.PickVariation(tt.mode, tt.orientation)
 			if result != tt.expected {
 				t.Errorf("PickVariation(%v, %v) = %v; want %v", tt.mode, tt.orientation, result, tt.expected)
 			}
