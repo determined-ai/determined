@@ -21,7 +21,7 @@ Optional Args
 import argparse
 import pathlib
 
-from docker_on_whales import docker
+from python_on_whales import docker
 from ruamel import yaml
 
 
