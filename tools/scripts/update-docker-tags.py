@@ -29,13 +29,13 @@ except ModuleNotFoundError:
     # Inexplicably, sometimes ruamel.yaml is packaged as ruamel_yaml instead.
     import ruamel_yaml as yaml  # type: ignore
 
-def gather_images(yaml_path: str, target_environment: str) -> list:
+def gather_images(yaml_path: str, target_version: str) -> list:
     with open(yaml_path) as f:
         images = yaml.YAML(typ="safe", pure=True).load(f)
     valid_images = []
 
     for image in images.values():
-        if target_environment in image["new"]:
+        if target_version in image["new"]:
             valid_images.append(image)
 
     return valid_images
@@ -51,14 +51,14 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("path", type=pathlib.Path, help="path/to/bumpenvs.yaml")
     parser.add_argument(
-        "--target_environment", help="version id (default found in environments-target.txt)"
+        "--target_version", help="version id (default found in VERSION)"
     )
     args = parser.parse_args()
 
-    if args.target_environment is None:
-        with open("tools/scripts/environments-target.txt") as f:
-            target_environment = f.readline()
+    if args.target_version is None:
+        with open("VERSION") as f:
+            target_version = f.readline()
     else:
-        target_environment = args.target_environment
+        target_version = args.target_version
 
-    main(args.path, target_environment)
+    main(args.path, target_version)
