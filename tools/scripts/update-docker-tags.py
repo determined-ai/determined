@@ -22,8 +22,12 @@ import argparse
 import pathlib
 
 from python_on_whales import docker
-from ruamel import yaml
 
+try:
+    from ruamel import yaml
+except ModuleNotFoundError:
+    # Inexplicably, sometimes ruamel.yaml is packaged as ruamel_yaml instead.
+    import ruamel_yaml as yaml  # type: ignore
 
 def gather_images(yaml_path: str, target_version: str) -> list:
     with open(yaml_path) as f:
