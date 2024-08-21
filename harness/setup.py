@@ -6,7 +6,7 @@ with open("../README.md", "r") as readme:
 
 setuptools.setup(
     name="determined",
-    version="0.36.0-rc4",
+    version="0.36.0-rc5",
     author="Determined AI",
     author_email="ai-open-source@hpe.com",
     url="https://determined.ai/",
