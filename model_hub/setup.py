@@ -2,7 +2,7 @@ import setuptools
 
 setuptools.setup(
     name="model-hub",
-    version="0.36.0-rc3",
+    version="0.36.0-rc4",
     author="Determined AI",
     author_email="ai-open-source@hpe.com",
     url="https://determined.ai/",
