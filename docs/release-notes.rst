@@ -49,14 +49,12 @@ Version 0.36.0
 -  Experiments: Report an experiment's status as FAILED if any failure occurs during the shutdown
    process, before the experiment has completed gracefully.
 
-**Deprecation**
+**Deprecations**
 
 -  Custom Searchers: All custom searchers (including DeepSpeed Autotune) have been deprecated. This
    feature will be removed in a future release. We will maintain first-class support for a variety
    of preset searchers, which can be easily configured for any experiment. Please see
    :ref:`search-methods` for details.
-
-**Deprecations**
 
 -  Cluster: Amazon Aurora V1 will reach End of Life at the end of 2024 and will no longer be the default
       persistent storage for AWS Determined deployments. Users should migrate to Amazon RDS for
