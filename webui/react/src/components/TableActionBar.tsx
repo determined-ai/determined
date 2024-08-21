@@ -20,6 +20,7 @@ import { FilterFormStore } from 'components/FilterForm/components/FilterFormStor
 import TableFilter from 'components/FilterForm/TableFilter';
 import MultiSortMenu from 'components/MultiSortMenu';
 import { OptionsMenu, RowHeight } from 'components/OptionsMenu';
+import { defaultProjectSettings } from 'components/Searches/Searches.settings';
 import useMobile from 'hooks/useMobile';
 import usePermissions from 'hooks/usePermissions';
 import { defaultExperimentColumns } from 'pages/F_ExpList/expListColumns';
@@ -400,6 +401,7 @@ const TableActionBar: React.FC<Props> = ({
             />
             <ColumnPickerMenu
               compare={compareViewOn}
+              defaultPinnedCount={defaultProjectSettings.pinnedColumnsCount}
               defaultVisibleColumns={defaultExperimentColumns}
               initialVisibleColumns={initialVisibleColumns}
               isMobile={isMobile}

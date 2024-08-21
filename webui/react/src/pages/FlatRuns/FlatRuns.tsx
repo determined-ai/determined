@@ -1085,6 +1085,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
             />
             <ColumnPickerMenu
               compare={settings.compare}
+              defaultPinnedCount={defaultFlatRunsSettings.pinnedColumnsCount}
               defaultVisibleColumns={searchId ? defaultSearchRunColumns : defaultRunColumns}
               initialVisibleColumns={columnsIfLoaded}
               isMobile={isMobile}
