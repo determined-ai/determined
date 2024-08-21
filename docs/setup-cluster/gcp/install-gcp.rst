@@ -406,5 +406,5 @@ This command line will spin up a cluster of up to 2 A100s in the ``us-central1-c
       --compute-agent-instance-type a2-highgpu-1g --gpu-num 1 \
       --gpu-type nvidia-tesla-a100 \
       --region us-central1 --zone us-central1-c \
-      --gpu-env-image determinedai/pytorch-ngc-dev:0736b6d \
-      --cpu-env-image determinedai/pytorch-ngc-dev:0736b6d
+      --gpu-env-image determinedai/pytorch-ngc:0.36.0 \
+      --cpu-env-image determinedai/pytorch-ngc:0.36.0
