@@ -1441,7 +1441,7 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 		if !m.config.UICustomization.HasCustomLogo() {
 			return echo.NewHTTPError(http.StatusNotFound)
 		}
-		return c.File(m.config.UICustomization.LogoPath.PickVariation(
+		return c.File(m.config.UICustomization.LogoPaths.PickVariation(
 			c.QueryParam("mode"), c.QueryParam("orientation"),
 		))
 	})
