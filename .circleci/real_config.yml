@@ -1522,8 +1522,8 @@ jobs:
           model-hub: false
           extra-requirements-file: "docs/requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
-      - run: python3 -m pip install python_on_whales
-      - run: python3 tools/scripts/update-docker-tags.py tools/scripts/bumpenvs.yaml
+      - run: pip install python_on_whales
+      - run: python tools/scripts/update-docker-tags.py tools/scripts/bumpenvs.yaml
 
   build-docs:
     parameters:
