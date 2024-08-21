@@ -5746,7 +5746,7 @@ workflows:
             parameters:
               path: ["harness", "model_hub"]
               dryrun: [true]
-          context: determined-production
+          context: determined-dryrun
           filters: *rc-filters
           requires:
             - package-and-push-system-rc
@@ -5765,7 +5765,7 @@ workflows:
             parameters:
               path: ["harness", "model_hub"]
               dryrun: [true]
-          context: determined-production
+          context: determined-dryrun
           filters: *release-filters
           requires:
             - package-and-push-system-release
