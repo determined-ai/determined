@@ -3,8 +3,9 @@ import Spinner from 'hew/Spinner';
 import { Failed, Loadable, Loaded, NotLoaded } from 'hew/utils/loadable';
 import { TreeNode } from 'hew/utils/types';
 import yaml from 'js-yaml';
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useMemo } from 'react';
 
+import { useAsync } from 'hooks/useAsync';
 import { paths } from 'routes/utils';
 import { getExperimentFileFromTree, getExperimentFileTree } from 'services/api';
 import { V1FileNode } from 'services/api-ts-sdk';
@@ -29,9 +30,6 @@ const ExperimentCodeViewer: React.FC<Props> = ({
   onSelectFile,
   selectedFilePath,
 }: Props) => {
-  const [expFiles, setExpFiles] = useState<Loadable<TreeNode[]>>(NotLoaded);
-  const [fileContent, setFileContent] = useState<Loadable<string>>(NotLoaded);
-
   const submittedConfig = useMemo(() => {
     if (!experiment.originalConfig) return;
 
@@ -53,7 +51,7 @@ const ExperimentCodeViewer: React.FC<Props> = ({
     return yaml.dump({ environment: restEnvironment, ...restConfig });
   }, [experiment.configRaw]);
 
-  useEffect(() => {
+  const expFiles = useAsync<TreeNode[]>(async () => {
     const convertV1FileNodeToTreeNode = (node: V1FileNode): TreeNode => ({
       children: node.files?.map((n) => convertV1FileNodeToTreeNode(n)) ?? [],
       download: paths.experimentFileFromTree(experiment.id, String(node.path)),
@@ -62,10 +60,8 @@ const ExperimentCodeViewer: React.FC<Props> = ({
       title: node.name,
     });
 
-    (async () => {
-      const fileTree = await getExperimentFileTree({ experimentId: experiment.id });
-      setExpFiles(Loaded(fileTree.map<TreeNode>(convertV1FileNodeToTreeNode)));
-    })();
+    const fileTree = await getExperimentFileTree({ experimentId: experiment.id });
+    return fileTree.map<TreeNode>(convertV1FileNodeToTreeNode);
   }, [experiment.id]);
 
   // handle blank selected file path
@@ -74,39 +70,43 @@ const ExperimentCodeViewer: React.FC<Props> = ({
     (submittedConfig && 'Submitted Configuration') ||
     (runtimeConfig && 'Runtime Configuration') ||
     '';
-  useEffect(() => {
+
+  const keyedFileContent = useAsync<[string, string]>(async () => {
     if (filePath === 'Submitted Configuration' && submittedConfig !== undefined) {
-      setFileContent(Loaded(submittedConfig));
-      return;
+      return [filePath, submittedConfig];
     }
     if (filePath === 'Runtime Configuration' && runtimeConfig !== undefined) {
-      setFileContent(Loaded(runtimeConfig));
-      return;
+      return [filePath, runtimeConfig];
     }
-    setFileContent(NotLoaded);
-    (async () => {
-      try {
-        const file = await getExperimentFileFromTree({
-          experimentId: experiment.id,
-          path: filePath,
-        });
-        if (!file) {
-          setFileContent(Failed(new Error('File has no content.')));
-        } else {
-          setFileContent(Loaded(file));
-        }
-      } catch (error) {
-        handleError(error, {
-          publicMessage: 'Failed to load selected file.',
-          publicSubject: 'Unable to fetch the selected file.',
-          silent: false,
-          type: ErrorType.Api,
-        });
-        setFileContent(Failed(new Error('Unable to fetch file.')));
-        return;
+    try {
+      const file = await getExperimentFileFromTree({
+        experimentId: experiment.id,
+        path: filePath,
+      });
+      if (!file) {
+        return Failed(new Error('File has no content'));
+      } else {
+        return [filePath, file];
       }
-    })();
+    } catch (error) {
+      handleError(error, {
+        publicMessage: 'Failed to load selected file.',
+        publicSubject: 'Unable to fetch the selected file.',
+        silent: false,
+        type: ErrorType.Api,
+      });
+      return Failed(new Error('Unable to fetch file.'));
+    }
   }, [experiment.id, filePath, runtimeConfig, submittedConfig]);
+
+  const fileContent = useMemo(() => {
+    return keyedFileContent.flatMap(([key, content]) => {
+      if (key !== filePath) {
+        return NotLoaded;
+      }
+      return Loaded(content);
+    });
+  }, [filePath, keyedFileContent]);
 
   const fileOpts = [
     submittedConfig
