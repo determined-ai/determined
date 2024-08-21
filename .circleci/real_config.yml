@@ -73,6 +73,14 @@ release-and-rc-filters: &release-and-rc-filters
       - /(\d)+(\.(\d)+)+/
       - /((\d)+(\.(\d)+)+)(-rc)(\d)+/
 
+dryrun-filters: &dryrun-filters
+  branches:
+    ignore:
+      - /.*/
+    tags:
+      only:
+        - /((\d)+(\.(\d)+)+)(-dryrun)(\d)+/
+
 rc-filters: &rc-filters
   branches:
     ignore:
@@ -5787,3 +5795,9 @@ workflows:
             - build-helm
           context: determined-production
           filters: *release-filters
+
+  dryrun:
+    jobs:
+      - retag-docker-images:
+          context: determined-production
+          filters: *dryrun-filters
