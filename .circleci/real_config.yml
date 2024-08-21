@@ -77,9 +77,9 @@ dryrun-filters: &dryrun-filters
   branches:
     ignore:
       - /.*/
-    tags:
-      only:
-        - /((\d)+(\.(\d)+)+)(-dryrun)(\d)+/
+  tags:
+    only:
+      - /((\d)+(\.(\d)+)+)(-dryrun)(\d)+/
 
 rc-filters: &rc-filters
   branches:
