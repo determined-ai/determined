@@ -510,7 +510,7 @@ platform. There may be additional per-user configuration that is required.
 
    .. code:: bash
 
-      image=determinedai/pytorch-ngc-dev:0736b6d
+      image=determinedai/pytorch-ngc-dev:testbumpenvs
       cd /shared/enroot/images
       enroot import docker://$image
       enroot create /shared/enroot/images/${image//[\/:]/\+}.sqsh

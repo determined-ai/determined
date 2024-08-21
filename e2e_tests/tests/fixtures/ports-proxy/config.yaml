@@ -23,7 +23,7 @@ max_restarts: 0
 
 # Hardcode the image because the new image has a bug. TODO fix this when the image bug is fixed.
 environment:
-  image: determinedai/pytorch-tensorflow-cpu-dev:0736b6d
+  image: determinedai/pytorch-tensorflow-cpu-dev:testbumpenvs
   proxy_ports:
     - proxy_port: 8000
       proxy_tcp: false
