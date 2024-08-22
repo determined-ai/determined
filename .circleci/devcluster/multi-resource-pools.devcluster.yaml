@@ -1,6 +1,11 @@
+temp_dir: /tmp/multi_resource_pools
+
 stages:
   - db:
+      name: db-multi-resource-pools
       name: db
+      db_name: db-multi-resource-pools
+      container_name: determined_db-multi-resource-pools
       port: 5436
 
   - master:
@@ -14,13 +19,13 @@ stages:
           port: 5436
           password: postgres
           user: postgres
-          name: determined
+          name: db-multi-resource-pools
         __internal:
           preemption_timeout: 60s
         checkpoint_storage:
           type: shared_fs
           host_path: /tmp
-          storage_path: determined-cp
+          storage_path: determined-cp-multi-resource-pools
         log:
           level: debug
         root: tools/build

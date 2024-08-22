@@ -3252,6 +3252,9 @@ jobs:
             - store_artifacts:
                 path: /tmp/priority_scheduler
                 destination: devcluster-priority_scheduler-logs
+            - store_artifacts:
+                path: /tmp/multi_resource_pools
+                destination: devcluster-multi-resource-pools-logs
 
   send-job-level-alerts:
     machine:
