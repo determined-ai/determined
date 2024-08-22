@@ -86,7 +86,7 @@ def test_horovod_chief(
     os.environ.pop("DET_CHIEF_IP", None)
     os.environ.pop("USE_HOROVOD", None)
 
-    with test_util.set_resources_id_env_var():
+    with test_util.set_env_vars({"DET_RESOURCES_ID": "resourcesId"}):
         assert launch.horovod.main(hvd_args, script, autohorovod) == 99
 
     if autohorovod and nnodes == 1 and nslots == 1:
@@ -143,7 +143,12 @@ def test_sshd_worker(
 
     os.environ.pop("DET_CHIEF_IP", None)
 
-    with test_util.set_resources_id_env_var():
+    with test_util.set_env_vars(
+        {
+            "DET_RESOURCES_ID": "resourcesId",
+            "DET_SESSION_TOKEN": info.session_token,
+        }
+    ):
         assert launch.horovod.main(hvd_args, script, True) == 99
 
     mock_cluster_info.assert_called_once()

@@ -64,12 +64,14 @@ def set_mock_cluster_info(
 
 
 @contextlib.contextmanager
-def set_resources_id_env_var() -> Iterator[None]:
+def set_env_vars(env_vars: dict[str, str]) -> Iterator[None]:
     try:
-        os.environ["DET_RESOURCES_ID"] = "resourcesId"
+        for k, v in env_vars.items():
+            os.environ[k] = v
         yield
     finally:
-        del os.environ["DET_RESOURCES_ID"]
+        for k, v in env_vars.items():
+            del os.environ[k]
 
 
 def parse_args_check(positive_cases: Dict, negative_cases: Dict, parse_func: Callable) -> None:
