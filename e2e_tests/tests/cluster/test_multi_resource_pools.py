@@ -14,7 +14,7 @@ from tests.cluster import managed_cluster
 def test_agent_resource_pool_change(
     restartable_managed_cluster_multi_resource_pools: managed_cluster.ManagedCluster,
 ) -> None:
-    admin = api_utils.admin_session()
+    admin = api_utils.user_session()  # api_utils.admin_session()
     try:
         restartable_managed_cluster_multi_resource_pools.kill_agent()
         restartable_managed_cluster_multi_resource_pools.dc.restart_stage("agent10")
@@ -37,7 +37,7 @@ def test_agent_resource_pool_change(
 def test_agent_resource_pool_unchanged(
     restartable_managed_cluster_multi_resource_pools: managed_cluster.ManagedCluster,
 ) -> None:
-    admin = api_utils.admin_session()
+    admin = api_utils.user_session()  # api_utils.admin_session()
     try:
         restartable_managed_cluster_multi_resource_pools.kill_agent()
         restartable_managed_cluster_multi_resource_pools.dc.restart_stage("agent20")
