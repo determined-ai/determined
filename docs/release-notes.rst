@@ -13,27 +13,27 @@
 Version 0.36.0
 ==============
 
-**Release Date:** August 21, 2024
+**Release Date:** August 22, 2024
 
 **New Features**
 
--  WebUI: In the enterprise edition of Determined, give Viewer, Editor, GenAI, and Workspace Admin
-   roles the ability to view resource quotas for each workspace in the WebUI when RBAC is enabled.
-   When RBAC is disabled, all users can view resource quotas.
+-  WebUI: In the enterprise edition of Determined, when RBAC is enabled, allow only Viewer, Editor,
+   GenAI, and Workspace Admin roles to view resource quotas for each workspace in the WebUI. When
+   RBAC is not enabled, any user can view resource quotas.
 
--  RBAC: Add a pre-canned role called ``EditorProjectRestricted`` which supersedes the ``Viewer``
+-  RBAC: Add a pre-canned role called ``EditorProjectRestricted`` that supersedes the ``Viewer``
    role and precedes the ``Editor`` role.
 
    -  Like the ``Editor`` role, the ``EditorProjectRestricted`` role grants the permissions to
       create, edit, or delete experiments and NSC (Notebook, Shell or Command) type workloads within
-      its designated scope. However, the ``EditorProjectRestricted`` role lacks the permissions to
-      create or update projects.
+      its scope. However, the ``EditorProjectRestricted`` role lacks the permissions to create or
+      update projects.
 
--  Kubernetes: Experimental support for AMD ROCM GPUs is now available for Kubernetes. To use set
-   ``slotType=rocm``. Visit :ref:`helm-config-reference` for more details.
+-  Kubernetes: Add experimental support for AMD ROCM GPUs. To use, set ``slotType=rocm``. Visit
+   :ref:`helm-config-reference` for more details.
 
--  Add New ROCM 6.1 images with DeepSpeed for MI300x users. Dev versions of these images can be
-   found in our Docker Hub, under `pytorch-infinityhub-dev
+-  Images: Add New ROCM 6.1 images with DeepSpeed for MI300x users. Dev versions of these images can
+   be found in our Docker Hub, under `pytorch-infinityhub-dev
    <https://hub.docker.com/repository/docker/determinedai/pytorch-infinityhub-dev/tags>`__ and
    `pytorch-infinityhub-hpc-dev
    <https://hub.docker.com/repository/docker/determinedai/pytorch-infinityhub-hpc-dev/tags>`__.
@@ -41,8 +41,8 @@ Version 0.36.0
    repository
    <https://github.com/determined-ai/environments/blob/main/Dockerfile-infinityhub-pytorch>`__.
 
--  Add a ``ui_customization`` option to the :ref:`master configuration <master-config-reference>`
-   for specifying a custom logo for the WebUI.
+-  Master: Add a ``ui_customization`` option to the :ref:`master configuration
+   <master-config-reference>` for specifying a custom logo for the WebUI.
 
 **Bug Fixes**
 
@@ -51,24 +51,25 @@ Version 0.36.0
 
 **Deprecations**
 
--  Custom Searchers: All custom searchers (including DeepSpeed Autotune) have been deprecated. This
+-  Custom Searchers: All custom searchers including DeepSpeed Autotune have been deprecated. This
    feature will be removed in a future release. We will maintain first-class support for a variety
-   of preset searchers, which can be easily configured for any experiment. Please see
+   of preset searchers, which can be easily configured for any experiment. Visit
    :ref:`search-methods` for details.
 
--  Cluster: Amazon Aurora V1 will reach End of Life at the end of 2024 and will no longer be the default
-      persistent storage for AWS Determined deployments. Users should migrate to Amazon RDS for
-      PostgreSQL.
+-  Cluster: Amazon Aurora V1 will reach End of Life at the end of 2024 and will no longer be the
+   default persistent storage for AWS Determined deployments. Users should migrate to Amazon RDS for
+   PostgreSQL.
 
--  Cluster: After Amazon Aurora V1 reaches End of Life, support for Amazon Aurora V1 in ``det deploy aws`` will be
-      removed. The deployment will default to the ``simple-rds`` type, which uses Amazon RDS.
+-  Cluster: After Amazon Aurora V1 reaches End of Life, support for Amazon Aurora V1 in ``det deploy
+   aws`` will be removed. The deployment will default to the ``simple-rds`` type, which uses Amazon
+   RDS.
 
--  Database: Postgres 12 will reach End of Life on November 14, 2024. Determined instances using Postgres 12 or earlier
-      should upgrade to Postgres 13 or later to ensure continued support.
+-  Database: Postgres 12 will reach End of Life on November 14, 2024. Determined instances using
+   Postgres 12 or earlier should upgrade to Postgres 13 or later to ensure continued support.
 
--  Kubernetes Scheduling: Support for the priority with preemption scheduler for Kubernetes Resource Managers
-      was deprecated in 0.35.0 and is now removed. Users should transition to the default scheduler.
-      Visit :ref:`Kubernetes Default Scheduler <kubernetes-default-scheduler>` for details.
+-  Kubernetes Scheduling: Support for the priority with preemption scheduler for Kubernetes Resource
+   Managers was deprecated in 0.35.0 and is now removed. Users should transition to the default
+   scheduler. Visit :ref:`Kubernetes Default Scheduler <kubernetes-default-scheduler>` for details.
 
 **************
  Version 0.35
