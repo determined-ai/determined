@@ -1,7 +1,7 @@
 stages:
   - db:
       name: db
-      port: 5436
+      port: 5434
 
   - master:
       pre:
@@ -11,7 +11,7 @@ stages:
           initial_user_password: $INITIAL_USER_PASSWORD
         db:
           host: localhost
-          port: 5436
+          port: 5434
           password: postgres
           user: postgres
           name: determined
@@ -57,16 +57,16 @@ stages:
 
   - custom:
       name: proxy
-      cmd: ["socat", "-d", "-d", "TCP-LISTEN:8083,reuseaddr,fork", "TCP:localhost:8080"]
+      cmd: ["socat", "-d", "-d", "TCP-LISTEN:8081,reuseaddr,fork", "TCP:localhost:8080"]
       post:
         - conncheck:
-            port: 8083
+            port: 8081
 
   - agent:
       name: agent1
       config_file:
         master_host: 127.0.0.1
-        master_port: 8083
+        master_port: 8081
         agent_id: agent1
         container_master_host: $DOCKER_LOCALHOST
         agent_reconnect_attempts: 24
@@ -80,7 +80,7 @@ stages:
       name: agent2
       config_file:
         master_host: 127.0.0.1
-        master_port: 8083
+        master_port: 8081
         agent_id: agent2
         container_master_host: $DOCKER_LOCALHOST
         agent_reconnect_attempts: 24
@@ -91,7 +91,7 @@ stages:
       name: agent10 # Copy of agent1, but with different resource pool.
       config_file:
         master_host: 127.0.0.1
-        master_port: 8083
+        master_port: 8081
         agent_id: agent1
         container_master_host: $DOCKER_LOCALHOST
         agent_reconnect_attempts: 24
@@ -103,7 +103,7 @@ stages:
       name: agent20 # Copy of agent1, but with empty(default) resource pool.
       config_file:
         master_host: 127.0.0.1
-        master_port: 8083
+        master_port: 8081
         agent_id: agent1
         container_master_host: $DOCKER_LOCALHOST
         agent_reconnect_attempts: 24
