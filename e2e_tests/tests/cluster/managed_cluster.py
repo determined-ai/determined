@@ -187,7 +187,7 @@ def managed_cluster_restarts(
     managed_cluster_session: ManagedCluster, request: Any
 ) -> Iterator[ManagedCluster]:  # check if priority scheduler or not using config.
     config = str(DEVCLUSTER_REATTACH_ON_CONFIG_PATH)
-    # port number is same for both reattach on and off config files or multi rp so you can use any.
+    # port number is same for both reattach on and off config files so you can use either.
     utils.set_master_port(config)
     nodeid = request.node.nodeid
     managed_cluster_session.log_marker(f"pytest [{utils.now_ts()}] {nodeid} setup\n")
