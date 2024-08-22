@@ -147,6 +147,7 @@ def test_sshd_worker(
         {
             "DET_RESOURCES_ID": "resourcesId",
             "DET_SESSION_TOKEN": info.session_token,
+            "DET_USER": "abcd",
         }
     ):
         assert launch.horovod.main(hvd_args, script, True) == 99

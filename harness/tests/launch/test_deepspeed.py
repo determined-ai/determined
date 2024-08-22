@@ -249,6 +249,7 @@ def test_launch_worker(
         {
             "DET_RESOURCES_ID": "resourcesId",
             "DET_SESSION_TOKEN": cluster_info.session_token,
+            "DET_USER": "abcd",
         }
     ):
         deeplaunch.main(["script"])
