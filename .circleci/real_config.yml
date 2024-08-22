@@ -86,6 +86,14 @@ release-filters: &release-filters
     only:
       - /v\d+\.\d+\.\d+/
 
+release-dryrun: &release-dryrun
+  branches:
+    ignore:
+      - /.*/
+  tags:
+    only:
+      - /v\d+\.\d+\.\d+-dryrun/
+
 upstream-feature-branch: &upstream-feature-branch
   branches:
     ignore:
@@ -5716,40 +5724,27 @@ workflows:
   release-dryrun:
     jobs:
       - build-helm:
-          filters: *release-and-rc-filters
+          filters: *release-dryrun
+
       - build-proto:
-          filters: *release-and-rc-filters
+          filters: *release-dryrun
+
       - build-react:
           context: determined-production
-          filters: *release-and-rc-filters
+          filters: *release-dryrun
+
       - build-docs:
           context: determined-production
-          filters: *release-and-rc-filters
+          filters: *release-dryrun
           requires:
             - build-helm
             - build-proto
+
       - upload-docs-search-index:
           requires:
             - build-docs
           context: determined-production
-          filters: *release-and-rc-filters
-      - package-and-push-system-rc:
-          dryrun: true
-          requires:
-            - build-react
-            - build-docs
-          context: determined-production
-          filters: *rc-filters
-      - publish-python-package:
-          name: publish-python-package-rc
-          matrix:
-            parameters:
-              path: ["harness", "model_hub"]
-              dryrun: [true]
-          context: determined-dryrun
-          filters: *rc-filters
-          requires:
-            - package-and-push-system-rc
+          filters: *release-dryrun
 
       - package-and-push-system-release:
           dryrun: true
@@ -5757,7 +5752,7 @@ workflows:
             - build-react
             - build-docs
           context: determined-production
-          filters: *release-filters
+          filters: *release-dryrun
 
       - publish-python-package:
           name: publish-python-package-release
@@ -5766,31 +5761,24 @@ workflows:
               path: ["harness", "model_hub"]
               dryrun: [true]
           context: determined-dryrun
-          filters: *release-filters
+          filters: *release-dryrun
           requires:
             - package-and-push-system-release
 
       - publish-docs:
           dryrun: true
-          name: publish-docs-rc
+          name: publish-docs
           requires:
             - build-docs
           context: determined-production
-          filters: *rc-filters
-
-      - publish-docs:
-          dryrun: true
-          requires:
-            - build-docs
-          context: determined-production
-          filters: *release-filters
+          filters: *release-dryrun
 
       - publish-helm-gh:
           dryrun: true
           requires:
             - build-helm
           context: determined-production
-          filters: *release-filters
+          filters: *release-dryrun
 
   release:
     jobs:
