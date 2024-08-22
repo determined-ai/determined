@@ -49,6 +49,7 @@ type ExperimentConfigV0 struct {
 	RawWorkspace                *string                     `json:"workspace"`
 	RawSlurmConfig              *SlurmConfigV0              `json:"slurm,omitempty"`
 	RawPbsConfig                *PbsConfigV0                `json:"pbs,omitempty"`
+	RawPreemptionTimeout        *int                        `json:"preemption_timeout"`
 }
 
 // Unit implements the model.InUnits interface.

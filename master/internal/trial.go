@@ -386,6 +386,13 @@ func (t *trial) maybeAllocateTask() error {
 
 	isSingleNode := t.config.Resources().IsSingleNode() != nil && *t.config.Resources().IsSingleNode()
 
+	// This should be set to defaults from TaskContainerDefaults, but catch case where we're
+	// restarting a trial previous to this field being set.
+	preemptionTimeout := model.DefaultPreemptionTimeout
+	if t.config.PreemptionTimeout() != nil {
+		preemptionTimeout = *t.config.PreemptionTimeout()
+	}
+
 	restoredAllocation, err := t.maybeRestoreAllocation()
 	if err != nil {
 		t.syslog.WithError(err).Warn("failed to restore trial allocation")
@@ -408,9 +415,11 @@ func (t *trial) maybeAllocateTask() error {
 			FittingRequirements: sproto.FittingRequirements{
 				SingleAgent: isSingleNode,
 			},
-
-			Preemptible: true,
-			Restore:     true,
+			Preemption: sproto.PreemptionConfig{
+				Preemptible:     true,
+				TimeoutDuration: time.Duration(preemptionTimeout) * time.Second,
+			},
+			Restore: true,
 			ProxyPorts: sproto.NewProxyPortConfig(
 				tasks.TrialSpecProxyPorts(t.taskSpec, t.config), t.taskID),
 
@@ -455,8 +464,11 @@ func (t *trial) maybeAllocateTask() error {
 			SingleAgent: isSingleNode,
 		},
 
-		Preemptible: true,
-		ProxyPorts:  sproto.NewProxyPortConfig(tasks.TrialSpecProxyPorts(t.taskSpec, t.config), t.taskID),
+		Preemption: sproto.PreemptionConfig{
+			Preemptible:     true,
+			TimeoutDuration: time.Duration(preemptionTimeout) * time.Second,
+		},
+		ProxyPorts: sproto.NewProxyPortConfig(tasks.TrialSpecProxyPorts(t.taskSpec, t.config), t.taskID),
 
 		BlockedNodes: blockedNodes,
 	}

@@ -8,18 +8,11 @@ import (
 
 	"github.com/google/uuid"
 
-	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/pkg/syncx/waitgroupx"
 )
 
-// ErrPreemptionTimeoutExceeded indicates that an allocation not halt within the expected deadline.
-var ErrPreemptionTimeoutExceeded = fmt.Errorf("allocation did not preempt in %s", DefaultTimeout)
-
 // ErrPreemptionDisabled indicates that an alloction is either non-preemptible or not running.
 var ErrPreemptionDisabled = fmt.Errorf("allocation is not preemptible")
-
-// DefaultTimeout is the delay before the deadline exceeded callback passed to preempt is called.
-var DefaultTimeout = time.Hour
 
 // TimeoutFn is called when preemption deadlines are exceeded.
 type TimeoutFn func(context.Context, error)
@@ -78,24 +71,18 @@ func (p *Preemptible) Unwatch(id uuid.UUID) {
 // Preempt preempts all watchers, marks us as preempted and begins the preemption deadline,
 // after which the timeout callback will be called. The preemption deadline callback can
 // fire until Close is called.
-func (p *Preemptible) Preempt(timeoutCallback TimeoutFn) {
+func (p *Preemptible) Preempt(timeout time.Duration, timeoutCallback TimeoutFn) {
 	p.mu.Lock()
 	defer p.mu.Unlock()
-
 	if !p.preempted {
 		p.wg.Go(func(ctx context.Context) {
 			// don't acquire a lock in here without changing close to not lock while it waits.
-			timeout := DefaultTimeout
-			if debugTimeout := config.GetMasterConfig().InternalConfig.PreemptionTimeout; debugTimeout != nil {
-				timeout = time.Duration(*debugTimeout)
-			}
-
 			t := time.NewTimer(timeout)
 			defer t.Stop()
 
 			select {
 			case <-t.C:
-				timeoutCallback(ctx, ErrPreemptionTimeoutExceeded)
+				timeoutCallback(ctx, fmt.Errorf("allocation did not preempt in %s", timeout))
 			case <-ctx.Done():
 			}
 		})

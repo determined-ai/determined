@@ -45,8 +45,9 @@ type GenericTaskConfig struct {
 	WorkDir     *string                 `json:"work_dir"`
 	Debug       bool                    `json:"debug"`
 
-	Pbs   expconf.PbsConfig   `json:"pbs,omitempty"`
-	Slurm expconf.SlurmConfig `json:"slurm,omitempty"`
+	Pbs               expconf.PbsConfig   `json:"pbs,omitempty"`
+	Slurm             expconf.SlurmConfig `json:"slurm,omitempty"`
+	PreemptionTimeout int                 `json:"preemption_timeout,omitempty"`
 }
 
 // Validate implements the check.Validatable interface.
