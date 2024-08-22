@@ -15,7 +15,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/user"
 )
 
-const defaultResourcePoolName = "default"
+// const defaultResourcePoolName = "default"
 
 func TestResourceManagerForwardMessage(t *testing.T) {
 	user.InitService(nil, nil)
