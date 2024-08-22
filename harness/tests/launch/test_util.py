@@ -64,13 +64,13 @@ def set_mock_cluster_info(
 
 
 @contextlib.contextmanager
-def set_env_vars(env_vars: dict[str, str]) -> Iterator[None]:
+def set_env_vars(env_vars: Dict[str, str]) -> Iterator[None]:
     try:
         for k, v in env_vars.items():
             os.environ[k] = v
         yield
     finally:
-        for k, v in env_vars.items():
+        for k, _ in env_vars.items():
             del os.environ[k]
 
 
