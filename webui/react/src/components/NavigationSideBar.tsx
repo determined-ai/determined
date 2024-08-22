@@ -120,6 +120,7 @@ const NavigationSideBar: React.FC = () => {
   const [showSettings, setShowSettings] = useState<boolean>(false);
   const gasLinkOn = useFeature().isOn('genai');
   const templatesOn = useFeature().isOn('task_templates');
+  const f_webhook = useFeature().isOn('webhook_improvement');
   const clusterStatus = useObservable(clusterStore.clusterStatus);
 
   const isAuthenticated = useObservable(authStore.isAuthenticated);
@@ -140,7 +141,7 @@ const NavigationSideBar: React.FC = () => {
   const shortVersion = version.replace(/^(\d+\.\d+\.\d+).*?$/i, '$1');
   const isVersionLong = version !== shortVersion;
 
-  const { canCreateWorkspace, canViewWorkspace, canEditWebhooks } = usePermissions();
+  const { canCreateWorkspace, canViewWorkspace } = usePermissions();
 
   const canAccessUncategorized = canViewWorkspace({ workspace: { id: 1 } });
 
@@ -174,7 +175,7 @@ const NavigationSideBar: React.FC = () => {
         path: paths.templates(),
       });
     }
-    if (canEditWebhooks) {
+    if (currentUser?.isAdmin || f_webhook) {
       topItems.splice(topItems.length - 1, 0, {
         icon: 'webhooks',
         label: 'Webhooks',
@@ -213,7 +214,14 @@ const NavigationSideBar: React.FC = () => {
       bottom: bottomItems,
       top: topItems,
     };
-  }, [canAccessUncategorized, canEditWebhooks, info.branding, gasLinkOn, templatesOn]);
+  }, [
+    canAccessUncategorized,
+    info.branding,
+    gasLinkOn,
+    templatesOn,
+    f_webhook,
+    currentUser?.isAdmin,
+  ]);
 
   const handleCollapse = useCallback(() => {
     updateSettings({ navbarCollapsed: !settings.navbarCollapsed });

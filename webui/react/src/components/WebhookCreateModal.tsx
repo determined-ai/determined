@@ -2,9 +2,11 @@ import Form from 'hew/Form';
 import Input from 'hew/Input';
 import { Modal } from 'hew/Modal';
 import Select, { Option } from 'hew/Select';
-import React, { useCallback, useEffect, useId, useState } from 'react';
+import { useToast } from 'hew/Toast';
+import React, { useCallback, useEffect, useId, useMemo, useState } from 'react';
 
 import useFeature from 'hooks/useFeature';
+import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { createWebhook } from 'services/api';
 import { V1TriggerType, V1WebhookMode, V1WebhookType } from 'services/api-ts-sdk/api';
@@ -72,6 +74,8 @@ const WebhookCreateModalComponent: React.FC<Props> = ({ onSuccess }: Props) => {
   const triggers = Form.useWatch('triggerEvents', form);
   const f_webhook = useFeature().isOn('webhook_improvement');
   const workspaces = useObservable(workspaceStore.workspaces).getOrElse([]);
+  const { canCreateWebhooks } = usePermissions();
+  const { openToast } = useToast();
 
   const onChange = useCallback(() => {
     const fields = form.getFieldsError();
@@ -84,6 +88,11 @@ const WebhookCreateModalComponent: React.FC<Props> = ({ onSuccess }: Props) => {
       form.setFieldValue('regex', null);
     }
   }, [triggers, form]);
+
+  const permWorkspace = useMemo(
+    () => canCreateWebhooks(workspaces),
+    [workspaces, canCreateWebhooks],
+  );
 
   const handleSubmit = useCallback(async () => {
     const values = await form.validateFields();
@@ -112,6 +121,10 @@ const WebhookCreateModalComponent: React.FC<Props> = ({ onSuccess }: Props) => {
         onSuccess?.();
         routeToReactUrl(paths.webhooks());
         form.resetFields();
+        openToast({
+          severity: 'Confirm',
+          title: 'Webhook created.',
+        });
       }
     } catch (e) {
       if (e instanceof DetError) {
@@ -133,7 +146,7 @@ const WebhookCreateModalComponent: React.FC<Props> = ({ onSuccess }: Props) => {
       }
       throw e;
     }
-  }, [form, onSuccess]);
+  }, [form, onSuccess, openToast]);
 
   return (
     <Modal
@@ -160,7 +173,7 @@ const WebhookCreateModalComponent: React.FC<Props> = ({ onSuccess }: Props) => {
               name="workspaceId"
               rules={[{ message: 'Workspace is required', required: true }]}>
               <Select allowClear placeholder="Workspace (required)">
-                {workspaces.map((workspace: Workspace) => (
+                {permWorkspace.map((workspace: Workspace) => (
                   <Option key={workspace.id} value={workspace.id}>
                     {workspace.name}
                   </Option>
