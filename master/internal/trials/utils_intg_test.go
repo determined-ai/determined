@@ -7,14 +7,15 @@ import (
 	"context"
 	"testing"
 
-	apiPkg "github.com/determined-ai/determined/master/internal/api"
-	"github.com/determined-ai/determined/master/internal/db"
-	"github.com/determined-ai/determined/master/pkg/etc"
-	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/require"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+
+	apiPkg "github.com/determined-ai/determined/master/internal/api"
+	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/pkg/etc"
+	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 const testTrialCount = 5
