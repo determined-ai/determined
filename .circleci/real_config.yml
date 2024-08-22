@@ -92,7 +92,7 @@ release-dryrun: &release-dryrun
       - /.*/
   tags:
     only:
-      - /v\d+\.\d+\.\d+-dryrun/
+      - /v\d+\.\d+\.\d+\+dryrun/
 
 upstream-feature-branch: &upstream-feature-branch
   branches:
