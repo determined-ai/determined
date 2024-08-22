@@ -32,11 +32,7 @@
     "unimported": "unimported"
   },
   "dependencies": {
-    "@codemirror/lang-markdown": "^6.2.5",
-    "@codemirror/lang-python": "^6.1.6",
-    "@codemirror/legacy-modes": "^6.3.3",
     "@glideapps/glide-data-grid": "^6.0.3",
-    "@uiw/react-codemirror": "^4.22.00",
     "ansi-to-html": "^0.7.2",
     "antd": "^5.1.7",
     "core-js": "3.37.0",
