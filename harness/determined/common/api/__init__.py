@@ -1,5 +1,5 @@
 from determined.common.api import authentication, errors, metric, bindings
-from determined.common.api._session import BaseSession, UnauthSession, Session
+from determined.common.api._session import BaseSession, UnauthSession, Session, TaskSession
 from determined.common.api._util import (
     PageOpts,
     get_ntsc_details,

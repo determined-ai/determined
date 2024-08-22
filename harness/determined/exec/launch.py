@@ -22,7 +22,7 @@ def trigger_preemption(signum: int, frame: types.FrameType) -> None:
         logger.info("SIGTERM: Preemption imminent.")
         # Notify the master that we need to be preempted
         cert = certs.default_load(info.master_url)
-        sess = authentication.login_with_cache(info.master_url, cert=cert)
+        sess = authentication.login_from_task(info.master_url, cert=cert)
         sess.post(f"/api/v1/allocations/{info.allocation_id}/signals/pending_preemption")
 
 

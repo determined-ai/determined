@@ -281,6 +281,8 @@ class Session(BaseSession):
     By far, most BaseSessions in the codebase will be this Session subclass.
     """
 
+    AUTH_HEADER = "Authorization"
+
     def __init__(
         self,
         master: str,
@@ -308,8 +310,25 @@ class Session(BaseSession):
             server_hostname=self.cert.name if self.cert else None,
             verify=self.cert.bundle if self.cert else None,
             max_retries=self._max_retries,
-            headers={"Authorization": f"Bearer {self.token}"},
+            headers={self.AUTH_HEADER: f"Bearer {self.token}"},
         )
+
+
+class TaskSession(Session):
+    """
+    ``TaskSession`` is a subclass of ``Session`` designed to be used for authenticating requests
+    using a task session token. It simply overrides the authentication header name used for
+    requests.
+
+    Most sessions that are created from user input should use ``Session`` instead, which
+    authenticates requests using a user token (i.e. the CLI, SDK).
+
+    Task session tokens really only have a longer expiration, and should be used for internal
+    sessions that may persist throughout a long training job (i.e. Core API).
+    """
+
+    # Authentication header name for task session tokens
+    AUTH_HEADER = "Grpc-Metadata-x-allocation-token"
 
 
 class _HTTPSAdapter(adapters.HTTPAdapter):

@@ -101,6 +101,10 @@ def get_det_password_from_env() -> Optional[str]:
     return os.environ.get("DET_PASS")
 
 
+def get_det_session_token_from_env() -> Optional[str]:
+    return os.environ.get("DET_SESSION_TOKEN")
+
+
 def login(
     master_address: str,
     username: str,
@@ -305,6 +309,27 @@ def logout_all(master_address: str, cert: Optional[certs.Cert]) -> None:
 
     for user in users:
         logout(master_address, user, cert)
+
+
+def login_from_task(
+    master_address: str,
+    cert: Optional[certs.Cert],
+) -> "api.TaskSession":
+    """
+    Creates a ``TaskSession`` from environment variables to be used for authenticating subsequent
+    requests.
+
+    This method should only be called on-cluster, from inside a task container.
+    """
+    session_token = get_det_session_token_from_env()
+    if not session_token:
+        raise ValueError("DET_SESSION_TOKEN environment variable not set.")
+
+    username = get_det_username_from_env()
+    if not username:
+        raise ValueError("DET_USER environment variable not set.")
+
+    return api.TaskSession(master=master_address, username=username, token=session_token, cert=cert)
 
 
 def _is_token_valid(master_address: str, token: str, cert: Optional[certs.Cert]) -> bool:

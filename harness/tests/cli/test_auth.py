@@ -10,7 +10,7 @@ from responses import matchers, registries
 
 from determined.cli import cli
 from determined.common import api
-from determined.common.api import authentication
+from determined.common.api import authentication, certs
 from tests.cli import util
 
 MOCK_MASTER_URL = "http://localhost:8080"
@@ -439,3 +439,28 @@ def test_logout_all() -> None:
             mts.clear_active()
 
             cli.main(["user", "logout", "--all"])
+
+
+def test_login_from_task() -> None:
+    mock_session_token = "abcde12345"
+    mock_user = "abababa"
+    mock_cert = certs.Cert()
+    with contextlib.ExitStack() as es:
+        # Configure environment variables.
+        es.enter_context(util.setenv_optional("DET_SESSION_TOKEN", mock_session_token))
+        es.enter_context(util.setenv_optional("DET_USER", mock_user))
+
+        with responses.RequestsMock(
+            registry=registries.OrderedRegistry, assert_all_requests_are_fired=True
+        ) as rsps:
+            sess = authentication.login_from_task(master_address=MOCK_MASTER_URL, cert=mock_cert)
+            assert sess.token == mock_session_token
+            assert sess.username == mock_user
+            assert sess.cert == mock_cert
+
+            rsps.get(
+                f"{MOCK_MASTER_URL}/api/v1/me",
+                status=200,
+                match=[matchers.header_matcher({sess.AUTH_HEADER: f"Bearer {mock_session_token}"})],
+            )
+            sess.get("/api/v1/me")
