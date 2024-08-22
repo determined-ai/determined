@@ -12398,7 +12398,36 @@ export interface V1Webhook {
      * @memberof V1Webhook
      */
     webhookType: V1WebhookType;
+    /**
+     * The name of the webhook.
+     * @type {string}
+     * @memberof V1Webhook
+     */
+    name: string;
+    /**
+     * The workspace of the webhook.
+     * @type {number}
+     * @memberof V1Webhook
+     */
+    workspaceId?: number;
+    /**
+     * The mode of the webhook.
+     * @type {V1WebhookMode}
+     * @memberof V1Webhook
+     */
+    mode: V1WebhookMode;
 }
+/**
+ * Enum values for webhook mode.   - WEBHOOK_MODE_UNSPECIFIED: Default value  - WEBHOOK_MODE_WORKSPACE: Webhook will be triggered by all experiment in the workspace  - WEBHOOK_MODE_SPECIFIC: Webhook will only be triggered by experiment with matching configuration in the same workspace as the web hook
+ * @export
+ * @enum {string}
+ */
+export const V1WebhookMode = {
+    UNSPECIFIED: 'WEBHOOK_MODE_UNSPECIFIED',
+    WORKSPACE: 'WEBHOOK_MODE_WORKSPACE',
+    SPECIFIC: 'WEBHOOK_MODE_SPECIFIC',
+} as const
+export type V1WebhookMode = ValueOf<typeof V1WebhookMode>
 /**
  * Enum values for expected webhook types.   - WEBHOOK_TYPE_UNSPECIFIED: Default value  - WEBHOOK_TYPE_DEFAULT: For a default webhook  - WEBHOOK_TYPE_SLACK: For a slack webhook.
  * @export

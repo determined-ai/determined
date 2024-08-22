@@ -1222,6 +1222,9 @@ export interface Webhook {
   triggers: V1Trigger[];
   url: string;
   webhookType: string;
+  name: string;
+  workspaceId: number;
+  mode: string;
 }
 
 export type UserOrGroup = User | V1Group;
