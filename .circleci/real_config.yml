@@ -4513,6 +4513,20 @@ workflows:
           collect-det-job-logs: false
 
       - test-e2e:
+          name: test-e2e-managed-devcluster-resource-pools
+          context:
+            - dev-ci-cluster-default-user-credentials
+          requires:
+            - build-go-ee
+          parallelism: 4
+          resource-class: large
+          tf2: true
+          mark: managed_devcluster_resource_pools
+          managed-devcluster: true
+          extra-pytest-flags: "--no-compare-stats"
+          collect-det-job-logs: false
+
+      - test-e2e:
           name: test-e2e-multi-k8s
           context:
             - dev-ci-cluster-default-user-credentials
