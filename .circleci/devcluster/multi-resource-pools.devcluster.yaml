@@ -3,7 +3,6 @@ temp_dir: /tmp/multi_resource_pools
 stages:
   - db:
       name: db-multi-resource-pools
-      name: db
       db_name: db-multi-resource-pools
       container_name: determined_db-multi-resource-pools
       port: 5436
