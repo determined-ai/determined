@@ -25,7 +25,7 @@ func actionFuncAllow(context.Context, model.User, *model.Experiment) error {
 }
 
 func actionFuncDeny(context.Context, model.User, *model.Experiment) error {
-	return status.Error(codes.PermissionDenied, "")
+	return status.Error(codes.Unknown, "")
 }
 
 func TestCanGetTrialsExperimentAndCheckCanDoAction(t *testing.T) {
@@ -48,7 +48,8 @@ func TestCanGetTrialsExperimentAndCheckCanDoAction(t *testing.T) {
 	require.NoError(t, err)
 	// denied
 	err = CanGetTrialsExperimentAndCheckCanDoAction(ctx, trial.ID, &user, actionFuncDeny)
-	require.Error(t, err)
+	expectedError := status.Error(codes.Unknown, "")
+	require.ErrorIs(t, err, status.Error(codes.PermissionDenied, expectedError.Error()))
 	// not found
 	err = CanGetTrialsExperimentAndCheckCanDoAction(ctx, -999, &user, actionFuncAllow)
 	require.ErrorIs(t, err, apiPkg.NotFoundErrs("trial", "-999", true))
@@ -78,7 +79,8 @@ func TestCanGetTrialsExperimentAndCheckCanDoActionBulk(t *testing.T) {
 	require.NoError(t, err)
 	// denied
 	err = CanGetTrialsExperimentAndCheckCanDoActionBulk(ctx, trialIDs, &user, actionFuncDeny)
-	require.Error(t, err)
+	expectedError := status.Error(codes.Unknown, "")
+	require.ErrorIs(t, err, status.Error(codes.PermissionDenied, expectedError.Error()))
 	// not found
 	err = CanGetTrialsExperimentAndCheckCanDoActionBulk(ctx, []int{-1, -2, -3}, &user, actionFuncAllow)
 	require.ErrorIs(t, err, apiPkg.NotFoundErrs("trial", "-1,-2,-3", true))
