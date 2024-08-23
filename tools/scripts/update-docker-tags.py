@@ -57,7 +57,7 @@ if __name__ == "__main__":
 
     if args.target_version is None:
         with open("VERSION") as f:
-            target_version = f.readline()
+            target_version = f.readline().rstrip()
     else:
         target_version = args.target_version
 
