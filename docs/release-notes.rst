@@ -32,7 +32,7 @@ read, create, edit, or delete experiments and NSC (Notebook, Shell or Command) t
 -  Kubernetes: Add experimental support for AMD ROCM GPUs. To use, set ``slotType=rocm``. Visit
    :ref:`helm-config-reference` for more details.
 
--  Images: Add New ROCM 6.1 images with DeepSpeed for MI300x users. Dev versions of these images can
+- Images: Add New ROCm 6.1 images with DeepSpeed for MI300x users. Dev versions of these images can
    be found in our Docker Hub, under `pytorch-infinityhub-dev
    <https://hub.docker.com/repository/docker/determinedai/pytorch-infinityhub-dev/tags>`__ and
    `pytorch-infinityhub-hpc-dev
