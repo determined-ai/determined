@@ -17,7 +17,7 @@ Version 0.36.0
 
 **New Features**
 
--  WebUI: In the enterprise edition of Determined, when RBAC is enabled, allow only Viewer, Editor,
+- WebUI: In the enterprise edition of Determined, when RBAC is enabled, allow Viewer, Editor,
    GenAI, and Workspace Admin roles to view resource quotas for each workspace in the WebUI. When
    RBAC is not enabled, any user can view resource quotas.
 
