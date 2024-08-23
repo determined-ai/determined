@@ -488,10 +488,10 @@ The ``EditorProjectRestricted`` role supersedes the ``Viewer`` role and precedes
 role. Assign the ``EditorProjectRestricted`` to users who need ``Editor`` permissions without the
 ability to create or update projects. More specifically:
 
--  ``EditorRestricted`` users can create, edit, or delete experiments and notebook, shell, or
-   Command (NSC) type workloads within their designated scope, just like those with the ``Editor``
-   role. However, ``EditorProjectRestricted`` users lack the permissions to create or update
-   projects.
+-  ``EditorProjectRestricted`` users can create, edit, or delete experiments and notebook,
+   tensorboard,shell, or Command (NTSC) type workloads within their designated scope, just like
+   those with the ``Editor`` role. However, ``EditorProjectRestricted`` users lack the permissions
+   to create or update projects.
 
 ``Editor``
 ==========
