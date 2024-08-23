@@ -17,29 +17,29 @@ Version 0.36.0
 
 **New Features**
 
-- WebUI: In the enterprise edition of Determined, when RBAC is enabled, allow Viewer, Editor,
-   GenAI, and Workspace Admin roles to view resource quotas for each workspace in the WebUI. When
-   RBAC is not enabled, any user can view resource quotas.
+-  WebUI: In the enterprise edition of Determined, when RBAC is enabled, allow Viewer, Editor,
+      GenAI, and Workspace Admin roles to view resource quotas for each workspace in the WebUI. When
+      RBAC is not enabled, any user can view resource quotas.
 
 -  RBAC: Add a pre-canned role called ``EditorProjectRestricted`` that supersedes the ``Viewer``
    role and precedes the ``Editor`` role.
 
-   -  Like the ``Editor`` role, the ``EditorProjectRestricted`` role grants the permissions to
-read, create, edit, or delete experiments and NTSC (Notebook, Tensorboard, Shell or Command) type workloads within
-      its scope. However, the ``EditorProjectRestricted`` role lacks the permissions to create or
-      update projects.
+   -  Like the ``Editor`` role, the ``EditorProjectRestricted`` role grants the permissions to read,
+      create, edit, or delete experiments and NTSC (Notebook, Tensorboard, Shell or Command) type
+      workloads within its scope. However, the ``EditorProjectRestricted`` role lacks the
+      permissions to create or update projects.
 
-- Kubernetes: Add experimental support for AMD ROCm GPUs. To use, set ``slotType=rocm``. Visit
-   :ref:`helm-config-reference` for more details.
+-  Kubernetes: Add experimental support for AMD ROCm GPUs. To use, set ``slotType=rocm``. Visit
+      :ref:`helm-config-reference` for more details.
 
-- Images: Add New ROCm 6.1 images with DeepSpeed for MI300x users. Dev versions of these images can
-   be found in our Docker Hub, under `pytorch-infinityhub-dev
-   <https://hub.docker.com/repository/docker/determinedai/pytorch-infinityhub-dev/tags>`__ and
-   `pytorch-infinityhub-hpc-dev
-   <https://hub.docker.com/repository/docker/determinedai/pytorch-infinityhub-hpc-dev/tags>`__.
-   Users can build these images locally based on the Dockerfiles found in our `environments
-   repository
-   <https://github.com/determined-ai/environments/blob/main/Dockerfile-infinityhub-pytorch>`__.
+-  Images: Add New ROCm 6.1 images with DeepSpeed for MI300x users. Dev versions of these images can
+      be found in our Docker Hub, under `pytorch-infinityhub-dev
+      <https://hub.docker.com/repository/docker/determinedai/pytorch-infinityhub-dev/tags>`__ and
+      `pytorch-infinityhub-hpc-dev
+      <https://hub.docker.com/repository/docker/determinedai/pytorch-infinityhub-hpc-dev/tags>`__.
+      Users can build these images locally based on the Dockerfiles found in our `environments
+      repository
+      <https://github.com/determined-ai/environments/blob/main/Dockerfile-infinityhub-pytorch>`__.
 
 -  Master: Add a ``ui_customization`` option to the :ref:`master configuration
    <master-config-reference>` for specifying a custom logo for the WebUI.
