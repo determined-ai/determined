@@ -1521,6 +1521,9 @@ jobs:
           determined: false
           model-hub: false
           executor: <<pipeline.parameters.docker-image>>
+      - login-docker:
+          username: ${DOCKER_USER}
+          password: ${DOCKER_PASS}
       - run: pip install python_on_whales ruamel_yaml
       - run: python tools/scripts/update-docker-tags.py tools/scripts/bumpenvs.yaml
 
