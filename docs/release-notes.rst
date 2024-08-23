@@ -13,7 +13,7 @@
 Version 0.36.0
 ==============
 
-**Release Date:** August 22, 2024
+**Release Date:** August 23, 2024
 
 **New Features**
 
