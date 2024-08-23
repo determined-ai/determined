@@ -489,7 +489,7 @@ role. Assign the ``EditorProjectRestricted`` to users who need ``Editor`` permis
 ability to create or update projects. More specifically:
 
 -  ``EditorProjectRestricted`` users can create, edit, or delete experiments and notebook,
-   tensorboard, shell, or Command (NTSC) type workloads within their designated scope, just like
+TensorBoard, shell, or Command (NTSC) type workloads within their designated scope, just like
    those with the ``Editor`` role. However, ``EditorProjectRestricted`` users lack the permissions
    to create or update projects.
 
