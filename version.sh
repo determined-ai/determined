@@ -47,9 +47,9 @@ while getopts ${OPTSTRING} opt; do
         t)
             TAG_OUTPUT=1
             ;;
-		d)
-			DOCKER_OUTPUT=1
-			;;
+        d)
+            DOCKER_OUTPUT=1
+            ;;
         ?)
             echo "Invalid option: -${OPTARG}."
             exit 1
@@ -60,7 +60,7 @@ done
 # Set VERSION to CIRCLE_TAG in case we're running in CircleCI. This makes it
 # easier to avoid fiddling with environment variables there.
 if [[ ! -z ${CIRCLE_TAG} ]]; then
-	VERSION=${CIRCLE_TAG}
+    VERSION=${CIRCLE_TAG}
 fi
 
 # If VERSION is unset or the empty string, "". This will be the default case for
@@ -99,10 +99,10 @@ if [[ -z ${VERSION} ]]; then
     if [[ -n ${TAG_OUTPUT} ]]; then
         echo -n "${MAYBE_TAG}+${SHA}"
     elif [[ -n ${DOCKER_OUTPUT} ]]; then
-		# Docker image tags must have the following format:
-		# [A-Za-z0-9_][A-Za-z0-9_\.\-]{0,127}
-		echo -n "${MAYBE_TAG#v}-${SHA}" | tr '+' '-'
-	else
+        # Docker image tags must have the following format:
+        # [A-Za-z0-9_][A-Za-z0-9_\.\-]{0,127}
+        echo -n "${MAYBE_TAG#v}-${SHA}" | tr '+' '-'
+    else
         echo -n "${MAYBE_TAG#v}+${SHA}"
     fi
 else
@@ -115,10 +115,10 @@ else
     # string without the 'v'.
     if [[ -n ${TAG_OUTPUT} ]]; then
         echo -n "${VERSION#v}"
-	elif [[ -n ${DOCKER_OUTPUT} ]]; then
-		# Docker image tags must have the following format:
-		# [A-Za-z0-9_][A-Za-z0-9_\.\-]{0,127}
-		echo -n "${VERSION#v}" | tr '+' '-'
+    elif [[ -n ${DOCKER_OUTPUT} ]]; then
+        # Docker image tags must have the following format:
+        # [A-Za-z0-9_][A-Za-z0-9_\.\-]{0,127}
+        echo -n "${VERSION#v}" | tr '+' '-'
     else
         echo -n "${VERSION}"
     fi
