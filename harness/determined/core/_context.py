@@ -242,9 +242,10 @@ def init(
 
     # We are on the cluster.
     cert = certs.default_load(info.master_url)
-    session = authentication.login_with_cache(info.master_url, cert=cert).with_retry(
-        util.get_max_retries_config()
-    )
+    session = authentication.login_from_task(
+        master_address=info.master_url,
+        cert=cert,
+    ).with_retry(util.get_max_retries_config())
 
     if distributed is None:
         if len(info.container_addrs) > 1 or len(info.slot_ids) > 1:

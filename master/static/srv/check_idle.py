@@ -83,7 +83,7 @@ def main():
     notebook_server = f"https://127.0.0.1:{port}/proxy/{notebook_id}"
     master_url = api.canonicalize_master_url(os.environ["DET_MASTER"])
     cert = certs.default_load(master_url)
-    sess = authentication.login_with_cache(master_url, cert=cert)
+    sess = authentication.login_from_task(master_url, cert=cert)
     try:
         idle_type = IdleType[os.environ["NOTEBOOK_IDLE_TYPE"].upper()]
     except KeyError:
