@@ -114,12 +114,12 @@ else
     # the full tag version string if it's set. Otherwise, return the version
     # string without the 'v'.
     if [[ -n ${TAG_OUTPUT} ]]; then
-        echo -n "${VERSION#v}"
+        echo -n "${VERSION}"
     elif [[ -n ${DOCKER_OUTPUT} ]]; then
         # Docker image tags must have the following format:
         # [A-Za-z0-9_][A-Za-z0-9_\.\-]{0,127}
         echo -n "${VERSION#v}" | tr '+' '-'
     else
-        echo -n "${VERSION}"
+        echo -n "${VERSION#v}"
     fi
 fi
