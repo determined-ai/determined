@@ -483,7 +483,7 @@ const UserManagement: React.FC<Props> = ({ onUserCreate }: Props) => {
     <>
       <Section className={css.usersTable}>
         <div className={css.actionBar} data-testid="actionRow">
-          <Row>
+          <Row wrap>
             <Column>
               <Row>
                 {/* input is uncontrolled */}
