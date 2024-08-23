@@ -10,6 +10,7 @@ GORELEASER = goreleaser
 
 export VERSION := $(shell ../version.sh)
 export VERSION_TAG:=$(shell ../version.sh -t)
+export VERSION_DOCKER := $(shell ../version.sh -d)
 
 export GO111MODULE := on
 

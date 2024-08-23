@@ -36,16 +36,20 @@
 # So, in our diagram, if run from B, C, D, E, F, I, J, or K, the script will return
 # 1.1.0. If run from L, M, N, or O, it will return 1.2.0. And so on.
 
-OPTSTRING=":t"
+OPTSTRING=":td"
 
 # Options parsing
-# -t will output the full git tag, necessary for some build steps. The default
-# case strips the leading 'v'.
+# -t outputs the full git tag, necessary for some build steps.
+# -d outputs a Docker-friendly image tag, necessary for pushing to Docker Hub.
+# The default case simply strips the leading 'v'.
 while getopts ${OPTSTRING} opt; do
     case ${opt} in
         t)
             TAG_OUTPUT=1
             ;;
+		d)
+			DOCKER_OUTPUT=1
+			;;
         ?)
             echo "Invalid option: -${OPTARG}."
             exit 1
@@ -91,14 +95,15 @@ if [[ -z ${VERSION} ]]; then
     # Munge the tag into the form we want. Note: we always append a SHA hash,
     # even if we're on the commit with the tag. This is partially because I feel
     # like it will be more consistent and result in fewer surprises, but also it
-    # might help indicate that this is a local version. Some build steps expect
-    # the version string to be the full tag, so check for a -t flag and return
-    # the full tag version string if it's set. Otherwise, return the version
-    # string without the 'v'.
-    if [[ -z ${TAG_OUTPUT} ]]; then
-        echo -n "${MAYBE_TAG#v}+${SHA}"
-    else
+    # might help indicate that this is a local version.
+    if [[ -n ${TAG_OUTPUT} ]]; then
         echo -n "${MAYBE_TAG}+${SHA}"
+    elif [[ -n ${DOCKER_OUTPUT} ]]; then
+		# Docker image tags must have the following format:
+		# [A-Za-z0-9_][A-Za-z0-9_\.\-]{0,127}
+		echo -n "${MAYBE_TAG#v}-${SHA}" | tr '+' '-'
+	else
+        echo -n "${MAYBE_TAG#v}+${SHA}"
     fi
 else
     # Use existing VERSION, which is much easier. This should be the default
@@ -108,8 +113,12 @@ else
     # the version string to be the full tag, so check for a -t flag and return
     # the full tag version string if it's set. Otherwise, return the version
     # string without the 'v'.
-    if [[ -z ${TAG_OUTPUT} ]]; then
+    if [[ -n ${TAG_OUTPUT} ]]; then
         echo -n "${VERSION#v}"
+	elif [[ -n ${DOCKER_OUTPUT} ]]; then
+		# Docker image tags must have the following format:
+		# [A-Za-z0-9_][A-Za-z0-9_\.\-]{0,127}
+		echo -n "${VERSION#v}" | tr '+' '-'
     else
         echo -n "${VERSION}"
     fi
