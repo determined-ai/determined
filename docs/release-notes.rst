@@ -25,7 +25,7 @@ Version 0.36.0
    role and precedes the ``Editor`` role.
 
    -  Like the ``Editor`` role, the ``EditorProjectRestricted`` role grants the permissions to
-read, create, edit, or delete experiments and NSC (Notebook, Shell or Command) type workloads within
+read, create, edit, or delete experiments and NTSC (Notebook, Tensorboard, Shell or Command) type workloads within
       its scope. However, the ``EditorProjectRestricted`` role lacks the permissions to create or
       update projects.
 
