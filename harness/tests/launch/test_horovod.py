@@ -116,7 +116,7 @@ def test_horovod_chief(
 
 @mock.patch("subprocess.Popen")
 @mock.patch("determined.get_cluster_info")
-@mock.patch("determined.common.api.authentication.login_with_cache")
+@mock.patch("determined.common.api.authentication.login_from_task")
 def test_sshd_worker(
     mock_login: mock.MagicMock,
     mock_cluster_info: mock.MagicMock,

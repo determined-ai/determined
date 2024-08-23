@@ -235,7 +235,7 @@ def test_launch_fail(mock_cluster_info: mock.MagicMock, mock_subprocess: mock.Ma
 
 @mock.patch("subprocess.Popen")
 @mock.patch("determined.get_cluster_info")
-@mock.patch("determined.common.api.authentication.login_with_cache")
+@mock.patch("determined.common.api.authentication.login_from_task")
 def test_launch_worker(
     mock_login: mock.MagicMock,
     mock_cluster_info: mock.MagicMock,
