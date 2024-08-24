@@ -97,13 +97,13 @@ if [[ -z ${VERSION} ]]; then
     # like it will be more consistent and result in fewer surprises, but also it
     # might help indicate that this is a local version.
     if [[ -n ${TAG_OUTPUT} ]]; then
-        echo -n "${MAYBE_TAG}+${SHA}"
+        echo -n "${MAYBE_TAG}+${SHA}" | sed -e 's/\+/-/g' | sed -e 's/-/+/'
     elif [[ -n ${DOCKER_OUTPUT} ]]; then
         # Docker image tags must have the following format:
         # [A-Za-z0-9_][A-Za-z0-9_\.\-]{0,127}
-        echo -n "${MAYBE_TAG#v}-${SHA}" | tr '+' '-'
+        echo -n "${MAYBE_TAG#v}-${SHA}" | sed -e 's/\+/-/g'
     else
-        echo -n "${MAYBE_TAG#v}+${SHA}"
+        echo -n "${MAYBE_TAG#v}+${SHA}" | sed -e 's/\+/-/g' | sed -e 's/-/+/'
     fi
 else
     # Use existing VERSION, which is much easier. This should be the default
@@ -114,12 +114,12 @@ else
     # the full tag version string if it's set. Otherwise, return the version
     # string without the 'v'.
     if [[ -n ${TAG_OUTPUT} ]]; then
-        echo -n "${VERSION}"
+        echo -n "${VERSION}" | sed -e 's/\+/-/g' | sed -e 's/-/+/'
     elif [[ -n ${DOCKER_OUTPUT} ]]; then
         # Docker image tags must have the following format:
         # [A-Za-z0-9_][A-Za-z0-9_\.\-]{0,127}
-        echo -n "${VERSION#v}" | tr '+' '-'
+        echo -n "${VERSION#v}" | sed -e 's/\+/-/g'
     else
-        echo -n "${VERSION#v}"
+        echo -n "${VERSION#v}" | sed -e 's/\+/-/g' | sed -e 's/-/+/'
     fi
 fi
