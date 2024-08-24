@@ -1,5 +1,6 @@
 SHELL := /bin/bash
 export VERSION := $(shell ../version.sh)
+export VERSION_DOCKER := $(shell ../version.sh -d)
 SHORT_GIT_HASH := $(shell git rev-parse --short HEAD)
 
 ARTIFACTS_DIR := /tmp/artifacts
@@ -113,7 +114,7 @@ build-transformers:
 		--build-arg DATASETS_VERSION=$(DATASETS_VERSION) \
 		--build-arg MODEL_HUB_VERSION=$(VERSION) \
 		-t $(TRANSFORMERS_ENVIRONMENT_ROOT):$(SHORT_GIT_HASH) \
-		-t $(TRANSFORMERS_ENVIRONMENT_ROOT):$(VERSION) \
+		-t $(TRANSFORMERS_ENVIRONMENT_ROOT):$(DOCKER_VERSION) \
 		.
 
 .PHONY: build-transformers-dryrun
@@ -124,18 +125,18 @@ build-transformers-dryrun:
 		--build-arg DATASETS_VERSION=$(DATASETS_VERSION) \
 		--build-arg MODEL_HUB_VERSION=$(VERSION) \
 		-t $(TRANSFORMERS_DRYRUN_ENVIRONMENT_ROOT):$(SHORT_GIT_HASH) \
-		-t $(TRANSFORMERS_DRYRUN_ENVIRONMENT_ROOT):$(VERSION) \
+		-t $(TRANSFORMERS_DRYRUN_ENVIRONMENT_ROOT):$(DOCKER_VERSION) \
 		.
 
 .PHONY: publish-transformers
 publish-transformers:
 	./docker/publish-docker.sh transformers-gpu-hash $(TRANSFORMERS_ENVIRONMENT_ROOT):$(SHORT_GIT_HASH) $(ARTIFACTS_DIR)
-	./docker/publish-docker.sh transformers-gpu-version $(TRANSFORMERS_ENVIRONMENT_ROOT):$(VERSION) $(ARTIFACTS_DIR)
+	./docker/publish-docker.sh transformers-gpu-version $(TRANSFORMERS_ENVIRONMENT_ROOT):$(DOCKER_VERSION) $(ARTIFACTS_DIR)
 
 .PHONY: publish-transformers-dryrun
 publish-transformers-dryrun:
 	./docker/publish-docker.sh transformers-gpu-hash $(TRANSFORMERS_DRYRUN_ENVIRONMENT_ROOT):$(SHORT_GIT_HASH) $(ARTIFACTS_DIR)
-	./docker/publish-docker.sh transformers-gpu-version $(TRANSFORMERS_DRYRUN_ENVIRONMENT_ROOT):$(VERSION) $(ARTIFACTS_DIR)
+	./docker/publish-docker.sh transformers-gpu-version $(TRANSFORMERS_DRYRUN_ENVIRONMENT_ROOT):$(DOCKER_VERSION) $(ARTIFACTS_DIR)
 
 .PHONY: build-mmdetection
 build-mmdetection:
@@ -147,7 +148,7 @@ build-mmdetection:
 		--build-arg MMDETECTION_VERSION=$(MMDETECTION_VERSION) \
 		--build-arg MODEL_HUB_VERSION=$(VERSION) \
 		-t $(MMDETECTION_ENVIRONMENT_ROOT):$(SHORT_GIT_HASH) \
-		-t $(MMDETECTION_ENVIRONMENT_ROOT):$(VERSION) \
+		-t $(MMDETECTION_ENVIRONMENT_ROOT):$(DOCKER_VERSION) \
 		.
 
 .PHONY: build-mmdetection-dryrun
@@ -160,18 +161,18 @@ build-mmdetection-dryrun:
 		--build-arg MMDETECTION_VERSION=$(MMDETECTION_VERSION) \
 		--build-arg MODEL_HUB_VERSION=$(VERSION) \
 		-t $(MMDETECTION_DRYRUN_ENVIRONMENT_ROOT):$(SHORT_GIT_HASH) \
-		-t $(MMDETECTION_DRYRUN_ENVIRONMENT_ROOT):$(VERSION) \
+		-t $(MMDETECTION_DRYRUN_ENVIRONMENT_ROOT):$(DOCKER_VERSION) \
 		.
 
 .PHONY: publish-mmdetection
 publish-mmdetection:
 	./docker/publish-docker.sh mmdetection-gpu-hash $(MMDETECTION_ENVIRONMENT_ROOT):$(SHORT_GIT_HASH) $(ARTIFACTS_DIR)
-	./docker/publish-docker.sh mmdetection-gpu-version $(MMDETECTION_ENVIRONMENT_ROOT):$(VERSION) $(ARTIFACTS_DIR)
+	./docker/publish-docker.sh mmdetection-gpu-version $(MMDETECTION_ENVIRONMENT_ROOT):$(DOCKER_VERSION) $(ARTIFACTS_DIR)
 
 .PHONY: publish-mmdetection-dryrun
 publish-mmdetection-dryrun:
 	./docker/publish-docker.sh mmdetection-gpu-hash $(MMDETECTION_DRYRUN_ENVIRONMENT_ROOT):$(SHORT_GIT_HASH) $(ARTIFACTS_DIR)
-	./docker/publish-docker.sh mmdetection-gpu-version $(MMDETECTION_DRYRUN_ENVIRONMENT_ROOT):$(VERSION) $(ARTIFACTS_DIR)
+	./docker/publish-docker.sh mmdetection-gpu-version $(MMDETECTION_DRYRUN_ENVIRONMENT_ROOT):$(DOCKER_VERSION) $(ARTIFACTS_DIR)
 
 .PHONY: build-docker
 build-docker: build-transformers build-mmdetection
