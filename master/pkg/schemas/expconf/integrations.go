@@ -3,6 +3,14 @@ package expconf
 // IntegrationsConfigV0 configures experiment-level integrations.
 type IntegrationsConfigV0 struct {
 	Pachyderm *PachydermConfigV0 `json:"pachyderm,omitempty"`
+	Webhooks  *WebhooksConfigV0  `json:"webhooks,omitempty"`
+}
+
+// WebhooksConfigV0 configures experiments with fields relevant to webhooks.
+type WebhooksConfigV0 struct {
+	WebhookID   *[]int    `json:"webhook_id,omitempty"`
+	WebhookName *[]string `json:"webhook_name,omitempty"`
+	Exclude     bool      `json:"exclude,omitempty"`
 }
 
 // PachydermConfigV0 configures experiments with fields relevant to the pachyderm integration.

@@ -28,7 +28,8 @@ type permissionMatch struct {
 	Permitted bool
 }
 
-func getWorkspaceFromExperiment(ctx context.Context, e *model.Experiment,
+// GetWorkspaceFromExperiment gets the workspace id given an experiment id.
+func GetWorkspaceFromExperiment(ctx context.Context, e *model.Experiment,
 ) (int32, error) {
 	var workspaceID int32
 	err := db.Bun().NewRaw("SELECT workspace_id FROM projects WHERE id = ?",
@@ -74,7 +75,7 @@ func (a *ExperimentAuthZRBAC) CanGetExperiment(
 		}
 	}()
 
-	workspaceID, err := getWorkspaceFromExperiment(ctx, e)
+	workspaceID, err := GetWorkspaceFromExperiment(ctx, e)
 	if err != nil {
 		return err
 	}
@@ -93,7 +94,7 @@ func (a *ExperimentAuthZRBAC) CanGetExperimentArtifacts(
 		audit.LogFromErr(fields, err)
 	}()
 
-	workspaceID, err := getWorkspaceFromExperiment(ctx, e)
+	workspaceID, err := GetWorkspaceFromExperiment(ctx, e)
 	if err != nil {
 		return err
 	}
@@ -112,7 +113,7 @@ func (a *ExperimentAuthZRBAC) CanDeleteExperiment(
 		audit.LogFromErr(fields, err)
 	}()
 
-	workspaceID, err := getWorkspaceFromExperiment(ctx, e)
+	workspaceID, err := GetWorkspaceFromExperiment(ctx, e)
 	if err != nil {
 		return err
 	}
@@ -278,7 +279,7 @@ func (a *ExperimentAuthZRBAC) CanEditExperiment(
 		audit.LogFromErr(fields, err)
 	}()
 
-	workspaceID, err := getWorkspaceFromExperiment(ctx, e)
+	workspaceID, err := GetWorkspaceFromExperiment(ctx, e)
 	if err != nil {
 		return err
 	}
@@ -297,7 +298,7 @@ func (a *ExperimentAuthZRBAC) CanEditExperimentsMetadata(
 		audit.LogFromErr(fields, err)
 	}()
 
-	workspaceID, err := getWorkspaceFromExperiment(ctx, e)
+	workspaceID, err := GetWorkspaceFromExperiment(ctx, e)
 	if err != nil {
 		return err
 	}
@@ -334,7 +335,7 @@ func (a *ExperimentAuthZRBAC) CanForkFromExperiment(
 		audit.LogFromErr(fields, err)
 	}()
 
-	workspaceID, err := getWorkspaceFromExperiment(ctx, e)
+	workspaceID, err := GetWorkspaceFromExperiment(ctx, e)
 	if err != nil {
 		return err
 	}

@@ -1459,7 +1459,7 @@ func (a *apiServer) ReportTrialValidationMetrics(
 func (a *apiServer) ReportCheckpoint(
 	ctx context.Context, req *apiv1.ReportCheckpointRequest,
 ) (*apiv1.ReportCheckpointResponse, error) {
-	if err := a.canDoActionsOnTask(ctx, model.TaskID(req.Checkpoint.TaskId),
+	if _, _, err := a.canDoActionsOnTask(ctx, model.TaskID(req.Checkpoint.TaskId),
 		experiment.AuthZProvider.Get().CanEditExperiment); err != nil {
 		return nil, err
 	}

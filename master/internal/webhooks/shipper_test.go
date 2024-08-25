@@ -141,7 +141,12 @@ func TestShipper(t *testing.T) {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		var config expconf.ExperimentConfig
+		workspaceName := uuid.New().String()
+		_, _ = db.RequireMockWorkspaceID(t, pgDB, workspaceName)
+
+		config := expconf.ExperimentConfig{
+			RawWorkspace: &workspaceName,
+		}
 		config = schemas.WithDefaults(config)
 		for id, delay := range schedule {
 			time.Sleep(scheduledWaitToDuration(delay))

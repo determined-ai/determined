@@ -332,6 +332,7 @@ type MockExperimentParams struct {
 	ProjectID            *int
 	ExternalExperimentID *string
 	State                *model.State
+	Integrations         *expconf.IntegrationsConfigV0
 }
 
 // RequireMockExperimentParams returns a mock experiment with various parameters.
@@ -378,6 +379,9 @@ func RequireMockExperimentParams(
 				},
 			}
 		}
+	}
+	if p.Integrations != nil {
+		notDefaulted.RawIntegrations = p.Integrations
 	}
 
 	cfg := schemas.WithDefaults(notDefaulted)

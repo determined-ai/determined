@@ -1,0 +1,37 @@
+{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v0/webhooks.json",
+    "title": "WebhooksConfig",
+    "type": "object",
+    "additionalProperties": false,
+    "eventuallyRequired": [],
+    "properties": {
+        "webhook_id": {
+            "type": [
+                "array",
+                "null"
+            ],
+            "default": null,
+            "items": {
+                "type": "integer"
+            }
+        },
+        "webhook_name": {
+            "type": [
+                "array",
+                "null"
+            ],
+            "default": null,
+            "items": {
+                "type": "string"
+            }
+        },
+        "exclude": {
+            "type": [
+                "boolean",
+                "null"
+            ],
+            "default": false
+        }
+    }
+}
