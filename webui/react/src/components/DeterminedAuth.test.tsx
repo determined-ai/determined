@@ -65,7 +65,7 @@ describe('DeterminedAuth', () => {
     });
   });
 
-  it('logs in with weak password', async () => {
+  it('logs in with warning when using a weak password', async () => {
     setup();
     await user.clear(screen.getByTestId(USERNAME_ID));
     await user.type(screen.getByTestId(USERNAME_ID), USERNAME);
