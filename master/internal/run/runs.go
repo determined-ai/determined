@@ -112,7 +112,7 @@ func flattenMetadata(data map[string]any) (flatMetadata []model.RunMetadataIndex
 					key:    key,
 					value:  value,
 					depth:  entry.depth + 1,
-					array:  entry.array,
+					array:  false,
 				})
 			}
 		// if the value is a slice, push each element onto the stack.
