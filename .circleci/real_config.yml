@@ -902,7 +902,7 @@ commands:
                 --docker-user $DOCKER_USER \
                 --docker-pass $DOCKER_PASS \
                 --retain-log-group \
-                --initial-user-password ${INITIAL_USER_PASSWORD} \
+                --initial-user-password "" \
                 --yes
             else
               echo "running OSS edition"
