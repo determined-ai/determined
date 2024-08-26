@@ -8,8 +8,6 @@ import swagger_parser
 from typing_extensions import Literal, assert_never
 
 DIRNAME = os.path.dirname(__file__)
-SWAGGER = "proto/build/swagger/determined/api/v1/api.swagger.json"
-SWAGGER = os.path.join(DIRNAME, "..", SWAGGER)
 STATIC_FOLDER = os.path.join(DIRNAME, "static_ts_files")
 
 Code = str
@@ -311,7 +309,7 @@ def generate_function(api: str, phase: Phase, function: swagger_parser.Function)
         code += jsdoc
         code.end_comment()
 
-        success_response = function.responses.get("200")
+        success_response = function.responses.get("200") or function.responses.get("101")
         assert success_response, function
 
         code += f"{function_name}({function_args}options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<{annotation(success_response)}> {{"
@@ -563,12 +561,12 @@ export class RequiredError extends Error {{
     out = [prelude]
 
     # workaround for streaming function behavior
-    runtime_stream_error = swagger.defs["runtimeStreamError"]
-    assert runtime_stream_error
-    runtime_stream_error_ref = swagger_parser.Ref(name="RuntimeStreamError")
-    swagger_parser.Ref.all_refs.append(runtime_stream_error_ref)
-    runtime_stream_error_ref.defn = runtime_stream_error
-    runtime_stream_error_ref.linked = True
+    # runtime_stream_error = swagger.defs["runtimeStreamError"]
+    # assert runtime_stream_error
+    # runtime_stream_error_ref = swagger_parser.Ref(name="RuntimeStreamError")
+    # swagger_parser.Ref.all_refs.append(runtime_stream_error_ref)
+    # runtime_stream_error_ref.defn = runtime_stream_error
+    # runtime_stream_error_ref.linked = True
 
     ops_by_tag = {}
     for defn in swagger.ops.values():
@@ -597,7 +595,7 @@ if __name__ == "__main__":
     import argparse
 
     parser = argparse.ArgumentParser()
-    parser.add_argument("--input", "-i", action="store", default=SWAGGER, help="input swagger file")
+    parser.add_argument("--input", "-i", action="store", required=True, help="input swagger file")
     parser.add_argument("--output", "-o", action="store", required=True, help="output folder")
     args = parser.parse_args()
 

@@ -162,9 +162,9 @@ class Function:
 @dataclass
 class ApiInfo:
     title: str
-    description: str
     version: str
-    contact: str
+    contact: typing.Optional[str]
+    description: typing.Optional[str] = ""
 
 
 @dataclass
@@ -264,7 +264,7 @@ def classify_definition(enums: dict, name: str, schema: dict):
 
     if schema["type"] == "object":
         # top-level named objects should be classes, not typed dictionaries:
-        assert "additionalProperties" not in schema, (name, schema)
+        # assert "additionalProperties" not in schema, (name, schema)
         required = set(schema.get("required", []))
         members = {
             k: Parameter(
@@ -318,12 +318,18 @@ def process_paths(
             streaming = None
             bad_op = False
             for code, rspec in spec["responses"].items():
-                rschema = rspec["schema"]
+                rschema = rspec.get("schema", None)
+                if rschema is None:  # CHECK
+                    # nil response
+                    responses["200"] = Any()
+                    streaming = False
+                    continue
+
                 if code == "default":
                     # We expect all "default" responses to be runtimeErrors, and we ignore them.
                     default_type = classify_type(enums, f"{name}.responses.default", rschema)
                     assert isinstance(default_type, Ref), rschema
-                    assert default_type.name == "runtimeError", rschema
+                    assert default_type.name in ["runtimeError", "ErrorModel"], rschema
                     # Safe to ignore this return type.
                     continue
 
@@ -430,7 +436,7 @@ def parse(path: str) -> ParseResult:
     info = ApiInfo(
         **{
             **{k: info_json[k] for k in info_keys if k in info_json},
-            **{"contact": info_json["contact"]["email"]},
+            **{"contact": info_json.get("contact", {}).get("email")},
         }
     )
 

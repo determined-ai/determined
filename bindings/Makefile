@@ -12,10 +12,10 @@ force-gen:
 	touch $(SWAGGER_SPEC)
 
 $(py_bindings_dest): $(SWAGGER_SPEC) swagger_parser.py $(py_generator)
-	python $(py_generator) --output $(py_bindings_dest)
+	python $(py_generator) --input $(SWAGGER_SPEC) --output $@
 
 $(ts_bindings_dest): $(SWAGGER_SPEC) swagger_parser.py $(ts_generator) $(wildcard static_ts_files/*)
-	python $(ts_generator) --output $@
+	python $(ts_generator) --input $(SWAGGER_SPEC) --output $@
 
 .PHONY: build/python
 build/python: $(py_bindings_dest)
