@@ -32,8 +32,13 @@ type permissionMatch struct {
 func GetWorkspaceFromExperiment(ctx context.Context, e *model.Experiment,
 ) (int32, error) {
 	var workspaceID int32
-	err := db.Bun().NewRaw("SELECT workspace_id FROM projects WHERE id = ?",
-		e.ProjectID).Scan(ctx, &workspaceID)
+	var q interface{}
+	q = db.Bun().NewSelect().Table("experiments").Column("project_id").Where("id = ?", e.ID)
+	if e.ProjectID > 0 {
+		q = e.ProjectID
+	}
+	err := db.Bun().NewSelect().Table("projects").Column("workspace_id").Where("id = (?)",
+		q).Scan(ctx, &workspaceID)
 	return workspaceID, err
 }
 

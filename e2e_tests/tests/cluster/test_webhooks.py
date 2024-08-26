@@ -1,4 +1,5 @@
 import json
+import random
 import time
 import uuid
 
@@ -125,27 +126,132 @@ def test_log_pattern_send_webhook(should_match: bool) -> None:
         ),
     )
 
+    workspace = bindings.post_PostWorkspace(
+            sess, body=bindings.v1PostWorkspaceRequest(name=f"webhook-test{random.random()}")
+        ).workspace
+    project =  bindings.post_PostProject(
+            sess,
+            body=bindings.v1PostProjectRequest(
+                name=f"webhook-test{random.random()}",
+                workspaceId=workspace.id,
+            ),
+            workspaceId=workspace.id,
+        ).project
+
+    specific_path = f"/test/path/here/{str(uuid.uuid4())}"
+    bindings.post_PostWebhook(
+        sess,
+        body=bindings.v1Webhook(
+            url=f"http://localhost:{port}{specific_path}",
+            webhookType=bindings.v1WebhookType.DEFAULT,
+            triggers=[webhook_trigger],
+            mode=bindings.v1WebhookMode.SPECIFIC,
+            name="specific-webhook",
+            workspaceId=workspace.id,
+        ),
+    )
+
+    specific_path_unmatch = f"/test/path/here/{str(uuid.uuid4())}"
+    bindings.post_PostWebhook(
+        sess,
+        body=bindings.v1Webhook(
+            url=f"http://localhost:{port}{specific_path_unmatch}",
+            webhookType=bindings.v1WebhookType.DEFAULT,
+            triggers=[webhook_trigger],
+            mode=bindings.v1WebhookMode.SPECIFIC,
+            name=f"webhook-test{random.random()}",
+            workspaceId=1,
+        ),
+    )
+
     exp_id = exp.create_experiment(
         sess,
         conf.fixtures_path("no_op/single-medium-train-step.yaml"),
         conf.fixtures_path("no_op"),
-        ["--config", "hyperparameters.metrics_sigma=-1.0"],
+        ["--config", "hyperparameters.metrics_sigma=-1.0", "--config", f"integrations.webhooks.webhook_name=['specific-webhook']", "--project_id", f"{project.id}"],
     )
     exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.ERROR)
 
-    for _ in range(10):
+    for _ in range(8):
         responses = server.return_responses()
-        if default_path in responses and slack_path in responses:
-            break
         time.sleep(1)
 
     responses = server.close_and_return_responses()
     if should_match:
-        assert len(responses) >= 2
+        assert len(responses) >= 3
         # Only need a spot check we get the default / slack responses.
         # Further tested in integrations.
         assert "TASK_LOG" in responses[default_path]
         assert "This log matched the regex" in responses[slack_path]
+        assert "TASK_LOG" in responses[default_path]
+        assert specific_path_unmatch not in responses
     else:
         assert default_path not in responses
         assert slack_path not in responses
+        assert specific_path not in responses
+        assert specific_path_unmatch not in responses
+
+@pytest.mark.e2e_cpu
+def test_specific_webhook() -> None:
+    port1 = 5007
+    server1 = utils.WebhookServer(port1, allow_dupes=True)
+    port2 = 5008
+    server2 = utils.WebhookServer(port2, allow_dupes=True)
+    sess = api_utils.admin_session()
+
+    workspace = bindings.post_PostWorkspace(
+            sess, body=bindings.v1PostWorkspaceRequest(name=f"webhook-test{random.random()}")
+        ).workspace
+    project =  bindings.post_PostProject(
+            sess,
+            body=bindings.v1PostProjectRequest(
+                name=f"webhook-test{random.random()}",
+                workspaceId=workspace.id,
+            ),
+            workspaceId=workspace.id,
+        ).project
+
+    webhook_trigger = bindings.v1Trigger(
+        triggerType=bindings.v1TriggerType.EXPERIMENT_STATE_CHANGE,
+        condition={"state": "COMPLETED"},
+    )
+
+    webhook_1 = bindings.v1Webhook(
+        url=f"http://localhost:{port1}",
+        webhookType=bindings.v1WebhookType.SLACK,
+        triggers=[webhook_trigger],
+        mode=bindings.v1WebhookMode.SPECIFIC,
+        name=f"webhook_1{random.random()}",
+        workspaceId=1,
+    )
+
+    webhook_2 = bindings.v1Webhook(
+        url=f"http://localhost:{port2}",
+        webhookType=bindings.v1WebhookType.SLACK,
+        triggers=[webhook_trigger],
+        mode=bindings.v1WebhookMode.SPECIFIC,
+        name="webhook_2",
+        workspaceId=workspace.id,
+    )
+
+    webhook_res_1 = bindings.post_PostWebhook(sess, body=webhook_1).webhook
+    assert webhook_res_1.url == webhook_1.url
+    webhook_res_2 = bindings.post_PostWebhook(sess, body=webhook_2).webhook
+    assert webhook_res_2.url == webhook_2.url
+
+    experiment_id = exp.create_experiment(
+        sess, conf.fixtures_path("no_op/single-one-short-step.yaml"), conf.fixtures_path("no_op"),
+        ["--project_id", f"{project.id}", "--config", f"integrations.webhooks.webhook_id=[{webhook_res_1.id},{webhook_res_2.id}]"],
+    )
+
+    exp.wait_for_experiment_state(
+        sess,
+        experiment_id,
+        bindings.experimentv1State.COMPLETED,
+        max_wait_secs=conf.DEFAULT_MAX_WAIT_SECS,
+    )
+
+    responses = server1.close_and_return_responses()
+    assert len(responses) == 0
+    responses = server2.close_and_return_responses()
+    assert len(responses) == 1

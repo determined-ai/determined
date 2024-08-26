@@ -24,6 +24,12 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
+const (
+	webhookName1 = "test-webhook-name1"
+	webhookName2 = "test-webhook-name2"
+	webhookName3 = "test-webhook-name3"
+)
+
 var pgDB *db.PgDB
 
 func TestMain(m *testing.M) {
@@ -129,8 +135,6 @@ func TestWebhookScanLogs(t *testing.T) {
 	r2 := uuid.New().String()
 
 	workspaceID, _ := db.RequireMockWorkspaceID(t, pgDB, "")
-	webhookName1 := "test-webhook-name1"
-	webhookName2 := "test-webhook-name2"
 
 	w0 := &Webhook{
 		WebhookType: WebhookTypeDefault,
@@ -289,7 +293,6 @@ func TestWebhookScanLogs(t *testing.T) {
 		require.Zero(t, countEventsForURL(ctx, t, w3.URL))
 		require.Zero(t, countEventsForURL(ctx, t, w4.URL))
 		require.Zero(t, countEventsForURL(ctx, t, w5.URL))
-
 	}
 
 	require.NoError(t, manager.deleteWebhook(ctx, w1.ID))
@@ -447,16 +450,16 @@ func TestReportExperimentStateChanged(t *testing.T) {
 	user := db.RequireMockUser(t, pgDB)
 	exp := db.RequireMockExperimentProject(t, pgDB, user, projectID)
 
-	config := expconf.ExperimentConfig{
-		RawWorkspace: &workspaceName,
-	}
+	var config expconf.ExperimentConfig
 	config = schemas.WithDefaults(config)
+
+	require.NoError(t, pgDB.AddExperiment(exp, []byte{}, config))
 
 	t.Run("no triggers for event type", func(t *testing.T) {
 		w := mockWebhook()
 		require.NoError(t, AddWebhook(ctx, w))
 		require.NoError(t, ReportExperimentStateChanged(ctx, model.Experiment{
-			ID:    0,
+			ID:    exp.ID,
 			State: model.CanceledState,
 		}, config))
 
@@ -471,7 +474,7 @@ func TestReportExperimentStateChanged(t *testing.T) {
 		})
 		require.NoError(t, AddWebhook(ctx, w))
 		require.NoError(t, ReportExperimentStateChanged(ctx, model.Experiment{
-			ID:    0,
+			ID:    exp.ID,
 			State: model.CanceledState,
 		}, config))
 
@@ -488,7 +491,7 @@ func TestReportExperimentStateChanged(t *testing.T) {
 		})
 		require.NoError(t, AddWebhook(ctx, w))
 		require.NoError(t, ReportExperimentStateChanged(ctx, model.Experiment{
-			ID:    0,
+			ID:    exp.ID,
 			State: model.CompletedState,
 		}, config))
 
@@ -508,7 +511,7 @@ func TestReportExperimentStateChanged(t *testing.T) {
 		}
 		require.NoError(t, AddWebhook(ctx, w))
 		require.NoError(t, ReportExperimentStateChanged(ctx, model.Experiment{
-			ID:    0,
+			ID:    exp.ID,
 			State: model.CompletedState,
 		}, config))
 
@@ -517,9 +520,6 @@ func TestReportExperimentStateChanged(t *testing.T) {
 
 	clearWebhooksTables(ctx, t)
 	t.Run("webhook with mode specific", func(t *testing.T) {
-		webhookName1 := "test-webhook-name1"
-		webhookName2 := "test-webhook-name2"
-		webhookName3 := "test-webhook-name3"
 		w1 := &Webhook{
 			URL:         uuid.New().String(),
 			WebhookType: WebhookTypeDefault,
@@ -772,12 +772,15 @@ func TestDequeueEvents(t *testing.T) {
 	singletonShipper = &shipper{wake: make(chan<- struct{})} // mock shipper
 
 	workspaceName := uuid.New().String()
-	_, _ = db.RequireMockWorkspaceID(t, pgDB, workspaceName)
+	workspaceID, _ := db.RequireMockWorkspaceID(t, pgDB, workspaceName)
+	projectID, _ := db.RequireMockProjectID(t, pgDB, workspaceID, false)
+	user := db.RequireMockUser(t, pgDB)
+	exp := db.RequireMockExperimentProject(t, pgDB, user, projectID)
 
-	config := expconf.ExperimentConfig{
-		RawWorkspace: &workspaceName,
-	}
+	var config expconf.ExperimentConfig
 	config = schemas.WithDefaults(config)
+
+	require.NoError(t, pgDB.AddExperiment(exp, []byte{}, config))
 
 	t.Log("add a test webhook with one trigger")
 	require.NoError(t, AddWebhook(ctx, &Webhook{
@@ -797,7 +800,7 @@ func TestDequeueEvents(t *testing.T) {
 	t.Run("dequeueing and consuming a event should work", func(t *testing.T) {
 		exp := model.Experiment{
 			State: model.CompletedState,
-			ID:    0,
+			ID:    exp.ID,
 		}
 		require.NoError(t, ReportExperimentStateChanged(ctx, exp, config))
 
@@ -809,7 +812,7 @@ func TestDequeueEvents(t *testing.T) {
 
 	t.Run("dequeueing and consuming a full batch of events should work", func(t *testing.T) {
 		for i := 0; i < maxEventBatchSize; i++ {
-			exp := model.Experiment{ID: i, State: model.CompletedState}
+			exp := model.Experiment{ID: exp.ID, State: model.CompletedState}
 			require.NoError(t, ReportExperimentStateChanged(ctx, exp, config))
 		}
 
@@ -820,7 +823,7 @@ func TestDequeueEvents(t *testing.T) {
 	})
 
 	t.Run("rolling back an event should work, and it should be reconsumed", func(t *testing.T) {
-		exp := model.Experiment{ID: 0, State: model.CompletedState}
+		exp := model.Experiment{ID: exp.ID, State: model.CompletedState}
 		require.NoError(t, ReportExperimentStateChanged(ctx, exp, config))
 
 		batch, err := dequeueEvents(ctx, maxEventBatchSize)

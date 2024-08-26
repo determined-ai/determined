@@ -60,7 +60,9 @@ func expFromTaskID(
 	return true, exp, nil
 }
 
-func canAccessNTSCTask(ctx context.Context, curUser model.User, taskID model.TaskID) (bool, model.AccessScopeID, error) {
+func canAccessNTSCTask(
+	ctx context.Context, curUser model.User, taskID model.TaskID,
+) (bool, model.AccessScopeID, error) {
 	spec, err := command.IdentifyTask(ctx, taskID)
 	if errors.Is(err, db.ErrNotFound) {
 		// Non NTSC case like checkpointGC case or the task just does not exist.
@@ -123,7 +125,7 @@ func (a *apiServer) canDoActionsOnTask(
 			}
 			return nil, nil, err
 		}
-		// When error is nil, workspaceID is guarenteed not nil
+		// When error is nil, workspaceID is guaranteed not nil
 		return &workspaceID, nil, nil
 	}
 }

@@ -15,6 +15,7 @@ import (
 
 	conf "github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/logpattern"
 	"github.com/determined-ai/determined/master/internal/project"
 	"github.com/determined-ai/determined/master/internal/workspace"
@@ -171,7 +172,9 @@ func matchWebhook(t *Trigger, config *expconf.WebhooksConfigV0, workspaceID int3
 	return true
 }
 
-func (l *WebhookManager) scanLogs(ctx context.Context, logs []*model.TaskLog, workspaceID model.AccessScopeID, expID *int) error {
+func (l *WebhookManager) scanLogs(
+	ctx context.Context, logs []*model.TaskLog, workspaceID model.AccessScopeID, expID *int,
+) error {
 	if len(logs) == 0 {
 		return nil
 	}
@@ -318,9 +321,9 @@ func ReportExperimentStateChanged(
 		return nil
 	}
 
-	var ws model.Workspace
-	if err := db.Bun().NewSelect().Model(&ws).Where("name = ?", activeConfig.Workspace()).Scan(ctx); err != nil {
-		return fmt.Errorf("getting workspace information from experiment config: %w\nactiveConfig: %s\nexperiment: %+v", err, activeConfig.Workspace(), e)
+	workspaceID, err := experiment.GetWorkspaceFromExperiment(ctx, &e)
+	if err != nil {
+		return fmt.Errorf("get workspace id from experiment %d: %w", e.ID, err)
 	}
 	var webhookConfig *expconf.WebhooksConfigV0
 	if activeConfig.Integrations() != nil {
@@ -329,7 +332,7 @@ func ReportExperimentStateChanged(
 
 	var es []Event
 	for _, t := range ts {
-		if !matchWebhook(&t, webhookConfig, int32(ws.ID), ptrs.Ptr(e.ID)) {
+		if !matchWebhook(&t, webhookConfig, workspaceID, ptrs.Ptr(e.ID)) {
 			continue
 		}
 		p, err := generateEventPayload(
