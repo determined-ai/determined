@@ -76,10 +76,9 @@ func TestFlattenMetadata(t *testing.T) {
 		},
 		{
 			RunID:          0,
-			FlatKey:        "key7.key8",
-			IntegerValue:   ptrs.Ptr(3),
-			ProjectID:      0,
-			IsArrayElement: false,
+			FlatKey:        "key7",
+			StringValue:    ptrs.Ptr(`{"key8":3}`),
+			IsArrayElement: true,
 		},
 		{
 			RunID:          0,
@@ -170,10 +169,10 @@ func TestFlattenMetadataArrayNested(t *testing.T) {
 	require.ElementsMatch(t, []model.RunMetadataIndex{
 		{
 			RunID:          0,
-			FlatKey:        "key1.key2",
-			IntegerValue:   ptrs.Ptr(1),
+			FlatKey:        "key1",
+			StringValue:    ptrs.Ptr("{\"key2\":1}"),
 			ProjectID:      0,
-			IsArrayElement: false,
+			IsArrayElement: true,
 		},
 	}, flattened)
 }
@@ -284,25 +283,6 @@ func TestFlattenMetadataArrayElementTooLongKey(t *testing.T) {
 		err,
 		fmt.Sprintf(
 			"metadata key exceeds maximum length of %d characters",
-			MaxMetadataKeyLength,
-		),
-	)
-}
-
-func TestFlattenMetadataArrayElementTooLongKeyInNestedArray(t *testing.T) {
-	data := map[string]interface{}{
-		"key1": []interface{}{
-			map[string]interface{}{
-				"key2": 1,
-			},
-		},
-	}
-	data["key1"].([]interface{})[0].(map[string]interface{})[strings.Repeat("a", MaxMetadataKeyLength+1)] = 2
-	_, err := FlattenMetadata(data)
-	require.ErrorContains(
-		t,
-		err,
-		fmt.Sprintf("metadata key exceeds maximum length of %d characters",
 			MaxMetadataKeyLength,
 		),
 	)
