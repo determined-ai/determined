@@ -190,7 +190,7 @@ def test_log_pattern_send_webhook(should_match: bool) -> None:
         # Further tested in integrations.
         assert "TASK_LOG" in responses[default_path]
         assert "This log matched the regex" in responses[slack_path]
-        assert "TASK_LOG" in responses[default_path]
+        assert "TASK_LOG" in responses[specific_path]
         assert specific_path_unmatch not in responses
     else:
         assert default_path not in responses
