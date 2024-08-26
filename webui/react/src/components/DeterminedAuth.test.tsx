@@ -55,6 +55,7 @@ describe('DeterminedAuth', () => {
       // onFinish ends:
       expect(screen.getByRole('button')).not.toBeDisabled();
 
+      // not.toBeInTheDocument is only a valid assertion after onFinish begins and ends:
       expect(screen.queryByText(WEAK_PASSWORD_SUBJECT)).not.toBeInTheDocument();
       expect(vi.mocked(login)).toHaveBeenLastCalledWith(
         { password: STRONG_PASSWORD, username: USERNAME },
