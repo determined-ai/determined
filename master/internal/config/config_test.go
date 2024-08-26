@@ -129,6 +129,7 @@ integrations:
 					TaskContainerDefaults: &model.TaskContainerDefaultsConfig{
 						ShmSizeBytes:           4294967296,
 						NetworkMode:            "bridge",
+						PreemptionTimeout:      model.DefaultPreemptionTimeout,
 						DtrainNetworkInterface: "if0",
 					},
 					AgentReconnectWait: model.Duration(aproto.AgentReconnectWait),
@@ -654,8 +655,9 @@ additional_resource_managers:
 				Username: "yo-yo-ma",
 				Password: registryAuthSecret,
 			},
-			ShmSizeBytes: 4294967296,
-			NetworkMode:  "bridge",
+			ShmSizeBytes:      4294967296,
+			NetworkMode:       "bridge",
+			PreemptionTimeout: model.DefaultPreemptionTimeout,
 		},
 		ResourceConfig: ResourceConfig{
 			AdditionalResourceManagersInternal: []*ResourceManagerWithPoolsConfig{

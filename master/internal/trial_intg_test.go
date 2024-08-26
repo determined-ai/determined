@@ -11,6 +11,11 @@ import (
 	"testing"
 	"time"
 
+	"github.com/determined-ai/determined/master/pkg/ptrs"
+
+	"github.com/determined-ai/determined/master/pkg/schemas"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
+
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
@@ -21,9 +26,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/etc"
 	detLogger "github.com/determined-ai/determined/master/pkg/logger"
 	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/ptrs"
-	"github.com/determined-ai/determined/master/pkg/schemas"
-	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/master/pkg/searcher"
 	"github.com/determined-ai/determined/master/pkg/ssh"
 	"github.com/determined-ai/determined/master/pkg/tasks"
@@ -145,6 +147,17 @@ func setup(t *testing.T) (
 	rID := model.NewRequestID(rand.Reader)
 	taskID := model.TaskID(fmt.Sprintf("%s-%s", model.TaskTypeTrial, rID))
 	done := make(chan bool)
+
+	// create expconf merged with task container defaults
+	expConf := schemas.WithDefaults(expconf.ExperimentConfig{
+		RawCheckpointStorage: &expconf.CheckpointStorageConfigV0{
+			RawSharedFSConfig: &expconf.SharedFSConfig{
+				RawHostPath:      ptrs.Ptr("/tmp"),
+				RawContainerPath: ptrs.Ptr("determined-sharedfs"),
+			},
+		},
+	})
+	model.DefaultTaskContainerDefaults().MergeIntoExpConfig(&expConf)
 	tr, err := newTrial(
 		detLogger.Context{},
 		taskID,
@@ -155,14 +168,7 @@ func setup(t *testing.T) (
 		experiment.TrialSearcherState{Create: searcher.Create{RequestID: rID}, Complete: true},
 		rmImpl,
 		a.m.db,
-		schemas.WithDefaults(expconf.ExperimentConfig{
-			RawCheckpointStorage: &expconf.CheckpointStorageConfigV0{
-				RawSharedFSConfig: &expconf.SharedFSConfig{
-					RawHostPath:      ptrs.Ptr("/tmp"),
-					RawContainerPath: ptrs.Ptr("determined-sharedfs"),
-				},
-			},
-		}),
+		expConf,
 		&model.Checkpoint{},
 		&tasks.TaskSpec{
 			AgentUserGroup: &model.AgentUserGroup{},

@@ -504,8 +504,12 @@ func (a *apiServer) getTensorBoardConfigsFromReq(
 		confByID[expID] = &tensorboardConfig{ExperimentID: expID, Config: conf}
 	}
 
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
 	for _, trialID := range req.TrialIds {
-		if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(ctx, int(trialID),
+		if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(ctx, int(trialID), curUser,
 			exputil.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 			return nil, err
 		}

@@ -7,6 +7,71 @@
 ###############
 
 **************
+ Version 0.36
+**************
+
+Version 0.36.0
+==============
+
+**Release Date:** August 23, 2024
+
+**New Features**
+
+-  WebUI: In the enterprise edition of Determined, when RBAC is enabled, allow Viewer, Editor,
+   GenAI, and Workspace Admin roles to view resource quotas for each workspace in the WebUI. When
+   RBAC is not enabled, any user can view resource quotas.
+
+-  RBAC: Add a pre-canned role called ``EditorProjectRestricted`` that supersedes the ``Viewer``
+   role and precedes the ``Editor`` role.
+
+   -  Like the ``Editor`` role, the ``EditorProjectRestricted`` role grants the permissions to read,
+      create, edit, or delete experiments and NTSC (Notebook, Tensorboard, Shell or Command) type
+      workloads within its scope. However, the ``EditorProjectRestricted`` role lacks the
+      permissions to create or update projects.
+
+-  Kubernetes: Add experimental support for AMD ROCm GPUs. To use, set ``slotType=rocm``. Visit
+   :ref:`helm-config-reference` for more details.
+
+-  Images: Add New ROCm 6.1 images with DeepSpeed for MI300x users. Dev versions of these images can
+   be found in our Docker Hub, under `pytorch-infinityhub-dev
+   <https://hub.docker.com/repository/docker/determinedai/pytorch-infinityhub-dev/tags>`__ and
+   `pytorch-infinityhub-hpc-dev
+   <https://hub.docker.com/repository/docker/determinedai/pytorch-infinityhub-hpc-dev/tags>`__.
+   Users can build these images locally based on the Dockerfiles found in our `environments
+   repository
+   <https://github.com/determined-ai/environments/blob/main/Dockerfile-infinityhub-pytorch>`__.
+
+-  Master: Add a ``ui_customization`` option to the :ref:`master configuration
+   <master-config-reference>` for specifying a custom logo for the WebUI.
+
+**Bug Fixes**
+
+-  Experiments: Report an experiment's status as FAILED if any failure occurs during the shutdown
+   process, before the experiment has completed gracefully.
+
+**Deprecations**
+
+-  Custom Searchers: All custom searchers including DeepSpeed Autotune have been deprecated. This
+   feature will be removed in a future release. We will maintain first-class support for a variety
+   of preset searchers, which can be easily configured for any experiment. Visit
+   :ref:`search-methods` for details.
+
+-  Cluster: Amazon Aurora V1 will reach End of Life at the end of 2024 and will no longer be the
+   default persistent storage for AWS Determined deployments. Users should migrate to Amazon RDS for
+   PostgreSQL.
+
+-  Cluster: After Amazon Aurora V1 reaches End of Life, support for Amazon Aurora V1 in ``det deploy
+   aws`` will be removed. The deployment will default to the ``simple-rds`` type, which uses Amazon
+   RDS.
+
+-  Database: Postgres 12 will reach End of Life on November 14, 2024. Determined instances using
+   Postgres 12 or earlier should upgrade to Postgres 13 or later to ensure continued support.
+
+-  Kubernetes Scheduling: Support for the priority with preemption scheduler for Kubernetes Resource
+   Managers was deprecated in 0.35.0 and is now removed. Users should transition to the default
+   scheduler. Visit :ref:`Kubernetes Default Scheduler <kubernetes-default-scheduler>` for details.
+
+**************
  Version 0.35
 **************
 

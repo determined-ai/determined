@@ -30,7 +30,7 @@ func TestPreemption(t *testing.T) {
 
 	// on preemption, it should receive status.
 	var timedOut atomic.Bool
-	p.Preempt(func(ctx context.Context, err error) { timedOut.Store(true) })
+	p.Preempt(time.Hour, func(ctx context.Context, err error) { timedOut.Store(true) })
 	select {
 	case <-w.C:
 	default:
@@ -60,9 +60,6 @@ func TestPreemption(t *testing.T) {
 }
 
 func TestTimeout(t *testing.T) {
-	preemptible.DefaultTimeout = time.Microsecond
-	defer func() { preemptible.DefaultTimeout = time.Hour }()
-
 	// "task" is allocated.
 	p := preemptible.New()
 
@@ -71,7 +68,7 @@ func TestTimeout(t *testing.T) {
 
 	// on preemption, it should receive status.
 	var timedOut atomic.Bool
-	p.Preempt(func(ctx context.Context, err error) { timedOut.Store(true) })
+	p.Preempt(time.Microsecond, func(ctx context.Context, err error) { timedOut.Store(true) })
 
 	waitForCondition(t, time.Second, timedOut.Load)
 
@@ -107,10 +104,10 @@ func waitForCondition(
 	timeout time.Duration,
 	condition func() bool,
 ) {
-	for i := 0; i < int(timeout/preemptible.DefaultTimeout); i++ {
+	for i := 0; i < int(timeout/time.Hour); i++ {
 		if condition() {
 			return
 		}
-		time.Sleep(preemptible.DefaultTimeout)
+		time.Sleep(time.Hour)
 	}
 }

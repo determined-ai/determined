@@ -42,7 +42,7 @@ def test_launch_list() -> None:
 @mock.patch("determined.common.storage.validate_config")
 def test_launch_script(mock_validate_config: mock.MagicMock) -> None:
     # Use runpy to actually run the whole launch script.
-    with test_util.set_resources_id_env_var():
+    with test_util.set_env_vars({"DET_RESOURCES_ID": "resourcesId"}):
         with test_util.set_mock_cluster_info(["0.0.0.1"], 0, 1) as info:
             # Successful entrypoints exit 0.
             info.trial._config["entrypoint"] = ["true"]

@@ -663,8 +663,11 @@ func (a *apiServer) UnpauseGenericTask(
 				FittingRequirements: sproto.FittingRequirements{
 					SingleAgent: isSingleNode,
 				},
-				Preemptible: true,
-				Restore:     false,
+				Preemption: sproto.PreemptionConfig{
+					Preemptible:     true,
+					TimeoutDuration: time.Duration(genericTaskSpec.GenericTaskConfig.PreemptionTimeout) * time.Second,
+				},
+				Restore: false,
 			}, a.m.db, a.m.rm, genericTaskSpec, onAllocationExit)
 		if err != nil {
 			return nil, err

@@ -51,16 +51,22 @@ type TaskContainerDefaultsConfig struct {
 
 	LogPolicies expconf.LogPoliciesConfig `json:"log_policies"`
 
+	PreemptionTimeout int `json:"preemption_timeout,omitempty"`
+
 	// TODO(DET-9856) we should probably eventually move this to expconf and allow setting
 	// on a per task level.
 	Kubernetes *KubernetesTaskContainerDefaults `json:"kubernetes"`
 }
 
+// DefaultPreemptionTimeout is the number of seconds to wait for preempted task to exit gracefully.
+const DefaultPreemptionTimeout = 60 * 60
+
 // DefaultTaskContainerDefaults returns the default for TaskContainerDefaultsConfig.
 func DefaultTaskContainerDefaults() *TaskContainerDefaultsConfig {
 	return &TaskContainerDefaultsConfig{
-		ShmSizeBytes: 4294967296,
-		NetworkMode:  "bridge",
+		ShmSizeBytes:      4294967296,
+		NetworkMode:       "bridge",
+		PreemptionTimeout: DefaultPreemptionTimeout,
 	}
 }
 
@@ -74,6 +80,7 @@ func DefaultTaskContainerDefaults() *TaskContainerDefaultsConfig {
 func (c *TaskContainerDefaultsConfig) UnmarshalJSON(data []byte) error {
 	c.ShmSizeBytes = 4294967296
 	c.NetworkMode = "bridge"
+	c.PreemptionTimeout = DefaultPreemptionTimeout
 	type DefaultParser *TaskContainerDefaultsConfig
 	if err := json.Unmarshal(data, DefaultParser(c)); err != nil {
 		return errors.Wrap(err, "failed to parse task container defaults")
@@ -165,6 +172,8 @@ func (c *TaskContainerDefaultsConfig) MergeIntoExpConfig(config *expconf.Experim
 		config.RawPbsConfig.RawSbatchArgs = append(
 			c.Pbs.SbatchArgs(), configRawPbsConfig.SbatchArgs()...)
 	}
+
+	config.RawPreemptionTimeout = schemas.Merge(config.RawPreemptionTimeout, &c.PreemptionTimeout)
 }
 
 var mergeCopier = copier.Option{IgnoreEmpty: true, DeepCopy: true}
@@ -316,6 +325,10 @@ func (c TaskContainerDefaultsConfig) Merge(
 		} else {
 			res.LogPolicies = res.LogPolicies.Merge(other.LogPolicies)
 		}
+	}
+
+	if other.PreemptionTimeout > 0 {
+		res.PreemptionTimeout = other.PreemptionTimeout
 	}
 
 	return res, nil
