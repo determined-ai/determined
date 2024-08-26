@@ -447,20 +447,17 @@ func TestReportExperimentStateChanged(t *testing.T) {
 	workspaceName := uuid.New().String()
 	workspaceID, _ := db.RequireMockWorkspaceID(t, pgDB, workspaceName)
 	projectID, _ := db.RequireMockProjectID(t, pgDB, workspaceID, false)
-	user := db.RequireMockUser(t, pgDB)
-	exp := db.RequireMockExperimentProject(t, pgDB, user, projectID)
 
 	var config expconf.ExperimentConfig
 	config = schemas.WithDefaults(config)
-
-	require.NoError(t, pgDB.AddExperiment(exp, []byte{}, config))
 
 	t.Run("no triggers for event type", func(t *testing.T) {
 		w := mockWebhook()
 		require.NoError(t, AddWebhook(ctx, w))
 		require.NoError(t, ReportExperimentStateChanged(ctx, model.Experiment{
-			ID:    exp.ID,
-			State: model.CanceledState,
+			ID:        0,
+			ProjectID: projectID,
+			State:     model.CanceledState,
 		}, config))
 
 		require.Zero(t, countEventsForURL(ctx, t, w.URL))
@@ -474,8 +471,9 @@ func TestReportExperimentStateChanged(t *testing.T) {
 		})
 		require.NoError(t, AddWebhook(ctx, w))
 		require.NoError(t, ReportExperimentStateChanged(ctx, model.Experiment{
-			ID:    exp.ID,
-			State: model.CanceledState,
+			ID:        0,
+			ProjectID: projectID,
+			State:     model.CanceledState,
 		}, config))
 
 		require.Zero(t, countEventsForURL(ctx, t, w.URL))
@@ -491,8 +489,9 @@ func TestReportExperimentStateChanged(t *testing.T) {
 		})
 		require.NoError(t, AddWebhook(ctx, w))
 		require.NoError(t, ReportExperimentStateChanged(ctx, model.Experiment{
-			ID:    exp.ID,
-			State: model.CompletedState,
+			ID:        0,
+			ProjectID: projectID,
+			State:     model.CompletedState,
 		}, config))
 
 		require.Equal(t, 1, countEventsForURL(ctx, t, w.URL))
@@ -511,8 +510,9 @@ func TestReportExperimentStateChanged(t *testing.T) {
 		}
 		require.NoError(t, AddWebhook(ctx, w))
 		require.NoError(t, ReportExperimentStateChanged(ctx, model.Experiment{
-			ID:    exp.ID,
-			State: model.CompletedState,
+			ID:        0,
+			ProjectID: projectID,
+			State:     model.CompletedState,
 		}, config))
 
 		require.Equal(t, n, countEventsForURL(ctx, t, w.URL))
@@ -563,8 +563,9 @@ func TestReportExperimentStateChanged(t *testing.T) {
 		require.NoError(t, AddWebhook(ctx, w3))
 
 		require.NoError(t, ReportExperimentStateChanged(ctx, model.Experiment{
-			ID:    exp.ID,
-			State: model.CompletedState,
+			ID:        0,
+			ProjectID: projectID,
+			State:     model.CompletedState,
 		}, config))
 
 		require.Zero(t, countEventsForURL(ctx, t, w1.URL))
@@ -578,8 +579,9 @@ func TestReportExperimentStateChanged(t *testing.T) {
 		}
 
 		require.NoError(t, ReportExperimentStateChanged(ctx, model.Experiment{
-			ID:    exp.ID,
-			State: model.CompletedState,
+			ID:        0,
+			ProjectID: projectID,
+			State:     model.CompletedState,
 		}, config))
 
 		require.Zero(t, countEventsForURL(ctx, t, w1.URL))
@@ -589,8 +591,9 @@ func TestReportExperimentStateChanged(t *testing.T) {
 		config.RawIntegrations.Webhooks.WebhookName = ptrs.Ptr([]string{webhookName1, webhookName2, webhookName3})
 
 		require.NoError(t, ReportExperimentStateChanged(ctx, model.Experiment{
-			ID:    exp.ID,
-			State: model.CompletedState,
+			ID:        0,
+			ProjectID: projectID,
+			State:     model.CompletedState,
 		}, config))
 
 		require.Zero(t, countEventsForURL(ctx, t, w1.URL))
@@ -629,8 +632,9 @@ func TestReportExperimentStateChanged(t *testing.T) {
 		require.NoError(t, AddWebhook(ctx, w2))
 
 		require.NoError(t, ReportExperimentStateChanged(ctx, model.Experiment{
-			ID:    exp.ID,
-			State: model.CompletedState,
+			ID:        0,
+			ProjectID: projectID,
+			State:     model.CompletedState,
 		}, config))
 
 		require.Zero(t, countEventsForURL(ctx, t, w1.URL))
@@ -643,8 +647,9 @@ func TestReportExperimentStateChanged(t *testing.T) {
 		}
 
 		require.NoError(t, ReportExperimentStateChanged(ctx, model.Experiment{
-			ID:    exp.ID,
-			State: model.CompletedState,
+			ID:        0,
+			ProjectID: projectID,
+			State:     model.CompletedState,
 		}, config))
 
 		require.Zero(t, countEventsForURL(ctx, t, w1.URL))
@@ -774,13 +779,9 @@ func TestDequeueEvents(t *testing.T) {
 	workspaceName := uuid.New().String()
 	workspaceID, _ := db.RequireMockWorkspaceID(t, pgDB, workspaceName)
 	projectID, _ := db.RequireMockProjectID(t, pgDB, workspaceID, false)
-	user := db.RequireMockUser(t, pgDB)
-	exp := db.RequireMockExperimentProject(t, pgDB, user, projectID)
 
 	var config expconf.ExperimentConfig
 	config = schemas.WithDefaults(config)
-
-	require.NoError(t, pgDB.AddExperiment(exp, []byte{}, config))
 
 	t.Log("add a test webhook with one trigger")
 	require.NoError(t, AddWebhook(ctx, &Webhook{
@@ -799,8 +800,9 @@ func TestDequeueEvents(t *testing.T) {
 
 	t.Run("dequeueing and consuming a event should work", func(t *testing.T) {
 		exp := model.Experiment{
-			State: model.CompletedState,
-			ID:    exp.ID,
+			State:     model.CompletedState,
+			ProjectID: projectID,
+			ID:        0,
 		}
 		require.NoError(t, ReportExperimentStateChanged(ctx, exp, config))
 
@@ -812,7 +814,7 @@ func TestDequeueEvents(t *testing.T) {
 
 	t.Run("dequeueing and consuming a full batch of events should work", func(t *testing.T) {
 		for i := 0; i < maxEventBatchSize; i++ {
-			exp := model.Experiment{ID: exp.ID, State: model.CompletedState}
+			exp := model.Experiment{ID: 0, ProjectID: projectID, State: model.CompletedState}
 			require.NoError(t, ReportExperimentStateChanged(ctx, exp, config))
 		}
 
@@ -823,7 +825,7 @@ func TestDequeueEvents(t *testing.T) {
 	})
 
 	t.Run("rolling back an event should work, and it should be reconsumed", func(t *testing.T) {
-		exp := model.Experiment{ID: exp.ID, State: model.CompletedState}
+		exp := model.Experiment{ID: 0, ProjectID: projectID, State: model.CompletedState}
 		require.NoError(t, ReportExperimentStateChanged(ctx, exp, config))
 
 		batch, err := dequeueEvents(ctx, maxEventBatchSize)
