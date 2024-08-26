@@ -127,16 +127,16 @@ def test_log_pattern_send_webhook(should_match: bool) -> None:
     )
 
     workspace = bindings.post_PostWorkspace(
-            sess, body=bindings.v1PostWorkspaceRequest(name=f"webhook-test{random.random()}")
-        ).workspace
-    project =  bindings.post_PostProject(
-            sess,
-            body=bindings.v1PostProjectRequest(
-                name=f"webhook-test{random.random()}",
-                workspaceId=workspace.id,
-            ),
+        sess, body=bindings.v1PostWorkspaceRequest(name=f"webhook-test{random.random()}")
+    ).workspace
+    project = bindings.post_PostProject(
+        sess,
+        body=bindings.v1PostProjectRequest(
+            name=f"webhook-test{random.random()}",
             workspaceId=workspace.id,
-        ).project
+        ),
+        workspaceId=workspace.id,
+    ).project
 
     specific_path = f"/test/path/here/{str(uuid.uuid4())}"
     bindings.post_PostWebhook(
@@ -168,7 +168,14 @@ def test_log_pattern_send_webhook(should_match: bool) -> None:
         sess,
         conf.fixtures_path("no_op/single-medium-train-step.yaml"),
         conf.fixtures_path("no_op"),
-        ["--config", "hyperparameters.metrics_sigma=-1.0", "--config", f"integrations.webhooks.webhook_name=['specific-webhook']", "--project_id", f"{project.id}"],
+        [
+            "--config",
+            "hyperparameters.metrics_sigma=-1.0",
+            "--config",
+            "integrations.webhooks.webhook_name=['specific-webhook']",
+            "--project_id",
+            f"{project.id}",
+        ],
     )
     exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.ERROR)
 
@@ -191,6 +198,7 @@ def test_log_pattern_send_webhook(should_match: bool) -> None:
         assert specific_path not in responses
         assert specific_path_unmatch not in responses
 
+
 @pytest.mark.e2e_cpu
 def test_specific_webhook() -> None:
     port1 = 5007
@@ -200,16 +208,16 @@ def test_specific_webhook() -> None:
     sess = api_utils.admin_session()
 
     workspace = bindings.post_PostWorkspace(
-            sess, body=bindings.v1PostWorkspaceRequest(name=f"webhook-test{random.random()}")
-        ).workspace
-    project =  bindings.post_PostProject(
-            sess,
-            body=bindings.v1PostProjectRequest(
-                name=f"webhook-test{random.random()}",
-                workspaceId=workspace.id,
-            ),
+        sess, body=bindings.v1PostWorkspaceRequest(name=f"webhook-test{random.random()}")
+    ).workspace
+    project = bindings.post_PostProject(
+        sess,
+        body=bindings.v1PostProjectRequest(
+            name=f"webhook-test{random.random()}",
             workspaceId=workspace.id,
-        ).project
+        ),
+        workspaceId=workspace.id,
+    ).project
 
     webhook_trigger = bindings.v1Trigger(
         triggerType=bindings.v1TriggerType.EXPERIMENT_STATE_CHANGE,
@@ -240,8 +248,15 @@ def test_specific_webhook() -> None:
     assert webhook_res_2.url == webhook_2.url
 
     experiment_id = exp.create_experiment(
-        sess, conf.fixtures_path("no_op/single-one-short-step.yaml"), conf.fixtures_path("no_op"),
-        ["--project_id", f"{project.id}", "--config", f"integrations.webhooks.webhook_id=[{webhook_res_1.id},{webhook_res_2.id}]"],
+        sess,
+        conf.fixtures_path("no_op/single-one-short-step.yaml"),
+        conf.fixtures_path("no_op"),
+        [
+            "--project_id",
+            f"{project.id}",
+            "--config",
+            f"integrations.webhooks.webhook_id=[{webhook_res_1.id},{webhook_res_2.id}]",
+        ],
     )
 
     exp.wait_for_experiment_state(
