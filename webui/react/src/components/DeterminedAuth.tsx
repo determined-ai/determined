@@ -25,10 +25,15 @@ interface Props {
   canceler: AbortController;
 }
 
-interface FromValues {
+interface FormValues {
   password?: string;
   username?: string;
 }
+
+export const WEAK_PASSWORD_SUBJECT = 'Weak Password';
+export const USERNAME_ID = 'username';
+export const PASSWORD_ID = 'password';
+export const SUBMIT_ID = 'submit';
 
 const storage = new StorageManager({ basePath: '/DeterminedAuth', store: window.localStorage });
 const STORAGE_KEY_LAST_USERNAME = 'lastUsername';
@@ -41,7 +46,7 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
   const [isSubmitted, setIsSubmitted] = useState<boolean>(false);
 
   const onFinish = useCallback(
-    async (creds: FromValues): Promise<void> => {
+    async (creds: FormValues): Promise<void> => {
       uiActions.showSpinner();
       setCanSubmit(false);
       setIsSubmitted(true);
@@ -62,7 +67,7 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
             level: ErrorLevel.Warn,
             publicMessage:
               'Your current password is either blank or weak according to current security recommendations. Please change your password.',
-            publicSubject: 'Weak Password',
+            publicSubject: WEAK_PASSWORD_SUBJECT,
             silent: false,
             type: ErrorType.Input,
           });
@@ -91,7 +96,7 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
     [canceler, uiActions, rbacEnabled],
   );
 
-  const onValuesChange = useCallback((_changes: FromValues, values: FromValues): void => {
+  const onValuesChange = useCallback((_changes: FormValues, values: FormValues): void => {
     const hasUsername = !!values.username;
     setIsBadCredentials(false);
     setCanSubmit(hasUsername);
@@ -113,14 +118,14 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
         ]}>
         <Input
           autoFocus
-          data-testid="username"
+          data-testid={USERNAME_ID}
           placeholder="username"
           prefix={<Icon name="user" size="small" title="Username" />}
         />
       </Form.Item>
       <Form.Item name="password">
         <Input.Password
-          data-testid="password"
+          data-testid={PASSWORD_ID}
           placeholder="password"
           prefix={<Icon name="lock" size="small" title="Password" />}
         />
@@ -130,7 +135,7 @@ const DeterminedAuth: React.FC<Props> = ({ canceler }: Props) => {
       )}
       <Form.Item>
         <Button
-          data-testid="submit"
+          data-testid={SUBMIT_ID}
           disabled={!canSubmit}
           htmlType="submit"
           loading={isSubmitted}
