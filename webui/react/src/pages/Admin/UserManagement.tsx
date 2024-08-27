@@ -29,6 +29,7 @@ import {
 } from 'components/Table/Table';
 import UserBadge from 'components/UserBadge';
 import { useAsync } from 'hooks/useAsync';
+import useMobile from 'hooks/useMobile';
 import usePermissions from 'hooks/usePermissions';
 import { getGroups, getUserRoles, getUsers, patchUsers } from 'services/api';
 import { V1GetUsersRequestSortBy, V1GroupSearchResult, V1OrderBy } from 'services/api-ts-sdk';
@@ -221,6 +222,7 @@ const UserManagement: React.FC<Props> = ({ onUserCreate }: Props) => {
   const pageRef = useRef<HTMLElement>(null);
   const currentUser = Loadable.getOrElse(undefined, useObservable(userStore.currentUser));
   const loadableSettings = useObservable(userManagementSettings);
+  const isMobile = useMobile();
   const settings = useMemo(() => {
     return Loadable.match(loadableSettings, {
       _: () => ({ ...DEFAULT_SETTINGS, ...columnSettings }),
@@ -485,7 +487,7 @@ const UserManagement: React.FC<Props> = ({ onUserCreate }: Props) => {
         <div className={css.actionBar} data-testid="actionRow">
           <Row wrap>
             <Column>
-              <Row>
+              <Row width="fill" wrap>
                 {/* input is uncontrolled */}
                 <Input
                   allowClear
@@ -493,6 +495,7 @@ const UserManagement: React.FC<Props> = ({ onUserCreate }: Props) => {
                   defaultValue={nameFilter}
                   placeholder="Find user"
                   prefix={<Icon color="cancel" decorative name="search" size="tiny" />}
+                  width={isMobile ? '100%' : 'max-content'}
                   onChange={handleNameSearchApply}
                 />
                 <Select
@@ -500,7 +503,7 @@ const UserManagement: React.FC<Props> = ({ onUserCreate }: Props) => {
                   options={roleOptions}
                   searchable={false}
                   value={roleFilter}
-                  width={120}
+                  width={isMobile ? 'calc(100vw - 32px)' : 120}
                   onChange={handleRoleFilterApply}
                 />
                 <Select
@@ -508,7 +511,7 @@ const UserManagement: React.FC<Props> = ({ onUserCreate }: Props) => {
                   options={statusOptions}
                   searchable={false}
                   value={statusFilter}
-                  width={170}
+                  width={isMobile ? 'calc(100vw - 32px)' : 170}
                   onChange={handleStatusFilterApply}
                 />
               </Row>
