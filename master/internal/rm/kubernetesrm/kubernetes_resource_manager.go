@@ -586,6 +586,12 @@ type jobSchedulingStateChanged struct {
 
 func (k *ResourceManager) jobSchedulingStateCallback(msg jobSchedulingStateChanged) {
 	for _, rp := range k.pools {
+		k.syslog.Debugf(
+			"Job Scheduling State Changed: \n\t%s\n\t%d\n\t%d\n",
+			msg.AllocationID,
+			msg.NumPods,
+			msg.State,
+		)
 		rp.JobSchedulingStateChanged(msg)
 	}
 }

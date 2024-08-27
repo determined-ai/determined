@@ -113,6 +113,7 @@ func (k *kubernetesResourcePool) JobSchedulingStateChanged(msg jobSchedulingStat
 
 	for it := k.reqList.Iterator(); it.Next(); {
 		req := it.Value()
+		k.syslog.Debugf("job (%s) scheduling state changed: %d -> %d", req.AllocationID, req.State, msg.State)
 		if req.AllocationID == msg.AllocationID {
 			req.State = msg.State
 			if sproto.ScheduledStates[req.State] {
@@ -457,6 +458,7 @@ func (k *kubernetesResourcePool) assignResources(
 func (k *kubernetesResourcePool) createResources(
 	req *sproto.AllocateRequest, slotsPerPod, numPods int,
 ) *k8sJobResource {
+	k.syslog.Infof("creating resources for %s", req.AllocationID)
 	return &k8sJobResource{
 		numPods:          numPods,
 		req:              req,
