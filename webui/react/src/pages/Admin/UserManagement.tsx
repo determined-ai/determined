@@ -501,17 +501,19 @@ const UserManagement: React.FC<Props> = ({ onUserCreate }: Props) => {
                 <Select
                   data-testid="roleSelect"
                   options={roleOptions}
+                  placeholder="Role"
                   searchable={false}
                   value={roleFilter}
-                  width={isMobile ? 'calc(100vw - 32px)' : 120}
+                  width={isMobile ? 'calc(100vw - padding)' : 120}
                   onChange={handleRoleFilterApply}
                 />
                 <Select
                   data-testid="statusSelect"
                   options={statusOptions}
+                  placeholder="Status"
                   searchable={false}
                   value={statusFilter}
-                  width={isMobile ? 'calc(100vw - 32px)' : 170}
+                  width={isMobile ? 'calc(100vw - padding)' : 170}
                   onChange={handleStatusFilterApply}
                 />
               </Row>
