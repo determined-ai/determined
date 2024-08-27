@@ -208,3 +208,87 @@ func TestGetExperimentsEditableByUser(t *testing.T) {
 		})
 	}
 }
+
+func TestIntegrationKillAllExperimentsInProject(t *testing.T) {
+	ctx := context.Background()
+	nameExt := uuid.New()
+	testUser := db.RequireMockUser(t, db.SingleDB())
+
+	// override experimentsEditableByUser to bypass dependency on context with attached auth
+	defer func(originalFunc func(context.Context, int32, []int32, *apiv1.BulkExperimentFilters) ([]int32, error)) {
+		experimentsEditableByUser = originalFunc
+	}(experimentsEditableByUser)
+	experimentsEditableByUser = func(
+		ctx context.Context,
+		projectID int32,
+		experimentIDs []int32,
+		filters *apiv1.BulkExperimentFilters,
+	) ([]int32, error) {
+		exps, err := getExperimentsEditableByUser(
+			ctx, &testUser, projectID, experimentIDs, filters,
+		)
+		return exps, err
+	}
+
+	testWorkspaceID, _ := db.RequireMockWorkspaceID(t, db.SingleDB(), "TestIntegrationKillExperiment-"+nameExt.String())
+	testProjectID, _ := db.RequireMockProjectID(t, db.SingleDB(), testWorkspaceID, false)
+	otherProjectID, _ := db.RequireMockProjectID(t, db.SingleDB(), testWorkspaceID, false)
+
+	statePtr := func(s model.State) *model.State { return &s }
+	testModels := map[string]db.MockExperimentParams{
+		// already in terminal state, will not be affected
+		"project_1_state_completed": {
+			ProjectID: &testProjectID,
+			State:     statePtr(model.CompletedState),
+		},
+		// expect this to be killed
+		"project_1_state_active": {
+			ProjectID: &testProjectID,
+			State:     statePtr(model.ActiveState),
+		},
+		// in a different project, will not be affected
+		"project_2_state_active": {
+			ProjectID: &otherProjectID,
+			State:     statePtr(model.ActiveState),
+		},
+	}
+
+	allExperimentIds := make([]int, len(testModels))
+	editableExperiments := map[string]*model.Experiment{}
+	i := 0
+	for name, model := range testModels {
+		exp := db.RequireMockExperimentParams(
+			t, db.SingleDB(), testUser,
+			model,
+			*model.ProjectID,
+		)
+		editableExperiments[name] = exp
+		allExperimentIds[i] = exp.ID
+		i++
+	}
+	defer func(ids []int) {
+		_ = db.SingleDB().DeleteExperiments(ctx, ids)
+	}(allExperimentIds)
+
+	for _, expID := range allExperimentIds {
+		exp := experimentMock{}
+		if expID == editableExperiments["project_1_state_active"].ID {
+			exp.On("KillExperiment").Return(nil)
+		}
+		require.NoError(t, ExperimentRegistry.Add(expID, &exp))
+		defer exp.AssertExpectations(t)
+		defer ExperimentRegistry.Delete(expID) //nolint:errcheck
+	}
+
+	filters := &apiv1.BulkExperimentFilters{
+		ProjectId: int32(testProjectID),
+	}
+
+	killed, err := KillExperiments(ctx, int32(testProjectID), []int32{}, filters)
+	require.NoError(t, err)
+	require.ElementsMatch(t, killed, []ExperimentActionResult{
+		{
+			ID: int32(editableExperiments["project_1_state_active"].ID),
+		},
+	})
+}
