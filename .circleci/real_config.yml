@@ -5516,7 +5516,8 @@ workflows:
           name: publish-python-package-release
           matrix:
             parameters:
-              path: ["harness"]
+              path:
+                - "harness"
           context: determined-production
           filters: *release-filters
           requires:
