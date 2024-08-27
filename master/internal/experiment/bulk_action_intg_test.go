@@ -30,30 +30,64 @@ func TestGetExperimentsEditableByUser(t *testing.T) {
 	testUser := db.RequireMockUser(t, db.SingleDB())
 	testWorkspaceID, _ := db.RequireMockWorkspaceID(t, db.SingleDB(), "TestGetExperimentsEditableByUser-"+nameExt.String())
 	testProjectID, _ := db.RequireMockProjectID(t, db.SingleDB(), testWorkspaceID, false)
+	testProjectID2, _ := db.RequireMockProjectID(t, db.SingleDB(), testWorkspaceID, false)
 
-	testModelStates := []model.State{
-		model.ActiveState,
-		model.CanceledState,
-		model.CompletedState,
-		model.ErrorState,
-		model.PausedState,
-		model.StoppingCanceledState,
-		model.DeletingState,
-		model.RunningState,
+	statePtr := func(s model.State) *model.State { return &s }
+	testModels := map[string]db.MockExperimentParams{
+		"project_1_state_active": {
+			ProjectID: &testProjectID,
+			State:     statePtr(model.ActiveState),
+		},
+		"project_1_state_canceled": {
+			ProjectID: &testProjectID,
+			State:     statePtr(model.CanceledState),
+		},
+		"project_1_state_completed": {
+			ProjectID: &testProjectID,
+			State:     statePtr(model.CompletedState),
+		},
+		"project_1_state_error": {
+			ProjectID: &testProjectID,
+			State:     statePtr(model.ErrorState),
+		},
+		"project_1_state_paused": {
+			ProjectID: &testProjectID,
+			State:     statePtr(model.PausedState),
+		},
+		"project_1_state_stoppingCanceled": {
+			ProjectID: &testProjectID,
+			State:     statePtr(model.StoppingCanceledState),
+		},
+		"project_1_state_deleting": {
+			ProjectID: &testProjectID,
+			State:     statePtr(model.DeletingState),
+		},
+		"project_1_state_running": {
+			ProjectID: &testProjectID,
+			State:     statePtr(model.RunningState),
+		},
+		"project_2_state_active": {
+			ProjectID: &testProjectID2,
+			State:     statePtr(model.ActiveState),
+		},
+		"project_2_state_paused": {
+			ProjectID: &testProjectID2,
+			State:     statePtr(model.PausedState),
+		},
 	}
 
-	allExperimentIds := make([]int, len(testModelStates))
-	editableExperiments := map[model.State]*model.Experiment{}
-	for i, state := range testModelStates {
+	allExperimentIds := make([]int, len(testModels))
+	editableExperiments := map[string]*model.Experiment{}
+	i := 0
+	for name, model := range testModels {
 		exp := db.RequireMockExperimentParams(
 			t, db.SingleDB(), testUser,
-			db.MockExperimentParams{
-				State: &state,
-			},
-			testProjectID,
+			model,
+			*model.ProjectID,
 		)
-		editableExperiments[state] = exp
+		editableExperiments[name] = exp
 		allExperimentIds[i] = exp.ID
+		i++
 	}
 
 	defer func(ids []int) {
@@ -71,25 +105,25 @@ func TestGetExperimentsEditableByUser(t *testing.T) {
 			args: args{
 				projectID: int32(testProjectID),
 				experimentIDs: []int32{
-					int32(editableExperiments[model.ActiveState].ID),
-					int32(editableExperiments[model.CanceledState].ID),
-					int32(editableExperiments[model.CompletedState].ID),
-					int32(editableExperiments[model.ErrorState].ID),
-					int32(editableExperiments[model.PausedState].ID),
-					int32(editableExperiments[model.StoppingCanceledState].ID),
-					int32(editableExperiments[model.DeletingState].ID),
-					int32(editableExperiments[model.RunningState].ID),
+					int32(editableExperiments["project_1_state_active"].ID),
+					int32(editableExperiments["project_1_state_canceled"].ID),
+					int32(editableExperiments["project_1_state_completed"].ID),
+					int32(editableExperiments["project_1_state_error"].ID),
+					int32(editableExperiments["project_1_state_paused"].ID),
+					int32(editableExperiments["project_1_state_stoppingCanceled"].ID),
+					int32(editableExperiments["project_1_state_deleting"].ID),
+					int32(editableExperiments["project_1_state_running"].ID),
 				},
 			},
 			expected: []int32{
-				int32(editableExperiments[model.ActiveState].ID),
-				int32(editableExperiments[model.CanceledState].ID),
-				int32(editableExperiments[model.CompletedState].ID),
-				int32(editableExperiments[model.ErrorState].ID),
-				int32(editableExperiments[model.PausedState].ID),
-				int32(editableExperiments[model.StoppingCanceledState].ID),
-				int32(editableExperiments[model.DeletingState].ID),
-				int32(editableExperiments[model.RunningState].ID),
+				int32(editableExperiments["project_1_state_active"].ID),
+				int32(editableExperiments["project_1_state_canceled"].ID),
+				int32(editableExperiments["project_1_state_completed"].ID),
+				int32(editableExperiments["project_1_state_error"].ID),
+				int32(editableExperiments["project_1_state_paused"].ID),
+				int32(editableExperiments["project_1_state_stoppingCanceled"].ID),
+				int32(editableExperiments["project_1_state_deleting"].ID),
+				int32(editableExperiments["project_1_state_running"].ID),
 			},
 		},
 		{
@@ -108,27 +142,27 @@ func TestGetExperimentsEditableByUser(t *testing.T) {
 			expected: []int32{},
 		},
 		{
-			name: "exclude finished",
+			name: "exclude finished by ID",
 			args: args{
 				projectID: int32(testProjectID),
 				filters: &apiv1.BulkExperimentFilters{
 					ExcludedExperimentIds: []int32{
-						int32(editableExperiments[model.CanceledState].ID),
-						int32(editableExperiments[model.CompletedState].ID),
-						int32(editableExperiments[model.ErrorState].ID),
+						int32(editableExperiments["project_1_state_canceled"].ID),
+						int32(editableExperiments["project_1_state_completed"].ID),
+						int32(editableExperiments["project_1_state_error"].ID),
 					},
 				},
 			},
 			expected: []int32{
-				int32(editableExperiments[model.ActiveState].ID),
-				int32(editableExperiments[model.PausedState].ID),
-				int32(editableExperiments[model.StoppingCanceledState].ID),
-				int32(editableExperiments[model.DeletingState].ID),
-				int32(editableExperiments[model.RunningState].ID),
+				int32(editableExperiments["project_1_state_active"].ID),
+				int32(editableExperiments["project_1_state_paused"].ID),
+				int32(editableExperiments["project_1_state_stoppingCanceled"].ID),
+				int32(editableExperiments["project_1_state_deleting"].ID),
+				int32(editableExperiments["project_1_state_running"].ID),
 			},
 		},
 		{
-			name: "include only finished",
+			name: "include only finished by state",
 			args: args{
 				projectID: int32(testProjectID),
 				filters: &apiv1.BulkExperimentFilters{
@@ -140,9 +174,24 @@ func TestGetExperimentsEditableByUser(t *testing.T) {
 				},
 			},
 			expected: []int32{
-				int32(editableExperiments[model.CanceledState].ID),
-				int32(editableExperiments[model.CompletedState].ID),
-				int32(editableExperiments[model.ErrorState].ID),
+				int32(editableExperiments["project_1_state_canceled"].ID),
+				int32(editableExperiments["project_1_state_completed"].ID),
+				int32(editableExperiments["project_1_state_error"].ID),
+			},
+		},
+		{
+			name: "active in project 2",
+			args: args{
+				projectID: int32(testProjectID2),
+				filters: &apiv1.BulkExperimentFilters{
+					ProjectId: int32(testProjectID2),
+					States: []experimentv1.State{
+						experimentv1.State_STATE_ACTIVE,
+					},
+				},
+			},
+			expected: []int32{
+				int32(editableExperiments["project_2_state_active"].ID),
 			},
 		},
 	}
