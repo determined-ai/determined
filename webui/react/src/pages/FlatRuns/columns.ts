@@ -129,7 +129,7 @@ export const getColumnDefs = ({
     isNumerical: true,
     renderer: (record: FlatRun) => ({
       allowOverlay: false,
-      copyData: record.checkpointSize ? humanReadableBytes(record.checkpointSize) : '',
+      copyData: record.checkpointSize ? humanReadableBytes(record.checkpointSize) : '-',
       data: { kind: TEXT_CELL },
       kind: GridCellKind.Custom,
     }),
@@ -154,7 +154,7 @@ export const getColumnDefs = ({
               unitMeasures: { ...DURATION_UNIT_MEASURES, ms: 1000 },
             },
           )
-        : '',
+        : '-',
       data: { kind: TEXT_CELL },
       kind: GridCellKind.Custom,
     }),
@@ -166,7 +166,7 @@ export const getColumnDefs = ({
     id: 'experimentDescription',
     renderer: (record: FlatRun) => ({
       allowOverlay: false,
-      copyData: String(record.experiment?.description),
+      copyData: String(record.experiment?.description ?? '-'),
       data: { kind: TEXT_CELL },
       kind: GridCellKind.Custom,
     }),
@@ -213,7 +213,7 @@ export const getColumnDefs = ({
     id: 'experimentName',
     renderer: (record: FlatRun) => ({
       allowOverlay: false,
-      copyData: String(record.experiment?.name),
+      copyData: String(record.experiment?.name ?? '-'),
       cursor: 'pointer',
       data: {
         kind: LINK_CELL,
@@ -246,7 +246,7 @@ export const getColumnDefs = ({
     id: 'externalExperimentId',
     renderer: (record: FlatRun) => ({
       allowOverlay: false,
-      copyData: record.experiment?.externalExperimentId ?? '',
+      copyData: record.experiment?.externalExperimentId ?? '-',
       data: { kind: TEXT_CELL },
       kind: GridCellKind.Custom,
     }),
@@ -261,7 +261,7 @@ export const getColumnDefs = ({
     id: 'externalRunId',
     renderer: (record: FlatRun) => ({
       allowOverlay: false,
-      copyData: String(record.externalRunId ?? ''),
+      copyData: String(record.externalRunId ?? '-'),
       data: { kind: TEXT_CELL },
       kind: GridCellKind.Custom,
     }),
@@ -273,7 +273,7 @@ export const getColumnDefs = ({
     id: 'forkedFrom',
     renderer: (record: FlatRun) => ({
       allowOverlay: false,
-      copyData: String(record.experiment?.forkedFrom ?? ''),
+      copyData: String(record.experiment?.forkedFrom ?? '-'),
       cursor: record.experiment?.forkedFrom ? 'pointer' : undefined,
       data: {
         kind: LINK_CELL,
@@ -283,7 +283,7 @@ export const getColumnDefs = ({
                 href: record.experiment?.forkedFrom
                   ? paths.experimentDetails(record.experiment?.forkedFrom)
                   : undefined,
-                title: String(record.experiment?.forkedFrom ?? ''),
+                title: String(record.experiment?.forkedFrom ?? '-'),
               }
             : undefined,
         navigateOn: 'click',
@@ -382,7 +382,7 @@ export const getColumnDefs = ({
     id: 'resourcePool',
     renderer: (record: FlatRun) => ({
       allowOverlay: false,
-      copyData: String(record.experiment?.resourcePool),
+      copyData: String(record.experiment?.resourcePool ?? '-'),
       data: { kind: TEXT_CELL },
       kind: GridCellKind.Custom,
     }),
@@ -394,7 +394,7 @@ export const getColumnDefs = ({
     id: 'searcherMetric',
     isNumerical: false,
     renderer: (record: FlatRun) => {
-      const sMetric = record.experiment?.searcherMetric ?? '';
+      const sMetric = record.experiment?.searcherMetric ?? '-';
       return {
         allowOverlay: false,
         copyData: sMetric,
@@ -410,7 +410,7 @@ export const getColumnDefs = ({
     id: 'searcherType',
     renderer: (record: FlatRun) => ({
       allowOverlay: false,
-      copyData: String(record.experiment?.searcherType),
+      copyData: String(record.experiment?.searcherType ?? '-'),
       data: { kind: TEXT_CELL },
       kind: GridCellKind.Custom,
     }),
@@ -453,7 +453,7 @@ export const getColumnDefs = ({
     id: 'tags',
     renderer: (record: FlatRun) => ({
       allowOverlay: true,
-      copyData: record.labels?.join(', ') ?? '',
+      copyData: record.labels?.join(', ') ?? '-',
       data: {
         kind: TAGS_CELL,
         possibleTags: [],
@@ -475,7 +475,7 @@ export const getColumnDefs = ({
       });
       return {
         allowOverlay: true,
-        copyData: String(displayName),
+        copyData: String(displayName ?? '-'),
         data: {
           image: undefined,
           initials: getInitials(displayName),
@@ -521,7 +521,7 @@ export const searcherMetricsValColumn = (
           ? typeof sMetricValue === 'number'
             ? humanReadableNumber(sMetricValue)
             : sMetricValue
-          : '',
+          : '-',
         data: { kind: TEXT_CELL },
         kind: GridCellKind.Custom,
         themeOverride: theme,
