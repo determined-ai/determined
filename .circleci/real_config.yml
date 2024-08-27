@@ -5498,7 +5498,8 @@ workflows:
           name: publish-python-package-rc
           matrix:
             parameters:
-              path: ["harness"]
+              path:
+                - "harness"
           context: determined-production
           filters: *rc-filters
           requires:
