@@ -9,7 +9,6 @@ import (
 
 	"github.com/pkg/errors"
 
-	"github.com/davecgh/go-spew/spew"
 	"github.com/determined-ai/determined/master/pkg/archive"
 	"github.com/determined-ai/determined/master/pkg/cproto"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -41,8 +40,6 @@ func harnessArchive(harnessPath string, aug *model.AgentUserGroup) cproto.RunArc
 		panic(errors.Wrapf(err, "error finding Python wheel files for version %s in path: %s",
 			version.Version, harnessPath))
 	}
-
-	spew.Dump(wheelPaths)
 
 	for _, path := range wheelPaths {
 		info, err := os.Stat(path)
