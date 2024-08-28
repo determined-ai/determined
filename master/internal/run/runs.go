@@ -1,6 +1,7 @@
 package run
 
 import (
+	"encoding/json"
 	"fmt"
 	"regexp"
 	"strings"
@@ -101,19 +102,35 @@ func flattenMetadata(data map[string]any) (flatMetadata []model.RunMetadataIndex
 				flatMetadata = append(flatMetadata, newIndex)
 				continue
 			}
-			for key, value := range typedVal {
-				newPrefix := entry.prefix + entry.key + "."
-				if newPrefix == "." {
-					newPrefix = ""
+			if entry.array {
+				newIndex := model.RunMetadataIndex{
+					FlatKey:        entry.prefix + entry.key,
+					IsArrayElement: true,
 				}
-				// push the key-value pair onto the stack
-				stack = append(stack, metadataEntry{
-					prefix: newPrefix,
-					key:    key,
-					value:  value,
-					depth:  entry.depth + 1,
-					array:  entry.array,
-				})
+				objJSON, err := json.Marshal(entry.value)
+				if err != nil {
+					return nil, fmt.Errorf(
+						"failed to marshall metadata object in array %w",
+						err,
+					)
+				}
+				newIndex.StringValue = ptrs.Ptr(string(objJSON))
+				flatMetadata = append(flatMetadata, newIndex)
+			} else {
+				for key, value := range typedVal {
+					newPrefix := entry.prefix + entry.key + "."
+					if newPrefix == "." {
+						newPrefix = ""
+					}
+					// push the key-value pair onto the stack
+					stack = append(stack, metadataEntry{
+						prefix: newPrefix,
+						key:    key,
+						value:  value,
+						depth:  entry.depth + 1,
+						array:  false,
+					})
+				}
 			}
 		// if the value is a slice, push each element onto the stack.
 		case []any:
