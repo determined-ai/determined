@@ -26,8 +26,8 @@ func (a *WebhookAuthZRBAC) CanEditWebhooks(
 		rbacv1.PermissionType_PERMISSION_TYPE_EDIT_WEBHOOKS)
 }
 
-// CanGetWebhooks returns a list of workspace that user can get webhooks from.
-func (a *WebhookAuthZRBAC) CanGetWebhooks(
+// WebhookAvailableWorkspaces returns a list of workspaces that user can get webhooks from.
+func (a *WebhookAuthZRBAC) WebhookAvailableWorkspaces(
 	ctx context.Context, curUser *model.User,
 ) (workspaceIDsWithPermsFilter []int32, serverError error) {
 	var workspaceIDs []int32

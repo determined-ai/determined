@@ -286,7 +286,8 @@ func GetWebhook(ctx context.Context, webhookID int) (*Webhook, error) {
 	return &webhook, nil
 }
 
-// getWebhooks Webhooks from the DB.
+// getWebhooks returns Webhooks from the DB whose scopes are in workspaceIDs.
+// workspaceIDs being nil gets only the globally scoped webhooks.
 func getWebhooks(ctx context.Context, workspaceIDs *[]int32) (Webhooks, error) {
 	webhooks := Webhooks{}
 	q := db.Bun().NewSelect().

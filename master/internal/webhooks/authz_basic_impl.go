@@ -20,13 +20,13 @@ func (a *WebhookAuthZBasic) CanEditWebhooks(
 		return nil
 	}
 	if !curUser.Admin {
-		return fmt.Errorf("non admin users can't edit webhooks")
+		return fmt.Errorf("non admin users can't edit global webhooks")
 	}
 	return nil
 }
 
-// CanGetWebhooks returns a list of workspace that user can get webhooks from.
-func (a *WebhookAuthZBasic) CanGetWebhooks(
+// WebhookAvailableWorkspaces returns a list of workspaces that user can get webhooks from.
+func (a *WebhookAuthZBasic) WebhookAvailableWorkspaces(
 	ctx context.Context, curUser *model.User,
 ) (workspaceIDsWithPermsFilter []int32, serverError error) {
 	var workspaceIDs []int32

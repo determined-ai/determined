@@ -24,13 +24,13 @@ import (
 // WebhooksAPIServer is an embedded api server struct.
 type WebhooksAPIServer struct{}
 
-// AuthorizeRequest checks if the user has CanEditWebhooks permissions.
+// authorizeEditRequest checks if the user has CanEditWebhooks permissions.
 // TODO remove this eventually since authz replaces this
 // We can't yet since we use it else where.
 func authorizeEditRequest(ctx context.Context, workspaceID int32) error {
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
-		return status.Errorf(codes.Internal, "failed to get the user: %s", err)
+		return status.Errorf(codes.Internal, "failed to get the user: %v", err)
 	}
 	var workspace *model.Workspace
 	if workspaceID > 0 {
@@ -53,9 +53,9 @@ func (a *WebhooksAPIServer) GetWebhooks(
 ) (*apiv1.GetWebhooksResponse, error) {
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
-		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
+		return nil, status.Errorf(codes.Internal, "failed to get the user: %v", err)
 	}
-	workspaceIDs, err := AuthZProvider.Get().CanGetWebhooks(ctx, curUser)
+	workspaceIDs, err := AuthZProvider.Get().WebhookAvailableWorkspaces(ctx, curUser)
 	if err != nil {
 		return nil, err
 	}

@@ -291,6 +291,7 @@ def create_default_webhook(sess: api.Session, workspaceId: Optional[int] = None)
             workspaceId=workspaceId,
         ),
     )
+    assert res.webhook.id is not None
     return res.webhook.id or 0
 
 
@@ -320,7 +321,7 @@ def test_webhook_permission() -> None:
             name=f"workspace_aug_{uuid.uuid4().hex[:8]}",
         ),
     ).workspace
-    # api_utils.assign_user_role(admin_sess, username, role="Editor", workspace="Uncategorized")
+
     workspace_webhook_id = create_default_webhook(user2_sess, workspace.id)
     # user should not add workspace to other users' workspace
     with pytest.raises(errors.APIException):

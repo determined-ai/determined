@@ -17,12 +17,12 @@ func (p *WebhookAuthZPermissive) CanEditWebhooks(
 	return (&WebhookAuthZBasic{}).CanEditWebhooks(ctx, curUser, workspace)
 }
 
-// CanGetWebhooks calls RBAC authz but enforces basic authz.
-func (p *WebhookAuthZPermissive) CanGetWebhooks(
+// WebhookAvailableWorkspaces calls RBAC authz but enforces basic authz.
+func (p *WebhookAuthZPermissive) WebhookAvailableWorkspaces(
 	ctx context.Context, curUser *model.User,
 ) (workspaceIDsWithPermsFilter []int32, serverError error) {
-	_, _ = (&WebhookAuthZRBAC{}).CanGetWebhooks(ctx, curUser)
-	return (&WebhookAuthZBasic{}).CanGetWebhooks(ctx, curUser)
+	_, _ = (&WebhookAuthZRBAC{}).WebhookAvailableWorkspaces(ctx, curUser)
+	return (&WebhookAuthZBasic{}).WebhookAvailableWorkspaces(ctx, curUser)
 }
 
 func init() {
