@@ -20,6 +20,7 @@ const DefaultRawConfig = `
 log:
     level: trace
     color: true
+resource_pool: default
 slot_type: auto
 security:
     tls:
@@ -100,6 +101,7 @@ func TestMergeAgentConfigViaNewViper(t *testing.T) {
 log:
     level: trace
     color: true
+resource_pool: default
 slot_type: auto
 security:
     tls:
@@ -157,6 +159,7 @@ func TestMergeAgentConfigViaViperWithDefaults(t *testing.T) {
 log:
     level: trace
     color: true
+resource_pool: default
 slot_type: auto
 security:
     tls:
@@ -213,6 +216,7 @@ func TestMergeAgentConfigViaViperWithDefaultsEnvAndFlags(t *testing.T) {
 log:
     level: trace
     color: true
+resource_pool: default
 slot_type: auto
 security:
     tls:
