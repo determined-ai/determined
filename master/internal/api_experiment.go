@@ -2349,7 +2349,7 @@ func (a *apiServer) GetModelDef(
 func (a *apiServer) GetTaskContextDirectory(
 	ctx context.Context, req *apiv1.GetTaskContextDirectoryRequest,
 ) (*apiv1.GetTaskContextDirectoryResponse, error) {
-	if err := a.canDoActionsOnTask(ctx, model.TaskID(req.TaskId),
+	if _, _, err := a.canDoActionsOnTask(ctx, model.TaskID(req.TaskId),
 		experiment.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 		return nil, err
 	}

@@ -75,7 +75,7 @@ def test_launch_multi_slot_chief(
 
     mock_subprocess.side_effect = mock_process
 
-    with test_util.set_resources_id_env_var():
+    with test_util.set_env_vars({"DET_RESOURCES_ID": "resourcesId"}):
         deeplaunch.main(script)
 
     mock_cluster_info.assert_called_once()
@@ -149,7 +149,7 @@ def test_launch_multi_slot_fail(
 
     mock_subprocess.side_effect = mock_process
 
-    with test_util.set_resources_id_env_var():
+    with test_util.set_env_vars({"DET_RESOURCES_ID": "resourcesId"}):
         with pytest.raises(ValueError, match="no sshd greeting"):
             deeplaunch.main(script)
 
@@ -195,7 +195,7 @@ def test_launch_one_slot(
     log_redirect_cmd = deeplaunch.create_log_redirect_cmd()
     launch_cmd = pid_server_cmd + deepspeed_cmd + pid_client_cmd + log_redirect_cmd + script
 
-    with test_util.set_resources_id_env_var():
+    with test_util.set_env_vars({"DET_RESOURCES_ID": "resourcesId"}):
         deeplaunch.main(script)
 
     mock_cluster_info.assert_called_once()
@@ -223,7 +223,7 @@ def test_launch_fail(mock_cluster_info: mock.MagicMock, mock_subprocess: mock.Ma
     log_redirect_cmd = deeplaunch.create_log_redirect_cmd()
     launch_cmd = pid_server_cmd + deepspeed_cmd + pid_client_cmd + log_redirect_cmd + script
 
-    with test_util.set_resources_id_env_var():
+    with test_util.set_env_vars({"DET_RESOURCES_ID": "resourcesId"}):
         assert deeplaunch.main(script) == 1
 
     mock_cluster_info.assert_called_once()
@@ -235,7 +235,7 @@ def test_launch_fail(mock_cluster_info: mock.MagicMock, mock_subprocess: mock.Ma
 
 @mock.patch("subprocess.Popen")
 @mock.patch("determined.get_cluster_info")
-@mock.patch("determined.common.api.authentication.login_with_cache")
+@mock.patch("determined.common.api.authentication.login_from_task")
 def test_launch_worker(
     mock_login: mock.MagicMock,
     mock_cluster_info: mock.MagicMock,
@@ -245,7 +245,13 @@ def test_launch_worker(
     mock_cluster_info.return_value = cluster_info
     mock_session = mock.MagicMock()
     mock_login.return_value = mock_session
-    with test_util.set_resources_id_env_var():
+    with test_util.set_env_vars(
+        {
+            "DET_RESOURCES_ID": "resourcesId",
+            "DET_SESSION_TOKEN": cluster_info.session_token,
+            "DET_USER": "abcd",
+        }
+    ):
         deeplaunch.main(["script"])
 
     mock_cluster_info.assert_called_once()

@@ -286,7 +286,7 @@ def main(script: List[str]) -> int:
         # Mark sshd containers as daemon containers that the master should kill when all non-daemon
         # containers (deepspeed launcher, in this case) have exited.
         cert = certs.default_load(info.master_url)
-        sess = authentication.login_with_cache(info.master_url, cert=cert)
+        sess = authentication.login_from_task(info.master_url, cert=cert)
         sess.post(f"/api/v1/allocations/{info.allocation_id}/resources/{resources_id}/daemon")
 
         # Wrap it in a pid_server to ensure that we can't hang if a worker fails.

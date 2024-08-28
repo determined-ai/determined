@@ -44,8 +44,12 @@ type runCandidateResult struct {
 func (a *apiServer) RunPrepareForReporting(
 	ctx context.Context, req *apiv1.RunPrepareForReportingRequest,
 ) (*apiv1.RunPrepareForReportingResponse, error) {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
 	// TODO(runs) run specific RBAC.
-	if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.RunId),
+	if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.RunId), curUser,
 		experiment.AuthZProvider.Get().CanEditExperiment); err != nil {
 		return nil, err
 	}
@@ -1015,8 +1019,12 @@ func pauseResumeAction(ctx context.Context, isPause bool, projectID int32,
 func (a *apiServer) GetRunMetadata(
 	ctx context.Context, req *apiv1.GetRunMetadataRequest,
 ) (*apiv1.GetRunMetadataResponse, error) {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
 	// TODO(runs) run specific RBAC.
-	if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.RunId),
+	if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.RunId), curUser,
 		experiment.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 		return nil, err
 	}
@@ -1033,8 +1041,12 @@ func (a *apiServer) GetRunMetadata(
 func (a *apiServer) PostRunMetadata(
 	ctx context.Context, req *apiv1.PostRunMetadataRequest,
 ) (*apiv1.PostRunMetadataResponse, error) {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
 	// TODO(runs) run specific RBAC.
-	if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.RunId),
+	if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.RunId), curUser,
 		experiment.AuthZProvider.Get().CanEditExperiment); err != nil {
 		return nil, err
 	}

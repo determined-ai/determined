@@ -24,6 +24,12 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
+const (
+	webhookName1 = "test-webhook-name1"
+	webhookName2 = "test-webhook-name2"
+	webhookName3 = "test-webhook-name3"
+)
+
 var pgDB *db.PgDB
 
 func TestMain(m *testing.M) {
@@ -128,6 +134,8 @@ func TestWebhookScanLogs(t *testing.T) {
 	r1 := uuid.New().String()
 	r2 := uuid.New().String()
 
+	workspaceID, _ := db.RequireMockWorkspaceID(t, pgDB, "")
+
 	w0 := &Webhook{
 		WebhookType: WebhookTypeDefault,
 		URL:         uuid.New().String(),
@@ -153,14 +161,44 @@ func TestWebhookScanLogs(t *testing.T) {
 		},
 		Mode: WebhookModeWorkspace,
 	}
+	w3 := &Webhook{
+		WebhookType: WebhookTypeDefault,
+		URL:         uuid.New().String(),
+		Triggers: Triggers{
+			{TriggerType: TriggerTypeTaskLog, Condition: map[string]any{"regex": r2}},
+		},
+		Name: webhookName1,
+		Mode: WebhookModeSpecific,
+	}
+	w4 := &Webhook{
+		WebhookType: WebhookTypeDefault,
+		URL:         uuid.New().String(),
+		Triggers: Triggers{
+			{TriggerType: TriggerTypeTaskLog, Condition: map[string]any{"regex": r2}},
+		},
+		Name:        webhookName2,
+		Mode:        WebhookModeSpecific,
+		WorkspaceID: ptrs.Ptr(int32(workspaceID)),
+	}
+	w5 := &Webhook{
+		WebhookType: WebhookTypeDefault,
+		URL:         uuid.New().String(),
+		Triggers: Triggers{
+			{TriggerType: TriggerTypeTaskLog, Condition: map[string]any{"regex": r2}},
+		},
+		Mode:        WebhookModeWorkspace,
+		WorkspaceID: ptrs.Ptr(int32(workspaceID)),
+	}
 
 	require.NoError(t, manager.addWebhook(ctx, w0))
 	require.NoError(t, manager.addWebhook(ctx, w1))
 	require.NoError(t, manager.addWebhook(ctx, w2))
+	require.NoError(t, manager.addWebhook(ctx, w3))
+	require.NoError(t, manager.addWebhook(ctx, w4))
+	require.NoError(t, manager.addWebhook(ctx, w5))
 
 	for _, shouldBounce := range []bool{false, true} { //nolint: dupl
-		_, err = db.Bun().NewDelete().Model((*Event)(nil)).Where("true").Exec(ctx)
-		require.NoError(t, err)
+		clearWebhooksEvent(ctx, t)
 
 		if shouldBounce {
 			manager, err = New(ctx)
@@ -177,11 +215,84 @@ func TestWebhookScanLogs(t *testing.T) {
 			{TaskID: string(task.TaskID), AgentID: ptrs.Ptr("test"), Log: r1},
 			{TaskID: string(task.TaskID), AgentID: ptrs.Ptr("test"), Log: r2},
 		}
-		require.NoError(t, manager.scanLogs(ctx, logs))
+		require.NoError(t, manager.scanLogs(ctx, logs, 0, nil))
 
 		require.Equal(t, 1, countEventsForURL(ctx, t, w0.URL))
 		require.Equal(t, 2, countEventsForURL(ctx, t, w1.URL))
 		require.Equal(t, 1, countEventsForURL(ctx, t, w2.URL))
+		require.Zero(t, countEventsForURL(ctx, t, w3.URL))
+		require.Zero(t, countEventsForURL(ctx, t, w4.URL))
+		require.Zero(t, countEventsForURL(ctx, t, w5.URL))
+
+		clearWebhooksEvent(ctx, t)
+
+		require.NoError(t, manager.scanLogs(ctx, logs, model.AccessScopeID(workspaceID), nil))
+		require.Equal(t, 1, countEventsForURL(ctx, t, w0.URL))
+		require.Equal(t, 2, countEventsForURL(ctx, t, w1.URL))
+		require.Equal(t, 1, countEventsForURL(ctx, t, w2.URL))
+		require.Zero(t, countEventsForURL(ctx, t, w3.URL))
+		require.Zero(t, countEventsForURL(ctx, t, w4.URL))
+		require.Equal(t, 1, countEventsForURL(ctx, t, w5.URL))
+
+		clearWebhooksEvent(ctx, t)
+
+		exp = db.RequireMockExperimentParams(t, pgDB, user,
+			db.MockExperimentParams{
+				Integrations: &expconf.IntegrationsConfigV0{
+					Webhooks: &expconf.WebhooksConfigV0{
+						WebhookName: ptrs.Ptr([]string{webhookName1, webhookName2}),
+					},
+				},
+			},
+			db.DefaultProjectID)
+		_, task = db.RequireMockTrial(t, pgDB, exp)
+
+		logs = []*model.TaskLog{
+			{TaskID: string(task.TaskID), AgentID: ptrs.Ptr("test"), Log: r2},
+			{TaskID: string(task.TaskID), AgentID: ptrs.Ptr("test"), Log: r2},
+		}
+		require.NoError(t, manager.scanLogs(ctx, logs, 0, ptrs.Ptr(exp.ID)))
+
+		require.Equal(t, 1, countEventsForURL(ctx, t, w2.URL))
+		require.Equal(t, 1, countEventsForURL(ctx, t, w3.URL))
+		require.Zero(t, countEventsForURL(ctx, t, w4.URL))
+		require.Zero(t, countEventsForURL(ctx, t, w5.URL))
+
+		clearWebhooksEvent(ctx, t)
+
+		require.NoError(t, manager.scanLogs(ctx, logs, model.AccessScopeID(workspaceID), ptrs.Ptr(exp.ID)))
+
+		require.Equal(t, 1, countEventsForURL(ctx, t, w2.URL))
+		require.Equal(t, 1, countEventsForURL(ctx, t, w3.URL))
+		require.Equal(t, 1, countEventsForURL(ctx, t, w4.URL))
+		require.Equal(t, 1, countEventsForURL(ctx, t, w5.URL))
+
+		clearWebhooksEvent(ctx, t)
+
+		exp = db.RequireMockExperimentParams(t, pgDB, user,
+			db.MockExperimentParams{
+				Integrations: &expconf.IntegrationsConfigV0{
+					Webhooks: &expconf.WebhooksConfigV0{
+						Exclude: true,
+					},
+				},
+			},
+			db.DefaultProjectID)
+		_, task = db.RequireMockTrial(t, pgDB, exp)
+
+		logs = []*model.TaskLog{
+			{TaskID: string(task.TaskID), AgentID: ptrs.Ptr("test"), Log: r2},
+			{TaskID: string(task.TaskID), AgentID: ptrs.Ptr("test"), Log: r2},
+		}
+
+		require.NoError(t, manager.scanLogs(ctx, logs, model.AccessScopeID(workspaceID), ptrs.Ptr(exp.ID)))
+
+		require.Zero(t, countEventsForURL(ctx, t, w0.URL))
+		require.Zero(t, countEventsForURL(ctx, t, w1.URL))
+		require.Zero(t, countEventsForURL(ctx, t, w2.URL))
+		require.Zero(t, countEventsForURL(ctx, t, w3.URL))
+		require.Zero(t, countEventsForURL(ctx, t, w4.URL))
+		require.Zero(t, countEventsForURL(ctx, t, w5.URL))
 	}
 
 	require.NoError(t, manager.deleteWebhook(ctx, w1.ID))
@@ -205,7 +316,7 @@ func TestWebhookScanLogs(t *testing.T) {
 			{TaskID: string(task.TaskID), AgentID: ptrs.Ptr("test"), Log: r1},
 			{TaskID: string(task.TaskID), AgentID: ptrs.Ptr("test"), Log: r2},
 		}
-		require.NoError(t, manager.scanLogs(ctx, logs))
+		require.NoError(t, manager.scanLogs(ctx, logs, 0, nil))
 
 		require.Equal(t, 1, countEventsForURL(ctx, t, w0.URL))
 		require.Zero(t, countEventsForURL(ctx, t, w1.URL))
@@ -333,6 +444,10 @@ func TestReportExperimentStateChanged(t *testing.T) {
 
 	singletonShipper = &shipper{wake: make(chan<- struct{})} // mock shipper
 
+	workspaceName := uuid.New().String()
+	workspaceID, _ := db.RequireMockWorkspaceID(t, pgDB, workspaceName)
+	projectID, _ := db.RequireMockProjectID(t, pgDB, workspaceID, false)
+
 	var config expconf.ExperimentConfig
 	config = schemas.WithDefaults(config)
 
@@ -340,7 +455,9 @@ func TestReportExperimentStateChanged(t *testing.T) {
 		w := mockWebhook()
 		require.NoError(t, AddWebhook(ctx, w))
 		require.NoError(t, ReportExperimentStateChanged(ctx, model.Experiment{
-			State: model.CanceledState,
+			ID:        0,
+			ProjectID: projectID,
+			State:     model.CanceledState,
 		}, config))
 
 		require.Zero(t, countEventsForURL(ctx, t, w.URL))
@@ -354,7 +471,9 @@ func TestReportExperimentStateChanged(t *testing.T) {
 		})
 		require.NoError(t, AddWebhook(ctx, w))
 		require.NoError(t, ReportExperimentStateChanged(ctx, model.Experiment{
-			State: model.CanceledState,
+			ID:        0,
+			ProjectID: projectID,
+			State:     model.CanceledState,
 		}, config))
 
 		require.Zero(t, countEventsForURL(ctx, t, w.URL))
@@ -370,7 +489,9 @@ func TestReportExperimentStateChanged(t *testing.T) {
 		})
 		require.NoError(t, AddWebhook(ctx, w))
 		require.NoError(t, ReportExperimentStateChanged(ctx, model.Experiment{
-			State: model.CompletedState,
+			ID:        0,
+			ProjectID: projectID,
+			State:     model.CompletedState,
 		}, config))
 
 		require.Equal(t, 1, countEventsForURL(ctx, t, w.URL))
@@ -389,10 +510,150 @@ func TestReportExperimentStateChanged(t *testing.T) {
 		}
 		require.NoError(t, AddWebhook(ctx, w))
 		require.NoError(t, ReportExperimentStateChanged(ctx, model.Experiment{
-			State: model.CompletedState,
+			ID:        0,
+			ProjectID: projectID,
+			State:     model.CompletedState,
 		}, config))
 
 		require.Equal(t, n, countEventsForURL(ctx, t, w.URL))
+	})
+
+	clearWebhooksTables(ctx, t)
+	t.Run("webhook with mode specific", func(t *testing.T) {
+		w1 := &Webhook{
+			URL:         uuid.New().String(),
+			WebhookType: WebhookTypeDefault,
+			Mode:        WebhookModeSpecific,
+			Triggers: Triggers{
+				{
+					TriggerType: TriggerTypeStateChange,
+					Condition:   map[string]interface{}{"state": model.CompletedState},
+				},
+			},
+			WorkspaceID: ptrs.Ptr(int32(model.DefaultWorkspaceID)),
+			Name:        webhookName1,
+		}
+		w2 := &Webhook{
+			URL:         uuid.New().String(),
+			WebhookType: WebhookTypeDefault,
+			Mode:        WebhookModeSpecific,
+			Triggers: Triggers{
+				{
+					TriggerType: TriggerTypeStateChange,
+					Condition:   map[string]interface{}{"state": model.CompletedState},
+				},
+			},
+			WorkspaceID: ptrs.Ptr(int32(workspaceID)),
+			Name:        webhookName2,
+		}
+		w3 := &Webhook{
+			URL:         uuid.New().String(),
+			WebhookType: WebhookTypeDefault,
+			Mode:        WebhookModeSpecific,
+			Triggers: Triggers{
+				{
+					TriggerType: TriggerTypeStateChange,
+					Condition:   map[string]interface{}{"state": model.CompletedState},
+				},
+			},
+			Name: webhookName3,
+		}
+		require.NoError(t, AddWebhook(ctx, w1))
+		require.NoError(t, AddWebhook(ctx, w2))
+		require.NoError(t, AddWebhook(ctx, w3))
+
+		require.NoError(t, ReportExperimentStateChanged(ctx, model.Experiment{
+			ID:        0,
+			ProjectID: projectID,
+			State:     model.CompletedState,
+		}, config))
+
+		require.Zero(t, countEventsForURL(ctx, t, w1.URL))
+		require.Zero(t, countEventsForURL(ctx, t, w2.URL))
+		require.Zero(t, countEventsForURL(ctx, t, w3.URL))
+
+		config.RawIntegrations = &expconf.IntegrationsConfigV0{
+			Webhooks: &expconf.WebhooksConfigV0{
+				WebhookName: ptrs.Ptr([]string{webhookName2}),
+			},
+		}
+
+		require.NoError(t, ReportExperimentStateChanged(ctx, model.Experiment{
+			ID:        0,
+			ProjectID: projectID,
+			State:     model.CompletedState,
+		}, config))
+
+		require.Zero(t, countEventsForURL(ctx, t, w1.URL))
+		require.Equal(t, 1, countEventsForURL(ctx, t, w2.URL))
+		require.Zero(t, countEventsForURL(ctx, t, w3.URL))
+
+		config.RawIntegrations.Webhooks.WebhookName = ptrs.Ptr([]string{webhookName1, webhookName2, webhookName3})
+
+		require.NoError(t, ReportExperimentStateChanged(ctx, model.Experiment{
+			ID:        0,
+			ProjectID: projectID,
+			State:     model.CompletedState,
+		}, config))
+
+		require.Zero(t, countEventsForURL(ctx, t, w1.URL))
+		require.Equal(t, 2, countEventsForURL(ctx, t, w2.URL))
+		require.Equal(t, 1, countEventsForURL(ctx, t, w3.URL))
+	})
+
+	clearWebhooksTables(ctx, t)
+	t.Run("webhook with mode workspace and exclude", func(t *testing.T) {
+		w1 := &Webhook{
+			URL:         uuid.New().String(),
+			WebhookType: WebhookTypeDefault,
+			Mode:        WebhookModeWorkspace,
+			Triggers: Triggers{
+				{
+					TriggerType: TriggerTypeStateChange,
+					Condition:   map[string]interface{}{"state": model.CompletedState},
+				},
+			},
+			WorkspaceID: ptrs.Ptr(int32(model.DefaultWorkspaceID)),
+		}
+		w2 := &Webhook{
+			URL:         uuid.New().String(),
+			WebhookType: WebhookTypeDefault,
+			Mode:        WebhookModeWorkspace,
+			Triggers: Triggers{
+				{
+					TriggerType: TriggerTypeStateChange,
+					Condition:   map[string]interface{}{"state": model.CompletedState},
+				},
+			},
+			WorkspaceID: ptrs.Ptr(int32(workspaceID)),
+		}
+
+		require.NoError(t, AddWebhook(ctx, w1))
+		require.NoError(t, AddWebhook(ctx, w2))
+
+		require.NoError(t, ReportExperimentStateChanged(ctx, model.Experiment{
+			ID:        0,
+			ProjectID: projectID,
+			State:     model.CompletedState,
+		}, config))
+
+		require.Zero(t, countEventsForURL(ctx, t, w1.URL))
+		require.Equal(t, 1, countEventsForURL(ctx, t, w2.URL))
+
+		config.RawIntegrations = &expconf.IntegrationsConfigV0{
+			Webhooks: &expconf.WebhooksConfigV0{
+				Exclude: true,
+			},
+		}
+
+		require.NoError(t, ReportExperimentStateChanged(ctx, model.Experiment{
+			ID:        0,
+			ProjectID: projectID,
+			State:     model.CompletedState,
+		}, config))
+
+		require.Zero(t, countEventsForURL(ctx, t, w1.URL))
+		require.Equal(t, 1, countEventsForURL(ctx, t, w2.URL))
 	})
 }
 
@@ -515,6 +776,10 @@ func TestDequeueEvents(t *testing.T) {
 
 	singletonShipper = &shipper{wake: make(chan<- struct{})} // mock shipper
 
+	workspaceName := uuid.New().String()
+	workspaceID, _ := db.RequireMockWorkspaceID(t, pgDB, workspaceName)
+	projectID, _ := db.RequireMockProjectID(t, pgDB, workspaceID, false)
+
 	var config expconf.ExperimentConfig
 	config = schemas.WithDefaults(config)
 
@@ -535,7 +800,9 @@ func TestDequeueEvents(t *testing.T) {
 
 	t.Run("dequeueing and consuming a event should work", func(t *testing.T) {
 		exp := model.Experiment{
-			State: model.CompletedState,
+			State:     model.CompletedState,
+			ProjectID: projectID,
+			ID:        0,
 		}
 		require.NoError(t, ReportExperimentStateChanged(ctx, exp, config))
 
@@ -547,7 +814,7 @@ func TestDequeueEvents(t *testing.T) {
 
 	t.Run("dequeueing and consuming a full batch of events should work", func(t *testing.T) {
 		for i := 0; i < maxEventBatchSize; i++ {
-			exp := model.Experiment{ID: i, State: model.CompletedState}
+			exp := model.Experiment{ID: 0, ProjectID: projectID, State: model.CompletedState}
 			require.NoError(t, ReportExperimentStateChanged(ctx, exp, config))
 		}
 
@@ -558,7 +825,7 @@ func TestDequeueEvents(t *testing.T) {
 	})
 
 	t.Run("rolling back an event should work, and it should be reconsumed", func(t *testing.T) {
-		exp := model.Experiment{State: model.CompletedState}
+		exp := model.Experiment{ID: 0, ProjectID: projectID, State: model.CompletedState}
 		require.NoError(t, ReportExperimentStateChanged(ctx, exp, config))
 
 		batch, err := dequeueEvents(ctx, maxEventBatchSize)
@@ -577,6 +844,16 @@ func clearWebhooksTables(ctx context.Context, t *testing.T) {
 	_, err := db.Bun().NewDelete().Model((*Webhook)(nil)).Where("true").Exec(ctx)
 	require.NoError(t, err)
 	_, err = db.Bun().NewDelete().Model((*Event)(nil)).Where("true").Exec(ctx)
+	require.NoError(t, err)
+	_, err = db.Bun().NewDelete().Model((*webhookTaskLogTrigger)(nil)).Where("true").Exec(ctx)
+	require.NoError(t, err)
+}
+
+func clearWebhooksEvent(ctx context.Context, t *testing.T) {
+	t.Log("clear webhooks event")
+	_, err := db.Bun().NewDelete().Model((*Event)(nil)).Where("true").Exec(ctx)
+	require.NoError(t, err)
+	_, err = db.Bun().NewDelete().Model((*webhookTaskLogTrigger)(nil)).Where("true").Exec(ctx)
 	require.NoError(t, err)
 }
 

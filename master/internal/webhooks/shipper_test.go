@@ -141,6 +141,10 @@ func TestShipper(t *testing.T) {
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
+		workspaceName := uuid.New().String()
+		workspaceID, _ := db.RequireMockWorkspaceID(t, pgDB, workspaceName)
+		projectID, _ := db.RequireMockProjectID(t, pgDB, workspaceID, false)
+
 		var config expconf.ExperimentConfig
 		config = schemas.WithDefaults(config)
 		for id, delay := range schedule {
@@ -148,8 +152,9 @@ func TestShipper(t *testing.T) {
 			expected[id] = 3 // 3 sends, one for each trigger.
 			shipperInitLock.Lock()
 			err := ReportExperimentStateChanged(ctx, model.Experiment{
-				ID:    id,
-				State: model.CompletedState,
+				ID:        id,
+				ProjectID: projectID,
+				State:     model.CompletedState,
 			}, config)
 			shipperInitLock.Unlock()
 			require.NoError(t, err)

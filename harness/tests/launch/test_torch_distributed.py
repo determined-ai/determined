@@ -38,7 +38,7 @@ def test_launch_single_slot(
     script = ["python3", "-m", "determined.exec.harness", "my_module:MyTrial"]
     override_args = ["--max_restarts", "1"]
 
-    with test_util.set_resources_id_env_var():
+    with test_util.set_env_vars({"DET_RESOURCES_ID": "resourcesId"}):
         launch.torch_distributed.main(override_args, script)
 
     launch_cmd = launch.torch_distributed.create_pid_server_cmd(
@@ -78,7 +78,7 @@ def test_launch_distributed(
 
     mock_subprocess.return_value = mock_proc
 
-    with test_util.set_resources_id_env_var():
+    with test_util.set_env_vars({"DET_RESOURCES_ID": "resourcesId"}):
         assert launch.torch_distributed.main(override_args, script) == mock_success_code
 
     launch_cmd = launch.torch_distributed.create_pid_server_cmd(

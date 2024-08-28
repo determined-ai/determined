@@ -16,7 +16,7 @@ import (
 func (a *apiServer) GetTask(
 	ctx context.Context, req *apiv1.GetTaskRequest,
 ) (resp *apiv1.GetTaskResponse, err error) {
-	if err := a.canDoActionsOnTask(ctx, model.TaskID(req.TaskId),
+	if _, _, err := a.canDoActionsOnTask(ctx, model.TaskID(req.TaskId),
 		expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 		return nil, err
 	}
@@ -34,7 +34,7 @@ func (a *apiServer) GetTask(
 func (a *apiServer) GetGenericTaskConfig(
 	ctx context.Context, req *apiv1.GetGenericTaskConfigRequest,
 ) (resp *apiv1.GetGenericTaskConfigResponse, err error) {
-	if err := a.canDoActionsOnTask(ctx, model.TaskID(req.TaskId)); err != nil {
+	if _, _, err := a.canDoActionsOnTask(ctx, model.TaskID(req.TaskId)); err != nil {
 		return nil, err
 	}
 

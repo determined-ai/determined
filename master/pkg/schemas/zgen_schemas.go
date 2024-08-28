@@ -919,6 +919,13 @@ var (
             ],
             "default": false
         },
+        "preemption_timeout": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": null
+        },
         "profiling": {
             "type": [
                 "object",
@@ -1407,6 +1414,14 @@ var (
             ],
             "default": null,
             "optionalRef": "http://determined.ai/schemas/expconf/v0/pachyderm.json"
+        },
+        "webhooks": {
+            "type": [
+                "object",
+                "null"
+            ],
+            "default": null,
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/webhooks.json"
         }
     }
 }
@@ -3345,6 +3360,44 @@ var (
     }
 }
 `)
+	textWebhooksConfigV0 = []byte(`{
+    "$schema": "http://json-schema.org/draft-07/schema#",
+    "$id": "http://determined.ai/schemas/expconf/v0/webhooks.json",
+    "title": "WebhooksConfig",
+    "type": "object",
+    "additionalProperties": false,
+    "eventuallyRequired": [],
+    "properties": {
+        "webhook_id": {
+            "type": [
+                "array",
+                "null"
+            ],
+            "default": null,
+            "items": {
+                "type": "integer"
+            }
+        },
+        "webhook_name": {
+            "type": [
+                "array",
+                "null"
+            ],
+            "default": null,
+            "items": {
+                "type": "string"
+            }
+        },
+        "exclude": {
+            "type": [
+                "boolean",
+                "null"
+            ],
+            "default": false
+        }
+    }
+}
+`)
 	schemaAzureConfigV0 interface{}
 
 	schemaBindMountV0 interface{}
@@ -3472,6 +3525,8 @@ var (
 	schemaTestUnionBV0 interface{}
 
 	schemaTestUnionV0 interface{}
+
+	schemaWebhooksConfigV0 interface{}
 
 	cacheLock sync.RWMutex
 
@@ -4760,6 +4815,26 @@ func ParsedTestUnionV0() interface{} {
 	return schemaTestUnionV0
 }
 
+func ParsedWebhooksConfigV0() interface{} {
+	cacheLock.RLock()
+	if schemaWebhooksConfigV0 != nil {
+		cacheLock.RUnlock()
+		return schemaWebhooksConfigV0
+	}
+	cacheLock.RUnlock()
+
+	cacheLock.Lock()
+	defer cacheLock.Unlock()
+	if schemaWebhooksConfigV0 != nil {
+		return schemaWebhooksConfigV0
+	}
+	err := json.Unmarshal(textWebhooksConfigV0, &schemaWebhooksConfigV0)
+	if err != nil {
+		panic("invalid embedded json for WebhooksConfigV0")
+	}
+	return schemaWebhooksConfigV0
+}
+
 func schemaBytesMap() map[string][]byte {
 	cacheLock.RLock()
 	if cachedSchemaBytesMap != nil {
@@ -4903,5 +4978,7 @@ func schemaBytesMap() map[string][]byte {
 	cachedSchemaBytesMap[url] = textTestUnionBV0
 	url = "http://determined.ai/schemas/expconf/v0/test-union.json"
 	cachedSchemaBytesMap[url] = textTestUnionV0
+	url = "http://determined.ai/schemas/expconf/v0/webhooks.json"
+	cachedSchemaBytesMap[url] = textWebhooksConfigV0
 	return cachedSchemaBytesMap
 }

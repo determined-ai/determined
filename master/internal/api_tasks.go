@@ -26,6 +26,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/task"
 	"github.com/determined-ai/determined/master/internal/webhooks"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/taskv1"
 )
@@ -59,65 +60,74 @@ func expFromTaskID(
 	return true, exp, nil
 }
 
-func canAccessNTSCTask(ctx context.Context, curUser model.User, taskID model.TaskID) (bool, error) {
+func canAccessNTSCTask(
+	ctx context.Context, curUser model.User, taskID model.TaskID,
+) (bool, model.AccessScopeID, error) {
 	spec, err := command.IdentifyTask(ctx, taskID)
 	if errors.Is(err, db.ErrNotFound) {
 		// Non NTSC case like checkpointGC case or the task just does not exist.
 		// TODO(nick) eventually control access to checkpointGC.
-		return true, nil
+		return true, spec.WorkspaceID, nil
 	} else if err != nil {
-		return false, err
+		return false, spec.WorkspaceID, err
 	}
 	err = command.AuthZProvider.Get().CanGetNSC(
 		ctx, curUser, spec.WorkspaceID)
-	return !authz.IsPermissionDenied(err), err
+	return !authz.IsPermissionDenied(err), spec.WorkspaceID, err
 }
 
 func (a *apiServer) canDoActionsOnTask(
 	ctx context.Context, taskID model.TaskID,
 	actions ...func(context.Context, model.User, *model.Experiment) error,
-) error {
+) (*model.AccessScopeID, *int, error) {
 	errTaskNotFound := api.NotFoundErrs("task", fmt.Sprint(taskID), true)
 	t, err := db.TaskByID(ctx, taskID)
 	if errors.Is(err, db.ErrNotFound) {
-		return errTaskNotFound
+		return nil, nil, errTaskNotFound
 	} else if err != nil {
-		return err
+		return nil, nil, err
 	}
 
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
-		return err
+		return nil, nil, err
 	}
 
 	switch t.TaskType {
 	case model.TaskTypeTrial:
 		isExp, exp, err := expFromTaskID(ctx, taskID)
 		if !isExp {
-			return fmt.Errorf("error we failed to look up an experiment "+
+			return nil, nil, fmt.Errorf("error we failed to look up an experiment "+
 				"from taskID %s when we think it is a trial task", taskID)
 		}
 		if err != nil {
-			return err
+			return nil, nil, err
 		}
 
 		if err = expauth.AuthZProvider.Get().CanGetExperiment(ctx, *curUser, exp); err != nil {
-			return authz.SubIfUnauthorized(err, errTaskNotFound)
+			return nil, nil, authz.SubIfUnauthorized(err, errTaskNotFound)
 		}
 		for _, action := range actions {
 			if err = action(ctx, *curUser, exp); err != nil {
-				return status.Error(codes.PermissionDenied, err.Error())
+				return nil, nil, status.Error(codes.PermissionDenied, err.Error())
 			}
 		}
+		workspaceID, err := expauth.GetWorkspaceFromExperiment(ctx, exp)
+		if err != nil {
+			return nil, nil, err
+		}
+		return ptrs.Ptr(model.AccessScopeID(workspaceID)), ptrs.Ptr(exp.ID), nil
 	default: // NTSC case + checkpointGC.
-		if ok, err := canAccessNTSCTask(ctx, *curUser, taskID); err != nil {
+		ok, workspaceID, err := canAccessNTSCTask(ctx, *curUser, taskID)
+		if err != nil {
 			if !ok || authz.IsPermissionDenied(err) {
-				return errTaskNotFound
+				return nil, nil, errTaskNotFound
 			}
-			return err
+			return nil, nil, err
 		}
+		// When error is nil, workspaceID is guaranteed not nil
+		return &workspaceID, nil, nil
 	}
-	return nil
 }
 
 func (a *apiServer) canGetTaskAcceleration(ctx context.Context, taskID string) error {
@@ -131,7 +141,7 @@ func (a *apiServer) canGetTaskAcceleration(ctx context.Context, taskID string) e
 	}
 	if !isExp {
 		var ok bool
-		if ok, err = canAccessNTSCTask(ctx, *curUser, model.TaskID(taskID)); err != nil {
+		if ok, _, err = canAccessNTSCTask(ctx, *curUser, model.TaskID(taskID)); err != nil {
 			return err
 		} else if !ok {
 			return api.NotFoundErrs("task", taskID, true)
@@ -163,7 +173,7 @@ func (a *apiServer) canGetAllocation(ctx context.Context, allocationID string) e
 	}
 	if !isExp {
 		var ok bool
-		if ok, err = canAccessNTSCTask(ctx, *curUser, taskID); err != nil {
+		if ok, _, err = canAccessNTSCTask(ctx, *curUser, taskID); err != nil {
 			return err
 		} else if !ok {
 			return api.NotFoundErrs("allocation", allocationID, true)
@@ -196,7 +206,7 @@ func (a *apiServer) canEditAllocation(ctx context.Context, allocationID string) 
 	}
 	if !isExp {
 		var ok bool
-		if ok, err = canAccessNTSCTask(ctx, *curUser, taskID); err != nil {
+		if ok, _, err = canAccessNTSCTask(ctx, *curUser, taskID); err != nil {
 			return err
 		} else if !ok {
 			return api.NotFoundErrs("allocation", allocationID, true)
@@ -460,8 +470,9 @@ func (a *apiServer) PostTaskLogs(
 	}
 	taskID := req.Logs[0].TaskId
 
-	if err := a.canDoActionsOnTask(ctx, model.TaskID(taskID),
-		expauth.AuthZProvider.Get().CanEditExperiment); err != nil {
+	workspaceID, expID, err := a.canDoActionsOnTask(ctx, model.TaskID(taskID),
+		expauth.AuthZProvider.Get().CanEditExperiment)
+	if err != nil {
 		return nil, err
 	}
 
@@ -486,7 +497,7 @@ func (a *apiServer) PostTaskLogs(
 		return nil, fmt.Errorf("adding task logs to task log backend: %w", err)
 	}
 
-	switch err := webhooks.ScanLogs(ctx, logs); {
+	switch err := webhooks.ScanLogs(ctx, logs, *workspaceID, expID); {
 	case err != nil && errors.Is(err, context.Canceled):
 		return nil, err
 	case err != nil:
@@ -580,7 +591,7 @@ func (a *apiServer) GetTasks(
 		}
 
 		if !isExp {
-			_, err = canAccessNTSCTask(ctx, *curUser, summary[allocationID].TaskID)
+			_, _, err = canAccessNTSCTask(ctx, *curUser, summary[allocationID].TaskID)
 		} else {
 			err = expauth.AuthZProvider.Get().CanGetExperiment(ctx, *curUser, exp)
 		}
@@ -612,7 +623,7 @@ func (a *apiServer) taskLogs(
 	var timeSinceLastAuth time.Time
 	fetch := func(r api.BatchRequest) (api.Batch, error) {
 		if time.Since(timeSinceLastAuth) >= recheckAuthPeriod {
-			if err = a.canDoActionsOnTask(ctx, taskID,
+			if _, _, err = a.canDoActionsOnTask(ctx, taskID,
 				expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 				return nil, err
 			}
@@ -735,7 +746,7 @@ func (a *apiServer) TaskLogsFields(
 	var timeSinceLastAuth time.Time
 	fetch := func(lr api.BatchRequest) (api.Batch, error) {
 		if time.Since(timeSinceLastAuth) >= recheckAuthPeriod {
-			if err := a.canDoActionsOnTask(resp.Context(), taskID,
+			if _, _, err := a.canDoActionsOnTask(resp.Context(), taskID,
 				expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 				return nil, err
 			}

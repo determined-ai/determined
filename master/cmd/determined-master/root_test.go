@@ -73,8 +73,9 @@ webhooks:
 		},
 	}
 	expected.TaskContainerDefaults = model.TaskContainerDefaultsConfig{
-		ShmSizeBytes: 4294967296,
-		NetworkMode:  "bridge",
+		ShmSizeBytes:      4294967296,
+		NetworkMode:       "bridge",
+		PreemptionTimeout: model.DefaultPreemptionTimeout,
 	}
 	expected.TaskContainerDefaults.CPUPodSpec = &k8sV1.Pod{
 		TypeMeta: metaV1.TypeMeta{
@@ -181,6 +182,49 @@ func TestApplyBackwardsCompatibility(t *testing.T) {
 						"type":           "priority",
 					},
 					"master_service_name": "k8s-det",
+				},
+			},
+		},
+		{
+			name: "preemption timeout (__internal set)",
+			before: map[string]interface{}{
+				"__internal": map[string]interface{}{
+					"audit_logging_enabled": false,
+					"preemption_timeout":    "1h10m10s",
+				},
+				"task_container_defaults": map[string]interface{}{
+					"shm_size_bytes": 4294967296,
+				},
+			},
+			expected: map[string]interface{}{
+				"__internal": map[string]interface{}{
+					"audit_logging_enabled": false,
+				},
+				"task_container_defaults": map[string]interface{}{
+					"shm_size_bytes":     4294967296,
+					"preemption_timeout": 4210,
+				},
+			},
+		},
+		{
+			name: "preemption timeout (both set)",
+			before: map[string]interface{}{
+				"__internal": map[string]interface{}{
+					"audit_logging_enabled": false,
+					"preemption_timeout":    "1h10m10s",
+				},
+				"task_container_defaults": map[string]interface{}{
+					"shm_size_bytes":     4294967296,
+					"preemption_timeout": 1000,
+				},
+			},
+			expected: map[string]interface{}{
+				"__internal": map[string]interface{}{
+					"audit_logging_enabled": false,
+				},
+				"task_container_defaults": map[string]interface{}{
+					"shm_size_bytes":     4294967296,
+					"preemption_timeout": 1000,
 				},
 			},
 		},

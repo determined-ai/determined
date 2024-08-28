@@ -41,7 +41,7 @@ type (
 		FittingRequirements FittingRequirements
 
 		// Behavioral configuration.
-		Preemptible bool
+		Preemption  PreemptionConfig
 		IdleTimeout *IdleTimeoutConfig
 		ProxyPorts  []*ProxyPortConfig
 		Restore     bool
@@ -60,6 +60,12 @@ type (
 		UseRunnerState  bool
 		TimeoutDuration time.Duration
 		Debug           bool
+	}
+
+	// PreemptionConfig configures task preemption.
+	PreemptionConfig struct {
+		Preemptible     bool
+		TimeoutDuration time.Duration
 	}
 
 	// ProxyPortConfig configures a proxy the allocation should start.

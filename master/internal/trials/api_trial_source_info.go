@@ -8,6 +8,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/db"
 	expauth "github.com/determined-ai/determined/master/internal/experiment"
+	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
 )
@@ -22,7 +23,11 @@ func (a *TrialSourceInfoAPIServer) ReportTrialSourceInfo(
 	ctx context.Context, req *apiv1.ReportTrialSourceInfoRequest,
 ) (*apiv1.ReportTrialSourceInfoResponse, error) {
 	tsi := req.TrialSourceInfo
-	if err := CanGetTrialsExperimentAndCheckCanDoAction(ctx, int(tsi.TrialId),
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err := CanGetTrialsExperimentAndCheckCanDoAction(ctx, int(tsi.TrialId), curUser,
 		expauth.AuthZProvider.Get().CanEditExperiment); err != nil {
 		return nil, err
 	}
@@ -46,13 +51,17 @@ func GetMetricsForTrialSourceInfoQuery(
 		return nil, fmt.Errorf("failed to get trial source info %w", err)
 	}
 
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
 	// TODO (Taylor): If we reach a point where this becomes a performance bottleneck
 	// we should join on trial_source_infos -> trials -> experiments to get the
 	// workspace_id and get permissions on those without checking each trial individually
 	ret := []*trialv1.MetricsReport{}
 	numMetricsLimit := 1000
 	for _, val := range trialIds {
-		if err := CanGetTrialsExperimentAndCheckCanDoAction(ctx, val.TrialID,
+		if err := CanGetTrialsExperimentAndCheckCanDoAction(ctx, val.TrialID, curUser,
 			expauth.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 			// If the user can see the checkpoint, but not one of the inference
 			// or fine tuning trials that points to it, simply don't show those

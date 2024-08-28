@@ -216,6 +216,7 @@
       tensor_fusion_threshold: 64
     pbs: {}
     perform_initial_validation: false
+    preemption_timeout: null
     profiling:
       enabled: false
       begin_on_batch: 0

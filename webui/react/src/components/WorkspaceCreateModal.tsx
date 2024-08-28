@@ -76,7 +76,11 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
   const resourceManagers = Loadable.getOrElse([], loadableResourceManagers);
   const namespaceBindingsList = useAsync(
     async (canceller) => {
-      if (workspaceId === undefined || resourceManagers.length === 0) {
+      if (
+        workspaceId === undefined ||
+        resourceManagers.length === 0 ||
+        !canSetWorkspaceNamespaceBindings
+      ) {
         return NotLoaded;
       }
       try {
@@ -95,11 +99,11 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
         return NotLoaded;
       }
     },
-    [resourceManagers, workspaceId],
+    [canSetWorkspaceNamespaceBindings, resourceManagers, workspaceId],
   );
   const resourceQuotasList = useAsync(
     async (canceller) => {
-      if (workspaceId === undefined || resourceManagers.length === 0) {
+      if (workspaceId === undefined || resourceManagers.length === 0 || !canViewResourceQuotas) {
         return NotLoaded;
       }
       try {
@@ -118,7 +122,7 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
         return NotLoaded;
       }
     },
-    [resourceManagers, workspaceId],
+    [canViewResourceQuotas, resourceManagers, workspaceId],
   );
 
   const initFields = useCallback(

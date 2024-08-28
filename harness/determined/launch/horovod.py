@@ -128,7 +128,7 @@ def main(hvd_args: List[str], script: List[str], autohorovod: bool) -> int:
         # Mark sshd containers as daemon resources that the master should kill when all non-daemon
         # containers (horovodrun, in this case) have exited.
         cert = certs.default_load(info.master_url)
-        sess = authentication.login_with_cache(info.master_url, cert=cert)
+        sess = authentication.login_from_task(info.master_url, cert=cert)
         sess.post(f"/api/v1/allocations/{info.allocation_id}/resources/{resources_id}/daemon")
 
         pid_server_cmd, run_sshd_command = create_sshd_worker_cmd(
