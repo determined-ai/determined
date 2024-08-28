@@ -62,7 +62,8 @@ const (
 	determinedSystemLabel     = "determined-system"
 	jobNameAnnotation         = "determined.ai/job-name"
 
-	kubernetesJobNameLabel = "batch.kubernetes.io/job-name"
+	kubernetesJobNameLabel     = "batch.kubernetes.io/job-name"
+	kubernetesFallbackJobLabel = "job-name" // used when the above label is not present.
 
 	resourceTypeNvidia = "nvidia.com/gpu"
 	resourceTypeAMD    = "amd.com/gpu"
@@ -1266,6 +1267,17 @@ func (j *jobsService) jobDeletedCallback(obj any) {
 	}
 }
 
+// resolvePodJobName returns the job name of the pod and a boolean indicating if the job name was
+// successfully resolved from the pod's labels.
+func resolvePodJobName(pod *k8sV1.Pod) (string, bool) {
+	jobName, ok := pod.Labels[kubernetesJobNameLabel]
+	if !ok {
+		// fallback to the plain job name label if the fully enumerated label is missing
+		jobName, ok = pod.Labels[kubernetesFallbackJobLabel]
+	}
+	return jobName, ok
+}
+
 func (j *jobsService) podStatusCallback(obj any) {
 	pod, ok := obj.(*k8sV1.Pod)
 	if !ok {
@@ -1274,7 +1286,7 @@ func (j *jobsService) podStatusCallback(obj any) {
 	}
 	syslog := j.syslog.WithField("pod", pod.Name)
 
-	jobName, ok := pod.Labels[kubernetesJobNameLabel]
+	jobName, ok := resolvePodJobName(pod)
 	if !ok {
 		syslog.Debugf("received pod informer event for pod without %s label", kubernetesJobNameLabel)
 		return
@@ -1310,7 +1322,7 @@ func (j *jobsService) podDeletedCallback(obj any) {
 	}
 	syslog := j.syslog.WithField("pod", pod.Name)
 
-	jobName, ok := pod.Labels[kubernetesJobNameLabel]
+	jobName, ok := resolvePodJobName(pod)
 	if !ok {
 		syslog.Debugf("received pod informer event for pod without %s label", kubernetesJobNameLabel)
 		return
@@ -1325,7 +1337,7 @@ func (j *jobsService) podDeletedCallback(obj any) {
 	jobHandler.podDeletedCallback(pod)
 }
 
-// jobSchedulingState is a roll-up of the sceduling states of its individual pods.
+// jobSchedulingState is a roll-up of the scheduling states of its individual pods.
 func (j *jobsService) jobSchedulingState(jobName string) sproto.SchedulingState {
 	states, ok := j.jobNameToPodNameToSchedulingState[jobName]
 	if !ok {
@@ -1482,7 +1494,7 @@ func (j *jobsService) releaseAllocationsOnDisabledNode(nodeName string) error {
 
 	notifiedAllocations := make(map[model.AllocationID]bool)
 	for _, pod := range pods.Items {
-		jobName, ok := pod.Labels[kubernetesJobNameLabel]
+		jobName, ok := resolvePodJobName(&pod)
 		if !ok {
 			j.syslog.Debugf("found pod when disabling node without %s label", kubernetesJobNameLabel)
 			continue
