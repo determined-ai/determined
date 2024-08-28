@@ -324,6 +324,10 @@ func Test_agentState_checkAgentStartedDevicesMatch(t *testing.T) {
 }
 
 func Test_agentState_checkAgentResourcePoolMatch(t *testing.T) {
+	const (
+		poolOne = "pool1"
+		poolTwo = "pool2"
+	)
 	tests := []struct {
 		name            string
 		state           agentState
@@ -333,17 +337,17 @@ func Test_agentState_checkAgentResourcePoolMatch(t *testing.T) {
 		{
 			name: "resource pool name match",
 			state: agentState{
-				resourcePoolName: "pool1",
+				resourcePoolName: poolOne,
 			},
 			agentStarted: &aproto.AgentStarted{
-				ResourcePoolName: "pool1",
+				ResourcePoolName: poolOne,
 			},
 			wantErrContains: "",
 		},
 		{
 			name: "resource pool name is missing",
 			state: agentState{
-				resourcePoolName: "pool1",
+				resourcePoolName: poolOne,
 			},
 			agentStarted:    &aproto.AgentStarted{ResourcePoolName: defaultResourcePoolName},
 			wantErrContains: "resource pool has changed",
@@ -353,16 +357,16 @@ func Test_agentState_checkAgentResourcePoolMatch(t *testing.T) {
 			state: agentState{
 				resourcePoolName: defaultResourcePoolName,
 			},
-			agentStarted:    &aproto.AgentStarted{ResourcePoolName: "pool1"},
+			agentStarted:    &aproto.AgentStarted{ResourcePoolName: poolOne},
 			wantErrContains: "resource pool has changed",
 		},
 		{
 			name: "mismatched resource pool name",
 			state: agentState{
-				resourcePoolName: "pool1",
+				resourcePoolName: poolOne,
 			},
 			agentStarted: &aproto.AgentStarted{
-				ResourcePoolName: "pool2",
+				ResourcePoolName: poolTwo,
 			},
 			wantErrContains: "resource pool has changed",
 		},
