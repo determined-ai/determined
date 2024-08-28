@@ -102,15 +102,10 @@ func (a *apiServer) validateClusterNamespaceMeta(
 	allClusters := make(map[string]int)
 	autoCreateAll := false
 	for clusterName, metadata := range namespaceMeta {
-		if metadata.ResourceQuota != nil {
-			return nil, autoCreateAll, status.Errorf(codes.InvalidArgument, "Cannot set resource "+
-				"quota in SetWorkspaceNamespaceBindingsRequest. Please use "+
-				"SetResourceQuotaRequest to achieve this.")
-		}
 		if metadata.AutoCreateNamespaceAllClusters {
 			autoCreateAll = true
 			if metadata.ResourceQuota != nil && len(a.m.allRms) > 1 {
-				return nil, autoCreateAll, status.Errorf(codes.InvalidArgument, "When using "+
+				return nil, autoCreateAll, status.Errorf(codes.InvalidArgument, "when using "+
 					"multiple resource managers, cannot set a resource quota when you request to "+
 					"auto-create a namespace for all clusters.")
 			}

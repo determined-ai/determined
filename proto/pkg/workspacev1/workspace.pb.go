@@ -493,7 +493,8 @@ type WorkspaceNamespaceMeta struct {
 	ClusterName string `protobuf:"bytes,4,opt,name=cluster_name,json=clusterName,proto3" json:"cluster_name,omitempty"`
 	// The optional resource quota placed on the namespace (and consequentially,
 	// the workspace).
-	// TODO (CM-495): Remove this field and use GetKubernetesResourceQuotasRequest instead.
+	// TODO (CM-495): Remove this field and use GetKubernetesResourceQuotasRequest
+	// instead.
 	ResourceQuota *int32 `protobuf:"varint,5,opt,name=resource_quota,json=resourceQuota,proto3,oneof" json:"resource_quota,omitempty"`
 }
 
