@@ -1527,7 +1527,6 @@ commands:
       - run:
           no_output_timeout: <<parameters.no_output_timeout>>
           command: |
-            set -vx
             if <<parameters.dryrun>>; then
               make -C <<parameters.component>> <<parameters.target>>
             else
