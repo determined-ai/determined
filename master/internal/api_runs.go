@@ -235,15 +235,15 @@ func sortRuns(sortString *string, runQuery *bun.SelectQuery) error {
 			runQuery.OrderExpr(fmt.Sprintf(`r.hparams->%s ?`, hpQuery), queryArgs...)
 		case strings.HasPrefix(paramDetail[0], "metadata."):
 			param := strings.ReplaceAll(paramDetail[0], "'", "")
-			hp := strings.Split(strings.TrimPrefix(param, "metadata."), ".")
+			mdt := strings.Split(strings.TrimPrefix(param, "metadata."), ".")
 			var queryArgs []interface{}
-			for i := 0; i < len(hp); i++ {
-				queryArgs = append(queryArgs, hp[i])
-				hp[i] = "?"
+			for i := 0; i < len(mdt); i++ {
+				queryArgs = append(queryArgs, mdt[i])
+				mdt[i] = "?"
 			}
-			hpQuery := strings.Join(hp, "->")
+			mdtQuery := strings.Join(mdt, "->")
 			queryArgs = append(queryArgs, bun.Safe(sortDirection))
-			runQuery.OrderExpr(fmt.Sprintf(`rm.metadata->%s ?`, hpQuery), queryArgs...)
+			runQuery.OrderExpr(fmt.Sprintf(`rm.metadata->%s ?`, mdtQuery), queryArgs...)
 		case strings.Contains(paramDetail[0], "."):
 			metricGroup, metricName, metricQualifier, err := parseMetricsName(paramDetail[0])
 			if err != nil {
