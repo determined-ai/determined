@@ -10,7 +10,8 @@ import (
 // WebhookAuthZ describes authz methods for experiments.
 type WebhookAuthZ interface {
 	// GET /api/v1/webhooks
-	WebhookAvailableWorkspaces(ctx context.Context, curUser *model.User) (workspaceIDsWithPermsFilter []int32, serverError error)
+	WebhookAvailableWorkspaces(
+		ctx context.Context, curUser *model.User) (workspaceIDsWithPermsFilter []int32, serverError error)
 	// POST /api/v1/webhooks
 	// DELETE /api/v1/webhooks/:webhook_id
 	// POST /api/v1/webhooks/test/:webhook_id
