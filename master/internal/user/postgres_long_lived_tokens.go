@@ -2,13 +2,11 @@ package user
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/o1egl/paseto"
 	"github.com/uptrace/bun"
-	"gopkg.in/guregu/null.v3"
-
-	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -62,26 +60,9 @@ func CreateLongLivedToken(ctx context.Context, user *model.User, opts ...LongLiv
 		privateKey := db.GetTokenKeys().PrivateKey
 		token, err := v2.Sign(privateKey, longLivedToken, nil)
 		if err != nil {
-			return errors.Wrap(err, "failed to generate user authentication token")
+			return fmt.Errorf("failed to generate user authentication token: %s", err)
 		}
-
-		// The token is hashed using model.HashPassword
 		longLivedToken.TokenValue = token
-		hashedToken, err := model.HashPassword(token)
-		if err != nil {
-			return errors.Wrap(err, "error updating user long lived token")
-		}
-		longLivedToken.TokenValueHash = null.StringFrom(hashedToken)
-
-		// The TokenValueHash is updated in the database.
-		_, err = db.Bun().NewUpdate().
-			Model(longLivedToken).
-			Column("token_value_hash").
-			Where("id = (?)", longLivedToken.ID).
-			Exec(ctx)
-		if err != nil {
-			return err
-		}
 
 		return nil
 	})
