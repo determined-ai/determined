@@ -79,6 +79,7 @@ func (w *Workspace) ToProto() (*workspacev1.Workspace, error) {
 		CheckpointStorageConfig: storageConfig,
 		DefaultComputePool:      w.DefaultComputePool,
 		DefaultAuxPool:          w.DefaultAuxPool,
+		AutoCreatedNamespace:    w.AutoCreatedNamespaceName,
 	}, nil
 }
 
