@@ -423,7 +423,8 @@ func TestAbortUpdateAutoCreateNamespaceNameTrigger(t *testing.T) {
 	// Verify that we cannot update the workspace's auto-created namespace name.
 	wkspAutoNmsp += diff
 	_, err = db.Bun().NewUpdate().Model(wksp).Where("id = ?", wksp.ID).Exec(ctx)
-	require.NoError(t, err)
+	require.ErrorContains(t, err, "auto_created_namespace_name")
+
 	var wkspNmsp string
 	err = db.Bun().NewSelect().
 		Model(&model.Workspace{}).
@@ -437,6 +438,14 @@ func TestAbortUpdateAutoCreateNamespaceNameTrigger(t *testing.T) {
 	// Create a workspace with no auto-created namespace name.
 	wksp, _ = createWorkspace(ctx, t)
 
+	err = db.Bun().NewSelect().
+		Model(&model.Workspace{}).
+		Column("auto_created_namespace_name").
+		Where("id = ?", wksp.ID).
+		Scan(ctx, &wkspNmsp)
+	require.NoError(t, err)
+	require.Equal(t, "", wkspNmsp)
+
 	// Verify that we can set the workspace's auto-created namespace name.
 	wkspAutoNmsp = wksp.Name + "-auto"
 	wksp.AutoCreatedNamespaceName = &wkspAutoNmsp
@@ -446,7 +455,7 @@ func TestAbortUpdateAutoCreateNamespaceNameTrigger(t *testing.T) {
 	// Verify that we cannot update the workspace's auto-created namespace name.
 	wkspAutoNmsp += diff
 	_, err = db.Bun().NewUpdate().Model(wksp).Where("id = ?", wksp.ID).Exec(ctx)
-	require.NoError(t, err)
+	require.ErrorContains(t, err, "auto_created_namespace_name")
 
 	err = db.Bun().NewSelect().
 		Model(&model.Workspace{}).
@@ -456,4 +465,9 @@ func TestAbortUpdateAutoCreateNamespaceNameTrigger(t *testing.T) {
 	require.NoError(t, err)
 	require.NotEqual(t, wkspAutoNmsp, wkspNmsp)
 	require.Equal(t, wksp.Name+"-auto", wkspNmsp)
+
+	// Verify that we cannot change the workspace's auto-created namespace name back to NULL.
+	wksp.AutoCreatedNamespaceName = nil
+	_, err = db.Bun().NewUpdate().Model(wksp).Where("id = ?", wksp.ID).Exec(ctx)
+	require.ErrorContains(t, err, "auto_created_namespace_name")
 }
