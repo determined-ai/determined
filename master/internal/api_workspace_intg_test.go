@@ -518,7 +518,9 @@ func TestWorkspacesIDsByExperimentIDs(t *testing.T) {
 }
 
 func TestPatchWorkspace(t *testing.T) {
-	api, _, ctx := setupAPITest(t, nil)
+	mockRM := MockRM()
+	testutils.MustLoadLicenseAndKeyFromFilesystem("../../")
+	api, _, ctx := setupAPITest(t, nil, mockRM)
 	resp, err := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: uuid.New().String()})
 	require.NoError(t, err)
 	workspaceID := resp.Workspace.Id
@@ -583,6 +585,44 @@ func TestPatchWorkspace(t *testing.T) {
 	require.NoError(t, err)
 	proto.Equal(expected, getWorkResp.Workspace.CheckpointStorageConfig)
 	require.Equal(t, expected, getWorkResp.Workspace.CheckpointStorageConfig)
+
+	nmsp := uuid.NewString()
+	mockRM.On("DefaultNamespace", mock.Anything).Return(&nmsp, nil)
+	mockRM.On("VerifyNamespaceExists", mock.Anything, mock.Anything).Return(nil)
+	patchResp, err = api.PatchWorkspace(ctx, &apiv1.PatchWorkspaceRequest{
+		Id: workspaceID,
+		Workspace: &workspacev1.PatchWorkspace{
+			ClusterNamespaceMeta: map[string]*workspacev1.WorkspaceNamespaceMeta{
+				config.DefaultClusterName: {Namespace: &nmsp},
+			},
+		},
+	})
+	require.NoError(t, err)
+	require.Nil(t, patchResp.Workspace.AutoCreatedNamespace)
+
+	// Bind workspace to an auto-created namespace.
+	mockRM.On("CreateNamespace", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	_, err = api.PatchWorkspace(ctx, &apiv1.PatchWorkspaceRequest{
+		Id: workspaceID,
+		Workspace: &workspacev1.PatchWorkspace{
+			ClusterNamespaceMeta: map[string]*workspacev1.WorkspaceNamespaceMeta{
+				config.DefaultClusterName: {AutoCreateNamespace: true},
+			},
+		},
+	})
+	require.NoError(t, err)
+
+	// Verify that we cannot change the resource quota using the PatchWorkspace.
+	var rq int32 = 2
+	_, err = api.PatchWorkspace(ctx, &apiv1.PatchWorkspaceRequest{
+		Id: workspaceID,
+		Workspace: &workspacev1.PatchWorkspace{
+			ClusterNamespaceMeta: map[string]*workspacev1.WorkspaceNamespaceMeta{
+				config.DefaultClusterName: {ResourceQuota: &rq},
+			},
+		},
+	})
+	require.Error(t, err)
 }
 
 var wAuthZ *mocks.WorkspaceAuthZ
