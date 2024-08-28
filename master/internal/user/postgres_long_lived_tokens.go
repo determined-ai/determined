@@ -50,7 +50,7 @@ func CreateLongLivedToken(ctx context.Context, user *model.User, opts ...LongLiv
 		// inserted row is returned and stored in longLivedToken.ID.
 		_, err := db.Bun().NewInsert().
 			Model(longLivedToken).
-			Column("user_id", "expires_at").
+			Column("user_id", "expires_at", "created_at").
 			Returning("id").
 			Exec(ctx, &longLivedToken.ID)
 		if err != nil {
@@ -67,11 +67,11 @@ func CreateLongLivedToken(ctx context.Context, user *model.User, opts ...LongLiv
 
 		// The token is hashed using model.HashPassword
 		longLivedToken.TokenValue = token
-		hashed_token, err := model.HashPassword(token)
+		hashedToken, err := model.HashPassword(token)
 		if err != nil {
 			return errors.Wrap(err, "error updating user long lived token")
 		}
-		longLivedToken.TokenValueHash = null.StringFrom(hashed_token)
+		longLivedToken.TokenValueHash = null.StringFrom(hashedToken)
 
 		// The TokenValueHash is updated in the database.
 		_, err = db.Bun().NewUpdate().
