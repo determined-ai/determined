@@ -122,7 +122,7 @@ func (l *WebhookManager) getWebhookConfig(ctx context.Context, expID *int) (*exp
 	l.mu.RLock()
 	defer l.mu.RUnlock()
 
-	if config := l.expToWebhookConfig[*expID]; config != nil {
+	if config, ok := l.expToWebhookConfig[*expID]; ok {
 		return config, nil
 	}
 	var expConfigBytes []byte
@@ -161,12 +161,13 @@ func matchWebhook(t *Trigger, config *expconf.WebhooksConfigV0, workspaceID int3
 				return false
 			}
 			// For webhook with mode specific, only proceed for experiments with matching config
-			if config.WebhookID != nil && !slices.Contains(*config.WebhookID, int(t.Webhook.ID)) {
-				return false
+			if config.WebhookID != nil && slices.Contains(*config.WebhookID, int(t.Webhook.ID)) {
+				return true
 			}
-			if config.WebhookName != nil && !slices.Contains(*config.WebhookName, t.Webhook.Name) {
-				return false
+			if config.WebhookName != nil && slices.Contains(*config.WebhookName, t.Webhook.Name) {
+				return true
 			}
+			return false
 		}
 	}
 	return true
@@ -299,7 +300,7 @@ func GetWebhooks(ctx context.Context) (Webhooks, error) {
 }
 
 // ReportExperimentStateChanged adds webhook events to the queue.
-// This function assumes ID presents in e, and valid workspace information presents in activeConfig.
+// This function assumes ID presents in e.
 // TODO(DET-8577): Remove unnecessary active config usage (remove the activeConfig parameter).
 func ReportExperimentStateChanged(
 	ctx context.Context, e model.Experiment, activeConfig expconf.ExperimentConfig,
