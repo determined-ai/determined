@@ -117,6 +117,10 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
     [isLoading, isLoadingSettings],
   );
 
+  useEffect(() => {
+    resetSettings(['tableOffset']);
+  }, [resetSettings]);
+
   const fetchModels = useCallback(async () => {
     if (!settings) return;
 
