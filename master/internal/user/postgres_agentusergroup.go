@@ -6,6 +6,7 @@ import (
 	"fmt"
 
 	"github.com/pkg/errors"
+	"github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
@@ -56,7 +57,11 @@ func GetAgentUserGroup(
 	workspaceID int,
 ) (*model.AgentUserGroup, error) {
 	workspaceAug, err := getAgentUserGroupFromWorkspaceID(ctx, workspaceID)
-	if err != nil {
+	if err == sql.ErrNoRows {
+		if workspaceID != 0 {
+			logrus.WithError(err).Warnf("no agent user group results from workspaceID=%d", workspaceID)
+		}
+	} else if err != nil {
 		return nil, fmt.Errorf("failed to get agent user group from experiment: %w", err)
 	}
 

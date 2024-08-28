@@ -52,6 +52,10 @@ enable user auto-provisioning and the remote management of any information attac
              auto_provision_users: true
              always_redirect: true
              display_name_attribute_name: "XYZ"
+             agent_uid_attribute_name: "user_id_key"
+             agent_gid_attribute_name: "group_id_key"
+             agent_user_name_attribute_name: "agent_user_key"
+             agent_group_name_attribute_name: "agent_group_key"
 
    .. tab::
 
@@ -77,9 +81,25 @@ enable user auto-provisioning and the remote management of any information attac
              idp_metadata_path: "https://myorg.okta.com/app/.../sso/saml/metadata"
              auto_provision_users: true
              always_redirect: true
+             agent_uid_attribute_name: "user_id_key"
+             agent_gid_attribute_name: "group_id_key"
+             agent_user_name_attribute_name: "agent_user_key"
+             agent_group_name_attribute_name: "agent_group_key"
 
 Determined sets the username of the user to the IdP email address. You cannot set the username
 independently.
+
+To automatically link custom claims, you can configure the attribute name with the relevant field.
+For example:
+
+``agent_uid_attribute_name: "custom_uid_attribute_name"``
+
+.. note::
+
+   Once this feature is enabled and an agent UID/GID is assigned to a user, it can only be reset
+   manually. To revert the UID or GID back to the default value specified by
+   ``security.default_task.uid(gid)``, an admin must manually remove the agent UID/GID settings for
+   that user.
 
 Set the Groups Claim Name Option
 ================================
