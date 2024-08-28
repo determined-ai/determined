@@ -193,6 +193,32 @@ func TestSearchRunsSort(t *testing.T) {
 		HParams:      hyperparameters2,
 	}, task2.TaskID))
 
+	rawMetadata := map[string]any{
+		"number_key": 1,
+		"nested": map[string]any{
+			"number_key": 1,
+		},
+	}
+	metadata := newProtoStruct(t, rawMetadata)
+	_, err = api.PostRunMetadata(ctx, &apiv1.PostRunMetadataRequest{
+		RunId:    resp.Runs[0].Id,
+		Metadata: metadata,
+	})
+	require.NoError(t, err)
+
+	rawMetadata = map[string]any{
+		"number_key": 2,
+		"nested": map[string]any{
+			"number_key": 2,
+		},
+	}
+	metadata = newProtoStruct(t, rawMetadata)
+	_, err = api.PostRunMetadata(ctx, &apiv1.PostRunMetadataRequest{
+		RunId:    resp.Runs[1].Id,
+		Metadata: metadata,
+	})
+	require.NoError(t, err)
+
 	// Sort by start time
 	resp, err = api.SearchRuns(ctx, &apiv1.SearchRunsRequest{
 		ProjectId: req.ProjectId,
@@ -217,6 +243,26 @@ func TestSearchRunsSort(t *testing.T) {
 	resp, err = api.SearchRuns(ctx, &apiv1.SearchRunsRequest{
 		ProjectId: req.ProjectId,
 		Sort:      ptrs.Ptr("hp.test1.test2=desc"),
+	})
+
+	require.NoError(t, err)
+	require.Equal(t, int32(exp2.ID), resp.Runs[0].Experiment.Id)
+	require.Equal(t, int32(exp.ID), resp.Runs[1].Experiment.Id)
+
+	// Sort by custom metadata
+	resp, err = api.SearchRuns(ctx, &apiv1.SearchRunsRequest{
+		ProjectId: req.ProjectId,
+		Sort:      ptrs.Ptr("metadata.number_key=desc"),
+	})
+
+	require.NoError(t, err)
+	require.Equal(t, int32(exp2.ID), resp.Runs[0].Experiment.Id)
+	require.Equal(t, int32(exp.ID), resp.Runs[1].Experiment.Id)
+
+	// Sort by nested custom metadata
+	resp, err = api.SearchRuns(ctx, &apiv1.SearchRunsRequest{
+		ProjectId: req.ProjectId,
+		Sort:      ptrs.Ptr("metadata.nested.number_key=desc"),
 	})
 
 	require.NoError(t, err)
