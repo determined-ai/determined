@@ -391,6 +391,11 @@ If you are using static resource pools and launching agents by hand, you will ne
 :ref:`agent configuration <agent-config-reference>` to specify which resource pool the agent should
 join.
 
+Note that to change an agent's assigned resource_pool after it has already joined one, you need to
+update the :ref:`agent configuration <agent-config-reference>`. Make sure to drain the agents
+properly before modifying the resource_pool. After making the changes, restart the agent to connect
+it to the new resource pool.
+
 Migrate to Resource Pools
 -------------------------
 
