@@ -5163,6 +5163,32 @@ class v1GetGenericTaskConfigResponse(Printable):
         }
         return out
 
+class v1GetGlobalConfigPoliciesResponse(Printable):
+    configPolicies: "typing.Optional[typing.Dict[str, typing.Any]]" = None
+
+    def __init__(
+        self,
+        *,
+        configPolicies: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
+    ):
+        if not isinstance(configPolicies, Unset):
+            self.configPolicies = configPolicies
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetGlobalConfigPoliciesResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "configPolicies" in obj:
+            kwargs["configPolicies"] = obj["configPolicies"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "configPolicies" in vars(self):
+            out["configPolicies"] = self.configPolicies
+        return out
+
 class v1GetGroupResponse(Printable):
     """GetGroupResponse is the body of the response for the call
     to get a group by id.
@@ -7114,6 +7140,32 @@ class v1GetWebhooksResponse(Printable):
         out: "typing.Dict[str, typing.Any]" = {
             "webhooks": [x.to_json(omit_unset) for x in self.webhooks],
         }
+        return out
+
+class v1GetWorkspaceConfigPoliciesResponse(Printable):
+    configPolicies: "typing.Optional[typing.Dict[str, typing.Any]]" = None
+
+    def __init__(
+        self,
+        *,
+        configPolicies: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
+    ):
+        if not isinstance(configPolicies, Unset):
+            self.configPolicies = configPolicies
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetWorkspaceConfigPoliciesResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "configPolicies" in obj:
+            kwargs["configPolicies"] = obj["configPolicies"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "configPolicies" in vars(self):
+            out["configPolicies"] = self.configPolicies
         return out
 
 class v1GetWorkspaceProjectsRequestSortBy(DetEnum):
@@ -12062,6 +12114,32 @@ class v1PutExperimentsRetainLogsResponse(Printable):
         }
         return out
 
+class v1PutGlobalConfigPoliciesResponse(Printable):
+    configPolicies: "typing.Optional[typing.Dict[str, typing.Any]]" = None
+
+    def __init__(
+        self,
+        *,
+        configPolicies: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
+    ):
+        if not isinstance(configPolicies, Unset):
+            self.configPolicies = configPolicies
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PutGlobalConfigPoliciesResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "configPolicies" in obj:
+            kwargs["configPolicies"] = obj["configPolicies"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "configPolicies" in vars(self):
+            out["configPolicies"] = self.configPolicies
+        return out
+
 class v1PutProjectNotesRequest(Printable):
     """Request for setting project notes."""
 
@@ -12226,6 +12304,32 @@ class v1PutTrialRetainLogsRequest(Printable):
         }
         if not omit_unset or "trialId" in vars(self):
             out["trialId"] = self.trialId
+        return out
+
+class v1PutWorkspaceConfigPoliciesResponse(Printable):
+    configPolicies: "typing.Optional[typing.Dict[str, typing.Any]]" = None
+
+    def __init__(
+        self,
+        *,
+        configPolicies: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
+    ):
+        if not isinstance(configPolicies, Unset):
+            self.configPolicies = configPolicies
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PutWorkspaceConfigPoliciesResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "configPolicies" in obj:
+            kwargs["configPolicies"] = obj["configPolicies"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "configPolicies" in vars(self):
+            out["configPolicies"] = self.configPolicies
         return out
 
 class v1QueueControl(Printable):
@@ -18261,6 +18365,29 @@ def delete_DeleteExperiments(
         return v1DeleteExperimentsResponse.from_json(_resp.json())
     raise APIHttpError("delete_DeleteExperiments", _resp)
 
+def delete_DeleteGlobalConfigPolicies(
+    session: "api.BaseSession",
+    *,
+    workloadType: str,
+) -> None:
+    """Delete global task config policies."""
+    _params = None
+    if type(workloadType) == str:
+        workloadType = parse.quote(workloadType)
+    _resp = session._do_request(
+        method="DELETE",
+        path=f"/api/v1/config-policies/global/{workloadType}",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("delete_DeleteGlobalConfigPolicies", _resp)
+
 def delete_DeleteGroup(
     session: "api.BaseSession",
     *,
@@ -18481,6 +18608,30 @@ def delete_DeleteWorkspace(
     if _resp.status_code == 200:
         return v1DeleteWorkspaceResponse.from_json(_resp.json())
     raise APIHttpError("delete_DeleteWorkspace", _resp)
+
+def delete_DeleteWorkspaceConfigPolicies(
+    session: "api.BaseSession",
+    *,
+    workloadType: str,
+    workspaceId: int,
+) -> None:
+    """Delete workspace task config policies."""
+    _params = None
+    if type(workloadType) == str:
+        workloadType = parse.quote(workloadType)
+    _resp = session._do_request(
+        method="DELETE",
+        path=f"/api/v1/config-policies/workspaces/{workspaceId}/{workloadType}",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("delete_DeleteWorkspaceConfigPolicies", _resp)
 
 def delete_DeleteWorkspaceNamespaceBindings(
     session: "api.BaseSession",
@@ -19338,6 +19489,29 @@ def get_GetGenericTaskConfig(
     if _resp.status_code == 200:
         return v1GetGenericTaskConfigResponse.from_json(_resp.json())
     raise APIHttpError("get_GetGenericTaskConfig", _resp)
+
+def get_GetGlobalConfigPolicies(
+    session: "api.BaseSession",
+    *,
+    workloadType: str,
+) -> "v1GetGlobalConfigPoliciesResponse":
+    """Get global task config policies."""
+    _params = None
+    if type(workloadType) == str:
+        workloadType = parse.quote(workloadType)
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/config-policies/global/{workloadType}",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1GetGlobalConfigPoliciesResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetGlobalConfigPolicies", _resp)
 
 def get_GetGroup(
     session: "api.BaseSession",
@@ -21415,6 +21589,30 @@ def get_GetWorkspace(
         return v1GetWorkspaceResponse.from_json(_resp.json())
     raise APIHttpError("get_GetWorkspace", _resp)
 
+def get_GetWorkspaceConfigPolicies(
+    session: "api.BaseSession",
+    *,
+    workloadType: str,
+    workspaceId: int,
+) -> "v1GetWorkspaceConfigPoliciesResponse":
+    """Get workspace task config policies."""
+    _params = None
+    if type(workloadType) == str:
+        workloadType = parse.quote(workloadType)
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/config-policies/workspaces/{workspaceId}/{workloadType}",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1GetWorkspaceConfigPoliciesResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetWorkspaceConfigPolicies", _resp)
+
 def get_GetWorkspaceProjects(
     session: "api.BaseSession",
     *,
@@ -23318,6 +23516,29 @@ def put_PutExperimentsRetainLogs(
         return v1PutExperimentsRetainLogsResponse.from_json(_resp.json())
     raise APIHttpError("put_PutExperimentsRetainLogs", _resp)
 
+def put_PutGlobalConfigPolicies(
+    session: "api.BaseSession",
+    *,
+    workloadType: str,
+) -> "v1PutGlobalConfigPoliciesResponse":
+    """Add or update global task config policies."""
+    _params = None
+    if type(workloadType) == str:
+        workloadType = parse.quote(workloadType)
+    _resp = session._do_request(
+        method="PUT",
+        path=f"/api/v1/config-policies/global/{workloadType}",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1PutGlobalConfigPoliciesResponse.from_json(_resp.json())
+    raise APIHttpError("put_PutGlobalConfigPolicies", _resp)
+
 def put_PutProjectNotes(
     session: "api.BaseSession",
     *,
@@ -23416,6 +23637,31 @@ def put_PutTrialRetainLogs(
     if _resp.status_code == 200:
         return
     raise APIHttpError("put_PutTrialRetainLogs", _resp)
+
+def put_PutWorkspaceConfigPolicies(
+    session: "api.BaseSession",
+    *,
+    body: str,
+    workloadType: str,
+    workspaceId: int,
+) -> "v1PutWorkspaceConfigPoliciesResponse":
+    """Add or update workspace task config policies."""
+    _params = None
+    if type(workloadType) == str:
+        workloadType = parse.quote(workloadType)
+    _resp = session._do_request(
+        method="PUT",
+        path=f"/api/v1/config-policies/workspaces/{workspaceId}/{workloadType}",
+        params=_params,
+        json=body,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1PutWorkspaceConfigPoliciesResponse.from_json(_resp.json())
+    raise APIHttpError("put_PutWorkspaceConfigPolicies", _resp)
 
 def post_RemoveAssignments(
     session: "api.BaseSession",

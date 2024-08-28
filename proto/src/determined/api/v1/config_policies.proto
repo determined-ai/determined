@@ -1,0 +1,64 @@
+syntax = "proto3";
+
+
+package determined.api.v1;
+option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
+
+import "google/protobuf/struct.proto";
+
+
+
+// PutWorkspaceConfigPoliciesRequest is a complete replacement of config policies for the workspace and workload type.
+message PutWorkspaceConfigPoliciesRequest {
+  int32 workspace_id = 1;
+  string workload_type = 2;
+  string config_policies = 3;
+}
+
+message PutWorkspaceConfigPoliciesResponse {
+  google.protobuf.Struct config_policies = 1;
+}
+
+// PutGlobalConfigPoliciesRequest is a complete replacement of global config policies for the workload type.
+message PutGlobalConfigPoliciesRequest {
+  string workload_type = 1;
+  string config_policies = 2;
+}
+
+message PutGlobalConfigPoliciesResponse {
+  google.protobuf.Struct config_policies = 1;
+}
+
+// GetWorkspaceConfigPoliciesRequest is used to list all task config policies for the workspace and task type.
+message GetWorkspaceConfigPoliciesRequest {
+  int32 workspace_id = 1;
+  string workload_type = 2;
+}
+
+message GetWorkspaceConfigPoliciesResponse {
+  google.protobuf.Struct config_policies = 1;
+}
+
+// GetGlobalConfigPoliciesRequest is used to list all global task config policies for the task type.
+message GetGlobalConfigPoliciesRequest {
+  string workload_type = 2;
+}
+
+message GetGlobalConfigPoliciesResponse {
+  google.protobuf.Struct config_policies = 1;
+}
+
+// DeleteWorkspaceConfigPoliciesRequest is used to delete all task config policies for the workspace and task type.
+message DeleteWorkspaceConfigPoliciesRequest {
+  int32 workspace_id = 1;
+  string workload_type = 2;
+}
+
+message DeleteWorkspaceConfigPoliciesResponse {}
+
+// DeleteGlobalConfigPoliciesRequest is used to delete all global task config policies for the task type.
+message DeleteGlobalConfigPoliciesRequest {
+  string workload_type = 1;
+}
+
+message DeleteGlobalConfigPoliciesResponse {}
