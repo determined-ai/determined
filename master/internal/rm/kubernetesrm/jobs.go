@@ -63,6 +63,7 @@ const (
 	jobNameAnnotation         = "determined.ai/job-name"
 
 	kubernetesJobNameLabel = "batch.kubernetes.io/job-name"
+	jobNameLabel           = "job-name"
 
 	resourceTypeNvidia = "nvidia.com/gpu"
 	defaultNamespace   = "default"
@@ -1272,9 +1273,9 @@ func (j *jobsService) podStatusCallback(obj any) {
 	}
 	syslog := j.syslog.WithField("pod", pod.Name)
 
-	jobName, ok := pod.Labels[kubernetesJobNameLabel]
+	jobName, ok := resolvePodJobName(pod)
 	if !ok {
-		syslog.Debugf("received pod informer event for pod without %s label", kubernetesJobNameLabel)
+		syslog.Debugf("received pod informer event for pod without %s label: %v", kubernetesJobNameLabel, pod.Labels)
 		return
 	}
 
@@ -1300,6 +1301,17 @@ func (j *jobsService) podStatusCallback(obj any) {
 	}
 }
 
+// resolvePodJobName returns the job name of the pod and a boolean indicating if the job name was
+// successfully resolved from the pod's labels.
+func resolvePodJobName(pod *k8sV1.Pod) (string, bool) {
+	jobName, ok := pod.Labels[kubernetesJobNameLabel]
+	if !ok {
+		// fallback to the plain job name label if the fully enumerated label is missing
+		jobName, ok = pod.Labels[jobNameLabel]
+	}
+	return jobName, ok
+}
+
 func (j *jobsService) podDeletedCallback(obj any) {
 	pod, ok := obj.(*k8sV1.Pod)
 	if !ok {
@@ -1308,9 +1320,9 @@ func (j *jobsService) podDeletedCallback(obj any) {
 	}
 	syslog := j.syslog.WithField("pod", pod.Name)
 
-	jobName, ok := pod.Labels[kubernetesJobNameLabel]
+	jobName, ok := resolvePodJobName(pod)
 	if !ok {
-		syslog.Debugf("received pod informer event for pod without %s label", kubernetesJobNameLabel)
+		syslog.Debugf("received pod informer event for pod without %s label: %v", kubernetesJobNameLabel, pod.Labels)
 		return
 	}
 
@@ -1480,9 +1492,9 @@ func (j *jobsService) releaseAllocationsOnDisabledNode(nodeName string) error {
 
 	notifiedAllocations := make(map[model.AllocationID]bool)
 	for _, pod := range pods.Items {
-		jobName, ok := pod.Labels[kubernetesJobNameLabel]
+		jobName, ok := resolvePodJobName(&pod)
 		if !ok {
-			j.syslog.Debugf("found pod when disabling node without %s label", kubernetesJobNameLabel)
+			j.syslog.Debugf("found pod when disabling node without %s label: %v", kubernetesJobNameLabel, pod.Labels)
 			continue
 		}
 
