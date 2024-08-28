@@ -4505,7 +4505,7 @@ workflows:
             - dev-ci-cluster-default-user-credentials
           requires:
             - build-go-ee
-          parallelism: 4
+          parallelism: 5
           resource-class: large
           tf2: true
           mark: managed_devcluster
