@@ -1871,25 +1871,20 @@ jobs:
           username: ${NGC_API_USERNAME}
           password: ${NGC_API_KEY}
       - pre-package-and-push-system
-      # - make-package
       - make-package:
           dryrun: <<parameters.dryrun>>
-      # - run: make -C master publish
       - make-component:
           component: master
           target: publish
           dryrun: <<parameters.dryrun>>
-      # - run: make -C agent publish
       - make-component:
           component: agent
           target: publish
           dryrun: <<parameters.dryrun>>
-      # - run: make -C model_hub build-docker
       - make-component:
           component: model_hub
           target: build-docker
           dryrun: <<parameters.dryrun>>
-      #- run: tools/scripts/retry.sh make -C model_hub publish-docker
       - make-component:
           component: model_hub
           target: publish-docker
