@@ -193,36 +193,12 @@ func TestSearchRunsSort(t *testing.T) {
 		HParams:      hyperparameters2,
 	}, task2.TaskID))
 
-	// Sort by start time
-	resp, err = api.SearchRuns(ctx, &apiv1.SearchRunsRequest{
-		ProjectId: req.ProjectId,
-		Sort:      ptrs.Ptr("startTime=asc"),
-	})
-
+	// Get runs in project
+	resp, err = api.SearchRuns(ctx, req)
 	require.NoError(t, err)
-	require.Equal(t, int32(exp.ID), resp.Runs[0].Experiment.Id)
-	require.Equal(t, int32(exp2.ID), resp.Runs[1].Experiment.Id)
+	require.Len(t, resp.Runs, 2)
 
-	// Sort by hyperparameter
-	resp, err = api.SearchRuns(ctx, &apiv1.SearchRunsRequest{
-		ProjectId: req.ProjectId,
-		Sort:      ptrs.Ptr("hp.global_batch_size=desc"),
-	})
-
-	require.NoError(t, err)
-	require.Equal(t, int32(exp2.ID), resp.Runs[0].Experiment.Id)
-	require.Equal(t, int32(exp.ID), resp.Runs[1].Experiment.Id)
-
-	// Sort by nested hyperparameter
-	resp, err = api.SearchRuns(ctx, &apiv1.SearchRunsRequest{
-		ProjectId: req.ProjectId,
-		Sort:      ptrs.Ptr("hp.test1.test2=desc"),
-	})
-
-	require.NoError(t, err)
-	require.Equal(t, int32(exp2.ID), resp.Runs[0].Experiment.Id)
-	require.Equal(t, int32(exp.ID), resp.Runs[1].Experiment.Id)
-
+	// add metadata
 	rawMetadata := map[string]any{
 		"number_key": 1,
 		"nested": map[string]any{
@@ -231,7 +207,7 @@ func TestSearchRunsSort(t *testing.T) {
 	}
 	metadata := newProtoStruct(t, rawMetadata)
 	_, err = api.PostRunMetadata(ctx, &apiv1.PostRunMetadataRequest{
-		RunId:    resp.Runs[1].Id,
+		RunId:    resp.Runs[0].Id,
 		Metadata: metadata,
 	})
 	require.NoError(t, err)
@@ -244,30 +220,54 @@ func TestSearchRunsSort(t *testing.T) {
 	}
 	metadata = newProtoStruct(t, rawMetadata)
 	_, err = api.PostRunMetadata(ctx, &apiv1.PostRunMetadataRequest{
-		RunId:    resp.Runs[0].Id,
+		RunId:    resp.Runs[1].Id,
 		Metadata: metadata,
 	})
 	require.NoError(t, err)
 
-	// Sort by custom metadata
-	resp, err = api.SearchRuns(ctx, &apiv1.SearchRunsRequest{
-		ProjectId: req.ProjectId,
-		Sort:      ptrs.Ptr("metadata.number_key=desc"),
-	})
+	tests := map[string]struct {
+		sortBy  string
+		reverse bool
+	}{
+		"StartTime": {
+			sortBy:  "startTime=asc",
+			reverse: false,
+		},
+		"Hyperparameter": {
+			sortBy:  "hp.global_batch_size=desc",
+			reverse: true,
+		},
+		"HyperparameterNested": {
+			sortBy:  "hp.test1.test2=desc",
+			reverse: true,
+		},
+		"Metadata": {
+			sortBy:  "metadata.number_key=desc",
+			reverse: true,
+		},
+		"MetadataNested": {
+			sortBy:  "metadata.nested.number_key=desc",
+			reverse: true,
+		},
+	}
 
-	require.NoError(t, err)
-	require.Equal(t, int32(exp2.ID), resp.Runs[0].Experiment.Id)
-	require.Equal(t, int32(exp.ID), resp.Runs[1].Experiment.Id)
+	for testCase, testVars := range tests {
+		t.Run(testCase, func(t *testing.T) {
+			resp, err = api.SearchRuns(ctx, &apiv1.SearchRunsRequest{
+				ProjectId: &projectID,
+				Sort:      ptrs.Ptr(testVars.sortBy),
+			})
 
-	// Sort by nested custom metadata
-	resp, err = api.SearchRuns(ctx, &apiv1.SearchRunsRequest{
-		ProjectId: req.ProjectId,
-		Sort:      ptrs.Ptr("metadata.nested.number_key=desc"),
-	})
-
-	require.NoError(t, err)
-	require.Equal(t, int32(exp2.ID), resp.Runs[0].Experiment.Id)
-	require.Equal(t, int32(exp.ID), resp.Runs[1].Experiment.Id)
+			require.NoError(t, err)
+			if testVars.reverse {
+				require.Equal(t, int32(exp2.ID), resp.Runs[0].Experiment.Id)
+				require.Equal(t, int32(exp.ID), resp.Runs[1].Experiment.Id)
+			} else {
+				require.Equal(t, int32(exp.ID), resp.Runs[0].Experiment.Id)
+				require.Equal(t, int32(exp2.ID), resp.Runs[1].Experiment.Id)
+			}
+		})
+	}
 }
 
 func TestSearchRunsFilter(t *testing.T) {
