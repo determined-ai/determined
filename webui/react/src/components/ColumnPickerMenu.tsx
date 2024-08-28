@@ -39,6 +39,7 @@ interface ColumnMenuProps {
   isMobile?: boolean;
   initialVisibleColumns: string[];
   defaultVisibleColumns: string[];
+  defaultPinnedCount: number;
   onVisibleColumnChange?: (newColumns: string[], pinnedCount?: number) => void;
   onHeatmapSelectionRemove?: (id: string) => void;
   projectColumns: Loadable<ProjectColumn[]>;
@@ -227,6 +228,7 @@ const ColumnPickerMenu: React.FC<ColumnMenuProps> = ({
   projectColumns,
   initialVisibleColumns,
   defaultVisibleColumns,
+  defaultPinnedCount,
   projectId,
   isMobile = false,
   onVisibleColumnChange,
@@ -250,9 +252,9 @@ const ColumnPickerMenu: React.FC<ColumnMenuProps> = ({
   );
 
   const handleShowSuggested = useCallback(() => {
-    onVisibleColumnChange?.(defaultVisibleColumns);
+    onVisibleColumnChange?.(defaultVisibleColumns, defaultPinnedCount);
     closeMenu();
-  }, [onVisibleColumnChange, defaultVisibleColumns]);
+  }, [onVisibleColumnChange, defaultVisibleColumns, defaultPinnedCount]);
 
   return (
     <Dropdown

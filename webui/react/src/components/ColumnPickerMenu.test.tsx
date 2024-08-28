@@ -26,6 +26,7 @@ const setup = (initCols?: string[]) => {
     <UIProvider theme={DefaultTheme.Light}>
       <ThemeProvider>
         <ColumnPickerMenu
+          defaultPinnedCount={3}
           defaultVisibleColumns={initialVisibleColumns}
           initialVisibleColumns={initCols ?? initialVisibleColumns}
           pinnedColumnsCount={PINNED_COLUMNS_COUNT}
@@ -81,7 +82,7 @@ describe('ColumnPickerMenu', () => {
     );
     const resets = await screen.findAllByText('Reset');
     await user.click(resets[0]);
-    expect(onVisibleColumnChange).toHaveBeenCalledWith(initialVisibleColumns);
+    expect(onVisibleColumnChange).toHaveBeenCalledWith(initialVisibleColumns, 3);
   });
 
   it('should switch tabs and display correct columns', async () => {

@@ -481,6 +481,18 @@ edit, or delete projects and experiments within its scope.
    notebooks, shells, and commands (NSC tasks), as well as the permission to update these tasks,
    such as changing the task's priority or deleting it.
 
+``EditorProjectRestricted``
+===========================
+
+The ``EditorProjectRestricted`` role supersedes the ``Viewer`` role and precedes the ``Editor``
+role. Assign the ``EditorProjectRestricted`` to users who need ``Editor`` permissions without the
+ability to create or update projects. More specifically:
+
+-  ``EditorProjectRestricted`` users can create, edit, or delete experiments and notebook,
+   TensorBoard, shell, or Command (NTSC) type workloads within their designated scope, just like
+   those with the ``Editor`` role. However, ``EditorProjectRestricted`` users lack the permissions
+   to create or update projects.
+
 ``Editor``
 ==========
 

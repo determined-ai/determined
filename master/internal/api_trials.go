@@ -134,7 +134,11 @@ func (a *apiServer) enrichTrialState(trials ...*trialv1.Trial) error {
 func (a *apiServer) TrialLogs(
 	req *apiv1.TrialLogsRequest, resp apiv1.Determined_TrialLogsServer,
 ) error {
-	if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(resp.Context(), int(req.TrialId),
+	curUser, _, err := grpcutil.GetUser(resp.Context())
+	if err != nil {
+		return err
+	}
+	if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(resp.Context(), int(req.TrialId), curUser,
 		experiment.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 		return err
 	}
@@ -253,8 +257,12 @@ func (a *apiServer) legacyTrialLogs(
 	var followState interface{}
 	trialLogsTimeSinceLastAuth := time.Now() // time.Now() to avoid recheck from a.TrialLogs.
 	fetch := func(r api.BatchRequest) (api.Batch, error) {
+		curUser, _, err := grpcutil.GetUser(ctx)
+		if err != nil {
+			return nil, err
+		}
 		if time.Since(trialLogsTimeSinceLastAuth) >= recheckAuthPeriod {
-			if err = trials.CanGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.TrialId),
+			if err = trials.CanGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.TrialId), curUser,
 				experiment.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 				return nil, err
 			}
@@ -348,7 +356,11 @@ func constructTrialLogsFilters(req *apiv1.TrialLogsRequest) ([]api.Filter, error
 func (a *apiServer) TrialLogsFields(
 	req *apiv1.TrialLogsFieldsRequest, resp apiv1.Determined_TrialLogsFieldsServer,
 ) error {
-	if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(resp.Context(), int(req.TrialId),
+	curUser, _, err := grpcutil.GetUser(resp.Context())
+	if err != nil {
+		return err
+	}
+	if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(resp.Context(), int(req.TrialId), curUser,
 		experiment.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 		return err
 	}
@@ -368,8 +380,12 @@ func (a *apiServer) TrialLogsFields(
 		api.BatchRequest{Follow: req.Follow},
 		func(lr api.BatchRequest) (api.Batch, error) {
 			if time.Since(trialLogsTimeSinceLastAuth) >= recheckAuthPeriod {
+				curUser, _, err := grpcutil.GetUser(ctx)
+				if err != nil {
+					return nil, err
+				}
 				if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(resp.Context(),
-					int(req.TrialId),
+					int(req.TrialId), curUser,
 					experiment.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 					return nil, err
 				}
@@ -393,8 +409,12 @@ func (a *apiServer) TrialLogsFields(
 			api.BatchRequest{Follow: req.Follow && i == len(trialTaskIDs)-1},
 			func(lr api.BatchRequest) (api.Batch, error) {
 				if time.Since(taskLogsTimeSinceLastAuth) >= recheckAuthPeriod {
+					curUser, _, err := grpcutil.GetUser(resp.Context())
+					if err != nil {
+						return nil, err
+					}
 					if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(resp.Context(),
-						int(req.TrialId),
+						int(req.TrialId), curUser,
 						experiment.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 						return nil, err
 					}
@@ -452,7 +472,11 @@ func (a *apiServer) TrialLogsFields(
 func (a *apiServer) GetTrialCheckpoints(
 	ctx context.Context, req *apiv1.GetTrialCheckpointsRequest,
 ) (*apiv1.GetTrialCheckpointsResponse, error) {
-	if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.Id),
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.Id), curUser,
 		experiment.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 		return nil, err
 	}
@@ -526,7 +550,11 @@ func (a *apiServer) GetTrialCheckpoints(
 func (a *apiServer) KillTrial(
 	ctx context.Context, req *apiv1.KillTrialRequest,
 ) (*apiv1.KillTrialResponse, error) {
-	if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.Id),
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.Id), curUser,
 		experiment.AuthZProvider.Get().CanEditExperiment); err != nil {
 		return nil, err
 	}
@@ -683,7 +711,11 @@ WHERE r.run_id = ?
 func (a *apiServer) GetTrial(ctx context.Context, req *apiv1.GetTrialRequest) (
 	*apiv1.GetTrialResponse, error,
 ) {
-	if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.TrialId),
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.TrialId), curUser,
 		experiment.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 		return nil, err
 	}
@@ -738,13 +770,17 @@ WHERE t.external_trial_id = ? AND e.external_experiment_id = ?`,
 func (a *apiServer) PutTrialRetainLogs(
 	ctx context.Context, req *apiv1.PutTrialRetainLogsRequest,
 ) (*apiv1.PutTrialRetainLogsResponse, error) {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
 	if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(
-		ctx, int(req.TrialId), experiment.AuthZProvider.Get().CanEditExperiment,
+		ctx, int(req.TrialId), curUser, experiment.AuthZProvider.Get().CanEditExperiment,
 	); err != nil {
 		return nil, err
 	}
 
-	err := db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+	err = db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		if _, err := tx.NewUpdate().Table("runs").
 			Set("log_retention_days = ?", req.NumDays).
 			Where("id = ?", req.TrialId).
@@ -902,27 +938,39 @@ func (a *apiServer) CompareTrials(ctx context.Context,
 	req *apiv1.CompareTrialsRequest,
 ) (*apiv1.CompareTrialsResponse, error) {
 	trialsList := make([]*apiv1.ComparableTrial, 0, len(req.TrialIds))
+	trialIds := make([]string, 0, len(req.TrialIds))
+	trialIntList := make([]int, 0, len(req.TrialIds))
 	for _, trialID := range req.TrialIds {
-		if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(ctx, int(trialID),
-			experiment.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
-			return nil, err
-		}
+		trialIds = append(trialIds, strconv.Itoa(int(trialID)))
+		trialIntList = append(trialIntList, int(trialID))
+	}
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err := trials.CanGetTrialsExperimentAndCheckCanDoActionBulk(ctx, trialIntList, curUser,
+		experiment.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
+		return nil, errors.Wrapf(err, "failed validate permissions")
+	}
+	//nolint:staticcheck // SA1019: backward compatibility
+	metricGroup, err := a.parseMetricGroupArgs(req.MetricType, model.MetricGroup(req.Group))
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to parse metric group args")
+	}
 
-		container := &apiv1.ComparableTrial{Trial: &trialv1.Trial{}}
-		switch err := a.m.db.QueryProto("get_trial_basic", container.Trial, trialID); {
-		case err == db.ErrNotFound:
-			return nil, status.Errorf(codes.NotFound, "trial %d not found:", trialID)
-		case err != nil:
-			return nil, errors.Wrapf(err, "failed to get trial %d", trialID)
-		}
+	trialsObjList := []*trialv1.Trial{}
 
-		//nolint:staticcheck // SA1019: backward compatibility
-		metricGroup, err := a.parseMetricGroupArgs(req.MetricType, model.MetricGroup(req.Group))
-		if err != nil {
-			return nil, err
-		}
+	trialIDFilterExpr := strings.Join(trialIds, ",")
 
-		tsample, err := a.multiTrialSample(trialID, req.MetricNames, metricGroup,
+	err = a.m.db.QueryProto("get_trials_basic", &trialsObjList, trialIDFilterExpr)
+	if err != nil {
+		return nil, errors.Wrapf(err, "failed to get trials")
+	}
+
+	for _, trialObj := range trialsObjList {
+		container := &apiv1.ComparableTrial{Trial: trialObj}
+
+		tsample, err := a.multiTrialSample(trialObj.Id, req.MetricNames, metricGroup,
 			int(req.MaxDatapoints), int(req.StartBatches), int(req.EndBatches),
 			req.TimeSeriesFilter, req.MetricIds)
 		if err != nil {
@@ -990,8 +1038,12 @@ func (a *apiServer) streamMetrics(ctx context.Context,
 	}
 	slices.Sort(trialIDs)
 
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return err
+	}
 	for _, trialID := range trialIDs {
-		if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(ctx, int(trialID),
+		if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(ctx, int(trialID), curUser,
 			experiment.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 			return err
 		}
@@ -1033,7 +1085,11 @@ func (a *apiServer) streamMetrics(ctx context.Context,
 func (a *apiServer) GetTrialWorkloads(ctx context.Context, req *apiv1.GetTrialWorkloadsRequest) (
 	*apiv1.GetTrialWorkloadsResponse, error,
 ) {
-	if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.TrialId),
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.TrialId), curUser,
 		experiment.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 		return nil, err
 	}
@@ -1084,8 +1140,12 @@ func (a *apiServer) GetTrialProfilerMetrics(
 	var timeSinceLastAuth time.Time
 	fetch := func(lr api.BatchRequest) (api.Batch, error) {
 		if time.Since(timeSinceLastAuth) >= recheckAuthPeriod {
+			curUser, _, err := grpcutil.GetUser(resp.Context())
+			if err != nil {
+				return nil, err
+			}
 			if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(resp.Context(),
-				int(req.Labels.TrialId),
+				int(req.Labels.TrialId), curUser,
 				experiment.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 				return nil, err
 			}
@@ -1130,8 +1190,12 @@ func (a *apiServer) GetTrialProfilerAvailableSeries(
 	var timeSinceLastAuth time.Time
 	fetch := func(_ api.BatchRequest) (api.Batch, error) {
 		if time.Since(timeSinceLastAuth) >= recheckAuthPeriod {
+			curUser, _, err := grpcutil.GetUser(resp.Context())
+			if err != nil {
+				return nil, err
+			}
 			if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(resp.Context(),
-				int(req.TrialId),
+				int(req.TrialId), curUser,
 				experiment.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 				return nil, err
 			}
@@ -1176,7 +1240,11 @@ func (a *apiServer) PostTrialProfilerMetricsBatch(
 	for _, batch := range req.Batches {
 		trialID := int(batch.Labels.TrialId)
 		if !existingTrials[trialID] {
-			if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(ctx, trialID,
+			curUser, _, err := grpcutil.GetUser(ctx)
+			if err != nil {
+				return nil, err
+			}
+			if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(ctx, trialID, curUser,
 				experiment.AuthZProvider.Get().CanEditExperiment); err != nil {
 				return nil, err
 			}
@@ -1303,7 +1371,11 @@ func (a *apiServer) MarkAllocationResourcesDaemon(
 func (a *apiServer) GetCurrentTrialSearcherOperation(
 	ctx context.Context, req *apiv1.GetCurrentTrialSearcherOperationRequest,
 ) (*apiv1.GetCurrentTrialSearcherOperationResponse, error) {
-	if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.TrialId),
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.TrialId), curUser,
 		experiment.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
 		return nil, err
 	}
@@ -1334,7 +1406,11 @@ func (a *apiServer) GetCurrentTrialSearcherOperation(
 func (a *apiServer) CompleteTrialSearcherValidation(
 	ctx context.Context, req *apiv1.CompleteTrialSearcherValidationRequest,
 ) (*apiv1.CompleteTrialSearcherValidationResponse, error) {
-	if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.TrialId),
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.TrialId), curUser,
 		experiment.AuthZProvider.Get().CanEditExperiment); err != nil {
 		return nil, err
 	}
@@ -1362,7 +1438,11 @@ func (a *apiServer) CompleteTrialSearcherValidation(
 func (a *apiServer) ReportTrialSearcherEarlyExit(
 	ctx context.Context, req *apiv1.ReportTrialSearcherEarlyExitRequest,
 ) (*apiv1.ReportTrialSearcherEarlyExitResponse, error) {
-	if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.TrialId),
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.TrialId), curUser,
 		experiment.AuthZProvider.Get().CanEditExperiment); err != nil {
 		return nil, err
 	}
@@ -1389,10 +1469,15 @@ func (a *apiServer) ReportTrialSearcherEarlyExit(
 func (a *apiServer) ReportTrialProgress(
 	ctx context.Context, req *apiv1.ReportTrialProgressRequest,
 ) (*apiv1.ReportTrialProgressResponse, error) {
-	if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.TrialId),
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.TrialId), curUser,
 		experiment.AuthZProvider.Get().CanEditExperiment); err != nil {
 		return nil, err
 	}
+
 	eID, rID, err := a.m.db.TrialExperimentAndRequestID(int(req.TrialId))
 	if err != nil {
 		return nil, err
@@ -1400,12 +1485,17 @@ func (a *apiServer) ReportTrialProgress(
 
 	e, ok := experiment.ExperimentRegistry.Load(eID)
 	if !ok {
-		return nil, api.NotFoundErrs("experiment", strconv.Itoa(eID), true)
+		// Unmanaged experiment is not included in ExperimentRegistry
+		if err := a.m.db.SaveExperimentProgress(eID, &req.Progress); err != nil {
+			return nil, err
+		}
+		return &apiv1.ReportTrialProgressResponse{}, nil
 	}
 
 	msg := experiment.TrialReportProgress{
 		RequestID: rID,
 		Progress:  searcher.PartialUnits(req.Progress),
+		IsRaw:     req.IsRaw,
 	}
 	if err := e.TrialReportProgress(msg); err != nil {
 		return nil, err
@@ -1420,7 +1510,11 @@ func (a *apiServer) ReportTrialMetrics(
 	if err := metricGroup.Validate(); err != nil {
 		return nil, err
 	}
-	if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.Metrics.TrialId),
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.Metrics.TrialId), curUser,
 		experiment.AuthZProvider.Get().CanEditExperiment); err != nil {
 		return nil, err
 	}
@@ -1551,7 +1645,11 @@ func (a *apiServer) AllocationRendezvousInfo(
 func (a *apiServer) PostTrialRunnerMetadata(
 	ctx context.Context, req *apiv1.PostTrialRunnerMetadataRequest,
 ) (*apiv1.PostTrialRunnerMetadataResponse, error) {
-	if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.TrialId),
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.TrialId), curUser,
 		experiment.AuthZProvider.Get().CanEditExperiment); err != nil {
 		return nil, err
 	}

@@ -22,60 +22,47 @@ func (m MediaAssetVariations) PickVariation(mode, orientation string) string {
 		orientationHorizontal = "horizontal"
 		orientationVertical   = "vertical"
 	)
-	if mode == "" || mode == "light" {
-		if orientation == "" || orientation == orientationHorizontal {
-			if m.LightHorizontal != "" {
-				return m.LightHorizontal
-			}
+	switch mode {
+	case "dark":
+		switch orientation {
+		case orientationVertical:
+			return m.DarkVeritical
+		default:
+			return m.DarkHorizontal
 		}
-		if orientation == "" || orientation == orientationVertical {
-			if m.LightVeritical != "" {
-				return m.LightVeritical
-			}
-			if m.LightHorizontal != "" {
-				return m.LightHorizontal
-			}
-		}
-	}
-
-	if mode == "dark" {
-		if orientation == "" || orientation == orientationHorizontal {
-			if m.DarkHorizontal != "" {
-				return m.DarkHorizontal
-			}
-		}
-		if orientation == "" || orientation == orientationVertical {
-			if m.DarkVeritical != "" {
-				return m.DarkVeritical
-			}
-			if m.DarkHorizontal != "" {
-				return m.DarkHorizontal
-			}
+	default:
+		switch orientation {
+		case orientationVertical:
+			return m.LightVeritical
+		default:
+			return m.LightHorizontal
 		}
 	}
-
-	return m.LightHorizontal
 }
 
 // UICustomizationConfig holds the configuration for customizing the UI.
 type UICustomizationConfig struct {
-	// LogoPath is the path to variation of custom logo to use in the web UI.
-	LogoPath MediaAssetVariations `json:"logo_path"`
+	// LogoPaths is the path to variations of the custom logo to use in the web UI.
+	LogoPaths *MediaAssetVariations `json:"logo_paths"`
 }
 
 // Validate checks if the paths in UICustomizationConfig are valid filesystem paths and reachable.
 func (u UICustomizationConfig) Validate() []error {
 	var errs []error
+	if u.LogoPaths == nil {
+		return errs
+	}
 
 	paths := map[string]string{
-		"LightHorizontal": u.LogoPath.LightHorizontal,
-		"LightVeritical":  u.LogoPath.LightVeritical,
-		"DarkHorizontal":  u.LogoPath.DarkHorizontal,
-		"DarkVeritical":   u.LogoPath.DarkVeritical,
+		"LightHorizontal": u.LogoPaths.LightHorizontal,
+		"LightVeritical":  u.LogoPaths.LightVeritical,
+		"DarkHorizontal":  u.LogoPaths.DarkHorizontal,
+		"DarkVeritical":   u.LogoPaths.DarkVeritical,
 	}
 
 	for name, path := range paths {
 		if path == "" {
+			errs = append(errs, errors.New(name+" path is not set"))
 			continue
 		}
 		license.RequireLicense("UI Customization")
@@ -95,7 +82,5 @@ func (u UICustomizationConfig) Validate() []error {
 
 // HasCustomLogo returns whether the UI customization has a custom logo.
 func (u UICustomizationConfig) HasCustomLogo() bool {
-	// If one exists, we're good
-	return u.LogoPath.LightHorizontal != "" || u.LogoPath.LightVeritical != "" ||
-		u.LogoPath.DarkHorizontal != "" || u.LogoPath.DarkVeritical != ""
+	return u.LogoPaths != nil
 }

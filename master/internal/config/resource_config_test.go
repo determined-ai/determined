@@ -9,6 +9,7 @@ import (
 
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/check"
+	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 )
@@ -271,15 +272,6 @@ additional_resource_managers:
 			"least one resource pool\n\terror found at root: for additional_resource_managers, " +
 			"you must specify at least one resource pool"},
 
-		{"k8s rocm config", `
-resource_manager:
-  type: kubernetes
-  max_slots_per_pod: 1
-  name: a
-  cluster_name: a
-  slot_type: rocm`, nil, "Check Failed! 1 errors found:\n\terror found at root.ResourceConfig." +
-			"RootManagerInternal.KubernetesRM: rocm slot_type is not supported yet on k8s"},
-
 		{"k8s negative cpu", `
 resource_manager:
   type: kubernetes
@@ -385,6 +377,33 @@ resource_manager:
 						DefaultAuxResourcePool:     "default",
 						DefaultComputeResourcePool: "default",
 						Scheduler:                  DefaultSchedulerConfig(),
+					},
+				},
+				RootPoolsInternal: []ResourcePoolConfig{
+					{
+						PoolName:                 "default",
+						MaxAuxContainersPerAgent: 100,
+						MaxCPUContainersPerAgent: -1,
+						AgentReconnectWait:       model.Duration(aproto.AgentReconnectWait),
+					},
+				},
+			},
+		}},
+
+		{"k8s rocm config", `
+resource_manager:
+  type: kubernetes
+  slot_type: rocm
+  max_slots_per_pod: 3
+`, Config{
+			ResourceConfig: ResourceConfig{
+				RootManagerInternal: &ResourceManagerConfig{
+					KubernetesRM: &KubernetesResourceManagerConfig{
+						ClusterName:                DefaultClusterName,
+						DefaultAuxResourcePool:     "default",
+						DefaultComputeResourcePool: "default",
+						SlotType:                   device.ROCM,
+						MaxSlotsPerPod:             ptrs.Ptr(3),
 					},
 				},
 				RootPoolsInternal: []ResourcePoolConfig{

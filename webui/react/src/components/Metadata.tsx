@@ -1,79 +1,30 @@
-import Button from 'hew/Button';
-import Icon from 'hew/Icon';
-import Message from 'hew/Message';
-import Surface from 'hew/Surface';
-import { useTheme } from 'hew/Theme';
-import Tooltip from 'hew/Tooltip';
-import Tree, { TreeDataNode } from 'hew/Tree';
-import { isArray } from 'lodash';
+import { Loaded } from 'hew/utils/loadable';
+import React from 'react';
 
-import { RawJson, TrialDetails } from 'types';
-import { downloadText } from 'utils/browser';
-import { isJsonObject } from 'utils/data';
+import { TrialDetails } from 'types';
+import handleError from 'utils/error';
 
 import css from './Metadata.module.scss';
 import Section from './Section';
 
+const CodeEditor = React.lazy(() => import('hew/CodeEditor'));
+
 interface Props {
-  trial?: TrialDetails;
+  trial: TrialDetails;
 }
 
-export const EMPTY_MESSAGE = 'No metadata found';
-
 const Metadata: React.FC<Props> = ({ trial }: Props) => {
-  const { tokens } = useTheme();
-
-  const getNodes = (data: RawJson): TreeDataNode[] => {
-    return Object.entries(data).map(([key, value]) => {
-      if (isJsonObject(value) || isArray(value)) {
-        return {
-          children: getNodes(value),
-          key,
-          selectable: false,
-          title: <span style={{ color: tokens.colorTextDescription }}>{key}</span>,
-        };
-      }
-      return {
-        key,
-        selectable: false,
-        title: (
-          <>
-            <span style={{ color: tokens.colorTextDescription }}>{key}:</span> <span>{value}</span>
-          </>
-        ),
-      };
-    });
-  };
-
-  const downloadMetadata = () => {
-    downloadText(`${trial?.id}_metadata.json`, [JSON.stringify(trial?.metadata)]);
-  };
-
-  const treeData = (trial?.metadata && getNodes(trial?.metadata)) ?? [];
-
   return (
-    <Section
-      options={[
-        <Tooltip content="Download metadata" key="download" placement="left">
-          <Button
-            disabled={!treeData.length}
-            icon={<Icon decorative name="download" />}
-            type="text"
-            onClick={downloadMetadata}
-          />
-        </Tooltip>,
-      ]}
-      title="Metadata">
-      <Surface>
-        {treeData.length ? (
-          <div className={css.base}>
-            <Tree defaultExpandAll treeData={treeData} />
-          </div>
-        ) : (
-          <Message title={EMPTY_MESSAGE} />
-        )}
-      </Surface>
-    </Section>
+    <div className={css.base}>
+      <Section title="Metadata">
+        <CodeEditor
+          file={Loaded(JSON.stringify(trial.metadata, undefined, 2))}
+          files={[{ key: `${trial.id}_metadata.json`, title: `${trial.id}_metadata.json` }]}
+          readonly
+          onError={handleError}
+        />
+      </Section>
+    </div>
   );
 };
 

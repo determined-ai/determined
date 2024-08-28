@@ -1554,12 +1554,15 @@ func (a *apiServer) ListRPsBoundToWorkspace(
 func (a *apiServer) GetKubernetesResourceQuotas(
 	ctx context.Context, req *apiv1.GetKubernetesResourceQuotasRequest,
 ) (*apiv1.GetKubernetesResourceQuotasResponse, error) {
-	curUser, _, err := grpcutil.GetUser(ctx)
+	_, curUser, err := a.getWorkspaceAndCheckCanDoActions(
+		ctx, req.Id, false, workspace.AuthZProvider.Get().CanGetWorkspace,
+	)
 	if err != nil {
 		return nil, err
 	}
-	err = workspace.AuthZProvider.Get().CanGetWorkspaceID(
-		ctx, *curUser, req.Id,
+
+	err = workspace.AuthZProvider.Get().CanViewResourceQuotas(
+		ctx, curUser,
 	)
 	if err != nil {
 		return nil, err

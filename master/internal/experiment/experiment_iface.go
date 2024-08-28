@@ -30,6 +30,7 @@ type (
 	TrialReportProgress struct {
 		RequestID model.RequestID
 		Progress  searcher.PartialUnits
+		IsRaw     bool
 	}
 
 	// UserInitiatedEarlyTrialExit is a user-injected message, provided through the early exit API. It

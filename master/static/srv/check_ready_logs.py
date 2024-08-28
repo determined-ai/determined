@@ -37,7 +37,7 @@ def main(ready: Pattern, waiting: Optional[Pattern] = None):
     cert = certs.default_load(master_url)
     # This only runs on-cluster, so it is expected the username and session token are present in the
     # environment.
-    sess = authentication.login_with_cache(master_url, cert=cert)
+    sess = authentication.login_from_task(master_url, cert=cert)
     allocation_id = str(os.environ["DET_ALLOCATION_ID"])
     for line in sys.stdin:
         if ready.match(line):
@@ -49,11 +49,15 @@ def main(ready: Pattern, waiting: Optional[Pattern] = None):
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Read STDIN for a match and mark a task as ready")
+    parser = argparse.ArgumentParser(
+        description="Read STDIN for a match and mark a task as ready"
+    )
     parser.add_argument(
         "--ready-regex", type=str, help="the pattern to match task ready", required=True
     )
-    parser.add_argument("--waiting-regex", type=str, help="the pattern to match task waiting")
+    parser.add_argument(
+        "--waiting-regex", type=str, help="the pattern to match task waiting"
+    )
     args = parser.parse_args()
 
     ready_regex = re.compile(args.ready_regex)

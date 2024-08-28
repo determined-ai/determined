@@ -127,7 +127,7 @@ func (p priorityScheduler) prioritySchedulerWithFilter(
 				}
 			} else if p.preemptionEnabled {
 				for _, allocatedTask := range successfulAllocations {
-					if !allocatedTask.Preemptible {
+					if !allocatedTask.Preemption.Preemptible {
 						continue
 					}
 					log.Debugf("scheduled task via backfilling: %s", allocatedTask.Name)
@@ -221,7 +221,7 @@ func (p priorityScheduler) trySchedulingTaskViaPreemption(
 				break
 			}
 			preemptionCandidate := priorityToScheduledTaskMap[priority][i]
-			if !preemptionCandidate.Preemptible || !filter(preemptionCandidate) {
+			if !preemptionCandidate.Preemption.Preemptible || !filter(preemptionCandidate) {
 				continue
 			}
 

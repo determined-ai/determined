@@ -1168,8 +1168,10 @@ func TestSetGroupPriority(t *testing.T) {
 			jobID := model.NewJobID()
 
 			rp.AllocateRequest(sproto.AllocateRequest{
-				JobID:       jobID,
-				Preemptible: tt.preemptible,
+				JobID: jobID,
+				Preemption: sproto.PreemptionConfig{
+					Preemptible: tt.preemptible,
+				},
 			})
 
 			err := rp.SetGroupPriority(sproto.SetGroupPriority{

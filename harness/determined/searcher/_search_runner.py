@@ -5,6 +5,7 @@ import pathlib
 import pickle
 import time
 import uuid
+import warnings
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Tuple, Union
 
 from determined import searcher
@@ -256,6 +257,13 @@ class LocalSearchRunner(SearchRunner):
         searcher_dir: Optional[pathlib.Path] = None,
         session: Optional[api.Session] = None,
     ):
+        warnings.warn(
+            "`LocalSearchRunner` and all custom searchers have been deprecated. "
+            "This feature will be removed in a future release. Consider configuring a preset "
+            "searcher instead (see Determined docs for details).",
+            FutureWarning,
+            stacklevel=2,
+        )
         super().__init__(search_method)
         self.state_path = None
         self.session = session

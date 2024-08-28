@@ -182,7 +182,7 @@ export const taskWorkspaceRenderer = (
   const workspace = workspaces.find((u) => u.id === record.workspaceId);
   const workspaceId = record.workspaceId;
   const isUncategorized = workspaceId === 1;
-
+  if (!workspace) return null;
   return (
     <div className={`${css.centerVertically} ${css.centerHorizontally}`}>
       <Link

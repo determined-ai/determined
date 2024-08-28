@@ -73,7 +73,7 @@ class LocustGetTaskWithMeta(BaseLocustTaskWithMeta):
         self.params = params
         self._url = endpoint
         if params is not None:
-            self._url += f'?{urlencode(params)}'
+            self._url += f'?{urlencode(params, doseq=True)}'
 
     @property
     def url(self) -> Url_t:

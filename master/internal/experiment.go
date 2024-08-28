@@ -356,8 +356,12 @@ func (e *internalExperiment) TrialReportProgress(msg experiment.TrialReportProgr
 	e.mu.Lock()
 	defer e.mu.Unlock()
 
-	e.searcher.SetTrialProgress(msg.RequestID, msg.Progress)
-	progress := e.searcher.Progress()
+	progress := float64(msg.Progress)
+	if !msg.IsRaw {
+		e.searcher.SetTrialProgress(msg.RequestID, msg.Progress)
+		progress = e.searcher.Progress()
+	}
+
 	if err := e.db.SaveExperimentProgress(e.ID, &progress); err != nil {
 		e.syslog.WithError(err).Error("failed to save experiment progress")
 	}

@@ -13,7 +13,8 @@ export type ValidFeature =
   | 'genai'
   | 'flat_runs'
   | 'streaming_updates'
-  | 'task_templates';
+  | 'task_templates'
+  | 'webhook_improvement';
 
 type FeatureDescription = {
   friendlyName: string;
@@ -54,6 +55,11 @@ export const FEATURES: Record<ValidFeature, FeatureDescription> = {
     defaultValue: true,
     description: 'Manage tempaltes through WebUI',
     friendlyName: 'Manage Templates',
+  },
+  webhook_improvement: {
+    defaultValue: false,
+    description: 'Allow webhooks to monitor experiments by workspace',
+    friendlyName: 'Webhook Improvement',
   },
 } as const;
 export const FEATURE_SETTINGS_PATH = 'global-features';

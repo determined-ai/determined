@@ -335,6 +335,26 @@ func TestPermissionMatch(t *testing.T) {
 			"user should not have permission to set resource quotas")
 
 		err = DoesPermissionMatch(ctx, userIDClusterAdmin, &workspaceID,
+			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_RESOURCE_QUOTAS)
+		require.NoError(t, err)
+
+		err = DoesPermissionMatch(ctx, userIDEditor, &workspaceID,
+			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_RESOURCE_QUOTAS)
+		require.NoError(t, err)
+
+		err = DoesPermissionMatch(ctx, userIDViewer, &workspaceID,
+			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_RESOURCE_QUOTAS)
+		require.NoError(t, err)
+
+		err = DoesPermissionMatch(ctx, userIDEditorProjectRestricted, &workspaceID,
+			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_RESOURCE_QUOTAS)
+		require.NoError(t, err)
+
+		err = DoesPermissionMatch(ctx, userIDEditorRestricted, &workspaceID,
+			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_RESOURCE_QUOTAS)
+		require.NoError(t, err)
+
+		err = DoesPermissionMatch(ctx, userIDClusterAdmin, &workspaceID,
 			rbacv1.PermissionType_PERMISSION_TYPE_SET_WORKSPACE_NAMESPACE_BINDINGS)
 		require.NoError(t, err)
 
@@ -402,6 +422,26 @@ func TestPermissionMatch(t *testing.T) {
 		err = DoesPermissionMatchAll(ctx, userIDClusterAdmin,
 			rbacv1.PermissionType_PERMISSION_TYPE_SET_RESOURCE_QUOTAS, workspaceID)
 		require.NoError(t, err)
+
+		err = DoesPermissionMatchAll(ctx, userIDClusterAdmin,
+			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_RESOURCE_QUOTAS, workspaceID)
+		require.NoError(t, err)
+
+		err = DoesPermissionMatchAll(ctx, userIDEditor,
+			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_RESOURCE_QUOTAS, workspaceID)
+		require.NoError(t, err)
+
+		err = DoesPermissionMatchAll(ctx, userIDViewer,
+			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_RESOURCE_QUOTAS, workspaceID)
+		require.NoError(t, err)
+
+		err = DoesPermissionMatchAll(ctx, userIDEditorProjectRestricted,
+			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_RESOURCE_QUOTAS, workspaceID)
+		require.NoError(t, err)
+
+		err = DoesPermissionMatchAll(ctx, userIDEditorRestricted,
+			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_RESOURCE_QUOTAS, workspaceID)
+		require.NoError(t, err)
 	})
 
 	t.Run("test DoesPermissionMatchAll multiple inputs no failure", func(t *testing.T) {
@@ -421,6 +461,26 @@ func TestPermissionMatch(t *testing.T) {
 		err = DoesPermissionMatchAll(ctx, userIDClusterAdmin,
 			rbacv1.PermissionType_PERMISSION_TYPE_SET_RESOURCE_QUOTAS, workspaceIDs...)
 		require.NoError(t, err, "error when searching for permissions")
+
+		err = DoesPermissionMatchAll(ctx, userIDClusterAdmin,
+			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_RESOURCE_QUOTAS, workspaceIDs...)
+		require.NoError(t, err)
+
+		err = DoesPermissionMatchAll(ctx, userIDEditor,
+			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_RESOURCE_QUOTAS, workspaceIDs...)
+		require.NoError(t, err)
+
+		err = DoesPermissionMatchAll(ctx, userIDViewer,
+			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_RESOURCE_QUOTAS, workspaceIDs...)
+		require.NoError(t, err)
+
+		err = DoesPermissionMatchAll(ctx, userIDEditorProjectRestricted,
+			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_RESOURCE_QUOTAS, workspaceIDs...)
+		require.NoError(t, err)
+
+		err = DoesPermissionMatchAll(ctx, userIDEditorRestricted,
+			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_RESOURCE_QUOTAS, workspaceIDs...)
+		require.NoError(t, err)
 	})
 
 	t.Run("test DoesPermissionMatchAll multiple inputs single failure", func(t *testing.T) {
@@ -495,6 +555,22 @@ func TestPermissionMatch(t *testing.T) {
 
 		err = DoPermissionsExist(ctx, userIDClusterAdmin,
 			rbacv1.PermissionType_PERMISSION_TYPE_SET_RESOURCE_QUOTAS)
+		require.NoError(t, err)
+
+		err = DoPermissionsExist(ctx, userIDEditor,
+			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_RESOURCE_QUOTAS)
+		require.NoError(t, err)
+
+		err = DoPermissionsExist(ctx, userIDEditorRestricted,
+			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_RESOURCE_QUOTAS)
+		require.NoError(t, err)
+
+		err = DoPermissionsExist(ctx, userIDEditorProjectRestricted,
+			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_RESOURCE_QUOTAS)
+		require.NoError(t, err)
+
+		err = DoPermissionsExist(ctx, userIDViewer,
+			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_RESOURCE_QUOTAS)
 		require.NoError(t, err)
 
 		err = DoPermissionsExist(ctx, userIDEditorRestricted,

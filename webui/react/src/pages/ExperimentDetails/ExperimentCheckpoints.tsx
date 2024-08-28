@@ -75,16 +75,20 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
   });
 
   const modelCreateModal = useModal(ModelCreateModal);
-  const registerModal = useModal(RegisterCheckpointModal);
+  const {
+    Component: RegisterModalComponent,
+    open: registerModalOpen,
+    close: registerModalClose,
+  } = useModal(RegisterCheckpointModal);
 
   const handleOnCloseCreateModel = useCallback(
     (modelName?: string) => {
       if (modelName) {
         setSelectedModelName(modelName);
-        registerModal.open();
+        registerModalOpen();
       }
     },
-    [setSelectedModelName, registerModal],
+    [registerModalOpen],
   );
 
   const clearSelected = useCallback(() => {
@@ -124,9 +128,9 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
   const handleRegisterCheckpoint = useCallback(
     (checkpoints: string[]) => {
       setSelectedCheckpoints(checkpoints);
-      registerModal.open();
+      registerModalOpen();
     },
-    [registerModal],
+    [registerModalOpen],
   );
 
   const handleDelete = useCallback(async (checkpointUuids: string[]) => {
@@ -205,8 +209,8 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
     [openCheckpoint],
   );
 
-  const columns = useMemo(() => {
-    const actionRenderer = (_: string, record: CoreApiGenericCheckpoint): React.ReactNode => (
+  const actionRenderer = useCallback(
+    (_: string, record: CoreApiGenericCheckpoint): React.ReactNode => (
       <ActionDropdown<CheckpointAction>
         actionOrder={batchActions}
         danger={{ [checkpointAction.Delete]: true }}
@@ -219,8 +223,11 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
         onError={handleError}
         onTrigger={dropDownOnTrigger(record.uuid)}
       />
-    );
+    ),
+    [dropDownOnTrigger],
+  );
 
+  const columns = useMemo(() => {
     const checkpointRenderer = (_: string, record: CoreApiGenericCheckpoint): React.ReactNode => {
       return (
         <Button
@@ -258,7 +265,7 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
 
     return newColumns;
   }, [
-    dropDownOnTrigger,
+    actionRenderer,
     experiment.config.searcher.metric,
     handleOpenCheckpoint,
     settings.sortDesc,
@@ -393,9 +400,9 @@ const ExperimentCheckpoints: React.FC<Props> = ({ experiment, pageRef }: Props) 
         )}
       </Section>
       <modelCreateModal.Component onClose={handleOnCloseCreateModel} />
-      <registerModal.Component
+      <RegisterModalComponent
         checkpoints={selectedCheckpoints ?? []}
-        closeModal={registerModal.close}
+        closeModal={registerModalClose}
         modelName={selectedModelName}
         models={models}
         openModelModal={modelCreateModal.open}

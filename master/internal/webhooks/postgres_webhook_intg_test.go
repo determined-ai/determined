@@ -78,9 +78,19 @@ func TestWebhooks(t *testing.T) {
 	})
 
 	t.Run("webhook creation should work", func(t *testing.T) {
+		workspaceID := int32(1)
 		testWebhookOne.Triggers = testTriggersOne
+		testWebhookOne.Mode = WebhookModeSpecific
+		testWebhookOne.Name = "test-name"
+		testWebhookOne.WorkspaceID = &workspaceID
 		err := AddWebhook(ctx, &testWebhookOne)
 		require.NoError(t, err, "failed to create webhook")
+		webhooks, err := GetWebhooks(ctx)
+		require.NoError(t, err, "unable to get webhooks")
+		webhookOneResponse := getWebhookByID(webhooks, testWebhookOne.ID)
+		require.Equal(t, "test-name", webhookOneResponse.Name)
+		require.Equal(t, workspaceID, *webhookOneResponse.WorkspaceID)
+		require.Equal(t, WebhookModeSpecific, testWebhookOne.Mode)
 	})
 
 	t.Run("webhook creation with multiple triggers should work", func(t *testing.T) {
@@ -124,6 +134,7 @@ func TestWebhookScanLogs(t *testing.T) {
 		Triggers: Triggers{
 			{TriggerType: TriggerTypeTaskLog, Condition: map[string]any{"regex": r0}},
 		},
+		Mode: WebhookModeWorkspace,
 	}
 	w1 := &Webhook{
 		WebhookType: WebhookTypeDefault,
@@ -132,6 +143,7 @@ func TestWebhookScanLogs(t *testing.T) {
 			{TriggerType: TriggerTypeTaskLog, Condition: map[string]any{"regex": r0}},
 			{TriggerType: TriggerTypeTaskLog, Condition: map[string]any{"regex": r1}},
 		},
+		Mode: WebhookModeWorkspace,
 	}
 	w2 := &Webhook{
 		WebhookType: WebhookTypeDefault,
@@ -139,6 +151,7 @@ func TestWebhookScanLogs(t *testing.T) {
 		Triggers: Triggers{
 			{TriggerType: TriggerTypeTaskLog, Condition: map[string]any{"regex": r2}},
 		},
+		Mode: WebhookModeWorkspace,
 	}
 
 	require.NoError(t, manager.addWebhook(ctx, w0))
@@ -388,26 +401,31 @@ var (
 		ID:          1000,
 		URL:         "http://testwebhook.com",
 		WebhookType: WebhookTypeSlack,
+		Mode:        WebhookModeWorkspace,
 	}
 	testWebhookTwo = Webhook{
 		ID:          2000,
 		URL:         "http://testwebhooktwo.com",
 		WebhookType: WebhookTypeDefault,
+		Mode:        WebhookModeWorkspace,
 	}
 	testWebhookThree = Webhook{
 		ID:          3000,
 		URL:         "http://testwebhookthree.com",
 		WebhookType: WebhookTypeSlack,
+		Mode:        WebhookModeWorkspace,
 	}
 	testWebhookFour = Webhook{
 		ID:          6000,
 		URL:         "http://twebhook.com",
 		WebhookType: WebhookTypeSlack,
+		Mode:        WebhookModeWorkspace,
 	}
 	testWebhookFive = Webhook{
 		ID:          7000,
 		URL:         "http://twebhooktwo.com",
 		WebhookType: WebhookTypeDefault,
+		Mode:        WebhookModeWorkspace,
 	}
 	testWebhookFourTrigger = Trigger{
 		ID:          6001,
@@ -484,6 +502,7 @@ func mockWebhook() *Webhook {
 	return &Webhook{
 		URL:         uuid.New().String(),
 		WebhookType: WebhookTypeDefault,
+		Mode:        WebhookModeWorkspace,
 	}
 }
 
@@ -511,6 +530,7 @@ func TestDequeueEvents(t *testing.T) {
 			},
 		},
 		WebhookType: WebhookTypeDefault,
+		Mode:        WebhookModeWorkspace,
 	}))
 
 	t.Run("dequeueing and consuming a event should work", func(t *testing.T) {

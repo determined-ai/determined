@@ -1078,6 +1078,7 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
           V1LocationType.HYPERPARAMETERS,
         ]}
         compareViewOn={settings.compare}
+        entityCopy="Show experiments…"
         formStore={formStore}
         heatmapBtnVisible={heatmapBtnVisible}
         heatmapOn={settings.heatmapOn}

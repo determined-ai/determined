@@ -17,6 +17,7 @@ interface Props {
   isMobile?: boolean;
   isOpenFilter: boolean;
   projectId?: number;
+  entityCopy?: string;
   onIsOpenFilterChange?: (value: boolean) => void;
 }
 
@@ -27,6 +28,7 @@ const TableFilter = ({
   isMobile = false,
   isOpenFilter,
   projectId,
+  entityCopy,
   onIsOpenFilterChange,
 }: Props): JSX.Element => {
   const columns: V1ProjectColumn[] = Loadable.getOrElse([], loadableColumns).filter(
@@ -70,6 +72,7 @@ const TableFilter = ({
             onMouseMove={(e) => e.stopPropagation()}>
             <FilterForm
               columns={columns}
+              entityCopy={entityCopy}
               formStore={formStore}
               projectId={projectId}
               onHidePopOver={onHidePopOver}

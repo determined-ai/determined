@@ -171,6 +171,14 @@ func (p *WorkspaceAuthZPermissive) CanSetResourceQuotas(
 	return (&WorkspaceAuthZBasic{}).CanSetResourceQuotas(ctx, curUser)
 }
 
+// CanViewResourceQuotas calls RBAC authz but enforces basic authz.
+func (p *WorkspaceAuthZPermissive) CanViewResourceQuotas(
+	ctx context.Context, curUser model.User,
+) error {
+	_ = (&WorkspaceAuthZRBAC{}).CanViewResourceQuotas(ctx, curUser)
+	return (&WorkspaceAuthZBasic{}).CanViewResourceQuotas(ctx, curUser)
+}
+
 func init() {
 	AuthZProvider.Register("permissive", &WorkspaceAuthZPermissive{})
 }

@@ -16,8 +16,8 @@ def main():
             # project="...",
         ),
     )
-
-    for i in range(100):
+    max_length = 100
+    for i in range(max_length):
         print(f"training loss: {random.random()}")
 
         core_v2.train.report_training_metrics(steps_completed=i, metrics={"loss": random.random()})
@@ -28,6 +28,7 @@ def main():
             core_v2.train.report_validation_metrics(
                 steps_completed=i, metrics={"loss": random.random()}
             )
+            core_v2.train.report_progress(i / float(max_length))
 
     core_v2.close()
 

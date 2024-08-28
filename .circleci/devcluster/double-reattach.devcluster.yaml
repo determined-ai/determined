@@ -14,8 +14,6 @@ stages:
           password: postgres
           user: postgres
           name: determined
-        __internal:
-          preemption_timeout: 60s
         checkpoint_storage:
           type: shared_fs
           host_path: /tmp
@@ -49,6 +47,8 @@ stages:
             type: basic
             username: determined
             password: password
+        task_container_defaults:
+          preemption_timeout: 60
 
   - custom:
       name: proxy

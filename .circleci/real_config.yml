@@ -21,7 +21,7 @@ executors:
 parameters:
   det-version:
     type: string
-    default: 0.35.1-dev0
+    default: 0.36.1-dev0
   docker-image:
     type: string
     default: determinedai/cimg-base:latest
@@ -282,7 +282,7 @@ commands:
       - when:
           condition: <<parameters.tf2>>
           steps:
-            - run: docker pull determinedai/pytorch-ngc-dev:5432424
+            - run: docker pull determinedai/pytorch-ngc-dev:0736b6d
 
   login-docker:
     parameters:
@@ -2439,7 +2439,7 @@ jobs:
 
   test-unit-harness-gpu-tf:
     docker:
-      - image: determinedai/tensorflow-ngc-dev:5432424
+      - image: determinedai/tensorflow-ngc-dev:0736b6d
     resource_class: determined-ai/container-runner-gpu
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
@@ -2466,7 +2466,7 @@ jobs:
 
   test-unit-harness-pytorch2-gpu:
     docker:
-      - image: determinedai/pytorch-ngc-dev:5432424
+      - image: determinedai/pytorch-ngc-dev:0736b6d
     resource_class: determined-ai/container-runner-gpu
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
@@ -2493,7 +2493,7 @@ jobs:
 
   test-unit-harness-pytorch2-cpu:
     docker:
-      - image: determinedai/pytorch-ngc-dev:5432424
+      - image: determinedai/pytorch-ngc-dev:0736b6d
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
       - checkout
@@ -2519,7 +2519,7 @@ jobs:
 
   test-unit-harness-gpu-parallel:
     docker:
-      - image: determinedai/pytorch-ngc-dev:5432424
+      - image: determinedai/pytorch-ngc-dev:0736b6d
     resource_class: determined-ai/container-runner-multi-gpu
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
@@ -2546,7 +2546,7 @@ jobs:
 
   test-unit-harness-gpu-deepspeed:
     docker:
-      - image: determinedai/pytorch-ngc-dev:5432424
+      - image: determinedai/pytorch-ngc-dev:0736b6d
     resource_class: determined-ai/container-runner-gpu
     steps:
       - run: mkdir -p ~/.ssh && ssh-keyscan github.com >> ~/.ssh/known_hosts
@@ -3637,7 +3637,7 @@ jobs:
         type: string
         default: "1"
       environment-image:
-        default: determinedai/pytorch-ngc-dev:5432424
+        default: determinedai/pytorch-ngc-dev:0736b6d
         type: string
       accel-node-taints:
         type: string

@@ -63,6 +63,8 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
     canModifyWorkspaceCheckpointStorage,
     canSetWorkspaceNamespaceBindings,
     canSetResourceQuotas,
+    canViewResourceQuotas,
+    canModifyWorkspace,
   } = usePermissions();
   const info = useObservable(determinedStore.info);
   const [form] = Form.useForm<FormInputs>();
@@ -74,7 +76,11 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
   const resourceManagers = Loadable.getOrElse([], loadableResourceManagers);
   const namespaceBindingsList = useAsync(
     async (canceller) => {
-      if (workspaceId === undefined || resourceManagers.length === 0) {
+      if (
+        workspaceId === undefined ||
+        resourceManagers.length === 0 ||
+        !canSetWorkspaceNamespaceBindings
+      ) {
         return NotLoaded;
       }
       try {
@@ -93,11 +99,11 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
         return NotLoaded;
       }
     },
-    [resourceManagers, workspaceId],
+    [canSetWorkspaceNamespaceBindings, resourceManagers, workspaceId],
   );
   const resourceQuotasList = useAsync(
     async (canceller) => {
-      if (workspaceId === undefined || resourceManagers.length === 0) {
+      if (workspaceId === undefined || resourceManagers.length === 0 || !canViewResourceQuotas) {
         return NotLoaded;
       }
       try {
@@ -116,7 +122,7 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
         return NotLoaded;
       }
     },
-    [resourceManagers, workspaceId],
+    [canViewResourceQuotas, resourceManagers, workspaceId],
   );
 
   const initFields = useCallback(
@@ -153,6 +159,8 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
 
   const loadableWorkspace = useObservable(workspaceStore.getWorkspace(workspaceId || 0));
   const workspace = Loadable.getOrElse(undefined, loadableWorkspace);
+  const isViewing = !!workspace && !canModifyWorkspace({ workspace });
+  const isEditing = workspaceId !== undefined;
 
   useEffect(() => {
     initFields(workspace || undefined);
@@ -167,7 +175,7 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
   }, [canModifyWorkspaceAgentUserGroup, canModifyWorkspaceCheckpointStorage, workspaceId]);
 
   const modalContent = useMemo(() => {
-    if (workspaceId && loadableWorkspace === NotLoaded) return <Spinner spinning />;
+    if (isEditing && loadableWorkspace === NotLoaded) return <Spinner spinning />;
     return (
       <Form
         autoComplete="off"
@@ -185,7 +193,7 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
               required: true,
             },
           ]}>
-          <Input maxLength={80} />
+          <Input disabled={isViewing} maxLength={80} />
         </Form.Item>
         {canSetWorkspaceNamespaceBindings && resourceManagers.length > 0 && (
           <>
@@ -238,6 +246,26 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
             </>
           </>
         )}
+        {!canSetWorkspaceNamespaceBindings &&
+          canViewResourceQuotas &&
+          isEditing &&
+          info.branding === BrandingType.HPE &&
+          resourceManagers.length > 0 && (
+            <>
+              <Divider />
+              Resource Quotas
+              <>
+                {resourceManagers.map((name) => (
+                  <Form.Item
+                    key={name}
+                    label={`Cluster Name: ${name}`}
+                    name={['resourceQuotas', name]}>
+                    <Input disabled />
+                  </Form.Item>
+                ))}
+              </>
+            </>
+          )}
         {canModifyAUG && (
           <>
             <Divider />
@@ -338,19 +366,21 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
       </Form>
     );
   }, [
-    workspaceId,
     loadableWorkspace,
     form,
     idPrefix,
+    isEditing,
+    isViewing,
     canSetWorkspaceNamespaceBindings,
     resourceManagers,
+    canViewResourceQuotas,
+    info.branding,
     canModifyAUG,
     useAgentUser,
     useAgentGroup,
     canModifyCPS,
     useCheckpointStorage,
     watchBindings,
-    info.branding,
     canSetResourceQuotas,
   ]);
 
@@ -420,7 +450,7 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
           }
         }
 
-        if (workspaceId) {
+        if (isEditing) {
           await patchWorkspace({ id: workspaceId, ...body });
           workspaceStore.fetch(undefined, true);
           resourceQuotaBody['id'] = workspaceId;
@@ -430,7 +460,11 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
           resourceQuotaBody['id'] = response.id;
         }
 
-        if (values.resourceQuotas) {
+        if (
+          canSetResourceQuotas &&
+          values.resourceQuotas &&
+          Object.keys(values.resourceQuotas).length !== 0
+        ) {
           resourceQuotaBody['clusterQuotaPairs'] = pick(values.resourceQuotas, resourceManagers);
           await setResourceQuotas(resourceQuotaBody);
         }
@@ -455,19 +489,31 @@ const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }
         });
       }
     }
-  }, [form, workspaceId, canModifyAUG, canModifyCPS, resourceManagers]);
+  }, [
+    form,
+    canModifyAUG,
+    canModifyCPS,
+    canSetResourceQuotas,
+    isEditing,
+    workspaceId,
+    resourceManagers,
+  ]);
 
   return (
     <Modal
       cancel
       size="medium"
-      submit={{
-        form: idPrefix + FORM_ID,
-        handleError,
-        handler: handleSubmit,
-        text: 'Save Workspace',
-      }}
-      title={`${workspaceId ? 'Edit' : 'New'} Workspace`}
+      submit={
+        isViewing
+          ? undefined
+          : {
+              form: idPrefix + FORM_ID,
+              handleError,
+              handler: handleSubmit,
+              text: 'Save Workspace',
+            }
+      }
+      title={isViewing ? 'Workspace Config' : `${isEditing ? 'Edit' : 'New'} Workspace`}
       onClose={() => {
         initFields(undefined);
         onClose?.();

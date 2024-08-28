@@ -521,6 +521,27 @@ WHERE t.id = ?`, trialID).Scan(ctx, &experiment); err != nil {
 	return &experiment, nil
 }
 
+// ExperimentsByTrialID looks up an experiment by a given list of trialIDs, returning
+// an error if none exists.
+func ExperimentsByTrialID(ctx context.Context, trialIDs []int) ([]*model.Experiment, error) {
+	var experiment []*model.Experiment
+
+	if err := Bun().NewRaw(`
+SELECT DISTINCT e.id, e.state, e.config, e.start_time, e.end_time, e.archived,
+       e.owner_id, e.notes, e.job_id, u.username as username, e.project_id, unmanaged, external_experiment_id
+FROM experiments e
+JOIN trials t ON e.id = t.experiment_id
+JOIN users u ON (e.owner_id = u.id)
+WHERE t.id IN (?)`, bun.In(trialIDs)).Scan(ctx, &experiment); err != nil {
+		return nil, MatchSentinelError(err)
+	}
+
+	if len(experiment) == 0 {
+		return nil, ErrNotFound
+	}
+	return experiment, nil
+}
+
 // ExperimentByTaskID looks up an experiment by a given taskID, returning an error
 // if none exists.
 func ExperimentByTaskID(
@@ -808,6 +829,9 @@ EXISTS(
 
 // SaveExperimentProgress stores the progress for an experiment in the database.
 func (db *PgDB) SaveExperimentProgress(id int, progress *float64) error {
+	if progress != nil && (*progress < 0 || *progress > 1) {
+		return errors.Errorf("invalid progress value: %f. Progress value should be between 0 and 1", *progress)
+	}
 	res, err := db.sql.Exec(`UPDATE experiments SET progress = $1 WHERE id = $2`, progress, id)
 	if err != nil {
 		return errors.Wrap(err, "saving experiment progress")

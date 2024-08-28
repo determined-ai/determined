@@ -874,6 +874,12 @@ export const mapV1Project = (data: Sdk.V1Project): types.Project => {
 export const mapV1Webhook = (data: Sdk.V1Webhook): types.Webhook => {
   return {
     id: data.id || -1,
+    mode: {
+      [Sdk.V1WebhookMode.WORKSPACE]: 'Workspace',
+      [Sdk.V1WebhookMode.SPECIFIC]: 'Specific',
+      [Sdk.V1WebhookMode.UNSPECIFIED]: 'Workspace',
+    }[data.mode],
+    name: data.name,
     triggers: data.triggers || [],
     url: data.url,
     webhookType:
@@ -882,6 +888,7 @@ export const mapV1Webhook = (data: Sdk.V1Webhook): types.Webhook => {
         [Sdk.V1WebhookType.DEFAULT]: 'Default',
         [Sdk.V1WebhookType.SLACK]: 'Slack',
       }[data.webhookType] || 'Unspecified',
+    workspaceId: data.workspaceId ?? 0,
   };
 };
 

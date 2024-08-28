@@ -99,6 +99,7 @@ func TestShipper(t *testing.T) {
 			},
 		},
 		WebhookType: WebhookTypeDefault,
+		Mode:        WebhookModeWorkspace,
 	}))
 	// And one that just fires once.
 	require.NoError(t, AddWebhook(ctx, &Webhook{
@@ -118,6 +119,7 @@ func TestShipper(t *testing.T) {
 			},
 		},
 		WebhookType: WebhookTypeDefault,
+		Mode:        WebhookModeWorkspace,
 	}))
 
 	t.Log("build shipper")

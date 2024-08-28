@@ -20,6 +20,7 @@ import { FilterFormStore } from 'components/FilterForm/components/FilterFormStor
 import TableFilter from 'components/FilterForm/TableFilter';
 import MultiSortMenu from 'components/MultiSortMenu';
 import { OptionsMenu, RowHeight } from 'components/OptionsMenu';
+import { defaultProjectSettings } from 'components/Searches/Searches.settings';
 import useMobile from 'hooks/useMobile';
 import usePermissions from 'hooks/usePermissions';
 import { defaultExperimentColumns } from 'pages/F_ExpList/expListColumns';
@@ -111,6 +112,7 @@ interface Props {
   columnGroups: (V1LocationType | V1LocationType[])[];
   bannedFilterColumns?: Set<string>;
   bannedSortColumns?: Set<string>;
+  entityCopy?: string;
 }
 
 const TableActionBar: React.FC<Props> = ({
@@ -141,6 +143,7 @@ const TableActionBar: React.FC<Props> = ({
   columnGroups,
   bannedFilterColumns,
   bannedSortColumns,
+  entityCopy,
 }) => {
   const permissions = usePermissions();
   const [batchAction, setBatchAction] = useState<BatchAction>();
@@ -382,6 +385,7 @@ const TableActionBar: React.FC<Props> = ({
           <Row>
             <TableFilter
               bannedFilterColumns={bannedFilterColumns}
+              entityCopy={entityCopy}
               formStore={formStore}
               isMobile={isMobile}
               isOpenFilter={isOpenFilter}
@@ -397,6 +401,7 @@ const TableActionBar: React.FC<Props> = ({
             />
             <ColumnPickerMenu
               compare={compareViewOn}
+              defaultPinnedCount={defaultProjectSettings.pinnedColumnsCount}
               defaultVisibleColumns={defaultExperimentColumns}
               initialVisibleColumns={initialVisibleColumns}
               isMobile={isMobile}

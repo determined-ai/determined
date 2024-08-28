@@ -155,6 +155,12 @@
    distributed experiments will launch with 4 GPUs per pod (with two pods on 8-GPU nodes).
    (*Required*)
 
+-  ``slotType``: Specifies the type of the slot that Determined will deploy. Valid options are
+   ``cpu`` for CPU training, ``gpu`` or ``cuda`` for Nvidia GPUs, and ``rocm`` for AMD GPUs.
+   Defaults to ``gpu``.
+
+   The ``rocm`` slot type is an experimental feature.
+
 -  ``masterCpuRequest``: The CPU requirements for the Determined master.
 
 -  ``masterMemRequest``: The memory requirements for the Determined master.
@@ -197,13 +203,13 @@
 
    -  ``cpuImage``: Sets the default Docker image for all non-GPU tasks. If a Docker image is
       specified in the :ref:`experiment config <exp-environment-image>` this default is overriden.
-      Defaults to: ``determinedai/pytorch-ngc-dev:5432424``.
+      Defaults to: ``determinedai/pytorch-ngc-dev:0736b6d``.
 
    -  ``startupHook``: An optional inline script that will be executed as part of task set up.
 
    -  ``gpuImage``: Sets the default Docker image for all GPU tasks. If a Docker image is specified
       in the :ref:`experiment config <exp-environment-image>` this default is overriden. Defaults
-      to: ``determinedai/pytorch-ngc-dev:5432424``.
+      to: ``determinedai/pytorch-ngc-dev:0736b6d``.
 
    -  ``logPolicies``: Sets log policies for trials. For details, visit :ref:`log_policies
       <experiment-config-min-validation-period>`.
@@ -255,9 +261,8 @@
 
 -  ``defaultScheduler``: Configures the default scheduler that Determined will use. Currently
    supports the ``coscheduler`` option, which enables the `lightweight coscheduling plugin
-   <https://github.com/kubernetes-sigs/scheduler-plugins/tree/release-1.18/pkg/coscheduling>`__, and
-   the ``preemption`` option, which enables a priority-based preemption scheduler. Unless specified
-   as ``coscheduler``, Determined will use the default Kubernetes scheduler.
+   <https://github.com/kubernetes-sigs/scheduler-plugins/tree/release-1.18/pkg/coscheduling>`__.
+   Unless specified as ``coscheduler``, Determined will use the default Kubernetes scheduler.
 
 -  ``resourcePools``: This section contains the names of the resource pools and their linked
    namespaces. Maps to the ``resource_pools`` section from the :ref:`master configuration

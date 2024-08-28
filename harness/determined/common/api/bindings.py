@@ -10778,6 +10778,7 @@ class v1PermissionType(DetEnum):
     - PERMISSION_TYPE_MODIFY_RP_WORKSPACE_BINDINGS: Ability to bind, unbind or overwrite resource pool workspace bindings.
     - PERMISSION_TYPE_SET_WORKSPACE_NAMESPACE_BINDINGS: Ability to bind, unbind, or overwrite namespace workspace bindings.
     - PERMISSION_TYPE_SET_RESOURCE_QUOTAS: Ability to set resource quotas on workspaces.
+    - PERMISSION_TYPE_VIEW_RESOURCE_QUOTAS: Ability to view resource quotas on workspaces.
     """
     UNSPECIFIED = "PERMISSION_TYPE_UNSPECIFIED"
     ADMINISTRATE_USER = "PERMISSION_TYPE_ADMINISTRATE_USER"
@@ -10828,6 +10829,7 @@ class v1PermissionType(DetEnum):
     MODIFY_RP_WORKSPACE_BINDINGS = "PERMISSION_TYPE_MODIFY_RP_WORKSPACE_BINDINGS"
     SET_WORKSPACE_NAMESPACE_BINDINGS = "PERMISSION_TYPE_SET_WORKSPACE_NAMESPACE_BINDINGS"
     SET_RESOURCE_QUOTAS = "PERMISSION_TYPE_SET_RESOURCE_QUOTAS"
+    VIEW_RESOURCE_QUOTAS = "PERMISSION_TYPE_VIEW_RESOURCE_QUOTAS"
 
 class v1PolymorphicFilter(Printable):
     doubleRange: "typing.Optional[v1DoubleFieldFilter]" = None
@@ -12481,6 +12483,43 @@ class v1ReportTrialMetricsRequest(Printable):
             "group": self.group,
             "metrics": self.metrics.to_json(omit_unset),
         }
+        return out
+
+class v1ReportTrialProgressRequest(Printable):
+    """For bookkeeping, updates the progress of the trial as a percent torwards
+    the training length requested of it by the searcher.
+    """
+    isRaw: "typing.Optional[bool]" = None
+
+    def __init__(
+        self,
+        *,
+        progress: float,
+        trialId: int,
+        isRaw: "typing.Union[bool, None, Unset]" = _unset,
+    ):
+        self.progress = progress
+        self.trialId = trialId
+        if not isinstance(isRaw, Unset):
+            self.isRaw = isRaw
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1ReportTrialProgressRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "progress": float(obj["progress"]),
+            "trialId": obj["trialId"],
+        }
+        if "isRaw" in obj:
+            kwargs["isRaw"] = obj["isRaw"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "progress": dump_float(self.progress),
+            "trialId": self.trialId,
+        }
+        if not omit_unset or "isRaw" in vars(self):
+            out["isRaw"] = self.isRaw
         return out
 
 class v1ReportTrialSourceInfoRequest(Printable):
@@ -16899,25 +16938,35 @@ class v1ValidationHistoryEntry(Printable):
 class v1Webhook(Printable):
     id: "typing.Optional[int]" = None
     triggers: "typing.Optional[typing.Sequence[v1Trigger]]" = None
+    workspaceId: "typing.Optional[int]" = None
 
     def __init__(
         self,
         *,
+        mode: "v1WebhookMode",
+        name: str,
         url: str,
         webhookType: "v1WebhookType",
         id: "typing.Union[int, None, Unset]" = _unset,
         triggers: "typing.Union[typing.Sequence[v1Trigger], None, Unset]" = _unset,
+        workspaceId: "typing.Union[int, None, Unset]" = _unset,
     ):
+        self.mode = mode
+        self.name = name
         self.url = url
         self.webhookType = webhookType
         if not isinstance(id, Unset):
             self.id = id
         if not isinstance(triggers, Unset):
             self.triggers = triggers
+        if not isinstance(workspaceId, Unset):
+            self.workspaceId = workspaceId
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1Webhook":
         kwargs: "typing.Dict[str, typing.Any]" = {
+            "mode": v1WebhookMode(obj["mode"]),
+            "name": obj["name"],
             "url": obj["url"],
             "webhookType": v1WebhookType(obj["webhookType"]),
         }
@@ -16925,10 +16974,14 @@ class v1Webhook(Printable):
             kwargs["id"] = obj["id"]
         if "triggers" in obj:
             kwargs["triggers"] = [v1Trigger.from_json(x) for x in obj["triggers"]] if obj["triggers"] is not None else None
+        if "workspaceId" in obj:
+            kwargs["workspaceId"] = obj["workspaceId"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
+            "mode": self.mode.value,
+            "name": self.name,
             "url": self.url,
             "webhookType": self.webhookType.value,
         }
@@ -16936,7 +16989,20 @@ class v1Webhook(Printable):
             out["id"] = self.id
         if not omit_unset or "triggers" in vars(self):
             out["triggers"] = None if self.triggers is None else [x.to_json(omit_unset) for x in self.triggers]
+        if not omit_unset or "workspaceId" in vars(self):
+            out["workspaceId"] = self.workspaceId
         return out
+
+class v1WebhookMode(DetEnum):
+    """Enum values for webhook mode.
+    - WEBHOOK_MODE_UNSPECIFIED: Default value
+    - WEBHOOK_MODE_WORKSPACE: Webhook will be triggered by all experiment in the workspace
+    - WEBHOOK_MODE_SPECIFIC: Webhook will only be triggered by experiment with matching configuration in
+    the same workspace as the web hook
+    """
+    UNSPECIFIED = "WEBHOOK_MODE_UNSPECIFIED"
+    WORKSPACE = "WEBHOOK_MODE_WORKSPACE"
+    SPECIFIC = "WEBHOOK_MODE_SPECIFIC"
 
 class v1WebhookType(DetEnum):
     """Enum values for expected webhook types.
@@ -23424,14 +23490,12 @@ def post_ReportTrialMetrics(
 def post_ReportTrialProgress(
     session: "api.BaseSession",
     *,
-    body: float,
+    body: "v1ReportTrialProgressRequest",
     trialId: int,
 ) -> None:
     """For bookkeeping, updates the progress towards to current requested searcher
     training length.
 
-    - body: Total units completed by the trial, in terms of the unit used to configure
-the searcher.
     - trialId: The id of the trial.
     """
     _params = None
@@ -23439,7 +23503,7 @@ the searcher.
         method="POST",
         path=f"/api/v1/trials/{trialId}/progress",
         params=_params,
-        json=dump_float(body),
+        json=body.to_json(True),
         data=None,
         headers=None,
         timeout=None,

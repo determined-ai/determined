@@ -27,7 +27,7 @@ def patch_checkpoints(storage_ids_to_resources: Dict[str, Dict[str, int]]) -> No
 
     cert = certs.default_load(info.master_url)
     # With backoff retries for 64 seconds
-    sess = authentication.login_with_cache(info.master_url, cert=cert).with_retry(
+    sess = authentication.login_from_task(info.master_url, cert=cert).with_retry(
         urllib3.util.retry.Retry(total=6, backoff_factor=0.5)
     )
 

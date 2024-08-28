@@ -41,6 +41,7 @@ interface DropdownProps {
   fetchGroups: () => void;
   group: V1GroupSearchResult;
   availabeUsers: DetailedUser[];
+  onGroupsUpdate: () => void;
 }
 
 const MenuKey = {
@@ -59,6 +60,7 @@ const GroupActionDropdown = ({
   expanded,
   fetchGroups,
   fetchGroup,
+  onGroupsUpdate,
   group,
   availabeUsers,
 }: DropdownProps) => {
@@ -109,13 +111,17 @@ const GroupActionDropdown = ({
         <Button icon={<Icon name="overflow-vertical" size="small" title="Action menu" />} />
       </Dropdown>
       <AddUsersToGroupModal.Component group={group} users={availabeUsers} onClose={onFinishEdit} />
-      <EditGroupModal.Component group={group} groupRoles={groupRoles} onClose={onFinishEdit} />
-      <DeleteGroupModal.Component group={group} onClose={fetchGroups} />
+      <EditGroupModal.Component group={group} groupRoles={groupRoles} onSuccess={onFinishEdit} />
+      <DeleteGroupModal.Component group={group} onSuccess={onGroupsUpdate} />
     </div>
   );
 };
 
-const GroupManagement: React.FC = () => {
+interface Props {
+  onGroupsUpdate: () => void;
+}
+
+const GroupManagement: React.FC<Props> = ({ onGroupsUpdate }: Props) => {
   const { rbacEnabled } = useObservable(determinedStore.info);
   const [groups, setGroups] = useState<V1GroupSearchResult[]>([]);
   const [groupUsers, setGroupUsers] = useState<V1GroupDetails[]>([]);
@@ -135,6 +141,13 @@ const GroupManagement: React.FC = () => {
 
   const fetchGroups = useCallback(async (): Promise<void> => {
     if (!('tableLimit' in settings) || !('tableOffset' in settings)) return;
+    if (settings.tableOffset > 0 && settings.tableOffset === total) {
+      // handle when last group is deleted on a page
+      updateSettings({
+        tableOffset: settings.tableOffset - settings.tableLimit,
+      });
+      return;
+    }
     try {
       const response = await getGroups(
         {
@@ -154,7 +167,7 @@ const GroupManagement: React.FC = () => {
     } finally {
       setIsLoading(false);
     }
-  }, [settings]);
+  }, [settings, total, updateSettings]);
 
   const fetchGroup = useCallback(
     async (groupId: number): Promise<void> => {
@@ -251,6 +264,11 @@ const GroupManagement: React.FC = () => {
     [groupUsers, canModifyGroups, RemoveUserFromGroupModal],
   );
 
+  const handleGroupsUpdate = useCallback(() => {
+    fetchGroups();
+    onGroupsUpdate();
+  }, [fetchGroups, onGroupsUpdate]);
+
   const columns = useMemo(() => {
     const actionRenderer = (_: string, record: V1GroupSearchResult) => {
       const userGroup = groupUsers.find((gr) => gr.groupId === record.group.groupId);
@@ -267,6 +285,7 @@ const GroupManagement: React.FC = () => {
           fetchGroup={fetchGroup}
           fetchGroups={fetchGroups}
           group={record}
+          onGroupsUpdate={handleGroupsUpdate}
         />
       ) : null;
     };
@@ -303,7 +322,15 @@ const GroupManagement: React.FC = () => {
         width: DEFAULT_COLUMN_WIDTHS['action'],
       },
     ];
-  }, [canModifyGroups, expandedKeys, fetchGroup, fetchGroups, groupUsers, users]);
+  }, [
+    canModifyGroups,
+    expandedKeys,
+    fetchGroup,
+    fetchGroups,
+    groupUsers,
+    users,
+    handleGroupsUpdate,
+  ]);
 
   const table = useMemo(() => {
     return settings ? (
@@ -348,7 +375,7 @@ const GroupManagement: React.FC = () => {
         title="Groups">
         {canViewGroups && <div className={css.usersTable}>{table}</div>}
       </Section>
-      <CreateGroupModal.Component onClose={fetchGroups} />
+      <CreateGroupModal.Component onSuccess={handleGroupsUpdate} />
       {groupResult && (
         <RemoveUserFromGroupModal.Component
           fetchGroups={fetchGroups}

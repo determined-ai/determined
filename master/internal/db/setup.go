@@ -5,6 +5,7 @@ import (
 	"crypto/ed25519"
 	"database/sql"
 	"fmt"
+	"regexp"
 
 	"github.com/pkg/errors"
 	log "github.com/sirupsen/logrus"
@@ -68,6 +69,37 @@ func InitAuthKeys() error {
 	return nil
 }
 
+// checkPostgresVersion checks the version of the connected Postgres database,
+// and logs a warning if the version is unsupported.
+func checkPostgresVersion(db *PgDB) error {
+	var dbVersion string
+	err := Bun().NewSelect().ColumnExpr("version()").Scan(context.TODO(), &dbVersion)
+	if err != nil {
+		return err
+	}
+	versionRegex := regexp.MustCompile(`PostgreSQL (\d+)(?:\.\d+)?`)
+
+	matches := versionRegex.FindStringSubmatch(dbVersion)
+	if len(matches) < 2 {
+		return fmt.Errorf("could not parse Postgres version: %s", dbVersion)
+	}
+	version := matches[1]
+	// TODO (CM-443): Bump this to 12 once Postgres 12 has reached EOL.
+	if version <= "11" {
+		log.Errorf(
+			"Postgres %s has reached its end of life. Upgrading to a supported version is strongly recommended.",
+			version,
+		)
+	} else if version == "12" {
+		// TODO (CM-443): Remove above warning once Postgres 12 has reached EOL.
+		log.Warnf(
+			"Postgres %s will reach it's end of life on November 14, 2024. Please upgrade to a supported version.",
+			version)
+	}
+
+	return nil
+}
+
 // Connect connects to the database, but doesn't run migrations & inits.
 func Connect(opts *config.DBConfig) (*PgDB, error) {
 	dbURL := fmt.Sprintf(cnxTpl, opts.User, opts.Password, opts.Host, opts.Port, opts.Name)
@@ -79,6 +111,11 @@ func Connect(opts *config.DBConfig) (*PgDB, error) {
 	}
 
 	db.sql.SetMaxOpenConns(maxOpenConns)
+
+	err = checkPostgresVersion(db)
+	if err != nil {
+		log.Errorf("error checking Postgres version: %s", err)
+	}
 
 	return db, nil
 }

@@ -355,7 +355,7 @@ func TestPreemption(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			closeDB, _, id, q, exitFuture := requireStarted(t, func(ar *sproto.AllocateRequest) {
-				ar.Preemptible = true
+				ar.Preemption.Preemptible = true
 			})
 			defer closeDB()
 			defer requireKilled(t, id, exitFuture)
@@ -623,7 +623,10 @@ func stubAllocateRequest(task *model.Task) sproto.AllocateRequest {
 		TaskID:       task.TaskID,
 		AllocationID: model.AllocationID(fmt.Sprintf("%s.0", task.TaskID)),
 		SlotsNeeded:  2,
-		Preemptible:  true,
+		Preemption: sproto.PreemptionConfig{
+			Preemptible:     true,
+			TimeoutDuration: time.Hour,
+		},
 		ResourcePool: stubResourcePoolName,
 	}
 }

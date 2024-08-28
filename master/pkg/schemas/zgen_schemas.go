@@ -919,6 +919,13 @@ var (
             ],
             "default": false
         },
+        "preemption_timeout": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": null
+        },
         "profiling": {
             "type": [
                 "object",

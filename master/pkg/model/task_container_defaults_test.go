@@ -18,9 +18,12 @@ import (
 func TestEnvironmentVarsDefaultMerging(t *testing.T) {
 	defaultGpuType := "tesla"
 	defaultSlotsPerNode := 99
+	defaultPreemptionTimeout := DefaultPreemptionTimeout
 
 	expGpuType := "a100"
 	expSlurmSlotsPerNode := 8
+	expPreemptionTimeout := 60
+
 	expSlurmConfig := expconf.SlurmConfigV0{
 		RawGpuType:      &expGpuType,
 		RawSlotsPerNode: &expSlurmSlotsPerNode,
@@ -44,6 +47,7 @@ func TestEnvironmentVarsDefaultMerging(t *testing.T) {
 			RawSlotsPerNode: &defaultSlotsPerNode,
 			RawSbatchArgs:   []string{"-WpbsTaskDefault"},
 		},
+		PreemptionTimeout: defaultPreemptionTimeout,
 	}
 	conf := expconf.ExperimentConfig{
 		RawEnvironment: &expconf.EnvironmentConfig{
@@ -52,8 +56,9 @@ func TestEnvironmentVarsDefaultMerging(t *testing.T) {
 				RawCUDA: []string{"extra=expconf"},
 			},
 		},
-		RawSlurmConfig: &expSlurmConfig,
-		RawPbsConfig:   &expPbsConfig,
+		RawSlurmConfig:       &expSlurmConfig,
+		RawPbsConfig:         &expPbsConfig,
+		RawPreemptionTimeout: &expPreemptionTimeout,
 	}
 
 	defaults.MergeIntoExpConfig(&conf)
@@ -69,6 +74,7 @@ func TestEnvironmentVarsDefaultMerging(t *testing.T) {
 	require.Equal(t, []string{"-SlrumTaskDefault", "-SlrumExpConf"}, conf.RawSlurmConfig.SbatchArgs())
 	require.Equal(t, defaultSlotsPerNode, *conf.RawPbsConfig.RawSlotsPerNode)
 	require.Equal(t, []string{"-WpbsTaskDefault", "-PbsExpConf"}, conf.RawPbsConfig.SbatchArgs())
+	require.Equal(t, expPreemptionTimeout, *conf.RawPreemptionTimeout)
 }
 
 func TestTaskContainerDefaultsConfigMerging(t *testing.T) {
@@ -184,6 +190,7 @@ func TestTaskContainerDefaultsConfigMerging(t *testing.T) {
 				GLOOPortRange:          "5-6",
 				ShmSizeBytes:           6789,
 				NetworkMode:            "bridge",
+				PreemptionTimeout:      60,
 				CPUPodSpec: &k8sV1.Pod{
 					Spec: k8sV1.PodSpec{
 						Volumes: []k8sV1.Volume{
@@ -270,6 +277,7 @@ func TestTaskContainerDefaultsConfigMerging(t *testing.T) {
 				GLOOPortRange:          "5-6",
 				ShmSizeBytes:           6789,
 				NetworkMode:            "bridge",
+				PreemptionTimeout:      60,
 				CPUPodSpec: &k8sV1.Pod{
 					Spec: k8sV1.PodSpec{
 						Volumes: []k8sV1.Volume{
@@ -438,8 +446,9 @@ func TestLogPatternUnmarshal(t *testing.T) {
 		}`)), &tcd))
 
 	expected := TaskContainerDefaultsConfig{
-		ShmSizeBytes: 4294967296,
-		NetworkMode:  "bridge",
+		ShmSizeBytes:      4294967296,
+		NetworkMode:       "bridge",
+		PreemptionTimeout: DefaultPreemptionTimeout,
 		LogPolicies: expconf.LogPoliciesConfig{
 			expconf.LogPolicy{RawPattern: "test", RawAction: expconf.LogAction{
 				RawExcludeNode: &expconf.LogActionExcludeNode{},

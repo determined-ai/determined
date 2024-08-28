@@ -1,6 +1,6 @@
 {{- if .Values.defaultScheduler}}
 {{- $schedulerType := .Values.defaultScheduler | trim}}
-{{- if or (eq $schedulerType "coscheduler") (eq $schedulerType "preemption")}}
+{{- if (eq $schedulerType "coscheduler") }}
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -31,11 +31,7 @@ spec:
         - --scheduler-name=coscheduler
         - --config=/etc/config/config.yaml
         name: {{ $schedulerType }}
-        {{- if eq $schedulerType "preemption"}}
-        image: "{{ .Values.defaultImages.kubeSchedulerPreemption }}"
-        {{- else }}
         image: "{{ .Values.defaultImages.kubeScheduler }}"
-        {{- end}}
         imagePullPolicy: "Always"
         livenessProbe:
           httpGet:

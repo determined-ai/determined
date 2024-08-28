@@ -6,9 +6,8 @@
  Use Checkpoints
 *****************
 
-When a model is trained with Determined, checkpoints are automatically saved to external storage.
-These checkpoints can then be exported for use outside Determined. See :ref:`use-trained-models` for
-details.
+When a model is trained with Determined, :ref:`checkpoints <checkpoints>` are automatically saved to
+external storage. These checkpoints can then be exported for use outside Determined.
 
 *********************
  Archive Experiments

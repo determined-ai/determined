@@ -85,6 +85,7 @@
     "get-started/basic",
     "get-started/example-solutions/_index",
     "get-started/webui-qs",
+    "get-started/webui-qs-multi",
     "getting-started",
     "how-to/custom-env",
     "how-to/distributed-training",

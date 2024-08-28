@@ -24,6 +24,8 @@ code with an object-oriented interface.
    :members:
    :member-order: bysource
 
+.. _python-sdk-checkpoint:
+
 ****************
  ``Checkpoint``
 ****************

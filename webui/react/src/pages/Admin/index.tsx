@@ -1,6 +1,6 @@
 import Pivot, { PivotProps } from 'hew/Pivot';
 import { Loadable } from 'hew/utils/loadable';
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import Page from 'components/Page';
@@ -45,7 +45,7 @@ const SettingsContent: React.FC = () => {
   const getGroupTotal = useCallback(async () => {
     const response = await getGroups(
       {
-        limit: 1,
+        limit: 0,
         offset: 0,
       },
       { signal: canceler.current.signal },
@@ -65,7 +65,11 @@ const SettingsContent: React.FC = () => {
     [navigate],
   );
 
-  const tabItems: PivotProps['items'] = useMemo(() => {
+  const handleUserCreate = () => {
+    userStore.fetchUsers();
+  };
+
+  const tabItems: () => PivotProps['items'] = () => {
     const items: PivotProps['items'] = [];
 
     if (canAdministrateUsers) {
@@ -73,7 +77,7 @@ const SettingsContent: React.FC = () => {
         _: () => null,
         Loaded: (users) => {
           items.push({
-            children: <UserManagement />,
+            children: <UserManagement onUserCreate={handleUserCreate} />,
             key: TAB_KEYS[TabType.UserManagement],
             label: `${TabType.UserManagement} (${users.length})`,
           });
@@ -83,21 +87,21 @@ const SettingsContent: React.FC = () => {
 
     if (rbacEnabled) {
       items.push({
-        children: <GroupManagement />,
+        children: <GroupManagement onGroupsUpdate={getGroupTotal} />,
         key: TAB_KEYS[TabType.GroupManagement],
         label: `${TabType.GroupManagement} ${totalGroup !== undefined ? `(${totalGroup})` : ''}`,
       });
     }
 
     return items;
-  }, [canAdministrateUsers, rbacEnabled, totalGroup, loadableUsers]);
+  };
 
   return (
     <Pivot
       activeKey={tab}
       defaultActiveKey={tabKey}
       destroyInactiveTabPane
-      items={tabItems}
+      items={tabItems()}
       onChange={handleTabChange}
     />
   );
