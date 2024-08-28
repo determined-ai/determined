@@ -23,6 +23,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
+	"github.com/determined-ai/determined/proto/pkg/logv1"
 
 	"github.com/google/uuid"
 )
@@ -37,6 +38,13 @@ type WebhookManager struct {
 	mu                 sync.RWMutex
 	regexToTriggers    map[string]regexTriggers
 	expToWebhookConfig map[int]*expconf.WebhooksConfigV0
+}
+
+// CustomTriggerData is the data for custom trigger.
+type CustomTriggerData struct {
+	Title       string         `json:"title"`
+	Description string         `json:"description"`
+	Level       logv1.LogLevel `json:"level"`
 }
 
 // New creates a new webhook manager.
@@ -272,6 +280,115 @@ func (l *WebhookManager) deleteWebhook(ctx context.Context, id WebhookID) error 
 	return nil
 }
 
+func handleCustomTriggerData(ctx context.Context, data CustomTriggerData, experimentID int, trialID *int) error {
+	var m struct {
+		bun.BaseModel `bun:"table:experiments"`
+		model.Experiment
+		ConfigBytes []byte `bun:"config"`
+	}
+	err := db.Bun().NewSelect().Model(&m).ExcludeColumn("username").Where("id = ?", experimentID).Scan(ctx)
+	if err != nil {
+		return fmt.Errorf("error getting experiment from id %d: %w", experimentID, err)
+	}
+
+	activeConfig, err := expconf.ParseAnyExperimentConfigYAML(m.ConfigBytes)
+	if err != nil {
+		return fmt.Errorf("error parsing experiment config : %w", err)
+	}
+	integrationsConfig := activeConfig.Integrations()
+	if integrationsConfig == nil {
+		return nil
+	}
+	webhookConfig := integrationsConfig.Webhooks
+	if webhookConfig == nil || webhookConfig.Exclude {
+		return nil
+	}
+
+	workspaceID, err := experiment.GetWorkspaceFromExperiment(ctx, &m.Experiment)
+	if err != nil {
+		return fmt.Errorf("error getting workspace from experiment : %w", err)
+	}
+
+	var es []Event
+	if webhookConfig.WebhookID != nil {
+		for _, webhookID := range *webhookConfig.WebhookID {
+			webhook, err := GetWebhook(ctx, webhookID)
+			if err != nil {
+				return fmt.Errorf("error getting webhook from id %d: %w", webhookID, err)
+			}
+			err = generateEventForCustomTrigger(
+				ctx, &es, webhook.Triggers, webhook.WebhookType, webhook.URL, m.Experiment, activeConfig, data, trialID)
+			if err != nil {
+				return err
+			}
+		}
+	}
+	if webhookConfig.WebhookName != nil {
+		for _, webhookName := range *webhookConfig.WebhookName {
+			webhook, err := getWebhookByName(ctx, webhookName, int(workspaceID))
+			if err != nil {
+				return fmt.Errorf("error getting webhook from name %s: %w", webhookName, err)
+			}
+			err = generateEventForCustomTrigger(
+				ctx, &es, webhook.Triggers, webhook.WebhookType, webhook.URL, m.Experiment, activeConfig, data, trialID)
+			if err != nil {
+				return err
+			}
+		}
+	}
+
+	if len(es) == 0 {
+		return nil
+	}
+
+	if _, err := db.Bun().NewInsert().Model(&es).Exec(ctx); err != nil {
+		return fmt.Errorf("report experiment state changed inserting event trigger: %w", err)
+	}
+
+	singletonShipper.Wake()
+	return nil
+}
+
+func generateEventForCustomTrigger(
+	ctx context.Context,
+	es *[]Event,
+	triggers Triggers,
+	webhookType WebhookType,
+	webhookURL string,
+	e model.Experiment,
+	activeConfig expconf.ExperimentConfig,
+	data CustomTriggerData,
+	trialID *int,
+) error {
+	for _, t := range triggers {
+		if t.TriggerType != TriggerTypeCustom {
+			continue
+		}
+		p, err := generateEventPayload(
+			ctx, webhookType, e, activeConfig, e.State, TriggerTypeCustom, &data, trialID,
+		)
+		if err != nil {
+			return fmt.Errorf("error generating event payload: %w", err)
+		}
+		*es = append(*es, Event{Payload: p, URL: webhookURL})
+	}
+	return nil
+}
+
+func getWebhookByName(ctx context.Context, webhookName string, workspaceID int) (*Webhook, error) {
+	webhook := Webhook{}
+	err := db.Bun().NewSelect().
+		Model(&webhook).
+		Relation("Triggers").
+		Where("name = ?", webhookName).
+		Where("workspace_id = ?", workspaceID).
+		Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+	return &webhook, nil
+}
+
 // GetWebhook returns a single Webhooks from the DB.
 func GetWebhook(ctx context.Context, webhookID int) (*Webhook, error) {
 	webhook := Webhook{}
@@ -337,7 +454,7 @@ func ReportExperimentStateChanged(
 			continue
 		}
 		p, err := generateEventPayload(
-			ctx, t.Webhook.WebhookType, e, activeConfig, e.State, TriggerTypeStateChange,
+			ctx, t.Webhook.WebhookType, e, activeConfig, e.State, TriggerTypeStateChange, nil, nil,
 		)
 		if err != nil {
 			return fmt.Errorf("error generating event payload: %w", err)
@@ -520,9 +637,14 @@ func generateEventPayload(
 	activeConfig expconf.ExperimentConfig,
 	expState model.State,
 	tT TriggerType,
+	eventData *CustomTriggerData, trialID *int,
 ) ([]byte, error) {
 	switch wt {
 	case WebhookTypeDefault:
+		experiment := experimentToWebhookPayload(e, activeConfig)
+		if trialID != nil {
+			experiment.TrialID = *trialID
+		}
 		pJSON, err := json.Marshal(EventPayload{
 			ID:        uuid.New(),
 			Type:      tT,
@@ -531,7 +653,8 @@ func generateEventPayload(
 				State: expState,
 			},
 			Data: EventData{
-				Experiment: experimentToWebhookPayload(e, activeConfig),
+				Experiment: experiment,
+				CustomData: eventData,
 			},
 		})
 		if err != nil {
@@ -539,7 +662,7 @@ func generateEventPayload(
 		}
 		return pJSON, nil
 	case WebhookTypeSlack:
-		slackJSON, err := generateSlackPayload(ctx, e, activeConfig)
+		slackJSON, err := generateSlackPayload(ctx, e, activeConfig, eventData, trialID)
 		if err != nil {
 			return nil, err
 		}
@@ -550,7 +673,8 @@ func generateEventPayload(
 }
 
 func generateSlackPayload(
-	ctx context.Context, e model.Experiment, activeConfig expconf.ExperimentConfig,
+	ctx context.Context, e model.Experiment,
+	activeConfig expconf.ExperimentConfig, eventData *CustomTriggerData, trialID *int,
 ) ([]byte, error) {
 	var status string
 	var eURL string
@@ -644,6 +768,12 @@ func generateSlackPayload(
 			Text: fmt.Sprintf("*Project*: %v", pName),
 		})
 	}
+	if trialID != nil {
+		expBlockFields = append(expBlockFields, SlackField{
+			Type: "mrkdwn",
+			Text: fmt.Sprintf("*Trial ID*: %d", *trialID),
+		})
+	}
 	experimentBlock := SlackBlock{
 		Text: SlackField{
 			Type: "mrkdwn",
@@ -658,6 +788,30 @@ func generateSlackPayload(
 			Type: "plain_text",
 		},
 		Type: "section",
+	}
+	if eventData != nil {
+		eventDataFields := []SlackField{
+			{
+				Type: "mrkdwn",
+				Text: fmt.Sprintf("*Level*: %v", eventData.Level),
+			},
+			{
+				Type: "mrkdwn",
+				Text: fmt.Sprintf("*Title*: %v", eventData.Title),
+			},
+			{
+				Type: "mrkdwn",
+				Text: fmt.Sprintf("*Description*: %v", eventData.Description),
+			},
+		}
+		messageBlock = SlackBlock{
+			Text: SlackField{
+				Text: "Event Data",
+				Type: "plain_text",
+			},
+			Type:   "section",
+			Fields: &eventDataFields,
+		}
 	}
 	attachment := SlackAttachment{
 		Color:  c,

@@ -182,6 +182,13 @@ const WebhooksView: React.FC = () => {
             </li>
           );
         }
+        if (t.triggerType === V1TriggerType.CUSTOM) {
+          return (
+            <li className={css.listBadge} key={t.id}>
+              <Badge>CUSTOM</Badge>
+            </li>
+          );
+        }
         return <></>;
       });
 

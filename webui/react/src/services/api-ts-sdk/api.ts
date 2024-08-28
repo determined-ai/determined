@@ -2535,6 +2535,31 @@ export interface V1CurrentUserResponse {
     user: V1User;
 }
 /**
+ * 
+ * @export
+ * @interface V1CustomWebhookEventData
+ */
+export interface V1CustomWebhookEventData {
+    /**
+     * The level for the event data.
+     * @type {V1LogLevel}
+     * @memberof V1CustomWebhookEventData
+     */
+    level?: V1LogLevel;
+    /**
+     * The title for the event data.
+     * @type {string}
+     * @memberof V1CustomWebhookEventData
+     */
+    title?: string;
+    /**
+     * The description for the event data.
+     * @type {string}
+     * @memberof V1CustomWebhookEventData
+     */
+    description?: string;
+}
+/**
  * One datapoint in a series of metrics from a trial in batch.
  * @export
  * @interface V1DataPoint
@@ -8386,6 +8411,38 @@ export interface V1PostUserSettingRequest {
 export interface V1PostUserSettingResponse {
 }
 /**
+ * Request for triggering custom trigger.
+ * @export
+ * @interface V1PostWebhookEventDataRequest
+ */
+export interface V1PostWebhookEventDataRequest {
+    /**
+     * The event data for custom webhook trigger.
+     * @type {V1CustomWebhookEventData}
+     * @memberof V1PostWebhookEventDataRequest
+     */
+    data: V1CustomWebhookEventData;
+    /**
+     * The id of the experiment.
+     * @type {number}
+     * @memberof V1PostWebhookEventDataRequest
+     */
+    experimentId: number;
+    /**
+     * The id of the trial.
+     * @type {number}
+     * @memberof V1PostWebhookEventDataRequest
+     */
+    trialId?: number;
+}
+/**
+ * Response to PostWebhookEventDataRequest.
+ * @export
+ * @interface V1PostWebhookEventDataResponse
+ */
+export interface V1PostWebhookEventDataResponse {
+}
+/**
  * Response to PostWebhookRequest.
  * @export
  * @interface V1PostWebhookResponse
@@ -11931,7 +11988,7 @@ export interface V1Trigger {
     webhookId?: number;
 }
 /**
- * Enum values for expected trigger types.   - TRIGGER_TYPE_UNSPECIFIED: Default value  - TRIGGER_TYPE_EXPERIMENT_STATE_CHANGE: For an experiment changing state  - TRIGGER_TYPE_METRIC_THRESHOLD_EXCEEDED: For metrics emitted during training.  - TRIGGER_TYPE_TASK_LOG: For task logs.
+ * Enum values for expected trigger types.   - TRIGGER_TYPE_UNSPECIFIED: Default value  - TRIGGER_TYPE_EXPERIMENT_STATE_CHANGE: For an experiment changing state  - TRIGGER_TYPE_METRIC_THRESHOLD_EXCEEDED: For metrics emitted during training.  - TRIGGER_TYPE_TASK_LOG: For task logs.  - TRIGGER_TYPE_CUSTOM: For custom alert.
  * @export
  * @enum {string}
  */
@@ -11940,6 +11997,7 @@ export const V1TriggerType = {
     EXPERIMENTSTATECHANGE: 'TRIGGER_TYPE_EXPERIMENT_STATE_CHANGE',
     METRICTHRESHOLDEXCEEDED: 'TRIGGER_TYPE_METRIC_THRESHOLD_EXCEEDED',
     TASKLOG: 'TRIGGER_TYPE_TASK_LOG',
+    CUSTOM: 'TRIGGER_TYPE_CUSTOM',
 } as const
 export type V1TriggerType = ValueOf<typeof V1TriggerType>
 /**
@@ -34895,6 +34953,44 @@ export const WebhooksApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Trigger custom trigger of webhooks.
+         * @param {V1PostWebhookEventDataRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postWebhookEventData(body: V1PostWebhookEventDataRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling postWebhookEventData.');
+            }
+            const localVarPath = `/api/v1/webhooks/custom`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Test a webhook.
          * @param {number} id The id of the webhook.
          * @param {*} [options] Override http request option.
@@ -34996,6 +35092,25 @@ export const WebhooksApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Trigger custom trigger of webhooks.
+         * @param {V1PostWebhookEventDataRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postWebhookEventData(body: V1PostWebhookEventDataRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostWebhookEventDataResponse> {
+            const localVarFetchArgs = WebhooksApiFetchParamCreator(configuration).postWebhookEventData(body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Test a webhook.
          * @param {number} id The id of the webhook.
          * @param {*} [options] Override http request option.
@@ -35053,6 +35168,16 @@ export const WebhooksApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Trigger custom trigger of webhooks.
+         * @param {V1PostWebhookEventDataRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        postWebhookEventData(body: V1PostWebhookEventDataRequest, options?: any) {
+            return WebhooksApiFp(configuration).postWebhookEventData(body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Test a webhook.
          * @param {number} id The id of the webhook.
          * @param {*} [options] Override http request option.
@@ -35104,6 +35229,18 @@ export class WebhooksApi extends BaseAPI {
      */
     public postWebhook(body: V1Webhook, options?: any) {
         return WebhooksApiFp(this.configuration).postWebhook(body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Trigger custom trigger of webhooks.
+     * @param {V1PostWebhookEventDataRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof WebhooksApi
+     */
+    public postWebhookEventData(body: V1PostWebhookEventDataRequest, options?: any) {
+        return WebhooksApiFp(this.configuration).postWebhookEventData(body, options)(this.fetch, this.basePath)
     }
     
     /**

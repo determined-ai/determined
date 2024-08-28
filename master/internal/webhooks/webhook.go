@@ -155,6 +155,9 @@ const (
 
 	// TriggerTypeTaskLog represents a trigger for a task logs.
 	TriggerTypeTaskLog TriggerType = "TASK_LOG"
+
+	// TriggerTypeCustom represents a custom trigger.
+	TriggerTypeCustom TriggerType = "CUSTOM"
 )
 
 const (
@@ -205,6 +208,8 @@ func TriggerTypeFromProto(t webhookv1.TriggerType) TriggerType {
 		return TriggerTypeStateChange
 	case webhookv1.TriggerType_TRIGGER_TYPE_TASK_LOG:
 		return TriggerTypeTaskLog
+	case webhookv1.TriggerType_TRIGGER_TYPE_CUSTOM:
+		return TriggerTypeCustom
 	default:
 		// TODO(???): prob don't panic
 		panic(fmt.Errorf("missing mapping for trigger %s to SQL", t))
@@ -242,6 +247,8 @@ func (t TriggerType) Proto() webhookv1.TriggerType {
 		return webhookv1.TriggerType_TRIGGER_TYPE_METRIC_THRESHOLD_EXCEEDED
 	case TriggerTypeTaskLog:
 		return webhookv1.TriggerType_TRIGGER_TYPE_TASK_LOG
+	case TriggerTypeCustom:
+		return webhookv1.TriggerType_TRIGGER_TYPE_CUSTOM
 	default:
 		return webhookv1.TriggerType_TRIGGER_TYPE_UNSPECIFIED
 	}
@@ -327,6 +334,7 @@ type EventData struct {
 	TestData   *string            `json:"data,omitempty"`
 	Experiment *ExperimentPayload `json:"experiment,omitempty"`
 	TaskLog    *TaskLogPayload    `json:"task_log,omitempty"`
+	CustomData *CustomTriggerData `json:"custom_data,omitempty"`
 }
 
 // ExperimentPayload is the webhook request representation of an experiment.
@@ -339,6 +347,7 @@ type ExperimentPayload struct {
 	SlotsPerTrial int          `json:"slots_per_trial"`
 	WorkspaceName string       `json:"workspace"`
 	ProjectName   string       `json:"project"`
+	TrialID       int          `json:"trial_id,omitempty"`
 }
 
 // TaskLogPayload is the webhook request representation of a trigger of a task log.

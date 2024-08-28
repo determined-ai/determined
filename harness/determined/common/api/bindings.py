@@ -3121,6 +3121,48 @@ class v1CurrentUserResponse(Printable):
         }
         return out
 
+class v1CustomWebhookEventData(Printable):
+    description: "typing.Optional[str]" = None
+    level: "typing.Optional[v1LogLevel]" = None
+    title: "typing.Optional[str]" = None
+
+    def __init__(
+        self,
+        *,
+        description: "typing.Union[str, None, Unset]" = _unset,
+        level: "typing.Union[v1LogLevel, None, Unset]" = _unset,
+        title: "typing.Union[str, None, Unset]" = _unset,
+    ):
+        if not isinstance(description, Unset):
+            self.description = description
+        if not isinstance(level, Unset):
+            self.level = level
+        if not isinstance(title, Unset):
+            self.title = title
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1CustomWebhookEventData":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "description" in obj:
+            kwargs["description"] = obj["description"]
+        if "level" in obj:
+            kwargs["level"] = v1LogLevel(obj["level"]) if obj["level"] is not None else None
+        if "title" in obj:
+            kwargs["title"] = obj["title"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "description" in vars(self):
+            out["description"] = self.description
+        if not omit_unset or "level" in vars(self):
+            out["level"] = None if self.level is None else self.level.value
+        if not omit_unset or "title" in vars(self):
+            out["title"] = self.title
+        return out
+
 class v1DataPoint(Printable):
     """One datapoint in a series of metrics from a trial in batch."""
     epoch: "typing.Optional[float]" = None
@@ -11545,6 +11587,41 @@ class v1PostUserSettingRequest(Printable):
         }
         return out
 
+class v1PostWebhookEventDataRequest(Printable):
+    """Request for triggering custom trigger."""
+    trialId: "typing.Optional[int]" = None
+
+    def __init__(
+        self,
+        *,
+        data: "v1CustomWebhookEventData",
+        experimentId: int,
+        trialId: "typing.Union[int, None, Unset]" = _unset,
+    ):
+        self.data = data
+        self.experimentId = experimentId
+        if not isinstance(trialId, Unset):
+            self.trialId = trialId
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PostWebhookEventDataRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "data": v1CustomWebhookEventData.from_json(obj["data"]),
+            "experimentId": obj["experimentId"],
+        }
+        if "trialId" in obj:
+            kwargs["trialId"] = obj["trialId"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "data": self.data.to_json(omit_unset),
+            "experimentId": self.experimentId,
+        }
+        if not omit_unset or "trialId" in vars(self):
+            out["trialId"] = self.trialId
+        return out
+
 class v1PostWebhookResponse(Printable):
     """Response to PostWebhookRequest."""
 
@@ -16366,11 +16443,13 @@ class v1TriggerType(DetEnum):
     - TRIGGER_TYPE_EXPERIMENT_STATE_CHANGE: For an experiment changing state
     - TRIGGER_TYPE_METRIC_THRESHOLD_EXCEEDED: For metrics emitted during training.
     - TRIGGER_TYPE_TASK_LOG: For task logs.
+    - TRIGGER_TYPE_CUSTOM: For custom alert.
     """
     UNSPECIFIED = "TRIGGER_TYPE_UNSPECIFIED"
     EXPERIMENT_STATE_CHANGE = "TRIGGER_TYPE_EXPERIMENT_STATE_CHANGE"
     METRIC_THRESHOLD_EXCEEDED = "TRIGGER_TYPE_METRIC_THRESHOLD_EXCEEDED"
     TASK_LOG = "TRIGGER_TYPE_TASK_LOG"
+    CUSTOM = "TRIGGER_TYPE_CUSTOM"
 
 class v1UnarchiveExperimentsRequest(Printable):
     """Unarchive multiple experiments."""
@@ -23169,6 +23248,27 @@ def post_PostWebhook(
     if _resp.status_code == 200:
         return v1PostWebhookResponse.from_json(_resp.json())
     raise APIHttpError("post_PostWebhook", _resp)
+
+def post_PostWebhookEventData(
+    session: "api.BaseSession",
+    *,
+    body: "v1PostWebhookEventDataRequest",
+) -> None:
+    """Trigger custom trigger of webhooks."""
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/webhooks/custom",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("post_PostWebhookEventData", _resp)
 
 def post_PostWorkspace(
     session: "api.BaseSession",
