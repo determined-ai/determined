@@ -327,6 +327,6 @@ type LongLivedToken struct {
 	UserID         UserID      `db:"user_id" json:"user_id"`
 	TokenValue     string      `bun:"-"`
 	TokenValueHash null.String `db:"token_value_hash" json:"token_value_hash"`
-	ExpiryTime     time.Time   `db:"expires_at" json:"expires_at"`
+	ExpiresAt      time.Time   `db:"expires_at" json:"expires_at"`
 	CreatedAt      time.Time   `db:"created_at" json:"created_at"`
 }

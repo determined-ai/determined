@@ -19,15 +19,15 @@ const (
 	TokenExpirationDuration = 30 * 24 * time.Hour
 )
 
-// LongLivedTokenOption is the return type for WithTokenExpiryTime helper function.
+// LongLivedTokenOption is the return type for WithTokenExpiresAt helper function.
 // It takes a pointer to model.LongLivedToken and modifies it.
 // It’s used to apply optional settings to the LongLivedToken object.
 type LongLivedTokenOption func(f *model.LongLivedToken)
 
-// WithTokenExpiryTime function will add specified expiryTime (if any) to the long lived token table.
-func WithTokenExpiryTime(expiryTime *time.Time) LongLivedTokenOption {
+// WithTokenExpiresAt function will add specified expiresAt (if any) to the long lived token table.
+func WithTokenExpiresAt(expiresAt *time.Time) LongLivedTokenOption {
 	return func(s *model.LongLivedToken) {
-		s.ExpiryTime = *expiryTime
+		s.ExpiresAt = *expiresAt
 	}
 }
 
@@ -35,12 +35,12 @@ func WithTokenExpiryTime(expiryTime *time.Time) LongLivedTokenOption {
 func CreateLongLivedToken(ctx context.Context, user *model.User, opts ...LongLivedTokenOption) (string, error) {
 	// Populate the default values in the model.
 	longLivedToken := &model.LongLivedToken{
-		UserID:     user.ID,
-		CreatedAt:  time.Now(),
-		ExpiryTime: time.Now().Add(TokenExpirationDuration),
+		UserID:    user.ID,
+		CreatedAt: time.Now(),
+		ExpiresAt: time.Now().Add(TokenExpirationDuration),
 	}
 
-	// Update the optional ExpiryTime field (if passed)
+	// Update the optional ExpiresAt field (if passed)
 	for _, opt := range opts {
 		opt(longLivedToken)
 	}
