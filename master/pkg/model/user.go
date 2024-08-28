@@ -316,3 +316,17 @@ func HashPassword(password string) (string, error) {
 	}
 	return string(passwordHash), nil
 }
+
+// TokenID is the type for user token IDs.
+type TokenID int
+
+// LongLivedToken corresponds to a row in the "long_lived_tokens" DB table.
+type LongLivedToken struct {
+	bun.BaseModel  `bun:"table:long_lived_tokens"`
+	ID             TokenID     `db:"id" json:"id"`
+	UserID         UserID      `db:"user_id" json:"user_id"`
+	TokenValue     string      `bun:"-"`
+	TokenValueHash null.String `db:"token_value_hash" json:"token_value_hash"`
+	ExpiryTime     time.Time   `db:"expires_at" json:"expires_at"`
+	CreatedAt      time.Time   `db:"created_at" json:"created_at"`
+}
