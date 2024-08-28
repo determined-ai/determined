@@ -23,7 +23,7 @@ func (m *Master) getTasks(c echo.Context) (interface{}, error) {
 		}
 
 		if !isExp {
-			_, err = canAccessNTSCTask(ctx, curUser, summary[allocationID].TaskID)
+			_, _, err = canAccessNTSCTask(ctx, curUser, summary[allocationID].TaskID)
 		} else {
 			err = expauth.AuthZProvider.Get().CanGetExperiment(ctx, curUser, exp)
 		}

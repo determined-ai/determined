@@ -16,13 +16,13 @@ func SetDefault(w *WebhookManager) {
 }
 
 // ScanLogs sends webhooks for task logs. This should be called wherever we add task logs.
-func ScanLogs(ctx context.Context, logs []*model.TaskLog) error {
+func ScanLogs(ctx context.Context, logs []*model.TaskLog, workspaceID model.AccessScopeID, expID *int) error {
 	if defaultManager == nil {
 		log.Error("webhook manager is uninitialized")
 		return nil
 	}
 
-	return defaultManager.scanLogs(ctx, logs)
+	return defaultManager.scanLogs(ctx, logs, workspaceID, expID)
 }
 
 // AddWebhook adds a Webhook and its Triggers to the DB.

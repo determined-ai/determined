@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"math"
 	"regexp"
+	"slices"
 	"sync"
 	"time"
 
@@ -14,10 +15,13 @@ import (
 
 	conf "github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/logpattern"
 	"github.com/determined-ai/determined/master/internal/project"
 	"github.com/determined-ai/determined/master/internal/workspace"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
+	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 
 	"github.com/google/uuid"
@@ -30,8 +34,9 @@ type regexTriggers struct {
 
 // WebhookManager manages webhooks.
 type WebhookManager struct {
-	mu              sync.RWMutex
-	regexToTriggers map[string]regexTriggers
+	mu                 sync.RWMutex
+	regexToTriggers    map[string]regexTriggers
+	expToWebhookConfig map[int]*expconf.WebhooksConfigV0
 }
 
 // New creates a new webhook manager.
@@ -44,7 +49,8 @@ func New(ctx context.Context) (*WebhookManager, error) {
 	}
 
 	m := &WebhookManager{
-		regexToTriggers: make(map[string]regexTriggers),
+		regexToTriggers:    make(map[string]regexTriggers),
+		expToWebhookConfig: make(map[int]*expconf.WebhooksConfigV0),
 	}
 	if err := m.addTriggers(triggers); err != nil {
 		return nil, fmt.Errorf("adding each trigger: %w", err)
@@ -108,8 +114,78 @@ func (l *WebhookManager) removeTriggers(triggers []*Trigger) error {
 	return nil
 }
 
-func (l *WebhookManager) scanLogs(ctx context.Context, logs []*model.TaskLog) error {
+func (l *WebhookManager) getWebhookConfig(ctx context.Context, expID *int) (*expconf.WebhooksConfigV0, error) {
+	if expID == nil {
+		return nil, nil
+	}
+
+	l.mu.RLock()
+	defer l.mu.RUnlock()
+
+	if config, ok := l.expToWebhookConfig[*expID]; ok {
+		return config, nil
+	}
+	var expConfigBytes []byte
+	err := db.Bun().NewSelect().Table("experiments").Column("config").Where("id = ?", *expID).Scan(ctx, &expConfigBytes)
+	if err != nil {
+		return nil, err
+	}
+	expConfig, err := expconf.ParseAnyExperimentConfigYAML(expConfigBytes)
+	if err != nil {
+		return nil, err
+	}
+	if integration := schemas.WithDefaults(expConfig).Integrations(); integration != nil {
+		l.expToWebhookConfig[*expID] = integration.Webhooks
+		return integration.Webhooks, nil
+	}
+	l.expToWebhookConfig[*expID] = nil
+	return nil, nil
+}
+
+func matchWebhook(t *Trigger, config *expconf.WebhooksConfigV0, workspaceID int32, expID *int) bool {
+	if config != nil && config.Exclude {
+		return false
+	}
+	// Global webhooks (no workspace ID and not specific) trigger for all tasks
+	if t.Webhook.Mode == WebhookModeSpecific || t.Webhook.WorkspaceID != nil {
+		if t.Webhook.WorkspaceID != nil {
+			// Webhook is workspace level instead of global level
+			if *t.Webhook.WorkspaceID != workspaceID {
+				// Skip webhook from other workspaces
+				return false
+			}
+		}
+		if t.Webhook.Mode == WebhookModeSpecific {
+			// Skip specific webhook if task is not an experiment
+			if expID == nil || config == nil {
+				return false
+			}
+			// For webhook with mode specific, only proceed for experiments with matching config
+			if config.WebhookID != nil && slices.Contains(*config.WebhookID, int(t.Webhook.ID)) {
+				return true
+			}
+			if config.WebhookName != nil && slices.Contains(*config.WebhookName, t.Webhook.Name) {
+				return true
+			}
+			return false
+		}
+	}
+	return true
+}
+
+func (l *WebhookManager) scanLogs(
+	ctx context.Context, logs []*model.TaskLog, workspaceID model.AccessScopeID, expID *int,
+) error {
 	if len(logs) == 0 {
+		return nil
+	}
+
+	config, err := l.getWebhookConfig(ctx, expID)
+	if err != nil {
+		return err
+	}
+
+	if config != nil && config.Exclude {
 		return nil
 	}
 
@@ -129,9 +205,11 @@ func (l *WebhookManager) scanLogs(ctx context.Context, logs []*model.TaskLog) er
 			}
 			if cacheItem.re.MatchString(log.Log) {
 				for _, t := range cacheItem.triggerIDToTrigger {
-					if err := addTaskLogEvent(ctx,
-						model.TaskID(log.TaskID), *log.AgentID, log.Log, t); err != nil {
-						return err
+					if matchWebhook(t, config, int32(workspaceID), expID) {
+						if err := addTaskLogEvent(ctx,
+							model.TaskID(log.TaskID), *log.AgentID, log.Log, t); err != nil {
+							return err
+						}
 					}
 				}
 			}
@@ -222,6 +300,7 @@ func GetWebhooks(ctx context.Context) (Webhooks, error) {
 }
 
 // ReportExperimentStateChanged adds webhook events to the queue.
+// This function assumes ID presents in e.
 // TODO(DET-8577): Remove unnecessary active config usage (remove the activeConfig parameter).
 func ReportExperimentStateChanged(
 	ctx context.Context, e model.Experiment, activeConfig expconf.ExperimentConfig,
@@ -243,8 +322,20 @@ func ReportExperimentStateChanged(
 		return nil
 	}
 
+	workspaceID, err := experiment.GetWorkspaceFromExperiment(ctx, &e)
+	if err != nil {
+		return fmt.Errorf("get workspace id from experiment %d: %w", e.ID, err)
+	}
+	var webhookConfig *expconf.WebhooksConfigV0
+	if activeConfig.Integrations() != nil {
+		webhookConfig = activeConfig.Integrations().Webhooks
+	}
+
 	var es []Event
 	for _, t := range ts {
+		if !matchWebhook(&t, webhookConfig, workspaceID, ptrs.Ptr(e.ID)) {
+			continue
+		}
 		p, err := generateEventPayload(
 			ctx, t.Webhook.WebhookType, e, activeConfig, e.State, TriggerTypeStateChange,
 		)
@@ -253,6 +344,10 @@ func ReportExperimentStateChanged(
 		}
 		es = append(es, Event{Payload: p, URL: t.Webhook.URL})
 	}
+	if len(es) == 0 {
+		return nil
+	}
+
 	if _, err := db.Bun().NewInsert().Model(&es).Exec(ctx); err != nil {
 		return fmt.Errorf("report experiment state changed inserting event trigger: %w", err)
 	}
