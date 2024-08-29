@@ -278,6 +278,7 @@ def test_custom_webhook(isSlack: bool) -> None:
     responses = server.close_and_return_responses()
     assert len(responses) == 1
     assert "end of main" in responses["/"]
+    assert "DEBUG" in responses["/"]
     assert str(experiment_id) in responses["/"]
 
 

@@ -660,7 +660,7 @@ func generateEventPayload(
 	switch wt {
 	case WebhookTypeDefault:
 		experiment := experimentToWebhookPayload(e, activeConfig)
-		if trialID != nil {
+		if trialID != nil && *trialID > 0 {
 			experiment.TrialID = *trialID
 		}
 		pJSON, err := json.Marshal(EventPayload{
@@ -800,7 +800,7 @@ func generateSlackPayload(
 			Text: fmt.Sprintf("*Project*: %v", pName),
 		})
 	}
-	if trialID != nil {
+	if trialID != nil && *trialID > 0 {
 		expBlockFields = append(expBlockFields, SlackField{
 			Type: "mrkdwn",
 			Text: fmt.Sprintf("*Trial ID*: %d", *trialID),

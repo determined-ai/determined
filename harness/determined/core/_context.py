@@ -90,7 +90,7 @@ class Context:
         level: Optional[Literal["warn", "info", "debug", "error"]] = "info",
     ) -> None:
         if not isinstance(self._session, api.BaseSession):
-            raise ValueError("init needs to be called before sending alert.")
+            raise ValueError("init() needs to be called before sending alert.")
         if self.info is None:
             raise ValueError("Workload alerting only works on determined-managed experiment.")
         if self.info.trial is None:
@@ -103,7 +103,6 @@ class Context:
         elif level == "error":
             log_level = bindings.v1LogLevel.ERROR
 
-        print("experiment id ==== ", self.info.trial.experiment_id, self.info.trial.trial_id)
         bindings.post_PostWebhookEventData(
             session=self._session,
             body=bindings.v1PostWebhookEventDataRequest(
