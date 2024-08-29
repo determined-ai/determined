@@ -2,6 +2,7 @@ package webhooks
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"math"
@@ -23,7 +24,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
-	"github.com/determined-ai/determined/proto/pkg/logv1"
 
 	"github.com/google/uuid"
 )
@@ -42,9 +42,9 @@ type WebhookManager struct {
 
 // CustomTriggerData is the data for custom trigger.
 type CustomTriggerData struct {
-	Title       string         `json:"title"`
-	Description string         `json:"description"`
-	Level       logv1.LogLevel `json:"level"`
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	Level       string `json:"level"`
 }
 
 // New creates a new webhook manager.
@@ -319,7 +319,7 @@ func handleCustomTriggerData(ctx context.Context, data CustomTriggerData, experi
 			err = generateEventForCustomTrigger(
 				ctx, &es, webhook.Triggers, webhook.WebhookType, webhook.URL, m.Experiment, activeConfig, data, trialID)
 			if err != nil {
-				return err
+				return fmt.Errorf("error genrating event %d %+v: %w", webhookID, webhook, err)
 			}
 		}
 	}
@@ -329,10 +329,13 @@ func handleCustomTriggerData(ctx context.Context, data CustomTriggerData, experi
 			if err != nil {
 				return fmt.Errorf("error getting webhook from name %s: %w", webhookName, err)
 			}
+			if webhook == nil {
+				continue
+			}
 			err = generateEventForCustomTrigger(
 				ctx, &es, webhook.Triggers, webhook.WebhookType, webhook.URL, m.Experiment, activeConfig, data, trialID)
 			if err != nil {
-				return err
+				return fmt.Errorf("error genrating event %s %+v: %w", webhookName, webhook, err)
 			}
 		}
 	}
@@ -384,6 +387,9 @@ func getWebhookByName(ctx context.Context, webhookName string, workspaceID int) 
 		Where("workspace_id = ?", workspaceID).
 		Scan(ctx)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
 		return nil, err
 	}
 	return &webhook, nil
@@ -719,7 +725,7 @@ func generateSlackPayload(
 		}
 		c = "#13B670"
 		mStatus = "Completed"
-	} else {
+	} else if e.State == model.ErrorState {
 		status = "Your experiment has stopped with errors"
 		if baseURLIsSet {
 			eURL = fmt.Sprintf("❌ <%v/det/experiments/%v/overview | %v (#%v)>",
@@ -729,8 +735,22 @@ func generateSlackPayload(
 		}
 		c = "#DD5040"
 		mStatus = "Errored"
+	} else {
+		status = fmt.Sprintf("The status of your experiment is %s", e.State)
+		if baseURLIsSet {
+			eURL = fmt.Sprintf("<%v/det/experiments/%v/overview | %v (#%v)>",
+				webUIBaseURL, e.ID, activeConfig.Name(), e.ID)
+		} else {
+			eURL = fmt.Sprintf("%v (#%v)", activeConfig.Name(), e.ID)
+		}
+		c = "#13B670"
+		mStatus = string(e.State)
 	}
-	hours := e.EndTime.Sub(e.StartTime).Hours()
+	endTime := time.Now()
+	if e.EndTime != nil {
+		endTime = *e.EndTime
+	}
+	hours := endTime.Sub(e.StartTime).Hours()
 	hours, m := math.Modf(hours)
 	minutes := int(m * 60)
 	duration := fmt.Sprintf("%vh %vmin", hours, minutes)

@@ -5,7 +5,7 @@ import uuid
 
 import pytest
 
-from determined.common.api import bindings
+from determined.common.api import bindings, errors
 from tests import api_utils
 from tests import config as conf
 from tests import experiment as exp
@@ -197,6 +197,86 @@ def test_log_pattern_send_webhook(should_match: bool) -> None:
         assert slack_path not in responses
         assert specific_path not in responses
         assert specific_path_unmatch not in responses
+
+
+@pytest.mark.e2e_cpu
+@pytest.mark.parametrize("isSlack", [True, False])
+def test_custom_webhook(isSlack: bool) -> None:
+    port = 5009 if isSlack else 5010
+    server = utils.WebhookServer(port, allow_dupes=True)
+    sess = api_utils.admin_session()
+    workspace = bindings.post_PostWorkspace(
+        sess, body=bindings.v1PostWorkspaceRequest(name=f"webhook-test{random.random()}")
+    ).workspace
+    project = bindings.post_PostProject(
+        sess,
+        body=bindings.v1PostProjectRequest(
+            name=f"webhook-test{random.random()}",
+            workspaceId=workspace.id,
+        ),
+        workspaceId=workspace.id,
+    ).project
+
+    webhook = bindings.v1Webhook(
+        url=f"http://localhost:{port}",
+        webhookType=bindings.v1WebhookType.SLACK if isSlack else bindings.v1WebhookType.DEFAULT,
+        triggers=[
+            bindings.v1Trigger(
+                triggerType=bindings.v1TriggerType.CUSTOM,
+            )
+        ],
+        mode=bindings.v1WebhookMode.WORKSPACE,
+        name=f"webhook_1{random.random()}",
+        workspaceId=workspace.id,
+    )
+    # custom triggers only work on webhook with mode specific
+    with pytest.raises(errors.APIException):
+        bindings.post_PostWebhook(sess, body=webhook)
+    webhook.mode = bindings.v1WebhookMode.SPECIFIC
+    bindings.post_PostWebhook(sess, body=webhook)
+
+    experiment_id = exp.create_experiment(
+        sess,
+        conf.fixtures_path("core_api/11_generic_metrics.yaml"),
+        conf.fixtures_path("core_api"),
+        [
+            "--project_id",
+            f"{project.id}",
+            "--config",
+            f"integrations.webhooks.webhook_name=['{webhook.name}']",
+        ],
+    )
+
+    # this experiment should not trigger webhook because the name does not match.
+    control_exp_id = exp.create_experiment(
+        sess,
+        conf.fixtures_path("core_api/11_generic_metrics.yaml"),
+        conf.fixtures_path("core_api"),
+        [
+            "--project_id",
+            f"{project.id}",
+            "--config",
+            "integrations.webhooks.webhook_name=['abc']",
+        ],
+    )
+
+    exp.wait_for_experiment_state(
+        sess,
+        experiment_id,
+        bindings.experimentv1State.COMPLETED,
+        max_wait_secs=conf.DEFAULT_MAX_WAIT_SECS,
+    )
+    exp.wait_for_experiment_state(
+        sess,
+        control_exp_id,
+        bindings.experimentv1State.COMPLETED,
+        max_wait_secs=conf.DEFAULT_MAX_WAIT_SECS,
+    )
+
+    responses = server.close_and_return_responses()
+    assert len(responses) == 1
+    assert "end of main" in responses["/"]
+    assert str(experiment_id) in responses["/"]
 
 
 @pytest.mark.e2e_cpu

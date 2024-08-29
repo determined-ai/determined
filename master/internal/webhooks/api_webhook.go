@@ -15,6 +15,7 @@ import (
 	"google.golang.org/grpc/status"
 
 	"github.com/determined-ai/determined/master/internal/grpcutil"
+	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/webhookv1"
@@ -228,7 +229,7 @@ func (a *WebhooksAPIServer) PostWebhookEventData(
 	if req.Data != nil {
 		data.Title = req.Data.Title
 		data.Description = req.Data.Description
-		data.Level = req.Data.Level
+		data.Level = model.TaskLogLevelFromProto(req.Data.Level)
 	}
 	err = handleCustomTriggerData(ctx, data, int(req.ExperimentId), ptrs.Ptr(int(req.TrialId)))
 	if err != nil {
