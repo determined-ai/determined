@@ -1,9 +1,9 @@
 /* Add RBAC permissions for creating/updating and viewing config policies. */
 INSERT into permissions(id, name, global_only) VALUES 
-    (11004, 'modify global config polcies', false),
+    (11004, 'modify global config policies', false),
     (11005, 'modify workspace config policies', false),
-    (11006, 'view global config polcies', false),
-    (11007, 'view workspace config polcies', false);
+    (11006, 'view global config policies', false),
+    (11007, 'view workspace config policies', false);
 
 INSERT INTO permission_assignments(permission_id, role_id) VALUES
     (11004, 1),

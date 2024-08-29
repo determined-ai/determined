@@ -132,13 +132,13 @@ const (
 	PermissionType_PERMISSION_TYPE_SET_RESOURCE_QUOTAS PermissionType = 11002
 	// Ability to view resource quotas on workspaces.
 	PermissionType_PERMISSION_TYPE_VIEW_RESOURCE_QUOTAS PermissionType = 11003
-	// Ability to modify global config polcies.
+	// Ability to modify global config policies.
 	PermissionType_PERMISSION_TYPE_MODIFY_GLOBAL_CONFIG_POLICIES PermissionType = 11004
-	// Ability to modify workspace config polcies.
+	// Ability to modify workspace config policies.
 	PermissionType_PERMISSION_TYPE_MODIFY_WORKSPACE_CONFIG_POLICIES PermissionType = 11005
-	// Ability to view global config polcies.
+	// Ability to view global config policies.
 	PermissionType_PERMISSION_TYPE_VIEW_GLOBAL_CONFIG_POLICIES PermissionType = 11006
-	// Ability to view workspace config polcies.
+	// Ability to view workspace config policies.
 	PermissionType_PERMISSION_TYPE_VIEW_WORKSPACE_CONFIG_POLICIES PermissionType = 11007
 )
 
