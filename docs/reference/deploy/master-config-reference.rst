@@ -1756,6 +1756,8 @@ The username for HTTP basic authentication (only allowed with ``type: basic``).
 
 The password for HTTP basic authentication (only allowed with ``type: basic``).
 
+.. _master-config-oidc:
+
 **********
  ``oidc``
 **********
@@ -1780,6 +1782,10 @@ used for :ref:`remote user <remote-users>` management.
           auto_provision_users: true
           groups_attribute_name: "XYZ"
           display_name_attribute_name: "XYZ"
+          agent_uid_attribute_name: "string"
+          agent_gid_attribute_name: "string"
+          agent_user_name_attribute_name: "string"
+          agent_group_name_attribute_name: "string"
           always_redirect: true
           exclude_groups_scope: false
 
@@ -1851,6 +1857,30 @@ The name of the attribute passed in through the claim that specifies group membe
 The name of the attribute passed in through the claim from the OIDC provider used to set the user's
 display name in Determined.
 
+``agent_uid_attribute_name``
+============================
+
+The name of the attribute passed in through the claim from the OIDC provider used to set a unique
+numeric ID for user.
+
+``agent_gid_attribute_name``
+============================
+
+The name of the attribute passed in through the claim from the OIDC provider used to set a unique
+numeric ID for group.
+
+``agent_user_name_attribute_name``
+==================================
+
+The name of the attribute passed in through the claim from the OIDC provider used to set a unique
+name for user.
+
+``agent_group_name_attribute_name``
+===================================
+
+The name of the attribute passed in through the claim from the OIDC provider used to set a unique
+name for group.
+
 ``always_redirect``
 ===================
 
@@ -1865,6 +1895,8 @@ and returned to the requested page after authentication.
 Specifies if the groups scope should be excluded for this OIDC provider. For most OIDC providers
 such as Okta, this should be false (or blank) if you'd like to provision group memberships. But for
 some providers such as Azure, that do not support groups scope, this should be set to true.
+
+.. _master-config-saml:
 
 **********
  ``saml``
@@ -1887,7 +1919,11 @@ For example:
           auto_provision_users: true
           groups_attribute_name: "groups"
           display_name_attribute_name: "disp_name"
-         always_redirect: true
+          agent_uid_attribute_name: "user_id_name"
+          agent_gid_attribute_name: "group_id_name"
+          agent_user_name_attribute_name: "agent_user_name"
+          agent_group_name_attribute_name: "agent_group_name"
+          always_redirect: true
 
 ``enabled``
 ===========
@@ -1936,6 +1972,30 @@ The claim name that specifies group memberships in SAML.
 ===============================
 
 The claim name from the SAML provider used to set the user's display name in Determined.
+
+``agent_uid_attribute_name``
+============================
+
+The name of the attribute passed in through the claim from the SAML provider used to set a unique
+numeric ID for user.
+
+``agent_gid_attribute_name``
+============================
+
+The name of the attribute passed in through the claim from the SAML provider used to set a unique
+numeric ID for group.
+
+``agent_user_name_attribute_name``
+==================================
+
+The name of the attribute passed in through the claim from the SAML provider used to set a unique
+name for user.
+
+``agent_group_name_attribute_name``
+===================================
+
+The name of the attribute passed in through the claim from the SAML provider used to set a unique
+name for group.
 
 ``always_redirect``
 ===================

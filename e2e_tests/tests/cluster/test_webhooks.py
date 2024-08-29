@@ -2,9 +2,11 @@ import json
 import random
 import time
 import uuid
+from typing import Optional
 
 import pytest
 
+from determined.common import api
 from determined.common.api import bindings, errors
 from tests import api_utils
 from tests import config as conf
@@ -350,3 +352,135 @@ def test_specific_webhook() -> None:
     assert len(responses) == 0
     responses = server2.close_and_return_responses()
     assert len(responses) == 1
+
+
+def create_default_webhook(sess: api.Session, workspaceId: Optional[int] = None) -> int:
+    webhook_trigger = bindings.v1Trigger(
+        triggerType=bindings.v1TriggerType.EXPERIMENT_STATE_CHANGE,
+        condition={"state": "COMPLETED"},
+    )
+    webhook_url = "http://localhost"
+    res = bindings.post_PostWebhook(
+        sess,
+        body=bindings.v1Webhook(
+            url=webhook_url,
+            webhookType=bindings.v1WebhookType.DEFAULT,
+            triggers=[webhook_trigger],
+            mode=bindings.v1WebhookMode.WORKSPACE,
+            name="",
+            workspaceId=workspaceId,
+        ),
+    )
+    assert res.webhook.id is not None
+    return res.webhook.id or 0
+
+
+@pytest.mark.e2e_cpu
+def test_webhook_permission() -> None:
+    # non-admin should not be able to create global webhook.
+    user1_sess = api_utils.user_session()
+    with pytest.raises(errors.APIException):
+        create_default_webhook(user1_sess)
+
+    # admin should be able to create global webhook.
+    admin_sess = api_utils.admin_session()
+    global_webhook_id = create_default_webhook(admin_sess)
+
+    # non-admin should be able to view global webhook.
+    res = bindings.get_GetWebhooks(user1_sess)
+    assert any(w.id == global_webhook_id for w in res.webhooks)
+
+    # user should be able to add webhook to their own workspace
+    username = api_utils.get_random_string()
+    (user2_sess, _) = api_utils.create_test_user(
+        user=bindings.v1User(username=username, active=True, admin=False),
+    )
+    workspace = bindings.post_PostWorkspace(
+        user2_sess,
+        body=bindings.v1PostWorkspaceRequest(
+            name=f"workspace_aug_{uuid.uuid4().hex[:8]}",
+        ),
+    ).workspace
+
+    workspace_webhook_id = create_default_webhook(user2_sess, workspace.id)
+    # user should not add workspace to other users' workspace
+    with pytest.raises(errors.APIException):
+        create_default_webhook(user1_sess, workspace.id)
+    # user should be able to get webhook from their own workspace
+    res = bindings.get_GetWebhooks(user2_sess)
+    assert any(w.id == workspace_webhook_id for w in res.webhooks)
+    # user should not be able to get webhook from other users' workspace
+    res = bindings.get_GetWebhooks(user1_sess)
+    assert not any(w.id == workspace_webhook_id for w in res.webhooks)
+    # admin should be able to get all webhooks
+    res = bindings.get_GetWebhooks(admin_sess)
+    assert any(w.id == workspace_webhook_id for w in res.webhooks)
+    assert any(w.id == global_webhook_id for w in res.webhooks)
+    # user should not delete webhook from other users' workspace
+    with pytest.raises(errors.APIException):
+        bindings.delete_DeleteWebhook(user1_sess, id=workspace_webhook_id)
+    # non admin should not delete global webhooks
+    with pytest.raises(errors.APIException):
+        bindings.delete_DeleteWebhook(user1_sess, id=global_webhook_id)
+    with pytest.raises(errors.APIException):
+        bindings.delete_DeleteWebhook(user2_sess, id=global_webhook_id)
+    # admin should be able to delete global webhook
+    bindings.delete_DeleteWebhook(admin_sess, id=global_webhook_id)
+    # user should be able to delete webhook from their own workspace
+    bindings.delete_DeleteWebhook(user2_sess, id=workspace_webhook_id)
+
+
+@pytest.mark.e2e_cpu_rbac
+@api_utils.skipif_rbac_not_enabled()
+def test_webhook_rbac() -> None:
+    # non-admin should not be able to create global webhook.
+    user1_sess = api_utils.user_session()
+    with pytest.raises(errors.ForbiddenException):
+        create_default_webhook(user1_sess)
+
+    # admin should be able to create global webhook.
+    admin_sess = api_utils.admin_session()
+    global_webhook_id = create_default_webhook(admin_sess)
+
+    # non-admin should be able to view global webhook.
+    res = bindings.get_GetWebhooks(user1_sess)
+    assert any(w.id == global_webhook_id for w in res.webhooks)
+
+    # user should be able to add webhook to workspace they have Editor access.
+    username = api_utils.get_random_string()
+    (user2_sess, _) = api_utils.create_test_user(
+        user=bindings.v1User(username=username, active=True, admin=False),
+    )
+    workspace = bindings.post_PostWorkspace(
+        admin_sess,
+        body=bindings.v1PostWorkspaceRequest(
+            name=f"workspace_aug_{uuid.uuid4().hex[:8]}",
+        ),
+    ).workspace
+    api_utils.assign_user_role(admin_sess, username, role="Editor", workspace=workspace.name)
+    workspace_webhook_id = create_default_webhook(user2_sess, workspace.id)
+    # user without Editor access should not manage webhook
+    with pytest.raises(errors.ForbiddenException):
+        create_default_webhook(user1_sess, workspace.id)
+    # user should be able to get webhook from workspace they have access to
+    res = bindings.get_GetWebhooks(user2_sess)
+    assert any(w.id == workspace_webhook_id for w in res.webhooks)
+    # user should not be able to get webhook from other users' workspace
+    res = bindings.get_GetWebhooks(user1_sess)
+    assert not any(w.id == workspace_webhook_id for w in res.webhooks)
+    # admin should be able to get all webhooks
+    res = bindings.get_GetWebhooks(admin_sess)
+    assert any(w.id == workspace_webhook_id for w in res.webhooks)
+    assert any(w.id == global_webhook_id for w in res.webhooks)
+    # user should not delete webhook from workspace they have no access
+    with pytest.raises(errors.ForbiddenException):
+        bindings.delete_DeleteWebhook(user1_sess, id=workspace_webhook_id)
+    # user should not delete global webhooks
+    with pytest.raises(errors.ForbiddenException):
+        bindings.delete_DeleteWebhook(user1_sess, id=global_webhook_id)
+    with pytest.raises(errors.ForbiddenException):
+        bindings.delete_DeleteWebhook(user2_sess, id=global_webhook_id)
+    # admin should be able to delete global webhook
+    bindings.delete_DeleteWebhook(admin_sess, id=global_webhook_id)
+    # user with editor access to workspace should be able to delete it's webhook
+    bindings.delete_DeleteWebhook(user2_sess, id=workspace_webhook_id)
