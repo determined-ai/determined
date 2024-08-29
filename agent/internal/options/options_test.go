@@ -58,6 +58,7 @@ log:
 log:
     level: trace
     color: true
+resource_pool: default
 slot_type: auto
 security:
     tls:

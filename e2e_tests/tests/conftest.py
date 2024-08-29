@@ -49,6 +49,7 @@ _INTEG_MARKERS = {
     "model_hub_mmdetection",
     "deepspeed",
     "managed_devcluster",
+    "managed_devcluster_resource_pools",
     "port_registry",
     "distributed_quarantine",
     "det_deploy_local_quarantine",
