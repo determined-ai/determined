@@ -4,24 +4,25 @@ import (
 	"context"
 	"fmt"
 
-	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"google.golang.org/protobuf/types/known/structpb"
 	"gopkg.in/yaml.v3"
+
+	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
 // workload types are used to distinguish configuration for experiments and NTSCs.
 const (
 	// Should not be used.
-	WORKLOAD_TYPE_UNSPECIFIED = "UNKNOWN"
+	WorkloadTypeUnspecified = "UNKNOWN"
 	// Configuration policies for experiments.
-	WORKLOAD_TYPE_EXPERIMENT = "EXPERIMENT"
+	WorkloadTypeExperiment = "EXPERIMENT"
 	// Configuration policies for NTSC.
-	WORKLOAD_TYPE_NTSC = "NTSC"
+	WorkloadTypeNTSC = "NTSC"
 )
 
 func validWorkloadEnum(val string) bool {
 	switch val {
-	case WORKLOAD_TYPE_EXPERIMENT, WORKLOAD_TYPE_NTSC:
+	case WorkloadTypeExperiment, WorkloadTypeNTSC:
 		return true
 	default:
 		return false
@@ -54,7 +55,8 @@ func stubData() (*structpb.Struct, error) {
 
 // Add or update workspace task config policies.
 func (*apiServer) PutWorkspaceConfigPolicies(
-	ctx context.Context, req *apiv1.PutWorkspaceConfigPoliciesRequest) (*apiv1.PutWorkspaceConfigPoliciesResponse, error) {
+	ctx context.Context, req *apiv1.PutWorkspaceConfigPoliciesRequest,
+) (*apiv1.PutWorkspaceConfigPoliciesResponse, error) {
 	if !validWorkloadEnum(req.WorkloadType) {
 		return nil, fmt.Errorf("invalid workload type: %s", req.WorkloadType)
 	}
@@ -64,7 +66,8 @@ func (*apiServer) PutWorkspaceConfigPolicies(
 
 // Add or update global task config policies.
 func (*apiServer) PutGlobalConfigPolicies(
-	ctx context.Context, req *apiv1.PutGlobalConfigPoliciesRequest) (*apiv1.PutGlobalConfigPoliciesResponse, error) {
+	ctx context.Context, req *apiv1.PutGlobalConfigPoliciesRequest,
+) (*apiv1.PutGlobalConfigPoliciesResponse, error) {
 	if !validWorkloadEnum(req.WorkloadType) {
 		return nil, fmt.Errorf("invalid workload type: %s", req.WorkloadType)
 	}
@@ -74,7 +77,8 @@ func (*apiServer) PutGlobalConfigPolicies(
 
 // Get workspace task config policies.
 func (*apiServer) GetWorkspaceConfigPolicies(
-	ctx context.Context, req *apiv1.GetWorkspaceConfigPoliciesRequest) (*apiv1.GetWorkspaceConfigPoliciesResponse, error) {
+	ctx context.Context, req *apiv1.GetWorkspaceConfigPoliciesRequest,
+) (*apiv1.GetWorkspaceConfigPoliciesResponse, error) {
 	if !validWorkloadEnum(req.WorkloadType) {
 		return nil, fmt.Errorf("invalid workload type: %s", req.WorkloadType)
 	}
@@ -84,7 +88,8 @@ func (*apiServer) GetWorkspaceConfigPolicies(
 
 // Get global task config policies.
 func (*apiServer) GetGlobalConfigPolicies(
-	ctx context.Context, req *apiv1.GetGlobalConfigPoliciesRequest) (*apiv1.GetGlobalConfigPoliciesResponse, error) {
+	ctx context.Context, req *apiv1.GetGlobalConfigPoliciesRequest,
+) (*apiv1.GetGlobalConfigPoliciesResponse, error) {
 	if !validWorkloadEnum(req.WorkloadType) {
 		return nil, fmt.Errorf("invalid workload type: %s", req.WorkloadType)
 	}
@@ -94,7 +99,8 @@ func (*apiServer) GetGlobalConfigPolicies(
 
 // Delete workspace task config policies.
 func (*apiServer) DeleteWorkspaceConfigPolicies(
-	ctx context.Context, req *apiv1.DeleteWorkspaceConfigPoliciesRequest) (*apiv1.DeleteWorkspaceConfigPoliciesResponse, error) {
+	ctx context.Context, req *apiv1.DeleteWorkspaceConfigPoliciesRequest,
+) (*apiv1.DeleteWorkspaceConfigPoliciesResponse, error) {
 	if !validWorkloadEnum(req.WorkloadType) {
 		return nil, fmt.Errorf("invalid workload type: %s", req.WorkloadType)
 	}
@@ -103,7 +109,8 @@ func (*apiServer) DeleteWorkspaceConfigPolicies(
 
 // Delete global task config policies.
 func (*apiServer) DeleteGlobalConfigPolicies(
-	ctx context.Context, req *apiv1.DeleteGlobalConfigPoliciesRequest) (*apiv1.DeleteGlobalConfigPoliciesResponse, error) {
+	ctx context.Context, req *apiv1.DeleteGlobalConfigPoliciesRequest,
+) (*apiv1.DeleteGlobalConfigPoliciesResponse, error) {
 	if !validWorkloadEnum(req.WorkloadType) {
 		return nil, fmt.Errorf("invalid workload type: %s", req.WorkloadType)
 	}
