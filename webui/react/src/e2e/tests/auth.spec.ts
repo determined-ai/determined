@@ -1,4 +1,5 @@
 import { expect, test } from 'e2e/fixtures/global-fixtures';
+import { Cluster } from 'e2e/models/pages/Cluster';
 import { SignIn } from 'e2e/models/pages/SignIn';
 
 test.describe('Authentication', () => {
@@ -26,13 +27,15 @@ test.describe('Authentication', () => {
 
   test('Login Redirect', async ({ page, auth }) => {
     await test.step('Attempt to Visit a Page', async () => {
-      await page.goto('./models');
+      await page.goto('./clusters/logs');
       await expect(page).toHaveURL(/login/);
     });
 
     await test.step('Login and Redirect', async () => {
-      await auth.login({ expectedURL: /models/ });
-      await expect(page).toHaveDeterminedTitle('Model Registry');
+      await auth.login({ expectedURL: /clusters\/logs/ });
+      const clusterPage = new Cluster(page);
+      await expect(page).toHaveDeterminedTitle(clusterPage.title);
+      await expect(clusterPage.logsTab.pwLocator).toHaveAttribute('aria-selected', 'true');
     });
   });
 
