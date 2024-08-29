@@ -59,7 +59,7 @@ done
 
 # Set VERSION to CIRCLE_TAG in case we're running in CircleCI. This makes it
 # easier to avoid fiddling with environment variables there.
-if [[ ! -z ${CIRCLE_TAG} ]]; then
+if [[ -n ${CIRCLE_TAG} ]]; then
     VERSION=${CIRCLE_TAG}
 fi
 
