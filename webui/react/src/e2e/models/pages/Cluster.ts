@@ -10,5 +10,7 @@ export class Cluster extends DeterminedPage {
   readonly url = 'clusters';
   readonly pageComponent = new PageComponent({ parent: this });
   readonly dynamicTabs = new DynamicTabs({ parent: this.pageComponent });
+  readonly overviewTab = this.dynamicTabs.pivot.tab('overview');
+  readonly historicalUsageTab = this.dynamicTabs.pivot.tab('historical-usage');
   readonly logsTab = this.dynamicTabs.pivot.tab('logs');
 }

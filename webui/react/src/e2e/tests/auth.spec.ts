@@ -35,6 +35,11 @@ test.describe('Authentication', () => {
       await auth.login({ expectedURL: /clusters\/logs/ });
       const clusterPage = new Cluster(page);
       await expect(page).toHaveDeterminedTitle(clusterPage.title);
+      await expect(clusterPage.overviewTab.pwLocator).toHaveAttribute('aria-selected', 'false');
+      await expect(clusterPage.historicalUsageTab.pwLocator).toHaveAttribute(
+        'aria-selected',
+        'false',
+      );
       await expect(clusterPage.logsTab.pwLocator).toHaveAttribute('aria-selected', 'true');
     });
   });
