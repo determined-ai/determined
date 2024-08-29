@@ -29,8 +29,7 @@ type PutWorkspaceConfigPoliciesRequest struct {
 	// Specifies which workspace the config policies apply to. Use global API for
 	// global config policies.
 	WorkspaceId int32 `protobuf:"varint,1,opt,name=workspace_id,json=workspaceId,proto3" json:"workspace_id,omitempty"`
-	// Specifies which task type the config policies apply to: experiment or NTSC.
-	// Mapped to enum in backend.
+	// Specifies which task type the config policies apply to: EXPERIMENT or NTSC.
 	WorkloadType string `protobuf:"bytes,2,opt,name=workload_type,json=workloadType,proto3" json:"workload_type,omitempty"`
 	// The config policies to use. Contains both invariant configs and constraints
 	// in yaml or json format.
@@ -148,7 +147,6 @@ type PutGlobalConfigPoliciesRequest struct {
 	unknownFields protoimpl.UnknownFields
 
 	// Specifies which task type the config policies apply to: experiment or NTSC.
-	// Mapped to enum in backend.
 	WorkloadType string `protobuf:"bytes,1,opt,name=workload_type,json=workloadType,proto3" json:"workload_type,omitempty"`
 	// The config policies to use. Contains both invariant configs and constraints
 	// in yaml or json format.
@@ -262,7 +260,6 @@ type GetWorkspaceConfigPoliciesRequest struct {
 	// global config policies.
 	WorkspaceId int32 `protobuf:"varint,1,opt,name=workspace_id,json=workspaceId,proto3" json:"workspace_id,omitempty"`
 	// Specifies which task type the config policies apply to: experiment or NTSC.
-	// Mapped to enum in backend.
 	WorkloadType string `protobuf:"bytes,2,opt,name=workload_type,json=workloadType,proto3" json:"workload_type,omitempty"`
 }
 
@@ -370,7 +367,6 @@ type GetGlobalConfigPoliciesRequest struct {
 	unknownFields protoimpl.UnknownFields
 
 	// Specifies which task type the config policies apply to: experiment or NTSC.
-	// Mapped to enum in backend.
 	WorkloadType string `protobuf:"bytes,1,opt,name=workload_type,json=workloadType,proto3" json:"workload_type,omitempty"`
 }
 
@@ -474,7 +470,6 @@ type DeleteWorkspaceConfigPoliciesRequest struct {
 	// global config policies.
 	WorkspaceId int32 `protobuf:"varint,1,opt,name=workspace_id,json=workspaceId,proto3" json:"workspace_id,omitempty"`
 	// Specifies which task type the config policies apply to: experiment or NTSC.
-	// Mapped to enum in backend.
 	WorkloadType string `protobuf:"bytes,2,opt,name=workload_type,json=workloadType,proto3" json:"workload_type,omitempty"`
 }
 
@@ -571,7 +566,6 @@ type DeleteGlobalConfigPoliciesRequest struct {
 	unknownFields protoimpl.UnknownFields
 
 	// Specifies which task type the config policies apply to: experiment or NTSC.
-	// Mapped to enum in backend.
 	WorkloadType string `protobuf:"bytes,1,opt,name=workload_type,json=workloadType,proto3" json:"workload_type,omitempty"`
 }
 

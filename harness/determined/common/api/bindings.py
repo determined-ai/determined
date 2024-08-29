@@ -18422,7 +18422,6 @@ def delete_DeleteGlobalConfigPolicies(
     """Delete global task config policies.
 
     - workloadType: Specifies which task type the config policies apply to: experiment or NTSC.
-Mapped to enum in backend.
     """
     _params = None
     if type(workloadType) == str:
@@ -18671,7 +18670,6 @@ def delete_DeleteWorkspaceConfigPolicies(
     """Delete workspace task config policies.
 
     - workloadType: Specifies which task type the config policies apply to: experiment or NTSC.
-Mapped to enum in backend.
     - workspaceId: Specifies which workspace the config policies apply to. Use global API for
 global config policies.
     """
@@ -19557,7 +19555,6 @@ def get_GetGlobalConfigPolicies(
     """Get global task config policies.
 
     - workloadType: Specifies which task type the config policies apply to: experiment or NTSC.
-Mapped to enum in backend.
     """
     _params = None
     if type(workloadType) == str:
@@ -21661,7 +21658,6 @@ def get_GetWorkspaceConfigPolicies(
     """Get workspace task config policies.
 
     - workloadType: Specifies which task type the config policies apply to: experiment or NTSC.
-Mapped to enum in backend.
     - workspaceId: Specifies which workspace the config policies apply to. Use global API for
 global config policies.
     """
@@ -23593,7 +23589,6 @@ def put_PutGlobalConfigPolicies(
     """Add or update global task config policies.
 
     - workloadType: Specifies which task type the config policies apply to: experiment or NTSC.
-Mapped to enum in backend.
     """
     _params = None
     if type(workloadType) == str:
@@ -23720,8 +23715,7 @@ def put_PutWorkspaceConfigPolicies(
 ) -> "v1PutWorkspaceConfigPoliciesResponse":
     """Add or update workspace task config policies.
 
-    - workloadType: Specifies which task type the config policies apply to: experiment or NTSC.
-Mapped to enum in backend.
+    - workloadType: Specifies which task type the config policies apply to: EXPERIMENT or NTSC.
     - workspaceId: Specifies which workspace the config policies apply to. Use global API for
 global config policies.
     """

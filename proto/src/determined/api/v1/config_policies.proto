@@ -11,8 +11,7 @@ message PutWorkspaceConfigPoliciesRequest {
   // Specifies which workspace the config policies apply to. Use global API for
   // global config policies.
   int32 workspace_id = 1;
-  // Specifies which task type the config policies apply to: experiment or NTSC.
-  // Mapped to enum in backend.
+  // Specifies which task type the config policies apply to: EXPERIMENT or NTSC.
   string workload_type = 2;
   // The config policies to use. Contains both invariant configs and constraints
   // in yaml or json format.
@@ -30,7 +29,6 @@ message PutWorkspaceConfigPoliciesResponse {
 // policies for the workload type.
 message PutGlobalConfigPoliciesRequest {
   // Specifies which task type the config policies apply to: experiment or NTSC.
-  // Mapped to enum in backend.
   string workload_type = 1;
   // The config policies to use. Contains both invariant configs and constraints
   // in yaml or json format.
@@ -51,7 +49,6 @@ message GetWorkspaceConfigPoliciesRequest {
   // global config policies.
   int32 workspace_id = 1;
   // Specifies which task type the config policies apply to: experiment or NTSC.
-  // Mapped to enum in backend.
   string workload_type = 2;
 }
 
@@ -66,7 +63,6 @@ message GetWorkspaceConfigPoliciesResponse {
 // policies for the task type.
 message GetGlobalConfigPoliciesRequest {
   // Specifies which task type the config policies apply to: experiment or NTSC.
-  // Mapped to enum in backend.
   string workload_type = 1;
 }
 
@@ -84,7 +80,6 @@ message DeleteWorkspaceConfigPoliciesRequest {
   // global config policies.
   int32 workspace_id = 1;
   // Specifies which task type the config policies apply to: experiment or NTSC.
-  // Mapped to enum in backend.
   string workload_type = 2;
 }
 
@@ -95,7 +90,6 @@ message DeleteWorkspaceConfigPoliciesResponse {}
 // policies for the task type.
 message DeleteGlobalConfigPoliciesRequest {
   // Specifies which task type the config policies apply to: experiment or NTSC.
-  // Mapped to enum in backend.
   string workload_type = 1;
 }
 
