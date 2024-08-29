@@ -121,7 +121,7 @@ def run(local: bool = False):
 
 if __name__ == "__main__":
     # Configure logging
-    logging.basicConfig(level=logging.DEBUG, format=det.LOG_FORMAT)
+    logging.basicConfig(level=logging.INFO, format=det.LOG_FORMAT)
 
     local_training = det.get_cluster_info() is None
     run(local=local_training)
