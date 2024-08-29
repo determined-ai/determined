@@ -10775,6 +10775,7 @@ class v1PermissionType(DetEnum):
     - PERMISSION_TYPE_DELETE_TEMPLATES: Ability to delete templates.
     - PERMISSION_TYPE_UPDATE_ROLES: Ability to create and update role definitions.
     - PERMISSION_TYPE_EDIT_WEBHOOKS: Ability to create and delete webhooks.
+    - PERMISSION_TYPE_VIEW_WEBHOOKS: Ability to view webhooks.
     - PERMISSION_TYPE_MODIFY_RP_WORKSPACE_BINDINGS: Ability to bind, unbind or overwrite resource pool workspace bindings.
     - PERMISSION_TYPE_SET_WORKSPACE_NAMESPACE_BINDINGS: Ability to bind, unbind, or overwrite namespace workspace bindings.
     - PERMISSION_TYPE_SET_RESOURCE_QUOTAS: Ability to set resource quotas on workspaces.
@@ -10826,6 +10827,7 @@ class v1PermissionType(DetEnum):
     DELETE_TEMPLATES = "PERMISSION_TYPE_DELETE_TEMPLATES"
     UPDATE_ROLES = "PERMISSION_TYPE_UPDATE_ROLES"
     EDIT_WEBHOOKS = "PERMISSION_TYPE_EDIT_WEBHOOKS"
+    VIEW_WEBHOOKS = "PERMISSION_TYPE_VIEW_WEBHOOKS"
     MODIFY_RP_WORKSPACE_BINDINGS = "PERMISSION_TYPE_MODIFY_RP_WORKSPACE_BINDINGS"
     SET_WORKSPACE_NAMESPACE_BINDINGS = "PERMISSION_TYPE_SET_WORKSPACE_NAMESPACE_BINDINGS"
     SET_RESOURCE_QUOTAS = "PERMISSION_TYPE_SET_RESOURCE_QUOTAS"

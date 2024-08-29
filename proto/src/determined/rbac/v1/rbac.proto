@@ -166,6 +166,9 @@ enum PermissionType {
   // Ability to create and delete webhooks.
   PERMISSION_TYPE_EDIT_WEBHOOKS = 97001;
 
+  // Ability to view webhooks.
+  PERMISSION_TYPE_VIEW_WEBHOOKS = 97002;
+
   // Ability to bind, unbind or overwrite resource pool workspace bindings.
   PERMISSION_TYPE_MODIFY_RP_WORKSPACE_BINDINGS = 10001;
 

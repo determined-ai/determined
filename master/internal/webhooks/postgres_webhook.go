@@ -286,17 +286,29 @@ func GetWebhook(ctx context.Context, webhookID int) (*Webhook, error) {
 	return &webhook, nil
 }
 
-// GetWebhooks returns all Webhooks from the DB.
-func GetWebhooks(ctx context.Context) (Webhooks, error) {
+// getWebhooks returns all global webhooks from the DB
+// and all webhooks whose scopes are in workspaceIDs.
+// workspaceIDs being nil gets only the globally scoped webhooks.
+func getWebhooks(ctx context.Context, workspaceIDs *[]int32) (Webhooks, error) {
 	webhooks := Webhooks{}
-	err := db.Bun().NewSelect().
+	q := db.Bun().NewSelect().
 		Model(&webhooks).
 		Relation("Triggers").
-		Scan(ctx)
+		Where("workspace_id is NULL")
+	if workspaceIDs != nil {
+		q.WhereOr("workspace_id IN (?)", bun.In(*workspaceIDs))
+	}
+	err := q.Scan(ctx)
 	if err != nil {
 		return nil, err
 	}
 	return webhooks, nil
+}
+
+func getWorkspace(ctx context.Context, workspaceID int32) (*model.Workspace, error) {
+	var workspace model.Workspace
+	err := db.Bun().NewSelect().Model(&workspace).Where("id = ?", workspaceID).Scan(ctx)
+	return &workspace, err
 }
 
 // ReportExperimentStateChanged adds webhook events to the queue.

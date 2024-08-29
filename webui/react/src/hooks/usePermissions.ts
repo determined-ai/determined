@@ -1,4 +1,5 @@
 import { Loadable } from 'hew/utils/loadable';
+import { flatten } from 'lodash';
 import { useObservable } from 'micro-observables';
 import { useMemo } from 'react';
 
@@ -20,6 +21,8 @@ import {
   Template,
   UserAssignment,
   UserRole,
+  Webhook,
+  Workspace,
   WorkspacePermissionsArgs,
 } from 'types';
 
@@ -77,7 +80,8 @@ export interface PermissionsHook {
   canDeleteWorkspace: (arg0: WorkspacePermissionsArgs) => boolean;
   canDeleteTemplate: (arg0: TemplatePermissionArgs) => boolean;
   canModifyTemplate: (arg0: TemplatePermissionArgs) => boolean;
-  canEditWebhooks: boolean;
+  canEditWebhooks: (args0: Workspace[], args1: Webhook) => boolean;
+  canCreateWebhooks: (args0: Workspace[]) => Workspace[];
   canManageResourcePoolBindings: boolean;
   canModifyExperiment: (arg0: WorkspacePermissionsArgs) => boolean;
   canModifyFlatRun: (arg0: WorkspacePermissionsArgs) => boolean;
@@ -150,6 +154,7 @@ const usePermissions = (): PermissionsHook => {
       canCreateTemplate: canCreateTemplate(rbacOpts),
       canCreateTemplateWorkspace: (args: WorkspacePermissionsArgs) =>
         canCreateTemplateWorkspace(rbacOpts, args.workspace!.id),
+      canCreateWebhooks: (args: Workspace[]) => canCreateWebhooks(rbacOpts, args),
       canCreateWorkspace: canCreateWorkspace(rbacOpts),
       canCreateWorkspaceNSC: (args: WorkspacePermissionsArgs) =>
         canCreateWorkspaceNSC(rbacOpts, args.workspace),
@@ -165,7 +170,8 @@ const usePermissions = (): PermissionsHook => {
         canDeleteTemplate(rbacOpts, args.template),
       canDeleteWorkspace: (args: WorkspacePermissionsArgs) =>
         canDeleteWorkspace(rbacOpts, args.workspace),
-      canEditWebhooks: canEditWebhooks(rbacOpts),
+      canEditWebhooks: (args: Workspace[], args1: Webhook) =>
+        canEditWebhooks(rbacOpts, args, args1),
       canManageResourcePoolBindings: canManageResourcePoolBindings(rbacOpts),
       canModifyExperiment: (args: WorkspacePermissionsArgs) =>
         canModifyExperiment(rbacOpts, args.workspace),
@@ -706,16 +712,44 @@ const canModifyWorkspaceNSC = (
 
 /* Webhooks */
 
-const canEditWebhooks = ({
-  currentUser,
-  rbacEnabled,
-  userAssignments,
-  userRoles,
-}: RbacOptsProps): boolean => {
-  const permitted = relevantPermissions(userAssignments, userRoles);
+const canEditWebhooks = (
+  { currentUser, rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
+  workspaces: Workspace[],
+  webhook: Webhook,
+): boolean => {
+  const permitted = relevantPermissions(
+    userAssignments,
+    userRoles,
+    webhook.workspaceId || undefined,
+  );
   return rbacEnabled
     ? permitted.has(V1PermissionType.EDITWEBHOOKS)
-    : !!currentUser && currentUser.isAdmin;
+    : !!currentUser &&
+        (currentUser.isAdmin ||
+          workspaces.find((w) => w.id === webhook.workspaceId)?.userId === currentUser.id);
+};
+
+const canCreateWebhooks = (
+  { currentUser, rbacEnabled, userAssignments, userRoles }: RbacOptsProps,
+  workspaces: Workspace[],
+): Workspace[] => {
+  const permitted = relevantPermissions(userAssignments, userRoles);
+  const roles = userRoles
+    ?.filter((r) => r.permissions.find((p) => p.id === V1PermissionType.EDITWEBHOOKS))
+    ?.map((r) => r.id);
+  // workspaces user with edit webhook permission
+  const permWorkspaceIds = flatten(
+    userAssignments?.filter((a) => roles?.includes(a.roleId)).map((a) => a.workspaces),
+  );
+  return rbacEnabled
+    ? permitted.has(V1PermissionType.EDITWEBHOOKS) // user has the permission globally
+      ? workspaces
+      : workspaces.filter((w) => permWorkspaceIds.includes(w.id))
+    : currentUser
+      ? currentUser.isAdmin
+        ? workspaces
+        : workspaces.filter((w) => w.userId === currentUser.id)
+      : [];
 };
 
 /* Resource Pools */
