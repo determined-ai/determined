@@ -345,12 +345,13 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
   const fetchExperiments = useCallback(async (): Promise<void> => {
     if (isLoadingSettings || Loadable.isNotLoaded(loadableFormset)) return;
     try {
+      const offset = page * settings.pageLimit;
       const response = await searchExperiments(
         {
           ...experimentFilters,
           filter: filtersString,
           limit: settings.pageLimit,
-          offset: page * settings.pageLimit,
+          offset,
           sort: sortString || undefined,
         },
         { signal: canceler.signal },
@@ -361,20 +362,25 @@ const F_ExperimentList: React.FC<Props> = ({ project }) => {
       setTotal(
         response.pagination.total !== undefined ? Loaded(response.pagination.total) : NotLoaded,
       );
+      // oob check
+      if ((response.pagination.total || 0) < offset) {
+        resetPagination();
+      }
     } catch (e) {
       handleError(e, { publicSubject: 'Unable to fetch experiments.' });
     } finally {
       setIsLoading(false);
     }
   }, [
-    canceler.signal,
-    experimentFilters,
-    filtersString,
     isLoadingSettings,
     loadableFormset,
     page,
-    sortString,
     settings.pageLimit,
+    experimentFilters,
+    filtersString,
+    resetPagination,
+    sortString,
+    canceler.signal,
   ]);
 
   const { stopPolling } = usePolling(fetchExperiments, { rerunOnNewFn: true });
