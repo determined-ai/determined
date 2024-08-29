@@ -1,64 +1,103 @@
 syntax = "proto3";
 
-
 package determined.api.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
 import "google/protobuf/struct.proto";
 
-
-
-// PutWorkspaceConfigPoliciesRequest is a complete replacement of config policies for the workspace and workload type.
+// PutWorkspaceConfigPoliciesRequest is a complete replacement of config
+// policies for the workspace and workload type.
 message PutWorkspaceConfigPoliciesRequest {
+  // Specifies which workspace the config policies apply to. Use global API for
+  // global config policies.
   int32 workspace_id = 1;
+  // Specifies which task type the config policies apply to: experiment or NTSC.
+  // Mapped to enum in backend.
   string workload_type = 2;
+  // The config policies to use. Contains both invariant configs and constraints
+  // in yaml or json format.
   string config_policies = 3;
 }
 
+// Response to PutWorkspaceConfigPolicies request.
 message PutWorkspaceConfigPoliciesResponse {
+  // The config policies saved. Contains both invariant configs and constraints
+  // in yaml or json format.
   google.protobuf.Struct config_policies = 1;
 }
 
-// PutGlobalConfigPoliciesRequest is a complete replacement of global config policies for the workload type.
+// PutGlobalConfigPoliciesRequest is a complete replacement of global config
+// policies for the workload type.
 message PutGlobalConfigPoliciesRequest {
+  // Specifies which task type the config policies apply to: experiment or NTSC.
+  // Mapped to enum in backend.
   string workload_type = 1;
+  // The config policies to use. Contains both invariant configs and constraints
+  // in yaml or json format.
   string config_policies = 2;
 }
 
+// Response to PutGlobalConfigPolicies request.
 message PutGlobalConfigPoliciesResponse {
+  // The config policies saved. Contains both invariant configs and constraints
+  // in yaml or json format.
   google.protobuf.Struct config_policies = 1;
 }
 
-// GetWorkspaceConfigPoliciesRequest is used to list all task config policies for the workspace and task type.
+// GetWorkspaceConfigPoliciesRequest is used to list all task config policies
+// for the workspace and task type.
 message GetWorkspaceConfigPoliciesRequest {
+  // Specifies which workspace the config policies apply to. Use global API for
+  // global config policies.
   int32 workspace_id = 1;
+  // Specifies which task type the config policies apply to: experiment or NTSC.
+  // Mapped to enum in backend.
   string workload_type = 2;
 }
 
+// Response to GetWorkspaceConfigPolicies request.
 message GetWorkspaceConfigPoliciesResponse {
+  // The current config policies saved. Contains both invariant configs and
+  // constraints in yaml or json format.
   google.protobuf.Struct config_policies = 1;
 }
 
-// GetGlobalConfigPoliciesRequest is used to list all global task config policies for the task type.
+// GetGlobalConfigPoliciesRequest is used to list all global task config
+// policies for the task type.
 message GetGlobalConfigPoliciesRequest {
-  string workload_type = 2;
-}
-
-message GetGlobalConfigPoliciesResponse {
-  google.protobuf.Struct config_policies = 1;
-}
-
-// DeleteWorkspaceConfigPoliciesRequest is used to delete all task config policies for the workspace and task type.
-message DeleteWorkspaceConfigPoliciesRequest {
-  int32 workspace_id = 1;
-  string workload_type = 2;
-}
-
-message DeleteWorkspaceConfigPoliciesResponse {}
-
-// DeleteGlobalConfigPoliciesRequest is used to delete all global task config policies for the task type.
-message DeleteGlobalConfigPoliciesRequest {
+  // Specifies which task type the config policies apply to: experiment or NTSC.
+  // Mapped to enum in backend.
   string workload_type = 1;
 }
 
+// Response to GetGlobalConfigPolicies request.
+message GetGlobalConfigPoliciesResponse {
+  // The current config policies saved. Contains both invariant configs and
+  // constraints in yaml or json format.
+  google.protobuf.Struct config_policies = 1;
+}
+
+// DeleteWorkspaceConfigPoliciesRequest is used to delete all task config
+// policies for the workspace and task type.
+message DeleteWorkspaceConfigPoliciesRequest {
+  // Specifies which workspace the config policies apply to. Use global API for
+  // global config policies.
+  int32 workspace_id = 1;
+  // Specifies which task type the config policies apply to: experiment or NTSC.
+  // Mapped to enum in backend.
+  string workload_type = 2;
+}
+
+// Response to DeleteWorkspaceConfigPolicies request.
+message DeleteWorkspaceConfigPoliciesResponse {}
+
+// DeleteGlobalConfigPoliciesRequest is used to delete all global task config
+// policies for the task type.
+message DeleteGlobalConfigPoliciesRequest {
+  // Specifies which task type the config policies apply to: experiment or NTSC.
+  // Mapped to enum in backend.
+  string workload_type = 1;
+}
+
+// Response to DeleteGlobalConfigPolicies request.
 message DeleteGlobalConfigPoliciesResponse {}

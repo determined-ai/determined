@@ -5164,6 +5164,7 @@ class v1GetGenericTaskConfigResponse(Printable):
         return out
 
 class v1GetGlobalConfigPoliciesResponse(Printable):
+    """Response to GetGlobalConfigPolicies request."""
     configPolicies: "typing.Optional[typing.Dict[str, typing.Any]]" = None
 
     def __init__(
@@ -7143,6 +7144,7 @@ class v1GetWebhooksResponse(Printable):
         return out
 
 class v1GetWorkspaceConfigPoliciesResponse(Printable):
+    """Response to GetWorkspaceConfigPolicies request."""
     configPolicies: "typing.Optional[typing.Dict[str, typing.Any]]" = None
 
     def __init__(
@@ -12115,6 +12117,7 @@ class v1PutExperimentsRetainLogsResponse(Printable):
         return out
 
 class v1PutGlobalConfigPoliciesResponse(Printable):
+    """Response to PutGlobalConfigPolicies request."""
     configPolicies: "typing.Optional[typing.Dict[str, typing.Any]]" = None
 
     def __init__(
@@ -12307,7 +12310,9 @@ class v1PutTrialRetainLogsRequest(Printable):
         return out
 
 class v1PutWorkspaceConfigPoliciesRequest(Printable):
-    """PutWorkspaceConfigPoliciesRequest is a complete replacement of config policies for the workspace and workload type."""
+    """PutWorkspaceConfigPoliciesRequest is a complete replacement of config
+    policies for the workspace and workload type.
+    """
     configPolicies: "typing.Optional[str]" = None
     workloadType: "typing.Optional[str]" = None
     workspaceId: "typing.Optional[int]" = None
@@ -12350,6 +12355,7 @@ class v1PutWorkspaceConfigPoliciesRequest(Printable):
         return out
 
 class v1PutWorkspaceConfigPoliciesResponse(Printable):
+    """Response to PutWorkspaceConfigPolicies request."""
     configPolicies: "typing.Optional[typing.Dict[str, typing.Any]]" = None
 
     def __init__(
@@ -18413,7 +18419,11 @@ def delete_DeleteGlobalConfigPolicies(
     *,
     workloadType: str,
 ) -> None:
-    """Delete global task config policies."""
+    """Delete global task config policies.
+
+    - workloadType: Specifies which task type the config policies apply to: experiment or NTSC.
+Mapped to enum in backend.
+    """
     _params = None
     if type(workloadType) == str:
         workloadType = parse.quote(workloadType)
@@ -18658,7 +18668,13 @@ def delete_DeleteWorkspaceConfigPolicies(
     workloadType: str,
     workspaceId: int,
 ) -> None:
-    """Delete workspace task config policies."""
+    """Delete workspace task config policies.
+
+    - workloadType: Specifies which task type the config policies apply to: experiment or NTSC.
+Mapped to enum in backend.
+    - workspaceId: Specifies which workspace the config policies apply to. Use global API for
+global config policies.
+    """
     _params = None
     if type(workloadType) == str:
         workloadType = parse.quote(workloadType)
@@ -19538,7 +19554,11 @@ def get_GetGlobalConfigPolicies(
     *,
     workloadType: str,
 ) -> "v1GetGlobalConfigPoliciesResponse":
-    """Get global task config policies."""
+    """Get global task config policies.
+
+    - workloadType: Specifies which task type the config policies apply to: experiment or NTSC.
+Mapped to enum in backend.
+    """
     _params = None
     if type(workloadType) == str:
         workloadType = parse.quote(workloadType)
@@ -21638,7 +21658,13 @@ def get_GetWorkspaceConfigPolicies(
     workloadType: str,
     workspaceId: int,
 ) -> "v1GetWorkspaceConfigPoliciesResponse":
-    """Get workspace task config policies."""
+    """Get workspace task config policies.
+
+    - workloadType: Specifies which task type the config policies apply to: experiment or NTSC.
+Mapped to enum in backend.
+    - workspaceId: Specifies which workspace the config policies apply to. Use global API for
+global config policies.
+    """
     _params = None
     if type(workloadType) == str:
         workloadType = parse.quote(workloadType)
@@ -23564,7 +23590,11 @@ def put_PutGlobalConfigPolicies(
     *,
     workloadType: str,
 ) -> "v1PutGlobalConfigPoliciesResponse":
-    """Add or update global task config policies."""
+    """Add or update global task config policies.
+
+    - workloadType: Specifies which task type the config policies apply to: experiment or NTSC.
+Mapped to enum in backend.
+    """
     _params = None
     if type(workloadType) == str:
         workloadType = parse.quote(workloadType)
@@ -23688,7 +23718,13 @@ def put_PutWorkspaceConfigPolicies(
     workloadType: str,
     workspaceId: int,
 ) -> "v1PutWorkspaceConfigPoliciesResponse":
-    """Add or update workspace task config policies."""
+    """Add or update workspace task config policies.
+
+    - workloadType: Specifies which task type the config policies apply to: experiment or NTSC.
+Mapped to enum in backend.
+    - workspaceId: Specifies which workspace the config policies apply to. Use global API for
+global config policies.
+    """
     _params = None
     if type(workloadType) == str:
         workloadType = parse.quote(workloadType)

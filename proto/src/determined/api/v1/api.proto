@@ -2797,63 +2797,69 @@ service Determined {
   }
 
   // Add or update workspace task config policies.
-  rpc PutWorkspaceConfigPolicies(PutWorkspaceConfigPoliciesRequest) returns (PutWorkspaceConfigPoliciesResponse) {
+  rpc PutWorkspaceConfigPolicies(PutWorkspaceConfigPoliciesRequest)
+      returns (PutWorkspaceConfigPoliciesResponse) {
     option (google.api.http) = {
       put: "/api/v1/config-policies/workspaces/{workspace_id}/{workload_type}"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Internal" // FIXME what tag to use?
+      tags: "Internal"  // FIXME what tag to use?
     };
   }
 
   // Add or update global task config policies.
-  rpc PutGlobalConfigPolicies(PutGlobalConfigPoliciesRequest) returns (PutGlobalConfigPoliciesResponse) {
+  rpc PutGlobalConfigPolicies(PutGlobalConfigPoliciesRequest)
+      returns (PutGlobalConfigPoliciesResponse) {
     option (google.api.http) = {
       put: "/api/v1/config-policies/global/{workload_type}"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Internal" // FIXME what tag to use?
+      tags: "Internal"  // FIXME what tag to use?
     };
   }
 
   // Get workspace task config policies.
-  rpc GetWorkspaceConfigPolicies(GetWorkspaceConfigPoliciesRequest) returns (GetWorkspaceConfigPoliciesResponse) {
+  rpc GetWorkspaceConfigPolicies(GetWorkspaceConfigPoliciesRequest)
+      returns (GetWorkspaceConfigPoliciesResponse) {
     option (google.api.http) = {
       get: "/api/v1/config-policies/workspaces/{workspace_id}/{workload_type}"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Internal" // FIXME what tag to use?
+      tags: "Internal"  // FIXME what tag to use?
     };
   }
 
   // Get global task config policies.
-  rpc GetGlobalConfigPolicies(GetGlobalConfigPoliciesRequest) returns (GetGlobalConfigPoliciesResponse) {
+  rpc GetGlobalConfigPolicies(GetGlobalConfigPoliciesRequest)
+      returns (GetGlobalConfigPoliciesResponse) {
     option (google.api.http) = {
       get: "/api/v1/config-policies/global/{workload_type}"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Internal" // FIXME what tag to use?
+      tags: "Internal"  // FIXME what tag to use?
     };
   }
 
   // Delete workspace task config policies.
-  rpc DeleteWorkspaceConfigPolicies(DeleteWorkspaceConfigPoliciesRequest) returns (DeleteWorkspaceConfigPoliciesResponse) {
+  rpc DeleteWorkspaceConfigPolicies(DeleteWorkspaceConfigPoliciesRequest)
+      returns (DeleteWorkspaceConfigPoliciesResponse) {
     option (google.api.http) = {
       delete: "/api/v1/config-policies/workspaces/{workspace_id}/{workload_type}"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Internal" // FIXME what tag to use?
+      tags: "Internal"  // FIXME what tag to use?
     };
   }
 
   // Delete global task config policies.
-  rpc DeleteGlobalConfigPolicies(DeleteGlobalConfigPoliciesRequest) returns (DeleteGlobalConfigPoliciesResponse) {
+  rpc DeleteGlobalConfigPolicies(DeleteGlobalConfigPoliciesRequest)
+      returns (DeleteGlobalConfigPoliciesResponse) {
     option (google.api.http) = {
       delete: "/api/v1/config-policies/global/{workload_type}"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Internal" // FIXME what tag to use?
+      tags: "Internal"  // FIXME what tag to use?
     };
   }
 }

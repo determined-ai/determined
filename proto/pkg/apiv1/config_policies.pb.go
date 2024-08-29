@@ -19,14 +19,21 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// PutWorkspaceConfigPoliciesRequest is a complete replacement of config policies for the workspace and workload type.
+// PutWorkspaceConfigPoliciesRequest is a complete replacement of config
+// policies for the workspace and workload type.
 type PutWorkspaceConfigPoliciesRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	WorkspaceId    int32  `protobuf:"varint,1,opt,name=workspace_id,json=workspaceId,proto3" json:"workspace_id,omitempty"`
-	WorkloadType   string `protobuf:"bytes,2,opt,name=workload_type,json=workloadType,proto3" json:"workload_type,omitempty"`
+	// Specifies which workspace the config policies apply to. Use global API for
+	// global config policies.
+	WorkspaceId int32 `protobuf:"varint,1,opt,name=workspace_id,json=workspaceId,proto3" json:"workspace_id,omitempty"`
+	// Specifies which task type the config policies apply to: experiment or NTSC.
+	// Mapped to enum in backend.
+	WorkloadType string `protobuf:"bytes,2,opt,name=workload_type,json=workloadType,proto3" json:"workload_type,omitempty"`
+	// The config policies to use. Contains both invariant configs and constraints
+	// in yaml or json format.
 	ConfigPolicies string `protobuf:"bytes,3,opt,name=config_policies,json=configPolicies,proto3" json:"config_policies,omitempty"`
 }
 
@@ -83,11 +90,14 @@ func (x *PutWorkspaceConfigPoliciesRequest) GetConfigPolicies() string {
 	return ""
 }
 
+// Response to PutWorkspaceConfigPolicies request.
 type PutWorkspaceConfigPoliciesResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	// The config policies saved. Contains both invariant configs and constraints
+	// in yaml or json format.
 	ConfigPolicies *_struct.Struct `protobuf:"bytes,1,opt,name=config_policies,json=configPolicies,proto3" json:"config_policies,omitempty"`
 }
 
@@ -130,13 +140,18 @@ func (x *PutWorkspaceConfigPoliciesResponse) GetConfigPolicies() *_struct.Struct
 	return nil
 }
 
-// PutGlobalConfigPoliciesRequest is a complete replacement of global config policies for the workload type.
+// PutGlobalConfigPoliciesRequest is a complete replacement of global config
+// policies for the workload type.
 type PutGlobalConfigPoliciesRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	WorkloadType   string `protobuf:"bytes,1,opt,name=workload_type,json=workloadType,proto3" json:"workload_type,omitempty"`
+	// Specifies which task type the config policies apply to: experiment or NTSC.
+	// Mapped to enum in backend.
+	WorkloadType string `protobuf:"bytes,1,opt,name=workload_type,json=workloadType,proto3" json:"workload_type,omitempty"`
+	// The config policies to use. Contains both invariant configs and constraints
+	// in yaml or json format.
 	ConfigPolicies string `protobuf:"bytes,2,opt,name=config_policies,json=configPolicies,proto3" json:"config_policies,omitempty"`
 }
 
@@ -186,11 +201,14 @@ func (x *PutGlobalConfigPoliciesRequest) GetConfigPolicies() string {
 	return ""
 }
 
+// Response to PutGlobalConfigPolicies request.
 type PutGlobalConfigPoliciesResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	// The config policies saved. Contains both invariant configs and constraints
+	// in yaml or json format.
 	ConfigPolicies *_struct.Struct `protobuf:"bytes,1,opt,name=config_policies,json=configPolicies,proto3" json:"config_policies,omitempty"`
 }
 
@@ -233,13 +251,18 @@ func (x *PutGlobalConfigPoliciesResponse) GetConfigPolicies() *_struct.Struct {
 	return nil
 }
 
-// GetWorkspaceConfigPoliciesRequest is used to list all task config policies for the workspace and task type.
+// GetWorkspaceConfigPoliciesRequest is used to list all task config policies
+// for the workspace and task type.
 type GetWorkspaceConfigPoliciesRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	WorkspaceId  int32  `protobuf:"varint,1,opt,name=workspace_id,json=workspaceId,proto3" json:"workspace_id,omitempty"`
+	// Specifies which workspace the config policies apply to. Use global API for
+	// global config policies.
+	WorkspaceId int32 `protobuf:"varint,1,opt,name=workspace_id,json=workspaceId,proto3" json:"workspace_id,omitempty"`
+	// Specifies which task type the config policies apply to: experiment or NTSC.
+	// Mapped to enum in backend.
 	WorkloadType string `protobuf:"bytes,2,opt,name=workload_type,json=workloadType,proto3" json:"workload_type,omitempty"`
 }
 
@@ -289,11 +312,14 @@ func (x *GetWorkspaceConfigPoliciesRequest) GetWorkloadType() string {
 	return ""
 }
 
+// Response to GetWorkspaceConfigPolicies request.
 type GetWorkspaceConfigPoliciesResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	// The current config policies saved. Contains both invariant configs and
+	// constraints in yaml or json format.
 	ConfigPolicies *_struct.Struct `protobuf:"bytes,1,opt,name=config_policies,json=configPolicies,proto3" json:"config_policies,omitempty"`
 }
 
@@ -336,13 +362,16 @@ func (x *GetWorkspaceConfigPoliciesResponse) GetConfigPolicies() *_struct.Struct
 	return nil
 }
 
-// GetGlobalConfigPoliciesRequest is used to list all global task config policies for the task type.
+// GetGlobalConfigPoliciesRequest is used to list all global task config
+// policies for the task type.
 type GetGlobalConfigPoliciesRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	WorkloadType string `protobuf:"bytes,2,opt,name=workload_type,json=workloadType,proto3" json:"workload_type,omitempty"`
+	// Specifies which task type the config policies apply to: experiment or NTSC.
+	// Mapped to enum in backend.
+	WorkloadType string `protobuf:"bytes,1,opt,name=workload_type,json=workloadType,proto3" json:"workload_type,omitempty"`
 }
 
 func (x *GetGlobalConfigPoliciesRequest) Reset() {
@@ -384,11 +413,14 @@ func (x *GetGlobalConfigPoliciesRequest) GetWorkloadType() string {
 	return ""
 }
 
+// Response to GetGlobalConfigPolicies request.
 type GetGlobalConfigPoliciesResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	// The current config policies saved. Contains both invariant configs and
+	// constraints in yaml or json format.
 	ConfigPolicies *_struct.Struct `protobuf:"bytes,1,opt,name=config_policies,json=configPolicies,proto3" json:"config_policies,omitempty"`
 }
 
@@ -431,13 +463,18 @@ func (x *GetGlobalConfigPoliciesResponse) GetConfigPolicies() *_struct.Struct {
 	return nil
 }
 
-// DeleteWorkspaceConfigPoliciesRequest is used to delete all task config policies for the workspace and task type.
+// DeleteWorkspaceConfigPoliciesRequest is used to delete all task config
+// policies for the workspace and task type.
 type DeleteWorkspaceConfigPoliciesRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	WorkspaceId  int32  `protobuf:"varint,1,opt,name=workspace_id,json=workspaceId,proto3" json:"workspace_id,omitempty"`
+	// Specifies which workspace the config policies apply to. Use global API for
+	// global config policies.
+	WorkspaceId int32 `protobuf:"varint,1,opt,name=workspace_id,json=workspaceId,proto3" json:"workspace_id,omitempty"`
+	// Specifies which task type the config policies apply to: experiment or NTSC.
+	// Mapped to enum in backend.
 	WorkloadType string `protobuf:"bytes,2,opt,name=workload_type,json=workloadType,proto3" json:"workload_type,omitempty"`
 }
 
@@ -487,6 +524,7 @@ func (x *DeleteWorkspaceConfigPoliciesRequest) GetWorkloadType() string {
 	return ""
 }
 
+// Response to DeleteWorkspaceConfigPolicies request.
 type DeleteWorkspaceConfigPoliciesResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -525,12 +563,15 @@ func (*DeleteWorkspaceConfigPoliciesResponse) Descriptor() ([]byte, []int) {
 	return file_determined_api_v1_config_policies_proto_rawDescGZIP(), []int{9}
 }
 
-// DeleteGlobalConfigPoliciesRequest is used to delete all global task config policies for the task type.
+// DeleteGlobalConfigPoliciesRequest is used to delete all global task config
+// policies for the task type.
 type DeleteGlobalConfigPoliciesRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
+	// Specifies which task type the config policies apply to: experiment or NTSC.
+	// Mapped to enum in backend.
 	WorkloadType string `protobuf:"bytes,1,opt,name=workload_type,json=workloadType,proto3" json:"workload_type,omitempty"`
 }
 
@@ -573,6 +614,7 @@ func (x *DeleteGlobalConfigPoliciesRequest) GetWorkloadType() string {
 	return ""
 }
 
+// Response to DeleteGlobalConfigPolicies request.
 type DeleteGlobalConfigPoliciesResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -665,7 +707,7 @@ var file_determined_api_v1_config_policies_proto_rawDesc = []byte{
 	0x69, 0x65, 0x73, 0x22, 0x45, 0x0a, 0x1e, 0x47, 0x65, 0x74, 0x47, 0x6c, 0x6f, 0x62, 0x61, 0x6c,
 	0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x50, 0x6f, 0x6c, 0x69, 0x63, 0x69, 0x65, 0x73, 0x52, 0x65,
 	0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x23, 0x0a, 0x0d, 0x77, 0x6f, 0x72, 0x6b, 0x6c, 0x6f, 0x61,
-	0x64, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0c, 0x77, 0x6f,
+	0x64, 0x5f, 0x74, 0x79, 0x70, 0x65, 0x18, 0x01, 0x20, 0x01, 0x28, 0x09, 0x52, 0x0c, 0x77, 0x6f,
 	0x72, 0x6b, 0x6c, 0x6f, 0x61, 0x64, 0x54, 0x79, 0x70, 0x65, 0x22, 0x63, 0x0a, 0x1f, 0x47, 0x65,
 	0x74, 0x47, 0x6c, 0x6f, 0x62, 0x61, 0x6c, 0x43, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x50, 0x6f, 0x6c,
 	0x69, 0x63, 0x69, 0x65, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x40, 0x0a,
