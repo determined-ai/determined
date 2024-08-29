@@ -19,7 +19,6 @@ analytics.max_retries = 5
 def get_library_version_analytics() -> Dict[str, Any]:
     modules = [
         "determined",
-        "model_hub",
         "torch",
         "tensorflow",
         "transformers",
