@@ -19961,7 +19961,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         /**
          * 
          * @summary Delete global task config policies.
-         * @param {string} workloadType Specifies which task type the config policies apply to: experiment or NTSC.
+         * @param {string} workloadType Specifies which task type the config policies apply to: EXPERIMENT or NTSC.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -20072,7 +20072,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * 
          * @summary Delete workspace task config policies.
          * @param {number} workspaceId Specifies which workspace the config policies apply to. Use global API for global config policies.
-         * @param {string} workloadType Specifies which task type the config policies apply to: experiment or NTSC.
+         * @param {string} workloadType Specifies which task type the config policies apply to: EXPERIMENT or NTSC.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -20301,7 +20301,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         /**
          * 
          * @summary Get global task config policies.
-         * @param {string} workloadType Specifies which task type the config policies apply to: experiment or NTSC.
+         * @param {string} workloadType Specifies which task type the config policies apply to: EXPERIMENT or NTSC.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -21102,7 +21102,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * 
          * @summary Get workspace task config policies.
          * @param {number} workspaceId Specifies which workspace the config policies apply to. Use global API for global config policies.
-         * @param {string} workloadType Specifies which task type the config policies apply to: experiment or NTSC.
+         * @param {string} workloadType Specifies which task type the config policies apply to: EXPERIMENT or NTSC.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -22087,7 +22087,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         /**
          * 
          * @summary Add or update global task config policies.
-         * @param {string} workloadType Specifies which task type the config policies apply to: experiment or NTSC.
+         * @param {string} workloadType Specifies which task type the config policies apply to: EXPERIMENT or NTSC.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -23397,7 +23397,7 @@ export const InternalApiFp = function (configuration?: Configuration) {
         /**
          * 
          * @summary Delete global task config policies.
-         * @param {string} workloadType Specifies which task type the config policies apply to: experiment or NTSC.
+         * @param {string} workloadType Specifies which task type the config policies apply to: EXPERIMENT or NTSC.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -23455,7 +23455,7 @@ export const InternalApiFp = function (configuration?: Configuration) {
          * 
          * @summary Delete workspace task config policies.
          * @param {number} workspaceId Specifies which workspace the config policies apply to. Use global API for global config policies.
-         * @param {string} workloadType Specifies which task type the config policies apply to: experiment or NTSC.
+         * @param {string} workloadType Specifies which task type the config policies apply to: EXPERIMENT or NTSC.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -23570,7 +23570,7 @@ export const InternalApiFp = function (configuration?: Configuration) {
         /**
          * 
          * @summary Get global task config policies.
-         * @param {string} workloadType Specifies which task type the config policies apply to: experiment or NTSC.
+         * @param {string} workloadType Specifies which task type the config policies apply to: EXPERIMENT or NTSC.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -23957,7 +23957,7 @@ export const InternalApiFp = function (configuration?: Configuration) {
          * 
          * @summary Get workspace task config policies.
          * @param {number} workspaceId Specifies which workspace the config policies apply to. Use global API for global config policies.
-         * @param {string} workloadType Specifies which task type the config policies apply to: experiment or NTSC.
+         * @param {string} workloadType Specifies which task type the config policies apply to: EXPERIMENT or NTSC.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -24414,7 +24414,7 @@ export const InternalApiFp = function (configuration?: Configuration) {
         /**
          * 
          * @summary Add or update global task config policies.
-         * @param {string} workloadType Specifies which task type the config policies apply to: experiment or NTSC.
+         * @param {string} workloadType Specifies which task type the config policies apply to: EXPERIMENT or NTSC.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -25043,7 +25043,7 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         /**
          * 
          * @summary Delete global task config policies.
-         * @param {string} workloadType Specifies which task type the config policies apply to: experiment or NTSC.
+         * @param {string} workloadType Specifies which task type the config policies apply to: EXPERIMENT or NTSC.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -25074,7 +25074,7 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * 
          * @summary Delete workspace task config policies.
          * @param {number} workspaceId Specifies which workspace the config policies apply to. Use global API for global config policies.
-         * @param {string} workloadType Specifies which task type the config policies apply to: experiment or NTSC.
+         * @param {string} workloadType Specifies which task type the config policies apply to: EXPERIMENT or NTSC.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -25135,7 +25135,7 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         /**
          * 
          * @summary Get global task config policies.
-         * @param {string} workloadType Specifies which task type the config policies apply to: experiment or NTSC.
+         * @param {string} workloadType Specifies which task type the config policies apply to: EXPERIMENT or NTSC.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -25351,7 +25351,7 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * 
          * @summary Get workspace task config policies.
          * @param {number} workspaceId Specifies which workspace the config policies apply to. Use global API for global config policies.
-         * @param {string} workloadType Specifies which task type the config policies apply to: experiment or NTSC.
+         * @param {string} workloadType Specifies which task type the config policies apply to: EXPERIMENT or NTSC.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -25601,7 +25601,7 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         /**
          * 
          * @summary Add or update global task config policies.
-         * @param {string} workloadType Specifies which task type the config policies apply to: experiment or NTSC.
+         * @param {string} workloadType Specifies which task type the config policies apply to: EXPERIMENT or NTSC.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -26067,7 +26067,7 @@ export class InternalApi extends BaseAPI {
     /**
      * 
      * @summary Delete global task config policies.
-     * @param {string} workloadType Specifies which task type the config policies apply to: experiment or NTSC.
+     * @param {string} workloadType Specifies which task type the config policies apply to: EXPERIMENT or NTSC.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof InternalApi
@@ -26104,7 +26104,7 @@ export class InternalApi extends BaseAPI {
      * 
      * @summary Delete workspace task config policies.
      * @param {number} workspaceId Specifies which workspace the config policies apply to. Use global API for global config policies.
-     * @param {string} workloadType Specifies which task type the config policies apply to: experiment or NTSC.
+     * @param {string} workloadType Specifies which task type the config policies apply to: EXPERIMENT or NTSC.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof InternalApi
@@ -26177,7 +26177,7 @@ export class InternalApi extends BaseAPI {
     /**
      * 
      * @summary Get global task config policies.
-     * @param {string} workloadType Specifies which task type the config policies apply to: experiment or NTSC.
+     * @param {string} workloadType Specifies which task type the config policies apply to: EXPERIMENT or NTSC.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof InternalApi
@@ -26431,7 +26431,7 @@ export class InternalApi extends BaseAPI {
      * 
      * @summary Get workspace task config policies.
      * @param {number} workspaceId Specifies which workspace the config policies apply to. Use global API for global config policies.
-     * @param {string} workloadType Specifies which task type the config policies apply to: experiment or NTSC.
+     * @param {string} workloadType Specifies which task type the config policies apply to: EXPERIMENT or NTSC.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof InternalApi
@@ -26727,7 +26727,7 @@ export class InternalApi extends BaseAPI {
     /**
      * 
      * @summary Add or update global task config policies.
-     * @param {string} workloadType Specifies which task type the config policies apply to: experiment or NTSC.
+     * @param {string} workloadType Specifies which task type the config policies apply to: EXPERIMENT or NTSC.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof InternalApi

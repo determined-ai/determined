@@ -28,7 +28,7 @@ message PutWorkspaceConfigPoliciesResponse {
 // PutGlobalConfigPoliciesRequest is a complete replacement of global config
 // policies for the workload type.
 message PutGlobalConfigPoliciesRequest {
-  // Specifies which task type the config policies apply to: experiment or NTSC.
+  // Specifies which task type the config policies apply to: EXPERIMENT or NTSC.
   string workload_type = 1;
   // The config policies to use. Contains both invariant configs and constraints
   // in yaml or json format.
@@ -48,7 +48,7 @@ message GetWorkspaceConfigPoliciesRequest {
   // Specifies which workspace the config policies apply to. Use global API for
   // global config policies.
   int32 workspace_id = 1;
-  // Specifies which task type the config policies apply to: experiment or NTSC.
+  // Specifies which task type the config policies apply to: EXPERIMENT or NTSC.
   string workload_type = 2;
 }
 
@@ -62,7 +62,7 @@ message GetWorkspaceConfigPoliciesResponse {
 // GetGlobalConfigPoliciesRequest is used to list all global task config
 // policies for the task type.
 message GetGlobalConfigPoliciesRequest {
-  // Specifies which task type the config policies apply to: experiment or NTSC.
+  // Specifies which task type the config policies apply to: EXPERIMENT or NTSC.
   string workload_type = 1;
 }
 
@@ -79,7 +79,7 @@ message DeleteWorkspaceConfigPoliciesRequest {
   // Specifies which workspace the config policies apply to. Use global API for
   // global config policies.
   int32 workspace_id = 1;
-  // Specifies which task type the config policies apply to: experiment or NTSC.
+  // Specifies which task type the config policies apply to: EXPERIMENT or NTSC.
   string workload_type = 2;
 }
 
@@ -89,7 +89,7 @@ message DeleteWorkspaceConfigPoliciesResponse {}
 // DeleteGlobalConfigPoliciesRequest is used to delete all global task config
 // policies for the task type.
 message DeleteGlobalConfigPoliciesRequest {
-  // Specifies which task type the config policies apply to: experiment or NTSC.
+  // Specifies which task type the config policies apply to: EXPERIMENT or NTSC.
   string workload_type = 1;
 }
 
