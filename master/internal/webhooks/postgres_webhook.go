@@ -696,11 +696,11 @@ func generateSlackPayload(
 ) ([]byte, error) {
 	var status string
 	var eURL string
-	var c string
 	var mStatus string
 	var projectID int
 	var wID int
 	var w *model.Workspace
+	c := "#13B670"
 	config := conf.GetMasterConfig()
 	wName := activeConfig.Workspace() // TODO(ET-288): This is incorrect on moves.
 	pName := activeConfig.Project()
@@ -727,7 +727,8 @@ func generateSlackPayload(
 		}
 	}
 
-	if e.State == model.CompletedState {
+	switch e.State {
+	case model.CompletedState:
 		status = "Your experiment completed successfully 🎉"
 		if baseURLIsSet {
 			eURL = fmt.Sprintf("✅ <%v/det/experiments/%v/overview | %v (#%v)>",
@@ -735,9 +736,8 @@ func generateSlackPayload(
 		} else {
 			eURL = fmt.Sprintf("✅ %v (#%v)", activeConfig.Name(), e.ID)
 		}
-		c = "#13B670"
 		mStatus = "Completed"
-	} else if e.State == model.ErrorState {
+	case model.ErrorState:
 		status = "Your experiment has stopped with errors"
 		if baseURLIsSet {
 			eURL = fmt.Sprintf("❌ <%v/det/experiments/%v/overview | %v (#%v)>",
@@ -747,7 +747,7 @@ func generateSlackPayload(
 		}
 		c = "#DD5040"
 		mStatus = "Errored"
-	} else {
+	default:
 		status = fmt.Sprintf("The status of your experiment is %s", e.State)
 		if baseURLIsSet {
 			eURL = fmt.Sprintf("<%v/det/experiments/%v/overview | %v (#%v)>",
@@ -755,9 +755,9 @@ func generateSlackPayload(
 		} else {
 			eURL = fmt.Sprintf("%v (#%v)", activeConfig.Name(), e.ID)
 		}
-		c = "#13B670"
 		mStatus = string(e.State)
 	}
+
 	endTime := time.Now()
 	if e.EndTime != nil {
 		endTime = *e.EndTime
