@@ -8928,6 +8928,31 @@ export interface V1PutTrialRetainLogsRequest {
 export interface V1PutTrialRetainLogsResponse {
 }
 /**
+ * PutWorkspaceConfigPoliciesRequest is a complete replacement of config policies for the workspace and workload type.
+ * @export
+ * @interface V1PutWorkspaceConfigPoliciesRequest
+ */
+export interface V1PutWorkspaceConfigPoliciesRequest {
+    /**
+     * 
+     * @type {number}
+     * @memberof V1PutWorkspaceConfigPoliciesRequest
+     */
+    workspaceId?: number;
+    /**
+     * 
+     * @type {string}
+     * @memberof V1PutWorkspaceConfigPoliciesRequest
+     */
+    workloadType?: string;
+    /**
+     * 
+     * @type {string}
+     * @memberof V1PutWorkspaceConfigPoliciesRequest
+     */
+    configPolicies?: string;
+}
+/**
  * 
  * @export
  * @interface V1PutWorkspaceConfigPoliciesResponse
@@ -22138,11 +22163,11 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
          * @summary Add or update workspace task config policies.
          * @param {number} workspaceId
          * @param {string} workloadType
-         * @param {string} body
+         * @param {V1PutWorkspaceConfigPoliciesRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        putWorkspaceConfigPolicies(workspaceId: number, workloadType: string, body: string, options: any = {}): FetchArgs {
+        putWorkspaceConfigPolicies(workspaceId: number, workloadType: string, body: V1PutWorkspaceConfigPoliciesRequest, options: any = {}): FetchArgs {
             // verify required parameter 'workspaceId' is not null or undefined
             if (workspaceId === null || workspaceId === undefined) {
                 throw new RequiredError('workspaceId','Required parameter workspaceId was null or undefined when calling putWorkspaceConfigPolicies.');
@@ -22176,8 +22201,7 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
             objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
-            const needsSerialization = localVarRequestOptions.headers['Content-Type'] === 'application/json';
-            localVarRequestOptions.body = needsSerialization ? JSON.stringify(body) : body
+            localVarRequestOptions.body = JSON.stringify(body)
             
             return {
                 url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
@@ -24430,11 +24454,11 @@ export const InternalApiFp = function (configuration?: Configuration) {
          * @summary Add or update workspace task config policies.
          * @param {number} workspaceId
          * @param {string} workloadType
-         * @param {string} body
+         * @param {V1PutWorkspaceConfigPoliciesRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        putWorkspaceConfigPolicies(workspaceId: number, workloadType: string, body: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PutWorkspaceConfigPoliciesResponse> {
+        putWorkspaceConfigPolicies(workspaceId: number, workloadType: string, body: V1PutWorkspaceConfigPoliciesRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PutWorkspaceConfigPoliciesResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).putWorkspaceConfigPolicies(workspaceId, workloadType, body, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
@@ -25599,11 +25623,11 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          * @summary Add or update workspace task config policies.
          * @param {number} workspaceId
          * @param {string} workloadType
-         * @param {string} body
+         * @param {V1PutWorkspaceConfigPoliciesRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        putWorkspaceConfigPolicies(workspaceId: number, workloadType: string, body: string, options?: any) {
+        putWorkspaceConfigPolicies(workspaceId: number, workloadType: string, body: V1PutWorkspaceConfigPoliciesRequest, options?: any) {
             return InternalApiFp(configuration).putWorkspaceConfigPolicies(workspaceId, workloadType, body, options)(fetch, basePath);
         },
         /**
@@ -26729,12 +26753,12 @@ export class InternalApi extends BaseAPI {
      * @summary Add or update workspace task config policies.
      * @param {number} workspaceId
      * @param {string} workloadType
-     * @param {string} body
+     * @param {V1PutWorkspaceConfigPoliciesRequest} body
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof InternalApi
      */
-    public putWorkspaceConfigPolicies(workspaceId: number, workloadType: string, body: string, options?: any) {
+    public putWorkspaceConfigPolicies(workspaceId: number, workloadType: string, body: V1PutWorkspaceConfigPoliciesRequest, options?: any) {
         return InternalApiFp(this.configuration).putWorkspaceConfigPolicies(workspaceId, workloadType, body, options)(this.fetch, this.basePath)
     }
     

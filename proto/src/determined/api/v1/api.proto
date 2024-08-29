@@ -2800,7 +2800,7 @@ service Determined {
   rpc PutWorkspaceConfigPolicies(PutWorkspaceConfigPoliciesRequest) returns (PutWorkspaceConfigPoliciesResponse) {
     option (google.api.http) = {
       put: "/api/v1/config-policies/workspaces/{workspace_id}/{workload_type}"
-      body: "config_policies"
+      body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Internal" // FIXME what tag to use?

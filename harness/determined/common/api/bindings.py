@@ -12306,6 +12306,49 @@ class v1PutTrialRetainLogsRequest(Printable):
             out["trialId"] = self.trialId
         return out
 
+class v1PutWorkspaceConfigPoliciesRequest(Printable):
+    """PutWorkspaceConfigPoliciesRequest is a complete replacement of config policies for the workspace and workload type."""
+    configPolicies: "typing.Optional[str]" = None
+    workloadType: "typing.Optional[str]" = None
+    workspaceId: "typing.Optional[int]" = None
+
+    def __init__(
+        self,
+        *,
+        configPolicies: "typing.Union[str, None, Unset]" = _unset,
+        workloadType: "typing.Union[str, None, Unset]" = _unset,
+        workspaceId: "typing.Union[int, None, Unset]" = _unset,
+    ):
+        if not isinstance(configPolicies, Unset):
+            self.configPolicies = configPolicies
+        if not isinstance(workloadType, Unset):
+            self.workloadType = workloadType
+        if not isinstance(workspaceId, Unset):
+            self.workspaceId = workspaceId
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PutWorkspaceConfigPoliciesRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "configPolicies" in obj:
+            kwargs["configPolicies"] = obj["configPolicies"]
+        if "workloadType" in obj:
+            kwargs["workloadType"] = obj["workloadType"]
+        if "workspaceId" in obj:
+            kwargs["workspaceId"] = obj["workspaceId"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "configPolicies" in vars(self):
+            out["configPolicies"] = self.configPolicies
+        if not omit_unset or "workloadType" in vars(self):
+            out["workloadType"] = self.workloadType
+        if not omit_unset or "workspaceId" in vars(self):
+            out["workspaceId"] = self.workspaceId
+        return out
+
 class v1PutWorkspaceConfigPoliciesResponse(Printable):
     configPolicies: "typing.Optional[typing.Dict[str, typing.Any]]" = None
 
@@ -23641,7 +23684,7 @@ def put_PutTrialRetainLogs(
 def put_PutWorkspaceConfigPolicies(
     session: "api.BaseSession",
     *,
-    body: str,
+    body: "v1PutWorkspaceConfigPoliciesRequest",
     workloadType: str,
     workspaceId: int,
 ) -> "v1PutWorkspaceConfigPoliciesResponse":
@@ -23653,7 +23696,7 @@ def put_PutWorkspaceConfigPolicies(
         method="PUT",
         path=f"/api/v1/config-policies/workspaces/{workspaceId}/{workloadType}",
         params=_params,
-        json=body,
+        json=body.to_json(True),
         data=None,
         headers=None,
         timeout=None,
