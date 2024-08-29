@@ -20,7 +20,7 @@ func TestCreateLongLivedToken(t *testing.T) {
 	require.NoError(t, err)
 
 	// Add a LongLivedToken.
-	token, err := CreateLongLivedToken(context.TODO(), user)
+	token, err := DeleteAndGenerateLongLivedToken(context.TODO(), user.ID)
 	require.NoError(t, err)
 	require.NotNil(t, token)
 
@@ -36,7 +36,7 @@ func TestCreateLongLivedTokenHasExpiresAt(t *testing.T) {
 
 	// Add a LongLivedToken with custom (Now() + 3 Months) Expiry Time.
 	expiresAt := time.Now().Add(TokenExpirationDuration * 3)
-	token, err := CreateLongLivedToken(context.TODO(), user, WithTokenExpiresAt(&expiresAt))
+	token, err := DeleteAndGenerateLongLivedToken(context.TODO(), user.ID, WithTokenExpiresAt(&expiresAt))
 	require.NoError(t, err)
 	require.NotNil(t, token)
 

@@ -6,6 +6,7 @@ option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 import "determined/user/v1/user.proto";
 import "determined/api/v1/pagination.proto";
 import "protoc-gen-swagger/options/annotations.proto";
+import "google/protobuf/duration.proto";
 
 // Message for results of individual users in a multi-user action.
 message UserActionResult {
@@ -225,3 +226,22 @@ message PostUserActivityRequest {
 
 // Response to PostUserActivityRequest.
 message PostUserActivityResponse {}
+
+// Update user LongLivedToken.
+message PostLongLivedTokenRequest {
+  // Option to provide lifespan of token.
+  google.protobuf.Duration lifespan = 1;
+}
+
+// Response to PostLongLivedTokenRequest.
+message PostLongLivedTokenResponse {
+  // long_lived_token string.
+  string long_lived_token = 1;
+}
+
+// Update user LongLivedToken.
+message PostUserLongLivedTokenRequest {
+  int32 user_id = 1;
+  // Option to provide lifespan of token.
+  google.protobuf.Duration lifespan = 2;
+}

@@ -683,3 +683,47 @@ func (a *apiServer) PostUserActivity(
 	}
 	return &apiv1.PostUserActivityResponse{}, err
 }
+
+func (a *apiServer) PostLongLivedToken(
+	ctx context.Context, req *apiv1.PostLongLivedTokenRequest,
+) (*apiv1.PostLongLivedTokenResponse, error) {
+	tokenExpiration := time.Now().Add(user.TokenExpirationDuration)
+	if req.Lifespan != nil {
+		lifespan := req.Lifespan.AsDuration()
+		// Check if the lifespan is valid
+		if lifespan <= 0 {
+			return nil, fmt.Errorf("invalid lifespan: duration must be positive")
+		}
+		tokenExpiration = time.Now().Add(lifespan)
+	}
+
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	token, err := user.DeleteAndGenerateLongLivedToken(ctx, curUser.ID, user.WithTokenExpiresAt(&tokenExpiration))
+	if err != nil {
+		return nil, err
+	}
+	return &apiv1.PostLongLivedTokenResponse{LongLivedToken: token}, nil
+}
+
+func (a *apiServer) PostUserLongLivedToken(
+	ctx context.Context, req *apiv1.PostUserLongLivedTokenRequest,
+) (*apiv1.PostLongLivedTokenResponse, error) {
+	tokenExpiration := time.Now().Add(user.TokenExpirationDuration)
+	if req.Lifespan != nil {
+		lifespan := req.Lifespan.AsDuration()
+		// Check if the lifespan is valid
+		if lifespan <= 0 {
+			return nil, fmt.Errorf("invalid lifespan: duration must be positive")
+		}
+		tokenExpiration = time.Now().Add(lifespan)
+	}
+
+	token, err := user.DeleteAndGenerateLongLivedToken(ctx, model.UserID(req.UserId), user.WithTokenExpiresAt(&tokenExpiration))
+	if err != nil {
+		return nil, err
+	}
+	return &apiv1.PostLongLivedTokenResponse{LongLivedToken: token}, nil
+}

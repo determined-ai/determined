@@ -29,11 +29,11 @@ func WithTokenExpiresAt(expiresAt *time.Time) LongLivedTokenOption {
 	}
 }
 
-// CreateLongLivedToken creates a row in the long lived token table.
-func CreateLongLivedToken(ctx context.Context, user *model.User, opts ...LongLivedTokenOption) (string, error) {
+// DeleteAndGenerateLongLivedToken creates a row in the long lived token table.
+func DeleteAndGenerateLongLivedToken(ctx context.Context, userID model.UserID, opts ...LongLivedTokenOption) (string, error) {
 	// Populate the default values in the model.
 	longLivedToken := &model.LongLivedToken{
-		UserID:    user.ID,
+		UserID:    userID,
 		CreatedAt: time.Now(),
 		ExpiresAt: time.Now().Add(TokenExpirationDuration),
 	}
@@ -44,9 +44,16 @@ func CreateLongLivedToken(ctx context.Context, user *model.User, opts ...LongLiv
 	}
 
 	err := db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		// Tokens should have a 1:1 relationship with users, if a user creates a new token,
+		// revoke the previous token if it exists.
+		err := DeleteLongLivenTokenByUserID(ctx, userID)
+		if err != nil {
+			return err
+		}
+
 		// A new row is inserted into the long_lived_token table, and the ID of the
 		// inserted row is returned and stored in longLivedToken.ID.
-		_, err := db.Bun().NewInsert().
+		_, err = db.Bun().NewInsert().
 			Model(longLivedToken).
 			Column("user_id", "expires_at", "created_at").
 			Returning("id").

@@ -10997,6 +10997,33 @@ class v1PostCheckpointMetadataResponse(Printable):
             out["checkpoint"] = None if self.checkpoint is None else self.checkpoint.to_json(omit_unset)
         return out
 
+class v1PostLongLivedTokenResponse(Printable):
+    """Response to PostLongLivedTokenRequest."""
+    longLivedToken: "typing.Optional[str]" = None
+
+    def __init__(
+        self,
+        *,
+        longLivedToken: "typing.Union[str, None, Unset]" = _unset,
+    ):
+        if not isinstance(longLivedToken, Unset):
+            self.longLivedToken = longLivedToken
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PostLongLivedTokenResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "longLivedToken" in obj:
+            kwargs["longLivedToken"] = obj["longLivedToken"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "longLivedToken" in vars(self):
+            out["longLivedToken"] = self.longLivedToken
+        return out
+
 class v1PostModelRequest(Printable):
     """Request for creating a model in the registry."""
     description: "typing.Optional[str]" = None
@@ -22863,6 +22890,30 @@ def post_PostCheckpointMetadata(
         return v1PostCheckpointMetadataResponse.from_json(_resp.json())
     raise APIHttpError("post_PostCheckpointMetadata", _resp)
 
+def post_PostLongLivedToken(
+    session: "api.BaseSession",
+    *,
+    body: str,
+) -> "v1PostLongLivedTokenResponse":
+    """Create and get current user's long lived token
+
+    - body: Option to provide lifespan of token.
+    """
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/user/token",
+        params=_params,
+        json=body,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1PostLongLivedTokenResponse.from_json(_resp.json())
+    raise APIHttpError("post_PostLongLivedToken", _resp)
+
 def post_PostModel(
     session: "api.BaseSession",
     *,
@@ -23123,6 +23174,31 @@ def post_PostUserActivity(
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_PostUserActivity", _resp)
+
+def post_PostUserLongLivedToken(
+    session: "api.BaseSession",
+    *,
+    body: str,
+    userId: int,
+) -> "v1PostLongLivedTokenResponse":
+    """Create and get a user's long lived token
+
+    - body: Option to provide lifespan of token.
+    """
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/users/{userId}/token",
+        params=_params,
+        json=body,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1PostLongLivedTokenResponse.from_json(_resp.json())
+    raise APIHttpError("post_PostUserLongLivedToken", _resp)
 
 def post_PostUserSetting(
     session: "api.BaseSession",
