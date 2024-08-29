@@ -101,7 +101,8 @@ def run(local: bool = False):
 
     if local:
         # For convenience, use hparams from const.yaml for local mode.
-        conf = yaml.safe_load(pathlib.Path("./const.yaml").read_text())
+        yml = yaml.YAML(typ="safe", pure=True)
+        conf = yml.load(pathlib.Path("./const.yaml").read_text())
         hparams = conf["hyperparameters"]
         max_length = pytorch.Batch(100)  # Train for 100 batches.
         latest_checkpoint = None
@@ -120,7 +121,7 @@ def run(local: bool = False):
 
 if __name__ == "__main__":
     # Configure logging
-    logging.basicConfig(level=logging.INFO, format=det.LOG_FORMAT)
+    logging.basicConfig(level=logging.DEBUG, format=det.LOG_FORMAT)
 
     local_training = det.get_cluster_info() is None
     run(local=local_training)
