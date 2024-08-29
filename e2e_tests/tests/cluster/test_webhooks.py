@@ -200,6 +200,8 @@ def test_log_pattern_send_webhook(should_match: bool) -> None:
         assert specific_path not in responses
         assert specific_path_unmatch not in responses
 
+    bindings.delete_DeleteWorkspace(sess, id=workspace.id)
+
 
 @pytest.mark.e2e_cpu
 @pytest.mark.parametrize("isSlack", [True, False])
@@ -280,6 +282,7 @@ def test_custom_webhook(isSlack: bool) -> None:
     assert "end of main" in responses["/"]
     assert "DEBUG" in responses["/"]
     assert str(experiment_id) in responses["/"]
+    bindings.delete_DeleteWorkspace(sess, id=workspace.id)
 
 
 @pytest.mark.e2e_cpu
@@ -353,6 +356,8 @@ def test_specific_webhook() -> None:
     assert len(responses) == 0
     responses = server2.close_and_return_responses()
     assert len(responses) == 1
+
+    bindings.delete_DeleteWorkspace(sess, id=workspace.id)
 
 
 def create_default_webhook(sess: api.Session, workspaceId: Optional[int] = None) -> int:
