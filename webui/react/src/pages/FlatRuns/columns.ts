@@ -285,7 +285,10 @@ export const getColumnDefs = ({
                   : undefined,
                 title: String(record.experiment?.forkedFrom ?? '-'),
               }
-            : undefined,
+            : {
+                href: undefined,
+                title: '-',
+              },
         navigateOn: 'click',
         onClick: (e: CellClickedEventArgs) => {
           const forkedFrom = record.experiment?.forkedFrom;
