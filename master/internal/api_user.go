@@ -701,7 +701,8 @@ func (a *apiServer) PostLongLivedToken(
 	if err != nil {
 		return nil, err
 	}
-	token, err := user.DeleteAndGenerateLongLivedToken(ctx, curUser.ID, user.WithTokenExpiresAt(&tokenExpiration))
+	token, err := user.DeleteAndGenerateLongLivedToken(
+		ctx, curUser.ID, user.WithTokenExpiresAt(&tokenExpiration))
 	if err != nil {
 		return nil, err
 	}
@@ -721,7 +722,8 @@ func (a *apiServer) PostUserLongLivedToken(
 		tokenExpiration = time.Now().Add(lifespan)
 	}
 
-	token, err := user.DeleteAndGenerateLongLivedToken(ctx, model.UserID(req.UserId), user.WithTokenExpiresAt(&tokenExpiration))
+	token, err := user.DeleteAndGenerateLongLivedToken(
+		ctx, model.UserID(req.UserId), user.WithTokenExpiresAt(&tokenExpiration))
 	if err != nil {
 		return nil, err
 	}
