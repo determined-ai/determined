@@ -10997,6 +10997,33 @@ class v1PostCheckpointMetadataResponse(Printable):
             out["checkpoint"] = None if self.checkpoint is None else self.checkpoint.to_json(omit_unset)
         return out
 
+class v1PostLongLivedTokenRequest(Printable):
+    """Create user's longLivedToken."""
+    lifespan: "typing.Optional[str]" = None
+
+    def __init__(
+        self,
+        *,
+        lifespan: "typing.Union[str, None, Unset]" = _unset,
+    ):
+        if not isinstance(lifespan, Unset):
+            self.lifespan = lifespan
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PostLongLivedTokenRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "lifespan" in obj:
+            kwargs["lifespan"] = obj["lifespan"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "lifespan" in vars(self):
+            out["lifespan"] = self.lifespan
+        return out
+
 class v1PostLongLivedTokenResponse(Printable):
     """Response to PostLongLivedTokenRequest."""
     longLivedToken: "typing.Optional[str]" = None
@@ -11477,6 +11504,41 @@ class v1PostUserActivityRequest(Printable):
             "entityId": self.entityId,
             "entityType": self.entityType.value,
         }
+        return out
+
+class v1PostUserLongLivedTokenRequest(Printable):
+    """Create the requested user's longLivedToken."""
+    lifespan: "typing.Optional[str]" = None
+    userId: "typing.Optional[int]" = None
+
+    def __init__(
+        self,
+        *,
+        lifespan: "typing.Union[str, None, Unset]" = _unset,
+        userId: "typing.Union[int, None, Unset]" = _unset,
+    ):
+        if not isinstance(lifespan, Unset):
+            self.lifespan = lifespan
+        if not isinstance(userId, Unset):
+            self.userId = userId
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PostUserLongLivedTokenRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "lifespan" in obj:
+            kwargs["lifespan"] = obj["lifespan"]
+        if "userId" in obj:
+            kwargs["userId"] = obj["userId"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "lifespan" in vars(self):
+            out["lifespan"] = self.lifespan
+        if not omit_unset or "userId" in vars(self):
+            out["userId"] = self.userId
         return out
 
 class v1PostUserLongLivedTokenResponse(Printable):
@@ -22920,18 +22982,15 @@ def post_PostCheckpointMetadata(
 def post_PostLongLivedToken(
     session: "api.BaseSession",
     *,
-    body: str,
+    body: "v1PostLongLivedTokenRequest",
 ) -> "v1PostLongLivedTokenResponse":
-    """Create and get current user's long lived token
-
-    - body: Option to provide lifespan of token.
-    """
+    """Create and get current user's long lived token"""
     _params = None
     _resp = session._do_request(
         method="POST",
         path="/api/v1/user/token",
         params=_params,
-        json=body,
+        json=body.to_json(True),
         data=None,
         headers=None,
         timeout=None,
@@ -23205,12 +23264,11 @@ def post_PostUserActivity(
 def post_PostUserLongLivedToken(
     session: "api.BaseSession",
     *,
-    body: str,
+    body: "v1PostUserLongLivedTokenRequest",
     userId: int,
 ) -> "v1PostUserLongLivedTokenResponse":
     """Create and get a user's long lived token
 
-    - body: Option to provide lifespan of token.
     - userId: The id of the user.
     """
     _params = None
@@ -23218,7 +23276,7 @@ def post_PostUserLongLivedToken(
         method="POST",
         path=f"/api/v1/users/{userId}/token",
         params=_params,
-        json=body,
+        json=body.to_json(True),
         data=None,
         headers=None,
         timeout=None,

@@ -2800,7 +2800,7 @@ service Determined {
       returns (PostLongLivedTokenResponse) {
     option (google.api.http) = {
       post: "/api/v1/user/token",
-      body: "lifespan"
+      body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Users"
@@ -2812,7 +2812,7 @@ service Determined {
       returns (PostUserLongLivedTokenResponse) {
     option (google.api.http) = {
       post: "/api/v1/users/{user_id}/token",
-      body: "lifespan"
+      body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Users"

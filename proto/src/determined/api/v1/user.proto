@@ -229,8 +229,14 @@ message PostUserActivityResponse {}
 
 // Create user's longLivedToken.
 message PostLongLivedTokenRequest {
-  // Option to provide lifespan of token.
-  google.protobuf.Duration lifespan = 1;
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: {
+      required: []
+    }
+  };
+  // Lifespan expressing how long the token should last. Should be a Go-format
+  // duration (e.g. "2s", "4m", "72h".)
+  string lifespan = 1;
 }
 
 // Response to PostLongLivedTokenRequest.
@@ -243,8 +249,9 @@ message PostLongLivedTokenResponse {
 message PostUserLongLivedTokenRequest {
   // The id of the user.
   int32 user_id = 1;
-  // Option to provide lifespan of token.
-  google.protobuf.Duration lifespan = 2;
+  // Lifespan expressing how long the token should last. Should be a Go-format
+  // duration (e.g. "2s", "4m", "72h".)
+  string lifespan = 2;
 }
 
 // Response to PostUserLongLivedTokenRequest.

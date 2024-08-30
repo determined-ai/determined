@@ -688,13 +688,13 @@ func (a *apiServer) PostLongLivedToken(
 	ctx context.Context, req *apiv1.PostLongLivedTokenRequest,
 ) (*apiv1.PostLongLivedTokenResponse, error) {
 	tokenExpiration := time.Now().Add(user.TokenExpirationDuration)
-	if req.Lifespan != nil {
-		lifespan := req.Lifespan.AsDuration()
-		// Check if the lifespan is valid
-		if lifespan <= 0 {
-			return nil, fmt.Errorf("invalid lifespan: duration must be positive")
+	if req.Lifespan != "" {
+		d, err := time.ParseDuration(req.Lifespan)
+		if err != nil || d < 0 {
+			return nil, status.Error(codes.InvalidArgument,
+				"Lifespan must be a Go-formatted duration string with a positive value")
 		}
-		tokenExpiration = time.Now().Add(lifespan)
+		tokenExpiration = time.Now().Add(d)
 	}
 
 	curUser, _, err := grpcutil.GetUser(ctx)
@@ -713,13 +713,13 @@ func (a *apiServer) PostUserLongLivedToken(
 	ctx context.Context, req *apiv1.PostUserLongLivedTokenRequest,
 ) (*apiv1.PostUserLongLivedTokenResponse, error) {
 	tokenExpiration := time.Now().Add(user.TokenExpirationDuration)
-	if req.Lifespan != nil {
-		lifespan := req.Lifespan.AsDuration()
-		// Check if the lifespan is valid
-		if lifespan <= 0 {
-			return nil, fmt.Errorf("invalid lifespan: duration must be positive")
+	if req.Lifespan != "" {
+		d, err := time.ParseDuration(req.Lifespan)
+		if err != nil || d < 0 {
+			return nil, status.Error(codes.InvalidArgument,
+				"Lifespan must be a Go-formatted duration string with a positive value")
 		}
-		tokenExpiration = time.Now().Add(lifespan)
+		tokenExpiration = time.Now().Add(d)
 	}
 
 	token, err := user.DeleteAndGenerateLongLivedToken(

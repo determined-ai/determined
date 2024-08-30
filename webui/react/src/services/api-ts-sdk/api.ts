@@ -8004,6 +8004,19 @@ export interface V1PostCheckpointMetadataResponse {
     checkpoint?: V1Checkpoint;
 }
 /**
+ * Create user's longLivedToken.
+ * @export
+ * @interface V1PostLongLivedTokenRequest
+ */
+export interface V1PostLongLivedTokenRequest {
+    /**
+     * Lifespan expressing how long the token should last. Should be a Go-format duration (e.g. "2s", "4m", "72h".)
+     * @type {string}
+     * @memberof V1PostLongLivedTokenRequest
+     */
+    lifespan?: string;
+}
+/**
  * Response to PostLongLivedTokenRequest.
  * @export
  * @interface V1PostLongLivedTokenResponse
@@ -8339,6 +8352,25 @@ export interface V1PostUserActivityRequest {
  * @interface V1PostUserActivityResponse
  */
 export interface V1PostUserActivityResponse {
+}
+/**
+ * Create the requested user's longLivedToken.
+ * @export
+ * @interface V1PostUserLongLivedTokenRequest
+ */
+export interface V1PostUserLongLivedTokenRequest {
+    /**
+     * The id of the user.
+     * @type {number}
+     * @memberof V1PostUserLongLivedTokenRequest
+     */
+    userId?: number;
+    /**
+     * Lifespan expressing how long the token should last. Should be a Go-format duration (e.g. "2s", "4m", "72h".)
+     * @type {string}
+     * @memberof V1PostUserLongLivedTokenRequest
+     */
+    lifespan?: string;
 }
 /**
  * Response to PostUserLongLivedTokenRequest.
@@ -34124,11 +34156,11 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
         /**
          * 
          * @summary Create and get current user's long lived token
-         * @param {string} body Option to provide lifespan of token.
+         * @param {V1PostLongLivedTokenRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        postLongLivedToken(body: string, options: any = {}): FetchArgs {
+        postLongLivedToken(body: V1PostLongLivedTokenRequest, options: any = {}): FetchArgs {
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
                 throw new RequiredError('body','Required parameter body was null or undefined when calling postLongLivedToken.');
@@ -34152,8 +34184,7 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
             objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
-            const needsSerialization = localVarRequestOptions.headers['Content-Type'] === 'application/json';
-            localVarRequestOptions.body = needsSerialization ? JSON.stringify(body) : body
+            localVarRequestOptions.body = JSON.stringify(body)
             
             return {
                 url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
@@ -34240,11 +34271,11 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
          * 
          * @summary Create and get a user's long lived token
          * @param {number} userId The id of the user.
-         * @param {string} body Option to provide lifespan of token.
+         * @param {V1PostUserLongLivedTokenRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        postUserLongLivedToken(userId: number, body: string, options: any = {}): FetchArgs {
+        postUserLongLivedToken(userId: number, body: V1PostUserLongLivedTokenRequest, options: any = {}): FetchArgs {
             // verify required parameter 'userId' is not null or undefined
             if (userId === null || userId === undefined) {
                 throw new RequiredError('userId','Required parameter userId was null or undefined when calling postUserLongLivedToken.');
@@ -34273,8 +34304,7 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
             objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
-            const needsSerialization = localVarRequestOptions.headers['Content-Type'] === 'application/json';
-            localVarRequestOptions.body = needsSerialization ? JSON.stringify(body) : body
+            localVarRequestOptions.body = JSON.stringify(body)
             
             return {
                 url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
@@ -34526,11 +34556,11 @@ export const UsersApiFp = function (configuration?: Configuration) {
         /**
          * 
          * @summary Create and get current user's long lived token
-         * @param {string} body Option to provide lifespan of token.
+         * @param {V1PostLongLivedTokenRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        postLongLivedToken(body: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostLongLivedTokenResponse> {
+        postLongLivedToken(body: V1PostLongLivedTokenRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostLongLivedTokenResponse> {
             const localVarFetchArgs = UsersApiFetchParamCreator(configuration).postLongLivedToken(body, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
@@ -34584,11 +34614,11 @@ export const UsersApiFp = function (configuration?: Configuration) {
          * 
          * @summary Create and get a user's long lived token
          * @param {number} userId The id of the user.
-         * @param {string} body Option to provide lifespan of token.
+         * @param {V1PostUserLongLivedTokenRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        postUserLongLivedToken(userId: number, body: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostUserLongLivedTokenResponse> {
+        postUserLongLivedToken(userId: number, body: V1PostUserLongLivedTokenRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostUserLongLivedTokenResponse> {
             const localVarFetchArgs = UsersApiFetchParamCreator(configuration).postUserLongLivedToken(userId, body, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
@@ -34735,11 +34765,11 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
         /**
          * 
          * @summary Create and get current user's long lived token
-         * @param {string} body Option to provide lifespan of token.
+         * @param {V1PostLongLivedTokenRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        postLongLivedToken(body: string, options?: any) {
+        postLongLivedToken(body: V1PostLongLivedTokenRequest, options?: any) {
             return UsersApiFp(configuration).postLongLivedToken(body, options)(fetch, basePath);
         },
         /**
@@ -34766,11 +34796,11 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
          * 
          * @summary Create and get a user's long lived token
          * @param {number} userId The id of the user.
-         * @param {string} body Option to provide lifespan of token.
+         * @param {V1PostUserLongLivedTokenRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        postUserLongLivedToken(userId: number, body: string, options?: any) {
+        postUserLongLivedToken(userId: number, body: V1PostUserLongLivedTokenRequest, options?: any) {
             return UsersApiFp(configuration).postUserLongLivedToken(userId, body, options)(fetch, basePath);
         },
         /**
@@ -34894,12 +34924,12 @@ export class UsersApi extends BaseAPI {
     /**
      * 
      * @summary Create and get current user's long lived token
-     * @param {string} body Option to provide lifespan of token.
+     * @param {V1PostLongLivedTokenRequest} body
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof UsersApi
      */
-    public postLongLivedToken(body: string, options?: any) {
+    public postLongLivedToken(body: V1PostLongLivedTokenRequest, options?: any) {
         return UsersApiFp(this.configuration).postLongLivedToken(body, options)(this.fetch, this.basePath)
     }
     
@@ -34931,12 +34961,12 @@ export class UsersApi extends BaseAPI {
      * 
      * @summary Create and get a user's long lived token
      * @param {number} userId The id of the user.
-     * @param {string} body Option to provide lifespan of token.
+     * @param {V1PostUserLongLivedTokenRequest} body
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof UsersApi
      */
-    public postUserLongLivedToken(userId: number, body: string, options?: any) {
+    public postUserLongLivedToken(userId: number, body: V1PostUserLongLivedTokenRequest, options?: any) {
         return UsersApiFp(this.configuration).postUserLongLivedToken(userId, body, options)(this.fetch, this.basePath)
     }
     
