@@ -230,9 +230,7 @@ message PostUserActivityResponse {}
 // Create user's longLivedToken.
 message PostLongLivedTokenRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: {
-      required: []
-    }
+    json_schema: { required: [] }
   };
   // Lifespan expressing how long the token should last. Should be a Go-format
   // duration (e.g. "2s", "4m", "72h".)
