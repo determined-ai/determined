@@ -11,7 +11,7 @@ from determined.common.api import bindings, errors
 from tests import api_utils
 from tests import config as conf
 from tests import experiment as exp
-from tests.cluster import utils, test_agent_user_group
+from tests.cluster import test_agent_user_group, utils
 
 
 @pytest.mark.e2e_cpu
@@ -92,6 +92,7 @@ def test_log_pattern_send_webhook(should_match: bool) -> None:
     port = 5006
     server = utils.WebhookServer(port)
     sess = api_utils.admin_session()
+    wh = []
 
     regex = r"assert 0 <= self\.metrics_sigma"
     if not should_match:
@@ -103,7 +104,7 @@ def test_log_pattern_send_webhook(should_match: bool) -> None:
     )
 
     slack_path = f"/test/slack/path/here/{str(uuid.uuid4())}"
-    bindings.post_PostWebhook(
+    w = bindings.post_PostWebhook(
         sess,
         body=bindings.v1Webhook(
             url=f"http://localhost:{port}{slack_path}",
@@ -114,9 +115,10 @@ def test_log_pattern_send_webhook(should_match: bool) -> None:
             workspaceId=None,
         ),
     )
+    wh.append(w.webhook.id)
 
     default_path = f"/test/path/here/{str(uuid.uuid4())}"
-    bindings.post_PostWebhook(
+    w = bindings.post_PostWebhook(
         sess,
         body=bindings.v1Webhook(
             url=f"http://localhost:{port}{default_path}",
@@ -127,6 +129,7 @@ def test_log_pattern_send_webhook(should_match: bool) -> None:
             workspaceId=None,
         ),
     )
+    wh.append(w.webhook.id)
 
     workspace = bindings.post_PostWorkspace(
         sess, body=bindings.v1PostWorkspaceRequest(name=f"webhook-test{random.random()}")
@@ -141,7 +144,7 @@ def test_log_pattern_send_webhook(should_match: bool) -> None:
     ).project
 
     specific_path = f"/test/path/here/{str(uuid.uuid4())}"
-    bindings.post_PostWebhook(
+    w = bindings.post_PostWebhook(
         sess,
         body=bindings.v1Webhook(
             url=f"http://localhost:{port}{specific_path}",
@@ -152,9 +155,10 @@ def test_log_pattern_send_webhook(should_match: bool) -> None:
             workspaceId=workspace.id,
         ),
     )
+    wh.append(w.webhook.id)
 
     specific_path_unmatch = f"/test/path/here/{str(uuid.uuid4())}"
-    bindings.post_PostWebhook(
+    w = bindings.post_PostWebhook(
         sess,
         body=bindings.v1Webhook(
             url=f"http://localhost:{port}{specific_path_unmatch}",
@@ -165,6 +169,7 @@ def test_log_pattern_send_webhook(should_match: bool) -> None:
             workspaceId=1,
         ),
     )
+    wh.append(w.webhook.id)
 
     exp_id = exp.create_experiment(
         sess,
@@ -200,8 +205,9 @@ def test_log_pattern_send_webhook(should_match: bool) -> None:
         assert specific_path not in responses
         assert specific_path_unmatch not in responses
 
+    for id in wh:
+        bindings.delete_DeleteWebhook(sess, id=id)
     test_agent_user_group._delete_workspace_and_check(sess, workspace)
-
 
 
 @pytest.mark.e2e_cpu
@@ -238,7 +244,7 @@ def test_custom_webhook(isSlack: bool) -> None:
     with pytest.raises(errors.APIException):
         bindings.post_PostWebhook(sess, body=webhook)
     webhook.mode = bindings.v1WebhookMode.SPECIFIC
-    bindings.post_PostWebhook(sess, body=webhook)
+    w = bindings.post_PostWebhook(sess, body=webhook)
 
     experiment_id = exp.create_experiment(
         sess,
@@ -283,7 +289,8 @@ def test_custom_webhook(isSlack: bool) -> None:
     assert "end of main" in responses["/"]
     assert "DEBUG" in responses["/"]
     assert str(experiment_id) in responses["/"]
-    
+
+    bindings.delete_DeleteWebhook(sess, id=w.id)
     test_agent_user_group._delete_workspace_and_check(sess, workspace)
 
 
@@ -359,6 +366,8 @@ def test_specific_webhook() -> None:
     responses = server2.close_and_return_responses()
     assert len(responses) == 1
 
+    bindings.delete_DeleteWebhook(sess, id=webhook_res_1.id)
+    bindings.delete_DeleteWebhook(sess, id=webhook_res_2.id)
     test_agent_user_group._delete_workspace_and_check(sess, workspace)
 
 
