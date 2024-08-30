@@ -290,7 +290,6 @@ class DetCallback(transformers.TrainerCallback):  # type: ignore
 EVAL = "eval_"
 TEST = "test_"
 TRAIN = "train_"
-DEFAULT = "uncategorized"
 
 
 def get_metric_type(d: Dict[str, Any]) -> str:
@@ -299,11 +298,9 @@ def get_metric_type(d: Dict[str, Any]) -> str:
             return EVAL
         elif k.startswith(TEST):
             return TEST
-        elif k.startswith(TRAIN):
-            return TRAIN
         else:
-            return DEFAULT
-    return DEFAULT
+            return TRAIN
+    return TRAIN
 
 
 def get_ds_config_path_from_args(args: List[str]) -> Optional[str]:
