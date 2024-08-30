@@ -227,7 +227,7 @@ message PostUserActivityRequest {
 // Response to PostUserActivityRequest.
 message PostUserActivityResponse {}
 
-// Update user LongLivedToken.
+// Create user's longLivedToken.
 message PostLongLivedTokenRequest {
   // Option to provide lifespan of token.
   google.protobuf.Duration lifespan = 1;
@@ -239,9 +239,16 @@ message PostLongLivedTokenResponse {
   string long_lived_token = 1;
 }
 
-// Update user LongLivedToken.
+// Create the requested user's longLivedToken.
 message PostUserLongLivedTokenRequest {
+  // The id of the user.
   int32 user_id = 1;
   // Option to provide lifespan of token.
   google.protobuf.Duration lifespan = 2;
+}
+
+// Response to PostUserLongLivedTokenRequest.
+message PostUserLongLivedTokenResponse {
+  // long_lived_token string.
+  string long_lived_token = 1;
 }

@@ -8341,6 +8341,19 @@ export interface V1PostUserActivityRequest {
 export interface V1PostUserActivityResponse {
 }
 /**
+ * Response to PostUserLongLivedTokenRequest.
+ * @export
+ * @interface V1PostUserLongLivedTokenResponse
+ */
+export interface V1PostUserLongLivedTokenResponse {
+    /**
+     * long_lived_token string.
+     * @type {string}
+     * @memberof V1PostUserLongLivedTokenResponse
+     */
+    longLivedToken?: string;
+}
+/**
  * Create a new user.
  * @export
  * @interface V1PostUserRequest
@@ -34226,7 +34239,7 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
         /**
          * 
          * @summary Create and get a user's long lived token
-         * @param {number} userId
+         * @param {number} userId The id of the user.
          * @param {string} body Option to provide lifespan of token.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -34570,12 +34583,12 @@ export const UsersApiFp = function (configuration?: Configuration) {
         /**
          * 
          * @summary Create and get a user's long lived token
-         * @param {number} userId
+         * @param {number} userId The id of the user.
          * @param {string} body Option to provide lifespan of token.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        postUserLongLivedToken(userId: number, body: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostLongLivedTokenResponse> {
+        postUserLongLivedToken(userId: number, body: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostUserLongLivedTokenResponse> {
             const localVarFetchArgs = UsersApiFetchParamCreator(configuration).postUserLongLivedToken(userId, body, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
@@ -34752,7 +34765,7 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
         /**
          * 
          * @summary Create and get a user's long lived token
-         * @param {number} userId
+         * @param {number} userId The id of the user.
          * @param {string} body Option to provide lifespan of token.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -34917,7 +34930,7 @@ export class UsersApi extends BaseAPI {
     /**
      * 
      * @summary Create and get a user's long lived token
-     * @param {number} userId
+     * @param {number} userId The id of the user.
      * @param {string} body Option to provide lifespan of token.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}

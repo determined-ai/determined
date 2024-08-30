@@ -2809,7 +2809,7 @@ service Determined {
 
   // Create and get a user's long lived token
   rpc PostUserLongLivedToken(PostUserLongLivedTokenRequest)
-      returns (PostLongLivedTokenResponse) {
+      returns (PostUserLongLivedTokenResponse) {
     option (google.api.http) = {
       post: "/api/v1/users/{user_id}/token",
       body: "lifespan"

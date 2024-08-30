@@ -11479,6 +11479,33 @@ class v1PostUserActivityRequest(Printable):
         }
         return out
 
+class v1PostUserLongLivedTokenResponse(Printable):
+    """Response to PostUserLongLivedTokenRequest."""
+    longLivedToken: "typing.Optional[str]" = None
+
+    def __init__(
+        self,
+        *,
+        longLivedToken: "typing.Union[str, None, Unset]" = _unset,
+    ):
+        if not isinstance(longLivedToken, Unset):
+            self.longLivedToken = longLivedToken
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PostUserLongLivedTokenResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "longLivedToken" in obj:
+            kwargs["longLivedToken"] = obj["longLivedToken"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "longLivedToken" in vars(self):
+            out["longLivedToken"] = self.longLivedToken
+        return out
+
 class v1PostUserRequest(Printable):
     """Create a new user."""
     isHashed: "typing.Optional[bool]" = None
@@ -23180,10 +23207,11 @@ def post_PostUserLongLivedToken(
     *,
     body: str,
     userId: int,
-) -> "v1PostLongLivedTokenResponse":
+) -> "v1PostUserLongLivedTokenResponse":
     """Create and get a user's long lived token
 
     - body: Option to provide lifespan of token.
+    - userId: The id of the user.
     """
     _params = None
     _resp = session._do_request(
@@ -23197,7 +23225,7 @@ def post_PostUserLongLivedToken(
         stream=False,
     )
     if _resp.status_code == 200:
-        return v1PostLongLivedTokenResponse.from_json(_resp.json())
+        return v1PostUserLongLivedTokenResponse.from_json(_resp.json())
     raise APIHttpError("post_PostUserLongLivedToken", _resp)
 
 def post_PostUserSetting(
