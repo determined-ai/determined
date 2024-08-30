@@ -205,8 +205,8 @@ def test_log_pattern_send_webhook(should_match: bool) -> None:
         assert specific_path not in responses
         assert specific_path_unmatch not in responses
 
-    for id in wh:
-        bindings.delete_DeleteWebhook(sess, id=id)
+    for i in wh:
+        bindings.delete_DeleteWebhook(sess, id=i)
     test_agent_user_group._delete_workspace_and_check(sess, workspace)
 
 
