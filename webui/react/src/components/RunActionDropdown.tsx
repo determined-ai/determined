@@ -78,7 +78,7 @@ const RunActionDropdown: React.FC<Props> = ({
 
   const cellCopyData = useMemo(() => {
     if (cell && 'displayData' in cell && isString(cell.displayData)) return cell.displayData;
-    if (cell?.copyData) return cell.copyData;
+    if (cell?.copyData && cell.copyData !== '-') return cell.copyData;
     return undefined;
   }, [cell]);
 
