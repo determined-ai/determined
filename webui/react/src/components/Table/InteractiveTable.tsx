@@ -54,24 +54,6 @@ export interface InteractiveTableSettings {
   tableOffset: number;
 }
 
-export interface InteractiveTableReducedSettings {
-  /**
-   * ColumnWidths: Array of column widths, corresponding to columns array below
-   */
-  columnWidths: number[];
-  /**
-   * Columns: Array of column names
-   */
-  columns: string[];
-  /**
-   * Row: Array of selected row IDs
-   */
-  row?: number[] | string[];
-  sortDesc: boolean;
-  sortKey?: Primitive;
-  tableLimit: number;
-}
-
 export const WIDGET_COLUMN_WIDTH = 46;
 const DEFAULT_RESIZE_THROTTLE_TIME = 30;
 const SOURCE_TYPE = 'DraggableColumn';

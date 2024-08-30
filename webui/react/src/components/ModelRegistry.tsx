@@ -44,7 +44,7 @@ import TableFilterSearch from 'components/Table/TableFilterSearch';
 import WorkspaceFilter from 'components/WorkspaceFilter';
 import usePermissions from 'hooks/usePermissions';
 import usePolling from 'hooks/usePolling';
-import { ResetSettings, UpdateSettings, useSettings } from 'hooks/useSettings';
+import { UpdateSettings, useSettings } from 'hooks/useSettings';
 import useTypedParams from 'hooks/useTypedParams';
 import { paths } from 'routes/utils';
 import { archiveModel, getModelLabels, getModels, patchModel, unarchiveModel } from 'services/api';
@@ -63,24 +63,19 @@ import settingsConfig, {
   DEFAULT_COLUMN_WIDTHS,
   isOfSortKey,
   ModelColumnName,
-  ReducedSettings,
+  Settings as ReducedSettings,
 } from './ModelRegistry.settings';
 
-const filterKeys: Array<keyof ReducedSettings> = [
-  'tags',
-  'name',
-  'users',
-  'description',
-  'workspace',
-];
+const filterKeys: Array<keyof Settings> = ['tags', 'name', 'users', 'description', 'workspace'];
 
 interface Props {
   workspace?: Workspace;
 }
 
 const tableOffsetType = io.type({ tableOffset: io.number });
-
 type Settings = ReducedSettings & io.TypeOf<typeof tableOffsetType>;
+
+const DEFAULT_PARAMS = { tableOffset: 0 };
 
 const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
   const canceler = useRef(new AbortController());
@@ -106,20 +101,10 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
     isLoading: isLoadingSettings,
     settings,
     updateSettings: updateUseSettings,
-    resetSettings: resetUseSettings,
+    resetSettings,
   } = useSettings<ReducedSettings>(settingConfig);
 
-  const { params, updateParams } = useTypedParams(tableOffsetType, {
-    tableOffset: 0,
-  });
-
-  const resetSettings: ResetSettings = useCallback(
-    (reset) => {
-      if (reset?.includes('tableOffset')) updateParams({ tableOffset: 0 });
-      resetUseSettings(reset);
-    },
-    [resetUseSettings, updateParams],
-  );
+  const { params, updateParams } = useTypedParams(tableOffsetType, DEFAULT_PARAMS);
 
   const updateSettings: UpdateSettings<Settings> = useCallback(
     (newSettings) => {
@@ -424,8 +409,9 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
   }, []);
 
   const resetFilters = useCallback(() => {
-    resetSettings([...filterKeys, 'tableOffset']);
-  }, [resetSettings]);
+    resetSettings(filterKeys);
+    updateParams(DEFAULT_PARAMS);
+  }, [resetSettings, updateParams]);
 
   const ModelActionMenu = useCallback(
     (record: ModelItem) => {
@@ -525,7 +511,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
         defaultWidth: DEFAULT_COLUMN_WIDTHS['name'],
         filterDropdown: nameFilterSearch,
         filterIcon: tableSearchIcon,
-        isFiltered: (settings: ReducedSettings) => !!settings.name,
+        isFiltered: (settings: Settings) => !!settings.name,
         key: V1GetModelsRequestSortBy.NAME,
         onCell: onRightClickableCell,
         render: modelNameRenderer,
@@ -537,7 +523,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
         defaultWidth: DEFAULT_COLUMN_WIDTHS['description'],
         filterDropdown: descriptionFilterSearch,
         filterIcon: tableSearchIcon,
-        isFiltered: (settings: ReducedSettings) => !!settings.description,
+        isFiltered: (settings: Settings) => !!settings.description,
         key: V1GetModelsRequestSortBy.DESCRIPTION,
         render: descriptionRenderer,
         sorter: true,
@@ -552,7 +538,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
           text: <WorkspaceFilter workspace={ws} />,
           value: ws.id,
         })),
-        isFiltered: (settings: ReducedSettings) => !!settings.workspace,
+        isFiltered: (settings: Settings) => !!settings.workspace,
         key: V1GetModelsRequestSortBy.WORKSPACE,
         render: (_v: string, record: ModelItem) => workspaceRenderer(record),
         sorter: true,
@@ -581,7 +567,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
         defaultWidth: DEFAULT_COLUMN_WIDTHS['tags'],
         filterDropdown: labelFilterDropdown,
         filters: tags.map((tag) => ({ text: tag, value: tag })),
-        isFiltered: (settings: ReducedSettings) => !!settings.tags,
+        isFiltered: (settings: Settings) => !!settings.tags,
         key: 'tags',
         render: tagsRenderer,
         title: 'Tags',
@@ -599,7 +585,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
         defaultWidth: DEFAULT_COLUMN_WIDTHS['user'],
         filterDropdown: userFilterDropdown,
         filters: users.map((user) => ({ text: getDisplayName(user), value: user.id })),
-        isFiltered: (settings: ReducedSettings) => !!settings.users,
+        isFiltered: (settings: Settings) => !!settings.users,
         key: 'user',
         render: (_, r) => userRenderer(users.find((u) => u.id === r.userId)),
         title: 'User',
@@ -704,6 +690,11 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
     [settings, updateSettings],
   );
 
+  const settingsWithOffset: Settings = useMemo(
+    () => ({ ...settings, tableOffset: params.tableOffset }),
+    [params.tableOffset, settings],
+  );
+
   return (
     <>
       <div className={css.options}>
@@ -754,7 +745,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
           )}
           rowClassName={defaultRowClassName({ clickable: false })}
           rowKey="name"
-          settings={{ ...settings, tableOffset: params.tableOffset }}
+          settings={settingsWithOffset}
           showSorterTooltip={false}
           size="small"
           updateSettings={updateSettings}
