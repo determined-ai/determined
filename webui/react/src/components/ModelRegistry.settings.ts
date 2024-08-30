@@ -1,6 +1,6 @@
 import { array, boolean, literal, number, string, undefined as undefinedType, union } from 'io-ts';
 
-import { InteractiveTableSettings } from 'components/Table/InteractiveTable';
+import { InteractiveTableReducedSettings } from 'components/Table/InteractiveTable';
 import { MINIMUM_PAGE_SIZE } from 'components/Table/Table';
 import { SettingsConfig } from 'hooks/useSettings';
 import { V1GetModelsRequestSortBy } from 'services/api-ts-sdk';
@@ -43,7 +43,7 @@ export const isOfSortKey = (sortKey: React.Key): sortKey is V1GetModelsRequestSo
   return sortKeys.includes(String(sortKey));
 };
 
-export interface Settings extends InteractiveTableSettings {
+export interface ReducedSettings extends InteractiveTableReducedSettings {
   archived?: boolean;
   columns: ModelColumnName[];
   description?: string;
@@ -54,7 +54,7 @@ export interface Settings extends InteractiveTableSettings {
   workspace?: number[];
 }
 
-const config = (id: string): SettingsConfig<Settings> => {
+const config = (id: string): SettingsConfig<ReducedSettings> => {
   const storagePath = `model-registry-${id}`;
 
   return {
@@ -120,11 +120,6 @@ const config = (id: string): SettingsConfig<Settings> => {
       tableLimit: {
         defaultValue: MINIMUM_PAGE_SIZE,
         storageKey: 'tableLimit',
-        type: number,
-      },
-      tableOffset: {
-        defaultValue: 0,
-        storageKey: 'tableOffset',
         type: number,
       },
       tags: {
