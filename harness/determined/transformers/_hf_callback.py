@@ -60,7 +60,7 @@ class DetCallback(transformers.TrainerCallback):  # type: ignore
             return
         metrics, metric_type = self._get_metrics(logs)
         logger.debug(f"on_log metrics, global_step {state.global_step}", metrics)
-        if metric_type in [TRAIN, TRAIN_AVG]:
+        if metric_type == TRAIN:
             # Prevents reporting metrics for the same step twice. This happens after
             # training is completed and average training metrics are reported with
             # the same step as the in-progress training metrics.
@@ -289,8 +289,8 @@ class DetCallback(transformers.TrainerCallback):  # type: ignore
 
 EVAL = "eval_"
 TEST = "test_"
-TRAIN_AVG = "train_"
-TRAIN = "train_progress"
+TRAIN = "train_"
+DEFAULT = "train_progress"
 
 
 def get_metric_type(d: Dict[str, Any]) -> str:
@@ -299,11 +299,11 @@ def get_metric_type(d: Dict[str, Any]) -> str:
             return EVAL
         elif k.startswith(TEST):
             return TEST
-        elif k.startswith(TRAIN_AVG):
-            return TRAIN_AVG
-        else:
+        elif k.startswith(TRAIN):
             return TRAIN
-    return TRAIN
+        else:
+            return DEFAULT
+    return DEFAULT
 
 
 def get_ds_config_path_from_args(args: List[str]) -> Optional[str]:
