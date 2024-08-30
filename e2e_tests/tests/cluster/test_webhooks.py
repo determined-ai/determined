@@ -11,7 +11,7 @@ from determined.common.api import bindings, errors
 from tests import api_utils
 from tests import config as conf
 from tests import experiment as exp
-from tests.cluster import utils
+from tests.cluster import utils, test_agent_user_group
 
 
 @pytest.mark.e2e_cpu
@@ -200,7 +200,8 @@ def test_log_pattern_send_webhook(should_match: bool) -> None:
         assert specific_path not in responses
         assert specific_path_unmatch not in responses
 
-    bindings.delete_DeleteWorkspace(sess, id=workspace.id)
+    test_agent_user_group._delete_workspace_and_check(sess, workspace)
+
 
 
 @pytest.mark.e2e_cpu
@@ -282,7 +283,8 @@ def test_custom_webhook(isSlack: bool) -> None:
     assert "end of main" in responses["/"]
     assert "DEBUG" in responses["/"]
     assert str(experiment_id) in responses["/"]
-    bindings.delete_DeleteWorkspace(sess, id=workspace.id)
+    
+    test_agent_user_group._delete_workspace_and_check(sess, workspace)
 
 
 @pytest.mark.e2e_cpu
@@ -357,7 +359,7 @@ def test_specific_webhook() -> None:
     responses = server2.close_and_return_responses()
     assert len(responses) == 1
 
-    bindings.delete_DeleteWorkspace(sess, id=workspace.id)
+    test_agent_user_group._delete_workspace_and_check(sess, workspace)
 
 
 def create_default_webhook(sess: api.Session, workspaceId: Optional[int] = None) -> int:
@@ -435,6 +437,8 @@ def test_webhook_permission() -> None:
     # user should be able to delete webhook from their own workspace
     bindings.delete_DeleteWebhook(user2_sess, id=workspace_webhook_id)
 
+    test_agent_user_group._delete_workspace_and_check(admin_sess, workspace)
+
 
 @pytest.mark.e2e_cpu_rbac
 @api_utils.skipif_rbac_not_enabled()
@@ -490,3 +494,5 @@ def test_webhook_rbac() -> None:
     bindings.delete_DeleteWebhook(admin_sess, id=global_webhook_id)
     # user with editor access to workspace should be able to delete it's webhook
     bindings.delete_DeleteWebhook(user2_sess, id=workspace_webhook_id)
+
+    test_agent_user_group._delete_workspace_and_check(admin_sess, workspace)
