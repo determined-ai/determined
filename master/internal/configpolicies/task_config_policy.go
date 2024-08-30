@@ -1,4 +1,4 @@
-package taskconfigpolicy
+package configpolicies
 
 import (
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -25,7 +25,7 @@ type Constraints struct {
 // within a given scope are silently overriden.
 // Submitted experiments whose constraint fields vary from the respective Constraint fields set
 // within a given scope are rejected.
-type ExperimentTaskConfigPolicy struct {
+type ExperimentConfigPolicy struct {
 	InvariantConfig expconf.ExperimentConfig `json:"config"`
 	Constraints     Constraints              `json:"constraints"`
 }
@@ -35,7 +35,7 @@ type ExperimentTaskConfigPolicy struct {
 // within a given scope are silently overriden.
 // Submitted NTSC tasks whose constraint fields vary from the respective Constraint fields set
 // within a given scope are rejected.
-type NTSCTaskConfigPolicy struct {
+type NTSCConfigPolicy struct {
 	InvariantConfig model.CommandConfig `json:"config"`
 	Constraints     Constraints         `json:"constraints"`
 }
