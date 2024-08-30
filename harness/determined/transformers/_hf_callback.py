@@ -60,7 +60,7 @@ class DetCallback(transformers.TrainerCallback):  # type: ignore
             return
         metrics, metric_type = self._get_metrics(logs)
         logger.debug(f"on_log metrics, global_step {state.global_step}", metrics)
-        if metric_type in [TRAIN,TRAIN_AVG]:
+        if metric_type in [TRAIN, TRAIN_AVG]:
             # Prevents reporting metrics for the same step twice. This happens after
             # training is completed and average training metrics are reported with
             # the same step as the in-progress training metrics.
