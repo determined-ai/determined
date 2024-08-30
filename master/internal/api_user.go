@@ -710,7 +710,7 @@ func (a *apiServer) PostLongLivedToken(
 
 func (a *apiServer) PostUserLongLivedToken(
 	ctx context.Context, req *apiv1.PostUserLongLivedTokenRequest,
-) (*apiv1.PostLongLivedTokenResponse, error) {
+) (*apiv1.PostUserLongLivedTokenResponse, error) {
 	tokenExpiration := time.Now().Add(user.TokenExpirationDuration)
 	if req.Lifespan != nil {
 		lifespan := req.Lifespan.AsDuration()
@@ -725,5 +725,5 @@ func (a *apiServer) PostUserLongLivedToken(
 	if err != nil {
 		return nil, err
 	}
-	return &apiv1.PostLongLivedTokenResponse{LongLivedToken: token}, nil
+	return &apiv1.PostUserLongLivedTokenResponse{LongLivedToken: token}, nil
 }
