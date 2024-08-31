@@ -687,6 +687,15 @@ func (a *apiServer) PostUserActivity(
 func (a *apiServer) PostLongLivedToken(
 	ctx context.Context, req *apiv1.PostLongLivedTokenRequest,
 ) (*apiv1.PostLongLivedTokenResponse, error) {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err = user.AuthZProvider.Get().CanCreateUsersOwnToken(
+		ctx, *curUser); err != nil {
+		return nil, status.Error(codes.PermissionDenied, err.Error())
+	}
+
 	tokenExpiration := time.Now().Add(user.TokenExpirationDuration)
 	if req.Lifespan != "" {
 		d, err := time.ParseDuration(req.Lifespan)
@@ -697,11 +706,7 @@ func (a *apiServer) PostLongLivedToken(
 		tokenExpiration = time.Now().Add(d)
 	}
 
-	curUser, _, err := grpcutil.GetUser(ctx)
-	if err != nil {
-		return nil, err
-	}
-	token, err := user.DeleteAndGenerateLongLivedToken(
+	token, err := user.DeleteAndCreateLongLivedToken(
 		ctx, curUser.ID, user.WithTokenExpiresAt(&tokenExpiration))
 	if err != nil {
 		return nil, err
@@ -712,6 +717,24 @@ func (a *apiServer) PostLongLivedToken(
 func (a *apiServer) PostUserLongLivedToken(
 	ctx context.Context, req *apiv1.PostUserLongLivedTokenRequest,
 ) (*apiv1.PostUserLongLivedTokenResponse, error) {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	targetFullUser, err := getFullModelUser(ctx, model.UserID(req.UserId))
+	if err != nil {
+		return nil, err
+	}
+	targetUser := targetFullUser.ToUser()
+	if err = user.AuthZProvider.Get().CanCreateUsersToken(ctx, *curUser, targetUser); err != nil {
+		if canGetErr := user.AuthZProvider.
+			Get().CanGetUser(ctx, *curUser, targetFullUser.ToUser()); canGetErr != nil {
+			return nil, authz.SubIfUnauthorized(canGetErr, api.NotFoundErrs("user", "", true))
+		}
+		return nil, status.Error(codes.PermissionDenied, err.Error())
+	}
+
 	tokenExpiration := time.Now().Add(user.TokenExpirationDuration)
 	if req.Lifespan != "" {
 		d, err := time.ParseDuration(req.Lifespan)
@@ -722,8 +745,8 @@ func (a *apiServer) PostUserLongLivedToken(
 		tokenExpiration = time.Now().Add(d)
 	}
 
-	token, err := user.DeleteAndGenerateLongLivedToken(
-		ctx, model.UserID(req.UserId), user.WithTokenExpiresAt(&tokenExpiration))
+	token, err := user.DeleteAndCreateLongLivedToken(
+		ctx, targetFullUser.ID, user.WithTokenExpiresAt(&tokenExpiration))
 	if err != nil {
 		return nil, err
 	}

@@ -64,6 +64,11 @@ type UserAuthZ interface {
 	) error
 	// POST /api/v1/users/setting/reset
 	CanResetUsersOwnSettings(ctx context.Context, curUser model.User) error
+
+	// POST /api/v1/users/token
+	CanCreateUsersOwnToken(ctx context.Context, curUser model.User) error
+	// POST /api/v1/users/:user_id/token
+	CanCreateUsersToken(ctx context.Context, curUser, targetUser model.User) error
 }
 
 // AuthZProvider is the authz registry for `user` package.

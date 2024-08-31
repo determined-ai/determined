@@ -29,8 +29,8 @@ func WithTokenExpiresAt(expiresAt *time.Time) LongLivedTokenOption {
 	}
 }
 
-// DeleteAndGenerateLongLivedToken creates a row in the long lived token table.
-func DeleteAndGenerateLongLivedToken(
+// DeleteAndCreateLongLivedToken creates a row in the long lived token table.
+func DeleteAndCreateLongLivedToken(
 	ctx context.Context, userID model.UserID, opts ...LongLivedTokenOption,
 ) (string, error) {
 	// Populate the default values in the model.

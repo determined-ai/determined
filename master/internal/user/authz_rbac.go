@@ -198,6 +198,32 @@ func (a *UserAuthZRBAC) CanSetUsersRemote(ctx context.Context, curUser model.Use
 	return canAdministrateUser(ctx, curUser.ID)
 }
 
+// CanCreateUsersOwnToken always returns nil.
+func (a *UserAuthZRBAC) CanCreateUsersOwnToken(ctx context.Context, curUser model.User) error {
+	noPermissionRequired(ctx, curUser.ID, curUser.ID)
+
+	return nil
+}
+
+// CanCreateUsersToken returns an error if the user is not the target user and does not have admin
+// permissions when trying to set another user's password.
+func (a *UserAuthZRBAC) CanCreateUsersToken(
+	ctx context.Context, curUser, targetUser model.User,
+) (err error) {
+	fields := audit.ExtractLogFields(ctx)
+	logCanAdministrateUser(fields, curUser.ID)
+	defer func() {
+		audit.LogFromErr(fields, err)
+	}()
+
+	err = db.DoesPermissionMatch(ctx, curUser.ID, nil,
+		rbacv1.PermissionType_PERMISSION_TYPE_ADMINISTRATE_USER)
+	if err != nil && curUser.ID != targetUser.ID {
+		return errors.New("only admin privileged users can change other user's passwords")
+	}
+	return nil
+}
+
 func init() {
 	AuthZProvider.Register("rbac", &UserAuthZRBAC{})
 }

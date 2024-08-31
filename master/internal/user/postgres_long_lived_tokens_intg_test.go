@@ -15,28 +15,32 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
-func TestCreateLongLivedToken(t *testing.T) {
+func getLongLivedTokensEntry(ctx context.Context, userID model.UserID) (bool, error) {
+	return db.Bun().NewSelect().Table("long_lived_tokens").
+		Where("user_id = ?", userID).Exists(ctx)
+}
+
+func TestDeleteAndCreateLongLivedToken(t *testing.T) {
 	user, err := addTestUser(nil)
 	require.NoError(t, err)
 
 	// Add a LongLivedToken.
-	token, err := DeleteAndGenerateLongLivedToken(context.TODO(), user.ID)
+	token, err := DeleteAndCreateLongLivedToken(context.TODO(), user.ID)
 	require.NoError(t, err)
 	require.NotNil(t, token)
 
-	exists, err := db.Bun().NewSelect().Table("long_lived_tokens").
-		Where("user_id = ?", user.ID).Exists(context.TODO())
+	exists, err := getLongLivedTokensEntry(context.TODO(), user.ID)
 	require.True(t, exists)
 	require.NoError(t, err)
 }
 
-func TestCreateLongLivedTokenHasExpiresAt(t *testing.T) {
+func TestDeleteAndCreateLongLivedTokenHasExpiresAt(t *testing.T) {
 	user, err := addTestUser(nil)
 	require.NoError(t, err)
 
 	// Add a LongLivedToken with custom (Now() + 3 Months) Expiry Time.
 	expiresAt := time.Now().Add(TokenExpirationDuration * 3)
-	token, err := DeleteAndGenerateLongLivedToken(context.TODO(), user.ID, WithTokenExpiresAt(&expiresAt))
+	token, err := DeleteAndCreateLongLivedToken(context.TODO(), user.ID, WithTokenExpiresAt(&expiresAt))
 	require.NoError(t, err)
 	require.NotNil(t, token)
 
@@ -48,8 +52,7 @@ func TestCreateLongLivedTokenHasExpiresAt(t *testing.T) {
 	// Strip monotonic clock readings by using time.Equal
 	require.True(t, restoredSession.ExpiresAt.Equal(expiresAt))
 
-	exists, err := db.Bun().NewSelect().Table("long_lived_tokens").
-		Where("user_id = ?", user.ID).Exists(context.TODO())
+	exists, err := getLongLivedTokensEntry(context.TODO(), user.ID)
 	require.True(t, exists)
 	require.NoError(t, err)
 }
@@ -61,8 +64,7 @@ func TestDeleteLongLivenTokenByUserID(t *testing.T) {
 	err = DeleteLongLivenTokenByUserID(context.TODO(), userID)
 	require.NoError(t, err)
 
-	exists, err := db.Bun().NewSelect().Table("long_lived_tokens").
-		Where("user_id = ?", userID).Exists(context.TODO())
+	exists, err := getLongLivedTokensEntry(context.TODO(), userID)
 	require.False(t, exists)
 	require.NoError(t, err)
 }
@@ -74,8 +76,7 @@ func TestDeleteLongLivenTokenByToken(t *testing.T) {
 	err = DeleteLongLivenTokenByToken(context.TODO(), token)
 	require.NoError(t, err)
 
-	exists, err := db.Bun().NewSelect().Table("long_lived_tokens").
-		Where("user_id = ?", userID).Exists(context.TODO())
+	exists, err := getLongLivedTokensEntry(context.TODO(), userID)
 	require.False(t, exists)
 	require.NoError(t, err)
 }

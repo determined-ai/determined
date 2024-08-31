@@ -104,6 +104,21 @@ func (a *UserAuthZBasic) CanSetUsersDisplayName(
 	return nil
 }
 
+// CanCreateUsersOwnToken always returns nil.
+func (a *UserAuthZBasic) CanCreateUsersOwnToken(ctx context.Context, curUser model.User) error {
+	return nil
+}
+
+// CanCreateUsersToken returns an error if the user is not an admin.
+func (a *UserAuthZBasic) CanCreateUsersToken(
+	ctx context.Context, curUser, targetUser model.User,
+) error {
+	if !curUser.Admin && curUser.ID != targetUser.ID {
+		return fmt.Errorf("only admin privileged users can create token for other users")
+	}
+	return nil
+}
+
 // CanGetUsersImage always returns nil.
 func (a *UserAuthZBasic) CanGetUsersImage(
 	ctx context.Context, curUser, targetUser model.User,

@@ -121,6 +121,22 @@ func (p *UserAuthZPermissive) CanResetUsersOwnSettings(
 	return (&UserAuthZBasic{}).CanResetUsersOwnSettings(ctx, curUser)
 }
 
+// CanCreateUsersOwnToken calls RBAC authz but enforces basic authz.
+func (p *UserAuthZPermissive) CanCreateUsersOwnToken(
+	ctx context.Context, curUser model.User,
+) error {
+	_ = (&UserAuthZRBAC{}).CanCreateUsersOwnToken(ctx, curUser)
+	return (&UserAuthZBasic{}).CanCreateUsersOwnToken(ctx, curUser)
+}
+
+// CanCreateUsersToken calls RBAC authz but enforces basic authz.
+func (p *UserAuthZPermissive) CanCreateUsersToken(
+	ctx context.Context, curUser, targetUser model.User,
+) error {
+	_ = (&UserAuthZRBAC{}).CanCreateUsersToken(ctx, curUser, targetUser)
+	return (&UserAuthZBasic{}).CanCreateUsersToken(ctx, curUser, targetUser)
+}
+
 func init() {
 	AuthZProvider.Register("permissive", &UserAuthZPermissive{})
 }
