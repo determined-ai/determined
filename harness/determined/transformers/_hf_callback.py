@@ -289,8 +289,7 @@ class DetCallback(transformers.TrainerCallback):  # type: ignore
 
 EVAL = "eval_"
 TEST = "test_"
-TRAIN_AVG = "train_"
-TRAIN = "train_progress"
+TRAIN = "train_"
 
 
 def get_metric_type(d: Dict[str, Any]) -> str:
@@ -299,8 +298,6 @@ def get_metric_type(d: Dict[str, Any]) -> str:
             return EVAL
         elif k.startswith(TEST):
             return TEST
-        elif k.startswith(TRAIN_AVG):
-            return TRAIN_AVG
         else:
             return TRAIN
     return TRAIN
