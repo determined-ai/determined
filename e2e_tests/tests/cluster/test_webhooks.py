@@ -244,7 +244,7 @@ def test_custom_webhook(isSlack: bool) -> None:
     with pytest.raises(errors.APIException):
         bindings.post_PostWebhook(sess, body=webhook)
     webhook.mode = bindings.v1WebhookMode.SPECIFIC
-    w = bindings.post_PostWebhook(sess, body=webhook)
+    w = bindings.post_PostWebhook(sess, body=webhook).webhook
 
     experiment_id = exp.create_experiment(
         sess,
