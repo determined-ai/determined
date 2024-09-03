@@ -9,8 +9,8 @@ import (
 // Submitted workloads that request resource quanities exceeding defined resource constraints in a
 // given scope are rejected.
 type ResourceConstraints struct {
-	MaxSlots    *int `json:"max_slots"`
-	MaxPriority *int `json:"max_priority"`
+	MaxSlots      *int `json:"max_slots"`
+	PriorityLimit *int `json:"priority_limit"`
 }
 
 // Constraints are non-overridable workload constraints.
@@ -18,6 +18,16 @@ type ResourceConstraints struct {
 // scope are rejected.
 type Constraints struct {
 	ResourceConstraints ResourceConstraints `json:"resources"`
+}
+
+type ResourceManagerPriority struct {
+	MaxPriority *int `json:"max_priority"`
+	MinPriority *int `json:"min_priority"`
+}
+
+type ConstraintsExtended struct {
+	Constraints
+	ResourceManagerPriority ResourceManagerPriority
 }
 
 // ExperimentTaskConfigPolicy is the invariant config and constraints for an experiment.
