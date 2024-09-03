@@ -91,7 +91,7 @@ SELECT jsonb_build_object(
 func (db *PgDB) UpdateResourceAllocationAggregation() error {
 	var lastDatePtr *time.Time
 	err := db.sql.QueryRow(
-		`SELECT date_trunc('day', max(date)) FROM resource_aggregates`,
+		`SELECT date_trunc('day', max(date)::timestamp) FROM resource_aggregates`,
 	).Scan(&lastDatePtr)
 	if err != nil {
 		return errors.Wrap(err, "failed to find last aggregate")
