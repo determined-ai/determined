@@ -63,7 +63,7 @@ const (
 	jobNameAnnotation         = "determined.ai/job-name"
 
 	kubernetesJobNameLabel     = "batch.kubernetes.io/job-name"
-	kubernetesFallbackJobLabel = "job-name" // used when the above label is not present.
+	kubernetesFallbackJobLabel = "job-name" // used in k8s versions < 1.27
 
 	resourceTypeNvidia = "nvidia.com/gpu"
 	resourceTypeAMD    = "amd.com/gpu"
