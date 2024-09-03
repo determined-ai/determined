@@ -32,8 +32,6 @@ message MoveSearchesRequest {
   int32 destination_project_id = 3;
   // Filter expression
   optional string filter = 4;
-  // If true, skip multi-trial experiments for move.
-  bool skip_multitrial = 5;
 }
 
 // Response to MoveSearchesRequest.
@@ -139,7 +137,7 @@ message UnarchiveSearchesResponse {
 // Request to pause the experiment associated witha search.
 message PauseSearchesRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "project_id", "search_ids", "skip_multitrial" ] }
+    json_schema: { required: [ "project_id", "search_ids" ] }
   };
 
   // The ids of the searches being moved.
@@ -163,7 +161,7 @@ message PauseSearchesResponse {
 // Request to unpause the experiment associated witha search.
 message ResumeSearchesRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "project_id", "search_ids", "skip_multitrial" ] }
+    json_schema: { required: [ "project_id", "search_ids" ] }
   };
 
   // The ids of the searches being moved.
