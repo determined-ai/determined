@@ -206,7 +206,7 @@ def test_log_pattern_send_webhook(should_match: bool) -> None:
         assert specific_path_unmatch not in responses
 
     for i in wh:
-        bindings.delete_DeleteWebhook(sess, id=int(i))
+        bindings.delete_DeleteWebhook(sess, id=i or 0)
     test_agent_user_group._delete_workspace_and_check(sess, workspace)
 
 
@@ -290,7 +290,7 @@ def test_custom_webhook(isSlack: bool) -> None:
     assert "DEBUG" in responses["/"]
     assert str(experiment_id) in responses["/"]
 
-    bindings.delete_DeleteWebhook(sess, id=int(w.id))
+    bindings.delete_DeleteWebhook(sess, id=w.id or 0)
     test_agent_user_group._delete_workspace_and_check(sess, workspace)
 
 
@@ -366,8 +366,8 @@ def test_specific_webhook() -> None:
     responses = server2.close_and_return_responses()
     assert len(responses) == 1
 
-    bindings.delete_DeleteWebhook(sess, id=int(webhook_res_1.id))
-    bindings.delete_DeleteWebhook(sess, id=int(webhook_res_2.id))
+    bindings.delete_DeleteWebhook(sess, id=webhook_res_1.id or 0)
+    bindings.delete_DeleteWebhook(sess, id=webhook_res_2.id or 0)
     test_agent_user_group._delete_workspace_and_check(sess, workspace)
 
 
