@@ -253,9 +253,8 @@ func TestIntegrationKillAllExperimentsInProject(t *testing.T) {
 		},
 	}
 
-	allExperimentIds := make([]int, len(testModels))
+	allExperimentIds := make([]int, 0, len(testModels))
 	editableExperiments := map[string]*model.Experiment{}
-	i := 0
 	for name, model := range testModels {
 		exp := db.RequireMockExperimentParams(
 			t, db.SingleDB(), testUser,
@@ -263,8 +262,7 @@ func TestIntegrationKillAllExperimentsInProject(t *testing.T) {
 			*model.ProjectID,
 		)
 		editableExperiments[name] = exp
-		allExperimentIds[i] = exp.ID
-		i++
+		allExperimentIds = append(allExperimentIds, exp.ID)
 	}
 	defer func(ids []int) {
 		_ = db.SingleDB().DeleteExperiments(ctx, ids)
