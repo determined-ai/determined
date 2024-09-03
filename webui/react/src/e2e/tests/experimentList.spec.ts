@@ -21,9 +21,13 @@ test.describe('Experiment List', () => {
       await expect(
         projectDetailsPageSetup.f_experimentList.tableActionBar.count.pwLocator,
       ).toContainText('experiment');
-      detExecSync(
-        `experiment create ${fullPath('examples/tutorials/mnist_pytorch/adaptive.yaml')} --paused --project_id ${newProject.response.project.id}`,
-      );
+      Array(3)
+        .fill(null)
+        .forEach(() => {
+          detExecSync(
+            `experiment create ${fullPath('examples/tutorials/mnist_pytorch/adaptive.yaml')} --paused --project_id ${newProject.response.project.id}`,
+          );
+        });
       await expect(
         projectDetailsPageSetup.f_experimentList.dataGrid.rows.pwLocator,
       ).not.toHaveCount(0, { timeout: 10_000 });
@@ -310,5 +314,39 @@ test.describe('Experiment List', () => {
     await row.experimentActionDropdown.open();
     await row.experimentActionDropdown.pause.pwLocator.click();
     await expect.soft((await row.getCellByColumnName('State')).pwLocator).toHaveText('paused');
+  });
+
+  test('Datagrid Bulk Action', async () => {
+    // should probably go last/before move
+    await test.step('Kill', async () => {
+      type RowType = typeof projectDetailsPage.f_experimentList.dataGrid.rows;
+      const rows = [0, 1].map((idx) => {
+        return projectDetailsPage.f_experimentList.dataGrid.getRowByIndex(idx);
+      });
+      const expectStateForRow = async (state: string, row: RowType) => {
+        const stateColumn = await row.getCellByColumnName('State');
+        await expect(stateColumn.pwLocator).toHaveText(state);
+      };
+      await rows.reduce(async (memo, row) => {
+        await memo;
+        await expectStateForRow('paused', row);
+        await row.clickColumn('Select');
+      }, Promise.resolve());
+
+      await projectDetailsPage.f_experimentList.tableActionBar.actions.kill.select();
+
+      // TODO: modal component model assumes buttons are attached to form
+      await projectDetailsPage.pwLocator.getByRole('button', { name: 'kill' }).click();
+
+      await expect(async () => {
+        await Promise.all([
+          ...rows.map(expectStateForRow.bind(this, 'canceled')),
+          expectStateForRow(
+            'paused',
+            projectDetailsPage.f_experimentList.dataGrid.getRowByIndex(2),
+          ),
+        ]);
+      }).toPass();
+    });
   });
 });
