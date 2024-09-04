@@ -195,7 +195,7 @@ type CustomWebhookEventData struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// The level for the event data.
+	// The level at which the event data is logged.
 	Level logv1.LogLevel `protobuf:"varint,1,opt,name=level,proto3,enum=determined.log.v1.LogLevel" json:"level,omitempty"`
 	// The title for the event data.
 	Title string `protobuf:"bytes,2,opt,name=title,proto3" json:"title,omitempty"`

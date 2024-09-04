@@ -2541,7 +2541,7 @@ export interface V1CurrentUserResponse {
  */
 export interface V1CustomWebhookEventData {
     /**
-     * The level for the event data.
+     * The level at which the event data is logged.
      * @type {V1LogLevel}
      * @memberof V1CustomWebhookEventData
      */

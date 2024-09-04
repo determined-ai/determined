@@ -293,7 +293,7 @@ func handleCustomTriggerData(ctx context.Context, data CustomTriggerData, experi
 
 	activeConfig, err := expconf.ParseAnyExperimentConfigYAML(m.ConfigBytes)
 	if err != nil {
-		return fmt.Errorf("error parsing experiment config : %w", err)
+		return fmt.Errorf("error parsing experiment config: %w", err)
 	}
 	integrationsConfig := activeConfig.Integrations()
 	if integrationsConfig == nil {

@@ -110,7 +110,7 @@ func (a *WebhooksAPIServer) PostWebhook(
 		if t.TriggerType == webhookv1.TriggerType_TRIGGER_TYPE_CUSTOM {
 			if req.Webhook.Mode != webhookv1.WebhookMode_WEBHOOK_MODE_SPECIFIC {
 				return nil, status.Errorf(codes.InvalidArgument,
-					"custom trigger only works on webhook with mode 'SPECIFIC' got %v",
+					"custom trigger only works on webhook with mode 'SPECIFIC'. Got %v",
 					req.Webhook.Mode)
 			}
 		}
