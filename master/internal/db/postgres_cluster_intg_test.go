@@ -100,11 +100,12 @@ func CreateMockJobAndTask(t *testing.T, db *PgDB) (*model.Job, *model.Task) {
 }
 
 type allocAggTest struct {
-	name      string
-	tzQuery   string
-	timeOfDay string
-	numSlots  int
-	seconds   int
+	name       string
+	tzQuery    string
+	timeOfDay  string
+	numSlots   int
+	seconds    int
+	queuedTime int
 }
 
 func TestUpdateResourceAllocationAggregation(t *testing.T) {
@@ -121,25 +122,28 @@ func TestUpdateResourceAllocationAggregation(t *testing.T) {
 
 	tests := []allocAggTest{
 		{
-			name:      "UTC basic add",
-			tzQuery:   `SET TIME ZONE 'Etc/UTC'`,
-			timeOfDay: "04:20:00AM",
-			numSlots:  5,
-			seconds:   5,
+			name:       "UTC basic add",
+			tzQuery:    `SET TIME ZONE 'Etc/UTC'`,
+			timeOfDay:  "04:20:00AM",
+			numSlots:   5,
+			seconds:    5,
+			queuedTime: 2,
 		},
 		{
-			name:      "Positive UTC offset",
-			tzQuery:   `SET TIME ZONE 'Europe/Athens'`,
-			timeOfDay: "11:30:00PM",
-			numSlots:  5,
-			seconds:   10,
+			name:       "Positive UTC offset",
+			tzQuery:    `SET TIME ZONE 'Europe/Athens'`,
+			timeOfDay:  "11:30:00PM",
+			numSlots:   5,
+			seconds:    10,
+			queuedTime: 2,
 		},
 		{
-			name:      "Negative UTC offset",
-			tzQuery:   `SET TIME ZONE 'America/Montreal'`,
-			timeOfDay: "01:20:00AM",
-			numSlots:  7,
-			seconds:   2,
+			name:       "Negative UTC offset",
+			tzQuery:    `SET TIME ZONE 'America/Montreal'`,
+			timeOfDay:  "01:20:00AM",
+			numSlots:   7,
+			seconds:    2,
+			queuedTime: 2,
 		},
 	}
 
@@ -161,13 +165,30 @@ func TestUpdateResourceAllocationAggregation(t *testing.T) {
 			ra := resourceAggregate{}
 			err = bunDB.NewSelect().
 				Model(&ra).
-				Where("date = ? AND aggregation_type = ?", formattedDate, "total").
+				Where("date = ? AND aggregation_type = ? AND aggregation_key = ?", formattedDate,
+					"total", "total").
 				Scan(ctx)
 			require.NoError(t, err)
 
 			var expectedSeconds interface{} = float64(test.numSlots*test.seconds) + prevSeconds
 			var seconds interface{} = ra.Seconds
-			require.InEpsilon(t, expectedSeconds, seconds, 0.5)
+			var diffTooLarge interface{} = fmt.Sprintf("expected time: %v \nactual time: %v \n",
+				expectedSeconds, seconds)
+			require.InEpsilon(t, expectedSeconds, seconds, 0.5, diffTooLarge)
+
+			err = bunDB.NewSelect().
+				Model(&ra).
+				Where("date = ? AND aggregation_type = ? AND aggregation_key = ?", formattedDate,
+					"queued", "total").
+				Scan(ctx)
+			require.NoError(t, err)
+
+			var expectedQueuedTime interface{} = test.queuedTime
+			seconds = ra.Seconds
+			diffTooLarge = fmt.Sprintf("expected queued time: %v \nactual queued "+
+				" time: %v \n",
+				expectedQueuedTime, seconds)
+			require.InEpsilon(t, expectedQueuedTime, seconds, 0.5, diffTooLarge)
 		})
 	}
 }
@@ -187,10 +208,7 @@ func setupUpdateResourceAllocationAggregation(ctx context.Context, t *testing.T,
 	startDate := fmt.Sprintf("%s/%s %s %s +00", yearMonthDay[1], yearMonthDay[2], test.timeOfDay,
 		yearMonthDay[0])
 
-	// (Setup) the allocation's start and end time.
-	startTime, err := time.Parse("01/02 03:04:05PM 2006 -07", startDate)
-	require.NoError(t, err)
-
+	// The total aggregated seconds from previously added allocations on the day recentDate.
 	var prevSeconds float64
 	err = bunDB.NewRaw(`
 	WITH d AS (
@@ -225,7 +243,11 @@ func setupUpdateResourceAllocationAggregation(ctx context.Context, t *testing.T,
 	`, formattedDate, formattedDate).Scan(ctx, &prevSeconds)
 	require.NoError(t, err)
 
+	// (Setup) the allocation's start and end time.
+	startTime, err := time.Parse("01/02 03:04:05PM 2006 -07", startDate)
+	require.NoError(t, err)
 	endTime := startTime.Add(time.Second * time.Duration(test.seconds))
+
 	allocID := uuid.NewString()
 	alloc := model.Allocation{
 		AllocationID: *model.NewAllocationID(&allocID),
@@ -235,6 +257,11 @@ func setupUpdateResourceAllocationAggregation(ctx context.Context, t *testing.T,
 		StartTime:    &startTime,
 		EndTime:      &endTime,
 	}
+
+	// The function UpdateResourceAllocationAggregation starts aggregating allocations from the day
+	// after the highest date in the resource_aggregates table. Therefore, we need to ensure that
+	// the highest date in resource_aggregates is less than the date on which we are adding the
+	// allocation in this setup.
 	_, err = bunDB.NewDelete().
 		Table("resource_aggregates").
 		Where("date >= ?", formattedDate).
@@ -242,6 +269,16 @@ func setupUpdateResourceAllocationAggregation(ctx context.Context, t *testing.T,
 	require.NoError(t, err)
 
 	_, err = bunDB.NewInsert().Model(&alloc).Exec(ctx)
+	require.NoError(t, err)
+
+	queuedEndTime := startTime.Add(time.Second * time.Duration(test.queuedTime))
+	taskStats := model.TaskStats{
+		AllocationID: model.AllocationID(allocID),
+		EventType:    "QUEUED",
+		StartTime:    &startTime,
+		EndTime:      &queuedEndTime,
+	}
+	_, err = bunDB.NewInsert().Model(&taskStats).Exec(ctx)
 	require.NoError(t, err)
 
 	return formattedDate, prevSeconds
