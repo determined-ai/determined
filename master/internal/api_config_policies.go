@@ -42,7 +42,7 @@ func stubData() (*structpb.Struct, error) {
 	// put yaml string into a map
 	var yamlMap map[string]interface{}
 	if err := yaml.Unmarshal([]byte(yamlString), &yamlMap); err != nil {
-		return nil, fmt.Errorf("unable to unmarshal yaml: %v", err)
+		return nil, fmt.Errorf("unable to unmarshal yaml: %w", err)
 	}
 
 	// convert map to protobuf struct
