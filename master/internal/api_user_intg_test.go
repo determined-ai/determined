@@ -1013,25 +1013,87 @@ func TestPostUserLongLivedTokenWithLifespan(t *testing.T) {
 	require.NoError(t, err)
 }
 
-func TestAuthzPostLongLivedToken(t *testing.T) {
+func TestGetLongLivedToken(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+
+	// Create a test token without lifespan input
+	token, err := api.PostLongLivedToken(ctx, &apiv1.PostLongLivedTokenRequest{})
+	require.NoError(t, err)
+	require.NotNil(t, token)
+
+	tokenInfo, err := api.GetLongLivedToken(ctx, &apiv1.GetLongLivedTokenRequest{})
+	require.NoError(t, err)
+	require.NotNil(t, tokenInfo)
+	require.Equal(t, int32(curUser.ID), tokenInfo.LongLivedTokenInfo.UserId)
+}
+
+func TestGetUserLongLivedToken(t *testing.T) {
+	api, _, ctx := setupAPITest(t, nil)
+
+	userID, err := user.Add(
+		context.TODO(),
+		&model.User{
+			Username: uuid.New().String(),
+			Remote:   false,
+		},
+		nil,
+	)
+	require.NoError(t, err)
+
+	// Create a test token without lifespan input
+	token, err := api.PostUserLongLivedToken(ctx, &apiv1.PostUserLongLivedTokenRequest{
+		UserId: int32(userID),
+	})
+	require.NoError(t, err)
+	require.NotNil(t, token)
+
+	tokenInfo, err := api.GetUserLongLivedToken(ctx, &apiv1.GetUserLongLivedTokenRequest{
+		UserId: int32(userID),
+	})
+	require.NoError(t, err)
+	require.NotNil(t, tokenInfo)
+	require.Equal(t, int32(userID), tokenInfo.LongLivedTokenInfo.UserId)
+}
+
+func TestAuthzLongLivedToken(t *testing.T) {
 	api, authzUsers, curUser, ctx := setupUserAuthzTest(t, nil)
 
+	// POST API Auth check
 	expectedErr := status.Error(codes.PermissionDenied, "canCreateUsersOwnToken")
 	authzUsers.On("CanCreateUsersOwnToken", mock.Anything, curUser).
 		Return(fmt.Errorf("canCreateUsersOwnToken")).Once()
 
 	_, err := api.PostLongLivedToken(ctx, &apiv1.PostLongLivedTokenRequest{})
 	require.Equal(t, expectedErr.Error(), err.Error())
+
+	// GET API Auth check
+	expectedErr = status.Error(codes.PermissionDenied, "canCreateUsersOwnToken")
+	authzUsers.On("CanCreateUsersOwnToken", mock.Anything, curUser).
+		Return(fmt.Errorf("canCreateUsersOwnToken")).Once()
+
+	_, err = api.GetLongLivedToken(ctx, &apiv1.GetLongLivedTokenRequest{})
+	require.Equal(t, expectedErr.Error(), err.Error())
 }
 
-func TestAuthzPostUserLongLivedToken(t *testing.T) {
+func TestAuthzUserLongLivedToken(t *testing.T) {
 	api, authzUsers, curUser, ctx := setupUserAuthzTest(t, nil)
 
+	// POST API Auth check
 	expectedErr := status.Error(codes.PermissionDenied, "canCreateUsersToken")
 	authzUsers.On("CanCreateUsersToken", mock.Anything, curUser, curUser).
 		Return(fmt.Errorf("canCreateUsersToken")).Once()
 
 	_, err := api.PostUserLongLivedToken(ctx, &apiv1.PostUserLongLivedTokenRequest{
+		UserId: int32(curUser.ID),
+	})
+	require.Equal(t, expectedErr.Error(), err.Error())
+
+	// GET API Auth check
+	expectedErr = status.Error(codes.PermissionDenied, "canCreateUsersToken")
+	authzUsers.On("CanCreateUsersToken", mock.Anything, curUser, curUser).
+		Return(fmt.Errorf("canCreateUsersToken")).Once()
+
+	_, err = api.GetUserLongLivedToken(ctx, &apiv1.GetUserLongLivedTokenRequest{
 		UserId: int32(curUser.ID),
 	})
 	require.Equal(t, expectedErr.Error(), err.Error())
