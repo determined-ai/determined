@@ -5,7 +5,7 @@ option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
 import "google/protobuf/struct.proto";
 
-// PutWorkspaceConfigPoliciesRequest is a complete replacement of config
+// PutWorkspaceConfigPoliciesRequest sets config
 // policies for the workspace and workload type.
 message PutWorkspaceConfigPoliciesRequest {
   // The workspace the config policies apply to. Use global API for
@@ -25,7 +25,7 @@ message PutWorkspaceConfigPoliciesResponse {
   google.protobuf.Struct config_policies = 1;
 }
 
-// PutGlobalConfigPoliciesRequest is a complete replacement of global config
+// PutGlobalConfigPoliciesRequest sets global config
 // policies for the workload type.
 message PutGlobalConfigPoliciesRequest {
   // The workload type the config policies apply to: EXPERIMENT or NTSC.
@@ -42,8 +42,8 @@ message PutGlobalConfigPoliciesResponse {
   google.protobuf.Struct config_policies = 1;
 }
 
-// GetWorkspaceConfigPoliciesRequest is used to list all task config policies
-// for the workspace and workload type.
+// GetWorkspaceConfigPoliciesRequest lists task config policies
+// for a given workspace and workload type.
 message GetWorkspaceConfigPoliciesRequest {
   // Specifies which workspace the config policies apply to. Use global API for
   // global config policies.
@@ -59,8 +59,8 @@ message GetWorkspaceConfigPoliciesResponse {
   google.protobuf.Struct config_policies = 1;
 }
 
-// GetGlobalConfigPoliciesRequest is used to list all global task config
-// policies for the workload type.
+// GetGlobalConfigPoliciesRequest lists global task config
+// policies for a given workload type.
 message GetGlobalConfigPoliciesRequest {
   // Specifies which workload type the config policies apply to: EXPERIMENT or NTSC.
   string workload_type = 1;

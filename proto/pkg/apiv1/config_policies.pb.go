@@ -19,17 +19,17 @@ const (
 	_ = protoimpl.EnforceVersion(protoimpl.MaxVersion - 20)
 )
 
-// PutWorkspaceConfigPoliciesRequest is a complete replacement of config
+// PutWorkspaceConfigPoliciesRequest sets config
 // policies for the workspace and workload type.
 type PutWorkspaceConfigPoliciesRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// Specifies which workspace the config policies apply to. Use global API for
+	// The workspace the config policies apply to. Use global API for
 	// global config policies.
 	WorkspaceId int32 `protobuf:"varint,1,opt,name=workspace_id,json=workspaceId,proto3" json:"workspace_id,omitempty"`
-	// Specifies which task type the config policies apply to: EXPERIMENT or NTSC.
+	// Specifies which workload type the config policies apply to: EXPERIMENT or NTSC.
 	WorkloadType string `protobuf:"bytes,2,opt,name=workload_type,json=workloadType,proto3" json:"workload_type,omitempty"`
 	// The config policies to use. Contains both invariant configs and constraints
 	// in yaml or json format.
@@ -139,14 +139,14 @@ func (x *PutWorkspaceConfigPoliciesResponse) GetConfigPolicies() *_struct.Struct
 	return nil
 }
 
-// PutGlobalConfigPoliciesRequest is a complete replacement of global config
+// PutGlobalConfigPoliciesRequest sets global config
 // policies for the workload type.
 type PutGlobalConfigPoliciesRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// Specifies which task type the config policies apply to: EXPERIMENT or NTSC.
+	// The workload type the config policies apply to: EXPERIMENT or NTSC.
 	WorkloadType string `protobuf:"bytes,1,opt,name=workload_type,json=workloadType,proto3" json:"workload_type,omitempty"`
 	// The config policies to use. Contains both invariant configs and constraints
 	// in yaml or json format.
@@ -249,8 +249,8 @@ func (x *PutGlobalConfigPoliciesResponse) GetConfigPolicies() *_struct.Struct {
 	return nil
 }
 
-// GetWorkspaceConfigPoliciesRequest is used to list all task config policies
-// for the workspace and task type.
+// GetWorkspaceConfigPoliciesRequest lists task config policies
+// for a given workspace and workload type.
 type GetWorkspaceConfigPoliciesRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -259,7 +259,7 @@ type GetWorkspaceConfigPoliciesRequest struct {
 	// Specifies which workspace the config policies apply to. Use global API for
 	// global config policies.
 	WorkspaceId int32 `protobuf:"varint,1,opt,name=workspace_id,json=workspaceId,proto3" json:"workspace_id,omitempty"`
-	// Specifies which task type the config policies apply to: EXPERIMENT or NTSC.
+	// The workload type the config policies apply to: EXPERIMENT or NTSC.
 	WorkloadType string `protobuf:"bytes,2,opt,name=workload_type,json=workloadType,proto3" json:"workload_type,omitempty"`
 }
 
@@ -315,7 +315,7 @@ type GetWorkspaceConfigPoliciesResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// The current config policies saved. Contains both invariant configs and
+	// The current config policies saved for the workspace. Contains both invariant configs and
 	// constraints in yaml or json format.
 	ConfigPolicies *_struct.Struct `protobuf:"bytes,1,opt,name=config_policies,json=configPolicies,proto3" json:"config_policies,omitempty"`
 }
@@ -359,14 +359,14 @@ func (x *GetWorkspaceConfigPoliciesResponse) GetConfigPolicies() *_struct.Struct
 	return nil
 }
 
-// GetGlobalConfigPoliciesRequest is used to list all global task config
-// policies for the task type.
+// GetGlobalConfigPoliciesRequest lists global task config
+// policies for a given workload type.
 type GetGlobalConfigPoliciesRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// Specifies which task type the config policies apply to: EXPERIMENT or NTSC.
+	// Specifies which workload type the config policies apply to: EXPERIMENT or NTSC.
 	WorkloadType string `protobuf:"bytes,1,opt,name=workload_type,json=workloadType,proto3" json:"workload_type,omitempty"`
 }
 
@@ -415,7 +415,7 @@ type GetGlobalConfigPoliciesResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// The current config policies saved. Contains both invariant configs and
+	// The global current config policies saved. Contains both invariant configs and
 	// constraints in yaml or json format.
 	ConfigPolicies *_struct.Struct `protobuf:"bytes,1,opt,name=config_policies,json=configPolicies,proto3" json:"config_policies,omitempty"`
 }
@@ -460,7 +460,7 @@ func (x *GetGlobalConfigPoliciesResponse) GetConfigPolicies() *_struct.Struct {
 }
 
 // DeleteWorkspaceConfigPoliciesRequest is used to delete all task config
-// policies for the workspace and task type.
+// policies for the workspace and workload type.
 type DeleteWorkspaceConfigPoliciesRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -469,7 +469,7 @@ type DeleteWorkspaceConfigPoliciesRequest struct {
 	// Specifies which workspace the config policies apply to. Use global API for
 	// global config policies.
 	WorkspaceId int32 `protobuf:"varint,1,opt,name=workspace_id,json=workspaceId,proto3" json:"workspace_id,omitempty"`
-	// Specifies which task type the config policies apply to: EXPERIMENT or NTSC.
+	// The workload type the config policies apply to: EXPERIMENT or NTSC.
 	WorkloadType string `protobuf:"bytes,2,opt,name=workload_type,json=workloadType,proto3" json:"workload_type,omitempty"`
 }
 
@@ -559,13 +559,13 @@ func (*DeleteWorkspaceConfigPoliciesResponse) Descriptor() ([]byte, []int) {
 }
 
 // DeleteGlobalConfigPoliciesRequest is used to delete all global task config
-// policies for the task type.
+// policies for the workload type.
 type DeleteGlobalConfigPoliciesRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// Specifies which task type the config policies apply to: EXPERIMENT or NTSC.
+	// Specifies which workload type the config policies apply to: EXPERIMENT or NTSC.
 	WorkloadType string `protobuf:"bytes,1,opt,name=workload_type,json=workloadType,proto3" json:"workload_type,omitempty"`
 }
 
