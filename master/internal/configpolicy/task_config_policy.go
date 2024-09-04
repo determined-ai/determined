@@ -16,26 +16,26 @@ type ResourceConstraints struct {
 // Submitted workloads whose config's respective field(s) exceed defined constraints within a given
 // scope are rejected.
 type Constraints struct {
-	ResourceConstraints ResourceConstraints `json:"resources"`
-	PriorityLimit       *int                `json:"priority_limit"`
+	ResourceConstraints *ResourceConstraints `json:"resources"`
+	PriorityLimit       *int                 `json:"priority_limit"`
 }
 
-// ExperimentTaskConfigPolicy is the invariant config and constraints for an experiment.
+// ExperimentConfigPolicy is the invariant config and constraints for an experiment.
 // Submitted experiments whose config fields vary from the respective InvariantConfig fields set
 // within a given scope are silently overriden.
 // Submitted experiments whose constraint fields vary from the respective Constraint fields set
 // within a given scope are rejected.
 type ExperimentConfigPolicy struct {
-	InvariantConfig expconf.ExperimentConfig `json:"config"`
-	Constraints     Constraints              `json:"constraints"`
+	InvariantConfig *expconf.ExperimentConfig `json:"config"`
+	Constraints     *Constraints              `json:"constraints"`
 }
 
-// NTSCTaskConfigPolicy is the invariant config and constraints for an NTSC task.
+// NTSCConfigPolicy is the invariant config and constraints for an NTSC task.
 // Submitted NTSC tasks whose config fields vary from the respective InvariantConfig fields set
 // within a given scope are silently overriden.
 // Submitted NTSC tasks whose constraint fields vary from the respective Constraint fields set
 // within a given scope are rejected.
 type NTSCConfigPolicy struct {
-	InvariantConfig model.CommandConfig `json:"config"`
-	Constraints     Constraints         `json:"constraints"`
+	InvariantConfig *model.CommandConfig `json:"config"`
+	Constraints     *Constraints         `json:"constraints"`
 }
