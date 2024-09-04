@@ -54,7 +54,7 @@ message GetWorkspaceConfigPoliciesRequest {
 
 // Response to GetWorkspaceConfigPolicies request.
 message GetWorkspaceConfigPoliciesResponse {
-  // The current config policies saved. Contains both invariant configs and
+  // The current config policies saved for the workspace. Contains both invariant configs and
   // constraints in yaml or json format.
   google.protobuf.Struct config_policies = 1;
 }
