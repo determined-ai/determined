@@ -80,3 +80,17 @@ func TestDeleteLongLivenTokenByToken(t *testing.T) {
 	require.False(t, exists)
 	require.NoError(t, err)
 }
+
+func TestGetLongLivenTokenInfoByUserID(t *testing.T) {
+	user, err := addTestUser(nil)
+	require.NoError(t, err)
+
+	// Add a LongLivedToken.
+	token, err := DeleteAndCreateLongLivedToken(context.TODO(), user.ID)
+	require.NoError(t, err)
+	require.NotNil(t, token)
+
+	tokenInfo, err := GetLongLivedTokenInfo(context.TODO(), user.ID)
+	require.NoError(t, err)
+	require.Equal(t, user.ID, tokenInfo.UserID)
+}

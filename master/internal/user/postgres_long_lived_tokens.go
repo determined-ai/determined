@@ -2,10 +2,12 @@ package user
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"time"
 
 	"github.com/o1egl/paseto"
+	"github.com/pkg/errors"
 	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/internal/db"
@@ -112,4 +114,22 @@ func DeleteLongLivedTokenByTokenID(ctx context.Context, longLivedTokenID model.T
 		Where("id = ?", longLivedTokenID).
 		Exec(ctx)
 	return err
+}
+
+func GetLongLivedTokenInfo(ctx context.Context, userID model.UserID) (
+	*model.LongLivedToken, error,
+) {
+	var tokenInfo model.LongLivedToken // To store the token info for the given user_id
+
+	// Execute the query to fetch the token info for the given user_id
+	switch err := db.Bun().NewSelect().Table("long_lived_tokens").
+		Where("user_id = ?", userID).
+		Scan(ctx, &tokenInfo); {
+	case errors.Is(err, sql.ErrNoRows):
+		return nil, nil
+	case err != nil:
+		return nil, err
+	default:
+		return &tokenInfo, nil
+	}
 }
