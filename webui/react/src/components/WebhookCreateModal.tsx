@@ -86,9 +86,7 @@ const WebhookCreateModalComponent: React.FC<Props> = ({ onSuccess }: Props) => {
   const { canCreateWebhooks } = usePermissions();
   const { openToast } = useToast();
 
-  const triggers = useMemo(() => (
-    triggerEvents || []
-  ), [triggerEvents])
+  const triggers = useMemo(() => triggerEvents || [], [triggerEvents]);
 
   const onChange = useCallback(() => {
     const fields = form.getFieldsError();
@@ -97,10 +95,10 @@ const WebhookCreateModalComponent: React.FC<Props> = ({ onSuccess }: Props) => {
   }, [form]);
 
   useEffect(() => {
-    if (!(triggers).includes(V1TriggerType.TASKLOG)) {
+    if (!triggers.includes(V1TriggerType.TASKLOG)) {
       form.setFieldValue('regex', null);
     }
-    if ((triggers).includes(V1TriggerType.CUSTOM)) {
+    if (triggers.includes(V1TriggerType.CUSTOM)) {
       form.setFieldValue('mode', V1WebhookMode.SPECIFIC);
     }
   }, [triggers, form]);
@@ -236,7 +234,7 @@ const WebhookCreateModalComponent: React.FC<Props> = ({ onSuccess }: Props) => {
             placeholder="Select trigger event"
           />
         </Form.Item>
-        {(triggers).includes(V1TriggerType.TASKLOG) && (
+        {triggers.includes(V1TriggerType.TASKLOG) && (
           <Form.Item
             label="Regex"
             name="regex"
@@ -251,7 +249,7 @@ const WebhookCreateModalComponent: React.FC<Props> = ({ onSuccess }: Props) => {
             name="mode"
             rules={[{ message: 'Webhook mode is required', required: true }]}>
             <Select
-              disabled={(triggers).includes(V1TriggerType.CUSTOM)}
+              disabled={triggers.includes(V1TriggerType.CUSTOM)}
               options={modeOptions}
               placeholder="Select webhook mode"
             />
