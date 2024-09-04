@@ -728,10 +728,6 @@ func (a *apiServer) PostUserLongLivedToken(
 	}
 	targetUser := targetFullUser.ToUser()
 	if err = user.AuthZProvider.Get().CanCreateUsersToken(ctx, *curUser, targetUser); err != nil {
-		if canGetErr := user.AuthZProvider.
-			Get().CanGetUser(ctx, *curUser, targetFullUser.ToUser()); canGetErr != nil {
-			return nil, authz.SubIfUnauthorized(canGetErr, api.NotFoundErrs("user", "", true))
-		}
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 

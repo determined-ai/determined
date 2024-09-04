@@ -46,6 +46,8 @@ var (
 	authzUser *mocks.UserAuthZ
 )
 
+const lifespan = "5s"
+
 // MockRM returns a mock resource manager that basically returns OK on every call. We should update this to an
 // RM that makes sure callers uphold expected invariants (release, kill not called before allocate, release not
 // called twice for the same resource, etc).
@@ -923,4 +925,146 @@ func TestPostUserActivity(t *testing.T) {
 func getActivityEntry(ctx context.Context, userID model.UserID, entityID int32) (int, error) {
 	return db.Bun().NewSelect().Model((*model.UserActivity)(nil)).Where("user_id = ?",
 		int32(userID)).Where("entity_id = ?", entityID).Count(ctx)
+}
+
+func TestPostLongLivedToken(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+
+	// Without lifespan input
+	token, err := api.PostLongLivedToken(ctx, &apiv1.PostLongLivedTokenRequest{})
+	require.NoError(t, err)
+	require.NotNil(t, token)
+
+	exists, err := getLongLivedTokensEntry(ctx, curUser.ID)
+	require.True(t, exists)
+	require.NoError(t, err)
+}
+
+func TestPostLongLivedTokenWithLifespan(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+
+	// With lifespan input
+	token, err := api.PostLongLivedToken(ctx, &apiv1.PostLongLivedTokenRequest{
+		Lifespan: lifespan,
+	})
+
+	require.NoError(t, err)
+	require.NotNil(t, token)
+
+	err = testSetLifespan(ctx, t, curUser.ID, lifespan)
+	require.NoError(t, err)
+
+	exists, err := getLongLivedTokensEntry(ctx, curUser.ID)
+	require.True(t, exists)
+	require.NoError(t, err)
+}
+
+func TestPostUserLongLivedToken(t *testing.T) {
+	api, _, ctx := setupAPITest(t, nil)
+
+	userID, err := user.Add(
+		context.TODO(),
+		&model.User{
+			Username: uuid.New().String(),
+			Remote:   false,
+		},
+		nil,
+	)
+	require.NoError(t, err)
+
+	// Without lifespan input
+	token, err := api.PostUserLongLivedToken(ctx, &apiv1.PostUserLongLivedTokenRequest{
+		UserId: int32(userID),
+	})
+	require.NoError(t, err)
+	require.NotNil(t, token)
+
+	exists, err := getLongLivedTokensEntry(ctx, userID)
+	require.True(t, exists)
+	require.NoError(t, err)
+}
+
+func TestPostUserLongLivedTokenWithLifespan(t *testing.T) {
+	api, _, ctx := setupAPITest(t, nil)
+
+	userID, err := user.Add(
+		context.TODO(),
+		&model.User{
+			Username: uuid.New().String(),
+			Remote:   false,
+		},
+		nil,
+	)
+	require.NoError(t, err)
+
+	// With lifespan input
+	token, err := api.PostUserLongLivedToken(ctx, &apiv1.PostUserLongLivedTokenRequest{
+		UserId:   int32(userID),
+		Lifespan: lifespan,
+	})
+	require.NoError(t, err)
+	require.NotNil(t, token)
+
+	err = testSetLifespan(ctx, t, userID, lifespan)
+	require.NoError(t, err)
+
+	exists, err := getLongLivedTokensEntry(ctx, userID)
+	require.True(t, exists)
+	require.NoError(t, err)
+}
+
+func TestAuthzPostLongLivedToken(t *testing.T) {
+	api, authzUsers, curUser, ctx := setupUserAuthzTest(t, nil)
+
+	expectedErr := status.Error(codes.PermissionDenied, "canCreateUsersOwnToken")
+	authzUsers.On("CanCreateUsersOwnToken", mock.Anything, curUser).
+		Return(fmt.Errorf("canCreateUsersOwnToken")).Once()
+
+	_, err := api.PostLongLivedToken(ctx, &apiv1.PostLongLivedTokenRequest{})
+	require.Equal(t, expectedErr.Error(), err.Error())
+}
+
+func TestAuthzPostUserLongLivedToken(t *testing.T) {
+	api, authzUsers, curUser, ctx := setupUserAuthzTest(t, nil)
+
+	expectedErr := status.Error(codes.PermissionDenied, "canCreateUsersToken")
+	authzUsers.On("CanCreateUsersToken", mock.Anything, curUser, curUser).
+		Return(fmt.Errorf("canCreateUsersToken")).Once()
+
+	_, err := api.PostUserLongLivedToken(ctx, &apiv1.PostUserLongLivedTokenRequest{
+		UserId: int32(curUser.ID),
+	})
+	require.Equal(t, expectedErr.Error(), err.Error())
+}
+
+func getLongLivedTokensEntry(ctx context.Context, userID model.UserID) (bool, error) {
+	return db.Bun().NewSelect().Table("long_lived_tokens").
+		Where("user_id = ?", userID).Exists(ctx)
+}
+
+func testSetLifespan(ctx context.Context, t *testing.T, userID model.UserID, lifespan string) error {
+	var expiresAt, createdAt time.Time
+	err := db.Bun().NewSelect().
+		Table("long_lived_tokens").
+		Column("expires_at", "created_at").
+		Where("user_id = ?", userID).
+		Scan(ctx, &expiresAt, &createdAt)
+	if err != nil {
+		return fmt.Errorf("Error getting the set lifespan, creation time")
+	}
+
+	duration, err := time.ParseDuration(lifespan)
+	if err != nil {
+		return fmt.Errorf("Invalid duration format")
+	}
+
+	durationDifference := expiresAt.Sub(createdAt)
+
+	// Define a small threshold to account for minor differences
+	threshold := 1 * time.Millisecond
+	// Use a condition to check if the difference is within the acceptable threshold
+	require.InDelta(t, duration.Seconds(), durationDifference.Seconds(), threshold.Seconds(),
+		"Duration difference is not within the acceptable range")
+
+	return nil
 }
