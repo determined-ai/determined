@@ -29,7 +29,8 @@ type PutWorkspaceConfigPoliciesRequest struct {
 	// The workspace the config policies apply to. Use global API for
 	// global config policies.
 	WorkspaceId int32 `protobuf:"varint,1,opt,name=workspace_id,json=workspaceId,proto3" json:"workspace_id,omitempty"`
-	// Specifies which workload type the config policies apply to: EXPERIMENT or NTSC.
+	// Specifies which workload type the config policies apply to: EXPERIMENT or
+	// NTSC.
 	WorkloadType string `protobuf:"bytes,2,opt,name=workload_type,json=workloadType,proto3" json:"workload_type,omitempty"`
 	// The config policies to use. Contains both invariant configs and constraints
 	// in yaml or json format.
@@ -315,8 +316,8 @@ type GetWorkspaceConfigPoliciesResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// The current config policies saved for the workspace. Contains both invariant configs and
-	// constraints in yaml or json format.
+	// The current config policies saved for the workspace. Contains both
+	// invariant configs and constraints in yaml or json format.
 	ConfigPolicies *_struct.Struct `protobuf:"bytes,1,opt,name=config_policies,json=configPolicies,proto3" json:"config_policies,omitempty"`
 }
 
@@ -366,7 +367,8 @@ type GetGlobalConfigPoliciesRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// Specifies which workload type the config policies apply to: EXPERIMENT or NTSC.
+	// Specifies which workload type the config policies apply to: EXPERIMENT or
+	// NTSC.
 	WorkloadType string `protobuf:"bytes,1,opt,name=workload_type,json=workloadType,proto3" json:"workload_type,omitempty"`
 }
 
@@ -415,8 +417,8 @@ type GetGlobalConfigPoliciesResponse struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// The global current config policies saved. Contains both invariant configs and
-	// constraints in yaml or json format.
+	// The global current config policies saved. Contains both invariant configs
+	// and constraints in yaml or json format.
 	ConfigPolicies *_struct.Struct `protobuf:"bytes,1,opt,name=config_policies,json=configPolicies,proto3" json:"config_policies,omitempty"`
 }
 
@@ -565,7 +567,8 @@ type DeleteGlobalConfigPoliciesRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// Specifies which workload type the config policies apply to: EXPERIMENT or NTSC.
+	// Specifies which workload type the config policies apply to: EXPERIMENT or
+	// NTSC.
 	WorkloadType string `protobuf:"bytes,1,opt,name=workload_type,json=workloadType,proto3" json:"workload_type,omitempty"`
 }
 

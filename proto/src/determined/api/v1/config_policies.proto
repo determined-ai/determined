@@ -11,7 +11,8 @@ message PutWorkspaceConfigPoliciesRequest {
   // The workspace the config policies apply to. Use global API for
   // global config policies.
   int32 workspace_id = 1;
-  // Specifies which workload type the config policies apply to: EXPERIMENT or NTSC.
+  // Specifies which workload type the config policies apply to: EXPERIMENT or
+  // NTSC.
   string workload_type = 2;
   // The config policies to use. Contains both invariant configs and constraints
   // in yaml or json format.
@@ -54,22 +55,23 @@ message GetWorkspaceConfigPoliciesRequest {
 
 // Response to GetWorkspaceConfigPolicies request.
 message GetWorkspaceConfigPoliciesResponse {
-  // The current config policies saved for the workspace. Contains both invariant configs and
-  // constraints in yaml or json format.
+  // The current config policies saved for the workspace. Contains both
+  // invariant configs and constraints in yaml or json format.
   google.protobuf.Struct config_policies = 1;
 }
 
 // GetGlobalConfigPoliciesRequest lists global task config
 // policies for a given workload type.
 message GetGlobalConfigPoliciesRequest {
-  // Specifies which workload type the config policies apply to: EXPERIMENT or NTSC.
+  // Specifies which workload type the config policies apply to: EXPERIMENT or
+  // NTSC.
   string workload_type = 1;
 }
 
 // Response to GetGlobalConfigPolicies request.
 message GetGlobalConfigPoliciesResponse {
-  // The global current config policies saved. Contains both invariant configs and
-  // constraints in yaml or json format.
+  // The global current config policies saved. Contains both invariant configs
+  // and constraints in yaml or json format.
   google.protobuf.Struct config_policies = 1;
 }
 
@@ -89,7 +91,8 @@ message DeleteWorkspaceConfigPoliciesResponse {}
 // DeleteGlobalConfigPoliciesRequest is used to delete all global task config
 // policies for the workload type.
 message DeleteGlobalConfigPoliciesRequest {
-  // Specifies which workload type the config policies apply to: EXPERIMENT or NTSC.
+  // Specifies which workload type the config policies apply to: EXPERIMENT or
+  // NTSC.
   string workload_type = 1;
 }
 

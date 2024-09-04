@@ -18421,7 +18421,8 @@ def delete_DeleteGlobalConfigPolicies(
 ) -> None:
     """Delete global task config policies.
 
-    - workloadType: Specifies which workload type the config policies apply to: EXPERIMENT or NTSC.
+    - workloadType: Specifies which workload type the config policies apply to: EXPERIMENT or
+NTSC.
     """
     _params = None
     if type(workloadType) == str:
@@ -19554,7 +19555,8 @@ def get_GetGlobalConfigPolicies(
 ) -> "v1GetGlobalConfigPoliciesResponse":
     """Get global task config policies.
 
-    - workloadType: Specifies which workload type the config policies apply to: EXPERIMENT or NTSC.
+    - workloadType: Specifies which workload type the config policies apply to: EXPERIMENT or
+NTSC.
     """
     _params = None
     if type(workloadType) == str:
@@ -23715,7 +23717,8 @@ def put_PutWorkspaceConfigPolicies(
 ) -> "v1PutWorkspaceConfigPoliciesResponse":
     """Add or update workspace task config policies.
 
-    - workloadType: Specifies which workload type the config policies apply to: EXPERIMENT or NTSC.
+    - workloadType: Specifies which workload type the config policies apply to: EXPERIMENT or
+NTSC.
     - workspaceId: The workspace the config policies apply to. Use global API for
 global config policies.
     """
