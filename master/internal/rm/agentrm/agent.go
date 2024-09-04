@@ -620,6 +620,19 @@ func (a *agent) HandleIncomingWebsocketMessage(msg *aproto.MasterMessage) {
 				a.stop(err)
 				return
 			}
+			resourcePoolErr := a.agentState.checkAgentResourcePoolMatch(msg.AgentStarted)
+			if resourcePoolErr != nil {
+				a.syslog.WithError(resourcePoolErr).
+					Error("change in agent resource pool was detected during reconnect")
+				a.socket.Outbox <- aproto.AgentMessage{
+					AgentShutdown: &aproto.AgentShutdown{
+						ErrMsg: aproto.ErrAgentMustReconnect.Error(),
+					},
+				}
+
+				a.stop(resourcePoolErr)
+				return
+			}
 		} else {
 			a.agentStarted(msg.AgentStarted)
 		}

@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package determined.configpolicy.v1;
+option go_package = "github.com/determined-ai/determined/proto/pkg/configpolicyv1";
+
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+import "protoc-gen-swagger/options/annotations.proto";
+
+// The workload type.
+enum WorkloadType {
+  // The workload type is unknown.
+  WORKLOAD_TYPE_UNSPECIFIED = 0;
+  // The workload is an experiment.
+  WORKLOAD_TYPE_EXPERIMENT = 1;
+  // The workload is an NTSC task.
+  WORKLOAD_TYPE_NTSC = 2;
+}

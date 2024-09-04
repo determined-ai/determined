@@ -92,7 +92,7 @@ def test_log_pattern_send_webhook(should_match: bool) -> None:
     port = 5006
     server = utils.WebhookServer(port)
     sess = api_utils.admin_session()
-    wh = []
+    ws_id = []
 
     regex = r"assert 0 <= self\.metrics_sigma"
     if not should_match:
@@ -115,7 +115,7 @@ def test_log_pattern_send_webhook(should_match: bool) -> None:
             workspaceId=None,
         ),
     )
-    wh.append(w.webhook.id)
+    ws_id.append(w.webhook.id)
 
     default_path = f"/test/path/here/{str(uuid.uuid4())}"
     w = bindings.post_PostWebhook(
@@ -129,7 +129,7 @@ def test_log_pattern_send_webhook(should_match: bool) -> None:
             workspaceId=None,
         ),
     )
-    wh.append(w.webhook.id)
+    ws_id.append(w.webhook.id)
 
     workspace = bindings.post_PostWorkspace(
         sess, body=bindings.v1PostWorkspaceRequest(name=f"webhook-test{random.random()}")
@@ -155,7 +155,7 @@ def test_log_pattern_send_webhook(should_match: bool) -> None:
             workspaceId=workspace.id,
         ),
     )
-    wh.append(w.webhook.id)
+    ws_id.append(w.webhook.id)
 
     specific_path_unmatch = f"/test/path/here/{str(uuid.uuid4())}"
     w = bindings.post_PostWebhook(
@@ -169,7 +169,7 @@ def test_log_pattern_send_webhook(should_match: bool) -> None:
             workspaceId=1,
         ),
     )
-    wh.append(w.webhook.id)
+    ws_id.append(w.webhook.id)
 
     exp_id = exp.create_experiment(
         sess,
@@ -205,92 +205,8 @@ def test_log_pattern_send_webhook(should_match: bool) -> None:
         assert specific_path not in responses
         assert specific_path_unmatch not in responses
 
-    for i in wh:
+    for i in ws_id:
         bindings.delete_DeleteWebhook(sess, id=i or 0)
-    test_agent_user_group._delete_workspace_and_check(sess, workspace)
-
-
-@pytest.mark.e2e_cpu
-@pytest.mark.parametrize("isSlack", [True, False])
-def test_custom_webhook(isSlack: bool) -> None:
-    port = 5009 if isSlack else 5010
-    server = utils.WebhookServer(port, allow_dupes=True)
-    sess = api_utils.admin_session()
-    workspace = bindings.post_PostWorkspace(
-        sess, body=bindings.v1PostWorkspaceRequest(name=f"webhook-test{random.random()}")
-    ).workspace
-    project = bindings.post_PostProject(
-        sess,
-        body=bindings.v1PostProjectRequest(
-            name=f"webhook-test{random.random()}",
-            workspaceId=workspace.id,
-        ),
-        workspaceId=workspace.id,
-    ).project
-
-    webhook = bindings.v1Webhook(
-        url=f"http://localhost:{port}",
-        webhookType=bindings.v1WebhookType.SLACK if isSlack else bindings.v1WebhookType.DEFAULT,
-        triggers=[
-            bindings.v1Trigger(
-                triggerType=bindings.v1TriggerType.CUSTOM,
-            )
-        ],
-        mode=bindings.v1WebhookMode.WORKSPACE,
-        name=f"webhook_1{random.random()}",
-        workspaceId=workspace.id,
-    )
-    # custom triggers only work on webhook with mode specific
-    with pytest.raises(errors.APIException):
-        bindings.post_PostWebhook(sess, body=webhook)
-    webhook.mode = bindings.v1WebhookMode.SPECIFIC
-    w = bindings.post_PostWebhook(sess, body=webhook).webhook
-
-    experiment_id = exp.create_experiment(
-        sess,
-        conf.fixtures_path("core_api/11_generic_metrics.yaml"),
-        conf.fixtures_path("core_api"),
-        [
-            "--project_id",
-            f"{project.id}",
-            "--config",
-            f"integrations.webhooks.webhook_name=['{webhook.name}']",
-        ],
-    )
-
-    # this experiment should not trigger webhook because the name does not match.
-    control_exp_id = exp.create_experiment(
-        sess,
-        conf.fixtures_path("core_api/11_generic_metrics.yaml"),
-        conf.fixtures_path("core_api"),
-        [
-            "--project_id",
-            f"{project.id}",
-            "--config",
-            "integrations.webhooks.webhook_name=['abc']",
-        ],
-    )
-
-    exp.wait_for_experiment_state(
-        sess,
-        experiment_id,
-        bindings.experimentv1State.COMPLETED,
-        max_wait_secs=conf.DEFAULT_MAX_WAIT_SECS,
-    )
-    exp.wait_for_experiment_state(
-        sess,
-        control_exp_id,
-        bindings.experimentv1State.COMPLETED,
-        max_wait_secs=conf.DEFAULT_MAX_WAIT_SECS,
-    )
-
-    responses = server.close_and_return_responses()
-    assert len(responses) == 1
-    assert "end of main" in responses["/"]
-    assert "DEBUG" in responses["/"]
-    assert str(experiment_id) in responses["/"]
-
-    bindings.delete_DeleteWebhook(sess, id=w.id or 0)
     test_agent_user_group._delete_workspace_and_check(sess, workspace)
 
 

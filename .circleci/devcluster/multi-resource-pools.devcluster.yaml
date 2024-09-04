@@ -1,0 +1,111 @@
+stages:
+  - db:
+      name: db
+      port: 5434
+
+  - master:
+      pre:
+        - sh: make -C tools prep-root
+      config_file:
+        security:
+          initial_user_password: $INITIAL_USER_PASSWORD
+        db:
+          host: localhost
+          port: 5434
+          password: postgres
+          user: postgres
+          name: determined
+        __internal:
+          preemption_timeout: 60s
+        checkpoint_storage:
+          type: shared_fs
+          host_path: /tmp
+          storage_path: determined-cp
+        log:
+          level: debug
+        root: tools/build
+        cache: 
+          cache_dir: /tmp/determined-cache
+        launch_error: false
+        telemetry:
+          enabled: false
+        resource_manager:
+          default_aux_resource_pool: default
+          default_compute_resource_pool: default
+          scheduler:
+            fitting_policy: best
+            type: fair_share
+          type: agent
+        resource_pools:
+          - agent_reattach_enabled: true
+            agent_reconnect_wait: 25s
+            description: ''
+            max_aux_containers_per_agent: 100
+            pool_name: default
+            provider: null
+            task_container_defaults: null
+          - pool_name: pool1
+            max_slots: 8
+            scheduler:
+              type: priority
+        scim:
+          enabled: true
+          auth:
+            type: basic
+            username: determined
+            password: password
+
+  - custom:
+      name: proxy
+      cmd: ["socat", "-d", "-d", "TCP-LISTEN:8081,reuseaddr,fork", "TCP:localhost:8080"]
+      post:
+        - conncheck:
+            port: 8081
+
+  - agent:
+      name: agent1
+      config_file:
+        master_host: 127.0.0.1
+        master_port: 8081
+        agent_id: agent1
+        container_master_host: $DOCKER_LOCALHOST
+        agent_reconnect_attempts: 24
+        agent_reconnect_backoff: 5
+        container_auto_remove_disabled: true
+        hooks:
+          on_connection_lost: ["touch", "/tmp/agent1-connection-lost"]
+
+
+  - agent:
+      name: agent2
+      config_file:
+        master_host: 127.0.0.1
+        master_port: 8081
+        agent_id: agent2
+        container_master_host: $DOCKER_LOCALHOST
+        agent_reconnect_attempts: 24
+        agent_reconnect_backoff: 5
+        container_auto_remove_disabled: true
+
+  - agent:
+      name: agent10 # Copy of agent1, but with different resource pool.
+      config_file:
+        master_host: 127.0.0.1
+        master_port: 8081
+        agent_id: agent1
+        container_master_host: $DOCKER_LOCALHOST
+        agent_reconnect_attempts: 24
+        agent_reconnect_backoff: 5
+        container_auto_remove_disabled: true
+        resource_pool: pool1
+  
+  - agent:
+      name: agent20 # Copy of agent1, but with empty(default) resource pool.
+      config_file:
+        master_host: 127.0.0.1
+        master_port: 8081
+        agent_id: agent1
+        container_master_host: $DOCKER_LOCALHOST
+        agent_reconnect_attempts: 24
+        agent_reconnect_backoff: 5
+        container_auto_remove_disabled: true

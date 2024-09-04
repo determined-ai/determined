@@ -28,6 +28,7 @@ func DefaultOptions() *Options {
 			Level: "trace",
 			Color: true,
 		},
+		ResourcePool:           "default",
 		SlotType:               "auto",
 		VisibleGPUs:            VisibleGPUsFromEnvironment(),
 		BindIP:                 "0.0.0.0",

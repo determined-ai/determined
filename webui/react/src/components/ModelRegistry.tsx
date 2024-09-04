@@ -17,6 +17,7 @@ import Toggle from 'hew/Toggle';
 import Tooltip from 'hew/Tooltip';
 import { Label } from 'hew/Typography';
 import { Loadable } from 'hew/utils/loadable';
+import * as io from 'io-ts';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -43,7 +44,8 @@ import TableFilterSearch from 'components/Table/TableFilterSearch';
 import WorkspaceFilter from 'components/WorkspaceFilter';
 import usePermissions from 'hooks/usePermissions';
 import usePolling from 'hooks/usePolling';
-import { useSettings } from 'hooks/useSettings';
+import { UpdateSettings, useSettings } from 'hooks/useSettings';
+import useTypedParams from 'hooks/useTypedParams';
 import { paths } from 'routes/utils';
 import { archiveModel, getModelLabels, getModels, patchModel, unarchiveModel } from 'services/api';
 import { V1GetModelsRequestSortBy } from 'services/api-ts-sdk';
@@ -61,7 +63,7 @@ import settingsConfig, {
   DEFAULT_COLUMN_WIDTHS,
   isOfSortKey,
   ModelColumnName,
-  Settings,
+  Settings as ReducedSettings,
 } from './ModelRegistry.settings';
 
 const filterKeys: Array<keyof Settings> = ['tags', 'name', 'users', 'description', 'workspace'];
@@ -69,6 +71,11 @@ const filterKeys: Array<keyof Settings> = ['tags', 'name', 'users', 'description
 interface Props {
   workspace?: Workspace;
 }
+
+const tableOffsetType = io.type({ tableOffset: io.number });
+type Settings = ReducedSettings & io.TypeOf<typeof tableOffsetType>;
+
+const DEFAULT_PARAMS = { tableOffset: 0 };
 
 const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
   const canceler = useRef(new AbortController());
@@ -93,9 +100,20 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
     activeSettings,
     isLoading: isLoadingSettings,
     settings,
-    updateSettings,
+    updateSettings: updateUseSettings,
     resetSettings,
-  } = useSettings<Settings>(settingConfig);
+  } = useSettings<ReducedSettings>(settingConfig);
+
+  const { params, updateParams } = useTypedParams(tableOffsetType, DEFAULT_PARAMS);
+
+  const updateSettings: UpdateSettings<Settings> = useCallback(
+    (newSettings) => {
+      const { tableOffset, ...restSettings } = newSettings;
+      if (tableOffset) updateParams({ tableOffset });
+      updateUseSettings(restSettings);
+    },
+    [updateParams, updateUseSettings],
+  );
 
   const [permissionsByModel, setPermissionsByModel] = useState<
     Record<number, { canDelete: boolean; canModify: boolean }>
@@ -128,7 +146,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
           labels: settings.tags,
           limit: settings.tableLimit,
           name: settings.name,
-          offset: settings.tableOffset,
+          offset: params.tableOffset,
           orderBy: settings.sortDesc ? 'ORDER_BY_DESC' : 'ORDER_BY_ASC',
           sortBy: validateDetApiEnum(V1GetModelsRequestSortBy, settings.sortKey),
           users: settings.users,
@@ -151,7 +169,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
     } finally {
       setIsLoading(false);
     }
-  }, [settings, workspace?.id]);
+  }, [params.tableOffset, settings, workspace?.id]);
 
   const fetchTags = useCallback(async () => {
     try {
@@ -391,8 +409,9 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
   }, []);
 
   const resetFilters = useCallback(() => {
-    resetSettings([...filterKeys, 'tableOffset']);
-  }, [resetSettings]);
+    resetSettings(filterKeys);
+    updateParams(DEFAULT_PARAMS);
+  }, [resetSettings, updateParams]);
 
   const ModelActionMenu = useCallback(
     (record: ModelItem) => {
@@ -671,6 +690,11 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
     [settings, updateSettings],
   );
 
+  const settingsWithOffset: Settings = useMemo(
+    () => ({ ...settings, tableOffset: params.tableOffset }),
+    [params.tableOffset, settings],
+  );
+
   return (
     <>
       <div className={css.options}>
@@ -715,13 +739,13 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
           pagination={getFullPaginationConfig(
             {
               limit: settings.tableLimit,
-              offset: settings.tableOffset,
+              offset: params.tableOffset,
             },
             total,
           )}
           rowClassName={defaultRowClassName({ clickable: false })}
           rowKey="name"
-          settings={settings}
+          settings={settingsWithOffset}
           showSorterTooltip={false}
           size="small"
           updateSettings={updateSettings}
