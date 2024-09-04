@@ -8,7 +8,7 @@ import "google/protobuf/struct.proto";
 // PutWorkspaceConfigPoliciesRequest is a complete replacement of config
 // policies for the workspace and workload type.
 message PutWorkspaceConfigPoliciesRequest {
-  // Specifies which workspace the config policies apply to. Use global API for
+  // The workspace the config policies apply to. Use global API for
   // global config policies.
   int32 workspace_id = 1;
   // Specifies which task type the config policies apply to: EXPERIMENT or NTSC.
