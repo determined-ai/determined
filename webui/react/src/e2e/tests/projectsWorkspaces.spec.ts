@@ -239,18 +239,6 @@ test.describe('Workspace UI CRUD', () => {
       workspaceCardEdited.pwLocator.waitFor({ timeout: 10_000 }),
     ]);
   });
-});
-
-test.describe('With a Workspace', () => {
-  test.beforeEach(async ({ authedPage, newWorkspace }) => {
-    const workspaceList = new WorkspaceList(authedPage);
-    const workspaceCard = workspaceList.cardByName(newWorkspace.response.workspace.name);
-
-    await test.step('Navigate to Workspaces', async () => {
-      await workspaceList.goto();
-      await workspaceCard.pwLocator.waitFor({ timeout: 10_000 });
-    });
-  });
 
   test('Attempt to delete a workspace but with bad validation', async ({
     authedPage,
@@ -264,6 +252,18 @@ test.describe('With a Workspace', () => {
     await (await workspaceCard.actionMenu.open()).delete.pwLocator.click();
     await deleteModal.nameConfirmation.pwLocator.fill('bad validation');
     await expect(deleteModal.footer.submit.pwLocator).toBeDisabled();
+  });
+});
+
+test.describe('With a Workspace', () => {
+  test.beforeEach(async ({ authedPage, newWorkspace }) => {
+    const workspaceList = new WorkspaceList(authedPage);
+    const workspaceCard = workspaceList.cardByName(newWorkspace.response.workspace.name);
+
+    await test.step('Navigate to Workspaces', async () => {
+      await workspaceList.goto();
+      await workspaceCard.pwLocator.waitFor({ timeout: 10_000 });
+    });
   });
 
   test.describe('Project UI CRUD', () => {
@@ -341,22 +341,5 @@ test.describe('With a Workspace', () => {
         await projectCard.archivedBadge.pwLocator.waitFor({ state: 'hidden' });
       });
     });
-
-    // remianing tests
-    // test('Navigation on Projects Page - Sorting and List', async () => {});
-    // test('Navigation on Workspaces Page - Sorting and List', async () => {});
-    // test('Navigate with Breadcrumbs on the Workspaces Page', async () => {});
-    // test('Navigate with Breadcrumbs on the Projects Page', async () => {});
-    // test.describe('With Model Teardown', () => {
-    //   test('Use UI to create and Delete a Model with All Possible Metadata', async () => {});
-    //   test('Create a model with backend, Archive and Unarchive Model', async () => {});
-    //   test('Move a Model Between Projects', async () => {});
-    // });
-    // test.describe('Task', () => {
-    //   beforeAll('Visit tasks page')
-    //   test('Launch JupyterLab, View Task Logs', async () => {});
-    //   test('Launch JupyterLab, Kill, View Task Logs', async () => {});
-    //   afterAll('Kill Tasks')
-    // });
   });
 });
