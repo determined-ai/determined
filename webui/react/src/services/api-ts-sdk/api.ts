@@ -2651,6 +2651,13 @@ export interface V1DeleteExperimentsResponse {
     results: Array<V1ExperimentActionResult>;
 }
 /**
+ * Response to DeleteGlobalConfigPolicies request.
+ * @export
+ * @interface V1DeleteGlobalConfigPoliciesResponse
+ */
+export interface V1DeleteGlobalConfigPoliciesResponse {
+}
+/**
  * DeleteGroupResponse is the body of the response for the call to delete a group.
  * @export
  * @interface V1DeleteGroupResponse
@@ -2742,6 +2749,13 @@ export interface V1DeleteTensorboardFilesResponse {
  * @interface V1DeleteWebhookResponse
  */
 export interface V1DeleteWebhookResponse {
+}
+/**
+ * Response to DeleteWorkspaceConfigPolicies request.
+ * @export
+ * @interface V1DeleteWorkspaceConfigPoliciesResponse
+ */
+export interface V1DeleteWorkspaceConfigPoliciesResponse {
 }
 /**
  * Response to DeleteWorkspaceNamespaceBindingsRequest.
@@ -4044,6 +4058,19 @@ export interface V1GetGenericTaskConfigResponse {
     config: string;
 }
 /**
+ * Response to GetGlobalConfigPolicies request.
+ * @export
+ * @interface V1GetGlobalConfigPoliciesResponse
+ */
+export interface V1GetGlobalConfigPoliciesResponse {
+    /**
+     * The global current config policies saved. Contains both invariant configs and constraints in yaml or json format.
+     * @type {any}
+     * @memberof V1GetGlobalConfigPoliciesResponse
+     */
+    configPolicies?: any;
+}
+/**
  * GetGroupResponse is the body of the response for the call to get a group by id.
  * @export
  * @interface V1GetGroupResponse
@@ -5251,6 +5278,19 @@ export interface V1GetWebhooksResponse {
      * @memberof V1GetWebhooksResponse
      */
     webhooks: Array<V1Webhook>;
+}
+/**
+ * Response to GetWorkspaceConfigPolicies request.
+ * @export
+ * @interface V1GetWorkspaceConfigPoliciesResponse
+ */
+export interface V1GetWorkspaceConfigPoliciesResponse {
+    /**
+     * The current config policies saved for the workspace. Contains both invariant configs and constraints in yaml or json format.
+     * @type {any}
+     * @memberof V1GetWorkspaceConfigPoliciesResponse
+     */
+    configPolicies?: any;
 }
 /**
  * Sort associated projects by the given field.   - SORT_BY_UNSPECIFIED: Returns projects in an unsorted list.  - SORT_BY_CREATION_TIME: Returns projects sorted by time that they were created.  - SORT_BY_LAST_EXPERIMENT_START_TIME: Returns projects sorted by most recent start of an experiment.  - SORT_BY_NAME: Returns projects sorted by name.  - SORT_BY_DESCRIPTION: Returns projects sorted by description.  - SORT_BY_ID: Returns projects sorted by ID.
@@ -8777,6 +8817,19 @@ export interface V1PutExperimentsRetainLogsResponse {
     results: Array<V1ExperimentActionResult>;
 }
 /**
+ * Response to PutGlobalConfigPolicies request.
+ * @export
+ * @interface V1PutGlobalConfigPoliciesResponse
+ */
+export interface V1PutGlobalConfigPoliciesResponse {
+    /**
+     * The config policies saved. Contains both invariant configs and constraints in yaml or json format.
+     * @type {any}
+     * @memberof V1PutGlobalConfigPoliciesResponse
+     */
+    configPolicies?: any;
+}
+/**
  * Request for setting project notes.
  * @export
  * @interface V1PutProjectNotesRequest
@@ -8878,6 +8931,44 @@ export interface V1PutTrialRetainLogsRequest {
  * @interface V1PutTrialRetainLogsResponse
  */
 export interface V1PutTrialRetainLogsResponse {
+}
+/**
+ * PutWorkspaceConfigPoliciesRequest sets config policies for the workspace and workload type.
+ * @export
+ * @interface V1PutWorkspaceConfigPoliciesRequest
+ */
+export interface V1PutWorkspaceConfigPoliciesRequest {
+    /**
+     * The workspace the config policies apply to. Use global API for global config policies.
+     * @type {number}
+     * @memberof V1PutWorkspaceConfigPoliciesRequest
+     */
+    workspaceId?: number;
+    /**
+     * Specifies which workload type the config policies apply to: EXPERIMENT or NTSC.
+     * @type {string}
+     * @memberof V1PutWorkspaceConfigPoliciesRequest
+     */
+    workloadType?: string;
+    /**
+     * The config policies to use. Contains both invariant configs and constraints in yaml or json format.
+     * @type {string}
+     * @memberof V1PutWorkspaceConfigPoliciesRequest
+     */
+    configPolicies?: string;
+}
+/**
+ * Response to PutWorkspaceConfigPolicies request.
+ * @export
+ * @interface V1PutWorkspaceConfigPoliciesResponse
+ */
+export interface V1PutWorkspaceConfigPoliciesResponse {
+    /**
+     * The config policies saved. Contains both invariant configs and constraints in yaml or json format.
+     * @type {any}
+     * @memberof V1PutWorkspaceConfigPoliciesResponse
+     */
+    configPolicies?: any;
 }
 /**
  * Describes a message to control jobs in a queue.
@@ -12652,6 +12743,542 @@ export const V1WorkspaceState = {
     DELETED: 'WORKSPACE_STATE_DELETED',
 } as const
 export type V1WorkspaceState = ValueOf<typeof V1WorkspaceState>
+/**
+ * AlphaApi - fetch parameter creator
+ * @export
+ */
+export const AlphaApiFetchParamCreator = function (configuration?: Configuration) {
+    return {
+        /**
+         * 
+         * @summary Delete global task config policies.
+         * @param {string} workloadType Specifies which workload type the config policies apply to: EXPERIMENT or NTSC.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteGlobalConfigPolicies(workloadType: string, options: any = {}): FetchArgs {
+            // verify required parameter 'workloadType' is not null or undefined
+            if (workloadType === null || workloadType === undefined) {
+                throw new RequiredError('workloadType','Required parameter workloadType was null or undefined when calling deleteGlobalConfigPolicies.');
+            }
+            const localVarPath = `/api/v1/config-policies/global/{workloadType}`
+                .replace(`{${"workloadType"}}`, encodeURIComponent(String(workloadType)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'DELETE', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Delete workspace task config policies.
+         * @param {number} workspaceId Specifies which workspace the config policies apply to. Use global API for global config policies.
+         * @param {string} workloadType The workload type the config policies apply to: EXPERIMENT or NTSC.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteWorkspaceConfigPolicies(workspaceId: number, workloadType: string, options: any = {}): FetchArgs {
+            // verify required parameter 'workspaceId' is not null or undefined
+            if (workspaceId === null || workspaceId === undefined) {
+                throw new RequiredError('workspaceId','Required parameter workspaceId was null or undefined when calling deleteWorkspaceConfigPolicies.');
+            }
+            // verify required parameter 'workloadType' is not null or undefined
+            if (workloadType === null || workloadType === undefined) {
+                throw new RequiredError('workloadType','Required parameter workloadType was null or undefined when calling deleteWorkspaceConfigPolicies.');
+            }
+            const localVarPath = `/api/v1/config-policies/workspaces/{workspaceId}/{workloadType}`
+                .replace(`{${"workspaceId"}}`, encodeURIComponent(String(workspaceId)))
+                .replace(`{${"workloadType"}}`, encodeURIComponent(String(workloadType)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'DELETE', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Get global task config policies.
+         * @param {string} workloadType Specifies which workload type the config policies apply to: EXPERIMENT or NTSC.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getGlobalConfigPolicies(workloadType: string, options: any = {}): FetchArgs {
+            // verify required parameter 'workloadType' is not null or undefined
+            if (workloadType === null || workloadType === undefined) {
+                throw new RequiredError('workloadType','Required parameter workloadType was null or undefined when calling getGlobalConfigPolicies.');
+            }
+            const localVarPath = `/api/v1/config-policies/global/{workloadType}`
+                .replace(`{${"workloadType"}}`, encodeURIComponent(String(workloadType)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Get workspace task config policies.
+         * @param {number} workspaceId Specifies which workspace the config policies apply to. Use global API for global config policies.
+         * @param {string} workloadType The workload type the config policies apply to: EXPERIMENT or NTSC.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getWorkspaceConfigPolicies(workspaceId: number, workloadType: string, options: any = {}): FetchArgs {
+            // verify required parameter 'workspaceId' is not null or undefined
+            if (workspaceId === null || workspaceId === undefined) {
+                throw new RequiredError('workspaceId','Required parameter workspaceId was null or undefined when calling getWorkspaceConfigPolicies.');
+            }
+            // verify required parameter 'workloadType' is not null or undefined
+            if (workloadType === null || workloadType === undefined) {
+                throw new RequiredError('workloadType','Required parameter workloadType was null or undefined when calling getWorkspaceConfigPolicies.');
+            }
+            const localVarPath = `/api/v1/config-policies/workspaces/{workspaceId}/{workloadType}`
+                .replace(`{${"workspaceId"}}`, encodeURIComponent(String(workspaceId)))
+                .replace(`{${"workloadType"}}`, encodeURIComponent(String(workloadType)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Add or update global task config policies.
+         * @param {string} workloadType The workload type the config policies apply to: EXPERIMENT or NTSC.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        putGlobalConfigPolicies(workloadType: string, options: any = {}): FetchArgs {
+            // verify required parameter 'workloadType' is not null or undefined
+            if (workloadType === null || workloadType === undefined) {
+                throw new RequiredError('workloadType','Required parameter workloadType was null or undefined when calling putGlobalConfigPolicies.');
+            }
+            const localVarPath = `/api/v1/config-policies/global/{workloadType}`
+                .replace(`{${"workloadType"}}`, encodeURIComponent(String(workloadType)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'PUT', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Add or update workspace task config policies.
+         * @param {number} workspaceId The workspace the config policies apply to. Use global API for global config policies.
+         * @param {string} workloadType Specifies which workload type the config policies apply to: EXPERIMENT or NTSC.
+         * @param {V1PutWorkspaceConfigPoliciesRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        putWorkspaceConfigPolicies(workspaceId: number, workloadType: string, body: V1PutWorkspaceConfigPoliciesRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'workspaceId' is not null or undefined
+            if (workspaceId === null || workspaceId === undefined) {
+                throw new RequiredError('workspaceId','Required parameter workspaceId was null or undefined when calling putWorkspaceConfigPolicies.');
+            }
+            // verify required parameter 'workloadType' is not null or undefined
+            if (workloadType === null || workloadType === undefined) {
+                throw new RequiredError('workloadType','Required parameter workloadType was null or undefined when calling putWorkspaceConfigPolicies.');
+            }
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling putWorkspaceConfigPolicies.');
+            }
+            const localVarPath = `/api/v1/config-policies/workspaces/{workspaceId}/{workloadType}`
+                .replace(`{${"workspaceId"}}`, encodeURIComponent(String(workspaceId)))
+                .replace(`{${"workloadType"}}`, encodeURIComponent(String(workloadType)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'PUT', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+    }
+};
+
+/**
+ * AlphaApi - functional programming interface
+ * @export
+ */
+export const AlphaApiFp = function (configuration?: Configuration) {
+    return {
+        /**
+         * 
+         * @summary Delete global task config policies.
+         * @param {string} workloadType Specifies which workload type the config policies apply to: EXPERIMENT or NTSC.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteGlobalConfigPolicies(workloadType: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteGlobalConfigPoliciesResponse> {
+            const localVarFetchArgs = AlphaApiFetchParamCreator(configuration).deleteGlobalConfigPolicies(workloadType, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Delete workspace task config policies.
+         * @param {number} workspaceId Specifies which workspace the config policies apply to. Use global API for global config policies.
+         * @param {string} workloadType The workload type the config policies apply to: EXPERIMENT or NTSC.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteWorkspaceConfigPolicies(workspaceId: number, workloadType: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteWorkspaceConfigPoliciesResponse> {
+            const localVarFetchArgs = AlphaApiFetchParamCreator(configuration).deleteWorkspaceConfigPolicies(workspaceId, workloadType, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Get global task config policies.
+         * @param {string} workloadType Specifies which workload type the config policies apply to: EXPERIMENT or NTSC.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getGlobalConfigPolicies(workloadType: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetGlobalConfigPoliciesResponse> {
+            const localVarFetchArgs = AlphaApiFetchParamCreator(configuration).getGlobalConfigPolicies(workloadType, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Get workspace task config policies.
+         * @param {number} workspaceId Specifies which workspace the config policies apply to. Use global API for global config policies.
+         * @param {string} workloadType The workload type the config policies apply to: EXPERIMENT or NTSC.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getWorkspaceConfigPolicies(workspaceId: number, workloadType: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetWorkspaceConfigPoliciesResponse> {
+            const localVarFetchArgs = AlphaApiFetchParamCreator(configuration).getWorkspaceConfigPolicies(workspaceId, workloadType, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Add or update global task config policies.
+         * @param {string} workloadType The workload type the config policies apply to: EXPERIMENT or NTSC.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        putGlobalConfigPolicies(workloadType: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PutGlobalConfigPoliciesResponse> {
+            const localVarFetchArgs = AlphaApiFetchParamCreator(configuration).putGlobalConfigPolicies(workloadType, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Add or update workspace task config policies.
+         * @param {number} workspaceId The workspace the config policies apply to. Use global API for global config policies.
+         * @param {string} workloadType Specifies which workload type the config policies apply to: EXPERIMENT or NTSC.
+         * @param {V1PutWorkspaceConfigPoliciesRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        putWorkspaceConfigPolicies(workspaceId: number, workloadType: string, body: V1PutWorkspaceConfigPoliciesRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PutWorkspaceConfigPoliciesResponse> {
+            const localVarFetchArgs = AlphaApiFetchParamCreator(configuration).putWorkspaceConfigPolicies(workspaceId, workloadType, body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+    }
+};
+
+/**
+ * AlphaApi - factory interface
+ * @export
+ */
+export const AlphaApiFactory = function (configuration?: Configuration, fetch?: FetchAPI, basePath?: string) {
+    return {
+        /**
+         * 
+         * @summary Delete global task config policies.
+         * @param {string} workloadType Specifies which workload type the config policies apply to: EXPERIMENT or NTSC.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteGlobalConfigPolicies(workloadType: string, options?: any) {
+            return AlphaApiFp(configuration).deleteGlobalConfigPolicies(workloadType, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Delete workspace task config policies.
+         * @param {number} workspaceId Specifies which workspace the config policies apply to. Use global API for global config policies.
+         * @param {string} workloadType The workload type the config policies apply to: EXPERIMENT or NTSC.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteWorkspaceConfigPolicies(workspaceId: number, workloadType: string, options?: any) {
+            return AlphaApiFp(configuration).deleteWorkspaceConfigPolicies(workspaceId, workloadType, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Get global task config policies.
+         * @param {string} workloadType Specifies which workload type the config policies apply to: EXPERIMENT or NTSC.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getGlobalConfigPolicies(workloadType: string, options?: any) {
+            return AlphaApiFp(configuration).getGlobalConfigPolicies(workloadType, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Get workspace task config policies.
+         * @param {number} workspaceId Specifies which workspace the config policies apply to. Use global API for global config policies.
+         * @param {string} workloadType The workload type the config policies apply to: EXPERIMENT or NTSC.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getWorkspaceConfigPolicies(workspaceId: number, workloadType: string, options?: any) {
+            return AlphaApiFp(configuration).getWorkspaceConfigPolicies(workspaceId, workloadType, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Add or update global task config policies.
+         * @param {string} workloadType The workload type the config policies apply to: EXPERIMENT or NTSC.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        putGlobalConfigPolicies(workloadType: string, options?: any) {
+            return AlphaApiFp(configuration).putGlobalConfigPolicies(workloadType, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Add or update workspace task config policies.
+         * @param {number} workspaceId The workspace the config policies apply to. Use global API for global config policies.
+         * @param {string} workloadType Specifies which workload type the config policies apply to: EXPERIMENT or NTSC.
+         * @param {V1PutWorkspaceConfigPoliciesRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        putWorkspaceConfigPolicies(workspaceId: number, workloadType: string, body: V1PutWorkspaceConfigPoliciesRequest, options?: any) {
+            return AlphaApiFp(configuration).putWorkspaceConfigPolicies(workspaceId, workloadType, body, options)(fetch, basePath);
+        },
+    }
+};
+
+/**
+ * AlphaApi - object-oriented interface
+ * @export
+ * @class
+ * @extends {BaseAPI}
+ */
+export class AlphaApi extends BaseAPI {
+    /**
+     * 
+     * @summary Delete global task config policies.
+     * @param {string} workloadType Specifies which workload type the config policies apply to: EXPERIMENT or NTSC.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AlphaApi
+     */
+    public deleteGlobalConfigPolicies(workloadType: string, options?: any) {
+        return AlphaApiFp(this.configuration).deleteGlobalConfigPolicies(workloadType, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Delete workspace task config policies.
+     * @param {number} workspaceId Specifies which workspace the config policies apply to. Use global API for global config policies.
+     * @param {string} workloadType The workload type the config policies apply to: EXPERIMENT or NTSC.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AlphaApi
+     */
+    public deleteWorkspaceConfigPolicies(workspaceId: number, workloadType: string, options?: any) {
+        return AlphaApiFp(this.configuration).deleteWorkspaceConfigPolicies(workspaceId, workloadType, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Get global task config policies.
+     * @param {string} workloadType Specifies which workload type the config policies apply to: EXPERIMENT or NTSC.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AlphaApi
+     */
+    public getGlobalConfigPolicies(workloadType: string, options?: any) {
+        return AlphaApiFp(this.configuration).getGlobalConfigPolicies(workloadType, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Get workspace task config policies.
+     * @param {number} workspaceId Specifies which workspace the config policies apply to. Use global API for global config policies.
+     * @param {string} workloadType The workload type the config policies apply to: EXPERIMENT or NTSC.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AlphaApi
+     */
+    public getWorkspaceConfigPolicies(workspaceId: number, workloadType: string, options?: any) {
+        return AlphaApiFp(this.configuration).getWorkspaceConfigPolicies(workspaceId, workloadType, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Add or update global task config policies.
+     * @param {string} workloadType The workload type the config policies apply to: EXPERIMENT or NTSC.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AlphaApi
+     */
+    public putGlobalConfigPolicies(workloadType: string, options?: any) {
+        return AlphaApiFp(this.configuration).putGlobalConfigPolicies(workloadType, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Add or update workspace task config policies.
+     * @param {number} workspaceId The workspace the config policies apply to. Use global API for global config policies.
+     * @param {string} workloadType Specifies which workload type the config policies apply to: EXPERIMENT or NTSC.
+     * @param {V1PutWorkspaceConfigPoliciesRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof AlphaApi
+     */
+    public putWorkspaceConfigPolicies(workspaceId: number, workloadType: string, body: V1PutWorkspaceConfigPoliciesRequest, options?: any) {
+        return AlphaApiFp(this.configuration).putWorkspaceConfigPolicies(workspaceId, workloadType, body, options)(this.fetch, this.basePath)
+    }
+    
+}
+
 /**
  * AuthenticationApi - fetch parameter creator
  * @export

@@ -1,0 +1,100 @@
+syntax = "proto3";
+
+package determined.api.v1;
+option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
+
+import "google/protobuf/struct.proto";
+
+// PutWorkspaceConfigPoliciesRequest sets config
+// policies for the workspace and workload type.
+message PutWorkspaceConfigPoliciesRequest {
+  // The workspace the config policies apply to. Use global API for
+  // global config policies.
+  int32 workspace_id = 1;
+  // Specifies which workload type the config policies apply to: EXPERIMENT or
+  // NTSC.
+  string workload_type = 2;
+  // The config policies to use. Contains both invariant configs and constraints
+  // in yaml or json format.
+  string config_policies = 3;
+}
+
+// Response to PutWorkspaceConfigPolicies request.
+message PutWorkspaceConfigPoliciesResponse {
+  // The config policies saved. Contains both invariant configs and constraints
+  // in yaml or json format.
+  google.protobuf.Struct config_policies = 1;
+}
+
+// PutGlobalConfigPoliciesRequest sets global config
+// policies for the workload type.
+message PutGlobalConfigPoliciesRequest {
+  // The workload type the config policies apply to: EXPERIMENT or NTSC.
+  string workload_type = 1;
+  // The config policies to use. Contains both invariant configs and constraints
+  // in yaml or json format.
+  string config_policies = 2;
+}
+
+// Response to PutGlobalConfigPolicies request.
+message PutGlobalConfigPoliciesResponse {
+  // The config policies saved. Contains both invariant configs and constraints
+  // in yaml or json format.
+  google.protobuf.Struct config_policies = 1;
+}
+
+// GetWorkspaceConfigPoliciesRequest lists task config policies
+// for a given workspace and workload type.
+message GetWorkspaceConfigPoliciesRequest {
+  // Specifies which workspace the config policies apply to. Use global API for
+  // global config policies.
+  int32 workspace_id = 1;
+  //  The workload type the config policies apply to: EXPERIMENT or NTSC.
+  string workload_type = 2;
+}
+
+// Response to GetWorkspaceConfigPolicies request.
+message GetWorkspaceConfigPoliciesResponse {
+  // The current config policies saved for the workspace. Contains both
+  // invariant configs and constraints in yaml or json format.
+  google.protobuf.Struct config_policies = 1;
+}
+
+// GetGlobalConfigPoliciesRequest lists global task config
+// policies for a given workload type.
+message GetGlobalConfigPoliciesRequest {
+  // Specifies which workload type the config policies apply to: EXPERIMENT or
+  // NTSC.
+  string workload_type = 1;
+}
+
+// Response to GetGlobalConfigPolicies request.
+message GetGlobalConfigPoliciesResponse {
+  // The global current config policies saved. Contains both invariant configs
+  // and constraints in yaml or json format.
+  google.protobuf.Struct config_policies = 1;
+}
+
+// DeleteWorkspaceConfigPoliciesRequest is used to delete all task config
+// policies for the workspace and workload type.
+message DeleteWorkspaceConfigPoliciesRequest {
+  // Specifies which workspace the config policies apply to. Use global API for
+  // global config policies.
+  int32 workspace_id = 1;
+  // The workload type the config policies apply to: EXPERIMENT or NTSC.
+  string workload_type = 2;
+}
+
+// Response to DeleteWorkspaceConfigPolicies request.
+message DeleteWorkspaceConfigPoliciesResponse {}
+
+// DeleteGlobalConfigPoliciesRequest is used to delete all global task config
+// policies for the workload type.
+message DeleteGlobalConfigPoliciesRequest {
+  // Specifies which workload type the config policies apply to: EXPERIMENT or
+  // NTSC.
+  string workload_type = 1;
+}
+
+// Response to DeleteGlobalConfigPolicies request.
+message DeleteGlobalConfigPoliciesResponse {}
