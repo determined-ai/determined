@@ -391,33 +391,37 @@ Some constraints are due to differences in behavior between Docker and Singulari
    reported as completed with no error message reported. Refer to :ref:`PBS Requirements
    <pbs-config-requirements>`.
 
+.. _rocm-known-issues:
+
 ***********************
  AMD/ROCm Known Issues
 ***********************
 
--  AMD/ROCm support is available only with Singularity containers. While Determined does add the
-   proper Podman arguments to enable ROCm GPU support, the capabilities have not yet been verified.
+Determined provides experimental support for :ref:`AMD ROCm GPUs <rocm-support>` in Kubernetes
+deployments.
 
--  Launching experiments with ``slot_type: rocm``, may fail with the error ``RuntimeError: No HIP
-   GPUs are available``. Ensure that the compute nodes are providing ROCm drivers and libraries
-   compatible with the environment image that you are using and that they are available in the
-   default locations, or are added to the ``path`` and/or ``ld_library_path`` variables in the
-   :ref:`slurm configuration <cluster-configuration-slurm>`. Depending upon your system
-   configuration, you may need to select a different ROCm image. See :ref:`set-environment-images`
-   for the images available.
+Deprecations and known issues:
 
--  Launching experiments with ``slot_type: rocm``, may fail in the AMD/ROCm libraries with with the
-   error ``terminate called after throwing an instance of 'boost::filesystem::filesystem_error'
-   what(): boost::filesystem::remove: Directory not empty: "/tmp/miopen-...``. A potential
-   workaround is to disable the per-container ``/tmp`` by adding the following :ref:`bind mount
-   <exp-bind-mounts>` in your experiment configuration or globally by using the
+-  **Agent Deprecation**: Agent-based deployments have been deprecated. Ensure that you are using
+   Kubernetes with ROCm support for your deployments.
+
+-  **HIP GPU Errors**: Launching experiments with ``slot_type: rocm`` may fail with the error
+   ``RuntimeError: No HIP GPUs are available``. Ensure that the compute nodes have ROCm drivers and
+   libraries compatible with the environment image in use. These should be available in default
+   locations or added to the ``PATH`` and/or ``LD_LIBRARY_PATH`` variables in the :ref:`slurm
+   configuration <cluster-configuration-slurm>`. Depending on your system setup, you may need to
+   select a different ROCm image. See :ref:`set-environment-images` for the available images.
+
+-  **Boost Filesystem Errors**: You may encounter the error ``boost::filesystem::remove: Directory
+   not empty`` during ROCm operations. A potential workaround is to disable the per-container
+   ``/tmp`` by adding a bind mount in your experiment configuration or globally using the
    ``task_container_defaults`` section in your master configuration:
 
-   .. code:: yaml
+      .. code:: yaml
 
-      bind_mounts:
-         - host_path: /tmp
-           container_path: /tmp
+         bind_mounts:
+            - host_path: /tmp
+              container_path: /tmp
 
 ***************************************
  Determined AI Experiment Requirements

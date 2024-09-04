@@ -62,15 +62,20 @@ If you'd like to build off of an existing model that already runs on Determined,
 
 .. _rocm-support:
 
-Determined has experimental support for ROCm. Determined provides a prebuilt Docker image that
-includes ROCm 5.0, PyTorch 1.10 and TensorFlow 2.7:
+Determined provides experimental support for AMD ROCm GPUs in Kubernetes deployments. Determined
+provides prebuilt Docker images for ROCm, including the latest ROCm 6.1 version with DeepSpeed
+support for MI300x users:
 
--  ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.26.4``
+-  `pytorch-infinityhub-dev
+   <https://hub.docker.com/repository/docker/determinedai/pytorch-infinityhub-dev/tags>`__
+-  `pytorch-infinityhub-hpc-dev
+   <https://hub.docker.com/repository/docker/determinedai/pytorch-infinityhub-hpc-dev/tags>`__
 
-Known limitations:
+You can build these images locally based on the Dockerfiles found in the `environments repository
+<https://github.com/determined-ai/environments/blob/main/Dockerfile-infinityhub-pytorch>`__.
 
--  Only agent-based deployments are available; Kubernetes is not yet supported.
--  GPU profiling is not yet supported.
+For more detailed information about configuration, visit the :ref:`helm-config-reference` or visit
+:ref:`rocm-known-issues` for details on current limitations and troubleshooting.
 
 .. toctree::
    :caption: Training APIs
