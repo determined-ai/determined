@@ -48,7 +48,7 @@ message GetWorkspaceConfigPoliciesRequest {
   // Specifies which workspace the config policies apply to. Use global API for
   // global config policies.
   int32 workspace_id = 1;
-  // Specifies which task type the config policies apply to: EXPERIMENT or NTSC.
+  //  The workload type the config policies apply to: EXPERIMENT or NTSC.
   string workload_type = 2;
 }
 
