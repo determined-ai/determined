@@ -11,7 +11,7 @@ from determined.common.api import bindings, errors
 from tests import api_utils
 from tests import config as conf
 from tests import experiment as exp
-from tests.cluster import utils
+from tests.cluster import test_agent_user_group, utils
 
 
 @pytest.mark.e2e_cpu
@@ -92,6 +92,7 @@ def test_log_pattern_send_webhook(should_match: bool) -> None:
     port = 5006
     server = utils.WebhookServer(port)
     sess = api_utils.admin_session()
+    ws_id = []
 
     regex = r"assert 0 <= self\.metrics_sigma"
     if not should_match:
@@ -103,7 +104,7 @@ def test_log_pattern_send_webhook(should_match: bool) -> None:
     )
 
     slack_path = f"/test/slack/path/here/{str(uuid.uuid4())}"
-    bindings.post_PostWebhook(
+    w = bindings.post_PostWebhook(
         sess,
         body=bindings.v1Webhook(
             url=f"http://localhost:{port}{slack_path}",
@@ -114,9 +115,10 @@ def test_log_pattern_send_webhook(should_match: bool) -> None:
             workspaceId=None,
         ),
     )
+    ws_id.append(w.webhook.id)
 
     default_path = f"/test/path/here/{str(uuid.uuid4())}"
-    bindings.post_PostWebhook(
+    w = bindings.post_PostWebhook(
         sess,
         body=bindings.v1Webhook(
             url=f"http://localhost:{port}{default_path}",
@@ -127,6 +129,7 @@ def test_log_pattern_send_webhook(should_match: bool) -> None:
             workspaceId=None,
         ),
     )
+    ws_id.append(w.webhook.id)
 
     workspace = bindings.post_PostWorkspace(
         sess, body=bindings.v1PostWorkspaceRequest(name=f"webhook-test{random.random()}")
@@ -141,7 +144,7 @@ def test_log_pattern_send_webhook(should_match: bool) -> None:
     ).project
 
     specific_path = f"/test/path/here/{str(uuid.uuid4())}"
-    bindings.post_PostWebhook(
+    w = bindings.post_PostWebhook(
         sess,
         body=bindings.v1Webhook(
             url=f"http://localhost:{port}{specific_path}",
@@ -152,9 +155,10 @@ def test_log_pattern_send_webhook(should_match: bool) -> None:
             workspaceId=workspace.id,
         ),
     )
+    ws_id.append(w.webhook.id)
 
     specific_path_unmatch = f"/test/path/here/{str(uuid.uuid4())}"
-    bindings.post_PostWebhook(
+    w = bindings.post_PostWebhook(
         sess,
         body=bindings.v1Webhook(
             url=f"http://localhost:{port}{specific_path_unmatch}",
@@ -165,6 +169,7 @@ def test_log_pattern_send_webhook(should_match: bool) -> None:
             workspaceId=1,
         ),
     )
+    ws_id.append(w.webhook.id)
 
     exp_id = exp.create_experiment(
         sess,
@@ -199,6 +204,10 @@ def test_log_pattern_send_webhook(should_match: bool) -> None:
         assert slack_path not in responses
         assert specific_path not in responses
         assert specific_path_unmatch not in responses
+
+    for i in ws_id:
+        bindings.delete_DeleteWebhook(sess, id=i or 0)
+    test_agent_user_group._delete_workspace_and_check(sess, workspace)
 
 
 @pytest.mark.e2e_cpu
@@ -272,6 +281,10 @@ def test_specific_webhook() -> None:
     assert len(responses) == 0
     responses = server2.close_and_return_responses()
     assert len(responses) == 1
+
+    bindings.delete_DeleteWebhook(sess, id=webhook_res_1.id or 0)
+    bindings.delete_DeleteWebhook(sess, id=webhook_res_2.id or 0)
+    test_agent_user_group._delete_workspace_and_check(sess, workspace)
 
 
 def create_default_webhook(sess: api.Session, workspaceId: Optional[int] = None) -> int:
@@ -349,6 +362,8 @@ def test_webhook_permission() -> None:
     # user should be able to delete webhook from their own workspace
     bindings.delete_DeleteWebhook(user2_sess, id=workspace_webhook_id)
 
+    test_agent_user_group._delete_workspace_and_check(admin_sess, workspace)
+
 
 @pytest.mark.e2e_cpu_rbac
 @api_utils.skipif_rbac_not_enabled()
@@ -404,3 +419,5 @@ def test_webhook_rbac() -> None:
     bindings.delete_DeleteWebhook(admin_sess, id=global_webhook_id)
     # user with editor access to workspace should be able to delete it's webhook
     bindings.delete_DeleteWebhook(user2_sess, id=workspace_webhook_id)
+
+    test_agent_user_group._delete_workspace_and_check(admin_sess, workspace)
