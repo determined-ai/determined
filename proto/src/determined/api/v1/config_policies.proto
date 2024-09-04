@@ -28,7 +28,7 @@ message PutWorkspaceConfigPoliciesResponse {
 // PutGlobalConfigPoliciesRequest is a complete replacement of global config
 // policies for the workload type.
 message PutGlobalConfigPoliciesRequest {
-  // Specifies which task type the config policies apply to: EXPERIMENT or NTSC.
+  // The workload type the config policies apply to: EXPERIMENT or NTSC.
   string workload_type = 1;
   // The config policies to use. Contains both invariant configs and constraints
   // in yaml or json format.
