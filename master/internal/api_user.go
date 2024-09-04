@@ -748,3 +748,51 @@ func (a *apiServer) PostUserLongLivedToken(
 	}
 	return &apiv1.PostUserLongLivedTokenResponse{LongLivedToken: token}, nil
 }
+
+func (a *apiServer) GetLongLivedToken(
+	ctx context.Context, req *apiv1.GetLongLivedTokenRequest,
+) (*apiv1.GetLongLivedTokenResponse, error) {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err = user.AuthZProvider.Get().CanCreateUsersOwnToken(ctx, *curUser); err != nil {
+		return nil, status.Error(codes.PermissionDenied, err.Error())
+	}
+
+	tokenInfo, err := user.GetLongLivedTokenInfo(ctx, curUser.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	var res *userv1.LongLivedTokenInfo = tokenInfo.Proto()
+
+	return &apiv1.GetLongLivedTokenResponse{LongLivedTokenInfo: res}, nil
+}
+
+func (a *apiServer) GetUserLongLivedToken(
+	ctx context.Context, req *apiv1.GetUserLongLivedTokenRequest,
+) (*apiv1.GetUserLongLivedTokenResponse, error) {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	targetFullUser, err := getFullModelUser(ctx, model.UserID(req.UserId))
+	if err != nil {
+		return nil, err
+	}
+	targetUser := targetFullUser.ToUser()
+	if err = user.AuthZProvider.Get().CanCreateUsersToken(ctx, *curUser, targetUser); err != nil {
+		return nil, status.Error(codes.PermissionDenied, err.Error())
+	}
+
+	tokenInfo, err := user.GetLongLivedTokenInfo(ctx, targetFullUser.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	var res *userv1.LongLivedTokenInfo = tokenInfo.Proto()
+
+	return &apiv1.GetUserLongLivedTokenResponse{LongLivedTokenInfo: res}, nil
+}

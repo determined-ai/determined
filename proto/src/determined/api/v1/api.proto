@@ -2818,4 +2818,27 @@ service Determined {
       tags: "Users"
     };
   }
+
+  // Get current user's long lived token info
+  rpc GetLongLivedToken(GetLongLivedTokenRequest)
+      returns (GetLongLivedTokenResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/user/token"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Users"
+    };
+  }
+
+  // Get a user's long lived token info
+  rpc GetUserLongLivedToken(GetUserLongLivedTokenRequest)
+      returns (GetUserLongLivedTokenResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/users/{user_id}/token"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Users"
+    };
+  }
+  
 }

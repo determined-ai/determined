@@ -4209,6 +4209,19 @@ export interface V1GetKubernetesResourceQuotasResponse {
     resourceQuotas: { [key: string]: number; };
 }
 /**
+ * Response to GetLongLivedTokenRequest.
+ * @export
+ * @interface V1GetLongLivedTokenResponse
+ */
+export interface V1GetLongLivedTokenResponse {
+    /**
+     * Return the LongLivedToken Info.
+     * @type {V1LongLivedTokenInfo}
+     * @memberof V1GetLongLivedTokenResponse
+     */
+    longLivedTokenInfo: V1LongLivedTokenInfo;
+}
+/**
  * Response to GetMasterRequest.
  * @export
  * @interface V1GetMasterConfigResponse
@@ -5163,6 +5176,19 @@ export interface V1GetUserByUsernameResponse {
      * @memberof V1GetUserByUsernameResponse
      */
     user: V1User;
+}
+/**
+ * Response to GetUserLongLivedTokenRequest.
+ * @export
+ * @interface V1GetUserLongLivedTokenResponse
+ */
+export interface V1GetUserLongLivedTokenResponse {
+    /**
+     * Return the LongLivedToken Info.
+     * @type {V1LongLivedTokenInfo}
+     * @memberof V1GetUserLongLivedTokenResponse
+     */
+    longLivedTokenInfo: V1LongLivedTokenInfo;
 }
 /**
  * Response to GetUserRequest.
@@ -6378,6 +6404,37 @@ export type V1LogLevel = ValueOf<typeof V1LogLevel>
  * @interface V1LogoutResponse
  */
 export interface V1LogoutResponse {
+}
+/**
+ * LongLivedTokenInfo represents long lived token info.
+ * @export
+ * @interface V1LongLivedTokenInfo
+ */
+export interface V1LongLivedTokenInfo {
+    /**
+     * The token ID.
+     * @type {number}
+     * @memberof V1LongLivedTokenInfo
+     */
+    id: number;
+    /**
+     * The user ID.
+     * @type {number}
+     * @memberof V1LongLivedTokenInfo
+     */
+    userId?: number;
+    /**
+     * The value of expires_at.
+     * @type {Date | DateString}
+     * @memberof V1LongLivedTokenInfo
+     */
+    expiresAt?: Date | DateString;
+    /**
+     * The value of created_at.
+     * @type {Date | DateString}
+     * @memberof V1LongLivedTokenInfo
+     */
+    createdAt?: Date | DateString;
 }
 /**
  * Mark some reservation as a daemon.
@@ -33909,6 +33966,36 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
     return {
         /**
          * 
+         * @summary Get current user's long lived token info
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getLongLivedToken(options: any = {}): FetchArgs {
+            const localVarPath = `/api/v1/user/token`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get the current user.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -33987,6 +34074,42 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
             }
             const localVarPath = `/api/v1/users/{username}/by-username`
                 .replace(`{${"username"}}`, encodeURIComponent(String(username)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Get a user's long lived token info
+         * @param {number} userId The id of the user.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getUserLongLivedToken(userId: number, options: any = {}): FetchArgs {
+            // verify required parameter 'userId' is not null or undefined
+            if (userId === null || userId === undefined) {
+                throw new RequiredError('userId','Required parameter userId was null or undefined when calling getUserLongLivedToken.');
+            }
+            const localVarPath = `/api/v1/users/{userId}/token`
+                .replace(`{${"userId"}}`, encodeURIComponent(String(userId)));
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
@@ -34435,6 +34558,24 @@ export const UsersApiFp = function (configuration?: Configuration) {
     return {
         /**
          * 
+         * @summary Get current user's long lived token info
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getLongLivedToken(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetLongLivedTokenResponse> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getLongLivedToken(options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Get the current user.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -34479,6 +34620,25 @@ export const UsersApiFp = function (configuration?: Configuration) {
          */
         getUserByUsername(username: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetUserByUsernameResponse> {
             const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getUserByUsername(username, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Get a user's long lived token info
+         * @param {number} userId The id of the user.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getUserLongLivedToken(userId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetUserLongLivedTokenResponse> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getUserLongLivedToken(userId, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -34698,6 +34858,15 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
     return {
         /**
          * 
+         * @summary Get current user's long lived token info
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getLongLivedToken(options?: any) {
+            return UsersApiFp(configuration).getLongLivedToken(options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Get the current user.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -34724,6 +34893,16 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
          */
         getUserByUsername(username: string, options?: any) {
             return UsersApiFp(configuration).getUserByUsername(username, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Get a user's long lived token info
+         * @param {number} userId The id of the user.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getUserLongLivedToken(userId: number, options?: any) {
+            return UsersApiFp(configuration).getUserLongLivedToken(userId, options)(fetch, basePath);
         },
         /**
          * 
@@ -34845,6 +35024,17 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
 export class UsersApi extends BaseAPI {
     /**
      * 
+     * @summary Get current user's long lived token info
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UsersApi
+     */
+    public getLongLivedToken(options?: any) {
+        return UsersApiFp(this.configuration).getLongLivedToken(options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
      * @summary Get the current user.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -34876,6 +35066,18 @@ export class UsersApi extends BaseAPI {
      */
     public getUserByUsername(username: string, options?: any) {
         return UsersApiFp(this.configuration).getUserByUsername(username, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Get a user's long lived token info
+     * @param {number} userId The id of the user.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UsersApi
+     */
+    public getUserLongLivedToken(userId: number, options?: any) {
+        return UsersApiFp(this.configuration).getUserLongLivedToken(userId, options)(this.fetch, this.basePath)
     }
     
     /**

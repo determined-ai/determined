@@ -47,6 +47,8 @@ func DeleteAndCreateLongLivedToken(
 		opt(longLivedToken)
 	}
 
+	var token string
+
 	err := db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		// Tokens should have a 1:1 relationship with users, if a user creates a new token,
 		// revoke the previous token if it exists.
@@ -69,11 +71,10 @@ func DeleteAndCreateLongLivedToken(
 		// A Paseto token is generated using the longLivedToken object and the private key.
 		v2 := paseto.NewV2()
 		privateKey := db.GetTokenKeys().PrivateKey
-		token, err := v2.Sign(privateKey, longLivedToken, nil)
+		token, err = v2.Sign(privateKey, longLivedToken, nil)
 		if err != nil {
 			return fmt.Errorf("failed to generate user authentication token: %s", err)
 		}
-		longLivedToken.TokenValue = token
 
 		return nil
 	})
@@ -81,7 +82,7 @@ func DeleteAndCreateLongLivedToken(
 		return "", err
 	}
 
-	return longLivedToken.TokenValue, nil
+	return token, nil
 }
 
 // DeleteLongLivenTokenByUserID deletes long lived token if found.
@@ -116,6 +117,7 @@ func DeleteLongLivedTokenByTokenID(ctx context.Context, longLivedTokenID model.T
 	return err
 }
 
+// GetLongLivedTokenInfo returns the token info from the table with the given user_id.
 func GetLongLivedTokenInfo(ctx context.Context, userID model.UserID) (
 	*model.LongLivedToken, error,
 ) {

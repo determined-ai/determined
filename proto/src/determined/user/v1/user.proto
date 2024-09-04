@@ -96,3 +96,18 @@ enum EntityType {
   // Represents a project.
   ENTITY_TYPE_PROJECT = 1;
 }
+
+// LongLivedTokenInfo represents long lived token info.
+message LongLivedTokenInfo {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "id" ] }
+  };
+  // The token ID.
+  int32 id = 1;
+  // The user ID.
+  int32 user_id = 2;
+  // The value of expires_at.
+  google.protobuf.Timestamp expires_at = 3;
+  // The value of created_at.
+  google.protobuf.Timestamp created_at = 4;
+}

@@ -325,7 +325,16 @@ type LongLivedToken struct {
 	bun.BaseModel `bun:"table:long_lived_tokens"`
 	ID            TokenID   `db:"id" json:"id"`
 	UserID        UserID    `db:"user_id" json:"user_id"`
-	TokenValue    string    `bun:"-"`
 	ExpiresAt     time.Time `db:"expires_at" json:"expires_at"`
 	CreatedAt     time.Time `db:"created_at" json:"created_at"`
+}
+
+// Proto returns the protobuf representation.
+func (s LongLivedToken) Proto() *userv1.LongLivedTokenInfo {
+	return &userv1.LongLivedTokenInfo{
+		Id:        int32(s.ID),
+		UserId:    int32(s.UserID),
+		ExpiresAt: timestamppb.New(s.ExpiresAt),
+		CreatedAt: timestamppb.New(s.CreatedAt),
+	}
 }

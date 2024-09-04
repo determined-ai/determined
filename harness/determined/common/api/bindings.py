@@ -5428,6 +5428,29 @@ class v1GetKubernetesResourceQuotasResponse(Printable):
         }
         return out
 
+class v1GetLongLivedTokenResponse(Printable):
+    """Response to GetLongLivedTokenRequest."""
+
+    def __init__(
+        self,
+        *,
+        longLivedTokenInfo: "v1LongLivedTokenInfo",
+    ):
+        self.longLivedTokenInfo = longLivedTokenInfo
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetLongLivedTokenResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "longLivedTokenInfo": v1LongLivedTokenInfo.from_json(obj["longLivedTokenInfo"]),
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "longLivedTokenInfo": self.longLivedTokenInfo.to_json(omit_unset),
+        }
+        return out
+
 class v1GetMasterConfigResponse(Printable):
     """Response to GetMasterRequest."""
 
@@ -6964,6 +6987,29 @@ class v1GetUserByUsernameResponse(Printable):
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "user": self.user.to_json(omit_unset),
+        }
+        return out
+
+class v1GetUserLongLivedTokenResponse(Printable):
+    """Response to GetUserLongLivedTokenRequest."""
+
+    def __init__(
+        self,
+        *,
+        longLivedTokenInfo: "v1LongLivedTokenInfo",
+    ):
+        self.longLivedTokenInfo = longLivedTokenInfo
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetUserLongLivedTokenResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "longLivedTokenInfo": v1LongLivedTokenInfo.from_json(obj["longLivedTokenInfo"]),
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "longLivedTokenInfo": self.longLivedTokenInfo.to_json(omit_unset),
         }
         return out
 
@@ -8741,6 +8787,53 @@ class v1LoginResponse(Printable):
             "token": self.token,
             "user": self.user.to_json(omit_unset),
         }
+        return out
+
+class v1LongLivedTokenInfo(Printable):
+    """LongLivedTokenInfo represents long lived token info."""
+    createdAt: "typing.Optional[str]" = None
+    expiresAt: "typing.Optional[str]" = None
+    userId: "typing.Optional[int]" = None
+
+    def __init__(
+        self,
+        *,
+        id: int,
+        createdAt: "typing.Union[str, None, Unset]" = _unset,
+        expiresAt: "typing.Union[str, None, Unset]" = _unset,
+        userId: "typing.Union[int, None, Unset]" = _unset,
+    ):
+        self.id = id
+        if not isinstance(createdAt, Unset):
+            self.createdAt = createdAt
+        if not isinstance(expiresAt, Unset):
+            self.expiresAt = expiresAt
+        if not isinstance(userId, Unset):
+            self.userId = userId
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1LongLivedTokenInfo":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "id": obj["id"],
+        }
+        if "createdAt" in obj:
+            kwargs["createdAt"] = obj["createdAt"]
+        if "expiresAt" in obj:
+            kwargs["expiresAt"] = obj["expiresAt"]
+        if "userId" in obj:
+            kwargs["userId"] = obj["userId"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "id": self.id,
+        }
+        if not omit_unset or "createdAt" in vars(self):
+            out["createdAt"] = self.createdAt
+        if not omit_unset or "expiresAt" in vars(self):
+            out["expiresAt"] = self.expiresAt
+        if not omit_unset or "userId" in vars(self):
+            out["userId"] = self.userId
         return out
 
 class v1MarkAllocationResourcesDaemonRequest(Printable):
@@ -19696,6 +19789,25 @@ def get_GetKubernetesResourceQuotas(
         return v1GetKubernetesResourceQuotasResponse.from_json(_resp.json())
     raise APIHttpError("get_GetKubernetesResourceQuotas", _resp)
 
+def get_GetLongLivedToken(
+    session: "api.BaseSession",
+) -> "v1GetLongLivedTokenResponse":
+    """Get current user's long lived token info"""
+    _params = None
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/user/token",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1GetLongLivedTokenResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetLongLivedToken", _resp)
+
 def get_GetMaster(
     session: "api.BaseSession",
 ) -> "v1GetMasterResponse":
@@ -21369,6 +21481,30 @@ def get_GetUserByUsername(
     if _resp.status_code == 200:
         return v1GetUserByUsernameResponse.from_json(_resp.json())
     raise APIHttpError("get_GetUserByUsername", _resp)
+
+def get_GetUserLongLivedToken(
+    session: "api.BaseSession",
+    *,
+    userId: int,
+) -> "v1GetUserLongLivedTokenResponse":
+    """Get a user's long lived token info
+
+    - userId: The id of the user.
+    """
+    _params = None
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/users/{userId}/token",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1GetUserLongLivedTokenResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetUserLongLivedToken", _resp)
 
 def get_GetUserSetting(
     session: "api.BaseSession",

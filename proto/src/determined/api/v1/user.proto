@@ -257,3 +257,30 @@ message PostUserLongLivedTokenResponse {
   // long_lived_token string.
   string long_lived_token = 1;
 }
+
+// Get user's longLivedToken info.
+message GetLongLivedTokenRequest {}
+
+// Response to GetLongLivedTokenRequest.
+message GetLongLivedTokenResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "longLivedTokenInfo" ] }
+  };
+  // Return the LongLivedToken Info.
+  determined.user.v1.LongLivedTokenInfo longLivedTokenInfo = 1;
+}
+
+// Get the requested user's longLivedToken info.
+message GetUserLongLivedTokenRequest {
+  // The id of the user.
+  int32 user_id = 1;
+}
+
+// Response to GetUserLongLivedTokenRequest.
+message GetUserLongLivedTokenResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "longLivedTokenInfo" ] }
+  };
+  // Return the LongLivedToken Info.
+  determined.user.v1.LongLivedTokenInfo longLivedTokenInfo = 1;
+}
