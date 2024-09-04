@@ -2804,7 +2804,7 @@ service Determined {
       body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Internal"  // FIXME what tag to use?
+      tags: "Alpha"
     };
   }
 
@@ -2815,7 +2815,7 @@ service Determined {
       put: "/api/v1/config-policies/global/{workload_type}"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Internal"  // FIXME what tag to use?
+      tags: "Alpha"
     };
   }
 
@@ -2826,7 +2826,7 @@ service Determined {
       get: "/api/v1/config-policies/workspaces/{workspace_id}/{workload_type}"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Internal"  // FIXME what tag to use?
+      tags: "Alpha"
     };
   }
 
@@ -2837,7 +2837,7 @@ service Determined {
       get: "/api/v1/config-policies/global/{workload_type}"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Internal"  // FIXME what tag to use?
+      tags: "Alpha"
     };
   }
 
@@ -2848,7 +2848,7 @@ service Determined {
       delete: "/api/v1/config-policies/workspaces/{workspace_id}/{workload_type}"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Internal"  // FIXME what tag to use?
+      tags: "Alpha"
     };
   }
 
@@ -2859,7 +2859,7 @@ service Determined {
       delete: "/api/v1/config-policies/global/{workload_type}"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Internal"  // FIXME what tag to use?
+      tags: "Alpha"
     };
   }
 }

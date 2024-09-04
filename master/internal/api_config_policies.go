@@ -29,7 +29,8 @@ func validWorkloadEnum(val string) bool {
 	}
 }
 
-var yamlString = `
+func stubData() (*structpb.Struct, error) {
+	const yamlString = `
 invariant_configs:
   description: "test"
 constraints:
@@ -37,8 +38,6 @@ constraints:
     max_slots: 4
   priority_limit: 10
  `
-
-func stubData() (*structpb.Struct, error) {
 	// put yaml string into a map
 	var yamlMap map[string]interface{}
 	if err := yaml.Unmarshal([]byte(yamlString), &yamlMap); err != nil {
