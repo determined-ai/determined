@@ -48,7 +48,7 @@ func stubData() (*structpb.Struct, error) {
 	// convert map to protobuf struct
 	yamlStruct, err := structpb.NewStruct(yamlMap)
 	if err != nil {
-		return nil, fmt.Errorf("unable to marshal to struct: %v", err)
+		return nil, fmt.Errorf("unable to convert map to protobuf struct: %w", err)
 	}
 	return yamlStruct, nil
 }
