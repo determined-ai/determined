@@ -92,7 +92,7 @@ def test_log_pattern_send_webhook(should_match: bool) -> None:
     port = 5006
     server = utils.WebhookServer(port)
     sess = api_utils.admin_session()
-    wh = []
+    ws_id = []
 
     regex = r"assert 0 <= self\.metrics_sigma"
     if not should_match:
@@ -115,7 +115,7 @@ def test_log_pattern_send_webhook(should_match: bool) -> None:
             workspaceId=None,
         ),
     )
-    wh.append(w.webhook.id)
+    ws_id.append(w.webhook.id)
 
     default_path = f"/test/path/here/{str(uuid.uuid4())}"
     w = bindings.post_PostWebhook(
@@ -129,7 +129,7 @@ def test_log_pattern_send_webhook(should_match: bool) -> None:
             workspaceId=None,
         ),
     )
-    wh.append(w.webhook.id)
+    ws_id.append(w.webhook.id)
 
     workspace = bindings.post_PostWorkspace(
         sess, body=bindings.v1PostWorkspaceRequest(name=f"webhook-test{random.random()}")
@@ -155,7 +155,7 @@ def test_log_pattern_send_webhook(should_match: bool) -> None:
             workspaceId=workspace.id,
         ),
     )
-    wh.append(w.webhook.id)
+    ws_id.append(w.webhook.id)
 
     specific_path_unmatch = f"/test/path/here/{str(uuid.uuid4())}"
     w = bindings.post_PostWebhook(
@@ -169,7 +169,7 @@ def test_log_pattern_send_webhook(should_match: bool) -> None:
             workspaceId=1,
         ),
     )
-    wh.append(w.webhook.id)
+    ws_id.append(w.webhook.id)
 
     exp_id = exp.create_experiment(
         sess,
@@ -205,7 +205,7 @@ def test_log_pattern_send_webhook(should_match: bool) -> None:
         assert specific_path not in responses
         assert specific_path_unmatch not in responses
 
-    for i in wh:
+    for i in ws_id:
         bindings.delete_DeleteWebhook(sess, id=i or 0)
     test_agent_user_group._delete_workspace_and_check(sess, workspace)
 
