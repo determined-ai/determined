@@ -22,7 +22,7 @@ type Constraints struct {
 
 // ExperimentConfigPolicy is the invariant config and constraints for an experiment.
 // Submitted experiments whose config fields vary from the respective InvariantConfig fields set
-// within a given scope are silently overriden.
+// within a given scope are silently overridden.
 // Submitted experiments whose constraint fields vary from the respective Constraint fields set
 // within a given scope are rejected.
 type ExperimentConfigPolicy struct {
@@ -32,7 +32,7 @@ type ExperimentConfigPolicy struct {
 
 // NTSCConfigPolicy is the invariant config and constraints for an NTSC task.
 // Submitted NTSC tasks whose config fields vary from the respective InvariantConfig fields set
-// within a given scope are silently overriden.
+// within a given scope are silently overridden.
 // Submitted NTSC tasks whose constraint fields vary from the respective Constraint fields set
 // within a given scope are rejected.
 type NTSCConfigPolicy struct {
