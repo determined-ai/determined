@@ -1,0 +1,299 @@
+package configpolicy
+
+import (
+	"testing"
+
+	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
+	"github.com/stretchr/testify/require"
+	"gotest.tools/assert"
+)
+
+const yamlConstraints = `
+constraints:
+  resources:
+    max_slots: 4
+  priority_limit: 10
+`
+const yamlExperiment = `
+invariant_config:
+  description: "test\nspecial\tchar"
+  environment:
+    force_pull_image: false
+    add_capabilities:
+      - "cap1"
+      - "cap2"
+  resources:
+    slots: 1
+`
+
+func TestUnmarshalYamlExperiment(t *testing.T) {
+	description := "test\nspecial\tchar"
+	slots := 1
+	forcePull := false
+	maxSlots := 4
+	priorityLimit := 10
+
+	structExperiment := ExperimentConfigPolicy{
+		InvariantConfig: &expconf.ExperimentConfig{
+			RawDescription: &description,
+			RawResources: &expconf.ResourcesConfig{
+				RawSlots: &slots,
+			},
+			RawEnvironment: &expconf.EnvironmentConfigV0{
+				RawForcePullImage:  &forcePull,
+				RawAddCapabilities: []string{"cap1", "cap2"},
+			},
+		},
+		Constraints: &Constraints{
+			ResourceConstraints: &ResourceConstraints{
+				MaxSlots: &maxSlots,
+			},
+			PriorityLimit: &priorityLimit,
+		},
+	}
+
+	justConfig := structExperiment
+	justConfig.Constraints = nil
+	justConstraints := structExperiment
+	justConstraints.InvariantConfig = nil
+
+	var testCases = []struct {
+		name   string
+		input  string
+		noErr  bool
+		output *ExperimentConfigPolicy
+	}{
+		{"valid yaml", yamlExperiment + yamlConstraints, true, &structExperiment},
+		{"just config", yamlExperiment, true, &justConfig},
+		{"just constraints", yamlConstraints, true, &justConstraints},
+		{"extra fields", yamlExperiment + `  extra_field: "string"` + yamlConstraints, false, nil},
+		{"invalid fields", yamlExperiment + "  debug true\n", false, nil},
+		{"empty input", "", true, &ExperimentConfigPolicy{}},
+		{"null/empty fields", yamlExperiment + `  debug:\n`, false, nil},
+		{"wrong field type", "invariant_configs:\n  description: 3\n", false, nil},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			config, err := UnmarshalExperimentConfigPolicy(tt.input)
+			require.Equal(t, tt.noErr, err == nil)
+			if !tt.noErr {
+				assert.DeepEqual(t, tt.output, config)
+			}
+		})
+	}
+}
+
+const yamlNTSC = `
+invariant_config:
+  description: "test\nspecial\tchar"
+  environment:
+    force_pull_image: false
+    add_capabilities:
+      - "cap1"
+      - "cap2"
+  resources:
+    slots: 1
+`
+
+func TestUnmarshalYamlNTSC(t *testing.T) {
+	maxSlots := 4
+	priorityLimit := 10
+	structNTSC := NTSCConfigPolicy{
+		InvariantConfig: &model.CommandConfig{
+			Description: "test\nspecial\tchar",
+			Resources: model.ResourcesConfig{
+				Slots: 10,
+			},
+			Environment: model.Environment{
+				ForcePullImage:  false,
+				AddCapabilities: []string{"cap1", "cap2"},
+			},
+		},
+		Constraints: &Constraints{
+			ResourceConstraints: &ResourceConstraints{
+				MaxSlots: &maxSlots,
+			},
+			PriorityLimit: &priorityLimit,
+		},
+	}
+
+	justConfig := structNTSC
+	justConfig.Constraints = nil
+	justConstraints := structNTSC
+	justConstraints.InvariantConfig = nil
+
+	var testCases = []struct {
+		name   string
+		input  string
+		noErr  bool
+		output *NTSCConfigPolicy
+	}{
+		{"valid yaml", yamlNTSC + yamlConstraints, true, &structNTSC},
+		{"just config", yamlNTSC, true, &justConfig},
+		{"just constraints", yamlConstraints, true, &justConstraints},
+		{"extra fields", yamlNTSC + `  extra_field: "string"` + yamlConstraints, false, nil},
+		{"invalid fields", yamlNTSC + "  debug true\n", false, nil},
+		{"empty input", "", true, &NTSCConfigPolicy{}},
+		{"null/empty fields", yamlNTSC + `  debug:\n`, false, nil},
+		{"wrong field type", "invariant_configs:\n  description: 3\n", false, nil},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			config, err := UnmarshalNTSCConfigPolicy(tt.input)
+			require.Equal(t, tt.noErr, err == nil)
+			if !tt.noErr {
+				assert.DeepEqual(t, tt.output, config)
+			}
+		})
+	}
+}
+
+const jsonConstraints = `
+constraints: {
+  resources: {
+    max_slots: 4
+  },
+  priority_limit: 10
+}
+`
+
+const jsonExperiment = `
+invariant_config: {
+  description: "test\nspecial\tchar",
+  environment: {
+    force_pull_image: false,
+    add_capabilities: ["cap1", "cap2"]
+  },
+  resources: {
+    slots: 1,
+  }
+}
+`
+
+func TestUnmarshalJSONExperiment(t *testing.T) {
+	description := "test\nspecial\tchar"
+	slots := 1
+	forcePull := false
+	maxSlots := 4
+	priorityLimit := 10
+
+	structExperiment := ExperimentConfigPolicy{
+		InvariantConfig: &expconf.ExperimentConfig{
+			RawDescription: &description,
+			RawResources: &expconf.ResourcesConfig{
+				RawSlots: &slots,
+			},
+			RawEnvironment: &expconf.EnvironmentConfigV0{
+				RawForcePullImage:  &forcePull,
+				RawAddCapabilities: []string{"cap1", "cap2"},
+			},
+		},
+		Constraints: &Constraints{
+			ResourceConstraints: &ResourceConstraints{
+				MaxSlots: &maxSlots,
+			},
+			PriorityLimit: &priorityLimit,
+		},
+	}
+
+	justConfig := structExperiment
+	justConfig.Constraints = nil
+	justConstraints := structExperiment
+	justConstraints.InvariantConfig = nil
+
+	var testCases = []struct {
+		name   string
+		input  string
+		noErr  bool
+		output *ExperimentConfigPolicy
+	}{
+		{"valid json", jsonExperiment + jsonConstraints, true, &structExperiment},
+		{"just config", jsonExperiment, true, &justConfig},
+		{"just constraints", jsonConstraints, true, &justConstraints},
+		{"extra fields", jsonExperiment + `  extra_field: "string"` + jsonConstraints, false, nil},
+		{"invalid fields", jsonExperiment + "  debug{ true }\n", false, nil},
+		{"empty input", "", true, &ExperimentConfigPolicy{}},
+		{"null/empty fields", jsonExperiment + "  debug:\n", false, nil},
+		{"wrong field type", "invariant_configs:\n  description: 3\n", false, nil},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			config, err := UnmarshalExperimentConfigPolicy(tt.input)
+			require.Equal(t, tt.noErr, err == nil)
+			if !tt.noErr {
+				assert.DeepEqual(t, tt.output, config)
+			}
+		})
+	}
+}
+
+const jsonNTSC = `
+invariant_config: {
+  description: "test\nspecial\tchar",
+  environment: {
+    force_pull_image: false,
+    add_capabilities: ["cap1", "cap2"]
+  },
+  resources: {
+    slots: 1,
+  }
+}
+`
+
+func TestUnmarshalJSONNTSC(t *testing.T) {
+	maxSlots := 4
+	priorityLimit := 10
+	structNTSC := NTSCConfigPolicy{
+		InvariantConfig: &model.CommandConfig{
+			Description: "test\nspecial\tchar",
+			Resources: model.ResourcesConfig{
+				Slots: 10,
+			},
+			Environment: model.Environment{
+				ForcePullImage:  false,
+				AddCapabilities: []string{"cap1", "cap2"},
+			},
+		},
+		Constraints: &Constraints{
+			ResourceConstraints: &ResourceConstraints{
+				MaxSlots: &maxSlots,
+			},
+			PriorityLimit: &priorityLimit,
+		},
+	}
+
+	justConfig := structNTSC
+	justConfig.Constraints = nil
+	justConstraints := structNTSC
+	justConstraints.InvariantConfig = nil
+
+	var testCases = []struct {
+		name   string
+		input  string
+		noErr  bool
+		output *NTSCConfigPolicy
+	}{
+		{"valid json", jsonNTSC + jsonConstraints, true, &structNTSC},
+		{"just config", jsonNTSC, true, &justConfig},
+		{"just constraints", jsonConstraints, true, &justConstraints},
+		{"extra fields", jsonNTSC + `  extra_field: "string"` + jsonConstraints, false, nil},
+		{"invalid fields", jsonNTSC + "  debug{ true }\n", false, nil},
+		{"empty input", "", true, &NTSCConfigPolicy{}},
+		{"null/empty fields", jsonNTSC + "  debug:\n", false, nil},
+		{"wrong field type", "invariant_configs:\n  description: 3\n", false, nil},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			config, err := UnmarshalNTSCConfigPolicy(tt.input)
+			require.Equal(t, tt.noErr, err == nil)
+			if !tt.noErr {
+				assert.DeepEqual(t, tt.output, config)
+			}
+		})
+	}
+}
