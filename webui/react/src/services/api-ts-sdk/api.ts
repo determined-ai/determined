@@ -2651,7 +2651,7 @@ export interface V1DeleteExperimentsResponse {
     results: Array<V1ExperimentActionResult>;
 }
 /**
- * Response to DeleteGlobalConfigPolicies request.
+ * Response to DeleteGlobalConfigPoliciesRequest.
  * @export
  * @interface V1DeleteGlobalConfigPoliciesResponse
  */
@@ -2751,7 +2751,7 @@ export interface V1DeleteTensorboardFilesResponse {
 export interface V1DeleteWebhookResponse {
 }
 /**
- * Response to DeleteWorkspaceConfigPolicies request.
+ * Response to DeleteWorkspaceConfigPoliciesRequest.
  * @export
  * @interface V1DeleteWorkspaceConfigPoliciesResponse
  */
@@ -5280,7 +5280,7 @@ export interface V1GetWebhooksResponse {
     webhooks: Array<V1Webhook>;
 }
 /**
- * Response to GetWorkspaceConfigPolicies request.
+ * Response to GetWorkspaceConfigPoliciesRequest.
  * @export
  * @interface V1GetWorkspaceConfigPoliciesResponse
  */
@@ -8817,7 +8817,7 @@ export interface V1PutExperimentsRetainLogsResponse {
     results: Array<V1ExperimentActionResult>;
 }
 /**
- * Response to PutGlobalConfigPolicies request.
+ * Response to PutGlobalConfigPoliciesRequest.
  * @export
  * @interface V1PutGlobalConfigPoliciesResponse
  */
@@ -8945,7 +8945,7 @@ export interface V1PutWorkspaceConfigPoliciesRequest {
      */
     workspaceId?: number;
     /**
-     * Specifies which workload type the config policies apply to: EXPERIMENT or NTSC.
+     * The workload type the config policies apply to: EXPERIMENT or NTSC.
      * @type {string}
      * @memberof V1PutWorkspaceConfigPoliciesRequest
      */
@@ -8958,7 +8958,7 @@ export interface V1PutWorkspaceConfigPoliciesRequest {
     configPolicies?: string;
 }
 /**
- * Response to PutWorkspaceConfigPolicies request.
+ * Response to PutWorkspaceConfigPoliciesRequest.
  * @export
  * @interface V1PutWorkspaceConfigPoliciesResponse
  */
@@ -12752,7 +12752,7 @@ export const AlphaApiFetchParamCreator = function (configuration?: Configuration
         /**
          * 
          * @summary Delete global task config policies.
-         * @param {string} workloadType Specifies which workload type the config policies apply to: EXPERIMENT or NTSC.
+         * @param {string} workloadType The workload type the config policies apply to: EXPERIMENT or NTSC.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -12788,7 +12788,7 @@ export const AlphaApiFetchParamCreator = function (configuration?: Configuration
         /**
          * 
          * @summary Delete workspace task config policies.
-         * @param {number} workspaceId Specifies which workspace the config policies apply to. Use global API for global config policies.
+         * @param {number} workspaceId The workspace the config policies apply to. Use global API for global config policies.
          * @param {string} workloadType The workload type the config policies apply to: EXPERIMENT or NTSC.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -12830,7 +12830,7 @@ export const AlphaApiFetchParamCreator = function (configuration?: Configuration
         /**
          * 
          * @summary Get global task config policies.
-         * @param {string} workloadType Specifies which workload type the config policies apply to: EXPERIMENT or NTSC.
+         * @param {string} workloadType The workload type the config policies apply to: EXPERIMENT or NTSC.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -12866,7 +12866,7 @@ export const AlphaApiFetchParamCreator = function (configuration?: Configuration
         /**
          * 
          * @summary Get workspace task config policies.
-         * @param {number} workspaceId Specifies which workspace the config policies apply to. Use global API for global config policies.
+         * @param {number} workspaceId The workspace the config policies apply to. Use global API for global config policies.
          * @param {string} workloadType The workload type the config policies apply to: EXPERIMENT or NTSC.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -12945,7 +12945,7 @@ export const AlphaApiFetchParamCreator = function (configuration?: Configuration
          * 
          * @summary Add or update workspace task config policies.
          * @param {number} workspaceId The workspace the config policies apply to. Use global API for global config policies.
-         * @param {string} workloadType Specifies which workload type the config policies apply to: EXPERIMENT or NTSC.
+         * @param {string} workloadType The workload type the config policies apply to: EXPERIMENT or NTSC.
          * @param {V1PutWorkspaceConfigPoliciesRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -13003,7 +13003,7 @@ export const AlphaApiFp = function (configuration?: Configuration) {
         /**
          * 
          * @summary Delete global task config policies.
-         * @param {string} workloadType Specifies which workload type the config policies apply to: EXPERIMENT or NTSC.
+         * @param {string} workloadType The workload type the config policies apply to: EXPERIMENT or NTSC.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -13022,7 +13022,7 @@ export const AlphaApiFp = function (configuration?: Configuration) {
         /**
          * 
          * @summary Delete workspace task config policies.
-         * @param {number} workspaceId Specifies which workspace the config policies apply to. Use global API for global config policies.
+         * @param {number} workspaceId The workspace the config policies apply to. Use global API for global config policies.
          * @param {string} workloadType The workload type the config policies apply to: EXPERIMENT or NTSC.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -13042,7 +13042,7 @@ export const AlphaApiFp = function (configuration?: Configuration) {
         /**
          * 
          * @summary Get global task config policies.
-         * @param {string} workloadType Specifies which workload type the config policies apply to: EXPERIMENT or NTSC.
+         * @param {string} workloadType The workload type the config policies apply to: EXPERIMENT or NTSC.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -13061,7 +13061,7 @@ export const AlphaApiFp = function (configuration?: Configuration) {
         /**
          * 
          * @summary Get workspace task config policies.
-         * @param {number} workspaceId Specifies which workspace the config policies apply to. Use global API for global config policies.
+         * @param {number} workspaceId The workspace the config policies apply to. Use global API for global config policies.
          * @param {string} workloadType The workload type the config policies apply to: EXPERIMENT or NTSC.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -13101,7 +13101,7 @@ export const AlphaApiFp = function (configuration?: Configuration) {
          * 
          * @summary Add or update workspace task config policies.
          * @param {number} workspaceId The workspace the config policies apply to. Use global API for global config policies.
-         * @param {string} workloadType Specifies which workload type the config policies apply to: EXPERIMENT or NTSC.
+         * @param {string} workloadType The workload type the config policies apply to: EXPERIMENT or NTSC.
          * @param {V1PutWorkspaceConfigPoliciesRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -13130,7 +13130,7 @@ export const AlphaApiFactory = function (configuration?: Configuration, fetch?: 
         /**
          * 
          * @summary Delete global task config policies.
-         * @param {string} workloadType Specifies which workload type the config policies apply to: EXPERIMENT or NTSC.
+         * @param {string} workloadType The workload type the config policies apply to: EXPERIMENT or NTSC.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -13140,7 +13140,7 @@ export const AlphaApiFactory = function (configuration?: Configuration, fetch?: 
         /**
          * 
          * @summary Delete workspace task config policies.
-         * @param {number} workspaceId Specifies which workspace the config policies apply to. Use global API for global config policies.
+         * @param {number} workspaceId The workspace the config policies apply to. Use global API for global config policies.
          * @param {string} workloadType The workload type the config policies apply to: EXPERIMENT or NTSC.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -13151,7 +13151,7 @@ export const AlphaApiFactory = function (configuration?: Configuration, fetch?: 
         /**
          * 
          * @summary Get global task config policies.
-         * @param {string} workloadType Specifies which workload type the config policies apply to: EXPERIMENT or NTSC.
+         * @param {string} workloadType The workload type the config policies apply to: EXPERIMENT or NTSC.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
@@ -13161,7 +13161,7 @@ export const AlphaApiFactory = function (configuration?: Configuration, fetch?: 
         /**
          * 
          * @summary Get workspace task config policies.
-         * @param {number} workspaceId Specifies which workspace the config policies apply to. Use global API for global config policies.
+         * @param {number} workspaceId The workspace the config policies apply to. Use global API for global config policies.
          * @param {string} workloadType The workload type the config policies apply to: EXPERIMENT or NTSC.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -13183,7 +13183,7 @@ export const AlphaApiFactory = function (configuration?: Configuration, fetch?: 
          * 
          * @summary Add or update workspace task config policies.
          * @param {number} workspaceId The workspace the config policies apply to. Use global API for global config policies.
-         * @param {string} workloadType Specifies which workload type the config policies apply to: EXPERIMENT or NTSC.
+         * @param {string} workloadType The workload type the config policies apply to: EXPERIMENT or NTSC.
          * @param {V1PutWorkspaceConfigPoliciesRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -13204,7 +13204,7 @@ export class AlphaApi extends BaseAPI {
     /**
      * 
      * @summary Delete global task config policies.
-     * @param {string} workloadType Specifies which workload type the config policies apply to: EXPERIMENT or NTSC.
+     * @param {string} workloadType The workload type the config policies apply to: EXPERIMENT or NTSC.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof AlphaApi
@@ -13216,7 +13216,7 @@ export class AlphaApi extends BaseAPI {
     /**
      * 
      * @summary Delete workspace task config policies.
-     * @param {number} workspaceId Specifies which workspace the config policies apply to. Use global API for global config policies.
+     * @param {number} workspaceId The workspace the config policies apply to. Use global API for global config policies.
      * @param {string} workloadType The workload type the config policies apply to: EXPERIMENT or NTSC.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -13229,7 +13229,7 @@ export class AlphaApi extends BaseAPI {
     /**
      * 
      * @summary Get global task config policies.
-     * @param {string} workloadType Specifies which workload type the config policies apply to: EXPERIMENT or NTSC.
+     * @param {string} workloadType The workload type the config policies apply to: EXPERIMENT or NTSC.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof AlphaApi
@@ -13241,7 +13241,7 @@ export class AlphaApi extends BaseAPI {
     /**
      * 
      * @summary Get workspace task config policies.
-     * @param {number} workspaceId Specifies which workspace the config policies apply to. Use global API for global config policies.
+     * @param {number} workspaceId The workspace the config policies apply to. Use global API for global config policies.
      * @param {string} workloadType The workload type the config policies apply to: EXPERIMENT or NTSC.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
@@ -13267,7 +13267,7 @@ export class AlphaApi extends BaseAPI {
      * 
      * @summary Add or update workspace task config policies.
      * @param {number} workspaceId The workspace the config policies apply to. Use global API for global config policies.
-     * @param {string} workloadType Specifies which workload type the config policies apply to: EXPERIMENT or NTSC.
+     * @param {string} workloadType The workload type the config policies apply to: EXPERIMENT or NTSC.
      * @param {V1PutWorkspaceConfigPoliciesRequest} body
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}

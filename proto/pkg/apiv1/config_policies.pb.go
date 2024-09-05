@@ -29,8 +29,7 @@ type PutWorkspaceConfigPoliciesRequest struct {
 	// The workspace the config policies apply to. Use global API for
 	// global config policies.
 	WorkspaceId int32 `protobuf:"varint,1,opt,name=workspace_id,json=workspaceId,proto3" json:"workspace_id,omitempty"`
-	// Specifies which workload type the config policies apply to: EXPERIMENT or
-	// NTSC.
+	// The workload type the config policies apply to: EXPERIMENT or NTSC.
 	WorkloadType string `protobuf:"bytes,2,opt,name=workload_type,json=workloadType,proto3" json:"workload_type,omitempty"`
 	// The config policies to use. Contains both invariant configs and constraints
 	// in yaml or json format.
@@ -90,7 +89,7 @@ func (x *PutWorkspaceConfigPoliciesRequest) GetConfigPolicies() string {
 	return ""
 }
 
-// Response to PutWorkspaceConfigPolicies request.
+// Response to PutWorkspaceConfigPoliciesRequest.
 type PutWorkspaceConfigPoliciesResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -200,7 +199,7 @@ func (x *PutGlobalConfigPoliciesRequest) GetConfigPolicies() string {
 	return ""
 }
 
-// Response to PutGlobalConfigPolicies request.
+// Response to PutGlobalConfigPoliciesRequest.
 type PutGlobalConfigPoliciesResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -257,7 +256,7 @@ type GetWorkspaceConfigPoliciesRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// Specifies which workspace the config policies apply to. Use global API for
+	// The workspace the config policies apply to. Use global API for
 	// global config policies.
 	WorkspaceId int32 `protobuf:"varint,1,opt,name=workspace_id,json=workspaceId,proto3" json:"workspace_id,omitempty"`
 	// The workload type the config policies apply to: EXPERIMENT or NTSC.
@@ -310,7 +309,7 @@ func (x *GetWorkspaceConfigPoliciesRequest) GetWorkloadType() string {
 	return ""
 }
 
-// Response to GetWorkspaceConfigPolicies request.
+// Response to GetWorkspaceConfigPoliciesRequest.
 type GetWorkspaceConfigPoliciesResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -367,8 +366,7 @@ type GetGlobalConfigPoliciesRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// Specifies which workload type the config policies apply to: EXPERIMENT or
-	// NTSC.
+	// The workload type the config policies apply to: EXPERIMENT or NTSC.
 	WorkloadType string `protobuf:"bytes,1,opt,name=workload_type,json=workloadType,proto3" json:"workload_type,omitempty"`
 }
 
@@ -468,7 +466,7 @@ type DeleteWorkspaceConfigPoliciesRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// Specifies which workspace the config policies apply to. Use global API for
+	// The workspace the config policies apply to. Use global API for
 	// global config policies.
 	WorkspaceId int32 `protobuf:"varint,1,opt,name=workspace_id,json=workspaceId,proto3" json:"workspace_id,omitempty"`
 	// The workload type the config policies apply to: EXPERIMENT or NTSC.
@@ -521,7 +519,7 @@ func (x *DeleteWorkspaceConfigPoliciesRequest) GetWorkloadType() string {
 	return ""
 }
 
-// Response to DeleteWorkspaceConfigPolicies request.
+// Response to DeleteWorkspaceConfigPoliciesRequest.
 type DeleteWorkspaceConfigPoliciesResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
@@ -567,8 +565,7 @@ type DeleteGlobalConfigPoliciesRequest struct {
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// Specifies which workload type the config policies apply to: EXPERIMENT or
-	// NTSC.
+	// The workload type the config policies apply to: EXPERIMENT or NTSC.
 	WorkloadType string `protobuf:"bytes,1,opt,name=workload_type,json=workloadType,proto3" json:"workload_type,omitempty"`
 }
 
@@ -611,7 +608,7 @@ func (x *DeleteGlobalConfigPoliciesRequest) GetWorkloadType() string {
 	return ""
 }
 
-// Response to DeleteGlobalConfigPolicies request.
+// Response to DeleteGlobalConfigPoliciesRequest.
 type DeleteGlobalConfigPoliciesResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

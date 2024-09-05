@@ -56,5 +56,4 @@ func UnmarshalNTSCConfigPolicy(str string) (*NTSCConfigPolicy, error) {
 
 func MarshalConfigPolicy(configPolicy interface{}) *structpb.Struct {
 	return protoutils.ToStruct(configPolicy)
-
 }
