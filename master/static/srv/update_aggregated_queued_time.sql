@@ -57,7 +57,7 @@ all_aggs AS (
 INSERT INTO
 resource_aggregates (
     SELECT
-        const.target_date AS date,
+        timezone('Etc/UTC', const.target_date) AS date,
         all_aggs.*
     FROM
         all_aggs, const
