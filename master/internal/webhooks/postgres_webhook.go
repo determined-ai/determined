@@ -319,7 +319,7 @@ func handleCustomTriggerData(ctx context.Context, data CustomTriggerData, experi
 			err = generateEventForCustomTrigger(
 				ctx, &es, webhook.Triggers, webhook.WebhookType, webhook.URL, m.Experiment, activeConfig, data, trialID)
 			if err != nil {
-				return fmt.Errorf("error genrating event %d %+v: %w", webhookID, webhook, err)
+				return fmt.Errorf("error genrating event for webhook with ID %d %+v: %w", webhookID, webhook, err)
 			}
 		}
 	}
