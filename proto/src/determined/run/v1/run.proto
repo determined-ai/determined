@@ -214,11 +214,11 @@ message Run {
   // The current processed batches.
   int32 total_batches_processed = 34;
   // Best validation.
-  MetricsWorkload best_validation = 35;
+  determined.trial.v1.MetricsWorkload best_validation = 35;
   // Latest validation.
-  MetricsWorkload latest_validation = 36;
+  determined.trial.v1.MetricsWorkload latest_validation = 36;
   // Best checkpoint.
-  CheckpointWorkload best_checkpoint = 37;
+  determined.trial.v1.CheckpointWorkload best_checkpoint = 37;
   // The last reported state of the trial runner (harness code).
   string runner_state = 38;
   // The wall clock time is all active time of the cluster for the trial,
