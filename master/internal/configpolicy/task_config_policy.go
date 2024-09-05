@@ -2,7 +2,6 @@ package configpolicy
 
 import (
 	"github.com/determined-ai/determined/master/pkg/model"
-	cp "github.com/determined-ai/determined/master/pkg/schemas/configpolicy"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
@@ -13,7 +12,7 @@ import (
 // within a given scope are rejected.
 type ExperimentConfigPolicy struct {
 	InvariantConfig *expconf.ExperimentConfig `json:"config"`
-	Constraints     *cp.Constraints           `json:"constraints"`
+	Constraints     *model.Constraints        `json:"constraints"`
 }
 
 // NTSCConfigPolicy is the invariant config and constraints for an NTSC task.
@@ -23,5 +22,5 @@ type ExperimentConfigPolicy struct {
 // within a given scope are rejected.
 type NTSCConfigPolicy struct {
 	InvariantConfig *model.CommandConfig `json:"config"`
-	Constraints     *cp.Constraints      `json:"constraints"`
+	Constraints     *model.Constraints   `json:"constraints"`
 }
