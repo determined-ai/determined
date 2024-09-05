@@ -436,6 +436,9 @@ service Determined {
   rpc GetExperiment(GetExperimentRequest) returns (GetExperimentResponse) {
     option (google.api.http) = {
       get: "/api/v1/experiments/{experiment_id}"
+      additional_bindings {
+        get: "/api/v2/searches/{experiment_id}"
+      }
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Experiments"
