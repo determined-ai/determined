@@ -104,62 +104,40 @@ func SetNTSCConfigPoliciesTx(ctx context.Context, tx *bun.Tx,
 // given scope (global or workspace-level).
 func GetExperimentConfigPolicies(ctx context.Context,
 	scope *int) (*model.ExperimentTaskConfigPolicies, error) {
-	experimentTCP, _, err := getConfigPolicies(ctx, scope, model.ExperimentType)
-	if err != nil {
-		return nil, err
-	}
-	return experimentTCP, nil
-}
-
-func getConfigPolicies(ctx context.Context,
-	scope *int, workloadType model.WorkloadType) (*model.ExperimentTaskConfigPolicies,
-	*model.NTSCTaskConfigPolicies, error) {
 	var experimentTCP model.ExperimentTaskConfigPolicies
-	var ntscTCP model.NTSCTaskConfigPolicies
-
-	switch workloadType {
-	case model.ExperimentType:
-		err := Bun().NewSelect().
-			Model(&experimentTCP).
-			Where("workspace_id = ? AND workload_type = ?", scope, workloadType.String()).
-			Scan(ctx)
-		if err != nil {
-			if scope == nil {
-				return nil, nil, fmt.Errorf("error retrieving global experiment task config "+
-					"policies: %w", err)
-			}
-			return nil, nil, fmt.Errorf("error retrieving experiment task config policies for "+
-				"workspace with ID %d: %w", *scope, err)
+	err := Bun().NewSelect().
+		Model(&experimentTCP).
+		Where("workspace_id = ? AND workload_type = ?", scope, model.ExperimentType).
+		Scan(ctx)
+	if err != nil {
+		if scope == nil {
+			return nil, fmt.Errorf("error retrieving global experiment task config "+
+				"policies: %w", err)
 		}
-	case model.NTSCType:
-		err := Bun().NewSelect().
-			Model(&ntscTCP).
-			Where("workspace_id = ? AND workload_type = ?", scope, workloadType.String()).
-			Scan(ctx)
-		if err != nil {
-			if scope == nil {
-				return nil, nil, fmt.Errorf("error retrieving global NTSC task config "+
-					"policies: %w", err)
-			}
-			return nil, nil, fmt.Errorf("error retrieving NTSC task config policies for "+
-				"workspace with ID %d: %w", *scope, err)
-		}
-	default:
-		return nil, nil, status.Errorf(codes.InvalidArgument,
-			"invalid workload type for config policy: %s", workloadType.String())
+		return nil, fmt.Errorf("error retrieving experiment task config policies for "+
+			"workspace with ID %d: %w", *scope, err)
 	}
-	return &experimentTCP, &ntscTCP, nil
+	return &experimentTCP, nil
 }
 
 // GetNTSCConfigPolicies retrieves the invariant NTSC config and constraints for the
 // given scope (global or workspace-level).
 func GetNTSCConfigPolicies(ctx context.Context,
 	scope *int) (*model.NTSCTaskConfigPolicies, error) {
-	_, ntscTCP, err := getConfigPolicies(ctx, scope, model.NTSCType)
+	var ntscTCP model.NTSCTaskConfigPolicies
+	err := Bun().NewSelect().
+		Model(&ntscTCP).
+		Where("workspace_id = ? AND workload_type = ?", scope, model.NTSCType).
+		Scan(ctx)
 	if err != nil {
-		return nil, err
+		if scope == nil {
+			return nil, fmt.Errorf("error retrieving global NTSC task config "+
+				"policies: %w", err)
+		}
+		return nil, fmt.Errorf("error retrieving NTSC task config policies for "+
+			"workspace with ID %d: %w", *scope, err)
 	}
-	return ntscTCP, nil
+	return &ntscTCP, nil
 }
 
 // DeleteExperimentConfigPolicies deletes the invariant experiment config and constraints for the

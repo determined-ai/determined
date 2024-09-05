@@ -13,39 +13,9 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas/configpolicy"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/google/uuid"
-	"google.golang.org/grpc/codes"
 
 	"github.com/stretchr/testify/require"
 )
-
-func TestCannotGetUnspecifiedWorkloadConfigPolicy(t *testing.T) {
-	ctx := context.Background()
-	require.NoError(t, etc.SetRootPath(RootFromDB))
-	pgDB, cleanup := MustResolveNewPostgresDatabase(t)
-	defer cleanup()
-	MustMigrateTestPostgres(t, pgDB, MigrationsFromDB)
-
-	// Global scope.
-	expCP, ntscCP, err := getConfigPolicies(ctx, nil, model.UnknownType)
-	require.Nil(t, expCP)
-	require.Nil(t, ntscCP)
-	require.ErrorContains(t, err, codes.InvalidArgument.String())
-
-	// Workspace-level scope.
-	// (Setup) Create a workspace and give it a valid constraints policy.
-	w, _, _ := CreateMockTaskConfigPolicies(ctx, t, pgDB, false)
-
-	// Verify that we can get the workspace's constraints policy for experiments.
-	expCP, _, err = getConfigPolicies(ctx, &w.ID, model.ExperimentType)
-	require.NoError(t, err)
-	require.NotNil(t, expCP)
-
-	var wkspID int
-	expCP, ntscCP, err = getConfigPolicies(ctx, &wkspID, model.UnknownType)
-	require.Nil(t, expCP)
-	require.Nil(t, ntscCP)
-	require.ErrorContains(t, err, codes.InvalidArgument.String())
-}
 
 func TestDeleteConfigPolicies(t *testing.T) {
 	ctx := context.Background()
