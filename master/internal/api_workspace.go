@@ -618,7 +618,7 @@ func (a *apiServer) DeleteWorkspaceNamespaceBindings(ctx context.Context,
 	err = db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		err := a.deleteWorkspaceNamespaceBinding(ctx, clusterNames, req.WorkspaceId, currUser, &tx)
 		if err != nil {
-			return err
+			return fmt.Errorf("failed to delete namespace binding: %w", err)
 		}
 		return nil
 	})
@@ -636,43 +636,37 @@ func (a *apiServer) deleteWorkspaceNamespaceBinding(ctx context.Context,
 		return status.Error(codes.PermissionDenied, err.Error())
 	}
 	if len(clusterNames) > 0 {
-		err := db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-			deletedBindings, err := workspace.DeleteWorkspaceNamespaceBindings(ctx, int(workspaceID), clusterNames, &tx)
+		deletedBindings, err := workspace.DeleteWorkspaceNamespaceBindings(ctx, int(workspaceID), clusterNames, tx)
+		if err != nil {
+			return err
+		}
+		deletedClusters := map[string]int{}
+		for _, v := range deletedBindings {
+			deletedClusters[v.ClusterName] = 1
+			err = a.m.rm.RemoveEmptyNamespace(v.Namespace, v.ClusterName)
 			if err != nil {
 				return err
 			}
-			deletedClusters := map[string]int{}
-			for _, v := range deletedBindings {
-				deletedClusters[v.ClusterName] = 1
-				err = a.m.rm.RemoveEmptyNamespace(v.Namespace, v.ClusterName)
-				if err != nil {
-					return err
-				}
-			}
-			// Since bindings to the default namespace are not stored in the db, we may
-			// delete less bindings in the database than specified in the request
-			if len(deletedClusters) < len(clusterNames) {
-				switch {
-				case len(clusterNames) == 1:
-					deleteDefaultBindingError := fmt.Sprintf("tried to delete default binding "+
-						"for cluster %v", clusterNames[0])
-					return errors.Wrap(db.ErrDeleteDefaultBinding, deleteDefaultBindingError)
-				default:
-					remainingClusters := ""
-					for _, i := range clusterNames {
-						if _, ok := deletedClusters[i]; !ok {
-							remainingClusters = remainingClusters + i + ", "
-						}
+		}
+		// Since bindings to the default namespace are not stored in the db, we may
+		// delete less bindings in the database than specified in the request
+		if len(deletedClusters) < len(clusterNames) {
+			switch {
+			case len(clusterNames) == 1:
+				deleteDefaultBindingError := fmt.Sprintf("tried to delete default binding "+
+					"for cluster %v", clusterNames[0])
+				return errors.Wrap(db.ErrDeleteDefaultBinding, deleteDefaultBindingError)
+			default:
+				remainingClusters := ""
+				for _, i := range clusterNames {
+					if _, ok := deletedClusters[i]; !ok {
+						remainingClusters = remainingClusters + i + ", "
 					}
-					deleteDefaultBindingError := fmt.Sprintf("tried to delete default binding for "+
-						"clusters: %v", remainingClusters[:len(remainingClusters)-2])
-					return errors.Wrap(db.ErrDeleteDefaultBinding, deleteDefaultBindingError)
 				}
+				deleteDefaultBindingError := fmt.Sprintf("tried to delete default binding for "+
+					"clusters: %v", remainingClusters[:len(remainingClusters)-2])
+				return errors.Wrap(db.ErrDeleteDefaultBinding, deleteDefaultBindingError)
 			}
-			return nil
-		})
-		if err != nil {
-			return fmt.Errorf("failed to delete namespace binding: %w", err)
 		}
 	}
 
@@ -816,8 +810,8 @@ func (a *apiServer) PatchWorkspace(
 			}
 			if len(toDelete) > 0 {
 				err = a.deleteWorkspaceNamespaceBinding(ctx, toDelete, req.Id, &currUser, &tx)
-				if errors.Is(err, db.ErrDeleteDefaultBinding) {
-					return err
+				if err != nil {
+					return fmt.Errorf("failed to delete namespace binding: %w", err)
 				}
 			}
 			updatedWksp, err := updatedWorkspace.ToProto()
