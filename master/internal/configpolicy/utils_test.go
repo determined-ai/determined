@@ -57,7 +57,7 @@ var (
 	priorityLimit = 10
 )
 
-var structExperiment = ExperimentConfigPolicy{
+var structExperiment = ExperimentConfigPolicies{
 	InvariantConfig: &expconf.ExperimentConfig{
 		RawDescription: &description,
 		RawResources: &expconf.ResourcesConfig{
@@ -68,8 +68,8 @@ var structExperiment = ExperimentConfigPolicy{
 			RawAddCapabilities: []string{"cap1", "cap2"},
 		},
 	},
-	Constraints: &Constraints{
-		ResourceConstraints: &ResourceConstraints{
+	Constraints: &model.Constraints{
+		ResourceConstraints: &model.ResourceConstraints{
 			MaxSlots: &maxSlots,
 		},
 		PriorityLimit: &priorityLimit,
@@ -86,14 +86,14 @@ func TestUnmarshalYamlExperiment(t *testing.T) {
 		name   string
 		input  string
 		noErr  bool
-		output *ExperimentConfigPolicy
+		output *ExperimentConfigPolicies
 	}{
 		{"valid yaml", yamlExperiment + yamlConstraints, true, &structExperiment},
 		{"just config", yamlExperiment, true, &justConfig},
 		{"just constraints", yamlConstraints, true, &justConstraints},
 		{"extra fields", yamlExperiment + `  extra_field: "string"` + yamlConstraints, false, nil},
 		{"invalid fields", yamlExperiment + "  debug true\n", false, nil},
-		{"empty input", "", true, &ExperimentConfigPolicy{}},
+		{"empty input", "", true, &ExperimentConfigPolicies{}},
 		{"null/empty fields", yamlExperiment + "  debug:\n", true, &structExperiment},
 		{"wrong field type", "invariant_config:\n  debug: 3\n", false, nil},
 	}
@@ -121,7 +121,7 @@ invariant_config:
     slots: 1
 `
 
-var structNTSC = NTSCConfigPolicy{
+var structNTSC = NTSCConfigPolicies{
 	InvariantConfig: &model.CommandConfig{
 		Description: "test\nspecial\tchar",
 		Resources: model.ResourcesConfig{
@@ -132,8 +132,8 @@ var structNTSC = NTSCConfigPolicy{
 			AddCapabilities: []string{"cap1", "cap2"},
 		},
 	},
-	Constraints: &Constraints{
-		ResourceConstraints: &ResourceConstraints{
+	Constraints: &model.Constraints{
+		ResourceConstraints: &model.ResourceConstraints{
 			MaxSlots: &maxSlots,
 		},
 		PriorityLimit: &priorityLimit,
@@ -150,14 +150,14 @@ func TestUnmarshalYamlNTSC(t *testing.T) {
 		name   string
 		input  string
 		noErr  bool
-		output *NTSCConfigPolicy
+		output *NTSCConfigPolicies
 	}{
 		{"valid yaml", yamlNTSC + yamlConstraints, true, &structNTSC},
 		{"just config", yamlNTSC, true, &justConfig},
 		{"just constraints", yamlConstraints, true, &justConstraints},
 		{"extra fields", yamlNTSC + `  extra_field: "string"` + yamlConstraints, false, nil},
 		{"invalid fields", yamlNTSC + "  debug true\n", false, nil},
-		{"empty input", "", true, &NTSCConfigPolicy{}},
+		{"empty input", "", true, &NTSCConfigPolicies{}},
 		{"null/empty fields", yamlNTSC + "  debug:\n", true, &structNTSC}, // empty fields unmarshal to default value
 		{"wrong field type", "invariant_config:\n  debug: 3\n", false, nil},
 	}
@@ -241,14 +241,14 @@ func TestUnmarshalJSONExperiment(t *testing.T) {
 		name   string
 		input  string
 		noErr  bool
-		output *ExperimentConfigPolicy
+		output *ExperimentConfigPolicies
 	}{
 		{"valid json", `{` + jsonExperiment + `,` + jsonConstraints + `}`, true, &structExperiment},
 		{"just config", `{` + jsonExperiment + `}`, true, &justConfig},
 		{"just constraints", `{` + jsonConstraints + `}`, true, &justConstraints},
 		{"extra fields", jsonExtraField, false, nil},
 		{"invalid fields", jsonInvalidField, false, nil},
-		{"empty input", "", true, &ExperimentConfigPolicy{}},
+		{"empty input", "", true, &ExperimentConfigPolicies{}},
 		{"null/empty fields", jsonEmptyField, true, &structExperiment}, // empty fields unmarshal to default value
 		{"wrong field type", jsonWrongFieldType, false, nil},
 	}
@@ -287,14 +287,14 @@ func TestUnmarshalJSONNTSC(t *testing.T) {
 		name   string
 		input  string
 		noErr  bool
-		output *NTSCConfigPolicy
+		output *NTSCConfigPolicies
 	}{
 		{"valid json", `{` + jsonNTSC + `,` + jsonConstraints + `}`, true, &structNTSC},
 		{"just config", `{` + jsonNTSC + `}`, true, &justConfig},
 		{"just constraints", `{` + jsonConstraints + `}`, true, &justConstraints},
 		{"extra fields", jsonExtraField, false, nil},
 		{"invalid fields", jsonInvalidField, false, nil},
-		{"empty input", "", true, &NTSCConfigPolicy{}},
+		{"empty input", "", true, &NTSCConfigPolicies{}},
 		{"null/empty fields", jsonEmptyField, true, &structNTSC}, // empty fields unmarshal to default value
 		{"wrong field type", jsonWrongFieldType, false, nil},
 	}

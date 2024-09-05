@@ -1,0 +1,123 @@
+package configpolicy
+
+import (
+	"context"
+	"fmt"
+	"strings"
+
+	"github.com/uptrace/bun"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
+
+	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/pkg/model"
+)
+
+// SetNTSCConfigPolicies adds the NTSC invariant config and constraints config policies to
+// the database.
+func SetNTSCConfigPolicies(ctx context.Context,
+	experimentTCP *model.NTSCTaskConfigPolicies,
+) error {
+	return db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		return SetNTSCConfigPoliciesTx(ctx, &tx, experimentTCP)
+	})
+}
+
+// SetNTSCConfigPoliciesTx adds the NTSC invariant config and constraints config policies to
+// the database.
+func SetNTSCConfigPoliciesTx(ctx context.Context, tx *bun.Tx,
+	ntscTCPs *model.NTSCTaskConfigPolicies,
+) error {
+	if ntscTCPs.WorkloadType != model.NTSCType {
+		return status.Error(codes.InvalidArgument,
+			"invalid workload type for config policies: "+ntscTCPs.WorkloadType.String())
+	}
+
+	if ntscTCPs.WorkspaceID == nil {
+		_, err := db.Bun().NewRaw(
+			`
+			INSERT INTO task_config_policies (workspace_id, last_updated_by, last_updated_time, 
+				workload_type, invariant_config, constraints) VALUES (?, ?, ?, ?, ?, ?)
+			ON CONFLICT (workload_type) WHERE workspace_id IS NULL
+				DO UPDATE SET last_updated_by = ?, last_updated_time = ?, invariant_config = ?, 
+				constraints = ?
+			`, ntscTCPs.WorkspaceID, ntscTCPs.LastUpdatedBy, ntscTCPs.LastUpdatedTime,
+			model.NTSCType.String(), ntscTCPs.InvariantConfig, ntscTCPs.Constraints,
+			ntscTCPs.LastUpdatedBy, ntscTCPs.LastUpdatedTime, ntscTCPs.InvariantConfig,
+			ntscTCPs.Constraints).
+			Exec(ctx)
+		if err != nil {
+			return fmt.Errorf("error setting global NTSC task config policies: %w", err)
+		}
+		return nil
+	}
+	_, err := db.Bun().NewRaw(
+		`
+		INSERT INTO task_config_policies (workspace_id, last_updated_by, last_updated_time, 
+			workload_type, invariant_config, constraints) VALUES (?, ?, ?, ?, ?, ?)
+		ON CONFLICT (workspace_id, workload_type) WHERE workspace_id IS NOT NULL
+			DO UPDATE SET last_updated_by = ?, last_updated_time = ?, invariant_config = ?, 
+			constraints = ?
+		`, ntscTCPs.WorkspaceID, ntscTCPs.LastUpdatedBy, ntscTCPs.LastUpdatedTime,
+		model.NTSCType.String(), ntscTCPs.InvariantConfig, ntscTCPs.Constraints,
+		ntscTCPs.LastUpdatedBy, ntscTCPs.LastUpdatedTime, ntscTCPs.InvariantConfig,
+		ntscTCPs.Constraints).
+		Exec(ctx)
+	if err != nil {
+		return fmt.Errorf("error setting NTSC task config policies: %w", err)
+	}
+
+	return nil
+}
+
+// GetNTSCConfigPolicies retrieves the invariant NTSC config and constraints for the
+// given scope (global or workspace-level).
+func GetNTSCConfigPolicies(ctx context.Context,
+	scope *int,
+) (*model.NTSCTaskConfigPolicies, error) {
+	var ntscTCP model.NTSCTaskConfigPolicies
+	wkspQuery := "workspace_id = ?"
+	if scope == nil {
+		wkspQuery = "workspace_id IS ?"
+	}
+	err := db.Bun().NewSelect().
+		Model(&ntscTCP).
+		Where(wkspQuery, scope).
+		Where("workload_type = ?", model.NTSCType).
+		Scan(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("error retrieving NTSC task config policies for "+
+			"workspace with ID %d: %w", scope, err)
+	}
+	return &ntscTCP, nil
+}
+
+// DeleteConfigPolicies deletes the invariant experiment config and constraints for the
+// given scope (global or workspace-level) and workload type.
+func DeleteConfigPolicies(ctx context.Context,
+	scope *int, workloadType model.WorkloadType,
+) error {
+	if workloadType == model.UnknownType {
+		return status.Error(codes.InvalidArgument,
+			"invalid workload type for config policies: "+workloadType.String())
+	}
+	wkspQuery := "workspace_id = ?"
+	if scope == nil {
+		wkspQuery = "workspace_id IS ?"
+	}
+
+	_, err := db.Bun().NewDelete().
+		Table("task_config_policies").
+		Where(wkspQuery, scope).
+		Where("workload_type = ?", workloadType.String()).
+		Exec(ctx)
+	if err != nil {
+		if scope == nil {
+			return fmt.Errorf("error deleting global %s config policies:%w",
+				strings.ToLower(workloadType.String()), err)
+		}
+		return fmt.Errorf("error deleting %s config policies for workspace with ID %d: %w",
+			strings.ToLower(workloadType.String()), scope, err)
+	}
+	return nil
+}
