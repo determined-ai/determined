@@ -4,13 +4,14 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/protoutils"
 	"github.com/ghodss/yaml"
 	"google.golang.org/protobuf/types/known/structpb"
+
+	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/protoutils"
 )
 
-// ValidWorkloadType checks if the string is an accepted WorkloadType
+// ValidWorkloadType checks if the string is an accepted WorkloadType.
 func ValidWorkloadType(val string) bool {
 	switch val {
 	case string(model.ExperimentType), string(model.NTSCType):
@@ -20,6 +21,7 @@ func ValidWorkloadType(val string) bool {
 	}
 }
 
+// UnmarshalExperimentConfigPolicy unpacks a string into ExperimentConfigPolicy struct.
 func UnmarshalExperimentConfigPolicy(str string) (*ExperimentConfigPolicy, error) {
 	var expConfigPolicy ExperimentConfigPolicy
 	var err error
@@ -37,6 +39,7 @@ func UnmarshalExperimentConfigPolicy(str string) (*ExperimentConfigPolicy, error
 	return nil, fmt.Errorf("invalid ExperimentConfigPolicy input: %w", err)
 }
 
+// UnmarshalNTSCConfigPolicy unpacks a string into NTSCConfigPolicy struct.
 func UnmarshalNTSCConfigPolicy(str string) (*NTSCConfigPolicy, error) {
 	var ntscConfigPolicy NTSCConfigPolicy
 	var err error
@@ -54,6 +57,7 @@ func UnmarshalNTSCConfigPolicy(str string) (*NTSCConfigPolicy, error) {
 	return nil, fmt.Errorf("invalid ExperimentConfigPolicy input: %w", err)
 }
 
+// MarshalConfigPolicy packs a config policy into a proto struct.
 func MarshalConfigPolicy(configPolicy interface{}) *structpb.Struct {
 	return protoutils.ToStruct(configPolicy)
 }

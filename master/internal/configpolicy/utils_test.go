@@ -3,10 +3,11 @@ package configpolicy
 import (
 	"testing"
 
-	"github.com/determined-ai/determined/master/pkg/model"
-	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/stretchr/testify/require"
 	"gotest.tools/assert"
+
+	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
 const yamlConstraints = `
@@ -15,6 +16,7 @@ constraints:
     max_slots: 4
   priority_limit: 10
 `
+
 const yamlExperiment = `
 invariant_config:
   description: "test\nspecial\tchar"
@@ -27,38 +29,40 @@ invariant_config:
     slots: 1
 `
 
+var (
+	description   = "test\nspecial\tchar"
+	slots         = 1
+	forcePull     = false
+	maxSlots      = 4
+	priorityLimit = 10
+)
+
+var structExperiment = ExperimentConfigPolicy{
+	InvariantConfig: &expconf.ExperimentConfig{
+		RawDescription: &description,
+		RawResources: &expconf.ResourcesConfig{
+			RawSlots: &slots,
+		},
+		RawEnvironment: &expconf.EnvironmentConfigV0{
+			RawForcePullImage:  &forcePull,
+			RawAddCapabilities: []string{"cap1", "cap2"},
+		},
+	},
+	Constraints: &Constraints{
+		ResourceConstraints: &ResourceConstraints{
+			MaxSlots: &maxSlots,
+		},
+		PriorityLimit: &priorityLimit,
+	},
+}
+
 func TestUnmarshalYamlExperiment(t *testing.T) {
-	description := "test\nspecial\tchar"
-	slots := 1
-	forcePull := false
-	maxSlots := 4
-	priorityLimit := 10
-
-	structExperiment := ExperimentConfigPolicy{
-		InvariantConfig: &expconf.ExperimentConfig{
-			RawDescription: &description,
-			RawResources: &expconf.ResourcesConfig{
-				RawSlots: &slots,
-			},
-			RawEnvironment: &expconf.EnvironmentConfigV0{
-				RawForcePullImage:  &forcePull,
-				RawAddCapabilities: []string{"cap1", "cap2"},
-			},
-		},
-		Constraints: &Constraints{
-			ResourceConstraints: &ResourceConstraints{
-				MaxSlots: &maxSlots,
-			},
-			PriorityLimit: &priorityLimit,
-		},
-	}
-
 	justConfig := structExperiment
 	justConfig.Constraints = nil
 	justConstraints := structExperiment
 	justConstraints.InvariantConfig = nil
 
-	var testCases = []struct {
+	testCases := []struct {
 		name   string
 		input  string
 		noErr  bool
@@ -97,34 +101,32 @@ invariant_config:
     slots: 1
 `
 
-func TestUnmarshalYamlNTSC(t *testing.T) {
-	maxSlots := 4
-	priorityLimit := 10
-	structNTSC := NTSCConfigPolicy{
-		InvariantConfig: &model.CommandConfig{
-			Description: "test\nspecial\tchar",
-			Resources: model.ResourcesConfig{
-				Slots: 10,
-			},
-			Environment: model.Environment{
-				ForcePullImage:  false,
-				AddCapabilities: []string{"cap1", "cap2"},
-			},
+var structNTSC = NTSCConfigPolicy{
+	InvariantConfig: &model.CommandConfig{
+		Description: "test\nspecial\tchar",
+		Resources: model.ResourcesConfig{
+			Slots: 10,
 		},
-		Constraints: &Constraints{
-			ResourceConstraints: &ResourceConstraints{
-				MaxSlots: &maxSlots,
-			},
-			PriorityLimit: &priorityLimit,
+		Environment: model.Environment{
+			ForcePullImage:  false,
+			AddCapabilities: []string{"cap1", "cap2"},
 		},
-	}
+	},
+	Constraints: &Constraints{
+		ResourceConstraints: &ResourceConstraints{
+			MaxSlots: &maxSlots,
+		},
+		PriorityLimit: &priorityLimit,
+	},
+}
 
+func TestUnmarshalYamlNTSC(t *testing.T) {
 	justConfig := structNTSC
 	justConfig.Constraints = nil
 	justConstraints := structNTSC
 	justConstraints.InvariantConfig = nil
 
-	var testCases = []struct {
+	testCases := []struct {
 		name   string
 		input  string
 		noErr  bool
@@ -174,37 +176,12 @@ invariant_config: {
 `
 
 func TestUnmarshalJSONExperiment(t *testing.T) {
-	description := "test\nspecial\tchar"
-	slots := 1
-	forcePull := false
-	maxSlots := 4
-	priorityLimit := 10
-
-	structExperiment := ExperimentConfigPolicy{
-		InvariantConfig: &expconf.ExperimentConfig{
-			RawDescription: &description,
-			RawResources: &expconf.ResourcesConfig{
-				RawSlots: &slots,
-			},
-			RawEnvironment: &expconf.EnvironmentConfigV0{
-				RawForcePullImage:  &forcePull,
-				RawAddCapabilities: []string{"cap1", "cap2"},
-			},
-		},
-		Constraints: &Constraints{
-			ResourceConstraints: &ResourceConstraints{
-				MaxSlots: &maxSlots,
-			},
-			PriorityLimit: &priorityLimit,
-		},
-	}
-
 	justConfig := structExperiment
 	justConfig.Constraints = nil
 	justConstraints := structExperiment
 	justConstraints.InvariantConfig = nil
 
-	var testCases = []struct {
+	testCases := []struct {
 		name   string
 		input  string
 		noErr  bool
@@ -245,33 +222,12 @@ invariant_config: {
 `
 
 func TestUnmarshalJSONNTSC(t *testing.T) {
-	maxSlots := 4
-	priorityLimit := 10
-	structNTSC := NTSCConfigPolicy{
-		InvariantConfig: &model.CommandConfig{
-			Description: "test\nspecial\tchar",
-			Resources: model.ResourcesConfig{
-				Slots: 10,
-			},
-			Environment: model.Environment{
-				ForcePullImage:  false,
-				AddCapabilities: []string{"cap1", "cap2"},
-			},
-		},
-		Constraints: &Constraints{
-			ResourceConstraints: &ResourceConstraints{
-				MaxSlots: &maxSlots,
-			},
-			PriorityLimit: &priorityLimit,
-		},
-	}
-
 	justConfig := structNTSC
 	justConfig.Constraints = nil
 	justConstraints := structNTSC
 	justConstraints.InvariantConfig = nil
 
-	var testCases = []struct {
+	testCases := []struct {
 		name   string
 		input  string
 		noErr  bool
