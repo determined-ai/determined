@@ -2,6 +2,7 @@ package db
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"strings"
@@ -13,19 +14,19 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-// AddExperimentonfigPolicies adds the experiment invariant config and constraints config policies to
+// SetExperimentonfigPolicies adds the experiment invariant config and constraints config policies to
 // the database.
-func AddExperimentConfigPolicies(ctx context.Context,
-	experimentTCP *model.ExperimentTaskConfigPolicy) error {
+func SetExperimentConfigPolicies(ctx context.Context,
+	experimentTCP *model.ExperimentTaskConfigPolicies) error {
 	return Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		return AddExperimentConfigPoliciesTx(ctx, &tx, experimentTCP)
+		return SetExperimentConfigPoliciesTx(ctx, &tx, experimentTCP)
 	})
 }
 
-// AddExperimentConfigPoliciesTx adds the experiment invariant config and constraints config policies to
+// SetExperimentConfigPoliciesTx adds the experiment invariant config and constraints config policies to
 // the database.
-func AddExperimentConfigPoliciesTx(ctx context.Context, tx *bun.Tx,
-	experimentTCP *model.ExperimentTaskConfigPolicy) error {
+func SetExperimentConfigPoliciesTx(ctx context.Context, tx *bun.Tx,
+	experimentTCP *model.ExperimentTaskConfigPolicies) error {
 
 	// Validate experiment invariant config and constraints.
 	expInvariantConfig, err := json.Marshal(experimentTCP.InvariantConfig)
@@ -40,27 +41,35 @@ func AddExperimentConfigPoliciesTx(ctx context.Context, tx *bun.Tx,
 			expConstraints)
 	}
 
-	// Insert invariant configs and constraints.
-	_, err = Bun().NewInsert().Model(experimentTCP).Exec(ctx)
-	if err != nil {
-		return fmt.Errorf("error inserting experiment task config policy: %w", err)
+	_, err = Bun().NewUpdate().
+		Model(experimentTCP).
+		Where(`workspace_id = ? AND workload_type = ?`, experimentTCP.WorkspaceID,
+			model.ExperimentType).
+		Exec(ctx)
+	if err != nil && err == sql.ErrNoRows {
+		// Insert invariant configs and constraints.
+		_, err = Bun().NewInsert().Model(experimentTCP).Exec(ctx)
+		if err != nil {
+			return fmt.Errorf("error inserting experiment task config policy: %w", err)
+		}
+		return fmt.Errorf("error updating experiment task config policy: %w", err)
 	}
-	return err
+	return nil
 }
 
-// AddNTSCConfigPolicies adds the NTSC invariant config and constraints config policies to
+// SetNTSCConfigPolicies adds the NTSC invariant config and constraints config policies to
 // the database.
-func AddNTSCConfigPolicies(ctx context.Context,
-	experimentTCP *model.ExperimentTaskConfigPolicy) error {
+func SetNTSCConfigPolicies(ctx context.Context,
+	experimentTCP *model.NTSCTaskConfigPolicies) error {
 	return Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		return AddNTSCConfigPoliciesTx(ctx, &tx, experimentTCP)
+		return SetNTSCConfigPoliciesTx(ctx, &tx, experimentTCP)
 	})
 }
 
-// AddNTSCConfigPoliciesTx adds the NTSC invariant config and constraints config policies to
+// SetNTSCConfigPoliciesTx adds the NTSC invariant config and constraints config policies to
 // the database.
-func AddNTSCConfigPoliciesTx(ctx context.Context, tx *bun.Tx,
-	ntscTCP *model.ExperimentTaskConfigPolicy) error {
+func SetNTSCConfigPoliciesTx(ctx context.Context, tx *bun.Tx,
+	ntscTCP *model.NTSCTaskConfigPolicies) error {
 
 	// Validate NTSC invariant config and constraints.
 	expInvariantConfig, err := json.Marshal(ntscTCP.InvariantConfig)
@@ -75,18 +84,26 @@ func AddNTSCConfigPoliciesTx(ctx context.Context, tx *bun.Tx,
 			expConstraints)
 	}
 
-	// Insert invariant configs and constraints.
-	_, err = Bun().NewInsert().Model(ntscTCP).Exec(ctx)
-	if err != nil {
-		return fmt.Errorf("error inserting NTSC task config policy: %w", err)
+	_, err = Bun().NewUpdate().
+		Model(ntscTCP).
+		Where(`workspace_id = ? AND workload_type = ?`, ntscTCP.WorkspaceID,
+			model.NTSCType).
+		Exec(ctx)
+	if err != nil && err == sql.ErrNoRows {
+		// Insert invariant configs and constraints.
+		_, err = Bun().NewInsert().Model(ntscTCP).Exec(ctx)
+		if err != nil {
+			return fmt.Errorf("error inserting NTSC task config policy: %w", err)
+		}
+		return fmt.Errorf("error updating NTSC task config policy: %w", err)
 	}
-	return err
+	return nil
 }
 
 // GetExperimentConfigPolicies retrieves the invariant experiment config and constraints for the
 // given scope (global or workspace-level).
 func GetExperimentConfigPolicies(ctx context.Context,
-	scope *int) (*model.ExperimentTaskConfigPolicy, error) {
+	scope *int) (*model.ExperimentTaskConfigPolicies, error) {
 	experimentTCP, _, err := getConfigPolicies(ctx, scope, model.ExperimentType)
 	if err != nil {
 		return nil, err
@@ -95,15 +112,17 @@ func GetExperimentConfigPolicies(ctx context.Context,
 }
 
 func getConfigPolicies(ctx context.Context,
-	scope *int, workloadType model.WorkloadType) (*model.ExperimentTaskConfigPolicy,
-	*model.NTSCTaskConfigPolicy, error) {
-	var experimentTCP model.ExperimentTaskConfigPolicy
-	var ntscTCP model.NTSCTaskConfigPolicy
+	scope *int, workloadType model.WorkloadType) (*model.ExperimentTaskConfigPolicies,
+	*model.NTSCTaskConfigPolicies, error) {
+	var experimentTCP model.ExperimentTaskConfigPolicies
+	var ntscTCP model.NTSCTaskConfigPolicies
 
 	switch workloadType {
 	case model.ExperimentType:
-		err := Bun().NewSelect().Model(&experimentTCP).Where("id = ? AND workload_type = ?", scope,
-			workloadType.String())
+		err := Bun().NewSelect().
+			Model(&experimentTCP).
+			Where("workspace_id = ? AND workload_type = ?", scope, workloadType.String()).
+			Scan(ctx)
 		if err != nil {
 			if scope == nil {
 				return nil, nil, fmt.Errorf("error retrieving global experiment task config "+
@@ -113,8 +132,10 @@ func getConfigPolicies(ctx context.Context,
 				"workspace with ID %d: %w", *scope, err)
 		}
 	case model.NTSCType:
-		err := Bun().NewSelect().Model(&ntscTCP).Where("id = ? AND workload_type = ?", scope,
-			workloadType.String())
+		err := Bun().NewSelect().
+			Model(&ntscTCP).
+			Where("workspace_id = ? AND workload_type = ?", scope, workloadType.String()).
+			Scan(ctx)
 		if err != nil {
 			if scope == nil {
 				return nil, nil, fmt.Errorf("error retrieving global NTSC task config "+
@@ -133,7 +154,7 @@ func getConfigPolicies(ctx context.Context,
 // GetNTSCConfigPolicies retrieves the invariant NTSC config and constraints for the
 // given scope (global or workspace-level).
 func GetNTSCConfigPolicies(ctx context.Context,
-	scope *int) (*model.NTSCTaskConfigPolicy, error) {
+	scope *int) (*model.NTSCTaskConfigPolicies, error) {
 	_, ntscTCP, err := getConfigPolicies(ctx, scope, model.NTSCType)
 	if err != nil {
 		return nil, err
@@ -149,8 +170,10 @@ func DeleteConfigPolicies(ctx context.Context,
 		return status.Error(codes.InvalidArgument,
 			"invalid workload type for config policy: "+workloadType.String())
 	}
-	_, err := Bun().NewDelete().Table("task_config_policies").Where("workspace_id = ? AND "+
-		"workload_type = ?", scope, workloadType.String()).Exec(ctx)
+	_, err := Bun().NewDelete().
+		Table("task_config_policies").
+		Where("workspace_id = ? AND workload_type = ?", scope, workloadType.String()).
+		Exec(ctx)
 	if err != nil {
 		if scope == nil {
 			return fmt.Errorf("error deleting global %s config policies:%w",
