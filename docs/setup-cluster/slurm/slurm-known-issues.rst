@@ -391,37 +391,11 @@ Some constraints are due to differences in behavior between Docker and Singulari
    reported as completed with no error message reported. Refer to :ref:`PBS Requirements
    <pbs-config-requirements>`.
 
-.. _rocm-known-issues:
-
 ***********************
  AMD/ROCm Known Issues
 ***********************
 
-Determined provides experimental support for :ref:`AMD ROCm GPUs <rocm-support>` in Kubernetes
-deployments.
-
-Deprecations and known issues:
-
--  **Agent Deprecation**: Agent-based deployments have been deprecated. Ensure that you are using
-   Kubernetes with ROCm support for your deployments.
-
--  **HIP GPU Errors**: Launching experiments with ``slot_type: rocm`` may fail with the error
-   ``RuntimeError: No HIP GPUs are available``. Ensure that the compute nodes have ROCm drivers and
-   libraries compatible with the environment image in use. These should be available in default
-   locations or added to the ``PATH`` and/or ``LD_LIBRARY_PATH`` variables in the :ref:`slurm
-   configuration <cluster-configuration-slurm>`. Depending on your system setup, you may need to
-   select a different ROCm image. See :ref:`set-environment-images` for the available images.
-
--  **Boost Filesystem Errors**: You may encounter the error ``boost::filesystem::remove: Directory
-   not empty`` during ROCm operations. A potential workaround is to disable the per-container
-   ``/tmp`` by adding a bind mount in your experiment configuration or globally using the
-   ``task_container_defaults`` section in your master configuration:
-
-      .. code:: yaml
-
-         bind_mounts:
-            - host_path: /tmp
-              container_path: /tmp
+For AMD/ROCm support and known issues, visit :ref:`AMD ROCm GPUs <rocm-support>`.
 
 ***************************************
  Determined AI Experiment Requirements

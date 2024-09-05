@@ -13,6 +13,11 @@ Kubernetes version >= 1.19 and <= 1.21. Later versions of Kubernetes may also wo
 Kubernetes manually, or you can use a managed Kubernetes service such as :ref:`GKE
 <setup-gke-cluster>` or :ref:`EKS <setup-eks-cluster>`.
 
+.. note::
+
+   For information on using AMD ROCm GPUs with Determined on Kubernetes, please refer to our
+   :ref:`ROCm Support Guide <rocm-support>`.
+
 **********************************
  Set up a Development Environment
 **********************************

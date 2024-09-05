@@ -35,6 +35,14 @@ To list the current installation of Determined on the Kubernetes cluster:
 
 It is recommended to have just one instance of Determined per Kubernetes cluster.
 
+****************************
+ AMD ROCm GPU Configuration
+****************************
+
+For specific configuration details related to AMD ROCm GPUs, including how to set up resource pools
+and configure experiments, see our :ref:`guide on Configuring Kubernetes for ROCm GPUs
+<rocm-config-k8s>`.
+
 **************************************
  Get the Determined Master IP Address
 **************************************

@@ -25,6 +25,9 @@ Launcher options include:
 
 -  A command with arguments, run in the container
 
+If you're using AMD ROCm GPUs, make sure to specify ``slot_type: rocm`` in your experiment
+configuration. For more information on ROCm support, see :ref:`AMD ROCm Support <rocm-support>`.
+
 For distributed training, separate the launcher that starts distributed workers from your training
 script, which typically runs each worker. The distributed training launcher must:
 
