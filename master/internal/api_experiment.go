@@ -1383,14 +1383,6 @@ func (a *apiServer) parseAndMergeContinueConfig(expID int, overrideConfig string
 
 	providedConfig, err := expconf.ParseAnyExperimentConfigYAML([]byte(overrideConfig))
 	if err != nil {
-		// Add a helpful error message if a user just submits
-		// searcher.max_length.batches = 2. They would also need
-		// searcher.name = "single", which all experiments will always be here.
-		if strings.Contains(err.Error(), `unknown field "max_length"`) {
-			return nil, false, status.Errorf(codes.InvalidArgument,
-				`unknown field "max_length", you might also need to specify searcher.name=single`)
-		}
-
 		return nil, false, status.Errorf(codes.InvalidArgument,
 			fmt.Errorf("parsing override config: %w", err).Error())
 	}

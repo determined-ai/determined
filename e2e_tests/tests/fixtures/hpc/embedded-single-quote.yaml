@@ -1,4 +1,4 @@
-description: metric_maker
+description: embedded-single-quote
 data:
   user_defined_key: datakey="datavalue with ' embedded "
 

@@ -63,8 +63,6 @@
   case:
     name: random
     max_trials: 10
-    max_length:
-      epochs: 1
   merge_src:
     metric: sae
     smaller_is_better: true
@@ -73,8 +71,6 @@
   merged:
     name: random
     max_trials: 10
-    max_length:
-      epochs: 1
     metric: sae
     smaller_is_better: true
     source_trial_id: 1

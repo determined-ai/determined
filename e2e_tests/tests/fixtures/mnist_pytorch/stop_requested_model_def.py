@@ -24,4 +24,4 @@ if __name__ == "__main__":
     with pytorch.init() as train_context:
         trial = MNistTrialStopRequested(train_context, hparams=info.trial.hparams)
         trainer = pytorch.Trainer(trial, train_context)
-        trainer.fit(latest_checkpoint=info.latest_checkpoint)
+        trainer.fit(max_length=pytorch.Epoch(1), latest_checkpoint=info.latest_checkpoint)
