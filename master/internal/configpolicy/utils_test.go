@@ -10,6 +10,26 @@ import (
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
+func TestValidWorkloadType(t *testing.T) {
+	testCases := []struct {
+		name  string
+		input string
+		valid bool
+	}{
+		{"valid experiment type", "EXPERIMENT", true},
+		{"valid ntsc type", "NTSC", true},
+		{"invalid type", "EXPERIMENTS", false},
+		{"lowercase", "experiment", false},
+	}
+
+	for _, tt := range testCases {
+		t.Run(tt.name, func(t *testing.T) {
+			valid := ValidWorkloadType(tt.input)
+			require.Equal(t, tt.valid, valid)
+		})
+	}
+}
+
 const yamlConstraints = `
 constraints:
   resources:
@@ -74,8 +94,8 @@ func TestUnmarshalYamlExperiment(t *testing.T) {
 		{"extra fields", yamlExperiment + `  extra_field: "string"` + yamlConstraints, false, nil},
 		{"invalid fields", yamlExperiment + "  debug true\n", false, nil},
 		{"empty input", "", true, &ExperimentConfigPolicy{}},
-		{"null/empty fields", yamlExperiment + `  debug:\n`, false, nil},
-		{"wrong field type", "invariant_configs:\n  description: 3\n", false, nil},
+		{"null/empty fields", yamlExperiment + "  debug:\n", true, &structExperiment},
+		{"wrong field type", "invariant_config:\n  debug: 3\n", false, nil},
 	}
 
 	for _, tt := range testCases {
@@ -138,8 +158,8 @@ func TestUnmarshalYamlNTSC(t *testing.T) {
 		{"extra fields", yamlNTSC + `  extra_field: "string"` + yamlConstraints, false, nil},
 		{"invalid fields", yamlNTSC + "  debug true\n", false, nil},
 		{"empty input", "", true, &NTSCConfigPolicy{}},
-		{"null/empty fields", yamlNTSC + `  debug:\n`, false, nil},
-		{"wrong field type", "invariant_configs:\n  description: 3\n", false, nil},
+		{"null/empty fields", yamlNTSC + "  debug:\n", true, &structNTSC}, // empty fields unmarshal to default value
+		{"wrong field type", "invariant_config:\n  debug: 3\n", false, nil},
 	}
 
 	for _, tt := range testCases {
@@ -154,26 +174,62 @@ func TestUnmarshalYamlNTSC(t *testing.T) {
 }
 
 const jsonConstraints = `
-constraints: {
-  resources: {
-    max_slots: 4
-  },
-  priority_limit: 10
-}
+    "constraints": {
+        "resources": {
+            "max_slots": 4
+        },
+        "priority_limit": 10
+    }
 `
 
 const jsonExperiment = `
-invariant_config: {
-  description: "test\nspecial\tchar",
-  environment: {
-    force_pull_image: false,
-    add_capabilities: ["cap1", "cap2"]
-  },
-  resources: {
-    slots: 1,
-  }
+    "invariant_config": {
+        "description": "test\nspecial\tchar",
+        "environment": {
+            "force_pull_image": false,
+            "add_capabilities": ["cap1", "cap2"]
+        },
+        "resources": {
+            "slots": 1
+        }
+    }
+`
+
+const jsonExtraField = `{
+    "invariant_config": {
+        "description": "test\nspecial\tchar",
+        "extra_field": "test"
+    }
 }
 `
+
+const jsonInvalidField = `{
+    "invariant_config": {
+        "description": "test\nspecial\tchar",
+        "debug"=true
+    }
+}`
+
+const jsonEmptyField = `{
+    "invariant_config": {
+        "description": "test\nspecial\tchar",
+        "debug":,
+        "environment": {
+            "force_pull_image": false,
+            "add_capabilities": ["cap1", "cap2"]
+        },
+        "resources": {
+            "slots": 1
+        }
+    }
+}`
+
+const jsonWrongFieldType = `{
+    "invariant_config": {
+        "description": "test\nspecial\tchar",
+        "debug": 4
+    }
+}`
 
 func TestUnmarshalJSONExperiment(t *testing.T) {
 	justConfig := structExperiment
@@ -187,14 +243,14 @@ func TestUnmarshalJSONExperiment(t *testing.T) {
 		noErr  bool
 		output *ExperimentConfigPolicy
 	}{
-		{"valid json", jsonExperiment + jsonConstraints, true, &structExperiment},
-		{"just config", jsonExperiment, true, &justConfig},
-		{"just constraints", jsonConstraints, true, &justConstraints},
-		{"extra fields", jsonExperiment + `  extra_field: "string"` + jsonConstraints, false, nil},
-		{"invalid fields", jsonExperiment + "  debug{ true }\n", false, nil},
+		{"valid json", `{` + jsonExperiment + `,` + jsonConstraints + `}`, true, &structExperiment},
+		{"just config", `{` + jsonExperiment + `}`, true, &justConfig},
+		{"just constraints", `{` + jsonConstraints + `}`, true, &justConstraints},
+		{"extra fields", jsonExtraField, false, nil},
+		{"invalid fields", jsonInvalidField, false, nil},
 		{"empty input", "", true, &ExperimentConfigPolicy{}},
-		{"null/empty fields", jsonExperiment + "  debug:\n", false, nil},
-		{"wrong field type", "invariant_configs:\n  description: 3\n", false, nil},
+		{"null/empty fields", jsonEmptyField, true, &structExperiment}, // empty fields unmarshal to default value
+		{"wrong field type", jsonWrongFieldType, false, nil},
 	}
 
 	for _, tt := range testCases {
@@ -209,16 +265,16 @@ func TestUnmarshalJSONExperiment(t *testing.T) {
 }
 
 const jsonNTSC = `
-invariant_config: {
-  description: "test\nspecial\tchar",
-  environment: {
-    force_pull_image: false,
-    add_capabilities: ["cap1", "cap2"]
-  },
-  resources: {
-    slots: 1,
-  }
-}
+    "invariant_config": {
+        "description": "test\nspecial\tchar",
+        "environment": {
+            "force_pull_image": false,
+            "add_capabilities": ["cap1", "cap2"]
+        },
+        "resources": {
+            "slots": 1
+        }
+    }
 `
 
 func TestUnmarshalJSONNTSC(t *testing.T) {
@@ -233,14 +289,14 @@ func TestUnmarshalJSONNTSC(t *testing.T) {
 		noErr  bool
 		output *NTSCConfigPolicy
 	}{
-		{"valid json", jsonNTSC + jsonConstraints, true, &structNTSC},
-		{"just config", jsonNTSC, true, &justConfig},
-		{"just constraints", jsonConstraints, true, &justConstraints},
-		{"extra fields", jsonNTSC + `  extra_field: "string"` + jsonConstraints, false, nil},
-		{"invalid fields", jsonNTSC + "  debug{ true }\n", false, nil},
+		{"valid json", `{` + jsonNTSC + `,` + jsonConstraints + `}`, true, &structNTSC},
+		{"just config", `{` + jsonNTSC + `}`, true, &justConfig},
+		{"just constraints", `{` + jsonConstraints + `}`, true, &justConstraints},
+		{"extra fields", jsonExtraField, false, nil},
+		{"invalid fields", jsonInvalidField, false, nil},
 		{"empty input", "", true, &NTSCConfigPolicy{}},
-		{"null/empty fields", jsonNTSC + "  debug:\n", false, nil},
-		{"wrong field type", "invariant_configs:\n  description: 3\n", false, nil},
+		{"null/empty fields", jsonEmptyField, true, &structNTSC}, // empty fields unmarshal to default value
+		{"wrong field type", jsonWrongFieldType, false, nil},
 	}
 
 	for _, tt := range testCases {

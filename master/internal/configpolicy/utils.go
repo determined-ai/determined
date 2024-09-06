@@ -1,6 +1,7 @@
 package configpolicy
 
 import (
+	"bytes"
 	"encoding/json"
 	"fmt"
 
@@ -26,7 +27,9 @@ func UnmarshalExperimentConfigPolicy(str string) (*ExperimentConfigPolicy, error
 	var expConfigPolicy ExperimentConfigPolicy
 	var err error
 
-	if err = json.Unmarshal([]byte(str), &expConfigPolicy); err == nil {
+	dec := json.NewDecoder(bytes.NewReader([]byte(str)))
+	dec.DisallowUnknownFields()
+	if err = dec.Decode(&expConfigPolicy); err == nil {
 		// valid JSON input
 		return &expConfigPolicy, nil
 	}
@@ -44,7 +47,9 @@ func UnmarshalNTSCConfigPolicy(str string) (*NTSCConfigPolicy, error) {
 	var ntscConfigPolicy NTSCConfigPolicy
 	var err error
 
-	if err = json.Unmarshal([]byte(str), &ntscConfigPolicy); err == nil {
+	dec := json.NewDecoder(bytes.NewReader([]byte(str)))
+	dec.DisallowUnknownFields()
+	if err = dec.Decode(&ntscConfigPolicy); err == nil {
 		// valid JSON input
 		return &ntscConfigPolicy, nil
 	}
