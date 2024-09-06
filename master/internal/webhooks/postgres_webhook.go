@@ -316,6 +316,10 @@ func handleCustomTriggerData(ctx context.Context, data CustomTriggerData, experi
 			if err != nil {
 				return fmt.Errorf("error getting webhook from id %d: %w", webhookID, err)
 			}
+			if webhook == nil ||
+				(webhook.WorkspaceID != nil && *webhook.WorkspaceID != workspaceID) {
+				continue
+			}
 			err = generateEventForCustomTrigger(
 				ctx, &es, webhook.Triggers, webhook.WebhookType, webhook.URL, m.Experiment, activeConfig, data, trialID)
 			if err != nil {
