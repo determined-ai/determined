@@ -67,13 +67,9 @@
     http://determined.ai/schemas/expconf/v0/searcher.json
   case:
     name: single
-    max_length:
-      batches: 1000
     metric: loss
   defaulted:
     name: single
-    max_length:
-      batches: 1000
     metric: loss
     smaller_is_better: true
     source_trial_id: null
@@ -87,16 +83,12 @@
     http://determined.ai/schemas/expconf/v0/searcher.json
   case:
     name: random
-    max_length:
-      batches: 1000
     max_trials: 1000
     metric: loss
     source_checkpoint_uuid: "asdf"
   defaulted:
     name: random
     max_concurrent_trials: 16
-    max_length:
-      batches: 1000
     max_trials: 1000
     metric: loss
     smaller_is_better: true
@@ -111,15 +103,11 @@
     http://determined.ai/schemas/expconf/v0/searcher.json
   case:
     name: grid
-    max_length:
-      batches: 1000
     metric: loss
     source_trial_id: 15
   defaulted:
     name: grid
     max_concurrent_trials: 16
-    max_length:
-      batches: 1000
     metric: loss
     smaller_is_better: true
     source_trial_id: 15
@@ -134,15 +122,11 @@
   case:
     name: async_halving
     num_rungs: 5
-    max_length:
-      batches: 1000
     max_trials: 100
     metric: loss
   defaulted:
     name: async_halving
     num_rungs: 5
-    max_length:
-      batches: 1000
     max_trials: 100
     divisor: 4
     max_concurrent_trials: 16
@@ -160,14 +144,10 @@
     http://determined.ai/schemas/expconf/v0/searcher.json
   case:
     name: adaptive_asha
-    max_length:
-      batches: 1000
     max_trials: 100
     metric: loss
   defaulted:
     name: adaptive_asha
-    max_length:
-      batches: 1000
     max_trials: 100
     bracket_rungs: []
     divisor: 4

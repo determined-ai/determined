@@ -12,7 +12,5 @@ max_restarts: 0
 searcher:
   name: single
   metric: validation_loss
-  max_length:
-      batches: 8
   smaller_is_better: true
 entrypoint: python3 failable_model_def.py

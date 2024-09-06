@@ -97,14 +97,6 @@ def set_slots_per_trial(config: Dict[Any, Any], slots: int) -> Dict[Any, Any]:
     return config
 
 
-def set_max_length(
-    config: Dict[Any, Any], max_length: Union[Dict[str, int], int]
-) -> Dict[Any, Any]:
-    config = config.copy()
-    config["searcher"]["max_length"] = max_length
-    return config
-
-
 def set_min_validation_period(
     config: Dict[Any, Any], min_validation_period: Dict[str, int]
 ) -> Dict[Any, Any]:

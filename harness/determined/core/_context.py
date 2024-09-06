@@ -58,7 +58,7 @@ class Context:
         self.preempt = preempt or core.DummyPreemptContext(self.distributed)
         self.train = train or core.DummyTrainContext()
         self._metrics = _metrics or core._DummyMetricsContext()
-        self.searcher = searcher or core.DummySearcherContext(self.distributed)
+        self.searcher = searcher or core.SearcherContextMissing()
         self.info = info
         self.experimental = experimental or core.DummyExperimentalCoreContext()
         self.profiler = profiler or core.DummyProfilerContext()
@@ -327,15 +327,19 @@ def init(
             tbd_writer,
         )
 
-        units = core._parse_searcher_units(info.trial._config)
-        searcher = core.SearcherContext(
-            session,
-            distributed,
-            info.trial.trial_id,
-            info.trial._trial_run_id,
-            info.allocation_id,
-            units,
-        )
+        # only provide a .searcher if max_length appears in the experiment config
+        max_length = core._parse_searcher_max_length(info.trial._config)
+        if not max_length:
+            searcher = None
+        else:
+            units = core._parse_searcher_units(info.trial._config)
+            searcher = core.SearcherContext(
+                session,
+                distributed,
+                info.trial.trial_id,
+                max_length,
+                units,
+            )
 
         if storage_manager is None:
             storage_manager = storage.build(

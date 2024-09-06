@@ -69,6 +69,7 @@ func (s *gridSearch) progress(
 	if s.MaxConcurrentTrials() > 0 && s.PendingTrials > s.MaxConcurrentTrials() {
 		panic("pending trials is greater than max_concurrent_trials")
 	}
+	// XXX
 	// Progress is calculated as follows:
 	//   - InvalidHP trials contribute max_length units since they represent one config within the grid
 	//     and are not replaced with a new config as with random search
