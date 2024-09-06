@@ -2040,9 +2040,9 @@ func TestGetAutoCreatedNamespace(t *testing.T) {
 	count, err := db.Bun().NewSelect().
 		Column("auto_created_namespace_name").
 		Table("workspaces").
-		Where("id = ? AND auto_created_namespace_name = NULL", w.Id).Count(ctx)
+		Where("id = ? AND auto_created_namespace_name IS NULL", w.Id).Count(ctx)
 	require.NoError(t, err)
-	require.Equal(t, 0, count)
+	require.Equal(t, 1, count)
 
 	// Generate and saves the correct auto-created namespace name for workspace with no
 	// auto-created namespace name set.

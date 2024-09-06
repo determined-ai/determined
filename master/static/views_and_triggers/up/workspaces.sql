@@ -11,7 +11,6 @@ DROP TRIGGER IF EXISTS on_update_auto_created_namespace_name ON workspaces CASCA
 CREATE TRIGGER on_update_auto_created_namespace_name
    BEFORE UPDATE ON workspaces
    FOR EACH ROW
-   WHEN (OLD.auto_created_namespace_name != NEW.auto_created_namespace_name
-        OR (NEW.auto_created_namespace_name IS NULL) 
-        AND OLD.auto_created_namespace_name IS NOT NULL)
+   WHEN (OLD.auto_created_namespace_name IS NOT NULL AND OLD.auto_created_namespace_name
+     IS DISTINCT FROM  NEW.auto_created_namespace_name)
    EXECUTE PROCEDURE prevent_auto_created_namespace_change();

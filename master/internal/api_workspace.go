@@ -616,7 +616,7 @@ func (a *apiServer) DeleteWorkspaceNamespaceBindings(ctx context.Context,
 	}
 
 	err = db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		err := a.deleteWorkspaceNamespaceBinding(ctx, clusterNames, req.WorkspaceId, currUser, &tx)
+		err := a.deleteWorkspaceNamespaceBindings(ctx, clusterNames, req.WorkspaceId, currUser, &tx)
 		if err != nil {
 			return fmt.Errorf("failed to delete namespace binding: %w", err)
 		}
@@ -628,7 +628,7 @@ func (a *apiServer) DeleteWorkspaceNamespaceBindings(ctx context.Context,
 	return &apiv1.DeleteWorkspaceNamespaceBindingsResponse{}, nil
 }
 
-func (a *apiServer) deleteWorkspaceNamespaceBinding(ctx context.Context,
+func (a *apiServer) deleteWorkspaceNamespaceBindings(ctx context.Context,
 	clusterNames []string, workspaceID int32, curUser *model.User, tx *bun.Tx,
 ) error {
 	if err := workspace.AuthZProvider.Get().
@@ -809,7 +809,7 @@ func (a *apiServer) PatchWorkspace(
 				}
 			}
 			if len(toDelete) > 0 {
-				err = a.deleteWorkspaceNamespaceBinding(ctx, toDelete, req.Id, &currUser, &tx)
+				err = a.deleteWorkspaceNamespaceBindings(ctx, toDelete, req.Id, &currUser, &tx)
 				if err != nil {
 					return fmt.Errorf("failed to delete namespace binding: %w", err)
 				}
