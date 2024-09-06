@@ -9,7 +9,7 @@ import uuid
 from typing import Any, Dict, Iterator, List, Optional, Tuple, Type
 
 import determined as det
-from determined import constants, core, gpu, load
+from determined import core, gpu, load
 
 logger = logging.getLogger("determined")
 
@@ -116,6 +116,20 @@ def _make_test_experiment_config(config: Dict[str, Any]) -> Dict[str, Any]:
     return config_test
 
 
+DEFAULT_TEST_CONFIG = {
+    "searcher": {"name": "single", "max_length": {"batches": 100}},
+    "scheduling_unit": 100,
+    "resources": {"slots_per_trial": 1},
+    "optimizations": {
+        "aggregation_frequency": 1,
+        "average_aggregated_gradients": True,
+        "average_training_metrics": True,
+        "gradient_compression": False,
+        "mixed_precision": "O0",
+    },
+}
+
+
 def _make_local_execution_exp_config(
     input_config: Optional[Dict[str, Any]],
     checkpoint_dir: str,
@@ -157,7 +171,7 @@ def _make_local_execution_exp_config(
         "host_path": os.path.abspath(checkpoint_dir),
     }
 
-    return {"checkpoint_storage": checkpoint_storage, **constants.DEFAULT_EXP_CFG, **input_config}
+    return {"checkpoint_storage": checkpoint_storage, **DEFAULT_TEST_CONFIG, **input_config}
 
 
 def _make_local_execution_env(

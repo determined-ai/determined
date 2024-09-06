@@ -270,9 +270,6 @@ class TrainContext:
         should represent the current iteration step as a fraction of maximum training steps
         (i.e.: `report_progress(step_num / max_steps)`).
 
-        Note that for hyperparameter search, progress should be reported through
-        ``SearcherOperation.report_progress()`` in the Searcher API instead.
-
         Arguments:
             progress (float): completion progress in the range [0, 1.0].
         """

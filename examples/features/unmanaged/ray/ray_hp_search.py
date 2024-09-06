@@ -28,9 +28,6 @@ def objective(config):
                 "name": "random",
                 "metric": "loss",
                 "smaller_is_better": True,
-                "max_length": {
-                    "batches": 1
-                },
                 "max_trials": 2,
             },
             external_experiment_id=experiment_name,

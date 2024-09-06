@@ -3,7 +3,6 @@ entrypoint: python3 -m determined.launch.torch_distributed python3 finetune.py
 searcher:
   name: single
   metric: loss
-  max_length: 1000 # Number of SGD steps.
 resources:
   slots_per_trial: 4
 max_restarts: 1
@@ -16,11 +15,11 @@ hyperparameters:
     model:
         pretrained_model_name_or_path: CompVis/stable-diffusion-v1-4
     concepts:
-        learnable_properties: # One of 'object' or 'style'. 
+        learnable_properties: # One of 'object' or 'style'.
             - object
-        concept_strs: # Individual strings representing new concepts. Must not exist in tokenizer.  
+        concept_strs: # Individual strings representing new concepts. Must not exist in tokenizer.
             - det-logo
-        initializer_strs: # Strings which describe the added concepts. 
+        initializer_strs: # Strings which describe the added concepts.
             - brain logo, sharp lines, connected circles, concept art
         img_dirs:
             - det_logos
@@ -33,6 +32,7 @@ hyperparameters:
         num_blank_prompts: 10
         num_a_prompts: 10
     training:
+        num_sgd_steps: 1000
         train_batch_size: 1
         gradient_accumulation_steps: 4
         optimizer_name: adam
@@ -61,5 +61,3 @@ hyperparameters:
         main_process_generator_seed: 2147483647
         other_inference_scheduler_kwargs:
             skip_prk_steps: True
-
-    

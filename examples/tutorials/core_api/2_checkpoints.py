@@ -66,8 +66,8 @@ def main(core_context, latest_checkpoint, trial_id, increment_by):
                 save_state(x, steps_completed, trial_id, path)
 
             # NEW: check for a preemption signal.  This could originate from a
-            # higher-priority task bumping us off the cluster, or for a user pausing
-            # the experiment via the WebUI or CLI.
+            # higher-priority task bumping us off the cluster, from the hpsearch
+            # algorithm, or from a user pausing in the WebUI or CLI.
             if core_context.preempt.should_preempt():
                 # At this point, a checkpoint was just saved, so training can exit
                 # immediately and resume when the trial is reactivated.

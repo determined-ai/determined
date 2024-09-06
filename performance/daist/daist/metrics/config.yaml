@@ -15,6 +15,10 @@ hyperparameters:
   delay: 0 # Seconds to sleep during each batch
   checkpoint_size: 4096 # Size of checkpoint data
 
+  # 2 batches are required because we are measuring the thing that is
+  # storing the metrics in the first pass
+  num_batches: 2
+
   batch_metric_count:
     type: int
     minval: 1
@@ -26,9 +30,6 @@ hyperparameters:
 searcher:
   name: grid
   metric: "metrics_count"
-  # this is the number of batches. 2 are required because we are measuring the thing that is
-  # storing the metrics in the first pass
-  max_length: 2
   max_concurrent_trials: 1
 
 max_restarts: 0

@@ -72,8 +72,6 @@ Use the following code to create the experiment configuration file:
       name: single
        # metric is required but it shouldn't hurt to ignore it at this point.
       metric: x
-      # max_length is ignored if the training script ignores it.
-      max_length: 1
 
    max_restarts: 0
 

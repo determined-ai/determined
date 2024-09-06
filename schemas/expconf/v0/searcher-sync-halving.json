@@ -10,7 +10,6 @@
     ],
     "eventuallyRequired": [
         "num_rungs",
-        "max_length",
         "budget",
         "metric"
     ],

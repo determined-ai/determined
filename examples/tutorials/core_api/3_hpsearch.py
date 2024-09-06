@@ -27,49 +27,37 @@ def load_state(trial_id, checkpoint_directory):
 
 def main(core_context, latest_checkpoint, trial_id, increment_by):
     x = 0
+    max_length = 100
 
     starting_batch = 0
     if latest_checkpoint is not None:
         with core_context.checkpoint.restore_path(latest_checkpoint) as path:
             x, starting_batch = load_state(trial_id, path)
 
-    # NEW: Iterate through the core_context.searcher.operations() to decide how long to train for.
-    batch = starting_batch
-    last_checkpoint_batch = None
-    for op in core_context.searcher.operations():
-        # NEW: Use a while loop for easier accounting of absolute lengths.
-        while batch < op.length:
-            x += increment_by
-            steps_completed = batch + 1
-            time.sleep(0.1)
-            logging.info(f"x is now {x}")
-            if steps_completed % 10 == 0:
-                core_context.train.report_training_metrics(
-                    steps_completed=steps_completed, metrics={"x": x}
-                )
+    for batch in range(starting_batch, max_length):
+        x += increment_by
+        steps_completed = batch + 1
+        time.sleep(0.1)
+        logging.info(f"x is now {x}")
+        if steps_completed % 10 == 0:
+            core_context.train.report_training_metrics(
+                steps_completed=steps_completed, metrics={"x": x}
+            )
+            core_context.train.report_progress(steps_completed / float(max_length))
 
-                # NEW: report progress once in a while.
-                op.report_progress(batch)
+            # NEW: periodically report validation metrics, which the searcher
+            # may monitor for the purpose of early-stopping.  Note that for the
+            # ASHA searcher  you need to provide the "time" metric you
+            # configured in the experiment config, in this case `batch`.
+            core_context.train.report_validation_metrics(
+                steps_completed=steps_completed, metrics={"x": x, "batches": steps_completed}
+            )
 
-                checkpoint_metadata = {"steps_completed": steps_completed}
-                with core_context.checkpoint.store_path(checkpoint_metadata) as (path, uuid):
-                    save_state(x, steps_completed, trial_id, path)
-                last_checkpoint_batch = steps_completed
-                if core_context.preempt.should_preempt():
-                    return
-            batch += 1
-        # NEW: After training for each op, you typically validate and report the
-        # searcher metric to the master.
-        core_context.train.report_validation_metrics(
-            steps_completed=steps_completed, metrics={"x": x}
-        )
-        op.report_completed(x)
-
-    # NEW: after searching, save a checkpoint if our last one is not up-to-date.
-    if last_checkpoint_batch != steps_completed:
-        checkpoint_metadata = {"steps_completed": steps_completed}
-        with core_context.checkpoint.store_path(checkpoint_metadata) as (path, uuid):
-            save_state(x, steps_completed, trial_id, path)
+            checkpoint_metadata = {"steps_completed": steps_completed}
+            with core_context.checkpoint.store_path(checkpoint_metadata) as (path, uuid):
+                save_state(x, steps_completed, trial_id, path)
+            if core_context.preempt.should_preempt():
+                return
 
 
 if __name__ == "__main__":

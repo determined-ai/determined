@@ -10,7 +10,6 @@
     ],
     "eventuallyRequired": [
         "budget",
-        "max_length",
         "metric"
     ],
     "properties": {

@@ -85,7 +85,7 @@ with only a few new lines of code.
    .. literalinclude:: ../../../../examples/tutorials/core_api/1_metrics.py
       :language: python
       :start-after: NEW: import determined
-      :end-before: def main
+      :end-at: import determined as det
 
 #. Enable ``logging``, using the ``det.LOG_FORMAT`` for logs. This enables useful log messages from
    the ``determined`` library, and ``det.LOG_FORMAT`` enables filter-by-level in the WebUI.
@@ -250,27 +250,6 @@ runs a train-validate-report loop:
       :dedent:
       :start-at: hparams = info.trial.hparams
 
-#. Modify ``main()`` to run the train-validate-report loop mentioned above by iterating through
-   ``core_context.searcher.operations()``. Each :class:`~determined.core.SearcherOperation` from
-   :meth:`~determined.core.SearcherContext.operations` has a ``length`` attribute that specifies the
-   absolute length of training to complete. After validating, report the searcher metric value using
-   ``op.report_completed()``.
-
-   .. literalinclude:: ../../../../examples/tutorials/core_api/3_hpsearch.py
-      :language: python
-      :dedent:
-      :start-at: batch = starting_batch
-      :end-at: op.report_completed
-
-#. Because the training length can vary, you might exit the train-validate-report loop before saving
-   the last of your progress. To handle this, add a conditional save after the loop ends:
-
-   .. literalinclude:: ../../../../examples/tutorials/core_api/3_hpsearch.py
-      :language: python
-      :dedent:
-      :start-at: if last_checkpoint_batch != steps_completed
-      :end-at: save_state
-
 #. Create a new ``3_hpsearch.yaml`` file and add an ``entrypoint`` that invokes ``3_hpsearch.py``:
 
    .. literalinclude:: ../../../../examples/tutorials/core_api/3_hpsearch.yaml
@@ -365,31 +344,14 @@ considerations are:
       :start-after: some logs are easier to read
       :end-at: logging.info
 
-#. Only the chief worker is permitted to report training metrics, report validation metrics, upload
-   checkpoints, or report searcher operations completed. This rule applies to the steps you take
-   periodically during training:
+#. Only the chief worker is permitted to report metrics, upload checkpoints, or report progress.
+   This rule applies to the steps you take periodically during training:
 
    .. literalinclude:: ../../../../examples/tutorials/core_api/4_distributed.py
       :language: python
       :dedent:
       :start-at: if steps_completed % 10 == 0
       :end-at: return
-
-   The rule also applies to the steps you take after validating:
-
-   .. literalinclude:: ../../../../examples/tutorials/core_api/4_distributed.py
-      :language: python
-      :dedent:
-      :start-after: only the chief may report validation metrics
-      :end-at: op.report_completed
-
-   The rule also applies to the conditional save after the main loop completes:
-
-   .. literalinclude:: ../../../../examples/tutorials/core_api/4_distributed.py
-      :language: python
-      :dedent:
-      :start-at: again, only the chief may upload checkpoints
-      :end-at: save_state
 
 #. Create a ``4_distributed.yaml`` file by copying the ``3_distributed.yaml`` file and changing the
    first couple of lines:
@@ -411,7 +373,7 @@ considerations are:
    .. literalinclude:: ../../../../examples/tutorials/core_api/4_distributed.yaml
       :language: yaml
       :start-at: searcher:
-      :end-at: max_length:
+      :end-at: metric:
 
 #. Run the code using the Determined CLI with the following command:
 

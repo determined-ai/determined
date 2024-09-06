@@ -32,7 +32,5 @@ searcher:
   metric: test_loss
   smaller_is_better: true
   max_trials: 500
-  max_length:
-    epochs: 20
 resources:
   slots_per_trial: 4

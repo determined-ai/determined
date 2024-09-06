@@ -25,8 +25,8 @@ searcher:
   metric: accuracy
   smaller_is_better: true
   max_trials: 2
-  max_length:
-    epochs: 1
 resources:
   slots_per_trial: 1
-entrypoint: python3 -m determined.launch.torch_distributed python3 train.py
+entrypoint: >-
+  python3 -m determined.launch.torch_distributed
+  python3 train.py --epochs 1
