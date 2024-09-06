@@ -7144,7 +7144,7 @@ class v1GetWebhooksResponse(Printable):
         return out
 
 class v1GetWorkspaceConfigPoliciesResponse(Printable):
-    """Response to GetWorkspaceConfigPolicies request."""
+    """Response to GetWorkspaceConfigPoliciesRequest."""
     configPolicies: "typing.Optional[typing.Dict[str, typing.Any]]" = None
 
     def __init__(
@@ -12127,7 +12127,7 @@ class v1PutExperimentsRetainLogsResponse(Printable):
         return out
 
 class v1PutGlobalConfigPoliciesResponse(Printable):
-    """Response to PutGlobalConfigPolicies request."""
+    """Response to PutGlobalConfigPoliciesRequest."""
     configPolicies: "typing.Optional[typing.Dict[str, typing.Any]]" = None
 
     def __init__(
@@ -12365,7 +12365,7 @@ class v1PutWorkspaceConfigPoliciesRequest(Printable):
         return out
 
 class v1PutWorkspaceConfigPoliciesResponse(Printable):
-    """Response to PutWorkspaceConfigPolicies request."""
+    """Response to PutWorkspaceConfigPoliciesRequest."""
     configPolicies: "typing.Optional[typing.Dict[str, typing.Any]]" = None
 
     def __init__(
@@ -18431,8 +18431,7 @@ def delete_DeleteGlobalConfigPolicies(
 ) -> None:
     """Delete global task config policies.
 
-    - workloadType: Specifies which workload type the config policies apply to: EXPERIMENT or
-NTSC.
+    - workloadType: The workload type the config policies apply to: EXPERIMENT or NTSC.
     """
     _params = None
     if type(workloadType) == str:
@@ -18681,7 +18680,7 @@ def delete_DeleteWorkspaceConfigPolicies(
     """Delete workspace task config policies.
 
     - workloadType: The workload type the config policies apply to: EXPERIMENT or NTSC.
-    - workspaceId: Specifies which workspace the config policies apply to. Use global API for
+    - workspaceId: The workspace the config policies apply to. Use global API for
 global config policies.
     """
     _params = None
@@ -19565,8 +19564,7 @@ def get_GetGlobalConfigPolicies(
 ) -> "v1GetGlobalConfigPoliciesResponse":
     """Get global task config policies.
 
-    - workloadType: Specifies which workload type the config policies apply to: EXPERIMENT or
-NTSC.
+    - workloadType: The workload type the config policies apply to: EXPERIMENT or NTSC.
     """
     _params = None
     if type(workloadType) == str:
@@ -21670,7 +21668,7 @@ def get_GetWorkspaceConfigPolicies(
     """Get workspace task config policies.
 
     - workloadType: The workload type the config policies apply to: EXPERIMENT or NTSC.
-    - workspaceId: Specifies which workspace the config policies apply to. Use global API for
+    - workspaceId: The workspace the config policies apply to. Use global API for
 global config policies.
     """
     _params = None
@@ -23727,8 +23725,7 @@ def put_PutWorkspaceConfigPolicies(
 ) -> "v1PutWorkspaceConfigPoliciesResponse":
     """Add or update workspace task config policies.
 
-    - workloadType: Specifies which workload type the config policies apply to: EXPERIMENT or
-NTSC.
+    - workloadType: The workload type the config policies apply to: EXPERIMENT or NTSC.
     - workspaceId: The workspace the config policies apply to. Use global API for
 global config policies.
     """

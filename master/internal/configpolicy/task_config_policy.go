@@ -26,7 +26,7 @@ type Constraints struct {
 // Submitted experiments whose constraint fields vary from the respective Constraint fields set
 // within a given scope are rejected.
 type ExperimentConfigPolicy struct {
-	InvariantConfig *expconf.ExperimentConfig `json:"config"`
+	InvariantConfig *expconf.ExperimentConfig `json:"invariant_config"`
 	Constraints     *Constraints              `json:"constraints"`
 }
 
@@ -36,6 +36,6 @@ type ExperimentConfigPolicy struct {
 // Submitted NTSC tasks whose constraint fields vary from the respective Constraint fields set
 // within a given scope are rejected.
 type NTSCConfigPolicy struct {
-	InvariantConfig *model.CommandConfig `json:"config"`
+	InvariantConfig *model.CommandConfig `json:"invariant_config"`
 	Constraints     *Constraints         `json:"constraints"`
 }
