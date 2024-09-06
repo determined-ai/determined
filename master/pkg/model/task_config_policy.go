@@ -31,7 +31,7 @@ type ExperimentTaskConfigPolicies struct {
 	LastUpdatedTime time.Time                 `bun:"last_updated_time,notnull"`
 	WorkloadType    WorkloadType              `bun:"workload_type,notnull"`
 	InvariantConfig *expconf.ExperimentConfig `bun:"invariant_config"`
-	Constraints     Constraints               `bun:"constraints"`
+	Constraints     *Constraints              `bun:"constraints"`
 }
 
 // NTSCTaskConfigPolicy is the bun model of a task config policy.
@@ -42,7 +42,7 @@ type NTSCTaskConfigPolicies struct {
 	LastUpdatedTime time.Time      `bun:"last_updated_time,notnull"`
 	WorkloadType    WorkloadType   `bun:"workload_type,notnull"`
 	InvariantConfig *CommandConfig `bun:"invariant_config"`
-	Constraints     Constraints    `bun:"constraints"`
+	Constraints     *Constraints   `bun:"constraints"`
 }
 
 // ResourceConstraints are non-overridable resource constraints.

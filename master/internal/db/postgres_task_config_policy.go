@@ -43,6 +43,7 @@ func SetExperimentConfigPoliciesTx(ctx context.Context, tx *bun.Tx,
 
 	_, err = Bun().NewUpdate().
 		Model(experimentTCP).
+		Value("invariant_config", "?", string(expInvariantConfig)).
 		Where(`workspace_id = ? AND workload_type = ?`, experimentTCP.WorkspaceID,
 			model.ExperimentType).
 		Exec(ctx)
@@ -70,21 +71,7 @@ func SetNTSCConfigPolicies(ctx context.Context,
 // the database.
 func SetNTSCConfigPoliciesTx(ctx context.Context, tx *bun.Tx,
 	ntscTCP *model.NTSCTaskConfigPolicies) error {
-
-	// Validate NTSC invariant config and constraints.
-	expInvariantConfig, err := json.Marshal(ntscTCP.InvariantConfig)
-	if err != nil {
-		return errors.Wrapf(err, "error handling experiment invariant config %v",
-			expInvariantConfig)
-	}
-
-	expConstraints, err := json.Marshal(ntscTCP.Constraints)
-	if err != nil {
-		return errors.Wrapf(err, "error handling experiment constarints %v",
-			expConstraints)
-	}
-
-	_, err = Bun().NewUpdate().
+	_, err := Bun().NewUpdate().
 		Model(ntscTCP).
 		Where(`workspace_id = ? AND workload_type = ?`, ntscTCP.WorkspaceID,
 			model.NTSCType).
