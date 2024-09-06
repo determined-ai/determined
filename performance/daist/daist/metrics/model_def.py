@@ -26,10 +26,7 @@ class Param:
     METRIC_COUNT: type_ = 'metric_count'
 
 
-def worker_main_in_context(core_context: Context, metric_count: int) -> int:
-    op = next(core_context.searcher.operations())
-    num_batches = op.length
-
+def worker_main_in_context(core_context: Context, num_batches: int, metric_count: int) -> int:
     write_latencies = list()
 
     for batch in range(num_batches):
@@ -47,9 +44,6 @@ def worker_main_in_context(core_context: Context, metric_count: int) -> int:
 
     core_context.train.report_validation_metrics(steps_completed=num_batches,
                                                  metrics={MetricKey.WRITE: write_latencies})
-
-    if core_context.distributed.rank == 0:
-        op.report_completed(None)
 
     return 0
 
@@ -133,7 +127,9 @@ def worker_main(info: det.ClusterInfo):
     with det.core.init(distributed=distributed) as core_context:
         exit_code = worker_main_in_context(
             core_context=core_context,
-            metric_count=info.trial.hparams['metric_count'])
+            num_batches=info.trial.hparams['num_batches'],
+            metric_count=info.trial.hparams['metric_count'],
+        )
     return exit_code
 
 

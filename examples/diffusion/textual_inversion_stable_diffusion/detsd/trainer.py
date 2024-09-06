@@ -30,6 +30,7 @@ class DetSDTextualInversionTrainer:
         initializer_strs: Union[str, Sequence[str]],
         learnable_properties: Sequence[Literal["object", "style"]],
         pretrained_model_name_or_path: str = "CompVis/stable-diffusion-v1-4",
+        num_sgd_steps: int = 100,
         train_batch_size: int = 1,
         gradient_accumulation_steps: int = 4,
         optimizer_name: Literal["adam", "adamw", "sgd"] = "adam",
@@ -74,6 +75,7 @@ class DetSDTextualInversionTrainer:
         self.logger = accelerate.logging.get_logger(__name__)
 
         self.pretrained_model_name_or_path = pretrained_model_name_or_path
+        self.num_sgd_steps = num_sgd_steps
 
         if isinstance(learnable_properties, str):
             learnable_properties = [learnable_properties]
@@ -233,39 +235,36 @@ class DetSDTextualInversionTrainer:
                     trial_id=trial_id,
                 )
 
-            # There will be a single op of len max_length, as defined in the searcher config.
-            for op in core_context.searcher.operations():
-                while trainer.steps_completed < op.length:
-                    for batch in trainer.train_dataloader:
-                        # Use the accumulate method for efficient gradient accumulation.
-                        with trainer.accelerator.accumulate(trainer.text_encoder):
-                            trainer._train_one_batch(batch)
-                        took_sgd_step = trainer.accelerator.sync_gradients
-                        if took_sgd_step:
-                            trainer.steps_completed += 1
-                            trainer.logger.info(f"Step {trainer.steps_completed} completed.")
+            while trainer.steps_completed < trainer.num_sgd_steps:
+                for batch in trainer.train_dataloader:
+                    # Use the accumulate method for efficient gradient accumulation.
+                    with trainer.accelerator.accumulate(trainer.text_encoder):
+                        trainer._train_one_batch(batch)
+                    took_sgd_step = trainer.accelerator.sync_gradients
+                    if took_sgd_step:
+                        trainer.steps_completed += 1
+                        trainer.logger.info(f"Step {trainer.steps_completed} completed.")
 
-                            is_end_of_training = trainer.steps_completed == op.length
-                            time_to_report = (
-                                trainer.steps_completed % trainer.metric_report_freq == 0
-                            )
-                            time_to_ckpt = trainer.steps_completed % trainer.checkpoint_freq == 0
+                        is_end_of_training = trainer.steps_completed == trainer.num_sgd_steps
+                        time_to_report = (
+                            trainer.steps_completed % trainer.metric_report_freq == 0
+                        )
+                        time_to_ckpt = trainer.steps_completed % trainer.checkpoint_freq == 0
 
-                            # Report metrics, checkpoint, and preempt as appropriate.
-                            if is_end_of_training or time_to_report or time_to_ckpt:
-                                trainer._report_train_metrics(core_context)
-                                # report_progress for Web UI progress-bar rendering.
-                                if trainer.accelerator.is_main_process:
-                                    op.report_progress(trainer.steps_completed)
-                            if is_end_of_training or time_to_ckpt:
-                                trainer._save(core_context, trial_id)
-                                if core_context.preempt.should_preempt():
-                                    return
-                            if is_end_of_training:
-                                break
-                if trainer.accelerator.is_main_process:
-                    # Report the final mean loss.
-                    op.report_completed(trainer.last_mean_loss)
+                        # Report metrics, checkpoint, and preempt as appropriate.
+                        if is_end_of_training or time_to_report or time_to_ckpt:
+                            trainer._report_train_metrics(core_context)
+                            # report_progress for Web UI progress-bar rendering.
+                            if trainer.accelerator.is_main_process:
+                                core_context.train.report_progress(
+                                    trainer.steps_completed / trainer.num_sgd_steps
+                                )
+                        if is_end_of_training or time_to_ckpt:
+                            trainer._save(core_context, trial_id)
+                            if core_context.preempt.should_preempt():
+                                return
+                        if is_end_of_training:
+                            break
 
     def _train_one_batch(self, batch: TorchData) -> None:
         """Train on a single batch and update internal metrics."""

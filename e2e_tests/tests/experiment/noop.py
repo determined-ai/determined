@@ -55,15 +55,7 @@ class Log:
         return {"action": "log", "base64": self.base64, "level": self.level}
 
 
-class CompleteSearcherOperation:
-    def __init__(self, metric: float) -> None:
-        self.metric = metric
-
-    def to_dict(self) -> Dict[str, Any]:
-        return {"action": "complete_searcher_operation", "metric": self.metric}
-
-
-Action = Union[Exit, Sleep, Report, Checkpoint, Log, CompleteSearcherOperation]
+Action = Union[Exit, Sleep, Report, Checkpoint, Log]
 
 
 def merge_config(old: Any, new: Any) -> Any:
@@ -92,7 +84,6 @@ def generate_config(
         "searcher": {
             "name": "single",
             "metric": "x",
-            "max_length": 1,
         },
     }
 
@@ -161,7 +152,6 @@ def create_paused_experiment(
                 "searcher": {
                     "name": "single",
                     "metric": "x",
-                    "max_length": 1,
                 },
                 "entrypoint": "echo yo",
             }

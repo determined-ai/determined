@@ -9,7 +9,6 @@
     ],
     "eventuallyRequired": [
         "num_rungs",
-        "max_length",
         "max_trials",
         "metric"
     ],

@@ -10,7 +10,7 @@ values to use in each trial. Every searcher is configured with the name of the v
 optimize (via the ``metric`` field), in addition to other searcher-specific options. For example,
 the ``adaptive_asha`` searcher (`arXiv:1810.0593 <http://arxiv.org/pdf/1810.05934>`_), suitable for
 larger experiments with many trials, is configured with the maximum number of trials to run, the
-maximum training length allowed per trial, and the maximum number of trials that can be worked on
+name and maxmimum value of a "time" metric, and the maximum number of trials that can be worked on
 simultaneously:
 
 .. code:: yaml
@@ -19,8 +19,8 @@ simultaneously:
      name: "adaptive_asha"
      metric: "validation_loss"
      max_trials: 16
-     max_length:
-         epochs: 1
+     time_metric: batches
+     max_time: 100000
      max_concurrent_trials: 8
 
 For details on the supported searchers and their respective configuration options, refer to

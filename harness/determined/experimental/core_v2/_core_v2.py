@@ -189,7 +189,6 @@ def _init_context(
             or {
                 "name": "single",
                 "metric": "unmanaged",
-                "max_length": 100000000,
             },
             "workspace": config.workspace,
             "project": config.project,

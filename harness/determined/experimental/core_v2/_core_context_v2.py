@@ -120,15 +120,19 @@ def _make_v2_context(
             tensorboard_manager,
             tbd_writer,
         )
-        units = core._parse_searcher_units(info.trial._config)
-        searcher = core.SearcherContext(
-            session,
-            distributed,
-            info.trial.trial_id,
-            info.trial._trial_run_id,
-            info.allocation_id,
-            units,
-        )
+        # only provide a .searcher if max_length appears in the experiment config
+        max_length = core._parse_searcher_max_length(info.trial._config)
+        if not max_length:
+            searcher = None
+        else:
+            units = core._parse_searcher_units(info.trial._config)
+            searcher = core.SearcherContext(
+                session,
+                distributed,
+                info.trial.trial_id,
+                max_length,
+                units,
+            )
 
         if storage_manager is None:
             if has_storage:
