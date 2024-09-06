@@ -1,15 +1,13 @@
 import Pivot, { PivotProps } from 'hew/Pivot';
-import Spinner from 'hew/Spinner';
 import { Loaded } from 'hew/utils/loadable';
 import { default as MarkdownViewer } from 'markdown-to-jsx';
 import React, { useMemo } from 'react';
 
+import CodeEditor from 'components/CodeEditor';
 import useResize from 'hooks/useResize';
 import handleError from 'utils/error';
 
 import css from './Markdown.module.scss';
-
-const CodeEditor = React.lazy(() => import('hew/CodeEditor'));
 
 interface Props {
   disabled?: boolean;
@@ -56,20 +54,13 @@ const Markdown: React.FC<Props> = ({
       {
         children: (
           <div className={css.noOverflow}>
-            <React.Suspense
-              fallback={
-                <div>
-                  <Spinner spinning tip="Loading text editor..." />
-                </div>
-              }>
-              <CodeEditor
-                file={Loaded(markdown)}
-                files={[{ key: 'input.md' }]}
-                height={`${resize.height - 420}px`}
-                onChange={onChange}
-                onError={handleError}
-              />
-            </React.Suspense>
+            <CodeEditor
+              file={Loaded(markdown)}
+              files={[{ key: 'input.md' }]}
+              height={`${resize.height - 420}px`}
+              onChange={onChange}
+              onError={handleError}
+            />
           </div>
         ),
         key: TabType.Edit,

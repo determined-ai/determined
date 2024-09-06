@@ -3,12 +3,12 @@ import Button from 'hew/Button';
 import Form, { hasErrors } from 'hew/Form';
 import Input from 'hew/Input';
 import { Modal } from 'hew/Modal';
-import Spinner from 'hew/Spinner';
 import { Loaded } from 'hew/utils/loadable';
 import yaml from 'js-yaml';
 import _ from 'lodash';
-import React, { useCallback, useEffect, useId, useMemo, useState } from 'react';
+import { useCallback, useEffect, useId, useMemo, useState } from 'react';
 
+import CodeEditor from 'components/CodeEditor';
 import useFeature from 'hooks/useFeature';
 import { paths } from 'routes/utils';
 import { createExperiment } from 'services/api';
@@ -84,8 +84,6 @@ interface ModalState {
   trial?: TrialItem;
   type: CreateExperimentType;
 }
-
-const CodeEditor = React.lazy(() => import('hew/CodeEditor'));
 
 const DEFAULT_MODAL_STATE = {
   config: {},
@@ -371,15 +369,13 @@ const ExperimentCreateModalComponent = ({
           <Alert message={modalState.configError} type="error" />
         )}
         {modalState.isAdvancedMode && (
-          <React.Suspense fallback={<Spinner spinning tip="Loading text editor..." />}>
-            <CodeEditor
-              file={Loaded(modalState.configString)}
-              files={[{ key: 'config.yaml' }]}
-              height="40vh"
-              onChange={handleEditorChange}
-              onError={handleError}
-            />
-          </React.Suspense>
+          <CodeEditor
+            file={Loaded(modalState.configString)}
+            files={[{ key: 'config.yaml' }]}
+            height="40vh"
+            onChange={handleEditorChange}
+            onError={handleError}
+          />
         )}
         <Form
           form={form}
