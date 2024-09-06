@@ -25,8 +25,10 @@ from determined.core._searcher import (
     DummySearcherOperation,
     SearcherMode,
     SearcherContext,
+    SearcherContextMissing,
     SearcherOperation,
     Unit,
+    _parse_searcher_max_length,
     _parse_searcher_units,
 )
 from determined.core._preempt import (
