@@ -361,6 +361,19 @@ test.describe('Workspace List', () => {
     await deleteModal.footer.submit.pwLocator.click();
     await deleteModal.pwLocator.waitFor({ state: 'hidden' });
   });
+
+  test('View Toggle', async ({ authedPage }) => {
+    const workspaceList = new WorkspaceList(authedPage);
+
+    await workspaceList.gridListRadioGroup.list.pwLocator.click();
+    await workspaceList.sortSelect.selectMenuOption('Newest to Oldest');
+
+    const idSortedWorkspaceNames = _.orderBy(workspaces, 'id', 'desc').map((w) => w.name);
+
+    expect(await workspaceList.table.table.rows.nth(0).name.pwLocator.textContent()).toEqual(
+      idSortedWorkspaceNames[0],
+    );
+  });
 });
 
 test.describe('Project UI CRUD', () => {

@@ -178,7 +178,7 @@ const WorkspaceList: React.FC = () => {
         dataIndex: 'name',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['name'],
         key: V1GetWorkspacesRequestSortBy.NAME,
-        onCell: onRightClickableCell,
+        onCell: () => ({ ...onRightClickableCell(), 'data-testid': 'name' }),
         render: workspaceNameRenderer,
         title: 'Name',
       },

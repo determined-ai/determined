@@ -4,9 +4,25 @@ import { DeterminedPage } from 'e2e/models/common/base/BasePage';
 import { Message } from 'e2e/models/common/hew/Message';
 import { Select } from 'e2e/models/common/hew/Select';
 import { Toggle } from 'e2e/models/common/hew/Toggle';
+import { GridListRadioGroup } from 'e2e/models/components/GridListRadioGroup';
+import { HeadRow, InteractiveTable, Row } from 'e2e/models/components/Table/InteractiveTable';
 import { WorkspaceCreateModal } from 'e2e/models/components/WorkspaceCreateModal';
 import { WorkspaceDeleteModal } from 'e2e/models/components/WorkspaceDeleteModal';
 import { WorkspaceCard } from 'e2e/models/pages/WorkspaceList/WorkspaceCard';
+
+class WorkspaceHeadRow extends HeadRow {
+  readonly name = new BaseComponent({
+    parent: this,
+    selector: '[data-testid="name"]',
+  });
+}
+
+class WorkspaceRow extends Row {
+  readonly name = new BaseComponent({
+    parent: this,
+    selector: '[data-testid="name"]',
+  });
+}
 
 /**
  * Represents the WorkspaceList page from src/pages/WorkspaceList.tsx
@@ -36,7 +52,18 @@ export class WorkspaceList extends DeterminedPage {
     parent: this,
     selector: '[data-testid="newWorkspace"]',
   });
-  // TODO missing grid list
+  readonly gridListRadioGroup = new GridListRadioGroup({
+    parent: this,
+    selector: '[data-testid="grid-list-radio-group"]',
+  });
+  readonly table = new InteractiveTable({
+    parent: this,
+    tableArgs: {
+      attachment: '[data-testid="table"]',
+      headRowType: WorkspaceHeadRow,
+      rowType: WorkspaceRow,
+    },
+  });
   readonly workspaceCards = new WorkspaceCard({
     parent: this,
   });
