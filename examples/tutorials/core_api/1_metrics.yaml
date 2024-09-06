@@ -6,6 +6,5 @@ entrypoint: python3 1_metrics.py
 searcher:
    name: single
    metric: x
-   max_length: 1
 
 max_restarts: 0

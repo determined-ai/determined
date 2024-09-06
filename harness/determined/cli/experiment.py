@@ -6,6 +6,7 @@ import pathlib
 import pprint
 import sys
 import time
+import warnings
 from typing import Any, Dict, Iterable, List, Optional, Sequence, Set, Union
 
 import tabulate
@@ -188,6 +189,14 @@ def submit_experiment(args: argparse.Namespace) -> None:
     )
 
     if args.test_mode:
+        warnings.warn(
+            "The --test flag to det experiment create has been deprecated in Determined XXYYZZ and "
+            "will be removed in a future version.  The searcher.max_length setting of the "
+            "experiment config has also been deprecated, and since --test mode relies on that "
+            "setting, --test mode will cease to work as soon as you remove max_length.",
+            FutureWarning,
+            stacklevel=2,
+        )
         print(termcolor.colored("Validating experiment configuration...", "yellow"), end="\r")
         bindings.post_CreateExperiment(sess, body=req)
         print(termcolor.colored("Experiment configuration validation succeeded! 🎉", "green"))
@@ -265,6 +274,17 @@ def local_experiment(args: argparse.Namespace) -> None:
             "Script-like entrypoints are not supported, but maybe you can just invoke your script "
             "directly?"
         )
+
+    warnings.warn(
+        "The --local and --test flags to det experiment create have both been deprecated in "
+        "Determined XXYYZZ and will be removed in a future version.  The searcher.max_length "
+        "setting of the experiment config has also been deprecated, and since --test mode relies "
+        "on that setting, --test mode will cease to work as soon as you remove max_length.  "
+        "Additionally, --local mode should no longer be necessary, as you should be able to just "
+        "invoke your script directly.",
+        FutureWarning,
+        stacklevel=2,
+    )
 
     common.set_logger(bool(experiment_config.get("debug", False)))
 
