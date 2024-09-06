@@ -1,9 +1,12 @@
+import _ from 'lodash';
+
 import { expect, test } from 'e2e/fixtures/global-fixtures';
 import { WorkspaceCreateModal } from 'e2e/models/components/WorkspaceCreateModal';
 import { ProjectDetails } from 'e2e/models/pages/ProjectDetails';
 import { WorkspaceDetails } from 'e2e/models/pages/WorkspaceDetails';
 import { WorkspaceList } from 'e2e/models/pages/WorkspaceList';
 import { randId, safeName } from 'e2e/utils/naming';
+import { V1GetWorkspaceResponse, V1Workspace } from 'services/api-ts-sdk';
 
 const createWorkspaceAllFields = async function (
   modal: WorkspaceCreateModal,
@@ -28,6 +31,17 @@ const createWorkspaceAllFields = async function (
   await modal.footer.submit.pwLocator.click();
   await modal.pwLocator.waitFor({ state: 'hidden' });
   return fullName;
+};
+
+const getCurrentWorkspaceNames = async (workspaceList: WorkspaceList) => {
+  await workspaceList.workspaceCards.pwLocator.nth(0).waitFor();
+
+  const cardTitles = await workspaceList.workspaceCards.title.pwLocator.all();
+  return await Promise.all(
+    cardTitles.map(async (title) => {
+      return await title.textContent();
+    }),
+  );
 };
 
 test.describe('Workspace UI CRUD', () => {
@@ -252,6 +266,93 @@ test.describe('Workspace UI CRUD', () => {
     await (await workspaceCard.actionMenu.open()).delete.pwLocator.click();
     await deleteModal.nameConfirmation.pwLocator.fill('bad validation');
     await expect(deleteModal.footer.submit.pwLocator).toBeDisabled();
+  });
+});
+
+test.describe('Workspace List', () => {
+  const workspaces: V1Workspace[] = [];
+
+  test.beforeAll(async ({ backgroundApiWorkspace }) => {
+    const promises: Promise<V1GetWorkspaceResponse>[] = [];
+
+    _.times(5, () => {
+      promises.push(backgroundApiWorkspace.createWorkspace(backgroundApiWorkspace.new()));
+    });
+
+    await Promise.all(promises).then((responses) => {
+      responses.forEach((response) => {
+        workspaces.push(response.workspace);
+      });
+    });
+  });
+
+  test.beforeEach(async ({ authedPage }) => {
+    const workspaceList = new WorkspaceList(authedPage);
+    await workspaceList.goto();
+  });
+
+  test.afterAll(async ({ backgroundApiWorkspace }) => {
+    for (const workspace of workspaces) {
+      await backgroundApiWorkspace.deleteWorkspace(workspace.id);
+    }
+  });
+
+  test('Sort', async ({ authedPage }) => {
+    const workspaceList = new WorkspaceList(authedPage);
+
+    const namesAfterAlphabetical = await getCurrentWorkspaceNames(workspaceList);
+    const nameSortedWorkspaceNames = _.orderBy(workspaces, 'name', 'asc').map((w) => w.name);
+    expect(nameSortedWorkspaceNames).toEqual(
+      namesAfterAlphabetical.filter((n) => {
+        return n && workspaces.map((w) => w.name).includes(n);
+      }),
+    );
+
+    await workspaceList.sortSelect.selectMenuOption('Newest to Oldest');
+
+    const namesAfterNewest = await getCurrentWorkspaceNames(workspaceList);
+    const idSortedWorkspaceNames = _.orderBy(workspaces, 'id', 'desc').map((w) => w.name);
+    expect(idSortedWorkspaceNames).toEqual(
+      namesAfterNewest.filter((n) => {
+        return n && workspaces.map((w) => w.name).includes(n);
+      }),
+    );
+  });
+
+  test('Filter', async ({ authedPage }) => {
+    const workspaceList = new WorkspaceList(authedPage);
+
+    await workspaceList.newWorkspaceButton.pwLocator.click();
+    const currentUserWorkspaceName = await createWorkspaceAllFields(
+      workspaceList.createModal,
+      'fromButton',
+    );
+    await workspaceList.nav.sidebar.workspaces.pwLocator.click();
+
+    const otherUserWorkspaceName = workspaces.map((w) => w.name)[0];
+
+    await workspaceList.whoseSelect.selectMenuOption("Others' Workspaces");
+    const namesAfterOthers = await getCurrentWorkspaceNames(workspaceList);
+    expect(namesAfterOthers).toContain(otherUserWorkspaceName);
+    expect(namesAfterOthers).not.toContain(currentUserWorkspaceName);
+
+    await workspaceList.whoseSelect.selectMenuOption('All Workspaces');
+    const namesAfterAll = await getCurrentWorkspaceNames(workspaceList);
+    expect(namesAfterAll).toContain(otherUserWorkspaceName);
+    expect(namesAfterAll).toContain(currentUserWorkspaceName);
+
+    await workspaceList.whoseSelect.selectMenuOption('My Workspaces');
+    const namesAfterMy = await getCurrentWorkspaceNames(workspaceList);
+    expect(namesAfterMy).toContain(currentUserWorkspaceName);
+    expect(namesAfterMy).not.toContain(otherUserWorkspaceName);
+
+    // cleanup:
+    const deleteModal = workspaceList.deleteModal;
+    const workspaceCard = workspaceList.cardByName(currentUserWorkspaceName);
+    await (await workspaceCard.actionMenu.open()).delete.pwLocator.click();
+    await deleteModal.nameConfirmation.pwLocator.fill(currentUserWorkspaceName);
+    await deleteModal.footer.submit.pwLocator.click();
+    await deleteModal.pwLocator.waitFor({ state: 'hidden' });
   });
 });
 

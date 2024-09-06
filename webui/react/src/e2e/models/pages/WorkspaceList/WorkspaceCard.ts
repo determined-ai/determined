@@ -15,4 +15,8 @@ export class WorkspaceCard extends Card {
     parent: this,
     selector: '[data-testid="archived"]',
   });
+  readonly title = new BaseComponent({
+    parent: this,
+    selector: 'h1',
+  });
 }
