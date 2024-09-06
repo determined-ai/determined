@@ -34,17 +34,15 @@ def test_hpc_job_pending_reason() -> None:
     config = conf.load_config(conf.tutorials_path("mnist_pytorch/const.yaml"))
     config = conf.set_slots_per_trial(config, 1)
     config = conf.set_profiling_enabled(config)
-    config["max_restarts"] = 0
-    # Shorten training to 64 batches.
     assert "--epochs 1" in config["entrypoint"], "update test to match tutorial"
     config["entrypoint"] = config["entrypoint"].replace("--epochs 1", "--batches 64")
+    config["max_restarts"] = 0
 
     # The experiment will request 6 CPUs
     config.setdefault("slurm", {})
     config["slurm"]["slots_per_node"] = 6
     config.setdefault("pbs", {})
     config["pbs"]["slots_per_node"] = 6
-    # Wrap entrypoint in torch_distributed for dtrain support.
     assert "torch_distributed" not in config["entrypoint"], "update test to match tutorial"
     config["entrypoint"] = "python3 -m determined.launch.torch_distributed " + config["entrypoint"]
 

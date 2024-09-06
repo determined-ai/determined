@@ -2603,6 +2603,7 @@ jobs:
       - run: pip install mypy pytest coverage
       - install-codecov
       - setup-paths
+      - run: make -C harness install
       - run: COVERAGE_FILE=$PWD/test-unit-harness-tf2-pycov make -C harness test-tf2
       - run: coverage xml -i --data-file=./test-unit-harness-tf2-pycov
       - run: codecov -v -t $CODECOV_TOKEN -F harness

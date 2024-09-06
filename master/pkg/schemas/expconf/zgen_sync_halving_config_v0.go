@@ -19,15 +19,12 @@ func (s *SyncHalvingConfigV0) SetNumRungs(val int) {
 	s.RawNumRungs = &val
 }
 
-func (s SyncHalvingConfigV0) MaxLength() LengthV0 {
-	if s.RawMaxLength == nil {
-		panic("You must call WithDefaults on SyncHalvingConfigV0 before .MaxLength")
-	}
-	return *s.RawMaxLength
+func (s SyncHalvingConfigV0) MaxLength() *LengthV0 {
+	return s.RawMaxLength
 }
 
-func (s *SyncHalvingConfigV0) SetMaxLength(val LengthV0) {
-	s.RawMaxLength = &val
+func (s *SyncHalvingConfigV0) SetMaxLength(val *LengthV0) {
+	s.RawMaxLength = val
 }
 
 func (s SyncHalvingConfigV0) Budget() LengthV0 {

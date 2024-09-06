@@ -36,7 +36,6 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/checkpointv1"
 	"github.com/determined-ai/determined/proto/pkg/commonv1"
-	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 	"github.com/determined-ai/determined/proto/pkg/trialv1"
 )
 
@@ -847,10 +846,6 @@ func (a *apiServer) multiTrialSample(trialID int32, metricNames []string,
 ) ([]*apiv1.DownsampledMetrics, error) {
 	var startTime time.Time
 	var metrics []*apiv1.DownsampledMetrics
-	// For now "epoch" is the only custom xAxis metric label supported so we
-	// build the `MetricSeriesEpoch` array. In the future this logic should
-	// be updated to support any number of xAxis metric options
-	xAxisLabelMetrics := []string{"epoch"}
 
 	if err := db.ValidatePolymorphicFilter(timeSeriesFilter); err != nil {
 		return nil, err
@@ -902,7 +897,6 @@ func (a *apiServer) multiTrialSample(trialID int32, metricNames []string,
 		var metric apiv1.DownsampledMetrics
 		metricMeasurements, err := trials.MetricsTimeSeries(
 			trialID, startTime, aMetricNames, startBatches, endBatches,
-			xAxisLabelMetrics,
 			maxDatapoints, *timeSeriesColumn, timeSeriesFilter, aMetricGroup)
 		if err != nil {
 			return nil, errors.Wrapf(err, fmt.Sprintf("error fetching time series of %s metrics",
@@ -1378,73 +1372,6 @@ func (a *apiServer) MarkAllocationResourcesDaemon(
 	return &apiv1.MarkAllocationResourcesDaemonResponse{}, nil
 }
 
-func (a *apiServer) GetCurrentTrialSearcherOperation(
-	ctx context.Context, req *apiv1.GetCurrentTrialSearcherOperationRequest,
-) (*apiv1.GetCurrentTrialSearcherOperationResponse, error) {
-	curUser, _, err := grpcutil.GetUser(ctx)
-	if err != nil {
-		return nil, err
-	}
-	if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.TrialId), curUser,
-		experiment.AuthZProvider.Get().CanGetExperimentArtifacts); err != nil {
-		return nil, err
-	}
-	eID, rID, err := a.m.db.TrialExperimentAndRequestID(int(req.TrialId))
-	if err != nil {
-		return nil, err
-	}
-
-	e, ok := experiment.ExperimentRegistry.Load(eID)
-	if !ok {
-		return nil, api.NotFoundErrs("experiment", strconv.Itoa(eID), true)
-	}
-	resp, err := e.TrialGetSearcherState(rID)
-	if err != nil {
-		return nil, err
-	}
-
-	return &apiv1.GetCurrentTrialSearcherOperationResponse{
-		Op: &experimentv1.TrialOperation{
-			Union: &experimentv1.TrialOperation_ValidateAfter{
-				ValidateAfter: resp.Op.ToProto(),
-			},
-		},
-		Completed: resp.Complete,
-	}, nil
-}
-
-func (a *apiServer) CompleteTrialSearcherValidation(
-	ctx context.Context, req *apiv1.CompleteTrialSearcherValidationRequest,
-) (*apiv1.CompleteTrialSearcherValidationResponse, error) {
-	curUser, _, err := grpcutil.GetUser(ctx)
-	if err != nil {
-		return nil, err
-	}
-	if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.TrialId), curUser,
-		experiment.AuthZProvider.Get().CanEditExperiment); err != nil {
-		return nil, err
-	}
-	eID, rID, err := a.m.db.TrialExperimentAndRequestID(int(req.TrialId))
-	if err != nil {
-		return nil, err
-	}
-
-	e, ok := experiment.ExperimentRegistry.Load(eID)
-	if !ok {
-		return nil, api.NotFoundErrs("experiment", strconv.Itoa(eID), true)
-	}
-
-	msg := experiment.TrialCompleteOperation{
-		RequestID: rID,
-		Metric:    req.CompletedOperation.SearcherMetric.AsInterface(),
-		Op:        searcher.NewValidateAfter(rID, req.CompletedOperation.Op.Length),
-	}
-	if err := e.TrialCompleteOperation(msg); err != nil {
-		return nil, err
-	}
-	return &apiv1.CompleteTrialSearcherValidationResponse{}, nil
-}
-
 func (a *apiServer) ReportTrialSearcherEarlyExit(
 	ctx context.Context, req *apiv1.ReportTrialSearcherEarlyExitRequest,
 ) (*apiv1.ReportTrialSearcherEarlyExitResponse, error) {
@@ -1503,11 +1430,10 @@ func (a *apiServer) ReportTrialProgress(
 	}
 
 	msg := experiment.TrialReportProgress{
-		RequestID: rID,
-		Progress:  searcher.PartialUnits(req.Progress),
-		IsRaw:     req.IsRaw,
+		Progress: searcher.PartialUnits(req.Progress),
+		IsRaw:    req.IsRaw,
 	}
-	if err := e.TrialReportProgress(msg); err != nil {
+	if err := e.TrialReportProgress(rID, msg); err != nil {
 		return nil, err
 	}
 	return &apiv1.ReportTrialProgressResponse{}, nil
@@ -1527,6 +1453,22 @@ func (a *apiServer) ReportTrialMetrics(
 	if err := trials.CanGetTrialsExperimentAndCheckCanDoAction(ctx, int(req.Metrics.TrialId), curUser,
 		experiment.AuthZProvider.Get().CanEditExperiment); err != nil {
 		return nil, err
+	}
+	if metricGroup == model.ValidationMetricGroup {
+		// Notify searcher of validation metrics.
+		eID, rID, err := a.m.db.TrialExperimentAndRequestID(int(req.Metrics.TrialId))
+		if err != nil {
+			return nil, errors.Errorf("Failed to get experiment ID from trial ID (%d)", req.Metrics.TrialId)
+		}
+		e, ok := experiment.ExperimentRegistry.Load(eID)
+		if ok {
+			// Report validation metrics to the searcher. Skip for experiments (such as detached mode)
+			// that are not already loaded in the master ExperimentRegistry.
+			err = e.TrialReportValidation(rID, req.Metrics.Metrics.AvgMetrics.AsMap())
+			if err != nil {
+				return nil, err
+			}
+		}
 	}
 	if err := a.m.db.AddTrialMetrics(ctx, req.Metrics, metricGroup); err != nil {
 		return nil, err
