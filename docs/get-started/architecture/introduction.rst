@@ -810,8 +810,6 @@ In this example experiment configuration, numbers, strings, maps, and an array a
    searcher:
      name: single
      metric: error
-     max_length:
-       batches: 500
      smaller_is_better: true
    environment:
      environment_variables:

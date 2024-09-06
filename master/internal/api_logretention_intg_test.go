@@ -43,10 +43,10 @@ retention_policy:
 
 func setRetentionTime(timestamp string) error {
 	_, err := db.Bun().NewRaw(fmt.Sprintf(`
-	CREATE or REPLACE FUNCTION retention_timestamp() RETURNS TIMESTAMPTZ AS $$ 
+	CREATE or REPLACE FUNCTION retention_timestamp() RETURNS TIMESTAMPTZ AS $$
     BEGIN
         RETURN %s;
-    END 
+    END
     $$ LANGUAGE PLPGSQL;
 	`, timestamp)).Exec(context.Background())
 	return err
@@ -96,10 +96,9 @@ hyperparameters:
 searcher:
   name: grid
   metric: none
-  max_length: %d
   max_concurrent_trials: %d
 %s
-`, numTrials, numTrials, config)
+`, numTrials, config)
 	createReq := &apiv1.CreateExperimentRequest{
 		ModelDefinition: []*utilv1.File{{Content: []byte{1}}},
 		Config:          conf,

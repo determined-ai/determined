@@ -547,7 +547,6 @@ def test_non_root_experiment(tmp_path: pathlib.Path) -> None:
             "searcher": {
                 "name": "single",
                 "metric": "x",
-                "max_length": 1,
             },
         }
         exp_ref = noop.create_experiment(sess, config=config)

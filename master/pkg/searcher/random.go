@@ -77,6 +77,7 @@ func (s *randomSearch) progress(
 	if s.MaxConcurrentTrials() > 0 && s.PendingTrials > s.MaxConcurrentTrials() {
 		panic("pending trials is greater than max_concurrent_trials")
 	}
+	// XXX
 	// Progress is calculated as follows:
 	//   - InvalidHP trials contribute 0 since we do not count them against max_trials budget and are
 	//     replaced with another randomly sampled config

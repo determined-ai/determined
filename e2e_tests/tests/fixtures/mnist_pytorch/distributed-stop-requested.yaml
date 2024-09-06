@@ -11,7 +11,7 @@ max_restarts: 0
 searcher:
   name: single
   metric: validation_loss
-  max_length:
-      batches: 937 #60,000 training images with batch size 64
   smaller_is_better: true
-entrypoint: python3 -m determined.launch.torch_distributed python3 stop_requested_model_def.py
+entrypoint: >-
+  python3 -m determined.launch.torch_distributed
+  python3 stop_requested_model_def.py

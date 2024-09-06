@@ -12,7 +12,8 @@ hyperparameters:
 searcher:
    name: adaptive_asha
    metric: x
-   max_length: 100
    max_trials: 10
+   time_metric: batches
+   max_time: 100
 
 max_restarts: 0

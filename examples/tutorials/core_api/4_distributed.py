@@ -38,57 +38,42 @@ def load_state(trial_id, checkpoint_directory):
 
 def main(core_context, latest_checkpoint, trial_id, increment_by):
     x = 0
+    max_length = 100
 
     starting_batch = 0
     if latest_checkpoint is not None:
         with core_context.checkpoint.restore_path(latest_checkpoint) as path:
             x, starting_batch = load_state(trial_id, path)
 
-    batch = starting_batch
-    last_checkpoint_batch = None
-    for op in core_context.searcher.operations():
-        while batch < op.length:
-            # NEW: Increment by the sum of every worker's increment_by value.
-            # In reality, it is just increment_by*num_workers, but the point is
-            # to show how to use the communication primitives.
-            all_increment_bys = core_context.distributed.allgather(increment_by)
-            x += sum(all_increment_bys)
-            steps_completed = batch + 1
-            time.sleep(0.1)
-            # NEW: some logs are easier to read if you only log from the chief.
-            if core_context.distributed.rank == 0:
-                logging.info(f"x is now {x}")
-            if steps_completed % 10 == 0:
-                # NEW: only the chief may report training metrics and progress,
-                # or upload checkpoints.
-                if core_context.distributed.rank == 0:
-                    core_context.train.report_training_metrics(
-                        steps_completed=steps_completed, metrics={"x": x}
-                    )
-                    op.report_progress(steps_completed)
-                    checkpoint_metadata = {"steps_completed": steps_completed}
-                    with core_context.checkpoint.store_path(checkpoint_metadata) as (
-                        checkpoint_directory,
-                        uuid,
-                    ):
-                        save_state(x, steps_completed, trial_id, checkpoint_directory)
-                    last_checkpoint_batch = steps_completed
-                if core_context.preempt.should_preempt():
-                    return
-            batch += 1
-
-        # NEW: only the chief may report validation metrics and completed operations.
+    for batch in range(starting_batch, max_length):
+        # NEW: Increment by the sum of every worker's increment_by value.
+        # In reality, it is just increment_by*num_workers, but the point is
+        # to show how to use the communication primitives.
+        all_increment_bys = core_context.distributed.allgather(increment_by)
+        x += sum(all_increment_bys)
+        steps_completed = batch + 1
+        time.sleep(0.1)
+        # NEW: some logs are easier to read if you only log from the chief.
         if core_context.distributed.rank == 0:
-            core_context.train.report_validation_metrics(
-                steps_completed=steps_completed, metrics={"x": x}
-            )
-            op.report_completed(x)
+            logging.info(f"x is now {x}")
+        if steps_completed % 10 == 0:
+            # NEW: only the chief may report metrics and progress,
+            # or upload checkpoints.
+            if core_context.distributed.rank == 0:
+                core_context.train.report_training_metrics(
+                    steps_completed=steps_completed, metrics={"x": x}
+                )
+                core_context.train.report_progress(steps_completed / float(max_length))
 
-    # NEW: again, only the chief may upload checkpoints.
-    if core_context.distributed.rank == 0 and last_checkpoint_batch != steps_completed:
-        checkpoint_metadata = {"steps_completed": steps_completed}
-        with core_context.checkpoint.store_path(checkpoint_metadata) as (path, uuid):
-            save_state(x, steps_completed, trial_id, path)
+                core_context.train.report_validation_metrics(
+                    steps_completed=steps_completed, metrics={"x": x}
+                )
+
+                checkpoint_metadata = {"steps_completed": steps_completed}
+                with core_context.checkpoint.store_path(checkpoint_metadata) as (path, uuid):
+                    save_state(x, steps_completed, trial_id, path)
+            if core_context.preempt.should_preempt():
+                return
 
 
 # NEW: Launch one process per slot.  In many distributed training frameworks, like horovod,

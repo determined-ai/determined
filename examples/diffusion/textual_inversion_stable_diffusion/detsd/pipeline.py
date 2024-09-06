@@ -185,42 +185,41 @@ class DetSDTextualInversionPipeline:
             if is_main_process:
                 logger.info("--------------- Generating Images ---------------")
 
-            # There will be a single op of len max_length, as defined in the searcher config.
-            for op in core_context.searcher.operations():
-                while pipeline.steps_completed < op.length:
-                    pipeline.image_history.extend(pipeline(**call_kwargs).images)
-                    pipeline.steps_completed += 1
+            # Due to tensorboard limitations, one should keep batch_size * MAX_STEPS <= 10 in order
+            # for all generated images to be easily viewable in tensorboard.  Scanning over
+            # generator seeds is the easiest way to get more samples while also diversifying the
+            # results.
+            MAX_STEPS = 5
+            while pipeline.steps_completed < MAX_STEPS:
+                pipeline.image_history.extend(pipeline(**call_kwargs).images)
+                pipeline.steps_completed += 1
 
-                    # Write to tensorboard and checkpoint at the specified frequency.
-                    if (
-                        pipeline.steps_completed % save_freq == 0
-                        or pipeline.steps_completed == op.length
-                    ):
-                        pipeline._write_tb_imgs(
-                            core_context=core_context, tb_writer=tb_writer, tb_tag=tb_tag
+                # Write to tensorboard and checkpoint at the specified frequency.
+                if (
+                    pipeline.steps_completed % save_freq == 0
+                    or pipeline.steps_completed == MAX_STEPS
+                ):
+                    pipeline._write_tb_imgs(
+                        core_context=core_context, tb_writer=tb_writer, tb_tag=tb_tag
+                    )
+
+                    # Checkpointing.
+                    devices_and_generators = core_context.distributed.gather(
+                        (device, generator.get_state())
+                    )
+                    if is_main_process:
+                        logger.info(f"Saving at step {pipeline.steps_completed}")
+                        # Save the state of the generators as the checkpoint.
+                        pipeline._save(
+                            core_context=core_context,
+                            devices_and_generators=devices_and_generators,
+                            trial_id=trial_id,
                         )
+                        core_context.train.report_progress(pipeline.steps_completed / MAX_LENGTH)
 
-                        # Checkpointing.
-                        devices_and_generators = core_context.distributed.gather(
-                            (device, generator.get_state())
-                        )
-                        if is_main_process:
-                            logger.info(f"Saving at step {pipeline.steps_completed}")
-                            # Save the state of the generators as the checkpoint.
-                            pipeline._save(
-                                core_context=core_context,
-                                devices_and_generators=devices_and_generators,
-                                trial_id=trial_id,
-                            )
-                            op.report_progress(pipeline.steps_completed)
-
-                        # Only preempt after a checkpoint has been saved.
-                        if core_context.preempt.should_preempt():
-                            return
-
-                if is_main_process:
-                    # Report zero upon completion.
-                    op.report_completed(0)
+                    # Only preempt after a checkpoint has been saved.
+                    if core_context.preempt.should_preempt():
+                        return
 
     def load_from_checkpoint_dir(
         self,

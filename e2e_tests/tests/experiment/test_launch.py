@@ -12,11 +12,10 @@ from tests import experiment as exp
 def test_launch_layer_mnist() -> None:
     sess = api_utils.user_session()
     config = conf.load_config(conf.tutorials_path("mnist_pytorch/const.yaml"))
-    config = conf.set_max_length(config, {"batches": 200})
     config = conf.set_slots_per_trial(config, 1)
     config = conf.set_profiling_enabled(config)
     config = conf.set_entrypoint(
-        config, "python3 -m determined.launch.horovod --autohorovod python3 train.py"
+        config, "python3 -m determined.launch.horovod --autohorovod python3 train.py --batches 200"
     )
 
     experiment_id = exp.run_basic_test_with_temp_config(

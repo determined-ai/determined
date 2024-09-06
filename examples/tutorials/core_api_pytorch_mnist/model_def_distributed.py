@@ -54,7 +54,7 @@ class Net(nn.Module):
         return output
 
 
-def train(args, model, device, train_loader, optimizer, core_context, epoch_idx, op):
+def train(args, model, device, train_loader, optimizer, epoch_idx, core_context):
     model.train()
     for batch_idx, (data, target) in enumerate(train_loader):
         data, target = data.to(device), target.to(device)
@@ -86,12 +86,8 @@ def train(args, model, device, train_loader, optimizer, core_context, epoch_idx,
             if args.dry_run:
                 break
 
-    # NEW: Report progress only on rank 0.
-    if core_context.distributed.rank == 0:
-        op.report_progress(epoch_idx)
 
-
-def test(args, model, device, test_loader, core_context, steps_completed, op) -> int:
+def test(args, model, device, test_loader, core_context, steps_completed):
     model.eval()
     test_loss = 0
     correct = 0
@@ -116,8 +112,6 @@ def test(args, model, device, test_loader, core_context, steps_completed, op) ->
         core_context.train.report_validation_metrics(
             steps_completed=steps_completed, metrics={"test_loss": test_loss}
         )
-
-    return test_loss
 
 
 def load_state(checkpoint_directory, trial_id):
@@ -264,40 +258,24 @@ def main(core_context):
     optimizer = optim.Adadelta(model.parameters(), lr=hparams["learning_rate"])
     scheduler = StepLR(optimizer, step_size=1, gamma=args.gamma)
 
-    epoch_idx = epochs_completed
-    last_checkpoint_batch = None
+    for epoch_idx in range(epochs_completed, args.epochs):
+        train(args, model, device, train_loader, optimizer, epoch_idx, core_context)
+        epochs_completed = epoch_idx + 1
+        steps_completed = epochs_completed * len(train_loader)
+        test(args, model, device, test_loader, core_context, steps_completed)
 
-    for op in core_context.searcher.operations():
-        while epoch_idx < op.length:
-            train(args, model, device, train_loader, optimizer, core_context, epoch_idx, op)
-            epochs_completed = epoch_idx + 1
-            steps_completed = epochs_completed * len(train_loader)
-            test_loss = test(args, model, device, test_loader, core_context, steps_completed, op)
+        scheduler.step()
 
-            scheduler.step()
-
-            checkpoint_metadata_dict = {
-                "steps_completed": steps_completed,
-            }
-
-            epoch_idx += 1
-
-            # Store checkpoints only on rank 0.
-            if core_context.distributed.rank == 0:
-                with core_context.checkpoint.store_path(checkpoint_metadata_dict) as (
-                    path,
-                    storage_id,
-                ):
-                    torch.save(model.state_dict(), path / "checkpoint.pt")
-                    with path.joinpath("state").open("w") as f:
-                        f.write(f"{epochs_completed},{info.trial.trial_id}")
-
-            if core_context.preempt.should_preempt():
-                return
-
-        # Report completed only on rank 0.
+        # NEW: Store checkpoints only on rank 0.
         if core_context.distributed.rank == 0:
-            op.report_completed(test_loss)
+            checkpoint_metadata_dict = {"steps_completed": steps_completed}
+            with core_context.checkpoint.store_path(checkpoint_metadata_dict) as (path, storage_id):
+                torch.save(model.state_dict(), path / "checkpoint.pt")
+                with path.joinpath("state").open("w") as f:
+                    f.write(f"{epochs_completed},{info.trial.trial_id}")
+
+        if core_context.preempt.should_preempt():
+            return
 
 
 # Docs snippet start: initialize process group
