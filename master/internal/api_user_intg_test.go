@@ -927,6 +927,8 @@ func getActivityEntry(ctx context.Context, userID model.UserID, entityID int32) 
 		int32(userID)).Where("entity_id = ?", entityID).Count(ctx)
 }
 
+// TestPostLongLivedToken tests current user WITHOUT lifespan input
+// POST /api/v1/user/token - Create and get current user's long lived token.
 func TestPostLongLivedToken(t *testing.T) {
 	api, curUser, ctx := setupAPITest(t, nil)
 
@@ -935,11 +937,15 @@ func TestPostLongLivedToken(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, token)
 
-	exists, err := getLongLivedTokensEntry(ctx, curUser.ID)
-	require.True(t, exists)
+	err = checkOutput(ctx, t, curUser.ID, "")
 	require.NoError(t, err)
+
+	// deleteTestToken(t, api, ctx)
 }
 
+// TestPostLongLivedTokenWithLifespan tests current user WITH lifespan input
+// POST /api/v1/user/token - Create and get current user's long lived token
+// Input body contains lifespan = "5s or "2h".
 func TestPostLongLivedTokenWithLifespan(t *testing.T) {
 	api, curUser, ctx := setupAPITest(t, nil)
 
@@ -947,29 +953,21 @@ func TestPostLongLivedTokenWithLifespan(t *testing.T) {
 	token, err := api.PostLongLivedToken(ctx, &apiv1.PostLongLivedTokenRequest{
 		Lifespan: lifespan,
 	})
-
 	require.NoError(t, err)
 	require.NotNil(t, token)
 
-	err = testSetLifespan(ctx, t, curUser.ID, lifespan)
+	err = checkOutput(ctx, t, curUser.ID, lifespan)
 	require.NoError(t, err)
 
-	exists, err := getLongLivedTokensEntry(ctx, curUser.ID)
-	require.True(t, exists)
-	require.NoError(t, err)
+	// deleteTestToken(t, api, ctx)
 }
 
+// TestPostUserLongLivedToken tests given user's WITHOUT lifespan input
+// POST /api/v1/users/{user_Id}/token - Create and get a user's long lived token.
 func TestPostUserLongLivedToken(t *testing.T) {
 	api, _, ctx := setupAPITest(t, nil)
 
-	userID, err := user.Add(
-		context.TODO(),
-		&model.User{
-			Username: uuid.New().String(),
-			Remote:   false,
-		},
-		nil,
-	)
+	userID, err := getTestUser(ctx)
 	require.NoError(t, err)
 
 	// Without lifespan input
@@ -979,22 +977,19 @@ func TestPostUserLongLivedToken(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, token)
 
-	exists, err := getLongLivedTokensEntry(ctx, userID)
-	require.True(t, exists)
+	err = checkOutput(ctx, t, userID, "")
 	require.NoError(t, err)
+
+	// deleteTestToken(t, api, ctx)
 }
 
+// TestPostUserLongLivedTokenWithLifespan tests given user's  WITH lifespan input
+// POST /api/v1/users/{user_Id}/token - Create and get a user's long lived token
+// Input body contains lifespan = "5s or "2h".
 func TestPostUserLongLivedTokenWithLifespan(t *testing.T) {
 	api, _, ctx := setupAPITest(t, nil)
 
-	userID, err := user.Add(
-		context.TODO(),
-		&model.User{
-			Username: uuid.New().String(),
-			Remote:   false,
-		},
-		nil,
-	)
+	userID, err := getTestUser(ctx)
 	require.NoError(t, err)
 
 	// With lifespan input
@@ -1005,47 +1000,36 @@ func TestPostUserLongLivedTokenWithLifespan(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, token)
 
-	err = testSetLifespan(ctx, t, userID, lifespan)
+	err = checkOutput(ctx, t, userID, lifespan)
 	require.NoError(t, err)
 
-	exists, err := getLongLivedTokensEntry(ctx, userID)
-	require.True(t, exists)
-	require.NoError(t, err)
+	// deleteTestToken(t, api, ctx)
 }
 
+// TestGetLongLivedToken tests current user's token info
+// GET /api/v1/user/token - Get current user's long lived token info.
 func TestGetLongLivedToken(t *testing.T) {
 	api, curUser, ctx := setupAPITest(t, nil)
 
-	// Create a test token without lifespan input
-	token, err := api.PostLongLivedToken(ctx, &apiv1.PostLongLivedTokenRequest{})
-	require.NoError(t, err)
-	require.NotNil(t, token)
+	createTestToken(ctx, t, api, 0)
 
 	tokenInfo, err := api.GetLongLivedToken(ctx, &apiv1.GetLongLivedTokenRequest{})
 	require.NoError(t, err)
 	require.NotNil(t, tokenInfo)
 	require.Equal(t, int32(curUser.ID), tokenInfo.LongLivedTokenInfo.UserId)
+
+	// deleteTestToken(t, api, ctx)
 }
 
+// TestGetLongLivedToken tests given user's token info
+// GET /api/v1/users/{user_Id}/token - Get a user's long lived token info.
 func TestGetUserLongLivedToken(t *testing.T) {
 	api, _, ctx := setupAPITest(t, nil)
 
-	userID, err := user.Add(
-		context.TODO(),
-		&model.User{
-			Username: uuid.New().String(),
-			Remote:   false,
-		},
-		nil,
-	)
+	userID, err := getTestUser(ctx)
 	require.NoError(t, err)
 
-	// Create a test token without lifespan input
-	token, err := api.PostUserLongLivedToken(ctx, &apiv1.PostUserLongLivedTokenRequest{
-		UserId: int32(userID),
-	})
-	require.NoError(t, err)
-	require.NotNil(t, token)
+	createTestToken(ctx, t, api, userID)
 
 	tokenInfo, err := api.GetUserLongLivedToken(ctx, &apiv1.GetUserLongLivedTokenRequest{
 		UserId: int32(userID),
@@ -1053,8 +1037,11 @@ func TestGetUserLongLivedToken(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, tokenInfo)
 	require.Equal(t, int32(userID), tokenInfo.LongLivedTokenInfo.UserId)
+
+	// deleteTestToken(t, api, ctx)
 }
 
+// TestAuthzLongLivedToken tests authorization of user creating/Viewing/Deleting their own token.
 func TestAuthzLongLivedToken(t *testing.T) {
 	api, authzUsers, curUser, ctx := setupUserAuthzTest(t, nil)
 
@@ -1067,14 +1054,16 @@ func TestAuthzLongLivedToken(t *testing.T) {
 	require.Equal(t, expectedErr.Error(), err.Error())
 
 	// GET API Auth check
-	expectedErr = status.Error(codes.PermissionDenied, "canCreateUsersOwnToken")
-	authzUsers.On("CanCreateUsersOwnToken", mock.Anything, curUser).
-		Return(fmt.Errorf("canCreateUsersOwnToken")).Once()
+	expectedErr = status.Error(codes.PermissionDenied, "canGetUsersOwnToken")
+	authzUsers.On("CanGetUsersOwnToken", mock.Anything, curUser).
+		Return(fmt.Errorf("canGetUsersOwnToken")).Once()
 
 	_, err = api.GetLongLivedToken(ctx, &apiv1.GetLongLivedTokenRequest{})
 	require.Equal(t, expectedErr.Error(), err.Error())
 }
 
+// TestAuthzUserLongLivedToken tests authorization of user creating/Viewing/Deleting
+// given user's token.
 func TestAuthzUserLongLivedToken(t *testing.T) {
 	api, authzUsers, curUser, ctx := setupUserAuthzTest(t, nil)
 
@@ -1089,14 +1078,52 @@ func TestAuthzUserLongLivedToken(t *testing.T) {
 	require.Equal(t, expectedErr.Error(), err.Error())
 
 	// GET API Auth check
-	expectedErr = status.Error(codes.PermissionDenied, "canCreateUsersToken")
-	authzUsers.On("CanCreateUsersToken", mock.Anything, curUser, curUser).
-		Return(fmt.Errorf("canCreateUsersToken")).Once()
+	expectedErr = status.Error(codes.PermissionDenied, "canGetUsersToken")
+	authzUsers.On("CanGetUsersToken", mock.Anything, curUser, curUser).
+		Return(fmt.Errorf("canGetUsersToken")).Once()
 
 	_, err = api.GetUserLongLivedToken(ctx, &apiv1.GetUserLongLivedTokenRequest{
 		UserId: int32(curUser.ID),
 	})
 	require.Equal(t, expectedErr.Error(), err.Error())
+}
+
+func checkOutput(ctx context.Context, t *testing.T, userID model.UserID, lifespan string) error {
+	exists, err := getLongLivedTokensEntry(ctx, userID)
+	require.True(t, exists)
+	require.NoError(t, err)
+
+	err = testSetLifespan(ctx, t, userID, lifespan)
+	require.NoError(t, err)
+
+	return nil
+}
+
+func createTestToken(ctx context.Context, t *testing.T, api *apiServer, userID model.UserID) {
+	if userID == 0 {
+		// Create a test token for current user without lifespan input
+		token, err := api.PostLongLivedToken(ctx, &apiv1.PostLongLivedTokenRequest{})
+		require.NoError(t, err)
+		require.NotNil(t, token)
+	} else {
+		// Create a test token for user_id without lifespan input
+		token, err := api.PostUserLongLivedToken(ctx, &apiv1.PostUserLongLivedTokenRequest{
+			UserId: int32(userID),
+		})
+		require.NoError(t, err)
+		require.NotNil(t, token)
+	}
+}
+
+func getTestUser(ctx context.Context) (model.UserID, error) {
+	return user.Add(
+		ctx,
+		&model.User{
+			Username: uuid.New().String(),
+			Remote:   false,
+		},
+		nil,
+	)
 }
 
 func getLongLivedTokensEntry(ctx context.Context, userID model.UserID) (bool, error) {
@@ -1105,8 +1132,16 @@ func getLongLivedTokensEntry(ctx context.Context, userID model.UserID) (bool, er
 }
 
 func testSetLifespan(ctx context.Context, t *testing.T, userID model.UserID, lifespan string) error {
+	expLifespan := user.DefaultTokenLifespan
+	var err error
+	if lifespan != "" {
+		expLifespan, err = time.ParseDuration(lifespan)
+		if err != nil {
+			return fmt.Errorf("Invalid duration format")
+		}
+	}
 	var expiresAt, createdAt time.Time
-	err := db.Bun().NewSelect().
+	err = db.Bun().NewSelect().
 		Table("long_lived_tokens").
 		Column("expires_at", "created_at").
 		Where("user_id = ?", userID).
@@ -1115,18 +1150,8 @@ func testSetLifespan(ctx context.Context, t *testing.T, userID model.UserID, lif
 		return fmt.Errorf("Error getting the set lifespan, creation time")
 	}
 
-	duration, err := time.ParseDuration(lifespan)
-	if err != nil {
-		return fmt.Errorf("Invalid duration format")
-	}
-
-	durationDifference := expiresAt.Sub(createdAt)
-
-	// Define a small threshold to account for minor differences
-	threshold := 1 * time.Millisecond
-	// Use a condition to check if the difference is within the acceptable threshold
-	require.InDelta(t, duration.Seconds(), durationDifference.Seconds(), threshold.Seconds(),
-		"Duration difference is not within the acceptable range")
+	actLifespan := expiresAt.Sub(createdAt)
+	require.Equal(t, expLifespan, actLifespan)
 
 	return nil
 }

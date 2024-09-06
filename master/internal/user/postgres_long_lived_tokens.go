@@ -14,10 +14,11 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
-const (
-	// TokenExpirationDuration is how long a newly created long lived token is valid.
-	TokenExpirationDuration = 30 * 24 * time.Hour
-)
+// DefaultTokenLifespan is how long a newly created long lived token is valid.
+const DefaultTokenLifespan = 30 * 24 * time.Hour
+
+// CurrentTimeNowInUTC stores the current time in UTC for time insertions.
+var CurrentTimeNowInUTC time.Time
 
 // LongLivedTokenOption is the return type for WithTokenExpiresAt helper function.
 // It takes a pointer to model.LongLivedToken and modifies it.
@@ -25,9 +26,9 @@ const (
 type LongLivedTokenOption func(f *model.LongLivedToken)
 
 // WithTokenExpiresAt function will add specified expiresAt (if any) to the long lived token table.
-func WithTokenExpiresAt(expiresAt *time.Time) LongLivedTokenOption {
+func WithTokenExpiresAt(expiresAt *time.Duration) LongLivedTokenOption {
 	return func(s *model.LongLivedToken) {
-		s.ExpiresAt = *expiresAt
+		s.ExpiresAt = CurrentTimeNowInUTC.Add(*expiresAt)
 	}
 }
 
@@ -35,11 +36,12 @@ func WithTokenExpiresAt(expiresAt *time.Time) LongLivedTokenOption {
 func DeleteAndCreateLongLivedToken(
 	ctx context.Context, userID model.UserID, opts ...LongLivedTokenOption,
 ) (string, error) {
+	CurrentTimeNowInUTC = time.Now().UTC()
 	// Populate the default values in the model.
 	longLivedToken := &model.LongLivedToken{
 		UserID:    userID,
-		CreatedAt: time.Now(),
-		ExpiresAt: time.Now().Add(TokenExpirationDuration),
+		CreatedAt: CurrentTimeNowInUTC,
+		ExpiresAt: CurrentTimeNowInUTC.Add(DefaultTokenLifespan),
 	}
 
 	// Update the optional ExpiresAt field (if passed)
@@ -52,14 +54,14 @@ func DeleteAndCreateLongLivedToken(
 	err := db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		// Tokens should have a 1:1 relationship with users, if a user creates a new token,
 		// revoke the previous token if it exists.
-		err := DeleteLongLivenTokenByUserID(ctx, userID)
+		err := DeleteLongLivenTokenByUserID(ctx, tx, userID)
 		if err != nil {
 			return err
 		}
 
 		// A new row is inserted into the long_lived_token table, and the ID of the
 		// inserted row is returned and stored in longLivedToken.ID.
-		_, err = db.Bun().NewInsert().
+		_, err = tx.NewInsert().
 			Model(longLivedToken).
 			Column("user_id", "expires_at", "created_at").
 			Returning("id").
@@ -87,8 +89,8 @@ func DeleteAndCreateLongLivedToken(
 
 // DeleteLongLivenTokenByUserID deletes long lived token if found.
 // If not found, the err will be nil, and the number of affected rows will be zero.
-func DeleteLongLivenTokenByUserID(ctx context.Context, userID model.UserID) error {
-	_, err := db.Bun().NewDelete().
+func DeleteLongLivenTokenByUserID(ctx context.Context, tx bun.Tx, userID model.UserID) error {
+	_, err := tx.NewDelete().
 		Table("long_lived_tokens").
 		Where("user_id = ?", userID).
 		Exec(ctx)

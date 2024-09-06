@@ -137,6 +137,38 @@ func (p *UserAuthZPermissive) CanCreateUsersToken(
 	return (&UserAuthZBasic{}).CanCreateUsersToken(ctx, curUser, targetUser)
 }
 
+// CanGetUsersOwnToken calls RBAC authz but enforces basic authz.
+func (p *UserAuthZPermissive) CanGetUsersOwnToken(
+	ctx context.Context, curUser model.User,
+) error {
+	_ = (&UserAuthZRBAC{}).CanGetUsersOwnToken(ctx, curUser)
+	return (&UserAuthZBasic{}).CanGetUsersOwnToken(ctx, curUser)
+}
+
+// CanGetUsersToken calls RBAC authz but enforces basic authz.
+func (p *UserAuthZPermissive) CanGetUsersToken(
+	ctx context.Context, curUser, targetUser model.User,
+) error {
+	_ = (&UserAuthZRBAC{}).CanGetUsersToken(ctx, curUser, targetUser)
+	return (&UserAuthZBasic{}).CanGetUsersToken(ctx, curUser, targetUser)
+}
+
+// CanDeleteUsersOwnToken calls RBAC authz but enforces basic authz.
+func (p *UserAuthZPermissive) CanDeleteUsersOwnToken(
+	ctx context.Context, curUser model.User,
+) error {
+	_ = (&UserAuthZRBAC{}).CanDeleteUsersOwnToken(ctx, curUser)
+	return (&UserAuthZBasic{}).CanDeleteUsersOwnToken(ctx, curUser)
+}
+
+// CanDeleteUsersToken calls RBAC authz but enforces basic authz.
+func (p *UserAuthZPermissive) CanDeleteUsersToken(
+	ctx context.Context, curUser, targetUser model.User,
+) error {
+	_ = (&UserAuthZRBAC{}).CanDeleteUsersToken(ctx, curUser, targetUser)
+	return (&UserAuthZBasic{}).CanDeleteUsersToken(ctx, curUser, targetUser)
+}
+
 func init() {
 	AuthZProvider.Register("permissive", &UserAuthZPermissive{})
 }
