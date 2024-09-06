@@ -345,7 +345,7 @@ func handleCustomTriggerData(ctx context.Context, data CustomTriggerData, experi
 	}
 
 	if _, err := db.Bun().NewInsert().Model(&es).Exec(ctx); err != nil {
-		return fmt.Errorf("report experiment state changed inserting event trigger: %w", err)
+		return fmt.Errorf("handle custom data inserting event trigger: %w", err)
 	}
 
 	singletonShipper.Wake()
