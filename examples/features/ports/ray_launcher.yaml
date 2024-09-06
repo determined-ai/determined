@@ -7,7 +7,6 @@ resources:
 searcher:
    name: single
    metric: x
-   max_length: 10000000
 
 max_restarts: 0
 

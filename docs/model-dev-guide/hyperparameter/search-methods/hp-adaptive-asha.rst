@@ -20,12 +20,13 @@ Search mode:
 
 Resource budget:
 
--  ``max_length``: The maximum training length (see :ref:`Training Units
-   <experiment-configuration_training_units>`) of any trial that survives to the end of the
-   experiment. This quantity is domain-specific and should roughly reflect the number of minibatches
-   the model must be trained on for it to converge on the data set. For users who would like to
-   determine this number experimentally, train a model with reasonable hyperparameters using the
-   ``single`` search method.
+-  ``time_metric``, ``max_time``: The name of the "time" metric and the maximum value it will take
+  for a trial that survives to the end of the experiment (see :ref:`Training Units
+  <experiment-configuration_training_units>`).  Note that the searcher will expect this metric to
+  appear in validation metrics reported by the model.  This quantity is domain-specific and should
+  roughly reflect the number of minibatches the model must be trained on for it to converge on the
+  data set.  For users who would like to determine this number experimentally, train a model with
+  reasonable hyperparameters using the ``single`` search method.
 
 -  ``max_trials``: This indicates the total number of hyperparameter settings that will be evaluated
    in the experiment. Set ``max_trials`` to at least 500 to take advantage of speedups from
@@ -85,7 +86,8 @@ At the end, the trial with best performance has the hyperparameter setting the S
 
 In the example above, we generalize "halving" with a field called divisor, which determines what
 fraction of trials are kept in successive rungs, as well as the training length in successive rungs.
-``max_length`` is 16 epochs, which is the maximum length a trial is trained for.
+In this example, ``time_metric`` would probably be "epochs" and ``max_time`` would be 16, since the
+maximum time a trial is trained for is 16 epochs.
 
 In general, SHA has a fixed ``divisor`` d. In the first rung, it generates an initial set of
 randomly chosen trials and runs until each trial has trained for the same length. In the next rung,
@@ -131,9 +133,9 @@ On one end, ``aggressive`` applies early stopping in a very eager manner; this m
 corresponds to only making a single call to ASHA. With the default ``divisor`` of 4, 75% of the
 remaining trials will be eliminated in each rung after only being trained for 25% the length of the
 next rung. This implies that relatively few trials will be allowed to finish even a small fraction
-of the length needed train to convergence (``max_length``). This aggressive early stopping behavior
-allows the searcher to start more trials for a wider exploration of hyperparameter configurations,
-at the risk of discarding a configuration too soon.
+of the length needed train to convergence (``time_metric``, ``max_time``). This aggressive early
+stopping behavior allows the searcher to start more trials for a wider exploration of hyperparameter
+configurations, at the risk of discarding a configuration too soon.
 
 On the other end, ``conservative`` mode is more similar to a ``random`` search, in that it performs
 significantly less pruning. Extra ASHA subroutines are spawned with fewer rungs and longer training
@@ -152,21 +154,21 @@ rung (N in the above ASHA example).
 
 **Q: How do I control how long a trial is trained for before it is potentially discarded?**
 
-The training length is guaranteed to be at least ``max_length / 256`` by default, or ``max_length /
-divisor ^ max_rungs-1`` in general. It is recommended to configure this in records or epochs if the
-``global_batch_size`` hyperparameter is not constant, to ensure each trial trains on the same amount
-of data.
+The training length is guaranteed to be at least ``max_time / 256`` by default, or ``max_time /
+divisor ^ max_rungs-1`` in general. It is recommended to use records or epochs as your
+``time_metric`` if your batch size is not constant across all trials, to ensure each trial trains on
+the same amount of data.
 
-**Q: How do I make sure ``x`` trials are run the full training length (``max_length``)?**
+**Q: How do I make sure ``x`` trials are run the full training length (``max_time``)?**
 
 The number of initial trials is determined by a combination of ``mode``, ``max_trials``,
-``divisor``, ``max_rungs``, ``max_length`` and ``bracket_rungs``. Here is a rule of thumb for the
+``divisor``, ``max_rungs``, ``max_time`` and ``bracket_rungs``. Here is a rule of thumb for the
 default configuration of ``max_rungs: 5`` and ``divisor: 4``, with ``mode: standard`` and a large
 enough ``max_trials``:
 
 -  The initial number of trials is ``max_trials``.
 
--  To ensure that ``x`` trials are run ``max_length``, set ``max_trials`` high enough for the
+-  To ensure that ``x`` trials are run ``max_time``, set ``max_time`` high enough for the
    brackets with their halving rate (the ``divisor``) to allow ``x`` trials to make it to the final
    ``rungs``. This can be viewed by the command describe below.
 

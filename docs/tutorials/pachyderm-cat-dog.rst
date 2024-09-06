@@ -243,8 +243,6 @@ The configuration should resemble the following:
    searcher:
      name: single
      metric: accuracy
-     max_length:
-       batches: 100
      smaller_is_better: false
    entrypoint: model_def:CatDogModel
    scheduling_unit: 10

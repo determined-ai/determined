@@ -1,7 +1,9 @@
+import logging
 from typing import Any, Dict, Tuple
 
 import torch.utils.data
 
+import determined as det
 from determined import pytorch
 
 
@@ -36,7 +38,7 @@ class IdentityPyTorchTrial(pytorch.PyTorchTrial):
         self.lr = 0.001
 
         optimizer = torch.optim.SGD(self.model.parameters(), self.lr)
-        self.opt = context.wrap_optimizer(optimizer)
+        self.opt = context.wrap_optimizer(optimizer, average_aggregated_gradients=True)
 
         self.loss_fn = torch.nn.MSELoss(reduction="mean")
         self.metrics_callback = MetricsCallback()
@@ -77,3 +79,22 @@ class IdentityPyTorchTrial(pytorch.PyTorchTrial):
 
     def build_callbacks(self) -> Dict[str, pytorch.PyTorchCallback]:
         return {"metrics": self.metrics_callback}
+
+
+if __name__ == "__main__":
+    info = det.get_cluster_info()
+    assert info, "This test is intended to run on cluster only."
+
+    # Configure logging
+    logging.basicConfig(level=logging.INFO, format=det.LOG_FORMAT)
+
+    with pytorch.init(aggregation_frequency=2) as train_context:
+        trial = IdentityPyTorchTrial(context=train_context)
+        trainer = pytorch.Trainer(trial, train_context)
+        trainer.fit(
+            max_length=pytorch.Epoch(3),
+            checkpoint_policy="none",
+            checkpoint_period=pytorch.Batch(1),
+            validation_period=pytorch.Batch(1),
+            latest_checkpoint=info.latest_checkpoint,
+        )

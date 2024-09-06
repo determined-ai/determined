@@ -158,8 +158,6 @@ our multi-trial search. Finally, we'll run a remote distributed training job.
                  name: random
                  metric: validation_loss
                  max_trials: 20
-                 max_length:
-                   batches: 1000
                  smaller_is_better: true
 
                entrypoint: python3 train.py

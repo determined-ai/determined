@@ -1,5 +1,5 @@
 name: core-api-stage-3
-entrypoint: python3 3_hpsearch.py
+entrypoint: ./3_hpsearch.py
 
 # NEW: configure a single "increment_by" hyperparameter
 hyperparameters:
@@ -12,7 +12,8 @@ hyperparameters:
 searcher:
    name: adaptive_asha
    metric: x
-   max_length: 100
    max_trials: 10
+   time_metric: 'batch'
+   max_time: 100
 
 max_restarts: 0

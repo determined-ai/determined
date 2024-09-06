@@ -40,7 +40,7 @@ def test_tf_keras_parallel(aggregation_frequency: int) -> None:
     sess = api_utils.user_session()
     config = conf.load_config(conf.cv_examples_path("iris_tf_keras/const.yaml"))
     config = conf.set_slots_per_trial(config, 8)
-    config = conf.set_max_length(config, {"batches": 200})
+    config["searcher"]["max_length"] = {"batches": 200}
     config = conf.set_aggregation_frequency(config, aggregation_frequency)
     config = conf.set_tf2_image(config)
     config = conf.set_profiling_enabled(config)

@@ -12,6 +12,7 @@ Then, configure and run the training loop with the PyTorch Trainer API.
 The model can be trained either locally or on-cluster with the same training code.
 
 """
+import argparse
 import logging
 import pathlib
 from typing import Any, Dict
@@ -76,10 +77,14 @@ class MNistTrial(pytorch.PyTorchTrial):
         pred = output.argmax(dim=1, keepdim=True)
         accuracy = pred.eq(labels.view_as(pred)).sum().item() / len(batch_data)
 
-        return {"validation_loss": validation_loss, "accuracy": accuracy}
+        return {
+            "validation_loss": validation_loss,
+            "accuracy": accuracy,
+            "batch": self.context.current_train_batch(),
+        }
 
 
-def run(local: bool = False):
+def run(max_length, local: bool = False):
     """Initializes the trial and runs the training loop.
 
     This method configures the appropriate training parameters for both local and on-cluster
@@ -100,11 +105,9 @@ def run(local: bool = False):
         yml = yaml.YAML(typ="safe", pure=True)
         conf = yml.load(pathlib.Path("./const.yaml").read_text())
         hparams = conf["hyperparameters"]
-        max_length = pytorch.Batch(100)  # Train for 100 batches.
         latest_checkpoint = None
     else:
         hparams = info.trial.hparams  # Get instance of hparam values from Determined cluster info.
-        max_length = None  # On-cluster training trains for the searcher's configured length.
         latest_checkpoint = (
             info.latest_checkpoint
         )  # (Optional) Configure checkpoint for pause/resume functionality.
@@ -119,5 +122,19 @@ if __name__ == "__main__":
     # Configure logging
     logging.basicConfig(level=logging.INFO, format=det.LOG_FORMAT)
 
+    # Parse command line options
+    parser = argparse.ArgumentParser()
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument("--batches", type=int)
+    group.add_argument("--epochs", type=int)
+    args = parser.parse_args()
+    if args.batches:
+        max_length = pytorch.Batch(args.batches)
+    elif args.epochs:
+        max_length = pytorch.Epoch(args.batches)
+    else:
+        # default training length
+        max_length = pytorch.Batch(100)
+
     local_training = det.get_cluster_info() is None
-    run(local=local_training)
+    run(max_length, local=local_training)

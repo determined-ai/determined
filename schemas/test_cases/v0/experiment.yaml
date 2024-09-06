@@ -22,7 +22,7 @@
     data:
       any: thing
     integrations:
-      pachyderm: 
+      pachyderm:
         pachd:
           host: localhost
           port: 80
@@ -166,8 +166,6 @@
     searcher:
       name: single
       metric: loss
-      max_length:
-        batches: 1000
     entrypoint: model_def:MyTrial
   #####
   defaulted:
@@ -237,8 +235,6 @@
       is_single_node: null
     scheduling_unit: 100
     searcher:
-      max_length:
-        batches: 1000
       metric: loss
       name: single
       smaller_is_better: true
@@ -282,8 +278,6 @@
     searcher:
       name: grid
       metric: loss
-      max_length:
-        batches: 1000
     entrypoint: model_def:MyTrial
 
 - name: check grid conditional (invalid)
@@ -320,5 +314,3 @@
     searcher:
       name: grid
       metric: loss
-      max_length:
-        batches: 1000

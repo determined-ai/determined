@@ -34,12 +34,10 @@ def test_hpc_job_pending_reason() -> None:
     sess = api_utils.user_session()
 
     config = conf.load_config(conf.tutorials_path("mnist_pytorch/const.yaml"))
-    config = conf.set_max_length(config, {"batches": 200})
     config = conf.set_slots_per_trial(config, 1)
     config = conf.set_profiling_enabled(config)
-    config = conf.set_entrypoint(
-        config, "python3 -m determined.launch.torch_distributed python3 train.py"
-    )
+    assert "--epochs 1" in config["entrypoint"], "update test to match tutorial"
+    config["entrypoint"] = config["entrypoint"].replace("--epochs 1", "--batches 64")
     config["max_restarts"] = 0
 
     # The experiment will request 6 CPUs

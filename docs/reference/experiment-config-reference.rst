@@ -17,84 +17,6 @@ example:
 
    det experiment create config-file.yaml model-directory
 
-****************
- Training Units
-****************
-
-Some configuration settings, such as searcher training lengths and budgets,
-``min_validation_period``, and ``min_checkpoint_period``, can be expressed in terms of a few
-training units: records, batches, or epochs.
-
--  ``records``: A *record* is a single labeled example (sometimes called a sample).
--  ``batches``: A *batch* is a group of records. The number of records in a batch is configured via
-   the ``global_batch_size`` hyperparameter.
--  ``epoch``: An *epoch* is a single copy of the entire training data set.
-
-For example, to specify the ``max_length`` for a searcher in terms of batches, the configuration
-would read as shown below.
-
-.. code:: yaml
-
-   max_length:
-     batches: 900
-
-To express it in terms of records or epochs, ``records`` or ``epochs`` would be specified in place
-of ``batches``. For :class:`~determined.pytorch.deepspeed.DeepSpeedTrial` and
-:class:`~determined.keras.TFKerasTrial`, :ref:`records_per_epoch <config-records-per-epoch>` must
-also be specified if using epochs. Below is an example that configures a ``single`` searcher to
-train a model for 64 epochs.
-
-.. code:: yaml
-
-   records_per_epoch: 50000
-   searcher:
-     name: single
-     metric: validation_error
-     max_length:
-       epochs: 64
-     smaller_is_better: true
-
-The configured :ref:`records_per_epoch <config-records-per-epoch>` is only used for interpreting
-configuration fields that are expressed in epochs. Actual epoch boundaries are still determined by
-the dataset itself (specifically, the end of an epoch occurs when the training data loader runs out
-of records).
-
-.. note::
-
-   When the amount of training data for a model is specified using records or epochs, and the batch
-   size does not evenly divide the configured number of inputs, the remaining "partial batch" of
-   data will be dropped (ignored). For example, if an experiment is configured to train a single
-   model on 10 records with a batch size of 3, the model will be trained on only 9 records of data.
-   In the special case where a trial is configured to train on less than a single batch of data, a
-   single complete batch will be used instead.
-
-Training Unit Conversion Limitations (Caveats)
-==============================================
-
-In most cases, values expressed in one type of training unit can be converted to another type while
-maintaining the same behavior. However, there are some limitations to consider:
-
--  Since training units must be positive integers, it is not always possible to convert between
-   different types of units. For example, converting 50 ``records`` into batches is not possible if
-   the batch size is 64.
-
--  When performing a hyperparameter search over a range of values for ``global_batch_size``, the
-   specified ``batches`` cannot be converted to a fixed number of records or epochs and hence cause
-   different behaviors in different trials of the search.
-
--  When using :ref:`adaptive_asha <experiment-configuration-searcher-adaptive>`, a single training
-   unit is treated as atomic (unable to be divided into fractional parts) when dividing
-   ``max_length`` into the series of rounds (or rungs) by which we early-stop underperforming
-   trials. This rounding may result in unexpected behavior when configuring ``max_length`` with a
-   small number of large epochs or batches.
-
-To verify your search is working as intended before committing to a full run, you can use the CLI's
-"preview search" feature:
-
-.. code::
-
-   det preview-search <configuration.yaml>
-
 **********
  Metadata
 **********
@@ -272,20 +194,6 @@ preemption, in the unit of batches. The number of records in a batch is controll
    workload to another, potentially more important, workload.
 -  As a rule of thumb, it should be set to the number of batches that can be trained in roughly
    60--180 seconds.
-
-.. _config-records-per-epoch:
-
-``records_per_epoch``
-=====================
-
-Optional. The number of records in the training data set. It must be configured if you want to
-specify ``min_validation_period``, ``min_checkpoint_period``, and ``searcher.max_length`` in units
-of ``epochs``.
-
-.. note::
-
-   For :class:`~determined.pytorch.PyTorchTrial`, epoch length is automatically determined using the
-   chief worker's dataset length, and this value will be ignored.
 
 .. _max-restarts:
 
@@ -884,8 +792,6 @@ example, to configure a ``random`` hyperparameter search that trains 5 trials fo
      name: random
      metric: accuracy
      max_trials: 5
-     max_length:
-       batches: 1000
 
 For details on using Determined to perform hyperparameter search, refer to
 :ref:`hyperparameter-tuning`. For more information on the search methods supported by Determined,
@@ -908,23 +814,6 @@ Required. The name of the validation metric used to evaluate the performance of 
 configuration.
 
 .. _experiment-configuration_single-searcher-max-length:
-
-``max_length``
---------------
-
-Required. The length of the trial.
-
--  This needs to be set in the unit of records, batches, or epochs using a nested dictionary. For
-   example:
-
-   .. code:: yaml
-
-      max_length:
-         epochs: 2
-
--  :class:`~determined.pytorch.deepspeed.DeepSpeedTrial` and
-   :class:`~determined.keras.TFKerasTrial`: If this is in the unit of epochs,
-   :ref:`records_per_epoch <config-records-per-epoch>` must be specified.
 
 **Optional Fields**
 
@@ -968,23 +857,6 @@ configuration.
 
 Required. The number of trials, i.e., hyperparameter configurations, to evaluate.
 
-``max_length``
---------------
-
-Required. The length of each trial.
-
--  This needs to be set in the unit of records, batches, or epochs using a nested dictionary. For
-   example:
-
-   .. code:: yaml
-
-      max_length:
-         epochs: 2
-
--  :class:`~determined.pytorch.deepspeed.DeepSpeedTrial` and
-   :class:`~determined.keras.TFKerasTrial`: If this is in the unit of epochs,
-   :ref:`records_per_epoch <config-records-per-epoch>` must be specified.
-
 **Optional Fields**
 
 ``smaller_is_better``
@@ -1024,23 +896,6 @@ specified via the ``hyperparameters`` field. For more details see the
 
 Required. The name of the validation metric used to evaluate the performance of a hyperparameter
 configuration.
-
-``max_length``
---------------
-
-Required. The length of each trial.
-
--  This needs to be set in the unit of records, batches, or epochs using a nested dictionary. For
-   example:
-
-   .. code:: yaml
-
-      max_length:
-         epochs: 2
-
--  :class:`~determined.pytorch.deepspeed.DeepSpeedTrial` and
-   :class:`~determined.keras.TFKerasTrial`: If this is in the unit of epochs,
-   :ref:`records_per_epoch <config-records-per-epoch>` must be specified.
 
 **Optional Fields**
 
@@ -1084,25 +939,17 @@ experiments with hundreds or thousands of trials.
 Required. The name of the validation metric used to evaluate the performance of a hyperparameter
 configuration.
 
-``max_length``
---------------
+``time_metric``
+---------------
 
-Required. The maximum training length of any one trial. The vast majority of trials will be stopped
-early, and thus only a small fraction of trials will actually be trained for this long. This
-quantity is domain-specific and should roughly reflect the length of training needed for the model
-to converge on the data set.
+Required.  The name of the validation metric used to evaluate the progress of a given trial.
 
--  This needs to be set in the unit of records, batches, or epochs using a nested dictionary. For
-   example:
+``max_time``
+------------
 
-   .. code:: yaml
-
-      max_length:
-         epochs: 2
-
--  :class:`~determined.pytorch.deepspeed.DeepSpeedTrial` and
-   :class:`~determined.keras.TFKerasTrial`: If this is in the unit of epochs,
-   :ref:`records_per_epoch <config-records-per-epoch>` must be specified.
+Required.  The maximum value that ``time_metric`` should take when a trial finishes training.  Early
+stopping is decided based on how far the ``time_metric`` has progressed towards this ``max_time``
+value.
 
 ``max_trials``
 --------------

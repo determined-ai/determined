@@ -323,8 +323,8 @@ The ``adaptive_asha`` search method and maximum number of trials, max_trials` ar
      metric: validation_loss
      smaller_is_better: true
      max_trials: 16
-     max_length:
-       batches: 937
+     time_metric: batch
+     max_time: 937
 
 This example uses a fixed batch size and searches on dropout size, filters, and learning rate. The
 ``max_trials`` setting of ``16`` indicates how many model configurations to explore.

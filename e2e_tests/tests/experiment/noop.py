@@ -92,7 +92,6 @@ def generate_config(
         "searcher": {
             "name": "single",
             "metric": "x",
-            "max_length": 1,
         },
     }
 
@@ -161,7 +160,6 @@ def create_paused_experiment(
                 "searcher": {
                     "name": "single",
                     "metric": "x",
-                    "max_length": 1,
                 },
                 "entrypoint": "echo yo",
             }

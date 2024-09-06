@@ -1516,12 +1516,14 @@ def run_amp(tmp_path: pathlib.Path, api_style: str, batches_trained: typing.Opti
         "manual": "MNistManualAMPTrial",
     }
 
-    config = utils.load_config(utils.fixtures_path(f"pytorch_amp/{api_style}_amp_distributed.yaml"))
-    config = config.copy()
-    config.setdefault("profiling", {})
-    config["profiling"]["enabled"] = True
-
-    hparams = config["hyperparameters"]
+    hparams = {
+        "learning_rate": 1.0,
+        "global_batch_size": 64,
+        "n_filters1": 32,
+        "n_filters2": 64,
+        "dropout1": 0.25,
+        "dropout2": 0.5,
+    }
 
     exp_config = utils.make_default_exp_config(
         hparams,
@@ -1529,8 +1531,8 @@ def run_amp(tmp_path: pathlib.Path, api_style: str, batches_trained: typing.Opti
         searcher_metric="validation_loss",
         checkpoint_dir=checkpoint_dir,
     )
-    exp_config.update(config)
     exp_config["searcher"]["smaller_is_better"] = True
+    exp_config.setdefault("profiling", {})["enabled"] = True
 
     example_path = utils.fixtures_path(f"pytorch_amp/{api_style}_amp_model_def.py")
     trial_class = utils.import_class_from_module(class_selector[api_style], example_path)

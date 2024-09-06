@@ -50,8 +50,6 @@ and a simplified configuration.
    searcher:
      name: single
      metric: error
-     max_length:
-       batches: 500
      smaller_is_better: true
 
 You may find that many experiments share the same values for the ``checkpoint_storage`` field,
@@ -86,8 +84,6 @@ The experiment configuration for this experiment can then be written using the f
    searcher:
      name: single
      metric: error
-     max_length:
-       batches: 500
      smaller_is_better: true
 
 To launch the experiment with the template:
