@@ -1,5 +1,4 @@
 -e harness
--e model_hub
 -r docs/requirements.txt
 -r harness/tests/requirements/requirements-harness.txt
 -r e2e_tests/tests/requirements.txt
