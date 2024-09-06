@@ -6,7 +6,7 @@ import { ProjectDetails } from 'e2e/models/pages/ProjectDetails';
 import { WorkspaceDetails } from 'e2e/models/pages/WorkspaceDetails';
 import { WorkspaceList } from 'e2e/models/pages/WorkspaceList';
 import { randId, safeName } from 'e2e/utils/naming';
-import { V1GetWorkspaceResponse, V1Workspace } from 'services/api-ts-sdk';
+import { V1Workspace } from 'services/api-ts-sdk';
 
 const createWorkspaceAllFields = async function (
   modal: WorkspaceCreateModal,
@@ -273,13 +273,20 @@ test.describe('Workspace List', () => {
   const workspaces: V1Workspace[] = [];
 
   test.beforeAll(async ({ backgroundApiWorkspace }) => {
-    const promises: Promise<V1GetWorkspaceResponse>[] = [];
-
-    _.times(5, () => {
-      promises.push(backgroundApiWorkspace.createWorkspace(backgroundApiWorkspace.new()));
-    });
-
-    await Promise.all(promises).then((responses) => {
+    await Promise.all([
+      backgroundApiWorkspace.createWorkspace(
+        backgroundApiWorkspace.new({
+          // oldest workspace with first alphabetical name
+          workspacePrefix: 'a-test-workspace',
+        }),
+      ),
+      backgroundApiWorkspace.createWorkspace(
+        backgroundApiWorkspace.new({
+          // newest workspace with last alphabetical name
+          workspacePrefix: 'b-test-workspace',
+        }),
+      ),
+    ]).then((responses) => {
       responses.forEach((response) => {
         workspaces.push(response.workspace);
       });
