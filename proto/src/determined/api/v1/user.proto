@@ -284,3 +284,18 @@ message GetUserLongLivedTokenResponse {
   // Return the LongLivedToken Info.
   determined.user.v1.LongLivedTokenInfo long_lived_token_info = 1;
 }
+
+// Delete user's longLivedToken info.
+message DeleteLongLivedTokenRequest {}
+
+// Response to DeleteLongLivedTokenRequest.
+message DeleteLongLivedTokenResponse {}
+
+// Delete token id's longLivedToken info.
+message DeleteLongLivedTokenByTokenIDRequest {
+  // The id of the token.
+  int32 token_id = 1;
+}
+
+// Response to DeleteLongLivedTokenByTokenIDRequest.
+message DeleteLongLivedTokenByTokenIDResponse {}

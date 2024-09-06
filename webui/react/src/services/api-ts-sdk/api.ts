@@ -2658,6 +2658,20 @@ export interface V1DeleteExperimentsResponse {
 export interface V1DeleteGroupResponse {
 }
 /**
+ * Response to DeleteLongLivedTokenByTokenIDRequest.
+ * @export
+ * @interface V1DeleteLongLivedTokenByTokenIDResponse
+ */
+export interface V1DeleteLongLivedTokenByTokenIDResponse {
+}
+/**
+ * Response to DeleteLongLivedTokenRequest.
+ * @export
+ * @interface V1DeleteLongLivedTokenResponse
+ */
+export interface V1DeleteLongLivedTokenResponse {
+}
+/**
  * 
  * @export
  * @interface V1DeleteModelResponse
@@ -33966,6 +33980,72 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
     return {
         /**
          * 
+         * @summary Delete current user's longLivedToken info.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteLongLivedToken(options: any = {}): FetchArgs {
+            const localVarPath = `/api/v1/user/token`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'DELETE', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Delete token id's longLivedToken info.
+         * @param {number} tokenId The id of the token.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteLongLivedTokenByTokenID(tokenId: number, options: any = {}): FetchArgs {
+            // verify required parameter 'tokenId' is not null or undefined
+            if (tokenId === null || tokenId === undefined) {
+                throw new RequiredError('tokenId','Required parameter tokenId was null or undefined when calling deleteLongLivedTokenByTokenID.');
+            }
+            const localVarPath = `/api/v1/tokens/{tokenId}`
+                .replace(`{${"tokenId"}}`, encodeURIComponent(String(tokenId)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'DELETE', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get current user's long lived token info
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -34558,6 +34638,43 @@ export const UsersApiFp = function (configuration?: Configuration) {
     return {
         /**
          * 
+         * @summary Delete current user's longLivedToken info.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteLongLivedToken(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteLongLivedTokenResponse> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).deleteLongLivedToken(options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Delete token id's longLivedToken info.
+         * @param {number} tokenId The id of the token.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteLongLivedTokenByTokenID(tokenId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1DeleteLongLivedTokenByTokenIDResponse> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).deleteLongLivedTokenByTokenID(tokenId, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Get current user's long lived token info
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -34858,6 +34975,25 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
     return {
         /**
          * 
+         * @summary Delete current user's longLivedToken info.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteLongLivedToken(options?: any) {
+            return UsersApiFp(configuration).deleteLongLivedToken(options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Delete token id's longLivedToken info.
+         * @param {number} tokenId The id of the token.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        deleteLongLivedTokenByTokenID(tokenId: number, options?: any) {
+            return UsersApiFp(configuration).deleteLongLivedTokenByTokenID(tokenId, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Get current user's long lived token info
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -35022,6 +35158,29 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
  * @extends {BaseAPI}
  */
 export class UsersApi extends BaseAPI {
+    /**
+     * 
+     * @summary Delete current user's longLivedToken info.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UsersApi
+     */
+    public deleteLongLivedToken(options?: any) {
+        return UsersApiFp(this.configuration).deleteLongLivedToken(options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Delete token id's longLivedToken info.
+     * @param {number} tokenId The id of the token.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UsersApi
+     */
+    public deleteLongLivedTokenByTokenID(tokenId: number, options?: any) {
+        return UsersApiFp(this.configuration).deleteLongLivedTokenByTokenID(tokenId, options)(this.fetch, this.basePath)
+    }
+    
     /**
      * 
      * @summary Get current user's long lived token info

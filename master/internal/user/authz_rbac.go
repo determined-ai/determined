@@ -219,7 +219,7 @@ func (a *UserAuthZRBAC) CanCreateUsersToken(
 	err = db.DoesPermissionMatch(ctx, curUser.ID, nil,
 		rbacv1.PermissionType_PERMISSION_TYPE_ADMINISTRATE_USER)
 	if err != nil && curUser.ID != targetUser.ID {
-		return errors.New("only admin privileged users can change other user's passwords")
+		return errors.New("only admin privileged users can change other user's token")
 	}
 	return nil
 }
@@ -245,7 +245,7 @@ func (a *UserAuthZRBAC) CanGetUsersToken(
 	err = db.DoesPermissionMatch(ctx, curUser.ID, nil,
 		rbacv1.PermissionType_PERMISSION_TYPE_ADMINISTRATE_USER)
 	if err != nil && curUser.ID != targetUser.ID {
-		return errors.New("only admin privileged users can change other user's passwords")
+		return errors.New("only admin privileged users can view other user's token")
 	}
 	return nil
 }
@@ -271,7 +271,7 @@ func (a *UserAuthZRBAC) CanDeleteUsersToken(
 	err = db.DoesPermissionMatch(ctx, curUser.ID, nil,
 		rbacv1.PermissionType_PERMISSION_TYPE_ADMINISTRATE_USER)
 	if err != nil && curUser.ID != targetUser.ID {
-		return errors.New("only admin privileged users can change other user's passwords")
+		return errors.New("only admin privileged users can delete other user's token")
 	}
 	return nil
 }

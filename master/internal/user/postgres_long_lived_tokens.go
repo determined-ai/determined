@@ -54,7 +54,10 @@ func DeleteAndCreateLongLivedToken(
 	err := db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		// Tokens should have a 1:1 relationship with users, if a user creates a new token,
 		// revoke the previous token if it exists.
-		err := DeleteLongLivenTokenByUserID(ctx, tx, userID)
+		_, err := tx.NewDelete().
+			Table("long_lived_tokens").
+			Where("user_id = ?", userID).
+			Exec(ctx)
 		if err != nil {
 			return err
 		}
@@ -89,12 +92,26 @@ func DeleteAndCreateLongLivedToken(
 
 // DeleteLongLivenTokenByUserID deletes long lived token if found.
 // If not found, the err will be nil, and the number of affected rows will be zero.
-func DeleteLongLivenTokenByUserID(ctx context.Context, tx bun.Tx, userID model.UserID) error {
-	_, err := tx.NewDelete().
+func DeleteLongLivenTokenByUserID(ctx context.Context, userID model.UserID) error {
+	res, err := db.Bun().NewDelete().
 		Table("long_lived_tokens").
 		Where("user_id = ?", userID).
 		Exec(ctx)
-	return err
+	if err != nil {
+		return err // Return error if the delete operation itself failed
+	}
+
+	// Check how many rows were affected
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return err // Return error if checking the rows affected failed
+	}
+
+	if rowsAffected == 0 {
+		return fmt.Errorf("no rows found with user_id: %v", userID) // Custom error when no rows were found
+	}
+
+	return nil // Return nil if deletion was successful
 }
 
 // DeleteLongLivenTokenByToken deletes long lived token if found.
@@ -112,11 +129,25 @@ func DeleteLongLivenTokenByToken(ctx context.Context, token string) error {
 // DeleteLongLivedTokenByTokenID deletes the long lived token with the given token ID.
 // If not found, the err will be nil, and the number of affected rows will be zero.
 func DeleteLongLivedTokenByTokenID(ctx context.Context, longLivedTokenID model.TokenID) error {
-	_, err := db.Bun().NewDelete().
+	res, err := db.Bun().NewDelete().
 		Table("long_lived_tokens").
 		Where("id = ?", longLivedTokenID).
 		Exec(ctx)
-	return err
+	if err != nil {
+		return err // Return error if the delete operation itself failed
+	}
+
+	// Check how many rows were affected
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return err // Return error if checking the rows affected failed
+	}
+
+	if rowsAffected == 0 {
+		return fmt.Errorf("no rows found with token_id: %v", longLivedTokenID) // Custom error when no rows were found
+	}
+
+	return nil // Return nil if deletion was successful
 }
 
 // GetLongLivedTokenInfo returns the token info from the table with the given user_id.
@@ -130,7 +161,7 @@ func GetLongLivedTokenInfo(ctx context.Context, userID model.UserID) (
 		Where("user_id = ?", userID).
 		Scan(ctx, &tokenInfo); {
 	case errors.Is(err, sql.ErrNoRows):
-		return nil, nil
+		return nil, fmt.Errorf("no rows found with user_id: %v", userID)
 	case err != nil:
 		return nil, err
 	default:

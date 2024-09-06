@@ -18494,6 +18494,49 @@ def delete_DeleteGroup(
         return
     raise APIHttpError("delete_DeleteGroup", _resp)
 
+def delete_DeleteLongLivedToken(
+    session: "api.BaseSession",
+) -> None:
+    """Delete current user's longLivedToken info."""
+    _params = None
+    _resp = session._do_request(
+        method="DELETE",
+        path="/api/v1/user/token",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("delete_DeleteLongLivedToken", _resp)
+
+def delete_DeleteLongLivedTokenByTokenID(
+    session: "api.BaseSession",
+    *,
+    tokenId: int,
+) -> None:
+    """Delete token id's longLivedToken info.
+
+    - tokenId: The id of the token.
+    """
+    _params = None
+    _resp = session._do_request(
+        method="DELETE",
+        path=f"/api/v1/tokens/{tokenId}",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("delete_DeleteLongLivedTokenByTokenID", _resp)
+
 def delete_DeleteModel(
     session: "api.BaseSession",
     *,

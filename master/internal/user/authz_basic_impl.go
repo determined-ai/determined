@@ -129,7 +129,7 @@ func (a *UserAuthZBasic) CanGetUsersToken(
 	ctx context.Context, curUser, targetUser model.User,
 ) error {
 	if !curUser.Admin && curUser.ID != targetUser.ID {
-		return fmt.Errorf("only admin privileged users can create token for other users")
+		return fmt.Errorf("only admin privileged users can view token of other users")
 	}
 	return nil
 }
@@ -144,7 +144,7 @@ func (a *UserAuthZBasic) CanDeleteUsersToken(
 	ctx context.Context, curUser, targetUser model.User,
 ) error {
 	if !curUser.Admin && curUser.ID != targetUser.ID {
-		return fmt.Errorf("only admin privileged users can create token for other users")
+		return fmt.Errorf("only admin privileged users can delete token of other users")
 	}
 	return nil
 }

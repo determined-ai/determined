@@ -929,7 +929,7 @@ func getActivityEntry(ctx context.Context, userID model.UserID, entityID int32) 
 
 // TestPostLongLivedToken tests current user WITHOUT lifespan input
 // POST /api/v1/user/token - Create and get current user's long lived token.
-func TestPostLongLivedToken(t *testing.T) {
+func TestPostDeleteLongLivedToken(t *testing.T) {
 	api, curUser, ctx := setupAPITest(t, nil)
 
 	// Without lifespan input
@@ -937,16 +937,20 @@ func TestPostLongLivedToken(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, token)
 
-	err = checkOutput(ctx, t, curUser.ID, "")
+	err = checkOutput(ctx, t, api, curUser.ID, "")
 	require.NoError(t, err)
 
-	// deleteTestToken(t, api, ctx)
+	_, err = api.DeleteLongLivedToken(ctx, &apiv1.DeleteLongLivedTokenRequest{})
+	require.NoError(t, err)
+
+	_, err = api.GetLongLivedToken(ctx, &apiv1.GetLongLivedTokenRequest{})
+	require.ErrorContains(t, err, "no rows found with user_id")
 }
 
 // TestPostLongLivedTokenWithLifespan tests current user WITH lifespan input
 // POST /api/v1/user/token - Create and get current user's long lived token
 // Input body contains lifespan = "5s or "2h".
-func TestPostLongLivedTokenWithLifespan(t *testing.T) {
+func TestPostDeleteLongLivedTokenWithLifespan(t *testing.T) {
 	api, curUser, ctx := setupAPITest(t, nil)
 
 	// With lifespan input
@@ -956,10 +960,14 @@ func TestPostLongLivedTokenWithLifespan(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, token)
 
-	err = checkOutput(ctx, t, curUser.ID, lifespan)
+	err = checkOutput(ctx, t, api, curUser.ID, lifespan)
 	require.NoError(t, err)
 
-	// deleteTestToken(t, api, ctx)
+	_, err = api.DeleteLongLivedToken(ctx, &apiv1.DeleteLongLivedTokenRequest{})
+	require.NoError(t, err)
+
+	_, err = api.GetLongLivedToken(ctx, &apiv1.GetLongLivedTokenRequest{})
+	require.ErrorContains(t, err, "no rows found with user_id")
 }
 
 // TestPostUserLongLivedToken tests given user's WITHOUT lifespan input
@@ -977,10 +985,14 @@ func TestPostUserLongLivedToken(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, token)
 
-	err = checkOutput(ctx, t, userID, "")
+	err = checkOutput(ctx, t, api, userID, "")
 	require.NoError(t, err)
 
-	// deleteTestToken(t, api, ctx)
+	err = user.DeleteLongLivenTokenByUserID(ctx, userID)
+	require.NoError(t, err)
+
+	_, err = api.GetLongLivedToken(ctx, &apiv1.GetLongLivedTokenRequest{})
+	require.ErrorContains(t, err, "no rows found with user_id")
 }
 
 // TestPostUserLongLivedTokenWithLifespan tests given user's  WITH lifespan input
@@ -1000,15 +1012,19 @@ func TestPostUserLongLivedTokenWithLifespan(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, token)
 
-	err = checkOutput(ctx, t, userID, lifespan)
+	err = checkOutput(ctx, t, api, userID, lifespan)
 	require.NoError(t, err)
 
-	// deleteTestToken(t, api, ctx)
+	err = user.DeleteLongLivenTokenByUserID(ctx, userID)
+	require.NoError(t, err)
+
+	_, err = api.GetLongLivedToken(ctx, &apiv1.GetLongLivedTokenRequest{})
+	require.ErrorContains(t, err, "no rows found with user_id")
 }
 
 // TestGetLongLivedToken tests current user's token info
 // GET /api/v1/user/token - Get current user's long lived token info.
-func TestGetLongLivedToken(t *testing.T) {
+func TestGetDeleteLongLivedToken(t *testing.T) {
 	api, curUser, ctx := setupAPITest(t, nil)
 
 	createTestToken(ctx, t, api, 0)
@@ -1018,12 +1034,18 @@ func TestGetLongLivedToken(t *testing.T) {
 	require.NotNil(t, tokenInfo)
 	require.Equal(t, int32(curUser.ID), tokenInfo.LongLivedTokenInfo.UserId)
 
-	// deleteTestToken(t, api, ctx)
+	_, err = api.DeleteLongLivedTokenByTokenID(ctx, &apiv1.DeleteLongLivedTokenByTokenIDRequest{
+		TokenId: tokenInfo.LongLivedTokenInfo.Id,
+	})
+	require.NoError(t, err)
+
+	_, err = api.GetLongLivedToken(ctx, &apiv1.GetLongLivedTokenRequest{})
+	require.ErrorContains(t, err, "no rows found with user_id")
 }
 
 // TestGetLongLivedToken tests given user's token info
 // GET /api/v1/users/{user_Id}/token - Get a user's long lived token info.
-func TestGetUserLongLivedToken(t *testing.T) {
+func TestGetDeleteUserLongLivedToken(t *testing.T) {
 	api, _, ctx := setupAPITest(t, nil)
 
 	userID, err := getTestUser(ctx)
@@ -1038,7 +1060,13 @@ func TestGetUserLongLivedToken(t *testing.T) {
 	require.NotNil(t, tokenInfo)
 	require.Equal(t, int32(userID), tokenInfo.LongLivedTokenInfo.UserId)
 
-	// deleteTestToken(t, api, ctx)
+	_, err = api.DeleteLongLivedTokenByTokenID(ctx, &apiv1.DeleteLongLivedTokenByTokenIDRequest{
+		TokenId: tokenInfo.LongLivedTokenInfo.Id,
+	})
+	require.NoError(t, err)
+
+	_, err = api.GetLongLivedToken(ctx, &apiv1.GetLongLivedTokenRequest{})
+	require.ErrorContains(t, err, "no rows found with user_id")
 }
 
 // TestAuthzLongLivedToken tests authorization of user creating/Viewing/Deleting their own token.
@@ -1088,10 +1116,12 @@ func TestAuthzUserLongLivedToken(t *testing.T) {
 	require.Equal(t, expectedErr.Error(), err.Error())
 }
 
-func checkOutput(ctx context.Context, t *testing.T, userID model.UserID, lifespan string) error {
-	exists, err := getLongLivedTokensEntry(ctx, userID)
-	require.True(t, exists)
+func checkOutput(ctx context.Context, t *testing.T, api *apiServer, userID model.UserID, lifespan string) error {
+	tokenInfo, err := api.GetUserLongLivedToken(ctx, &apiv1.GetUserLongLivedTokenRequest{
+		UserId: int32(userID),
+	})
 	require.NoError(t, err)
+	require.NotNil(t, tokenInfo)
 
 	err = testSetLifespan(ctx, t, userID, lifespan)
 	require.NoError(t, err)
@@ -1124,11 +1154,6 @@ func getTestUser(ctx context.Context) (model.UserID, error) {
 		},
 		nil,
 	)
-}
-
-func getLongLivedTokensEntry(ctx context.Context, userID model.UserID) (bool, error) {
-	return db.Bun().NewSelect().Table("long_lived_tokens").
-		Where("user_id = ?", userID).Exists(ctx)
 }
 
 func testSetLifespan(ctx context.Context, t *testing.T, userID model.UserID, lifespan string) error {

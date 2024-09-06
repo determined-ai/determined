@@ -318,7 +318,7 @@ func HashPassword(password string) (string, error) {
 }
 
 // TokenID is the type for user token IDs.
-type TokenID int
+type TokenID int32
 
 // LongLivedToken corresponds to a row in the "long_lived_tokens" DB table.
 type LongLivedToken struct {

@@ -127,6 +127,19 @@ func getUser(ctx context.Context, userID model.UserID) (*userv1.User, error) {
 	return toProtoUserFromFullUser(*user), nil
 }
 
+func getUserIDFromTokenID(ctx context.Context, tokenID int32) (model.UserID, error) {
+	var userID model.UserID
+	err := db.Bun().NewSelect().
+		Table("long_lived_tokens").
+		Column("user_id").
+		Where("id = ?", tokenID).
+		Scan(ctx, &userID)
+	if err != nil {
+		return 0, err
+	}
+	return userID, nil
+}
+
 func (a *apiServer) GetUsers(
 	ctx context.Context, req *apiv1.GetUsersRequest,
 ) (*apiv1.GetUsersResponse, error) {
@@ -797,4 +810,54 @@ func (a *apiServer) GetUserLongLivedToken(
 	}
 
 	return &apiv1.GetUserLongLivedTokenResponse{LongLivedTokenInfo: tokenInfo.Proto()}, nil
+}
+
+// DELETE Long lived token deletes row of token information for the logged in user.
+func (a *apiServer) DeleteLongLivedToken(
+	ctx context.Context, req *apiv1.DeleteLongLivedTokenRequest,
+) (*apiv1.DeleteLongLivedTokenResponse, error) {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err = user.AuthZProvider.Get().CanDeleteUsersOwnToken(ctx, *curUser); err != nil {
+		return nil, status.Error(codes.PermissionDenied, err.Error())
+	}
+
+	err = user.DeleteLongLivenTokenByUserID(ctx, curUser.ID)
+	if err != nil {
+		return nil, err
+	}
+	return &apiv1.DeleteLongLivedTokenResponse{}, nil
+}
+
+// DELETE Long lived token deletes row of token information for the logged in user.
+func (a *apiServer) DeleteLongLivedTokenByTokenID(
+	ctx context.Context, req *apiv1.DeleteLongLivedTokenByTokenIDRequest,
+) (*apiv1.DeleteLongLivedTokenByTokenIDResponse, error) {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	userIDFromTokenID, err := getUserIDFromTokenID(ctx, req.TokenId)
+	if err != nil || userIDFromTokenID < 1 {
+		return nil, err
+	}
+
+	targetFullUser, err := getFullModelUser(ctx, userIDFromTokenID)
+	if err != nil {
+		return nil, err
+	}
+	targetUser := targetFullUser.ToUser()
+	if err = user.AuthZProvider.Get().CanDeleteUsersToken(ctx, *curUser, targetUser); err != nil {
+		return nil, status.Error(codes.PermissionDenied, err.Error())
+	}
+
+	err = user.DeleteLongLivedTokenByTokenID(ctx, model.TokenID(req.TokenId))
+	if err != nil {
+		return nil, err
+	}
+
+	return &apiv1.DeleteLongLivedTokenByTokenIDResponse{}, nil
 }

@@ -2840,4 +2840,26 @@ service Determined {
       tags: "Users"
     };
   }
+
+  // Delete current user's longLivedToken info.
+  rpc DeleteLongLivedToken(DeleteLongLivedTokenRequest)
+      returns (DeleteLongLivedTokenResponse) {
+    option (google.api.http) = {
+      delete: "/api/v1/user/token"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Users"
+    };
+  }
+
+  // Delete token id's longLivedToken info.
+  rpc DeleteLongLivedTokenByTokenID(DeleteLongLivedTokenByTokenIDRequest)
+      returns (DeleteLongLivedTokenByTokenIDResponse) {
+    option (google.api.http) = {
+      delete: "/api/v1/tokens/{token_id}"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Users"
+    };
+  }
 }
