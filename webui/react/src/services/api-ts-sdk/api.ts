@@ -3447,7 +3447,7 @@ export const V1FittingPolicy = {
 } as const
 export type V1FittingPolicy = ValueOf<typeof V1FittingPolicy>
 /**
- * Flat run respresentation.
+ * Flat run respresentation. Used for the rows of the Run Table.
  * @export
  * @interface V1FlatRun
  */

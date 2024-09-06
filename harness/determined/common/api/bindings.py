@@ -4341,7 +4341,7 @@ class v1FittingPolicy(DetEnum):
     PBS = "FITTING_POLICY_PBS"
 
 class v1FlatRun(Printable):
-    """Flat run respresentation."""
+    """Flat run respresentation. Used for the rows of the Run Table."""
     duration: "typing.Optional[int]" = None
     endTime: "typing.Optional[str]" = None
     experiment: "typing.Optional[v1FlatRunExperiment]" = None
