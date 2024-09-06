@@ -209,28 +209,6 @@ def test_end_to_end_adaptive() -> None:
 
 
 @pytest.mark.e2e_cpu
-def test_graceful_trial_termination() -> None:
-    sess = api_utils.user_session()
-    config = {
-        "hyperparameters": {
-            "actions": {
-                "1": {
-                    "type": "categorical",
-                    "vals": [
-                        # One trial completes its searcher operation.
-                        noop.CompleteSearcherOperation(1.0).to_dict(),
-                        # The other trial just exits 0.
-                        noop.Exit(0).to_dict(),
-                    ],
-                }
-            }
-        }
-    }
-    exp_ref = noop.create_experiment(sess, config=config)
-    assert exp_ref.wait(interval=0.01) == client.ExperimentState.COMPLETED
-
-
-@pytest.mark.e2e_cpu
 def test_kill_experiment_ignoring_preemption() -> None:
     sess = api_utils.user_session()
     exp_id = exp.create_experiment(

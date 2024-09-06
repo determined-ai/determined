@@ -13,7 +13,8 @@ from tests import experiment as exp
 def test_mnist_pytorch_distributed() -> None:
     sess = api_utils.user_session()
     config = conf.load_config(conf.tutorials_path("mnist_pytorch/distributed.yaml"))
-    config = conf.set_max_length(config, {"batches": 200})
+    assert "--epochs 1" in config["entrypoint"], "update test to match tutorial"
+    config["entrypoint"] = config["entrypoint"].replace("--epochs 1", "--batches 64")
     exp.run_basic_test_with_temp_config(sess, config, conf.fixtures_path("mnist_pytorch"), 1)
 
 
@@ -38,7 +39,7 @@ def test_hf_trainer_api_integration() -> None:
 def test_gpt_neox_zero1() -> None:
     sess = api_utils.user_session()
     config = conf.load_config(conf.deepspeed_examples_path("gpt_neox/zero1.yaml"))
-    config = conf.set_max_length(config, {"batches": 100})
+    config["searcher"]["max_length"] = {"batches": 100}
     config = conf.set_min_validation_period(config, {"batches": 100})
     # Changing to satisfy cluter size and gpu mem limitations.
     config = conf.set_slots_per_trial(config, 8)
@@ -78,7 +79,7 @@ def test_textual_inversion_stable_diffusion_finetune() -> None:
             "textual_inversion_stable_diffusion/finetune_const_advanced.yaml"
         )
     )
-    config = conf.set_max_length(config, 10)
+    config["hyperparameters"]["training"]["num_sgd_steps"] = 10
     try:
         config = conf.set_environment_variables(
             config, [f'HF_AUTH_TOKEN={os.environ["HF_READ_ONLY_TOKEN"]}']
@@ -110,7 +111,7 @@ def test_textual_inversion_stable_diffusion_generate() -> None:
         conf.diffusion_examples_path("textual_inversion_stable_diffusion/generate_grid.yaml")
     )
     # Shorten the Experiment and reduce to two Trials.
-    config = conf.set_max_length(config, 2)
+    config["hyperparameters"]["num_batches"] = 2
     prompt_vals = config["hyperparameters"]["call_kwargs"]["prompt"]["vals"]
     config["hyperparameters"]["call_kwargs"]["guidance_scale"] = 7.5
     while len(prompt_vals) > 1:

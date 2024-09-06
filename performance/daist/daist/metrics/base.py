@@ -32,6 +32,7 @@ environment:
 
 hyperparameters:
   checkpoint_size: 4096
+  num_batches: {num_batches}
   metric_count: {metric_count}
   {param1}:
     type: int
@@ -44,14 +45,13 @@ optimizations:
 
 resources:
   slots_per_trial: 1
-  
+
   # This may or may not be needed
-  # resource_pool: compute_pool  
+  # resource_pool: compute_pool
 
 searcher:
   name: grid
   metric: "{param1}"
-  max_length: {searcher_max_length}
   max_concurrent_trials: {searcher_max_concurrent_trials}
 
 max_restarts: 0"""

@@ -39,8 +39,8 @@ def export_and_load_model(sess: api.Session, experiment_id: int) -> None:
 def test_tf_keras_parallel(aggregation_frequency: int) -> None:
     sess = api_utils.user_session()
     config = conf.load_config(conf.cv_examples_path("iris_tf_keras/const.yaml"))
-    config = conf.set_slots_per_trial(config, 8)
-    config = conf.set_max_length(config, {"batches": 200})
+    assert "--epochs" not in config["entrypoint"], "please update test"
+    config["entrypoint"] += " --epochs 1"
     config = conf.set_aggregation_frequency(config, aggregation_frequency)
     config = conf.set_tf2_image(config)
     config = conf.set_profiling_enabled(config)

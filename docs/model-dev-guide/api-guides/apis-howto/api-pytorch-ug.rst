@@ -745,6 +745,7 @@ arguments, such as checkpointing periods, validation periods, and checkpointing 
            trial = MyTrial(train_context)
            trainer = det.pytorch.Trainer(trial, train_context)
    +       trainer.fit(
+   +           max_length=pytorch.Epoch(10),
    +           checkpoint_period=pytorch.Batch(100),
    +           validation_period=pytorch.Batch(100),
    +           checkpoint_policy="all"
@@ -760,8 +761,7 @@ Run Your Training Script Locally
 ================================
 
 Run training scripts locally without submitting to a cluster or defining an experiment configuration
-file. Be sure to specify ``max_length`` in the ``.fit()`` call, which is used in local training mode
-to determine the maximum number of steps to train for.
+file.
 
 .. code:: python
 
@@ -773,7 +773,7 @@ to determine the maximum number of steps to train for.
            trial = MyTrial(train_context)
            trainer = det.pytorch.Trainer(trial, train_context)
            trainer.fit(
-               max_length=pytorch.Epoch(1),
+               max_length=pytorch.Epoch(10),
                checkpoint_period=pytorch.Batch(100),
                validation_period=pytorch.Batch(100),
                checkpoint_policy="all",
@@ -786,7 +786,7 @@ to determine the maximum number of steps to train for.
        main()
 
 You can run this Python script directly (``python3 train.py``), or in a Jupyter notebook. This code
-will train for one epoch, and checkpoint and validate every 100 batches.
+will train for ten epochs, and checkpoint and validate every 100 batches.
 
 Local Distributed Training
 ==========================
@@ -808,7 +808,7 @@ code. Both Horovod and PyTorch Distributed backends are supported.
              trial = MyTrial(train_context)
              trainer = det.pytorch.Trainer(trial, train_context)
              trainer.fit(
-                 max_length=pytorch.Epoch(1),
+                 max_length=pytorch.Epoch(10),
                  checkpoint_period=pytorch.Batch(100),
                  validation_period=pytorch.Batch(100),
                  checkpoint_policy="all"
@@ -827,7 +827,7 @@ tests around your model code.
 .. code:: diff
 
     trainer.fit(
-                 max_length=pytorch.Epoch(1),
+                 max_length=pytorch.Epoch(10),
                  checkpoint_period=pytorch.Batch(100),
                  validation_period=pytorch.Batch(100),
    +             test_mode=True
@@ -864,7 +864,7 @@ Example workflow of frequent iterations between local debugging and cluster depl
              trial = MNistTrial(train_context)
              trainer = det.pytorch.Trainer(trial, train_context)
              trainer.fit(
-                 max_length=pytorch.Epoch(1),
+                 max_length=pytorch.Epoch(11),
                  checkpoint_period=pytorch.Batch(100),
                  validation_period=pytorch.Batch(100),
    +             latest_checkpoint=latest_checkpoint,
@@ -896,8 +896,6 @@ Your experiment configuration file must contain searcher configuration and entry
    searcher:
      name: single
      metric: validation_loss
-     max_length:
-       epochs: 1
    resources:
      slots_per_trial: 8
    entrypoint: python3 -m determined.launch.torch_distributed python3 train.py

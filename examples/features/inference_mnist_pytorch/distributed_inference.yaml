@@ -9,7 +9,6 @@ resources:
 searcher:
   name: grid
   metric: x
-  max_length: 100
 hyperparameters:
   # Change this to your model name.
   model_name: mnist_models

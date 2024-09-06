@@ -8,7 +8,6 @@
         "name"
     ],
     "eventuallyRequired": [
-        "max_length",
         "metric"
     ],
     "properties": {
