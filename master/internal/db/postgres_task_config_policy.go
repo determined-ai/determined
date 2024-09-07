@@ -23,8 +23,8 @@ func SetExperimentConfigPolicies(ctx context.Context,
 	})
 }
 
-// SetExperimentConfigPoliciesTx adds the experiment invariant config and constraints config policies to
-// the database.
+// SetExperimentConfigPoliciesTx adds the experiment invariant config and constraints config
+// policies to the database.
 func SetExperimentConfigPoliciesTx(ctx context.Context, tx *bun.Tx,
 	experimentTCP *model.ExperimentTaskConfigPolicies) error {
 
@@ -41,20 +41,31 @@ func SetExperimentConfigPoliciesTx(ctx context.Context, tx *bun.Tx,
 			expConstraints)
 	}
 
+	err = Bun().NewSelect().
+		Model(experimentTCP).
+		Where("workspace_id = ? AND workload_type = ?", experimentTCP.WorkspaceID,
+			model.ExperimentType).
+		Scan(ctx)
+	if err != nil && err == sql.ErrNoRows {
+		// Insert invariant configs and constraints.
+		_, err = Bun().NewInsert().
+			Model(experimentTCP).
+			Value("invariant_config", "?", string(expInvariantConfig)).
+			Exec(ctx)
+		if err != nil {
+			return fmt.Errorf("error inserting experiment task config policy: %w", err)
+		}
+		return nil
+	} else if err != nil {
+		return fmt.Errorf("error getting experiment task config policy: %w", err)
+	}
 	_, err = Bun().NewUpdate().
 		Model(experimentTCP).
 		Value("invariant_config", "?", string(expInvariantConfig)).
 		Where(`workspace_id = ? AND workload_type = ?`, experimentTCP.WorkspaceID,
-			model.ExperimentType).
+			model.NTSCType).
 		Exec(ctx)
-	if err != nil && err == sql.ErrNoRows {
-		// Insert invariant configs and constraints.
-		_, err = Bun().NewInsert().Model(experimentTCP).Exec(ctx)
-		if err != nil {
-			return fmt.Errorf("error inserting experiment task config policy: %w", err)
-		}
-		return fmt.Errorf("error updating experiment task config policy: %w", err)
-	}
+
 	return nil
 }
 
@@ -71,19 +82,27 @@ func SetNTSCConfigPolicies(ctx context.Context,
 // the database.
 func SetNTSCConfigPoliciesTx(ctx context.Context, tx *bun.Tx,
 	ntscTCP *model.NTSCTaskConfigPolicies) error {
-	_, err := Bun().NewUpdate().
+	err := Bun().NewSelect().
 		Model(ntscTCP).
-		Where(`workspace_id = ? AND workload_type = ?`, ntscTCP.WorkspaceID,
+		Where("workspace_id = ? AND workload_type = ?", ntscTCP.WorkspaceID,
 			model.NTSCType).
-		Exec(ctx)
+		Scan(ctx)
+
 	if err != nil && err == sql.ErrNoRows {
 		// Insert invariant configs and constraints.
 		_, err = Bun().NewInsert().Model(ntscTCP).Exec(ctx)
 		if err != nil {
-			return fmt.Errorf("error inserting NTSC task config policy: %w", err)
+			return fmt.Errorf("error inserting NTSC task config policy: %v", err)
 		}
-		return fmt.Errorf("error updating NTSC task config policy: %w", err)
+		return nil
+	} else if err != nil {
+		return fmt.Errorf("error getting experiment task config policy: %w", err)
 	}
+	_, err = Bun().NewUpdate().
+		Model(ntscTCP).
+		Where(`workspace_id = ? AND workload_type = ?`, ntscTCP.WorkspaceID,
+			model.NTSCType).
+		Exec(ctx)
 	return nil
 }
 

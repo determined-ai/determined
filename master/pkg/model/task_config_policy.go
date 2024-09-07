@@ -26,23 +26,23 @@ const (
 // ExperimentTaskConfigPolicy is the bun model of a task config policy.
 type ExperimentTaskConfigPolicies struct {
 	bun.BaseModel   `bun:"table:task_config_policies"`
-	WorkspaceID     *int                      `bun:"workspace_id,unique"`
-	LastUpdatedBy   UserID                    `bun:"last_updated_by,notnull"`
-	LastUpdatedTime time.Time                 `bun:"last_updated_time,notnull"`
-	WorkloadType    WorkloadType              `bun:"workload_type,notnull"`
-	InvariantConfig *expconf.ExperimentConfig `bun:"invariant_config"`
-	Constraints     *Constraints              `bun:"constraints"`
+	WorkspaceID     *int                     `bun:"workspace_id"`
+	LastUpdatedBy   UserID                   `bun:"last_updated_by,notnull"`
+	LastUpdatedTime time.Time                `bun:"last_updated_time,notnull"`
+	WorkloadType    WorkloadType             `bun:"workload_type,notnull"`
+	InvariantConfig expconf.ExperimentConfig `bun:"invariant_config"`
+	Constraints     Constraints              `bun:"constraints"`
 }
 
 // NTSCTaskConfigPolicy is the bun model of a task config policy.
 type NTSCTaskConfigPolicies struct {
 	bun.BaseModel   `bun:"table:task_config_policies"`
-	WorkspaceID     *int           `bun:"workspace_id,unique"`
-	LastUpdatedBy   UserID         `bun:"last_updated_by,notnull"`
-	LastUpdatedTime time.Time      `bun:"last_updated_time,notnull"`
-	WorkloadType    WorkloadType   `bun:"workload_type,notnull"`
-	InvariantConfig *CommandConfig `bun:"invariant_config"`
-	Constraints     *Constraints   `bun:"constraints"`
+	WorkspaceID     *int          `bun:"workspace_id"`
+	LastUpdatedBy   UserID        `bun:"last_updated_by,notnull"`
+	LastUpdatedTime time.Time     `bun:"last_updated_time,notnull"`
+	WorkloadType    WorkloadType  `bun:"workload_type,notnull"`
+	InvariantConfig CommandConfig `bun:"invariant_config"`
+	Constraints     Constraints   `bun:"constraints"`
 }
 
 // ResourceConstraints are non-overridable resource constraints.
