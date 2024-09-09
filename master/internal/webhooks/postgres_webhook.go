@@ -129,7 +129,7 @@ func (l *WebhookManager) editTriggers(ts []*Trigger) error {
 
 	for _, t := range ts {
 		if t.TriggerType != TriggerTypeTaskLog {
-			return nil
+			continue
 		}
 
 		regex, ok := t.Condition[regexConditionKey].(string)
