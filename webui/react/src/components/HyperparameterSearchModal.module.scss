@@ -14,9 +14,6 @@
     :global(.ant-modal-confirm-btns) {
       display: none;
     }
-    div[class*='ant-form-item-explain'] {
-      display: none;
-    }
     :global(.ant-form-item) {
       min-width: fit-content;
     }
@@ -69,6 +66,9 @@
         grid-auto-rows: max-content;
         overflow-x: auto;
 
+        div[class*='ant-form-item-explain'] {
+          display: none;
+        }
         .hyperparameterName {
           align-items: center;
           display: flex;
