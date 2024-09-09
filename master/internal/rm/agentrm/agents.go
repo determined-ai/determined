@@ -99,7 +99,7 @@ func newAgentService(
 }
 
 // list implements agentService.
-func (a *agents) list(resourcePoolName string) map[aproto.ID]*agentState {
+func (a *agents) list(resourcePoolName string) map[aproto.ID]*agentState { // I think this is the agent location where the slots used is computed
 	agents := a.agents.Snapshot()
 	result := make(map[aproto.ID]*agentState, len(agents))
 	for id, a := range agents {

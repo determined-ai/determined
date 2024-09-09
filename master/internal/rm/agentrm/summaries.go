@@ -37,6 +37,8 @@ func resourceSummaryFromAgentStates(
 
 	deviceTypeCount := make(map[device.Type]int)
 
+	// we add up the totals
+	// it seems to be ok that there's multiple types
 	for _, agentState := range agentInfo {
 		summary.numAgents++
 		summary.numTotalSlots += agentState.numSlots()

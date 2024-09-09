@@ -656,7 +656,7 @@ func (k *ResourceManager) createResourcePoolSummary(
 		return &resourcepoolv1.ResourcePool{}, err
 	}
 
-	resourceSummary, err := rp.getResourceSummary()
+	resourceSummary, err := rp.getResourceSummary() // I think the resource summary is wrong
 	if err != nil {
 		return &resourcepoolv1.ResourcePool{}, err
 	}

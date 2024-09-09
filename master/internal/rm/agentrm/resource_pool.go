@@ -597,11 +597,11 @@ func (rp *resourcePool) GetResourceSummary() resourceSummary {
 	rp.mu.Lock()
 	defer rp.mu.Unlock()
 
-	rp.agentStatesCache = rp.agentService.list(rp.config.PoolName)
+	rp.agentStatesCache = rp.agentService.list(rp.config.PoolName) // get info here?
 	defer func() {
 		rp.agentStatesCache = nil
 	}()
-	return resourceSummaryFromAgentStates(rp.agentStatesCache)
+	return resourceSummaryFromAgentStates(rp.agentStatesCache) // summarize info here?
 }
 
 func (rp *resourcePool) CapacityCheck(msg sproto.CapacityCheck) (sproto.CapacityCheckResponse, error) {

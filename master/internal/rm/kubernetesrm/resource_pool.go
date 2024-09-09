@@ -232,7 +232,7 @@ func (k *kubernetesResourcePool) getResourceSummary() (*resourceSummary, error) 
 	defer k.mu.Unlock()
 	k.tryAdmitPendingTasks = true
 
-	slotsUsed := 0
+	slotsUsed := 0 // could be that k.slotsUsedPerGroup is empty?
 	for _, slotsUsedByGroup := range k.slotsUsedPerGroup {
 		slotsUsed += slotsUsedByGroup
 	}
