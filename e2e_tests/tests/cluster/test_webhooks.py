@@ -505,3 +505,59 @@ def test_webhook_rbac() -> None:
     bindings.delete_DeleteWebhook(user2_sess, id=workspace_webhook_id)
 
     test_agent_user_group._delete_workspace_and_check(admin_sess, workspace)
+
+@pytest.mark.e2e_cpu
+def test_editing_webhook() -> None:
+    port = 5009
+    sess = api_utils.admin_session()
+
+    webhook_trigger = bindings.v1Trigger(
+        triggerType=bindings.v1TriggerType.TASK_LOG,
+        condition={"regex": "test-regex"},
+    )
+
+    default_path = f"/test/path/here/{str(uuid.uuid4())}"
+    res = bindings.post_PostWebhook(
+        sess,
+        body=bindings.v1Webhook(
+            url=f"http://localhost:{port}{default_path}",
+            webhookType=bindings.v1WebhookType.DEFAULT,
+            triggers=[webhook_trigger],
+            mode=bindings.v1WebhookMode.WORKSPACE,
+            name="",
+            workspaceId=None,
+        ),
+    )
+    id = res.webhook.id
+
+    specific_path = f"/test/path/here/{str(uuid.uuid4())}"
+    res = bindings.post_PostWebhook(
+        sess,
+        body=bindings.v1Webhook(
+            url=f"http://localhost:{port}{specific_path}",
+            webhookType=bindings.v1WebhookType.DEFAULT,
+            triggers=[webhook_trigger],
+            mode=bindings.v1WebhookMode.SPECIFIC,
+            name="specific-webhook2",
+            workspaceId=1,
+        ),
+    )
+    specific_id = res.webhook.id
+
+    modified_path = f"/test/path/here/{str(uuid.uuid4())}"
+    bindings.patch_PatchWebhook(
+        sess, body=bindings.v1PatchWebhook(url=f"http://localhost:{port}{modified_path}"), id=id
+    )
+    bindings.patch_PatchWebhook(
+        sess,
+        body=bindings.v1PatchWebhook(url=f"http://localhost:{port}{modified_path}"),
+        id=specific_id,
+    )
+
+    res = bindings.get_GetWebhooks(sess)
+    for webhook in res.webhooks:
+        if webhook.id == id or webhook.id == specific_id:
+            assert webhook.url == f"http://localhost:{port}{modified_path}"
+
+    bindings.delete_DeleteWebhook(sess, id=id)
+    bindings.delete_DeleteWebhook(sess, id=specific_id)

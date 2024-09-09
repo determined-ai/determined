@@ -10549,6 +10549,28 @@ class v1PatchUsersResponse(Printable):
         }
         return out
 
+class v1PatchWebhook(Printable):
+
+    def __init__(
+        self,
+        *,
+        url: str,
+    ):
+        self.url = url
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PatchWebhook":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "url": obj["url"],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "url": self.url,
+        }
+        return out
+
 class v1PatchWorkspace(Printable):
     """PatchWorkspace is a partial update to a workspace with all optional fields."""
     agentUserGroup: "typing.Optional[v1AgentUserGroup]" = None
@@ -22986,6 +23008,32 @@ def patch_PatchUsers(
     if _resp.status_code == 200:
         return v1PatchUsersResponse.from_json(_resp.json())
     raise APIHttpError("patch_PatchUsers", _resp)
+
+def patch_PatchWebhook(
+    session: "api.BaseSession",
+    *,
+    body: "v1PatchWebhook",
+    id: int,
+) -> None:
+    """Update a webhook.
+
+    - body: The desired webhook fields and values to update.
+    - id: The id of the webhook.
+    """
+    _params = None
+    _resp = session._do_request(
+        method="PATCH",
+        path=f"/api/v1/webhooks/{id}",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("patch_PatchWebhook", _resp)
 
 def patch_PatchWorkspace(
     session: "api.BaseSession",

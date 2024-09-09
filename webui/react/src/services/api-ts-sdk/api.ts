@@ -7706,6 +7706,26 @@ export interface V1PatchUsersResponse {
     results: Array<V1UserActionResult>;
 }
 /**
+ * 
+ * @export
+ * @interface V1PatchWebhook
+ */
+export interface V1PatchWebhook {
+    /**
+     * The new url of the webhook.
+     * @type {string}
+     * @memberof V1PatchWebhook
+     */
+    url: string;
+}
+/**
+ * Response to PatchWebhookRequest.
+ * @export
+ * @interface V1PatchWebhookResponse
+ */
+export interface V1PatchWebhookResponse {
+}
+/**
  * PatchWorkspace is a partial update to a workspace with all optional fields.
  * @export
  * @interface V1PatchWorkspace
@@ -35547,6 +35567,50 @@ export const WebhooksApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Update a webhook.
+         * @param {number} id The id of the webhook.
+         * @param {V1PatchWebhook} body The desired webhook fields and values to update.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchWebhook(id: number, body: V1PatchWebhook, options: any = {}): FetchArgs {
+            // verify required parameter 'id' is not null or undefined
+            if (id === null || id === undefined) {
+                throw new RequiredError('id','Required parameter id was null or undefined when calling patchWebhook.');
+            }
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling patchWebhook.');
+            }
+            const localVarPath = `/api/v1/webhooks/{id}`
+                .replace(`{${"id"}}`, encodeURIComponent(String(id)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'PATCH', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Create a webhook. TODO(???): Simplify req/response structs?
          * @param {V1Webhook} body The webhook to store.
          * @param {*} [options] Override http request option.
@@ -35705,6 +35769,26 @@ export const WebhooksApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Update a webhook.
+         * @param {number} id The id of the webhook.
+         * @param {V1PatchWebhook} body The desired webhook fields and values to update.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchWebhook(id: number, body: V1PatchWebhook, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PatchWebhookResponse> {
+            const localVarFetchArgs = WebhooksApiFetchParamCreator(configuration).patchWebhook(id, body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Create a webhook. TODO(???): Simplify req/response structs?
          * @param {V1Webhook} body The webhook to store.
          * @param {*} [options] Override http request option.
@@ -35790,6 +35874,17 @@ export const WebhooksApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Update a webhook.
+         * @param {number} id The id of the webhook.
+         * @param {V1PatchWebhook} body The desired webhook fields and values to update.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        patchWebhook(id: number, body: V1PatchWebhook, options?: any) {
+            return WebhooksApiFp(configuration).patchWebhook(id, body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Create a webhook. TODO(???): Simplify req/response structs?
          * @param {V1Webhook} body The webhook to store.
          * @param {*} [options] Override http request option.
@@ -35849,6 +35944,19 @@ export class WebhooksApi extends BaseAPI {
      */
     public getWebhooks(options?: any) {
         return WebhooksApiFp(this.configuration).getWebhooks(options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Update a webhook.
+     * @param {number} id The id of the webhook.
+     * @param {V1PatchWebhook} body The desired webhook fields and values to update.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof WebhooksApi
+     */
+    public patchWebhook(id: number, body: V1PatchWebhook, options?: any) {
+        return WebhooksApiFp(this.configuration).patchWebhook(id, body, options)(this.fetch, this.basePath)
     }
     
     /**

@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/url"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -14,6 +16,8 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/determined-ai/determined/master/internal/api"
+	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
@@ -255,4 +259,29 @@ func (a *WebhooksAPIServer) PostWebhookEventData(
 	}
 
 	return &res, nil
+}
+
+func (a *WebhooksAPIServer) PatchWebhook(
+	ctx context.Context, req *apiv1.PatchWebhookRequest,
+) (*apiv1.PatchWebhookResponse, error) {
+	webhook, err := GetWebhook(ctx, int(req.Id))
+	if err != nil {
+		return nil, err
+	}
+	if err := authorizeEditRequest(ctx, webhook.Proto().WorkspaceId); err != nil {
+		return nil, err
+	}
+
+	err = UpdateWebhook(
+		ctx,
+		req.Id,
+		req.Webhook,
+	)
+	if err != nil && errors.Is(err, db.ErrNotFound) {
+		return nil, api.NotFoundErrs("webhook", strconv.Itoa(int(req.Id)), true)
+	} else if err != nil {
+		log.WithError(err).Errorf("failed to update webhook %d", req.Id)
+		return nil, err
+	}
+	return &apiv1.PatchWebhookResponse{}, nil
 }
