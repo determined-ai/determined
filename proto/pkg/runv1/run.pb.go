@@ -427,7 +427,6 @@ type Run struct {
 	// The current state of the run(trial).
 	State trialv1.State `protobuf:"varint,4,opt,name=state,proto3,enum=determined.trial.v1.State" json:"state,omitempty"`
 	// The tags of the associated experiment.
-	// TODO(aaron.amanuel): Create add/remove tags for runs.
 	Labels []string `protobuf:"bytes,5,rep,name=labels,proto3" json:"labels,omitempty"`
 	// The total size of checkpoints.
 	CheckpointSize int64 `protobuf:"varint,6,opt,name=checkpoint_size,json=checkpointSize,proto3" json:"checkpoint_size,omitempty"`
