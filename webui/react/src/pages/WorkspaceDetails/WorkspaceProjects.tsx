@@ -102,11 +102,19 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
     () =>
       loadableProjects
         .map((p): [Project[], boolean] => [
-          sortProjects(p.toJSON().filter((p) => (settings.archived ? p : !p.archived))),
+          sortProjects(
+            p.toJSON().filter((p) => {
+              if (settings.user === undefined) return settings.archived ? p : !p.archived;
+
+              if (settings.archived) return settings.user?.includes(p.userId.toString());
+
+              return !p.archived && settings.user?.includes(p.userId.toString());
+            }),
+          ),
           false,
         ])
         .getOrElse([[], true]),
-    [loadableProjects, settings.archived, sortProjects],
+    [loadableProjects, settings.archived, settings.user, sortProjects],
   );
 
   const handleProjectCreateClick = useCallback(() => {
