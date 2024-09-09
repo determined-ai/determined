@@ -109,8 +109,9 @@ stages:
         master_port: 8080
         resource_pool: pool2
         container_master_host: $DOCKER_LOCALHOST
+        visible_gpus: 1
+        slot_type: cuda
         # Often dtrain clusters have multiple gpus per agent.
-        artificial_slots: 8
         # Each agent needs a unique agent_id.
         agent_id: agent2
         # Each agent needs a deconflicting fluent container
