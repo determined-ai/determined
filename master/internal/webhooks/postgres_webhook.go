@@ -946,6 +946,9 @@ func (l *WebhookManager) updateWebhook(
 			return fmt.Errorf("updating webhook %d: %w", webhookID, err)
 		}
 
+		for _, t := range ts {
+			t.Webhook.URL = p.Url
+		}
 		if err := l.editTriggers(ts); err != nil {
 			return err
 		}
