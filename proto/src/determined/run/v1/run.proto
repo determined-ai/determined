@@ -150,7 +150,6 @@ message Run {
   // The current state of the run(trial).
   determined.trial.v1.State state = 4;
   // The tags of the associated experiment.
-  // TODO(aaron.amanuel): Create add/remove tags for runs.
   repeated string labels = 5;
   // The total size of checkpoints.
   int64 checkpoint_size = 6;
