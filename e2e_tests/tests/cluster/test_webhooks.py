@@ -529,7 +529,7 @@ def test_editing_webhook() -> None:
             workspaceId=None,
         ),
     )
-    id = res.webhook.id
+    default_id = res.webhook.id
 
     specific_path = f"/test/path/here/{str(uuid.uuid4())}"
     res = bindings.post_PostWebhook(
@@ -547,7 +547,9 @@ def test_editing_webhook() -> None:
 
     modified_path = f"/test/path/here/{str(uuid.uuid4())}"
     bindings.patch_PatchWebhook(
-        sess, body=bindings.v1PatchWebhook(url=f"http://localhost:{port}{modified_path}"), id=id
+        sess,
+        body=bindings.v1PatchWebhook(url=f"http://localhost:{port}{modified_path}"),
+        id=default_id,
     )
     bindings.patch_PatchWebhook(
         sess,
@@ -557,10 +559,10 @@ def test_editing_webhook() -> None:
 
     res = bindings.get_GetWebhooks(sess)
     for webhook in res.webhooks:
-        if webhook.id == id or webhook.id == specific_id:
+        if webhook.id == default_id or webhook.id == specific_id:
             assert webhook.url == f"http://localhost:{port}{modified_path}"
 
-    bindings.delete_DeleteWebhook(sess, id=id)
+    bindings.delete_DeleteWebhook(sess, id=default_id)
     bindings.delete_DeleteWebhook(sess, id=specific_id)
 
 
