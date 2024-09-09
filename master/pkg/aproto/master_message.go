@@ -80,6 +80,7 @@ type AgentStarted struct {
 	Version              string
 	Devices              []device.Device
 	ContainersReattached []ContainerReattachAck
+	ResourcePoolName     string
 }
 
 // ContainerStateChanged notifies the master that the agent transitioned the container state.

@@ -640,7 +640,7 @@ const HyperparameterSearchModal = ({ closeModal, experiment, trial }: Props): JS
         <Row>
           <Button onClick={handleCancel}>Cancel</Button>
           <Button
-            disabled={validationError}
+            disabled={validationError || isSubmitting}
             loading={isSubmitting}
             type="primary"
             onClick={handleOk}>

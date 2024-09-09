@@ -86,7 +86,7 @@ func TestActivateExperiments(t *testing.T) {
 			expectedErr:         true,
 		},
 		{
-			name: "three experiments selected, one found",
+			name: "three experiments selected, one eligible",
 			args: args{
 				projectID:     1,
 				experimentIds: []int32{132, 142, 152},
@@ -111,7 +111,7 @@ func TestActivateExperiments(t *testing.T) {
 			},
 		},
 		{
-			name: "filters are used",
+			name: "basic label filter",
 			args: args{
 				projectID:     1,
 				experimentIds: []int32{132, 142, 152},

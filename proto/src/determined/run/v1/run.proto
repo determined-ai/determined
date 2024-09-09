@@ -51,7 +51,7 @@ message FlatRunExperiment {
   optional google.protobuf.Struct pachyderm_integration = 12;
 }
 
-// Flat run respresentation.
+// Flat run respresentation. Used for the rows of the Run Table.
 message FlatRun {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: {
@@ -119,4 +119,118 @@ message FlatRun {
   bool archived = 21;
   // Project level local id of run.
   string local_id = 22;
+}
+
+// Flat run respresentation.
+message Run {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: {
+      required: [
+        "id",
+        "start_time",
+        "state",
+        "tags",
+        "checkpoint_size",
+        "checkpoint_count",
+        "project_id",
+        "project_name",
+        "workspace_id",
+        "workspace_name",
+        "parent_archived",
+        "archived"
+      ]
+    }
+  };
+  // The id of the run.
+  int32 id = 1;
+  // The time the run was started.
+  google.protobuf.Timestamp start_time = 2;
+  // The time the run ended.
+  google.protobuf.Timestamp end_time = 3;
+  // The current state of the run(trial).
+  determined.trial.v1.State state = 4;
+  // The tags of the associated experiment.
+  repeated string labels = 5;
+  // The total size of checkpoints.
+  int64 checkpoint_size = 6;
+  // The count of checkpoints.
+  int32 checkpoint_count = 7;
+  // Signed searcher metrics value.
+  optional double searcher_metric_value = 8;
+  // The id of external run
+  optional string external_run_id = 9;
+  // Trial hyperparameters.
+  optional google.protobuf.Struct hyperparameters = 10;
+  // summary metrics.
+  optional google.protobuf.Struct summary_metrics = 11;
+  // The id of the user who created the run.
+  optional int32 user_id = 12;
+  // Time in seconds which the run ran or has been running.
+  optional int32 duration = 13;
+  // The id of the project associated with this run.
+  int32 project_id = 14;
+  // The name of the project associated with this run.
+  string project_name = 15;
+  // The id of the workspace associated with this run.
+  int32 workspace_id = 16;
+  // The name of the workspace associated with this run.
+  string workspace_name = 17;
+  // The archived status of the parent project (can be inherited from
+  // workspace).
+  bool parent_archived = 18;
+  // The arbitrary metadata of the run.
+  optional google.protobuf.Struct metadata = 19;
+  // The archived status of this run.
+  // This is only looking at the archived status at the run level and not taking
+  // into account whether the search is archived or not.
+  bool archived = 20;
+  // The id of the search linked to the run.
+  int32 search_id = 21;
+  // The type of searcher for the search.
+  string searcher_type = 22;
+  // The searcher metric name for the search.
+  string searcher_metric = 23;
+  // Original id of a forked or continued search.
+  optional int32 forked_from = 24;
+  // The id of external search
+  optional string external_search_id = 25;
+  // The resource pool the search was created in.
+  string resource_pool = 26;
+  // The current progress of a running search.
+  float progress = 27;
+  // The description of the search.
+  string description = 28;
+  // The search name.
+  string search_name = 29;
+  // Unmanaged searchs are detached.
+  bool unmanaged = 30;
+  // True if the associated search is a multitrial search
+  bool is_multirun = 31;
+  // The search pachyderm integration config.
+  optional google.protobuf.Struct pachyderm_integration = 32;
+  // Number times the trial restarted.
+  int32 restarts = 33;
+  // The current processed batches.
+  int32 total_batches_processed = 34;
+  // Best validation.
+  determined.trial.v1.MetricsWorkload best_validation = 35;
+  // Latest validation.
+  determined.trial.v1.MetricsWorkload latest_validation = 36;
+  // Best checkpoint.
+  determined.trial.v1.CheckpointWorkload best_checkpoint = 37;
+  // The last reported state of the trial runner (harness code).
+  string runner_state = 38;
+  // The wall clock time is all active time of the cluster for the trial,
+  // inclusive of everything (restarts, initiailization, etc), in seconds.
+  double wall_clock_time = 39;
+  // UUID of checkpoint that this trial started from.
+  string warm_start_checkpoint_uuid = 40;
+  // Task IDs of tasks associated with this trial.
+  // Length of task_ids will always be greater or equal to one when TaskID is
+  // sent. For example CompareTrial we will send a reduced Trial object, without
+  // TaskID or TaskIDs fileld in. The first element of task_ids will be the same
+  // as task_id. task_ids is sorted ascending by task_run_id.
+  repeated string task_ids = 41;
+  // Number of days to retain logs for.
+  optional int32 log_retention_days = 42;
 }

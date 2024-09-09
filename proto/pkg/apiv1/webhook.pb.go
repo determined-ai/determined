@@ -490,6 +490,112 @@ func (x *TestWebhookResponse) GetCompleted() bool {
 	return false
 }
 
+// Request for triggering custom trigger.
+type PostWebhookEventDataRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// The event data for custom webhook trigger.
+	Data *webhookv1.CustomWebhookEventData `protobuf:"bytes,1,opt,name=data,proto3" json:"data,omitempty"`
+	// The id of the experiment.
+	ExperimentId int32 `protobuf:"varint,2,opt,name=experiment_id,json=experimentId,proto3" json:"experiment_id,omitempty"`
+	// The id of the trial.
+	TrialId int32 `protobuf:"varint,3,opt,name=trial_id,json=trialId,proto3" json:"trial_id,omitempty"`
+}
+
+func (x *PostWebhookEventDataRequest) Reset() {
+	*x = PostWebhookEventDataRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_determined_api_v1_webhook_proto_msgTypes[10]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *PostWebhookEventDataRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PostWebhookEventDataRequest) ProtoMessage() {}
+
+func (x *PostWebhookEventDataRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_determined_api_v1_webhook_proto_msgTypes[10]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PostWebhookEventDataRequest.ProtoReflect.Descriptor instead.
+func (*PostWebhookEventDataRequest) Descriptor() ([]byte, []int) {
+	return file_determined_api_v1_webhook_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *PostWebhookEventDataRequest) GetData() *webhookv1.CustomWebhookEventData {
+	if x != nil {
+		return x.Data
+	}
+	return nil
+}
+
+func (x *PostWebhookEventDataRequest) GetExperimentId() int32 {
+	if x != nil {
+		return x.ExperimentId
+	}
+	return 0
+}
+
+func (x *PostWebhookEventDataRequest) GetTrialId() int32 {
+	if x != nil {
+		return x.TrialId
+	}
+	return 0
+}
+
+// Response to PostWebhookEventDataRequest.
+type PostWebhookEventDataResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+}
+
+func (x *PostWebhookEventDataResponse) Reset() {
+	*x = PostWebhookEventDataResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_determined_api_v1_webhook_proto_msgTypes[11]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *PostWebhookEventDataResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PostWebhookEventDataResponse) ProtoMessage() {}
+
+func (x *PostWebhookEventDataResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_determined_api_v1_webhook_proto_msgTypes[11]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PostWebhookEventDataResponse.ProtoReflect.Descriptor instead.
+func (*PostWebhookEventDataResponse) Descriptor() ([]byte, []int) {
+	return file_determined_api_v1_webhook_proto_rawDescGZIP(), []int{11}
+}
+
 var File_determined_api_v1_webhook_proto protoreflect.FileDescriptor
 
 var file_determined_api_v1_webhook_proto_rawDesc = []byte{
@@ -543,10 +649,25 @@ var file_determined_api_v1_webhook_proto_rawDesc = []byte{
 	0x12, 0x1c, 0x0a, 0x09, 0x63, 0x6f, 0x6d, 0x70, 0x6c, 0x65, 0x74, 0x65, 0x64, 0x18, 0x01, 0x20,
 	0x01, 0x28, 0x08, 0x52, 0x09, 0x63, 0x6f, 0x6d, 0x70, 0x6c, 0x65, 0x74, 0x65, 0x64, 0x3a, 0x11,
 	0x92, 0x41, 0x0e, 0x0a, 0x0c, 0xd2, 0x01, 0x09, 0x63, 0x6f, 0x6d, 0x70, 0x6c, 0x65, 0x74, 0x65,
-	0x64, 0x42, 0x35, 0x5a, 0x33, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f,
-	0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2d, 0x61, 0x69, 0x2f, 0x64, 0x65,
-	0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x70,
-	0x6b, 0x67, 0x2f, 0x61, 0x70, 0x69, 0x76, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x64, 0x22, 0xbe, 0x01, 0x0a, 0x1b, 0x50, 0x6f, 0x73, 0x74, 0x57, 0x65, 0x62, 0x68, 0x6f, 0x6f,
+	0x6b, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x44, 0x61, 0x74, 0x61, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73,
+	0x74, 0x12, 0x41, 0x0a, 0x04, 0x64, 0x61, 0x74, 0x61, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32,
+	0x2d, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x77, 0x65, 0x62,
+	0x68, 0x6f, 0x6f, 0x6b, 0x2e, 0x76, 0x31, 0x2e, 0x43, 0x75, 0x73, 0x74, 0x6f, 0x6d, 0x57, 0x65,
+	0x62, 0x68, 0x6f, 0x6f, 0x6b, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x44, 0x61, 0x74, 0x61, 0x52, 0x04,
+	0x64, 0x61, 0x74, 0x61, 0x12, 0x23, 0x0a, 0x0d, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65,
+	0x6e, 0x74, 0x5f, 0x69, 0x64, 0x18, 0x02, 0x20, 0x01, 0x28, 0x05, 0x52, 0x0c, 0x65, 0x78, 0x70,
+	0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x49, 0x64, 0x12, 0x19, 0x0a, 0x08, 0x74, 0x72, 0x69,
+	0x61, 0x6c, 0x5f, 0x69, 0x64, 0x18, 0x03, 0x20, 0x01, 0x28, 0x05, 0x52, 0x07, 0x74, 0x72, 0x69,
+	0x61, 0x6c, 0x49, 0x64, 0x3a, 0x1c, 0x92, 0x41, 0x19, 0x0a, 0x17, 0xd2, 0x01, 0x04, 0x64, 0x61,
+	0x74, 0x61, 0xd2, 0x01, 0x0d, 0x65, 0x78, 0x70, 0x65, 0x72, 0x69, 0x6d, 0x65, 0x6e, 0x74, 0x5f,
+	0x69, 0x64, 0x22, 0x1e, 0x0a, 0x1c, 0x50, 0x6f, 0x73, 0x74, 0x57, 0x65, 0x62, 0x68, 0x6f, 0x6f,
+	0x6b, 0x45, 0x76, 0x65, 0x6e, 0x74, 0x44, 0x61, 0x74, 0x61, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e,
+	0x73, 0x65, 0x42, 0x35, 0x5a, 0x33, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d,
+	0x2f, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2d, 0x61, 0x69, 0x2f, 0x64,
+	0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f,
+	0x70, 0x6b, 0x67, 0x2f, 0x61, 0x70, 0x69, 0x76, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f,
+	0x33,
 }
 
 var (
@@ -561,30 +682,34 @@ func file_determined_api_v1_webhook_proto_rawDescGZIP() []byte {
 	return file_determined_api_v1_webhook_proto_rawDescData
 }
 
-var file_determined_api_v1_webhook_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
+var file_determined_api_v1_webhook_proto_msgTypes = make([]protoimpl.MessageInfo, 12)
 var file_determined_api_v1_webhook_proto_goTypes = []interface{}{
-	(*GetWebhookRequest)(nil),     // 0: determined.api.v1.GetWebhookRequest
-	(*GetWebhookResponse)(nil),    // 1: determined.api.v1.GetWebhookResponse
-	(*GetWebhooksRequest)(nil),    // 2: determined.api.v1.GetWebhooksRequest
-	(*GetWebhooksResponse)(nil),   // 3: determined.api.v1.GetWebhooksResponse
-	(*PostWebhookRequest)(nil),    // 4: determined.api.v1.PostWebhookRequest
-	(*PostWebhookResponse)(nil),   // 5: determined.api.v1.PostWebhookResponse
-	(*DeleteWebhookRequest)(nil),  // 6: determined.api.v1.DeleteWebhookRequest
-	(*DeleteWebhookResponse)(nil), // 7: determined.api.v1.DeleteWebhookResponse
-	(*TestWebhookRequest)(nil),    // 8: determined.api.v1.TestWebhookRequest
-	(*TestWebhookResponse)(nil),   // 9: determined.api.v1.TestWebhookResponse
-	(*webhookv1.Webhook)(nil),     // 10: determined.webhook.v1.Webhook
+	(*GetWebhookRequest)(nil),                // 0: determined.api.v1.GetWebhookRequest
+	(*GetWebhookResponse)(nil),               // 1: determined.api.v1.GetWebhookResponse
+	(*GetWebhooksRequest)(nil),               // 2: determined.api.v1.GetWebhooksRequest
+	(*GetWebhooksResponse)(nil),              // 3: determined.api.v1.GetWebhooksResponse
+	(*PostWebhookRequest)(nil),               // 4: determined.api.v1.PostWebhookRequest
+	(*PostWebhookResponse)(nil),              // 5: determined.api.v1.PostWebhookResponse
+	(*DeleteWebhookRequest)(nil),             // 6: determined.api.v1.DeleteWebhookRequest
+	(*DeleteWebhookResponse)(nil),            // 7: determined.api.v1.DeleteWebhookResponse
+	(*TestWebhookRequest)(nil),               // 8: determined.api.v1.TestWebhookRequest
+	(*TestWebhookResponse)(nil),              // 9: determined.api.v1.TestWebhookResponse
+	(*PostWebhookEventDataRequest)(nil),      // 10: determined.api.v1.PostWebhookEventDataRequest
+	(*PostWebhookEventDataResponse)(nil),     // 11: determined.api.v1.PostWebhookEventDataResponse
+	(*webhookv1.Webhook)(nil),                // 12: determined.webhook.v1.Webhook
+	(*webhookv1.CustomWebhookEventData)(nil), // 13: determined.webhook.v1.CustomWebhookEventData
 }
 var file_determined_api_v1_webhook_proto_depIdxs = []int32{
-	10, // 0: determined.api.v1.GetWebhookResponse.webhook:type_name -> determined.webhook.v1.Webhook
-	10, // 1: determined.api.v1.GetWebhooksResponse.webhooks:type_name -> determined.webhook.v1.Webhook
-	10, // 2: determined.api.v1.PostWebhookRequest.webhook:type_name -> determined.webhook.v1.Webhook
-	10, // 3: determined.api.v1.PostWebhookResponse.webhook:type_name -> determined.webhook.v1.Webhook
-	4,  // [4:4] is the sub-list for method output_type
-	4,  // [4:4] is the sub-list for method input_type
-	4,  // [4:4] is the sub-list for extension type_name
-	4,  // [4:4] is the sub-list for extension extendee
-	0,  // [0:4] is the sub-list for field type_name
+	12, // 0: determined.api.v1.GetWebhookResponse.webhook:type_name -> determined.webhook.v1.Webhook
+	12, // 1: determined.api.v1.GetWebhooksResponse.webhooks:type_name -> determined.webhook.v1.Webhook
+	12, // 2: determined.api.v1.PostWebhookRequest.webhook:type_name -> determined.webhook.v1.Webhook
+	12, // 3: determined.api.v1.PostWebhookResponse.webhook:type_name -> determined.webhook.v1.Webhook
+	13, // 4: determined.api.v1.PostWebhookEventDataRequest.data:type_name -> determined.webhook.v1.CustomWebhookEventData
+	5,  // [5:5] is the sub-list for method output_type
+	5,  // [5:5] is the sub-list for method input_type
+	5,  // [5:5] is the sub-list for extension type_name
+	5,  // [5:5] is the sub-list for extension extendee
+	0,  // [0:5] is the sub-list for field type_name
 }
 
 func init() { file_determined_api_v1_webhook_proto_init() }
@@ -713,6 +838,30 @@ func file_determined_api_v1_webhook_proto_init() {
 				return nil
 			}
 		}
+		file_determined_api_v1_webhook_proto_msgTypes[10].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*PostWebhookEventDataRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_determined_api_v1_webhook_proto_msgTypes[11].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*PostWebhookEventDataResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -720,7 +869,7 @@ func file_determined_api_v1_webhook_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_determined_api_v1_webhook_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   10,
+			NumMessages:   12,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

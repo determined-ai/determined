@@ -4,6 +4,7 @@ package determined.webhook.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/webhookv1";
 import "protoc-gen-swagger/options/annotations.proto";
 import "google/protobuf/struct.proto";
+import "determined/log/v1/log.proto";
 
 // Enum values for expected webhook types.
 enum WebhookType {
@@ -36,6 +37,18 @@ enum TriggerType {
   TRIGGER_TYPE_METRIC_THRESHOLD_EXCEEDED = 2;
   // For task logs.
   TRIGGER_TYPE_TASK_LOG = 3;
+  // For custom alert.
+  TRIGGER_TYPE_CUSTOM = 4;
+}
+
+// Event data for custom trigger.
+message CustomWebhookEventData {
+  // The level at which the event data is logged.
+  determined.log.v1.LogLevel level = 1;
+  // The title for the event data.
+  string title = 2;
+  // The description for the event data.
+  string description = 3;
 }
 
 // Representation of a Webhook

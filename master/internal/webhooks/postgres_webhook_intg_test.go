@@ -70,7 +70,7 @@ func TestWebhooks(t *testing.T) {
 		require.NoError(t, err)
 		err = AddWebhook(ctx, &testWebhookFive)
 		require.NoError(t, err, "failure creating webhooks")
-		webhooks, err := GetWebhooks(ctx)
+		webhooks, err := getWebhooks(ctx, nil)
 		webhookFourResponse := getWebhookByID(webhooks, testWebhookFour.ID)
 		require.NoError(t, err, "unable to get webhooks")
 		require.Len(t, webhooks, 2, "did not retrieve two webhooks")
@@ -91,7 +91,7 @@ func TestWebhooks(t *testing.T) {
 		testWebhookOne.WorkspaceID = &workspaceID
 		err := AddWebhook(ctx, &testWebhookOne)
 		require.NoError(t, err, "failed to create webhook")
-		webhooks, err := GetWebhooks(ctx)
+		webhooks, err := getWebhooks(ctx, &[]int32{workspaceID})
 		require.NoError(t, err, "unable to get webhooks")
 		webhookOneResponse := getWebhookByID(webhooks, testWebhookOne.ID)
 		require.Equal(t, "test-name", webhookOneResponse.Name)
@@ -103,7 +103,7 @@ func TestWebhooks(t *testing.T) {
 		testWebhookTwo.Triggers = testTriggersTwo
 		err := AddWebhook(ctx, &testWebhookTwo)
 		require.NoError(t, err, "failed to create webhook with multiple triggers")
-		webhooks, err := GetWebhooks(ctx)
+		webhooks, err := getWebhooks(ctx, nil)
 		require.NoError(t, err)
 		createdWebhook := getWebhookByID(webhooks, testWebhookTwo.ID)
 		require.Len(t, createdWebhook.Triggers, len(testTriggersTwo),

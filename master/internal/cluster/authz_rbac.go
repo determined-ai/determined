@@ -103,6 +103,29 @@ func (a *MiscAuthZRBAC) CanViewExternalJobs(
 	)
 }
 
+// CanModifyGlobalConfigPolicies checks if the user can modify global
+// task config policies.
+func (a *MiscAuthZRBAC) CanModifyGlobalConfigPolicies(
+	ctx context.Context, curUser *model.User,
+) (permErr error, err error) {
+	return a.checkForPermission(
+		ctx,
+		curUser,
+		rbacv1.PermissionType_PERMISSION_TYPE_MODIFY_GLOBAL_CONFIG_POLICIES,
+	)
+}
+
+// CanViewGlobalConfigPolicies checks if the user can view global task config policies.
+func (a *MiscAuthZRBAC) CanViewGlobalConfigPolicies(
+	ctx context.Context, curUser *model.User,
+) (permErr error, err error) {
+	return a.checkForPermission(
+		ctx,
+		curUser,
+		rbacv1.PermissionType_PERMISSION_TYPE_VIEW_GLOBAL_CONFIG_POLICIES,
+	)
+}
+
 func init() {
 	AuthZProvider.Register("rbac", &MiscAuthZRBAC{})
 }

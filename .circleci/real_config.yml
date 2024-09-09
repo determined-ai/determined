@@ -401,9 +401,6 @@ commands:
       determined:
         type: boolean
         default: false
-      model-hub:
-        type: boolean
-        default: false
       install-python:
         type: boolean
         default: true
@@ -426,9 +423,6 @@ commands:
             pip freeze --all >> /tmp/cachefile
             if [ "<<parameters.determined>>" = "true" ]; then
               cat harness/setup.py >> /tmp/cachefile
-            fi
-            if [ "<<parameters.model-hub>>" = "true" ]; then
-              cat model_hub/setup.py >> /tmp/cachefile
             fi
             echo <<parameters.extras-requires>> >> /tmp/cachefile
             if [ -n <<parameters.extra-requirements-file>> ]; then
@@ -497,34 +491,15 @@ commands:
             echo 'export PATH=/tmp/venv/bin:$PATH' >> $BASH_ENV
             /tmp/venv/bin/python -m pip install --upgrade pip wheel setuptools
 
-      # Either of make -C {harness,model_hub} build require pypa's build module.
       - when:
-          condition:
-            or:
-              - <<parameters.determined>>
-              - <<parameters.model-hub>>
+          condition: <<parameters.determined>>
           steps:
             - run:
                 name: Install pypa builder
                 command: python3 -m pip install build
-
-      - when:
-          condition: <<parameters.determined>>
-          steps:
             - install-wheel:
                 package-name: determined
                 package-location: ./harness
-      - when:
-          condition: <<parameters.model-hub>>
-          steps:
-            - run:
-                name: Install mmdetection dependencies
-                command: |
-                  sudo apt-get update
-                  sudo apt-get install -y ffmpeg libsm6 libxext6
-            - install-wheel:
-                package-name: model-hub
-                package-location: ./model_hub
       - run:
           name: Install <<parameters.extras-requires>>
           command: |
@@ -1524,7 +1499,6 @@ jobs:
       - setup-python-venv:
           install-python: false
           determined: true
-          model-hub: true
           extra-requirements-file: "docs/requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
       - run: make -C examples build
@@ -1542,7 +1516,6 @@ jobs:
           paths:
             - examples/build
             - harness/dist
-            - model_hub/dist
             - docs/build
             - docs/site
       - run: tar czf docs.tgz docs/site/html
@@ -1557,7 +1530,6 @@ jobs:
       - setup-python-venv:
           install-python: false
           determined: true
-          model-hub: true
           extra-requirements-file: "docs/requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
       - attach_workspace:
@@ -1572,7 +1544,6 @@ jobs:
       - setup-python-venv:
           install-python: false
           determined: true
-          model-hub: true
           extra-requirements-file: "docs/requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
       - attach_workspace:
@@ -1633,7 +1604,6 @@ jobs:
       - setup-python-venv:
           install-python: false
           determined: true
-          model-hub: true
           extra-requirements-file: "docs/requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
       - when:
@@ -1740,20 +1710,6 @@ jobs:
       - make-package
       - run: tools/scripts/retry.sh make -C master publish-dev
       - run: tools/scripts/retry.sh make -C agent publish-dev
-      - run:
-          name: Build and publish model_hub docker images
-          command: |
-            if [ ${CIRCLE_BRANCH} = 'main' ] || [[ ${CIRCLE_BRANCH} == *"release-"* ]]; then
-                # For main and release branches, we will tag and publish both the environment
-                # with the git hash as well as the version.  This will make that image available
-                # immediately for nightly tests.
-                make -C model_hub build-docker
-                tools/scripts/retry.sh make -C model_hub publish-docker
-            else
-                # Otherwise, only tag and publish the environment with the git hash.
-                make -C model_hub build-docker-dev
-                tools/scripts/retry.sh make -C model_hub publish-docker-dev
-            fi
       - run: mkdir /tmp/pkgs && cp -v */dist/*.{rpm,deb,tar.gz} /tmp/pkgs
       - store_artifacts:
           path: /tmp/pkgs
@@ -1784,20 +1740,6 @@ jobs:
       - make-package-ee
       - run: tools/scripts/retry.sh make -C master publish-dev-ee
       - run: tools/scripts/retry.sh make -C agent publish-dev-ee
-      - run:
-          name: Build and publish model_hub docker images
-          command: |
-            if [ ${CIRCLE_BRANCH} = 'main' ] || [[ ${CIRCLE_BRANCH} == *"release-"* ]]; then
-                # For main and release branches, we will tag and publish both the environment
-                # with the git hash as well as the version.  This will make that image available
-                # immediately for nightly tests.
-                make -C model_hub build-docker
-                tools/scripts/retry.sh make -C model_hub publish-docker
-            else
-                # Otherwise, only tag and publish the environment with the git hash.
-                make -C model_hub build-docker-dev
-                tools/scripts/retry.sh make -C model_hub publish-docker-dev
-            fi
       - run: mkdir /tmp/pkgs && cp -v */dist/*.{rpm,deb,tar.gz} /tmp/pkgs
 
   package-and-push-system-rc:
@@ -1824,8 +1766,6 @@ jobs:
       - make-package
       - run: make -C master publish
       - run: make -C agent publish
-      - run: make -C model_hub build-docker
-      - run: tools/scripts/retry.sh make -C model_hub publish-docker
       - run: mkdir /tmp/pkgs && cp -v */dist/*.{rpm,deb,tar.gz} /tmp/pkgs
       - store_artifacts:
           path: /tmp/pkgs
@@ -1880,8 +1820,6 @@ jobs:
       - run:
           no_output_timeout: 30m
           command: make -C agent release
-      - run: make -C model_hub build-docker
-      - run: make -C model_hub publish-docker
       - run: mkdir /tmp/pkgs && cp -v */dist/*.{rpm,deb,tar.gz} /tmp/pkgs
       - store_artifacts:
           path: /tmp/pkgs
@@ -2400,11 +2338,9 @@ jobs:
       - setup-python-venv:
           install-python: false
           determined: true
-          model-hub: true
-          extra-requirements-file: "requirements.txt model_hub/tests/requirements.txt"
+          extra-requirements-file: "requirements.txt"
           executor: <<pipeline.parameters.docker-image>>
       - run: make -C harness check
-      - run: make -C model_hub check
       - run: make -C e2e_tests check
       - run: make -C tools check
       - run: make -C schemas check
@@ -2625,35 +2561,6 @@ jobs:
       - store_test_results:
           path: /tmp/test-results
 
-  test-unit-model-hub:
-    docker:
-      - image: <<pipeline.parameters.docker-image>>
-    resource_class: medium+
-    steps:
-      - checkout
-      - add-and-fetch-upstream
-      - skip-if-only-docs
-      - skip-if-only-github
-      - skip-if-only-webui
-      - install-codecov
-      - setup-python-venv:
-          install-python: false
-          determined: true
-          model-hub: true
-          extras-requires: "torch==1.9.0 torchvision==0.10.0"
-          extra-requirements-file: "model_hub/tests/requirements.txt"
-          executor: <<pipeline.parameters.docker-image>>
-      - run: COVERAGE_FILE=$PWD/test-model-hub-pycov make -C model_hub test
-      - run: coverage xml -i --data-file=./test-model-hub-pycov
-      - run: codecov -v -t $CODECOV_TOKEN -F harness
-      - upload-junit-datadog:
-          service: test-unit-model-hub
-          env: ci-cpu
-      - persist_to_workspace:
-          root: .
-          paths:
-            - test-model-hub-pycov
-
   python-coverage:
     docker:
       - image: <<pipeline.parameters.docker-image>>
@@ -2666,16 +2573,13 @@ jobs:
       - setup-python-venv:
           install-python: false
           determined: false
-          model-hub: false
           extras-requires: "coverage"
           executor: <<pipeline.parameters.docker-image>>
       - attach_workspace:
           at: .
       - run: coverage combine *-pycov
       - run: coverage report --include 'harness/determined/*' --skip-covered
-      - run: coverage report --include 'model_hub/model_hub/*' --skip-covered
       - run: coverage html --include 'harness/determined/*' --skip-covered -d cov-html/harness
-      - run: coverage html --include 'model_hub/model_hub/*' --skip-covered -d cov-html/model_hub
       - store_artifacts:
           path: cov-html
           destination: cov-html
@@ -4051,7 +3955,6 @@ workflows:
           name: f-test-unit-harness-gpu-parallel
           filters: *any-fork
 
-      - test-unit-model-hub
       - test-unit-storage:
           context: storage-unit-tests
           filters: *any-upstream
@@ -4063,7 +3966,6 @@ workflows:
             - test-unit-harness-tf2
             - test-unit-harness-pytorch2-cpu
             - test-unit-harness-pytorch2-gpu
-            - test-unit-model-hub
             - test-unit-storage
 
   send-alerts:
@@ -4509,6 +4411,20 @@ workflows:
           managed-devcluster: true
           # Managed devcluster restarts the master over the course of the tests,
           # so `compare_stats` cannot get the full logs from `det master logs`.
+          extra-pytest-flags: "--no-compare-stats"
+          collect-det-job-logs: false
+
+      - test-e2e:
+          name: test-e2e-managed-devcluster-resource-pools
+          context:
+            - dev-ci-cluster-default-user-credentials
+          requires:
+            - build-go-ee
+          parallelism: 4
+          resource-class: large
+          tf2: true
+          mark: managed_devcluster_resource_pools
+          managed-devcluster: true
           extra-pytest-flags: "--no-compare-stats"
           collect-det-job-logs: false
 
@@ -5066,29 +4982,6 @@ workflows:
               enable-tls: [true]
               mark: ["e2e_gpu"]
 
-      # mmdetection tests
-      - request-mmdetection-tests:
-          type: approval
-          filters: *upstream-feature-branch
-
-      - test-e2e-aws:
-          name: test-e2e-mmdetection
-          context:
-            - aws
-            - aws-ci-cluster-default-user-credentials
-            - determined-ee
-          filters: *upstream-feature-branch
-          requires:
-            - request-mmdetection-tests
-            - package-and-push-system-dev-ee
-          matrix:
-            parameters:
-              compute-agent-instance-type: ["g4dn.metal"]
-              aux-agent-instance-type: ["m6i.large"]
-              cluster-id-prefix: ["mmdetection"]
-              mark: ["model_hub_mmdetection"]
-              max-dynamic-agents: [2]
-
       # packaging tests
       - request-packaging-tests:
           type: approval
@@ -5422,19 +5315,6 @@ workflows:
               aux-agent-instance-type: ["m6i.large"]
               max-dynamic-agents: [2]
       - test-e2e-aws:
-          name: test-e2e-gpu-mmdetection
-          context:
-            - aws
-            - aws-ci-cluster-default-user-credentials
-            - determined-ee
-          matrix:
-            parameters:
-              cluster-id-prefix: ["mmdet"]
-              mark: ["model_hub_mmdetection"]
-              compute-agent-instance-type: ["g4dn.metal"]
-              aux-agent-instance-type: ["m6i.large"]
-              max-dynamic-agents: [2]
-      - test-e2e-aws:
           name: test-e2e-gpu-deepspeed
           context:
             - aws
@@ -5632,7 +5512,8 @@ workflows:
           name: publish-python-package-rc
           matrix:
             parameters:
-              path: ["harness", "model_hub"]
+              path:
+                - "harness"
           context: determined-production
           filters: *rc-filters
           requires:
@@ -5649,7 +5530,8 @@ workflows:
           name: publish-python-package-release
           matrix:
             parameters:
-              path: ["harness", "model_hub"]
+              path:
+                - "harness"
           context: determined-production
           filters: *release-filters
           requires:

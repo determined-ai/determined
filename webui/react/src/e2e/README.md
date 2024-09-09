@@ -40,7 +40,7 @@ Pick between live and static
 1. `det deploy local cluster-up --no-gpu --master-port=8080`
 2. `SERVER_ADDRESS="http://localhost:3001" npm run build --prefix webui/react`
 3. Optional `npm run preview --prefix webui/react` to run the preview app. Won't be used if `CI=true`.
-4. To run the tests: `PW_SERVER_ADDRESS="http://localhost:3001"  PW_USER_NAME="admin" PW_PASSWORD="" npm run e2e --prefix webui/react`
+4. To run the tests: `PW_BASE_URL="http://localhost:3001"  PW_USERNAME="admin" PW_PASSWORD="" npm run e2e --prefix webui/react`
    - Provide `-- -p=firefox` to choose one browser to run on. Full list of projects located in [playwright config](/webui/react/playwright.config.ts).
 
 ## Run Tests

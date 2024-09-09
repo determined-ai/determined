@@ -166,6 +166,9 @@ enum PermissionType {
   // Ability to create and delete webhooks.
   PERMISSION_TYPE_EDIT_WEBHOOKS = 97001;
 
+  // Ability to view webhooks.
+  PERMISSION_TYPE_VIEW_WEBHOOKS = 97002;
+
   // Ability to bind, unbind or overwrite resource pool workspace bindings.
   PERMISSION_TYPE_MODIFY_RP_WORKSPACE_BINDINGS = 10001;
 
@@ -177,6 +180,18 @@ enum PermissionType {
 
   // Ability to view resource quotas on workspaces.
   PERMISSION_TYPE_VIEW_RESOURCE_QUOTAS = 11003;
+
+  // Ability to modify global config policies.
+  PERMISSION_TYPE_MODIFY_GLOBAL_CONFIG_POLICIES = 11004;
+
+  // Ability to modify workspace config policies.
+  PERMISSION_TYPE_MODIFY_WORKSPACE_CONFIG_POLICIES = 11005;
+
+  // Ability to view global config policies.
+  PERMISSION_TYPE_VIEW_GLOBAL_CONFIG_POLICIES = 11006;
+
+  // Ability to view workspace config policies.
+  PERMISSION_TYPE_VIEW_WORKSPACE_CONFIG_POLICIES = 11007;
 }
 
 // RoleAssignmentSummary is used to describe permissions a user has.

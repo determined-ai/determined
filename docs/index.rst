@@ -5,7 +5,6 @@
    Set Up <setup-cluster/_index>
    Manage <manage/_index>
    Tutorials <tutorials/_index>
-   Model Hub Library <model-hub-library/_index>
    Model Dev Guide <model-dev-guide/_index>
    Reference <reference/_index>
    Tools <tools/_index>
@@ -61,13 +60,6 @@ almost any deep learning model using Determined.
                <img class="tile-icon" src="_static/images/setup.png"  alt="setup icon">
                <h2 class="tile-title">Model Developer Quickstart</h2>
                <p class="tile-description">Learn the basic steps needed to set up a Determined environment and train models.</p>
-            </a>
-         </div>
-         <div class="tile-container">
-            <a class="tile" href="model-dev-guide/_index.html">
-               <img class="tile-icon" src="_static/images/developer-guide.png" alt="developer guide icon">
-               <h2 class="tile-title">Model Developer Guide</h2>
-               <p class="tile-description">Find user guides. Learn how to work with Training APIs and configure your distributed training experiments.</p>
             </a>
          </div>
          <div class="tile-container">
