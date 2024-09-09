@@ -273,24 +273,21 @@ test.describe('Workspace List', () => {
   const workspaces: V1Workspace[] = [];
 
   test.beforeAll(async ({ backgroundApiWorkspace }) => {
-    await Promise.all([
-      backgroundApiWorkspace.createWorkspace(
-        backgroundApiWorkspace.new({
-          // oldest workspace with first alphabetical name
-          workspacePrefix: 'a-test-workspace',
-        }),
-      ),
-      backgroundApiWorkspace.createWorkspace(
-        backgroundApiWorkspace.new({
-          // newest workspace with last alphabetical name
-          workspacePrefix: 'b-test-workspace',
-        }),
-      ),
-    ]).then((responses) => {
-      responses.forEach((response) => {
-        workspaces.push(response.workspace);
-      });
-    });
+    const olderWorkspace = await backgroundApiWorkspace.createWorkspace(
+      backgroundApiWorkspace.new({
+        // older workspace with first alphabetical name
+        workspacePrefix: 'a-test-workspace',
+      }),
+    );
+    workspaces.push(olderWorkspace.workspace);
+
+    const newerWorkspace = await backgroundApiWorkspace.createWorkspace(
+      backgroundApiWorkspace.new({
+        // newer workspace with last alphabetical name
+        workspacePrefix: 'b-test-workspace',
+      }),
+    );
+    workspaces.push(newerWorkspace.workspace);
   });
 
   test.beforeEach(async ({ authedPage }) => {
