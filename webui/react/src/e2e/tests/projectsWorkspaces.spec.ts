@@ -293,6 +293,8 @@ test.describe('Workspace List', () => {
   test.beforeEach(async ({ authedPage }) => {
     const workspaceList = new WorkspaceList(authedPage);
     await workspaceList.goto();
+    await workspaceList.whoseSelect.selectMenuOption('All Workspaces');
+    await workspaceList.sortSelect.selectMenuOption('Newest to Oldest');
   });
 
   test.afterAll(async ({ backgroundApiWorkspace }) => {
@@ -304,20 +306,20 @@ test.describe('Workspace List', () => {
   test('Sort', async ({ authedPage }) => {
     const workspaceList = new WorkspaceList(authedPage);
 
-    const namesAfterAlphabetical = await getCurrentWorkspaceNames(workspaceList);
-    const nameSortedWorkspaceNames = _.orderBy(workspaces, 'name', 'asc').map((w) => w.name);
-    expect(nameSortedWorkspaceNames).toEqual(
-      namesAfterAlphabetical.filter((n) => {
-        return n && workspaces.map((w) => w.name).includes(n);
-      }),
-    );
-
-    await workspaceList.sortSelect.selectMenuOption('Newest to Oldest');
-
     const namesAfterNewest = await getCurrentWorkspaceNames(workspaceList);
     const idSortedWorkspaceNames = _.orderBy(workspaces, 'id', 'desc').map((w) => w.name);
     expect(idSortedWorkspaceNames).toEqual(
       namesAfterNewest.filter((n) => {
+        return n && workspaces.map((w) => w.name).includes(n);
+      }),
+    );
+
+    await workspaceList.sortSelect.selectMenuOption('Alphabetical');
+
+    const namesAfterAlphabetical = await getCurrentWorkspaceNames(workspaceList);
+    const nameSortedWorkspaceNames = _.orderBy(workspaces, 'name', 'asc').map((w) => w.name);
+    expect(nameSortedWorkspaceNames).toEqual(
+      namesAfterAlphabetical.filter((n) => {
         return n && workspaces.map((w) => w.name).includes(n);
       }),
     );
@@ -334,16 +336,14 @@ test.describe('Workspace List', () => {
     await workspaceList.nav.sidebar.workspaces.pwLocator.click();
 
     const otherUserWorkspaceName = workspaces.map((w) => w.name)[0];
+    const namesAfterAll = await getCurrentWorkspaceNames(workspaceList);
+    expect(namesAfterAll).toContain(otherUserWorkspaceName);
+    expect(namesAfterAll).toContain(currentUserWorkspaceName);
 
     await workspaceList.whoseSelect.selectMenuOption("Others' Workspaces");
     const namesAfterOthers = await getCurrentWorkspaceNames(workspaceList);
     expect(namesAfterOthers).toContain(otherUserWorkspaceName);
     expect(namesAfterOthers).not.toContain(currentUserWorkspaceName);
-
-    await workspaceList.whoseSelect.selectMenuOption('All Workspaces');
-    const namesAfterAll = await getCurrentWorkspaceNames(workspaceList);
-    expect(namesAfterAll).toContain(otherUserWorkspaceName);
-    expect(namesAfterAll).toContain(currentUserWorkspaceName);
 
     await workspaceList.whoseSelect.selectMenuOption('My Workspaces');
     const namesAfterMy = await getCurrentWorkspaceNames(workspaceList);
@@ -363,7 +363,6 @@ test.describe('Workspace List', () => {
     const workspaceList = new WorkspaceList(authedPage);
 
     await workspaceList.gridListRadioGroup.list.pwLocator.click();
-    await workspaceList.sortSelect.selectMenuOption('Newest to Oldest');
 
     const idSortedWorkspaceNames = _.orderBy(workspaces, 'id', 'desc').map((w) => w.name);
 
