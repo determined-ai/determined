@@ -44,6 +44,8 @@ For an introduction to using the training APIs, please visit :ref:`Training APIs
  DeepSpeed
 ***********
 
+.. comment:: XXX Unsure if these last three go to DeepSpeed now or should be deleted.
+
 .. list-table::
    :header-rows: 1
 
@@ -54,17 +56,6 @@ For an introduction to using the training APIs, please visit :ref:`Training APIs
    -  -  DeepSpeed (PyTorch)
       -  Enron Email Corpus
       -  :download:`gpt_neox.tgz </examples/gpt_neox.tgz>`
-
-********************
- DeepSpeed Autotune
-********************
-
-.. list-table::
-   :header-rows: 1
-
-   -  -  Framework
-      -  Dataset
-      -  Filename
 
    -  -  DeepSpeed (PyTorch)
       -  ImageNet (Generated)

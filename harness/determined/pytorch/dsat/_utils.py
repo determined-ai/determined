@@ -349,7 +349,7 @@ def report_json_results(
         op.report_completed(results_dict)
     # Ensure the operations generator is empty to complete sanity checks.
     try:
-        next(core_context.searcher.operations())
+        next(core_context.searcher._operations())
     except StopIteration:
         pass
     else:

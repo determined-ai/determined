@@ -334,6 +334,7 @@ settings in our experiment configuration file:
 -  ``max_trials``: 500 (This is the maximum number of trials the searcher should run.)
 -  ``max_length``: 20 epochs (The max length of a trial. For more information, visit Adaptive ASHA
    in the :ref:`Experiment Configuration Reference <experiment-configuration>`.
+   .. comment:: XXX address max_length up there ^ too
 
 In addition, we also need to define the hyperparameters themselves. Adaptive ASHA will pick values
 between the ``minval`` and ``maxval`` for each hyperparameter for each trial.

@@ -7,9 +7,6 @@ CV_EXAMPLES_DIRS := $(patsubst computer_vision/%/., build/%.tgz, $(CV_EXAMPLES))
 DEEPSPEED_EXAMPLES := $(wildcard deepspeed/*/.)
 DEEPSPEED_EXAMPLES_DIRS := $(patsubst deepspeed/%/., build/%.tgz, $(DEEPSPEED_EXAMPLES))
 
-DEEPSPEED_AUTOTUNE_EXAMPLES := $(wildcard deepspeed_autotune/*/.)
-DEEPSPEED_AUTOTUNE_EXAMPLES_DIRS := $(patsubst deepspeed_autotune/%/., build/%.tgz, $(DEEPSPEED_AUTOTUNE_EXAMPLES))
-
 HF_TRAINER_EXAMPLES := $(wildcard hf_trainer_api/*/.)
 HF_TRAINER_EXAMPLES_DIRS := $(patsubst hf_trainer_api/%/., build/%.tgz, $(HF_TRAINER_EXAMPLES))
 

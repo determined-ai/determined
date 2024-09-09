@@ -1,14 +1,10 @@
 # A grid search over multiple prompts and pipeline settings.
 
-# Due to tensorboard limitations, one should keep batch_size * max_length <= 10 in order for all
-# generated images to be easily viewable in tensorboard.  Scanning over generator seeds is the
-# easiest way to get more samples while also diversifying the results.
 name: detsd_generate
 entrypoint: python3 -m determined.launch.torch_distributed python3 generate.py
 searcher:
   name: grid
   metric: none
-  max_length: 5 # Number of times the generation pipeline is called, per-worker.
 resources:
   slots_per_trial: 2 # Also equal to the number of unique initial seeds which will be used.
   max_slots: 4
@@ -51,4 +47,3 @@ hyperparameters:
         minval: 2
         maxval: 6
         count: 3
-

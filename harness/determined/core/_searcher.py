@@ -257,6 +257,20 @@ class SearcherContext:
             stacklevel=2,
         )
 
+        yield from self._operations(searcher_mode)
+
+    def _operations(
+        self,
+        searcher_mode: SearcherMode = SearcherMode.WorkersAskChief,
+    ) -> Iterator[SearcherOperation]:
+        """
+        The internal-only version of .operations which doesn't show a warning.
+
+        This is meant to be called by other, deprecated things which internally depend on
+        .operations() and have their own deprecation warning.  That way the user gets the
+        deprecation warning for what they actually used.
+        """
+
         searcher_mode = SearcherMode(searcher_mode)
         # Force the same synchronization behavior we used to have before fabricating operations.
         if self._dist.rank == 0:

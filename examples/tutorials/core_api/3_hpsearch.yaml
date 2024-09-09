@@ -1,5 +1,5 @@
 name: core-api-stage-3
-entrypoint: python3 3_hpsearch.py
+entrypoint: ./3_hpsearch.py
 
 # NEW: configure a single "increment_by" hyperparameter
 hyperparameters:
@@ -14,5 +14,6 @@ searcher:
    metric: x
    max_length: 100
    max_trials: 10
+   # XXX: need to specify time unit too
 
 max_restarts: 0

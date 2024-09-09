@@ -49,9 +49,7 @@ class Net(nn.Module):
         return output
 
 
-# NEW: Modify function header to include op for reporting training
-# progress to master.
-def train(args, model, device, train_loader, optimizer, core_context, epoch_idx, op):
+def train(args, model, device, train_loader, optimizer, epoch_idx, core_context):
     model.train()
     for batch_idx, (data, target) in enumerate(train_loader):
         data, target = data.to(device), target.to(device)
@@ -79,13 +77,8 @@ def train(args, model, device, train_loader, optimizer, core_context, epoch_idx,
             if args.dry_run:
                 break
 
-    # NEW: Report progress once in a while.
-    op.report_progress(epoch_idx)
 
-
-# NEW: Modify function header to include op for reporting training
-# progress to master and return test loss.
-def test(args, model, device, test_loader, core_context, steps_completed, op) -> int:
+def test(args, model, device, test_loader, core_context, steps_completed):
     model.eval()
     test_loss = 0
     correct = 0
@@ -109,9 +102,6 @@ def test(args, model, device, test_loader, core_context, steps_completed, op) ->
         steps_completed=steps_completed,
         metrics={"test_loss": test_loss},
     )
-
-    # NEW: Return test_loss.
-    return test_loss
 
 
 def load_state(checkpoint_directory, trial_id):
@@ -232,41 +222,22 @@ def main(core_context):
 
     scheduler = StepLR(optimizer, step_size=1, gamma=args.gamma)
 
-    # NEW: Iterate through the core_context.searcher.operations() to
-    # decide how long to train for.
-    # Start with the number of epochs completed, in case of pausing
-    # and resuming the experiment.
-    epoch_idx = epochs_completed
-    last_checkpoint_batch = None
+    for epoch_idx in range(epochs_completed, args.epochs):
+        train(args, model, device, train_loader, optimizer, epoch_idx, core_context)
+        epochs_completed = epoch_idx + 1
+        steps_completed = epochs_completed * len(train_loader)
+        test(args, model, device, test_loader, core_context, steps_completed)
 
-    for op in core_context.searcher.operations():
-        # NEW: Use a while loop for easier accounting of absolute lengths.
-        while epoch_idx < op.length:
-            # NEW: Pass op into train() and test().
-            train(args, model, device, train_loader, optimizer, core_context, epoch_idx, op)
-            epochs_completed = epoch_idx + 1
-            steps_completed = epochs_completed * len(train_loader)
-            test_loss = test(args, model, device, test_loader, core_context, steps_completed, op)
+        scheduler.step()
 
-            scheduler.step()
+        checkpoint_metadata_dict = {"steps_completed": steps_completed}
+        with core_context.checkpoint.store_path(checkpoint_metadata_dict) as (path, storage_id):
+            torch.save(model.state_dict(), path / "checkpoint.pt")
+            with path.joinpath("state").open("w") as f:
+                f.write(f"{epochs_completed},{info.trial.trial_id}")
 
-            checkpoint_metadata_dict = {
-                "steps_completed": steps_completed,
-            }
-
-            epoch_idx += 1
-
-            with core_context.checkpoint.store_path(checkpoint_metadata_dict) as (path, storage_id):
-                torch.save(model.state_dict(), path / "checkpoint.pt")
-                with path.joinpath("state").open("w") as f:
-                    f.write(f"{epochs_completed},{info.trial.trial_id}")
-
-            if core_context.preempt.should_preempt():
-                return
-
-        # NEW: After training for each op, validate and report the
-        # searcher metric to the master.
-        op.report_completed(test_loss)
+        if core_context.preempt.should_preempt():
+            return
 
 
 if __name__ == "__main__":
