@@ -129,10 +129,10 @@ test.describe('Workspace UI CRUD', () => {
     });
   });
 
-  test('Pin and Unpin a Workspace from Card', async ({ authedPage, backgroundApiWorkspace }) => {
+  test('Pin and Unpin a Workspace from Card', async ({ authedPage, apiWorkspace }) => {
     const workspaceList = new WorkspaceList(authedPage);
 
-    const newWorkspace = await backgroundApiWorkspace.createWorkspace(backgroundApiWorkspace.new());
+    const newWorkspace = await apiWorkspace.createWorkspace(apiWorkspace.new());
     workspaceIds.push(newWorkspace.workspace.id!);
     const workspaceCard = workspaceList.cardByName(newWorkspace.workspace.name!);
     const sidebarItem = workspaceList.nav.sidebar.sidebarWorkspaceItem(
@@ -155,10 +155,10 @@ test.describe('Workspace UI CRUD', () => {
     });
   });
 
-  test('Unpin a Workspace from Sidebar', async ({ authedPage, backgroundApiWorkspace }) => {
+  test('Unpin a Workspace from Sidebar', async ({ authedPage, apiWorkspace }) => {
     const workspaceList = new WorkspaceList(authedPage);
 
-    const newWorkspace = await backgroundApiWorkspace.createWorkspace(backgroundApiWorkspace.new());
+    const newWorkspace = await apiWorkspace.createWorkspace(apiWorkspace.new());
     workspaceIds.push(newWorkspace.workspace.id!);
     const workspaceCard = workspaceList.cardByName(newWorkspace.workspace.name!);
     const sidebarItem = workspaceList.nav.sidebar.sidebarWorkspaceItem(
@@ -174,13 +174,10 @@ test.describe('Workspace UI CRUD', () => {
     );
   });
 
-  test('Archive and Unarchive Workspace from Card', async ({
-    authedPage,
-    backgroundApiWorkspace,
-  }) => {
+  test('Archive and Unarchive Workspace from Card', async ({ authedPage, apiWorkspace }) => {
     const workspaceList = new WorkspaceList(authedPage);
 
-    const newWorkspace = await backgroundApiWorkspace.createWorkspace(backgroundApiWorkspace.new());
+    const newWorkspace = await apiWorkspace.createWorkspace(apiWorkspace.new());
     workspaceIds.push(newWorkspace.workspace.id!);
     const workspaceCard = workspaceList.cardByName(newWorkspace.workspace.name!);
     const sidebarItem = workspaceList.nav.sidebar.sidebarWorkspaceItem(
@@ -207,13 +204,10 @@ test.describe('Workspace UI CRUD', () => {
     });
   });
 
-  test('Archive and Unarchive Workspace from Sidebar', async ({
-    authedPage,
-    backgroundApiWorkspace,
-  }) => {
+  test('Archive and Unarchive Workspace from Sidebar', async ({ authedPage, apiWorkspace }) => {
     const workspaceList = new WorkspaceList(authedPage);
 
-    const newWorkspace = await backgroundApiWorkspace.createWorkspace(backgroundApiWorkspace.new());
+    const newWorkspace = await apiWorkspace.createWorkspace(apiWorkspace.new());
     workspaceIds.push(newWorkspace.workspace.id!);
     const workspaceCard = workspaceList.cardByName(newWorkspace.workspace.name!);
     const sidebarItem = workspaceList.nav.sidebar.sidebarWorkspaceItem(
@@ -374,6 +368,9 @@ test.describe('Workspace List', () => {
     expect(await workspaceList.table.table.rows.nth(0).name.pwLocator.textContent()).toEqual(
       idSortedWorkspaceNames[0],
     );
+
+    // cleanup:
+    await workspaceList.gridListRadioGroup.grid.pwLocator.click();
   });
 });
 
