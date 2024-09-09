@@ -73,7 +73,7 @@ const WebhookEditModalComponent: React.FC<Props> = ({ onSuccess, webhook }: Prop
           initialValue={webhook?.name}
           label="Name"
           name="name">
-          <Input disabled/>
+          <Input disabled />
         </Form.Item>
         <Form.Item
           initialValue={webhook?.url}

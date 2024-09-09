@@ -261,6 +261,7 @@ func (a *WebhooksAPIServer) PostWebhookEventData(
 	return &res, nil
 }
 
+// PatchWebhook updates a webhook.
 func (a *WebhooksAPIServer) PatchWebhook(
 	ctx context.Context, req *apiv1.PatchWebhookRequest,
 ) (*apiv1.PatchWebhookResponse, error) {
