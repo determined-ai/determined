@@ -2376,6 +2376,18 @@ service Determined {
     };
   }
 
+  // Trigger custom trigger of webhooks.
+  rpc PostWebhookEventData(PostWebhookEventDataRequest)
+      returns (PostWebhookEventDataResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/webhooks/custom"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Webhooks"
+    };
+  }
+
   // Get a group by id.
   rpc GetGroup(GetGroupRequest) returns (GetGroupResponse) {
     option (google.api.http) = {

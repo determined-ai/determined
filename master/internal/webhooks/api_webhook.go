@@ -107,6 +107,13 @@ func (a *WebhooksAPIServer) PostWebhook(
 					regexConditionKey, m)
 			}
 		}
+		if t.TriggerType == webhookv1.TriggerType_TRIGGER_TYPE_CUSTOM {
+			if req.Webhook.Mode != webhookv1.WebhookMode_WEBHOOK_MODE_SPECIFIC {
+				return nil, status.Errorf(codes.InvalidArgument,
+					"custom trigger only works on webhook with mode 'SPECIFIC'. Got %v",
+					req.Webhook.Mode)
+			}
+		}
 	}
 
 	w := WebhookFromProto(req.Webhook)
@@ -222,4 +229,30 @@ func (a *WebhooksAPIServer) TestWebhook(
 			"received error from webhook server for event %v error: %v ", eventID, resp.StatusCode)
 	}
 	return &apiv1.TestWebhookResponse{}, nil
+}
+
+// PostWebhookEventData handles data for custom trigger.
+func (a *WebhooksAPIServer) PostWebhookEventData(
+	ctx context.Context, req *apiv1.PostWebhookEventDataRequest,
+) (*apiv1.PostWebhookEventDataResponse, error) {
+	var res apiv1.PostWebhookEventDataResponse
+	_, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return &res, status.Errorf(codes.Internal, "failed to get the user: %s", err)
+	}
+
+	var data CustomTriggerData
+	if req.Data != nil {
+		data.Title = req.Data.Title
+		data.Description = req.Data.Description
+		data.Level = model.TaskLogLevelFromProto(req.Data.Level)
+	}
+	err = handleCustomTriggerData(ctx, data, int(req.ExperimentId), ptrs.Ptr(int(req.TrialId)))
+	if err != nil {
+		return &res, status.Errorf(codes.Internal,
+			"failed to handle custom trigger data: %+v experiment id: %d trial_id %d : %s",
+			data, req.ExperimentId, req.TrialId, err)
+	}
+
+	return &res, nil
 }

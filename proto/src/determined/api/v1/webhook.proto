@@ -86,3 +86,19 @@ message TestWebhookResponse {
   // Status of test.
   bool completed = 1;
 }
+
+// Request for triggering custom trigger.
+message PostWebhookEventDataRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "data", "experiment_id" ] }
+  };
+  // The event data for custom webhook trigger.
+  determined.webhook.v1.CustomWebhookEventData data = 1;
+  // The id of the experiment.
+  int32 experiment_id = 2;
+  // The id of the trial.
+  int32 trial_id = 3;
+}
+
+// Response to PostWebhookEventDataRequest.
+message PostWebhookEventDataResponse {}
