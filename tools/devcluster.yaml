@@ -93,7 +93,6 @@ stages:
         resource_pool: pool1
         container_master_host: $DOCKER_LOCALHOST
         # Often dtrain clusters have multiple gpus per agent.
-        artificial_slots: 8
         # Each agent needs a unique agent_id.
         agent_id: agent1
         # Each agent needs a deconflicting fluent container
