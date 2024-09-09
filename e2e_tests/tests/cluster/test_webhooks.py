@@ -530,6 +530,7 @@ def test_editing_webhook() -> None:
         ),
     )
     default_id = res.webhook.id
+    assert default_id is not None
 
     specific_path = f"/test/path/here/{str(uuid.uuid4())}"
     res = bindings.post_PostWebhook(
@@ -544,6 +545,7 @@ def test_editing_webhook() -> None:
         ),
     )
     specific_id = res.webhook.id
+    assert specific_id is not None
 
     modified_path = f"/test/path/here/{str(uuid.uuid4())}"
     bindings.patch_PatchWebhook(
@@ -557,8 +559,8 @@ def test_editing_webhook() -> None:
         id=specific_id,
     )
 
-    res = bindings.get_GetWebhooks(sess)
-    for webhook in res.webhooks:
+    get_res = bindings.get_GetWebhooks(sess)
+    for webhook in get_res.webhooks:
         if webhook.id == default_id or webhook.id == specific_id:
             assert webhook.url == f"http://localhost:{port}{modified_path}"
 
@@ -593,6 +595,8 @@ def test_log_pattern_webhook_cached_url_is_updated() -> None:
             workspaceId=None,
         ),
     )
+    slack_webhook_id = slack_webhook.webhook.id
+    assert slack_webhook_id is not None
 
     default_path = f"/test/path/here/{str(uuid.uuid4())}"
     default_webhook = bindings.post_PostWebhook(
@@ -606,16 +610,18 @@ def test_log_pattern_webhook_cached_url_is_updated() -> None:
             workspaceId=None,
         ),
     )
+    default_webhook_id = default_webhook.webhook.id
+    assert default_webhook_id is not None
 
     bindings.patch_PatchWebhook(
         sess,
         body=bindings.v1PatchWebhook(url=f"http://localhost:{updated_port}{slack_path}"),
-        id=slack_webhook.webhook.id,
+        id=slack_webhook_id,
     )
     bindings.patch_PatchWebhook(
         sess,
         body=bindings.v1PatchWebhook(url=f"http://localhost:{updated_port}{default_path}"),
-        id=default_webhook.webhook.id,
+        id=default_webhook_id,
     )
 
     exp_id = exp.create_experiment(
@@ -643,5 +649,5 @@ def test_log_pattern_webhook_cached_url_is_updated() -> None:
     assert "TASK_LOG" in responses[default_path]
     assert "This log matched the regex" in responses[slack_path]
 
-    bindings.delete_DeleteWebhook(sess, id=slack_webhook.webhook.id or 0)
-    bindings.delete_DeleteWebhook(sess, id=default_webhook.webhook.id or 0)
+    bindings.delete_DeleteWebhook(sess, id=slack_webhook_id or 0)
+    bindings.delete_DeleteWebhook(sess, id=default_webhook_id or 0)
