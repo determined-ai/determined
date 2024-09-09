@@ -177,7 +177,7 @@ func TestRunContainer(t *testing.T) {
 		if err := rawCl.ContainerRemove(
 			ctx,
 			dockerID,
-			types.ContainerRemoveOptions{Force: true},
+			container.RemoveOptions{Force: true},
 		); err != nil {
 			t.Errorf("failed to cleanup container %s: %s", dockerID, err)
 		}
@@ -244,7 +244,7 @@ func TestRunContainerWithService(t *testing.T) {
 		if rErr := rawCl.ContainerRemove(
 			ctx,
 			c.ContainerInfo.ID,
-			types.ContainerRemoveOptions{Force: true},
+			container.RemoveOptions{Force: true},
 		); rErr != nil {
 			t.Errorf("failed to cleanup container %s: %s", c.ContainerInfo.ID, rErr)
 		}
