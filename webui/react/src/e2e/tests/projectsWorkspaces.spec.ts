@@ -253,6 +253,24 @@ test.describe('Workspace UI CRUD', () => {
       workspaceCardEdited.pwLocator.waitFor({ timeout: 10_000 }),
     ]);
   });
+
+  test('Attempt to delete a workspace but with bad validation', async ({
+    authedPage,
+    backgroundApiWorkspace,
+  }) => {
+    const workspaceList = new WorkspaceList(authedPage);
+    const deleteModal = workspaceList.deleteModal;
+
+    const newWorkspace = await backgroundApiWorkspace.createWorkspace(backgroundApiWorkspace.new());
+    workspaceIds.push(newWorkspace.workspace.id!);
+    const workspaceCard = workspaceList.cardByName(newWorkspace.workspace.name!);
+
+    await authedPage.reload();
+    await workspaceList.nav.sidebar.workspaces.pwLocator.click();
+    await (await workspaceCard.actionMenu.open()).delete.pwLocator.click();
+    await deleteModal.nameConfirmation.pwLocator.fill('bad validation');
+    await expect(deleteModal.footer.submit.pwLocator).toBeDisabled();
+  });
 });
 
 test.describe('Workspace List', () => {
@@ -368,20 +386,6 @@ test.describe('With a Workspace', () => {
       await workspaceList.goto();
       await workspaceCard.pwLocator.waitFor({ timeout: 10_000 });
     });
-  });
-
-  test('Attempt to delete a workspace but with bad validation', async ({
-    authedPage,
-    newWorkspace,
-  }) => {
-    const workspaceList = new WorkspaceList(authedPage);
-    const deleteModal = workspaceList.deleteModal;
-    const workspaceCard = workspaceList.cardByName(newWorkspace.response.workspace.name);
-
-    await workspaceList.nav.sidebar.workspaces.pwLocator.click();
-    await (await workspaceCard.actionMenu.open()).delete.pwLocator.click();
-    await deleteModal.nameConfirmation.pwLocator.fill('bad validation');
-    await expect(deleteModal.footer.submit.pwLocator).toBeDisabled();
   });
 
   test.describe('Project UI CRUD', () => {
