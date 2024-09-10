@@ -88,7 +88,7 @@ stages:
       config_file:
         master_host: 127.0.0.1
         master_port: 8080
-        slot_type: cuda
+        slot_type: none
         visible_gpus: 0
         resource_pool: pool1
         container_master_host: $DOCKER_LOCALHOST
@@ -110,8 +110,8 @@ stages:
         resource_pool: pool1
         container_master_host: $DOCKER_LOCALHOST
         #visible_gpus: 1
-        #slot_type: cuda
-        artificial_slots: 8
+        slot_type: none
+        #artificial_slots: 8
         # Each agent needs a unique agent_id.
         agent_id: agent2
         # Each agent needs a deconflicting fluent container
