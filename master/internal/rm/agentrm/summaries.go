@@ -24,7 +24,7 @@ type resourceSummary struct {
 	slotType               device.Type
 }
 
-func resourceSummaryFromAgentStates(
+func (rp *resourcePool) resourceSummaryFromAgentStates(
 	agentInfo map[aproto.ID]*agentState,
 ) resourceSummary {
 	summary := resourceSummary{
@@ -48,9 +48,11 @@ func resourceSummaryFromAgentStates(
 		}
 	}
 
-	// If we have homogenous slots, get their type. Otherwise, we default to
-	// `UNSPECIFIED` aka `device.ZeroSlot`, although it may be an error/warning.
-	if len(deviceTypeCount) == 1 {
+	// If we have heterogenous slots, we default to`UNSPECIFIED` aka `device.ZeroSlot`.
+	// We raise an error in the logs.
+	if len(deviceTypeCount) != 1 {
+		rp.syslog.Errorf("resource pool has unspecified slot type with %v total slot types", len(deviceTypeCount))
+	} else {
 		for deviceType := range deviceTypeCount {
 			summary.slotType = deviceType
 		}

@@ -71,6 +71,7 @@ func MockTaskToAllocateRequest(mockTask *MockTask) *sproto.AllocateRequest {
 
 type MockAgent struct {
 	ID                    string
+	SlotType              string
 	Slots                 int
 	SlotsUsed             int
 	MaxZeroSlotContainers int
