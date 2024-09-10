@@ -29,5 +29,5 @@ preparation needed.
 If you need to add additional customization to the training environment, review the
 :ref:`custom-env` page.
 
-For details on using ROCm-enabled images, including our ROCm 6.1 images with DeepSpeed support for
-MI300x users, see our :ref:`AMD ROCm Support documentation <rocm-support>`.
+For details on using AMD ROCm-enabled images, including our ROCm 6.1 images with DeepSpeed support
+for MI300x users, see our :ref:`AMD ROCm Support documentation <rocm-support>`.

@@ -40,7 +40,7 @@ It is recommended to have just one instance of Determined per Kubernetes cluster
 ****************************
 
 For specific configuration details related to AMD ROCm GPUs, including how to set up resource pools
-and configure experiments, see our :ref:`guide on Configuring Kubernetes for ROCm GPUs
+and configure experiments, see our :ref:`guide on Configuring Kubernetes for AMD ROCm GPUs
 <rocm-config-k8s>`.
 
 **************************************

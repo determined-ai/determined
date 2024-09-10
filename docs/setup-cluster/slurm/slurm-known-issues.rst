@@ -392,10 +392,10 @@ Some constraints are due to differences in behavior between Docker and Singulari
    <pbs-config-requirements>`.
 
 ***********************
- AMD/ROCm Known Issues
+ AMD ROCm Known Issues
 ***********************
 
-For AMD/ROCm support and known issues, visit :ref:`AMD ROCm GPUs <rocm-support>`.
+For AMD ROCm support and known issues, visit :ref:`AMD ROCm GPUs <rocm-support>`.
 
 ***************************************
  Determined AI Experiment Requirements

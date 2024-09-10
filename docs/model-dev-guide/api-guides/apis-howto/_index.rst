@@ -56,8 +56,8 @@ Prefer to use an Example Model?
 If you'd like to build off of an existing model that already runs on Determined, visit our
 :ref:`example-solutions` to see if the model you'd like to train is already available.
 
-ROCm Support
-============
+AMD ROCm Support
+================
 
 For AMD ROCm support, visit :ref:`rocm-support`
 

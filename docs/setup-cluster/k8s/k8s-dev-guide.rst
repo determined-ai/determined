@@ -16,7 +16,7 @@ Kubernetes manually, or you can use a managed Kubernetes service such as :ref:`G
 .. note::
 
    For information on using AMD ROCm GPUs with Determined on Kubernetes, please refer to our
-   :ref:`ROCm Support Guide <rocm-support>`.
+   :ref:`AMD ROCm Support Guide <rocm-support>`.
 
 **********************************
  Set up a Development Environment

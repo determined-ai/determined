@@ -81,7 +81,7 @@ option was called ``gpu``.
 
 ``cpu``: Map all the CPUs to a slot, even when GPUs are present.
 
-``rocm``: The agent will map each detected ROCm AMD GPU to a slot.
+``rocm``: The agent will map each detected AMD ROCm GPU to a slot.
 
 ****************
  ``http_proxy``

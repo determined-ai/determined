@@ -14,7 +14,7 @@
 
 .. note::
 
-   ROCm support in Determined is experimental. Features and configurations may change in future
+   AMD ROCm support in Determined is experimental. Features and configurations may change in future
    releases. We recommend testing thoroughly in a non-production environment before deploying to
    production.
 
@@ -35,11 +35,11 @@ For more detailed information about configuration, visit the :ref:`helm-config-r
 
 .. _rocm-config-k8s:
 
-**************************************
- Configuring Kubernetes for ROCm GPUs
-**************************************
+******************************************
+ Configuring Kubernetes for AMD ROCm GPUs
+******************************************
 
-To use ROCm GPUs in your Kubernetes deployment:
+To use AMD ROCm GPUs in your Kubernetes deployment:
 
 #. Ensure your Kubernetes cluster has nodes with ROCm-capable GPUs and the necessary drivers
    installed.
@@ -59,11 +59,11 @@ To use ROCm GPUs in your Kubernetes deployment:
 #. When submitting experiments or launching tasks, specify ``slot_type: rocm`` in your experiment
    configuration.
 
-**********************************
- Using ROCm Images in Experiments
-**********************************
+**************************************
+ Using AMD ROCm Images in Experiments
+**************************************
 
-To use ROCm images in your experiments, specify the image in your experiment configuration:
+To use AMD ROCm images in your experiments, specify the image in your experiment configuration:
 
 .. code:: yaml
 
