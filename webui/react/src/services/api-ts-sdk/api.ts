@@ -3771,6 +3771,19 @@ export interface V1GetAgentsResponse {
     pagination?: V1Pagination;
 }
 /**
+ * Response to GetAllLongLivedTokenRequest.
+ * @export
+ * @interface V1GetAllLongLivedTokenResponse
+ */
+export interface V1GetAllLongLivedTokenResponse {
+    /**
+     * Return list of LongLivedToken Info.
+     * @type {Array<V1UserSessionInfo>}
+     * @memberof V1GetAllLongLivedTokenResponse
+     */
+    longLivedTokenInfo: Array<V1UserSessionInfo>;
+}
+/**
  * 
  * @export
  * @interface V1GetAllocationResponse
@@ -4230,10 +4243,10 @@ export interface V1GetKubernetesResourceQuotasResponse {
 export interface V1GetLongLivedTokenResponse {
     /**
      * Return the LongLivedToken Info.
-     * @type {V1LongLivedTokenInfo}
+     * @type {V1UserSessionInfo}
      * @memberof V1GetLongLivedTokenResponse
      */
-    longLivedTokenInfo: V1LongLivedTokenInfo;
+    longLivedTokenInfo: V1UserSessionInfo;
 }
 /**
  * Response to GetMasterRequest.
@@ -5199,10 +5212,10 @@ export interface V1GetUserByUsernameResponse {
 export interface V1GetUserLongLivedTokenResponse {
     /**
      * Return the LongLivedToken Info.
-     * @type {V1LongLivedTokenInfo}
+     * @type {V1UserSessionInfo}
      * @memberof V1GetUserLongLivedTokenResponse
      */
-    longLivedTokenInfo: V1LongLivedTokenInfo;
+    longLivedTokenInfo: V1UserSessionInfo;
 }
 /**
  * Response to GetUserRequest.
@@ -6418,37 +6431,6 @@ export type V1LogLevel = ValueOf<typeof V1LogLevel>
  * @interface V1LogoutResponse
  */
 export interface V1LogoutResponse {
-}
-/**
- * LongLivedTokenInfo represents long lived token info.
- * @export
- * @interface V1LongLivedTokenInfo
- */
-export interface V1LongLivedTokenInfo {
-    /**
-     * The token ID.
-     * @type {number}
-     * @memberof V1LongLivedTokenInfo
-     */
-    id: number;
-    /**
-     * The user ID.
-     * @type {number}
-     * @memberof V1LongLivedTokenInfo
-     */
-    userId?: number;
-    /**
-     * The value of expires_at.
-     * @type {Date | DateString}
-     * @memberof V1LongLivedTokenInfo
-     */
-    expiresAt?: Date | DateString;
-    /**
-     * The value of created_at.
-     * @type {Date | DateString}
-     * @memberof V1LongLivedTokenInfo
-     */
-    createdAt?: Date | DateString;
 }
 /**
  * Mark some reservation as a daemon.
@@ -10593,7 +10575,7 @@ export interface V1SetClusterMessageRequest {
      */
     endTime?: Date | DateString;
     /**
-     * Duration expressing how long the message should last. Should be a Go-format duration (e.g. 24h, 2w, 5d)
+     * Duration expressing how long the message should last. Should be a Go-format duration (e.g. "2s", "4m", "72h").
      * @type {string}
      * @memberof V1SetClusterMessageRequest
      */
@@ -11527,6 +11509,17 @@ export interface V1TimestampFieldFilter {
     gte?: Date | DateString;
 }
 /**
+ * Token type.   - TOKEN_TYPE_UNSPECIFIED: Default token type.  - TOKEN_TYPE_USER_SESSION: User Session token.  - TOKEN_TYPE_LONG_LIVED_TOKEN: Long Lived token.
+ * @export
+ * @enum {string}
+ */
+export const V1TokenType = {
+    UNSPECIFIED: 'TOKEN_TYPE_UNSPECIFIED',
+    USERSESSION: 'TOKEN_TYPE_USER_SESSION',
+    LONGLIVEDTOKEN: 'TOKEN_TYPE_LONG_LIVED_TOKEN',
+} as const
+export type V1TokenType = ValueOf<typeof V1TokenType>
+/**
  * TrialClosed is a searcher event triggered when a trial has successfully finished.
  * @export
  * @interface V1TrialClosed
@@ -12402,6 +12395,49 @@ export interface V1UserRoleAssignment {
      * @memberof V1UserRoleAssignment
      */
     roleAssignment: V1RoleAssignment;
+}
+/**
+ * UserSessionInfo represents user session info.
+ * @export
+ * @interface V1UserSessionInfo
+ */
+export interface V1UserSessionInfo {
+    /**
+     * The token ID.
+     * @type {number}
+     * @memberof V1UserSessionInfo
+     */
+    id: number;
+    /**
+     * The user ID.
+     * @type {number}
+     * @memberof V1UserSessionInfo
+     */
+    userId?: number;
+    /**
+     * The value of expiry.
+     * @type {Date | DateString}
+     * @memberof V1UserSessionInfo
+     */
+    expiry?: Date | DateString;
+    /**
+     * The value of created_at.
+     * @type {Date | DateString}
+     * @memberof V1UserSessionInfo
+     */
+    createdAt?: Date | DateString;
+    /**
+     * The value of token_type.
+     * @type {V1TokenType}
+     * @memberof V1UserSessionInfo
+     */
+    tokenType?: V1TokenType;
+    /**
+     * The value of token_description.
+     * @type {string}
+     * @memberof V1UserSessionInfo
+     */
+    tokenDescription?: string;
 }
 /**
  * UserWebSetting represents user web setting.
@@ -34046,6 +34082,36 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
         },
         /**
          * 
+         * @summary Get list of all long lived token info
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getAllLongLivedToken(options: any = {}): FetchArgs {
+            const localVarPath = `/api/v1/user/tokens`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get current user's long lived token info
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -34675,6 +34741,24 @@ export const UsersApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Get list of all long lived token info
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getAllLongLivedToken(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetAllLongLivedTokenResponse> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getAllLongLivedToken(options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Get current user's long lived token info
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -34994,6 +35078,15 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
         },
         /**
          * 
+         * @summary Get list of all long lived token info
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getAllLongLivedToken(options?: any) {
+            return UsersApiFp(configuration).getAllLongLivedToken(options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Get current user's long lived token info
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
@@ -35179,6 +35272,17 @@ export class UsersApi extends BaseAPI {
      */
     public deleteLongLivedTokenByTokenID(tokenId: number, options?: any) {
         return UsersApiFp(this.configuration).deleteLongLivedTokenByTokenID(tokenId, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Get list of all long lived token info
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UsersApi
+     */
+    public getAllLongLivedToken(options?: any) {
+        return UsersApiFp(this.configuration).getAllLongLivedToken(options)(this.fetch, this.basePath)
     }
     
     /**

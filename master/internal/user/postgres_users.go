@@ -24,7 +24,13 @@ const (
 	SessionDuration = 7 * 24 * time.Hour
 	// PersonalGroupPostfix is the system postfix appended to the username of all personal groups.
 	PersonalGroupPostfix = "DeterminedPersonalGroup"
+
+	// DefaultTokenLifespan is how long a newly created long lived token is valid.
+	DefaultTokenLifespan = 30 * 24 * time.Hour
 )
+
+// CurrentTimeNowInUTC stores the current time in UTC for time insertions.
+var CurrentTimeNowInUTC time.Time
 
 // ErrRemoteUserTokenExpired notifies that the remote user's token has expired.
 var ErrRemoteUserTokenExpired = status.Error(codes.Unauthenticated, "remote user token expired")
@@ -41,9 +47,13 @@ func WithInheritedClaims(claims map[string]string) UserSessionOption {
 
 // StartSession creates a row in the user_sessions table.
 func StartSession(ctx context.Context, user *model.User, opts ...UserSessionOption) (string, error) {
+	CurrentTimeNowInUTC = time.Now().UTC()
+
 	userSession := &model.UserSession{
-		UserID: user.ID,
-		Expiry: time.Now().Add(SessionDuration),
+		UserID:    user.ID,
+		Expiry:    CurrentTimeNowInUTC.Add(SessionDuration),
+		CreatedAt: CurrentTimeNowInUTC,
+		TokenType: model.TokenTypeUserSession,
 	}
 
 	for _, opt := range opts {
@@ -51,16 +61,16 @@ func StartSession(ctx context.Context, user *model.User, opts ...UserSessionOpti
 	}
 
 	err := db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		_, err := db.Bun().NewInsert().
+		_, err := tx.NewInsert().
 			Model(userSession).
-			Column("user_id", "expiry").
+			Column("user_id", "expiry", "created_at", "token_type").
 			Returning("id").
 			Exec(ctx, &userSession.ID)
 		if err != nil {
 			return err
 		}
 
-		_, err = db.Bun().NewUpdate().
+		_, err = tx.NewUpdate().
 			Table("users").
 			SetColumn("last_auth_at", "NOW()").
 			Where("id = (?)", user.ID).
@@ -121,7 +131,8 @@ func Update(
 		if slices.Contains(toUpdate, "password_hash") {
 			if _, err := tx.NewDelete().
 				Table("user_sessions").
-				Where("user_id = ?", updated.ID).Exec(ctx); err != nil {
+				Where("user_id = ?", updated.ID).
+				Where("token_type = ?", model.TokenTypeUserSession).Exec(ctx); err != nil {
 				return fmt.Errorf("error deleting user sessions: %s", err)
 			}
 		}
@@ -170,11 +181,24 @@ func DeleteSessionByToken(ctx context.Context, token string) error {
 
 // DeleteSessionByID deletes the user session with the given ID.
 func DeleteSessionByID(ctx context.Context, sessionID model.SessionID) error {
-	_, err := db.Bun().NewDelete().
+	res, err := db.Bun().NewDelete().
 		Table("user_sessions").
 		Where("id = ?", sessionID).
 		Exec(ctx)
-	return err
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return fmt.Errorf("no rows found with session_id: %v", sessionID)
+	}
+
+	return nil
 }
 
 // AddUserTx & addAgentUserGroup are helper methods for Add & Update.
@@ -449,4 +473,153 @@ func BySessionID(ctx context.Context, sessionID model.SessionID) (*model.User, e
 		return nil, errors.Wrapf(err, "error fetching session (%d)", sessionID)
 	}
 	return &user, nil
+}
+
+// LongLivedTokenOption is the return type for WithTokenExpiry helper function.
+// It takes a pointer to model.UserSession and modifies it.
+// It’s used to apply optional settings to the LongLivedToken object.
+type LongLivedTokenOption func(f *model.UserSession)
+
+// WithTokenExpiry function will add specified expiresAt (if any) to the long lived token table.
+func WithTokenExpiry(expiry *time.Duration) LongLivedTokenOption {
+	return func(s *model.UserSession) {
+		s.Expiry = CurrentTimeNowInUTC.Add(*expiry)
+	}
+}
+
+// DeleteAndCreateLongLivedToken creates/overwrites a long lived token and store in
+// user_sessions db.
+func DeleteAndCreateLongLivedToken(
+	ctx context.Context, userID model.UserID, opts ...LongLivedTokenOption,
+) (string, error) {
+	CurrentTimeNowInUTC = time.Now().UTC()
+	// Populate the default values in the model.
+	longLivedToken := &model.UserSession{
+		UserID:    userID,
+		CreatedAt: CurrentTimeNowInUTC,
+		Expiry:    CurrentTimeNowInUTC.Add(DefaultTokenLifespan),
+		TokenType: model.TokenTypeLongLivedToken,
+	}
+
+	// Update the optional ExpiresAt field (if passed)
+	for _, opt := range opts {
+		opt(longLivedToken)
+	}
+
+	var token string
+
+	err := db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		// LongLivedTokens should have a 1:1 relationship with users, if a user creates a new token,
+		// revoke the previous token if it exists.
+		_, err := tx.NewDelete().
+			Table("user_sessions").
+			Where("user_id = ?", userID).
+			Where("token_type = ?", model.TokenTypeLongLivedToken).
+			Exec(ctx)
+		if err != nil {
+			return err
+		}
+
+		// A new row is inserted into the user_sessions table, and the ID of the
+		// inserted row is returned and stored in user_sessions.ID.
+		_, err = tx.NewInsert().
+			Model(longLivedToken).
+			Column("user_id", "expiry", "created_at", "token_type").
+			Returning("id").
+			Exec(ctx, &longLivedToken.ID)
+		if err != nil {
+			return err
+		}
+
+		// A Paseto token is generated using the longLivedToken object and the private key.
+		v2 := paseto.NewV2()
+		privateKey := db.GetTokenKeys().PrivateKey
+		token, err = v2.Sign(privateKey, longLivedToken, nil)
+		if err != nil {
+			return fmt.Errorf("failed to generate user authentication token: %s", err)
+		}
+
+		return nil
+	})
+	if err != nil {
+		return "", err
+	}
+
+	return token, nil
+}
+
+// DeleteLongLivenTokenByUserID deletes the user long lived token with the given userID.
+func DeleteLongLivenTokenByUserID(ctx context.Context, userID model.UserID) error {
+	res, err := db.Bun().NewDelete().
+		Table("user_sessions").
+		Where("user_id = ?", userID).
+		Where("token_type = ?", model.TokenTypeLongLivedToken).
+		Exec(ctx)
+	if err != nil {
+		return err // Return error if the delete operation itself failed
+	}
+
+	// Check how many rows were affected
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return err // Return error if checking the rows affected failed
+	}
+
+	if rowsAffected == 0 {
+		// Custom error when no rows were found
+		return fmt.Errorf("no long lived token rows found with user_id: %v", userID)
+	}
+
+	return nil // Return nil if deletion was successful
+}
+
+// DeleteLongLivenTokenByToken deletes the user long lived token with the given token.
+func DeleteLongLivenTokenByToken(ctx context.Context, token string) error {
+	v2 := paseto.NewV2()
+	var longLivedToken model.UserSession
+	// Verification will fail when using external token (Jwt instead of Paseto).
+	// Currently passing Paseto token.
+	if err := v2.Verify(token, db.GetTokenKeys().PublicKey, &longLivedToken, nil); err != nil {
+		return nil //nolint: nilerr
+	}
+	return DeleteSessionByID(ctx, longLivedToken.ID)
+}
+
+// GetLongLivedTokenInfo returns the token info from the table with the given user_id.
+func GetLongLivedTokenInfo(ctx context.Context, userID model.UserID) (
+	*model.UserSession, error,
+) {
+	var tokenInfo model.UserSession // To store the token info for the given user_id
+
+	// Execute the query to fetch the token info for the given user_id
+	switch err := db.Bun().NewSelect().Table("user_sessions").
+		Where("user_id = ?", userID).
+		Where("token_type = ?", model.TokenTypeLongLivedToken).
+		Scan(ctx, &tokenInfo); {
+	case errors.Is(err, sql.ErrNoRows):
+		return nil, fmt.Errorf("no rows found with user_id: %v", userID)
+	case err != nil:
+		return nil, err
+	default:
+		return &tokenInfo, nil
+	}
+}
+
+// GetAllLongLivedTokenInfo returns all token info from the table with the given user_id for admin.
+func GetAllLongLivedTokenInfo(ctx context.Context) (
+	[]*model.UserSession, error,
+) {
+	var tokenInfo []*model.UserSession // To store the token info for the given user_id
+
+	// Execute the query to fetch the token info of long-lived type
+	switch err := db.Bun().NewSelect().Table("user_sessions").
+		Where("token_type = ?", model.TokenTypeLongLivedToken).
+		Scan(ctx, &tokenInfo); {
+	case errors.Is(err, sql.ErrNoRows):
+		return nil, fmt.Errorf("no rows found")
+	case err != nil:
+		return nil, err
+	default:
+		return tokenInfo, nil
+	}
 }

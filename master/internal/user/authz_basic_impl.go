@@ -134,6 +134,16 @@ func (a *UserAuthZBasic) CanGetUsersToken(
 	return nil
 }
 
+// CanGetAllToken returns an error if the user is not an admin.
+func (a *UserAuthZBasic) CanGetAllToken(
+	ctx context.Context, curUser model.User,
+) error {
+	if !curUser.Admin {
+		return fmt.Errorf("only admin privileged users view all users token")
+	}
+	return nil
+}
+
 // CanDeleteUsersOwnToken always returns nil.
 func (a *UserAuthZBasic) CanDeleteUsersOwnToken(ctx context.Context, curUser model.User) error {
 	return nil

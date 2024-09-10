@@ -145,6 +145,14 @@ func (p *UserAuthZPermissive) CanGetUsersOwnToken(
 	return (&UserAuthZBasic{}).CanGetUsersOwnToken(ctx, curUser)
 }
 
+// CanGetAllToken calls RBAC authz but enforces basic authz.
+func (p *UserAuthZPermissive) CanGetAllToken(
+	ctx context.Context, curUser model.User,
+) error {
+	_ = (&UserAuthZRBAC{}).CanGetAllToken(ctx, curUser)
+	return (&UserAuthZBasic{}).CanGetAllToken(ctx, curUser)
+}
+
 // CanGetUsersToken calls RBAC authz but enforces basic authz.
 func (p *UserAuthZPermissive) CanGetUsersToken(
 	ctx context.Context, curUser, targetUser model.User,

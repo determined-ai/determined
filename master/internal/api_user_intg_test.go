@@ -1023,7 +1023,7 @@ func TestPostUserLongLivedTokenWithLifespan(t *testing.T) {
 }
 
 // TestGetLongLivedToken tests current user's token info
-// GET /api/v1/user/token - Get current user's long lived token info.
+// GET /api/v1/user/token_info - Get current user's long lived token info.
 func TestGetDeleteLongLivedToken(t *testing.T) {
 	api, curUser, ctx := setupAPITest(t, nil)
 
@@ -1041,6 +1041,40 @@ func TestGetDeleteLongLivedToken(t *testing.T) {
 
 	_, err = api.GetLongLivedToken(ctx, &apiv1.GetLongLivedTokenRequest{})
 	require.ErrorContains(t, err, "no rows found with user_id")
+}
+
+// TestGetAllLongLivedToken tests all long lived token info
+// GET /api/v1/users/tokens - Get all long lived token info
+// from user_sessions db for admin.
+func TestGetDeleteAllLongLivedToken(t *testing.T) {
+	api, _, ctx := setupAPITest(t, nil)
+
+	userIDList, err := getTestMultiUser(ctx, 3)
+	require.NoError(t, err)
+
+	for _, userID := range userIDList {
+		createTestToken(ctx, t, api, userID)
+	}
+
+	tokenInfoList, err := api.GetAllLongLivedToken(ctx, &apiv1.GetAllLongLivedTokenRequest{})
+	require.NoError(t, err)
+	require.NotNil(t, tokenInfoList)
+
+	var actualUserIds []model.UserID
+	for _, tokenInfo := range tokenInfoList.GetLongLivedTokenInfo() {
+		actualUserIds = append(actualUserIds, model.UserID(tokenInfo.UserId))
+	}
+
+	for _, userID := range userIDList {
+		require.Contains(t, actualUserIds, userID, "Expected token for user ID %v, but not found",
+			userID)
+	}
+
+	// For test cleanup
+	for _, userID := range userIDList {
+		err = user.DeleteLongLivenTokenByUserID(ctx, userID)
+		require.NoError(t, err)
+	}
 }
 
 // TestGetLongLivedToken tests given user's token info
@@ -1087,6 +1121,14 @@ func TestAuthzLongLivedToken(t *testing.T) {
 		Return(fmt.Errorf("canGetUsersOwnToken")).Once()
 
 	_, err = api.GetLongLivedToken(ctx, &apiv1.GetLongLivedTokenRequest{})
+	require.Equal(t, expectedErr.Error(), err.Error())
+
+	// DELETE API Auth check
+	expectedErr = status.Error(codes.PermissionDenied, "canDeleteUsersOwnToken")
+	authzUsers.On("CanDeleteUsersOwnToken", mock.Anything, curUser).
+		Return(fmt.Errorf("canDeleteUsersOwnToken")).Once()
+
+	_, err = api.DeleteLongLivedToken(ctx, &apiv1.DeleteLongLivedTokenRequest{})
 	require.Equal(t, expectedErr.Error(), err.Error())
 }
 
@@ -1156,6 +1198,27 @@ func getTestUser(ctx context.Context) (model.UserID, error) {
 	)
 }
 
+func getTestMultiUser(ctx context.Context, n int) ([]model.UserID, error) {
+	var userList []model.UserID
+	curr := 1
+	for curr <= n {
+		user, err := user.Add(
+			ctx,
+			&model.User{
+				Username: uuid.New().String(),
+				Remote:   false,
+			},
+			nil,
+		)
+		if err != nil {
+			return nil, err
+		}
+		userList = append(userList, user)
+		curr++
+	}
+	return userList, nil
+}
+
 func testSetLifespan(ctx context.Context, t *testing.T, userID model.UserID, lifespan string) error {
 	expLifespan := user.DefaultTokenLifespan
 	var err error
@@ -1165,17 +1228,18 @@ func testSetLifespan(ctx context.Context, t *testing.T, userID model.UserID, lif
 			return fmt.Errorf("Invalid duration format")
 		}
 	}
-	var expiresAt, createdAt time.Time
+	var expiry, createdAt time.Time
 	err = db.Bun().NewSelect().
-		Table("long_lived_tokens").
-		Column("expires_at", "created_at").
+		Table("user_sessions").
+		Column("expiry", "created_at").
 		Where("user_id = ?", userID).
-		Scan(ctx, &expiresAt, &createdAt)
+		Where("token_type = ?", model.TokenTypeLongLivedToken).
+		Scan(ctx, &expiry, &createdAt)
 	if err != nil {
 		return fmt.Errorf("Error getting the set lifespan, creation time")
 	}
 
-	actLifespan := expiresAt.Sub(createdAt)
+	actLifespan := expiry.Sub(createdAt)
 	require.Equal(t, expLifespan, actLifespan)
 
 	return nil

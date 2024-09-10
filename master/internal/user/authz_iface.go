@@ -72,6 +72,8 @@ type UserAuthZ interface {
 
 	// GET /api/v1/users/token
 	CanGetUsersOwnToken(ctx context.Context, curUser model.User) error
+	// GET /api/v1/user/tokens
+	CanGetAllToken(ctx context.Context, curUser model.User) error
 	// GET /api/v1/users/:user_id/token
 	CanGetUsersToken(ctx context.Context, curUser, targetUser model.User) error
 

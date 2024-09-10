@@ -1,0 +1,4 @@
+CREATE TYPE token_type AS ENUM ('USER_SESSION', 'LONG_LIVED_TOKEN');
+ALTER TABLE user_sessions ADD COLUMN created_at TIMESTAMP DEFAULT NULL;
+ALTER TABLE user_sessions ADD COLUMN token_type token_type NOT NULL DEFAULT 'USER_SESSION';
+ALTER TABLE user_sessions ADD COLUMN token_description TEXT DEFAULT NULL;

@@ -194,7 +194,9 @@ func TestUserStartSession(t *testing.T) {
 	require.NotNil(t, token)
 
 	exists, err := db.Bun().NewSelect().Table("user_sessions").
-		Where("user_id = ?", user.ID).Exists(context.TODO())
+		Where("user_id = ?", user.ID).
+		Where("token_type = ?", model.TokenTypeUserSession).
+		Exists(context.TODO())
 	require.True(t, exists)
 	require.NoError(t, err)
 }
@@ -216,7 +218,9 @@ func TestUserStartSessionTokenHasClaims(t *testing.T) {
 	require.Equal(t, restoredSession.InheritedClaims, claims)
 
 	exists, err := db.Bun().NewSelect().Table("user_sessions").
-		Where("user_id = ?", user.ID).Exists(context.TODO())
+		Where("user_id = ?", user.ID).
+		Where("token_type = ?", model.TokenTypeUserSession).
+		Exists(context.TODO())
 	require.True(t, exists)
 	require.NoError(t, err)
 }
@@ -229,7 +233,9 @@ func TestDeleteSessionByToken(t *testing.T) {
 	require.NoError(t, err)
 
 	exists, err := db.Bun().NewSelect().Table("user_sessions").
-		Where("user_id = ?", userID).Exists(context.TODO())
+		Where("user_id = ?", userID).
+		Where("token_type = ?", model.TokenTypeUserSession).
+		Exists(context.TODO())
 	require.False(t, exists)
 	require.NoError(t, err)
 }
@@ -242,7 +248,9 @@ func TestDeleteSessionByID(t *testing.T) {
 	require.NoError(t, err)
 
 	exists, err := db.Bun().NewSelect().Table("user_sessions").
-		Where("user_id = ?", userID).Exists(context.TODO())
+		Where("user_id = ?", userID).
+		Where("token_type = ?", model.TokenTypeUserSession).
+		Exists(context.TODO())
 	require.False(t, exists)
 	require.NoError(t, err)
 }
@@ -418,7 +426,9 @@ func addTestSession() (model.UserID, model.SessionID, string, error) {
 	}
 
 	if err = db.Bun().NewSelect().Table("user_sessions").
-		Where("user_id = ?", user.ID).Scan(context.TODO(), &session); err != nil {
+		Where("user_id = ?", user.ID).
+		Where("token_type = ?", model.TokenTypeUserSession).
+		Scan(context.TODO(), &session); err != nil {
 		return 0, 0, "", fmt.Errorf("couldn't create new session: %w", err)
 	}
 	return user.ID, session.ID, token, nil
@@ -574,4 +584,182 @@ func TestUpdateUserSettings(t *testing.T) {
 	out, err = GetUserSetting(context.Background(), u.ID)
 	require.NoError(t, err)
 	require.Empty(t, out, "found user web settings when all should be deleted")
+}
+
+// TestDeleteAndCreateLongLivedToken tests deleting and creating token with default lifespan.
+func TestDeleteAndCreateLongLivedToken(t *testing.T) {
+	user, err := addTestUser(nil)
+	require.NoError(t, err)
+
+	// Add a LongLivedToken.
+	token, err := DeleteAndCreateLongLivedToken(context.TODO(), user.ID)
+	require.NoError(t, err)
+	require.NotNil(t, token)
+
+	restoredToken := restoreTokenInfo(token, t)
+
+	expLifespan := DefaultTokenLifespan
+	actLifespan := restoredToken.Expiry.Sub(restoredToken.CreatedAt)
+	require.Equal(t, expLifespan, actLifespan)
+
+	tokenInfo, err := GetLongLivedTokenInfo(context.TODO(), user.ID)
+	require.NoError(t, err)
+	require.NotNil(t, tokenInfo)
+
+	// For test cleanup
+	err = DeleteLongLivenTokenByUserID(context.TODO(), user.ID)
+	require.NoError(t, err)
+}
+
+// TestDeleteAndCreateLongLivedTokenHasExpiry tests deleting and creating token with
+// given lifespan.
+func TestDeleteAndCreateLongLivedTokenHasExpiry(t *testing.T) {
+	user, err := addTestUser(nil)
+	require.NoError(t, err)
+
+	// Add a LongLivedToken with custom (Now() + 3 Months) Expiry Time.
+	expLifespan := DefaultTokenLifespan * 3
+	token, err := DeleteAndCreateLongLivedToken(context.TODO(), user.ID, WithTokenExpiry(&expLifespan))
+	require.NoError(t, err)
+	require.NotNil(t, token)
+
+	restoredToken := restoreTokenInfo(token, t)
+
+	actLifespan := restoredToken.Expiry.Sub(restoredToken.CreatedAt)
+	require.Equal(t, expLifespan, actLifespan)
+
+	tokenInfo, err := GetLongLivedTokenInfo(context.TODO(), user.ID)
+	require.NoError(t, err)
+	require.NotNil(t, tokenInfo)
+
+	// For test cleanup
+	err = DeleteLongLivenTokenByUserID(context.TODO(), user.ID)
+	require.NoError(t, err)
+}
+
+// TestDeleteLongLivenTokenByUserID tests deleting long lived token info for given userId.
+func TestDeleteLongLivenTokenByUserID(t *testing.T) {
+	userID, _, _, err := addTestSession()
+	require.NoError(t, err)
+
+	token, err := DeleteAndCreateLongLivedToken(context.TODO(), userID)
+	require.NoError(t, err)
+	require.NotNil(t, token)
+
+	err = DeleteLongLivenTokenByUserID(context.TODO(), userID)
+	require.NoError(t, err)
+
+	_, err = GetLongLivedTokenInfo(context.TODO(), userID)
+	require.ErrorContains(t, err, "no rows found with user_id")
+}
+
+// TestDeleteLongLivenTokenByToken tests deleting long lived token info for given token.
+func TestDeleteLongLivenTokenByToken(t *testing.T) {
+	userID, _, _, err := addTestSession()
+	require.NoError(t, err)
+
+	token, err := DeleteAndCreateLongLivedToken(context.TODO(), userID)
+	require.NoError(t, err)
+	require.NotNil(t, token)
+
+	err = DeleteLongLivenTokenByToken(context.TODO(), token)
+	require.NoError(t, err)
+
+	_, err = GetLongLivedTokenInfo(context.TODO(), userID)
+	require.ErrorContains(t, err, "no rows found with user_id")
+}
+
+// TestDeleteLongLivenTokenByTokenId tests deleting long lived token info for given token id.
+func TestDeleteLongLivenTokenByTokenId(t *testing.T) {
+	userID, _, _, err := addTestSession()
+	require.NoError(t, err)
+
+	token, err := DeleteAndCreateLongLivedToken(context.TODO(), userID)
+	require.NoError(t, err)
+	require.NotNil(t, token)
+
+	longLivedToken := restoreTokenInfo(token, t)
+
+	err = DeleteSessionByID(context.TODO(), longLivedToken.ID)
+	require.NoError(t, err)
+
+	_, err = GetLongLivedTokenInfo(context.TODO(), userID)
+	require.ErrorContains(t, err, "no rows found with user_id")
+}
+
+// TestGetLongLivenTokenInfoByUserID tests getting long lived token info for given userId.
+func TestGetLongLivenTokenInfoByUserID(t *testing.T) {
+	user, err := addTestUser(nil)
+	require.NoError(t, err)
+
+	// Add a LongLivedToken.
+	token, err := DeleteAndCreateLongLivedToken(context.TODO(), user.ID)
+	require.NoError(t, err)
+	require.NotNil(t, token)
+
+	tokenInfo, err := GetLongLivedTokenInfo(context.TODO(), user.ID)
+	require.NoError(t, err)
+	require.Equal(t, user.ID, tokenInfo.UserID)
+
+	// For test cleanup
+	err = DeleteLongLivenTokenByUserID(context.TODO(), user.ID)
+	require.NoError(t, err)
+}
+
+// TestGetAllLongLivenTokenInfoByUserID tests getting all long lived token info.
+func TestGetAllLongLivenTokenInfoByUserID(t *testing.T) {
+	users, err := addMultiTestUser(nil, 3)
+	require.NoError(t, err)
+
+	for _, user := range users {
+		// Add a LongLivedToken.
+		token, err := DeleteAndCreateLongLivedToken(context.TODO(), user.ID)
+		require.NoError(t, err)
+		require.NotNil(t, token)
+	}
+
+	tokenInfoList, err := GetAllLongLivedTokenInfo(context.TODO())
+	require.NoError(t, err)
+
+	var actualUserIds []model.UserID
+	for _, tokenInfo := range tokenInfoList {
+		actualUserIds = append(actualUserIds, tokenInfo.UserID)
+	}
+
+	for _, user := range users {
+		require.Contains(t, actualUserIds, user.ID, "Expected token for user ID %v, but not found",
+			user.ID)
+	}
+
+	// For test cleanup
+	for _, user := range users {
+		err = DeleteLongLivenTokenByUserID(context.TODO(), user.ID)
+		require.NoError(t, err)
+	}
+}
+
+func restoreTokenInfo(token string, t *testing.T) model.UserSession {
+	var restoredToken model.UserSession
+	v2 := paseto.NewV2()
+	err := v2.Verify(token, db.GetTokenKeys().PublicKey, &restoredToken, nil)
+	require.NoError(t, err)
+
+	return restoredToken
+}
+
+func addMultiTestUser(aug *model.AgentUserGroup, n int, opts ...func(*model.User)) (
+	[]*model.User, error,
+) {
+	var users []*model.User
+	curr := 1
+	for curr <= n {
+		user, err := addTestUser(nil)
+		if err != nil {
+			return nil, err
+		}
+		users = append(users, user)
+		curr++
+	}
+
+	return users, nil
 }

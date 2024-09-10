@@ -2830,6 +2830,17 @@ service Determined {
     };
   }
 
+  // Get list of all long lived token info
+  rpc GetAllLongLivedToken(GetAllLongLivedTokenRequest)
+      returns (GetAllLongLivedTokenResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/user/tokens"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Users"
+    };
+  }
+
   // Get a user's long lived token info
   rpc GetUserLongLivedToken(GetUserLongLivedTokenRequest)
       returns (GetUserLongLivedTokenResponse) {

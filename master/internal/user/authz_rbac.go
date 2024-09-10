@@ -231,6 +231,13 @@ func (a *UserAuthZRBAC) CanGetUsersOwnToken(ctx context.Context, curUser model.U
 	return nil
 }
 
+// CanGetAllToken returns an error if the user does not have admin permissions.
+func (a *UserAuthZRBAC) CanGetAllToken(
+	ctx context.Context, curUser model.User,
+) error {
+	return canAdministrateUser(ctx, curUser.ID)
+}
+
 // CanGetUsersToken returns an error if the user is not the target user and does not have admin
 // permissions when trying to get another user's token.
 func (a *UserAuthZRBAC) CanGetUsersToken(

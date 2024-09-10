@@ -54,13 +54,62 @@ type User struct {
 	LastAuthAt    *time.Time  `db:"last_auth_at" json:"last_auth_at"`
 }
 
+// TokenType is the type of a token.
+type TokenType string
+
+const (
+	// TokenTypeUserSession is the "USER_SESSION" token type for the enum public.token_type in Postgres.
+	TokenTypeUserSession TokenType = "USER_SESSION"
+	// TokenTypeLongLivedToken is the "LONG_LIVED_TOKEN" token type for the enum public.token_type in Postgres.
+	TokenTypeLongLivedToken TokenType = "LONG_LIVED_TOKEN"
+)
+
+// Proto returns the proto representation of the token type.
+func (tt TokenType) Proto() userv1.TokenType {
+	switch tt {
+	case TokenTypeUserSession:
+		return userv1.TokenType_TOKEN_TYPE_USER_SESSION
+	case TokenTypeLongLivedToken:
+		return userv1.TokenType_TOKEN_TYPE_LONG_LIVED_TOKEN
+	default:
+		panic("unknown token type")
+	}
+}
+
+// TokenTypeFromProto maps a userv1.TokenType to TokenType.
+func TokenTypeFromProto(t userv1.TokenType) TokenType {
+	switch t {
+	case userv1.TokenType_TOKEN_TYPE_USER_SESSION:
+		return TokenTypeUserSession
+	case userv1.TokenType_TOKEN_TYPE_LONG_LIVED_TOKEN:
+		return TokenTypeLongLivedToken
+	default:
+		panic("unknown token type")
+	}
+}
+
 // UserSession corresponds to a row in the "user_sessions" DB table.
 type UserSession struct {
-	bun.BaseModel   `bun:"table:user_sessions"`
-	ID              SessionID         `db:"id" json:"id"`
-	UserID          UserID            `db:"user_id" json:"user_id"`
-	Expiry          time.Time         `db:"expiry" json:"expiry"`
-	InheritedClaims map[string]string `bun:"-"` // InheritedClaims contains the OIDC raw ID token when OIDC is enabled
+	bun.BaseModel    `bun:"table:user_sessions"`
+	ID               SessionID         `db:"id" json:"id"`
+	UserID           UserID            `db:"user_id" json:"user_id"`
+	Expiry           time.Time         `db:"expiry" json:"expiry"`
+	CreatedAt        time.Time         `db:"created_at" json:"created_at"`
+	TokenType        TokenType         `db:"token_type" json:"token_type"`
+	TokenDescription null.String       `db:"token_description" json:"token_description"`
+	InheritedClaims  map[string]string `bun:"-"` // InheritedClaims contains the OIDC raw ID token when OIDC is enabled
+}
+
+// Proto returns the protobuf representation of User_Sessions table.
+func (s UserSession) Proto() *userv1.UserSessionInfo {
+	return &userv1.UserSessionInfo{
+		Id:               int32(s.ID),
+		UserId:           int32(s.UserID),
+		Expiry:           timestamppb.New(s.Expiry),
+		CreatedAt:        timestamppb.New(s.CreatedAt),
+		TokenType:        s.TokenType.Proto(),
+		TokenDescription: s.TokenDescription.ValueOrZero(),
+	}
 }
 
 // A FullUser is a User joined with any other user relations.
@@ -315,26 +364,4 @@ func HashPassword(password string) (string, error) {
 		return "", err
 	}
 	return string(passwordHash), nil
-}
-
-// TokenID is the type for user token IDs.
-type TokenID int32
-
-// LongLivedToken corresponds to a row in the "long_lived_tokens" DB table.
-type LongLivedToken struct {
-	bun.BaseModel `bun:"table:long_lived_tokens"`
-	ID            TokenID   `db:"id" json:"id"`
-	UserID        UserID    `db:"user_id" json:"user_id"`
-	ExpiresAt     time.Time `db:"expires_at" json:"expires_at"`
-	CreatedAt     time.Time `db:"created_at" json:"created_at"`
-}
-
-// Proto returns the protobuf representation.
-func (s LongLivedToken) Proto() *userv1.LongLivedTokenInfo {
-	return &userv1.LongLivedTokenInfo{
-		Id:        int32(s.ID),
-		UserId:    int32(s.UserID),
-		ExpiresAt: timestamppb.New(s.ExpiresAt),
-		CreatedAt: timestamppb.New(s.CreatedAt),
-	}
 }

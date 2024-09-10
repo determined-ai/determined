@@ -97,8 +97,18 @@ enum EntityType {
   ENTITY_TYPE_PROJECT = 1;
 }
 
-// LongLivedTokenInfo represents long lived token info.
-message LongLivedTokenInfo {
+// Token type.
+enum TokenType {
+  // Default token type.
+  TOKEN_TYPE_UNSPECIFIED = 0;
+  // User Session token.
+  TOKEN_TYPE_USER_SESSION = 1;
+  // Long Lived token.
+  TOKEN_TYPE_LONG_LIVED_TOKEN = 2;
+}
+
+// UserSessionInfo represents user session info.
+message UserSessionInfo {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "id" ] }
   };
@@ -106,8 +116,12 @@ message LongLivedTokenInfo {
   int32 id = 1;
   // The user ID.
   int32 user_id = 2;
-  // The value of expires_at.
-  google.protobuf.Timestamp expires_at = 3;
+  // The value of expiry.
+  google.protobuf.Timestamp expiry = 3;
   // The value of created_at.
   google.protobuf.Timestamp created_at = 4;
+  // The value of token_type.
+  TokenType token_type = 5;
+  // The value of token_description.
+  string token_description = 6;
 }

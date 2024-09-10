@@ -267,7 +267,19 @@ message GetLongLivedTokenResponse {
     json_schema: { required: [ "long_lived_token_info" ] }
   };
   // Return the LongLivedToken Info.
-  determined.user.v1.LongLivedTokenInfo long_lived_token_info = 1;
+  determined.user.v1.UserSessionInfo long_lived_token_info = 1;
+}
+
+// Get all longLivedToken info for admin.
+message GetAllLongLivedTokenRequest {}
+
+// Response to GetAllLongLivedTokenRequest.
+message GetAllLongLivedTokenResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "long_lived_token_info" ] }
+  };
+  // Return list of LongLivedToken Info.
+  repeated determined.user.v1.UserSessionInfo long_lived_token_info = 1;
 }
 
 // Get the requested user's longLivedToken info.
@@ -282,7 +294,7 @@ message GetUserLongLivedTokenResponse {
     json_schema: { required: [ "long_lived_token_info" ] }
   };
   // Return the LongLivedToken Info.
-  determined.user.v1.LongLivedTokenInfo long_lived_token_info = 1;
+  determined.user.v1.UserSessionInfo long_lived_token_info = 1;
 }
 
 // Delete user's longLivedToken info.
