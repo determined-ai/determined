@@ -392,32 +392,10 @@ Some constraints are due to differences in behavior between Docker and Singulari
    <pbs-config-requirements>`.
 
 ***********************
- AMD/ROCm Known Issues
+ AMD ROCm Known Issues
 ***********************
 
--  AMD/ROCm support is available only with Singularity containers. While Determined does add the
-   proper Podman arguments to enable ROCm GPU support, the capabilities have not yet been verified.
-
--  Launching experiments with ``slot_type: rocm``, may fail with the error ``RuntimeError: No HIP
-   GPUs are available``. Ensure that the compute nodes are providing ROCm drivers and libraries
-   compatible with the environment image that you are using and that they are available in the
-   default locations, or are added to the ``path`` and/or ``ld_library_path`` variables in the
-   :ref:`slurm configuration <cluster-configuration-slurm>`. Depending upon your system
-   configuration, you may need to select a different ROCm image. See :ref:`set-environment-images`
-   for the images available.
-
--  Launching experiments with ``slot_type: rocm``, may fail in the AMD/ROCm libraries with with the
-   error ``terminate called after throwing an instance of 'boost::filesystem::filesystem_error'
-   what(): boost::filesystem::remove: Directory not empty: "/tmp/miopen-...``. A potential
-   workaround is to disable the per-container ``/tmp`` by adding the following :ref:`bind mount
-   <exp-bind-mounts>` in your experiment configuration or globally by using the
-   ``task_container_defaults`` section in your master configuration:
-
-   .. code:: yaml
-
-      bind_mounts:
-         - host_path: /tmp
-           container_path: /tmp
+For AMD ROCm support and known issues, visit :ref:`AMD ROCm GPUs <rocm-support>`.
 
 ***************************************
  Determined AI Experiment Requirements
