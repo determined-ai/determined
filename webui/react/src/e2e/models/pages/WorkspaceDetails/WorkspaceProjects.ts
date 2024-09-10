@@ -6,6 +6,7 @@ import { Toggle } from 'e2e/models/common/hew/Toggle';
 import { ProjectsCard } from 'e2e/models/components/ProjectCard';
 import { ProjectCreateModal } from 'e2e/models/components/ProjectCreateModal';
 import { ProjectDeleteModal } from 'e2e/models/components/ProjectDeleteModal';
+import { ProjectMoveModal } from 'e2e/models/components/ProjectMoveModal';
 
 /**
  * Represents the WorkspaceProjects page in src/pages/WorkspaceDetails/WorkspaceProjects.tsx
@@ -34,6 +35,9 @@ export class WorkspaceProjects extends BaseReactFragment {
     root: this.root,
   });
   readonly deleteModal = new ProjectDeleteModal({
+    root: this.root,
+  });
+  readonly moveModal = new ProjectMoveModal({
     root: this.root,
   });
   cardByName(name: string): ProjectsCard {

@@ -439,4 +439,44 @@ test.describe('Project UI CRUD', () => {
       await projectCard.archivedBadge.pwLocator.waitFor({ state: 'hidden' });
     });
   });
+
+  test('Move a Project', async ({
+    authedPage,
+    newWorkspace,
+    backgroundApiWorkspace,
+    backgroundApiProject,
+  }) => {
+    const workspaceDetails = new WorkspaceDetails(authedPage);
+
+    const destinationWorkspace = (
+      await backgroundApiWorkspace.createWorkspace(backgroundApiWorkspace.new())
+    ).workspace;
+
+    const newProject = await backgroundApiProject.createProject(
+      newWorkspace.response.workspace.id,
+      backgroundApiProject.new(),
+    );
+    projectIds.push(newProject.project.id);
+
+    await authedPage.reload();
+
+    const projects = workspaceDetails.workspaceProjects;
+    const projectCard = projects.cardByName(newProject.project.name);
+    const moveMenuItem = projectCard.actionMenu.move;
+
+    await projectCard.actionMenu.open();
+    await moveMenuItem.pwLocator.click();
+    await projects.moveModal.destinationWorkspace.pwLocator.fill(destinationWorkspace.name);
+    await projects.moveModal.destinationWorkspace.pwLocator.press('Enter');
+    await projects.moveModal.footer.submit.pwLocator.click();
+
+    await projects.moveModal.pwLocator.waitFor({ state: 'hidden' });
+    await projectCard.pwLocator.waitFor({ state: 'hidden' });
+
+    await workspaceDetails.gotoWorkspace(destinationWorkspace.id);
+
+    await projectCard.pwLocator.waitFor();
+
+    await backgroundApiWorkspace.deleteWorkspace(destinationWorkspace.id);
+  });
 });
