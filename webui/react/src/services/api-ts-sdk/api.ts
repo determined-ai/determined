@@ -12720,6 +12720,12 @@ export interface V1Workspace {
      * @memberof V1Workspace
      */
     defaultAuxPool?: string;
+    /**
+     * Optional auto-created namespace bound to the workspace.
+     * @type {string}
+     * @memberof V1Workspace
+     */
+    autoCreatedNamespace?: string;
 }
 /**
  * WorkspaceNamespace represents a workspace-namespace binding for a given workspace and cluster.
@@ -12783,7 +12789,7 @@ export interface V1WorkspaceNamespaceMeta {
      */
     clusterName?: string;
     /**
-     * The optional resource quota placed on the namespace (and consequentially, the workspace).
+     * The optional resource quota placed on the namespace (and consequentially, the workspace). TODO (CM-495): Remove this field and use GetKubernetesResourceQuotasRequest instead.
      * @type {number}
      * @memberof V1WorkspaceNamespaceMeta
      */

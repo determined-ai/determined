@@ -17305,6 +17305,7 @@ class v1WorkloadContainer(Printable):
 class v1Workspace(Printable):
     """Workspace is a named collection of projects."""
     agentUserGroup: "typing.Optional[v1AgentUserGroup]" = None
+    autoCreatedNamespace: "typing.Optional[str]" = None
     checkpointStorageConfig: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     defaultAuxPool: "typing.Optional[str]" = None
     defaultComputePool: "typing.Optional[str]" = None
@@ -17325,6 +17326,7 @@ class v1Workspace(Printable):
         userId: int,
         username: str,
         agentUserGroup: "typing.Union[v1AgentUserGroup, None, Unset]" = _unset,
+        autoCreatedNamespace: "typing.Union[str, None, Unset]" = _unset,
         checkpointStorageConfig: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
         defaultAuxPool: "typing.Union[str, None, Unset]" = _unset,
         defaultComputePool: "typing.Union[str, None, Unset]" = _unset,
@@ -17343,6 +17345,8 @@ class v1Workspace(Printable):
         self.username = username
         if not isinstance(agentUserGroup, Unset):
             self.agentUserGroup = agentUserGroup
+        if not isinstance(autoCreatedNamespace, Unset):
+            self.autoCreatedNamespace = autoCreatedNamespace
         if not isinstance(checkpointStorageConfig, Unset):
             self.checkpointStorageConfig = checkpointStorageConfig
         if not isinstance(defaultAuxPool, Unset):
@@ -17369,6 +17373,8 @@ class v1Workspace(Printable):
         }
         if "agentUserGroup" in obj:
             kwargs["agentUserGroup"] = v1AgentUserGroup.from_json(obj["agentUserGroup"]) if obj["agentUserGroup"] is not None else None
+        if "autoCreatedNamespace" in obj:
+            kwargs["autoCreatedNamespace"] = obj["autoCreatedNamespace"]
         if "checkpointStorageConfig" in obj:
             kwargs["checkpointStorageConfig"] = obj["checkpointStorageConfig"]
         if "defaultAuxPool" in obj:
@@ -17395,6 +17401,8 @@ class v1Workspace(Printable):
         }
         if not omit_unset or "agentUserGroup" in vars(self):
             out["agentUserGroup"] = None if self.agentUserGroup is None else self.agentUserGroup.to_json(omit_unset)
+        if not omit_unset or "autoCreatedNamespace" in vars(self):
+            out["autoCreatedNamespace"] = self.autoCreatedNamespace
         if not omit_unset or "checkpointStorageConfig" in vars(self):
             out["checkpointStorageConfig"] = self.checkpointStorageConfig
         if not omit_unset or "defaultAuxPool" in vars(self):
