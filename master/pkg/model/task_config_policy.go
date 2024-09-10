@@ -4,9 +4,10 @@ import (
 	"strings"
 	"time"
 
+	"github.com/uptrace/bun"
+
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/proto/pkg/configpolicyv1"
-	"github.com/uptrace/bun"
 )
 
 // WorkloadType is the type of workload (experiment or NTSC) that the task config policy applies to.
@@ -23,10 +24,10 @@ const (
 	NTSCType WorkloadType = "NTSC"
 )
 
-// ExperimentTaskConfigPolicy is the bun model of a task config policy.
+// ExperimentTaskConfigPolicies is the bun model of a task config policy.
 type ExperimentTaskConfigPolicies struct {
 	bun.BaseModel   `bun:"table:task_config_policies"`
-	WorkspaceID     *int                     `bun:"workspace_id"`
+	WorkspaceID     int                      `bun:"workspace_id"`
 	LastUpdatedBy   UserID                   `bun:"last_updated_by,notnull"`
 	LastUpdatedTime time.Time                `bun:"last_updated_time,notnull"`
 	WorkloadType    WorkloadType             `bun:"workload_type,notnull"`
@@ -34,10 +35,10 @@ type ExperimentTaskConfigPolicies struct {
 	Constraints     Constraints              `bun:"constraints"`
 }
 
-// NTSCTaskConfigPolicy is the bun model of a task config policy.
+// NTSCTaskConfigPolicies is the bun model of a task config policy.
 type NTSCTaskConfigPolicies struct {
 	bun.BaseModel   `bun:"table:task_config_policies"`
-	WorkspaceID     *int          `bun:"workspace_id"`
+	WorkspaceID     int           `bun:"workspace_id"`
 	LastUpdatedBy   UserID        `bun:"last_updated_by,notnull"`
 	LastUpdatedTime time.Time     `bun:"last_updated_time,notnull"`
 	WorkloadType    WorkloadType  `bun:"workload_type,notnull"`

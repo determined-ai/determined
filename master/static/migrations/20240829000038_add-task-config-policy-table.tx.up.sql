@@ -2,7 +2,7 @@ CREATE TYPE workload_type AS ENUM ('EXPERIMENT', 'NTSC');
 
 CREATE TABLE IF NOT EXISTS task_config_policies
 (
-    workspace_id integer,
+    workspace_id integer NOT NULL,
     last_updated_by integer NOT NULL,
     last_updated_time timestamptz NOT NULL DEFAULT current_timestamp,
     workload_type workload_type NOT NULL,
@@ -13,4 +13,7 @@ CREATE TABLE IF NOT EXISTS task_config_policies
     CONSTRAINT pk_wksp_id_wkld_type UNIQUE(workspace_id, workload_type),
     CONSTRAINT fk_last_updated_by_user_id FOREIGN KEY(last_updated_by) REFERENCES users(id)
 );
+
+INSERT INTO workspaces (id, name, archived, created_at, user_id, immutable, state) 
+    VALUES (0, 'global', false, current_timestamp, 1, true, 'UNSPECIFIED')
 

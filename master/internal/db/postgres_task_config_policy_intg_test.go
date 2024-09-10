@@ -5,19 +5,22 @@ package db
 
 import (
 	"context"
+	"encoding/json"
 	"testing"
+	"time"
+
+	"github.com/google/uuid"
+	log "github.com/sirupsen/logrus"
 
 	"github.com/determined-ai/determined/master/pkg/etc"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
-	"github.com/google/uuid"
-	log "github.com/sirupsen/logrus"
 
 	"github.com/stretchr/testify/require"
 )
 
-func TestSetAndGetExperimentConfigPolicies(t *testing.T) {
+func TestSetExperimentConfigPolicies(t *testing.T) {
 	ctx := context.Background()
 	require.NoError(t, etc.SetRootPath(RootFromDB))
 	pgDB, cleanup := MustResolveNewPostgresDatabase(t)
@@ -35,35 +38,142 @@ func TestSetAndGetExperimentConfigPolicies(t *testing.T) {
 	}()
 
 	tests := []struct {
-		name       string
-		expTCP     *model.ExperimentTaskConfigPolicies
-		updatedTCP *model.ExperimentTaskConfigPolicies
-		expected   model.ExperimentTaskConfigPolicies
-		err        *string
-	}{}
+		name    string
+		expTCPs *model.ExperimentTaskConfigPolicies
+		global  bool
+		err     *string
+	}{
+		{
+			"invalid workspace id",
+			&model.ExperimentTaskConfigPolicies{
+				WorkspaceID:     -1,
+				LastUpdatedBy:   user.ID,
+				WorkloadType:    model.ExperimentType,
+				InvariantConfig: DefaultExperimentConfig(),
+				Constraints:     model.Constraints{},
+			},
+			false,
+			ptrs.Ptr("violates foreign key constraint"),
+		},
+		{
+			"invalid user id",
+			&model.ExperimentTaskConfigPolicies{
+				WorkspaceID:     0,
+				LastUpdatedBy:   -1,
+				WorkloadType:    model.ExperimentType,
+				InvariantConfig: DefaultExperimentConfig(),
+				Constraints:     model.Constraints{},
+			},
+			false,
+			ptrs.Ptr("violates foreign key constraint"),
+		},
+		{
+			"valid config no constraint",
+			&model.ExperimentTaskConfigPolicies{
+				LastUpdatedBy:   user.ID,
+				LastUpdatedTime: time.Now(),
+				WorkloadType:    model.ExperimentType,
+				InvariantConfig: DefaultExperimentConfig(),
+				Constraints:     model.Constraints{},
+			},
+			false,
+			nil,
+		},
+		// {
+		// 	"valid constraint no config",
+		// 	&model.ExperimentTaskConfigPolicies{
+		// 		LastUpdatedBy:   user.ID,
+		// 		LastUpdatedTime: time.Now().UTC(),
+		// 		WorkloadType:    model.ExperimentType,
+		// 		InvariantConfig: expconf.ExperimentConfig{},
+		// 		Constraints:     DefaultConstraints(),
+		// 	},
+		// 	false,
+		// 	nil,
+		// },
+		// {
+		// 	"valid constraint valid config",
+		// 	&model.ExperimentTaskConfigPolicies{
+		// 		WorkspaceID:     0,
+		// 		LastUpdatedBy:   user.ID,
+		// 		LastUpdatedTime: time.Now().UTC(),
+		// 		WorkloadType:    model.ExperimentType,
+		// 		InvariantConfig: expconf.ExperimentConfig{},
+		// 		Constraints:     DefaultConstraints(),
+		// 	},
+		// 	false,
+		// 	nil,
+		// },
+		// {
+		// 	"valid config no constraint",
+		// 	&model.ExperimentTaskConfigPolicies{
+		// 		WorkspaceID:     0,
+		// 		LastUpdatedBy:   user.ID,
+		// 		LastUpdatedTime: time.Now().UTC(),
+		// 		WorkloadType:    model.ExperimentType,
+		// 		InvariantConfig: DefaultExperimentConfig(),
+		// 		Constraints:     model.Constraints{},
+		// 	},
+		// 	false,
+		// 	nil,
+		// },
+		// {
+		// 	"global valid constraint no config",
+		// 	&model.ExperimentTaskConfigPolicies{
+		// 		WorkspaceID:     0,
+		// 		LastUpdatedBy:   user.ID,
+		// 		LastUpdatedTime: time.Now().UTC(),
+		// 		WorkloadType:    model.ExperimentType,
+		// 		InvariantConfig: expconf.ExperimentConfig{},
+		// 		Constraints:     DefaultConstraints(),
+		// 	},
+		// 	true,
+		// 	nil,
+		// },
+		// {
+		// 	"global valid constraint valid config",
+		// 	&model.ExperimentTaskConfigPolicies{
+		// 		WorkspaceID:     0,
+		// 		LastUpdatedBy:   user.ID,
+		// 		LastUpdatedTime: time.Now().UTC(),
+		// 		WorkloadType:    model.ExperimentType,
+		// 		InvariantConfig: DefaultExperimentConfig(),
+		// 		Constraints:     DefaultConstraints(),
+		// 	},
+		// 	true,
+		// 	nil,
+		// },
+	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			w = &model.Workspace{Name: uuid.NewString(), UserID: user.ID}
-			_, err := Bun().NewInsert().Model(w).Exec(ctx)
-			require.NoError(t, err)
-			// Test add
-			err = SetExperimentConfigPolicies(ctx, test.expTCP)
+			var w model.Workspace
+			if test.global {
+				w = model.Workspace{Name: uuid.NewString(), UserID: user.ID}
+				_, err := Bun().NewInsert().Model(w).Exec(ctx)
+				require.NoError(t, err)
+				workspaceIDs = append(workspaceIDs, int32(w.ID))
+				test.expTCPs.WorkspaceID = w.ID
+			}
+
+			// Test add experiment task config policies.
+			err := SetExperimentConfigPolicies(ctx, test.expTCPs)
 			if test.err == nil {
 				require.NoError(t, err)
 			} else {
 				require.ErrorContains(t, err, *test.err)
+				return
 			}
 
-			// Test Get
-
-			// Test update.
-
+			// Test get experiment task config policies.
+			expTCPs, err := GetExperimentConfigPolicies(ctx, test.expTCPs.WorkspaceID)
+			require.NoError(t, err)
+			require.Equal(t, test.expTCPs, expTCPs)
 		})
 	}
 }
 
-func TestSetAndGetNTSCConfigPolicies(t *testing.T) {
+func TestSetNTSCConfigPolicies(t *testing.T) {
 	ctx := context.Background()
 	require.NoError(t, etc.SetRootPath(RootFromDB))
 	pgDB, cleanup := MustResolveNewPostgresDatabase(t)
@@ -82,14 +192,189 @@ func TestSetAndGetNTSCConfigPolicies(t *testing.T) {
 
 	tests := []struct {
 		name     string
-		ntscTCP  model.NTSCTaskConfigPolicies
-		expected model.NTSCTaskConfigPolicies
+		ntscTCPs *model.NTSCTaskConfigPolicies
+		global   bool
 		err      *string
-	}{}
+	}{
+		{
+			"invalid workspace id",
+			&model.NTSCTaskConfigPolicies{
+				WorkspaceID:     -1,
+				LastUpdatedBy:   user.ID,
+				WorkloadType:    model.NTSCType,
+				InvariantConfig: DefaultCommandConfig(),
+				Constraints:     DefaultConstraints(),
+			},
+			false,
+			ptrs.Ptr("violates foreign key constraint"),
+		},
+		{
+			"invalid user id",
+			&model.NTSCTaskConfigPolicies{
+				WorkspaceID:     0,
+				LastUpdatedBy:   -1,
+				WorkloadType:    model.NTSCType,
+				InvariantConfig: DefaultCommandConfig(),
+				Constraints:     DefaultConstraints(),
+			},
+			false,
+			ptrs.Ptr("violates foreign key constraint"),
+		},
+		{
+			"valid config no constraint",
+			&model.NTSCTaskConfigPolicies{
+				LastUpdatedBy:   user.ID,
+				LastUpdatedTime: time.Now().UTC(),
+				WorkloadType:    model.ExperimentType,
+				InvariantConfig: DefaultCommandConfig(),
+				Constraints:     model.Constraints{},
+			},
+			false,
+			nil,
+		},
+		{
+			"valid constraint no config",
+			&model.NTSCTaskConfigPolicies{
+				LastUpdatedBy:   user.ID,
+				LastUpdatedTime: time.Now().UTC(),
+				WorkloadType:    model.ExperimentType,
+				InvariantConfig: model.CommandConfig{},
+				Constraints:     DefaultConstraints(),
+			},
+			false,
+			nil,
+		},
+		{
+			"valid constraint valid config",
+			&model.NTSCTaskConfigPolicies{
+				WorkspaceID:     0,
+				LastUpdatedBy:   user.ID,
+				LastUpdatedTime: time.Now().UTC(),
+				WorkloadType:    model.ExperimentType,
+				InvariantConfig: model.CommandConfig{},
+				Constraints:     DefaultConstraints(),
+			},
+			false,
+			nil,
+		},
+		{
+			"valid config no constraint",
+			&model.NTSCTaskConfigPolicies{
+				WorkspaceID:     0,
+				LastUpdatedBy:   user.ID,
+				LastUpdatedTime: time.Now().UTC(),
+				WorkloadType:    model.ExperimentType,
+				InvariantConfig: DefaultCommandConfig(),
+				Constraints:     model.Constraints{},
+			},
+			false,
+			nil,
+		},
+		{
+			"global valid constraint no config",
+			&model.NTSCTaskConfigPolicies{
+				WorkspaceID:     0,
+				LastUpdatedBy:   user.ID,
+				LastUpdatedTime: time.Now().UTC(),
+				WorkloadType:    model.ExperimentType,
+				InvariantConfig: model.CommandConfig{},
+				Constraints:     DefaultConstraints(),
+			},
+			true,
+			nil,
+		},
+		{
+			"global valid constraint valid config",
+			&model.NTSCTaskConfigPolicies{
+				WorkspaceID:     0,
+				LastUpdatedBy:   user.ID,
+				LastUpdatedTime: time.Now().UTC(),
+				WorkloadType:    model.ExperimentType,
+				InvariantConfig: DefaultCommandConfig(),
+				Constraints:     DefaultConstraints(),
+			},
+			true,
+			nil,
+		},
+	}
 
 	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			var w model.Workspace
+			if test.global {
+				w = model.Workspace{Name: uuid.NewString(), UserID: user.ID}
+				_, err := Bun().NewInsert().Model(w).Exec(ctx)
+				require.NoError(t, err)
+				workspaceIDs = append(workspaceIDs, int32(w.ID))
+				test.ntscTCPs.WorkspaceID = w.ID
+			}
 
+			// Test add experiment task config policies.
+			err := SetNTSCConfigPolicies(ctx, test.ntscTCPs)
+			if test.err == nil {
+				require.NoError(t, err)
+			} else {
+				require.ErrorContains(t, err, *test.err)
+				return
+			}
+
+			// Test get experiment task config policies.
+			ntscTCPs, err := GetExperimentConfigPolicies(ctx, test.ntscTCPs.WorkspaceID)
+			require.NoError(t, err)
+			require.Equal(t, test.ntscTCPs, ntscTCPs)
+		})
 	}
+}
+
+// Test the enforcement of the primary key on the task_config_polciies table.
+func TestTaskConfigPoliciesUnique(t *testing.T) {
+	ctx := context.Background()
+	require.NoError(t, etc.SetRootPath(RootFromDB))
+	pgDB, cleanup := MustResolveNewPostgresDatabase(t)
+	defer cleanup()
+	MustMigrateTestPostgres(t, pgDB, MigrationsFromDB)
+
+	user := RequireMockUser(t, pgDB)
+
+	// Global scope.
+	w, expTCP, _ := CreateMockTaskConfigPolicies(ctx, t, pgDB, user, true, true, true)
+	expTCP.Constraints = model.Constraints{}
+	expInvariantConfig, err := json.Marshal(expTCP.InvariantConfig)
+	require.NoError(t, err)
+
+	count, err := Bun().NewSelect().
+		Table("task_config_policies").
+		Where("workspace_id = ?", w.ID).
+		Count(ctx)
+	require.NoError(t, err)
+	require.Equal(t, 2, count)
+
+	_, err = Bun().NewInsert().Model(expTCP).
+		Where("workspace_id = ?", nil).
+		Where("workspace_type = ?", model.ExperimentType).
+		Value("invariant_config", "?", string(expInvariantConfig)).
+		Exec(ctx)
+	require.ErrorContains(t, err, "duplicate key value violates unique constraint")
+
+	// Workspace-level.
+	w, expTCP, _ = CreateMockTaskConfigPolicies(ctx, t, pgDB, user, false, true, true)
+	expTCP.Constraints = model.Constraints{}
+	expInvariantConfig, err = json.Marshal(expTCP.InvariantConfig)
+	require.NoError(t, err)
+
+	count, err = Bun().NewSelect().
+		Table("task_config_policies").
+		Where("workspace_id = ?", w.ID).
+		Count(ctx)
+	require.NoError(t, err)
+	require.Equal(t, 2, count)
+
+	_, err = Bun().NewInsert().Model(expTCP).
+		Where("workspace_id = ?", w.ID).
+		Where("workspace_type = ?", model.NTSCType).
+		Value("invariant_config", "?", string(expInvariantConfig)).
+		Exec(ctx)
+	require.ErrorContains(t, err, "duplicate key value violates unique constraint")
 }
 
 func TestDeleteConfigPolicies(t *testing.T) {
@@ -124,15 +409,19 @@ func TestDeleteConfigPolicies(t *testing.T) {
 		{"ntsc config no constraint", false, model.NTSCType, true, false, nil},
 		{"ntsc config and constraint", false, model.NTSCType, true, true, nil},
 		{"ntsc no config has constraint", false, model.NTSCType, false, true, nil},
-		{"unspecified workload type", false, model.UnknownType, true, true,
-			ptrs.Ptr("invalid workload type")},
+		{
+			"unspecified workload type", false, model.UnknownType, true, true,
+			ptrs.Ptr("invalid workload type"),
+		},
 		{"ntsc no config no constraint", false, model.NTSCType, false, false, nil},
 		{"global exp config no constraint", true, model.ExperimentType, true, false, nil},
 		{"global exp config no constraint", true, model.ExperimentType, true, true, nil},
 		{"global ntsc config no constraint", true, model.NTSCType, true, false, nil},
 		{"global ntsc config and constraint", true, model.NTSCType, true, true, nil},
-		{"global unspecified workload type", true, model.UnknownType, true, true,
-			ptrs.Ptr("invalid workload type")},
+		{
+			"global unspecified workload type", true, model.UnknownType, true, true,
+			ptrs.Ptr("invalid workload type"),
+		},
 	}
 
 	for _, test := range tests {
@@ -147,7 +436,7 @@ func TestDeleteConfigPolicies(t *testing.T) {
 
 				err := DeleteConfigPolicies(ctx, expTCP.WorkspaceID, test.workloadType)
 				if test.err == nil {
-					require.Nil(t, err)
+					require.NoError(t, err)
 				} else {
 					require.ErrorContains(t, err, *test.err)
 				}
@@ -161,7 +450,7 @@ func TestDeleteConfigPolicies(t *testing.T) {
 
 				err := DeleteConfigPolicies(ctx, ntscTCP.WorkspaceID, test.workloadType)
 				if test.err == nil {
-					require.Nil(t, err)
+					require.NoError(t, err)
 				} else {
 					require.ErrorContains(t, err, *test.err)
 				}
@@ -170,7 +459,7 @@ func TestDeleteConfigPolicies(t *testing.T) {
 	}
 
 	// Verify that trying to delete task config policies for a nonexistent scope doesn't error out.
-	err := DeleteConfigPolicies(ctx, ptrs.Ptr(-1), model.ExperimentType)
+	err := DeleteConfigPolicies(ctx, -1, model.ExperimentType)
 	require.NoError(t, err)
 
 	// Verify that trying to delete task config policies for a workspace with no set policies
@@ -180,71 +469,96 @@ func TestDeleteConfigPolicies(t *testing.T) {
 	require.NoError(t, err)
 	workspaceIDs = append(workspaceIDs, int32(w.ID))
 
-	err = DeleteConfigPolicies(ctx, ptrs.Ptr(w.ID), model.ExperimentType)
+	err = DeleteConfigPolicies(ctx, w.ID, model.ExperimentType)
 	require.NoError(t, err)
-
-	// Verify that we can delete both the experiment and NTSC task config policy for the same
-	// workspace.
-	w, _, _ = CreateMockTaskConfigPolicies(ctx, t, pgDB, user, false, true, true)
-	workspaceIDs = append(workspaceIDs, int32(w.ID))
-
-	q := Bun().NewSelect().Table("task_config_policies")
-	count, err := q.Where("workspace_id = ?", w.ID).Count(ctx)
-	require.NoError(t, err)
-	require.Equal(t, 2, count)
-
-	err = DeleteConfigPolicies(ctx, ptrs.Ptr(w.ID), model.ExperimentType)
-	require.NoError(t, err)
-
-	count, err = q.Count(ctx)
-	require.NoError(t, err)
-	require.Equal(t, 1, count)
-
-	err = DeleteConfigPolicies(ctx, ptrs.Ptr(w.ID), model.NTSCType)
-	require.NoError(t, err)
-	count, err = q.Count(ctx)
-	require.NoError(t, err)
-	require.Equal(t, 0, count)
 
 	// Verify that we can create and delete task config policies individually for different
 	// workspaces.
 	w1, _, _ := CreateMockTaskConfigPolicies(ctx, t, pgDB, user, false, true, true)
 	workspaceIDs = append(workspaceIDs, int32(w1.ID))
-	count, err = Bun().NewSelect().
-		Table("task_config_policies").
-		Where("workspace_id = ?", w1.ID).
-		Count(ctx)
+	q1 := Bun().NewSelect().Table("task_config_policies").Where("workspace_id = ?", w1.ID)
+	count, err := q1.Count(ctx)
 	require.NoError(t, err)
 	require.Equal(t, 2, count)
 
 	w2, _, _ := CreateMockTaskConfigPolicies(ctx, t, pgDB, user, false, true, true)
 	workspaceIDs = append(workspaceIDs, int32(w2.ID))
-	count, err = Bun().NewSelect().
-		Table("task_config_policies").
-		Where("workspace_id = ?", w2.ID).
-		Count(ctx)
+	q2 := Bun().NewSelect().Table("task_config_policies").Where("workspace_id = ?", w2.ID)
+	count, err = q2.Count(ctx)
 	require.NoError(t, err)
 	require.Equal(t, 2, count)
 
-	err = DeleteConfigPolicies(ctx, ptrs.Ptr(w1.ID), model.ExperimentType)
+	err = DeleteConfigPolicies(ctx, w1.ID, model.ExperimentType)
 	require.NoError(t, err)
 
-	// Verify that the task config policy in the other workspace still exists.
-	count, err = Bun().NewSelect().
-		Table("task_config_policies").
-		Where("workspace_id = ?", w2.ID).Count(ctx)
-	require.NoError(t, err)
-	require.Equal(t, 2, count)
-
-	err = DeleteConfigPolicies(ctx, ptrs.Ptr(w2.ID), model.ExperimentType)
-	require.NoError(t, err)
-
-	// Verify that the task config policy in the other workspace still exists.
-	count, err = Bun().NewSelect().
-		Table("task_config_policies").
-		Where("workspace_id = ?", w2.ID).Count(ctx)
+	// Verify that exactly 1 task config policy was deleted from w1.
+	count, err = q1.Count(ctx)
 	require.NoError(t, err)
 	require.Equal(t, 1, count)
+
+	// Verify that both task config policies in w2 still exist.
+	count, err = q2.Count(ctx)
+	require.NoError(t, err)
+	require.Equal(t, 2, count)
+
+	err = DeleteConfigPolicies(ctx, w2.ID, model.ExperimentType)
+	require.NoError(t, err)
+
+	// Verify that exactly 1 task config policy was deleted from w2.
+	count, err = q2.Count(ctx)
+	require.NoError(t, err)
+	require.Equal(t, 1, count)
+
+	err = DeleteConfigPolicies(ctx, w1.ID, model.NTSCType)
+	require.NoError(t, err)
+
+	// Verify that no task config policies exist for w1.
+	count, err = q1.Count(ctx)
+	require.NoError(t, err)
+	require.Equal(t, 0, count)
+
+	err = DeleteConfigPolicies(ctx, w2.ID, model.NTSCType)
+	require.NoError(t, err)
+
+	// Verify that no task config policies exist for w2.
+	count, err = q2.Count(ctx)
+	require.NoError(t, err)
+	require.Equal(t, 0, count)
+
+	// Test delete cascade on task config policies when a workspace is deleted.
+	w1, _, _ = CreateMockTaskConfigPolicies(ctx, t, pgDB, user, false, true, true)
+	workspaceIDs = append(workspaceIDs, int32(w1.ID))
+	q1 = Bun().NewSelect().Table("task_config_policies").Where("workspace_id = ?", w1.ID)
+	count, err = q1.Count(ctx)
+	require.NoError(t, err)
+	require.Equal(t, 2, count)
+
+	w2, _, _ = CreateMockTaskConfigPolicies(ctx, t, pgDB, user, false, true, true)
+	workspaceIDs = append(workspaceIDs, int32(w2.ID))
+	q2 = Bun().NewSelect().Table("task_config_policies").Where("workspace_id = ?", w2.ID)
+	count, err = q2.Count(ctx)
+	require.NoError(t, err)
+	require.Equal(t, 2, count)
+
+	// Verify that only the task config policies of w1 were deleted when w1 was deleted.
+	_, err = Bun().NewDelete().Model(&model.Workspace{}).Where("id = ?", w1.ID).Exec(ctx)
+	require.NoError(t, err)
+
+	count, err = q1.Count(ctx)
+	require.NoError(t, err)
+	require.Equal(t, 0, count)
+
+	count, err = q2.Count(ctx)
+	require.NoError(t, err)
+	require.Equal(t, 2, count)
+
+	// Verify that both task config policies of w2 are deleted when w2 is deleted.
+	_, err = Bun().NewDelete().Model(&model.Workspace{}).Where("id = ?", w2.ID).Exec(ctx)
+	require.NoError(t, err)
+
+	count, err = q2.Count(ctx)
+	require.NoError(t, err)
+	require.Equal(t, 0, count)
 }
 
 // CreateMockTaskConfigPolicies creates experiment and NTSC invariant configs and constraints as
@@ -252,36 +566,27 @@ func TestDeleteConfigPolicies(t *testing.T) {
 func CreateMockTaskConfigPolicies(ctx context.Context, t *testing.T,
 	pgDB *PgDB, user model.User, global bool, hasInvariantConfig bool,
 	hasConstraints bool) (*model.Workspace, *model.ExperimentTaskConfigPolicies,
-	*model.NTSCTaskConfigPolicies) {
-
-	var scope *int
-	var w *model.Workspace
+	*model.NTSCTaskConfigPolicies,
+) {
+	var scope int
+	var w model.Workspace
 	var expConfig expconf.ExperimentConfig
 	var ntscConfig model.CommandConfig
 
 	var constraints model.Constraints
 
 	if !global {
-		w = &model.Workspace{Name: uuid.NewString(), UserID: user.ID}
-		_, err := Bun().NewInsert().Model(w).Exec(ctx)
+		w = model.Workspace{Name: uuid.NewString(), UserID: user.ID}
+		_, err := Bun().NewInsert().Model(&w).Exec(ctx)
 		require.NoError(t, err)
-		scope = &w.ID
+		scope = w.ID
 	}
 	if hasInvariantConfig {
 		expConfig = DefaultExperimentConfig()
-		ntscConfig = model.CommandConfig{
-			Description: "random description",
-			Resources: model.ResourcesConfig{
-				Slots:    4,
-				MaxSlots: ptrs.Ptr(8),
-			},
-		}
+		ntscConfig = DefaultCommandConfig()
 	}
 	if hasConstraints {
-		constraints = model.Constraints{PriorityLimit: ptrs.Ptr[int](10),
-			ResourceConstraints: &model.ResourceConstraints{
-				MaxSlots: ptrs.Ptr(10),
-			}}
+		constraints = DefaultConstraints()
 	}
 
 	experimentTCP := &model.ExperimentTaskConfigPolicies{
@@ -304,14 +609,20 @@ func CreateMockTaskConfigPolicies(ctx context.Context, t *testing.T,
 	err = SetNTSCConfigPolicies(ctx, ntscTCP)
 	require.NoError(t, err)
 
-	return w, experimentTCP, ntscTCP
+	return &w, experimentTCP, ntscTCP
 }
 
-func DefaultExperimentConfig() expconf.ExperimentConfigV0 {
-	return expconf.ExperimentConfigV0{
+func DefaultExperimentConfig() expconf.ExperimentConfig {
+
+	// Marshal and Unmarshal this and return the Unmarshaled version
+	// var expConf expconf.ExperimentConfig
+	// json.Unmarshal(bytes, &d.RawString)
+
+	return expconf.ExperimentConfig{
 		RawCheckpointStorage: &expconf.CheckpointStorageConfigV0{
 			RawSharedFSConfig: &expconf.SharedFSConfigV0{
-				RawHostPath: ptrs.Ptr("path/to/config")},
+				RawHostPath: ptrs.Ptr("path/to/config"),
+			},
 		},
 		RawHyperparameters: expconf.HyperparametersV0{},
 		RawName:            expconf.Name{RawString: ptrs.Ptr(uuid.NewString())},
@@ -326,6 +637,25 @@ func DefaultExperimentConfig() expconf.ExperimentConfigV0 {
 					Units: uint64(2),
 				},
 			},
+		},
+	}
+}
+
+func DefaultCommandConfig() model.CommandConfig {
+	return model.CommandConfig{
+		Description: "random description",
+		Resources: model.ResourcesConfig{
+			Slots:    4,
+			MaxSlots: ptrs.Ptr(8),
+		},
+	}
+}
+
+func DefaultConstraints() model.Constraints {
+	return model.Constraints{
+		PriorityLimit: ptrs.Ptr[int](10),
+		ResourceConstraints: &model.ResourceConstraints{
+			MaxSlots: ptrs.Ptr(10),
 		},
 	}
 }
