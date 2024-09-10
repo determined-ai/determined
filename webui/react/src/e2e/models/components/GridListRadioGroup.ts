@@ -1,6 +1,7 @@
-import { BaseComponent } from 'playwright-page-model-base/BaseComponent';
+import { BaseComponent, NamedComponent } from 'playwright-page-model-base/BaseComponent';
 
-export class GridListRadioGroup extends BaseComponent {
+export class GridListRadioGroup extends NamedComponent {
+  override defaultSelector = '[data-test-component="grid-list-radio-group"]';
   readonly grid = new BaseComponent({
     parent: this,
     selector: 'label:first-of-type',

@@ -24,7 +24,7 @@ const GridListRadioGroup: React.FC<Props> = ({ onChange, value }: Props) => {
   );
 
   return (
-    <div data-testid="grid-list-radio-group">
+    <div data-test-component="grid-list-radio-group">
       <RadioGroup
         iconOnly
         options={[

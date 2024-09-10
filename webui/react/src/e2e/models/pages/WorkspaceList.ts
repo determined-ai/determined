@@ -54,7 +54,6 @@ export class WorkspaceList extends DeterminedPage {
   });
   readonly gridListRadioGroup = new GridListRadioGroup({
     parent: this,
-    selector: '[data-testid="grid-list-radio-group"]',
   });
   readonly table = new InteractiveTable({
     parent: this,

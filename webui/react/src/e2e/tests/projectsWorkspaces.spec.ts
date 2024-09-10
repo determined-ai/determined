@@ -324,17 +324,16 @@ test.describe('Workspace List', () => {
     );
   });
 
-  test('Filter', async ({ authedPage }) => {
+  test('Filter', async ({ authedPage, apiWorkspace }) => {
     const workspaceList = new WorkspaceList(authedPage);
 
-    await workspaceList.newWorkspaceButton.pwLocator.click();
-    const currentUserWorkspaceName = await createWorkspaceAllFields(
-      workspaceList.createModal,
-      'fromButton',
-    );
-    await workspaceList.nav.sidebar.workspaces.pwLocator.click();
+    const currentUserWorkspace = (await apiWorkspace.createWorkspace(apiWorkspace.new())).workspace;
 
+    const currentUserWorkspaceName = currentUserWorkspace.name;
     const otherUserWorkspaceName = workspaces.map((w) => w.name)[0];
+
+    await authedPage.reload();
+
     const namesAfterAll = await getCurrentWorkspaceNames(workspaceList);
     expect(namesAfterAll).toContain(otherUserWorkspaceName);
     expect(namesAfterAll).toContain(currentUserWorkspaceName);
@@ -349,13 +348,7 @@ test.describe('Workspace List', () => {
     expect(namesAfterMy).toContain(currentUserWorkspaceName);
     expect(namesAfterMy).not.toContain(otherUserWorkspaceName);
 
-    // cleanup:
-    const deleteModal = workspaceList.deleteModal;
-    const workspaceCard = workspaceList.cardByName(currentUserWorkspaceName);
-    await (await workspaceCard.actionMenu.open()).delete.pwLocator.click();
-    await deleteModal.nameConfirmation.pwLocator.fill(currentUserWorkspaceName);
-    await deleteModal.footer.submit.pwLocator.click();
-    await deleteModal.pwLocator.waitFor({ state: 'hidden' });
+    await apiWorkspace.deleteWorkspace(currentUserWorkspace.id);
   });
 
   test('View Toggle', async ({ authedPage }) => {
@@ -368,97 +361,82 @@ test.describe('Workspace List', () => {
     expect(await workspaceList.table.table.rows.nth(0).name.pwLocator.textContent()).toEqual(
       idSortedWorkspaceNames[0],
     );
-
-    // cleanup:
-    await workspaceList.gridListRadioGroup.grid.pwLocator.click();
   });
 });
 
-test.describe('With a Workspace', () => {
-  test.beforeEach(async ({ authedPage, newWorkspace }) => {
-    const workspaceList = new WorkspaceList(authedPage);
-    const workspaceCard = workspaceList.cardByName(newWorkspace.response.workspace.name);
+test.describe('Project UI CRUD', () => {
+  const projectIds: number[] = [];
 
-    await test.step('Navigate to Workspaces', async () => {
-      await workspaceList.goto();
-      await workspaceCard.pwLocator.waitFor({ timeout: 10_000 });
+  test.beforeEach(async ({ authedPage, newWorkspace }) => {
+    const workspaceDetails = new WorkspaceDetails(authedPage);
+    await workspaceDetails.gotoWorkspace(newWorkspace.response.workspace.id);
+    await workspaceDetails.workspaceProjects.showArchived.switch.uncheck();
+  });
+
+  test.afterAll(async ({ backgroundApiProject }) => {
+    for (const project of projectIds) {
+      await backgroundApiProject.deleteProject(project);
+    }
+  });
+
+  test('Create a Project', async ({ authedPage, newWorkspace }) => {
+    const projectName = safeName('test-project');
+    const workspaceDetails = new WorkspaceDetails(authedPage);
+    const projectDetails = new ProjectDetails(authedPage);
+
+    const projects = workspaceDetails.workspaceProjects;
+
+    await test.step('Create a Project', async () => {
+      await projects.newProject.pwLocator.click();
+      await projects.createModal.projectName.pwLocator.fill(projectName);
+      await projects.createModal.description.pwLocator.fill(randId());
+      await projects.createModal.footer.submit.pwLocator.click();
+      projectIds.push(await projectDetails.getIdFromUrl());
+      await workspaceDetails.gotoWorkspace(newWorkspace.response.workspace.id);
+      await projects.cardByName(projectName).pwLocator.waitFor();
+    });
+
+    await test.step('Delete a Project', async () => {
+      await workspaceDetails.gotoWorkspace(newWorkspace.response.workspace.id);
+      await workspaceDetails.projectsTab.pwLocator.click();
+      const projectCard = projects.cardByName(projectName);
+      await projectCard.actionMenu.open();
+      await projectCard.actionMenu.delete.pwLocator.click();
+      await projects.deleteModal.nameConfirmation.pwLocator.fill(projectName);
+      await projects.deleteModal.footer.submit.pwLocator.click();
     });
   });
 
-  test.describe('Project UI CRUD', () => {
-    const projectIds: number[] = [];
+  test('Archive and Unarchive Project', async ({
+    authedPage,
+    newWorkspace,
+    backgroundApiProject,
+  }) => {
+    const workspaceDetails = new WorkspaceDetails(authedPage);
 
-    test.beforeEach(async ({ authedPage, newWorkspace }) => {
-      const workspaceDetails = new WorkspaceDetails(authedPage);
-      await workspaceDetails.gotoWorkspace(newWorkspace.response.workspace.id);
-      await workspaceDetails.workspaceProjects.showArchived.switch.uncheck();
+    const newProject = await backgroundApiProject.createProject(
+      newWorkspace.response.workspace.id,
+      backgroundApiProject.new(),
+    );
+    projectIds.push(newProject.project.id);
+    const projectCard = workspaceDetails.workspaceProjects.cardByName(newProject.project.name);
+    const archiveMenuItem = projectCard.actionMenu.archive;
+
+    await test.step('Archive', async () => {
+      await authedPage.reload();
+      await projectCard.actionMenu.open();
+      await expect(archiveMenuItem.pwLocator).toHaveText('Archive');
+      await archiveMenuItem.pwLocator.click();
+      await projectCard.pwLocator.waitFor({ state: 'hidden' });
     });
 
-    test.afterAll(async ({ backgroundApiProject }) => {
-      for (const project of projectIds) {
-        await backgroundApiProject.deleteProject(project);
-      }
-    });
-
-    test('Create a Project', async ({ authedPage, newWorkspace }) => {
-      const projectName = safeName('test-project');
-      const workspaceDetails = new WorkspaceDetails(authedPage);
-      const projectDetails = new ProjectDetails(authedPage);
-
-      const projects = workspaceDetails.workspaceProjects;
-
-      await test.step('Create a Project', async () => {
-        await projects.newProject.pwLocator.click();
-        await projects.createModal.projectName.pwLocator.fill(projectName);
-        await projects.createModal.description.pwLocator.fill(randId());
-        await projects.createModal.footer.submit.pwLocator.click();
-        projectIds.push(await projectDetails.getIdFromUrl());
-        await workspaceDetails.gotoWorkspace(newWorkspace.response.workspace.id);
-        await projects.cardByName(projectName).pwLocator.waitFor();
-      });
-
-      await test.step('Delete a Project', async () => {
-        await workspaceDetails.gotoWorkspace(newWorkspace.response.workspace.id);
-        await workspaceDetails.projectsTab.pwLocator.click();
-        const projectCard = projects.cardByName(projectName);
-        await projectCard.actionMenu.open();
-        await projectCard.actionMenu.delete.pwLocator.click();
-        await projects.deleteModal.nameConfirmation.pwLocator.fill(projectName);
-        await projects.deleteModal.footer.submit.pwLocator.click();
-      });
-    });
-
-    test('Archive and Unarchive Project', async ({
-      authedPage,
-      newWorkspace,
-      backgroundApiProject,
-    }) => {
-      const workspaceDetails = new WorkspaceDetails(authedPage);
-
-      const newProject = await backgroundApiProject.createProject(
-        newWorkspace.response.workspace.id,
-        backgroundApiProject.new(),
-      );
-      projectIds.push(newProject.project.id);
-      const projectCard = workspaceDetails.workspaceProjects.cardByName(newProject.project.name);
-      const archiveMenuItem = projectCard.actionMenu.archive;
-
-      await test.step('Archive', async () => {
-        await authedPage.reload();
-        await projectCard.actionMenu.open();
-        await expect(archiveMenuItem.pwLocator).toHaveText('Archive');
-        await archiveMenuItem.pwLocator.click();
-        await projectCard.pwLocator.waitFor({ state: 'hidden' });
-      });
-
-      await test.step('Unarchive', async () => {
-        await workspaceDetails.workspaceProjects.showArchived.switch.pwLocator.click();
-        await projectCard.archivedBadge.pwLocator.waitFor();
-        await projectCard.actionMenu.open();
-        await expect(archiveMenuItem.pwLocator).toHaveText('Unarchive');
-        await archiveMenuItem.pwLocator.click();
-        await projectCard.archivedBadge.pwLocator.waitFor({ state: 'hidden' });
-      });
+    await test.step('Unarchive', async () => {
+      await workspaceDetails.workspaceProjects.showArchived.switch.pwLocator.click();
+      await projectCard.archivedBadge.pwLocator.waitFor();
+      await projectCard.actionMenu.open();
+      await expect(archiveMenuItem.pwLocator).toHaveText('Unarchive');
+      await archiveMenuItem.pwLocator.click();
+      await projectCard.archivedBadge.pwLocator.waitFor({ state: 'hidden' });
     });
   });
 });
