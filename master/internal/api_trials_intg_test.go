@@ -1476,7 +1476,7 @@ func completeExp(ctx context.Context, expID int32) error {
 	return nil
 }
 
-func TestGetTrialRemainingLogRetentionDays(t *testing.T) {
+func TestGetTrialRemainingLogRetentionDaysNullMasterConfig(t *testing.T) {
 	api, _, ctx := setupAPITest(t, nil)
 
 	tests := []struct {
@@ -1485,6 +1485,47 @@ func TestGetTrialRemainingLogRetentionDays(t *testing.T) {
 		expRemainingDays []int32
 	}{
 		{"test-null-days", "", []int32{-1, -1, -1, -1}},
+		{"test-forever", `
+retention_policy:
+  log_retention_days: -1
+`, []int32{-1, -1, -1, -1}},
+		{"test-10days", `
+retention_policy:
+  log_retention_days: 10
+`, []int32{0, 0, 4, 9}},
+	}
+
+	for _, tt := range tests {
+		log.Printf("Starting %v", tt.name)
+		testEndTimes := []int{15, 10, 5, 0}
+		exp, trialIDs, _ := CreateTestRetentionExperiment(ctx, t, api, tt.logRetentionDays, len(testEndTimes))
+
+		for i, v := range testEndTimes {
+			err := completeTrialsandTasks(ctx, trialIDs[i], v)
+			require.NoError(t, err)
+
+			d, err := api.GetTrialRemainingLogRetentionDays(ctx, &apiv1.GetTrialRemainingLogRetentionDaysRequest{
+				Id: int32(trialIDs[i]),
+			})
+			require.NoError(t, err)
+			require.Equal(t, tt.expRemainingDays[i], *d.RemainingDays)
+		}
+		err := completeExp(ctx, exp.Id)
+		require.NoError(t, err)
+	}
+}
+
+func TestGetTrialRemainingLogRetentionDaysNonNullMasterConfig(t *testing.T) {
+	api, _, ctx := setupAPITest(t, nil)
+	// set Log retention days in master config
+	retentionDays := int16(100)
+	api.m.config.RetentionPolicy.LogRetentionDays = &retentionDays
+	tests := []struct {
+		name             string
+		logRetentionDays string
+		expRemainingDays []int32
+	}{
+		{"test-null-days", "", []int32{84, 89, 94, 99}},
 		{"test-forever", `
 retention_policy:
   log_retention_days: -1
