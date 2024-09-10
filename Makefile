@@ -37,6 +37,11 @@ package:
 	$(MAKE) -C agent $@
 	$(MAKE) -C master $@
 
+.PHONY: package-dryrun
+package-dryrun:
+	$(MAKE) -C agent $@
+	$(MAKE) -C master $@
+
 .PHONY: package-ee
 package-ee:
 	$(MAKE) -C agent $@
