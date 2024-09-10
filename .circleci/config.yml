@@ -92,6 +92,7 @@ jobs:
           command: |
             VERSION=$(./version.sh)
             echo "Version is: [${VERSION}]"
+            echo "CIRCLE_TAG is: [${CIRCLE_TAG}]"
             jq --arg version "${VERSION}" '. += {"det-version": $version}' < "<<pipeline.parameters.params_basename>>" > tmpfile
             mv -v tmpfile "<<pipeline.parameters.params_basename>>"
             cat "<<pipeline.parameters.params_basename>>"
