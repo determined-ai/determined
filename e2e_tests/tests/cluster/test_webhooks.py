@@ -94,7 +94,7 @@ def test_log_pattern_send_webhook(should_match: bool) -> None:
     sess = api_utils.admin_session()
     ws_id = []
 
-    regex = r"assert 0 <= self\.metrics_sigma"
+    regex = r"assert not self\.crash_on_startup"
     if not should_match:
         regex = r"(.*)cuda(.*)"
 
@@ -177,7 +177,7 @@ def test_log_pattern_send_webhook(should_match: bool) -> None:
         conf.fixtures_path("no_op"),
         [
             "--config",
-            "hyperparameters.metrics_sigma=-1.0",
+            "hyperparameters.crash_on_startup=True",
             "--config",
             "integrations.webhooks.webhook_name=['specific-webhook']",
             "--project_id",

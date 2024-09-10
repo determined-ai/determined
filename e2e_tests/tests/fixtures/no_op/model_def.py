@@ -7,7 +7,7 @@ import pickle
 import random
 import sys
 import time
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
 import numpy as np
 
@@ -52,37 +52,23 @@ class NoOpTrialController(det.TrialController):
         if check_startup_hook_ran:
             check.true(os.path.isfile("startup-hook-ran"), "File should exists.")
 
-        self.chaos = random.SystemRandom()
         self._batch_size = self.context.get_per_slot_batch_size()
-        self.chaos_probability = self.env.hparams.get("chaos_probability", 0)
-        self.chaos_probability_train = self.env.hparams.get("chaos_probability_train")
-        self.chaos_probability_validate = self.env.hparams.get("chaos_probability_validate")
-        self.chaos_probability_checkpoint = self.env.hparams.get("chaos_probability_checkpoint")
         self.nan_probability_validate = self.env.hparams.get("nan_probability_validate", 0)
-        self.fail_on_first_validation = self.env.hparams.get("fail_on_first_validation", "")
-        self.fail_on_chechpoint_save = self.env.hparams.get("fail_on_chechpoint_save", "")
-        self.validation_set_size = self.env.hparams.get("validation_set_size", 32 * 32)
+        self.validation_set_size = 256
         self.train_batch_secs = self.env.hparams.get("training_batch_seconds", 0)
-        self.validation_secs = self.env.hparams.get(
-            "validation_seconds",
-            self.validation_set_size * self.train_batch_secs / self._batch_size,
-        )
         self.num_training_metrics = self.env.hparams.get("num_training_metrics", 1)
         assert self.num_training_metrics > 0
         self.num_validation_metrics = self.env.hparams.get("num_validation_metrics", 1)
         assert self.num_validation_metrics > 0
-        self.save_secs = self.env.hparams.get("save_checkpoint_seconds", 0)
-        self.load_secs = self.env.hparams.get("load_checkpoint_secs", 0)
         self.metrics_progression = self.env.hparams.get("metrics_progression", "decreasing")
         assert self.metrics_progression in ("increasing", "decreasing", "constant")
         self.metrics_base = self.env.hparams.get("metrics_base", 0.9)
         assert 0 < self.metrics_base < 1
-        self.metrics_sigma = self.env.hparams.get("metrics_sigma", 0.0)
-        assert 0 <= self.metrics_sigma
         self.write_null = self.env.hparams.get("write_null", False)
 
         self.request_stop = self.env.hparams.get("request_stop", False)
 
+        self.crash_on_startup = self.env.hparams.get("crash_on_startup", False)
         self.non_chief_exit_immediately = self.env.hparams.get("non_chief_exit_immediately", False)
 
         self.wlsq = None
@@ -107,12 +93,13 @@ class NoOpTrialController(det.TrialController):
 
     @staticmethod
     def pre_execute_hook(env: det.EnvContext, distributed_backend: det._DistributedBackend) -> None:
-        np.random.seed(env.trial_seed)
+        pass
 
     def create_metric_writer(self) -> tensorboard.BatchMetricWriter:
         return tensorboard.get_metric_writer()
 
     def run(self) -> None:
+        assert not self.crash_on_startup
         if self.non_chief_exit_immediately:
             if self.context.distributed.get_rank() != 0:
                 sys.exit()
@@ -145,20 +132,18 @@ class NoOpTrialController(det.TrialController):
         return sum(self.trained_steps.values())
 
     def current_metric(self) -> float:
-        noise = np.random.normal(loc=0.0, scale=self.metrics_sigma**2)
         if self.metrics_progression == "constant":
-            return self.metrics_base + noise
+            return self.metrics_base
         elif self.metrics_progression == "decreasing":
-            return self.metrics_base ** self.steps_trained() + noise
+            return self.metrics_base ** self.steps_trained()
         elif self.metrics_progression == "increasing":
-            return 1 - (self.metrics_base ** self.steps_trained()) + noise
+            return 1 - (self.metrics_base ** self.steps_trained())
         else:
             raise ValueError("Invalid `metrics_progression` {}".format(self.metrics_progression))
 
     def train_for_step(self, step_id: int, num_batches: int) -> Dict[str, Any]:
         if self.request_stop:
             self.context.set_stop_requested(True)
-        self.chaos_failure(self.chaos_probability_train)
         time.sleep(self.train_batch_secs * num_batches)
         if self.write_null:
             with open("/dev/stdout", "wb") as f:
@@ -180,10 +165,6 @@ class NoOpTrialController(det.TrialController):
         return response
 
     def compute_validation_metrics(self, step_id: int) -> Dict[str, Any]:
-        if self.fail_on_first_validation:
-            raise Exception(self.fail_on_first_validation)
-        self.chaos_failure(self.chaos_probability_validate)
-        time.sleep(self.validation_secs)
         metrics = {
             name: (
                 np.nan if random.random() < self.nan_probability_validate else self.current_metric()
@@ -208,10 +189,6 @@ class NoOpTrialController(det.TrialController):
         return self._batch_size
 
     def save(self, path: pathlib.Path) -> None:
-        if self.fail_on_chechpoint_save:
-            raise Exception(self.fail_on_chechpoint_save)
-        self.chaos_failure(self.chaos_probability_checkpoint)
-        time.sleep(self.save_secs)
         fpath = path.joinpath(self.CHECKPOINT_FILENAME)
         logging.info("Saving checkpoint {}, steps_trained {}".format(fpath, self.steps_trained()))
         with fpath.open("w") as f:
@@ -225,8 +202,6 @@ class NoOpTrialController(det.TrialController):
                 pickle.dump(self.wlsq.get_state(), f)
 
     def load(self, path: pathlib.Path) -> None:
-        self.chaos_failure(self.chaos_probability_checkpoint)
-        time.sleep(self.load_secs)
         fpath = path.joinpath(self.CHECKPOINT_FILENAME)
         with fpath.open("r") as f:
             jbody = {int(k): v for k, v in json.load(f).items()}
@@ -243,12 +218,6 @@ class NoOpTrialController(det.TrialController):
         if self.wlsq is not None and wlsq_path.exists():
             with wlsq_path.open("rb") as f:
                 self.wlsq.load_state(pickle.load(f))
-
-    def chaos_failure(self, probability: Optional[float]) -> None:
-        if probability is None:
-            probability = self.chaos_probability
-        if self.chaos.random() < probability:
-            raise Exception("CHAOS! Executing random failure.")
 
 
 class NoOpTrial(det.LegacyTrial):

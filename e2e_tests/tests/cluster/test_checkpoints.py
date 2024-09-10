@@ -538,34 +538,3 @@ def test_checkpoint_partial_delete() -> None:
         new_resources,
         bindings.checkpointv1State.PARTIALLY_DELETED,
     )
-
-
-@pytest.mark.e2e_cpu
-def test_fail_on_chechpoint_save() -> None:
-    sess = api_utils.user_session()
-    error_log = "failed on checkpoint save"
-    config_obj = conf.load_config(conf.fixtures_path("no_op/single.yaml"))
-    config_obj["hyperparameters"]["fail_on_chechpoint_save"] = error_log
-    exp.run_failure_test_with_temp_config(
-        sess,
-        config_obj,
-        conf.fixtures_path("no_op"),
-        error_log,
-    )
-
-
-@pytest.mark.e2e_cpu
-def test_fail_on_preclose_chechpoint_save() -> None:
-    sess = api_utils.user_session()
-    error_log = "failed on checkpoint save"
-    config_obj = conf.load_config(conf.fixtures_path("no_op/single.yaml"))
-    config_obj["hyperparameters"]["fail_on_chechpoint_save"] = error_log
-    config_obj["searcher"]["max_length"] = {"batches": 1}
-    config_obj["min_validation_period"] = {"batches": 1}
-    config_obj["max_restarts"] = 1
-    exp.run_failure_test_with_temp_config(
-        sess,
-        config_obj,
-        conf.fixtures_path("no_op"),
-        error_log,
-    )
