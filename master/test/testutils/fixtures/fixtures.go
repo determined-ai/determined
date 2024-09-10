@@ -130,7 +130,7 @@ func ConnectMaster(c *config.Config) (apiv1.DeterminedClient, error) {
 	err = db.Bun().QueryRow(`SELECT password_hash FROM users WHERE username = 'determined'`).Scan(&passwordHash)
 
 	for i := 0; i < 15; i++ {
-		clConn, err = grpc.Dial(fmt.Sprintf("localhost:%d", c.Port),
+		clConn, err = grpc.NewClient(fmt.Sprintf("localhost:%d", c.Port),
 			grpc.WithTransportCredentials(insecure.NewCredentials()))
 		if err != nil {
 			err = fmt.Errorf("failed to dial master: %w", err)
