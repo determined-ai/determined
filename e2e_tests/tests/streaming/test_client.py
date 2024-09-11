@@ -6,8 +6,7 @@ from determined.common import streams
 from determined.common.api import bindings
 from determined.experimental import client
 from tests import api_utils
-from tests import config as conf
-from tests import experiment as exp
+from tests.experiment import noop
 
 
 @pytest.mark.e2e_cpu
@@ -138,18 +137,12 @@ def test_subscribe_model_version() -> None:
     ws = streams._client.LomondStreamWebSocket(sess)
     stream = streams._client.Stream(ws)
     syncId = "sync2"
-    modelName = "test_model_version_streaming"
+    modelName = api_utils.get_random_string()
 
-    detobj = client.Determined._from_session(sess)
+    exp_ref = noop.create_experiment(sess, [noop.Checkpoint()])
+    assert exp_ref.wait(interval=0.01) == client.ExperimentState.COMPLETED
 
-    exp_id = exp.create_experiment(
-        sess,
-        conf.fixtures_path("no_op/gc_checkpoints_decreasing.yaml"),
-        conf.fixtures_path("no_op"),
-    )
-    exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.COMPLETED)
-
-    ckpt = detobj.get_experiment(exp_id).top_checkpoint()
+    ckpt = exp_ref.top_checkpoint()
 
     resp_m = bindings.post_PostModel(sess, body=bindings.v1PostModelRequest(name=modelName))
     m = resp_m.model

@@ -1,9 +1,7 @@
 import pytest
 
-from determined.common import util
-from determined.experimental import client
 from tests import api_utils
-from tests import config as conf
+from tests.experiment import noop
 
 
 @pytest.mark.e2e_cpu
@@ -16,31 +14,18 @@ def test_default_pool_task_container_defaults() -> None:
     #    environment_variables:
     #      - SOMEVAR=SOMEVAL
     sess = api_utils.user_session()
-    d = client.Determined._from_session(sess)
-    config_path = conf.fixtures_path("no_op/single-medium-train-step.yaml")
-    e1 = d.create_experiment(
-        config=config_path,
-        model_dir=conf.fixtures_path("no_op"),
-    )
-
+    e1 = noop.create_experiment(sess)
     assert e1.config
-    e1_config = e1.config
+    assert len(e1.config["environment"]["environment_variables"]["cpu"]) > 0
 
-    assert len(e1_config["environment"]["environment_variables"]["cpu"]) > 0
-
-    with open(config_path) as fin:
-        config_text = fin.read()
-    parsed_config = util.safe_load_yaml_with_exceptions(config_text)
-    parsed_config["resources"] = {"resource_pool": e1_config["resources"]["resource_pool"]}
-
-    e2 = d.create_experiment(
-        config=parsed_config,
-        model_dir=conf.fixtures_path("no_op"),
-    )
+    config = {"resources": {"resource_pool": e1.config["resources"]["resource_pool"]}}
+    e2 = noop.create_experiment(sess, config=config)
     assert e2.config
-    e2_config = e2.config
-
     assert (
-        e1_config["environment"]["environment_variables"]["cpu"]
-        == e2_config["environment"]["environment_variables"]["cpu"]
+        e1.config["environment"]["environment_variables"]["cpu"]
+        == e2.config["environment"]["environment_variables"]["cpu"]
     )
+    e1.kill()
+    e2.kill()
+    e1.wait(interval=0.01)
+    e2.wait(interval=0.01)

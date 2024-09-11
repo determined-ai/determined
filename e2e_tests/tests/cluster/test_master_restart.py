@@ -1,5 +1,6 @@
 import logging
 import time
+from typing import Iterator
 
 import docker
 import pytest
@@ -8,15 +9,35 @@ import urllib3
 
 from determined.common import api
 from determined.common.api import bindings
+from determined.experimental import client
 from tests import api_utils
 from tests import command as cmd
 from tests import config as conf
 from tests import detproc
 from tests import experiment as exp
-from tests.cluster import abstract_cluster, managed_cluster, managed_cluster_k8s, utils
+from tests.cluster import (
+    abstract_cluster,
+    managed_cluster,
+    managed_cluster_k8s,
+    managed_slurm_cluster,
+    utils,
+)
+from tests.experiment import noop
 from tests.task import task
 
 logger = logging.getLogger(__name__)
+
+
+# Create a pytest fixture that returns a restartable instance of ManagedSlurmCluster.
+@pytest.fixture
+def restartable_managed_slurm_cluster(
+    managed_slurm_cluster_restarts: managed_slurm_cluster.ManagedSlurmCluster,
+) -> Iterator[managed_slurm_cluster.ManagedSlurmCluster]:
+    try:
+        yield managed_slurm_cluster_restarts
+    except Exception:
+        managed_slurm_cluster_restarts.restart_master()
+        raise
 
 
 @pytest.mark.managed_devcluster
@@ -28,21 +49,16 @@ def test_master_restart_ok(restartable_managed_cluster: managed_cluster.ManagedC
 @pytest.mark.managed_devcluster
 def test_queued_time_restore(restartable_managed_cluster: managed_cluster.ManagedCluster) -> None:
     sess = api_utils.user_session()
-    exp_id = exp.create_experiment(
-        sess,
-        conf.fixtures_path("no_op/single.yaml"),
-        conf.fixtures_path("no_op"),
-        None,
-    )
+    exp_ref = noop.create_experiment(sess, [noop.Sleep(5)])
     start_time = time.time()
     exp.wait_for_experiment_state(
-        sess, exp_id, bindings.experimentv1State.RUNNING, max_wait_secs=60
+        sess, exp_ref.id, bindings.experimentv1State.RUNNING, max_wait_secs=60
     )
 
     def check_queued_aggregates_for_today() -> None:
         exps = bindings.get_GetExperiments(sess).experiments
         assert len(exps) == 1
-        assert exps[0].id == exp_id
+        assert exps[0].id == exp_ref.id
         aggregates = [
             res.aggregates for res in bindings.get_GetJobQueueStats(sess).results if res.aggregates
         ]
@@ -65,15 +81,21 @@ def test_queued_time_restore(restartable_managed_cluster: managed_cluster.Manage
     restartable_managed_cluster.restart_master()
     restartable_managed_cluster.restart_agent(True)
 
-    exp.wait_for_experiment_state(
-        sess, exp_id, bindings.experimentv1State.COMPLETED, max_wait_secs=60
-    )
+    assert exp_ref.wait(interval=0.01) == client.ExperimentState.COMPLETED
     check_queued_aggregates_for_today()
 
 
 @pytest.mark.e2e_k8s
 def test_master_restart_ok_k8s(k8s_managed_cluster: managed_cluster_k8s.ManagedK8sCluster) -> None:
     _test_master_restart_ok(k8s_managed_cluster)
+
+
+# Test to ensure master restarts successfully.
+@pytest.mark.e2e_slurm_restart
+def test_master_restart_ok_slurm(
+    managed_slurm_cluster_restarts: managed_slurm_cluster.ManagedSlurmCluster,
+) -> None:
+    _test_master_restart_ok(managed_slurm_cluster_restarts)
 
 
 def _test_master_restart_ok(managed_cluster: abstract_cluster.Cluster) -> None:
@@ -121,6 +143,18 @@ def test_master_restart_reattach_recover_experiment_k8s(
     _test_master_restart_reattach_recover_experiment(k8s_managed_cluster, downtime)
 
 
+# Test to ensure that master can reattach to the experiment and resume it, after the determined
+# master has restarted.
+@pytest.mark.e2e_slurm_restart
+@pytest.mark.parametrize("downtime", [0, 20, 60])
+def test_master_restart_reattach_recover_experiment_slurm(
+    managed_slurm_cluster_restarts: managed_slurm_cluster.ManagedSlurmCluster, downtime: int
+) -> None:
+    _test_master_restart_reattach_recover_experiment(
+        managed_slurm_cluster_restarts, downtime, max_workload_ticks=500
+    )
+
+
 @pytest.mark.managed_devcluster
 def test_master_agent_restart_reattach_recover_experiment(
     restartable_managed_cluster: managed_cluster.ManagedCluster,
@@ -129,12 +163,7 @@ def test_master_agent_restart_reattach_recover_experiment(
 
     try:
         # Start an experiment
-        exp_id = exp.create_experiment(
-            sess,
-            conf.fixtures_path("no_op/single-medium-train-step.yaml"),
-            conf.fixtures_path("no_op"),
-            None,
-        )
+        exp_ref = noop.create_experiment(sess, [noop.Sleep(10)])
 
         # Kill the agent & master
         restartable_managed_cluster.kill_agent()
@@ -144,10 +173,8 @@ def test_master_agent_restart_reattach_recover_experiment(
         restartable_managed_cluster.restart_master()
         restartable_managed_cluster.restart_agent(True)
 
-        exp.wait_for_experiment_state(
-            sess, exp_id, bindings.experimentv1State.COMPLETED, max_wait_secs=60
-        )
-        trials = exp.experiment_trials(sess, exp_id)
+        assert exp_ref.wait(interval=0.01) == client.ExperimentState.COMPLETED
+        trials = exp.experiment_trials(sess, exp_ref.id)
         assert (trials[0].trial.state) == bindings.trialv1State.COMPLETED
     except Exception:
         restartable_managed_cluster.restart_master()
@@ -226,15 +253,20 @@ def _test_master_restart_reattach_recover_experiment(
 ) -> None:
     sess = api_utils.user_session()
     try:
-        exp_id = exp.create_experiment(
+        exp_ref = noop.create_experiment(
             sess,
-            conf.fixtures_path("no_op/single-medium-train-step.yaml"),
-            conf.fixtures_path("no_op"),
-            None,
+            [
+                # Two Reports to meet the requirements of wait_for_workload_progress().
+                noop.Report({"loss": 1}),
+                noop.Report({"loss": 1}),
+                noop.Sleep(2 + downtime),
+                # A third Report to prove we finished successfully.
+                noop.Report({"loss": 1}),
+            ],
         )
 
         # TODO(ilia): don't wait for progress.
-        exp.wait_for_experiment_workload_progress(sess, exp_id, max_workload_ticks)
+        exp.wait_for_experiment_workload_progress(sess, exp_ref.id, max_workload_ticks)
 
         if downtime >= 0:
             restartable_managed_cluster.kill_master()
@@ -243,15 +275,15 @@ def _test_master_restart_reattach_recover_experiment(
 
         exp.wait_for_experiment_state(
             sess,
-            exp_id,
+            exp_ref.id,
             bindings.experimentv1State.COMPLETED,
             max_wait_secs=downtime + exp_timeout,
         )
-        trials = exp.experiment_trials(sess, exp_id)
+        trials = exp.experiment_trials(sess, exp_ref.id)
 
         assert len(trials) == 1
         train_wls = exp.workloads_with_training(trials[0].workloads)
-        assert len(train_wls) == 5
+        assert len(train_wls) == 3
     except Exception:
         restartable_managed_cluster.restart_master()
         restartable_managed_cluster.restart_agent()
@@ -263,13 +295,8 @@ def test_master_restart_continued_experiment(
     managed_cluster_restarts: managed_cluster.ManagedCluster,
 ) -> None:
     sess = api_utils.user_session()
-    exp_id = exp.create_experiment(
-        sess,
-        conf.fixtures_path("no_op/single-medium-train-step.yaml"),
-        conf.fixtures_path("no_op"),
-        None,
-    )
-    exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.COMPLETED)
+    exp_ref = noop.create_experiment(sess)
+    assert exp_ref.wait(interval=0.01) == client.ExperimentState.COMPLETED
 
     detproc.check_output(
         sess,
@@ -277,22 +304,18 @@ def test_master_restart_continued_experiment(
             "det",
             "e",
             "continue",
-            str(exp_id),
+            str(exp_ref.id),
             "--config",
-            "searcher.max_length.batches=505",
-            "--config",
-            "searcher.name=single",
+            'hyperparameters.actions.1={"action":"sleep","time":5}',
         ],
     )
 
     managed_cluster_restarts.kill_master()
     managed_cluster_restarts.restart_master()
-    exp.wait_for_experiment_state(
-        sess, exp_id, bindings.experimentv1State.COMPLETED, max_wait_secs=60
-    )
+    assert exp_ref.wait(interval=0.01) == client.ExperimentState.COMPLETED
 
     # We continued the latest task, not the first one.
-    experiment_trials = exp.experiment_trials(sess, exp_id)
+    experiment_trials = exp.experiment_trials(sess, exp_ref.id)
     assert len(experiment_trials) == 1
     task_ids = experiment_trials[0].trial.taskIds
     assert task_ids is not None
@@ -480,24 +503,23 @@ def test_master_restart_kill_works_k8s(
 def _test_master_restart_kill_works(managed_cluster_restarts: abstract_cluster.Cluster) -> None:
     sess = api_utils.user_session()
     try:
-        exp_id = exp.create_experiment(
+        exp_ref = noop.create_experiment(
             sess,
-            conf.fixtures_path("no_op/single-many-long-steps.yaml"),
-            conf.fixtures_path("no_op"),
-            ["--config", "searcher.max_length.batches=10000", "--config", "max_restarts=0"],
+            [
+                # Two Reports to meet the requirements of wait_for_workload_progress().
+                noop.Report({"loss": 1}),
+                noop.Report({"loss": 1}),
+                noop.Sleep(10000),
+            ],
         )
-
-        exp.wait_for_experiment_workload_progress(sess, exp_id)
+        exp.wait_for_experiment_workload_progress(sess, exp_ref.id)
 
         managed_cluster_restarts.kill_master()
-        time.sleep(0)
         managed_cluster_restarts.restart_master()
 
-        detproc.check_call(sess, ["det", "e", "kill", str(exp_id)])
+        detproc.check_call(sess, ["det", "e", "kill", str(exp_ref.id)])
 
-        exp.wait_for_experiment_state(
-            sess, exp_id, bindings.experimentv1State.CANCELED, max_wait_secs=30
-        )
+        assert exp_ref.wait(interval=0.01) == client.ExperimentState.CANCELED
 
         managed_cluster_restarts.ensure_agent_ok()
     except Exception:
@@ -520,6 +542,19 @@ def test_master_restart_cmd_k8s(
     k8s_managed_cluster: managed_cluster_k8s.ManagedK8sCluster, slots: int, downtime: int
 ) -> None:
     _test_master_restart_cmd(k8s_managed_cluster, slots, downtime)
+
+
+# Test to ensure that master can recover and complete a command that was in running state
+# when the master has restarted.
+@pytest.mark.e2e_slurm_restart
+@pytest.mark.parametrize("slots", [0, 1])
+@pytest.mark.parametrize("downtime", [0, 20, 60])
+def test_master_restart_cmd_slurm(
+    restartable_managed_slurm_cluster: managed_slurm_cluster.ManagedSlurmCluster,
+    slots: int,
+    downtime: int,
+) -> None:
+    _test_master_restart_cmd(restartable_managed_slurm_cluster, slots, downtime)
 
 
 def _test_master_restart_cmd(
@@ -680,18 +715,10 @@ def _test_master_restart_tensorboard(
     managed_cluster: abstract_cluster.Cluster, downtime: int
 ) -> None:
     sess = api_utils.user_session()
-    exp_id = exp.create_experiment(
-        sess,
-        conf.fixtures_path("no_op/short-default-ckpt.yaml"),
-        conf.fixtures_path("no_op"),
-        None,
-    )
+    exp_ref = noop.create_experiment(sess, [noop.Report({"x": 1})])
+    assert exp_ref.wait(interval=0.01) == client.ExperimentState.COMPLETED
 
-    exp.wait_for_experiment_state(
-        sess, exp_id, bindings.experimentv1State.COMPLETED, max_wait_secs=60
-    )
-
-    with cmd.interactive_command(sess, ["tensorboard", "start", "--detach", str(exp_id)]) as tb:
+    with cmd.interactive_command(sess, ["tensorboard", "start", "--detach", str(exp_ref.id)]) as tb:
         task_id = tb.task_id
         assert task_id is not None
         utils.wait_for_task_state(sess, "tensorboard", task_id, "RUNNING")

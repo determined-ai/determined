@@ -7,8 +7,8 @@ import tests.config as conf
 from determined.common import api
 from determined.common.api import bindings, errors
 from tests import api_utils, detproc
-from tests import experiment as exp
 from tests.cluster import test_rbac, test_workspace_org
+from tests.experiment import noop
 
 DEFAULT_WID = 1  # default workspace ID
 
@@ -145,12 +145,9 @@ def test_ntsc_iface_access() -> None:
                 ).project.id
 
                 # experiment for tensorboard
-                experiment_id = exp.create_experiment(
-                    creds[0],
-                    conf.fixtures_path("no_op/single.yaml"),
-                    conf.fixtures_path("no_op"),
-                    ["--project_id", str(pid)],
-                )
+                experiment_id = noop.create_experiment(
+                    creds[0], [noop.Report({"x": 1})], project_id=pid
+                ).id
 
             created_id = api_utils.launch_ntsc(creds[0], workspaces[0].id, typ, experiment_id).id
 
@@ -270,12 +267,9 @@ def test_ntsc_proxy() -> None:
                 ).project.id
 
                 # experiment for tensorboard
-                experiment_id = exp.create_experiment(
-                    creds[0],
-                    conf.fixtures_path("no_op/single.yaml"),
-                    conf.fixtures_path("no_op"),
-                    ["--project_id", str(pid)],
-                )
+                experiment_id = noop.create_experiment(
+                    creds[0], [noop.Report({"x": 1})], project_id=pid
+                ).id
 
             created_id = api_utils.launch_ntsc(creds[0], workspaces[0].id, typ, experiment_id).id
 
@@ -325,12 +319,9 @@ def test_tsb_listed() -> None:
         ).project.id
 
         # experiment for tensorboard
-        experiment_id = exp.create_experiment(
-            editor_sess,
-            conf.fixtures_path("no_op/single.yaml"),
-            conf.fixtures_path("no_op"),
-            ["--project_id", str(pid)],
-        )
+        experiment_id = noop.create_experiment(
+            editor_sess, [noop.Report({"x": 1})], project_id=pid
+        ).id
 
         created_id = api_utils.launch_ntsc(
             editor_sess, workspace.id, api.NTSC_Kind.tensorboard, experiment_id
@@ -361,12 +352,9 @@ def test_tsb_launch_on_trials() -> None:
             body=bindings.v1PostProjectRequest(name="test", workspaceId=workspace.id),
             workspaceId=workspace.id,
         ).project.id
-        experiment_id = exp.create_experiment(
-            api_utils.admin_session(),
-            conf.fixtures_path("no_op/single.yaml"),
-            conf.fixtures_path("no_op"),
-            ["--project_id", str(pid)],
-        )
+        experiment_id = noop.create_experiment(
+            api_utils.admin_session(), [noop.Report({"x": 1})], project_id=pid
+        ).id
 
         trials = bindings.get_GetExperimentTrials(creds[0], experimentId=experiment_id).trials
         trial_ids = [t.id for t in trials]

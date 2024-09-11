@@ -9,12 +9,14 @@ from typing import Any, Dict, List, Set, Tuple
 import pytest
 
 from determined import errors
-from determined.common import api, storage, util
+from determined.common import api, storage
 from determined.common.api import bindings
+from determined.experimental import client
 from tests import api_utils
 from tests import config as conf
 from tests import detproc
 from tests import experiment as exp
+from tests.experiment import noop
 
 EXPECT_TIMEOUT = 5
 
@@ -22,8 +24,9 @@ EXPECT_TIMEOUT = 5
 def wait_for_gc_to_finish(sess: api.Session, experiment_ids: List[int]) -> None:
     seen_gc_experiment_ids = set()
     done_gc_experiment_ids = set()
-    # Don't wait longer than 5 minutes (as 600 half-seconds to improve our sampling resolution).
-    for _ in range(600):
+    # Don't wait longer than 5 minutes.
+    deadline = time.time() + 5 * 60
+    while time.time() < deadline:
         r = sess.get("tasks").json()
         names = [task["name"] for task in r.values()]
 
@@ -37,7 +40,7 @@ def wait_for_gc_to_finish(sess: api.Session, experiment_ids: List[int]) -> None:
 
         if len(done_gc_experiment_ids) == len(experiment_ids):
             return
-        time.sleep(0.5)
+        time.sleep(0.01)
 
     # It's possible that it ran really fast and we missed it, so just log this.
     print("Did not observe checkpoint gc start or finish!", file=sys.stderr)
@@ -47,34 +50,30 @@ def wait_for_gc_to_finish(sess: api.Session, experiment_ids: List[int]) -> None:
 @pytest.mark.e2e_slurm_gpu
 def test_set_gc_policy() -> None:
     sess = api_utils.user_session()
-    exp_id = exp.run_basic_test(
-        sess,
-        config_file=conf.fixtures_path("no_op/gc_checkpoints_decreasing.yaml"),
-        model_def_file=conf.fixtures_path("no_op"),
-        expected_trials=1,
+    save_exp_best = 3
+    save_trial_latest = 2
+    save_trial_best = 1
+    config = {
+        "checkpoint_storage": {
+            "save_experiment_best": save_exp_best,
+            "save_trial_latest": save_trial_latest,
+            "save_trial_best": save_trial_best,
+        },
+    }
+    exp_ref = noop.create_experiment(
+        sess, noop.traininglike_steps(10, metric_scale=0.9), config=config
     )
-
-    config = conf.load_config(str(conf.fixtures_path("no_op/gc_checkpoints_decreasing.yaml")))
-    save_exp_best = config["checkpoint_storage"]["save_experiment_best"]
-    save_trial_latest = config["checkpoint_storage"]["save_trial_latest"]
-    save_trial_best = 1  # default because not set in this config
+    assert exp_ref.wait(interval=0.01) == client.ExperimentState.COMPLETED
 
     # Command that uses the same gc policy as initial policy used for the experiment.
-    run_command_gc_policy(
-        sess, str(save_exp_best), str(save_trial_latest), str(save_trial_best), str(exp_id)
-    )
+    run_command_gc_policy(sess, save_exp_best, save_trial_latest, save_trial_best, exp_ref.id)
 
     # Command that uses a diff gc policy from the initial policy used for the experiment.
-    save_exp_best = 0
-    save_trial_latest = 1
-    save_trial_best = 1
-    run_command_gc_policy(
-        sess, str(save_exp_best), str(save_trial_latest), str(save_trial_best), str(exp_id)
-    )
+    run_command_gc_policy(sess, 0, 1, 1, exp_ref.id)
 
 
 def run_command_gc_policy(
-    sess: api.Session, save_exp_best: str, save_trial_latest: str, save_trial_best: str, exp_id: str
+    sess: api.Session, save_exp_best: int, save_trial_latest: int, save_trial_best: int, exp_id: int
 ) -> None:
     command = [
         "det",
@@ -124,30 +123,24 @@ def test_gc_checkpoints_lfs() -> None:
 @pytest.mark.e2e_cpu
 def test_delete_checkpoints() -> None:
     sess = api_utils.user_session()
-    base_conf_path = conf.fixtures_path("no_op/single-default-ckpt.yaml")
-
-    config = conf.load_config(str(base_conf_path))
-    config["checkpoint_storage"] = {
-        "type": "shared_fs",
-        "host_path": "/tmp",
-        "storage_path": "delete-checkpoints-e2etest",
-        "save_trial_latest": 10,
+    config = {
+        "checkpoint_storage": {
+            "type": "shared_fs",
+            "host_path": "/tmp",
+            "storage_path": "delete-checkpoints-e2etest",
+            "save_trial_latest": 10,
+        },
     }
-    config["min_checkpoint_period"] = {"batches": 10}
-
-    exp_id_1 = exp.run_basic_test_with_temp_config(
-        sess, config, model_def_path=conf.fixtures_path("no_op"), expected_trials=1
-    )
-
-    exp_id_2 = exp.run_basic_test_with_temp_config(
-        sess, config, model_def_path=conf.fixtures_path("no_op"), expected_trials=1
-    )
+    exp1 = noop.create_experiment(sess, noop.traininglike_steps(10), config=config)
+    exp2 = noop.create_experiment(sess, noop.traininglike_steps(10), config=config)
+    assert exp1.wait(interval=0.01) == client.ExperimentState.COMPLETED
+    assert exp2.wait(interval=0.01) == client.ExperimentState.COMPLETED
 
     sess = api_utils.user_session()
-    exp_1_checkpoints = bindings.get_GetExperimentCheckpoints(session=sess, id=exp_id_1).checkpoints
-    exp_2_checkpoints = bindings.get_GetExperimentCheckpoints(session=sess, id=exp_id_2).checkpoints
-    assert len(exp_1_checkpoints) > 0, f"no checkpoints found in experiment with ID:{exp_id_1}"
-    assert len(exp_2_checkpoints) > 0, f"no checkpoints found in experiment with ID:{exp_id_2}"
+    exp_1_checkpoints = bindings.get_GetExperimentCheckpoints(session=sess, id=exp1.id).checkpoints
+    exp_2_checkpoints = bindings.get_GetExperimentCheckpoints(session=sess, id=exp2.id).checkpoints
+    assert len(exp_1_checkpoints) > 0, f"no checkpoints found in experiment with ID:{exp1.id}"
+    assert len(exp_2_checkpoints) > 0, f"no checkpoints found in experiment with ID:{exp2.id}"
 
     assert all(
         checkpoint.storageId is not None
@@ -164,7 +157,7 @@ def test_delete_checkpoints() -> None:
     ]
 
     d_checkpoint_uuids = d_exp_1_checkpoint_uuids + d_exp_2_checkpoint_uuids
-    print(f"checkpoints uuids to be deleteted: {d_checkpoint_uuids}")
+    print(f"checkpoints uuids to be deleted: {d_checkpoint_uuids}")
     # ensure checkpoint directories exist:
     checkpoint_config = config["checkpoint_storage"]
     storage_manager = storage.build(checkpoint_config, container_path=None)
@@ -178,7 +171,7 @@ def test_delete_checkpoints() -> None:
     delete_body = bindings.v1DeleteCheckpointsRequest(checkpointUuids=d_checkpoint_uuids)
     bindings.delete_DeleteCheckpoints(session=sess, body=delete_body)
 
-    wait_for_gc_to_finish(sess, [exp_id_1, exp_id_2])
+    wait_for_gc_to_finish(sess, [exp1.id, exp2.id])
 
     for d_c in d_checkpoint_uuids:
         ensure_checkpoint_deleted(sess, d_c, storage_manager)
@@ -207,64 +200,43 @@ def run_gc_checkpoints_test(checkpoint_storage: Dict[str, str]) -> None:
     sess = api_utils.user_session()
     fixtures = [
         (
-            conf.fixtures_path("no_op/gc_checkpoints_decreasing.yaml"),
+            noop.traininglike_steps(10, metric_scale=0.9),
             {
-                (bindings.experimentv1State.COMPLETED.value): {800, 900, 1000},
-                (bindings.experimentv1State.DELETED.value): {
-                    100,
-                    200,
-                    300,
-                    400,
-                    500,
-                    600,
-                    700,
-                },
+                (bindings.experimentv1State.COMPLETED.value): {8, 9, 10},
+                (bindings.experimentv1State.DELETED.value): {1, 2, 3, 4, 5, 6, 7},
             },
         ),
         (
-            conf.fixtures_path("no_op/gc_checkpoints_increasing.yaml"),
+            noop.traininglike_steps(10, metric_scale=1.1),
             {
-                (bindings.experimentv1State.COMPLETED.value): {
-                    100,
-                    200,
-                    300,
-                    900,
-                    1000,
-                },
-                (bindings.experimentv1State.DELETED.value): {
-                    400,
-                    500,
-                    600,
-                    700,
-                    800,
-                },
+                (bindings.experimentv1State.COMPLETED.value): {1, 2, 3, 9, 10},
+                (bindings.experimentv1State.DELETED.value): {4, 5, 6, 7, 8},
             },
         ),
     ]
 
     all_checkpoints: List[Tuple[Any, List[bindings.v1CheckpointWorkload]]] = []
-    for base_conf_path, result in fixtures:
-        config = conf.load_config(str(base_conf_path))
-        experiment_storage = checkpoint_storage.copy()
-        experiment_storage.update(config["checkpoint_storage"])
-        config["checkpoint_storage"].update(experiment_storage)
-
-        with tempfile.NamedTemporaryFile() as tf:
-            with open(tf.name, "w") as f:
-                util.yaml_safe_dump(config, f)
-
-            experiment_id = exp.create_experiment(sess, tf.name, conf.fixtures_path("no_op"))
-
-        exp.wait_for_experiment_state(sess, experiment_id, bindings.experimentv1State.COMPLETED)
+    for actions, result in fixtures:
+        config: Dict[str, Any] = {
+            "checkpoint_storage": {
+                **checkpoint_storage,
+                "save_experiment_best": 3,
+                "save_trial_latest": 2,
+            }
+        }
+        exp_ref = noop.create_experiment(sess, actions, config=config)
+        assert exp_ref.wait(interval=0.01) == client.ExperimentState.COMPLETED, "".join(
+            exp_ref.get_trials()[0].iter_logs()
+        )
 
         # In some configurations, checkpoint GC will run on an auxillary machine, which may have to
         # be spun up still.  So we'll wait for it to run.
-        wait_for_gc_to_finish(sess, [experiment_id])
+        wait_for_gc_to_finish(sess, [exp_ref.id])
 
         # Checkpoints are not marked as deleted until gc_checkpoint task starts.
-        retries = 5
-        for retry in range(retries):
-            trials = exp.experiment_trials(sess, experiment_id)
+        retries = 30
+        for _ in range(retries):
+            trials = exp.experiment_trials(sess, exp_ref.id)
             assert len(trials) == 1
 
             cpoints = exp.workloads_with_checkpoint(trials[0].workloads)
@@ -281,10 +253,9 @@ def run_gc_checkpoints_test(checkpoint_storage: Dict[str, str]) -> None:
                 all_checkpoints.append((config, sorted_checkpoints))
                 break
 
-            if retry + 1 == retries:
-                assert by_state == result
-
             time.sleep(1)
+        else:
+            assert by_state == result
 
     # Check that the actual checkpoint storage reflects the
     # deletions. We want to wait for the GC containers to exit, so check
@@ -359,26 +330,15 @@ def test_s3_no_creds(secrets: Dict[str, str]) -> None:
 @pytest.mark.e2e_cpu
 def test_delete_experiment_with_no_checkpoints() -> None:
     sess = api_utils.user_session()
-    # Experiment will intentionally fail.
-    config = conf.load_config(conf.fixtures_path("no_op/single.yaml"))
-    config["checkpoint_storage"] = {
-        "type": "s3",
-        "bucket": "dettestthisbucketdoesntexist",
-    }
-    config["max_restarts"] = 0
-    exp_id = exp.run_failure_test_with_temp_config(
-        sess,
-        config,
-        conf.fixtures_path("no_op"),
-        None,
-    )
+    exp_ref = noop.create_experiment(sess)
+    exp_ref.wait(interval=0.01)
 
     # Still able to delete this since it will have no checkpoints meaning no checkpoint gc task.
-    bindings.delete_DeleteExperiment(session=sess, experimentId=exp_id)
+    bindings.delete_DeleteExperiment(session=sess, experimentId=exp_ref.id)
     ticks = 60
     for i in range(ticks):
         try:
-            state = exp.experiment_state(sess, exp_id)
+            state = exp.experiment_state(sess, exp_ref.id)
             if i % 5 == 0:
                 print(f"experiment in state {state} waiting to be deleted")
             time.sleep(1)
@@ -390,40 +350,33 @@ def test_delete_experiment_with_no_checkpoints() -> None:
 
 @pytest.mark.e2e_cpu
 def test_checkpoint_partial_delete() -> None:
-    sess = api_utils.user_session()
-    base_conf_path = conf.fixtures_path("no_op/single-default-ckpt.yaml")
+    # Create a user whose checkpoint files we can delete without special permissions.
+    sess = api_utils.create_linked_user(os.getuid(), "user", os.getgid(), "usergroup")
 
     host_path = "/tmp"
     storage_path = "partial-delete-checkpoints-e2etest"
-    config = conf.load_config(str(base_conf_path))
-    config["checkpoint_storage"] = {
-        "type": "shared_fs",
-        "host_path": host_path,
-        "storage_path": storage_path,
-        "save_trial_latest": 10,
+    config = {
+        "checkpoint_storage": {
+            "type": "shared_fs",
+            "host_path": host_path,
+            "storage_path": storage_path,
+            "save_trial_latest": 2,
+        },
     }
-    config["min_checkpoint_period"] = {"batches": 10}
-
-    exp_id = exp.run_basic_test_with_temp_config(
-        sess, config, model_def_path=conf.fixtures_path("no_op"), expected_trials=1
-    )
+    exp_ref = noop.create_experiment(sess, noop.traininglike_steps(2), config=config)
+    assert exp_ref.wait(interval=0.01) == client.ExperimentState.COMPLETED
 
     checkpoints = bindings.get_GetExperimentCheckpoints(
         session=sess,
-        id=exp_id,
+        id=exp_ref.id,
     ).checkpoints
-    completed_checkpoints = []
-    for c in checkpoints:
-        if c.state == bindings.checkpointv1State.COMPLETED:
-            completed_checkpoints.append(c)
-            if len(completed_checkpoints) >= 2:
-                break
-    else:
-        pytest.fail("did not find two checkpoints in state completed")
+    assert len(checkpoints) == 2, len(checkpoints)
+    assert checkpoints[0].state == bindings.checkpointv1State.COMPLETED, checkpoints[0].state
+    assert checkpoints[1].state == bindings.checkpointv1State.COMPLETED, checkpoints[1].state
 
     s = bindings.get_GetExperiment(
         sess,
-        experimentId=exp_id,
+        experimentId=exp_ref.id,
     ).experiment.checkpointSize
     assert s is not None
     starting_size = int(s)
@@ -437,11 +390,11 @@ def test_checkpoint_partial_delete() -> None:
     ) -> None:
         s = bindings.get_GetExperiment(
             sess,
-            experimentId=exp_id,
+            experimentId=exp_ref.id,
         ).experiment.checkpointSize
         assert s is not None and int(s) == exp_size
 
-        trials = bindings.get_GetExperimentTrials(sess, experimentId=exp_id).trials
+        trials = bindings.get_GetExperimentTrials(sess, experimentId=exp_ref.id).trials
         assert len(trials) == 1
         assert (
             trials[0].totalCheckpointSize is not None
@@ -456,60 +409,60 @@ def test_checkpoint_partial_delete() -> None:
         assert ckpt.state == state
         assert ckpt.storageId is not None
 
-    # Unchanged and empty glob causes checkpoint state says the same.
+    # Unchanged and empty glob causes checkpoint state to say the same.
     remove_body = bindings.v1CheckpointsRemoveFilesRequest(
         checkpointGlobs=[],
-        checkpointUuids=[completed_checkpoints[0].uuid],
+        checkpointUuids=[checkpoints[0].uuid],
     )
     bindings.post_CheckpointsRemoveFiles(sess, body=remove_body)
-    wait_for_gc_to_finish(sess, [exp_id])
+    wait_for_gc_to_finish(sess, [exp_ref.id])
 
     assert_checkpoint_state(
-        completed_checkpoints[0].uuid,
+        checkpoints[0].uuid,
         starting_size,
         starting_size,
-        completed_checkpoints[0].resources,
+        checkpoints[0].resources,
         bindings.checkpointv1State.COMPLETED,
     )
 
     # Delete from shared_fs with no glob => update state.
-    # metadata.json is being creatd somehow. This is the difference we are getting.
+    # metadata.json is being created somehow. This is the difference we are getting.
     new_resources = {}
     new_size = starting_size
-    for file_name, size in completed_checkpoints[0].resources.items():
-        if "pkl" in file_name:
-            os.remove(f"{host_path}/{storage_path}/{completed_checkpoints[0].uuid}/{file_name}")
+    for file_name, size in checkpoints[0].resources.items():
+        if file_name == "state":
+            os.remove(f"{host_path}/{storage_path}/{checkpoints[0].uuid}/{file_name}")
             new_size -= int(size)
         else:
             new_resources[file_name] = size
 
     remove_body = bindings.v1CheckpointsRemoveFilesRequest(
         checkpointGlobs=[],
-        checkpointUuids=[completed_checkpoints[0].uuid],
+        checkpointUuids=[checkpoints[0].uuid],
     )
     bindings.post_CheckpointsRemoveFiles(sess, body=remove_body)
-    wait_for_gc_to_finish(sess, [exp_id])
+    wait_for_gc_to_finish(sess, [exp_ref.id])
 
     assert_checkpoint_state(
-        completed_checkpoints[0].uuid,
+        checkpoints[0].uuid,
         new_size,
         new_size,
         new_resources,
         bindings.checkpointv1State.PARTIALLY_DELETED,
     )
 
-    # Competly delete checkpoint.
+    # Completely delete checkpoint.
     new_size -= sum(int(s) for s in new_resources.values())
     # new_resources stays the same since we don't delete resources when we delete checkpoints..
     remove_body = bindings.v1CheckpointsRemoveFilesRequest(
         checkpointGlobs=["**/*"],
-        checkpointUuids=[completed_checkpoints[0].uuid],
+        checkpointUuids=[checkpoints[0].uuid],
     )
     bindings.post_CheckpointsRemoveFiles(sess, body=remove_body)
-    wait_for_gc_to_finish(sess, [exp_id])
+    wait_for_gc_to_finish(sess, [exp_ref.id])
 
     assert_checkpoint_state(
-        completed_checkpoints[0].uuid,
+        checkpoints[0].uuid,
         new_size,
         new_size,
         new_resources,
@@ -518,21 +471,21 @@ def test_checkpoint_partial_delete() -> None:
 
     # Matching glob => update state and trials.
     new_resources = {}
-    for file_name, size in completed_checkpoints[1].resources.items():
-        if "pkl" in file_name:
+    for file_name, size in checkpoints[1].resources.items():
+        if file_name == "state":
             new_size -= int(size)
         else:
             new_resources[file_name] = size
 
     remove_body = bindings.v1CheckpointsRemoveFilesRequest(
-        checkpointGlobs=["**/*.pkl"],
-        checkpointUuids=[completed_checkpoints[1].uuid],
+        checkpointGlobs=["**/*state*"],
+        checkpointUuids=[checkpoints[1].uuid],
     )
     bindings.post_CheckpointsRemoveFiles(sess, body=remove_body)
-    wait_for_gc_to_finish(sess, [exp_id])
+    wait_for_gc_to_finish(sess, [exp_ref.id])
 
     assert_checkpoint_state(
-        completed_checkpoints[1].uuid,
+        checkpoints[1].uuid,
         new_size,
         new_size,
         new_resources,
