@@ -238,7 +238,10 @@ files and ``__pycache__`` directories, are always ignored.
 
 Trials are created to train the model. The :ref:`Hyperparameter Tuning <hyperparameter-tuning>`
 searcher specified in the experiment configuration file defines a set of hyperparameter
-configurations, each corresponding to a single trial.
+configurations, each corresponding to a single trial. When using a searcher, ensure that you include
+a ``max_length`` parameter in the searcher section of your configuration. This parameter is required
+for the SearcherContext to function properly and determines the maximum training length for any
+trial in the hyperparameter search.
 
 After the context and experiment configuration reach the master, the experiment waits for the
 scheduler to assign slots. The master allocates necessary resources as defined in the cluster

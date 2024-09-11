@@ -221,23 +221,22 @@ found in the :download:`core_api.tgz </examples/core_api.tgz>` download or in th
  Hyperparameter Search
 ***********************
 
-With the Core API you can run advanced hyperparameter searches with arbitrary training code. The
-hyperparameter search logic is in the master, which coordinates many different Trials. Each trial
-runs a train-validate-report loop:
+When performing a hyperparameter search, your training script needs to follow this pattern:
 
-.. table::
++----------+--------------------------------------------------------------------------+
+| Train    | Train for the length specified by the SearcherOperation obtained via the |
+|          | Core API. The length of training is absolute, so you need to keep track  |
+|          | of how much you have already trained.                                    |
++----------+--------------------------------------------------------------------------+
+| Validate | Validate your model to obtain the metric you configured in the           |
+|          | ``searcher.metric`` field of your experiment config.                     |
++----------+--------------------------------------------------------------------------+
+| Report   | Use the Core API to report results to the master.                        |
++----------+--------------------------------------------------------------------------+
 
-   +----------+--------------------------------------------------------------------------+
-   | Train    | Train until a point chosen by the hyperparameter search algorithm and    |
-   |          | obtained via the Core API.  The length of training is absolute, so you   |
-   |          | have to keep track of how much you have already trained to know how much |
-   |          | more to train.                                                           |
-   +----------+--------------------------------------------------------------------------+
-   | Validate | Validate your model to obtain the metric you configured in the           |
-   |          | ``searcher.metric`` field of your experiment config.                     |
-   +----------+--------------------------------------------------------------------------+
-   | Report   | Use the Core API to report results to the master.                        |
-   +----------+--------------------------------------------------------------------------+
+The SearcherContext fabricates a single SearcherOperation based on the `max_length` specified in the
+experiment configuration. Ensure that your configuration includes a `max_length` parameter in the
+searcher section.
 
 #. Create a ``3_hpsearch.py`` training script by copying the ``2_checkpoints.py`` script you created
    in :ref:`core-checkpoints`.
