@@ -94,7 +94,7 @@ func TestUnmarshalYamlExperiment(t *testing.T) {
 		{"extra fields", yamlExperiment + `  extra_field: "string"` + yamlConstraints, false, nil},
 		{"invalid fields", yamlExperiment + "  debug true\n", false, nil},
 		{"empty input", "", true, &ExperimentConfigPolicy{}},
-		{"null/empty fields", yamlExperiment + "  debug:\n", true, &structExperiment},
+		{"null/empty fields", yamlExperiment + "  debug:\n", true, &justConfig},
 		{"wrong field type", "invariant_config:\n  debug: 3\n", false, nil},
 	}
 
@@ -102,7 +102,7 @@ func TestUnmarshalYamlExperiment(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			config, err := UnmarshalExperimentConfigPolicy(tt.input)
 			require.Equal(t, tt.noErr, err == nil)
-			if !tt.noErr {
+			if tt.noErr {
 				assert.DeepEqual(t, tt.output, config)
 			}
 		})
@@ -125,7 +125,7 @@ var structNTSC = NTSCConfigPolicy{
 	InvariantConfig: &model.CommandConfig{
 		Description: "test\nspecial\tchar",
 		Resources: model.ResourcesConfig{
-			Slots: 10,
+			Slots: 1,
 		},
 		Environment: model.Environment{
 			ForcePullImage:  false,
@@ -158,7 +158,7 @@ func TestUnmarshalYamlNTSC(t *testing.T) {
 		{"extra fields", yamlNTSC + `  extra_field: "string"` + yamlConstraints, false, nil},
 		{"invalid fields", yamlNTSC + "  debug true\n", false, nil},
 		{"empty input", "", true, &NTSCConfigPolicy{}},
-		{"null/empty fields", yamlNTSC + "  debug:\n", true, &structNTSC}, // empty fields unmarshal to default value
+		{"null/empty fields", yamlNTSC + "  debug:\n", true, &justConfig}, // empty fields unmarshal to default value
 		{"wrong field type", "invariant_config:\n  debug: 3\n", false, nil},
 	}
 
@@ -166,7 +166,7 @@ func TestUnmarshalYamlNTSC(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			config, err := UnmarshalNTSCConfigPolicy(tt.input)
 			require.Equal(t, tt.noErr, err == nil)
-			if !tt.noErr {
+			if tt.noErr {
 				assert.DeepEqual(t, tt.output, config)
 			}
 		})
@@ -249,7 +249,7 @@ func TestUnmarshalJSONExperiment(t *testing.T) {
 		{"extra fields", jsonExtraField, false, nil},
 		{"invalid fields", jsonInvalidField, false, nil},
 		{"empty input", "", true, &ExperimentConfigPolicy{}},
-		{"null/empty fields", jsonEmptyField, true, &structExperiment}, // empty fields unmarshal to default value
+		{"null/empty fields", jsonEmptyField, true, &justConfig}, // empty fields unmarshal to default value
 		{"wrong field type", jsonWrongFieldType, false, nil},
 	}
 
@@ -257,7 +257,7 @@ func TestUnmarshalJSONExperiment(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			config, err := UnmarshalExperimentConfigPolicy(tt.input)
 			require.Equal(t, tt.noErr, err == nil)
-			if !tt.noErr {
+			if tt.noErr {
 				assert.DeepEqual(t, tt.output, config)
 			}
 		})
@@ -295,7 +295,7 @@ func TestUnmarshalJSONNTSC(t *testing.T) {
 		{"extra fields", jsonExtraField, false, nil},
 		{"invalid fields", jsonInvalidField, false, nil},
 		{"empty input", "", true, &NTSCConfigPolicy{}},
-		{"null/empty fields", jsonEmptyField, true, &structNTSC}, // empty fields unmarshal to default value
+		{"null/empty fields", jsonEmptyField, true, &justConfig}, // empty fields unmarshal to default value
 		{"wrong field type", jsonWrongFieldType, false, nil},
 	}
 
@@ -303,7 +303,7 @@ func TestUnmarshalJSONNTSC(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			config, err := UnmarshalNTSCConfigPolicy(tt.input)
 			require.Equal(t, tt.noErr, err == nil)
-			if !tt.noErr {
+			if tt.noErr {
 				assert.DeepEqual(t, tt.output, config)
 			}
 		})
