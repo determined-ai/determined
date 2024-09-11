@@ -540,6 +540,11 @@ export interface GetWebhookParams {
   id: number;
 }
 
+export interface PatchWebhookParams {
+  id: number;
+  url: string;
+}
+
 export interface SearchRolesAssignableToScopeParams {
   limit?: number;
   offset?: number;

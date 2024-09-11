@@ -90,3 +90,12 @@ message Trigger {
   // The parent webhook of the trigger.
   int32 webhook_id = 4;
 }
+
+// PatchWebhook is a partial update to a webhook
+message PatchWebhook {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "url" ] }
+  };
+  // The new url of the webhook.
+  string url = 1;
+}

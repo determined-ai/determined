@@ -24,6 +24,7 @@ import (
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
+	"github.com/determined-ai/determined/proto/pkg/webhookv1"
 
 	"github.com/google/uuid"
 )
@@ -118,6 +119,26 @@ func (l *WebhookManager) removeTriggers(triggers []*Trigger) error {
 		}
 
 		delete(l.regexToTriggers[regex].triggerIDToTrigger, t.ID)
+	}
+	return nil
+}
+
+func (l *WebhookManager) editTriggers(ts []*Trigger) error {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	for _, t := range ts {
+		if t.TriggerType != TriggerTypeTaskLog {
+			continue
+		}
+
+		regex, ok := t.Condition[regexConditionKey].(string)
+		if !ok {
+			return fmt.Errorf(
+				"expected webhook trigger to have regex in condition instead got %v", t.Condition)
+		}
+
+		l.regexToTriggers[regex].triggerIDToTrigger[t.ID].Webhook.URL = t.Webhook.URL
 	}
 	return nil
 }
@@ -900,4 +921,42 @@ WHERE q.id = webhook_events_queue.id RETURNING webhook_events_queue.*
 		return nil, fmt.Errorf("scanning events: %w", err)
 	}
 	return &eventBatch{tx: &tx, events: events}, nil
+}
+
+// updateWebhook updates a webhook in the database.
+func (l *WebhookManager) updateWebhook(
+	ctx context.Context,
+	webhookID int32,
+	p *webhookv1.PatchWebhook,
+) error {
+	var ts []*Trigger
+	err := db.Bun().NewSelect().Model(&ts).Relation("Webhook").
+		Where("webhook_id = ?", webhookID).
+		Scan(ctx, &ts)
+	if err != nil {
+		return fmt.Errorf("getting webhook triggers to update cache: %w", err)
+	}
+
+	err = db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		_, err := tx.NewUpdate().Table("webhooks").
+			Set("url = ?", p.Url).
+			Where("id = ?", webhookID).
+			Exec(ctx)
+		if err != nil {
+			return fmt.Errorf("updating webhook %d: %w", webhookID, err)
+		}
+
+		for _, t := range ts {
+			t.Webhook.URL = p.Url
+		}
+		if err := l.editTriggers(ts); err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("updating webhook: %w", err)
+	}
+
+	return nil
 }

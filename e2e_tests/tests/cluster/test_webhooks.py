@@ -505,3 +505,149 @@ def test_webhook_rbac() -> None:
     bindings.delete_DeleteWebhook(user2_sess, id=workspace_webhook_id)
 
     test_agent_user_group._delete_workspace_and_check(admin_sess, workspace)
+
+
+@pytest.mark.e2e_cpu
+def test_editing_webhook() -> None:
+    port = 5009
+    sess = api_utils.admin_session()
+
+    webhook_trigger = bindings.v1Trigger(
+        triggerType=bindings.v1TriggerType.TASK_LOG,
+        condition={"regex": "test-regex"},
+    )
+
+    default_path = f"/test/path/here/{str(uuid.uuid4())}"
+    res = bindings.post_PostWebhook(
+        sess,
+        body=bindings.v1Webhook(
+            url=f"http://localhost:{port}{default_path}",
+            webhookType=bindings.v1WebhookType.DEFAULT,
+            triggers=[webhook_trigger],
+            mode=bindings.v1WebhookMode.WORKSPACE,
+            name="",
+            workspaceId=None,
+        ),
+    )
+    default_id = res.webhook.id
+    assert default_id is not None
+
+    specific_path = f"/test/path/here/{str(uuid.uuid4())}"
+    res = bindings.post_PostWebhook(
+        sess,
+        body=bindings.v1Webhook(
+            url=f"http://localhost:{port}{specific_path}",
+            webhookType=bindings.v1WebhookType.DEFAULT,
+            triggers=[webhook_trigger],
+            mode=bindings.v1WebhookMode.SPECIFIC,
+            name="specific-webhook2",
+            workspaceId=1,
+        ),
+    )
+    specific_id = res.webhook.id
+    assert specific_id is not None
+
+    modified_path = f"/test/path/here/{str(uuid.uuid4())}"
+    bindings.patch_PatchWebhook(
+        sess,
+        body=bindings.v1PatchWebhook(url=f"http://localhost:{port}{modified_path}"),
+        id=default_id,
+    )
+    bindings.patch_PatchWebhook(
+        sess,
+        body=bindings.v1PatchWebhook(url=f"http://localhost:{port}{modified_path}"),
+        id=specific_id,
+    )
+
+    get_res = bindings.get_GetWebhooks(sess)
+    for webhook in get_res.webhooks:
+        if webhook.id == default_id or webhook.id == specific_id:
+            assert webhook.url == f"http://localhost:{port}{modified_path}"
+
+    bindings.delete_DeleteWebhook(sess, id=default_id)
+    bindings.delete_DeleteWebhook(sess, id=specific_id)
+
+
+@pytest.mark.e2e_cpu
+def test_log_pattern_webhook_cached_url_is_updated() -> None:
+    original_port = 5011
+    updated_port = 5012
+    original_server = utils.WebhookServer(original_port)
+    updated_server = utils.WebhookServer(updated_port)
+    sess = api_utils.admin_session()
+
+    regex = r"assert 0 <= self\.metrics_sigma"
+
+    webhook_trigger = bindings.v1Trigger(
+        triggerType=bindings.v1TriggerType.TASK_LOG,
+        condition={"regex": regex},
+    )
+
+    slack_path = f"/test/slack/path/here/{str(uuid.uuid4())}"
+    slack_webhook = bindings.post_PostWebhook(
+        sess,
+        body=bindings.v1Webhook(
+            url=f"http://localhost:{original_port}{slack_path}",
+            webhookType=bindings.v1WebhookType.SLACK,
+            triggers=[webhook_trigger],
+            mode=bindings.v1WebhookMode.WORKSPACE,
+            name="",
+            workspaceId=None,
+        ),
+    )
+    slack_webhook_id = slack_webhook.webhook.id
+    assert slack_webhook_id is not None
+
+    default_path = f"/test/path/here/{str(uuid.uuid4())}"
+    default_webhook = bindings.post_PostWebhook(
+        sess,
+        body=bindings.v1Webhook(
+            url=f"http://localhost:{original_port}{default_path}",
+            webhookType=bindings.v1WebhookType.DEFAULT,
+            triggers=[webhook_trigger],
+            mode=bindings.v1WebhookMode.WORKSPACE,
+            name="",
+            workspaceId=None,
+        ),
+    )
+    default_webhook_id = default_webhook.webhook.id
+    assert default_webhook_id is not None
+
+    bindings.patch_PatchWebhook(
+        sess,
+        body=bindings.v1PatchWebhook(url=f"http://localhost:{updated_port}{slack_path}"),
+        id=slack_webhook_id,
+    )
+    bindings.patch_PatchWebhook(
+        sess,
+        body=bindings.v1PatchWebhook(url=f"http://localhost:{updated_port}{default_path}"),
+        id=default_webhook_id,
+    )
+
+    exp_id = exp.create_experiment(
+        sess,
+        conf.fixtures_path("no_op/single-medium-train-step.yaml"),
+        conf.fixtures_path("no_op"),
+        ["--config", "hyperparameters.metrics_sigma=-1.0"],
+    )
+    exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.ERROR)
+
+    time.sleep(10)
+    responses = original_server.close_and_return_responses()
+    assert len(responses) == 0
+
+    for _ in range(10):
+        responses = updated_server.return_responses()
+        if default_path in responses and slack_path in responses:
+            break
+        time.sleep(1)
+
+    responses = updated_server.close_and_return_responses()
+    assert len(responses) >= 2
+    # Only need a spot check we get the default / slack responses.
+    # Further tested in integrations.
+    assert "TASK_LOG" in responses[default_path]
+    assert "This log matched the regex" in responses[slack_path]
+
+    bindings.delete_DeleteWebhook(sess, id=slack_webhook_id or 0)
+    bindings.delete_DeleteWebhook(sess, id=default_webhook_id or 0)
