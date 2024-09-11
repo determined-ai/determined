@@ -192,11 +192,7 @@ export const test = baseTest.extend<CustomFixtures, CustomWorkerFixtures>({
         },
       });
       const adminUser = await backgroundApiUser.createUser(request);
-      await backgroundApiUser.apiAuth.loginApi({
-        creds: { password: request.password!, username: adminUser.user!.username },
-      });
       await use({ request, response: adminUser });
-      await backgroundApiUser.apiAuth.loginApi();
       await backgroundApiUser.patchUser(adminUser.user!.id!, { active: false });
     },
     { scope: 'worker' },
