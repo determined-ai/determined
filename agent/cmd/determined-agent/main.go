@@ -6,6 +6,7 @@ import (
 	log "github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
+	"github.com/determined-ai/determined/master/pkg/config"
 	"github.com/determined-ai/determined/master/pkg/logger"
 )
 
@@ -33,7 +34,7 @@ func nonRootSubCmds(rootCmd *cobra.Command) []string {
 }
 
 func main() {
-	logger.SetLogrus(*logger.DefaultConfig())
+	logger.SetLogrus(*config.DefaultLoggerConfig())
 	maybeInjectRootAlias(rootCmd, "run")
 
 	if err := rootCmd.Execute(); err != nil {
