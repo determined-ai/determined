@@ -6,11 +6,11 @@ import pytest
 
 from determined.common import api
 from determined.common.api import bindings
-from tests import api_utils
-from tests import config as conf
-from tests import detproc
+from determined.experimental import client
+from tests import api_utils, detproc
 from tests import experiment as exp
 from tests.cluster import utils
+from tests.experiment import noop
 
 
 @pytest.mark.e2e_cpu
@@ -85,15 +85,11 @@ def test_disable_agent_experiment_resume() -> None:
     assert len(slots) == 1
     agent_id = slots[0]["agent_id"]
 
-    exp_id = exp.create_experiment(
-        sess,
-        conf.fixtures_path("no_op/single-medium-train-step.yaml"),
-        conf.fixtures_path("no_op"),
-        ["--config", "max_restarts=0"],
-    )
+    # Make the experiment preemptible.
+    exp_ref = noop.create_experiment(sess, [noop.Sleep(100)], config={"max_restarts": 0})
     exp.wait_for_experiment_state(
         sess,
-        exp_id,
+        exp_ref.id,
         bindings.experimentv1State.RUNNING,
         max_wait_secs=utils.KUBERNETES_EXPERIMENT_TIMEOUT,
     )
@@ -108,7 +104,18 @@ def test_disable_agent_experiment_resume() -> None:
             time.sleep(1)
         else:
             pytest.fail("Experiment stayed scheduled after agent was disabled")
-    exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.COMPLETED)
+
+    # Wait for the experiment to be running again.
+    exp.wait_for_experiment_state(
+        sess,
+        exp_ref.id,
+        bindings.experimentv1State.RUNNING,
+        max_wait_secs=utils.KUBERNETES_EXPERIMENT_TIMEOUT,
+    )
+
+    # Now just kill it off.
+    exp_ref.kill()
+    assert exp_ref.wait(interval=0.01) == client.ExperimentState.CANCELED
 
 
 @pytest.mark.e2e_cpu
@@ -151,20 +158,25 @@ def test_drain_agent() -> None:
     assert len(slots) == 1
     agent_id = slots[0]["agent_id"]
 
-    experiment_id = exp.create_experiment(
+    exp_ref = noop.create_experiment(
         sess,
-        conf.fixtures_path("no_op/single-medium-train-step.yaml"),
-        conf.fixtures_path("no_op"),
-        ["--config", "hyperparameters.training_batch_seconds=0.15"],  # Take 15 seconds.
+        [
+            # Two Reports to meet the requirements of wait_for_workload_progress().
+            noop.Report({"loss": 1}),
+            noop.Report({"loss": 1}),
+            noop.Sleep(5),
+            # A third Report to prove we finished successfully.
+            noop.Report({"loss": 1}),
+        ],
     )
     exp.wait_for_experiment_state(
         sess,
-        experiment_id,
+        exp_ref.id,
         bindings.experimentv1State.RUNNING,
         max_wait_secs=utils.KUBERNETES_EXPERIMENT_TIMEOUT,
     )
-    exp.wait_for_experiment_active_workload(sess, experiment_id)
-    exp.wait_for_experiment_workload_progress(sess, experiment_id)
+    exp.wait_for_experiment_active_workload(sess, exp_ref.id)
+    exp.wait_for_experiment_workload_progress(sess, exp_ref.id)
 
     # Disable and quickly enable it back.
     with _disable_agent(admin, agent_id, drain=True):
@@ -172,29 +184,22 @@ def test_drain_agent() -> None:
 
     # Try to launch another experiment. It shouldn't get scheduled because the
     # slot is still busy with the first experiment.
-    experiment_id_no_start = exp.create_experiment(
-        sess,
-        conf.fixtures_path("no_op/single-medium-train-step.yaml"),
-        conf.fixtures_path("no_op"),
-        None,
-    )
-    time.sleep(5)
-    exp.wait_for_experiment_state(sess, experiment_id_no_start, bindings.experimentv1State.QUEUED)
+    no_start = noop.create_experiment(sess)
+    time.sleep(2)
+    no_start.reload()
+    assert no_start.state == client.ExperimentState.QUEUED, no_start.state
 
     with _disable_agent(admin, agent_id, drain=True):
         # Ensure the first one has finished with the correct number of workloads.
-        exp.wait_for_experiment_state(sess, experiment_id, bindings.experimentv1State.COMPLETED)
-        trials = exp.experiment_trials(sess, experiment_id)
+        assert exp_ref.wait(interval=0.01) == client.ExperimentState.COMPLETED
+        trials = exp.experiment_trials(sess, exp_ref.id)
         assert len(trials) == 1
-        assert len(trials[0].workloads) == 7
+        assert len(trials[0].workloads) == 3
 
-        # Check for 15 seconds it doesn't get scheduled into the same slot.
-        for _ in range(15):
-            assert (
-                exp.experiment_state(sess, experiment_id_no_start)
-                == bindings.experimentv1State.QUEUED
-            )
-            time.sleep(1)
+        # Make sure it doesn't get scheduled into the same slot.
+        time.sleep(2)
+        no_start.reload()
+        assert no_start.state == client.ExperimentState.QUEUED, no_start.state
 
         # Ensure the slot is empty.
         slots = _fetch_slots(admin)
@@ -211,7 +216,7 @@ def test_drain_agent() -> None:
         assert agent_data["enabled"] is False
         assert agent_data["draining"] is True
 
-        exp.kill_single(sess, experiment_id_no_start)
+        no_start.kill()
 
 
 @pytest.mark.e2e_cpu_2a
@@ -225,13 +230,16 @@ def test_drain_agent_sched() -> None:
     slots = _wait_for_slots(admin, 2)
     assert len(slots) == 2
 
-    exp_id1 = exp.create_experiment(
+    exp_ref1 = noop.create_experiment(
         sess,
-        conf.fixtures_path("no_op/single-medium-train-step.yaml"),
-        conf.fixtures_path("no_op"),
-        None,
+        [
+            # Two Reports to meet the requirements of wait_for_workload_progress().
+            noop.Report({"loss": 1}),
+            noop.Report({"loss": 1}),
+            noop.Sleep(100),
+        ],
     )
-    exp.wait_for_experiment_workload_progress(sess, exp_id1)
+    exp.wait_for_experiment_workload_progress(sess, exp_ref1.id)
 
     slots = _fetch_slots(admin)
     used_slots = [s for s in slots if s["allocation_id"] != "FREE"]
@@ -239,16 +247,10 @@ def test_drain_agent_sched() -> None:
     agent_id1 = used_slots[0]["agent_id"]
 
     with _disable_agent(admin, agent_id1, drain=True):
-        exp_id2 = exp.create_experiment(
-            sess,
-            conf.fixtures_path("no_op/single-medium-train-step.yaml"),
-            conf.fixtures_path("no_op"),
-            None,
-        )
-        exp.wait_for_experiment_state(sess, exp_id2, bindings.experimentv1State.RUNNING)
+        exp_ref2 = noop.create_experiment(sess, [noop.Sleep(100)])
 
         # Wait for a state when *BOTH* experiments are scheduled.
-        for _ in range(20):
+        for _ in range(200):
             slots = _fetch_slots(admin)
             assert len(slots) == 2
             used_slots = [s for s in slots if s["allocation_id"] != "FREE"]
@@ -261,13 +263,10 @@ def test_drain_agent_sched() -> None:
                 "while the first agent was draining"
             )
 
-        exp.wait_for_experiment_state(sess, exp_id1, bindings.experimentv1State.COMPLETED)
-        exp.wait_for_experiment_state(sess, exp_id2, bindings.experimentv1State.COMPLETED)
-
-        trials1 = exp.experiment_trials(sess, exp_id1)
-        trials2 = exp.experiment_trials(sess, exp_id2)
-        assert len(trials1) == len(trials2) == 1
-        assert len(trials1[0].workloads) == len(trials2[0].workloads) == 7
+        exp_ref1.kill()
+        exp_ref2.kill()
+        assert exp_ref1.wait(interval=0.01) == client.ExperimentState.CANCELED
+        assert exp_ref2.wait(interval=0.01) == client.ExperimentState.CANCELED
 
 
 def _task_data(sess: api.Session, task_id: str) -> Optional[Dict[str, Any]]:

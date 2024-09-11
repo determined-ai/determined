@@ -1,88 +1,90 @@
-import copy
 import os
-import shutil
 import tempfile
 import time
+from typing import Any, Dict, List
 
 import pytest
 
-from determined.common import check, util
 from determined.common.api import bindings
 from determined.experimental import client
 from tests import api_utils
-from tests import config as conf
 from tests import experiment as exp
+from tests.experiment import noop
 
 
-@pytest.mark.e2e_cpu
-def test_noop_pause() -> None:
+def do_test_pause_and_nan_validations(time_scale: int) -> None:
     """
     Walk through starting, pausing, and resuming a single no-op experiment.
+
+    Simultaneously, ensure that NaN validation metrics don't explode an experiment, which used to
+    be a separate test.
     """
     sess = api_utils.user_session()
-    experiment_id = exp.create_experiment(
-        sess,
-        conf.fixtures_path("no_op/single-medium-train-step.yaml"),
-        conf.fixtures_path("no_op"),
-        None,
-    )
-    exp.wait_for_experiment_state(sess, experiment_id, bindings.experimentv1State.RUNNING)
-
-    # Wait for the only trial to get scheduled.
-    exp.wait_for_experiment_active_workload(sess, experiment_id)
-
-    # Wait for the only trial to show progress, indicating the image is built and running.
-    exp.wait_for_experiment_workload_progress(sess, experiment_id)
+    actions: List[noop.Action] = []
+    for _ in range(20):
+        actions.append(noop.Report({"loss": "nan"}, group="training"))
+        actions.append(noop.Report({"loss": "nan"}, group="validation"))
+        actions.append(noop.Sleep(1 * time_scale))
+    exp_ref = noop.create_experiment(sess, actions)
+    # Wait for the experiment to become RUNNING, which can take especially long for the slurm tests.
+    exp.wait_for_experiment_state(sess, exp_ref.id, bindings.experimentv1State.RUNNING)
+    # Wait for the experiment to actually show progress, so we don't risk pausing before starting.
+    exp.wait_for_experiment_workload_progress(sess, exp_ref.id)
 
     # Pause the experiment. Note that Determined does not currently differentiate
     # between a "stopping paused" and a "paused" state, so we follow this check
     # up by ensuring the experiment cleared all scheduled workloads.
-    exp.pause_experiment(sess, experiment_id)
-    exp.wait_for_experiment_state(sess, experiment_id, bindings.experimentv1State.PAUSED)
+    exp_ref.pause()
+    exp.wait_for_experiment_state(sess, exp_ref.id, bindings.experimentv1State.PAUSED)
 
-    # Wait at most 20 seconds for the experiment to clear all workloads (each
-    # train step should take 5 seconds).
-    for _ in range(20):
-        workload_active = exp.experiment_has_active_workload(sess, experiment_id)
+    # Wait at most 20 * time_scale seconds for the experiment to clear all workloads.
+    for _ in range(200):
+        workload_active = exp.experiment_has_active_workload(sess, exp_ref.id)
         if not workload_active:
             break
-        else:
-            time.sleep(1)
-    check.true(
-        not workload_active,
-        "The experiment cannot be paused within 20 seconds.",
-    )
+        time.sleep(0.1 * time_scale)
+    else:
+        raise ValueError(f"The experiment cannot be paused within {20 * time_scale} seconds.")
 
-    # Resume the experiment and wait for completion.
-    exp.activate_experiment(sess, experiment_id)
-    exp.wait_for_experiment_state(sess, experiment_id, bindings.experimentv1State.COMPLETED)
+    # Resume the experiment and ensure it is still running.
+    trial = exp_ref.get_trials()[0]
 
+    def count_metrics() -> int:
+        return sum(1 for _ in trial.iter_metrics("training"))
 
-@pytest.mark.e2e_cpu
-def test_noop_nan_validations() -> None:
-    """
-    Ensure that NaN validation metric values don't prevent an experiment from completing.
-    """
-    sess = api_utils.user_session()
-    experiment_id = exp.create_experiment(
-        sess,
-        conf.fixtures_path("no_op/single-nan-validations.yaml"),
-        conf.fixtures_path("no_op"),
-        None,
-    )
-    exp.wait_for_experiment_state(sess, experiment_id, bindings.experimentv1State.COMPLETED)
+    metrics_before = count_metrics()
+    exp_ref.activate()
+    for _ in range(200):
+        if count_metrics() > metrics_before:
+            break
+        time.sleep(0.1 * time_scale)
+    else:
+        raise ValueError(f"The experiment did not reactivate within {20 * time_scale} seconds.")
+
+    exp_ref.kill()
 
 
 @pytest.mark.e2e_cpu
-def test_noop_load() -> None:
+def test_pause_and_nan_validations() -> None:
+    do_test_pause_and_nan_validations(time_scale=1)
+
+
+@pytest.mark.e2e_slurm
+@pytest.mark.e2e_pbs
+@pytest.mark.timeout(20 * 60)
+def test_pause_and_nan_validations_hpc() -> None:
     """
-    Load a checkpoint
+    Just like the e2e_cpu verison, but much slower.
     """
+    do_test_pause_and_nan_validations(time_scale=10)
+
+
+@pytest.mark.e2e_cpu
+def test_generic_checkpoint_associated_with_trial() -> None:
     sess = api_utils.user_session()
-    experiment_id = exp.run_basic_test(
-        sess, conf.fixtures_path("no_op/single.yaml"), conf.fixtures_path("no_op"), 1
-    )
-    trials = exp.experiment_trials(sess, experiment_id)
+    exp_ref = noop.create_experiment(sess, [noop.Checkpoint()])
+    assert exp_ref.wait(interval=0.01) == client.ExperimentState.COMPLETED
+    trials = exp.experiment_trials(sess, exp_ref.id)
     checkpoint = (
         client.Determined._from_session(sess).get_trial(trials[0].trial.id).top_checkpoint()
     )
@@ -90,279 +92,193 @@ def test_noop_load() -> None:
 
 
 @pytest.mark.e2e_cpu
-def test_noop_pause_of_experiment_without_trials() -> None:
+def test_pause_of_experiment_without_trials() -> None:
     """
     Walk through starting, pausing, and resuming a single no-op experiment
     which will never schedule a trial.
     """
     sess = api_utils.user_session()
-    config_obj = conf.load_config(conf.fixtures_path("no_op/single-one-short-step.yaml"))
-    impossibly_large = 100
-    config_obj["max_restarts"] = 0
-    config_obj["resources"] = {"slots_per_trial": impossibly_large}
-    with tempfile.NamedTemporaryFile() as tf:
-        with open(tf.name, "w") as f:
-            util.yaml_safe_dump(config_obj, f)
-        experiment_id = exp.create_experiment(sess, tf.name, conf.fixtures_path("no_op"), None)
-    exp.pause_experiment(sess, experiment_id)
-    exp.wait_for_experiment_state(sess, experiment_id, bindings.experimentv1State.PAUSED)
+    exp_ref = noop.create_experiment(sess, config={"resources": {"slots_per_trial": 1000}})
+    exp_ref.pause()
+    exp.wait_for_experiment_state(sess, exp_ref.id, bindings.experimentv1State.PAUSED)
 
-    exp.activate_experiment(sess, experiment_id)
-    exp.wait_for_experiment_state(sess, experiment_id, bindings.experimentv1State.QUEUED)
+    exp_ref.activate()
+    exp.wait_for_experiment_state(sess, exp_ref.id, bindings.experimentv1State.QUEUED)
 
-    for _ in range(5):
-        assert exp.experiment_state(sess, experiment_id) == bindings.experimentv1State.QUEUED
-        time.sleep(1)
-
-    exp.kill_single(sess, experiment_id)
+    exp_ref.kill()
 
 
 @pytest.mark.e2e_cpu
-def test_noop_pause_with_multiexperiment() -> None:
+def test_pause_with_multiexperiment() -> None:
     """
     Start, pause, and resume a single no-op experiment
     using the bulk action endpoints and ExperimentIds param.
     """
     sess = api_utils.user_session()
-    config_obj = conf.load_config(conf.fixtures_path("no_op/single-one-short-step.yaml"))
-    impossibly_large = 100
-    config_obj["max_restarts"] = 0
-    config_obj["resources"] = {"slots_per_trial": impossibly_large}
-    with tempfile.NamedTemporaryFile() as tf:
-        with open(tf.name, "w") as f:
-            util.yaml_safe_dump(config_obj, f)
-        experiment_id = exp.create_experiment(sess, tf.name, conf.fixtures_path("no_op"), None)
-    exp.pause_experiments(sess, [experiment_id], -1)
-    exp.wait_for_experiment_state(sess, experiment_id, bindings.experimentv1State.PAUSED)
+    exp_ref = noop.create_experiment(sess, config={"resources": {"slots_per_trial": 1000}})
+    exp.pause_experiments(sess, [exp_ref.id], -1)
+    exp.wait_for_experiment_state(sess, exp_ref.id, bindings.experimentv1State.PAUSED)
 
-    exp.activate_experiments(sess, [experiment_id], -1)
-    exp.wait_for_experiment_state(sess, experiment_id, bindings.experimentv1State.QUEUED)
-    exp.kill_experiments(sess, [experiment_id], -1)
+    exp.activate_experiments(sess, [exp_ref.id], -1)
+    exp.wait_for_experiment_state(sess, exp_ref.id, bindings.experimentv1State.QUEUED)
+    exp.kill_experiments(sess, [exp_ref.id], -1)
+    exp_ref.reload()
+    assert exp_ref.wait(interval=0.01) == client.ExperimentState.CANCELED
 
 
 @pytest.mark.e2e_cpu
-def test_noop_pause_with_multiexperiment_filter() -> None:
+def test_pause_with_multiexperiment_filter() -> None:
     """
     Pause a single no-op experiment
     using the bulk action endpoint and Filters param.
     """
     sess = api_utils.user_session()
-    config_obj = conf.load_config(conf.fixtures_path("no_op/single-one-short-step.yaml"))
-    impossibly_large = 100
-    config_obj["max_restarts"] = 0
-    config_obj["resources"] = {"slots_per_trial": impossibly_large}
-    with tempfile.NamedTemporaryFile() as tf:
-        config_obj["name"] = tf.name
-        with open(tf.name, "w") as f:
-            util.yaml_safe_dump(config_obj, f)
-        experiment_id = exp.create_experiment(sess, tf.name, conf.fixtures_path("no_op"), None)
-    exp.pause_experiments(sess, [], -1, name=tf.name)
-    exp.wait_for_experiment_state(sess, experiment_id, bindings.experimentv1State.PAUSED)
+    name = api_utils.get_random_string()
+    config = {"name": name, "resources": {"slots_per_trial": 1000}}
+    exp_ref = noop.create_experiment(sess, config=config)
+    exp.pause_experiments(sess, [], -1, name=name)
+    exp.wait_for_experiment_state(sess, exp_ref.id, bindings.experimentv1State.PAUSED)
     # test state=nonTerminalExperimentStates() filter in cancel/kill
-    exp.kill_experiments(sess, [], -1, name=tf.name)
-    exp.wait_for_experiment_state(sess, experiment_id, bindings.experimentv1State.CANCELED)
+    exp.kill_experiments(sess, [], -1, name=name)
+    exp.wait_for_experiment_state(sess, exp_ref.id, bindings.experimentv1State.CANCELED)
     # test state=terminalExperimentStates() filter in archive
-    exp.archive_experiments(sess, [], -1, name=tf.name)
+    exp.archive_experiments(sess, [], -1, name=name)
+    exp_ref.reload()
+    assert exp_ref.archived, exp_ref.archived
 
 
 @pytest.mark.e2e_cpu
-def test_noop_single_warm_start() -> None:
+def test_warm_start() -> None:
     sess = api_utils.user_session()
-    experiment_id1 = exp.run_basic_test(
-        sess, conf.fixtures_path("no_op/single.yaml"), conf.fixtures_path("no_op"), 1
+    exp_1 = noop.create_experiment(
+        sess,
+        [
+            # Two checkpoints to ensure source_trial_id takes the second one.
+            noop.Checkpoint(),
+            noop.Report({"x": 1}),
+            noop.Checkpoint(),
+        ],
     )
+    assert exp_1.wait(interval=0.01) == client.ExperimentState.COMPLETED
 
-    trials = exp.experiment_trials(sess, experiment_id1)
-    assert len(trials) == 1
+    trial_1 = exp.experiment_trials(sess, exp_1.id)[0]
+    ckpt_1 = exp.workloads_with_checkpoint(trial_1.workloads)[1].uuid
 
-    first_trial = trials[0].trial
-    first_trial_id = first_trial.id
-
-    first_workloads = trials[0].workloads
-    assert len(first_workloads) == 90
-    checkpoints = exp.workloads_with_checkpoint(first_workloads)
-    assert len(checkpoints) == 30
-    first_checkpoint_uuid = checkpoints[0].uuid
-    last_checkpoint_uuid = checkpoints[-1].uuid
-    last_validation = exp.workloads_with_validation(first_workloads)[-1]
-    assert last_validation.metrics.avgMetrics["validation_error"] == pytest.approx(0.9**30)
-
-    config_base = conf.load_config(conf.fixtures_path("no_op/single.yaml"))
+    def wait_for_trial(exp_id: int) -> exp.TrialPlusWorkload:
+        # Wait for a trial to appear.
+        deadline = time.time() + 20
+        while time.time() < deadline:
+            trials = exp.experiment_trials(sess, exp_id)
+            if trials:
+                return trials[0]
+        raise ValueError("no trial created before deadline")
 
     # Test source_trial_id.
-    config_obj = copy.deepcopy(config_base)
-    # Add a source trial ID to warm start from.
-    config_obj["searcher"]["source_trial_id"] = first_trial_id
-
-    experiment_id2 = exp.run_basic_test_with_temp_config(
-        sess, config_obj, conf.fixtures_path("no_op"), 1
-    )
-
-    trials = exp.experiment_trials(sess, experiment_id2)
-    assert len(trials) == 1
-
-    second_trial = trials[0]
-    assert len(second_trial.workloads) == 90
+    config: Dict[str, Any] = {"searcher": {"source_trial_id": trial_1.trial.id}}
+    exp_2 = noop.create_experiment(sess, config=config)
+    trial_2 = wait_for_trial(exp_2.id)
+    exp_2.kill()
 
     # Second trial should have a warm start checkpoint id.
-    assert second_trial.trial.warmStartCheckpointUuid == last_checkpoint_uuid
-
-    val_workloads = exp.workloads_with_validation(second_trial.workloads)
-    assert val_workloads[-1].metrics.avgMetrics["validation_error"] == pytest.approx(0.9**60)
+    assert trial_2.trial.warmStartCheckpointUuid == ckpt_1
 
     # Now test source_checkpoint_uuid.
-    config_obj = copy.deepcopy(config_base)
-    # Add a source trial ID to warm start from.
-    config_obj["searcher"]["source_checkpoint_uuid"] = checkpoints[0].uuid
+    config = {"searcher": {"source_checkpoint_uuid": ckpt_1}}
+    exp_3 = noop.create_experiment(sess, config=config)
+    trial_3 = wait_for_trial(exp_3.id)
+    exp_3.kill()
 
-    with tempfile.NamedTemporaryFile() as tf:
-        with open(tf.name, "w") as f:
-            util.yaml_safe_dump(config_obj, f)
-
-        experiment_id3 = exp.run_basic_test(sess, tf.name, conf.fixtures_path("no_op"), 1)
-
-    trials = exp.experiment_trials(sess, experiment_id3)
-    assert len(trials) == 1
-
-    third_trial = trials[0]
-    assert len(third_trial.workloads) == 90
-
-    assert third_trial.trial.warmStartCheckpointUuid == first_checkpoint_uuid
-    validations = exp.workloads_with_validation(third_trial.workloads)
-    assert validations[1].metrics.avgMetrics["validation_error"] == pytest.approx(0.9**3)
+    assert trial_3.trial.warmStartCheckpointUuid == ckpt_1
 
 
 @pytest.mark.e2e_cpu
-def test_cancel_one_experiment() -> None:
+def test_cancel_experiment() -> None:
     sess = api_utils.user_session()
-    experiment_id = exp.create_experiment(
-        sess,
-        conf.fixtures_path("no_op/single-many-long-steps.yaml"),
-        conf.fixtures_path("no_op"),
-    )
-
-    exp.cancel_single(sess, experiment_id)
+    exp_ref = noop.create_experiment(sess)
+    exp_ref.cancel()
+    assert exp_ref.wait(interval=0.01) == client.ExperimentState.CANCELED
 
 
 @pytest.mark.e2e_cpu
-def test_cancel_one_active_experiment_unready() -> None:
+def test_cancel_active_experiment_unready() -> None:
     sess = api_utils.user_session()
-    experiment_id = exp.create_experiment(
-        sess,
-        conf.fixtures_path("no_op/single-many-long-steps.yaml"),
-        conf.fixtures_path("no_op"),
-    )
+    actions: List[noop.Action] = []
+    for _ in range(20):
+        actions.append(noop.Report({"loss": "1"}, group="training"))
+        actions.append(noop.Report({"loss": "1"}, group="validation"))
+        actions.append(noop.Sleep(1))
+    exp_ref = noop.create_experiment(sess, actions)
 
-    for _ in range(15):
-        if exp.experiment_has_active_workload(sess, experiment_id):
+    for _ in range(150):
+        if exp.experiment_has_active_workload(sess, exp_ref.id):
             break
-        time.sleep(1)
+        time.sleep(0.1)
     else:
         raise AssertionError("no workload active after 15 seconds")
 
-    exp.cancel_single(sess, experiment_id, should_have_trial=True)
+    exp_ref.cancel()
+    assert exp_ref.wait(interval=0.01) == client.ExperimentState.CANCELED
 
 
 @pytest.mark.e2e_cpu
 @pytest.mark.timeout(3 * 60)
-def test_cancel_one_active_experiment_ready() -> None:
+def test_cancel_active_experiment_ready() -> None:
     sess = api_utils.user_session()
-    experiment_id = exp.create_experiment(
-        sess,
-        conf.tutorials_path("mnist_pytorch/const.yaml"),
-        conf.fixtures_path("mnist_pytorch"),
-    )
-
-    while 1:
-        if exp.experiment_has_completed_workload(sess, experiment_id):
-            break
-        time.sleep(1)
-
-    exp.cancel_single(sess, experiment_id, should_have_trial=True)
-    exp.assert_performed_final_checkpoint(sess, experiment_id)
+    actions: List[noop.Action] = []
+    for _ in range(20):
+        actions.append(noop.Report({"loss": "1"}, group="training"))
+        actions.append(noop.Report({"loss": "1"}, group="validation"))
+        actions.append(noop.Sleep(1))
+    exp_ref = noop.create_experiment(sess, actions)
+    exp.wait_for_experiment_workload_progress(sess, exp_ref.id)
+    exp_ref.cancel()
+    assert exp_ref.wait(interval=0.01) == client.ExperimentState.CANCELED
 
 
 @pytest.mark.e2e_cpu
-def test_cancel_one_paused_experiment() -> None:
+def test_cancel_paused_experiment() -> None:
     sess = api_utils.user_session()
-    experiment_id = exp.create_experiment(
-        sess,
-        conf.fixtures_path("no_op/single-many-long-steps.yaml"),
-        conf.fixtures_path("no_op"),
-        ["--paused"],
-    )
-    exp.cancel_single(sess, experiment_id)
-
-
-@pytest.mark.e2e_cpu
-def test_cancel_ten_experiments() -> None:
-    sess = api_utils.user_session()
-    experiment_ids = [
-        exp.create_experiment(
-            sess,
-            conf.fixtures_path("no_op/single-many-long-steps.yaml"),
-            conf.fixtures_path("no_op"),
-        )
-        for _ in range(10)
-    ]
-
-    for experiment_id in experiment_ids:
-        exp.cancel_single(sess, experiment_id)
-
-
-@pytest.mark.e2e_cpu
-def test_cancel_ten_paused_experiments() -> None:
-    sess = api_utils.user_session()
-    experiment_ids = [
-        exp.create_experiment(
-            sess,
-            conf.fixtures_path("no_op/single-many-long-steps.yaml"),
-            conf.fixtures_path("no_op"),
-            ["--paused"],
-        )
-        for _ in range(10)
-    ]
-
-    for experiment_id in experiment_ids:
-        exp.cancel_single(sess, experiment_id)
-
-
-@pytest.mark.e2e_cpu
-def test_startup_hook() -> None:
-    sess = api_utils.user_session()
-    exp.run_basic_test(
-        sess,
-        conf.fixtures_path("no_op/startup-hook.yaml"),
-        conf.fixtures_path("no_op"),
-        1,
-    )
+    exp_ref = noop.create_paused_experiment(sess)
+    exp_ref.cancel()
+    assert exp_ref.wait(interval=0.01) == client.ExperimentState.CANCELED
 
 
 @pytest.mark.e2e_cpu
 def test_large_model_def_experiment() -> None:
     sess = api_utils.user_session()
     with tempfile.TemporaryDirectory() as td:
-        shutil.copy(conf.fixtures_path("no_op/model_def.py"), td)
         # Write a 94MB file into the directory.  Use random data because it is not compressible.
-        with open(os.path.join(td, "junk.txt"), "wb") as f:
+        junk_path = os.path.join(td, "junk.txt")
+        with open(junk_path, "wb") as f:
             f.write(os.urandom(94 * 1024 * 1024))
 
-        exp.run_basic_test(sess, conf.fixtures_path("no_op/single-one-short-step.yaml"), td, 1)
+        # Actually run the test to make sure that not only does the master accept the model, but the
+        # resource manager can start the experiment.
+        exp_ref = noop.create_experiment(sess, includes=[junk_path])
+        assert exp_ref.wait(interval=0.01) == client.ExperimentState.COMPLETED
 
 
 @pytest.mark.e2e_cpu
-def test_noop_experiment_config_override() -> None:
+def test_experiment_config_override() -> None:
     sess = api_utils.user_session()
-    config_obj = conf.load_config(conf.fixtures_path("no_op/single-one-short-step.yaml"))
     with tempfile.NamedTemporaryFile() as tf:
         with open(tf.name, "w") as f:
-            util.yaml_safe_dump(config_obj, f)
+            f.write(
+                """
+                name: test_experiment_config_override
+                searcher:
+                    name: single
+                    metric: x
+                    max_length: 1
+                entrypoint: echo yo dawg
+            """
+            )
         experiment_id = exp.create_experiment(
             sess,
             tf.name,
-            conf.fixtures_path("no_op"),
-            ["--config", "reproducibility.experiment_seed=8200"],
+            None,
+            ["--config=name=xyz", "--paused"],
         )
         exp_config = exp.experiment_config_json(sess, experiment_id)
-        assert exp_config["reproducibility"]["experiment_seed"] == 8200
+        assert exp_config["name"] == "xyz"
         exp.kill_single(sess, experiment_id)

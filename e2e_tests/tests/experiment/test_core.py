@@ -1,9 +1,8 @@
 import subprocess
-import tempfile
 
 import pytest
 
-from determined.common import api, util
+from determined.common import api
 from determined.common.api import bindings
 from determined.experimental import client
 from tests import api_utils
@@ -12,6 +11,7 @@ from tests import config as conf
 from tests import detproc
 from tests import experiment as exp
 from tests.cluster import test_checkpoints
+from tests.experiment import noop
 
 
 @pytest.mark.e2e_cpu
@@ -26,16 +26,14 @@ def test_invalid_experiment() -> None:
 @pytest.mark.e2e_cpu
 def test_experiment_archive_unarchive() -> None:
     sess = api_utils.user_session()
-    experiment_id = exp.create_experiment(
-        sess, conf.fixtures_path("no_op/single.yaml"), conf.fixtures_path("no_op"), ["--paused"]
-    )
+    exp_ref = noop.create_paused_experiment(sess)
 
     describe_args = [
         "det",
         "experiment",
         "describe",
         "--json",
-        str(experiment_id),
+        str(exp_ref.id),
     ]
 
     # Check that the experiment is initially unarchived.
@@ -45,16 +43,16 @@ def test_experiment_archive_unarchive() -> None:
 
     # Check that archiving a non-terminal experiment fails, then terminate it.
     with pytest.raises(subprocess.CalledProcessError):
-        detproc.check_call(sess, ["det", "experiment", "archive", str(experiment_id)])
-    detproc.check_call(sess, ["det", "experiment", "cancel", str(experiment_id)])
+        detproc.check_call(sess, ["det", "experiment", "archive", str(exp_ref.id)])
+    detproc.check_call(sess, ["det", "experiment", "cancel", str(exp_ref.id)])
 
     # Check that we can archive and unarchive the experiment and see the expected effects.
-    detproc.check_call(sess, ["det", "experiment", "archive", str(experiment_id)])
+    detproc.check_call(sess, ["det", "experiment", "archive", str(exp_ref.id)])
     infos = detproc.check_json(sess, describe_args)
     assert len(infos) == 1
     assert infos[0]["experiment"]["archived"]
 
-    detproc.check_call(sess, ["det", "experiment", "unarchive", str(experiment_id)])
+    detproc.check_call(sess, ["det", "experiment", "unarchive", str(exp_ref.id)])
     infos = detproc.check_json(sess, describe_args)
     assert len(infos) == 1
     assert not infos[0]["experiment"]["archived"]
@@ -94,43 +92,19 @@ def test_create_test_mode() -> None:
 
 
 @pytest.mark.e2e_cpu
-def test_trial_logs() -> None:
-    sess = api_utils.user_session()
-    experiment_id = exp.run_basic_test(
-        sess, conf.fixtures_path("no_op/single.yaml"), conf.fixtures_path("no_op"), 1
-    )
-    trial_id = exp.experiment_trials(sess, experiment_id)[0].trial.id
-    detproc.check_call(sess, ["det", "trial", "logs", str(trial_id)])
-    detproc.check_call(
-        sess,
-        ["det", "trial", "logs", "--head", "10", str(trial_id)],
-    )
-    detproc.check_call(
-        sess,
-        ["det", "trial", "logs", "--tail", "10", str(trial_id)],
-    )
-
-
-@pytest.mark.e2e_cpu
 def test_labels() -> None:
     sess = api_utils.user_session()
-    experiment_id = exp.create_experiment(
-        sess,
-        conf.fixtures_path("no_op/single-one-short-step.yaml"),
-        conf.fixtures_path("no_op"),
-        None,
-    )
-
+    exp_ref = noop.create_paused_experiment(sess)
     label = "__det_test_dummy_label__"
 
     # Add a label and check that it shows up.
-    detproc.check_call(sess, ["det", "e", "label", "add", str(experiment_id), label])
-    output = detproc.check_output(sess, ["det", "e", "describe", str(experiment_id)])
+    detproc.check_call(sess, ["det", "e", "label", "add", str(exp_ref.id), label])
+    output = detproc.check_output(sess, ["det", "e", "describe", str(exp_ref.id)])
     assert label in output
 
     # Remove the label and check that it doesn't show up.
-    detproc.check_call(sess, ["det", "e", "label", "remove", str(experiment_id), label])
-    output = detproc.check_output(sess, ["det", "e", "describe", str(experiment_id)])
+    detproc.check_call(sess, ["det", "e", "label", "remove", str(exp_ref.id), label])
+    output = detproc.check_output(sess, ["det", "e", "describe", str(exp_ref.id)])
     assert label not in output
 
 
@@ -235,27 +209,25 @@ def test_end_to_end_adaptive() -> None:
 
 
 @pytest.mark.e2e_cpu
-def test_log_null_bytes() -> None:
-    sess = api_utils.user_session()
-    config_obj = conf.load_config(conf.fixtures_path("no_op/single.yaml"))
-    config_obj["hyperparameters"]["write_null"] = True
-    config_obj["max_restarts"] = 0
-    config_obj["searcher"]["max_length"] = {"batches": 1}
-    experiment_id = exp.run_basic_test_with_temp_config(
-        sess, config_obj, conf.fixtures_path("no_op"), 1
-    )
-
-    trials = exp.experiment_trials(sess, experiment_id)
-    assert len(trials) == 1
-    logs = exp.trial_logs(sess, trials[0].trial.id)
-    assert len(logs) > 0
-
-
-@pytest.mark.e2e_cpu
 def test_graceful_trial_termination() -> None:
     sess = api_utils.user_session()
-    config_obj = conf.load_config(conf.fixtures_path("no_op/grid-graceful-trial-termination.yaml"))
-    exp.run_basic_test_with_temp_config(sess, config_obj, conf.fixtures_path("no_op"), 2)
+    config = {
+        "hyperparameters": {
+            "actions": {
+                "1": {
+                    "type": "categorical",
+                    "vals": [
+                        # One trial completes its searcher operation.
+                        noop.CompleteSearcherOperation(1.0).to_dict(),
+                        # The other trial just exits 0.
+                        noop.Exit(0).to_dict(),
+                    ],
+                }
+            }
+        }
+    }
+    exp_ref = noop.create_experiment(sess, config=config)
+    assert exp_ref.wait(interval=0.01) == client.ExperimentState.COMPLETED
 
 
 @pytest.mark.e2e_cpu
@@ -283,11 +255,7 @@ def test_kill_experiment_ignoring_preemption() -> None:
         (
             "random",
             {
-                "metric": "validation_error",
                 "name": "random",
-                "max_length": {
-                    "batches": 3000,
-                },
                 "max_trials": 8,
                 "max_concurrent_trials": 1,
             },
@@ -295,12 +263,7 @@ def test_kill_experiment_ignoring_preemption() -> None:
         (
             "grid",
             {
-                "metric": "validation_error",
-                "name": "random",
-                "max_length": {
-                    "batches": 3000,
-                },
-                "max_trials": 8,
+                "name": "grid",
                 "max_concurrent_trials": 1,
             },
         ),
@@ -308,62 +271,73 @@ def test_kill_experiment_ignoring_preemption() -> None:
 )
 def test_max_concurrent_trials(name: str, searcher_cfg: str) -> None:
     sess = api_utils.user_session()
-    config_obj = conf.load_config(conf.fixtures_path("no_op/single-very-many-long-steps.yaml"))
-    config_obj["name"] = f"{name} searcher max concurrent trials test"
-    config_obj["searcher"] = searcher_cfg
-    config_obj["hyperparameters"]["x"] = {
-        "type": "categorical",
-        # Intentionally give the searcher more to do, in case a bug involves exceeding max
-        # concurrent trials.
-        "vals": list(range(16)),
+    config = {
+        "name": f"{name} searcher max concurrent trials test",
+        "searcher": searcher_cfg,
+        "hyperparameters": {
+            "x": {
+                "type": "categorical",
+                # Intentionally give the searcher more to do, in case a bug involves exceeding max
+                # concurrent trials.
+                "vals": list(range(16)),
+            }
+        },
     }
-
-    with tempfile.NamedTemporaryFile() as tf:
-        with open(tf.name, "w") as f:
-            util.yaml_safe_dump(config_obj, f)
-        experiment_id = exp.create_experiment(sess, tf.name, conf.fixtures_path("no_op"), [])
+    exp_ref = noop.create_experiment(sess, [noop.Sleep(10000)], config=config)
 
     try:
-        exp.wait_for_experiment_active_workload(sess, experiment_id)
-        trials = exp.wait_for_at_least_n_trials(sess, experiment_id, 1)
+        exp.wait_for_experiment_active_workload(sess, exp_ref.id)
+        trials = exp.wait_for_at_least_n_trials(sess, exp_ref.id, 1)
         assert len(trials) == 1, trials
 
         for t in trials:
             exp.kill_trial(sess, t.trial.id)
 
         # Give the experiment time to refill max_concurrent_trials.
-        trials = exp.wait_for_at_least_n_trials(sess, experiment_id, 2)
+        trials = exp.wait_for_at_least_n_trials(sess, exp_ref.id, 2)
 
         # Pause the experiment to count the trials.
-        exp.pause_experiment(sess, experiment_id)
+        exp.pause_experiment(sess, exp_ref.id)
 
         # Make sure that there were never more than 2 total trials created.
-        trials = exp.wait_for_at_least_n_trials(sess, experiment_id, 2)
+        trials = exp.wait_for_at_least_n_trials(sess, exp_ref.id, 2)
         assert len(trials) == 2, trials
     finally:
-        exp.kill_experiments(sess, [experiment_id], -1)
+        exp_ref.kill()
 
 
 @pytest.mark.e2e_cpu
 def test_experiment_list_columns() -> None:
     sess = api_utils.user_session()
-    exp.create_experiment(
+    config = {
+        "hyperparameters": {
+            "flat": 1,
+            "nest": {
+                "sub1": 1,
+                "sub2": 2,
+                "empty_leaf": {},
+            },
+        }
+    }
+    # Use a metric name unique to this experiment, so we don't get false positives.
+    exp_ref = noop.create_experiment(
         sess,
-        conf.fixtures_path("no_op/single-nested-hps.yaml"),
-        conf.fixtures_path("no_op"),
-        ["--project", "1"],
+        [noop.Report({"telc": 1}, group="validation")],
+        config=config,
     )
+    assert exp_ref.wait(interval=0.01) == client.ExperimentState.COMPLETED
     exp_hyperparameters = [
-        "global_batch_size",
-        "metrics_progression",
-        "metrics_base.min_val",
-        "metrics_base.max_val",
+        "flat",
+        "nest.sub1",
+        "nest.sub2",
+        # TODO(ET-819): don't drop the empty leaf node hparams.
+        # "empty_leaf",
     ]
     exp_metrics = [
-        "validation.validation_error.min",
-        "validation.validation_error.max",
-        "validation.validation_error.last",
-        "validation.validation_error.mean",
+        "validation.telc.min",
+        "validation.telc.max",
+        "validation.telc.last",
+        "validation.telc.mean",
     ]
     columns = bindings.get_GetProjectColumns(sess, id=1)
 

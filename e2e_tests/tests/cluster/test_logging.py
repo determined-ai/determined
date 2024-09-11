@@ -8,9 +8,10 @@ import pytest
 
 from determined.common import api
 from determined.common.api import bindings
+from determined.experimental import client
 from tests import api_utils
-from tests import config as conf
 from tests import experiment as exp
+from tests.experiment import noop
 
 Log = Union[bindings.v1TaskLogsResponse, bindings.v1TrialLogsResponse]
 
@@ -21,10 +22,10 @@ LogFields = Union[bindings.v1TaskLogsFieldsResponse, bindings.v1TrialLogsFieldsR
 def _test_trial_logs(log_regex: re.Pattern) -> None:
     sess = api_utils.user_session()
 
-    experiment_id = exp.run_basic_test(
-        sess, conf.fixtures_path("no_op/single.yaml"), conf.fixtures_path("no_op"), 1
-    )
-    trial = exp.experiment_trials(sess, experiment_id)[0].trial
+    # Log a null byte to ensure we can read null bytes.
+    exp_ref = noop.create_experiment(sess, [noop.Log(msg="Logs\x00Can\x00Have\x00Null\x00Bytes")])
+    assert exp_ref.wait(interval=0.01) == client.ExperimentState.COMPLETED
+    trial = exp.experiment_trials(sess, exp_ref.id)[0].trial
     trial_id = trial.id
     task_id = trial.taskId
     assert task_id != ""
@@ -68,7 +69,7 @@ def test_tcd_startup_hook_trial_master() -> None:
 @pytest.mark.e2e_pbs
 @pytest.mark.timeout(10 * 60)
 def test_trial_logs() -> None:
-    log_regex = re.compile("^.*New trial runner.*$")
+    log_regex = re.compile("^.*Logs\x00Can\x00Have\x00Null\x00Bytes.*$")
     _test_trial_logs(log_regex)
 
 
@@ -79,13 +80,9 @@ def _test_task_logs(task_type: str, task_config: Dict[str, Any], log_regex: re.P
     assert rps.resourcePools and len(rps.resourcePools) > 0, "missing resource pool"
 
     if task_type == "tensorboard":
-        exp_id = exp.run_basic_test(
-            sess,
-            conf.fixtures_path("no_op/single.yaml"),
-            conf.fixtures_path("no_op"),
-            1,
-        )
-        treq = bindings.v1LaunchTensorboardRequest(config=task_config, experimentIds=[exp_id])
+        exp_ref = noop.create_experiment(sess, [noop.Report({"x": 1})])
+        assert exp_ref.wait(interval=0.01) == client.ExperimentState.COMPLETED
+        treq = bindings.v1LaunchTensorboardRequest(config=task_config, experimentIds=[exp_ref.id])
         task_id = bindings.post_LaunchTensorboard(sess, body=treq).tensorboard.id
     elif task_type == "notebook":
         nreq = bindings.v1LaunchNotebookRequest(config=task_config)

@@ -8,10 +8,12 @@ import pytest
 
 from determined.common import api
 from determined.common.api import bindings, errors
+from determined.experimental import client
 from tests import api_utils
 from tests import config as conf
 from tests import experiment as exp
 from tests.cluster import test_agent_user_group, utils
+from tests.experiment import noop
 
 
 @pytest.mark.e2e_cpu
@@ -37,17 +39,9 @@ def test_slack_webhook() -> None:
     result = bindings.post_PostWebhook(sess, body=webhook_request)
     assert result.webhook.url == webhook_request.url
 
-    experiment_id = exp.create_experiment(
-        sess, conf.fixtures_path("no_op/single-one-short-step.yaml"), conf.fixtures_path("no_op")
-    )
-
-    exp.wait_for_experiment_state(
-        sess,
-        experiment_id,
-        bindings.experimentv1State.COMPLETED,
-        max_wait_secs=conf.DEFAULT_MAX_WAIT_SECS,
-    )
-    exp_config = exp.experiment_config_json(sess, experiment_id)
+    exp_ref = noop.create_experiment(sess)
+    exp_ref.wait(interval=0.01)
+    assert exp_ref.config
     expected_field = {"type": "mrkdwn", "text": "*Status*: Completed"}
     expected_payload = {
         "blocks": [
@@ -64,7 +58,7 @@ def test_slack_webhook() -> None:
                         "type": "section",
                         "text": {
                             "type": "mrkdwn",
-                            "text": "✅ " + exp_config["name"] + f" (#{experiment_id})",
+                            "text": "✅ " + exp_ref.config["name"] + f" (#{exp_ref.id})",
                         },
                         "fields": [
                             {"type": "mrkdwn", "text": "*Status*: Completed"},
@@ -94,9 +88,9 @@ def test_log_pattern_send_webhook(should_match: bool) -> None:
     sess = api_utils.admin_session()
     ws_id = []
 
-    regex = r"assert not self\.crash_on_startup"
+    regex = r"executing.*action.*exit.*code.*7"
     if not should_match:
-        regex = r"(.*)cuda(.*)"
+        regex = r"(.*)this should not match(.*)"
 
     webhook_trigger = bindings.v1Trigger(
         triggerType=bindings.v1TriggerType.TASK_LOG,
@@ -171,20 +165,9 @@ def test_log_pattern_send_webhook(should_match: bool) -> None:
     )
     ws_id.append(w.webhook.id)
 
-    exp_id = exp.create_experiment(
-        sess,
-        conf.fixtures_path("no_op/single-medium-train-step.yaml"),
-        conf.fixtures_path("no_op"),
-        [
-            "--config",
-            "hyperparameters.crash_on_startup=True",
-            "--config",
-            "integrations.webhooks.webhook_name=['specific-webhook']",
-            "--project_id",
-            f"{project.id}",
-        ],
-    )
-    exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.ERROR)
+    config = {"integrations": {"webhooks": {"webhook_name": ["specific-webhook"]}}}
+    exp_ref = noop.create_experiment(sess, [noop.Exit(7)], config=config, project_id=project.id)
+    assert exp_ref.wait(interval=0.01) == client.ExperimentState.ERROR
 
     for _ in range(8):
         responses = server.return_responses()
@@ -342,24 +325,9 @@ def test_specific_webhook() -> None:
     webhook_res_2 = bindings.post_PostWebhook(sess, body=webhook_2).webhook
     assert webhook_res_2.url == webhook_2.url
 
-    experiment_id = exp.create_experiment(
-        sess,
-        conf.fixtures_path("no_op/single-one-short-step.yaml"),
-        conf.fixtures_path("no_op"),
-        [
-            "--project_id",
-            f"{project.id}",
-            "--config",
-            f"integrations.webhooks.webhook_id=[{webhook_res_1.id},{webhook_res_2.id}]",
-        ],
-    )
-
-    exp.wait_for_experiment_state(
-        sess,
-        experiment_id,
-        bindings.experimentv1State.COMPLETED,
-        max_wait_secs=conf.DEFAULT_MAX_WAIT_SECS,
-    )
+    config = {"integrations": {"webhooks": {"webhook_id": [webhook_res_1.id, webhook_res_2.id]}}}
+    exp_ref = noop.create_experiment(sess, config=config, project_id=project.id)
+    assert exp_ref.wait(interval=0.01) == client.ExperimentState.COMPLETED
 
     responses = server1.close_and_return_responses()
     assert len(responses) == 0
@@ -576,7 +544,7 @@ def test_log_pattern_webhook_cache_when_url_is_updated() -> None:
     updated_server = utils.WebhookServer(updated_port)
     sess = api_utils.admin_session()
 
-    regex = r"assert not self\.crash_on_startup"
+    regex = r"executing.*action.*exit.*code.*7"
 
     webhook_trigger = bindings.v1Trigger(
         triggerType=bindings.v1TriggerType.TASK_LOG,
@@ -624,13 +592,8 @@ def test_log_pattern_webhook_cache_when_url_is_updated() -> None:
         id=default_webhook_id,
     )
 
-    exp_id = exp.create_experiment(
-        sess,
-        conf.fixtures_path("no_op/single-medium-train-step.yaml"),
-        conf.fixtures_path("no_op"),
-        ["--config", "hyperparameters.crash_on_startup=True"],
-    )
-    exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.ERROR)
+    exp_ref = noop.create_experiment(sess, [noop.Exit(7)])
+    assert exp_ref.wait(interval=0.01) == client.ExperimentState.ERROR
 
     time.sleep(10)
     responses = original_server.close_and_return_responses()
