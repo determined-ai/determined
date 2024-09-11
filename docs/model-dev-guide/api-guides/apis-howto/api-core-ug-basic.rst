@@ -234,9 +234,9 @@ When performing a hyperparameter search, your training script needs to follow th
 | Report   | Use the Core API to report results to the master.                        |
 +----------+--------------------------------------------------------------------------+
 
-The SearcherContext fabricates a single SearcherOperation based on the `max_length` specified in the
-experiment configuration. Ensure that your configuration includes a `max_length` parameter in the
-searcher section.
+The SearcherContext fabricates a single SearcherOperation based on the ``max_length`` specified in
+the experiment configuration. Ensure that your configuration includes a ``max_length`` parameter in
+the searcher section.
 
 #. Create a ``3_hpsearch.py`` training script by copying the ``2_checkpoints.py`` script you created
    in :ref:`core-checkpoints`.
