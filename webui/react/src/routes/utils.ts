@@ -251,6 +251,6 @@ export const findReactRoute = (url: string): RouteConfig | undefined => {
     .filter((route) => route.path !== '*')
     .find((route) => {
       const routeRegex = pathToRegexp(route.path);
-      return routeRegex.test(pathname);
+      return routeRegex.regexp.test(pathname);
     });
 };
