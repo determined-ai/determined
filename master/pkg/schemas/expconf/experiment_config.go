@@ -87,6 +87,7 @@ func (e *ExperimentConfigV0) Scan(src interface{}) error {
 	// were in the database, but to ensure we never allow any un-defaulted experiments anywhere
 	// inside the system, we call WithDefaults here.
 	*e = schemas.WithDefaults(config)
+
 	return nil
 }
 
