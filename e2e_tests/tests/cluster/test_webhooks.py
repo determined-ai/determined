@@ -569,14 +569,14 @@ def test_editing_webhook() -> None:
 
 
 @pytest.mark.e2e_cpu
-def test_log_pattern_webhook_cached_url_is_updated() -> None:
+def test_log_pattern_webhook_cache_when_url_is_updated() -> None:
     original_port = 5011
     updated_port = 5012
     original_server = utils.WebhookServer(original_port)
     updated_server = utils.WebhookServer(updated_port)
     sess = api_utils.admin_session()
 
-    regex = r"assert 0 <= self\.metrics_sigma"
+    regex = r"assert not self\.crash_on_startup"
 
     webhook_trigger = bindings.v1Trigger(
         triggerType=bindings.v1TriggerType.TASK_LOG,
@@ -628,7 +628,7 @@ def test_log_pattern_webhook_cached_url_is_updated() -> None:
         sess,
         conf.fixtures_path("no_op/single-medium-train-step.yaml"),
         conf.fixtures_path("no_op"),
-        ["--config", "hyperparameters.metrics_sigma=-1.0"],
+        ["--config", "hyperparameters.crash_on_startup=True"],
     )
     exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.ERROR)
 
