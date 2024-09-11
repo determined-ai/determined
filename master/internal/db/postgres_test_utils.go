@@ -581,5 +581,6 @@ func CleanupMockWorkspace(workspaceIDs []int32) error {
 	_, err := Bun().NewDelete().Model(&workspaces).
 		Where("id IN (?)", bun.In(workspaceIDs)).
 		Exec(context.Background())
+
 	return err
 }

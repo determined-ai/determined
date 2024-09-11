@@ -50,6 +50,7 @@ func TestSetNTSCConfigPolicies(t *testing.T) {
 			&model.NTSCTaskConfigPolicies{
 				WorkloadType:    model.NTSCType,
 				LastUpdatedBy:   -1,
+				LastUpdatedTime: time.Now().UTC().Truncate(time.Second),
 				InvariantConfig: DefaultCommandConfig(),
 				Constraints:     DefaultConstraints(),
 			},
@@ -61,7 +62,7 @@ func TestSetNTSCConfigPolicies(t *testing.T) {
 			&model.NTSCTaskConfigPolicies{
 				WorkloadType:    model.NTSCType,
 				LastUpdatedBy:   user.ID,
-				LastUpdatedTime: time.Now().UTC(),
+				LastUpdatedTime: time.Now().UTC().Truncate(time.Second),
 				InvariantConfig: DefaultCommandConfig(),
 				Constraints:     model.Constraints{},
 			},
@@ -73,7 +74,7 @@ func TestSetNTSCConfigPolicies(t *testing.T) {
 			&model.NTSCTaskConfigPolicies{
 				WorkloadType:    model.NTSCType,
 				LastUpdatedBy:   user.ID,
-				LastUpdatedTime: time.Now().UTC(),
+				LastUpdatedTime: time.Now().UTC().Truncate(time.Second),
 				InvariantConfig: model.CommandConfig{},
 				Constraints:     DefaultConstraints(),
 			},
@@ -85,7 +86,7 @@ func TestSetNTSCConfigPolicies(t *testing.T) {
 			&model.NTSCTaskConfigPolicies{
 				WorkloadType:    model.NTSCType,
 				LastUpdatedBy:   user.ID,
-				LastUpdatedTime: time.Now().UTC(),
+				LastUpdatedTime: time.Now().UTC().Truncate(time.Second),
 				InvariantConfig: DefaultCommandConfig(),
 				Constraints:     DefaultConstraints(),
 			},
@@ -98,7 +99,7 @@ func TestSetNTSCConfigPolicies(t *testing.T) {
 				WorkloadType:    model.NTSCType,
 				WorkspaceID:     nil,
 				LastUpdatedBy:   user.ID,
-				LastUpdatedTime: time.Now().UTC(),
+				LastUpdatedTime: time.Now().UTC().Truncate(time.Second),
 				InvariantConfig: model.CommandConfig{},
 				Constraints:     DefaultConstraints(),
 			},
@@ -110,7 +111,7 @@ func TestSetNTSCConfigPolicies(t *testing.T) {
 			&model.NTSCTaskConfigPolicies{
 				WorkloadType:    model.NTSCType,
 				LastUpdatedBy:   user.ID,
-				LastUpdatedTime: time.Now().UTC(),
+				LastUpdatedTime: time.Now().UTC().Truncate(time.Second),
 				InvariantConfig: DefaultCommandConfig(),
 				Constraints:     model.Constraints{},
 			},
@@ -122,7 +123,7 @@ func TestSetNTSCConfigPolicies(t *testing.T) {
 			&model.NTSCTaskConfigPolicies{
 				WorkloadType:    model.NTSCType,
 				LastUpdatedBy:   user.ID,
-				LastUpdatedTime: time.Now().UTC(),
+				LastUpdatedTime: time.Now().UTC().Truncate(time.Second),
 				InvariantConfig: DefaultCommandConfig(),
 				Constraints:     DefaultConstraints(),
 			},
@@ -134,7 +135,7 @@ func TestSetNTSCConfigPolicies(t *testing.T) {
 			&model.NTSCTaskConfigPolicies{
 				WorkloadType:    model.NTSCType,
 				LastUpdatedBy:   user.ID,
-				LastUpdatedTime: time.Now().UTC(),
+				LastUpdatedTime: time.Now().UTC().Truncate(time.Second),
 				InvariantConfig: model.CommandConfig{},
 				Constraints:     model.Constraints{},
 			},
@@ -146,7 +147,7 @@ func TestSetNTSCConfigPolicies(t *testing.T) {
 			&model.NTSCTaskConfigPolicies{
 				WorkloadType:    model.ExperimentType,
 				LastUpdatedBy:   user.ID,
-				LastUpdatedTime: time.Now().UTC(),
+				LastUpdatedTime: time.Now().UTC().Truncate(time.Second),
 				InvariantConfig: model.CommandConfig{},
 				Constraints:     model.Constraints{},
 			},
@@ -190,7 +191,7 @@ func TestSetNTSCConfigPolicies(t *testing.T) {
 			// Test get NTSC task config policies.
 			ntscTCPs, err = GetNTSCConfigPolicies(ctx, test.ntscTCPs.WorkspaceID)
 			require.NoError(t, err)
-			ntscTCPs.LastUpdatedTime = ntscTCPs.LastUpdatedTime.UTC()
+			ntscTCPs.LastUpdatedTime = ntscTCPs.LastUpdatedTime.UTC().Truncate(time.Second)
 			require.Equal(t, test.ntscTCPs, ntscTCPs)
 		})
 	}

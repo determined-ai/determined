@@ -54,8 +54,8 @@ func SetNTSCConfigPoliciesTx(ctx context.Context, tx *bun.Tx,
 				constraints = ?
 			`
 	}
-	_, err := db.Bun().NewRaw(q, ntscTCPs.WorkspaceID, ntscTCPs.LastUpdatedBy,
-		ntscTCPs.LastUpdatedTime, model.NTSCType.String(), ntscTCPs.InvariantConfig,
+	_, err := db.Bun().NewRaw(q, ntscTCPs.WorkspaceID, model.NTSCType.String(),
+		ntscTCPs.LastUpdatedBy, ntscTCPs.LastUpdatedTime, ntscTCPs.InvariantConfig,
 		ntscTCPs.Constraints, ntscTCPs.LastUpdatedBy, ntscTCPs.LastUpdatedTime,
 		ntscTCPs.InvariantConfig, ntscTCPs.Constraints).
 		Exec(ctx)

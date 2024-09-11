@@ -17,4 +17,4 @@ CREATE TABLE IF NOT EXISTS task_config_policies
 CREATE UNIQUE INDEX wkld_type_global ON task_config_policies (workload_type) 
     WHERE workspace_id IS NULL; 
 CREATE UNIQUE INDEX wksp_id_wkld_type ON task_config_policies (workspace_id, workload_type) 
-WHERE workspace_id IS NOT NULL;
+    WHERE workspace_id IS NOT NULL;
