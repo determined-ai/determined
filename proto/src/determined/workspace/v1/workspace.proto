@@ -75,6 +75,8 @@ message Workspace {
   string default_compute_pool = 15;
   // Name of the default aux pool.
   string default_aux_pool = 16;
+  // Optional auto-created namespace bound to the workspace.
+  optional string auto_created_namespace = 17;
 }
 
 // PatchWorkspace is a partial update to a workspace with all optional fields.
@@ -132,5 +134,7 @@ message WorkspaceNamespaceMeta {
   string cluster_name = 4;
   // The optional resource quota placed on the namespace (and consequentially,
   // the workspace).
+  // TODO (CM-495): Remove this field and use GetKubernetesResourceQuotasRequest
+  // instead.
   optional int32 resource_quota = 5;
 }

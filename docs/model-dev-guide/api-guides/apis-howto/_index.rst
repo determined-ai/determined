@@ -56,21 +56,10 @@ Prefer to use an Example Model?
 If you'd like to build off of an existing model that already runs on Determined, visit our
 :ref:`example-solutions` to see if the model you'd like to train is already available.
 
-******************
- AMD ROCm Support
-******************
+AMD ROCm Support
+================
 
-.. _rocm-support:
-
-Determined has experimental support for ROCm. Determined provides a prebuilt Docker image that
-includes ROCm 5.0, PyTorch 1.10 and TensorFlow 2.7:
-
--  ``determinedai/environments:rocm-5.0-pytorch-1.10-tf-2.7-rocm-0.26.4``
-
-Known limitations:
-
--  Only agent-based deployments are available; Kubernetes is not yet supported.
--  GPU profiling is not yet supported.
+For AMD ROCm support, visit :ref:`rocm-support`
 
 .. toctree::
    :caption: Training APIs

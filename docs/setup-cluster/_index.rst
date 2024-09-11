@@ -97,3 +97,4 @@ Enable Determined to submit jobs to a Slurm cluster.
    Deploy on Kubernetes <k8s/_index>
    Deploy on Slurm/PBS <slurm/_index>
    Cluster Configuration <cluster-configuration>
+   AMD ROCm Support <rocm-support>

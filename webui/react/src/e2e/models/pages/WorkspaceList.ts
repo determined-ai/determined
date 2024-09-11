@@ -13,7 +13,7 @@ import { WorkspaceCard } from 'e2e/models/pages/WorkspaceList/WorkspaceCard';
 class WorkspaceHeadRow extends HeadRow {
   readonly name = new BaseComponent({
     parent: this,
-    selector: '[data-testid="name"]',
+    selector: '[data-testid="Name"]',
   });
 }
 
