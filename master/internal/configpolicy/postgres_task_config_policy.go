@@ -13,6 +13,11 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
+const (
+	wkspIDQuery       = "workspace_id = ?"
+	wkspIDGlobalQuery = "workspace_id IS ?"
+)
+
 // SetNTSCConfigPolicies adds the NTSC invariant config and constraints config policies to
 // the database.
 func SetNTSCConfigPolicies(ctx context.Context,
@@ -67,9 +72,9 @@ func GetNTSCConfigPolicies(ctx context.Context,
 	scope *int,
 ) (*model.NTSCTaskConfigPolicies, error) {
 	var ntscTCP model.NTSCTaskConfigPolicies
-	wkspQuery := "workspace_id = ?"
+	wkspQuery := wkspIDQuery
 	if scope == nil {
-		wkspQuery = "workspace_id IS ?"
+		wkspQuery = wkspIDGlobalQuery
 	}
 	err := db.Bun().NewSelect().
 		Model(&ntscTCP).
@@ -92,9 +97,9 @@ func DeleteConfigPolicies(ctx context.Context,
 		return status.Error(codes.InvalidArgument,
 			"invalid workload type for config policies: "+workloadType.String())
 	}
-	wkspQuery := "workspace_id = ?"
+	wkspQuery := wkspIDQuery
 	if scope == nil {
-		wkspQuery = "workspace_id IS ?"
+		wkspQuery = wkspIDGlobalQuery
 	}
 
 	_, err := db.Bun().NewDelete().

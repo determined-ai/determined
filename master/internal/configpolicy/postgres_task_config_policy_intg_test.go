@@ -37,7 +37,6 @@ func TestSetNTSCConfigPolicies(t *testing.T) {
 				log.Errorf("error when cleaning up mock workspaces")
 			}
 		}
-
 	}()
 
 	tests := []struct {
@@ -169,12 +168,11 @@ func TestSetNTSCConfigPolicies(t *testing.T) {
 
 			// Test add NTSC task config policies.
 			err := SetNTSCConfigPolicies(ctx, test.ntscTCPs)
-			if test.err == nil {
-				require.NoError(t, err)
-			} else {
+			if test.err != nil {
 				require.ErrorContains(t, err, *test.err)
 				return
 			}
+			require.NoError(t, err)
 
 			// Test get NTSC task config policies.
 			ntscTCPs, err := GetNTSCConfigPolicies(ctx, test.ntscTCPs.WorkspaceID)
@@ -184,7 +182,8 @@ func TestSetNTSCConfigPolicies(t *testing.T) {
 
 			// Test update NTSC task config policies.
 			test.ntscTCPs.InvariantConfig.Environment.Image = model.RuntimeItem{
-				CPU: uuid.NewString()}
+				CPU: uuid.NewString(),
+			}
 			err = SetNTSCConfigPolicies(ctx, test.ntscTCPs)
 			require.NoError(t, err)
 
@@ -218,7 +217,7 @@ func TestTaskConfigPoliciesUnique(t *testing.T) {
 	user := db.RequireMockUser(t, pgDB)
 
 	// Global scope.
-	w, _, ntscTCPs := CreateMockTaskConfigPolicies(ctx, t, pgDB, user, true, true, true)
+	_, _, ntscTCPs := CreateMockTaskConfigPolicies(ctx, t, pgDB, user, true, true, true)
 	ntscTCPs.Constraints = model.Constraints{}
 	expInvariantConfig, err := json.Marshal(ntscTCPs.InvariantConfig)
 	require.NoError(t, err)
@@ -238,7 +237,7 @@ func TestTaskConfigPoliciesUnique(t *testing.T) {
 	require.ErrorContains(t, err, "duplicate key value violates unique constraint")
 
 	// Workspace-level.
-	w, _, ntscTCPs = CreateMockTaskConfigPolicies(ctx, t, pgDB, user, false, true, true)
+	w, _, ntscTCPs := CreateMockTaskConfigPolicies(ctx, t, pgDB, user, false, true, true)
 	ntscTCPs.Constraints = model.Constraints{}
 	expInvariantConfig, err = json.Marshal(ntscTCPs.InvariantConfig)
 	require.NoError(t, err)
@@ -283,7 +282,6 @@ func TestDeleteConfigPolicies(t *testing.T) {
 		hasConstraints     bool
 		err                *string
 	}{
-
 		{"ntsc config no constraint", false, model.NTSCType, true, false, nil},
 		{"ntsc config and constraint", false, model.NTSCType, true, true, nil},
 		{"ntsc no config has constraint", false, model.NTSCType, false, true, nil},
