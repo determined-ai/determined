@@ -38,23 +38,6 @@ stages:
 
       # config_file is just a master.yaml
       config_file:
-        resource_manager:
-          type: agent
-          scheduler:
-            type: fair_share
-            fitting_policy: worst
-          default_aux_resource_pool: pool1
-          default_compute_resource_pool: pool1
-        resource_pools:
-          - pool_name: pool1
-            scheduler:
-              type: priority
-              preemption: true
-              fitting_policy: best
-          - pool_name: pool2
-            scheduler:
-              type: priority
-              fitting_policy: worst
         db:
           host: localhost
           port: 5432
@@ -80,41 +63,20 @@ stages:
         # This is important: we have to use the symbolic links in the
         # tools/build directory to run properly.
         root: tools/build
+
   - agent:
-      # Each agent stage should have a unique name for devcluster.
-      name: agent1
       pre:
         - sh: make -C agent build
+      cmdline:
+        - agent/build/determined-agent
+        - run
+        - --config-file
+        - :config
+
+      # config_file is just an agent.yaml
       config_file:
         master_host: 127.0.0.1
         master_port: 8080
-        slot_type: none
-        visible_gpus: 0
-        resource_pool: pool1
         container_master_host: $DOCKER_LOCALHOST
-        # Often dtrain clusters have multiple gpus per agent.
-        # Each agent needs a unique agent_id.
-        agent_id: agent1
-        # Each agent needs a deconflicting fluent container
-        fluent:
-          port: 24224  # default value is 24224
-          container_name: determined-fluent-1
-  - agent:
-      # Each agent stage should have a unique name for devcluster.
-      name: agent2
-      pre:
-        - sh: make -C agent build
-      config_file:
-        master_host: 127.0.0.1
-        master_port: 8080
-        resource_pool: pool1
-        container_master_host: $DOCKER_LOCALHOST
-        #visible_gpus: 1
-        slot_type: none
-        #artificial_slots: 8
-        # Each agent needs a unique agent_id.
-        agent_id: agent2
-        # Each agent needs a deconflicting fluent container
-        fluent:
-          port: 24225  # default value is 24224
-          container_name: determined-fluent-2
+        log:
+          level: trace
