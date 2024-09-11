@@ -33,35 +33,26 @@ func SetNTSCConfigPoliciesTx(ctx context.Context, tx *bun.Tx,
 			"invalid workload type for config policies: "+ntscTCPs.WorkloadType.String())
 	}
 
-	if ntscTCPs.WorkspaceID == nil {
-		_, err := db.Bun().NewRaw(
-			`
-			INSERT INTO task_config_policies (workspace_id, last_updated_by, last_updated_time, 
-				workload_type, invariant_config, constraints) VALUES (?, ?, ?, ?, ?, ?)
-			ON CONFLICT (workload_type) WHERE workspace_id IS NULL
-				DO UPDATE SET last_updated_by = ?, last_updated_time = ?, invariant_config = ?, 
-				constraints = ?
-			`, ntscTCPs.WorkspaceID, ntscTCPs.LastUpdatedBy, ntscTCPs.LastUpdatedTime,
-			model.NTSCType.String(), ntscTCPs.InvariantConfig, ntscTCPs.Constraints,
-			ntscTCPs.LastUpdatedBy, ntscTCPs.LastUpdatedTime, ntscTCPs.InvariantConfig,
-			ntscTCPs.Constraints).
-			Exec(ctx)
-		if err != nil {
-			return fmt.Errorf("error setting global NTSC task config policies: %w", err)
-		}
-		return nil
-	}
-	_, err := db.Bun().NewRaw(
-		`
-		INSERT INTO task_config_policies (workspace_id, last_updated_by, last_updated_time, 
-			workload_type, invariant_config, constraints) VALUES (?, ?, ?, ?, ?, ?)
+	q := `
+		INSERT INTO task_config_policies (workspace_id, workload_type, last_updated_by,
+			last_updated_time,  invariant_config, constraints) VALUES (?, ?, ?, ?, ?, ?)
 		ON CONFLICT (workspace_id, workload_type) WHERE workspace_id IS NOT NULL
 			DO UPDATE SET last_updated_by = ?, last_updated_time = ?, invariant_config = ?, 
 			constraints = ?
-		`, ntscTCPs.WorkspaceID, ntscTCPs.LastUpdatedBy, ntscTCPs.LastUpdatedTime,
-		model.NTSCType.String(), ntscTCPs.InvariantConfig, ntscTCPs.Constraints,
-		ntscTCPs.LastUpdatedBy, ntscTCPs.LastUpdatedTime, ntscTCPs.InvariantConfig,
-		ntscTCPs.Constraints).
+		`
+	if ntscTCPs.WorkspaceID == nil {
+		q = `
+			INSERT INTO task_config_policies (workspace_id, workload_type, last_updated_by,
+				last_updated_time, invariant_config, constraints) VALUES (?, ?, ?, ?, ?, ?)
+			ON CONFLICT (workload_type) WHERE workspace_id IS NULL
+				DO UPDATE SET last_updated_by = ?, last_updated_time = ?, invariant_config = ?, 
+				constraints = ?
+			`
+	}
+	_, err := db.Bun().NewRaw(q, ntscTCPs.WorkspaceID, ntscTCPs.LastUpdatedBy,
+		ntscTCPs.LastUpdatedTime, model.NTSCType.String(), ntscTCPs.InvariantConfig,
+		ntscTCPs.Constraints, ntscTCPs.LastUpdatedBy, ntscTCPs.LastUpdatedTime,
+		ntscTCPs.InvariantConfig, ntscTCPs.Constraints).
 		Exec(ctx)
 	if err != nil {
 		return fmt.Errorf("error setting NTSC task config policies: %w", err)

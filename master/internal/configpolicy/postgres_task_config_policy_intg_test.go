@@ -49,8 +49,8 @@ func TestSetNTSCConfigPolicies(t *testing.T) {
 		{
 			"invalid user id",
 			&model.NTSCTaskConfigPolicies{
-				LastUpdatedBy:   -1,
 				WorkloadType:    model.NTSCType,
+				LastUpdatedBy:   -1,
 				InvariantConfig: DefaultCommandConfig(),
 				Constraints:     DefaultConstraints(),
 			},
@@ -60,9 +60,9 @@ func TestSetNTSCConfigPolicies(t *testing.T) {
 		{
 			"valid config no constraint",
 			&model.NTSCTaskConfigPolicies{
+				WorkloadType:    model.NTSCType,
 				LastUpdatedBy:   user.ID,
 				LastUpdatedTime: time.Now().UTC(),
-				WorkloadType:    model.NTSCType,
 				InvariantConfig: DefaultCommandConfig(),
 				Constraints:     model.Constraints{},
 			},
@@ -72,9 +72,9 @@ func TestSetNTSCConfigPolicies(t *testing.T) {
 		{
 			"valid constraint no config",
 			&model.NTSCTaskConfigPolicies{
+				WorkloadType:    model.NTSCType,
 				LastUpdatedBy:   user.ID,
 				LastUpdatedTime: time.Now().UTC(),
-				WorkloadType:    model.NTSCType,
 				InvariantConfig: model.CommandConfig{},
 				Constraints:     DefaultConstraints(),
 			},
@@ -84,9 +84,9 @@ func TestSetNTSCConfigPolicies(t *testing.T) {
 		{
 			"valid constraint valid config",
 			&model.NTSCTaskConfigPolicies{
+				WorkloadType:    model.NTSCType,
 				LastUpdatedBy:   user.ID,
 				LastUpdatedTime: time.Now().UTC(),
-				WorkloadType:    model.NTSCType,
 				InvariantConfig: DefaultCommandConfig(),
 				Constraints:     DefaultConstraints(),
 			},
@@ -94,25 +94,12 @@ func TestSetNTSCConfigPolicies(t *testing.T) {
 			nil,
 		},
 		{
-			"valid config no constraint",
-			&model.NTSCTaskConfigPolicies{
-				WorkspaceID:     nil,
-				LastUpdatedBy:   user.ID,
-				LastUpdatedTime: time.Now().UTC(),
-				WorkloadType:    model.NTSCType,
-				InvariantConfig: DefaultCommandConfig(),
-				Constraints:     model.Constraints{},
-			},
-			false,
-			nil,
-		},
-		{
 			"global valid constraint no config",
 			&model.NTSCTaskConfigPolicies{
+				WorkloadType:    model.NTSCType,
 				WorkspaceID:     nil,
 				LastUpdatedBy:   user.ID,
 				LastUpdatedTime: time.Now().UTC(),
-				WorkloadType:    model.NTSCType,
 				InvariantConfig: model.CommandConfig{},
 				Constraints:     DefaultConstraints(),
 			},
@@ -122,9 +109,9 @@ func TestSetNTSCConfigPolicies(t *testing.T) {
 		{
 			"global valid config no constraint",
 			&model.NTSCTaskConfigPolicies{
+				WorkloadType:    model.NTSCType,
 				LastUpdatedBy:   user.ID,
 				LastUpdatedTime: time.Now().UTC(),
-				WorkloadType:    model.NTSCType,
 				InvariantConfig: DefaultCommandConfig(),
 				Constraints:     model.Constraints{},
 			},
@@ -134,9 +121,9 @@ func TestSetNTSCConfigPolicies(t *testing.T) {
 		{
 			"global valid constraint valid config",
 			&model.NTSCTaskConfigPolicies{
+				WorkloadType:    model.NTSCType,
 				LastUpdatedBy:   user.ID,
 				LastUpdatedTime: time.Now().UTC(),
-				WorkloadType:    model.NTSCType,
 				InvariantConfig: DefaultCommandConfig(),
 				Constraints:     DefaultConstraints(),
 			},
@@ -146,9 +133,9 @@ func TestSetNTSCConfigPolicies(t *testing.T) {
 		{
 			"global no constraint no config",
 			&model.NTSCTaskConfigPolicies{
+				WorkloadType:    model.NTSCType,
 				LastUpdatedBy:   user.ID,
 				LastUpdatedTime: time.Now().UTC(),
-				WorkloadType:    model.NTSCType,
 				InvariantConfig: model.CommandConfig{},
 				Constraints:     model.Constraints{},
 			},
@@ -158,9 +145,9 @@ func TestSetNTSCConfigPolicies(t *testing.T) {
 		{
 			"experiment workload type for NTCP policies",
 			&model.NTSCTaskConfigPolicies{
+				WorkloadType:    model.ExperimentType,
 				LastUpdatedBy:   user.ID,
 				LastUpdatedTime: time.Now().UTC(),
-				WorkloadType:    model.ExperimentType,
 				InvariantConfig: model.CommandConfig{},
 				Constraints:     model.Constraints{},
 			},
@@ -315,34 +302,17 @@ func TestDeleteConfigPolicies(t *testing.T) {
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			switch test.workloadType {
-			case model.ExperimentType:
-				w, expTCP, _ := CreateMockTaskConfigPolicies(ctx, t, pgDB, user, test.global,
-					test.hasInvariantConfig, test.hasConstraints)
-				if !test.global {
-					workspaceIDs = append(workspaceIDs, int32(w.ID))
-				}
+			w, _, ntscTCP := CreateMockTaskConfigPolicies(ctx, t, pgDB, user, test.global,
+				test.hasInvariantConfig, test.hasConstraints)
+			if !test.global {
+				workspaceIDs = append(workspaceIDs, int32(w.ID))
+			}
 
-				err := DeleteConfigPolicies(ctx, expTCP.WorkspaceID, test.workloadType)
-				if test.err == nil {
-					require.NoError(t, err)
-				} else {
-					require.ErrorContains(t, err, *test.err)
-				}
-
-			default:
-				w, _, ntscTCP := CreateMockTaskConfigPolicies(ctx, t, pgDB, user, test.global,
-					test.hasInvariantConfig, test.hasConstraints)
-				if !test.global {
-					workspaceIDs = append(workspaceIDs, int32(w.ID))
-				}
-
-				err := DeleteConfigPolicies(ctx, ntscTCP.WorkspaceID, test.workloadType)
-				if test.err == nil {
-					require.NoError(t, err)
-				} else {
-					require.ErrorContains(t, err, *test.err)
-				}
+			err := DeleteConfigPolicies(ctx, ntscTCP.WorkspaceID, test.workloadType)
+			if test.err == nil {
+				require.NoError(t, err)
+			} else {
+				require.ErrorContains(t, err, *test.err)
 			}
 		})
 	}
@@ -478,8 +448,8 @@ func CreateMockTaskConfigPolicies(ctx context.Context, t *testing.T,
 
 	ntscTCP := &model.NTSCTaskConfigPolicies{
 		WorkspaceID:     scope,
-		LastUpdatedBy:   user.ID,
 		WorkloadType:    model.NTSCType,
+		LastUpdatedBy:   user.ID,
 		InvariantConfig: ntscConfig,
 		Constraints:     constraints,
 	}

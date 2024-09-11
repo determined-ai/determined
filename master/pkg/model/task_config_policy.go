@@ -28,9 +28,9 @@ const (
 type ExperimentTaskConfigPolicies struct {
 	bun.BaseModel   `bun:"table:task_config_policies"`
 	WorkspaceID     *int                     `bun:"workspace_id"`
+	WorkloadType    WorkloadType             `bun:"workload_type,notnull"`
 	LastUpdatedBy   UserID                   `bun:"last_updated_by,notnull"`
 	LastUpdatedTime time.Time                `bun:"last_updated_time,notnull"`
-	WorkloadType    WorkloadType             `bun:"workload_type,notnull"`
 	InvariantConfig expconf.ExperimentConfig `bun:"invariant_config"`
 	Constraints     Constraints              `bun:"constraints"`
 }
@@ -39,9 +39,9 @@ type ExperimentTaskConfigPolicies struct {
 type NTSCTaskConfigPolicies struct {
 	bun.BaseModel   `bun:"table:task_config_policies"`
 	WorkspaceID     *int          `bun:"workspace_id"`
+	WorkloadType    WorkloadType  `bun:"workload_type,notnull"`
 	LastUpdatedBy   UserID        `bun:"last_updated_by,notnull"`
 	LastUpdatedTime time.Time     `bun:"last_updated_time,notnull"`
-	WorkloadType    WorkloadType  `bun:"workload_type,notnull"`
 	InvariantConfig CommandConfig `bun:"invariant_config"`
 	Constraints     Constraints   `bun:"constraints"`
 }

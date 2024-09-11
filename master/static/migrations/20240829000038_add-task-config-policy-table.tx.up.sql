@@ -11,11 +11,10 @@ CREATE TABLE IF NOT EXISTS task_config_policies
 
     CONSTRAINT fk_wksp_id FOREIGN KEY(workspace_id) REFERENCES workspaces(id) ON DELETE CASCADE,
     CONSTRAINT fk_last_updated_by_user_id FOREIGN KEY(last_updated_by) REFERENCES users(id)
-        ON DELETE CASCADE
 );
 
 
-CREATE UNIQUE INDEX task_config_policies_workload_type_idx ON task_config_policies (workload_type) 
+CREATE UNIQUE INDEX wkld_type_global ON task_config_policies (workload_type) 
     WHERE workspace_id IS NULL; 
 CREATE UNIQUE INDEX wksp_id_wkld_type ON task_config_policies (workspace_id, workload_type) 
 WHERE workspace_id IS NOT NULL;
