@@ -22,10 +22,10 @@ from pathlib import Path
 from typing import Any, Dict, Optional, Tuple
 
 import datasets
+import evaluate
 import numpy as np
 import torch
 import transformers
-from datasets import load_dataset
 from PIL import Image
 from torch.utils.tensorboard import SummaryWriter
 from torchvision.transforms import (
@@ -273,7 +273,7 @@ def main(det_callback, tb_callback, model_args, data_args, training_args):
 
     # Initialize our dataset and prepare it for the 'image-classification' task.
     if data_args.dataset_name is not None:
-        dataset = load_dataset(
+        dataset = datasets.load_dataset(
             data_args.dataset_name,
             data_args.dataset_config_name,
             cache_dir=model_args.cache_dir,
@@ -286,7 +286,7 @@ def main(det_callback, tb_callback, model_args, data_args, training_args):
             data_files["train"] = os.path.join(data_args.train_dir, "**")
         if data_args.validation_dir is not None:
             data_files["validation"] = os.path.join(data_args.validation_dir, "**")
-        dataset = load_dataset(
+        dataset = datasets.load_dataset(
             "imagefolder",
             data_files=data_files,
             cache_dir=model_args.cache_dir,
@@ -312,10 +312,7 @@ def main(det_callback, tb_callback, model_args, data_args, training_args):
         id2label[str(i)] = label
 
     # Load the accuracy metric from the datasets package
-    metric = datasets.load_metric(
-        "accuracy",
-        trust_remote_code=True,
-    )
+    metric = evaluate.load("accuracy")
 
     # Define our compute_metrics function. It takes an `EvalPrediction` object (a namedtuple with a
     # predictions and label_ids field) and has to return a dictionary string to float.
