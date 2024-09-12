@@ -8,18 +8,11 @@ from determined.common.api import bindings
 
 def describe_config_policies(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
-    workload_type = ""
-    if args.workload_type.upper() == "EXPERIMENT":
-        workload_type = "EXPERIMENT"
-    elif args.workload_type.upper() == "NTSC":
+    workload_type = "EXPERIMENT"
+    if args.workload_type.upper() == "NTSC":
         workload_type = "NTSC"
-    else:
-        raise cli.errors.CliError(
-            "Failed to list config policies: Invalid workload type provided."
-            + " Valid options: 'experiment' and 'ntsc'"
-        )
 
-    wksp = api.workspace_by_name(sess, args.workspace_name)
+    wksp = api.workspace_by_name(sess, args.workspace)
     resp = bindings.get_GetWorkspaceConfigPolicies(
         sess, workloadType=workload_type, workspaceId=wksp.id
     )
@@ -27,28 +20,20 @@ def describe_config_policies(args: argparse.Namespace) -> None:
         render.print_json(resp.configPolicies)
     else:
         print(util.yaml_safe_dump(resp.configPolicies, default_flow_style=False))
-    return None
 
 
 def set_config_policies(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     try:
-        with open(args.path, "r") as f:
+        with open(args.config_file, "r") as f:
             data = f.read()
     except Exception as e:
         raise cli.errors.CliError(f"Error opening file: {e}")
-    workload_type = ""
-    if args.workload_type.upper() == "EXPERIMENT":
-        workload_type = "EXPERIMENT"
-    elif args.workload_type.upper() == "NTSC":
+    workload_type = "EXPERIMENT"
+    if args.workload_type.upper() == "NTSC":
         workload_type = "NTSC"
-    else:
-        raise cli.errors.CliError(
-            "Failed to set config policies: Invalid workload type provided."
-            + " Valid options: 'experiment' and 'ntsc'"
-        )
 
-    wksp = api.workspace_by_name(sess, args.workspace_name)
+    wksp = api.workspace_by_name(sess, args.workspace)
     body = bindings.v1PutWorkspaceConfigPoliciesRequest(
         workloadType=workload_type, configPolicies=data, workspaceId=wksp.id
     )
@@ -56,30 +41,19 @@ def set_config_policies(args: argparse.Namespace) -> None:
         sess, workloadType=workload_type, workspaceId=wksp.id, body=body
     )
     print(util.yaml_safe_dump(resp.configPolicies, default_flow_style=False))
-    return None
 
 
 def delete_config_policies(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
-    workload_type = ""
-    if args.workload_type.upper() == "EXPERIMENT":
-        workload_type = "EXPERIMENT"
-    elif args.workload_type.upper() == "NTSC":
+    workload_type = "EXPERIMENT"
+    if args.workload_type.upper() == "NTSC":
         workload_type = "NTSC"
-    else:
-        raise cli.errors.CliError(
-            "Failed to delete config policies: Invalid workload type provided."
-            + " Valid options: 'experiment' and 'ntsc'"
-        )
 
-    wksp = api.workspace_by_name(sess, args.workspace_name)
+    wksp = api.workspace_by_name(sess, args.workspace)
     bindings.delete_DeleteWorkspaceConfigPolicies(
         sess, workloadType=workload_type, workspaceId=wksp.id
     )
-    print(
-        f"Successfully deleted {workload_type} config policies for workspace {args.workspace_name}."
-    )
-    return None
+    print(f"Successfully deleted {workload_type} config policies for workspace {args.workspace}.")
 
 
 args_description: cli.ArgsDescription = [
@@ -94,16 +68,16 @@ args_description: cli.ArgsDescription = [
                 "describe config policies",
                 [
                     cli.Arg(
-                        "--workspace-name",
+                        "workload_type",
+                        type=str,
+                        choices=["experiment", "ntsc"],
+                        help="the type (Experiment or NTSC ) of config policies",
+                    ),
+                    cli.Arg(
+                        "--workspace",
                         type=str,
                         required=True,  # change to false when adding --global
                         help="config policies for the given workspace",
-                    ),
-                    cli.Arg(
-                        "--workload-type",
-                        type=str,
-                        required=True,
-                        help="the type (Experiment or NTSC ) of config policies",
                     ),
                     cli.Group(cli.output_format_args["json"], cli.output_format_args["yaml"]),
                 ],
@@ -115,19 +89,19 @@ args_description: cli.ArgsDescription = [
                 "set config policies",
                 [
                     cli.Arg(
-                        "--workspace-name",
+                        "workload_type",
+                        type=str,
+                        choices=["experiment", "ntsc"],
+                        help="the type (Experiment or NTSC ) of config policies",
+                    ),
+                    cli.Arg(
+                        "--workspace",
                         type=str,
                         required=True,  # change to false when adding --global
                         help="config policies for the given workspace",
                     ),
                     cli.Arg(
-                        "--workload-type",
-                        type=str,
-                        required=True,
-                        help="the type (Experiment or NTSC ) of config policies",
-                    ),
-                    cli.Arg(
-                        "--path",
+                        "--config-file",
                         type=str,
                         required=True,
                         help="path to the yaml file containing defined config policies",
@@ -140,16 +114,16 @@ args_description: cli.ArgsDescription = [
                 "delete config policies",
                 [
                     cli.Arg(
-                        "--workspace-name",
+                        "workload_type",
+                        type=str,
+                        choices=["experiment", "ntsc"],
+                        help="the type (Experiment or NTSC ) of config policies",
+                    ),
+                    cli.Arg(
+                        "--workspace",
                         type=str,
                         required=True,  # change to false when adding --global
                         help="config policies for the given workspace",
-                    ),
-                    cli.Arg(
-                        "--workload-type",
-                        type=str,
-                        required=True,
-                        help="the type (Experiment or NTSC ) of config policies",
                     ),
                 ],
             ),
