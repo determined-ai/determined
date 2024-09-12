@@ -23,11 +23,10 @@ def test_set_config_policies() -> None:
             "det",
             "config-policies",
             "set",
-            "--workspace-name",
-            workspace_name,
-            "--workload-type",
             "experiment",
-            "--path",
+            "--workspace",
+            workspace_name,
+            "--config-file",
             conf.fixtures_path("config_policies/valid.yaml"),
         ],
     )
@@ -45,11 +44,10 @@ def test_set_config_policies() -> None:
             "det",
             "config-policies",
             "set",
-            "--workspace-name",
-            workspace_name,
-            "--workload-type",
             "ntsc",
-            "--path",
+            "--workspace",
+            workspace_name,
+            "--config-file",
             conf.fixtures_path("config_policies/valid.yaml"),
         ],
     )
@@ -65,31 +63,13 @@ def test_set_config_policies() -> None:
             "det",
             "config-policies",
             "set",
-            "--workspace-name",
-            workspace_name,
-            "--workload-type",
             "experiment",
-            "--path",
+            "--workspace",
+            workspace_name,
+            "--config-file",
             conf.fixtures_path("config_policies/non-existent.yaml"),
         ],
         "No such file or directory",
-    )
-
-    # invalid workload type
-    detproc.check_error(
-        sess,
-        [
-            "det",
-            "config-policies",
-            "set",
-            "--workspace-name",
-            workspace_name,
-            "--workload-type",
-            "wrong-type",
-            "--path",
-            conf.fixtures_path("config_policies/valid.yaml"),
-        ],
-        "Invalid workload type provided. Valid options: 'experiment' and 'ntsc'",
     )
 
     # workspace name not provided
@@ -99,12 +79,11 @@ def test_set_config_policies() -> None:
             "det",
             "config-policies",
             "set",
-            "--workload-type",
             "ntsc",
-            "--path",
+            "--config-file",
             conf.fixtures_path("config_policies/valid.yaml"),
         ],
-        "the following arguments are required: --workspace-name",
+        "the following arguments are required: --workspace",
     )
 
     # path not provided
@@ -114,12 +93,11 @@ def test_set_config_policies() -> None:
             "det",
             "config-policies",
             "set",
-            "--workspace-name",
-            workspace_name,
-            "--workload-type",
             "ntsc",
+            "--workspace",
+            workspace_name,
         ],
-        "the following arguments are required: --path",
+        "the following arguments are required: --config-file",
     )
 
 
@@ -138,11 +116,10 @@ def test_describe_config_policies() -> None:
             "det",
             "config-policies",
             "set",
-            "--workspace-name",
-            workspace_name,
-            "--workload-type",
             "ntsc",
-            "--path",
+            "--workspace",
+            workspace_name,
+            "--config-file",
             conf.fixtures_path("config_policies/valid.yaml"),
         ],
     )
@@ -154,10 +131,9 @@ def test_describe_config_policies() -> None:
             "det",
             "config-policies",
             "describe",
-            "--workspace-name",
-            workspace_name,
-            "--workload-type",
             "ntsc",
+            "--workspace",
+            workspace_name,
         ],
     )
     with open(conf.fixtures_path("config_policies/valid.yaml"), "r") as f:
@@ -171,10 +147,9 @@ def test_describe_config_policies() -> None:
             "det",
             "config-policies",
             "describe",
-            "--workspace-name",
-            workspace_name,
-            "--workload-type",
             "ntsc",
+            "--workspace",
+            workspace_name,
             "--yaml",
         ],
     )
@@ -189,10 +164,9 @@ def test_describe_config_policies() -> None:
             "det",
             "config-policies",
             "describe",
-            "--workspace-name",
-            workspace_name,
-            "--workload-type",
             "ntsc",
+            "--workspace",
+            workspace_name,
             "--json",
         ],
     )
@@ -202,21 +176,6 @@ def test_describe_config_policies() -> None:
     # check if output is a valid json containing original data
     assert original_data == json.loads(stdout)
 
-    # invalid workload type
-    detproc.check_error(
-        sess,
-        [
-            "det",
-            "config-policies",
-            "describe",
-            "--workspace-name",
-            workspace_name,
-            "--workload-type",
-            "wrong-type",
-        ],
-        "Invalid workload type provided. Valid options: 'experiment' and 'ntsc'",
-    )
-
     # workspace name not provided
     detproc.check_error(
         sess,
@@ -224,10 +183,9 @@ def test_describe_config_policies() -> None:
             "det",
             "config-policies",
             "describe",
-            "--workload-type",
             "ntsc",
         ],
-        "the following arguments are required: --workspace-name",
+        "the following arguments are required: --workspace",
     )
 
 
@@ -246,11 +204,10 @@ def test_delete_config_policies() -> None:
             "det",
             "config-policies",
             "set",
-            "--workspace-name",
-            workspace_name,
-            "--workload-type",
             "ntsc",
-            "--path",
+            "--workspace",
+            workspace_name,
+            "--config-file",
             conf.fixtures_path("config_policies/valid.yaml"),
         ],
     )
@@ -261,28 +218,12 @@ def test_delete_config_policies() -> None:
             "det",
             "config-policies",
             "delete",
-            "--workspace-name",
-            workspace_name,
-            "--workload-type",
             "ntsc",
+            "--workspace",
+            workspace_name,
         ],
     )
     assert "Successfully deleted" in stdout
-
-    # invalid workload type
-    detproc.check_error(
-        sess,
-        [
-            "det",
-            "config-policies",
-            "delete",
-            "--workspace-name",
-            workspace_name,
-            "--workload-type",
-            "wrong-type",
-        ],
-        "Invalid workload type provided. Valid options: 'experiment' and 'ntsc'",
-    )
 
     # workspace name not provided
     detproc.check_error(
@@ -291,8 +232,7 @@ def test_delete_config_policies() -> None:
             "det",
             "config-policies",
             "delete",
-            "--workload-type",
             "ntsc",
         ],
-        "the following arguments are required: --workspace-name",
+        "the following arguments are required: --workspace",
     )
