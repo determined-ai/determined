@@ -566,7 +566,9 @@ func TestExternalKillWhileQueuedFails(t *testing.T) {
 }
 
 func TestExternalPodDelete(t *testing.T) {
-	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
+	// TODO(CM-524): avoid this long timeout, which is effectively just waiting for pods to
+	// disappear after spending 30ish seconds in TERMINATING state.
+	ctx, cancel := context.WithTimeout(context.Background(), 60*time.Second)
 	defer cancel()
 
 	j := newTestJobsService(t)
@@ -940,6 +942,25 @@ func TestPartialJobsShowQueuedStates(t *testing.T) {
 }
 
 func TestNodeWorkflows(t *testing.T) {
+	// TODO(CM-526): This timeout is waiting for any pods sitting on the cluster after
+	// TestPartialJobsShowQueuedStates finished running, to disappear after some time in a
+	// TERMINATING state.  The proper fix is to figure out why this test fails if there are
+	// TERMINATING pods sitting on the cluster.
+	//
+	// I (rb) was able to determine that:
+	//   - if you run this test against a clean cluster, it creates a job with a pod that can't
+	//     be scheduled.  You see the `FailedScheduling` event in `kubectl events --watch`.  Then
+	//     when the test re-enables the node, scheduling recalculates and you immediately see a
+	//     `Scheduled` event, and the test proceeds to completion.
+	//
+	//   - if you run this test shortly after TestPartialJobsShowQueuedStates (either in the same run
+	//     of `go test`, or one test in two separate `go test` commands), you see the
+	//     FailedScheduling event right after creating the job, but when the test re-enables the
+	//     node, you see... no events at all.  Nothing.  And I have no idea why.
+	//
+	// I could reproduce this failure either in CI or locally, both under kind (0.20.0) and
+	// minikube (1.33.1).
+	time.Sleep(60 * time.Second)
 	ctx, cancel := context.WithTimeout(context.Background(), 15*time.Second)
 	defer cancel()
 
