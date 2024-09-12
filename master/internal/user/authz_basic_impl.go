@@ -134,8 +134,8 @@ func (a *UserAuthZBasic) CanGetUsersToken(
 	return nil
 }
 
-// CanGetAllToken returns an error if the user is not an admin.
-func (a *UserAuthZBasic) CanGetAllToken(
+// CanGetAllLongLivedTokens returns an error if the user is not an admin.
+func (a *UserAuthZBasic) CanGetAllLongLivedTokens(
 	ctx context.Context, curUser model.User,
 ) error {
 	if !curUser.Admin {

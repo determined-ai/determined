@@ -122,6 +122,8 @@ message UserSessionInfo {
   google.protobuf.Timestamp created_at = 4;
   // The value of token_type.
   TokenType token_type = 5;
+  // Bool denoting whether the account is active or revoked.
+  bool is_revoked = 6;
   // The value of token_description.
-  string token_description = 6;
+  string token_description = 7;
 }

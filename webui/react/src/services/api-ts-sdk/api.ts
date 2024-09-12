@@ -3771,17 +3771,38 @@ export interface V1GetAgentsResponse {
     pagination?: V1Pagination;
 }
 /**
+ * Sort token info by the given field.   - SORT_BY_UNSPECIFIED: Returns token info in an unsorted list.  - SORT_BY_USER_ID: Returns token info sorted by user id.  - SORT_BY_EXPIRY: Returns token info sorted by expiry.  - SORT_BY_CREATED_AT: Returns token info sorted by created at.  - SORT_BY_TOKEN_TYPE: Returns token info sorted by token type.  - SORT_BY_IS_REVOKED: Returns token info sorted by if it is revoked.  - SORT_BY_TOKEN_DESCRIPTION: Returns token info sorted by description of token.
+ * @export
+ * @enum {string}
+ */
+export const V1GetAllLongLivedTokensRequestSortBy = {
+    UNSPECIFIED: 'SORT_BY_UNSPECIFIED',
+    USERID: 'SORT_BY_USER_ID',
+    EXPIRY: 'SORT_BY_EXPIRY',
+    CREATEDAT: 'SORT_BY_CREATED_AT',
+    TOKENTYPE: 'SORT_BY_TOKEN_TYPE',
+    ISREVOKED: 'SORT_BY_IS_REVOKED',
+    TOKENDESCRIPTION: 'SORT_BY_TOKEN_DESCRIPTION',
+} as const
+export type V1GetAllLongLivedTokensRequestSortBy = ValueOf<typeof V1GetAllLongLivedTokensRequestSortBy>
+/**
  * Response to GetAllLongLivedTokenRequest.
  * @export
- * @interface V1GetAllLongLivedTokenResponse
+ * @interface V1GetAllLongLivedTokensResponse
  */
-export interface V1GetAllLongLivedTokenResponse {
+export interface V1GetAllLongLivedTokensResponse {
     /**
      * Return list of LongLivedToken Info.
      * @type {Array<V1UserSessionInfo>}
-     * @memberof V1GetAllLongLivedTokenResponse
+     * @memberof V1GetAllLongLivedTokensResponse
      */
     longLivedTokenInfo: Array<V1UserSessionInfo>;
+    /**
+     * Pagination information of the full dataset.
+     * @type {V1Pagination}
+     * @memberof V1GetAllLongLivedTokensResponse
+     */
+    pagination?: V1Pagination;
 }
 /**
  * 
@@ -12432,6 +12453,12 @@ export interface V1UserSessionInfo {
      * @memberof V1UserSessionInfo
      */
     tokenType?: V1TokenType;
+    /**
+     * Bool denoting whether the account is active or revoked.
+     * @type {boolean}
+     * @memberof V1UserSessionInfo
+     */
+    isRevoked?: boolean;
     /**
      * The value of token_description.
      * @type {string}
@@ -34083,10 +34110,17 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
         /**
          * 
          * @summary Get list of all long lived token info
+         * @param {V1GetAllLongLivedTokensRequestSortBy} [sortBy] Sort token info by the given field.   - SORT_BY_UNSPECIFIED: Returns token info in an unsorted list.  - SORT_BY_USER_ID: Returns token info sorted by user id.  - SORT_BY_EXPIRY: Returns token info sorted by expiry.  - SORT_BY_CREATED_AT: Returns token info sorted by created at.  - SORT_BY_TOKEN_TYPE: Returns token info sorted by token type.  - SORT_BY_IS_REVOKED: Returns token info sorted by if it is revoked.  - SORT_BY_TOKEN_DESCRIPTION: Returns token info sorted by description of token.
+         * @param {V1OrderBy} [orderBy] Order token info in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+         * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
+         * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
+         * @param {string} [name] Filter by username or display name.
+         * @param {V1TokenType} [tokenType] Filter by token type.   - TOKEN_TYPE_UNSPECIFIED: Default token type.  - TOKEN_TYPE_USER_SESSION: User Session token.  - TOKEN_TYPE_LONG_LIVED_TOKEN: Long Lived token.
+         * @param {boolean} [isRevoked] Filter by status.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getAllLongLivedToken(options: any = {}): FetchArgs {
+        getAllLongLivedTokens(sortBy?: V1GetAllLongLivedTokensRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, tokenType?: V1TokenType, isRevoked?: boolean, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/user/tokens`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
@@ -34099,6 +34133,34 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
                     ? configuration.apiKey("Authorization")
                     : configuration.apiKey;
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            if (sortBy !== undefined) {
+                localVarQueryParameter['sortBy'] = sortBy
+            }
+            
+            if (orderBy !== undefined) {
+                localVarQueryParameter['orderBy'] = orderBy
+            }
+            
+            if (offset !== undefined) {
+                localVarQueryParameter['offset'] = offset
+            }
+            
+            if (limit !== undefined) {
+                localVarQueryParameter['limit'] = limit
+            }
+            
+            if (name !== undefined) {
+                localVarQueryParameter['name'] = name
+            }
+            
+            if (tokenType !== undefined) {
+                localVarQueryParameter['tokenType'] = tokenType
+            }
+            
+            if (isRevoked !== undefined) {
+                localVarQueryParameter['isRevoked'] = isRevoked
             }
             
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
@@ -34742,11 +34804,18 @@ export const UsersApiFp = function (configuration?: Configuration) {
         /**
          * 
          * @summary Get list of all long lived token info
+         * @param {V1GetAllLongLivedTokensRequestSortBy} [sortBy] Sort token info by the given field.   - SORT_BY_UNSPECIFIED: Returns token info in an unsorted list.  - SORT_BY_USER_ID: Returns token info sorted by user id.  - SORT_BY_EXPIRY: Returns token info sorted by expiry.  - SORT_BY_CREATED_AT: Returns token info sorted by created at.  - SORT_BY_TOKEN_TYPE: Returns token info sorted by token type.  - SORT_BY_IS_REVOKED: Returns token info sorted by if it is revoked.  - SORT_BY_TOKEN_DESCRIPTION: Returns token info sorted by description of token.
+         * @param {V1OrderBy} [orderBy] Order token info in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+         * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
+         * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
+         * @param {string} [name] Filter by username or display name.
+         * @param {V1TokenType} [tokenType] Filter by token type.   - TOKEN_TYPE_UNSPECIFIED: Default token type.  - TOKEN_TYPE_USER_SESSION: User Session token.  - TOKEN_TYPE_LONG_LIVED_TOKEN: Long Lived token.
+         * @param {boolean} [isRevoked] Filter by status.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getAllLongLivedToken(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetAllLongLivedTokenResponse> {
-            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getAllLongLivedToken(options);
+        getAllLongLivedTokens(sortBy?: V1GetAllLongLivedTokensRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, tokenType?: V1TokenType, isRevoked?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetAllLongLivedTokensResponse> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getAllLongLivedTokens(sortBy, orderBy, offset, limit, name, tokenType, isRevoked, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -35079,11 +35148,18 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
         /**
          * 
          * @summary Get list of all long lived token info
+         * @param {V1GetAllLongLivedTokensRequestSortBy} [sortBy] Sort token info by the given field.   - SORT_BY_UNSPECIFIED: Returns token info in an unsorted list.  - SORT_BY_USER_ID: Returns token info sorted by user id.  - SORT_BY_EXPIRY: Returns token info sorted by expiry.  - SORT_BY_CREATED_AT: Returns token info sorted by created at.  - SORT_BY_TOKEN_TYPE: Returns token info sorted by token type.  - SORT_BY_IS_REVOKED: Returns token info sorted by if it is revoked.  - SORT_BY_TOKEN_DESCRIPTION: Returns token info sorted by description of token.
+         * @param {V1OrderBy} [orderBy] Order token info in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+         * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
+         * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
+         * @param {string} [name] Filter by username or display name.
+         * @param {V1TokenType} [tokenType] Filter by token type.   - TOKEN_TYPE_UNSPECIFIED: Default token type.  - TOKEN_TYPE_USER_SESSION: User Session token.  - TOKEN_TYPE_LONG_LIVED_TOKEN: Long Lived token.
+         * @param {boolean} [isRevoked] Filter by status.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getAllLongLivedToken(options?: any) {
-            return UsersApiFp(configuration).getAllLongLivedToken(options)(fetch, basePath);
+        getAllLongLivedTokens(sortBy?: V1GetAllLongLivedTokensRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, tokenType?: V1TokenType, isRevoked?: boolean, options?: any) {
+            return UsersApiFp(configuration).getAllLongLivedTokens(sortBy, orderBy, offset, limit, name, tokenType, isRevoked, options)(fetch, basePath);
         },
         /**
          * 
@@ -35277,12 +35353,19 @@ export class UsersApi extends BaseAPI {
     /**
      * 
      * @summary Get list of all long lived token info
+     * @param {V1GetAllLongLivedTokensRequestSortBy} [sortBy] Sort token info by the given field.   - SORT_BY_UNSPECIFIED: Returns token info in an unsorted list.  - SORT_BY_USER_ID: Returns token info sorted by user id.  - SORT_BY_EXPIRY: Returns token info sorted by expiry.  - SORT_BY_CREATED_AT: Returns token info sorted by created at.  - SORT_BY_TOKEN_TYPE: Returns token info sorted by token type.  - SORT_BY_IS_REVOKED: Returns token info sorted by if it is revoked.  - SORT_BY_TOKEN_DESCRIPTION: Returns token info sorted by description of token.
+     * @param {V1OrderBy} [orderBy] Order token info in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+     * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
+     * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
+     * @param {string} [name] Filter by username or display name.
+     * @param {V1TokenType} [tokenType] Filter by token type.   - TOKEN_TYPE_UNSPECIFIED: Default token type.  - TOKEN_TYPE_USER_SESSION: User Session token.  - TOKEN_TYPE_LONG_LIVED_TOKEN: Long Lived token.
+     * @param {boolean} [isRevoked] Filter by status.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof UsersApi
      */
-    public getAllLongLivedToken(options?: any) {
-        return UsersApiFp(this.configuration).getAllLongLivedToken(options)(this.fetch, this.basePath)
+    public getAllLongLivedTokens(sortBy?: V1GetAllLongLivedTokensRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, tokenType?: V1TokenType, isRevoked?: boolean, options?: any) {
+        return UsersApiFp(this.configuration).getAllLongLivedTokens(sortBy, orderBy, offset, limit, name, tokenType, isRevoked, options)(this.fetch, this.basePath)
     }
     
     /**

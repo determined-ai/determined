@@ -1024,7 +1024,7 @@ func TestPostUserLongLivedTokenWithLifespan(t *testing.T) {
 
 // TestGetLongLivedToken tests current user's token info
 // GET /api/v1/user/token_info - Get current user's long lived token info.
-func TestGetDeleteLongLivedToken(t *testing.T) {
+func TestGetLongLivedToken(t *testing.T) {
 	api, curUser, ctx := setupAPITest(t, nil)
 
 	createTestToken(ctx, t, api, 0)
@@ -1043,43 +1043,58 @@ func TestGetDeleteLongLivedToken(t *testing.T) {
 	require.ErrorContains(t, err, "no rows found with user_id")
 }
 
-// TestGetAllLongLivedToken tests all long lived token info
+// TestGetAllLongLivedTokens tests all long lived token info
 // GET /api/v1/users/tokens - Get all long lived token info
 // from user_sessions db for admin.
-func TestGetDeleteAllLongLivedToken(t *testing.T) {
+func TestGetAllLongLivedTokens(t *testing.T) {
 	api, _, ctx := setupAPITest(t, nil)
 
-	userIDList, err := getTestMultiUser(ctx, 3)
+	userID1, err := getTestUser(ctx)
 	require.NoError(t, err)
 
-	for _, userID := range userIDList {
-		createTestToken(ctx, t, api, userID)
-	}
+	createTestToken(ctx, t, api, userID1)
 
-	tokenInfoList, err := api.GetAllLongLivedToken(ctx, &apiv1.GetAllLongLivedTokenRequest{})
+	tokenInfo1, err := api.GetUserLongLivedToken(ctx, &apiv1.GetUserLongLivedTokenRequest{
+		UserId: int32(userID1),
+	})
 	require.NoError(t, err)
-	require.NotNil(t, tokenInfoList)
+	require.NotNil(t, tokenInfo1)
+	require.Equal(t, int32(userID1), tokenInfo1.LongLivedTokenInfo.UserId)
 
-	var actualUserIds []model.UserID
-	for _, tokenInfo := range tokenInfoList.GetLongLivedTokenInfo() {
-		actualUserIds = append(actualUserIds, model.UserID(tokenInfo.UserId))
-	}
+	userID2, err := getTestUser(ctx)
+	require.NoError(t, err)
 
-	for _, userID := range userIDList {
-		require.Contains(t, actualUserIds, userID, "Expected token for user ID %v, but not found",
-			userID)
-	}
+	createTestToken(ctx, t, api, userID2)
 
-	// For test cleanup
-	for _, userID := range userIDList {
-		err = user.DeleteLongLivenTokenByUserID(ctx, userID)
-		require.NoError(t, err)
+	tokenInfo2, err := api.GetUserLongLivedToken(ctx, &apiv1.GetUserLongLivedTokenRequest{
+		UserId: int32(userID2),
+	})
+	require.NoError(t, err)
+	require.NotNil(t, tokenInfo2)
+	require.Equal(t, int32(userID2), tokenInfo2.LongLivedTokenInfo.UserId)
+
+	_, err = api.DeleteLongLivedTokenByTokenID(ctx, &apiv1.DeleteLongLivedTokenByTokenIDRequest{
+		TokenId: tokenInfo2.LongLivedTokenInfo.Id,
+	})
+	require.NoError(t, err)
+
+	resp, err := api.GetAllLongLivedTokens(ctx, &apiv1.GetAllLongLivedTokensRequest{})
+	require.NoError(t, err)
+
+	for _, u := range resp.LongLivedTokenInfo {
+		if model.UserID(u.Id) == model.UserID(tokenInfo1.LongLivedTokenInfo.Id) {
+			require.False(t, u.IsRevoked)
+			require.Equal(t, tokenInfo1.LongLivedTokenInfo.TokenType, u.TokenType)
+		} else if model.UserID(u.Id) == model.UserID(tokenInfo2.LongLivedTokenInfo.Id) {
+			require.True(t, u.IsRevoked)
+			require.Equal(t, tokenInfo2.LongLivedTokenInfo.TokenType, u.TokenType)
+		}
 	}
 }
 
 // TestGetLongLivedToken tests given user's token info
 // GET /api/v1/users/{user_Id}/token - Get a user's long lived token info.
-func TestGetDeleteUserLongLivedToken(t *testing.T) {
+func TestGetUserLongLivedToken(t *testing.T) {
 	api, _, ctx := setupAPITest(t, nil)
 
 	userID, err := getTestUser(ctx)
@@ -1121,6 +1136,14 @@ func TestAuthzLongLivedToken(t *testing.T) {
 		Return(fmt.Errorf("canGetUsersOwnToken")).Once()
 
 	_, err = api.GetLongLivedToken(ctx, &apiv1.GetLongLivedTokenRequest{})
+	require.Equal(t, expectedErr.Error(), err.Error())
+
+	// GET All API Auth check
+	expectedErr = status.Error(codes.PermissionDenied, "canGetAllLongLivedTokens")
+	authzUsers.On("CanGetAllLongLivedTokens", mock.Anything, curUser).
+		Return(fmt.Errorf("canGetAllLongLivedTokens")).Once()
+
+	_, err = api.GetAllLongLivedTokens(ctx, &apiv1.GetAllLongLivedTokensRequest{})
 	require.Equal(t, expectedErr.Error(), err.Error())
 
 	// DELETE API Auth check
@@ -1196,27 +1219,6 @@ func getTestUser(ctx context.Context) (model.UserID, error) {
 		},
 		nil,
 	)
-}
-
-func getTestMultiUser(ctx context.Context, n int) ([]model.UserID, error) {
-	var userList []model.UserID
-	curr := 1
-	for curr <= n {
-		user, err := user.Add(
-			ctx,
-			&model.User{
-				Username: uuid.New().String(),
-				Remote:   false,
-			},
-			nil,
-		)
-		if err != nil {
-			return nil, err
-		}
-		userList = append(userList, user)
-		curr++
-	}
-	return userList, nil
 }
 
 func testSetLifespan(ctx context.Context, t *testing.T, userID model.UserID, lifespan string) error {

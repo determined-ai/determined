@@ -54,6 +54,7 @@ func StartSession(ctx context.Context, user *model.User, opts ...UserSessionOpti
 		Expiry:    CurrentTimeNowInUTC.Add(SessionDuration),
 		CreatedAt: CurrentTimeNowInUTC,
 		TokenType: model.TokenTypeUserSession,
+		IsRevoked: false,
 	}
 
 	for _, opt := range opts {
@@ -63,7 +64,7 @@ func StartSession(ctx context.Context, user *model.User, opts ...UserSessionOpti
 	err := db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		_, err := tx.NewInsert().
 			Model(userSession).
-			Column("user_id", "expiry", "created_at", "token_type").
+			Column("user_id", "expiry", "created_at", "token_type", "is_revoked").
 			Returning("id").
 			Exec(ctx, &userSession.ID)
 		if err != nil {
@@ -181,24 +182,11 @@ func DeleteSessionByToken(ctx context.Context, token string) error {
 
 // DeleteSessionByID deletes the user session with the given ID.
 func DeleteSessionByID(ctx context.Context, sessionID model.SessionID) error {
-	res, err := db.Bun().NewDelete().
+	_, err := db.Bun().NewDelete().
 		Table("user_sessions").
 		Where("id = ?", sessionID).
 		Exec(ctx)
-	if err != nil {
-		return err
-	}
-
-	rowsAffected, err := res.RowsAffected()
-	if err != nil {
-		return err
-	}
-
-	if rowsAffected == 0 {
-		return fmt.Errorf("no rows found with session_id: %v", sessionID)
-	}
-
-	return nil
+	return err
 }
 
 // AddUserTx & addAgentUserGroup are helper methods for Add & Update.
@@ -487,9 +475,9 @@ func WithTokenExpiry(expiry *time.Duration) LongLivedTokenOption {
 	}
 }
 
-// DeleteAndCreateLongLivedToken creates/overwrites a long lived token and store in
+// RevokeAndCreateLongLivedToken creates/overwrites a long lived token and store in
 // user_sessions db.
-func DeleteAndCreateLongLivedToken(
+func RevokeAndCreateLongLivedToken(
 	ctx context.Context, userID model.UserID, opts ...LongLivedTokenOption,
 ) (string, error) {
 	CurrentTimeNowInUTC = time.Now().UTC()
@@ -499,6 +487,7 @@ func DeleteAndCreateLongLivedToken(
 		CreatedAt: CurrentTimeNowInUTC,
 		Expiry:    CurrentTimeNowInUTC.Add(DefaultTokenLifespan),
 		TokenType: model.TokenTypeLongLivedToken,
+		IsRevoked: false,
 	}
 
 	// Update the optional ExpiresAt field (if passed)
@@ -511,8 +500,9 @@ func DeleteAndCreateLongLivedToken(
 	err := db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		// LongLivedTokens should have a 1:1 relationship with users, if a user creates a new token,
 		// revoke the previous token if it exists.
-		_, err := tx.NewDelete().
+		_, err := tx.NewUpdate().
 			Table("user_sessions").
+			Set("is_revoked = true").
 			Where("user_id = ?", userID).
 			Where("token_type = ?", model.TokenTypeLongLivedToken).
 			Exec(ctx)
@@ -524,7 +514,7 @@ func DeleteAndCreateLongLivedToken(
 		// inserted row is returned and stored in user_sessions.ID.
 		_, err = tx.NewInsert().
 			Model(longLivedToken).
-			Column("user_id", "expiry", "created_at", "token_type").
+			Column("user_id", "expiry", "created_at", "token_type", "is_revoked").
 			Returning("id").
 			Exec(ctx, &longLivedToken.ID)
 		if err != nil {
@@ -548,10 +538,11 @@ func DeleteAndCreateLongLivedToken(
 	return token, nil
 }
 
-// DeleteLongLivenTokenByUserID deletes the user long lived token with the given userID.
+// DeleteLongLivenTokenByUserID marks column is_revoked to true with the given userID and its long lived token.
 func DeleteLongLivenTokenByUserID(ctx context.Context, userID model.UserID) error {
-	res, err := db.Bun().NewDelete().
+	res, err := db.Bun().NewUpdate().
 		Table("user_sessions").
+		Set("is_revoked = true").
 		Where("user_id = ?", userID).
 		Where("token_type = ?", model.TokenTypeLongLivedToken).
 		Exec(ctx)
@@ -573,7 +564,7 @@ func DeleteLongLivenTokenByUserID(ctx context.Context, userID model.UserID) erro
 	return nil // Return nil if deletion was successful
 }
 
-// DeleteLongLivenTokenByToken deletes the user long lived token with the given token.
+// DeleteLongLivenTokenByToken marks column is_revoked to true with the given token.
 func DeleteLongLivenTokenByToken(ctx context.Context, token string) error {
 	v2 := paseto.NewV2()
 	var longLivedToken model.UserSession
@@ -582,18 +573,41 @@ func DeleteLongLivenTokenByToken(ctx context.Context, token string) error {
 	if err := v2.Verify(token, db.GetTokenKeys().PublicKey, &longLivedToken, nil); err != nil {
 		return nil //nolint: nilerr
 	}
-	return DeleteSessionByID(ctx, longLivedToken.ID)
+	return DeleteLongLivenTokenByTokenID(ctx, longLivedToken.ID)
 }
 
-// GetLongLivedTokenInfo returns the token info from the table with the given user_id.
+// DeleteLongLivenTokenByTokenID deletes the user session with the given ID.
+func DeleteLongLivenTokenByTokenID(ctx context.Context, sessionID model.SessionID) error {
+	res, err := db.Bun().NewUpdate().
+		Table("user_sessions").
+		Set("is_revoked = true").
+		Where("id = ?", sessionID).
+		Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+
+	if rowsAffected == 0 {
+		return fmt.Errorf("no rows found with session_id: %v", sessionID)
+	}
+
+	return nil
+}
+
+// GetLongLivedTokenInfo returns the active token info from the table with the given user_id.
 func GetLongLivedTokenInfo(ctx context.Context, userID model.UserID) (
 	*model.UserSession, error,
 ) {
 	var tokenInfo model.UserSession // To store the token info for the given user_id
 
-	// Execute the query to fetch the token info for the given user_id
+	// Execute the query to fetch the active token info for the given user_id
 	switch err := db.Bun().NewSelect().Table("user_sessions").
-		Where("user_id = ?", userID).
+		Where("user_id = ?", userID).Where("is_revoked = ?", false).
 		Where("token_type = ?", model.TokenTypeLongLivedToken).
 		Scan(ctx, &tokenInfo); {
 	case errors.Is(err, sql.ErrNoRows):
@@ -605,13 +619,13 @@ func GetLongLivedTokenInfo(ctx context.Context, userID model.UserID) (
 	}
 }
 
-// GetAllLongLivedTokenInfo returns all token info from the table with the given user_id for admin.
+// GetAllLongLivedTokenInfo returns all (active / revoked) token info from the table with the given user_id for admin.
 func GetAllLongLivedTokenInfo(ctx context.Context) (
 	[]*model.UserSession, error,
 ) {
 	var tokenInfo []*model.UserSession // To store the token info for the given user_id
 
-	// Execute the query to fetch the token info of long-lived type
+	// Execute the query to fetch the token info (active / revoked) of long-lived type
 	switch err := db.Bun().NewSelect().Table("user_sessions").
 		Where("token_type = ?", model.TokenTypeLongLivedToken).
 		Scan(ctx, &tokenInfo); {

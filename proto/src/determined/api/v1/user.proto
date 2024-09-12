@@ -270,16 +270,53 @@ message GetLongLivedTokenResponse {
   determined.user.v1.UserSessionInfo long_lived_token_info = 1;
 }
 
-// Get all longLivedToken info for admin.
-message GetAllLongLivedTokenRequest {}
+// Get all longLivedTokens info for admin.
+message GetAllLongLivedTokensRequest {
+  // Sort token info by the given field.
+  enum SortBy {
+    // Returns token info in an unsorted list.
+    SORT_BY_UNSPECIFIED = 0;
+    // Returns token info sorted by user id.
+    SORT_BY_USER_ID = 1;
+    // Returns token info sorted by expiry.
+    SORT_BY_EXPIRY = 2;
+    // Returns token info sorted by created at.
+    SORT_BY_CREATED_AT = 3;
+    // Returns token info sorted by token type.
+    SORT_BY_TOKEN_TYPE = 4;
+    // Returns token info sorted by if it is revoked.
+    SORT_BY_IS_REVOKED = 5;
+    // Returns token info sorted by description of token.
+    SORT_BY_TOKEN_DESCRIPTION = 6;
+  }
+  // Sort token info by the given field.
+  SortBy sort_by = 1;
+  // Order token info in either ascending or descending order.
+  OrderBy order_by = 2;
+
+  // Skip the number of projects before returning results. Negative values
+  // denote number of projects to skip from the end before returning results.
+  int32 offset = 3;
+  // Limit the number of projects. A value of 0 denotes no limit.
+  int32 limit = 4;
+
+  // Filter by username or display name.
+  string name = 5;
+  // Filter by token type.
+  optional determined.user.v1.TokenType token_type = 6;
+  // Filter by status.
+  optional bool is_revoked = 7;
+}
 
 // Response to GetAllLongLivedTokenRequest.
-message GetAllLongLivedTokenResponse {
+message GetAllLongLivedTokensResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "long_lived_token_info" ] }
   };
   // Return list of LongLivedToken Info.
   repeated determined.user.v1.UserSessionInfo long_lived_token_info = 1;
+  // Pagination information of the full dataset.
+  Pagination pagination = 2;
 }
 
 // Get the requested user's longLivedToken info.

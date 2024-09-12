@@ -96,6 +96,7 @@ type UserSession struct {
 	Expiry           time.Time         `db:"expiry" json:"expiry"`
 	CreatedAt        time.Time         `db:"created_at" json:"created_at"`
 	TokenType        TokenType         `db:"token_type" json:"token_type"`
+	IsRevoked        bool              `db:"is_revoked" json:"is_revoked"`
 	TokenDescription null.String       `db:"token_description" json:"token_description"`
 	InheritedClaims  map[string]string `bun:"-"` // InheritedClaims contains the OIDC raw ID token when OIDC is enabled
 }
@@ -108,6 +109,7 @@ func (s UserSession) Proto() *userv1.UserSessionInfo {
 		Expiry:           timestamppb.New(s.Expiry),
 		CreatedAt:        timestamppb.New(s.CreatedAt),
 		TokenType:        s.TokenType.Proto(),
+		IsRevoked:        s.IsRevoked,
 		TokenDescription: s.TokenDescription.ValueOrZero(),
 	}
 }

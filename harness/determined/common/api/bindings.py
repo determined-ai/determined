@@ -4692,27 +4692,53 @@ class v1GetAgentsResponse(Printable):
             out["pagination"] = None if self.pagination is None else self.pagination.to_json(omit_unset)
         return out
 
-class v1GetAllLongLivedTokenResponse(Printable):
+class v1GetAllLongLivedTokensRequestSortBy(DetEnum):
+    """Sort token info by the given field.
+    - SORT_BY_UNSPECIFIED: Returns token info in an unsorted list.
+    - SORT_BY_USER_ID: Returns token info sorted by user id.
+    - SORT_BY_EXPIRY: Returns token info sorted by expiry.
+    - SORT_BY_CREATED_AT: Returns token info sorted by created at.
+    - SORT_BY_TOKEN_TYPE: Returns token info sorted by token type.
+    - SORT_BY_IS_REVOKED: Returns token info sorted by if it is revoked.
+    - SORT_BY_TOKEN_DESCRIPTION: Returns token info sorted by description of token.
+    """
+    UNSPECIFIED = "SORT_BY_UNSPECIFIED"
+    USER_ID = "SORT_BY_USER_ID"
+    EXPIRY = "SORT_BY_EXPIRY"
+    CREATED_AT = "SORT_BY_CREATED_AT"
+    TOKEN_TYPE = "SORT_BY_TOKEN_TYPE"
+    IS_REVOKED = "SORT_BY_IS_REVOKED"
+    TOKEN_DESCRIPTION = "SORT_BY_TOKEN_DESCRIPTION"
+
+class v1GetAllLongLivedTokensResponse(Printable):
     """Response to GetAllLongLivedTokenRequest."""
+    pagination: "typing.Optional[v1Pagination]" = None
 
     def __init__(
         self,
         *,
         longLivedTokenInfo: "typing.Sequence[v1UserSessionInfo]",
+        pagination: "typing.Union[v1Pagination, None, Unset]" = _unset,
     ):
         self.longLivedTokenInfo = longLivedTokenInfo
+        if not isinstance(pagination, Unset):
+            self.pagination = pagination
 
     @classmethod
-    def from_json(cls, obj: Json) -> "v1GetAllLongLivedTokenResponse":
+    def from_json(cls, obj: Json) -> "v1GetAllLongLivedTokensResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "longLivedTokenInfo": [v1UserSessionInfo.from_json(x) for x in obj["longLivedTokenInfo"]],
         }
+        if "pagination" in obj:
+            kwargs["pagination"] = v1Pagination.from_json(obj["pagination"]) if obj["pagination"] is not None else None
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "longLivedTokenInfo": [x.to_json(omit_unset) for x in self.longLivedTokenInfo],
         }
+        if not omit_unset or "pagination" in vars(self):
+            out["pagination"] = None if self.pagination is None else self.pagination.to_json(omit_unset)
         return out
 
 class v1GetAllocationResponse(Printable):
@@ -16992,6 +17018,7 @@ class v1UserSessionInfo(Printable):
     """UserSessionInfo represents user session info."""
     createdAt: "typing.Optional[str]" = None
     expiry: "typing.Optional[str]" = None
+    isRevoked: "typing.Optional[bool]" = None
     tokenDescription: "typing.Optional[str]" = None
     tokenType: "typing.Optional[v1TokenType]" = None
     userId: "typing.Optional[int]" = None
@@ -17002,6 +17029,7 @@ class v1UserSessionInfo(Printable):
         id: int,
         createdAt: "typing.Union[str, None, Unset]" = _unset,
         expiry: "typing.Union[str, None, Unset]" = _unset,
+        isRevoked: "typing.Union[bool, None, Unset]" = _unset,
         tokenDescription: "typing.Union[str, None, Unset]" = _unset,
         tokenType: "typing.Union[v1TokenType, None, Unset]" = _unset,
         userId: "typing.Union[int, None, Unset]" = _unset,
@@ -17011,6 +17039,8 @@ class v1UserSessionInfo(Printable):
             self.createdAt = createdAt
         if not isinstance(expiry, Unset):
             self.expiry = expiry
+        if not isinstance(isRevoked, Unset):
+            self.isRevoked = isRevoked
         if not isinstance(tokenDescription, Unset):
             self.tokenDescription = tokenDescription
         if not isinstance(tokenType, Unset):
@@ -17027,6 +17057,8 @@ class v1UserSessionInfo(Printable):
             kwargs["createdAt"] = obj["createdAt"]
         if "expiry" in obj:
             kwargs["expiry"] = obj["expiry"]
+        if "isRevoked" in obj:
+            kwargs["isRevoked"] = obj["isRevoked"]
         if "tokenDescription" in obj:
             kwargs["tokenDescription"] = obj["tokenDescription"]
         if "tokenType" in obj:
@@ -17043,6 +17075,8 @@ class v1UserSessionInfo(Printable):
             out["createdAt"] = self.createdAt
         if not omit_unset or "expiry" in vars(self):
             out["expiry"] = self.expiry
+        if not omit_unset or "isRevoked" in vars(self):
+            out["isRevoked"] = self.isRevoked
         if not omit_unset or "tokenDescription" in vars(self):
             out["tokenDescription"] = self.tokenDescription
         if not omit_unset or "tokenType" in vars(self):
@@ -19060,11 +19094,53 @@ denote number of agents to skip from the end before returning results.
         return v1GetAgentsResponse.from_json(_resp.json())
     raise APIHttpError("get_GetAgents", _resp)
 
-def get_GetAllLongLivedToken(
+def get_GetAllLongLivedTokens(
     session: "api.BaseSession",
-) -> "v1GetAllLongLivedTokenResponse":
-    """Get list of all long lived token info"""
-    _params = None
+    *,
+    isRevoked: "typing.Optional[bool]" = None,
+    limit: "typing.Optional[int]" = None,
+    name: "typing.Optional[str]" = None,
+    offset: "typing.Optional[int]" = None,
+    orderBy: "typing.Optional[v1OrderBy]" = None,
+    sortBy: "typing.Optional[v1GetAllLongLivedTokensRequestSortBy]" = None,
+    tokenType: "typing.Optional[v1TokenType]" = None,
+) -> "v1GetAllLongLivedTokensResponse":
+    """Get list of all long lived token info
+
+    - isRevoked: Filter by status.
+    - limit: Limit the number of projects. A value of 0 denotes no limit.
+    - name: Filter by username or display name.
+    - offset: Skip the number of projects before returning results. Negative values
+denote number of projects to skip from the end before returning results.
+    - orderBy: Order token info in either ascending or descending order.
+
+ - ORDER_BY_UNSPECIFIED: Returns records in no specific order.
+ - ORDER_BY_ASC: Returns records in ascending order.
+ - ORDER_BY_DESC: Returns records in descending order.
+    - sortBy: Sort token info by the given field.
+
+ - SORT_BY_UNSPECIFIED: Returns token info in an unsorted list.
+ - SORT_BY_USER_ID: Returns token info sorted by user id.
+ - SORT_BY_EXPIRY: Returns token info sorted by expiry.
+ - SORT_BY_CREATED_AT: Returns token info sorted by created at.
+ - SORT_BY_TOKEN_TYPE: Returns token info sorted by token type.
+ - SORT_BY_IS_REVOKED: Returns token info sorted by if it is revoked.
+ - SORT_BY_TOKEN_DESCRIPTION: Returns token info sorted by description of token.
+    - tokenType: Filter by token type.
+
+ - TOKEN_TYPE_UNSPECIFIED: Default token type.
+ - TOKEN_TYPE_USER_SESSION: User Session token.
+ - TOKEN_TYPE_LONG_LIVED_TOKEN: Long Lived token.
+    """
+    _params = {
+        "isRevoked": str(isRevoked).lower() if isRevoked is not None else None,
+        "limit": limit,
+        "name": name,
+        "offset": offset,
+        "orderBy": orderBy.value if orderBy is not None else None,
+        "sortBy": sortBy.value if sortBy is not None else None,
+        "tokenType": tokenType.value if tokenType is not None else None,
+    }
     _resp = session._do_request(
         method="GET",
         path="/api/v1/user/tokens",
@@ -19076,8 +19152,8 @@ def get_GetAllLongLivedToken(
         stream=False,
     )
     if _resp.status_code == 200:
-        return v1GetAllLongLivedTokenResponse.from_json(_resp.json())
-    raise APIHttpError("get_GetAllLongLivedToken", _resp)
+        return v1GetAllLongLivedTokensResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetAllLongLivedTokens", _resp)
 
 def get_GetAllocation(
     session: "api.BaseSession",
@@ -25143,6 +25219,7 @@ def get_health(
 # attribute is a v1Pagination-type object.
 Paginated = typing.Union[
     v1GetAgentsResponse,
+    v1GetAllLongLivedTokensResponse,
     v1GetCommandsResponse,
     v1GetExperimentCheckpointsResponse,
     v1GetExperimentTrialsResponse,

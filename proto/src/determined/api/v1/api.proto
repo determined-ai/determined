@@ -2831,8 +2831,8 @@ service Determined {
   }
 
   // Get list of all long lived token info
-  rpc GetAllLongLivedToken(GetAllLongLivedTokenRequest)
-      returns (GetAllLongLivedTokenResponse) {
+  rpc GetAllLongLivedTokens(GetAllLongLivedTokensRequest)
+      returns (GetAllLongLivedTokensResponse) {
     option (google.api.http) = {
       get: "/api/v1/user/tokens"
     };

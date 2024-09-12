@@ -231,8 +231,8 @@ func (a *UserAuthZRBAC) CanGetUsersOwnToken(ctx context.Context, curUser model.U
 	return nil
 }
 
-// CanGetAllToken returns an error if the user does not have admin permissions.
-func (a *UserAuthZRBAC) CanGetAllToken(
+// CanGetAllLongLivedTokens returns an error if the user does not have admin permissions.
+func (a *UserAuthZRBAC) CanGetAllLongLivedTokens(
 	ctx context.Context, curUser model.User,
 ) error {
 	return canAdministrateUser(ctx, curUser.ID)
