@@ -2,6 +2,7 @@ import { expect, test } from 'e2e/fixtures/global-fixtures';
 import { ProjectDetails } from 'e2e/models/pages/ProjectDetails';
 import { detExecSync, fullPath } from 'e2e/utils/detCLI';
 import { safeName } from 'e2e/utils/naming';
+import { ExperimentBase } from 'types';
 
 test.describe('Experiment List', () => {
   let projectDetailsPage: ProjectDetails;
@@ -28,6 +29,12 @@ test.describe('Experiment List', () => {
             `experiment create ${fullPath('examples/tutorials/mnist_pytorch/adaptive.yaml')} --paused --project_id ${newProject.response.project.id}`,
           );
         });
+      const experiments: ExperimentBase[] = JSON.parse(
+        detExecSync(
+          `project list-experiments -json ${newProject.response.project.workspaceName} ${newProject.response.project.name}`,
+        ),
+      );
+      detExecSync(`experiment archive ${experiments[0]?.id}`);
       await expect(
         projectDetailsPageSetup.f_experimentList.dataGrid.rows.pwLocator,
       ).not.toHaveCount(0, { timeout: 10_000 });
