@@ -23,8 +23,8 @@ func ValidWorkloadType(val string) bool {
 }
 
 // UnmarshalExperimentConfigPolicy unpacks a string into ExperimentConfigPolicy struct.
-func UnmarshalExperimentConfigPolicy(str string) (*ExperimentConfigPolicy, error) {
-	var expConfigPolicy ExperimentConfigPolicy
+func UnmarshalExperimentConfigPolicy(str string) (*ExperimentConfigPolicies, error) {
+	var expConfigPolicy ExperimentConfigPolicies
 	var err error
 
 	dec := json.NewDecoder(bytes.NewReader([]byte(str)))
@@ -43,8 +43,8 @@ func UnmarshalExperimentConfigPolicy(str string) (*ExperimentConfigPolicy, error
 }
 
 // UnmarshalNTSCConfigPolicy unpacks a string into NTSCConfigPolicy struct.
-func UnmarshalNTSCConfigPolicy(str string) (*NTSCConfigPolicy, error) {
-	var ntscConfigPolicy NTSCConfigPolicy
+func UnmarshalNTSCConfigPolicy(str string) (*NTSCConfigPolicies, error) {
+	var ntscConfigPolicy NTSCConfigPolicies
 	var err error
 
 	dec := json.NewDecoder(bytes.NewReader([]byte(str)))
