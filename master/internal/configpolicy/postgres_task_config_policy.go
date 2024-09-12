@@ -21,10 +21,10 @@ const (
 // SetNTSCConfigPolicies adds the NTSC invariant config and constraints config policies to
 // the database.
 func SetNTSCConfigPolicies(ctx context.Context,
-	experimentTCP *model.NTSCTaskConfigPolicies,
+	ntscTCPs *model.NTSCTaskConfigPolicies,
 ) error {
 	return db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		return SetNTSCConfigPoliciesTx(ctx, &tx, experimentTCP)
+		return SetNTSCConfigPoliciesTx(ctx, &tx, ntscTCPs)
 	})
 }
 
@@ -93,10 +93,6 @@ func GetNTSCConfigPolicies(ctx context.Context,
 func DeleteConfigPolicies(ctx context.Context,
 	scope *int, workloadType model.WorkloadType,
 ) error {
-	if workloadType == model.UnknownType {
-		return status.Error(codes.InvalidArgument,
-			"invalid workload type for config policies: "+workloadType.String())
-	}
 	wkspQuery := wkspIDQuery
 	if scope == nil {
 		wkspQuery = wkspIDGlobalQuery
