@@ -3,10 +3,26 @@ import { BaseReactFragment } from 'playwright-page-model-base/BaseReactFragment'
 
 import { Select } from 'e2e/models/common/hew/Select';
 import { Toggle } from 'e2e/models/common/hew/Toggle';
-import { ProjectsCard } from 'e2e/models/components/ProjectCard';
+import { GridListRadioGroup } from 'e2e/models/components/GridListRadioGroup';
+import { ProjectCard } from 'e2e/models/components/ProjectCard';
 import { ProjectCreateModal } from 'e2e/models/components/ProjectCreateModal';
 import { ProjectDeleteModal } from 'e2e/models/components/ProjectDeleteModal';
 import { ProjectMoveModal } from 'e2e/models/components/ProjectMoveModal';
+import { HeadRow, InteractiveTable, Row } from 'e2e/models/components/Table/InteractiveTable';
+
+class ProjectHeadRow extends HeadRow {
+  readonly name = new BaseComponent({
+    parent: this,
+    selector: '[data-testid="Name"]',
+  });
+}
+
+class ProjectRow extends Row {
+  readonly name = new BaseComponent({
+    parent: this,
+    selector: '[data-testid="name"]',
+  });
+}
 
 /**
  * Represents the WorkspaceProjects page in src/pages/WorkspaceDetails/WorkspaceProjects.tsx
@@ -30,7 +46,20 @@ export class WorkspaceProjects extends BaseReactFragment {
     parent: this,
     selector: '[data-testid="newProject"]',
   });
-  // TODO missing grid toggle
+  readonly gridListRadioGroup = new GridListRadioGroup({
+    parent: this,
+  });
+  readonly table = new InteractiveTable({
+    parent: this,
+    tableArgs: {
+      attachment: '[data-testid="table"]',
+      headRowType: ProjectHeadRow,
+      rowType: ProjectRow,
+    },
+  });
+  readonly projectCards = new ProjectCard({
+    parent: this,
+  });
   readonly createModal = new ProjectCreateModal({
     root: this.root,
   });
@@ -40,8 +69,8 @@ export class WorkspaceProjects extends BaseReactFragment {
   readonly moveModal = new ProjectMoveModal({
     root: this.root,
   });
-  cardByName(name: string): ProjectsCard {
-    return new ProjectsCard({
+  cardByName(name: string): ProjectCard {
+    return new ProjectCard({
       attachment: `[data-testid="card-${name}"]`,
       parent: this,
     });
