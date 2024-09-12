@@ -4,7 +4,7 @@ import React, { PropsWithChildren, useEffect, useMemo, useRef, useState } from '
 import Section from 'components/Section';
 import { Agent, Resource, SlotsRecord } from 'types';
 
-import css from './Topology.module.scss';
+import css from './ClusterTopology.module.scss';
 
 interface NodeElementProps {
   name: string;
