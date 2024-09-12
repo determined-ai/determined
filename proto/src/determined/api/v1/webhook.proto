@@ -102,3 +102,18 @@ message PostWebhookEventDataRequest {
 
 // Response to PostWebhookEventDataRequest.
 message PostWebhookEventDataResponse {}
+
+// Request for updating a webhook.
+message PatchWebhookRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "id", "webook" ] }
+  };
+
+  // The id of the webhook.
+  int32 id = 1;
+  // The desired webhook fields and values to update.
+  determined.webhook.v1.PatchWebhook webhook = 2;
+}
+
+// Response to PatchWebhookRequest.
+message PatchWebhookResponse {}

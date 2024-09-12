@@ -7,7 +7,6 @@ hyperparameters:
   global_batch_size: 32
   metrics_progression: decreasing
   metrics_base: 0.5
-  metrics_sigma: 0
   request_stop:
     type: categorical
     vals: [True, False]

@@ -10,7 +10,6 @@ hyperparameters:
     type: double
     minval: 0.5
     maxval: 0.9
-  metrics_sigma: 0
   # Each step will take 0.05 seconds / batch * 100 batches = 5 seconds
   training_batch_seconds: 0.05
 searcher:

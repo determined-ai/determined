@@ -13,7 +13,7 @@ from tests import experiment as exp
 @pytest.mark.parametrize("should_match", [True, False])
 def test_log_policy_cancel_retries(should_match: bool) -> None:
     sess = api_utils.user_session()
-    regex = r"assert 0 <= self\.metrics_sigma"
+    regex = r"assert not self\.crash_on_startup"
     if not should_match:
         regex = r"(.*) this should not match (.*)"
 
@@ -26,7 +26,7 @@ def test_log_policy_cancel_retries(should_match: bool) -> None:
             },
         },
     ]
-    config["hyperparameters"]["metrics_sigma"] = -1
+    config["hyperparameters"]["crash_on_startup"] = True
     config["max_restarts"] = 1
 
     with tempfile.NamedTemporaryFile() as tf:
@@ -52,7 +52,7 @@ def test_log_policy_cancel_retries(should_match: bool) -> None:
 @pytest.mark.parametrize("should_match", [True, False])
 def test_log_policy_exclude_node_k8s(should_match: bool) -> None:
     sess = api_utils.user_session()
-    regex = r"assert 0 <= self\.metrics_sigma"
+    regex = r"assert not self\.crash_on_startup"
     if not should_match:
         regex = r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b"
 
@@ -65,7 +65,7 @@ def test_log_policy_exclude_node_k8s(should_match: bool) -> None:
             },
         },
     ]
-    config["hyperparameters"]["metrics_sigma"] = -1
+    config["hyperparameters"]["crash_on_startup"] = True
     config["max_restarts"] = 1
 
     agents = bindings.get_GetAgents(sess).agents
@@ -111,7 +111,7 @@ def test_log_policy_exclude_node_k8s(should_match: bool) -> None:
 @pytest.mark.parametrize("should_match", [True, False])
 def test_log_policy_exclude_node_single_agent(should_match: bool) -> None:
     sess = api_utils.user_session()
-    regex = r"assert 0 <= self\.metrics_sigma"
+    regex = r"assert not self\.crash_on_startup"
     if not should_match:
         regex = r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b"
 
@@ -124,7 +124,7 @@ def test_log_policy_exclude_node_single_agent(should_match: bool) -> None:
             },
         },
     ]
-    config["hyperparameters"]["metrics_sigma"] = -1
+    config["hyperparameters"]["crash_on_startup"] = True
     config["max_restarts"] = 1
 
     agents = bindings.get_GetAgents(sess).agents
@@ -170,7 +170,7 @@ def test_log_policy_exclude_slurm(should_match: bool) -> None:
     if len(agents) != 1:
         pytest.skip("can only be run on a single agent cluster")
 
-    regex = r"assert 0 <= self\.metrics_sigma"
+    regex = r"assert not self\.crash_on_startup"
     if not should_match:
         regex = r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b"
 
@@ -183,7 +183,7 @@ def test_log_policy_exclude_slurm(should_match: bool) -> None:
             },
         },
     ]
-    config["hyperparameters"]["metrics_sigma"] = -1
+    config["hyperparameters"]["crash_on_startup"] = True
     config["max_restarts"] = 1
 
     with tempfile.NamedTemporaryFile() as tf:
