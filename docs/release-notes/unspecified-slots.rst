@@ -2,5 +2,6 @@
 
 **Improvements**
 
--  WebUI: Change "Compute" slot label to "Unspecified" slot label for resource pools that have no,
-   or more than one slot type.
+-  WebUI: Change the "Compute Slots Allocated" label to "Unspecified Slots Allocated" for resource
+   pools with no or multiple slot types. Added error logs for zero or multi-slot-type cases, and
+   updated the progress bar to include all agents when the slot type is TYPE_UNSPECIFIED.
