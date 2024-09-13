@@ -102,7 +102,15 @@ describe('Cluster Utilities', () => {
 
     it('should convert enabled UNSPECIFIED agents into slot container states', () => {
       const result = utils.getSlotContainerStates(AGENTS, Type.ResourceType.UNSPECIFIED);
-      const expected: Type.ResourceState[] = [];
+      const expected: Type.ResourceState[] = [
+        Type.ResourceState.Running,
+        Type.ResourceState.Running,
+        Type.ResourceState.Running,
+        Type.ResourceState.Pulling,
+        Type.ResourceState.Pulling,
+        Type.ResourceState.Pulling,
+        Type.ResourceState.Running,
+      ];
       expect(result).toStrictEqual(expected);
     });
 

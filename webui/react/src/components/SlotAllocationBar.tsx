@@ -249,7 +249,7 @@ const SlotAllocationBar: React.FC<Props> = ({
     <div className={classes.join(' ')}>
       {!hideHeader && (
         <div className={css.header}>
-          <header>{title || 'Compute'} Slots Allocated</header>
+          <header>{title || 'Unspecified'} Slots Allocated</header>
           {totalSlots === 0 ? (
             <span>0/0</span>
           ) : (
@@ -282,7 +282,7 @@ const SlotAllocationBar: React.FC<Props> = ({
               {`${
                 isAux
                   ? `${footer.auxContainersRunning} Aux Containers Running`
-                  : `${resourceStates.length} ${title || 'Compute'} Slots Allocated`
+                  : `${resourceStates.length} ${title || 'Unspecified'} Slots Allocated`
               }`}
             </header>
           ) : (
@@ -291,7 +291,7 @@ const SlotAllocationBar: React.FC<Props> = ({
                 isAux
                   ? `${footer.auxContainersRunning}/${footer.auxContainerCapacity} Aux Containers Running`
                   : `${resourceStates.length}/${totalSlotsNum} ${
-                      title || 'Compute'
+                      title || 'Unspecified'
                     } Slots Allocated`
               }`}
             </header>
