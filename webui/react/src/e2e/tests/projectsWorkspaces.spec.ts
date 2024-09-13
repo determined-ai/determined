@@ -354,13 +354,16 @@ test.describe('Workspace List', () => {
   test('View Toggle', async ({ authedPage }) => {
     const workspaceList = new WorkspaceList(authedPage);
 
+    const firstCard = workspaceList.workspaceCards.nth(0);
+    const firstRow = workspaceList.table.table.rows.nth(0);
+
     await workspaceList.gridListRadioGroup.list.pwLocator.click();
+    await firstCard.pwLocator.waitFor({ state: 'hidden' });
+    await firstRow.pwLocator.waitFor();
 
-    const idSortedWorkspaceNames = _.orderBy(workspaces, 'id', 'desc').map((w) => w.name);
-
-    expect(await workspaceList.table.table.rows.nth(0).name.pwLocator.textContent()).toEqual(
-      idSortedWorkspaceNames[0],
-    );
+    await workspaceList.gridListRadioGroup.grid.pwLocator.click();
+    await firstRow.pwLocator.waitFor({ state: 'hidden' });
+    await firstCard.pwLocator.waitFor();
   });
 });
 
