@@ -1,12 +1,11 @@
 class deployment_types:
-    SIMPLE = "simple"
     SIMPLE_RDS = "simple-rds"
     SECURE = "secure"
     EFS = "efs"
     GENAI = "genai"
     FSX = "fsx"
     GOVCLOUD = "govcloud"
-    DEPLOYMENT_TYPES = [SIMPLE, SECURE, EFS, FSX, GOVCLOUD, SIMPLE_RDS, GENAI]
+    DEPLOYMENT_TYPES = [SIMPLE_RDS, SECURE, EFS, FSX, GOVCLOUD, GENAI]
     TYPE_TAG_KEY = "deployment-type"
 
 
