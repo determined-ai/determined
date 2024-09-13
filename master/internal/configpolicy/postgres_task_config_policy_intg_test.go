@@ -30,14 +30,14 @@ func TestSetNTSCConfigPolicies(t *testing.T) {
 	user := db.RequireMockUser(t, pgDB)
 	workspaceIDs := []int32{}
 
-	defer func() {
-		if len(workspaceIDs) > 0 {
-			err := db.CleanupMockWorkspace(workspaceIDs)
-			if err != nil {
-				log.Errorf("error when cleaning up mock workspaces")
-			}
-		}
-	}()
+	// defer func() {
+	// 	if len(workspaceIDs) > 0 {
+	// 		err := db.CleanupMockWorkspace(workspaceIDs)
+	// 		if err != nil {
+	// 			log.Errorf("error when cleaning up mock workspaces")
+	// 		}
+	// 	}
+	// }()
 
 	tests := []struct {
 		name     string

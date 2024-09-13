@@ -8,7 +8,9 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/determined-ai/determined/master/internal/configpolicy"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
+	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 func stubData() (*structpb.Struct, error) {
@@ -58,8 +60,28 @@ func (*apiServer) GetWorkspaceConfigPolicies(
 	if !configpolicy.ValidWorkloadType(req.WorkloadType) {
 		return nil, fmt.Errorf("invalid workload type: %s", req.WorkloadType)
 	}
-	data, err := stubData()
-	return &apiv1.GetWorkspaceConfigPoliciesResponse{ConfigPolicies: data}, err
+	
+	resp := apiv1.GetWorkspaceConfigPoliciesResponse{}
+	if req.WorkloadType == string(model.NTSCType) {
+		configPolicies, err := configpolicy.GetNTSCConfigPolicies(ctx, ptrs.Ptr(int(req.WorkspaceId)))
+		if err != nil {
+			return nil, err
+		}
+		fmt.Printf("%+v\n", configPolicies)
+		type ConfigPolicies struct {
+			Constraints model.Constraints
+			InvariantConfig model.CommandConfig
+		}
+		respStruct := ConfigPolicies{Constraints: configPolicies.Constraints, InvariantConfig: configPolicies.InvariantConfig}
+		resp.ConfigPolicies = configpolicy.MarshalConfigPolicy(respStruct)
+	} else {
+		data, err := stubData()
+		if err != nil {
+			return nil, err
+		}
+		resp.ConfigPolicies = data
+	}
+	return &resp, nil
 }
 
 // Get global task config policies.
