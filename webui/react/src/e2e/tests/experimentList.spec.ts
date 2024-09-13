@@ -31,7 +31,7 @@ test.describe('Experiment List', () => {
         });
       const experiments: ExperimentBase[] = JSON.parse(
         detExecSync(
-          `project list-experiments -json ${newWorkspace.response.workspace.name} ${newProject.response.project.name}`,
+          `project list-experiments --json ${newWorkspace.response.workspace.name} ${newProject.response.project.name}`,
         ),
       );
       detExecSync(`experiment archive ${experiments[0]?.id}`);
