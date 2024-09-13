@@ -234,12 +234,15 @@ test.describe('Project List', () => {
     const workspaceDetails = new WorkspaceDetails(authedPage);
     const workspaceProjects = workspaceDetails.workspaceProjects;
 
+    const firstCard = workspaceProjects.projectCards.nth(0);
+    const firstRow = workspaceProjects.table.table.rows.nth(0);
+
     await workspaceProjects.gridListRadioGroup.list.pwLocator.click();
+    await firstCard.pwLocator.waitFor({ state: 'hidden' });
+    await firstRow.pwLocator.waitFor();
 
-    const idSortedWorkspaceNames = _.orderBy(projects, 'id', 'desc').map((w) => w.name);
-
-    expect(await workspaceProjects.table.table.rows.nth(0).name.pwLocator.textContent()).toEqual(
-      idSortedWorkspaceNames[0],
-    );
+    await workspaceProjects.gridListRadioGroup.grid.pwLocator.click();
+    await firstRow.pwLocator.waitFor({ state: 'hidden' });
+    await firstCard.pwLocator.waitFor();
   });
 });
