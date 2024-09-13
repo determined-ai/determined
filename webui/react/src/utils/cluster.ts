@@ -14,8 +14,8 @@ export const getSlotContainerStates = (
         .filter(([type]) => {
           return (
             resourceType === ResourceType.ALL ||
-            type === `TYPE_${resourceType}` ||
-            resourceType === 'UNSPECIFIED'
+            resourceType === ResourceType.UNSPECIFIED ||
+            type === `TYPE_${resourceType}`
           );
         })
         .flatMap(([, val]) => {
