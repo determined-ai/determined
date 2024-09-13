@@ -143,7 +143,7 @@ test.describe('Project List', () => {
     const olderProject = await backgroundApiProject.createProject(
       newWorkspace.response.workspace.id,
       {
-        name: 'a-test-project',
+        name: safeName('a-test-project'),
         workspaceId: newWorkspace.response.workspace.id,
       },
     );
@@ -151,7 +151,7 @@ test.describe('Project List', () => {
     const newerProject = await backgroundApiProject.createProject(
       newWorkspace.response.workspace.id,
       {
-        name: 'b-test-project',
+        name: safeName('b-test-project'),
         workspaceId: newWorkspace.response.workspace.id,
       },
     );
@@ -203,7 +203,7 @@ test.describe('Project List', () => {
 
     const currentUserProject = (
       await apiProject.createProject(newWorkspace.response.workspace.id, {
-        name: 'current-user-project',
+        name: safeName('current-user-project'),
         workspaceId: newWorkspace.response.workspace.id,
       })
     ).project;
