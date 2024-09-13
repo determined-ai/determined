@@ -1245,6 +1245,7 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 		SSHRsaSize:            m.config.Security.SSH.RsaKeySize,
 		SegmentEnabled:        m.config.Telemetry.Enabled && m.config.Telemetry.SegmentMasterKey != "",
 		SegmentAPIKey:         m.config.Telemetry.SegmentMasterKey,
+		LogRetentionDays:      m.config.RetentionPolicy.LogRetentionDays,
 	}
 	if m.config.RetentionPolicy.Schedule != nil {
 		if err := logretention.Schedule(m.config.RetentionPolicy); err != nil {
