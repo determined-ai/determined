@@ -1671,10 +1671,14 @@ Security-related configuration settings.
  ``retention_policy``
 **********************
 
-Specifies configuration settings for the retention of trial logs. Note: If the ``retention_policy``
-is first applied to a long-running cluster, there may be some performance issues as the databse
-cleans up all the relevant task logs. We recommend configuring the retention policy to trigger
-outside the working hours. The retention policy logs can be found at the trace level.
+Specifies configuration settings for the retention of trial logs.
+
+.. note::
+
+   When applying a retention policy to a long-running cluster for the first time, there may be
+   temporary performance impacts while the database cleans up relevant task logs. For this reason,
+   you should consider configuring the retention policy to trigger outside of peak working hours.
+   Retention policy logs can be found at the trace level.
 
 ``log_retention_days``
 ======================
