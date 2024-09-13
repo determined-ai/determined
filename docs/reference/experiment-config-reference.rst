@@ -345,14 +345,14 @@ defaults.
 Optional. Defines retention policies for logs related to all trials of a given experiment.
 Parameters include:
 
--  ``log_retention_days``: Optional. Overrides the number of days to retain logs for a trial
-   set in the cluster's task container defaults.
-   Acceptable values range from ``-1`` to ``32767``. If set to ``-1``, logs will be retained
-   indefinitely. If set to ``0``, logs will be deleted during the next cleanup. To modify the
-   retention settings post-completion for a single trial or the entire experiment, you can use the
-   CLI command ``det t set log-retention <trial-id>`` or ``det e set log-retention <exp-id>``. Both
-   commands accept either the argument: ``--days``, which sets the number of days to retain logs
-   from the end time of the task, or ``--forever`` which retains logs indefinitely.
+-  ``log_retention_days``: Optional. Overrides the number of days to retain logs for a trial set in
+   the cluster's task container defaults. Acceptable values range from ``-1`` to ``32767``. If set
+   to ``-1``, logs will be retained indefinitely. If set to ``0``, logs will be deleted during the
+   next cleanup. To modify the retention settings post-completion for a single trial or the entire
+   experiment, you can use the CLI command ``det t set log-retention <trial-id>`` or ``det e set
+   log-retention <exp-id>``. Both commands accept either the argument: ``--days``, which sets the
+   number of days to retain logs from the end time of the task, or ``--forever`` which retains logs
+   indefinitely.
 
    Note: If the cluster's log retention policy/days is upgraded after the experiment is created, the
    new cluster value will override the old experiment value.
