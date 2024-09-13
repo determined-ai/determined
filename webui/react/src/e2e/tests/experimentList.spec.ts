@@ -247,6 +247,14 @@ test.describe('Experiment List', () => {
       },
       totalExperiments,
     );
+
+    await filterScenario(
+      'Show Archived',
+      async () => {
+        await tableFilter.filterForm.showArchived.pwLocator.click();
+      },
+      totalExperiments + 1,
+    );
   });
 
   test('Datagrid Functionality Validations', async ({ authedPage }) => {
