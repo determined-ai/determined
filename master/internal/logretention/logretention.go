@@ -92,7 +92,6 @@ func DeleteExpiredTaskLogs(ctx context.Context, days *int16) (int64, error) {
 	if days != nil {
 		defaultLogRetentionDays = *days
 	}
-	logrus.Errorf("DEFAULT DAYS %v, %v", defaultLogRetentionDays, *days)
 
 	log.WithField("default-retention-days", defaultLogRetentionDays).Trace("deleting expired task logs")
 	r, err := db.Bun().NewRaw(fmt.Sprintf(`
