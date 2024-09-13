@@ -13,6 +13,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/aproto"
 	"github.com/determined-ai/determined/master/pkg/cproto"
+	"github.com/determined-ai/determined/master/pkg/device"
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
@@ -228,4 +229,40 @@ func TestSettingGroupPriority(t *testing.T) {
 	rp.mu.Lock()
 	assert.Check(t, rp.groups[jobID] == nil)
 	rp.mu.Unlock()
+}
+
+func TestGetResourceSummary(t *testing.T) {
+	defaultPriority := 50
+	config := config.ResourcePoolConfig{
+		Scheduler: &config.SchedulerConfig{
+			Priority: &config.PrioritySchedulerConfig{
+				DefaultPriority: &defaultPriority,
+			},
+			FittingPolicy: best,
+		},
+	}
+
+	cases := []struct {
+		name    string
+		devices device.Type
+		agents  []*MockAgent
+	}{
+		{"simple", device.Type(""), nil},
+		{"homogenous agents", device.Type("cuda"), []*MockAgent{
+			{ID: "agent1", SlotType: "cuda", Slots: 1},
+			{ID: "agent2", SlotType: "cuda", Slots: 2},
+		}},
+		{"heterogenous agents", device.Type(""), []*MockAgent{
+			{ID: "agent1", SlotType: "cuda"},
+			{ID: "agent2", SlotType: "cpu"},
+			{ID: "agent2", SlotType: "rocm"},
+		}},
+	}
+	for _, tt := range cases {
+		t.Run(tt.name, func(t *testing.T) {
+			rp := setupResourcePool(t, nil, &config, nil, nil, tt.agents)
+			summary := rp.resourceSummaryFromAgentStates(rp.agentStatesCache)
+			require.Equal(t, tt.devices, summary.slotType)
+		})
+	}
 }

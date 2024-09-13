@@ -468,7 +468,14 @@ func setupSchedulerStates(
 		state.handler = &agent{}
 
 		for i := 0; i < mockAgent.Slots; i++ {
-			state.Devices[device.Device{ID: device.ID(i)}] = nil
+			switch mockAgent.SlotType {
+			case "cuda":
+				state.Devices[device.Device{ID: device.ID(i), Type: device.CUDA}] = nil
+			case "cpu":
+				state.Devices[device.Device{ID: device.ID(i), Type: device.CPU}] = nil
+			default:
+				state.Devices[device.Device{ID: device.ID(i)}] = nil
+			}
 		}
 		agents[aproto.ID(mockAgent.ID)] = state
 	}
