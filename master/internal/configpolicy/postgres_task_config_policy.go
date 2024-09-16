@@ -35,7 +35,7 @@ func SetNTSCConfigPoliciesTx(ctx context.Context, tx *bun.Tx,
 ) error {
 	if ntscTCPs.WorkloadType != model.NTSCType {
 		return status.Error(codes.InvalidArgument,
-			"invalid workload type for config policies: "+ntscTCPs.WorkloadType.String())
+			"invalid workload type for config policies: "+ntscTCPs.WorkloadType)
 	}
 
 	q := `
@@ -54,7 +54,7 @@ func SetNTSCConfigPoliciesTx(ctx context.Context, tx *bun.Tx,
 				constraints = ?
 			`
 	}
-	_, err := db.Bun().NewRaw(q, ntscTCPs.WorkspaceID, model.NTSCType.String(),
+	_, err := db.Bun().NewRaw(q, ntscTCPs.WorkspaceID, model.NTSCType,
 		ntscTCPs.LastUpdatedBy, ntscTCPs.LastUpdatedTime, ntscTCPs.InvariantConfig,
 		ntscTCPs.Constraints, ntscTCPs.LastUpdatedBy, ntscTCPs.LastUpdatedTime,
 		ntscTCPs.InvariantConfig, ntscTCPs.Constraints).
@@ -91,7 +91,7 @@ func GetNTSCConfigPolicies(ctx context.Context,
 // DeleteConfigPolicies deletes the invariant experiment config and constraints for the
 // given scope (global or workspace-level) and workload type.
 func DeleteConfigPolicies(ctx context.Context,
-	scope *int, workloadType model.WorkloadType,
+	scope *int, workloadType string,
 ) error {
 	wkspQuery := wkspIDQuery
 	if scope == nil {
@@ -101,15 +101,15 @@ func DeleteConfigPolicies(ctx context.Context,
 	_, err := db.Bun().NewDelete().
 		Table("task_config_policies").
 		Where(wkspQuery, scope).
-		Where("workload_type = ?", workloadType.String()).
+		Where("workload_type = ?", workloadType).
 		Exec(ctx)
 	if err != nil {
 		if scope == nil {
 			return fmt.Errorf("error deleting global %s config policies:%w",
-				strings.ToLower(workloadType.String()), err)
+				strings.ToLower(workloadType), err)
 		}
 		return fmt.Errorf("error deleting %s config policies for workspace with ID %d: %w",
-			strings.ToLower(workloadType.String()), scope, err)
+			strings.ToLower(workloadType), scope, err)
 	}
 	return nil
 }

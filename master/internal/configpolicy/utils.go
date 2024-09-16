@@ -15,7 +15,7 @@ import (
 // ValidWorkloadType checks if the string is an accepted WorkloadType.
 func ValidWorkloadType(val string) bool {
 	switch val {
-	case string(model.ExperimentType), string(model.NTSCType):
+	case model.ExperimentType, model.NTSCType:
 		return true
 	default:
 		return false

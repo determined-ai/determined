@@ -11,10 +11,9 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/cluster"
 	"github.com/determined-ai/determined/master/internal/configpolicy"
-	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
+	"github.com/determined-ai/determined/master/internal/license"
 	"github.com/determined-ai/determined/master/internal/workspace"
-	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
@@ -85,26 +84,19 @@ func (*apiServer) GetGlobalConfigPolicies(
 func (a *apiServer) DeleteWorkspaceConfigPolicies(
 	ctx context.Context, req *apiv1.DeleteWorkspaceConfigPoliciesRequest,
 ) (*apiv1.DeleteWorkspaceConfigPoliciesResponse, error) {
+	license.RequireLicense("manage config policies")
+
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	err = workspace.AuthZProvider.Get().CanGetWorkspaceID(
-		ctx, *curUser, req.WorkspaceId,
-	)
+	w, err := a.GetWorkspaceByID(ctx, req.WorkspaceId, *curUser, false)
 	if err != nil {
 		return nil, err
 	}
 
-	var w model.Workspace
-	err = db.Bun().NewSelect().Model(&w).Where("id = ?", req.WorkspaceId).Scan(ctx)
-	if err != nil {
-		return nil, status.Errorf(codes.InvalidArgument, err.Error())
-	}
-
-	wksp, err := w.ToProto()
-	err = workspace.AuthZProvider.Get().CanModifyWorkspaceConfigPolicies(ctx, *curUser, wksp)
+	err = workspace.AuthZProvider.Get().CanModifyWorkspaceConfigPolicies(ctx, *curUser, w)
 	if err != nil {
 		return nil, err
 	}
@@ -115,7 +107,7 @@ func (a *apiServer) DeleteWorkspaceConfigPolicies(
 	}
 
 	err = configpolicy.DeleteConfigPolicies(ctx, ptrs.Ptr(int(req.WorkspaceId)),
-		model.WorkloadType(req.WorkloadType))
+		req.WorkloadType)
 	if err != nil {
 		return nil, err
 	}
@@ -126,6 +118,8 @@ func (a *apiServer) DeleteWorkspaceConfigPolicies(
 func (a *apiServer) DeleteGlobalConfigPolicies(
 	ctx context.Context, req *apiv1.DeleteGlobalConfigPoliciesRequest,
 ) (*apiv1.DeleteGlobalConfigPoliciesResponse, error) {
+	license.RequireLicense("manage config policies")
+
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
@@ -139,11 +133,14 @@ func (a *apiServer) DeleteGlobalConfigPolicies(
 	}
 
 	if !configpolicy.ValidWorkloadType(req.WorkloadType) {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid workload type :%s",
-			req.WorkloadType)
+		errMessage := fmt.Sprintf("invalid workload type: %s.", req.WorkloadType)
+		if len(req.WorkloadType) == 0 {
+			errMessage = "no workload type specified."
+		}
+		return nil, status.Errorf(codes.InvalidArgument, errMessage)
 	}
 
-	err = configpolicy.DeleteConfigPolicies(ctx, nil, model.WorkloadType(req.WorkloadType))
+	err = configpolicy.DeleteConfigPolicies(ctx, nil, req.WorkloadType)
 	if err != nil {
 		return nil, err
 	}

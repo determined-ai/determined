@@ -278,7 +278,7 @@ func TestDeleteConfigPolicies(t *testing.T) {
 	tests := []struct {
 		name               string
 		global             bool
-		workloadType       model.WorkloadType
+		workloadType       string
 		hasInvariantConfig bool
 		hasConstraints     bool
 		err                *string
