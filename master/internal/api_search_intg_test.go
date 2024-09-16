@@ -62,12 +62,21 @@ func TestGetPutDeleteSearchTags(t *testing.T) {
 	}
 	require.NoError(t, api.m.db.AddExperiment(exp, []byte{10, 11, 12}, activeConfig))
 
+	// Runs are required for delete tags to work
+	task := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
+	require.NoError(t, db.AddTask(ctx, task))
+	require.NoError(t, db.AddTrial(ctx, &model.Trial{
+		State:        model.PausedState,
+		ExperimentID: exp.ID,
+		StartTime:    time.Now(),
+	}, task.TaskID))
+
 	// No tags initially
 	getResp, err := api.GetSearchTags(ctx, &apiv2.GetSearchTagsRequest{
 		ProjectId: projectID,
 	})
 	require.NoError(t, err)
-	require.Len(t, getResp.Tags, 0)
+	require.Empty(t, getResp.Tags)
 
 	// Put new tag
 	testTag := "testTag"
@@ -92,12 +101,12 @@ func TestGetPutDeleteSearchTags(t *testing.T) {
 		Tag:      testTag,
 	})
 	require.NoError(t, err)
-	require.Len(t, deleteResp.Tags, 0)
+	require.Empty(t, deleteResp.Tags)
 
 	// No more tags in project
 	getResp, err = api.GetSearchTags(ctx, &apiv2.GetSearchTagsRequest{
 		ProjectId: projectID,
 	})
 	require.NoError(t, err)
-	require.Len(t, getResp.Tags, 0)
+	require.Empty(t, getResp.Tags)
 }
