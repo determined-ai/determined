@@ -1284,7 +1284,7 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 	m.echo.Use(middleware.Recover())
 
 	// Files that receive a unique hash when bundled and deployed can be cached forever
-	cacheFileLongTerm := regexp.MustCompile(`(-[0-9a-z]{1,}\.(js|css))$|(woff2|woff)$`)
+	cacheFileLongTerm := regexp.MustCompile(`(-[0-9a-zA-Z]{1,}\.(js|css))$|(woff2|woff)$`)
 
 	// Other static files should only be cached for a short period of time
 	cacheFileShortTerm := regexp.MustCompile(`.(antd.\S+(.css)|ico|png|jpe*g|gif|svg)$`)
