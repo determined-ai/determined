@@ -92,7 +92,7 @@ func DeleteExpiredTaskLogs(ctx context.Context, days *int16) (int64, error) {
 	if days != nil {
 		defaultLogRetentionDays = *days
 	}
-	log.WithField("default-retention-days", defaultLogRetentionDays).Trace("deleting expired task logs")
+	log.WithField("default-retention-days", defaultLogRetentionDays).Info("deleting expired task logs")
 	r, err := db.Bun().NewRaw(fmt.Sprintf(`
 		WITH log_retention_tasks AS (
 			SELECT COALESCE(r.log_retention_days, %d) as log_retention_days, t.task_id, t.end_time
@@ -112,6 +112,6 @@ func DeleteExpiredTaskLogs(ctx context.Context, days *int16) (int64, error) {
 		return 0, errors.Wrap(err, "error deleting expired task logs")
 	}
 	rows, err := r.RowsAffected()
-	log.WithFields(logrus.Fields{"rows": rows, "err": err}).Trace("deleted expired task logs")
+	log.WithFields(logrus.Fields{"rows": rows, "err": err}).Info("deleted expired task logs")
 	return rows, err
 }
