@@ -143,7 +143,7 @@ func TestSetNTSCConfigPolicies(t *testing.T) {
 			nil,
 		},
 		{
-			"experiment workload type for NTCP policies",
+			"experiment workload type for NTSC policies",
 			&model.NTSCTaskConfigPolicies{
 				WorkloadType:    model.ExperimentType,
 				LastUpdatedBy:   user.ID,
@@ -278,7 +278,7 @@ func TestDeleteConfigPolicies(t *testing.T) {
 	tests := []struct {
 		name               string
 		global             bool
-		workloadType       model.WorkloadType
+		workloadType       string
 		hasInvariantConfig bool
 		hasConstraints     bool
 		err                *string
@@ -288,15 +288,11 @@ func TestDeleteConfigPolicies(t *testing.T) {
 		{"ntsc no config has constraint", false, model.NTSCType, false, true, nil},
 		{
 			"unspecified workload type", false, model.UnknownType, true, true,
-			ptrs.Ptr("invalid workload type"),
+			ptrs.Ptr("invalid input value for enum"),
 		},
 		{"ntsc no config no constraint", false, model.NTSCType, false, false, nil},
 		{"global ntsc config no constraint", true, model.NTSCType, true, false, nil},
 		{"global ntsc config and constraint", true, model.NTSCType, true, true, nil},
-		{
-			"global unspecified workload type", true, model.UnknownType, true, true,
-			ptrs.Ptr("invalid workload type"),
-		},
 	}
 
 	for _, test := range tests {
