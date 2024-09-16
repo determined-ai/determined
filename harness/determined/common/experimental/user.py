@@ -1,3 +1,4 @@
+import enum
 from typing import Optional
 
 from determined.common import api
@@ -118,3 +119,56 @@ class User:
         user = cls(session=session, user_id=user_bindings.id)
         user._hydrate(user_bindings)
         return user
+
+
+class TokenType(enum.Enum):
+    # UNSPECIFIED is internal to the bound API and is not be exposed to the front end
+    USER_SESSION = bindings.v1TokenType.USER_SESSION.value
+    LONG_LIVED_TOKEN = bindings.v1TokenType.LONG_LIVED_TOKEN.value
+
+
+class UserSessions:
+    """
+    A class representing a UserSessions object that contains user session token info and
+    long lived access token info.
+
+    It can be obtained from :func:`determined.experimental.client.list_tokens`
+
+    Attributes:
+        session: HTTP request session.
+        id: (int) The ID of the user session.
+        user_id: (int) Unique ID for the user.
+        expiry: (Mutable, Optional[str]) Timestamp expires at reported.
+        created_at: (Mutable, Optional[str]) Timestamp created at reported.
+        token_type: (Mutable, Optional[TokenType]) Token type of the token.
+        is_revoked: (Mutable, Optional[bool]) Whether the token is active or revoked.
+        token_description: (Mutable, Optional[str]) Human-friendly description of token.
+    """
+
+    def __init__(self, id: int, session: api.Session):
+        self.id = id
+        self._session = session
+
+        self.user_id: Optional[int] = None
+        self.expiry: Optional[str] = None
+        self.created_at: Optional[str] = None
+        self.token_type: Optional[TokenType] = None
+        self.is_revoked: Optional[bool] = None
+        self.token_description: Optional[str] = None
+
+    def _hydrate(self, userSession: bindings.v1UserSessionInfo) -> None:
+        self.user_id = userSession.userId
+        self.expiry = userSession.expiry
+        self.created_at = userSession.createdAt
+        self.token_type = TokenType(userSession.tokenType.value)
+        self.is_revoked = userSession.isRevoked
+        self.token_description = userSession.tokenDescription
+
+    @classmethod
+    def _from_bindings(
+        cls, userSession_bindings: bindings.v1UserSessionInfo, session: api.Session
+    ) -> "UserSessions":
+        assert userSession_bindings.id
+        userSessionInfo = cls(session=session, id=userSession_bindings.id)
+        userSessionInfo._hydrate(userSession_bindings)
+        return userSessionInfo

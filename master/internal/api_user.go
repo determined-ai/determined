@@ -939,7 +939,7 @@ func (a *apiServer) DeleteLongLivedTokenByTokenID(
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
-	err = user.DeleteSessionByID(ctx, model.SessionID(req.TokenId))
+	err = user.DeleteLongLivenTokenByTokenID(ctx, model.SessionID(req.TokenId))
 	if err != nil {
 		return nil, err
 	}

@@ -659,3 +659,18 @@ def stream_trials_validation_metrics(trial_ids: List[int]) -> Iterable[Validatio
 def _get_singleton_session() -> _api.Session:
     assert _determined is not None
     return _determined._session
+
+
+@_require_singleton
+def list_tokens(isRevoked: Optional[bool] = None) -> List[User]:
+    """Get a list of all tokens.
+
+    Arg:
+        isRevoked: if this parameter is set to false, filter for active users only.
+            When true, filter for inactive users. Return all users otherwise.
+
+    Returns:
+        A list of :class:`~determined.experimental.client.UserSessions` objects.
+    """
+    assert _determined is not None
+    return _determined.list_users(isRevoked=isRevoked)
