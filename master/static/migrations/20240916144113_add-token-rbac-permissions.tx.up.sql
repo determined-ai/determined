@@ -5,7 +5,6 @@ INSERT INTO permissions (
 INSERT INTO permission_assignments (permission_id, role_id) VALUES
 (12001, 1), --	ClusterAdmin
 (12001, 2), --	WorkspaceAdmin
-(12001, 3), --	WorkspaceCreator
 (12001, 5), --	Editor
 (12001, 7), --	EditorRestricted
 (12001, 8), --	GenAIUser
