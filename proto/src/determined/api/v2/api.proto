@@ -67,4 +67,24 @@ service Determined {
       tags: "Searches"
     };
   }
+
+  // Get a list of unique search tags.
+  rpc GetSearchTags(GetSearchTagsRequest) returns (GetSearchTagsResponse) {
+    option (google.api.http) = {
+      get: "/api/v2/search/tags"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Searches"
+    };
+  }
+
+  // Put a new tag on the seach.
+  rpc PutSearchTag(PutSearchTagRequest) returns (PutSearchTagResponse) {
+    option (google.api.http) = {
+      get: "/api/v2/searches/{search_id}/tags/{tag}"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Searches"
+    };
+  }
 }

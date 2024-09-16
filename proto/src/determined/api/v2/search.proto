@@ -28,3 +28,37 @@ message GetSearchResponse {
   // The search's config.
   google.protobuf.Struct config = 3;
 }
+
+// Get a list of search tags.
+message GetSearchTagsRequest {
+  // Filter searches by project.
+  int32 project_id = 1;
+} 
+
+message GetSearchTagsResponse {
+  // The list of tags used across all searches.
+  repeated string tags = 1;
+}
+
+// Request for adding a new search tag.
+message PutSearchTagRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "search_id", "tag" ] }
+  };
+
+  // The ID of the search.
+  int32 search_id = 1;
+
+  // The tag to add.
+  string tag = 2;
+}
+
+// Response to PutSearchTagRequest.
+message PutSearchTagResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "tags" ] }
+  };
+
+  // The complete list of tags associated with the experiment.
+  repeated string tags = 1;
+}

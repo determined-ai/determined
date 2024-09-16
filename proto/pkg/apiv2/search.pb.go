@@ -140,6 +140,210 @@ func (x *GetSearchResponse) GetConfig() *_struct.Struct {
 	return nil
 }
 
+// Get a list of search tags.
+type GetSearchTagsRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// Filter searches by project.
+	ProjectId int32 `protobuf:"varint,1,opt,name=project_id,json=projectId,proto3" json:"project_id,omitempty"`
+}
+
+func (x *GetSearchTagsRequest) Reset() {
+	*x = GetSearchTagsRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_determined_api_v2_search_proto_msgTypes[2]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetSearchTagsRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetSearchTagsRequest) ProtoMessage() {}
+
+func (x *GetSearchTagsRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_determined_api_v2_search_proto_msgTypes[2]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetSearchTagsRequest.ProtoReflect.Descriptor instead.
+func (*GetSearchTagsRequest) Descriptor() ([]byte, []int) {
+	return file_determined_api_v2_search_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *GetSearchTagsRequest) GetProjectId() int32 {
+	if x != nil {
+		return x.ProjectId
+	}
+	return 0
+}
+
+type GetSearchTagsResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// The list of tags used across all searches.
+	Tags []string `protobuf:"bytes,1,rep,name=tags,proto3" json:"tags,omitempty"`
+}
+
+func (x *GetSearchTagsResponse) Reset() {
+	*x = GetSearchTagsResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_determined_api_v2_search_proto_msgTypes[3]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetSearchTagsResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetSearchTagsResponse) ProtoMessage() {}
+
+func (x *GetSearchTagsResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_determined_api_v2_search_proto_msgTypes[3]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetSearchTagsResponse.ProtoReflect.Descriptor instead.
+func (*GetSearchTagsResponse) Descriptor() ([]byte, []int) {
+	return file_determined_api_v2_search_proto_rawDescGZIP(), []int{3}
+}
+
+func (x *GetSearchTagsResponse) GetTags() []string {
+	if x != nil {
+		return x.Tags
+	}
+	return nil
+}
+
+// Request for adding a new search tag.
+type PutSearchTagRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// The ID of the search.
+	SearchId int32 `protobuf:"varint,1,opt,name=search_id,json=searchId,proto3" json:"search_id,omitempty"`
+	// The tag to add.
+	Tag string `protobuf:"bytes,2,opt,name=tag,proto3" json:"tag,omitempty"`
+}
+
+func (x *PutSearchTagRequest) Reset() {
+	*x = PutSearchTagRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_determined_api_v2_search_proto_msgTypes[4]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *PutSearchTagRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PutSearchTagRequest) ProtoMessage() {}
+
+func (x *PutSearchTagRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_determined_api_v2_search_proto_msgTypes[4]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PutSearchTagRequest.ProtoReflect.Descriptor instead.
+func (*PutSearchTagRequest) Descriptor() ([]byte, []int) {
+	return file_determined_api_v2_search_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *PutSearchTagRequest) GetSearchId() int32 {
+	if x != nil {
+		return x.SearchId
+	}
+	return 0
+}
+
+func (x *PutSearchTagRequest) GetTag() string {
+	if x != nil {
+		return x.Tag
+	}
+	return ""
+}
+
+// Response to PutSearchTagRequest.
+type PutSearchTagResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// The complete list of tags associated with the experiment.
+	Tags []string `protobuf:"bytes,1,rep,name=tags,proto3" json:"tags,omitempty"`
+}
+
+func (x *PutSearchTagResponse) Reset() {
+	*x = PutSearchTagResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_determined_api_v2_search_proto_msgTypes[5]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *PutSearchTagResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PutSearchTagResponse) ProtoMessage() {}
+
+func (x *PutSearchTagResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_determined_api_v2_search_proto_msgTypes[5]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PutSearchTagResponse.ProtoReflect.Descriptor instead.
+func (*PutSearchTagResponse) Descriptor() ([]byte, []int) {
+	return file_determined_api_v2_search_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *PutSearchTagResponse) GetTags() []string {
+	if x != nil {
+		return x.Tags
+	}
+	return nil
+}
+
 var File_determined_api_v2_search_proto protoreflect.FileDescriptor
 
 var file_determined_api_v2_search_proto_rawDesc = []byte{
@@ -174,11 +378,27 @@ var file_determined_api_v2_search_proto_rawDesc = []byte{
 	0x06, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x18, 0x03, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x17, 0x2e,
 	0x67, 0x6f, 0x6f, 0x67, 0x6c, 0x65, 0x2e, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x62, 0x75, 0x66, 0x2e,
 	0x53, 0x74, 0x72, 0x75, 0x63, 0x74, 0x52, 0x06, 0x63, 0x6f, 0x6e, 0x66, 0x69, 0x67, 0x3a, 0x0e,
-	0x92, 0x41, 0x0b, 0x0a, 0x09, 0xd2, 0x01, 0x06, 0x73, 0x65, 0x61, 0x72, 0x63, 0x68, 0x42, 0x35,
-	0x5a, 0x33, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x64, 0x65, 0x74,
-	0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2d, 0x61, 0x69, 0x2f, 0x64, 0x65, 0x74, 0x65, 0x72,
-	0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x70, 0x6b, 0x67, 0x2f,
-	0x61, 0x70, 0x69, 0x76, 0x32, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x92, 0x41, 0x0b, 0x0a, 0x09, 0xd2, 0x01, 0x06, 0x73, 0x65, 0x61, 0x72, 0x63, 0x68, 0x22, 0x35,
+	0x0a, 0x14, 0x47, 0x65, 0x74, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x54, 0x61, 0x67, 0x73, 0x52,
+	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1d, 0x0a, 0x0a, 0x70, 0x72, 0x6f, 0x6a, 0x65, 0x63,
+	0x74, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x09, 0x70, 0x72, 0x6f, 0x6a,
+	0x65, 0x63, 0x74, 0x49, 0x64, 0x22, 0x2b, 0x0a, 0x15, 0x47, 0x65, 0x74, 0x53, 0x65, 0x61, 0x72,
+	0x63, 0x68, 0x54, 0x61, 0x67, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x12,
+	0x0a, 0x04, 0x74, 0x61, 0x67, 0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x09, 0x52, 0x04, 0x74, 0x61,
+	0x67, 0x73, 0x22, 0x5d, 0x0a, 0x13, 0x50, 0x75, 0x74, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x54,
+	0x61, 0x67, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x1b, 0x0a, 0x09, 0x73, 0x65, 0x61,
+	0x72, 0x63, 0x68, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x08, 0x73, 0x65,
+	0x61, 0x72, 0x63, 0x68, 0x49, 0x64, 0x12, 0x10, 0x0a, 0x03, 0x74, 0x61, 0x67, 0x18, 0x02, 0x20,
+	0x01, 0x28, 0x09, 0x52, 0x03, 0x74, 0x61, 0x67, 0x3a, 0x17, 0x92, 0x41, 0x14, 0x0a, 0x12, 0xd2,
+	0x01, 0x09, 0x73, 0x65, 0x61, 0x72, 0x63, 0x68, 0x5f, 0x69, 0x64, 0xd2, 0x01, 0x03, 0x74, 0x61,
+	0x67, 0x22, 0x38, 0x0a, 0x14, 0x50, 0x75, 0x74, 0x53, 0x65, 0x61, 0x72, 0x63, 0x68, 0x54, 0x61,
+	0x67, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x12, 0x0a, 0x04, 0x74, 0x61, 0x67,
+	0x73, 0x18, 0x01, 0x20, 0x03, 0x28, 0x09, 0x52, 0x04, 0x74, 0x61, 0x67, 0x73, 0x3a, 0x0c, 0x92,
+	0x41, 0x09, 0x0a, 0x07, 0xd2, 0x01, 0x04, 0x74, 0x61, 0x67, 0x73, 0x42, 0x35, 0x5a, 0x33, 0x67,
+	0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d,
+	0x69, 0x6e, 0x65, 0x64, 0x2d, 0x61, 0x69, 0x2f, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e,
+	0x65, 0x64, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x70, 0x6b, 0x67, 0x2f, 0x61, 0x70, 0x69,
+	0x76, 0x32, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -193,18 +413,22 @@ func file_determined_api_v2_search_proto_rawDescGZIP() []byte {
 	return file_determined_api_v2_search_proto_rawDescData
 }
 
-var file_determined_api_v2_search_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_determined_api_v2_search_proto_msgTypes = make([]protoimpl.MessageInfo, 6)
 var file_determined_api_v2_search_proto_goTypes = []interface{}{
-	(*GetSearchRequest)(nil),  // 0: determined.api.v2.GetSearchRequest
-	(*GetSearchResponse)(nil), // 1: determined.api.v2.GetSearchResponse
-	(*searchv2.Search)(nil),   // 2: determined.search.v2.Search
-	(*jobv2.JobSummary)(nil),  // 3: determined.job.v2.JobSummary
-	(*_struct.Struct)(nil),    // 4: google.protobuf.Struct
+	(*GetSearchRequest)(nil),      // 0: determined.api.v2.GetSearchRequest
+	(*GetSearchResponse)(nil),     // 1: determined.api.v2.GetSearchResponse
+	(*GetSearchTagsRequest)(nil),  // 2: determined.api.v2.GetSearchTagsRequest
+	(*GetSearchTagsResponse)(nil), // 3: determined.api.v2.GetSearchTagsResponse
+	(*PutSearchTagRequest)(nil),   // 4: determined.api.v2.PutSearchTagRequest
+	(*PutSearchTagResponse)(nil),  // 5: determined.api.v2.PutSearchTagResponse
+	(*searchv2.Search)(nil),       // 6: determined.search.v2.Search
+	(*jobv2.JobSummary)(nil),      // 7: determined.job.v2.JobSummary
+	(*_struct.Struct)(nil),        // 8: google.protobuf.Struct
 }
 var file_determined_api_v2_search_proto_depIdxs = []int32{
-	2, // 0: determined.api.v2.GetSearchResponse.search:type_name -> determined.search.v2.Search
-	3, // 1: determined.api.v2.GetSearchResponse.job_summary:type_name -> determined.job.v2.JobSummary
-	4, // 2: determined.api.v2.GetSearchResponse.config:type_name -> google.protobuf.Struct
+	6, // 0: determined.api.v2.GetSearchResponse.search:type_name -> determined.search.v2.Search
+	7, // 1: determined.api.v2.GetSearchResponse.job_summary:type_name -> determined.job.v2.JobSummary
+	8, // 2: determined.api.v2.GetSearchResponse.config:type_name -> google.protobuf.Struct
 	3, // [3:3] is the sub-list for method output_type
 	3, // [3:3] is the sub-list for method input_type
 	3, // [3:3] is the sub-list for extension type_name
@@ -242,6 +466,54 @@ func file_determined_api_v2_search_proto_init() {
 				return nil
 			}
 		}
+		file_determined_api_v2_search_proto_msgTypes[2].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetSearchTagsRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_determined_api_v2_search_proto_msgTypes[3].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*GetSearchTagsResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_determined_api_v2_search_proto_msgTypes[4].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*PutSearchTagRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_determined_api_v2_search_proto_msgTypes[5].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*PutSearchTagResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -249,7 +521,7 @@ func file_determined_api_v2_search_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_determined_api_v2_search_proto_rawDesc,
 			NumEnums:      0,
-			NumMessages:   2,
+			NumMessages:   6,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
