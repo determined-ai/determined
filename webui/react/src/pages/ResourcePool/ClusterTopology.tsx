@@ -21,8 +21,8 @@ const NodeElement: React.FC<PropsWithChildren<NodeElementProps>> = ({ name, slot
   const shouldTruncate = useMemo(() => name.length > 5, [name]);
   const slotsContainer = useRef<HTMLSpanElement>(null);
   const slotsData = useMemo(
-      () => (slots !== undefined ? Object.values(slots) : resources),
-      [slots, resources],
+    () => (slots !== undefined ? Object.values(slots) : resources),
+    [slots, resources],
   );
   const singleSlot = slotsData.length === 1;
   const coupleSlot = slotsData.length === 2;
@@ -49,8 +49,8 @@ const NodeElement: React.FC<PropsWithChildren<NodeElementProps>> = ({ name, slot
       <span className={css.nodeCluster} ref={slotsContainer}>
         {slotsData.map(({ container }, idx) => (
           <span
-              className={`${styles.join(' ')} ${container ? css.active : ''}`}
-              key={`slot${idx}`}
+            className={`${styles.join(' ')} ${container ? css.active : ''}`}
+            key={`slot${idx}`}
           />
         ))}
       </span>
