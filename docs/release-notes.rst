@@ -433,8 +433,8 @@ Version 0.32.1
 
 **Bug Fixes**
 
--  Kubernetes: Fix an issue introduced in 0.32.0 where workspaces with names incompatible with
-   Kubernetes naming requirements would cause jobs in that workspace to fail.
+-  Kubernetes: Fix an issue where workspaces with names incompatible with Kubernetes naming
+   requirements would cause jobs in that workspace to fail.
 
 Version 0.32.0
 ==============

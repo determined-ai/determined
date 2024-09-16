@@ -69,7 +69,7 @@ Access the tutorial files via the :download:`core_api_pytorch_mnist.tgz
 <https://github.com/determined-ai/determined/tree/main/examples/tutorials/core_api_pytorch_mnist>`_.
 These scripts have already been modified to fit the steps outlined in this tutorial.
 
-In this initial step, we’ll run our experiment using the ``model_def.py`` script and its
+In this initial step, we'll run our experiment using the ``model_def.py`` script and its
 accompanying ``const.yaml`` experiment configuration file.
 
 CD into the directory and run this command:
@@ -97,7 +97,7 @@ the next section, we'll report training and validation metrics.
  Step 2: Report Metrics
 ************************
 
-To report training and validation metrics to the Determined master, we’ll add a few lines of code to
+To report training and validation metrics to the Determined master, we'll add a few lines of code to
 our script. More specifically, we'll create a :class:`~determined.core.Context` object to allow
 interaction with the master. Then, we'll pass the ``core_context`` as an argument into ``main()``,
 ``train()``, and ``test()`` and modify the function headers accordingly.
@@ -153,7 +153,7 @@ and ``core_context.train.report_validation_metrics()``:
 Step 2.3: Modify the Test Method
 ================================
 
-Modify the ``test()`` function header to include ``args`` and other elements you’ll need during the
+Modify the ``test()`` function header to include ``args`` and other elements you'll need during the
 evaluation loop. The ``args`` variable lets you pass configuration settings such as batch size and
 learning rate. In addition, pass the newly created ``core_context`` into both ``train()`` and
 ``test()``. Passing ``core_context`` enables reporting of metrics to the Determined master.
@@ -190,17 +190,17 @@ tab. The WebUI now displays metrics.
 |
 
 In this step, you learned how to add a few new lines of code in order to report training and
-validation metrics to the Determined master. Next, we’ll modify our script to report checkpoints.
+validation metrics to the Determined master. Next, we'll modify our script to report checkpoints.
 
 ***********************
  Step 3: Checkpointing
 ***********************
 
 Checkpointing periodically during training and reporting the :ref:`checkpoints <checkpoints>` to the
-master gives us the ability to stop and restart training. In this section, we’ll modify our script
+master gives us the ability to stop and restart training. In this section, we'll modify our script
 for the purpose of checkpointing.
 
-In this step, we’ll run our experiment using the ``model_def_checkpoints.py`` script and its
+In this step, we'll run our experiment using the ``model_def_checkpoints.py`` script and its
 accompanying ``checkpoints.yaml`` experiment configuration file.
 
 .. include:: ../../../_shared/note-premade-tutorial-script.txt
@@ -327,23 +327,27 @@ To perform a hyperparameter search, we'll update our script to define the hyperp
 settings we want to use for our experiment. More specifically, we'll need to define the following
 settings in our experiment configuration file:
 
--  ``name:`` ``adaptive_asha`` (name of our searcher. For all options, visit :ref:`search-methods`.
+-  ``name:`` ``adaptive_asha`` (name of our searcher. For all options, visit :ref:`search-methods`.)
 -  ``metric``: ``test_loss``
 -  ``smaller_is_better``: ``True`` (This is equivalent to minimization vs. maximization of
    objective.)
 -  ``max_trials``: 500 (This is the maximum number of trials the searcher should run.)
--  ``max_length``: 20 epochs (The max length of a trial. For more information, visit Adaptive ASHA
-   in the :ref:`Experiment Configuration Reference <experiment-configuration>`.
+-  ``max_length``: 20 epochs (The max length of a trial. This is a required parameter for the
+   SearcherContext to function properly.)
 
 In addition, we also need to define the hyperparameters themselves. Adaptive ASHA will pick values
 between the ``minval`` and ``maxval`` for each hyperparameter for each trial.
 
 .. note::
 
+   The SearcherContext fabricates a single SearcherOperation based on the ``max_length`` specified
+   in the experiment configuration. Ensure that your configuration includes a ``max_length``
+   parameter in the searcher section.
+
    To see early stopping in action, try setting ``max_trials`` to over 500 and playing around with
    the hyperparameter search values.
 
-In this step, we’ll run our experiment using the ``model_def_adaptive.py`` script and its
+In this step, we'll run our experiment using the ``model_def_adaptive.py`` script and its
 accompanying ``adaptive.yaml`` experiment configuration file.
 
 .. include:: ../../../_shared/note-premade-tutorial-script.txt
@@ -418,10 +422,10 @@ features are:
    torch.distributed, and DeepSpeed. For more information about launcher options, visit
    :ref:`experiments`.
 
-In this example, we’ll be using PyTorch’s DistributedDataParallel. We’ll also need to make specific
+In this example, we'll be using PyTorch's DistributedDataParallel. We'll also need to make specific
 changes to our configuration experiment file.
 
-In this step, we’ll run our experiment using the ``model_def_distributed.py`` script and its
+In this step, we'll run our experiment using the ``model_def_distributed.py`` script and its
 accompanying ``distributed.yaml`` experiment configuration file.
 
 .. include:: ../../../_shared/note-premade-tutorial-script.txt
@@ -487,7 +491,7 @@ Shard the data into ``num_replicas`` non-overlapping parts. ``num_replicas`` is 
    :end-before: # Docs snippet end: shard data
    :dedent:
 
-Wrap your model with torch’s DistributedDataParallel:
+Wrap your model with torch's DistributedDataParallel:
 
 .. literalinclude:: ../../../../examples/tutorials/core_api_pytorch_mnist/model_def_distributed.py
    :language: python
