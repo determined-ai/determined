@@ -189,6 +189,7 @@ func (x *GetSearchTagsRequest) GetProjectId() int32 {
 	return 0
 }
 
+// Response to GetSearchTagsRequest
 type GetSearchTagsResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache

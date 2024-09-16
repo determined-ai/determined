@@ -33,8 +33,9 @@ message GetSearchResponse {
 message GetSearchTagsRequest {
   // Filter searches by project.
   int32 project_id = 1;
-} 
+}
 
+// Response to GetSearchTagsRequest
 message GetSearchTagsResponse {
   // The list of tags used across all searches.
   repeated string tags = 1;
