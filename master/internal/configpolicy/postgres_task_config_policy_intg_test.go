@@ -288,7 +288,7 @@ func TestDeleteConfigPolicies(t *testing.T) {
 		{"ntsc no config has constraint", false, model.NTSCType, false, true, nil},
 		{
 			"unspecified workload type", false, model.UnknownType, true, true,
-			ptrs.Ptr("invalid workload type"),
+			ptrs.Ptr("invalid input value for enum"),
 		},
 		{"ntsc no config no constraint", false, model.NTSCType, false, false, nil},
 		{"global ntsc config no constraint", true, model.NTSCType, true, false, nil},

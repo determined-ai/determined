@@ -18,6 +18,10 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
+const (
+	noWorkloadErr = "no workload type specified."
+)
+
 func stubData() (*structpb.Struct, error) {
 	const yamlString = `
 invariant_config:
@@ -102,8 +106,11 @@ func (a *apiServer) DeleteWorkspaceConfigPolicies(
 	}
 
 	if !configpolicy.ValidWorkloadType(req.WorkloadType) {
-		return nil, status.Errorf(codes.InvalidArgument, "invalid workload type :%s",
-			req.WorkloadType)
+		errMessage := fmt.Sprintf("invalid workload type: %s.", req.WorkloadType)
+		if len(req.WorkloadType) == 0 {
+			errMessage = noWorkloadErr
+		}
+		return nil, status.Errorf(codes.InvalidArgument, errMessage)
 	}
 
 	err = configpolicy.DeleteConfigPolicies(ctx, ptrs.Ptr(int(req.WorkspaceId)),
@@ -135,7 +142,7 @@ func (a *apiServer) DeleteGlobalConfigPolicies(
 	if !configpolicy.ValidWorkloadType(req.WorkloadType) {
 		errMessage := fmt.Sprintf("invalid workload type: %s.", req.WorkloadType)
 		if len(req.WorkloadType) == 0 {
-			errMessage = "no workload type specified."
+			errMessage = noWorkloadErr
 		}
 		return nil, status.Errorf(codes.InvalidArgument, errMessage)
 	}

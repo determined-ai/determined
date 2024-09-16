@@ -22,7 +22,7 @@ func TestDeleteWorkspaceConfigPolicies(t *testing.T) {
 	// TODO (CM-520): Make test cases for experiment config policies.
 
 	// Create one workspace and continuously set and delete config policies from there
-	api, _, ctx := setupAPITest(t, nil)
+	api, curUser, ctx := setupAPITest(t, nil)
 	testutils.MustLoadLicenseAndKeyFromFilesystem("../../")
 
 	wkspResp, err := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: uuid.New().String()})
@@ -45,9 +45,9 @@ func TestDeleteWorkspaceConfigPolicies(t *testing.T) {
 			"empty workload type",
 			&apiv1.DeleteWorkspaceConfigPoliciesRequest{
 				WorkspaceId:  workspaceID,
-				WorkloadType: "no workload type",
+				WorkloadType: "",
 			},
-			fmt.Errorf("no workload type"),
+			fmt.Errorf(noWorkloadErr),
 		},
 		{
 			"valid request",
@@ -62,8 +62,9 @@ func TestDeleteWorkspaceConfigPolicies(t *testing.T) {
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
 			ntscPolicies := &model.NTSCTaskConfigPolicies{
-				WorkspaceID:  ptrs.Ptr(int(test.req.WorkspaceId)),
-				WorkloadType: model.NTSCType,
+				WorkspaceID:   ptrs.Ptr(int(test.req.WorkspaceId)),
+				WorkloadType:  model.NTSCType,
+				LastUpdatedBy: curUser.ID,
 			}
 			err = configpolicy.SetNTSCConfigPolicies(ctx, ntscPolicies)
 			require.NoError(t, err)
@@ -90,13 +91,13 @@ func TestDeleteWorkspaceConfigPolicies(t *testing.T) {
 		WorkloadType: model.NTSCType,
 	})
 	require.Nil(t, resp)
-	require.ErrorContains(t, err, "InvalidArgument")
+	require.ErrorContains(t, err, "not found")
 }
 
 func TestDeleteGlobalConfigPolicies(t *testing.T) {
 	// TODO (CM-520): Make test cases for experiment config policies.
 
-	api, _, ctx := setupAPITest(t, nil)
+	api, curUser, ctx := setupAPITest(t, nil)
 	testutils.MustLoadLicenseAndKeyFromFilesystem("../../")
 
 	cases := []struct {
@@ -114,9 +115,9 @@ func TestDeleteGlobalConfigPolicies(t *testing.T) {
 		{
 			"empty workload type",
 			&apiv1.DeleteGlobalConfigPoliciesRequest{
-				WorkloadType: "no workload type",
+				WorkloadType: "",
 			},
-			fmt.Errorf("no workload type"),
+			fmt.Errorf(noWorkloadErr),
 		},
 		{
 			"valid request",
@@ -130,7 +131,8 @@ func TestDeleteGlobalConfigPolicies(t *testing.T) {
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
 			err := configpolicy.SetNTSCConfigPolicies(ctx, &model.NTSCTaskConfigPolicies{
-				WorkloadType: model.NTSCType,
+				WorkloadType:  model.NTSCType,
+				LastUpdatedBy: curUser.ID,
 			})
 			require.NoError(t, err)
 
@@ -191,7 +193,7 @@ func TestBasicRBACConfigPolicyPerms(t *testing.T) {
 			fmt.Errorf("only admins may set config policies for workspaces"),
 		},
 		{
-			"delete workspace config policies",
+			"delete global config policies",
 			func() error {
 				_, err := api.DeleteGlobalConfigPolicies(ctx,
 					&apiv1.DeleteGlobalConfigPoliciesRequest{
