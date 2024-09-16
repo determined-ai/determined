@@ -34,8 +34,8 @@ test.describe('Experiment List', () => {
           `project list-experiments --json ${newWorkspace.response.workspace.name} ${newProject.response.project.name}`,
         ),
       );
-      detExecSync(`experiment kill ${experiments.last()?.id}`);
-      detExecSync(`experiment archive ${experiments.last()?.id}`);
+      detExecSync(`experiment kill ${experiments[experiments.length - 1]?.id}`);
+      detExecSync(`experiment archive ${experiments[experiments.length - 1]?.id}`);
       await expect(
         projectDetailsPageSetup.f_experimentList.dataGrid.rows.pwLocator,
       ).not.toHaveCount(0, { timeout: 10_000 });
