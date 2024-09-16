@@ -254,7 +254,7 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
         dataIndex: 'name',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['name'],
         key: V1GetWorkspaceProjectsRequestSortBy.NAME,
-        onCell: onRightClickableCell,
+        onCell: () => ({ ...onRightClickableCell(), 'data-testid': 'name' }),
         render: projectNameRenderer,
         title: 'Name',
       },
@@ -437,7 +437,11 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
       <Section>
         <Row wrap>
           <Column>
-            <Select value={settings.whose} width={160} onSelect={handleViewSelect}>
+            <Select
+              data-testid="whose"
+              value={settings.whose}
+              width={160}
+              onSelect={handleViewSelect}>
               <Option value={WhoseProjects.All}>All Projects</Option>
               <Option value={WhoseProjects.Mine}>My Projects</Option>
               <Option value={WhoseProjects.Others}>Others&apos; Projects</Option>
@@ -452,7 +456,11 @@ const WorkspaceProjects: React.FC<Props> = ({ workspace, id, pageRef }) => {
                   onChange={switchShowArchived}
                 />
               )}
-              <Select value={settings.sortKey} width={170} onSelect={handleSortSelect}>
+              <Select
+                data-testid="sort"
+                value={settings.sortKey}
+                width={170}
+                onSelect={handleSortSelect}>
                 <Option value={V1GetWorkspaceProjectsRequestSortBy.NAME}>Alphabetical</Option>
                 <Option value={V1GetWorkspaceProjectsRequestSortBy.LASTEXPERIMENTSTARTTIME}>
                   Last Updated

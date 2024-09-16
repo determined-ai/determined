@@ -1,3 +1,4 @@
+import Form from 'hew/Form';
 import Icon from 'hew/Icon';
 import { Modal } from 'hew/Modal';
 import Select, { Option, SelectValue } from 'hew/Select';
@@ -16,6 +17,8 @@ import handleError, { DetError, ErrorLevel, ErrorType } from 'utils/error';
 import { useObservable } from 'utils/observable';
 
 import css from './ProjectMoveModal.module.scss';
+
+const FORM_ID = 'move-project-form';
 
 interface Props {
   onMove?: () => void;
@@ -76,37 +79,40 @@ const ProjectMoveModalComponent: React.FC<Props> = ({ onMove, project }: Props) 
       size="small"
       submit={{
         disabled: !destinationWorkspaceId,
+        form: FORM_ID,
         handleError,
         handler: handleSubmit,
         text: 'Move Project',
       }}
       title="Move Project">
       <label htmlFor="workspace">Workspace</label>
-      <Select
-        id="workspace"
-        placeholder="Select a destination workspace."
-        value={destinationWorkspaceId}
-        width={'100%'}
-        onSelect={handleWorkspaceSelect}>
-        {workspaces.map((workspace) => {
-          const disabled = workspace.archived || workspace.id === project.workspaceId;
-          return (
-            <Option
-              disabled={disabled}
-              key={workspace.id}
-              label={workspace.name}
-              value={workspace.id}>
-              <div className={disabled ? css.workspaceOptionDisabled : ''}>
-                <Label truncate={{ tooltip: true }}>{workspace.name}</Label>
-                {workspace.archived && <Icon name="archive" title="Archived" />}
-                {workspace.id === project.workspaceId && (
-                  <Icon name="checkmark" title="Project's current workspace" />
-                )}
-              </div>
-            </Option>
-          );
-        })}
-      </Select>
+      <Form id={FORM_ID}>
+        <Select
+          id="workspace"
+          placeholder="Select a destination workspace."
+          value={destinationWorkspaceId}
+          width={'100%'}
+          onSelect={handleWorkspaceSelect}>
+          {workspaces.map((workspace) => {
+            const disabled = workspace.archived || workspace.id === project.workspaceId;
+            return (
+              <Option
+                disabled={disabled}
+                key={workspace.id}
+                label={workspace.name}
+                value={workspace.id}>
+                <div className={disabled ? css.workspaceOptionDisabled : ''}>
+                  <Label truncate={{ tooltip: true }}>{workspace.name}</Label>
+                  {workspace.archived && <Icon name="archive" title="Archived" />}
+                  {workspace.id === project.workspaceId && (
+                    <Icon name="checkmark" title="Project's current workspace" />
+                  )}
+                </div>
+              </Option>
+            );
+          })}
+        </Select>
+      </Form>
     </Modal>
   );
 };
