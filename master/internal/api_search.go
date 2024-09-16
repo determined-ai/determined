@@ -232,8 +232,68 @@ func (a *apiServer) PutSearchTag(
 	}
 
 	if err = tx.Commit(); err != nil {
-		return nil, fmt.Errorf("could not commit patch experiment labels transaction %w", err)
+		return nil, fmt.Errorf("could not commit patch experiment tags transaction %w", err)
 	}
 
 	return &apiv2.PutSearchTagResponse{Tags: exp.Labels}, nil
+}
+
+func (a *apiServer) DeleteSearchTag(
+	ctx context.Context, req *apiv2.DeleteSearchTagRequest,
+) (*apiv2.DeleteSearchTagResponse, error) {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get the user: %s", err)
+	}
+
+	tx, err := db.Bun().BeginTx(ctx, nil)
+	if err != nil {
+		return nil, err
+	}
+	defer func() {
+		if err = tx.Rollback(); err != nil && err != sql.ErrTxDone {
+			log.WithError(err).Error("error rolling back transaction in create workspace")
+		}
+	}()
+
+	exp := &experimentv1.Experiment{}
+	query := db.Bun().NewSelect().
+		ModelTableExpr("experiments as e").
+		Model(exp).
+		Apply(getExperimentColumns).
+		Where("e.id = ?", req.SearchId).
+		For("UPDATE")
+	if err = query.Scan(ctx); err != nil {
+		return nil, err
+	}
+
+	modelExp, err := model.ExperimentFromProto(exp)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = experiment.AuthZProvider.Get().CanEditExperimentsMetadata(
+		ctx, *curUser, modelExp); err != nil {
+		return nil, status.Errorf(codes.PermissionDenied, err.Error())
+	}
+
+	i := slices.Index(exp.Labels, req.Tag)
+	if i == -1 {
+		return &apiv2.DeleteSearchTagResponse{Tags: exp.Labels}, nil
+	}
+	exp.Labels = slices.Delete(exp.Labels, i, i+1)
+
+	_, err = tx.NewUpdate().Model(modelExp).
+		Set("config = jsonb_set(config, '{labels}', ?, true)", exp.Labels).
+		Where("id = ?", exp.Id).
+		Exec(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("error updating experiment %v in database: %w", exp.Id, err)
+	}
+
+	if err = tx.Commit(); err != nil {
+		return nil, fmt.Errorf("could not commit delete experiment tags transaction: %w", err)
+	}
+
+	return &apiv2.DeleteSearchTagResponse{Tags: exp.Labels}, nil
 }

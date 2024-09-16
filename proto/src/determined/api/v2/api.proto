@@ -78,10 +78,21 @@ service Determined {
     };
   }
 
-  // Put a new tag on the seach.
+  // Put a new tag on the search.
   rpc PutSearchTag(PutSearchTagRequest) returns (PutSearchTagResponse) {
     option (google.api.http) = {
-      get: "/api/v2/searches/{search_id}/tags/{tag}"
+      put: "/api/v2/searches/{search_id}/tags/{tag}"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Searches"
+    };
+  }
+
+  // Delete a tag from the search.
+  rpc DeleteSearchTag(DeleteSearchTagRequest)
+      returns (DeleteSearchTagResponse) {
+    option (google.api.http) = {
+      delete: "/api/v1/searches/{search_id}/tags/{tag}"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Searches"

@@ -59,6 +59,29 @@ message PutSearchTagResponse {
     json_schema: { required: [ "tags" ] }
   };
 
-  // The complete list of tags associated with the experiment.
+  // The complete list of tags associated with the search.
+  repeated string tags = 1;
+}
+
+// Request for deleting an search tag.
+message DeleteSearchTagRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "search_id", "tag" ] }
+  };
+
+  // The ID of the search.
+  int32 search_id = 1;
+
+  // The tag to delete.
+  string tag = 2;
+}
+
+// Response to DeleteSearchTagRequest.
+message DeleteSearchTagResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "tags" ] }
+  };
+
+  // The complete list of tags associated with the search.
   repeated string tags = 1;
 }
