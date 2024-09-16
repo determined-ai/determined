@@ -22,7 +22,7 @@ import usePermissions from 'hooks/usePermissions';
 import usePolling from 'hooks/usePolling';
 import ClusterQueuedChart from 'pages/Cluster/ClusterQueuedChart';
 import JobQueue from 'pages/JobQueue/JobQueue';
-import Topology from 'pages/ResourcePool/Topology';
+import Topology from 'pages/ResourcePool/ClusterTopology';
 import { paths } from 'routes/utils';
 import { getAgents, getJobQStats } from 'services/api';
 import { V1ResourcePoolDetail, V1RPQueueStat, V1SchedulerType } from 'services/api-ts-sdk';
