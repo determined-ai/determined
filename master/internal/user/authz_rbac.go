@@ -261,6 +261,11 @@ func (a *UserAuthZRBAC) CanGetUsersToken(
 func (a *UserAuthZRBAC) CanDeleteUsersOwnToken(ctx context.Context, curUser model.User) error {
 	noPermissionRequired(ctx, curUser.ID, curUser.ID)
 
+	err := db.DoesPermissionMatch(ctx, curUser.ID, nil,
+		rbacv1.PermissionType_PERMISSION_TYPE_REVOKE_LONG_LIVED_TOKEN)
+	if err != nil {
+		return errors.Wrap(err, "unable to revoke token due to insufficient permissions")
+	}
 	return nil
 }
 

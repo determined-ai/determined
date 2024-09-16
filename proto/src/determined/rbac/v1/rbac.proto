@@ -177,6 +177,9 @@ enum PermissionType {
 
   // Ability to view resource quotas on workspaces.
   PERMISSION_TYPE_VIEW_RESOURCE_QUOTAS = 11003;
+
+  // Ability to revoke one's own long lived token
+  PERMISSION_TYPE_REVOKE_LONG_LIVED_TOKEN = 12001;
 }
 
 // RoleAssignmentSummary is used to describe permissions a user has.
