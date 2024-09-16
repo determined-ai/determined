@@ -261,8 +261,7 @@ func (a *apiServer) DeleteSearchTag(
 		ModelTableExpr("experiments as e").
 		Model(exp).
 		Apply(getExperimentColumns).
-		Where("e.id = ?", req.SearchId).
-		For("UPDATE")
+		Where("e.id = ?", req.SearchId)
 	if err = query.Scan(ctx); err != nil {
 		return nil, err
 	}
