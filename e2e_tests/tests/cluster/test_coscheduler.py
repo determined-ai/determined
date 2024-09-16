@@ -18,7 +18,7 @@ def test_gang_scheduling() -> None:
 
     config = conf.load_config(conf.tutorials_path("mnist_pytorch/distributed.yaml"))
     config = conf.set_slots_per_trial(config, int(total_slots))
-    model = conf.tutorials_path("mnist_pytorch")
+    model = conf.fixtures_path("mnist_pytorch")
 
     def submit_job() -> None:
         ret_value = exp.run_basic_test_with_temp_config(sess, config, model, 1)

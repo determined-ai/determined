@@ -20,7 +20,7 @@ def test_launch_layer_mnist() -> None:
     )
 
     experiment_id = exp.run_basic_test_with_temp_config(
-        sess, config, conf.tutorials_path("mnist_pytorch"), 1
+        sess, config, conf.fixtures_path("mnist_pytorch"), 1
     )
     trials = exp.experiment_trials(sess, experiment_id)
 
@@ -41,7 +41,7 @@ def test_launch_layer_exit() -> None:
     config["max_restarts"] = 0
 
     experiment_id = exp.run_failure_test_with_temp_config(
-        sess, config, conf.tutorials_path("mnist_pytorch")
+        sess, config, conf.fixtures_path("mnist_pytorch")
     )
     trials = exp.experiment_trials(sess, experiment_id)
     client.Determined._from_session(sess).get_trial(trials[0].trial.id)

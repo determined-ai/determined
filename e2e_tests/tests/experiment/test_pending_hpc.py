@@ -52,7 +52,7 @@ def test_hpc_job_pending_reason() -> None:
         with open(tf.name, "w") as f:
             util.yaml_safe_dump(config, f)
         running_exp_id = exp.create_experiment(
-            sess, tf.name, conf.tutorials_path("mnist_pytorch"), None
+            sess, tf.name, conf.fixtures_path("mnist_pytorch"), None
         )
     print(f"Created experiment {running_exp_id}")
     exp.wait_for_experiment_state(sess, running_exp_id, bindings.experimentv1State.RUNNING)
@@ -62,7 +62,7 @@ def test_hpc_job_pending_reason() -> None:
         with open(tf.name, "w") as f:
             util.yaml_safe_dump(config, f)
         pending_exp_id = exp.create_experiment(
-            sess, tf.name, conf.tutorials_path("mnist_pytorch"), None
+            sess, tf.name, conf.fixtures_path("mnist_pytorch"), None
         )
     print(f"Created experiment {pending_exp_id}")
 
