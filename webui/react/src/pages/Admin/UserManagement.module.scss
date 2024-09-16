@@ -12,8 +12,8 @@
   margin-bottom: 8px;
 }
 
-@media only screen and (max-width: $breakpoint-mobile) {
-  div[class^='Select_base'] {
+@media only screen and (max-width: $breakpoint-tablet) {
+  .selectWrapper {
     width: 100%;
   }
 }

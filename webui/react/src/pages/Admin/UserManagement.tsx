@@ -29,7 +29,7 @@ import {
 } from 'components/Table/Table';
 import UserBadge from 'components/UserBadge';
 import { useAsync } from 'hooks/useAsync';
-import useMobile from 'hooks/useMobile';
+import { useTablet } from 'hooks/useMobile';
 import usePermissions from 'hooks/usePermissions';
 import { getGroups, getUserRoles, getUsers, patchUsers } from 'services/api';
 import { V1GetUsersRequestSortBy, V1GroupSearchResult, V1OrderBy } from 'services/api-ts-sdk';
@@ -222,7 +222,7 @@ const UserManagement: React.FC<Props> = ({ onUserCreate }: Props) => {
   const pageRef = useRef<HTMLElement>(null);
   const currentUser = Loadable.getOrElse(undefined, useObservable(userStore.currentUser));
   const loadableSettings = useObservable(userManagementSettings);
-  const isMobile = useMobile();
+  const isTablet = useTablet();
   const settings = useMemo(() => {
     return Loadable.match(loadableSettings, {
       _: () => ({ ...DEFAULT_SETTINGS, ...columnSettings }),
@@ -485,9 +485,9 @@ const UserManagement: React.FC<Props> = ({ onUserCreate }: Props) => {
     <>
       <Section className={css.usersTable}>
         <div className={css.actionBar} data-testid="actionRow">
-          <Row wrap>
+          <Row wrap={isTablet}>
             <Column>
-              <Row width="fill" wrap>
+              <Row width="fill" wrap={isTablet}>
                 {/* input is uncontrolled */}
                 <Input
                   allowClear
@@ -495,27 +495,31 @@ const UserManagement: React.FC<Props> = ({ onUserCreate }: Props) => {
                   defaultValue={nameFilter}
                   placeholder="Find user"
                   prefix={<Icon color="cancel" decorative name="search" size="tiny" />}
-                  width={isMobile ? '100%' : 'max-content'}
+                  width={isTablet ? '100%' : 'max-content'}
                   onChange={handleNameSearchApply}
                 />
-                <Select
-                  data-testid="roleSelect"
-                  options={roleOptions}
-                  placeholder="Role"
-                  searchable={false}
-                  value={roleFilter}
-                  width={isMobile ? '100%' : 120}
-                  onChange={handleRoleFilterApply}
-                />
-                <Select
-                  data-testid="statusSelect"
-                  options={statusOptions}
-                  placeholder="Status"
-                  searchable={false}
-                  value={statusFilter}
-                  width={isMobile ? '100%' : 170}
-                  onChange={handleStatusFilterApply}
-                />
+                <div className={css.selectWrapper}>
+                  <Select
+                    data-testid="roleSelect"
+                    options={roleOptions}
+                    placeholder="Role"
+                    searchable={false}
+                    value={roleFilter}
+                    width={isTablet ? '100%' : 120}
+                    onChange={handleRoleFilterApply}
+                  />
+                </div>
+                <div className={css.selectWrapper}>
+                  <Select
+                    data-testid="statusSelect"
+                    options={statusOptions}
+                    placeholder="Status"
+                    searchable={false}
+                    value={statusFilter}
+                    width={isTablet ? '100%' : 170}
+                    onChange={handleStatusFilterApply}
+                  />
+                </div>
               </Row>
             </Column>
             <Column align="right">
