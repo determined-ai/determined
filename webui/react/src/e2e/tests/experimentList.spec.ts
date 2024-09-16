@@ -22,20 +22,22 @@ test.describe('Experiment List', () => {
       await expect(
         projectDetailsPageSetup.f_experimentList.tableActionBar.count.pwLocator,
       ).toContainText('experiment');
-      Array(3)
+      Array(4)
         .fill(null)
         .forEach(() => {
           detExecSync(
             `experiment create ${fullPath('examples/tutorials/mnist_pytorch/adaptive.yaml')} --paused --project_id ${newProject.response.project.id}`,
           );
         });
+
       const experiments: ExperimentBase[] = JSON.parse(
         detExecSync(
           `project list-experiments --json ${newWorkspace.response.workspace.name} ${newProject.response.project.name}`,
         ),
       );
-      detExecSync(`experiment kill ${experiments[experiments.length - 1]?.id}`);
+      detExecSync(`experiment kill ${experiments[experiments.length - 1]?.id}`); // Experiments must be in terminal state to archive
       detExecSync(`experiment archive ${experiments[experiments.length - 1]?.id}`);
+
       await expect(
         projectDetailsPageSetup.f_experimentList.dataGrid.rows.pwLocator,
       ).not.toHaveCount(0, { timeout: 10_000 });
@@ -87,6 +89,18 @@ test.describe('Experiment List', () => {
       const tableFilter =
         await projectDetailsPage.f_experimentList.tableActionBar.tableFilter.open();
       await tableFilter.filterForm.clearFilters.pwLocator.click();
+      await tableFilter.close();
+      await waitTableStable();
+    });
+    await test.step('Reset Show Archived', async () => {
+      const tableFilter =
+        await projectDetailsPage.f_experimentList.tableActionBar.tableFilter.open();
+      if (
+        (await tableFilter.filterForm.showArchived.pwLocator.getAttribute('aria-checked')) ===
+        'true'
+      ) {
+        await tableFilter.filterForm.showArchived.pwLocator.click();
+      }
       await tableFilter.close();
       await waitTableStable();
     });
