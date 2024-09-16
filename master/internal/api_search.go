@@ -24,7 +24,7 @@ func convertExpToSearch(exp *experimentv1.Experiment) *searchv2.Search {
 	return &searchv2.Search{
 		Id:                    exp.Id,
 		Description:           exp.Description,
-		Labels:                exp.Labels,
+		Tags:                  exp.Labels,
 		StartTime:             exp.StartTime,
 		EndTime:               exp.EndTime,
 		State:                 searchv2.State(exp.State),
