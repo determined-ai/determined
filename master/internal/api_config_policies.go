@@ -67,7 +67,11 @@ func (*apiServer) GetWorkspaceConfigPolicies(
 	ctx context.Context, req *apiv1.GetWorkspaceConfigPoliciesRequest,
 ) (*apiv1.GetWorkspaceConfigPoliciesResponse, error) {
 	if !configpolicy.ValidWorkloadType(req.WorkloadType) {
-		return nil, fmt.Errorf("invalid workload type: %s", req.WorkloadType)
+		errMessage := fmt.Sprintf("invalid workload type: %s.", req.WorkloadType)
+		if len(req.WorkloadType) == 0 {
+			errMessage = noWorkloadErr
+		}
+		return nil, status.Errorf(codes.InvalidArgument, errMessage)
 	}
 
 	resp := apiv1.GetWorkspaceConfigPoliciesResponse{}

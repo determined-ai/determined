@@ -51,7 +51,7 @@ func TestSetTaskConfigPolicies(t *testing.T) {
 				WorkloadType:    model.NTSCType,
 				LastUpdatedBy:   -1,
 				LastUpdatedTime: time.Now().UTC().Truncate(time.Second),
-				InvariantConfig: DefaultCommandConfig(),
+				InvariantConfig: DefaultInvariantConfig(),
 				Constraints:     DefaultConstraints(),
 			},
 			false,
@@ -63,7 +63,7 @@ func TestSetTaskConfigPolicies(t *testing.T) {
 				WorkloadType:    model.NTSCType,
 				LastUpdatedBy:   user.ID,
 				LastUpdatedTime: time.Now().UTC().Truncate(time.Second),
-				InvariantConfig: DefaultCommandConfig(),
+				InvariantConfig: DefaultInvariantConfig(),
 				Constraints:     nil,
 			},
 			false,
@@ -87,7 +87,7 @@ func TestSetTaskConfigPolicies(t *testing.T) {
 				WorkloadType:    model.NTSCType,
 				LastUpdatedBy:   user.ID,
 				LastUpdatedTime: time.Now().UTC().Truncate(time.Second),
-				InvariantConfig: DefaultCommandConfig(),
+				InvariantConfig: DefaultInvariantConfig(),
 				Constraints:     DefaultConstraints(),
 			},
 			false,
@@ -112,7 +112,7 @@ func TestSetTaskConfigPolicies(t *testing.T) {
 				WorkloadType:    model.NTSCType,
 				LastUpdatedBy:   user.ID,
 				LastUpdatedTime: time.Now().UTC().Truncate(time.Second),
-				InvariantConfig: DefaultCommandConfig(),
+				InvariantConfig: DefaultInvariantConfig(),
 				Constraints:     nil,
 			},
 			true,
@@ -124,7 +124,7 @@ func TestSetTaskConfigPolicies(t *testing.T) {
 				WorkloadType:    model.NTSCType,
 				LastUpdatedBy:   user.ID,
 				LastUpdatedTime: time.Now().UTC().Truncate(time.Second),
-				InvariantConfig: DefaultCommandConfig(),
+				InvariantConfig: DefaultInvariantConfig(),
 				Constraints:     DefaultConstraints(),
 			},
 			true,
@@ -200,7 +200,7 @@ func TestSetTaskConfigPolicies(t *testing.T) {
 		WorkspaceID:     ptrs.Ptr(-1),
 		LastUpdatedBy:   user.ID,
 		WorkloadType:    model.NTSCType,
-		InvariantConfig: DefaultCommandConfig(),
+		InvariantConfig: DefaultInvariantConfig(),
 		Constraints:     DefaultConstraints(),
 	})
 	require.ErrorContains(t, err, "violates foreign key constraint")
@@ -434,7 +434,7 @@ func CreateMockTaskConfigPolicies(ctx context.Context, t *testing.T,
 		scope = ptrs.Ptr(w.ID)
 	}
 	if hasInvariantConfig {
-		ntscConfig = DefaultCommandConfig()
+		ntscConfig = DefaultInvariantConfig()
 	}
 	if hasConstraints {
 		constraints = DefaultConstraints()
@@ -453,14 +453,12 @@ func CreateMockTaskConfigPolicies(ctx context.Context, t *testing.T,
 	return &w, nil, ntscTCP
 }
 
-func DefaultCommandConfig() *string {
-	jsonString := `{"description": "random description", "resources": {"slots": 4, "max_slots": 8}}`
-	return ptrs.Ptr(jsonString)
+func DefaultInvariantConfig() *string {
+	return ptrs.Ptr(DefaultInvariantConfigStr)
 }
 
 func DefaultConstraints() *string {
-	jsonString := `{"priority_limit": 10, "resources": {"max_slots": 8}}`
-	return ptrs.Ptr(jsonString)
+	return ptrs.Ptr(DefaultConstraintsStr)
 }
 
 func requireEqualTaskPolicy(t *testing.T, exp *model.TaskConfigPolicies, act *model.TaskConfigPolicies) {
