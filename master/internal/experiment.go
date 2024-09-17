@@ -39,8 +39,6 @@ import (
 	"github.com/determined-ai/determined/master/pkg/searcher"
 	"github.com/determined-ai/determined/master/pkg/ssh"
 	"github.com/determined-ai/determined/master/pkg/tasks"
-	"github.com/determined-ai/determined/proto/pkg/apiv1"
-	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 )
 
 const (
@@ -513,88 +511,6 @@ func (e *internalExperiment) stop() error {
 	return nil
 }
 
-func (e *internalExperiment) PerformSearcherOperations(msg *apiv1.PostSearcherOperationsRequest) error {
-	e.mu.Lock()
-	defer e.mu.Unlock()
-
-	queue, err := e.searcher.GetCustomSearcherEventQueue()
-	if err != nil {
-		return status.Error(codes.Internal, err.Error())
-	}
-	var ops []searcher.Operation
-	for _, searcherOp := range msg.SearcherOperations {
-		switch concreteOperation := searcherOp.GetUnion().(type) {
-		case *experimentv1.SearcherOperation_CreateTrial:
-			op, err := searcher.CreateFromProto(concreteOperation, model.TrialWorkloadSequencerType)
-			if err != nil {
-				e.syslog.Error(err)
-			} else {
-				ops = append(ops, *op)
-			}
-		case *experimentv1.SearcherOperation_ShutDown:
-			op, err := searcher.ShutdownFromProto(concreteOperation)
-			if err != nil {
-				e.syslog.Error(err)
-			} else {
-				ops = append(ops, *op)
-			}
-		case *experimentv1.SearcherOperation_TrialOperation:
-			if sub, ok := concreteOperation.TrialOperation.GetUnion().(*experimentv1.TrialOperation_ValidateAfter); ok {
-				op, err := searcher.ValidateAfterFromProto(sub)
-				if err != nil {
-					e.syslog.Error(err)
-				} else {
-					ops = append(ops, *op)
-				}
-			}
-		case *experimentv1.SearcherOperation_CloseTrial:
-			op, err := searcher.CloseFromProto(concreteOperation)
-			if err != nil {
-				e.syslog.Error(err)
-			} else {
-				ops = append(ops, *op)
-			}
-		case *experimentv1.SearcherOperation_SetSearcherProgress:
-			ops = append(ops, searcher.SetSearcherProgressFromProto(concreteOperation))
-		default:
-			e.syslog.Errorf("unimplemented op %+v", concreteOperation)
-		}
-	}
-	e.syslog.Infof("processing searcher operations %+v", ops)
-
-	// Remove newly processed events from queue.
-	if err := queue.RemoveUpTo(int(msg.TriggeredByEvent.Id)); err != nil {
-		return status.Error(codes.Internal, "failed to remove events from queue")
-	}
-	e.searcher.Record(ops)
-	e.processOperations(ops, nil)
-	return nil
-}
-
-func (e *internalExperiment) GetSearcherEventsWatcher() (*searcher.EventsWatcher, error) {
-	e.mu.Lock()
-	defer e.mu.Unlock()
-
-	queue, err := e.searcher.GetCustomSearcherEventQueue()
-	if err != nil {
-		return nil, status.Error(codes.Internal, err.Error())
-	}
-	watcher, err := queue.Watch()
-	return &watcher, err
-}
-
-func (e *internalExperiment) UnwatchEvents(id uuid.UUID) error {
-	e.mu.Lock()
-	defer e.mu.Unlock()
-
-	queue, err := e.searcher.GetCustomSearcherEventQueue()
-	if err != nil {
-		return status.Error(codes.Internal, err.Error())
-	}
-	queue.Unwatch(id)
-	return nil
-}
-
 func (e *internalExperiment) ActivateExperiment() error {
 	e.mu.Lock()
 	defer e.mu.Unlock()
@@ -835,10 +751,6 @@ func (e *internalExperiment) processOperations(
 			state.Complete = false
 			e.TrialSearcherState[op.RequestID] = state
 			updatedTrials[op.RequestID] = true
-		case searcher.SetSearcherProgress:
-			if err := e.searcher.SetCustomSearcherProgress(op.Progress); err != nil {
-				e.syslog.WithError(err).Error("failed to set searcher progress")
-			}
 		case searcher.Close:
 			state := e.TrialSearcherState[op.RequestID]
 			state.Closed = true
