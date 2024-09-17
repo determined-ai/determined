@@ -213,30 +213,20 @@ func TestBasicRBACConfigPolicyPerms(t *testing.T) {
 	}
 }
 
-func TestGetWorkspaceConfigPolicies(t *testing.T) {
+func TestGetConfigPolicies(t *testing.T) {
 	api, curUser, ctx := setupAPITest(t, nil)
 	testutils.MustLoadLicenseAndKeyFromFilesystem("../../")
 
 	wkspResp, err := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: uuid.New().String()})
 	require.NoError(t, err)
-	workspaceID1 := wkspResp.Workspace.Id
+	workspaceID1 := ptrs.Ptr(int(wkspResp.Workspace.Id))
 	wkspResp, err = api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: uuid.New().String()})
 	require.NoError(t, err)
-	workspaceID2 := wkspResp.Workspace.Id
+	workspaceID2 := ptrs.Ptr(int(wkspResp.Workspace.Id))
 
-	// set only config policy
+	// set only constraints policy for workspace 1
 	taskConfigPolicies := &model.TaskConfigPolicies{
-		WorkspaceID:     ptrs.Ptr(int(workspaceID1)),
-		WorkloadType:    model.NTSCType,
-		LastUpdatedBy:   curUser.ID,
-		InvariantConfig: ptrs.Ptr(configpolicy.DefaultInvariantConfigStr),
-	}
-	err = configpolicy.SetTaskConfigPolicies(ctx, taskConfigPolicies)
-	require.NoError(t, err)
-
-	// set only constraints policy
-	taskConfigPolicies = &model.TaskConfigPolicies{
-		WorkspaceID:   ptrs.Ptr(int(workspaceID1)),
+		WorkspaceID:   workspaceID1,
 		WorkloadType:  model.ExperimentType,
 		LastUpdatedBy: curUser.ID,
 		Constraints:   ptrs.Ptr(configpolicy.DefaultConstraintsStr),
@@ -244,70 +234,92 @@ func TestGetWorkspaceConfigPolicies(t *testing.T) {
 	err = configpolicy.SetTaskConfigPolicies(ctx, taskConfigPolicies)
 	require.NoError(t, err)
 
-	// set both config and constraints policy
-	taskConfigPolicies = &model.TaskConfigPolicies{
-		WorkspaceID:     ptrs.Ptr(int(workspaceID2)),
-		WorkloadType:    model.NTSCType,
-		LastUpdatedBy:   curUser.ID,
-		InvariantConfig: ptrs.Ptr(configpolicy.DefaultInvariantConfigStr),
-		Constraints:     ptrs.Ptr(configpolicy.DefaultConstraintsStr),
-	}
+	// set only config policy for workspace 1
+	taskConfigPolicies.WorkloadType = model.NTSCType
+	taskConfigPolicies.Constraints = nil
+	taskConfigPolicies.InvariantConfig = ptrs.Ptr(configpolicy.DefaultInvariantConfigStr)
+	err = configpolicy.SetTaskConfigPolicies(ctx, taskConfigPolicies)
+	require.NoError(t, err)
+
+	// set both config and constraints policy for workspace 2
+	taskConfigPolicies.WorkspaceID = workspaceID2
+	taskConfigPolicies.Constraints = ptrs.Ptr(configpolicy.DefaultConstraintsStr)
+	err = configpolicy.SetTaskConfigPolicies(ctx, taskConfigPolicies)
+	require.NoError(t, err)
+
+	// set both config and constraints policy globally
+	taskConfigPolicies.WorkspaceID = nil
 	err = configpolicy.SetTaskConfigPolicies(ctx, taskConfigPolicies)
 	require.NoError(t, err)
 
 	cases := []struct {
 		name           string
-		req            *apiv1.GetWorkspaceConfigPoliciesRequest
+		workspaceID    *int
+		workloadType   string
 		err            error
 		hasConfig      bool
 		hasConstraints bool
 	}{
 		{
 			"invalid workload type",
-			&apiv1.GetWorkspaceConfigPoliciesRequest{
-				WorkspaceId:  workspaceID1,
-				WorkloadType: "bad workload type",
-			},
+			workspaceID1,
+			"bad workload type",
 			fmt.Errorf("invalid workload type"),
 			false,
 			false,
 		},
 		{
 			"empty workload type",
-			&apiv1.GetWorkspaceConfigPoliciesRequest{
-				WorkspaceId:  workspaceID1,
-				WorkloadType: "",
-			},
+			workspaceID1,
+			"",
 			fmt.Errorf(noWorkloadErr),
 			false,
 			false,
 		},
 		{
-			"valid request only config",
-			&apiv1.GetWorkspaceConfigPoliciesRequest{
-				WorkspaceId:  workspaceID1,
-				WorkloadType: model.NTSCType,
-			},
+			"valid workspace request, only config",
+			workspaceID1,
+			model.NTSCType,
 			nil,
 			true,
 			false,
 		},
 		{
-			"valid request only constraints",
-			&apiv1.GetWorkspaceConfigPoliciesRequest{
-				WorkspaceId:  workspaceID1,
-				WorkloadType: model.ExperimentType,
-			},
+			"valid workspace request, only constraints",
+			workspaceID1,
+			model.ExperimentType,
 			nil,
 			false,
 			true,
 		},
 		{
-			"valid request both configs and constraints",
-			&apiv1.GetWorkspaceConfigPoliciesRequest{
-				WorkspaceId:  workspaceID2,
-				WorkloadType: model.NTSCType,
-			},
+			"valid workspace request both configs and constraints",
+			workspaceID2,
+			model.NTSCType,
+			nil,
+			true,
+			true,
+		},
+		{
+			"valid workspace request, only config",
+			workspaceID1,
+			model.NTSCType,
+			nil,
+			true,
+			false,
+		},
+		{
+			"valid workspace request, only constraints",
+			workspaceID1,
+			model.ExperimentType,
+			nil,
+			false,
+			true,
+		},
+		{
+			"valid global request both configs and constraints",
+			nil,
+			model.NTSCType,
 			nil,
 			true,
 			true,
@@ -316,7 +328,7 @@ func TestGetWorkspaceConfigPolicies(t *testing.T) {
 
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
-			resp, err := api.GetWorkspaceConfigPolicies(ctx, test.req)
+			resp, err := api.GetConfigPolicies(ctx, test.workspaceID, test.workloadType)
 			if test.err != nil {
 				require.ErrorContains(t, err, test.err.Error())
 				return
@@ -325,15 +337,15 @@ func TestGetWorkspaceConfigPolicies(t *testing.T) {
 			require.NotNil(t, resp)
 
 			if test.hasConfig {
-				require.Contains(t, resp.ConfigPolicies.String(), "config")
+				require.Contains(t, resp.String(), "config")
 			} else {
-				require.NotContains(t, resp.ConfigPolicies.String(), "config")
+				require.NotContains(t, resp.String(), "config")
 			}
 
 			if test.hasConstraints {
-				require.Contains(t, resp.ConfigPolicies.String(), "constraints")
+				require.Contains(t, resp.String(), "constraints")
 			} else {
-				require.NotContains(t, resp.ConfigPolicies.String(), "constraints")
+				require.NotContains(t, resp.String(), "constraints")
 			}
 		})
 	}
