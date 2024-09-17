@@ -62,6 +62,18 @@ packages:
         config:
           filename: rm_authz_iface.go
           mockname: ResourceManagerAuthZ
+  github.com/determined-ai/determined/master/internal/cluster:
+    interfaces:
+      MiscAuthZ:
+        config:
+          filename: misc_authz_iface.go
+          mockname: MiscAuthZ
+  github.com/determined-ai/determined/master/internal/configpolicy:
+    interfaces:
+      ConfigPolicyAuthZ:
+        config:
+          filename: config_policy_authz_iface.go
+          mockname: ConfigPolicyAuthZ
   github.com/determined-ai/determined/master/internal/task:
     interfaces:
       AllocationService:

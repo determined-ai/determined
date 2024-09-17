@@ -6,10 +6,13 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/determined-ai/determined/master/internal/cluster"
 	"github.com/determined-ai/determined/master/internal/configpolicy"
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/mocks"
 	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/internal/workspace"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -349,4 +352,73 @@ func setUpTaskConfigPolicies(ctx context.Context, t *testing.T,
 	taskConfigPolicies.WorkspaceID = nil
 	err = configpolicy.SetTaskConfigPolicies(ctx, taskConfigPolicies)
 	require.NoError(t, err)
+}
+
+func TestAuthZCanModifyConfigPolicies(t *testing.T) {
+	api, workspaceAuthZ, _, ctx := setupWorkspaceAuthZTest(t, nil)
+	testutils.MustLoadLicenseAndKeyFromFilesystem("../../")
+	configPolicyAuthZ := setupConfigPolicyAuthZ()
+	miscAuthZ := setupMiscAuthZ()
+
+	workspaceAuthZ.On("CanCreateWorkspace", mock.Anything, mock.Anything).Return(nil)
+	workspaceAuthZ.On("CanGetWorkspace", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+
+	wkspResp, err := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: uuid.New().String()})
+	require.NoError(t, err)
+	workspaceID := wkspResp.Workspace.Id
+
+	// (Workspace-level) Deny with permission access error.
+	expectedErr := fmt.Errorf("canModifyConfigPoliciesError")
+	configPolicyAuthZ.On("CanModifyWorkspaceConfigPolicies", mock.Anything, mock.Anything,
+		mock.Anything).Return(expectedErr).Once()
+
+	_, err = api.DeleteWorkspaceConfigPolicies(ctx,
+		&apiv1.DeleteWorkspaceConfigPoliciesRequest{WorkspaceId: workspaceID,
+			WorkloadType: string(model.NTSCType)})
+	require.Equal(t, expectedErr, err)
+
+	// Nil error returns whatever the delete request returned.
+	configPolicyAuthZ.On("CanModifyWorkspaceConfigPolicies", mock.Anything, mock.Anything,
+		mock.Anything).Return(nil).Once()
+	_, err = api.DeleteWorkspaceConfigPolicies(ctx,
+		&apiv1.DeleteWorkspaceConfigPoliciesRequest{WorkspaceId: workspaceID,
+			WorkloadType: model.NTSCType})
+	require.NoError(t, err)
+
+	workspaceAuthZ.On("CanCreateWorkspace", mock.Anything, mock.Anything).Return(nil)
+
+	// (Global) Deny with permission access error.
+	expectedErr = fmt.Errorf("canModifyGlobalConfigPoliciesError")
+	miscAuthZ.On("CanModifyGlobalConfigPolicies", mock.Anything, mock.Anything).
+		Return(expectedErr, nil).Once()
+
+	_, err = api.DeleteGlobalConfigPolicies(ctx,
+		&apiv1.DeleteGlobalConfigPoliciesRequest{WorkloadType: string(model.NTSCType)})
+	require.Equal(t, expectedErr, err)
+
+	// Nil error returns whatever the delete request returned.
+	miscAuthZ.On("CanModifyGlobalConfigPolicies", mock.Anything, mock.Anything).
+		Return(nil, nil).Once()
+	_, err = api.DeleteGlobalConfigPolicies(ctx,
+		&apiv1.DeleteGlobalConfigPoliciesRequest{WorkloadType: model.NTSCType})
+	require.NoError(t, err)
+}
+
+var mAuthZ *mocks.MiscAuthZ
+var cpAuthZ *mocks.ConfigPolicyAuthZ
+
+func setupMiscAuthZ() *mocks.MiscAuthZ {
+	if mAuthZ == nil {
+		mAuthZ = &mocks.MiscAuthZ{}
+		cluster.AuthZProvider.Register("mock", mAuthZ)
+	}
+	return mAuthZ
+}
+
+func setupConfigPolicyAuthZ() *mocks.ConfigPolicyAuthZ {
+	if cpAuthZ == nil {
+		cpAuthZ = &mocks.ConfigPolicyAuthZ{}
+		configpolicy.AuthZProvider.Register("mock", cpAuthZ)
+	}
+	return cpAuthZ
 }

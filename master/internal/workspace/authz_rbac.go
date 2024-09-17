@@ -412,38 +412,6 @@ func (r *WorkspaceAuthZRBAC) CanViewResourceQuotas(ctx context.Context,
 		rbacv1.PermissionType_PERMISSION_TYPE_VIEW_RESOURCE_QUOTAS)
 }
 
-// CanModifyWorkspaceConfigPolicies determines whether a user can modify
-// workspace task config policies.
-func (r *WorkspaceAuthZRBAC) CanModifyWorkspaceConfigPolicies(
-	ctx context.Context, curUser model.User, workspace *workspacev1.Workspace,
-) (err error) {
-	fields := audit.ExtractLogFields(ctx)
-	addInfoWithoutWorkspace(curUser, fields,
-		rbacv1.PermissionType_PERMISSION_TYPE_MODIFY_WORKSPACE_CONFIG_POLICIES)
-	defer func() {
-		audit.LogFromErr(fields, err)
-	}()
-
-	return db.DoesPermissionMatch(ctx, curUser.ID, nil,
-		rbacv1.PermissionType_PERMISSION_TYPE_MODIFY_WORKSPACE_CONFIG_POLICIES)
-}
-
-// CanViewWorkspaceConfigPolicies determines whether a user can view
-// workspace task config policies.
-func (r *WorkspaceAuthZRBAC) CanViewWorkspaceConfigPolicies(
-	ctx context.Context, curUser model.User, workspace *workspacev1.Workspace,
-) (err error) {
-	fields := audit.ExtractLogFields(ctx)
-	addInfoWithoutWorkspace(curUser, fields,
-		rbacv1.PermissionType_PERMISSION_TYPE_VIEW_WORKSPACE_CONFIG_POLICIES)
-	defer func() {
-		audit.LogFromErr(fields, err)
-	}()
-
-	return db.DoesPermissionMatch(ctx, curUser.ID, nil,
-		rbacv1.PermissionType_PERMISSION_TYPE_VIEW_WORKSPACE_CONFIG_POLICIES)
-}
-
 func hasPermissionOnWorkspace(ctx context.Context, uid model.UserID,
 	workspace *workspacev1.Workspace, permID rbacv1.PermissionType,
 ) error {
