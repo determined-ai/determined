@@ -8894,6 +8894,25 @@ export interface V1PutExperimentsRetainLogsResponse {
     results: Array<V1ExperimentActionResult>;
 }
 /**
+ * PutGlobalConfigPoliciesRequest sets global config policies for the workload type.
+ * @export
+ * @interface V1PutGlobalConfigPoliciesRequest
+ */
+export interface V1PutGlobalConfigPoliciesRequest {
+    /**
+     * The workload type the config policies apply to: EXPERIMENT or NTSC.
+     * @type {string}
+     * @memberof V1PutGlobalConfigPoliciesRequest
+     */
+    workloadType?: string;
+    /**
+     * The config policies to use. Contains both invariant configs and constraints in yaml or json format.
+     * @type {string}
+     * @memberof V1PutGlobalConfigPoliciesRequest
+     */
+    configPolicies?: string;
+}
+/**
  * Response to PutGlobalConfigPoliciesRequest.
  * @export
  * @interface V1PutGlobalConfigPoliciesResponse
@@ -12993,13 +13012,18 @@ export const AlphaApiFetchParamCreator = function (configuration?: Configuration
          * 
          * @summary Add or update global task config policies.
          * @param {string} workloadType The workload type the config policies apply to: EXPERIMENT or NTSC.
+         * @param {V1PutGlobalConfigPoliciesRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        putGlobalConfigPolicies(workloadType: string, options: any = {}): FetchArgs {
+        putGlobalConfigPolicies(workloadType: string, body: V1PutGlobalConfigPoliciesRequest, options: any = {}): FetchArgs {
             // verify required parameter 'workloadType' is not null or undefined
             if (workloadType === null || workloadType === undefined) {
                 throw new RequiredError('workloadType','Required parameter workloadType was null or undefined when calling putGlobalConfigPolicies.');
+            }
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling putGlobalConfigPolicies.');
             }
             const localVarPath = `/api/v1/config-policies/global/{workloadType}`
                 .replace(`{${"workloadType"}}`, encodeURIComponent(String(workloadType)));
@@ -13016,9 +13040,12 @@ export const AlphaApiFetchParamCreator = function (configuration?: Configuration
                 localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
             objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
             
             return {
                 url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
@@ -13166,11 +13193,12 @@ export const AlphaApiFp = function (configuration?: Configuration) {
          * 
          * @summary Add or update global task config policies.
          * @param {string} workloadType The workload type the config policies apply to: EXPERIMENT or NTSC.
+         * @param {V1PutGlobalConfigPoliciesRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        putGlobalConfigPolicies(workloadType: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PutGlobalConfigPoliciesResponse> {
-            const localVarFetchArgs = AlphaApiFetchParamCreator(configuration).putGlobalConfigPolicies(workloadType, options);
+        putGlobalConfigPolicies(workloadType: string, body: V1PutGlobalConfigPoliciesRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PutGlobalConfigPoliciesResponse> {
+            const localVarFetchArgs = AlphaApiFetchParamCreator(configuration).putGlobalConfigPolicies(workloadType, body, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -13257,11 +13285,12 @@ export const AlphaApiFactory = function (configuration?: Configuration, fetch?: 
          * 
          * @summary Add or update global task config policies.
          * @param {string} workloadType The workload type the config policies apply to: EXPERIMENT or NTSC.
+         * @param {V1PutGlobalConfigPoliciesRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        putGlobalConfigPolicies(workloadType: string, options?: any) {
-            return AlphaApiFp(configuration).putGlobalConfigPolicies(workloadType, options)(fetch, basePath);
+        putGlobalConfigPolicies(workloadType: string, body: V1PutGlobalConfigPoliciesRequest, options?: any) {
+            return AlphaApiFp(configuration).putGlobalConfigPolicies(workloadType, body, options)(fetch, basePath);
         },
         /**
          * 
@@ -13339,12 +13368,13 @@ export class AlphaApi extends BaseAPI {
      * 
      * @summary Add or update global task config policies.
      * @param {string} workloadType The workload type the config policies apply to: EXPERIMENT or NTSC.
+     * @param {V1PutGlobalConfigPoliciesRequest} body
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof AlphaApi
      */
-    public putGlobalConfigPolicies(workloadType: string, options?: any) {
-        return AlphaApiFp(this.configuration).putGlobalConfigPolicies(workloadType, options)(this.fetch, this.basePath)
+    public putGlobalConfigPolicies(workloadType: string, body: V1PutGlobalConfigPoliciesRequest, options?: any) {
+        return AlphaApiFp(this.configuration).putGlobalConfigPolicies(workloadType, body, options)(this.fetch, this.basePath)
     }
     
     /**

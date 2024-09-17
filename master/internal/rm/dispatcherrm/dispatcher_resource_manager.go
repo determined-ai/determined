@@ -206,6 +206,16 @@ func New(
 	return m, nil
 }
 
+// Type implements rm.ResourceManager.
+func (m *DispatcherResourceManager) Type() string {
+	return rm.SlurmType
+}
+
+// SmallerValueIsHigherPriority returns true if smaller priority values indicate a higher priority level.
+func (m *DispatcherResourceManager) SmallerValueIsHigherPriority() (bool, error) {
+	return false, fmt.Errorf("priority not implemented")
+}
+
 // Allocate adds a task to the queue to be allocated.
 func (m *DispatcherResourceManager) Allocate(msg sproto.AllocateRequest) (*sproto.ResourcesSubscription, error) {
 	m.mu.Lock()

@@ -2,12 +2,14 @@ package configpolicy
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 
 	"github.com/ghodss/yaml"
 	"google.golang.org/protobuf/types/known/structpb"
 
+	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
 )
@@ -20,6 +22,37 @@ func ValidWorkloadType(val string) bool {
 	default:
 		return false
 	}
+}
+
+// GetPriorityLimitPrecedence retrieves the priority limit using order of precedence
+func GetPriorityLimitPrecedence(ctx context.Context, workspace_id int, workload_type string) (limit int, found bool, err error) {
+	// highest precedence: get global limit
+	if limit, found, err = GetPriorityLimit(ctx, nil, workload_type); found {
+		return limit, found, err
+	}
+
+	// second precedence: get workspace limit
+	if limit, found, err = GetPriorityLimit(ctx, &workspace_id, workload_type); found {
+		return limit, found, err
+	}
+
+	// default
+	return 0, false, nil
+}
+
+// PriorityLimit returns the ne
+func PriorityOK(currPriority int, priorityLimit int, resourceManager rm.ResourceManager) bool {
+	smallerHigher, err := resourceManager.SmallerValueIsHigherPriority()
+	if err != nil {
+		// RM does not have the concept of priority. No Limit applied.
+		return true
+	}
+
+	if smallerHigher {
+		return currPriority >= priorityLimit
+	}
+
+	return currPriority <= priorityLimit
 }
 
 // UnmarshalExperimentConfigPolicy unpacks a string into ExperimentConfigPolicy struct.

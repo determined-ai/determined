@@ -2,6 +2,7 @@ package configpolicy
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"strings"
 
@@ -86,6 +87,41 @@ func GetNTSCConfigPolicies(ctx context.Context,
 			"workspace with ID %d: %w", scope, err)
 	}
 	return &ntscTCP, nil
+}
+
+// GetPriorityLimit reads the priority limit for the given scope and workload type. It returns found=false if no limit exists.
+func GetPriorityLimit(ctx context.Context, scope *int, workloadType string) (limit int, found bool, err error) {
+
+	if !ValidWorkloadType(workloadType) {
+		return 0, false, fmt.Errorf("invalid workload type: %s", workloadType)
+	}
+
+	// FIXME query jsonb directly
+	// FIXME do more sophisticated coalesce and jsbonb query to optimize (CLI to postgres12)
+	wkspQuery := wkspIDQuery
+	if scope == nil {
+		wkspQuery = wkspIDGlobalQuery
+	}
+
+	var constraints *model.Constraints
+	err = db.Bun().NewSelect().
+		Table("task_config_policies").
+		Column("constraints").
+		Where(wkspQuery, scope).
+		Where("workload_type = ?", workloadType).
+		Scan(ctx, constraints)
+
+	if err == sql.ErrNoRows {
+		return 0, false, nil
+	} else if err != nil {
+		return 0, false, fmt.Errorf("error retrieving priority limit: %w", err)
+	}
+
+	if constraints != nil && constraints.PriorityLimit != nil {
+		return *constraints.PriorityLimit, true, nil
+	}
+
+	return 0, false, nil
 }
 
 // DeleteConfigPolicies deletes the invariant experiment config and constraints for the

@@ -1,13 +1,16 @@
 package command
 
 import (
+	"context"
 	"fmt"
 
 	"google.golang.org/protobuf/types/known/timestamppb"
 
 	"github.com/determined-ai/determined/master/internal/config"
+	"github.com/determined-ai/determined/master/internal/configpolicy"
 	"github.com/determined-ai/determined/master/internal/rm/rmerrors"
 	"github.com/determined-ai/determined/master/internal/sproto"
+	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
 
@@ -47,7 +50,25 @@ func (c *Command) SetJobPriority(priority int) error {
 	if priority < 1 || priority > 99 {
 		return fmt.Errorf("priority must be between 1 and 99")
 	}
-	err := c.setNTSCPriority(priority, true)
+
+	// check if a priority limit has been set in task config policies
+	// TODO create an appropriate context with a timeout
+	//scope :=
+	//limit, found, err := configpolicy.GetPriorityLimit(context.TODO(), )
+	wkspID := int(c.GenericCommandSpec.Metadata.WorkspaceID)
+	priorityLimit, found, err := configpolicy.GetPriorityLimitPrecedence(context.TODO(), wkspID, model.NTSCType)
+	if found {
+
+		ok := configpolicy.PriorityOK(priority, priorityLimit, c.rm)
+		if !ok {
+			return fmt.Errorf("priority exceeds task config policy's priority_limit: %d", priorityLimit)
+		}
+
+	} else if err != nil {
+		return err
+	}
+
+	err = c.setNTSCPriority(priority, true)
 	if err != nil {
 		c.syslog.WithError(err).Info("setting command job priority")
 	}

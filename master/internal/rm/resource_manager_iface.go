@@ -10,6 +10,18 @@ import (
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
 )
 
+// Resource Manager types.
+const (
+	// Agent Resource Manager constant.
+	AgentRM string = "AGENT"
+	// Kubernetes Resource Manager constant.
+	KubernetesType string = "KUBERNETES"
+	// Multi RM constant.
+	MultiType string = "MultiRM"
+	// Slurm Resource Manager constant.
+	SlurmType string = "SLURM"
+)
+
 // ResourceManager is an interface for a resource manager, which can allocate and manage resources.
 type ResourceManager interface {
 	// Basic functionality
@@ -19,6 +31,8 @@ type ResourceManager interface {
 	ValidateResources(sproto.ValidateResourcesRequest) ([]command.LaunchWarning, error)
 	DeleteJob(sproto.DeleteJob) (sproto.DeleteJobResponse, error)
 	NotifyContainerRunning(sproto.NotifyContainerRunning) error
+	SmallerValueIsHigherPriority() (bool, error)
+	Type() string
 
 	// Scheduling related stuff
 	SetGroupMaxSlots(sproto.SetGroupMaxSlots)

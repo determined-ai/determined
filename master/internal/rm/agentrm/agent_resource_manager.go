@@ -108,6 +108,16 @@ func newAgentResourceManager(
 	return a, nil
 }
 
+// Type implements rm.ResourceManager.
+func (a *ResourceManager) Type() string {
+	return rm.AgentRM
+}
+
+// SmallerValueIsHigherPriority returns true if smaller priority values indicate a higher priority level.
+func (a *ResourceManager) SmallerValueIsHigherPriority() (bool, error) {
+	return true, nil
+}
+
 // Allocate implements rm.ResourceManager.
 func (a *ResourceManager) Allocate(msg sproto.AllocateRequest) (*sproto.ResourcesSubscription, error) {
 	// this code exists to handle the case where an experiment does not have
