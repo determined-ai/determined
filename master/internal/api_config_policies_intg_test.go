@@ -373,16 +373,20 @@ func TestAuthZCanModifyConfigPolicies(t *testing.T) {
 		mock.Anything).Return(expectedErr).Once()
 
 	_, err = api.DeleteWorkspaceConfigPolicies(ctx,
-		&apiv1.DeleteWorkspaceConfigPoliciesRequest{WorkspaceId: workspaceID,
-			WorkloadType: string(model.NTSCType)})
+		&apiv1.DeleteWorkspaceConfigPoliciesRequest{
+			WorkspaceId:  workspaceID,
+			WorkloadType: model.NTSCType,
+		})
 	require.Equal(t, expectedErr, err)
 
 	// Nil error returns whatever the delete request returned.
 	configPolicyAuthZ.On("CanModifyWorkspaceConfigPolicies", mock.Anything, mock.Anything,
 		mock.Anything).Return(nil).Once()
 	_, err = api.DeleteWorkspaceConfigPolicies(ctx,
-		&apiv1.DeleteWorkspaceConfigPoliciesRequest{WorkspaceId: workspaceID,
-			WorkloadType: model.NTSCType})
+		&apiv1.DeleteWorkspaceConfigPoliciesRequest{
+			WorkspaceId:  workspaceID,
+			WorkloadType: model.NTSCType,
+		})
 	require.NoError(t, err)
 
 	workspaceAuthZ.On("CanCreateWorkspace", mock.Anything, mock.Anything).Return(nil)
@@ -393,7 +397,7 @@ func TestAuthZCanModifyConfigPolicies(t *testing.T) {
 		Return(expectedErr, nil).Once()
 
 	_, err = api.DeleteGlobalConfigPolicies(ctx,
-		&apiv1.DeleteGlobalConfigPoliciesRequest{WorkloadType: string(model.NTSCType)})
+		&apiv1.DeleteGlobalConfigPoliciesRequest{WorkloadType: model.NTSCType})
 	require.Equal(t, expectedErr, err)
 
 	// Nil error returns whatever the delete request returned.
@@ -404,8 +408,10 @@ func TestAuthZCanModifyConfigPolicies(t *testing.T) {
 	require.NoError(t, err)
 }
 
-var mAuthZ *mocks.MiscAuthZ
-var cpAuthZ *mocks.ConfigPolicyAuthZ
+var (
+	mAuthZ  *mocks.MiscAuthZ
+	cpAuthZ *mocks.ConfigPolicyAuthZ
+)
 
 func setupMiscAuthZ() *mocks.MiscAuthZ {
 	if mAuthZ == nil {

@@ -28,3 +28,7 @@ func (a *ConfigPolicyAuthZBasic) CanViewWorkspaceConfigPolicies(
 ) error {
 	return nil
 }
+
+func init() {
+	AuthZProvider.Register("basic", &ConfigPolicyAuthZBasic{})
+}

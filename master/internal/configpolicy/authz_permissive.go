@@ -10,18 +10,18 @@ import (
 // ConfigPolicyAuthZPermissive is the permission implementation.
 type ConfigPolicyAuthZPermissive struct{}
 
-// CanModifyWorkspaceConfigPolicies RBAC authz but enforces basic authz.
+// CanModifyWorkspaceConfigPolicies calls RBAC authz but enforces basic authz.
 func (p *ConfigPolicyAuthZPermissive) CanModifyWorkspaceConfigPolicies(
 	ctx context.Context, curUser model.User, workspace *workspacev1.Workspace,
 ) error {
-	_ = (&ConfigPolicyAuthZPermissive{}).CanModifyWorkspaceConfigPolicies(ctx, curUser, workspace)
-	return (&ConfigPolicyAuthZPermissive{}).CanModifyWorkspaceConfigPolicies(ctx, curUser, workspace)
+	_ = (&ConfigPolicyAuthZRBAC{}).CanModifyWorkspaceConfigPolicies(ctx, curUser, workspace)
+	return (&ConfigPolicyAuthZBasic{}).CanModifyWorkspaceConfigPolicies(ctx, curUser, workspace)
 }
 
-// CanViewWorkspaceConfigPolicies RBAC authz but enforces basic authz.
+// CanViewWorkspaceConfigPolicies calls RBAC authz but enforces basic authz.
 func (p *ConfigPolicyAuthZPermissive) CanViewWorkspaceConfigPolicies(
 	ctx context.Context, curUser model.User, workspace *workspacev1.Workspace,
 ) error {
-	_ = (&ConfigPolicyAuthZPermissive{}).CanViewWorkspaceConfigPolicies(ctx, curUser, workspace)
-	return (&ConfigPolicyAuthZPermissive{}).CanViewWorkspaceConfigPolicies(ctx, curUser, workspace)
+	_ = (&ConfigPolicyAuthZRBAC{}).CanViewWorkspaceConfigPolicies(ctx, curUser, workspace)
+	return (&ConfigPolicyAuthZBasic{}).CanViewWorkspaceConfigPolicies(ctx, curUser, workspace)
 }
