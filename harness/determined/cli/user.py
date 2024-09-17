@@ -234,7 +234,6 @@ def describe_token(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
 
     if args.username is None:
-        # userID = bindings.get_GetMe(sess).user.id  # TODO
         resp = bindings.get_GetLongLivedToken(sess)
     else:
         userID = bindings.get_GetUserByUsername(session=sess, username=args.username).user.id
@@ -271,10 +270,7 @@ def create_token(args: argparse.Namespace) -> None:
         token = bindings.post_PostLongLivedToken(sess, body=content)
     else:
         userID = bindings.get_GetUserByUsername(session=sess, username=args.username).user.id
-        content = bindings.v1PostUserLongLivedTokenRequest(
-            lifespan=args.lifespan,
-            userId=userID
-        )
+        content = bindings.v1PostUserLongLivedTokenRequest(lifespan=args.lifespan, userId=userID)
         token = bindings.post_PostUserLongLivedToken(sess, body=content, userId=userID)
 
     if args.yaml:

@@ -198,10 +198,37 @@ func (a *UserAuthZRBAC) CanSetUsersRemote(ctx context.Context, curUser model.Use
 	return canAdministrateUser(ctx, curUser.ID)
 }
 
+func logCanAdministrateLongLivedTokenOnUser(fields log.Fields, curUserID model.UserID, permissionID rbacv1.PermissionType) {
+	fields["userID"] = curUserID
+	fields["permissionRequired"] = []audit.PermissionWithSubject{
+		{
+			PermissionTypes: []rbacv1.PermissionType{
+				permissionID,
+			},
+			SubjectType: "user",
+		},
+	}
+}
+
+func canAdministrateLongLivedTokenOnUser(ctx context.Context, curUserID model.UserID, permissionID rbacv1.PermissionType) (err error) {
+	fields := audit.ExtractLogFields(ctx)
+	logCanAdministrateLongLivedTokenOnUser(fields, curUserID, permissionID)
+	defer func() {
+		audit.LogFromErr(fields, err)
+	}()
+
+	return db.DoesPermissionMatch(ctx, curUserID, nil, permissionID)
+}
+
 // CanCreateUsersOwnToken always returns nil.
 func (a *UserAuthZRBAC) CanCreateUsersOwnToken(ctx context.Context, curUser model.User) error {
 	noPermissionRequired(ctx, curUser.ID, curUser.ID)
 
+	err := db.DoesPermissionMatch(ctx, curUser.ID, nil,
+		rbacv1.PermissionType_PERMISSION_TYPE_CREATE_LONG_LIVED_TOKEN)
+	if err != nil {
+		return errors.Wrap(err, "unable to create token due to insufficient permissions")
+	}
 	return nil
 }
 
@@ -211,13 +238,14 @@ func (a *UserAuthZRBAC) CanCreateUsersToken(
 	ctx context.Context, curUser, targetUser model.User,
 ) (err error) {
 	fields := audit.ExtractLogFields(ctx)
-	logCanAdministrateUser(fields, curUser.ID)
+	logCanAdministrateLongLivedTokenOnUser(fields, curUser.ID,
+		rbacv1.PermissionType_PERMISSION_TYPE_CREATE_OTHER_LONG_LIVED_TOKEN)
 	defer func() {
 		audit.LogFromErr(fields, err)
 	}()
 
 	err = db.DoesPermissionMatch(ctx, curUser.ID, nil,
-		rbacv1.PermissionType_PERMISSION_TYPE_ADMINISTRATE_USER)
+		rbacv1.PermissionType_PERMISSION_TYPE_CREATE_OTHER_LONG_LIVED_TOKEN)
 	if err != nil && curUser.ID != targetUser.ID {
 		return errors.New("only admin privileged users can change other user's token")
 	}
@@ -235,7 +263,8 @@ func (a *UserAuthZRBAC) CanGetUsersOwnToken(ctx context.Context, curUser model.U
 func (a *UserAuthZRBAC) CanGetAllLongLivedTokens(
 	ctx context.Context, curUser model.User,
 ) error {
-	return canAdministrateUser(ctx, curUser.ID)
+	return canAdministrateLongLivedTokenOnUser(ctx, curUser.ID,
+		rbacv1.PermissionType_PERMISSION_TYPE_VIEW_OTHER_LONG_LIVED_TOKEN)
 }
 
 // CanGetUsersToken returns an error if the user is not the target user and does not have admin
@@ -244,13 +273,14 @@ func (a *UserAuthZRBAC) CanGetUsersToken(
 	ctx context.Context, curUser, targetUser model.User,
 ) (err error) {
 	fields := audit.ExtractLogFields(ctx)
-	logCanAdministrateUser(fields, curUser.ID)
+	logCanAdministrateLongLivedTokenOnUser(fields, curUser.ID,
+		rbacv1.PermissionType_PERMISSION_TYPE_VIEW_OTHER_LONG_LIVED_TOKEN)
 	defer func() {
 		audit.LogFromErr(fields, err)
 	}()
 
 	err = db.DoesPermissionMatch(ctx, curUser.ID, nil,
-		rbacv1.PermissionType_PERMISSION_TYPE_ADMINISTRATE_USER)
+		rbacv1.PermissionType_PERMISSION_TYPE_VIEW_OTHER_LONG_LIVED_TOKEN)
 	if err != nil && curUser.ID != targetUser.ID {
 		return errors.New("only admin privileged users can view other user's token")
 	}
@@ -275,13 +305,14 @@ func (a *UserAuthZRBAC) CanDeleteUsersToken(
 	ctx context.Context, curUser, targetUser model.User,
 ) (err error) {
 	fields := audit.ExtractLogFields(ctx)
-	logCanAdministrateUser(fields, curUser.ID)
+	logCanAdministrateLongLivedTokenOnUser(fields, curUser.ID,
+		rbacv1.PermissionType_PERMISSION_TYPE_REVOKE_OTHER_LONG_LIVED_TOKEN)
 	defer func() {
 		audit.LogFromErr(fields, err)
 	}()
 
 	err = db.DoesPermissionMatch(ctx, curUser.ID, nil,
-		rbacv1.PermissionType_PERMISSION_TYPE_ADMINISTRATE_USER)
+		rbacv1.PermissionType_PERMISSION_TYPE_REVOKE_OTHER_LONG_LIVED_TOKEN)
 	if err != nil && curUser.ID != targetUser.ID {
 		return errors.New("only admin privileged users can delete other user's token")
 	}

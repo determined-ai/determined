@@ -180,6 +180,21 @@ enum PermissionType {
 
   // Ability to revoke one's own long lived token
   PERMISSION_TYPE_REVOKE_LONG_LIVED_TOKEN = 12001;
+
+  // Ability to revoke another user's long lived token
+  PERMISSION_TYPE_REVOKE_OTHER_LONG_LIVED_TOKEN = 12002;
+
+  // Ability to create one's own long lived token
+  PERMISSION_TYPE_CREATE_LONG_LIVED_TOKEN = 12003;
+
+  // Ability to create another user's long lived token
+  PERMISSION_TYPE_CREATE_OTHER_LONG_LIVED_TOKEN = 12004;
+
+  // Ability to view one's own long lived token
+  PERMISSION_TYPE_VIEW_LONG_LIVED_TOKEN = 12005;
+
+  // Ability to view another user's long lived token
+  PERMISSION_TYPE_VIEW_OTHER_LONG_LIVED_TOKEN = 12006;
 }
 
 // RoleAssignmentSummary is used to describe permissions a user has.

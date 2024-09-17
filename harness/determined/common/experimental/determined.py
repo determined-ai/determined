@@ -586,8 +586,10 @@ class Determined:
     def list_tokens(self, isRevoked: Optional[bool] = None) -> List[user.UserSessions]:
         def get_with_offset(offset: int) -> bindings.v1GetAllLongLivedTokensResponse:
             return bindings.get_GetAllLongLivedTokens(
-                session=self._session, offset=offset, isRevoked=isRevoked,
-                tokenType=bindings.v1TokenType.LONG_LIVED_TOKEN
+                session=self._session,
+                offset=offset,
+                isRevoked=isRevoked,
+                tokenType=bindings.v1TokenType.LONG_LIVED_TOKEN,
             )
 
         resps = api.read_paginated(get_with_offset)
