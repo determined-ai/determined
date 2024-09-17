@@ -14,7 +14,6 @@ import (
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/license"
 	"github.com/determined-ai/determined/master/internal/workspace"
-	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
@@ -72,25 +71,27 @@ func (*apiServer) GetWorkspaceConfigPolicies(
 	}
 
 	resp := apiv1.GetWorkspaceConfigPoliciesResponse{}
-	if req.WorkloadType == model.NTSCType {
-		configPolicies, err := configpolicy.GetNTSCConfigPolicies(ctx, ptrs.Ptr(int(req.WorkspaceId)))
-		if err != nil {
-			return nil, err
-		}
-
-		type ConfigPolicies struct {
-			Constraints     model.Constraints
-			InvariantConfig model.CommandConfig
-		}
-		respStruct := ConfigPolicies{Constraints: configPolicies.Constraints, InvariantConfig: configPolicies.InvariantConfig}
-		resp.ConfigPolicies = configpolicy.MarshalConfigPolicy(respStruct)
-	} else {
-		data, err := stubData()
-		if err != nil {
-			return nil, err
-		}
-		resp.ConfigPolicies = data
+	configPolicies, err := configpolicy.GetTaskConfigPolicies(
+		ctx, ptrs.Ptr(int(req.WorkspaceId)), req.WorkloadType)
+	if err != nil {
+		return nil, err
 	}
+	policyMap := map[string]interface{}{}
+	if configPolicies.InvariantConfig != nil {
+		var configMap map[string]interface{}
+		if err := yaml.Unmarshal([]byte(*configPolicies.InvariantConfig), &configMap); err != nil {
+			return nil, fmt.Errorf("unable to unmarshal json: %w", err)
+		}
+		policyMap["invariant_config"] = configMap
+	}
+	if configPolicies.Constraints != nil {
+		var constraintsMap map[string]interface{}
+		if err := yaml.Unmarshal([]byte(*configPolicies.Constraints), &constraintsMap); err != nil {
+			return nil, fmt.Errorf("unable to unmarshal json: %w", err)
+		}
+		policyMap["constraints"] = constraintsMap
+	}
+	resp.ConfigPolicies = configpolicy.MarshalConfigPolicy(policyMap)
 	return &resp, nil
 }
 

@@ -61,12 +61,12 @@ func TestDeleteWorkspaceConfigPolicies(t *testing.T) {
 
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
-			ntscPolicies := &model.NTSCTaskConfigPolicies{
+			ntscPolicies := &model.TaskConfigPolicies{
 				WorkspaceID:   ptrs.Ptr(int(test.req.WorkspaceId)),
 				WorkloadType:  model.NTSCType,
 				LastUpdatedBy: curUser.ID,
 			}
-			err = configpolicy.SetNTSCConfigPolicies(ctx, ntscPolicies)
+			err = configpolicy.SetTaskConfigPolicies(ctx, ntscPolicies)
 			require.NoError(t, err)
 
 			resp, err := api.DeleteWorkspaceConfigPolicies(ctx, test.req)
@@ -79,7 +79,7 @@ func TestDeleteWorkspaceConfigPolicies(t *testing.T) {
 			require.NotNil(t, resp)
 
 			// Policies removed?
-			policies, err := configpolicy.GetNTSCConfigPolicies(ctx, ptrs.Ptr(int(workspaceID)))
+			policies, err := configpolicy.GetTaskConfigPolicies(ctx, ptrs.Ptr(int(workspaceID)), test.req.WorkloadType)
 			require.Nil(t, policies)
 			require.ErrorIs(t, err, sql.ErrNoRows)
 		})
@@ -130,7 +130,7 @@ func TestDeleteGlobalConfigPolicies(t *testing.T) {
 
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
-			err := configpolicy.SetNTSCConfigPolicies(ctx, &model.NTSCTaskConfigPolicies{
+			err := configpolicy.SetTaskConfigPolicies(ctx, &model.TaskConfigPolicies{
 				WorkloadType:  model.NTSCType,
 				LastUpdatedBy: curUser.ID,
 			})
@@ -146,7 +146,7 @@ func TestDeleteGlobalConfigPolicies(t *testing.T) {
 			require.NotNil(t, resp)
 
 			// Policies removed?
-			policies, err := configpolicy.GetNTSCConfigPolicies(ctx, nil)
+			policies, err := configpolicy.GetTaskConfigPolicies(ctx, nil, test.req.WorkloadType)
 			require.Nil(t, policies)
 			require.ErrorIs(t, err, sql.ErrNoRows)
 		})

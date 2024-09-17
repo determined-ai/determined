@@ -20,7 +20,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func TestSetNTSCConfigPolicies(t *testing.T) {
+func TestSetTaskConfigPolicies(t *testing.T) {
 	ctx := context.Background()
 	require.NoError(t, etc.SetRootPath(db.RootFromDB))
 	pgDB, cleanup := db.MustResolveNewPostgresDatabase(t)
@@ -30,24 +30,24 @@ func TestSetNTSCConfigPolicies(t *testing.T) {
 	user := db.RequireMockUser(t, pgDB)
 	workspaceIDs := []int32{}
 
-	// defer func() {
-	// 	if len(workspaceIDs) > 0 {
-	// 		err := db.CleanupMockWorkspace(workspaceIDs)
-	// 		if err != nil {
-	// 			log.Errorf("error when cleaning up mock workspaces")
-	// 		}
-	// 	}
-	// }()
+	defer func() {
+		if len(workspaceIDs) > 0 {
+			err := db.CleanupMockWorkspace(workspaceIDs)
+			if err != nil {
+				log.Errorf("error when cleaning up mock workspaces")
+			}
+		}
+	}()
 
 	tests := []struct {
-		name     string
-		ntscTCPs *model.NTSCTaskConfigPolicies
-		global   bool
-		err      *string
+		name   string
+		tcps   *model.TaskConfigPolicies
+		global bool
+		err    *string
 	}{
 		{
 			"invalid user id",
-			&model.NTSCTaskConfigPolicies{
+			&model.TaskConfigPolicies{
 				WorkloadType:    model.NTSCType,
 				LastUpdatedBy:   -1,
 				LastUpdatedTime: time.Now().UTC().Truncate(time.Second),
@@ -59,23 +59,23 @@ func TestSetNTSCConfigPolicies(t *testing.T) {
 		},
 		{
 			"valid config no constraint",
-			&model.NTSCTaskConfigPolicies{
+			&model.TaskConfigPolicies{
 				WorkloadType:    model.NTSCType,
 				LastUpdatedBy:   user.ID,
 				LastUpdatedTime: time.Now().UTC().Truncate(time.Second),
 				InvariantConfig: DefaultCommandConfig(),
-				Constraints:     model.Constraints{},
+				Constraints:     nil,
 			},
 			false,
 			nil,
 		},
 		{
 			"valid constraint no config",
-			&model.NTSCTaskConfigPolicies{
+			&model.TaskConfigPolicies{
 				WorkloadType:    model.NTSCType,
 				LastUpdatedBy:   user.ID,
 				LastUpdatedTime: time.Now().UTC().Truncate(time.Second),
-				InvariantConfig: model.CommandConfig{},
+				InvariantConfig: nil,
 				Constraints:     DefaultConstraints(),
 			},
 			false,
@@ -83,7 +83,7 @@ func TestSetNTSCConfigPolicies(t *testing.T) {
 		},
 		{
 			"valid constraint valid config",
-			&model.NTSCTaskConfigPolicies{
+			&model.TaskConfigPolicies{
 				WorkloadType:    model.NTSCType,
 				LastUpdatedBy:   user.ID,
 				LastUpdatedTime: time.Now().UTC().Truncate(time.Second),
@@ -95,12 +95,12 @@ func TestSetNTSCConfigPolicies(t *testing.T) {
 		},
 		{
 			"global valid constraint no config",
-			&model.NTSCTaskConfigPolicies{
+			&model.TaskConfigPolicies{
 				WorkloadType:    model.NTSCType,
 				WorkspaceID:     nil,
 				LastUpdatedBy:   user.ID,
 				LastUpdatedTime: time.Now().UTC().Truncate(time.Second),
-				InvariantConfig: model.CommandConfig{},
+				InvariantConfig: nil,
 				Constraints:     DefaultConstraints(),
 			},
 			true,
@@ -108,19 +108,19 @@ func TestSetNTSCConfigPolicies(t *testing.T) {
 		},
 		{
 			"global valid config no constraint",
-			&model.NTSCTaskConfigPolicies{
+			&model.TaskConfigPolicies{
 				WorkloadType:    model.NTSCType,
 				LastUpdatedBy:   user.ID,
 				LastUpdatedTime: time.Now().UTC().Truncate(time.Second),
 				InvariantConfig: DefaultCommandConfig(),
-				Constraints:     model.Constraints{},
+				Constraints:     nil,
 			},
 			true,
 			nil,
 		},
 		{
 			"global valid constraint valid config",
-			&model.NTSCTaskConfigPolicies{
+			&model.TaskConfigPolicies{
 				WorkloadType:    model.NTSCType,
 				LastUpdatedBy:   user.ID,
 				LastUpdatedTime: time.Now().UTC().Truncate(time.Second),
@@ -132,27 +132,27 @@ func TestSetNTSCConfigPolicies(t *testing.T) {
 		},
 		{
 			"global no constraint no config",
-			&model.NTSCTaskConfigPolicies{
+			&model.TaskConfigPolicies{
 				WorkloadType:    model.NTSCType,
 				LastUpdatedBy:   user.ID,
 				LastUpdatedTime: time.Now().UTC().Truncate(time.Second),
-				InvariantConfig: model.CommandConfig{},
-				Constraints:     model.Constraints{},
+				InvariantConfig: nil,
+				Constraints:     nil,
 			},
 			true,
 			nil,
 		},
 		{
-			"experiment workload type for NTSC policies",
-			&model.NTSCTaskConfigPolicies{
+			"experiment workload type for TCP policies",
+			&model.TaskConfigPolicies{
 				WorkloadType:    model.ExperimentType,
 				LastUpdatedBy:   user.ID,
 				LastUpdatedTime: time.Now().UTC().Truncate(time.Second),
-				InvariantConfig: model.CommandConfig{},
-				Constraints:     model.Constraints{},
+				InvariantConfig: nil,
+				Constraints:     nil,
 			},
 			true,
-			ptrs.Ptr("invalid workload type"),
+			nil,
 		},
 	}
 
@@ -164,11 +164,11 @@ func TestSetNTSCConfigPolicies(t *testing.T) {
 				_, err := db.Bun().NewInsert().Model(&w).Exec(ctx)
 				require.NoError(t, err)
 				workspaceIDs = append(workspaceIDs, int32(w.ID))
-				test.ntscTCPs.WorkspaceID = ptrs.Ptr(w.ID)
+				test.tcps.WorkspaceID = ptrs.Ptr(w.ID)
 			}
 
 			// Test add NTSC task config policies.
-			err := SetNTSCConfigPolicies(ctx, test.ntscTCPs)
+			err := SetTaskConfigPolicies(ctx, test.tcps)
 			if test.err != nil {
 				require.ErrorContains(t, err, *test.err)
 				return
@@ -176,28 +176,27 @@ func TestSetNTSCConfigPolicies(t *testing.T) {
 			require.NoError(t, err)
 
 			// Test get NTSC task config policies.
-			ntscTCPs, err := GetNTSCConfigPolicies(ctx, test.ntscTCPs.WorkspaceID)
+			tcps, err := GetTaskConfigPolicies(ctx, test.tcps.WorkspaceID, test.tcps.WorkloadType)
 			require.NoError(t, err)
-			ntscTCPs.LastUpdatedTime = ntscTCPs.LastUpdatedTime.UTC()
-			require.Equal(t, test.ntscTCPs, ntscTCPs)
+			tcps.LastUpdatedTime = tcps.LastUpdatedTime.UTC()
+			requireEqualTaskPolicy(t, test.tcps, tcps)
 
 			// Test update NTSC task config policies.
-			test.ntscTCPs.InvariantConfig.Environment.Image = model.RuntimeItem{
-				CPU: uuid.NewString(),
-			}
-			err = SetNTSCConfigPolicies(ctx, test.ntscTCPs)
+			test.tcps.InvariantConfig = ptrs.Ptr(
+				`{"description":"random description","resources":{"slots":4,"max_slots":8},"notebook_idle_type":"activity"}`)
+			err = SetTaskConfigPolicies(ctx, test.tcps)
 			require.NoError(t, err)
 
 			// Test get NTSC task config policies.
-			ntscTCPs, err = GetNTSCConfigPolicies(ctx, test.ntscTCPs.WorkspaceID)
+			tcps, err = GetTaskConfigPolicies(ctx, test.tcps.WorkspaceID, test.tcps.WorkloadType)
 			require.NoError(t, err)
-			ntscTCPs.LastUpdatedTime = ntscTCPs.LastUpdatedTime.UTC().Truncate(time.Second)
-			require.Equal(t, test.ntscTCPs, ntscTCPs)
+			tcps.LastUpdatedTime = tcps.LastUpdatedTime.UTC().Truncate(time.Second)
+			requireEqualTaskPolicy(t, test.tcps, tcps)
 		})
 	}
 
 	// Test invalid workspace ID.
-	err := SetNTSCConfigPolicies(ctx, &model.NTSCTaskConfigPolicies{
+	err := SetTaskConfigPolicies(ctx, &model.TaskConfigPolicies{
 		WorkspaceID:     ptrs.Ptr(-1),
 		LastUpdatedBy:   user.ID,
 		WorkloadType:    model.NTSCType,
@@ -219,7 +218,7 @@ func TestTaskConfigPoliciesUnique(t *testing.T) {
 
 	// Global scope.
 	_, _, ntscTCPs := CreateMockTaskConfigPolicies(ctx, t, pgDB, user, true, true, true)
-	ntscTCPs.Constraints = model.Constraints{}
+	ntscTCPs.Constraints = nil
 	expInvariantConfig, err := json.Marshal(ntscTCPs.InvariantConfig)
 	require.NoError(t, err)
 
@@ -239,7 +238,7 @@ func TestTaskConfigPoliciesUnique(t *testing.T) {
 
 	// Workspace-level.
 	w, _, ntscTCPs := CreateMockTaskConfigPolicies(ctx, t, pgDB, user, false, true, true)
-	ntscTCPs.Constraints = model.Constraints{}
+	ntscTCPs.Constraints = nil
 	expInvariantConfig, err = json.Marshal(ntscTCPs.InvariantConfig)
 	require.NoError(t, err)
 
@@ -419,14 +418,14 @@ func TestDeleteConfigPolicies(t *testing.T) {
 // requested for the specified scope.
 func CreateMockTaskConfigPolicies(ctx context.Context, t *testing.T,
 	pgDB *db.PgDB, user model.User, global bool, hasInvariantConfig bool,
-	hasConstraints bool) (*model.Workspace, *model.ExperimentTaskConfigPolicies,
-	*model.NTSCTaskConfigPolicies,
+	hasConstraints bool) (*model.Workspace, *model.TaskConfigPolicies,
+	*model.TaskConfigPolicies,
 ) {
 	var scope *int
 	var w model.Workspace
-	var ntscConfig model.CommandConfig
+	var ntscConfig *string
 
-	var constraints model.Constraints
+	var constraints *string
 
 	if !global {
 		w = model.Workspace{Name: uuid.NewString(), UserID: user.ID}
@@ -441,34 +440,53 @@ func CreateMockTaskConfigPolicies(ctx context.Context, t *testing.T,
 		constraints = DefaultConstraints()
 	}
 
-	ntscTCP := &model.NTSCTaskConfigPolicies{
+	ntscTCP := &model.TaskConfigPolicies{
 		WorkspaceID:     scope,
 		WorkloadType:    model.NTSCType,
 		LastUpdatedBy:   user.ID,
 		InvariantConfig: ntscConfig,
 		Constraints:     constraints,
 	}
-	err := SetNTSCConfigPolicies(ctx, ntscTCP)
+	err := SetTaskConfigPolicies(ctx, ntscTCP)
 	require.NoError(t, err)
 
 	return &w, nil, ntscTCP
 }
 
-func DefaultCommandConfig() model.CommandConfig {
-	return model.CommandConfig{
-		Description: "random description",
-		Resources: model.ResourcesConfig{
-			Slots:    4,
-			MaxSlots: ptrs.Ptr(8),
-		},
-	}
+func DefaultCommandConfig() *string {
+	jsonString := `{"description": "random description", "resources": {"slots": 4, "max_slots": 8}}`
+	return ptrs.Ptr(jsonString)
 }
 
-func DefaultConstraints() model.Constraints {
-	return model.Constraints{
-		PriorityLimit: ptrs.Ptr[int](10),
-		ResourceConstraints: &model.ResourceConstraints{
-			MaxSlots: ptrs.Ptr(10),
-		},
+func DefaultConstraints() *string {
+	jsonString := `{"priority_limit": 10, "resources": {"max_slots": 8}}`
+	return ptrs.Ptr(jsonString)
+}
+
+func requireEqualTaskPolicy(t *testing.T, exp *model.TaskConfigPolicies, act *model.TaskConfigPolicies) {
+	require.Equal(t, exp.LastUpdatedBy, act.LastUpdatedBy)
+	require.Equal(t, exp.LastUpdatedTime, act.LastUpdatedTime)
+	require.Equal(t, exp.WorkloadType, act.WorkloadType)
+	require.Equal(t, exp.WorkspaceID, act.WorkspaceID)
+
+	if exp.Constraints == nil {
+		require.Nil(t, exp.Constraints, act.Constraints)
+	} else {
+		var expJSONMap, actJSONMap map[string]interface{}
+		err := json.Unmarshal([]byte(*exp.Constraints), &expJSONMap)
+		require.NoError(t, err)
+		err = json.Unmarshal([]byte(*act.Constraints), &actJSONMap)
+		require.NoError(t, err)
+		require.Equal(t, expJSONMap, actJSONMap)
+	}
+	if exp.InvariantConfig == nil {
+		require.Nil(t, exp.InvariantConfig, act.InvariantConfig)
+	} else {
+		var expJSONMap, actJSONMap map[string]interface{}
+		err := json.Unmarshal([]byte(*exp.InvariantConfig), &expJSONMap)
+		require.NoError(t, err)
+		err = json.Unmarshal([]byte(*act.InvariantConfig), &actJSONMap)
+		require.NoError(t, err)
+		require.Equal(t, expJSONMap, actJSONMap)
 	}
 }
