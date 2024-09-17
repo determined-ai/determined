@@ -63,9 +63,26 @@ func (*apiServer) PutGlobalConfigPolicies(
 }
 
 // Get workspace task config policies.
-func (*apiServer) GetWorkspaceConfigPolicies(
+func (a *apiServer) GetWorkspaceConfigPolicies(
 	ctx context.Context, req *apiv1.GetWorkspaceConfigPoliciesRequest,
 ) (*apiv1.GetWorkspaceConfigPoliciesResponse, error) {
+	license.RequireLicense("manage config policies")
+
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	w, err := a.GetWorkspaceByID(ctx, req.WorkspaceId, *curUser, false)
+	if err != nil {
+		return nil, err
+	}
+
+	err = workspace.AuthZProvider.Get().CanViewWorkspaceConfigPolicies(ctx, *curUser, w)
+	if err != nil {
+		return nil, err
+	}
+
 	if !configpolicy.ValidWorkloadType(req.WorkloadType) {
 		errMessage := fmt.Sprintf("invalid workload type: %s.", req.WorkloadType)
 		if len(req.WorkloadType) == 0 {
@@ -74,7 +91,6 @@ func (*apiServer) GetWorkspaceConfigPolicies(
 		return nil, status.Errorf(codes.InvalidArgument, errMessage)
 	}
 
-	resp := apiv1.GetWorkspaceConfigPoliciesResponse{}
 	configPolicies, err := configpolicy.GetTaskConfigPolicies(
 		ctx, ptrs.Ptr(int(req.WorkspaceId)), req.WorkloadType)
 	if err != nil {
@@ -95,8 +111,7 @@ func (*apiServer) GetWorkspaceConfigPolicies(
 		}
 		policyMap["constraints"] = constraintsMap
 	}
-	resp.ConfigPolicies = configpolicy.MarshalConfigPolicy(policyMap)
-	return &resp, nil
+	return &apiv1.GetWorkspaceConfigPoliciesResponse{ConfigPolicies: configpolicy.MarshalConfigPolicy(policyMap)}, nil
 }
 
 // Get global task config policies.

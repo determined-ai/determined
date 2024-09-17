@@ -23,10 +23,10 @@ const (
 // SetTaskConfigPolicies adds the task invariant config and constraints config policies to
 // the database.
 func SetTaskConfigPolicies(ctx context.Context,
-	experimentTCP *model.TaskConfigPolicies,
+	tcp *model.TaskConfigPolicies,
 ) error {
 	return db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		return SetTaskConfigPoliciesTx(ctx, &tx, experimentTCP)
+		return SetTaskConfigPoliciesTx(ctx, &tx, tcp)
 	})
 }
 
@@ -71,13 +71,13 @@ func SetTaskConfigPoliciesTx(ctx context.Context, tx *bun.Tx,
 func GetTaskConfigPolicies(ctx context.Context,
 	scope *int, workloadType string,
 ) (*model.TaskConfigPolicies, error) {
-	var ntscTCP model.TaskConfigPolicies
+	var tcp model.TaskConfigPolicies
 	wkspQuery := wkspIDQuery
 	if scope == nil {
 		wkspQuery = wkspIDGlobalQuery
 	}
 	err := db.Bun().NewSelect().
-		Model(&ntscTCP).
+		Model(&tcp).
 		Where(wkspQuery, scope).
 		Where("workload_type = ?", workloadType).
 		Scan(ctx)
@@ -85,7 +85,7 @@ func GetTaskConfigPolicies(ctx context.Context,
 		return nil, fmt.Errorf("error retrieving %v task config policies for "+
 			"workspace with ID %d: %w", workloadType, scope, err)
 	}
-	return &ntscTCP, nil
+	return &tcp, nil
 }
 
 // DeleteConfigPolicies deletes the invariant experiment config and constraints for the
