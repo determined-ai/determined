@@ -994,3 +994,15 @@ export const killTask = async (task: Pick<Type.CommandTask, 'id' | 'type'>): Pro
       return await killTensorBoard({ commandId: task.id });
   }
 };
+
+export const getWorkspaceConfigPolicies = generateDetApi<
+  Service.GetWorkspaceConfigPolicies,
+  Api.V1GetWorkspaceConfigPoliciesResponse,
+  Api.V1GetWorkspaceConfigPoliciesResponse
+>(Config.getWorkspaceConfigPolicies);
+
+export const updateWorkspaceConfigPolicies = generateDetApi<
+  Service.UpdateWorkspaceConfigPolicies,
+  Api.V1PutWorkspaceConfigPoliciesResponse,
+  Api.V1PutWorkspaceConfigPoliciesResponse
+>(Config.updateWorkspaceConfigPolicies);
