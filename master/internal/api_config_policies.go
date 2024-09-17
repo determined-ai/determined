@@ -8,9 +8,9 @@ import (
 	"gopkg.in/yaml.v3"
 
 	"github.com/determined-ai/determined/master/internal/configpolicy"
+	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
-	"github.com/determined-ai/determined/master/pkg/model"
 )
 
 func stubData() (*structpb.Struct, error) {
@@ -60,27 +60,29 @@ func (*apiServer) GetWorkspaceConfigPolicies(
 	if !configpolicy.ValidWorkloadType(req.WorkloadType) {
 		return nil, fmt.Errorf("invalid workload type: %s", req.WorkloadType)
 	}
-	
+
 	resp := apiv1.GetWorkspaceConfigPoliciesResponse{}
-	if req.WorkloadType == string(model.NTSCType) {
-		configPolicies, err := configpolicy.GetNTSCConfigPolicies(ctx, ptrs.Ptr(int(req.WorkspaceId)))
-		if err != nil {
-			return nil, err
-		}
-		fmt.Printf("%+v\n", configPolicies)
-		type ConfigPolicies struct {
-			Constraints model.Constraints
-			InvariantConfig model.CommandConfig
-		}
-		respStruct := ConfigPolicies{Constraints: configPolicies.Constraints, InvariantConfig: configPolicies.InvariantConfig}
-		resp.ConfigPolicies = configpolicy.MarshalConfigPolicy(respStruct)
-	} else {
-		data, err := stubData()
-		if err != nil {
-			return nil, err
-		}
-		resp.ConfigPolicies = data
+	configPolicies, err := configpolicy.GetTaskConfigPolicies(
+		ctx, ptrs.Ptr(int(req.WorkspaceId)), model.WorkloadType(req.WorkloadType))
+	if err != nil {
+		return nil, err
 	}
+	policyMap := map[string]interface{}{}
+	if configPolicies.InvariantConfig != nil {
+		var configMap map[string]interface{}
+		if err := yaml.Unmarshal([]byte(*configPolicies.InvariantConfig), &configMap); err != nil {
+			return nil, fmt.Errorf("unable to unmarshal json: %w", err)
+		}
+		policyMap["invariant_config"] = configMap
+	}
+	if configPolicies.Constraints != nil {
+		var constraintsMap map[string]interface{}
+		if err := yaml.Unmarshal([]byte(*configPolicies.Constraints), &constraintsMap); err != nil {
+			return nil, fmt.Errorf("unable to unmarshal json: %w", err)
+		}
+		policyMap["constraints"] = constraintsMap
+	}
+	resp.ConfigPolicies = configpolicy.MarshalConfigPolicy(policyMap)
 	return &resp, nil
 }
 
