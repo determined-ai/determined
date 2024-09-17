@@ -122,6 +122,31 @@ Below is an example of handling a signed payload in Python.
    signed payload. For example "{"key_one": "value_one"}" will fail authentication, while
    "{"key_one":"value_one"}" will yield the correct signed payload value.
 
+.. _supported-webhook-triggers:
+
+Supported Triggers
+==================
+
+``Completed`` or ``Error`` will be triggered when an experiment in scope is completed or errored.
+
+``Tasklog`` will be triggered when a task matching regex is detected.
+
+``Custom`` will only be triggered from experiment code.
+
+.. code::
+
+   # Here is an example code to trigger a custom trigger.
+
+   # config.yaml
+   integrations:
+      webhooks:
+         webhook_name:
+            - <webhook_name>
+
+   # code.py
+   with det.core.init() as core_context:
+      core_context.alert(title="some title", description="some description", level="info")
+
 *******************
  Creating Webhooks
 *******************
@@ -140,11 +165,24 @@ To create a webhook:
    If you do not have sufficient permissions to view and create webhooks, consult with a systems
    admin.
 
+-  Workspace: You can only select from workspaces you have the permission to create webhook in.
+-  Name: Identifier to reference webhook in experiment configuration.
 -  URL: Supply the webhook URL.
 -  Type: Select a type, either ``Default`` or ``Slack``. The ``Slack`` type can automatically format
    message content for better readability on Slack.
--  Trigger: Select the experiment state change you want to monitor, either ``Completed``, ``Error``,
-   or ``Tasklog``.
+-  Trigger: Select the event you want to monitor, see :ref:`supported-webhook-triggers`.
+-  Trigger by: Select whether you want to monitor all experiments within the workspace. ``Custom``
+   trigger can only be triggered by specific experiments.
+
+.. code::
+
+   # Here is an example experiment config associated with specific webhooks
+
+   integrations:
+      webhooks:
+         webhook_name:
+            - <webhook_name>
+
 -  Regex: If the webhook is configured to trigger on Tasklog, define a regex using `Golang Regex
    Syntax <https://pkg.go.dev/regexp/syntax>`_.
 
@@ -152,7 +190,8 @@ To create a webhook:
    :width: 100%
    :alt: Webhook user interface showing the fields you will interact with.
 
-Once created, your webhook will begin executing for the selected events.
+Once created, your webhook will begin executing for the selected events for experiments within
+scope.
 
 ******************
  Testing Webhooks
@@ -189,10 +228,17 @@ payload as stated below:
 To delete a webhook, select the more-options menu to the right of the webhook record to expand
 available actions.
 
+******************
+ Editing Webhooks
+******************
+
+To edit a webhook, select the more-options menu to the right of the webhook record to expand
+available actions.
+
 .. note::
 
-   Determined does not support editing webhooks. Instead, you should delete and recreate the
-   webhook.
+   Determined only support editing the URL of webhooks. To edit other attributes, you should delete
+   and recreate the webhook.
 
 .. toctree::
    :caption: Notification

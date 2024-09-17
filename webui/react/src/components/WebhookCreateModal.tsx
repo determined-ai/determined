@@ -5,6 +5,7 @@ import Select, { Option } from 'hew/Select';
 import { useToast } from 'hew/Toast';
 import React, { useCallback, useEffect, useId, useMemo, useState } from 'react';
 
+import Link from 'components/Link';
 import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
@@ -15,6 +16,7 @@ import { RunState, Workspace } from 'types';
 import handleError, { DetError, ErrorLevel, ErrorType } from 'utils/error';
 import { useObservable } from 'utils/observable';
 import { routeToReactUrl } from 'utils/routes';
+
 interface Props {
   onSuccess?: () => void;
 }
@@ -68,7 +70,7 @@ const triggerOptions = [
 ];
 const modeOptions = [
   {
-    label: 'All experiments in Workspace',
+    label: 'All experiments',
     value: V1WebhookMode.WORKSPACE,
   },
   {
@@ -188,11 +190,8 @@ const WebhookCreateModalComponent: React.FC<Props> = ({ onSuccess }: Props) => {
         onFieldsChange={onChange}>
         {f_webhook && (
           <>
-            <Form.Item
-              label="Workspace"
-              name="workspaceId"
-              rules={[{ message: 'Workspace is required', required: true }]}>
-              <Select allowClear placeholder="Workspace (required)">
+            <Form.Item label="Workspace" name="workspaceId">
+              <Select allowClear placeholder="Workspace">
                 {permWorkspace.map((workspace: Workspace) => (
                   <Option key={workspace.id} value={workspace.id}>
                     {workspace.name}
@@ -255,6 +254,9 @@ const WebhookCreateModalComponent: React.FC<Props> = ({ onSuccess }: Props) => {
             />
           </Form.Item>
         )}
+        <Link external path={paths.docs('/integrations/notification/_index.html')} popout>
+          Learn more
+        </Link>
       </Form>
     </Modal>
   );
