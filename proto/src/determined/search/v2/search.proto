@@ -84,8 +84,6 @@ message Search {
   int32 id = 1;
   // The description of the search.
   string description = 2;
-  // Labels attached to the search.
-  repeated string labels = 3;
   // Tags attached to the search.
   repeated string tags = 3;
   // The time the search was started.
@@ -176,8 +174,6 @@ message PatchSearch {
   int32 id = 1;
   // The description of the search.
   google.protobuf.StringValue description = 2;
-  // Labels attached to the search.
-  google.protobuf.ListValue labels = 3;
   // Tags attached to the search.
   google.protobuf.ListValue tags = 3;
   // The search name.
