@@ -12226,6 +12226,43 @@ class v1PutExperimentsRetainLogsResponse(Printable):
         }
         return out
 
+class v1PutGlobalConfigPoliciesRequest(Printable):
+    """PutGlobalConfigPoliciesRequest sets global config
+    policies for the workload type.
+    """
+    configPolicies: "typing.Optional[str]" = None
+    workloadType: "typing.Optional[str]" = None
+
+    def __init__(
+        self,
+        *,
+        configPolicies: "typing.Union[str, None, Unset]" = _unset,
+        workloadType: "typing.Union[str, None, Unset]" = _unset,
+    ):
+        if not isinstance(configPolicies, Unset):
+            self.configPolicies = configPolicies
+        if not isinstance(workloadType, Unset):
+            self.workloadType = workloadType
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PutGlobalConfigPoliciesRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "configPolicies" in obj:
+            kwargs["configPolicies"] = obj["configPolicies"]
+        if "workloadType" in obj:
+            kwargs["workloadType"] = obj["workloadType"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "configPolicies" in vars(self):
+            out["configPolicies"] = self.configPolicies
+        if not omit_unset or "workloadType" in vars(self):
+            out["workloadType"] = self.workloadType
+        return out
+
 class v1PutGlobalConfigPoliciesResponse(Printable):
     """Response to PutGlobalConfigPoliciesRequest."""
     configPolicies: "typing.Optional[typing.Dict[str, typing.Any]]" = None
@@ -23751,6 +23788,7 @@ def put_PutExperimentsRetainLogs(
 def put_PutGlobalConfigPolicies(
     session: "api.BaseSession",
     *,
+    body: "v1PutGlobalConfigPoliciesRequest",
     workloadType: str,
 ) -> "v1PutGlobalConfigPoliciesResponse":
     """Add or update global task config policies.
@@ -23764,7 +23802,7 @@ def put_PutGlobalConfigPolicies(
         method="PUT",
         path=f"/api/v1/config-policies/global/{workloadType}",
         params=_params,
-        json=None,
+        json=body.to_json(True),
         data=None,
         headers=None,
         timeout=None,
