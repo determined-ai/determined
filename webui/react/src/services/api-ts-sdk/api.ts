@@ -9039,7 +9039,7 @@ export interface V1PutWorkspaceConfigPoliciesRequest {
      * @type {number}
      * @memberof V1PutWorkspaceConfigPoliciesRequest
      */
-    workspaceId?: number;
+    workspaceId: number;
     /**
      * The workload type the config policies apply to: EXPERIMENT or NTSC.
      * @type {string}

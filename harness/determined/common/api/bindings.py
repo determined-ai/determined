@@ -12452,37 +12452,33 @@ class v1PutWorkspaceConfigPoliciesRequest(Printable):
     """PutWorkspaceConfigPoliciesRequest sets config
     policies for the workspace and workload type.
     """
-    workspaceId: "typing.Optional[int]" = None
 
     def __init__(
         self,
         *,
         configPolicies: str,
         workloadType: str,
-        workspaceId: "typing.Union[int, None, Unset]" = _unset,
+        workspaceId: int,
     ):
         self.configPolicies = configPolicies
         self.workloadType = workloadType
-        if not isinstance(workspaceId, Unset):
-            self.workspaceId = workspaceId
+        self.workspaceId = workspaceId
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1PutWorkspaceConfigPoliciesRequest":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "configPolicies": obj["configPolicies"],
             "workloadType": obj["workloadType"],
+            "workspaceId": obj["workspaceId"],
         }
-        if "workspaceId" in obj:
-            kwargs["workspaceId"] = obj["workspaceId"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "configPolicies": self.configPolicies,
             "workloadType": self.workloadType,
+            "workspaceId": self.workspaceId,
         }
-        if not omit_unset or "workspaceId" in vars(self):
-            out["workspaceId"] = self.workspaceId
         return out
 
 class v1PutWorkspaceConfigPoliciesResponse(Printable):

@@ -10,7 +10,7 @@ import "protoc-gen-swagger/options/annotations.proto";
 // policies for the workspace and workload type.
 message PutWorkspaceConfigPoliciesRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "workload_type", "config_policies" ] }
+    json_schema: { required: [ "workspace_id", "workload_type", "config_policies" ] }
   };
 
   // The workspace the config policies apply to. Use global API for
@@ -58,7 +58,7 @@ message PutGlobalConfigPoliciesResponse {
 // for a given workspace and workload type.
 message GetWorkspaceConfigPoliciesRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "workload_type" ] }
+    json_schema: { required: [ "workspace_id", "workload_type" ] }
   };
 
   // The workspace the config policies apply to. Use global API for
@@ -98,7 +98,7 @@ message GetGlobalConfigPoliciesResponse {
 // policies for the workspace and workload type.
 message DeleteWorkspaceConfigPoliciesRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "workload_type" ] }
+    json_schema: { required: [ "workspace_id", "workload_type" ] }
   };
 
   // The workspace the config policies apply to. Use global API for
