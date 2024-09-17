@@ -52,10 +52,19 @@ export class ApiWorkspaceFixture {
    * strict superset of the Response, so no info is lost.
    */
   async createWorkspace(req: V1PostWorkspaceRequest): Promise<V1PostWorkspaceResponse> {
+    const apiAuth = this.apiAuth;
     const workspaceResp = await (await this.startWorkspaceRequest())
       .postWorkspace(req, {})
       .catch(async function (error) {
         const respBody = await streamConsumers.text(error.body);
+        if (error.status === 401) {
+          const token = apiAuth.getBearerToken();
+          throw new Error(
+            `Create Workspace Request failed. Status: ${error.status} Request: ${JSON.stringify(
+              req,
+            )} Token: ${token} Response: ${respBody}`,
+          );
+        }
         throw new Error(
           `Create Workspace Request failed. Status: ${error.status} Request: ${JSON.stringify(
             req,
