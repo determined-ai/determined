@@ -63,14 +63,55 @@ func (*apiServer) PutGlobalConfigPolicies(
 }
 
 // Get workspace task config policies.
-func (*apiServer) GetWorkspaceConfigPolicies(
+func (a *apiServer) GetWorkspaceConfigPolicies(
 	ctx context.Context, req *apiv1.GetWorkspaceConfigPoliciesRequest,
 ) (*apiv1.GetWorkspaceConfigPoliciesResponse, error) {
-	if !configpolicy.ValidWorkloadType(req.WorkloadType) {
-		return nil, fmt.Errorf("invalid workload type: %s", req.WorkloadType)
+	license.RequireLicense("manage config policies")
+
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
 	}
-	data, err := stubData()
-	return &apiv1.GetWorkspaceConfigPoliciesResponse{ConfigPolicies: data}, err
+
+	w, err := a.GetWorkspaceByID(ctx, req.WorkspaceId, *curUser, false)
+	if err != nil {
+		return nil, err
+	}
+
+	err = workspace.AuthZProvider.Get().CanViewWorkspaceConfigPolicies(ctx, *curUser, w)
+	if err != nil {
+		return nil, err
+	}
+
+	if !configpolicy.ValidWorkloadType(req.WorkloadType) {
+		errMessage := fmt.Sprintf("invalid workload type: %s.", req.WorkloadType)
+		if len(req.WorkloadType) == 0 {
+			errMessage = noWorkloadErr
+		}
+		return nil, status.Errorf(codes.InvalidArgument, errMessage)
+	}
+
+	configPolicies, err := configpolicy.GetTaskConfigPolicies(
+		ctx, ptrs.Ptr(int(req.WorkspaceId)), req.WorkloadType)
+	if err != nil {
+		return nil, err
+	}
+	policyMap := map[string]interface{}{}
+	if configPolicies.InvariantConfig != nil {
+		var configMap map[string]interface{}
+		if err := yaml.Unmarshal([]byte(*configPolicies.InvariantConfig), &configMap); err != nil {
+			return nil, fmt.Errorf("unable to unmarshal json: %w", err)
+		}
+		policyMap["invariant_config"] = configMap
+	}
+	if configPolicies.Constraints != nil {
+		var constraintsMap map[string]interface{}
+		if err := yaml.Unmarshal([]byte(*configPolicies.Constraints), &constraintsMap); err != nil {
+			return nil, fmt.Errorf("unable to unmarshal json: %w", err)
+		}
+		policyMap["constraints"] = constraintsMap
+	}
+	return &apiv1.GetWorkspaceConfigPoliciesResponse{ConfigPolicies: configpolicy.MarshalConfigPolicy(policyMap)}, nil
 }
 
 // Get global task config policies.

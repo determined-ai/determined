@@ -4,8 +4,6 @@ import (
 	"time"
 
 	"github.com/uptrace/bun"
-
-	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
 // Constants.
@@ -19,26 +17,15 @@ const (
 	NTSCType string = "NTSC"
 )
 
-// ExperimentTaskConfigPolicies is the bun model of a task config policy.
-type ExperimentTaskConfigPolicies struct {
+// TaskConfigPolicies is the bun model of a task config policy.
+type TaskConfigPolicies struct {
 	bun.BaseModel   `bun:"table:task_config_policies"`
-	WorkspaceID     *int                     `bun:"workspace_id"`
-	WorkloadType    string                   `bun:"workload_type,notnull"`
-	LastUpdatedBy   UserID                   `bun:"last_updated_by,notnull"`
-	LastUpdatedTime time.Time                `bun:"last_updated_time,notnull"`
-	InvariantConfig expconf.ExperimentConfig `bun:"invariant_config"`
-	Constraints     Constraints              `bun:"constraints"`
-}
-
-// NTSCTaskConfigPolicies is the bun model of a task config policy.
-type NTSCTaskConfigPolicies struct {
-	bun.BaseModel   `bun:"table:task_config_policies"`
-	WorkspaceID     *int          `bun:"workspace_id"`
-	WorkloadType    string        `bun:"workload_type,notnull"`
-	LastUpdatedBy   UserID        `bun:"last_updated_by,notnull"`
-	LastUpdatedTime time.Time     `bun:"last_updated_time,notnull"`
-	InvariantConfig CommandConfig `bun:"invariant_config"`
-	Constraints     Constraints   `bun:"constraints"`
+	WorkspaceID     *int      `bun:"workspace_id"`
+	WorkloadType    string    `bun:"workload_type,notnull"`
+	LastUpdatedBy   UserID    `bun:"last_updated_by,notnull"`
+	LastUpdatedTime time.Time `bun:"last_updated_time,notnull"`
+	InvariantConfig *string   `bun:"invariant_config"`
+	Constraints     *string   `bun:"constraints"`
 }
 
 // ResourceConstraints are non-overridable resource constraints.
