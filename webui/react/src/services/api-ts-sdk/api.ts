@@ -4083,7 +4083,7 @@ export interface V1GetGenericTaskConfigResponse {
     config: string;
 }
 /**
- * Response to GetGlobalConfigPolicies request.
+ * Response to GetGlobalConfigPoliciesRequest.
  * @export
  * @interface V1GetGlobalConfigPoliciesResponse
  */
@@ -8904,13 +8904,13 @@ export interface V1PutGlobalConfigPoliciesRequest {
      * @type {string}
      * @memberof V1PutGlobalConfigPoliciesRequest
      */
-    workloadType?: string;
+    workloadType: string;
     /**
      * The config policies to use. Contains both invariant configs and constraints in yaml or json format.
      * @type {string}
      * @memberof V1PutGlobalConfigPoliciesRequest
      */
-    configPolicies?: string;
+    configPolicies: string;
 }
 /**
  * Response to PutGlobalConfigPoliciesRequest.
@@ -9045,13 +9045,13 @@ export interface V1PutWorkspaceConfigPoliciesRequest {
      * @type {string}
      * @memberof V1PutWorkspaceConfigPoliciesRequest
      */
-    workloadType?: string;
+    workloadType: string;
     /**
      * The config policies to use. Contains both invariant configs and constraints in yaml or json format.
      * @type {string}
      * @memberof V1PutWorkspaceConfigPoliciesRequest
      */
-    configPolicies?: string;
+    configPolicies: string;
 }
 /**
  * Response to PutWorkspaceConfigPoliciesRequest.
