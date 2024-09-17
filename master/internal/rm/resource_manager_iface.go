@@ -19,6 +19,7 @@ type ResourceManager interface {
 	ValidateResources(sproto.ValidateResourcesRequest) ([]command.LaunchWarning, error)
 	DeleteJob(sproto.DeleteJob) (sproto.DeleteJobResponse, error)
 	NotifyContainerRunning(sproto.NotifyContainerRunning) error
+	SmallerValueIsHigherPriority() (bool, error)
 
 	// Scheduling related stuff
 	SetGroupMaxSlots(sproto.SetGroupMaxSlots)

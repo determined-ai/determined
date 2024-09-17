@@ -2,6 +2,7 @@ package configpolicy
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 
@@ -20,6 +21,32 @@ func ValidWorkloadType(val string) bool {
 	default:
 		return false
 	}
+}
+
+// GetPriorityLimitPrecedence retrieves the priority limit using order of precedence
+func GetPriorityLimitPrecedence(ctx context.Context, workspace_id int, workload_type string) (limit int, found bool, err error) {
+	// highest precedence: get global limit
+	if limit, found, err = GetPriorityLimit(ctx, nil, workload_type); found {
+		return limit, found, err
+	}
+
+	// second precedence: get workspace limit
+	if limit, found, err = GetPriorityLimit(ctx, &workspace_id, workload_type); found {
+		return limit, found, err
+	}
+
+	// default
+	return 0, false, nil
+}
+
+// PriorityOK returns true if the current priority is acceptable given the priority limit and resource manager.
+func PriorityOK(currPriority int, priorityLimit int, smallerValueIsHigherPriority bool) bool {
+
+	if smallerValueIsHigherPriority {
+		return currPriority >= priorityLimit
+	}
+
+	return currPriority <= priorityLimit
 }
 
 // UnmarshalExperimentConfigPolicy unpacks a string into ExperimentConfigPolicy struct.

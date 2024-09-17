@@ -2836,6 +2836,7 @@ service Determined {
       returns (PutGlobalConfigPoliciesResponse) {
     option (google.api.http) = {
       put: "/api/v1/config-policies/global/{workload_type}"
+      body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Alpha"

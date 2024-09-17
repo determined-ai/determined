@@ -277,6 +277,7 @@ func (c *Command) garbageCollect() {
 	go DefaultCmdService.unregisterCommand(c.taskID)
 }
 
+// TODO update me to include constraints
 func (c *Command) setNTSCPriority(priority int, forward bool) error {
 	if forward {
 		switch err := c.rm.SetGroupPriority(sproto.SetGroupPriority{

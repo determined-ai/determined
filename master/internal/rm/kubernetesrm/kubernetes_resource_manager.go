@@ -142,6 +142,11 @@ func New(
 	return k, nil
 }
 
+// SmallerValueIsHigherPriority returns true if smaller priority values indicate a higher priority level.
+func (k *ResourceManager) SmallerValueIsHigherPriority() (bool, error) {
+	return false, nil
+}
+
 // Allocate implements rm.ResourceManager.
 func (k *ResourceManager) Allocate(msg sproto.AllocateRequest) (*sproto.ResourcesSubscription, error) {
 	// This code exists to handle the case where an experiment does not have
