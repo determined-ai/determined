@@ -9,7 +9,6 @@ import (
 	"github.com/ghodss/yaml"
 	"google.golang.org/protobuf/types/known/structpb"
 
-	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/protoutils"
 )
@@ -40,15 +39,10 @@ func GetPriorityLimitPrecedence(ctx context.Context, workspace_id int, workload_
 	return 0, false, nil
 }
 
-// PriorityLimit returns the ne
-func PriorityOK(currPriority int, priorityLimit int, resourceManager rm.ResourceManager) bool {
-	smallerHigher, err := resourceManager.SmallerValueIsHigherPriority()
-	if err != nil {
-		// RM does not have the concept of priority. No Limit applied.
-		return true
-	}
+// PriorityOK returns true if the current priority is acceptable given the priority limit and resource manager.
+func PriorityOK(currPriority int, priorityLimit int, smallerValueIsHigherPriority bool) bool {
 
-	if smallerHigher {
+	if smallerValueIsHigherPriority {
 		return currPriority >= priorityLimit
 	}
 

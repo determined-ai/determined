@@ -207,6 +207,115 @@ func TestSetNTSCConfigPolicies(t *testing.T) {
 	require.ErrorContains(t, err, "violates foreign key constraint")
 }
 
+func TestWorkspaceGetPriorityLimit(t *testing.T) {
+	ctx := context.Background()
+	require.NoError(t, etc.SetRootPath(db.RootFromDB))
+	pgDB, cleanup := db.MustResolveNewPostgresDatabase(t)
+	defer cleanup()
+	db.MustMigrateTestPostgres(t, pgDB, db.MigrationsFromDB)
+	user := db.RequireMockUser(t, pgDB)
+
+	// add a workspace to use
+	w := model.Workspace{Name: uuid.NewString(), UserID: user.ID}
+	_, err := db.Bun().NewInsert().Model(&w).Exec(ctx)
+	require.NoError(t, err)
+	defer func() {
+		err := db.CleanupMockWorkspace([]int32{int32(w.ID)})
+		if err != nil {
+			log.Errorf("error when cleaning up mock workspaces")
+		}
+	}()
+
+	// add priority limit for workspace NTSC
+	wkspLimit := 20
+	wkspInput := model.NTSCTaskConfigPolicies{
+		WorkloadType: model.NTSCType,
+		WorkspaceID:  &w.ID,
+		Constraints: model.Constraints{
+			PriorityLimit: &wkspLimit,
+		},
+		LastUpdatedBy: user.ID,
+	}
+	err = SetNTSCConfigPolicies(ctx, &wkspInput)
+	require.NoError(t, err)
+
+	// get priority limit; should match workspace
+	res, found, err := GetPriorityLimit(ctx, &w.ID, model.NTSCType)
+	require.NoError(t, err)
+	require.True(t, found)
+	require.Equal(t, wkspLimit, res)
+
+	// get limit for workspace that does not exist
+	wkspIDDoesNotExist := 404
+	res, found, err = GetPriorityLimit(ctx, &wkspIDDoesNotExist, model.NTSCType)
+	require.NoError(t, err)
+	require.False(t, found)
+
+	// read global
+	res, found, err = GetPriorityLimit(ctx, nil, model.NTSCType)
+	require.NoError(t, err)
+	require.False(t, found)
+
+	// read experiment
+	res, found, err = GetPriorityLimit(ctx, &w.ID, model.ExperimentType)
+	require.NoError(t, err)
+	require.False(t, found)
+
+	// read invalid workload type
+	res, found, err = GetPriorityLimit(ctx, &w.ID, "bogus")
+	require.Error(t, err)
+	require.False(t, found)
+}
+
+func TestGlobalGetPriorityLimit(t *testing.T) {
+	ctx := context.Background()
+	require.NoError(t, etc.SetRootPath(db.RootFromDB))
+	pgDB, cleanup := db.MustResolveNewPostgresDatabase(t)
+	defer cleanup()
+	db.MustMigrateTestPostgres(t, pgDB, db.MigrationsFromDB)
+	user := db.RequireMockUser(t, pgDB)
+
+	// add a workspace to use
+	w := model.Workspace{Name: uuid.NewString(), UserID: user.ID}
+	_, err := db.Bun().NewInsert().Model(&w).Exec(ctx)
+	require.NoError(t, err)
+	defer func() {
+		err := db.CleanupMockWorkspace([]int32{int32(w.ID)})
+		if err != nil {
+			log.Errorf("error when cleaning up mock workspaces")
+		}
+	}()
+
+	// add priority limit for global NTSC
+	globalLimit := 5
+	wkspInput := model.NTSCTaskConfigPolicies{
+		WorkloadType: model.NTSCType,
+		WorkspaceID:  nil,
+		Constraints: model.Constraints{
+			PriorityLimit: &globalLimit,
+		},
+		LastUpdatedBy: user.ID,
+	}
+	err = SetNTSCConfigPolicies(ctx, &wkspInput)
+	require.NoError(t, err)
+
+	// get priority limit
+	res, found, err := GetPriorityLimit(ctx, nil, model.NTSCType)
+	require.NoError(t, err)
+	require.True(t, found)
+	require.Equal(t, globalLimit, res)
+
+	// read experiment
+	res, found, err = GetPriorityLimit(ctx, nil, model.ExperimentType)
+	require.NoError(t, err)
+	require.False(t, found)
+
+	// read invalid workload type
+	res, found, err = GetPriorityLimit(ctx, nil, "bogus")
+	require.Error(t, err)
+	require.False(t, found)
+}
+
 // Test the enforcement of the primary key on the task_config_polciies table.
 func TestTaskConfigPoliciesUnique(t *testing.T) {
 	ctx := context.Background()

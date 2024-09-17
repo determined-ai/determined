@@ -108,11 +108,6 @@ func newAgentResourceManager(
 	return a, nil
 }
 
-// Type implements rm.ResourceManager.
-func (a *ResourceManager) Type() string {
-	return rm.AgentRM
-}
-
 // SmallerValueIsHigherPriority returns true if smaller priority values indicate a higher priority level.
 func (a *ResourceManager) SmallerValueIsHigherPriority() (bool, error) {
 	return true, nil

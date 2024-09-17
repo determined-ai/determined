@@ -52,19 +52,20 @@ func (c *Command) SetJobPriority(priority int) error {
 	}
 
 	// check if a priority limit has been set in task config policies
-	// TODO create an appropriate context with a timeout
-	//scope :=
-	//limit, found, err := configpolicy.GetPriorityLimit(context.TODO(), )
 	wkspID := int(c.GenericCommandSpec.Metadata.WorkspaceID)
 	priorityLimit, found, err := configpolicy.GetPriorityLimitPrecedence(context.TODO(), wkspID, model.NTSCType)
-	if found {
 
-		ok := configpolicy.PriorityOK(priority, priorityLimit, c.rm)
+	// returns err if RM does not have concept of priority
+	smallerIsHigher, rmErr := c.rm.SmallerValueIsHigherPriority()
+	if found && rmErr == nil {
+
+		ok := configpolicy.PriorityOK(priority, priorityLimit, smallerIsHigher)
 		if !ok {
 			return fmt.Errorf("priority exceeds task config policy's priority_limit: %d", priorityLimit)
 		}
 
 	} else if err != nil {
+		// TODO do we really want to block on this?
 		return err
 	}
 

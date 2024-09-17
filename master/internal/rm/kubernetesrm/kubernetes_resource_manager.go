@@ -142,11 +142,6 @@ func New(
 	return k, nil
 }
 
-// Type implements rm.ResourceManager.
-func (k *ResourceManager) Type() string {
-	return rm.KubernetesType
-}
-
 // SmallerValueIsHigherPriority returns true if smaller priority values indicate a higher priority level.
 func (k *ResourceManager) SmallerValueIsHigherPriority() (bool, error) {
 	return false, nil

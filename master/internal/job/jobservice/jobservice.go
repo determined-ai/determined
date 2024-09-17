@@ -189,11 +189,7 @@ func (s *Service) applyUpdate(update *jobv1.QueueControl) error {
 
 	switch action := update.GetAction().(type) {
 	case *jobv1.QueueControl_Priority:
-		// TODO handle priority updates with new constraints
 		priority := int(action.Priority)
-		// FIXME add rm as an argument? InternalExperimnt seems to have rm in it. What about workspace?
-		// TaskSpec seems to have workspace saved as a string
-		//wkspID :=
 		return j.SetJobPriority(priority)
 	case *jobv1.QueueControl_Weight:
 		if action.Weight <= 0 {

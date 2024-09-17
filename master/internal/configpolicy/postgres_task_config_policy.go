@@ -96,20 +96,18 @@ func GetPriorityLimit(ctx context.Context, scope *int, workloadType string) (lim
 		return 0, false, fmt.Errorf("invalid workload type: %s", workloadType)
 	}
 
-	// FIXME query jsonb directly
-	// FIXME do more sophisticated coalesce and jsbonb query to optimize (CLI to postgres12)
 	wkspQuery := wkspIDQuery
 	if scope == nil {
 		wkspQuery = wkspIDGlobalQuery
 	}
 
-	var constraints *model.Constraints
+	var constraints model.Constraints
 	err = db.Bun().NewSelect().
 		Table("task_config_policies").
 		Column("constraints").
 		Where(wkspQuery, scope).
 		Where("workload_type = ?", workloadType).
-		Scan(ctx, constraints)
+		Scan(ctx, &constraints)
 
 	if err == sql.ErrNoRows {
 		return 0, false, nil
@@ -117,7 +115,7 @@ func GetPriorityLimit(ctx context.Context, scope *int, workloadType string) (lim
 		return 0, false, fmt.Errorf("error retrieving priority limit: %w", err)
 	}
 
-	if constraints != nil && constraints.PriorityLimit != nil {
+	if constraints.PriorityLimit != nil {
 		return *constraints.PriorityLimit, true, nil
 	}
 
