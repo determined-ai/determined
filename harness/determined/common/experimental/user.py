@@ -145,14 +145,14 @@ class UserSessions:
         token_description: (Mutable, Optional[str]) Human-friendly description of token.
     """
 
-    def __init__(self, id: int, session: api.Session):
-        self.id = id
+    def __init__(self, token_id: int, session: api.Session):
+        self.id = token_id
         self._session = session
 
         self.user_id: Optional[int] = None
         self.expiry: Optional[str] = None
         self.created_at: Optional[str] = None
-        self.token_type: Optional[TokenType] = None
+        self.token_type: TokenType = TokenType.LONG_LIVED_TOKEN
         self.is_revoked: Optional[bool] = None
         self.token_description: Optional[str] = None
 
@@ -160,7 +160,7 @@ class UserSessions:
         self.user_id = userSession.userId
         self.expiry = userSession.expiry
         self.created_at = userSession.createdAt
-        self.token_type = TokenType(userSession.tokenType.value)
+        self.token_type = userSession.tokenType.value
         self.is_revoked = userSession.isRevoked
         self.token_description = userSession.tokenDescription
 
@@ -169,6 +169,6 @@ class UserSessions:
         cls, userSession_bindings: bindings.v1UserSessionInfo, session: api.Session
     ) -> "UserSessions":
         assert userSession_bindings.id
-        userSessionInfo = cls(session=session, id=userSession_bindings.id)
+        userSessionInfo = cls(session=session, token_id=userSession_bindings.id)
         userSessionInfo._hydrate(userSession_bindings)
         return userSessionInfo

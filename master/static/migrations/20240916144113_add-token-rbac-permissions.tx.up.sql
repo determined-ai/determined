@@ -4,8 +4,7 @@ INSERT INTO permissions (id, name, global_only) VALUES
     (12003, 'create long lived token', true),
     (12004, 'create other long lived token', true),
     (12005, 'view long lived token', true),
-    (12006, 'view other long lived token', true)
-    ON CONFLICT DO NOTHING;
+    (12006, 'view other long lived token', true),
 
 INSERT INTO permission_assignments (permission_id, role_id) VALUES
     (12001, 1), --	ClusterAdmin -- revoke long lived token
@@ -31,7 +30,4 @@ INSERT INTO permission_assignments (permission_id, role_id) VALUES
     (12005, 7), --	EditorRestricted
     (12005, 8), --	GenAIUser
     (12005, 9), --	EditorProjectRestricted
-    (12006, 1) --	ClusterAdmin -- view other long lived token
-    ON CONFLICT DO NOTHING;
-
-
+    (12006, 1); --	ClusterAdmin -- view other long lived token

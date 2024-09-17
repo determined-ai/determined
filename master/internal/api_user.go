@@ -830,9 +830,11 @@ func (a *apiServer) GetAllLongLivedTokens(
 		}
 		query.Where("us.user_id = ?", userIDForGivenUsername)
 	}
-	if req.TokenType != nil && req.TokenType.String() != userv1.TokenType_TOKEN_TYPE_UNSPECIFIED.String() {
-		query.Where("us.token_type = ?", model.TokenTypeFromProto(*req.TokenType.Enum()))
-	}
+
+	// Get only Long lived token type
+	query.Where("us.token_type = ?", model.TokenTypeLongLivedToken)
+	//model.TokenTypeFromProto(*model.TokenTypeLongLivedToken.Proto().Enum()))
+
 	if req.IsRevoked != nil {
 		query.Where("us.is_revoked = ?", *req.IsRevoked)
 	}

@@ -1,7 +1,7 @@
 import argparse
 import collections
 import getpass
-from typing import Any, List
+from typing import Any, Dict, List
 
 from determined import cli
 from determined.cli import errors, render
@@ -230,19 +230,26 @@ def edit(args: argparse.Namespace) -> None:
         raise errors.CliError("No field provided. Use 'det user edit -h' for usage.")
 
 
+def printData(data: Dict[str, Any], args: argparse.Namespace) -> None:
+    if args.yaml:
+        print(util.yaml_safe_dump(data, default_flow_style=False))
+    else:
+        render.print_json(data)
+
+
 def describe_token(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
 
     if args.username is None:
-        resp = bindings.get_GetLongLivedToken(sess)
+        respFromLongLiveToken = bindings.get_GetLongLivedToken(sess)
+        printData(respFromLongLiveToken.to_json(), args)
     else:
         userID = bindings.get_GetUserByUsername(session=sess, username=args.username).user.id
-        resp = bindings.get_GetUserLongLivedToken(session=sess, userId=userID)
-
-    if args.yaml:
-        print(util.yaml_safe_dump(resp.to_json(), default_flow_style=False))
-    else:
-        render.print_json(resp.to_json())
+        if userID is not None:
+            respFromUserLongLiveToken = bindings.get_GetUserLongLivedToken(
+                session=sess, userId=userID
+            )
+            printData(respFromUserLongLiveToken.to_json(), args)
 
 
 def list_tokens(args: argparse.Namespace) -> None:
@@ -262,21 +269,24 @@ def create_token(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     # TODO: API to update token description & CLI
 
-    token = ""
     if args.username is None:
-        content = bindings.v1PostLongLivedTokenRequest(
+        contentForLongLivedToken = bindings.v1PostLongLivedTokenRequest(
             lifespan=args.lifespan,
         )
-        token = bindings.post_PostLongLivedToken(sess, body=content)
+        respFromLongLivedToken = bindings.post_PostLongLivedToken(
+            sess, body=contentForLongLivedToken
+        )
+        printData(respFromLongLivedToken.to_json(), args)
     else:
         userID = bindings.get_GetUserByUsername(session=sess, username=args.username).user.id
-        content = bindings.v1PostUserLongLivedTokenRequest(lifespan=args.lifespan, userId=userID)
-        token = bindings.post_PostUserLongLivedToken(sess, body=content, userId=userID)
-
-    if args.yaml:
-        print(util.yaml_safe_dump(token.to_json(), default_flow_style=False))
-    else:
-        render.print_json(token.to_json())
+        if userID is not None:
+            contentForUserLongLivedToken = bindings.v1PostUserLongLivedTokenRequest(
+                lifespan=args.lifespan, userId=userID
+            )
+            respFromUserLongLivedToken = bindings.post_PostUserLongLivedToken(
+                sess, body=contentForUserLongLivedToken, userId=userID
+            )
+            printData(respFromUserLongLivedToken.to_json(), args)
 
 
 AGENT_USER_GROUP_ARGS = [

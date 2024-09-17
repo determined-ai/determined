@@ -589,7 +589,6 @@ class Determined:
                 session=self._session,
                 offset=offset,
                 isRevoked=isRevoked,
-                tokenType=bindings.v1TokenType.LONG_LIVED_TOKEN,
             )
 
         resps = api.read_paginated(get_with_offset)

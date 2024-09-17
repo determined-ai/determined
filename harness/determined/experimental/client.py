@@ -82,7 +82,7 @@ from determined.common.experimental.trial import (  # noqa: F401
     TrialSortBy,
     TrialState,
 )
-from determined.common.experimental.user import User
+from determined.common.experimental.user import User, UserSessions
 from determined.common.experimental.workspace import Workspace  # noqa: F401
 
 logger = logging.getLogger("determined.client")
@@ -662,15 +662,15 @@ def _get_singleton_session() -> _api.Session:
 
 
 @_require_singleton
-def list_tokens(isRevoked: Optional[bool] = None) -> List[User]:
+def list_tokens(isRevoked: Optional[bool] = None) -> List[UserSessions]:
     """Get a list of all tokens.
 
     Arg:
-        isRevoked: if this parameter is set to false, filter for active users only.
-            When true, filter for inactive users. Return all users otherwise.
+        isRevoked: if this parameter is set to false, filter for active user sessions only.
+            When true, filter for inactive user sessions. Return all user sessions otherwise.
 
     Returns:
         A list of :class:`~determined.experimental.client.UserSessions` objects.
     """
     assert _determined is not None
-    return _determined.list_users(isRevoked=isRevoked)
+    return _determined.list_tokens(isRevoked=isRevoked)

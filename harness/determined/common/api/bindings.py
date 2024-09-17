@@ -19115,7 +19115,6 @@ def get_GetAllLongLivedTokens(
     offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
     sortBy: "typing.Optional[v1GetAllLongLivedTokensRequestSortBy]" = None,
-    tokenType: "typing.Optional[v1TokenType]" = None,
 ) -> "v1GetAllLongLivedTokensResponse":
     """Get list of all long lived token info
 
@@ -19138,11 +19137,6 @@ denote number of projects to skip from the end before returning results.
  - SORT_BY_TOKEN_TYPE: Returns token info sorted by token type.
  - SORT_BY_IS_REVOKED: Returns token info sorted by if it is revoked.
  - SORT_BY_TOKEN_DESCRIPTION: Returns token info sorted by description of token.
-    - tokenType: Filter by token type.
-
- - TOKEN_TYPE_UNSPECIFIED: Default token type.
- - TOKEN_TYPE_USER_SESSION: User Session token.
- - TOKEN_TYPE_LONG_LIVED_TOKEN: Long Lived token.
     """
     _params = {
         "isRevoked": str(isRevoked).lower() if isRevoked is not None else None,
@@ -19151,7 +19145,6 @@ denote number of projects to skip from the end before returning results.
         "offset": offset,
         "orderBy": orderBy.value if orderBy is not None else None,
         "sortBy": sortBy.value if sortBy is not None else None,
-        "tokenType": tokenType.value if tokenType is not None else None,
     }
     _resp = session._do_request(
         method="GET",

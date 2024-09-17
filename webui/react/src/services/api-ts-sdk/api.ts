@@ -34121,12 +34121,11 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
          * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
          * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
          * @param {string} [name] Filter by username or display name.
-         * @param {V1TokenType} [tokenType] Filter by token type.   - TOKEN_TYPE_UNSPECIFIED: Default token type.  - TOKEN_TYPE_USER_SESSION: User Session token.  - TOKEN_TYPE_LONG_LIVED_TOKEN: Long Lived token.
          * @param {boolean} [isRevoked] Filter by status.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getAllLongLivedTokens(sortBy?: V1GetAllLongLivedTokensRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, tokenType?: V1TokenType, isRevoked?: boolean, options: any = {}): FetchArgs {
+        getAllLongLivedTokens(sortBy?: V1GetAllLongLivedTokensRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, isRevoked?: boolean, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/user/tokens`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
@@ -34159,10 +34158,6 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
             
             if (name !== undefined) {
                 localVarQueryParameter['name'] = name
-            }
-            
-            if (tokenType !== undefined) {
-                localVarQueryParameter['tokenType'] = tokenType
             }
             
             if (isRevoked !== undefined) {
@@ -34815,13 +34810,12 @@ export const UsersApiFp = function (configuration?: Configuration) {
          * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
          * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
          * @param {string} [name] Filter by username or display name.
-         * @param {V1TokenType} [tokenType] Filter by token type.   - TOKEN_TYPE_UNSPECIFIED: Default token type.  - TOKEN_TYPE_USER_SESSION: User Session token.  - TOKEN_TYPE_LONG_LIVED_TOKEN: Long Lived token.
          * @param {boolean} [isRevoked] Filter by status.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getAllLongLivedTokens(sortBy?: V1GetAllLongLivedTokensRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, tokenType?: V1TokenType, isRevoked?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetAllLongLivedTokensResponse> {
-            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getAllLongLivedTokens(sortBy, orderBy, offset, limit, name, tokenType, isRevoked, options);
+        getAllLongLivedTokens(sortBy?: V1GetAllLongLivedTokensRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, isRevoked?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetAllLongLivedTokensResponse> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getAllLongLivedTokens(sortBy, orderBy, offset, limit, name, isRevoked, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -35159,13 +35153,12 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
          * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
          * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
          * @param {string} [name] Filter by username or display name.
-         * @param {V1TokenType} [tokenType] Filter by token type.   - TOKEN_TYPE_UNSPECIFIED: Default token type.  - TOKEN_TYPE_USER_SESSION: User Session token.  - TOKEN_TYPE_LONG_LIVED_TOKEN: Long Lived token.
          * @param {boolean} [isRevoked] Filter by status.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getAllLongLivedTokens(sortBy?: V1GetAllLongLivedTokensRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, tokenType?: V1TokenType, isRevoked?: boolean, options?: any) {
-            return UsersApiFp(configuration).getAllLongLivedTokens(sortBy, orderBy, offset, limit, name, tokenType, isRevoked, options)(fetch, basePath);
+        getAllLongLivedTokens(sortBy?: V1GetAllLongLivedTokensRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, isRevoked?: boolean, options?: any) {
+            return UsersApiFp(configuration).getAllLongLivedTokens(sortBy, orderBy, offset, limit, name, isRevoked, options)(fetch, basePath);
         },
         /**
          * 
@@ -35364,14 +35357,13 @@ export class UsersApi extends BaseAPI {
      * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
      * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
      * @param {string} [name] Filter by username or display name.
-     * @param {V1TokenType} [tokenType] Filter by token type.   - TOKEN_TYPE_UNSPECIFIED: Default token type.  - TOKEN_TYPE_USER_SESSION: User Session token.  - TOKEN_TYPE_LONG_LIVED_TOKEN: Long Lived token.
      * @param {boolean} [isRevoked] Filter by status.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof UsersApi
      */
-    public getAllLongLivedTokens(sortBy?: V1GetAllLongLivedTokensRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, tokenType?: V1TokenType, isRevoked?: boolean, options?: any) {
-        return UsersApiFp(this.configuration).getAllLongLivedTokens(sortBy, orderBy, offset, limit, name, tokenType, isRevoked, options)(this.fetch, this.basePath)
+    public getAllLongLivedTokens(sortBy?: V1GetAllLongLivedTokensRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, isRevoked?: boolean, options?: any) {
+        return UsersApiFp(this.configuration).getAllLongLivedTokens(sortBy, orderBy, offset, limit, name, isRevoked, options)(this.fetch, this.basePath)
     }
     
     /**

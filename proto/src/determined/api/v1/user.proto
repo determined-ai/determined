@@ -302,10 +302,8 @@ message GetAllLongLivedTokensRequest {
 
   // Filter by username or display name.
   string name = 5;
-  // Filter by token type.
-  optional determined.user.v1.TokenType token_type = 6;
   // Filter by status.
-  optional bool is_revoked = 7;
+  optional bool is_revoked = 6;
 }
 
 // Response to GetAllLongLivedTokenRequest.

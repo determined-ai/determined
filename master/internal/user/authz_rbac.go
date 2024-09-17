@@ -198,7 +198,9 @@ func (a *UserAuthZRBAC) CanSetUsersRemote(ctx context.Context, curUser model.Use
 	return canAdministrateUser(ctx, curUser.ID)
 }
 
-func logCanAdministrateLongLivedTokenOnUser(fields log.Fields, curUserID model.UserID, permissionID rbacv1.PermissionType) {
+func logCanAdministrateLongLivedTokenOnUser(fields log.Fields, curUserID model.UserID,
+	permissionID rbacv1.PermissionType,
+) {
 	fields["userID"] = curUserID
 	fields["permissionRequired"] = []audit.PermissionWithSubject{
 		{
@@ -210,7 +212,9 @@ func logCanAdministrateLongLivedTokenOnUser(fields log.Fields, curUserID model.U
 	}
 }
 
-func canAdministrateLongLivedTokenOnUser(ctx context.Context, curUserID model.UserID, permissionID rbacv1.PermissionType) (err error) {
+func canAdministrateLongLivedTokenOnUser(ctx context.Context, curUserID model.UserID,
+	permissionID rbacv1.PermissionType,
+) (err error) {
 	fields := audit.ExtractLogFields(ctx)
 	logCanAdministrateLongLivedTokenOnUser(fields, curUserID, permissionID)
 	defer func() {
