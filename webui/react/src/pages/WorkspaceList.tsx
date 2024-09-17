@@ -178,7 +178,7 @@ const WorkspaceList: React.FC = () => {
         dataIndex: 'name',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['name'],
         key: V1GetWorkspacesRequestSortBy.NAME,
-        onCell: onRightClickableCell,
+        onCell: () => ({ ...onRightClickableCell(), 'data-testid': 'name' }),
         render: workspaceNameRenderer,
         title: 'Name',
       },
@@ -394,15 +394,15 @@ const WorkspaceList: React.FC = () => {
           workspacesList
         ) : settings.whose === WhoseWorkspaces.All && settings.archived && !isLoading ? (
           <Message
-            data-testid="noWorkspaces"
             description={`Create a workspace to keep track of related projects and ${f_flat_runs ? 'searches' : 'experiments'}.`}
             icon="workspaces"
+            testId="noWorkspaces"
             title="No Workspaces"
           />
         ) : (
           <Message
-            data-testid="noMatchingWorkspaces"
             icon="warning"
+            testId="noMatchingWorkspaces"
             title="No workspaces matching the current filters"
           />
         )}

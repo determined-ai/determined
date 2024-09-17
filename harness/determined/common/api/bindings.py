@@ -10549,6 +10549,28 @@ class v1PatchUsersResponse(Printable):
         }
         return out
 
+class v1PatchWebhook(Printable):
+
+    def __init__(
+        self,
+        *,
+        url: str,
+    ):
+        self.url = url
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PatchWebhook":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "url": obj["url"],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "url": self.url,
+        }
+        return out
+
 class v1PatchWorkspace(Printable):
     """PatchWorkspace is a partial update to a workspace with all optional fields."""
     agentUserGroup: "typing.Optional[v1AgentUserGroup]" = None
@@ -17305,6 +17327,7 @@ class v1WorkloadContainer(Printable):
 class v1Workspace(Printable):
     """Workspace is a named collection of projects."""
     agentUserGroup: "typing.Optional[v1AgentUserGroup]" = None
+    autoCreatedNamespace: "typing.Optional[str]" = None
     checkpointStorageConfig: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     defaultAuxPool: "typing.Optional[str]" = None
     defaultComputePool: "typing.Optional[str]" = None
@@ -17325,6 +17348,7 @@ class v1Workspace(Printable):
         userId: int,
         username: str,
         agentUserGroup: "typing.Union[v1AgentUserGroup, None, Unset]" = _unset,
+        autoCreatedNamespace: "typing.Union[str, None, Unset]" = _unset,
         checkpointStorageConfig: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
         defaultAuxPool: "typing.Union[str, None, Unset]" = _unset,
         defaultComputePool: "typing.Union[str, None, Unset]" = _unset,
@@ -17343,6 +17367,8 @@ class v1Workspace(Printable):
         self.username = username
         if not isinstance(agentUserGroup, Unset):
             self.agentUserGroup = agentUserGroup
+        if not isinstance(autoCreatedNamespace, Unset):
+            self.autoCreatedNamespace = autoCreatedNamespace
         if not isinstance(checkpointStorageConfig, Unset):
             self.checkpointStorageConfig = checkpointStorageConfig
         if not isinstance(defaultAuxPool, Unset):
@@ -17369,6 +17395,8 @@ class v1Workspace(Printable):
         }
         if "agentUserGroup" in obj:
             kwargs["agentUserGroup"] = v1AgentUserGroup.from_json(obj["agentUserGroup"]) if obj["agentUserGroup"] is not None else None
+        if "autoCreatedNamespace" in obj:
+            kwargs["autoCreatedNamespace"] = obj["autoCreatedNamespace"]
         if "checkpointStorageConfig" in obj:
             kwargs["checkpointStorageConfig"] = obj["checkpointStorageConfig"]
         if "defaultAuxPool" in obj:
@@ -17395,6 +17423,8 @@ class v1Workspace(Printable):
         }
         if not omit_unset or "agentUserGroup" in vars(self):
             out["agentUserGroup"] = None if self.agentUserGroup is None else self.agentUserGroup.to_json(omit_unset)
+        if not omit_unset or "autoCreatedNamespace" in vars(self):
+            out["autoCreatedNamespace"] = self.autoCreatedNamespace
         if not omit_unset or "checkpointStorageConfig" in vars(self):
             out["checkpointStorageConfig"] = self.checkpointStorageConfig
         if not omit_unset or "defaultAuxPool" in vars(self):
@@ -22986,6 +23016,32 @@ def patch_PatchUsers(
     if _resp.status_code == 200:
         return v1PatchUsersResponse.from_json(_resp.json())
     raise APIHttpError("patch_PatchUsers", _resp)
+
+def patch_PatchWebhook(
+    session: "api.BaseSession",
+    *,
+    body: "v1PatchWebhook",
+    id: int,
+) -> None:
+    """Update a webhook.
+
+    - body: The desired webhook fields and values to update.
+    - id: The id of the webhook.
+    """
+    _params = None
+    _resp = session._do_request(
+        method="PATCH",
+        path=f"/api/v1/webhooks/{id}",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("patch_PatchWebhook", _resp)
 
 def patch_PatchWorkspace(
     session: "api.BaseSession",

@@ -6,7 +6,6 @@ checkpoint_storage:
 hyperparameters:
   global_batch_size: 32
   metrics_progression: decreasing
-  metrics_sigma: 0
   learning_rate:
     count: 3
     maxval: 1

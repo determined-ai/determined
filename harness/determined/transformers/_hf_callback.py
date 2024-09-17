@@ -137,7 +137,7 @@ class DetCallback(transformers.TrainerCallback):  # type: ignore
         )
 
         if self.core_context.preempt.should_preempt():
-            raise Exception("Process preempted / killed")
+            pass
 
     def _on_save_user_data(self, save_path: str) -> None:
         """

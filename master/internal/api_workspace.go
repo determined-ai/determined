@@ -105,7 +105,7 @@ func (a *apiServer) validateClusterNamespaceMeta(
 		if metadata.AutoCreateNamespaceAllClusters {
 			autoCreateAll = true
 			if metadata.ResourceQuota != nil && len(a.m.allRms) > 1 {
-				return nil, autoCreateAll, status.Errorf(codes.InvalidArgument, "When using "+
+				return nil, autoCreateAll, status.Errorf(codes.InvalidArgument, "when using "+
 					"multiple resource managers, cannot set a resource quota when you request to "+
 					"auto-create a namespace for all clusters.")
 			}
@@ -615,58 +615,58 @@ func (a *apiServer) DeleteWorkspaceNamespaceBindings(ctx context.Context,
 		clusterNames = append(clusterNames, c)
 	}
 
-	err = a.deleteWorkspaceNamespaceBinding(ctx, clusterNames, req.WorkspaceId, currUser)
+	err = db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		err := a.deleteWorkspaceNamespaceBindings(ctx, clusterNames, req.WorkspaceId, currUser, &tx)
+		if err != nil {
+			return fmt.Errorf("failed to delete namespace binding: %w", err)
+		}
+		return nil
+	})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("error deleting workspace-namespace bindings: %w", err)
 	}
 	return &apiv1.DeleteWorkspaceNamespaceBindingsResponse{}, nil
 }
 
-func (a *apiServer) deleteWorkspaceNamespaceBinding(ctx context.Context,
-	clusterNames []string, workspaceID int32, curUser *model.User,
+func (a *apiServer) deleteWorkspaceNamespaceBindings(ctx context.Context,
+	clusterNames []string, workspaceID int32, curUser *model.User, tx *bun.Tx,
 ) error {
 	if err := workspace.AuthZProvider.Get().
 		CanSetWorkspaceNamespaceBindings(ctx, *curUser); err != nil {
 		return status.Error(codes.PermissionDenied, err.Error())
 	}
 	if len(clusterNames) > 0 {
-		err := db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-			deletedBindings, err := workspace.DeleteWorkspaceNamespaceBindings(ctx, int(workspaceID), clusterNames, &tx)
+		deletedBindings, err := workspace.DeleteWorkspaceNamespaceBindings(ctx, int(workspaceID), clusterNames, tx)
+		if err != nil {
+			return err
+		}
+		deletedClusters := map[string]int{}
+		for _, v := range deletedBindings {
+			deletedClusters[v.ClusterName] = 1
+			err = a.m.rm.RemoveEmptyNamespace(v.Namespace, v.ClusterName)
 			if err != nil {
 				return err
 			}
-			deletedClusters := map[string]int{}
-			for _, v := range deletedBindings {
-				deletedClusters[v.ClusterName] = 1
-				err = a.m.rm.RemoveEmptyNamespace(v.Namespace, v.ClusterName)
-				if err != nil {
-					return err
-				}
-			}
-			// Since bindings to the default namespace are not stored in the db, we may
-			// delete less bindings in the database than specified in the request
-			if len(deletedClusters) < len(clusterNames) {
-				switch {
-				case len(clusterNames) == 1:
-					deleteDefaultBindingError := fmt.Sprintf("tried to delete default binding "+
-						"for cluster %v", clusterNames[0])
-					return errors.Wrap(db.ErrDeleteDefaultBinding, deleteDefaultBindingError)
-				default:
-					remainingClusters := ""
-					for _, i := range clusterNames {
-						if _, ok := deletedClusters[i]; !ok {
-							remainingClusters = remainingClusters + i + ", "
-						}
+		}
+		// Since bindings to the default namespace are not stored in the db, we may
+		// delete less bindings in the database than specified in the request
+		if len(deletedClusters) < len(clusterNames) {
+			switch {
+			case len(clusterNames) == 1:
+				deleteDefaultBindingError := fmt.Sprintf("tried to delete default binding "+
+					"for cluster %v", clusterNames[0])
+				return errors.Wrap(db.ErrDeleteDefaultBinding, deleteDefaultBindingError)
+			default:
+				remainingClusters := ""
+				for _, i := range clusterNames {
+					if _, ok := deletedClusters[i]; !ok {
+						remainingClusters = remainingClusters + i + ", "
 					}
-					deleteDefaultBindingError := fmt.Sprintf("tried to delete default binding for "+
-						"clusters: %v", remainingClusters[:len(remainingClusters)-2])
-					return errors.Wrap(db.ErrDeleteDefaultBinding, deleteDefaultBindingError)
 				}
+				deleteDefaultBindingError := fmt.Sprintf("tried to delete default binding for "+
+					"clusters: %v", remainingClusters[:len(remainingClusters)-2])
+				return errors.Wrap(db.ErrDeleteDefaultBinding, deleteDefaultBindingError)
 			}
-			return nil
-		})
-		if err != nil {
-			return fmt.Errorf("failed to delete namespace binding: %w", err)
 		}
 	}
 
@@ -779,37 +779,56 @@ func (a *apiServer) PatchWorkspace(
 			}
 		}
 		insertColumns = append(insertColumns, "checkpoint_storage_config")
+	}
 
-		toDelete := []string{}
-		for cluster, metadata := range req.Workspace.ClusterNamespaceMeta {
-			if metadata.Namespace == nil && !metadata.AutoCreateNamespace {
-				toDelete = append(toDelete, cluster)
-				delete(req.Workspace.ClusterNamespaceMeta, cluster)
-			}
-		}
-		if len(toDelete) > 0 {
-			err = a.deleteWorkspaceNamespaceBinding(ctx, toDelete, req.Id, &currUser)
-			if errors.Is(err, db.ErrDeleteDefaultBinding) {
-				return nil, err
-			}
-		}
-
+	err = db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		if len(req.Workspace.ClusterNamespaceMeta) != 0 {
 			newReq := &apiv1.SetWorkspaceNamespaceBindingsRequest{
 				WorkspaceId:          req.Id,
 				ClusterNamespaceMeta: req.Workspace.ClusterNamespaceMeta,
 			}
-			err = db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-				_, err := a.setWorkspaceNamespaceBindings(ctx, newReq, &tx, &currUser, currWorkspace)
-				if err != nil {
-					return fmt.Errorf("failed to create namespace binding: %w", err)
+			toDelete := []string{}
+			for cluster, metadata := range req.Workspace.ClusterNamespaceMeta {
+				if metadata.ResourceQuota != nil {
+					return status.Errorf(codes.InvalidArgument, "Cannot set resource "+
+						"quota in PatchWorkspaceRequest. Please use "+
+						"SetResourceQuotaRequest to achieve this.")
 				}
-				return nil
-			})
+				if metadata.Namespace == nil && !metadata.AutoCreateNamespace {
+					toDelete = append(toDelete, cluster)
+					delete(req.Workspace.ClusterNamespaceMeta, cluster)
+				}
+				if metadata.AutoCreateNamespace {
+					autoCreatedNamespace, err := getAutoGeneratedNamespaceName(ctx,
+						int(currWorkspace.Id), &tx)
+					if err != nil {
+						return err
+					}
+					updatedWorkspace.AutoCreatedNamespaceName = autoCreatedNamespace
+					insertColumns = append(insertColumns, "auto_created_namespace_name")
+				}
+			}
+			if len(toDelete) > 0 {
+				err = a.deleteWorkspaceNamespaceBindings(ctx, toDelete, req.Id, &currUser, &tx)
+				if err != nil {
+					return fmt.Errorf("failed to delete namespace binding: %w", err)
+				}
+			}
+			updatedWksp, err := updatedWorkspace.ToProto()
+			updatedWksp.Id = currWorkspace.Id
 			if err != nil {
-				return nil, err
+				return fmt.Errorf("error converting workspace %s to proto: %w",
+					updatedWorkspace.Name, err)
+			}
+			_, err = a.setWorkspaceNamespaceBindings(ctx, newReq, &tx, &currUser, updatedWksp)
+			if err != nil {
+				return fmt.Errorf("failed to create namespace binding: %w", err)
 			}
 		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
 	}
 
 	if len(insertColumns) == 0 {
@@ -822,8 +841,8 @@ func (a *apiServer) PatchWorkspace(
 		Exec(ctx)
 	if err != nil {
 		if strings.Contains(err.Error(), db.CodeUniqueViolation) {
-			return nil,
-				status.Errorf(codes.AlreadyExists, "avoid names equal to other workspaces (case-insensitive)")
+			return nil, status.Errorf(codes.AlreadyExists, "avoid names equal to other "+
+				"workspaces (case-insensitive)")
 		}
 		return nil, err
 	}
@@ -857,7 +876,7 @@ func (a *apiServer) setWorkspaceNamespaceBindings(ctx context.Context,
 		return nil, err
 	}
 
-	autoCreatedNamespace, err := getAutoGeneratedNamespaceName(ctx, wkspID, tx)
+	autoCreatedNamespace, err := getAutoCreatedNamespace(ctx, wkspID, w.Name, tx)
 	if err != nil {
 		return nil, fmt.Errorf("error getting generated namespace name for workspace %s: %w",
 			w.Name, err)
@@ -979,6 +998,45 @@ func (a *apiServer) setWorkspaceNamespaceBindings(ctx context.Context,
 	return &apiv1.SetWorkspaceNamespaceBindingsResponse{NamespaceBindings: namespaceBindings}, nil
 }
 
+// getAutoCreatedNamespace generates an auto-created namespace for a workspace if one doesn't
+// exist already and returns a workspace's auto-created namespace if it does. Once a workspace's
+// auto-created namespace is generated and saved in the database, it is immutable. Therefore,
+// changing the workspace's name will not generate a new auto-created namespace.
+func getAutoCreatedNamespace(ctx context.Context, wkspID int, wkspName string,
+	tx *bun.Tx,
+) (*string, error) {
+	var nmsp string
+	err := tx.NewSelect().
+		Column("auto_created_namespace_name").
+		Table("workspaces").
+		Where("id = ?", wkspID).Scan(ctx, &nmsp)
+	if err != nil && err != sql.ErrNoRows {
+		return nil, fmt.Errorf("failed to get auto-created namespace for workspace %s: %w",
+			wkspName, err)
+	}
+
+	if nmsp == "" {
+		autoCreatedNamespace, err := getAutoGeneratedNamespaceName(ctx, wkspID, tx)
+		if err != nil {
+			return nil, fmt.Errorf("error getting generated namespace name for workspace %s: %w",
+				wkspName, err)
+		}
+		nmsp = *autoCreatedNamespace
+	}
+
+	_, err = tx.NewUpdate().
+		Table("workspaces").
+		Set("auto_created_namespace_name = ?", nmsp).
+		Where("id = ?", wkspID).
+		Exec(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("error setting the auto-created namespace for workspace %s : %w",
+			wkspName, err)
+	}
+
+	return &nmsp, nil
+}
+
 func (a *apiServer) generateClusterNamespaceMeta(
 	autoCreatedNamespace string,
 ) map[string]*workspacev1.WorkspaceNamespaceMeta {
@@ -1029,7 +1087,7 @@ func (a *apiServer) setResourceQuotas(ctx context.Context,
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
-	autoGeneratedNamespace, err := getAutoGeneratedNamespaceName(ctx, int(w.Id), tx)
+	autoGeneratedNamespace, err := getAutoCreatedNamespace(ctx, int(w.Id), w.Name, tx)
 	if err != nil {
 		return nil, fmt.Errorf("error getting generated namespace name for workspace %s: %w",
 			w.Name, err)
@@ -1229,7 +1287,7 @@ func (a *apiServer) DeleteWorkspace(
 	ctx context.Context,
 	req *apiv1.DeleteWorkspaceRequest,
 ) (*apiv1.DeleteWorkspaceResponse, error) {
-	_, _, err := a.getWorkspaceAndCheckCanDoActions(ctx, req.Id, false,
+	wksp, _, err := a.getWorkspaceAndCheckCanDoActions(ctx, req.Id, false,
 		workspace.AuthZProvider.Get().CanDeleteWorkspace)
 	if err != nil {
 		return nil, err
@@ -1290,7 +1348,8 @@ func (a *apiServer) DeleteWorkspace(
 		nil,
 		func(ctx context.Context, tx bun.Tx) error {
 			// Get the auto-generated namespace name for the workspace.
-			autoGeneratedNamespaceName, err := getAutoGeneratedNamespaceName(ctx, int(req.Id), &tx)
+			autoGeneratedNamespaceName, err := getAutoCreatedNamespace(ctx, int(wksp.Id), wksp.Name,
+				&tx)
 			autoCreatedNamespace = autoGeneratedNamespaceName
 			if err != nil {
 				return fmt.Errorf("error getting auto-generated namespace: %w", err)

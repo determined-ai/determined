@@ -18,13 +18,13 @@ def test_continue_config_file_cli() -> None:
         sess,
         conf.fixtures_path("no_op/single-medium-train-step.yaml"),
         conf.fixtures_path("no_op"),
-        ["--config", "hyperparameters.metrics_sigma=-1.0"],
+        ["--config", "hyperparameters.crash_on_startup=true"],
     )
     exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.ERROR)
 
     with tempfile.NamedTemporaryFile() as tf:
         with open(tf.name, "w") as f:
-            util.yaml_safe_dump({"hyperparameters": {"metrics_sigma": 1.0}}, f)
+            util.yaml_safe_dump({"hyperparameters": {"crash_on_startup": False}}, f)
         detproc.check_call(sess, ["det", "e", "continue", str(exp_id), "--config-file", tf.name])
 
     exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.COMPLETED)
@@ -37,7 +37,7 @@ def test_continue_config_file_and_args_cli() -> None:
         sess,
         conf.fixtures_path("no_op/single-medium-train-step.yaml"),
         conf.fixtures_path("no_op"),
-        ["--config", "hyperparameters.metrics_sigma=-1.0"],
+        ["--config", "hyperparameters.crash_on_startup=true"],
     )
     exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.ERROR)
 
@@ -45,7 +45,7 @@ def test_continue_config_file_and_args_cli() -> None:
     with tempfile.NamedTemporaryFile() as tf:
         with open(tf.name, "w") as f:
             util.yaml_safe_dump(
-                {"name": expected_name, "hyperparameters": {"metrics_sigma": -1.0}}, f
+                {"name": expected_name, "hyperparameters": {"crash_on_startup": True}}, f
             )
 
         stdout = detproc.check_output(
@@ -58,7 +58,7 @@ def test_continue_config_file_and_args_cli() -> None:
                 "--config-file",
                 tf.name,
                 "--config",
-                "hyperparameters.metrics_sigma=1.0",
+                "hyperparameters.crash_on_startup=false",
                 "-f",
             ],
         )
@@ -85,12 +85,13 @@ def test_continue_fixing_broken_config() -> None:
         sess,
         conf.fixtures_path("no_op/single-medium-train-step.yaml"),
         conf.fixtures_path("no_op"),
-        ["--config", "hyperparameters.metrics_sigma=-1.0"],
+        ["--config", "hyperparameters.crash_on_startup=true"],
     )
     exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.ERROR)
 
     detproc.check_call(
-        sess, ["det", "e", "continue", str(exp_id), "--config", "hyperparameters.metrics_sigma=1.0"]
+        sess,
+        ["det", "e", "continue", str(exp_id), "--config", "hyperparameters.crash_on_startup=false"],
     )
     exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.COMPLETED)
 
@@ -99,7 +100,7 @@ def test_continue_fixing_broken_config() -> None:
 
     # Trial logs show both tasks logs with the failure message in it.
     trial_logs = "\n".join(exp.trial_logs(sess, trials[0].trial.id))
-    assert "assert 0 <= self.metrics_sigma" in trial_logs
+    assert "assert not self.crash_on_startup" in trial_logs
     assert "resources exited successfully with a zero exit code" in trial_logs
 
 
@@ -110,7 +111,7 @@ def test_continue_max_restart() -> None:
         sess,
         conf.fixtures_path("no_op/single-medium-train-step.yaml"),
         conf.fixtures_path("no_op"),
-        ["--config", "hyperparameters.metrics_sigma=-1.0", "--config", "max_restarts=2"],
+        ["--config", "hyperparameters.crash_on_startup=true", "--config", "max_restarts=2"],
     )
     exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.ERROR)
 
@@ -119,7 +120,7 @@ def test_continue_max_restart() -> None:
 
     def count_times_ran() -> int:
         return "\n".join(exp.trial_logs(sess, trials[0].trial.id)).count(
-            "assert 0 <= self.metrics_sigma"
+            "assert not self.crash_on_startup"
         )
 
     def get_trial_restarts() -> int:
@@ -148,7 +149,7 @@ def test_continue_trial_time() -> None:
         sess,
         conf.fixtures_path("no_op/single-medium-train-step.yaml"),
         conf.fixtures_path("no_op"),
-        ["--config", "hyperparameters.metrics_sigma=-1.0"],
+        ["--config", "hyperparameters.crash_on_startup=true"],
     )
     exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.ERROR)
 

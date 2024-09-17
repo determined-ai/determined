@@ -5,9 +5,9 @@ import { Card } from 'e2e/models/common/hew/Card';
 import { ProjectActionDropdown } from './ProjectActionDropdown';
 
 /**
- * Represents the ProjectsCard in the WorkspaceProjects component
+ * Represents the ProjectCard in the WorkspaceProjects component
  */
-export class ProjectsCard extends Card {
+export class ProjectCard extends Card {
   override readonly actionMenu = new ProjectActionDropdown({
     clickThisComponentToOpen: this.actionMenuContainer,
     root: this.root,
@@ -15,5 +15,9 @@ export class ProjectsCard extends Card {
   readonly archivedBadge = new BaseComponent({
     parent: this,
     selector: '[data-testid="archived"]',
+  });
+  readonly title = new BaseComponent({
+    parent: this,
+    selector: 'h1',
   });
 }
