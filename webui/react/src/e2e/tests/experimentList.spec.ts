@@ -2,6 +2,7 @@ import { expect, test } from 'e2e/fixtures/global-fixtures';
 import { ProjectDetails } from 'e2e/models/pages/ProjectDetails';
 import { detExecSync, fullPath } from 'e2e/utils/detCLI';
 import { safeName } from 'e2e/utils/naming';
+import { repeatWithFallback } from 'e2e/utils/polling';
 import { ExperimentBase } from 'types';
 
 test.describe('Experiment List', () => {
@@ -95,12 +96,16 @@ test.describe('Experiment List', () => {
     await test.step('Reset Show Archived', async () => {
       const tableFilter =
         await projectDetailsPage.f_experimentList.tableActionBar.tableFilter.open();
-      if (
-        (await tableFilter.filterForm.showArchived.pwLocator.getAttribute('aria-checked')) ===
-        'true'
-      ) {
-        await tableFilter.filterForm.showArchived.pwLocator.click();
-      }
+      await expect(
+        repeatWithFallback(
+          async () =>
+            await expect(tableFilter.filterForm.showArchived.pwLocator).toHaveAttribute(
+              'aria-checked',
+              'false',
+            ),
+          async () => await tableFilter.filterForm.showArchived.pwLocator.click(),
+        ),
+      ).toPass({ timeout: 30_000 });
       await tableFilter.close();
       await waitTableStable();
     });
@@ -266,7 +271,16 @@ test.describe('Experiment List', () => {
     await filterScenario(
       'Show Archived',
       async () => {
-        await tableFilter.filterForm.showArchived.pwLocator.click();
+        await expect(
+          repeatWithFallback(
+            async () =>
+              await expect(tableFilter.filterForm.showArchived.pwLocator).toHaveAttribute(
+                'aria-checked',
+                'true',
+              ),
+            async () => await tableFilter.filterForm.showArchived.pwLocator.click(),
+          ),
+        ).toPass({ timeout: 30_000 });
       },
       totalExperiments + 1,
     );
