@@ -2,7 +2,6 @@ package internal
 
 import (
 	"context"
-	"database/sql"
 	"fmt"
 	"testing"
 
@@ -81,8 +80,9 @@ func TestDeleteWorkspaceConfigPolicies(t *testing.T) {
 
 			// Policies removed?
 			policies, err := configpolicy.GetTaskConfigPolicies(ctx, ptrs.Ptr(int(workspaceID)), test.req.WorkloadType)
-			require.Nil(t, policies)
-			require.ErrorIs(t, err, sql.ErrNoRows)
+			require.NoError(t, err)
+			require.Nil(t, policies.InvariantConfig)
+			require.Nil(t, policies.Constraints)
 		})
 	}
 
@@ -148,8 +148,9 @@ func TestDeleteGlobalConfigPolicies(t *testing.T) {
 
 			// Policies removed?
 			policies, err := configpolicy.GetTaskConfigPolicies(ctx, nil, test.req.WorkloadType)
-			require.Nil(t, policies)
-			require.ErrorIs(t, err, sql.ErrNoRows)
+			require.NoError(t, err)
+			require.Nil(t, policies.InvariantConfig)
+			require.Nil(t, policies.Constraints)
 		})
 	}
 }
