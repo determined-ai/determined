@@ -13,6 +13,7 @@ import (
 	"golang.org/x/exp/slices"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"gopkg.in/guregu/null.v3"
 
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/saas"
@@ -475,6 +476,16 @@ func WithTokenExpiry(expiry *time.Duration) LongLivedTokenOption {
 	}
 }
 
+// WithTokenDescription function will add specified description (if any) to the long lived token table.
+func WithTokenDescription(description string) LongLivedTokenOption {
+	return func(s *model.UserSession) {
+		if description == "" {
+			return
+		}
+		s.TokenDescription = null.StringFrom(description)
+	}
+}
+
 // RevokeAndCreateLongLivedToken creates/overwrites a long lived token and store in
 // user_sessions db.
 func RevokeAndCreateLongLivedToken(
@@ -483,11 +494,12 @@ func RevokeAndCreateLongLivedToken(
 	CurrentTimeNowInUTC = time.Now().UTC()
 	// Populate the default values in the model.
 	longLivedToken := &model.UserSession{
-		UserID:    userID,
-		CreatedAt: CurrentTimeNowInUTC,
-		Expiry:    CurrentTimeNowInUTC.Add(DefaultTokenLifespan),
-		TokenType: model.TokenTypeLongLivedToken,
-		IsRevoked: false,
+		UserID:           userID,
+		CreatedAt:        CurrentTimeNowInUTC,
+		Expiry:           CurrentTimeNowInUTC.Add(DefaultTokenLifespan),
+		TokenType:        model.TokenTypeLongLivedToken,
+		TokenDescription: null.StringFromPtr(nil),
+		IsRevoked:        false,
 	}
 
 	// Update the optional ExpiresAt field (if passed)
@@ -514,7 +526,7 @@ func RevokeAndCreateLongLivedToken(
 		// inserted row is returned and stored in user_sessions.ID.
 		_, err = tx.NewInsert().
 			Model(longLivedToken).
-			Column("user_id", "expiry", "created_at", "token_type", "is_revoked").
+			Column("user_id", "expiry", "created_at", "token_type", "is_revoked", "token_description").
 			Returning("id").
 			Exec(ctx, &longLivedToken.ID)
 		if err != nil {
@@ -610,8 +622,6 @@ func GetLongLivedTokenInfo(ctx context.Context, userID model.UserID) (
 		Where("user_id = ?", userID).Where("is_revoked = ?", false).
 		Where("token_type = ?", model.TokenTypeLongLivedToken).
 		Scan(ctx, &tokenInfo); {
-	case errors.Is(err, sql.ErrNoRows):
-		return nil, fmt.Errorf("no rows found with user_id: %v", userID)
 	case err != nil:
 		return nil, err
 	default:

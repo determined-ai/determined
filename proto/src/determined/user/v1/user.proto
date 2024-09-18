@@ -107,23 +107,23 @@ enum TokenType {
   TOKEN_TYPE_LONG_LIVED_TOKEN = 2;
 }
 
-// UserSessionInfo represents user session info.
-message UserSessionInfo {
+// TokenInfo represents a token entry in the database.
+message TokenInfo {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "id" ] }
+    json_schema: { required: [ "id", "user_id" ] }
   };
   // The token ID.
   int32 id = 1;
-  // The user ID.
+  // The id of the user the token belongs to.
   int32 user_id = 2;
-  // The value of expiry.
+  // Timestamp of when the token expires.
   google.protobuf.Timestamp expiry = 3;
-  // The value of created_at.
+  // Tiemstamp of when the token was created.
   google.protobuf.Timestamp created_at = 4;
-  // The value of token_type.
+  // Type of token this entry represents.
   TokenType token_type = 5;
-  // Bool denoting whether the account is active or revoked.
-  bool is_revoked = 6;
-  // The value of token_description.
-  string token_description = 7;
+  // Flag denoting if this token is revoked.
+  bool revoked = 6;
+  // Description of the token.
+  string description = 7;
 }

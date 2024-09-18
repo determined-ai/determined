@@ -2,8 +2,10 @@ package internal
 
 import (
 	"context"
+	"database/sql"
 	"fmt"
 	"regexp"
+	"strconv"
 	"strings"
 	"time"
 
@@ -722,11 +724,11 @@ func (a *apiServer) PostLongLivedToken(
 	}
 
 	token, err := user.RevokeAndCreateLongLivedToken(
-		ctx, curUser.ID, user.WithTokenExpiry(&tokenExpiration))
+		ctx, curUser.ID, user.WithTokenExpiry(&tokenExpiration), user.WithTokenDescription(req.Description))
 	if err != nil {
 		return nil, err
 	}
-	return &apiv1.PostLongLivedTokenResponse{LongLivedToken: token}, nil
+	return &apiv1.PostLongLivedTokenResponse{Token: token}, nil
 }
 
 // POST User Long lived token takes user id and optional lifespan and overwrites an
@@ -759,11 +761,11 @@ func (a *apiServer) PostUserLongLivedToken(
 	}
 
 	token, err := user.RevokeAndCreateLongLivedToken(
-		ctx, targetFullUser.ID, user.WithTokenExpiry(&tokenExpiration))
+		ctx, targetFullUser.ID, user.WithTokenExpiry(&tokenExpiration), user.WithTokenDescription(req.Description))
 	if err != nil {
 		return nil, err
 	}
-	return &apiv1.PostUserLongLivedTokenResponse{LongLivedToken: token}, nil
+	return &apiv1.PostUserLongLivedTokenResponse{Token: token}, nil
 }
 
 // GET active Long lived token returns token information for the logged in user.
@@ -779,11 +781,14 @@ func (a *apiServer) GetLongLivedToken(
 	}
 
 	tokenInfo, err := user.GetLongLivedTokenInfo(ctx, curUser.ID)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, api.NotFoundErrs("token for user", curUser.Username, true)
+	}
 	if err != nil {
 		return nil, err
 	}
 
-	return &apiv1.GetLongLivedTokenResponse{LongLivedTokenInfo: tokenInfo.Proto()}, nil
+	return &apiv1.GetLongLivedTokenResponse{TokenInfo: tokenInfo.Proto()}, nil
 }
 
 // GET All (active / revoked) Long lived token returns all long-lived token information from user_session db.
@@ -833,10 +838,11 @@ func (a *apiServer) GetAllLongLivedTokens(
 
 	// Get only Long lived token type
 	query.Where("us.token_type = ?", model.TokenTypeLongLivedToken)
-	//model.TokenTypeFromProto(*model.TokenTypeLongLivedToken.Proto().Enum()))
+	// model.TokenTypeFromProto(*model.TokenTypeLongLivedToken.Proto().Enum()))
 
-	if req.IsRevoked != nil {
-		query.Where("us.is_revoked = ?", *req.IsRevoked)
+	if !req.IncludeInactive {
+		query.Where("us.expiry > ?", time.Now().UTC())
+		query.Where("us.is_revoked = false")
 	}
 
 	orderBy, ok := orderByMap[req.OrderBy]
@@ -868,9 +874,9 @@ func (a *apiServer) GetAllLongLivedTokens(
 
 	res := &apiv1.GetAllLongLivedTokensResponse{}
 	for _, s := range userSessions {
-		res.LongLivedTokenInfo = append(res.LongLivedTokenInfo, s.Proto())
+		res.TokenInfo = append(res.TokenInfo, s.Proto())
 	}
-	return res, api.Paginate(&res.Pagination, &res.LongLivedTokenInfo, req.Offset, req.Limit)
+	return res, api.Paginate(&res.Pagination, &res.TokenInfo, req.Offset, req.Limit)
 }
 
 // GET User Long lived token takes user id and returns token information for the given user.
@@ -884,7 +890,7 @@ func (a *apiServer) GetUserLongLivedToken(
 
 	targetFullUser, err := getFullModelUser(ctx, model.UserID(req.UserId))
 	if err != nil {
-		return nil, err
+		return nil, status.Error(codes.NotFound, "User with name: {req.UserId} not found")
 	}
 	targetUser := targetFullUser.ToUser()
 	if err = user.AuthZProvider.Get().CanGetUsersToken(ctx, *curUser, targetUser); err != nil {
@@ -892,11 +898,14 @@ func (a *apiServer) GetUserLongLivedToken(
 	}
 
 	tokenInfo, err := user.GetLongLivedTokenInfo(ctx, targetFullUser.ID)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, api.NotFoundErrs("token for user", targetUser.Username, true)
+	}
 	if err != nil {
 		return nil, err
 	}
 
-	return &apiv1.GetUserLongLivedTokenResponse{LongLivedTokenInfo: tokenInfo.Proto()}, nil
+	return &apiv1.GetUserLongLivedTokenResponse{TokenInfo: tokenInfo.Proto()}, nil
 }
 
 // DELETE Long lived token deletes long lived token with current logged in user_id.
@@ -912,6 +921,9 @@ func (a *apiServer) DeleteLongLivedToken(
 	}
 
 	err = user.DeleteLongLivenTokenByUserID(ctx, curUser.ID)
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, api.NotFoundErrs("token for user", curUser.Username, true)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -942,6 +954,9 @@ func (a *apiServer) DeleteLongLivedTokenByTokenID(
 	}
 
 	err = user.DeleteLongLivenTokenByTokenID(ctx, model.SessionID(req.TokenId))
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, api.NotFoundErrs("token", strconv.Itoa(int(req.TokenId)), true)
+	}
 	if err != nil {
 		return nil, err
 	}

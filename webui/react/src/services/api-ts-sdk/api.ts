@@ -3792,11 +3792,11 @@ export type V1GetAllLongLivedTokensRequestSortBy = ValueOf<typeof V1GetAllLongLi
  */
 export interface V1GetAllLongLivedTokensResponse {
     /**
-     * Return list of LongLivedToken Info.
-     * @type {Array<V1UserSessionInfo>}
+     * List of information regarded request tokens.
+     * @type {Array<V1TokenInfo>}
      * @memberof V1GetAllLongLivedTokensResponse
      */
-    longLivedTokenInfo: Array<V1UserSessionInfo>;
+    tokenInfo: Array<V1TokenInfo>;
     /**
      * Pagination information of the full dataset.
      * @type {V1Pagination}
@@ -4263,11 +4263,11 @@ export interface V1GetKubernetesResourceQuotasResponse {
  */
 export interface V1GetLongLivedTokenResponse {
     /**
-     * Return the LongLivedToken Info.
-     * @type {V1UserSessionInfo}
+     * Information about the requested token.
+     * @type {V1TokenInfo}
      * @memberof V1GetLongLivedTokenResponse
      */
-    longLivedTokenInfo: V1UserSessionInfo;
+    tokenInfo: V1TokenInfo;
 }
 /**
  * Response to GetMasterRequest.
@@ -5232,11 +5232,11 @@ export interface V1GetUserByUsernameResponse {
  */
 export interface V1GetUserLongLivedTokenResponse {
     /**
-     * Return the LongLivedToken Info.
-     * @type {V1UserSessionInfo}
+     * Information about the requested token.
+     * @type {V1TokenInfo}
      * @memberof V1GetUserLongLivedTokenResponse
      */
-    longLivedTokenInfo: V1UserSessionInfo;
+    tokenInfo: V1TokenInfo;
 }
 /**
  * Response to GetUserRequest.
@@ -8095,6 +8095,12 @@ export interface V1PostLongLivedTokenRequest {
      * @memberof V1PostLongLivedTokenRequest
      */
     lifespan?: string;
+    /**
+     * Description of the token.
+     * @type {string}
+     * @memberof V1PostLongLivedTokenRequest
+     */
+    description?: string;
 }
 /**
  * Response to PostLongLivedTokenRequest.
@@ -8103,11 +8109,11 @@ export interface V1PostLongLivedTokenRequest {
  */
 export interface V1PostLongLivedTokenResponse {
     /**
-     * long_lived_token string.
+     * token value string.
      * @type {string}
      * @memberof V1PostLongLivedTokenResponse
      */
-    longLivedToken?: string;
+    token?: string;
 }
 /**
  * Request for creating a model in the registry.
@@ -8451,6 +8457,12 @@ export interface V1PostUserLongLivedTokenRequest {
      * @memberof V1PostUserLongLivedTokenRequest
      */
     lifespan?: string;
+    /**
+     * Description of the token.
+     * @type {string}
+     * @memberof V1PostUserLongLivedTokenRequest
+     */
+    description?: string;
 }
 /**
  * Response to PostUserLongLivedTokenRequest.
@@ -8459,11 +8471,11 @@ export interface V1PostUserLongLivedTokenRequest {
  */
 export interface V1PostUserLongLivedTokenResponse {
     /**
-     * long_lived_token string.
+     * token value string.
      * @type {string}
      * @memberof V1PostUserLongLivedTokenResponse
      */
-    longLivedToken?: string;
+    token?: string;
 }
 /**
  * Create a new user.
@@ -11536,6 +11548,55 @@ export interface V1TimestampFieldFilter {
     gte?: Date | DateString;
 }
 /**
+ * TokenInfo represents a token entry in the database.
+ * @export
+ * @interface V1TokenInfo
+ */
+export interface V1TokenInfo {
+    /**
+     * The token ID.
+     * @type {number}
+     * @memberof V1TokenInfo
+     */
+    id: number;
+    /**
+     * The id of the user the token belongs to.
+     * @type {number}
+     * @memberof V1TokenInfo
+     */
+    userId: number;
+    /**
+     * Timestamp of when the token expires.
+     * @type {Date | DateString}
+     * @memberof V1TokenInfo
+     */
+    expiry?: Date | DateString;
+    /**
+     * Tiemstamp of when the token was created.
+     * @type {Date | DateString}
+     * @memberof V1TokenInfo
+     */
+    createdAt?: Date | DateString;
+    /**
+     * Type of token this entry represents.
+     * @type {V1TokenType}
+     * @memberof V1TokenInfo
+     */
+    tokenType?: V1TokenType;
+    /**
+     * Flag denoting if this token is revoked.
+     * @type {boolean}
+     * @memberof V1TokenInfo
+     */
+    revoked?: boolean;
+    /**
+     * Description of the token.
+     * @type {string}
+     * @memberof V1TokenInfo
+     */
+    description?: string;
+}
+/**
  * Token type.   - TOKEN_TYPE_UNSPECIFIED: Default token type.  - TOKEN_TYPE_USER_SESSION: User Session token.  - TOKEN_TYPE_LONG_LIVED_TOKEN: Long Lived token.
  * @export
  * @enum {string}
@@ -12422,55 +12483,6 @@ export interface V1UserRoleAssignment {
      * @memberof V1UserRoleAssignment
      */
     roleAssignment: V1RoleAssignment;
-}
-/**
- * UserSessionInfo represents user session info.
- * @export
- * @interface V1UserSessionInfo
- */
-export interface V1UserSessionInfo {
-    /**
-     * The token ID.
-     * @type {number}
-     * @memberof V1UserSessionInfo
-     */
-    id: number;
-    /**
-     * The user ID.
-     * @type {number}
-     * @memberof V1UserSessionInfo
-     */
-    userId?: number;
-    /**
-     * The value of expiry.
-     * @type {Date | DateString}
-     * @memberof V1UserSessionInfo
-     */
-    expiry?: Date | DateString;
-    /**
-     * The value of created_at.
-     * @type {Date | DateString}
-     * @memberof V1UserSessionInfo
-     */
-    createdAt?: Date | DateString;
-    /**
-     * The value of token_type.
-     * @type {V1TokenType}
-     * @memberof V1UserSessionInfo
-     */
-    tokenType?: V1TokenType;
-    /**
-     * Bool denoting whether the account is active or revoked.
-     * @type {boolean}
-     * @memberof V1UserSessionInfo
-     */
-    isRevoked?: boolean;
-    /**
-     * The value of token_description.
-     * @type {string}
-     * @memberof V1UserSessionInfo
-     */
-    tokenDescription?: string;
 }
 /**
  * UserWebSetting represents user web setting.
@@ -34121,11 +34133,11 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
          * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
          * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
          * @param {string} [name] Filter by username or display name.
-         * @param {boolean} [isRevoked] Filter by status.
+         * @param {boolean} [includeInactive] Include inactive tokens (expired & revoked) in response.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getAllLongLivedTokens(sortBy?: V1GetAllLongLivedTokensRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, isRevoked?: boolean, options: any = {}): FetchArgs {
+        getAllLongLivedTokens(sortBy?: V1GetAllLongLivedTokensRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, includeInactive?: boolean, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/user/tokens`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
@@ -34160,8 +34172,8 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
                 localVarQueryParameter['name'] = name
             }
             
-            if (isRevoked !== undefined) {
-                localVarQueryParameter['isRevoked'] = isRevoked
+            if (includeInactive !== undefined) {
+                localVarQueryParameter['includeInactive'] = includeInactive
             }
             
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
@@ -34810,12 +34822,12 @@ export const UsersApiFp = function (configuration?: Configuration) {
          * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
          * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
          * @param {string} [name] Filter by username or display name.
-         * @param {boolean} [isRevoked] Filter by status.
+         * @param {boolean} [includeInactive] Include inactive tokens (expired & revoked) in response.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getAllLongLivedTokens(sortBy?: V1GetAllLongLivedTokensRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, isRevoked?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetAllLongLivedTokensResponse> {
-            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getAllLongLivedTokens(sortBy, orderBy, offset, limit, name, isRevoked, options);
+        getAllLongLivedTokens(sortBy?: V1GetAllLongLivedTokensRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, includeInactive?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetAllLongLivedTokensResponse> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getAllLongLivedTokens(sortBy, orderBy, offset, limit, name, includeInactive, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -35153,12 +35165,12 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
          * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
          * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
          * @param {string} [name] Filter by username or display name.
-         * @param {boolean} [isRevoked] Filter by status.
+         * @param {boolean} [includeInactive] Include inactive tokens (expired & revoked) in response.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getAllLongLivedTokens(sortBy?: V1GetAllLongLivedTokensRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, isRevoked?: boolean, options?: any) {
-            return UsersApiFp(configuration).getAllLongLivedTokens(sortBy, orderBy, offset, limit, name, isRevoked, options)(fetch, basePath);
+        getAllLongLivedTokens(sortBy?: V1GetAllLongLivedTokensRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, includeInactive?: boolean, options?: any) {
+            return UsersApiFp(configuration).getAllLongLivedTokens(sortBy, orderBy, offset, limit, name, includeInactive, options)(fetch, basePath);
         },
         /**
          * 
@@ -35357,13 +35369,13 @@ export class UsersApi extends BaseAPI {
      * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
      * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
      * @param {string} [name] Filter by username or display name.
-     * @param {boolean} [isRevoked] Filter by status.
+     * @param {boolean} [includeInactive] Include inactive tokens (expired & revoked) in response.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof UsersApi
      */
-    public getAllLongLivedTokens(sortBy?: V1GetAllLongLivedTokensRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, isRevoked?: boolean, options?: any) {
-        return UsersApiFp(this.configuration).getAllLongLivedTokens(sortBy, orderBy, offset, limit, name, isRevoked, options)(this.fetch, this.basePath)
+    public getAllLongLivedTokens(sortBy?: V1GetAllLongLivedTokensRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, includeInactive?: boolean, options?: any) {
+        return UsersApiFp(this.configuration).getAllLongLivedTokens(sortBy, orderBy, offset, limit, name, includeInactive, options)(this.fetch, this.basePath)
     }
     
     /**

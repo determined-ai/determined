@@ -235,12 +235,14 @@ message PostLongLivedTokenRequest {
   // Lifespan expressing how long the token should last. Should be a Go-format
   // duration (e.g. "2s", "4m", "72h".)
   string lifespan = 1;
+  // Description of the token.
+  string description = 2;
 }
 
 // Response to PostLongLivedTokenRequest.
 message PostLongLivedTokenResponse {
-  // long_lived_token string.
-  string long_lived_token = 1;
+  // token value string.
+  string token = 1;
 }
 
 // Create the requested user's longLivedToken.
@@ -250,12 +252,14 @@ message PostUserLongLivedTokenRequest {
   // Lifespan expressing how long the token should last. Should be a Go-format
   // duration (e.g. "2s", "4m", "72h".)
   string lifespan = 2;
+  // Description of the token.
+  string description = 3;
 }
 
 // Response to PostUserLongLivedTokenRequest.
 message PostUserLongLivedTokenResponse {
-  // long_lived_token string.
-  string long_lived_token = 1;
+  // token value string.
+  string token = 1;
 }
 
 // Get user's longLivedToken info.
@@ -264,10 +268,10 @@ message GetLongLivedTokenRequest {}
 // Response to GetLongLivedTokenRequest.
 message GetLongLivedTokenResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "long_lived_token_info" ] }
+    json_schema: { required: [ "token_info" ] }
   };
-  // Return the LongLivedToken Info.
-  determined.user.v1.UserSessionInfo long_lived_token_info = 1;
+  // Information about the requested token.
+  determined.user.v1.TokenInfo token_info = 1;
 }
 
 // Get all longLivedTokens info for admin.
@@ -302,17 +306,17 @@ message GetAllLongLivedTokensRequest {
 
   // Filter by username or display name.
   string name = 5;
-  // Filter by status.
-  optional bool is_revoked = 6;
+  // Include inactive tokens (expired & revoked) in response.
+  bool include_inactive = 7;
 }
 
 // Response to GetAllLongLivedTokenRequest.
 message GetAllLongLivedTokensResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "long_lived_token_info" ] }
+    json_schema: { required: [ "token_info" ] }
   };
-  // Return list of LongLivedToken Info.
-  repeated determined.user.v1.UserSessionInfo long_lived_token_info = 1;
+  // List of information regarded request tokens.
+  repeated determined.user.v1.TokenInfo token_info = 1;
   // Pagination information of the full dataset.
   Pagination pagination = 2;
 }
@@ -326,10 +330,10 @@ message GetUserLongLivedTokenRequest {
 // Response to GetUserLongLivedTokenRequest.
 message GetUserLongLivedTokenResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "long_lived_token_info" ] }
+    json_schema: { required: [ "token_info" ] }
   };
-  // Return the LongLivedToken Info.
-  determined.user.v1.UserSessionInfo long_lived_token_info = 1;
+  // Information about the requested token.
+  determined.user.v1.TokenInfo token_info = 1;
 }
 
 // Delete user's longLivedToken info.
