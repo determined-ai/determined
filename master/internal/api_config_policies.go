@@ -83,16 +83,52 @@ func (a *apiServer) GetWorkspaceConfigPolicies(
 		return nil, err
 	}
 
-	if !configpolicy.ValidWorkloadType(req.WorkloadType) {
-		errMessage := fmt.Sprintf("invalid workload type: %s.", req.WorkloadType)
-		if len(req.WorkloadType) == 0 {
+	resp, err := a.getConfigPolicies(ctx, ptrs.Ptr(int(req.WorkspaceId)), req.WorkloadType)
+	if err != nil {
+		return nil, err
+	}
+
+	return &apiv1.GetWorkspaceConfigPoliciesResponse{ConfigPolicies: resp}, nil
+}
+
+// Get global task config policies.
+func (a *apiServer) GetGlobalConfigPolicies(
+	ctx context.Context, req *apiv1.GetGlobalConfigPoliciesRequest,
+) (*apiv1.GetGlobalConfigPoliciesResponse, error) {
+	license.RequireLicense("manage config policies")
+
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	permErr, err := cluster.AuthZProvider.Get().CanViewGlobalConfigPolicies(ctx, curUser)
+	if err != nil {
+		return nil, err
+	} else if permErr != nil {
+		return nil, permErr
+	}
+	resp, err := a.getConfigPolicies(ctx, nil, req.WorkloadType)
+	if err != nil {
+		return nil, err
+	}
+
+	return &apiv1.GetGlobalConfigPoliciesResponse{ConfigPolicies: resp}, nil
+}
+
+func (*apiServer) getConfigPolicies(
+	ctx context.Context, workspaceID *int, workloadType string,
+) (*structpb.Struct, error) {
+	if !configpolicy.ValidWorkloadType(workloadType) {
+		errMessage := fmt.Sprintf("invalid workload type: %s.", workloadType)
+		if len(workloadType) == 0 {
 			errMessage = noWorkloadErr
 		}
 		return nil, status.Errorf(codes.InvalidArgument, errMessage)
 	}
 
 	configPolicies, err := configpolicy.GetTaskConfigPolicies(
-		ctx, ptrs.Ptr(int(req.WorkspaceId)), req.WorkloadType)
+		ctx, workspaceID, workloadType)
 	if err != nil {
 		return nil, err
 	}
@@ -111,18 +147,7 @@ func (a *apiServer) GetWorkspaceConfigPolicies(
 		}
 		policyMap["constraints"] = constraintsMap
 	}
-	return &apiv1.GetWorkspaceConfigPoliciesResponse{ConfigPolicies: configpolicy.MarshalConfigPolicy(policyMap)}, nil
-}
-
-// Get global task config policies.
-func (*apiServer) GetGlobalConfigPolicies(
-	ctx context.Context, req *apiv1.GetGlobalConfigPoliciesRequest,
-) (*apiv1.GetGlobalConfigPoliciesResponse, error) {
-	if !configpolicy.ValidWorkloadType(req.WorkloadType) {
-		return nil, fmt.Errorf("invalid workload type: %s", req.WorkloadType)
-	}
-	data, err := stubData()
-	return &apiv1.GetGlobalConfigPoliciesResponse{ConfigPolicies: data}, err
+	return configpolicy.MarshalConfigPolicy(policyMap), nil
 }
 
 // Delete workspace task config policies.
