@@ -2,5 +2,8 @@
 
 **New Features**
 
--  Webhooks: Add support for monitoring experiment by workspaces, editing webhook URL and triggering
-   webhook from code. For more details, refer to :ref:`supported-webhook-triggers`.
+-  Webhooks: Add support for experiment monitoring and alerting. Capabilities include creation of
+   workspace-level subscriptions with "All experiments" and "Specific experiment(s) with matching
+   configuration" options; new trigger types: COMPLETED, ERROR, TASKLOG, and CUSTOM; custom triggers
+   for code-based alerts; webhook exclusion for specific experiments; and editable webhook URLs. For
+   details, visit :ref:supported-webhook-triggers.

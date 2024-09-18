@@ -151,7 +151,7 @@ Supported Triggers
  Creating Webhooks
 *******************
 
-To create a webhook:
+To create a webhook, follow these steps:
 
 -  Navigate to ``/det/webhooks`` or select **Webhooks** in the left-side navigation pane.
 -  Choose **New Webhook**.
@@ -163,20 +163,21 @@ To create a webhook:
 .. note::
 
    If you do not have sufficient permissions to view and create webhooks, consult with a systems
-   admin.
+   administrator.
 
--  Workspace: You can only select from workspaces you have the permission to create webhook in.
--  Name: Identifier to reference webhook in experiment configuration.
--  URL: Supply the webhook URL.
--  Type: Select a type, either ``Default`` or ``Slack``. The ``Slack`` type can automatically format
-   message content for better readability on Slack.
--  Trigger: Select the event you want to monitor, see :ref:`supported-webhook-triggers`.
--  Trigger by: Select whether you want to monitor all experiments within the workspace. ``Custom``
-   trigger can only be triggered by specific experiments.
+-  Workspace: Select a workspace where you have permission to create webhooks.
+-  Name: Supply a unique identifier for referencing the webhook in the experiment configuration.
+-  URL: Enter the webhook URL.
+-  Type: Choose either ``Default`` or ``Slack``. The ``Slack`` type automatically formats message
+   content for better readability on Slack.
+-  Trigger: Select the event you want to monitor. See the list of supported triggers in the
+   :ref:`supported-webhook-triggers` section.
+-  Triggered by: Choose whether to monitor all experiments within the workspace. For the ``Custom``
+   option, the trigger applies only to specific experiments.
 
 .. code::
 
-   # Here is an example experiment config associated with specific webhooks
+   # Example of an experiment configuration with webhooks
 
    integrations:
       webhooks:
@@ -190,14 +191,14 @@ To create a webhook:
    :width: 100%
    :alt: Webhook user interface showing the fields you will interact with.
 
-Once created, your webhook will begin executing for the selected events for experiments within
-scope.
+Once created, your webhook will automatically execute for the selected events within the specified
+experiments.
 
 ******************
  Testing Webhooks
 ******************
 
-To test a webhook, select the more-options menu to the right of the webhook record to expand
+To edit a webhook, select the more-options menu to the right of the webhook record to access
 available actions.
 
 .. image:: /assets/images/webhook_action.png
@@ -237,8 +238,8 @@ available actions.
 
 .. note::
 
-   Determined only support editing the URL of webhooks. To edit other attributes, you should delete
-   and recreate the webhook.
+   Determined only supports editing the URL of webhooks. To modify other attributes, delete and
+   recreate the webhook.
 
 .. toctree::
    :caption: Notification
