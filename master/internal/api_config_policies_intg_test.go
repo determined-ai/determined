@@ -9,7 +9,6 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/determined-ai/determined/master/internal/cluster"
 	"github.com/determined-ai/determined/master/internal/configpolicy"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/mocks"
@@ -358,7 +357,6 @@ func TestAuthZCanModifyConfigPolicies(t *testing.T) {
 	api, workspaceAuthZ, _, ctx := setupWorkspaceAuthZTest(t, nil)
 	testutils.MustLoadLicenseAndKeyFromFilesystem("../../")
 	configPolicyAuthZ := setupConfigPolicyAuthZ()
-	miscAuthZ := setupMiscAuthZ()
 
 	workspaceAuthZ.On("CanCreateWorkspace", mock.Anything, mock.Anything).Return(nil)
 	workspaceAuthZ.On("CanGetWorkspace", mock.Anything, mock.Anything, mock.Anything).Return(nil)
@@ -393,7 +391,7 @@ func TestAuthZCanModifyConfigPolicies(t *testing.T) {
 
 	// (Global) Deny with permission access error.
 	expectedErr = fmt.Errorf("canModifyGlobalConfigPoliciesError")
-	miscAuthZ.On("CanModifyGlobalConfigPolicies", mock.Anything, mock.Anything).
+	configPolicyAuthZ.On("CanModifyGlobalConfigPolicies", mock.Anything, mock.Anything).
 		Return(expectedErr, nil).Once()
 
 	_, err = api.DeleteGlobalConfigPolicies(ctx,
@@ -401,25 +399,14 @@ func TestAuthZCanModifyConfigPolicies(t *testing.T) {
 	require.Equal(t, expectedErr, err)
 
 	// Nil error returns whatever the delete request returned.
-	miscAuthZ.On("CanModifyGlobalConfigPolicies", mock.Anything, mock.Anything).
+	configPolicyAuthZ.On("CanModifyGlobalConfigPolicies", mock.Anything, mock.Anything).
 		Return(nil, nil).Once()
 	_, err = api.DeleteGlobalConfigPolicies(ctx,
 		&apiv1.DeleteGlobalConfigPoliciesRequest{WorkloadType: model.NTSCType})
 	require.NoError(t, err)
 }
 
-var (
-	mAuthZ  *mocks.MiscAuthZ
-	cpAuthZ *mocks.ConfigPolicyAuthZ
-)
-
-func setupMiscAuthZ() *mocks.MiscAuthZ {
-	if mAuthZ == nil {
-		mAuthZ = &mocks.MiscAuthZ{}
-		cluster.AuthZProvider.Register("mock", mAuthZ)
-	}
-	return mAuthZ
-}
+var cpAuthZ *mocks.ConfigPolicyAuthZ
 
 func setupConfigPolicyAuthZ() *mocks.ConfigPolicyAuthZ {
 	if cpAuthZ == nil {

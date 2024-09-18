@@ -9,7 +9,6 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 	"gopkg.in/yaml.v3"
 
-	"github.com/determined-ai/determined/master/internal/cluster"
 	"github.com/determined-ai/determined/master/internal/configpolicy"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/license"
@@ -197,11 +196,9 @@ func (a *apiServer) DeleteGlobalConfigPolicies(
 		return nil, err
 	}
 
-	permErr, err := cluster.AuthZProvider.Get().CanModifyGlobalConfigPolicies(ctx, curUser)
+	err = configpolicy.AuthZProvider.Get().CanModifyGlobalConfigPolicies(ctx, curUser)
 	if err != nil {
 		return nil, err
-	} else if permErr != nil {
-		return nil, permErr
 	}
 
 	if !configpolicy.ValidWorkloadType(req.WorkloadType) {

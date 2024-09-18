@@ -9,6 +9,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/rbac/audit"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/proto/pkg/rbacv1"
 	"github.com/determined-ai/determined/proto/pkg/workspacev1"
 )
@@ -33,7 +34,7 @@ func (r *ConfigPolicyAuthZRBAC) CanModifyWorkspaceConfigPolicies(
 		audit.LogFromErr(fields, err)
 	}()
 
-	return db.DoesPermissionMatch(ctx, curUser.ID, nil,
+	return db.DoesPermissionMatch(ctx, curUser.ID, ptrs.Ptr(workspace.Id),
 		rbacv1.PermissionType_PERMISSION_TYPE_MODIFY_WORKSPACE_CONFIG_POLICIES)
 }
 
@@ -50,8 +51,32 @@ func (r *ConfigPolicyAuthZRBAC) CanViewWorkspaceConfigPolicies(
 		audit.LogFromErr(fields, err)
 	}()
 
-	return db.DoesPermissionMatch(ctx, curUser.ID, nil,
+	return db.DoesPermissionMatch(ctx, curUser.ID, ptrs.Ptr(workspace.Id),
 		rbacv1.PermissionType_PERMISSION_TYPE_VIEW_WORKSPACE_CONFIG_POLICIES)
+}
+
+// CanModifyGlobalConfigPolicies checks if the user can modify global
+// task config policies.
+func (a *ConfigPolicyAuthZRBAC) CanModifyGlobalConfigPolicies(
+	ctx context.Context, curUser *model.User) error {
+	return db.DoesPermissionMatch(
+		ctx,
+		curUser.ID,
+		nil,
+		rbacv1.PermissionType_PERMISSION_TYPE_MODIFY_GLOBAL_CONFIG_POLICIES,
+	)
+}
+
+// CanViewGlobalConfigPolicies checks if the user can view global task config policies.
+func (a *ConfigPolicyAuthZRBAC) CanViewGlobalConfigPolicies(
+	ctx context.Context, curUser *model.User,
+) error {
+	return db.DoesPermissionMatch(
+		ctx,
+		curUser.ID,
+		nil,
+		rbacv1.PermissionType_PERMISSION_TYPE_VIEW_GLOBAL_CONFIG_POLICIES,
+	)
 }
 
 func addConfigPolicyInfo(curUser model.User,

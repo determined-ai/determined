@@ -68,21 +68,6 @@ func (a *MiscAuthZBasic) CanViewExternalJobs(
 	return nil, nil
 }
 
-// CanModifyGlobalConfigPolicies checks if user has access to modify global task config policies.
-func (a *MiscAuthZBasic) CanModifyGlobalConfigPolicies(ctx context.Context, curUser *model.User,
-) (permErr error, err error) {
-	if !curUser.Admin {
-		return grpcutil.ErrPermissionDenied, nil
-	}
-	return nil, nil
-}
-
-// CanViewGlobalConfigPolicies returns a nil error.
-func (a *MiscAuthZBasic) CanViewGlobalConfigPolicies(ctx context.Context, curUser *model.User,
-) (permErr error, err error) {
-	return nil, nil
-}
-
 func init() {
 	AuthZProvider.Register("basic", &MiscAuthZBasic{})
 }

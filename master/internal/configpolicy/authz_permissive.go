@@ -25,3 +25,20 @@ func (p *ConfigPolicyAuthZPermissive) CanViewWorkspaceConfigPolicies(
 	_ = (&ConfigPolicyAuthZRBAC{}).CanViewWorkspaceConfigPolicies(ctx, curUser, workspace)
 	return (&ConfigPolicyAuthZBasic{}).CanViewWorkspaceConfigPolicies(ctx, curUser, workspace)
 }
+
+// CanModifyGlobalConfigPolicies calls the RBAC implementation and returns if
+// the user has access to modfy global task config policies.
+func (a *ConfigPolicyAuthZPermissive) CanModifyGlobalConfigPolicies(
+	ctx context.Context, curUser *model.User,
+) error {
+	_ = (&ConfigPolicyAuthZRBAC{}).CanModifyGlobalConfigPolicies(ctx, curUser)
+	return (&ConfigPolicyAuthZBasic{}).CanModifyGlobalConfigPolicies(ctx, curUser)
+}
+
+// CanViewGlobalConfigPolicies calls the RBAC implementation but always allows access.
+func (a *ConfigPolicyAuthZPermissive) CanViewGlobalConfigPolicies(
+	ctx context.Context, curUser *model.User,
+) error {
+	_ = (&ConfigPolicyAuthZRBAC{}).CanViewGlobalConfigPolicies(ctx, curUser)
+	return (&ConfigPolicyAuthZBasic{}).CanViewGlobalConfigPolicies(ctx, curUser)
+}
