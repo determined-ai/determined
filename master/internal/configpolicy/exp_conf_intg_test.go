@@ -46,13 +46,17 @@ func TestExpConfUnmarshal(t *testing.T) {
 	// 3. create user exp conf
 	userExpConf := expconf.ExperimentConfig{}
 	userExpConf = schemas.WithDefaults(userExpConf)
-	require.Equal(t, "determinedai/environments:rocm-5.6-pytorch-1.3-tf-2.10-rocm-mpich-0736b6d", *userExpConf.Environment().Image().RawROCM)
+	userExpConf.RawEnvironment.RawImage.SetCPU("junk")
+	require.Equal(t, "determinedai/environments:rocm-5.6-pytorch-1.3-tf-2.10-rocm-mpich-0736b6d", userExpConf.Environment().Image().ROCM())
+	require.Equal(t, "junk", userExpConf.Environment().Image().CPU())
 
 	// 4. apply invariant config
-	err = json.Unmarshal([]byte(*res.InvariantConfig), &userExpConf)
+	adminExpConf := expconf.ExperimentConfig{}
+	err = json.Unmarshal([]byte(*res.InvariantConfig), &adminExpConf)
+	mergedExpConf := schemas.Merge(&adminExpConf, &userExpConf)
 	require.NoError(t, err)
 
 	// 5. does it work?
-	require.Equal(t, "bogus", *userExpConf.Environment().Image().RawROCM)
-
+	require.Equal(t, "bogus", mergedExpConf.Environment().Image().ROCM()) // admin config applied
+	require.Equal(t, "junk", mergedExpConf.Environment().Image().CPU())   // user config unmodified (if no invariant config defined)
 }
