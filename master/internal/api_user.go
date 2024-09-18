@@ -833,7 +833,6 @@ func (a *apiServer) GetAllLongLivedTokens(
 
 	// Get only Long lived token type
 	query.Where("us.token_type = ?", model.TokenTypeLongLivedToken)
-	//model.TokenTypeFromProto(*model.TokenTypeLongLivedToken.Proto().Enum()))
 
 	if req.IsRevoked != nil {
 		query.Where("us.is_revoked = ?", *req.IsRevoked)

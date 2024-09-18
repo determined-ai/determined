@@ -160,7 +160,7 @@ class UserSessions:
         self.user_id = userSession.userId
         self.expiry = userSession.expiry
         self.created_at = userSession.createdAt
-        self.token_type = userSession.tokenType.value
+        self.token_type = TokenType.LONG_LIVED_TOKEN
         self.is_revoked = userSession.isRevoked
         self.token_description = userSession.tokenDescription
 
