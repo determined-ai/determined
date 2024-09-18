@@ -15,7 +15,8 @@ const (
 	wkspIDQuery       = "workspace_id = ?"
 	wkspIDGlobalQuery = "workspace_id IS ?"
 	// DefaultInvariantConfigStr is the default invariant config val used for tests.
-	DefaultInvariantConfigStr = `{"description": "random description", "resources": {"slots": 4, "max_slots": 8}}`
+	DefaultInvariantConfigStr      = `{"description": "random description", "resources": {"slots": 4, "max_slots": 8}}`
+	DefaultInvariantConfigStrImage = `{"description": "random description", "resources": {"slots": 4, "max_slots": 8}, "environment": {"image": {"rocm": "bogus"}}}`
 	// DefaultConstraintsStr is the default constraints val used for tests.
 	DefaultConstraintsStr = `{"priority_limit": 10, "resources": {"max_slots": 8}}`
 )
