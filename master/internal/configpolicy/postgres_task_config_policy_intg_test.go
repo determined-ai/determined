@@ -215,7 +215,7 @@ func TestWorkspaceGetPriorityLimit(t *testing.T) {
 	db.MustMigrateTestPostgres(t, pgDB, db.MigrationsFromDB)
 	user := db.RequireMockUser(t, pgDB)
 
-	// add a workspace to use
+	// Add a workspace to use.
 	w := model.Workspace{Name: uuid.NewString(), UserID: user.ID}
 	_, err := db.Bun().NewInsert().Model(&w).Exec(ctx)
 	require.NoError(t, err)
@@ -226,7 +226,12 @@ func TestWorkspaceGetPriorityLimit(t *testing.T) {
 		}
 	}()
 
-	// add priority limit for workspace NTSC
+	// No limit set.
+	_, found, err := GetPriorityLimit(ctx, nil, model.NTSCType)
+	require.NoError(t, err)
+	require.False(t, found)
+
+	// Add priority limit for workspace NTSC.
 	wkspLimit := 20
 	constraints := fmt.Sprintf(`{"priority_limit": %d}`, wkspLimit)
 	wkspInput := model.TaskConfigPolicies{
@@ -235,33 +240,33 @@ func TestWorkspaceGetPriorityLimit(t *testing.T) {
 		Constraints:   &constraints,
 		LastUpdatedBy: user.ID,
 	}
-	// err = SetNTSCConfigPolicies(ctx, &wkspInput)
+
 	err = SetTaskConfigPolicies(ctx, &wkspInput)
 	require.NoError(t, err)
 
-	// get priority limit; should match workspace
+	// Get priority limit; should match workspace limit.
 	res, found, err := GetPriorityLimit(ctx, &w.ID, model.NTSCType)
 	require.NoError(t, err)
 	require.True(t, found)
 	require.Equal(t, wkspLimit, res)
 
-	// get limit for workspace that does not exist
+	// Get limit for a workspace that does not exist.
 	wkspIDDoesNotExist := 404
 	_, found, err = GetPriorityLimit(ctx, &wkspIDDoesNotExist, model.NTSCType)
 	require.NoError(t, err)
 	require.False(t, found)
 
-	// read global
+	// Get global limit.
 	_, found, err = GetPriorityLimit(ctx, nil, model.NTSCType)
 	require.NoError(t, err)
 	require.False(t, found)
 
-	// read experiment
+	// Get limit for other workload type.
 	_, found, err = GetPriorityLimit(ctx, &w.ID, model.ExperimentType)
 	require.NoError(t, err)
 	require.False(t, found)
 
-	// read invalid workload type
+	// Try an invalid workload type.
 	_, found, err = GetPriorityLimit(ctx, &w.ID, "bogus")
 	require.Error(t, err)
 	require.False(t, found)
@@ -275,7 +280,7 @@ func TestGlobalGetPriorityLimit(t *testing.T) {
 	db.MustMigrateTestPostgres(t, pgDB, db.MigrationsFromDB)
 	user := db.RequireMockUser(t, pgDB)
 
-	// add a workspace to use
+	// Add a workspace to use.
 	w := model.Workspace{Name: uuid.NewString(), UserID: user.ID}
 	_, err := db.Bun().NewInsert().Model(&w).Exec(ctx)
 	require.NoError(t, err)
@@ -286,7 +291,12 @@ func TestGlobalGetPriorityLimit(t *testing.T) {
 		}
 	}()
 
-	// add priority limit for global NTSC
+	// No limit set.
+	_, found, err := GetPriorityLimit(ctx, nil, model.NTSCType)
+	require.NoError(t, err)
+	require.False(t, found)
+
+	// Add priority limit for global NTSC.
 	globalLimit := 5
 	constraints := fmt.Sprintf(`{"priority_limit": %d}`, globalLimit)
 	globalInput := model.TaskConfigPolicies{
@@ -298,18 +308,18 @@ func TestGlobalGetPriorityLimit(t *testing.T) {
 	err = SetTaskConfigPolicies(ctx, &globalInput)
 	require.NoError(t, err)
 
-	// get priority limit
+	// Get priority limit, should be global limit.
 	res, found, err := GetPriorityLimit(ctx, nil, model.NTSCType)
 	require.NoError(t, err)
 	require.True(t, found)
 	require.Equal(t, globalLimit, res)
 
-	// read experiment
+	// Get limit for a different workload type.
 	_, found, err = GetPriorityLimit(ctx, nil, model.ExperimentType)
 	require.NoError(t, err)
 	require.False(t, found)
 
-	// read invalid workload type
+	// Try an invalid workload type.
 	_, found, err = GetPriorityLimit(ctx, nil, "bogus")
 	require.Error(t, err)
 	require.False(t, found)
