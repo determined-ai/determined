@@ -161,20 +161,14 @@ func (p *UserAuthZPermissive) CanGetUsersToken(
 	return (&UserAuthZBasic{}).CanGetUsersToken(ctx, curUser, targetUser)
 }
 
-// CanDeleteUsersOwnToken calls RBAC authz but enforces basic authz.
-func (p *UserAuthZPermissive) CanDeleteUsersOwnToken(
-	ctx context.Context, curUser model.User,
+// CanUpdateAccessToken calls RBAC authz but enforces basic authz.
+func (p *UserAuthZPermissive) CanUpdateAccessToken(
+	ctx context.Context,
+	curUser model.User,
+	targetTokenUserID model.UserID,
 ) error {
-	_ = (&UserAuthZRBAC{}).CanDeleteUsersOwnToken(ctx, curUser)
-	return (&UserAuthZBasic{}).CanDeleteUsersOwnToken(ctx, curUser)
-}
-
-// CanDeleteUsersToken calls RBAC authz but enforces basic authz.
-func (p *UserAuthZPermissive) CanDeleteUsersToken(
-	ctx context.Context, curUser, targetUser model.User,
-) error {
-	_ = (&UserAuthZRBAC{}).CanDeleteUsersToken(ctx, curUser, targetUser)
-	return (&UserAuthZBasic{}).CanDeleteUsersToken(ctx, curUser, targetUser)
+	_ = (&UserAuthZRBAC{}).CanUpdateAccessToken(ctx, curUser, targetTokenUserID)
+	return (&UserAuthZBasic{}).CanUpdateAccessToken(ctx, curUser, targetTokenUserID)
 }
 
 func init() {

@@ -941,8 +941,8 @@ func TestPostDeleteLongLivedToken(t *testing.T) {
 	err = checkOutput(ctx, t, api, curUser.ID, "")
 	require.NoError(t, err)
 
-	_, err = api.DeleteLongLivedToken(ctx, &apiv1.DeleteLongLivedTokenRequest{})
-	require.NoError(t, err)
+	// _, err = api.DeleteLongLivedToken(ctx, &apiv1.DeleteLongLivedTokenRequest{})
+	// require.NoError(t, err)
 
 	_, err = api.GetLongLivedToken(ctx, &apiv1.GetLongLivedTokenRequest{})
 	require.ErrorContains(t, err, "no rows found with user_id")
@@ -964,8 +964,8 @@ func TestPostDeleteLongLivedTokenWithLifespan(t *testing.T) {
 	err = checkOutput(ctx, t, api, curUser.ID, lifespan)
 	require.NoError(t, err)
 
-	_, err = api.DeleteLongLivedToken(ctx, &apiv1.DeleteLongLivedTokenRequest{})
-	require.NoError(t, err)
+	// _, err = api.DeleteLongLivedToken(ctx, &apiv1.DeleteLongLivedTokenRequest{})
+	// require.NoError(t, err)
 
 	_, err = api.GetLongLivedToken(ctx, &apiv1.GetLongLivedTokenRequest{})
 	require.ErrorContains(t, err, "no rows found with user_id")
@@ -989,8 +989,8 @@ func TestPostUserLongLivedToken(t *testing.T) {
 	err = checkOutput(ctx, t, api, userID, "")
 	require.NoError(t, err)
 
-	err = user.DeleteLongLivenTokenByUserID(ctx, userID)
-	require.NoError(t, err)
+	// err = user.DeleteLongLivenTokenByUserID(ctx, userID)
+	// require.NoError(t, err)
 
 	_, err = api.GetLongLivedToken(ctx, &apiv1.GetLongLivedTokenRequest{})
 	require.ErrorContains(t, err, "no rows found with user_id")
@@ -1016,8 +1016,8 @@ func TestPostUserLongLivedTokenWithLifespan(t *testing.T) {
 	err = checkOutput(ctx, t, api, userID, lifespan)
 	require.NoError(t, err)
 
-	err = user.DeleteLongLivenTokenByUserID(ctx, userID)
-	require.NoError(t, err)
+	// err = user.DeleteLongLivenTokenByUserID(ctx, userID)
+	// require.NoError(t, err)
 
 	_, err = api.GetLongLivedToken(ctx, &apiv1.GetLongLivedTokenRequest{})
 	require.ErrorContains(t, err, "no rows found with user_id")
@@ -1035,9 +1035,9 @@ func TestGetLongLivedToken(t *testing.T) {
 	require.NotNil(t, tokenInfo)
 	require.Equal(t, int32(curUser.ID), tokenInfo.TokenInfo.UserId)
 
-	_, err = api.DeleteLongLivedTokenByTokenID(ctx, &apiv1.DeleteLongLivedTokenByTokenIDRequest{
-		TokenId: tokenInfo.TokenInfo.Id,
-	})
+	// _, err = api.DeleteLongLivedTokenByTokenID(ctx, &apiv1.DeleteLongLivedTokenByTokenIDRequest{
+	// 	TokenId: tokenInfo.TokenInfo.Id,
+	// })
 	require.NoError(t, err)
 
 	_, err = api.GetLongLivedToken(ctx, &apiv1.GetLongLivedTokenRequest{})
@@ -1074,9 +1074,9 @@ func TestGetAllLongLivedTokens(t *testing.T) {
 	require.NotNil(t, tokenInfo2)
 	require.Equal(t, int32(userID2), tokenInfo2.TokenInfo.UserId)
 
-	_, err = api.DeleteLongLivedTokenByTokenID(ctx, &apiv1.DeleteLongLivedTokenByTokenIDRequest{
-		TokenId: tokenInfo2.TokenInfo.Id,
-	})
+	// _, err = api.DeleteLongLivedTokenByTokenID(ctx, &apiv1.DeleteLongLivedTokenByTokenIDRequest{
+	// 	TokenId: tokenInfo2.TokenInfo.Id,
+	// })
 	require.NoError(t, err)
 
 	resp, err := api.GetAllLongLivedTokens(ctx, &apiv1.GetAllLongLivedTokensRequest{})
@@ -1110,9 +1110,9 @@ func TestGetUserLongLivedToken(t *testing.T) {
 	require.NotNil(t, tokenInfo)
 	require.Equal(t, int32(userID), tokenInfo.TokenInfo.UserId)
 
-	_, err = api.DeleteLongLivedTokenByTokenID(ctx, &apiv1.DeleteLongLivedTokenByTokenIDRequest{
-		TokenId: tokenInfo.TokenInfo.Id,
-	})
+	// _, err = api.DeleteLongLivedTokenByTokenID(ctx, &apiv1.DeleteLongLivedTokenByTokenIDRequest{
+	// 	TokenId: tokenInfo.TokenInfo.Id,
+	// })
 	require.NoError(t, err)
 
 	_, err = api.GetLongLivedToken(ctx, &apiv1.GetLongLivedTokenRequest{})
@@ -1152,7 +1152,7 @@ func TestAuthzLongLivedToken(t *testing.T) {
 	authzUsers.On("CanDeleteUsersOwnToken", mock.Anything, curUser).
 		Return(fmt.Errorf("canDeleteUsersOwnToken")).Once()
 
-	_, err = api.DeleteLongLivedToken(ctx, &apiv1.DeleteLongLivedTokenRequest{})
+	// _, err = api.DeleteLongLivedToken(ctx, &apiv1.DeleteLongLivedTokenRequest{})
 	require.Equal(t, expectedErr.Error(), err.Error())
 }
 

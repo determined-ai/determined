@@ -2886,6 +2886,18 @@ service Determined {
     };
   }
 
+  // Patch an access tokens mutable fields.
+  rpc PatchAccessToken(PatchAccessTokenRequest)
+      returns (PatchAccessTokenResponse) {
+    option (google.api.http) = {
+      patch: "/api/v1/users/token/{token_id}"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Users"
+    };
+  }
+
   // Create and get current user's long lived token
   rpc PostLongLivedToken(PostLongLivedTokenRequest)
       returns (PostLongLivedTokenResponse) {
@@ -2937,28 +2949,6 @@ service Determined {
       returns (GetUserLongLivedTokenResponse) {
     option (google.api.http) = {
       get: "/api/v1/users/{user_id}/token"
-    };
-    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Users"
-    };
-  }
-
-  // Delete current user's longLivedToken info.
-  rpc DeleteLongLivedToken(DeleteLongLivedTokenRequest)
-      returns (DeleteLongLivedTokenResponse) {
-    option (google.api.http) = {
-      delete: "/api/v1/user/token"
-    };
-    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Users"
-    };
-  }
-
-  // Delete token id's longLivedToken info.
-  rpc DeleteLongLivedTokenByTokenID(DeleteLongLivedTokenByTokenIDRequest)
-      returns (DeleteLongLivedTokenByTokenIDResponse) {
-    option (google.api.http) = {
-      delete: "/api/v1/tokens/{token_id}"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Users"

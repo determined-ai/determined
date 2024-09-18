@@ -5,7 +5,6 @@ import (
 	"database/sql"
 	"fmt"
 	"regexp"
-	"strconv"
 	"strings"
 	"time"
 
@@ -889,7 +888,7 @@ func (a *apiServer) GetUserLongLivedToken(
 
 	targetFullUser, err := getFullModelUser(ctx, model.UserID(req.UserId))
 	if err != nil {
-		return nil, status.Error(codes.NotFound, "User with name: {req.UserId} not found")
+		return nil, status.Error(codes.NotFound, fmt.Sprintf("User with name: {%d} not found", req.UserId))
 	}
 	targetUser := targetFullUser.ToUser()
 	if err = user.AuthZProvider.Get().CanGetUsersToken(ctx, *curUser, targetUser); err != nil {
@@ -907,58 +906,31 @@ func (a *apiServer) GetUserLongLivedToken(
 	return &apiv1.GetUserLongLivedTokenResponse{TokenInfo: tokenInfo.Proto()}, nil
 }
 
-// DELETE Long lived token deletes long lived token with current logged in user_id.
-func (a *apiServer) DeleteLongLivedToken(
-	ctx context.Context, req *apiv1.DeleteLongLivedTokenRequest,
-) (*apiv1.DeleteLongLivedTokenResponse, error) {
-	curUser, _, err := grpcutil.GetUser(ctx)
-	if err != nil {
-		return nil, err
-	}
-	if err = user.AuthZProvider.Get().CanDeleteUsersOwnToken(ctx, *curUser); err != nil {
-		return nil, status.Error(codes.PermissionDenied, err.Error())
-	}
-
-	err = user.DeleteLongLivenTokenByUserID(ctx, curUser.ID)
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, api.NotFoundErrs("token for user", curUser.Username, true)
-	}
-	if err != nil {
-		return nil, err
-	}
-	return &apiv1.DeleteLongLivedTokenResponse{}, nil
-}
-
-// DELETE Long lived token deletes long lived token with given id.
-func (a *apiServer) DeleteLongLivedTokenByTokenID(
-	ctx context.Context, req *apiv1.DeleteLongLivedTokenByTokenIDRequest,
-) (*apiv1.DeleteLongLivedTokenByTokenIDResponse, error) {
+// PatchAccessToken performs a partial patch of mutable fields on an existing access token.
+func (a *apiServer) PatchAccessToken(
+	ctx context.Context, req *apiv1.PatchAccessTokenRequest,
+) (*apiv1.PatchAccessTokenResponse, error) {
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	userIDFromTokenID, err := getUserIDFromTokenID(ctx, req.TokenId)
-	if err != nil || userIDFromTokenID < 1 {
-		return nil, err
-	}
-
-	targetFullUser, err := getFullModelUser(ctx, userIDFromTokenID)
+	targetUserID, err := getUserIDFromTokenID(ctx, req.TokenId)
 	if err != nil {
-		return nil, err
+		return nil, status.Error(codes.NotFound, fmt.Sprintf("Token with id: {%d} not found", req.TokenId))
 	}
-	targetUser := targetFullUser.ToUser()
-	if err = user.AuthZProvider.Get().CanDeleteUsersToken(ctx, *curUser, targetUser); err != nil {
+	err = user.AuthZProvider.Get().CanUpdateAccessToken(ctx, *curUser, targetUserID)
+	if err != nil {
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
-	err = user.DeleteLongLivenTokenByTokenID(ctx, model.SessionID(req.TokenId))
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, api.NotFoundErrs("token", strconv.Itoa(int(req.TokenId)), true)
+	patchOptions := user.AccessTokenUpdateOptions{
+		Description: req.Description,
+		SetRevoked:  req.SetRevoked,
 	}
+	patchedTokenInfo, err := user.UpdateAccessToken(ctx, model.TokenID(req.TokenId), patchOptions)
 	if err != nil {
 		return nil, err
 	}
-
-	return &apiv1.DeleteLongLivedTokenByTokenIDResponse{}, nil
+	return &apiv1.PatchAccessTokenResponse{TokenInfo: patchedTokenInfo.Proto()}, nil
 }

@@ -54,6 +54,9 @@ type User struct {
 	LastAuthAt    *time.Time  `db:"last_auth_at" json:"last_auth_at"`
 }
 
+// TokenID is the type for token IDs.
+type TokenID int
+
 // TokenType is the type of a token.
 type TokenType string
 

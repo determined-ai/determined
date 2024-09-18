@@ -550,8 +550,55 @@ func RevokeAndCreateLongLivedToken(
 	return token, nil
 }
 
-// DeleteLongLivenTokenByUserID marks column is_revoked to true with the given userID and its long lived token.
-func DeleteLongLivenTokenByUserID(ctx context.Context, userID model.UserID) error {
+// AccessTokenUpdateOptions is the set of mutable fields for an Access Token record.
+type AccessTokenUpdateOptions struct {
+	Description *string
+	SetRevoked  bool
+}
+
+// UpdateAccessToken updates the description and revocation status of the access token.
+func UpdateAccessToken(
+	ctx context.Context, tokenID model.TokenID, options AccessTokenUpdateOptions,
+) (*model.UserSession, error) {
+	var tokenInfo model.UserSession
+	err := db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		err := tx.NewSelect().Table("user_sessions").
+			Where("id = ?", tokenID).Where("token_type = ?", model.TokenTypeLongLivedToken).
+			Scan(ctx, &tokenInfo)
+		if err != nil {
+			return err
+		}
+
+		if tokenInfo.IsRevoked {
+			return fmt.Errorf("unable to update revoked token with ID %v", tokenID)
+		}
+
+		if options.Description != nil {
+			tokenInfo.TokenDescription = null.StringFrom(*options.Description)
+		}
+
+		if options.SetRevoked {
+			tokenInfo.IsRevoked = true
+		}
+
+		_, err = tx.NewUpdate().
+			Model(&tokenInfo).
+			Column("token_description", "is_revoked").
+			Where("id = ?", tokenID).
+			Exec(ctx)
+		if err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	return &tokenInfo, nil
+}
+
+// RevokeAccessTokenByUserID marks column is_revoked to true with the given userID and its long lived token.
+func RevokeAccessTokenByUserID(ctx context.Context, userID model.UserID) error {
 	var tokenInfo model.UserSession
 
 	// Execute the query to fetch the active token info for the given user_id
@@ -564,80 +611,28 @@ func DeleteLongLivenTokenByUserID(ctx context.Context, userID model.UserID) erro
 	}
 	if tokenInfo.ID == 0 {
 		return fmt.Errorf("no active token info found with user_id: %v", userID)
-	} else {
-
-		res, err := db.Bun().NewUpdate().
-			Table("user_sessions").
-			Set("is_revoked = true").
-			Where("user_id = ?", userID).
-			Where("token_type = ?", model.TokenTypeLongLivedToken).
-			Exec(ctx)
-		if err != nil {
-			return err // Return error if the delete operation itself failed
-		}
-
-		// Check how many rows were affected
-		rowsAffected, err := res.RowsAffected()
-		if err != nil {
-			return err // Return error if checking the rows affected failed
-		}
-
-		if rowsAffected == 0 {
-			// Custom error when no rows were found
-			return fmt.Errorf("no long lived token rows found with user_id: %v", userID)
-		}
 	}
-
-	return nil // Return nil if deletion was successful
-}
-
-// DeleteLongLivenTokenByToken marks column is_revoked to true with the given token.
-func DeleteLongLivenTokenByToken(ctx context.Context, token string) error {
-	v2 := paseto.NewV2()
-	var longLivedToken model.UserSession
-	// Verification will fail when using external token (Jwt instead of Paseto).
-	// Currently passing Paseto token.
-	if err := v2.Verify(token, db.GetTokenKeys().PublicKey, &longLivedToken, nil); err != nil {
-		return nil //nolint: nilerr
-	}
-	return DeleteLongLivenTokenByTokenID(ctx, longLivedToken.ID)
-}
-
-// DeleteLongLivenTokenByTokenID deletes the user session with the given ID.
-func DeleteLongLivenTokenByTokenID(ctx context.Context, sessionID model.SessionID) error {
-	var tokenInfo model.UserSession
-
-	// Execute the query to fetch the active token info for the given user_id
-	err := db.Bun().NewSelect().Table("user_sessions").
-		Where("id = ?", sessionID).Where("is_revoked = ?", false).
+	res, err := db.Bun().NewUpdate().
+		Table("user_sessions").
+		Set("is_revoked = true").
+		Where("user_id = ?", userID).
 		Where("token_type = ?", model.TokenTypeLongLivedToken).
-		Scan(ctx, &tokenInfo)
+		Exec(ctx)
 	if err != nil {
-		return err
-	}
-	if tokenInfo.ID == 0 {
-		return fmt.Errorf("no active token info found with id: %v", sessionID)
-	} else {
-		res, err := db.Bun().NewUpdate().
-			Table("user_sessions").
-			Set("is_revoked = true").
-			Where("id = ?", sessionID).
-			Exec(ctx)
-		if err != nil {
-			return err
-		}
-
-		rowsAffected, err := res.RowsAffected()
-		if err != nil {
-			return err
-		}
-
-		if rowsAffected == 0 {
-			return fmt.Errorf("no rows found with session_id: %v", sessionID)
-		}
+		return err // Return error if the delete operation itself failed
 	}
 
-	return nil
+	// Check how many rows were affected
+	rowsAffected, err := res.RowsAffected()
+	if err != nil {
+		return err // Return error if checking the rows affected failed
+	}
+
+	if rowsAffected == 0 {
+		// Custom error when no rows were found
+		return fmt.Errorf("no long lived token rows found with user_id: %v", userID)
+	}
+	return nil // Return nil if deletion was successful
 }
 
 // GetLongLivedTokenInfo returns the active token info from the table with the given user_id.

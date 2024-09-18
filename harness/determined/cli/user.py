@@ -288,7 +288,11 @@ def list_tokens(args: argparse.Namespace) -> None:
 def revoke_token(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     try:
-        bindings.delete_DeleteLongLivedTokenByTokenID(sess, tokenId=args.token_id)
+        request = bindings.v1PatchAccessTokenRequest(
+            tokenId=args.token_id, description=None, setRevoked=True
+        )
+        resp = bindings.patch_PatchAccessToken(sess, body=request, tokenId=args.token_id)
+        print(resp.to_json())
     except api.errors.NotFoundException:
         raise errors.CliError("Token not found")
     print("Successfully revoked token with ID: {}".format(args.token_id))
@@ -445,7 +449,7 @@ args_description = [
             cli.Cmd("create", create_token, "create token", [
                 cli.Arg("--username", type=str, help="name of user to create token"),
                 cli.Arg("--lifespan", type=str, help="give expiry lifespan"),
-                cli.Arg("--description", type=str, default=None, help="description of new token"), 
+                cli.Arg("--description", type=str, default=None, help="description of new token"),
                 cli.Arg("--file-path", type=str, help="write token to file"),
                 cli.Group(
                     cli.output_format_args["json"],

@@ -336,6 +336,25 @@ message GetUserLongLivedTokenResponse {
   determined.user.v1.TokenInfo token_info = 1;
 }
 
+// Patch user's access token info.
+message PatchAccessTokenRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "token_id" ] }
+  };
+  // The id of the token.
+  int32 token_id = 1;
+  // The requested updated token description.
+  optional string description = 2;
+  // The requested updated token revoke status.
+  bool set_revoked = 3;
+}
+
+// Response to PatchAccessTokenRequest.
+message PatchAccessTokenResponse {
+  // The updated token information.
+  determined.user.v1.TokenInfo token_info = 1;
+}
+
 // Delete user's longLivedToken info.
 message DeleteLongLivedTokenRequest {}
 

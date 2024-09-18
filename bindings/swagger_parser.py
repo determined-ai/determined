@@ -401,6 +401,9 @@ def process_paths(
             assert is_expected_path(path), (path, name)
             path = path.replace(".", "_")
             tags = set(spec["tags"])
+            # write spec out to file
+            with open("/Users/corbanbeaird/Dev/swaggererror.txt", "w") as file:
+                file.write(spec.__str__())
             summary = spec["summary"]
             needs_auth = "security" not in spec
             op = Function(

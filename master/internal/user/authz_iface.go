@@ -77,10 +77,8 @@ type UserAuthZ interface {
 	// GET /api/v1/users/:user_id/token
 	CanGetUsersToken(ctx context.Context, curUser, targetUser model.User) error
 
-	// DELETE /api/v1/users/token
-	CanDeleteUsersOwnToken(ctx context.Context, curUser model.User) error
-	// DELETE /api/v1/tokens/:token_id
-	CanDeleteUsersToken(ctx context.Context, curUser, targetUser model.User) error
+	// PATCH /api/v1/users/token/:token_id
+	CanUpdateAccessToken(ctx context.Context, curUser model.User, targetTokenUserID model.UserID) error
 }
 
 // AuthZProvider is the authz registry for `user` package.

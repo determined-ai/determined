@@ -144,17 +144,15 @@ func (a *UserAuthZBasic) CanGetAllLongLivedTokens(
 	return nil
 }
 
-// CanDeleteUsersOwnToken always returns nil.
-func (a *UserAuthZBasic) CanDeleteUsersOwnToken(ctx context.Context, curUser model.User) error {
-	return nil
-}
-
-// CanDeleteUsersToken returns an error if the user is not an admin.
-func (a *UserAuthZBasic) CanDeleteUsersToken(
-	ctx context.Context, curUser, targetUser model.User,
+// CanUpdateAccessToken returns an error if the user is not an admin when attempting to update
+// another user's token; otherwise, it returns nil.
+func (a *UserAuthZBasic) CanUpdateAccessToken(
+	ctx context.Context,
+	curUser model.User,
+	targetTokenUserID model.UserID,
 ) error {
-	if !curUser.Admin && curUser.ID != targetUser.ID {
-		return fmt.Errorf("only admin privileged users can delete token of other users")
+	if !curUser.Admin && curUser.ID != targetTokenUserID {
+		return fmt.Errorf("only admin privileged users can update other users' tokens")
 	}
 	return nil
 }

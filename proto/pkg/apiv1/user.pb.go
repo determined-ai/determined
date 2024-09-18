@@ -2108,6 +2108,122 @@ func (x *GetUserLongLivedTokenResponse) GetTokenInfo() *userv1.TokenInfo {
 	return nil
 }
 
+// Patch user's access token info.
+type PatchAccessTokenRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// The id of the token.
+	TokenId int32 `protobuf:"varint,1,opt,name=token_id,json=tokenId,proto3" json:"token_id,omitempty"`
+	// The requested updated token description.
+	Description *string `protobuf:"bytes,2,opt,name=description,proto3,oneof" json:"description,omitempty"`
+	// The requested updated token revoke status.
+	SetRevoked bool `protobuf:"varint,3,opt,name=set_revoked,json=setRevoked,proto3" json:"set_revoked,omitempty"`
+}
+
+func (x *PatchAccessTokenRequest) Reset() {
+	*x = PatchAccessTokenRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_determined_api_v1_user_proto_msgTypes[36]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *PatchAccessTokenRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PatchAccessTokenRequest) ProtoMessage() {}
+
+func (x *PatchAccessTokenRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_determined_api_v1_user_proto_msgTypes[36]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PatchAccessTokenRequest.ProtoReflect.Descriptor instead.
+func (*PatchAccessTokenRequest) Descriptor() ([]byte, []int) {
+	return file_determined_api_v1_user_proto_rawDescGZIP(), []int{36}
+}
+
+func (x *PatchAccessTokenRequest) GetTokenId() int32 {
+	if x != nil {
+		return x.TokenId
+	}
+	return 0
+}
+
+func (x *PatchAccessTokenRequest) GetDescription() string {
+	if x != nil && x.Description != nil {
+		return *x.Description
+	}
+	return ""
+}
+
+func (x *PatchAccessTokenRequest) GetSetRevoked() bool {
+	if x != nil {
+		return x.SetRevoked
+	}
+	return false
+}
+
+// Response to PatchAccessTokenRequest.
+type PatchAccessTokenResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// The updated token information.
+	TokenInfo *userv1.TokenInfo `protobuf:"bytes,1,opt,name=token_info,json=tokenInfo,proto3" json:"token_info,omitempty"`
+}
+
+func (x *PatchAccessTokenResponse) Reset() {
+	*x = PatchAccessTokenResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_determined_api_v1_user_proto_msgTypes[37]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *PatchAccessTokenResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*PatchAccessTokenResponse) ProtoMessage() {}
+
+func (x *PatchAccessTokenResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_determined_api_v1_user_proto_msgTypes[37]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use PatchAccessTokenResponse.ProtoReflect.Descriptor instead.
+func (*PatchAccessTokenResponse) Descriptor() ([]byte, []int) {
+	return file_determined_api_v1_user_proto_rawDescGZIP(), []int{37}
+}
+
+func (x *PatchAccessTokenResponse) GetTokenInfo() *userv1.TokenInfo {
+	if x != nil {
+		return x.TokenInfo
+	}
+	return nil
+}
+
 // Delete user's longLivedToken info.
 type DeleteLongLivedTokenRequest struct {
 	state         protoimpl.MessageState
@@ -2118,7 +2234,7 @@ type DeleteLongLivedTokenRequest struct {
 func (x *DeleteLongLivedTokenRequest) Reset() {
 	*x = DeleteLongLivedTokenRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_user_proto_msgTypes[36]
+		mi := &file_determined_api_v1_user_proto_msgTypes[38]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2131,7 +2247,7 @@ func (x *DeleteLongLivedTokenRequest) String() string {
 func (*DeleteLongLivedTokenRequest) ProtoMessage() {}
 
 func (x *DeleteLongLivedTokenRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_user_proto_msgTypes[36]
+	mi := &file_determined_api_v1_user_proto_msgTypes[38]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2144,7 +2260,7 @@ func (x *DeleteLongLivedTokenRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteLongLivedTokenRequest.ProtoReflect.Descriptor instead.
 func (*DeleteLongLivedTokenRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_user_proto_rawDescGZIP(), []int{36}
+	return file_determined_api_v1_user_proto_rawDescGZIP(), []int{38}
 }
 
 // Response to DeleteLongLivedTokenRequest.
@@ -2157,7 +2273,7 @@ type DeleteLongLivedTokenResponse struct {
 func (x *DeleteLongLivedTokenResponse) Reset() {
 	*x = DeleteLongLivedTokenResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_user_proto_msgTypes[37]
+		mi := &file_determined_api_v1_user_proto_msgTypes[39]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2170,7 +2286,7 @@ func (x *DeleteLongLivedTokenResponse) String() string {
 func (*DeleteLongLivedTokenResponse) ProtoMessage() {}
 
 func (x *DeleteLongLivedTokenResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_user_proto_msgTypes[37]
+	mi := &file_determined_api_v1_user_proto_msgTypes[39]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2183,7 +2299,7 @@ func (x *DeleteLongLivedTokenResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteLongLivedTokenResponse.ProtoReflect.Descriptor instead.
 func (*DeleteLongLivedTokenResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_user_proto_rawDescGZIP(), []int{37}
+	return file_determined_api_v1_user_proto_rawDescGZIP(), []int{39}
 }
 
 // Delete token id's longLivedToken info.
@@ -2199,7 +2315,7 @@ type DeleteLongLivedTokenByTokenIDRequest struct {
 func (x *DeleteLongLivedTokenByTokenIDRequest) Reset() {
 	*x = DeleteLongLivedTokenByTokenIDRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_user_proto_msgTypes[38]
+		mi := &file_determined_api_v1_user_proto_msgTypes[40]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2212,7 +2328,7 @@ func (x *DeleteLongLivedTokenByTokenIDRequest) String() string {
 func (*DeleteLongLivedTokenByTokenIDRequest) ProtoMessage() {}
 
 func (x *DeleteLongLivedTokenByTokenIDRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_user_proto_msgTypes[38]
+	mi := &file_determined_api_v1_user_proto_msgTypes[40]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2225,7 +2341,7 @@ func (x *DeleteLongLivedTokenByTokenIDRequest) ProtoReflect() protoreflect.Messa
 
 // Deprecated: Use DeleteLongLivedTokenByTokenIDRequest.ProtoReflect.Descriptor instead.
 func (*DeleteLongLivedTokenByTokenIDRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_user_proto_rawDescGZIP(), []int{38}
+	return file_determined_api_v1_user_proto_rawDescGZIP(), []int{40}
 }
 
 func (x *DeleteLongLivedTokenByTokenIDRequest) GetTokenId() int32 {
@@ -2245,7 +2361,7 @@ type DeleteLongLivedTokenByTokenIDResponse struct {
 func (x *DeleteLongLivedTokenByTokenIDResponse) Reset() {
 	*x = DeleteLongLivedTokenByTokenIDResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_user_proto_msgTypes[39]
+		mi := &file_determined_api_v1_user_proto_msgTypes[41]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2258,7 +2374,7 @@ func (x *DeleteLongLivedTokenByTokenIDResponse) String() string {
 func (*DeleteLongLivedTokenByTokenIDResponse) ProtoMessage() {}
 
 func (x *DeleteLongLivedTokenByTokenIDResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_user_proto_msgTypes[39]
+	mi := &file_determined_api_v1_user_proto_msgTypes[41]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2271,7 +2387,7 @@ func (x *DeleteLongLivedTokenByTokenIDResponse) ProtoReflect() protoreflect.Mess
 
 // Deprecated: Use DeleteLongLivedTokenByTokenIDResponse.ProtoReflect.Descriptor instead.
 func (*DeleteLongLivedTokenByTokenIDResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_user_proto_rawDescGZIP(), []int{39}
+	return file_determined_api_v1_user_proto_rawDescGZIP(), []int{41}
 }
 
 var File_determined_api_v1_user_proto protoreflect.FileDescriptor
@@ -2530,22 +2646,38 @@ var file_determined_api_v1_user_proto_rawDesc = []byte{
 	0x32, 0x1d, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x75, 0x73,
 	0x65, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x49, 0x6e, 0x66, 0x6f, 0x52,
 	0x09, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x49, 0x6e, 0x66, 0x6f, 0x3a, 0x12, 0x92, 0x41, 0x0f, 0x0a,
-	0x0d, 0xd2, 0x01, 0x0a, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x5f, 0x69, 0x6e, 0x66, 0x6f, 0x22, 0x1d,
-	0x0a, 0x1b, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x4c, 0x6f, 0x6e, 0x67, 0x4c, 0x69, 0x76, 0x65,
-	0x64, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x22, 0x1e, 0x0a,
-	0x1c, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x4c, 0x6f, 0x6e, 0x67, 0x4c, 0x69, 0x76, 0x65, 0x64,
-	0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x41, 0x0a,
-	0x24, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x4c, 0x6f, 0x6e, 0x67, 0x4c, 0x69, 0x76, 0x65, 0x64,
-	0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x42, 0x79, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x49, 0x44, 0x52, 0x65,
-	0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x19, 0x0a, 0x08, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x5f, 0x69,
-	0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x07, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x49, 0x64,
-	0x22, 0x27, 0x0a, 0x25, 0x44, 0x65, 0x6c, 0x65, 0x74, 0x65, 0x4c, 0x6f, 0x6e, 0x67, 0x4c, 0x69,
-	0x76, 0x65, 0x64, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x42, 0x79, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x49,
-	0x44, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x42, 0x35, 0x5a, 0x33, 0x67, 0x69, 0x74,
-	0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e,
-	0x65, 0x64, 0x2d, 0x61, 0x69, 0x2f, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64,
-	0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x70, 0x6b, 0x67, 0x2f, 0x61, 0x70, 0x69, 0x76, 0x31,
-	0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+	0x0d, 0xd2, 0x01, 0x0a, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x5f, 0x69, 0x6e, 0x66, 0x6f, 0x22, 0x9e,
+	0x01, 0x0a, 0x17, 0x50, 0x61, 0x74, 0x63, 0x68, 0x41, 0x63, 0x63, 0x65, 0x73, 0x73, 0x54, 0x6f,
+	0x6b, 0x65, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x19, 0x0a, 0x08, 0x74, 0x6f,
+	0x6b, 0x65, 0x6e, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x07, 0x74, 0x6f,
+	0x6b, 0x65, 0x6e, 0x49, 0x64, 0x12, 0x25, 0x0a, 0x0b, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70,
+	0x74, 0x69, 0x6f, 0x6e, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x48, 0x00, 0x52, 0x0b, 0x64, 0x65,
+	0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x88, 0x01, 0x01, 0x12, 0x1f, 0x0a, 0x0b,
+	0x73, 0x65, 0x74, 0x5f, 0x72, 0x65, 0x76, 0x6f, 0x6b, 0x65, 0x64, 0x18, 0x03, 0x20, 0x01, 0x28,
+	0x08, 0x52, 0x0a, 0x73, 0x65, 0x74, 0x52, 0x65, 0x76, 0x6f, 0x6b, 0x65, 0x64, 0x3a, 0x10, 0x92,
+	0x41, 0x0d, 0x0a, 0x0b, 0xd2, 0x01, 0x08, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x5f, 0x69, 0x64, 0x42,
+	0x0e, 0x0a, 0x0c, 0x5f, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x22,
+	0x58, 0x0a, 0x18, 0x50, 0x61, 0x74, 0x63, 0x68, 0x41, 0x63, 0x63, 0x65, 0x73, 0x73, 0x54, 0x6f,
+	0x6b, 0x65, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x3c, 0x0a, 0x0a, 0x74,
+	0x6f, 0x6b, 0x65, 0x6e, 0x5f, 0x69, 0x6e, 0x66, 0x6f, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32,
+	0x1d, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x75, 0x73, 0x65,
+	0x72, 0x2e, 0x76, 0x31, 0x2e, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x49, 0x6e, 0x66, 0x6f, 0x52, 0x09,
+	0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x49, 0x6e, 0x66, 0x6f, 0x22, 0x1d, 0x0a, 0x1b, 0x44, 0x65, 0x6c,
+	0x65, 0x74, 0x65, 0x4c, 0x6f, 0x6e, 0x67, 0x4c, 0x69, 0x76, 0x65, 0x64, 0x54, 0x6f, 0x6b, 0x65,
+	0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x22, 0x1e, 0x0a, 0x1c, 0x44, 0x65, 0x6c, 0x65,
+	0x74, 0x65, 0x4c, 0x6f, 0x6e, 0x67, 0x4c, 0x69, 0x76, 0x65, 0x64, 0x54, 0x6f, 0x6b, 0x65, 0x6e,
+	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x41, 0x0a, 0x24, 0x44, 0x65, 0x6c, 0x65,
+	0x74, 0x65, 0x4c, 0x6f, 0x6e, 0x67, 0x4c, 0x69, 0x76, 0x65, 0x64, 0x54, 0x6f, 0x6b, 0x65, 0x6e,
+	0x42, 0x79, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x49, 0x44, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
+	0x12, 0x19, 0x0a, 0x08, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01,
+	0x28, 0x05, 0x52, 0x07, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x49, 0x64, 0x22, 0x27, 0x0a, 0x25, 0x44,
+	0x65, 0x6c, 0x65, 0x74, 0x65, 0x4c, 0x6f, 0x6e, 0x67, 0x4c, 0x69, 0x76, 0x65, 0x64, 0x54, 0x6f,
+	0x6b, 0x65, 0x6e, 0x42, 0x79, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x49, 0x44, 0x52, 0x65, 0x73, 0x70,
+	0x6f, 0x6e, 0x73, 0x65, 0x42, 0x35, 0x5a, 0x33, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63,
+	0x6f, 0x6d, 0x2f, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2d, 0x61, 0x69,
+	0x2f, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2f, 0x70, 0x72, 0x6f, 0x74,
+	0x6f, 0x2f, 0x70, 0x6b, 0x67, 0x2f, 0x61, 0x70, 0x69, 0x76, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f,
+	0x74, 0x6f, 0x33,
 }
 
 var (
@@ -2561,7 +2693,7 @@ func file_determined_api_v1_user_proto_rawDescGZIP() []byte {
 }
 
 var file_determined_api_v1_user_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_determined_api_v1_user_proto_msgTypes = make([]protoimpl.MessageInfo, 40)
+var file_determined_api_v1_user_proto_msgTypes = make([]protoimpl.MessageInfo, 42)
 var file_determined_api_v1_user_proto_goTypes = []interface{}{
 	(GetUsersRequest_SortBy)(0),                   // 0: determined.api.v1.GetUsersRequest.SortBy
 	(GetAllLongLivedTokensRequest_SortBy)(0),      // 1: determined.api.v1.GetAllLongLivedTokensRequest.SortBy
@@ -2601,49 +2733,52 @@ var file_determined_api_v1_user_proto_goTypes = []interface{}{
 	(*GetAllLongLivedTokensResponse)(nil),         // 35: determined.api.v1.GetAllLongLivedTokensResponse
 	(*GetUserLongLivedTokenRequest)(nil),          // 36: determined.api.v1.GetUserLongLivedTokenRequest
 	(*GetUserLongLivedTokenResponse)(nil),         // 37: determined.api.v1.GetUserLongLivedTokenResponse
-	(*DeleteLongLivedTokenRequest)(nil),           // 38: determined.api.v1.DeleteLongLivedTokenRequest
-	(*DeleteLongLivedTokenResponse)(nil),          // 39: determined.api.v1.DeleteLongLivedTokenResponse
-	(*DeleteLongLivedTokenByTokenIDRequest)(nil),  // 40: determined.api.v1.DeleteLongLivedTokenByTokenIDRequest
-	(*DeleteLongLivedTokenByTokenIDResponse)(nil), // 41: determined.api.v1.DeleteLongLivedTokenByTokenIDResponse
-	(OrderBy)(0),                                  // 42: determined.api.v1.OrderBy
-	(*userv1.User)(nil),                           // 43: determined.user.v1.User
-	(*Pagination)(nil),                            // 44: determined.api.v1.Pagination
-	(*userv1.PatchUser)(nil),                      // 45: determined.user.v1.PatchUser
-	(*userv1.UserWebSetting)(nil),                 // 46: determined.user.v1.UserWebSetting
-	(userv1.ActivityType)(0),                      // 47: determined.user.v1.ActivityType
-	(userv1.EntityType)(0),                        // 48: determined.user.v1.EntityType
-	(*userv1.TokenInfo)(nil),                      // 49: determined.user.v1.TokenInfo
+	(*PatchAccessTokenRequest)(nil),               // 38: determined.api.v1.PatchAccessTokenRequest
+	(*PatchAccessTokenResponse)(nil),              // 39: determined.api.v1.PatchAccessTokenResponse
+	(*DeleteLongLivedTokenRequest)(nil),           // 40: determined.api.v1.DeleteLongLivedTokenRequest
+	(*DeleteLongLivedTokenResponse)(nil),          // 41: determined.api.v1.DeleteLongLivedTokenResponse
+	(*DeleteLongLivedTokenByTokenIDRequest)(nil),  // 42: determined.api.v1.DeleteLongLivedTokenByTokenIDRequest
+	(*DeleteLongLivedTokenByTokenIDResponse)(nil), // 43: determined.api.v1.DeleteLongLivedTokenByTokenIDResponse
+	(OrderBy)(0),                                  // 44: determined.api.v1.OrderBy
+	(*userv1.User)(nil),                           // 45: determined.user.v1.User
+	(*Pagination)(nil),                            // 46: determined.api.v1.Pagination
+	(*userv1.PatchUser)(nil),                      // 47: determined.user.v1.PatchUser
+	(*userv1.UserWebSetting)(nil),                 // 48: determined.user.v1.UserWebSetting
+	(userv1.ActivityType)(0),                      // 49: determined.user.v1.ActivityType
+	(userv1.EntityType)(0),                        // 50: determined.user.v1.EntityType
+	(*userv1.TokenInfo)(nil),                      // 51: determined.user.v1.TokenInfo
 }
 var file_determined_api_v1_user_proto_depIdxs = []int32{
 	0,  // 0: determined.api.v1.GetUsersRequest.sort_by:type_name -> determined.api.v1.GetUsersRequest.SortBy
-	42, // 1: determined.api.v1.GetUsersRequest.order_by:type_name -> determined.api.v1.OrderBy
-	43, // 2: determined.api.v1.GetUsersResponse.users:type_name -> determined.user.v1.User
-	44, // 3: determined.api.v1.GetUsersResponse.pagination:type_name -> determined.api.v1.Pagination
-	43, // 4: determined.api.v1.GetUserResponse.user:type_name -> determined.user.v1.User
-	43, // 5: determined.api.v1.GetUserByUsernameResponse.user:type_name -> determined.user.v1.User
-	43, // 6: determined.api.v1.GetMeResponse.user:type_name -> determined.user.v1.User
-	43, // 7: determined.api.v1.PostUserRequest.user:type_name -> determined.user.v1.User
-	43, // 8: determined.api.v1.PostUserResponse.user:type_name -> determined.user.v1.User
-	43, // 9: determined.api.v1.SetUserPasswordResponse.user:type_name -> determined.user.v1.User
-	45, // 10: determined.api.v1.PatchUserRequest.user:type_name -> determined.user.v1.PatchUser
-	43, // 11: determined.api.v1.PatchUserResponse.user:type_name -> determined.user.v1.User
+	44, // 1: determined.api.v1.GetUsersRequest.order_by:type_name -> determined.api.v1.OrderBy
+	45, // 2: determined.api.v1.GetUsersResponse.users:type_name -> determined.user.v1.User
+	46, // 3: determined.api.v1.GetUsersResponse.pagination:type_name -> determined.api.v1.Pagination
+	45, // 4: determined.api.v1.GetUserResponse.user:type_name -> determined.user.v1.User
+	45, // 5: determined.api.v1.GetUserByUsernameResponse.user:type_name -> determined.user.v1.User
+	45, // 6: determined.api.v1.GetMeResponse.user:type_name -> determined.user.v1.User
+	45, // 7: determined.api.v1.PostUserRequest.user:type_name -> determined.user.v1.User
+	45, // 8: determined.api.v1.PostUserResponse.user:type_name -> determined.user.v1.User
+	45, // 9: determined.api.v1.SetUserPasswordResponse.user:type_name -> determined.user.v1.User
+	47, // 10: determined.api.v1.PatchUserRequest.user:type_name -> determined.user.v1.PatchUser
+	45, // 11: determined.api.v1.PatchUserResponse.user:type_name -> determined.user.v1.User
 	17, // 12: determined.api.v1.PatchUsersRequest.filters:type_name -> determined.api.v1.UserFilters
 	2,  // 13: determined.api.v1.PatchUsersResponse.results:type_name -> determined.api.v1.UserActionResult
-	46, // 14: determined.api.v1.GetUserSettingResponse.settings:type_name -> determined.user.v1.UserWebSetting
-	46, // 15: determined.api.v1.PostUserSettingRequest.settings:type_name -> determined.user.v1.UserWebSetting
-	47, // 16: determined.api.v1.PostUserActivityRequest.activity_type:type_name -> determined.user.v1.ActivityType
-	48, // 17: determined.api.v1.PostUserActivityRequest.entity_type:type_name -> determined.user.v1.EntityType
-	49, // 18: determined.api.v1.GetLongLivedTokenResponse.token_info:type_name -> determined.user.v1.TokenInfo
+	48, // 14: determined.api.v1.GetUserSettingResponse.settings:type_name -> determined.user.v1.UserWebSetting
+	48, // 15: determined.api.v1.PostUserSettingRequest.settings:type_name -> determined.user.v1.UserWebSetting
+	49, // 16: determined.api.v1.PostUserActivityRequest.activity_type:type_name -> determined.user.v1.ActivityType
+	50, // 17: determined.api.v1.PostUserActivityRequest.entity_type:type_name -> determined.user.v1.EntityType
+	51, // 18: determined.api.v1.GetLongLivedTokenResponse.token_info:type_name -> determined.user.v1.TokenInfo
 	1,  // 19: determined.api.v1.GetAllLongLivedTokensRequest.sort_by:type_name -> determined.api.v1.GetAllLongLivedTokensRequest.SortBy
-	42, // 20: determined.api.v1.GetAllLongLivedTokensRequest.order_by:type_name -> determined.api.v1.OrderBy
-	49, // 21: determined.api.v1.GetAllLongLivedTokensResponse.token_info:type_name -> determined.user.v1.TokenInfo
-	44, // 22: determined.api.v1.GetAllLongLivedTokensResponse.pagination:type_name -> determined.api.v1.Pagination
-	49, // 23: determined.api.v1.GetUserLongLivedTokenResponse.token_info:type_name -> determined.user.v1.TokenInfo
-	24, // [24:24] is the sub-list for method output_type
-	24, // [24:24] is the sub-list for method input_type
-	24, // [24:24] is the sub-list for extension type_name
-	24, // [24:24] is the sub-list for extension extendee
-	0,  // [0:24] is the sub-list for field type_name
+	44, // 20: determined.api.v1.GetAllLongLivedTokensRequest.order_by:type_name -> determined.api.v1.OrderBy
+	51, // 21: determined.api.v1.GetAllLongLivedTokensResponse.token_info:type_name -> determined.user.v1.TokenInfo
+	46, // 22: determined.api.v1.GetAllLongLivedTokensResponse.pagination:type_name -> determined.api.v1.Pagination
+	51, // 23: determined.api.v1.GetUserLongLivedTokenResponse.token_info:type_name -> determined.user.v1.TokenInfo
+	51, // 24: determined.api.v1.PatchAccessTokenResponse.token_info:type_name -> determined.user.v1.TokenInfo
+	25, // [25:25] is the sub-list for method output_type
+	25, // [25:25] is the sub-list for method input_type
+	25, // [25:25] is the sub-list for extension type_name
+	25, // [25:25] is the sub-list for extension extendee
+	0,  // [0:25] is the sub-list for field type_name
 }
 
 func init() { file_determined_api_v1_user_proto_init() }
@@ -3086,7 +3221,7 @@ func file_determined_api_v1_user_proto_init() {
 			}
 		}
 		file_determined_api_v1_user_proto_msgTypes[36].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DeleteLongLivedTokenRequest); i {
+			switch v := v.(*PatchAccessTokenRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -3098,7 +3233,7 @@ func file_determined_api_v1_user_proto_init() {
 			}
 		}
 		file_determined_api_v1_user_proto_msgTypes[37].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DeleteLongLivedTokenResponse); i {
+			switch v := v.(*PatchAccessTokenResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -3110,7 +3245,7 @@ func file_determined_api_v1_user_proto_init() {
 			}
 		}
 		file_determined_api_v1_user_proto_msgTypes[38].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DeleteLongLivedTokenByTokenIDRequest); i {
+			switch v := v.(*DeleteLongLivedTokenRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -3122,6 +3257,30 @@ func file_determined_api_v1_user_proto_init() {
 			}
 		}
 		file_determined_api_v1_user_proto_msgTypes[39].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*DeleteLongLivedTokenResponse); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_determined_api_v1_user_proto_msgTypes[40].Exporter = func(v interface{}, i int) interface{} {
+			switch v := v.(*DeleteLongLivedTokenByTokenIDRequest); i {
+			case 0:
+				return &v.state
+			case 1:
+				return &v.sizeCache
+			case 2:
+				return &v.unknownFields
+			default:
+				return nil
+			}
+		}
+		file_determined_api_v1_user_proto_msgTypes[41].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*DeleteLongLivedTokenByTokenIDResponse); i {
 			case 0:
 				return &v.state
@@ -3136,13 +3295,14 @@ func file_determined_api_v1_user_proto_init() {
 	}
 	file_determined_api_v1_user_proto_msgTypes[1].OneofWrappers = []interface{}{}
 	file_determined_api_v1_user_proto_msgTypes[15].OneofWrappers = []interface{}{}
+	file_determined_api_v1_user_proto_msgTypes[36].OneofWrappers = []interface{}{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_determined_api_v1_user_proto_rawDesc,
 			NumEnums:      2,
-			NumMessages:   40,
+			NumMessages:   42,
 			NumExtensions: 0,
 			NumServices:   0,
 		},
