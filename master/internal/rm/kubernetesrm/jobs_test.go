@@ -138,6 +138,32 @@ func TestJobScheduledStatus(t *testing.T) {
 	require.Equal(t, expectedState, actualState)
 }
 
+func TestResolvePodJobName(t *testing.T) {
+	// Pod has no job name label.
+	pod := k8sV1.Pod{
+		ObjectMeta: metaV1.ObjectMeta{
+			Name: "test-pod",
+		},
+	}
+	actualJobName, ok := resolvePodJobName(&pod)
+	require.Equal(t, "", actualJobName)
+	require.False(t, ok, "expected no job name")
+
+	// Pod has a job name label.
+	jobName := "test-labeled-job"
+	pod.Labels = map[string]string{kubernetesJobNameLabel: jobName}
+	actualJobName, ok = resolvePodJobName(&pod)
+	require.Equal(t, jobName, actualJobName)
+	require.True(t, ok, "expected job name when %s label is set", kubernetesJobNameLabel)
+
+	// Pod has a fallback job name label.
+	fallbackJobName := "fallback-job"
+	pod.Labels = map[string]string{kubernetesFallbackJobLabel: fallbackJobName}
+	actualJobName, ok = resolvePodJobName(&pod)
+	require.Equal(t, fallbackJobName, actualJobName)
+	require.True(t, ok, "expected job name when %s label is set", kubernetesFallbackJobLabel)
+}
+
 func TestTaintTolerated(t *testing.T) {
 	cases := []struct {
 		expected    bool

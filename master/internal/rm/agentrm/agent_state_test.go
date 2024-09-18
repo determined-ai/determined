@@ -70,6 +70,7 @@ func TestAgentStatePersistence(t *testing.T) {
 		Version:              "",
 		Devices:              devices,
 		ContainersReattached: []aproto.ContainerReattachAck{},
+		ResourcePoolName:     defaultResourcePoolName,
 	}
 	state.agentStarted(started)
 	require.Len(t, state.getSlotsSummary("/myagent"), 2)
@@ -322,6 +323,66 @@ func Test_agentState_checkAgentStartedDevicesMatch(t *testing.T) {
 	}
 }
 
+func Test_agentState_checkAgentResourcePoolMatch(t *testing.T) {
+	const (
+		poolOne = "pool1"
+		poolTwo = "pool2"
+	)
+	tests := []struct {
+		name            string
+		state           agentState
+		agentStarted    *aproto.AgentStarted
+		wantErrContains string
+	}{
+		{
+			name: "resource pool name match",
+			state: agentState{
+				resourcePoolName: poolOne,
+			},
+			agentStarted: &aproto.AgentStarted{
+				ResourcePoolName: poolOne,
+			},
+			wantErrContains: "",
+		},
+		{
+			name: "resource pool name is missing",
+			state: agentState{
+				resourcePoolName: poolOne,
+			},
+			agentStarted:    &aproto.AgentStarted{ResourcePoolName: defaultResourcePoolName},
+			wantErrContains: "resource pool has changed",
+		},
+		{
+			name: "resource pool name is missing",
+			state: agentState{
+				resourcePoolName: defaultResourcePoolName,
+			},
+			agentStarted:    &aproto.AgentStarted{ResourcePoolName: poolOne},
+			wantErrContains: "resource pool has changed",
+		},
+		{
+			name: "mismatched resource pool name",
+			state: agentState{
+				resourcePoolName: poolOne,
+			},
+			agentStarted: &aproto.AgentStarted{
+				ResourcePoolName: poolTwo,
+			},
+			wantErrContains: "resource pool has changed",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := tt.state.checkAgentResourcePoolMatch(tt.agentStarted)
+			if tt.wantErrContains == "" {
+				require.NoError(t, err)
+				return
+			}
+			require.ErrorContains(t, err, tt.wantErrContains)
+		})
+	}
+}
+
 func TestSlotStates(t *testing.T) {
 	rpName := "test"
 	state := newAgentState(aproto.ID(uuid.NewString()), 64)
@@ -345,6 +406,7 @@ func TestSlotStates(t *testing.T) {
 		Version:              "",
 		Devices:              devices,
 		ContainersReattached: []aproto.ContainerReattachAck{},
+		ResourcePoolName:     defaultResourcePoolName,
 	}
 	state.agentStarted(started)
 	slots := state.getSlotsSummary("/")

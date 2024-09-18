@@ -693,6 +693,13 @@ JOIN run_id_task_id as r ON t.task_id = r.task_id
 WHERE r.run_id = ?
 `
 	resp = &apiv1.GetTrialRemainingLogRetentionDaysResponse{}
+	// set trial retention days to global retention days if
+	// trial retention days is unset and global retention days is set
+	if t.LogRetentionDays == nil && a.m.config.RetentionPolicy.LogRetentionDays != nil {
+		t.LogRetentionDays = a.m.config.RetentionPolicy.LogRetentionDays
+	}
+
+	// if neither trial or global retention days is set, default is forever (-1)
 	if t.LogRetentionDays == nil || *t.LogRetentionDays == -1 {
 		days := int32(-1)
 		resp.RemainingDays = &days
@@ -1547,7 +1554,7 @@ func (a *apiServer) ReportTrialValidationMetrics(
 func (a *apiServer) ReportCheckpoint(
 	ctx context.Context, req *apiv1.ReportCheckpointRequest,
 ) (*apiv1.ReportCheckpointResponse, error) {
-	if err := a.canDoActionsOnTask(ctx, model.TaskID(req.Checkpoint.TaskId),
+	if _, _, err := a.canDoActionsOnTask(ctx, model.TaskID(req.Checkpoint.TaskId),
 		experiment.AuthZProvider.Get().CanEditExperiment); err != nil {
 		return nil, err
 	}

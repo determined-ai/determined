@@ -1,8 +1,8 @@
 WITH const AS (
     SELECT
-        tstzrange(
-            $1::timestamptz,
-            ($1::timestamptz + interval '1 day')
+        tsrange(
+            $1::timestamp,
+            ($1::timestamp + interval '1 day')
         ) AS period
 ),
 
@@ -21,7 +21,7 @@ allocs_in_range AS (
         (
             SELECT
                 *,
-                tstzrange(start_time, greatest(start_time, end_time)) AS range
+                tsrange(start_time, greatest(start_time, end_time)) AS range
             FROM
                 allocations
             WHERE

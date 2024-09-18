@@ -4,7 +4,7 @@
 
 If you encounter an issue or would like to request a new feature, please create
 [an issue on GitHub](https://github.com/determined-ai/determined/issues). You can
-also join the [Slack](https://join.slack.com/t/determined-community/shared_invite/zt-1f4hj60z5-JMHb~wSr2xksLZVBN61g_Q)
+also join the [Slack](https://determined-community.slack.com)
 to get support and talk with other users and developers in real-time.
 
 ## Contributing Changes
@@ -12,7 +12,7 @@ to get support and talk with other users and developers in real-time.
 We welcome outside contributions. If you'd like to make a contribution, please:
 
 1. Tell us about what you'd like to contribute on
-   [our Slack](https://join.slack.com/t/determined-community/shared_invite/zt-1f4hj60z5-JMHb~wSr2xksLZVBN61g_Q)
+   [our Slack](https://determined-community.slack.com)
    or [community mailing list](https://groups.google.com/a/determined.ai/forum/#!forum/community).
    We'd hate for you to duplicate efforts that are already in-flight.
 

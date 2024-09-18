@@ -2,6 +2,8 @@ import { expect, test } from 'e2e/fixtures/global-fixtures';
 import { ProjectDetails } from 'e2e/models/pages/ProjectDetails';
 import { detExecSync, fullPath } from 'e2e/utils/detCLI';
 import { safeName } from 'e2e/utils/naming';
+import { repeatWithFallback } from 'e2e/utils/polling';
+import { ExperimentBase } from 'types';
 
 test.describe('Experiment List', () => {
   let projectDetailsPage: ProjectDetails;
@@ -14,16 +16,29 @@ test.describe('Experiment List', () => {
     return parseInt(count);
   };
 
-  test.beforeAll(async ({ backgroundAuthedPage, newProject }) => {
+  test.beforeAll(async ({ backgroundAuthedPage, newWorkspace, newProject }) => {
     const projectDetailsPageSetup = new ProjectDetails(backgroundAuthedPage);
     await projectDetailsPageSetup.gotoProject(newProject.response.project.id);
     await test.step('Create an experiment', async () => {
       await expect(
         projectDetailsPageSetup.f_experimentList.tableActionBar.count.pwLocator,
       ).toContainText('experiment');
-      detExecSync(
-        `experiment create ${fullPath('examples/tutorials/mnist_pytorch/adaptive.yaml')} --paused --project_id ${newProject.response.project.id}`,
+      Array(4)
+        .fill(null)
+        .forEach(() => {
+          detExecSync(
+            `experiment create ${fullPath('examples/tutorials/mnist_pytorch/adaptive.yaml')} --paused --project_id ${newProject.response.project.id}`,
+          );
+        });
+
+      const experiments: ExperimentBase[] = JSON.parse(
+        detExecSync(
+          `project list-experiments --json ${newWorkspace.response.workspace.name} ${newProject.response.project.name}`,
+        ),
       );
+      detExecSync(`experiment kill ${experiments[experiments.length - 1]?.id}`); // Experiments must be in terminal state to archive
+      detExecSync(`experiment archive ${experiments[experiments.length - 1]?.id}`);
+
       await expect(
         projectDetailsPageSetup.f_experimentList.dataGrid.rows.pwLocator,
       ).not.toHaveCount(0, { timeout: 10_000 });
@@ -75,6 +90,22 @@ test.describe('Experiment List', () => {
       const tableFilter =
         await projectDetailsPage.f_experimentList.tableActionBar.tableFilter.open();
       await tableFilter.filterForm.clearFilters.pwLocator.click();
+      await tableFilter.close();
+      await waitTableStable();
+    });
+    await test.step('Reset Show Archived', async () => {
+      const tableFilter =
+        await projectDetailsPage.f_experimentList.tableActionBar.tableFilter.open();
+      await expect(
+        repeatWithFallback(
+          async () =>
+            await expect(tableFilter.filterForm.showArchived.pwLocator).toHaveAttribute(
+              'aria-checked',
+              'false',
+            ),
+          async () => await tableFilter.filterForm.showArchived.pwLocator.click(),
+        ),
+      ).toPass({ timeout: 30_000 });
       await tableFilter.close();
       await waitTableStable();
     });
@@ -236,6 +267,23 @@ test.describe('Experiment List', () => {
       },
       totalExperiments,
     );
+
+    await filterScenario(
+      'Show Archived',
+      async () => {
+        await expect(
+          repeatWithFallback(
+            async () =>
+              await expect(tableFilter.filterForm.showArchived.pwLocator).toHaveAttribute(
+                'aria-checked',
+                'true',
+              ),
+            async () => await tableFilter.filterForm.showArchived.pwLocator.click(),
+          ),
+        ).toPass({ timeout: 30_000 });
+      },
+      totalExperiments + 1,
+    );
   });
 
   test('Datagrid Functionality Validations', async ({ authedPage }) => {
@@ -310,5 +358,39 @@ test.describe('Experiment List', () => {
     await row.experimentActionDropdown.open();
     await row.experimentActionDropdown.pause.pwLocator.click();
     await expect.soft((await row.getCellByColumnName('State')).pwLocator).toHaveText('paused');
+  });
+
+  test('Datagrid Bulk Action', async () => {
+    // should probably go last/before move
+    await test.step('Kill', async () => {
+      type RowType = typeof projectDetailsPage.f_experimentList.dataGrid.rows;
+      const rows = [0, 1].map((idx) => {
+        return projectDetailsPage.f_experimentList.dataGrid.getRowByIndex(idx);
+      });
+      const expectStateForRow = async (state: string, row: RowType) => {
+        const stateColumn = await row.getCellByColumnName('State');
+        await expect(stateColumn.pwLocator).toHaveText(state);
+      };
+      await rows.reduce(async (memo, row) => {
+        await memo;
+        await expectStateForRow('paused', row);
+        await row.clickColumn('Select');
+      }, Promise.resolve());
+
+      await projectDetailsPage.f_experimentList.tableActionBar.actions.kill.select();
+
+      // TODO: modal component model assumes buttons are attached to form
+      await projectDetailsPage.pwLocator.getByRole('button', { name: 'kill' }).click();
+
+      await expect(async () => {
+        await Promise.all([
+          ...rows.map(expectStateForRow.bind(this, 'canceled')),
+          expectStateForRow(
+            'paused',
+            projectDetailsPage.f_experimentList.dataGrid.getRowByIndex(2),
+          ),
+        ]);
+      }).toPass();
+    });
   });
 });

@@ -616,18 +616,6 @@ def assert_patterns_in_trial_logs(sess: api.Session, trial_id: int, patterns: Li
     )
 
 
-def assert_performed_initial_validation(sess: api.Session, exp_id: int) -> None:
-    trials = experiment_trials(sess, exp_id)
-
-    assert len(trials) > 0
-    workloads = trials[0].workloads
-
-    assert len(workloads) > 0
-    zeroth_step = workloads_with_validation(workloads)[0]
-
-    assert zeroth_step.totalBatches == 0
-
-
 def last_workload_matches_last_checkpoint(
     workloads: Sequence[bindings.v1WorkloadContainer],
 ) -> None:

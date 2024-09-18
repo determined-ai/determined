@@ -7,6 +7,7 @@ import (
 	"encoding/base64"
 	"fmt"
 	"io"
+	"math"
 	"net/http"
 	"net/url"
 	"os"
@@ -51,6 +52,12 @@ type Service struct {
 type IDTokenClaims struct {
 	AuthenticationClaim string   `json:"authentication_claim"`
 	DisplayName         string   `json:"display_name"`
+	AgentUID            int      `json:"agent_uid"`
+	AgentGID            int      `json:"agent_gid"`
+	AgentUserName       string   `json:"agent_user_name"`
+	AgentGroupName      string   `json:"agent_group_name"`
+	AgentUIDSet         bool     `json:"agent_uid_set"`
+	AgentGIDSet         bool     `json:"agent_gid_set"`
 	Groups              []string `json:"groups"`
 }
 
@@ -146,7 +153,11 @@ func (s *Service) callback(c echo.Context) error {
 			"user exists but was not created with the --remote option")
 	}
 
-	u, err = s.syncUser(ctx, u, claims)
+	ug, err := user.GetAgentUserGroup(ctx, u.ID, 0)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusInternalServerError, "unable to look up user group")
+	}
+	u, err = s.syncUser(ctx, u, claims, ug)
 	if err != nil {
 		return err
 	}
@@ -237,6 +248,36 @@ func (s *Service) toIDTokenClaim(userInfo *oidc.UserInfo) (*IDTokenClaims, error
 		}
 		c.DisplayName = displayName
 	}
+	if cs[s.config.AgentUIDAttributeName] != nil {
+		agentUID, ok := cs[s.config.AgentUIDAttributeName].(float64)
+		if !ok {
+			return nil, fmt.Errorf("user info agentUID value was not a valid number")
+		}
+		c.AgentUID = int(math.Round(agentUID))
+		c.AgentUIDSet = true
+	}
+	if cs[s.config.AgentGIDAttributeName] != nil {
+		agentGID, ok := cs[s.config.AgentGIDAttributeName].(float64)
+		if !ok {
+			return nil, fmt.Errorf("user info agentGID value was not a valid number")
+		}
+		c.AgentGID = int(math.Round(agentGID))
+		c.AgentGIDSet = true
+	}
+	if cs[s.config.AgentUserNameAttributeName] != nil {
+		agentUserName, ok := cs[s.config.AgentUserNameAttributeName].(string)
+		if !ok {
+			return nil, fmt.Errorf("user info agentUserName value was not a string")
+		}
+		c.AgentUserName = agentUserName
+	}
+	if cs[s.config.AgentGroupNameAttributeName] != nil {
+		agentGroupName, ok := cs[s.config.AgentGroupNameAttributeName].(string)
+		if !ok {
+			return nil, fmt.Errorf("user info agentUserName value was not a string")
+		}
+		c.AgentGroupName = agentGroupName
+	}
 	if cs[s.config.GroupsAttributeName] != nil {
 		gs, ok := cs[s.config.GroupsAttributeName].([]interface{})
 		if !ok {
@@ -272,19 +313,52 @@ func (s *Service) lookupUser(ctx context.Context, claimValue string) (*model.Use
 	return u, err
 }
 
+func mergeUserGroups(sessionData *IDTokenClaims, dbData *model.AgentUserGroup) *model.AgentUserGroup {
+	result := model.AgentUserGroup{
+		UID:   dbData.UID,
+		GID:   dbData.GID,
+		User:  dbData.User,
+		Group: dbData.Group,
+	}
+
+	if sessionData.AgentUIDSet {
+		result.UID = sessionData.AgentUID
+	}
+	if sessionData.AgentGIDSet {
+		result.GID = sessionData.AgentGID
+	}
+	if sessionData.AgentUserName != "" {
+		result.User = sessionData.AgentUserName
+	}
+	if sessionData.AgentGroupName != "" {
+		result.Group = sessionData.AgentGroupName
+	}
+
+	return &result
+}
+
 // syncUser syncs the mutable user fields parsed from the claim, only if there are non-null changes.
-func (s *Service) syncUser(ctx context.Context, u *model.User, claims *IDTokenClaims) (*model.User, error) {
+func (s *Service) syncUser(ctx context.Context, u *model.User, claims *IDTokenClaims,
+	ug *model.AgentUserGroup,
+) (*model.User, error) {
+	ugUpdate := mergeUserGroups(claims, ug)
+	if ugUpdate.UID == ug.UID && ugUpdate.GID == ug.GID && ugUpdate.User == ug.User && ugUpdate.Group == ug.Group {
+		// nothing in user group to update
+		ugUpdate = nil
+	}
+
 	if err := db.Bun().RunInTx(ctx, &sql.TxOptions{Isolation: sql.LevelSerializable},
 		func(ctx context.Context, tx bun.Tx) error {
 			// If the config is set to auto-provision users, sync the display name.
 			if s.config.AutoProvisionUsers {
-				if claims.DisplayName != "" && claims.DisplayName != u.DisplayName.String {
+				updateDisplayName := claims.DisplayName != "" && claims.DisplayName != u.DisplayName.String
+				if updateDisplayName || ugUpdate != nil {
 					err := user.Update(ctx,
 						&model.User{
 							ID:          u.ID,
 							Username:    claims.AuthenticationClaim,
 							DisplayName: null.NewString(claims.DisplayName, true),
-						}, []string{"display_name"}, nil)
+						}, []string{"display_name"}, ugUpdate)
 					if err != nil {
 						return fmt.Errorf("error setting display name of %q: %s", u.Username, err)
 					}

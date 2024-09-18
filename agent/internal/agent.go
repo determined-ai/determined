@@ -160,6 +160,7 @@ func (a *Agent) run(ctx context.Context) error {
 		Version:              a.version,
 		Devices:              devices,
 		ContainersReattached: reattached,
+		ResourcePoolName:     a.opts.ResourcePool,
 	}}:
 	case <-ctx.Done():
 		return ctx.Err()
@@ -351,6 +352,7 @@ func (a *Agent) reconnectFlow(
 		Version:              a.version,
 		Devices:              devices,
 		ContainersReattached: reattached,
+		ResourcePoolName:     a.opts.ResourcePool,
 	}}:
 	case <-ctx.Done():
 		return nil, nil, ctx.Err()

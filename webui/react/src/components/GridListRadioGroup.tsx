@@ -24,15 +24,17 @@ const GridListRadioGroup: React.FC<Props> = ({ onChange, value }: Props) => {
   );
 
   return (
-    <RadioGroup
-      iconOnly
-      options={[
-        { icon: 'grid', id: GridListView.Grid, label: 'Grid View' },
-        { icon: 'list', id: GridListView.List, label: 'List View' },
-      ]}
-      value={value}
-      onChange={handleChange}
-    />
+    <div data-test-component="grid-list-radio-group">
+      <RadioGroup
+        iconOnly
+        options={[
+          { icon: 'grid', id: GridListView.Grid, label: 'Grid View' },
+          { icon: 'list', id: GridListView.List, label: 'List View' },
+        ]}
+        value={value}
+        onChange={handleChange}
+      />
+    </div>
   );
 };
 

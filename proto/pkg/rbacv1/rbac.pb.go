@@ -122,6 +122,8 @@ const (
 	PermissionType_PERMISSION_TYPE_UPDATE_ROLES PermissionType = 96001
 	// Ability to create and delete webhooks.
 	PermissionType_PERMISSION_TYPE_EDIT_WEBHOOKS PermissionType = 97001
+	// Ability to view webhooks.
+	PermissionType_PERMISSION_TYPE_VIEW_WEBHOOKS PermissionType = 97002
 	// Ability to bind, unbind or overwrite resource pool workspace bindings.
 	PermissionType_PERMISSION_TYPE_MODIFY_RP_WORKSPACE_BINDINGS PermissionType = 10001
 	// Ability to bind, unbind, or overwrite namespace workspace bindings.
@@ -130,6 +132,14 @@ const (
 	PermissionType_PERMISSION_TYPE_SET_RESOURCE_QUOTAS PermissionType = 11002
 	// Ability to view resource quotas on workspaces.
 	PermissionType_PERMISSION_TYPE_VIEW_RESOURCE_QUOTAS PermissionType = 11003
+	// Ability to modify global config policies.
+	PermissionType_PERMISSION_TYPE_MODIFY_GLOBAL_CONFIG_POLICIES PermissionType = 11004
+	// Ability to modify workspace config policies.
+	PermissionType_PERMISSION_TYPE_MODIFY_WORKSPACE_CONFIG_POLICIES PermissionType = 11005
+	// Ability to view global config policies.
+	PermissionType_PERMISSION_TYPE_VIEW_GLOBAL_CONFIG_POLICIES PermissionType = 11006
+	// Ability to view workspace config policies.
+	PermissionType_PERMISSION_TYPE_VIEW_WORKSPACE_CONFIG_POLICIES PermissionType = 11007
 	// Ability to revoke one's own long lived token
 	PermissionType_PERMISSION_TYPE_REVOKE_LONG_LIVED_TOKEN PermissionType = 12001
 	// Ability to revoke another user's long lived token
@@ -193,10 +203,15 @@ var (
 		9004:  "PERMISSION_TYPE_DELETE_TEMPLATES",
 		96001: "PERMISSION_TYPE_UPDATE_ROLES",
 		97001: "PERMISSION_TYPE_EDIT_WEBHOOKS",
+		97002: "PERMISSION_TYPE_VIEW_WEBHOOKS",
 		10001: "PERMISSION_TYPE_MODIFY_RP_WORKSPACE_BINDINGS",
 		11001: "PERMISSION_TYPE_SET_WORKSPACE_NAMESPACE_BINDINGS",
 		11002: "PERMISSION_TYPE_SET_RESOURCE_QUOTAS",
 		11003: "PERMISSION_TYPE_VIEW_RESOURCE_QUOTAS",
+		11004: "PERMISSION_TYPE_MODIFY_GLOBAL_CONFIG_POLICIES",
+		11005: "PERMISSION_TYPE_MODIFY_WORKSPACE_CONFIG_POLICIES",
+		11006: "PERMISSION_TYPE_VIEW_GLOBAL_CONFIG_POLICIES",
+		11007: "PERMISSION_TYPE_VIEW_WORKSPACE_CONFIG_POLICIES",
 		12001: "PERMISSION_TYPE_REVOKE_LONG_LIVED_TOKEN",
 		12002: "PERMISSION_TYPE_REVOKE_OTHER_LONG_LIVED_TOKEN",
 		12003: "PERMISSION_TYPE_CREATE_LONG_LIVED_TOKEN",
@@ -251,6 +266,7 @@ var (
 		"PERMISSION_TYPE_DELETE_TEMPLATES":                        9004,
 		"PERMISSION_TYPE_UPDATE_ROLES":                            96001,
 		"PERMISSION_TYPE_EDIT_WEBHOOKS":                           97001,
+		"PERMISSION_TYPE_VIEW_WEBHOOKS":                           97002,
 		"PERMISSION_TYPE_MODIFY_RP_WORKSPACE_BINDINGS":            10001,
 		"PERMISSION_TYPE_SET_WORKSPACE_NAMESPACE_BINDINGS":        11001,
 		"PERMISSION_TYPE_SET_RESOURCE_QUOTAS":                     11002,

@@ -2,9 +2,11 @@ import Form from 'hew/Form';
 import Input from 'hew/Input';
 import { Modal } from 'hew/Modal';
 import Select, { Option } from 'hew/Select';
-import React, { useCallback, useEffect, useId, useState } from 'react';
+import { useToast } from 'hew/Toast';
+import React, { useCallback, useEffect, useId, useMemo, useState } from 'react';
 
 import useFeature from 'hooks/useFeature';
+import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
 import { createWebhook } from 'services/api';
 import { V1TriggerType, V1WebhookMode, V1WebhookType } from 'services/api-ts-sdk/api';
@@ -19,7 +21,12 @@ interface Props {
 
 const FORM_ID = 'create-webhook-form';
 
-const triggerEvents = [RunState.Completed, RunState.Error, V1TriggerType.TASKLOG] as const;
+const triggerEvents = [
+  RunState.Completed,
+  RunState.Error,
+  V1TriggerType.TASKLOG,
+  V1TriggerType.CUSTOM,
+] as const;
 
 interface FormInputs {
   regex?: string;
@@ -54,6 +61,10 @@ const triggerOptions = [
     label: 'TASKLOG',
     value: V1TriggerType.TASKLOG,
   },
+  {
+    label: 'CUSTOM',
+    value: V1TriggerType.CUSTOM,
+  },
 ];
 const modeOptions = [
   {
@@ -69,9 +80,13 @@ const WebhookCreateModalComponent: React.FC<Props> = ({ onSuccess }: Props) => {
   const idPrefix = useId();
   const [form] = Form.useForm<FormInputs>();
   const [disabled, setDisabled] = useState<boolean>(true);
-  const triggers = Form.useWatch('triggerEvents', form);
+  const triggerEvents = Form.useWatch('triggerEvents', form);
   const f_webhook = useFeature().isOn('webhook_improvement');
   const workspaces = useObservable(workspaceStore.workspaces).getOrElse([]);
+  const { canCreateWebhooks } = usePermissions();
+  const { openToast } = useToast();
+
+  const triggers = useMemo(() => triggerEvents || [], [triggerEvents]);
 
   const onChange = useCallback(() => {
     const fields = form.getFieldsError();
@@ -80,10 +95,18 @@ const WebhookCreateModalComponent: React.FC<Props> = ({ onSuccess }: Props) => {
   }, [form]);
 
   useEffect(() => {
-    if (!(triggers || []).includes('TRIGGER_TYPE_TASK_LOG')) {
+    if (!triggers.includes(V1TriggerType.TASKLOG)) {
       form.setFieldValue('regex', null);
     }
+    if (triggers.includes(V1TriggerType.CUSTOM)) {
+      form.setFieldValue('mode', V1WebhookMode.SPECIFIC);
+    }
   }, [triggers, form]);
+
+  const permWorkspace = useMemo(
+    () => canCreateWebhooks(workspaces),
+    [workspaces, canCreateWebhooks],
+  );
 
   const handleSubmit = useCallback(async () => {
     const values = await form.validateFields();
@@ -94,9 +117,15 @@ const WebhookCreateModalComponent: React.FC<Props> = ({ onSuccess }: Props) => {
           mode: values.mode,
           name: values.name,
           triggers: values.triggerEvents.map((state) => {
-            if (state === 'TRIGGER_TYPE_TASK_LOG') {
+            if (state === V1TriggerType.TASKLOG) {
               return {
                 condition: { regex: values.regex },
+                triggerType: state,
+              };
+            }
+            if (state === V1TriggerType.CUSTOM) {
+              return {
+                condition: {},
                 triggerType: state,
               };
             }
@@ -112,6 +141,10 @@ const WebhookCreateModalComponent: React.FC<Props> = ({ onSuccess }: Props) => {
         onSuccess?.();
         routeToReactUrl(paths.webhooks());
         form.resetFields();
+        openToast({
+          severity: 'Confirm',
+          title: 'Webhook created.',
+        });
       }
     } catch (e) {
       if (e instanceof DetError) {
@@ -133,7 +166,7 @@ const WebhookCreateModalComponent: React.FC<Props> = ({ onSuccess }: Props) => {
       }
       throw e;
     }
-  }, [form, onSuccess]);
+  }, [form, onSuccess, openToast]);
 
   return (
     <Modal
@@ -160,7 +193,7 @@ const WebhookCreateModalComponent: React.FC<Props> = ({ onSuccess }: Props) => {
               name="workspaceId"
               rules={[{ message: 'Workspace is required', required: true }]}>
               <Select allowClear placeholder="Workspace (required)">
-                {workspaces.map((workspace: Workspace) => (
+                {permWorkspace.map((workspace: Workspace) => (
                   <Option key={workspace.id} value={workspace.id}>
                     {workspace.name}
                   </Option>
@@ -184,15 +217,6 @@ const WebhookCreateModalComponent: React.FC<Props> = ({ onSuccess }: Props) => {
           ]}>
           <Input />
         </Form.Item>
-        {f_webhook && (
-          <Form.Item
-            initialValue={V1WebhookMode.WORKSPACE}
-            label="Trigger by"
-            name="mode"
-            rules={[{ message: 'Webhook mode is required', required: true }]}>
-            <Select options={modeOptions} placeholder="Select webhook mode" />
-          </Form.Item>
-        )}
         <Form.Item
           initialValue={V1WebhookType.DEFAULT}
           label="Type"
@@ -204,14 +228,31 @@ const WebhookCreateModalComponent: React.FC<Props> = ({ onSuccess }: Props) => {
           label="Trigger"
           name="triggerEvents"
           rules={[{ message: 'At least one trigger event is required', required: true }]}>
-          <Select mode="multiple" options={triggerOptions} placeholder="Select trigger event" />
+          <Select
+            mode="multiple"
+            options={f_webhook ? triggerOptions : triggerOptions.slice(0, 3)}
+            placeholder="Select trigger event"
+          />
         </Form.Item>
-        {(triggers || []).includes(V1TriggerType.TASKLOG) && (
+        {triggers.includes(V1TriggerType.TASKLOG) && (
           <Form.Item
             label="Regex"
             name="regex"
             rules={[{ message: 'Regex is required when triggering on task log', required: true }]}>
             <Input />
+          </Form.Item>
+        )}
+        {f_webhook && (
+          <Form.Item
+            initialValue={V1WebhookMode.WORKSPACE}
+            label="Trigger by"
+            name="mode"
+            rules={[{ message: 'Webhook mode is required', required: true }]}>
+            <Select
+              disabled={triggers.includes(V1TriggerType.CUSTOM)}
+              options={modeOptions}
+              placeholder="Select webhook mode"
+            />
           </Form.Item>
         )}
       </Form>

@@ -65,7 +65,6 @@ rules: Dict[Path, Union[str, List[str]]] = {
     root / "docs": "make fmt check build",
     root / ".circleci": "type circleci || exit 0 && circleci config validate config.yml",
     root / "e2e_tests": "make fmt check",
-    root / "model_hub": "make fmt check",
 }
 
 

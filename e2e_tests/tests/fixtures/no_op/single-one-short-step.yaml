@@ -8,7 +8,6 @@ hyperparameters:
   global_batch_size: 32
   metrics_progression: decreasing
   metrics_base: 0.9
-  metrics_sigma: 0
 scheduling_unit: 1
 searcher:
   metric: validation_error

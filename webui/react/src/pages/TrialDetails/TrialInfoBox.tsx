@@ -11,7 +11,7 @@ import Section from 'components/Section';
 import TimeAgo from 'components/TimeAgo';
 import { useCheckpointFlow } from 'hooks/useCheckpointFlow';
 import useFeature from 'hooks/useFeature';
-import { NodeElement } from 'pages/ResourcePool/Topology';
+import { NodeElement } from 'pages/ResourcePool/TrialTopology';
 import { handlePath, paths } from 'routes/utils';
 import { getTaskAcceleratorData } from 'services/api';
 import { V1AcceleratorData } from 'services/api-ts-sdk/api';

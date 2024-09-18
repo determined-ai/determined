@@ -601,7 +601,7 @@ func (rp *resourcePool) GetResourceSummary() resourceSummary {
 	defer func() {
 		rp.agentStatesCache = nil
 	}()
-	return resourceSummaryFromAgentStates(rp.agentStatesCache)
+	return rp.resourceSummaryFromAgentStates(rp.agentStatesCache)
 }
 
 func (rp *resourcePool) CapacityCheck(msg sproto.CapacityCheck) (sproto.CapacityCheckResponse, error) {

@@ -120,7 +120,7 @@ func (d *Client) ReattachContainer(
 	id cproto.ID,
 ) (*Container, *aproto.ExitCode, error) {
 	filter := LabelFilter(ContainerIDLabel, id.String())
-	containers, err := d.cl.ContainerList(ctx, types.ContainerListOptions{Filters: filter})
+	containers, err := d.cl.ContainerList(ctx, dcontainer.ListOptions{Filters: filter})
 	if err != nil {
 		return nil, nil, fmt.Errorf("while reattaching container: %w", err)
 	}
@@ -299,7 +299,7 @@ func (d *Client) RunContainer(
 	// Wait before start to not miss immediate exits.
 	waiter, errs := d.cl.ContainerWait(waitCtx, id, dcontainer.WaitConditionNextExit)
 
-	if err := d.cl.ContainerStart(ctx, id, types.ContainerStartOptions{}); err != nil {
+	if err := d.cl.ContainerStart(ctx, id, dcontainer.StartOptions{}); err != nil {
 		return nil, fmt.Errorf("starting container: %w", err)
 	}
 
@@ -330,7 +330,7 @@ func (d *Client) SignalContainer(ctx context.Context, id string, sig syscall.Sig
 
 // RemoveContainer removes a Docker container by ID.
 func (d *Client) RemoveContainer(ctx context.Context, id string, force bool) error {
-	return d.cl.ContainerRemove(ctx, id, types.ContainerRemoveOptions{Force: force})
+	return d.cl.ContainerRemove(ctx, id, dcontainer.RemoveOptions{Force: force})
 }
 
 // ListRunningContainers lists running Docker containers satisfying the given filters.
@@ -339,7 +339,7 @@ func (d *Client) ListRunningContainers(ctx context.Context, fs filters.Args) (
 ) {
 	// List "our" running containers, based on `dockerAgentLabel`.
 	// This doesn't include containers spawned by other agents.
-	containers, err := d.cl.ContainerList(ctx, types.ContainerListOptions{All: false, Filters: fs})
+	containers, err := d.cl.ContainerList(ctx, dcontainer.ListOptions{All: false, Filters: fs})
 	if err != nil {
 		return nil, err
 	}

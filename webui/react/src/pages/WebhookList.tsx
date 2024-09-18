@@ -5,11 +5,12 @@ import {
   TablePaginationConfig,
 } from 'antd/lib/table/interface';
 import Button from 'hew/Button';
-import Dropdown from 'hew/Dropdown';
+import Dropdown, { MenuItem } from 'hew/Dropdown';
 import Icon from 'hew/Icon';
 import Message from 'hew/Message';
 import { useModal } from 'hew/Modal';
 import Row from 'hew/Row';
+import { useToast } from 'hew/Toast';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
@@ -25,6 +26,7 @@ import {
 import TableFilterDropdown from 'components/Table/TableFilterDropdown';
 import WebhookCreateModalComponent from 'components/WebhookCreateModal';
 import WebhookDeleteModalComponent from 'components/WebhookDeleteModal';
+import WebhookEditModalComponent from 'components/WebhookEditModal';
 import WorkspaceFilter from 'components/WorkspaceFilter';
 import useFeature from 'hooks/useFeature';
 import usePermissions from 'hooks/usePermissions';
@@ -35,6 +37,7 @@ import { getWebhooks, testWebhook } from 'services/api';
 import { V1Trigger, V1TriggerType } from 'services/api-ts-sdk/api';
 import workspaceStore from 'stores/workspaces';
 import { Webhook } from 'types';
+import { copyToClipboard } from 'utils/dom';
 import handleError, { ErrorType } from 'utils/error';
 import { useObservable } from 'utils/observable';
 import { alphaNumericSorter } from 'utils/sort';
@@ -43,14 +46,11 @@ import css from './WebhookList.module.scss';
 import settingsConfig, { DEFAULT_COLUMN_WIDTHS, Settings } from './WebhookList.settings';
 
 const MenuKey = {
+  CopyName: 'copy-name',
   DeleteWebhook: 'delete-webhook',
+  EditWebhook: 'edit-webhook',
   TestWebhook: 'test-webhook',
 } as const;
-
-const DROPDOWN_MENU = [
-  { key: MenuKey.TestWebhook, label: 'Test Webhook' },
-  { danger: true, key: MenuKey.DeleteWebhook, label: 'Delete Webhook' },
-];
 
 const WebhooksView: React.FC = () => {
   const [webhooks, setWebhooks] = useState<Webhook[]>([]);
@@ -62,14 +62,17 @@ const WebhooksView: React.FC = () => {
   const f_webhook = useFeature().isOn('webhook_improvement');
   const pageRef = useRef<HTMLElement>(null);
 
-  const { canEditWebhooks } = usePermissions();
+  const { canCreateWebhooks, canEditWebhooks } = usePermissions();
 
   const workspaces = useObservable(workspaceStore.workspaces).getOrElse([]);
 
   const WebhookCreateModal = useModal(WebhookCreateModalComponent);
   const WebhookDeleteModal = useModal(WebhookDeleteModalComponent);
+  const WebhookEditModal = useModal(WebhookEditModalComponent);
 
   const { settings, updateSettings } = useSettings<Settings>(settingsConfig);
+
+  const { openToast } = useToast();
 
   const fetchWebhooks = useCallback(async () => {
     try {
@@ -111,6 +114,22 @@ const WebhooksView: React.FC = () => {
   const handleDropdown = useCallback(
     async (key: string, record: Webhook) => {
       switch (key) {
+        case MenuKey.CopyName:
+          try {
+            await copyToClipboard(record.name);
+            openToast({
+              description: 'Webhook name copied to the clipboard.',
+              severity: 'Confirm',
+              title: 'Webhook Name Copied',
+            });
+          } catch (e) {
+            openToast({
+              description: (e as Error)?.message,
+              severity: 'Warning',
+              title: 'Unable to Copy to Clipboard',
+            });
+          }
+          break;
         case MenuKey.DeleteWebhook:
           setSelectedWebhook(record);
           WebhookDeleteModal.open();
@@ -125,9 +144,13 @@ const WebhooksView: React.FC = () => {
             });
           }
           break;
+        case MenuKey.EditWebhook:
+          setSelectedWebhook(record);
+          WebhookEditModal.open();
+          break;
       }
     },
-    [WebhookDeleteModal],
+    [WebhookDeleteModal, WebhookEditModal, openToast],
   );
 
   const handleWorkspaceFilterApply = useCallback(
@@ -160,11 +183,25 @@ const WebhooksView: React.FC = () => {
   );
 
   const columns = useMemo(() => {
-    const actionRenderer = (_: string, record: Webhook) => (
-      <Dropdown menu={DROPDOWN_MENU} onClick={(key) => handleDropdown(key, record)}>
-        <Button icon={<Icon name="overflow-vertical" title="Action menu" />} type="text" />
-      </Dropdown>
-    );
+    const renderMenu: (record: Webhook) => MenuItem[] = (record: Webhook) => {
+      const DROPDOWN_MENU = [];
+      record.name && DROPDOWN_MENU.push({ key: MenuKey.CopyName, label: 'Copy Webhook Name' });
+      canEditWebhooks(workspaces, record) &&
+        DROPDOWN_MENU.push(
+          { key: MenuKey.TestWebhook, label: 'Test Webhook' },
+          { key: MenuKey.EditWebhook, label: 'Edit Webhook' },
+          { danger: true, key: MenuKey.DeleteWebhook, label: 'Delete Webhook' },
+        );
+      return DROPDOWN_MENU;
+    };
+    const actionRenderer = (_: string, record: Webhook) => {
+      const menu = renderMenu(record);
+      return menu.length > 0 ? (
+        <Dropdown menu={menu} onClick={(key) => handleDropdown(key, record)}>
+          <Button icon={<Icon name="overflow-vertical" title="Action menu" />} type="text" />
+        </Dropdown>
+      ) : null;
+    };
 
     const webhookTriggerRenderer = (triggers: V1Trigger[]) =>
       triggers.map((t) => {
@@ -179,6 +216,13 @@ const WebhooksView: React.FC = () => {
           return (
             <li className={css.listBadge} key={t.id}>
               <Badge>TASKLOG</Badge>
+            </li>
+          );
+        }
+        if (t.triggerType === V1TriggerType.CUSTOM) {
+          return (
+            <li className={css.listBadge} key={t.id}>
+              <Badge>CUSTOM</Badge>
             </li>
           );
         }
@@ -254,7 +298,14 @@ const WebhooksView: React.FC = () => {
     }
 
     return columns;
-  }, [f_flat_runs, handleDropdown, workspaces, workspaceFilterDropdown, f_webhook]);
+  }, [
+    f_flat_runs,
+    handleDropdown,
+    workspaces,
+    workspaceFilterDropdown,
+    f_webhook,
+    canEditWebhooks,
+  ]);
 
   const handleTableChange = useCallback(
     (
@@ -294,7 +345,9 @@ const WebhooksView: React.FC = () => {
       id="webhooks"
       options={
         <Row>
-          {canEditWebhooks && <Button onClick={WebhookCreateModal.open}>New Webhook</Button>}
+          {canCreateWebhooks(workspaces).length > 0 && (
+            <Button onClick={WebhookCreateModal.open}>New Webhook</Button>
+          )}
         </Row>
       }
       title="Webhooks">
@@ -330,6 +383,7 @@ const WebhooksView: React.FC = () => {
       )}
       <WebhookCreateModal.Component onSuccess={() => fetchWebhooks()} />
       <WebhookDeleteModal.Component webhook={selectedWebhook} onSuccess={() => fetchWebhooks()} />
+      <WebhookEditModal.Component webhook={selectedWebhook} onSuccess={() => fetchWebhooks()} />
     </Page>
   );
 };

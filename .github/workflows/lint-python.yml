@@ -21,7 +21,6 @@ jobs:
           - e2e_tests
           - examples
           - harness
-          - model_hub
           - schemas
           - tools
     runs-on: ubuntu-latest
@@ -37,7 +36,6 @@ jobs:
           cache: pip
           cache-dependency-path: |
             harness/setup.py
-            model_hub/setup.py
             requirements.txt
       - name: Install pip dependencies
         run: |
@@ -51,12 +49,5 @@ jobs:
           make build
           pip install --find-links dist determined==${{ env.VERSION }}
           pip install --no-deps --force-reinstall --find-links dist determined==${{ env.VERSION }}
-      - name: Install model_hub
-        working-directory: model_hub
-        run: |
-          sudo apt-get update && sudo apt-get install -y ffmpeg libsm6 libxext6
-          make build
-          pip install --find-links dist model-hub==${{ env.VERSION }}
-          pip install --no-deps --force-reinstall --find-links dist model-hub==${{ env.VERSION }}
       - name: Run checks
         run: make -C ${{ matrix.component }} check

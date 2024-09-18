@@ -1,0 +1,61 @@
+.mainContainer {
+  background-color: var(--theme-surface);
+  border-radius: var(--theme-border-radius-weak);
+  box-shadow: 0 1.6px 3.6px 1.6px rgb(0 0 0 / 13%);
+  color: var(--theme-surface-on);
+  padding: 30px;
+  width: 100%;
+}
+.nodesContainer {
+  display: flex;
+  flex-flow: row wrap;
+  justify-content: flex-start;
+
+  .node {
+    align-items: flex-start;
+    color: var(--theme-status-active-strong);
+    display: flex;
+    flex-direction: column;
+    margin-bottom: 20px;
+    margin-right: 30px;
+
+    .nodeName {
+      display: inline-block;
+      font-size: var(--single-line-size-l);
+      margin-bottom: 6px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      text-transform: uppercase;
+      vertical-align: bottom;
+      white-space: nowrap;
+    }
+    .nodeCluster {
+      align-items: center;
+      border: 2px solid var(--theme-status-active-strong);
+      box-sizing: border-box;
+      display: flex;
+      justify-content: space-around;
+      padding: 6px;
+
+      .nodeSlot {
+        background-color: var(--theme-status-inactive-weak);
+        height: 20px;
+        margin-right: 6px;
+        width: 6px;
+
+        &:last-of-type {
+          margin-right: 0;
+        }
+      }
+      .singleSlot {
+        width: 90px;
+      }
+      .coupleSlot {
+        width: 42px;
+      }
+      .active {
+        background-color: var(--theme-status-active-strong);
+      }
+    }
+  }
+}

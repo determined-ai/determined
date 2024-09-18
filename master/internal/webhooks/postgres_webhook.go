@@ -2,10 +2,12 @@ package webhooks
 
 import (
 	"context"
+	"database/sql"
 	"encoding/json"
 	"fmt"
 	"math"
 	"regexp"
+	"slices"
 	"sync"
 	"time"
 
@@ -14,11 +16,15 @@ import (
 
 	conf "github.com/determined-ai/determined/master/internal/config"
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/logpattern"
 	"github.com/determined-ai/determined/master/internal/project"
 	"github.com/determined-ai/determined/master/internal/workspace"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/ptrs"
+	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
+	"github.com/determined-ai/determined/proto/pkg/webhookv1"
 
 	"github.com/google/uuid"
 )
@@ -30,8 +36,16 @@ type regexTriggers struct {
 
 // WebhookManager manages webhooks.
 type WebhookManager struct {
-	mu              sync.RWMutex
-	regexToTriggers map[string]regexTriggers
+	mu                 sync.RWMutex
+	regexToTriggers    map[string]regexTriggers
+	expToWebhookConfig map[int]*expconf.WebhooksConfigV0
+}
+
+// CustomTriggerData is the data for custom trigger.
+type CustomTriggerData struct {
+	Title       string `json:"title"`
+	Description string `json:"description"`
+	Level       string `json:"level"`
 }
 
 // New creates a new webhook manager.
@@ -44,7 +58,8 @@ func New(ctx context.Context) (*WebhookManager, error) {
 	}
 
 	m := &WebhookManager{
-		regexToTriggers: make(map[string]regexTriggers),
+		regexToTriggers:    make(map[string]regexTriggers),
+		expToWebhookConfig: make(map[int]*expconf.WebhooksConfigV0),
 	}
 	if err := m.addTriggers(triggers); err != nil {
 		return nil, fmt.Errorf("adding each trigger: %w", err)
@@ -108,8 +123,98 @@ func (l *WebhookManager) removeTriggers(triggers []*Trigger) error {
 	return nil
 }
 
-func (l *WebhookManager) scanLogs(ctx context.Context, logs []*model.TaskLog) error {
+func (l *WebhookManager) editTriggers(ts []*Trigger) error {
+	l.mu.Lock()
+	defer l.mu.Unlock()
+
+	for _, t := range ts {
+		if t.TriggerType != TriggerTypeTaskLog {
+			continue
+		}
+
+		regex, ok := t.Condition[regexConditionKey].(string)
+		if !ok {
+			return fmt.Errorf(
+				"expected webhook trigger to have regex in condition instead got %v", t.Condition)
+		}
+
+		l.regexToTriggers[regex].triggerIDToTrigger[t.ID].Webhook.URL = t.Webhook.URL
+	}
+	return nil
+}
+
+func (l *WebhookManager) getWebhookConfig(ctx context.Context, expID *int) (*expconf.WebhooksConfigV0, error) {
+	if expID == nil {
+		return nil, nil
+	}
+
+	l.mu.RLock()
+	defer l.mu.RUnlock()
+
+	if config, ok := l.expToWebhookConfig[*expID]; ok {
+		return config, nil
+	}
+	var expConfigBytes []byte
+	err := db.Bun().NewSelect().Table("experiments").Column("config").Where("id = ?", *expID).Scan(ctx, &expConfigBytes)
+	if err != nil {
+		return nil, err
+	}
+	expConfig, err := expconf.ParseAnyExperimentConfigYAML(expConfigBytes)
+	if err != nil {
+		return nil, err
+	}
+	if integration := schemas.WithDefaults(expConfig).Integrations(); integration != nil {
+		l.expToWebhookConfig[*expID] = integration.Webhooks
+		return integration.Webhooks, nil
+	}
+	l.expToWebhookConfig[*expID] = nil
+	return nil, nil
+}
+
+func matchWebhook(t *Trigger, config *expconf.WebhooksConfigV0, workspaceID int32, expID *int) bool {
+	if config != nil && config.Exclude {
+		return false
+	}
+	// Global webhooks (no workspace ID and not specific) trigger for all tasks
+	if t.Webhook.Mode == WebhookModeSpecific || t.Webhook.WorkspaceID != nil {
+		if t.Webhook.WorkspaceID != nil {
+			// Webhook is workspace level instead of global level
+			if *t.Webhook.WorkspaceID != workspaceID {
+				// Skip webhook from other workspaces
+				return false
+			}
+		}
+		if t.Webhook.Mode == WebhookModeSpecific {
+			// Skip specific webhook if task is not an experiment
+			if expID == nil || config == nil {
+				return false
+			}
+			// For webhook with mode specific, only proceed for experiments with matching config
+			if config.WebhookID != nil && slices.Contains(*config.WebhookID, int(t.Webhook.ID)) {
+				return true
+			}
+			if config.WebhookName != nil && slices.Contains(*config.WebhookName, t.Webhook.Name) {
+				return true
+			}
+			return false
+		}
+	}
+	return true
+}
+
+func (l *WebhookManager) scanLogs(
+	ctx context.Context, logs []*model.TaskLog, workspaceID model.AccessScopeID, expID *int,
+) error {
 	if len(logs) == 0 {
+		return nil
+	}
+
+	config, err := l.getWebhookConfig(ctx, expID)
+	if err != nil {
+		return err
+	}
+
+	if config != nil && config.Exclude {
 		return nil
 	}
 
@@ -129,9 +234,11 @@ func (l *WebhookManager) scanLogs(ctx context.Context, logs []*model.TaskLog) er
 			}
 			if cacheItem.re.MatchString(log.Log) {
 				for _, t := range cacheItem.triggerIDToTrigger {
-					if err := addTaskLogEvent(ctx,
-						model.TaskID(log.TaskID), *log.AgentID, log.Log, t); err != nil {
-						return err
+					if matchWebhook(t, config, int32(workspaceID), expID) {
+						if err := addTaskLogEvent(ctx,
+							model.TaskID(log.TaskID), *log.AgentID, log.Log, t); err != nil {
+							return err
+						}
 					}
 				}
 			}
@@ -194,6 +301,125 @@ func (l *WebhookManager) deleteWebhook(ctx context.Context, id WebhookID) error 
 	return nil
 }
 
+func handleCustomTriggerData(ctx context.Context, data CustomTriggerData, experimentID int, trialID *int) error {
+	var m struct {
+		bun.BaseModel `bun:"table:experiments"`
+		model.Experiment
+		ConfigBytes []byte `bun:"config"`
+	}
+	err := db.Bun().NewSelect().Model(&m).ExcludeColumn("username").Where("id = ?", experimentID).Scan(ctx)
+	if err != nil {
+		return fmt.Errorf("error getting experiment from id %d: %w", experimentID, err)
+	}
+
+	activeConfig, err := expconf.ParseAnyExperimentConfigYAML(m.ConfigBytes)
+	if err != nil {
+		return fmt.Errorf("error parsing experiment config: %w", err)
+	}
+	integrationsConfig := activeConfig.Integrations()
+	if integrationsConfig == nil {
+		return nil
+	}
+	webhookConfig := integrationsConfig.Webhooks
+	if webhookConfig == nil || webhookConfig.Exclude {
+		return nil
+	}
+
+	workspaceID, err := experiment.GetWorkspaceFromExperiment(ctx, &m.Experiment)
+	if err != nil {
+		return fmt.Errorf("error getting workspace from experiment : %w", err)
+	}
+
+	var es []Event
+	if webhookConfig.WebhookID != nil {
+		for _, webhookID := range *webhookConfig.WebhookID {
+			webhook, err := GetWebhook(ctx, webhookID)
+			if err != nil {
+				return fmt.Errorf("error getting webhook from id %d: %w", webhookID, err)
+			}
+			if webhook == nil ||
+				(webhook.WorkspaceID != nil && *webhook.WorkspaceID != workspaceID) {
+				continue
+			}
+			err = generateEventForCustomTrigger(
+				ctx, &es, webhook.Triggers, webhook.WebhookType, webhook.URL, m.Experiment, activeConfig, data, trialID)
+			if err != nil {
+				return fmt.Errorf("error genrating event for webhook with ID %d %+v: %w", webhookID, webhook, err)
+			}
+		}
+	}
+	if webhookConfig.WebhookName != nil {
+		for _, webhookName := range *webhookConfig.WebhookName {
+			webhook, err := getWebhookByName(ctx, webhookName, int(workspaceID))
+			if err != nil {
+				return fmt.Errorf("error getting webhook from name %s: %w", webhookName, err)
+			}
+			if webhook == nil {
+				continue
+			}
+			err = generateEventForCustomTrigger(
+				ctx, &es, webhook.Triggers, webhook.WebhookType, webhook.URL, m.Experiment, activeConfig, data, trialID)
+			if err != nil {
+				return fmt.Errorf("error genrating event %s %+v: %w", webhookName, webhook, err)
+			}
+		}
+	}
+
+	if len(es) == 0 {
+		return nil
+	}
+
+	if _, err := db.Bun().NewInsert().Model(&es).Exec(ctx); err != nil {
+		return fmt.Errorf("handle custom data inserting event trigger: %w", err)
+	}
+
+	singletonShipper.Wake()
+	return nil
+}
+
+func generateEventForCustomTrigger(
+	ctx context.Context,
+	es *[]Event,
+	triggers Triggers,
+	webhookType WebhookType,
+	webhookURL string,
+	e model.Experiment,
+	activeConfig expconf.ExperimentConfig,
+	data CustomTriggerData,
+	trialID *int,
+) error {
+	for _, t := range triggers {
+		if t.TriggerType != TriggerTypeCustom {
+			continue
+		}
+		p, err := generateEventPayload(
+			ctx, webhookType, e, activeConfig, e.State, TriggerTypeCustom, &data, trialID,
+		)
+		if err != nil {
+			return fmt.Errorf("error generating event payload: %w", err)
+		}
+		*es = append(*es, Event{Payload: p, URL: webhookURL})
+	}
+	return nil
+}
+
+func getWebhookByName(ctx context.Context, webhookName string, workspaceID int) (*Webhook, error) {
+	webhook := Webhook{}
+	err := db.Bun().NewSelect().
+		Model(&webhook).
+		Relation("Triggers").
+		Where("name = ?", webhookName).
+		Where("workspace_id = ?", workspaceID).
+		Scan(ctx)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return &webhook, nil
+}
+
 // GetWebhook returns a single Webhooks from the DB.
 func GetWebhook(ctx context.Context, webhookID int) (*Webhook, error) {
 	webhook := Webhook{}
@@ -208,20 +434,33 @@ func GetWebhook(ctx context.Context, webhookID int) (*Webhook, error) {
 	return &webhook, nil
 }
 
-// GetWebhooks returns all Webhooks from the DB.
-func GetWebhooks(ctx context.Context) (Webhooks, error) {
+// getWebhooks returns all global webhooks from the DB
+// and all webhooks whose scopes are in workspaceIDs.
+// workspaceIDs being nil gets only the globally scoped webhooks.
+func getWebhooks(ctx context.Context, workspaceIDs *[]int32) (Webhooks, error) {
 	webhooks := Webhooks{}
-	err := db.Bun().NewSelect().
+	q := db.Bun().NewSelect().
 		Model(&webhooks).
 		Relation("Triggers").
-		Scan(ctx)
+		Where("workspace_id is NULL")
+	if workspaceIDs != nil {
+		q.WhereOr("workspace_id IN (?)", bun.In(*workspaceIDs))
+	}
+	err := q.Scan(ctx)
 	if err != nil {
 		return nil, err
 	}
 	return webhooks, nil
 }
 
+func getWorkspace(ctx context.Context, workspaceID int32) (*model.Workspace, error) {
+	var workspace model.Workspace
+	err := db.Bun().NewSelect().Model(&workspace).Where("id = ?", workspaceID).Scan(ctx)
+	return &workspace, err
+}
+
 // ReportExperimentStateChanged adds webhook events to the queue.
+// This function assumes ID presents in e.
 // TODO(DET-8577): Remove unnecessary active config usage (remove the activeConfig parameter).
 func ReportExperimentStateChanged(
 	ctx context.Context, e model.Experiment, activeConfig expconf.ExperimentConfig,
@@ -243,16 +482,32 @@ func ReportExperimentStateChanged(
 		return nil
 	}
 
+	workspaceID, err := experiment.GetWorkspaceFromExperiment(ctx, &e)
+	if err != nil {
+		return fmt.Errorf("get workspace id from experiment %d: %w", e.ID, err)
+	}
+	var webhookConfig *expconf.WebhooksConfigV0
+	if activeConfig.Integrations() != nil {
+		webhookConfig = activeConfig.Integrations().Webhooks
+	}
+
 	var es []Event
 	for _, t := range ts {
+		if !matchWebhook(&t, webhookConfig, workspaceID, ptrs.Ptr(e.ID)) {
+			continue
+		}
 		p, err := generateEventPayload(
-			ctx, t.Webhook.WebhookType, e, activeConfig, e.State, TriggerTypeStateChange,
+			ctx, t.Webhook.WebhookType, e, activeConfig, e.State, TriggerTypeStateChange, nil, nil,
 		)
 		if err != nil {
 			return fmt.Errorf("error generating event payload: %w", err)
 		}
 		es = append(es, Event{Payload: p, URL: t.Webhook.URL})
 	}
+	if len(es) == 0 {
+		return nil
+	}
+
 	if _, err := db.Bun().NewInsert().Model(&es).Exec(ctx); err != nil {
 		return fmt.Errorf("report experiment state changed inserting event trigger: %w", err)
 	}
@@ -425,9 +680,14 @@ func generateEventPayload(
 	activeConfig expconf.ExperimentConfig,
 	expState model.State,
 	tT TriggerType,
+	eventData *CustomTriggerData, trialID *int,
 ) ([]byte, error) {
 	switch wt {
 	case WebhookTypeDefault:
+		experiment := experimentToWebhookPayload(e, activeConfig)
+		if trialID != nil && *trialID > 0 {
+			experiment.TrialID = *trialID
+		}
 		pJSON, err := json.Marshal(EventPayload{
 			ID:        uuid.New(),
 			Type:      tT,
@@ -436,7 +696,8 @@ func generateEventPayload(
 				State: expState,
 			},
 			Data: EventData{
-				Experiment: experimentToWebhookPayload(e, activeConfig),
+				Experiment: experiment,
+				CustomData: eventData,
 			},
 		})
 		if err != nil {
@@ -444,7 +705,7 @@ func generateEventPayload(
 		}
 		return pJSON, nil
 	case WebhookTypeSlack:
-		slackJSON, err := generateSlackPayload(ctx, e, activeConfig)
+		slackJSON, err := generateSlackPayload(ctx, e, activeConfig, eventData, trialID)
 		if err != nil {
 			return nil, err
 		}
@@ -455,15 +716,16 @@ func generateEventPayload(
 }
 
 func generateSlackPayload(
-	ctx context.Context, e model.Experiment, activeConfig expconf.ExperimentConfig,
+	ctx context.Context, e model.Experiment,
+	activeConfig expconf.ExperimentConfig, eventData *CustomTriggerData, trialID *int,
 ) ([]byte, error) {
 	var status string
 	var eURL string
-	var c string
 	var mStatus string
 	var projectID int
 	var wID int
 	var w *model.Workspace
+	c := "#13B670"
 	config := conf.GetMasterConfig()
 	wName := activeConfig.Workspace() // TODO(ET-288): This is incorrect on moves.
 	pName := activeConfig.Project()
@@ -490,7 +752,8 @@ func generateSlackPayload(
 		}
 	}
 
-	if e.State == model.CompletedState {
+	switch e.State {
+	case model.CompletedState:
 		status = "Your experiment completed successfully 🎉"
 		if baseURLIsSet {
 			eURL = fmt.Sprintf("✅ <%v/det/experiments/%v/overview | %v (#%v)>",
@@ -498,9 +761,8 @@ func generateSlackPayload(
 		} else {
 			eURL = fmt.Sprintf("✅ %v (#%v)", activeConfig.Name(), e.ID)
 		}
-		c = "#13B670"
 		mStatus = "Completed"
-	} else {
+	case model.ErrorState:
 		status = "Your experiment has stopped with errors"
 		if baseURLIsSet {
 			eURL = fmt.Sprintf("❌ <%v/det/experiments/%v/overview | %v (#%v)>",
@@ -510,8 +772,22 @@ func generateSlackPayload(
 		}
 		c = "#DD5040"
 		mStatus = "Errored"
+	default:
+		status = fmt.Sprintf("The status of your experiment is %s", e.State)
+		if baseURLIsSet {
+			eURL = fmt.Sprintf("<%v/det/experiments/%v/overview | %v (#%v)>",
+				webUIBaseURL, e.ID, activeConfig.Name(), e.ID)
+		} else {
+			eURL = fmt.Sprintf("%v (#%v)", activeConfig.Name(), e.ID)
+		}
+		mStatus = string(e.State)
 	}
-	hours := e.EndTime.Sub(e.StartTime).Hours()
+
+	endTime := time.Now()
+	if e.EndTime != nil {
+		endTime = *e.EndTime
+	}
+	hours := endTime.Sub(e.StartTime).Hours()
 	hours, m := math.Modf(hours)
 	minutes := int(m * 60)
 	duration := fmt.Sprintf("%vh %vmin", hours, minutes)
@@ -549,6 +825,12 @@ func generateSlackPayload(
 			Text: fmt.Sprintf("*Project*: %v", pName),
 		})
 	}
+	if trialID != nil && *trialID > 0 {
+		expBlockFields = append(expBlockFields, SlackField{
+			Type: "mrkdwn",
+			Text: fmt.Sprintf("*Trial ID*: %d", *trialID),
+		})
+	}
 	experimentBlock := SlackBlock{
 		Text: SlackField{
 			Type: "mrkdwn",
@@ -563,6 +845,30 @@ func generateSlackPayload(
 			Type: "plain_text",
 		},
 		Type: "section",
+	}
+	if eventData != nil {
+		eventDataFields := []SlackField{
+			{
+				Type: "mrkdwn",
+				Text: fmt.Sprintf("*Level*: %v", eventData.Level),
+			},
+			{
+				Type: "mrkdwn",
+				Text: fmt.Sprintf("*Title*: %v", eventData.Title),
+			},
+			{
+				Type: "mrkdwn",
+				Text: fmt.Sprintf("*Description*: %v", eventData.Description),
+			},
+		}
+		messageBlock = SlackBlock{
+			Text: SlackField{
+				Text: "Event Data",
+				Type: "plain_text",
+			},
+			Type:   "section",
+			Fields: &eventDataFields,
+		}
 	}
 	attachment := SlackAttachment{
 		Color:  c,
@@ -615,4 +921,42 @@ WHERE q.id = webhook_events_queue.id RETURNING webhook_events_queue.*
 		return nil, fmt.Errorf("scanning events: %w", err)
 	}
 	return &eventBatch{tx: &tx, events: events}, nil
+}
+
+// updateWebhook updates a webhook in the database.
+func (l *WebhookManager) updateWebhook(
+	ctx context.Context,
+	webhookID int32,
+	p *webhookv1.PatchWebhook,
+) error {
+	var ts []*Trigger
+	err := db.Bun().NewSelect().Model(&ts).Relation("Webhook").
+		Where("webhook_id = ?", webhookID).
+		Scan(ctx, &ts)
+	if err != nil {
+		return fmt.Errorf("getting webhook triggers to update cache: %w", err)
+	}
+
+	err = db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
+		_, err := tx.NewUpdate().Table("webhooks").
+			Set("url = ?", p.Url).
+			Where("id = ?", webhookID).
+			Exec(ctx)
+		if err != nil {
+			return fmt.Errorf("updating webhook %d: %w", webhookID, err)
+		}
+
+		for _, t := range ts {
+			t.Webhook.URL = p.Url
+		}
+		if err := l.editTriggers(ts); err != nil {
+			return err
+		}
+		return nil
+	})
+	if err != nil {
+		return fmt.Errorf("updating webhook: %w", err)
+	}
+
+	return nil
 }

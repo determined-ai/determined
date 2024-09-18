@@ -127,7 +127,7 @@ If you need help, want to file a bug report, or just want to keep up-to-date
 with the latest news about Determined, please join the Determined community!
 
 - [Slack](https://determined-community.slack.com) is the best place to
-  ask questions about Determined and get support. [Click here to join our Slack](https://join.slack.com/t/determined-community/shared_invite/zt-1f4hj60z5-JMHb~wSr2xksLZVBN61g_Q).
+  ask questions about Determined and get support. [Click here to join our Slack](https://determined-community.slack.com).
 - You can also follow us on [YouTube](https://www.youtube.com/@DeterminedAI) and [Twitter](https://www.twitter.com/DeterminedAI).
 - You can also join the [community mailing list](https://groups.google.com/a/determined.ai/forum/#!forum/community)
   to ask questions about the project and receive announcements.

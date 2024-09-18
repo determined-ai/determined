@@ -286,30 +286,6 @@ def test_kill_experiment_ignoring_preemption() -> None:
     exp.wait_for_experiment_state(sess, exp_id, bindings.experimentv1State.CANCELED)
 
 
-@pytest.mark.e2e_cpu
-def test_fail_on_first_validation() -> None:
-    sess = api_utils.user_session()
-    error_log = "failed on first validation"
-    config_obj = conf.load_config(conf.fixtures_path("no_op/single.yaml"))
-    config_obj["hyperparameters"]["fail_on_first_validation"] = error_log
-    exp.run_failure_test_with_temp_config(
-        sess,
-        config_obj,
-        conf.fixtures_path("no_op"),
-        error_log,
-    )
-
-
-@pytest.mark.e2e_cpu
-def test_perform_initial_validation() -> None:
-    sess = api_utils.user_session()
-    config = conf.load_config(conf.fixtures_path("no_op/single.yaml"))
-    config = conf.set_max_length(config, {"batches": 1})
-    config = conf.set_perform_initial_validation(config, True)
-    exp_id = exp.run_basic_test_with_temp_config(sess, config, conf.fixtures_path("no_op"), 1)
-    exp.assert_performed_initial_validation(sess, exp_id)
-
-
 @pytest.mark.e2e_cpu_2a
 @pytest.mark.parametrize(
     "name,searcher_cfg",

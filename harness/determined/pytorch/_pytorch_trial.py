@@ -992,8 +992,8 @@ class _PyTorchTrialController:
 
         else:
             assert self._evaluate_full_dataset_defined(), "evaluate_full_dataset not defined."
-            assert self.validation_loader is not None
             if self.is_chief:
+                assert self.validation_loader is not None
                 metrics = self.trial.evaluate_full_dataset(data_loader=self.validation_loader)
 
                 if not isinstance(metrics, dict):

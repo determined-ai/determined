@@ -95,15 +95,6 @@ updates:
     #   - determined-ai/someteam
     open-pull-requests-limit: 0
 
-  # Maintain python dependencies for Model Hub
-  - package-ecosystem: pip
-    directory: /model-hub/tests
-    schedule:
-      interval: daily
-    # reviewers:
-    #   - determined-ai/someteam
-    open-pull-requests-limit: 0
-
   # Maintain python dependencies for docs
   - package-ecosystem: pip
     directory: /docs

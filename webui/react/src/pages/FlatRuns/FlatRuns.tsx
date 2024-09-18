@@ -525,6 +525,12 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
     [page, updateSettings, setPage],
   );
 
+  const resetPagination = useCallback(() => {
+    setIsLoading(true);
+    setPage(0);
+    setRuns(INITIAL_LOADING_RUNS);
+  }, [setPage]);
+
   const fetchRuns = useCallback(async (): Promise<void> => {
     if (isLoadingSettings || Loadable.isNotLoaded(loadableFormset)) return;
     try {
@@ -546,11 +552,12 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
           kind: 'group',
         };
       }
+      const offset = page * settings.pageLimit;
       const response = await searchRuns(
         {
           filter: JSON.stringify(filters),
           limit: settings.pageLimit,
-          offset: page * settings.pageLimit,
+          offset,
           projectId: projectId,
           sort: sortString || undefined,
         },
@@ -562,6 +569,10 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
       setTotal(
         response.pagination.total !== undefined ? Loaded(response.pagination.total) : NotLoaded,
       );
+      // if we're out of bounds, load page one
+      if ((response.pagination.total || 0) < offset) {
+        resetPagination();
+      }
     } catch (e) {
       handleError(e, { publicSubject: 'Unable to fetch runs.' });
     } finally {
@@ -574,6 +585,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
     loadableFormset,
     page,
     projectId,
+    resetPagination,
     settings.pageLimit,
     sortString,
     searchId,
@@ -584,12 +596,6 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
   const numFilters = useMemo(() => {
     return rootFilterChildren.length;
   }, [rootFilterChildren.length]);
-
-  const resetPagination = useCallback(() => {
-    setIsLoading(true);
-    setPage(0);
-    setRuns(INITIAL_LOADING_RUNS);
-  }, [setPage]);
 
   useLayoutEffect(() => {
     let cleanup: () => void;

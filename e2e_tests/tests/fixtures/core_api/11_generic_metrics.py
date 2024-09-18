@@ -31,6 +31,7 @@ def main(core_context: det.core.Context, increment_by: float):
         core_context.train.report_metrics(
             group=group, steps_completed=steps_completed, metrics=metrics
         )
+    core_context.alert(title="end of main", level="debug")
 
 
 if __name__ == "__main__":

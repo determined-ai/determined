@@ -137,7 +137,7 @@ class DetCallback(transformers.TrainerCallback):  # type: ignore
         )
 
         if self.core_context.preempt.should_preempt():
-            raise Exception("Process preempted / killed")
+            pass
 
     def _on_save_user_data(self, save_path: str) -> None:
         """
@@ -289,8 +289,7 @@ class DetCallback(transformers.TrainerCallback):  # type: ignore
 
 EVAL = "eval_"
 TEST = "test_"
-TRAIN_AVG = "train_"
-TRAIN = "train_progress"
+TRAIN = "train_"
 
 
 def get_metric_type(d: Dict[str, Any]) -> str:
@@ -299,8 +298,6 @@ def get_metric_type(d: Dict[str, Any]) -> str:
             return EVAL
         elif k.startswith(TEST):
             return TEST
-        elif k.startswith(TRAIN_AVG):
-            return TRAIN_AVG
         else:
             return TRAIN
     return TRAIN

@@ -15,6 +15,9 @@ DEVCLUSTER_CONFIG_ROOT_PATH = conf.PROJECT_ROOT_PATH.joinpath(".circleci/devclus
 DEVCLUSTER_REATTACH_OFF_CONFIG_PATH = DEVCLUSTER_CONFIG_ROOT_PATH / "double.devcluster.yaml"
 DEVCLUSTER_REATTACH_ON_CONFIG_PATH = DEVCLUSTER_CONFIG_ROOT_PATH / "double-reattach.devcluster.yaml"
 DEVCLUSTER_PRIORITY_SCHEDULER_CONFIG_PATH = DEVCLUSTER_CONFIG_ROOT_PATH / "priority.devcluster.yaml"
+DEVCLUSTER_MULTI_RP_CONFIG_PATH = (
+    DEVCLUSTER_CONFIG_ROOT_PATH / "multi-resource-pools.devcluster.yaml"
+)
 
 
 def get_agent_data(sess: api.Session) -> List[Dict[str, Any]]:
@@ -203,4 +206,42 @@ def restartable_managed_cluster(
     except Exception:
         managed_cluster_restarts.restart_master()
         managed_cluster_restarts.restart_agent()
+        raise
+
+
+@pytest.fixture(scope="session")
+def managed_cluster_session_multi_resource_pools(request: Any) -> Iterator[ManagedCluster]:
+    config = str(DEVCLUSTER_MULTI_RP_CONFIG_PATH)
+    with ManagedCluster(config) as mc:
+        mc.initial_startup()
+        yield mc
+
+
+@pytest.fixture
+def managed_cluster_multi_resource_pools(
+    managed_cluster_session_multi_resource_pools: ManagedCluster, request: Any
+) -> Iterator[ManagedCluster]:
+    config = str(DEVCLUSTER_MULTI_RP_CONFIG_PATH)
+    utils.set_master_port(config)
+    nodeid = request.node.nodeid
+    managed_cluster_session_multi_resource_pools.log_marker(
+        f"pytest [{utils.now_ts()}] {nodeid} setup\n"
+    )
+    yield managed_cluster_session_multi_resource_pools
+    managed_cluster_session_multi_resource_pools.log_marker(
+        f"pytest [{utils.now_ts()}] {nodeid} teardown\n"
+    )
+
+
+@pytest.fixture
+def restartable_managed_cluster_multi_resource_pools(
+    managed_cluster_multi_resource_pools: ManagedCluster,
+) -> Iterator[ManagedCluster]:
+    managed_cluster_multi_resource_pools.wait_for_agent_ok(20)
+    try:
+        yield managed_cluster_multi_resource_pools
+        managed_cluster_multi_resource_pools.wait_for_agent_ok(20)
+    except Exception:
+        managed_cluster_multi_resource_pools.restart_master()
+        managed_cluster_multi_resource_pools.restart_agent()
         raise

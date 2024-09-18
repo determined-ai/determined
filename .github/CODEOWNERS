@@ -25,7 +25,7 @@
 # Harness is mapped to model-dev by default, except for `deploy`
 # and auto-generated bindings and version files.
 /harness                         @determined-ai/model-dev
-/harness/determined/deploy       @determined-ai/resource-mgmt
+/harness/determined/deploy       @determined-ai/cluster-mgmt
 /harness/determined/common/api/bindings.py
 /harness/determined/__version__.py
 
@@ -49,20 +49,20 @@
 /webui/react/src/services/api-ts-sdk/
 
 # Owned by resource management, so far this is only the stuff that is obvious and in its own dir.
-/master/internal/command @determined-ai/resource-mgmt
-/master/internal/job @determined-ai/resource-mgmt
-/master/internal/postregistry @determined-ai/resource-mgmt
-/master/internal/sproto @determined-ai/resource-mgmt
-/master/internal/rm @determined-ai/resource-mgmt
-/master/internal/task @determined-ai/resource-mgmt
-/master/pkg/aproto @determined-ai/resource-mgmt
-/master/pkg/archive @determined-ai/resource-mgmt
-/master/pkg/command @determined-ai/resource-mgmt
-/master/pkg/cproto @determined-ai/resource-mgmt
-/master/pkg/device @determined-ai/resource-mgmt
-/master/pkg/etc @determined-ai/resource-mgmt
-/master/pkg/tasks @determined-ai/resource-mgmt
-/tools/scripts/slurm @determined-ai/resource-mgmt
+/master/internal/command @determined-ai/cluster-mgmt
+/master/internal/job @determined-ai/cluster-mgmt
+/master/internal/postregistry @determined-ai/cluster-mgmt
+/master/internal/sproto @determined-ai/cluster-mgmt
+/master/internal/rm @determined-ai/cluster-mgmt
+/master/internal/task @determined-ai/cluster-mgmt
+/master/pkg/aproto @determined-ai/cluster-mgmt
+/master/pkg/archive @determined-ai/cluster-mgmt
+/master/pkg/command @determined-ai/cluster-mgmt
+/master/pkg/cproto @determined-ai/cluster-mgmt
+/master/pkg/device @determined-ai/cluster-mgmt
+/master/pkg/etc @determined-ai/cluster-mgmt
+/master/pkg/tasks @determined-ai/cluster-mgmt
+/tools/scripts/slurm @determined-ai/cluster-mgmt
 # EE only files in their own section to ease rebases
 /master/internal/rm/dispatcherrm @determined-ai/backend
 /master/internal/config/dispatcher* @determined-ai/backend

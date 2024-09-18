@@ -32,3 +32,4 @@ DROP FUNCTION IF EXISTS stream_project_seq_modify CASCADE;
 DROP FUNCTION IF EXISTS try_float8_cast CASCADE;
 
 DROP AGGREGATE IF EXISTS jsonb_collect(jsonb);
+DROP FUNCTION IF EXISTS prevent_auto_created_namespace_change CASCADE;

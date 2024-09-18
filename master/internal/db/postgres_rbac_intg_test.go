@@ -31,6 +31,7 @@ var (
 	userModelEditorRestricted        model.User
 	userModelEditorProjectRestricted model.User
 	userModelClusterAdmin            model.User
+	userModelWorkspaceAdmin          model.User
 )
 
 var roles = map[string]int{
@@ -49,7 +50,8 @@ var wsIDs,
 	editorGroupIDs,
 	editorRestrictedGroupIDs,
 	editorProjectRestrictedGroupIDs,
-	clusterAdminGroupIDs []int
+	clusterAdminGroupIDs,
+	workspaceAdminGroupIDs []int
 
 func setup(t *testing.T, pgDB *PgDB) {
 	ctx := context.TODO()
@@ -68,6 +70,7 @@ func setup(t *testing.T, pgDB *PgDB) {
 		editorProjectRestrictedGroupName := fmt.Sprintf("test_group_editor_project_restricted_%s",
 			nameExt)
 		clusterAdminGroupName := fmt.Sprintf("test_group_cluster_admin_%s", nameExt)
+		workspaceAdminGroupName := fmt.Sprintf("test_group_workspace_admin_%s", nameExt)
 
 		wsName := fmt.Sprintf("test_workspace_permissions_%s", nameExt)
 		wsID, _ := RequireMockWorkspaceID(t, pgDB, wsName)
@@ -135,6 +138,17 @@ func setup(t *testing.T, pgDB *PgDB) {
 		raData["scope_id"] = scopeID
 		_, err = Bun().NewInsert().Model(&raData).Table("role_assignments").Exec(ctx)
 		require.NoError(t, err, "error inserting editor-restricted role assignment")
+
+		grp = &model.Group{Name: workspaceAdminGroupName}
+		_, err = Bun().NewInsert().Model(grp).Returning("id").Exec(ctx)
+		require.NoError(t, err, "error inserting workspace admin group")
+		workspaceAdminGroupIDs = append(workspaceAdminGroupIDs, grp.ID)
+
+		raData["group_id"] = grp.ID
+		raData["role_id"] = roles["WorkspaceAdmin"]
+		raData["scope_id"] = scopeID
+		_, err = Bun().NewInsert().Model(&raData).Table("role_assignments").Exec(ctx)
+		require.NoError(t, err, "error inserting workspace adin role assignment")
 	}
 
 	// Create 4 users and add each user to a group with viewer, editor, editor-restricted, or
@@ -157,6 +171,10 @@ func setup(t *testing.T, pgDB *PgDB) {
 
 	userModelClusterAdmin = model.User{Username: uuid.New().String(), Active: true}
 	_, err = HackAddUser(context.TODO(), &userModelClusterAdmin)
+	require.NoError(t, err)
+
+	userModelWorkspaceAdmin = model.User{Username: uuid.New().String(), Active: true}
+	_, err = HackAddUser(context.TODO(), &userModelWorkspaceAdmin)
 	require.NoError(t, err)
 
 	for i := range []int{0, 1, 2} {
@@ -205,6 +223,15 @@ func setup(t *testing.T, pgDB *PgDB) {
 			Exec(ctx)
 		require.NoError(t, err, "error inserting user group membership "+
 			strconv.Itoa(clusterAdminGID))
+
+		workspaceAdminGID := workspaceAdminGroupIDs[i]
+		groupMembership["user_id"] = userModelWorkspaceAdmin.ID
+		groupMembership["group_id"] = workspaceAdminGID
+
+		_, err = Bun().NewInsert().Model(&groupMembership).Table("user_group_membership").
+			Exec(ctx)
+		require.NoError(t, err, "error inserting user group membership "+
+			strconv.Itoa(workspaceAdminGID))
 	}
 }
 
@@ -230,6 +257,10 @@ func cleanUp(t *testing.T) {
 		Exec(ctx)
 	require.NoError(t, err)
 
+	_, err = Bun().NewDelete().Table("users").Where("id = ?", userModelWorkspaceAdmin.ID).
+		Exec(ctx)
+	require.NoError(t, err)
+
 	// Remove workspaces.
 	_, err = Bun().NewDelete().Table("workspaces").Where("id IN (?)", bun.In(wsIDs)).Exec(ctx)
 	require.NoError(t, err, "error cleaning up workspace")
@@ -252,6 +283,10 @@ func cleanUp(t *testing.T) {
 	_, err = Bun().NewDelete().Table("groups").Where("id IN (?)", bun.In(clusterAdminGroupIDs)).
 		Exec(ctx)
 	require.NoError(t, err, "error deleting cluster admin groups")
+
+	_, err = Bun().NewDelete().Table("groups").Where("id IN (?)", bun.In(workspaceAdminGroupIDs)).
+		Exec(ctx)
+	require.NoError(t, err, "error deleting workspace admin groups")
 }
 
 func TestPermissionMatch(t *testing.T) {
@@ -269,7 +304,7 @@ func TestPermissionMatch(t *testing.T) {
 	userIDEditorRestricted := userModelEditorRestricted.ID
 	userIDEditorProjectRestricted := userModelEditorProjectRestricted.ID
 	userIDClusterAdmin := userModelClusterAdmin.ID
-
+	userIDWorkspaceAdmin := userModelWorkspaceAdmin.ID
 	badWorkspaceID := int32(maxWsID) + 10
 
 	t.Run("test DoesPermissionMatch", func(t *testing.T) {
@@ -373,6 +408,56 @@ func TestPermissionMatch(t *testing.T) {
 		err = DoesPermissionMatch(ctx, userIDViewer, &badWorkspaceID,
 			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA)
 		require.IsType(t, authz.PermissionDeniedError{}, err, "workspace should not exist")
+
+		err = DoesPermissionMatch(ctx, userIDClusterAdmin, &workspaceID,
+			rbacv1.PermissionType_PERMISSION_TYPE_MODIFY_GLOBAL_CONFIG_POLICIES)
+		require.NoError(t, err)
+
+		err = DoesPermissionMatch(ctx, userIDClusterAdmin, &workspaceID,
+			rbacv1.PermissionType_PERMISSION_TYPE_MODIFY_WORKSPACE_CONFIG_POLICIES)
+		require.NoError(t, err)
+
+		err = DoesPermissionMatch(ctx, userIDClusterAdmin, &workspaceID,
+			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_GLOBAL_CONFIG_POLICIES)
+		require.NoError(t, err)
+
+		err = DoesPermissionMatch(ctx, userIDClusterAdmin, &workspaceID,
+			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_WORKSPACE_CONFIG_POLICIES)
+		require.NoError(t, err)
+
+		err = DoesPermissionMatch(ctx, userIDWorkspaceAdmin, &workspaceID,
+			rbacv1.PermissionType_PERMISSION_TYPE_MODIFY_GLOBAL_CONFIG_POLICIES)
+		require.NoError(t, err)
+
+		err = DoesPermissionMatch(ctx, userIDWorkspaceAdmin, &workspaceID,
+			rbacv1.PermissionType_PERMISSION_TYPE_MODIFY_WORKSPACE_CONFIG_POLICIES)
+		require.NoError(t, err)
+
+		err = DoesPermissionMatch(ctx, userIDWorkspaceAdmin, &workspaceID,
+			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_GLOBAL_CONFIG_POLICIES)
+		require.NoError(t, err)
+
+		err = DoesPermissionMatch(ctx, userIDWorkspaceAdmin, &workspaceID,
+			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_WORKSPACE_CONFIG_POLICIES)
+		require.NoError(t, err)
+
+		err = DoesPermissionMatch(ctx, userIDViewer, &workspaceID,
+			rbacv1.PermissionType_PERMISSION_TYPE_MODIFY_GLOBAL_CONFIG_POLICIES)
+		require.IsType(t, authz.PermissionDeniedError{}, err,
+			"user should not have permission to edit global config policies")
+
+		err = DoesPermissionMatch(ctx, userIDViewer, &workspaceID,
+			rbacv1.PermissionType_PERMISSION_TYPE_MODIFY_WORKSPACE_CONFIG_POLICIES)
+		require.IsType(t, authz.PermissionDeniedError{}, err,
+			"user should not have permission to edit workspace config policies")
+
+		err = DoesPermissionMatch(ctx, userIDViewer, &workspaceID,
+			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_GLOBAL_CONFIG_POLICIES)
+		require.NoError(t, err)
+
+		err = DoesPermissionMatch(ctx, userIDViewer, &workspaceID,
+			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_WORKSPACE_CONFIG_POLICIES)
+		require.NoError(t, err)
 	})
 
 	t.Run("test DoesPermissionMatchAll single input", func(t *testing.T) {
@@ -425,6 +510,74 @@ func TestPermissionMatch(t *testing.T) {
 
 		err = DoesPermissionMatchAll(ctx, userIDClusterAdmin,
 			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_RESOURCE_QUOTAS, workspaceID)
+		require.NoError(t, err)
+
+		err = DoesPermissionMatchAll(ctx, userIDClusterAdmin,
+			rbacv1.PermissionType_PERMISSION_TYPE_MODIFY_GLOBAL_CONFIG_POLICIES, workspaceID)
+		require.NoError(t, err)
+
+		err = DoesPermissionMatchAll(ctx, userIDClusterAdmin,
+			rbacv1.PermissionType_PERMISSION_TYPE_MODIFY_WORKSPACE_CONFIG_POLICIES, workspaceID)
+		require.NoError(t, err)
+
+		err = DoesPermissionMatchAll(ctx, userIDClusterAdmin,
+			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_GLOBAL_CONFIG_POLICIES, workspaceID)
+		require.NoError(t, err)
+
+		err = DoesPermissionMatchAll(ctx, userIDClusterAdmin,
+			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_WORKSPACE_CONFIG_POLICIES, workspaceID)
+		require.NoError(t, err)
+
+		err = DoesPermissionMatchAll(ctx, userIDWorkspaceAdmin,
+			rbacv1.PermissionType_PERMISSION_TYPE_MODIFY_GLOBAL_CONFIG_POLICIES, workspaceID)
+		require.NoError(t, err)
+
+		err = DoesPermissionMatchAll(ctx, userIDWorkspaceAdmin,
+			rbacv1.PermissionType_PERMISSION_TYPE_MODIFY_WORKSPACE_CONFIG_POLICIES, workspaceID)
+		require.NoError(t, err)
+
+		err = DoesPermissionMatchAll(ctx, userIDWorkspaceAdmin,
+			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_GLOBAL_CONFIG_POLICIES, workspaceID)
+		require.NoError(t, err)
+
+		err = DoesPermissionMatchAll(ctx, userIDWorkspaceAdmin,
+			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_WORKSPACE_CONFIG_POLICIES, workspaceID)
+		require.NoError(t, err)
+
+		err = DoesPermissionMatchAll(ctx, userIDEditor,
+			rbacv1.PermissionType_PERMISSION_TYPE_MODIFY_GLOBAL_CONFIG_POLICIES, workspaceID)
+		require.IsType(t, authz.PermissionDeniedError{}, err,
+			"user should not have permission to edit global config policies")
+
+		err = DoesPermissionMatchAll(ctx, userIDEditor,
+			rbacv1.PermissionType_PERMISSION_TYPE_MODIFY_WORKSPACE_CONFIG_POLICIES, workspaceID)
+		require.IsType(t, authz.PermissionDeniedError{}, err,
+			"user should not have permission to edit workspace config policies")
+
+		err = DoesPermissionMatchAll(ctx, userIDEditor,
+			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_GLOBAL_CONFIG_POLICIES, workspaceID)
+		require.NoError(t, err)
+
+		err = DoesPermissionMatchAll(ctx, userIDEditor,
+			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_WORKSPACE_CONFIG_POLICIES, workspaceID)
+		require.NoError(t, err)
+
+		err = DoesPermissionMatchAll(ctx, userIDViewer,
+			rbacv1.PermissionType_PERMISSION_TYPE_MODIFY_GLOBAL_CONFIG_POLICIES, workspaceID)
+		require.IsType(t, authz.PermissionDeniedError{}, err,
+			"user should not have permission to edit global config policies")
+
+		err = DoesPermissionMatchAll(ctx, userIDViewer,
+			rbacv1.PermissionType_PERMISSION_TYPE_MODIFY_WORKSPACE_CONFIG_POLICIES, workspaceID)
+		require.IsType(t, authz.PermissionDeniedError{}, err,
+			"user should not have permission to edit workspace config policies")
+
+		err = DoesPermissionMatchAll(ctx, userIDViewer,
+			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_GLOBAL_CONFIG_POLICIES, workspaceID)
+		require.NoError(t, err)
+
+		err = DoesPermissionMatchAll(ctx, userIDViewer,
+			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_WORKSPACE_CONFIG_POLICIES, workspaceID)
 		require.NoError(t, err)
 
 		err = DoesPermissionMatchAll(ctx, userIDEditor,
@@ -480,6 +633,74 @@ func TestPermissionMatch(t *testing.T) {
 
 		err = DoesPermissionMatchAll(ctx, userIDEditorRestricted,
 			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_RESOURCE_QUOTAS, workspaceIDs...)
+		require.NoError(t, err)
+
+		err = DoesPermissionMatchAll(ctx, userIDClusterAdmin,
+			rbacv1.PermissionType_PERMISSION_TYPE_MODIFY_GLOBAL_CONFIG_POLICIES, workspaceIDs...)
+		require.NoError(t, err)
+
+		err = DoesPermissionMatchAll(ctx, userIDClusterAdmin,
+			rbacv1.PermissionType_PERMISSION_TYPE_MODIFY_WORKSPACE_CONFIG_POLICIES, workspaceIDs...)
+		require.NoError(t, err)
+
+		err = DoesPermissionMatchAll(ctx, userIDClusterAdmin,
+			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_GLOBAL_CONFIG_POLICIES, workspaceIDs...)
+		require.NoError(t, err)
+
+		err = DoesPermissionMatchAll(ctx, userIDClusterAdmin,
+			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_WORKSPACE_CONFIG_POLICIES, workspaceIDs...)
+		require.NoError(t, err)
+
+		err = DoesPermissionMatchAll(ctx, userIDWorkspaceAdmin,
+			rbacv1.PermissionType_PERMISSION_TYPE_MODIFY_GLOBAL_CONFIG_POLICIES, workspaceIDs...)
+		require.NoError(t, err)
+
+		err = DoesPermissionMatchAll(ctx, userIDWorkspaceAdmin,
+			rbacv1.PermissionType_PERMISSION_TYPE_MODIFY_WORKSPACE_CONFIG_POLICIES, workspaceIDs...)
+		require.NoError(t, err)
+
+		err = DoesPermissionMatchAll(ctx, userIDWorkspaceAdmin,
+			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_GLOBAL_CONFIG_POLICIES, workspaceIDs...)
+		require.NoError(t, err)
+
+		err = DoesPermissionMatchAll(ctx, userIDWorkspaceAdmin,
+			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_WORKSPACE_CONFIG_POLICIES, workspaceIDs...)
+		require.NoError(t, err)
+
+		err = DoesPermissionMatchAll(ctx, userIDEditor,
+			rbacv1.PermissionType_PERMISSION_TYPE_MODIFY_GLOBAL_CONFIG_POLICIES, workspaceIDs...)
+		require.IsType(t, authz.PermissionDeniedError{}, err,
+			"user should not have permission to edit global config policies")
+
+		err = DoesPermissionMatchAll(ctx, userIDEditor,
+			rbacv1.PermissionType_PERMISSION_TYPE_MODIFY_WORKSPACE_CONFIG_POLICIES, workspaceIDs...)
+		require.IsType(t, authz.PermissionDeniedError{}, err,
+			"user should not have permission to edit workspace config policies")
+
+		err = DoesPermissionMatchAll(ctx, userIDEditor,
+			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_GLOBAL_CONFIG_POLICIES, workspaceIDs...)
+		require.NoError(t, err)
+
+		err = DoesPermissionMatchAll(ctx, userIDEditor,
+			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_WORKSPACE_CONFIG_POLICIES, workspaceIDs...)
+		require.NoError(t, err)
+
+		err = DoesPermissionMatchAll(ctx, userIDViewer,
+			rbacv1.PermissionType_PERMISSION_TYPE_MODIFY_GLOBAL_CONFIG_POLICIES, workspaceIDs...)
+		require.IsType(t, authz.PermissionDeniedError{}, err,
+			"user should not have permission to edit global config policies")
+
+		err = DoesPermissionMatchAll(ctx, userIDViewer,
+			rbacv1.PermissionType_PERMISSION_TYPE_MODIFY_WORKSPACE_CONFIG_POLICIES, workspaceIDs...)
+		require.IsType(t, authz.PermissionDeniedError{}, err,
+			"user should not have permission to edit workspace config policies")
+
+		err = DoesPermissionMatchAll(ctx, userIDViewer,
+			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_GLOBAL_CONFIG_POLICIES, workspaceIDs...)
+		require.NoError(t, err)
+
+		err = DoesPermissionMatchAll(ctx, userIDViewer,
+			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_WORKSPACE_CONFIG_POLICIES, workspaceIDs...)
 		require.NoError(t, err)
 	})
 
@@ -592,6 +813,56 @@ func TestPermissionMatch(t *testing.T) {
 			rbacv1.PermissionType_PERMISSION_TYPE_SET_RESOURCE_QUOTAS)
 		require.IsType(t, authz.PermissionDeniedError{}, err,
 			"error should have been returned when searching for permissions")
+
+		err = DoPermissionsExist(ctx, userIDClusterAdmin,
+			rbacv1.PermissionType_PERMISSION_TYPE_MODIFY_GLOBAL_CONFIG_POLICIES)
+		require.NoError(t, err)
+
+		err = DoPermissionsExist(ctx, userIDClusterAdmin,
+			rbacv1.PermissionType_PERMISSION_TYPE_MODIFY_WORKSPACE_CONFIG_POLICIES)
+		require.NoError(t, err)
+
+		err = DoPermissionsExist(ctx, userIDClusterAdmin,
+			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_GLOBAL_CONFIG_POLICIES)
+		require.NoError(t, err)
+
+		err = DoPermissionsExist(ctx, userIDClusterAdmin,
+			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_WORKSPACE_CONFIG_POLICIES)
+		require.NoError(t, err)
+
+		err = DoPermissionsExist(ctx, userIDWorkspaceAdmin,
+			rbacv1.PermissionType_PERMISSION_TYPE_MODIFY_GLOBAL_CONFIG_POLICIES)
+		require.NoError(t, err)
+
+		err = DoPermissionsExist(ctx, userIDWorkspaceAdmin,
+			rbacv1.PermissionType_PERMISSION_TYPE_MODIFY_WORKSPACE_CONFIG_POLICIES)
+		require.NoError(t, err)
+
+		err = DoPermissionsExist(ctx, userIDWorkspaceAdmin,
+			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_GLOBAL_CONFIG_POLICIES)
+		require.NoError(t, err)
+
+		err = DoPermissionsExist(ctx, userIDWorkspaceAdmin,
+			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_WORKSPACE_CONFIG_POLICIES)
+		require.NoError(t, err)
+
+		err = DoPermissionsExist(ctx, userIDViewer,
+			rbacv1.PermissionType_PERMISSION_TYPE_MODIFY_GLOBAL_CONFIG_POLICIES)
+		require.IsType(t, authz.PermissionDeniedError{}, err,
+			"user should not have permission to edit global config policies")
+
+		err = DoPermissionsExist(ctx, userIDViewer,
+			rbacv1.PermissionType_PERMISSION_TYPE_MODIFY_WORKSPACE_CONFIG_POLICIES)
+		require.IsType(t, authz.PermissionDeniedError{}, err,
+			"user should not have permission to edit workspace config policies")
+
+		err = DoPermissionsExist(ctx, userIDViewer,
+			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_GLOBAL_CONFIG_POLICIES)
+		require.NoError(t, err)
+
+		err = DoPermissionsExist(ctx, userIDViewer,
+			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_WORKSPACE_CONFIG_POLICIES)
+		require.NoError(t, err)
 	})
 
 	t.Run("test GetWorkspacesWithPermission", func(t *testing.T) {

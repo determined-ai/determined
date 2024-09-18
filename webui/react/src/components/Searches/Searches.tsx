@@ -339,12 +339,13 @@ const Searches: React.FC<Props> = ({ project }) => {
         kind: 'group',
       };
 
+      const offset = page * settings.pageLimit;
       const response = await searchExperiments(
         {
           ...experimentFilters,
           filter: JSON.stringify(filters),
           limit: settings.pageLimit,
-          offset: page * settings.pageLimit,
+          offset,
           sort: sortString || undefined,
         },
         { signal: canceler.signal },
@@ -355,6 +356,10 @@ const Searches: React.FC<Props> = ({ project }) => {
       setTotal(
         response.pagination.total !== undefined ? Loaded(response.pagination.total) : NotLoaded,
       );
+      // oob check
+      if ((response.pagination.total || 0) < offset) {
+        resetPagination();
+      }
     } catch (e) {
       handleError(e, { publicSubject: 'Unable to fetch experiments.' });
     } finally {
@@ -367,6 +372,7 @@ const Searches: React.FC<Props> = ({ project }) => {
     isLoadingSettings,
     loadableFormset,
     page,
+    resetPagination,
     sortString,
     settings.pageLimit,
   ]);

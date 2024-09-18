@@ -4,8 +4,10 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"net/http"
 	"net/url"
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -14,7 +16,10 @@ import (
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
+	"github.com/determined-ai/determined/master/internal/api"
+	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
+	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/webhookv1"
@@ -23,18 +28,25 @@ import (
 // WebhooksAPIServer is an embedded api server struct.
 type WebhooksAPIServer struct{}
 
-// AuthorizeRequest checks if the user has CanEditWebhooks permissions.
+// authorizeEditRequest checks if the user has CanEditWebhooks permissions.
 // TODO remove this eventually since authz replaces this
 // We can't yet since we use it else where.
-func AuthorizeRequest(ctx context.Context) error {
+func authorizeEditRequest(ctx context.Context, workspaceID int32) error {
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
-		return status.Errorf(codes.Internal, "failed to get the user: %s", err)
+		return status.Errorf(codes.Internal, "failed to get the user: %v", err)
 	}
-	authErr := AuthZProvider.Get().
-		CanEditWebhooks(ctx, curUser)
-	if authErr != nil {
-		return status.Error(codes.PermissionDenied, authErr.Error())
+	var workspace *model.Workspace
+	if workspaceID > 0 {
+		workspace, err = getWorkspace(ctx, workspaceID)
+		if err != nil {
+			return err
+		}
+	}
+
+	err = AuthZProvider.Get().CanEditWebhooks(ctx, curUser, workspace)
+	if err != nil {
+		return err
 	}
 	return nil
 }
@@ -43,10 +55,15 @@ func AuthorizeRequest(ctx context.Context) error {
 func (a *WebhooksAPIServer) GetWebhooks(
 	ctx context.Context, req *apiv1.GetWebhooksRequest,
 ) (*apiv1.GetWebhooksResponse, error) {
-	if err := AuthorizeRequest(ctx); err != nil {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "failed to get the user: %v", err)
+	}
+	workspaceIDs, err := AuthZProvider.Get().WebhookAvailableWorkspaces(ctx, curUser)
+	if err != nil {
 		return nil, err
 	}
-	webhooks, err := GetWebhooks(ctx)
+	webhooks, err := getWebhooks(ctx, &workspaceIDs)
 	if err != nil {
 		return nil, err
 	}
@@ -57,9 +74,10 @@ func (a *WebhooksAPIServer) GetWebhooks(
 func (a *WebhooksAPIServer) PostWebhook(
 	ctx context.Context, req *apiv1.PostWebhookRequest,
 ) (*apiv1.PostWebhookResponse, error) {
-	if err := AuthorizeRequest(ctx); err != nil {
+	if err := authorizeEditRequest(ctx, req.Webhook.WorkspaceId); err != nil {
 		return nil, err
 	}
+
 	if len(req.Webhook.Triggers) == 0 {
 		return nil, status.Errorf(
 			codes.InvalidArgument,
@@ -93,6 +111,13 @@ func (a *WebhooksAPIServer) PostWebhook(
 					regexConditionKey, m)
 			}
 		}
+		if t.TriggerType == webhookv1.TriggerType_TRIGGER_TYPE_CUSTOM {
+			if req.Webhook.Mode != webhookv1.WebhookMode_WEBHOOK_MODE_SPECIFIC {
+				return nil, status.Errorf(codes.InvalidArgument,
+					"custom trigger only works on webhook with mode 'SPECIFIC'. Got %v",
+					req.Webhook.Mode)
+			}
+		}
 	}
 
 	w := WebhookFromProto(req.Webhook)
@@ -106,7 +131,11 @@ func (a *WebhooksAPIServer) PostWebhook(
 func (a *WebhooksAPIServer) DeleteWebhook(
 	ctx context.Context, req *apiv1.DeleteWebhookRequest,
 ) (*apiv1.DeleteWebhookResponse, error) {
-	if err := AuthorizeRequest(ctx); err != nil {
+	webhook, err := GetWebhook(ctx, int(req.Id))
+	if err != nil {
+		return nil, err
+	}
+	if err := authorizeEditRequest(ctx, webhook.Proto().WorkspaceId); err != nil {
 		return nil, err
 	}
 	if err := DeleteWebhook(ctx, WebhookID(req.Id)); err != nil {
@@ -119,12 +148,11 @@ func (a *WebhooksAPIServer) DeleteWebhook(
 func (a *WebhooksAPIServer) TestWebhook(
 	ctx context.Context, req *apiv1.TestWebhookRequest,
 ) (*apiv1.TestWebhookResponse, error) {
-	if err := AuthorizeRequest(ctx); err != nil {
-		return nil, err
-	}
-
 	webhook, err := GetWebhook(ctx, int(req.Id))
 	if err != nil {
+		return nil, err
+	}
+	if err := authorizeEditRequest(ctx, webhook.Proto().WorkspaceId); err != nil {
 		return nil, err
 	}
 
@@ -205,4 +233,56 @@ func (a *WebhooksAPIServer) TestWebhook(
 			"received error from webhook server for event %v error: %v ", eventID, resp.StatusCode)
 	}
 	return &apiv1.TestWebhookResponse{}, nil
+}
+
+// PostWebhookEventData handles data for custom trigger.
+func (a *WebhooksAPIServer) PostWebhookEventData(
+	ctx context.Context, req *apiv1.PostWebhookEventDataRequest,
+) (*apiv1.PostWebhookEventDataResponse, error) {
+	var res apiv1.PostWebhookEventDataResponse
+	_, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return &res, status.Errorf(codes.Internal, "failed to get the user: %s", err)
+	}
+
+	var data CustomTriggerData
+	if req.Data != nil {
+		data.Title = req.Data.Title
+		data.Description = req.Data.Description
+		data.Level = model.TaskLogLevelFromProto(req.Data.Level)
+	}
+	err = handleCustomTriggerData(ctx, data, int(req.ExperimentId), ptrs.Ptr(int(req.TrialId)))
+	if err != nil {
+		return &res, status.Errorf(codes.Internal,
+			"failed to handle custom trigger data: %+v experiment id: %d trial_id %d : %s",
+			data, req.ExperimentId, req.TrialId, err)
+	}
+
+	return &res, nil
+}
+
+// PatchWebhook updates a webhook.
+func (a *WebhooksAPIServer) PatchWebhook(
+	ctx context.Context, req *apiv1.PatchWebhookRequest,
+) (*apiv1.PatchWebhookResponse, error) {
+	webhook, err := GetWebhook(ctx, int(req.Id))
+	if err != nil {
+		return nil, err
+	}
+	if err := authorizeEditRequest(ctx, webhook.Proto().WorkspaceId); err != nil {
+		return nil, err
+	}
+
+	err = UpdateWebhook(
+		ctx,
+		req.Id,
+		req.Webhook,
+	)
+	if err != nil && errors.Is(err, db.ErrNotFound) {
+		return nil, api.NotFoundErrs("webhook", strconv.Itoa(int(req.Id)), true)
+	} else if err != nil {
+		log.WithError(err).Errorf("failed to update webhook %d", req.Id)
+		return nil, err
+	}
+	return &apiv1.PatchWebhookResponse{}, nil
 }

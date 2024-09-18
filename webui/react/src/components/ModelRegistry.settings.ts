@@ -43,7 +43,7 @@ export const isOfSortKey = (sortKey: React.Key): sortKey is V1GetModelsRequestSo
   return sortKeys.includes(String(sortKey));
 };
 
-export interface Settings extends InteractiveTableSettings {
+export interface Settings extends Omit<InteractiveTableSettings, 'tableOffset'> {
   archived?: boolean;
   columns: ModelColumnName[];
   description?: string;
@@ -120,11 +120,6 @@ const config = (id: string): SettingsConfig<Settings> => {
       tableLimit: {
         defaultValue: MINIMUM_PAGE_SIZE,
         storageKey: 'tableLimit',
-        type: number,
-      },
-      tableOffset: {
-        defaultValue: 0,
-        storageKey: 'tableOffset',
         type: number,
       },
       tags: {
