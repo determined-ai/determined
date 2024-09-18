@@ -32,48 +32,49 @@ Resource Utilization
 
 This section displays real-time information about the cluster's resource usage:
 
--  Total slots available: The total number of compute resources (GPUs/CPUs) in the cluster.
--  Currently active slots: The number of slots currently in use.
--  Percentage of resource utilization: Visualized as a bar chart showing the proportion of used
-   slots.
+-  Connected Agents: The number of agents currently connected to the cluster.
+-  CUDA Slots Allocated: The number of CUDA (GPU) slots currently in use out of the total available.
+-  CPU Slots Allocated: The number of CPU slots currently in use out of the total available.
+-  Aux Containers Running: The number of auxiliary containers currently running out of the total
+   capacity.
+-  Active Searches: The number of active hyperparameter searches.
 
-Slots Allocated Bar
--------------------
+Slots Allocated Bars
+--------------------
 
-The slots allocated bar provides a visual representation of resource utilization across the cluster:
+The slots allocated bars provide a visual representation of resource utilization across the cluster:
 
--  For the main overview: A large bar shows the overall cluster utilization.
--  For each resource pool: A smaller bar indicates the utilization within that specific pool.
+-  Compute (CUDA) Slots Allocated: Shows the utilization of GPU resources.
+-  Compute (CPU) Slots Allocated: Shows the utilization of CPU resources.
 
-The bar is divided into different colors representing various slot types:
+Each bar is divided into sections:
 
--  Unspecified Slots (Gray): Used for resource pools with mixed slot types or when the slot type is
-   not explicitly defined. This replaces the previous "Compute Slots" terminology.
--  CUDA Slots (Blue): Represents GPU resources, typically used for CUDA-enabled workloads.
--  CPU Slots (Green): Indicates CPU resources for CPU-only tasks.
+-  Running (Blue): Currently active slots.
+-  Pending (Purple): Slots allocated but not yet active.
+-  Free (Gray): Available slots.
 
-This color-coding helps quickly identify the distribution and usage of different resource types
-across your cluster.
-
-Slot Type Explanation
----------------------
-
--  Unspecified Slots: Used for resource pools that contain a mix of different slot types (e.g., both
-   GPUs and CPUs) or when the slot type is not explicitly defined.
--  CUDA Slots: Specifically for resource pools that only contain NVIDIA GPU resources.
--  CPU Slots: For resource pools that only contain CPU resources.
-
-The "Unspecified Slots Allocated" label is used for resource pools with mixed slot types to provide
-a clear indication of the diverse resource allocation within that pool.
+The percentage and fraction of used slots are displayed on the right side of each bar.
 
 Resource Pools
 ==============
 
-A list of configured resource pools, including:
+This section lists the configured resource pools, providing detailed information for each:
 
--  Pool names
--  Number of GPUs/CPUs in each pool
--  Current utilization of each pool
+-  Pool Name: The name of the resource pool (e.g., pool1, pool2).
+
+-  Slots Allocated: Shows the number of slots in use and the total available. - For pools with mixed
+   resource types (both CUDA and CPU), it displays "Unspecified Slots Allocated". - For pools with a
+   single resource type, it specifies the type (e.g., "CUDA Slots Allocated").
+
+-  Aux Containers: The number of auxiliary containers running out of the total capacity.
+
+-  Additional Information: Includes details such as Accelerator type, Instance Type, Connected
+   Agents, Slots Per Agent, and Scheduler Type.
+
+Note: The presence of "Unspecified Slots Allocated" indicates that the pool contains both CUDA and
+CPU agents. While this is allowed, it is considered a suboptimal configuration and will be logged as
+an error. It's recommended to separate CUDA and CPU resources into different pools for better
+management and allocation.
 
 For more details on resource pools, visit :ref:`resource-pools`.
 
