@@ -1033,10 +1033,10 @@ func TestGetLongLivedToken(t *testing.T) {
 	tokenInfo, err := api.GetLongLivedToken(ctx, &apiv1.GetLongLivedTokenRequest{})
 	require.NoError(t, err)
 	require.NotNil(t, tokenInfo)
-	require.Equal(t, int32(curUser.ID), tokenInfo.LongLivedTokenInfo.UserId)
+	require.Equal(t, int32(curUser.ID), tokenInfo.TokenInfo.UserId)
 
 	_, err = api.DeleteLongLivedTokenByTokenID(ctx, &apiv1.DeleteLongLivedTokenByTokenIDRequest{
-		TokenId: tokenInfo.LongLivedTokenInfo.Id,
+		TokenId: tokenInfo.TokenInfo.Id,
 	})
 	require.NoError(t, err)
 
@@ -1060,7 +1060,7 @@ func TestGetAllLongLivedTokens(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.NotNil(t, tokenInfo1)
-	require.Equal(t, int32(userID1), tokenInfo1.LongLivedTokenInfo.UserId)
+	require.Equal(t, int32(userID1), tokenInfo1.TokenInfo.UserId)
 
 	userID2, err := getTestUser(ctx)
 	require.NoError(t, err)
@@ -1072,23 +1072,23 @@ func TestGetAllLongLivedTokens(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.NotNil(t, tokenInfo2)
-	require.Equal(t, int32(userID2), tokenInfo2.LongLivedTokenInfo.UserId)
+	require.Equal(t, int32(userID2), tokenInfo2.TokenInfo.UserId)
 
 	_, err = api.DeleteLongLivedTokenByTokenID(ctx, &apiv1.DeleteLongLivedTokenByTokenIDRequest{
-		TokenId: tokenInfo2.LongLivedTokenInfo.Id,
+		TokenId: tokenInfo2.TokenInfo.Id,
 	})
 	require.NoError(t, err)
 
 	resp, err := api.GetAllLongLivedTokens(ctx, &apiv1.GetAllLongLivedTokensRequest{})
 	require.NoError(t, err)
 
-	for _, u := range resp.LongLivedTokenInfo {
-		if model.UserID(u.Id) == model.UserID(tokenInfo1.LongLivedTokenInfo.Id) {
-			require.False(t, u.IsRevoked)
-			require.Equal(t, tokenInfo1.LongLivedTokenInfo.TokenType, u.TokenType)
-		} else if model.UserID(u.Id) == model.UserID(tokenInfo2.LongLivedTokenInfo.Id) {
-			require.True(t, u.IsRevoked)
-			require.Equal(t, tokenInfo2.LongLivedTokenInfo.TokenType, u.TokenType)
+	for _, u := range resp.TokenInfo {
+		if model.UserID(u.Id) == model.UserID(tokenInfo1.TokenInfo.Id) {
+			require.False(t, u.Revoked)
+			require.Equal(t, tokenInfo1.TokenInfo.TokenType, u.TokenType)
+		} else if model.UserID(u.Id) == model.UserID(tokenInfo2.TokenInfo.Id) {
+			require.True(t, u.Revoked)
+			require.Equal(t, tokenInfo2.TokenInfo.TokenType, u.TokenType)
 		}
 	}
 }
@@ -1108,10 +1108,10 @@ func TestGetUserLongLivedToken(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.NotNil(t, tokenInfo)
-	require.Equal(t, int32(userID), tokenInfo.LongLivedTokenInfo.UserId)
+	require.Equal(t, int32(userID), tokenInfo.TokenInfo.UserId)
 
 	_, err = api.DeleteLongLivedTokenByTokenID(ctx, &apiv1.DeleteLongLivedTokenByTokenIDRequest{
-		TokenId: tokenInfo.LongLivedTokenInfo.Id,
+		TokenId: tokenInfo.TokenInfo.Id,
 	})
 	require.NoError(t, err)
 
