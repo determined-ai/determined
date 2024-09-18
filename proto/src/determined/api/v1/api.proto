@@ -2885,4 +2885,83 @@ service Determined {
       tags: "Alpha"
     };
   }
+
+  // Create and get current user's long lived token
+  rpc PostLongLivedToken(PostLongLivedTokenRequest)
+      returns (PostLongLivedTokenResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/user/token",
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Users"
+    };
+  }
+
+  // Create and get a user's long lived token
+  rpc PostUserLongLivedToken(PostUserLongLivedTokenRequest)
+      returns (PostUserLongLivedTokenResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/users/{user_id}/token",
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Users"
+    };
+  }
+
+  // Get current user's long lived token info
+  rpc GetLongLivedToken(GetLongLivedTokenRequest)
+      returns (GetLongLivedTokenResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/user/token"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Users"
+    };
+  }
+
+  // Get list of all long lived token info
+  rpc GetAllLongLivedTokens(GetAllLongLivedTokensRequest)
+      returns (GetAllLongLivedTokensResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/user/tokens"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Users"
+    };
+  }
+
+  // Get a user's long lived token info
+  rpc GetUserLongLivedToken(GetUserLongLivedTokenRequest)
+      returns (GetUserLongLivedTokenResponse) {
+    option (google.api.http) = {
+      get: "/api/v1/users/{user_id}/token"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Users"
+    };
+  }
+
+  // Delete current user's longLivedToken info.
+  rpc DeleteLongLivedToken(DeleteLongLivedTokenRequest)
+      returns (DeleteLongLivedTokenResponse) {
+    option (google.api.http) = {
+      delete: "/api/v1/user/token"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Users"
+    };
+  }
+
+  // Delete token id's longLivedToken info.
+  rpc DeleteLongLivedTokenByTokenID(DeleteLongLivedTokenByTokenIDRequest)
+      returns (DeleteLongLivedTokenByTokenIDResponse) {
+    option (google.api.http) = {
+      delete: "/api/v1/tokens/{token_id}"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Users"
+    };
+  }
 }

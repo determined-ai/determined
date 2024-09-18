@@ -1,11 +1,11 @@
 import argparse
 import collections
 import getpass
-from typing import Any, List
+from typing import Any, Dict, List
 
 from determined import cli
 from determined.cli import errors, render
-from determined.common import api
+from determined.common import api, util
 from determined.common.api import authentication, bindings
 from determined.experimental import client
 
@@ -36,6 +36,18 @@ FullUserNoAdmin = collections.namedtuple(
         "agent_gid",
         "agent_user",
         "agent_group",
+    ],
+)
+UserSessionInfo = collections.namedtuple(
+    "UserSessionInfo",
+    [
+        "id",
+        "user_id",
+        "expiry",
+        "created_at",
+        "token_type",
+        "is_revoked",
+        "token_description",
     ],
 )
 
@@ -218,6 +230,65 @@ def edit(args: argparse.Namespace) -> None:
         raise errors.CliError("No field provided. Use 'det user edit -h' for usage.")
 
 
+def printData(data: Dict[str, Any], args: argparse.Namespace) -> None:
+    if args.yaml:
+        print(util.yaml_safe_dump(data, default_flow_style=False))
+    else:
+        render.print_json(data)
+
+
+def describe_token(args: argparse.Namespace) -> None:
+    sess = cli.setup_session(args)
+
+    if args.username is None:
+        respFromLongLiveToken = bindings.get_GetLongLivedToken(sess)
+        printData(respFromLongLiveToken.to_json(), args)
+    else:
+        userID = bindings.get_GetUserByUsername(session=sess, username=args.username).user.id
+        if userID is not None:
+            respFromUserLongLiveToken = bindings.get_GetUserLongLivedToken(
+                session=sess, userId=userID
+            )
+            printData(respFromUserLongLiveToken.to_json(), args)
+
+
+def list_tokens(args: argparse.Namespace) -> None:
+    sess = cli.setup_session(args)
+    d = client.Determined._from_session(sess)
+    userSessions_list = d.list_tokens(isRevoked=None if args.all else False)
+    renderer = UserSessionInfo  # type: Any
+    render.render_objects(renderer, userSessions_list)
+
+
+def revoke_token(args: argparse.Namespace) -> None:
+    sess = cli.setup_session(args)
+    bindings.delete_DeleteLongLivedTokenByTokenID(sess, tokenId=args.tokenId)
+
+
+def create_token(args: argparse.Namespace) -> None:
+    sess = cli.setup_session(args)
+    # TODO: API to update token description & CLI
+
+    if args.username is None:
+        contentForLongLivedToken = bindings.v1PostLongLivedTokenRequest(
+            lifespan=args.lifespan,
+        )
+        respFromLongLivedToken = bindings.post_PostLongLivedToken(
+            sess, body=contentForLongLivedToken
+        )
+        printData(respFromLongLivedToken.to_json(), args)
+    else:
+        userID = bindings.get_GetUserByUsername(session=sess, username=args.username).user.id
+        if userID is not None:
+            contentForUserLongLivedToken = bindings.v1PostUserLongLivedTokenRequest(
+                lifespan=args.lifespan, userId=userID
+            )
+            respFromUserLongLivedToken = bindings.post_PostUserLongLivedToken(
+                sess, body=contentForUserLongLivedToken, userId=userID
+            )
+            printData(respFromUserLongLivedToken.to_json(), args)
+
+
 AGENT_USER_GROUP_ARGS = [
     cli.Arg("--agent-uid", type=int, help="UID on the agent to run tasks as"),
     cli.Arg("--agent-user", help="user on the agent to run tasks as"),
@@ -312,6 +383,35 @@ args_description = [
                 default=None,
                 help="grant/remove user admin permissions",
             ),
+        ]),
+        cli.Cmd("token", None, "manage long lived access tokens", [
+            cli.Cmd("describe", describe_token, "describe token info", [
+                cli.Arg("--username", nargs="?", default=None,
+                        help="name of user to describe token"),
+                cli.Group(
+                    cli.output_format_args["json"],
+                    cli.output_format_args["yaml"],
+                ),
+            ]),
+            cli.Cmd("list ls", list_tokens, "list all active access tokens", [
+                cli.Arg("--all", "-a", action="store_true", default=None,
+                        help="list all access tokens, including revoked & expired tokens"),
+                cli.Group(
+                    cli.output_format_args["json"],
+                ),
+            ]),
+            cli.Cmd("revoke", revoke_token, "revoke token", [
+                cli.Arg("tokenId", help="revoke given access token"),
+            ]),
+            cli.Cmd("create", create_token, "create token", [
+                cli.Arg("--username", type=str, help="name of user to create token"),
+                cli.Arg("--lifespan", type=str, help="give expiry lifespan"),
+                cli.Arg("--description", type=str, help="description of new token"),  # TODO
+                cli.Group(
+                    cli.output_format_args["json"],
+                    cli.output_format_args["yaml"],
+                ),
+            ]),
         ]),
     ])
 ]  # type: List[Any]

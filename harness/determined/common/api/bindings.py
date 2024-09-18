@@ -4735,6 +4735,55 @@ class v1GetAgentsResponse(Printable):
             out["pagination"] = None if self.pagination is None else self.pagination.to_json(omit_unset)
         return out
 
+class v1GetAllLongLivedTokensRequestSortBy(DetEnum):
+    """Sort token info by the given field.
+    - SORT_BY_UNSPECIFIED: Returns token info in an unsorted list.
+    - SORT_BY_USER_ID: Returns token info sorted by user id.
+    - SORT_BY_EXPIRY: Returns token info sorted by expiry.
+    - SORT_BY_CREATED_AT: Returns token info sorted by created at.
+    - SORT_BY_TOKEN_TYPE: Returns token info sorted by token type.
+    - SORT_BY_IS_REVOKED: Returns token info sorted by if it is revoked.
+    - SORT_BY_TOKEN_DESCRIPTION: Returns token info sorted by description of token.
+    """
+    UNSPECIFIED = "SORT_BY_UNSPECIFIED"
+    USER_ID = "SORT_BY_USER_ID"
+    EXPIRY = "SORT_BY_EXPIRY"
+    CREATED_AT = "SORT_BY_CREATED_AT"
+    TOKEN_TYPE = "SORT_BY_TOKEN_TYPE"
+    IS_REVOKED = "SORT_BY_IS_REVOKED"
+    TOKEN_DESCRIPTION = "SORT_BY_TOKEN_DESCRIPTION"
+
+class v1GetAllLongLivedTokensResponse(Printable):
+    """Response to GetAllLongLivedTokenRequest."""
+    pagination: "typing.Optional[v1Pagination]" = None
+
+    def __init__(
+        self,
+        *,
+        longLivedTokenInfo: "typing.Sequence[v1UserSessionInfo]",
+        pagination: "typing.Union[v1Pagination, None, Unset]" = _unset,
+    ):
+        self.longLivedTokenInfo = longLivedTokenInfo
+        if not isinstance(pagination, Unset):
+            self.pagination = pagination
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetAllLongLivedTokensResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "longLivedTokenInfo": [v1UserSessionInfo.from_json(x) for x in obj["longLivedTokenInfo"]],
+        }
+        if "pagination" in obj:
+            kwargs["pagination"] = v1Pagination.from_json(obj["pagination"]) if obj["pagination"] is not None else None
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "longLivedTokenInfo": [x.to_json(omit_unset) for x in self.longLivedTokenInfo],
+        }
+        if not omit_unset or "pagination" in vars(self):
+            out["pagination"] = None if self.pagination is None else self.pagination.to_json(omit_unset)
+        return out
+
 class v1GetAllocationResponse(Printable):
 
     def __init__(
@@ -5495,6 +5544,29 @@ class v1GetKubernetesResourceQuotasResponse(Printable):
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "resourceQuotas": {k: dump_float(v) for k, v in self.resourceQuotas.items()},
+        }
+        return out
+
+class v1GetLongLivedTokenResponse(Printable):
+    """Response to GetLongLivedTokenRequest."""
+
+    def __init__(
+        self,
+        *,
+        longLivedTokenInfo: "v1UserSessionInfo",
+    ):
+        self.longLivedTokenInfo = longLivedTokenInfo
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetLongLivedTokenResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "longLivedTokenInfo": v1UserSessionInfo.from_json(obj["longLivedTokenInfo"]),
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "longLivedTokenInfo": self.longLivedTokenInfo.to_json(omit_unset),
         }
         return out
 
@@ -7034,6 +7106,29 @@ class v1GetUserByUsernameResponse(Printable):
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "user": self.user.to_json(omit_unset),
+        }
+        return out
+
+class v1GetUserLongLivedTokenResponse(Printable):
+    """Response to GetUserLongLivedTokenRequest."""
+
+    def __init__(
+        self,
+        *,
+        longLivedTokenInfo: "v1UserSessionInfo",
+    ):
+        self.longLivedTokenInfo = longLivedTokenInfo
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetUserLongLivedTokenResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "longLivedTokenInfo": v1UserSessionInfo.from_json(obj["longLivedTokenInfo"]),
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "longLivedTokenInfo": self.longLivedTokenInfo.to_json(omit_unset),
         }
         return out
 
@@ -10903,6 +10998,12 @@ class v1PermissionType(DetEnum):
     - PERMISSION_TYPE_MODIFY_WORKSPACE_CONFIG_POLICIES: Ability to modify workspace config policies.
     - PERMISSION_TYPE_VIEW_GLOBAL_CONFIG_POLICIES: Ability to view global config policies.
     - PERMISSION_TYPE_VIEW_WORKSPACE_CONFIG_POLICIES: Ability to view workspace config policies.
+    - PERMISSION_TYPE_REVOKE_LONG_LIVED_TOKEN: Ability to revoke one's own long lived token
+    - PERMISSION_TYPE_REVOKE_OTHER_LONG_LIVED_TOKEN: Ability to revoke another user's long lived token
+    - PERMISSION_TYPE_CREATE_LONG_LIVED_TOKEN: Ability to create one's own long lived token
+    - PERMISSION_TYPE_CREATE_OTHER_LONG_LIVED_TOKEN: Ability to create another user's long lived token
+    - PERMISSION_TYPE_VIEW_LONG_LIVED_TOKEN: Ability to view one's own long lived token
+    - PERMISSION_TYPE_VIEW_OTHER_LONG_LIVED_TOKEN: Ability to view another user's long lived token
     """
     UNSPECIFIED = "PERMISSION_TYPE_UNSPECIFIED"
     ADMINISTRATE_USER = "PERMISSION_TYPE_ADMINISTRATE_USER"
@@ -10959,6 +11060,12 @@ class v1PermissionType(DetEnum):
     MODIFY_WORKSPACE_CONFIG_POLICIES = "PERMISSION_TYPE_MODIFY_WORKSPACE_CONFIG_POLICIES"
     VIEW_GLOBAL_CONFIG_POLICIES = "PERMISSION_TYPE_VIEW_GLOBAL_CONFIG_POLICIES"
     VIEW_WORKSPACE_CONFIG_POLICIES = "PERMISSION_TYPE_VIEW_WORKSPACE_CONFIG_POLICIES"
+    REVOKE_LONG_LIVED_TOKEN = "PERMISSION_TYPE_REVOKE_LONG_LIVED_TOKEN"
+    REVOKE_OTHER_LONG_LIVED_TOKEN = "PERMISSION_TYPE_REVOKE_OTHER_LONG_LIVED_TOKEN"
+    CREATE_LONG_LIVED_TOKEN = "PERMISSION_TYPE_CREATE_LONG_LIVED_TOKEN"
+    CREATE_OTHER_LONG_LIVED_TOKEN = "PERMISSION_TYPE_CREATE_OTHER_LONG_LIVED_TOKEN"
+    VIEW_LONG_LIVED_TOKEN = "PERMISSION_TYPE_VIEW_LONG_LIVED_TOKEN"
+    VIEW_OTHER_LONG_LIVED_TOKEN = "PERMISSION_TYPE_VIEW_OTHER_LONG_LIVED_TOKEN"
 
 class v1PolymorphicFilter(Printable):
     doubleRange: "typing.Optional[v1DoubleFieldFilter]" = None
@@ -11124,6 +11231,60 @@ class v1PostCheckpointMetadataResponse(Printable):
         }
         if not omit_unset or "checkpoint" in vars(self):
             out["checkpoint"] = None if self.checkpoint is None else self.checkpoint.to_json(omit_unset)
+        return out
+
+class v1PostLongLivedTokenRequest(Printable):
+    """Create user's longLivedToken."""
+    lifespan: "typing.Optional[str]" = None
+
+    def __init__(
+        self,
+        *,
+        lifespan: "typing.Union[str, None, Unset]" = _unset,
+    ):
+        if not isinstance(lifespan, Unset):
+            self.lifespan = lifespan
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PostLongLivedTokenRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "lifespan" in obj:
+            kwargs["lifespan"] = obj["lifespan"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "lifespan" in vars(self):
+            out["lifespan"] = self.lifespan
+        return out
+
+class v1PostLongLivedTokenResponse(Printable):
+    """Response to PostLongLivedTokenRequest."""
+    longLivedToken: "typing.Optional[str]" = None
+
+    def __init__(
+        self,
+        *,
+        longLivedToken: "typing.Union[str, None, Unset]" = _unset,
+    ):
+        if not isinstance(longLivedToken, Unset):
+            self.longLivedToken = longLivedToken
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PostLongLivedTokenResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "longLivedToken" in obj:
+            kwargs["longLivedToken"] = obj["longLivedToken"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "longLivedToken" in vars(self):
+            out["longLivedToken"] = self.longLivedToken
         return out
 
 class v1PostModelRequest(Printable):
@@ -11579,6 +11740,68 @@ class v1PostUserActivityRequest(Printable):
             "entityId": self.entityId,
             "entityType": self.entityType.value,
         }
+        return out
+
+class v1PostUserLongLivedTokenRequest(Printable):
+    """Create the requested user's longLivedToken."""
+    lifespan: "typing.Optional[str]" = None
+    userId: "typing.Optional[int]" = None
+
+    def __init__(
+        self,
+        *,
+        lifespan: "typing.Union[str, None, Unset]" = _unset,
+        userId: "typing.Union[int, None, Unset]" = _unset,
+    ):
+        if not isinstance(lifespan, Unset):
+            self.lifespan = lifespan
+        if not isinstance(userId, Unset):
+            self.userId = userId
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PostUserLongLivedTokenRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "lifespan" in obj:
+            kwargs["lifespan"] = obj["lifespan"]
+        if "userId" in obj:
+            kwargs["userId"] = obj["userId"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "lifespan" in vars(self):
+            out["lifespan"] = self.lifespan
+        if not omit_unset or "userId" in vars(self):
+            out["userId"] = self.userId
+        return out
+
+class v1PostUserLongLivedTokenResponse(Printable):
+    """Response to PostUserLongLivedTokenRequest."""
+    longLivedToken: "typing.Optional[str]" = None
+
+    def __init__(
+        self,
+        *,
+        longLivedToken: "typing.Union[str, None, Unset]" = _unset,
+    ):
+        if not isinstance(longLivedToken, Unset):
+            self.longLivedToken = longLivedToken
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PostUserLongLivedTokenResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "longLivedToken" in obj:
+            kwargs["longLivedToken"] = obj["longLivedToken"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "longLivedToken" in vars(self):
+            out["longLivedToken"] = self.longLivedToken
         return out
 
 class v1PostUserRequest(Printable):
@@ -15876,6 +16099,16 @@ class v1TimestampFieldFilter(Printable):
             out["lte"] = self.lte
         return out
 
+class v1TokenType(DetEnum):
+    """Token type.
+    - TOKEN_TYPE_UNSPECIFIED: Default token type.
+    - TOKEN_TYPE_USER_SESSION: User Session token.
+    - TOKEN_TYPE_LONG_LIVED_TOKEN: Long Lived token.
+    """
+    UNSPECIFIED = "TOKEN_TYPE_UNSPECIFIED"
+    USER_SESSION = "TOKEN_TYPE_USER_SESSION"
+    LONG_LIVED_TOKEN = "TOKEN_TYPE_LONG_LIVED_TOKEN"
+
 class v1TrialClosed(Printable):
     """TrialClosed is a searcher event triggered when a trial has successfully
     finished.
@@ -17056,6 +17289,77 @@ class v1UserRoleAssignment(Printable):
             "roleAssignment": self.roleAssignment.to_json(omit_unset),
             "userId": self.userId,
         }
+        return out
+
+class v1UserSessionInfo(Printable):
+    """UserSessionInfo represents user session info."""
+    createdAt: "typing.Optional[str]" = None
+    expiry: "typing.Optional[str]" = None
+    isRevoked: "typing.Optional[bool]" = None
+    tokenDescription: "typing.Optional[str]" = None
+    tokenType: "typing.Optional[v1TokenType]" = None
+    userId: "typing.Optional[int]" = None
+
+    def __init__(
+        self,
+        *,
+        id: int,
+        createdAt: "typing.Union[str, None, Unset]" = _unset,
+        expiry: "typing.Union[str, None, Unset]" = _unset,
+        isRevoked: "typing.Union[bool, None, Unset]" = _unset,
+        tokenDescription: "typing.Union[str, None, Unset]" = _unset,
+        tokenType: "typing.Union[v1TokenType, None, Unset]" = _unset,
+        userId: "typing.Union[int, None, Unset]" = _unset,
+    ):
+        self.id = id
+        if not isinstance(createdAt, Unset):
+            self.createdAt = createdAt
+        if not isinstance(expiry, Unset):
+            self.expiry = expiry
+        if not isinstance(isRevoked, Unset):
+            self.isRevoked = isRevoked
+        if not isinstance(tokenDescription, Unset):
+            self.tokenDescription = tokenDescription
+        if not isinstance(tokenType, Unset):
+            self.tokenType = tokenType
+        if not isinstance(userId, Unset):
+            self.userId = userId
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1UserSessionInfo":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "id": obj["id"],
+        }
+        if "createdAt" in obj:
+            kwargs["createdAt"] = obj["createdAt"]
+        if "expiry" in obj:
+            kwargs["expiry"] = obj["expiry"]
+        if "isRevoked" in obj:
+            kwargs["isRevoked"] = obj["isRevoked"]
+        if "tokenDescription" in obj:
+            kwargs["tokenDescription"] = obj["tokenDescription"]
+        if "tokenType" in obj:
+            kwargs["tokenType"] = v1TokenType(obj["tokenType"]) if obj["tokenType"] is not None else None
+        if "userId" in obj:
+            kwargs["userId"] = obj["userId"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "id": self.id,
+        }
+        if not omit_unset or "createdAt" in vars(self):
+            out["createdAt"] = self.createdAt
+        if not omit_unset or "expiry" in vars(self):
+            out["expiry"] = self.expiry
+        if not omit_unset or "isRevoked" in vars(self):
+            out["isRevoked"] = self.isRevoked
+        if not omit_unset or "tokenDescription" in vars(self):
+            out["tokenDescription"] = self.tokenDescription
+        if not omit_unset or "tokenType" in vars(self):
+            out["tokenType"] = None if self.tokenType is None else self.tokenType.value
+        if not omit_unset or "userId" in vars(self):
+            out["userId"] = self.userId
         return out
 
 class v1UserWebSetting(Printable):
@@ -18584,6 +18888,49 @@ def delete_DeleteGroup(
         return
     raise APIHttpError("delete_DeleteGroup", _resp)
 
+def delete_DeleteLongLivedToken(
+    session: "api.BaseSession",
+) -> None:
+    """Delete current user's longLivedToken info."""
+    _params = None
+    _resp = session._do_request(
+        method="DELETE",
+        path="/api/v1/user/token",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("delete_DeleteLongLivedToken", _resp)
+
+def delete_DeleteLongLivedTokenByTokenID(
+    session: "api.BaseSession",
+    *,
+    tokenId: int,
+) -> None:
+    """Delete token id's longLivedToken info.
+
+    - tokenId: The id of the token.
+    """
+    _params = None
+    _resp = session._do_request(
+        method="DELETE",
+        path=f"/api/v1/tokens/{tokenId}",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return
+    raise APIHttpError("delete_DeleteLongLivedTokenByTokenID", _resp)
+
 def delete_DeleteModel(
     session: "api.BaseSession",
     *,
@@ -19086,6 +19433,60 @@ denote number of agents to skip from the end before returning results.
     if _resp.status_code == 200:
         return v1GetAgentsResponse.from_json(_resp.json())
     raise APIHttpError("get_GetAgents", _resp)
+
+def get_GetAllLongLivedTokens(
+    session: "api.BaseSession",
+    *,
+    isRevoked: "typing.Optional[bool]" = None,
+    limit: "typing.Optional[int]" = None,
+    name: "typing.Optional[str]" = None,
+    offset: "typing.Optional[int]" = None,
+    orderBy: "typing.Optional[v1OrderBy]" = None,
+    sortBy: "typing.Optional[v1GetAllLongLivedTokensRequestSortBy]" = None,
+) -> "v1GetAllLongLivedTokensResponse":
+    """Get list of all long lived token info
+
+    - isRevoked: Filter by status.
+    - limit: Limit the number of projects. A value of 0 denotes no limit.
+    - name: Filter by username or display name.
+    - offset: Skip the number of projects before returning results. Negative values
+denote number of projects to skip from the end before returning results.
+    - orderBy: Order token info in either ascending or descending order.
+
+ - ORDER_BY_UNSPECIFIED: Returns records in no specific order.
+ - ORDER_BY_ASC: Returns records in ascending order.
+ - ORDER_BY_DESC: Returns records in descending order.
+    - sortBy: Sort token info by the given field.
+
+ - SORT_BY_UNSPECIFIED: Returns token info in an unsorted list.
+ - SORT_BY_USER_ID: Returns token info sorted by user id.
+ - SORT_BY_EXPIRY: Returns token info sorted by expiry.
+ - SORT_BY_CREATED_AT: Returns token info sorted by created at.
+ - SORT_BY_TOKEN_TYPE: Returns token info sorted by token type.
+ - SORT_BY_IS_REVOKED: Returns token info sorted by if it is revoked.
+ - SORT_BY_TOKEN_DESCRIPTION: Returns token info sorted by description of token.
+    """
+    _params = {
+        "isRevoked": str(isRevoked).lower() if isRevoked is not None else None,
+        "limit": limit,
+        "name": name,
+        "offset": offset,
+        "orderBy": orderBy.value if orderBy is not None else None,
+        "sortBy": sortBy.value if sortBy is not None else None,
+    }
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/user/tokens",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1GetAllLongLivedTokensResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetAllLongLivedTokens", _resp)
 
 def get_GetAllocation(
     session: "api.BaseSession",
@@ -19933,6 +20334,25 @@ def get_GetKubernetesResourceQuotas(
     if _resp.status_code == 200:
         return v1GetKubernetesResourceQuotasResponse.from_json(_resp.json())
     raise APIHttpError("get_GetKubernetesResourceQuotas", _resp)
+
+def get_GetLongLivedToken(
+    session: "api.BaseSession",
+) -> "v1GetLongLivedTokenResponse":
+    """Get current user's long lived token info"""
+    _params = None
+    _resp = session._do_request(
+        method="GET",
+        path="/api/v1/user/token",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1GetLongLivedTokenResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetLongLivedToken", _resp)
 
 def get_GetMaster(
     session: "api.BaseSession",
@@ -21608,6 +22028,30 @@ def get_GetUserByUsername(
         return v1GetUserByUsernameResponse.from_json(_resp.json())
     raise APIHttpError("get_GetUserByUsername", _resp)
 
+def get_GetUserLongLivedToken(
+    session: "api.BaseSession",
+    *,
+    userId: int,
+) -> "v1GetUserLongLivedTokenResponse":
+    """Get a user's long lived token info
+
+    - userId: The id of the user.
+    """
+    _params = None
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/users/{userId}/token",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1GetUserLongLivedTokenResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetUserLongLivedToken", _resp)
+
 def get_GetUserSetting(
     session: "api.BaseSession",
 ) -> "v1GetUserSettingResponse":
@@ -23272,6 +23716,27 @@ def post_PostCheckpointMetadata(
         return v1PostCheckpointMetadataResponse.from_json(_resp.json())
     raise APIHttpError("post_PostCheckpointMetadata", _resp)
 
+def post_PostLongLivedToken(
+    session: "api.BaseSession",
+    *,
+    body: "v1PostLongLivedTokenRequest",
+) -> "v1PostLongLivedTokenResponse":
+    """Create and get current user's long lived token"""
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path="/api/v1/user/token",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1PostLongLivedTokenResponse.from_json(_resp.json())
+    raise APIHttpError("post_PostLongLivedToken", _resp)
+
 def post_PostModel(
     session: "api.BaseSession",
     *,
@@ -23532,6 +23997,31 @@ def post_PostUserActivity(
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_PostUserActivity", _resp)
+
+def post_PostUserLongLivedToken(
+    session: "api.BaseSession",
+    *,
+    body: "v1PostUserLongLivedTokenRequest",
+    userId: int,
+) -> "v1PostUserLongLivedTokenResponse":
+    """Create and get a user's long lived token
+
+    - userId: The id of the user.
+    """
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/users/{userId}/token",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1PostUserLongLivedTokenResponse.from_json(_resp.json())
+    raise APIHttpError("post_PostUserLongLivedToken", _resp)
 
 def post_PostUserSetting(
     session: "api.BaseSession",
@@ -25220,6 +25710,7 @@ def get_health(
 # attribute is a v1Pagination-type object.
 Paginated = typing.Union[
     v1GetAgentsResponse,
+    v1GetAllLongLivedTokensResponse,
     v1GetCommandsResponse,
     v1GetExperimentCheckpointsResponse,
     v1GetExperimentTrialsResponse,

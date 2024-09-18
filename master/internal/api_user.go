@@ -127,6 +127,19 @@ func getUser(ctx context.Context, userID model.UserID) (*userv1.User, error) {
 	return toProtoUserFromFullUser(*user), nil
 }
 
+func getUserIDFromTokenID(ctx context.Context, tokenID int32) (model.UserID, error) {
+	var userID model.UserID
+	err := db.Bun().NewSelect().
+		Table("user_sessions").
+		Column("user_id").
+		Where("id = ?", tokenID).
+		Scan(ctx, &userID)
+	if err != nil {
+		return 0, err
+	}
+	return userID, nil
+}
+
 func (a *apiServer) GetUsers(
 	ctx context.Context, req *apiv1.GetUsersRequest,
 ) (*apiv1.GetUsersResponse, error) {
@@ -682,4 +695,255 @@ func (a *apiServer) PostUserActivity(
 		return nil, err
 	}
 	return &apiv1.PostUserActivityResponse{}, err
+}
+
+// POST Long lived token takes optional lifespan and overwrites an already existing long
+// lived token for the current logged in user.
+func (a *apiServer) PostLongLivedToken(
+	ctx context.Context, req *apiv1.PostLongLivedTokenRequest,
+) (*apiv1.PostLongLivedTokenResponse, error) {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err = user.AuthZProvider.Get().CanCreateUsersOwnToken(
+		ctx, *curUser); err != nil {
+		return nil, status.Error(codes.PermissionDenied, err.Error())
+	}
+
+	tokenExpiration := user.DefaultTokenLifespan
+	if req.Lifespan != "" {
+		d, err := time.ParseDuration(req.Lifespan)
+		if err != nil || d < 0 {
+			return nil, status.Error(codes.InvalidArgument,
+				"Lifespan must be a Go-formatted duration string with a positive value")
+		}
+		tokenExpiration = d
+	}
+
+	token, err := user.RevokeAndCreateLongLivedToken(
+		ctx, curUser.ID, user.WithTokenExpiry(&tokenExpiration))
+	if err != nil {
+		return nil, err
+	}
+	return &apiv1.PostLongLivedTokenResponse{LongLivedToken: token}, nil
+}
+
+// POST User Long lived token takes user id and optional lifespan and overwrites an
+// access token for the given user.
+func (a *apiServer) PostUserLongLivedToken(
+	ctx context.Context, req *apiv1.PostUserLongLivedTokenRequest,
+) (*apiv1.PostUserLongLivedTokenResponse, error) {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	targetFullUser, err := getFullModelUser(ctx, model.UserID(req.UserId))
+	if err != nil {
+		return nil, err
+	}
+	targetUser := targetFullUser.ToUser()
+	if err = user.AuthZProvider.Get().CanCreateUsersToken(ctx, *curUser, targetUser); err != nil {
+		return nil, status.Error(codes.PermissionDenied, err.Error())
+	}
+
+	tokenExpiration := user.DefaultTokenLifespan
+	if req.Lifespan != "" {
+		d, err := time.ParseDuration(req.Lifespan)
+		if err != nil || d < 0 {
+			return nil, status.Error(codes.InvalidArgument,
+				"Lifespan must be a Go-formatted duration string with a positive value")
+		}
+		tokenExpiration = d
+	}
+
+	token, err := user.RevokeAndCreateLongLivedToken(
+		ctx, targetFullUser.ID, user.WithTokenExpiry(&tokenExpiration))
+	if err != nil {
+		return nil, err
+	}
+	return &apiv1.PostUserLongLivedTokenResponse{LongLivedToken: token}, nil
+}
+
+// GET active Long lived token returns token information for the logged in user.
+func (a *apiServer) GetLongLivedToken(
+	ctx context.Context, req *apiv1.GetLongLivedTokenRequest,
+) (*apiv1.GetLongLivedTokenResponse, error) {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err = user.AuthZProvider.Get().CanGetUsersOwnToken(ctx, *curUser); err != nil {
+		return nil, status.Error(codes.PermissionDenied, err.Error())
+	}
+
+	tokenInfo, err := user.GetLongLivedTokenInfo(ctx, curUser.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &apiv1.GetLongLivedTokenResponse{LongLivedTokenInfo: tokenInfo.Proto()}, nil
+}
+
+// GET All (active / revoked) Long lived token returns all long-lived token information from user_session db.
+func (a *apiServer) GetAllLongLivedTokens(
+	ctx context.Context, req *apiv1.GetAllLongLivedTokensRequest,
+) (*apiv1.GetAllLongLivedTokensResponse, error) {
+	sortColMap := map[apiv1.GetAllLongLivedTokensRequest_SortBy]string{
+		apiv1.GetAllLongLivedTokensRequest_SORT_BY_UNSPECIFIED:       "id",
+		apiv1.GetAllLongLivedTokensRequest_SORT_BY_USER_ID:           "user_id",
+		apiv1.GetAllLongLivedTokensRequest_SORT_BY_EXPIRY:            "expiry",
+		apiv1.GetAllLongLivedTokensRequest_SORT_BY_CREATED_AT:        "created_at",
+		apiv1.GetAllLongLivedTokensRequest_SORT_BY_TOKEN_TYPE:        "token_type",
+		apiv1.GetAllLongLivedTokensRequest_SORT_BY_IS_REVOKED:        "is_revoked",
+		apiv1.GetAllLongLivedTokensRequest_SORT_BY_TOKEN_DESCRIPTION: "token_description",
+	}
+	orderByMap := map[apiv1.OrderBy]string{
+		apiv1.OrderBy_ORDER_BY_UNSPECIFIED: "ASC",
+		apiv1.OrderBy_ORDER_BY_ASC:         "ASC",
+		apiv1.OrderBy_ORDER_BY_DESC:        "DESC",
+	}
+
+	userSessions := []model.UserSession{}
+
+	query := db.Bun().NewSelect().Model(&userSessions).
+		ModelTableExpr("user_sessions as us").
+		Column("us.id").
+		Column("us.user_id").
+		Column("us.expiry").
+		Column("us.created_at").
+		Column("us.token_type").
+		Column("us.is_revoked").
+		Column("us.token_description")
+
+	if req.Name != "" {
+		var userIDForGivenUsername model.UserID
+		nameFilterExpr := "%" + req.Name + "%"
+		err := db.Bun().NewSelect().
+			Table("users").
+			Column("id").
+			Where("username ILIKE ?", nameFilterExpr).
+			Scan(ctx, &userIDForGivenUsername)
+		if err != nil {
+			return nil, err
+		}
+		query.Where("us.user_id = ?", userIDForGivenUsername)
+	}
+
+	// Get only Long lived token type
+	query.Where("us.token_type = ?", model.TokenTypeLongLivedToken)
+
+	if req.IsRevoked != nil {
+		query.Where("us.is_revoked = ?", *req.IsRevoked)
+	}
+
+	orderBy, ok := orderByMap[req.OrderBy]
+	if !ok {
+		return nil, fmt.Errorf("unsupported order by %s", req.OrderBy)
+	}
+	sortColumn, ok := sortColMap[req.SortBy]
+	if !ok {
+		return nil, fmt.Errorf("unsupported sort by %s", req.SortBy)
+	}
+	query.OrderExpr("? ?", bun.Ident(sortColumn), bun.Safe(orderBy))
+	if sortColumn != "id" {
+		query.OrderExpr("id asc")
+	}
+
+	err := query.Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	if err = user.AuthZProvider.Get().CanGetAllLongLivedTokens(ctx, *curUser); err != nil {
+		return nil, status.Error(codes.PermissionDenied, err.Error())
+	}
+
+	res := &apiv1.GetAllLongLivedTokensResponse{}
+	for _, s := range userSessions {
+		res.LongLivedTokenInfo = append(res.LongLivedTokenInfo, s.Proto())
+	}
+	return res, api.Paginate(&res.Pagination, &res.LongLivedTokenInfo, req.Offset, req.Limit)
+}
+
+// GET User Long lived token takes user id and returns token information for the given user.
+func (a *apiServer) GetUserLongLivedToken(
+	ctx context.Context, req *apiv1.GetUserLongLivedTokenRequest,
+) (*apiv1.GetUserLongLivedTokenResponse, error) {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	targetFullUser, err := getFullModelUser(ctx, model.UserID(req.UserId))
+	if err != nil {
+		return nil, err
+	}
+	targetUser := targetFullUser.ToUser()
+	if err = user.AuthZProvider.Get().CanGetUsersToken(ctx, *curUser, targetUser); err != nil {
+		return nil, status.Error(codes.PermissionDenied, err.Error())
+	}
+
+	tokenInfo, err := user.GetLongLivedTokenInfo(ctx, targetFullUser.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	return &apiv1.GetUserLongLivedTokenResponse{LongLivedTokenInfo: tokenInfo.Proto()}, nil
+}
+
+// DELETE Long lived token deletes long lived token with current logged in user_id.
+func (a *apiServer) DeleteLongLivedToken(
+	ctx context.Context, req *apiv1.DeleteLongLivedTokenRequest,
+) (*apiv1.DeleteLongLivedTokenResponse, error) {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err = user.AuthZProvider.Get().CanDeleteUsersOwnToken(ctx, *curUser); err != nil {
+		return nil, status.Error(codes.PermissionDenied, err.Error())
+	}
+
+	err = user.DeleteLongLivenTokenByUserID(ctx, curUser.ID)
+	if err != nil {
+		return nil, err
+	}
+	return &apiv1.DeleteLongLivedTokenResponse{}, nil
+}
+
+// DELETE Long lived token deletes long lived token with given id.
+func (a *apiServer) DeleteLongLivedTokenByTokenID(
+	ctx context.Context, req *apiv1.DeleteLongLivedTokenByTokenIDRequest,
+) (*apiv1.DeleteLongLivedTokenByTokenIDResponse, error) {
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	userIDFromTokenID, err := getUserIDFromTokenID(ctx, req.TokenId)
+	if err != nil || userIDFromTokenID < 1 {
+		return nil, err
+	}
+
+	targetFullUser, err := getFullModelUser(ctx, userIDFromTokenID)
+	if err != nil {
+		return nil, err
+	}
+	targetUser := targetFullUser.ToUser()
+	if err = user.AuthZProvider.Get().CanDeleteUsersToken(ctx, *curUser, targetUser); err != nil {
+		return nil, status.Error(codes.PermissionDenied, err.Error())
+	}
+
+	err = user.DeleteLongLivenTokenByTokenID(ctx, model.SessionID(req.TokenId))
+	if err != nil {
+		return nil, err
+	}
+
+	return &apiv1.DeleteLongLivedTokenByTokenIDResponse{}, nil
 }

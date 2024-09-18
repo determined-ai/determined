@@ -104,6 +104,61 @@ func (a *UserAuthZBasic) CanSetUsersDisplayName(
 	return nil
 }
 
+// CanCreateUsersOwnToken always returns nil.
+func (a *UserAuthZBasic) CanCreateUsersOwnToken(ctx context.Context, curUser model.User) error {
+	return nil
+}
+
+// CanCreateUsersToken returns an error if the user is not an admin.
+func (a *UserAuthZBasic) CanCreateUsersToken(
+	ctx context.Context, curUser, targetUser model.User,
+) error {
+	if !curUser.Admin && curUser.ID != targetUser.ID {
+		return fmt.Errorf("only admin privileged users can create token for other users")
+	}
+	return nil
+}
+
+// CanGetUsersOwnToken always returns nil.
+func (a *UserAuthZBasic) CanGetUsersOwnToken(ctx context.Context, curUser model.User) error {
+	return nil
+}
+
+// CanGetUsersToken returns an error if the user is not an admin.
+func (a *UserAuthZBasic) CanGetUsersToken(
+	ctx context.Context, curUser, targetUser model.User,
+) error {
+	if !curUser.Admin && curUser.ID != targetUser.ID {
+		return fmt.Errorf("only admin privileged users can view token of other users")
+	}
+	return nil
+}
+
+// CanGetAllLongLivedTokens returns an error if the user is not an admin.
+func (a *UserAuthZBasic) CanGetAllLongLivedTokens(
+	ctx context.Context, curUser model.User,
+) error {
+	if !curUser.Admin {
+		return fmt.Errorf("only admin privileged users view all users token")
+	}
+	return nil
+}
+
+// CanDeleteUsersOwnToken always returns nil.
+func (a *UserAuthZBasic) CanDeleteUsersOwnToken(ctx context.Context, curUser model.User) error {
+	return nil
+}
+
+// CanDeleteUsersToken returns an error if the user is not an admin.
+func (a *UserAuthZBasic) CanDeleteUsersToken(
+	ctx context.Context, curUser, targetUser model.User,
+) error {
+	if !curUser.Admin && curUser.ID != targetUser.ID {
+		return fmt.Errorf("only admin privileged users can delete token of other users")
+	}
+	return nil
+}
+
 // CanGetUsersImage always returns nil.
 func (a *UserAuthZBasic) CanGetUsersImage(
 	ctx context.Context, curUser, targetUser model.User,
