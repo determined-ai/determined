@@ -4,98 +4,65 @@
  Workload Alerting
 ###################
 
-Workload alerting allows you to monitor the state of your experiments and share important information with your team members. This feature enables proactive issue detection while maintaining a good signal-to-noise ratio.
+Workload alerting allows you to monitor the state of your experiments and share important
+information with your team members. This feature enables proactive issue detection while maintaining
+a good signal-to-noise ratio.
 
 .. note::
-   This is an experimental feature. You need to enable the "Webhook Improvement" feature to use these capabilities.
 
-*****************
+   To use this experimental feature, enable "Webhook Improvement" in :ref:`user settings
+   <web-ui-user-settings>`.
+
+**************
  Key Concepts
-*****************
+**************
 
-- Webhook Subscription Modes: "Open" (All experiments in the Workspace) and "Run specific" (Specific experiment(s) with matching configuration)
-- Webhook Exclusion
-- Custom Triggers
-- Alert Levels: INFO, WARN, DEBUG, ERROR
+-  Webhook Trigger by options: "All experiments in Workspace" and "Specific experiment(s) with
+   matching configuration"
+-  Webhook Exclusion
+-  Trigger Types: COMPLETED, ERROR, TASKLOG, CUSTOM
+-  Alert Levels: INFO, WARN, DEBUG, ERROR
+
+For detailed information on supported triggers and example usage, see :ref:`notifications`.
 
 *******************
  Creating Webhooks
 *******************
 
-As a non-admin user, you can configure webhooks. Here's how to create webhooks in different workspaces:
+As a non-admin user with Editor or higher permissions, you can configure webhooks within your
+workspace. Here's how to create webhooks:
 
-1. Navigate to the Webhooks section in the WebUI.
-2. Click "New Webhook".
-3. In the New Webhook dialogue:
-   - Select your Workspace
-   - Name your webhook
-   - Paste the webhook URL (e.g., from Zapier)
-   - Set type to Default
-   - Select the trigger event (COMPLETED, ERROR, TASKLOG, or CUSTOM)
-   - In "Trigger by", select either "All experiments in the Workspace" or "Specific experiment(s) with matching configuration"
-4. Click Create Webhook
+#. Navigate to the **Webhooks** section in the WebUI.
 
-*******************
+#. Select **New Webhook**.
+
+#. In the New Webhook dialogue: - Select your Workspace - Name your webhook - Paste the webhook URL
+   (e.g., from Zapier) - Set Type to either Default or Slack - Select the Trigger event (COMPLETED,
+   ERROR, TASKLOG, or CUSTOM) - Choose the Trigger by option: "All experiments in Workspace" or
+   "Specific experiment(s) with matching configuration - If "Specific experiment(s) with matching
+   configuration", note the Webhook Name for use in experiment configurations
+
+#. Click **Create Webhook**.
+
+***********
  Use Cases
-*******************
+***********
 
-Determined supports global and workspace-specific webhooks.
+Case 1: Share Simple State on All Experiments in Workspace
+==========================================================
 
-Global Webhooks
-===============
+To monitor all experiments in a workspace:
 
-Global webhooks are triggered for all experiments across all workspaces, providing a centralized way to monitor and receive notifications for your entire cluster.
+#. Create a webhook with the "Open" subscription mode.
+#. Select the desired trigger events (COMPLETED, ERROR, TASKLOG).
+#. All experiments in the workspace will now trigger this webhook unless explicitly excluded.
 
-To create a global webhook:
+Case 2: Exclude Specific Experiments from Triggering Webhooks
+=============================================================
 
-1. Navigate to the Webhooks section in the WebUI.
-2. Click "New Webhook".
-3. In the New Webhook dialogue:
-   - Leave the Workspace field empty or select "Global" if available
-   - Follow the same steps as creating a regular webhook for the remaining fields
+To prevent a specific experiment from triggering webhooks during iteration:
 
-Global webhooks are particularly useful for cluster-wide monitoring and alerting. They can be used to:
-
-- Track overall cluster usage and performance
-- Monitor for system-wide issues or errors
-- Provide a comprehensive view of all experiments running across different workspaces
-
-.. note::
-   Global webhooks require appropriate permissions. If you don't see the option to create a global webhook, consult with your system administrator.
-
-Triggering Webhooks Within the Same Workspace
-=============================================
-
-Experiments only trigger webhooks within the same workspace. To verify:
-
-1. Create an experiment in the workspace where you set up the webhook.
-2. Run the experiment.
-3. Check the event log in your webhook service (e.g., Zapier) to see if it was triggered upon experiment completion.
-
-Triggering Specific Webhooks with Matching Configurations
-=========================================================
-
-To set up a webhook that only triggers for specific experiments:
-
-1. Create a webhook with the "Run specific" mode.
-2. Set "Trigger by" to "Specific experiment(s) with matching configuration".
-3. In the experiment configuration, reference the webhook:
-
-   .. code:: yaml
-
-      integrations:
-        webhooks:
-          webhook_name:
-            - your-specific-webhook-name
-
-4. Run the experiment and check the event log in your webhook service.
-
-Excluding Experiments from Webhooks
-===================================
-
-To prevent a specific experiment from triggering webhooks:
-
-1. Edit the experiment configuration:
+#. Edit the experiment configuration:
 
    .. code:: yaml
 
@@ -103,40 +70,49 @@ To prevent a specific experiment from triggering webhooks:
         webhooks:
           exclude: true
 
-2. Run the experiment and verify that no webhooks are triggered.
+#. Run the experiment and verify that no webhooks are triggered.
 
-Using Custom Triggers
-=====================
+Case 3: Customizable Monitoring for Specific Experiments
+========================================================
 
-To create and use custom triggers:
+To set up custom monitoring for specific experiments:
 
-1. Create a new webhook with the trigger set to "CUSTOM".
-2. Edit the experiment config to match the custom trigger:
+#. Create a webhook with the "Specific experiment(s) with matching configuration" option and
+   "CUSTOM" trigger type.
+
+#. Note the Webhook Name.
+
+#. In the experiment configuration, reference the webhook:
 
    .. code:: yaml
 
       integrations:
         webhooks:
           webhook_name:
-            - your-custom-webhook-name
+            - <webhook_name>
 
-3. In your experiment code, use the `core_context.alert()` function to trigger the webhook:
+#. In your experiment code, use the `core_context.alert()` function to trigger the webhook:
 
    .. code:: python
 
-      core_context.alert(
-          title="Custom Alert",
-          description="This is a custom alert",
-          level="INFO"
-      )
+      with det.core.init() as core_context:
+          core_context.alert(
+              title="Custom Alert",
+              description="This is a custom alert",
+              level="INFO"
+          )
 
-4. Run the experiment and check the event log in your webhook service for the custom data.
+#. Run the experiment and check the event log in your webhook service for the custom data.
 
-*****************
+For more details on custom triggers, see :ref:`notifications`.
+
+****************
  Best Practices
-*****************
+****************
 
-- Use specific webhooks for critical experiments to avoid alert fatigue.
-- Leverage custom triggers for fine-grained control over when alerts are sent.
-- Regularly review and update your webhook configurations to ensure they remain relevant and useful.
-
+-  Use "Open" subscription mode for general monitoring of all experiments in a workspace.
+-  Leverage "Run specific" mode and custom triggers for fine-grained control over alerts for
+   critical experiments.
+-  Use webhook exclusion for experiments under active iteration to reduce noise.
+-  Regularly review and update your webhook configurations to ensure they remain relevant and
+   useful.
