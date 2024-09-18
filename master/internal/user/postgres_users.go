@@ -552,25 +552,40 @@ func RevokeAndCreateLongLivedToken(
 
 // DeleteLongLivenTokenByUserID marks column is_revoked to true with the given userID and its long lived token.
 func DeleteLongLivenTokenByUserID(ctx context.Context, userID model.UserID) error {
-	res, err := db.Bun().NewUpdate().
-		Table("user_sessions").
-		Set("is_revoked = true").
-		Where("user_id = ?", userID).
+	var tokenInfo model.UserSession
+
+	// Execute the query to fetch the active token info for the given user_id
+	err := db.Bun().NewSelect().Table("user_sessions").
+		Where("user_id = ?", userID).Where("is_revoked = ?", false).
 		Where("token_type = ?", model.TokenTypeLongLivedToken).
-		Exec(ctx)
+		Scan(ctx, &tokenInfo)
 	if err != nil {
-		return err // Return error if the delete operation itself failed
+		return err
 	}
+	if tokenInfo.ID == 0 {
+		return fmt.Errorf("no active token info found with user_id: %v", userID)
+	} else {
 
-	// Check how many rows were affected
-	rowsAffected, err := res.RowsAffected()
-	if err != nil {
-		return err // Return error if checking the rows affected failed
-	}
+		res, err := db.Bun().NewUpdate().
+			Table("user_sessions").
+			Set("is_revoked = true").
+			Where("user_id = ?", userID).
+			Where("token_type = ?", model.TokenTypeLongLivedToken).
+			Exec(ctx)
+		if err != nil {
+			return err // Return error if the delete operation itself failed
+		}
 
-	if rowsAffected == 0 {
-		// Custom error when no rows were found
-		return fmt.Errorf("no long lived token rows found with user_id: %v", userID)
+		// Check how many rows were affected
+		rowsAffected, err := res.RowsAffected()
+		if err != nil {
+			return err // Return error if checking the rows affected failed
+		}
+
+		if rowsAffected == 0 {
+			// Custom error when no rows were found
+			return fmt.Errorf("no long lived token rows found with user_id: %v", userID)
+		}
 	}
 
 	return nil // Return nil if deletion was successful
@@ -590,22 +605,36 @@ func DeleteLongLivenTokenByToken(ctx context.Context, token string) error {
 
 // DeleteLongLivenTokenByTokenID deletes the user session with the given ID.
 func DeleteLongLivenTokenByTokenID(ctx context.Context, sessionID model.SessionID) error {
-	res, err := db.Bun().NewUpdate().
-		Table("user_sessions").
-		Set("is_revoked = true").
-		Where("id = ?", sessionID).
-		Exec(ctx)
+	var tokenInfo model.UserSession
+
+	// Execute the query to fetch the active token info for the given user_id
+	err := db.Bun().NewSelect().Table("user_sessions").
+		Where("id = ?", sessionID).Where("is_revoked = ?", false).
+		Where("token_type = ?", model.TokenTypeLongLivedToken).
+		Scan(ctx, &tokenInfo)
 	if err != nil {
 		return err
 	}
+	if tokenInfo.ID == 0 {
+		return fmt.Errorf("no active token info found with id: %v", sessionID)
+	} else {
+		res, err := db.Bun().NewUpdate().
+			Table("user_sessions").
+			Set("is_revoked = true").
+			Where("id = ?", sessionID).
+			Exec(ctx)
+		if err != nil {
+			return err
+		}
 
-	rowsAffected, err := res.RowsAffected()
-	if err != nil {
-		return err
-	}
+		rowsAffected, err := res.RowsAffected()
+		if err != nil {
+			return err
+		}
 
-	if rowsAffected == 0 {
-		return fmt.Errorf("no rows found with session_id: %v", sessionID)
+		if rowsAffected == 0 {
+			return fmt.Errorf("no rows found with session_id: %v", sessionID)
+		}
 	}
 
 	return nil
