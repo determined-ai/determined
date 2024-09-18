@@ -128,6 +128,13 @@ SELECT
       WHERE tt.run_id = t.id
       ORDER BY ta.start_time
   ) sub_tasks)) AS task_ids,
+  (
+    (SELECT json_agg(log_signal) FILTER (WHERE log_signal IS NOT NULL) FROM (
+      SELECT ta.log_signal FROM run_id_task_id tt
+      JOIN tasks ta ON tt.task_id = ta.task_id
+      WHERE tt.run_id = t.id
+      ORDER BY ta.start_time
+  ) log_signals)) AS log_signals,
   t.checkpoint_size AS total_checkpoint_size,
   t.checkpoint_count,
   t.total_batches AS total_batches_processed,
@@ -149,3 +156,12 @@ FROM searcher_info
   LEFT JOIN best_checkpoint bc ON bc.trial_id = searcher_info.trial_id
   LEFT JOIN checkpoints_v2 new_ckpt ON new_ckpt.id = t.warm_start_checkpoint_id
   ORDER BY searcher_info.ordering
+
+
+
+-- SELECT json_agg(log_signal) FILTER (WHERE log_signal IS NOT NULL) FROM (
+--       SELECT ta.log_signal FROM run_id_task_id tt
+--       JOIN tasks ta ON tt.task_id = ta.task_id
+--       WHERE tt.run_id = 44012
+--       ORDER BY ta.start_time
+--   ) log_signals;

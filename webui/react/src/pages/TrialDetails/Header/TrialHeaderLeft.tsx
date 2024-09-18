@@ -1,3 +1,4 @@
+import Badge from 'hew/Badge';
 import Icon from 'hew/Icon';
 import React from 'react';
 import { Link } from 'react-router-dom';
@@ -6,6 +7,7 @@ import ExperimentIcons from 'components/ExperimentIcons';
 import useFeature from 'hooks/useFeature';
 import { paths } from 'routes/utils';
 import { ExperimentBase, TrialDetails } from 'types';
+import { hex2hsl } from 'utils/color';
 
 import css from './TrialHeaderLeft.module.scss';
 
@@ -26,6 +28,9 @@ const TrialHeaderLeft: React.FC<Props> = ({ experiment, trial }: Props) => {
       <div className={css.trial}>
         <ExperimentIcons state={trial.state} />
         <div>Trial {trial.id}</div>
+        {trial.logSignals?.map((s) => (
+          <Badge backgroundColor={hex2hsl('#CC0000')} key={s} text={s} />
+        ))}
       </div>
     </div>
   );
