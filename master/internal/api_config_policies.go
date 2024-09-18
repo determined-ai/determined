@@ -1,63 +1,193 @@
 package internal
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
+	"time"
 
+	"github.com/ghodss/yaml"
+	structpb "github.com/golang/protobuf/ptypes/struct"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
-	"google.golang.org/protobuf/types/known/structpb"
-	"gopkg.in/yaml.v3"
 
 	"github.com/determined-ai/determined/master/internal/configpolicy"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/license"
+	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
 const (
-	noWorkloadErr = "no workload type specified."
+	noWorkloadErr          = "no workload type specified."
+	noPoliciesErr          = "no specified config policies."
+	invalidWorkloadTypeErr = "invalid workload type"
 )
 
-func stubData() (*structpb.Struct, error) {
-	const yamlString = `
-invariant_config:
-  description: "test"
-constraints:
-  resources:
-    max_slots: 4
-  priority_limit: 10
- `
-	// put yaml string into a map
-	var yamlMap map[string]interface{}
-	if err := yaml.Unmarshal([]byte(yamlString), &yamlMap); err != nil {
-		return nil, fmt.Errorf("unable to unmarshal yaml: %w", err)
+func validatePoliciesAndWorkloadType(workloadType, configPolicies string) error {
+	if !configpolicy.ValidWorkloadType(workloadType) {
+		errMessage := fmt.Sprintf(invalidWorkloadTypeErr+": %s.", workloadType)
+		if len(workloadType) == 0 {
+			errMessage = noWorkloadErr
+		}
+		return status.Errorf(codes.InvalidArgument, errMessage)
 	}
 
-	return configpolicy.MarshalConfigPolicy(yamlMap), nil
+	if len(configPolicies) == 0 {
+		return status.Errorf(codes.InvalidArgument, noPoliciesErr)
+	}
+
+	// Validate the input config based on workload type.
+	if workloadType == model.ExperimentType {
+		_, err := configpolicy.UnmarshalExperimentConfigPolicy(configPolicies)
+		if err != nil {
+			return err
+		}
+	} else {
+		_, err := configpolicy.UnmarshalNTSCConfigPolicy(configPolicies)
+		if err != nil {
+			return err
+		}
+	}
+
+	// TODO (request validation): Verify that configs do not violate constraints.
+	return nil
+}
+
+func parseConfigPolicies(configAndConstraints string) (tcps map[string]interface{},
+	invariantConfig *string, constraints *string, err error) {
+	if len(configAndConstraints) == 0 {
+		return nil, nil, nil, status.Error(codes.InvalidArgument, "nothing to parse, empty "+
+			"config and constraints input")
+	}
+	// Standardize to JSON policies file format.
+	configPolicies, err := yaml.YAMLToJSON([]byte(configAndConstraints))
+
+	// Extract individal config and constraints.
+	var policies map[string]interface{}
+	dec := json.NewDecoder(bytes.NewReader(configPolicies))
+	err = dec.Decode(&policies)
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("error unmarshaling config policies: %s", err.Error())
+	}
+
+	var configPolicy *string
+	if invariantConfig, ok := policies["invariant_config"]; ok {
+		configPolicyBytes, err := json.Marshal(invariantConfig)
+		if err != nil {
+			return nil, nil, nil,
+				fmt.Errorf("error marshaling input invariant config policy: %s", err.Error())
+		}
+		configPolicy = ptrs.Ptr(string(configPolicyBytes))
+
+	}
+
+	var constraintsPolicy *string
+	if constraints, ok := policies["constraints"]; ok {
+		constraintsPolicyBytes, err := json.Marshal(constraints)
+		if err != nil {
+			return nil, nil, nil, fmt.Errorf("error marshaling input constraints policy: %s",
+				err.Error())
+		}
+		constraintsPolicy = ptrs.Ptr(string(constraintsPolicyBytes))
+	}
+
+	return policies, configPolicy, constraintsPolicy, nil
 }
 
 // Add or update workspace task config policies.
-func (*apiServer) PutWorkspaceConfigPolicies(
+func (a *apiServer) PutWorkspaceConfigPolicies(
 	ctx context.Context, req *apiv1.PutWorkspaceConfigPoliciesRequest,
 ) (*apiv1.PutWorkspaceConfigPoliciesResponse, error) {
-	if !configpolicy.ValidWorkloadType(req.WorkloadType) {
-		return nil, fmt.Errorf("invalid workload type: %s", req.WorkloadType)
+	license.RequireLicense("manage config policies")
+
+	// Request Validation
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
 	}
-	data, err := stubData()
-	return &apiv1.PutWorkspaceConfigPoliciesResponse{ConfigPolicies: data}, err
+
+	w, err := a.GetWorkspaceByID(ctx, req.WorkspaceId, *curUser, false)
+	if err != nil {
+		return nil, err
+	}
+
+	err = configpolicy.AuthZProvider.Get().CanModifyWorkspaceConfigPolicies(ctx, *curUser, w)
+	if err != nil {
+		return nil, err
+	}
+
+	err = validatePoliciesAndWorkloadType(req.WorkloadType, req.ConfigPolicies)
+	if err != nil {
+		return nil, err
+	}
+
+	configPolicies, invariantConfig, constraints, err := parseConfigPolicies(req.ConfigPolicies)
+	if err != nil {
+		return nil, err
+	}
+
+	err = configpolicy.SetTaskConfigPolicies(ctx, &model.TaskConfigPolicies{
+		WorkspaceID:     ptrs.Ptr(int(req.WorkspaceId)),
+		WorkloadType:    req.WorkloadType,
+		LastUpdatedBy:   curUser.ID,
+		LastUpdatedTime: time.Now(),
+		InvariantConfig: invariantConfig,
+		Constraints:     constraints,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error setting task config policies: %w", err)
+	}
+
+	return &apiv1.PutWorkspaceConfigPoliciesResponse{
+			ConfigPolicies: configpolicy.MarshalConfigPolicy(configPolicies),
+		},
+		err
 }
 
 // Add or update global task config policies.
-func (*apiServer) PutGlobalConfigPolicies(
+func (a *apiServer) PutGlobalConfigPolicies(
 	ctx context.Context, req *apiv1.PutGlobalConfigPoliciesRequest,
 ) (*apiv1.PutGlobalConfigPoliciesResponse, error) {
-	if !configpolicy.ValidWorkloadType(req.WorkloadType) {
-		return nil, fmt.Errorf("invalid workload type: %s", req.WorkloadType)
+	license.RequireLicense("manage config policies")
+
+	curUser, _, err := grpcutil.GetUser(ctx)
+	if err != nil {
+		return nil, err
 	}
-	data, err := stubData()
-	return &apiv1.PutGlobalConfigPoliciesResponse{ConfigPolicies: data}, err
+
+	err = configpolicy.AuthZProvider.Get().CanModifyGlobalConfigPolicies(ctx, curUser)
+	if err != nil {
+		return nil, err
+	}
+
+	err = validatePoliciesAndWorkloadType(req.WorkloadType, req.ConfigPolicies)
+	if err != nil {
+		return nil, err
+	}
+
+	configPolicies, invariantConfig, constraints, err := parseConfigPolicies(req.ConfigPolicies)
+	if err != nil {
+		return nil, err
+	}
+
+	err = configpolicy.SetTaskConfigPolicies(ctx, &model.TaskConfigPolicies{
+		WorkloadType:    req.WorkloadType,
+		LastUpdatedBy:   curUser.ID,
+		LastUpdatedTime: time.Now(),
+		InvariantConfig: invariantConfig,
+		Constraints:     constraints,
+	})
+	if err != nil {
+		return nil, fmt.Errorf("error setting task config policies: %w", err)
+	}
+
+	return &apiv1.PutGlobalConfigPoliciesResponse{
+			ConfigPolicies: configpolicy.MarshalConfigPolicy(configPolicies),
+		},
+		err
 }
 
 // Get workspace task config policies.
@@ -117,7 +247,7 @@ func (*apiServer) getConfigPolicies(
 	ctx context.Context, workspaceID *int, workloadType string,
 ) (*structpb.Struct, error) {
 	if !configpolicy.ValidWorkloadType(workloadType) {
-		errMessage := fmt.Sprintf("invalid workload type: %s.", workloadType)
+		errMessage := fmt.Sprintf(invalidWorkloadTypeErr+": %s.", workloadType)
 		if len(workloadType) == 0 {
 			errMessage = noWorkloadErr
 		}
@@ -169,7 +299,7 @@ func (a *apiServer) DeleteWorkspaceConfigPolicies(
 	}
 
 	if !configpolicy.ValidWorkloadType(req.WorkloadType) {
-		errMessage := fmt.Sprintf("invalid workload type: %s.", req.WorkloadType)
+		errMessage := fmt.Sprintf(invalidWorkloadTypeErr+": %s.", req.WorkloadType)
 		if len(req.WorkloadType) == 0 {
 			errMessage = noWorkloadErr
 		}
@@ -201,7 +331,7 @@ func (a *apiServer) DeleteGlobalConfigPolicies(
 	}
 
 	if !configpolicy.ValidWorkloadType(req.WorkloadType) {
-		errMessage := fmt.Sprintf("invalid workload type: %s.", req.WorkloadType)
+		errMessage := fmt.Sprintf(invalidWorkloadTypeErr+": %s.", req.WorkloadType)
 		if len(req.WorkloadType) == 0 {
 			errMessage = noWorkloadErr
 		}
