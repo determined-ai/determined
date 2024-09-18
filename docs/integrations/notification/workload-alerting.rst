@@ -36,11 +36,15 @@ workspace. Here's how to create webhooks:
 
 #. Select **New Webhook**.
 
-#. In the New Webhook dialogue: - Select your Workspace - Name your webhook - Paste the webhook URL
-   (e.g., from Zapier) - Set Type to either Default or Slack - Select the Trigger event (COMPLETED,
-   ERROR, TASKLOG, or CUSTOM) - Choose the Trigger by option: "All experiments in Workspace" or
-   "Specific experiment(s) with matching configuration - If "Specific experiment(s) with matching
-   configuration", note the Webhook Name for use in experiment configurations
+#. In the New Webhook dialogue:
+
+   - Select your Workspace
+   - Name your webhook
+   - Paste the webhook URL (e.g., from Zapier)
+   - Set Type to either Default or Slack
+   - Select the Trigger event (COMPLETED, ERROR, TASKLOG, or CUSTOM)
+   - Choose the Trigger by option: "All experiments in Workspace" or "Specific experiment(s) with matching configuration"
+   - If "Specific experiment(s) with matching configuration", note the Webhook Name for use in experiment configurations
 
 #. Click **Create Webhook**.
 
