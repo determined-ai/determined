@@ -181,6 +181,11 @@ const WebhookCreateModalComponent: React.FC<Props> = ({ onSuccess }: Props) => {
         handler: handleSubmit,
         text: 'Create Webhook',
       }}
+      footerLink={
+        <Link external path={paths.docs('/integrations/notification/_index.html')} popout>
+          Learn more
+        </Link>
+      }
       title="New Webhook">
       <Form
         autoComplete="off"
@@ -254,9 +259,6 @@ const WebhookCreateModalComponent: React.FC<Props> = ({ onSuccess }: Props) => {
             />
           </Form.Item>
         )}
-        <Link external path={paths.docs('/integrations/notification/_index.html')} popout>
-          Learn more
-        </Link>
       </Form>
     </Modal>
   );
