@@ -304,9 +304,9 @@ func TestGetConfigPolicies(t *testing.T) {
 			require.NotNil(t, resp)
 
 			if test.hasConfig {
-				require.Contains(t, resp.String(), "config")
+				require.Contains(t, resp.String(), "invariant_config")
 			} else {
-				require.NotContains(t, resp.String(), "config")
+				require.NotContains(t, resp.String(), "invariant_config")
 			}
 
 			if test.hasConstraints {
@@ -321,7 +321,7 @@ func TestGetConfigPolicies(t *testing.T) {
 func setUpTaskConfigPolicies(ctx context.Context, t *testing.T,
 	workspaceID1 *int, workspaceID2 *int, userID model.UserID,
 ) {
-	// set only constraints policy for workspace 1
+	// set only Experiment constraints policy for workspace 1
 	taskConfigPolicies := &model.TaskConfigPolicies{
 		WorkspaceID:   workspaceID1,
 		WorkloadType:  model.ExperimentType,
@@ -331,20 +331,20 @@ func setUpTaskConfigPolicies(ctx context.Context, t *testing.T,
 	err := configpolicy.SetTaskConfigPolicies(ctx, taskConfigPolicies)
 	require.NoError(t, err)
 
-	// set only config policy for workspace 1
+	// set only NTSC config policy for workspace 1
 	taskConfigPolicies.WorkloadType = model.NTSCType
 	taskConfigPolicies.Constraints = nil
 	taskConfigPolicies.InvariantConfig = ptrs.Ptr(configpolicy.DefaultInvariantConfigStr)
 	err = configpolicy.SetTaskConfigPolicies(ctx, taskConfigPolicies)
 	require.NoError(t, err)
 
-	// set both config and constraints policy for workspace 2
+	// set both config and constraints policy for workspace 2 (NTSC)
 	taskConfigPolicies.WorkspaceID = workspaceID2
 	taskConfigPolicies.Constraints = ptrs.Ptr(configpolicy.DefaultConstraintsStr)
 	err = configpolicy.SetTaskConfigPolicies(ctx, taskConfigPolicies)
 	require.NoError(t, err)
 
-	// set both config and constraints policy globally
+	// set both config and constraints policy globally (NTSC)
 	taskConfigPolicies.WorkspaceID = nil
 	err = configpolicy.SetTaskConfigPolicies(ctx, taskConfigPolicies)
 	require.NoError(t, err)
