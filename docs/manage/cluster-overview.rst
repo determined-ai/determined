@@ -18,6 +18,9 @@ To access the Cluster Overview:
 #. From the left navigation pane, select **Cluster**.
 #. The overview will be the default view under the Cluster section.
 
+.. image:: /assets/images/webui-cluster-overview.png
+   :alt: A view of the Determined WebUI Cluster Overview tab
+
 *****************
  Page Components
 *****************
@@ -44,13 +47,24 @@ The slots allocated bar provides a visual representation of resource utilization
 
 The bar is divided into different colors representing various slot types:
 
--  Unspecified/Compute Slots (Gray): Used for resource pools with mixed slot types or when the slot
-   type is not explicitly defined.
--  CUDA Slots (Green): Represents GPU resources, typically used for CUDA-enabled workloads.
--  CPU Slots (Blue): Indicates CPU resources for CPU-only tasks.
+-  Unspecified Slots (Gray): Used for resource pools with mixed slot types or when the slot type is
+   not explicitly defined. This replaces the previous "Compute Slots" terminology.
+-  CUDA Slots (Blue): Represents GPU resources, typically used for CUDA-enabled workloads.
+-  CPU Slots (Green): Indicates CPU resources for CPU-only tasks.
 
 This color-coding helps quickly identify the distribution and usage of different resource types
 across your cluster.
+
+Slot Type Explanation
+---------------------
+
+-  Unspecified Slots: Used for resource pools that contain a mix of different slot types (e.g., both
+   GPUs and CPUs) or when the slot type is not explicitly defined.
+-  CUDA Slots: Specifically for resource pools that only contain NVIDIA GPU resources.
+-  CPU Slots: For resource pools that only contain CPU resources.
+
+The "Unspecified Slots Allocated" label is used for resource pools with mixed slot types to provide
+a clear indication of the diverse resource allocation within that pool.
 
 Resource Pools
 ==============
