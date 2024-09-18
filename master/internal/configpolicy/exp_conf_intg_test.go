@@ -3,7 +3,6 @@ package configpolicy
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"testing"
 	"time"
 
@@ -47,8 +46,6 @@ func TestExpConfUnmarshal(t *testing.T) {
 	// 3. create user exp conf
 	userExpConf := expconf.ExperimentConfig{}
 	userExpConf = schemas.WithDefaults(userExpConf)
-	fmt.Println("user exp conf:")
-	fmt.Println(*userExpConf.Environment().Image().RawROCM)
 	require.Equal(t, "determinedai/environments:rocm-5.6-pytorch-1.3-tf-2.10-rocm-mpich-0736b6d", *userExpConf.Environment().Image().RawROCM)
 
 	// 4. apply invariant config
