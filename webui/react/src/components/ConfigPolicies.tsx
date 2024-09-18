@@ -2,7 +2,7 @@ import Alert from 'hew/Alert';
 import Button from 'hew/Button';
 import CodeEditor from 'hew/CodeEditor';
 import Column from 'hew/Column';
-import Form from 'hew/Form';
+import Form, { hasErrors } from 'hew/Form';
 import Row from 'hew/Row';
 import Spinner from 'hew/Spinner';
 import { useToast } from 'hew/Toast';
@@ -82,6 +82,10 @@ const ConfigPolicies: React.FC<Props> = ({ workspaceId }: Props) => {
 
   const initialTaskYAML = yaml.dump(loadableTaskConfigPolicies.getOrElse(undefined));
 
+  const handleChange = () => {
+    setDisabled(hasErrors(form) || form.getFieldValue('task') === initialTaskYAML);
+  };
+
   if (rbacLoading) return <Spinner spinning />;
 
   return (
@@ -105,7 +109,7 @@ const ConfigPolicies: React.FC<Props> = ({ workspaceId }: Props) => {
       </Row>
       <Row width="fill">
         <div style={{ width: '100%' }}>
-          <Form form={form}>
+          <Form form={form} onFieldsChange={handleChange}>
             <Form.Item
               name="task"
               rules={[
@@ -113,14 +117,8 @@ const ConfigPolicies: React.FC<Props> = ({ workspaceId }: Props) => {
                   validator: (_, value) => {
                     try {
                       yaml.load(value);
-                      if (value === initialTaskYAML) {
-                        setDisabled(true);
-                      } else {
-                        setDisabled(false);
-                      }
                       return Promise.resolve();
                     } catch (err: unknown) {
-                      setDisabled(true);
                       return Promise.reject(
                         new Error(
                           `Invalid YAML on line ${(err as { mark: { line: string } }).mark.line}.`,
