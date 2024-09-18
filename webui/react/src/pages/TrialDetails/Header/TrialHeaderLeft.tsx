@@ -16,6 +16,8 @@ interface Props {
   trial: TrialDetails;
 }
 
+const signalMaxLength = 12;
+
 const TrialHeaderLeft: React.FC<Props> = ({ experiment, trial }: Props) => {
   const f_flat_runs = useFeature().isOn('flat_runs');
 
@@ -29,7 +31,11 @@ const TrialHeaderLeft: React.FC<Props> = ({ experiment, trial }: Props) => {
         <ExperimentIcons state={trial.state} />
         <div>Trial {trial.id}</div>
         {trial.logSignals?.map((s) => (
-          <Badge backgroundColor={hex2hsl('#CC0000')} key={s} text={s} />
+          <Badge
+            backgroundColor={hex2hsl('#CC0000')}
+            key={s}
+            text={s.length < signalMaxLength ? s : `${s.slice(0, signalMaxLength)}...`}
+          />
         ))}
       </div>
     </div>
