@@ -13,6 +13,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/apiv2"
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
@@ -117,4 +118,34 @@ func (a *apiServer) GetSearch(
 	}
 
 	return &resp, nil
+}
+
+func (a *apiServer) GetSearcherEventsV2(
+	ctx context.Context, req *apiv2.GetSearcherEventsV2Request,
+) (*apiv2.GetSearcherEventsV2Response, error) {
+	expReq := apiv1.GetSearcherEventsRequest{
+		ExperimentId: req.SearchId,
+	}
+	expRes, err := a.GetSearcherEvents(ctx, &expReq)
+	if err != nil {
+		return nil, err
+	}
+	res := apiv2.GetSearcherEventsV2Response{
+		SearcherEvents: expRes.SearcherEvents,
+	}
+	return &res, nil
+}
+
+func (a *apiServer) PostSearcherOperationsV2(
+	ctx context.Context, req *apiv2.PostSearcherOperationsV2Request,
+) (*apiv2.PostSearcherOperationsV2Response, error) {
+	expReq := apiv1.PostSearcherOperationsRequest{
+		ExperimentId: req.SearchId,
+	}
+	_, err := a.PostSearcherOperations(ctx, &expReq)
+	if err != nil {
+		return nil, err
+	}
+	res := apiv2.PostSearcherOperationsV2Response{}
+	return &res, nil
 }
