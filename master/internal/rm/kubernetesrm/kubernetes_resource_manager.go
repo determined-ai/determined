@@ -726,3 +726,8 @@ func (k ResourceManager) DisableSlot(
 ) (resp *apiv1.DisableSlotResponse, err error) {
 	return nil, rmerrors.ErrNotSupported
 }
+
+// SmallerValueIsHigherPriority returns true if smaller priority values indicate a higher priority level.
+func (k *ResourceManager) SmallerValueIsHigherPriority() (bool, error) {
+	return false, nil
+}
