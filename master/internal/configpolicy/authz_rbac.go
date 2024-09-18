@@ -57,8 +57,9 @@ func (r *ConfigPolicyAuthZRBAC) CanViewWorkspaceConfigPolicies(
 
 // CanModifyGlobalConfigPolicies checks if the user can modify global
 // task config policies.
-func (a *ConfigPolicyAuthZRBAC) CanModifyGlobalConfigPolicies(
-	ctx context.Context, curUser *model.User) error {
+func (r *ConfigPolicyAuthZRBAC) CanModifyGlobalConfigPolicies(
+	ctx context.Context, curUser *model.User,
+) error {
 	return db.DoesPermissionMatch(
 		ctx,
 		curUser.ID,
@@ -68,7 +69,7 @@ func (a *ConfigPolicyAuthZRBAC) CanModifyGlobalConfigPolicies(
 }
 
 // CanViewGlobalConfigPolicies checks if the user can view global task config policies.
-func (a *ConfigPolicyAuthZRBAC) CanViewGlobalConfigPolicies(
+func (r *ConfigPolicyAuthZRBAC) CanViewGlobalConfigPolicies(
 	ctx context.Context, curUser *model.User,
 ) error {
 	return db.DoesPermissionMatch(

@@ -76,7 +76,7 @@ func (a *apiServer) GetWorkspaceConfigPolicies(
 		return nil, err
 	}
 
-	err = workspace.AuthZProvider.Get().CanViewWorkspaceConfigPolicies(ctx, *curUser, w)
+	err = configpolicy.AuthZProvider.Get().CanViewWorkspaceConfigPolicies(ctx, *curUser, w)
 	if err != nil {
 		return nil, err
 	}
