@@ -1,6 +1,7 @@
 package internal
 
 import (
+	"context"
 	"database/sql"
 	"fmt"
 	"testing"
@@ -224,33 +225,7 @@ func TestGetConfigPolicies(t *testing.T) {
 	require.NoError(t, err)
 	workspaceID2 := ptrs.Ptr(int(wkspResp.Workspace.Id))
 
-	// set only constraints policy for workspace 1
-	taskConfigPolicies := &model.TaskConfigPolicies{
-		WorkspaceID:   workspaceID1,
-		WorkloadType:  model.ExperimentType,
-		LastUpdatedBy: curUser.ID,
-		Constraints:   ptrs.Ptr(configpolicy.DefaultConstraintsStr),
-	}
-	err = configpolicy.SetTaskConfigPolicies(ctx, taskConfigPolicies)
-	require.NoError(t, err)
-
-	// set only config policy for workspace 1
-	taskConfigPolicies.WorkloadType = model.NTSCType
-	taskConfigPolicies.Constraints = nil
-	taskConfigPolicies.InvariantConfig = ptrs.Ptr(configpolicy.DefaultInvariantConfigStr)
-	err = configpolicy.SetTaskConfigPolicies(ctx, taskConfigPolicies)
-	require.NoError(t, err)
-
-	// set both config and constraints policy for workspace 2
-	taskConfigPolicies.WorkspaceID = workspaceID2
-	taskConfigPolicies.Constraints = ptrs.Ptr(configpolicy.DefaultConstraintsStr)
-	err = configpolicy.SetTaskConfigPolicies(ctx, taskConfigPolicies)
-	require.NoError(t, err)
-
-	// set both config and constraints policy globally
-	taskConfigPolicies.WorkspaceID = nil
-	err = configpolicy.SetTaskConfigPolicies(ctx, taskConfigPolicies)
-	require.NoError(t, err)
+	setUpTaskConfigPolicies(ctx, t, workspaceID1, workspaceID2, curUser.ID)
 
 	cases := []struct {
 		name           string
@@ -301,22 +276,6 @@ func TestGetConfigPolicies(t *testing.T) {
 			true,
 		},
 		{
-			"valid workspace request, only config",
-			workspaceID1,
-			model.NTSCType,
-			nil,
-			true,
-			false,
-		},
-		{
-			"valid workspace request, only constraints",
-			workspaceID1,
-			model.ExperimentType,
-			nil,
-			false,
-			true,
-		},
-		{
 			"valid global request both configs and constraints",
 			nil,
 			model.NTSCType,
@@ -324,11 +283,19 @@ func TestGetConfigPolicies(t *testing.T) {
 			true,
 			true,
 		},
+		{
+			"no global config policy",
+			nil,
+			model.ExperimentType,
+			nil,
+			false,
+			false,
+		},
 	}
 
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
-			resp, err := api.GetConfigPolicies(ctx, test.workspaceID, test.workloadType)
+			resp, err := api.getConfigPolicies(ctx, test.workspaceID, test.workloadType)
 			if test.err != nil {
 				require.ErrorContains(t, err, test.err.Error())
 				return
@@ -349,4 +316,36 @@ func TestGetConfigPolicies(t *testing.T) {
 			}
 		})
 	}
+}
+
+func setUpTaskConfigPolicies(ctx context.Context, t *testing.T,
+	workspaceID1 *int, workspaceID2 *int, userID model.UserID,
+) {
+	// set only constraints policy for workspace 1
+	taskConfigPolicies := &model.TaskConfigPolicies{
+		WorkspaceID:   workspaceID1,
+		WorkloadType:  model.ExperimentType,
+		LastUpdatedBy: userID,
+		Constraints:   ptrs.Ptr(configpolicy.DefaultConstraintsStr),
+	}
+	err := configpolicy.SetTaskConfigPolicies(ctx, taskConfigPolicies)
+	require.NoError(t, err)
+
+	// set only config policy for workspace 1
+	taskConfigPolicies.WorkloadType = model.NTSCType
+	taskConfigPolicies.Constraints = nil
+	taskConfigPolicies.InvariantConfig = ptrs.Ptr(configpolicy.DefaultInvariantConfigStr)
+	err = configpolicy.SetTaskConfigPolicies(ctx, taskConfigPolicies)
+	require.NoError(t, err)
+
+	// set both config and constraints policy for workspace 2
+	taskConfigPolicies.WorkspaceID = workspaceID2
+	taskConfigPolicies.Constraints = ptrs.Ptr(configpolicy.DefaultConstraintsStr)
+	err = configpolicy.SetTaskConfigPolicies(ctx, taskConfigPolicies)
+	require.NoError(t, err)
+
+	// set both config and constraints policy globally
+	taskConfigPolicies.WorkspaceID = nil
+	err = configpolicy.SetTaskConfigPolicies(ctx, taskConfigPolicies)
+	require.NoError(t, err)
 }

@@ -83,7 +83,7 @@ func (a *apiServer) GetWorkspaceConfigPolicies(
 		return nil, err
 	}
 
-	resp, err := a.GetConfigPolicies(ctx, ptrs.Ptr(int(req.WorkspaceId)), req.WorkloadType)
+	resp, err := a.getConfigPolicies(ctx, ptrs.Ptr(int(req.WorkspaceId)), req.WorkloadType)
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +108,7 @@ func (a *apiServer) GetGlobalConfigPolicies(
 	} else if permErr != nil {
 		return nil, permErr
 	}
-	resp, err := a.GetConfigPolicies(ctx, nil, req.WorkloadType)
+	resp, err := a.getConfigPolicies(ctx, nil, req.WorkloadType)
 	if err != nil {
 		return nil, err
 	}
@@ -116,7 +116,7 @@ func (a *apiServer) GetGlobalConfigPolicies(
 	return &apiv1.GetGlobalConfigPoliciesResponse{ConfigPolicies: resp}, nil
 }
 
-func (*apiServer) GetConfigPolicies(
+func (*apiServer) getConfigPolicies(
 	ctx context.Context, workspaceID *int, workloadType string,
 ) (*structpb.Struct, error) {
 	if !configpolicy.ValidWorkloadType(workloadType) {
