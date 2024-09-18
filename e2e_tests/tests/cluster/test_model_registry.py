@@ -18,7 +18,7 @@ def test_model_registry() -> None:
     exp_id = exp.run_basic_test(
         sess,
         conf.fixtures_path("mnist_pytorch/const-pytorch11.yaml"),
-        conf.tutorials_path("mnist_pytorch"),
+        conf.fixtures_path("mnist_pytorch"),
         None,
     )
     d = client.Determined._from_session(sess)
@@ -122,7 +122,7 @@ def test_model_registry() -> None:
         exp_id = exp.run_basic_test(
             sess,
             conf.fixtures_path("mnist_pytorch/const-pytorch11.yaml"),
-            conf.tutorials_path("mnist_pytorch"),
+            conf.fixtures_path("mnist_pytorch"),
             None,
         )
         checkpoint = d.get_experiment(exp_id).top_checkpoint()

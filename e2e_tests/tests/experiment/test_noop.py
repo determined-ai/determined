@@ -270,7 +270,7 @@ def test_cancel_one_active_experiment_ready() -> None:
     experiment_id = exp.create_experiment(
         sess,
         conf.tutorials_path("mnist_pytorch/const.yaml"),
-        conf.tutorials_path("mnist_pytorch"),
+        conf.fixtures_path("mnist_pytorch"),
     )
 
     while 1:

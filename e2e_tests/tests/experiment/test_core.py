@@ -81,7 +81,7 @@ def test_create_test_mode() -> None:
         "create",
         "--test-mode",
         conf.fixtures_path("mnist_pytorch/adaptive_short.yaml"),
-        conf.tutorials_path("mnist_pytorch"),
+        conf.fixtures_path("mnist_pytorch"),
     ]
     output = detproc.check_output(sess, command)
     assert "Model definition test succeeded" in output, output
@@ -150,7 +150,7 @@ def test_end_to_end_adaptive() -> None:
     exp_id = exp.run_basic_test(
         sess,
         conf.fixtures_path("mnist_pytorch/adaptive_short.yaml"),
-        conf.tutorials_path("mnist_pytorch"),
+        conf.fixtures_path("mnist_pytorch"),
         None,
     )
 
