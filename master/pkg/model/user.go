@@ -102,15 +102,15 @@ type UserSession struct {
 }
 
 // Proto returns the protobuf representation of User_Sessions table.
-func (s UserSession) Proto() *userv1.UserSessionInfo {
-	return &userv1.UserSessionInfo{
-		Id:               int32(s.ID),
-		UserId:           int32(s.UserID),
-		Expiry:           timestamppb.New(s.Expiry),
-		CreatedAt:        timestamppb.New(s.CreatedAt),
-		TokenType:        s.TokenType.Proto(),
-		IsRevoked:        s.IsRevoked,
-		TokenDescription: s.TokenDescription.ValueOrZero(),
+func (s UserSession) Proto() *userv1.TokenInfo {
+	return &userv1.TokenInfo{
+		Id:          int32(s.ID),
+		UserId:      int32(s.UserID),
+		Expiry:      timestamppb.New(s.Expiry),
+		CreatedAt:   timestamppb.New(s.CreatedAt),
+		TokenType:   s.TokenType.Proto(),
+		Revoked:     s.IsRevoked,
+		Description: s.TokenDescription.ValueOrZero(),
 	}
 }
 

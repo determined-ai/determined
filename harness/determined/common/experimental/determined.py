@@ -583,7 +583,7 @@ class Determined:
         )
         return trial._stream_validation_metrics(self._session, trial_ids)
 
-    def list_tokens(self, isRevoked: Optional[bool] = None) -> List[user.UserSessions]:
+    def list_tokens(self, isRevoked: Optional[bool] = None) -> List[user.TokenInfo]:
         def get_with_offset(offset: int) -> bindings.v1GetAllLongLivedTokensResponse:
             return bindings.get_GetAllLongLivedTokens(
                 session=self._session,
@@ -594,9 +594,9 @@ class Determined:
         resps = api.read_paginated(get_with_offset)
         userSessions = []
         for r in resps:
-            if not r.longLivedTokenInfo:
+            if not r.tokenInfo:
                 continue
-            for u in r.longLivedTokenInfo:
+            for u in r.tokenInfo:
                 userSessions.append(user.UserSessions._from_bindings(u, self._session))
 
         return userSessions

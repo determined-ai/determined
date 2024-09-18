@@ -82,7 +82,7 @@ from determined.common.experimental.trial import (  # noqa: F401
     TrialSortBy,
     TrialState,
 )
-from determined.common.experimental.user import User, UserSessions
+from determined.common.experimental.user import TokenInfo, User
 from determined.common.experimental.workspace import Workspace  # noqa: F401
 
 logger = logging.getLogger("determined.client")
@@ -662,7 +662,7 @@ def _get_singleton_session() -> _api.Session:
 
 
 @_require_singleton
-def list_tokens(isRevoked: Optional[bool] = None) -> List[UserSessions]:
+def list_tokens(isRevoked: Optional[bool] = None) -> List[TokenInfo]:
     """Get a list of all tokens.
 
     Arg:
