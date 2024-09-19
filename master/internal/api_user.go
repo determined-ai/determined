@@ -698,43 +698,11 @@ func (a *apiServer) PostUserActivity(
 	return &apiv1.PostUserActivityResponse{}, err
 }
 
-// POST Long lived token takes optional lifespan and overwrites an already existing long
-// lived token for the current logged in user.
-func (a *apiServer) PostLongLivedToken(
-	ctx context.Context, req *apiv1.PostLongLivedTokenRequest,
-) (*apiv1.PostLongLivedTokenResponse, error) {
-	curUser, _, err := grpcutil.GetUser(ctx)
-	if err != nil {
-		return nil, err
-	}
-	if err = user.AuthZProvider.Get().CanCreateUsersOwnToken(
-		ctx, *curUser); err != nil {
-		return nil, status.Error(codes.PermissionDenied, err.Error())
-	}
-
-	tokenExpiration := user.DefaultTokenLifespan
-	if req.Lifespan != "" {
-		d, err := time.ParseDuration(req.Lifespan)
-		if err != nil || d < 0 {
-			return nil, status.Error(codes.InvalidArgument,
-				"Lifespan must be a Go-formatted duration string with a positive value")
-		}
-		tokenExpiration = d
-	}
-
-	token, err := user.RevokeAndCreateLongLivedToken(
-		ctx, curUser.ID, user.WithTokenExpiry(&tokenExpiration), user.WithTokenDescription(req.Description))
-	if err != nil {
-		return nil, err
-	}
-	return &apiv1.PostLongLivedTokenResponse{Token: token}, nil
-}
-
-// POST User Long lived token takes user id and optional lifespan and overwrites an
+// PostAccessToken takes user id and optional lifespan, description and overwrites an
 // access token for the given user.
-func (a *apiServer) PostUserLongLivedToken(
-	ctx context.Context, req *apiv1.PostUserLongLivedTokenRequest,
-) (*apiv1.PostUserLongLivedTokenResponse, error) {
+func (a *apiServer) PostAccessToken(
+	ctx context.Context, req *apiv1.PostAccessTokenRequest,
+) (*apiv1.PostAccessTokenResponse, error) {
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
@@ -745,7 +713,7 @@ func (a *apiServer) PostUserLongLivedToken(
 		return nil, err
 	}
 	targetUser := targetFullUser.ToUser()
-	if err = user.AuthZProvider.Get().CanCreateUsersToken(ctx, *curUser, targetUser); err != nil {
+	if err = user.AuthZProvider.Get().CanCreateAccessToken(ctx, *curUser, targetUser); err != nil {
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
@@ -764,7 +732,7 @@ func (a *apiServer) PostUserLongLivedToken(
 	if err != nil {
 		return nil, err
 	}
-	return &apiv1.PostUserLongLivedTokenResponse{Token: token}, nil
+	return &apiv1.PostAccessTokenResponse{Token: token}, nil
 }
 
 // GetAllAccessTokens returns (active / revoked) access token info.

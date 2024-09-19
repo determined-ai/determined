@@ -2898,21 +2898,9 @@ service Determined {
     };
   }
 
-  // Create and get current user's long lived token
-  rpc PostLongLivedToken(PostLongLivedTokenRequest)
-      returns (PostLongLivedTokenResponse) {
-    option (google.api.http) = {
-      post: "/api/v1/user/token",
-      body: "*"
-    };
-    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Users"
-    };
-  }
-
-  // Create and get a user's long lived token
-  rpc PostUserLongLivedToken(PostUserLongLivedTokenRequest)
-      returns (PostUserLongLivedTokenResponse) {
+  // Create and get a user's access token
+  rpc PostAccessToken(PostAccessTokenRequest)
+      returns (PostAccessTokenResponse) {
     option (google.api.http) = {
       post: "/api/v1/users/{user_id}/token",
       body: "*"

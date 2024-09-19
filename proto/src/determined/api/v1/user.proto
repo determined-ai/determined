@@ -227,26 +227,8 @@ message PostUserActivityRequest {
 // Response to PostUserActivityRequest.
 message PostUserActivityResponse {}
 
-// Create user's longLivedToken.
-message PostLongLivedTokenRequest {
-  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [] }
-  };
-  // Lifespan expressing how long the token should last. Should be a Go-format
-  // duration (e.g. "2s", "4m", "72h".)
-  string lifespan = 1;
-  // Description of the token.
-  string description = 2;
-}
-
-// Response to PostLongLivedTokenRequest.
-message PostLongLivedTokenResponse {
-  // token value string.
-  string token = 1;
-}
-
-// Create the requested user's longLivedToken.
-message PostUserLongLivedTokenRequest {
+// Create the requested user's accessToken.
+message PostAccessTokenRequest {
   // The id of the user.
   int32 user_id = 1;
   // Lifespan expressing how long the token should last. Should be a Go-format
@@ -256,8 +238,8 @@ message PostUserLongLivedTokenRequest {
   string description = 3;
 }
 
-// Response to PostUserLongLivedTokenRequest.
-message PostUserLongLivedTokenResponse {
+// Response to PostAccessTokenRequest.
+message PostAccessTokenResponse {
   // token value string.
   string token = 1;
 }

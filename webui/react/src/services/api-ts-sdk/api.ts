@@ -8000,7 +8000,7 @@ export interface V1Permission {
     scopeTypeMask?: V1ScopeTypeMask;
 }
 /**
- * List of permissions types. Value of the enum has 9xxxx for global only permissions. Permissions on the same object share the thousands place value like 2001 and 2002.   - PERMISSION_TYPE_UNSPECIFIED: The permission type is unknown.  - PERMISSION_TYPE_ADMINISTRATE_USER: Can create and update other users. Allows updating other users passwords making this permission give all other permissions effectively.  - PERMISSION_TYPE_ADMINISTRATE_OAUTH: Ability to manage OAuth clients and settings.  - PERMISSION_TYPE_CREATE_EXPERIMENT: Ability to create experiments.  - PERMISSION_TYPE_VIEW_EXPERIMENT_ARTIFACTS: Ability to view experiment's model code, checkpoints, trials.  - PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA: Ability to view experiment's metadata such as experiment config, progress.  - PERMISSION_TYPE_UPDATE_EXPERIMENT: Ability to update experiment and experiment's lifecycle.  - PERMISSION_TYPE_UPDATE_EXPERIMENT_METADATA: Ability to update experiment's metadata.  - PERMISSION_TYPE_DELETE_EXPERIMENT: Ability to delete experiment.  - PERMISSION_TYPE_CREATE_NSC: Ability to create Notebooks, Shells, and Commands.  - PERMISSION_TYPE_VIEW_NSC: Ability to view Notebooks, Shells, and Commands.  - PERMISSION_TYPE_UPDATE_NSC: Ability to terminate Notebooks, Shells, and Commands.  - PERMISSION_TYPE_UPDATE_GROUP: Ability to create, update, and add / remove users from groups.  - PERMISSION_TYPE_CREATE_WORKSPACE: Ability to create workspaces.  - PERMISSION_TYPE_VIEW_WORKSPACE: Ability to view workspace.  - PERMISSION_TYPE_UPDATE_WORKSPACE: Ability to update workspace.  - PERMISSION_TYPE_DELETE_WORKSPACE: Ability to delete workspace.  - PERMISSION_TYPE_SET_WORKSPACE_AGENT_USER_GROUP: Ability to set workspace agent user group config.  - PERMISSION_TYPE_SET_WORKSPACE_CHECKPOINT_STORAGE_CONFIG: Ability to set workspace checkpoint storage config.  - PERMISSION_TYPE_SET_WORKSPACE_DEFAULT_RESOURCE_POOL: Ability to set workspace default resource pool.  - PERMISSION_TYPE_CREATE_PROJECT: Ability to create projects.  - PERMISSION_TYPE_VIEW_PROJECT: Ability to view projects.  - PERMISSION_TYPE_UPDATE_PROJECT: Ability to update projects.  - PERMISSION_TYPE_DELETE_PROJECT: Ability to delete projects.  - PERMISSION_TYPE_ASSIGN_ROLES: Ability to assign roles to groups / users. If assigned at a workspace scope, can only assign roles to that workspace scope.  - PERMISSION_TYPE_VIEW_MODEL_REGISTRY: Ability to view model registry.  - PERMISSION_TYPE_EDIT_MODEL_REGISTRY: Ability to edit model registry.  - PERMISSION_TYPE_CREATE_MODEL_REGISTRY: Ability to create model registry.  - PERMISSION_TYPE_DELETE_MODEL_REGISTRY: Ability to delete model registry.  - PERMISSION_TYPE_DELETE_MODEL_VERSION: Ability to delete model version.  - PERMISSION_TYPE_DELETE_OTHER_USER_MODEL_REGISTRY: Ability to delete another user's model registry.  - PERMISSION_TYPE_DELETE_OTHER_USER_MODEL_VERSION: Ability to delete another user's model version.  - PERMISSION_TYPE_VIEW_MASTER_LOGS: Ability to view master logs.  - PERMISSION_TYPE_VIEW_CLUSTER_USAGE: Ability to view detailed cluster usage info.  - PERMISSION_TYPE_UPDATE_AGENTS: Ability to update agents.  - PERMISSION_TYPE_VIEW_SENSITIVE_AGENT_INFO: Ability to view sensitive subset of agent info.  - PERMISSION_TYPE_VIEW_MASTER_CONFIG: Ability to view master configs.  - PERMISSION_TYPE_UPDATE_MASTER_CONFIG: Ability to update master configs.  - PERMISSION_TYPE_VIEW_EXTERNAL_JOBS: Ability to view external jobs.  - PERMISSION_TYPE_CONTROL_STRICT_JOB_QUEUE: Ability to control strict job queue.  - PERMISSION_TYPE_VIEW_TEMPLATES: Ability to view templates.  - PERMISSION_TYPE_UPDATE_TEMPLATES: Ability to update templates.  - PERMISSION_TYPE_CREATE_TEMPLATES: Ability to create templates.  - PERMISSION_TYPE_DELETE_TEMPLATES: Ability to delete templates.  - PERMISSION_TYPE_UPDATE_ROLES: Ability to create and update role definitions.  - PERMISSION_TYPE_EDIT_WEBHOOKS: Ability to create and delete webhooks.  - PERMISSION_TYPE_VIEW_WEBHOOKS: Ability to view webhooks.  - PERMISSION_TYPE_MODIFY_RP_WORKSPACE_BINDINGS: Ability to bind, unbind or overwrite resource pool workspace bindings.  - PERMISSION_TYPE_SET_WORKSPACE_NAMESPACE_BINDINGS: Ability to bind, unbind, or overwrite namespace workspace bindings.  - PERMISSION_TYPE_SET_RESOURCE_QUOTAS: Ability to set resource quotas on workspaces.  - PERMISSION_TYPE_VIEW_RESOURCE_QUOTAS: Ability to view resource quotas on workspaces.  - PERMISSION_TYPE_MODIFY_GLOBAL_CONFIG_POLICIES: Ability to modify global config policies.  - PERMISSION_TYPE_MODIFY_WORKSPACE_CONFIG_POLICIES: Ability to modify workspace config policies.  - PERMISSION_TYPE_VIEW_GLOBAL_CONFIG_POLICIES: Ability to view global config policies.  - PERMISSION_TYPE_VIEW_WORKSPACE_CONFIG_POLICIES: Ability to view workspace config policies.  - PERMISSION_TYPE_ADMINISTRATE_TOKEN: Ability to administrate other users' tokens.  - PERMISSION_TYPE_UPDATE_TOKEN: Ability to update one's own token.  - PERMISSION_TYPE_CREATE_LONG_LIVED_TOKEN: Ability to create one's own long lived token  - PERMISSION_TYPE_CREATE_OTHER_LONG_LIVED_TOKEN: Ability to create another user's long lived token  - PERMISSION_TYPE_VIEW_OTHER_TOKEN: Ability to view another user's token  - PERMISSION_TYPE_VIEW_TOKEN: Ability to view one's own token
+ * List of permissions types. Value of the enum has 9xxxx for global only permissions. Permissions on the same object share the thousands place value like 2001 and 2002.   - PERMISSION_TYPE_UNSPECIFIED: The permission type is unknown.  - PERMISSION_TYPE_ADMINISTRATE_USER: Can create and update other users. Allows updating other users passwords making this permission give all other permissions effectively.  - PERMISSION_TYPE_ADMINISTRATE_OAUTH: Ability to manage OAuth clients and settings.  - PERMISSION_TYPE_CREATE_EXPERIMENT: Ability to create experiments.  - PERMISSION_TYPE_VIEW_EXPERIMENT_ARTIFACTS: Ability to view experiment's model code, checkpoints, trials.  - PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA: Ability to view experiment's metadata such as experiment config, progress.  - PERMISSION_TYPE_UPDATE_EXPERIMENT: Ability to update experiment and experiment's lifecycle.  - PERMISSION_TYPE_UPDATE_EXPERIMENT_METADATA: Ability to update experiment's metadata.  - PERMISSION_TYPE_DELETE_EXPERIMENT: Ability to delete experiment.  - PERMISSION_TYPE_CREATE_NSC: Ability to create Notebooks, Shells, and Commands.  - PERMISSION_TYPE_VIEW_NSC: Ability to view Notebooks, Shells, and Commands.  - PERMISSION_TYPE_UPDATE_NSC: Ability to terminate Notebooks, Shells, and Commands.  - PERMISSION_TYPE_UPDATE_GROUP: Ability to create, update, and add / remove users from groups.  - PERMISSION_TYPE_CREATE_WORKSPACE: Ability to create workspaces.  - PERMISSION_TYPE_VIEW_WORKSPACE: Ability to view workspace.  - PERMISSION_TYPE_UPDATE_WORKSPACE: Ability to update workspace.  - PERMISSION_TYPE_DELETE_WORKSPACE: Ability to delete workspace.  - PERMISSION_TYPE_SET_WORKSPACE_AGENT_USER_GROUP: Ability to set workspace agent user group config.  - PERMISSION_TYPE_SET_WORKSPACE_CHECKPOINT_STORAGE_CONFIG: Ability to set workspace checkpoint storage config.  - PERMISSION_TYPE_SET_WORKSPACE_DEFAULT_RESOURCE_POOL: Ability to set workspace default resource pool.  - PERMISSION_TYPE_CREATE_PROJECT: Ability to create projects.  - PERMISSION_TYPE_VIEW_PROJECT: Ability to view projects.  - PERMISSION_TYPE_UPDATE_PROJECT: Ability to update projects.  - PERMISSION_TYPE_DELETE_PROJECT: Ability to delete projects.  - PERMISSION_TYPE_ASSIGN_ROLES: Ability to assign roles to groups / users. If assigned at a workspace scope, can only assign roles to that workspace scope.  - PERMISSION_TYPE_VIEW_MODEL_REGISTRY: Ability to view model registry.  - PERMISSION_TYPE_EDIT_MODEL_REGISTRY: Ability to edit model registry.  - PERMISSION_TYPE_CREATE_MODEL_REGISTRY: Ability to create model registry.  - PERMISSION_TYPE_DELETE_MODEL_REGISTRY: Ability to delete model registry.  - PERMISSION_TYPE_DELETE_MODEL_VERSION: Ability to delete model version.  - PERMISSION_TYPE_DELETE_OTHER_USER_MODEL_REGISTRY: Ability to delete another user's model registry.  - PERMISSION_TYPE_DELETE_OTHER_USER_MODEL_VERSION: Ability to delete another user's model version.  - PERMISSION_TYPE_VIEW_MASTER_LOGS: Ability to view master logs.  - PERMISSION_TYPE_VIEW_CLUSTER_USAGE: Ability to view detailed cluster usage info.  - PERMISSION_TYPE_UPDATE_AGENTS: Ability to update agents.  - PERMISSION_TYPE_VIEW_SENSITIVE_AGENT_INFO: Ability to view sensitive subset of agent info.  - PERMISSION_TYPE_VIEW_MASTER_CONFIG: Ability to view master configs.  - PERMISSION_TYPE_UPDATE_MASTER_CONFIG: Ability to update master configs.  - PERMISSION_TYPE_VIEW_EXTERNAL_JOBS: Ability to view external jobs.  - PERMISSION_TYPE_CONTROL_STRICT_JOB_QUEUE: Ability to control strict job queue.  - PERMISSION_TYPE_VIEW_TEMPLATES: Ability to view templates.  - PERMISSION_TYPE_UPDATE_TEMPLATES: Ability to update templates.  - PERMISSION_TYPE_CREATE_TEMPLATES: Ability to create templates.  - PERMISSION_TYPE_DELETE_TEMPLATES: Ability to delete templates.  - PERMISSION_TYPE_UPDATE_ROLES: Ability to create and update role definitions.  - PERMISSION_TYPE_EDIT_WEBHOOKS: Ability to create and delete webhooks.  - PERMISSION_TYPE_VIEW_WEBHOOKS: Ability to view webhooks.  - PERMISSION_TYPE_MODIFY_RP_WORKSPACE_BINDINGS: Ability to bind, unbind or overwrite resource pool workspace bindings.  - PERMISSION_TYPE_SET_WORKSPACE_NAMESPACE_BINDINGS: Ability to bind, unbind, or overwrite namespace workspace bindings.  - PERMISSION_TYPE_SET_RESOURCE_QUOTAS: Ability to set resource quotas on workspaces.  - PERMISSION_TYPE_VIEW_RESOURCE_QUOTAS: Ability to view resource quotas on workspaces.  - PERMISSION_TYPE_MODIFY_GLOBAL_CONFIG_POLICIES: Ability to modify global config policies.  - PERMISSION_TYPE_MODIFY_WORKSPACE_CONFIG_POLICIES: Ability to modify workspace config policies.  - PERMISSION_TYPE_VIEW_GLOBAL_CONFIG_POLICIES: Ability to view global config policies.  - PERMISSION_TYPE_VIEW_WORKSPACE_CONFIG_POLICIES: Ability to view workspace config policies.  - PERMISSION_TYPE_ADMINISTRATE_TOKEN: Ability to administrate other users' tokens.  - PERMISSION_TYPE_UPDATE_TOKEN: Ability to update one's own token.  - PERMISSION_TYPE_CREATE_TOKEN: Ability to create one's own token  - PERMISSION_TYPE_CREATE_OTHER_TOKEN: Ability to create another user's token  - PERMISSION_TYPE_VIEW_OTHER_TOKEN: Ability to view another user's token  - PERMISSION_TYPE_VIEW_TOKEN: Ability to view one's own token
  * @export
  * @enum {string}
  */
@@ -8062,8 +8062,8 @@ export const V1PermissionType = {
     VIEWWORKSPACECONFIGPOLICIES: 'PERMISSION_TYPE_VIEW_WORKSPACE_CONFIG_POLICIES',
     ADMINISTRATETOKEN: 'PERMISSION_TYPE_ADMINISTRATE_TOKEN',
     UPDATETOKEN: 'PERMISSION_TYPE_UPDATE_TOKEN',
-    CREATELONGLIVEDTOKEN: 'PERMISSION_TYPE_CREATE_LONG_LIVED_TOKEN',
-    CREATEOTHERLONGLIVEDTOKEN: 'PERMISSION_TYPE_CREATE_OTHER_LONG_LIVED_TOKEN',
+    CREATETOKEN: 'PERMISSION_TYPE_CREATE_TOKEN',
+    CREATEOTHERTOKEN: 'PERMISSION_TYPE_CREATE_OTHER_TOKEN',
     VIEWOTHERTOKEN: 'PERMISSION_TYPE_VIEW_OTHER_TOKEN',
     VIEWTOKEN: 'PERMISSION_TYPE_VIEW_TOKEN',
 } as const
@@ -8105,6 +8105,44 @@ export interface V1PolymorphicFilter {
      * @memberof V1PolymorphicFilter
      */
     timeRange?: V1TimestampFieldFilter;
+}
+/**
+ * Create the requested user's accessToken.
+ * @export
+ * @interface V1PostAccessTokenRequest
+ */
+export interface V1PostAccessTokenRequest {
+    /**
+     * The id of the user.
+     * @type {number}
+     * @memberof V1PostAccessTokenRequest
+     */
+    userId?: number;
+    /**
+     * Lifespan expressing how long the token should last. Should be a Go-format duration (e.g. "2s", "4m", "72h".)
+     * @type {string}
+     * @memberof V1PostAccessTokenRequest
+     */
+    lifespan?: string;
+    /**
+     * Description of the token.
+     * @type {string}
+     * @memberof V1PostAccessTokenRequest
+     */
+    description?: string;
+}
+/**
+ * Response to PostAccessTokenRequest.
+ * @export
+ * @interface V1PostAccessTokenResponse
+ */
+export interface V1PostAccessTokenResponse {
+    /**
+     * token value string.
+     * @type {string}
+     * @memberof V1PostAccessTokenResponse
+     */
+    token?: string;
 }
 /**
  * Set the accelerator data for some allocation.
@@ -8183,38 +8221,6 @@ export interface V1PostCheckpointMetadataResponse {
      * @memberof V1PostCheckpointMetadataResponse
      */
     checkpoint?: V1Checkpoint;
-}
-/**
- * Create user's longLivedToken.
- * @export
- * @interface V1PostLongLivedTokenRequest
- */
-export interface V1PostLongLivedTokenRequest {
-    /**
-     * Lifespan expressing how long the token should last. Should be a Go-format duration (e.g. "2s", "4m", "72h".)
-     * @type {string}
-     * @memberof V1PostLongLivedTokenRequest
-     */
-    lifespan?: string;
-    /**
-     * Description of the token.
-     * @type {string}
-     * @memberof V1PostLongLivedTokenRequest
-     */
-    description?: string;
-}
-/**
- * Response to PostLongLivedTokenRequest.
- * @export
- * @interface V1PostLongLivedTokenResponse
- */
-export interface V1PostLongLivedTokenResponse {
-    /**
-     * token value string.
-     * @type {string}
-     * @memberof V1PostLongLivedTokenResponse
-     */
-    token?: string;
 }
 /**
  * Request for creating a model in the registry.
@@ -8539,44 +8545,6 @@ export interface V1PostUserActivityRequest {
  * @interface V1PostUserActivityResponse
  */
 export interface V1PostUserActivityResponse {
-}
-/**
- * Create the requested user's longLivedToken.
- * @export
- * @interface V1PostUserLongLivedTokenRequest
- */
-export interface V1PostUserLongLivedTokenRequest {
-    /**
-     * The id of the user.
-     * @type {number}
-     * @memberof V1PostUserLongLivedTokenRequest
-     */
-    userId?: number;
-    /**
-     * Lifespan expressing how long the token should last. Should be a Go-format duration (e.g. "2s", "4m", "72h".)
-     * @type {string}
-     * @memberof V1PostUserLongLivedTokenRequest
-     */
-    lifespan?: string;
-    /**
-     * Description of the token.
-     * @type {string}
-     * @memberof V1PostUserLongLivedTokenRequest
-     */
-    description?: string;
-}
-/**
- * Response to PostUserLongLivedTokenRequest.
- * @export
- * @interface V1PostUserLongLivedTokenResponse
- */
-export interface V1PostUserLongLivedTokenResponse {
-    /**
-     * token value string.
-     * @type {string}
-     * @memberof V1PostUserLongLivedTokenResponse
-     */
-    token?: string;
 }
 /**
  * Create a new user.
@@ -35174,17 +35142,23 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
         },
         /**
          * 
-         * @summary Create and get current user's long lived token
-         * @param {V1PostLongLivedTokenRequest} body
+         * @summary Create and get a user's access token
+         * @param {number} userId The id of the user.
+         * @param {V1PostAccessTokenRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        postLongLivedToken(body: V1PostLongLivedTokenRequest, options: any = {}): FetchArgs {
+        postAccessToken(userId: number, body: V1PostAccessTokenRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'userId' is not null or undefined
+            if (userId === null || userId === undefined) {
+                throw new RequiredError('userId','Required parameter userId was null or undefined when calling postAccessToken.');
+            }
             // verify required parameter 'body' is not null or undefined
             if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling postLongLivedToken.');
+                throw new RequiredError('body','Required parameter body was null or undefined when calling postAccessToken.');
             }
-            const localVarPath = `/api/v1/user/token`;
+            const localVarPath = `/api/v1/users/{userId}/token`
+                .replace(`{${"userId"}}`, encodeURIComponent(String(userId)));
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
@@ -35261,50 +35235,6 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
                 throw new RequiredError('body','Required parameter body was null or undefined when calling postUserActivity.');
             }
             const localVarPath = `/api/v1/users/activity`;
-            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
-            const localVarRequestOptions = { method: 'POST', ...options };
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-            
-            // authentication BearerToken required
-            if (configuration && configuration.apiKey) {
-                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
-                    ? configuration.apiKey("Authorization")
-                    : configuration.apiKey;
-                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-            
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-            
-            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
-            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
-            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
-            localVarRequestOptions.body = JSON.stringify(body)
-            
-            return {
-                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
-         * @summary Create and get a user's long lived token
-         * @param {number} userId The id of the user.
-         * @param {V1PostUserLongLivedTokenRequest} body
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        postUserLongLivedToken(userId: number, body: V1PostUserLongLivedTokenRequest, options: any = {}): FetchArgs {
-            // verify required parameter 'userId' is not null or undefined
-            if (userId === null || userId === undefined) {
-                throw new RequiredError('userId','Required parameter userId was null or undefined when calling postUserLongLivedToken.');
-            }
-            // verify required parameter 'body' is not null or undefined
-            if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling postUserLongLivedToken.');
-            }
-            const localVarPath = `/api/v1/users/{userId}/token`
-                .replace(`{${"userId"}}`, encodeURIComponent(String(userId)));
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'POST', ...options };
             const localVarHeaderParameter = {} as any;
@@ -35637,13 +35567,14 @@ export const UsersApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Create and get current user's long lived token
-         * @param {V1PostLongLivedTokenRequest} body
+         * @summary Create and get a user's access token
+         * @param {number} userId The id of the user.
+         * @param {V1PostAccessTokenRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        postLongLivedToken(body: V1PostLongLivedTokenRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostLongLivedTokenResponse> {
-            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).postLongLivedToken(body, options);
+        postAccessToken(userId: number, body: V1PostAccessTokenRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostAccessTokenResponse> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).postAccessToken(userId, body, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -35682,26 +35613,6 @@ export const UsersApiFp = function (configuration?: Configuration) {
          */
         postUserActivity(body: V1PostUserActivityRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostUserActivityResponse> {
             const localVarFetchArgs = UsersApiFetchParamCreator(configuration).postUserActivity(body, options);
-            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
-                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
-                    if (response.status >= 200 && response.status < 300) {
-                        return response.json();
-                    } else {
-                        throw response;
-                    }
-                });
-            };
-        },
-        /**
-         * 
-         * @summary Create and get a user's long lived token
-         * @param {number} userId The id of the user.
-         * @param {V1PostUserLongLivedTokenRequest} body
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        postUserLongLivedToken(userId: number, body: V1PostUserLongLivedTokenRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PostUserLongLivedTokenResponse> {
-            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).postUserLongLivedToken(userId, body, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -35882,13 +35793,14 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
         },
         /**
          * 
-         * @summary Create and get current user's long lived token
-         * @param {V1PostLongLivedTokenRequest} body
+         * @summary Create and get a user's access token
+         * @param {number} userId The id of the user.
+         * @param {V1PostAccessTokenRequest} body
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        postLongLivedToken(body: V1PostLongLivedTokenRequest, options?: any) {
-            return UsersApiFp(configuration).postLongLivedToken(body, options)(fetch, basePath);
+        postAccessToken(userId: number, body: V1PostAccessTokenRequest, options?: any) {
+            return UsersApiFp(configuration).postAccessToken(userId, body, options)(fetch, basePath);
         },
         /**
          * 
@@ -35909,17 +35821,6 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
          */
         postUserActivity(body: V1PostUserActivityRequest, options?: any) {
             return UsersApiFp(configuration).postUserActivity(body, options)(fetch, basePath);
-        },
-        /**
-         * 
-         * @summary Create and get a user's long lived token
-         * @param {number} userId The id of the user.
-         * @param {V1PostUserLongLivedTokenRequest} body
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        postUserLongLivedToken(userId: number, body: V1PostUserLongLivedTokenRequest, options?: any) {
-            return UsersApiFp(configuration).postUserLongLivedToken(userId, body, options)(fetch, basePath);
         },
         /**
          * 
@@ -36083,14 +35984,15 @@ export class UsersApi extends BaseAPI {
     
     /**
      * 
-     * @summary Create and get current user's long lived token
-     * @param {V1PostLongLivedTokenRequest} body
+     * @summary Create and get a user's access token
+     * @param {number} userId The id of the user.
+     * @param {V1PostAccessTokenRequest} body
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof UsersApi
      */
-    public postLongLivedToken(body: V1PostLongLivedTokenRequest, options?: any) {
-        return UsersApiFp(this.configuration).postLongLivedToken(body, options)(this.fetch, this.basePath)
+    public postAccessToken(userId: number, body: V1PostAccessTokenRequest, options?: any) {
+        return UsersApiFp(this.configuration).postAccessToken(userId, body, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -36115,19 +36017,6 @@ export class UsersApi extends BaseAPI {
      */
     public postUserActivity(body: V1PostUserActivityRequest, options?: any) {
         return UsersApiFp(this.configuration).postUserActivity(body, options)(this.fetch, this.basePath)
-    }
-    
-    /**
-     * 
-     * @summary Create and get a user's long lived token
-     * @param {number} userId The id of the user.
-     * @param {V1PostUserLongLivedTokenRequest} body
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof UsersApi
-     */
-    public postUserLongLivedToken(userId: number, body: V1PostUserLongLivedTokenRequest, options?: any) {
-        return UsersApiFp(this.configuration).postUserLongLivedToken(userId, body, options)(this.fetch, this.basePath)
     }
     
     /**

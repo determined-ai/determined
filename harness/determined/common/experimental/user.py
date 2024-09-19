@@ -162,7 +162,7 @@ class TokenInfo:
         self.created_at = tokenInfo.createdAt
         self.token_type = tokenInfo.tokenType.value
         self.revoked = tokenInfo.revoked
-        self.description = tokenInfo.Description
+        self.description = tokenInfo.description
 
     @classmethod
     def _from_bindings(

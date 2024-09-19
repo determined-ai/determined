@@ -292,7 +292,7 @@ def revoke_token(args: argparse.Namespace) -> None:
             tokenId=args.token_id, description=None, setRevoked=True
         )
         resp = bindings.patch_PatchAccessToken(sess, body=request, tokenId=args.token_id)
-        print(resp.to_json())
+        print(json.dumps(resp.to_json(), indent=2))
     except api.errors.NotFoundException:
         raise errors.CliError("Token not found")
     print("Successfully revoked token with ID: {}".format(args.token_id))
@@ -303,16 +303,13 @@ def create_token(args: argparse.Namespace) -> None:
     current_user, token_user = sess.username, args.username
     request, handler = None, None
     if token_user is None or token_user == current_user:
-        request = bindings.v1PostLongLivedTokenRequest(
-            lifespan=args.lifespan, description=args.description
-        )
-        handler = bindings.post_PostLongLivedToken
+        user_id = bindings.get_GetUserByUsername(session=sess, username=current_user).user.id
     else:
         user_id = bindings.get_GetUserByUsername(session=sess, username=token_user).user.id
-        request = bindings.v1PostUserLongLivedTokenRequest(
-            lifespan=args.lifespan, userId=user_id, description=args.description
-        )
-        handler = functools.partial(bindings.post_PostUserLongLivedToken, userId=user_id)
+    request = bindings.v1PostAccessTokenRequest(
+        lifespan=args.lifespan, userId=user_id, description=args.description
+    )
+    handler = functools.partial(bindings.post_PostAccessToken, userId=user_id)
     resp = handler(session=sess, body=request).to_json()
 
     outputString = None
@@ -338,7 +335,7 @@ def update_token(args: argparse.Namespace) -> None:
                 tokenId=args.token_id, description=args.description, setRevoked=False
             )
             resp = bindings.patch_PatchAccessToken(sess, body=request, tokenId=args.token_id)
-        print(resp.to_json())
+        print(json.dumps(resp.to_json(), indent=2))
     except api.errors.NotFoundException:
         raise errors.CliError("Token not found")
     print("Successfully updated token with ID: {}".format(args.token_id))
@@ -450,8 +447,9 @@ args_description = [
                 ),
             ]),
             cli.Cmd("list ls", list_tokens, "list all active access tokens", [
-                cli.Arg("--all", "-a", action="store_true", default=None,
-                        help="list all access tokens, including revoked & expired tokens"),
+                cli.Arg("--all", "-a", action="store_true",
+                        help="list all access tokens, including revoked & expired tokens",
+                        is_default=True),
                 cli.Group(
                     cli.output_format_args["json"],
                     cli.output_format_args["yaml"],

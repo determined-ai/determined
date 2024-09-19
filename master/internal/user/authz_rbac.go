@@ -224,32 +224,31 @@ func canAdministrateLongLivedTokenOnUser(ctx context.Context, curUserID model.Us
 	return db.DoesPermissionMatch(ctx, curUserID, nil, permissionID)
 }
 
-// CanCreateUsersOwnToken always returns nil.
-func (a *UserAuthZRBAC) CanCreateUsersOwnToken(ctx context.Context, curUser model.User) error {
-	noPermissionRequired(ctx, curUser.ID, curUser.ID)
-
-	err := db.DoesPermissionMatch(ctx, curUser.ID, nil,
-		rbacv1.PermissionType_PERMISSION_TYPE_CREATE_LONG_LIVED_TOKEN)
-	if err != nil {
-		return errors.Wrap(err, "unable to create token due to insufficient permissions")
-	}
-	return nil
-}
-
-// CanCreateUsersToken returns an error if the user is not the target user and does not have admin
-// permissions when trying to create another user's token.
-func (a *UserAuthZRBAC) CanCreateUsersToken(
+// CanCreateAccessToken returns an error if the user does not have permission to create either
+// their own token or another user's token based on the targetUser.
+func (a *UserAuthZRBAC) CanCreateAccessToken(
 	ctx context.Context, curUser, targetUser model.User,
 ) (err error) {
 	fields := audit.ExtractLogFields(ctx)
+
+	// TODO: improve logging around the case were a user is creating their own token
+	if curUser.ID == targetUser.ID {
+		err = db.DoesPermissionMatch(ctx, curUser.ID, nil,
+			rbacv1.PermissionType_PERMISSION_TYPE_CREATE_TOKEN)
+		if err != nil {
+			return errors.Wrap(err, "unable to update token due to insufficient permissions")
+		}
+		return nil
+	}
+
 	logCanAdministrateLongLivedTokenOnUser(fields, curUser.ID,
-		rbacv1.PermissionType_PERMISSION_TYPE_CREATE_OTHER_LONG_LIVED_TOKEN)
+		rbacv1.PermissionType_PERMISSION_TYPE_CREATE_OTHER_TOKEN)
 	defer func() {
 		audit.LogFromErr(fields, err)
 	}()
 
 	err = db.DoesPermissionMatch(ctx, curUser.ID, nil,
-		rbacv1.PermissionType_PERMISSION_TYPE_CREATE_OTHER_LONG_LIVED_TOKEN)
+		rbacv1.PermissionType_PERMISSION_TYPE_CREATE_OTHER_TOKEN)
 	if err != nil && curUser.ID != targetUser.ID {
 		return errors.New("only admin privileged users can change other user's token")
 	}

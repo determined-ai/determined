@@ -11043,8 +11043,8 @@ class v1PermissionType(DetEnum):
     - PERMISSION_TYPE_VIEW_WORKSPACE_CONFIG_POLICIES: Ability to view workspace config policies.
     - PERMISSION_TYPE_ADMINISTRATE_TOKEN: Ability to administrate other users' tokens.
     - PERMISSION_TYPE_UPDATE_TOKEN: Ability to update one's own token.
-    - PERMISSION_TYPE_CREATE_LONG_LIVED_TOKEN: Ability to create one's own long lived token
-    - PERMISSION_TYPE_CREATE_OTHER_LONG_LIVED_TOKEN: Ability to create another user's long lived token
+    - PERMISSION_TYPE_CREATE_TOKEN: Ability to create one's own token
+    - PERMISSION_TYPE_CREATE_OTHER_TOKEN: Ability to create another user's token
     - PERMISSION_TYPE_VIEW_OTHER_TOKEN: Ability to view another user's token
     - PERMISSION_TYPE_VIEW_TOKEN: Ability to view one's own token
     """
@@ -11105,8 +11105,8 @@ class v1PermissionType(DetEnum):
     VIEW_WORKSPACE_CONFIG_POLICIES = "PERMISSION_TYPE_VIEW_WORKSPACE_CONFIG_POLICIES"
     ADMINISTRATE_TOKEN = "PERMISSION_TYPE_ADMINISTRATE_TOKEN"
     UPDATE_TOKEN = "PERMISSION_TYPE_UPDATE_TOKEN"
-    CREATE_LONG_LIVED_TOKEN = "PERMISSION_TYPE_CREATE_LONG_LIVED_TOKEN"
-    CREATE_OTHER_LONG_LIVED_TOKEN = "PERMISSION_TYPE_CREATE_OTHER_LONG_LIVED_TOKEN"
+    CREATE_TOKEN = "PERMISSION_TYPE_CREATE_TOKEN"
+    CREATE_OTHER_TOKEN = "PERMISSION_TYPE_CREATE_OTHER_TOKEN"
     VIEW_OTHER_TOKEN = "PERMISSION_TYPE_VIEW_OTHER_TOKEN"
     VIEW_TOKEN = "PERMISSION_TYPE_VIEW_TOKEN"
 
@@ -11158,6 +11158,76 @@ class v1PolymorphicFilter(Printable):
             out["name"] = self.name
         if not omit_unset or "timeRange" in vars(self):
             out["timeRange"] = None if self.timeRange is None else self.timeRange.to_json(omit_unset)
+        return out
+
+class v1PostAccessTokenRequest(Printable):
+    """Create the requested user's accessToken."""
+    description: "typing.Optional[str]" = None
+    lifespan: "typing.Optional[str]" = None
+    userId: "typing.Optional[int]" = None
+
+    def __init__(
+        self,
+        *,
+        description: "typing.Union[str, None, Unset]" = _unset,
+        lifespan: "typing.Union[str, None, Unset]" = _unset,
+        userId: "typing.Union[int, None, Unset]" = _unset,
+    ):
+        if not isinstance(description, Unset):
+            self.description = description
+        if not isinstance(lifespan, Unset):
+            self.lifespan = lifespan
+        if not isinstance(userId, Unset):
+            self.userId = userId
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PostAccessTokenRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "description" in obj:
+            kwargs["description"] = obj["description"]
+        if "lifespan" in obj:
+            kwargs["lifespan"] = obj["lifespan"]
+        if "userId" in obj:
+            kwargs["userId"] = obj["userId"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "description" in vars(self):
+            out["description"] = self.description
+        if not omit_unset or "lifespan" in vars(self):
+            out["lifespan"] = self.lifespan
+        if not omit_unset or "userId" in vars(self):
+            out["userId"] = self.userId
+        return out
+
+class v1PostAccessTokenResponse(Printable):
+    """Response to PostAccessTokenRequest."""
+    token: "typing.Optional[str]" = None
+
+    def __init__(
+        self,
+        *,
+        token: "typing.Union[str, None, Unset]" = _unset,
+    ):
+        if not isinstance(token, Unset):
+            self.token = token
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PostAccessTokenResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "token" in obj:
+            kwargs["token"] = obj["token"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "token" in vars(self):
+            out["token"] = self.token
         return out
 
 class v1PostAllocationAcceleratorDataRequest(Printable):
@@ -11274,68 +11344,6 @@ class v1PostCheckpointMetadataResponse(Printable):
         }
         if not omit_unset or "checkpoint" in vars(self):
             out["checkpoint"] = None if self.checkpoint is None else self.checkpoint.to_json(omit_unset)
-        return out
-
-class v1PostLongLivedTokenRequest(Printable):
-    """Create user's longLivedToken."""
-    description: "typing.Optional[str]" = None
-    lifespan: "typing.Optional[str]" = None
-
-    def __init__(
-        self,
-        *,
-        description: "typing.Union[str, None, Unset]" = _unset,
-        lifespan: "typing.Union[str, None, Unset]" = _unset,
-    ):
-        if not isinstance(description, Unset):
-            self.description = description
-        if not isinstance(lifespan, Unset):
-            self.lifespan = lifespan
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1PostLongLivedTokenRequest":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-        }
-        if "description" in obj:
-            kwargs["description"] = obj["description"]
-        if "lifespan" in obj:
-            kwargs["lifespan"] = obj["lifespan"]
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-        }
-        if not omit_unset or "description" in vars(self):
-            out["description"] = self.description
-        if not omit_unset or "lifespan" in vars(self):
-            out["lifespan"] = self.lifespan
-        return out
-
-class v1PostLongLivedTokenResponse(Printable):
-    """Response to PostLongLivedTokenRequest."""
-    token: "typing.Optional[str]" = None
-
-    def __init__(
-        self,
-        *,
-        token: "typing.Union[str, None, Unset]" = _unset,
-    ):
-        if not isinstance(token, Unset):
-            self.token = token
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1PostLongLivedTokenResponse":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-        }
-        if "token" in obj:
-            kwargs["token"] = obj["token"]
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-        }
-        if not omit_unset or "token" in vars(self):
-            out["token"] = self.token
         return out
 
 class v1PostModelRequest(Printable):
@@ -11791,76 +11799,6 @@ class v1PostUserActivityRequest(Printable):
             "entityId": self.entityId,
             "entityType": self.entityType.value,
         }
-        return out
-
-class v1PostUserLongLivedTokenRequest(Printable):
-    """Create the requested user's longLivedToken."""
-    description: "typing.Optional[str]" = None
-    lifespan: "typing.Optional[str]" = None
-    userId: "typing.Optional[int]" = None
-
-    def __init__(
-        self,
-        *,
-        description: "typing.Union[str, None, Unset]" = _unset,
-        lifespan: "typing.Union[str, None, Unset]" = _unset,
-        userId: "typing.Union[int, None, Unset]" = _unset,
-    ):
-        if not isinstance(description, Unset):
-            self.description = description
-        if not isinstance(lifespan, Unset):
-            self.lifespan = lifespan
-        if not isinstance(userId, Unset):
-            self.userId = userId
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1PostUserLongLivedTokenRequest":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-        }
-        if "description" in obj:
-            kwargs["description"] = obj["description"]
-        if "lifespan" in obj:
-            kwargs["lifespan"] = obj["lifespan"]
-        if "userId" in obj:
-            kwargs["userId"] = obj["userId"]
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-        }
-        if not omit_unset or "description" in vars(self):
-            out["description"] = self.description
-        if not omit_unset or "lifespan" in vars(self):
-            out["lifespan"] = self.lifespan
-        if not omit_unset or "userId" in vars(self):
-            out["userId"] = self.userId
-        return out
-
-class v1PostUserLongLivedTokenResponse(Printable):
-    """Response to PostUserLongLivedTokenRequest."""
-    token: "typing.Optional[str]" = None
-
-    def __init__(
-        self,
-        *,
-        token: "typing.Union[str, None, Unset]" = _unset,
-    ):
-        if not isinstance(token, Unset):
-            self.token = token
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1PostUserLongLivedTokenResponse":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-        }
-        if "token" in obj:
-            kwargs["token"] = obj["token"]
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-        }
-        if not omit_unset or "token" in vars(self):
-            out["token"] = self.token
         return out
 
 class v1PostUserRequest(Printable):
@@ -23651,6 +23589,31 @@ def post_PinWorkspace(
         return
     raise APIHttpError("post_PinWorkspace", _resp)
 
+def post_PostAccessToken(
+    session: "api.BaseSession",
+    *,
+    body: "v1PostAccessTokenRequest",
+    userId: int,
+) -> "v1PostAccessTokenResponse":
+    """Create and get a user's access token
+
+    - userId: The id of the user.
+    """
+    _params = None
+    _resp = session._do_request(
+        method="POST",
+        path=f"/api/v1/users/{userId}/token",
+        params=_params,
+        json=body.to_json(True),
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1PostAccessTokenResponse.from_json(_resp.json())
+    raise APIHttpError("post_PostAccessToken", _resp)
+
 def post_PostAllocationAcceleratorData(
     session: "api.BaseSession",
     *,
@@ -23733,27 +23696,6 @@ def post_PostCheckpointMetadata(
     if _resp.status_code == 200:
         return v1PostCheckpointMetadataResponse.from_json(_resp.json())
     raise APIHttpError("post_PostCheckpointMetadata", _resp)
-
-def post_PostLongLivedToken(
-    session: "api.BaseSession",
-    *,
-    body: "v1PostLongLivedTokenRequest",
-) -> "v1PostLongLivedTokenResponse":
-    """Create and get current user's long lived token"""
-    _params = None
-    _resp = session._do_request(
-        method="POST",
-        path="/api/v1/user/token",
-        params=_params,
-        json=body.to_json(True),
-        data=None,
-        headers=None,
-        timeout=None,
-        stream=False,
-    )
-    if _resp.status_code == 200:
-        return v1PostLongLivedTokenResponse.from_json(_resp.json())
-    raise APIHttpError("post_PostLongLivedToken", _resp)
 
 def post_PostModel(
     session: "api.BaseSession",
@@ -24015,31 +23957,6 @@ def post_PostUserActivity(
     if _resp.status_code == 200:
         return
     raise APIHttpError("post_PostUserActivity", _resp)
-
-def post_PostUserLongLivedToken(
-    session: "api.BaseSession",
-    *,
-    body: "v1PostUserLongLivedTokenRequest",
-    userId: int,
-) -> "v1PostUserLongLivedTokenResponse":
-    """Create and get a user's long lived token
-
-    - userId: The id of the user.
-    """
-    _params = None
-    _resp = session._do_request(
-        method="POST",
-        path=f"/api/v1/users/{userId}/token",
-        params=_params,
-        json=body.to_json(True),
-        data=None,
-        headers=None,
-        timeout=None,
-        stream=False,
-    )
-    if _resp.status_code == 200:
-        return v1PostUserLongLivedTokenResponse.from_json(_resp.json())
-    raise APIHttpError("post_PostUserLongLivedToken", _resp)
 
 def post_PostUserSetting(
     session: "api.BaseSession",

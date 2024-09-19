@@ -24,6 +24,8 @@ import (
 	"github.com/determined-ai/determined/master/pkg/model"
 )
 
+const desc = "test desc"
+
 func TestMain(m *testing.M) {
 	pgDB, _, err := db.ResolveTestPostgres()
 	if err != nil {
@@ -586,7 +588,7 @@ func TestUpdateUserSettings(t *testing.T) {
 	require.Empty(t, out, "found user web settings when all should be deleted")
 }
 
-// TestRevokeAndCreateLongLivedToken tests deleting and creating token with default lifespan.
+// TestRevokeAndCreateLongLivedToken tests revoking and creating token with default lifespan.
 func TestRevokeAndCreateLongLivedToken(t *testing.T) {
 	user, err := addTestUser(nil)
 	require.NoError(t, err)
@@ -611,15 +613,16 @@ func TestRevokeAndCreateLongLivedToken(t *testing.T) {
 	require.NoError(t, err)
 }
 
-// TestRevokeAndCreateLongLivedTokenHasExpiry tests deleting and creating token with
-// given lifespan.
+// TestRevokeAndCreateLongLivedTokenHasExpiry tests revoking and creating token with
+// given lifespan and description.
 func TestRevokeAndCreateLongLivedTokenHasExpiry(t *testing.T) {
 	user, err := addTestUser(nil)
 	require.NoError(t, err)
 
 	// Add a LongLivedToken with custom (Now() + 3 Months) Expiry Time.
 	expLifespan := DefaultTokenLifespan * 3
-	token, err := RevokeAndCreateLongLivedToken(context.TODO(), user.ID, WithTokenExpiry(&expLifespan))
+	token, err := RevokeAndCreateLongLivedToken(context.TODO(), user.ID,
+		WithTokenExpiry(&expLifespan), WithTokenDescription(desc))
 	require.NoError(t, err)
 	require.NotNil(t, token)
 
@@ -627,6 +630,7 @@ func TestRevokeAndCreateLongLivedTokenHasExpiry(t *testing.T) {
 
 	actLifespan := restoredToken.Expiry.Sub(restoredToken.CreatedAt)
 	require.Equal(t, expLifespan, actLifespan)
+	require.Equal(t, desc, restoredToken.Description.String)
 
 	tokenInfo, err := GetAccessToken(context.TODO(), user.ID)
 	require.NoError(t, err)
@@ -649,17 +653,17 @@ func TestUpdateAccessToken(t *testing.T) {
 	longLivedToken := restoreTokenInfo(token, t)
 
 	// Test before updating Access token
-	desc := "test desc"
+	description := "description"
 	require.False(t, longLivedToken.Revoked)
-	require.NotEqual(t, desc, longLivedToken.Description)
+	require.NotEqual(t, description, longLivedToken.Description)
 
-	opt := AccessTokenUpdateOptions{Description: &desc, SetRevoked: true}
+	opt := AccessTokenUpdateOptions{Description: &description, SetRevoked: true}
 	tokenInfo, err := UpdateAccessToken(context.TODO(), model.TokenID(longLivedToken.ID), opt)
 	require.NoError(t, err)
 
 	// Test after updating access token
 	require.True(t, tokenInfo.Revoked)
-	require.Contains(t, desc, tokenInfo.Description.String)
+	require.Contains(t, description, tokenInfo.Description.String)
 
 	// Delete from DB by UserID for cleanup
 	err = DeleteSessionByID(context.TODO(), tokenInfo.ID)

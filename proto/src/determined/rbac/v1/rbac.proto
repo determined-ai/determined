@@ -199,11 +199,11 @@ enum PermissionType {
   // Ability to update one's own token.
   PERMISSION_TYPE_UPDATE_TOKEN = 12002;
 
-  // Ability to create one's own long lived token
-  PERMISSION_TYPE_CREATE_LONG_LIVED_TOKEN = 12003;
+  // Ability to create one's own token
+  PERMISSION_TYPE_CREATE_TOKEN = 12003;
 
-  // Ability to create another user's long lived token
-  PERMISSION_TYPE_CREATE_OTHER_LONG_LIVED_TOKEN = 12004;
+  // Ability to create another user's token
+  PERMISSION_TYPE_CREATE_OTHER_TOKEN = 12004;
 
   // Ability to view another user's token
   PERMISSION_TYPE_VIEW_OTHER_TOKEN = 12005;
