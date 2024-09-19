@@ -358,8 +358,9 @@ func TestAuthZCanModifyConfigPolicies(t *testing.T) {
 	testutils.MustLoadLicenseAndKeyFromFilesystem("../../")
 	configPolicyAuthZ := setupConfigPolicyAuthZ()
 
-	workspaceAuthZ.On("CanCreateWorkspace", mock.Anything, mock.Anything).Return(nil)
-	workspaceAuthZ.On("CanGetWorkspace", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+	workspaceAuthZ.On("CanCreateWorkspace", mock.Anything, mock.Anything).Return(nil).Once()
+	workspaceAuthZ.On("CanGetWorkspace", mock.Anything, mock.Anything, mock.Anything).
+		Return(nil).Twice()
 
 	wkspResp, err := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: uuid.New().String()})
 	require.NoError(t, err)
@@ -386,8 +387,6 @@ func TestAuthZCanModifyConfigPolicies(t *testing.T) {
 			WorkloadType: model.NTSCType,
 		})
 	require.NoError(t, err)
-
-	workspaceAuthZ.On("CanCreateWorkspace", mock.Anything, mock.Anything).Return(nil)
 
 	// (Global) Deny with permission access error.
 	expectedErr = fmt.Errorf("canModifyGlobalConfigPoliciesError")

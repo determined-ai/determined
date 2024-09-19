@@ -100,12 +100,11 @@ func (a *apiServer) GetGlobalConfigPolicies(
 		return nil, err
 	}
 
-	permErr, err := cluster.AuthZProvider.Get().CanViewGlobalConfigPolicies(ctx, curUser)
+	err = configpolicy.AuthZProvider.Get().CanViewGlobalConfigPolicies(ctx, curUser)
 	if err != nil {
 		return nil, err
-	} else if permErr != nil {
-		return nil, permErr
 	}
+
 	resp, err := a.getConfigPolicies(ctx, nil, req.WorkloadType)
 	if err != nil {
 		return nil, err
