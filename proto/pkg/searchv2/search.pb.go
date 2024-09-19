@@ -758,7 +758,7 @@ func (x *ValidationHistoryEntry) GetSearcherMetric() float32 {
 	return 0
 }
 
-// File node is one node of file in search model definition file tree.
+// File node is one node of a file in search model definition file tree.
 type FileNode struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
