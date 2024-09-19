@@ -15,8 +15,8 @@ const ProjectDetails = React.lazy(() => import('pages/ProjectDetails'));
 const Reload = React.lazy(() => import('pages/Reload'));
 const ResourcepoolDetail = React.lazy(() => import('pages/ResourcePool/ResourcepoolDetail'));
 const SearchDetails = React.lazy(() => import('pages/SearchDetails'));
-const SignIn = React.lazy(() => import('pages/SignIn'));
-const SignOut = React.lazy(() => import('pages/SignOut'));
+import SignIn from 'pages/SignIn'; // no React.lazy to avoid e2e ci error
+import SignOut from 'pages/SignOut';
 const TaskListPage = React.lazy(() => import('pages/TaskListPage'));
 const TaskLogsWrapper = React.lazy(() =>
   import('pages/TaskLogs').then((module) => ({ default: module.TaskLogsWrapper })),
