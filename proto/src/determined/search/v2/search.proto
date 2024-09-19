@@ -1,0 +1,241 @@
+syntax = "proto3";
+
+package determined.search.v2;
+option go_package = "github.com/determined-ai/determined/proto/pkg/searchv2";
+
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+import "google/protobuf/wrappers.proto";
+import "protoc-gen-swagger/options/annotations.proto";
+
+// The current state of the search.
+enum State {
+  // The state of the search is unknown.
+  STATE_UNSPECIFIED = 0;
+  // The search is in an active state.
+  STATE_ACTIVE = 1;
+  // The search is in a paused state
+  STATE_PAUSED = 2;
+  // The search is completed and is shutting down.
+  STATE_STOPPING_COMPLETED = 3;
+  // The search is canceled and is shutting down.
+  STATE_STOPPING_CANCELED = 4;
+  // The search is errored and is shutting down.
+  STATE_STOPPING_ERROR = 5;
+  // The search is completed and is shut down.
+  STATE_COMPLETED = 6;
+  // The search is canceled and is shut down.
+  STATE_CANCELED = 7;
+  // The search is errored and is shut down.
+  STATE_ERROR = 8;
+  // The search has been deleted.
+  STATE_DELETED = 9;
+  // The search is deleting.
+  STATE_DELETING = 10;
+  // The search failed to delete.
+  STATE_DELETE_FAILED = 11;
+  // The search is killed and is shutting down.
+  STATE_STOPPING_KILLED = 12;
+  // The search is queued (waiting to be run, or job state is still queued).
+  // Queued is a substate of the Active state.
+  STATE_QUEUED = 13;
+  // The search is pulling the image. Pulling is a substate of the Active
+  // state.
+  STATE_PULLING = 14;
+  // The search is preparing the environment after finishing pulling the
+  // image. Starting is a substate of the Active state.
+  STATE_STARTING = 15;
+  // The search has an allocation actively running.
+  // Running is a substate of the Active state.
+  STATE_RUNNING = 16;
+}
+
+// SearchRun is run-level data that is surfaced to the search
+// level.
+message SearchRun {
+  // the searcher metric value associated with the best_validation_id for the
+  // run.
+  optional double searcher_metric_value = 1;
+}
+
+// Search is a collection of one or more runs that are exploring a
+// user-defined hyperparameter space.
+message Search {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: {
+      required: [
+        "id",
+        "name",
+        "start_time",
+        "state",
+        "archived",
+        "num_runs",
+        "username",
+        "job_id",
+        "searcher_type",
+        "project_id",
+        "original_config",
+        "project_owner_id",
+        "config"
+      ]
+    }
+  };
+  // The id of the search.
+  int32 id = 1;
+  // The description of the search.
+  string description = 2;
+  // Tags attached to the search.
+  repeated string tags = 3;
+  // The time the search was started.
+  google.protobuf.Timestamp start_time = 4;
+  // The time the search ended if the search is stopped.
+  google.protobuf.Timestamp end_time = 5;
+  // The current state of the search.
+  State state = 6;
+  // Boolean denoting whether the search was archived.
+  bool archived = 7;
+  // The number of runs linked to the search.
+  int32 num_runs = 8;
+  // The ids of runs linked to the search.
+  repeated int32 run_ids = 20;
+  // The display name of the user that created the search.
+  string display_name = 18;
+  // The id of the user that created the search.
+  int32 user_id = 19;
+  // The username of the user that created the search.
+  string username = 10;
+  // The resource pool the search was created in
+  string resource_pool = 11;
+  // The type of searcher for the search
+  string searcher_type = 12;
+  // The searcher metric name for the search
+  string searcher_metric = 42;
+  // The hyperparameters for the search
+  google.protobuf.Struct hyperparameters = 46;
+  // The search name.
+  string name = 13;
+  // The search notes.
+  string notes = 14;
+  // Associated job's id.
+  string job_id = 15;
+  // Original id of a forked or continued search.
+  google.protobuf.Int32Value forked_from = 16;
+  // The current progress of a running search.
+  google.protobuf.DoubleValue progress = 17;
+  // The id of the project associated with this search.
+  int32 project_id = 21;
+  // The name of the project associated with this search.
+  string project_name = 22;
+  // The id of the workspace associated with this search.
+  int32 workspace_id = 23;
+  // The name of the workspace associated with this search.
+  string workspace_name = 24;
+  // The archived status of the parent project (can be inherited from
+  // workspace).
+  bool parent_archived = 25;
+  // The configuration of the search.
+  // Is deprecated for performance reasons on the listing search route.
+  // Use GetSearchResponse.config instead.
+  google.protobuf.Struct config = 26 [deprecated = true];
+  // The original configuration that the user submitted.
+  string original_config = 27;
+  // The id of the user who created the parent project.
+  int32 project_owner_id = 28;
+  // The total size of checkpoints.
+  int64 checkpoint_size = 29;
+  // The count of checkpoints.
+  int32 checkpoint_count = 30;
+  // The metrics and hyperparameters associated with the best run by searcher
+  // metric.
+  optional double best_run_searcher_metric = 31;
+  // Id of search's best run, calculated by the best searcher metrics
+  // value of run's best validation.
+  optional int32 best_run_id = 32;
+  // Unmanaged searches are detached.
+  bool unmanaged = 40;
+  // Time in seconds which search ran or has been running.
+  optional int32 duration = 41;
+  // The id of external search
+  optional string external_search_id = 43;
+  // The id of external run
+  optional string external_run_id = 44;
+  // Size of model definition file, for unmanaged searches this should be 0.
+  optional int32 model_definition_size = 45;
+  // The search pachyderm integration config.
+  optional google.protobuf.Struct pachyderm_integration = 47;
+}
+
+// PatchSearch is a partial update to an search with only id required.
+message PatchSearch {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "id" ] }
+  };
+  // The id of the search.
+  int32 id = 1;
+  // The description of the search.
+  google.protobuf.StringValue description = 2;
+  // Tags attached to the search.
+  google.protobuf.ListValue tags = 3;
+  // The search name.
+  google.protobuf.StringValue name = 4;
+  // The search notes.
+  google.protobuf.StringValue notes = 5;
+
+  // Nested object for resources field patch.
+  message PatchResources {
+    // Search config resources.max_slots.
+    optional int32 max_slots = 1;
+    // Search config resources.weight.
+    optional double weight = 2;
+    // Search config resources.priority.
+    optional int32 priority = 3;
+  }
+
+  // Nested object for checkpoint_storage field patch.
+  message PatchCheckpointStorage {
+    // Search config checkpoint_storage.save_search_best.
+    int32 save_search_best = 1;
+    // Search config checkpoint_storage.save_run_best.
+    int32 save_run_best = 2;
+    // Search config checkpoint_storage.save_run_latest.
+    int32 save_run_latest = 3;
+  }
+
+  // Search config resources.
+  optional PatchResources resources = 6;
+  // Search config checkpoint_storage.
+  optional PatchCheckpointStorage checkpoint_storage = 7;
+}
+
+// ValidationHistoryEntry is a single entry for a validation history for an
+// search.
+message ValidationHistoryEntry {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "run_id", "end_time", "searcher_metric" ] }
+  };
+  // The id for the run associated with this validation entry.
+  int32 run_id = 1;
+  // The time at which the completed validation was reported.
+  google.protobuf.Timestamp end_time = 2;
+  // The value of the `searcher.metric`, indicated by the search config, for
+  // the validation.
+  float searcher_metric = 3;
+}
+
+// File node is one node of file in search model definition file tree.
+message FileNode {
+  // Path of file.
+  string path = 1;
+  // Name of file.
+  string name = 2;
+  // Modification time of file.
+  google.protobuf.Timestamp modified_time = 3;
+  // Number of bytes in file content.
+  int32 content_length = 4;
+  // Is this a directory.
+  bool is_dir = 5;
+  // MIME type of file.
+  string content_type = 6;
+  // Subdirectory files.
+  repeated FileNode files = 7;
+}

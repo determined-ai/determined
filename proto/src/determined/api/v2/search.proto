@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package determined.api.v2;
+option go_package = "github.com/determined-ai/determined/proto/pkg/apiv2";
+
+import "google/protobuf/wrappers.proto";
+import "google/protobuf/struct.proto";
+import "google/protobuf/timestamp.proto";
+import "protoc-gen-swagger/options/annotations.proto";
+
+import "determined/job/v2/job.proto";
+import "determined/search/v2/search.proto";
+
+// Get a single search.
+message GetSearchRequest {
+  // The id of the search.
+  int32 search_id = 1;
+}
+// Response to GetSearchRequest.
+message GetSearchResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "search" ] }
+  };
+  // The requested search.
+  determined.search.v2.Search search = 1;
+  // Associated job summary.
+  determined.job.v2.JobSummary job_summary = 2;
+  // The search's config.
+  google.protobuf.Struct config = 3;
+}
