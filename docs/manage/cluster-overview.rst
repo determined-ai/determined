@@ -1,8 +1,8 @@
 .. _cluster-overview:
 
-##########################
- Cluster Overview (WebUI)
-##########################
+##################
+ Cluster Overview
+##################
 
 The Cluster Overview page in the WebUI provides a comprehensive view of your Determined cluster's
 status, resource utilization, and configuration. This page is accessible to users with appropriate
@@ -19,7 +19,7 @@ To access the Cluster Overview:
 #. The overview will be the default view under the Cluster section.
 
 .. image:: /assets/images/webui-cluster-overview.png
-   :alt: A view of the Determined WebUI Cluster Overview tab
+   :alt: Determined WebUI Cluster Overview tab showing resource utilization, resource pools, and cluster topology.
 
 *****************
  Page Components
