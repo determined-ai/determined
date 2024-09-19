@@ -198,7 +198,7 @@ experiments.
  Testing Webhooks
 ******************
 
-To edit a webhook, select the more-options menu to the right of the webhook record to access
+To test a webhook, select the more-options menu to the right of the webhook record to access
 available actions.
 
 .. image:: /assets/images/webhook_action.png
