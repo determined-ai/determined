@@ -16212,151 +16212,6 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
         },
         /**
          * 
-         * @summary Return a downsampled time series of metrics from multiple trials to compare them side-by-side.
-         * @param {Array<number>} [trialIds] The requested trial ids.
-         * @param {number} [maxDatapoints] The maximum number of data points to return after downsampling.
-         * @param {Array<string>} [metricNames] The names of selected metrics.
-         * @param {number} [startBatches] Sample from metrics after this batch number.
-         * @param {number} [endBatches] Sample from metrics before this batch number.
-         * @param {V1MetricType} [metricType] Metric group.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.  - METRIC_TYPE_PROFILING: For metrics emitted during profiling.
-         * @param {string} [group] Metric group (training, validation, etc).
-         * @param {Array<string>} [metricIds] metric ids for the query. must be in the form group.metric_name.
-         * @param {string} [timeSeriesFilterName] metric or column name for the filter.
-         * @param {number} [timeSeriesFilterDoubleRangeLt] Less than.
-         * @param {number} [timeSeriesFilterDoubleRangeLte] Less than or equal.
-         * @param {number} [timeSeriesFilterDoubleRangeGt] Greater than.
-         * @param {number} [timeSeriesFilterDoubleRangeGte] Greater than or equal.
-         * @param {number} [timeSeriesFilterIntegerRangeLt] Less than.
-         * @param {number} [timeSeriesFilterIntegerRangeLte] Less than or equal.
-         * @param {number} [timeSeriesFilterIntegerRangeGt] Greater than.
-         * @param {number} [timeSeriesFilterIntegerRangeGte] Greater than or equal.
-         * @param {Array<number>} [timeSeriesFilterIntegerRangeIncl] In a set. `in` is a reserved word in python.
-         * @param {Array<number>} [timeSeriesFilterIntegerRangeNotIn] Not in a set.
-         * @param {Date | DateString} [timeSeriesFilterTimeRangeLt] Less than.
-         * @param {Date | DateString} [timeSeriesFilterTimeRangeLte] Less than or equal.
-         * @param {Date | DateString} [timeSeriesFilterTimeRangeGt] Greater than.
-         * @param {Date | DateString} [timeSeriesFilterTimeRangeGte] Greater than or equal.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: V1MetricType, group?: string, metricIds?: Array<string>, timeSeriesFilterName?: string, timeSeriesFilterDoubleRangeLt?: number, timeSeriesFilterDoubleRangeLte?: number, timeSeriesFilterDoubleRangeGt?: number, timeSeriesFilterDoubleRangeGte?: number, timeSeriesFilterIntegerRangeLt?: number, timeSeriesFilterIntegerRangeLte?: number, timeSeriesFilterIntegerRangeGt?: number, timeSeriesFilterIntegerRangeGte?: number, timeSeriesFilterIntegerRangeIncl?: Array<number>, timeSeriesFilterIntegerRangeNotIn?: Array<number>, timeSeriesFilterTimeRangeLt?: Date | DateString, timeSeriesFilterTimeRangeLte?: Date | DateString, timeSeriesFilterTimeRangeGt?: Date | DateString, timeSeriesFilterTimeRangeGte?: Date | DateString, options: any = {}): FetchArgs {
-            const localVarPath = `/api/v1/trials/time-series`;
-            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
-            const localVarRequestOptions = { method: 'GET', ...options };
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-            
-            // authentication BearerToken required
-            if (configuration && configuration.apiKey) {
-                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
-                    ? configuration.apiKey("Authorization")
-                    : configuration.apiKey;
-                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-            
-            if (trialIds) {
-                localVarQueryParameter['trialIds'] = trialIds
-            }
-            
-            if (maxDatapoints !== undefined) {
-                localVarQueryParameter['maxDatapoints'] = maxDatapoints
-            }
-            
-            if (metricNames) {
-                localVarQueryParameter['metricNames'] = metricNames
-            }
-            
-            if (startBatches !== undefined) {
-                localVarQueryParameter['startBatches'] = startBatches
-            }
-            
-            if (endBatches !== undefined) {
-                localVarQueryParameter['endBatches'] = endBatches
-            }
-            
-            if (metricType !== undefined) {
-                localVarQueryParameter['metricType'] = metricType
-            }
-            
-            if (group !== undefined) {
-                localVarQueryParameter['group'] = group
-            }
-            
-            if (metricIds) {
-                localVarQueryParameter['metricIds'] = metricIds
-            }
-            
-            if (timeSeriesFilterName !== undefined) {
-                localVarQueryParameter['timeSeriesFilter.name'] = timeSeriesFilterName
-            }
-            
-            if (timeSeriesFilterDoubleRangeLt !== undefined) {
-                localVarQueryParameter['timeSeriesFilter.doubleRange.lt'] = timeSeriesFilterDoubleRangeLt
-            }
-            
-            if (timeSeriesFilterDoubleRangeLte !== undefined) {
-                localVarQueryParameter['timeSeriesFilter.doubleRange.lte'] = timeSeriesFilterDoubleRangeLte
-            }
-            
-            if (timeSeriesFilterDoubleRangeGt !== undefined) {
-                localVarQueryParameter['timeSeriesFilter.doubleRange.gt'] = timeSeriesFilterDoubleRangeGt
-            }
-            
-            if (timeSeriesFilterDoubleRangeGte !== undefined) {
-                localVarQueryParameter['timeSeriesFilter.doubleRange.gte'] = timeSeriesFilterDoubleRangeGte
-            }
-            
-            if (timeSeriesFilterIntegerRangeLt !== undefined) {
-                localVarQueryParameter['timeSeriesFilter.integerRange.lt'] = timeSeriesFilterIntegerRangeLt
-            }
-            
-            if (timeSeriesFilterIntegerRangeLte !== undefined) {
-                localVarQueryParameter['timeSeriesFilter.integerRange.lte'] = timeSeriesFilterIntegerRangeLte
-            }
-            
-            if (timeSeriesFilterIntegerRangeGt !== undefined) {
-                localVarQueryParameter['timeSeriesFilter.integerRange.gt'] = timeSeriesFilterIntegerRangeGt
-            }
-            
-            if (timeSeriesFilterIntegerRangeGte !== undefined) {
-                localVarQueryParameter['timeSeriesFilter.integerRange.gte'] = timeSeriesFilterIntegerRangeGte
-            }
-            
-            if (timeSeriesFilterIntegerRangeIncl) {
-                localVarQueryParameter['timeSeriesFilter.integerRange.incl'] = timeSeriesFilterIntegerRangeIncl
-            }
-            
-            if (timeSeriesFilterIntegerRangeNotIn) {
-                localVarQueryParameter['timeSeriesFilter.integerRange.notIn'] = timeSeriesFilterIntegerRangeNotIn
-            }
-            
-            if (timeSeriesFilterTimeRangeLt) {
-                localVarQueryParameter['timeSeriesFilter.timeRange.lt'] = typeof timeSeriesFilterTimeRangeLt === "string" ? timeSeriesFilterTimeRangeLt : timeSeriesFilterTimeRangeLt.toISOString()
-            }
-            
-            if (timeSeriesFilterTimeRangeLte) {
-                localVarQueryParameter['timeSeriesFilter.timeRange.lte'] = typeof timeSeriesFilterTimeRangeLte === "string" ? timeSeriesFilterTimeRangeLte : timeSeriesFilterTimeRangeLte.toISOString()
-            }
-            
-            if (timeSeriesFilterTimeRangeGt) {
-                localVarQueryParameter['timeSeriesFilter.timeRange.gt'] = typeof timeSeriesFilterTimeRangeGt === "string" ? timeSeriesFilterTimeRangeGt : timeSeriesFilterTimeRangeGt.toISOString()
-            }
-            
-            if (timeSeriesFilterTimeRangeGte) {
-                localVarQueryParameter['timeSeriesFilter.timeRange.gte'] = typeof timeSeriesFilterTimeRangeGte === "string" ? timeSeriesFilterTimeRangeGte : timeSeriesFilterTimeRangeGte.toISOString()
-            }
-            
-            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
-            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
-            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
-            
-            return {
-                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
          * @summary Delete the requested experiment.
          * @param {number} experimentId The ID of the experiment.
          * @param {*} [options] Override http request option.
@@ -16838,78 +16693,6 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
         },
         /**
          * 
-         * @summary Get the validation history for an experiment.
-         * @param {number} experimentId The id of the experiment.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getExperimentValidationHistory(experimentId: number, options: any = {}): FetchArgs {
-            // verify required parameter 'experimentId' is not null or undefined
-            if (experimentId === null || experimentId === undefined) {
-                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling getExperimentValidationHistory.');
-            }
-            const localVarPath = `/api/v1/experiments/{experimentId}/validation-history`
-                .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
-            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
-            const localVarRequestOptions = { method: 'GET', ...options };
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-            
-            // authentication BearerToken required
-            if (configuration && configuration.apiKey) {
-                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
-                    ? configuration.apiKey("Authorization")
-                    : configuration.apiKey;
-                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-            
-            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
-            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
-            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
-            
-            return {
-                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
-         * @summary Get the model definition of an experiment.
-         * @param {number} experimentId The id of the experiment.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getModelDef(experimentId: number, options: any = {}): FetchArgs {
-            // verify required parameter 'experimentId' is not null or undefined
-            if (experimentId === null || experimentId === undefined) {
-                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling getModelDef.');
-            }
-            const localVarPath = `/api/v1/experiments/{experimentId}/model_def`
-                .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
-            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
-            const localVarRequestOptions = { method: 'GET', ...options };
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-            
-            // authentication BearerToken required
-            if (configuration && configuration.apiKey) {
-                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
-                    ? configuration.apiKey("Authorization")
-                    : configuration.apiKey;
-                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-            
-            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
-            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
-            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
-            
-            return {
-                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
          * @summary Get one file content of model definition of an experiment.
          * @param {number} experimentId The id of the experiment.
          * @param {V1GetModelDefFileRequest} body
@@ -16946,42 +16729,6 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
             objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
-            
-            return {
-                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
-         * @summary Get the model definition file tree of an experiment.
-         * @param {number} experimentId The id of the experiment.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getModelDefTree(experimentId: number, options: any = {}): FetchArgs {
-            // verify required parameter 'experimentId' is not null or undefined
-            if (experimentId === null || experimentId === undefined) {
-                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling getModelDefTree.');
-            }
-            const localVarPath = `/api/v1/experiments/{experimentId}/file_tree`
-                .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
-            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
-            const localVarRequestOptions = { method: 'GET', ...options };
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-            
-            // authentication BearerToken required
-            if (configuration && configuration.apiKey) {
-                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
-                    ? configuration.apiKey("Authorization")
-                    : configuration.apiKey;
-                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-            
-            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
-            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
-            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
                 url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
@@ -17500,44 +17247,6 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
         },
         /**
          * 
-         * @summary Preview hyperparameter search.
-         * @param {V1PreviewHPSearchRequest} body
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        previewHPSearch(body: V1PreviewHPSearchRequest, options: any = {}): FetchArgs {
-            // verify required parameter 'body' is not null or undefined
-            if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling previewHPSearch.');
-            }
-            const localVarPath = `/api/v1/preview-hp-search`;
-            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
-            const localVarRequestOptions = { method: 'POST', ...options };
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-            
-            // authentication BearerToken required
-            if (configuration && configuration.apiKey) {
-                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
-                    ? configuration.apiKey("Authorization")
-                    : configuration.apiKey;
-                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-            
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-            
-            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
-            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
-            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
-            localVarRequestOptions.body = JSON.stringify(body)
-            
-            return {
-                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
          * @summary Put a new label on the experiment.
          * @param {number} experimentId The ID of the experiment.
          * @param {string} label The label to add.
@@ -17802,47 +17511,6 @@ export const ExperimentsApiFetchParamCreator = function (configuration?: Configu
         },
         /**
          * 
-         * @summary Stream trial log fields.
-         * @param {number} trialId The ID of the trial.
-         * @param {boolean} [follow] Continue following fields until the trial stops.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        trialLogsFields(trialId: number, follow?: boolean, options: any = {}): FetchArgs {
-            // verify required parameter 'trialId' is not null or undefined
-            if (trialId === null || trialId === undefined) {
-                throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling trialLogsFields.');
-            }
-            const localVarPath = `/api/v1/trials/{trialId}/logs/fields`
-                .replace(`{${"trialId"}}`, encodeURIComponent(String(trialId)));
-            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
-            const localVarRequestOptions = { method: 'GET', ...options };
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-            
-            // authentication BearerToken required
-            if (configuration && configuration.apiKey) {
-                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
-                    ? configuration.apiKey("Authorization")
-                    : configuration.apiKey;
-                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-            
-            if (follow !== undefined) {
-                localVarQueryParameter['follow'] = follow
-            }
-            
-            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
-            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
-            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
-            
-            return {
-                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
          * @summary Unarchive an experiment.
          * @param {number} id The experiment id.
          * @param {*} [options] Override http request option.
@@ -18037,47 +17705,6 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
          */
         cancelExperiments(projectId: number, body: V1CancelExperimentsRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CancelExperimentsResponse> {
             const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).cancelExperiments(projectId, body, options);
-            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
-                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
-                    if (response.status >= 200 && response.status < 300) {
-                        return response.json();
-                    } else {
-                        throw response;
-                    }
-                });
-            };
-        },
-        /**
-         * 
-         * @summary Return a downsampled time series of metrics from multiple trials to compare them side-by-side.
-         * @param {Array<number>} [trialIds] The requested trial ids.
-         * @param {number} [maxDatapoints] The maximum number of data points to return after downsampling.
-         * @param {Array<string>} [metricNames] The names of selected metrics.
-         * @param {number} [startBatches] Sample from metrics after this batch number.
-         * @param {number} [endBatches] Sample from metrics before this batch number.
-         * @param {V1MetricType} [metricType] Metric group.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.  - METRIC_TYPE_PROFILING: For metrics emitted during profiling.
-         * @param {string} [group] Metric group (training, validation, etc).
-         * @param {Array<string>} [metricIds] metric ids for the query. must be in the form group.metric_name.
-         * @param {string} [timeSeriesFilterName] metric or column name for the filter.
-         * @param {number} [timeSeriesFilterDoubleRangeLt] Less than.
-         * @param {number} [timeSeriesFilterDoubleRangeLte] Less than or equal.
-         * @param {number} [timeSeriesFilterDoubleRangeGt] Greater than.
-         * @param {number} [timeSeriesFilterDoubleRangeGte] Greater than or equal.
-         * @param {number} [timeSeriesFilterIntegerRangeLt] Less than.
-         * @param {number} [timeSeriesFilterIntegerRangeLte] Less than or equal.
-         * @param {number} [timeSeriesFilterIntegerRangeGt] Greater than.
-         * @param {number} [timeSeriesFilterIntegerRangeGte] Greater than or equal.
-         * @param {Array<number>} [timeSeriesFilterIntegerRangeIncl] In a set. `in` is a reserved word in python.
-         * @param {Array<number>} [timeSeriesFilterIntegerRangeNotIn] Not in a set.
-         * @param {Date | DateString} [timeSeriesFilterTimeRangeLt] Less than.
-         * @param {Date | DateString} [timeSeriesFilterTimeRangeLte] Less than or equal.
-         * @param {Date | DateString} [timeSeriesFilterTimeRangeGt] Greater than.
-         * @param {Date | DateString} [timeSeriesFilterTimeRangeGte] Greater than or equal.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: V1MetricType, group?: string, metricIds?: Array<string>, timeSeriesFilterName?: string, timeSeriesFilterDoubleRangeLt?: number, timeSeriesFilterDoubleRangeLte?: number, timeSeriesFilterDoubleRangeGt?: number, timeSeriesFilterDoubleRangeGte?: number, timeSeriesFilterIntegerRangeLt?: number, timeSeriesFilterIntegerRangeLte?: number, timeSeriesFilterIntegerRangeGt?: number, timeSeriesFilterIntegerRangeGte?: number, timeSeriesFilterIntegerRangeIncl?: Array<number>, timeSeriesFilterIntegerRangeNotIn?: Array<number>, timeSeriesFilterTimeRangeLt?: Date | DateString, timeSeriesFilterTimeRangeLte?: Date | DateString, timeSeriesFilterTimeRangeGt?: Date | DateString, timeSeriesFilterTimeRangeGte?: Date | DateString, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CompareTrialsResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).compareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, group, metricIds, timeSeriesFilterName, timeSeriesFilterDoubleRangeLt, timeSeriesFilterDoubleRangeLte, timeSeriesFilterDoubleRangeGt, timeSeriesFilterDoubleRangeGte, timeSeriesFilterIntegerRangeLt, timeSeriesFilterIntegerRangeLte, timeSeriesFilterIntegerRangeGt, timeSeriesFilterIntegerRangeGte, timeSeriesFilterIntegerRangeIncl, timeSeriesFilterIntegerRangeNotIn, timeSeriesFilterTimeRangeLt, timeSeriesFilterTimeRangeLte, timeSeriesFilterTimeRangeGt, timeSeriesFilterTimeRangeGte, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -18292,44 +17919,6 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Get the validation history for an experiment.
-         * @param {number} experimentId The id of the experiment.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getExperimentValidationHistory(experimentId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetExperimentValidationHistoryResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getExperimentValidationHistory(experimentId, options);
-            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
-                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
-                    if (response.status >= 200 && response.status < 300) {
-                        return response.json();
-                    } else {
-                        throw response;
-                    }
-                });
-            };
-        },
-        /**
-         * 
-         * @summary Get the model definition of an experiment.
-         * @param {number} experimentId The id of the experiment.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getModelDef(experimentId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelDefResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getModelDef(experimentId, options);
-            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
-                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
-                    if (response.status >= 200 && response.status < 300) {
-                        return response.json();
-                    } else {
-                        throw response;
-                    }
-                });
-            };
-        },
-        /**
-         * 
          * @summary Get one file content of model definition of an experiment.
          * @param {number} experimentId The id of the experiment.
          * @param {V1GetModelDefFileRequest} body
@@ -18338,25 +17927,6 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
          */
         getModelDefFile(experimentId: number, body: V1GetModelDefFileRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelDefFileResponse> {
             const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getModelDefFile(experimentId, body, options);
-            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
-                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
-                    if (response.status >= 200 && response.status < 300) {
-                        return response.json();
-                    } else {
-                        throw response;
-                    }
-                });
-            };
-        },
-        /**
-         * 
-         * @summary Get the model definition file tree of an experiment.
-         * @param {number} experimentId The id of the experiment.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getModelDefTree(experimentId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelDefTreeResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).getModelDefTree(experimentId, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -18609,25 +18179,6 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Preview hyperparameter search.
-         * @param {V1PreviewHPSearchRequest} body
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        previewHPSearch(body: V1PreviewHPSearchRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PreviewHPSearchResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).previewHPSearch(body, options);
-            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
-                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
-                    if (response.status >= 200 && response.status < 300) {
-                        return response.json();
-                    } else {
-                        throw response;
-                    }
-                });
-            };
-        },
-        /**
-         * 
          * @summary Put a new label on the experiment.
          * @param {number} experimentId The ID of the experiment.
          * @param {string} label The label to add.
@@ -18726,26 +18277,6 @@ export const ExperimentsApiFp = function (configuration?: Configuration) {
          */
         trialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date | DateString, timestampAfter?: Date | DateString, orderBy?: V1OrderBy, searchText?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TrialLogsResponse> {
             const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).trialLogs(trialId, limit, follow, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options);
-            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
-                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
-                    if (response.status >= 200 && response.status < 300) {
-                        return response.json();
-                    } else {
-                        throw response;
-                    }
-                });
-            };
-        },
-        /**
-         * 
-         * @summary Stream trial log fields.
-         * @param {number} trialId The ID of the trial.
-         * @param {boolean} [follow] Continue following fields until the trial stops.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        trialLogsFields(trialId: number, follow?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TrialLogsFieldsResponse> {
-            const localVarFetchArgs = ExperimentsApiFetchParamCreator(configuration).trialLogsFields(trialId, follow, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -18866,38 +18397,6 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          */
         cancelExperiments(projectId: number, body: V1CancelExperimentsRequest, options?: any) {
             return ExperimentsApiFp(configuration).cancelExperiments(projectId, body, options)(fetch, basePath);
-        },
-        /**
-         * 
-         * @summary Return a downsampled time series of metrics from multiple trials to compare them side-by-side.
-         * @param {Array<number>} [trialIds] The requested trial ids.
-         * @param {number} [maxDatapoints] The maximum number of data points to return after downsampling.
-         * @param {Array<string>} [metricNames] The names of selected metrics.
-         * @param {number} [startBatches] Sample from metrics after this batch number.
-         * @param {number} [endBatches] Sample from metrics before this batch number.
-         * @param {V1MetricType} [metricType] Metric group.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.  - METRIC_TYPE_PROFILING: For metrics emitted during profiling.
-         * @param {string} [group] Metric group (training, validation, etc).
-         * @param {Array<string>} [metricIds] metric ids for the query. must be in the form group.metric_name.
-         * @param {string} [timeSeriesFilterName] metric or column name for the filter.
-         * @param {number} [timeSeriesFilterDoubleRangeLt] Less than.
-         * @param {number} [timeSeriesFilterDoubleRangeLte] Less than or equal.
-         * @param {number} [timeSeriesFilterDoubleRangeGt] Greater than.
-         * @param {number} [timeSeriesFilterDoubleRangeGte] Greater than or equal.
-         * @param {number} [timeSeriesFilterIntegerRangeLt] Less than.
-         * @param {number} [timeSeriesFilterIntegerRangeLte] Less than or equal.
-         * @param {number} [timeSeriesFilterIntegerRangeGt] Greater than.
-         * @param {number} [timeSeriesFilterIntegerRangeGte] Greater than or equal.
-         * @param {Array<number>} [timeSeriesFilterIntegerRangeIncl] In a set. `in` is a reserved word in python.
-         * @param {Array<number>} [timeSeriesFilterIntegerRangeNotIn] Not in a set.
-         * @param {Date | DateString} [timeSeriesFilterTimeRangeLt] Less than.
-         * @param {Date | DateString} [timeSeriesFilterTimeRangeLte] Less than or equal.
-         * @param {Date | DateString} [timeSeriesFilterTimeRangeGt] Greater than.
-         * @param {Date | DateString} [timeSeriesFilterTimeRangeGte] Greater than or equal.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: V1MetricType, group?: string, metricIds?: Array<string>, timeSeriesFilterName?: string, timeSeriesFilterDoubleRangeLt?: number, timeSeriesFilterDoubleRangeLte?: number, timeSeriesFilterDoubleRangeGt?: number, timeSeriesFilterDoubleRangeGte?: number, timeSeriesFilterIntegerRangeLt?: number, timeSeriesFilterIntegerRangeLte?: number, timeSeriesFilterIntegerRangeGt?: number, timeSeriesFilterIntegerRangeGte?: number, timeSeriesFilterIntegerRangeIncl?: Array<number>, timeSeriesFilterIntegerRangeNotIn?: Array<number>, timeSeriesFilterTimeRangeLt?: Date | DateString, timeSeriesFilterTimeRangeLte?: Date | DateString, timeSeriesFilterTimeRangeGt?: Date | DateString, timeSeriesFilterTimeRangeGte?: Date | DateString, options?: any) {
-            return ExperimentsApiFp(configuration).compareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, group, metricIds, timeSeriesFilterName, timeSeriesFilterDoubleRangeLt, timeSeriesFilterDoubleRangeLte, timeSeriesFilterDoubleRangeGt, timeSeriesFilterDoubleRangeGte, timeSeriesFilterIntegerRangeLt, timeSeriesFilterIntegerRangeLte, timeSeriesFilterIntegerRangeGt, timeSeriesFilterIntegerRangeGte, timeSeriesFilterIntegerRangeIncl, timeSeriesFilterIntegerRangeNotIn, timeSeriesFilterTimeRangeLt, timeSeriesFilterTimeRangeLte, timeSeriesFilterTimeRangeGt, timeSeriesFilterTimeRangeGte, options)(fetch, basePath);
         },
         /**
          * 
@@ -19022,26 +18521,6 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
         },
         /**
          * 
-         * @summary Get the validation history for an experiment.
-         * @param {number} experimentId The id of the experiment.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getExperimentValidationHistory(experimentId: number, options?: any) {
-            return ExperimentsApiFp(configuration).getExperimentValidationHistory(experimentId, options)(fetch, basePath);
-        },
-        /**
-         * 
-         * @summary Get the model definition of an experiment.
-         * @param {number} experimentId The id of the experiment.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getModelDef(experimentId: number, options?: any) {
-            return ExperimentsApiFp(configuration).getModelDef(experimentId, options)(fetch, basePath);
-        },
-        /**
-         * 
          * @summary Get one file content of model definition of an experiment.
          * @param {number} experimentId The id of the experiment.
          * @param {V1GetModelDefFileRequest} body
@@ -19050,16 +18529,6 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          */
         getModelDefFile(experimentId: number, body: V1GetModelDefFileRequest, options?: any) {
             return ExperimentsApiFp(configuration).getModelDefFile(experimentId, body, options)(fetch, basePath);
-        },
-        /**
-         * 
-         * @summary Get the model definition file tree of an experiment.
-         * @param {number} experimentId The id of the experiment.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getModelDefTree(experimentId: number, options?: any) {
-            return ExperimentsApiFp(configuration).getModelDefTree(experimentId, options)(fetch, basePath);
         },
         /**
          * 
@@ -19195,16 +18664,6 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
         },
         /**
          * 
-         * @summary Preview hyperparameter search.
-         * @param {V1PreviewHPSearchRequest} body
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        previewHPSearch(body: V1PreviewHPSearchRequest, options?: any) {
-            return ExperimentsApiFp(configuration).previewHPSearch(body, options)(fetch, basePath);
-        },
-        /**
-         * 
          * @summary Put a new label on the experiment.
          * @param {number} experimentId The ID of the experiment.
          * @param {string} label The label to add.
@@ -19267,17 +18726,6 @@ export const ExperimentsApiFactory = function (configuration?: Configuration, fe
          */
         trialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date | DateString, timestampAfter?: Date | DateString, orderBy?: V1OrderBy, searchText?: string, options?: any) {
             return ExperimentsApiFp(configuration).trialLogs(trialId, limit, follow, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options)(fetch, basePath);
-        },
-        /**
-         * 
-         * @summary Stream trial log fields.
-         * @param {number} trialId The ID of the trial.
-         * @param {boolean} [follow] Continue following fields until the trial stops.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        trialLogsFields(trialId: number, follow?: boolean, options?: any) {
-            return ExperimentsApiFp(configuration).trialLogsFields(trialId, follow, options)(fetch, basePath);
         },
         /**
          * 
@@ -19383,40 +18831,6 @@ export class ExperimentsApi extends BaseAPI {
      */
     public cancelExperiments(projectId: number, body: V1CancelExperimentsRequest, options?: any) {
         return ExperimentsApiFp(this.configuration).cancelExperiments(projectId, body, options)(this.fetch, this.basePath)
-    }
-    
-    /**
-     * 
-     * @summary Return a downsampled time series of metrics from multiple trials to compare them side-by-side.
-     * @param {Array<number>} [trialIds] The requested trial ids.
-     * @param {number} [maxDatapoints] The maximum number of data points to return after downsampling.
-     * @param {Array<string>} [metricNames] The names of selected metrics.
-     * @param {number} [startBatches] Sample from metrics after this batch number.
-     * @param {number} [endBatches] Sample from metrics before this batch number.
-     * @param {V1MetricType} [metricType] Metric group.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.  - METRIC_TYPE_PROFILING: For metrics emitted during profiling.
-     * @param {string} [group] Metric group (training, validation, etc).
-     * @param {Array<string>} [metricIds] metric ids for the query. must be in the form group.metric_name.
-     * @param {string} [timeSeriesFilterName] metric or column name for the filter.
-     * @param {number} [timeSeriesFilterDoubleRangeLt] Less than.
-     * @param {number} [timeSeriesFilterDoubleRangeLte] Less than or equal.
-     * @param {number} [timeSeriesFilterDoubleRangeGt] Greater than.
-     * @param {number} [timeSeriesFilterDoubleRangeGte] Greater than or equal.
-     * @param {number} [timeSeriesFilterIntegerRangeLt] Less than.
-     * @param {number} [timeSeriesFilterIntegerRangeLte] Less than or equal.
-     * @param {number} [timeSeriesFilterIntegerRangeGt] Greater than.
-     * @param {number} [timeSeriesFilterIntegerRangeGte] Greater than or equal.
-     * @param {Array<number>} [timeSeriesFilterIntegerRangeIncl] In a set. `in` is a reserved word in python.
-     * @param {Array<number>} [timeSeriesFilterIntegerRangeNotIn] Not in a set.
-     * @param {Date | DateString} [timeSeriesFilterTimeRangeLt] Less than.
-     * @param {Date | DateString} [timeSeriesFilterTimeRangeLte] Less than or equal.
-     * @param {Date | DateString} [timeSeriesFilterTimeRangeGt] Greater than.
-     * @param {Date | DateString} [timeSeriesFilterTimeRangeGte] Greater than or equal.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof ExperimentsApi
-     */
-    public compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: V1MetricType, group?: string, metricIds?: Array<string>, timeSeriesFilterName?: string, timeSeriesFilterDoubleRangeLt?: number, timeSeriesFilterDoubleRangeLte?: number, timeSeriesFilterDoubleRangeGt?: number, timeSeriesFilterDoubleRangeGte?: number, timeSeriesFilterIntegerRangeLt?: number, timeSeriesFilterIntegerRangeLte?: number, timeSeriesFilterIntegerRangeGt?: number, timeSeriesFilterIntegerRangeGte?: number, timeSeriesFilterIntegerRangeIncl?: Array<number>, timeSeriesFilterIntegerRangeNotIn?: Array<number>, timeSeriesFilterTimeRangeLt?: Date | DateString, timeSeriesFilterTimeRangeLte?: Date | DateString, timeSeriesFilterTimeRangeGt?: Date | DateString, timeSeriesFilterTimeRangeGte?: Date | DateString, options?: any) {
-        return ExperimentsApiFp(this.configuration).compareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, group, metricIds, timeSeriesFilterName, timeSeriesFilterDoubleRangeLt, timeSeriesFilterDoubleRangeLte, timeSeriesFilterDoubleRangeGt, timeSeriesFilterDoubleRangeGte, timeSeriesFilterIntegerRangeLt, timeSeriesFilterIntegerRangeLte, timeSeriesFilterIntegerRangeGt, timeSeriesFilterIntegerRangeGte, timeSeriesFilterIntegerRangeIncl, timeSeriesFilterIntegerRangeNotIn, timeSeriesFilterTimeRangeLt, timeSeriesFilterTimeRangeLte, timeSeriesFilterTimeRangeGt, timeSeriesFilterTimeRangeGte, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -19560,30 +18974,6 @@ export class ExperimentsApi extends BaseAPI {
     
     /**
      * 
-     * @summary Get the validation history for an experiment.
-     * @param {number} experimentId The id of the experiment.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof ExperimentsApi
-     */
-    public getExperimentValidationHistory(experimentId: number, options?: any) {
-        return ExperimentsApiFp(this.configuration).getExperimentValidationHistory(experimentId, options)(this.fetch, this.basePath)
-    }
-    
-    /**
-     * 
-     * @summary Get the model definition of an experiment.
-     * @param {number} experimentId The id of the experiment.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof ExperimentsApi
-     */
-    public getModelDef(experimentId: number, options?: any) {
-        return ExperimentsApiFp(this.configuration).getModelDef(experimentId, options)(this.fetch, this.basePath)
-    }
-    
-    /**
-     * 
      * @summary Get one file content of model definition of an experiment.
      * @param {number} experimentId The id of the experiment.
      * @param {V1GetModelDefFileRequest} body
@@ -19593,18 +18983,6 @@ export class ExperimentsApi extends BaseAPI {
      */
     public getModelDefFile(experimentId: number, body: V1GetModelDefFileRequest, options?: any) {
         return ExperimentsApiFp(this.configuration).getModelDefFile(experimentId, body, options)(this.fetch, this.basePath)
-    }
-    
-    /**
-     * 
-     * @summary Get the model definition file tree of an experiment.
-     * @param {number} experimentId The id of the experiment.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof ExperimentsApi
-     */
-    public getModelDefTree(experimentId: number, options?: any) {
-        return ExperimentsApiFp(this.configuration).getModelDefTree(experimentId, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -19765,18 +19143,6 @@ export class ExperimentsApi extends BaseAPI {
     
     /**
      * 
-     * @summary Preview hyperparameter search.
-     * @param {V1PreviewHPSearchRequest} body
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof ExperimentsApi
-     */
-    public previewHPSearch(body: V1PreviewHPSearchRequest, options?: any) {
-        return ExperimentsApiFp(this.configuration).previewHPSearch(body, options)(this.fetch, this.basePath)
-    }
-    
-    /**
-     * 
      * @summary Put a new label on the experiment.
      * @param {number} experimentId The ID of the experiment.
      * @param {string} label The label to add.
@@ -19848,19 +19214,6 @@ export class ExperimentsApi extends BaseAPI {
      */
     public trialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date | DateString, timestampAfter?: Date | DateString, orderBy?: V1OrderBy, searchText?: string, options?: any) {
         return ExperimentsApiFp(this.configuration).trialLogs(trialId, limit, follow, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options)(this.fetch, this.basePath)
-    }
-    
-    /**
-     * 
-     * @summary Stream trial log fields.
-     * @param {number} trialId The ID of the trial.
-     * @param {boolean} [follow] Continue following fields until the trial stops.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof ExperimentsApi
-     */
-    public trialLogsFields(trialId: number, follow?: boolean, options?: any) {
-        return ExperimentsApiFp(this.configuration).trialLogsFields(trialId, follow, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -20351,6 +19704,151 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Return a downsampled time series of metrics from multiple trials to compare them side-by-side.
+         * @param {Array<number>} [trialIds] The requested trial ids.
+         * @param {number} [maxDatapoints] The maximum number of data points to return after downsampling.
+         * @param {Array<string>} [metricNames] The names of selected metrics.
+         * @param {number} [startBatches] Sample from metrics after this batch number.
+         * @param {number} [endBatches] Sample from metrics before this batch number.
+         * @param {V1MetricType} [metricType] Metric group.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.  - METRIC_TYPE_PROFILING: For metrics emitted during profiling.
+         * @param {string} [group] Metric group (training, validation, etc).
+         * @param {Array<string>} [metricIds] metric ids for the query. must be in the form group.metric_name.
+         * @param {string} [timeSeriesFilterName] metric or column name for the filter.
+         * @param {number} [timeSeriesFilterDoubleRangeLt] Less than.
+         * @param {number} [timeSeriesFilterDoubleRangeLte] Less than or equal.
+         * @param {number} [timeSeriesFilterDoubleRangeGt] Greater than.
+         * @param {number} [timeSeriesFilterDoubleRangeGte] Greater than or equal.
+         * @param {number} [timeSeriesFilterIntegerRangeLt] Less than.
+         * @param {number} [timeSeriesFilterIntegerRangeLte] Less than or equal.
+         * @param {number} [timeSeriesFilterIntegerRangeGt] Greater than.
+         * @param {number} [timeSeriesFilterIntegerRangeGte] Greater than or equal.
+         * @param {Array<number>} [timeSeriesFilterIntegerRangeIncl] In a set. `in` is a reserved word in python.
+         * @param {Array<number>} [timeSeriesFilterIntegerRangeNotIn] Not in a set.
+         * @param {Date | DateString} [timeSeriesFilterTimeRangeLt] Less than.
+         * @param {Date | DateString} [timeSeriesFilterTimeRangeLte] Less than or equal.
+         * @param {Date | DateString} [timeSeriesFilterTimeRangeGt] Greater than.
+         * @param {Date | DateString} [timeSeriesFilterTimeRangeGte] Greater than or equal.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: V1MetricType, group?: string, metricIds?: Array<string>, timeSeriesFilterName?: string, timeSeriesFilterDoubleRangeLt?: number, timeSeriesFilterDoubleRangeLte?: number, timeSeriesFilterDoubleRangeGt?: number, timeSeriesFilterDoubleRangeGte?: number, timeSeriesFilterIntegerRangeLt?: number, timeSeriesFilterIntegerRangeLte?: number, timeSeriesFilterIntegerRangeGt?: number, timeSeriesFilterIntegerRangeGte?: number, timeSeriesFilterIntegerRangeIncl?: Array<number>, timeSeriesFilterIntegerRangeNotIn?: Array<number>, timeSeriesFilterTimeRangeLt?: Date | DateString, timeSeriesFilterTimeRangeLte?: Date | DateString, timeSeriesFilterTimeRangeGt?: Date | DateString, timeSeriesFilterTimeRangeGte?: Date | DateString, options: any = {}): FetchArgs {
+            const localVarPath = `/api/v1/trials/time-series`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            if (trialIds) {
+                localVarQueryParameter['trialIds'] = trialIds
+            }
+            
+            if (maxDatapoints !== undefined) {
+                localVarQueryParameter['maxDatapoints'] = maxDatapoints
+            }
+            
+            if (metricNames) {
+                localVarQueryParameter['metricNames'] = metricNames
+            }
+            
+            if (startBatches !== undefined) {
+                localVarQueryParameter['startBatches'] = startBatches
+            }
+            
+            if (endBatches !== undefined) {
+                localVarQueryParameter['endBatches'] = endBatches
+            }
+            
+            if (metricType !== undefined) {
+                localVarQueryParameter['metricType'] = metricType
+            }
+            
+            if (group !== undefined) {
+                localVarQueryParameter['group'] = group
+            }
+            
+            if (metricIds) {
+                localVarQueryParameter['metricIds'] = metricIds
+            }
+            
+            if (timeSeriesFilterName !== undefined) {
+                localVarQueryParameter['timeSeriesFilter.name'] = timeSeriesFilterName
+            }
+            
+            if (timeSeriesFilterDoubleRangeLt !== undefined) {
+                localVarQueryParameter['timeSeriesFilter.doubleRange.lt'] = timeSeriesFilterDoubleRangeLt
+            }
+            
+            if (timeSeriesFilterDoubleRangeLte !== undefined) {
+                localVarQueryParameter['timeSeriesFilter.doubleRange.lte'] = timeSeriesFilterDoubleRangeLte
+            }
+            
+            if (timeSeriesFilterDoubleRangeGt !== undefined) {
+                localVarQueryParameter['timeSeriesFilter.doubleRange.gt'] = timeSeriesFilterDoubleRangeGt
+            }
+            
+            if (timeSeriesFilterDoubleRangeGte !== undefined) {
+                localVarQueryParameter['timeSeriesFilter.doubleRange.gte'] = timeSeriesFilterDoubleRangeGte
+            }
+            
+            if (timeSeriesFilterIntegerRangeLt !== undefined) {
+                localVarQueryParameter['timeSeriesFilter.integerRange.lt'] = timeSeriesFilterIntegerRangeLt
+            }
+            
+            if (timeSeriesFilterIntegerRangeLte !== undefined) {
+                localVarQueryParameter['timeSeriesFilter.integerRange.lte'] = timeSeriesFilterIntegerRangeLte
+            }
+            
+            if (timeSeriesFilterIntegerRangeGt !== undefined) {
+                localVarQueryParameter['timeSeriesFilter.integerRange.gt'] = timeSeriesFilterIntegerRangeGt
+            }
+            
+            if (timeSeriesFilterIntegerRangeGte !== undefined) {
+                localVarQueryParameter['timeSeriesFilter.integerRange.gte'] = timeSeriesFilterIntegerRangeGte
+            }
+            
+            if (timeSeriesFilterIntegerRangeIncl) {
+                localVarQueryParameter['timeSeriesFilter.integerRange.incl'] = timeSeriesFilterIntegerRangeIncl
+            }
+            
+            if (timeSeriesFilterIntegerRangeNotIn) {
+                localVarQueryParameter['timeSeriesFilter.integerRange.notIn'] = timeSeriesFilterIntegerRangeNotIn
+            }
+            
+            if (timeSeriesFilterTimeRangeLt) {
+                localVarQueryParameter['timeSeriesFilter.timeRange.lt'] = typeof timeSeriesFilterTimeRangeLt === "string" ? timeSeriesFilterTimeRangeLt : timeSeriesFilterTimeRangeLt.toISOString()
+            }
+            
+            if (timeSeriesFilterTimeRangeLte) {
+                localVarQueryParameter['timeSeriesFilter.timeRange.lte'] = typeof timeSeriesFilterTimeRangeLte === "string" ? timeSeriesFilterTimeRangeLte : timeSeriesFilterTimeRangeLte.toISOString()
+            }
+            
+            if (timeSeriesFilterTimeRangeGt) {
+                localVarQueryParameter['timeSeriesFilter.timeRange.gt'] = typeof timeSeriesFilterTimeRangeGt === "string" ? timeSeriesFilterTimeRangeGt : timeSeriesFilterTimeRangeGt.toISOString()
+            }
+            
+            if (timeSeriesFilterTimeRangeGte) {
+                localVarQueryParameter['timeSeriesFilter.timeRange.gte'] = typeof timeSeriesFilterTimeRangeGte === "string" ? timeSeriesFilterTimeRangeGte : timeSeriesFilterTimeRangeGte.toISOString()
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Reports to the searcher that the trial has completed the given searcher operation.
          * @param {number} trialId The id of the trial.
          * @param {V1CompleteValidateAfterOperation} body The completed operation.
@@ -20811,6 +20309,42 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Get the validation history for an experiment.
+         * @param {number} experimentId The id of the experiment.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getExperimentValidationHistory(experimentId: number, options: any = {}): FetchArgs {
+            // verify required parameter 'experimentId' is not null or undefined
+            if (experimentId === null || experimentId === undefined) {
+                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling getExperimentValidationHistory.');
+            }
+            const localVarPath = `/api/v1/experiments/{experimentId}/validation-history`
+                .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Get task config
          * @param {string} taskId The id of the task.
          * @param {*} [options] Override http request option.
@@ -21114,6 +20648,78 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             const localVarPath = `/api/v1/projects/{projectId}/metadata/{key}`
                 .replace(`{${"projectId"}}`, encodeURIComponent(String(projectId)))
                 .replace(`{${"key"}}`, encodeURIComponent(String(key)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Get the model definition of an experiment.
+         * @param {number} experimentId The id of the experiment.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getModelDef(experimentId: number, options: any = {}): FetchArgs {
+            // verify required parameter 'experimentId' is not null or undefined
+            if (experimentId === null || experimentId === undefined) {
+                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling getModelDef.');
+            }
+            const localVarPath = `/api/v1/experiments/{experimentId}/model_def`
+                .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Get the model definition file tree of an experiment.
+         * @param {number} experimentId The id of the experiment.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getModelDefTree(experimentId: number, options: any = {}): FetchArgs {
+            // verify required parameter 'experimentId' is not null or undefined
+            if (experimentId === null || experimentId === undefined) {
+                throw new RequiredError('experimentId','Required parameter experimentId was null or undefined when calling getModelDefTree.');
+            }
+            const localVarPath = `/api/v1/experiments/{experimentId}/file_tree`
+                .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
@@ -22511,6 +22117,44 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
+         * @summary Preview hyperparameter search.
+         * @param {V1PreviewHPSearchRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        previewHPSearch(body: V1PreviewHPSearchRequest, options: any = {}): FetchArgs {
+            // verify required parameter 'body' is not null or undefined
+            if (body === null || body === undefined) {
+                throw new RequiredError('body','Required parameter body was null or undefined when calling previewHPSearch.');
+            }
+            const localVarPath = `/api/v1/preview-hp-search`;
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'POST', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            localVarHeaderParameter['Content-Type'] = 'application/json';
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
          * @summary Put an experiment by external id.
          * @param {string} externalExperimentId External experiment id.
          * @param {V1CreateExperimentRequest} body CreateExperimentRequest payload.
@@ -23077,6 +22721,47 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
             localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             localVarRequestOptions.body = JSON.stringify(body)
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Stream trial log fields.
+         * @param {number} trialId The ID of the trial.
+         * @param {boolean} [follow] Continue following fields until the trial stops.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        trialLogsFields(trialId: number, follow?: boolean, options: any = {}): FetchArgs {
+            // verify required parameter 'trialId' is not null or undefined
+            if (trialId === null || trialId === undefined) {
+                throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling trialLogsFields.');
+            }
+            const localVarPath = `/api/v1/trials/{trialId}/logs/fields`
+                .replace(`{${"trialId"}}`, encodeURIComponent(String(trialId)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            if (follow !== undefined) {
+                localVarQueryParameter['follow'] = follow
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
             
             return {
                 url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
@@ -23664,6 +23349,47 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Return a downsampled time series of metrics from multiple trials to compare them side-by-side.
+         * @param {Array<number>} [trialIds] The requested trial ids.
+         * @param {number} [maxDatapoints] The maximum number of data points to return after downsampling.
+         * @param {Array<string>} [metricNames] The names of selected metrics.
+         * @param {number} [startBatches] Sample from metrics after this batch number.
+         * @param {number} [endBatches] Sample from metrics before this batch number.
+         * @param {V1MetricType} [metricType] Metric group.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.  - METRIC_TYPE_PROFILING: For metrics emitted during profiling.
+         * @param {string} [group] Metric group (training, validation, etc).
+         * @param {Array<string>} [metricIds] metric ids for the query. must be in the form group.metric_name.
+         * @param {string} [timeSeriesFilterName] metric or column name for the filter.
+         * @param {number} [timeSeriesFilterDoubleRangeLt] Less than.
+         * @param {number} [timeSeriesFilterDoubleRangeLte] Less than or equal.
+         * @param {number} [timeSeriesFilterDoubleRangeGt] Greater than.
+         * @param {number} [timeSeriesFilterDoubleRangeGte] Greater than or equal.
+         * @param {number} [timeSeriesFilterIntegerRangeLt] Less than.
+         * @param {number} [timeSeriesFilterIntegerRangeLte] Less than or equal.
+         * @param {number} [timeSeriesFilterIntegerRangeGt] Greater than.
+         * @param {number} [timeSeriesFilterIntegerRangeGte] Greater than or equal.
+         * @param {Array<number>} [timeSeriesFilterIntegerRangeIncl] In a set. `in` is a reserved word in python.
+         * @param {Array<number>} [timeSeriesFilterIntegerRangeNotIn] Not in a set.
+         * @param {Date | DateString} [timeSeriesFilterTimeRangeLt] Less than.
+         * @param {Date | DateString} [timeSeriesFilterTimeRangeLte] Less than or equal.
+         * @param {Date | DateString} [timeSeriesFilterTimeRangeGt] Greater than.
+         * @param {Date | DateString} [timeSeriesFilterTimeRangeGte] Greater than or equal.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: V1MetricType, group?: string, metricIds?: Array<string>, timeSeriesFilterName?: string, timeSeriesFilterDoubleRangeLt?: number, timeSeriesFilterDoubleRangeLte?: number, timeSeriesFilterDoubleRangeGt?: number, timeSeriesFilterDoubleRangeGte?: number, timeSeriesFilterIntegerRangeLt?: number, timeSeriesFilterIntegerRangeLte?: number, timeSeriesFilterIntegerRangeGt?: number, timeSeriesFilterIntegerRangeGte?: number, timeSeriesFilterIntegerRangeIncl?: Array<number>, timeSeriesFilterIntegerRangeNotIn?: Array<number>, timeSeriesFilterTimeRangeLt?: Date | DateString, timeSeriesFilterTimeRangeLte?: Date | DateString, timeSeriesFilterTimeRangeGt?: Date | DateString, timeSeriesFilterTimeRangeGte?: Date | DateString, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CompareTrialsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).compareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, group, metricIds, timeSeriesFilterName, timeSeriesFilterDoubleRangeLt, timeSeriesFilterDoubleRangeLte, timeSeriesFilterDoubleRangeGt, timeSeriesFilterDoubleRangeGte, timeSeriesFilterIntegerRangeLt, timeSeriesFilterIntegerRangeLte, timeSeriesFilterIntegerRangeGt, timeSeriesFilterIntegerRangeGte, timeSeriesFilterIntegerRangeIncl, timeSeriesFilterIntegerRangeNotIn, timeSeriesFilterTimeRangeLt, timeSeriesFilterTimeRangeLte, timeSeriesFilterTimeRangeGt, timeSeriesFilterTimeRangeGte, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Reports to the searcher that the trial has completed the given searcher operation.
          * @param {number} trialId The id of the trial.
          * @param {V1CompleteValidateAfterOperation} body The completed operation.
@@ -23894,6 +23620,25 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Get the validation history for an experiment.
+         * @param {number} experimentId The id of the experiment.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getExperimentValidationHistory(experimentId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetExperimentValidationHistoryResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getExperimentValidationHistory(experimentId, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Get task config
          * @param {string} taskId The id of the task.
          * @param {*} [options] Override http request option.
@@ -24042,6 +23787,44 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         getMetadataValues(projectId: number, key: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetMetadataValuesResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getMetadataValues(projectId, key, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Get the model definition of an experiment.
+         * @param {number} experimentId The id of the experiment.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getModelDef(experimentId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelDefResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getModelDef(experimentId, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Get the model definition file tree of an experiment.
+         * @param {number} experimentId The id of the experiment.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getModelDefTree(experimentId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetModelDefTreeResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getModelDefTree(experimentId, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -24698,6 +24481,25 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
+         * @summary Preview hyperparameter search.
+         * @param {V1PreviewHPSearchRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        previewHPSearch(body: V1PreviewHPSearchRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1PreviewHPSearchResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).previewHPSearch(body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
          * @summary Put an experiment by external id.
          * @param {string} externalExperimentId External experiment id.
          * @param {V1CreateExperimentRequest} body CreateExperimentRequest payload.
@@ -24959,6 +24761,26 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         startTrial(trialId: number, body: V1StartTrialRequest, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1StartTrialResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).startTrial(trialId, body, options);
+            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
+                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
+                    if (response.status >= 200 && response.status < 300) {
+                        return response.json();
+                    } else {
+                        throw response;
+                    }
+                });
+            };
+        },
+        /**
+         * 
+         * @summary Stream trial log fields.
+         * @param {number} trialId The ID of the trial.
+         * @param {boolean} [follow] Continue following fields until the trial stops.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        trialLogsFields(trialId: number, follow?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TrialLogsFieldsResponse> {
+            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).trialLogsFields(trialId, follow, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -25246,6 +25068,38 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Return a downsampled time series of metrics from multiple trials to compare them side-by-side.
+         * @param {Array<number>} [trialIds] The requested trial ids.
+         * @param {number} [maxDatapoints] The maximum number of data points to return after downsampling.
+         * @param {Array<string>} [metricNames] The names of selected metrics.
+         * @param {number} [startBatches] Sample from metrics after this batch number.
+         * @param {number} [endBatches] Sample from metrics before this batch number.
+         * @param {V1MetricType} [metricType] Metric group.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.  - METRIC_TYPE_PROFILING: For metrics emitted during profiling.
+         * @param {string} [group] Metric group (training, validation, etc).
+         * @param {Array<string>} [metricIds] metric ids for the query. must be in the form group.metric_name.
+         * @param {string} [timeSeriesFilterName] metric or column name for the filter.
+         * @param {number} [timeSeriesFilterDoubleRangeLt] Less than.
+         * @param {number} [timeSeriesFilterDoubleRangeLte] Less than or equal.
+         * @param {number} [timeSeriesFilterDoubleRangeGt] Greater than.
+         * @param {number} [timeSeriesFilterDoubleRangeGte] Greater than or equal.
+         * @param {number} [timeSeriesFilterIntegerRangeLt] Less than.
+         * @param {number} [timeSeriesFilterIntegerRangeLte] Less than or equal.
+         * @param {number} [timeSeriesFilterIntegerRangeGt] Greater than.
+         * @param {number} [timeSeriesFilterIntegerRangeGte] Greater than or equal.
+         * @param {Array<number>} [timeSeriesFilterIntegerRangeIncl] In a set. `in` is a reserved word in python.
+         * @param {Array<number>} [timeSeriesFilterIntegerRangeNotIn] Not in a set.
+         * @param {Date | DateString} [timeSeriesFilterTimeRangeLt] Less than.
+         * @param {Date | DateString} [timeSeriesFilterTimeRangeLte] Less than or equal.
+         * @param {Date | DateString} [timeSeriesFilterTimeRangeGt] Greater than.
+         * @param {Date | DateString} [timeSeriesFilterTimeRangeGte] Greater than or equal.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: V1MetricType, group?: string, metricIds?: Array<string>, timeSeriesFilterName?: string, timeSeriesFilterDoubleRangeLt?: number, timeSeriesFilterDoubleRangeLte?: number, timeSeriesFilterDoubleRangeGt?: number, timeSeriesFilterDoubleRangeGte?: number, timeSeriesFilterIntegerRangeLt?: number, timeSeriesFilterIntegerRangeLte?: number, timeSeriesFilterIntegerRangeGt?: number, timeSeriesFilterIntegerRangeGte?: number, timeSeriesFilterIntegerRangeIncl?: Array<number>, timeSeriesFilterIntegerRangeNotIn?: Array<number>, timeSeriesFilterTimeRangeLt?: Date | DateString, timeSeriesFilterTimeRangeLte?: Date | DateString, timeSeriesFilterTimeRangeGt?: Date | DateString, timeSeriesFilterTimeRangeGte?: Date | DateString, options?: any) {
+            return InternalApiFp(configuration).compareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, group, metricIds, timeSeriesFilterName, timeSeriesFilterDoubleRangeLt, timeSeriesFilterDoubleRangeLte, timeSeriesFilterDoubleRangeGt, timeSeriesFilterDoubleRangeGte, timeSeriesFilterIntegerRangeLt, timeSeriesFilterIntegerRangeLte, timeSeriesFilterIntegerRangeGt, timeSeriesFilterIntegerRangeGte, timeSeriesFilterIntegerRangeIncl, timeSeriesFilterIntegerRangeNotIn, timeSeriesFilterTimeRangeLt, timeSeriesFilterTimeRangeLte, timeSeriesFilterTimeRangeGt, timeSeriesFilterTimeRangeGte, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Reports to the searcher that the trial has completed the given searcher operation.
          * @param {number} trialId The id of the trial.
          * @param {V1CompleteValidateAfterOperation} body The completed operation.
@@ -25368,6 +25222,16 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Get the validation history for an experiment.
+         * @param {number} experimentId The id of the experiment.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getExperimentValidationHistory(experimentId: number, options?: any) {
+            return InternalApiFp(configuration).getExperimentValidationHistory(experimentId, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Get task config
          * @param {string} taskId The id of the task.
          * @param {*} [options] Override http request option.
@@ -25453,6 +25317,26 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          */
         getMetadataValues(projectId: number, key: string, options?: any) {
             return InternalApiFp(configuration).getMetadataValues(projectId, key, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Get the model definition of an experiment.
+         * @param {number} experimentId The id of the experiment.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getModelDef(experimentId: number, options?: any) {
+            return InternalApiFp(configuration).getModelDef(experimentId, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Get the model definition file tree of an experiment.
+         * @param {number} experimentId The id of the experiment.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getModelDefTree(experimentId: number, options?: any) {
+            return InternalApiFp(configuration).getModelDefTree(experimentId, options)(fetch, basePath);
         },
         /**
          * 
@@ -25812,6 +25696,16 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
+         * @summary Preview hyperparameter search.
+         * @param {V1PreviewHPSearchRequest} body
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        previewHPSearch(body: V1PreviewHPSearchRequest, options?: any) {
+            return InternalApiFp(configuration).previewHPSearch(body, options)(fetch, basePath);
+        },
+        /**
+         * 
          * @summary Put an experiment by external id.
          * @param {string} externalExperimentId External experiment id.
          * @param {V1CreateExperimentRequest} body CreateExperimentRequest payload.
@@ -25956,6 +25850,17 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          */
         startTrial(trialId: number, body: V1StartTrialRequest, options?: any) {
             return InternalApiFp(configuration).startTrial(trialId, body, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Stream trial log fields.
+         * @param {number} trialId The ID of the trial.
+         * @param {boolean} [follow] Continue following fields until the trial stops.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        trialLogsFields(trialId: number, follow?: boolean, options?: any) {
+            return InternalApiFp(configuration).trialLogsFields(trialId, follow, options)(fetch, basePath);
         },
         /**
          * 
@@ -26194,6 +26099,40 @@ export class InternalApi extends BaseAPI {
     
     /**
      * 
+     * @summary Return a downsampled time series of metrics from multiple trials to compare them side-by-side.
+     * @param {Array<number>} [trialIds] The requested trial ids.
+     * @param {number} [maxDatapoints] The maximum number of data points to return after downsampling.
+     * @param {Array<string>} [metricNames] The names of selected metrics.
+     * @param {number} [startBatches] Sample from metrics after this batch number.
+     * @param {number} [endBatches] Sample from metrics before this batch number.
+     * @param {V1MetricType} [metricType] Metric group.   - METRIC_TYPE_UNSPECIFIED: Zero-value (not allowed).  - METRIC_TYPE_TRAINING: For metrics emitted during training.  - METRIC_TYPE_VALIDATION: For metrics emitted during validation.  - METRIC_TYPE_PROFILING: For metrics emitted during profiling.
+     * @param {string} [group] Metric group (training, validation, etc).
+     * @param {Array<string>} [metricIds] metric ids for the query. must be in the form group.metric_name.
+     * @param {string} [timeSeriesFilterName] metric or column name for the filter.
+     * @param {number} [timeSeriesFilterDoubleRangeLt] Less than.
+     * @param {number} [timeSeriesFilterDoubleRangeLte] Less than or equal.
+     * @param {number} [timeSeriesFilterDoubleRangeGt] Greater than.
+     * @param {number} [timeSeriesFilterDoubleRangeGte] Greater than or equal.
+     * @param {number} [timeSeriesFilterIntegerRangeLt] Less than.
+     * @param {number} [timeSeriesFilterIntegerRangeLte] Less than or equal.
+     * @param {number} [timeSeriesFilterIntegerRangeGt] Greater than.
+     * @param {number} [timeSeriesFilterIntegerRangeGte] Greater than or equal.
+     * @param {Array<number>} [timeSeriesFilterIntegerRangeIncl] In a set. `in` is a reserved word in python.
+     * @param {Array<number>} [timeSeriesFilterIntegerRangeNotIn] Not in a set.
+     * @param {Date | DateString} [timeSeriesFilterTimeRangeLt] Less than.
+     * @param {Date | DateString} [timeSeriesFilterTimeRangeLte] Less than or equal.
+     * @param {Date | DateString} [timeSeriesFilterTimeRangeGt] Greater than.
+     * @param {Date | DateString} [timeSeriesFilterTimeRangeGte] Greater than or equal.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public compareTrials(trialIds?: Array<number>, maxDatapoints?: number, metricNames?: Array<string>, startBatches?: number, endBatches?: number, metricType?: V1MetricType, group?: string, metricIds?: Array<string>, timeSeriesFilterName?: string, timeSeriesFilterDoubleRangeLt?: number, timeSeriesFilterDoubleRangeLte?: number, timeSeriesFilterDoubleRangeGt?: number, timeSeriesFilterDoubleRangeGte?: number, timeSeriesFilterIntegerRangeLt?: number, timeSeriesFilterIntegerRangeLte?: number, timeSeriesFilterIntegerRangeGt?: number, timeSeriesFilterIntegerRangeGte?: number, timeSeriesFilterIntegerRangeIncl?: Array<number>, timeSeriesFilterIntegerRangeNotIn?: Array<number>, timeSeriesFilterTimeRangeLt?: Date | DateString, timeSeriesFilterTimeRangeLte?: Date | DateString, timeSeriesFilterTimeRangeGt?: Date | DateString, timeSeriesFilterTimeRangeGte?: Date | DateString, options?: any) {
+        return InternalApiFp(this.configuration).compareTrials(trialIds, maxDatapoints, metricNames, startBatches, endBatches, metricType, group, metricIds, timeSeriesFilterName, timeSeriesFilterDoubleRangeLt, timeSeriesFilterDoubleRangeLte, timeSeriesFilterDoubleRangeGt, timeSeriesFilterDoubleRangeGte, timeSeriesFilterIntegerRangeLt, timeSeriesFilterIntegerRangeLte, timeSeriesFilterIntegerRangeGt, timeSeriesFilterIntegerRangeGte, timeSeriesFilterIntegerRangeIncl, timeSeriesFilterIntegerRangeNotIn, timeSeriesFilterTimeRangeLt, timeSeriesFilterTimeRangeLte, timeSeriesFilterTimeRangeGt, timeSeriesFilterTimeRangeGte, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
      * @summary Reports to the searcher that the trial has completed the given searcher operation.
      * @param {number} trialId The id of the trial.
      * @param {V1CompleteValidateAfterOperation} body The completed operation.
@@ -26340,6 +26279,18 @@ export class InternalApi extends BaseAPI {
     
     /**
      * 
+     * @summary Get the validation history for an experiment.
+     * @param {number} experimentId The id of the experiment.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public getExperimentValidationHistory(experimentId: number, options?: any) {
+        return InternalApiFp(this.configuration).getExperimentValidationHistory(experimentId, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
      * @summary Get task config
      * @param {string} taskId The id of the task.
      * @param {*} [options] Override http request option.
@@ -26440,6 +26391,30 @@ export class InternalApi extends BaseAPI {
      */
     public getMetadataValues(projectId: number, key: string, options?: any) {
         return InternalApiFp(this.configuration).getMetadataValues(projectId, key, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Get the model definition of an experiment.
+     * @param {number} experimentId The id of the experiment.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public getModelDef(experimentId: number, options?: any) {
+        return InternalApiFp(this.configuration).getModelDef(experimentId, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Get the model definition file tree of an experiment.
+     * @param {number} experimentId The id of the experiment.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public getModelDefTree(experimentId: number, options?: any) {
+        return InternalApiFp(this.configuration).getModelDefTree(experimentId, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -26864,6 +26839,18 @@ export class InternalApi extends BaseAPI {
     
     /**
      * 
+     * @summary Preview hyperparameter search.
+     * @param {V1PreviewHPSearchRequest} body
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public previewHPSearch(body: V1PreviewHPSearchRequest, options?: any) {
+        return InternalApiFp(this.configuration).previewHPSearch(body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
      * @summary Put an experiment by external id.
      * @param {string} externalExperimentId External experiment id.
      * @param {V1CreateExperimentRequest} body CreateExperimentRequest payload.
@@ -27035,6 +27022,19 @@ export class InternalApi extends BaseAPI {
      */
     public startTrial(trialId: number, body: V1StartTrialRequest, options?: any) {
         return InternalApiFp(this.configuration).startTrial(trialId, body, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Stream trial log fields.
+     * @param {number} trialId The ID of the trial.
+     * @param {boolean} [follow] Continue following fields until the trial stops.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof InternalApi
+     */
+    public trialLogsFields(trialId: number, follow?: boolean, options?: any) {
+        return InternalApiFp(this.configuration).trialLogsFields(trialId, follow, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -33991,47 +33991,6 @@ export const TrialsApiFetchParamCreator = function (configuration?: Configuratio
                 options: localVarRequestOptions,
             };
         },
-        /**
-         * 
-         * @summary Stream trial log fields.
-         * @param {number} trialId The ID of the trial.
-         * @param {boolean} [follow] Continue following fields until the trial stops.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        trialLogsFields(trialId: number, follow?: boolean, options: any = {}): FetchArgs {
-            // verify required parameter 'trialId' is not null or undefined
-            if (trialId === null || trialId === undefined) {
-                throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling trialLogsFields.');
-            }
-            const localVarPath = `/api/v1/trials/{trialId}/logs/fields`
-                .replace(`{${"trialId"}}`, encodeURIComponent(String(trialId)));
-            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
-            const localVarRequestOptions = { method: 'GET', ...options };
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-            
-            // authentication BearerToken required
-            if (configuration && configuration.apiKey) {
-                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
-                    ? configuration.apiKey("Authorization")
-                    : configuration.apiKey;
-                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-            
-            if (follow !== undefined) {
-                localVarQueryParameter['follow'] = follow
-            }
-            
-            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
-            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
-            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
-            
-            return {
-                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
-                options: localVarRequestOptions,
-            };
-        },
     }
 };
 
@@ -34240,26 +34199,6 @@ export const TrialsApiFp = function (configuration?: Configuration) {
                 });
             };
         },
-        /**
-         * 
-         * @summary Stream trial log fields.
-         * @param {number} trialId The ID of the trial.
-         * @param {boolean} [follow] Continue following fields until the trial stops.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        trialLogsFields(trialId: number, follow?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<StreamResultOfV1TrialLogsFieldsResponse> {
-            const localVarFetchArgs = TrialsApiFetchParamCreator(configuration).trialLogsFields(trialId, follow, options);
-            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
-                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
-                    if (response.status >= 200 && response.status < 300) {
-                        return response.json();
-                    } else {
-                        throw response;
-                    }
-                });
-            };
-        },
     }
 };
 
@@ -34386,17 +34325,6 @@ export const TrialsApiFactory = function (configuration?: Configuration, fetch?:
          */
         trialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date | DateString, timestampAfter?: Date | DateString, orderBy?: V1OrderBy, searchText?: string, options?: any) {
             return TrialsApiFp(configuration).trialLogs(trialId, limit, follow, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options)(fetch, basePath);
-        },
-        /**
-         * 
-         * @summary Stream trial log fields.
-         * @param {number} trialId The ID of the trial.
-         * @param {boolean} [follow] Continue following fields until the trial stops.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        trialLogsFields(trialId: number, follow?: boolean, options?: any) {
-            return TrialsApiFp(configuration).trialLogsFields(trialId, follow, options)(fetch, basePath);
         },
     }
 };
@@ -34542,19 +34470,6 @@ export class TrialsApi extends BaseAPI {
      */
     public trialLogs(trialId: number, limit?: number, follow?: boolean, agentIds?: Array<string>, containerIds?: Array<string>, rankIds?: Array<number>, levels?: Array<V1LogLevel>, stdtypes?: Array<string>, sources?: Array<string>, timestampBefore?: Date | DateString, timestampAfter?: Date | DateString, orderBy?: V1OrderBy, searchText?: string, options?: any) {
         return TrialsApiFp(this.configuration).trialLogs(trialId, limit, follow, agentIds, containerIds, rankIds, levels, stdtypes, sources, timestampBefore, timestampAfter, orderBy, searchText, options)(this.fetch, this.basePath)
-    }
-    
-    /**
-     * 
-     * @summary Stream trial log fields.
-     * @param {number} trialId The ID of the trial.
-     * @param {boolean} [follow] Continue following fields until the trial stops.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof TrialsApi
-     */
-    public trialLogsFields(trialId: number, follow?: boolean, options?: any) {
-        return TrialsApiFp(this.configuration).trialLogsFields(trialId, follow, options)(this.fetch, this.basePath)
     }
     
 }
