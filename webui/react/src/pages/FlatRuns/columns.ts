@@ -106,9 +106,9 @@ function getCellStateFromExperimentState(expState: RunState) {
 
 const EMPTY_CELL: GridCell = {
   allowOverlay: false,
-  copyData: '-',
-  data: { kind: TEXT_CELL },
-  kind: GridCellKind.Custom,
+  data: '-',
+  displayData: '-',
+  kind: GridCellKind.Text,
 } as const;
 
 interface Params {
@@ -178,7 +178,7 @@ export const getColumnDefs = ({
   experimentDescription: {
     id: 'experimentDescription',
     renderer: (record: FlatRun) =>
-      record.experiment?.description !== undefined
+      record.experiment?.description
         ? {
             allowOverlay: false,
             copyData: record.experiment.description,
