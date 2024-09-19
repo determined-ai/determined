@@ -15,6 +15,29 @@ export OPT_LAUNCHER_PORT=8081
 MACHINE_TYPE=
 GPUS=
 
+tryloop_attempt() {
+    # Run the command after the `--` arg.
+    while [ "$1" != "--" ]; do shift; done
+    shift
+    "$@"
+}
+
+# Try an action multiple time with configurable sleeps in between.
+#
+# usage: tryloop A B... -- CMD...
+#
+# Equivalent to: CMD || sleep A && CMD || sleep B && CMD || ...
+tryloop() {
+    while [ "$1" != "--" ]; do
+        tryloop_attempt "$@" && return
+        echo "retrying in $1..." >&2
+        sleep "$1"
+        shift
+    done
+    # Final attempt.
+    tryloop_attempt "$@"
+}
+
 while [[ $# -gt 0 ]]; do
     case $1 in
         -c | --container-run-type)
@@ -146,11 +169,11 @@ echo "Started bidirectional tunnels to $INSTANCE_NAME"
 # Grab launcher token.
 REMOTE_TOKEN_SOURCE=/opt/launcher/jetty/base/etc/.launcher.token
 LOCAL_TOKEN_DEST=$TEMPDIR/.launcher.token
-gcloud compute scp --quiet --zone "us-west1-b" --project "determined-ai" root@$INSTANCE_NAME:$REMOTE_TOKEN_SOURCE $LOCAL_TOKEN_DEST
+tryloop 1 1 1 10 30 -- gcloud compute scp --quiet --zone "us-west1-b" --project "determined-ai" root@$INSTANCE_NAME:$REMOTE_TOKEN_SOURCE $LOCAL_TOKEN_DEST
 echo "Copied launcher token to $LOCAL_TOKEN_DEST"
 # The launcher service verifies communication with the launcher, so just have to be sure it is started.
 # Also show the status for extra confirmaiton in the logs of the state.
-gcloud compute ssh --zone "$ZONE" "$INSTANCE_NAME" --project "$PROJECT" -- "sudo systemctl start launcher.service ; systemctl status launcher.service --no-pager"
+tryloop 1 1 1 10 30 -- gcloud compute ssh --zone "$ZONE" "$INSTANCE_NAME" --project "$PROJECT" -- "sudo systemctl start launcher.service ; systemctl status launcher.service --no-pager"
 
 # Build devcluster.yaml.
 
