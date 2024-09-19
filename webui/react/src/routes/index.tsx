@@ -1,30 +1,32 @@
 import React from 'react';
 
-import Admin from 'pages/Admin';
-import Cluster from 'pages/Cluster';
-import ClusterLogs from 'pages/ClusterLogs';
-import Dashboard from 'pages/Dashboard';
-import DefaultRoute from 'pages/DefaultRoute';
-import Deprecated from 'pages/Deprecated';
-import ExperimentDetails from 'pages/ExperimentDetails';
-import InteractiveTask from 'pages/InteractiveTask';
-import ModelDetails from 'pages/ModelDetails';
-import ModelRegistryPage from 'pages/ModelRegistryPage';
-import ModelVersionDetails from 'pages/ModelVersionDetails';
-import ProjectDetails from 'pages/ProjectDetails';
-import Reload from 'pages/Reload';
-import ResourcepoolDetail from 'pages/ResourcePool/ResourcepoolDetail';
-import SearchDetails from 'pages/SearchDetails';
-import SignIn from 'pages/SignIn';
-import SignOut from 'pages/SignOut';
-import TaskListPage from 'pages/TaskListPage';
-import { TaskLogsWrapper } from 'pages/TaskLogs';
-import TemplatesPage from 'pages/Templates/TemplatesPage';
-import TrialDetails from 'pages/TrialDetails';
-import Wait from 'pages/Wait';
-import Webhooks from 'pages/WebhookList';
-import WorkspaceDetails from 'pages/WorkspaceDetails';
-import WorkspaceList from 'pages/WorkspaceList';
+const Admin = React.lazy(() => import('pages/Admin'));
+const Cluster = React.lazy(() => import('pages/Cluster'));
+const ClusterLogs = React.lazy(() => import('pages/ClusterLogs'));
+const Dashboard = React.lazy(() => import('pages/Dashboard'));
+const DefaultRoute = React.lazy(() => import('pages/DefaultRoute'));
+const Deprecated = React.lazy(() => import('pages/Deprecated'));
+const ExperimentDetails = React.lazy(() => import('pages/ExperimentDetails'));
+const InteractiveTask = React.lazy(() => import('pages/InteractiveTask'));
+const ModelDetails = React.lazy(() => import('pages/ModelDetails'));
+const ModelRegistryPage = React.lazy(() => import('pages/ModelRegistryPage'));
+const ModelVersionDetails = React.lazy(() => import('pages/ModelVersionDetails'));
+const ProjectDetails = React.lazy(() => import('pages/ProjectDetails'));
+const Reload = React.lazy(() => import('pages/Reload'));
+const ResourcepoolDetail = React.lazy(() => import('pages/ResourcePool/ResourcepoolDetail'));
+const SearchDetails = React.lazy(() => import('pages/SearchDetails'));
+const SignIn = React.lazy(() => import('pages/SignIn'));
+const SignOut = React.lazy(() => import('pages/SignOut'));
+const TaskListPage = React.lazy(() => import('pages/TaskListPage'));
+const TaskLogsWrapper = React.lazy(() =>
+  import('pages/TaskLogs').then((module) => ({ default: module.TaskLogsWrapper })),
+);
+const TemplatesPage = React.lazy(() => import('pages/Templates/TemplatesPage'));
+const TrialDetails = React.lazy(() => import('pages/TrialDetails'));
+const Wait = React.lazy(() => import('pages/Wait'));
+const Webhooks = React.lazy(() => import('pages/WebhookList'));
+const WorkspaceDetails = React.lazy(() => import('pages/WorkspaceDetails'));
+const WorkspaceList = React.lazy(() => import('pages/WorkspaceList'));
 import { RouteConfig } from 'types';
 
 import Routes from './routes';
