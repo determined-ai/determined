@@ -179,22 +179,6 @@ func (p *WorkspaceAuthZPermissive) CanViewResourceQuotas(
 	return (&WorkspaceAuthZBasic{}).CanViewResourceQuotas(ctx, curUser)
 }
 
-// CanModifyWorkspaceConfigPolicies RBAC authz but enforces basic authz.
-func (p *WorkspaceAuthZPermissive) CanModifyWorkspaceConfigPolicies(
-	ctx context.Context, curUser model.User, workspace *workspacev1.Workspace,
-) error {
-	_ = (&WorkspaceAuthZRBAC{}).CanModifyWorkspaceConfigPolicies(ctx, curUser, workspace)
-	return (&WorkspaceAuthZBasic{}).CanModifyWorkspaceConfigPolicies(ctx, curUser, workspace)
-}
-
-// CanViewWorkspaceConfigPolicies RBAC authz but enforces basic authz.
-func (p *WorkspaceAuthZPermissive) CanViewWorkspaceConfigPolicies(
-	ctx context.Context, curUser model.User, workspace *workspacev1.Workspace,
-) error {
-	_ = (&WorkspaceAuthZRBAC{}).CanViewWorkspaceConfigPolicies(ctx, curUser, workspace)
-	return (&WorkspaceAuthZBasic{}).CanViewWorkspaceConfigPolicies(ctx, curUser, workspace)
-}
-
 func init() {
 	AuthZProvider.Register("permissive", &WorkspaceAuthZPermissive{})
 }
