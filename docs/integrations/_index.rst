@@ -7,23 +7,51 @@
 .. meta::
    :description: Discover how Determined integrates with other popular machine learning ecosystem tools.
 
-Determined is designed to easily integrate with other popular ML ecosystem tools for tasks that are
-related to model training, such as ETL, ML pipelines, and model serving. It is recommended to use
-the :ref:`python-sdk` to interact with Determined.
+Determined seamlessly integrates with popular ML ecosystem tools to enhance your model training
+workflow. From data transformation to monitoring and alerting, our integrations help streamline your
+ML pipeline.
 
--  :ref:`data-transformers`: Dive into how Determined integrates with data transformation tools such
-   as :ref:`pachyderm-integration`.
--  :ref:`ides-index`: Determined shells can be used in the popular IDEs similarly to a common remote
-   SSH host.
--  :ref:`notifications`: Make use of webhooks to integrate Determined into your existing workflows.
--  :ref:`prometheus-grafana`: Discover how to enable a Grafana dashboard to monitor Determined
-   hardware and system metrics on a cloud cluster, such as AWS or Kubernetes.
+******************
+ Key Integrations
+******************
 
-Learn more:
+-  **Data Transformation**: Integrate with tools like :ref:`pachyderm-integration` to streamline
+   your data preprocessing.
 
-Visit the `Works with Determined <https://github.com/determined-ai/works-with-determined>`__
-repository to find examples of how to use Determined with a variety of ML ecosystem tools, including
-Pachyderm, DVC, Delta Lake, Seldon, Spark, Argo, Airflow, and Kubeflow.
+-  **Development Environments**: Use Determined shells in popular IDEs, similar to remote SSH hosts.
+   Learn more at :ref:`ides-index`.
+
+-  **Workload Alerting**: Set up :ref:`workload-alerting` through webhooks to stay informed about
+   your experiments in real-time. For a comprehensive overview of notification options, see
+   :ref:`notifications`.
+
+-  **Monitoring**: Enable Grafana dashboards to monitor hardware and system metrics on cloud
+   clusters. See :ref:`prometheus-grafana` for details.
+
+*****************
+ Getting Started
+*****************
+
+To make the most of these integrations, we recommend using the :ref:`python-sdk` to interact with
+Determined.
+
+**************
+ Explore More
+**************
+
+Visit our `Works with Determined <https://github.com/determined-ai/works-with-determined>`__
+repository for examples of using Determined with various ML ecosystem tools, including:
+
+-  Pachyderm
+-  DVC
+-  Delta Lake
+-  Seldon
+-  Spark
+-  Argo
+-  Airflow
+-  Kubeflow
+
+These examples demonstrate how Determined can enhance your existing ML workflows and tools.
 
 .. toctree::
    :hidden:

@@ -17,13 +17,15 @@ a good signal-to-noise ratio.
  Key Concepts
 **************
 
--  Webhook Trigger by options: "All experiments in Workspace" and "Specific experiment(s) with
-   matching configuration"
+-  Webhook Trigger options: "All experiments in Workspace" and "Specific experiment(s) with matching
+   configuration"
 -  Webhook Exclusion
 -  Trigger Types: COMPLETED, ERROR, TASKLOG, CUSTOM
 -  Alert Levels: INFO, WARN, DEBUG, ERROR
 
 For detailed information on supported triggers and example usage, see :ref:`notifications`.
+
+.. _creating-webhooks:
 
 *******************
  Creating Webhooks
@@ -50,23 +52,47 @@ workspace. Here's how to create webhooks:
 
 #. Click **Create Webhook**.
 
+*******************
+ Deleting Webhooks
+*******************
+
+To delete a webhook, select the more-options menu to the right of the webhook record to expand
+available actions.
+
+******************
+ Editing Webhooks
+******************
+
+To edit a webhook, select the more-options menu to the right of the webhook record to expand
+available actions.
+
+.. note::
+
+   Determined only supports editing the URL of webhooks. To modify other attributes, delete and
+   recreate the webhook.
+
 ***********
  Use Cases
 ***********
 
+Webhooks in Determined offer versatile solutions for various monitoring and alerting needs. Let's
+explore some common use cases to help you leverage this powerful feature effectively.
+
 Case 1: Share Simple State on All Experiments in Workspace
 ==========================================================
 
-To monitor all experiments in a workspace:
+This use case is ideal for teams that want to maintain a broad overview of all experiments running
+in a workspace, ensuring that no important updates are missed.
 
-#. Create a webhook with the "Open" subscription mode.
+#. Create a webhook with the "All experiments in Workspace" option.
 #. Select the desired trigger events (COMPLETED, ERROR, TASKLOG).
 #. All experiments in the workspace will now trigger this webhook unless explicitly excluded.
 
 Case 2: Exclude Specific Experiments from Triggering Webhooks
 =============================================================
 
-To prevent a specific experiment from triggering webhooks during iteration:
+During active development or debugging, you may want to prevent certain experiments from triggering
+alerts to reduce noise and focus on specific tasks.
 
 #. Edit the experiment configuration:
 
@@ -81,7 +107,8 @@ To prevent a specific experiment from triggering webhooks during iteration:
 Case 3: Customizable Monitoring for Specific Experiments
 ========================================================
 
-To set up custom monitoring for specific experiments:
+For critical experiments or those requiring special attention, you can set up custom monitoring to
+receive tailored alerts based on specific conditions or events in your code.
 
 #. Create a webhook with the "Specific experiment(s) with matching configuration" option and
    "CUSTOM" trigger type.
