@@ -517,6 +517,12 @@ var file_determined_api_v2_search_proto_rawDesc = []byte{
 	0x6e, 0x65, 0x64, 0x2d, 0x61, 0x69, 0x2f, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65,
 	0x64, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x70, 0x6b, 0x67, 0x2f, 0x61, 0x70, 0x69, 0x76,
 	0x32, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
+
+	0x92, 0x41, 0x0b, 0x0a, 0x09, 0xd2, 0x01, 0x06, 0x73, 0x65, 0x61, 0x72, 0x63, 0x68, 0x42, 0x35,
+	0x5a, 0x33, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x64, 0x65, 0x74,
+	0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2d, 0x61, 0x69, 0x2f, 0x64, 0x65, 0x74, 0x65, 0x72,
+	0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x70, 0x6b, 0x67, 0x2f,
+	0x61, 0x70, 0x69, 0x76, 0x32, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -554,6 +560,24 @@ var file_determined_api_v2_search_proto_depIdxs = []int32{
 	3,  // [3:3] is the sub-list for extension type_name
 	3,  // [3:3] is the sub-list for extension extendee
 	0,  // [0:3] is the sub-list for field type_name
+
+var file_determined_api_v2_search_proto_msgTypes = make([]protoimpl.MessageInfo, 2)
+var file_determined_api_v2_search_proto_goTypes = []interface{}{
+	(*GetSearchRequest)(nil),  // 0: determined.api.v2.GetSearchRequest
+	(*GetSearchResponse)(nil), // 1: determined.api.v2.GetSearchResponse
+	(*searchv2.Search)(nil),   // 2: determined.search.v2.Search
+	(*jobv2.JobSummary)(nil),  // 3: determined.job.v2.JobSummary
+	(*_struct.Struct)(nil),    // 4: google.protobuf.Struct
+}
+var file_determined_api_v2_search_proto_depIdxs = []int32{
+	2, // 0: determined.api.v2.GetSearchResponse.search:type_name -> determined.search.v2.Search
+	3, // 1: determined.api.v2.GetSearchResponse.job_summary:type_name -> determined.job.v2.JobSummary
+	4, // 2: determined.api.v2.GetSearchResponse.config:type_name -> google.protobuf.Struct
+	3, // [3:3] is the sub-list for method output_type
+	3, // [3:3] is the sub-list for method input_type
+	3, // [3:3] is the sub-list for extension type_name
+	3, // [3:3] is the sub-list for extension extendee
+	0, // [0:3] is the sub-list for field type_name
 }
 
 func init() { file_determined_api_v2_search_proto_init() }
@@ -658,6 +682,7 @@ func file_determined_api_v2_search_proto_init() {
 				return nil
 			}
 		}
+
 	}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
@@ -666,6 +691,8 @@ func file_determined_api_v2_search_proto_init() {
 			RawDescriptor: file_determined_api_v2_search_proto_rawDesc,
 			NumEnums:      0,
 			NumMessages:   8,
+
+			NumMessages:   2,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

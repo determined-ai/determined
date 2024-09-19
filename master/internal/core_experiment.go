@@ -138,7 +138,7 @@ func (m *Master) getExperimentCheckpointsToGC(c echo.Context) (interface{}, erro
 }
 
 //	@Summary	Get individual file from modal definitions for download.
-//	@Tags		Experiments
+//	@Tags		Internal
 //	@ID			get-experiment-model-file
 //	@Accept		json
 //	@Produce	text/plain; charset=utf-8
