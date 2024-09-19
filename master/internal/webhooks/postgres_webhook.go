@@ -409,7 +409,7 @@ func getWebhookByName(ctx context.Context, webhookName string, workspaceID int) 
 		Model(&webhook).
 		Relation("Triggers").
 		Where("name = ?", webhookName).
-		Where("workspace_id = ?", workspaceID).
+		Where("workspace_id = ? OR workspace_id IS NULL", workspaceID).
 		Scan(ctx)
 	if err != nil {
 		if err == sql.ErrNoRows {
@@ -780,6 +780,7 @@ func generateSlackPayload(
 		} else {
 			eURL = fmt.Sprintf("%v (#%v)", activeConfig.Name(), e.ID)
 		}
+		c = "#009bde"
 		mStatus = string(e.State)
 	}
 
@@ -863,7 +864,7 @@ func generateSlackPayload(
 		}
 		messageBlock = SlackBlock{
 			Text: SlackField{
-				Text: "Event Data",
+				Text: status,
 				Type: "plain_text",
 			},
 			Type:   "section",
