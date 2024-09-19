@@ -944,8 +944,8 @@ func TestPostDeleteLongLivedToken(t *testing.T) {
 	// _, err = api.DeleteLongLivedToken(ctx, &apiv1.DeleteLongLivedTokenRequest{})
 	// require.NoError(t, err)
 
-	_, err = api.GetLongLivedToken(ctx, &apiv1.GetLongLivedTokenRequest{})
-	require.ErrorContains(t, err, "no rows found with user_id")
+	// _, err = api.GetLongLivedToken(ctx, &apiv1.GetLongLivedTokenRequest{})
+	// require.ErrorContains(t, err, "no rows found with user_id")
 }
 
 // TestPostLongLivedTokenWithLifespan tests current user WITH lifespan input
@@ -967,8 +967,8 @@ func TestPostDeleteLongLivedTokenWithLifespan(t *testing.T) {
 	// _, err = api.DeleteLongLivedToken(ctx, &apiv1.DeleteLongLivedTokenRequest{})
 	// require.NoError(t, err)
 
-	_, err = api.GetLongLivedToken(ctx, &apiv1.GetLongLivedTokenRequest{})
-	require.ErrorContains(t, err, "no rows found with user_id")
+	// _, err = api.GetLongLivedToken(ctx, &apiv1.GetLongLivedTokenRequest{})
+	// require.ErrorContains(t, err, "no rows found with user_id")
 }
 
 // TestPostUserLongLivedToken tests given user's WITHOUT lifespan input
@@ -992,8 +992,8 @@ func TestPostUserLongLivedToken(t *testing.T) {
 	// err = user.DeleteLongLivenTokenByUserID(ctx, userID)
 	// require.NoError(t, err)
 
-	_, err = api.GetLongLivedToken(ctx, &apiv1.GetLongLivedTokenRequest{})
-	require.ErrorContains(t, err, "no rows found with user_id")
+	// _, err = api.GetLongLivedToken(ctx, &apiv1.GetLongLivedTokenRequest{})
+	// require.ErrorContains(t, err, "no rows found with user_id")
 }
 
 // TestPostUserLongLivedTokenWithLifespan tests given user's  WITH lifespan input
@@ -1019,146 +1019,77 @@ func TestPostUserLongLivedTokenWithLifespan(t *testing.T) {
 	// err = user.DeleteLongLivenTokenByUserID(ctx, userID)
 	// require.NoError(t, err)
 
-	_, err = api.GetLongLivedToken(ctx, &apiv1.GetLongLivedTokenRequest{})
-	require.ErrorContains(t, err, "no rows found with user_id")
+	// _, err = api.GetLongLivedToken(ctx, &apiv1.GetLongLivedTokenRequest{})
+	// require.ErrorContains(t, err, "no rows found with user_id")
 }
 
-// TestGetLongLivedToken tests current user's token info
-// GET /api/v1/user/token_info - Get current user's long lived token info.
-func TestGetLongLivedToken(t *testing.T) {
-	api, curUser, ctx := setupAPITest(t, nil)
-
-	createTestToken(ctx, t, api, 0)
-
-	tokenInfo, err := api.GetLongLivedToken(ctx, &apiv1.GetLongLivedTokenRequest{})
-	require.NoError(t, err)
-	require.NotNil(t, tokenInfo)
-	require.Equal(t, int32(curUser.ID), tokenInfo.TokenInfo.UserId)
-
-	// _, err = api.DeleteLongLivedTokenByTokenID(ctx, &apiv1.DeleteLongLivedTokenByTokenIDRequest{
-	// 	TokenId: tokenInfo.TokenInfo.Id,
-	// })
-	require.NoError(t, err)
-
-	_, err = api.GetLongLivedToken(ctx, &apiv1.GetLongLivedTokenRequest{})
-	require.ErrorContains(t, err, "no rows found with user_id")
-}
-
-// TestGetAllLongLivedTokens tests all long lived token info
+// TestGetAllAccessTokens tests all long lived token info
 // GET /api/v1/users/tokens - Get all long lived token info
 // from user_sessions db for admin.
-func TestGetAllLongLivedTokens(t *testing.T) {
+func TestGetAllAccessTokens(t *testing.T) {
 	api, _, ctx := setupAPITest(t, nil)
 
+	// Create test user 1 and do not revoke or set description
 	userID1, err := getTestUser(ctx)
 	require.NoError(t, err)
 
 	createTestToken(ctx, t, api, userID1)
 
-	tokenInfo1, err := api.GetUserLongLivedToken(ctx, &apiv1.GetUserLongLivedTokenRequest{
+	tokenInfo1, err := api.GetAccessToken(ctx, &apiv1.GetAccessTokenRequest{
 		UserId: int32(userID1),
 	})
 	require.NoError(t, err)
 	require.NotNil(t, tokenInfo1)
 	require.Equal(t, int32(userID1), tokenInfo1.TokenInfo.UserId)
 
+	// Create test user 2 and revoke and set description
 	userID2, err := getTestUser(ctx)
 	require.NoError(t, err)
 
 	createTestToken(ctx, t, api, userID2)
 
-	tokenInfo2, err := api.GetUserLongLivedToken(ctx, &apiv1.GetUserLongLivedTokenRequest{
+	// Tests TestGetAccessToken info for giver userID
+	tokenInfo2, err := api.GetAccessToken(ctx, &apiv1.GetAccessTokenRequest{
 		UserId: int32(userID2),
 	})
 	require.NoError(t, err)
 	require.NotNil(t, tokenInfo2)
 	require.Equal(t, int32(userID2), tokenInfo2.TokenInfo.UserId)
 
-	// _, err = api.DeleteLongLivedTokenByTokenID(ctx, &apiv1.DeleteLongLivedTokenByTokenIDRequest{
-	// 	TokenId: tokenInfo2.TokenInfo.Id,
-	// })
+	desc := "test desc"
+	// Tests TestPatchAccessToken info for giver tokenID
+	_, err = api.PatchAccessToken(ctx, &apiv1.PatchAccessTokenRequest{
+		TokenId:     tokenInfo2.TokenInfo.Id,
+		Description: &desc,
+		SetRevoked:  true,
+	})
 	require.NoError(t, err)
 
-	resp, err := api.GetAllLongLivedTokens(ctx, &apiv1.GetAllLongLivedTokensRequest{})
+	resp, err := api.GetAllAccessTokens(ctx, &apiv1.GetAllAccessTokensRequest{})
 	require.NoError(t, err)
 
 	for _, u := range resp.TokenInfo {
 		if model.UserID(u.Id) == model.UserID(tokenInfo1.TokenInfo.Id) {
 			require.False(t, u.Revoked)
+			require.NotEqual(t, desc, u.Description)
 			require.Equal(t, tokenInfo1.TokenInfo.TokenType, u.TokenType)
 		} else if model.UserID(u.Id) == model.UserID(tokenInfo2.TokenInfo.Id) {
 			require.True(t, u.Revoked)
+			require.Equal(t, desc, u.Description)
 			require.Equal(t, tokenInfo2.TokenInfo.TokenType, u.TokenType)
 		}
 	}
+
+	// Clean up of test users
+	for _, u := range resp.TokenInfo {
+		err = user.DeleteSessionByID(context.TODO(), model.SessionID(u.Id))
+		require.NoError(t, err)
+	}
 }
 
-// TestGetLongLivedToken tests given user's token info
-// GET /api/v1/users/{user_Id}/token - Get a user's long lived token info.
-func TestGetUserLongLivedToken(t *testing.T) {
-	api, _, ctx := setupAPITest(t, nil)
-
-	userID, err := getTestUser(ctx)
-	require.NoError(t, err)
-
-	createTestToken(ctx, t, api, userID)
-
-	tokenInfo, err := api.GetUserLongLivedToken(ctx, &apiv1.GetUserLongLivedTokenRequest{
-		UserId: int32(userID),
-	})
-	require.NoError(t, err)
-	require.NotNil(t, tokenInfo)
-	require.Equal(t, int32(userID), tokenInfo.TokenInfo.UserId)
-
-	// _, err = api.DeleteLongLivedTokenByTokenID(ctx, &apiv1.DeleteLongLivedTokenByTokenIDRequest{
-	// 	TokenId: tokenInfo.TokenInfo.Id,
-	// })
-	require.NoError(t, err)
-
-	_, err = api.GetLongLivedToken(ctx, &apiv1.GetLongLivedTokenRequest{})
-	require.ErrorContains(t, err, "no rows found with user_id")
-}
-
-// TestAuthzLongLivedToken tests authorization of user creating/Viewing/Deleting their own token.
-func TestAuthzLongLivedToken(t *testing.T) {
-	api, authzUsers, curUser, ctx := setupUserAuthzTest(t, nil)
-
-	// POST API Auth check
-	expectedErr := status.Error(codes.PermissionDenied, "canCreateUsersOwnToken")
-	authzUsers.On("CanCreateUsersOwnToken", mock.Anything, curUser).
-		Return(fmt.Errorf("canCreateUsersOwnToken")).Once()
-
-	_, err := api.PostLongLivedToken(ctx, &apiv1.PostLongLivedTokenRequest{})
-	require.Equal(t, expectedErr.Error(), err.Error())
-
-	// GET API Auth check
-	expectedErr = status.Error(codes.PermissionDenied, "canGetUsersOwnToken")
-	authzUsers.On("CanGetUsersOwnToken", mock.Anything, curUser).
-		Return(fmt.Errorf("canGetUsersOwnToken")).Once()
-
-	_, err = api.GetLongLivedToken(ctx, &apiv1.GetLongLivedTokenRequest{})
-	require.Equal(t, expectedErr.Error(), err.Error())
-
-	// GET All API Auth check
-	expectedErr = status.Error(codes.PermissionDenied, "canGetAllLongLivedTokens")
-	authzUsers.On("CanGetAllLongLivedTokens", mock.Anything, curUser).
-		Return(fmt.Errorf("canGetAllLongLivedTokens")).Once()
-
-	_, err = api.GetAllLongLivedTokens(ctx, &apiv1.GetAllLongLivedTokensRequest{})
-	require.Equal(t, expectedErr.Error(), err.Error())
-
-	// DELETE API Auth check
-	expectedErr = status.Error(codes.PermissionDenied, "canDeleteUsersOwnToken")
-	authzUsers.On("CanDeleteUsersOwnToken", mock.Anything, curUser).
-		Return(fmt.Errorf("canDeleteUsersOwnToken")).Once()
-
-	// _, err = api.DeleteLongLivedToken(ctx, &apiv1.DeleteLongLivedTokenRequest{})
-	require.Equal(t, expectedErr.Error(), err.Error())
-}
-
-// TestAuthzUserLongLivedToken tests authorization of user creating/Viewing/Deleting
+// TestAuthzOtherAccessToken tests authorization of user creating/viewing/patching
 // given user's token.
-func TestAuthzUserLongLivedToken(t *testing.T) {
+func TestAuthzOtherAccessToken(t *testing.T) {
 	api, authzUsers, curUser, ctx := setupUserAuthzTest(t, nil)
 
 	// POST API Auth check
@@ -1172,18 +1103,18 @@ func TestAuthzUserLongLivedToken(t *testing.T) {
 	require.Equal(t, expectedErr.Error(), err.Error())
 
 	// GET API Auth check
-	expectedErr = status.Error(codes.PermissionDenied, "canGetUsersToken")
-	authzUsers.On("CanGetUsersToken", mock.Anything, curUser, curUser).
-		Return(fmt.Errorf("canGetUsersToken")).Once()
+	expectedErr = status.Error(codes.PermissionDenied, "canGetAccessToken")
+	authzUsers.On("CanGetAccessToken", mock.Anything, curUser, curUser).
+		Return(fmt.Errorf("canGetAccessToken")).Once()
 
-	_, err = api.GetUserLongLivedToken(ctx, &apiv1.GetUserLongLivedTokenRequest{
+	_, err = api.GetAccessToken(ctx, &apiv1.GetAccessTokenRequest{
 		UserId: int32(curUser.ID),
 	})
 	require.Equal(t, expectedErr.Error(), err.Error())
 }
 
 func checkOutput(ctx context.Context, t *testing.T, api *apiServer, userID model.UserID, lifespan string) error {
-	tokenInfo, err := api.GetUserLongLivedToken(ctx, &apiv1.GetUserLongLivedTokenRequest{
+	tokenInfo, err := api.GetAccessToken(ctx, &apiv1.GetAccessTokenRequest{
 		UserId: int32(userID),
 	})
 	require.NoError(t, err)

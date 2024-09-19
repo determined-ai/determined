@@ -205,11 +205,11 @@ enum PermissionType {
   // Ability to create another user's long lived token
   PERMISSION_TYPE_CREATE_OTHER_LONG_LIVED_TOKEN = 12004;
 
-  // Ability to view one's own long lived token
-  PERMISSION_TYPE_VIEW_LONG_LIVED_TOKEN = 12005;
+  // Ability to view another user's token
+  PERMISSION_TYPE_VIEW_OTHER_TOKEN = 12005;
 
-  // Ability to view another user's long lived token
-  PERMISSION_TYPE_VIEW_OTHER_LONG_LIVED_TOKEN = 12006;
+  // Ability to view one's own token
+  PERMISSION_TYPE_VIEW_TOKEN = 12006;
 }
 
 // RoleAssignmentSummary is used to describe permissions a user has.

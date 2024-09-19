@@ -99,72 +99,72 @@ func (GetUsersRequest_SortBy) EnumDescriptor() ([]byte, []int) {
 }
 
 // Sort token info by the given field.
-type GetAllLongLivedTokensRequest_SortBy int32
+type GetAllAccessTokensRequest_SortBy int32
 
 const (
 	// Returns token info in an unsorted list.
-	GetAllLongLivedTokensRequest_SORT_BY_UNSPECIFIED GetAllLongLivedTokensRequest_SortBy = 0
+	GetAllAccessTokensRequest_SORT_BY_UNSPECIFIED GetAllAccessTokensRequest_SortBy = 0
 	// Returns token info sorted by user id.
-	GetAllLongLivedTokensRequest_SORT_BY_USER_ID GetAllLongLivedTokensRequest_SortBy = 1
+	GetAllAccessTokensRequest_SORT_BY_USER_ID GetAllAccessTokensRequest_SortBy = 1
 	// Returns token info sorted by expiry.
-	GetAllLongLivedTokensRequest_SORT_BY_EXPIRY GetAllLongLivedTokensRequest_SortBy = 2
+	GetAllAccessTokensRequest_SORT_BY_EXPIRY GetAllAccessTokensRequest_SortBy = 2
 	// Returns token info sorted by created at.
-	GetAllLongLivedTokensRequest_SORT_BY_CREATED_AT GetAllLongLivedTokensRequest_SortBy = 3
+	GetAllAccessTokensRequest_SORT_BY_CREATED_AT GetAllAccessTokensRequest_SortBy = 3
 	// Returns token info sorted by token type.
-	GetAllLongLivedTokensRequest_SORT_BY_TOKEN_TYPE GetAllLongLivedTokensRequest_SortBy = 4
+	GetAllAccessTokensRequest_SORT_BY_TOKEN_TYPE GetAllAccessTokensRequest_SortBy = 4
 	// Returns token info sorted by if it is revoked.
-	GetAllLongLivedTokensRequest_SORT_BY_IS_REVOKED GetAllLongLivedTokensRequest_SortBy = 5
+	GetAllAccessTokensRequest_SORT_BY_REVOKED GetAllAccessTokensRequest_SortBy = 5
 	// Returns token info sorted by description of token.
-	GetAllLongLivedTokensRequest_SORT_BY_TOKEN_DESCRIPTION GetAllLongLivedTokensRequest_SortBy = 6
+	GetAllAccessTokensRequest_SORT_BY_DESCRIPTION GetAllAccessTokensRequest_SortBy = 6
 )
 
-// Enum value maps for GetAllLongLivedTokensRequest_SortBy.
+// Enum value maps for GetAllAccessTokensRequest_SortBy.
 var (
-	GetAllLongLivedTokensRequest_SortBy_name = map[int32]string{
+	GetAllAccessTokensRequest_SortBy_name = map[int32]string{
 		0: "SORT_BY_UNSPECIFIED",
 		1: "SORT_BY_USER_ID",
 		2: "SORT_BY_EXPIRY",
 		3: "SORT_BY_CREATED_AT",
 		4: "SORT_BY_TOKEN_TYPE",
-		5: "SORT_BY_IS_REVOKED",
-		6: "SORT_BY_TOKEN_DESCRIPTION",
+		5: "SORT_BY_REVOKED",
+		6: "SORT_BY_DESCRIPTION",
 	}
-	GetAllLongLivedTokensRequest_SortBy_value = map[string]int32{
-		"SORT_BY_UNSPECIFIED":       0,
-		"SORT_BY_USER_ID":           1,
-		"SORT_BY_EXPIRY":            2,
-		"SORT_BY_CREATED_AT":        3,
-		"SORT_BY_TOKEN_TYPE":        4,
-		"SORT_BY_IS_REVOKED":        5,
-		"SORT_BY_TOKEN_DESCRIPTION": 6,
+	GetAllAccessTokensRequest_SortBy_value = map[string]int32{
+		"SORT_BY_UNSPECIFIED": 0,
+		"SORT_BY_USER_ID":     1,
+		"SORT_BY_EXPIRY":      2,
+		"SORT_BY_CREATED_AT":  3,
+		"SORT_BY_TOKEN_TYPE":  4,
+		"SORT_BY_REVOKED":     5,
+		"SORT_BY_DESCRIPTION": 6,
 	}
 )
 
-func (x GetAllLongLivedTokensRequest_SortBy) Enum() *GetAllLongLivedTokensRequest_SortBy {
-	p := new(GetAllLongLivedTokensRequest_SortBy)
+func (x GetAllAccessTokensRequest_SortBy) Enum() *GetAllAccessTokensRequest_SortBy {
+	p := new(GetAllAccessTokensRequest_SortBy)
 	*p = x
 	return p
 }
 
-func (x GetAllLongLivedTokensRequest_SortBy) String() string {
+func (x GetAllAccessTokensRequest_SortBy) String() string {
 	return protoimpl.X.EnumStringOf(x.Descriptor(), protoreflect.EnumNumber(x))
 }
 
-func (GetAllLongLivedTokensRequest_SortBy) Descriptor() protoreflect.EnumDescriptor {
+func (GetAllAccessTokensRequest_SortBy) Descriptor() protoreflect.EnumDescriptor {
 	return file_determined_api_v1_user_proto_enumTypes[1].Descriptor()
 }
 
-func (GetAllLongLivedTokensRequest_SortBy) Type() protoreflect.EnumType {
+func (GetAllAccessTokensRequest_SortBy) Type() protoreflect.EnumType {
 	return &file_determined_api_v1_user_proto_enumTypes[1]
 }
 
-func (x GetAllLongLivedTokensRequest_SortBy) Number() protoreflect.EnumNumber {
+func (x GetAllAccessTokensRequest_SortBy) Number() protoreflect.EnumNumber {
 	return protoreflect.EnumNumber(x)
 }
 
-// Deprecated: Use GetAllLongLivedTokensRequest_SortBy.Descriptor instead.
-func (GetAllLongLivedTokensRequest_SortBy) EnumDescriptor() ([]byte, []int) {
-	return file_determined_api_v1_user_proto_rawDescGZIP(), []int{32, 0}
+// Deprecated: Use GetAllAccessTokensRequest_SortBy.Descriptor instead.
+func (GetAllAccessTokensRequest_SortBy) EnumDescriptor() ([]byte, []int) {
+	return file_determined_api_v1_user_proto_rawDescGZIP(), []int{30, 0}
 }
 
 // Message for results of individual users in a multi-user action.
@@ -1769,102 +1769,14 @@ func (x *PostUserLongLivedTokenResponse) GetToken() string {
 	return ""
 }
 
-// Get user's longLivedToken info.
-type GetLongLivedTokenRequest struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-}
-
-func (x *GetLongLivedTokenRequest) Reset() {
-	*x = GetLongLivedTokenRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_user_proto_msgTypes[30]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *GetLongLivedTokenRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetLongLivedTokenRequest) ProtoMessage() {}
-
-func (x *GetLongLivedTokenRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_user_proto_msgTypes[30]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetLongLivedTokenRequest.ProtoReflect.Descriptor instead.
-func (*GetLongLivedTokenRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_user_proto_rawDescGZIP(), []int{30}
-}
-
-// Response to GetLongLivedTokenRequest.
-type GetLongLivedTokenResponse struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	// Information about the requested token.
-	TokenInfo *userv1.TokenInfo `protobuf:"bytes,1,opt,name=token_info,json=tokenInfo,proto3" json:"token_info,omitempty"`
-}
-
-func (x *GetLongLivedTokenResponse) Reset() {
-	*x = GetLongLivedTokenResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_user_proto_msgTypes[31]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *GetLongLivedTokenResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetLongLivedTokenResponse) ProtoMessage() {}
-
-func (x *GetLongLivedTokenResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_user_proto_msgTypes[31]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetLongLivedTokenResponse.ProtoReflect.Descriptor instead.
-func (*GetLongLivedTokenResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_user_proto_rawDescGZIP(), []int{31}
-}
-
-func (x *GetLongLivedTokenResponse) GetTokenInfo() *userv1.TokenInfo {
-	if x != nil {
-		return x.TokenInfo
-	}
-	return nil
-}
-
-// Get all longLivedTokens info for admin.
-type GetAllLongLivedTokensRequest struct {
+// Get all access tokens info for admin.
+type GetAllAccessTokensRequest struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
 	// Sort token info by the given field.
-	SortBy GetAllLongLivedTokensRequest_SortBy `protobuf:"varint,1,opt,name=sort_by,json=sortBy,proto3,enum=determined.api.v1.GetAllLongLivedTokensRequest_SortBy" json:"sort_by,omitempty"`
+	SortBy GetAllAccessTokensRequest_SortBy `protobuf:"varint,1,opt,name=sort_by,json=sortBy,proto3,enum=determined.api.v1.GetAllAccessTokensRequest_SortBy" json:"sort_by,omitempty"`
 	// Order token info in either ascending or descending order.
 	OrderBy OrderBy `protobuf:"varint,2,opt,name=order_by,json=orderBy,proto3,enum=determined.api.v1.OrderBy" json:"order_by,omitempty"`
 	// Skip the number of projects before returning results. Negative values
@@ -1878,8 +1790,150 @@ type GetAllLongLivedTokensRequest struct {
 	IncludeInactive bool `protobuf:"varint,7,opt,name=include_inactive,json=includeInactive,proto3" json:"include_inactive,omitempty"`
 }
 
-func (x *GetAllLongLivedTokensRequest) Reset() {
-	*x = GetAllLongLivedTokensRequest{}
+func (x *GetAllAccessTokensRequest) Reset() {
+	*x = GetAllAccessTokensRequest{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_determined_api_v1_user_proto_msgTypes[30]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetAllAccessTokensRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetAllAccessTokensRequest) ProtoMessage() {}
+
+func (x *GetAllAccessTokensRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_determined_api_v1_user_proto_msgTypes[30]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetAllAccessTokensRequest.ProtoReflect.Descriptor instead.
+func (*GetAllAccessTokensRequest) Descriptor() ([]byte, []int) {
+	return file_determined_api_v1_user_proto_rawDescGZIP(), []int{30}
+}
+
+func (x *GetAllAccessTokensRequest) GetSortBy() GetAllAccessTokensRequest_SortBy {
+	if x != nil {
+		return x.SortBy
+	}
+	return GetAllAccessTokensRequest_SORT_BY_UNSPECIFIED
+}
+
+func (x *GetAllAccessTokensRequest) GetOrderBy() OrderBy {
+	if x != nil {
+		return x.OrderBy
+	}
+	return OrderBy_ORDER_BY_UNSPECIFIED
+}
+
+func (x *GetAllAccessTokensRequest) GetOffset() int32 {
+	if x != nil {
+		return x.Offset
+	}
+	return 0
+}
+
+func (x *GetAllAccessTokensRequest) GetLimit() int32 {
+	if x != nil {
+		return x.Limit
+	}
+	return 0
+}
+
+func (x *GetAllAccessTokensRequest) GetName() string {
+	if x != nil {
+		return x.Name
+	}
+	return ""
+}
+
+func (x *GetAllAccessTokensRequest) GetIncludeInactive() bool {
+	if x != nil {
+		return x.IncludeInactive
+	}
+	return false
+}
+
+// Response to GetAllAccessTokensRequest.
+type GetAllAccessTokensResponse struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// List of information regarded request tokens.
+	TokenInfo []*userv1.TokenInfo `protobuf:"bytes,1,rep,name=token_info,json=tokenInfo,proto3" json:"token_info,omitempty"`
+	// Pagination information of the full dataset.
+	Pagination *Pagination `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`
+}
+
+func (x *GetAllAccessTokensResponse) Reset() {
+	*x = GetAllAccessTokensResponse{}
+	if protoimpl.UnsafeEnabled {
+		mi := &file_determined_api_v1_user_proto_msgTypes[31]
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		ms.StoreMessageInfo(mi)
+	}
+}
+
+func (x *GetAllAccessTokensResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetAllAccessTokensResponse) ProtoMessage() {}
+
+func (x *GetAllAccessTokensResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_determined_api_v1_user_proto_msgTypes[31]
+	if protoimpl.UnsafeEnabled && x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetAllAccessTokensResponse.ProtoReflect.Descriptor instead.
+func (*GetAllAccessTokensResponse) Descriptor() ([]byte, []int) {
+	return file_determined_api_v1_user_proto_rawDescGZIP(), []int{31}
+}
+
+func (x *GetAllAccessTokensResponse) GetTokenInfo() []*userv1.TokenInfo {
+	if x != nil {
+		return x.TokenInfo
+	}
+	return nil
+}
+
+func (x *GetAllAccessTokensResponse) GetPagination() *Pagination {
+	if x != nil {
+		return x.Pagination
+	}
+	return nil
+}
+
+// Get users' access token info.
+type GetAccessTokenRequest struct {
+	state         protoimpl.MessageState
+	sizeCache     protoimpl.SizeCache
+	unknownFields protoimpl.UnknownFields
+
+	// The id of the user.
+	UserId int32 `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
+}
+
+func (x *GetAccessTokenRequest) Reset() {
+	*x = GetAccessTokenRequest{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_determined_api_v1_user_proto_msgTypes[32]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1887,13 +1941,13 @@ func (x *GetAllLongLivedTokensRequest) Reset() {
 	}
 }
 
-func (x *GetAllLongLivedTokensRequest) String() string {
+func (x *GetAccessTokenRequest) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetAllLongLivedTokensRequest) ProtoMessage() {}
+func (*GetAccessTokenRequest) ProtoMessage() {}
 
-func (x *GetAllLongLivedTokensRequest) ProtoReflect() protoreflect.Message {
+func (x *GetAccessTokenRequest) ProtoReflect() protoreflect.Message {
 	mi := &file_determined_api_v1_user_proto_msgTypes[32]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1905,67 +1959,30 @@ func (x *GetAllLongLivedTokensRequest) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GetAllLongLivedTokensRequest.ProtoReflect.Descriptor instead.
-func (*GetAllLongLivedTokensRequest) Descriptor() ([]byte, []int) {
+// Deprecated: Use GetAccessTokenRequest.ProtoReflect.Descriptor instead.
+func (*GetAccessTokenRequest) Descriptor() ([]byte, []int) {
 	return file_determined_api_v1_user_proto_rawDescGZIP(), []int{32}
 }
 
-func (x *GetAllLongLivedTokensRequest) GetSortBy() GetAllLongLivedTokensRequest_SortBy {
+func (x *GetAccessTokenRequest) GetUserId() int32 {
 	if x != nil {
-		return x.SortBy
-	}
-	return GetAllLongLivedTokensRequest_SORT_BY_UNSPECIFIED
-}
-
-func (x *GetAllLongLivedTokensRequest) GetOrderBy() OrderBy {
-	if x != nil {
-		return x.OrderBy
-	}
-	return OrderBy_ORDER_BY_UNSPECIFIED
-}
-
-func (x *GetAllLongLivedTokensRequest) GetOffset() int32 {
-	if x != nil {
-		return x.Offset
+		return x.UserId
 	}
 	return 0
 }
 
-func (x *GetAllLongLivedTokensRequest) GetLimit() int32 {
-	if x != nil {
-		return x.Limit
-	}
-	return 0
-}
-
-func (x *GetAllLongLivedTokensRequest) GetName() string {
-	if x != nil {
-		return x.Name
-	}
-	return ""
-}
-
-func (x *GetAllLongLivedTokensRequest) GetIncludeInactive() bool {
-	if x != nil {
-		return x.IncludeInactive
-	}
-	return false
-}
-
-// Response to GetAllLongLivedTokenRequest.
-type GetAllLongLivedTokensResponse struct {
+// Response to GetAccessTokenRequest.
+type GetAccessTokenResponse struct {
 	state         protoimpl.MessageState
 	sizeCache     protoimpl.SizeCache
 	unknownFields protoimpl.UnknownFields
 
-	// List of information regarded request tokens.
-	TokenInfo []*userv1.TokenInfo `protobuf:"bytes,1,rep,name=token_info,json=tokenInfo,proto3" json:"token_info,omitempty"`
-	// Pagination information of the full dataset.
-	Pagination *Pagination `protobuf:"bytes,2,opt,name=pagination,proto3" json:"pagination,omitempty"`
+	// Information about the requested token.
+	TokenInfo *userv1.TokenInfo `protobuf:"bytes,1,opt,name=token_info,json=tokenInfo,proto3" json:"token_info,omitempty"`
 }
 
-func (x *GetAllLongLivedTokensResponse) Reset() {
-	*x = GetAllLongLivedTokensResponse{}
+func (x *GetAccessTokenResponse) Reset() {
+	*x = GetAccessTokenResponse{}
 	if protoimpl.UnsafeEnabled {
 		mi := &file_determined_api_v1_user_proto_msgTypes[33]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1973,13 +1990,13 @@ func (x *GetAllLongLivedTokensResponse) Reset() {
 	}
 }
 
-func (x *GetAllLongLivedTokensResponse) String() string {
+func (x *GetAccessTokenResponse) String() string {
 	return protoimpl.X.MessageStringOf(x)
 }
 
-func (*GetAllLongLivedTokensResponse) ProtoMessage() {}
+func (*GetAccessTokenResponse) ProtoMessage() {}
 
-func (x *GetAllLongLivedTokensResponse) ProtoReflect() protoreflect.Message {
+func (x *GetAccessTokenResponse) ProtoReflect() protoreflect.Message {
 	mi := &file_determined_api_v1_user_proto_msgTypes[33]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
@@ -1991,117 +2008,12 @@ func (x *GetAllLongLivedTokensResponse) ProtoReflect() protoreflect.Message {
 	return mi.MessageOf(x)
 }
 
-// Deprecated: Use GetAllLongLivedTokensResponse.ProtoReflect.Descriptor instead.
-func (*GetAllLongLivedTokensResponse) Descriptor() ([]byte, []int) {
+// Deprecated: Use GetAccessTokenResponse.ProtoReflect.Descriptor instead.
+func (*GetAccessTokenResponse) Descriptor() ([]byte, []int) {
 	return file_determined_api_v1_user_proto_rawDescGZIP(), []int{33}
 }
 
-func (x *GetAllLongLivedTokensResponse) GetTokenInfo() []*userv1.TokenInfo {
-	if x != nil {
-		return x.TokenInfo
-	}
-	return nil
-}
-
-func (x *GetAllLongLivedTokensResponse) GetPagination() *Pagination {
-	if x != nil {
-		return x.Pagination
-	}
-	return nil
-}
-
-// Get the requested user's longLivedToken info.
-type GetUserLongLivedTokenRequest struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	// The id of the user.
-	UserId int32 `protobuf:"varint,1,opt,name=user_id,json=userId,proto3" json:"user_id,omitempty"`
-}
-
-func (x *GetUserLongLivedTokenRequest) Reset() {
-	*x = GetUserLongLivedTokenRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_user_proto_msgTypes[34]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *GetUserLongLivedTokenRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetUserLongLivedTokenRequest) ProtoMessage() {}
-
-func (x *GetUserLongLivedTokenRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_user_proto_msgTypes[34]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetUserLongLivedTokenRequest.ProtoReflect.Descriptor instead.
-func (*GetUserLongLivedTokenRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_user_proto_rawDescGZIP(), []int{34}
-}
-
-func (x *GetUserLongLivedTokenRequest) GetUserId() int32 {
-	if x != nil {
-		return x.UserId
-	}
-	return 0
-}
-
-// Response to GetUserLongLivedTokenRequest.
-type GetUserLongLivedTokenResponse struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	// Information about the requested token.
-	TokenInfo *userv1.TokenInfo `protobuf:"bytes,1,opt,name=token_info,json=tokenInfo,proto3" json:"token_info,omitempty"`
-}
-
-func (x *GetUserLongLivedTokenResponse) Reset() {
-	*x = GetUserLongLivedTokenResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_user_proto_msgTypes[35]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *GetUserLongLivedTokenResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*GetUserLongLivedTokenResponse) ProtoMessage() {}
-
-func (x *GetUserLongLivedTokenResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_user_proto_msgTypes[35]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use GetUserLongLivedTokenResponse.ProtoReflect.Descriptor instead.
-func (*GetUserLongLivedTokenResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_user_proto_rawDescGZIP(), []int{35}
-}
-
-func (x *GetUserLongLivedTokenResponse) GetTokenInfo() *userv1.TokenInfo {
+func (x *GetAccessTokenResponse) GetTokenInfo() *userv1.TokenInfo {
 	if x != nil {
 		return x.TokenInfo
 	}
@@ -2125,7 +2037,7 @@ type PatchAccessTokenRequest struct {
 func (x *PatchAccessTokenRequest) Reset() {
 	*x = PatchAccessTokenRequest{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_user_proto_msgTypes[36]
+		mi := &file_determined_api_v1_user_proto_msgTypes[34]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2138,7 +2050,7 @@ func (x *PatchAccessTokenRequest) String() string {
 func (*PatchAccessTokenRequest) ProtoMessage() {}
 
 func (x *PatchAccessTokenRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_user_proto_msgTypes[36]
+	mi := &file_determined_api_v1_user_proto_msgTypes[34]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2151,7 +2063,7 @@ func (x *PatchAccessTokenRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PatchAccessTokenRequest.ProtoReflect.Descriptor instead.
 func (*PatchAccessTokenRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_user_proto_rawDescGZIP(), []int{36}
+	return file_determined_api_v1_user_proto_rawDescGZIP(), []int{34}
 }
 
 func (x *PatchAccessTokenRequest) GetTokenId() int32 {
@@ -2188,7 +2100,7 @@ type PatchAccessTokenResponse struct {
 func (x *PatchAccessTokenResponse) Reset() {
 	*x = PatchAccessTokenResponse{}
 	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_user_proto_msgTypes[37]
+		mi := &file_determined_api_v1_user_proto_msgTypes[35]
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		ms.StoreMessageInfo(mi)
 	}
@@ -2201,7 +2113,7 @@ func (x *PatchAccessTokenResponse) String() string {
 func (*PatchAccessTokenResponse) ProtoMessage() {}
 
 func (x *PatchAccessTokenResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_user_proto_msgTypes[37]
+	mi := &file_determined_api_v1_user_proto_msgTypes[35]
 	if protoimpl.UnsafeEnabled && x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -2214,7 +2126,7 @@ func (x *PatchAccessTokenResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use PatchAccessTokenResponse.ProtoReflect.Descriptor instead.
 func (*PatchAccessTokenResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_user_proto_rawDescGZIP(), []int{37}
+	return file_determined_api_v1_user_proto_rawDescGZIP(), []int{35}
 }
 
 func (x *PatchAccessTokenResponse) GetTokenInfo() *userv1.TokenInfo {
@@ -2222,172 +2134,6 @@ func (x *PatchAccessTokenResponse) GetTokenInfo() *userv1.TokenInfo {
 		return x.TokenInfo
 	}
 	return nil
-}
-
-// Delete user's longLivedToken info.
-type DeleteLongLivedTokenRequest struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-}
-
-func (x *DeleteLongLivedTokenRequest) Reset() {
-	*x = DeleteLongLivedTokenRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_user_proto_msgTypes[38]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *DeleteLongLivedTokenRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*DeleteLongLivedTokenRequest) ProtoMessage() {}
-
-func (x *DeleteLongLivedTokenRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_user_proto_msgTypes[38]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use DeleteLongLivedTokenRequest.ProtoReflect.Descriptor instead.
-func (*DeleteLongLivedTokenRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_user_proto_rawDescGZIP(), []int{38}
-}
-
-// Response to DeleteLongLivedTokenRequest.
-type DeleteLongLivedTokenResponse struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-}
-
-func (x *DeleteLongLivedTokenResponse) Reset() {
-	*x = DeleteLongLivedTokenResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_user_proto_msgTypes[39]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *DeleteLongLivedTokenResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*DeleteLongLivedTokenResponse) ProtoMessage() {}
-
-func (x *DeleteLongLivedTokenResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_user_proto_msgTypes[39]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use DeleteLongLivedTokenResponse.ProtoReflect.Descriptor instead.
-func (*DeleteLongLivedTokenResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_user_proto_rawDescGZIP(), []int{39}
-}
-
-// Delete token id's longLivedToken info.
-type DeleteLongLivedTokenByTokenIDRequest struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-
-	// The id of the token.
-	TokenId int32 `protobuf:"varint,1,opt,name=token_id,json=tokenId,proto3" json:"token_id,omitempty"`
-}
-
-func (x *DeleteLongLivedTokenByTokenIDRequest) Reset() {
-	*x = DeleteLongLivedTokenByTokenIDRequest{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_user_proto_msgTypes[40]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *DeleteLongLivedTokenByTokenIDRequest) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*DeleteLongLivedTokenByTokenIDRequest) ProtoMessage() {}
-
-func (x *DeleteLongLivedTokenByTokenIDRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_user_proto_msgTypes[40]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use DeleteLongLivedTokenByTokenIDRequest.ProtoReflect.Descriptor instead.
-func (*DeleteLongLivedTokenByTokenIDRequest) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_user_proto_rawDescGZIP(), []int{40}
-}
-
-func (x *DeleteLongLivedTokenByTokenIDRequest) GetTokenId() int32 {
-	if x != nil {
-		return x.TokenId
-	}
-	return 0
-}
-
-// Response to DeleteLongLivedTokenByTokenIDRequest.
-type DeleteLongLivedTokenByTokenIDResponse struct {
-	state         protoimpl.MessageState
-	sizeCache     protoimpl.SizeCache
-	unknownFields protoimpl.UnknownFields
-}
-
-func (x *DeleteLongLivedTokenByTokenIDResponse) Reset() {
-	*x = DeleteLongLivedTokenByTokenIDResponse{}
-	if protoimpl.UnsafeEnabled {
-		mi := &file_determined_api_v1_user_proto_msgTypes[41]
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		ms.StoreMessageInfo(mi)
-	}
-}
-
-func (x *DeleteLongLivedTokenByTokenIDResponse) String() string {
-	return protoimpl.X.MessageStringOf(x)
-}
-
-func (*DeleteLongLivedTokenByTokenIDResponse) ProtoMessage() {}
-
-func (x *DeleteLongLivedTokenByTokenIDResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_determined_api_v1_user_proto_msgTypes[41]
-	if protoimpl.UnsafeEnabled && x != nil {
-		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
-		if ms.LoadMessageInfo() == nil {
-			ms.StoreMessageInfo(mi)
-		}
-		return ms
-	}
-	return mi.MessageOf(x)
-}
-
-// Deprecated: Use DeleteLongLivedTokenByTokenIDResponse.ProtoReflect.Descriptor instead.
-func (*DeleteLongLivedTokenByTokenIDResponse) Descriptor() ([]byte, []int) {
-	return file_determined_api_v1_user_proto_rawDescGZIP(), []int{41}
 }
 
 var File_determined_api_v1_user_proto protoreflect.FileDescriptor
@@ -2587,97 +2333,75 @@ var file_determined_api_v1_user_proto_rawDesc = []byte{
 	0x6f, 0x6e, 0x22, 0x36, 0x0a, 0x1e, 0x50, 0x6f, 0x73, 0x74, 0x55, 0x73, 0x65, 0x72, 0x4c, 0x6f,
 	0x6e, 0x67, 0x4c, 0x69, 0x76, 0x65, 0x64, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x52, 0x65, 0x73, 0x70,
 	0x6f, 0x6e, 0x73, 0x65, 0x12, 0x14, 0x0a, 0x05, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x18, 0x01, 0x20,
-	0x01, 0x28, 0x09, 0x52, 0x05, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x22, 0x1a, 0x0a, 0x18, 0x47, 0x65,
-	0x74, 0x4c, 0x6f, 0x6e, 0x67, 0x4c, 0x69, 0x76, 0x65, 0x64, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x52,
-	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x22, 0x6d, 0x0a, 0x19, 0x47, 0x65, 0x74, 0x4c, 0x6f, 0x6e,
-	0x67, 0x4c, 0x69, 0x76, 0x65, 0x64, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f,
-	0x6e, 0x73, 0x65, 0x12, 0x3c, 0x0a, 0x0a, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x5f, 0x69, 0x6e, 0x66,
-	0x6f, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1d, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d,
-	0x69, 0x6e, 0x65, 0x64, 0x2e, 0x75, 0x73, 0x65, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x54, 0x6f, 0x6b,
-	0x65, 0x6e, 0x49, 0x6e, 0x66, 0x6f, 0x52, 0x09, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x49, 0x6e, 0x66,
-	0x6f, 0x3a, 0x12, 0x92, 0x41, 0x0f, 0x0a, 0x0d, 0xd2, 0x01, 0x0a, 0x74, 0x6f, 0x6b, 0x65, 0x6e,
-	0x5f, 0x69, 0x6e, 0x66, 0x6f, 0x22, 0xc7, 0x03, 0x0a, 0x1c, 0x47, 0x65, 0x74, 0x41, 0x6c, 0x6c,
-	0x4c, 0x6f, 0x6e, 0x67, 0x4c, 0x69, 0x76, 0x65, 0x64, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x73, 0x52,
-	0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x4f, 0x0a, 0x07, 0x73, 0x6f, 0x72, 0x74, 0x5f, 0x62,
-	0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x36, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d,
-	0x69, 0x6e, 0x65, 0x64, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x47, 0x65, 0x74, 0x41,
-	0x6c, 0x6c, 0x4c, 0x6f, 0x6e, 0x67, 0x4c, 0x69, 0x76, 0x65, 0x64, 0x54, 0x6f, 0x6b, 0x65, 0x6e,
-	0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x2e, 0x53, 0x6f, 0x72, 0x74, 0x42, 0x79, 0x52,
-	0x06, 0x73, 0x6f, 0x72, 0x74, 0x42, 0x79, 0x12, 0x35, 0x0a, 0x08, 0x6f, 0x72, 0x64, 0x65, 0x72,
-	0x5f, 0x62, 0x79, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x1a, 0x2e, 0x64, 0x65, 0x74, 0x65,
-	0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x4f, 0x72,
-	0x64, 0x65, 0x72, 0x42, 0x79, 0x52, 0x07, 0x6f, 0x72, 0x64, 0x65, 0x72, 0x42, 0x79, 0x12, 0x16,
-	0x0a, 0x06, 0x6f, 0x66, 0x66, 0x73, 0x65, 0x74, 0x18, 0x03, 0x20, 0x01, 0x28, 0x05, 0x52, 0x06,
-	0x6f, 0x66, 0x66, 0x73, 0x65, 0x74, 0x12, 0x14, 0x0a, 0x05, 0x6c, 0x69, 0x6d, 0x69, 0x74, 0x18,
-	0x04, 0x20, 0x01, 0x28, 0x05, 0x52, 0x05, 0x6c, 0x69, 0x6d, 0x69, 0x74, 0x12, 0x12, 0x0a, 0x04,
-	0x6e, 0x61, 0x6d, 0x65, 0x18, 0x05, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65,
-	0x12, 0x29, 0x0a, 0x10, 0x69, 0x6e, 0x63, 0x6c, 0x75, 0x64, 0x65, 0x5f, 0x69, 0x6e, 0x61, 0x63,
-	0x74, 0x69, 0x76, 0x65, 0x18, 0x07, 0x20, 0x01, 0x28, 0x08, 0x52, 0x0f, 0x69, 0x6e, 0x63, 0x6c,
-	0x75, 0x64, 0x65, 0x49, 0x6e, 0x61, 0x63, 0x74, 0x69, 0x76, 0x65, 0x22, 0xb1, 0x01, 0x0a, 0x06,
-	0x53, 0x6f, 0x72, 0x74, 0x42, 0x79, 0x12, 0x17, 0x0a, 0x13, 0x53, 0x4f, 0x52, 0x54, 0x5f, 0x42,
-	0x59, 0x5f, 0x55, 0x4e, 0x53, 0x50, 0x45, 0x43, 0x49, 0x46, 0x49, 0x45, 0x44, 0x10, 0x00, 0x12,
-	0x13, 0x0a, 0x0f, 0x53, 0x4f, 0x52, 0x54, 0x5f, 0x42, 0x59, 0x5f, 0x55, 0x53, 0x45, 0x52, 0x5f,
-	0x49, 0x44, 0x10, 0x01, 0x12, 0x12, 0x0a, 0x0e, 0x53, 0x4f, 0x52, 0x54, 0x5f, 0x42, 0x59, 0x5f,
-	0x45, 0x58, 0x50, 0x49, 0x52, 0x59, 0x10, 0x02, 0x12, 0x16, 0x0a, 0x12, 0x53, 0x4f, 0x52, 0x54,
-	0x5f, 0x42, 0x59, 0x5f, 0x43, 0x52, 0x45, 0x41, 0x54, 0x45, 0x44, 0x5f, 0x41, 0x54, 0x10, 0x03,
-	0x12, 0x16, 0x0a, 0x12, 0x53, 0x4f, 0x52, 0x54, 0x5f, 0x42, 0x59, 0x5f, 0x54, 0x4f, 0x4b, 0x45,
-	0x4e, 0x5f, 0x54, 0x59, 0x50, 0x45, 0x10, 0x04, 0x12, 0x16, 0x0a, 0x12, 0x53, 0x4f, 0x52, 0x54,
-	0x5f, 0x42, 0x59, 0x5f, 0x49, 0x53, 0x5f, 0x52, 0x45, 0x56, 0x4f, 0x4b, 0x45, 0x44, 0x10, 0x05,
-	0x12, 0x1d, 0x0a, 0x19, 0x53, 0x4f, 0x52, 0x54, 0x5f, 0x42, 0x59, 0x5f, 0x54, 0x4f, 0x4b, 0x45,
-	0x4e, 0x5f, 0x44, 0x45, 0x53, 0x43, 0x52, 0x49, 0x50, 0x54, 0x49, 0x4f, 0x4e, 0x10, 0x06, 0x22,
-	0xb0, 0x01, 0x0a, 0x1d, 0x47, 0x65, 0x74, 0x41, 0x6c, 0x6c, 0x4c, 0x6f, 0x6e, 0x67, 0x4c, 0x69,
-	0x76, 0x65, 0x64, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x73, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
+	0x01, 0x28, 0x09, 0x52, 0x05, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x22, 0xb8, 0x03, 0x0a, 0x19, 0x47,
+	0x65, 0x74, 0x41, 0x6c, 0x6c, 0x41, 0x63, 0x63, 0x65, 0x73, 0x73, 0x54, 0x6f, 0x6b, 0x65, 0x6e,
+	0x73, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x4c, 0x0a, 0x07, 0x73, 0x6f, 0x72, 0x74,
+	0x5f, 0x62, 0x79, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x33, 0x2e, 0x64, 0x65, 0x74, 0x65,
+	0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x47, 0x65,
+	0x74, 0x41, 0x6c, 0x6c, 0x41, 0x63, 0x63, 0x65, 0x73, 0x73, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x73,
+	0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x2e, 0x53, 0x6f, 0x72, 0x74, 0x42, 0x79, 0x52, 0x06,
+	0x73, 0x6f, 0x72, 0x74, 0x42, 0x79, 0x12, 0x35, 0x0a, 0x08, 0x6f, 0x72, 0x64, 0x65, 0x72, 0x5f,
+	0x62, 0x79, 0x18, 0x02, 0x20, 0x01, 0x28, 0x0e, 0x32, 0x1a, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72,
+	0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x4f, 0x72, 0x64,
+	0x65, 0x72, 0x42, 0x79, 0x52, 0x07, 0x6f, 0x72, 0x64, 0x65, 0x72, 0x42, 0x79, 0x12, 0x16, 0x0a,
+	0x06, 0x6f, 0x66, 0x66, 0x73, 0x65, 0x74, 0x18, 0x03, 0x20, 0x01, 0x28, 0x05, 0x52, 0x06, 0x6f,
+	0x66, 0x66, 0x73, 0x65, 0x74, 0x12, 0x14, 0x0a, 0x05, 0x6c, 0x69, 0x6d, 0x69, 0x74, 0x18, 0x04,
+	0x20, 0x01, 0x28, 0x05, 0x52, 0x05, 0x6c, 0x69, 0x6d, 0x69, 0x74, 0x12, 0x12, 0x0a, 0x04, 0x6e,
+	0x61, 0x6d, 0x65, 0x18, 0x05, 0x20, 0x01, 0x28, 0x09, 0x52, 0x04, 0x6e, 0x61, 0x6d, 0x65, 0x12,
+	0x29, 0x0a, 0x10, 0x69, 0x6e, 0x63, 0x6c, 0x75, 0x64, 0x65, 0x5f, 0x69, 0x6e, 0x61, 0x63, 0x74,
+	0x69, 0x76, 0x65, 0x18, 0x07, 0x20, 0x01, 0x28, 0x08, 0x52, 0x0f, 0x69, 0x6e, 0x63, 0x6c, 0x75,
+	0x64, 0x65, 0x49, 0x6e, 0x61, 0x63, 0x74, 0x69, 0x76, 0x65, 0x22, 0xa8, 0x01, 0x0a, 0x06, 0x53,
+	0x6f, 0x72, 0x74, 0x42, 0x79, 0x12, 0x17, 0x0a, 0x13, 0x53, 0x4f, 0x52, 0x54, 0x5f, 0x42, 0x59,
+	0x5f, 0x55, 0x4e, 0x53, 0x50, 0x45, 0x43, 0x49, 0x46, 0x49, 0x45, 0x44, 0x10, 0x00, 0x12, 0x13,
+	0x0a, 0x0f, 0x53, 0x4f, 0x52, 0x54, 0x5f, 0x42, 0x59, 0x5f, 0x55, 0x53, 0x45, 0x52, 0x5f, 0x49,
+	0x44, 0x10, 0x01, 0x12, 0x12, 0x0a, 0x0e, 0x53, 0x4f, 0x52, 0x54, 0x5f, 0x42, 0x59, 0x5f, 0x45,
+	0x58, 0x50, 0x49, 0x52, 0x59, 0x10, 0x02, 0x12, 0x16, 0x0a, 0x12, 0x53, 0x4f, 0x52, 0x54, 0x5f,
+	0x42, 0x59, 0x5f, 0x43, 0x52, 0x45, 0x41, 0x54, 0x45, 0x44, 0x5f, 0x41, 0x54, 0x10, 0x03, 0x12,
+	0x16, 0x0a, 0x12, 0x53, 0x4f, 0x52, 0x54, 0x5f, 0x42, 0x59, 0x5f, 0x54, 0x4f, 0x4b, 0x45, 0x4e,
+	0x5f, 0x54, 0x59, 0x50, 0x45, 0x10, 0x04, 0x12, 0x13, 0x0a, 0x0f, 0x53, 0x4f, 0x52, 0x54, 0x5f,
+	0x42, 0x59, 0x5f, 0x52, 0x45, 0x56, 0x4f, 0x4b, 0x45, 0x44, 0x10, 0x05, 0x12, 0x17, 0x0a, 0x13,
+	0x53, 0x4f, 0x52, 0x54, 0x5f, 0x42, 0x59, 0x5f, 0x44, 0x45, 0x53, 0x43, 0x52, 0x49, 0x50, 0x54,
+	0x49, 0x4f, 0x4e, 0x10, 0x06, 0x22, 0xad, 0x01, 0x0a, 0x1a, 0x47, 0x65, 0x74, 0x41, 0x6c, 0x6c,
+	0x41, 0x63, 0x63, 0x65, 0x73, 0x73, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x73, 0x52, 0x65, 0x73, 0x70,
+	0x6f, 0x6e, 0x73, 0x65, 0x12, 0x3c, 0x0a, 0x0a, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x5f, 0x69, 0x6e,
+	0x66, 0x6f, 0x18, 0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x1d, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72,
+	0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x75, 0x73, 0x65, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x54, 0x6f,
+	0x6b, 0x65, 0x6e, 0x49, 0x6e, 0x66, 0x6f, 0x52, 0x09, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x49, 0x6e,
+	0x66, 0x6f, 0x12, 0x3d, 0x0a, 0x0a, 0x70, 0x61, 0x67, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e,
+	0x18, 0x02, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1d, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69,
+	0x6e, 0x65, 0x64, 0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x50, 0x61, 0x67, 0x69, 0x6e,
+	0x61, 0x74, 0x69, 0x6f, 0x6e, 0x52, 0x0a, 0x70, 0x61, 0x67, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f,
+	0x6e, 0x3a, 0x12, 0x92, 0x41, 0x0f, 0x0a, 0x0d, 0xd2, 0x01, 0x0a, 0x74, 0x6f, 0x6b, 0x65, 0x6e,
+	0x5f, 0x69, 0x6e, 0x66, 0x6f, 0x22, 0x30, 0x0a, 0x15, 0x47, 0x65, 0x74, 0x41, 0x63, 0x63, 0x65,
+	0x73, 0x73, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x17,
+	0x0a, 0x07, 0x75, 0x73, 0x65, 0x72, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52,
+	0x06, 0x75, 0x73, 0x65, 0x72, 0x49, 0x64, 0x22, 0x6a, 0x0a, 0x16, 0x47, 0x65, 0x74, 0x41, 0x63,
+	0x63, 0x65, 0x73, 0x73, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73,
 	0x65, 0x12, 0x3c, 0x0a, 0x0a, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x5f, 0x69, 0x6e, 0x66, 0x6f, 0x18,
-	0x01, 0x20, 0x03, 0x28, 0x0b, 0x32, 0x1d, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e,
+	0x01, 0x20, 0x01, 0x28, 0x0b, 0x32, 0x1d, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e,
 	0x65, 0x64, 0x2e, 0x75, 0x73, 0x65, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x54, 0x6f, 0x6b, 0x65, 0x6e,
-	0x49, 0x6e, 0x66, 0x6f, 0x52, 0x09, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x49, 0x6e, 0x66, 0x6f, 0x12,
-	0x3d, 0x0a, 0x0a, 0x70, 0x61, 0x67, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x02, 0x20,
-	0x01, 0x28, 0x0b, 0x32, 0x1d, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64,
-	0x2e, 0x61, 0x70, 0x69, 0x2e, 0x76, 0x31, 0x2e, 0x50, 0x61, 0x67, 0x69, 0x6e, 0x61, 0x74, 0x69,
-	0x6f, 0x6e, 0x52, 0x0a, 0x70, 0x61, 0x67, 0x69, 0x6e, 0x61, 0x74, 0x69, 0x6f, 0x6e, 0x3a, 0x12,
-	0x92, 0x41, 0x0f, 0x0a, 0x0d, 0xd2, 0x01, 0x0a, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x5f, 0x69, 0x6e,
-	0x66, 0x6f, 0x22, 0x37, 0x0a, 0x1c, 0x47, 0x65, 0x74, 0x55, 0x73, 0x65, 0x72, 0x4c, 0x6f, 0x6e,
-	0x67, 0x4c, 0x69, 0x76, 0x65, 0x64, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65,
-	0x73, 0x74, 0x12, 0x17, 0x0a, 0x07, 0x75, 0x73, 0x65, 0x72, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20,
-	0x01, 0x28, 0x05, 0x52, 0x06, 0x75, 0x73, 0x65, 0x72, 0x49, 0x64, 0x22, 0x71, 0x0a, 0x1d, 0x47,
-	0x65, 0x74, 0x55, 0x73, 0x65, 0x72, 0x4c, 0x6f, 0x6e, 0x67, 0x4c, 0x69, 0x76, 0x65, 0x64, 0x54,
-	0x6f, 0x6b, 0x65, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x3c, 0x0a, 0x0a,
-	0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x5f, 0x69, 0x6e, 0x66, 0x6f, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b,
-	0x32, 0x1d, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x75, 0x73,
-	0x65, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x49, 0x6e, 0x66, 0x6f, 0x52,
-	0x09, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x49, 0x6e, 0x66, 0x6f, 0x3a, 0x12, 0x92, 0x41, 0x0f, 0x0a,
-	0x0d, 0xd2, 0x01, 0x0a, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x5f, 0x69, 0x6e, 0x66, 0x6f, 0x22, 0x9e,
-	0x01, 0x0a, 0x17, 0x50, 0x61, 0x74, 0x63, 0x68, 0x41, 0x63, 0x63, 0x65, 0x73, 0x73, 0x54, 0x6f,
-	0x6b, 0x65, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12, 0x19, 0x0a, 0x08, 0x74, 0x6f,
-	0x6b, 0x65, 0x6e, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28, 0x05, 0x52, 0x07, 0x74, 0x6f,
-	0x6b, 0x65, 0x6e, 0x49, 0x64, 0x12, 0x25, 0x0a, 0x0b, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70,
-	0x74, 0x69, 0x6f, 0x6e, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x48, 0x00, 0x52, 0x0b, 0x64, 0x65,
-	0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x88, 0x01, 0x01, 0x12, 0x1f, 0x0a, 0x0b,
-	0x73, 0x65, 0x74, 0x5f, 0x72, 0x65, 0x76, 0x6f, 0x6b, 0x65, 0x64, 0x18, 0x03, 0x20, 0x01, 0x28,
-	0x08, 0x52, 0x0a, 0x73, 0x65, 0x74, 0x52, 0x65, 0x76, 0x6f, 0x6b, 0x65, 0x64, 0x3a, 0x10, 0x92,
-	0x41, 0x0d, 0x0a, 0x0b, 0xd2, 0x01, 0x08, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x5f, 0x69, 0x64, 0x42,
-	0x0e, 0x0a, 0x0c, 0x5f, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x22,
-	0x58, 0x0a, 0x18, 0x50, 0x61, 0x74, 0x63, 0x68, 0x41, 0x63, 0x63, 0x65, 0x73, 0x73, 0x54, 0x6f,
-	0x6b, 0x65, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x12, 0x3c, 0x0a, 0x0a, 0x74,
-	0x6f, 0x6b, 0x65, 0x6e, 0x5f, 0x69, 0x6e, 0x66, 0x6f, 0x18, 0x01, 0x20, 0x01, 0x28, 0x0b, 0x32,
-	0x1d, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2e, 0x75, 0x73, 0x65,
-	0x72, 0x2e, 0x76, 0x31, 0x2e, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x49, 0x6e, 0x66, 0x6f, 0x52, 0x09,
-	0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x49, 0x6e, 0x66, 0x6f, 0x22, 0x1d, 0x0a, 0x1b, 0x44, 0x65, 0x6c,
-	0x65, 0x74, 0x65, 0x4c, 0x6f, 0x6e, 0x67, 0x4c, 0x69, 0x76, 0x65, 0x64, 0x54, 0x6f, 0x6b, 0x65,
-	0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x22, 0x1e, 0x0a, 0x1c, 0x44, 0x65, 0x6c, 0x65,
-	0x74, 0x65, 0x4c, 0x6f, 0x6e, 0x67, 0x4c, 0x69, 0x76, 0x65, 0x64, 0x54, 0x6f, 0x6b, 0x65, 0x6e,
-	0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65, 0x22, 0x41, 0x0a, 0x24, 0x44, 0x65, 0x6c, 0x65,
-	0x74, 0x65, 0x4c, 0x6f, 0x6e, 0x67, 0x4c, 0x69, 0x76, 0x65, 0x64, 0x54, 0x6f, 0x6b, 0x65, 0x6e,
-	0x42, 0x79, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x49, 0x44, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74,
-	0x12, 0x19, 0x0a, 0x08, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01,
-	0x28, 0x05, 0x52, 0x07, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x49, 0x64, 0x22, 0x27, 0x0a, 0x25, 0x44,
-	0x65, 0x6c, 0x65, 0x74, 0x65, 0x4c, 0x6f, 0x6e, 0x67, 0x4c, 0x69, 0x76, 0x65, 0x64, 0x54, 0x6f,
-	0x6b, 0x65, 0x6e, 0x42, 0x79, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x49, 0x44, 0x52, 0x65, 0x73, 0x70,
-	0x6f, 0x6e, 0x73, 0x65, 0x42, 0x35, 0x5a, 0x33, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63,
-	0x6f, 0x6d, 0x2f, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2d, 0x61, 0x69,
-	0x2f, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2f, 0x70, 0x72, 0x6f, 0x74,
-	0x6f, 0x2f, 0x70, 0x6b, 0x67, 0x2f, 0x61, 0x70, 0x69, 0x76, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f,
-	0x74, 0x6f, 0x33,
+	0x49, 0x6e, 0x66, 0x6f, 0x52, 0x09, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x49, 0x6e, 0x66, 0x6f, 0x3a,
+	0x12, 0x92, 0x41, 0x0f, 0x0a, 0x0d, 0xd2, 0x01, 0x0a, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x5f, 0x69,
+	0x6e, 0x66, 0x6f, 0x22, 0x9e, 0x01, 0x0a, 0x17, 0x50, 0x61, 0x74, 0x63, 0x68, 0x41, 0x63, 0x63,
+	0x65, 0x73, 0x73, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x52, 0x65, 0x71, 0x75, 0x65, 0x73, 0x74, 0x12,
+	0x19, 0x0a, 0x08, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x5f, 0x69, 0x64, 0x18, 0x01, 0x20, 0x01, 0x28,
+	0x05, 0x52, 0x07, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x49, 0x64, 0x12, 0x25, 0x0a, 0x0b, 0x64, 0x65,
+	0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x18, 0x02, 0x20, 0x01, 0x28, 0x09, 0x48,
+	0x00, 0x52, 0x0b, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70, 0x74, 0x69, 0x6f, 0x6e, 0x88, 0x01,
+	0x01, 0x12, 0x1f, 0x0a, 0x0b, 0x73, 0x65, 0x74, 0x5f, 0x72, 0x65, 0x76, 0x6f, 0x6b, 0x65, 0x64,
+	0x18, 0x03, 0x20, 0x01, 0x28, 0x08, 0x52, 0x0a, 0x73, 0x65, 0x74, 0x52, 0x65, 0x76, 0x6f, 0x6b,
+	0x65, 0x64, 0x3a, 0x10, 0x92, 0x41, 0x0d, 0x0a, 0x0b, 0xd2, 0x01, 0x08, 0x74, 0x6f, 0x6b, 0x65,
+	0x6e, 0x5f, 0x69, 0x64, 0x42, 0x0e, 0x0a, 0x0c, 0x5f, 0x64, 0x65, 0x73, 0x63, 0x72, 0x69, 0x70,
+	0x74, 0x69, 0x6f, 0x6e, 0x22, 0x58, 0x0a, 0x18, 0x50, 0x61, 0x74, 0x63, 0x68, 0x41, 0x63, 0x63,
+	0x65, 0x73, 0x73, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x52, 0x65, 0x73, 0x70, 0x6f, 0x6e, 0x73, 0x65,
+	0x12, 0x3c, 0x0a, 0x0a, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x5f, 0x69, 0x6e, 0x66, 0x6f, 0x18, 0x01,
+	0x20, 0x01, 0x28, 0x0b, 0x32, 0x1d, 0x2e, 0x64, 0x65, 0x74, 0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65,
+	0x64, 0x2e, 0x75, 0x73, 0x65, 0x72, 0x2e, 0x76, 0x31, 0x2e, 0x54, 0x6f, 0x6b, 0x65, 0x6e, 0x49,
+	0x6e, 0x66, 0x6f, 0x52, 0x09, 0x74, 0x6f, 0x6b, 0x65, 0x6e, 0x49, 0x6e, 0x66, 0x6f, 0x42, 0x35,
+	0x5a, 0x33, 0x67, 0x69, 0x74, 0x68, 0x75, 0x62, 0x2e, 0x63, 0x6f, 0x6d, 0x2f, 0x64, 0x65, 0x74,
+	0x65, 0x72, 0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2d, 0x61, 0x69, 0x2f, 0x64, 0x65, 0x74, 0x65, 0x72,
+	0x6d, 0x69, 0x6e, 0x65, 0x64, 0x2f, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x2f, 0x70, 0x6b, 0x67, 0x2f,
+	0x61, 0x70, 0x69, 0x76, 0x31, 0x62, 0x06, 0x70, 0x72, 0x6f, 0x74, 0x6f, 0x33,
 }
 
 var (
@@ -2693,92 +2417,85 @@ func file_determined_api_v1_user_proto_rawDescGZIP() []byte {
 }
 
 var file_determined_api_v1_user_proto_enumTypes = make([]protoimpl.EnumInfo, 2)
-var file_determined_api_v1_user_proto_msgTypes = make([]protoimpl.MessageInfo, 42)
+var file_determined_api_v1_user_proto_msgTypes = make([]protoimpl.MessageInfo, 36)
 var file_determined_api_v1_user_proto_goTypes = []interface{}{
-	(GetUsersRequest_SortBy)(0),                   // 0: determined.api.v1.GetUsersRequest.SortBy
-	(GetAllLongLivedTokensRequest_SortBy)(0),      // 1: determined.api.v1.GetAllLongLivedTokensRequest.SortBy
-	(*UserActionResult)(nil),                      // 2: determined.api.v1.UserActionResult
-	(*GetUsersRequest)(nil),                       // 3: determined.api.v1.GetUsersRequest
-	(*GetUsersResponse)(nil),                      // 4: determined.api.v1.GetUsersResponse
-	(*GetUserRequest)(nil),                        // 5: determined.api.v1.GetUserRequest
-	(*GetUserResponse)(nil),                       // 6: determined.api.v1.GetUserResponse
-	(*GetUserByUsernameRequest)(nil),              // 7: determined.api.v1.GetUserByUsernameRequest
-	(*GetUserByUsernameResponse)(nil),             // 8: determined.api.v1.GetUserByUsernameResponse
-	(*GetMeRequest)(nil),                          // 9: determined.api.v1.GetMeRequest
-	(*GetMeResponse)(nil),                         // 10: determined.api.v1.GetMeResponse
-	(*PostUserRequest)(nil),                       // 11: determined.api.v1.PostUserRequest
-	(*PostUserResponse)(nil),                      // 12: determined.api.v1.PostUserResponse
-	(*SetUserPasswordRequest)(nil),                // 13: determined.api.v1.SetUserPasswordRequest
-	(*SetUserPasswordResponse)(nil),               // 14: determined.api.v1.SetUserPasswordResponse
-	(*PatchUserRequest)(nil),                      // 15: determined.api.v1.PatchUserRequest
-	(*PatchUserResponse)(nil),                     // 16: determined.api.v1.PatchUserResponse
-	(*UserFilters)(nil),                           // 17: determined.api.v1.UserFilters
-	(*PatchUsersRequest)(nil),                     // 18: determined.api.v1.PatchUsersRequest
-	(*PatchUsersResponse)(nil),                    // 19: determined.api.v1.PatchUsersResponse
-	(*GetUserSettingRequest)(nil),                 // 20: determined.api.v1.GetUserSettingRequest
-	(*GetUserSettingResponse)(nil),                // 21: determined.api.v1.GetUserSettingResponse
-	(*PostUserSettingRequest)(nil),                // 22: determined.api.v1.PostUserSettingRequest
-	(*PostUserSettingResponse)(nil),               // 23: determined.api.v1.PostUserSettingResponse
-	(*ResetUserSettingRequest)(nil),               // 24: determined.api.v1.ResetUserSettingRequest
-	(*ResetUserSettingResponse)(nil),              // 25: determined.api.v1.ResetUserSettingResponse
-	(*PostUserActivityRequest)(nil),               // 26: determined.api.v1.PostUserActivityRequest
-	(*PostUserActivityResponse)(nil),              // 27: determined.api.v1.PostUserActivityResponse
-	(*PostLongLivedTokenRequest)(nil),             // 28: determined.api.v1.PostLongLivedTokenRequest
-	(*PostLongLivedTokenResponse)(nil),            // 29: determined.api.v1.PostLongLivedTokenResponse
-	(*PostUserLongLivedTokenRequest)(nil),         // 30: determined.api.v1.PostUserLongLivedTokenRequest
-	(*PostUserLongLivedTokenResponse)(nil),        // 31: determined.api.v1.PostUserLongLivedTokenResponse
-	(*GetLongLivedTokenRequest)(nil),              // 32: determined.api.v1.GetLongLivedTokenRequest
-	(*GetLongLivedTokenResponse)(nil),             // 33: determined.api.v1.GetLongLivedTokenResponse
-	(*GetAllLongLivedTokensRequest)(nil),          // 34: determined.api.v1.GetAllLongLivedTokensRequest
-	(*GetAllLongLivedTokensResponse)(nil),         // 35: determined.api.v1.GetAllLongLivedTokensResponse
-	(*GetUserLongLivedTokenRequest)(nil),          // 36: determined.api.v1.GetUserLongLivedTokenRequest
-	(*GetUserLongLivedTokenResponse)(nil),         // 37: determined.api.v1.GetUserLongLivedTokenResponse
-	(*PatchAccessTokenRequest)(nil),               // 38: determined.api.v1.PatchAccessTokenRequest
-	(*PatchAccessTokenResponse)(nil),              // 39: determined.api.v1.PatchAccessTokenResponse
-	(*DeleteLongLivedTokenRequest)(nil),           // 40: determined.api.v1.DeleteLongLivedTokenRequest
-	(*DeleteLongLivedTokenResponse)(nil),          // 41: determined.api.v1.DeleteLongLivedTokenResponse
-	(*DeleteLongLivedTokenByTokenIDRequest)(nil),  // 42: determined.api.v1.DeleteLongLivedTokenByTokenIDRequest
-	(*DeleteLongLivedTokenByTokenIDResponse)(nil), // 43: determined.api.v1.DeleteLongLivedTokenByTokenIDResponse
-	(OrderBy)(0),                                  // 44: determined.api.v1.OrderBy
-	(*userv1.User)(nil),                           // 45: determined.user.v1.User
-	(*Pagination)(nil),                            // 46: determined.api.v1.Pagination
-	(*userv1.PatchUser)(nil),                      // 47: determined.user.v1.PatchUser
-	(*userv1.UserWebSetting)(nil),                 // 48: determined.user.v1.UserWebSetting
-	(userv1.ActivityType)(0),                      // 49: determined.user.v1.ActivityType
-	(userv1.EntityType)(0),                        // 50: determined.user.v1.EntityType
-	(*userv1.TokenInfo)(nil),                      // 51: determined.user.v1.TokenInfo
+	(GetUsersRequest_SortBy)(0),            // 0: determined.api.v1.GetUsersRequest.SortBy
+	(GetAllAccessTokensRequest_SortBy)(0),  // 1: determined.api.v1.GetAllAccessTokensRequest.SortBy
+	(*UserActionResult)(nil),               // 2: determined.api.v1.UserActionResult
+	(*GetUsersRequest)(nil),                // 3: determined.api.v1.GetUsersRequest
+	(*GetUsersResponse)(nil),               // 4: determined.api.v1.GetUsersResponse
+	(*GetUserRequest)(nil),                 // 5: determined.api.v1.GetUserRequest
+	(*GetUserResponse)(nil),                // 6: determined.api.v1.GetUserResponse
+	(*GetUserByUsernameRequest)(nil),       // 7: determined.api.v1.GetUserByUsernameRequest
+	(*GetUserByUsernameResponse)(nil),      // 8: determined.api.v1.GetUserByUsernameResponse
+	(*GetMeRequest)(nil),                   // 9: determined.api.v1.GetMeRequest
+	(*GetMeResponse)(nil),                  // 10: determined.api.v1.GetMeResponse
+	(*PostUserRequest)(nil),                // 11: determined.api.v1.PostUserRequest
+	(*PostUserResponse)(nil),               // 12: determined.api.v1.PostUserResponse
+	(*SetUserPasswordRequest)(nil),         // 13: determined.api.v1.SetUserPasswordRequest
+	(*SetUserPasswordResponse)(nil),        // 14: determined.api.v1.SetUserPasswordResponse
+	(*PatchUserRequest)(nil),               // 15: determined.api.v1.PatchUserRequest
+	(*PatchUserResponse)(nil),              // 16: determined.api.v1.PatchUserResponse
+	(*UserFilters)(nil),                    // 17: determined.api.v1.UserFilters
+	(*PatchUsersRequest)(nil),              // 18: determined.api.v1.PatchUsersRequest
+	(*PatchUsersResponse)(nil),             // 19: determined.api.v1.PatchUsersResponse
+	(*GetUserSettingRequest)(nil),          // 20: determined.api.v1.GetUserSettingRequest
+	(*GetUserSettingResponse)(nil),         // 21: determined.api.v1.GetUserSettingResponse
+	(*PostUserSettingRequest)(nil),         // 22: determined.api.v1.PostUserSettingRequest
+	(*PostUserSettingResponse)(nil),        // 23: determined.api.v1.PostUserSettingResponse
+	(*ResetUserSettingRequest)(nil),        // 24: determined.api.v1.ResetUserSettingRequest
+	(*ResetUserSettingResponse)(nil),       // 25: determined.api.v1.ResetUserSettingResponse
+	(*PostUserActivityRequest)(nil),        // 26: determined.api.v1.PostUserActivityRequest
+	(*PostUserActivityResponse)(nil),       // 27: determined.api.v1.PostUserActivityResponse
+	(*PostLongLivedTokenRequest)(nil),      // 28: determined.api.v1.PostLongLivedTokenRequest
+	(*PostLongLivedTokenResponse)(nil),     // 29: determined.api.v1.PostLongLivedTokenResponse
+	(*PostUserLongLivedTokenRequest)(nil),  // 30: determined.api.v1.PostUserLongLivedTokenRequest
+	(*PostUserLongLivedTokenResponse)(nil), // 31: determined.api.v1.PostUserLongLivedTokenResponse
+	(*GetAllAccessTokensRequest)(nil),      // 32: determined.api.v1.GetAllAccessTokensRequest
+	(*GetAllAccessTokensResponse)(nil),     // 33: determined.api.v1.GetAllAccessTokensResponse
+	(*GetAccessTokenRequest)(nil),          // 34: determined.api.v1.GetAccessTokenRequest
+	(*GetAccessTokenResponse)(nil),         // 35: determined.api.v1.GetAccessTokenResponse
+	(*PatchAccessTokenRequest)(nil),        // 36: determined.api.v1.PatchAccessTokenRequest
+	(*PatchAccessTokenResponse)(nil),       // 37: determined.api.v1.PatchAccessTokenResponse
+	(OrderBy)(0),                           // 38: determined.api.v1.OrderBy
+	(*userv1.User)(nil),                    // 39: determined.user.v1.User
+	(*Pagination)(nil),                     // 40: determined.api.v1.Pagination
+	(*userv1.PatchUser)(nil),               // 41: determined.user.v1.PatchUser
+	(*userv1.UserWebSetting)(nil),          // 42: determined.user.v1.UserWebSetting
+	(userv1.ActivityType)(0),               // 43: determined.user.v1.ActivityType
+	(userv1.EntityType)(0),                 // 44: determined.user.v1.EntityType
+	(*userv1.TokenInfo)(nil),               // 45: determined.user.v1.TokenInfo
 }
 var file_determined_api_v1_user_proto_depIdxs = []int32{
 	0,  // 0: determined.api.v1.GetUsersRequest.sort_by:type_name -> determined.api.v1.GetUsersRequest.SortBy
-	44, // 1: determined.api.v1.GetUsersRequest.order_by:type_name -> determined.api.v1.OrderBy
-	45, // 2: determined.api.v1.GetUsersResponse.users:type_name -> determined.user.v1.User
-	46, // 3: determined.api.v1.GetUsersResponse.pagination:type_name -> determined.api.v1.Pagination
-	45, // 4: determined.api.v1.GetUserResponse.user:type_name -> determined.user.v1.User
-	45, // 5: determined.api.v1.GetUserByUsernameResponse.user:type_name -> determined.user.v1.User
-	45, // 6: determined.api.v1.GetMeResponse.user:type_name -> determined.user.v1.User
-	45, // 7: determined.api.v1.PostUserRequest.user:type_name -> determined.user.v1.User
-	45, // 8: determined.api.v1.PostUserResponse.user:type_name -> determined.user.v1.User
-	45, // 9: determined.api.v1.SetUserPasswordResponse.user:type_name -> determined.user.v1.User
-	47, // 10: determined.api.v1.PatchUserRequest.user:type_name -> determined.user.v1.PatchUser
-	45, // 11: determined.api.v1.PatchUserResponse.user:type_name -> determined.user.v1.User
+	38, // 1: determined.api.v1.GetUsersRequest.order_by:type_name -> determined.api.v1.OrderBy
+	39, // 2: determined.api.v1.GetUsersResponse.users:type_name -> determined.user.v1.User
+	40, // 3: determined.api.v1.GetUsersResponse.pagination:type_name -> determined.api.v1.Pagination
+	39, // 4: determined.api.v1.GetUserResponse.user:type_name -> determined.user.v1.User
+	39, // 5: determined.api.v1.GetUserByUsernameResponse.user:type_name -> determined.user.v1.User
+	39, // 6: determined.api.v1.GetMeResponse.user:type_name -> determined.user.v1.User
+	39, // 7: determined.api.v1.PostUserRequest.user:type_name -> determined.user.v1.User
+	39, // 8: determined.api.v1.PostUserResponse.user:type_name -> determined.user.v1.User
+	39, // 9: determined.api.v1.SetUserPasswordResponse.user:type_name -> determined.user.v1.User
+	41, // 10: determined.api.v1.PatchUserRequest.user:type_name -> determined.user.v1.PatchUser
+	39, // 11: determined.api.v1.PatchUserResponse.user:type_name -> determined.user.v1.User
 	17, // 12: determined.api.v1.PatchUsersRequest.filters:type_name -> determined.api.v1.UserFilters
 	2,  // 13: determined.api.v1.PatchUsersResponse.results:type_name -> determined.api.v1.UserActionResult
-	48, // 14: determined.api.v1.GetUserSettingResponse.settings:type_name -> determined.user.v1.UserWebSetting
-	48, // 15: determined.api.v1.PostUserSettingRequest.settings:type_name -> determined.user.v1.UserWebSetting
-	49, // 16: determined.api.v1.PostUserActivityRequest.activity_type:type_name -> determined.user.v1.ActivityType
-	50, // 17: determined.api.v1.PostUserActivityRequest.entity_type:type_name -> determined.user.v1.EntityType
-	51, // 18: determined.api.v1.GetLongLivedTokenResponse.token_info:type_name -> determined.user.v1.TokenInfo
-	1,  // 19: determined.api.v1.GetAllLongLivedTokensRequest.sort_by:type_name -> determined.api.v1.GetAllLongLivedTokensRequest.SortBy
-	44, // 20: determined.api.v1.GetAllLongLivedTokensRequest.order_by:type_name -> determined.api.v1.OrderBy
-	51, // 21: determined.api.v1.GetAllLongLivedTokensResponse.token_info:type_name -> determined.user.v1.TokenInfo
-	46, // 22: determined.api.v1.GetAllLongLivedTokensResponse.pagination:type_name -> determined.api.v1.Pagination
-	51, // 23: determined.api.v1.GetUserLongLivedTokenResponse.token_info:type_name -> determined.user.v1.TokenInfo
-	51, // 24: determined.api.v1.PatchAccessTokenResponse.token_info:type_name -> determined.user.v1.TokenInfo
-	25, // [25:25] is the sub-list for method output_type
-	25, // [25:25] is the sub-list for method input_type
-	25, // [25:25] is the sub-list for extension type_name
-	25, // [25:25] is the sub-list for extension extendee
-	0,  // [0:25] is the sub-list for field type_name
+	42, // 14: determined.api.v1.GetUserSettingResponse.settings:type_name -> determined.user.v1.UserWebSetting
+	42, // 15: determined.api.v1.PostUserSettingRequest.settings:type_name -> determined.user.v1.UserWebSetting
+	43, // 16: determined.api.v1.PostUserActivityRequest.activity_type:type_name -> determined.user.v1.ActivityType
+	44, // 17: determined.api.v1.PostUserActivityRequest.entity_type:type_name -> determined.user.v1.EntityType
+	1,  // 18: determined.api.v1.GetAllAccessTokensRequest.sort_by:type_name -> determined.api.v1.GetAllAccessTokensRequest.SortBy
+	38, // 19: determined.api.v1.GetAllAccessTokensRequest.order_by:type_name -> determined.api.v1.OrderBy
+	45, // 20: determined.api.v1.GetAllAccessTokensResponse.token_info:type_name -> determined.user.v1.TokenInfo
+	40, // 21: determined.api.v1.GetAllAccessTokensResponse.pagination:type_name -> determined.api.v1.Pagination
+	45, // 22: determined.api.v1.GetAccessTokenResponse.token_info:type_name -> determined.user.v1.TokenInfo
+	45, // 23: determined.api.v1.PatchAccessTokenResponse.token_info:type_name -> determined.user.v1.TokenInfo
+	24, // [24:24] is the sub-list for method output_type
+	24, // [24:24] is the sub-list for method input_type
+	24, // [24:24] is the sub-list for extension type_name
+	24, // [24:24] is the sub-list for extension extendee
+	0,  // [0:24] is the sub-list for field type_name
 }
 
 func init() { file_determined_api_v1_user_proto_init() }
@@ -3149,7 +2866,7 @@ func file_determined_api_v1_user_proto_init() {
 			}
 		}
 		file_determined_api_v1_user_proto_msgTypes[30].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetLongLivedTokenRequest); i {
+			switch v := v.(*GetAllAccessTokensRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -3161,7 +2878,7 @@ func file_determined_api_v1_user_proto_init() {
 			}
 		}
 		file_determined_api_v1_user_proto_msgTypes[31].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetLongLivedTokenResponse); i {
+			switch v := v.(*GetAllAccessTokensResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -3173,7 +2890,7 @@ func file_determined_api_v1_user_proto_init() {
 			}
 		}
 		file_determined_api_v1_user_proto_msgTypes[32].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetAllLongLivedTokensRequest); i {
+			switch v := v.(*GetAccessTokenRequest); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -3185,7 +2902,7 @@ func file_determined_api_v1_user_proto_init() {
 			}
 		}
 		file_determined_api_v1_user_proto_msgTypes[33].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetAllLongLivedTokensResponse); i {
+			switch v := v.(*GetAccessTokenResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -3197,30 +2914,6 @@ func file_determined_api_v1_user_proto_init() {
 			}
 		}
 		file_determined_api_v1_user_proto_msgTypes[34].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetUserLongLivedTokenRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_determined_api_v1_user_proto_msgTypes[35].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*GetUserLongLivedTokenResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_determined_api_v1_user_proto_msgTypes[36].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*PatchAccessTokenRequest); i {
 			case 0:
 				return &v.state
@@ -3232,56 +2925,8 @@ func file_determined_api_v1_user_proto_init() {
 				return nil
 			}
 		}
-		file_determined_api_v1_user_proto_msgTypes[37].Exporter = func(v interface{}, i int) interface{} {
+		file_determined_api_v1_user_proto_msgTypes[35].Exporter = func(v interface{}, i int) interface{} {
 			switch v := v.(*PatchAccessTokenResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_determined_api_v1_user_proto_msgTypes[38].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DeleteLongLivedTokenRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_determined_api_v1_user_proto_msgTypes[39].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DeleteLongLivedTokenResponse); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_determined_api_v1_user_proto_msgTypes[40].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DeleteLongLivedTokenByTokenIDRequest); i {
-			case 0:
-				return &v.state
-			case 1:
-				return &v.sizeCache
-			case 2:
-				return &v.unknownFields
-			default:
-				return nil
-			}
-		}
-		file_determined_api_v1_user_proto_msgTypes[41].Exporter = func(v interface{}, i int) interface{} {
-			switch v := v.(*DeleteLongLivedTokenByTokenIDResponse); i {
 			case 0:
 				return &v.state
 			case 1:
@@ -3295,14 +2940,14 @@ func file_determined_api_v1_user_proto_init() {
 	}
 	file_determined_api_v1_user_proto_msgTypes[1].OneofWrappers = []interface{}{}
 	file_determined_api_v1_user_proto_msgTypes[15].OneofWrappers = []interface{}{}
-	file_determined_api_v1_user_proto_msgTypes[36].OneofWrappers = []interface{}{}
+	file_determined_api_v1_user_proto_msgTypes[34].OneofWrappers = []interface{}{}
 	type x struct{}
 	out := protoimpl.TypeBuilder{
 		File: protoimpl.DescBuilder{
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: file_determined_api_v1_user_proto_rawDesc,
 			NumEnums:      2,
-			NumMessages:   42,
+			NumMessages:   36,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

@@ -93,15 +93,15 @@ func TokenTypeFromProto(t userv1.TokenType) TokenType {
 
 // UserSession corresponds to a row in the "user_sessions" DB table.
 type UserSession struct {
-	bun.BaseModel    `bun:"table:user_sessions"`
-	ID               SessionID         `db:"id" json:"id"`
-	UserID           UserID            `db:"user_id" json:"user_id"`
-	Expiry           time.Time         `db:"expiry" json:"expiry"`
-	CreatedAt        time.Time         `db:"created_at" json:"created_at"`
-	TokenType        TokenType         `db:"token_type" json:"token_type"`
-	IsRevoked        bool              `db:"is_revoked" json:"is_revoked"`
-	TokenDescription null.String       `db:"token_description" json:"token_description"`
-	InheritedClaims  map[string]string `bun:"-"` // InheritedClaims contains the OIDC raw ID token when OIDC is enabled
+	bun.BaseModel   `bun:"table:user_sessions"`
+	ID              SessionID         `db:"id" json:"id"`
+	UserID          UserID            `db:"user_id" json:"user_id"`
+	Expiry          time.Time         `db:"expiry" json:"expiry"`
+	CreatedAt       time.Time         `db:"created_at" json:"created_at"`
+	TokenType       TokenType         `db:"token_type" json:"token_type"`
+	Revoked         bool              `db:"revoked" json:"revoked"`
+	Description     null.String       `db:"description" json:"description"`
+	InheritedClaims map[string]string `bun:"-"` // InheritedClaims contains the OIDC raw ID token when OIDC is enabled
 }
 
 // Proto returns the protobuf representation of User_Sessions table.
@@ -112,8 +112,8 @@ func (s UserSession) Proto() *userv1.TokenInfo {
 		Expiry:      timestamppb.New(s.Expiry),
 		CreatedAt:   timestamppb.New(s.CreatedAt),
 		TokenType:   s.TokenType.Proto(),
-		Revoked:     s.IsRevoked,
-		Description: s.TokenDescription.ValueOrZero(),
+		Revoked:     s.Revoked,
+		Description: s.Description.ValueOrZero(),
 	}
 }
 

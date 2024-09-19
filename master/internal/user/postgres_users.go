@@ -55,7 +55,7 @@ func StartSession(ctx context.Context, user *model.User, opts ...UserSessionOpti
 		Expiry:    CurrentTimeNowInUTC.Add(SessionDuration),
 		CreatedAt: CurrentTimeNowInUTC,
 		TokenType: model.TokenTypeUserSession,
-		IsRevoked: false,
+		Revoked:   false,
 	}
 
 	for _, opt := range opts {
@@ -65,7 +65,7 @@ func StartSession(ctx context.Context, user *model.User, opts ...UserSessionOpti
 	err := db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		_, err := tx.NewInsert().
 			Model(userSession).
-			Column("user_id", "expiry", "created_at", "token_type", "is_revoked").
+			Column("user_id", "expiry", "created_at", "token_type", "revoked").
 			Returning("id").
 			Exec(ctx, &userSession.ID)
 		if err != nil {
@@ -482,7 +482,7 @@ func WithTokenDescription(description string) LongLivedTokenOption {
 		if description == "" {
 			return
 		}
-		s.TokenDescription = null.StringFrom(description)
+		s.Description = null.StringFrom(description)
 	}
 }
 
@@ -494,12 +494,12 @@ func RevokeAndCreateLongLivedToken(
 	CurrentTimeNowInUTC = time.Now().UTC()
 	// Populate the default values in the model.
 	longLivedToken := &model.UserSession{
-		UserID:           userID,
-		CreatedAt:        CurrentTimeNowInUTC,
-		Expiry:           CurrentTimeNowInUTC.Add(DefaultTokenLifespan),
-		TokenType:        model.TokenTypeLongLivedToken,
-		TokenDescription: null.StringFromPtr(nil),
-		IsRevoked:        false,
+		UserID:      userID,
+		CreatedAt:   CurrentTimeNowInUTC,
+		Expiry:      CurrentTimeNowInUTC.Add(DefaultTokenLifespan),
+		TokenType:   model.TokenTypeLongLivedToken,
+		Description: null.StringFromPtr(nil),
+		Revoked:     false,
 	}
 
 	// Update the optional ExpiresAt field (if passed)
@@ -514,7 +514,7 @@ func RevokeAndCreateLongLivedToken(
 		// revoke the previous token if it exists.
 		_, err := tx.NewUpdate().
 			Table("user_sessions").
-			Set("is_revoked = true").
+			Set("revoked = true").
 			Where("user_id = ?", userID).
 			Where("token_type = ?", model.TokenTypeLongLivedToken).
 			Exec(ctx)
@@ -526,7 +526,7 @@ func RevokeAndCreateLongLivedToken(
 		// inserted row is returned and stored in user_sessions.ID.
 		_, err = tx.NewInsert().
 			Model(longLivedToken).
-			Column("user_id", "expiry", "created_at", "token_type", "is_revoked", "token_description").
+			Column("user_id", "expiry", "created_at", "token_type", "revoked", "description").
 			Returning("id").
 			Exec(ctx, &longLivedToken.ID)
 		if err != nil {
@@ -569,21 +569,21 @@ func UpdateAccessToken(
 			return err
 		}
 
-		if tokenInfo.IsRevoked {
+		if tokenInfo.Revoked {
 			return fmt.Errorf("unable to update revoked token with ID %v", tokenID)
 		}
 
 		if options.Description != nil {
-			tokenInfo.TokenDescription = null.StringFrom(*options.Description)
+			tokenInfo.Description = null.StringFrom(*options.Description)
 		}
 
 		if options.SetRevoked {
-			tokenInfo.IsRevoked = true
+			tokenInfo.Revoked = true
 		}
 
 		_, err = tx.NewUpdate().
 			Model(&tokenInfo).
-			Column("token_description", "is_revoked").
+			Column("description", "revoked").
 			Where("id = ?", tokenID).
 			Exec(ctx)
 		if err != nil {
@@ -597,77 +597,20 @@ func UpdateAccessToken(
 	return &tokenInfo, nil
 }
 
-// RevokeAccessTokenByUserID marks column is_revoked to true with the given userID and its long lived token.
-func RevokeAccessTokenByUserID(ctx context.Context, userID model.UserID) error {
-	var tokenInfo model.UserSession
-
-	// Execute the query to fetch the active token info for the given user_id
-	err := db.Bun().NewSelect().Table("user_sessions").
-		Where("user_id = ?", userID).Where("is_revoked = ?", false).
-		Where("token_type = ?", model.TokenTypeLongLivedToken).
-		Scan(ctx, &tokenInfo)
-	if err != nil {
-		return err
-	}
-	if tokenInfo.ID == 0 {
-		return fmt.Errorf("no active token info found with user_id: %v", userID)
-	}
-	res, err := db.Bun().NewUpdate().
-		Table("user_sessions").
-		Set("is_revoked = true").
-		Where("user_id = ?", userID).
-		Where("token_type = ?", model.TokenTypeLongLivedToken).
-		Exec(ctx)
-	if err != nil {
-		return err // Return error if the delete operation itself failed
-	}
-
-	// Check how many rows were affected
-	rowsAffected, err := res.RowsAffected()
-	if err != nil {
-		return err // Return error if checking the rows affected failed
-	}
-
-	if rowsAffected == 0 {
-		// Custom error when no rows were found
-		return fmt.Errorf("no long lived token rows found with user_id: %v", userID)
-	}
-	return nil // Return nil if deletion was successful
-}
-
-// GetLongLivedTokenInfo returns the active token info from the table with the given user_id.
-func GetLongLivedTokenInfo(ctx context.Context, userID model.UserID) (
+// GetAccessToken returns the active token info from the table with the user_id.
+func GetAccessToken(ctx context.Context, userID model.UserID) (
 	*model.UserSession, error,
 ) {
 	var tokenInfo model.UserSession // To store the token info for the given user_id
 
 	// Execute the query to fetch the active token info for the given user_id
 	switch err := db.Bun().NewSelect().Table("user_sessions").
-		Where("user_id = ?", userID).Where("is_revoked = ?", false).
+		Where("user_id = ?", userID).Where("revoked = ?", false).
 		Where("token_type = ?", model.TokenTypeLongLivedToken).
 		Scan(ctx, &tokenInfo); {
 	case err != nil:
 		return nil, err
 	default:
 		return &tokenInfo, nil
-	}
-}
-
-// GetAllLongLivedTokenInfo returns all (active / revoked) token info from the table with the given user_id for admin.
-func GetAllLongLivedTokenInfo(ctx context.Context) (
-	[]*model.UserSession, error,
-) {
-	var tokenInfo []*model.UserSession // To store the token info for the given user_id
-
-	// Execute the query to fetch the token info (active / revoked) of long-lived type
-	switch err := db.Bun().NewSelect().Table("user_sessions").
-		Where("token_type = ?", model.TokenTypeLongLivedToken).
-		Scan(ctx, &tokenInfo); {
-	case errors.Is(err, sql.ErrNoRows):
-		return nil, fmt.Errorf("no rows found")
-	case err != nil:
-		return nil, err
-	default:
-		return tokenInfo, nil
 	}
 }

@@ -2922,20 +2922,9 @@ service Determined {
     };
   }
 
-  // Get current user's long lived token info
-  rpc GetLongLivedToken(GetLongLivedTokenRequest)
-      returns (GetLongLivedTokenResponse) {
-    option (google.api.http) = {
-      get: "/api/v1/user/token"
-    };
-    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Users"
-    };
-  }
-
-  // Get list of all long lived token info
-  rpc GetAllLongLivedTokens(GetAllLongLivedTokensRequest)
-      returns (GetAllLongLivedTokensResponse) {
+  // Get list of all access token info
+  rpc GetAllAccessTokens(GetAllAccessTokensRequest)
+      returns (GetAllAccessTokensResponse) {
     option (google.api.http) = {
       get: "/api/v1/user/tokens"
     };
@@ -2944,9 +2933,8 @@ service Determined {
     };
   }
 
-  // Get a user's long lived token info
-  rpc GetUserLongLivedToken(GetUserLongLivedTokenRequest)
-      returns (GetUserLongLivedTokenResponse) {
+  // Get user's access token info
+  rpc GetAccessToken(GetAccessTokenRequest) returns (GetAccessTokenResponse) {
     option (google.api.http) = {
       get: "/api/v1/users/{user_id}/token"
     };

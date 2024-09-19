@@ -262,20 +262,8 @@ message PostUserLongLivedTokenResponse {
   string token = 1;
 }
 
-// Get user's longLivedToken info.
-message GetLongLivedTokenRequest {}
-
-// Response to GetLongLivedTokenRequest.
-message GetLongLivedTokenResponse {
-  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "token_info" ] }
-  };
-  // Information about the requested token.
-  determined.user.v1.TokenInfo token_info = 1;
-}
-
-// Get all longLivedTokens info for admin.
-message GetAllLongLivedTokensRequest {
+// Get all access tokens info for admin.
+message GetAllAccessTokensRequest {
   // Sort token info by the given field.
   enum SortBy {
     // Returns token info in an unsorted list.
@@ -289,9 +277,9 @@ message GetAllLongLivedTokensRequest {
     // Returns token info sorted by token type.
     SORT_BY_TOKEN_TYPE = 4;
     // Returns token info sorted by if it is revoked.
-    SORT_BY_IS_REVOKED = 5;
+    SORT_BY_REVOKED = 5;
     // Returns token info sorted by description of token.
-    SORT_BY_TOKEN_DESCRIPTION = 6;
+    SORT_BY_DESCRIPTION = 6;
   }
   // Sort token info by the given field.
   SortBy sort_by = 1;
@@ -310,8 +298,8 @@ message GetAllLongLivedTokensRequest {
   bool include_inactive = 7;
 }
 
-// Response to GetAllLongLivedTokenRequest.
-message GetAllLongLivedTokensResponse {
+// Response to GetAllAccessTokensRequest.
+message GetAllAccessTokensResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "token_info" ] }
   };
@@ -321,14 +309,14 @@ message GetAllLongLivedTokensResponse {
   Pagination pagination = 2;
 }
 
-// Get the requested user's longLivedToken info.
-message GetUserLongLivedTokenRequest {
+// Get users' access token info.
+message GetAccessTokenRequest {
   // The id of the user.
   int32 user_id = 1;
 }
 
-// Response to GetUserLongLivedTokenRequest.
-message GetUserLongLivedTokenResponse {
+// Response to GetAccessTokenRequest.
+message GetAccessTokenResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "token_info" ] }
   };
@@ -354,18 +342,3 @@ message PatchAccessTokenResponse {
   // The updated token information.
   determined.user.v1.TokenInfo token_info = 1;
 }
-
-// Delete user's longLivedToken info.
-message DeleteLongLivedTokenRequest {}
-
-// Response to DeleteLongLivedTokenRequest.
-message DeleteLongLivedTokenResponse {}
-
-// Delete token id's longLivedToken info.
-message DeleteLongLivedTokenByTokenIDRequest {
-  // The id of the token.
-  int32 token_id = 1;
-}
-
-// Response to DeleteLongLivedTokenByTokenIDRequest.
-message DeleteLongLivedTokenByTokenIDResponse {}

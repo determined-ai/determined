@@ -70,12 +70,10 @@ type UserAuthZ interface {
 	// POST /api/v1/users/:user_id/token
 	CanCreateUsersToken(ctx context.Context, curUser, targetUser model.User) error
 
-	// GET /api/v1/users/token
-	CanGetUsersOwnToken(ctx context.Context, curUser model.User) error
 	// GET /api/v1/user/tokens
-	CanGetAllLongLivedTokens(ctx context.Context, curUser model.User) error
+	CanGetAllAccessTokens(ctx context.Context, curUser model.User) error
 	// GET /api/v1/users/:user_id/token
-	CanGetUsersToken(ctx context.Context, curUser, targetUser model.User) error
+	CanGetAccessToken(ctx context.Context, curUser, targetUser model.User) error
 
 	// PATCH /api/v1/users/token/:token_id
 	CanUpdateAccessToken(ctx context.Context, curUser model.User, targetTokenUserID model.UserID) error

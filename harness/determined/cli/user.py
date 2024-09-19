@@ -266,10 +266,10 @@ def print_token_info(data: Sequence[bindings.v1TokenInfo], args: argparse.Namesp
 def describe_token(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     if args.username is None:
-        resp = bindings.get_GetLongLivedToken(sess)
+        userID = bindings.get_GetUserByUsername(session=sess, username=sess.username).user.id
     else:
         userID = bindings.get_GetUserByUsername(session=sess, username=args.username).user.id
-        resp = bindings.get_GetUserLongLivedToken(session=sess, userId=userID)
+    resp = bindings.get_GetAccessToken(session=sess, userId=userID)
     if args.json or args.yaml:
         print_token_info([resp.tokenInfo], args)
     else:
@@ -278,7 +278,7 @@ def describe_token(args: argparse.Namespace) -> None:
 
 def list_tokens(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
-    resp = bindings.get_GetAllLongLivedTokens(sess, includeInactive=args.all)
+    resp = bindings.get_GetAllAccessTokens(sess, includeInactive=args.all)
     if args.json or args.yaml:
         print_token_info(resp.tokenInfo, args)
         return
@@ -328,6 +328,20 @@ def create_token(args: argparse.Namespace) -> None:
             file.write(outputString)
     else:
         print(outputString)
+
+
+def update_token(args: argparse.Namespace) -> None:
+    sess = cli.setup_session(args)
+    try:
+        if args.description and args.token_id:
+            request = bindings.v1PatchAccessTokenRequest(
+                tokenId=args.token_id, description=args.description, setRevoked=False
+            )
+            resp = bindings.patch_PatchAccessToken(sess, body=request, tokenId=args.token_id)
+        print(resp.to_json())
+    except api.errors.NotFoundException:
+        raise errors.CliError("Token not found")
+    print("Successfully updated token with ID: {}".format(args.token_id))
 
 
 AGENT_USER_GROUP_ARGS = [
@@ -426,7 +440,7 @@ args_description = [
                 help="grant/remove user admin permissions",
             ),
         ]),
-        cli.Cmd("token", None, "manage long lived access tokens", [
+        cli.Cmd("token", None, "manage access tokens", [
             cli.Cmd("describe", describe_token, "describe token info", [
                 cli.Arg("username", nargs="?", default=None,
                         help="name of user to describe token"),
@@ -451,6 +465,15 @@ args_description = [
                 cli.Arg("--lifespan", type=str, help="give expiry lifespan"),
                 cli.Arg("--description", type=str, default=None, help="description of new token"),
                 cli.Arg("--file-path", type=str, help="write token to file"),
+                cli.Group(
+                    cli.output_format_args["json"],
+                    cli.output_format_args["yaml"],
+                ),
+            ]),
+            cli.Cmd("update", update_token, "update token info", [
+                cli.Arg("token_id", help="revoke given access token"),
+                cli.Arg("description", type=str, default=None,
+                        help="description of token"),
                 cli.Group(
                     cli.output_format_args["json"],
                     cli.output_format_args["yaml"],

@@ -662,15 +662,15 @@ def _get_singleton_session() -> _api.Session:
 
 
 @_require_singleton
-def list_tokens(isRevoked: Optional[bool] = None) -> List[TokenInfo]:
+def list_tokens(includeInactive: Optional[bool] = None) -> List[TokenInfo]:
     """Get a list of all tokens.
 
     Arg:
-        isRevoked: if this parameter is set to false, filter for active user sessions only.
+        includeInactive: if this parameter is set to false, filter for active user sessions only.
             When true, filter for inactive user sessions. Return all user sessions otherwise.
 
     Returns:
-        A list of :class:`~determined.experimental.client.UserSessions` objects.
+        A list of :class:`~determined.experimental.client.TokenInfo` objects.
     """
     assert _determined is not None
-    return _determined.list_tokens(isRevoked=isRevoked)
+    return _determined.list_tokens(includeInactive=includeInactive)

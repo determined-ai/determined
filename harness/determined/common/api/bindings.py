@@ -4636,6 +4636,29 @@ class v1GenericTaskState(DetEnum):
     STOPPING_COMPLETED = "GENERIC_TASK_STATE_STOPPING_COMPLETED"
     STOPPING_ERROR = "GENERIC_TASK_STATE_STOPPING_ERROR"
 
+class v1GetAccessTokenResponse(Printable):
+    """Response to GetAccessTokenRequest."""
+
+    def __init__(
+        self,
+        *,
+        tokenInfo: "v1TokenInfo",
+    ):
+        self.tokenInfo = tokenInfo
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1GetAccessTokenResponse":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "tokenInfo": v1TokenInfo.from_json(obj["tokenInfo"]),
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "tokenInfo": self.tokenInfo.to_json(omit_unset),
+        }
+        return out
+
 class v1GetActiveTasksCountResponse(Printable):
     """Response to GetActiveTasksCountRequest."""
 
@@ -4735,26 +4758,26 @@ class v1GetAgentsResponse(Printable):
             out["pagination"] = None if self.pagination is None else self.pagination.to_json(omit_unset)
         return out
 
-class v1GetAllLongLivedTokensRequestSortBy(DetEnum):
+class v1GetAllAccessTokensRequestSortBy(DetEnum):
     """Sort token info by the given field.
     - SORT_BY_UNSPECIFIED: Returns token info in an unsorted list.
     - SORT_BY_USER_ID: Returns token info sorted by user id.
     - SORT_BY_EXPIRY: Returns token info sorted by expiry.
     - SORT_BY_CREATED_AT: Returns token info sorted by created at.
     - SORT_BY_TOKEN_TYPE: Returns token info sorted by token type.
-    - SORT_BY_IS_REVOKED: Returns token info sorted by if it is revoked.
-    - SORT_BY_TOKEN_DESCRIPTION: Returns token info sorted by description of token.
+    - SORT_BY_REVOKED: Returns token info sorted by if it is revoked.
+    - SORT_BY_DESCRIPTION: Returns token info sorted by description of token.
     """
     UNSPECIFIED = "SORT_BY_UNSPECIFIED"
     USER_ID = "SORT_BY_USER_ID"
     EXPIRY = "SORT_BY_EXPIRY"
     CREATED_AT = "SORT_BY_CREATED_AT"
     TOKEN_TYPE = "SORT_BY_TOKEN_TYPE"
-    IS_REVOKED = "SORT_BY_IS_REVOKED"
-    TOKEN_DESCRIPTION = "SORT_BY_TOKEN_DESCRIPTION"
+    REVOKED = "SORT_BY_REVOKED"
+    DESCRIPTION = "SORT_BY_DESCRIPTION"
 
-class v1GetAllLongLivedTokensResponse(Printable):
-    """Response to GetAllLongLivedTokenRequest."""
+class v1GetAllAccessTokensResponse(Printable):
+    """Response to GetAllAccessTokensRequest."""
     pagination: "typing.Optional[v1Pagination]" = None
 
     def __init__(
@@ -4768,7 +4791,7 @@ class v1GetAllLongLivedTokensResponse(Printable):
             self.pagination = pagination
 
     @classmethod
-    def from_json(cls, obj: Json) -> "v1GetAllLongLivedTokensResponse":
+    def from_json(cls, obj: Json) -> "v1GetAllAccessTokensResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "tokenInfo": [v1TokenInfo.from_json(x) for x in obj["tokenInfo"]],
         }
@@ -5544,29 +5567,6 @@ class v1GetKubernetesResourceQuotasResponse(Printable):
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "resourceQuotas": {k: dump_float(v) for k, v in self.resourceQuotas.items()},
-        }
-        return out
-
-class v1GetLongLivedTokenResponse(Printable):
-    """Response to GetLongLivedTokenRequest."""
-
-    def __init__(
-        self,
-        *,
-        tokenInfo: "v1TokenInfo",
-    ):
-        self.tokenInfo = tokenInfo
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1GetLongLivedTokenResponse":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-            "tokenInfo": v1TokenInfo.from_json(obj["tokenInfo"]),
-        }
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-            "tokenInfo": self.tokenInfo.to_json(omit_unset),
         }
         return out
 
@@ -7106,29 +7106,6 @@ class v1GetUserByUsernameResponse(Printable):
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "user": self.user.to_json(omit_unset),
-        }
-        return out
-
-class v1GetUserLongLivedTokenResponse(Printable):
-    """Response to GetUserLongLivedTokenRequest."""
-
-    def __init__(
-        self,
-        *,
-        tokenInfo: "v1TokenInfo",
-    ):
-        self.tokenInfo = tokenInfo
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1GetUserLongLivedTokenResponse":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-            "tokenInfo": v1TokenInfo.from_json(obj["tokenInfo"]),
-        }
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-            "tokenInfo": self.tokenInfo.to_json(omit_unset),
         }
         return out
 
@@ -11068,8 +11045,8 @@ class v1PermissionType(DetEnum):
     - PERMISSION_TYPE_UPDATE_TOKEN: Ability to update one's own token.
     - PERMISSION_TYPE_CREATE_LONG_LIVED_TOKEN: Ability to create one's own long lived token
     - PERMISSION_TYPE_CREATE_OTHER_LONG_LIVED_TOKEN: Ability to create another user's long lived token
-    - PERMISSION_TYPE_VIEW_LONG_LIVED_TOKEN: Ability to view one's own long lived token
-    - PERMISSION_TYPE_VIEW_OTHER_LONG_LIVED_TOKEN: Ability to view another user's long lived token
+    - PERMISSION_TYPE_VIEW_OTHER_TOKEN: Ability to view another user's token
+    - PERMISSION_TYPE_VIEW_TOKEN: Ability to view one's own token
     """
     UNSPECIFIED = "PERMISSION_TYPE_UNSPECIFIED"
     ADMINISTRATE_USER = "PERMISSION_TYPE_ADMINISTRATE_USER"
@@ -11130,8 +11107,8 @@ class v1PermissionType(DetEnum):
     UPDATE_TOKEN = "PERMISSION_TYPE_UPDATE_TOKEN"
     CREATE_LONG_LIVED_TOKEN = "PERMISSION_TYPE_CREATE_LONG_LIVED_TOKEN"
     CREATE_OTHER_LONG_LIVED_TOKEN = "PERMISSION_TYPE_CREATE_OTHER_LONG_LIVED_TOKEN"
-    VIEW_LONG_LIVED_TOKEN = "PERMISSION_TYPE_VIEW_LONG_LIVED_TOKEN"
-    VIEW_OTHER_LONG_LIVED_TOKEN = "PERMISSION_TYPE_VIEW_OTHER_LONG_LIVED_TOKEN"
+    VIEW_OTHER_TOKEN = "PERMISSION_TYPE_VIEW_OTHER_TOKEN"
+    VIEW_TOKEN = "PERMISSION_TYPE_VIEW_TOKEN"
 
 class v1PolymorphicFilter(Printable):
     doubleRange: "typing.Optional[v1DoubleFieldFilter]" = None
@@ -19374,6 +19351,30 @@ def get_ExpMetricNames(
         return
     raise APIHttpError("get_ExpMetricNames", _resp)
 
+def get_GetAccessToken(
+    session: "api.BaseSession",
+    *,
+    userId: int,
+) -> "v1GetAccessTokenResponse":
+    """Get user's access token info
+
+    - userId: The id of the user.
+    """
+    _params = None
+    _resp = session._do_request(
+        method="GET",
+        path=f"/api/v1/users/{userId}/token",
+        params=_params,
+        json=None,
+        data=None,
+        headers=None,
+        timeout=None,
+        stream=False,
+    )
+    if _resp.status_code == 200:
+        return v1GetAccessTokenResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetAccessToken", _resp)
+
 def get_GetActiveTasksCount(
     session: "api.BaseSession",
 ) -> "v1GetActiveTasksCountResponse":
@@ -19469,7 +19470,7 @@ denote number of agents to skip from the end before returning results.
         return v1GetAgentsResponse.from_json(_resp.json())
     raise APIHttpError("get_GetAgents", _resp)
 
-def get_GetAllLongLivedTokens(
+def get_GetAllAccessTokens(
     session: "api.BaseSession",
     *,
     includeInactive: "typing.Optional[bool]" = None,
@@ -19477,9 +19478,9 @@ def get_GetAllLongLivedTokens(
     name: "typing.Optional[str]" = None,
     offset: "typing.Optional[int]" = None,
     orderBy: "typing.Optional[v1OrderBy]" = None,
-    sortBy: "typing.Optional[v1GetAllLongLivedTokensRequestSortBy]" = None,
-) -> "v1GetAllLongLivedTokensResponse":
-    """Get list of all long lived token info
+    sortBy: "typing.Optional[v1GetAllAccessTokensRequestSortBy]" = None,
+) -> "v1GetAllAccessTokensResponse":
+    """Get list of all access token info
 
     - includeInactive: Include inactive tokens (expired & revoked) in response.
     - limit: Limit the number of projects. A value of 0 denotes no limit.
@@ -19498,8 +19499,8 @@ denote number of projects to skip from the end before returning results.
  - SORT_BY_EXPIRY: Returns token info sorted by expiry.
  - SORT_BY_CREATED_AT: Returns token info sorted by created at.
  - SORT_BY_TOKEN_TYPE: Returns token info sorted by token type.
- - SORT_BY_IS_REVOKED: Returns token info sorted by if it is revoked.
- - SORT_BY_TOKEN_DESCRIPTION: Returns token info sorted by description of token.
+ - SORT_BY_REVOKED: Returns token info sorted by if it is revoked.
+ - SORT_BY_DESCRIPTION: Returns token info sorted by description of token.
     """
     _params = {
         "includeInactive": str(includeInactive).lower() if includeInactive is not None else None,
@@ -19520,8 +19521,8 @@ denote number of projects to skip from the end before returning results.
         stream=False,
     )
     if _resp.status_code == 200:
-        return v1GetAllLongLivedTokensResponse.from_json(_resp.json())
-    raise APIHttpError("get_GetAllLongLivedTokens", _resp)
+        return v1GetAllAccessTokensResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetAllAccessTokens", _resp)
 
 def get_GetAllocation(
     session: "api.BaseSession",
@@ -20369,25 +20370,6 @@ def get_GetKubernetesResourceQuotas(
     if _resp.status_code == 200:
         return v1GetKubernetesResourceQuotasResponse.from_json(_resp.json())
     raise APIHttpError("get_GetKubernetesResourceQuotas", _resp)
-
-def get_GetLongLivedToken(
-    session: "api.BaseSession",
-) -> "v1GetLongLivedTokenResponse":
-    """Get current user's long lived token info"""
-    _params = None
-    _resp = session._do_request(
-        method="GET",
-        path="/api/v1/user/token",
-        params=_params,
-        json=None,
-        data=None,
-        headers=None,
-        timeout=None,
-        stream=False,
-    )
-    if _resp.status_code == 200:
-        return v1GetLongLivedTokenResponse.from_json(_resp.json())
-    raise APIHttpError("get_GetLongLivedToken", _resp)
 
 def get_GetMaster(
     session: "api.BaseSession",
@@ -22062,30 +22044,6 @@ def get_GetUserByUsername(
     if _resp.status_code == 200:
         return v1GetUserByUsernameResponse.from_json(_resp.json())
     raise APIHttpError("get_GetUserByUsername", _resp)
-
-def get_GetUserLongLivedToken(
-    session: "api.BaseSession",
-    *,
-    userId: int,
-) -> "v1GetUserLongLivedTokenResponse":
-    """Get a user's long lived token info
-
-    - userId: The id of the user.
-    """
-    _params = None
-    _resp = session._do_request(
-        method="GET",
-        path=f"/api/v1/users/{userId}/token",
-        params=_params,
-        json=None,
-        data=None,
-        headers=None,
-        timeout=None,
-        stream=False,
-    )
-    if _resp.status_code == 200:
-        return v1GetUserLongLivedTokenResponse.from_json(_resp.json())
-    raise APIHttpError("get_GetUserLongLivedToken", _resp)
 
 def get_GetUserSetting(
     session: "api.BaseSession",
@@ -25770,7 +25728,7 @@ def get_health(
 # attribute is a v1Pagination-type object.
 Paginated = typing.Union[
     v1GetAgentsResponse,
-    v1GetAllLongLivedTokensResponse,
+    v1GetAllAccessTokensResponse,
     v1GetCommandsResponse,
     v1GetExperimentCheckpointsResponse,
     v1GetExperimentTrialsResponse,

@@ -152,9 +152,9 @@ class TokenInfo:
         self.user_id: Optional[int] = None
         self.expiry: Optional[str] = None
         self.created_at: Optional[str] = None
-        self.token_type: TokenType = TokenType.LONG_LIVED_TOKEN
-        self.is_revoked: Optional[bool] = None
-        self.token_description: Optional[str] = None
+        self.token_type: Optional[TokenType] = None
+        self.revoked: Optional[bool] = None
+        self.description: Optional[str] = None
 
     def _hydrate(self, tokenInfo: bindings.v1TokenInfo) -> None:
         self.user_id = tokenInfo.userId
@@ -162,7 +162,7 @@ class TokenInfo:
         self.created_at = tokenInfo.createdAt
         self.token_type = tokenInfo.tokenType.value
         self.revoked = tokenInfo.revoked
-        self.token_description = tokenInfo.tokenDescription
+        self.description = tokenInfo.Description
 
     @classmethod
     def _from_bindings(

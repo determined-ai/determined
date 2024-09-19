@@ -119,13 +119,8 @@ func (a *UserAuthZBasic) CanCreateUsersToken(
 	return nil
 }
 
-// CanGetUsersOwnToken always returns nil.
-func (a *UserAuthZBasic) CanGetUsersOwnToken(ctx context.Context, curUser model.User) error {
-	return nil
-}
-
-// CanGetUsersToken returns an error if the user is not an admin.
-func (a *UserAuthZBasic) CanGetUsersToken(
+// CanGetAccessToken returns an error if the user is not an admin.
+func (a *UserAuthZBasic) CanGetAccessToken(
 	ctx context.Context, curUser, targetUser model.User,
 ) error {
 	if !curUser.Admin && curUser.ID != targetUser.ID {
@@ -134,8 +129,8 @@ func (a *UserAuthZBasic) CanGetUsersToken(
 	return nil
 }
 
-// CanGetAllLongLivedTokens returns an error if the user is not an admin.
-func (a *UserAuthZBasic) CanGetAllLongLivedTokens(
+// CanGetAllAccessTokens returns an error if the user is not an admin.
+func (a *UserAuthZBasic) CanGetAllAccessTokens(
 	ctx context.Context, curUser model.User,
 ) error {
 	if !curUser.Admin {

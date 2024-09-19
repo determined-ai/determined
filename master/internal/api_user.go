@@ -767,41 +767,18 @@ func (a *apiServer) PostUserLongLivedToken(
 	return &apiv1.PostUserLongLivedTokenResponse{Token: token}, nil
 }
 
-// GET active Long lived token returns token information for the logged in user.
-func (a *apiServer) GetLongLivedToken(
-	ctx context.Context, req *apiv1.GetLongLivedTokenRequest,
-) (*apiv1.GetLongLivedTokenResponse, error) {
-	curUser, _, err := grpcutil.GetUser(ctx)
-	if err != nil {
-		return nil, err
-	}
-	if err = user.AuthZProvider.Get().CanGetUsersOwnToken(ctx, *curUser); err != nil {
-		return nil, status.Error(codes.PermissionDenied, err.Error())
-	}
-
-	tokenInfo, err := user.GetLongLivedTokenInfo(ctx, curUser.ID)
-	if errors.Is(err, sql.ErrNoRows) {
-		return nil, api.NotFoundErrs("token for user", curUser.Username, true)
-	}
-	if err != nil {
-		return nil, err
-	}
-
-	return &apiv1.GetLongLivedTokenResponse{TokenInfo: tokenInfo.Proto()}, nil
-}
-
-// GET All (active / revoked) Long lived token returns all long-lived token information from user_session db.
-func (a *apiServer) GetAllLongLivedTokens(
-	ctx context.Context, req *apiv1.GetAllLongLivedTokensRequest,
-) (*apiv1.GetAllLongLivedTokensResponse, error) {
-	sortColMap := map[apiv1.GetAllLongLivedTokensRequest_SortBy]string{
-		apiv1.GetAllLongLivedTokensRequest_SORT_BY_UNSPECIFIED:       "id",
-		apiv1.GetAllLongLivedTokensRequest_SORT_BY_USER_ID:           "user_id",
-		apiv1.GetAllLongLivedTokensRequest_SORT_BY_EXPIRY:            "expiry",
-		apiv1.GetAllLongLivedTokensRequest_SORT_BY_CREATED_AT:        "created_at",
-		apiv1.GetAllLongLivedTokensRequest_SORT_BY_TOKEN_TYPE:        "token_type",
-		apiv1.GetAllLongLivedTokensRequest_SORT_BY_IS_REVOKED:        "is_revoked",
-		apiv1.GetAllLongLivedTokensRequest_SORT_BY_TOKEN_DESCRIPTION: "token_description",
+// GetAllAccessTokens returns (active / revoked) access token info.
+func (a *apiServer) GetAllAccessTokens(
+	ctx context.Context, req *apiv1.GetAllAccessTokensRequest,
+) (*apiv1.GetAllAccessTokensResponse, error) {
+	sortColMap := map[apiv1.GetAllAccessTokensRequest_SortBy]string{
+		apiv1.GetAllAccessTokensRequest_SORT_BY_UNSPECIFIED: "id",
+		apiv1.GetAllAccessTokensRequest_SORT_BY_USER_ID:     "user_id",
+		apiv1.GetAllAccessTokensRequest_SORT_BY_EXPIRY:      "expiry",
+		apiv1.GetAllAccessTokensRequest_SORT_BY_CREATED_AT:  "created_at",
+		apiv1.GetAllAccessTokensRequest_SORT_BY_TOKEN_TYPE:  "token_type",
+		apiv1.GetAllAccessTokensRequest_SORT_BY_REVOKED:     "revoked",
+		apiv1.GetAllAccessTokensRequest_SORT_BY_DESCRIPTION: "description",
 	}
 	orderByMap := map[apiv1.OrderBy]string{
 		apiv1.OrderBy_ORDER_BY_UNSPECIFIED: "ASC",
@@ -818,8 +795,8 @@ func (a *apiServer) GetAllLongLivedTokens(
 		Column("us.expiry").
 		Column("us.created_at").
 		Column("us.token_type").
-		Column("us.is_revoked").
-		Column("us.token_description")
+		Column("us.revoked").
+		Column("us.description")
 
 	if req.Name != "" {
 		var userIDForGivenUsername model.UserID
@@ -840,7 +817,7 @@ func (a *apiServer) GetAllLongLivedTokens(
 
 	if !req.IncludeInactive {
 		query.Where("us.expiry > ?", time.Now().UTC())
-		query.Where("us.is_revoked = false")
+		query.Where("us.revoked = false")
 	}
 
 	orderBy, ok := orderByMap[req.OrderBy]
@@ -866,21 +843,21 @@ func (a *apiServer) GetAllLongLivedTokens(
 		return nil, err
 	}
 
-	if err = user.AuthZProvider.Get().CanGetAllLongLivedTokens(ctx, *curUser); err != nil {
+	if err = user.AuthZProvider.Get().CanGetAllAccessTokens(ctx, *curUser); err != nil {
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
-	res := &apiv1.GetAllLongLivedTokensResponse{}
+	res := &apiv1.GetAllAccessTokensResponse{}
 	for _, s := range userSessions {
 		res.TokenInfo = append(res.TokenInfo, s.Proto())
 	}
 	return res, api.Paginate(&res.Pagination, &res.TokenInfo, req.Offset, req.Limit)
 }
 
-// GET User Long lived token takes user id and returns token information for the given user.
-func (a *apiServer) GetUserLongLivedToken(
-	ctx context.Context, req *apiv1.GetUserLongLivedTokenRequest,
-) (*apiv1.GetUserLongLivedTokenResponse, error) {
+// GetAccessToken takes user id and returns token info for the given user.
+func (a *apiServer) GetAccessToken(
+	ctx context.Context, req *apiv1.GetAccessTokenRequest,
+) (*apiv1.GetAccessTokenResponse, error) {
 	curUser, _, err := grpcutil.GetUser(ctx)
 	if err != nil {
 		return nil, err
@@ -888,14 +865,15 @@ func (a *apiServer) GetUserLongLivedToken(
 
 	targetFullUser, err := getFullModelUser(ctx, model.UserID(req.UserId))
 	if err != nil {
-		return nil, status.Error(codes.NotFound, fmt.Sprintf("User with name: {%d} not found", req.UserId))
+		return nil, status.Error(codes.NotFound, fmt.Sprintf("User with id: {%d} not found", req.UserId))
 	}
 	targetUser := targetFullUser.ToUser()
-	if err = user.AuthZProvider.Get().CanGetUsersToken(ctx, *curUser, targetUser); err != nil {
+	err = user.AuthZProvider.Get().CanGetAccessToken(ctx, *curUser, targetUser)
+	if err != nil {
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
-	tokenInfo, err := user.GetLongLivedTokenInfo(ctx, targetFullUser.ID)
+	tokenInfo, err := user.GetAccessToken(ctx, model.UserID(req.UserId))
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, api.NotFoundErrs("token for user", targetUser.Username, true)
 	}
@@ -903,7 +881,7 @@ func (a *apiServer) GetUserLongLivedToken(
 		return nil, err
 	}
 
-	return &apiv1.GetUserLongLivedTokenResponse{TokenInfo: tokenInfo.Proto()}, nil
+	return &apiv1.GetAccessTokenResponse{TokenInfo: tokenInfo.Proto()}, nil
 }
 
 // PatchAccessToken performs a partial patch of mutable fields on an existing access token.

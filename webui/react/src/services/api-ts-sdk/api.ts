@@ -3722,6 +3722,19 @@ export const V1GenericTaskState = {
 } as const
 export type V1GenericTaskState = ValueOf<typeof V1GenericTaskState>
 /**
+ * Response to GetAccessTokenRequest.
+ * @export
+ * @interface V1GetAccessTokenResponse
+ */
+export interface V1GetAccessTokenResponse {
+    /**
+     * Information about the requested token.
+     * @type {V1TokenInfo}
+     * @memberof V1GetAccessTokenResponse
+     */
+    tokenInfo: V1TokenInfo;
+}
+/**
  * Response to GetActiveTasksCountRequest.
  * @export
  * @interface V1GetActiveTasksCountResponse
@@ -3796,36 +3809,36 @@ export interface V1GetAgentsResponse {
     pagination?: V1Pagination;
 }
 /**
- * Sort token info by the given field.   - SORT_BY_UNSPECIFIED: Returns token info in an unsorted list.  - SORT_BY_USER_ID: Returns token info sorted by user id.  - SORT_BY_EXPIRY: Returns token info sorted by expiry.  - SORT_BY_CREATED_AT: Returns token info sorted by created at.  - SORT_BY_TOKEN_TYPE: Returns token info sorted by token type.  - SORT_BY_IS_REVOKED: Returns token info sorted by if it is revoked.  - SORT_BY_TOKEN_DESCRIPTION: Returns token info sorted by description of token.
+ * Sort token info by the given field.   - SORT_BY_UNSPECIFIED: Returns token info in an unsorted list.  - SORT_BY_USER_ID: Returns token info sorted by user id.  - SORT_BY_EXPIRY: Returns token info sorted by expiry.  - SORT_BY_CREATED_AT: Returns token info sorted by created at.  - SORT_BY_TOKEN_TYPE: Returns token info sorted by token type.  - SORT_BY_REVOKED: Returns token info sorted by if it is revoked.  - SORT_BY_DESCRIPTION: Returns token info sorted by description of token.
  * @export
  * @enum {string}
  */
-export const V1GetAllLongLivedTokensRequestSortBy = {
+export const V1GetAllAccessTokensRequestSortBy = {
     UNSPECIFIED: 'SORT_BY_UNSPECIFIED',
     USERID: 'SORT_BY_USER_ID',
     EXPIRY: 'SORT_BY_EXPIRY',
     CREATEDAT: 'SORT_BY_CREATED_AT',
     TOKENTYPE: 'SORT_BY_TOKEN_TYPE',
-    ISREVOKED: 'SORT_BY_IS_REVOKED',
-    TOKENDESCRIPTION: 'SORT_BY_TOKEN_DESCRIPTION',
+    REVOKED: 'SORT_BY_REVOKED',
+    DESCRIPTION: 'SORT_BY_DESCRIPTION',
 } as const
-export type V1GetAllLongLivedTokensRequestSortBy = ValueOf<typeof V1GetAllLongLivedTokensRequestSortBy>
+export type V1GetAllAccessTokensRequestSortBy = ValueOf<typeof V1GetAllAccessTokensRequestSortBy>
 /**
- * Response to GetAllLongLivedTokenRequest.
+ * Response to GetAllAccessTokensRequest.
  * @export
- * @interface V1GetAllLongLivedTokensResponse
+ * @interface V1GetAllAccessTokensResponse
  */
-export interface V1GetAllLongLivedTokensResponse {
+export interface V1GetAllAccessTokensResponse {
     /**
      * List of information regarded request tokens.
      * @type {Array<V1TokenInfo>}
-     * @memberof V1GetAllLongLivedTokensResponse
+     * @memberof V1GetAllAccessTokensResponse
      */
     tokenInfo: Array<V1TokenInfo>;
     /**
      * Pagination information of the full dataset.
      * @type {V1Pagination}
-     * @memberof V1GetAllLongLivedTokensResponse
+     * @memberof V1GetAllAccessTokensResponse
      */
     pagination?: V1Pagination;
 }
@@ -4293,19 +4306,6 @@ export interface V1GetKubernetesResourceQuotasResponse {
      * @memberof V1GetKubernetesResourceQuotasResponse
      */
     resourceQuotas: { [key: string]: number; };
-}
-/**
- * Response to GetLongLivedTokenRequest.
- * @export
- * @interface V1GetLongLivedTokenResponse
- */
-export interface V1GetLongLivedTokenResponse {
-    /**
-     * Information about the requested token.
-     * @type {V1TokenInfo}
-     * @memberof V1GetLongLivedTokenResponse
-     */
-    tokenInfo: V1TokenInfo;
 }
 /**
  * Response to GetMasterRequest.
@@ -5262,19 +5262,6 @@ export interface V1GetUserByUsernameResponse {
      * @memberof V1GetUserByUsernameResponse
      */
     user: V1User;
-}
-/**
- * Response to GetUserLongLivedTokenRequest.
- * @export
- * @interface V1GetUserLongLivedTokenResponse
- */
-export interface V1GetUserLongLivedTokenResponse {
-    /**
-     * Information about the requested token.
-     * @type {V1TokenInfo}
-     * @memberof V1GetUserLongLivedTokenResponse
-     */
-    tokenInfo: V1TokenInfo;
 }
 /**
  * Response to GetUserRequest.
@@ -8013,7 +8000,7 @@ export interface V1Permission {
     scopeTypeMask?: V1ScopeTypeMask;
 }
 /**
- * List of permissions types. Value of the enum has 9xxxx for global only permissions. Permissions on the same object share the thousands place value like 2001 and 2002.   - PERMISSION_TYPE_UNSPECIFIED: The permission type is unknown.  - PERMISSION_TYPE_ADMINISTRATE_USER: Can create and update other users. Allows updating other users passwords making this permission give all other permissions effectively.  - PERMISSION_TYPE_ADMINISTRATE_OAUTH: Ability to manage OAuth clients and settings.  - PERMISSION_TYPE_CREATE_EXPERIMENT: Ability to create experiments.  - PERMISSION_TYPE_VIEW_EXPERIMENT_ARTIFACTS: Ability to view experiment's model code, checkpoints, trials.  - PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA: Ability to view experiment's metadata such as experiment config, progress.  - PERMISSION_TYPE_UPDATE_EXPERIMENT: Ability to update experiment and experiment's lifecycle.  - PERMISSION_TYPE_UPDATE_EXPERIMENT_METADATA: Ability to update experiment's metadata.  - PERMISSION_TYPE_DELETE_EXPERIMENT: Ability to delete experiment.  - PERMISSION_TYPE_CREATE_NSC: Ability to create Notebooks, Shells, and Commands.  - PERMISSION_TYPE_VIEW_NSC: Ability to view Notebooks, Shells, and Commands.  - PERMISSION_TYPE_UPDATE_NSC: Ability to terminate Notebooks, Shells, and Commands.  - PERMISSION_TYPE_UPDATE_GROUP: Ability to create, update, and add / remove users from groups.  - PERMISSION_TYPE_CREATE_WORKSPACE: Ability to create workspaces.  - PERMISSION_TYPE_VIEW_WORKSPACE: Ability to view workspace.  - PERMISSION_TYPE_UPDATE_WORKSPACE: Ability to update workspace.  - PERMISSION_TYPE_DELETE_WORKSPACE: Ability to delete workspace.  - PERMISSION_TYPE_SET_WORKSPACE_AGENT_USER_GROUP: Ability to set workspace agent user group config.  - PERMISSION_TYPE_SET_WORKSPACE_CHECKPOINT_STORAGE_CONFIG: Ability to set workspace checkpoint storage config.  - PERMISSION_TYPE_SET_WORKSPACE_DEFAULT_RESOURCE_POOL: Ability to set workspace default resource pool.  - PERMISSION_TYPE_CREATE_PROJECT: Ability to create projects.  - PERMISSION_TYPE_VIEW_PROJECT: Ability to view projects.  - PERMISSION_TYPE_UPDATE_PROJECT: Ability to update projects.  - PERMISSION_TYPE_DELETE_PROJECT: Ability to delete projects.  - PERMISSION_TYPE_ASSIGN_ROLES: Ability to assign roles to groups / users. If assigned at a workspace scope, can only assign roles to that workspace scope.  - PERMISSION_TYPE_VIEW_MODEL_REGISTRY: Ability to view model registry.  - PERMISSION_TYPE_EDIT_MODEL_REGISTRY: Ability to edit model registry.  - PERMISSION_TYPE_CREATE_MODEL_REGISTRY: Ability to create model registry.  - PERMISSION_TYPE_DELETE_MODEL_REGISTRY: Ability to delete model registry.  - PERMISSION_TYPE_DELETE_MODEL_VERSION: Ability to delete model version.  - PERMISSION_TYPE_DELETE_OTHER_USER_MODEL_REGISTRY: Ability to delete another user's model registry.  - PERMISSION_TYPE_DELETE_OTHER_USER_MODEL_VERSION: Ability to delete another user's model version.  - PERMISSION_TYPE_VIEW_MASTER_LOGS: Ability to view master logs.  - PERMISSION_TYPE_VIEW_CLUSTER_USAGE: Ability to view detailed cluster usage info.  - PERMISSION_TYPE_UPDATE_AGENTS: Ability to update agents.  - PERMISSION_TYPE_VIEW_SENSITIVE_AGENT_INFO: Ability to view sensitive subset of agent info.  - PERMISSION_TYPE_VIEW_MASTER_CONFIG: Ability to view master configs.  - PERMISSION_TYPE_UPDATE_MASTER_CONFIG: Ability to update master configs.  - PERMISSION_TYPE_VIEW_EXTERNAL_JOBS: Ability to view external jobs.  - PERMISSION_TYPE_CONTROL_STRICT_JOB_QUEUE: Ability to control strict job queue.  - PERMISSION_TYPE_VIEW_TEMPLATES: Ability to view templates.  - PERMISSION_TYPE_UPDATE_TEMPLATES: Ability to update templates.  - PERMISSION_TYPE_CREATE_TEMPLATES: Ability to create templates.  - PERMISSION_TYPE_DELETE_TEMPLATES: Ability to delete templates.  - PERMISSION_TYPE_UPDATE_ROLES: Ability to create and update role definitions.  - PERMISSION_TYPE_EDIT_WEBHOOKS: Ability to create and delete webhooks.  - PERMISSION_TYPE_VIEW_WEBHOOKS: Ability to view webhooks.  - PERMISSION_TYPE_MODIFY_RP_WORKSPACE_BINDINGS: Ability to bind, unbind or overwrite resource pool workspace bindings.  - PERMISSION_TYPE_SET_WORKSPACE_NAMESPACE_BINDINGS: Ability to bind, unbind, or overwrite namespace workspace bindings.  - PERMISSION_TYPE_SET_RESOURCE_QUOTAS: Ability to set resource quotas on workspaces.  - PERMISSION_TYPE_VIEW_RESOURCE_QUOTAS: Ability to view resource quotas on workspaces.  - PERMISSION_TYPE_MODIFY_GLOBAL_CONFIG_POLICIES: Ability to modify global config policies.  - PERMISSION_TYPE_MODIFY_WORKSPACE_CONFIG_POLICIES: Ability to modify workspace config policies.  - PERMISSION_TYPE_VIEW_GLOBAL_CONFIG_POLICIES: Ability to view global config policies.  - PERMISSION_TYPE_VIEW_WORKSPACE_CONFIG_POLICIES: Ability to view workspace config policies.  - PERMISSION_TYPE_ADMINISTRATE_TOKEN: Ability to administrate other users' tokens.  - PERMISSION_TYPE_UPDATE_TOKEN: Ability to update one's own token.  - PERMISSION_TYPE_CREATE_LONG_LIVED_TOKEN: Ability to create one's own long lived token  - PERMISSION_TYPE_CREATE_OTHER_LONG_LIVED_TOKEN: Ability to create another user's long lived token  - PERMISSION_TYPE_VIEW_LONG_LIVED_TOKEN: Ability to view one's own long lived token  - PERMISSION_TYPE_VIEW_OTHER_LONG_LIVED_TOKEN: Ability to view another user's long lived token
+ * List of permissions types. Value of the enum has 9xxxx for global only permissions. Permissions on the same object share the thousands place value like 2001 and 2002.   - PERMISSION_TYPE_UNSPECIFIED: The permission type is unknown.  - PERMISSION_TYPE_ADMINISTRATE_USER: Can create and update other users. Allows updating other users passwords making this permission give all other permissions effectively.  - PERMISSION_TYPE_ADMINISTRATE_OAUTH: Ability to manage OAuth clients and settings.  - PERMISSION_TYPE_CREATE_EXPERIMENT: Ability to create experiments.  - PERMISSION_TYPE_VIEW_EXPERIMENT_ARTIFACTS: Ability to view experiment's model code, checkpoints, trials.  - PERMISSION_TYPE_VIEW_EXPERIMENT_METADATA: Ability to view experiment's metadata such as experiment config, progress.  - PERMISSION_TYPE_UPDATE_EXPERIMENT: Ability to update experiment and experiment's lifecycle.  - PERMISSION_TYPE_UPDATE_EXPERIMENT_METADATA: Ability to update experiment's metadata.  - PERMISSION_TYPE_DELETE_EXPERIMENT: Ability to delete experiment.  - PERMISSION_TYPE_CREATE_NSC: Ability to create Notebooks, Shells, and Commands.  - PERMISSION_TYPE_VIEW_NSC: Ability to view Notebooks, Shells, and Commands.  - PERMISSION_TYPE_UPDATE_NSC: Ability to terminate Notebooks, Shells, and Commands.  - PERMISSION_TYPE_UPDATE_GROUP: Ability to create, update, and add / remove users from groups.  - PERMISSION_TYPE_CREATE_WORKSPACE: Ability to create workspaces.  - PERMISSION_TYPE_VIEW_WORKSPACE: Ability to view workspace.  - PERMISSION_TYPE_UPDATE_WORKSPACE: Ability to update workspace.  - PERMISSION_TYPE_DELETE_WORKSPACE: Ability to delete workspace.  - PERMISSION_TYPE_SET_WORKSPACE_AGENT_USER_GROUP: Ability to set workspace agent user group config.  - PERMISSION_TYPE_SET_WORKSPACE_CHECKPOINT_STORAGE_CONFIG: Ability to set workspace checkpoint storage config.  - PERMISSION_TYPE_SET_WORKSPACE_DEFAULT_RESOURCE_POOL: Ability to set workspace default resource pool.  - PERMISSION_TYPE_CREATE_PROJECT: Ability to create projects.  - PERMISSION_TYPE_VIEW_PROJECT: Ability to view projects.  - PERMISSION_TYPE_UPDATE_PROJECT: Ability to update projects.  - PERMISSION_TYPE_DELETE_PROJECT: Ability to delete projects.  - PERMISSION_TYPE_ASSIGN_ROLES: Ability to assign roles to groups / users. If assigned at a workspace scope, can only assign roles to that workspace scope.  - PERMISSION_TYPE_VIEW_MODEL_REGISTRY: Ability to view model registry.  - PERMISSION_TYPE_EDIT_MODEL_REGISTRY: Ability to edit model registry.  - PERMISSION_TYPE_CREATE_MODEL_REGISTRY: Ability to create model registry.  - PERMISSION_TYPE_DELETE_MODEL_REGISTRY: Ability to delete model registry.  - PERMISSION_TYPE_DELETE_MODEL_VERSION: Ability to delete model version.  - PERMISSION_TYPE_DELETE_OTHER_USER_MODEL_REGISTRY: Ability to delete another user's model registry.  - PERMISSION_TYPE_DELETE_OTHER_USER_MODEL_VERSION: Ability to delete another user's model version.  - PERMISSION_TYPE_VIEW_MASTER_LOGS: Ability to view master logs.  - PERMISSION_TYPE_VIEW_CLUSTER_USAGE: Ability to view detailed cluster usage info.  - PERMISSION_TYPE_UPDATE_AGENTS: Ability to update agents.  - PERMISSION_TYPE_VIEW_SENSITIVE_AGENT_INFO: Ability to view sensitive subset of agent info.  - PERMISSION_TYPE_VIEW_MASTER_CONFIG: Ability to view master configs.  - PERMISSION_TYPE_UPDATE_MASTER_CONFIG: Ability to update master configs.  - PERMISSION_TYPE_VIEW_EXTERNAL_JOBS: Ability to view external jobs.  - PERMISSION_TYPE_CONTROL_STRICT_JOB_QUEUE: Ability to control strict job queue.  - PERMISSION_TYPE_VIEW_TEMPLATES: Ability to view templates.  - PERMISSION_TYPE_UPDATE_TEMPLATES: Ability to update templates.  - PERMISSION_TYPE_CREATE_TEMPLATES: Ability to create templates.  - PERMISSION_TYPE_DELETE_TEMPLATES: Ability to delete templates.  - PERMISSION_TYPE_UPDATE_ROLES: Ability to create and update role definitions.  - PERMISSION_TYPE_EDIT_WEBHOOKS: Ability to create and delete webhooks.  - PERMISSION_TYPE_VIEW_WEBHOOKS: Ability to view webhooks.  - PERMISSION_TYPE_MODIFY_RP_WORKSPACE_BINDINGS: Ability to bind, unbind or overwrite resource pool workspace bindings.  - PERMISSION_TYPE_SET_WORKSPACE_NAMESPACE_BINDINGS: Ability to bind, unbind, or overwrite namespace workspace bindings.  - PERMISSION_TYPE_SET_RESOURCE_QUOTAS: Ability to set resource quotas on workspaces.  - PERMISSION_TYPE_VIEW_RESOURCE_QUOTAS: Ability to view resource quotas on workspaces.  - PERMISSION_TYPE_MODIFY_GLOBAL_CONFIG_POLICIES: Ability to modify global config policies.  - PERMISSION_TYPE_MODIFY_WORKSPACE_CONFIG_POLICIES: Ability to modify workspace config policies.  - PERMISSION_TYPE_VIEW_GLOBAL_CONFIG_POLICIES: Ability to view global config policies.  - PERMISSION_TYPE_VIEW_WORKSPACE_CONFIG_POLICIES: Ability to view workspace config policies.  - PERMISSION_TYPE_ADMINISTRATE_TOKEN: Ability to administrate other users' tokens.  - PERMISSION_TYPE_UPDATE_TOKEN: Ability to update one's own token.  - PERMISSION_TYPE_CREATE_LONG_LIVED_TOKEN: Ability to create one's own long lived token  - PERMISSION_TYPE_CREATE_OTHER_LONG_LIVED_TOKEN: Ability to create another user's long lived token  - PERMISSION_TYPE_VIEW_OTHER_TOKEN: Ability to view another user's token  - PERMISSION_TYPE_VIEW_TOKEN: Ability to view one's own token
  * @export
  * @enum {string}
  */
@@ -8077,8 +8064,8 @@ export const V1PermissionType = {
     UPDATETOKEN: 'PERMISSION_TYPE_UPDATE_TOKEN',
     CREATELONGLIVEDTOKEN: 'PERMISSION_TYPE_CREATE_LONG_LIVED_TOKEN',
     CREATEOTHERLONGLIVEDTOKEN: 'PERMISSION_TYPE_CREATE_OTHER_LONG_LIVED_TOKEN',
-    VIEWLONGLIVEDTOKEN: 'PERMISSION_TYPE_VIEW_LONG_LIVED_TOKEN',
-    VIEWOTHERLONGLIVEDTOKEN: 'PERMISSION_TYPE_VIEW_OTHER_LONG_LIVED_TOKEN',
+    VIEWOTHERTOKEN: 'PERMISSION_TYPE_VIEW_OTHER_TOKEN',
+    VIEWTOKEN: 'PERMISSION_TYPE_VIEW_TOKEN',
 } as const
 export type V1PermissionType = ValueOf<typeof V1PermissionType>
 /**
@@ -34801,8 +34788,44 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
     return {
         /**
          * 
-         * @summary Get list of all long lived token info
-         * @param {V1GetAllLongLivedTokensRequestSortBy} [sortBy] Sort token info by the given field.   - SORT_BY_UNSPECIFIED: Returns token info in an unsorted list.  - SORT_BY_USER_ID: Returns token info sorted by user id.  - SORT_BY_EXPIRY: Returns token info sorted by expiry.  - SORT_BY_CREATED_AT: Returns token info sorted by created at.  - SORT_BY_TOKEN_TYPE: Returns token info sorted by token type.  - SORT_BY_IS_REVOKED: Returns token info sorted by if it is revoked.  - SORT_BY_TOKEN_DESCRIPTION: Returns token info sorted by description of token.
+         * @summary Get user's access token info
+         * @param {number} userId The id of the user.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getAccessToken(userId: number, options: any = {}): FetchArgs {
+            // verify required parameter 'userId' is not null or undefined
+            if (userId === null || userId === undefined) {
+                throw new RequiredError('userId','Required parameter userId was null or undefined when calling getAccessToken.');
+            }
+            const localVarPath = `/api/v1/users/{userId}/token`
+                .replace(`{${"userId"}}`, encodeURIComponent(String(userId)));
+            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
+            const localVarRequestOptions = { method: 'GET', ...options };
+            const localVarHeaderParameter = {} as any;
+            const localVarQueryParameter = {} as any;
+            
+            // authentication BearerToken required
+            if (configuration && configuration.apiKey) {
+                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
+                    ? configuration.apiKey("Authorization")
+                    : configuration.apiKey;
+                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
+            }
+            
+            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
+            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
+            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
+            
+            return {
+                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
+                options: localVarRequestOptions,
+            };
+        },
+        /**
+         * 
+         * @summary Get list of all access token info
+         * @param {V1GetAllAccessTokensRequestSortBy} [sortBy] Sort token info by the given field.   - SORT_BY_UNSPECIFIED: Returns token info in an unsorted list.  - SORT_BY_USER_ID: Returns token info sorted by user id.  - SORT_BY_EXPIRY: Returns token info sorted by expiry.  - SORT_BY_CREATED_AT: Returns token info sorted by created at.  - SORT_BY_TOKEN_TYPE: Returns token info sorted by token type.  - SORT_BY_REVOKED: Returns token info sorted by if it is revoked.  - SORT_BY_DESCRIPTION: Returns token info sorted by description of token.
          * @param {V1OrderBy} [orderBy] Order token info in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
          * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
@@ -34811,7 +34834,7 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getAllLongLivedTokens(sortBy?: V1GetAllLongLivedTokensRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, includeInactive?: boolean, options: any = {}): FetchArgs {
+        getAllAccessTokens(sortBy?: V1GetAllAccessTokensRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, includeInactive?: boolean, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/user/tokens`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
@@ -34848,36 +34871,6 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
             
             if (includeInactive !== undefined) {
                 localVarQueryParameter['includeInactive'] = includeInactive
-            }
-            
-            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
-            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
-            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
-            
-            return {
-                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
-         * @summary Get current user's long lived token info
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getLongLivedToken(options: any = {}): FetchArgs {
-            const localVarPath = `/api/v1/user/token`;
-            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
-            const localVarRequestOptions = { method: 'GET', ...options };
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-            
-            // authentication BearerToken required
-            if (configuration && configuration.apiKey) {
-                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
-                    ? configuration.apiKey("Authorization")
-                    : configuration.apiKey;
-                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
             }
             
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
@@ -34969,42 +34962,6 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
             }
             const localVarPath = `/api/v1/users/{username}/by-username`
                 .replace(`{${"username"}}`, encodeURIComponent(String(username)));
-            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
-            const localVarRequestOptions = { method: 'GET', ...options };
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-            
-            // authentication BearerToken required
-            if (configuration && configuration.apiKey) {
-                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
-                    ? configuration.apiKey("Authorization")
-                    : configuration.apiKey;
-                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-            
-            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
-            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
-            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
-            
-            return {
-                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
-         * @summary Get a user's long lived token info
-         * @param {number} userId The id of the user.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getUserLongLivedToken(userId: number, options: any = {}): FetchArgs {
-            // verify required parameter 'userId' is not null or undefined
-            if (userId === null || userId === undefined) {
-                throw new RequiredError('userId','Required parameter userId was null or undefined when calling getUserLongLivedToken.');
-            }
-            const localVarPath = `/api/v1/users/{userId}/token`
-                .replace(`{${"userId"}}`, encodeURIComponent(String(userId)));
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
@@ -35497,18 +35454,13 @@ export const UsersApiFp = function (configuration?: Configuration) {
     return {
         /**
          * 
-         * @summary Get list of all long lived token info
-         * @param {V1GetAllLongLivedTokensRequestSortBy} [sortBy] Sort token info by the given field.   - SORT_BY_UNSPECIFIED: Returns token info in an unsorted list.  - SORT_BY_USER_ID: Returns token info sorted by user id.  - SORT_BY_EXPIRY: Returns token info sorted by expiry.  - SORT_BY_CREATED_AT: Returns token info sorted by created at.  - SORT_BY_TOKEN_TYPE: Returns token info sorted by token type.  - SORT_BY_IS_REVOKED: Returns token info sorted by if it is revoked.  - SORT_BY_TOKEN_DESCRIPTION: Returns token info sorted by description of token.
-         * @param {V1OrderBy} [orderBy] Order token info in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
-         * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
-         * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
-         * @param {string} [name] Filter by username or display name.
-         * @param {boolean} [includeInactive] Include inactive tokens (expired & revoked) in response.
+         * @summary Get user's access token info
+         * @param {number} userId The id of the user.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getAllLongLivedTokens(sortBy?: V1GetAllLongLivedTokensRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, includeInactive?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetAllLongLivedTokensResponse> {
-            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getAllLongLivedTokens(sortBy, orderBy, offset, limit, name, includeInactive, options);
+        getAccessToken(userId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetAccessTokenResponse> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getAccessToken(userId, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -35521,12 +35473,18 @@ export const UsersApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Get current user's long lived token info
+         * @summary Get list of all access token info
+         * @param {V1GetAllAccessTokensRequestSortBy} [sortBy] Sort token info by the given field.   - SORT_BY_UNSPECIFIED: Returns token info in an unsorted list.  - SORT_BY_USER_ID: Returns token info sorted by user id.  - SORT_BY_EXPIRY: Returns token info sorted by expiry.  - SORT_BY_CREATED_AT: Returns token info sorted by created at.  - SORT_BY_TOKEN_TYPE: Returns token info sorted by token type.  - SORT_BY_REVOKED: Returns token info sorted by if it is revoked.  - SORT_BY_DESCRIPTION: Returns token info sorted by description of token.
+         * @param {V1OrderBy} [orderBy] Order token info in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
+         * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
+         * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
+         * @param {string} [name] Filter by username or display name.
+         * @param {boolean} [includeInactive] Include inactive tokens (expired & revoked) in response.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getLongLivedToken(options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetLongLivedTokenResponse> {
-            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getLongLivedToken(options);
+        getAllAccessTokens(sortBy?: V1GetAllAccessTokensRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, includeInactive?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetAllAccessTokensResponse> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getAllAccessTokens(sortBy, orderBy, offset, limit, name, includeInactive, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -35583,25 +35541,6 @@ export const UsersApiFp = function (configuration?: Configuration) {
          */
         getUserByUsername(username: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetUserByUsernameResponse> {
             const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getUserByUsername(username, options);
-            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
-                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
-                    if (response.status >= 200 && response.status < 300) {
-                        return response.json();
-                    } else {
-                        throw response;
-                    }
-                });
-            };
-        },
-        /**
-         * 
-         * @summary Get a user's long lived token info
-         * @param {number} userId The id of the user.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getUserLongLivedToken(userId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetUserLongLivedTokenResponse> {
-            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getUserLongLivedToken(userId, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -35841,8 +35780,18 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
     return {
         /**
          * 
-         * @summary Get list of all long lived token info
-         * @param {V1GetAllLongLivedTokensRequestSortBy} [sortBy] Sort token info by the given field.   - SORT_BY_UNSPECIFIED: Returns token info in an unsorted list.  - SORT_BY_USER_ID: Returns token info sorted by user id.  - SORT_BY_EXPIRY: Returns token info sorted by expiry.  - SORT_BY_CREATED_AT: Returns token info sorted by created at.  - SORT_BY_TOKEN_TYPE: Returns token info sorted by token type.  - SORT_BY_IS_REVOKED: Returns token info sorted by if it is revoked.  - SORT_BY_TOKEN_DESCRIPTION: Returns token info sorted by description of token.
+         * @summary Get user's access token info
+         * @param {number} userId The id of the user.
+         * @param {*} [options] Override http request option.
+         * @throws {RequiredError}
+         */
+        getAccessToken(userId: number, options?: any) {
+            return UsersApiFp(configuration).getAccessToken(userId, options)(fetch, basePath);
+        },
+        /**
+         * 
+         * @summary Get list of all access token info
+         * @param {V1GetAllAccessTokensRequestSortBy} [sortBy] Sort token info by the given field.   - SORT_BY_UNSPECIFIED: Returns token info in an unsorted list.  - SORT_BY_USER_ID: Returns token info sorted by user id.  - SORT_BY_EXPIRY: Returns token info sorted by expiry.  - SORT_BY_CREATED_AT: Returns token info sorted by created at.  - SORT_BY_TOKEN_TYPE: Returns token info sorted by token type.  - SORT_BY_REVOKED: Returns token info sorted by if it is revoked.  - SORT_BY_DESCRIPTION: Returns token info sorted by description of token.
          * @param {V1OrderBy} [orderBy] Order token info in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
          * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
@@ -35851,17 +35800,8 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getAllLongLivedTokens(sortBy?: V1GetAllLongLivedTokensRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, includeInactive?: boolean, options?: any) {
-            return UsersApiFp(configuration).getAllLongLivedTokens(sortBy, orderBy, offset, limit, name, includeInactive, options)(fetch, basePath);
-        },
-        /**
-         * 
-         * @summary Get current user's long lived token info
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getLongLivedToken(options?: any) {
-            return UsersApiFp(configuration).getLongLivedToken(options)(fetch, basePath);
+        getAllAccessTokens(sortBy?: V1GetAllAccessTokensRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, includeInactive?: boolean, options?: any) {
+            return UsersApiFp(configuration).getAllAccessTokens(sortBy, orderBy, offset, limit, name, includeInactive, options)(fetch, basePath);
         },
         /**
          * 
@@ -35891,16 +35831,6 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
          */
         getUserByUsername(username: string, options?: any) {
             return UsersApiFp(configuration).getUserByUsername(username, options)(fetch, basePath);
-        },
-        /**
-         * 
-         * @summary Get a user's long lived token info
-         * @param {number} userId The id of the user.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getUserLongLivedToken(userId: number, options?: any) {
-            return UsersApiFp(configuration).getUserLongLivedToken(userId, options)(fetch, basePath);
         },
         /**
          * 
@@ -36033,8 +35963,20 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
 export class UsersApi extends BaseAPI {
     /**
      * 
-     * @summary Get list of all long lived token info
-     * @param {V1GetAllLongLivedTokensRequestSortBy} [sortBy] Sort token info by the given field.   - SORT_BY_UNSPECIFIED: Returns token info in an unsorted list.  - SORT_BY_USER_ID: Returns token info sorted by user id.  - SORT_BY_EXPIRY: Returns token info sorted by expiry.  - SORT_BY_CREATED_AT: Returns token info sorted by created at.  - SORT_BY_TOKEN_TYPE: Returns token info sorted by token type.  - SORT_BY_IS_REVOKED: Returns token info sorted by if it is revoked.  - SORT_BY_TOKEN_DESCRIPTION: Returns token info sorted by description of token.
+     * @summary Get user's access token info
+     * @param {number} userId The id of the user.
+     * @param {*} [options] Override http request option.
+     * @throws {RequiredError}
+     * @memberof UsersApi
+     */
+    public getAccessToken(userId: number, options?: any) {
+        return UsersApiFp(this.configuration).getAccessToken(userId, options)(this.fetch, this.basePath)
+    }
+    
+    /**
+     * 
+     * @summary Get list of all access token info
+     * @param {V1GetAllAccessTokensRequestSortBy} [sortBy] Sort token info by the given field.   - SORT_BY_UNSPECIFIED: Returns token info in an unsorted list.  - SORT_BY_USER_ID: Returns token info sorted by user id.  - SORT_BY_EXPIRY: Returns token info sorted by expiry.  - SORT_BY_CREATED_AT: Returns token info sorted by created at.  - SORT_BY_TOKEN_TYPE: Returns token info sorted by token type.  - SORT_BY_REVOKED: Returns token info sorted by if it is revoked.  - SORT_BY_DESCRIPTION: Returns token info sorted by description of token.
      * @param {V1OrderBy} [orderBy] Order token info in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
      * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
      * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
@@ -36044,19 +35986,8 @@ export class UsersApi extends BaseAPI {
      * @throws {RequiredError}
      * @memberof UsersApi
      */
-    public getAllLongLivedTokens(sortBy?: V1GetAllLongLivedTokensRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, includeInactive?: boolean, options?: any) {
-        return UsersApiFp(this.configuration).getAllLongLivedTokens(sortBy, orderBy, offset, limit, name, includeInactive, options)(this.fetch, this.basePath)
-    }
-    
-    /**
-     * 
-     * @summary Get current user's long lived token info
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof UsersApi
-     */
-    public getLongLivedToken(options?: any) {
-        return UsersApiFp(this.configuration).getLongLivedToken(options)(this.fetch, this.basePath)
+    public getAllAccessTokens(sortBy?: V1GetAllAccessTokensRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, includeInactive?: boolean, options?: any) {
+        return UsersApiFp(this.configuration).getAllAccessTokens(sortBy, orderBy, offset, limit, name, includeInactive, options)(this.fetch, this.basePath)
     }
     
     /**
@@ -36092,18 +36023,6 @@ export class UsersApi extends BaseAPI {
      */
     public getUserByUsername(username: string, options?: any) {
         return UsersApiFp(this.configuration).getUserByUsername(username, options)(this.fetch, this.basePath)
-    }
-    
-    /**
-     * 
-     * @summary Get a user's long lived token info
-     * @param {number} userId The id of the user.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof UsersApi
-     */
-    public getUserLongLivedToken(userId: number, options?: any) {
-        return UsersApiFp(this.configuration).getUserLongLivedToken(userId, options)(this.fetch, this.basePath)
     }
     
     /**
