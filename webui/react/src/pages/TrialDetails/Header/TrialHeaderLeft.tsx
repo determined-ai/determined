@@ -1,5 +1,6 @@
 import Badge from 'hew/Badge';
 import Icon from 'hew/Icon';
+import Tooltip from 'hew/Tooltip';
 import React from 'react';
 import { Link } from 'react-router-dom';
 
@@ -16,7 +17,8 @@ interface Props {
   trial: TrialDetails;
 }
 
-const signalMaxLength = 12;
+const labelMaxLength = 12;
+const labelColor = '#CC0000';
 
 const TrialHeaderLeft: React.FC<Props> = ({ experiment, trial }: Props) => {
   const f_flat_runs = useFeature().isOn('flat_runs');
@@ -30,13 +32,18 @@ const TrialHeaderLeft: React.FC<Props> = ({ experiment, trial }: Props) => {
       <div className={css.trial}>
         <ExperimentIcons state={trial.state} />
         <div>Trial {trial.id}</div>
-        {trial.logSignals?.map((s) => (
-          <Badge
-            backgroundColor={hex2hsl('#CC0000')}
-            key={s}
-            text={s.length < signalMaxLength ? s : `${s.slice(0, signalMaxLength)}...`}
-          />
-        ))}
+        {trial.logSignals?.map((s) =>
+          s.length < labelMaxLength ? (
+            <Badge backgroundColor={hex2hsl(labelColor)} key={s} text={s} />
+          ) : (
+            <Tooltip content={s} key={s}>
+              <Badge
+                backgroundColor={hex2hsl(labelColor)}
+                text={`${s.slice(0, labelMaxLength)}...`}
+              />
+            </Tooltip>
+          ),
+        )}
       </div>
     </div>
   );
