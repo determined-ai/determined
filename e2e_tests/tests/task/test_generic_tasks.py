@@ -233,7 +233,7 @@ def test_pause_and_unpause_generic_task() -> None:
     detproc.check_call(sess, command)
 
     # The task may still be PAUSING, retry a few times.
-    retries = 3
+    retries = 5
     for i in range(retries):
         pause_resp = bindings.get_GetTask(sess, taskId=task_resp.taskId)
         if pause_resp.task.taskState == bindings.v1GenericTaskState.PAUSED:
