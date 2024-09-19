@@ -1,0 +1,197 @@
+syntax = "proto3";
+
+package determined.job.v2;
+option go_package = "github.com/determined-ai/determined/proto/pkg/jobv2";
+
+import "google/protobuf/timestamp.proto";
+import "protoc-gen-swagger/options/annotations.proto";
+
+// Job type.
+enum Type {
+  // Unspecified state.
+  TYPE_UNSPECIFIED = 0;
+  // Experiement Job.
+  TYPE_EXPERIMENT = 1;
+  // Jupyter Notebook Job.
+  TYPE_NOTEBOOK = 2;
+  // TensorBoard Job.
+  TYPE_TENSORBOARD = 3;
+  // Shell Job.
+  TYPE_SHELL = 4;
+  // Command Job.
+  TYPE_COMMAND = 5;
+  // CheckpointGC Job.
+  TYPE_CHECKPOINT_GC = 6;
+  // External Job.
+  TYPE_EXTERNAL = 7;
+  // Generic Job.
+  TYPE_GENERIC = 8;
+}
+
+// Job state.
+enum State {
+  // Unspecified state.
+  STATE_UNSPECIFIED = 0;
+  // Job is queued and waiting to be schedlued.
+  STATE_QUEUED = 1;
+  // Job is scheduled.
+  STATE_SCHEDULED = 2;
+  // Job is scheduled as a backfill.
+  STATE_SCHEDULED_BACKFILLED = 3;
+}
+
+// Job summary.
+message JobSummary {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "state", "jobs_ahead" ] }
+  };
+  // The scheduling state of the job.
+  State state = 1;
+  // The number of jobs ahead of this one in the queue.
+  int32 jobs_ahead = 2;
+}
+
+// LimitedJob is a Job with omitted fields.
+message LimitedJob {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: {
+      required: [
+        "type",
+        "resource_pool",
+        "is_preemptible",
+        "requested_slots",
+        "allocated_slots",
+        "workspace_id",
+        "job_id"
+      ]
+    }
+  };
+  // Job summary.
+  JobSummary summary = 1;
+  // Job type.
+  Type type = 2;
+  // Associated resource pool.
+  string resource_pool = 3;
+  // Whether the job is preemptible.
+  bool is_preemptible = 4;
+  // The job priority in priority scheduler.
+  int32 priority = 5;
+  // The job weight in fairshare scheduler.
+  double weight = 6;
+  // Job type.
+  string job_id = 7;
+  // Number of requested slots.
+  int32 requested_slots = 8;
+  // Number of allocated slots.
+  int32 allocated_slots = 9;
+  // Job's progress from 0 to 1.
+  float progress = 10;
+  // Job's workspace id.
+  int32 workspace_id = 11;
+}
+
+// Job represents a user submitted work that is not in a terminal
+// state.
+message Job {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: {
+      required: [
+        "type",
+        "submission_time",
+        "username",
+        "resource_pool",
+        "is_preemptible",
+        "entity_id",
+        "name",
+        "workspace_id",
+        "requested_slots",
+        "allocated_slots",
+        "job_id"
+      ]
+    }
+  };
+  // Job summary.
+  JobSummary summary = 1;
+  // Job type.
+  Type type = 2;
+  // The time when the job was submitted by the user.
+  google.protobuf.Timestamp submission_time = 3;
+  // The username of the user who submitted the job.
+  string username = 4;
+  // Associated resource pool.
+  string resource_pool = 5;
+  // Whether the job is preemptible.
+  bool is_preemptible = 6;
+  // The job priority in priority scheduler.
+  int32 priority = 7;
+  // The job weight in fairshare scheduler.
+  double weight = 8;
+  // Entity ID.
+  string entity_id = 9;
+  // Job type.
+  string job_id = 10;
+  // Number of requested slots.
+  int32 requested_slots = 11;
+  // Number of allocated slots.
+  int32 allocated_slots = 12;
+  // Job name.
+  string name = 13;
+  // Job's progress from 0 to 1.
+  float progress = 14;
+  // The id of the user who submitted the job.
+  int32 user_id = 15;
+  // Job's workspace id.
+  int32 workspace_id = 16;
+}
+
+// RBACJob is a job that can have either a limited or a full
+// representation of a job.
+message RBACJob {
+  // job represent one of the possible representations of a job.
+  oneof job {
+    // Full representation.
+    Job full = 1;
+    // Limited representation for lower access levels.
+    LimitedJob limited = 2;
+  }
+}
+
+// Describes a message to control jobs in a queue.
+message QueueControl {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "job_id", "action" ] }
+  };
+  // Job id.
+  string job_id = 1;
+  // The action to perform.
+  oneof action {
+    // Name of the target resource_pool to move the job to.
+    string resource_pool = 2;
+    // The desired job priority in priority scheduler.
+    int32 priority = 3;
+    // The desired job weight in fairshare scheduler.
+    float weight = 4;
+  }
+}
+
+// Statistics for a queue.
+message QueueStats {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "queued_count", "scheduled_count" ] }
+  };
+  // Number of queued jobs in the queue.
+  int32 queued_count = 1;
+  // Number of scheduled jobs in the queue.
+  int32 scheduled_count = 2;
+}
+
+// Aggregate statistics for a queue.
+message AggregateQueueStats {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "period_start", "seconds" ] }
+  };
+  // The date of this entry.
+  string period_start = 1;
+  // The total number of seconds queued.
+  float seconds = 2;
+}
