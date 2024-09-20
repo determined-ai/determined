@@ -15,7 +15,7 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Badge, { BadgeType } from 'components/Badge';
 import FilterCounter from 'components/FilterCounter';
 import JupyterLabButton from 'components/JupyterLabButton';
-import InteractiveTable, { ColumnDef } from 'components/Table/InteractiveTable';
+import InteractiveTable, { ColumnDef, onRightClickableCell } from 'components/Table/InteractiveTable';
 import {
   defaultRowClassName,
   getFullPaginationConfig,
@@ -496,6 +496,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
         defaultWidth: DEFAULT_COLUMN_WIDTHS['action'],
         fixed: 'right',
         key: 'action',
+        onCell: () => ({ ...onRightClickableCell(), 'data-testid': 'actions' }),
         render: actionRenderer,
         title: '',
       },
