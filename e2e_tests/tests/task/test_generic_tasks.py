@@ -231,15 +231,12 @@ def test_pause_and_unpause_generic_task() -> None:
 
     detproc.check_call(sess, command)
 
-    pause_resp = bindings.get_GetTask(sess, taskId=task_resp.taskId)
-    assert pause_resp.task.taskState == bindings.v1GenericTaskState.PAUSED
+    task.wait_for_task_state(sess, task_resp.taskId, bindings.v1GenericTaskState.PAUSED)
 
     # Unpause task
     command = ["det", "-m", conf.make_master_url(), "task", "unpause", task_resp.taskId]
 
     detproc.check_call(sess, command)
 
-    unpause_resp = bindings.get_GetTask(sess, taskId=task_resp.taskId)
-    assert unpause_resp.task.taskState == bindings.v1GenericTaskState.ACTIVE
-
+    task.wait_for_task_state(sess, task_resp.taskId, bindings.v1GenericTaskState.ACTIVE)
     task.wait_for_task_state(sess, task_resp.taskId, bindings.v1GenericTaskState.COMPLETED)
