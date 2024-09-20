@@ -1,5 +1,4 @@
 import pytest
-import time
 
 from determined.cli import ntsc
 from determined.common import util
