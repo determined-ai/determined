@@ -50,7 +50,7 @@ func (rp *resourcePool) resourceSummaryFromAgentStates(
 
 	// If we have heterogenous slots, we default to`UNSPECIFIED` aka `device.ZeroSlot`.
 	// We raise an error in the logs if there is more than one slot type.
-	if len(deviceTypeCount) < 1 {
+	if len(deviceTypeCount) > 1 {
 		rp.syslog.Errorf("resource pool has unspecified slot type with %v total slot types", len(deviceTypeCount))
 	} else {
 		for deviceType := range deviceTypeCount {
