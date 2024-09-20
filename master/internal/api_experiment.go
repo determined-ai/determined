@@ -3026,8 +3026,7 @@ func (a *apiServer) DeleteExperimentLabel(ctx context.Context,
 		ModelTableExpr("experiments as e").
 		Model(exp).
 		Apply(getExperimentColumns).
-		Where("e.id = ?", req.ExperimentId).
-		For("UPDATE")
+		Where("e.id = ?", req.ExperimentId)
 	if err = query.Scan(ctx); err != nil {
 		return nil, err
 	}
