@@ -19,14 +19,15 @@
 // A jsonschema extension consists of three parts:
 //
 //  - A compile function.  Compiling happens once before any validations and takes the schema as
-//    input.  The extension's compile function will be called each time the extension appears in
-//    the schema.  The return value of the compile function will be fed to the validation function.
+//    input.  The extension's compile function will be called once for each time the extension
+//    appears in the schema.  The return value of the compile function will be fed to the validation
+//    function.
 //
-//  - A validate function.  Validation happens once for each instance of data that is checked.  The
-//    extension's validate function is called once for each time the compile function was caused,
-//    for each overall validation.  Each call to the validate function receives the output from one
-//    call to the compile function and corresponds to a particular appearance of the extension in
-//    the schema.
+//  - A validate function.  Validation happens once for each instance of data that is checked.
+//    During a validation, the validate function will be called as many times as the extension
+//    appeared in the schema.  Each call to the validate function receives the output from one call
+//    to the compile function and corresponds to a particular appearance of the extension in the
+//    schema.
 //
 //  - A metaschema which describes how the *schema* that uses the extension is allowed to look.
 
