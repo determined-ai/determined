@@ -265,15 +265,12 @@ def print_token_info(data: Sequence[bindings.v1TokenInfo], args: argparse.Namesp
 
 def describe_token(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
-    if args.username is None:
-        userID = bindings.get_GetUserByUsername(session=sess, username=sess.username).user.id
-    else:
-        userID = bindings.get_GetUserByUsername(session=sess, username=args.username).user.id
-    resp = bindings.get_GetAccessToken(session=sess, userId=userID)
-    if args.json or args.yaml:
-        print_token_info([resp.tokenInfo], args)
-    else:
-        render_token_info([resp.tokenInfo])
+    result = []
+    for arg in args.username:
+        userID = bindings.get_GetUserByUsername(session=sess, username=arg).user.id
+        resp = bindings.get_GetAccessToken(session=sess, userId=userID)
+        result.append(resp.tokenInfo)
+    render_token_info(result)
 
 
 def list_tokens(args: argparse.Namespace) -> None:
@@ -439,7 +436,7 @@ args_description = [
         ]),
         cli.Cmd("token", None, "manage access tokens", [
             cli.Cmd("describe", describe_token, "describe token info", [
-                cli.Arg("username", nargs="?", default=None,
+                cli.Arg("username", nargs=argparse.ONE_OR_MORE, default=None,
                         help="name of user to describe token"),
                 cli.Group(
                     cli.output_format_args["json"],
@@ -447,9 +444,8 @@ args_description = [
                 ),
             ]),
             cli.Cmd("list ls", list_tokens, "list all active access tokens", [
-                cli.Arg("--all", "-a", action="store_true",
-                        help="list all access tokens, including revoked & expired tokens",
-                        is_default=True),
+                cli.Arg("--all", "-a", action="store_true", default=None,
+                        help="list all access tokens, including revoked & expired tokens"),
                 cli.Group(
                     cli.output_format_args["json"],
                     cli.output_format_args["yaml"],
