@@ -13,6 +13,7 @@ import (
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/proto/pkg/apiv1"
 	"github.com/determined-ai/determined/proto/pkg/apiv2"
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 	"github.com/determined-ai/determined/proto/pkg/jobv1"
@@ -117,4 +118,54 @@ func (a *apiServer) GetSearch(
 	}
 
 	return &resp, nil
+}
+
+func (a *apiServer) GetSearchTags(
+	ctx context.Context, req *apiv2.GetSearchTagsRequest,
+) (*apiv2.GetSearchTagsResponse, error) {
+	expReq := apiv1.GetExperimentLabelsRequest{
+		ProjectId: req.ProjectId,
+	}
+	expRes, err := a.GetExperimentLabels(ctx, &expReq)
+	if err != nil {
+		return nil, err
+	}
+	res := apiv2.GetSearchTagsResponse{
+		Tags: expRes.Labels,
+	}
+	return &res, nil
+}
+
+func (a *apiServer) PutSearchTag(
+	ctx context.Context, req *apiv2.PutSearchTagRequest,
+) (*apiv2.PutSearchTagResponse, error) {
+	expReq := apiv1.PutExperimentLabelRequest{
+		ExperimentId: req.SearchId,
+		Label:        req.Tag,
+	}
+	expRes, err := a.PutExperimentLabel(ctx, &expReq)
+	if err != nil {
+		return nil, err
+	}
+	res := apiv2.PutSearchTagResponse{
+		Tags: expRes.Labels,
+	}
+	return &res, nil
+}
+
+func (a *apiServer) DeleteSearchTag(
+	ctx context.Context, req *apiv2.DeleteSearchTagRequest,
+) (*apiv2.DeleteSearchTagResponse, error) {
+	expReq := apiv1.DeleteExperimentLabelRequest{
+		ExperimentId: req.SearchId,
+		Label:        req.Tag,
+	}
+	expRes, err := a.DeleteExperimentLabel(ctx, &expReq)
+	if err != nil {
+		return nil, err
+	}
+	res := apiv2.DeleteSearchTagResponse{
+		Tags: expRes.Labels,
+	}
+	return &res, nil
 }
