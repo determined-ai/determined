@@ -7,8 +7,17 @@
 This document describes how to deploy Determined on an HPC cluster managed by the Slurm or PBS
 workload managers. It covers both scenarios where root access is available and where it is not.
 
-For non-root installations, ensure that the prerequisites in :ref:`hpc-environment-requirements`
-have been completed by the your system administrator before proceeding.
+For non-root installations:
+
+#. Ensure that the prerequisites in :ref:`hpc-environment-requirements` have been completed by your
+   system administrator.
+#. Verify that you have the necessary permissions to run Slurm/PBS jobs and access the required
+   directories.
+#. Check that the container runtime (Singularity/Apptainer, Podman, or Enroot) is properly
+   configured for non-root usage.
+
+For root installations, ensure that all requirements in :ref:`hpc-environment-requirements` and
+:ref:`slurm-requirements` are met before proceeding.
 
 .. include:: ../../_shared/tip-keep-install-instructions.txt
 
