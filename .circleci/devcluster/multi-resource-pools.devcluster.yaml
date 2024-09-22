@@ -2,6 +2,7 @@ stages:
   - db:
       name: db
       port: 5434
+      image_name: $DET_POSTGRES_VERSION
 
   - master:
       pre:

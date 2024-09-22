@@ -6,6 +6,7 @@ stages:
       db_name: db-priority-scheduler
       container_name: determined_db-priority-scheduler
       port: 5434
+      image_name: $DET_POSTGRES_VERSION
 
   - elastic:
       name: elastic-priority-scheduler

@@ -1,6 +1,7 @@
 stages:
   - db:
       name: db
+      image_name: $DET_POSTGRES_VERSION
 
   - elastic:
       name: elastic
