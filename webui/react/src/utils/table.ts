@@ -8,10 +8,11 @@ export const EMPTY_CELL: GridCell = {
 } as const;
 
 export const handleEmptyCell = <T>(
-  param: T | undefined,
-  cell: (datum: T) => GridCell,
-  onlyUndefined = true,
+  uncertainData: T | undefined,
+  cell: (data: T) => GridCell,
+  allowFalsy = true, // if allowFalsy === false, then falsy values such as 0 or the empty string will be treated as empty
 ): GridCell => {
-  if ((onlyUndefined && param === undefined) || (!onlyUndefined && !param)) return EMPTY_CELL;
-  return cell(param!);
+  if (uncertainData === undefined || uncertainData === null) return EMPTY_CELL;
+  if (allowFalsy === false && !uncertainData) return EMPTY_CELL;
+  return cell(uncertainData);
 };
