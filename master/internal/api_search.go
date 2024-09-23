@@ -120,19 +120,6 @@ func (a *apiServer) GetSearch(
 	return &resp, nil
 }
 
-func (a *apiServer) GetSearcherEventsV2(
-	ctx context.Context, req *apiv2.GetSearcherEventsV2Request,
-) (*apiv2.GetSearcherEventsV2Response, error) {
-	expReq := apiv1.GetSearcherEventsRequest{
-		ExperimentId: req.SearchId,
-	}
-	expRes, err := a.GetSearcherEvents(ctx, &expReq)
-	if err != nil {
-		return nil, err
-	}
-	res := apiv2.GetSearcherEventsV2Response{
-		SearcherEvents: expRes.SearcherEvents,
-
 func (a *apiServer) GetSearchTags(
 	ctx context.Context, req *apiv2.GetSearchTagsRequest,
 ) (*apiv2.GetSearchTagsResponse, error) {
@@ -148,33 +135,6 @@ func (a *apiServer) GetSearchTags(
 	}
 	return &res, nil
 }
-
-func (a *apiServer) PostSearcherOperationsV2(
-	ctx context.Context, req *apiv2.PostSearcherOperationsV2Request,
-) (*apiv2.PostSearcherOperationsV2Response, error) {
-	expReq := apiv1.PostSearcherOperationsRequest{
-		ExperimentId: req.SearchId,
-	}
-	_, err := a.PostSearcherOperations(ctx, &expReq)
-	if err != nil {
-		return nil, err
-	}
-	res := apiv2.PostSearcherOperationsV2Response{}
-	return &res, nil
-}
-
-func (a *apiServer) PutSearchRetainLogs(
-	ctx context.Context, req *apiv2.PutSearchRetainLogsRequest,
-) (*apiv2.PutSearchRetainLogsResponse, error) {
-	expReq := apiv1.PutExperimentRetainLogsRequest{
-		ExperimentId: req.SearchId,
-		NumDays:      req.NumDays,
-	}
-	_, err := a.PutExperimentRetainLogs(ctx, &expReq)
-	if err != nil {
-		return nil, err
-	}
-	res := apiv2.PutSearchRetainLogsResponse{}
 
 func (a *apiServer) PutSearchTag(
 	ctx context.Context, req *apiv2.PutSearchTagRequest,
@@ -207,5 +167,50 @@ func (a *apiServer) DeleteSearchTag(
 	res := apiv2.DeleteSearchTagResponse{
 		Tags: expRes.Labels,
 	}
+	return &res, nil
+}
+
+func (a *apiServer) GetSearcherEventsV2(
+	ctx context.Context, req *apiv2.GetSearcherEventsV2Request,
+) (*apiv2.GetSearcherEventsV2Response, error) {
+	expReq := apiv1.GetSearcherEventsRequest{
+		ExperimentId: req.SearchId,
+	}
+	expRes, err := a.GetSearcherEvents(ctx, &expReq)
+	if err != nil {
+		return nil, err
+	}
+	res := apiv2.GetSearcherEventsV2Response{
+		SearcherEvents: expRes.SearcherEvents,
+	}
+	return &res, nil
+}
+
+func (a *apiServer) PostSearcherOperationsV2(
+	ctx context.Context, req *apiv2.PostSearcherOperationsV2Request,
+) (*apiv2.PostSearcherOperationsV2Response, error) {
+	expReq := apiv1.PostSearcherOperationsRequest{
+		ExperimentId: req.SearchId,
+	}
+	_, err := a.PostSearcherOperations(ctx, &expReq)
+	if err != nil {
+		return nil, err
+	}
+	res := apiv2.PostSearcherOperationsV2Response{}
+	return &res, nil
+}
+
+func (a *apiServer) PutSearchRetainLogs(
+	ctx context.Context, req *apiv2.PutSearchRetainLogsRequest,
+) (*apiv2.PutSearchRetainLogsResponse, error) {
+	expReq := apiv1.PutExperimentRetainLogsRequest{
+		ExperimentId: req.SearchId,
+		NumDays:      req.NumDays,
+	}
+	_, err := a.PutExperimentRetainLogs(ctx, &expReq)
+	if err != nil {
+		return nil, err
+	}
+	res := apiv2.PutSearchRetainLogsResponse{}
 	return &res, nil
 }
