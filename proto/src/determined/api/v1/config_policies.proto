@@ -4,15 +4,24 @@ package determined.api.v1;
 option go_package = "github.com/determined-ai/determined/proto/pkg/apiv1";
 
 import "google/protobuf/struct.proto";
+import "protoc-gen-swagger/options/annotations.proto";
 
 // PutWorkspaceConfigPoliciesRequest sets config
 // policies for the workspace and workload type.
 message PutWorkspaceConfigPoliciesRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: {
+      required: [ "workspace_id", "workload_type", "config_policies" ]
+    }
+  };
+
   // The workspace the config policies apply to. Use global API for
   // global config policies.
   int32 workspace_id = 1;
+
   // The workload type the config policies apply to: EXPERIMENT or NTSC.
   string workload_type = 2;
+
   // The config policies to use. Contains both invariant configs and constraints
   // in yaml or json format.
   string config_policies = 3;
@@ -28,8 +37,13 @@ message PutWorkspaceConfigPoliciesResponse {
 // PutGlobalConfigPoliciesRequest sets global config
 // policies for the workload type.
 message PutGlobalConfigPoliciesRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "workload_type", "config_policies" ] }
+  };
+
   // The workload type the config policies apply to: EXPERIMENT or NTSC.
   string workload_type = 1;
+
   // The config policies to use. Contains both invariant configs and constraints
   // in yaml or json format.
   string config_policies = 2;
@@ -45,9 +59,14 @@ message PutGlobalConfigPoliciesResponse {
 // GetWorkspaceConfigPoliciesRequest lists task config policies
 // for a given workspace and workload type.
 message GetWorkspaceConfigPoliciesRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "workspace_id", "workload_type" ] }
+  };
+
   // The workspace the config policies apply to. Use global API for
   // global config policies.
   int32 workspace_id = 1;
+
   //  The workload type the config policies apply to: EXPERIMENT or NTSC.
   string workload_type = 2;
 }
@@ -62,11 +81,15 @@ message GetWorkspaceConfigPoliciesResponse {
 // GetGlobalConfigPoliciesRequest lists global task config
 // policies for a given workload type.
 message GetGlobalConfigPoliciesRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "workload_type" ] }
+  };
+
   //  The workload type the config policies apply to: EXPERIMENT or NTSC.
   string workload_type = 1;
 }
 
-// Response to GetGlobalConfigPolicies request.
+// Response to GetGlobalConfigPoliciesRequest.
 message GetGlobalConfigPoliciesResponse {
   // The global current config policies saved. Contains both invariant configs
   // and constraints in yaml or json format.
@@ -76,9 +99,14 @@ message GetGlobalConfigPoliciesResponse {
 // DeleteWorkspaceConfigPoliciesRequest is used to delete all task config
 // policies for the workspace and workload type.
 message DeleteWorkspaceConfigPoliciesRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "workspace_id", "workload_type" ] }
+  };
+
   // The workspace the config policies apply to. Use global API for
   // global config policies.
   int32 workspace_id = 1;
+
   // The workload type the config policies apply to: EXPERIMENT or NTSC.
   string workload_type = 2;
 }
@@ -89,6 +117,10 @@ message DeleteWorkspaceConfigPoliciesResponse {}
 // DeleteGlobalConfigPoliciesRequest is used to delete all global task config
 // policies for the workload type.
 message DeleteGlobalConfigPoliciesRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "workload_type" ] }
+  };
+
   // The workload type the config policies apply to: EXPERIMENT or NTSC.
   string workload_type = 1;
 }

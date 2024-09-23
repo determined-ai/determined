@@ -5207,7 +5207,7 @@ class v1GetGenericTaskConfigResponse(Printable):
         return out
 
 class v1GetGlobalConfigPoliciesResponse(Printable):
-    """Response to GetGlobalConfigPolicies request."""
+    """Response to GetGlobalConfigPoliciesRequest."""
     configPolicies: "typing.Optional[typing.Dict[str, typing.Any]]" = None
 
     def __init__(
@@ -12226,6 +12226,35 @@ class v1PutExperimentsRetainLogsResponse(Printable):
         }
         return out
 
+class v1PutGlobalConfigPoliciesRequest(Printable):
+    """PutGlobalConfigPoliciesRequest sets global config
+    policies for the workload type.
+    """
+
+    def __init__(
+        self,
+        *,
+        configPolicies: str,
+        workloadType: str,
+    ):
+        self.configPolicies = configPolicies
+        self.workloadType = workloadType
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1PutGlobalConfigPoliciesRequest":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+            "configPolicies": obj["configPolicies"],
+            "workloadType": obj["workloadType"],
+        }
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+            "configPolicies": self.configPolicies,
+            "workloadType": self.workloadType,
+        }
+        return out
+
 class v1PutGlobalConfigPoliciesResponse(Printable):
     """Response to PutGlobalConfigPoliciesRequest."""
     configPolicies: "typing.Optional[typing.Dict[str, typing.Any]]" = None
@@ -12423,45 +12452,33 @@ class v1PutWorkspaceConfigPoliciesRequest(Printable):
     """PutWorkspaceConfigPoliciesRequest sets config
     policies for the workspace and workload type.
     """
-    configPolicies: "typing.Optional[str]" = None
-    workloadType: "typing.Optional[str]" = None
-    workspaceId: "typing.Optional[int]" = None
 
     def __init__(
         self,
         *,
-        configPolicies: "typing.Union[str, None, Unset]" = _unset,
-        workloadType: "typing.Union[str, None, Unset]" = _unset,
-        workspaceId: "typing.Union[int, None, Unset]" = _unset,
+        configPolicies: str,
+        workloadType: str,
+        workspaceId: int,
     ):
-        if not isinstance(configPolicies, Unset):
-            self.configPolicies = configPolicies
-        if not isinstance(workloadType, Unset):
-            self.workloadType = workloadType
-        if not isinstance(workspaceId, Unset):
-            self.workspaceId = workspaceId
+        self.configPolicies = configPolicies
+        self.workloadType = workloadType
+        self.workspaceId = workspaceId
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1PutWorkspaceConfigPoliciesRequest":
         kwargs: "typing.Dict[str, typing.Any]" = {
+            "configPolicies": obj["configPolicies"],
+            "workloadType": obj["workloadType"],
+            "workspaceId": obj["workspaceId"],
         }
-        if "configPolicies" in obj:
-            kwargs["configPolicies"] = obj["configPolicies"]
-        if "workloadType" in obj:
-            kwargs["workloadType"] = obj["workloadType"]
-        if "workspaceId" in obj:
-            kwargs["workspaceId"] = obj["workspaceId"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
+            "configPolicies": self.configPolicies,
+            "workloadType": self.workloadType,
+            "workspaceId": self.workspaceId,
         }
-        if not omit_unset or "configPolicies" in vars(self):
-            out["configPolicies"] = self.configPolicies
-        if not omit_unset or "workloadType" in vars(self):
-            out["workloadType"] = self.workloadType
-        if not omit_unset or "workspaceId" in vars(self):
-            out["workspaceId"] = self.workspaceId
         return out
 
 class v1PutWorkspaceConfigPoliciesResponse(Printable):
@@ -23751,6 +23768,7 @@ def put_PutExperimentsRetainLogs(
 def put_PutGlobalConfigPolicies(
     session: "api.BaseSession",
     *,
+    body: "v1PutGlobalConfigPoliciesRequest",
     workloadType: str,
 ) -> "v1PutGlobalConfigPoliciesResponse":
     """Add or update global task config policies.
@@ -23764,7 +23782,7 @@ def put_PutGlobalConfigPolicies(
         method="PUT",
         path=f"/api/v1/config-policies/global/{workloadType}",
         params=_params,
-        json=None,
+        json=body.to_json(True),
         data=None,
         headers=None,
         timeout=None,

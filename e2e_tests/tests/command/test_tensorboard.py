@@ -238,7 +238,7 @@ def test_delete_tensorboard_for_experiment() -> None:
     sess = api_utils.user_session()
     config_obj = conf.load_config(conf.tutorials_path("mnist_pytorch/const.yaml"))
     experiment_id = exp.run_basic_test_with_temp_config(
-        sess, config_obj, conf.tutorials_path("mnist_pytorch"), 1
+        sess, config_obj, conf.fixtures_path("mnist_pytorch"), 1
     )
 
     command = ["det", "e", "delete-tb-files", str(experiment_id)]

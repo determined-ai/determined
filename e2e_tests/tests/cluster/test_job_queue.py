@@ -16,7 +16,7 @@ from tests import experiment as exp
 def test_job_queue_adjust_priority() -> None:
     sess = api_utils.user_session()
     config = conf.tutorials_path("mnist_pytorch/const.yaml")
-    model = conf.tutorials_path("mnist_pytorch")
+    model = conf.fixtures_path("mnist_pytorch")
     exp_ids = [exp.create_experiment(sess, config, model) for _ in range(2)]
 
     try:

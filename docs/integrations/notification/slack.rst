@@ -1,3 +1,5 @@
+.. _slack-integration:
+
 #######
  Slack
 #######

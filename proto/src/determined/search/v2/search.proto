@@ -223,6 +223,7 @@ message ValidationHistoryEntry {
 }
 
 // File node is one node of file in search model definition file tree.
+// File node is one node of a file in search model definition file tree.
 message FileNode {
   // Path of file.
   string path = 1;

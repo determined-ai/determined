@@ -65,23 +65,6 @@ func (a *MiscAuthZPermissive) CanViewExternalJobs(
 	return (&MiscAuthZBasic{}).CanViewExternalJobs(ctx, curUser)
 }
 
-// CanModifyGlobalConfigPolicies calls the RBAC implementation and returns if
-// the user has access to modfy global task config policies.
-func (a *MiscAuthZPermissive) CanModifyGlobalConfigPolicies(
-	ctx context.Context, curUser *model.User,
-) (permErr error, err error) {
-	_, _ = (&MiscAuthZRBAC{}).CanModifyGlobalConfigPolicies(ctx, curUser)
-	return (&MiscAuthZBasic{}).CanModifyGlobalConfigPolicies(ctx, curUser)
-}
-
-// CanViewGlobalConfigPolicies calls the RBAC implementation but always allows access.
-func (a *MiscAuthZPermissive) CanViewGlobalConfigPolicies(
-	ctx context.Context, curUser *model.User,
-) (permErr error, err error) {
-	_, _ = (&MiscAuthZRBAC{}).CanViewGlobalConfigPolicies(ctx, curUser)
-	return (&MiscAuthZBasic{}).CanViewGlobalConfigPolicies(ctx, curUser)
-}
-
 func init() {
 	AuthZProvider.Register("permissive", &MiscAuthZPermissive{})
 }

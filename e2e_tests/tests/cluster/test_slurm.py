@@ -196,10 +196,10 @@ def test_mnist_pytorch_distributed() -> None:
     sess = api_utils.user_session()
     config = conf.load_config(conf.tutorials_path("mnist_pytorch/distributed.yaml"))
     config["searcher"]["max_length"] = {"epochs": 1}
-    config["records_per_epoch"] = 5000
+    config["records_per_epoch"] = 64
     config["max_restarts"] = 0
 
-    exp.run_basic_test_with_temp_config(sess, config, conf.tutorials_path("mnist_pytorch"), 1)
+    exp.run_basic_test_with_temp_config(sess, config, conf.fixtures_path("mnist_pytorch"), 1)
 
 
 # Test to ensure that determined is able to handle preemption gracefully when using dispatcher RM.

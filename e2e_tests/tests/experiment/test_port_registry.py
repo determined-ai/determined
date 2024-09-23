@@ -12,7 +12,7 @@ def test_multi_trial_exp_port_registry() -> None:
     experiment_id = exp.create_experiment(
         sess,
         conf.tutorials_path("mnist_pytorch/dist_random.yaml"),
-        conf.tutorials_path("mnist_pytorch"),
+        conf.fixtures_path("mnist_pytorch"),
     )
 
     exp.wait_for_experiment_state(

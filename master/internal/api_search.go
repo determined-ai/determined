@@ -132,6 +132,19 @@ func (a *apiServer) GetSearcherEventsV2(
 	}
 	res := apiv2.GetSearcherEventsV2Response{
 		SearcherEvents: expRes.SearcherEvents,
+
+func (a *apiServer) GetSearchTags(
+	ctx context.Context, req *apiv2.GetSearchTagsRequest,
+) (*apiv2.GetSearchTagsResponse, error) {
+	expReq := apiv1.GetExperimentLabelsRequest{
+		ProjectId: req.ProjectId,
+	}
+	expRes, err := a.GetExperimentLabels(ctx, &expReq)
+	if err != nil {
+		return nil, err
+	}
+	res := apiv2.GetSearchTagsResponse{
+		Tags: expRes.Labels,
 	}
 	return &res, nil
 }
@@ -162,5 +175,37 @@ func (a *apiServer) PutSearchRetainLogs(
 		return nil, err
 	}
 	res := apiv2.PutSearchRetainLogsResponse{}
+
+func (a *apiServer) PutSearchTag(
+	ctx context.Context, req *apiv2.PutSearchTagRequest,
+) (*apiv2.PutSearchTagResponse, error) {
+	expReq := apiv1.PutExperimentLabelRequest{
+		ExperimentId: req.SearchId,
+		Label:        req.Tag,
+	}
+	expRes, err := a.PutExperimentLabel(ctx, &expReq)
+	if err != nil {
+		return nil, err
+	}
+	res := apiv2.PutSearchTagResponse{
+		Tags: expRes.Labels,
+	}
+	return &res, nil
+}
+
+func (a *apiServer) DeleteSearchTag(
+	ctx context.Context, req *apiv2.DeleteSearchTagRequest,
+) (*apiv2.DeleteSearchTagResponse, error) {
+	expReq := apiv1.DeleteExperimentLabelRequest{
+		ExperimentId: req.SearchId,
+		Label:        req.Tag,
+	}
+	expRes, err := a.DeleteExperimentLabel(ctx, &expReq)
+	if err != nil {
+		return nil, err
+	}
+	res := apiv2.DeleteSearchTagResponse{
+		Tags: expRes.Labels,
+	}
 	return &res, nil
 }

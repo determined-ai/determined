@@ -20,7 +20,7 @@ def test_streaming_metrics_api() -> None:
     experiment_id = exp.create_experiment(
         sess,
         conf.fixtures_path("mnist_pytorch/adaptive_short.yaml"),
-        conf.tutorials_path("mnist_pytorch"),
+        conf.fixtures_path("mnist_pytorch"),
     )
     # To fully test the streaming APIs, the requests need to start running immediately after the
     # experiment, and then stay open until the experiment is complete. To accomplish this with all

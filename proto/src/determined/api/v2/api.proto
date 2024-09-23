@@ -72,6 +72,10 @@ service Determined {
   rpc GetSearcherEventsV2(GetSearcherEventsV2Request) returns (GetSearcherEventsV2Response) {
     option (google.api.http) = {
       get: "/api/v2/searches/{search_id}/searcher_events"
+  // Get a list of unique search tags.
+  rpc GetSearchTags(GetSearchTagsRequest) returns (GetSearchTagsResponse) {
+    option (google.api.http) = {
+      get: "/api/v2/search/tags"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Searches"
@@ -84,6 +88,11 @@ service Determined {
     option (google.api.http) = {
       post: "/api/v2/searches/{search_id}/searcher_operations"
       body: "*"
+
+  // Put a new tag on the search.
+  rpc PutSearchTag(PutSearchTagRequest) returns (PutSearchTagResponse) {
+    option (google.api.http) = {
+      put: "/api/v2/searches/{search_id}/tags/{tag}"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Searches"
@@ -96,6 +105,12 @@ service Determined {
     option (google.api.http) = {
       put: "/api/v1/search/{search_id}/retain_logs"
       body: "*"
+
+  // Delete a tag from the search.
+  rpc DeleteSearchTag(DeleteSearchTagRequest)
+      returns (DeleteSearchTagResponse) {
+    option (google.api.http) = {
+      delete: "/api/v1/searches/{search_id}/tags/{tag}"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Searches"

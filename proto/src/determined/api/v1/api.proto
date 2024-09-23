@@ -493,7 +493,7 @@ service Determined {
       get: "/api/v1/experiments/{experiment_id}/model_def"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Experiments"
+      tags: "Internal"
     };
     option deprecated = true;  // Use GetTaskModelDef instead.
   }
@@ -514,7 +514,7 @@ service Determined {
       get: "/api/v1/experiments/{experiment_id}/file_tree"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Experiments"
+      tags: "Internal"
     };
   }
   // Get one file content of model definition of an experiment.
@@ -545,7 +545,7 @@ service Determined {
       get: "/api/v1/experiments/{experiment_id}/validation-history"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Experiments"
+      tags: "Internal"
     };
   }
   // Activate an experiment.
@@ -757,7 +757,7 @@ service Determined {
       body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Experiments"
+      tags: "Internal"
     };
   }
 
@@ -791,7 +791,7 @@ service Determined {
       get: "/api/v1/trials/time-series"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Experiments"
+      tags: "Internal"
     };
   }
 
@@ -912,7 +912,7 @@ service Determined {
       get: "/api/v1/trials/{trial_id}/logs/fields"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: [ "Experiments", "Trials" ]
+      tags: [ "Internal" ]
     };
     option deprecated = true;
   }
@@ -2836,6 +2836,7 @@ service Determined {
       returns (PutGlobalConfigPoliciesResponse) {
     option (google.api.http) = {
       put: "/api/v1/config-policies/global/{workload_type}"
+      body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Alpha"

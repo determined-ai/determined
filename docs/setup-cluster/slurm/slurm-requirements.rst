@@ -1,83 +1,13 @@
 .. _slurm-requirements:
 
-###########################
- Installation Requirements
-###########################
+########################
+ Slurm/PBS Requirements
+########################
 
-********************
- Basic Requirements
-********************
+This document describes the specific requirements for deploying Determined on Slurm or PBS workload
+managers.
 
-To deploy the Determined HPC Launcher on Slurm/PBS, the following requirements must be met.
-
--  The login node, admin node, and compute nodes must be installed and configured with one of the
-   following Linux distributions:
-
-   -  RHEL or Rocky Linux® 8.5, 8.6
-   -  RHEL 9
-   -  SUSE® Linux Enterprise Server (SLES) 12 SP3 , 15 SP3, 15 SP4
-   -  Ubuntu® 20.04, 22.04
-   -  Cray OS (COS) 2.3, 2.4
-
-   Note: More restrictive Linux distribution dependencies may be required by your choice of
-   Slurm/PBS version and container runtime (Singularity/Apptainer®, Podman, or NVIDIA® Enroot).
-
--  Slurm 20.02 or greater (excluding 22.05.5 through at least 22.05.8 - see
-   :ref:`slurm-known-issues`) or PBS 2021.1.2 or greater.
-
--  Apptainer 1.0 or greater, Singularity 3.7 or greater, Enroot 3.4.0 or greater or Podman 3.3.1 or
-   greater.
-
--  A cluster-wide shared filesystem with consistent path names across the HPC cluster.
-
--  User and group configuration must be consistent across all nodes.
-
--  All nodes must be able to resolve the hostnames of all other nodes.
-
--  To run jobs with GPUs, the NVIDIA or AMD drivers must be installed on each compute node.
-   Determined requires a version greater than or equal to 450.80 of the NVIDIA drivers. The NVIDIA
-   drivers can be installed as part of a CUDA installation but the rest of the CUDA toolkit is not
-   required.
-
--  Determined supports the `active Python versions <https://endoflife.date/python>`__.
-
-***********************
- Launcher Requirements
-***********************
-
-The launcher has the following additional requirements on the installation node:
-
--  Support for an RPM or Debian-based package installer
--  Java 1.8 or greater
--  Sudo is configured to process configuration files present in the ``/etc/sudoers.d`` directory
--  Access to the Slurm or PBS command-line interface for the cluster
--  Access to a cluster-wide file system with a consistent path names across the cluster
-
-.. _proxy-config-requirements:
-
-**********************************
- Proxy Configuration Requirements
-**********************************
-
-If internet connectivity requires a use of a proxy, verify the following requirements:
-
--  Ensure that the proxy variables are defined in ``/etc/environment`` (or ``/etc/sysconfig/proxy``
-   on SLES).
-
--  Ensure that the `no_proxy` setting covers the login and admin nodes. If these nodes may be
-   referenced by short names known only within the cluster, they must explicitly be included in the
-   `no_proxy` setting.
-
--  If your experiment code communicates between compute nodes with a protocol that honors proxy
-   environment variables, you should additionally include the names of all compute nodes in the
-   `no_proxy` variable setting.
-
-The HPC launcher imports `http_proxy`, `https_proxy`, `ftp_proxy`, `rsync_proxy`, `gopher_proxy`,
-`socks_proxy`, `socks5_server`, and `no_proxy` from ``/etc/environment`` and
-``/etc/sysconfig/proxy``. These environment variables are automatically exported in lowercase and
-uppercase into any launched jobs and containers.
-
-.. _slurm-config-requirements:
+For general environment requirements, please refer to :ref:`hpc-environment-requirements`.
 
 ********************
  Slurm Requirements
@@ -194,6 +124,8 @@ interacts with Slurm, we recommend the following steps:
 
 .. _pbs-config-requirements:
 
+.. _pbs-ngpus-config:
+
 ******************
  PBS Requirements
 ******************
@@ -225,8 +157,6 @@ interacts with PBS, we recommend the following steps:
    utilize only a single GPU on each node. To fully utilize multiple GPUs, you must either manually
    configure ``CUDA_VISIBLE_DEVICES`` or set the ``pbs.slots_per_node`` setting in your experiment
    configuration file to indicate the desired number of GPU slots for Determined.
-
-.. _pbs-ngpus-config:
 
 -  Ensure the ``ngpus`` resource is defined with the correct values.
 
@@ -396,11 +326,9 @@ interacts with PBS, we recommend the following steps:
  Apptainer/Singularity Requirements
 ************************************
 
-Apptainer/Singularity is the recommended container runtime for Determined on HPC clusters. Apptainer
-is a fork of Singularity 3.8 and provides both the ``apptainer`` and ``singularity`` commands. For
-purposes of this documentation, you can consider all references to Singularity to also apply to
-Apptainer. The Determined launcher interacts with Apptainer/Singularity using the ``singularity``
-command.
+Determined supports Apptainer (formerly known as Singularity) for container runtime in HPC
+environments. Ensure that Apptainer or Singularity is properly installed and configured on all
+compute nodes of your cluster.
 
 .. note::
 

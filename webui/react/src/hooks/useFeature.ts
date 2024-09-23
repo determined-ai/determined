@@ -57,7 +57,7 @@ export const FEATURES: Record<ValidFeature, FeatureDescription> = {
     friendlyName: 'Manage Templates',
   },
   webhook_improvement: {
-    defaultValue: false,
+    defaultValue: true,
     description: 'Allow webhooks to monitor experiments by workspace',
     friendlyName: 'Webhook Improvement',
   },

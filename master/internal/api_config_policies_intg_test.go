@@ -1,15 +1,17 @@
 package internal
 
 import (
-	"database/sql"
+	"context"
 	"fmt"
 	"testing"
 
 	"github.com/google/uuid"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
 	"github.com/determined-ai/determined/master/internal/configpolicy"
 	"github.com/determined-ai/determined/master/internal/db"
+	"github.com/determined-ai/determined/master/internal/mocks"
 	"github.com/determined-ai/determined/master/internal/user"
 	"github.com/determined-ai/determined/master/internal/workspace"
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -61,12 +63,12 @@ func TestDeleteWorkspaceConfigPolicies(t *testing.T) {
 
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
-			ntscPolicies := &model.NTSCTaskConfigPolicies{
+			ntscPolicies := &model.TaskConfigPolicies{
 				WorkspaceID:   ptrs.Ptr(int(test.req.WorkspaceId)),
 				WorkloadType:  model.NTSCType,
 				LastUpdatedBy: curUser.ID,
 			}
-			err = configpolicy.SetNTSCConfigPolicies(ctx, ntscPolicies)
+			err = configpolicy.SetTaskConfigPolicies(ctx, ntscPolicies)
 			require.NoError(t, err)
 
 			resp, err := api.DeleteWorkspaceConfigPolicies(ctx, test.req)
@@ -79,9 +81,10 @@ func TestDeleteWorkspaceConfigPolicies(t *testing.T) {
 			require.NotNil(t, resp)
 
 			// Policies removed?
-			policies, err := configpolicy.GetNTSCConfigPolicies(ctx, ptrs.Ptr(int(workspaceID)))
-			require.Nil(t, policies)
-			require.ErrorIs(t, err, sql.ErrNoRows)
+			policies, err := configpolicy.GetTaskConfigPolicies(ctx, ptrs.Ptr(int(workspaceID)), test.req.WorkloadType)
+			require.NoError(t, err)
+			require.Nil(t, policies.InvariantConfig)
+			require.Nil(t, policies.Constraints)
 		})
 	}
 
@@ -130,7 +133,7 @@ func TestDeleteGlobalConfigPolicies(t *testing.T) {
 
 	for _, test := range cases {
 		t.Run(test.name, func(t *testing.T) {
-			err := configpolicy.SetNTSCConfigPolicies(ctx, &model.NTSCTaskConfigPolicies{
+			err := configpolicy.SetTaskConfigPolicies(ctx, &model.TaskConfigPolicies{
 				WorkloadType:  model.NTSCType,
 				LastUpdatedBy: curUser.ID,
 			})
@@ -146,9 +149,10 @@ func TestDeleteGlobalConfigPolicies(t *testing.T) {
 			require.NotNil(t, resp)
 
 			// Policies removed?
-			policies, err := configpolicy.GetNTSCConfigPolicies(ctx, nil)
-			require.Nil(t, policies)
-			require.ErrorIs(t, err, sql.ErrNoRows)
+			policies, err := configpolicy.GetTaskConfigPolicies(ctx, nil, test.req.WorkloadType)
+			require.NoError(t, err)
+			require.Nil(t, policies.InvariantConfig)
+			require.Nil(t, policies.Constraints)
 		})
 	}
 }
@@ -211,4 +215,202 @@ func TestBasicRBACConfigPolicyPerms(t *testing.T) {
 			require.ErrorContains(t, err, test.err.Error())
 		})
 	}
+}
+
+func TestGetConfigPolicies(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	testutils.MustLoadLicenseAndKeyFromFilesystem("../../")
+
+	wkspResp, err := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: uuid.New().String()})
+	require.NoError(t, err)
+	workspaceID1 := ptrs.Ptr(int(wkspResp.Workspace.Id))
+	wkspResp, err = api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: uuid.New().String()})
+	require.NoError(t, err)
+	workspaceID2 := ptrs.Ptr(int(wkspResp.Workspace.Id))
+
+	setUpTaskConfigPolicies(ctx, t, workspaceID1, workspaceID2, curUser.ID)
+
+	cases := []struct {
+		name           string
+		workspaceID    *int
+		workloadType   string
+		err            error
+		hasConfig      bool
+		hasConstraints bool
+	}{
+		{
+			"invalid workload type",
+			workspaceID1,
+			"bad workload type",
+			fmt.Errorf("invalid workload type"),
+			false,
+			false,
+		},
+		{
+			"empty workload type",
+			workspaceID1,
+			"",
+			fmt.Errorf(noWorkloadErr),
+			false,
+			false,
+		},
+		{
+			"valid workspace request, only config",
+			workspaceID1,
+			model.NTSCType,
+			nil,
+			true,
+			false,
+		},
+		{
+			"valid workspace request, only constraints",
+			workspaceID1,
+			model.ExperimentType,
+			nil,
+			false,
+			true,
+		},
+		{
+			"valid workspace request both configs and constraints",
+			workspaceID2,
+			model.NTSCType,
+			nil,
+			true,
+			true,
+		},
+		{
+			"valid global request both configs and constraints",
+			nil,
+			model.NTSCType,
+			nil,
+			true,
+			true,
+		},
+		{
+			"no global config policy",
+			nil,
+			model.ExperimentType,
+			nil,
+			false,
+			false,
+		},
+	}
+
+	for _, test := range cases {
+		t.Run(test.name, func(t *testing.T) {
+			resp, err := api.getConfigPolicies(ctx, test.workspaceID, test.workloadType)
+			if test.err != nil {
+				require.ErrorContains(t, err, test.err.Error())
+				return
+			}
+			require.NoError(t, err)
+			require.NotNil(t, resp)
+
+			if test.hasConfig {
+				require.Contains(t, resp.String(), "invariant_config")
+			} else {
+				require.NotContains(t, resp.String(), "invariant_config")
+			}
+
+			if test.hasConstraints {
+				require.Contains(t, resp.String(), "constraints")
+			} else {
+				require.NotContains(t, resp.String(), "constraints")
+			}
+		})
+	}
+}
+
+func setUpTaskConfigPolicies(ctx context.Context, t *testing.T,
+	workspaceID1 *int, workspaceID2 *int, userID model.UserID,
+) {
+	// set only Experiment constraints policy for workspace 1
+	taskConfigPolicies := &model.TaskConfigPolicies{
+		WorkspaceID:   workspaceID1,
+		WorkloadType:  model.ExperimentType,
+		LastUpdatedBy: userID,
+		Constraints:   ptrs.Ptr(configpolicy.DefaultConstraintsStr),
+	}
+	err := configpolicy.SetTaskConfigPolicies(ctx, taskConfigPolicies)
+	require.NoError(t, err)
+
+	// set only NTSC config policy for workspace 1
+	taskConfigPolicies.WorkloadType = model.NTSCType
+	taskConfigPolicies.Constraints = nil
+	taskConfigPolicies.InvariantConfig = ptrs.Ptr(configpolicy.DefaultInvariantConfigStr)
+	err = configpolicy.SetTaskConfigPolicies(ctx, taskConfigPolicies)
+	require.NoError(t, err)
+
+	// set both config and constraints policy for workspace 2 (NTSC)
+	taskConfigPolicies.WorkspaceID = workspaceID2
+	taskConfigPolicies.Constraints = ptrs.Ptr(configpolicy.DefaultConstraintsStr)
+	err = configpolicy.SetTaskConfigPolicies(ctx, taskConfigPolicies)
+	require.NoError(t, err)
+
+	// set both config and constraints policy globally (NTSC)
+	taskConfigPolicies.WorkspaceID = nil
+	err = configpolicy.SetTaskConfigPolicies(ctx, taskConfigPolicies)
+	require.NoError(t, err)
+}
+
+func TestAuthZCanModifyConfigPolicies(t *testing.T) {
+	api, workspaceAuthZ, _, ctx := setupWorkspaceAuthZTest(t, nil)
+	testutils.MustLoadLicenseAndKeyFromFilesystem("../../")
+	configPolicyAuthZ := setupConfigPolicyAuthZ()
+
+	workspaceAuthZ.On("CanCreateWorkspace", mock.Anything, mock.Anything).Return(nil).Once()
+	workspaceAuthZ.On("CanGetWorkspace", mock.Anything, mock.Anything, mock.Anything).
+		Return(nil).Twice()
+
+	wkspResp, err := api.PostWorkspace(ctx, &apiv1.PostWorkspaceRequest{Name: uuid.New().String()})
+	require.NoError(t, err)
+	workspaceID := wkspResp.Workspace.Id
+
+	// (Workspace-level) Deny with permission access error.
+	expectedErr := fmt.Errorf("canModifyConfigPoliciesError")
+	configPolicyAuthZ.On("CanModifyWorkspaceConfigPolicies", mock.Anything, mock.Anything,
+		mock.Anything).Return(expectedErr).Once()
+
+	_, err = api.DeleteWorkspaceConfigPolicies(ctx,
+		&apiv1.DeleteWorkspaceConfigPoliciesRequest{
+			WorkspaceId:  workspaceID,
+			WorkloadType: model.NTSCType,
+		})
+	require.Equal(t, expectedErr, err)
+
+	// Nil error returns whatever the delete request returned.
+	configPolicyAuthZ.On("CanModifyWorkspaceConfigPolicies", mock.Anything, mock.Anything,
+		mock.Anything).Return(nil).Once()
+	_, err = api.DeleteWorkspaceConfigPolicies(ctx,
+		&apiv1.DeleteWorkspaceConfigPoliciesRequest{
+			WorkspaceId:  workspaceID,
+			WorkloadType: model.NTSCType,
+		})
+	require.NoError(t, err)
+
+	// (Global) Deny with permission access error.
+	expectedErr = fmt.Errorf("canModifyGlobalConfigPoliciesError")
+	configPolicyAuthZ.On("CanModifyGlobalConfigPolicies", mock.Anything, mock.Anything).
+		Return(expectedErr, nil).Once()
+
+	_, err = api.DeleteGlobalConfigPolicies(ctx,
+		&apiv1.DeleteGlobalConfigPoliciesRequest{WorkloadType: model.NTSCType})
+	require.Equal(t, expectedErr, err)
+
+	// Nil error returns whatever the delete request returned.
+	configPolicyAuthZ.On("CanModifyGlobalConfigPolicies", mock.Anything, mock.Anything).
+		Return(nil, nil).Once()
+	_, err = api.DeleteGlobalConfigPolicies(ctx,
+		&apiv1.DeleteGlobalConfigPoliciesRequest{WorkloadType: model.NTSCType})
+	require.NoError(t, err)
+}
+
+var cpAuthZ *mocks.ConfigPolicyAuthZ
+
+func setupConfigPolicyAuthZ() *mocks.ConfigPolicyAuthZ {
+	if cpAuthZ == nil {
+		cpAuthZ = &mocks.ConfigPolicyAuthZ{}
+		configpolicy.AuthZProvider.Register("mock", cpAuthZ)
+	}
+	return cpAuthZ
 }
