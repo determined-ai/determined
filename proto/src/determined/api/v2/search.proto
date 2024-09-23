@@ -12,7 +12,6 @@ import "determined/job/v2/job.proto";
 import "determined/search/v2/search.proto";
 import "determined/experiment/v1/searcher.proto";
 
-
 // Get a single search.
 message GetSearchRequest {
   // The id of the search.

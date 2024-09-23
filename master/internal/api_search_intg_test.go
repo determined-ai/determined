@@ -6,7 +6,6 @@ package internal
 import (
 	"encoding/json"
 	"testing"
-
 	"time"
 
 	"github.com/google/uuid"
