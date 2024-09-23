@@ -320,8 +320,8 @@ test.describe('Experiment List', () => {
         await multiSortMenu.multiSort.add.pwLocator.click();
 
         const secondRow = multiSortMenu.multiSort.rows.nth(1);
-        await secondRow.column.nth(1).selectMenuOption(secondSortBy);
-        await secondRow.order.nth(1).selectMenuOption(secondSortOrder);
+        await secondRow.column.selectMenuOption(secondSortBy);
+        await secondRow.order.selectMenuOption(secondSortOrder);
 
         await multiSortMenu.close();
         await scenario();
