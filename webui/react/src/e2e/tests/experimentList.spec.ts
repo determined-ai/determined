@@ -287,7 +287,7 @@ test.describe('Experiment List', () => {
   });
 
   test('Multi-sort menu', async () => {
-    const getOrder = async (firstKey: keyof ExperimentBase, secondKey: keyof ExperimentBase) => {
+    const checkTableOrder = async (firstKey: keyof ExperimentBase, secondKey: keyof ExperimentBase) => {
       const experimentList: ExperimentBase[] = JSON.parse(await detExecSync('experiment ls'));
 
       return [
@@ -305,6 +305,7 @@ test.describe('Experiment List', () => {
       firstSortOrder: string,
       secondSortBy: string,
       secondSortOrder: string,
+      scenario: () => Promise<void>,
     ) => {
       await test.step(`Sort by ${firstSortBy} and ${secondSortBy}`, async () => {
         await multiSortMenu.open();
@@ -318,21 +319,25 @@ test.describe('Experiment List', () => {
 
         await multiSortMenu.multiSort.add.pwLocator.click();
 
-        const secondRow = multiSortMenu.multiSort.rows.nth(2);
-        await secondRow.column.selectMenuOption(secondSortBy);
-        await secondRow.order.selectMenuOption(secondSortOrder);
+        const secondRow = multiSortMenu.multiSort.rows.nth(1);
+        await secondRow.column.nth(1).selectMenuOption(secondSortBy);
+        await secondRow.order.nth(1).selectMenuOption(secondSortOrder);
+
         await multiSortMenu.close();
+        await scenario();
         await waitTableStable();
       });
     };
 
-    await sortingScenario('ID', '9 → 0', 'Start time', 'Oldest → Newest');
-    const [higher, lower] = await getOrder('id', 'startTime');
-    await expect(higher.id).toBeGreaterThan(lower.id as number);
+    await sortingScenario('ID', '9 → 0', 'Start time', 'Oldest → Newest',  async () => {
+      const [higher, lower] = await checkTableOrder('id', 'startTime');
+      await expect(higher.id).toBeGreaterThan(lower.id as number);
+      },);
 
-    await sortingScenario('Trial count', '0 → 9', 'Searcher', 'A → Z');
-    const [first, last] = await getOrder('numTrials', 'searcherType');
-    await expect(first.numTrials).toBeLessThanOrEqual(last.numTrials as number);
+    await sortingScenario('Trial count', '0 → 9', 'Searcher', 'A → Z',  async () => {
+      const [first, last] = await checkTableOrder('numTrials', 'searcherType');
+      await expect(first.numTrials).toBeLessThanOrEqual(last.numTrials as number);
+      },);
   });
 
   test('Datagrid Functionality Validations', async ({ authedPage }) => {
