@@ -326,7 +326,7 @@ test.describe('Experiment List', () => {
       });
     };
 
-    await sortingScenario('ID', '9 → 0', 'Started', 'A → Z');
+    await sortingScenario('ID', '9 → 0', 'Start time', 'Oldest → Newest');
     const [higher, lower] = await getOrder('id', 'startTime');
     await expect(higher.id).toBeGreaterThan(lower.id as number);
 
