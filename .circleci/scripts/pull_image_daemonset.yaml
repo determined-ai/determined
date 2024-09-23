@@ -13,7 +13,7 @@ spec:
     spec:
       containers:
         - name: pull-docker-daemonset
-          image: determinedai/pytorch-ngc-dev:0736b6d
+          image: determinedai/pytorch-ngc:0.37.0
           command: ["/bin/bash"]
           args: ["echo", "test"]
           resources:
