@@ -11,6 +11,7 @@ import yaml from 'js-yaml';
 import { pick } from 'lodash';
 import React, { Fragment, useCallback, useEffect, useId, useMemo } from 'react';
 
+import CodeEditor from 'components/CodeEditor';
 import { useAsync } from 'hooks/useAsync';
 import usePermissions from 'hooks/usePermissions';
 import { paths } from 'routes/utils';
@@ -53,8 +54,6 @@ interface Props {
   onClose?: () => void;
   workspaceId?: number;
 }
-
-const CodeEditor = React.lazy(() => import('hew/CodeEditor'));
 
 const WorkspaceCreateModalComponent: React.FC<Props> = ({ onClose, workspaceId }: Props = {}) => {
   const idPrefix = useId();

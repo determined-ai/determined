@@ -116,7 +116,13 @@ module.exports = {
     'no-empty': ['error', { allowEmptyCatch: false }],
     'no-multi-spaces': ['error', { ignoreEOLComments: true }],
     'no-multiple-empty-lines': ['error', { max: 1, maxBOF: 0, maxEOF: 0 }],
-    'no-restricted-imports': ['error', { patterns: ['..*'] }],
+    'no-restricted-imports': [
+      'error',
+      {
+        paths: [{ message: 'Please use components/CodeEditor instead', name: 'hew/CodeEditor' }],
+        patterns: ['..*'],
+      },
+    ],
     'no-throw-literal': 'error',
     'no-trailing-spaces': ['error', {}],
     'no-unused-vars': 'off',

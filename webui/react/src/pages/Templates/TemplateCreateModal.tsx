@@ -1,5 +1,4 @@
 import Alert from 'hew/Alert';
-import CodeEditor from 'hew/CodeEditor';
 import Form from 'hew/Form';
 import Input from 'hew/Input';
 import { Modal } from 'hew/Modal';
@@ -10,6 +9,7 @@ import yaml from 'js-yaml';
 import { useObservable } from 'micro-observables';
 import React, { useCallback, useEffect, useId, useState } from 'react';
 
+import CodeEditor from 'components/CodeEditor';
 import { createTaskTemplate, updateTaskTemplate, updateTaskTemplateName } from 'services/api';
 import workspaceStore from 'stores/workspaces';
 import { Template, Workspace } from 'types';
