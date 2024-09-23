@@ -1,12 +1,34 @@
 .. _task-config-policies:
 
-######################
- Task Config Policies
-######################
+#######################
+ Config Policies Guide
+#######################
 
-Task Config Policies allow administrators to set limits on how users can define workloads (e.g.,
-experiments and notebooks, tensorboards, shells, and commands). This feature enables enterprises to
-govern user behavior more closely at various levels within the Determined cluster.
+Config Policies allow administrators to set limits on how users can define workloads (e.g.,
+experiments and notebooks, tensorboards, shells, and commands). This feature enables you to govern
+user behavior more closely at various levels within the Determined cluster.
+
+.. include:: ../_shared/attn-enterprise-edition.txt
+
+When implementing Config Policies, administrators should be aware of the following:
+
+#. Separate Priority Limits: Administrators can now set different priority limits for experiments
+   and NTSC (notebooks, tensorboards, shells, and commands) tasks. This allows for more granular
+   control over task prioritization and resource allocation.
+
+#. Priority Overrides: If a given scope has an invariant config policy set for a given task, and
+   that invariant configuration policy specifies ``priority``, this priority can still be overridden
+   using the ``SetJobPriority`` API endpoint. However, the new priority must not violate any
+   constraints defined in the applicable policies for that scope.
+
+These features provide administrators with greater flexibility in managing task priorities while
+still maintaining policy-based control over resource usage.
+
++------------------------------------------------------------------+
+| Visit the Config Policies Reference                              |
++==================================================================+
+| :ref:`task-config-policies-reference`                            |
++------------------------------------------------------------------+
 
 **************
  Key Features
@@ -14,26 +36,26 @@ govern user behavior more closely at various levels within the Determined cluste
 
 -  Set policies via WebUI or CLI
 -  Define limits for resource usage, environment settings, and more
--  Apply policies at different levels (cluster-wide, workspace, or project)
+-  Apply policies at different levels (cluster-wide or workspace)
 -  Override capabilities for specific user roles or groups
--  Set different priority limits for experiments and NTSC (notebooks, tensorboards, shells, and
+-  Set different priority limits for experiments and NTSC (notebooks, TensorBoards, shells, and
    commands) tasks
+-  Allow priority overrides within policy constraints
 
 ******************
  Setting Policies
 ******************
 
-Administrators can set Task Config Policies using either the WebUI or the CLI.
+Administrators can set Config Policies using either the WebUI or the CLI.
 
 WebUI
 =====
 
-#. Log in to the Determined WebUI as an administrator.
-#. Navigate to the "Admin" section.
-#. Select "Task Config Policies" from the menu.
-#. Click "Create New Policy" or edit an existing policy.
-#. Define the policy settings and scope (cluster-wide, workspace, or project).
-#. Save the policy.
+#. Sign in to the Determined WebUI as a cluster administrator or workspace administrator.
+#. Navigate to **Config Policies**.
+#. Choose **Experiments** or **Tasks** to display the editable configuration file.
+#. Define the policies then click **Apply**.
+#. Confirm you want to apply the policies.
 
 CLI
 ===
@@ -59,6 +81,31 @@ Use the following commands to manage Task Config Policies via CLI:
 *****************
 
 Here are some example policies:
+
+#. Limit resources.
+
+In the following example for an Agent resource manager (RM), the ``priority_limit`` is set to ``50``
+and ``max_slots`` is set to ``1``. This means a user cannot set a priority value lower than 50 and
+cannot set ``max_slots`` to greater than ``1``.
+
+.. note::
+
+   Tasks (NTSC - notebooks, Tensorboards, shells, and commands) and some resource managers (RMs)
+   have a priority. Priority levels are between 1 and 99. The default cluster priority is usually
+   42. The priority limit determines the order in which queued tasks run. In this example we are
+   using limits because for the agent resource manager, a lower number means a higher priority. For
+   a Kubernetes resource manager, a higher number means a higher priority.
+
+.. code:: bash
+
+   # Set priority limit to 50
+   constraints:
+      priority_limit: 50
+      resources:
+         max_slots: 1
+
+If your priority limits are above the defaults, for example if your notebook priority is set to 42
+and the limit is 50, then the request fails and the system displays a descriptive message.
 
 #. Limit maximum GPU usage per experiment:
 
@@ -92,19 +139,6 @@ Here are some example policies:
    config:
      scheduling:
        default_priority: 5
-
-******************
- Policy Hierarchy
-******************
-
-Policies are applied in the following order of precedence:
-
-#. Project-level policies
-#. Workspace-level policies
-#. Cluster-wide policies
-
-More specific policies (e.g., project-level) override more general policies (e.g., cluster-wide)
-when conflicts occur.
 
 *******************
  Priority Override
