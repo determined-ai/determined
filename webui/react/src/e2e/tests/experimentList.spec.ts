@@ -286,6 +286,55 @@ test.describe('Experiment List', () => {
     );
   });
 
+  test('Multi-sort menu', async () => {
+    const getOrder = async (firstKey: keyof ExperimentBase, secondKey: keyof ExperimentBase) => {
+      const experimentList: ExperimentBase[] = JSON.parse(await detExecSync('experiment ls'));
+
+      return [
+        { [firstKey]: experimentList[0][firstKey], [secondKey]: experimentList[0][secondKey] },
+        {
+          [firstKey]: experimentList[experimentList.length - 1][firstKey],
+          [secondKey]: experimentList[experimentList.length - 1][secondKey],
+        },
+      ];
+    };
+    const multiSortMenu = projectDetailsPage.f_experimentList.tableActionBar.multiSortMenu;
+
+    const sortingScenario = async (
+      firstSortBy: string,
+      firstSortOrder: string,
+      secondSortBy: string,
+      secondSortOrder: string,
+    ) => {
+      await test.step(`Sort by ${firstSortBy} and ${secondSortBy}`, async () => {
+        await multiSortMenu.open();
+        await multiSortMenu.multiSort.reset.pwLocator.click();
+        await multiSortMenu.close();
+        await multiSortMenu.open();
+
+        const firstRow = multiSortMenu.multiSort.rows.nth(0);
+        await firstRow.column.selectMenuOption(firstSortBy);
+        await firstRow.order.selectMenuOption(firstSortOrder);
+
+        await multiSortMenu.multiSort.add.pwLocator.click();
+
+        const secondRow = multiSortMenu.multiSort.rows.nth(2);
+        await secondRow.column.selectMenuOption(secondSortBy);
+        await secondRow.order.selectMenuOption(secondSortOrder);
+        await multiSortMenu.close();
+        await waitTableStable();
+      });
+    };
+
+    await sortingScenario('ID', '9 → 0', 'Started', 'A → Z');
+    const [higher, lower] = await getOrder('id', 'startTime');
+    await expect(higher.id).toBeGreaterThan(lower.id as number);
+
+    await sortingScenario('Trial count', '0 → 9', 'Searcher', 'A → Z');
+    const [first, last] = await getOrder('numTrials', 'searcherType');
+    await expect(first.numTrials).toBeLessThanOrEqual(last.numTrials as number);
+  });
+
   test('Datagrid Functionality Validations', async ({ authedPage }) => {
     const row = projectDetailsPage.f_experimentList.dataGrid.getRowByIndex(0);
     await test.step('Select Row', async () => {
