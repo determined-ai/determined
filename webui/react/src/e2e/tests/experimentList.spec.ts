@@ -286,7 +286,7 @@ test.describe('Experiment List', () => {
     );
   });
 
-  test('Multi-sort menu', async () => {
+  test('Multi-sort menu', async ({ dev }) => {
     const checkTableOrder = async (firstKey: keyof ExperimentBase, secondKey: keyof ExperimentBase) => {
       const experimentList: ExperimentBase[] = JSON.parse(await detExecSync('experiment ls'));
 
@@ -318,8 +318,9 @@ test.describe('Experiment List', () => {
         await firstRow.order.selectMenuOption(firstSortOrder);
 
         await multiSortMenu.multiSort.add.pwLocator.click();
-
+        
         const secondRow = multiSortMenu.multiSort.rows.nth(1);
+        dev.debugComponentVisible(secondRow);
         await secondRow.column.selectMenuOption(secondSortBy);
         await secondRow.order.selectMenuOption(secondSortOrder);
 
