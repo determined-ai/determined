@@ -244,8 +244,8 @@ export const getColumnDefs = ({
     renderer: (record: FlatRun) =>
       handleEmptyCell(record.experiment?.externalExperimentId, (data) => ({
         allowOverlay: false,
-        displayData: data,
         data: data,
+        displayData: data,
         kind: GridCellKind.Text,
       })),
     title: 'External Experiment ID',
@@ -260,8 +260,8 @@ export const getColumnDefs = ({
     renderer: (record: FlatRun) =>
       handleEmptyCell(record.externalRunId, (data) => ({
         allowOverlay: false,
-        displayData: data,
         data: data,
+        displayData: data,
         kind: GridCellKind.Text,
       })),
     title: 'External Run ID',
@@ -373,8 +373,8 @@ export const getColumnDefs = ({
     renderer: (record: FlatRun) =>
       handleEmptyCell(record.experiment?.resourcePool, (data) => ({
         allowOverlay: false,
-        displayData: data,
         data: data,
+        displayData: data,
         kind: GridCellKind.Text,
       })),
     title: 'Resource Pool',
@@ -387,8 +387,8 @@ export const getColumnDefs = ({
     renderer: (record: FlatRun) =>
       handleEmptyCell(record.experiment?.searcherMetric, (data) => ({
         allowOverlay: false,
-        displayData: data,
         data: data,
+        displayData: data,
         kind: GridCellKind.Text,
       })),
     title: 'Searcher Metric',
@@ -400,8 +400,8 @@ export const getColumnDefs = ({
     renderer: (record: FlatRun) =>
       handleEmptyCell(record.experiment?.searcherType, (data) => ({
         allowOverlay: false,
-        displayData: data,
         data: data,
+        displayData: data,
         kind: GridCellKind.Text,
       })),
     title: 'Searcher',

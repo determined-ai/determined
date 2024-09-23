@@ -1,13 +1,14 @@
 import { GridCell, GridCellKind } from '@glideapps/glide-data-grid';
-import { EMPTY_CELL, handleEmptyCell } from './table';
 import fc from 'fast-check';
+
+import { EMPTY_CELL, handleEmptyCell } from './table';
 
 const generateGridCell = (value: unknown): GridCell => {
   return {
-    kind: GridCellKind.Text,
+    allowOverlay: false,
     data: String(value),
     displayData: String(value),
-    allowOverlay: false,
+    kind: GridCellKind.Text,
   };
 };
 
