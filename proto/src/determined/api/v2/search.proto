@@ -54,3 +54,18 @@ message PostSearcherOperationsV2Request {
 
 // Response to PostSearcherOperationsV2Response.
 message PostSearcherOperationsV2Response {}
+
+// Request for changing the log retention policy for the an search.
+message PutSearchRetainLogsRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "search_id", "num_days" ] }
+  };
+  // The ID of the search.
+  int32 search_id = 1;
+
+  // The number of days to retain logs, starting from the end time of the task.
+  int32 num_days = 2;
+}
+
+// Response to PutSearchRetainLogsRequest.
+message PutSearchRetainLogsResponse {}

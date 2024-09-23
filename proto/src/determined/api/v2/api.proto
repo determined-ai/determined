@@ -89,4 +89,16 @@ service Determined {
       tags: "Searches"
     };
   }
+
+  // Retain logs for a search.
+  rpc PutSearchRetainLogs(PutSearchRetainLogsRequest)
+      returns (PutSearchRetainLogsResponse) {
+    option (google.api.http) = {
+      put: "/api/v1/search/{search_id}/retain_logs"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Searches"
+    };
+  }
 }

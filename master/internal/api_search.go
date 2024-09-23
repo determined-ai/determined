@@ -149,3 +149,18 @@ func (a *apiServer) PostSearcherOperationsV2(
 	res := apiv2.PostSearcherOperationsV2Response{}
 	return &res, nil
 }
+
+func (a *apiServer) PutSearchRetainLogs(
+	ctx context.Context, req *apiv2.PutSearchRetainLogsRequest,
+) (*apiv2.PutSearchRetainLogsResponse, error) {
+	expReq := apiv1.PutExperimentRetainLogsRequest{
+		ExperimentId: req.SearchId,
+		NumDays:      req.NumDays,
+	}
+	_, err := a.PutExperimentRetainLogs(ctx, &expReq)
+	if err != nil {
+		return nil, err
+	}
+	res := apiv2.PutSearchRetainLogsResponse{}
+	return &res, nil
+}
