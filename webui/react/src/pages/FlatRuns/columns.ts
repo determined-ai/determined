@@ -1,9 +1,4 @@
-import {
-  CellClickedEventArgs,
-  GridCell,
-  GridCellKind,
-  Theme as GTheme,
-} from '@glideapps/glide-data-grid';
+import { CellClickedEventArgs, GridCellKind, Theme as GTheme } from '@glideapps/glide-data-grid';
 import { getColor, getInitials } from 'hew/Avatar';
 import {
   ColumnDef,
@@ -29,6 +24,7 @@ import { DURATION_UNIT_MEASURES, durationInEnglish, getTimeInEnglish } from 'uti
 import { humanReadableNumber } from 'utils/number';
 import { AnyMouseEvent } from 'utils/routes';
 import { capitalize, floatToPercent, humanReadableBytes } from 'utils/string';
+import { handleEmptyCell } from 'utils/table';
 import { getDisplayName } from 'utils/user';
 
 // order used in ColumnPickerMenu
@@ -104,13 +100,6 @@ function getCellStateFromExperimentState(expState: RunState) {
   }
 }
 
-const EMPTY_CELL: GridCell = {
-  allowOverlay: false,
-  data: '-',
-  displayData: '-',
-  kind: GridCellKind.Text,
-} as const;
-
 interface Params {
   appTheme: Theme;
   columnWidths: Record<string, number>;
@@ -153,24 +142,18 @@ export const getColumnDefs = ({
     id: 'duration',
     isNumerical: true,
     renderer: (record: FlatRun) =>
-      record.duration !== undefined
-        ? {
-            allowOverlay: false,
-            copyData: durationInEnglish(
-              (record.endTime ? new Date(record.endTime) : new Date()).getTime() -
-                new Date(record.startTime).getTime(),
-              {
-                conjunction: ' ',
-                delimiter: ' ',
-                largest: 2,
-                serialComma: false,
-                unitMeasures: { ...DURATION_UNIT_MEASURES, ms: 1000 },
-              },
-            ),
-            data: { kind: TEXT_CELL },
-            kind: GridCellKind.Custom,
-          }
-        : EMPTY_CELL,
+      handleEmptyCell(record.duration, (data) => ({
+        allowOverlay: false,
+        copyData: durationInEnglish(data, {
+          conjunction: ' ',
+          delimiter: ' ',
+          largest: 2,
+          serialComma: false,
+          unitMeasures: { ...DURATION_UNIT_MEASURES, ms: 1000 },
+        }),
+        data: { kind: TEXT_CELL },
+        kind: GridCellKind.Custom,
+      })),
     title: 'Duration',
     tooltip: () => undefined,
     width: columnWidths.duration ?? defaultColumnWidths.duration ?? MIN_COLUMN_WIDTH,
@@ -178,14 +161,16 @@ export const getColumnDefs = ({
   experimentDescription: {
     id: 'experimentDescription',
     renderer: (record: FlatRun) =>
-      record.experiment?.description
-        ? {
-            allowOverlay: false,
-            copyData: record.experiment.description,
-            data: { kind: TEXT_CELL },
-            kind: GridCellKind.Custom,
-          }
-        : EMPTY_CELL,
+      handleEmptyCell(
+        record.experiment?.description,
+        (data) => ({
+          allowOverlay: false,
+          copyData: data,
+          data: { kind: TEXT_CELL },
+          kind: GridCellKind.Custom,
+        }),
+        false,
+      ),
     title: 'Search Description',
     tooltip: () => undefined,
     width:
@@ -228,34 +213,27 @@ export const getColumnDefs = ({
   experimentName: {
     id: 'experimentName',
     renderer: (record: FlatRun) =>
-      record.experiment?.name !== undefined
-        ? {
-            allowOverlay: false,
-            copyData: record.experiment.name,
-            cursor: 'pointer',
-            data: {
-              kind: LINK_CELL,
-              link: record.experiment?.id
-                ? {
-                    href: paths.experimentDetails(record.experiment?.id),
-                    title: record.experiment.name,
-                    unmanaged: record.experiment.unmanaged,
-                  }
-                : undefined,
-              navigateOn: 'click',
-              onClick: (e: CellClickedEventArgs) => {
-                if (record.experiment) {
-                  handlePath(e as unknown as AnyMouseEvent, {
-                    path: paths.experimentDetails(record.experiment.id),
-                  });
-                }
-              },
-              underlineOffset: 6,
-            },
-            kind: GridCellKind.Custom,
-            readonly: true,
-          }
-        : EMPTY_CELL,
+      handleEmptyCell(record.experiment, (data) => ({
+        allowOverlay: false,
+        copyData: data.name,
+        cursor: 'pointer',
+        data: {
+          kind: LINK_CELL,
+          link: {
+            href: paths.experimentDetails(data.id),
+            title: data.name,
+            unmanaged: data.unmanaged,
+          },
+          navigateOn: 'click',
+          onClick: (e: CellClickedEventArgs) =>
+            handlePath(e as unknown as AnyMouseEvent, {
+              path: paths.experimentDetails(data.id),
+            }),
+          underlineOffset: 6,
+        },
+        kind: GridCellKind.Custom,
+        readonly: true,
+      })),
     title: 'Search Name',
     tooltip: () => undefined,
     width: columnWidths.experimentName ?? defaultColumnWidths.experimentName ?? MIN_COLUMN_WIDTH,
@@ -264,14 +242,12 @@ export const getColumnDefs = ({
   externalExperimentId: {
     id: 'externalExperimentId',
     renderer: (record: FlatRun) =>
-      record.experiment?.externalExperimentId !== undefined
-        ? {
-            allowOverlay: false,
-            copyData: record.experiment.externalExperimentId,
-            data: { kind: TEXT_CELL },
-            kind: GridCellKind.Custom,
-          }
-        : EMPTY_CELL,
+      handleEmptyCell(record.experiment?.externalExperimentId, (data) => ({
+        allowOverlay: false,
+        displayData: data,
+        data: data,
+        kind: GridCellKind.Text,
+      })),
     title: 'External Experiment ID',
     tooltip: () => undefined,
     width:
@@ -282,14 +258,12 @@ export const getColumnDefs = ({
   externalRunId: {
     id: 'externalRunId',
     renderer: (record: FlatRun) =>
-      record.externalRunId !== undefined
-        ? {
-            allowOverlay: false,
-            copyData: record.externalRunId,
-            data: { kind: TEXT_CELL },
-            kind: GridCellKind.Custom,
-          }
-        : EMPTY_CELL,
+      handleEmptyCell(record.externalRunId, (data) => ({
+        allowOverlay: false,
+        displayData: data,
+        data: data,
+        kind: GridCellKind.Text,
+      })),
     title: 'External Run ID',
     tooltip: () => undefined,
     width: columnWidths.externalRunId ?? defaultColumnWidths.externalRunId ?? MIN_COLUMN_WIDTH,
@@ -297,32 +271,26 @@ export const getColumnDefs = ({
   forkedFrom: {
     id: 'forkedFrom',
     renderer: (record: FlatRun) =>
-      record.experiment?.forkedFrom !== undefined
-        ? {
-            allowOverlay: false,
-            copyData: record.experiment.forkedFrom.toString(),
-            cursor: 'pointer',
-            data: {
-              kind: LINK_CELL,
-              link: {
-                href: paths.experimentDetails(record.experiment.forkedFrom),
-                title: record.experiment.forkedFrom,
-              },
-              navigateOn: 'click',
-              onClick: (e: CellClickedEventArgs) => {
-                const forkedFrom = record.experiment?.forkedFrom;
-                if (forkedFrom !== undefined) {
-                  handlePath(e as unknown as AnyMouseEvent, {
-                    path: paths.experimentDetails(forkedFrom),
-                  });
-                }
-              },
-              underlineOffset: 6,
-            },
-            kind: GridCellKind.Custom,
-            readonly: true,
-          }
-        : EMPTY_CELL,
+      handleEmptyCell(record.experiment?.forkedFrom, (data) => ({
+        allowOverlay: false,
+        copyData: data.toString(),
+        cursor: 'pointer',
+        data: {
+          kind: LINK_CELL,
+          link: {
+            href: paths.experimentDetails(data),
+            title: data,
+          },
+          navigateOn: 'click',
+          onClick: (e: CellClickedEventArgs) =>
+            handlePath(e as unknown as AnyMouseEvent, {
+              path: paths.experimentDetails(data),
+            }),
+          underlineOffset: 6,
+        },
+        kind: GridCellKind.Custom,
+        readonly: true,
+      })),
     title: 'Forked From',
     tooltip: () => undefined,
     width: columnWidths.forkedFrom ?? defaultColumnWidths.forkedFrom ?? MIN_COLUMN_WIDTH,
@@ -353,7 +321,6 @@ export const getColumnDefs = ({
         underlineOffset: 6,
       },
       kind: GridCellKind.Custom,
-
       readonly: true,
     }),
     title: 'ID',
@@ -404,14 +371,12 @@ export const getColumnDefs = ({
   resourcePool: {
     id: 'resourcePool',
     renderer: (record: FlatRun) =>
-      record.experiment?.resourcePool
-        ? {
-            allowOverlay: false,
-            copyData: record.experiment.resourcePool,
-            data: { kind: TEXT_CELL },
-            kind: GridCellKind.Custom,
-          }
-        : EMPTY_CELL,
+      handleEmptyCell(record.experiment?.resourcePool, (data) => ({
+        allowOverlay: false,
+        displayData: data,
+        data: data,
+        kind: GridCellKind.Text,
+      })),
     title: 'Resource Pool',
     tooltip: () => undefined,
     width: columnWidths.resourcePool ?? defaultColumnWidths.resourcePool ?? MIN_COLUMN_WIDTH,
@@ -419,16 +384,13 @@ export const getColumnDefs = ({
   searcherMetric: {
     id: 'searcherMetric',
     isNumerical: false,
-    renderer: (record: FlatRun) => {
-      return record.experiment?.searcherMetric
-        ? {
-            allowOverlay: false,
-            copyData: record.experiment.searcherMetric,
-            data: { kind: TEXT_CELL },
-            kind: GridCellKind.Custom,
-          }
-        : EMPTY_CELL;
-    },
+    renderer: (record: FlatRun) =>
+      handleEmptyCell(record.experiment?.searcherMetric, (data) => ({
+        allowOverlay: false,
+        displayData: data,
+        data: data,
+        kind: GridCellKind.Text,
+      })),
     title: 'Searcher Metric',
     tooltip: () => undefined,
     width: columnWidths.searcherMetric ?? defaultColumnWidths.searcherMetric ?? MIN_COLUMN_WIDTH,
@@ -436,14 +398,12 @@ export const getColumnDefs = ({
   searcherType: {
     id: 'searcherType',
     renderer: (record: FlatRun) =>
-      record.experiment?.searcherType !== undefined
-        ? {
-            allowOverlay: false,
-            copyData: record.experiment.searcherType,
-            data: { kind: TEXT_CELL },
-            kind: GridCellKind.Custom,
-          }
-        : EMPTY_CELL,
+      handleEmptyCell(record.experiment?.searcherType, (data) => ({
+        allowOverlay: false,
+        displayData: data,
+        data: data,
+        kind: GridCellKind.Text,
+      })),
     title: 'Searcher',
     tooltip: () => undefined,
     width: columnWidths.searcherType ?? defaultColumnWidths.searcherType ?? MIN_COLUMN_WIDTH,
@@ -482,19 +442,17 @@ export const getColumnDefs = ({
   tags: {
     id: 'tags',
     renderer: (record: FlatRun) =>
-      record.labels !== undefined
-        ? {
-            allowOverlay: true,
-            copyData: record.labels.join(', '),
-            data: {
-              kind: TAGS_CELL,
-              possibleTags: [],
-              readonly: true,
-              tags: record.labels,
-            },
-            kind: GridCellKind.Custom,
-          }
-        : EMPTY_CELL,
+      handleEmptyCell(record.labels, (data) => ({
+        allowOverlay: true,
+        copyData: data.join(', '),
+        data: {
+          kind: TAGS_CELL,
+          possibleTags: [],
+          readonly: true,
+          tags: data,
+        },
+        kind: GridCellKind.Custom,
+      })),
     title: 'Tags',
     tooltip: () => undefined,
     width: columnWidths.tags ?? defaultColumnWidths.tags ?? MIN_COLUMN_WIDTH,
@@ -506,19 +464,17 @@ export const getColumnDefs = ({
         _: () => undefined,
         Loaded: (users) => getDisplayName(users?.find((u) => u.id === record.userId)),
       });
-      return displayName !== undefined
-        ? {
-            allowOverlay: true,
-            copyData: displayName,
-            data: {
-              image: undefined,
-              initials: getInitials(displayName),
-              kind: USER_AVATAR_CELL,
-              tint: getColor(displayName, themeIsDark),
-            },
-            kind: GridCellKind.Custom,
-          }
-        : EMPTY_CELL;
+      return handleEmptyCell(displayName, (data) => ({
+        allowOverlay: true,
+        copyData: data,
+        data: {
+          image: undefined,
+          initials: getInitials(data),
+          kind: USER_AVATAR_CELL,
+          tint: getColor(data, themeIsDark),
+        },
+        kind: GridCellKind.Custom,
+      }));
     },
     title: 'User',
     tooltip: (record: FlatRun) => {
@@ -550,15 +506,13 @@ export const searcherMetricsValColumn = (
           textDark: 'white',
         };
       }
-      return sMetricValue !== undefined
-        ? {
-            allowOverlay: false,
-            copyData: humanReadableNumber(sMetricValue),
-            data: { kind: TEXT_CELL },
-            kind: GridCellKind.Custom,
-            themeOverride: theme,
-          }
-        : EMPTY_CELL;
+      return handleEmptyCell(sMetricValue, (data) => ({
+        allowOverlay: false,
+        copyData: humanReadableNumber(data),
+        data: { kind: TEXT_CELL },
+        kind: GridCellKind.Custom,
+        themeOverride: theme,
+      }));
     },
     title: 'Searcher Metric Value',
     tooltip: () => undefined,
