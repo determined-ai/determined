@@ -318,7 +318,7 @@ test.describe('Experiment List', () => {
         await firstRow.order.selectMenuOption(firstSortOrder);
 
         await multiSortMenu.multiSort.add.pwLocator.click();
-        
+
         const secondRow = multiSortMenu.multiSort.rows.nth(1);
         dev.debugComponentVisible(secondRow);
         await secondRow.column.selectMenuOption(secondSortBy);
@@ -330,15 +330,15 @@ test.describe('Experiment List', () => {
       });
     };
 
-    await sortingScenario('ID', '9 → 0', 'Start time', 'Oldest → Newest',  async () => {
+    await sortingScenario('ID', '9 → 0', 'Start time', 'Oldest → Newest', async () => {
       const [higher, lower] = await checkTableOrder('id', 'startTime');
       await expect(higher.id).toBeGreaterThan(lower.id as number);
-      },);
+      });
 
-    await sortingScenario('Trial count', '0 → 9', 'Searcher', 'A → Z',  async () => {
+    await sortingScenario('Trial count', '0 → 9', 'Searcher', 'A → Z', async () => {
       const [first, last] = await checkTableOrder('numTrials', 'searcherType');
       await expect(first.numTrials).toBeLessThanOrEqual(last.numTrials as number);
-      },);
+      });
   });
 
   test('Datagrid Functionality Validations', async ({ authedPage }) => {
