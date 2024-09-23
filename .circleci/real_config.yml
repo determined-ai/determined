@@ -62,6 +62,12 @@ parameters:
     type: string
     default: ""
 
+det-versions: &det-versions
+  - "0.34.0"
+  - "0.35.0"
+  - "0.36.0"
+  - <branch-of-unreleased-change>
+
 release-and-rc-filters: &release-and-rc-filters
   branches:
     ignore:
@@ -395,14 +401,17 @@ commands:
         type: string
       package-location:
         type: string
+      det-version:
+        type: string
+        default: <<pipeline.parameters.det-version>>
     steps:
       - run:
           name: Install <<parameters.package-name>>
           working_directory: <<parameters.package-location>>
           command: |
             make build
-            pip install --find-links dist <<parameters.package-name>>==<< pipeline.parameters.det-version >>
-            pip install --no-deps --force-reinstall --find-links dist <<parameters.package-name>>==<< pipeline.parameters.det-version >>
+            pip install --find-links dist <<parameters.package-name>>==<<parameters.det-version>>
+            pip install --no-deps --force-reinstall --find-links dist <<parameters.package-name>>==<<parameters.det-version>>
 
   setup-python-venv:
     description: Set up and create Python venv.
@@ -424,6 +433,9 @@ commands:
       python-version:
         type: string
         default: "3.8.18"
+      det-version:
+        type: string
+        default: <<pipeline.parameters.det-version>>
     steps:
       - run:
           name: Write cache key
@@ -507,6 +519,7 @@ commands:
                 name: Install pypa builder
                 command: python3 -m pip install build
             - install-wheel:
+                det-version: <<parameters.det-version>>
                 package-name: determined
                 package-location: ./harness
       - run:
@@ -1486,6 +1499,11 @@ commands:
       - run:
           command: devcluster --oneshot -c .circleci/devcluster/<<parameters.devcluster-config>> --target-stage <<parameters.target-stage>> || circleci-agent step halt
           background: true
+
+  stop-devcluster:
+    steps:
+      - run: 
+          command: pkill -SIGHUP -f "devcluster" && rm -rf /tmp/devcluster/lock
 
   make-component:
     description: "Basic parameterized version of make for building Determined components."
@@ -3170,6 +3188,12 @@ jobs:
       k8s-version:
         type: string
         default: "1.29.5"
+      upgrade: 
+        type: boolean
+        default: false
+      det-version:
+        type: string
+        default: <<pipeline.parameters.det-version>>
     machine:
       image: <<pipeline.parameters.machine-image>>
     resource_class: <<parameters.resource-class>>
@@ -3179,6 +3203,18 @@ jobs:
       DET_AGENT_VERSION: <<parameters.agent-version>>
     steps:
       - checkout
+      # TODO CAROLINA: remove pip build, take inputs of commit SHAs, not just tags.
+      - when:
+          condition: <<parameters.upgrade>>
+          steps:
+            - run: 
+                name: Fetch Tags & Checkout <<parameters.det-version>> Version
+                command: git fetch --tags && git checkout tags/<<parameters.det-version>>
+            - run: # given branch name, find most recent build, & substitute in ... ?
+            # 1. checkout git branch
+            # 2. iterate through SHAs & check which is a match (for master, agent, etc) in docker image registry
+            # 3. take first match & git fetch that SHA
+        
       - add-and-fetch-upstream
       - skip-if-only-docs
       - skip-if-only-github
@@ -3188,6 +3224,7 @@ jobs:
 
       - setup-python-venv:
           determined: True
+          det-version: <<parameters.det-version>>
           extra-requirements-file: "e2e_tests/tests/requirements.txt"
           executor: <<pipeline.parameters.machine-image>>
 
@@ -3210,6 +3247,24 @@ jobs:
                   - run:
                       name: Start additionalrm minikube
                       command: minikube start --profile additionalrm --kubernetes-version <<parameters.k8s-version>>
+      
+      - when:
+          condition: <<parameters.upgrade>>
+          steps:
+            - install-devcluster
+            - unless:
+                condition: <<parameters.managed-devcluster>>
+                steps:
+                  - start-devcluster:
+                      devcluster-config: <<parameters.devcluster-config>>
+                      target-stage: <<parameters.target-stage>>
+            - stop-devcluster
+            - checkout
+            - setup-python-venv:
+                determined: True
+                extra-requirements-file: "e2e_tests/tests/requirements.txt"
+                executor: <<pipeline.parameters.machine-image>>
+
       - install-devcluster
       - unless:
           condition: <<parameters.managed-devcluster>>
@@ -4720,6 +4775,289 @@ workflows:
                 - main
           requires:
             - package-and-push-system-dev-ee
+
+  test-e2e-release-upgrade:
+    <<: *do-not-run-on-manual-trigger
+    jobs:
+      - build-proto
+      - build-helm
+      - build-react:
+          dev-mode: true
+      - test-e2e-react:
+          name: test-e2e-react-ee
+          ee: true
+          requires:
+            - build-go-ee
+          context:
+            - playwright
+            - github-read
+            - dev-ci-cluster-default-user-credentials
+          filters: *any-upstream
+      - build-docs:
+          requires:
+            - build-helm
+            - build-proto
+      - build-go:
+          name: build-go-ee
+          context: github-read
+
+      - test-e2e:
+          name: test-e2e-rbac
+          context:
+            - dev-ci-cluster-default-user-credentials
+          requires:
+            - build-go-ee
+          parallelism: 1
+          mark: e2e_cpu_rbac
+          devcluster-config: single-rbac.devcluster.yaml
+          upgrade: true
+          matrix:
+            parameters:
+              det-version: *det-versions
+
+      - test-e2e:
+          name: test-e2e-cpu
+          context:
+            - dev-ci-cluster-default-user-credentials
+          requires:
+            - build-go-ee
+          parallelism: 6
+          resource-class: xlarge
+          tf2: true
+          mark: e2e_cpu
+          upgrade: true
+          matrix:
+            parameters:
+              det-version: *det-versions
+
+      - test-e2e:
+          name: test-e2e-cpu-double
+          context:
+            - dev-ci-cluster-default-user-credentials
+          requires:
+            - build-go-ee
+          parallelism: 5
+          resource-class: large
+          tf2: true
+          mark: e2e_cpu_2a
+          target-stage: agent2
+          devcluster-config: double-priority.devcluster.yaml
+          upgrade: true
+          matrix:
+            parameters:
+              det-version: *det-versions
+
+      - test-e2e:
+          name: test-e2e-cpu-oauth
+          context:
+            - dev-ci-cluster-default-user-credentials
+          requires:
+            - build-go-ee
+          parallelism: 1
+          devcluster-config: oauth.devcluster.yaml
+          mark: test_oauth
+          target-stage: agent1
+          upgrade: true
+          matrix:
+            parameters:
+              det-version: *det-versions
+
+      - test-e2e:
+          name: test-e2e-cpu-model-registry-rbac
+          context:
+            - dev-ci-cluster-default-user-credentials
+          requires:
+            - build-go-ee
+          parallelism: 1
+          devcluster-config: rbac-model-registry.yaml
+          mark: test_model_registry_rbac
+          target-stage: agent1
+          upgrade: true
+          matrix:
+            parameters:
+              det-version: *det-versions
+
+      - test-e2e:
+          name: test-e2e-managed-devcluster
+          context:
+            - dev-ci-cluster-default-user-credentials
+          requires:
+            - build-go-ee
+          parallelism: 4
+          resource-class: large
+          tf2: true
+          mark: managed_devcluster
+          managed-devcluster: true
+          # Managed devcluster restarts the master over the course of the tests,
+          # so `compare_stats` cannot get the full logs from `det master logs`.
+          extra-pytest-flags: "--no-compare-stats"
+          collect-det-job-logs: false
+          upgrade: true
+          matrix:
+            parameters:
+              det-version: *det-versions
+
+      - test-e2e:
+          name: test-e2e-managed-devcluster-resource-pools
+          context:
+            - dev-ci-cluster-default-user-credentials
+          requires:
+            - build-go-ee
+          parallelism: 4
+          resource-class: large
+          tf2: true
+          mark: managed_devcluster_resource_pools
+          managed-devcluster: true
+          extra-pytest-flags: "--no-compare-stats"
+          collect-det-job-logs: false
+          upgrade: true
+          matrix:
+            parameters:
+              det-version: *det-versions
+
+      - test-e2e:
+          name: test-e2e-multi-k8s
+          context:
+            - dev-ci-cluster-default-user-credentials
+          requires:
+            - build-go-ee
+          parallelism: 1
+          tf2: true
+          mark: e2e_multi_k8s
+          target-stage: master
+          devcluster-config: multi-k8s.devcluster.yaml
+          run-minikubes: true
+          multi-k8s: true
+          upgrade: true
+          matrix:
+            parameters:
+              det-version: *det-versions
+
+      - test-e2e:
+          name: test-e2e-single-k8s
+          context:
+            - dev-ci-cluster-default-user-credentials
+          requires:
+            - build-go-ee
+          parallelism: 1
+          mark: e2e_single_k8s
+          target-stage: master
+          devcluster-config: single-k8s.devcluster.yaml
+          run-minikubes: true
+          upgrade: true
+          matrix:
+            parameters:
+              det-version: *det-versions
+
+      - test-e2e:
+          name: test-e2e-port-registry
+          context:
+            - dev-ci-cluster-default-user-credentials
+          requires:
+            - build-go-ee
+          parallelism: 1
+          devcluster-config: port-registry.devcluster.yaml
+          mark: port_registry
+          target-stage: agent
+          upgrade: true
+          matrix:
+            parameters:
+              det-version: *det-versions
+
+      - test-e2e:
+          name: test-e2e-cpu-elastic
+          context:
+            - dev-ci-cluster-default-user-credentials
+          requires:
+            - build-go-ee
+          parallelism: 1
+          resource-class: large
+          mark: e2e_cpu_elastic
+          devcluster-config: elastic.devcluster.yaml
+          target-stage: agent
+          upgrade: true
+          matrix:
+            parameters:
+              det-version: *det-versions
+
+      - test-e2e:
+          name: test-e2e-postgres10-with-ssl
+          context:
+            - dev-ci-cluster-default-user-credentials
+          requires:
+            - build-go-ee
+          parallelism: 1
+          mark: e2e_cpu_postgres
+          devcluster-config: postgres-with-ssl.devcluster.yaml
+          target-stage: agent
+          postgres-version: "10"
+          upgrade: true
+          matrix:
+            parameters:
+              det-version: *det-versions
+
+      - test-e2e:
+          name: test-e2e-postgres14-with-ssl
+          context:
+            - dev-ci-cluster-default-user-credentials
+          requires:
+            - build-go-ee
+          parallelism: 1
+          mark: e2e_cpu_postgres
+          devcluster-config: postgres-with-ssl.devcluster.yaml
+          target-stage: agent
+          postgres-version: "14"
+          upgrade: true
+          matrix:
+            parameters:
+              det-version: *det-versions
+
+      - test-e2e:
+          name: test-e2e-old-agent-versions
+          context:
+            - dev-ci-cluster-default-user-credentials
+          requires:
+            - build-go-ee
+          parallelism: 1
+          mark: e2e_cpu_postgres
+          devcluster-config: custom-agent-version.devcluster.yaml
+          target-stage: agent
+          matrix:
+            parameters:
+              agent-version: ["0.17.10"]
+              det-version: *det-versions
+          upgrade: true
+
+      - test-e2e:
+          name: test-e2e-agent-connection-loss
+          requires:
+            - build-go-ee
+          parallelism: 1
+          mark: e2e_cpu_agent_connection_loss
+          devcluster-config: agent-no-connection.devcluster.yaml
+          target-stage: agent
+          wait-for-master: false
+          extra-pytest-flags: "--no-compare-stats"
+          collect-det-job-logs: false
+          upgrade: true
+          matrix:
+            parameters:
+              det-version: *det-versions
+
+      - test-e2e:
+          name: test-e2e-saml
+          context:
+            - okta
+            - dev-ci-cluster-default-user-credentials
+          requires:
+            - build-go-ee
+          parallelism: 1
+          devcluster-config: saml.devcluster.yaml
+          mark: e2e_saml
+          upgrade: true
+          matrix:
+            parameters:
+              det-version: *det-versions
 
   test-e2e-longrunning:
     <<: *do-not-run-on-manual-trigger
