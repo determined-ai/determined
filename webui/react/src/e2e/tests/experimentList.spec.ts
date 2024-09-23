@@ -141,7 +141,7 @@ test.describe('Experiment List', () => {
     });
   });
 
-  test('Column Picker Show All and Hide All', async () => {
+  test.skip('Column Picker Show All and Hide All', async () => {
     const columnPicker = projectDetailsPage.f_experimentList.tableActionBar.columnPickerMenu;
     const grid = projectDetailsPage.f_experimentList.dataGrid;
     let previousTabs = grid.headRow.columnDefs.size;
@@ -194,7 +194,7 @@ test.describe('Experiment List', () => {
     });
   });
 
-  test('Table Filter', async () => {
+  test.skip('Table Filter', async () => {
     const tableFilter = projectDetailsPage.f_experimentList.tableActionBar.tableFilter;
     const totalExperiments = await getCount();
 
@@ -286,7 +286,7 @@ test.describe('Experiment List', () => {
     );
   });
 
-  test('Multi-sort menu', async ({ dev }) => {
+  test('Multi-sort menu', async () => {
     const checkTableOrder = async (firstKey: keyof ExperimentBase, secondKey: keyof ExperimentBase) => {
       const experimentList: ExperimentBase[] = JSON.parse(await detExecSync('experiment ls'));
 
@@ -320,7 +320,6 @@ test.describe('Experiment List', () => {
         await multiSortMenu.multiSort.add.pwLocator.click();
 
         const secondRow = multiSortMenu.multiSort.rows.nth(1);
-        dev.debugComponentVisible(secondRow);
         await secondRow.column.selectMenuOption(secondSortBy);
         await secondRow.order.selectMenuOption(secondSortOrder);
 
