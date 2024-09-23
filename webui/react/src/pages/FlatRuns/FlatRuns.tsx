@@ -111,7 +111,12 @@ const INITIAL_LOADING_RUNS: Loadable<FlatRun>[] = new Array(PAGE_SIZE).fill(NotL
 
 const STATIC_COLUMNS = [MULTISELECT];
 
-const BANNED_FILTER_COLUMNS = new Set(['searcherMetricsVal', 'parentArchived', 'isExpMultitrial']);
+const BANNED_FILTER_COLUMNS = new Set([
+  'searcherMetricsVal',
+  'parentArchived',
+  'isExpMultitrial',
+  'archived',
+]);
 const BANNED_SORT_COLUMNS = new Set(['tags', 'searcherMetricsVal']);
 
 const NO_PINS_WIDTH = 200;
