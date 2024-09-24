@@ -34,15 +34,15 @@ def test_priortity_scheduler_noop_command(
     managed_cluster_priority_scheduler.ensure_agent_ok()
     assert str(conf.MASTER_PORT) == "8082"
     # without slots (and default priority)
-    command_id = utils.run_command(sess, slots=0)
+    command_id = utils.run_command(sess, 0, slots=0)
     utils.wait_for_command_state(sess, command_id, "TERMINATED", 40)
     utils.assert_command_succeeded(sess, command_id)
     # with slots (and default priority)
-    command_id = utils.run_command(sess, slots=1)
+    command_id = utils.run_command(sess, 0, slots=1)
     utils.wait_for_command_state(sess, command_id, "TERMINATED", 60)
     utils.assert_command_succeeded(sess, command_id)
     # explicity priority
-    command_id = utils.run_command_set_priority(sess, slots=0, priority=60)
+    command_id = utils.run_command_set_priority(sess, 0, slots=0, priority=60)
     utils.wait_for_command_state(sess, command_id, "TERMINATED", 60)
     utils.assert_command_succeeded(sess, command_id)
 
