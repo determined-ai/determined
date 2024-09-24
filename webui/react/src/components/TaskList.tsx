@@ -15,7 +15,10 @@ import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import Badge, { BadgeType } from 'components/Badge';
 import FilterCounter from 'components/FilterCounter';
 import JupyterLabButton from 'components/JupyterLabButton';
-import InteractiveTable, { ColumnDef, onRightClickableCell } from 'components/Table/InteractiveTable';
+import InteractiveTable, {
+  ColumnDef,
+  onRightClickableCell,
+} from 'components/Table/InteractiveTable';
 import {
   defaultRowClassName,
   getFullPaginationConfig,
