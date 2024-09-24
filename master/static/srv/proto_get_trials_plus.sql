@@ -113,7 +113,7 @@ SELECT
   t.start_time,
   t.end_time,
   t.hparams,
-  r.log_signal,
+  t.log_signal,
   new_ckpt.uuid AS warm_start_checkpoint_uuid,
   (
     SELECT tt.task_id FROM run_id_task_id tt
@@ -145,7 +145,6 @@ SELECT
   t.metadata as metadata
 FROM searcher_info
   INNER JOIN trials t ON t.id = searcher_info.trial_id
-  LEFT JOIN runs r ON t.id = r.id
   LEFT JOIN best_validation bv ON bv.trial_id = searcher_info.trial_id
   LEFT JOIN latest_validation lv ON lv.trial_id = searcher_info.trial_id
   LEFT JOIN best_checkpoint bc ON bc.trial_id = searcher_info.trial_id
