@@ -26,7 +26,7 @@ const (
 	// PersonalGroupPostfix is the system postfix appended to the username of all personal groups.
 	PersonalGroupPostfix = "DeterminedPersonalGroup"
 
-	// DefaultTokenLifespan is how long a newly created long lived token is valid.
+	// DefaultTokenLifespan is how long a newly created access token is valid.
 	DefaultTokenLifespan = 30 * 24 * time.Hour
 )
 
@@ -424,7 +424,7 @@ func ByToken(ctx context.Context, token string, ext *model.ExternalSessions) (
 		return nil, nil, db.ErrNotFound
 	}
 
-	if session.TokenType == model.TokenTypeLongLivedToken && session.Revoked {
+	if session.TokenType == model.TokenTypeAccessToken && session.Revoked {
 		return nil, nil, ErrAccessTokenRevoked
 	}
 
@@ -471,20 +471,20 @@ func BySessionID(ctx context.Context, sessionID model.SessionID) (*model.User, e
 	return &user, nil
 }
 
-// LongLivedTokenOption is the return type for WithTokenExpiry helper function.
+// AccessTokenOption is the return type for WithTokenExpiry helper function.
 // It takes a pointer to model.UserSession and modifies it.
-// It’s used to apply optional settings to the LongLivedToken object.
-type LongLivedTokenOption func(f *model.UserSession)
+// It’s used to apply optional settings to the AccessToken object.
+type AccessTokenOption func(f *model.UserSession)
 
-// WithTokenExpiry function will add specified expiresAt (if any) to the long lived token table.
-func WithTokenExpiry(expiry *time.Duration) LongLivedTokenOption {
+// WithTokenExpiry function will add specified expiresAt (if any) to the access token table.
+func WithTokenExpiry(expiry *time.Duration) AccessTokenOption {
 	return func(s *model.UserSession) {
 		s.Expiry = CurrentTimeNowInUTC.Add(*expiry)
 	}
 }
 
-// WithTokenDescription function will add specified description (if any) to the long lived token table.
-func WithTokenDescription(description string) LongLivedTokenOption {
+// WithTokenDescription function will add specified description (if any) to the access token table.
+func WithTokenDescription(description string) AccessTokenOption {
 	return func(s *model.UserSession) {
 		if description == "" {
 			return
@@ -493,37 +493,37 @@ func WithTokenDescription(description string) LongLivedTokenOption {
 	}
 }
 
-// RevokeAndCreateLongLivedToken creates/overwrites a long lived token and store in
+// RevokeAndCreateAccessToken creates/overwrites a access token and store in
 // user_sessions db.
-func RevokeAndCreateLongLivedToken(
-	ctx context.Context, userID model.UserID, opts ...LongLivedTokenOption,
+func RevokeAndCreateAccessToken(
+	ctx context.Context, userID model.UserID, opts ...AccessTokenOption,
 ) (string, error) {
 	CurrentTimeNowInUTC = time.Now().UTC()
 	// Populate the default values in the model.
-	longLivedToken := &model.UserSession{
+	accessToken := &model.UserSession{
 		UserID:      userID,
 		CreatedAt:   CurrentTimeNowInUTC,
 		Expiry:      CurrentTimeNowInUTC.Add(DefaultTokenLifespan),
-		TokenType:   model.TokenTypeLongLivedToken,
+		TokenType:   model.TokenTypeAccessToken,
 		Description: null.StringFromPtr(nil),
 		Revoked:     false,
 	}
 
 	// Update the optional ExpiresAt field (if passed)
 	for _, opt := range opts {
-		opt(longLivedToken)
+		opt(accessToken)
 	}
 
 	var token string
 
 	err := db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		// LongLivedTokens should have a 1:1 relationship with users, if a user creates a new token,
+		// AccessTokens should have a 1:1 relationship with users, if a user creates a new token,
 		// revoke the previous token if it exists.
 		_, err := tx.NewUpdate().
 			Table("user_sessions").
 			Set("revoked = true").
 			Where("user_id = ?", userID).
-			Where("token_type = ?", model.TokenTypeLongLivedToken).
+			Where("token_type = ?", model.TokenTypeAccessToken).
 			Exec(ctx)
 		if err != nil {
 			return err
@@ -532,18 +532,18 @@ func RevokeAndCreateLongLivedToken(
 		// A new row is inserted into the user_sessions table, and the ID of the
 		// inserted row is returned and stored in user_sessions.ID.
 		_, err = tx.NewInsert().
-			Model(longLivedToken).
+			Model(accessToken).
 			Column("user_id", "expiry", "created_at", "token_type", "revoked", "description").
 			Returning("id").
-			Exec(ctx, &longLivedToken.ID)
+			Exec(ctx, &accessToken.ID)
 		if err != nil {
 			return err
 		}
 
-		// A Paseto token is generated using the longLivedToken object and the private key.
+		// A Paseto token is generated using the accessToken object and the private key.
 		v2 := paseto.NewV2()
 		privateKey := db.GetTokenKeys().PrivateKey
-		token, err = v2.Sign(privateKey, longLivedToken, nil)
+		token, err = v2.Sign(privateKey, accessToken, nil)
 		if err != nil {
 			return fmt.Errorf("failed to generate user authentication token: %s", err)
 		}
@@ -570,7 +570,7 @@ func UpdateAccessToken(
 	var tokenInfo model.UserSession
 	err := db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
 		err := tx.NewSelect().Table("user_sessions").
-			Where("id = ?", tokenID).Where("token_type = ?", model.TokenTypeLongLivedToken).
+			Where("id = ?", tokenID).Where("token_type = ?", model.TokenTypeAccessToken).
 			Scan(ctx, &tokenInfo)
 		if err != nil {
 			return err
@@ -613,7 +613,7 @@ func GetAccessToken(ctx context.Context, userID model.UserID) (
 	// Execute the query to fetch the active token info for the given user_id
 	switch err := db.Bun().NewSelect().Table("user_sessions").
 		Where("user_id = ?", userID).Where("revoked = ?", false).
-		Where("token_type = ?", model.TokenTypeLongLivedToken).
+		Where("token_type = ?", model.TokenTypeAccessToken).
 		Scan(ctx, &tokenInfo); {
 	case err != nil:
 		return nil, err

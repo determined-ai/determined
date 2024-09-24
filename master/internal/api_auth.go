@@ -96,7 +96,7 @@ func (a *apiServer) Logout(
 
 	// Do not want the AccessTokens to be deleted if the user logs out from session.
 	// User can log back in using the same AccessToken: det u login <username> --token <token>
-	if userSession.TokenType != model.TokenTypeLongLivedToken {
+	if userSession.TokenType != model.TokenTypeAccessToken {
 		err = user.DeleteSessionByID(ctx, userSession.ID)
 	}
 	return &apiv1.LogoutResponse{}, err

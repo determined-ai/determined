@@ -11,8 +11,15 @@ from determined.common import api, util
 from determined.common.api import authentication, bindings
 from determined.experimental import client
 
-TOKEN_HEADERS = ["ID", "User ID", "Description", "Created At", "Expires At", "Revoked",
-                 "Token Type"]
+TOKEN_HEADERS = [
+    "ID",
+    "User ID",
+    "Description",
+    "Created At",
+    "Expires At",
+    "Revoked",
+    "Token Type",
+]
 
 FullUser = collections.namedtuple(
     "FullUser",

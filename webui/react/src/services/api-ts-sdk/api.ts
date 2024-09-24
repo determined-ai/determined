@@ -11749,14 +11749,14 @@ export interface V1TokenInfo {
     description?: string;
 }
 /**
- * Token type.   - TOKEN_TYPE_UNSPECIFIED: Default token type.  - TOKEN_TYPE_USER_SESSION: User Session token.  - TOKEN_TYPE_LONG_LIVED_TOKEN: Long Lived token.
+ * Token type.   - TOKEN_TYPE_UNSPECIFIED: Default token type.  - TOKEN_TYPE_USER_SESSION: User Session token.  - TOKEN_TYPE_ACCESS_TOKEN: Access token.
  * @export
  * @enum {string}
  */
 export const V1TokenType = {
     UNSPECIFIED: 'TOKEN_TYPE_UNSPECIFIED',
     USERSESSION: 'TOKEN_TYPE_USER_SESSION',
-    LONGLIVEDTOKEN: 'TOKEN_TYPE_LONG_LIVED_TOKEN',
+    ACCESSTOKEN: 'TOKEN_TYPE_ACCESS_TOKEN',
 } as const
 export type V1TokenType = ValueOf<typeof V1TokenType>
 /**

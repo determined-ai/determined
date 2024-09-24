@@ -588,13 +588,13 @@ func TestUpdateUserSettings(t *testing.T) {
 	require.Empty(t, out, "found user web settings when all should be deleted")
 }
 
-// TestRevokeAndCreateLongLivedToken tests revoking and creating token with default lifespan.
-func TestRevokeAndCreateLongLivedToken(t *testing.T) {
+// TestRevokeAndCreateAccessToken tests revoking and creating token with default lifespan.
+func TestRevokeAndCreateAccessToken(t *testing.T) {
 	user, err := addTestUser(nil)
 	require.NoError(t, err)
 
-	// Add a LongLivedToken.
-	token, err := RevokeAndCreateLongLivedToken(context.TODO(), user.ID)
+	// Add an access Token.
+	token, err := RevokeAndCreateAccessToken(context.TODO(), user.ID)
 	require.NoError(t, err)
 	require.NotNil(t, token)
 
@@ -613,15 +613,15 @@ func TestRevokeAndCreateLongLivedToken(t *testing.T) {
 	require.NoError(t, err)
 }
 
-// TestRevokeAndCreateLongLivedTokenHasExpiry tests revoking and creating token with
+// TestRevokeAndCreateAccessTokenHasExpiry tests revoking and creating token with
 // given lifespan and description.
-func TestRevokeAndCreateLongLivedTokenHasExpiry(t *testing.T) {
+func TestRevokeAndCreateAccessTokenHasExpiry(t *testing.T) {
 	user, err := addTestUser(nil)
 	require.NoError(t, err)
 
-	// Add a LongLivedToken with custom (Now() + 3 Months) Expiry Time.
+	// Add a AccessToken with custom (Now() + 3 Months) Expiry Time.
 	expLifespan := DefaultTokenLifespan * 3
-	token, err := RevokeAndCreateLongLivedToken(context.TODO(), user.ID,
+	token, err := RevokeAndCreateAccessToken(context.TODO(), user.ID,
 		WithTokenExpiry(&expLifespan), WithTokenDescription(desc))
 	require.NoError(t, err)
 	require.NotNil(t, token)
@@ -646,19 +646,19 @@ func TestUpdateAccessToken(t *testing.T) {
 	userID, _, _, err := addTestSession()
 	require.NoError(t, err)
 
-	token, err := RevokeAndCreateLongLivedToken(context.TODO(), userID)
+	token, err := RevokeAndCreateAccessToken(context.TODO(), userID)
 	require.NoError(t, err)
 	require.NotNil(t, token)
 
-	longLivedToken := restoreTokenInfo(token, t)
+	accessToken := restoreTokenInfo(token, t)
 
 	// Test before updating Access token
 	description := "description"
-	require.False(t, longLivedToken.Revoked)
-	require.NotEqual(t, description, longLivedToken.Description)
+	require.False(t, accessToken.Revoked)
+	require.NotEqual(t, description, accessToken.Description)
 
 	opt := AccessTokenUpdateOptions{Description: &description, SetRevoked: true}
-	tokenInfo, err := UpdateAccessToken(context.TODO(), model.TokenID(longLivedToken.ID), opt)
+	tokenInfo, err := UpdateAccessToken(context.TODO(), model.TokenID(accessToken.ID), opt)
 	require.NoError(t, err)
 
 	// Test after updating access token
@@ -670,13 +670,13 @@ func TestUpdateAccessToken(t *testing.T) {
 	require.NoError(t, err)
 }
 
-// TestGetLongLivenTokenInfoByUserID tests getting long lived token info for given userId.
+// TestGetLongLivenTokenInfoByUserID tests getting access token info for given userId.
 func TestGetAccessToken(t *testing.T) {
 	user, err := addTestUser(nil)
 	require.NoError(t, err)
 
-	// Add a LongLivedToken.
-	token, err := RevokeAndCreateLongLivedToken(context.TODO(), user.ID)
+	// Add a AccessToken.
+	token, err := RevokeAndCreateAccessToken(context.TODO(), user.ID)
 	require.NoError(t, err)
 	require.NotNil(t, token)
 

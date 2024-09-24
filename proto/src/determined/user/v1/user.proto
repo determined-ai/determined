@@ -103,8 +103,8 @@ enum TokenType {
   TOKEN_TYPE_UNSPECIFIED = 0;
   // User Session token.
   TOKEN_TYPE_USER_SESSION = 1;
-  // Long Lived token.
-  TOKEN_TYPE_LONG_LIVED_TOKEN = 2;
+  // Access token.
+  TOKEN_TYPE_ACCESS_TOKEN = 2;
 }
 
 // TokenInfo represents a token entry in the database.

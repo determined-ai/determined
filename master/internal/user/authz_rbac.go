@@ -198,7 +198,7 @@ func (a *UserAuthZRBAC) CanSetUsersRemote(ctx context.Context, curUser model.Use
 	return canAdministrateUser(ctx, curUser.ID)
 }
 
-func logCanAdministrateLongLivedTokenOnUser(fields log.Fields, curUserID model.UserID,
+func logCanAdministrateAccessTokenOnUser(fields log.Fields, curUserID model.UserID,
 	permissionID rbacv1.PermissionType,
 ) {
 	fields["userID"] = curUserID
@@ -212,11 +212,11 @@ func logCanAdministrateLongLivedTokenOnUser(fields log.Fields, curUserID model.U
 	}
 }
 
-func canAdministrateLongLivedTokenOnUser(ctx context.Context, curUserID model.UserID,
+func canAdministrateAccessTokenOnUser(ctx context.Context, curUserID model.UserID,
 	permissionID rbacv1.PermissionType,
 ) (err error) {
 	fields := audit.ExtractLogFields(ctx)
-	logCanAdministrateLongLivedTokenOnUser(fields, curUserID, permissionID)
+	logCanAdministrateAccessTokenOnUser(fields, curUserID, permissionID)
 	defer func() {
 		audit.LogFromErr(fields, err)
 	}()
@@ -241,7 +241,7 @@ func (a *UserAuthZRBAC) CanCreateAccessToken(
 		return nil
 	}
 
-	logCanAdministrateLongLivedTokenOnUser(fields, curUser.ID,
+	logCanAdministrateAccessTokenOnUser(fields, curUser.ID,
 		rbacv1.PermissionType_PERMISSION_TYPE_CREATE_OTHER_TOKEN)
 	defer func() {
 		audit.LogFromErr(fields, err)
@@ -259,7 +259,7 @@ func (a *UserAuthZRBAC) CanCreateAccessToken(
 func (a *UserAuthZRBAC) CanGetAllAccessTokens(
 	ctx context.Context, curUser model.User,
 ) error {
-	return canAdministrateLongLivedTokenOnUser(ctx, curUser.ID,
+	return canAdministrateAccessTokenOnUser(ctx, curUser.ID,
 		rbacv1.PermissionType_PERMISSION_TYPE_VIEW_OTHER_TOKEN)
 }
 
@@ -280,7 +280,7 @@ func (a *UserAuthZRBAC) CanGetAccessToken(
 		return nil
 	}
 
-	logCanAdministrateLongLivedTokenOnUser(fields, curUser.ID,
+	logCanAdministrateAccessTokenOnUser(fields, curUser.ID,
 		rbacv1.PermissionType_PERMISSION_TYPE_VIEW_OTHER_TOKEN)
 	defer func() {
 		audit.LogFromErr(fields, err)
@@ -312,7 +312,7 @@ func (a *UserAuthZRBAC) CanUpdateAccessToken(
 		return nil
 	}
 
-	logCanAdministrateLongLivedTokenOnUser(fields, curUser.ID,
+	logCanAdministrateAccessTokenOnUser(fields, curUser.ID,
 		rbacv1.PermissionType_PERMISSION_TYPE_ADMINISTRATE_TOKEN)
 	defer func() {
 		audit.LogFromErr(fields, err)

@@ -980,8 +980,8 @@ func TestPostAccessTokenWithLifespan(t *testing.T) {
 	require.NoError(t, err)
 }
 
-// TestGetAllAccessTokens tests all long lived token info
-// GET /api/v1/users/tokens - Get all long lived token info
+// TestGetAllAccessTokens tests all access token info
+// GET /api/v1/users/tokens - Get all access token info
 // from user_sessions db for admin.
 func TestGetAllAccessTokens(t *testing.T) {
 	api, _, ctx := setupAPITest(t, nil)
@@ -1129,7 +1129,7 @@ func testSetLifespan(ctx context.Context, t *testing.T, userID model.UserID, lif
 		Table("user_sessions").
 		Column("expiry", "created_at").
 		Where("user_id = ?", userID).
-		Where("token_type = ?", model.TokenTypeLongLivedToken).
+		Where("token_type = ?", model.TokenTypeAccessToken).
 		Scan(ctx, &expiry, &createdAt)
 	if err != nil {
 		return fmt.Errorf("Error getting the set lifespan, creation time")

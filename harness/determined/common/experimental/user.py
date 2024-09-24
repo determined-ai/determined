@@ -124,13 +124,13 @@ class User:
 class TokenType(enum.Enum):
     # UNSPECIFIED is internal to the bound API and is not be exposed to the front end
     USER_SESSION = bindings.v1TokenType.USER_SESSION.value
-    LONG_LIVED_TOKEN = bindings.v1TokenType.LONG_LIVED_TOKEN.value
+    ACCESS_TOKEN = bindings.v1TokenType.ACCESS_TOKEN.value
 
 
 class TokenInfo:
     """
     A class representing a TokenInfo object that contains information regarding either
-    a long lived access token or a session token.
+    an access token or a session token.
 
     It can be obtained from :func:`determined.experimental.client.list_tokens`
 

@@ -727,7 +727,7 @@ func (a *apiServer) PostAccessToken(
 		tokenExpiration = d
 	}
 
-	token, err := user.RevokeAndCreateLongLivedToken(
+	token, err := user.RevokeAndCreateAccessToken(
 		ctx, targetFullUser.ID, user.WithTokenExpiry(&tokenExpiration), user.WithTokenDescription(req.Description))
 	if err != nil {
 		return nil, err
@@ -780,8 +780,8 @@ func (a *apiServer) GetAllAccessTokens(
 		query.Where("us.user_id = ?", userIDForGivenUsername)
 	}
 
-	// Get only Long lived token type
-	query.Where("us.token_type = ?", model.TokenTypeLongLivedToken)
+	// Get only Access token type
+	query.Where("us.token_type = ?", model.TokenTypeAccessToken)
 
 	if !req.IncludeInactive {
 		query.Where("us.expiry > ?", time.Now().UTC())

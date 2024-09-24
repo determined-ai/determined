@@ -63,8 +63,8 @@ type TokenType string
 const (
 	// TokenTypeUserSession is the "USER_SESSION" token type for the enum public.token_type in Postgres.
 	TokenTypeUserSession TokenType = "USER_SESSION"
-	// TokenTypeLongLivedToken is the "LONG_LIVED_TOKEN" token type for the enum public.token_type in Postgres.
-	TokenTypeLongLivedToken TokenType = "LONG_LIVED_TOKEN"
+	// TokenTypeAccessToken is the "ACCESS_TOKEN" token type for the enum public.token_type in Postgres.
+	TokenTypeAccessToken TokenType = "ACCESS_TOKEN"
 )
 
 // Proto returns the proto representation of the token type.
@@ -72,8 +72,8 @@ func (tt TokenType) Proto() userv1.TokenType {
 	switch tt {
 	case TokenTypeUserSession:
 		return userv1.TokenType_TOKEN_TYPE_USER_SESSION
-	case TokenTypeLongLivedToken:
-		return userv1.TokenType_TOKEN_TYPE_LONG_LIVED_TOKEN
+	case TokenTypeAccessToken:
+		return userv1.TokenType_TOKEN_TYPE_ACCESS_TOKEN
 	default:
 		panic("unknown token type")
 	}
@@ -84,8 +84,8 @@ func TokenTypeFromProto(t userv1.TokenType) TokenType {
 	switch t {
 	case userv1.TokenType_TOKEN_TYPE_USER_SESSION:
 		return TokenTypeUserSession
-	case userv1.TokenType_TOKEN_TYPE_LONG_LIVED_TOKEN:
-		return TokenTypeLongLivedToken
+	case userv1.TokenType_TOKEN_TYPE_ACCESS_TOKEN:
+		return TokenTypeAccessToken
 	default:
 		panic("unknown token type")
 	}

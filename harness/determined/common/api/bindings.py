@@ -16167,11 +16167,11 @@ class v1TokenType(DetEnum):
     """Token type.
     - TOKEN_TYPE_UNSPECIFIED: Default token type.
     - TOKEN_TYPE_USER_SESSION: User Session token.
-    - TOKEN_TYPE_LONG_LIVED_TOKEN: Long Lived token.
+    - TOKEN_TYPE_ACCESS_TOKEN: Access token.
     """
     UNSPECIFIED = "TOKEN_TYPE_UNSPECIFIED"
     USER_SESSION = "TOKEN_TYPE_USER_SESSION"
-    LONG_LIVED_TOKEN = "TOKEN_TYPE_LONG_LIVED_TOKEN"
+    ACCESS_TOKEN = "TOKEN_TYPE_ACCESS_TOKEN"
 
 class v1TrialClosed(Printable):
     """TrialClosed is a searcher event triggered when a trial has successfully
