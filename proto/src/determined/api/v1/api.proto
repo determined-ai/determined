@@ -1899,29 +1899,6 @@ service Determined {
     };
   }
 
-  // Get the list of custom searcher events with long polling.
-  rpc GetSearcherEvents(GetSearcherEventsRequest)
-      returns (GetSearcherEventsResponse) {
-    option (google.api.http) = {
-      get: "/api/v1/experiments/{experiment_id}/searcher_events"
-    };
-    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Experiments"
-    };
-  }
-
-  // Submit operations to a custom searcher.
-  rpc PostSearcherOperations(PostSearcherOperationsRequest)
-      returns (PostSearcherOperationsResponse) {
-    option (google.api.http) = {
-      post: "/api/v1/experiments/{experiment_id}/searcher_operations"
-      body: "*"
-    };
-    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Experiments"
-    };
-  }
-
   // Get the set of metric names recorded for a list of experiments.
   rpc ExpMetricNames(ExpMetricNamesRequest)
       returns (stream ExpMetricNamesResponse) {

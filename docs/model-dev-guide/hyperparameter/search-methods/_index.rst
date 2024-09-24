@@ -59,8 +59,6 @@ Determined also supports other common hyperparameter search algorithms:
 -  :ref:`Random <topic-guides_hp-tuning-det_random>` evaluates a set of hyperparameter
    configurations chosen at random and returns the best.
 
-You can also implement your own :ref:`custom search methods <topic-guides_hp-tuning-det_custom>`.
-
 .. toctree::
    :maxdepth: 1
    :hidden:

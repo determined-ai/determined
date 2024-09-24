@@ -377,13 +377,6 @@ func (a *ExperimentAuthZRBAC) CanSetExperimentsCheckpointGCPolicy(
 	return a.CanEditExperiment(ctx, curUser, e)
 }
 
-// CanRunCustomSearch checks if a user has permission to run customer search.
-func (a *ExperimentAuthZRBAC) CanRunCustomSearch(
-	ctx context.Context, curUser model.User, e *model.Experiment,
-) error {
-	return a.CanEditExperiment(ctx, curUser, e) // TODO verify with custom search project.
-}
-
 func init() {
 	AuthZProvider.Register("rbac", &ExperimentAuthZRBAC{})
 }
