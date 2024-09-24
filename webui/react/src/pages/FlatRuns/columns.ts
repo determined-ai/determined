@@ -260,6 +260,21 @@ export const getColumnDefs = ({
     tooltip: () => undefined,
     width: columnWidths.experimentName ?? defaultColumnWidths.experimentName ?? MIN_COLUMN_WIDTH,
   },
+
+  experimentProgress: {
+    id: 'experimentProgress',
+    renderer: (record: FlatRun) =>
+      handleEmptyCell(record.experiment?.progress, (data) => ({
+        allowOverlay: false,
+        data: floatToPercent(data, 0),
+        displayData: floatToPercent(data, 0),
+        kind: GridCellKind.Text,
+      })),
+    title: 'Search Progress',
+    tooltip: () => undefined,
+    width:
+      columnWidths.experimentProgress ?? defaultColumnWidths.experimentProgress ?? MIN_COLUMN_WIDTH,
+  },
   // TODO: should this change to search?
   externalExperimentId: {
     id: 'externalExperimentId',
@@ -383,23 +398,6 @@ export const getColumnDefs = ({
     title: 'Parent Archived',
     tooltip: () => undefined,
     width: columnWidths.parentArchived ?? defaultColumnWidths.parentArchived ?? MIN_COLUMN_WIDTH,
-  },
-  progress: {
-    id: 'experimentProgress',
-    renderer: (record: FlatRun) => {
-      const percentage = floatToPercent(record.experiment?.progress ?? 0, 0);
-
-      return {
-        allowOverlay: false,
-        data: percentage,
-        displayData: percentage,
-        kind: GridCellKind.Text,
-      };
-    },
-    title: 'Search Progress',
-    tooltip: () => undefined,
-    width:
-      columnWidths.experimentProgress ?? defaultColumnWidths.experimentProgress ?? MIN_COLUMN_WIDTH,
   },
   resourcePool: {
     id: 'resourcePool',
