@@ -29,6 +29,7 @@ import { DURATION_UNIT_MEASURES, durationInEnglish, getTimeInEnglish } from 'uti
 import { humanReadableNumber } from 'utils/number';
 import { AnyMouseEvent } from 'utils/routes';
 import { capitalize, floatToPercent, humanReadableBytes } from 'utils/string';
+import { handleEmptyCell } from 'utils/table';
 import { getDisplayName } from 'utils/user';
 
 // order used in ColumnPickerMenu
