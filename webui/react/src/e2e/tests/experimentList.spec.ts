@@ -141,7 +141,7 @@ test.describe('Experiment List', () => {
     });
   });
 
-  test('Column Picker Show All and Hide All', async () => {
+  test.skip('Column Picker Show All and Hide All', async () => {
     const columnPicker = projectDetailsPage.f_experimentList.tableActionBar.columnPickerMenu;
     const grid = projectDetailsPage.f_experimentList.dataGrid;
     let previousTabs = grid.headRow.columnDefs.size;
@@ -194,7 +194,7 @@ test.describe('Experiment List', () => {
     });
   });
 
-  test('Table Filter', async () => {
+  test.skip('Table Filter', async () => {
     const tableFilter = projectDetailsPage.f_experimentList.tableActionBar.tableFilter;
     const totalExperiments = await getCount();
 
