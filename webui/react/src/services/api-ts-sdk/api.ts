@@ -2164,32 +2164,6 @@ export interface V1CompareTrialsResponse {
     trials: Array<V1ComparableTrial>;
 }
 /**
- * 
- * @export
- * @interface V1CompleteTrialSearcherValidationResponse
- */
-export interface V1CompleteTrialSearcherValidationResponse {
-}
-/**
- * Used to complete a ValidateAfterOperation.
- * @export
- * @interface V1CompleteValidateAfterOperation
- */
-export interface V1CompleteValidateAfterOperation {
-    /**
-     * The ValidateAfterOperation being completed.
-     * @type {V1ValidateAfterOperation}
-     * @memberof V1CompleteValidateAfterOperation
-     */
-    op?: V1ValidateAfterOperation;
-    /**
-     * The value of searcher metric associated with this completed operation. The metric provided should be the metric used to guide HP search.
-     * @type {any}
-     * @memberof V1CompleteValidateAfterOperation
-     */
-    searcherMetric?: any;
-}
-/**
  * The config to be patched into Master Config.
  * @export
  * @interface V1Config
@@ -3261,31 +3235,6 @@ export interface V1ExperimentActionResult {
     id: number;
 }
 /**
- * ExperimentSimulation holds the configuration and results of simulated run of a searcher.
- * @export
- * @interface V1ExperimentSimulation
- */
-export interface V1ExperimentSimulation {
-    /**
-     * The simulated experiment config.
-     * @type {any}
-     * @memberof V1ExperimentSimulation
-     */
-    config?: any;
-    /**
-     * The searcher simulation seed.
-     * @type {number}
-     * @memberof V1ExperimentSimulation
-     */
-    seed?: number;
-    /**
-     * The list of trials in the simulation.
-     * @type {Array<V1TrialSimulation>}
-     * @memberof V1ExperimentSimulation
-     */
-    trials?: Array<V1TrialSimulation>;
-}
-/**
  * Response to ExpMetricNamesRequest.
  * @export
  * @interface V1ExpMetricNamesResponse
@@ -3864,25 +3813,6 @@ export interface V1GetCommandsResponse {
      * @memberof V1GetCommandsResponse
      */
     pagination?: V1Pagination;
-}
-/**
- * 
- * @export
- * @interface V1GetCurrentTrialSearcherOperationResponse
- */
-export interface V1GetCurrentTrialSearcherOperationResponse {
-    /**
-     * The current searcher operation.
-     * @type {V1TrialOperation}
-     * @memberof V1GetCurrentTrialSearcherOperationResponse
-     */
-    op?: V1TrialOperation;
-    /**
-     * The status of the searcher operation.
-     * @type {boolean}
-     * @memberof V1GetCurrentTrialSearcherOperationResponse
-     */
-    completed?: boolean;
 }
 /**
  * Response to GetExperimentCheckpointsRequest.
@@ -8523,11 +8453,11 @@ export interface V1PreviewHPSearchRequest {
  */
 export interface V1PreviewHPSearchResponse {
     /**
-     * The resulting simulation.
-     * @type {V1ExperimentSimulation}
+     * The resulting summary.
+     * @type {V1SearchSummary}
      * @memberof V1PreviewHPSearchResponse
      */
-    simulation?: V1ExperimentSimulation;
+    summary?: V1SearchSummary;
 }
 /**
  * Project is a named collection of experiments.
@@ -10178,36 +10108,6 @@ export interface V1RunActionResult {
     id: number;
 }
 /**
- * RunnableOperation represents a single runnable operation emitted by a searcher.
- * @export
- * @interface V1RunnableOperation
- */
-export interface V1RunnableOperation {
-    /**
-     * This is the type of the operation.
-     * @type {V1RunnableType}
-     * @memberof V1RunnableOperation
-     */
-    type?: V1RunnableType;
-    /**
-     * If the type == WORKLOAD_KIND_TRAIN, this is the number of units
-     * @type {string}
-     * @memberof V1RunnableOperation
-     */
-    length?: string;
-}
-/**
- * RunnableType defines the type of operation that should be executed by trial runners.   - RUNNABLE_TYPE_UNSPECIFIED: Denotes an unknown runnable type.  - RUNNABLE_TYPE_TRAIN: Signals to a trial runner that it should run a train.  - RUNNABLE_TYPE_VALIDATE: Signals to a trial runner it should compute validation metrics.
- * @export
- * @enum {string}
- */
-export const V1RunnableType = {
-    UNSPECIFIED: 'RUNNABLE_TYPE_UNSPECIFIED',
-    TRAIN: 'RUNNABLE_TYPE_TRAIN',
-    VALIDATE: 'RUNNABLE_TYPE_VALIDATE',
-} as const
-export type V1RunnableType = ValueOf<typeof V1RunnableType>
-/**
  * Request to prepare to start reporting to a run.
  * @export
  * @interface V1RunPrepareForReportingRequest
@@ -10447,6 +10347,50 @@ export interface V1SearchRunsResponse {
      * @memberof V1SearchRunsResponse
      */
     pagination: V1Pagination;
+}
+/**
+ * SearchSummary contains the estimated runs and training lengths that a search plans to execute.
+ * @export
+ * @interface V1SearchSummary
+ */
+export interface V1SearchSummary {
+    /**
+     * The searcher config from which the summary is generated.
+     * @type {any}
+     * @memberof V1SearchSummary
+     */
+    config?: any;
+    /**
+     * A map of planned number of runs to their training lengths.
+     * @type {{ [key: string]: V1SearchUnit; }}
+     * @memberof V1SearchSummary
+     */
+    runs?: { [key: string]: V1SearchUnit; };
+}
+/**
+ * SearchUnit describes a length unit used by some searchers to manage training.
+ * @export
+ * @interface V1SearchUnit
+ */
+export interface V1SearchUnit {
+    /**
+     * 
+     * @type {string}
+     * @memberof V1SearchUnit
+     */
+    name?: string;
+    /**
+     * 
+     * @type {number}
+     * @memberof V1SearchUnit
+     */
+    value?: number;
+    /**
+     * Bool indicating whether the training length is defined by the searcher.
+     * @type {boolean}
+     * @memberof V1SearchUnit
+     */
+    undefined?: boolean;
 }
 /**
  * Set the cluster-wide message.
@@ -11546,19 +11490,6 @@ export interface V1TrialMetrics {
     metrics: V1Metrics;
 }
 /**
- * TrialOperation is any operation that a trial can perform while it is active.
- * @export
- * @interface V1TrialOperation
- */
-export interface V1TrialOperation {
-    /**
-     * ValidateAfter means a trial is currently training and will later validate.
-     * @type {V1ValidateAfterOperation}
-     * @memberof V1TrialOperation
-     */
-    validateAfter?: V1ValidateAfterOperation;
-}
-/**
  * 
  * @export
  * @interface V1TrialProfilerMetricLabels
@@ -11638,25 +11569,6 @@ export interface V1TrialRunnerMetadata {
      * @memberof V1TrialRunnerMetadata
      */
     state: string;
-}
-/**
- * TrialSimulation is a specific sequence of workloads that were run before the trial was completed.
- * @export
- * @interface V1TrialSimulation
- */
-export interface V1TrialSimulation {
-    /**
-     * The list of operations that were run before the trial was completed.
-     * @type {Array<V1RunnableOperation>}
-     * @memberof V1TrialSimulation
-     */
-    operations?: Array<V1RunnableOperation>;
-    /**
-     * The number of times that this trial configuration has occurred during the simulation.
-     * @type {number}
-     * @memberof V1TrialSimulation
-     */
-    occurrences?: number;
 }
 /**
  * 
@@ -12200,25 +12112,6 @@ export interface V1UserWebSetting {
      * @memberof V1UserWebSetting
      */
     value?: string;
-}
-/**
- * ValidateAfterOperation means the trial should train and validate after training the given length.
- * @export
- * @interface V1ValidateAfterOperation
- */
-export interface V1ValidateAfterOperation {
-    /**
-     * The ID of the trial that should train.
-     * @type {string}
-     * @memberof V1ValidateAfterOperation
-     */
-    requestId?: string;
-    /**
-     * The length to train before reporting a validation.
-     * @type {string}
-     * @memberof V1ValidateAfterOperation
-     */
-    length?: string;
 }
 /**
  * ValidationHistoryEntry is a single entry for a validation history for an experiment.
@@ -19900,50 +19793,6 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
         },
         /**
          * 
-         * @summary Reports to the searcher that the trial has completed the given searcher operation.
-         * @param {number} trialId The id of the trial.
-         * @param {V1CompleteValidateAfterOperation} body The completed operation.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        completeTrialSearcherValidation(trialId: number, body: V1CompleteValidateAfterOperation, options: any = {}): FetchArgs {
-            // verify required parameter 'trialId' is not null or undefined
-            if (trialId === null || trialId === undefined) {
-                throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling completeTrialSearcherValidation.');
-            }
-            // verify required parameter 'body' is not null or undefined
-            if (body === null || body === undefined) {
-                throw new RequiredError('body','Required parameter body was null or undefined when calling completeTrialSearcherValidation.');
-            }
-            const localVarPath = `/api/v1/trials/{trialId}/searcher/completed_operation`
-                .replace(`{${"trialId"}}`, encodeURIComponent(String(trialId)));
-            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
-            const localVarRequestOptions = { method: 'POST', ...options };
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-            
-            // authentication BearerToken required
-            if (configuration && configuration.apiKey) {
-                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
-                    ? configuration.apiKey("Authorization")
-                    : configuration.apiKey;
-                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-            
-            localVarHeaderParameter['Content-Type'] = 'application/json';
-            
-            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
-            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
-            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
-            localVarRequestOptions.body = JSON.stringify(body)
-            
-            return {
-                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
          * @summary Continues an experiment either to make the existing experiment train longer or to retry it.
          * @param {V1ContinueExperimentRequest} body
          * @param {*} [options] Override http request option.
@@ -20300,42 +20149,6 @@ export const InternalApiFetchParamCreator = function (configuration?: Configurat
             }
             const localVarPath = `/api/v1/experiments/{experimentId}/searcher/best_searcher_validation_metric`
                 .replace(`{${"experimentId"}}`, encodeURIComponent(String(experimentId)));
-            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
-            const localVarRequestOptions = { method: 'GET', ...options };
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-            
-            // authentication BearerToken required
-            if (configuration && configuration.apiKey) {
-                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
-                    ? configuration.apiKey("Authorization")
-                    : configuration.apiKey;
-                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-            
-            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
-            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
-            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
-            
-            return {
-                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
-         * @summary Get the current searcher operation.
-         * @param {number} trialId The id of the trial.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getCurrentTrialSearcherOperation(trialId: number, options: any = {}): FetchArgs {
-            // verify required parameter 'trialId' is not null or undefined
-            if (trialId === null || trialId === undefined) {
-                throw new RequiredError('trialId','Required parameter trialId was null or undefined when calling getCurrentTrialSearcherOperation.');
-            }
-            const localVarPath = `/api/v1/trials/{trialId}/searcher/operation`
-                .replace(`{${"trialId"}}`, encodeURIComponent(String(trialId)));
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
             const localVarHeaderParameter = {} as any;
@@ -23213,26 +23026,6 @@ export const InternalApiFp = function (configuration?: Configuration) {
         },
         /**
          * 
-         * @summary Reports to the searcher that the trial has completed the given searcher operation.
-         * @param {number} trialId The id of the trial.
-         * @param {V1CompleteValidateAfterOperation} body The completed operation.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        completeTrialSearcherValidation(trialId: number, body: V1CompleteValidateAfterOperation, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1CompleteTrialSearcherValidationResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).completeTrialSearcherValidation(trialId, body, options);
-            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
-                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
-                    if (response.status >= 200 && response.status < 300) {
-                        return response.json();
-                    } else {
-                        throw response;
-                    }
-                });
-            };
-        },
-        /**
-         * 
          * @summary Continues an experiment either to make the existing experiment train longer or to retry it.
          * @param {V1ContinueExperimentRequest} body
          * @param {*} [options] Override http request option.
@@ -23412,25 +23205,6 @@ export const InternalApiFp = function (configuration?: Configuration) {
          */
         getBestSearcherValidationMetric(experimentId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetBestSearcherValidationMetricResponse> {
             const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getBestSearcherValidationMetric(experimentId, options);
-            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
-                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
-                    if (response.status >= 200 && response.status < 300) {
-                        return response.json();
-                    } else {
-                        throw response;
-                    }
-                });
-            };
-        },
-        /**
-         * 
-         * @summary Get the current searcher operation.
-         * @param {number} trialId The id of the trial.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getCurrentTrialSearcherOperation(trialId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetCurrentTrialSearcherOperationResponse> {
-            const localVarFetchArgs = InternalApiFetchParamCreator(configuration).getCurrentTrialSearcherOperation(trialId, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -24795,17 +24569,6 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
         },
         /**
          * 
-         * @summary Reports to the searcher that the trial has completed the given searcher operation.
-         * @param {number} trialId The id of the trial.
-         * @param {V1CompleteValidateAfterOperation} body The completed operation.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        completeTrialSearcherValidation(trialId: number, body: V1CompleteValidateAfterOperation, options?: any) {
-            return InternalApiFp(configuration).completeTrialSearcherValidation(trialId, body, options)(fetch, basePath);
-        },
-        /**
-         * 
          * @summary Continues an experiment either to make the existing experiment train longer or to retry it.
          * @param {V1ContinueExperimentRequest} body
          * @param {*} [options] Override http request option.
@@ -24904,16 +24667,6 @@ export const InternalApiFactory = function (configuration?: Configuration, fetch
          */
         getBestSearcherValidationMetric(experimentId: number, options?: any) {
             return InternalApiFp(configuration).getBestSearcherValidationMetric(experimentId, options)(fetch, basePath);
-        },
-        /**
-         * 
-         * @summary Get the current searcher operation.
-         * @param {number} trialId The id of the trial.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getCurrentTrialSearcherOperation(trialId: number, options?: any) {
-            return InternalApiFp(configuration).getCurrentTrialSearcherOperation(trialId, options)(fetch, basePath);
         },
         /**
          * 
@@ -25743,19 +25496,6 @@ export class InternalApi extends BaseAPI {
     
     /**
      * 
-     * @summary Reports to the searcher that the trial has completed the given searcher operation.
-     * @param {number} trialId The id of the trial.
-     * @param {V1CompleteValidateAfterOperation} body The completed operation.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof InternalApi
-     */
-    public completeTrialSearcherValidation(trialId: number, body: V1CompleteValidateAfterOperation, options?: any) {
-        return InternalApiFp(this.configuration).completeTrialSearcherValidation(trialId, body, options)(this.fetch, this.basePath)
-    }
-    
-    /**
-     * 
      * @summary Continues an experiment either to make the existing experiment train longer or to retry it.
      * @param {V1ContinueExperimentRequest} body
      * @param {*} [options] Override http request option.
@@ -25873,18 +25613,6 @@ export class InternalApi extends BaseAPI {
      */
     public getBestSearcherValidationMetric(experimentId: number, options?: any) {
         return InternalApiFp(this.configuration).getBestSearcherValidationMetric(experimentId, options)(this.fetch, this.basePath)
-    }
-    
-    /**
-     * 
-     * @summary Get the current searcher operation.
-     * @param {number} trialId The id of the trial.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof InternalApi
-     */
-    public getCurrentTrialSearcherOperation(trialId: number, options?: any) {
-        return InternalApiFp(this.configuration).getCurrentTrialSearcherOperation(trialId, options)(this.fetch, this.basePath)
     }
     
     /**

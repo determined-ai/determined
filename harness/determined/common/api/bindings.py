@@ -2527,41 +2527,6 @@ class v1CompareTrialsResponse(Printable):
         }
         return out
 
-class v1CompleteValidateAfterOperation(Printable):
-    """Used to complete a ValidateAfterOperation."""
-    op: "typing.Optional[v1ValidateAfterOperation]" = None
-    searcherMetric: "typing.Optional[typing.Any]" = None
-
-    def __init__(
-        self,
-        *,
-        op: "typing.Union[v1ValidateAfterOperation, None, Unset]" = _unset,
-        searcherMetric: "typing.Union[typing.Any, None, Unset]" = _unset,
-    ):
-        if not isinstance(op, Unset):
-            self.op = op
-        if not isinstance(searcherMetric, Unset):
-            self.searcherMetric = searcherMetric
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1CompleteValidateAfterOperation":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-        }
-        if "op" in obj:
-            kwargs["op"] = v1ValidateAfterOperation.from_json(obj["op"]) if obj["op"] is not None else None
-        if "searcherMetric" in obj:
-            kwargs["searcherMetric"] = obj["searcherMetric"]
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-        }
-        if not omit_unset or "op" in vars(self):
-            out["op"] = None if self.op is None else self.op.to_json(omit_unset)
-        if not omit_unset or "searcherMetric" in vars(self):
-            out["searcherMetric"] = self.searcherMetric
-        return out
-
 class v1Config(Printable):
     """The config to be patched into Master Config."""
     log: "typing.Optional[v1LogConfig]" = None
@@ -4089,51 +4054,6 @@ class v1ExperimentActionResult(Printable):
         }
         return out
 
-class v1ExperimentSimulation(Printable):
-    """ExperimentSimulation holds the configuration and results of simulated run of
-    a searcher.
-    """
-    config: "typing.Optional[typing.Dict[str, typing.Any]]" = None
-    seed: "typing.Optional[int]" = None
-    trials: "typing.Optional[typing.Sequence[v1TrialSimulation]]" = None
-
-    def __init__(
-        self,
-        *,
-        config: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
-        seed: "typing.Union[int, None, Unset]" = _unset,
-        trials: "typing.Union[typing.Sequence[v1TrialSimulation], None, Unset]" = _unset,
-    ):
-        if not isinstance(config, Unset):
-            self.config = config
-        if not isinstance(seed, Unset):
-            self.seed = seed
-        if not isinstance(trials, Unset):
-            self.trials = trials
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1ExperimentSimulation":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-        }
-        if "config" in obj:
-            kwargs["config"] = obj["config"]
-        if "seed" in obj:
-            kwargs["seed"] = obj["seed"]
-        if "trials" in obj:
-            kwargs["trials"] = [v1TrialSimulation.from_json(x) for x in obj["trials"]] if obj["trials"] is not None else None
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-        }
-        if not omit_unset or "config" in vars(self):
-            out["config"] = self.config
-        if not omit_unset or "seed" in vars(self):
-            out["seed"] = self.seed
-        if not omit_unset or "trials" in vars(self):
-            out["trials"] = None if self.trials is None else [x.to_json(omit_unset) for x in self.trials]
-        return out
-
 class v1FailureType(DetEnum):
     """The failure type of a resource.
     - FAILURE_TYPE_UNSPECIFIED: UNSPECIFIED denotes an error that is not defined below.
@@ -4835,40 +4755,6 @@ class v1GetCommandsResponse(Printable):
         }
         if not omit_unset or "pagination" in vars(self):
             out["pagination"] = None if self.pagination is None else self.pagination.to_json(omit_unset)
-        return out
-
-class v1GetCurrentTrialSearcherOperationResponse(Printable):
-    completed: "typing.Optional[bool]" = None
-    op: "typing.Optional[v1TrialOperation]" = None
-
-    def __init__(
-        self,
-        *,
-        completed: "typing.Union[bool, None, Unset]" = _unset,
-        op: "typing.Union[v1TrialOperation, None, Unset]" = _unset,
-    ):
-        if not isinstance(completed, Unset):
-            self.completed = completed
-        if not isinstance(op, Unset):
-            self.op = op
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1GetCurrentTrialSearcherOperationResponse":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-        }
-        if "completed" in obj:
-            kwargs["completed"] = obj["completed"]
-        if "op" in obj:
-            kwargs["op"] = v1TrialOperation.from_json(obj["op"]) if obj["op"] is not None else None
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-        }
-        if not omit_unset or "completed" in vars(self):
-            out["completed"] = self.completed
-        if not omit_unset or "op" in vars(self):
-            out["op"] = None if self.op is None else self.op.to_json(omit_unset)
         return out
 
 class v1GetExperimentCheckpointsResponse(Printable):
@@ -11701,29 +11587,29 @@ class v1PreviewHPSearchRequest(Printable):
 
 class v1PreviewHPSearchResponse(Printable):
     """Response to PreviewSearchRequest."""
-    simulation: "typing.Optional[v1ExperimentSimulation]" = None
+    summary: "typing.Optional[v1SearchSummary]" = None
 
     def __init__(
         self,
         *,
-        simulation: "typing.Union[v1ExperimentSimulation, None, Unset]" = _unset,
+        summary: "typing.Union[v1SearchSummary, None, Unset]" = _unset,
     ):
-        if not isinstance(simulation, Unset):
-            self.simulation = simulation
+        if not isinstance(summary, Unset):
+            self.summary = summary
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1PreviewHPSearchResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
         }
-        if "simulation" in obj:
-            kwargs["simulation"] = v1ExperimentSimulation.from_json(obj["simulation"]) if obj["simulation"] is not None else None
+        if "summary" in obj:
+            kwargs["summary"] = v1SearchSummary.from_json(obj["summary"]) if obj["summary"] is not None else None
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
         }
-        if not omit_unset or "simulation" in vars(self):
-            out["simulation"] = None if self.simulation is None else self.simulation.to_json(omit_unset)
+        if not omit_unset or "summary" in vars(self):
+            out["summary"] = None if self.summary is None else self.summary.to_json(omit_unset)
         return out
 
 class v1Project(Printable):
@@ -13852,54 +13738,6 @@ class v1RunPrepareForReportingResponse(Printable):
             out["storageId"] = self.storageId
         return out
 
-class v1RunnableOperation(Printable):
-    """RunnableOperation represents a single runnable operation emitted by a
-    searcher.
-    """
-    length: "typing.Optional[str]" = None
-    type: "typing.Optional[v1RunnableType]" = None
-
-    def __init__(
-        self,
-        *,
-        length: "typing.Union[str, None, Unset]" = _unset,
-        type: "typing.Union[v1RunnableType, None, Unset]" = _unset,
-    ):
-        if not isinstance(length, Unset):
-            self.length = length
-        if not isinstance(type, Unset):
-            self.type = type
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1RunnableOperation":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-        }
-        if "length" in obj:
-            kwargs["length"] = obj["length"]
-        if "type" in obj:
-            kwargs["type"] = v1RunnableType(obj["type"]) if obj["type"] is not None else None
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-        }
-        if not omit_unset or "length" in vars(self):
-            out["length"] = self.length
-        if not omit_unset or "type" in vars(self):
-            out["type"] = None if self.type is None else self.type.value
-        return out
-
-class v1RunnableType(DetEnum):
-    """RunnableType defines the type of operation that should be executed by trial
-    runners.
-    - RUNNABLE_TYPE_UNSPECIFIED: Denotes an unknown runnable type.
-    - RUNNABLE_TYPE_TRAIN: Signals to a trial runner that it should run a train.
-    - RUNNABLE_TYPE_VALIDATE: Signals to a trial runner it should compute validation metrics.
-    """
-    UNSPECIFIED = "RUNNABLE_TYPE_UNSPECIFIED"
-    TRAIN = "RUNNABLE_TYPE_TRAIN"
-    VALIDATE = "RUNNABLE_TYPE_VALIDATE"
-
 class v1SSOProvider(Printable):
     """Describe one SSO provider."""
     alwaysRedirect: "typing.Optional[bool]" = None
@@ -14264,6 +14102,84 @@ class v1SearchRunsResponse(Printable):
             "pagination": self.pagination.to_json(omit_unset),
             "runs": [x.to_json(omit_unset) for x in self.runs],
         }
+        return out
+
+class v1SearchSummary(Printable):
+    """SearchSummary contains the estimated runs and training lengths that a search plans to execute."""
+    config: "typing.Optional[typing.Dict[str, typing.Any]]" = None
+    runs: "typing.Optional[typing.Dict[str, v1SearchUnit]]" = None
+
+    def __init__(
+        self,
+        *,
+        config: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
+        runs: "typing.Union[typing.Dict[str, v1SearchUnit], None, Unset]" = _unset,
+    ):
+        if not isinstance(config, Unset):
+            self.config = config
+        if not isinstance(runs, Unset):
+            self.runs = runs
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1SearchSummary":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "config" in obj:
+            kwargs["config"] = obj["config"]
+        if "runs" in obj:
+            kwargs["runs"] = {k: v1SearchUnit.from_json(v) for k, v in obj["runs"].items()} if obj["runs"] is not None else None
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "config" in vars(self):
+            out["config"] = self.config
+        if not omit_unset or "runs" in vars(self):
+            out["runs"] = None if self.runs is None else {k: v.to_json(omit_unset) for k, v in self.runs.items()}
+        return out
+
+class v1SearchUnit(Printable):
+    """SearchUnit describes a length unit used by some searchers to manage training."""
+    name: "typing.Optional[str]" = None
+    undefined: "typing.Optional[bool]" = None
+    value: "typing.Optional[int]" = None
+
+    def __init__(
+        self,
+        *,
+        name: "typing.Union[str, None, Unset]" = _unset,
+        undefined: "typing.Union[bool, None, Unset]" = _unset,
+        value: "typing.Union[int, None, Unset]" = _unset,
+    ):
+        if not isinstance(name, Unset):
+            self.name = name
+        if not isinstance(undefined, Unset):
+            self.undefined = undefined
+        if not isinstance(value, Unset):
+            self.value = value
+
+    @classmethod
+    def from_json(cls, obj: Json) -> "v1SearchUnit":
+        kwargs: "typing.Dict[str, typing.Any]" = {
+        }
+        if "name" in obj:
+            kwargs["name"] = obj["name"]
+        if "undefined" in obj:
+            kwargs["undefined"] = obj["undefined"]
+        if "value" in obj:
+            kwargs["value"] = obj["value"]
+        return cls(**kwargs)
+
+    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
+        out: "typing.Dict[str, typing.Any]" = {
+        }
+        if not omit_unset or "name" in vars(self):
+            out["name"] = self.name
+        if not omit_unset or "undefined" in vars(self):
+            out["undefined"] = self.undefined
+        if not omit_unset or "value" in vars(self):
+            out["value"] = self.value
         return out
 
 class v1SetClusterMessageRequest(Printable):
@@ -15746,33 +15662,6 @@ class v1TrialMetrics(Printable):
             out["stepsCompleted"] = self.stepsCompleted
         return out
 
-class v1TrialOperation(Printable):
-    """TrialOperation is any operation that a trial can perform while it is active."""
-    validateAfter: "typing.Optional[v1ValidateAfterOperation]" = None
-
-    def __init__(
-        self,
-        *,
-        validateAfter: "typing.Union[v1ValidateAfterOperation, None, Unset]" = _unset,
-    ):
-        if not isinstance(validateAfter, Unset):
-            self.validateAfter = validateAfter
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1TrialOperation":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-        }
-        if "validateAfter" in obj:
-            kwargs["validateAfter"] = v1ValidateAfterOperation.from_json(obj["validateAfter"]) if obj["validateAfter"] is not None else None
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-        }
-        if not omit_unset or "validateAfter" in vars(self):
-            out["validateAfter"] = None if self.validateAfter is None else self.validateAfter.to_json(omit_unset)
-        return out
-
 class v1TrialProfilerMetricLabels(Printable):
     agentId: "typing.Optional[str]" = None
     gpuUuid: "typing.Optional[str]" = None
@@ -15883,43 +15772,6 @@ class v1TrialRunnerMetadata(Printable):
         out: "typing.Dict[str, typing.Any]" = {
             "state": self.state,
         }
-        return out
-
-class v1TrialSimulation(Printable):
-    """TrialSimulation is a specific sequence of workloads that were run before the
-    trial was completed.
-    """
-    occurrences: "typing.Optional[int]" = None
-    operations: "typing.Optional[typing.Sequence[v1RunnableOperation]]" = None
-
-    def __init__(
-        self,
-        *,
-        occurrences: "typing.Union[int, None, Unset]" = _unset,
-        operations: "typing.Union[typing.Sequence[v1RunnableOperation], None, Unset]" = _unset,
-    ):
-        if not isinstance(occurrences, Unset):
-            self.occurrences = occurrences
-        if not isinstance(operations, Unset):
-            self.operations = operations
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1TrialSimulation":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-        }
-        if "occurrences" in obj:
-            kwargs["occurrences"] = obj["occurrences"]
-        if "operations" in obj:
-            kwargs["operations"] = [v1RunnableOperation.from_json(x) for x in obj["operations"]] if obj["operations"] is not None else None
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-        }
-        if not omit_unset or "occurrences" in vars(self):
-            out["occurrences"] = self.occurrences
-        if not omit_unset or "operations" in vars(self):
-            out["operations"] = None if self.operations is None else [x.to_json(omit_unset) for x in self.operations]
         return out
 
 class v1TrialSourceInfo(Printable):
@@ -16619,43 +16471,6 @@ class v1UserWebSetting(Printable):
             out["storagePath"] = self.storagePath
         if not omit_unset or "value" in vars(self):
             out["value"] = self.value
-        return out
-
-class v1ValidateAfterOperation(Printable):
-    """ValidateAfterOperation means the trial should train and validate after
-    training the given length.
-    """
-    length: "typing.Optional[str]" = None
-    requestId: "typing.Optional[str]" = None
-
-    def __init__(
-        self,
-        *,
-        length: "typing.Union[str, None, Unset]" = _unset,
-        requestId: "typing.Union[str, None, Unset]" = _unset,
-    ):
-        if not isinstance(length, Unset):
-            self.length = length
-        if not isinstance(requestId, Unset):
-            self.requestId = requestId
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1ValidateAfterOperation":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-        }
-        if "length" in obj:
-            kwargs["length"] = obj["length"]
-        if "requestId" in obj:
-            kwargs["requestId"] = obj["requestId"]
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-        }
-        if not omit_unset or "length" in vars(self):
-            out["length"] = self.length
-        if not omit_unset or "requestId" in vars(self):
-            out["requestId"] = self.requestId
         return out
 
 class v1ValidationHistoryEntry(Printable):
@@ -17755,33 +17570,6 @@ def get_CompareTrials(
         return v1CompareTrialsResponse.from_json(_resp.json())
     raise APIHttpError("get_CompareTrials", _resp)
 
-def post_CompleteTrialSearcherValidation(
-    session: "api.BaseSession",
-    *,
-    body: "v1CompleteValidateAfterOperation",
-    trialId: int,
-) -> None:
-    """Reports to the searcher that the trial has completed the given searcher
-    operation.
-
-    - body: The completed operation.
-    - trialId: The id of the trial.
-    """
-    _params = None
-    _resp = session._do_request(
-        method="POST",
-        path=f"/api/v1/trials/{trialId}/searcher/completed_operation",
-        params=_params,
-        json=body.to_json(True),
-        data=None,
-        headers=None,
-        timeout=None,
-        stream=False,
-    )
-    if _resp.status_code == 200:
-        return
-    raise APIHttpError("post_CompleteTrialSearcherValidation", _resp)
-
 def post_ContinueExperiment(
     session: "api.BaseSession",
     *,
@@ -18755,30 +18543,6 @@ accessible workspaces.
     if _resp.status_code == 200:
         return v1GetCommandsResponse.from_json(_resp.json())
     raise APIHttpError("get_GetCommands", _resp)
-
-def get_GetCurrentTrialSearcherOperation(
-    session: "api.BaseSession",
-    *,
-    trialId: int,
-) -> "v1GetCurrentTrialSearcherOperationResponse":
-    """Get the current searcher operation.
-
-    - trialId: The id of the trial.
-    """
-    _params = None
-    _resp = session._do_request(
-        method="GET",
-        path=f"/api/v1/trials/{trialId}/searcher/operation",
-        params=_params,
-        json=None,
-        data=None,
-        headers=None,
-        timeout=None,
-        stream=False,
-    )
-    if _resp.status_code == 200:
-        return v1GetCurrentTrialSearcherOperationResponse.from_json(_resp.json())
-    raise APIHttpError("get_GetCurrentTrialSearcherOperation", _resp)
 
 def get_GetExperiment(
     session: "api.BaseSession",

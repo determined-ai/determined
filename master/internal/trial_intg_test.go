@@ -33,7 +33,7 @@ import (
 
 func TestTrial(t *testing.T) {
 	_, rID, tr, alloc, done := setup(t)
-
+	// xxx: fix this test
 	// Pre-scheduled stage.
 	require.NoError(t, tr.PatchState(
 		model.StateWithReason{State: model.ActiveState}))
@@ -49,11 +49,7 @@ func TestTrial(t *testing.T) {
 
 	// Running stage.
 	require.NoError(t, tr.PatchSearcherState(experiment.TrialSearcherState{
-		Create: searcher.Create{RequestID: rID},
-		Op: searcher.ValidateAfter{
-			RequestID: rID,
-			Length:    10,
-		},
+		Create:   searcher.Create{RequestID: rID},
 		Complete: true,
 		Closed:   true,
 	}))

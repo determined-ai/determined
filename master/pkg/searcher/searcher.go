@@ -2,7 +2,6 @@ package searcher
 
 import (
 	"encoding/json"
-	"fmt"
 	"math"
 	"sync"
 
@@ -19,15 +18,13 @@ type PartialUnits float64
 type (
 	// SearcherState encapsulates all persisted searcher state.
 	SearcherState struct {
-		TrialsRequested     int                              `json:"trials_requested"`
-		TrialsCreated       map[model.RequestID]bool         `json:"trials_created"`
-		TrialsClosed        map[model.RequestID]bool         `json:"trials_closed"`
-		Exits               map[model.RequestID]bool         `json:"exits"`
-		Cancels             map[model.RequestID]bool         `json:"cancels"`
-		Failures            map[model.RequestID]bool         `json:"failures"`
-		TrialProgress       map[model.RequestID]PartialUnits `json:"trial_progress"`
-		Shutdown            bool                             `json:"shutdown"`
-		CompletedOperations map[string]ValidateAfter         `json:"completed_operations"`
+		RunsRequested int               `json:"runs_requested"`
+		RunsCreated   map[int32]bool    `json:"runs_created"`
+		RunsClosed    map[int32]bool    `json:"runs_closed"`
+		Exits         map[int32]bool    `json:"exits"`
+		Cancels       map[int32]bool    `json:"cancels"`
+		Failures      map[int32]bool    `json:"failures"`
+		RunProgress   map[int32]float64 `json:"run_progress"`
 
 		Rand *nprand.State `json:"rand"`
 
@@ -50,14 +47,13 @@ func NewSearcher(seed uint32, method SearchMethod, hparams expconf.Hyperparamete
 		hparams: hparams,
 		method:  method,
 		state: SearcherState{
-			Rand:                nprand.New(seed),
-			TrialsCreated:       map[model.RequestID]bool{},
-			TrialsClosed:        map[model.RequestID]bool{},
-			Exits:               map[model.RequestID]bool{},
-			Cancels:             map[model.RequestID]bool{},
-			Failures:            map[model.RequestID]bool{},
-			TrialProgress:       map[model.RequestID]PartialUnits{},
-			CompletedOperations: map[string]ValidateAfter{},
+			Rand:        nprand.New(seed),
+			RunsCreated: map[int32]bool{},
+			RunsClosed:  map[int32]bool{},
+			Exits:       map[int32]bool{},
+			Cancels:     map[int32]bool{},
+			Failures:    map[int32]bool{},
+			RunProgress: map[int32]float64{},
 		},
 	}
 }
@@ -66,53 +62,52 @@ func (s *Searcher) context() context {
 	return context{rand: s.state.Rand, hparams: s.hparams}
 }
 
-// InitialOperations return a set of initial operations that the searcher would like to take.
+// xxx: comment
 // This should be called only once after the searcher has been created.
-func (s *Searcher) InitialOperations() ([]Operation, error) {
+func (s *Searcher) InitialRuns() ([]Action, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	operations, err := s.method.initialOperations(s.context())
+	creates, err := s.method.initialRuns(s.context())
 	if err != nil {
 		return nil, errors.Wrap(err, "error while fetching initial operations of search method")
 	}
-	s.record(operations)
-	return operations, nil
+	s.record(creates)
+	return creates, nil
 }
 
-// TrialCreated informs the searcher that a trial has been created as a result of a Create
-// operation.
-func (s *Searcher) TrialCreated(requestID model.RequestID) ([]Operation, error) {
+// xxx: comment
+func (s *Searcher) RunCreated(runID int32, action Create) ([]Action, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	s.state.TrialsCreated[requestID] = true
-	s.state.TrialProgress[requestID] = 0
-	operations, err := s.method.trialCreated(s.context(), requestID)
+	s.state.RunsCreated[runID] = true
+	s.state.RunProgress[runID] = 0
+	operations, err := s.method.runCreated(s.context(), runID, action)
 	if err != nil {
 		return nil, errors.Wrapf(err,
-			"error while handling a trial created event: %s", requestID)
+			"error while handling a trial created event: %d", runID)
 	}
 	s.record(operations)
 	return operations, nil
 }
 
-// TrialIsCreated returns true if the creation has been recorded with a TrialCreated call.
-func (s *Searcher) TrialIsCreated(requestID model.RequestID) bool {
+// RunIsCreated returns true if the creation has been recorded with a TrialCreated call.
+func (s *Searcher) RunIsCreated(runID int32) bool {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	return s.state.TrialsCreated[requestID]
+	return s.state.RunsCreated[runID]
 }
 
-// TrialExitedEarly indicates to the searcher that the trial with the given trialID exited early.
-func (s *Searcher) TrialExitedEarly(
-	requestID model.RequestID, exitedReason model.ExitedReason,
-) ([]Operation, error) {
+// xxx: comment
+func (s *Searcher) RunExitedEarly(
+	runID int32, exitedReason model.ExitedReason,
+) ([]Action, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if s.state.Exits[requestID] {
+	if s.state.Exits[runID] {
 		// If a trial reports an early exit twice, just ignore it (it can be convenient for each
 		// rank to be allowed to report it without synchronization).
 		return nil, nil
@@ -120,88 +115,83 @@ func (s *Searcher) TrialExitedEarly(
 
 	switch exitedReason {
 	case model.InvalidHP, model.InitInvalidHP:
-		delete(s.state.TrialProgress, requestID)
+		delete(s.state.RunProgress, runID)
 	case model.UserCanceled:
-		s.state.Cancels[requestID] = true
+		s.state.Cancels[runID] = true
 	case model.Errored:
 		// Only workload.Errored is considered a failure (since failures cause an experiment
 		// to be in the failed state).
-		s.state.Failures[requestID] = true
+		s.state.Failures[runID] = true
 	}
-	operations, err := s.method.trialExitedEarly(s.context(), requestID, exitedReason)
+	operations, err := s.method.runExitedEarly(s.context(), runID, exitedReason)
 	if err != nil {
-		return nil, errors.Wrapf(err, "error relaying trial exited early to trial %d", requestID)
+		return nil, errors.Wrapf(err, "error relaying trial exited early to trial %d", runID)
 	}
-	s.state.Exits[requestID] = true
+	s.state.Exits[runID] = true
 	s.record(operations)
 
-	if s.state.TrialsRequested == len(s.state.TrialsClosed) {
-		shutdown := Shutdown{Failure: len(s.state.Failures) >= s.state.TrialsRequested}
-		s.record([]Operation{shutdown})
+	if s.state.RunsRequested == len(s.state.RunsClosed) {
+		shutdown := Shutdown{Failure: len(s.state.Failures) >= s.state.RunsRequested}
+		s.record([]Action{shutdown})
 		operations = append(operations, shutdown)
 	}
 
 	return operations, nil
 }
 
-// SetTrialProgress informs the searcher of the progress of a given trial.
-func (s *Searcher) SetTrialProgress(requestID model.RequestID, progress PartialUnits) {
+// SetRunProgress informs the searcher of the progress of a given trial.
+func (s *Searcher) SetRunProgress(runID int32, progress float64) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	s.state.TrialProgress[requestID] = progress
+	s.state.RunProgress[runID] = progress
 }
 
 // ValidationCompleted informs the searcher that a validation for the trial was completed.
 func (s *Searcher) ValidationCompleted(
-	requestID model.RequestID, metric interface{}, op ValidateAfter,
-) ([]Operation, error) {
+	runID int32, metrics map[string]interface{},
+) ([]Action, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if _, ok := s.state.CompletedOperations[op.String()]; ok {
-		return nil, fmt.Errorf("operation %v was already completed", op)
-	}
-
-	operations, err := s.method.validationCompleted(s.context(), requestID, metric, op)
+	operations, err := s.method.validationCompleted(s.context(), runID, metrics)
 	if err != nil {
-		return nil, errors.Wrapf(err, "error while handling a workload completed event: %s", requestID)
+		return nil, errors.Wrapf(err, "error while handling a validation completed event: %d", runID)
 	}
-	s.state.CompletedOperations[op.String()] = op
 	s.record(operations)
 	return operations, nil
 }
 
-// TrialClosed informs the searcher that the trial has been closed as a result of a Close operation.
-func (s *Searcher) TrialClosed(requestID model.RequestID) ([]Operation, error) {
+// xxx: comment
+func (s *Searcher) RunClosed(runID int32) ([]Action, error) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	s.state.TrialsClosed[requestID] = true
-	operations, err := s.method.trialClosed(s.context(), requestID)
+	s.state.RunsClosed[runID] = true
+	actions, err := s.method.runClosed(s.context(), runID)
 	if err != nil {
-		return nil, errors.Wrapf(err, "error while handling a trial closed event: %s", requestID)
+		return nil, errors.Wrapf(err, "error while handling a trial closed event: %d", runID)
 	}
-	s.record(operations)
+	s.record(actions)
 
-	if s.state.TrialsRequested == len(s.state.TrialsClosed) {
+	if s.state.RunsRequested == len(s.state.RunsClosed) {
 		shutdown := Shutdown{
-			Cancel:  len(s.state.Cancels) >= s.state.TrialsRequested,
-			Failure: len(s.state.Failures) >= s.state.TrialsRequested,
+			Cancel:  len(s.state.Cancels) >= s.state.RunsRequested,
+			Failure: len(s.state.Failures) >= s.state.RunsRequested,
 		}
-		s.record([]Operation{shutdown})
-		operations = append(operations, shutdown)
+		s.record([]Action{shutdown})
+		actions = append(actions, shutdown)
 	}
 
-	return operations, nil
+	return actions, nil
 }
 
-// TrialIsClosed returns true if the close has been recorded with a TrialClosed call.
-func (s *Searcher) TrialIsClosed(requestID model.RequestID) bool {
+// TrialIsClosed returns true if the close has been recorded with a RunClosed call.
+func (s *Searcher) TrialIsClosed(runID int32) bool {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	return s.state.TrialsClosed[requestID]
+	return s.state.RunsClosed[runID]
 }
 
 // Progress returns experiment progress as a float between 0.0 and 1.0.
@@ -209,7 +199,7 @@ func (s *Searcher) Progress() float64 {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	progress := s.method.progress(s.state.TrialProgress, s.state.TrialsClosed)
+	progress := s.method.progress(s.state.RunProgress, s.state.RunsClosed)
 	if math.IsNaN(progress) || math.IsInf(progress, 0) {
 		return 0.0
 	}
@@ -217,20 +207,18 @@ func (s *Searcher) Progress() float64 {
 }
 
 // Record records operations that were requested by the searcher for a specific trial.
-func (s *Searcher) Record(ops []Operation) {
+func (s *Searcher) Record(ops []Action) {
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
 	s.record(ops)
 }
 
-func (s *Searcher) record(ops []Operation) {
+func (s *Searcher) record(ops []Action) {
 	for _, op := range ops {
 		switch op.(type) {
 		case Create:
-			s.state.TrialsRequested++
-		case Shutdown:
-			s.state.Shutdown = true
+			s.state.RunsRequested++
 		}
 	}
 }

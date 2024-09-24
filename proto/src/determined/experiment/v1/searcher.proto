@@ -105,15 +105,6 @@ message ValidateAfterOperation {
   uint64 length = 2;
 }
 
-// Used to complete a ValidateAfterOperation.
-message CompleteValidateAfterOperation {
-  // The ValidateAfterOperation being completed.
-  ValidateAfterOperation op = 1;
-  // The value of searcher metric associated with this completed operation.
-  // The metric provided should be the metric used to guide HP search.
-  google.protobuf.Value searcher_metric = 2;
-}
-
 // Create a trial with given hyperparameters.
 message CreateTrialOperation {
   // The ID of the trial to create.
@@ -161,43 +152,18 @@ message TrialOperation {
   }
 }
 
-// RunnableType defines the type of operation that should be executed by trial
-// runners.
-enum RunnableType {
-  // Denotes an unknown runnable type.
-  RUNNABLE_TYPE_UNSPECIFIED = 0;
-  // Signals to a trial runner that it should run a train.
-  RUNNABLE_TYPE_TRAIN = 1;
-  // Signals to a trial runner it should compute validation metrics.
-  RUNNABLE_TYPE_VALIDATE = 2;
+// SearchUnit describes a length unit used by some searchers to manage training.
+message SearchUnit {
+  string name = 1;
+  int32 value = 2;
+  // Bool indicating whether the training length is defined by the searcher.
+  bool undefined = 3;
 }
 
-// RunnableOperation represents a single runnable operation emitted by a
-// searcher.
-message RunnableOperation {
-  // This is the type of the operation.
-  RunnableType type = 1;
-  // If the type == WORKLOAD_KIND_TRAIN, this is the number of units
-  uint64 length = 2;
-}
-
-// TrialSimulation is a specific sequence of workloads that were run before the
-// trial was completed.
-message TrialSimulation {
-  // The list of operations that were run before the trial was completed.
-  repeated RunnableOperation operations = 1;
-  // The number of times that this trial configuration has occurred during the
-  // simulation.
-  int32 occurrences = 2;
-}
-
-// ExperimentSimulation holds the configuration and results of simulated run of
-// a searcher.
-message ExperimentSimulation {
-  // The simulated experiment config.
+// SearchSummary contains the estimated runs and training lengths that a search plans to execute.
+message SearchSummary {
+  // The searcher config from which the summary is generated.
   google.protobuf.Struct config = 1;
-  // The searcher simulation seed.
-  uint32 seed = 2;
-  // The list of trials in the simulation.
-  repeated TrialSimulation trials = 3;
+  // A map of planned number of runs to their training lengths.
+  map<int32, SearchUnit> runs = 2;
 }

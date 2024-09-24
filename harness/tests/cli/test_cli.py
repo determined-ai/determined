@@ -1,6 +1,7 @@
 import collections
 import inspect
 import io
+import json
 import os
 import pathlib
 import sys
@@ -12,14 +13,16 @@ from unittest import mock
 import pytest
 import requests
 import requests_mock
+from responses import matchers
 
 from determined.cli import cli, ntsc, render
 from determined.common import constants, context
 from determined.common.api import bindings
 from tests import filetree
+from tests.cli import util
 
 MINIMAL_CONFIG = '{"description": "test"}'
-
+MASTER_HOST = "http://localhost:8080"
 
 def test_parse_config() -> None:
     assert ntsc.parse_config(None, [], [], []) == {}
@@ -566,3 +569,46 @@ def test_dev_bindings_call_arg_unmarshal(case: Tuple[List[str], Dict[str, Any]])
     _, params = dev.bindings_sig(bindings.get_ExpMetricNames)
     kwargs = dev.parse_args_to_kwargs(args, params)
     assert kwargs == expected, kwargs
+
+
+def test_preview_search(tmp_path: pathlib.Path) -> None:
+    # Save a test experiment config file to a temporary path.
+    searcher_config = {
+        "name": "test preview search",
+        "hyperparameters": {
+            "x": 12,
+        },
+        "searcher": {
+            "name": "random",
+            "metric": "loss",
+            "max_trials": 10,
+        }
+    }
+    conf_path = tmp_path / "config.yaml"
+    with conf_path.open("w") as tmp_file:
+        tmp_file.write(json.dumps(searcher_config))
+
+    mock_resp = bindings.v1PreviewHPSearchResponse(
+        summary=bindings.v1SearchSummary(
+            config=searcher_config,
+            runs={
+                "1": bindings.v1SearchUnit(undefined=True),
+            }
+        )
+    )
+    with util.standard_cli_rsps() as rsps:
+        rsps.post(
+            f"{MASTER_HOST}/api/v1/preview-hp-search",
+            status=200,
+            match=[
+                matchers.json_params_matcher(
+                    params={
+                        "config": searcher_config,
+                    }
+                )
+            ],
+            json=mock_resp.to_json(),
+        )
+        cli.main(
+            ["preview-search", str(conf_path)]
+        )

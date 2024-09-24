@@ -2,7 +2,6 @@ package searcher
 
 import (
 	"encoding/json"
-
 	"github.com/pkg/errors"
 
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -13,10 +12,9 @@ import (
 // are sent to the originating search method that created the corresponding operation.
 type (
 	tournamentSearchState struct {
-		SubSearchUnitsCompleted []float64               `json:"sub_search_units_completed"`
-		TrialTable              map[model.RequestID]int `json:"trial_table"`
-		SubSearchStates         []json.RawMessage       `json:"sub_search_states"`
-		SearchMethodType        SearchMethodType        `json:"search_method_type"`
+		RunTable         map[int32]int     `json:"run_table"`
+		SubSearchStates  []json.RawMessage `json:"sub_search_states"`
+		SearchMethodType SearchMethodType  `json:"search_method_type"`
 	}
 	tournamentSearch struct {
 		subSearches []SearchMethod
@@ -28,10 +26,9 @@ func newTournamentSearch(mt SearchMethodType, subSearches ...SearchMethod) *tour
 	return &tournamentSearch{
 		subSearches: subSearches,
 		tournamentSearchState: tournamentSearchState{
-			SubSearchUnitsCompleted: make([]float64, len(subSearches)),
-			TrialTable:              make(map[model.RequestID]int),
-			SubSearchStates:         make([]json.RawMessage, len(subSearches)),
-			SearchMethodType:        mt,
+			RunTable:         make(map[int32]int),
+			SubSearchStates:  make([]json.RawMessage, len(subSearches)),
+			SearchMethodType: mt,
 		},
 	}
 }
@@ -60,72 +57,76 @@ func (s *tournamentSearch) Restore(state json.RawMessage) error {
 	return nil
 }
 
-func (s *tournamentSearch) initialOperations(ctx context) ([]Operation, error) {
-	var operations []Operation
+func (s *tournamentSearch) initialRuns(ctx context) ([]Action, error) {
+	var actions []Action
 	for i, subSearch := range s.subSearches {
-		ops, err := subSearch.initialOperations(ctx)
+		creates, err := subSearch.initialRuns(ctx)
 		if err != nil {
 			return nil, err
 		}
-		s.markCreates(i, ops)
-		operations = append(operations, ops...)
+		// Set SubSearchID on the create actions.
+		for _, create := range creates {
+			action := create.(Create)
+			action.SubSearchID = i
+			actions = append(actions, action)
+		}
 	}
-	return operations, nil
+	return actions, nil
 }
 
-func (s *tournamentSearch) trialCreated(
-	ctx context, requestID model.RequestID,
-) ([]Operation, error) {
-	subSearchID := s.TrialTable[requestID]
-	subSearch := s.subSearches[subSearchID]
-	ops, err := subSearch.trialCreated(ctx, requestID)
-	return s.markCreates(subSearchID, ops), err
+func (s *tournamentSearch) runCreated(
+	ctx context, runID int32, action Create,
+) ([]Action, error) {
+	s.RunTable[runID] = action.SubSearchID
+	subSearch := s.subSearches[action.SubSearchID]
+	ops, err := subSearch.runCreated(ctx, runID, action)
+	return s.markCreates(action.SubSearchID, runID, ops), err
 }
 
 func (s *tournamentSearch) validationCompleted(
-	ctx context, requestID model.RequestID, metric interface{}, op ValidateAfter,
-) ([]Operation, error) {
-	subSearchID := s.TrialTable[requestID]
+	ctx context, runID int32, metrics map[string]interface{},
+) ([]Action, error) {
+	subSearchID := s.RunTable[runID]
 	subSearch := s.subSearches[subSearchID]
-	ops, err := subSearch.validationCompleted(ctx, requestID, metric, op)
-	return s.markCreates(subSearchID, ops), err
+	ops, err := subSearch.validationCompleted(ctx, runID, metrics)
+	return s.markCreates(subSearchID, runID, ops), err
 }
 
 // trialClosed informs the searcher that the trial has been closed as a result of a Close operation.
-func (s *tournamentSearch) trialClosed(
-	ctx context, requestID model.RequestID,
-) ([]Operation, error) {
-	subSearchID := s.TrialTable[requestID]
+func (s *tournamentSearch) runClosed(
+	ctx context, runID int32,
+) ([]Action, error) {
+	subSearchID := s.RunTable[runID]
 	subSearch := s.subSearches[subSearchID]
-	ops, err := subSearch.trialClosed(ctx, requestID)
-	return s.markCreates(subSearchID, ops), err
+	ops, err := subSearch.runClosed(ctx, runID)
+	return s.markCreates(subSearchID, runID, ops), err
 }
 
-func (s *tournamentSearch) trialExitedEarly(
-	ctx context, requestID model.RequestID, exitedReason model.ExitedReason,
-) ([]Operation, error) {
-	subSearchID := s.TrialTable[requestID]
+func (s *tournamentSearch) runExitedEarly(
+	ctx context, runID int32, exitedReason model.ExitedReason,
+) ([]Action, error) {
+	subSearchID := s.RunTable[runID]
 	subSearch := s.subSearches[subSearchID]
-	ops, err := subSearch.trialExitedEarly(ctx, requestID, exitedReason)
-	return s.markCreates(subSearchID, ops), err
+	ops, err := subSearch.runExitedEarly(ctx, runID, exitedReason)
+	return s.markCreates(subSearchID, runID, ops), err
 }
 
 // progress returns experiment progress as a float between 0.0 and 1.0.
 func (s *tournamentSearch) progress(
-	trialProgress map[model.RequestID]PartialUnits,
-	trialsClosed map[model.RequestID]bool,
+	trialProgress map[int32]float64,
+	trialsClosed map[int32]bool,
 ) float64 {
 	sum := 0.0
 	for subSearchID, subSearch := range s.subSearches {
-		subSearchTrialProgress := map[model.RequestID]PartialUnits{}
+		subSearchTrialProgress := map[int32]float64{}
 		for rID, p := range trialProgress {
-			if subSearchID == s.TrialTable[rID] {
+			if subSearchID == s.RunTable[rID] {
 				subSearchTrialProgress[rID] = p
 			}
 		}
-		subSearchTrialsClosed := map[model.RequestID]bool{}
+		subSearchTrialsClosed := map[int32]bool{}
 		for rID, closed := range trialsClosed {
-			if subSearchID == s.TrialTable[rID] {
+			if subSearchID == s.RunTable[rID] {
 				subSearchTrialsClosed[rID] = closed
 			}
 		}
@@ -138,11 +139,15 @@ func (s *tournamentSearch) Unit() expconf.Unit {
 	return s.subSearches[0].Unit()
 }
 
-func (s *tournamentSearch) markCreates(subSearchID int, operations []Operation) []Operation {
-	for _, operation := range operations {
-		if operation, ok := operation.(Create); ok {
-			s.TrialTable[operation.RequestID] = subSearchID
+func (s *tournamentSearch) markCreates(subSearchID int, runID int32, actions []Action) []Action {
+	for _, action := range actions {
+		if _, ok := action.(Create); ok {
+			s.RunTable[runID] = subSearchID
 		}
 	}
-	return operations
+	return actions
+}
+
+func (s *tournamentSearch) Type() SearchMethodType {
+	return s.SearchMethodType
 }

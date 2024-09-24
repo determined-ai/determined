@@ -33,6 +33,20 @@
             "default": null,
             "minimum": 1
         },
+        "time_metric": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        },
+        "max_time": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": null
+        },
         "mode": {
             "enum": [
                 null,
