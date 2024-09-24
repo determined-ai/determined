@@ -18,6 +18,7 @@ import { getDurationInEnglish, getTimeInEnglish } from 'utils/datetime';
 import { humanReadableNumber } from 'utils/number';
 import { AnyMouseEvent } from 'utils/routes';
 import { floatToPercent, humanReadableBytes } from 'utils/string';
+import { handleEmptyCell } from 'utils/table';
 import { getDisplayName } from 'utils/user';
 
 // order used in ColumnPickerMenu
@@ -143,26 +144,30 @@ export const getColumnDefs = ({
   checkpointSize: {
     id: 'checkpointSize',
     isNumerical: true,
-    renderer: (record: ExperimentWithTrial) => ({
-      allowOverlay: false,
-      copyData: record.experiment.checkpointSize
-        ? humanReadableBytes(record.experiment.checkpointSize)
-        : '',
-      data: { kind: TEXT_CELL },
-      kind: GridCellKind.Custom,
-    }),
+    renderer: (record: ExperimentWithTrial) =>
+      handleEmptyCell(record.experiment.checkpointSize, (data) => ({
+        allowOverlay: false,
+        copyData: humanReadableBytes(data),
+        data: { kind: TEXT_CELL },
+        kind: GridCellKind.Custom,
+      })),
     title: 'Checkpoint Size',
     tooltip: () => undefined,
     width: columnWidths.checkpointSize,
   },
   description: {
     id: 'description',
-    renderer: (record: ExperimentWithTrial) => ({
-      allowOverlay: false,
-      copyData: String(record.experiment.description),
-      data: { kind: TEXT_CELL },
-      kind: GridCellKind.Custom,
-    }),
+    renderer: (record: ExperimentWithTrial) =>
+      handleEmptyCell(
+        record.experiment.description,
+        (data) => ({
+          allowOverlay: false,
+          copyData: String(data),
+          data: { kind: TEXT_CELL },
+          kind: GridCellKind.Custom,
+        }),
+        false,
+      ),
     title: 'Description',
     tooltip: () => undefined,
     width: columnWidths.description,
@@ -170,70 +175,67 @@ export const getColumnDefs = ({
   duration: {
     id: 'duration',
     isNumerical: true,
-    renderer: (record: ExperimentWithTrial) => ({
-      allowOverlay: false,
-      copyData: getDurationInEnglish(record.experiment),
-      data: { kind: TEXT_CELL },
-      kind: GridCellKind.Custom,
-    }),
+    renderer: (record: ExperimentWithTrial) =>
+      handleEmptyCell(record.experiment.duration, () => ({
+        allowOverlay: false,
+        copyData: getDurationInEnglish(record.experiment),
+        data: { kind: TEXT_CELL },
+        kind: GridCellKind.Custom,
+      })),
     title: 'Duration',
     tooltip: () => undefined,
     width: columnWidths.duration,
   },
   externalExperimentId: {
     id: 'externalExperimentId',
-    renderer: (record: ExperimentWithTrial) => ({
-      allowOverlay: false,
-      copyData: record.experiment.externalExperimentId ?? '',
-      data: { kind: TEXT_CELL },
-      kind: GridCellKind.Custom,
-    }),
+    renderer: (record: ExperimentWithTrial) =>
+      handleEmptyCell(record.experiment.externalExperimentId, (data) => ({
+        allowOverlay: false,
+        copyData: data,
+        data: { kind: TEXT_CELL },
+        kind: GridCellKind.Custom,
+      })),
     title: 'External Search ID',
     tooltip: () => undefined,
     width: columnWidths.externalExperimentId,
   },
   externalTrialId: {
     id: 'externalTrialId',
-    renderer: (record: ExperimentWithTrial) => ({
-      allowOverlay: false,
-      copyData: record.experiment.externalTrialId ?? '',
-      data: { kind: TEXT_CELL },
-      kind: GridCellKind.Custom,
-    }),
+    renderer: (record: ExperimentWithTrial) =>
+      handleEmptyCell(record.experiment.externalTrialId, (data) => ({
+        allowOverlay: false,
+        copyData: data,
+        data: { kind: TEXT_CELL },
+        kind: GridCellKind.Custom,
+      })),
     title: 'External Trial ID',
     tooltip: () => undefined,
     width: columnWidths.externalTrialId,
   },
   forkedFrom: {
     id: 'forkedFrom',
-    renderer: (record: ExperimentWithTrial) => ({
-      allowOverlay: false,
-      copyData: String(record.experiment.forkedFrom ?? ''),
-      cursor: record.experiment.forkedFrom ? 'pointer' : undefined,
-      data: {
-        kind: LINK_CELL,
-        link:
-          record.experiment.forkedFrom !== undefined
-            ? {
-                href: record.experiment.forkedFrom
-                  ? paths.experimentDetails(record.experiment.forkedFrom)
-                  : undefined,
-                title: String(record.experiment.forkedFrom ?? ''),
-              }
-            : undefined,
-        navigateOn: 'click',
-        underlineOffset: 6,
-      },
-      kind: GridCellKind.Custom,
-      onClick: (e: CellClickedEventArgs) => {
-        if (record.experiment.forkedFrom) {
+    renderer: (record: ExperimentWithTrial) =>
+      handleEmptyCell(record.experiment.forkedFrom, (data) => ({
+        allowOverlay: false,
+        copyData: String(record.experiment.forkedFrom),
+        cursor: 'pointer',
+        data: {
+          kind: LINK_CELL,
+          link: {
+            href: paths.experimentDetails(data),
+            title: String(record.experiment.forkedFrom),
+          },
+          navigateOn: 'click',
+          underlineOffset: 6,
+        },
+        kind: GridCellKind.Custom,
+        onClick: (e: CellClickedEventArgs) => {
           handlePath(e as unknown as AnyMouseEvent, {
             path: String(record.experiment.forkedFrom),
           });
-        }
-      },
-      readonly: true,
-    }),
+        },
+        readonly: true,
+      })),
     title: 'Forked From',
     tooltip: () => undefined,
     width: columnWidths.forkedFrom,
@@ -308,16 +310,13 @@ export const getColumnDefs = ({
   },
   progress: {
     id: 'progress',
-    renderer: (record: ExperimentWithTrial) => {
-      const percentage = floatToPercent(record.experiment.progress ?? 0, 0);
-
-      return {
+    renderer: (record: ExperimentWithTrial) =>
+      handleEmptyCell(record.experiment.progress, (data) => ({
         allowOverlay: false,
-        data: percentage,
-        displayData: percentage,
+        data: floatToPercent(data, 0),
+        displayData: floatToPercent(data, 0),
         kind: GridCellKind.Text,
-      };
-    },
+      })),
     title: 'Progress',
     tooltip: () => undefined,
     width: columnWidths.progress,
@@ -337,15 +336,13 @@ export const getColumnDefs = ({
   searcherMetric: {
     id: 'searcherMetric',
     isNumerical: false,
-    renderer: (record: ExperimentWithTrial) => {
-      const sMetric = record.experiment.searcherMetric ?? '';
-      return {
+    renderer: (record: ExperimentWithTrial) =>
+      handleEmptyCell(record.experiment.searcherMetric, (data) => ({
         allowOverlay: false,
-        copyData: sMetric,
+        copyData: data,
         data: { kind: TEXT_CELL },
         kind: GridCellKind.Custom,
-      };
-    },
+      })),
     title: 'Searcher Metric',
     tooltip: () => undefined,
     width: columnWidths.searcherMetric,
@@ -444,20 +441,13 @@ export const searcherMetricsValColumn = (columnWidth?: number): ColumnDef<Experi
   return {
     id: 'searcherMetricsVal',
     isNumerical: true,
-    renderer: (record: ExperimentWithTrial) => {
-      const sMetricValue = record.bestTrial?.searcherMetricsVal;
-
-      return {
+    renderer: (record: ExperimentWithTrial) =>
+      handleEmptyCell(record.bestTrial?.searcherMetricsVal, (data) => ({
         allowOverlay: false,
-        copyData: sMetricValue
-          ? typeof sMetricValue === 'number'
-            ? humanReadableNumber(sMetricValue)
-            : sMetricValue
-          : '',
+        copyData: humanReadableNumber(data),
         data: { kind: TEXT_CELL },
         kind: GridCellKind.Custom,
-      };
-    },
+      })),
     title: 'Searcher Metric Value',
     tooltip: () => undefined,
     width: columnWidth ?? DEFAULT_COLUMN_WIDTH,

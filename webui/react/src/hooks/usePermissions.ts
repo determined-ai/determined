@@ -111,6 +111,8 @@ export interface PermissionsHook {
   canViewWorkspace: (arg0: WorkspacePermissionsArgs) => boolean;
   canViewWorkspaces: boolean;
   canViewResourceQuotas: boolean;
+  canViewWorkspaceConfigPolicies: boolean;
+  canModifyWorkspaceConfigPolicies: boolean;
   loading: boolean;
 }
 
@@ -195,6 +197,7 @@ const usePermissions = (): PermissionsHook => {
         canModifyWorkspaceAgentUserGroup(rbacOpts, args.workspace),
       canModifyWorkspaceCheckpointStorage: (args: WorkspacePermissionsArgs) =>
         canModifyWorkspaceCheckpointStorage(rbacOpts, args.workspace),
+      canModifyWorkspaceConfigPolicies: canModifyWorkspaceConfigPolicies(rbacOpts),
       canModifyWorkspaceNSC: (args: WorkspacePermissionsArgs) =>
         canModifyWorkspaceNSC(rbacOpts, args.workspace),
       canMoveExperiment: (args: ExperimentPermissionsArgs) =>
@@ -218,6 +221,7 @@ const usePermissions = (): PermissionsHook => {
       canViewResourceQuotas: canViewResourceQuotas(rbacOpts),
       canViewWorkspace: (args: WorkspacePermissionsArgs) =>
         canViewWorkspace(rbacOpts, args.workspace),
+      canViewWorkspaceConfigPolicies: canViewWorkspaceConfigPolicies(rbacOpts),
       canViewWorkspaces: canViewWorkspaces(rbacOpts),
       loading:
         rbacOpts.rbacEnabled &&
@@ -809,6 +813,28 @@ const canMoveFlatRun = (
       ? srcPermit.has(V1PermissionType.DELETEEXPERIMENT)
       : currentUser.isAdmin || currentUser.id === run.userId)
   );
+};
+
+// Config Policies:
+const canViewWorkspaceConfigPolicies = ({
+  rbacEnabled,
+  userAssignments,
+  userRoles,
+}: RbacOptsProps): boolean => {
+  const permitted = relevantPermissions(userAssignments, userRoles);
+  return !rbacEnabled || permitted.has(V1PermissionType.VIEWWORKSPACECONFIGPOLICIES);
+};
+
+const canModifyWorkspaceConfigPolicies = ({
+  currentUser,
+  rbacEnabled,
+  userAssignments,
+  userRoles,
+}: RbacOptsProps): boolean => {
+  const permitted = relevantPermissions(userAssignments, userRoles);
+  return rbacEnabled
+    ? permitted.has(V1PermissionType.MODIFYWORKSPACECONFIGPOLICIES)
+    : !!currentUser && currentUser.isAdmin;
 };
 
 export default usePermissions;

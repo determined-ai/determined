@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/pkg/errors"
 	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/internal/db"
@@ -84,6 +85,9 @@ func GetTaskConfigPolicies(ctx context.Context,
 		Where("workload_type = ?", workloadType).
 		Scan(ctx)
 	if err != nil {
+		if errors.Is(err, db.ErrNotFound) || errors.Cause(err) == sql.ErrNoRows {
+			return &model.TaskConfigPolicies{}, nil
+		}
 		return nil, fmt.Errorf("error retrieving %v task config policies for "+
 			"workspace with ID %d: %w", workloadType, scope, err)
 	}

@@ -84,12 +84,6 @@ type WorkspaceAuthZ interface {
 	CanUnpinWorkspace(
 		ctx context.Context, curUser model.User, workspace *workspacev1.Workspace,
 	) error
-	// PUT /api/v1/config-policies/workspaces/:workspace-id/:type
-	CanModifyWorkspaceConfigPolicies(ctx context.Context, curUser model.User, workspace *workspacev1.Workspace,
-	) error
-	// GET /api/v1/config-policies/workspaces/:workspace-id/:type
-	CanViewWorkspaceConfigPolicies(ctx context.Context, curUser model.User, workspace *workspacev1.Workspace,
-	) error
 }
 
 // AuthZProvider providers WorkspaceAuthZ implementations.

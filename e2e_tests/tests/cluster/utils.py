@@ -101,7 +101,7 @@ def num_free_slots(sess: api.Session) -> int:
 
 
 def run_command_set_priority(
-    sess: api.Session, sleep: int = 30, slots: int = 1, priority: int = 0
+    sess: api.Session, sleep: int, slots: int = 1, priority: int = 0
 ) -> str:
     cmd = [
         "det",
@@ -118,7 +118,7 @@ def run_command_set_priority(
     return detproc.check_output(sess, cmd).strip()
 
 
-def run_command(sess: api.Session, sleep: int = 30, slots: int = 1) -> str:
+def run_command(sess: api.Session, sleep: int, slots: int = 1) -> str:
     cmd = [
         "det",
         "command",
@@ -144,7 +144,7 @@ def run_command_args(sess: api.Session, entrypoint: str, args: Optional[List[str
     return detproc.check_output(sess, cmd + [entrypoint]).strip()
 
 
-def run_zero_slot_command(sess: api.Session, sleep: int = 30) -> str:
+def run_zero_slot_command(sess: api.Session, sleep: int) -> str:
     return run_command(sess, sleep=sleep, slots=0)
 
 

@@ -57,15 +57,6 @@ type MiscAuthZ interface {
 	CanViewExternalJobs(
 		ctx context.Context, curUser *model.User,
 	) (permErr error, err error)
-
-	// CanModifyGlobalConfigPolicies returns an error if the user is not authorized to
-	// modify task config policies.
-	CanModifyGlobalConfigPolicies(ctx context.Context, curUser *model.User,
-	) (permErr error, err error)
-
-	// CanViewGlobalConfigPolicies returns a nil error.
-	CanViewGlobalConfigPolicies(ctx context.Context, curUser *model.User,
-	) (permErr error, err error)
 }
 
 // AuthZProvider is the authz registry for Notebooks, Shells, and Commands.
