@@ -120,6 +120,7 @@ test.describe('User Management', () => {
           });
           testUser = await user.changeStatusUser(testUser, true);
           saveTestUser(testUser, testUsers);
+          await user.validateUser(testUser);
         });
         await test.step('Successful Sign In', async () => {
           await auth.logout();
