@@ -15,30 +15,30 @@ type context struct {
 // interface should use pointer receivers to ensure interface equality is calculated through pointer
 // equality.
 type SearchMethod interface {
-	// initialOperations returns a set of initial operations that the searcher would like to take.
+	// initialRuns returns a set of initial runs the searcher would like to create.
 	// This should be called only once after the searcher has been created.
-	initialOperations(ctx context) ([]Operation, error)
-	// trialCreated informs the searcher that a trial has been created as a result of a Create
+	initialRuns(ctx context) ([]Action, error)
+	// runCreated informs the searcher that a run has been created as a result of a Create
+	// action and returns additional Actions to perform.
+	runCreated(ctx context, runID int32, action Create) ([]Action, error)
+	// validationCompleted informs the searcher that a validation metric has been reported.
+	// xxx: reword comments
+	validationCompleted(ctx context, runID int32,
+		metrics map[string]interface{}) ([]Action, error)
+	// runClosed informs the searcher that the trial has been closed as a result of a Close
 	// operation.
-	trialCreated(ctx context, requestID model.RequestID) ([]Operation, error)
-	// validationCompleted informs the searcher that the validation workload initiated by the same
-	// searcher has completed. It returns any new operations as a result of this workload
-	// completing.
-	validationCompleted(ctx context, requestID model.RequestID,
-		metric interface{}, op ValidateAfter) ([]Operation, error)
-	// trialClosed informs the searcher that the trial has been closed as a result of a Close
-	// operation.
-	trialClosed(ctx context, requestID model.RequestID) ([]Operation, error)
-	// progress returns experiment progress as a float between 0.0 and 1.0.
-	progress(map[model.RequestID]PartialUnits, map[model.RequestID]bool) float64
-	// trialExitedEarly informs the searcher that the trial has exited earlier than expected.
-	trialExitedEarly(
-		ctx context, requestID model.RequestID, exitedReason model.ExitedReason,
-	) ([]Operation, error)
+	runClosed(ctx context, runID int32) ([]Action, error)
+	// progress returns search progress as a float between 0.0 and 1.0.
+	progress(map[int32]float64, map[int32]bool) float64
+	// runExitedEarly informs the searcher that the run has exited earlier than expected.
+	runExitedEarly(
+		ctx context, runID int32, exitedReason model.ExitedReason,
+	) ([]Action, error)
 
 	// TODO: refactor as model.Snapshotter interface or something
 	model.Snapshotter
 	expconf.InUnits
+	Type() SearchMethodType
 }
 
 // SearchMethodType is the type of a SearchMethod. It is saved in snapshots to be used
@@ -69,13 +69,8 @@ func NewSearchMethod(c expconf.SearcherConfig) SearchMethod {
 		return newRandomSearch(*c.RawRandomConfig)
 	case c.RawGridConfig != nil:
 		return newGridSearch(*c.RawGridConfig)
-	case c.RawAsyncHalvingConfig != nil:
-		if c.RawAsyncHalvingConfig.StopOnce() {
-			return newAsyncHalvingStoppingSearch(*c.RawAsyncHalvingConfig, c.SmallerIsBetter())
-		}
-		return newAsyncHalvingSearch(*c.RawAsyncHalvingConfig, c.SmallerIsBetter())
 	case c.RawAdaptiveASHAConfig != nil:
-		return newAdaptiveASHASearch(*c.RawAdaptiveASHAConfig, c.SmallerIsBetter())
+		return newAdaptiveASHASearch(*c.RawAdaptiveASHAConfig, c.SmallerIsBetter(), c.Metric())
 	default:
 		panic("no searcher type specified")
 	}
@@ -83,24 +78,22 @@ func NewSearchMethod(c expconf.SearcherConfig) SearchMethod {
 
 type defaultSearchMethod struct{}
 
-func (defaultSearchMethod) trialCreated(context, model.RequestID) ([]Operation, error) {
+func (defaultSearchMethod) runCreated(context, int32, Create) ([]Action, error) {
 	return nil, nil
 }
 
-func (defaultSearchMethod) validationCompleted(
-	context, model.RequestID, interface{}, ValidateAfter,
-) ([]Operation, error) {
-	return nil, nil
-}
-
-// nolint:unused
-func (defaultSearchMethod) trialClosed(context, model.RequestID) ([]Operation, error) {
+func (defaultSearchMethod) validationCompleted(context, int32, map[string]interface{}) ([]Action, error) {
 	return nil, nil
 }
 
 // nolint:unused
-func (defaultSearchMethod) trialExitedEarly(
-	context, model.RequestID, model.ExitedReason,
-) ([]Operation, error) {
-	return []Operation{Shutdown{Failure: true}}, nil
+func (defaultSearchMethod) runClosed(context, int32) ([]Action, error) {
+	return nil, nil
+}
+
+// nolint:unused
+func (defaultSearchMethod) runExitedEarly(
+	context, int32, model.ExitedReason,
+) ([]Action, error) {
+	return []Action{Shutdown{Failure: true}}, nil
 }

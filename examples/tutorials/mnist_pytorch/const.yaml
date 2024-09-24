@@ -6,7 +6,9 @@ hyperparameters:
   dropout1: 0.25
   dropout2: 0.5
 searcher:
-  name: single
+  name: grid
+  max_concurrent_trials: 2
   metric: validation_loss
   smaller_is_better: true
+  max_length: 100
 entrypoint: python3 train.py --epochs 1

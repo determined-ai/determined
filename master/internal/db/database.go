@@ -18,7 +18,6 @@ type DB interface {
 	Migrate(migrationURL, codeURL string, actions []string) error
 	Close() error
 	GetOrCreateClusterID(telemetryID string) (string, error)
-	TrialExperimentAndRequestID(id int) (int, model.RequestID, error)
 	AddExperiment(experiment *model.Experiment, modelDef []byte, activeConfig expconf.ExperimentConfig) error
 	ExperimentIDByTrialID(trialID int) (int, error)
 	NonTerminalExperiments() ([]*model.Experiment, error)

@@ -10,7 +10,6 @@ import (
 	"gotest.tools/assert"
 
 	"github.com/determined-ai/determined/master/pkg/ptrs"
-	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
@@ -31,7 +30,7 @@ func checkGrid(t *testing.T, counts []int) {
 	for _, count := range counts {
 		numTrials *= count
 	}
-	grid := newHyperparameterGrid(generateHyperparameters(counts))
+	grid := NewHyperparameterGrid(generateHyperparameters(counts))
 	assert.Equal(t, len(grid), numTrials)
 }
 
@@ -97,7 +96,7 @@ func TestGrid(t *testing.T) {
 		"1": expconf.Hyperparameter{RawIntHyperparameter: iParam1},
 		"2": expconf.Hyperparameter{RawIntHyperparameter: iParam2},
 	}
-	actual := newHyperparameterGrid(hparams)
+	actual := NewHyperparameterGrid(hparams)
 	expected := []HParamSample{
 		{"1": 0, "2": 0},
 		{"1": 0, "2": 5},
@@ -123,7 +122,7 @@ func TestNestedGrid(t *testing.T) {
 			},
 		},
 	}
-	actual := newHyperparameterGrid(hparams)
+	actual := NewHyperparameterGrid(hparams)
 	expected := []HParamSample{
 		{"1": 0, "2": HParamSample{"3": 0}},
 		{"1": 0, "2": HParamSample{"3": 5}},
@@ -199,7 +198,7 @@ func TestNestedGridFurther(t *testing.T) {
 		`{"a":{"b":{"c1":5,"c2":11}},"constant":2,"f":17,"l":100}`: true,
 	}
 
-	for _, sample := range newHyperparameterGrid(hps) {
+	for _, sample := range NewHyperparameterGrid(hps) {
 		byts, err := json.Marshal(sample)
 		assert.NilError(t, err)
 		result := string(byts)
@@ -228,7 +227,7 @@ func TestGridIntCount(t *testing.T) {
 			},
 		},
 	}
-	actual := newHyperparameterGrid(hparams)
+	actual := NewHyperparameterGrid(hparams)
 	expected := []HParamSample{
 		{"1": 0},
 		{"1": 1},
@@ -247,7 +246,7 @@ func TestGridIntCountNegative(t *testing.T) {
 			},
 		},
 	}
-	actual := newHyperparameterGrid(hparams)
+	actual := NewHyperparameterGrid(hparams)
 	expected := []HParamSample{
 		{"1": -4},
 		{"1": -3},
@@ -256,63 +255,6 @@ func TestGridIntCountNegative(t *testing.T) {
 	assert.DeepEqual(t, actual, expected)
 }
 
-func TestGridSearcherRecords(t *testing.T) {
-	actual := expconf.GridConfig{RawMaxLength: ptrs.Ptr(expconf.NewLengthInRecords(19200))}
-	actual = schemas.WithDefaults(actual)
-	params := generateHyperparameters([]int{2, 1, 3})
-	expected := [][]ValidateAfter{
-		toOps("19200R"), toOps("19200R"), toOps("19200R"),
-		toOps("19200R"), toOps("19200R"), toOps("19200R"),
-	}
-	searchMethod := newGridSearch(actual)
-	checkSimulation(t, searchMethod, params, ConstantValidation, expected)
-}
-
-func TestGridSearcherBatches(t *testing.T) {
-	actual := expconf.GridConfig{RawMaxLength: ptrs.Ptr(expconf.NewLengthInBatches(300))}
-	actual = schemas.WithDefaults(actual)
-	params := generateHyperparameters([]int{2, 1, 3})
-	expected := [][]ValidateAfter{
-		toOps("300B"), toOps("300B"), toOps("300B"),
-		toOps("300B"), toOps("300B"), toOps("300B"),
-	}
-	searchMethod := newGridSearch(actual)
-	checkSimulation(t, searchMethod, params, ConstantValidation, expected)
-}
-
-func TestGridSearcherEpochs(t *testing.T) {
-	actual := expconf.GridConfig{RawMaxLength: ptrs.Ptr(expconf.NewLengthInEpochs(3))}
-	actual = schemas.WithDefaults(actual)
-	params := generateHyperparameters([]int{2, 1, 3})
-	expected := [][]ValidateAfter{
-		toOps("3E"), toOps("3E"), toOps("3E"),
-		toOps("3E"), toOps("3E"), toOps("3E"),
-	}
-	searchMethod := newGridSearch(actual)
-	checkSimulation(t, searchMethod, params, ConstantValidation, expected)
-}
-
 func TestGridSearchMethod(t *testing.T) {
-	testCases := []valueSimulationTestCase{
-		{
-			name: "test grid search method",
-			expectedTrials: []predefinedTrial{
-				newConstantPredefinedTrial(toOps("300B"), 0.1),
-				newConstantPredefinedTrial(toOps("300B"), 0.1),
-				newConstantPredefinedTrial(toOps("300B"), 0.1),
-				newConstantPredefinedTrial(toOps("300B"), 0.1),
-				newConstantPredefinedTrial(toOps("300B"), 0.1),
-				newEarlyExitPredefinedTrial(toOps("300B"), .1),
-			},
-			config: expconf.SearcherConfig{
-				RawGridConfig: &expconf.GridConfig{
-					RawMaxLength:           ptrs.Ptr(expconf.NewLengthInBatches(300)),
-					RawMaxConcurrentTrials: ptrs.Ptr(2),
-				},
-			},
-			hparams: generateHyperparameters([]int{2, 1, 3}),
-		},
-	}
-
-	runValueSimulationTestCases(t, testCases)
+	// write this
 }

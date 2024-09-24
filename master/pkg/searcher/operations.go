@@ -4,8 +4,6 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/google/uuid"
-
 	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 
 	"github.com/determined-ai/determined/master/pkg/model"
@@ -104,76 +102,31 @@ type Requested interface {
 	GetRequestID() model.RequestID
 }
 
-// Create a new trial for the search method.
-type Create struct {
+// LegacyCreate a new trial for the search method.
+type LegacyCreate struct {
 	RequestID model.RequestID `json:"request_id"`
 	// TrialSeed must be a value between 0 and 2**31 - 1.
-	TrialSeed             uint32                      `json:"trial_seed"`
-	Hparams               HParamSample                `json:"hparams"`
-	Checkpoint            *Checkpoint                 `json:"checkpoint"`
-	WorkloadSequencerType model.WorkloadSequencerType `json:"workload_sequencer_type"`
+	TrialSeed uint32       `json:"trial_seed"`
+	Hparams   HParamSample `json:"hparams"`
 }
 
 // NewCreate initializes a new Create operation with a new request ID and the given hyperparameters.
-func NewCreate(
-	rand *nprand.State, s HParamSample, sequencerType model.WorkloadSequencerType,
-) Create {
-	return Create{
-		RequestID:             model.NewRequestID(rand),
-		TrialSeed:             uint32(rand.Int64n(1 << 31)),
-		Hparams:               s,
-		WorkloadSequencerType: sequencerType,
+func NewLegacyCreate(
+	rand *nprand.State, s HParamSample,
+) LegacyCreate {
+	return LegacyCreate{
+		RequestID: model.NewRequestID(rand),
+		TrialSeed: uint32(rand.Int64n(1 << 31)),
+		Hparams:   s,
 	}
 }
 
-// NewCreateFromCheckpoint initializes a new Create operation with a new request ID and the given
-// hyperparameters and checkpoint to initially load from.
-func NewCreateFromCheckpoint(
-	rand *nprand.State, s HParamSample, parentID model.RequestID,
-	sequencerType model.WorkloadSequencerType,
-) Create {
-	create := NewCreate(rand, s, sequencerType)
-	create.Checkpoint = &Checkpoint{parentID}
-	return create
-}
-
-// CreateFromProto initializes a new Create operation from an
-// experimentv1.SearcherOperation_CreateTrial.
-func CreateFromProto(
-	protoSearcherOp *experimentv1.SearcherOperation_CreateTrial,
-	sequencerType model.WorkloadSequencerType,
-) (*Create, error) {
-	requestID, err := uuid.Parse(protoSearcherOp.CreateTrial.RequestId)
-	if err != nil {
-		return nil, fmt.Errorf("unparseable trial ID %s", protoSearcherOp.CreateTrial.RequestId)
-	}
-	// TODO: Determine whether trial seed is set on client or on master.
-	trialSeed := uint32(42)
-	var hparams HParamSample
-	if err = json.Unmarshal([]byte(protoSearcherOp.CreateTrial.Hyperparams), &hparams); err != nil {
-		// TODO: Should we return this err instead?
-		return nil, fmt.Errorf("unparseable hyperparams %s", protoSearcherOp.CreateTrial.Hyperparams)
-	}
-	return &Create{
-		RequestID:             model.RequestID(requestID),
-		TrialSeed:             trialSeed,
-		Hparams:               hparams,
-		WorkloadSequencerType: sequencerType,
-	}, nil
-}
-
-func (create Create) String() string {
-	if create.Checkpoint == nil {
-		return fmt.Sprintf("{Create %s, seed %d}", create.RequestID, create.TrialSeed)
-	}
-	return fmt.Sprintf(
-		"{Create %s, seed %d, parent %v}", create.RequestID, create.TrialSeed,
-		create.Checkpoint.RequestID,
-	)
+func (create LegacyCreate) String() string {
+	return fmt.Sprintf("{Create %s, seed %d}", create.RequestID, create.TrialSeed)
 }
 
 // GetRequestID implemented Requested.
-func (create Create) GetRequestID() model.RequestID { return create.RequestID }
+func (create LegacyCreate) GetRequestID() model.RequestID { return create.RequestID }
 
 // Checkpoint indicates which trial the trial created by a Create should inherit from.
 type Checkpoint struct {
@@ -194,20 +147,6 @@ type ValidateAfter struct {
 // NewValidateAfter returns a new train operation.
 func NewValidateAfter(requestID model.RequestID, length uint64) ValidateAfter {
 	return ValidateAfter{requestID, length}
-}
-
-// ValidateAfterFromProto creates a ValidateAfter operation from its protobuf representation.
-func ValidateAfterFromProto(
-	op *experimentv1.TrialOperation_ValidateAfter,
-) (*ValidateAfter, error) {
-	requestID, err := uuid.Parse(op.ValidateAfter.RequestId)
-	if err != nil {
-		return nil, fmt.Errorf("unparseable trial ID %s", op.ValidateAfter.RequestId)
-	}
-	return &ValidateAfter{
-		RequestID: model.RequestID(requestID),
-		Length:    op.ValidateAfter.Length,
-	}, nil
 }
 
 func (t ValidateAfter) String() string {
@@ -234,19 +173,6 @@ func NewClose(requestID model.RequestID) Close {
 	}
 }
 
-// CloseFromProto returns a Close operation from its protobuf representation.
-func CloseFromProto(
-	op *experimentv1.SearcherOperation_CloseTrial,
-) (*Close, error) {
-	requestID, err := uuid.Parse(op.CloseTrial.RequestId)
-	if err != nil {
-		return nil, fmt.Errorf("unparseable trial ID %s", op.CloseTrial.RequestId)
-	}
-	return &Close{
-		RequestID: model.RequestID(requestID),
-	}, nil
-}
-
 func (close Close) String() string {
 	return fmt.Sprintf("{Close %s}", close.RequestID)
 }
@@ -255,26 +181,11 @@ func (close Close) String() string {
 func (close Close) GetRequestID() model.RequestID { return close.RequestID }
 
 // Shutdown marks the searcher as completed.
-type Shutdown struct {
+type LegacyShutdown struct {
 	Cancel  bool
 	Failure bool
 }
 
-// NewShutdown initializes a Shutdown operation for the searcher.
-func NewShutdown() Shutdown {
-	return Shutdown{}
-}
-
-// ShutdownFromProto creates a Shutdown from its protobuf representation.
-func ShutdownFromProto(
-	op *experimentv1.SearcherOperation_ShutDown,
-) (*Shutdown, error) {
-	return &Shutdown{
-		Cancel:  op.ShutDown.Cancel,
-		Failure: op.ShutDown.Failure,
-	}, nil
-}
-
-func (shutdown Shutdown) String() string {
+func (shutdown LegacyShutdown) String() string {
 	return fmt.Sprintf("{Shutdown Cancel: %v Failure: %v}", shutdown.Cancel, shutdown.Failure)
 }

@@ -153,17 +153,30 @@ func (g GridConfigV0) Unit() Unit {
 //
 //go:generate ../gen.sh
 type AsyncHalvingConfigV0 struct {
-	RawNumRungs            *int      `json:"num_rungs"`
-	RawMaxLength           *LengthV0 `json:"max_length"`
-	RawMaxTrials           *int      `json:"max_trials"`
-	RawDivisor             *float64  `json:"divisor"`
-	RawMaxConcurrentTrials *int      `json:"max_concurrent_trials"`
-	RawStopOnce            *bool     `json:"stop_once"`
+	RawNumRungs            *int     `json:"num_rungs"`
+	RawMaxTrials           *int     `json:"max_trials"`
+	RawDivisor             *float64 `json:"divisor"`
+	RawMaxConcurrentTrials *int     `json:"max_concurrent_trials"`
+	RawMaxTime             *int     `json:"max_time"`
+	RawTimeMetric          *string  `json:"time_metric"`
+	// These config options are deprecated and should not be used.
+	// They exist to help parse legacy exp configs.
+	RawMaxLength *LengthV0 `json:"max_length"`
+	RawStopOnce  *bool     `json:"stop_once"`
 }
 
 // Unit implements the model.InUnits interface.
 func (a AsyncHalvingConfigV0) Unit() Unit {
 	return a.RawMaxLength.Unit
+}
+
+// Length returns the maximum training length.
+func (a AsyncHalvingConfigV0) Length() Length {
+	if a.RawMaxTime != nil && a.RawTimeMetric != nil {
+		return Length{Unit: Unit(*a.RawTimeMetric), Units: uint64(*a.RawMaxTime)}
+	}
+	// Parse legacy expconfs for backwards compat.
+	return *a.RawMaxLength
 }
 
 // AdaptiveMode specifies how aggressively to perform early stopping.
@@ -190,19 +203,32 @@ func AdaptiveModePtr(mode string) *AdaptiveMode {
 //
 //go:generate ../gen.sh
 type AdaptiveASHAConfigV0 struct {
-	RawMaxLength           *LengthV0     `json:"max_length"`
 	RawMaxTrials           *int          `json:"max_trials"`
 	RawBracketRungs        []int         `json:"bracket_rungs"`
 	RawDivisor             *float64      `json:"divisor"`
 	RawMode                *AdaptiveMode `json:"mode"`
 	RawMaxRungs            *int          `json:"max_rungs"`
 	RawMaxConcurrentTrials *int          `json:"max_concurrent_trials"`
-	RawStopOnce            *bool         `json:"stop_once"`
+	RawMaxTime             *int          `json:"max_time"`
+	RawTimeMetric          *string       `json:"time_metric"`
+	// These config options are deprecated and should not be used.
+	// They exist to help parse legacy exp configs.
+	RawMaxLength *LengthV0 `json:"max_length"`
+	RawStopOnce  *bool     `json:"stop_once"`
 }
 
 // Unit implements the model.InUnits interface.
 func (a AdaptiveASHAConfigV0) Unit() Unit {
 	return a.RawMaxLength.Unit
+}
+
+// Length returns the maximum training length.
+func (a AdaptiveASHAConfigV0) Length() Length {
+	if a.RawMaxTime != nil && a.RawTimeMetric != nil {
+		return Length{Unit: Unit(*a.RawTimeMetric), Units: uint64(*a.RawMaxTime)}
+	}
+	// Parse legacy expconfs for backwards compat.
+	return *a.RawMaxLength
 }
 
 // SyncHalvingConfigV0 is a legacy config.

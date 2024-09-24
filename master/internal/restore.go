@@ -5,26 +5,24 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
-
+	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/rm"
 	"github.com/determined-ai/determined/master/internal/sproto"
-	"github.com/determined-ai/determined/master/internal/workspace"
-
-	"github.com/pkg/errors"
-	log "github.com/sirupsen/logrus"
-
-	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/user"
+	"github.com/determined-ai/determined/master/internal/workspace"
 	"github.com/determined-ai/determined/master/pkg/model"
+	"github.com/determined-ai/determined/master/pkg/nprand"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/searcher"
+	"github.com/pkg/errors"
+	log "github.com/sirupsen/logrus"
 )
 
 // The current experiment snapshot version. Once this is incremented, older versions should be
 // shimmed. Experiment and trial snapshots share a version currently.
-const experimentSnapshotVersion = 5
+const experimentSnapshotVersion = 6
 
 // Restore works by restoring from distributed consistent snapshots taken through the course
 // of an experiment. Snapshots within the system flow from the bottom up, starting with the
@@ -69,7 +67,6 @@ func (m *Master) restoreExperiment(expModel *model.Experiment) error {
 			"cannot restore experiment %d with legacy searcher", expModel.ID,
 		)
 	}
-
 	workspaceModel, err := workspace.WorkspaceByProjectID(context.TODO(), expModel.ProjectID)
 	if err != nil && errors.Cause(err) != sql.ErrNoRows {
 		return err
@@ -134,79 +131,67 @@ func (m *Master) restoreExperiment(expModel *model.Experiment) error {
 	return nil
 }
 
-// restoreTrial takes the a searcher.Create and attempts to restore the trial that would be
-// associated with it. On failure, the trial is just reset to the start and errors are logged.
-func (e *internalExperiment) restoreTrial(
-	ckpt *model.Checkpoint, searcher experiment.TrialSearcherState,
+func (e *internalExperiment) restoreRun(
+	ckpt *model.Checkpoint, searcher experiment.RunSearcherState,
 ) {
-	l := e.syslog.WithField("request-id", searcher.Create.RequestID)
-	l.Debug("restoring trial")
+	syslog := e.syslog
+	syslog.Debug("restoring run")
 
+	var trial *model.Trial
 	var trialID *int
-	var terminal bool
-	switch trial, err := db.TrialByExperimentAndRequestID(context.TODO(),
-		e.ID, searcher.Create.RequestID); {
-	case errors.Cause(err) == db.ErrNotFound:
-		l.Debug("trial was not previously persisted")
-	case err != nil:
-		// This is the only place we _have_ to error, because if the trial did previously exist
-		// and we failed to retrieve it, continuing will result in an invalid state (we'll get a
-		// new trial in the trials table with the same (experiment_id, request_id).
-		l.WithError(err).Error("failed to retrieve trial, aborting restore")
-		terminal = true
-	default:
-		trialID = &trial.ID
-		l = l.WithField("trial-id", trial.ID)
-		if model.TerminalStates[trial.State] {
-			l.Debugf("trial was in terminal state in restore: %s", trial.State)
-			terminal = true
+	var err error
+
+	if searcher.RunID != nil {
+		if _, ok := e.trials[*searcher.RunID]; ok {
+			syslog.Errorf("run %d was already restored, exiting", *searcher.RunID)
+			return
+		}
+		trial, err = db.TrialByID(context.TODO(), int(*searcher.RunID))
+		if err != nil {
+			syslog.WithError(err).Error("failed to retrieve previous run, restoring new run")
+		} else {
+			syslog = syslog.WithField("run-id", trial.ID)
 		}
 	}
 
-	taskID := trialTaskID(e.ID, searcher.Create.RequestID)
-	if !terminal && trialID != nil {
-		trialTaskIDs, err := db.TrialTaskIDsByTrialID(context.TODO(), *trialID)
-		switch {
-		case err != nil:
-			l.WithError(err).Error("failed to retrieve trial's tasks, stopping restore")
-			terminal = true
-		case len(trialTaskIDs) == 0:
-			l.Errorf("trial %d in restoring has no task IDs, stopping restore", *trialID)
-			terminal = true
-		default:
+	taskID := model.TaskID(fmt.Sprintf("%d.%s", e.ID, model.NewTaskID()))
+
+	if trial != nil {
+		trialID = &trial.ID
+		// If the run being restored was in a terminal state, replay the close for the searcher and exit.
+		if model.TerminalStates[trial.State] {
+			syslog.Debugf("run was in terminal state in restore: %s", trial.State)
+			if !e.searcher.TrialIsClosed(*searcher.RunID) {
+				e.runClosed(*searcher.RunID, nil)
+			}
+			return
+		}
+		trialTaskIDs, err := db.TrialTaskIDsByTrialID(context.TODO(), trial.ID)
+		if err != nil {
+			syslog.WithError(err).Error("failed to retrieve tasks for run")
+		} else if len(trialTaskIDs) == 0 {
+			syslog.Errorf("no tasks for run with id %d", trial.ID)
+		} else {
 			taskID = trialTaskIDs[len(trialTaskIDs)-1].TaskID
 		}
-	}
-
-	// In the event a trial is terminal and is not recorded in the searcher, replay the close.
-	if terminal {
-		if !e.searcher.TrialIsClosed(searcher.Create.RequestID) {
-			e.trialClosed(searcher.Create.RequestID, nil)
-		}
-		return
-	}
-	_, ok := e.trials[searcher.Create.RequestID]
-	if ok {
-		l.Errorf("trial %s was already restored", searcher.Create.RequestID)
-		return
 	}
 
 	config := schemas.Copy(e.activeConfig)
 	t, err := newTrial(
 		e.logCtx, taskID, e.JobID, e.StartTime, e.ID, e.State,
 		searcher, e.rm, e.db, config, ckpt, e.taskSpec, e.generatedKeys, true, trialID,
-		nil, e.TrialClosed,
+		nil, e.RunClosed,
 	)
 	if err != nil {
-		l.WithError(err).Error("failed restoring trial, aborting restore")
-		if !e.searcher.TrialIsClosed(searcher.Create.RequestID) {
-			e.trialClosed(searcher.Create.RequestID, ptrs.Ptr(model.Errored))
+		syslog.WithError(err).Error("failed restoring run, aborting restore")
+		if searcher.RunID != nil && !e.searcher.TrialIsClosed(*searcher.RunID) {
+			e.runClosed(*searcher.RunID, ptrs.Ptr(model.Errored))
 		}
 		return
 	}
 	e.trialCreated(t)
 
-	l.Debug("restored trial")
+	syslog.Debug("restored run")
 }
 
 // retrieveExperimentSnapshot retrieves a snapshot in from database if it exists.
@@ -443,4 +428,218 @@ func shimExperimentSnapshotV4(snapshot []byte) ([]byte, error) {
 	}
 
 	return json.Marshal(experimentSnapshotV4)
+}
+
+// shimExperimentSnapshotV5 shims a v4 snapshot to a v5 snapshot. From v4 to v5:
+// - `searcher_state.TrialsRequested` -> `RunsRequested`
+// - `searcher_state.TrialsCreated` -> `RunsCreated`
+// - `searcher_state.TrialsClosed` -> `RunsClosed`
+// - `searcher_state.Exits` -> `Exits`
+// - `searcher_state.Cancels` -> `Cancels`
+// - `searcher_state.Failures` -> `Failures`
+// - `searcher_state.TrialProgress` -> `RunProgress`
+// - `searcher_state.CompletedOperations` -> dropped
+// - `searcher_state.Shutdown` -> dropped
+//
+// - `trial_searcher_state` -> `run_searcher_state`
+// - `trial_searcher_state.Create (searcher.Operation)` -> `run_searcher_state.Create (searcher.Action)`
+// - `trial_searcher_state.Complete` -> dropped
+// - `trial_searcher_state.Op (searcher.ValidateAfter)` -> dropped
+// - `trial_searcher_state.Stop` -> dropped
+// - `trial_searcher_state.Closed` -> `run_searcher_state.Closed`
+func shimExperimentSnapshotV5(snapshot []byte) ([]byte, error) {
+
+	type v4SearcherState struct {
+		TrialsRequested   int                         `json:"trials_requested"`
+		TrialsCreated     map[model.RequestID]bool    `json:"trials_created"`
+		TrialsClosed      map[model.RequestID]bool    `json:"trials_closed"`
+		Exits             map[model.RequestID]bool    `json:"exits"`
+		Cancels           map[model.RequestID]bool    `json:"cancels"`
+		Failures          map[model.RequestID]bool    `json:"failures"`
+		TrialProgress     map[model.RequestID]float64 `json:"trial_progress"`
+		Rand              *nprand.State               `json:"rand"`
+		SearchMethodState json.RawMessage             `json:"search_method_state"`
+	}
+	type v4CreateOp struct {
+		HParams   map[string]interface{} `json:"hparams"`
+		RequestID model.RequestID        `json:"request_id"`
+		TrialSeed uint32                 `json:"trial_seed"`
+	}
+
+	type v4TrialSearcherState struct {
+		Create   v4CreateOp
+		Stop     bool
+		Closed   bool
+		Complete bool
+	}
+	type experimentSnapshotV4 struct {
+		SearcherState      v4SearcherState                          `json:"searcher_state"`
+		TrialSearcherState map[model.RequestID]v4TrialSearcherState `json:"trial_searcher_state"`
+	}
+
+	v4ExperimentSnapshot := experimentSnapshotV4{}
+
+	if err := json.Unmarshal(snapshot, &v4ExperimentSnapshot); err != nil {
+		return nil, err
+	}
+
+	runsCreated, err := mapRequestIDToRunID(v4ExperimentSnapshot.SearcherState.TrialsCreated)
+	runsClosed, err := mapRequestIDToRunID(v4ExperimentSnapshot.SearcherState.TrialsClosed)
+	exits, err := mapRequestIDToRunID(v4ExperimentSnapshot.SearcherState.Exits)
+	cancels, err := mapRequestIDToRunID(v4ExperimentSnapshot.SearcherState.Cancels)
+	failures, err := mapRequestIDToRunID(v4ExperimentSnapshot.SearcherState.Failures)
+	runProgress, err := mapRequestIDToRunID(v4ExperimentSnapshot.SearcherState.TrialProgress)
+
+	searchMethodStateV4 := map[string]interface{}{}
+	err = json.Unmarshal(v4ExperimentSnapshot.SearcherState.SearchMethodState, &searchMethodStateV4)
+	searchMethodState, err := shimSearchMethodStateV5(searchMethodStateV4)
+	runSearcherStateV4, err := mapRequestIDToRunID(v4ExperimentSnapshot.TrialSearcherState)
+	if err != nil {
+		return nil, ExperimentSnapshotShimError{Message: "unable to parse searcher state"}
+	}
+
+	var runSearcherState map[int]interface{}
+
+	for rID, trialSearcherState := range runSearcherStateV4 {
+		// Only for ASHA
+		subsearchID, _ := searchMethodState.(map[string]interface{})["run_table"].(map[int]int)[rID]
+		runSearcherState[rID] = map[string]interface{}{
+			"Create": map[string]interface{}{
+				"hparams":       trialSearcherState.Create.HParams,
+				"run_seed":      trialSearcherState.Create.TrialSeed,
+				"sub_search_id": subsearchID,
+			},
+			"RunID":   rID,
+			"Stopped": trialSearcherState.Stop || trialSearcherState.Complete,
+			"Closed":  trialSearcherState.Closed,
+		}
+	}
+
+	experimentSnapshotV5 := map[string]interface{}{
+		"searcher_state": map[string]interface{}{
+			"runs_requested":      v4ExperimentSnapshot.SearcherState.TrialsRequested,
+			"runs_created":        runsCreated,
+			"runs_closed":         runsClosed,
+			"exits":               exits,
+			"cancels":             cancels,
+			"failures":            failures,
+			"run_progress":        runProgress,
+			"rand":                v4ExperimentSnapshot.SearcherState.Rand,
+			"search_method_state": searchMethodState,
+		},
+		"run_searcher_state": runSearcherState,
+	}
+
+	return json.Marshal(experimentSnapshotV5)
+}
+
+func shimSearchMethodStateV5(v4SearchMethodState map[string]interface{}) (interface{}, error) {
+	searchMethodType, ok := v4SearchMethodState["search_method_type"].(searcher.SearchMethodType)
+	if !ok {
+		return nil, ExperimentSnapshotShimError{Message: "search_method_type not recognized"}
+	}
+	switch searchMethodType {
+	case searcher.SingleSearch:
+		fallthrough
+	case searcher.RandomSearch:
+		createdTrials, ok := v4SearchMethodState["created_trials"].(int)
+		pendingTrials, ok := v4SearchMethodState["pending_trials"].(int)
+		if !ok {
+			return nil, ExperimentSnapshotShimError{Message: "cannot parse search_method_state"}
+		}
+		return map[string]interface{}{
+			"created_runs":       createdTrials,
+			"pending_runs":       pendingTrials,
+			"search_method_type": v4SearchMethodState["search_method_type"],
+		}, nil
+	case searcher.GridSearch:
+		createdTrials, ok := v4SearchMethodState["created_trials"].(int)
+		remainingTrials, ok := v4SearchMethodState["remaining_trials"].(int)
+		if !ok {
+			return nil, ExperimentSnapshotShimError{Message: "cannot parse search_method_state"}
+		}
+		return map[string]interface{}{
+			"created_runs":       createdTrials,
+			"remaining_runs":     remainingTrials,
+			"search_method_type": v4SearchMethodState["search_method_type"],
+		}, nil
+	case searcher.AdaptiveASHASearch:
+		trialTable, ok := v4SearchMethodState["trial_table"].(map[model.RequestID]int)
+		subSearchStatesV4, ok := v4SearchMethodState["sub_search_states"].([]map[string]interface{})
+		runTable, err := mapRequestIDToRunID(trialTable)
+		if !ok || err != nil {
+			return nil, ExperimentSnapshotShimError{Message: "unable to parse search_method_state"}
+		}
+		var subSearchStates []map[string]interface{}
+
+		for _, subSearchStateV4 := range subSearchStatesV4 {
+			rungsV4, ok := subSearchStateV4["rungsV4"].([]map[string]interface{})
+			trialRungs, ok := subSearchStateV4["trial_rungs"].(map[model.RequestID]int)
+			earlyExitTrials, ok := subSearchStateV4["early_exit_trials"].(map[model.RequestID]bool)
+			runRungs, err := mapRequestIDToRunID(trialRungs)
+			earlyExitRuns, err := mapRequestIDToRunID(earlyExitTrials)
+			trialsCompleted, ok := subSearchStateV4["trials_completed"].(int)
+			invalidTrials, ok := subSearchStateV4["invalid_trials"].(int)
+			if !ok || err != nil {
+				return nil, ExperimentSnapshotShimError{Message: "unable to parse search_method_state"}
+			}
+			var rungs []map[string]interface{}
+
+			for _, rungV4 := range rungsV4 {
+				unitsNeeded, ok := rungV4["units_needed"].(uint64)
+				metricsV4, ok := rungV4["metrics"].([]map[string]interface{})
+				if !ok {
+					return nil, ExperimentSnapshotShimError{Message: "unable to parse search_method_state"}
+				}
+				var metrics []map[string]interface{}
+
+				for _, metric := range metricsV4 {
+					requestID, ok := metric["request_id"].(model.RequestID)
+					metric, ok := metric["metric"].(model.ExtendedFloat64)
+					if !ok {
+						return nil, ExperimentSnapshotShimError{Message: "unable to parse search_method_state"}
+					}
+					tID, err := db.TrialIDByRequestID(context.TODO(), requestID)
+					if err != nil {
+						return nil, ExperimentSnapshotShimError{Message: "unable to parse search_method_state"}
+					}
+					metrics = append(metrics, map[string]interface{}{
+						"run_id": tID,
+						"metric": metric,
+					})
+				}
+
+				rungs = append(rungs, map[string]interface{}{
+					"units_needed": unitsNeeded,
+					"metrics":      metrics,
+				})
+			}
+			subSearchStates = append(subSearchStates, map[string]interface{}{
+				"invalid_runs":    invalidTrials,
+				"runs_completed":  trialsCompleted,
+				"early_exit_runs": earlyExitRuns,
+				"run_rungs":       runRungs,
+			})
+		}
+		return map[string]interface{}{
+			"run_table":          runTable,
+			"sub_search_states":  subSearchStates,
+			"search_method_type": v4SearchMethodState["search_method_type"],
+		}, nil
+	default:
+		return nil, ExperimentSnapshotShimError{Message: "unsupported search_method_type"}
+	}
+}
+
+func mapRequestIDToRunID[T any](obj map[model.RequestID]T) (map[int]T, error) {
+	runIDMap := make(map[int]T)
+
+	for k, v := range obj {
+		tID, err := db.TrialIDByRequestID(context.TODO(), k)
+		if err != nil {
+			return nil, err
+		}
+		runIDMap[*tID] = v
+	}
+	return runIDMap, nil
 }

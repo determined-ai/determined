@@ -1,16 +1,13 @@
 package searcher
 
 import (
-	"encoding/json"
-	"math/rand"
-	"sort"
-	"strconv"
-	"strings"
-	"time"
-
+	"fmt"
+	"github.com/determined-ai/determined/master/pkg/mathx"
+	"github.com/determined-ai/determined/master/pkg/protoutils"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
+	"github.com/determined-ai/determined/proto/pkg/experimentv1"
 	"github.com/pkg/errors"
-
-	"github.com/determined-ai/determined/master/pkg/model"
+	"math/rand"
 )
 
 // ValidationFunction calculates the validation metric for the validation step.
@@ -27,196 +24,85 @@ func TrialIDMetric(_ *rand.Rand, trialID, _ int) float64 {
 	return float64(trialID)
 }
 
-// SimulationResults holds all created trials and all executed workloads for each trial.
-type SimulationResults map[model.RequestID][]ValidateAfter
-
-// MarshalJSON implements the json.Marshaler interface.
-func (s SimulationResults) MarshalJSON() ([]byte, error) {
-	summary := make(map[string]int)
-
-	for _, ops := range s {
-		var keyParts []string
-		for _, op := range ops {
-			keyParts = append(keyParts, strconv.FormatUint(op.Length, 10))
-		}
-		summary[strings.Join(keyParts, " ")]++
-	}
-
-	return json.Marshal(summary)
+type SearchSummary struct {
+	Runs   map[int]SearchUnit
+	Config expconf.SearcherConfig
 }
 
-// Simulation holds the configuration and results of simulated run of a searcher.
-type Simulation struct {
-	Results SimulationResults `json:"results"`
-	Seed    int64             `json:"seed"`
+type SearchUnit struct {
+	Name      string
+	Value     int
+	Undefined bool
 }
 
-// Simulate simulates the searcher.
-func Simulate(
-	s *Searcher, seed *int64, valFunc ValidationFunction, randomOrder bool, metricName string,
-) (Simulation, error) {
-	simulation := Simulation{
-		Results: make(SimulationResults),
-		Seed:    time.Now().Unix(),
+func (su SearchUnit) Proto() *experimentv1.SearchUnit {
+	return &experimentv1.SearchUnit{
+		Name:      su.Name,
+		Value:     int32(su.Value),
+		Undefined: su.Undefined,
 	}
-	//nolint:gosec // Weak RNG doesn't matter here.
-	random := rand.New(rand.NewSource(simulation.Seed))
-	if seed != nil {
-		simulation.Seed = *seed
-		//nolint:gosec // Weak RNG doesn't matter here.
-		random = rand.New(rand.NewSource(*seed))
-	}
-
-	lengthCompleted := make(map[model.RequestID]PartialUnits)
-	pending := make(map[model.RequestID][]Operation)
-	trialIDs := make(map[model.RequestID]int)
-	var requestIDs []model.RequestID
-	ops, err := s.InitialOperations()
-	if err != nil {
-		return simulation, err
-	}
-
-	lastProgress := s.Progress()
-	if lastProgress != 0.0 {
-		return simulation, errors.Errorf("Initial searcher progress started at %f", lastProgress)
-	}
-
-	shutdown, err := handleOperations(pending, &requestIDs, ops)
-	if err != nil {
-		return simulation, err
-	}
-
-	nextTrialID := 1
-	trialOpIdxs := map[model.RequestID]int{}
-	for !shutdown {
-		requestID, err := pickTrial(random, pending, requestIDs, randomOrder)
-		if err != nil {
-			return simulation, err
-		}
-		operation := pending[requestID][0]
-		pending[requestID] = pending[requestID][1:]
-
-		switch operation := operation.(type) {
-		case Create:
-			simulation.Results[requestID] = []ValidateAfter{}
-			trialIDs[requestID] = nextTrialID
-			ops, err := s.TrialCreated(operation.RequestID)
-			if err != nil {
-				return simulation, err
-			}
-			trialOpIdxs[requestID] = 0
-			lengthCompleted[requestID] = 0
-			shutdown, err = handleOperations(pending, &requestIDs, ops)
-			if err != nil {
-				return simulation, err
-			}
-			nextTrialID++
-		case ValidateAfter:
-			simulation.Results[requestID] = append(simulation.Results[requestID], operation)
-			s.SetTrialProgress(requestID, PartialUnits(operation.Length))
-
-			metric := valFunc(random, trialIDs[requestID], trialOpIdxs[requestID])
-			ops, err := s.ValidationCompleted(requestID, metric, operation)
-			if err != nil {
-				return simulation, err
-			}
-			trialOpIdxs[requestID]++
-
-			shutdown, err = handleOperations(pending, &requestIDs, ops)
-			if err != nil {
-				return simulation, err
-			}
-		case Close:
-			delete(pending, requestID)
-			ops, err := s.TrialClosed(requestID)
-			if err != nil {
-				return simulation, err
-			}
-			shutdown, err = handleOperations(pending, &requestIDs, ops)
-			if err != nil {
-				return simulation, err
-			}
-		default:
-			return simulation, errors.Errorf("unexpected searcher operation: %T", operation)
-		}
-		if shutdown {
-			if len(pending) != 0 {
-				return simulation, errors.New("searcher shutdown prematurely")
-			}
-			break
-		}
-
-		progress := s.Progress()
-		if progress < lastProgress {
-			return simulation, errors.Errorf(
-				"searcher progress dropped from %f%% to %f%%", lastProgress*100, progress*100)
-		}
-		lastProgress = progress
-	}
-
-	lastProgress = s.Progress()
-	if lastProgress != 1.0 {
-		return simulation, errors.Errorf(
-			"searcher progress was not equal to 100%%: %f%%", lastProgress*100)
-	}
-	if len(simulation.Results) != len(requestIDs) {
-		return simulation, errors.New("more trials created than completed")
-	}
-	return simulation, nil
 }
 
-func handleOperations(
-	pending map[model.RequestID][]Operation, requestIDs *[]model.RequestID, operations []Operation,
-) (bool, error) {
-	for _, operation := range operations {
-		switch op := operation.(type) {
-		case Create:
-			*requestIDs = append(*requestIDs, op.RequestID)
-			pending[op.RequestID] = []Operation{op}
-		case Requested:
-			pending[op.GetRequestID()] = append(pending[op.GetRequestID()], op)
-		case Shutdown:
-			return true, nil
-		default:
-			return false, errors.Errorf("unexpected operation: %T", operation)
-		}
-	}
-	return false, nil
+func (su SearchUnit) String() string {
+	return fmt.Sprintf("%s(%d)", su.Name, su.Value)
 }
 
-func pickTrial(
-	random *rand.Rand, pending map[model.RequestID][]Operation, requestIDs []model.RequestID,
-	randomOrder bool,
-) (model.RequestID, error) {
-	// If randomOrder is false, then return the first id from requestIDs that has any operations
-	// pending.
-	if !randomOrder {
-		for _, requestID := range requestIDs {
-			operations := pending[requestID]
-			if len(operations) > 0 {
-				return requestID, nil
+func (s SearchSummary) Proto() *experimentv1.SearchSummary {
+	runSummaries := make(map[int32]*experimentv1.SearchUnit)
+	for k, v := range s.Runs {
+		runSummaries[int32(k)] = v.Proto()
+	}
+	return &experimentv1.SearchSummary{
+		Config: protoutils.ToStruct(s.Config),
+		Runs:   runSummaries,
+	}
+}
+
+// Simulate generates the intended training plan for the searcher.
+func Simulate(conf expconf.SearcherConfig, hparams expconf.Hyperparameters) (SearchSummary, error) {
+	searchSummary := SearchSummary{
+		Runs:   make(map[int]SearchUnit),
+		Config: conf,
+	}
+	switch {
+	case conf.RawSingleConfig != nil:
+		searchSummary.Runs[1] = SearchUnit{Undefined: true}
+		return searchSummary, nil
+	case conf.RawRandomConfig != nil:
+		maxRuns := conf.RawRandomConfig.MaxTrials()
+		searchSummary.Runs[maxRuns] = SearchUnit{Undefined: true}
+		return searchSummary, nil
+	case conf.RawGridConfig != nil:
+		hparamGrid := NewHyperparameterGrid(hparams)
+		searchSummary.Runs[len(hparamGrid)] = SearchUnit{Undefined: true}
+		return searchSummary, nil
+	case conf.RawAdaptiveASHAConfig != nil:
+		ashaConfig := conf.RawAdaptiveASHAConfig
+		brackets := makeBrackets(*ashaConfig)
+		unitsPerRun := make(map[int]int)
+		for _, bracket := range brackets {
+			rungs := makeRungs(bracket.numRungs, ashaConfig.Divisor(), ashaConfig.Length().Units)
+			rungRuns := bracket.maxTrials
+			// For each rung, calculate number of runs that will be stopped before next rung.
+			for i, rung := range rungs {
+				rungUnits := int(rung.UnitsNeeded)
+				runsContinued := mathx.Max(int(float64(rungRuns)/ashaConfig.Divisor()), 1)
+				runsStopped := rungRuns - runsContinued
+				if i == len(rungs)-1 {
+					runsStopped = rungRuns
+				}
+				unitsPerRun[rungUnits] += runsStopped
+				rungRuns = runsContinued
 			}
 		}
-		return model.RequestID{}, errors.New("tried to pick a trial when no trial had pending operations")
-	}
-
-	// If randomOrder is true, pseudo-randomly select a trial that has pending operations.
-	var candidates []model.RequestID
-	for requestID, operations := range pending {
-		if len(operations) > 0 {
-			candidates = append(candidates, requestID)
+		for units, numRuns := range unitsPerRun {
+			searchSummary.Runs[numRuns] = SearchUnit{
+				Name:  string(ashaConfig.Length().Unit),
+				Value: units,
+			}
 		}
+		return searchSummary, nil
+	default:
+		return SearchSummary{}, errors.New("invalid searcher configuration")
 	}
-	if len(candidates) == 0 {
-		return model.RequestID{}, errors.New("tried to pick a trial when no trial had pending operations")
-	}
-
-	// Map iteration order is nondeterministic, even for identical maps in the same run, so sort the
-	// candidates before selecting one.
-	sort.Slice(candidates, func(i, j int) bool {
-		return candidates[i].Before(candidates[j])
-	})
-
-	choice := random.Intn(len(candidates))
-	return candidates[choice], nil
 }

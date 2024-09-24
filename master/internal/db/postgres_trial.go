@@ -276,17 +276,17 @@ func TrialTaskIDsByTrialID(ctx context.Context, trialID int) ([]*model.RunTaskID
 	return ids, nil
 }
 
-// TrialByExperimentAndRequestID looks up a trial, returning an error if none exists.
-func TrialByExperimentAndRequestID(
-	ctx context.Context, experimentID int, requestID model.RequestID,
-) (*model.Trial, error) {
-	t := &model.Trial{}
-	if err := Bun().NewSelect().Model(t).
-		Where("experiment_id = ?", experimentID).
-		Where("request_id = ?", requestID).Scan(ctx); err != nil {
+// TrialIDByRequestID looks up a trial ID by request ID, returning an error if none exists.
+// This is only used to shim legacy experiment snapshots.
+func TrialIDByRequestID(
+	ctx context.Context, requestID model.RequestID,
+) (*int, error) {
+	var trialID int
+	if err := Bun().NewSelect().
+		Where("request_id = ?", requestID).Scan(ctx, &trialID); err != nil {
 		return nil, fmt.Errorf("error querying for trial %s: %w", requestID, err)
 	}
-	return t, nil
+	return &trialID, nil
 }
 
 // TrialByTaskID looks up a trial by taskID, returning an error if none exists.

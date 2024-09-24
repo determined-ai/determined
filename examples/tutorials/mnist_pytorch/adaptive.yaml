@@ -25,6 +25,6 @@ searcher:
   metric: validation_loss
   smaller_is_better: true
   max_trials: 16
-  time_metric: batch
-  max_time: 937  # 60,000 training images with batch size 64
-entrypoint: python3 train.py --epochs 1
+  max_length:
+    batches: 937 #60,000 training images with batch size 64
+entrypoint: python3 train.py

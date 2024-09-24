@@ -2211,7 +2211,6 @@ var (
         "name"
     ],
     "eventuallyRequired": [
-        "max_length",
         "max_trials",
         "metric"
     ],
@@ -2236,6 +2235,20 @@ var (
             ],
             "default": null,
             "minimum": 1
+        },
+        "time_metric": {
+            "type": [
+                "string",
+                "null"
+            ],
+            "default": null
+        },
+        "max_time": {
+            "type": [
+                "integer",
+                "null"
+            ],
+            "default": null
         },
         "mode": {
             "enum": [
@@ -2329,7 +2342,6 @@ var (
     ],
     "eventuallyRequired": [
         "max_trials",
-        "max_length",
         "metric"
     ],
     "properties": {
@@ -2421,7 +2433,6 @@ var (
     ],
     "eventuallyRequired": [
         "budget",
-        "max_length",
         "metric"
     ],
     "properties": {
@@ -2528,7 +2539,6 @@ var (
     ],
     "eventuallyRequired": [
         "num_rungs",
-        "max_length",
         "max_trials",
         "metric"
     ],
@@ -2667,7 +2677,6 @@ var (
         "name"
     ],
     "eventuallyRequired": [
-        "max_length",
         "metric"
     ],
     "properties": {
@@ -2753,7 +2762,6 @@ var (
     ],
     "eventuallyRequired": [
         "max_trials",
-        "max_length",
         "metric"
     ],
     "properties": {
@@ -2826,7 +2834,6 @@ var (
         "name"
     ],
     "eventuallyRequired": [
-        "max_length",
         "metric"
     ],
     "properties": {
@@ -2885,7 +2892,6 @@ var (
     ],
     "eventuallyRequired": [
         "num_rungs",
-        "max_length",
         "budget",
         "metric"
     ],
@@ -3031,6 +3037,8 @@ var (
         "max_concurrent_trials": true,
         "max_length": true,
         "max_rungs": true,
+        "max_time": true,
+        "time_metric": true,
         "max_trials": true,
         "mode": true,
         "name": true,
