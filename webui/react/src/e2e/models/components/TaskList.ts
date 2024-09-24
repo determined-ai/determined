@@ -16,6 +16,10 @@ class TaskRow extends Row {
     }),
     root: this.root,
   });
+  readonly state = new BaseComponent({
+    parent: this,
+    selector: '[data-testid="state"]',
+  });
 }
 
 /**

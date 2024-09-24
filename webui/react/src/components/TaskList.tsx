@@ -440,6 +440,7 @@ const TaskList: React.FC<Props> = ({ workspace }: Props) => {
         })),
         isFiltered: (settings: Settings) => !!settings.state,
         key: 'state',
+        onCell: () => ({ ...onRightClickableCell(), 'data-testid': 'state' }),
         render: stateRenderer,
         sorter: (a: CommandTask, b: CommandTask): number => commandStateSorter(a.state, b.state),
         title: 'State',
