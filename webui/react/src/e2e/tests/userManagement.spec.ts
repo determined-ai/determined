@@ -95,6 +95,10 @@ test.describe('User Management', () => {
             password: testUser.password,
             username: testUser.user?.username,
           });
+          await expect(page).toHaveDeterminedTitle(signInPage.title);
+          await expect(page).toHaveURL(/login/);
+          await expect(signInPage.detAuth.errors.pwLocator).toBeVisible();
+          await expect(signInPage.detAuth.errors.alert.pwLocator).toBeVisible();
           expect(await signInPage.detAuth.errors.message.pwLocator.textContent()).toContain(
             'Login failed',
           );
@@ -116,6 +120,7 @@ test.describe('User Management', () => {
           });
           testUser = await user.changeStatusUser(testUser, true);
           saveTestUser(testUser, testUsers);
+          await user.validateUser(testUser);
         });
         await test.step('Successful Sign In', async () => {
           await auth.logout();

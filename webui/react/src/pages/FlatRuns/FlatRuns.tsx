@@ -362,8 +362,10 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
             dataPath = currentColumn.column;
             break;
           case V1LocationType.HYPERPARAMETERS:
-          case V1LocationType.RUNHYPERPARAMETERS:
             dataPath = `hyperparameters.${currentColumn.column.replace('hp.', '')}.val`;
+            break;
+          case V1LocationType.RUNHYPERPARAMETERS:
+            dataPath = `hyperparameters.${currentColumn.column.replace('hp.', '')}`;
             break;
           case V1LocationType.VALIDATIONS:
             dataPath = `summaryMetrics.validationMetrics.${currentColumn.column.replace(

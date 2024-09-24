@@ -27,6 +27,7 @@ const updatedApiConfigParams = (
 const generateApiConfig = (apiConfig?: Api.ConfigurationParameters) => {
   const config = updatedApiConfigParams(apiConfig);
   return {
+    Alpha: new Api.AlphaApi(config),
     Auth: new Api.AuthenticationApi(config),
     Checkpoint: new Api.CheckpointsApi(config),
     Cluster: new Api.ClusterApi(config),
@@ -2178,4 +2179,35 @@ export const deleteCheckpoints: DetApi<
   name: 'deleteCheckpoints',
   postProcess: identity,
   request: (params, options) => detApi.Checkpoint.deleteCheckpoints(params, options),
+};
+
+export const getWorkspaceConfigPolicies: DetApi<
+  Service.GetWorkspaceConfigPolicies,
+  Api.V1GetWorkspaceConfigPoliciesResponse,
+  Api.V1GetWorkspaceConfigPoliciesResponse
+> = {
+  name: 'getWorkspaceConfigPolicies',
+  postProcess: identity,
+  request: (params: Service.GetWorkspaceConfigPolicies, options) =>
+    detApi.Alpha.getWorkspaceConfigPolicies(params.workspaceId, params.workloadType, options),
+};
+
+export const updateWorkspaceConfigPolicies: DetApi<
+  Service.UpdateWorkspaceConfigPolicies,
+  Api.V1PutWorkspaceConfigPoliciesResponse,
+  Api.V1PutWorkspaceConfigPoliciesResponse
+> = {
+  name: 'updateWorkspaceConfigPolicies',
+  postProcess: identity,
+  request: (params: Service.UpdateWorkspaceConfigPolicies, options) =>
+    detApi.Alpha.putWorkspaceConfigPolicies(
+      params.workspaceId,
+      params.workloadType,
+      {
+        configPolicies: params.configPolicies,
+        workloadType: params.workloadType,
+        workspaceId: params.workspaceId,
+      },
+      options,
+    ),
 };

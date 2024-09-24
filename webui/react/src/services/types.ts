@@ -563,3 +563,14 @@ export interface ModifyResourcePoolBindingsParams {
   resourcePoolName: string;
   workspaceIds: number[];
 }
+
+export interface GetWorkspaceConfigPolicies {
+  workspaceId: number;
+  workloadType: 'NTSC' | 'EXPERIMENT';
+}
+
+export interface UpdateWorkspaceConfigPolicies {
+  workspaceId: number;
+  workloadType: 'NTSC' | 'EXPERIMENT';
+  configPolicies: string;
+}
