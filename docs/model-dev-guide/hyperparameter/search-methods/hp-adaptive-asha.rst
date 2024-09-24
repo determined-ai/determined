@@ -21,12 +21,12 @@ Search mode:
 Resource budget:
 
 -  ``time_metric``, ``max_time``: The name of the "time" metric and the maximum value it will take
-  for a trial that survives to the end of the experiment (see :ref:`Training Units
-  <experiment-configuration_training_units>`).  Note that the searcher will expect this metric to
-  appear in validation metrics reported by the model.  This quantity is domain-specific and should
-  roughly reflect the number of minibatches the model must be trained on for it to converge on the
-  data set.  For users who would like to determine this number experimentally, train a model with
-  reasonable hyperparameters using the ``single`` search method.
+   for a trial that survives to the end of the experiment (see :ref:`Training Units
+   <experiment-configuration_training_units>`). Note that the searcher will expect this metric to
+   appear in validation metrics reported by the model. This quantity is domain-specific and should
+   roughly reflect the number of minibatches the model must be trained on for it to converge on the
+   data set. For users who would like to determine this number experimentally, train a model with
+   reasonable hyperparameters using the ``single`` search method.
 
 -  ``max_trials``: This indicates the total number of hyperparameter settings that will be evaluated
    in the experiment. Set ``max_trials`` to at least 500 to take advantage of speedups from
@@ -168,8 +168,8 @@ enough ``max_trials``:
 
 -  The initial number of trials is ``max_trials``.
 
--  To ensure that ``x`` trials are run ``max_time``, set ``max_time`` high enough for the
-   brackets with their halving rate (the ``divisor``) to allow ``x`` trials to make it to the final
+-  To ensure that ``x`` trials are run ``max_time``, set ``max_time`` high enough for the brackets
+   with their halving rate (the ``divisor``) to allow ``x`` trials to make it to the final
    ``rungs``. This can be viewed by the command describe below.
 
 A configuration setting that meets set goals can be found by trial and error. The command

@@ -4,89 +4,90 @@ package searcher
 import (
 	"testing"
 
-	"gotest.tools/assert"
+	"github.com/stretchr/testify/require"
 
 	"github.com/determined-ai/determined/master/pkg/ptrs"
-	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
-const RandomTournamentSearch SearchMethodType = "random_tournament"
-
-func TestRandomTournamentSearcher(t *testing.T) {
-	actual := newTournamentSearch(
-		RandomTournamentSearch,
-		newRandomSearch(schemas.WithDefaults(expconf.RandomConfig{
-			RawMaxTrials: ptrs.Ptr(2),
-			RawMaxLength: ptrs.Ptr(expconf.NewLengthInBatches(300)),
-		})),
-		newRandomSearch(schemas.WithDefaults(expconf.RandomConfig{
-			RawMaxTrials: ptrs.Ptr(3),
-			RawMaxLength: ptrs.Ptr(expconf.NewLengthInBatches(200)),
-		})),
-	)
-	expected := [][]ValidateAfter{
-		toOps("300B"),
-		toOps("300B"),
-		toOps("200B"),
-		toOps("200B"),
-		toOps("200B"),
+func TestAdaptiveASHASearchMethod(t *testing.T) {
+	maxConcurrentTrials := 3
+	maxTrials := 9
+	maxRungs := 5
+	divisor := 3.0
+	maxTime := 90
+	metric := "loss"
+	config := expconf.AdaptiveASHAConfig{
+		RawMaxTime:             &maxTime,
+		RawDivisor:             &divisor,
+		RawMaxRungs:            &maxRungs,
+		RawMaxConcurrentTrials: &maxConcurrentTrials,
+		RawMaxTrials:           &maxTrials,
+		RawTimeMetric:          ptrs.Ptr("batches"),
+		RawMode:                ptrs.Ptr(expconf.StandardMode),
 	}
-	checkSimulation(t, actual, nil, ConstantValidation, expected)
-}
-
-func TestRandomTournamentSearcherReproducibility(t *testing.T) {
-	conf := expconf.RandomConfig{
-		RawMaxTrials: ptrs.Ptr(5), RawMaxLength: ptrs.Ptr(expconf.NewLengthInBatches(800)),
+	searcherConfig := expconf.SearcherConfig{
+		RawAdaptiveASHAConfig: &config,
+		RawSmallerIsBetter:    ptrs.Ptr(true),
+		RawMetric:             ptrs.Ptr(metric),
 	}
-	conf = schemas.WithDefaults(conf)
-	gen := func() SearchMethod {
-		return newTournamentSearch(
-			RandomTournamentSearch,
-			newRandomSearch(conf),
-			newRandomSearch(conf),
-		)
-	}
-	checkReproducibility(t, gen, nil, defaultMetric)
-}
-
-func TestTournamentSearchMethod(t *testing.T) {
-	expectedTrials := []predefinedTrial{
-		newConstantPredefinedTrial(toOps("1000B 3000B"), 0.1),
-		newConstantPredefinedTrial(toOps("1000B"), 0.2),
-		newConstantPredefinedTrial(toOps("1000B"), 0.3),
-
-		newConstantPredefinedTrial(toOps("1000B"), 0.3),
-		newConstantPredefinedTrial(toOps("1000B"), 0.2),
-		newConstantPredefinedTrial(toOps("1000B 3000B"), 0.1),
+	intHparam := &expconf.IntHyperparameter{RawMaxval: 10, RawCount: ptrs.Ptr(3)}
+	hparams := expconf.Hyperparameters{
+		"x": expconf.Hyperparameter{RawIntHyperparameter: intHparam},
 	}
 
-	adaptiveConfig1 := expconf.SearcherConfig{
-		RawAsyncHalvingConfig: &expconf.AsyncHalvingConfig{
-			RawNumRungs:  ptrs.Ptr(3),
-			RawMaxLength: ptrs.Ptr(expconf.NewLengthInBatches(9000)),
-			RawMaxTrials: ptrs.Ptr(3),
-			RawDivisor:   ptrs.Ptr[float64](3),
-		},
+	// Create a new test searcher and verify correct brackets/rungs initialized.
+	testSearchRunner := NewTestSearchRunner(t, searcherConfig, hparams)
+	search := testSearchRunner.method.(*tournamentSearch)
+	expectedRungs := []*rung{
+		{UnitsNeeded: uint64(10)},
+		{UnitsNeeded: uint64(30)},
+		{UnitsNeeded: uint64(90)},
 	}
-	adaptiveConfig1 = schemas.WithDefaults(adaptiveConfig1)
-	adaptiveMethod1 := NewSearchMethod(adaptiveConfig1)
-
-	adaptiveConfig2 := expconf.SearcherConfig{
-		RawAsyncHalvingConfig: &expconf.AsyncHalvingConfig{
-			RawNumRungs:  ptrs.Ptr(3),
-			RawMaxLength: ptrs.Ptr(expconf.NewLengthInBatches(9000)),
-			RawMaxTrials: ptrs.Ptr(3),
-			RawDivisor:   ptrs.Ptr[float64](3),
-		},
+	for i, s := range search.subSearches {
+		ashaSearch := s.(*asyncHalvingStoppingSearch)
+		require.Equal(t, expectedRungs[i:], ashaSearch.Rungs)
 	}
-	adaptiveConfig2 = schemas.WithDefaults(adaptiveConfig2)
-	adaptiveMethod2 := NewSearchMethod(adaptiveConfig2)
 
-	params := expconf.Hyperparameters{}
+	// Simulate running the search.
+	testSearchRunner.run(90, 10, true)
 
-	method := newTournamentSearch(AdaptiveSearch, adaptiveMethod1, adaptiveMethod2)
+	// Expect 2 brackets and 9 total runs.
+	require.Len(t, search.subSearches, 2)
+	require.Len(t, search.TrialTable, maxTrials)
 
-	err := checkValueSimulation(t, method, params, expectedTrials)
-	assert.NilError(t, err)
+	bracket1 := make(map[int32]*testRun)
+	bracket2 := make(map[int32]*testRun)
+
+	for _, tr := range testSearchRunner.runs {
+		if search.TrialTable[tr.id] == 0 {
+			bracket1[tr.id] = tr
+		} else {
+			bracket2[tr.id] = tr
+		}
+	}
+
+	// Bracket #1: 6 total runs
+	// Rungs: [10, 30, 90]
+	// Since we reported progressively worse metrics, only one run continues to top rung.
+	// All others are stopped at first rung.
+	require.Len(t, bracket1, 6)
+	for i, tr := range bracket1 {
+		if i == 0 {
+			require.Equal(t, 90, tr.stoppedAt)
+		} else {
+			require.Equal(t, 10, tr.stoppedAt)
+		}
+	}
+	// Bracket #2: 3 total runs
+	// Rungs: [30, 90]
+	// First run (run #3 from initialTrials) continues to top rung, two will stop at first rung.
+	require.Len(t, bracket2, 3)
+	for i, tr := range bracket2 {
+		if i == 2 {
+			require.Equal(t, 90, tr.stoppedAt)
+		} else {
+			require.Equal(t, 30, tr.stoppedAt)
+		}
+	}
 }

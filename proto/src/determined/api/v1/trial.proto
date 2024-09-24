@@ -649,37 +649,6 @@ message NotifyContainerRunningResponse {
   repeated google.protobuf.Struct data = 1;
 }
 
-// Retrieves the current searcher operation.
-message GetCurrentTrialSearcherOperationRequest {
-  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "trial_id" ] }
-  };
-  // The id of the trial.
-  int32 trial_id = 1;
-}
-// Response to GetCurrentTrialSearcherOperationRequest
-message GetCurrentTrialSearcherOperationResponse {
-  // The current searcher operation.
-  determined.experiment.v1.TrialOperation op = 1;
-  // The status of the searcher operation.
-  bool completed = 2;
-}
-
-// Reports to the searcher that the trial has completed the current requested
-// amount of training.
-message CompleteTrialSearcherValidationRequest {
-  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "trial_id", "searcher_metric" ] }
-  };
-  // The id of the trial.
-  int32 trial_id = 1;
-  // The completed operation.
-  determined.experiment.v1.CompleteValidateAfterOperation completed_operation =
-      2;
-}
-// Response to CompleteTrialSearcherValidationRequest
-message CompleteTrialSearcherValidationResponse {}
-
 // Report a voluntary, permanent early exit to the searcher.
 message ReportTrialSearcherEarlyExitRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {

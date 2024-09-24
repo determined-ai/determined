@@ -47,8 +47,8 @@ const (
 
 type (
 	experimentState struct {
-		SearcherState      json.RawMessage                                   `json:"searcher_state"`
-		TrialSearcherState map[model.RequestID]experiment.TrialSearcherState `json:"trial_searcher_state"`
+		SearcherState      json.RawMessage                         `json:"searcher_state"`
+		TrialSearcherState map[int32]experiment.TrialSearcherState `json:"trial_searcher_state"`
 	}
 
 	internalExperiment struct {
@@ -56,7 +56,7 @@ type (
 
 		experimentState
 
-		trials map[model.RequestID]*trial
+		trials map[int32]*trial
 
 		*model.Experiment
 		activeConfig        expconf.ExperimentConfig
@@ -174,7 +174,7 @@ func newExperiment(
 		searcher:            search,
 		warmStartCheckpoint: checkpoint,
 
-		trials: map[model.RequestID]*trial{},
+		trials: map[int32]*trial{},
 
 		taskSpec:      taskSpec,
 		generatedKeys: generatedKeys,
@@ -182,7 +182,7 @@ func newExperiment(
 		faultToleranceEnabled: true,
 
 		experimentState: experimentState{
-			TrialSearcherState: map[model.RequestID]experiment.TrialSearcherState{},
+			TrialSearcherState: map[int32]experiment.TrialSearcherState{},
 		},
 
 		logCtx: logger.Context{
@@ -300,7 +300,7 @@ func (e *internalExperiment) start() error {
 		return nil
 	}
 
-	ops, err := e.searcher.InitialOperations()
+	creates, err := e.searcher.InitialTrials()
 	if err != nil {
 		err = errors.Wrap(err, "failed to generate initial operations")
 		e.updateState(model.StateWithReason{
@@ -309,56 +309,17 @@ func (e *internalExperiment) start() error {
 		})
 		return err
 	}
-	e.processOperations(ops, nil)
+	e.handleSearcherActions(creates, nil)
 
 	return nil
 }
 
-func (e *internalExperiment) TrialCompleteOperation(msg experiment.TrialCompleteOperation) error {
-	e.mu.Lock()
-	defer e.mu.Unlock()
-
-	state, ok := e.TrialSearcherState[msg.Op.RequestID]
-	switch {
-	case !ok:
-		return api.AsValidationError("no such trial")
-	case msg.Op != state.Op:
-		return api.AsValidationError("expected op %v but received op %v", state.Op, msg.Op)
-	case state.Complete:
-		return api.AsValidationError("received op %v which was previously completed", msg.Op)
-	}
-
-	defer func() {
-		ops, err := e.searcher.ValidationCompleted(msg.RequestID, msg.Metric, msg.Op)
-		e.processOperations(ops, err)
-	}()
-
-	state.Complete = true
-	e.TrialSearcherState[msg.Op.RequestID] = state
-
-	t, ok := e.trials[msg.Op.RequestID]
-	if !ok {
-		return api.AsErrNotFound("trial not found")
-	}
-
-	err := t.PatchSearcherState(state)
-	if err != nil {
-		e.syslog.WithError(err).Error("patching trial search state")
-		return err
-	}
-
-	return nil
-}
-
-func (e *internalExperiment) TrialReportProgress(msg experiment.TrialReportProgress) error {
+func (e *internalExperiment) TrialReportProgress(trialID int32, msg experiment.TrialReportProgress) error {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 
 	progress := float64(msg.Progress)
-	if !msg.IsRaw {
-		e.searcher.SetTrialProgress(msg.RequestID, msg.Progress)
-		progress = e.searcher.Progress()
-	}
+	e.searcher.SetTrialProgress(trialID, progress)
 
 	if err := e.db.SaveExperimentProgress(e.ID, &progress); err != nil {
 		e.syslog.WithError(err).Error("failed to save experiment progress")
@@ -366,22 +327,19 @@ func (e *internalExperiment) TrialReportProgress(msg experiment.TrialReportProgr
 	return nil
 }
 
-func (e *internalExperiment) TrialGetSearcherState(requestID model.RequestID) (experiment.TrialSearcherState, error) {
+func (e *internalExperiment) TrialReportValidation(trialID int32, metrics map[string]interface{}) error {
 	e.mu.Lock()
 	defer e.mu.Unlock()
-
-	state, ok := e.TrialSearcherState[requestID]
-	if !ok {
-		return state, api.AsErrNotFound("trial has no state")
-	}
-	return state, nil
+	ops, err := e.searcher.ValidationCompleted(trialID, metrics)
+	e.handleSearcherActions(ops, err)
+	return nil
 }
 
 func (e *internalExperiment) UserInitiatedEarlyTrialExit(msg experiment.UserInitiatedEarlyTrialExit) error {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 
-	ref, ok := e.trials[msg.RequestID]
+	ref, ok := e.trials[msg.TrialID]
 	if !ok {
 		return api.AsErrNotFound("trial not found")
 	}
@@ -395,7 +353,7 @@ func (e *internalExperiment) PatchTrialState(msg experiment.PatchTrialState) err
 	e.mu.Lock()
 	defer e.mu.Unlock()
 
-	ref, ok := e.trials[msg.RequestID]
+	ref, ok := e.trials[msg.TrialID]
 	if !ok {
 		return api.AsErrNotFound("trial not found")
 	}
@@ -574,21 +532,21 @@ func (e *internalExperiment) KillExperiment() error {
 	return nil
 }
 
-func (e *internalExperiment) TrialClosed(requestID model.RequestID, reason *model.ExitedReason) {
+func (e *internalExperiment) TrialExited(trialID int32, reason *model.ExitedReason) {
 	e.mu.Lock()
 	defer e.mu.Unlock()
 
-	e.trialClosed(requestID, reason)
+	e.trialExited(trialID, reason)
 }
 
-func (e *internalExperiment) trialClosed(requestID model.RequestID, reason *model.ExitedReason) {
+func (e *internalExperiment) trialExited(trialID int32, reason *model.ExitedReason) {
 	if reason != nil {
-		e.trialReportEarlyExit(requestID, *reason)
+		e.trialReportEarlyExit(trialID, *reason)
 	}
-	delete(e.trials, requestID)
+	delete(e.trials, trialID)
 
-	ops, err := e.searcher.TrialClosed(requestID)
-	e.processOperations(ops, err)
+	ops, err := e.searcher.TrialExited(trialID)
+	e.handleSearcherActions(ops, err)
 	if e.canTerminate() {
 		if err := e.stop(); err != nil {
 			e.syslog.WithError(err).Error("failed to stop experiment on trial closed")
@@ -596,26 +554,25 @@ func (e *internalExperiment) trialClosed(requestID model.RequestID, reason *mode
 	}
 }
 
-func (e *internalExperiment) trialReportEarlyExit(requestID model.RequestID, reason model.ExitedReason) {
-	e.syslog.WithField("requestId", requestID).Info("experiment received trial early exit")
-	state, ok := e.TrialSearcherState[requestID]
+func (e *internalExperiment) trialReportEarlyExit(trialID int32, reason model.ExitedReason) {
+	e.syslog.WithField("requestId", trialID).Info("experiment received trial early exit")
+	state, ok := e.TrialSearcherState[trialID]
 	if !ok {
-		e.syslog.WithField("requestID", requestID).Error("trial has no searcher state on early exit")
+		e.syslog.WithField("trial-id", trialID).Error("trial has no searcher state on early exit")
 		return
 	}
 
 	defer func() {
-		ops, err := e.searcher.TrialExitedEarly(requestID, reason)
-		e.processOperations(ops, err)
+		ops, err := e.searcher.TrialExitedEarly(trialID, reason)
+		e.handleSearcherActions(ops, err)
 	}()
 
-	state.Complete = true
 	state.Closed = true
-	e.TrialSearcherState[requestID] = state
+	e.TrialSearcherState[trialID] = state
 
-	t, ok := e.trials[requestID]
+	t, ok := e.trials[trialID]
 	if !ok {
-		e.syslog.WithField("requestID", requestID).Warnf("missing trial to patch on early exit")
+		e.syslog.WithField("trial-id", trialID).Warnf("missing trial to patch on early exit")
 		return
 	}
 
@@ -626,63 +583,29 @@ func (e *internalExperiment) trialReportEarlyExit(requestID model.RequestID, rea
 }
 
 func (e *internalExperiment) trialCreated(t *trial) {
-	requestID := t.searcher.Create.RequestID
-	if !e.searcher.TrialIsCreated(requestID) {
-		ops, err := e.searcher.TrialCreated(requestID)
-		e.processOperations(ops, err)
+	trialID := int32(t.id)
+	if !e.searcher.TrialIsCreated(trialID) {
+		ops, err := e.searcher.TrialCreated(trialID, t.searcher.Create)
+		e.handleSearcherActions(ops, err)
 	}
-	e.trials[requestID] = t
+	e.TrialSearcherState[trialID] = experiment.TrialSearcherState{Create: t.searcher.Create, TrialID: &trialID}
+	e.trials[trialID] = t
 }
 
 // restoreTrialsFromStates from the operations that were snapshotted with the
 // last experiment checkpoint.
 func (e *internalExperiment) restoreTrials() {
 	for _, state := range e.TrialSearcherState {
-		checkpoint, err := e.checkpointForCreate(state.Create)
-		if err != nil {
-			e.updateState(model.StateWithReason{
-				State:               model.StoppingErrorState,
-				InformationalReason: fmt.Sprintf("failed getting checkpoint to restore with error %v", err),
-			})
-			e.syslog.Error(err)
-			return
-		}
-		e.restoreTrial(checkpoint, state)
+		e.restoreTrial(e.warmStartCheckpoint, state)
 	}
 }
 
-func (e *internalExperiment) handleContinueExperiment(reqID model.RequestID) (*int, bool) {
-	var continueFromTrialID *int
-	if e.continueTrials {
-		switch trial, err := internaldb.TrialByExperimentAndRequestID(context.TODO(), e.ID, reqID); {
-		case errors.Is(err, sql.ErrNoRows):
-		// Trial doesn't exist, don't do anything
-		case err != nil:
-			e.updateState(model.StateWithReason{
-				State: model.StoppingErrorState,
-				InformationalReason: fmt.Sprintf(
-					"hp search unable to get trial for the Request ID %v with error %v", reqID, err),
-			})
-			e.syslog.Error(err)
-			return nil, true
-		case err == nil:
-			if trial.State != model.CompletedState {
-				continueFromTrialID = &trial.ID
-			} else {
-				e.trialClosed(reqID, nil)
-				return nil, true
-			}
-		}
-	}
-	return continueFromTrialID, false
-}
-
-func (e *internalExperiment) processOperations(
-	ops []searcher.Operation, err error,
+func (e *internalExperiment) handleSearcherActions(
+	actions []searcher.Action, err error,
 ) {
 	// Only continue for experiments in stopping states if the searcher operations are all
 	// type Shutdown failures.
-	if _, ok := model.StoppingStates[e.State]; ok && !allSearcherShutdowns(ops) {
+	if _, ok := model.StoppingStates[e.State]; ok && !allSearcherShutdowns(actions) {
 		return
 	}
 
@@ -697,74 +620,44 @@ func (e *internalExperiment) processOperations(
 
 	defer e.snapshotAndSave()
 
-	updatedTrials := make(map[model.RequestID]bool)
-	for _, operation := range ops {
-		e.syslog.Debugf("handling searcher op: %v", operation)
-		switch op := operation.(type) {
+	updatedTrials := make(map[int32]bool)
+	for _, action := range actions {
+		e.syslog.Debugf("handling searcher action: %v", action)
+		switch action := action.(type) {
 		case searcher.Create:
-			_, ok := e.trials[op.RequestID]
-			if ok {
-				e.syslog.Errorf("trial %s already exists", op.RequestID)
-				continue
-			}
-
-			continueFromTrialID, closed := e.handleContinueExperiment(op.RequestID)
-			if closed {
-				continue
-			}
-
-			checkpoint, err := e.checkpointForCreate(op)
-			if err != nil {
-				e.updateState(model.StateWithReason{
-					State: model.StoppingErrorState,
-					InformationalReason: fmt.Sprintf(
-						"hp search unable to get checkpoint for new trial with error %v", err),
-				})
-				e.syslog.Error(err)
-				continue
-			}
 			config := schemas.Copy(e.activeConfig)
-			state := experiment.TrialSearcherState{Create: op, Complete: true}
-			e.TrialSearcherState[op.RequestID] = state
+			state := experiment.TrialSearcherState{Create: action}
 
 			clonedSpec, err := e.taskSpec.Clone()
 			if err != nil {
 				e.syslog.WithError(err).Error("failed to create trial")
-				e.trialClosed(op.RequestID, ptrs.Ptr(model.Errored))
 				continue
 			}
 
 			t, err := newTrial(
-				e.logCtx, trialTaskID(e.ID, op.RequestID), e.JobID, e.StartTime, e.ID, e.State,
-				state, e.rm, e.db, config, checkpoint, clonedSpec, e.generatedKeys, false,
-				nil, continueFromTrialID, e.TrialClosed,
+				e.logCtx, trialTaskID(e.ID), e.JobID, e.StartTime, e.ID, e.State,
+				state, e.rm, e.db, config, e.warmStartCheckpoint, clonedSpec, e.generatedKeys, false,
+				nil, nil, e.TrialExited,
 			)
 			if err != nil {
 				e.syslog.WithError(err).Error("failed to create trial")
-				e.trialClosed(op.RequestID, ptrs.Ptr(model.Errored))
 				continue
 			}
 			e.trialCreated(t)
-		case searcher.ValidateAfter:
-			state := e.TrialSearcherState[op.RequestID]
-			state.Op = op
-			state.Complete = false
-			e.TrialSearcherState[op.RequestID] = state
-			updatedTrials[op.RequestID] = true
-		case searcher.Close:
-			state := e.TrialSearcherState[op.RequestID]
-			state.Closed = true
-			e.TrialSearcherState[op.RequestID] = state
-			updatedTrials[op.RequestID] = true
+		case searcher.Stop:
+			state := e.TrialSearcherState[action.TrialID]
+			state.Stopped = true
+			e.TrialSearcherState[action.TrialID] = state
+			updatedTrials[action.TrialID] = true
 		case searcher.Shutdown:
-			e.syslog.WithField("op", operation).Info("searcher shutdown")
+			e.syslog.WithField("action", action).Info("searcher shutdown")
 			switch {
-			case op.Failure:
+			case action.Failure:
 				e.updateState(model.StateWithReason{
 					State:               model.StoppingErrorState,
 					InformationalReason: "hp search failed",
 				})
-			case op.Cancel:
+			case action.Cancel:
 				e.updateState(model.StateWithReason{
 					State:               model.StoppingCanceledState,
 					InformationalReason: "hp search canceled",
@@ -776,23 +669,23 @@ func (e *internalExperiment) processOperations(
 				})
 			}
 		default:
-			panic(fmt.Sprintf("unexpected operation: %v", op))
+			panic(fmt.Sprintf("unexpected action: %v", action))
 		}
 	}
 
 	var g errgroup.Group
 	g.SetLimit(maxConcurrentTrialOps)
-	for requestID := range updatedTrials {
-		syslog := e.syslog.WithField("requestID", requestID)
-		t, ok := e.trials[requestID]
+	for trialID := range updatedTrials {
+		syslog := e.syslog.WithField("trial-id", trialID)
+		t, ok := e.trials[trialID]
 		if !ok {
-			syslog.Errorf("processOperations invalid requestID")
+			syslog.Errorf("handleSearcherActions invalid trialID")
 			continue
 		}
 		g.Go(func() error {
-			err := t.PatchSearcherState(e.TrialSearcherState[requestID])
+			err := t.PatchSearcherState(e.TrialSearcherState[trialID])
 			if err != nil {
-				syslog.WithError(err).Error("processOperations updating trial search state")
+				syslog.WithError(err).Error("handleSearcherActions updating trial search state")
 			}
 			return nil
 		})
@@ -800,8 +693,8 @@ func (e *internalExperiment) processOperations(
 	_ = g.Wait() // Errors are handled in g.Go.
 }
 
-func trialTaskID(eID int, rID model.RequestID) model.TaskID {
-	return model.TaskID(fmt.Sprintf("%d.%s", eID, rID))
+func trialTaskID(eID int) model.TaskID {
+	return model.TaskID(fmt.Sprintf("%d.%s", eID, model.NewTaskID()))
 }
 
 var errIsNotTrialTaskID = fmt.Errorf("taskID is not a trial task ID")
@@ -821,24 +714,6 @@ func experimentIDFromTrialTaskID(taskID model.TaskID) (int, error) {
 	}
 
 	return experimentID, nil
-}
-
-func (e *internalExperiment) checkpointForCreate(op searcher.Create) (*model.Checkpoint, error) {
-	checkpoint := e.warmStartCheckpoint
-	// If the Create specifies a checkpoint, ignore the experiment-wide one.
-	if op.Checkpoint != nil {
-		trial, err := internaldb.TrialByExperimentAndRequestID(context.TODO(), e.ID, op.Checkpoint.RequestID)
-		if err != nil {
-			return nil, errors.Wrapf(err,
-				"invalid request ID in Create operation: %d", op.Checkpoint.RequestID)
-		}
-		checkpointModel, err := checkpointFromTrialIDOrUUID(e.db, &trial.ID, nil)
-		if err != nil {
-			return nil, errors.Wrap(err, "checkpoint not found")
-		}
-		checkpoint = checkpointModel
-	}
-	return checkpoint, nil
 }
 
 func (e *internalExperiment) updateState(state model.StateWithReason) bool {
@@ -1054,9 +929,9 @@ func (e *internalExperiment) setRP(resourcePool string) error {
 	return nil
 }
 
-func allSearcherShutdowns(ops []searcher.Operation) bool {
-	for _, operation := range ops {
-		if _, ok := operation.(searcher.Shutdown); !ok {
+func allSearcherShutdowns(actions []searcher.Action) bool {
+	for _, action := range actions {
+		if _, ok := action.(searcher.Shutdown); !ok {
 			return false
 		}
 	}

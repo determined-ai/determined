@@ -46,7 +46,7 @@ var nonRetryableErrors = []*regexp.Regexp{
 	regexp.MustCompile("sbatch: error: Batch job submission failed"),
 }
 
-type trialExitCallback func(model.RequestID, *model.ExitedReason)
+type trialExitCallback func(int32, *model.ExitedReason)
 
 // A trial is a struct which is responsible for handling:
 //   - messages from the resource manager,
@@ -88,7 +88,7 @@ type trial struct {
 	// restarts is a failure count, it increments when the trial fails and we retry it.
 	restarts int
 	// runID is a count of how many times the task container(s) have stopped and restarted, which
-	// could be due to a failure or due to normal pausing and continuing. When RunID increments,
+	// could be due to a failure or due to normal pausing and continuing. When TrialID increments,
 	// it effectively invalidates many outstanding messages associated with the previous run.
 	runID int
 
@@ -194,7 +194,7 @@ func (t *trial) exit(reason *model.ExitedReason) {
 	if err := t.close(); err != nil {
 		t.syslog.WithError(err).Error("error closing trial")
 	}
-	go t.exitCallback(t.searcher.Create.RequestID, reason)
+	go t.exitCallback(int32(t.id), reason)
 }
 
 func (t *trial) close() error {
@@ -230,13 +230,22 @@ func (t *trial) PatchSearcherState(req experiment.TrialSearcherState) error {
 
 	t.searcher = req
 	switch {
-	case !t.searcher.Complete:
-		return t.maybeAllocateTask()
-	case t.searcher.Complete && t.searcher.Closed:
+	case t.searcher.Stopped:
+		return t.patchState(
+			model.StateWithReason{
+				State:               model.StoppingCanceledState,
+				InformationalReason: "searcher decided to early stop trial",
+			},
+		)
+	case t.searcher.Closed:
 		return t.patchState(model.StateWithReason{
 			State:               model.StoppingCompletedState,
 			InformationalReason: "hp search is finished",
 		})
+	default:
+		if !t.searcher.Stopped && !t.searcher.Closed {
+			return t.maybeAllocateTask()
+		}
 	}
 	return nil
 }
@@ -295,7 +304,6 @@ func (t *trial) SetUserInitiatedEarlyExit(req experiment.UserInitiatedEarlyTrial
 func (t *trial) create() error {
 	m := model.NewTrial(
 		t.state,
-		t.searcher.Create.RequestID,
 		t.experimentID,
 		model.JSONObj(t.searcher.Create.Hparams),
 		t.warmStartCheckpoint,
@@ -366,10 +374,11 @@ func (t *trial) maybeAllocateTask() error {
 	// Only allocate for active trials, or trials that have been restored and are stopping.
 	// We need to allocate for stopping because we need to reattach the allocation.
 	shouldAllocateState := t.state == model.ActiveState || (t.restored && model.StoppingStates[t.state])
-	if t.allocationID != nil || t.searcher.Complete || !shouldAllocateState {
+	if t.allocationID != nil || t.searcher.Closed || t.searcher.Stopped || !shouldAllocateState {
 		t.syslog.WithFields(logrus.Fields{
 			"allocation-id":    t.allocationID,
-			"sercher-complete": t.searcher.Complete,
+			"searcher-closed":  t.searcher.Closed,
+			"searcher-stopped": t.searcher.Stopped,
 			"trial-state":      t.state,
 			"restored":         t.restored,
 		}).Trace("decided not to allocate trial")
@@ -378,7 +387,6 @@ func (t *trial) maybeAllocateTask() error {
 
 	name := fmt.Sprintf("Trial %d (Experiment %d)", t.id, t.experimentID)
 	t.syslog.Info("decided to allocate trial")
-
 	blockedNodes, err := logpattern.GetBlockedNodes(context.TODO(), t.taskID)
 	if err != nil {
 		return err
@@ -581,7 +589,7 @@ func (t *trial) handleAllocationExit(exit *task.AllocationExited) error {
 			State:               model.StoppingToTerminalStates[t.state],
 			InformationalReason: "trial stopped",
 		})
-	case t.searcher.Complete && t.searcher.Closed:
+	case t.searcher.Stopped || t.searcher.Closed:
 		if exit.Err != nil {
 			return t.transition(model.StateWithReason{
 				State: model.ErrorState,

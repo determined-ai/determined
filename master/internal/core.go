@@ -1503,9 +1503,6 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 	checkpointsGroup := m.echo.Group("/checkpoints")
 	checkpointsGroup.GET("/:checkpoint_uuid", m.getCheckpoint)
 
-	searcherGroup := m.echo.Group("/searcher")
-	searcherGroup.POST("/preview", api.Route(m.getSearcherPreview))
-
 	resourcesGroup := m.echo.Group("/resources", cluster.CanGetUsageDetails())
 	resourcesGroup.GET("/allocation/raw", m.getRawResourceAllocation)
 	resourcesGroup.GET("/allocation/allocations-csv", m.getResourceAllocations)

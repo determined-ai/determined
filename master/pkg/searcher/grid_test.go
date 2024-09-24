@@ -3,14 +3,16 @@ package searcher
 
 import (
 	"encoding/json"
+	"slices"
 	"strconv"
 	"testing"
+
+	"github.com/stretchr/testify/require"
 
 	"github.com/pkg/errors"
 	"gotest.tools/assert"
 
 	"github.com/determined-ai/determined/master/pkg/ptrs"
-	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
 
@@ -256,63 +258,36 @@ func TestGridIntCountNegative(t *testing.T) {
 	assert.DeepEqual(t, actual, expected)
 }
 
-func TestGridSearcherRecords(t *testing.T) {
-	actual := expconf.GridConfig{RawMaxLength: ptrs.Ptr(expconf.NewLengthInRecords(19200))}
-	actual = schemas.WithDefaults(actual)
-	params := generateHyperparameters([]int{2, 1, 3})
-	expected := [][]ValidateAfter{
-		toOps("19200R"), toOps("19200R"), toOps("19200R"),
-		toOps("19200R"), toOps("19200R"), toOps("19200R"),
-	}
-	searchMethod := newGridSearch(actual)
-	checkSimulation(t, searchMethod, params, ConstantValidation, expected)
-}
-
-func TestGridSearcherBatches(t *testing.T) {
-	actual := expconf.GridConfig{RawMaxLength: ptrs.Ptr(expconf.NewLengthInBatches(300))}
-	actual = schemas.WithDefaults(actual)
-	params := generateHyperparameters([]int{2, 1, 3})
-	expected := [][]ValidateAfter{
-		toOps("300B"), toOps("300B"), toOps("300B"),
-		toOps("300B"), toOps("300B"), toOps("300B"),
-	}
-	searchMethod := newGridSearch(actual)
-	checkSimulation(t, searchMethod, params, ConstantValidation, expected)
-}
-
-func TestGridSearcherEpochs(t *testing.T) {
-	actual := expconf.GridConfig{RawMaxLength: ptrs.Ptr(expconf.NewLengthInEpochs(3))}
-	actual = schemas.WithDefaults(actual)
-	params := generateHyperparameters([]int{2, 1, 3})
-	expected := [][]ValidateAfter{
-		toOps("3E"), toOps("3E"), toOps("3E"),
-		toOps("3E"), toOps("3E"), toOps("3E"),
-	}
-	searchMethod := newGridSearch(actual)
-	checkSimulation(t, searchMethod, params, ConstantValidation, expected)
-}
-
 func TestGridSearchMethod(t *testing.T) {
-	testCases := []valueSimulationTestCase{
-		{
-			name: "test grid search method",
-			expectedTrials: []predefinedTrial{
-				newConstantPredefinedTrial(toOps("300B"), 0.1),
-				newConstantPredefinedTrial(toOps("300B"), 0.1),
-				newConstantPredefinedTrial(toOps("300B"), 0.1),
-				newConstantPredefinedTrial(toOps("300B"), 0.1),
-				newConstantPredefinedTrial(toOps("300B"), 0.1),
-				newEarlyExitPredefinedTrial(toOps("300B"), .1),
+	maxConcurrentTrials := 2
+	gridConfig := expconf.GridConfig{
+		RawMaxConcurrentTrials: ptrs.Ptr(maxConcurrentTrials),
+	}
+	searcherConfig := expconf.SearcherConfig{
+		RawGridConfig: &gridConfig,
+		RawMetric:     ptrs.Ptr("loss"),
+	}
+	hparams := expconf.Hyperparameters{
+		"a": expconf.Hyperparameter{
+			RawIntHyperparameter: &expconf.IntHyperparameter{
+				RawMinval: 0, RawMaxval: 3, RawCount: ptrs.Ptr(4),
 			},
-			config: expconf.SearcherConfig{
-				RawGridConfig: &expconf.GridConfig{
-					RawMaxLength:           ptrs.Ptr(expconf.NewLengthInBatches(300)),
-					RawMaxConcurrentTrials: ptrs.Ptr(2),
-				},
-			},
-			hparams: generateHyperparameters([]int{2, 1, 3}),
 		},
 	}
+	allHparams := []int{0, 1, 2, 3}
 
-	runValueSimulationTestCases(t, testCases)
+	testSearchRunner := NewTestSearchRunner(t, searcherConfig, hparams)
+
+	// Simulate the search and check resulting runs.
+	testSearchRunner.run(100, 10, false)
+
+	// 4 total runs for each hparam in space, all should run to completion.
+	var runHparams []int
+	require.Len(t, testSearchRunner.runs, len(allHparams))
+	for _, tr := range testSearchRunner.runs {
+		require.False(t, tr.stopped)
+		runHparams = append(runHparams, tr.hparams["a"].(int))
+	}
+	slices.Sort(runHparams)
+	require.Equal(t, allHparams, runHparams)
 }

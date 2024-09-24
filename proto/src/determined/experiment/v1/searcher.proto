@@ -105,15 +105,6 @@ message ValidateAfterOperation {
   uint64 length = 2;
 }
 
-// Used to complete a ValidateAfterOperation.
-message CompleteValidateAfterOperation {
-  // The ValidateAfterOperation being completed.
-  ValidateAfterOperation op = 1;
-  // The value of searcher metric associated with this completed operation.
-  // The metric provided should be the metric used to guide HP search.
-  google.protobuf.Value searcher_metric = 2;
-}
-
 // Create a trial with given hyperparameters.
 message CreateTrialOperation {
   // The ID of the trial to create.
@@ -161,43 +152,39 @@ message TrialOperation {
   }
 }
 
-// RunnableType defines the type of operation that should be executed by trial
-// runners.
-enum RunnableType {
-  // Denotes an unknown runnable type.
-  RUNNABLE_TYPE_UNSPECIFIED = 0;
-  // Signals to a trial runner that it should run a train.
-  RUNNABLE_TYPE_TRAIN = 1;
-  // Signals to a trial runner it should compute validation metrics.
-  RUNNABLE_TYPE_VALIDATE = 2;
+// SearchUnit describes a length unit used by some searchers to manage training.
+message SearchUnit {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "max_length" ] }
+  };
+  // Name of the length unit (if max_length is false).
+  optional string name = 1;
+  // Value of the length unit (if max_length is false).
+  optional int32 value = 2;
+  // Bool indicating whether the training length is defined in code.
+  bool max_length = 3;
 }
 
-// RunnableOperation represents a single runnable operation emitted by a
-// searcher.
-message RunnableOperation {
-  // This is the type of the operation.
-  RunnableType type = 1;
-  // If the type == WORKLOAD_KIND_TRAIN, this is the number of units
-  uint64 length = 2;
+// TrialSummary describes the runs that are estimated to train for a certain
+// length.
+message TrialSummary {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "count", "unit" ] }
+  };
+  // Number of trials.
+  int32 count = 1;
+  // Training length for the trials.
+  SearchUnit unit = 2;
 }
 
-// TrialSimulation is a specific sequence of workloads that were run before the
-// trial was completed.
-message TrialSimulation {
-  // The list of operations that were run before the trial was completed.
-  repeated RunnableOperation operations = 1;
-  // The number of times that this trial configuration has occurred during the
-  // simulation.
-  int32 occurrences = 2;
-}
-
-// ExperimentSimulation holds the configuration and results of simulated run of
-// a searcher.
-message ExperimentSimulation {
-  // The simulated experiment config.
+// SearchSummary contains the estimated trials and training lengths that a search
+// plans to execute.
+message SearchSummary {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "config", "runs" ] }
+  };
+  // The searcher config from which the summary is generated.
   google.protobuf.Struct config = 1;
-  // The searcher simulation seed.
-  uint32 seed = 2;
-  // The list of trials in the simulation.
-  repeated TrialSimulation trials = 3;
+  // A list of planned number of trials to their training lengths.
+  repeated TrialSummary trials = 2;
 }

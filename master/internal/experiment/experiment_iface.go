@@ -14,51 +14,41 @@ var ExperimentRegistry = tasklist.NewRegistry[int, Experiment]()
 
 // Experiment-specific interface types.
 type (
-	// TrialCompleteOperation is a message sent to an experiment to indicate that a trial has
-	// completed an operation.
-	TrialCompleteOperation struct {
-		RequestID model.RequestID
-		Op        searcher.ValidateAfter
-		Metric    interface{}
-	}
-
 	// TrialReportProgress is a message sent to an experiment to indicate that a trial has
 	// reported progress.
 	TrialReportProgress struct {
-		RequestID model.RequestID
-		Progress  searcher.PartialUnits
-		IsRaw     bool
+		Progress searcher.PartialUnits
+		IsRaw    bool
 	}
 
 	// UserInitiatedEarlyTrialExit is a user-injected message, provided through the early exit API. It
 	// _should_ indicate the user is exiting, but in the event they don't, we will clean them up.
 	UserInitiatedEarlyTrialExit struct {
-		RequestID model.RequestID
-		Reason    model.ExitedReason
+		TrialID int32
+		Reason  model.ExitedReason
 	}
 
 	// PatchTrialState is a message sent to an experiment to indicate that a trial has
 	// changed state.
 	PatchTrialState struct {
-		RequestID model.RequestID
-		State     model.StateWithReason
+		TrialID int32
+		State   model.StateWithReason
 	}
 
-	// TrialSearcherState is a message sent to an experiment to indicate that a trial has
+	// TrialSearcherState is a message sent to an search to indicate that a run has
 	// changed searcher state.
 	TrialSearcherState struct {
-		Create   searcher.Create
-		Op       searcher.ValidateAfter
-		Complete bool
-		Closed   bool
+		Create  searcher.Create
+		TrialID *int32
+		Stopped bool
+		Closed  bool
 	}
 )
 
 // Experiment is an interface that represents an experiment.
 type Experiment interface {
-	TrialCompleteOperation(msg TrialCompleteOperation) error
-	TrialReportProgress(msg TrialReportProgress) error
-	TrialGetSearcherState(requestID model.RequestID) (TrialSearcherState, error)
+	TrialReportProgress(trialID int32, msg TrialReportProgress) error
+	TrialReportValidation(trialID int32, metrics map[string]interface{}) error
 	UserInitiatedEarlyTrialExit(msg UserInitiatedEarlyTrialExit) error
 	PatchTrialState(msg PatchTrialState) error
 	SetGroupMaxSlots(msg sproto.SetGroupMaxSlots)

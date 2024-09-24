@@ -5,7 +5,6 @@ package internal
 
 import (
 	"context"
-	"crypto/rand"
 	"encoding/json"
 	"fmt"
 	"log"
@@ -49,7 +48,7 @@ func createTestTrial(
 		TaskType:   model.TaskTypeTrial,
 		LogVersion: model.TaskLogVersion1,
 		StartTime:  time.Now(),
-		TaskID:     trialTaskID(exp.ID, model.NewRequestID(rand.Reader)),
+		TaskID:     trialTaskID(exp.ID),
 	}
 	require.NoError(t, db.AddTask(context.TODO(), task))
 
@@ -746,20 +745,6 @@ func TestTrialAuthZ(t *testing.T) {
 				})
 			return err
 		}, false},
-		{"CanGetExperimentArtifacts", func(id int) error {
-			_, err := api.GetCurrentTrialSearcherOperation(ctx,
-				&apiv1.GetCurrentTrialSearcherOperationRequest{
-					TrialId: int32(id),
-				})
-			return err
-		}, false},
-		{"CanEditExperiment", func(id int) error {
-			_, err := api.CompleteTrialSearcherValidation(ctx,
-				&apiv1.CompleteTrialSearcherValidationRequest{
-					TrialId: int32(id),
-				})
-			return err
-		}, false},
 		{"CanEditExperiment", func(id int) error {
 			_, err := api.ReportTrialSearcherEarlyExit(ctx,
 				&apiv1.ReportTrialSearcherEarlyExitRequest{
@@ -855,7 +840,7 @@ func TestTrialProtoTaskIDs(t *testing.T) {
 		TaskType:   model.TaskTypeTrial,
 		LogVersion: model.TaskLogVersion1,
 		StartTime:  task0.StartTime.Add(time.Second),
-		TaskID:     trialTaskID(trial.ExperimentID, model.NewRequestID(rand.Reader)),
+		TaskID:     trialTaskID(trial.ExperimentID),
 	}
 	require.NoError(t, db.AddTask(ctx, task1))
 
@@ -863,7 +848,7 @@ func TestTrialProtoTaskIDs(t *testing.T) {
 		TaskType:   model.TaskTypeTrial,
 		LogVersion: model.TaskLogVersion1,
 		StartTime:  task1.StartTime.Add(time.Second),
-		TaskID:     trialTaskID(trial.ExperimentID, model.NewRequestID(rand.Reader)),
+		TaskID:     trialTaskID(trial.ExperimentID),
 	}
 	require.NoError(t, db.AddTask(ctx, task2))
 
@@ -993,7 +978,7 @@ func TestTrialLogs(t *testing.T) {
 		TaskType:   model.TaskTypeTrial,
 		LogVersion: model.TaskLogVersion1,
 		StartTime:  task0.StartTime.Add(time.Second),
-		TaskID:     trialTaskID(trial.ExperimentID, model.NewRequestID(rand.Reader)),
+		TaskID:     trialTaskID(trial.ExperimentID),
 	}
 	require.NoError(t, db.AddTask(ctx, task1))
 
@@ -1001,7 +986,7 @@ func TestTrialLogs(t *testing.T) {
 		TaskType:   model.TaskTypeTrial,
 		LogVersion: model.TaskLogVersion1,
 		StartTime:  task1.StartTime.Add(time.Second),
-		TaskID:     trialTaskID(trial.ExperimentID, model.NewRequestID(rand.Reader)),
+		TaskID:     trialTaskID(trial.ExperimentID),
 	}
 	require.NoError(t, db.AddTask(ctx, task2))
 
@@ -1087,7 +1072,7 @@ func TestTrialLogFields(t *testing.T) {
 		TaskType:   model.TaskTypeTrial,
 		LogVersion: model.TaskLogVersion1,
 		StartTime:  task0.StartTime.Add(time.Second),
-		TaskID:     trialTaskID(trial.ExperimentID, model.NewRequestID(rand.Reader)),
+		TaskID:     trialTaskID(trial.ExperimentID),
 	}
 	require.NoError(t, db.AddTask(ctx, task1))
 
@@ -1095,7 +1080,7 @@ func TestTrialLogFields(t *testing.T) {
 		TaskType:   model.TaskTypeTrial,
 		LogVersion: model.TaskLogVersion1,
 		StartTime:  task1.StartTime.Add(time.Second),
-		TaskID:     trialTaskID(trial.ExperimentID, model.NewRequestID(rand.Reader)),
+		TaskID:     trialTaskID(trial.ExperimentID),
 	}
 	require.NoError(t, db.AddTask(ctx, task2))
 

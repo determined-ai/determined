@@ -14,7 +14,7 @@ type (
 	// randomSearchState stores the state for random.  Since not all trials are always created at
 	// initialization, we need to track CreatedTrials so we know whether we need to create more
 	// trials when workloads complete so that we reach MaxTrials.  PendingTrials tracks active
-	// workloads and is used to check max_concurrent_trials for the searcher is respected.
+	// trials and is used to check max_concurrent_trials for the searcher is respected.
 	// Tracking searcher type on restart gives us the ability to differentiate random searches
 	// in a shim if needed.
 	randomSearchState struct {
@@ -44,7 +44,6 @@ func newSingleSearch(config expconf.SingleConfig) SearchMethod {
 	return &randomSearch{
 		RandomConfig: schemas.WithDefaults(expconf.RandomConfig{
 			RawMaxTrials:           ptrs.Ptr(1),
-			RawMaxLength:           ptrs.Ptr(config.MaxLength()),
 			RawMaxConcurrentTrials: ptrs.Ptr(1),
 		}),
 		randomSearchState: randomSearchState{
@@ -53,54 +52,52 @@ func newSingleSearch(config expconf.SingleConfig) SearchMethod {
 	}
 }
 
-func (s *randomSearch) initialOperations(ctx context) ([]Operation, error) {
-	var ops []Operation
+func (s *randomSearch) initialTrials(ctx context) ([]Action, error) {
+	var actions []Action
 	initialTrials := s.MaxTrials()
 	if s.MaxConcurrentTrials() > 0 {
 		initialTrials = mathx.Min(s.MaxTrials(), s.MaxConcurrentTrials())
 	}
 	for trial := 0; trial < initialTrials; trial++ {
-		create := NewCreate(ctx.rand, sampleAll(ctx.hparams, ctx.rand), model.TrialWorkloadSequencerType)
-		ops = append(ops, create)
-		ops = append(ops, NewValidateAfter(create.RequestID, s.MaxLength().Units))
-		ops = append(ops, NewClose(create.RequestID))
+		create := NewCreate(ctx.rand, sampleAll(ctx.hparams, ctx.rand))
+		actions = append(actions, create)
 		s.CreatedTrials++
 		s.PendingTrials++
 	}
-	return ops, nil
+	return actions, nil
 }
 
 func (s *randomSearch) progress(
-	trialProgress map[model.RequestID]PartialUnits,
-	trialsClosed map[model.RequestID]bool,
+	trialProgress map[int32]float64,
+	trialsClosed map[int32]bool,
 ) float64 {
 	if s.MaxConcurrentTrials() > 0 && s.PendingTrials > s.MaxConcurrentTrials() {
 		panic("pending trials is greater than max_concurrent_trials")
 	}
-	// XXX
 	// Progress is calculated as follows:
 	//   - InvalidHP trials contribute 0 since we do not count them against max_trials budget and are
 	//     replaced with another randomly sampled config
 	//   - Other early-exit trials contribute max_length units
 	//   - In progress trials contribute units trained
-	unitsCompleted := 0.
-	// trialProgress records units trained for all trials except for InvalidHP trials.
+	// trialsProgress records units trained for all trials except for InvalidHP trials.
+	trialProgresses := 0.
+
 	for k, v := range trialProgress {
 		if trialsClosed[k] {
-			unitsCompleted += float64(s.MaxLength().Units)
+			trialProgresses += 1.0
 		} else {
-			unitsCompleted += float64(v)
+			trialProgresses += v
 		}
 	}
-	unitsExpected := s.MaxLength().Units * uint64(s.MaxTrials())
-	return unitsCompleted / float64(unitsExpected)
+
+	return trialProgresses / float64(len(trialProgress))
 }
 
 // trialExitedEarly creates a new trial upon receiving an InvalidHP workload.
 // Otherwise, it does nothing since actions are not taken based on search status.
 func (s *randomSearch) trialExitedEarly(
-	ctx context, requestID model.RequestID, exitedReason model.ExitedReason,
-) ([]Operation, error) {
+	ctx context, trialID int32, exitedReason model.ExitedReason,
+) ([]Action, error) {
 	s.PendingTrials--
 	if s.SearchMethodType == RandomSearch {
 		if exitedReason == model.InvalidHP || exitedReason == model.InitInvalidHP {
@@ -113,18 +110,16 @@ func (s *randomSearch) trialExitedEarly(
 	return nil, nil
 }
 
-func (s *randomSearch) trialClosed(ctx context, requestID model.RequestID) ([]Operation, error) {
+func (s *randomSearch) trialExited(ctx context, trialID int32) ([]Action, error) {
 	s.PendingTrials--
-	var ops []Operation
+	var actions []Action
 	if s.CreatedTrials < s.MaxTrials() {
-		create := NewCreate(ctx.rand, sampleAll(ctx.hparams, ctx.rand), model.TrialWorkloadSequencerType)
-		ops = append(ops, create)
-		ops = append(ops, NewValidateAfter(create.RequestID, s.MaxLength().Units))
-		ops = append(ops, NewClose(create.RequestID))
+		create := NewCreate(ctx.rand, sampleAll(ctx.hparams, ctx.rand))
+		actions = append(actions, create)
 		s.CreatedTrials++
 		s.PendingTrials++
 	}
-	return ops, nil
+	return actions, nil
 }
 
 func (s *randomSearch) Snapshot() (json.RawMessage, error) {
@@ -136,4 +131,8 @@ func (s *randomSearch) Restore(state json.RawMessage) error {
 		return nil
 	}
 	return json.Unmarshal(state, &s.randomSearchState)
+}
+
+func (s *randomSearch) Type() SearchMethodType {
+	return s.SearchMethodType
 }
