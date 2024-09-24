@@ -1,7 +1,8 @@
 ALTER table public.runs
     ADD COLUMN log_signal text;
 
-DROP VIEW trials;
+DROP VIEW IF EXISTS trials;
+
 CREATE VIEW trials AS
 WITH task_log_retention AS (
   SELECT  
