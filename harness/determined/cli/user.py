@@ -11,7 +11,8 @@ from determined.common import api, util
 from determined.common.api import authentication, bindings
 from determined.experimental import client
 
-TOKEN_HEADERS = ["ID", "User ID", "Description", "Created At", "Expires At", "Revoked"]
+TOKEN_HEADERS = ["ID", "User ID", "Description", "Created At", "Expires At", "Revoked",
+                 "Token Type"]
 
 FullUser = collections.namedtuple(
     "FullUser",
@@ -245,6 +246,7 @@ def render_token_info(token_info: Sequence[bindings.v1TokenInfo]) -> None:
             ti.createdAt,
             ti.expiry,
             ti.revoked,
+            ti.tokenType,
         ]
         values.append(value)
     render.tabulate_or_csv(TOKEN_HEADERS, values, False)
@@ -292,7 +294,7 @@ def revoke_token(args: argparse.Namespace) -> None:
         print(json.dumps(resp.to_json(), indent=2))
     except api.errors.NotFoundException:
         raise errors.CliError("Token not found")
-    print("Successfully revoked token with ID: {}".format(args.token_id))
+    print("Successfully updated token with ID: {}".format(args.token_id))
 
 
 def create_token(args: argparse.Namespace) -> None:

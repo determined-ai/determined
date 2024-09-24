@@ -36,6 +36,9 @@ var CurrentTimeNowInUTC time.Time
 // ErrRemoteUserTokenExpired notifies that the remote user's token has expired.
 var ErrRemoteUserTokenExpired = status.Error(codes.Unauthenticated, "remote user token expired")
 
+// ErrAccessTokenRevoked notifies that the user's access token has been revoked.
+var ErrAccessTokenRevoked = status.Error(codes.Unauthenticated, "user access token revoked")
+
 // UserSessionOption is the return type for WithInheritedClaims helper function.
 type UserSessionOption func(f *model.UserSession)
 
@@ -402,7 +405,7 @@ func ByToken(ctx context.Context, token string, ext *model.ExternalSessions) (
 		return nil, nil, err
 	}
 
-	if session.Expiry.Before(time.Now()) {
+	if session.Expiry.Before(time.Now().UTC()) {
 		var isRemote bool
 		if err := db.Bun().NewSelect().
 			Model(&model.User{}).
@@ -419,6 +422,10 @@ func ByToken(ctx context.Context, token string, ext *model.ExternalSessions) (
 		}
 
 		return nil, nil, db.ErrNotFound
+	}
+
+	if session.TokenType == model.TokenTypeLongLivedToken && session.Revoked {
+		return nil, nil, ErrAccessTokenRevoked
 	}
 
 	var user model.User
