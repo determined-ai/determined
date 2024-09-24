@@ -790,11 +790,11 @@ func TestSmallerValueIsHigherPriority(t *testing.T) {
 	}
 
 	t.Run("both RMs same type", func(t *testing.T) {
-		defaultRM.On("SmallerValueIsHigherPriority", mock.Anything).Return(false, nil)
-		otherRM.On("SmallerValueIsHigherPriority", mock.Anything).Return(false, nil)
+		defaultRM.On("SmallerValueIsHigherPriority", mock.Anything).Return(true, nil)
+		otherRM.On("SmallerValueIsHigherPriority", mock.Anything).Return(true, nil)
 		smallerIsHigher, err := m.SmallerValueIsHigherPriority()
 		require.NoError(t, err)
-		require.False(t, smallerIsHigher)
+		require.True(t, smallerIsHigher)
 	})
 
 	t.Run("RMs different type", func(t *testing.T) {
@@ -808,7 +808,7 @@ func TestSmallerValueIsHigherPriority(t *testing.T) {
 	t.Run("RMs with error", func(t *testing.T) {
 		// This is not a supported mode in Determined but we still need to test it.
 		defaultRM.On("SmallerValueIsHigherPriority", mock.Anything).Return(false, fmt.Errorf("error"))
-		otherRM.On("SmallerValueIsHigherPriority", mock.Anything).Return(true, nil)
+		otherRM.On("SmallerValueIsHigherPriority", mock.Anything).Return(false, nil)
 		_, err := m.SmallerValueIsHigherPriority()
 		require.Error(t, err)
 	})
