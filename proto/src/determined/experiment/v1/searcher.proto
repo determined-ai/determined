@@ -96,33 +96,6 @@ message ExperimentInactive {
   State experiment_state = 1;
 }
 
-// SearcherEvent is a message from master to a client-driven custom searcher
-// informing it of relevant changes in the state of an experiment.
-message SearcherEvent {
-  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
-    json_schema: { required: [ "id" ] }
-  };
-  // Incremental ID of the event.
-  int32 id = 1;
-  // The concrete event.
-  oneof event {
-    // An experiment has just been created.
-    InitialOperations initial_operations = 3;
-    // A trial has been created.
-    TrialCreated trial_created = 4;
-    // Validation has completed.
-    ValidationCompleted validation_completed = 5;
-    // Trial has finished.
-    TrialClosed trial_closed = 6;
-    // Trial exited early.
-    TrialExitedEarly trial_exited_early = 7;
-    // Trial progress.
-    TrialProgress trial_progress = 8;
-    // Experiment is inactive.
-    ExperimentInactive experiment_inactive = 9;
-  }
-}
-
 // ValidateAfterOperation means the trial should train and validate after
 // training the given length.
 message ValidateAfterOperation {
@@ -130,13 +103,6 @@ message ValidateAfterOperation {
   string request_id = 1;
   // The length to train before reporting a validation.
   uint64 length = 2;
-}
-
-// SetSearcherProgressOperation informs the master of the progress of the custom
-// searcher.
-message SetSearcherProgressOperation {
-  // Experiment progress as a float between 0.0 and 1.0.
-  double progress = 1;
 }
 
 // Used to complete a ValidateAfterOperation.
@@ -182,9 +148,6 @@ message SearcherOperation {
     CloseTrialOperation close_trial = 3;
     // ShutDownOperation is issued to shut down the custom search method.
     ShutDownOperation shut_down = 4;
-    // SetSearcherProgressOperation is issued to set the progress of the custom
-    // search method.
-    SetSearcherProgressOperation set_searcher_progress = 5;
   }
 }
 

@@ -32,12 +32,11 @@ type (
 
 // All the operation types that support serialization.
 const (
-	CreateOperation              OperationType = 0
-	TrainOperation               OperationType = 1
-	ValidateOperation            OperationType = 2
-	CloseOperation               OperationType = 4
-	ValidateAfterOperation       OperationType = 5
-	SetSearcherProgressOperation OperationType = 6
+	CreateOperation        OperationType = 0
+	TrainOperation         OperationType = 1
+	ValidateOperation      OperationType = 2
+	CloseOperation         OperationType = 4
+	ValidateAfterOperation OperationType = 5
 )
 
 // MarshalJSON implements json.Marshaler.
@@ -52,8 +51,6 @@ func (l OperationList) MarshalJSON() ([]byte, error) {
 			typedOp.OperationType = ValidateAfterOperation
 		case Close:
 			typedOp.OperationType = CloseOperation
-		case SetSearcherProgress:
-			typedOp.OperationType = SetSearcherProgressOperation
 		default:
 			return nil, fmt.Errorf("unable to serialize %T as operation", op)
 		}
@@ -223,18 +220,6 @@ func (t ValidateAfter) GetRequestID() model.RequestID { return t.RequestID }
 // ToProto converts a searcher.ValidateAfter to its protobuf representation.
 func (t ValidateAfter) ToProto() *experimentv1.ValidateAfterOperation {
 	return &experimentv1.ValidateAfterOperation{Length: t.Length}
-}
-
-// SetSearcherProgress sets the progress of the custom searcher.
-type SetSearcherProgress struct {
-	Progress float64
-}
-
-// SetSearcherProgressFromProto creates a SetSearcherProgress from its protobuf representation.
-func SetSearcherProgressFromProto(
-	op *experimentv1.SearcherOperation_SetSearcherProgress,
-) SetSearcherProgress {
-	return SetSearcherProgress{Progress: op.SetSearcherProgress.Progress}
 }
 
 // Close the trial with the given trial ID.

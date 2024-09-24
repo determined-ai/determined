@@ -2647,6 +2647,7 @@ var (
 `)
 	textCustomConfigV0 = []byte(`{
     "$schema": "http://json-schema.org/draft-07/schema#",
+    "$comment": "this is an EOL searcher, not to be used in new experiments",
     "$id": "http://determined.ai/schemas/expconf/v0/searcher-custom.json",
     "title": "CustomConfig",
     "type": "object",
@@ -3020,16 +3021,17 @@ var (
                     "$ref": "http://determined.ai/schemas/expconf/v0/searcher-grid.json"
                 },
                 {
-                    "unionKey": "const:name=custom",
-                    "$ref": "http://determined.ai/schemas/expconf/v0/searcher-custom.json"
-                },
-                {
                     "unionKey": "const:name=adaptive_asha",
                     "$ref": "http://determined.ai/schemas/expconf/v0/searcher-adaptive-asha.json"
                 },
                 {
                     "unionKey": "const:name=async_halving",
                     "$ref": "http://determined.ai/schemas/expconf/v0/searcher-async-halving.json"
+                },
+                {
+                    "$comment": "this is an EOL searcher, not to be used in new experiments",
+                    "unionKey": "const:name=custom",
+                    "$ref": "http://determined.ai/schemas/expconf/v0/searcher-custom.json"
                 },
                 {
                     "$comment": "this is an EOL searcher, not to be used in new experiments",
