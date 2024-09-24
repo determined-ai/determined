@@ -710,7 +710,7 @@ export interface TrialItem extends StartEndTimes {
   logRetentionDays?: number;
   taskId?: string;
   metadata?: JsonObject;
-  logSignals?: string[];
+  logSignal?: string;
 }
 
 export interface TrialDetails extends TrialItem {

@@ -935,10 +935,10 @@ export interface Trialv1Trial {
     metadata?: any;
     /**
      * The log signals.
-     * @type {Array<string>}
+     * @type {string}
      * @memberof Trialv1Trial
      */
-    logSignals?: Array<string>;
+    logSignal?: string;
 }
 /**
  * 

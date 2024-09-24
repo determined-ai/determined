@@ -170,14 +170,12 @@ func getRunsColumns(q *bun.SelectQuery) *bun.SelectQuery {
 			'pachyderm_integration', NULLIF(e.config#>'{integrations,pachyderm}', 'null'),
 			'id', e.id) AS experiment`).
 		ColumnExpr("rm.metadata AS metadata").
-		ColumnExpr("ta.log_signal AS log_signal").
+		ColumnExpr("r.log_signal AS log_signal").
 		Join("LEFT JOIN experiments AS e ON r.experiment_id=e.id").
 		Join("LEFT JOIN runs_metadata AS rm ON r.id=rm.run_id").
 		Join("LEFT JOIN users u ON e.owner_id = u.id").
 		Join("LEFT JOIN projects p ON r.project_id = p.id").
-		Join("LEFT JOIN workspaces w ON p.workspace_id = w.id").
-		Join("LEFT JOIN run_id_task_id rt ON r.id=rt.run_id").
-		Join("LEFT JOIN tasks ta ON ta.task_id=rt.task_id")
+		Join("LEFT JOIN workspaces w ON p.workspace_id = w.id")
 }
 
 func sortRuns(sortString *string, runQuery *bun.SelectQuery) error {

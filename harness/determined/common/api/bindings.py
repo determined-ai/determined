@@ -727,7 +727,7 @@ class trialv1Trial(Printable):
     endTime: "typing.Optional[str]" = None
     latestValidation: "typing.Optional[v1MetricsWorkload]" = None
     logRetentionDays: "typing.Optional[int]" = None
-    logSignals: "typing.Optional[typing.Sequence[str]]" = None
+    logSignal: "typing.Optional[str]" = None
     metadata: "typing.Optional[typing.Dict[str, typing.Any]]" = None
     runnerState: "typing.Optional[str]" = None
     searcherMetricValue: "typing.Optional[float]" = None
@@ -754,7 +754,7 @@ class trialv1Trial(Printable):
         endTime: "typing.Union[str, None, Unset]" = _unset,
         latestValidation: "typing.Union[v1MetricsWorkload, None, Unset]" = _unset,
         logRetentionDays: "typing.Union[int, None, Unset]" = _unset,
-        logSignals: "typing.Union[typing.Sequence[str], None, Unset]" = _unset,
+        logSignal: "typing.Union[str, None, Unset]" = _unset,
         metadata: "typing.Union[typing.Dict[str, typing.Any], None, Unset]" = _unset,
         runnerState: "typing.Union[str, None, Unset]" = _unset,
         searcherMetricValue: "typing.Union[float, None, Unset]" = _unset,
@@ -784,8 +784,8 @@ class trialv1Trial(Printable):
             self.latestValidation = latestValidation
         if not isinstance(logRetentionDays, Unset):
             self.logRetentionDays = logRetentionDays
-        if not isinstance(logSignals, Unset):
-            self.logSignals = logSignals
+        if not isinstance(logSignal, Unset):
+            self.logSignal = logSignal
         if not isinstance(metadata, Unset):
             self.metadata = metadata
         if not isinstance(runnerState, Unset):
@@ -828,8 +828,8 @@ class trialv1Trial(Printable):
             kwargs["latestValidation"] = v1MetricsWorkload.from_json(obj["latestValidation"]) if obj["latestValidation"] is not None else None
         if "logRetentionDays" in obj:
             kwargs["logRetentionDays"] = obj["logRetentionDays"]
-        if "logSignals" in obj:
-            kwargs["logSignals"] = obj["logSignals"]
+        if "logSignal" in obj:
+            kwargs["logSignal"] = obj["logSignal"]
         if "metadata" in obj:
             kwargs["metadata"] = obj["metadata"]
         if "runnerState" in obj:
@@ -872,8 +872,8 @@ class trialv1Trial(Printable):
             out["latestValidation"] = None if self.latestValidation is None else self.latestValidation.to_json(omit_unset)
         if not omit_unset or "logRetentionDays" in vars(self):
             out["logRetentionDays"] = self.logRetentionDays
-        if not omit_unset or "logSignals" in vars(self):
-            out["logSignals"] = self.logSignals
+        if not omit_unset or "logSignal" in vars(self):
+            out["logSignal"] = self.logSignal
         if not omit_unset or "metadata" in vars(self):
             out["metadata"] = self.metadata
         if not omit_unset or "runnerState" in vars(self):

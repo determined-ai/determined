@@ -113,6 +113,7 @@ SELECT
   t.start_time,
   t.end_time,
   t.hparams,
+  r.log_signal,
   new_ckpt.uuid AS warm_start_checkpoint_uuid,
   (
     SELECT tt.task_id FROM run_id_task_id tt
@@ -128,13 +129,6 @@ SELECT
       WHERE tt.run_id = t.id
       ORDER BY ta.start_time
   ) sub_tasks)) AS task_ids,
-  (
-    (SELECT json_agg(log_signal) FILTER (WHERE log_signal IS NOT NULL) FROM (
-      SELECT ta.log_signal FROM run_id_task_id tt
-      JOIN tasks ta ON tt.task_id = ta.task_id
-      WHERE tt.run_id = t.id
-      ORDER BY ta.start_time
-  ) log_signals)) AS log_signals,
   t.checkpoint_size AS total_checkpoint_size,
   t.checkpoint_count,
   t.total_batches AS total_batches_processed,
@@ -151,6 +145,7 @@ SELECT
   t.metadata as metadata
 FROM searcher_info
   INNER JOIN trials t ON t.id = searcher_info.trial_id
+  LEFT JOIN runs r ON t.id = r.id
   LEFT JOIN best_validation bv ON bv.trial_id = searcher_info.trial_id
   LEFT JOIN latest_validation lv ON lv.trial_id = searcher_info.trial_id
   LEFT JOIN best_checkpoint bc ON bc.trial_id = searcher_info.trial_id
