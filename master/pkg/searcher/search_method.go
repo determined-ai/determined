@@ -41,13 +41,6 @@ type SearchMethod interface {
 	expconf.InUnits
 }
 
-// CustomSearchMethod is the interface for the custom search method.
-type CustomSearchMethod interface {
-	getSearcherEventQueue() *SearcherEventQueue
-	setCustomSearcherProgress(progress float64)
-	trialProgress(ctx context, requestID model.RequestID, progress PartialUnits)
-}
-
 // SearchMethodType is the type of a SearchMethod. It is saved in snapshots to be used
 // when shimming json blobs of searcher snapshots.
 type SearchMethodType string
@@ -65,8 +58,6 @@ const (
 	ASHASearch SearchMethodType = "asha"
 	// AdaptiveASHASearch is the SearchMethodType for an adaptive ASHA searcher.
 	AdaptiveASHASearch SearchMethodType = "adaptive_asha"
-	// CustomSearch is the SearchMethodType for a custom searcher.
-	CustomSearch SearchMethodType = "custom_search"
 )
 
 // NewSearchMethod returns a new search method for the provided searcher configuration.
@@ -85,8 +76,6 @@ func NewSearchMethod(c expconf.SearcherConfig) SearchMethod {
 		return newAsyncHalvingSearch(*c.RawAsyncHalvingConfig, c.SmallerIsBetter())
 	case c.RawAdaptiveASHAConfig != nil:
 		return newAdaptiveASHASearch(*c.RawAdaptiveASHAConfig, c.SmallerIsBetter())
-	case c.RawCustomConfig != nil:
-		return newCustomSearch(*c.RawCustomConfig)
 	default:
 		panic("no searcher type specified")
 	}

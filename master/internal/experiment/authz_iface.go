@@ -111,10 +111,6 @@ type ExperimentAuthZ interface {
 	CanSetExperimentsCheckpointGCPolicy(
 		ctx context.Context, curUser model.User, e *model.Experiment,
 	) error
-
-	// GET /api/v1/experiments/:exp_id/searcher_events
-	// POST /api/v1/experiments/:exp_id/searcher_operations
-	CanRunCustomSearch(ctx context.Context, curUser model.User, e *model.Experiment) error
 }
 
 // AuthZProvider is the authz registry for experiments.

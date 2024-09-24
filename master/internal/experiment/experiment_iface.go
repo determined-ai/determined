@@ -1,13 +1,10 @@
 package experiment
 
 import (
-	"github.com/google/uuid"
-
 	"github.com/determined-ai/determined/master/internal/rm/tasklist"
 	"github.com/determined-ai/determined/master/internal/sproto"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/searcher"
-	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
 
 // ExperimentRegistry is a registry of all experiments.
@@ -67,9 +64,6 @@ type Experiment interface {
 	SetGroupMaxSlots(msg sproto.SetGroupMaxSlots)
 	SetGroupWeight(weight float64) error
 	SetGroupPriority(priority int) error
-	PerformSearcherOperations(msg *apiv1.PostSearcherOperationsRequest) error
-	GetSearcherEventsWatcher() (*searcher.EventsWatcher, error)
-	UnwatchEvents(id uuid.UUID) error
 	ActivateExperiment() error
 	PauseExperiment() error
 	CancelExperiment() error

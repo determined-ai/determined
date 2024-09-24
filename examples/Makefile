@@ -7,9 +7,6 @@ CV_EXAMPLES_DIRS := $(patsubst computer_vision/%/., build/%.tgz, $(CV_EXAMPLES))
 DEEPSPEED_EXAMPLES := $(wildcard deepspeed/*/.)
 DEEPSPEED_EXAMPLES_DIRS := $(patsubst deepspeed/%/., build/%.tgz, $(DEEPSPEED_EXAMPLES))
 
-DEEPSPEED_AUTOTUNE_EXAMPLES := $(wildcard deepspeed_autotune/*/.)
-DEEPSPEED_AUTOTUNE_EXAMPLES_DIRS := $(patsubst deepspeed_autotune/%/., build/%.tgz, $(DEEPSPEED_AUTOTUNE_EXAMPLES))
-
 HF_TRAINER_EXAMPLES := $(wildcard hf_trainer_api/*/.)
 HF_TRAINER_EXAMPLES_DIRS := $(patsubst hf_trainer_api/%/., build/%.tgz, $(HF_TRAINER_EXAMPLES))
 
@@ -26,7 +23,7 @@ IGNORE := \( -path ./build -o -path ./tests -o -name __pycache__ -o -name \*.pyc
 # SRCS is a list of all files that could affect our outputs.
 SRCS := $(shell find . $(IGNORE) -prune -o -type f -print | sort)
 
-build/stamp: $(TUTORIAL_EXAMPLES_DIRS) $(CV_EXAMPLES_DIRS) $(DEEPSPEED_EXAMPLES_DIRS) $(DEEPSPEED_AUTOTUNE_EXAMPLES_DIRS) $(HF_TRAINER_EXAMPLES_DIRS) $(DIFFUSION_EXAMPLES_DIRS) $(FEATURES_EXAMPLES_DIRS)
+build/stamp: $(TUTORIAL_EXAMPLES_DIRS) $(CV_EXAMPLES_DIRS) $(DEEPSPEED_EXAMPLES_DIRS) $(HF_TRAINER_EXAMPLES_DIRS) $(DIFFUSION_EXAMPLES_DIRS) $(FEATURES_EXAMPLES_DIRS)
 	touch $@
 
 .PHONY: build

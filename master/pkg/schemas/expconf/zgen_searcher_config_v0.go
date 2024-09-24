@@ -62,9 +62,6 @@ func (s SearcherConfigV0) GetUnionMember() interface{} {
 	if s.RawAdaptiveASHAConfig != nil {
 		return *s.RawAdaptiveASHAConfig
 	}
-	if s.RawCustomConfig != nil {
-		return *s.RawCustomConfig
-	}
 	if s.RawSyncHalvingConfig != nil {
 		return *s.RawSyncHalvingConfig
 	}
@@ -73,6 +70,9 @@ func (s SearcherConfigV0) GetUnionMember() interface{} {
 	}
 	if s.RawAdaptiveSimpleConfig != nil {
 		return *s.RawAdaptiveSimpleConfig
+	}
+	if s.RawCustomConfig != nil {
+		return *s.RawCustomConfig
 	}
 	panic("no union member defined")
 }

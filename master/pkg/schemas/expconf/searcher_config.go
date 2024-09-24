@@ -18,7 +18,6 @@ type SearcherConfigV0 struct {
 	RawGridConfig         *GridConfigV0         `union:"name,grid" json:"-"`
 	RawAsyncHalvingConfig *AsyncHalvingConfigV0 `union:"name,async_halving" json:"-"`
 	RawAdaptiveASHAConfig *AdaptiveASHAConfigV0 `union:"name,adaptive_asha" json:"-"`
-	RawCustomConfig       *CustomConfigV0       `union:"name,custom" json:"-"`
 
 	// TODO(DET-8577): There should not be a need to parse EOL searchers if we get rid of parsing
 	//                 active experiment configs unnecessarily.
@@ -26,6 +25,7 @@ type SearcherConfigV0 struct {
 	RawSyncHalvingConfig    *SyncHalvingConfigV0    `union:"name,sync_halving" json:"-"`
 	RawAdaptiveConfig       *AdaptiveConfigV0       `union:"name,adaptive" json:"-"`
 	RawAdaptiveSimpleConfig *AdaptiveSimpleConfigV0 `union:"name,adaptive_simple" json:"-"`
+	RawCustomConfig         *CustomConfigV0         `union:"name,custom" json:"-"`
 
 	RawMetric               *string `json:"metric"`
 	RawSmallerIsBetter      *bool   `json:"smaller_is_better"`
@@ -66,7 +66,7 @@ func (s SearcherConfigV0) Unit() Unit {
 	case s.RawAdaptiveASHAConfig != nil:
 		return s.RawAdaptiveASHAConfig.Unit()
 	case s.RawCustomConfig != nil:
-		panic("custom searcher config does not provide Unit()")
+		panic("cannot get unit of EOL searcher class")
 	case s.RawSyncHalvingConfig != nil:
 		panic("cannot get unit of EOL searcher class")
 	case s.RawAdaptiveConfig != nil:
@@ -108,13 +108,6 @@ func (s SearcherConfigV0) AsLegacy() LegacySearcher {
 		Metric:          s.Metric(),
 		SmallerIsBetter: s.SmallerIsBetter(),
 	}
-}
-
-// CustomConfigV0 configures a custom search.
-//
-//go:generate ../gen.sh
-type CustomConfigV0 struct {
-	RawUnit *Unit `json:"unit"`
 }
 
 // SingleConfigV0 configures a single trial.
@@ -247,6 +240,13 @@ type AdaptiveSimpleConfigV0 struct {
 	RawMaxRungs  *int          `json:"max_rungs"`
 }
 
+// CustomConfigV0 configures a custom search.
+//
+//go:generate ../gen.sh
+type CustomConfigV0 struct {
+	RawUnit *Unit `json:"unit"`
+}
+
 // AssertCurrent distinguishes configs which are only parsable from those that are runnable.
 func (s SearcherConfig) AssertCurrent() error {
 	switch {
@@ -261,6 +261,10 @@ func (s SearcherConfig) AssertCurrent() error {
 	case s.RawAdaptiveSimpleConfig != nil:
 		return errors.New(
 			"the 'adaptive_simple' searcher has been removed and is not valid for new experiments",
+		)
+	case s.RawCustomConfig != nil:
+		return errors.New(
+			"the 'custom' searcher has been removed and is not valid for new experiments",
 		)
 	}
 	return nil

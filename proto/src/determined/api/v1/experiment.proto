@@ -913,31 +913,6 @@ message GetModelDefFileResponse {
   bytes file = 1;
 }
 
-// Request to get the list of searcher events.
-message GetSearcherEventsRequest {
-  // The ID of the experiment.
-  int32 experiment_id = 1;
-}
-
-// Response to GetSearcherEventsRequest.
-message GetSearcherEventsResponse {
-  // The list of events in the queue.
-  repeated determined.experiment.v1.SearcherEvent searcher_events = 1;
-}
-
-// Request for sending operations from a custom search method.
-message PostSearcherOperationsRequest {
-  // The experiment ID.
-  int32 experiment_id = 1;
-  // List of operations to submit.
-  repeated determined.experiment.v1.SearcherOperation searcher_operations = 2;
-  // The event that triggered the client to send these operations to the master.
-  determined.experiment.v1.SearcherEvent triggered_by_event = 3;
-}
-
-// Response to PostSearcherOperationsResponse.
-message PostSearcherOperationsResponse {}
-
 // Request for searching experiments
 message SearchExperimentsRequest {
   // ID of the project to look at

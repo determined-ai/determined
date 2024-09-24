@@ -62,10 +62,6 @@ func NewSearcher(seed uint32, method SearchMethod, hparams expconf.Hyperparamete
 	}
 }
 
-func unsupportedMethodError(method SearchMethod, unsupportedOp string) error {
-	return fmt.Errorf("%T search method does not support %s", method, unsupportedOp)
-}
-
 func (s *Searcher) context() context {
 	return context{rand: s.state.Rand, hparams: s.hparams}
 }
@@ -139,9 +135,7 @@ func (s *Searcher) TrialExitedEarly(
 	s.state.Exits[requestID] = true
 	s.record(operations)
 
-	_, isCustom := s.method.(*customSearch)
-	// For non-custom-search methods, you can assume that trials will be created immediately.
-	if s.state.TrialsRequested == len(s.state.TrialsClosed) && !isCustom {
+	if s.state.TrialsRequested == len(s.state.TrialsClosed) {
 		shutdown := Shutdown{Failure: len(s.state.Failures) >= s.state.TrialsRequested}
 		s.record([]Operation{shutdown})
 		operations = append(operations, shutdown)
@@ -155,9 +149,6 @@ func (s *Searcher) SetTrialProgress(requestID model.RequestID, progress PartialU
 	s.mu.Lock()
 	defer s.mu.Unlock()
 
-	if sMethod, ok := s.method.(*customSearch); ok {
-		sMethod.trialProgress(s.context(), requestID, progress)
-	}
 	s.state.TrialProgress[requestID] = progress
 }
 
@@ -193,9 +184,7 @@ func (s *Searcher) TrialClosed(requestID model.RequestID) ([]Operation, error) {
 	}
 	s.record(operations)
 
-	_, isCustom := s.method.(*customSearch)
-	// For non-custom-search methods, you can assume that trials will be created immediately.
-	if s.state.TrialsRequested == len(s.state.TrialsClosed) && !isCustom {
+	if s.state.TrialsRequested == len(s.state.TrialsClosed) {
 		shutdown := Shutdown{
 			Cancel:  len(s.state.Cancels) >= s.state.TrialsRequested,
 			Failure: len(s.state.Failures) >= s.state.TrialsRequested,
@@ -225,30 +214,6 @@ func (s *Searcher) Progress() float64 {
 		return 0.0
 	}
 	return progress
-}
-
-// GetCustomSearcherEventQueue returns the searcher's custom searcher event queue. It returns an
-// error if the search method is not a custom searcher.
-func (s *Searcher) GetCustomSearcherEventQueue() (*SearcherEventQueue, error) {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	if sMethod, ok := s.method.(*customSearch); ok {
-		return sMethod.getSearcherEventQueue(), nil
-	}
-	return nil, unsupportedMethodError(s.method, "GetCustomSearcherEventQueue")
-}
-
-// SetCustomSearcherProgress sets the custom searcher progress.
-func (s *Searcher) SetCustomSearcherProgress(progress float64) error {
-	s.mu.Lock()
-	defer s.mu.Unlock()
-
-	if sMethod, ok := s.method.(*customSearch); ok {
-		sMethod.setCustomSearcherProgress(progress)
-		return nil
-	}
-	return unsupportedMethodError(s.method, "SetCustomSearcherProgress")
 }
 
 // Record records operations that were requested by the searcher for a specific trial.
