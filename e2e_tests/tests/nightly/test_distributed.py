@@ -4,7 +4,6 @@ import tempfile
 
 import pytest
 
-from determined.common import util
 from tests import api_utils
 from tests import config as conf
 from tests import experiment as exp
@@ -129,90 +128,6 @@ def test_textual_inversion_stable_diffusion_generate() -> None:
             raise RuntimeError(HUGGINGFACE_CONTEXT_ERR_MSG)
         else:
             raise k
-
-
-@pytest.mark.distributed
-@pytest.mark.gpu_required
-def test_hf_trainer_image_classification_deepspeed_autotuning() -> None:
-    sess = api_utils.user_session()
-    test_dir = "hf_image_classification"
-    config_path = conf.hf_trainer_examples_path(f"{test_dir}/deepspeed.yaml")
-    config = conf.load_config(config_path)
-    with tempfile.NamedTemporaryFile() as tf:
-        with open(tf.name, "w") as f:
-            util.yaml_safe_dump(config, f)
-        # expected_trials=1 in run_basic_autotuning_test because the search runner only generates
-        # a single trial (which in turn generates a second, possibly multi-trial experiment).
-        _ = exp.run_basic_autotuning_test(
-            sess,
-            tf.name,
-            conf.hf_trainer_examples_path(test_dir),
-            1,
-            search_method_name="asha",
-        )
-
-
-@pytest.mark.distributed
-@pytest.mark.gpu_required
-def test_hf_trainer_language_modeling_deepspeed_autotuning() -> None:
-    sess = api_utils.user_session()
-    test_dir = "hf_language_modeling"
-    config_path = conf.hf_trainer_examples_path(f"{test_dir}/deepspeed.yaml")
-    config = conf.load_config(config_path)
-    with tempfile.NamedTemporaryFile() as tf:
-        with open(tf.name, "w") as f:
-            util.yaml_safe_dump(config, f)
-        # expected_trials=1 in run_basic_autotuning_test because the search runner only generates
-        # a single trial (which in turn generates a second, possibly multi-trial experiment).
-        _ = exp.run_basic_autotuning_test(
-            sess,
-            tf.name,
-            conf.hf_trainer_examples_path(test_dir),
-            1,
-            search_method_name="binary",
-        )
-
-
-@pytest.mark.distributed
-@pytest.mark.gpu_required
-def test_torchvision_core_api_deepspeed_autotuning() -> None:
-    sess = api_utils.user_session()
-    test_dir = "torchvision/core_api"
-    config_path = conf.deepspeed_autotune_examples_path(f"{test_dir}/deepspeed.yaml")
-    config = conf.load_config(config_path)
-    with tempfile.NamedTemporaryFile() as tf:
-        with open(tf.name, "w") as f:
-            util.yaml_safe_dump(config, f)
-        # expected_trials=1 in run_basic_autotuning_test because the search runner only generates
-        # a single trial (which in turn generates a second, possibly multi-trial experiment).
-        _ = exp.run_basic_autotuning_test(
-            sess,
-            tf.name,
-            conf.deepspeed_autotune_examples_path(test_dir),
-            1,
-            search_method_name="asha",
-        )
-
-
-@pytest.mark.distributed
-@pytest.mark.gpu_required
-def test_torchvision_deepspeed_trial_deepspeed_autotuning() -> None:
-    sess = api_utils.user_session()
-    test_dir = "torchvision/deepspeed_trial"
-    config_path = conf.deepspeed_autotune_examples_path(f"{test_dir}/deepspeed.yaml")
-    config = conf.load_config(config_path)
-    with tempfile.NamedTemporaryFile() as tf:
-        with open(tf.name, "w") as f:
-            util.yaml_safe_dump(config, f)
-        # expected_trials=1 in run_basic_autotuning_test because the search runner only generates
-        # a single trial (which in turn generates a second, possibly multi-trial experiment).
-        _ = exp.run_basic_autotuning_test(
-            sess,
-            tf.name,
-            conf.deepspeed_autotune_examples_path(test_dir),
-            1,
-            search_method_name="random",
-        )
 
 
 @pytest.mark.distributed

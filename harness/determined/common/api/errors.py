@@ -54,9 +54,10 @@ class APIException(BadRequestException):
         try:
             self.response_error = response.json()["error"]
             m = self.response_error["error"]
-        except (ValueError, KeyError):
+        except (AttributeError, ValueError, KeyError):
             self.response_error = None
-            m = response.text
+            # Requests that don't go through the GRPC gateway will return error plain messages.
+            m = response.text if hasattr(response, "text") else response
         super().__init__(m, response, *args)
         self.status_code = response.status_code
 

@@ -78,13 +78,6 @@
                 "type": null
             }
         }
-    },
-    "v1ValidationCompleted": {
-        "properties": {
-            "metric": {
-                "type": null
-            }
-        }
     }
   }
 }

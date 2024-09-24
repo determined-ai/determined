@@ -127,14 +127,6 @@ func (p *ExperimentAuthZPermissive) CanSetExperimentsCheckpointGCPolicy(
 	return (&ExperimentAuthZBasic{}).CanSetExperimentsCheckpointGCPolicy(ctx, curUser, e)
 }
 
-// CanRunCustomSearch calls RBAC authz but enforces basic authz.
-func (p *ExperimentAuthZPermissive) CanRunCustomSearch(
-	ctx context.Context, curUser model.User, e *model.Experiment,
-) error {
-	_ = (&ExperimentAuthZRBAC{}).CanRunCustomSearch(ctx, curUser, e)
-	return (&ExperimentAuthZBasic{}).CanRunCustomSearch(ctx, curUser, e)
-}
-
 func init() {
 	AuthZProvider.Register("permissive", &ExperimentAuthZPermissive{})
 }
