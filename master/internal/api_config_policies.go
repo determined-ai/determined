@@ -9,11 +9,9 @@ import (
 	"google.golang.org/protobuf/types/known/structpb"
 	"gopkg.in/yaml.v3"
 
-	"github.com/determined-ai/determined/master/internal/cluster"
 	"github.com/determined-ai/determined/master/internal/configpolicy"
 	"github.com/determined-ai/determined/master/internal/grpcutil"
 	"github.com/determined-ai/determined/master/internal/license"
-	"github.com/determined-ai/determined/master/internal/workspace"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
@@ -78,7 +76,7 @@ func (a *apiServer) GetWorkspaceConfigPolicies(
 		return nil, err
 	}
 
-	err = workspace.AuthZProvider.Get().CanViewWorkspaceConfigPolicies(ctx, *curUser, w)
+	err = configpolicy.AuthZProvider.Get().CanViewWorkspaceConfigPolicies(ctx, *curUser, w)
 	if err != nil {
 		return nil, err
 	}
@@ -102,12 +100,11 @@ func (a *apiServer) GetGlobalConfigPolicies(
 		return nil, err
 	}
 
-	permErr, err := cluster.AuthZProvider.Get().CanViewGlobalConfigPolicies(ctx, curUser)
+	err = configpolicy.AuthZProvider.Get().CanViewGlobalConfigPolicies(ctx, curUser)
 	if err != nil {
 		return nil, err
-	} else if permErr != nil {
-		return nil, permErr
 	}
+
 	resp, err := a.getConfigPolicies(ctx, nil, req.WorkloadType)
 	if err != nil {
 		return nil, err
@@ -166,7 +163,7 @@ func (a *apiServer) DeleteWorkspaceConfigPolicies(
 		return nil, err
 	}
 
-	err = workspace.AuthZProvider.Get().CanModifyWorkspaceConfigPolicies(ctx, *curUser, w)
+	err = configpolicy.AuthZProvider.Get().CanModifyWorkspaceConfigPolicies(ctx, *curUser, w)
 	if err != nil {
 		return nil, err
 	}
@@ -198,11 +195,9 @@ func (a *apiServer) DeleteGlobalConfigPolicies(
 		return nil, err
 	}
 
-	permErr, err := cluster.AuthZProvider.Get().CanModifyGlobalConfigPolicies(ctx, curUser)
+	err = configpolicy.AuthZProvider.Get().CanModifyGlobalConfigPolicies(ctx, curUser)
 	if err != nil {
 		return nil, err
-	} else if permErr != nil {
-		return nil, permErr
 	}
 
 	if !configpolicy.ValidWorkloadType(req.WorkloadType) {

@@ -190,24 +190,6 @@ func (a *WorkspaceAuthZBasic) CanSetWorkspacesDefaultPools(
 	return nil
 }
 
-// CanModifyWorkspaceConfigPolicies returns a nil error or the user is not an admin
-// or owner of the workspace.
-func (a *WorkspaceAuthZBasic) CanModifyWorkspaceConfigPolicies(
-	ctx context.Context, curUser model.User, workspace *workspacev1.Workspace,
-) error {
-	if !curUser.Admin && curUser.ID != model.UserID(workspace.UserId) {
-		return fmt.Errorf("only admins may set config policies for workspaces")
-	}
-	return nil
-}
-
-// CanViewWorkspaceConfigPolicies returns a nil error.
-func (a *WorkspaceAuthZBasic) CanViewWorkspaceConfigPolicies(
-	ctx context.Context, curUser model.User, workspace *workspacev1.Workspace,
-) error {
-	return nil
-}
-
 func init() {
 	AuthZProvider.Register("basic", &WorkspaceAuthZBasic{})
 }

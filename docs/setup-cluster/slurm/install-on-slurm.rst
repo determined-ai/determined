@@ -5,7 +5,19 @@
 #################################
 
 This document describes how to deploy Determined on an HPC cluster managed by the Slurm or PBS
-workload managers.
+workload managers. It covers both scenarios where root access is available and where it is not.
+
+For non-root installations:
+
+#. Ensure that the prerequisites in :ref:`hpc-environment-requirements` have been completed by your
+   system administrator.
+#. Verify that you have the necessary permissions to run Slurm/PBS jobs and access the required
+   directories.
+#. Check that the container runtime (Singularity/Apptainer, Podman, or Enroot) is properly
+   configured for non-root usage.
+
+For root installations, ensure that all requirements in :ref:`hpc-environment-requirements` and
+:ref:`slurm-requirements` are met before proceeding.
 
 .. include:: ../../_shared/tip-keep-install-instructions.txt
 
@@ -123,7 +135,7 @@ configured, install and configure the Determined master:
    |                            | path, you can override the default by updating this value.     |
    +----------------------------+----------------------------------------------------------------+
    | ``gres_supported``         | Indicates that Slurm/PBS identifies available GPUs. The        |
-   |                            | default is ``true``. See :ref:`slurm-config-requirements` or   |
+   |                            | default is ``true``. See :ref:`slurm-requirements` or          |
    |                            | :ref:`pbs-config-requirements` for details.                    |
    +----------------------------+----------------------------------------------------------------+
 
@@ -163,8 +175,8 @@ configured, install and configure the Determined master:
 #. If the compute nodes of your cluster do not have internet connectivity to download Docker images,
    see :ref:`slurm-image-config`.
 
-#. If internet connectivity requires use of a proxy, make sure the proxy variables are defined as
-   per :ref:`proxy-config-requirements`.
+#. If internet connectivity requires the use of a proxy, make sure the proxy variables are properly
+   configured in your environment.
 
 #. Log into Determined, see :ref:`users`. The Determined user must be linked to a user on the HPC
    cluster. If signed in with a Determined administrator account, the following example creates a

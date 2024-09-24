@@ -12,6 +12,12 @@
    <div class="landing">
       <div class="tiles-flex">
          <div class="tile-container">
+            <a class="tile" href="cluster-overview.html">
+               <h2 class="tile-title">Cluster Overview</h2>
+               <p class="tile-description">Discover how to manage your cluster in the WebUI.</p>
+            </a>
+         </div>
+         <div class="tile-container">
             <a class="tile" href="historical-cluster-usage-data.html">
                <h2 class="tile-title">Historical Cluster Usage Data</h2>
                <p class="tile-description">Discover how to unlock the secrets of your cluster with historical usage data.</p>

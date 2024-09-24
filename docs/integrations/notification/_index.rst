@@ -4,9 +4,14 @@
  Notifications
 ###############
 
-Monitoring experiment status is a vital part of working with Determined. In order to integrate
-Determined into your existing workflows, you can make use of webhooks to update other systems,
-receive emails, slack messages, and more when an experiment is updated.
+Monitoring experiment status is crucial when working with Determined. To integrate Determined into
+your existing workflows, you can use :ref:`workload-alerting` through webhooks. This feature allows
+you to receive timely updates about your experiments via various channels such as email, Slack
+messages, or other systems.
+
+Workload alerting is particularly useful for real-time monitoring, debugging, and custom
+notifications. For example, you can configure alerts to trigger as soon as specific events occur in
+your experiments, rather than waiting for tasks to reach final states like "Completed" or "Error".
 
 Webhooks such as tasklog webhooks are useful for real-time monitoring, debugging, custom
 notifications, and integration with other systems. For example, using ``Tasklog``, you could get
@@ -122,77 +127,47 @@ Below is an example of handling a signed payload in Python.
    signed payload. For example "{"key_one": "value_one"}" will fail authentication, while
    "{"key_one":"value_one"}" will yield the correct signed payload value.
 
-*******************
- Creating Webhooks
-*******************
+.. _supported-webhook-triggers:
 
-To create a webhook:
+Supported Triggers
+==================
 
--  Navigate to ``/det/webhooks`` or select **Webhooks** in the left-side navigation pane.
--  Choose **New Webhook**.
+Determined supports the following webhook trigger types:
 
-.. image:: /assets/images/webhook.png
-   :width: 100%
-   :alt: Webhooks interface showing New Webhook button.
+``COMPLETED`` or ``ERROR`` will be triggered when an experiment in scope is completed or errored.
 
-.. note::
+``TASKLOG`` will be triggered when a task matching regex is detected.
 
-   If you do not have sufficient permissions to view and create webhooks, consult with a systems
-   admin.
-
--  URL: Supply the webhook URL.
--  Type: Select a type, either ``Default`` or ``Slack``. The ``Slack`` type can automatically format
-   message content for better readability on Slack.
--  Trigger: Select the experiment state change you want to monitor, either ``Completed``, ``Error``,
-   or ``Tasklog``.
--  Regex: If the webhook is configured to trigger on Tasklog, define a regex using `Golang Regex
-   Syntax <https://pkg.go.dev/regexp/syntax>`_.
-
-.. image:: /assets/images/webhook_modal.png
-   :width: 100%
-   :alt: Webhook user interface showing the fields you will interact with.
-
-Once created, your webhook will begin executing for the selected events.
-
-******************
- Testing Webhooks
-******************
-
-To test a webhook, select the more-options menu to the right of the webhook record to expand
-available actions.
-
-.. image:: /assets/images/webhook_action.png
-   :width: 100%
-   :alt: Webhooks interface showing where to find the actions menu
-
-Select **Test Webhook** to trigger a test event to be sent to the defined webhook URL with a mock
-payload as stated below:
+``CUSTOM`` will only be triggered from experiment code.
 
 .. code::
 
-   {
-      "event_id": "b8667b8a-e14d-40e5-83ee-a64e31bdc5f4",
-      "event_type": "EXPERIMENT_STATE_CHANGE",
-      "timestamp": 1665695871,
-      "condition": {
-         "state": "COMPLETED"
-      },
-      "event_data": {
-         "data": "test"
-      }
-   }
+   # Example code to trigger a custom trigger.
 
-*******************
- Deleting Webhooks
-*******************
+   # config.yaml
+   integrations:
+      webhooks:
+         webhook_name:
+            - <webhook_name>
 
-To delete a webhook, select the more-options menu to the right of the webhook record to expand
-available actions.
+   # code.py
+   with det.core.init() as core_context:
+      core_context.alert(title="some title", description="some description", level="info")
 
-.. note::
+****************
+ Using Webhooks
+****************
 
-   Determined does not support editing webhooks. Instead, you should delete and recreate the
-   webhook.
+To get started with webhooks in Determined:
+
+#. For step-by-step instructions on creating webhooks, see :ref:`creating-webhooks`.
+
+#. For use cases and best practices, visit :ref:`workload-alerting` guide.
+
+#. For platform-specific integration guides, see:
+
+   -  :ref:`slack-integration`
+   -  :ref:`zapier-integration`
 
 .. toctree::
    :caption: Notification
