@@ -28,13 +28,12 @@ type NTSCConfigPolicies struct {
 	Constraints     *model.Constraints   `json:"constraints"`
 }
 
-// PriorityAllowed returns true if the desired priority is within the task config policy limit.
+// PriorityAllowed returns true if the desired priority is within the limit set by task config policies.
 func PriorityAllowed(wkspID int, workloadType string, priority int, smallerHigher bool) (bool, error) {
-	// Check if a priority limit has been set in task config policies.
+	// Check if a priority limit has been set with a constraint policy.
 	// Global policies have highest precedence.
 	limit, found, err := GetPriorityLimit(context.TODO(), nil, workloadType)
 	if err != nil {
-		// TODO do we really want to block on this?
 		return false, fmt.Errorf("unable to fetch task config policy priority limit")
 	}
 	if found {

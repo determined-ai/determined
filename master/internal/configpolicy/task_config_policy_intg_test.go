@@ -25,15 +25,17 @@ func TestPriorityAllowed(t *testing.T) {
 	require.True(t, ok)
 
 	wkspLimit := 50
-	w := addWorkspacePriorityLimit(t, pgDB, wkspLimit)
+	user := db.RequireMockUser(t, pgDB)
+	w := addWorkspacePriorityLimit(t, pgDB, user, wkspLimit)
 
 	// Priority is outside workspace limit.
-	ok, err = PriorityAllowed(w.ID, model.NTSCType, wkspLimit-1, true)
+	smallerValueIsHigherPriority := true
+	ok, err = PriorityAllowed(w.ID, model.NTSCType, wkspLimit-1, smallerValueIsHigherPriority)
 	require.NoError(t, err)
 	require.False(t, ok)
 
 	globalLimit := 42
-	addGlobalPriorityLimit(t, pgDB, globalLimit)
+	addGlobalPriorityLimit(t, pgDB, user, globalLimit)
 
 	// Priority is within global limit.
 	ok, err = PriorityAllowed(w.ID, model.NTSCType, wkspLimit-1, true)
@@ -46,9 +48,8 @@ func TestPriorityAllowed(t *testing.T) {
 	require.False(t, ok)
 }
 
-func addWorkspacePriorityLimit(t *testing.T, pgDB *db.PgDB, limit int) model.Workspace {
+func addWorkspacePriorityLimit(t *testing.T, pgDB *db.PgDB, user model.User, limit int) model.Workspace {
 	ctx := context.Background()
-	user := db.RequireMockUser(t, pgDB)
 
 	// add a workspace to use
 	w := model.Workspace{Name: uuid.NewString(), UserID: user.ID}
@@ -68,9 +69,8 @@ func addWorkspacePriorityLimit(t *testing.T, pgDB *db.PgDB, limit int) model.Wor
 	return w
 }
 
-func addGlobalPriorityLimit(t *testing.T, pgDB *db.PgDB, limit int) {
+func addGlobalPriorityLimit(t *testing.T, pgDB *db.PgDB, user model.User, limit int) {
 	ctx := context.Background()
-	user := db.RequireMockUser(t, pgDB)
 
 	constraints := fmt.Sprintf(`{"priority_limit": %d}`, limit)
 	input := model.TaskConfigPolicies{
