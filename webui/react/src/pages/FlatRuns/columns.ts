@@ -241,7 +241,8 @@ export const getColumnDefs = ({
 
   experimentProgress: {
     id: 'experimentProgress',
-    renderer: (record: FlatRun) => handleEmptyCell(record.experiment?.progress, (data) => ({
+    renderer: (record: FlatRun) =>
+      handleEmptyCell(record.experiment?.progress, (data) => ({
         allowOverlay: false,
         data: floatToPercent(data, 0),
         displayData: floatToPercent(data, 0),
@@ -253,7 +254,7 @@ export const getColumnDefs = ({
       columnWidths.experimentProgress ?? defaultColumnWidths.experimentProgress ?? MIN_COLUMN_WIDTH,
   },
   // TODO: should this change to search?
-externalExperimentId: {
+  externalExperimentId: {
     id: 'externalExperimentId',
     renderer: (record: FlatRun) =>
       handleEmptyCell(record.experiment?.externalExperimentId, (data) => ({
