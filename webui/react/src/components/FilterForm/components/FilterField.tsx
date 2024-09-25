@@ -13,7 +13,7 @@ import { useDrag, useDrop } from 'react-dnd';
 import { debounce } from 'throttle-debounce';
 
 import ConjunctionContainer from 'components/FilterForm/components/ConjunctionContainer';
-import { FilterFormStore, getInitField } from 'components/FilterForm/components/FilterFormStore';
+import { FilterFormStore } from 'components/FilterForm/components/FilterFormStore';
 import {
   AvailableOperators,
   Conjunction,
@@ -201,7 +201,10 @@ const FilterField = ({
     (e: React.KeyboardEvent) => {
       // would use isComposing alone but safari has a bug: https://bugs.webkit.org/show_bug.cgi?id=165004
       if (e.key === 'Enter' && !inputOpen && !e.nativeEvent.isComposing && e.keyCode !== 229) {
-        formStore.addChild(parentId, FormKind.Field, { index: index + 1, item: getInitField() });
+        formStore.addChild(parentId, FormKind.Field, {
+          index: index + 1,
+          item: formStore.newField(),
+        });
         // stop panel flashing for selects and dates
         if (
           field.type === 'COLUMN_TYPE_DATE' ||

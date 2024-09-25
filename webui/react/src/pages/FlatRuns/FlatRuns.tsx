@@ -116,7 +116,7 @@ const BANNED_SORT_COLUMNS = new Set(['tags', 'searcherMetricsVal']);
 
 const NO_PINS_WIDTH = 200;
 
-export const formStore = new FilterFormStore();
+export const formStore = new FilterFormStore(V1LocationType.RUN);
 
 interface Props {
   projectId: number;
