@@ -193,7 +193,6 @@ func addWorkspacePriorityLimit(t *testing.T, user model.User, limit int) model.W
 	require.NoError(t, err)
 
 	constraints := fmt.Sprintf(`{"priority_limit": %d}`, limit)
-	fmt.Printf("adding constraints to wksp=%d, %s\n", w.ID, constraints)
 	input := model.TaskConfigPolicies{
 		WorkloadType:  model.NTSCType,
 		WorkspaceID:   &w.ID,
