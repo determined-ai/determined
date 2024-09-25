@@ -170,19 +170,6 @@ func (a *apiServer) DeleteSearchTag(
 	return &res, nil
 }
 
-/*
-expReq := apiv1.{
-	}
-	expRes, err := a.(ctx, &expReq)
-	if err != nil {
-		return nil, err
-	}
-	res := apiv2.{
-
-	}
-	return &res, nil
-*/
-
 func BulkFiltersSearchtToExperiment(filter *apiv2.BulkSearchFilters) *apiv1.BulkExperimentFilters {
 	states := []experimentv1.State{}
 	for _, e := range filter.States {
