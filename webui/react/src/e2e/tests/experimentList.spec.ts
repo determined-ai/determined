@@ -3,6 +3,7 @@ import { ProjectDetails } from 'e2e/models/pages/ProjectDetails';
 import { detExecSync, fullPath } from 'e2e/utils/detCLI';
 import { safeName } from 'e2e/utils/naming';
 import { repeatWithFallback } from 'e2e/utils/polling';
+import { UsersApiFp } from 'services/api-ts-sdk';
 import { ExperimentBase } from 'types';
 
 test.describe('Experiment List', () => {
@@ -45,70 +46,39 @@ test.describe('Experiment List', () => {
     });
   });
 
-  test.beforeEach(async ({ authedPage, newProject }) => {
+  test.beforeEach(async ({ apiAuth, authedPage, newProject }) => {
     test.slow();
     projectDetailsPage = new ProjectDetails(authedPage);
-    const grid = projectDetailsPage.f_experimentList.dataGrid;
 
-    await projectDetailsPage.gotoProject(newProject.response.project.id);
+    // reset settings
+    const projectId = newProject.response.project.id;
+    const basePath = apiAuth.baseURL.endsWith('/') ? apiAuth.baseURL.slice(0, -1) : apiAuth.baseURL;
+    const userAPI = UsersApiFp({ apiKey: await apiAuth.getBearerToken() });
+    const { settings } = await userAPI.getUserSetting()(fetch, basePath);
+    const storagePath = `experimentListingForProject${projectId}`;
+    const settingsKeys = settings
+      .filter((setting) => {
+        return setting.storagePath === storagePath;
+      })
+      .map((setting) => setting.key);
+    const newSettings = [
+      ...settingsKeys.map((key) => ({
+        key,
+        storagePath,
+      })),
+      {
+        key: 'sort',
+        storagePath,
+        value: '"startTime:asc"',
+      },
+    ];
+    await userAPI.postUserSetting({ settings: newSettings })(fetch, basePath);
+
+    await projectDetailsPage.gotoProject(projectId);
     await expect(projectDetailsPage.f_experimentList.dataGrid.rows.pwLocator).not.toHaveCount(0, {
       timeout: 10_000,
     });
-    await test.step('Deselect', async () => {
-      try {
-        await grid.headRow.selectDropdown.menuItem('select-none').select({ timeout: 1_000 });
-      } catch (e) {
-        // close the dropdown by clicking elsewhere
-        await projectDetailsPage.f_experimentList.tableActionBar.count.pwLocator.click();
-      }
-    });
-    await test.step('Reset Columns', async () => {
-      const columnPicker =
-        await projectDetailsPage.f_experimentList.tableActionBar.columnPickerMenu.open();
-      await waitTableStable();
-      await columnPicker.columnPickerTab.reset.pwLocator.click();
-      await columnPicker.close();
-      await waitTableStable();
-    });
-    await test.step('Sort Oldest → Newest', async () => {
-      // reset
-      const sortContent =
-        await projectDetailsPage.f_experimentList.tableActionBar.multiSortMenu.open();
-      await sortContent.multiSort.reset.pwLocator.click();
-      // the menu doesn't close in local automation, but it works with mouse events
-      // manually and sometimes on ci. let's just close it manually
-      await sortContent.close();
-      await sortContent.open();
-      // set sort
-      const firstRow = sortContent.multiSort.rows.nth(0);
-      await firstRow.column.selectMenuOption('Start time');
-      await firstRow.order.selectMenuOption('Oldest → Newest');
-      await sortContent.close();
-      await waitTableStable();
-    });
-    await test.step('Reset Filters', async () => {
-      const tableFilter =
-        await projectDetailsPage.f_experimentList.tableActionBar.tableFilter.open();
-      await tableFilter.filterForm.clearFilters.pwLocator.click();
-      await tableFilter.close();
-      await waitTableStable();
-    });
-    await test.step('Reset Show Archived', async () => {
-      const tableFilter =
-        await projectDetailsPage.f_experimentList.tableActionBar.tableFilter.open();
-      await expect(
-        repeatWithFallback(
-          async () =>
-            await expect(tableFilter.filterForm.showArchived.pwLocator).toHaveAttribute(
-              'aria-checked',
-              'false',
-            ),
-          async () => await tableFilter.filterForm.showArchived.pwLocator.click(),
-        ),
-      ).toPass({ timeout: 30_000 });
-      await tableFilter.close();
-      await waitTableStable();
-    });
+    const grid = projectDetailsPage.f_experimentList.dataGrid;
     await grid.setColumnHeight();
     await grid.headRow.setColumnDefs();
   });
