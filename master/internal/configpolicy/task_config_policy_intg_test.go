@@ -64,7 +64,7 @@ func TestValidateNTSCConstraints(t *testing.T) {
 		resourceManager.On("SmallerValueIsHigherPriority", mock.Anything).Return(false, nil)
 
 		config := defaultConfig()
-		ok, err := ValidateConstraintsNTSC(context.Background(), 1, config, &resourceManager)
+		ok, err := ValidateNTSCConstraints(context.Background(), 1, config, &resourceManager)
 		require.NoError(t, err)
 		require.True(t, ok)
 	})
@@ -75,7 +75,7 @@ func TestValidateNTSCConstraints(t *testing.T) {
 		resourceManager.On("SmallerValueIsHigherPriority", mock.Anything).Return(false, nil)
 
 		config := defaultConfig()
-		ok, err := ValidateConstraintsNTSC(context.Background(), w.ID, config, &resourceManager)
+		ok, err := ValidateNTSCConstraints(context.Background(), w.ID, config, &resourceManager)
 		require.False(t, ok)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "requested priority")
@@ -86,9 +86,10 @@ func TestValidateNTSCConstraints(t *testing.T) {
 		resourceManager.On("SmallerValueIsHigherPriority", mock.Anything).Return(false, nil)
 		w := model.Workspace{Name: uuid.NewString(), UserID: user.ID}
 		_, err := db.Bun().NewInsert().Model(&w).Exec(context.Background())
+		require.NoError(t, err)
 
 		config := defaultConfig()
-		ok, err := ValidateConstraintsNTSC(context.Background(), w.ID, config, &resourceManager)
+		ok, err := ValidateNTSCConstraints(context.Background(), w.ID, config, &resourceManager)
 		require.True(t, ok)
 		require.NoError(t, err)
 	})
@@ -97,13 +98,14 @@ func TestValidateNTSCConstraints(t *testing.T) {
 		constraints := DefaultConstraints()
 		w := model.Workspace{Name: uuid.NewString(), UserID: user.ID}
 		_, err := db.Bun().NewInsert().Model(&w).Exec(context.Background())
+		require.NoError(t, err)
 		addConstraints(t, user, &w.ID, *constraints)
 
 		resourceManager := mocks.ResourceManager{}
 		resourceManager.On("SmallerValueIsHigherPriority", mock.Anything).Return(true, nil)
 
 		config := defaultConfig()
-		ok, err := ValidateConstraintsNTSC(context.Background(), w.ID, config, &resourceManager)
+		ok, err := ValidateNTSCConstraints(context.Background(), w.ID, config, &resourceManager)
 		require.False(t, ok)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "requested resources.max_slots")
@@ -115,7 +117,7 @@ func TestValidateNTSCConstraints(t *testing.T) {
 		rm1.On("SmallerValueIsHigherPriority", mock.Anything).Return(false, nil).Once()
 
 		config := defaultConfig()
-		ok, err := ValidateConstraintsNTSC(context.Background(), w.ID, config, &rm1)
+		ok, err := ValidateNTSCConstraints(context.Background(), w.ID, config, &rm1)
 		require.False(t, ok)
 		require.Error(t, err)
 		require.Contains(t, err.Error(), "requested priority")
@@ -123,7 +125,7 @@ func TestValidateNTSCConstraints(t *testing.T) {
 		// Validate constraints again. This time, the RM does not support priority.
 		rmNoPriority := mocks.ResourceManager{}
 		rmNoPriority.On("SmallerValueIsHigherPriority", mock.Anything).Return(false, fmt.Errorf("not supported")).Once()
-		ok, err = ValidateConstraintsNTSC(context.Background(), w.ID, config, &rmNoPriority)
+		ok, err = ValidateNTSCConstraints(context.Background(), w.ID, config, &rmNoPriority)
 		require.True(t, ok)
 		require.NoError(t, err)
 	})
@@ -136,12 +138,12 @@ func TestValidateNTSCConstraints(t *testing.T) {
 		resourceManager.On("SmallerValueIsHigherPriority", mock.Anything).Return(true, nil)
 
 		config := defaultConfig()
-		ok, err := ValidateConstraintsNTSC(context.Background(), 1, config, &resourceManager)
+		ok, err := ValidateNTSCConstraints(context.Background(), 1, config, &resourceManager)
 		require.False(t, ok)
 		require.Error(t, err)
 
 		emptyConfig := model.CommandConfig{}
-		ok, err = ValidateConstraintsNTSC(context.Background(), 1, emptyConfig, &resourceManager)
+		ok, err = ValidateNTSCConstraints(context.Background(), 1, emptyConfig, &resourceManager)
 		require.True(t, ok)
 		require.NoError(t, err)
 	})
@@ -208,7 +210,6 @@ func addWorkspacePriorityLimit(t *testing.T, user model.User, limit int) model.W
 func addConstraints(t *testing.T, user model.User, wkspID *int, constraints string) {
 	ctx := context.Background()
 
-	fmt.Printf("adding constraints to wksp=%d, %s\n", wkspID, constraints)
 	input := model.TaskConfigPolicies{
 		WorkloadType:  model.NTSCType,
 		WorkspaceID:   wkspID,
