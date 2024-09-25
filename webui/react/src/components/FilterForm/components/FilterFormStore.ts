@@ -33,11 +33,11 @@ const getInitGroup = (): FormGroup => ({
   kind: FormKind.Group,
 });
 
-export const getInitField = (): FormField => ({
+export const getInitField = (location: V1LocationType): FormField => ({
   columnName: 'id',
   id: uuidv4(),
   kind: FormKind.Field,
-  location: V1LocationType.EXPERIMENT,
+  location,
   operator: AvailableOperators[V1ColumnType.NUMBER][0],
   type: V1ColumnType.NUMBER,
   value: null,
@@ -47,6 +47,11 @@ const isNotUndefined = <T>(arg: T): arg is Exclude<T, undefined> => arg !== unde
 
 export class FilterFormStore {
   #formset: WritableObservable<Loadable<FilterFormSet>> = observable(NotLoaded);
+  #defaultLocation: V1LocationType;
+
+  constructor(defaultLocation: V1LocationType) {
+    this.#defaultLocation = defaultLocation;
+  }
 
   public init(data?: Readonly<FilterFormSet>): void {
     this.#formset.update(() => Loaded(structuredClone(data ? data : INIT_FORMSET)));
@@ -265,6 +270,10 @@ export class FilterFormStore {
     return this.#updateField(id, (form) => (form.value === value ? form : { ...form, value }));
   }
 
+  public newField(): FormField {
+    return getInitField(this.#defaultLocation);
+  }
+
   public addChild(
     id: string,
     addType: FormKind,
@@ -275,7 +284,7 @@ export class FilterFormStore {
         ? form.children
             .slice(0, obj.index)
             .concat([structuredClone(obj.item)], form.children.slice(obj.index))
-        : [...form.children, addType === FormKind.Group ? getInitGroup() : getInitField()];
+        : [...form.children, addType === FormKind.Group ? getInitGroup() : this.newField()];
       return {
         ...form,
         children,

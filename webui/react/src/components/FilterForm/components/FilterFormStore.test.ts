@@ -16,7 +16,7 @@ const jsonReplacer = (key: string, value: unknown): unknown => {
   return key === 'id' ? undefined : value;
 };
 
-const initField = JSON.parse(JSON.stringify(getInitField(), jsonReplacer));
+const initField = JSON.parse(JSON.stringify(getInitField(V1LocationType.EXPERIMENT), jsonReplacer));
 
 const ROOT_ID = 'ROOT';
 
@@ -114,12 +114,12 @@ const initData: Readonly<FilterFormSet> = {
 describe('FilterFormStore', () => {
   describe('Init', () => {
     it('should initialize store as NotLoaded', () => {
-      const filterFormStore = new FilterFormStore();
+      const filterFormStore = new FilterFormStore(V1LocationType.EXPERIMENT);
       expect(filterFormStore.formset.get()).toEqual(NotLoaded);
     });
 
     it('should have an empty init() fill with default values', () => {
-      const filterFormStore = new FilterFormStore();
+      const filterFormStore = new FilterFormStore(V1LocationType.EXPERIMENT);
       filterFormStore.init();
       const loadableFormset = filterFormStore.formset.get();
 
@@ -141,7 +141,7 @@ describe('FilterFormStore', () => {
     });
 
     it('should initialize store with init data', () => {
-      const filterFormStore = new FilterFormStore();
+      const filterFormStore = new FilterFormStore(V1LocationType.EXPERIMENT);
       filterFormStore.init(initData);
 
       const loadableFormset = filterFormStore.formset.get();
@@ -151,7 +151,7 @@ describe('FilterFormStore', () => {
     });
 
     it('should deep clone init data to avoid unexpected data overwrite', () => {
-      const filterFormStore = new FilterFormStore();
+      const filterFormStore = new FilterFormStore(V1LocationType.EXPERIMENT);
       filterFormStore.init(initData);
       filterFormStore.addChild(ROOT_ID, FormKind.Field);
       const jsonWithId = filterFormStore.formset.get();
@@ -174,14 +174,14 @@ describe('FilterFormStore', () => {
 
     describe('Basic Field and Group Interaction', () => {
       it('should sweep invalid groups and conditions', () => {
-        const filterFormStore = new FilterFormStore();
+        const filterFormStore = new FilterFormStore(V1LocationType.EXPERIMENT);
         filterFormStore.init(initData);
         filterFormStore.sweep();
         expect(filterFormStore.fieldCount.get()).toBe(5);
       });
 
       it('should add new fields', () => {
-        const filterFormStore = new FilterFormStore();
+        const filterFormStore = new FilterFormStore(V1LocationType.EXPERIMENT);
         filterFormStore.init();
         filterFormStore.addChild(ROOT_ID, FormKind.Field);
 
@@ -211,7 +211,7 @@ describe('FilterFormStore', () => {
       });
 
       it('should add new groups', () => {
-        const filterFormStore = new FilterFormStore();
+        const filterFormStore = new FilterFormStore(V1LocationType.EXPERIMENT);
         filterFormStore.init();
         filterFormStore.addChild(ROOT_ID, FormKind.Group);
 
@@ -266,7 +266,7 @@ describe('FilterFormStore', () => {
       });
 
       it('should add new fields/group comprehensively', () => {
-        const filterFormStore = new FilterFormStore();
+        const filterFormStore = new FilterFormStore(V1LocationType.EXPERIMENT);
         filterFormStore.init();
         filterFormStore.addChild(ROOT_ID, FormKind.Group);
         filterFormStore.addChild(ROOT_ID, FormKind.Field);
@@ -319,7 +319,7 @@ describe('FilterFormStore', () => {
       });
 
       it('should remove field', () => {
-        const filterFormStore = new FilterFormStore();
+        const filterFormStore = new FilterFormStore(V1LocationType.EXPERIMENT);
         filterFormStore.init();
         filterFormStore.addChild(ROOT_ID, FormKind.Field);
         filterFormStore.addChild(ROOT_ID, FormKind.Field);
@@ -338,7 +338,7 @@ describe('FilterFormStore', () => {
       });
 
       it('should remove empty group', () => {
-        const filterFormStore = new FilterFormStore();
+        const filterFormStore = new FilterFormStore(V1LocationType.EXPERIMENT);
         filterFormStore.init();
         filterFormStore.addChild(ROOT_ID, FormKind.Group);
         let formset = getFormset(filterFormStore);
@@ -353,7 +353,7 @@ describe('FilterFormStore', () => {
       });
 
       it('should remove non-empty group', () => {
-        const filterFormStore = new FilterFormStore();
+        const filterFormStore = new FilterFormStore(V1LocationType.EXPERIMENT);
         filterFormStore.init();
         filterFormStore.addChild(ROOT_ID, FormKind.Group);
         const loadableFormset = filterFormStore.formset.get();
@@ -367,7 +367,7 @@ describe('FilterFormStore', () => {
       });
 
       it('should clear all (remove ROOT_ID)', () => {
-        const filterFormStore = new FilterFormStore();
+        const filterFormStore = new FilterFormStore(V1LocationType.EXPERIMENT);
         filterFormStore.init();
         filterFormStore.removeChild(ROOT_ID);
         expect(filterFormStore.asJsonString.get()).toStrictEqual(JSON.stringify(EMPTY_DATA));
@@ -376,7 +376,7 @@ describe('FilterFormStore', () => {
         filterFormStore.removeChild(ROOT_ID);
         expect(filterFormStore.asJsonString.get()).toStrictEqual(JSON.stringify(EMPTY_DATA));
 
-        const filterFormStoreWithInit = new FilterFormStore();
+        const filterFormStoreWithInit = new FilterFormStore(V1LocationType.EXPERIMENT);
         filterFormStoreWithInit.init(initData);
         filterFormStoreWithInit.removeChild(ROOT_ID);
         expect(filterFormStoreWithInit.asJsonString.get()).toStrictEqual(
@@ -385,7 +385,7 @@ describe('FilterFormStore', () => {
       });
 
       it('should change `show archived` value', () => {
-        const filterFormStore = new FilterFormStore();
+        const filterFormStore = new FilterFormStore(V1LocationType.EXPERIMENT);
         filterFormStore.init();
         filterFormStore.setArchivedValue(true);
         let loadableFormset = filterFormStore.formset.get();
@@ -402,7 +402,7 @@ describe('FilterFormStore', () => {
       });
 
       it('should `show archived` value remain the same after clear all', () => {
-        const filterFormStoreWithInit = new FilterFormStore();
+        const filterFormStoreWithInit = new FilterFormStore(V1LocationType.EXPERIMENT);
         filterFormStoreWithInit.init(initData);
         let loadableFormset = filterFormStoreWithInit.formset.get();
         let formset = Loadable.getOrElse(null, loadableFormset);
@@ -431,7 +431,7 @@ describe('FilterFormStore', () => {
       };
 
       it('should change the field order', () => {
-        const filterFormStore = new FilterFormStore();
+        const filterFormStore = new FilterFormStore(V1LocationType.EXPERIMENT);
         filterFormStore.init();
 
         filterFormStore.addChild(ROOT_ID, FormKind.Field);
@@ -456,7 +456,7 @@ describe('FilterFormStore', () => {
       });
 
       it('should move field into different group', () => {
-        const filterFormStore = new FilterFormStore();
+        const filterFormStore = new FilterFormStore(V1LocationType.EXPERIMENT);
         filterFormStore.init();
 
         filterFormStore.addChild(ROOT_ID, FormKind.Group);
@@ -489,7 +489,7 @@ describe('FilterFormStore', () => {
 
     describe('Field Value Interaction', () => {
       it('should change column name', () => {
-        const filterFormStore = new FilterFormStore();
+        const filterFormStore = new FilterFormStore(V1LocationType.EXPERIMENT);
         filterFormStore.init();
         filterFormStore.addChild(ROOT_ID, FormKind.Field);
 
@@ -507,7 +507,7 @@ describe('FilterFormStore', () => {
       });
 
       it('should change operator', () => {
-        const filterFormStore = new FilterFormStore();
+        const filterFormStore = new FilterFormStore(V1LocationType.EXPERIMENT);
         filterFormStore.init();
         filterFormStore.addChild(ROOT_ID, FormKind.Field);
 
@@ -519,7 +519,7 @@ describe('FilterFormStore', () => {
       });
 
       it('should change value', () => {
-        const filterFormStore = new FilterFormStore();
+        const filterFormStore = new FilterFormStore(V1LocationType.EXPERIMENT);
         filterFormStore.init();
         filterFormStore.addChild(ROOT_ID, FormKind.Field);
 
@@ -534,7 +534,7 @@ describe('FilterFormStore', () => {
 
     describe('Group Value Interaction', () => {
       it('should change conjunction', () => {
-        const filterFormStore = new FilterFormStore();
+        const filterFormStore = new FilterFormStore(V1LocationType.EXPERIMENT);
         filterFormStore.init();
         filterFormStore.addChild(ROOT_ID, FormKind.Group);
 
