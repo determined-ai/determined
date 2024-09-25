@@ -98,4 +98,163 @@ service Determined {
       tags: "Searches"
     };
   }
+
+  // Activate a search.
+  rpc ActivateSearch(ActivateSearchRequest)
+      returns (ActivateSearchResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/searches/{id}/activate"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Searches"
+    };
+  }
+
+  // Activate multiple searches.
+  rpc ActivateSearches(ActivateSearchesRequest)
+      returns (ActivateSearchesResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/projects/{project_id}/searches/activate"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Searches"
+    };
+  }
+
+  // Pause an search.
+  rpc PauseSearch(PauseSearchRequest)
+      returns (PauseSearchResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/searches/{id}/pause"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Searches"
+    };
+  }
+  // Pause multiple searches.
+  rpc PauseSearches(PauseSearchesRequest)
+      returns (PauseSearchesResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/projects/{project_id}/searches/pause"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Searches"
+    };
+  }
+
+  // Cancel an search.
+  rpc CancelSearch(CancelSearchRequest)
+      returns (CancelSearchResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/searches/{id}/cancel"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Searches"
+    };
+  }
+
+  // Cancel multiple searches.
+  rpc CancelSearches(CancelSearchesRequest)
+      returns (CancelSearchesResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/projects/{project_id}/searches/cancel"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Searches"
+    };
+  }
+
+  // Kill an search.
+  rpc KillSearch(KillSearchRequest) returns (KillSearchResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/searches/{id}/kill"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Searches"
+    };
+  }
+
+  // Kill multiple searches.
+  rpc KillSearches(KillSearchesRequest)
+      returns (KillSearchesResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/projects/{project_id}/searches/kill"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Searches"
+    };
+  }
+
+  // Archive an search.
+  rpc ArchiveSearch(ArchiveSearchRequest)
+      returns (ArchiveSearchResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/searches/{id}/archive"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Searches"
+    };
+  }
+
+  // Archive multiple searches.
+  rpc ArchiveSearches(ArchiveSearchesRequest)
+      returns (ArchiveSearchesResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/projects/{project_id}/searches/archive"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Searches"
+    };
+  }
+
+  // Unarchive an search.
+  rpc UnarchiveSearch(UnarchiveSearchRequest)
+      returns (UnarchiveSearchResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/searches/{id}/unarchive"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Searches"
+    };
+  }
+
+  // Unarchive multiple searches.
+  rpc UnarchiveSearches(UnarchiveSearchesRequest)
+      returns (UnarchiveSearchesResponse) {
+    option (google.api.http) = {
+      post: "/api/v1/projects/{project_id}/searches/unarchive"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Searches"
+    };
+  }
+
+  // Delete multiple searches.
+  rpc DeleteSearches(DeleteSearchesRequest)
+      returns (DeleteSearchesResponse) {
+    option (google.api.http) = {
+      delete: "/api/v1/projects/{project_id}/searches/delete"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Searches"
+    };
+  }
+
+  // Delete the requested search.
+  rpc DeleteSearch(DeleteSearchRequest)
+      returns (DeleteSearchResponse) {
+    option (google.api.http) = {
+      delete: "/api/v1/searches/{search_id}"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Searches"
+    };
+  }
 }

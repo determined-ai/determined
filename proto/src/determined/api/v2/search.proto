@@ -10,6 +10,7 @@ import "protoc-gen-swagger/options/annotations.proto";
 
 import "determined/job/v2/job.proto";
 import "determined/search/v2/search.proto";
+import "determined/api/v1/experiment.proto";
 
 // Get a single search.
 message GetSearchRequest {
@@ -85,4 +86,245 @@ message DeleteSearchTagResponse {
 
   // The complete list of tags associated with the search.
   repeated string tags = 1;
+}
+
+// Activate an search.
+message ActivateSearchRequest {
+  // The search id.
+  int32 id = 1;
+}
+// Response to ActivateSearchRequest.
+message ActivateSearchResponse {}
+
+// Activate multiple searches.
+message ActivateSearchesRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "project_id", "search_ids" ] }
+  };
+
+  // Select searches by id.
+  repeated int32 search_ids = 1;
+  // Targets all searches matching filters.
+  BulkSearchFilters filters = 2;
+  // Project id that the searches belong to.
+  int32 project_id = 3;
+}
+// Response to ActivateSearchesRequest.
+message ActivateSearchesResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "results" ] }
+  };
+
+  // Details on success or error for each search.
+  repeated determined.api.v1.ExperimentActionResult results = 1;
+}
+
+// Pause an search.
+message PauseSearchRequest {
+  // The search id.
+  int32 id = 1;
+}
+// Response to PauseSearchRequest.
+message PauseSearchResponse {}
+
+// Filters to apply actions to multiple searches.
+message BulkSearchFilters {
+  // Limit searches to those that match the description.
+  string description = 1;
+  // Limit searches to those that match the name.
+  string name = 2;
+  // Limit searches to those that match the provided labels.
+  repeated string labels = 3;
+  // Limit searches to those that are archived.
+  google.protobuf.BoolValue archived = 4;
+  // Limit searches to those that match the provided state.
+  repeated determined.search.v2.State states = 5;
+  // Limit searches to those that are owned by users with the specified
+  // userIds.
+  repeated int32 user_ids = 6;
+  // Limit searches to those within a specified project, or 0 for all
+  // projects.
+  int32 project_id = 7;
+  // Search ids to exclude when filters are used.
+  repeated int32 excluded_search_ids = 8;
+}
+
+// Pause multiple searches.
+message PauseSearchesRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "project_id", "search_ids" ] }
+  };
+
+  // Selecting searches by id.
+  repeated int32 search_ids = 1;
+  // Targets all searches matching filters.
+  BulkSearchFilters filters = 2;
+  // Project id that the searches belong to.
+  int32 project_id = 3;
+}
+
+// Response to PauseSearchesRequest.
+message PauseSearchesResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "results" ] }
+  };
+
+  // Details on success or error for each search.
+  repeated determined.api.v1.ExperimentActionResult results = 1;
+}
+
+// Cancel an search.
+message CancelSearchRequest {
+  // The search id.
+  int32 id = 1;
+}
+// Response to CancelSearchRequest.
+message CancelSearchResponse {}
+
+// Cancel multiple searches.
+message CancelSearchesRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "project_id", "search_ids" ] }
+  };
+
+  // Selecting searches by id.
+  repeated int32 search_ids = 1;
+  // Targets all searches matching filters.
+  BulkSearchFilters filters = 2;
+  // Project id that the searches belong to.
+  int32 project_id = 3;
+}
+// Response to CancelSearchesRequest.
+message CancelSearchesResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "results" ] }
+  };
+
+  // Details on success or error for each search.
+  repeated determined.api.v1.ExperimentActionResult results = 1;
+}
+
+// Kill an search.
+message KillSearchRequest {
+  // The search id.
+  int32 id = 1;
+}
+// Response to KillSearchRequest.
+message KillSearchResponse {}
+
+// Kill multiple searches.
+message KillSearchesRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "project_id", "search_ids" ] }
+  };
+
+  // Selecting searches by id.
+  repeated int32 search_ids = 1;
+  // Targets all searches matching filters.
+  BulkSearchFilters filters = 2;
+  // Project id that the searches belong to.
+  int32 project_id = 3;
+}
+// Response to KillSearchesRequest.
+message KillSearchesResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "results" ] }
+  };
+
+  // Details on success or error for each search.
+  repeated determined.api.v1.ExperimentActionResult results = 1;
+}
+
+// Archive an search.
+message ArchiveSearchRequest {
+  // The search id.
+  int32 id = 1;
+}
+// Response to ArchiveSearchRequest.
+message ArchiveSearchResponse {}
+
+// Archive multiple searches.
+message ArchiveSearchesRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "project_id", "search_ids" ] }
+  };
+
+  // Selecting searches by id.
+  repeated int32 search_ids = 1;
+  // Targets all searches matching filters.
+  BulkSearchFilters filters = 2;
+  // Project id that the searches belong to.
+  int32 project_id = 3;
+}
+// Response to ArchiveSearchesRequest.
+message ArchiveSearchesResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "results" ] }
+  };
+
+  // Details on success or error for each search.
+  repeated determined.api.v1.ExperimentActionResult results = 1;
+}
+
+// Unarchive an search.
+message UnarchiveSearchRequest {
+  // The search id.
+  int32 id = 1;
+}
+// Response to UnarchiveSearchRequest.
+message UnarchiveSearchResponse {}
+
+// Unarchive multiple searches.
+message UnarchiveSearchesRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "project_id", "search_ids" ] }
+  };
+
+  // Selecting searches by id.
+  repeated int32 search_ids = 1;
+  // Targets all searches matching filters.
+  BulkSearchFilters filters = 2;
+  // Project id that the searches belong to.
+  int32 project_id = 3;
+}
+// Response to UnarchiveSearchesRequest.
+message UnarchiveSearchesResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "results" ] }
+  };
+
+  // Details on success or error for each search.
+  repeated determined.api.v1.ExperimentActionResult results = 1;
+}
+
+// Delete a single search.
+message DeleteSearchRequest {
+  // The ID of the search.
+  int32 search_id = 1;
+}
+// Response to DeleteSearchRequest.
+message DeleteSearchResponse {}
+
+// Delete multiple searches.
+message DeleteSearchesRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "project_id", "search_ids" ] }
+  };
+
+  // Selecting searches by id.
+  repeated int32 search_ids = 1;
+  // Targets all searches matching filters.
+  BulkSearchFilters filters = 2;
+  // Project id that the searches belong to.
+  int32 project_id = 3;
+}
+
+// Response to DeleteSearchesRequest.
+message DeleteSearchesResponse {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "results" ] }
+  };
+
+  // Details on success or error for each search.
+  repeated determined.api.v1.ExperimentActionResult results = 1;
 }
