@@ -83,7 +83,9 @@ func GetTaskConfigPolicies(ctx context.Context,
 		Where(wkspQuery, scope).
 		Where("workload_type = ?", workloadType).
 		Scan(ctx)
-	if err != nil {
+	if err == sql.ErrNoRows {
+		return &tcp, nil
+	} else if err != nil {
 		return nil, fmt.Errorf("error retrieving %v task config policies for "+
 			"workspace with ID %d: %w", workloadType, scope, err)
 	}
