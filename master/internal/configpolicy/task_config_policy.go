@@ -31,7 +31,7 @@ type NTSCConfigPolicies struct {
 }
 
 // ValidateNTSCConstraints returns true if the NTSC config passes constraint checks.
-func ValidateConstraintsNTSC(
+func ValidateNTSCConstraints(
 	ctx context.Context,
 	workspaceID int,
 	workloadConfig model.CommandConfig,
@@ -51,7 +51,8 @@ func ValidateConstraintsNTSC(
 		}
 	}
 
-	if constraints.ResourceConstraints != nil && constraints.ResourceConstraints.MaxSlots != nil && workloadConfig.Resources.MaxSlots != nil {
+	if constraints.ResourceConstraints != nil && constraints.ResourceConstraints.MaxSlots != nil &&
+		workloadConfig.Resources.MaxSlots != nil {
 		if *constraints.ResourceConstraints.MaxSlots < *workloadConfig.Resources.MaxSlots {
 			return false, fmt.Errorf("requested resources.max_slots [%d] exceeds limit set by admin [%d]",
 				*constraints.ResourceConstraints.MaxSlots, *workloadConfig.Resources.MaxSlots)
