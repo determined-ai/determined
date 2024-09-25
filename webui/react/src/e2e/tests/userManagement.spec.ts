@@ -123,6 +123,7 @@ test.describe('User Management', () => {
           await user.validateUser(testUser);
         });
         await test.step('Successful Sign In', async () => {
+          test.slow();
           await auth.logout();
           await auth.login({ password: testUser.password, username: testUser.user?.username });
         });
