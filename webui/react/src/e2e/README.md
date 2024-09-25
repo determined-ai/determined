@@ -10,6 +10,8 @@ Determined AI uses [Playwright 🎭](https://playwright.dev/).
 
 Everything you need before running tests
 
+**Before you follow the steps bellow, make sure that your VSCode is up-to-date, or you might face issues**
+
 ### `.env`
 
 Create `.env` file in `webui/react` like `webui/react/.env` and env variables. (`PW_` prefix stands for Playwright)
