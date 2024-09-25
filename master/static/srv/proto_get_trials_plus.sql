@@ -113,6 +113,7 @@ SELECT
   t.start_time,
   t.end_time,
   t.hparams,
+  t.log_signal,
   new_ckpt.uuid AS warm_start_checkpoint_uuid,
   (
     SELECT tt.task_id FROM run_id_task_id tt
