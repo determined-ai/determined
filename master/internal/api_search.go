@@ -187,8 +187,8 @@ func BulkFiltersSearchtToExperiment(filter *apiv2.BulkSearchFilters) *apiv1.Bulk
 	}
 }
 
-func (a *apiServer) ActivateSearch(ctx context.Context, req *apiv2.ActivateSearchRequest,
-) (*apiv2.ActivateSearchResponse, error) {
+func (a *apiServer) ResumeSearch(ctx context.Context, req *apiv2.ResumeSearchRequest,
+) (*apiv2.ResumeSearchResponse, error) {
 	expReq := apiv1.ActivateExperimentRequest{
 		Id: req.Id,
 	}
@@ -196,12 +196,12 @@ func (a *apiServer) ActivateSearch(ctx context.Context, req *apiv2.ActivateSearc
 	if err != nil {
 		return nil, err
 	}
-	res := apiv2.ActivateSearchResponse{}
+	res := apiv2.ResumeSearchResponse{}
 	return &res, nil
 }
 
-func (a *apiServer) ActivateSearches(ctx context.Context, req *apiv2.ActivateSearchesRequest,
-) (*apiv2.ActivateSearchesResponse, error) {
+func (a *apiServer) ResumeSearches(ctx context.Context, req *apiv2.ResumeSearchesRequest,
+) (*apiv2.ResumeSearchesResponse, error) {
 	expReq := apiv1.ActivateExperimentsRequest{
 		ExperimentIds: req.SearchIds,
 		Filters:       BulkFiltersSearchtToExperiment(req.Filters),
@@ -211,7 +211,7 @@ func (a *apiServer) ActivateSearches(ctx context.Context, req *apiv2.ActivateSea
 	if err != nil {
 		return nil, err
 	}
-	res := apiv2.ActivateSearchesResponse{
+	res := apiv2.ResumeSearchesResponse{
 		Results: expRes.Results,
 	}
 	return &res, nil

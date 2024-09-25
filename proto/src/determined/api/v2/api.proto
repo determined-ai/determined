@@ -99,22 +99,22 @@ service Determined {
     };
   }
 
-  // Activate a search.
-  rpc ActivateSearch(ActivateSearchRequest)
-      returns (ActivateSearchResponse) {
+  // Resume a search.
+  rpc ResumeSearch(ResumeSearchRequest)
+      returns (ResumeSearchResponse) {
     option (google.api.http) = {
-      post: "/api/v1/searches/{id}/activate"
+      post: "/api/v1/searches/{id}/resume"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Searches"
     };
   }
 
-  // Activate multiple searches.
-  rpc ActivateSearches(ActivateSearchesRequest)
-      returns (ActivateSearchesResponse) {
+  // Resume multiple searches.
+  rpc ResumeSearches(ResumeSearchesRequest)
+      returns (ResumeSearchesResponse) {
     option (google.api.http) = {
-      post: "/api/v1/projects/{project_id}/searches/activate"
+      post: "/api/v1/projects/{project_id}/searches/resume"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {

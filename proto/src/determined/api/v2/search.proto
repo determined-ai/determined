@@ -88,16 +88,16 @@ message DeleteSearchTagResponse {
   repeated string tags = 1;
 }
 
-// Activate an search.
-message ActivateSearchRequest {
+// Resume an search.
+message ResumeSearchRequest {
   // The search id.
   int32 id = 1;
 }
-// Response to ActivateSearchRequest.
-message ActivateSearchResponse {}
+// Response to ResumeSearchRequest.
+message ResumeSearchResponse {}
 
-// Activate multiple searches.
-message ActivateSearchesRequest {
+// Resume multiple searches.
+message ResumeSearchesRequest {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "project_id", "search_ids" ] }
   };
@@ -109,8 +109,8 @@ message ActivateSearchesRequest {
   // Project id that the searches belong to.
   int32 project_id = 3;
 }
-// Response to ActivateSearchesRequest.
-message ActivateSearchesResponse {
+// Response to ResumeSearchesRequest.
+message ResumeSearchesResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "results" ] }
   };
