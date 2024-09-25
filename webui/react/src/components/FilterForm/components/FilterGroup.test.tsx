@@ -7,11 +7,13 @@ import { useObservable } from 'micro-observables';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 
+import { V1LocationType } from 'services/api-ts-sdk';
+
 import { FilterFormStore, ROOT_ID } from './FilterFormStore';
 import FilterGroup from './FilterGroup';
 import { FormKind } from './type';
 
-const filterFormStore = new FilterFormStore();
+const filterFormStore = new FilterFormStore(V1LocationType.EXPERIMENT);
 window.HTMLElement.prototype.scrollIntoView = vi.fn();
 
 const Component = ({ filterFormStore }: { filterFormStore: FilterFormStore }): JSX.Element => {
