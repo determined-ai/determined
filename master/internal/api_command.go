@@ -115,7 +115,6 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 	}
 
 	// Get the full configuration.
-	// This is for commands. What about notebooks?
 	config := model.DefaultConfig(&taskSpec.TaskContainerDefaults)
 	if req.TemplateName != "" {
 		err := templates.UnmarshalTemplateConfig(ctx, req.TemplateName, aUser, &config, false)
