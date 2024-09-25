@@ -4911,8 +4911,8 @@ workflows:
 
       - test-perf:
           name: test-perf-feature-branch
-          snapshot-after-migrations: false
-          deploy-db: true
+          snapshot-after-migrations: true
+          deploy-db: false
           requires:
             - build-go
             - request-perf-tests
