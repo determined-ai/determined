@@ -14,7 +14,7 @@ test.describe('Workspace Tasks', () => {
     await workspaceDetails.taskList.jupyterLabModal.footer.submit.pwLocator.click();
     await workspaceDetails.taskList.jupyterLabModal.pwLocator.waitFor({ state: 'hidden' });
 
-    const jupyterLabPage = await context.waitForEvent('page');
+    const jupyterLabPage = await context.waitForEvent('page', { timeout: 10_000 });
     await jupyterLabPage.close();
 
     await workspaceDetails.taskList.table.pwLocator.waitFor();
