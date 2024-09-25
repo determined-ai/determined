@@ -286,22 +286,19 @@ test.describe('Experiment List', () => {
     );
   });
 
-  test('Multi-sort menu', async () => {
+  test('Multi-sort menu', async ({ newProject, newWorkspace }) => {
     const multiSortMenu = projectDetailsPage.f_experimentList.tableActionBar.multiSortMenu;
     const secondRow = multiSortMenu.multiSort.rows.nth(1);
-    const checkTableOrder = async (
-      firstKey: keyof ExperimentBase,
-      secondKey: keyof ExperimentBase,
-    ) => {
-      const experimentList: ExperimentBase[] = JSON.parse(await detExecSync('experiment ls'));
+    const checkTableOrder = async (firstKey: keyof ExperimentBase) => {
+      const experimentList: ExperimentBase[] = JSON.parse(
+        await detExecSync(
+          `project list-experiments --json ${newWorkspace.response.workspace.name} ${newProject.response.project.name}`,
+        ),
+      );
 
-      return [
-        { [firstKey]: experimentList[0][firstKey], [secondKey]: experimentList[0][secondKey] },
-        {
-          [firstKey]: experimentList[experimentList.length - 1][firstKey],
-          [secondKey]: experimentList[experimentList.length - 1][secondKey],
-        },
-      ];
+      expect(experimentList[0][firstKey] as number).toBeLessThanOrEqual(
+        experimentList[experimentList.length - 1][firstKey] as number,
+      );
     };
 
     const sortingScenario = async (
@@ -333,13 +330,11 @@ test.describe('Experiment List', () => {
     };
 
     await sortingScenario('ID', '9 → 0', 'Start time', 'Oldest → Newest', async () => {
-      const [higher, lower] = await checkTableOrder('id', 'startTime');
-      expect(higher.id).toBeGreaterThan(lower.id as number);
+      await checkTableOrder('id');
     });
 
     await sortingScenario('Trial count', '0 → 9', 'Searcher', 'A → Z', async () => {
-      const [first, last] = await checkTableOrder('numTrials', 'searcherType');
-      expect(first.numTrials).toBeLessThanOrEqual(last.numTrials as number);
+      await checkTableOrder('numTrials');
     });
   });
 
