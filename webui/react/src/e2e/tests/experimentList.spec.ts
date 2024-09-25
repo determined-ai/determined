@@ -19,11 +19,11 @@ test.describe('Experiment List', () => {
   test.beforeAll(async ({ backgroundAuthedPage, newWorkspace, newProject }) => {
     const projectDetailsPageSetup = new ProjectDetails(backgroundAuthedPage);
     await projectDetailsPageSetup.gotoProject(newProject.response.project.id);
-    await test.step('Create an experiment', async () => {
+    await test.step('Create experiments', async () => {
       await expect(
         projectDetailsPageSetup.f_experimentList.tableActionBar.count.pwLocator,
       ).toContainText('experiment');
-      Array(4)
+      Array(52)
         .fill(null)
         .forEach(() => {
           detExecSync(
@@ -108,6 +108,14 @@ test.describe('Experiment List', () => {
       ).toPass({ timeout: 30_000 });
       await tableFilter.close();
       await waitTableStable();
+    });
+    await test.step('Ensure pagination options', async () => {
+      const pageSizeSelect = projectDetailsPage.f_experimentList.pagination.perPage;
+      const pageSize = await pageSizeSelect.selectionItem.pwLocator.textContent();
+      if (!pageSize?.startsWith('20')) {
+        await pageSizeSelect.selectMenuOption('20 / page');
+        await waitTableStable();
+      }
     });
     await grid.setColumnHeight();
     await grid.headRow.setColumnDefs();
@@ -392,5 +400,21 @@ test.describe('Experiment List', () => {
         ]);
       }).toPass();
     });
+  });
+  test('Pagination', async () => {
+    const expectPageNumber = async (pageParam: string | null) => {
+      await projectDetailsPage._page.waitForResponse((res) => {
+        return res.url().endsWith('experiments-search');
+      });
+      const params = new URL(projectDetailsPage._page.url()).searchParams;
+      expect(params.get('page')).toBe(pageParam);
+    };
+    // table is virtualized so row counts are not reliable.
+    await projectDetailsPage.f_experimentList.pagination.next.pwLocator.click();
+    await expectPageNumber('1');
+    await projectDetailsPage.f_experimentList.pagination.pageButtonLocator(3).click();
+    await expectPageNumber('2');
+    await projectDetailsPage.f_experimentList.pagination.perPage.selectMenuOption('80 / page');
+    await expectPageNumber(null);
   });
 });
