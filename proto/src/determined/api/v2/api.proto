@@ -100,8 +100,7 @@ service Determined {
   }
 
   // Resume a search.
-  rpc ResumeSearch(ResumeSearchRequest)
-      returns (ResumeSearchResponse) {
+  rpc ResumeSearch(ResumeSearchRequest) returns (ResumeSearchResponse) {
     option (google.api.http) = {
       post: "/api/v1/searches/{id}/resume"
     };
@@ -111,8 +110,7 @@ service Determined {
   }
 
   // Resume multiple searches.
-  rpc ResumeSearches(ResumeSearchesRequest)
-      returns (ResumeSearchesResponse) {
+  rpc ResumeSearches(ResumeSearchesRequest) returns (ResumeSearchesResponse) {
     option (google.api.http) = {
       post: "/api/v1/projects/{project_id}/searches/resume"
       body: "*"
@@ -123,8 +121,7 @@ service Determined {
   }
 
   // Pause an search.
-  rpc PauseSearch(PauseSearchRequest)
-      returns (PauseSearchResponse) {
+  rpc PauseSearch(PauseSearchRequest) returns (PauseSearchResponse) {
     option (google.api.http) = {
       post: "/api/v1/searches/{id}/pause"
     };
@@ -133,8 +130,7 @@ service Determined {
     };
   }
   // Pause multiple searches.
-  rpc PauseSearches(PauseSearchesRequest)
-      returns (PauseSearchesResponse) {
+  rpc PauseSearches(PauseSearchesRequest) returns (PauseSearchesResponse) {
     option (google.api.http) = {
       post: "/api/v1/projects/{project_id}/searches/pause"
       body: "*"
@@ -145,8 +141,7 @@ service Determined {
   }
 
   // Cancel an search.
-  rpc CancelSearch(CancelSearchRequest)
-      returns (CancelSearchResponse) {
+  rpc CancelSearch(CancelSearchRequest) returns (CancelSearchResponse) {
     option (google.api.http) = {
       post: "/api/v1/searches/{id}/cancel"
     };
@@ -156,8 +151,7 @@ service Determined {
   }
 
   // Cancel multiple searches.
-  rpc CancelSearches(CancelSearchesRequest)
-      returns (CancelSearchesResponse) {
+  rpc CancelSearches(CancelSearchesRequest) returns (CancelSearchesResponse) {
     option (google.api.http) = {
       post: "/api/v1/projects/{project_id}/searches/cancel"
       body: "*"
@@ -178,8 +172,7 @@ service Determined {
   }
 
   // Kill multiple searches.
-  rpc KillSearches(KillSearchesRequest)
-      returns (KillSearchesResponse) {
+  rpc KillSearches(KillSearchesRequest) returns (KillSearchesResponse) {
     option (google.api.http) = {
       post: "/api/v1/projects/{project_id}/searches/kill"
       body: "*"
@@ -190,8 +183,7 @@ service Determined {
   }
 
   // Archive an search.
-  rpc ArchiveSearch(ArchiveSearchRequest)
-      returns (ArchiveSearchResponse) {
+  rpc ArchiveSearch(ArchiveSearchRequest) returns (ArchiveSearchResponse) {
     option (google.api.http) = {
       post: "/api/v1/searches/{id}/archive"
     };
@@ -236,8 +228,7 @@ service Determined {
   }
 
   // Delete multiple searches.
-  rpc DeleteSearches(DeleteSearchesRequest)
-      returns (DeleteSearchesResponse) {
+  rpc DeleteSearches(DeleteSearchesRequest) returns (DeleteSearchesResponse) {
     option (google.api.http) = {
       delete: "/api/v1/projects/{project_id}/searches/delete"
       body: "*"
@@ -248,8 +239,7 @@ service Determined {
   }
 
   // Delete the requested search.
-  rpc DeleteSearch(DeleteSearchRequest)
-      returns (DeleteSearchResponse) {
+  rpc DeleteSearch(DeleteSearchRequest) returns (DeleteSearchResponse) {
     option (google.api.http) = {
       delete: "/api/v1/searches/{search_id}"
     };
