@@ -34,13 +34,9 @@ const TrialHeaderLeft: React.FC<Props> = ({ experiment, trial }: Props) => {
         <div>Trial {trial.id}</div>
         {trial.logSignal &&
           (trial.logSignal.length < labelMaxLength ? (
-            <Badge
-              backgroundColor={hex2hsl(labelColor)}
-              key={trial.logSignal}
-              text={trial.logSignal}
-            />
+            <Badge backgroundColor={hex2hsl(labelColor)} text={trial.logSignal} />
           ) : (
-            <Tooltip content={trial.logSignal} key={trial.logSignal}>
+            <Tooltip content={trial.logSignal}>
               <Badge
                 backgroundColor={hex2hsl(labelColor)}
                 text={`${trial.logSignal.slice(0, labelMaxLength)}...`}
