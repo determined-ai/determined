@@ -14,6 +14,8 @@ const (
 	FilterOperationLessThanEqual
 	// FilterOperationStringContainment checks if the field contains a value as a substring.
 	FilterOperationStringContainment
+	// FilterOperationRegexContainment checks if the field contains the regex.
+	FilterOperationRegexContainment
 )
 
 // Filter is a general representation for a filter provided to an API.

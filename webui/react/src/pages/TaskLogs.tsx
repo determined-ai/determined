@@ -112,6 +112,7 @@ const TaskLogs: React.FC<Props> = ({ taskId, taskType, onCloseLogs, headerCompon
         decode(optional(DateString), options.timestampAfter),
         options.orderBy as OrderBy,
         settings.searchText,
+        false,
         { signal: config.canceler.signal },
       );
     },
