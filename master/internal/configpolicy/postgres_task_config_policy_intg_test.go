@@ -457,6 +457,10 @@ func DefaultInvariantConfig() *string {
 	return ptrs.Ptr(DefaultInvariantConfigStr)
 }
 
+func DefaultInvariantConfigImage() *string {
+	return ptrs.Ptr(DefaultInvariantConfigStrImage)
+}
+
 func DefaultConstraints() *string {
 	return ptrs.Ptr(DefaultConstraintsStr)
 }
