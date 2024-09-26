@@ -26,7 +26,7 @@ test.describe('Workspace Tasks', () => {
       await workspaceDetails.taskList.taskKillModal.pwLocator.waitFor();
       await workspaceDetails.taskList.taskKillModal.killButton.pwLocator.click();
 
-      await expect(await firstRow.state.pwLocator).toHaveText('Terminated');
+      await expect(firstRow.state.pwLocator).toHaveText('Terminated');
     });
 
     await test.step('View logs', async () => {
