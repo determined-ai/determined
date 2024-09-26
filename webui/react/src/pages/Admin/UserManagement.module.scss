@@ -13,7 +13,8 @@
 }
 
 @media only screen and (max-width: $breakpoint-tablet-large) {
-  .selectWrapper {
+  .selectWrapper,
+  .buttonWrapper {
     width: 100%;
   }
 }

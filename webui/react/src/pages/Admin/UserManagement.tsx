@@ -522,22 +522,24 @@ const UserManagement: React.FC<Props> = ({ onUserCreate }: Props) => {
                 </div>
               </Row>
             </Column>
-            <Column align="right">
-              <Row>
-                {selectedUserIds.length > 0 && (
-                  <Dropdown menu={actionDropdownMenu} onClick={handleActionDropdown}>
-                    <Button data-testid="actions">Actions</Button>
-                  </Dropdown>
-                )}
-                <Button
-                  aria-label={CREATE_USER_LABEL}
-                  data-testid="addUser"
-                  disabled={!info.userManagementEnabled || !canModifyUsers}
-                  onClick={CreateUserModal.open}>
-                  {CREATE_USER}
-                </Button>
-              </Row>
-            </Column>
+            <div className={css.buttonWrapper}>
+              <Column align="right">
+                <Row>
+                  {selectedUserIds.length > 0 && (
+                    <Dropdown menu={actionDropdownMenu} onClick={handleActionDropdown}>
+                      <Button data-testid="actions">Actions</Button>
+                    </Dropdown>
+                  )}
+                  <Button
+                    aria-label={CREATE_USER_LABEL}
+                    data-testid="addUser"
+                    disabled={!info.userManagementEnabled || !canModifyUsers}
+                    onClick={CreateUserModal.open}>
+                    {CREATE_USER}
+                  </Button>
+                </Row>
+              </Column>
+            </div>
           </Row>
         </div>
         {settings ? (
