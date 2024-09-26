@@ -57,14 +57,17 @@ func validatePoliciesAndWorkloadType(workloadType, configPolicies string) error 
 }
 
 func parseConfigPolicies(configAndConstraints string) (tcps map[string]interface{},
-	invariantConfig *string, constraints *string, err error) {
+	invariantConfig *string, constraints *string, err error,
+) {
 	if len(configAndConstraints) == 0 {
 		return nil, nil, nil, status.Error(codes.InvalidArgument, "nothing to parse, empty "+
 			"config and constraints input")
 	}
 	// Standardize to JSON policies file format.
 	configPolicies, err := yaml.YAMLToJSON([]byte(configAndConstraints))
-
+	if err != nil {
+		return nil, nil, nil, fmt.Errorf("error parsing config policies: %w", err)
+	}
 	// Extract individal config and constraints.
 	var policies map[string]interface{}
 	dec := json.NewDecoder(bytes.NewReader(configPolicies))
@@ -72,7 +75,6 @@ func parseConfigPolicies(configAndConstraints string) (tcps map[string]interface
 	if err != nil {
 		return nil, nil, nil, fmt.Errorf("error unmarshaling config policies: %s", err.Error())
 	}
-
 	var configPolicy *string
 	if invariantConfig, ok := policies["invariant_config"]; ok {
 		configPolicyBytes, err := json.Marshal(invariantConfig)
@@ -81,7 +83,6 @@ func parseConfigPolicies(configAndConstraints string) (tcps map[string]interface
 				fmt.Errorf("error marshaling input invariant config policy: %s", err.Error())
 		}
 		configPolicy = ptrs.Ptr(string(configPolicyBytes))
-
 	}
 
 	var constraintsPolicy *string
