@@ -81,8 +81,6 @@ func TestPostTaskLogs(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	defer require.NoError(t, api.m.taskLogBackend.DeleteTaskLogs([]model.TaskID{task.TaskID}))
-
 	stream := &mockStream[*apiv1.TaskLogsResponse]{ctx: ctx}
 	err = api.TaskLogs(&apiv1.TaskLogsRequest{
 		TaskId: string(task.TaskID),
