@@ -10,6 +10,8 @@ import { ProjectDeleteModal } from 'e2e/models/components/ProjectDeleteModal';
 import { ProjectMoveModal } from 'e2e/models/components/ProjectMoveModal';
 import { HeadRow, InteractiveTable, Row } from 'e2e/models/components/Table/InteractiveTable';
 
+// import { ProjectActionDropdown } from 'e2e/models/components/ProjectActionDropdown';
+
 class ProjectHeadRow extends HeadRow {
   readonly name = new BaseComponent({
     parent: this,
@@ -21,8 +23,18 @@ class ProjectRow extends Row {
   readonly name = new BaseComponent({
     parent: this,
     selector: '[data-testid="name"]',
+    // TODO: add all columns from WorkspaceProjects file here
+    // TODO: make sure to have the variable to open
   });
 }
+// readonly actionMenuContainer = new BaseComponent({
+//   parent: this,
+//   selector: '[aria-label="Action menu"]',
+// });
+//   readonly actionMenu = new ProjectActionDropdown({
+//   clickThisComponentToOpen: this.actionMenuContainer,
+//   root: this.root, // root of the dropdown
+// });
 
 /**
  * Represents the WorkspaceProjects page in src/pages/WorkspaceDetails/WorkspaceProjects.tsx
