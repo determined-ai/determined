@@ -1,6 +1,9 @@
 package configpolicy
 
 import (
+	"context"
+	"fmt"
+
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 )
@@ -23,4 +26,39 @@ type ExperimentConfigPolicies struct {
 type NTSCConfigPolicies struct {
 	InvariantConfig *model.CommandConfig `json:"invariant_config"`
 	Constraints     *model.Constraints   `json:"constraints"`
+}
+
+// PriorityAllowed returns true if the desired priority is within the limit set by task config policies.
+func PriorityAllowed(wkspID int, workloadType string, priority int, smallerHigher bool) (bool, error) {
+	// Check if a priority limit has been set with a constraint policy.
+	// Global policies have highest precedence.
+	limit, found, err := GetPriorityLimit(context.TODO(), nil, workloadType)
+	if err != nil {
+		return false, fmt.Errorf("unable to fetch task config policy priority limit")
+	}
+	if found {
+		return priorityWithinLimit(priority, limit, smallerHigher), nil
+	}
+
+	// TODO use COALESCE instead once postgres updates are complete.
+	// Workspace policies have second precedence.
+	limit, found, err = GetPriorityLimit(context.TODO(), &wkspID, workloadType)
+	if err != nil {
+		// TODO do we really want to block on this?
+		return false, fmt.Errorf("unable to fetch task config policy priority limit")
+	}
+	if found {
+		return priorityWithinLimit(priority, limit, smallerHigher), nil
+	}
+
+	// No priority limit has been set.
+	return true, nil
+}
+
+func priorityWithinLimit(userPriority int, adminLimit int, smallerHigher bool) bool {
+	if smallerHigher {
+		return userPriority >= adminLimit
+	}
+
+	return userPriority <= adminLimit
 }
