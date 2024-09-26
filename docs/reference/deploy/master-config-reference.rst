@@ -133,8 +133,8 @@ Defaults to ``false``.
 =================
 
 Defines the default `Docker registry credentials
-<https://docs.docker.com/engine/api/v1.30/#tag/System/operation/SystemAuth>`__ to use when pulling a
-custom base Docker image, if needed. If credentials are specified in the :ref:`experiment config
+<https://docs.docker.com/reference/api/engine/version/v1.30/>`__ to use when pulling a custom base
+Docker image, if needed. If credentials are specified in the :ref:`experiment config
 <exp-environment-image>` this default value is overridden. Credentials are specified as the
 following nested fields:
 
@@ -283,7 +283,7 @@ master config that provides a readable name for the Determined deployment.
 ``name``
 --------
 
-(deprecated) Specifies the resource manager’s name. ``cluster_name`` should be specified instead.
+(deprecated) Specifies the resource manager's name. ``cluster_name`` should be specified instead.
 
 ``metadata``
 ============
