@@ -1127,6 +1127,7 @@ const FlatRuns: React.FC<Props> = ({ projectId, workspaceId, searchId }) => {
             <LoadableCount
               labelPlural="runs"
               labelSingular="run"
+              pageSize={settings.pageLimit}
               selectedCount={selectedRunIdSet.size}
               total={total}
             />

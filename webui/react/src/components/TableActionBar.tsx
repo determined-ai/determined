@@ -93,6 +93,7 @@ interface Props {
   isOpenFilter: boolean;
   onActionComplete?: () => Promise<void>;
   onActionSuccess?: (action: BatchAction, successfulIds: number[]) => void;
+  onActualSelectAll?: () => void;
   onComparisonViewToggle?: () => void;
   onHeatmapToggle?: (heatmapOn: boolean) => void;
   onIsOpenFilterChange?: (value: boolean) => void;
@@ -100,6 +101,7 @@ interface Props {
   onSortChange?: (sorts: Sort[]) => void;
   onVisibleColumnChange?: (newColumns: string[], pinnedCount?: number) => void;
   onHeatmapSelectionRemove?: (id: string) => void;
+  pageSize?: number;
   project: Project;
   projectColumns: Loadable<ProjectColumn[]>;
   rowHeight: RowHeight;
@@ -124,6 +126,7 @@ const TableActionBar: React.FC<Props> = ({
   isOpenFilter,
   onActionComplete,
   onActionSuccess,
+  onActualSelectAll,
   onComparisonViewToggle,
   onHeatmapToggle,
   onIsOpenFilterChange,
@@ -131,6 +134,7 @@ const TableActionBar: React.FC<Props> = ({
   onSortChange,
   onHeatmapSelectionRemove,
   onVisibleColumnChange,
+  pageSize,
   project,
   projectColumns,
   rowHeight,
@@ -423,8 +427,10 @@ const TableActionBar: React.FC<Props> = ({
             <LoadableCount
               labelPlural={labelPlural}
               labelSingular={labelSingular}
+              pageSize={pageSize}
               selectedCount={selectedExperimentIds.length}
               total={total}
+              onActualSelectAll={onActualSelectAll}
             />
           </Row>
         </Column>
