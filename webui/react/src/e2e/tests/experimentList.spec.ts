@@ -23,7 +23,7 @@ test.describe('Experiment List', () => {
       await expect(
         projectDetailsPageSetup.f_experimentList.tableActionBar.count.pwLocator,
       ).toContainText('experiment');
-      Array(52)
+      Array(4)
         .fill(null)
         .forEach(() => {
           detExecSync(
@@ -108,14 +108,6 @@ test.describe('Experiment List', () => {
       ).toPass({ timeout: 30_000 });
       await tableFilter.close();
       await waitTableStable();
-    });
-    await test.step('Ensure pagination options', async () => {
-      const pageSizeSelect = projectDetailsPage.f_experimentList.pagination.perPage;
-      const pageSize = await pageSizeSelect.selectionItem.pwLocator.textContent();
-      if (!pageSize?.startsWith('20')) {
-        await pageSizeSelect.selectMenuOption('20 / page');
-        await waitTableStable();
-      }
     });
     await grid.setColumnHeight();
     await grid.headRow.setColumnDefs();
@@ -401,20 +393,41 @@ test.describe('Experiment List', () => {
       }).toPass();
     });
   });
-  test('Pagination', async () => {
-    const expectPageNumber = async (pageParam: string | null) => {
-      await projectDetailsPage._page.waitForResponse((res) => {
-        return res.url().endsWith('experiments-search');
+  test.describe('Experiment List Pagination', () => {
+    test.beforeAll(({ newProject }) => {
+      Array(51)
+        .fill(null)
+        .forEach(() => {
+          detExecSync(
+            `experiment create ${fullPath('examples/tutorials/mnist_pytorch/adaptive.yaml')} --paused --project_id ${newProject.response.project.id}`,
+          );
+        });
+    });
+    test.beforeEach(async () => {
+      await test.step('Ensure pagination options', async () => {
+        const pageSizeSelect = projectDetailsPage.f_experimentList.pagination.perPage;
+        const pageSize = await pageSizeSelect.selectionItem.pwLocator.textContent();
+        if (!pageSize?.startsWith('20')) {
+          await pageSizeSelect.selectMenuOption('20 / page');
+          await waitTableStable();
+        }
       });
-      const params = new URL(projectDetailsPage._page.url()).searchParams;
-      expect(params.get('page')).toBe(pageParam);
-    };
-    // table is virtualized so row counts are not reliable.
-    await projectDetailsPage.f_experimentList.pagination.next.pwLocator.click();
-    await expectPageNumber('1');
-    await projectDetailsPage.f_experimentList.pagination.pageButtonLocator(3).click();
-    await expectPageNumber('2');
-    await projectDetailsPage.f_experimentList.pagination.perPage.selectMenuOption('80 / page');
-    await expectPageNumber(null);
+    });
+    test('Pagination', async () => {
+      const expectPageNumber = async (pageParam: string | null) => {
+        await projectDetailsPage._page.waitForResponse((res) => {
+          return res.url().endsWith('experiments-search');
+        });
+        const params = new URL(projectDetailsPage._page.url()).searchParams;
+        expect(params.get('page')).toBe(pageParam);
+      };
+      // table is virtualized so row counts are not reliable.
+      await projectDetailsPage.f_experimentList.pagination.next.pwLocator.click();
+      await expectPageNumber('1');
+      await projectDetailsPage.f_experimentList.pagination.pageButtonLocator(3).click();
+      await expectPageNumber('2');
+      await projectDetailsPage.f_experimentList.pagination.perPage.selectMenuOption('80 / page');
+      await expectPageNumber(null);
+    });
   });
 });
