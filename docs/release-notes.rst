@@ -19,20 +19,20 @@ Version 0.37.0
 
 -  API: Remove the ``model_hub`` library from Determined.
 
--  Starting with this release, ``MMDetTrial`` and ``BaseTransformerTrial`` are removed. HuggingFace users
-      should refer to the provided `HuggingFace TrainerAPI examples
-      <https://github.com/determined-ai/determined/tree/main/examples/hf_trainer_api>`__, which use
-      a custom callback instead of BaseTransformerTrial. Users of ``MMDetTrial`` can refer to
-      :ref:`Core API <api-core-ug>`.
+-  Starting with this release, ``MMDetTrial`` and ``BaseTransformerTrial`` are removed. HuggingFace
+   users should refer to the provided `HuggingFace TrainerAPI examples
+   <https://github.com/determined-ai/determined/tree/main/examples/hf_trainer_api>`__, which use a
+   custom callback instead of BaseTransformerTrial. Users of ``MMDetTrial`` can refer to :ref:`Core
+   API <api-core-ug>`.
 
 **New Features**
 
 -  Webhooks: Add support for experiment monitoring and alerting. Capabilities include
-      workspace-level subscriptions for "All experiments" or "Specific experiment(s) with matching
-      configuration" options. New trigger types include ``COMPLETED``, ``ERROR``, ``TASKLOG``, and
-      ``CUSTOM``. Support for custom triggers, code-based alerts, experiment-specific webhook
-      exclusions, and editable webhook URLs is also added. For details, visit
-      :ref:`supported-webhook-triggers`.
+   workspace-level subscriptions for "All experiments" or "Specific experiment(s) with matching
+   configuration" options. New trigger types include ``COMPLETED``, ``ERROR``, ``TASKLOG``, and
+   ``CUSTOM``. Support for custom triggers, code-based alerts, experiment-specific webhook
+   exclusions, and editable webhook URLs is also added. For details, visit
+   :ref:`supported-webhook-triggers`.
 
 -  Master Configuration: Add support for POSIX claims in the master configuration. It now accepts
    ``agent_uid_attribute_name``, ``agent_gid_attribute_name``, ``agent_user_name_attribute_name``,
