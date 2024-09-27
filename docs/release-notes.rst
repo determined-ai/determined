@@ -30,8 +30,8 @@ Version 0.37.0
 -  Webhooks: Add support for experiment monitoring and alerting. Capabilities include
       workspace-level subscriptions for "All experiments" or "Specific experiment(s) with matching
       configuration" options. New trigger types include ``COMPLETED``, ``ERROR``, ``TASKLOG``, and
-      ``CUSTOM``. Support for custom triggers for code-based alerts, webhook exclusion for specific
-      experiments, and editable webhook URLs is also added. For details, visit
+      ``CUSTOM``. Support for custom triggers, code-based alerts, experiment-specific webhook
+      exclusions, and editable webhook URLs is also added. For details, visit
       :ref:`supported-webhook-triggers`.
 
 -  Master Configuration: Add support for POSIX claims in the master configuration. It now accepts
