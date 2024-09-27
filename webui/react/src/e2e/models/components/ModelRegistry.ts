@@ -4,6 +4,7 @@ import { BaseReactFragment } from 'playwright-page-model-base/BaseReactFragment'
 import { Modal } from 'e2e/models/common/ant/Modal';
 import { Notification } from 'e2e/models/common/ant/Notification';
 import { DropdownMenu } from 'e2e/models/common/hew/Dropdown';
+import { Select } from 'e2e/models/common/hew/Select';
 import { Toggle } from 'e2e/models/common/hew/Toggle';
 import { ModelCreateModal } from 'e2e/models/components/ModelCreateModal';
 import { HeadRow, InteractiveTable, Row } from 'e2e/models/components/Table/InteractiveTable';
@@ -21,6 +22,10 @@ class ModelRow extends Row {
     parent: this,
     selector: '[data-testid="archived"]',
   });
+  readonly name = new BaseComponent({
+    parent: this,
+    selector: '[data-testid="name"]',
+  });
   readonly archivedIcon = new BaseComponent({
     parent: this,
     selector: '[aria-label="Checkmark"]',
@@ -33,12 +38,20 @@ class ModelRow extends Row {
 class ModelActionDropdown extends DropdownMenu {
   readonly delete = this.menuItem('delete-model');
   readonly switchArchived = this.menuItem('switch-archived');
+  readonly move = this.menuItem('move-model');
 }
 
 class ModelDeleteModal extends Modal {
   readonly deleteButton = new BaseComponent({
     parent: this,
     selector: '.ant-btn-dangerous',
+  });
+}
+
+class ModelMoveModal extends Modal {
+  readonly workspaceSelect = new Select({
+    parent: this,
+    selector: 'input[id="workspace"]',
   });
 }
 
@@ -53,6 +66,9 @@ export class ModelRegistry extends BaseReactFragment {
     selector: '[data-testid="new-model-button"]',
   });
   readonly modelCreateModal = new ModelCreateModal({
+    root: this.root,
+  });
+  readonly modelMoveModal = new ModelMoveModal({
     root: this.root,
   });
   readonly table = new InteractiveTable({

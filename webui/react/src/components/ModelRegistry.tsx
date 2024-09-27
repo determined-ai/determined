@@ -513,7 +513,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
         filterIcon: tableSearchIcon,
         isFiltered: (settings: Settings) => !!settings.name,
         key: V1GetModelsRequestSortBy.NAME,
-        onCell: onRightClickableCell,
+        onCell: () => ({ ...onRightClickableCell(), 'data-testid': 'name' }),
         render: modelNameRenderer,
         sorter: true,
         title: 'Name',
