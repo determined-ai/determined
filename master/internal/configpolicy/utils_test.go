@@ -93,7 +93,7 @@ func TestUnmarshalYamlExperiment(t *testing.T) {
 		{"just constraints", yamlConstraints, true, &justConstraints},
 		{"extra fields", yamlExperiment + `  extra_field: "string"` + yamlConstraints, false, nil},
 		{"invalid fields", yamlExperiment + "  debug true\n", false, nil},
-		{"empty input", "", true, &ExperimentConfigPolicies{}},
+		{"empty input", "", false, nil},
 		{"null/empty fields", yamlExperiment + "  debug:\n", true, &justConfig},
 		{"wrong field type", "invariant_config:\n  debug: 3\n", false, nil},
 	}
@@ -157,7 +157,7 @@ func TestUnmarshalYamlNTSC(t *testing.T) {
 		{"just constraints", yamlConstraints, true, &justConstraints},
 		{"extra fields", yamlNTSC + `  extra_field: "string"` + yamlConstraints, false, nil},
 		{"invalid fields", yamlNTSC + "  debug true\n", false, nil},
-		{"empty input", "", true, &NTSCConfigPolicies{}},
+		{"empty input", "", false, nil},
 		{"null/empty fields", yamlNTSC + "  debug:\n", true, &justConfig}, // empty fields unmarshal to default value
 		{"wrong field type", "invariant_config:\n  debug: 3\n", false, nil},
 	}
@@ -248,7 +248,7 @@ func TestUnmarshalJSONExperiment(t *testing.T) {
 		{"just constraints", `{` + jsonConstraints + `}`, true, &justConstraints},
 		{"extra fields", jsonExtraField, false, nil},
 		{"invalid fields", jsonInvalidField, false, nil},
-		{"empty input", "", true, &ExperimentConfigPolicies{}},
+		{"empty input", "", false, nil},
 		{"null/empty fields", jsonEmptyField, true, &justConfig}, // empty fields unmarshal to default value
 		{"wrong field type", jsonWrongFieldType, false, nil},
 	}
@@ -294,7 +294,7 @@ func TestUnmarshalJSONNTSC(t *testing.T) {
 		{"just constraints", `{` + jsonConstraints + `}`, true, &justConstraints},
 		{"extra fields", jsonExtraField, false, nil},
 		{"invalid fields", jsonInvalidField, false, nil},
-		{"empty input", "", true, &NTSCConfigPolicies{}},
+		{"empty input", "", false, nil},
 		{"null/empty fields", jsonEmptyField, true, &justConfig}, // empty fields unmarshal to default value
 		{"wrong field type", jsonWrongFieldType, false, nil},
 	}
