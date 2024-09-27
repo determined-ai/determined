@@ -64,7 +64,7 @@ func TestValidateNTSCConstraints(t *testing.T) {
 		resourceManager.On("SmallerValueIsHigherPriority", mock.Anything).Return(false, nil)
 
 		config := defaultConfig()
-		ok, err := ValidateNTSCConstraints(context.Background(), 1, config, &resourceManager)
+		ok, err := CheckNTSCConstraints(context.Background(), 1, config, &resourceManager)
 		require.NoError(t, err)
 		require.True(t, ok)
 	})
@@ -74,11 +74,12 @@ func TestValidateNTSCConstraints(t *testing.T) {
 		resourceManager := mocks.ResourceManager{}
 		resourceManager.On("SmallerValueIsHigherPriority", mock.Anything).Return(false, nil)
 
+		ctx, cancel := context.WithCancel(context.Background())
+		defer cancel()
 		config := defaultConfig()
-		ok, err := ValidateNTSCConstraints(context.Background(), w.ID, config, &resourceManager)
-		require.False(t, ok)
+		_, err := CheckNTSCConstraints(ctx, w.ID, config, &resourceManager)
 		require.Error(t, err)
-		require.Contains(t, err.Error(), "requested priority")
+		require.ErrorIs(t, err, ErrPriorityConstraintFailure)
 	})
 
 	t.Run("running in wksp without constraints - ok", func(t *testing.T) {
@@ -89,7 +90,7 @@ func TestValidateNTSCConstraints(t *testing.T) {
 		require.NoError(t, err)
 
 		config := defaultConfig()
-		ok, err := ValidateNTSCConstraints(context.Background(), w.ID, config, &resourceManager)
+		ok, err := CheckNTSCConstraints(context.Background(), w.ID, config, &resourceManager)
 		require.True(t, ok)
 		require.NoError(t, err)
 	})
@@ -105,10 +106,9 @@ func TestValidateNTSCConstraints(t *testing.T) {
 		resourceManager.On("SmallerValueIsHigherPriority", mock.Anything).Return(true, nil)
 
 		config := defaultConfig()
-		ok, err := ValidateNTSCConstraints(context.Background(), w.ID, config, &resourceManager)
-		require.False(t, ok)
+		_, err = CheckNTSCConstraints(context.Background(), w.ID, config, &resourceManager)
 		require.Error(t, err)
-		require.Contains(t, err.Error(), "requested resources.max_slots")
+		require.ErrorIs(t, err, ErrResourceConstraintFailure)
 	})
 
 	t.Run("rm priority not supported - ok", func(t *testing.T) {
@@ -117,15 +117,14 @@ func TestValidateNTSCConstraints(t *testing.T) {
 		rm1.On("SmallerValueIsHigherPriority", mock.Anything).Return(false, nil).Once()
 
 		config := defaultConfig()
-		ok, err := ValidateNTSCConstraints(context.Background(), w.ID, config, &rm1)
-		require.False(t, ok)
+		_, err := CheckNTSCConstraints(context.Background(), w.ID, config, &rm1)
 		require.Error(t, err)
-		require.Contains(t, err.Error(), "requested priority")
+		require.ErrorIs(t, err, ErrPriorityConstraintFailure)
 
 		// Validate constraints again. This time, the RM does not support priority.
 		rmNoPriority := mocks.ResourceManager{}
 		rmNoPriority.On("SmallerValueIsHigherPriority", mock.Anything).Return(false, fmt.Errorf("not supported")).Once()
-		ok, err = ValidateNTSCConstraints(context.Background(), w.ID, config, &rmNoPriority)
+		ok, err := CheckNTSCConstraints(context.Background(), w.ID, config, &rmNoPriority)
 		require.True(t, ok)
 		require.NoError(t, err)
 	})
@@ -138,12 +137,12 @@ func TestValidateNTSCConstraints(t *testing.T) {
 		resourceManager.On("SmallerValueIsHigherPriority", mock.Anything).Return(true, nil)
 
 		config := defaultConfig()
-		ok, err := ValidateNTSCConstraints(context.Background(), 1, config, &resourceManager)
+		ok, err := CheckNTSCConstraints(context.Background(), 1, config, &resourceManager)
 		require.False(t, ok)
 		require.Error(t, err)
 
 		emptyConfig := model.CommandConfig{}
-		ok, err = ValidateNTSCConstraints(context.Background(), 1, emptyConfig, &resourceManager)
+		ok, err = CheckNTSCConstraints(context.Background(), 1, emptyConfig, &resourceManager)
 		require.True(t, ok)
 		require.NoError(t, err)
 	})

@@ -3,6 +3,7 @@ package configpolicy
 import (
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 
 	"github.com/determined-ai/determined/master/internal/rm"
@@ -30,8 +31,13 @@ type NTSCConfigPolicies struct {
 	Constraints     *model.Constraints   `json:"constraints"`
 }
 
-// ValidateNTSCConstraints returns true if the NTSC config passes constraint checks.
-func ValidateNTSCConstraints(
+var (
+	ErrPriorityConstraintFailure = errors.New("submitted workload failed priority constraint")
+	ErrResourceConstraintFailure = errors.New("submitted workload failed a resource constraint")
+)
+
+// CheckNTSCConstraints returns true if the NTSC config passes constraint checks.
+func CheckNTSCConstraints(
 	ctx context.Context,
 	workspaceID int,
 	workloadConfig model.CommandConfig,
@@ -43,19 +49,20 @@ func ValidateNTSCConstraints(
 	}
 
 	// For each submitted constraint, check if the workload config is within allowed values.
+	// rm.SmallerValueIsHigherPriority only returns nil if priority is not implemented for that resource manager. In that case, there is no need to check if requested priority is within limits.
 	smallerHigher, err := resourceManager.SmallerValueIsHigherPriority()
 	if err == nil && constraints.PriorityLimit != nil && workloadConfig.Resources.Priority != nil {
 		if !priorityWithinLimit(*workloadConfig.Resources.Priority, *constraints.PriorityLimit, smallerHigher) {
-			return false, fmt.Errorf("requested priority [%d] exceeds limit set by admin [%d]",
-				*constraints.PriorityLimit, *workloadConfig.Resources.Priority)
+			return false, fmt.Errorf("requested priority [%d] exceeds limit set by admin [%d]: %w",
+				*constraints.PriorityLimit, *workloadConfig.Resources.Priority, ErrPriorityConstraintFailure)
 		}
 	}
 
 	if constraints.ResourceConstraints != nil && constraints.ResourceConstraints.MaxSlots != nil &&
 		workloadConfig.Resources.MaxSlots != nil {
 		if *constraints.ResourceConstraints.MaxSlots < *workloadConfig.Resources.MaxSlots {
-			return false, fmt.Errorf("requested resources.max_slots [%d] exceeds limit set by admin [%d]",
-				*constraints.ResourceConstraints.MaxSlots, *workloadConfig.Resources.MaxSlots)
+			return false, fmt.Errorf("requested resources.max_slots [%d] exceeds limit set by admin [%d]: %w",
+				*constraints.ResourceConstraints.MaxSlots, *workloadConfig.Resources.MaxSlots, ErrResourceConstraintFailure)
 		}
 	}
 
@@ -63,30 +70,31 @@ func ValidateNTSCConstraints(
 }
 
 // GetMergedConstraints retrieves Workspace and Global constraints and returns a merged result.
-func GetMergedConstraints(ctx context.Context, workspaceID int, workloadType string) (model.Constraints, error) {
+// workloadType is expected to be model.ExperimentType or model.NTSCType.
+func GetMergedConstraints(ctx context.Context, workspaceID int, workloadType string) (*model.Constraints, error) {
 	// Workspace-level constraints should be over-ridden by global contraints, if set.
 	var constraints model.Constraints
 	wkspConfigPolicies, err := GetTaskConfigPolicies(ctx, &workspaceID, workloadType)
 	if err != nil {
-		return constraints, err
+		return nil, err
 	}
 	if wkspConfigPolicies.Constraints != nil {
 		if err = json.Unmarshal([]byte(*wkspConfigPolicies.Constraints), &constraints); err != nil {
-			return constraints, err
+			return nil, fmt.Errorf("unable to merge workspace and global constraints: %w", err)
 		}
 	}
 
 	globalConfigPolicies, err := GetTaskConfigPolicies(ctx, nil, workloadType)
 	if err != nil {
-		return constraints, err
+		return nil, err
 	}
 	if globalConfigPolicies.Constraints != nil {
 		if err = json.Unmarshal([]byte(*globalConfigPolicies.Constraints), &constraints); err != nil {
-			return constraints, err
+			return nil, fmt.Errorf("unable to merge workspace and global constraints: %w", err)
 		}
 	}
 
-	return constraints, nil
+	return &constraints, nil
 }
 
 // PriorityAllowed returns true if the desired priority is within the task config policy limit.
