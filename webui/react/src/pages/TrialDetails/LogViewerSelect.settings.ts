@@ -1,6 +1,5 @@
-import { array, boolean, literal, number, string, undefined as undefinedType, union } from 'io-ts';
-
 import { LogLevelFromApi, SettingsConfig } from 'hew/internal/types';
+import { array, boolean, literal, number, string, undefined as undefinedType, union } from 'io-ts';
 
 export interface Settings {
   agentId?: string[];
@@ -35,6 +34,11 @@ const settingsConfigForLogs = (id: number | string): SettingsConfig<Settings> =>
       storageKey: 'containerId',
       type: union([undefinedType, array(string)]),
     },
+    enableRegex: {
+      defaultValue: undefined,
+      storageKey: 'enableRegex',
+      type: union([undefinedType, boolean]),
+    },
     level: {
       defaultValue: undefined,
       storageKey: 'level',
@@ -63,11 +67,6 @@ const settingsConfigForLogs = (id: number | string): SettingsConfig<Settings> =>
       storageKey: 'searchText',
       type: union([undefinedType, string]),
     },
-    enableRegex: {
-      defaultValue: false,
-      storageKey: 'enableRegex',
-      type: union([undefinedType, boolean]),
-    }
   },
   storagePath: `log-viewer-filters-${id}`,
 });

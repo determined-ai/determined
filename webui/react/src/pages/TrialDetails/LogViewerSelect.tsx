@@ -1,14 +1,13 @@
+import Button from 'hew/Button';
+import Icon from 'hew/Icon';
+import Input from 'hew/Input';
+import { alphaNumericSorter } from 'hew/internal/functions';
+import { LogLevelFromApi } from 'hew/internal/types';
+import Row from 'hew/Row';
+import Select, { Option, SelectValue } from 'hew/Select';
+import { isArray } from 'lodash';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { throttle } from 'throttle-debounce';
-
-import Button from 'hew/Button';
-import Input from'hew/Input';
-import { alphaNumericSorter } from'hew/internal/functions';
-import { LogLevelFromApi } from'hew/internal/types';
-import Row from'hew/Row';
-import Select, { Option, SelectValue } from'hew/Select';
-import Icon from'hew/Icon';
-import { isArray } from 'lodash';
 
 interface Props {
   onChange?: (filters: Filters) => void;
@@ -38,10 +37,10 @@ export const LABELS: Record<keyof Filters, string> = {
   agentIds: 'Agents',
   allocationIds: 'Allocations',
   containerIds: 'Containers',
+  enableRegex: 'Regex',
   levels: 'Levels',
   rankIds: 'Ranks',
   searchText: 'Searches',
-  enableRegex: 'Regex'
 };
 
 const LogViewerSelect: React.FC<Props> = ({
@@ -73,7 +72,7 @@ const LogViewerSelect: React.FC<Props> = ({
     return Object.keys(selectOptions).reduce(
       (acc, key) => {
         const filterKey = key as keyof Filters;
-        if(filterKey === 'enableRegex') return acc
+        if (filterKey === 'enableRegex') return acc;
         const options = selectOptions[filterKey];
 
         // !! casts `undefined` into the boolean value of `false`.
@@ -86,16 +85,15 @@ const LogViewerSelect: React.FC<Props> = ({
   }, [selectOptions]);
 
   const isResetShown = useMemo(() => {
-    console.log({values})
     if (values.searchText) return true;
 
     const keys = Object.keys(selectOptions);
     for (let i = 0; i < keys.length; i++) {
       const key = keys[i] as keyof Filters;
-      
+
       const value = values[key];
       if (key === 'enableRegex' && value) {
-        return true
+        return true;
       }
       if (value && isArray(value) && value.length !== 0) return true;
     }
@@ -114,6 +112,8 @@ const LogViewerSelect: React.FC<Props> = ({
       ),
     [onChange],
   );
+
+  useEffect(() => console.log({filters}), [filters])
 
   useEffect(() => {
     return () => {
@@ -157,7 +157,11 @@ const LogViewerSelect: React.FC<Props> = ({
       {showSearch && (
         <Input placeholder="Search Logs..." value={filters.searchText} onChange={handleSearch} />
       )}
-      {onClickSearch && <Button onClick={onClickSearch}><Icon name={searchOn ? 'close' : 'search'} title='search' /></Button>}
+      {onClickSearch && (
+        <Button onClick={onClickSearch}>
+          <Icon name={searchOn ? 'close' : 'search'} title="search" />
+        </Button>
+      )}
       {moreThanOne.allocationIds && (
         <Select
           disableTags

@@ -1,10 +1,11 @@
 .base {
-  height: 100%;
   display: flex;
+  height: 100%;
 
   .search {
-    width: 40%;
     height: 100%;
+    width: 40%;
+
     .header {
       border-bottom: var(--theme-stroke-width) solid var(--theme-stage-border);
       margin-bottom: var(--spacing-md);
@@ -16,13 +17,15 @@
       overflow-y: auto;
 
       .log {
-        font-family:var(--theme-font-family-code);
-        text-wrap: nowrap;
-        overflow-x: hidden;
-        line-height: 24px;
         cursor: pointer;
-        &:hover {
-          color: var(--theme-ix-on-active)
+        font-family: var(--theme-font-family-code);
+        line-height: 24px;
+        overflow-x: hidden;
+        text-wrap: nowrap;
+
+        &:hover,
+        &.selected {
+          color: var(--theme-ix-on-active);
         }
       }
     }

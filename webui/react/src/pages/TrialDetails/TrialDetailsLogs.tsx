@@ -1,10 +1,12 @@
+import Checkbox from 'hew/Checkbox';
 import CodeSample from 'hew/CodeSample';
-import LogViewer, { FetchConfig, FetchDirection, FetchType } from 'hew/LogViewer/LogViewer';
-import LogViewerSelect, { Filters } from './LogViewerSelect';
-import { Settings, settingsConfigForTrial } from './LogViewerSelect.settings';
+import Input from 'hew/Input';
+import Message from 'hew/Message';
 import Spinner from 'hew/Spinner';
+import Tooltip from 'hew/Tooltip';
 import useConfirm from 'hew/useConfirm';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { throttle } from 'throttle-debounce';
 
 import useUI from 'components/ThemeProvider';
 import useFeature from 'hooks/useFeature';
@@ -19,14 +21,10 @@ import { downloadTrialLogs } from 'utils/browser';
 import handleError, { ErrorType } from 'utils/error';
 import mergeAbortControllers from 'utils/mergeAbortControllers';
 
+import LogViewer, { FetchConfig, FetchDirection, FetchType } from './LogViewer';
+import LogViewerSelect, { Filters } from './LogViewerSelect';
+import { Settings, settingsConfigForTrial } from './LogViewerSelect.settings';
 import css from './TrialDetailsLogs.module.scss';
-import Input from 'hew/Input';
-// import Icon from 'hew/Icon';
-// import Button from 'hew/Button';
-import Checkbox from 'hew/Checkbox';
-import { throttle } from 'throttle-debounce';
-import _ from 'lodash';
-import Tooltip from 'hew/Tooltip';
 
 export interface Props {
   experiment: ExperimentBase;
@@ -39,8 +37,9 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
   const { ui } = useUI();
   const [filterOptions, setFilterOptions] = useState<Filters>({});
   const [searchOn, setSearchOn] = useState<boolean>(false);
-  const [searchInput, setSearchInput] = useState<string>("");
+  const [searchInput, setSearchInput] = useState<string>('');
   const [searchResults, setSearchResults] = useState<TrialLog[]>([]);
+  const [selectedLog, setSelectedLog] = useState<TrialLog>();
   const confirm = useConfirm();
   const canceler = useRef(new AbortController());
   const f_flat_runs = useFeature().isOn('flat_runs');
@@ -52,44 +51,44 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
     () => ({
       agentIds: settings.agentId,
       containerIds: settings.containerId,
+      enableRegex: settings.enableRegex,
       levels: settings.level,
       rankIds: settings.rankId,
       searchText: settings.searchText,
-      enableRegex: settings.enableRegex,
     }),
     [settings],
   );
 
   useEffect(() => {
-    settings.searchText?.length && setSearchOn(true)
-  }, [settings.searchText])
+    settings.searchText?.length && setSearchOn(true);
+  }, [settings.searchText]);
 
   const handleFilterChange = useCallback(
     (filters: Filters) => {
       // request should have already been canceled when resetSettings updated
       // the settings hash
       if (Object.keys(filters).length === 0) return;
-
       canceler.current.abort();
       const newCanceler = new AbortController();
       canceler.current = newCanceler;
-
+      console.log({filters})
       updateSettings({
         agentId: filters.agentIds,
         containerId: filters.containerIds,
+        enableRegex: filters.enableRegex,
         level: filters.levels,
         rankId: filters.rankIds,
         searchText: filters.searchText,
-        enableRegex: filters.enableRegex
       });
     },
     [updateSettings],
   );
 
   const handleFilterReset = useCallback(() => {
-    resetSettings()
-    setSearchResults([])
-    setSearchInput("")
+    resetSettings();
+    setSearchResults([]);
+    setSearchInput('');
+    setSelectedLog(undefined);
   }, [resetSettings]);
 
   const handleDownloadConfirm = useCallback(async () => {
@@ -131,7 +130,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
   }, [confirm, experiment.id, f_flat_runs, handleDownloadConfirm, trial?.id]);
 
   const handleFetch = useCallback(
-    (config: FetchConfig, type: FetchType) => {
+    (config: FetchConfig, type: FetchType, searchText?: string) => {
       const { signal } = mergeAbortControllers(config.canceler, canceler.current);
 
       const options = {
@@ -171,7 +170,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
         decode(optional(DateString), options.timestampBefore),
         decode(optional(DateString), options.timestampAfter),
         options.orderBy as OrderBy,
-        settings.searchText,
+        searchText,
         false,
         { signal },
       );
@@ -202,12 +201,12 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
   const logFilters = (
     <LogViewerSelect
       options={filterOptions}
+      searchOn={searchOn}
       showSearch={false}
       values={filterValues}
       onChange={handleFilterChange}
+      onClickSearch={() => setSearchOn((prev) => !prev)}
       onReset={handleFilterReset}
-      onClickSearch={() => setSearchOn(prev => !prev)}
-      searchOn={searchOn}
     />
   );
 
@@ -216,11 +215,11 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
       throttle(
         500,
         (s: string) => {
-          updateSettings({...settings, searchText: s});
+          updateSettings({ ...settings, searchText: s });
         },
         { noLeading: true },
       ),
-    [updateSettings],
+    [updateSettings, settings],
   );
 
   useEffect(() => {
@@ -229,70 +228,103 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
     };
   }, [throttledChangeSearch]);
 
-  const onSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
-    setSearchInput(e.target.value)
-    throttledChangeSearch(e.target.value)
-  }, [throttledChangeSearch])
+  const onSearchChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setSearchInput(e.target.value);
+      throttledChangeSearch(e.target.value);
+      if(!e.target.value) setSearchResults([])
+    },
+    [throttledChangeSearch],
+  );
 
-  const processSearchResult = useCallback((log: TrialLog) => {
-    const key = settings.searchText
+  const processSearchResult = useCallback(
+    (log: TrialLog) => {
+      const key = settings.searchText;
 
-    if(!key) return
+      if (!key) return;
+      const content = log.log;
+      if (!content) return;
+      const i = content.indexOf(key);
+      if (i < 0) return;
+      const numOfChar = 18;
+      const j = i + key.length;
+      let start = Math.max(i - numOfChar, 0);
+      let end = Math.min(j + numOfChar, content.length);
+      if (start > 0 && end === content.length) {
+        start = Math.max(start - (numOfChar - end + j), 0);
+      } else if (start === 0 && end < content.length) {
+        end = Math.min(end + numOfChar - i + start, content.length);
+      }
+      const formated: TrialLog = {
+        ...log,
+        log: `${start > 0 ? '...' : ''}${content.slice(start, i)}<span style="background-color: #E7F7FF">${content.slice(i, j)}</span>${content.slice(j, end)}${end < content.length ? '...' : ''}`,
+      };
 
-    const content = log.log
-    if(!content) return
-    const i = content.indexOf(key);
-    if(!i) return
-    const numOfChar = 18
-    const j = i + key.length
-    let start = Math.max(i - numOfChar, 0)
-    let end = Math.min(j + numOfChar, content.length)
-    if(start > 0 && end === content.length) {
-      start = Math.max(start - (numOfChar - end + j), 0)
-    } else if(start === 0 && end < content.length) {
-      end = Math.min(end + numOfChar - i + start, content.length)
-    }
-    const formated: TrialLog =  {...log, 
-      log: `${start > 0 ? '...': ''}${content.slice(start, i)}<span style="background-color: #E7F7FF">${content.slice(i, j)}</span>${content.slice(j, end)}${end < content.length ? '...': ''}`}
-    
-    setSearchResults(prev => [...prev, formated])
-  }, [settings.searchText, setSearchResults])
+      setSearchResults((prev) => [...prev, formated]);
+    },
+    [settings.searchText, setSearchResults],
+  );
 
   useEffect(() => {
-    console.log({searchResults})
-  }, [searchResults])
-
-  useEffect(() => {
-    if(settings.searchText) {
-      setSearchResults([])
-      readStream(handleFetch({
-        canceler: canceler.current,
-        fetchDirection: "Newer",
-        limit: 0,
-        offset: 0
-      }, FetchType.Initial), 
-      (log) => processSearchResult(log as TrialLog))
+    if (settings.searchText) {
+      setSearchResults([]);
+      readStream(
+        handleFetch(
+          {
+            canceler: canceler.current,
+            fetchDirection: FetchDirection.Newer,
+            limit: 0,
+          },
+          FetchType.Initial,
+          settings.searchText,
+        ),
+        (log) => processSearchResult(log as TrialLog),
+      );
     }
-  }, [settings.searchText])
+  }, [settings.searchText, handleFetch, processSearchResult]);
 
   return (
     <div className={css.base}>
-      {searchOn && <div className={css.search}>
-        <div className={css.header}>
-          <Input allowClear value={searchInput || settings.searchText} onChange={onSearchChange}  />
+      {searchOn && (
+        <div className={css.search}>
+          <div className={css.header}>
+            <Input
+              allowClear
+              placeholder="Search Logs..."
+              value={searchInput || settings.searchText}
+              onChange={onSearchChange}
+            />
           </div>
-          <Checkbox checked={settings.enableRegex} onChange={e => handleFilterChange({enableRegex: e.target.checked})} >Regex</Checkbox>
-          <div className={css.logContainer}>{searchResults.map(log => <div key={log.id} >
-          <Tooltip content={log.message}>
-            <div className={css.log} dangerouslySetInnerHTML={{__html: log.log!}}></div>
-          </Tooltip>
+          <Checkbox
+            checked={settings.enableRegex}
+            onChange={(e) => handleFilterChange({ enableRegex: e.target.checked })}>
+            Regex
+          </Checkbox>
+          <div className={css.logContainer}>
+            {searchResults.length > 0 ? (
+              searchResults.map((log) => (
+                <div key={log.id}>
+                  <Tooltip content={log.message}>
+                    <div
+                      className={
+                        selectedLog?.id === log.id ? [css.log, css.selected].join(' ') : css.log
+                      }
+                      dangerouslySetInnerHTML={{ __html: log.log! }}
+                      onClick={() => setSelectedLog(log)}
+                    />
+                  </Tooltip>
+                </div>
+              ))
+            ) : (
+              <Message icon="warning" title="No logs to show. " />
+            )}
+          </div>
         </div>
-      )}</div>
-        </div>}
-        
+      )}
       <Spinner conditionalRender spinning={!trial}>
         <LogViewer
           decoder={mapV1LogsResponse}
+          selectedLog={selectedLog}
           serverAddress={serverAddress}
           title={logFilters}
           onDownload={handleDownloadLogs}
