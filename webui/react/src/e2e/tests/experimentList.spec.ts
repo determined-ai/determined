@@ -295,20 +295,28 @@ test.describe('Experiment List', () => {
       inverseFirst?: boolean,
     ) => {
       await projectDetailsPage.f_experimentList.dataGrid.headRow.setColumnDefs();
+
       const getColumnTextValue = async (rowIdx: number, col: string) =>
-        (await projectDetailsPage.f_experimentList.dataGrid.getRowByIndex(rowIdx).getCellByColumnName(col)).pwLocator.innerText;
+        await projectDetailsPage.f_experimentList.dataGrid
+          .getRowByIndex(rowIdx)
+          .getCellByColumnName(col);
+      const firstCaseElement1 = await getColumnTextValue(0, firstKey);
+      const firstCaseElement2 = await getColumnTextValue(1, firstKey);
+      const secondCaseElement = await getColumnTextValue(0, secondKey);
 
       if (inverseFirst) {
-        expect(Number(await getColumnTextValue(0, firstKey))).toBeLessThanOrEqual( // "OrEqual" is to be used for the "Trial Count" as well
-          Number(await getColumnTextValue(1, firstKey)),
+        expect(Number(await firstCaseElement1.pwLocator.innerText())).toBeLessThanOrEqual(
+          // "OrEqual" is to be used for the "Trial Count" as well
+          Number(await firstCaseElement2.pwLocator.innerText()),
         );
       } else {
-        expect(Number(await getColumnTextValue(0, firstKey))).toBeGreaterThanOrEqual( // "OrEqual" is to be used for the "Trial Count" as well
-          Number(await getColumnTextValue(1, firstKey)),
+        expect(Number(await firstCaseElement1.pwLocator.innerText())).toBeGreaterThanOrEqual(
+          // "OrEqual" is to be used for the "Trial Count" as well
+          Number(await firstCaseElement2.pwLocator.innerText()),
         );
       }
 
-      expect(await getColumnTextValue(0, secondKey)).toBe(metricCheck);
+      expect(await secondCaseElement.pwLocator.innerText()).toBe(metricCheck);
     };
 
     // create a new experiment for comparing Searcher Metric and Trial Count
@@ -346,17 +354,17 @@ test.describe('Experiment List', () => {
     };
 
     await sortingScenario('ID', '9 → 0', 'Searcher', 'A → Z', async () => {
-      await checkTableOrder('ID', 'searcherType', 'val_loss'); // searcher taken from the file used to create the experiment
+      await checkTableOrder('ID', 'Searcher', 'single'); // searcher taken from the file used to create the experiment
     });
     await sortingScenario('ID', '0 → 9', 'Searcher', 'A → Z', async () => {
-      await checkTableOrder('ID', 'searcherType', 'val_loss', true); // searcher taken from the file used to create the experiment
+      await checkTableOrder('ID', 'Searcher', 'adaptive_asha', true); // searcher taken from the file used to create the experiment
     });
 
     await sortingScenario('Trial count', '9 → 0', 'Searcher Metric', 'A → Z', async () => {
-      await checkTableOrder('Trial count', 'Searcher Metric', 'A → Z'); // searcher metric value taken from the file used to create the experiment
+      await checkTableOrder('Trial count', 'Searcher Metric', 'val_loss'); // searcher metric value taken from the file used to create the experiment
     });
     await sortingScenario('Trial count', '0 → 9', 'Searcher Metric', 'A → Z', async () => {
-      await checkTableOrder('Trial count', 'Searcher Metric', 'A → Z', true); // searcher metric value taken from the file used to create the experiment
+      await checkTableOrder('Trial count', 'Searcher Metric', 'val_loss', true); // searcher metric value taken from the file used to create the experiment
     });
   });
 
