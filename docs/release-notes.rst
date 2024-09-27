@@ -17,38 +17,39 @@ Version 0.37.0
 
 **Breaking Changes**
 
--  API: Remove model_hub library from determined.
+-  API: Remove the ``model_hub`` library from determined.
 
-   -  Starting with this release, MMDetTrial and BaseTransformerTrial are removed. HuggingFace users
-      should look at provided `HuggingFace TrainerAPI
-      examples<https://github.com/determined-ai/determined/tree/main/examples/hf_trainer_api>_`,
-      which use a custom callback in place of BaseTransformerTrial. Users of MMDetTrial can refer to
+-  Starting with this release, ``MMDetTrial`` and ``BaseTransformerTrial`` are removed. HuggingFace users
+      should refer to the provided `HuggingFace TrainerAPI examples
+      <https://github.com/determined-ai/determined/tree/main/examples/hf_trainer_api>`, which use a
+      custom callback instead of BaseTransformerTrial. Users of ``MMDetTrial`` can refer to
       :ref:`Core API <api-core-ug>`.
 
 **New Features**
 
--  Webhooks: Add support for experiment monitoring and alerting. Capabilities include creation of
-   workspace-level subscriptions with "All experiments" and "Specific experiment(s) with matching
-   configuration" options; new trigger types: COMPLETED, ERROR, TASKLOG, and CUSTOM; custom triggers
-   for code-based alerts; webhook exclusion for specific experiments; and editable webhook URLs. For
-   details, visit :ref:supported-webhook-triggers.
+-  Webhooks: Add support for experiment monitoring and alerting. Capabilities include
+      workspace-level subscriptions for "All experiments" or "Specific experiment(s) with matching
+      configuration" options. New trigger types include ``COMPLETED``, ``ERROR``, ``TASKLOG``, and
+      ``CUSTOM``. Support for custom triggers for code-based alerts, webhook exclusion for specific
+      experiments, and editable webhook URLs is also added. For details, visit
+      :ref:`supported-webhook-triggers`.
 
 -  Master Configuration: Add support for POSIX claims in the master configuration. It now accepts
-   `agent_uid_attribute_name`, `agent_gid_attribute_name`, `agent_user_name_attribute_name`, or
-   `agent_group_name_attribute_name`. Refer to the :ref:OIDC master configuration
-   <master-config-oidc> or :ref:SAML master configuration <master-config-saml> for details. If any
-   of these fields are configured, they will be used and synced to the database.
+   ``agent_uid_attribute_name``, ``agent_gid_attribute_name``, ``agent_user_name_attribute_name``,
+   or ``agent_group_name_attribute_name``. Refer to the :ref:`OIDC master configuration
+   <master-config-oidc>` or :ref:`SAML master configuration <master-config-saml>` for details. If
+   any of these fields are configured, they will sync with the database.
 
 **Improvements**
 
 -  WebUI: Change the "Compute Slots Allocated" label to "Unspecified Slots Allocated" for resource
-   pools with no or multiple slot types. Added error logs for zero or multi-slot-type cases, and
-   updated the progress bar to include all agents when the slot type is TYPE_UNSPECIFIED.
+   pools with no or multiple slot types. Add error logs for zero or multi-slot-type cases and update
+   the progress bar to include all agents when the slot type is ``TYPE_UNSPECIFIED``.
 
 **Bug Fixes**
 
 -  API/Tasks: Fix a bug where a master-configured ``log_retention_days`` value is not applied to
-   experiments and tasks. Now, the master-configured value is correctly applied to new experiments,
+   experiments and tasks. The master-configured value is now correctly applied to new experiments,
    and all pre-existing experiments will also follow the specified ``log_retention_days``.
 
 **************
