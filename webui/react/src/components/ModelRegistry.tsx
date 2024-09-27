@@ -577,6 +577,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
         dataIndex: 'archived',
         defaultWidth: DEFAULT_COLUMN_WIDTHS['archived'],
         key: 'archived',
+        onCell: () => ({ ...onRightClickableCell(), 'data-testid': 'archived' }),
         render: checkmarkRenderer,
         title: 'Archived',
       },

@@ -4,6 +4,7 @@ import { BaseReactFragment } from 'playwright-page-model-base/BaseReactFragment'
 import { Modal } from 'e2e/models/common/ant/Modal';
 import { Notification } from 'e2e/models/common/ant/Notification';
 import { DropdownMenu } from 'e2e/models/common/hew/Dropdown';
+import { Toggle } from 'e2e/models/common/hew/Toggle';
 import { ModelCreateModal } from 'e2e/models/components/ModelCreateModal';
 import { HeadRow, InteractiveTable, Row } from 'e2e/models/components/Table/InteractiveTable';
 
@@ -16,6 +17,14 @@ class ModelRow extends Row {
     }),
     root: this.root,
   });
+  readonly archived = new BaseComponent({
+    parent: this,
+    selector: '[data-testid="archived"]',
+  });
+  readonly archivedIcon = new BaseComponent({
+    parent: this,
+    selector: '[aria-label="Checkmark"]',
+  });
 }
 
 /**
@@ -23,6 +32,7 @@ class ModelRow extends Row {
  */
 class ModelActionDropdown extends DropdownMenu {
   readonly delete = this.menuItem('delete-model');
+  readonly switchArchived = this.menuItem('switch-archived');
 }
 
 class ModelDeleteModal extends Modal {
@@ -35,6 +45,9 @@ class ModelDeleteModal extends Modal {
 /* Represents the ModelRegistry component in src/components/ModelRegistry.tsx
  */
 export class ModelRegistry extends BaseReactFragment {
+  readonly showArchived = new Toggle({
+    parent: this,
+  });
   readonly newModelButton = new BaseComponent({
     parent: this,
     selector: '[data-testid="new-model-button"]',

@@ -26,6 +26,18 @@ test.describe('Workspace Model Registry', () => {
       );
     });
 
+    await test.step('Archive and Unarchive', async () => {
+      await firstRow.pwLocator.waitFor();
+      await (await firstRow.actions.open()).switchArchived.pwLocator.click();
+      await modelRegistry.table.pwLocator.waitFor({ state: 'hidden' });
+
+      await modelRegistry.showArchived.switch.pwLocator.click();
+      await firstRow.archivedIcon.pwLocator.waitFor();
+
+      await (await firstRow.actions.open()).switchArchived.pwLocator.click();
+      await firstRow.archivedIcon.pwLocator.waitFor({ state: 'hidden' });
+    });
+
     await test.step('Delete model', async () => {
       await firstRow.pwLocator.waitFor();
       await (await firstRow.actions.open()).delete.pwLocator.click();
