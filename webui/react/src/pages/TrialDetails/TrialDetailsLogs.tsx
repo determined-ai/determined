@@ -1,7 +1,7 @@
 import CodeSample from 'hew/CodeSample';
 import LogViewer, { FetchConfig, FetchDirection, FetchType } from 'hew/LogViewer/LogViewer';
-import LogViewerSelect, { Filters } from 'hew/LogViewer/LogViewerSelect';
-import { Settings, settingsConfigForTrial } from 'hew/LogViewer/LogViewerSelect.settings';
+import LogViewerSelect, { Filters } from './LogViewerSelect';
+import { Settings, settingsConfigForTrial } from './LogViewerSelect.settings';
 import Spinner from 'hew/Spinner';
 import useConfirm from 'hew/useConfirm';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -14,12 +14,19 @@ import { serverAddress } from 'routes/utils';
 import { detApi } from 'services/apiConfig';
 import { mapV1LogsResponse } from 'services/decoder';
 import { readStream } from 'services/utils';
-import { ExperimentBase, TrialDetails } from 'types';
+import { ExperimentBase, TrialDetails, TrialLog } from 'types';
 import { downloadTrialLogs } from 'utils/browser';
 import handleError, { ErrorType } from 'utils/error';
 import mergeAbortControllers from 'utils/mergeAbortControllers';
 
 import css from './TrialDetailsLogs.module.scss';
+import Input from 'hew/Input';
+// import Icon from 'hew/Icon';
+// import Button from 'hew/Button';
+import Checkbox from 'hew/Checkbox';
+import { throttle } from 'throttle-debounce';
+import _ from 'lodash';
+import Tooltip from 'hew/Tooltip';
 
 export interface Props {
   experiment: ExperimentBase;
@@ -31,6 +38,9 @@ type OrderBy = 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC';
 const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
   const { ui } = useUI();
   const [filterOptions, setFilterOptions] = useState<Filters>({});
+  const [searchOn, setSearchOn] = useState<boolean>(false);
+  const [searchInput, setSearchInput] = useState<string>("");
+  const [searchResults, setSearchResults] = useState<TrialLog[]>([]);
   const confirm = useConfirm();
   const canceler = useRef(new AbortController());
   const f_flat_runs = useFeature().isOn('flat_runs');
@@ -45,9 +55,14 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
       levels: settings.level,
       rankIds: settings.rankId,
       searchText: settings.searchText,
+      enableRegex: settings.enableRegex,
     }),
     [settings],
   );
+
+  useEffect(() => {
+    settings.searchText?.length && setSearchOn(true)
+  }, [settings.searchText])
 
   const handleFilterChange = useCallback(
     (filters: Filters) => {
@@ -65,12 +80,17 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
         level: filters.levels,
         rankId: filters.rankIds,
         searchText: filters.searchText,
+        enableRegex: filters.enableRegex
       });
     },
     [updateSettings],
   );
 
-  const handleFilterReset = useCallback(() => resetSettings(), [resetSettings]);
+  const handleFilterReset = useCallback(() => {
+    resetSettings()
+    setSearchResults([])
+    setSearchInput("")
+  }, [resetSettings]);
 
   const handleDownloadConfirm = useCallback(async () => {
     if (!trial?.id) return;
@@ -182,15 +202,94 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
   const logFilters = (
     <LogViewerSelect
       options={filterOptions}
-      showSearch={true}
+      showSearch={false}
       values={filterValues}
       onChange={handleFilterChange}
       onReset={handleFilterReset}
+      onClickSearch={() => setSearchOn(prev => !prev)}
+      searchOn={searchOn}
     />
   );
 
+  const throttledChangeSearch = useMemo(
+    () =>
+      throttle(
+        500,
+        (s: string) => {
+          updateSettings({...settings, searchText: s});
+        },
+        { noLeading: true },
+      ),
+    [updateSettings],
+  );
+
+  useEffect(() => {
+    return () => {
+      throttledChangeSearch.cancel();
+    };
+  }, [throttledChangeSearch]);
+
+  const onSearchChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearchInput(e.target.value)
+    throttledChangeSearch(e.target.value)
+  }, [throttledChangeSearch])
+
+  const processSearchResult = useCallback((log: TrialLog) => {
+    const key = settings.searchText
+
+    if(!key) return
+
+    const content = log.log
+    if(!content) return
+    const i = content.indexOf(key);
+    if(!i) return
+    const numOfChar = 18
+    const j = i + key.length
+    let start = Math.max(i - numOfChar, 0)
+    let end = Math.min(j + numOfChar, content.length)
+    if(start > 0 && end === content.length) {
+      start = Math.max(start - (numOfChar - end + j), 0)
+    } else if(start === 0 && end < content.length) {
+      end = Math.min(end + numOfChar - i + start, content.length)
+    }
+    const formated: TrialLog =  {...log, 
+      log: `${start > 0 ? '...': ''}${content.slice(start, i)}<span style="background-color: #E7F7FF">${content.slice(i, j)}</span>${content.slice(j, end)}${end < content.length ? '...': ''}`}
+    
+    setSearchResults(prev => [...prev, formated])
+  }, [settings.searchText, setSearchResults])
+
+  useEffect(() => {
+    console.log({searchResults})
+  }, [searchResults])
+
+  useEffect(() => {
+    if(settings.searchText) {
+      setSearchResults([])
+      readStream(handleFetch({
+        canceler: canceler.current,
+        fetchDirection: "Newer",
+        limit: 0,
+        offset: 0
+      }, FetchType.Initial), 
+      (log) => processSearchResult(log as TrialLog))
+    }
+  }, [settings.searchText])
+
   return (
     <div className={css.base}>
+      {searchOn && <div className={css.search}>
+        <div className={css.header}>
+          <Input allowClear value={searchInput || settings.searchText} onChange={onSearchChange}  />
+          </div>
+          <Checkbox checked={settings.enableRegex} onChange={e => handleFilterChange({enableRegex: e.target.checked})} >Regex</Checkbox>
+          <div className={css.logContainer}>{searchResults.map(log => <div key={log.id} >
+          <Tooltip content={log.message}>
+            <div className={css.log} dangerouslySetInnerHTML={{__html: log.log!}}></div>
+          </Tooltip>
+        </div>
+      )}</div>
+        </div>}
+        
       <Spinner conditionalRender spinning={!trial}>
         <LogViewer
           decoder={mapV1LogsResponse}

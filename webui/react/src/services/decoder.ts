@@ -831,6 +831,7 @@ export const mapV1LogsResponse = <T extends Sdk.V1TrialLogsResponse | Sdk.V1Task
     level: decodeV1LogLevelToLogLevel(logData.level),
     message: formatLogMessage(logData.message),
     time: logData.timestamp as unknown as string,
+    log: logData.log
   };
 };
 

@@ -1,3 +1,30 @@
 .base {
   height: 100%;
+  display: flex;
+
+  .search {
+    width: 40%;
+    height: 100%;
+    .header {
+      border-bottom: var(--theme-stroke-width) solid var(--theme-stage-border);
+      margin-bottom: var(--spacing-md);
+      padding-block: var(--spacing-md);
+      padding-right: var(--spacing-md);
+    }
+    .logContainer {
+      height: 555px;
+      overflow-y: auto;
+
+      .log {
+        font-family:var(--theme-font-family-code);
+        text-wrap: nowrap;
+        overflow-x: hidden;
+        line-height: 24px;
+        cursor: pointer;
+        &:hover {
+          color: var(--theme-ix-on-active)
+        }
+      }
+    }
+  }
 }
