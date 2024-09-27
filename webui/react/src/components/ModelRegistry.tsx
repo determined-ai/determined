@@ -731,6 +731,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
             </>
           }
           icon="model"
+          testId="no-models-registered"
           title="No Models Registered"
         />
       ) : (

@@ -20,12 +20,13 @@ test.describe('Workspace Model Registry', () => {
 
     await modelRegistry.newModelButton.pwLocator.click();
 
+    await modal.name.pwLocator.fill(modelName);
+    await modal.description.pwLocator.fill(modelName + ' description');
+
     await modal.addMoreDetails.pwLocator.click();
     await modal.addMetadatButton.pwLocator.click();
     await modal.addTagButton.pwLocator.click();
 
-    await modal.name.pwLocator.fill(modelName);
-    await modal.description.pwLocator.fill(modelName + ' description');
     await modal.metadataKey.pwLocator.fill('metadata_key');
     await modal.metadataValue.pwLocator.fill('metadata_value');
     await modal.tag.pwLocator.fill('tag');
@@ -35,6 +36,8 @@ test.describe('Workspace Model Registry', () => {
     await expect(modelRegistry.notification.description.pwLocator).toContainText(
       `${modelName} has been created`,
     );
+
+    await backgroundAuthedPage.reload();
     await expect(firstRow.name.pwLocator).toContainText(modelName);
   });
 
@@ -45,13 +48,15 @@ test.describe('Workspace Model Registry', () => {
 
     await test.step('Delete model', async () => {
       const workspace = workspaces.get('destination') ?? workspaces.get('origin');
+
       await workspaceDetails.gotoWorkspace(workspace?.id);
       await workspaceDetails.modelRegistryTab.pwLocator.click();
 
       await (await firstRow.actions.open()).delete.pwLocator.click();
       await modelRegistry.modelDeleteModal.deleteButton.pwLocator.click();
 
-      await modelRegistry.table.pwLocator.waitFor({ state: 'hidden' });
+      await backgroundAuthedPage.reload();
+      await modelRegistry.noModelsMessage.pwLocator.waitFor();
     });
 
     await test.step('Delete destination workspace', async () => {
@@ -71,7 +76,7 @@ test.describe('Workspace Model Registry', () => {
     await workspaceDetails.modelRegistryTab.pwLocator.click();
 
     await (await firstRow.actions.open()).switchArchived.pwLocator.click();
-    await modelRegistry.table.pwLocator.waitFor({ state: 'hidden' });
+    await modelRegistry.noModelsMessage.pwLocator.waitFor();
 
     await modelRegistry.showArchived.switch.pwLocator.click();
     await firstRow.archivedIcon.pwLocator.waitFor();
@@ -94,17 +99,22 @@ test.describe('Workspace Model Registry', () => {
     await workspaceDetails.modelRegistryTab.pwLocator.click();
 
     await (await firstRow.actions.open()).move.pwLocator.click();
+
     await modelRegistry.modelMoveModal.workspaceSelect.pwLocator.fill(destinationWorkspace.name);
     await modelRegistry.modelMoveModal.workspaceSelect.pwLocator.press('Enter');
+
     await modelRegistry.modelMoveModal.footer.submit.pwLocator.click();
 
     await expect(modelRegistry.notification.description.pwLocator).toContainText(
       `${modelName} moved to workspace ${destinationWorkspace.name}`,
     );
-    await modelRegistry.table.pwLocator.waitFor({ state: 'hidden' });
+
+    await authedPage.reload();
+    await modelRegistry.noModelsMessage.pwLocator.waitFor();
 
     await workspaceDetails.gotoWorkspace(destinationWorkspace.id);
     await workspaceDetails.modelRegistryTab.pwLocator.click();
+
     await expect(firstRow.name.pwLocator).toContainText(modelName);
   });
 });

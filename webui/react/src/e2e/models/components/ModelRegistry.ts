@@ -85,4 +85,8 @@ export class ModelRegistry extends BaseReactFragment {
   readonly modelDeleteModal = new ModelDeleteModal({
     root: this.root,
   });
+  readonly noModelsMessage = new BaseComponent({
+    parent: this,
+    selector: '[data-testid="no-models-registered"]',
+  });
 }
