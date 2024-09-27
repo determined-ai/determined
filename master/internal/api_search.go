@@ -215,7 +215,7 @@ func (a *apiServer) PutSearchRetainLogs(
 	return &res, nil
 }
 
-func BulkFiltersSearchtToExperiment(filter *apiv2.BulkSearchFilters) *apiv1.BulkExperimentFilters {
+func BulkFiltersSearchToExperiment(filter *apiv2.BulkSearchFilters) *apiv1.BulkExperimentFilters {
 	states := []experimentv1.State{}
 	for _, e := range filter.States {
 		states = append(states, experimentv1.State(e))
@@ -249,7 +249,7 @@ func (a *apiServer) ResumeSearches(ctx context.Context, req *apiv2.ResumeSearche
 ) (*apiv2.ResumeSearchesResponse, error) {
 	expReq := apiv1.ActivateExperimentsRequest{
 		ExperimentIds: req.SearchIds,
-		Filters:       BulkFiltersSearchtToExperiment(req.Filters),
+		Filters:       BulkFiltersSearchToExperiment(req.Filters),
 		ProjectId:     req.ProjectId,
 	}
 	expRes, err := a.ActivateExperiments(ctx, &expReq)
@@ -279,7 +279,7 @@ func (a *apiServer) PauseSearches(ctx context.Context, req *apiv2.PauseSearchesR
 ) (*apiv2.PauseSearchesResponse, error) {
 	expReq := apiv1.PauseExperimentsRequest{
 		ExperimentIds: req.SearchIds,
-		Filters:       BulkFiltersSearchtToExperiment(req.Filters),
+		Filters:       BulkFiltersSearchToExperiment(req.Filters),
 		ProjectId:     req.ProjectId,
 	}
 	expRes, err := a.PauseExperiments(ctx, &expReq)
@@ -309,7 +309,7 @@ func (a *apiServer) CancelSearches(ctx context.Context, req *apiv2.CancelSearche
 ) (*apiv2.CancelSearchesResponse, error) {
 	expReq := apiv1.CancelExperimentsRequest{
 		ExperimentIds: req.SearchIds,
-		Filters:       BulkFiltersSearchtToExperiment(req.Filters),
+		Filters:       BulkFiltersSearchToExperiment(req.Filters),
 		ProjectId:     req.ProjectId,
 	}
 	expRes, err := a.CancelExperiments(ctx, &expReq)
@@ -339,7 +339,7 @@ func (a *apiServer) KillSearches(ctx context.Context, req *apiv2.KillSearchesReq
 ) (*apiv2.KillSearchesResponse, error) {
 	expReq := apiv1.KillExperimentsRequest{
 		ExperimentIds: req.SearchIds,
-		Filters:       BulkFiltersSearchtToExperiment(req.Filters),
+		Filters:       BulkFiltersSearchToExperiment(req.Filters),
 		ProjectId:     req.ProjectId,
 	}
 	expRes, err := a.KillExperiments(ctx, &expReq)
@@ -369,7 +369,7 @@ func (a *apiServer) ArchiveSearches(ctx context.Context, req *apiv2.ArchiveSearc
 ) (*apiv2.ArchiveSearchesResponse, error) {
 	expReq := apiv1.ArchiveExperimentsRequest{
 		ExperimentIds: req.SearchIds,
-		Filters:       BulkFiltersSearchtToExperiment(req.Filters),
+		Filters:       BulkFiltersSearchToExperiment(req.Filters),
 		ProjectId:     req.ProjectId,
 	}
 	expRes, err := a.ArchiveExperiments(ctx, &expReq)
@@ -399,7 +399,7 @@ func (a *apiServer) UnarchiveSearches(ctx context.Context, req *apiv2.UnarchiveS
 ) (*apiv2.UnarchiveSearchesResponse, error) {
 	expReq := apiv1.UnarchiveExperimentsRequest{
 		ExperimentIds: req.SearchIds,
-		Filters:       BulkFiltersSearchtToExperiment(req.Filters),
+		Filters:       BulkFiltersSearchToExperiment(req.Filters),
 		ProjectId:     req.ProjectId,
 	}
 	expRes, err := a.UnarchiveExperiments(ctx, &expReq)
@@ -429,7 +429,7 @@ func (a *apiServer) DeleteSearches(ctx context.Context, req *apiv2.DeleteSearche
 ) (*apiv2.DeleteSearchesResponse, error) {
 	expReq := apiv1.DeleteExperimentsRequest{
 		ExperimentIds: req.SearchIds,
-		Filters:       BulkFiltersSearchtToExperiment(req.Filters),
+		Filters:       BulkFiltersSearchToExperiment(req.Filters),
 		ProjectId:     req.ProjectId,
 	}
 	expRes, err := a.DeleteExperiments(ctx, &expReq)
