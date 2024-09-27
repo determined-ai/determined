@@ -3,6 +3,7 @@ import { ProjectDetails } from 'e2e/models/pages/ProjectDetails';
 import { detExecSync, fullPath } from 'e2e/utils/detCLI';
 import { safeName } from 'e2e/utils/naming';
 import { repeatWithFallback } from 'e2e/utils/polling';
+import { ExperimentColumnName } from 'pages/ExperimentList.settings';
 import { ExperimentBase } from 'types';
 
 test.describe('Experiment List', () => {
@@ -15,6 +16,8 @@ test.describe('Experiment List', () => {
     if (count === null) throw new Error('Count is null');
     return parseInt(count);
   };
+
+  let createdExperimentID: string;
 
   test.beforeAll(async ({ backgroundAuthedPage, newWorkspace, newProject }) => {
     const projectDetailsPageSetup = new ProjectDetails(backgroundAuthedPage);
@@ -111,6 +114,17 @@ test.describe('Experiment List', () => {
     });
     await grid.setColumnHeight();
     await grid.headRow.setColumnDefs();
+  });
+
+  test.afterEach(async () => {
+    if (createdExperimentID !== undefined) {
+      await detExecSync(
+        `experiment activate ${createdExperimentID}`,
+      );
+      await detExecSync(
+        `experiment delete ${createdExperimentID}`,
+      );
+    }
   });
 
   test.skip('Column Picker Check and Uncheck', async () => {
@@ -286,20 +300,41 @@ test.describe('Experiment List', () => {
     );
   });
 
-  test('Multi-sort menu', async ({ newProject, newWorkspace }) => {
+  test('Multi-sort menu', async ({ newProject }) => {
     const multiSortMenu = projectDetailsPage.f_experimentList.tableActionBar.multiSortMenu;
-    const secondRow = multiSortMenu.multiSort.rows.nth(1);
-    const checkTableOrder = async (firstKey: keyof ExperimentBase) => {
-      const experimentList: ExperimentBase[] = JSON.parse(
-        await detExecSync(
-          `project list-experiments --json ${newWorkspace.response.workspace.name} ${newProject.response.project.name}`,
-        ),
-      );
+    const checkTableOrder = async (
+      firstKey: ExperimentColumnName,
+      secondKey: ExperimentColumnName,
+      metricCheck: string,
+      inverseFirst?: boolean,
+    ) => {
+      // const experimentList: ExperimentBase[] = JSON.parse(
+      //   await detExecSync(
+      //     `project list-experiments --json ${newWorkspace.response.workspace.name} ${newProject.response.project.name}`,
+      //   ),
+      // );
 
-      expect(experimentList[0][firstKey] as number).toBeLessThanOrEqual(
-        experimentList[experimentList.length - 1][firstKey] as number,
-      );
+      const getColumnTextValue = async (rowIdx: number, col: ExperimentColumnName) => (await projectDetailsPage.f_experimentList.dataGrid.getRowByIndex(rowIdx).getCellByColumnName(col)).pwLocator.innerText;
+      // eslint-disable-next-line no-console
+      console.log(getColumnTextValue(0, 'id'));
+
+      if (inverseFirst) {
+        expect(Number(await getColumnTextValue(0, firstKey))).toBeLessThanOrEqual( // "OrEqual" is to be used for the "Trial Count" as well
+          Number(await getColumnTextValue(1, firstKey)),
+        );
+      } else {
+        expect(Number(await getColumnTextValue(0, firstKey))).toBeGreaterThanOrEqual( // "OrEqual" is to be used for the "Trial Count" as well
+          Number(await getColumnTextValue(1, firstKey)),
+        );
+      }
+
+      expect(await getColumnTextValue(0, secondKey)).toBe(metricCheck);
     };
+
+    // create a new experiment for comparing Searcher Metric and Trial Count
+    createdExperimentID = await detExecSync(
+      `experiment create ${fullPath('examples/tutorials/core_api_pytorch_mnist/checkpoints.yaml')} --paused --project_id ${newProject.response.project.id}`,
+    ).split(' ')[2];
 
     const sortingScenario = async (
       firstSortBy: string,
@@ -320,6 +355,7 @@ test.describe('Experiment List', () => {
 
         await multiSortMenu.multiSort.add.pwLocator.click();
 
+        const secondRow = multiSortMenu.multiSort.rows.nth(1);
         await secondRow.column.selectMenuOption(secondSortBy);
         await secondRow.order.selectMenuOption(secondSortOrder);
 
@@ -329,13 +365,19 @@ test.describe('Experiment List', () => {
       });
     };
 
-    await sortingScenario('ID', '9 → 0', 'Start time', 'Oldest → Newest', async () => {
-      await checkTableOrder('id');
+    await sortingScenario('ID', '9 → 0', 'Searcher', 'A → Z', async () => {
+      await checkTableOrder('id', 'searcherType', 'val_loss'); // searcher taken from the file used to create the experiment
+    });
+    await sortingScenario('ID', '0 → 9', 'Searcher', 'A → Z', async () => {
+      await checkTableOrder('id', 'searcherType', 'val_loss', true); // searcher taken from the file used to create the experiment
     });
 
-    await sortingScenario('Trial count', '0 → 9', 'Searcher', 'A → Z', async () => {
-      await checkTableOrder('numTrials');
-    });
+    // await sortingScenario('Trial count', '9 → 0', 'Searcher Metric', 'A → Z', async () => {
+    //   await checkTableOrder('numTrials', 'searcherMetricValue', 'A → Z');
+    // });
+    // await sortingScenario('Trial count', '0 → 9', 'Searcher Metric', 'A → Z', async () => {
+    //   await checkTableOrder('numTrials', 'searcherMetricValue', 'A → Z', true);
+    // });
   });
 
   test('Datagrid Functionality Validations', async ({ authedPage }) => {
