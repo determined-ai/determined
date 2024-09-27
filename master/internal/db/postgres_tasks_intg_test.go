@@ -737,7 +737,7 @@ func TestTaskLogsFlow(t *testing.T) {
 	logs, _, err = db.TaskLogs(t1In.TaskID, 5, []api.Filter{{
 		Field:     "log",
 		Operation: api.FilterOperationStringContainment,
-		Values:    []string{"^this"},
+		Values:    []string{"^th.s"},
 	}}, apiv1.OrderBy_ORDER_BY_UNSPECIFIED, nil)
 	require.NoError(t, err)
 	require.Empty(t, logs)
@@ -745,7 +745,7 @@ func TestTaskLogsFlow(t *testing.T) {
 	logs, _, err = db.TaskLogs(t1In.TaskID, 5, []api.Filter{{
 		Field:     "log",
 		Operation: api.FilterOperationRegexContainment,
-		Values:    []string{"^this"},
+		Values:    []string{"^th.s"},
 	}}, apiv1.OrderBy_ORDER_BY_UNSPECIFIED, nil)
 	require.NoError(t, err)
 	require.Len(t, logs, 2)
