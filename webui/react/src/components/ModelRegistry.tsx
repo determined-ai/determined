@@ -597,6 +597,7 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
         defaultWidth: DEFAULT_COLUMN_WIDTHS['action'],
         fixed: 'right',
         key: 'action',
+        onCell: () => ({ ...onRightClickableCell(), 'data-testid': 'actions' }),
         render: actionRenderer,
         title: '',
         width: DEFAULT_COLUMN_WIDTHS['action'],
@@ -704,7 +705,9 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
             <FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />
           )}
           {canCreateModels ? (
-            <Button onClick={showCreateModelModal}>New Model</Button>
+            <div data-testid="new-model-button">
+              <Button onClick={showCreateModelModal}>New Model</Button>
+            </div>
           ) : (
             <Tooltip content="User lacks permission to create models" placement="leftBottom">
               <div>
