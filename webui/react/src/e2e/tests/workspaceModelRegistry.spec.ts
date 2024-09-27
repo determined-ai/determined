@@ -55,7 +55,9 @@ test.describe('Workspace Model Registry', () => {
       await (await firstRow.actions.open()).delete.pwLocator.click();
       await modelRegistry.modelDeleteModal.deleteButton.pwLocator.click();
 
-      await backgroundAuthedPage.reload();
+      await workspaceDetails.gotoWorkspace(workspace?.id);
+      await workspaceDetails.modelRegistryTab.pwLocator.click();
+
       await modelRegistry.noModelsMessage.pwLocator.waitFor();
     });
 
@@ -72,17 +74,21 @@ test.describe('Workspace Model Registry', () => {
     const modelRegistry = workspaceDetails.modelRegistry;
     const firstRow = modelRegistry.table.table.rows.nth(0);
 
-    await workspaceDetails.gotoWorkspace(newWorkspace.response.workspace.id);
-    await workspaceDetails.modelRegistryTab.pwLocator.click();
+    await test.step('Archive', async () => {
+      await workspaceDetails.gotoWorkspace(newWorkspace.response.workspace.id);
+      await workspaceDetails.modelRegistryTab.pwLocator.click();
 
-    await (await firstRow.actions.open()).switchArchived.pwLocator.click();
-    await modelRegistry.noModelsMessage.pwLocator.waitFor();
+      await (await firstRow.actions.open()).switchArchived.pwLocator.click();
+      await modelRegistry.noModelsMessage.pwLocator.waitFor();
 
-    await modelRegistry.showArchived.switch.pwLocator.click();
-    await firstRow.archivedIcon.pwLocator.waitFor();
+      await modelRegistry.showArchived.switch.pwLocator.click();
+      await firstRow.archivedIcon.pwLocator.waitFor();
+    });
 
-    await (await firstRow.actions.open()).switchArchived.pwLocator.click();
-    await firstRow.archivedIcon.pwLocator.waitFor({ state: 'hidden' });
+    await test.step('Unarchive', async () => {
+      await (await firstRow.actions.open()).switchArchived.pwLocator.click();
+      await firstRow.archivedIcon.pwLocator.waitFor({ state: 'hidden' });
+    });
   });
 
   test('Move', async ({ backgroundApiWorkspace, newWorkspace, authedPage }) => {
@@ -90,31 +96,38 @@ test.describe('Workspace Model Registry', () => {
     const modelRegistry = workspaceDetails.modelRegistry;
     const firstRow = modelRegistry.table.table.rows.nth(0);
 
-    const destinationWorkspace = (
-      await backgroundApiWorkspace.createWorkspace(backgroundApiWorkspace.new())
-    ).workspace;
-    workspaces.set('destination', destinationWorkspace);
+    await test.step('Create destination workspace', async () => {
+      const destinationWorkspace = (
+        await backgroundApiWorkspace.createWorkspace(backgroundApiWorkspace.new())
+      ).workspace;
+      workspaces.set('destination', destinationWorkspace);
+    });
 
-    await workspaceDetails.gotoWorkspace(newWorkspace.response.workspace.id);
-    await workspaceDetails.modelRegistryTab.pwLocator.click();
+    await test.step('Move model to destination workspace', async () => {
+      await workspaceDetails.gotoWorkspace(newWorkspace.response.workspace.id);
+      await workspaceDetails.modelRegistryTab.pwLocator.click();
 
-    await (await firstRow.actions.open()).move.pwLocator.click();
+      await (await firstRow.actions.open()).move.pwLocator.click();
 
-    await modelRegistry.modelMoveModal.workspaceSelect.pwLocator.fill(destinationWorkspace.name);
-    await modelRegistry.modelMoveModal.workspaceSelect.pwLocator.press('Enter');
+      const destinationWorkspaceName = workspaces.get('destination')?.name ?? '';
+      await modelRegistry.modelMoveModal.workspaceSelect.pwLocator.fill(destinationWorkspaceName);
+      await modelRegistry.modelMoveModal.workspaceSelect.pwLocator.press('Enter');
 
-    await modelRegistry.modelMoveModal.footer.submit.pwLocator.click();
+      await modelRegistry.modelMoveModal.footer.submit.pwLocator.click();
 
-    await expect(modelRegistry.notification.description.pwLocator).toContainText(
-      `${modelName} moved to workspace ${destinationWorkspace.name}`,
-    );
+      await expect(modelRegistry.notification.description.pwLocator).toContainText(
+        `${modelName} moved to workspace ${workspaces.get('destination')?.name}`,
+      );
 
-    await authedPage.reload();
-    await modelRegistry.noModelsMessage.pwLocator.waitFor();
+      await authedPage.reload();
+      await modelRegistry.noModelsMessage.pwLocator.waitFor();
+    });
 
-    await workspaceDetails.gotoWorkspace(destinationWorkspace.id);
-    await workspaceDetails.modelRegistryTab.pwLocator.click();
+    await test.step('Check destination workspace', async () => {
+      await workspaceDetails.gotoWorkspace(workspaces.get('destination')?.id);
+      await workspaceDetails.modelRegistryTab.pwLocator.click();
 
-    await expect(firstRow.name.pwLocator).toContainText(modelName);
+      await expect(firstRow.name.pwLocator).toContainText(modelName);
+    });
   });
 });
