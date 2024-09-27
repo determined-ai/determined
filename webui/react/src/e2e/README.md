@@ -57,6 +57,10 @@ CI is setup as `test-e2e-react` in `.circleci/config.yml`.
 
 Run individual tests on ci with `e2e-react` `-g [your test]`.
 
+you can also run using the following script (which will run your test, but with the UI open)
+
+`npx playwright test -g "[your_test]" --ui`
+
 ![trigger pipeline](./docs/images/trigger-pipeline.png)
 
 ### Environment

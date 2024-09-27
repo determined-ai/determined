@@ -116,17 +116,6 @@ test.describe('Experiment List', () => {
     await grid.headRow.setColumnDefs();
   });
 
-  test.afterEach(async () => {
-    if (createdExperimentID !== undefined) {
-      await detExecSync(
-        `experiment activate ${createdExperimentID}`,
-      );
-      await detExecSync(
-        `experiment delete ${createdExperimentID}`,
-      );
-    }
-  });
-
   test.skip('Column Picker Check and Uncheck', async () => {
     // BUG [ET-287]
     const columnTitle = 'Forked From',
