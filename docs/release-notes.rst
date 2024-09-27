@@ -17,12 +17,12 @@ Version 0.37.0
 
 **Breaking Changes**
 
--  API: Remove the ``model_hub`` library from determined.
+-  API: Remove the ``model_hub`` library from Determined.
 
 -  Starting with this release, ``MMDetTrial`` and ``BaseTransformerTrial`` are removed. HuggingFace users
       should refer to the provided `HuggingFace TrainerAPI examples
-      <https://github.com/determined-ai/determined/tree/main/examples/hf_trainer_api>`__, which use a
-      custom callback instead of BaseTransformerTrial. Users of ``MMDetTrial`` can refer to
+      <https://github.com/determined-ai/determined/tree/main/examples/hf_trainer_api>`__, which use
+      a custom callback instead of BaseTransformerTrial. Users of ``MMDetTrial`` can refer to
       :ref:`Core API <api-core-ug>`.
 
 **New Features**
