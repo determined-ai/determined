@@ -706,9 +706,9 @@ const ModelRegistry: React.FC<Props> = ({ workspace }: Props) => {
             <FilterCounter activeFilterCount={filterCount} onReset={resetFilters} />
           )}
           {canCreateModels ? (
-            <div data-testid="new-model-button">
-              <Button onClick={showCreateModelModal}>New Model</Button>
-            </div>
+            <Button test-id="new-model-button" onClick={showCreateModelModal}>
+              New Model
+            </Button>
           ) : (
             <Tooltip content="User lacks permission to create models" placement="leftBottom">
               <div>

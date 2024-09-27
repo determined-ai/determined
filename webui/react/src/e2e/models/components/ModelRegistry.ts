@@ -63,7 +63,7 @@ export class ModelRegistry extends BaseReactFragment {
   });
   readonly newModelButton = new BaseComponent({
     parent: this,
-    selector: '[data-testid="new-model-button"]',
+    selector: '[test-id="new-model-button"]',
   });
   readonly modelCreateModal = new ModelCreateModal({
     root: this.root,
