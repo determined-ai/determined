@@ -54,10 +54,9 @@ test.describe('Workspace Model Registry', () => {
 
       await (await firstRow.actions.open()).delete.pwLocator.click();
       await modelRegistry.modelDeleteModal.deleteButton.pwLocator.click();
+      await modelRegistry.modelDeleteModal.pwLocator.waitFor({ state: 'hidden' });
 
-      await workspaceDetails.gotoWorkspace(workspace?.id);
-      await workspaceDetails.modelRegistryTab.pwLocator.click();
-
+      await backgroundAuthedPage.reload();
       await modelRegistry.noModelsMessage.pwLocator.waitFor();
     });
 
