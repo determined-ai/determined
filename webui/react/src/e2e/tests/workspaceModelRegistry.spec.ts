@@ -19,7 +19,17 @@ test.describe('Workspace Model Registry', () => {
     await workspaceDetails.modelRegistryTab.pwLocator.click();
 
     await modelRegistry.newModelButton.pwLocator.click();
-    await modal.modelName.pwLocator.fill(modelName);
+
+    await modal.addMoreDetails.pwLocator.click();
+    await modal.addMetadatButton.pwLocator.click();
+    await modal.addTagButton.pwLocator.click();
+
+    await modal.name.pwLocator.fill(modelName);
+    await modal.description.pwLocator.fill(modelName + ' description');
+    await modal.metadataKey.pwLocator.fill('metadata_key');
+    await modal.metadataValue.pwLocator.fill('metadata_value');
+    await modal.tag.pwLocator.fill('tag');
+
     await modal.footer.submit.pwLocator.click();
 
     await expect(modelRegistry.notification.description.pwLocator).toContainText(
