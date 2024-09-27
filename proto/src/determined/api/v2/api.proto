@@ -99,6 +99,41 @@ service Determined {
     };
   }
 
+  // Get the list of searcher events.
+  rpc GetSearcherEventsV2(GetSearcherEventsV2Request)
+      returns (GetSearcherEventsV2Response) {
+    option (google.api.http) = {
+      get: "/api/v2/searches/{search_id}/searcher_events"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Searches"
+    };
+  }
+
+  // Submit operations to a custom searcher.
+  rpc PostSearcherOperationsV2(PostSearcherOperationsV2Request)
+      returns (PostSearcherOperationsV2Response) {
+    option (google.api.http) = {
+      post: "/api/v2/searches/{search_id}/searcher_operations"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Searches"
+    };
+  }
+
+  // Retain logs for a search.
+  rpc PutSearchRetainLogs(PutSearchRetainLogsRequest)
+      returns (PutSearchRetainLogsResponse) {
+    option (google.api.http) = {
+      put: "/api/v1/search/{search_id}/retain_logs"
+      body: "*"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Searches"
+    };
+  }
+
   // Resume a search.
   rpc ResumeSearch(ResumeSearchRequest) returns (ResumeSearchResponse) {
     option (google.api.http) = {

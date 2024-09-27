@@ -10,6 +10,7 @@ import "protoc-gen-swagger/options/annotations.proto";
 
 import "determined/job/v2/job.proto";
 import "determined/search/v2/search.proto";
+import "determined/experiment/v1/searcher.proto";
 import "determined/api/v1/experiment.proto";
 
 // Get a single search.
@@ -87,6 +88,46 @@ message DeleteSearchTagResponse {
   // The complete list of tags associated with the search.
   repeated string tags = 1;
 }
+
+// Request to get the list of searcher events.
+message GetSearcherEventsV2Request {
+  // The ID of the search.
+  int32 search_id = 1;
+}
+
+// Response to GetSearcherEventsV2Request.
+message GetSearcherEventsV2Response {
+  // The list of events in the queue.
+  repeated determined.experiment.v1.SearcherEvent searcher_events = 1;
+}
+
+// Request for sending operations from a custom search method.
+message PostSearcherOperationsV2Request {
+  // The experiment ID.
+  int32 search_id = 1;
+  // List of operations to submit.
+  repeated determined.experiment.v1.SearcherOperation searcher_operations = 2;
+  // The event that triggered the client to send these operations to the master.
+  determined.experiment.v1.SearcherEvent triggered_by_event = 3;
+}
+
+// Response to PostSearcherOperationsV2Response.
+message PostSearcherOperationsV2Response {}
+
+// Request for changing the log retention policy for the an search.
+message PutSearchRetainLogsRequest {
+  option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
+    json_schema: { required: [ "search_id", "num_days" ] }
+  };
+  // The ID of the search.
+  int32 search_id = 1;
+
+  // The number of days to retain logs, starting from the end time of the task.
+  int32 num_days = 2;
+}
+
+// Response to PutSearchRetainLogsRequest.
+message PutSearchRetainLogsResponse {}
 
 // Resume an search.
 message ResumeSearchRequest {

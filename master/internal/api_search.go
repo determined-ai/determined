@@ -170,6 +170,51 @@ func (a *apiServer) DeleteSearchTag(
 	return &res, nil
 }
 
+func (a *apiServer) GetSearcherEventsV2(
+	ctx context.Context, req *apiv2.GetSearcherEventsV2Request,
+) (*apiv2.GetSearcherEventsV2Response, error) {
+	expReq := apiv1.GetSearcherEventsRequest{
+		ExperimentId: req.SearchId,
+	}
+	expRes, err := a.GetSearcherEvents(ctx, &expReq)
+	if err != nil {
+		return nil, err
+	}
+	res := apiv2.GetSearcherEventsV2Response{
+		SearcherEvents: expRes.SearcherEvents,
+	}
+	return &res, nil
+}
+
+func (a *apiServer) PostSearcherOperationsV2(
+	ctx context.Context, req *apiv2.PostSearcherOperationsV2Request,
+) (*apiv2.PostSearcherOperationsV2Response, error) {
+	expReq := apiv1.PostSearcherOperationsRequest{
+		ExperimentId: req.SearchId,
+	}
+	_, err := a.PostSearcherOperations(ctx, &expReq)
+	if err != nil {
+		return nil, err
+	}
+	res := apiv2.PostSearcherOperationsV2Response{}
+	return &res, nil
+}
+
+func (a *apiServer) PutSearchRetainLogs(
+	ctx context.Context, req *apiv2.PutSearchRetainLogsRequest,
+) (*apiv2.PutSearchRetainLogsResponse, error) {
+	expReq := apiv1.PutExperimentRetainLogsRequest{
+		ExperimentId: req.SearchId,
+		NumDays:      req.NumDays,
+	}
+	_, err := a.PutExperimentRetainLogs(ctx, &expReq)
+	if err != nil {
+		return nil, err
+	}
+	res := apiv2.PutSearchRetainLogsResponse{}
+	return &res, nil
+}
+
 func BulkFiltersSearchtToExperiment(filter *apiv2.BulkSearchFilters) *apiv1.BulkExperimentFilters {
 	states := []experimentv1.State{}
 	for _, e := range filter.States {

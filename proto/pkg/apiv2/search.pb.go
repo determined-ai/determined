@@ -6,6 +6,7 @@ package apiv2
 
 import (
 	apiv1 "github.com/determined-ai/determined/proto/pkg/apiv1"
+	experimentv1 "github.com/determined-ai/determined/proto/pkg/experimentv1"
 	jobv2 "github.com/determined-ai/determined/proto/pkg/jobv2"
 	searchv2 "github.com/determined-ai/determined/proto/pkg/searchv2"
 	_struct "github.com/golang/protobuf/ptypes/struct"
