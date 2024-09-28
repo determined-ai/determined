@@ -79,7 +79,7 @@ func TestValidateNTSCConstraints(t *testing.T) {
 		config := defaultConfig()
 		_, err := CheckNTSCConstraints(ctx, w.ID, config, &resourceManager)
 		require.Error(t, err)
-		require.ErrorIs(t, err, ErrPriorityConstraintFailure)
+		require.ErrorIs(t, err, errPriorityConstraintFailure)
 	})
 
 	t.Run("running in wksp without constraints - ok", func(t *testing.T) {
@@ -108,7 +108,7 @@ func TestValidateNTSCConstraints(t *testing.T) {
 		config := defaultConfig()
 		_, err = CheckNTSCConstraints(context.Background(), w.ID, config, &resourceManager)
 		require.Error(t, err)
-		require.ErrorIs(t, err, ErrResourceConstraintFailure)
+		require.ErrorIs(t, err, errResourceConstraintFailure)
 	})
 
 	t.Run("rm priority not supported - ok", func(t *testing.T) {
@@ -119,7 +119,7 @@ func TestValidateNTSCConstraints(t *testing.T) {
 		config := defaultConfig()
 		_, err := CheckNTSCConstraints(context.Background(), w.ID, config, &rm1)
 		require.Error(t, err)
-		require.ErrorIs(t, err, ErrPriorityConstraintFailure)
+		require.ErrorIs(t, err, errPriorityConstraintFailure)
 
 		// Validate constraints again. This time, the RM does not support priority.
 		rmNoPriority := mocks.ResourceManager{}

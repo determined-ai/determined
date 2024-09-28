@@ -1833,6 +1833,9 @@ func TestAuthZGetExperimentAndCanDoActions(t *testing.T) {
 				mock.Anything).Return(nil).Once()
 			workspaceAuthZ.On("CanGetWorkspace", mock.Anything, mock.Anything, mock.Anything).
 				Return(nil).Once()
+			mockRM := MockRM()
+			mockRM.On("SmallerValueIsHigherPriority", mock.Anything).Return(true, nil)
+			api.m.rm = mockRM
 			_, err := api.LaunchTensorboard(ctx, &apiv1.LaunchTensorboardRequest{
 				ExperimentIds: []int32{int32(id)},
 			})

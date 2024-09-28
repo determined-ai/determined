@@ -32,8 +32,8 @@ type NTSCConfigPolicies struct {
 }
 
 var (
-	ErrPriorityConstraintFailure = errors.New("submitted workload failed priority constraint")
-	ErrResourceConstraintFailure = errors.New("submitted workload failed a resource constraint")
+	errPriorityConstraintFailure = errors.New("submitted workload failed priority constraint")
+	errResourceConstraintFailure = errors.New("submitted workload failed a resource constraint")
 )
 
 // CheckNTSCConstraints returns true if the NTSC config passes constraint checks.
@@ -49,12 +49,13 @@ func CheckNTSCConstraints(
 	}
 
 	// For each submitted constraint, check if the workload config is within allowed values.
-	// rm.SmallerValueIsHigherPriority only returns nil if priority is not implemented for that resource manager. In that case, there is no need to check if requested priority is within limits.
+	// rm.SmallerValueIsHigherPriority only returns nil if priority is not implemented for that resource manager.
+	// In that case, there is no need to check if requested priority is within limits.
 	smallerHigher, err := resourceManager.SmallerValueIsHigherPriority()
 	if err == nil && constraints.PriorityLimit != nil && workloadConfig.Resources.Priority != nil {
 		if !priorityWithinLimit(*workloadConfig.Resources.Priority, *constraints.PriorityLimit, smallerHigher) {
 			return false, fmt.Errorf("requested priority [%d] exceeds limit set by admin [%d]: %w",
-				*constraints.PriorityLimit, *workloadConfig.Resources.Priority, ErrPriorityConstraintFailure)
+				*constraints.PriorityLimit, *workloadConfig.Resources.Priority, errPriorityConstraintFailure)
 		}
 	}
 
@@ -62,7 +63,7 @@ func CheckNTSCConstraints(
 		workloadConfig.Resources.MaxSlots != nil {
 		if *constraints.ResourceConstraints.MaxSlots < *workloadConfig.Resources.MaxSlots {
 			return false, fmt.Errorf("requested resources.max_slots [%d] exceeds limit set by admin [%d]: %w",
-				*constraints.ResourceConstraints.MaxSlots, *workloadConfig.Resources.MaxSlots, ErrResourceConstraintFailure)
+				*constraints.ResourceConstraints.MaxSlots, *workloadConfig.Resources.MaxSlots, errResourceConstraintFailure)
 		}
 	}
 
