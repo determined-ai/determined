@@ -5,6 +5,8 @@ from determined.experimental import client
 from tests import api_utils
 from tests import experiment as exp
 from tests.experiment import noop
+from tests import detproc
+from tests.cluster import utils
 
 
 @pytest.mark.e2e_cpu
@@ -16,7 +18,7 @@ def test_log_policy_cancel_retries(should_match: bool) -> None:
         regex = r"(.*) this should not match (.*)"
 
     config = {
-        "log_policies": [{"pattern": regex, "action": {"type": "cancel_retries"}}],
+        "log_policies": [{"pattern": regex, "actions": [{"type": "cancel_retries"}]}],
         "max_restarts": 1,
     }
     exp_ref = noop.create_experiment(sess, [noop.Exit(7)], config=config)
@@ -152,3 +154,81 @@ def test_log_policy_exclude_slurm(should_match: bool) -> None:
         )  # Job fails to start up the second restart since all nodes are excluded.
     else:
         assert times_ran == 2
+
+
+@pytest.mark.e2e_cpu
+@pytest.mark.parametrize("should_match", [True, False])
+def test_log_signal(should_match: bool) -> None:
+    sess = api_utils.user_session()
+    regex = r"executing.*action.*exit.*code.*7"
+    if not should_match:
+        regex = r"(.*) this should not match (.*)"
+
+    expected_signal = "Test Signal"
+    config = {
+        "log_policies": [{"pattern": regex, "signal": expected_signal}],
+        "max_restarts": 1,
+    }
+
+    exp_ref = noop.create_experiment(sess, [noop.Exit(7)], config=config)
+    assert exp_ref.wait(interval=0.01) == client.ExperimentState.ERROR
+    
+
+    searchRes = utils.get_run_by_exp_id(sess, exp_ref.id)
+    runSignal = searchRes.runs[0].logSignal
+
+    trialRes = bindings.get_GetTrial(
+        sess,
+        trialId = searchRes.runs[0].id
+    )
+    trialSignal = trialRes.trial.logSignal
+
+
+    if should_match:
+        assert runSignal == expected_signal
+        assert trialSignal == expected_signal
+    else:
+        assert runSignal is None
+        assert trialSignal is None
+
+@pytest.mark.e2e_cpu
+def test_signal_clear_after_exp_continue() -> None:
+    sess = api_utils.user_session()
+    regex = r"executing.*action.*exit.*code.*7"
+
+    expected_signal = "Test Signal"
+    config = {
+        "log_policies": [{"pattern": regex, "signal": expected_signal}],
+        "max_restarts": 0,
+    }
+
+    exp_ref = noop.create_experiment(sess, [noop.Exit(7)], config=config)
+    assert exp_ref.wait(interval=0.01) == client.ExperimentState.ERROR
+
+    searchRes = utils.get_run_by_exp_id(sess, exp_ref.id)
+    runSignal = searchRes.runs[0].logSignal
+
+    trialRes = bindings.get_GetTrial(
+        sess,
+        trialId = searchRes.runs[0].id
+    )
+    trialSignal = trialRes.trial.logSignal
+
+    assert runSignal == expected_signal
+    assert trialSignal == expected_signal
+
+
+    detproc.check_call(sess, ["det", "e", "continue", str(exp_ref.id), "--config", "hyperparameters.crash_on_startup=false"])
+    exp.wait_for_experiment_state(sess, exp_ref.id, bindings.experimentv1State.COMPLETED)
+
+    searchRes = utils.get_run_by_exp_id(sess, exp_ref.id)
+    runSignal = searchRes.runs[0].logSignal
+
+    trialRes = bindings.get_GetTrial(
+        sess,
+        trialId = searchRes.runs[0].id
+    )
+    trialSignal = trialRes.trial.logSignal
+
+    assert runSignal == None
+    assert trialSignal == None

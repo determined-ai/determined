@@ -1570,8 +1570,6 @@ var (
     "title": "LogPolicy",
     "additionalProperties": false,
     "required": [
-        "pattern",
-        "action"
     ],
     "type": "object",
     "properties": {
@@ -1582,9 +1580,16 @@ var (
         },
         "action": {
             "type": [
-                "object"
+                "object",
+                "null"
             ],
-            "$ref": "http://determined.ai/schemas/expconf/v0/log-action.json"
+            "$ref": "http://determined.ai/schemas/expconf/v0/log-action.json",
+            "default": null
+        },
+        "signal": {
+            "type": [
+                "string"
+            ]
         }
     }
 }

@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/determined-ai/determined/master/pkg/ptrs"
+	"github.com/uptrace/bun"
 
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
@@ -19,6 +20,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
+	"github.com/determined-ai/determined/master/internal/db"
 	internaldb "github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/mocks/allocationmocks"
@@ -185,4 +187,81 @@ func setup(t *testing.T) (
 	)
 	require.NoError(t, err)
 	return a.m.db, rID, tr, &as, done
+}
+
+func TestClearLogSignalAfterTrialRestarts(t *testing.T) {
+	_, rID, tr, _, done := setup(t)
+	// Pre-scheduled stage.
+	require.NoError(t, tr.PatchState(
+		model.StateWithReason{State: model.ActiveState}))
+	require.NoError(t, tr.PatchSearcherState(experiment.TrialSearcherState{
+		Create: searcher.Create{RequestID: rID},
+		Op: searcher.ValidateAfter{
+			RequestID: rID,
+			Length:    10,
+		},
+		Complete: false,
+		Closed:   true,
+	}))
+
+	signal := "Test signal"
+	_, err := internaldb.Bun().NewUpdate().Model(&model.Task{}).
+		Table("run_id_task_id").
+		Set("log_signal = ?", signal).
+		Where("run_id_task_id.run_id = ?", tr.id).
+		Where("task.task_id = run_id_task_id.task_id").
+		Exec(context.Background())
+	require.NoError(t, err)
+
+	_, err = internaldb.Bun().NewUpdate().Model(&model.Run{}).
+		Set("log_signal = ?", signal).
+		Where("id = ?", tr.id).
+		Exec(context.Background())
+	require.NoError(t, err)
+
+	// Restart
+	tr.AllocationExitedCallback(&task.AllocationExited{Err: fmt.Errorf("bad stuff went down")})
+
+	// Verity log signal is reset after restart
+	runsOut := struct {
+		bun.BaseModel `bun:"table:runs"`
+		LogSignal     *string `db:"log_signal"`
+	}{}
+
+	err = db.Bun().NewSelect().Model(&runsOut).
+		Where("id = ?", tr.id).
+		Scan(context.Background())
+	require.NoError(t, err)
+	require.NotNil(t, runsOut)
+	require.Nil(t, runsOut.LogSignal)
+
+	tasksOut := struct {
+		bun.BaseModel `bun:"table:tasks"`
+		LogSignal     *string `db:"log_signal"`
+	}{}
+	err = db.Bun().NewSelect().Model(&tasksOut).
+		Join("LEFT JOIN run_id_task_id AS rt on tasks.task_id = rt.task_id").
+		Where("run_id = ?", tr.id).
+		Scan(context.Background())
+	require.NoError(t, err)
+	require.NotNil(t, tasksOut)
+	require.Nil(t, tasksOut.LogSignal)
+
+	// Running and Terminating stage.
+	require.NoError(t, tr.PatchSearcherState(experiment.TrialSearcherState{
+		Create: searcher.Create{RequestID: rID},
+		Op: searcher.ValidateAfter{
+			RequestID: rID,
+			Length:    10,
+		},
+		Complete: true,
+		Closed:   true,
+	}))
+	tr.AllocationExitedCallback(&task.AllocationExited{})
+	select {
+	case <-done: // success
+	case <-time.After(5 * time.Second):
+		require.Error(t, fmt.Errorf("timed out waiting for trial to terminate"))
+	}
+	require.True(t, model.TerminalStates[tr.state])
 }
