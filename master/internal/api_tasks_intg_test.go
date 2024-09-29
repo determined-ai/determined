@@ -218,11 +218,11 @@ func TestPostTaskLogsLogPattern(t *testing.T) {
 
 	activeConfig, err := api.m.db.ActiveExperimentConfig(trial.ExperimentID)
 	require.NoError(t, err)
-	activeConfig.RawLogPolicies = expconf.LogPoliciesConfig{
-		expconf.LogPolicy{RawPattern: "sub", RawAction: expconf.LogAction{
+	activeConfig.RawLogPolicies = &expconf.LogPoliciesConfig{
+		expconf.LogPolicy{RawPattern: "sub", RawAction: &expconf.LogAction{
 			RawCancelRetries: &expconf.LogActionCancelRetries{},
 		}},
-		expconf.LogPolicy{RawPattern: `\d{5}$`, RawAction: expconf.LogAction{
+		expconf.LogPolicy{RawPattern: `\d{5}$`, RawAction: &expconf.LogAction{
 			RawExcludeNode: &expconf.LogActionExcludeNode{},
 		}},
 	}
@@ -442,4 +442,157 @@ func TestGetAllocationAcceleratorData(t *testing.T) {
 		aID1.String(), "failed to get the correct allocation's accelerator data")
 	require.Equal(t, resp.AcceleratorData[0].ResourcePool,
 		a1.ResourcePool, "failed to get the correct allocation's resource pool data")
+}
+
+func TestPostTaskLogsLogSignalDataSaving(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	trial, task := createTestTrial(t, api, curUser)
+
+	activeConfig, err := api.m.db.ActiveExperimentConfig(trial.ExperimentID)
+	require.NoError(t, err)
+
+	signal := "sub"
+	activeConfig.RawLogPolicies = &expconf.LogPoliciesConfig{
+		expconf.LogPolicy{RawPattern: "sub", RawSignal: &signal},
+		expconf.LogPolicy{RawPattern: `\d{5}$`},
+	}
+
+	v, err := json.Marshal(activeConfig)
+	require.NoError(t, err)
+
+	var m map[string]any
+	require.NoError(t, json.Unmarshal(v, &m))
+
+	_, err = db.Bun().NewUpdate().Table("experiments").
+		Where("id = ?", trial.ExperimentID).
+		Set("config = ?", m).
+		Exec(ctx)
+	require.NoError(t, err)
+
+	_, err = api.PostTaskLogs(ctx, &apiv1.PostTaskLogsRequest{
+		Logs: []*taskv1.TaskLog{
+			{
+				TaskId:  string(task.TaskID),
+				AgentId: ptrs.Ptr("a1"),
+				Log:     "stringsubstring",
+			},
+			{
+				TaskId:  string(task.TaskID),
+				AgentId: ptrs.Ptr("a1"),
+				Log:     "12345",
+			},
+		},
+	})
+	require.NoError(t, err)
+
+	runsOut := struct {
+		bun.BaseModel `bun:"table:runs"`
+		LogSignal     *string `db:"log_signal"`
+	}{}
+
+	err = db.Bun().NewSelect().Model(&runsOut).
+		Where("id = ?", trial.ID).
+		Scan(ctx)
+	require.NoError(t, err)
+	require.NotNil(t, runsOut)
+	require.NotNil(t, runsOut.LogSignal)
+
+	require.Equal(t, "sub", *runsOut.LogSignal)
+
+	tasksOut := struct {
+		bun.BaseModel `bun:"table:tasks"`
+		LogSignal     *string `db:"log_signal"`
+	}{}
+	err = db.Bun().NewSelect().Model(&tasksOut).
+		Join("LEFT JOIN run_id_task_id AS rt on tasks.task_id = rt.task_id").
+		Where("run_id = ?", trial.ID).
+		Scan(ctx)
+	require.NoError(t, err)
+	require.NotNil(t, tasksOut)
+	require.NotNil(t, tasksOut.LogSignal)
+
+	require.Equal(t, "sub", *tasksOut.LogSignal)
+}
+
+func TestPostTaskLogsDefaultLogSignal(t *testing.T) {
+	api, curUser, ctx := setupAPITest(t, nil)
+	trial, task := createTestTrial(t, api, curUser)
+
+	_, err := api.PostTaskLogs(ctx, &apiv1.PostTaskLogsRequest{
+		Logs: []*taskv1.TaskLog{
+			{
+				TaskId:  string(task.TaskID),
+				AgentId: ptrs.Ptr("a1"),
+				Log:     "log CUDA out of memory more log",
+			},
+		},
+	})
+	require.NoError(t, err)
+
+	runsOut := struct {
+		bun.BaseModel `bun:"table:runs"`
+		LogSignal     *string `db:"log_signal"`
+	}{}
+
+	err = db.Bun().NewSelect().Model(&runsOut).
+		Where("id = ?", trial.ID).
+		Scan(ctx)
+	require.NoError(t, err)
+	require.NotNil(t, runsOut)
+	require.NotNil(t, runsOut.LogSignal)
+
+	require.Equal(t, "CUDA OOM", *runsOut.LogSignal)
+
+	tasksOut := struct {
+		bun.BaseModel `bun:"table:tasks"`
+		LogSignal     *string `db:"log_signal"`
+	}{}
+	err = db.Bun().NewSelect().Model(&tasksOut).
+		Join("LEFT JOIN run_id_task_id AS rt on tasks.task_id = rt.task_id").
+		Where("run_id = ?", trial.ID).
+		Scan(ctx)
+	require.NoError(t, err)
+	require.NotNil(t, tasksOut)
+	require.NotNil(t, tasksOut.LogSignal)
+
+	require.Equal(t, "CUDA OOM", *tasksOut.LogSignal)
+
+	_, err = api.PostTaskLogs(ctx, &apiv1.PostTaskLogsRequest{
+		Logs: []*taskv1.TaskLog{
+			{
+				TaskId:  string(task.TaskID),
+				AgentId: ptrs.Ptr("a1"),
+				Log:     "log uncorrectable ECC error encountered more log",
+			},
+		},
+	})
+	require.NoError(t, err)
+
+	runsOut = struct {
+		bun.BaseModel `bun:"table:runs"`
+		LogSignal     *string `db:"log_signal"`
+	}{}
+
+	err = db.Bun().NewSelect().Model(&runsOut).
+		Where("id = ?", trial.ID).
+		Scan(ctx)
+	require.NoError(t, err)
+	require.NotNil(t, runsOut)
+	require.NotNil(t, runsOut.LogSignal)
+
+	require.Equal(t, "ECC Error", *runsOut.LogSignal)
+
+	tasksOut = struct {
+		bun.BaseModel `bun:"table:tasks"`
+		LogSignal     *string `db:"log_signal"`
+	}{}
+	err = db.Bun().NewSelect().Model(&tasksOut).
+		Join("LEFT JOIN run_id_task_id AS rt on tasks.task_id = rt.task_id").
+		Where("run_id = ?", trial.ID).
+		Scan(ctx)
+	require.NoError(t, err)
+	require.NotNil(t, tasksOut)
+	require.NotNil(t, tasksOut.LogSignal)
+
+	require.Equal(t, "ECC Error", *tasksOut.LogSignal)
 }

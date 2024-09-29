@@ -49,7 +49,7 @@ type TaskContainerDefaultsConfig struct {
 
 	StartupHook string `json:"startup_hook"`
 
-	LogPolicies expconf.LogPoliciesConfig `json:"log_policies"`
+	LogPolicies *expconf.LogPoliciesConfig `json:"log_policies"`
 
 	PreemptionTimeout int `json:"preemption_timeout,omitempty"`
 

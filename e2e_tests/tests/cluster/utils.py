@@ -11,6 +11,7 @@ import requests
 from typing_extensions import Literal  # noqa:I2041
 
 from determined.common import api
+from determined.common.api import bindings
 from tests import command
 from tests import config as conf
 from tests import detproc
@@ -197,3 +198,30 @@ def set_master_port(config: str) -> None:
     lc = conf.load_config(config_path=config)
     port = get_master_port(lc)
     conf.MASTER_PORT = port
+
+
+def get_run_by_exp_id(sess, exp_id) -> int:
+    return bindings.post_SearchRuns(
+        sess,
+        body=bindings.v1SearchRunsRequest(
+            limit=1,
+            filter="""{
+            "filterGroup": {
+                "children": [
+                {
+                    "columnName": "experimentId",
+                    "kind": "field",
+                    "location": "LOCATION_TYPE_RUN",
+                    "operator": "=",
+                    "type": "COLUMN_TYPE_NUMBER",
+                    "value": %s
+                }
+                ],
+                "conjunction": "and",
+                "kind": "group"
+            },
+            "showArchived": false
+            }"""
+            % exp_id,
+        ),
+    )

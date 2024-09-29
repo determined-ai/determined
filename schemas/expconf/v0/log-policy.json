@@ -4,8 +4,7 @@
     "title": "LogPolicy",
     "additionalProperties": false,
     "required": [
-        "pattern",
-        "action"
+        "pattern"
     ],
     "type": "object",
     "properties": {
@@ -19,6 +18,27 @@
                 "object"
             ],
             "$ref": "http://determined.ai/schemas/expconf/v0/log-action.json"
+        },
+        "signal": {
+            "type": [
+                "string"
+            ]
+        }
+    },
+    "checks": {
+        "neither action nor signal is set": {
+            "anyOf": [
+                {
+                    "required": [
+                        "action"
+                    ]
+                },
+                {
+                    "required": [
+                        "signal"
+                    ]
+                }
+            ]
         }
     }
 }

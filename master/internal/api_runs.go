@@ -130,6 +130,7 @@ func (a *apiServer) SearchRuns(
 	}
 	resp.Pagination = pagination
 	resp.Runs = runs
+	fmt.Printf("\n\n runs: %#v\n\n", runs)
 	return resp, nil
 }
 
