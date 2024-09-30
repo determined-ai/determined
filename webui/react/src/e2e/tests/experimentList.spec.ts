@@ -414,20 +414,29 @@ test.describe('Experiment List', () => {
       });
     });
     test('Pagination', async () => {
-      const expectPageNumber = async (pageParam: string | null) => {
-        await projectDetailsPage._page.waitForResponse((res) => {
+      const pollWatch = () =>
+        projectDetailsPage._page.waitForResponse((res) => {
           return res.url().endsWith('experiments-search');
         });
+      const expectPageNumber = (pageParam: string | null) => {
         const params = new URL(projectDetailsPage._page.url()).searchParams;
         expect(params.get('page')).toBe(pageParam);
       };
       // table is virtualized so row counts are not reliable.
+      const nextPageUpdate = pollWatch();
       await projectDetailsPage.f_experimentList.pagination.next.pwLocator.click();
-      await expectPageNumber('1');
+      await nextPageUpdate;
+      expectPageNumber('1');
+
+      const buttonPageUpdate = pollWatch();
       await projectDetailsPage.f_experimentList.pagination.pageButtonLocator(3).click();
-      await expectPageNumber('2');
+      await buttonPageUpdate;
+      expectPageNumber('2');
+
+      const perPageUpdate = pollWatch();
       await projectDetailsPage.f_experimentList.pagination.perPage.selectMenuOption('80 / page');
-      await expectPageNumber(null);
+      await perPageUpdate;
+      expectPageNumber(null);
     });
   });
 });
