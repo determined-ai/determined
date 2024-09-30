@@ -133,4 +133,36 @@ service Determined {
       tags: "Searches"
     };
   }
+
+  // Stream one or more run's metrics.
+  rpc GetMetrics(GetMetricsRequest) returns (stream GetMetricsResponse) {
+    option (google.api.http) = {
+      get: "/api/v2/runs/metrics/trial_metrics"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Runs"
+    };
+  }
+
+  // Stream one or more trial's training metrics.
+  rpc GetTrainingMetrics(GetTrainingMetricsRequest)
+      returns (stream GetTrainingMetricsResponse) {
+    option (google.api.http) = {
+      get: "/api/v2/runs/metrics/training_metrics"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Runs"
+    };
+  }
+
+  // Stream one or more trial's validation metrics.
+  rpc GetValidationMetrics(GetValidationMetricsRequest)
+      returns (stream GetValidationMetricsResponse) {
+    option (google.api.http) = {
+      get: "/api/v2/runs/metrics/validation_metrics"
+    };
+    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
+      tags: "Runs"
+    };
+  }
 }
