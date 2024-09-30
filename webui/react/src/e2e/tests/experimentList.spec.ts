@@ -348,8 +348,8 @@ test.describe('Experiment List', () => {
         await secondRow.order.selectMenuOption(secondSortOrder);
 
         await multiSortMenu.close();
-        await scenario();
         await waitTableStable();
+        await scenario();
       });
     };
 
