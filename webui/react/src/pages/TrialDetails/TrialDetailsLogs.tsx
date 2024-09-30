@@ -259,8 +259,15 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
     searchResults.forEach((l) => {
       const content = l.log;
       if (!content) return;
+      if (settings.enableRegex) {
+        try {
+          new RegExp(key)
+        } catch {
+          return 
+        }
+      } 
+      
       const i = settings.enableRegex ? content.match(`${key}`)?.index : content.indexOf(key);
-
       if (!i || i < 0) return;
       const keyLen = settings.enableRegex ? content.match(`${key}`)?.[0].length || 0 : key.length;
       const j = i + keyLen;
