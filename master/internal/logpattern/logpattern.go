@@ -283,6 +283,5 @@ func ClearSignal(ctx context.Context, taskID model.TaskID) error {
 		return fmt.Errorf("resetting log signal: %w", err)
 	}
 
-	// TODO run
 	return nil
 }

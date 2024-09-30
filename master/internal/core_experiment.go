@@ -291,7 +291,6 @@ func (m *Master) parseCreateExperiment(ctx context.Context, req *apiv1.CreateExp
 	}
 
 	defaulted := schemas.WithDefaults(config)
-
 	resources := defaulted.Resources()
 
 	p, err := getCreateExperimentsProject(m, req, owner, defaulted)

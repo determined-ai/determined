@@ -222,5 +222,5 @@ def test_signal_clear_after_exp_continue() -> None:
     trialRes = bindings.get_GetTrial(sess, trialId=searchRes.runs[0].id)
     trialSignal = trialRes.trial.logSignal
 
-    assert runSignal == None
-    assert trialSignal == None
+    assert runSignal is None
+    assert trialSignal is None
