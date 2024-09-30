@@ -15,18 +15,22 @@
         },
         "action": {
             "type": [
-                "object"
+                "object",
+                "null"
             ],
-            "$ref": "http://determined.ai/schemas/expconf/v0/log-action.json"
+            "optionalRef": "http://determined.ai/schemas/expconf/v0/log-action.json",
+            "default": null
         },
         "signal": {
             "type": [
-                "string"
-            ]
+                "string",
+                "null"
+            ],
+            "default": null
         }
     },
     "checks": {
-        "neither action nor signal is set": {
+        "one of or both of action and signal must be set": {
             "anyOf": [
                 {
                     "required": [

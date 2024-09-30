@@ -30,16 +30,17 @@ func (l *LogPoliciesConfigV0) WithDefaults() *LogPoliciesConfigV0 {
 }
 
 // Merge implemenets the mergable interface.
-func (b *LogPoliciesConfigV0) Merge(
-	other *LogPoliciesConfigV0,
-) *LogPoliciesConfigV0 {
+func (b LogPoliciesConfigV0) Merge(
+	other LogPoliciesConfigV0,
+) LogPoliciesConfigV0 {
 	var out LogPoliciesConfigV0
 	seen := make(map[string]bool)
-	for _, p := range append(*other, *b...) {
+	for _, p := range append(other, b...) {
 		json, err := json.Marshal(p)
 		if err != nil {
 			log.Errorf("marshaling error %+v %v", p, err)
 		}
+		fmt.Printf("\njson: %#v\n", json)
 		if seen[string(json)] {
 			continue
 		}
@@ -47,7 +48,7 @@ func (b *LogPoliciesConfigV0) Merge(
 
 		out = append(out, p)
 	}
-	return &out
+	return out
 }
 
 // LogPolicyV0 is an action to take if we match against trial logs.

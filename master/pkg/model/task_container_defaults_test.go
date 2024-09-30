@@ -449,11 +449,11 @@ func TestLogPatternUnmarshal(t *testing.T) {
 		ShmSizeBytes:      4294967296,
 		NetworkMode:       "bridge",
 		PreemptionTimeout: DefaultPreemptionTimeout,
-		LogPolicies: expconf.LogPoliciesConfig{
-			expconf.LogPolicy{RawPattern: "test", RawAction: expconf.LogAction{
+		LogPolicies: &expconf.LogPoliciesConfig{
+			expconf.LogPolicy{RawPattern: "test", RawAction: &expconf.LogAction{
 				RawExcludeNode: &expconf.LogActionExcludeNode{},
 			}},
-			expconf.LogPolicy{RawPattern: "test2", RawAction: expconf.LogAction{
+			expconf.LogPolicy{RawPattern: "test2", RawAction: &expconf.LogAction{
 				RawCancelRetries: &expconf.LogActionCancelRetries{},
 			}},
 		},
@@ -463,25 +463,25 @@ func TestLogPatternUnmarshal(t *testing.T) {
 
 func TestLogPatternPoliciesMerging(t *testing.T) {
 	defaults := &TaskContainerDefaultsConfig{
-		LogPolicies: expconf.LogPoliciesConfig{
-			expconf.LogPolicy{RawPattern: "a", RawAction: expconf.LogAction{
+		LogPolicies: &expconf.LogPoliciesConfig{
+			expconf.LogPolicy{RawPattern: "a", RawAction: &expconf.LogAction{
 				RawCancelRetries: &expconf.LogActionCancelRetries{},
 			}},
-			expconf.LogPolicy{RawPattern: "b", RawAction: expconf.LogAction{
+			expconf.LogPolicy{RawPattern: "b", RawAction: &expconf.LogAction{
 				RawExcludeNode: &expconf.LogActionExcludeNode{},
 			}},
 		},
 	}
 
 	conf := expconf.ExperimentConfig{
-		RawLogPolicies: expconf.LogPoliciesConfig{
-			expconf.LogPolicy{RawPattern: "b", RawAction: expconf.LogAction{
+		RawLogPolicies: &expconf.LogPoliciesConfig{
+			expconf.LogPolicy{RawPattern: "b", RawAction: &expconf.LogAction{
 				RawCancelRetries: &expconf.LogActionCancelRetries{},
 			}},
-			expconf.LogPolicy{RawPattern: "b", RawAction: expconf.LogAction{
+			expconf.LogPolicy{RawPattern: "b", RawAction: &expconf.LogAction{
 				RawExcludeNode: &expconf.LogActionExcludeNode{},
 			}},
-			expconf.LogPolicy{RawPattern: "c", RawAction: expconf.LogAction{
+			expconf.LogPolicy{RawPattern: "c", RawAction: &expconf.LogAction{
 				RawExcludeNode: &expconf.LogActionExcludeNode{},
 			}},
 		},
@@ -489,17 +489,17 @@ func TestLogPatternPoliciesMerging(t *testing.T) {
 
 	defaults.MergeIntoExpConfig(&conf)
 
-	expected := expconf.LogPoliciesConfig{
-		expconf.LogPolicy{RawPattern: "a", RawAction: expconf.LogAction{
+	expected := &expconf.LogPoliciesConfig{
+		expconf.LogPolicy{RawPattern: "a", RawAction: &expconf.LogAction{
 			RawCancelRetries: &expconf.LogActionCancelRetries{},
 		}},
-		expconf.LogPolicy{RawPattern: "b", RawAction: expconf.LogAction{
+		expconf.LogPolicy{RawPattern: "b", RawAction: &expconf.LogAction{
 			RawExcludeNode: &expconf.LogActionExcludeNode{},
 		}},
-		expconf.LogPolicy{RawPattern: "b", RawAction: expconf.LogAction{
+		expconf.LogPolicy{RawPattern: "b", RawAction: &expconf.LogAction{
 			RawCancelRetries: &expconf.LogActionCancelRetries{},
 		}},
-		expconf.LogPolicy{RawPattern: "c", RawAction: expconf.LogAction{
+		expconf.LogPolicy{RawPattern: "c", RawAction: &expconf.LogAction{
 			RawExcludeNode: &expconf.LogActionExcludeNode{},
 		}},
 	}

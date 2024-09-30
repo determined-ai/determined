@@ -6,6 +6,7 @@ from tests import api_utils
 from tests import experiment as exp
 from tests.experiment import noop
 from tests import detproc
+from tests import experiment as exp
 from tests.cluster import utils
 
 
@@ -177,12 +178,8 @@ def test_log_signal(should_match: bool) -> None:
     searchRes = utils.get_run_by_exp_id(sess, exp_ref.id)
     runSignal = searchRes.runs[0].logSignal
 
-    trialRes = bindings.get_GetTrial(
-        sess,
-        trialId = searchRes.runs[0].id
-    )
+    trialRes = bindings.get_GetTrial(sess, trialId=searchRes.runs[0].id)
     trialSignal = trialRes.trial.logSignal
-
 
     if should_match:
         assert runSignal == expected_signal
@@ -190,6 +187,7 @@ def test_log_signal(should_match: bool) -> None:
     else:
         assert runSignal is None
         assert trialSignal is None
+
 
 @pytest.mark.e2e_cpu
 def test_signal_clear_after_exp_continue() -> None:
@@ -208,10 +206,7 @@ def test_signal_clear_after_exp_continue() -> None:
     searchRes = utils.get_run_by_exp_id(sess, exp_ref.id)
     runSignal = searchRes.runs[0].logSignal
 
-    trialRes = bindings.get_GetTrial(
-        sess,
-        trialId = searchRes.runs[0].id
-    )
+    trialRes = bindings.get_GetTrial(sess, trialId=searchRes.runs[0].id)
     trialSignal = trialRes.trial.logSignal
 
     assert runSignal == expected_signal
@@ -224,10 +219,7 @@ def test_signal_clear_after_exp_continue() -> None:
     searchRes = utils.get_run_by_exp_id(sess, exp_ref.id)
     runSignal = searchRes.runs[0].logSignal
 
-    trialRes = bindings.get_GetTrial(
-        sess,
-        trialId = searchRes.runs[0].id
-    )
+    trialRes = bindings.get_GetTrial(sess, trialId=searchRes.runs[0].id)
     trialSignal = trialRes.trial.logSignal
 
     assert runSignal == None

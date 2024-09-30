@@ -435,15 +435,23 @@ func TestActiveLogPatternPolicies(t *testing.T) {
 
 	policies, err := ActiveLogPolicies(ctx, exp.ID)
 	require.NoError(t, err)
-	require.Empty(t, policies)
+	require.NotEmpty(t, policies)
+	eccErrorSignal := "ECC Error"
+	cudaOOMSignal := "CUDA OOM"
+	expected := expconf.LogPoliciesConfig{
+		expconf.LogPolicy{RawPattern: ".*uncorrectable ECC error encountered.*", RawSignal: &eccErrorSignal},
+		expconf.LogPolicy{RawPattern: ".*CUDA out of memory.*", RawSignal: &cudaOOMSignal},
+	}
+
+	require.Equal(t, expected, policies)
 
 	activeConfig, err := db.ActiveExperimentConfig(exp.ID)
 	require.NoError(t, err)
-	activeConfig.RawLogPolicies = expconf.LogPoliciesConfig{
-		expconf.LogPolicy{RawPattern: "sub", RawAction: expconf.LogAction{
+	activeConfig.RawLogPolicies = &expconf.LogPoliciesConfig{
+		expconf.LogPolicy{RawPattern: "sub", RawAction: &expconf.LogAction{
 			RawCancelRetries: &expconf.LogActionCancelRetries{},
 		}},
-		expconf.LogPolicy{RawPattern: `\d{5}$`, RawAction: expconf.LogAction{
+		expconf.LogPolicy{RawPattern: `\d{5}$`, RawAction: &expconf.LogAction{
 			RawExcludeNode: &expconf.LogActionExcludeNode{},
 		}},
 	}
@@ -460,7 +468,7 @@ func TestActiveLogPatternPolicies(t *testing.T) {
 
 	policies, err = ActiveLogPolicies(ctx, exp.ID)
 	require.NoError(t, err)
-	require.Equal(t, activeConfig.RawLogPolicies, policies)
+	require.Equal(t, activeConfig.RawLogPolicies, &policies)
 }
 
 func TestGetNonTerminalExperimentCount(t *testing.T) {

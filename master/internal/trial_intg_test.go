@@ -11,8 +11,9 @@ import (
 	"testing"
 	"time"
 
-	"github.com/determined-ai/determined/master/pkg/ptrs"
 	"github.com/uptrace/bun"
+
+	"github.com/determined-ai/determined/master/pkg/ptrs"
 
 	"github.com/determined-ai/determined/master/pkg/schemas"
 	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
