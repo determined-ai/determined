@@ -259,10 +259,12 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
     searchResults.forEach((l) => {
       const content = l.log;
       if (!content) return;
-      const i = content.indexOf(key);
-      if (i < 0) return;
-      const numOfChar = Math.floor(searchWidth / 20);
-      const j = i + key.length;
+      const i = settings.enableRegex ? content.match(`${key}`)?.index : content.indexOf(key);
+
+      if (!i || i < 0) return;
+      const keyLen = settings.enableRegex ? content.match(`${key}`)?.[0].length || 0 : key.length;
+      const j = i + keyLen;
+      const numOfChar = Math.floor(searchWidth / 18) - keyLen;
       let start = Math.max(i - numOfChar, 0);
       let end = Math.min(j + numOfChar, content.length);
       if (start > 0 && end === content.length) {
@@ -276,7 +278,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
       });
     });
     return formated;
-  }, [searchResults, settings.searchText, searchWidth]);
+  }, [searchResults, settings.searchText, searchWidth, settings.enableRegex]);
 
   useEffect(() => {
     if (settings.searchText) {
