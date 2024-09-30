@@ -174,7 +174,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
         { signal },
       );
     },
-    [settings, trial?.id],
+    [settings.agentId, settings.containerId, settings.rankId, settings.level, settings.enableRegex, trial?.id],
   );
 
   useEffect(() => {

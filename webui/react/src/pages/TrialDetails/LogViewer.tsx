@@ -161,7 +161,7 @@ function LogViewer<T>({
         index: logs.findIndex((l) => l.id === selectedLog.id),
       });
       if (logs.findIndex((l) => l.id === selectedLog.id) >= 0) setScrolledForSearch(true);
-    }, 500);
+    }, 250);
   }, [scrolledForSearch, selectedLog, logs]);
 
   const fetchLogs = useCallback(
