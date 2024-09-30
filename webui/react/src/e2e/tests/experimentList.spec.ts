@@ -364,7 +364,7 @@ test.describe('Experiment List', () => {
       await checkTableOrder('Trial count', 'Searcher Metric', 'val_loss'); // searcher metric value taken from the file used to create the experiment
     });
     await sortingScenario('Trial count', '0 → 9', 'Searcher Metric', 'A → Z', async () => {
-      await checkTableOrder('Trial count', 'Searcher Metric', 'val_loss', true); // searcher metric value taken from the file used to create the experiment
+      await checkTableOrder('Trial count', 'Searcher Metric', 'validation_loss', true); // searcher metric value taken from the file used to create the experiment
     });
   });
 
