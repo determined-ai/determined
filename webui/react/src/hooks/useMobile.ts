@@ -1,7 +1,7 @@
 import useResize from './useResize';
 
 const MOBILE_BREAKPOINT = 480;
-const TABLET_BREAKPOINT = 890;
+const TABLET_BREAKPOINT = 1023;
 
 const useMobile = (): boolean => {
   const { width } = useResize();
