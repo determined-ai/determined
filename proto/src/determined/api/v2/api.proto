@@ -7,6 +7,7 @@ import "google/api/annotations.proto";
 import "protoc-gen-swagger/options/annotations.proto";
 
 import "determined/api/v2/search.proto";
+import "determined/api/v2/run.proto";
 
 option (grpc.gateway.protoc_gen_swagger.options.openapiv2_swagger) = {
   info: {
@@ -135,7 +136,7 @@ service Determined {
   }
 
   // Stream one or more run's metrics.
-  rpc GetMetrics(GetMetricsRequest) returns (stream GetMetricsResponse) {
+  rpc GetMetricsV2(GetMetricsV2Request) returns (stream GetMetricsV2Response) {
     option (google.api.http) = {
       get: "/api/v2/runs/metrics/trial_metrics"
     };
@@ -144,9 +145,9 @@ service Determined {
     };
   }
 
-  // Stream one or more trial's training metrics.
-  rpc GetTrainingMetrics(GetTrainingMetricsRequest)
-      returns (stream GetTrainingMetricsResponse) {
+  // Stream one or more run's training metrics.
+  rpc GetTrainingMetricsV2(GetTrainingMetricsV2Request)
+      returns (stream GetTrainingMetricsV2Response) {
     option (google.api.http) = {
       get: "/api/v2/runs/metrics/training_metrics"
     };
@@ -155,9 +156,9 @@ service Determined {
     };
   }
 
-  // Stream one or more trial's validation metrics.
-  rpc GetValidationMetrics(GetValidationMetricsRequest)
-      returns (stream GetValidationMetricsResponse) {
+  // Stream one or more run's validation metrics.
+  rpc GetValidationMetricsV2(GetValidationMetricsV2Request)
+      returns (stream GetValidationMetricsV2Response) {
     option (google.api.http) = {
       get: "/api/v2/runs/metrics/validation_metrics"
     };
