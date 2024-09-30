@@ -5,7 +5,6 @@ package schemas
 import (
 	"bytes"
 	"encoding/json"
-	"fmt"
 	"sync"
 
 	"github.com/pkg/errors"
@@ -136,7 +135,6 @@ func GetCompletenessValidator(url string) *jsonschema.Schema {
 	compiler.Extensions["checks"] = extensions.ChecksExtension()
 	compiler.Extensions["compareProperties"] = extensions.ComparePropertiesExtension()
 	compiler.Extensions["optionalRef"] = extensions.OptionalRefExtension()
-	fmt.Printf("url: %#v\n", url)
 	compiler.Extensions["eventuallyRequired"] = extensions.EventuallyRequiredExtension()
 	compiler.Extensions["eventually"] = extensions.EventuallyExtension()
 
@@ -144,7 +142,6 @@ func GetCompletenessValidator(url string) *jsonschema.Schema {
 	if err != nil {
 		panic("uncompilable schema: " + url)
 	}
-	fmt.Printf("after Compiple url\n")
 
 	completenessValidators[url] = validator
 

@@ -3,7 +3,6 @@ package schemas
 import (
 	"fmt"
 	"reflect"
-	"runtime/debug"
 )
 
 // mergeIfMergable checks if obj implements our Mergable psuedointerface and calls obj.Merge(src)
@@ -93,8 +92,7 @@ func assertTypeMatch(obj reflect.Value, src reflect.Value) {
 // return type will also be the same.  The return value will never share memory with src, so it is
 // safe to alter obj without affecting src after the fact.
 func merge(obj reflect.Value, src reflect.Value, name string) reflect.Value {
-	debug.PrintStack()
-	fmt.Printf("\nmerge(%T, %T, %v)\n", obj.Interface(), src.Interface(), name)
+	// fmt.Printf("merge(%T, %T, %v)\n", obj.Interface(), src.Interface(), name)
 	assertTypeMatch(obj, src)
 
 	// Always handle pointers first.
@@ -127,7 +125,6 @@ func merge(obj reflect.Value, src reflect.Value, name string) reflect.Value {
 	switch obj.Kind() {
 	case reflect.Struct:
 		// Recurse into each field of the struct.
-		fmt.Printf("\nit's a struct\n\n")
 		out := reflect.New(obj.Type()).Elem()
 		for i := 0; i < src.NumField(); i++ {
 			structField := src.Type().Field(i)

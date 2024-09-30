@@ -93,7 +93,11 @@
     # pre-0.15.6 non-Native-API experiments emitted `internal: null` configs
     internal: null
     labels: []
-    log_policies: []
+    log_policies:
+      - pattern: .*uncorrectable ECC error encountered.*
+        signal: ECC Error
+      - pattern: .*CUDA out of memory.*
+        signal: CUDA OOM
     max_restarts: 5
     min_validation_period:
       batches: 0

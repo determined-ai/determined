@@ -291,9 +291,7 @@ func (m *Master) parseCreateExperiment(ctx context.Context, req *apiv1.CreateExp
 	}
 
 	defaulted := schemas.WithDefaults(config)
-	fmt.Printf("\n\ndefaulted: %#v\n\n", *defaulted.RawEnvironment.RawImage.RawCUDA)
 
-	fmt.Printf("\n\nconfig: %#v\n\n", config.RawEnvironment)
 	resources := defaulted.Resources()
 
 	p, err := getCreateExperimentsProject(m, req, owner, defaulted)
@@ -320,22 +318,16 @@ func (m *Master) parseCreateExperiment(ctx context.Context, req *apiv1.CreateExp
 		}
 	}
 
-	fmt.Printf("\n\nbefore mering taskcontainerdefault: %#v\n\n", m.config.TaskContainerDefaults.Image)
-
 	taskContainerDefaults, err := m.rm.TaskContainerDefaults(
 		poolName,
 		m.config.TaskContainerDefaults,
 	)
-	fmt.Printf("\n\nafter mering taskcontainerdefault: %#v\n\n", taskContainerDefaults.Image)
 	if err != nil {
 		return nil, nil, config, nil, nil, errors.Wrapf(err, "error getting TaskContainerDefaults")
 	}
 
-	fmt.Printf("\n\nbefore mering taskcontainerdefault with config: %#v\n\n", config.RawEnvironment)
 	taskSpec.TaskContainerDefaults = taskContainerDefaults
 	taskSpec.TaskContainerDefaults.MergeIntoExpConfig(&config)
-
-	fmt.Printf("\n\nafter mering taskcontainerdefault with config: %#v\n\n", config.RawEnvironment.RawImage)
 
 	// Merge log retention into the taskSpec.
 	if config.RawRetentionPolicy != nil {
@@ -364,14 +356,8 @@ func (m *Master) parseCreateExperiment(ctx context.Context, req *apiv1.CreateExp
 		config.RawResources.RawPriority = &prio
 	}
 
-	userLogPolicyConfig := config.RawLogPolicies
 	// Lastly, apply any json-schema-defined defaults.
-	fmt.Printf("\n\nbefore last withdefaults config: %#v\n\n", config.RawEnvironment.RawImage)
-	fmt.Printf("\n\nbefore last withdefaults config log: %#v\n\n", userLogPolicyConfig)
 	config = schemas.WithDefaults(config)
-
-	fmt.Printf("\n\nafter last withdefaults config: %#v\n\n", *config.RawEnvironment.RawImage.RawCUDA)
-	fmt.Printf("\n\nafter last withdefaults config log: %#v\n\n", config.RawLogPolicies)
 
 	// Make sure the experiment config has all eventuallyRequired fields.
 	if err = schemas.IsComplete(config); err != nil {

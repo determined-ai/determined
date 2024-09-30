@@ -14,19 +14,19 @@ import (
 type LogPoliciesConfigV0 []LogPolicyV0
 
 // WithDefaults implements the Defaultable psuedointerface.
-func (l *LogPoliciesConfigV0) WithDefaults() *LogPoliciesConfigV0 {
+func (b *LogPoliciesConfigV0) WithDefaults() *LogPoliciesConfigV0 {
 	eccErrorPattern := ECCErrorPattern
 	eccErrorSignal := ECCErrorSignal
 	cudaOomPattern := CUDAOOMPattern
 	cudaOomSignal := CUDAOOMSignal
 
-	if l != nil && len(*l) == 0 {
+	if b != nil && len(*b) == 0 {
 		return &LogPoliciesConfigV0{
 			LogPolicyV0{RawPattern: eccErrorPattern, RawSignal: &eccErrorSignal},
 			LogPolicyV0{RawPattern: cudaOomPattern, RawSignal: &cudaOomSignal},
 		}
 	}
-	return l
+	return b
 }
 
 // Merge implemenets the mergable interface.
@@ -40,7 +40,6 @@ func (b LogPoliciesConfigV0) Merge(
 		if err != nil {
 			log.Errorf("marshaling error %+v %v", p, err)
 		}
-		fmt.Printf("\njson: %#v\n", json)
 		if seen[string(json)] {
 			continue
 		}

@@ -29,12 +29,6 @@ func defaultIfDefaultable(obj reflect.Value) (reflect.Value, bool) {
 	if !ok {
 		return out, false
 	}
-	if obj.Type().Name() == "LogPoliciesConfigV0" {
-		fmt.Printf("\n\n found type: %#v\n\n", obj.Type().Name())
-	}
-	if obj.Type().Name() == "*LogPoliciesConfigV0" {
-		fmt.Printf("\n\n found type: %#v\n\n", obj.Type().Name())
-	}
 
 	// Verify the signature matches our Defaultable psuedointerface:
 	// - one input (the receiver), and one output

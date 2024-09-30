@@ -21,7 +21,6 @@ import (
 	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 
-	"github.com/determined-ai/determined/master/internal/db"
 	internaldb "github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/experiment"
 	"github.com/determined-ai/determined/master/internal/mocks/allocationmocks"
@@ -228,7 +227,7 @@ func TestClearLogSignalAfterTrialRestarts(t *testing.T) {
 		LogSignal     *string `db:"log_signal"`
 	}{}
 
-	err = db.Bun().NewSelect().Model(&runsOut).
+	err = internaldb.Bun().NewSelect().Model(&runsOut).
 		Where("id = ?", tr.id).
 		Scan(context.Background())
 	require.NoError(t, err)
@@ -239,7 +238,7 @@ func TestClearLogSignalAfterTrialRestarts(t *testing.T) {
 		bun.BaseModel `bun:"table:tasks"`
 		LogSignal     *string `db:"log_signal"`
 	}{}
-	err = db.Bun().NewSelect().Model(&tasksOut).
+	err = internaldb.Bun().NewSelect().Model(&tasksOut).
 		Join("LEFT JOIN run_id_task_id AS rt on tasks.task_id = rt.task_id").
 		Where("run_id = ?", tr.id).
 		Scan(context.Background())

@@ -164,9 +164,7 @@ func (c *TaskContainerDefaultsConfig) MergeIntoExpConfig(config *expconf.Experim
 			c.Slurm.SbatchArgs(), configRawSlurmConfig.SbatchArgs()...)
 	}
 
-	fmt.Printf("\nbefore merge, logp: %#v\n", config.RawLogPolicies)
 	config.RawLogPolicies = schemas.Merge(config.RawLogPolicies, c.LogPolicies)
-	fmt.Printf("\nafter merge, logp: %#v\n", config.RawLogPolicies)
 
 	configRawPbsConfig := config.RawPbsConfig
 	config.RawPbsConfig = schemas.Merge(config.RawPbsConfig, &c.Pbs)
