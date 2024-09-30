@@ -71,7 +71,6 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
       canceler.current.abort();
       const newCanceler = new AbortController();
       canceler.current = newCanceler;
-      console.log({filters})
       updateSettings({
         agentId: filters.agentIds,
         containerId: filters.containerIds,
@@ -171,7 +170,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
         decode(optional(DateString), options.timestampAfter),
         options.orderBy as OrderBy,
         searchText,
-        false,
+        settings.enableRegex,
         { signal },
       );
     },
@@ -232,7 +231,10 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
     (e: React.ChangeEvent<HTMLInputElement>) => {
       setSearchInput(e.target.value);
       throttledChangeSearch(e.target.value);
-      if(!e.target.value) setSearchResults([])
+      if (!e.target.value) {
+        setSearchResults([]);
+        setSelectedLog(undefined);
+      }
     },
     [throttledChangeSearch],
   );
@@ -268,6 +270,8 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
   useEffect(() => {
     if (settings.searchText) {
       setSearchResults([]);
+      const newCanceler = new AbortController();
+      canceler.current = newCanceler;
       readStream(
         handleFetch(
           {
@@ -278,9 +282,10 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
           FetchType.Initial,
           settings.searchText,
         ),
-        (log) => processSearchResult(log as TrialLog),
+        (log) => processSearchResult(mapV1LogsResponse(log)),
       );
     }
+    return () => canceler.current.abort();
   }, [settings.searchText, handleFetch, processSearchResult]);
 
   return (

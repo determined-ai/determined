@@ -113,8 +113,6 @@ const LogViewerSelect: React.FC<Props> = ({
     [onChange],
   );
 
-  useEffect(() => console.log({filters}), [filters])
-
   useEffect(() => {
     return () => {
       throttledChangeFilter.cancel();

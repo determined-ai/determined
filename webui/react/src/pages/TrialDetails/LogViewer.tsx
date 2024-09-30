@@ -130,7 +130,7 @@ function LogViewer<T>({
   const [showButtons, setShowButtons] = useState(false);
   const [logs, setLogs] = useState<ViewerLog[]>([]);
   const [firstItemIndex, setFirstItemIndex] = useState(START_INDEX);
-  const [scrolledForSearch, setScrolledForSearch] = useState(false);
+  const [scrolledForSearch, setScrolledForSearch] = useState(true);
 
   const processLogs = useCallback(
     (newLogs: Log[]) => {
@@ -160,7 +160,7 @@ function LogViewer<T>({
         behavior: 'smooth',
         index: logs.findIndex((l) => l.id === selectedLog.id),
       });
-      setScrolledForSearch(true);
+      if (logs.findIndex((l) => l.id === selectedLog.id) >= 0) setScrolledForSearch(true);
     }, 500);
   }, [scrolledForSearch, selectedLog, logs]);
 
