@@ -108,14 +108,14 @@ func TestPostTaskLogs(t *testing.T) {
 	stream = &mockStream[*apiv1.TaskLogsResponse]{ctx: ctx}
 	err = api.TaskLogs(&apiv1.TaskLogsRequest{
 		TaskId:     string(task.TaskID),
-		SearchText: "^lo.*xt",
+		SearchText: "^lo.{4}xt",
 	}, stream)
 	require.NoError(t, err)
 	require.Empty(t, stream.getData())
 
 	err = api.TaskLogs(&apiv1.TaskLogsRequest{
 		TaskId:      string(task.TaskID),
-		SearchText:  "^lo.*xt",
+		SearchText:  "^lo.{4}xt",
 		EnableRegex: true,
 	}, stream)
 	require.NoError(t, err)
