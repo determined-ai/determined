@@ -1,11 +1,10 @@
 .base {
-  display: flex;
   height: 100%;
 
+  .container {
+    display: flex;
+  }
   .search {
-    height: 100%;
-    width: 40%;
-
     .header {
       border-bottom: var(--theme-stroke-width) solid var(--theme-stage-border);
       margin-bottom: var(--spacing-md);
@@ -13,7 +12,7 @@
       padding-right: var(--spacing-md);
     }
     .logContainer {
-      height: 555px;
+      height: 100%;
       overflow-y: auto;
 
       .log {

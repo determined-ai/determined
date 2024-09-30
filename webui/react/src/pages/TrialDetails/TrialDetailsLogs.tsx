@@ -3,6 +3,7 @@ import CodeSample from 'hew/CodeSample';
 import Input from 'hew/Input';
 import Message from 'hew/Message';
 import Spinner from 'hew/Spinner';
+import SplitPane, { Pane } from 'hew/SplitPane';
 import Tooltip from 'hew/Tooltip';
 import useConfirm from 'hew/useConfirm';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
@@ -33,6 +34,8 @@ export interface Props {
 
 type OrderBy = 'ORDER_BY_UNSPECIFIED' | 'ORDER_BY_ASC' | 'ORDER_BY_DESC';
 
+const INITIAL_SEARCH_WIDTH = 420;
+
 const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
   const { ui } = useUI();
   const [filterOptions, setFilterOptions] = useState<Filters>({});
@@ -40,8 +43,10 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
   const [searchInput, setSearchInput] = useState<string>('');
   const [searchResults, setSearchResults] = useState<TrialLog[]>([]);
   const [selectedLog, setSelectedLog] = useState<TrialLog>();
+  const [searchWidth, setSearchWidth] = useState(INITIAL_SEARCH_WIDTH);
   const confirm = useConfirm();
   const canceler = useRef(new AbortController());
+  const container = useRef<HTMLDivElement>(null);
   const f_flat_runs = useFeature().isOn('flat_runs');
 
   const trialSettingsConfig = useMemo(() => settingsConfigForTrial(trial?.id || -1), [trial?.id]);
@@ -174,7 +179,14 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
         { signal },
       );
     },
-    [settings.agentId, settings.containerId, settings.rankId, settings.level, settings.enableRegex, trial?.id],
+    [
+      settings.agentId,
+      settings.containerId,
+      settings.rankId,
+      settings.level,
+      settings.enableRegex,
+      trial?.id,
+    ],
   );
 
   useEffect(() => {
@@ -239,16 +251,17 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
     [throttledChangeSearch],
   );
 
-  const processSearchResult = useCallback(
-    (log: TrialLog) => {
-      const key = settings.searchText;
+  const formatedSearchResults = useMemo(() => {
+    const key = settings.searchText;
 
-      if (!key) return;
-      const content = log.log;
+    if (!key) return;
+    const formated: TrialLog[] = [];
+    searchResults.forEach((l) => {
+      const content = l.log;
       if (!content) return;
       const i = content.indexOf(key);
       if (i < 0) return;
-      const numOfChar = 18;
+      const numOfChar = Math.floor(searchWidth / 20);
       const j = i + key.length;
       let start = Math.max(i - numOfChar, 0);
       let end = Math.min(j + numOfChar, content.length);
@@ -257,15 +270,13 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
       } else if (start === 0 && end < content.length) {
         end = Math.min(end + numOfChar - i + start, content.length);
       }
-      const formated: TrialLog = {
-        ...log,
+      formated.push({
+        ...l,
         log: `${start > 0 ? '...' : ''}${content.slice(start, i)}<span style="background-color: #E7F7FF">${content.slice(i, j)}</span>${content.slice(j, end)}${end < content.length ? '...' : ''}`,
-      };
-
-      setSearchResults((prev) => [...prev, formated]);
-    },
-    [settings.searchText, setSearchResults],
-  );
+      });
+    });
+    return formated;
+  }, [searchResults, settings.searchText, searchWidth]);
 
   useEffect(() => {
     if (settings.searchText) {
@@ -282,59 +293,79 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
           FetchType.Initial,
           settings.searchText,
         ),
-        (log) => processSearchResult(mapV1LogsResponse(log)),
+        (log) => setSearchResults((prev) => [...prev, mapV1LogsResponse(log)]),
       );
     }
     return () => canceler.current.abort();
-  }, [settings.searchText, handleFetch, processSearchResult]);
+  }, [settings.searchText, handleFetch]);
+
+  const renderSearch = useCallback(() => {
+    const height = container.current?.getBoundingClientRect().height || 0;
+    return (
+      <div className={css.search} style={{ height: `${height - 74}px` }}>
+        <div className={css.header}>
+          <Input
+            allowClear
+            placeholder="Search Logs..."
+            value={searchInput || settings.searchText}
+            onChange={onSearchChange}
+          />
+        </div>
+        <Checkbox
+          checked={settings.enableRegex}
+          onChange={(e) => handleFilterChange({ enableRegex: e.target.checked })}>
+          Regex
+        </Checkbox>
+        <div className={css.logContainer}>
+          {formatedSearchResults && formatedSearchResults.length > 0 ? (
+            formatedSearchResults.map((log) => (
+              <Tooltip content={log.message} key={log.id}>
+                <div
+                  className={
+                    selectedLog?.id === log.id ? [css.log, css.selected].join(' ') : css.log
+                  }
+                  dangerouslySetInnerHTML={{ __html: log.log! }}
+                  onClick={() => setSelectedLog(log)}
+                />
+              </Tooltip>
+            ))
+          ) : (
+            <Message icon="warning" title="No logs to show. " />
+          )}
+        </div>
+      </div>
+    );
+  }, [
+    settings.enableRegex,
+    settings.searchText,
+    searchInput,
+    formatedSearchResults,
+    container,
+    selectedLog,
+    onSearchChange,
+    handleFilterChange,
+  ]);
 
   return (
-    <div className={css.base}>
-      {searchOn && (
-        <div className={css.search}>
-          <div className={css.header}>
-            <Input
-              allowClear
-              placeholder="Search Logs..."
-              value={searchInput || settings.searchText}
-              onChange={onSearchChange}
-            />
-          </div>
-          <Checkbox
-            checked={settings.enableRegex}
-            onChange={(e) => handleFilterChange({ enableRegex: e.target.checked })}>
-            Regex
-          </Checkbox>
-          <div className={css.logContainer}>
-            {searchResults.length > 0 ? (
-              searchResults.map((log) => (
-                <div key={log.id}>
-                  <Tooltip content={log.message}>
-                    <div
-                      className={
-                        selectedLog?.id === log.id ? [css.log, css.selected].join(' ') : css.log
-                      }
-                      dangerouslySetInnerHTML={{ __html: log.log! }}
-                      onClick={() => setSelectedLog(log)}
-                    />
-                  </Tooltip>
-                </div>
-              ))
-            ) : (
-              <Message icon="warning" title="No logs to show. " />
-            )}
-          </div>
-        </div>
-      )}
+    <div className={css.base} ref={container}>
       <Spinner conditionalRender spinning={!trial}>
-        <LogViewer
-          decoder={mapV1LogsResponse}
-          selectedLog={selectedLog}
-          serverAddress={serverAddress}
-          title={logFilters}
-          onDownload={handleDownloadLogs}
-          onError={handleError}
-          onFetch={handleFetch}
+        <SplitPane
+          hidePane={searchOn ? undefined : Pane.Left}
+          initialWidth={INITIAL_SEARCH_WIDTH}
+          leftPane={renderSearch()}
+          minimumWidths={{ left: 300, right: 550 }}
+          rightPane={
+            <LogViewer
+              decoder={mapV1LogsResponse}
+              selectedLog={selectedLog}
+              serverAddress={serverAddress}
+              title={logFilters}
+              onDownload={handleDownloadLogs}
+              onError={handleError}
+              onFetch={handleFetch}
+            />
+          }
+          onChange={(w) => setSearchWidth(w)}
         />
       </Spinner>
     </div>
