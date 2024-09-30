@@ -7,11 +7,11 @@ import { Modal } from 'e2e/models/common/hew/Modal';
  */
 export class ModelCreateModal extends Modal {
   readonly name = new BaseComponent({
-    parent: this.body,
+    parent: this,
     selector: '[id="modelName"]',
   });
   readonly description = new BaseComponent({
-    parent: this.body,
+    parent: this,
     selector: '[id="modelDescription"]',
   });
   readonly addMoreDetails = new BaseComponent({
