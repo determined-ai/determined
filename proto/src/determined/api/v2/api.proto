@@ -92,7 +92,7 @@ service Determined {
   rpc DeleteSearchTag(DeleteSearchTagRequest)
       returns (DeleteSearchTagResponse) {
     option (google.api.http) = {
-      delete: "/api/v1/searches/{search_id}/tags/{tag}"
+      delete: "/api/v2/searches/{search_id}/tags/{tag}"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Searches"
@@ -126,7 +126,7 @@ service Determined {
   rpc PutSearchRetainLogs(PutSearchRetainLogsRequest)
       returns (PutSearchRetainLogsResponse) {
     option (google.api.http) = {
-      put: "/api/v1/search/{search_id}/retain_logs"
+      put: "/api/v2/search/{search_id}/retain_logs"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
@@ -137,7 +137,7 @@ service Determined {
   // Resume a search.
   rpc ResumeSearch(ResumeSearchRequest) returns (ResumeSearchResponse) {
     option (google.api.http) = {
-      post: "/api/v1/searches/{id}/resume"
+      post: "/api/v2/searches/{id}/resume"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Searches"
@@ -147,7 +147,7 @@ service Determined {
   // Resume multiple searches.
   rpc ResumeSearches(ResumeSearchesRequest) returns (ResumeSearchesResponse) {
     option (google.api.http) = {
-      post: "/api/v1/projects/{project_id}/searches/resume"
+      post: "/api/v2/projects/{project_id}/searches/resume"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
@@ -158,7 +158,7 @@ service Determined {
   // Pause an search.
   rpc PauseSearch(PauseSearchRequest) returns (PauseSearchResponse) {
     option (google.api.http) = {
-      post: "/api/v1/searches/{id}/pause"
+      post: "/api/v2/searches/{id}/pause"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Searches"
@@ -167,7 +167,7 @@ service Determined {
   // Pause multiple searches.
   rpc PauseSearches(PauseSearchesRequest) returns (PauseSearchesResponse) {
     option (google.api.http) = {
-      post: "/api/v1/projects/{project_id}/searches/pause"
+      post: "/api/v2/projects/{project_id}/searches/pause"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
@@ -178,7 +178,7 @@ service Determined {
   // Cancel an search.
   rpc CancelSearch(CancelSearchRequest) returns (CancelSearchResponse) {
     option (google.api.http) = {
-      post: "/api/v1/searches/{id}/cancel"
+      post: "/api/v2/searches/{id}/cancel"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Searches"
@@ -188,7 +188,7 @@ service Determined {
   // Cancel multiple searches.
   rpc CancelSearches(CancelSearchesRequest) returns (CancelSearchesResponse) {
     option (google.api.http) = {
-      post: "/api/v1/projects/{project_id}/searches/cancel"
+      post: "/api/v2/projects/{project_id}/searches/cancel"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
@@ -199,7 +199,7 @@ service Determined {
   // Kill an search.
   rpc KillSearch(KillSearchRequest) returns (KillSearchResponse) {
     option (google.api.http) = {
-      post: "/api/v1/searches/{id}/kill"
+      post: "/api/v2/searches/{id}/kill"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Searches"
@@ -209,7 +209,7 @@ service Determined {
   // Kill multiple searches.
   rpc KillSearches(KillSearchesRequest) returns (KillSearchesResponse) {
     option (google.api.http) = {
-      post: "/api/v1/projects/{project_id}/searches/kill"
+      post: "/api/v2/projects/{project_id}/searches/kill"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
@@ -220,7 +220,7 @@ service Determined {
   // Archive an search.
   rpc ArchiveSearch(ArchiveSearchRequest) returns (ArchiveSearchResponse) {
     option (google.api.http) = {
-      post: "/api/v1/searches/{id}/archive"
+      post: "/api/v2/searches/{id}/archive"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Searches"
@@ -231,7 +231,7 @@ service Determined {
   rpc ArchiveSearches(ArchiveSearchesRequest)
       returns (ArchiveSearchesResponse) {
     option (google.api.http) = {
-      post: "/api/v1/projects/{project_id}/searches/archive"
+      post: "/api/v2/projects/{project_id}/searches/archive"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
@@ -243,7 +243,7 @@ service Determined {
   rpc UnarchiveSearch(UnarchiveSearchRequest)
       returns (UnarchiveSearchResponse) {
     option (google.api.http) = {
-      post: "/api/v1/searches/{id}/unarchive"
+      post: "/api/v2/searches/{id}/unarchive"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Searches"
@@ -254,7 +254,7 @@ service Determined {
   rpc UnarchiveSearches(UnarchiveSearchesRequest)
       returns (UnarchiveSearchesResponse) {
     option (google.api.http) = {
-      post: "/api/v1/projects/{project_id}/searches/unarchive"
+      post: "/api/v2/projects/{project_id}/searches/unarchive"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
@@ -265,7 +265,7 @@ service Determined {
   // Delete multiple searches.
   rpc DeleteSearches(DeleteSearchesRequest) returns (DeleteSearchesResponse) {
     option (google.api.http) = {
-      delete: "/api/v1/projects/{project_id}/searches/delete"
+      delete: "/api/v2/projects/{project_id}/searches/delete"
       body: "*"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
@@ -276,7 +276,7 @@ service Determined {
   // Delete the requested search.
   rpc DeleteSearch(DeleteSearchRequest) returns (DeleteSearchResponse) {
     option (google.api.http) = {
-      delete: "/api/v1/searches/{search_id}"
+      delete: "/api/v2/searches/{search_id}"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Searches"
