@@ -61,7 +61,7 @@ const EXCLUDED_SEARCH_DEFAULT_COLUMNS: RunColumn[] = [
 
 export type RunColumn = (typeof runColumns)[number];
 
-export const defaultRunColumns: RunColumn[] = runColumns.slice(0, -1);
+export const defaultRunColumns: RunColumn[] = runColumns.filter((f) => f !== 'archived');
 
 export const defaultSearchRunColumns: RunColumn[] = defaultRunColumns.filter(
   (c) => !EXCLUDED_SEARCH_DEFAULT_COLUMNS?.includes(c),
