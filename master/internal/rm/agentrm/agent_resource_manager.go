@@ -872,3 +872,8 @@ func (a *ResourceManager) stop() {
 		pool.stop()
 	}
 }
+
+// SmallerValueIsHigherPriority returns true if smaller priority values indicate a higher priority level.
+func (a *ResourceManager) SmallerValueIsHigherPriority() (bool, error) {
+	return true, nil
+}

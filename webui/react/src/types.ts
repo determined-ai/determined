@@ -710,6 +710,7 @@ export interface TrialItem extends StartEndTimes {
   logRetentionDays?: number;
   taskId?: string;
   metadata?: JsonObject;
+  logSignal?: string;
 }
 
 export interface TrialDetails extends TrialItem {
@@ -1295,6 +1296,7 @@ export interface FlatRun {
   archived: boolean;
   parentArchived: boolean;
   experiment?: FlatRunExperiment;
+  logSignal?: string;
 }
 
 export interface FlatRunExperiment {

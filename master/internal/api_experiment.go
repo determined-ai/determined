@@ -2706,6 +2706,7 @@ func (a *apiServer) SearchExperiments(
 		Column("searcher_metric_value").
 		Column("trials.external_trial_id").
 		ColumnExpr("nullif(trials.metadata, 'null') as metadata").
+		ColumnExpr("NULL as log_signal").
 		Join("LEFT JOIN validations bv ON trials.best_validation_id = bv.id").
 		Join("LEFT JOIN validations lv ON trials.latest_validation_id = lv.id").
 		Join("LEFT JOIN checkpoints_v2 new_ckpt ON new_ckpt.id = trials.warm_start_checkpoint_id").

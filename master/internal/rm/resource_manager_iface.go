@@ -26,6 +26,7 @@ type ResourceManager interface {
 	SetGroupPriority(sproto.SetGroupPriority) error
 	ExternalPreemptionPending(sproto.PendingPreemption) error
 	IsReattachableOnlyAfterStarted() bool
+	SmallerValueIsHigherPriority() (bool, error)
 
 	// Resource pool stuff.
 	GetResourcePools() (*apiv1.GetResourcePoolsResponse, error)

@@ -260,8 +260,13 @@ func getGridAxes(route []string, h expconf.Hyperparameter) []gridAxis {
 		return []gridAxis{axis}
 	case h.RawNestedHyperparameter != nil:
 		axes := []gridAxis{}
-		// Use h.Each for deterministic ordering.
 		nested := expconf.Hyperparameters(*h.RawNestedHyperparameter)
+		// Make sure empty maps don't disappear after sampling.
+		if len(nested) == 0 {
+			axes = append(axes, gridAxis{axisValue{route, map[string]interface{}{}}})
+			return axes
+		}
+		// Use h.Each for deterministic ordering.
 		nested.Each(func(name string, subparam expconf.HyperparameterV0) {
 			// make a completely clean copy of route
 			var subroute []string
