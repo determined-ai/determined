@@ -72,7 +72,7 @@
     "sprintf-js": "^1.1.3",
     "throttle-debounce": "^5.0.0",
     "tslib": "^2.6.2",
-    "uplot": "^1.6.18",
+    "uplot": "^1.6.31",
     "uuid": "^9.0.1"
   },
   "browserslist": {
