@@ -9,6 +9,7 @@ import { useToast } from 'hew/Toast';
 import useConfirm from 'hew/useConfirm';
 import { Loadable, NotLoaded } from 'hew/utils/loadable';
 import yaml from 'js-yaml';
+import { isEmpty } from 'lodash';
 import { useState } from 'react';
 
 import { useAsync } from 'hooks/useAsync';
@@ -75,6 +76,7 @@ const ConfigPolicies: React.FC<Props> = ({ workspaceId }: Props) => {
         workloadType: 'NTSC',
         workspaceId,
       });
+      if (isEmpty(response.configPolicies)) return undefined;
       return response.configPolicies;
     }
     return NotLoaded;
