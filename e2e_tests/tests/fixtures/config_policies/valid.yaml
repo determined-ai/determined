@@ -1,0 +1,6 @@
+constraints:
+  priority_limit: 10
+  resources:
+    max_slots: 4
+invariant_config:
+  description: test
