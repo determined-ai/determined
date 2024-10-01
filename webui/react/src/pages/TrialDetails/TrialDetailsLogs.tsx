@@ -1,6 +1,8 @@
 import Checkbox from 'hew/Checkbox';
 import CodeSample from 'hew/CodeSample';
 import Input from 'hew/Input';
+import LogViewerSelect, { Filters } from 'hew/LogViewer/LogViewerSelect';
+import { Settings, settingsConfigForTrial } from 'hew/LogViewer/LogViewerSelect.settings';
 import Message from 'hew/Message';
 import Spinner from 'hew/Spinner';
 import SplitPane, { Pane } from 'hew/SplitPane';
@@ -23,8 +25,6 @@ import handleError, { ErrorType } from 'utils/error';
 import mergeAbortControllers from 'utils/mergeAbortControllers';
 
 import LogViewer, { FetchConfig, FetchDirection, FetchType } from './LogViewer';
-import LogViewerSelect, { Filters } from './LogViewerSelect';
-import { Settings, settingsConfigForTrial } from './LogViewerSelect.settings';
 import css from './TrialDetailsLogs.module.scss';
 
 export interface Props {
@@ -261,12 +261,12 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
       if (!content) return;
       if (settings.enableRegex) {
         try {
-          new RegExp(key)
+          new RegExp(key);
         } catch {
-          return 
+          return;
         }
-      } 
-      
+      }
+
       const i = settings.enableRegex ? content.match(`${key}`)?.index : content.indexOf(key);
       if (!i || i < 0) return;
       const keyLen = settings.enableRegex ? content.match(`${key}`)?.[0].length || 0 : key.length;

@@ -314,15 +314,6 @@ function LogViewer<T>({
 
         // Slight delay on scrolling to the end for the log viewer to render and resolve everything.
         setTimeout(() => {
-          // if(selectedLog) {
-          //     virtuosoRef.current?.scrollToIndex({
-          //         index: 0,
-          //       })
-          // } else {
-          //     virtuosoRef.current?.scrollToIndex({
-          //         index: fetchDirection === FetchDirection.Older ? 'LAST' : 0,
-          //       });
-          // }
           local.current.isScrollReady = true;
         }, 200);
       },
