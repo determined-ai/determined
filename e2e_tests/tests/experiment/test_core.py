@@ -15,17 +15,6 @@ from tests.cluster import test_checkpoints
 
 
 @pytest.mark.e2e_cpu
-def test_trial_error() -> None:
-    sess = api_utils.user_session()
-    exp.run_failure_test(
-        sess,
-        conf.fixtures_path("trial_error/const.yaml"),
-        conf.fixtures_path("trial_error"),
-        "NotImplementedError",
-    )
-
-
-@pytest.mark.e2e_cpu
 def test_invalid_experiment() -> None:
     sess = api_utils.user_session()
     completed_process = exp.maybe_create_experiment(
@@ -93,8 +82,9 @@ def test_create_test_mode() -> None:
         "experiment",
         "create",
         "--test-mode",
-        conf.fixtures_path("trial_error/const.yaml"),
-        conf.fixtures_path("trial_error"),
+        "--config=entrypoint=exit 99",
+        conf.fixtures_path("mnist_pytorch/adaptive_short.yaml"),
+        conf.fixtures_path("mnist_pytorch"),
     ]
     # We expect a failing exit code, but --test-mode doesn't actually emit to stderr.
     p = detproc.check_error(sess, command, "")
