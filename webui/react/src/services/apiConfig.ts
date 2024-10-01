@@ -955,7 +955,7 @@ export const getExpValidationHistory: DetApi<
     }));
   },
   request: (params, options) => {
-    return detApi.Experiments.getExperimentValidationHistory(params.id, options);
+    return detApi.Internal.getExperimentValidationHistory(params.id, options);
   },
 };
 
@@ -1067,7 +1067,7 @@ export const timeSeries: DetApi<
     return response.trials.map(decoder.decodeTrialSummary);
   },
   request: (params: Service.TimeSeriesParams) => {
-    return detApi.Experiments.compareTrials(
+    return detApi.Internal.compareTrials(
       params.trialIds,
       params.maxDatapoints,
       undefined,
@@ -1088,7 +1088,7 @@ export const getExperimentFileTree: DetApi<
   name: 'getModelDefTree',
   postProcess: (response) => response.files || [],
   request: (params) => {
-    return detApi.Experiments.getModelDefTree(params.experimentId);
+    return detApi.Internal.getModelDefTree(params.experimentId);
   },
 };
 
