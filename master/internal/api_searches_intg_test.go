@@ -4,6 +4,7 @@
 package internal
 
 import (
+	"encoding/json"
 	"fmt"
 	"slices"
 	"strings"
@@ -15,8 +16,28 @@ import (
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/pkg/model"
 	"github.com/determined-ai/determined/master/pkg/ptrs"
+	"github.com/determined-ai/determined/master/pkg/schemas"
+	"github.com/determined-ai/determined/master/pkg/schemas/expconf"
 	"github.com/determined-ai/determined/proto/pkg/apiv1"
 )
+
+// nolint: exhaustruct
+func createTestSearchWithHParams(
+	t *testing.T, api *apiServer, curUser model.User, projectID int, hparams map[string]any,
+) *model.Experiment {
+	experimentConfig := expconf.ExperimentConfig{
+		RawDescription: ptrs.Ptr("desc"),
+		RawName:        expconf.Name{RawString: ptrs.Ptr("name")},
+	}
+
+	b, err := json.Marshal(hparams)
+	require.NoError(t, err)
+	err = json.Unmarshal(b, &experimentConfig.RawHyperparameters)
+	require.NoError(t, err)
+
+	activeConfig := schemas.WithDefaults(schemas.Merge(minExpConfig, experimentConfig))
+	return createTestExpWithActiveConfig(t, api, curUser, projectID, activeConfig)
+}
 
 func TestMoveSearchesIds(t *testing.T) {
 	api, curUser, ctx := setupAPITest(t, nil)
@@ -90,10 +111,10 @@ func TestMoveSearchesFilter(t *testing.T) {
 	sourceprojectID := int32(projectIDInt)
 	destprojectID := int32(projectID2Int)
 
-	exp1 := createTestExpWithProjectID(t, api, curUser, projectIDInt)
-	exp2 := createTestExpWithProjectID(t, api, curUser, projectIDInt)
-
 	hyperparameters1 := map[string]any{"global_batch_size": 1, "test1": map[string]any{"test2": 1}}
+	hyperparameters2 := map[string]any{"test1": map[string]any{"test2": 5}}
+	exp1 := createTestSearchWithHParams(t, api, curUser, projectIDInt, hyperparameters1)
+	exp2 := createTestSearchWithHParams(t, api, curUser, projectIDInt, hyperparameters2)
 
 	task1 := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
 	require.NoError(t, db.AddTask(ctx, task1))
@@ -104,7 +125,6 @@ func TestMoveSearchesFilter(t *testing.T) {
 		HParams:      hyperparameters1,
 	}, task1.TaskID))
 
-	hyperparameters2 := map[string]any{"test1": map[string]any{"test2": 5}}
 	task2 := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
 	require.NoError(t, db.AddTask(ctx, task2))
 	require.NoError(t, db.AddTrial(ctx, &model.Trial{
@@ -229,6 +249,7 @@ func TestDeleteSearchesNonTerminal(t *testing.T) {
 func TestDeleteSearchesIds(t *testing.T) {
 	api, curUser, ctx := setupAPITest(t, nil)
 	projectID, _, _, _, expID := setUpMultiTrialExperiments(ctx, t, api, curUser) //nolint:dogsled
+	require.NoError(t, completeExp(ctx, expID))
 
 	expIDs := []int32{expID}
 	req := &apiv1.DeleteSearchesRequest{
@@ -251,7 +272,7 @@ func TestDeleteSearchesIds(t *testing.T) {
 	require.Empty(t, searchResp.Runs)
 }
 
-func TestDeleteSearchesIdsNonExistant(t *testing.T) {
+func TestDeleteSearchesIdsNonExistent(t *testing.T) {
 	api, _, ctx := setupAPITest(t, nil)
 	_, projectIDInt := createProjectAndWorkspace(ctx, t, api)
 	projectID := int32(projectIDInt)
@@ -274,10 +295,11 @@ func TestDeleteSearchesFilter(t *testing.T) {
 	_, projectIDInt := createProjectAndWorkspace(ctx, t, api)
 	projectID := int32(projectIDInt)
 
-	exp1 := createTestExpWithProjectID(t, api, curUser, projectIDInt)
-	exp2 := createTestExpWithProjectID(t, api, curUser, projectIDInt)
-
 	hyperparameters1 := map[string]any{"global_batch_size": 1, "test1": map[string]any{"test2": 1}}
+	exp1 := createTestSearchWithHParams(t, api, curUser, projectIDInt, hyperparameters1)
+	hyperparameters2 := map[string]any{"test1": map[string]any{"test2": 5}}
+	exp2 := createTestSearchWithHParams(t, api, curUser, projectIDInt, hyperparameters2)
+
 	task1 := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
 	require.NoError(t, db.AddTask(ctx, task1))
 	require.NoError(t, db.AddTrial(ctx, &model.Trial{
@@ -287,7 +309,6 @@ func TestDeleteSearchesFilter(t *testing.T) {
 		HParams:      hyperparameters1,
 	}, task1.TaskID))
 
-	hyperparameters2 := map[string]any{"test1": map[string]any{"test2": 5}}
 	task2 := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
 	require.NoError(t, db.AddTask(ctx, task2))
 	require.NoError(t, db.AddTrial(ctx, &model.Trial{
@@ -301,6 +322,9 @@ func TestDeleteSearchesFilter(t *testing.T) {
 	require.Len(t, projHparam, 2)
 	require.True(t, slices.Contains(projHparam, "test1.test2"))
 	require.True(t, slices.Contains(projHparam, "global_batch_size"))
+
+	require.NoError(t, completeExp(ctx, int32(exp1.ID)))
+	require.NoError(t, completeExp(ctx, int32(exp2.ID)))
 
 	filter := `{
 		"filterGroup": {
@@ -346,6 +370,7 @@ func TestDeleteSearchesFilter(t *testing.T) {
 func TestArchiveUnarchiveSearchIds(t *testing.T) {
 	api, curUser, ctx := setupAPITest(t, nil)
 	projectID, _, _, _, expID := setUpMultiTrialExperiments(ctx, t, api, curUser) //nolint:dogsled
+	require.NoError(t, completeExp(ctx, expID))
 
 	searchIDs := []int32{expID}
 	archReq := &apiv1.ArchiveSearchesRequest{
@@ -374,9 +399,8 @@ func TestArchiveUnarchiveSearchIds(t *testing.T) {
 	}
 	unarchRes, err := api.UnarchiveSearches(ctx, unarchReq)
 	require.NoError(t, err)
-	require.Len(t, unarchRes.Results, 2)
+	require.Len(t, unarchRes.Results, 1)
 	require.Equal(t, "", unarchRes.Results[0].Error)
-	require.Equal(t, "", unarchRes.Results[1].Error)
 
 	searchResp, err = api.SearchRuns(ctx, searchReq)
 	require.NoError(t, err)
@@ -388,10 +412,10 @@ func TestArchiveUnarchiveSearchFilter(t *testing.T) {
 	_, projectIDInt := createProjectAndWorkspace(ctx, t, api)
 	projectID := int32(projectIDInt)
 
-	exp1 := createTestExpWithProjectID(t, api, curUser, projectIDInt)
-	exp2 := createTestExpWithProjectID(t, api, curUser, projectIDInt)
-
 	hyperparameters1 := map[string]any{"global_batch_size": 1, "test1": map[string]any{"test2": 1}}
+	exp1 := createTestSearchWithHParams(t, api, curUser, projectIDInt, hyperparameters1)
+	hyperparameters2 := map[string]any{"global_batch_size": 1, "test1": map[string]any{"test2": 5}}
+	exp2 := createTestSearchWithHParams(t, api, curUser, projectIDInt, hyperparameters2)
 
 	task1 := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
 	require.NoError(t, db.AddTask(ctx, task1))
@@ -402,7 +426,6 @@ func TestArchiveUnarchiveSearchFilter(t *testing.T) {
 		HParams:      hyperparameters1,
 	}, task1.TaskID))
 
-	hyperparameters2 := map[string]any{"global_batch_size": 1, "test1": map[string]any{"test2": 5}}
 	task2 := &model.Task{TaskType: model.TaskTypeTrial, TaskID: model.NewTaskID()}
 	require.NoError(t, db.AddTask(ctx, task2))
 	require.NoError(t, db.AddTrial(ctx, &model.Trial{
@@ -411,6 +434,9 @@ func TestArchiveUnarchiveSearchFilter(t *testing.T) {
 		StartTime:    time.Now(),
 		HParams:      hyperparameters2,
 	}, task2.TaskID))
+
+	require.NoError(t, completeExp(ctx, int32(exp1.ID)))
+	require.NoError(t, completeExp(ctx, int32(exp2.ID)))
 
 	filter := `{"filterGroup":{"children":[{"columnName":"hp.test1.test2","kind":"field",` +
 		`"location":"LOCATION_TYPE_HYPERPARAMETERS","operator":"<=","type":"COLUMN_TYPE_NUMBER","value":1}],` +
@@ -452,6 +478,7 @@ func TestArchiveUnarchiveSearchFilter(t *testing.T) {
 func TestArchiveAlreadyArchivedSearch(t *testing.T) {
 	api, curUser, ctx := setupAPITest(t, nil)
 	projectID, _, _, _, expID := setUpMultiTrialExperiments(ctx, t, api, curUser) //nolint:dogsled
+	require.NoError(t, completeExp(ctx, expID))
 
 	// Archive runs
 	searchIDs := []int32{expID}
@@ -509,6 +536,7 @@ func TestArchiveSearchNonTerminalState(t *testing.T) {
 func TestUnarchiveSearchAlreadyUnarchived(t *testing.T) {
 	api, curUser, ctx := setupAPITest(t, nil)
 	projectID, _, _, _, exp := setUpMultiTrialExperiments(ctx, t, api, curUser) //nolint:dogsled
+	require.NoError(t, completeExp(ctx, exp))
 
 	unarchReq := &apiv1.UnarchiveSearchesRequest{
 		SearchIds: []int32{exp},

@@ -380,9 +380,21 @@ func (a *apiServer) DeleteSearches(ctx context.Context, req *apiv1.DeleteSearche
 		}
 	}()
 
+	var deleteRunIDs []int32
+	getQ = db.Bun().NewSelect().
+		TableExpr("runs AS r").
+		Model(&deleteRunIDs).
+		Column("r.id").
+		Where("r.experiment_id IN (?)", bun.In(validIDs))
+
+	err = getQ.Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+
 	// delete run logs
 	if _, err = tx.NewDelete().Table("trial_logs").
-		Where("trial_logs.trial_id IN (?)", bun.In(validIDs)).
+		Where("trial_logs.trial_id IN (?)", bun.In(deleteRunIDs)).
 		Exec(ctx); err != nil {
 		return nil, fmt.Errorf("delete run logs: %w", err)
 	}
@@ -390,17 +402,24 @@ func (a *apiServer) DeleteSearches(ctx context.Context, req *apiv1.DeleteSearche
 	// delete task logs
 	trialTaskQuery := tx.NewSelect().Table("run_id_task_id").
 		ColumnExpr("task_id").
-		Where("run_id IN (?)", bun.In(validIDs))
+		Where("run_id IN (?)", bun.In(deleteRunIDs))
 	if _, err = tx.NewDelete().Table("task_logs").
 		Where("task_logs.task_id IN (?)", trialTaskQuery).
+		Exec(ctx); err != nil {
+		return nil, fmt.Errorf("delete task logs: %w", err)
+	}
+
+	// delete runs
+	if _, err = tx.NewDelete().Table("runs").
+		Where("runs.id IN (?)", bun.In(deleteRunIDs)).
 		Exec(ctx); err != nil {
 		return nil, fmt.Errorf("delete runs: %w", err)
 	}
 
 	var acceptedIDs []int
-	if _, err = tx.NewDelete().Table("runs").
-		Where("runs.id IN (?)", bun.In(validIDs)).
-		Returning("runs.id").
+	if _, err = tx.NewDelete().Table("experiments").
+		Where("id IN (?)", bun.In(validIDs)).
+		Returning("id").
 		Model(&acceptedIDs).
 		Exec(ctx); err != nil {
 		return nil, fmt.Errorf("delete runs: %w", err)
@@ -415,7 +434,7 @@ func (a *apiServer) DeleteSearches(ctx context.Context, req *apiv1.DeleteSearche
 
 	// delete run hparams
 	if _, err = tx.NewDelete().Table("run_hparams").
-		Where("run_id IN (?)", bun.In(acceptedIDs)).
+		Where("run_id IN (?)", bun.In(deleteRunIDs)).
 		Exec(ctx); err != nil {
 		return nil, fmt.Errorf("deleting run hparams: %w", err)
 	}
