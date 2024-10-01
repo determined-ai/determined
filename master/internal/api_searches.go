@@ -38,7 +38,7 @@ func filterSearchQuery(getQ *bun.SelectQuery, filter *string) (*bun.SelectQuery,
 		return q
 	}).WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
 		if !efr.ShowArchived {
-			return q.Where(`NOT (r.archived OR e.archived)`)
+			return q.Where(`NOT e.archived`)
 		}
 		return q
 	})
@@ -100,7 +100,7 @@ func (a *apiServer) MoveSearches(
 		Where("e.project_id = ?", req.SourceProjectId)
 
 	if req.Filter == nil {
-		getQ = getQ.Where("r.id IN (?)", bun.In(req.SearchIds))
+		getQ = getQ.Where("e.id IN (?)", bun.In(req.SearchIds))
 	} else {
 		getQ, err = filterSearchQuery(getQ, req.Filter)
 		if err != nil {
@@ -124,8 +124,6 @@ func (a *apiServer) MoveSearches(
 	var results []*apiv1.SearchActionResult
 	visibleIDs := set.New[int32]()
 	var validIDs []int32
-	// experiments to move
-	var expMoveIds []int32
 	for _, check := range searchChecks {
 		visibleIDs.Insert(check.ID)
 		if check.Archived {
@@ -148,7 +146,7 @@ func (a *apiServer) MoveSearches(
 		}
 	}
 	if len(validIDs) > 0 {
-		expMoveResults, err := experiment.MoveExperiments(ctx, srcProject.Id, expMoveIds, nil, req.DestinationProjectId)
+		expMoveResults, err := experiment.MoveExperiments(ctx, srcProject.Id, validIDs, nil, req.DestinationProjectId)
 		if err != nil {
 			return nil, err
 		}
