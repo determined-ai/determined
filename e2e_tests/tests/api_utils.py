@@ -6,6 +6,7 @@ import pytest
 
 from determined.common import api
 from determined.common.api import authentication, bindings, certs, errors
+from determined.experimental import client
 from tests import config as conf
 
 _cert: Optional[certs.Cert] = None
@@ -51,6 +52,14 @@ def create_test_user(
     bindings.post_PostUser(session, body=bindings.v1PostUserRequest(user=user, password=password))
     sess = make_session(user.username, password)
     return sess, password
+
+
+def create_linked_user(uid: int, agent_user: str, gid: int, group: str) -> api.Session:
+    sess, _ = create_test_user()
+    det_obj = client.Determined._from_session(admin_session())
+    user = det_obj.get_user_by_name(user_name=sess.username)
+    user.link_with_agent(agent_gid=gid, agent_uid=uid, agent_group=group, agent_user=agent_user)
+    return sess
 
 
 def assign_user_role(session: api.Session, user: str, role: str, workspace: Optional[str]) -> None:

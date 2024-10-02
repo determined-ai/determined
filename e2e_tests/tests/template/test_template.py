@@ -7,9 +7,9 @@ from determined.common.api import bindings, errors
 from tests import api_utils
 from tests import command as cmd
 from tests import config as conf
-from tests import experiment as exp
 from tests import template as tpl
 from tests.cluster import test_rbac
+from tests.experiment import noop
 
 
 @pytest.mark.e2e_cpu
@@ -244,29 +244,23 @@ def test_rbac_template_ntsc_create(kind: api.NTSC_Kind) -> None:
         tpl0 = setup_template_test(admin, workspaces[0].id, name="ntsc")
         tpl1 = setup_template_test(admin, workspaces[1].id, name="ntsc")
 
-        experiment_id = None
         pid = bindings.post_PostProject(
             admin,
             body=bindings.v1PostProjectRequest(name="test", workspaceId=workspaces[0].id),
             workspaceId=workspaces[0].id,
         ).project.id
-        experiment_id = exp.create_experiment(
-            admin,
-            conf.fixtures_path("no_op/single.yaml"),
-            conf.fixtures_path("no_op"),
-            ["--project_id", str(pid)],
-        )
-
+        exp_ref = noop.create_paused_experiment(admin, project_id=pid)
         for sess in sessions.values():
             api_utils.launch_ntsc(
-                sess, workspaces[0].id, kind, exp_id=experiment_id, template=tpl0.name
+                sess, workspaces[0].id, kind, exp_id=exp_ref.id, template=tpl0.name
             )
             e = None
             with pytest.raises(errors.APIException) as e:
                 api_utils.launch_ntsc(
-                    sess, workspaces[0].id, kind, exp_id=experiment_id, template=tpl1.name
+                    sess, workspaces[0].id, kind, exp_id=exp_ref.id, template=tpl1.name
                 )
             assert e.value.status_code == 404, e.value.message
+        exp_ref.kill()
 
 
 @pytest.mark.e2e_cpu_rbac
@@ -292,17 +286,7 @@ def test_rbac_template_exp_create() -> None:
         ).project.id
 
         for sess in sessions.values():
-            exp.create_experiment(
-                sess,
-                conf.fixtures_path("no_op/single.yaml"),
-                conf.fixtures_path("no_op"),
-                ["--project_id", str(pid), "--template", tpl0.name],
-            )
-            proc = exp.maybe_create_experiment(
-                sess,
-                conf.fixtures_path("no_op/single.yaml"),
-                conf.fixtures_path("no_op"),
-                ["--project_id", str(pid), "--template", tpl1.name],
-            )
-            assert proc.returncode == 1
-            assert "not found" in proc.stderr
+            exp_ref = noop.create_paused_experiment(sess, project_id=pid, template=tpl0.name)
+            exp_ref.kill()
+            with pytest.raises(errors.NotFoundException):
+                noop.create_paused_experiment(sess, project_id=pid, template=tpl1.name)

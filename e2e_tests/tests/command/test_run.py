@@ -135,11 +135,14 @@ def test_environment_variables_command() -> None:
 
 
 @pytest.mark.e2e_cpu
-def test_command_startup_hook_works() -> None:
+def test_command_startup_hook_works(tmp_path: pathlib.Path) -> None:
     sess = api_utils.user_session()
+    path = tmp_path / "startup-hook.sh"
+    with path.open("w") as f:
+        f.write("touch startup-hook-ran")
     _run_cmd(
         sess,
-        ["--context", conf.fixtures_path("no_op/"), '[ -e "startup-hook-ran" ]'],
+        ["--include", str(path), '[ -e "startup-hook-ran" ]'],
         expect_success=True,
     )
 

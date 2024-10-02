@@ -1,61 +1,41 @@
+import json
 import pathlib
-from typing import Dict, Optional
+from typing import Any, Dict, Optional
 
 import pytest
 
 from determined.common import api, util
+from determined.experimental import client
 from tests import api_utils
 from tests import command as cmd
-from tests import config as conf
 from tests import detproc
-from tests import experiment as exp
-from tests import filetree
+from tests.experiment import noop
 
 num_trials = 1
 
 
-def shared_fs_config(num_trials: int) -> str:
-    return f"""
-name: noop_random
-checkpoint_storage:
-  type: shared_fs
-  host_path: /tmp
-hyperparameters:
-  global_batch_size: 1
-searcher:
-  metric: validation_error
-  smaller_is_better: true
-  name: random
-  max_trials: {num_trials}
-  max_length:
-    batches: 100
-entrypoint: model_def:NoOpTrial
-"""
+SHARED_FS_CONFIG = {
+    "checkpoint_storage": {
+        "type": "shared_fs",
+        "host_path": "/tmp",
+        "storage_path": "test-tensorboard",
+    },
+}
 
 
-def s3_config(num_trials: int, secrets: Dict[str, str], prefix: Optional[str] = None) -> str:
-    config_dict = {
-        "description": "noop_random",
+def s3_config(secrets: Dict[str, str], prefix: Optional[str] = None) -> Dict[str, Any]:
+    config = {
         "checkpoint_storage": {
             "type": "s3",
             "access_key": secrets["INTEGRATIONS_S3_ACCESS_KEY"],
             "secret_key": secrets["INTEGRATIONS_S3_SECRET_KEY"],
             "bucket": secrets["INTEGRATIONS_S3_BUCKET"],
         },
-        "hyperparameters": {"global_batch_size": 1},
-        "searcher": {
-            "metric": "validation_error",
-            "smaller_is_better": True,
-            "name": "random",
-            "max_trials": num_trials,
-            "max_length": {"batches": 100},
-        },
-        "entrypoint": "model_def:NoOpTrial",
     }
     if prefix is not None:
-        config_dict["checkpoint_storage"]["prefix"] = prefix  # type: ignore
+        config["checkpoint_storage"]["prefix"] = prefix
 
-    return str(util.yaml_safe_dump(config_dict))
+    return config
 
 
 @pytest.mark.slow
@@ -67,13 +47,10 @@ def test_start_tensorboard_for_shared_fs_experiment(tmp_path: pathlib.Path) -> N
     instance.
     """
     sess = api_utils.user_session()
-    with filetree.FileTree(tmp_path, {"config.yaml": shared_fs_config(1)}) as tree:
-        config_path = tree.joinpath("config.yaml")
-        experiment_id = exp.run_basic_test(
-            sess, str(config_path), conf.fixtures_path("no_op"), num_trials
-        )
+    exp_ref = noop.create_experiment(sess, [noop.Report({"x": 1})], config=SHARED_FS_CONFIG)
+    assert exp_ref.wait(interval=0.01) == client.ExperimentState.COMPLETED
 
-    command = ["tensorboard", "start", str(experiment_id), "--no-browser"]
+    command = ["tensorboard", "start", str(exp_ref.id), "--no-browser"]
     with cmd.interactive_command(sess, command) as tensorboard:
         assert tensorboard.task_id is not None
         err = api.wait_for_task_ready(sess, tensorboard.task_id)
@@ -93,13 +70,10 @@ def test_start_tensorboard_for_s3_experiment(
     instance.
     """
     sess = api_utils.user_session()
-    with filetree.FileTree(tmp_path, {"config.yaml": s3_config(1, secrets, prefix)}) as tree:
-        config_path = tree.joinpath("config.yaml")
-        experiment_id = exp.run_basic_test(
-            sess, str(config_path), conf.fixtures_path("no_op"), num_trials
-        )
+    exp_ref = noop.create_experiment(sess, [noop.Report({"x": 1})], config=s3_config(secrets))
+    assert exp_ref.wait(interval=0.01) == client.ExperimentState.COMPLETED
 
-    command = ["tensorboard", "start", str(experiment_id), "--no-browser"]
+    command = ["tensorboard", "start", str(exp_ref.id), "--no-browser"]
     with cmd.interactive_command(sess, command) as tensorboard:
         assert tensorboard.task_id is not None
         err = api.wait_for_task_ready(sess, tensorboard.task_id)
@@ -120,37 +94,30 @@ def test_start_tensorboard_for_multi_experiment(
     trials, and kill the TensorBoard instance.
     """
     sess = api_utils.user_session()
-    with filetree.FileTree(
-        tmp_path,
-        {
-            "shared_fs_config.yaml": shared_fs_config(1),
-            "s3_config.yaml": s3_config(1, secrets),
-            "multi_trial_config.yaml": shared_fs_config(3),
+    exp1 = noop.create_experiment(sess, [noop.Report({"x": 1})], config=SHARED_FS_CONFIG)
+    exp2 = noop.create_experiment(sess, [noop.Report({"x": 1})], config=s3_config(secrets))
+    exp3 = noop.create_experiment(
+        sess,
+        [noop.Report({"x": 1})],
+        config={
+            **SHARED_FS_CONFIG,
+            "searcher": {
+                "name": "random",
+                "max_trials": 2,
+            },
         },
-    ) as tree:
-        shared_conf_path = tree.joinpath("shared_fs_config.yaml")
-        shared_fs_exp_id = exp.run_basic_test(
-            sess, str(shared_conf_path), conf.fixtures_path("no_op"), num_trials
-        )
-
-        s3_conf_path = tree.joinpath("s3_config.yaml")
-        s3_exp_id = exp.run_basic_test(
-            sess, str(s3_conf_path), conf.fixtures_path("no_op"), num_trials
-        )
-
-        multi_trial_config = tree.joinpath("multi_trial_config.yaml")
-        multi_trial_exp_id = exp.run_basic_test(
-            sess, str(multi_trial_config), conf.fixtures_path("no_op"), 3
-        )
-
-        trial_ids = [str(t.trial.id) for t in exp.experiment_trials(sess, multi_trial_exp_id)]
+    )
+    assert exp1.wait(interval=0.01) == client.ExperimentState.COMPLETED
+    assert exp2.wait(interval=0.01) == client.ExperimentState.COMPLETED
+    assert exp3.wait(interval=0.01) == client.ExperimentState.COMPLETED
+    trial_ids = [str(t.id) for t in exp3.get_trials()]
 
     command = [
         "tensorboard",
         "start",
-        str(shared_fs_exp_id),
-        str(s3_exp_id),
-        str(multi_trial_exp_id),
+        str(exp1.id),
+        str(exp2.id),
+        str(exp3.id),
         "-t",
         *trial_ids,
         "--no-browser",
@@ -169,17 +136,12 @@ def test_start_tensorboard_with_custom_image() -> None:
     to the experiment with custom image, verify the image has been set.
     """
     sess = api_utils.user_session()
-    experiment_id = exp.run_basic_test(
-        sess,
-        conf.fixtures_path("no_op/single-one-short-step.yaml"),
-        conf.fixtures_path("no_op"),
-        1,
-    )
+    exp_ref = noop.create_experiment(sess)
     command = [
         "det",
         "tensorboard",
         "start",
-        str(experiment_id),
+        str(exp_ref.id),
         "--no-browser",
         "--detach",
         "--config",
@@ -194,6 +156,9 @@ def test_start_tensorboard_with_custom_image() -> None:
         and config["environment"]["image"]["cuda"] == "python:3.8.16"
         and config["environment"]["image"]["rocm"] == "python:3.8.16"
     ), config
+    # Kill experiment and tensorbaord.
+    exp_ref.kill()
+    detproc.check_call(sess, ["det", "tensorboard", "kill", t_id])
 
 
 @pytest.mark.e2e_cpu
@@ -204,18 +169,14 @@ def test_tensorboard_inherit_image_pull_secrets() -> None:
     """
     sess = api_utils.user_session()
     exp_secrets = [{"name": "ips"}]
-    config_obj = conf.load_config(conf.fixtures_path("no_op/single-one-short-step.yaml"))
-    pod = config_obj.setdefault("environment", {}).setdefault("pod_spec", {})
-    pod.setdefault("spec", {})["imagePullSecrets"] = [{"name": "ips"}]
-    experiment_id = exp.run_basic_test_with_temp_config(
-        sess, config_obj, conf.fixtures_path("no_op"), 1
-    )
+    config = {"environment": {"pod_spec": {"spec": {"imagePullSecrets": exp_secrets}}}}
+    exp_ref = noop.create_experiment(sess, config=config)
 
     command = [
         "det",
         "tensorboard",
         "start",
-        str(experiment_id),
+        str(exp_ref.id),
         "--no-browser",
         "--detach",
     ]
@@ -225,8 +186,11 @@ def test_tensorboard_inherit_image_pull_secrets() -> None:
     config = util.yaml_safe_load(res)
 
     ips = config["environment"]["pod_spec"]["spec"]["imagePullSecrets"]
-
     assert ips == exp_secrets, (ips, exp_secrets)
+
+    # Kill experiment and tensorbaord.
+    exp_ref.kill()
+    detproc.check_call(sess, ["det", "tensorboard", "kill", t_id])
 
 
 @pytest.mark.e2e_cpu
@@ -236,51 +200,48 @@ def test_delete_tensorboard_for_experiment() -> None:
     the experiment, delete tensorboard and verify deletion.
     """
     sess = api_utils.user_session()
-    config_obj = conf.load_config(conf.tutorials_path("mnist_pytorch/const.yaml"))
-    experiment_id = exp.run_basic_test_with_temp_config(
-        sess, config_obj, conf.fixtures_path("mnist_pytorch"), 1
+    exp_ref = noop.create_experiment(sess, [noop.Report({"x": 1})])
+    assert exp_ref.wait(interval=0.01) == client.ExperimentState.COMPLETED
+
+    command = ["det", "e", "delete-tb-files", str(exp_ref.id)]
+    detproc.check_call(sess, command)
+
+    # Ensure Tensorboard files are deleted.
+    assert exp_ref.config
+    host_path = exp_ref.config["checkpoint_storage"]["host_path"]
+    storage_path = exp_ref.config["checkpoint_storage"]["storage_path"]
+    cluster_id = sess.get("info").json()["cluster_id"]
+    tb_path = (
+        pathlib.Path(host_path)
+        / storage_path
+        / cluster_id
+        / "tensorboard"
+        / "experiment"
+        / str(exp_ref.id)
     )
-
-    command = ["det", "e", "delete-tb-files", str(experiment_id)]
-    detproc.check_output(sess, command)
-
-    # Check if Tensorboard files are deleted
-    tb_path = sorted(pathlib.Path("/tmp/determined-cp/").glob("*/tensorboard"))[0]
-    tb_path = tb_path / "experiment" / str(experiment_id)
-    assert not pathlib.Path(tb_path).exists()
+    assert not tb_path.exists()
 
 
 @pytest.mark.e2e_cpu
-def test_tensorboard_directory_storage(tmp_path: pathlib.Path) -> None:
+def test_tensorboard_directory_storage() -> None:
     sess = api_utils.user_session()
-    config_obj = conf.load_config(conf.fixtures_path("no_op/single-one-short-step.yaml"))
-    config_obj["checkpoint_storage"] = {
-        "type": "directory",
-        "container_path": "/tmp/somepath",
-    }
-    tb_config = {}
-    tb_config["bind_mounts"] = config_obj["bind_mounts"] = [
-        {
-            "host_path": "/tmp/",
+    bind_mounts = [{"host_path": "/tmp", "container_path": "/tmp/somepath"}]
+    config = {
+        "checkpoint_storage": {
+            "type": "directory",
             "container_path": "/tmp/somepath",
-        }
-    ]
-
-    tb_config_path = tmp_path / "tb.yaml"
-    with tb_config_path.open("w") as fout:
-        util.yaml_safe_dump(tb_config, fout)
-
-    experiment_id = exp.run_basic_test_with_temp_config(
-        sess, config_obj, conf.fixtures_path("no_op"), 1
-    )
+        },
+        "bind_mounts": bind_mounts,
+    }
+    exp_ref = noop.create_experiment(sess, [noop.Report({"x": 1})], config=config)
+    assert exp_ref.wait(interval=0.01) == client.ExperimentState.COMPLETED
 
     command = [
         "tensorboard",
         "start",
-        str(experiment_id),
+        str(exp_ref.id),
         "--no-browser",
-        "--config-file",
-        str(tb_config_path),
+        f"--config=bind_mounts={json.dumps(bind_mounts)}",
     ]
 
     with cmd.interactive_command(sess, command) as tensorboard:
