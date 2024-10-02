@@ -134,7 +134,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
   }, [confirm, experiment.id, f_flat_runs, handleDownloadConfirm, trial?.id]);
 
   const handleFetch = useCallback(
-    (config: FetchConfig, type: FetchType, searchText?: string) => {
+    (config: FetchConfig, type: FetchType, searchText?: string, enableRegex?: boolean) => {
       const { signal } = mergeAbortControllers(config.canceler, canceler.current);
 
       const options = {
@@ -175,18 +175,11 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
         decode(optional(DateString), options.timestampAfter),
         options.orderBy as OrderBy,
         searchText,
-        settings.enableRegex,
+        enableRegex,
         { signal },
       );
     },
-    [
-      settings.agentId,
-      settings.containerId,
-      settings.rankId,
-      settings.level,
-      settings.enableRegex,
-      trial?.id,
-    ],
+    [settings.agentId, settings.containerId, settings.rankId, settings.level, trial?.id],
   );
 
   useEffect(() => {
@@ -290,6 +283,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
   useEffect(() => {
     if (settings.searchText) {
       setSearchResults([]);
+      setSelectedLog(undefined);
       const newCanceler = new AbortController();
       canceler.current = newCanceler;
       readStream(
@@ -301,12 +295,13 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
           },
           FetchType.Initial,
           settings.searchText,
+          settings.enableRegex,
         ),
         (log) => setSearchResults((prev) => [...prev, mapV1LogsResponse(log)]),
       );
     }
     return () => canceler.current.abort();
-  }, [settings.searchText, handleFetch]);
+  }, [settings.searchText, handleFetch, settings.enableRegex]);
 
   const renderSearch = useCallback(() => {
     const height = container.current?.getBoundingClientRect().height || 0;
@@ -322,7 +317,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
         </div>
         <Checkbox
           checked={settings.enableRegex}
-          onChange={(e) => handleFilterChange({ enableRegex: e.target.checked })}>
+          onChange={(e) => updateSettings({ enableRegex: e.target.checked })}>
           Regex
         </Checkbox>
         <div className={css.logContainer}>
@@ -352,7 +347,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
     container,
     selectedLog,
     onSearchChange,
-    handleFilterChange,
+    updateSettings,
   ]);
 
   return (
