@@ -114,22 +114,12 @@ func (a *UserAuthZBasic) CanCreateAccessToken(
 	return nil
 }
 
-// CanGetAccessToken returns an error if the user is not an admin.
-func (a *UserAuthZBasic) CanGetAccessToken(
+// CanGetAccessTokens returns an error if the user is not an admin.
+func (a *UserAuthZBasic) CanGetAccessTokens(
 	ctx context.Context, curUser, targetUser model.User,
 ) error {
 	if !curUser.Admin && curUser.ID != targetUser.ID {
 		return fmt.Errorf("only admin privileged users can view token of other users")
-	}
-	return nil
-}
-
-// CanGetAllAccessTokens returns an error if the user is not an admin.
-func (a *UserAuthZBasic) CanGetAllAccessTokens(
-	ctx context.Context, curUser model.User,
-) error {
-	if !curUser.Admin {
-		return fmt.Errorf("only admin privileged users view all users token")
 	}
 	return nil
 }

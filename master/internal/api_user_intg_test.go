@@ -980,10 +980,10 @@ func TestPostAccessTokenWithLifespan(t *testing.T) {
 	require.NoError(t, err)
 }
 
-// TestGetAllAccessTokens tests all access token info
+// TestGetAccessTokens tests all access token info
 // GET /api/v1/users/tokens - Get all access token info
 // from user_sessions db for admin.
-func TestGetAllAccessTokens(t *testing.T) {
+func TestGetAccessTokens(t *testing.T) {
 	api, _, ctx := setupAPITest(t, nil)
 
 	// Create test user 1 and do not revoke or set description
@@ -992,8 +992,12 @@ func TestGetAllAccessTokens(t *testing.T) {
 
 	createTestToken(ctx, t, api, userID1)
 
-	tokenInfo1, err := api.GetAccessToken(ctx, &apiv1.GetAccessTokenRequest{
-		UserId: int32(userID1),
+	usernameForGivenUserID, err := getUsernameForGivenUserID(ctx, userID1)
+	require.NoError(t, err)
+	filter := fmt.Sprintf(`{"username":"%s"}`, usernameForGivenUserID)
+
+	tokenInfo1, err := api.GetAccessTokens(ctx, &apiv1.GetAccessTokensRequest{
+		Filter: filter,
 	})
 	require.NoError(t, err)
 	require.NotNil(t, tokenInfo1)
@@ -1015,9 +1019,13 @@ func TestGetAllAccessTokens(t *testing.T) {
 
 	createTestToken(ctx, t, api, userID2)
 
+	usernameForGivenUserID, err = getUsernameForGivenUserID(ctx, userID2)
+	require.NoError(t, err)
+	filter = fmt.Sprintf(`{"username":"%s"}`, usernameForGivenUserID)
+
 	// Tests TestGetAccessToken info for giver userID
-	tokenInfo2, err := api.GetAccessToken(ctx, &apiv1.GetAccessTokenRequest{
-		UserId: int32(userID2),
+	tokenInfo2, err := api.GetAccessTokens(ctx, &apiv1.GetAccessTokensRequest{
+		Filter: filter,
 	})
 	require.NoError(t, err)
 	require.NotNil(t, tokenInfo2)
@@ -1042,7 +1050,7 @@ func TestGetAllAccessTokens(t *testing.T) {
 	})
 	require.NoError(t, err)
 
-	resp, err := api.GetAllAccessTokens(ctx, &apiv1.GetAllAccessTokensRequest{})
+	resp, err := api.GetAccessTokens(ctx, &apiv1.GetAccessTokensRequest{})
 	require.NoError(t, err)
 
 	for _, u := range resp.TokenInfo {
@@ -1078,12 +1086,13 @@ func TestAuthzOtherAccessToken(t *testing.T) {
 	require.Equal(t, expectedErr.Error(), err.Error())
 
 	// GET API Auth check
-	expectedErr = status.Error(codes.PermissionDenied, "canGetAccessToken")
-	authzUsers.On("CanGetAccessToken", mock.Anything, curUser, curUser).
-		Return(fmt.Errorf("canGetAccessToken")).Once()
+	expectedErr = status.Error(codes.PermissionDenied, "canGetAccessTokens")
+	authzUsers.On("CanGetAccessTokens", mock.Anything, curUser, curUser).
+		Return(fmt.Errorf("canGetAccessTokens")).Once()
 
-	_, err = api.GetAccessToken(ctx, &apiv1.GetAccessTokenRequest{
-		UserId: int32(curUser.ID),
+	filter := fmt.Sprintf(`{"username":"%s"}`, curUser.Username)
+	_, err = api.GetAccessTokens(ctx, &apiv1.GetAccessTokensRequest{
+		Filter: filter,
 	})
 	require.Equal(t, expectedErr.Error(), err.Error())
 }
@@ -1091,11 +1100,16 @@ func TestAuthzOtherAccessToken(t *testing.T) {
 func checkOutput(ctx context.Context, t *testing.T, api *apiServer, userID model.UserID,
 	lifespan string, desc string,
 ) error {
-	tokenInfos, err := api.GetAccessToken(ctx, &apiv1.GetAccessTokenRequest{
-		UserId: int32(userID),
+	usernameForGivenUserID, err := getUsernameForGivenUserID(ctx, userID)
+	require.NoError(t, err)
+
+	filter := fmt.Sprintf(`{"username":"%s"}`, usernameForGivenUserID)
+	tokenInfos, err := api.GetAccessTokens(ctx, &apiv1.GetAccessTokensRequest{
+		Filter: filter,
 	})
 	require.NoError(t, err)
 	require.NotNil(t, tokenInfos)
+
 	tokenID := model.TokenID(0)
 	if desc != "" {
 		descFound := false
@@ -1145,7 +1159,8 @@ func getTestUser(ctx context.Context) (model.UserID, error) {
 }
 
 func testSetLifespan(ctx context.Context, t *testing.T, userID model.UserID, lifespan string,
-	tokenID model.TokenID) error {
+	tokenID model.TokenID,
+) error {
 	expLifespan := user.DefaultTokenLifespan
 	var err error
 	if lifespan != "" {
@@ -1170,4 +1185,17 @@ func testSetLifespan(ctx context.Context, t *testing.T, userID model.UserID, lif
 	require.Equal(t, expLifespan, actLifespan)
 
 	return nil
+}
+
+func getUsernameForGivenUserID(ctx context.Context, userID model.UserID) (string, error) {
+	var usernameForGivenUserID string
+	err := db.Bun().NewSelect().
+		Table("users").
+		Column("username").
+		Where("id = ?", userID).
+		Scan(ctx, &usernameForGivenUserID)
+	if err != nil {
+		return "", fmt.Errorf("Error getting username for the user")
+	}
+	return usernameForGivenUserID, nil
 }

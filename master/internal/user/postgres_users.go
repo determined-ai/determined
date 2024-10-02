@@ -592,21 +592,3 @@ func UpdateAccessToken(
 	}
 	return &tokenInfo, nil
 }
-
-// GetAccessToken returns the active token info from the table with the user_id.
-func GetAccessToken(ctx context.Context, userID model.UserID) (
-	[]model.UserSession, error,
-) {
-	var tokenInfos []model.UserSession // To store the token info for the given user_id
-
-	// Execute the query to fetch the active token info for the given user_id
-	switch err := db.Bun().NewSelect().Table("user_sessions").
-		Where("user_id = ?", userID).Where("revoked = ?", false).
-		Where("token_type = ?", model.TokenTypeAccessToken).
-		Scan(ctx, &tokenInfos); {
-	case err != nil:
-		return nil, err
-	default:
-		return tokenInfos, nil
-	}
-}

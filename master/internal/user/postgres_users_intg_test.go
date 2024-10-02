@@ -604,7 +604,7 @@ func TestCreateAccessToken(t *testing.T) {
 	actLifespan := restoredToken.Expiry.Sub(restoredToken.CreatedAt)
 	require.Equal(t, expLifespan, actLifespan)
 
-	tokenInfos, err := GetAccessToken(context.TODO(), user.ID)
+	tokenInfos, err := getAccessToken(context.TODO(), user.ID)
 	require.NoError(t, err)
 	require.NotNil(t, tokenInfos)
 
@@ -635,7 +635,7 @@ func TestCreateAccessTokenHasExpiry(t *testing.T) {
 	require.Equal(t, expLifespan, actLifespan)
 	require.Equal(t, desc, restoredToken.Description.String)
 
-	tokenInfos, err := GetAccessToken(context.TODO(), user.ID)
+	tokenInfos, err := getAccessToken(context.TODO(), user.ID)
 	require.NoError(t, err)
 	require.NotNil(t, tokenInfos)
 
@@ -686,7 +686,7 @@ func TestGetAccessToken(t *testing.T) {
 	require.NoError(t, err)
 	require.NotNil(t, token)
 
-	tokenInfos, err := GetAccessToken(context.TODO(), user.ID)
+	tokenInfos, err := getAccessToken(context.TODO(), user.ID)
 	require.NoError(t, err)
 
 	restoredTokeninfo := restoreTokenInfo(token, t)
@@ -724,4 +724,20 @@ func restoreTokenInfo(token string, t *testing.T) model.UserSession {
 	require.NoError(t, err)
 
 	return restoredToken
+}
+
+func getAccessToken(ctx context.Context, userID model.UserID) ([]model.UserSession, error) {
+	var tokenInfos []model.UserSession // To store the token info for the given user_id
+
+	// Execute the query to fetch the active token info for the given user_id
+	err := db.Bun().NewSelect().
+		Table("user_sessions").
+		Where("user_id = ?", userID).
+		Where("revoked = ?", false).
+		Where("token_type = ?", model.TokenTypeAccessToken).
+		Scan(ctx, &tokenInfos)
+	if err != nil {
+		return nil, err
+	}
+	return tokenInfos, nil
 }

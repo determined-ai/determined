@@ -4636,27 +4636,53 @@ class v1GenericTaskState(DetEnum):
     STOPPING_COMPLETED = "GENERIC_TASK_STATE_STOPPING_COMPLETED"
     STOPPING_ERROR = "GENERIC_TASK_STATE_STOPPING_ERROR"
 
-class v1GetAccessTokenResponse(Printable):
-    """Response to GetAccessTokenRequest."""
+class v1GetAccessTokensRequestSortBy(DetEnum):
+    """Sort token info by the given field.
+    - SORT_BY_UNSPECIFIED: Returns token info in an unsorted list.
+    - SORT_BY_USER_ID: Returns token info sorted by user id.
+    - SORT_BY_EXPIRY: Returns token info sorted by expiry.
+    - SORT_BY_CREATED_AT: Returns token info sorted by created at.
+    - SORT_BY_TOKEN_TYPE: Returns token info sorted by token type.
+    - SORT_BY_REVOKED: Returns token info sorted by if it is revoked.
+    - SORT_BY_DESCRIPTION: Returns token info sorted by description of token.
+    """
+    UNSPECIFIED = "SORT_BY_UNSPECIFIED"
+    USER_ID = "SORT_BY_USER_ID"
+    EXPIRY = "SORT_BY_EXPIRY"
+    CREATED_AT = "SORT_BY_CREATED_AT"
+    TOKEN_TYPE = "SORT_BY_TOKEN_TYPE"
+    REVOKED = "SORT_BY_REVOKED"
+    DESCRIPTION = "SORT_BY_DESCRIPTION"
+
+class v1GetAccessTokensResponse(Printable):
+    """Response to GetAccessTokensRequest."""
+    pagination: "typing.Optional[v1Pagination]" = None
 
     def __init__(
         self,
         *,
         tokenInfo: "typing.Sequence[v1TokenInfo]",
+        pagination: "typing.Union[v1Pagination, None, Unset]" = _unset,
     ):
         self.tokenInfo = tokenInfo
+        if not isinstance(pagination, Unset):
+            self.pagination = pagination
 
     @classmethod
-    def from_json(cls, obj: Json) -> "v1GetAccessTokenResponse":
+    def from_json(cls, obj: Json) -> "v1GetAccessTokensResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
             "tokenInfo": [v1TokenInfo.from_json(x) for x in obj["tokenInfo"]],
         }
+        if "pagination" in obj:
+            kwargs["pagination"] = v1Pagination.from_json(obj["pagination"]) if obj["pagination"] is not None else None
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "tokenInfo": [x.to_json(omit_unset) for x in self.tokenInfo],
         }
+        if not omit_unset or "pagination" in vars(self):
+            out["pagination"] = None if self.pagination is None else self.pagination.to_json(omit_unset)
         return out
 
 class v1GetActiveTasksCountResponse(Printable):
@@ -4753,55 +4779,6 @@ class v1GetAgentsResponse(Printable):
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
             "agents": [x.to_json(omit_unset) for x in self.agents],
-        }
-        if not omit_unset or "pagination" in vars(self):
-            out["pagination"] = None if self.pagination is None else self.pagination.to_json(omit_unset)
-        return out
-
-class v1GetAllAccessTokensRequestSortBy(DetEnum):
-    """Sort token info by the given field.
-    - SORT_BY_UNSPECIFIED: Returns token info in an unsorted list.
-    - SORT_BY_USER_ID: Returns token info sorted by user id.
-    - SORT_BY_EXPIRY: Returns token info sorted by expiry.
-    - SORT_BY_CREATED_AT: Returns token info sorted by created at.
-    - SORT_BY_TOKEN_TYPE: Returns token info sorted by token type.
-    - SORT_BY_REVOKED: Returns token info sorted by if it is revoked.
-    - SORT_BY_DESCRIPTION: Returns token info sorted by description of token.
-    """
-    UNSPECIFIED = "SORT_BY_UNSPECIFIED"
-    USER_ID = "SORT_BY_USER_ID"
-    EXPIRY = "SORT_BY_EXPIRY"
-    CREATED_AT = "SORT_BY_CREATED_AT"
-    TOKEN_TYPE = "SORT_BY_TOKEN_TYPE"
-    REVOKED = "SORT_BY_REVOKED"
-    DESCRIPTION = "SORT_BY_DESCRIPTION"
-
-class v1GetAllAccessTokensResponse(Printable):
-    """Response to GetAllAccessTokensRequest."""
-    pagination: "typing.Optional[v1Pagination]" = None
-
-    def __init__(
-        self,
-        *,
-        tokenInfo: "typing.Sequence[v1TokenInfo]",
-        pagination: "typing.Union[v1Pagination, None, Unset]" = _unset,
-    ):
-        self.tokenInfo = tokenInfo
-        if not isinstance(pagination, Unset):
-            self.pagination = pagination
-
-    @classmethod
-    def from_json(cls, obj: Json) -> "v1GetAllAccessTokensResponse":
-        kwargs: "typing.Dict[str, typing.Any]" = {
-            "tokenInfo": [v1TokenInfo.from_json(x) for x in obj["tokenInfo"]],
-        }
-        if "pagination" in obj:
-            kwargs["pagination"] = v1Pagination.from_json(obj["pagination"]) if obj["pagination"] is not None else None
-        return cls(**kwargs)
-
-    def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
-        out: "typing.Dict[str, typing.Any]" = {
-            "tokenInfo": [x.to_json(omit_unset) for x in self.tokenInfo],
         }
         if not omit_unset or "pagination" in vars(self):
             out["pagination"] = None if self.pagination is None else self.pagination.to_json(omit_unset)
@@ -19289,19 +19266,46 @@ def get_ExpMetricNames(
         return
     raise APIHttpError("get_ExpMetricNames", _resp)
 
-def get_GetAccessToken(
+def get_GetAccessTokens(
     session: "api.BaseSession",
     *,
-    userId: int,
-) -> "v1GetAccessTokenResponse":
-    """Get user's access token info
+    filter: "typing.Optional[str]" = None,
+    limit: "typing.Optional[int]" = None,
+    offset: "typing.Optional[int]" = None,
+    orderBy: "typing.Optional[v1OrderBy]" = None,
+    sortBy: "typing.Optional[v1GetAccessTokensRequestSortBy]" = None,
+) -> "v1GetAccessTokensResponse":
+    """Get list of all access token info
 
-    - userId: The id of the user.
+    - filter: Filter by username or expression.
+    - limit: Limit the number of projects. A value of 0 denotes no limit.
+    - offset: Skip the number of projects before returning results. Negative values
+denote number of projects to skip from the end before returning results.
+    - orderBy: Order token info in either ascending or descending order.
+
+ - ORDER_BY_UNSPECIFIED: Returns records in no specific order.
+ - ORDER_BY_ASC: Returns records in ascending order.
+ - ORDER_BY_DESC: Returns records in descending order.
+    - sortBy: Sort token info by the given field.
+
+ - SORT_BY_UNSPECIFIED: Returns token info in an unsorted list.
+ - SORT_BY_USER_ID: Returns token info sorted by user id.
+ - SORT_BY_EXPIRY: Returns token info sorted by expiry.
+ - SORT_BY_CREATED_AT: Returns token info sorted by created at.
+ - SORT_BY_TOKEN_TYPE: Returns token info sorted by token type.
+ - SORT_BY_REVOKED: Returns token info sorted by if it is revoked.
+ - SORT_BY_DESCRIPTION: Returns token info sorted by description of token.
     """
-    _params = None
+    _params = {
+        "filter": filter,
+        "limit": limit,
+        "offset": offset,
+        "orderBy": orderBy.value if orderBy is not None else None,
+        "sortBy": sortBy.value if sortBy is not None else None,
+    }
     _resp = session._do_request(
         method="GET",
-        path=f"/api/v1/users/{userId}/token",
+        path="/api/v1/user/tokens",
         params=_params,
         json=None,
         data=None,
@@ -19310,8 +19314,8 @@ def get_GetAccessToken(
         stream=False,
     )
     if _resp.status_code == 200:
-        return v1GetAccessTokenResponse.from_json(_resp.json())
-    raise APIHttpError("get_GetAccessToken", _resp)
+        return v1GetAccessTokensResponse.from_json(_resp.json())
+    raise APIHttpError("get_GetAccessTokens", _resp)
 
 def get_GetActiveTasksCount(
     session: "api.BaseSession",
@@ -19407,60 +19411,6 @@ denote number of agents to skip from the end before returning results.
     if _resp.status_code == 200:
         return v1GetAgentsResponse.from_json(_resp.json())
     raise APIHttpError("get_GetAgents", _resp)
-
-def get_GetAllAccessTokens(
-    session: "api.BaseSession",
-    *,
-    includeInactive: "typing.Optional[bool]" = None,
-    limit: "typing.Optional[int]" = None,
-    name: "typing.Optional[str]" = None,
-    offset: "typing.Optional[int]" = None,
-    orderBy: "typing.Optional[v1OrderBy]" = None,
-    sortBy: "typing.Optional[v1GetAllAccessTokensRequestSortBy]" = None,
-) -> "v1GetAllAccessTokensResponse":
-    """Get list of all access token info
-
-    - includeInactive: Include inactive tokens (expired & revoked) in response.
-    - limit: Limit the number of projects. A value of 0 denotes no limit.
-    - name: Filter by username or display name.
-    - offset: Skip the number of projects before returning results. Negative values
-denote number of projects to skip from the end before returning results.
-    - orderBy: Order token info in either ascending or descending order.
-
- - ORDER_BY_UNSPECIFIED: Returns records in no specific order.
- - ORDER_BY_ASC: Returns records in ascending order.
- - ORDER_BY_DESC: Returns records in descending order.
-    - sortBy: Sort token info by the given field.
-
- - SORT_BY_UNSPECIFIED: Returns token info in an unsorted list.
- - SORT_BY_USER_ID: Returns token info sorted by user id.
- - SORT_BY_EXPIRY: Returns token info sorted by expiry.
- - SORT_BY_CREATED_AT: Returns token info sorted by created at.
- - SORT_BY_TOKEN_TYPE: Returns token info sorted by token type.
- - SORT_BY_REVOKED: Returns token info sorted by if it is revoked.
- - SORT_BY_DESCRIPTION: Returns token info sorted by description of token.
-    """
-    _params = {
-        "includeInactive": str(includeInactive).lower() if includeInactive is not None else None,
-        "limit": limit,
-        "name": name,
-        "offset": offset,
-        "orderBy": orderBy.value if orderBy is not None else None,
-        "sortBy": sortBy.value if sortBy is not None else None,
-    }
-    _resp = session._do_request(
-        method="GET",
-        path="/api/v1/user/tokens",
-        params=_params,
-        json=None,
-        data=None,
-        headers=None,
-        timeout=None,
-        stream=False,
-    )
-    if _resp.status_code == 200:
-        return v1GetAllAccessTokensResponse.from_json(_resp.json())
-    raise APIHttpError("get_GetAllAccessTokens", _resp)
 
 def get_GetAllocation(
     session: "api.BaseSession",
@@ -25644,8 +25594,8 @@ def get_health(
 # Paginated is a union type of objects whose .pagination
 # attribute is a v1Pagination-type object.
 Paginated = typing.Union[
+    v1GetAccessTokensResponse,
     v1GetAgentsResponse,
-    v1GetAllAccessTokensResponse,
     v1GetCommandsResponse,
     v1GetExperimentCheckpointsResponse,
     v1GetExperimentTrialsResponse,
