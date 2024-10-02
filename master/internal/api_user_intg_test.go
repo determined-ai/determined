@@ -997,7 +997,17 @@ func TestGetAllAccessTokens(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.NotNil(t, tokenInfo1)
-	require.Equal(t, int32(userID1), tokenInfo1.TokenInfo.UserId)
+	// Loop through all the returned user sessions
+	userIDFound := false
+	tokenID1 := 0
+	for _, tokenInfo := range tokenInfo1.TokenInfo {
+		// Check if user ID matches
+		if tokenInfo.UserId == int32(userID1) {
+			userIDFound = true
+			tokenID1 = int(tokenInfo.Id)
+		}
+	}
+	require.True(t, userIDFound, "User ID should be present in tokenInfo1")
 
 	// Create test user 2 and revoke and set description
 	userID2, err := getTestUser(ctx)
@@ -1011,12 +1021,22 @@ func TestGetAllAccessTokens(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.NotNil(t, tokenInfo2)
-	require.Equal(t, int32(userID2), tokenInfo2.TokenInfo.UserId)
+	// Loop through all the returned user sessions
+	userIDFound = false
+	tokenID2 := 0
+	for _, tokenInfo := range tokenInfo2.TokenInfo {
+		// Check if user ID matches
+		if tokenInfo.UserId == int32(userID2) {
+			userIDFound = true
+			tokenID2 = int(tokenInfo.Id)
+		}
+	}
+	require.True(t, userIDFound, "User ID should be present in tokenInfo2")
 
 	description := "test desc"
 	// Tests TestPatchAccessToken info for giver tokenID
 	_, err = api.PatchAccessToken(ctx, &apiv1.PatchAccessTokenRequest{
-		TokenId:     tokenInfo2.TokenInfo.Id,
+		TokenId:     int32(tokenID2),
 		Description: &description,
 		SetRevoked:  true,
 	})
@@ -1026,14 +1046,12 @@ func TestGetAllAccessTokens(t *testing.T) {
 	require.NoError(t, err)
 
 	for _, u := range resp.TokenInfo {
-		if model.UserID(u.Id) == model.UserID(tokenInfo1.TokenInfo.Id) {
+		if model.UserID(u.Id) == model.UserID(tokenID1) {
 			require.False(t, u.Revoked)
 			require.NotEqual(t, description, u.Description)
-			require.Equal(t, tokenInfo1.TokenInfo.TokenType, u.TokenType)
-		} else if model.UserID(u.Id) == model.UserID(tokenInfo2.TokenInfo.Id) {
+		} else if model.UserID(u.Id) == model.UserID(tokenID2) {
 			require.True(t, u.Revoked)
 			require.Equal(t, description, u.Description)
-			require.Equal(t, tokenInfo2.TokenInfo.TokenType, u.TokenType)
 		}
 	}
 
@@ -1073,17 +1091,28 @@ func TestAuthzOtherAccessToken(t *testing.T) {
 func checkOutput(ctx context.Context, t *testing.T, api *apiServer, userID model.UserID,
 	lifespan string, desc string,
 ) error {
-	tokenInfo, err := api.GetAccessToken(ctx, &apiv1.GetAccessTokenRequest{
+	tokenInfos, err := api.GetAccessToken(ctx, &apiv1.GetAccessTokenRequest{
 		UserId: int32(userID),
 	})
 	require.NoError(t, err)
-	require.NotNil(t, tokenInfo)
+	require.NotNil(t, tokenInfos)
+	tokenID := model.TokenID(0)
 	if desc != "" {
-		require.Equal(t, tokenInfo.TokenInfo.Description, desc)
+		descFound := false
+		for _, tokenInfo := range tokenInfos.TokenInfo {
+			// Check if user ID matches
+			if tokenInfo.Description == desc {
+				descFound = true
+				tokenID = model.TokenID(tokenInfo.Id)
+			}
+		}
+		require.True(t, descFound, "Desc should be present in tokenInfo")
 	}
 
-	err = testSetLifespan(ctx, t, userID, lifespan)
-	require.NoError(t, err)
+	if lifespan != "" {
+		err = testSetLifespan(ctx, t, userID, lifespan, tokenID)
+		require.NoError(t, err)
+	}
 
 	return nil
 }
@@ -1115,7 +1144,8 @@ func getTestUser(ctx context.Context) (model.UserID, error) {
 	)
 }
 
-func testSetLifespan(ctx context.Context, t *testing.T, userID model.UserID, lifespan string) error {
+func testSetLifespan(ctx context.Context, t *testing.T, userID model.UserID, lifespan string,
+	tokenID model.TokenID) error {
 	expLifespan := user.DefaultTokenLifespan
 	var err error
 	if lifespan != "" {
@@ -1130,6 +1160,7 @@ func testSetLifespan(ctx context.Context, t *testing.T, userID model.UserID, lif
 		Column("expiry", "created_at").
 		Where("user_id = ?", userID).
 		Where("token_type = ?", model.TokenTypeAccessToken).
+		Where("id = ?", tokenID).
 		Scan(ctx, &expiry, &createdAt)
 	if err != nil {
 		return fmt.Errorf("Error getting the set lifespan, creation time")

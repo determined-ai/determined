@@ -4642,20 +4642,20 @@ class v1GetAccessTokenResponse(Printable):
     def __init__(
         self,
         *,
-        tokenInfo: "v1TokenInfo",
+        tokenInfo: "typing.Sequence[v1TokenInfo]",
     ):
         self.tokenInfo = tokenInfo
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1GetAccessTokenResponse":
         kwargs: "typing.Dict[str, typing.Any]" = {
-            "tokenInfo": v1TokenInfo.from_json(obj["tokenInfo"]),
+            "tokenInfo": [v1TokenInfo.from_json(x) for x in obj["tokenInfo"]],
         }
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
         out: "typing.Dict[str, typing.Any]" = {
-            "tokenInfo": self.tokenInfo.to_json(omit_unset),
+            "tokenInfo": [x.to_json(omit_unset) for x in self.tokenInfo],
         }
         return out
 

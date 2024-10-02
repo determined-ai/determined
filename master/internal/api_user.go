@@ -698,7 +698,7 @@ func (a *apiServer) PostUserActivity(
 	return &apiv1.PostUserActivityResponse{}, err
 }
 
-// PostAccessToken takes user id and optional lifespan, description and overwrites an
+// PostAccessToken takes user id and optional lifespan, description and creates an
 // access token for the given user.
 func (a *apiServer) PostAccessToken(
 	ctx context.Context, req *apiv1.PostAccessTokenRequest,
@@ -727,7 +727,7 @@ func (a *apiServer) PostAccessToken(
 		tokenExpiration = d
 	}
 
-	token, err := user.RevokeAndCreateAccessToken(
+	token, err := user.CreateAccessToken(
 		ctx, targetFullUser.ID, user.WithTokenExpiry(&tokenExpiration), user.WithTokenDescription(req.Description))
 	if err != nil {
 		return nil, err
@@ -735,7 +735,7 @@ func (a *apiServer) PostAccessToken(
 	return &apiv1.PostAccessTokenResponse{Token: token}, nil
 }
 
-// GetAllAccessTokens returns (active / revoked) access token info.
+// GetAllAccessTokens returns all access token info.
 func (a *apiServer) GetAllAccessTokens(
 	ctx context.Context, req *apiv1.GetAllAccessTokensRequest,
 ) (*apiv1.GetAllAccessTokensResponse, error) {
@@ -841,7 +841,7 @@ func (a *apiServer) GetAccessToken(
 		return nil, status.Error(codes.PermissionDenied, err.Error())
 	}
 
-	tokenInfo, err := user.GetAccessToken(ctx, model.UserID(req.UserId))
+	tokenInfos, err := user.GetAccessToken(ctx, model.UserID(req.UserId))
 	if errors.Is(err, sql.ErrNoRows) {
 		return nil, api.NotFoundErrs("token for user", targetUser.Username, true)
 	}
@@ -849,7 +849,11 @@ func (a *apiServer) GetAccessToken(
 		return nil, err
 	}
 
-	return &apiv1.GetAccessTokenResponse{TokenInfo: tokenInfo.Proto()}, nil
+	res := &apiv1.GetAccessTokenResponse{}
+	for _, s := range tokenInfos {
+		res.TokenInfo = append(res.TokenInfo, s.Proto())
+	}
+	return res, nil
 }
 
 // PatchAccessToken performs a partial patch of mutable fields on an existing access token.

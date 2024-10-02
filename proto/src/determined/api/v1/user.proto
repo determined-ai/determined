@@ -285,7 +285,7 @@ message GetAllAccessTokensResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "token_info" ] }
   };
-  // List of information regarded request tokens.
+  // List of token information.
   repeated determined.user.v1.TokenInfo token_info = 1;
   // Pagination information of the full dataset.
   Pagination pagination = 2;
@@ -302,8 +302,8 @@ message GetAccessTokenResponse {
   option (grpc.gateway.protoc_gen_swagger.options.openapiv2_schema) = {
     json_schema: { required: [ "token_info" ] }
   };
-  // Information about the requested token.
-  determined.user.v1.TokenInfo token_info = 1;
+  // List of information about the requested token.
+  repeated determined.user.v1.TokenInfo token_info = 1;
 }
 
 // Patch user's access token info.

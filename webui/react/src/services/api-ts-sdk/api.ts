@@ -3728,11 +3728,11 @@ export type V1GenericTaskState = ValueOf<typeof V1GenericTaskState>
  */
 export interface V1GetAccessTokenResponse {
     /**
-     * Information about the requested token.
-     * @type {V1TokenInfo}
+     * List of information about the requested token.
+     * @type {Array<V1TokenInfo>}
      * @memberof V1GetAccessTokenResponse
      */
-    tokenInfo: V1TokenInfo;
+    tokenInfo: Array<V1TokenInfo>;
 }
 /**
  * Response to GetActiveTasksCountRequest.
@@ -3830,7 +3830,7 @@ export type V1GetAllAccessTokensRequestSortBy = ValueOf<typeof V1GetAllAccessTok
  */
 export interface V1GetAllAccessTokensResponse {
     /**
-     * List of information regarded request tokens.
+     * List of token information.
      * @type {Array<V1TokenInfo>}
      * @memberof V1GetAllAccessTokensResponse
      */
