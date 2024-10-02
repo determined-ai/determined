@@ -47,29 +47,6 @@ export const durationInEnglish = humanizeDuration.humanizer({
   units: ['y', 'mo', 'w', 'd', 'h', 'm', 's', 'ms'],
 });
 
-export const formatDatetime = (
-  datetime: string,
-  options: { format?: string; inputUTC?: boolean; outputUTC?: boolean } = {},
-): string => {
-  const config = {
-    format: DEFAULT_DATETIME_FORMAT,
-    inputUTC: false,
-    outputUTC: true,
-    ...options,
-  };
-  // Strip out the timezone info if we want to force UTC input.
-  const dateString = config.inputUTC ? stripTimezone(datetime) : datetime;
-
-  // `dayjs.utc` respects timezone in the datetime string if available.
-  let dayjsDate = dayjs.utc(dateString);
-
-  // Prep the date as UTC or local time based on output UTC option.
-  if (!config.outputUTC) dayjsDate = dayjsDate.local();
-
-  // Return the formatted date based on provided format.
-  return dayjsDate.format(config.format);
-};
-
 // Experiment duration (naive) in miliseconds
 export const getDuration = (times: StartEndTimes): number => {
   const endTime = times.endTime ? new Date(times.endTime) : new Date();
