@@ -20,14 +20,17 @@ html_title = "Determined AI Documentation"
 copyright = time.strftime("%Y, Determined AI")
 author = "ai-open-source@hpe.com"
 
+class VersionError(Exception):
+    pass
+
 # Read the application version string from the VERSION environment
 # variable. Previously, this was read from a static VERSION file at the root of
 # the repository. Now, we read it from an environment variable set by a
 # Makefile, generated from version.sh in the repository root.
-version = os.environ.get("VERSION")
-if version is None:
-    print("Please ensure VERSION environment variable is set.")
-    os.exit(1)
+try:
+    version = os.environ["VERSION"]
+except KeyError as e:
+    raise VersionError("Please ensure VERSION environment variable is set.").with_traceback(e.__traceback__)
 
 release = version
 language = "en"
