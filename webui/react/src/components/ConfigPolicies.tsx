@@ -15,7 +15,11 @@ import { useState } from 'react';
 
 import { useAsync } from 'hooks/useAsync';
 import usePermissions from 'hooks/usePermissions';
-import { deleteWorkspaceConfigPolicies, getWorkspaceConfigPolicies, updateWorkspaceConfigPolicies } from 'services/api';
+import {
+  deleteWorkspaceConfigPolicies,
+  getWorkspaceConfigPolicies,
+  updateWorkspaceConfigPolicies,
+} from 'services/api';
 import handleError from 'utils/error';
 
 interface Props {
@@ -140,7 +144,9 @@ const ConfigPoliciesTab: React.FC<TabProps> = ({ workspaceId, type }: TabProps) 
   const initialConfigPoliciesYAML = yaml.dump(loadableConfigPolicies.getOrElse(undefined));
 
   const handleChange = () => {
-    setDisabled(hasErrors(form) || form.getFieldValue('configPolicies') === initialConfigPoliciesYAML);
+    setDisabled(
+      hasErrors(form) || form.getFieldValue('configPolicies') === initialConfigPoliciesYAML,
+    );
   };
 
   if (rbacLoading) return <Spinner spinning />;
