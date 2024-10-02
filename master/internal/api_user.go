@@ -772,7 +772,6 @@ func (a *apiServer) GetAccessTokens(
 		Column("us.revoked").
 		Column("us.description")
 
-	// {"showActive":true,"username":"admin","TokenType":"ACCESS_TOKEN"}
 	var userIDForGivenUsername model.UserID
 	if req.Filter != "" {
 		var atf accessTokenFilter

@@ -1001,7 +1001,7 @@ func TestGetAccessTokens(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.NotNil(t, tokenInfo1)
-	// Loop through all the returned user sessions
+	// Loop through the returned access token records
 	userIDFound := false
 	tokenID1 := 0
 	for _, tokenInfo := range tokenInfo1.TokenInfo {
@@ -1029,7 +1029,7 @@ func TestGetAccessTokens(t *testing.T) {
 	})
 	require.NoError(t, err)
 	require.NotNil(t, tokenInfo2)
-	// Loop through all the returned user sessions
+	// Loop through the returned access token records
 	userIDFound = false
 	tokenID2 := 0
 	for _, tokenInfo := range tokenInfo2.TokenInfo {
