@@ -2911,20 +2911,10 @@ service Determined {
   }
 
   // Get list of all access token info
-  rpc GetAllAccessTokens(GetAllAccessTokensRequest)
-      returns (GetAllAccessTokensResponse) {
+  rpc GetAccessTokens(GetAccessTokensRequest)
+      returns (GetAccessTokensResponse) {
     option (google.api.http) = {
       get: "/api/v1/user/tokens"
-    };
-    option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
-      tags: "Users"
-    };
-  }
-
-  // Get user's access token info
-  rpc GetAccessToken(GetAccessTokenRequest) returns (GetAccessTokenResponse) {
-    option (google.api.http) = {
-      get: "/api/v1/users/{user_id}/token"
     };
     option (grpc.gateway.protoc_gen_swagger.options.openapiv2_operation) = {
       tags: "Users"

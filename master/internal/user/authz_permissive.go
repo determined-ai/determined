@@ -129,20 +129,12 @@ func (p *UserAuthZPermissive) CanCreateAccessToken(
 	return (&UserAuthZBasic{}).CanCreateAccessToken(ctx, curUser, targetUser)
 }
 
-// CanGetAllAccessTokens calls RBAC authz but enforces basic authz.
-func (p *UserAuthZPermissive) CanGetAllAccessTokens(
-	ctx context.Context, curUser model.User,
-) error {
-	_ = (&UserAuthZRBAC{}).CanGetAllAccessTokens(ctx, curUser)
-	return (&UserAuthZBasic{}).CanGetAllAccessTokens(ctx, curUser)
-}
-
-// CanGetAccessToken calls RBAC authz but enforces basic authz.
-func (p *UserAuthZPermissive) CanGetAccessToken(
+// CanGetAccessTokens calls RBAC authz but enforces basic authz.
+func (p *UserAuthZPermissive) CanGetAccessTokens(
 	ctx context.Context, curUser, targetUser model.User,
 ) error {
-	_ = (&UserAuthZRBAC{}).CanGetAccessToken(ctx, curUser, targetUser)
-	return (&UserAuthZBasic{}).CanGetAccessToken(ctx, curUser, targetUser)
+	_ = (&UserAuthZRBAC{}).CanGetAccessTokens(ctx, curUser, targetUser)
+	return (&UserAuthZBasic{}).CanGetAccessTokens(ctx, curUser, targetUser)
 }
 
 // CanUpdateAccessToken calls RBAC authz but enforces basic authz.

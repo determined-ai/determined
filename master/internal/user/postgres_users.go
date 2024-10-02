@@ -493,9 +493,9 @@ func WithTokenDescription(description string) AccessTokenOption {
 	}
 }
 
-// RevokeAndCreateAccessToken creates/overwrites a access token and store in
+// CreateAccessToken creates a new access token and store in
 // user_sessions db.
-func RevokeAndCreateAccessToken(
+func CreateAccessToken(
 	ctx context.Context, userID model.UserID, opts ...AccessTokenOption,
 ) (string, error) {
 	CurrentTimeNowInUTC = time.Now().UTC()
@@ -517,21 +517,10 @@ func RevokeAndCreateAccessToken(
 	var token string
 
 	err := db.Bun().RunInTx(ctx, nil, func(ctx context.Context, tx bun.Tx) error {
-		// AccessTokens should have a 1:1 relationship with users, if a user creates a new token,
-		// revoke the previous token if it exists.
-		_, err := tx.NewUpdate().
-			Table("user_sessions").
-			Set("revoked = true").
-			Where("user_id = ?", userID).
-			Where("token_type = ?", model.TokenTypeAccessToken).
-			Exec(ctx)
-		if err != nil {
-			return err
-		}
-
+		// AccessTokens should have a many:1 relationship with users.
 		// A new row is inserted into the user_sessions table, and the ID of the
 		// inserted row is returned and stored in user_sessions.ID.
-		_, err = tx.NewInsert().
+		_, err := tx.NewInsert().
 			Model(accessToken).
 			Column("user_id", "expiry", "created_at", "token_type", "revoked", "description").
 			Returning("id").
@@ -602,22 +591,4 @@ func UpdateAccessToken(
 		return nil, err
 	}
 	return &tokenInfo, nil
-}
-
-// GetAccessToken returns the active token info from the table with the user_id.
-func GetAccessToken(ctx context.Context, userID model.UserID) (
-	*model.UserSession, error,
-) {
-	var tokenInfo model.UserSession // To store the token info for the given user_id
-
-	// Execute the query to fetch the active token info for the given user_id
-	switch err := db.Bun().NewSelect().Table("user_sessions").
-		Where("user_id = ?", userID).Where("revoked = ?", false).
-		Where("token_type = ?", model.TokenTypeAccessToken).
-		Scan(ctx, &tokenInfo); {
-	case err != nil:
-		return nil, err
-	default:
-		return &tokenInfo, nil
-	}
 }

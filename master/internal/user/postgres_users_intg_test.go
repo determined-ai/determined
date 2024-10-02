@@ -588,13 +588,13 @@ func TestUpdateUserSettings(t *testing.T) {
 	require.Empty(t, out, "found user web settings when all should be deleted")
 }
 
-// TestRevokeAndCreateAccessToken tests revoking and creating token with default lifespan.
-func TestRevokeAndCreateAccessToken(t *testing.T) {
+// TestCreateAccessToken tests revoking and creating token with default lifespan.
+func TestCreateAccessToken(t *testing.T) {
 	user, err := addTestUser(nil)
 	require.NoError(t, err)
 
 	// Add an access Token.
-	token, err := RevokeAndCreateAccessToken(context.TODO(), user.ID)
+	token, err := CreateAccessToken(context.TODO(), user.ID)
 	require.NoError(t, err)
 	require.NotNil(t, token)
 
@@ -604,24 +604,27 @@ func TestRevokeAndCreateAccessToken(t *testing.T) {
 	actLifespan := restoredToken.Expiry.Sub(restoredToken.CreatedAt)
 	require.Equal(t, expLifespan, actLifespan)
 
-	tokenInfo, err := GetAccessToken(context.TODO(), user.ID)
+	tokenInfos, err := getAccessToken(context.TODO(), user.ID)
 	require.NoError(t, err)
-	require.NotNil(t, tokenInfo)
+	require.NotNil(t, tokenInfos)
 
-	// For test cleanup
-	err = DeleteSessionByID(context.TODO(), tokenInfo.ID)
-	require.NoError(t, err)
+	// Loop through all the returned user sessions
+	for _, tokenInfo := range tokenInfos {
+		// For test cleanup: delete each session by ID
+		err = DeleteSessionByID(context.TODO(), tokenInfo.ID)
+		require.NoError(t, err)
+	}
 }
 
-// TestRevokeAndCreateAccessTokenHasExpiry tests revoking and creating token with
+// TestCreateAccessTokenHasExpiry tests revoking and creating token with
 // given lifespan and description.
-func TestRevokeAndCreateAccessTokenHasExpiry(t *testing.T) {
+func TestCreateAccessTokenHasExpiry(t *testing.T) {
 	user, err := addTestUser(nil)
 	require.NoError(t, err)
 
 	// Add a AccessToken with custom (Now() + 3 Months) Expiry Time.
 	expLifespan := DefaultTokenLifespan * 3
-	token, err := RevokeAndCreateAccessToken(context.TODO(), user.ID,
+	token, err := CreateAccessToken(context.TODO(), user.ID,
 		WithTokenExpiry(&expLifespan), WithTokenDescription(desc))
 	require.NoError(t, err)
 	require.NotNil(t, token)
@@ -632,13 +635,16 @@ func TestRevokeAndCreateAccessTokenHasExpiry(t *testing.T) {
 	require.Equal(t, expLifespan, actLifespan)
 	require.Equal(t, desc, restoredToken.Description.String)
 
-	tokenInfo, err := GetAccessToken(context.TODO(), user.ID)
+	tokenInfos, err := getAccessToken(context.TODO(), user.ID)
 	require.NoError(t, err)
-	require.NotNil(t, tokenInfo)
+	require.NotNil(t, tokenInfos)
 
-	// Delete from DB by UserID for cleanup
-	err = DeleteSessionByID(context.TODO(), tokenInfo.ID)
-	require.NoError(t, err)
+	// Loop through all the returned user sessions
+	for _, tokenInfo := range tokenInfos {
+		// For test cleanup: delete each session by ID
+		err = DeleteSessionByID(context.TODO(), tokenInfo.ID)
+		require.NoError(t, err)
+	}
 }
 
 // TestUpdateAccessToken tests the description and revocation status of the access token.
@@ -646,7 +652,7 @@ func TestUpdateAccessToken(t *testing.T) {
 	userID, _, _, err := addTestSession()
 	require.NoError(t, err)
 
-	token, err := RevokeAndCreateAccessToken(context.TODO(), userID)
+	token, err := CreateAccessToken(context.TODO(), userID)
 	require.NoError(t, err)
 	require.NotNil(t, token)
 
@@ -676,20 +682,39 @@ func TestGetAccessToken(t *testing.T) {
 	require.NoError(t, err)
 
 	// Add a AccessToken.
-	token, err := RevokeAndCreateAccessToken(context.TODO(), user.ID)
+	token, err := CreateAccessToken(context.TODO(), user.ID)
 	require.NoError(t, err)
 	require.NotNil(t, token)
 
-	tokenInfo, err := GetAccessToken(context.TODO(), user.ID)
+	tokenInfos, err := getAccessToken(context.TODO(), user.ID)
 	require.NoError(t, err)
-	require.Equal(t, user.ID, tokenInfo.UserID)
 
 	restoredTokeninfo := restoreTokenInfo(token, t)
-	require.Equal(t, restoredTokeninfo.ID, tokenInfo.ID)
 
-	// Delete from DB by UserID for cleanup
-	err = DeleteSessionByID(context.TODO(), tokenInfo.ID)
-	require.NoError(t, err)
+	// Flag to check if userID is found in tokenInfos
+	userIDFound := false
+	restoredTokenIDFound := false
+
+	// Loop through all the returned user sessions
+	for _, tokenInfo := range tokenInfos {
+		// Check if user ID matches
+		if tokenInfo.UserID == user.ID {
+			userIDFound = true
+		}
+
+		// Check if the token ID matches the restored token info
+		if tokenInfo.ID == restoredTokeninfo.ID {
+			restoredTokenIDFound = true
+		}
+
+		// For test cleanup: delete each session by ID
+		err = DeleteSessionByID(context.TODO(), tokenInfo.ID)
+		require.NoError(t, err)
+	}
+
+	// Assert that user.ID and restoredTokeninfo.ID are found in tokenInfos
+	require.True(t, userIDFound, "User ID should be present in tokenInfos")
+	require.True(t, restoredTokenIDFound, "Restored token ID should be present in tokenInfos")
 }
 
 func restoreTokenInfo(token string, t *testing.T) model.UserSession {
@@ -699,4 +724,20 @@ func restoreTokenInfo(token string, t *testing.T) model.UserSession {
 	require.NoError(t, err)
 
 	return restoredToken
+}
+
+func getAccessToken(ctx context.Context, userID model.UserID) ([]model.UserSession, error) {
+	var tokenInfos []model.UserSession // To store the token info for the given user_id
+
+	// Execute the query to fetch the active token info for the given user_id
+	err := db.Bun().NewSelect().
+		Table("user_sessions").
+		Where("user_id = ?", userID).
+		Where("revoked = ?", false).
+		Where("token_type = ?", model.TokenTypeAccessToken).
+		Scan(ctx, &tokenInfos)
+	if err != nil {
+		return nil, err
+	}
+	return tokenInfos, nil
 }

@@ -212,18 +212,6 @@ func logCanAdministrateAccessTokenOnUser(fields log.Fields, curUserID model.User
 	}
 }
 
-func canAdministrateAccessTokenOnUser(ctx context.Context, curUserID model.UserID,
-	permissionID rbacv1.PermissionType,
-) (err error) {
-	fields := audit.ExtractLogFields(ctx)
-	logCanAdministrateAccessTokenOnUser(fields, curUserID, permissionID)
-	defer func() {
-		audit.LogFromErr(fields, err)
-	}()
-
-	return db.DoesPermissionMatch(ctx, curUserID, nil, permissionID)
-}
-
 // CanCreateAccessToken returns an error if the user does not have permission to create either
 // their own token or another user's token based on the targetUser.
 func (a *UserAuthZRBAC) CanCreateAccessToken(
@@ -236,7 +224,7 @@ func (a *UserAuthZRBAC) CanCreateAccessToken(
 		err = db.DoesPermissionMatch(ctx, curUser.ID, nil,
 			rbacv1.PermissionType_PERMISSION_TYPE_CREATE_TOKEN)
 		if err != nil {
-			return errors.Wrap(err, "unable to update token due to insufficient permissions")
+			return errors.Wrap(err, "unable to create token due to insufficient permissions")
 		}
 		return nil
 	}
@@ -250,22 +238,14 @@ func (a *UserAuthZRBAC) CanCreateAccessToken(
 	err = db.DoesPermissionMatch(ctx, curUser.ID, nil,
 		rbacv1.PermissionType_PERMISSION_TYPE_CREATE_OTHER_TOKEN)
 	if err != nil && curUser.ID != targetUser.ID {
-		return errors.New("only admin privileged users can change other user's token")
+		return errors.New("only admin privileged users can create other user's token")
 	}
 	return nil
 }
 
-// CanGetAllAccessTokens returns an error if the user does not have admin permissions.
-func (a *UserAuthZRBAC) CanGetAllAccessTokens(
-	ctx context.Context, curUser model.User,
-) error {
-	return canAdministrateAccessTokenOnUser(ctx, curUser.ID,
-		rbacv1.PermissionType_PERMISSION_TYPE_VIEW_OTHER_TOKEN)
-}
-
-// CanGetAccessToken returns an error if the user does not have permission to view either
+// CanGetAccessTokens returns an error if the user does not have permission to view either
 // their own token or another user's token based on the targetUser.
-func (a *UserAuthZRBAC) CanGetAccessToken(
+func (a *UserAuthZRBAC) CanGetAccessTokens(
 	ctx context.Context, curUser, targetUser model.User,
 ) (err error) {
 	fields := audit.ExtractLogFields(ctx)
@@ -275,7 +255,7 @@ func (a *UserAuthZRBAC) CanGetAccessToken(
 		err = db.DoesPermissionMatch(ctx, curUser.ID, nil,
 			rbacv1.PermissionType_PERMISSION_TYPE_VIEW_TOKEN)
 		if err != nil {
-			return errors.Wrap(err, "unable to update token due to insufficient permissions")
+			return errors.Wrap(err, "unable to get token due to insufficient permissions")
 		}
 		return nil
 	}
@@ -289,7 +269,7 @@ func (a *UserAuthZRBAC) CanGetAccessToken(
 	err = db.DoesPermissionMatch(ctx, curUser.ID, nil,
 		rbacv1.PermissionType_PERMISSION_TYPE_VIEW_OTHER_TOKEN)
 	if err != nil && curUser.ID != targetUser.ID {
-		return errors.New("unable to update token due to insufficient permissions")
+		return errors.New("unable to get token due to insufficient permissions")
 	}
 	return nil
 }

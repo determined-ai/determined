@@ -3722,17 +3722,38 @@ export const V1GenericTaskState = {
 } as const
 export type V1GenericTaskState = ValueOf<typeof V1GenericTaskState>
 /**
- * Response to GetAccessTokenRequest.
+ * Sort token info by the given field.   - SORT_BY_UNSPECIFIED: Returns token info in an unsorted list.  - SORT_BY_USER_ID: Returns token info sorted by user id.  - SORT_BY_EXPIRY: Returns token info sorted by expiry.  - SORT_BY_CREATED_AT: Returns token info sorted by created at.  - SORT_BY_TOKEN_TYPE: Returns token info sorted by token type.  - SORT_BY_REVOKED: Returns token info sorted by if it is revoked.  - SORT_BY_DESCRIPTION: Returns token info sorted by description of token.
  * @export
- * @interface V1GetAccessTokenResponse
+ * @enum {string}
  */
-export interface V1GetAccessTokenResponse {
+export const V1GetAccessTokensRequestSortBy = {
+    UNSPECIFIED: 'SORT_BY_UNSPECIFIED',
+    USERID: 'SORT_BY_USER_ID',
+    EXPIRY: 'SORT_BY_EXPIRY',
+    CREATEDAT: 'SORT_BY_CREATED_AT',
+    TOKENTYPE: 'SORT_BY_TOKEN_TYPE',
+    REVOKED: 'SORT_BY_REVOKED',
+    DESCRIPTION: 'SORT_BY_DESCRIPTION',
+} as const
+export type V1GetAccessTokensRequestSortBy = ValueOf<typeof V1GetAccessTokensRequestSortBy>
+/**
+ * Response to GetAccessTokensRequest.
+ * @export
+ * @interface V1GetAccessTokensResponse
+ */
+export interface V1GetAccessTokensResponse {
     /**
-     * Information about the requested token.
-     * @type {V1TokenInfo}
-     * @memberof V1GetAccessTokenResponse
+     * List of token information.
+     * @type {Array<V1TokenInfo>}
+     * @memberof V1GetAccessTokensResponse
      */
-    tokenInfo: V1TokenInfo;
+    tokenInfo: Array<V1TokenInfo>;
+    /**
+     * Pagination information of the full dataset.
+     * @type {V1Pagination}
+     * @memberof V1GetAccessTokensResponse
+     */
+    pagination?: V1Pagination;
 }
 /**
  * Response to GetActiveTasksCountRequest.
@@ -3805,40 +3826,6 @@ export interface V1GetAgentsResponse {
      * Pagination information of the full dataset.
      * @type {V1Pagination}
      * @memberof V1GetAgentsResponse
-     */
-    pagination?: V1Pagination;
-}
-/**
- * Sort token info by the given field.   - SORT_BY_UNSPECIFIED: Returns token info in an unsorted list.  - SORT_BY_USER_ID: Returns token info sorted by user id.  - SORT_BY_EXPIRY: Returns token info sorted by expiry.  - SORT_BY_CREATED_AT: Returns token info sorted by created at.  - SORT_BY_TOKEN_TYPE: Returns token info sorted by token type.  - SORT_BY_REVOKED: Returns token info sorted by if it is revoked.  - SORT_BY_DESCRIPTION: Returns token info sorted by description of token.
- * @export
- * @enum {string}
- */
-export const V1GetAllAccessTokensRequestSortBy = {
-    UNSPECIFIED: 'SORT_BY_UNSPECIFIED',
-    USERID: 'SORT_BY_USER_ID',
-    EXPIRY: 'SORT_BY_EXPIRY',
-    CREATEDAT: 'SORT_BY_CREATED_AT',
-    TOKENTYPE: 'SORT_BY_TOKEN_TYPE',
-    REVOKED: 'SORT_BY_REVOKED',
-    DESCRIPTION: 'SORT_BY_DESCRIPTION',
-} as const
-export type V1GetAllAccessTokensRequestSortBy = ValueOf<typeof V1GetAllAccessTokensRequestSortBy>
-/**
- * Response to GetAllAccessTokensRequest.
- * @export
- * @interface V1GetAllAccessTokensResponse
- */
-export interface V1GetAllAccessTokensResponse {
-    /**
-     * List of information regarded request tokens.
-     * @type {Array<V1TokenInfo>}
-     * @memberof V1GetAllAccessTokensResponse
-     */
-    tokenInfo: Array<V1TokenInfo>;
-    /**
-     * Pagination information of the full dataset.
-     * @type {V1Pagination}
-     * @memberof V1GetAllAccessTokensResponse
      */
     pagination?: V1Pagination;
 }
@@ -34756,53 +34743,16 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
     return {
         /**
          * 
-         * @summary Get user's access token info
-         * @param {number} userId The id of the user.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getAccessToken(userId: number, options: any = {}): FetchArgs {
-            // verify required parameter 'userId' is not null or undefined
-            if (userId === null || userId === undefined) {
-                throw new RequiredError('userId','Required parameter userId was null or undefined when calling getAccessToken.');
-            }
-            const localVarPath = `/api/v1/users/{userId}/token`
-                .replace(`{${"userId"}}`, encodeURIComponent(String(userId)));
-            const localVarUrlObj = new URL(localVarPath, BASE_PATH);
-            const localVarRequestOptions = { method: 'GET', ...options };
-            const localVarHeaderParameter = {} as any;
-            const localVarQueryParameter = {} as any;
-            
-            // authentication BearerToken required
-            if (configuration && configuration.apiKey) {
-                const localVarApiKeyValue = typeof configuration.apiKey === 'function'
-                    ? configuration.apiKey("Authorization")
-                    : configuration.apiKey;
-                localVarHeaderParameter["Authorization"] = localVarApiKeyValue;
-            }
-            
-            objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
-            objToSearchParams(options.query || {}, localVarUrlObj.searchParams);
-            localVarRequestOptions.headers = { ...localVarHeaderParameter, ...options.headers };
-            
-            return {
-                url: `${localVarUrlObj.pathname}${localVarUrlObj.search}`,
-                options: localVarRequestOptions,
-            };
-        },
-        /**
-         * 
          * @summary Get list of all access token info
-         * @param {V1GetAllAccessTokensRequestSortBy} [sortBy] Sort token info by the given field.   - SORT_BY_UNSPECIFIED: Returns token info in an unsorted list.  - SORT_BY_USER_ID: Returns token info sorted by user id.  - SORT_BY_EXPIRY: Returns token info sorted by expiry.  - SORT_BY_CREATED_AT: Returns token info sorted by created at.  - SORT_BY_TOKEN_TYPE: Returns token info sorted by token type.  - SORT_BY_REVOKED: Returns token info sorted by if it is revoked.  - SORT_BY_DESCRIPTION: Returns token info sorted by description of token.
+         * @param {V1GetAccessTokensRequestSortBy} [sortBy] Sort token info by the given field.   - SORT_BY_UNSPECIFIED: Returns token info in an unsorted list.  - SORT_BY_USER_ID: Returns token info sorted by user id.  - SORT_BY_EXPIRY: Returns token info sorted by expiry.  - SORT_BY_CREATED_AT: Returns token info sorted by created at.  - SORT_BY_TOKEN_TYPE: Returns token info sorted by token type.  - SORT_BY_REVOKED: Returns token info sorted by if it is revoked.  - SORT_BY_DESCRIPTION: Returns token info sorted by description of token.
          * @param {V1OrderBy} [orderBy] Order token info in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
          * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
-         * @param {string} [name] Filter by username or display name.
-         * @param {boolean} [includeInactive] Include inactive tokens (expired & revoked) in response.
+         * @param {string} [filter] Filter by username or expression.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getAllAccessTokens(sortBy?: V1GetAllAccessTokensRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, includeInactive?: boolean, options: any = {}): FetchArgs {
+        getAccessTokens(sortBy?: V1GetAccessTokensRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, filter?: string, options: any = {}): FetchArgs {
             const localVarPath = `/api/v1/user/tokens`;
             const localVarUrlObj = new URL(localVarPath, BASE_PATH);
             const localVarRequestOptions = { method: 'GET', ...options };
@@ -34833,12 +34783,8 @@ export const UsersApiFetchParamCreator = function (configuration?: Configuration
                 localVarQueryParameter['limit'] = limit
             }
             
-            if (name !== undefined) {
-                localVarQueryParameter['name'] = name
-            }
-            
-            if (includeInactive !== undefined) {
-                localVarQueryParameter['includeInactive'] = includeInactive
+            if (filter !== undefined) {
+                localVarQueryParameter['filter'] = filter
             }
             
             objToSearchParams(localVarQueryParameter, localVarUrlObj.searchParams);
@@ -35384,37 +35330,17 @@ export const UsersApiFp = function (configuration?: Configuration) {
     return {
         /**
          * 
-         * @summary Get user's access token info
-         * @param {number} userId The id of the user.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getAccessToken(userId: number, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetAccessTokenResponse> {
-            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getAccessToken(userId, options);
-            return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
-                return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
-                    if (response.status >= 200 && response.status < 300) {
-                        return response.json();
-                    } else {
-                        throw response;
-                    }
-                });
-            };
-        },
-        /**
-         * 
          * @summary Get list of all access token info
-         * @param {V1GetAllAccessTokensRequestSortBy} [sortBy] Sort token info by the given field.   - SORT_BY_UNSPECIFIED: Returns token info in an unsorted list.  - SORT_BY_USER_ID: Returns token info sorted by user id.  - SORT_BY_EXPIRY: Returns token info sorted by expiry.  - SORT_BY_CREATED_AT: Returns token info sorted by created at.  - SORT_BY_TOKEN_TYPE: Returns token info sorted by token type.  - SORT_BY_REVOKED: Returns token info sorted by if it is revoked.  - SORT_BY_DESCRIPTION: Returns token info sorted by description of token.
+         * @param {V1GetAccessTokensRequestSortBy} [sortBy] Sort token info by the given field.   - SORT_BY_UNSPECIFIED: Returns token info in an unsorted list.  - SORT_BY_USER_ID: Returns token info sorted by user id.  - SORT_BY_EXPIRY: Returns token info sorted by expiry.  - SORT_BY_CREATED_AT: Returns token info sorted by created at.  - SORT_BY_TOKEN_TYPE: Returns token info sorted by token type.  - SORT_BY_REVOKED: Returns token info sorted by if it is revoked.  - SORT_BY_DESCRIPTION: Returns token info sorted by description of token.
          * @param {V1OrderBy} [orderBy] Order token info in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
          * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
-         * @param {string} [name] Filter by username or display name.
-         * @param {boolean} [includeInactive] Include inactive tokens (expired & revoked) in response.
+         * @param {string} [filter] Filter by username or expression.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getAllAccessTokens(sortBy?: V1GetAllAccessTokensRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, includeInactive?: boolean, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetAllAccessTokensResponse> {
-            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getAllAccessTokens(sortBy, orderBy, offset, limit, name, includeInactive, options);
+        getAccessTokens(sortBy?: V1GetAccessTokensRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, filter?: string, options?: any): (fetch?: FetchAPI, basePath?: string) => Promise<V1GetAccessTokensResponse> {
+            const localVarFetchArgs = UsersApiFetchParamCreator(configuration).getAccessTokens(sortBy, orderBy, offset, limit, filter, options);
             return (fetch: FetchAPI = window.fetch, basePath: string = BASE_PATH) => {
                 return fetch(basePath + localVarFetchArgs.url, localVarFetchArgs.options).then((response) => {
                     if (response.status >= 200 && response.status < 300) {
@@ -35691,28 +35617,17 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
     return {
         /**
          * 
-         * @summary Get user's access token info
-         * @param {number} userId The id of the user.
-         * @param {*} [options] Override http request option.
-         * @throws {RequiredError}
-         */
-        getAccessToken(userId: number, options?: any) {
-            return UsersApiFp(configuration).getAccessToken(userId, options)(fetch, basePath);
-        },
-        /**
-         * 
          * @summary Get list of all access token info
-         * @param {V1GetAllAccessTokensRequestSortBy} [sortBy] Sort token info by the given field.   - SORT_BY_UNSPECIFIED: Returns token info in an unsorted list.  - SORT_BY_USER_ID: Returns token info sorted by user id.  - SORT_BY_EXPIRY: Returns token info sorted by expiry.  - SORT_BY_CREATED_AT: Returns token info sorted by created at.  - SORT_BY_TOKEN_TYPE: Returns token info sorted by token type.  - SORT_BY_REVOKED: Returns token info sorted by if it is revoked.  - SORT_BY_DESCRIPTION: Returns token info sorted by description of token.
+         * @param {V1GetAccessTokensRequestSortBy} [sortBy] Sort token info by the given field.   - SORT_BY_UNSPECIFIED: Returns token info in an unsorted list.  - SORT_BY_USER_ID: Returns token info sorted by user id.  - SORT_BY_EXPIRY: Returns token info sorted by expiry.  - SORT_BY_CREATED_AT: Returns token info sorted by created at.  - SORT_BY_TOKEN_TYPE: Returns token info sorted by token type.  - SORT_BY_REVOKED: Returns token info sorted by if it is revoked.  - SORT_BY_DESCRIPTION: Returns token info sorted by description of token.
          * @param {V1OrderBy} [orderBy] Order token info in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
          * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
          * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
-         * @param {string} [name] Filter by username or display name.
-         * @param {boolean} [includeInactive] Include inactive tokens (expired & revoked) in response.
+         * @param {string} [filter] Filter by username or expression.
          * @param {*} [options] Override http request option.
          * @throws {RequiredError}
          */
-        getAllAccessTokens(sortBy?: V1GetAllAccessTokensRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, includeInactive?: boolean, options?: any) {
-            return UsersApiFp(configuration).getAllAccessTokens(sortBy, orderBy, offset, limit, name, includeInactive, options)(fetch, basePath);
+        getAccessTokens(sortBy?: V1GetAccessTokensRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, filter?: string, options?: any) {
+            return UsersApiFp(configuration).getAccessTokens(sortBy, orderBy, offset, limit, filter, options)(fetch, basePath);
         },
         /**
          * 
@@ -35864,31 +35779,18 @@ export const UsersApiFactory = function (configuration?: Configuration, fetch?: 
 export class UsersApi extends BaseAPI {
     /**
      * 
-     * @summary Get user's access token info
-     * @param {number} userId The id of the user.
-     * @param {*} [options] Override http request option.
-     * @throws {RequiredError}
-     * @memberof UsersApi
-     */
-    public getAccessToken(userId: number, options?: any) {
-        return UsersApiFp(this.configuration).getAccessToken(userId, options)(this.fetch, this.basePath)
-    }
-    
-    /**
-     * 
      * @summary Get list of all access token info
-     * @param {V1GetAllAccessTokensRequestSortBy} [sortBy] Sort token info by the given field.   - SORT_BY_UNSPECIFIED: Returns token info in an unsorted list.  - SORT_BY_USER_ID: Returns token info sorted by user id.  - SORT_BY_EXPIRY: Returns token info sorted by expiry.  - SORT_BY_CREATED_AT: Returns token info sorted by created at.  - SORT_BY_TOKEN_TYPE: Returns token info sorted by token type.  - SORT_BY_REVOKED: Returns token info sorted by if it is revoked.  - SORT_BY_DESCRIPTION: Returns token info sorted by description of token.
+     * @param {V1GetAccessTokensRequestSortBy} [sortBy] Sort token info by the given field.   - SORT_BY_UNSPECIFIED: Returns token info in an unsorted list.  - SORT_BY_USER_ID: Returns token info sorted by user id.  - SORT_BY_EXPIRY: Returns token info sorted by expiry.  - SORT_BY_CREATED_AT: Returns token info sorted by created at.  - SORT_BY_TOKEN_TYPE: Returns token info sorted by token type.  - SORT_BY_REVOKED: Returns token info sorted by if it is revoked.  - SORT_BY_DESCRIPTION: Returns token info sorted by description of token.
      * @param {V1OrderBy} [orderBy] Order token info in either ascending or descending order.   - ORDER_BY_UNSPECIFIED: Returns records in no specific order.  - ORDER_BY_ASC: Returns records in ascending order.  - ORDER_BY_DESC: Returns records in descending order.
      * @param {number} [offset] Skip the number of projects before returning results. Negative values denote number of projects to skip from the end before returning results.
      * @param {number} [limit] Limit the number of projects. A value of 0 denotes no limit.
-     * @param {string} [name] Filter by username or display name.
-     * @param {boolean} [includeInactive] Include inactive tokens (expired & revoked) in response.
+     * @param {string} [filter] Filter by username or expression.
      * @param {*} [options] Override http request option.
      * @throws {RequiredError}
      * @memberof UsersApi
      */
-    public getAllAccessTokens(sortBy?: V1GetAllAccessTokensRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, name?: string, includeInactive?: boolean, options?: any) {
-        return UsersApiFp(this.configuration).getAllAccessTokens(sortBy, orderBy, offset, limit, name, includeInactive, options)(this.fetch, this.basePath)
+    public getAccessTokens(sortBy?: V1GetAccessTokensRequestSortBy, orderBy?: V1OrderBy, offset?: number, limit?: number, filter?: string, options?: any) {
+        return UsersApiFp(this.configuration).getAccessTokens(sortBy, orderBy, offset, limit, filter, options)(this.fetch, this.basePath)
     }
     
     /**
