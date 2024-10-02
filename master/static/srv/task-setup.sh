@@ -49,7 +49,7 @@ fi
 if [ "$HOME" = "/" ]; then
     HOME="$(
         set -o pipefail
-        getent passwd "$(whoami)" | cut -d: -f6
+        getent passwd "$UID" | cut -d: -f6
     )" || HOME="$PWD"
     export HOME
 fi
