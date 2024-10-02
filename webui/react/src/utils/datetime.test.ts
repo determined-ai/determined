@@ -59,18 +59,4 @@ describe('Datetime Utilities', () => {
       });
     });
   });
-
-  describe('stripTimezone', () => {
-    it('should strip timezone from datetime strings', () => {
-      const tests = [
-        { input: '2021-11-11T00:00:00', output: '2021-11-11T00:00:00' },
-        { input: '2021-11-11T00:00:00Z', output: '2021-11-11T00:00:00' },
-        { input: '2021-11-11T00:00:00+11:11', output: '2021-11-11T00:00:00' },
-        { input: '2021-11-11T00:00:00-05:05', output: '2021-11-11T00:00:00' },
-      ];
-      tests.forEach((test) => {
-        expect(utils.stripTimezone(test.input)).toBe(test.output);
-      });
-    });
-  });
 });

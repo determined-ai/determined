@@ -56,11 +56,6 @@ export const getDuration = (times: StartEndTimes): number => {
 
 export const secondToHour = (seconds: number): number => seconds / 3600;
 
-export const stripTimezone = (datetime: string): string => {
-  const timezoneRegex = /(Z|(-|\+)\d{2}:\d{2})$/;
-  return datetime.replace(timezoneRegex, '');
-};
-
 export const getDurationInEnglish = (record: BulkExperimentItem): string => {
   const duration = getDuration(record);
   const options = {
