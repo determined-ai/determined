@@ -10,9 +10,7 @@ def readme() -> str:
 
 
 def version() -> str:
-    version = os.environ.get("VERSION")
-
-    if version is None:
+    def get_version_from_sh():
         try:
             # This feels more disgusting than it is. Numpy does something similar,
             # although they generate a version.py file from their Meson build file
@@ -28,6 +26,8 @@ def version() -> str:
         else:
             # version.sh succeeded. Collect the output.
             version = output.stdout.decode("utf-8")
+
+    version = os.environ.get("VERSION", get_version_from_sh())
 
     return version
 
