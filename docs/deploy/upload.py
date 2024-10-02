@@ -7,6 +7,11 @@ import time
 
 import boto3
 
+
+class VersionError(Exception):
+    pass
+
+
 HERE = pathlib.Path(__file__).parent
 
 if __name__ == "__main__":
@@ -67,11 +72,10 @@ if __name__ == "__main__":
     # from a static VERSION file at the root of the repository. Now,
     # we read it from an environment variable set by a Makefile,
     # generated from version.sh in the repository root.
-    version = os.environ.get("VERSION")
-
-    if version is None:
-        print("Please ensure VERSION environment variable is set.")
-        os.exit(1)
+    try:
+        version = os.environ["VERSION"]
+    except KeyError as e:
+        raise VersionError("Please ensure VERSION environment variable is set.").with_traceback(e.__traceback__)
 
     # ya know, jic
     if version == "latest":

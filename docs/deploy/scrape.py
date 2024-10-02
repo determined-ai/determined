@@ -109,6 +109,10 @@ class ExtractionError(Exception):
     pass
 
 
+class VersionError(Exception):
+    pass
+
+
 def xmldumps(node):
     return ElementTree.tostring(node).decode("utf8")
 
@@ -296,11 +300,10 @@ if __name__ == "__main__":
     # variable. Previously, this was read from a static VERSION file at the root
     # of the repository. Now, we read it from an environment variable set by a
     # Makefile, generated from version.sh in the repository root.
-    version = os.environ.get("VERSION")
-
-    if version is None:
-        print("Please ensure VERSION environment variable is set.")
-        exit(1)
+    try:
+        version = os.environ["VERSION"]
+    except KeyError as e:
+        raise VersionError("Please ensure VERSION environment variable is set.").with_traceback(e.__traceback__)
 
     if "-dev" in version:
         # Dev builds search against a special dev index that is update with every push to master.
