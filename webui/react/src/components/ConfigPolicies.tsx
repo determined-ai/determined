@@ -194,6 +194,7 @@ const ConfigPoliciesTab: React.FC<TabProps> = ({ workspaceId, type }: TabProps) 
               <CodeEditor
                 file={initialConfigPoliciesYAML}
                 files={[{ key: type, title: `${type}-config-policies.yaml` }]}
+                readonly={!canModifyWorkspaceConfigPolicies}
                 onError={(error) => {
                   handleError(error);
                 }}
