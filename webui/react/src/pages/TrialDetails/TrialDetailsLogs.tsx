@@ -168,7 +168,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
     canceler.current = newCanceler;
 
     readStream(
-      detApi.StreamingExperiments.trialLogsFields(trial.id, true, { signal: fieldCanceler.signal }),
+      detApi.StreamingInternal.trialLogsFields(trial.id, true, { signal: fieldCanceler.signal }),
       (event) => setFilterOptions(event as Filters),
     );
 
