@@ -3,6 +3,7 @@ import Button from 'hew/Button';
 import CodeEditor from 'hew/CodeEditor';
 import Column from 'hew/Column';
 import Form, { hasErrors } from 'hew/Form';
+import Pivot, { PivotProps } from 'hew/Pivot';
 import Row from 'hew/Row';
 import Spinner from 'hew/Spinner';
 import { useToast } from 'hew/Toast';
@@ -21,11 +22,51 @@ interface Props {
   workspaceId?: number;
 }
 
+type ConfigPoliciesType = 'experiments' | 'tasks';
+
+interface ConfigPoliciesValues {
+  label: string;
+  workloadType: 'NTSC' | 'EXPERIMENT';
+}
+
+const ConfigPoliciesValues: Record<ConfigPoliciesType, ConfigPoliciesValues> = {
+  experiments: {
+    label: 'Experiments',
+    workloadType: 'EXPERIMENT',
+  },
+  tasks: {
+    label: 'Tasks',
+    workloadType: 'NTSC',
+  },
+};
+
+interface TabProps {
+  workspaceId?: number;
+  type: ConfigPoliciesType;
+}
+
 type FormInputs = {
-  task: string;
+  configPolicies: string;
 };
 
 const ConfigPolicies: React.FC<Props> = ({ workspaceId }: Props) => {
+  const tabItems: PivotProps['items'] = [
+    {
+      children: <ConfigPoliciesTab type="experiments" workspaceId={workspaceId} />,
+      key: 'experiments',
+      label: ConfigPoliciesValues.experiments.label,
+    },
+    {
+      children: <ConfigPoliciesTab type="tasks" workspaceId={workspaceId} />,
+      key: 'tasks',
+      label: ConfigPoliciesValues.tasks.label,
+    },
+  ];
+
+  return <Pivot items={tabItems} type="secondary" />;
+};
+
+const ConfigPoliciesTab: React.FC<TabProps> = ({ workspaceId, type }: TabProps) => {
   const confirm = useConfirm();
   const { openToast } = useToast();
   const { canModifyWorkspaceConfigPolicies, loading: rbacLoading } = usePermissions();
@@ -40,8 +81,8 @@ const ConfigPolicies: React.FC<Props> = ({ workspaceId }: Props) => {
     if (workspaceId) {
       try {
         await updateWorkspaceConfigPolicies({
-          configPolicies: form.getFieldValue('task'),
-          workloadType: 'NTSC',
+          configPolicies: form.getFieldValue('configPolicies'),
+          workloadType: ConfigPoliciesValues[type].workloadType,
           workspaceId,
         });
         openToast({ title: 'Config policies updated' });
@@ -70,22 +111,22 @@ const ConfigPolicies: React.FC<Props> = ({ workspaceId }: Props) => {
     });
   };
 
-  const loadableTaskConfigPolicies: Loadable<string | undefined> = useAsync(async () => {
+  const loadableConfigPolicies: Loadable<string | undefined> = useAsync(async () => {
     if (workspaceId) {
       const response = await getWorkspaceConfigPolicies({
-        workloadType: 'NTSC',
+        workloadType: ConfigPoliciesValues[type].workloadType,
         workspaceId,
       });
       if (isEmpty(response.configPolicies)) return undefined;
       return response.configPolicies;
     }
     return NotLoaded;
-  }, [workspaceId]);
+  }, [workspaceId, type]);
 
-  const initialTaskYAML = yaml.dump(loadableTaskConfigPolicies.getOrElse(undefined));
+  const initialConfigPoliciesYAML = yaml.dump(loadableConfigPolicies.getOrElse(undefined));
 
   const handleChange = () => {
-    setDisabled(hasErrors(form) || form.getFieldValue('task') === initialTaskYAML);
+    setDisabled(hasErrors(form) || form.getFieldValue('configPolicies') === initialConfigPoliciesYAML);
   };
 
   if (rbacLoading) return <Spinner spinning />;
@@ -113,7 +154,7 @@ const ConfigPolicies: React.FC<Props> = ({ workspaceId }: Props) => {
         <div style={{ width: '100%' }}>
           <Form form={form} onFieldsChange={handleChange}>
             <Form.Item
-              name="task"
+              name="configPolicies"
               rules={[
                 {
                   validator: (_, value) => {
@@ -131,8 +172,8 @@ const ConfigPolicies: React.FC<Props> = ({ workspaceId }: Props) => {
                 },
               ]}>
               <CodeEditor
-                file={initialTaskYAML}
-                files={[{ key: 'task', title: 'Task Config Policies' }]}
+                file={initialConfigPoliciesYAML}
+                files={[{ key: type, title: `${type}-config-policies.yaml` }]}
                 onError={(error) => {
                   handleError(error);
                 }}
