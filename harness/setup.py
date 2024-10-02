@@ -27,9 +27,7 @@ def version() -> str:
             # version.sh succeeded. Collect the output.
             return output.stdout.decode("utf-8")
 
-    version = os.environ.get("VERSION", get_version_from_sh())
-
-    return version
+    return os.environ.get("VERSION", get_version_from_sh())
 
 
 setuptools.setup(
