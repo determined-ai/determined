@@ -19,7 +19,7 @@ test.describe('Experiment List', () => {
   test.beforeAll(async ({ backgroundAuthedPage, newWorkspace, newProject }) => {
     const projectDetailsPageSetup = new ProjectDetails(backgroundAuthedPage);
     await projectDetailsPageSetup.gotoProject(newProject.response.project.id);
-    await test.step('Create an experiment', async () => {
+    await test.step('Create experiments', async () => {
       await expect(
         projectDetailsPageSetup.f_experimentList.tableActionBar.count.pwLocator,
       ).toContainText('experiment');
@@ -391,6 +391,52 @@ test.describe('Experiment List', () => {
           ),
         ]);
       }).toPass();
+    });
+  });
+  test.describe('Experiment List Pagination', () => {
+    test.beforeAll(({ newProject }) => {
+      Array(51)
+        .fill(null)
+        .forEach(() => {
+          detExecSync(
+            `experiment create ${fullPath('examples/tutorials/mnist_pytorch/adaptive.yaml')} --paused --project_id ${newProject.response.project.id}`,
+          );
+        });
+    });
+    test.beforeEach(async () => {
+      await test.step('Ensure pagination options', async () => {
+        const pageSizeSelect = projectDetailsPage.f_experimentList.pagination.perPage;
+        const pageSize = await pageSizeSelect.selectionItem.pwLocator.textContent();
+        if (!pageSize?.startsWith('20')) {
+          await pageSizeSelect.selectMenuOption('20 / page');
+          await waitTableStable();
+        }
+      });
+    });
+    test('Pagination', async () => {
+      const pollWatch = () =>
+        projectDetailsPage._page.waitForResponse((res) => {
+          return res.url().endsWith('experiments-search');
+        });
+      const expectPageNumber = (pageParam: string | null) => {
+        const params = new URL(projectDetailsPage._page.url()).searchParams;
+        expect(params.get('page')).toBe(pageParam);
+      };
+      // table is virtualized so row counts are not reliable.
+      const nextPageUpdate = pollWatch();
+      await projectDetailsPage.f_experimentList.pagination.next.pwLocator.click();
+      await nextPageUpdate;
+      expectPageNumber('1');
+
+      const buttonPageUpdate = pollWatch();
+      await projectDetailsPage.f_experimentList.pagination.pageButtonLocator(3).click();
+      await buttonPageUpdate;
+      expectPageNumber('2');
+
+      const perPageUpdate = pollWatch();
+      await projectDetailsPage.f_experimentList.pagination.perPage.selectMenuOption('80 / page');
+      await perPageUpdate;
+      expectPageNumber(null);
     });
   });
 });
