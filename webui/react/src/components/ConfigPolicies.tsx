@@ -15,7 +15,7 @@ import { useState } from 'react';
 
 import { useAsync } from 'hooks/useAsync';
 import usePermissions from 'hooks/usePermissions';
-import { getWorkspaceConfigPolicies, updateWorkspaceConfigPolicies } from 'services/api';
+import { deleteWorkspaceConfigPolicies, getWorkspaceConfigPolicies, updateWorkspaceConfigPolicies } from 'services/api';
 import handleError from 'utils/error';
 
 interface Props {
@@ -76,18 +76,32 @@ const ConfigPoliciesTab: React.FC<TabProps> = ({ workspaceId, type }: TabProps) 
 
   const APPLY_MESSAGE = "You're about to apply these config policies to this workspace.";
   const VIEW_MESSAGE = 'An admin applied these config policies to this workspace.';
+  const CONFIRMATION_MESSAGE = 'Config policies updated';
 
   const updatePolicies = async () => {
     if (workspaceId) {
-      try {
-        await updateWorkspaceConfigPolicies({
-          configPolicies: form.getFieldValue('configPolicies'),
-          workloadType: ConfigPoliciesValues[type].workloadType,
-          workspaceId,
-        });
-        openToast({ title: 'Config policies updated' });
-      } catch (error) {
-        handleError(error);
+      const configPolicies = form.getFieldValue('configPolicies');
+      if (configPolicies.length) {
+        try {
+          await updateWorkspaceConfigPolicies({
+            configPolicies,
+            workloadType: ConfigPoliciesValues[type].workloadType,
+            workspaceId,
+          });
+          openToast({ title: CONFIRMATION_MESSAGE });
+        } catch (error) {
+          handleError(error);
+        }
+      } else {
+        try {
+          await deleteWorkspaceConfigPolicies({
+            workloadType: ConfigPoliciesValues[type].workloadType,
+            workspaceId,
+          });
+          openToast({ title: CONFIRMATION_MESSAGE });
+        } catch (error) {
+          handleError(error);
+        }
       }
     }
   };
