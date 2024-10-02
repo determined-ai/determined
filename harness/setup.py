@@ -22,10 +22,10 @@ def version() -> str:
         except subprocess.CalledProcessError:
             # version.sh failed for whatever reason. Return an unknown version with
             # epoch set to 1 so at least pip dependency resolution should succeed.
-            version = "1!0.0.0+unknown"
+            return "1!0.0.0+unknown"
         else:
             # version.sh succeeded. Collect the output.
-            version = output.stdout.decode("utf-8")
+            return output.stdout.decode("utf-8")
 
     version = os.environ.get("VERSION", get_version_from_sh())
 
