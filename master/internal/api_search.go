@@ -214,3 +214,230 @@ func (a *apiServer) PutSearchRetainLogs(
 	res := apiv2.PutSearchRetainLogsResponse{}
 	return &res, nil
 }
+
+func bulkFiltersSearchToExperiment(filter *apiv2.BulkSearchFilters) *apiv1.BulkExperimentFilters {
+	states := []experimentv1.State{}
+	for _, e := range filter.States {
+		states = append(states, experimentv1.State(e))
+	}
+	return &apiv1.BulkExperimentFilters{
+		Description:           filter.Description,
+		Name:                  filter.Name,
+		Labels:                filter.Labels,
+		Archived:              filter.Archived,
+		States:                states,
+		UserIds:               filter.UserIds,
+		ProjectId:             filter.ProjectId,
+		ExcludedExperimentIds: filter.ExcludedSearchIds,
+	}
+}
+
+func (a *apiServer) ResumeSearch(ctx context.Context, req *apiv2.ResumeSearchRequest,
+) (*apiv2.ResumeSearchResponse, error) {
+	expReq := apiv1.ActivateExperimentRequest{
+		Id: req.Id,
+	}
+	_, err := a.ActivateExperiment(ctx, &expReq)
+	if err != nil {
+		return nil, err
+	}
+	res := apiv2.ResumeSearchResponse{}
+	return &res, nil
+}
+
+func (a *apiServer) ResumeSearches(ctx context.Context, req *apiv2.ResumeSearchesRequest,
+) (*apiv2.ResumeSearchesResponse, error) {
+	expReq := apiv1.ActivateExperimentsRequest{
+		ExperimentIds: req.SearchIds,
+		Filters:       bulkFiltersSearchToExperiment(req.Filters),
+		ProjectId:     req.ProjectId,
+	}
+	expRes, err := a.ActivateExperiments(ctx, &expReq)
+	if err != nil {
+		return nil, err
+	}
+	res := apiv2.ResumeSearchesResponse{
+		Results: expRes.Results,
+	}
+	return &res, nil
+}
+
+func (a *apiServer) PauseSearch(ctx context.Context, req *apiv2.PauseSearchRequest,
+) (*apiv2.PauseSearchResponse, error) {
+	expReq := apiv1.PauseExperimentRequest{
+		Id: req.Id,
+	}
+	_, err := a.PauseExperiment(ctx, &expReq)
+	if err != nil {
+		return nil, err
+	}
+	res := apiv2.PauseSearchResponse{}
+	return &res, nil
+}
+
+func (a *apiServer) PauseSearches(ctx context.Context, req *apiv2.PauseSearchesRequest,
+) (*apiv2.PauseSearchesResponse, error) {
+	expReq := apiv1.PauseExperimentsRequest{
+		ExperimentIds: req.SearchIds,
+		Filters:       bulkFiltersSearchToExperiment(req.Filters),
+		ProjectId:     req.ProjectId,
+	}
+	expRes, err := a.PauseExperiments(ctx, &expReq)
+	if err != nil {
+		return nil, err
+	}
+	res := apiv2.PauseSearchesResponse{
+		Results: expRes.Results,
+	}
+	return &res, nil
+}
+
+func (a *apiServer) CancelSearch(ctx context.Context, req *apiv2.CancelSearchRequest,
+) (*apiv2.CancelSearchResponse, error) {
+	expReq := apiv1.CancelExperimentRequest{
+		Id: req.Id,
+	}
+	_, err := a.CancelExperiment(ctx, &expReq)
+	if err != nil {
+		return nil, err
+	}
+	res := apiv2.CancelSearchResponse{}
+	return &res, nil
+}
+
+func (a *apiServer) CancelSearches(ctx context.Context, req *apiv2.CancelSearchesRequest,
+) (*apiv2.CancelSearchesResponse, error) {
+	expReq := apiv1.CancelExperimentsRequest{
+		ExperimentIds: req.SearchIds,
+		Filters:       bulkFiltersSearchToExperiment(req.Filters),
+		ProjectId:     req.ProjectId,
+	}
+	expRes, err := a.CancelExperiments(ctx, &expReq)
+	if err != nil {
+		return nil, err
+	}
+	res := apiv2.CancelSearchesResponse{
+		Results: expRes.Results,
+	}
+	return &res, nil
+}
+
+func (a *apiServer) KillSearch(ctx context.Context, req *apiv2.KillSearchRequest,
+) (*apiv2.KillSearchResponse, error) {
+	expReq := apiv1.KillExperimentRequest{
+		Id: req.Id,
+	}
+	_, err := a.KillExperiment(ctx, &expReq)
+	if err != nil {
+		return nil, err
+	}
+	res := apiv2.KillSearchResponse{}
+	return &res, nil
+}
+
+func (a *apiServer) KillSearches(ctx context.Context, req *apiv2.KillSearchesRequest,
+) (*apiv2.KillSearchesResponse, error) {
+	expReq := apiv1.KillExperimentsRequest{
+		ExperimentIds: req.SearchIds,
+		Filters:       bulkFiltersSearchToExperiment(req.Filters),
+		ProjectId:     req.ProjectId,
+	}
+	expRes, err := a.KillExperiments(ctx, &expReq)
+	if err != nil {
+		return nil, err
+	}
+	res := apiv2.KillSearchesResponse{
+		Results: expRes.Results,
+	}
+	return &res, nil
+}
+
+func (a *apiServer) ArchiveSearch(ctx context.Context, req *apiv2.ArchiveSearchRequest,
+) (*apiv2.ArchiveSearchResponse, error) {
+	expReq := apiv1.ArchiveExperimentRequest{
+		Id: req.Id,
+	}
+	_, err := a.ArchiveExperiment(ctx, &expReq)
+	if err != nil {
+		return nil, err
+	}
+	res := apiv2.ArchiveSearchResponse{}
+	return &res, nil
+}
+
+func (a *apiServer) ArchiveSearches(ctx context.Context, req *apiv2.ArchiveSearchesRequest,
+) (*apiv2.ArchiveSearchesResponse, error) {
+	expReq := apiv1.ArchiveExperimentsRequest{
+		ExperimentIds: req.SearchIds,
+		Filters:       bulkFiltersSearchToExperiment(req.Filters),
+		ProjectId:     req.ProjectId,
+	}
+	expRes, err := a.ArchiveExperiments(ctx, &expReq)
+	if err != nil {
+		return nil, err
+	}
+	res := apiv2.ArchiveSearchesResponse{
+		Results: expRes.Results,
+	}
+	return &res, nil
+}
+
+func (a *apiServer) UnarchiveSearch(ctx context.Context, req *apiv2.UnarchiveSearchRequest,
+) (*apiv2.UnarchiveSearchResponse, error) {
+	expReq := apiv1.UnarchiveExperimentRequest{
+		Id: req.Id,
+	}
+	_, err := a.UnarchiveExperiment(ctx, &expReq)
+	if err != nil {
+		return nil, err
+	}
+	res := apiv2.UnarchiveSearchResponse{}
+	return &res, nil
+}
+
+func (a *apiServer) UnarchiveSearches(ctx context.Context, req *apiv2.UnarchiveSearchesRequest,
+) (*apiv2.UnarchiveSearchesResponse, error) {
+	expReq := apiv1.UnarchiveExperimentsRequest{
+		ExperimentIds: req.SearchIds,
+		Filters:       bulkFiltersSearchToExperiment(req.Filters),
+		ProjectId:     req.ProjectId,
+	}
+	expRes, err := a.UnarchiveExperiments(ctx, &expReq)
+	if err != nil {
+		return nil, err
+	}
+	res := apiv2.UnarchiveSearchesResponse{
+		Results: expRes.Results,
+	}
+	return &res, nil
+}
+
+func (a *apiServer) DeleteSearch(ctx context.Context, req *apiv2.DeleteSearchRequest,
+) (*apiv2.DeleteSearchResponse, error) {
+	expReq := apiv1.DeleteExperimentRequest{
+		ExperimentId: req.SearchId,
+	}
+	_, err := a.DeleteExperiment(ctx, &expReq)
+	if err != nil {
+		return nil, err
+	}
+	res := apiv2.DeleteSearchResponse{}
+	return &res, nil
+}
+
+func (a *apiServer) DeleteSearches(ctx context.Context, req *apiv2.DeleteSearchesRequest,
+) (*apiv2.DeleteSearchesResponse, error) {
+	expReq := apiv1.DeleteExperimentsRequest{
+		ExperimentIds: req.SearchIds,
+		Filters:       bulkFiltersSearchToExperiment(req.Filters),
+		ProjectId:     req.ProjectId,
+	}
+	expRes, err := a.DeleteExperiments(ctx, &expReq)
+	if err != nil {
+		return nil, err
+	}
+	res := apiv2.DeleteSearchesResponse{
+		Results: expRes.Results,
+	}
+	return &res, nil
+}
