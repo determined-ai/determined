@@ -55,15 +55,20 @@ func CheckNTSCConstraints(
 	if err == nil && constraints.PriorityLimit != nil && workloadConfig.Resources.Priority != nil {
 		if !priorityWithinLimit(*workloadConfig.Resources.Priority, *constraints.PriorityLimit, smallerHigher) {
 			return false, fmt.Errorf("requested priority [%d] exceeds limit set by admin [%d]: %w",
-				*constraints.PriorityLimit, *workloadConfig.Resources.Priority, errPriorityConstraintFailure)
+				*workloadConfig.Resources.Priority, *constraints.PriorityLimit, errPriorityConstraintFailure)
 		}
 	}
 
-	if constraints.ResourceConstraints != nil && constraints.ResourceConstraints.MaxSlots != nil &&
-		workloadConfig.Resources.MaxSlots != nil {
-		if *constraints.ResourceConstraints.MaxSlots < *workloadConfig.Resources.MaxSlots {
-			return false, fmt.Errorf("requested resources.max_slots [%d] exceeds limit set by admin [%d]: %w",
-				*constraints.ResourceConstraints.MaxSlots, *workloadConfig.Resources.MaxSlots, errResourceConstraintFailure)
+	if constraints.ResourceConstraints != nil && constraints.ResourceConstraints.MaxSlots != nil {
+		if workloadConfig.Resources.MaxSlots != nil {
+			if *constraints.ResourceConstraints.MaxSlots < *workloadConfig.Resources.MaxSlots {
+				return false, fmt.Errorf("requested resources.max_slots [%d] exceeds limit set by admin [%d]: %w",
+					*workloadConfig.Resources.MaxSlots, *constraints.ResourceConstraints.MaxSlots, errResourceConstraintFailure)
+			}
+		}
+		if *constraints.ResourceConstraints.MaxSlots < workloadConfig.Resources.Slots {
+			return false, fmt.Errorf("requested resources.slots [%d] exceeds limit set by admin [%d]: %w",
+				workloadConfig.Resources.Slots, *constraints.ResourceConstraints.MaxSlots, errResourceConstraintFailure)
 		}
 	}
 

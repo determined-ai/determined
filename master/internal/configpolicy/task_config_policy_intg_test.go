@@ -111,6 +111,24 @@ func TestValidateNTSCConstraints(t *testing.T) {
 		require.ErrorIs(t, err, errResourceConstraintFailure)
 	})
 
+	t.Run("exceeds slots - not ok", func(t *testing.T) {
+		constraints := DefaultConstraints()
+		w := model.Workspace{Name: uuid.NewString(), UserID: user.ID}
+		_, err := db.Bun().NewInsert().Model(&w).Exec(context.Background())
+		require.NoError(t, err)
+		addConstraints(t, user, &w.ID, *constraints)
+
+		resourceManager := mocks.ResourceManager{}
+		resourceManager.On("SmallerValueIsHigherPriority", mock.Anything).Return(true, nil)
+
+		config := defaultConfig()
+		config.Resources.Slots = *config.Resources.MaxSlots
+		config.Resources.MaxSlots = nil // ensure only slots is set
+		_, err = CheckNTSCConstraints(context.Background(), w.ID, config, &resourceManager)
+		require.Error(t, err)
+		require.ErrorIs(t, err, errResourceConstraintFailure)
+	})
+
 	t.Run("rm priority not supported - ok", func(t *testing.T) {
 		w := addWorkspacePriorityLimit(t, user, wkspPriorityLimit)
 		rm1 := mocks.ResourceManager{}
