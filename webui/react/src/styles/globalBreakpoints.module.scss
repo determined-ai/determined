@@ -1,7 +1,9 @@
+/* stylelint-disable selector-pseudo-class-no-unknown, property-no-unknown */
+
 :export {
+  breakpointDesktopLarge: $breakpoint-desktop-large;
+  breakpointDesktopMedium: $breakpoint-desktop-medium;
+  breakpointDesktopSmall: $breakpoint-desktop-small;
   breakpointMobile: $breakpoint-mobile;
   breakpointTablet: $breakpoint-tablet;
-  breakpointDesktopSmall: $breakpoint-desktop-small;
-  breakpointDesktopMedium: $breakpoint-desktop-medium;
-  breakpointDesktopLarge: $breakpoint-desktop-large;
 }
