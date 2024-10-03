@@ -440,7 +440,6 @@ test.describe('Experiment List', () => {
       expectPageNumber(null);
     });
   });
-  
   test.describe('Experiment List Multi-sort', () => {
     const runScenarioAndValidation = (projectDetailsPage: ProjectDetails) => {
       const multiSortMenu = projectDetailsPage.f_experimentList.tableActionBar.multiSortMenu;
@@ -542,9 +541,9 @@ test.describe('Experiment List', () => {
       });
     });
 
-    test('sort with ID as 9 → 0 and Searcher as A → Z', async () => {
+    test('sort with ID as 9 → 0 and Searcher as Z → A', async () => {
       const { sortingScenario, checkTableOrder } = runScenarioAndValidation(projectDetailsPage);
-      await sortingScenario('ID', '9 → 0', 'Searcher', 'A → Z', async () => {
+      await sortingScenario('ID', '9 → 0', 'Searcher', 'Z → A', async () => {
         await checkTableOrder('ID', 'Searcher', true);
       });
     });
@@ -556,9 +555,9 @@ test.describe('Experiment List', () => {
       });
     });
 
-    test('sort with Trial count as 9 → 0 and Searcher Metric as A → Z', async () => {
+    test('sort with Trial count as 9 → 0 and Searcher Metric as Z → A', async () => {
       const { sortingScenario, checkTableOrder } = runScenarioAndValidation(projectDetailsPage);
-      await sortingScenario('Trial count', '9 → 0', 'Searcher Metric', 'A → Z', async () => {
+      await sortingScenario('Trial count', '9 → 0', 'Searcher Metric', 'Z → A', async () => {
         await checkTableOrder('Trial count', 'Searcher Metric', true);
       });
     });
