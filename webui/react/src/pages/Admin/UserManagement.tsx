@@ -29,7 +29,7 @@ import {
 } from 'components/Table/Table';
 import UserBadge from 'components/UserBadge';
 import { useAsync } from 'hooks/useAsync';
-import { useTablet } from 'hooks/useMobile';
+import { useMediaQuery } from 'hooks/useMobile';
 import usePermissions from 'hooks/usePermissions';
 import { getGroups, getUserRoles, getUsers, patchUsers } from 'services/api';
 import { V1GetUsersRequestSortBy, V1GroupSearchResult, V1OrderBy } from 'services/api-ts-sdk';
@@ -37,6 +37,7 @@ import determinedStore from 'stores/determinedInfo';
 import roleStore from 'stores/roles';
 import userStore from 'stores/users';
 import userSettings from 'stores/userSettings';
+import { breakpointDesktopSmall } from 'styles/globalBreakpoints.module.scss';
 import { DetailedUser, UserRole as UserRoleType } from 'types';
 import handleError, { ErrorType } from 'utils/error';
 import { useObservable } from 'utils/observable';
@@ -222,7 +223,8 @@ const UserManagement: React.FC<Props> = ({ onUserCreate }: Props) => {
   const pageRef = useRef<HTMLElement>(null);
   const currentUser = Loadable.getOrElse(undefined, useObservable(userStore.currentUser));
   const loadableSettings = useObservable(userManagementSettings);
-  const isTablet = useTablet();
+  const smallDesktopMq = `(max-width: ${breakpointDesktopSmall})`;
+  const isUpToSmDesktop = useMediaQuery(smallDesktopMq);
   const settings = useMemo(() => {
     return Loadable.match(loadableSettings, {
       _: () => ({ ...DEFAULT_SETTINGS, ...columnSettings }),
@@ -485,9 +487,9 @@ const UserManagement: React.FC<Props> = ({ onUserCreate }: Props) => {
     <>
       <Section className={css.usersTable}>
         <div className={css.actionBar} data-testid="actionRow">
-          <Row wrap={isTablet}>
+          <Row wrap={isUpToSmDesktop}>
             <Column>
-              <Row width="fill" wrap={isTablet}>
+              <Row width="fill" wrap={isUpToSmDesktop}>
                 {/* input is uncontrolled */}
                 <Input
                   allowClear
@@ -495,7 +497,7 @@ const UserManagement: React.FC<Props> = ({ onUserCreate }: Props) => {
                   defaultValue={nameFilter}
                   placeholder="Find user"
                   prefix={<Icon color="cancel" decorative name="search" size="tiny" />}
-                  width={isTablet ? '100%' : 'max-content'}
+                  width={isUpToSmDesktop ? '100%' : 'max-content'}
                   onChange={handleNameSearchApply}
                 />
                 <div className={css.selectWrapper}>
@@ -505,7 +507,7 @@ const UserManagement: React.FC<Props> = ({ onUserCreate }: Props) => {
                     placeholder="Role"
                     searchable={false}
                     value={roleFilter}
-                    width={isTablet ? '100%' : 120}
+                    width={isUpToSmDesktop ? '100%' : 120}
                     onChange={handleRoleFilterApply}
                   />
                 </div>
@@ -516,7 +518,7 @@ const UserManagement: React.FC<Props> = ({ onUserCreate }: Props) => {
                     placeholder="Status"
                     searchable={false}
                     value={statusFilter}
-                    width={isTablet ? '100%' : 170}
+                    width={isUpToSmDesktop ? '100%' : 170}
                     onChange={handleStatusFilterApply}
                   />
                 </div>
