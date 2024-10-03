@@ -275,20 +275,36 @@ def print_token_info(data: Sequence[bindings.v1TokenInfo], args: argparse.Namesp
 def describe_token(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
     result = []
-    for arg in args.username:
-        userID = bindings.get_GetUserByUsername(session=sess, username=arg).user.id
-        resp = bindings.get_GetAccessToken(session=sess, userId=userID)
-        result.append(resp.tokenInfo)
-    render_token_info(result)
+    for token_id in args.token_id:
+        filter_data = json.dumps({"TokenId": token_id, "TokenType": "ACCESS_TOKEN"})
+        try:
+            resp = bindings.get_GetAccessTokens(session=sess, filter=filter_data)
+            if len(resp.tokenInfo) == 1:
+                result.append(resp.tokenInfo[0])
+            else:
+                print(f"Could not find token with ID: {token_id}")
+        except Exception as e:
+            print(f"Error fetching token with ID {token_id}: {e}")
+    if result:
+        render_token_info(result)
 
 
 def list_tokens(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
-    resp = bindings.get_GetAllAccessTokens(sess, includeInactive=args.all)
-    if args.json or args.yaml:
-        print_token_info(resp.tokenInfo, args)
-        return
-    render_token_info(resp.tokenInfo)
+    filter_data = {
+        "TokenType": "ACCESS_TOKEN",
+        **({"Username": args.username} if args.username else {}),
+        **({"showActive": args.show_active} if args.show_active else {}),
+    }
+    try:
+        filter_json = json.dumps(filter_data)
+        resp = bindings.get_GetAccessTokens(sess, filter=filter_json)
+        if args.json or args.yaml:
+            print_token_info(resp.tokenInfo, args)
+            return
+        render_token_info(resp.tokenInfo)
+    except Exception as e:
+        print(f"Error fetching tokens: {e}")
 
 
 def revoke_token(args: argparse.Namespace) -> None:
@@ -445,23 +461,27 @@ args_description = [
         ]),
         cli.Cmd("token", None, "manage access tokens", [
             cli.Cmd("describe", describe_token, "describe token info", [
-                cli.Arg("username", nargs=argparse.ONE_OR_MORE, default=None,
-                        help="name of user to describe token"),
+                cli.Arg("token_id", type=int, nargs=argparse.ONE_OR_MORE, default=None,
+                        help="describe given access token id"),
                 cli.Group(
                     cli.output_format_args["json"],
                     cli.output_format_args["yaml"],
                 ),
             ]),
             cli.Cmd("list ls", list_tokens, "list all active access tokens", [
+                cli.Arg("username", type=str, nargs=argparse.OPTIONAL,
+                        help="list token for the given username", default=None),
                 cli.Arg("--all", "-a", action="store_true", default=None,
                         help="list all access tokens, including revoked & expired tokens"),
+                cli.Arg("--show_active", action="store_true", default=None,
+                        help="list only the active tokens"),
                 cli.Group(
                     cli.output_format_args["json"],
                     cli.output_format_args["yaml"],
                 ),
             ]),
             cli.Cmd("revoke", revoke_token, "revoke token", [
-                cli.Arg("token_id", help="revoke given access token"),
+                cli.Arg("token_id", help="revoke given access token id"),
             ]),
             cli.Cmd("create", create_token, "create token", [
                 cli.Arg("--username", type=str, help="name of user to create token"),

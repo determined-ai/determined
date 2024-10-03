@@ -739,6 +739,7 @@ type accessTokenFilter struct {
 	ShowActive bool
 	Username   string
 	TokenType  model.TokenType
+	TokenID    model.TokenID
 }
 
 // GetAccessTokens returns all access token info.
@@ -806,6 +807,11 @@ func (a *apiServer) GetAccessTokens(
 		}).WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
 			if atf.TokenType != "" {
 				return q.Where("us.token_type = ?", atf.TokenType)
+			}
+			return q
+		}).WhereGroup(" AND ", func(q *bun.SelectQuery) *bun.SelectQuery {
+			if atf.TokenID > 0 {
+				return q.Where("us.id = ?", atf.TokenID)
 			}
 			return q
 		})
