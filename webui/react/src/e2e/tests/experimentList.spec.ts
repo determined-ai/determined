@@ -403,16 +403,14 @@ test.describe('Experiment List', () => {
     });
 
     // set table columns to have just the columns that we are using in the test cases.
-    test.beforeAll(async () => {
+    test.beforeEach(async ({ authedPage, newProject }) => {
+      projectDetailsPage = new ProjectDetails(authedPage);
+      await projectDetailsPage.gotoProject(newProject.response.project.id);
       const columnPicker = projectDetailsPage.f_experimentList.tableActionBar.columnPickerMenu;
       await columnPicker.open();
       await columnPicker.columnPickerTab.showAll.pwLocator.click();
-      await columnPicker.close();
-      await waitTableStable();
       await expect.soft(columnPicker.columnPickerTab.showAll.pwLocator).toHaveText('Hide all');
       await columnPicker.columnPickerTab.showAll.pwLocator.click();
-      await columnPicker.close();
-      await waitTableStable();
 
       const columnTitles = ['ID', 'Searcher', 'Trial count', 'Searcher Metric'];
 
@@ -430,17 +428,19 @@ test.describe('Experiment List', () => {
         firstKey: string,
         secondKey: string,
         metricCheck: string,
-        inverseFirst?: boolean,
+        ascending?: boolean,
       ) => {
-        const getColumnTextValue = async (rowIdx: number, col: string) =>
+        // eslint-disable-next-line no-console
+        console.log(await projectDetailsPage.f_experimentList.dataGrid.rows);
+        const getColumn = async (rowIdx: number, col: string) =>
           await projectDetailsPage.f_experimentList.dataGrid
             .getRowByIndex(rowIdx)
             .getCellByColumnName(col);
-        const firstCaseElement1 = await getColumnTextValue(0, firstKey);
-        const firstCaseElement2 = await getColumnTextValue(1, firstKey);
-        const secondCaseElement = await getColumnTextValue(0, secondKey);
+        const firstCaseElement1 = await getColumn(0, firstKey);
+        const firstCaseElement2 = await getColumn(1, firstKey);
+        const secondCaseElement = await getColumn(0, secondKey);
 
-        if (inverseFirst) {
+        if (ascending) {
           expect(Number(await firstCaseElement1.pwLocator.innerText())).toBeLessThanOrEqual(
             // "OrEqual" is to be used for the "Trial Count" as well
             Number(await firstCaseElement2.pwLocator.innerText()),
