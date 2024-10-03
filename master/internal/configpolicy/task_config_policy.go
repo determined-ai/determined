@@ -160,6 +160,34 @@ func GetMergedConstraints(ctx context.Context, workspaceID int, workloadType str
 	return &constraints, nil
 }
 
+// MergeWithInvariantExperimentConfigs merges the config with workspace and global invariant
+// configs, where a global invariant config takes precedence over a workspace-level invariant
+// config.
+func MergeWithInvariantExperimentConfigs(ctx context.Context, workspaceID int,
+	config *expconf.ExperimentConfigV0) error {
+	wkspConfigPolicies, err := GetTaskConfigPolicies(ctx, &workspaceID, model.ExperimentType)
+	if err != nil {
+		return err
+	}
+	if wkspConfigPolicies.InvariantConfig != nil {
+		if err := json.Unmarshal([]byte(*wkspConfigPolicies.InvariantConfig), config); err != nil {
+			return fmt.Errorf("error unmarshaling workspace invariant config: %w", err)
+		}
+	}
+
+	globalConfigPolicies, err := GetTaskConfigPolicies(ctx, nil, model.ExperimentType)
+	if err != nil {
+		return err
+	}
+	if globalConfigPolicies.InvariantConfig != nil {
+		if err = json.Unmarshal([]byte(*globalConfigPolicies.InvariantConfig), config); err != nil {
+			return fmt.Errorf(" error unmarshaling global invariant config: %w", err)
+		}
+	}
+
+	return nil
+}
+
 // PriorityAllowed returns true if the desired priority is within the task config policy limit.
 func PriorityAllowed(wkspID int, workloadType string, priority int, smallerHigher bool) (bool, error) {
 	// Check if a priority limit has been set with a constraint policy.
