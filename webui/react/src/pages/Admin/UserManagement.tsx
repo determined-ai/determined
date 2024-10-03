@@ -483,58 +483,56 @@ const UserManagement: React.FC<Props> = ({ onUserCreate }: Props) => {
     <>
       <Section className={css.usersTable}>
         <div className={css.actionBar} data-testid="actionRow">
-          <div className={css.grid}>
-            <div className={css.gridInput}>
-              <Input
-                allowClear
-                data-testid="search"
-                defaultValue={nameFilter}
-                placeholder="Find user"
-                prefix={<Icon color="cancel" decorative name="search" size="tiny" />}
-                width={'100%'}
-                onChange={handleNameSearchApply}
-              />
-            </div>
-            <div className={css.roleSelect}>
-              <Select
-                data-testid="roleSelect"
-                options={roleOptions}
-                placeholder="Role"
-                searchable={false}
-                value={roleFilter}
-                width={'100%'}
-                onChange={handleRoleFilterApply}
-              />
-            </div>
-            <div className={css.statusSelect}>
-              <Select
-                data-testid="statusSelect"
-                options={statusOptions}
-                placeholder="Status"
-                searchable={false}
-                value={statusFilter}
-                width={'100%'}
-                onChange={handleStatusFilterApply}
-              />
-            </div>
-            <div className={css.gridButtons}>
-              <Column align="right">
-                <Row>
-                  {selectedUserIds.length > 0 && (
-                    <Dropdown menu={actionDropdownMenu} onClick={handleActionDropdown}>
-                      <Button data-testid="actions">Actions</Button>
-                    </Dropdown>
-                  )}
-                  <Button
-                    aria-label={CREATE_USER_LABEL}
-                    data-testid="addUser"
-                    disabled={!info.userManagementEnabled || !canModifyUsers}
-                    onClick={CreateUserModal.open}>
-                    {CREATE_USER}
-                  </Button>
-                </Row>
-              </Column>
-            </div>
+          <div className={css.gridInput}>
+            <Input
+              allowClear
+              data-testid="search"
+              defaultValue={nameFilter}
+              placeholder="Find user"
+              prefix={<Icon color="cancel" decorative name="search" size="tiny" />}
+              width={'100%'}
+              onChange={handleNameSearchApply}
+            />
+          </div>
+          <div className={css.roleSelect}>
+            <Select
+              data-testid="roleSelect"
+              options={roleOptions}
+              placeholder="Role"
+              searchable={false}
+              value={roleFilter}
+              width={'100%'}
+              onChange={handleRoleFilterApply}
+            />
+          </div>
+          <div className={css.statusSelect}>
+            <Select
+              data-testid="statusSelect"
+              options={statusOptions}
+              placeholder="Status"
+              searchable={false}
+              value={statusFilter}
+              width={'100%'}
+              onChange={handleStatusFilterApply}
+            />
+          </div>
+          <div className={css.gridButtons}>
+            <Column align="right">
+              <Row>
+                {selectedUserIds.length > 0 && (
+                  <Dropdown menu={actionDropdownMenu} onClick={handleActionDropdown}>
+                    <Button data-testid="actions">Actions</Button>
+                  </Dropdown>
+                )}
+                <Button
+                  aria-label={CREATE_USER_LABEL}
+                  data-testid="addUser"
+                  disabled={!info.userManagementEnabled || !canModifyUsers}
+                  onClick={CreateUserModal.open}>
+                  {CREATE_USER}
+                </Button>
+              </Row>
+            </Column>
           </div>
         </div>
         {settings ? (

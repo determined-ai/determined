@@ -8,9 +8,6 @@
 .rightAligned {
   text-align: right;
 }
-.actionBar {
-  margin-bottom: 8px;
-}
 .gridInput {
   grid-area: input;
 }
@@ -23,15 +20,16 @@
 .gridButtons {
   grid-area: button;
 }
-.grid {
+.actionBar {
   align-items: center;
   display: grid;
   gap: var(--spacing-md);
   grid-template: 'input roleSelect statusSelect button' auto / minmax(auto, max-content) minmax(auto, 120px) minmax(auto, 170px) auto;
+  margin-bottom: 8px;
 }
 
 @media only screen and (max-width: $breakpoint-tablet) {
-  .grid {
+  .actionBar {
     grid-template: 
       'input' auto
       'roleSelect' auto
