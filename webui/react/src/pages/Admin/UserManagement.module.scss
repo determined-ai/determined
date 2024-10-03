@@ -3,24 +3,12 @@
   display: grid;
   gap: var(--spacing-md);
   grid-template:
-    'input roleSelect statusSelect button' auto
-    / minmax(auto, max-content) minmax(auto, 120px) minmax(auto, 170px) auto;
+    'input roleSelect statusSelect buttonGroup' auto
+    / minmax(auto, max-content) minmax(min-content, 120px) minmax(min-content, 170px) auto;
   margin-bottom: 8px;
 }
 .gridButtons {
-  grid-area: button;
-}
-.gridInput {
-  grid-area: input;
-}
-.rightAligned {
-  text-align: right;
-}
-.roleSelect {
-  grid-area: roleSelect;
-}
-.statusSelect {
-  grid-area: statusSelect;
+  grid-area: buttonGroup;
 }
 .usersTable {
   .overflow {
@@ -36,7 +24,7 @@
       'input' auto
       'roleSelect' auto
       'statusSelect' auto
-      'button' auto
+      'buttonGroup' auto
       / 100%;
   }
 }
