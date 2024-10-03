@@ -517,7 +517,7 @@ const UserManagement: React.FC<Props> = ({ onUserCreate }: Props) => {
                 onChange={handleStatusFilterApply}
               />
             </div>
-            <div className={css.gridButton}>
+            <div className={css.gridButtons}>
               <Column align="right">
                 <Row>
                   {selectedUserIds.length > 0 && (
