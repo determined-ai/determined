@@ -318,6 +318,9 @@ func TestAuthZCanCreateNSC(t *testing.T) {
 	).Times(3)
 	workspaceAuthZ.On("CanGetWorkspace", mock.Anything, mock.Anything, mock.Anything).
 		Return(nil).Times(3)
+	mockRM := MockRM()
+	mockRM.On("SmallerValueIsHigherPriority", mock.Anything).Return(true, nil)
+	api.m.rm = mockRM
 	_, err = api.LaunchNotebook(ctx, &apiv1.LaunchNotebookRequest{})
 	require.Equal(t, codes.PermissionDenied, status.Code(err))
 	_, err = api.LaunchCommand(ctx, &apiv1.LaunchCommandRequest{})

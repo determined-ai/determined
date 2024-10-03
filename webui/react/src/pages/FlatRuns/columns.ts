@@ -50,6 +50,7 @@ export const runColumns = [
   'externalRunId',
   'isExpMultitrial',
   'parentArchived',
+  'archived',
 ] as const;
 
 const EXCLUDED_SEARCH_DEFAULT_COLUMNS: RunColumn[] = [
@@ -60,9 +61,9 @@ const EXCLUDED_SEARCH_DEFAULT_COLUMNS: RunColumn[] = [
 
 export type RunColumn = (typeof runColumns)[number];
 
-export const defaultRunColumns: RunColumn[] = [...runColumns];
+export const defaultRunColumns: RunColumn[] = runColumns.filter((f) => f !== 'archived');
 
-export const defaultSearchRunColumns: RunColumn[] = runColumns.filter(
+export const defaultSearchRunColumns: RunColumn[] = defaultRunColumns.filter(
   (c) => !EXCLUDED_SEARCH_DEFAULT_COLUMNS?.includes(c),
 );
 
@@ -112,6 +113,18 @@ export const getColumnDefs = ({
   users,
   appTheme,
 }: Params): ColumnDefs<FlatRun> => ({
+  archived: {
+    id: 'archived',
+    renderer: (record: FlatRun) => ({
+      allowOverlay: false,
+      data: String(record.archived),
+      displayData: record.archived ? '📦' : '',
+      kind: GridCellKind.Text,
+    }),
+    title: 'Archived',
+    tooltip: () => undefined,
+    width: columnWidths.archived,
+  },
   checkpointCount: {
     id: 'checkpointCount',
     isNumerical: true,
@@ -520,6 +533,7 @@ export const searcherMetricsValColumn = (
 };
 
 export const defaultColumnWidths: Partial<Record<RunColumn, number>> = {
+  archived: 80,
   checkpointCount: 120,
   checkpointSize: 110,
   duration: 86,

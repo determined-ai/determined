@@ -10,14 +10,13 @@ from typing import Generator, List, Tuple
 import appdirs
 import pytest
 
-from determined.common import api, util
+from determined.common import api
 from determined.common.api import bindings, errors
 from determined.experimental import client
 from tests import api_utils, command
 from tests import config as conf
 from tests import detproc
-from tests import experiment as exp
-from tests import filetree
+from tests.experiment import noop
 
 EXPECT_TIMEOUT = 5
 logger = logging.getLogger(__name__)
@@ -210,30 +209,27 @@ def test_experiment_creation_and_listing() -> None:
     sess1, _ = api_utils.create_test_user()
     sess2, _ = api_utils.create_test_user()
 
-    # Create an experiment as first user.
-    experiment_id1 = exp.run_basic_test(
-        sess1, conf.fixtures_path("no_op/single.yaml"), conf.fixtures_path("no_op"), 1
-    )
-
-    # Create another experiment, this time as second user.
-    experiment_id2 = exp.run_basic_test(
-        sess2, conf.fixtures_path("no_op/single.yaml"), conf.fixtures_path("no_op"), 1
-    )
+    # Create an experiment as each user.
+    exp1 = noop.create_experiment(sess1)
+    exp2 = noop.create_experiment(sess2)
+    # We don't care what happens to them.
+    exp1.kill()
+    exp2.kill()
 
     # user 1 can only see user 1 experiment
     output = extract_id_and_owner_from_exp_list(detproc.check_output(sess1, ["det", "e", "list"]))
-    assert (experiment_id1, sess1.username) in output, output
-    assert (experiment_id2, sess2.username) not in output, output
+    assert (exp1.id, sess1.username) in output, output
+    assert (exp2.id, sess2.username) not in output, output
 
     # Now use the -a flag to list all experiments.  The output should include both experiments.
     output = extract_id_and_owner_from_exp_list(
         detproc.check_output(sess1, ["det", "e", "list", "-a"])
     )
-    assert (experiment_id1, sess1.username) in output, output
-    assert (experiment_id2, sess2.username) in output, output
+    assert (exp1.id, sess1.username) in output, output
+    assert (exp2.id, sess2.username) in output, output
 
     # Clean up.
-    delete_experiments(api_utils.admin_session(), experiment_id1, experiment_id2)
+    delete_experiments(api_utils.admin_session(), exp1.id, exp2.id)
 
 
 @pytest.mark.e2e_cpu
@@ -327,7 +323,7 @@ def delete_experiments(sess: api.Session, *experiment_ids: int) -> None:
     while eids:
         output = extract_columns(detproc.check_output(sess, ["det", "e", "list", "-a"]), [0, 4])
 
-        running_ids = {int(o[0]) for o in output if o[1] == "COMPLETED"}
+        running_ids = {int(o[0]) for o in output if o[1] in ["COMPLETED", "CANCELED"]}
         intersection = eids & running_ids
         if not intersection:
             time.sleep(0.5)
@@ -408,23 +404,11 @@ def test_tensorboard_creation_and_listing() -> None:
     sess2, _ = api_utils.create_test_user()
 
     # Create an experiment.
-    experiment_id1 = exp.run_basic_test(
-        sess1,
-        conf.fixtures_path("no_op/single-one-short-step.yaml"),
-        conf.fixtures_path("no_op"),
-        1,
-    )
+    exp1 = noop.create_experiment(sess1, [noop.Report({"x": 1})])
+    tensorboard_id1 = start_tensorboard(sess1, exp1.id)
 
-    tensorboard_id1 = start_tensorboard(sess1, experiment_id1)
-
-    experiment_id2 = exp.run_basic_test(
-        sess2,
-        conf.fixtures_path("no_op/single-one-short-step.yaml"),
-        conf.fixtures_path("no_op"),
-        1,
-    )
-
-    tensorboard_id2 = start_tensorboard(sess2, experiment_id2)
+    exp2 = noop.create_experiment(sess2, [noop.Report({"x": 1})])
+    tensorboard_id2 = start_tensorboard(sess2, exp2.id)
 
     output = extract_columns(detproc.check_output(sess1, ["det", "tensorboard", "list"]), [0, 1])
     assert (tensorboard_id1, sess1.username) in output
@@ -438,7 +422,8 @@ def test_tensorboard_creation_and_listing() -> None:
 
     admin = api_utils.admin_session()
     kill_tensorboards(admin, tensorboard_id1, tensorboard_id2)
-    delete_experiments(admin, experiment_id1, experiment_id2)
+    exp1.kill()
+    exp2.kill()
 
 
 @pytest.mark.e2e_cpu
@@ -460,7 +445,7 @@ def test_command_creation_and_listing() -> None:
     assert (command_id2, sess2.username) in output
 
 
-def create_linked_user(uid: int, user: str, gid: int, group: str) -> api.Session:
+def create_linked_user_cli(uid: int, user: str, gid: int, group: str) -> api.Session:
     admin = api_utils.admin_session()
     sess, _ = api_utils.create_test_user()
 
@@ -484,14 +469,6 @@ def create_linked_user(uid: int, user: str, gid: int, group: str) -> api.Session
     return sess
 
 
-def create_linked_user_sdk(uid: int, agent_user: str, gid: int, group: str) -> api.Session:
-    sess, _ = api_utils.create_test_user()
-    det_obj = client.Determined._from_session(api_utils.admin_session())
-    user = det_obj.get_user_by_name(user_name=sess.username)
-    user.link_with_agent(agent_gid=gid, agent_uid=uid, agent_group=group, agent_user=agent_user)
-    return sess
-
-
 def check_link_with_agent_output(sess: api.Session, expected_output: str) -> None:
     assert expected_output in detproc.check_output(
         sess,
@@ -501,18 +478,18 @@ def check_link_with_agent_output(sess: api.Session, expected_output: str) -> Non
 
 @pytest.mark.e2e_cpu
 def test_link_with_agent_user() -> None:
-    sess = create_linked_user(200, "someuser", 300, "somegroup")
+    sess = create_linked_user_cli(200, "someuser", 300, "somegroup")
     expected_output = "someuser:200:somegroup:300"
     check_link_with_agent_output(sess, expected_output)
 
-    sess = create_linked_user_sdk(210, "anyuser", 310, "anygroup")
+    sess = api_utils.create_linked_user(210, "anyuser", 310, "anygroup")
     expected_output = "anyuser:210:anygroup:310"
     check_link_with_agent_output(sess, expected_output)
 
 
 @pytest.mark.e2e_cpu
 def test_link_with_large_uid() -> None:
-    sess = create_linked_user(2000000000, "someuser", 2000000000, "somegroup")
+    sess = create_linked_user_cli(2000000000, "someuser", 2000000000, "somegroup")
 
     expected_output = "someuser:2000000000:somegroup:2000000000"
     check_link_with_agent_output(sess, expected_output)
@@ -520,7 +497,7 @@ def test_link_with_large_uid() -> None:
 
 @pytest.mark.e2e_cpu
 def test_link_with_existing_agent_user() -> None:
-    sess = create_linked_user(65533, "det-nobody", 65533, "det-nobody")
+    sess = create_linked_user_cli(65533, "det-nobody", 65533, "det-nobody")
 
     expected_output = "det-nobody:65533:det-nobody:65533"
     check_link_with_agent_output(sess, expected_output)
@@ -555,31 +532,26 @@ def non_tmp_shared_fs_path() -> Generator:
 
 @pytest.mark.e2e_cpu
 def test_non_root_experiment(tmp_path: pathlib.Path) -> None:
-    sess = create_linked_user(65533, "det-nobody", 65533, "det-nobody")
-
-    with open(conf.fixtures_path("no_op/model_def.py")) as f:
-        model_def_content = f.read()
-
-    with open(conf.fixtures_path("no_op/single-one-short-step.yaml")) as f:
-        config = util.yaml_safe_load(f)
+    sess = create_linked_user_cli(65533, "det-nobody", 65533, "det-nobody")
 
     # Use a user-owned path to ensure shared_fs uses the container_path and not host_path.
     with non_tmp_shared_fs_path() as host_path:
-        config["checkpoint_storage"] = {
-            "type": "shared_fs",
-            "host_path": host_path,
-        }
-
-        # Call `det --version` in a startup hook to ensure that det is on the PATH.
-        with filetree.FileTree(
-            tmp_path,
-            {
-                "startup-hook.sh": "det --version || exit 77",
-                "const.yaml": util.yaml_safe_dump(config),
-                "model_def.py": model_def_content,
+        config = {
+            "checkpoint_storage": {
+                "type": "shared_fs",
+                "host_path": host_path,
             },
-        ) as tree:
-            exp.run_basic_test(sess, str(tree.joinpath("const.yaml")), str(tree), None)
+            # Call the `det` cli to make sure det is on the PATH.
+            # Call `det user whoami` to make sure we can authenticate with the master.
+            "entrypoint": "det user whoami || exit 77",
+            "searcher": {
+                "name": "single",
+                "metric": "x",
+                "max_length": 1,
+            },
+        }
+        exp_ref = noop.create_experiment(sess, config=config)
+        assert exp_ref.wait(interval=0.01) == client.ExperimentState.COMPLETED
 
 
 @pytest.mark.e2e_cpu
@@ -591,7 +563,7 @@ def test_link_without_agent_user() -> None:
 
 @pytest.mark.e2e_cpu
 def test_non_root_shell(tmp_path: pathlib.Path) -> None:
-    sess = create_linked_user(1234, "someuser", 1234, "somegroup")
+    sess = create_linked_user_cli(1234, "someuser", 1234, "somegroup")
     exp = "someuser:1234:somegroup:1234"
     cmd = "echo; echo $(id -u -n):$(id -u):$(id -g -n):$(id -g)"
     with command.interactive_command(sess, ["shell", "start", "--detach"]) as shell:
@@ -606,13 +578,13 @@ def test_experiment_delete() -> None:
     sess = api_utils.user_session()
     other, _ = api_utils.create_test_user()
 
-    experiment_id = exp.run_basic_test(
-        sess, conf.fixtures_path("no_op/single.yaml"), conf.fixtures_path("no_op"), 1
-    )
+    exp_ref = noop.create_experiment(sess)
+    # We don't care about finishing it, though.
+    exp_ref.kill()
 
     # "det experiment delete" call should fail, because the other user is not an admin and
     # doesn't own the experiment.
-    cmd = ["det", "experiment", "delete", str(experiment_id), "--yes"]
+    cmd = ["det", "experiment", "delete", str(exp_ref.id), "--yes"]
     detproc.check_error(other, cmd, "forbidden")
 
     # but the owner can delete it
@@ -624,7 +596,7 @@ def test_experiment_delete() -> None:
         # experiment is no longer in the database.
         p = detproc.run(
             sess,
-            ["det", "experiment", "describe", str(experiment_id)],
+            ["det", "experiment", "describe", str(exp_ref.id)],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )

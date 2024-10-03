@@ -2,11 +2,13 @@ import subprocess
 
 import pytest
 
+from determined.experimental import client
 from tests import api_utils
 from tests import config as conf
 from tests import detproc
 from tests import experiment as exp
 from tests.cluster import managed_cluster, utils
+from tests.experiment import noop
 
 
 @pytest.mark.managed_devcluster
@@ -17,13 +19,12 @@ def test_priortity_scheduler_noop_experiment(
     managed_cluster_priority_scheduler.ensure_agent_ok()
     assert str(conf.MASTER_PORT) == str(8082)
     # uses the default priority set in cluster config
-    exp.run_basic_test(
-        sess, conf.fixtures_path("no_op/single.yaml"), conf.fixtures_path("no_op"), 1
-    )
+    exp_ref = noop.create_experiment(sess)
+    assert exp_ref.wait(interval=0.01) == client.ExperimentState.COMPLETED
     # uses explicit priority
-    exp.run_basic_test(
-        sess, conf.fixtures_path("no_op/single.yaml"), conf.fixtures_path("no_op"), 1, priority=50
-    )
+    exp_ref = noop.create_experiment(sess)
+    exp.set_priority(sess, exp_ref.id, 50)
+    assert exp_ref.wait(interval=0.01) == client.ExperimentState.COMPLETED
 
 
 @pytest.mark.managed_devcluster

@@ -3,13 +3,12 @@ from typing import Any, Dict, List, Tuple
 
 import pytest
 
-from determined.common import api, util
+from determined.common import api
 from determined.common.api import bindings, errors
 from determined.experimental import client
-from tests import api_utils
-from tests import config as conf
-from tests import detproc, experiment
+from tests import api_utils, detproc
 from tests.cluster import test_rbac, test_workspace_org
+from tests.experiment import noop
 
 
 def get_random_string() -> str:
@@ -101,14 +100,9 @@ def register_model_version(
         workspaceId=workspace_id,
     ).project.id
     m = create_model_registry(sess, model_name, workspace_id)
-    experiment_id = experiment.create_experiment(
-        sess,
-        conf.fixtures_path("no_op/single.yaml"),
-        conf.fixtures_path("no_op"),
-        ["--project_id", str(pid)],
-    )
-    experiment.wait_for_experiment_state(sess, experiment_id, bindings.experimentv1State.COMPLETED)
-    checkpoint = bindings.get_GetExperimentCheckpoints(sess, id=experiment_id).checkpoints[0]
+    exp_ref = noop.create_experiment(sess, [noop.Checkpoint()], project_id=pid)
+    assert exp_ref.wait(interval=0.01) == client.ExperimentState.COMPLETED
+    checkpoint = bindings.get_GetExperimentCheckpoints(sess, id=exp_ref.id).checkpoints[0]
     model_version = m.register_version(checkpoint.uuid)
     assert model_version.model_version == 1
 
@@ -188,11 +182,9 @@ def test_model_registry_rbac() -> None:
 
         # Test editor user.
         d = client.Determined._from_session(editor)
-        with open(conf.fixtures_path("no_op/single-one-short-step.yaml")) as f:
-            config = util.yaml_safe_load(f)
-        exp = d.create_experiment(config, conf.fixtures_path("no_op"))
+        exp = noop.create_experiment(editor, [noop.Checkpoint()])
         # wait for exp state to be completed
-        assert exp.wait() == client.ExperimentState.COMPLETED
+        assert exp.wait(interval=0.01) == client.ExperimentState.COMPLETED
         checkpoint = d.get_experiment(exp.id).top_checkpoint()
         # need to get a new determined obj everytime a new user is logged in.
         # Same pattern is followed below.
