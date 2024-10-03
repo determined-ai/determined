@@ -582,21 +582,3 @@ class Determined:
             stacklevel=2,
         )
         return trial._stream_validation_metrics(self._session, trial_ids)
-
-    def list_tokens(self, includeInactive: Optional[bool] = None) -> List[user.TokenInfo]:
-        def get_with_offset(offset: int) -> bindings.v1GetAllAccessTokensResponse:
-            return bindings.get_GetAllAccessTokens(
-                session=self._session,
-                offset=offset,
-                includeInactive=includeInactive,
-            )
-
-        resps = api.read_paginated(get_with_offset)
-        userSessions = []
-        for r in resps:
-            if not r.tokenInfo:
-                continue
-            for u in r.tokenInfo:
-                userSessions.append(user.TokenInfo._from_bindings(u, self._session))
-
-        return userSessions

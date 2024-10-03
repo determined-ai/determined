@@ -82,7 +82,7 @@ from determined.common.experimental.trial import (  # noqa: F401
     TrialSortBy,
     TrialState,
 )
-from determined.common.experimental.user import TokenInfo, User
+from determined.common.experimental.user import User
 from determined.common.experimental.workspace import Workspace  # noqa: F401
 
 logger = logging.getLogger("determined.client")
@@ -659,18 +659,3 @@ def stream_trials_validation_metrics(trial_ids: List[int]) -> Iterable[Validatio
 def _get_singleton_session() -> _api.Session:
     assert _determined is not None
     return _determined._session
-
-
-@_require_singleton
-def list_tokens(includeInactive: Optional[bool] = None) -> List[TokenInfo]:
-    """Get a list of all tokens.
-
-    Arg:
-        includeInactive: if this parameter is set to false, filter for active user sessions only.
-            When true, filter for inactive user sessions. Return all user sessions otherwise.
-
-    Returns:
-        A list of :class:`~determined.experimental.client.TokenInfo` objects.
-    """
-    assert _determined is not None
-    return _determined.list_tokens(includeInactive=includeInactive)

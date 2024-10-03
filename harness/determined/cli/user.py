@@ -1,6 +1,5 @@
 import argparse
 import collections
-import functools
 import getpass
 import json
 from typing import Any, List, Sequence
@@ -244,32 +243,11 @@ def edit(args: argparse.Namespace) -> None:
 
 
 def render_token_info(token_info: Sequence[bindings.v1TokenInfo]) -> None:
-    values = []
-    for ti in token_info:
-        value = [
-            ti.id,
-            ti.userId,
-            ti.description,
-            ti.createdAt,
-            ti.expiry,
-            ti.revoked,
-            ti.tokenType,
-        ]
-        values.append(value)
+    values = [
+        [t.id, t.userId, t.description, t.createdAt, t.expiry, t.revoked, t.tokenType]
+        for t in token_info
+    ]
     render.tabulate_or_csv(TOKEN_HEADERS, values, False)
-
-
-def print_token_info(data: Sequence[bindings.v1TokenInfo], args: argparse.Namespace) -> None:
-    if data:
-        json_data = [elem.to_json() for elem in data]
-        if len(data) == 1:
-            json_data = json_data[0]
-    else:
-        json_data = {}
-    if args.yaml:
-        print(util.yaml_safe_dump(json_data, default_flow_style=False))
-    else:
-        render.print_json(json_data)
 
 
 def describe_token(args: argparse.Namespace) -> None:
@@ -281,10 +259,11 @@ def describe_token(args: argparse.Namespace) -> None:
             resp = bindings.get_GetAccessTokens(session=sess, filter=filter_data)
             if len(resp.tokenInfo) == 1:
                 result.append(resp.tokenInfo[0])
+            # We might want to catch exception here
             else:
                 print(f"Could not find token with ID: {token_id}")
-        except Exception as e:
-            print(f"Error fetching token with ID {token_id}: {e}")
+        except api.errors.NotFoundException:
+            raise errors.CliError(f"Token {token_id} not found")
     if result:
         render_token_info(result)
 
@@ -300,9 +279,13 @@ def list_tokens(args: argparse.Namespace) -> None:
         filter_json = json.dumps(filter_data)
         resp = bindings.get_GetAccessTokens(sess, filter=filter_json)
         if args.json or args.yaml:
-            print_token_info(resp.tokenInfo, args)
-            return
-        render_token_info(resp.tokenInfo)
+            json_data = [t.to_json() for t in resp.tokenInfo]
+            if args.json:
+                render.print_json(json_data)
+            else:
+                print(util.yaml_safe_dump(json_data, default_flow_style=False))
+        else:
+            render_token_info(resp.tokenInfo)
     except Exception as e:
         print(f"Error fetching tokens: {e}")
 
@@ -322,45 +305,28 @@ def revoke_token(args: argparse.Namespace) -> None:
 
 def create_token(args: argparse.Namespace) -> None:
     sess = cli.setup_session(args)
-    current_user, token_user = sess.username, args.username
-    request, handler = None, None
-    if token_user is None or token_user == current_user:
-        user_id = bindings.get_GetUserByUsername(session=sess, username=current_user).user.id
-    else:
-        user_id = bindings.get_GetUserByUsername(session=sess, username=token_user).user.id
+    username = args.username or sess.username
+    user_id = bindings.get_GetUserByUsername(session=sess, username=username).user.id
+
+    request = None
     request = bindings.v1PostAccessTokenRequest(
-        lifespan=args.lifespan, userId=user_id, description=args.description
+        lifespan=args.expiration_duration, userId=user_id, description=args.description
     )
-    handler = functools.partial(bindings.post_PostAccessToken, userId=user_id)
-    resp = handler(session=sess, body=request).to_json()
+    resp = bindings.post_PostAccessToken(sess, userId=user_id, body=request).to_json()
 
-    outputString = None
+    output_string = None
     if args.yaml:
-        outputString = util.yaml_safe_dump(resp, default_flow_style=False)
+        output_string = util.yaml_safe_dump(resp, default_flow_style=False)
     elif args.json:
-        outputString = json.dumps(resp, indent=2)
+        output_string = json.dumps(resp, indent=2)
     else:
-        outputString = resp["token"]
+        output_string = resp["token"]
 
-    if args.file_path:
-        with open(args.file_path, "w") as file:
-            file.write(outputString)
+    if args.output_file:
+        with open(args.output_file, "w") as file:
+            file.write(output_string)
     else:
-        print(outputString)
-
-
-def update_token(args: argparse.Namespace) -> None:
-    sess = cli.setup_session(args)
-    try:
-        if args.description and args.token_id:
-            request = bindings.v1PatchAccessTokenRequest(
-                tokenId=args.token_id, description=args.description, setRevoked=False
-            )
-            resp = bindings.patch_PatchAccessToken(sess, body=request, tokenId=args.token_id)
-        print(json.dumps(resp.to_json(), indent=2))
-    except api.errors.NotFoundException:
-        raise errors.CliError("Token not found")
-    print("Successfully updated token with ID: {}".format(args.token_id))
+        print(output_string)
 
 
 AGENT_USER_GROUP_ARGS = [
@@ -473,7 +439,7 @@ args_description = [
                         help="list token for the given username", default=None),
                 cli.Arg("--all", "-a", action="store_true", default=None,
                         help="list all access tokens, including revoked & expired tokens"),
-                cli.Arg("--show_active", action="store_true", default=None,
+                cli.Arg("--show-active", action="store_true", default=None,
                         help="list only the active tokens"),
                 cli.Group(
                     cli.output_format_args["json"],
@@ -484,19 +450,13 @@ args_description = [
                 cli.Arg("token_id", help="revoke given access token id"),
             ]),
             cli.Cmd("create", create_token, "create token", [
-                cli.Arg("--username", type=str, help="name of user to create token"),
-                cli.Arg("--lifespan", type=str, help="give expiry lifespan"),
-                cli.Arg("--description", type=str, default=None, help="description of new token"),
-                cli.Arg("--file-path", type=str, help="write token to file"),
-                cli.Group(
-                    cli.output_format_args["json"],
-                    cli.output_format_args["yaml"],
-                ),
-            ]),
-            cli.Cmd("update", update_token, "update token info", [
-                cli.Arg("token_id", help="revoke given access token"),
-                cli.Arg("description", type=str, default=None,
-                        help="description of token"),
+                cli.Arg("username", type=str, nargs=argparse.OPTIONAL,
+                        help="name of user to create token", default=None),
+                cli.Arg("--expiration-duration", "-e", type=str,
+                        help="give expiry duration like 2h or 5m or 10s"),
+                cli.Arg("--description", "-d", type=str, default=None,
+                        help="description of new token"),
+                cli.Arg("--output-file", "-o", type=str, help="write token to a file"),
                 cli.Group(
                     cli.output_format_args["json"],
                     cli.output_format_args["yaml"],
