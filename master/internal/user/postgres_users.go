@@ -168,11 +168,9 @@ func revokeUserAccessTokens(ctx context.Context, tx bun.Tx, userID model.UserID)
 		Table("user_sessions").
 		Set("revoked = ?", true).
 		Where("user_id = ?", userID).
+		Where("token_type = ?", model.TokenTypeAccessToken).
 		Exec(ctx)
-	if err != nil {
-		return err
-	}
-	return nil
+	return err
 }
 
 // SetActive changes multiple users' activation status.
