@@ -395,72 +395,45 @@ test.describe('Experiment List', () => {
   });
 
   test.describe('Experiment List Multi-sort', () => {
-    test.beforeAll(async ({ newProject }) => {
-      // create a new experiment for comparing Searcher Metric and Trial Count
-      await detExecSync(
-        `experiment create ${fullPath('examples/tutorials/core_api_pytorch_mnist/checkpoints.yaml')} --paused --project_id ${newProject.response.project.id}`,
-      );
-    });
-
-    // set table columns to have just the columns that we are using in the test cases.
-    test.beforeEach(async ({ authedPage, newProject }) => {
-      projectDetailsPage = new ProjectDetails(authedPage);
-      await projectDetailsPage.gotoProject(newProject.response.project.id);
-      const columnPicker = projectDetailsPage.f_experimentList.tableActionBar.columnPickerMenu;
-      await columnPicker.open();
-      await columnPicker.columnPickerTab.showAll.pwLocator.click();
-      await expect.soft(columnPicker.columnPickerTab.showAll.pwLocator).toHaveText('Hide all');
-      await columnPicker.columnPickerTab.showAll.pwLocator.click();
-
-      const columnTitles = ['ID', 'Searcher', 'Trial count', 'Searcher Metric'];
-
-      for (const title of columnTitles) {
-        const checkbox = await columnPicker.columnPickerTab.columns.listItem(title).checkbox;
-        await checkbox.pwLocator.check();
-      }
-
-      await projectDetailsPage.f_experimentList.dataGrid.headRow.setColumnDefs();
-    });
-
-    test('sort with ID as 9 → 0 and Searcher as A → Z', async () => {
+    const runScenarioAndValidation = (projectDetailsPage: ProjectDetails) => {
       const multiSortMenu = projectDetailsPage.f_experimentList.tableActionBar.multiSortMenu;
+      const validateByColumn = async (rows: number[], colKey: string, descending: boolean) => {
+        const valuesToCompare = [];
+
+        for (const row of rows) {
+          const value = await projectDetailsPage.f_experimentList.dataGrid.getRowByIndex(row).getCellByColumnName(colKey);
+          valuesToCompare.push(value);
+        }
+
+        if (!descending) {
+          const expectedAscendingValues = [...valuesToCompare].sort();
+          expect(expectedAscendingValues).toStrictEqual(valuesToCompare);
+        } else {
+          const expectedAscendingValues = [...valuesToCompare].sort((a, b) => {
+            if (a < b) return 1;
+            if (a > b) return -1;
+
+            return 0;
+          });
+          ;
+          expect(expectedAscendingValues).toStrictEqual(valuesToCompare);
+        }
+      };
       const checkTableOrder = async (
         firstKey: string,
         secondKey: string,
-        metricCheck: string,
-        ascending?: boolean,
+        descending = false,
       ) => {
-        // eslint-disable-next-line no-console
-        console.log(await projectDetailsPage.f_experimentList.dataGrid.rows);
-        const getColumn = async (rowIdx: number, col: string) =>
-          await projectDetailsPage.f_experimentList.dataGrid
-            .getRowByIndex(rowIdx)
-            .getCellByColumnName(col);
-        const firstCaseElement1 = await getColumn(0, firstKey);
-        const firstCaseElement2 = await getColumn(1, firstKey);
-        const secondCaseElement = await getColumn(0, secondKey);
-
-        if (ascending) {
-          expect(Number(await firstCaseElement1.pwLocator.innerText())).toBeLessThanOrEqual(
-            // "OrEqual" is to be used for the "Trial Count" as well
-            Number(await firstCaseElement2.pwLocator.innerText()),
-          );
-        } else {
-          expect(Number(await firstCaseElement1.pwLocator.innerText())).toBeGreaterThanOrEqual(
-            // "OrEqual" is to be used for the "Trial Count" as well
-            Number(await firstCaseElement2.pwLocator.innerText()),
-          );
-        }
-
-        expect(await secondCaseElement.pwLocator.innerText()).toBe(metricCheck);
+        const rowIndexes = (await projectDetailsPage.f_experimentList.dataGrid.allRows()).map((_, index) => index);
+        await validateByColumn(rowIndexes, firstKey, descending);
+        await validateByColumn(rowIndexes, secondKey, descending);
       };
       const sortingScenario = async (
         firstSortBy: string,
         firstSortOrder: string,
         secondSortBy: string,
         secondSortOrder: string,
-        scenario: () => Promise<void>,
-      ) => {
+        scenario: () => Promise<void>): Promise<void> => {
         await test.step(`Sort by ${firstSortBy} and ${secondSortBy}`, async () => {
           await multiSortMenu.open();
           await multiSortMenu.multiSort.reset.pwLocator.click();
@@ -483,29 +456,64 @@ test.describe('Experiment List', () => {
         });
       };
 
-      await sortingScenario('ID', '9 → 0', 'Searcher', 'A → Z', async () => {
-        await checkTableOrder('ID', 'Searcher', 'single'); // searcher taken from the file used to create the experiment
+      return { checkTableOrder, sortingScenario };
+    };
+
+    test.beforeAll(async ({ newProject }) => {
+      // create a new experiment for comparing Searcher Metric and Trial Count
+      await detExecSync(
+        `experiment create ${fullPath('examples/tutorials/core_api_pytorch_mnist/checkpoints.yaml')} --paused --project_id ${newProject.response.project.id}`,
+      );
+    });
+
+    // set table columns to have just the columns that we are using in the test cases.
+    test.beforeEach(async ({ authedPage, newProject }) => {
+      projectDetailsPage = new ProjectDetails(authedPage);
+      await projectDetailsPage.gotoProject(newProject.response.project.id);
+      const columnPicker = projectDetailsPage.f_experimentList.tableActionBar.columnPickerMenu;
+      await columnPicker.open();
+      await columnPicker.columnPickerTab.showAll.pwLocator.click();
+      await expect.soft(columnPicker.columnPickerTab.showAll.pwLocator).toHaveText('Hide all');
+      await columnPicker.columnPickerTab.showAll.pwLocator.click();
+
+      const columnTitles = ['id', 'searcherType', 'numTrials', 'searcherMetric'];
+
+      for (const title of columnTitles) {
+        const checkbox = await columnPicker.columnPickerTab.columns.listItem(title).checkbox;
+        await checkbox.pwLocator.check();
+      }
+
+      await columnPicker.close();
+
+      await projectDetailsPage.f_experimentList.dataGrid.headRow.setColumnDefs();
+    });
+
+    test('sort with ID as 0 → 9 and Searcher as A → Z', async () => {
+      const { sortingScenario, checkTableOrder } = runScenarioAndValidation(projectDetailsPage);
+      await sortingScenario('ID', '0 → 9', 'Searcher', 'A → Z', async () => {
+        await checkTableOrder('ID', 'Searcher');
       });
     });
 
-    // TODO: format the function to get "ascending" and "descending" as params, and use that to compare the row indexes to what we would expect as values.
+    test('sort with ID as 9 → 0 and Searcher as A → Z', async () => {
+      const { sortingScenario, checkTableOrder } = runScenarioAndValidation(projectDetailsPage);
+      await sortingScenario('ID', '9 → 0', 'Searcher', 'A → Z', async () => {
+        await checkTableOrder('ID', 'Searcher', true);
+      });
+    });
 
-    //   test('sort with ID as 0 → 9 and Searcher as A → Z', async () => {
-    //     await sortingScenario('ID', '0 → 9', 'Searcher', 'A → Z', async () => {
-    //       await checkTableOrder('ID', 'Searcher', 'adaptive_asha', true); // searcher taken from the file used to create the experiment
-    //     });
-    //   });
+    test('sort with Trial count as 0 → 0 and Searcher Metric as A → Z', async () => {
+      const { sortingScenario, checkTableOrder } = runScenarioAndValidation(projectDetailsPage);
+      await sortingScenario('Trial count', '0 → 9', 'Searcher Metric', 'A → Z', async () => {
+        await checkTableOrder('Trial count', 'Searcher Metric');
+      });
+    });
 
-    //   test('sort with Trial count as 9 → 0 and Searcher Metric as A → Z', async () => {
-    //     await sortingScenario('Trial count', '9 → 0', 'Searcher Metric', 'A → Z', async () => {
-    //       await checkTableOrder('Trial count', 'Searcher Metric', 'validation_loss'); // searcher metric value taken from the file used to create the experiment
-    //     });
-    //   });
-
-    //   test('sort with Trial count as 0 → 0 and Searcher Metric as A → Z', async () => {
-    //     await sortingScenario('Trial count', '0 → 9', 'Searcher Metric', 'A → Z', async () => {
-    //       await checkTableOrder('Trial count', 'Searcher Metric', 'val_loss', true); // searcher metric value taken from the file used to create the experiment
-    //     });
-    //   });
+    test('sort with Trial count as 9 → 0 and Searcher Metric as A → Z', async () => {
+      const { sortingScenario, checkTableOrder } = runScenarioAndValidation(projectDetailsPage);
+      await sortingScenario('Trial count', '9 → 0', 'Searcher Metric', 'A → Z', async () => {
+        await checkTableOrder('Trial count', 'Searcher Metric', true);
+      });
+    });
   });
 });
