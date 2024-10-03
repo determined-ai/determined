@@ -153,7 +153,7 @@ func (a *apiServer) getCommandLaunchParams(ctx context.Context, req *protoComman
 	// Check submitted config against task config policies.
 	valid, err := configpolicy.CheckNTSCConstraints(ctx, int(cmdSpec.Metadata.WorkspaceID), config, a.m.rm)
 	if !valid {
-		return nil, nil, err
+		return nil, nil, status.Errorf(codes.InvalidArgument, "failed constraint check: %w", err)
 	}
 
 	token, err := getTaskSessionToken(ctx, userModel)
