@@ -300,12 +300,18 @@ func TestScheduleRetentionNoConfig(t *testing.T) {
 	}()
 
 	fakeClock := clockwork.NewFakeClock()
-	logretention.SetupScheduler(gocron.WithClock(fakeClock))
+	lrs, err := logretention.NewScheduler(gocron.WithClock(fakeClock))
+	require.NoError(t, err)
+	defer func() {
+		if err := lrs.Shutdown(); err != nil {
+			t.Logf("failed to shutdown gocron.Scheduler: %v", err)
+		}
+	}()
 	logretention.TestingOnlySynchronizationHelper = &sync.WaitGroup{}
 
 	api, _, ctx := setupAPITest(t, nil)
 
-	err := logretention.Schedule(model.LogRetentionPolicy{
+	err = logretention.Schedule(lrs, model.LogRetentionPolicy{
 		LogRetentionDays: ptrs.Ptr(int16(10)),
 		Schedule:         ptrs.Ptr("0 0 * * *"),
 	})
@@ -397,12 +403,18 @@ func TestScheduleRetention100days(t *testing.T) {
 	}()
 
 	fakeClock := clockwork.NewFakeClock()
-	logretention.SetupScheduler(gocron.WithClock(fakeClock))
+	lrs, err := logretention.NewScheduler(gocron.WithClock(fakeClock))
+	require.NoError(t, err)
+	defer func() {
+		if err := lrs.Shutdown(); err != nil {
+			t.Logf("failed to shutdown gocron.Scheduler: %v", err)
+		}
+	}()
 	logretention.TestingOnlySynchronizationHelper = &sync.WaitGroup{}
 
 	api, _, ctx := setupAPITest(t, nil)
 
-	err := logretention.Schedule(model.LogRetentionPolicy{
+	err = logretention.Schedule(lrs, model.LogRetentionPolicy{
 		LogRetentionDays: ptrs.Ptr(int16(10)),
 		Schedule:         ptrs.Ptr("0 0 * * *"),
 	})
@@ -501,12 +513,18 @@ func TestScheduleRetentionNeverExpire(t *testing.T) {
 	}()
 
 	fakeClock := clockwork.NewFakeClock()
-	logretention.SetupScheduler(gocron.WithClock(fakeClock))
+	lrs, err := logretention.NewScheduler(gocron.WithClock(fakeClock))
+	require.NoError(t, err)
+	defer func() {
+		if err := lrs.Shutdown(); err != nil {
+			t.Logf("failed to shutdown gocron.Scheduler: %v", err)
+		}
+	}()
 	logretention.TestingOnlySynchronizationHelper = &sync.WaitGroup{}
 
 	api, _, ctx := setupAPITest(t, nil)
 
-	err := logretention.Schedule(model.LogRetentionPolicy{
+	err = logretention.Schedule(lrs, model.LogRetentionPolicy{
 		LogRetentionDays: ptrs.Ptr(int16(10)),
 		Schedule:         ptrs.Ptr("0 0 * * *"),
 	})
