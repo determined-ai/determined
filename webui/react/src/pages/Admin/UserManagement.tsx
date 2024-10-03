@@ -483,39 +483,33 @@ const UserManagement: React.FC<Props> = ({ onUserCreate }: Props) => {
     <>
       <Section className={css.usersTable}>
         <div className={css.actionBar} data-testid="actionRow">
-          <div className={css.gridInput}>
-            <Input
-              allowClear
-              data-testid="search"
-              defaultValue={nameFilter}
-              placeholder="Find user"
-              prefix={<Icon color="cancel" decorative name="search" size="tiny" />}
-              width={'100%'}
-              onChange={handleNameSearchApply}
-            />
-          </div>
-          <div className={css.roleSelect}>
-            <Select
-              data-testid="roleSelect"
-              options={roleOptions}
-              placeholder="Role"
-              searchable={false}
-              value={roleFilter}
-              width={'100%'}
-              onChange={handleRoleFilterApply}
-            />
-          </div>
-          <div className={css.statusSelect}>
-            <Select
-              data-testid="statusSelect"
-              options={statusOptions}
-              placeholder="Status"
-              searchable={false}
-              value={statusFilter}
-              width={'100%'}
-              onChange={handleStatusFilterApply}
-            />
-          </div>
+          <Input
+            allowClear
+            data-testid="search"
+            defaultValue={nameFilter}
+            placeholder="Find user"
+            prefix={<Icon color="cancel" decorative name="search" size="tiny" />}
+            width={'100%'}
+            onChange={handleNameSearchApply}
+          />
+          <Select
+            data-testid="roleSelect"
+            options={roleOptions}
+            placeholder="Role"
+            searchable={false}
+            value={roleFilter}
+            width={'100%'}
+            onChange={handleRoleFilterApply}
+          />
+          <Select
+            data-testid="statusSelect"
+            options={statusOptions}
+            placeholder="Status"
+            searchable={false}
+            value={statusFilter}
+            width={'100%'}
+            onChange={handleStatusFilterApply}
+          />
           <div className={css.gridButtons}>
             <Column align="right">
               <Row>
