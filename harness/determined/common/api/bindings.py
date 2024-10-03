@@ -11183,14 +11183,18 @@ class v1PostAccessTokenRequest(Printable):
 class v1PostAccessTokenResponse(Printable):
     """Response to PostAccessTokenRequest."""
     token: "typing.Optional[str]" = None
+    tokenId: "typing.Optional[int]" = None
 
     def __init__(
         self,
         *,
         token: "typing.Union[str, None, Unset]" = _unset,
+        tokenId: "typing.Union[int, None, Unset]" = _unset,
     ):
         if not isinstance(token, Unset):
             self.token = token
+        if not isinstance(tokenId, Unset):
+            self.tokenId = tokenId
 
     @classmethod
     def from_json(cls, obj: Json) -> "v1PostAccessTokenResponse":
@@ -11198,6 +11202,8 @@ class v1PostAccessTokenResponse(Printable):
         }
         if "token" in obj:
             kwargs["token"] = obj["token"]
+        if "tokenId" in obj:
+            kwargs["tokenId"] = obj["tokenId"]
         return cls(**kwargs)
 
     def to_json(self, omit_unset: bool = False) -> typing.Dict[str, typing.Any]:
@@ -11205,6 +11211,8 @@ class v1PostAccessTokenResponse(Printable):
         }
         if not omit_unset or "token" in vars(self):
             out["token"] = self.token
+        if not omit_unset or "tokenId" in vars(self):
+            out["tokenId"] = self.tokenId
         return out
 
 class v1PostAllocationAcceleratorDataRequest(Printable):

@@ -727,12 +727,12 @@ func (a *apiServer) PostAccessToken(
 		tokenExpiration = d
 	}
 
-	token, err := user.CreateAccessToken(
+	token, tokenID, err := user.CreateAccessToken(
 		ctx, targetFullUser.ID, user.WithTokenExpiry(&tokenExpiration), user.WithTokenDescription(req.Description))
 	if err != nil {
 		return nil, err
 	}
-	return &apiv1.PostAccessTokenResponse{Token: token}, nil
+	return &apiv1.PostAccessTokenResponse{Token: token, TokenId: int32(tokenID)}, nil
 }
 
 type accessTokenFilter struct {

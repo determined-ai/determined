@@ -8130,6 +8130,12 @@ export interface V1PostAccessTokenResponse {
      * @memberof V1PostAccessTokenResponse
      */
     token?: string;
+    /**
+     * token id.
+     * @type {number}
+     * @memberof V1PostAccessTokenResponse
+     */
+    tokenId?: number;
 }
 /**
  * Set the accelerator data for some allocation.

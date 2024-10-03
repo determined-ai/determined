@@ -497,7 +497,7 @@ func WithTokenDescription(description string) AccessTokenOption {
 // user_sessions db.
 func CreateAccessToken(
 	ctx context.Context, userID model.UserID, opts ...AccessTokenOption,
-) (string, error) {
+) (string, model.TokenID, error) {
 	CurrentTimeNowInUTC = time.Now().UTC()
 	// Populate the default values in the model.
 	accessToken := &model.UserSession{
@@ -540,10 +540,10 @@ func CreateAccessToken(
 		return nil
 	})
 	if err != nil {
-		return "", err
+		return "", 0, err
 	}
 
-	return token, nil
+	return token, model.TokenID(accessToken.ID), nil
 }
 
 // AccessTokenUpdateOptions is the set of mutable fields for an Access Token record.

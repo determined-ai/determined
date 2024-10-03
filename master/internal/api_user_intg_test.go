@@ -940,11 +940,13 @@ func TestPostAccessToken(t *testing.T) {
 	require.NoError(t, err)
 
 	// Without lifespan input
-	token, err := api.PostAccessToken(ctx, &apiv1.PostAccessTokenRequest{
+	resp, err := api.PostAccessToken(ctx, &apiv1.PostAccessTokenRequest{
 		UserId: int32(userID),
 	})
+	token, tokenID := resp.Token, resp.TokenId
 	require.NoError(t, err)
 	require.NotNil(t, token)
+	require.NotNil(t, tokenID)
 
 	err = checkOutput(ctx, t, api, userID, "", "")
 	require.NoError(t, err)
@@ -964,13 +966,15 @@ func TestPostAccessTokenWithLifespan(t *testing.T) {
 	require.NoError(t, err)
 
 	// With lifespan input
-	token, err := api.PostAccessToken(ctx, &apiv1.PostAccessTokenRequest{
+	resp, err := api.PostAccessToken(ctx, &apiv1.PostAccessTokenRequest{
 		UserId:      int32(userID),
 		Lifespan:    lifespan,
 		Description: desc,
 	})
+	token, tokenID := resp.Token, resp.TokenId
 	require.NoError(t, err)
 	require.NotNil(t, token)
+	require.NotNil(t, tokenID)
 
 	err = checkOutput(ctx, t, api, userID, lifespan, desc)
 	require.NoError(t, err)

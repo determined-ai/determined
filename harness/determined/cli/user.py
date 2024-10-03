@@ -320,7 +320,7 @@ def create_token(args: argparse.Namespace) -> None:
     elif args.json:
         output_string = json.dumps(resp, indent=2)
     else:
-        output_string = resp["token"]
+        output_string = f'{resp["token"]}\n{resp["tokenId"]}'
 
     if args.output_file:
         with open(args.output_file, "w") as file:
