@@ -1252,7 +1252,7 @@ func (m *Master) Run(ctx context.Context, gRPCLogInitDone chan struct{}) error {
 		if err != nil {
 			return fmt.Errorf("initializing log retention scheduler: %w", err)
 		}
-		if err := logretention.Schedule(lrs, m.config.RetentionPolicy); err != nil {
+		if err := lrs.Schedule(m.config.RetentionPolicy); err != nil {
 			return fmt.Errorf("scheduling log retention enforcer: %w", err)
 		}
 		defer func() {

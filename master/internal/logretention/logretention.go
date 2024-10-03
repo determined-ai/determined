@@ -17,31 +17,34 @@ import (
 const retainForever = -1
 
 var (
-	syslog = logrus.WithField("component", "log-retention")
-
+	syslog               = logrus.WithField("component", "log-retention")
 	schedulerDefaultOpts = []gocron.SchedulerOption{gocron.WithLimitConcurrentJobs(1, gocron.LimitModeReschedule)}
-
-	// TestingOnlySynchronizationHelper is used for testing purposes to wait for the log retention scheduler to finish.
-	TestingOnlySynchronizationHelper *sync.WaitGroup
 )
 
+// Scheduler is a thin wrapper around gocron.Scheduler adds some functionality for testing.
+type Scheduler struct {
+	sched gocron.Scheduler
+	// TestingOnlySynchronizationHelper is used for testing purposes to wait for the log retention scheduler to finish.
+	TestingOnlySynchronizationHelper *sync.WaitGroup
+}
+
 // NewScheduler creates a new scheduler with the provided options.
-func NewScheduler(opts ...gocron.SchedulerOption) (gocron.Scheduler, error) {
+func NewScheduler(opts ...gocron.SchedulerOption) (*Scheduler, error) {
 	opts = append(schedulerDefaultOpts, opts...)
-	scheduler, err := gocron.NewScheduler(opts...)
+	s, err := gocron.NewScheduler(opts...)
 	if err != nil {
 		return nil, err
 	}
-	return scheduler, nil
+	return &Scheduler{sched: s}, nil
 }
 
 // Schedule begins a log deletion schedule according to the provided LogRetentionPolicy.
-func Schedule(scheduler gocron.Scheduler, config model.LogRetentionPolicy) error {
+func (s *Scheduler) Schedule(config model.LogRetentionPolicy) error {
 	// Create a task that deletes expired task logs.
 	task := gocron.NewTask(func() {
 		defer func() {
-			if TestingOnlySynchronizationHelper != nil {
-				TestingOnlySynchronizationHelper.Done()
+			if s.TestingOnlySynchronizationHelper != nil {
+				s.TestingOnlySynchronizationHelper.Done()
 			}
 		}()
 		count, err := DeleteExpiredTaskLogs(context.Background(), config.LogRetentionDays)
@@ -56,22 +59,27 @@ func Schedule(scheduler gocron.Scheduler, config model.LogRetentionPolicy) error
 		if d, err := time.ParseDuration(*config.Schedule); err == nil {
 			// Try to parse out a duration.
 			syslog.WithField("duration", d).Debug("running task log cleanup with duration")
-			_, err := scheduler.NewJob(gocron.DurationJob(d), task)
+			_, err := s.sched.NewJob(gocron.DurationJob(d), task)
 			if err != nil {
 				return errors.Wrapf(err, "failed to schedule duration task log cleanup")
 			}
 		} else {
 			// Otherwise, use a cron.
 			syslog.WithField("cron", *config.Schedule).Debug("running task log cleanup with cron")
-			_, err := scheduler.NewJob(gocron.CronJob(*config.Schedule, false), task)
+			_, err := s.sched.NewJob(gocron.CronJob(*config.Schedule, false), task)
 			if err != nil {
 				return errors.Wrapf(err, "failed to schedule cron task log cleanup")
 			}
 		}
 	}
 	// Start the scheduler.
-	scheduler.Start()
+	s.sched.Start()
 	return nil
+}
+
+// Shutdown stops the internal gocron.Scheduler.
+func (s *Scheduler) Shutdown() error {
+	return s.sched.Shutdown()
 }
 
 // DeleteExpiredTaskLogs deletes task logs older than days time when defined and non-negative.
