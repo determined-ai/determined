@@ -100,8 +100,6 @@ func GetMergedConstraints(ctx context.Context, workspaceID int, workloadType str
 		}
 	}
 
-	fmt.Printf("merged constraints: %v\n", constraints)
-
 	return &constraints, nil
 }
 
