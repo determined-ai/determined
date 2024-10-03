@@ -1006,3 +1006,9 @@ export const updateWorkspaceConfigPolicies = generateDetApi<
   Api.V1PutWorkspaceConfigPoliciesResponse,
   Api.V1PutWorkspaceConfigPoliciesResponse
 >(Config.updateWorkspaceConfigPolicies);
+
+export const deleteWorkspaceConfigPolicies = generateDetApi<
+  Service.DeleteWorkspaceConfigPolicies,
+  Api.V1DeleteWorkspaceConfigPoliciesResponse,
+  Api.V1DeleteWorkspaceConfigPoliciesResponse
+>(Config.deleteWorkspaceConfigPolicies);
