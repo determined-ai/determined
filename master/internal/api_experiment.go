@@ -493,15 +493,16 @@ func (a *apiServer) deleteExperiments(exps []*model.Experiment, userModel *model
 				log.WithError(err).Errorf("failed to delete experiment: %d", exp.ID)
 				return err
 			}
-			if len(checkpoints) > 0 {
-				if err := runCheckpointGCForCheckpoints(
-					a.m.rm, a.m.db, exp.JobID, exp.StartTime,
-					&taskSpec, exp.ID, exp.Config, checkpoints,
-					[]string{fullDeleteGlob}, true, agentUserGroup, userModel, nil,
-				); err != nil {
-					log.WithError(err).Errorf("failed to gc checkpoints for experiment: %d", exp.ID)
-					return err
-				}
+
+			// Unfortunately we can't be clever and not run if there aren't checkpoints since we can't
+			// know if there are tensorboards to GC or not.
+			if err := runCheckpointGCForCheckpoints(
+				a.m.rm, a.m.db, exp.JobID, exp.StartTime,
+				&taskSpec, exp.ID, exp.Config, checkpoints,
+				[]string{fullDeleteGlob}, true, agentUserGroup, userModel, nil,
+			); err != nil {
+				log.WithError(err).Errorf("failed to gc checkpoints for experiment: %d", exp.ID)
+				return err
 			}
 
 			// delete jobs per experiment
