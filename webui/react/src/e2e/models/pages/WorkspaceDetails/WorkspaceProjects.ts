@@ -10,12 +10,38 @@ import { ProjectDeleteModal } from 'e2e/models/components/ProjectDeleteModal';
 import { ProjectMoveModal } from 'e2e/models/components/ProjectMoveModal';
 import { HeadRow, InteractiveTable, Row } from 'e2e/models/components/Table/InteractiveTable';
 
-// import { ProjectActionDropdown } from 'e2e/models/components/ProjectActionDropdown';
-
 class ProjectHeadRow extends HeadRow {
   readonly name = new BaseComponent({
     parent: this,
     selector: '[data-testid="Name"]',
+  });
+  readonly description = new BaseComponent({
+    parent: this,
+    selector: '[data-testid="Description"]',
+  });
+  readonly numExperiments = new BaseComponent({
+    parent: this,
+    selector: '[data-testid="NumExperiments"]',
+  });
+  readonly lastUpdated = new BaseComponent({
+    parent: this,
+    selector: '[data-testid="LastUpdated"]',
+  });
+  readonly userId = new BaseComponent({
+    parent: this,
+    selector: '[data-testid="UserId"]',
+  });
+  readonly archived = new BaseComponent({
+    parent: this,
+    selector: '[data-testid="Archived"]',
+  });
+  readonly state = new BaseComponent({
+    parent: this,
+    selector: '[data-testid="State"]',
+  });
+  readonly action = new BaseComponent({
+    parent: this,
+    selector: '[data-testid="Action"]',
   });
 }
 
@@ -23,18 +49,36 @@ class ProjectRow extends Row {
   readonly name = new BaseComponent({
     parent: this,
     selector: '[data-testid="name"]',
-    // TODO: add all columns from WorkspaceProjects file here
-    // TODO: make sure to have the variable to open
+  });
+  readonly description = new BaseComponent({
+    parent: this,
+    selector: '[data-testid="Description"]',
+  });
+  readonly numExperiments = new BaseComponent({
+    parent: this,
+    selector: '[data-testid="NumExperiments"]',
+  });
+  readonly lastUpdated = new BaseComponent({
+    parent: this,
+    selector: '[data-testid="LastUpdated"]',
+  });
+  readonly userId = new BaseComponent({
+    parent: this,
+    selector: '[data-testid="UserId"]',
+  });
+  readonly archived = new BaseComponent({
+    parent: this,
+    selector: '[data-testid="Archived"]',
+  });
+  readonly state = new BaseComponent({
+    parent: this,
+    selector: '[data-testid="State"]',
+  });
+  readonly action = new BaseComponent({
+    parent: this,
+    selector: '[data-testid="Action"]',
   });
 }
-// readonly actionMenuContainer = new BaseComponent({
-//   parent: this,
-//   selector: '[aria-label="Action menu"]',
-// });
-//   readonly actionMenu = new ProjectActionDropdown({
-//   clickThisComponentToOpen: this.actionMenuContainer,
-//   root: this.root, // root of the dropdown
-// });
 
 /**
  * Represents the WorkspaceProjects page in src/pages/WorkspaceDetails/WorkspaceProjects.tsx
