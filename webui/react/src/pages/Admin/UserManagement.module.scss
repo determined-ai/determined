@@ -1,15 +1,20 @@
-.usersTable {
-  .overflow {
-    &:hover {
-      background: transparent !important;
-    }
-  }
+.actionBar {
+  align-items: center;
+  display: grid;
+  gap: var(--spacing-md);
+  grid-template:
+    'input roleSelect statusSelect button' auto
+    / minmax(auto, max-content) minmax(auto, 120px) minmax(auto, 170px) auto;
+  margin-bottom: 8px;
 }
-.rightAligned {
-  text-align: right;
+.gridButtons {
+  grid-area: button;
 }
 .gridInput {
   grid-area: input;
+}
+.rightAligned {
+  text-align: right;
 }
 .roleSelect {
   grid-area: roleSelect;
@@ -17,18 +22,12 @@
 .statusSelect {
   grid-area: statusSelect;
 }
-.gridButtons {
-  grid-area: button;
-}
-.actionBar {
-  align-items: center;
-  display: grid;
-  gap: var(--spacing-md);
-  grid-template: 'input roleSelect statusSelect button' auto / minmax(auto, max-content) minmax(
-      auto,
-      120px
-    ) minmax(auto, 170px) auto;
-  margin-bottom: 8px;
+.usersTable {
+  .overflow {
+    &:hover {
+      background: transparent !important;
+    }
+  }
 }
 
 @media only screen and (max-width: $breakpoint-tablet) {
