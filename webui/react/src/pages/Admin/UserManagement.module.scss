@@ -24,13 +24,16 @@
   align-items: center;
   display: grid;
   gap: var(--spacing-md);
-  grid-template: 'input roleSelect statusSelect button' auto / minmax(auto, max-content) minmax(auto, 120px) minmax(auto, 170px) auto;
+  grid-template: 'input roleSelect statusSelect button' auto / minmax(auto, max-content) minmax(
+      auto,
+      120px
+    ) minmax(auto, 170px) auto;
   margin-bottom: 8px;
 }
 
 @media only screen and (max-width: $breakpoint-tablet) {
   .actionBar {
-    grid-template: 
+    grid-template:
       'input' auto
       'roleSelect' auto
       'statusSelect' auto
