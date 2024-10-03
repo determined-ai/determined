@@ -401,7 +401,9 @@ test.describe('Experiment List', () => {
         const valuesToCompare = [];
 
         for (const row of rows) {
-          const value = await projectDetailsPage.f_experimentList.dataGrid.getRowByIndex(row).getCellByColumnName(colKey);
+          const value = await projectDetailsPage.f_experimentList.dataGrid
+            .getRowByIndex(row)
+            .getCellByColumnName(colKey);
           valuesToCompare.push(value);
         }
 
@@ -415,16 +417,13 @@ test.describe('Experiment List', () => {
 
             return 0;
           });
-          ;
           expect(expectedAscendingValues).toStrictEqual(valuesToCompare);
         }
       };
-      const checkTableOrder = async (
-        firstKey: string,
-        secondKey: string,
-        descending = false,
-      ) => {
-        const rowIndexes = (await projectDetailsPage.f_experimentList.dataGrid.allRows()).map((_, index) => index);
+      const checkTableOrder = async (firstKey: string, secondKey: string, descending = false) => {
+        const rowIndexes = (await projectDetailsPage.f_experimentList.dataGrid.allRows()).map(
+          (_, index) => index,
+        );
         await validateByColumn(rowIndexes, firstKey, descending);
         await validateByColumn(rowIndexes, secondKey, descending);
       };
@@ -433,7 +432,8 @@ test.describe('Experiment List', () => {
         firstSortOrder: string,
         secondSortBy: string,
         secondSortOrder: string,
-        scenario: () => Promise<void>): Promise<void> => {
+        scenario: () => Promise<void>,
+      ): Promise<void> => {
         await test.step(`Sort by ${firstSortBy} and ${secondSortBy}`, async () => {
           await multiSortMenu.open();
           await multiSortMenu.multiSort.reset.pwLocator.click();
