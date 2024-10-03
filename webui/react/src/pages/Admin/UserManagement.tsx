@@ -29,7 +29,6 @@ import {
 } from 'components/Table/Table';
 import UserBadge from 'components/UserBadge';
 import { useAsync } from 'hooks/useAsync';
-import { useMediaQuery } from 'hooks/useMobile';
 import usePermissions from 'hooks/usePermissions';
 import { getGroups, getUserRoles, getUsers, patchUsers } from 'services/api';
 import { V1GetUsersRequestSortBy, V1GroupSearchResult, V1OrderBy } from 'services/api-ts-sdk';
@@ -37,7 +36,6 @@ import determinedStore from 'stores/determinedInfo';
 import roleStore from 'stores/roles';
 import userStore from 'stores/users';
 import userSettings from 'stores/userSettings';
-import { breakpointDesktopSmall } from 'styles/globalBreakpoints.module.scss';
 import { DetailedUser, UserRole as UserRoleType } from 'types';
 import handleError, { ErrorType } from 'utils/error';
 import { useObservable } from 'utils/observable';
@@ -223,8 +221,6 @@ const UserManagement: React.FC<Props> = ({ onUserCreate }: Props) => {
   const pageRef = useRef<HTMLElement>(null);
   const currentUser = Loadable.getOrElse(undefined, useObservable(userStore.currentUser));
   const loadableSettings = useObservable(userManagementSettings);
-  const smallDesktopMq = `(max-width: ${breakpointDesktopSmall})`;
-  const isUpToSmDesktop = useMediaQuery(smallDesktopMq);
   const settings = useMemo(() => {
     return Loadable.match(loadableSettings, {
       _: () => ({ ...DEFAULT_SETTINGS, ...columnSettings }),
@@ -487,44 +483,41 @@ const UserManagement: React.FC<Props> = ({ onUserCreate }: Props) => {
     <>
       <Section className={css.usersTable}>
         <div className={css.actionBar} data-testid="actionRow">
-          <Row wrap={isUpToSmDesktop}>
-            <Column>
-              <Row width="fill" wrap={isUpToSmDesktop}>
-                {/* input is uncontrolled */}
-                <Input
-                  allowClear
-                  data-testid="search"
-                  defaultValue={nameFilter}
-                  placeholder="Find user"
-                  prefix={<Icon color="cancel" decorative name="search" size="tiny" />}
-                  width={isUpToSmDesktop ? '100%' : 'max-content'}
-                  onChange={handleNameSearchApply}
-                />
-                <div className={css.selectWrapper}>
-                  <Select
-                    data-testid="roleSelect"
-                    options={roleOptions}
-                    placeholder="Role"
-                    searchable={false}
-                    value={roleFilter}
-                    width={isUpToSmDesktop ? '100%' : 120}
-                    onChange={handleRoleFilterApply}
-                  />
-                </div>
-                <div className={css.selectWrapper}>
-                  <Select
-                    data-testid="statusSelect"
-                    options={statusOptions}
-                    placeholder="Status"
-                    searchable={false}
-                    value={statusFilter}
-                    width={isUpToSmDesktop ? '100%' : 170}
-                    onChange={handleStatusFilterApply}
-                  />
-                </div>
-              </Row>
-            </Column>
-            <div className={css.buttonWrapper}>
+          <div className={css.grid}>
+            <div className={css.gridInput}>
+              <Input
+                allowClear
+                data-testid="search"
+                defaultValue={nameFilter}
+                placeholder="Find user"
+                prefix={<Icon color="cancel" decorative name="search" size="tiny" />}
+                width={'100%'}
+                onChange={handleNameSearchApply}
+              />
+            </div>
+            <div className={css.roleSelect}>
+              <Select
+                data-testid="roleSelect"
+                options={roleOptions}
+                placeholder="Role"
+                searchable={false}
+                value={roleFilter}
+                width={'100%'}
+                onChange={handleRoleFilterApply}
+              />
+            </div>
+            <div className={css.statusSelect}>
+              <Select
+                data-testid="statusSelect"
+                options={statusOptions}
+                placeholder="Status"
+                searchable={false}
+                value={statusFilter}
+                width={'100%'}
+                onChange={handleStatusFilterApply}
+              />
+            </div>
+            <div className={css.gridButton}>
               <Column align="right">
                 <Row>
                   {selectedUserIds.length > 0 && (
@@ -542,7 +535,7 @@ const UserManagement: React.FC<Props> = ({ onUserCreate }: Props) => {
                 </Row>
               </Column>
             </div>
-          </Row>
+          </div>
         </div>
         {settings ? (
           <InteractiveTable<DetailedUser, UserManagementSettingsWithColumns>

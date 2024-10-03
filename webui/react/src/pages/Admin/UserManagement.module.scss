@@ -11,10 +11,38 @@
 .actionBar {
   margin-bottom: 8px;
 }
+.gridInput {
+  grid-area: input;
+}
+.roleSelect {
+  grid-area: roleSelect;
+}
+.statusSelect {
+  grid-area: statusSelect;
+}
+.gridButton {
+  grid-area: button;
+}
+.grid {
+  width: 100%;
+  display: inline-grid;
+  grid-template-columns: minmax(auto, max-content) minmax(auto, 120px) minmax(auto, 170px) auto;
+  column-gap: 8px;
+  grid-template-rows: auto;
+  grid-template-areas: 'input roleSelect statusSelect button';
+  align-items: center;
+}
 
-@media only screen and (max-width: $breakpoint-desktop-small) {
-  .selectWrapper,
-  .buttonWrapper {
-    width: 100%;
+@media only screen and (max-width: $breakpoint-tablet) {
+  .grid {
+    display: grid;
+    grid-template-columns: 100%;
+    grid-template-rows: auto auto auto;
+    row-gap: 8px;
+    grid-template-areas:
+      'input'
+      'roleSelect'
+      'statusSelect'
+      'button';
   }
 }
