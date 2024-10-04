@@ -3,7 +3,22 @@ WITH const AS (
         $1::timestamptz
         AS target_date
 ),
-
+relevant_tasks AS (
+    SELECT 
+        task_id
+    FROM tasks
+    WHERE
+        start_time >= const.target_date
+        AND start_time < (const.target_date + interval '1 day')
+        AND task_type in (
+            'TRIAL',
+            'NOTEBOOK',
+            'SHELL',
+            'COMMAND',
+            'TENSORBOARD',
+            'GENERIC'
+        )
+),
 day_agg AS (
     SELECT
         'queued' AS aggregation_type,
@@ -15,6 +30,7 @@ day_agg AS (
             )
         ) AS seconds
     FROM task_stats, const, allocations
+    INNER JOIN relevant_tasks ON task_stats.task_id = relevant_tasks.task_id
     WHERE
         allocations.allocation_id = task_stats.allocation_id
         -- Exclude the rows with NULL start_time. When Bun sees StartTime is nil,
@@ -37,6 +53,7 @@ total_agg AS (
             )
         ), 0) AS seconds
     FROM task_stats, const
+    INNER JOIN relevant_tasks ON task_stats.task_id = relevant_tasks.task_id
     WHERE
         end_time >= const.target_date
         AND end_time < (const.target_date + interval '1 day')
