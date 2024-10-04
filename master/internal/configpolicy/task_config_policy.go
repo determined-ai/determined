@@ -59,7 +59,7 @@ func CheckNTSCConstraints(
 	// rm.SmallerValueIsHigherPriority only returns an error if task priority is not implemented for that resource manager.
 	// In that case, there is no need to check if requested priority is within limits.
 	smallerHigher, err := resourceManager.SmallerValueIsHigherPriority()
-	if err != nil {
+	if err == nil {
 		if err = checkPriorityConstraint(smallerHigher, constraints.PriorityLimit,
 			workloadConfig.Resources.Priority); err != nil {
 			return err
@@ -94,7 +94,7 @@ func CheckExperimentConstraints(
 	// rm.SmallerValueIsHigherPriority only returns an error if task priority is not implemented for that resource manager.
 	// In that case, there is no need to check if requested priority is within limits.
 	smallerHigher, err := resourceManager.SmallerValueIsHigherPriority()
-	if err != nil {
+	if err == nil {
 		if err = checkPriorityConstraint(smallerHigher, constraints.PriorityLimit,
 			workloadConfig.Resources().Priority()); err != nil {
 			return err
