@@ -85,3 +85,20 @@ and forwards a port from the local machine to the container:
    det shell start -- -L8080:localhost:8080
 
 To stop the SSH server container and free cluster resources, run ``det shell kill <UUID>``.
+
+.. _shell-file-locations:
+
+File Locations
+==============
+
+When using the ``det shell start`` command with the ``--context`` option:
+
+-  Files are copied to the container to ``/run/determined/workdir``.
+-  SSH sessions always start in the HOME directory for the logged-in user.
+-  If you don't see your context files immediately, navigate to ``/run/determined/workdir``.
+
+.. note::
+
+   For containers running as root, sessions will start in ``/root``. For containers using
+   Apptainer/Singularity, the user's actual system home directory is bind-mounted into the
+   container.

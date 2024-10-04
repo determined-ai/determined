@@ -248,3 +248,48 @@ You can view the current set of Docker image names in the cache with the ``-l`` 
 .. code:: bash
 
    manage-enroot-cache -s /shared/enroot -l
+
+.. _singularity-apptainer-shells:
+
+******************************
+ Singularity/Apptainer Shells
+******************************
+
+When using Determined AI with Singularity/Apptainer for interactive shells, there are some important
+behaviors to understand, particularly regarding home directories and file locations.
+
+Home Directory Binding
+======================
+
+Singularity/Apptainer automatically binds the user's home directory to the container. This means:
+
+-  When you start a shell, you will be placed in your actual system home directory, rather than the
+   :ref:`working directory <shell-file-locations>` where files are copied.
+-  This behavior differs from Docker containers and can be confusing if you're expecting to see your
+   files immediately.
+
+Usage Example
+=============
+
+To start a shell and access your copied files:
+
+.. code:: bash
+
+   det shell start --config-file config.yaml --context .
+   cd /run/determined/workdir
+
+.. note::
+
+   Remember that your initial working directory will be your home directory, not where the files
+   were copied. Always navigate to the correct directory to find your copied files.
+
+For more information on shell configuration options, refer to :ref:`command-notebook-configuration`.
+
+File Locations
+==============
+
+When using the ``det shell start`` command with the ``--context`` option:
+
+-  Files are copied to the container to ``/run/determined/workdir``.
+-  Due to the home directory binding, you won't see these files in your initial working directory.
+-  To access your files, navigate to ``/run/determined/workdir`` once your shell starts.
