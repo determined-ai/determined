@@ -26,10 +26,7 @@ import {
 import { XOR } from 'types';
 import handleError from 'utils/error';
 
-type Props = XOR<
-  { workspaceId: number },
-  { global: true }
->;
+type Props = XOR<{ workspaceId: number }, { global: true }>;
 
 type ConfigPoliciesType = 'experiments' | 'tasks';
 
@@ -51,7 +48,7 @@ const ConfigPoliciesValues: Record<ConfigPoliciesType, ConfigPoliciesValues> = {
 
 type TabProps = Props & {
   type: ConfigPoliciesType;
-}
+};
 
 type FormInputs = {
   [YAML_FORM_ITEM_NAME]: string;
@@ -96,14 +93,24 @@ const ConfigPolicies: React.FC<Props> = ({ workspaceId, global }: Props) => {
 const ConfigPoliciesTab: React.FC<TabProps> = ({ workspaceId, global, type }: TabProps) => {
   const confirm = useConfirm();
   const { openToast } = useToast();
-  const { canModifyWorkspaceConfigPolicies, canModifyGlobalConfigPolicies, loading: rbacLoading } = usePermissions();
+  const {
+    canModifyWorkspaceConfigPolicies,
+    canModifyGlobalConfigPolicies,
+    loading: rbacLoading,
+  } = usePermissions();
   const [form] = Form.useForm<FormInputs>();
 
   const [disabled, setDisabled] = useState(true);
 
-  const applyMessage = global ? "You're about to apply these config policies to this cluster." : "You're about to apply these config policies to this workspace.";
-  const viewMessage = global ? 'These global config policies are being applied to this cluster.' : 'These global config policies are being applied to this workspace.';
-  const confirmMessageEnding = global ? 'underlying workspaces, projects, and submitted experiments in this cluster.' : 'underlying projects and their experiments in this workspace.';
+  const applyMessage = global
+    ? "You're about to apply these config policies to this cluster."
+    : "You're about to apply these config policies to this workspace.";
+  const viewMessage = global
+    ? 'These global config policies are being applied to this cluster.'
+    : 'These global config policies are being applied to this workspace.';
+  const confirmMessageEnding = global
+    ? 'underlying workspaces, projects, and submitted experiments in this cluster.'
+    : 'underlying projects and their experiments in this workspace.';
 
   const updatePolicies = async () => {
     const configPolicies = form.getFieldValue(YAML_FORM_ITEM_NAME);
@@ -196,9 +203,7 @@ const ConfigPoliciesTab: React.FC<TabProps> = ({ workspaceId, global, type }: Ta
   const canModify = global ? canModifyGlobalConfigPolicies : canModifyWorkspaceConfigPolicies;
 
   const handleChange = () => {
-    setDisabled(
-      hasErrors(form) || form.getFieldValue(YAML_FORM_ITEM_NAME) === initialYAML,
-    );
+    setDisabled(hasErrors(form) || form.getFieldValue(YAML_FORM_ITEM_NAME) === initialYAML);
   };
 
   if (rbacLoading) return <Spinner spinning />;
