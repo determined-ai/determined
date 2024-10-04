@@ -1688,7 +1688,6 @@ func (a *apiServer) CreateExperiment(
 	}
 	if len(wkspIDs) != 1 {
 		return nil, status.Error(codes.InvalidArgument, "expected exactly one workspace")
-
 	}
 	err = configpolicy.CheckExperimentConstraints(ctx, int(wkspIDs[0]), activeConfig, a.m.rm)
 	if err != nil {

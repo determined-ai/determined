@@ -36,7 +36,7 @@ var (
 	errResourceConstraintFailure = errors.New("submitted workload failed a resource constraint")
 )
 
-// CheckNTSCConstraints returns true if the NTSC config passes constraint checks.
+// CheckNTSCConstraints returns an error if the NTSC config fails constraint checks.
 func CheckNTSCConstraints(
 	ctx context.Context,
 	workspaceID int,
@@ -68,7 +68,7 @@ func CheckNTSCConstraints(
 	return nil
 }
 
-// CheckExperimentConstraints returns true if the NTSC config passes constraint checks.
+// CheckExperimentConstraints returns an error if the NTSC config fails constraint checks.
 func CheckExperimentConstraints(
 	ctx context.Context,
 	workspaceID int,
