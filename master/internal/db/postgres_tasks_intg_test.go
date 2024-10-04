@@ -733,6 +733,31 @@ func TestTaskLogsFlow(t *testing.T) {
 	require.NoError(t, err)
 	require.Len(t, logs, 2)
 
+	// Filter by search text.
+	logs, _, err = db.TaskLogs(t1In.TaskID, 5, []api.Filter{{
+		Field:     "log",
+		Operation: api.FilterOperationStringContainment,
+		Values:    []string{"this"},
+	}}, apiv1.OrderBy_ORDER_BY_UNSPECIFIED, nil)
+	require.NoError(t, err)
+	require.Len(t, logs, 2)
+
+	logs, _, err = db.TaskLogs(t1In.TaskID, 5, []api.Filter{{
+		Field:     "log",
+		Operation: api.FilterOperationStringContainment,
+		Values:    []string{"^th.s"},
+	}}, apiv1.OrderBy_ORDER_BY_UNSPECIFIED, nil)
+	require.NoError(t, err)
+	require.Empty(t, logs)
+
+	logs, _, err = db.TaskLogs(t1In.TaskID, 5, []api.Filter{{
+		Field:     "log",
+		Operation: api.FilterOperationRegexContainment,
+		Values:    []string{"^th.s"},
+	}}, apiv1.OrderBy_ORDER_BY_UNSPECIFIED, nil)
+	require.NoError(t, err)
+	require.Len(t, logs, 2)
+
 	// Test DeleteTaskLogs.
 	err = db.DeleteTaskLogs([]model.TaskID{t2In.TaskID})
 	require.NoError(t, err)

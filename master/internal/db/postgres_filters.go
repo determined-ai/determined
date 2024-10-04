@@ -75,6 +75,8 @@ func filterToSQL(
 		return fmt.Sprintf("AND encode(%s::bytea, 'escape') ILIKE  ('%%%%' || $%d || '%%%%')",
 			field,
 			paramID)
+	case api.FilterOperationRegexContainment:
+		return fmt.Sprintf("AND encode(%s::bytea, 'escape') ~ $%d", field, paramID)
 	default:
 		panic(fmt.Sprintf("cannot convert operation %d to SQL", f.Operation))
 	}

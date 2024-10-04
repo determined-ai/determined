@@ -152,6 +152,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
         decode(optional(DateString), options.timestampAfter),
         options.orderBy as OrderBy,
         settings.searchText,
+        false,
         { signal },
       );
     },
