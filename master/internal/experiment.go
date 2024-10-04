@@ -50,12 +50,7 @@ type (
 		SearcherState    json.RawMessage                       `json:"searcher_state"`
 		RunSearcherState map[int32]experiment.RunSearcherState `json:"run_searcher_state"`
 	}
-
-	//legacyExperimentState struct {
-	//	SearcherState      json.RawMessage                                   `json:"searcher_state"`
-	//	TrialSearcherState map[model.RequestID]experiment.TrialSearcherState `json:"trial_searcher_state"`
-	//}
-
+	
 	internalExperiment struct {
 		mu sync.Mutex
 
