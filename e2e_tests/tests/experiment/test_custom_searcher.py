@@ -35,7 +35,7 @@ def test_run_custom_searcher_experiment(tmp_path: pathlib.Path) -> None:
     sess = api_utils.user_session()
     client._determined = client.Determined._from_session(sess)
     # example searcher script
-    config = conf.load_config(conf.fixtures_path("no_op/single.yaml"))
+    config = conf.load_config(conf.fixtures_path("custom_searcher_exp/single.yaml"))
     config["searcher"] = {
         "name": "custom",
         "metric": "validation_error",
@@ -46,7 +46,7 @@ def test_run_custom_searcher_experiment(tmp_path: pathlib.Path) -> None:
     config["description"] = "custom searcher"
     search_method = searchers.SingleSearchMethod(config, 500)
     search_runner = searcher.LocalSearchRunner(search_method, tmp_path, session=sess)
-    experiment_id = search_runner.run(config, model_dir=conf.fixtures_path("no_op"))
+    experiment_id = search_runner.run(config, model_dir=conf.fixtures_path("custom_searcher_exp"))
 
     assert client._determined is not None
     response = bindings.get_GetExperiment(sess, experimentId=experiment_id)
@@ -57,7 +57,7 @@ def test_run_custom_searcher_experiment(tmp_path: pathlib.Path) -> None:
 def test_run_random_searcher_exp() -> None:
     sess = api_utils.user_session()
     client._determined = client.Determined._from_session(sess)
-    config = conf.load_config(conf.fixtures_path("no_op/single.yaml"))
+    config = conf.load_config(conf.fixtures_path("custom_searcher_exp/single.yaml"))
     config["searcher"] = {
         "name": "custom",
         "metric": "validation_error",
@@ -78,7 +78,9 @@ def test_run_random_searcher_exp() -> None:
         search_runner = searcher.LocalSearchRunner(
             search_method, pathlib.Path(searcher_dir), session=sess
         )
-        experiment_id = search_runner.run(config, model_dir=conf.fixtures_path("no_op"))
+        experiment_id = search_runner.run(
+            config, model_dir=conf.fixtures_path("custom_searcher_exp")
+        )
 
     response = bindings.get_GetExperiment(sess, experimentId=experiment_id)
     assert response.experiment.numTrials == 5
@@ -252,7 +254,7 @@ def test_pause_multi_trial_random_searcher_core_api() -> None:
 )
 def test_resume_random_searcher_exp(exceptions: List[str]) -> None:
     sess = api_utils.user_session()
-    config = conf.load_config(conf.fixtures_path("no_op/single.yaml"))
+    config = conf.load_config(conf.fixtures_path("custom_searcher_exp/single.yaml"))
     config["searcher"] = {
         "name": "custom",
         "metric": "validation_error",
@@ -285,7 +287,7 @@ def test_resume_random_searcher_exp(exceptions: List[str]) -> None:
                 search_runner_mock = FallibleSearchRunner(
                     exception_point, search_method, pathlib.Path(searcher_dir)
                 )
-                search_runner_mock.run(config, model_dir=conf.fixtures_path("no_op"))
+                search_runner_mock.run(config, model_dir=conf.fixtures_path("custom_searcher_exp"))
                 pytest.fail("Expected an exception")
             except connectionpool.MaxRetryError:
                 failures += 1
@@ -298,7 +300,9 @@ def test_resume_random_searcher_exp(exceptions: List[str]) -> None:
         search_runner = searcher.LocalSearchRunner(
             search_method, pathlib.Path(searcher_dir), session=sess
         )
-        experiment_id = search_runner.run(config, model_dir=conf.fixtures_path("no_op"))
+        experiment_id = search_runner.run(
+            config, model_dir=conf.fixtures_path("custom_searcher_exp")
+        )
 
     assert search_runner.state.last_event_id == 41
     assert search_runner.state.experiment_completed is True
@@ -317,7 +321,7 @@ def test_resume_random_searcher_exp(exceptions: List[str]) -> None:
 def test_run_asha_batches_exp(tmp_path: pathlib.Path) -> None:
     sess = api_utils.user_session()
     client._determined = client.Determined._from_session(sess)
-    config = conf.load_config(conf.fixtures_path("no_op/adaptive.yaml"))
+    config = conf.load_config(conf.fixtures_path("custom_searcher_exp/adaptive.yaml"))
     config["searcher"] = {
         "name": "custom",
         "metric": "validation_error",
@@ -336,7 +340,7 @@ def test_run_asha_batches_exp(tmp_path: pathlib.Path) -> None:
         max_length, max_trials, num_rungs, divisor, test_type="noop"
     )
     search_runner = searcher.LocalSearchRunner(search_method, tmp_path)
-    experiment_id = search_runner.run(config, model_dir=conf.fixtures_path("no_op"))
+    experiment_id = search_runner.run(config, model_dir=conf.fixtures_path("custom_searcher_exp"))
 
     assert client._determined is not None
     response = bindings.get_GetExperiment(sess, experimentId=experiment_id)
@@ -392,7 +396,7 @@ def test_run_asha_batches_exp(tmp_path: pathlib.Path) -> None:
 def test_resume_asha_batches_exp(exceptions: List[str]) -> None:
     sess = api_utils.user_session()
     client._determined = client.Determined._from_session(sess)
-    config = conf.load_config(conf.fixtures_path("no_op/adaptive.yaml"))
+    config = conf.load_config(conf.fixtures_path("custom_searcher_exp/adaptive.yaml"))
     config["searcher"] = {
         "name": "custom",
         "metric": "validation_error",
@@ -425,7 +429,7 @@ def test_resume_asha_batches_exp(exceptions: List[str]) -> None:
                 search_runner_mock = FallibleSearchRunner(
                     exception_point, search_method, pathlib.Path(searcher_dir)
                 )
-                search_runner_mock.run(config, model_dir=conf.fixtures_path("no_op"))
+                search_runner_mock.run(config, model_dir=conf.fixtures_path("custom_searcher_exp"))
                 pytest.fail("Expected an exception")
             except connectionpool.MaxRetryError:
                 failures += 1
@@ -436,7 +440,9 @@ def test_resume_asha_batches_exp(exceptions: List[str]) -> None:
             max_length, max_trials, num_rungs, divisor, test_type="noop"
         )
         search_runner = searcher.LocalSearchRunner(search_method, pathlib.Path(searcher_dir))
-        experiment_id = search_runner.run(config, model_dir=conf.fixtures_path("no_op"))
+        experiment_id = search_runner.run(
+            config, model_dir=conf.fixtures_path("custom_searcher_exp")
+        )
 
     assert search_runner.state.experiment_completed is True
     response = bindings.get_GetExperiment(sess, experimentId=experiment_id)

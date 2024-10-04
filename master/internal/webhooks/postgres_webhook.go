@@ -148,8 +148,8 @@ func (l *WebhookManager) getWebhookConfig(ctx context.Context, expID *int) (*exp
 		return nil, nil
 	}
 
-	l.mu.RLock()
-	defer l.mu.RUnlock()
+	l.mu.Lock()
+	defer l.mu.Unlock()
 
 	if config, ok := l.expToWebhookConfig[*expID]; ok {
 		return config, nil

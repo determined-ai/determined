@@ -2192,6 +2192,17 @@ export const getWorkspaceConfigPolicies: DetApi<
     detApi.Alpha.getWorkspaceConfigPolicies(params.workspaceId, params.workloadType, options),
 };
 
+export const deleteWorkspaceConfigPolicies: DetApi<
+  Service.DeleteWorkspaceConfigPolicies,
+  Api.V1DeleteWorkspaceConfigPoliciesResponse,
+  Api.V1DeleteWorkspaceConfigPoliciesResponse
+> = {
+  name: 'deleteWorkspaceConfigPolicies',
+  postProcess: identity,
+  request: (params: Service.DeleteWorkspaceConfigPolicies, options) =>
+    detApi.Alpha.deleteWorkspaceConfigPolicies(params.workspaceId, params.workloadType, options),
+};
+
 export const updateWorkspaceConfigPolicies: DetApi<
   Service.UpdateWorkspaceConfigPolicies,
   Api.V1PutWorkspaceConfigPoliciesResponse,

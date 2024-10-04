@@ -1,14 +1,14 @@
-from typing import Optional
+from typing import Any, Dict, Optional
 
 import pytest
 
 from determined.common import api
 from determined.common.api import bindings
-from tests import api_utils
-from tests import config as conf
-from tests import detproc
+from determined.experimental import client
+from tests import api_utils, detproc
 from tests import experiment as exp
 from tests.cluster import utils
+from tests.experiment import noop
 
 MAX_WAIT_TIME = 500  # Really long since minikube will need to pull images.
 
@@ -18,25 +18,15 @@ MAX_WAIT_TIME = 500  # Really long since minikube will need to pull images.
     "resource_pool, expected_node", [(None, "defaultrm"), ("additional_pool", "additionalrm")]
 )
 def test_run_experiment_multi_k8s(resource_pool: Optional[str], expected_node: str) -> None:
-    args = ["--config", "entrypoint=echo RunningOnNode=$DET_AGENT_ID"]
+    config: Dict[str, Any] = {"entrypoint": "echo RunningOnNode=$DET_AGENT_ID"}
     if resource_pool:
-        args += ["--config", f"resources.resource_pool={resource_pool}"]
+        config["resources"] = {"resource_pool": resource_pool}
 
     sess = api_utils.user_session()
-    exp_id = exp.create_experiment(
-        sess,
-        conf.fixtures_path("no_op/single-one-short-step.yaml"),
-        conf.fixtures_path("no_op"),
-        args,
-    )
-    exp.wait_for_experiment_state(
-        sess,
-        exp_id,
-        bindings.experimentv1State.COMPLETED,
-        max_wait_secs=MAX_WAIT_TIME,
-    )
+    exp_ref = noop.create_experiment(sess, config=config)
+    assert exp_ref.wait(interval=0.01) == client.ExperimentState.COMPLETED
     exp.assert_patterns_in_trial_logs(
-        sess, exp.experiment_first_trial(sess, exp_id), [f"RunningOnNode={expected_node}"]
+        sess, exp.experiment_first_trial(sess, exp_ref.id), [f"RunningOnNode={expected_node}"]
     )
 
 

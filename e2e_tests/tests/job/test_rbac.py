@@ -6,8 +6,8 @@ import tests.config as conf
 from determined.common import api
 from determined.common.api import bindings, errors
 from tests import api_utils, detproc
-from tests import experiment as exp
 from tests.cluster import test_rbac
+from tests.experiment import noop
 
 
 def seed_workspace(ws: bindings.v1Workspace) -> None:
@@ -20,17 +20,12 @@ def seed_workspace(ws: bindings.v1Workspace) -> None:
     ).project.id
 
     print("creating experiment")
-    experiment_id = exp.create_experiment(
-        admin,
-        conf.fixtures_path("no_op/single-very-many-long-steps.yaml"),
-        conf.fixtures_path("no_op"),
-        ["--project_id", str(pid)],
-    )
-    print(f"created experiment {experiment_id}")
+    exp_ref = noop.create_experiment(admin, [noop.Sleep(100)], project_id=pid)
+    print(f"created experiment {exp_ref.id}")
 
     for kind in conf.ALL_NTSC:
         print(f"creating {kind}")
-        ntsc = api_utils.launch_ntsc(admin, workspace_id=ws.id, typ=kind, exp_id=experiment_id)
+        ntsc = api_utils.launch_ntsc(admin, workspace_id=ws.id, typ=kind, exp_id=exp_ref.id)
         print(f"created {kind} {ntsc.id}")
 
 
@@ -38,14 +33,10 @@ def seed_workspace(ws: bindings.v1Workspace) -> None:
 @api_utils.skipif_rbac_not_enabled()
 def test_job_global_perm() -> None:
     admin = api_utils.admin_session()
-    experiment_id = exp.create_experiment(
-        admin,
-        conf.fixtures_path("no_op/single.yaml"),
-        conf.fixtures_path("no_op"),
-        ["--project_id", str(1)],
-    )
+    exp_ref = noop.create_experiment(admin, project_id=1)
     output = detproc.check_output(admin, ["det", "job", "ls"])
-    assert str(experiment_id) in output
+    assert str(exp_ref.id) in output
+    exp_ref.kill()
 
 
 def run_permission_tests(

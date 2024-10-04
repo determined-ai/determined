@@ -574,3 +574,8 @@ export interface UpdateWorkspaceConfigPolicies {
   workloadType: 'NTSC' | 'EXPERIMENT';
   configPolicies: string;
 }
+
+export interface DeleteWorkspaceConfigPolicies {
+  workspaceId: number;
+  workloadType: 'NTSC' | 'EXPERIMENT';
+}
