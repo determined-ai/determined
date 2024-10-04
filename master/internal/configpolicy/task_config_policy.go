@@ -59,10 +59,9 @@ func CheckNTSCConstraints(
 	// In that case, there is no need to check if requested priority is within limits.
 	smallerHigher, err := resourceManager.SmallerValueIsHigherPriority()
 	if err != nil {
-		return nil
-	}
-	if err = checkPriorityConstraint(smallerHigher, constraints.PriorityLimit, workloadConfig.Resources.Priority); err != nil {
-		return err
+		if err = checkPriorityConstraint(smallerHigher, constraints.PriorityLimit, workloadConfig.Resources.Priority); err != nil {
+			return err
+		}
 	}
 
 	return nil
