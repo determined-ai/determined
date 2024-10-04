@@ -49,7 +49,8 @@ func CheckNTSCConstraints(
 	}
 
 	if constraints.ResourceConstraints != nil && constraints.ResourceConstraints.MaxSlots != nil {
-		if err = checkSlotsConstraint(*constraints.ResourceConstraints.MaxSlots, workloadConfig.Resources.Slots, workloadConfig.Resources.MaxSlots); err != nil {
+		if err = checkSlotsConstraint(*constraints.ResourceConstraints.MaxSlots, workloadConfig.Resources.Slots,
+			workloadConfig.Resources.MaxSlots); err != nil {
 			return err
 		}
 	}
@@ -59,7 +60,8 @@ func CheckNTSCConstraints(
 	// In that case, there is no need to check if requested priority is within limits.
 	smallerHigher, err := resourceManager.SmallerValueIsHigherPriority()
 	if err != nil {
-		if err = checkPriorityConstraint(smallerHigher, constraints.PriorityLimit, workloadConfig.Resources.Priority); err != nil {
+		if err = checkPriorityConstraint(smallerHigher, constraints.PriorityLimit,
+			workloadConfig.Resources.Priority); err != nil {
 			return err
 		}
 	}
@@ -82,7 +84,8 @@ func CheckExperimentConstraints(
 	if constraints.ResourceConstraints != nil && constraints.ResourceConstraints.MaxSlots != nil {
 		// users cannot specify number of slots for an experiment
 		slotsRequest := 0
-		if err = checkSlotsConstraint(*constraints.ResourceConstraints.MaxSlots, slotsRequest, workloadConfig.Resources().MaxSlots()); err != nil {
+		if err = checkSlotsConstraint(*constraints.ResourceConstraints.MaxSlots, slotsRequest,
+			workloadConfig.Resources().MaxSlots()); err != nil {
 			return err
 		}
 	}
@@ -92,10 +95,10 @@ func CheckExperimentConstraints(
 	// In that case, there is no need to check if requested priority is within limits.
 	smallerHigher, err := resourceManager.SmallerValueIsHigherPriority()
 	if err != nil {
-		return nil
-	}
-	if err = checkPriorityConstraint(smallerHigher, constraints.PriorityLimit, workloadConfig.Resources().Priority()); err != nil {
-		return err
+		if err = checkPriorityConstraint(smallerHigher, constraints.PriorityLimit,
+			workloadConfig.Resources().Priority()); err != nil {
+			return err
+		}
 	}
 
 	return nil
