@@ -1,12 +1,13 @@
-.. _task-config-policies:
+.. _config-policies:
 
 #######################
  Config Policies Guide
 #######################
 
 Config Policies allow administrators to set limits on how users can define workloads (e.g.,
-experiments and notebooks, tensorboards, shells, and commands). This feature enables you to govern
-user behavior more closely at various levels within the Determined cluster.
+experiments and notebooks, tensorboards, shells, and commands). This feature enables administrators
+to govern user behavior more closely at the workspace and cluster level. Administrators can include
+any parameter referenced in the :ref:`experiment configuration <experiment-config-reference>`.
 
 .. include:: ../_shared/attn-enterprise-edition.txt
 
@@ -23,12 +24,6 @@ When implementing Config Policies, administrators should be aware of the followi
 
 These features provide administrators with greater flexibility in managing task priorities while
 still maintaining policy-based control over resource usage.
-
-+------------------------------------------------------------------+
-| Visit the Config Policies Reference                              |
-+==================================================================+
-| :ref:`task-config-policies-reference`                            |
-+------------------------------------------------------------------+
 
 **************
  Key Features
@@ -51,11 +46,33 @@ Administrators can set Config Policies using either the WebUI or the CLI.
 WebUI
 =====
 
-#. Sign in to the Determined WebUI as a cluster administrator or workspace administrator.
-#. Navigate to **Config Policies**.
-#. Choose **Experiments** or **Tasks** to display the editable configuration file.
-#. Define the policies then click **Apply**.
-#. Confirm you want to apply the policies.
+Administrators can set Config Policies at either the cluster or workspace levels.
+
+.. tabs::
+
+   .. tab::
+
+      Cluster Config Policy
+
+      To set configuration policies at the cluster level, follow these steps:
+
+      #. Sign in to the Determined WebUI as a cluster administrator.
+      #. Navigate to **Config Policies**.
+      #. Choose **Experiments** or **Tasks** to display the editable configuration file.
+      #. Define the policies, then click **Apply**.
+      #. Confirm you want to apply the policies.
+
+   .. tab::
+
+      Workspace Config Policy
+
+      To set configuration policies at the workspace level, follow these steps:
+
+      #. Sign in to the Determined WebUI as a cluster or workspace administrator.
+      #. From your workspace, navigate to the **Config Policies** tab.
+      #. Choose **Experiments** or **Tasks** to display the editable configuration file.
+      #. Define the policies, then click **Apply**.
+      #. Confirm you want to apply the policies.
 
 CLI
 ===
@@ -84,8 +101,8 @@ Here are some example policies:
 
 #. Limit resources.
 
-In the following example for an Agent resource manager (RM), the ``priority_limit`` is set to ``50``
-and ``max_slots`` is set to ``1``. This means a user cannot set a priority value lower than 50 and
+In the following example for an Agent resource manager (RM), the ``priority_limit`` is set to ``15``
+and ``max_slots`` is set to ``1``. This means a user cannot set a priority value lower than 15 and
 cannot set ``max_slots`` to greater than ``1``.
 
 .. note::
@@ -98,14 +115,14 @@ cannot set ``max_slots`` to greater than ``1``.
 
 .. code:: bash
 
-   # Set priority limit to 50
+   # Set priority limit to 15
    constraints:
-      priority_limit: 50
+      priority_limit: 15
       resources:
          max_slots: 1
 
-If your priority limits are above the defaults, for example if your notebook priority is set to 42
-and the limit is 50, then the request fails and the system displays a descriptive message.
+If your priority limits are above the defaults, for example if your notebook priority is set to 10
+and the limit is 15, then the request fails and the system displays a descriptive message.
 
 #. Limit maximum GPU usage per experiment:
 
@@ -160,6 +177,3 @@ constraints placed on the scope.
 -  Communicate policy changes to users to ensure smooth adoption.
 -  Use the SetJobPriority API endpoint cautiously, ensuring that priority changes do not violate
    existing policies.
-
-For more detailed information on configuring and managing Task Config Policies, refer to the
-:ref:`Task Config Policies API Reference <task-config-policies-reference>`.

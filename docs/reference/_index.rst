@@ -46,12 +46,6 @@
              </a>
          </div>
          <div class="tile-container">
-             <a class="tile" href="task-config-policies-reference.html">
-                 <h2 class="tile-title">Task Config Policies Reference</h2>
-                 <p class="tile-description">Reference documentation for task config policies.</p>
-             </a>
-         </div>
-         <div class="tile-container">
              <a class="tile" href="cli-reference.html">
                  <h2 class="tile-title">CLI Reference</h2>
                  <p class="tile-description">Reference documentation for the Determined CLI.</p>
@@ -74,7 +68,6 @@
    Job Configuration Reference <job-config-reference>
    Deployment Reference <deploy/_index>
    Training Reference <training/_index>
-   Task Config Policies Reference <task-config-policies-reference>
    Python SDK <python-sdk/_index>
    REST API <rest-api>
    Determined CLI Reference <cli-reference>
