@@ -1,13 +1,16 @@
+import Button from 'hew/Button';
 import Checkbox from 'hew/Checkbox';
 import CodeSample from 'hew/CodeSample';
+import Icon from 'hew/Icon';
 import Input from 'hew/Input';
+import LogViewerEntry from 'hew/LogViewer/LogViewerEntry';
 import LogViewerSelect, { Filters } from 'hew/LogViewer/LogViewerSelect';
 import { Settings, settingsConfigForTrial } from 'hew/LogViewer/LogViewerSelect.settings';
 import Message from 'hew/Message';
 import Spinner from 'hew/Spinner';
 import SplitPane, { Pane } from 'hew/SplitPane';
-import Tooltip from 'hew/Tooltip';
 import useConfirm from 'hew/useConfirm';
+import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { throttle } from 'throttle-debounce';
 
@@ -24,7 +27,13 @@ import { downloadTrialLogs } from 'utils/browser';
 import handleError, { ErrorType } from 'utils/error';
 import mergeAbortControllers from 'utils/mergeAbortControllers';
 
-import LogViewer, { FetchConfig, FetchDirection, FetchType } from './LogViewer';
+import LogViewer, {
+  FetchConfig,
+  FetchDirection,
+  FetchType,
+  formatLogEntry,
+  ViewerLog,
+} from './LogViewer';
 import css from './TrialDetailsLogs.module.scss';
 
 export interface Props {
@@ -40,9 +49,10 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
   const { ui } = useUI();
   const [filterOptions, setFilterOptions] = useState<Filters>({});
   const [searchOn, setSearchOn] = useState<boolean>(false);
+  const [logViewerOn, setLogViewerOn] = useState<boolean>(true);
   const [searchInput, setSearchInput] = useState<string>('');
   const [searchResults, setSearchResults] = useState<TrialLog[]>([]);
-  const [selectedLog, setSelectedLog] = useState<TrialLog>();
+  const [selectedLog, setSelectedLog] = useState<ViewerLog>();
   const [searchWidth, setSearchWidth] = useState(INITIAL_SEARCH_WIDTH);
   const confirm = useConfirm();
   const canceler = useRef(new AbortController());
@@ -202,6 +212,10 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
     };
   }, [trial?.id, ui.isPageHidden]);
 
+  const onClickSearchIcon = useCallback(() => {
+    searchOn ? setLogViewerOn(false) : setSearchOn(true);
+  }, [searchOn]);
+
   const logFilters = (
     <LogViewerSelect
       options={filterOptions}
@@ -209,7 +223,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
       showSearch={false}
       values={filterValues}
       onChange={handleFilterChange}
-      onClickSearch={() => setSearchOn((prev) => !prev)}
+      onClickSearch={onClickSearchIcon}
       onReset={handleFilterReset}
     />
   );
@@ -248,7 +262,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
     const key = settings.searchText;
 
     if (!key) return;
-    const formated: TrialLog[] = [];
+    const formated: ViewerLog[] = [];
     searchResults.forEach((l) => {
       const content = l.log;
       if (!content) return;
@@ -260,32 +274,24 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
         }
       }
 
+      const logEntry = formatLogEntry(l);
+
       const i = settings.enableRegex ? content.match(`${key}`)?.index : content.indexOf(key);
-      if (!i || i < 0) return;
+      if (_.isUndefined(i) || i < 0) return;
       const keyLen = settings.enableRegex ? content.match(`${key}`)?.[0].length || 0 : key.length;
       const j = i + keyLen;
-      const numOfChar = Math.floor(searchWidth / 18) - keyLen;
-      let start = Math.max(i - numOfChar, 0);
-      let end = Math.min(j + numOfChar, content.length);
-      if (start > 0 && end === content.length) {
-        start = Math.max(start - (numOfChar - end + j), 0);
-      } else if (start === 0 && end < content.length) {
-        end = Math.min(end + numOfChar - i + start, content.length);
-      }
       formated.push({
-        ...l,
-        log: `${start > 0 ? '...' : ''}${content.slice(start, i)}<span style="background-color: #E7F7FF">${content.slice(i, j)}</span>${content.slice(j, end)}${end < content.length ? '...' : ''}`,
+        ...logEntry,
+        message: `${content.slice(0, i)}<span style="background-color: #E7F7FF">${content.slice(i, j)}</span>${content.slice(j)}`,
       });
     });
     return formated;
-  }, [searchResults, settings.searchText, searchWidth, settings.enableRegex]);
+  }, [searchResults, settings.searchText, settings.enableRegex]);
 
   useEffect(() => {
     if (settings.searchText) {
       setSearchResults([]);
       setSelectedLog(undefined);
-      const newCanceler = new AbortController();
-      canceler.current = newCanceler;
       readStream(
         handleFetch(
           {
@@ -300,8 +306,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
         (log) => setSearchResults((prev) => [...prev, mapV1LogsResponse(log)]),
       );
     }
-    return () => canceler.current.abort();
-  }, [settings.searchText, handleFetch, settings.enableRegex]);
+  }, [settings.searchText, handleFetch, settings.enableRegex, canceler]);
 
   const renderSearch = useCallback(() => {
     const height = container.current?.getBoundingClientRect().height || 0;
@@ -314,6 +319,14 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
             value={searchInput || settings.searchText}
             onChange={onSearchChange}
           />
+          <Button onClick={() => setSearchOn(false)}>
+            <Icon decorative name="close" />
+          </Button>
+          {!logViewerOn && (
+            <Button onClick={() => setLogViewerOn(true)}>
+              <Icon decorative name="list" />
+            </Button>
+          )}
         </div>
         <Checkbox
           checked={settings.enableRegex}
@@ -322,16 +335,25 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
         </Checkbox>
         <div className={css.logContainer}>
           {formatedSearchResults && formatedSearchResults.length > 0 ? (
-            formatedSearchResults.map((log) => (
-              <Tooltip content={log.message} key={log.id}>
-                <div
-                  className={
-                    selectedLog?.id === log.id ? [css.log, css.selected].join(' ') : css.log
-                  }
-                  dangerouslySetInnerHTML={{ __html: log.log! }}
-                  onClick={() => setSelectedLog(log)}
+            formatedSearchResults.map((logEntry) => (
+              <div
+                className={css.log}
+                key={logEntry.id}
+                onClick={() => {
+                  setSelectedLog(logEntry);
+                  setLogViewerOn(true);
+                }}>
+                <LogViewerEntry
+                  formattedTime={logEntry.formattedTime}
+                  htmlMessage={true}
+                  key={logEntry.id}
+                  level={logEntry.level}
+                  message={logEntry.message}
+                  style={{
+                    backgroundColor: logEntry.id === selectedLog?.id ? '#E7F7FF' : 'transparent',
+                  }}
                 />
-              </Tooltip>
+              </div>
             ))
           ) : (
             <Message icon="warning" title="No logs to show. " />
@@ -348,16 +370,17 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
     selectedLog,
     onSearchChange,
     updateSettings,
+    logViewerOn,
   ]);
 
   return (
     <div className={css.base} ref={container}>
       <Spinner conditionalRender spinning={!trial}>
         <SplitPane
-          hidePane={searchOn ? undefined : Pane.Left}
-          initialWidth={INITIAL_SEARCH_WIDTH}
+          hidePane={searchOn && logViewerOn ? undefined : searchOn ? Pane.Right : Pane.Left}
+          initialWidth={searchWidth || INITIAL_SEARCH_WIDTH}
           leftPane={renderSearch()}
-          minimumWidths={{ left: 300, right: 550 }}
+          minimumWidths={{ left: 300, right: 300 }}
           rightPane={
             <LogViewer
               decoder={mapV1LogsResponse}
