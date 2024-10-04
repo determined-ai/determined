@@ -131,6 +131,13 @@ func Update(
 				Where("id = ?", updated.ID).Exec(ctx); err != nil {
 				return fmt.Errorf("error setting active status of %q: %s", updated.Username, err)
 			}
+			// Revoke all access tokens of a user when it is deactivated.
+			if !updated.Active {
+				err := revokeUserAccessTokens(ctx, tx, updated.ID)
+				if err != nil {
+					return fmt.Errorf("error revoking active access token of %q: %s", updated.Username, err)
+				}
+			}
 		}
 
 		if slices.Contains(toUpdate, "password_hash") {
@@ -153,6 +160,17 @@ func Update(
 
 		return nil
 	})
+}
+
+// Revoke all access tokens of a user when it is deactivated.
+func revokeUserAccessTokens(ctx context.Context, tx bun.Tx, userID model.UserID) error {
+	_, err := tx.NewUpdate().
+		Table("user_sessions").
+		Set("revoked = ?", true).
+		Where("user_id = ?", userID).
+		Where("token_type = ?", model.TokenTypeAccessToken).
+		Exec(ctx)
+	return err
 }
 
 // SetActive changes multiple users' activation status.
