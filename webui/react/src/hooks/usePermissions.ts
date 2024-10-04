@@ -113,6 +113,8 @@ export interface PermissionsHook {
   canViewResourceQuotas: boolean;
   canViewWorkspaceConfigPolicies: boolean;
   canModifyWorkspaceConfigPolicies: boolean;
+  canViewGlobalConfigPolicies: boolean;
+  canModifyGlobalConfigPolicies: boolean;
   loading: boolean;
 }
 
@@ -181,6 +183,7 @@ const usePermissions = (): PermissionsHook => {
         canModifyExperimentMetadata(rbacOpts, args.workspace),
       canModifyFlatRun: (args: WorkspacePermissionsArgs) =>
         canModifyFlatRun(rbacOpts, args.workspace),
+      canModifyGlobalConfigPolicies: canModifyGlobalConfigPolicies(rbacOpts),
       canModifyGroups: canModifyGroups(rbacOpts),
       canModifyModel: (args: ModelPermissionsArgs) => canModifyModel(rbacOpts, args.model),
       canModifyModelVersion: (args: ModelVersionPermissionsArgs) =>
@@ -215,6 +218,7 @@ const usePermissions = (): PermissionsHook => {
       canUpdateRoles: (args: WorkspacePermissionsArgs) => canUpdateRoles(rbacOpts, args.workspace),
       canViewExperimentArtifacts: (args: WorkspacePermissionsArgs) =>
         canViewExperimentArtifacts(rbacOpts, args.workspace),
+      canViewGlobalConfigPolicies: canViewGlobalConfigPolicies(rbacOpts),
       canViewGroups: canViewGroups(rbacOpts),
       canViewModelRegistry: (args: WorkspacePermissionsArgs) =>
         canViewModelRegistry(rbacOpts, args.workspace),
@@ -834,6 +838,27 @@ const canModifyWorkspaceConfigPolicies = ({
   const permitted = relevantPermissions(userAssignments, userRoles);
   return rbacEnabled
     ? permitted.has(V1PermissionType.MODIFYWORKSPACECONFIGPOLICIES)
+    : !!currentUser && currentUser.isAdmin;
+};
+
+const canViewGlobalConfigPolicies = ({
+  rbacEnabled,
+  userAssignments,
+  userRoles,
+}: RbacOptsProps): boolean => {
+  const permitted = relevantPermissions(userAssignments, userRoles);
+  return !rbacEnabled || permitted.has(V1PermissionType.VIEWGLOBALCONFIGPOLICIES);
+};
+
+const canModifyGlobalConfigPolicies = ({
+  currentUser,
+  rbacEnabled,
+  userAssignments,
+  userRoles,
+}: RbacOptsProps): boolean => {
+  const permitted = relevantPermissions(userAssignments, userRoles);
+  return rbacEnabled
+    ? permitted.has(V1PermissionType.MODIFYGLOBALCONFIGPOLICIES)
     : !!currentUser && currentUser.isAdmin;
 };
 

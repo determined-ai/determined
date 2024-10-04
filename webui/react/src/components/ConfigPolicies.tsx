@@ -16,15 +16,20 @@ import { useState } from 'react';
 import { useAsync } from 'hooks/useAsync';
 import usePermissions from 'hooks/usePermissions';
 import {
+  deleteGlobalConfigPolicies,
   deleteWorkspaceConfigPolicies,
+  getGlobalConfigPolicies,
   getWorkspaceConfigPolicies,
+  updateGlobalConfigPolicies,
   updateWorkspaceConfigPolicies,
 } from 'services/api';
+import { XOR } from 'types';
 import handleError from 'utils/error';
 
-interface Props {
-  workspaceId?: number;
-}
+type Props = XOR<
+  { workspaceId: number },
+  { global: true }
+>;
 
 type ConfigPoliciesType = 'experiments' | 'tasks';
 
@@ -44,47 +49,86 @@ const ConfigPoliciesValues: Record<ConfigPoliciesType, ConfigPoliciesValues> = {
   },
 };
 
-interface TabProps {
-  workspaceId?: number;
+type TabProps = Props & {
   type: ConfigPoliciesType;
 }
 
 type FormInputs = {
-  configPolicies: string;
+  [YAML_FORM_ITEM_NAME]: string;
 };
 
-const ConfigPolicies: React.FC<Props> = ({ workspaceId }: Props) => {
-  const tabItems: PivotProps['items'] = [
-    {
-      children: <ConfigPoliciesTab type="experiments" workspaceId={workspaceId} />,
-      key: 'experiments',
-      label: ConfigPoliciesValues.experiments.label,
-    },
-    {
-      children: <ConfigPoliciesTab type="tasks" workspaceId={workspaceId} />,
-      key: 'tasks',
-      label: ConfigPoliciesValues.tasks.label,
-    },
-  ];
+const SUCCESS_MESSAGE = 'Config policies updated.';
+const YAML_FORM_ITEM_NAME = 'configPolicies';
+
+const ConfigPolicies: React.FC<Props> = ({ workspaceId, global }: Props) => {
+  let tabItems: PivotProps['items'];
+  if (global) {
+    tabItems = [
+      {
+        children: <ConfigPoliciesTab global type="experiments" />,
+        key: 'experiments',
+        label: ConfigPoliciesValues.experiments.label,
+      },
+      {
+        children: <ConfigPoliciesTab global type="tasks" />,
+        key: 'tasks',
+        label: ConfigPoliciesValues.tasks.label,
+      },
+    ];
+  } else if (workspaceId) {
+    tabItems = [
+      {
+        children: <ConfigPoliciesTab type="experiments" workspaceId={workspaceId} />,
+        key: 'experiments',
+        label: ConfigPoliciesValues.experiments.label,
+      },
+      {
+        children: <ConfigPoliciesTab type="tasks" workspaceId={workspaceId} />,
+        key: 'tasks',
+        label: ConfigPoliciesValues.tasks.label,
+      },
+    ];
+  }
 
   return <Pivot items={tabItems} type="secondary" />;
 };
 
-const ConfigPoliciesTab: React.FC<TabProps> = ({ workspaceId, type }: TabProps) => {
+const ConfigPoliciesTab: React.FC<TabProps> = ({ workspaceId, global, type }: TabProps) => {
   const confirm = useConfirm();
   const { openToast } = useToast();
-  const { canModifyWorkspaceConfigPolicies, loading: rbacLoading } = usePermissions();
+  const { canModifyWorkspaceConfigPolicies, canModifyGlobalConfigPolicies, loading: rbacLoading } = usePermissions();
   const [form] = Form.useForm<FormInputs>();
 
   const [disabled, setDisabled] = useState(true);
 
-  const APPLY_MESSAGE = "You're about to apply these config policies to this workspace.";
-  const VIEW_MESSAGE = 'An admin applied these config policies to this workspace.';
-  const CONFIRMATION_MESSAGE = 'Config policies updated';
+  const applyMessage = global ? "You're about to apply these config policies to this cluster." : "You're about to apply these config policies to this workspace.";
+  const viewMessage = global ? 'These global config policies are being applied to this cluster.' : 'These global config policies are being applied to this workspace.';
+  const confirmMessageEnding = global ? 'underlying workspaces, projects, and submitted experiments in this cluster.' : 'underlying projects and their experiments in this workspace.';
 
   const updatePolicies = async () => {
-    if (workspaceId) {
-      const configPolicies = form.getFieldValue('configPolicies');
+    const configPolicies = form.getFieldValue(YAML_FORM_ITEM_NAME);
+    if (global) {
+      if (configPolicies.length) {
+        try {
+          await updateGlobalConfigPolicies({
+            configPolicies,
+            workloadType: ConfigPoliciesValues[type].workloadType,
+          });
+          openToast({ title: SUCCESS_MESSAGE });
+        } catch (error) {
+          handleError(error);
+        }
+      } else {
+        try {
+          await deleteGlobalConfigPolicies({
+            workloadType: ConfigPoliciesValues[type].workloadType,
+          });
+          openToast({ title: SUCCESS_MESSAGE });
+        } catch (error) {
+          handleError(error);
+        }
+      }
+    } else if (workspaceId) {
       if (configPolicies.length) {
         try {
           await updateWorkspaceConfigPolicies({
@@ -92,7 +136,7 @@ const ConfigPoliciesTab: React.FC<TabProps> = ({ workspaceId, type }: TabProps) 
             workloadType: ConfigPoliciesValues[type].workloadType,
             workspaceId,
           });
-          openToast({ title: CONFIRMATION_MESSAGE });
+          openToast({ title: SUCCESS_MESSAGE });
         } catch (error) {
           handleError(error);
         }
@@ -102,7 +146,7 @@ const ConfigPoliciesTab: React.FC<TabProps> = ({ workspaceId, type }: TabProps) 
             workloadType: ConfigPoliciesValues[type].workloadType,
             workspaceId,
           });
-          openToast({ title: CONFIRMATION_MESSAGE });
+          openToast({ title: SUCCESS_MESSAGE });
         } catch (error) {
           handleError(error);
         }
@@ -118,19 +162,25 @@ const ConfigPoliciesTab: React.FC<TabProps> = ({ workspaceId, type }: TabProps) 
           <strong>
             <u>all</u>
           </strong>{' '}
-          underlying projects and their experiments in this workspace.
+          {confirmMessageEnding}
         </span>
       ),
       okText: 'Apply',
       onConfirm: updatePolicies,
       onError: handleError,
       size: 'medium',
-      title: APPLY_MESSAGE,
+      title: applyMessage,
     });
   };
 
   const loadableConfigPolicies: Loadable<string | undefined> = useAsync(async () => {
-    if (workspaceId) {
+    if (global) {
+      const response = await getGlobalConfigPolicies({
+        workloadType: ConfigPoliciesValues[type].workloadType,
+      });
+      if (isEmpty(response.configPolicies)) return undefined;
+      return response.configPolicies;
+    } else if (workspaceId) {
       const response = await getWorkspaceConfigPolicies({
         workloadType: ConfigPoliciesValues[type].workloadType,
         workspaceId,
@@ -139,13 +189,15 @@ const ConfigPoliciesTab: React.FC<TabProps> = ({ workspaceId, type }: TabProps) 
       return response.configPolicies;
     }
     return NotLoaded;
-  }, [workspaceId, type]);
+  }, [workspaceId, type, global]);
 
-  const initialConfigPoliciesYAML = yaml.dump(loadableConfigPolicies.getOrElse(undefined));
+  const initialYAML = yaml.dump(loadableConfigPolicies.getOrElse(undefined));
+
+  const canModify = global ? canModifyGlobalConfigPolicies : canModifyWorkspaceConfigPolicies;
 
   const handleChange = () => {
     setDisabled(
-      hasErrors(form) || form.getFieldValue('configPolicies') === initialConfigPoliciesYAML,
+      hasErrors(form) || form.getFieldValue(YAML_FORM_ITEM_NAME) === initialYAML,
     );
   };
 
@@ -155,18 +207,18 @@ const ConfigPoliciesTab: React.FC<TabProps> = ({ workspaceId, type }: TabProps) 
     <Column>
       <Row width="fill">
         <div style={{ width: '100%' }}>
-          {canModifyWorkspaceConfigPolicies ? (
+          {canModify ? (
             <Alert
               action={
                 <Button disabled={disabled} onClick={confirmApply}>
                   Apply
                 </Button>
               }
-              message={APPLY_MESSAGE}
+              message={applyMessage}
               showIcon
             />
           ) : (
-            <Alert message={VIEW_MESSAGE} showIcon />
+            <Alert message={viewMessage} showIcon />
           )}
         </div>
       </Row>
@@ -174,7 +226,7 @@ const ConfigPoliciesTab: React.FC<TabProps> = ({ workspaceId, type }: TabProps) 
         <div style={{ width: '100%' }}>
           <Form form={form} onFieldsChange={handleChange}>
             <Form.Item
-              name="configPolicies"
+              name={YAML_FORM_ITEM_NAME}
               rules={[
                 {
                   validator: (_, value) => {
@@ -192,9 +244,9 @@ const ConfigPoliciesTab: React.FC<TabProps> = ({ workspaceId, type }: TabProps) 
                 },
               ]}>
               <CodeEditor
-                file={initialConfigPoliciesYAML}
+                file={initialYAML}
                 files={[{ key: type, title: `${type}-config-policies.yaml` }]}
-                readonly={!canModifyWorkspaceConfigPolicies}
+                readonly={!canModify}
                 onError={(error) => {
                   handleError(error);
                 }}
