@@ -1,17 +1,22 @@
 import Button from 'hew/Button';
 import Checkbox from 'hew/Checkbox';
+import ClipboardButton from 'hew/ClipboardButton';
 import CodeSample from 'hew/CodeSample';
 import Icon from 'hew/Icon';
 import Input from 'hew/Input';
-import LogViewerEntry from 'hew/LogViewer/LogViewerEntry';
+import LogViewerEntry, { MAX_DATETIME_LENGTH } from 'hew/LogViewer/LogViewerEntry';
 import LogViewerSelect, { Filters } from 'hew/LogViewer/LogViewerSelect';
 import { Settings, settingsConfigForTrial } from 'hew/LogViewer/LogViewerSelect.settings';
 import Message from 'hew/Message';
+import Row from 'hew/Row';
 import Spinner from 'hew/Spinner';
 import SplitPane, { Pane } from 'hew/SplitPane';
+import Tooltip from 'hew/Tooltip';
 import useConfirm from 'hew/useConfirm';
 import _ from 'lodash';
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import screenfull from 'screenfull';
+import { sprintf } from 'sprintf-js';
 import { throttle } from 'throttle-debounce';
 
 import useUI from 'components/ThemeProvider';
@@ -22,10 +27,11 @@ import { serverAddress } from 'routes/utils';
 import { detApi } from 'services/apiConfig';
 import { mapV1LogsResponse } from 'services/decoder';
 import { readStream } from 'services/utils';
-import { ExperimentBase, TrialDetails, TrialLog } from 'types';
+import { ExperimentBase, Log, TrialDetails, TrialLog } from 'types';
 import { downloadTrialLogs } from 'utils/browser';
 import handleError, { ErrorType } from 'utils/error';
 import mergeAbortControllers from 'utils/mergeAbortControllers';
+import { pluralizer } from 'utils/string';
 
 import LogViewer, {
   FetchConfig,
@@ -48,6 +54,7 @@ const INITIAL_SEARCH_WIDTH = 420;
 const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
   const { ui } = useUI();
   const [filterOptions, setFilterOptions] = useState<Filters>({});
+  const [logs, setLogs] = useState<ViewerLog[]>([]);
   const [searchOn, setSearchOn] = useState<boolean>(false);
   const [logViewerOn, setLogViewerOn] = useState<boolean>(true);
   const [searchInput, setSearchInput] = useState<string>('');
@@ -57,6 +64,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
   const confirm = useConfirm();
   const canceler = useRef(new AbortController());
   const container = useRef<HTMLDivElement>(null);
+  const logsRef = useRef<HTMLDivElement>(null);
   const f_flat_runs = useFeature().isOn('flat_runs');
 
   const trialSettingsConfig = useMemo(() => settingsConfigForTrial(trial?.id || -1), [trial?.id]);
@@ -212,18 +220,12 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
     };
   }, [trial?.id, ui.isPageHidden]);
 
-  const onClickSearchIcon = useCallback(() => {
-    searchOn ? setLogViewerOn(false) : setSearchOn(true);
-  }, [searchOn]);
-
   const logFilters = (
     <LogViewerSelect
       options={filterOptions}
-      searchOn={searchOn}
       showSearch={false}
       values={filterValues}
       onChange={handleFilterChange}
-      onClickSearch={onClickSearchIcon}
       onReset={handleFilterReset}
     />
   );
@@ -311,23 +313,7 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
   const renderSearch = useCallback(() => {
     const height = container.current?.getBoundingClientRect().height || 0;
     return (
-      <div className={css.search} style={{ height: `${height - 74}px` }}>
-        <div className={css.header}>
-          <Input
-            allowClear
-            placeholder="Search Logs..."
-            value={searchInput || settings.searchText}
-            onChange={onSearchChange}
-          />
-          <Button onClick={() => setSearchOn(false)}>
-            <Icon decorative name="close" />
-          </Button>
-          {!logViewerOn && (
-            <Button onClick={() => setLogViewerOn(true)}>
-              <Icon decorative name="list" />
-            </Button>
-          )}
-        </div>
+      <div className={css.search} style={{ height: `${height}px` }}>
         <Checkbox
           checked={settings.enableRegex}
           onChange={(e) => updateSettings({ enableRegex: e.target.checked })}>
@@ -361,21 +347,76 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
         </div>
       </div>
     );
-  }, [
-    settings.enableRegex,
-    settings.searchText,
-    searchInput,
-    formatedSearchResults,
-    container,
-    selectedLog,
-    onSearchChange,
-    updateSettings,
-    logViewerOn,
-  ]);
+  }, [settings.enableRegex, formatedSearchResults, container, selectedLog, updateSettings]);
+  const formatClipboardHeader = (log: Log): string => {
+    const logEntry = formatLogEntry(log);
+    const format = `%${MAX_DATETIME_LENGTH - 1}s `;
+    const level = `<${logEntry.level || ''}>`;
+    return sprintf(`%-9s ${format}`, level, logEntry.formattedTime);
+  };
+
+  const clipboardCopiedMessage = useMemo(() => {
+    const linesLabel = pluralizer(logs.length, 'entry', 'entries');
+    return `Copied ${logs.length} ${linesLabel}!`;
+  }, [logs]);
+
+  const getClipboardContent = useCallback(() => {
+    return logs.map((log) => `${formatClipboardHeader(log)}${log.message || ''}`).join('\n');
+  }, [logs]);
+
+  const handleFullScreen = useCallback(() => {
+    if (logsRef.current && screenfull.isEnabled) screenfull.toggle();
+  }, []);
+
+  const rightButtons = (
+    <Row>
+      <ClipboardButton copiedMessage={clipboardCopiedMessage} getContent={getClipboardContent} />
+      <Button
+        aria-label="Toggle Fullscreen Mode"
+        icon={<Icon name="fullscreen" showTooltip title="Toggle Fullscreen Mode" />}
+        onClick={handleFullScreen}
+      />
+      <Button
+        aria-label="Download Logs"
+        icon={<Icon name="download" showTooltip title="Download Logs" />}
+        onClick={handleDownloadLogs}
+      />
+    </Row>
+  );
 
   return (
     <div className={css.base} ref={container}>
       <Spinner conditionalRender spinning={!trial}>
+        <div className={css.header}>
+          <div className={css.filters}>
+            <Input
+              allowClear
+              placeholder="Search Logs..."
+              value={searchInput || settings.searchText}
+              width={240}
+              onChange={onSearchChange}
+            />
+            <Tooltip content={`${searchOn ? 'Close' : 'Open'} Search`}>
+              <Button
+                type={searchOn ? 'primary' : 'default'}
+                onClick={() => {
+                  setSearchOn((prev) => !prev);
+                  searchOn && setLogViewerOn(true);
+                }}>
+                <Icon decorative name="search" />
+              </Button>
+            </Tooltip>
+            <Tooltip content={searchOn && `${logViewerOn ? 'Close' : 'Open'} Logs`}>
+              <Button
+                type={logViewerOn ? 'primary' : 'default'}
+                onClick={() => searchOn && setLogViewerOn((prev) => !prev)}>
+                <Icon decorative name="list" />
+              </Button>
+            </Tooltip>
+            {logFilters}
+          </div>
+          {rightButtons}
+        </div>
         <SplitPane
           hidePane={searchOn && logViewerOn ? undefined : searchOn ? Pane.Right : Pane.Left}
           initialWidth={searchWidth || INITIAL_SEARCH_WIDTH}
@@ -384,10 +425,11 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
           rightPane={
             <LogViewer
               decoder={mapV1LogsResponse}
+              logs={logs}
+              logsRef={logsRef}
               selectedLog={selectedLog}
               serverAddress={serverAddress}
-              title={logFilters}
-              onDownload={handleDownloadLogs}
+              setLogs={setLogs}
               onError={handleError}
               onFetch={handleFetch}
             />

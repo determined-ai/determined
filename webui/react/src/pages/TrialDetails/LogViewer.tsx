@@ -1,47 +1,34 @@
 import Button from 'hew/Button';
-import ClipboardButton from 'hew/ClipboardButton';
-import Column from 'hew/Column';
 import Icon from 'hew/Icon';
 import { clone, dateTimeStringSorter, formatDatetime, numericSorter } from 'hew/internal/functions';
 import { readLogStream } from 'hew/internal/services';
 import { FetchArgs, Log, LogLevel, RecordKey } from 'hew/internal/types';
-import LogViewerEntry, { DATETIME_FORMAT, MAX_DATETIME_LENGTH } from 'hew/LogViewer/LogViewerEntry';
+import LogViewerEntry, { DATETIME_FORMAT } from 'hew/LogViewer/LogViewerEntry';
 import Message from 'hew/Message';
-import Row from 'hew/Row';
 import Section from 'hew/Section';
 import Spinner from 'hew/Spinner';
 import { ErrorHandler } from 'hew/utils/error';
 import { ValueOf } from 'hew/utils/types';
-import React, {
-  useCallback,
-  useEffect,
-  useId,
-  useLayoutEffect,
-  useMemo,
-  useRef,
-  useState,
-} from 'react';
+import React, { useCallback, useEffect, useId, useLayoutEffect, useRef, useState } from 'react';
 import { ListItem, Virtuoso, VirtuosoHandle } from 'react-virtuoso';
-import screenfull from 'screenfull';
-import { sprintf } from 'sprintf-js';
 import { throttle } from 'throttle-debounce';
-
-import { pluralizer } from 'utils/string';
 
 import css from './LogViewer.module.scss';
 
 export interface Props<T> {
   decoder: (data: T) => Log;
-  handleCloseLogs?: () => void;
+
   height?: number | 'stretch';
   initialLogs?: T[];
-  onDownload?: () => void;
+
   onFetch?: (config: FetchConfig, type: FetchType) => FetchArgs;
   onError: ErrorHandler;
   serverAddress: (path: string) => string;
   sortKey?: keyof Log;
-  title?: React.ReactNode;
   selectedLog?: Log;
+  logs: ViewerLog[];
+  setLogs: React.Dispatch<React.SetStateAction<ViewerLog[]>>;
+  logsRef: React.RefObject<HTMLDivElement>;
 }
 
 export interface ViewerLog extends Log {
@@ -83,13 +70,6 @@ export const formatLogEntry = (log: Log): ViewerLog => {
   return { ...log, formattedTime };
 };
 
-const formatClipboardHeader = (log: Log): string => {
-  const logEntry = formatLogEntry(log);
-  const format = `%${MAX_DATETIME_LENGTH - 1}s `;
-  const level = `<${logEntry.level || ''}>`;
-  return sprintf(`%-9s ${format}`, level, logEntry.formattedTime);
-};
-
 const logSorter =
   (key: keyof Log) =>
   (a: Log, b: Log): number => {
@@ -107,17 +87,17 @@ function LogViewer<T>({
   decoder,
   height = 'stretch',
   initialLogs,
-  onDownload,
   onFetch,
   onError,
   serverAddress,
   sortKey = 'time',
-  handleCloseLogs,
-  title,
   selectedLog,
+  logs,
+  setLogs,
+  logsRef,
 }: Props<T>): JSX.Element {
   const componentId = useId();
-  const logsRef = useRef<HTMLDivElement>(null);
+
   const virtuosoRef = useRef<VirtuosoHandle>(null);
   const [isFetching, setIsFetching] = useState(false);
   const local = useRef({
@@ -128,7 +108,7 @@ function LogViewer<T>({
   const [fetchDirection, setFetchDirection] = useState<FetchDirection>(FetchDirection.Older);
   const [isTailing, setIsTailing] = useState<boolean>(true);
   const [showButtons, setShowButtons] = useState(false);
-  const [logs, setLogs] = useState<ViewerLog[]>([]);
+
   const [firstItemIndex, setFirstItemIndex] = useState(START_INDEX);
   const [scrolledForSearch, setScrolledForSearch] = useState(true);
 
@@ -147,11 +127,14 @@ function LogViewer<T>({
     [sortKey],
   );
 
-  const addLogs = useCallback((newLogs: ViewerLog[] = [], prepend = false): void => {
-    if (newLogs.length === 0) return;
-    setLogs((prevLogs) => (prepend ? newLogs.concat(prevLogs) : prevLogs.concat(newLogs)));
-    if (prepend) setFirstItemIndex((prev) => prev - newLogs.length);
-  }, []);
+  const addLogs = useCallback(
+    (newLogs: ViewerLog[] = [], prepend = false): void => {
+      if (newLogs.length === 0) return;
+      setLogs((prevLogs) => (prepend ? newLogs.concat(prevLogs) : prevLogs.concat(newLogs)));
+      if (prepend) setFirstItemIndex((prev) => prev - newLogs.length);
+    },
+    [setLogs],
+  );
 
   useEffect(() => {
     if (scrolledForSearch || !selectedLog || !local.current.isScrollReady) return;
@@ -250,7 +233,7 @@ function LogViewer<T>({
       setFetchDirection(FetchDirection.Newer);
       setFirstItemIndex(0);
     }
-  }, [fetchDirection, firstItemIndex]);
+  }, [fetchDirection, firstItemIndex, setLogs]);
 
   const handleEnableTailing = useCallback(() => {
     setIsTailing(true);
@@ -267,24 +250,7 @@ function LogViewer<T>({
       setFetchDirection(FetchDirection.Older);
       setFirstItemIndex(START_INDEX);
     }
-  }, [fetchDirection]);
-
-  const clipboardCopiedMessage = useMemo(() => {
-    const linesLabel = pluralizer(logs.length, 'entry', 'entries');
-    return `Copied ${logs.length} ${linesLabel}!`;
-  }, [logs]);
-
-  const getClipboardContent = useCallback(() => {
-    return logs.map((log) => `${formatClipboardHeader(log)}${log.message || ''}`).join('\n');
-  }, [logs]);
-
-  const handleFullScreen = useCallback(() => {
-    if (logsRef.current && screenfull.isEnabled) screenfull.toggle();
-  }, []);
-
-  const handleDownload = useCallback(() => {
-    onDownload?.();
-  }, [onDownload]);
+  }, [fetchDirection, setLogs]);
 
   // Re-fetch logs when fetch callback changes.
   useEffect(() => {
@@ -297,7 +263,7 @@ function LogViewer<T>({
     setIsTailing(true);
     setFetchDirection(FetchDirection.Older);
     setFirstItemIndex(START_INDEX);
-  }, [onFetch]);
+  }, [onFetch, setLogs]);
 
   // Add initial logs if applicable.
   useEffect(() => {
@@ -432,38 +398,6 @@ function LogViewer<T>({
 
   return (
     <Section fullHeight>
-      <div className={css.options}>
-        <Row>
-          <Column width="shrink">{title}</Column>
-          <Column align="right">
-            <Row>
-              <ClipboardButton
-                copiedMessage={clipboardCopiedMessage}
-                getContent={getClipboardContent}
-              />
-              <Button
-                aria-label="Toggle Fullscreen Mode"
-                icon={<Icon name="fullscreen" showTooltip title="Toggle Fullscreen Mode" />}
-                onClick={handleFullScreen}
-              />
-              {handleCloseLogs && (
-                <Button
-                  aria-label="Close Logs"
-                  icon={<Icon name="close" title="Close Logs" />}
-                  onClick={handleCloseLogs}
-                />
-              )}
-              {onDownload && (
-                <Button
-                  aria-label="Download Logs"
-                  icon={<Icon name="download" showTooltip title="Download Logs" />}
-                  onClick={handleDownload}
-                />
-              )}
-            </Row>
-          </Column>
-        </Row>
-      </div>
       <Spinner center spinning={isFetching}>
         <div className={css.base} style={{ height: height === 'stretch' ? '100%' : `${height}px` }}>
           <div className={css.logs} ref={logsRef}>
