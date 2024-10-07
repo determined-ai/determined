@@ -139,28 +139,34 @@ test.describe('Project UI CRUD', () => {
 
 test.describe('Project List', () => {
   const projects: V1Project[] = [];
-  test.beforeAll(async ({ backgroundApiProject, newWorkspace }) => {
-    const olderProject = await backgroundApiProject.createProject(
-      newWorkspace.response.workspace.id,
-      {
+  const workspaceIds: number[] = [];
+
+  test.beforeAll(async ({ backgroundApiProject, backgroundApiWorkspace }) => {
+    // create workspace to use for List tests instead of using fixture:
+    workspaceIds.push(
+      (await backgroundApiWorkspace.createWorkspace(backgroundApiWorkspace.new())).workspace.id,
+    );
+
+    const olderProject = (
+      await backgroundApiProject.createProject(workspaceIds[0], {
         name: safeName('a-test-project'),
-        workspaceId: newWorkspace.response.workspace.id,
-      },
-    );
-    projects.push(olderProject.project);
-    const newerProject = await backgroundApiProject.createProject(
-      newWorkspace.response.workspace.id,
-      {
+        workspaceId: workspaceIds[0],
+      })
+    ).project;
+    projects.push(olderProject);
+
+    const newerProject = (
+      await backgroundApiProject.createProject(workspaceIds[0], {
         name: safeName('b-test-project'),
-        workspaceId: newWorkspace.response.workspace.id,
-      },
-    );
-    projects.push(newerProject.project);
+        workspaceId: workspaceIds[0],
+      })
+    ).project;
+    projects.push(newerProject);
   });
 
-  test.beforeEach(async ({ authedPage, newWorkspace }) => {
+  test.beforeEach(async ({ authedPage }) => {
     const workspaceDetails = new WorkspaceDetails(authedPage);
-    await workspaceDetails.gotoWorkspace(newWorkspace.response.workspace.id);
+    await workspaceDetails.gotoWorkspace(workspaceIds[0]);
     const workspaceProjects = workspaceDetails.workspaceProjects;
 
     await workspaceProjects.whoseSelect.selectMenuOption('All Projects');
@@ -168,9 +174,12 @@ test.describe('Project List', () => {
     await workspaceProjects.gridListRadioGroup.grid.pwLocator.click();
   });
 
-  test.afterAll(async ({ backgroundApiProject }) => {
+  test.afterAll(async ({ backgroundApiProject, backgroundApiWorkspace }) => {
     for (const project of projects) {
       await backgroundApiProject.deleteProject(project.id);
+    }
+    for (const workspaceId of workspaceIds) {
+      await backgroundApiWorkspace.deleteWorkspace(workspaceId);
     }
   });
 
@@ -197,14 +206,14 @@ test.describe('Project List', () => {
     );
   });
 
-  test('Filter', async ({ authedPage, apiProject, newWorkspace }) => {
+  test('Filter', async ({ authedPage, apiProject }) => {
     const workspaceDetails = new WorkspaceDetails(authedPage);
     const workspaceProjects = workspaceDetails.workspaceProjects;
 
     const currentUserProject = (
-      await apiProject.createProject(newWorkspace.response.workspace.id, {
+      await apiProject.createProject(workspaceIds[0], {
         name: safeName('current-user-project'),
-        workspaceId: newWorkspace.response.workspace.id,
+        workspaceId: workspaceIds[0],
       })
     ).project;
 
