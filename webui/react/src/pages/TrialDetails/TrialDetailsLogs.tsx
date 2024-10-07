@@ -260,11 +260,11 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
     [throttledChangeSearch],
   );
 
-  const formatedSearchResults = useMemo(() => {
+  const formattedSearchResults = useMemo(() => {
     const key = settings.searchText;
 
-    if (!key) return;
-    const formated: ViewerLog[] = [];
+    if (!key) return [];
+    const formatted: ViewerLog[] = [];
     searchResults.forEach((l) => {
       const content = l.log;
       if (!content) return;
@@ -282,12 +282,12 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
       if (_.isUndefined(i) || i < 0) return;
       const keyLen = settings.enableRegex ? content.match(`${key}`)?.[0].length || 0 : key.length;
       const j = i + keyLen;
-      formated.push({
+      formatted.push({
         ...logEntry,
-        message: `${content.slice(0, i)}<span style="background-color: #E7F7FF">${content.slice(i, j)}</span>${content.slice(j)}`,
+        message: `${content.slice(0, i)}<span class=${css.key}>${content.slice(i, j)}</span>${content.slice(j)}`,
       });
     });
-    return formated;
+    return formatted;
   }, [searchResults, settings.searchText, settings.enableRegex]);
 
   useEffect(() => {
@@ -320,8 +320,8 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
           Regex
         </Checkbox>
         <div className={css.logContainer}>
-          {formatedSearchResults && formatedSearchResults.length > 0 ? (
-            formatedSearchResults.map((logEntry) => (
+          {formattedSearchResults.length > 0 ? (
+            formattedSearchResults.map((logEntry) => (
               <div
                 className={css.log}
                 key={logEntry.id}
@@ -336,7 +336,8 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
                   level={logEntry.level}
                   message={logEntry.message}
                   style={{
-                    backgroundColor: logEntry.id === selectedLog?.id ? '#E7F7FF' : 'transparent',
+                    backgroundColor:
+                      logEntry.id === selectedLog?.id ? 'var(--theme-ix-active)' : 'transparent',
                   }}
                 />
               </div>
@@ -347,7 +348,8 @@ const TrialDetailsLogs: React.FC<Props> = ({ experiment, trial }: Props) => {
         </div>
       </div>
     );
-  }, [settings.enableRegex, formatedSearchResults, container, selectedLog, updateSettings]);
+  }, [settings.enableRegex, formattedSearchResults, container, selectedLog, updateSettings]);
+
   const formatClipboardHeader = (log: Log): string => {
     const logEntry = formatLogEntry(log);
     const format = `%${MAX_DATETIME_LENGTH - 1}s `;

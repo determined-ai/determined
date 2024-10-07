@@ -29,6 +29,9 @@
         &:hover {
           color: var(--theme-ix-on-active);
         }
+        .key {
+          background-color: var(--theme-ix-active);
+        }
       }
     }
   }
