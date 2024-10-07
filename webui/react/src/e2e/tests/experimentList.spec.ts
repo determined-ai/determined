@@ -1,4 +1,5 @@
 import { expect, test } from 'e2e/fixtures/global-fixtures';
+import { ExperimentRow } from 'e2e/models/components/F_ExperimentList';
 import { ProjectDetails } from 'e2e/models/pages/ProjectDetails';
 import { detExecSync, fullPath } from 'e2e/utils/detCLI';
 import { safeName } from 'e2e/utils/naming';
@@ -443,35 +444,25 @@ test.describe('Experiment List', () => {
   test.describe('Experiment List Multi-sort', () => {
     const runScenarioAndValidation = (projectDetailsPage: ProjectDetails) => {
       const multiSortMenu = projectDetailsPage.f_experimentList.tableActionBar.multiSortMenu;
-      const validateByColumn = async (rows: number[], colKey: string, descending: boolean) => {
-        const valuesToCompare = [];
+      const validateByColumn = async (
+        rows: ExperimentRow[],
+        colKey: string,
+        descending: boolean,
+      ) => {
+        const valuesToCompare = await Promise.all(rows.map((r) => r.getCellByColumnName(colKey))); // TODO: maybe do a Map()
 
-        for (const row of rows) {
-          const value = await projectDetailsPage.f_experimentList.dataGrid
-            .getRowByIndex(row)
-            .getCellByColumnName(colKey);
-          valuesToCompare.push(value);
+        const expectedValues = [...valuesToCompare].sort();
+        if (descending) {
+          expectedValues.reverse();
         }
-
-        if (!descending) {
-          const expectedAscendingValues = [...valuesToCompare].sort();
-          expect(expectedAscendingValues).toStrictEqual(valuesToCompare);
-        } else {
-          const expectedAscendingValues = [...valuesToCompare].sort((a, b) => {
-            if (a < b) return 1;
-            if (a > b) return -1;
-
-            return 0;
-          });
-          expect(expectedAscendingValues).toStrictEqual(valuesToCompare);
-        }
+        expect(valuesToCompare).toEqual(expectedValues);
       };
       const checkTableOrder = async (firstKey: string, secondKey: string, descending = false) => {
-        const rowIndexes = (await projectDetailsPage.f_experimentList.dataGrid.allRows()).map(
-          (_, index) => index,
+        const rows = await projectDetailsPage.f_experimentList.dataGrid.filterRows(
+          async () => await true,
         );
-        await validateByColumn(rowIndexes, firstKey, descending);
-        await validateByColumn(rowIndexes, secondKey, descending);
+        await validateByColumn(rows, firstKey, descending);
+        await validateByColumn(rows, secondKey, descending);
       };
       const sortingScenario = async (
         firstSortBy: string,
@@ -518,14 +509,16 @@ test.describe('Experiment List', () => {
       await projectDetailsPage.gotoProject(newProject.response.project.id);
       const columnPicker = projectDetailsPage.f_experimentList.tableActionBar.columnPickerMenu;
       await columnPicker.open();
-      await columnPicker.columnPickerTab.showAll.pwLocator.click();
-      await expect.soft(columnPicker.columnPickerTab.showAll.pwLocator).toHaveText('Hide all');
-      await columnPicker.columnPickerTab.showAll.pwLocator.click();
+      const showAllButton = columnPicker.columnPickerTab.showAll.pwLocator;
+      await showAllButton.click();
+      if ((await showAllButton.textContent()) === 'Hide all') {
+        await showAllButton.click();
+      }
 
       const columnTitles = ['id', 'searcherType', 'numTrials', 'searcherMetric'];
 
       for (const title of columnTitles) {
-        const checkbox = await columnPicker.columnPickerTab.columns.listItem(title).checkbox;
+        const checkbox = columnPicker.columnPickerTab.columns.listItem(title).checkbox;
         await checkbox.pwLocator.check();
       }
 
