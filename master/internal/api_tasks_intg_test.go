@@ -103,6 +103,23 @@ func TestPostTaskLogs(t *testing.T) {
 		require.Equal(t, e.Source, a.Source)
 		require.Equal(t, e.Stdtype, a.Stdtype)
 	}
+
+	// Test log filtering by regex
+	stream = &mockStream[*apiv1.TaskLogsResponse]{ctx: ctx}
+	err = api.TaskLogs(&apiv1.TaskLogsRequest{
+		TaskId:     string(task.TaskID),
+		SearchText: "^lo.{4}xt",
+	}, stream)
+	require.NoError(t, err)
+	require.Empty(t, stream.getData())
+
+	err = api.TaskLogs(&apiv1.TaskLogsRequest{
+		TaskId:      string(task.TaskID),
+		SearchText:  "^lo.{4}xt",
+		EnableRegex: true,
+	}, stream)
+	require.NoError(t, err)
+	require.Len(t, stream.getData(), 1)
 }
 
 func mockNotebookWithWorkspaceID(

@@ -161,6 +161,8 @@ message TaskLogsRequest {
   OrderBy order_by = 15;
   // Search the logs by whether the text contains a substring.
   string search_text = 16;
+  // Search text is regex. Default to false.
+  bool enable_regex = 17;
 }
 
 // Response to TaskLogsRequest.

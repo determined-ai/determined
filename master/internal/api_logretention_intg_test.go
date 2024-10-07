@@ -12,6 +12,7 @@ import (
 
 	"github.com/go-co-op/gocron/v2"
 	"github.com/jonboulle/clockwork"
+	"github.com/stretchr/testify/mock"
 	"github.com/stretchr/testify/require"
 	"github.com/uptrace/bun"
 
@@ -108,6 +109,9 @@ searcher:
 	}
 
 	// No checkpoint specified anywhere.
+	mockRM := MockRM()
+	api.m.rm = mockRM
+	mockRM.On("SmallerValueIsHigherPriority", mock.Anything).Return(true, nil)
 	resp, err := api.CreateExperiment(ctx, createReq)
 	require.NoError(t, err)
 	require.Empty(t, resp.Warnings)

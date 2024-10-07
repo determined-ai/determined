@@ -1,3 +1,4 @@
+import dayjs from 'dayjs';
 import Button from 'hew/Button';
 import Dropdown, { MenuOption } from 'hew/Dropdown';
 import Glossary, { InfoRow } from 'hew/Glossary';
@@ -19,7 +20,6 @@ import Avatar from 'components/UserAvatar';
 import usePermissions from 'hooks/usePermissions';
 import userStore from 'stores/users';
 import { ModelVersion } from 'types';
-import { formatDatetime } from 'utils/datetime';
 import { useObservable } from 'utils/observable';
 import { getDisplayName } from 'utils/user';
 
@@ -73,7 +73,7 @@ const ModelVersionHeader: React.FC<Props> = ({
                     icon={<Avatar user={user} />}
                     name={user?.username ?? 'Unavailable'}
                   />{' '}
-                  on {formatDatetime(modelVersion.creationTime, { format: 'MMM D, YYYY' })}
+                  on {dayjs.utc(modelVersion.creationTime).format('MMM D, YYYY')}
                 </Row>
               );
             }}

@@ -36,43 +36,100 @@ var (
 	errResourceConstraintFailure = errors.New("submitted workload failed a resource constraint")
 )
 
-// CheckNTSCConstraints returns true if the NTSC config passes constraint checks.
+// CheckNTSCConstraints returns an error if the NTSC config fails constraint checks.
 func CheckNTSCConstraints(
 	ctx context.Context,
 	workspaceID int,
 	workloadConfig model.CommandConfig,
 	resourceManager rm.ResourceManager,
-) (bool, error) {
+) error {
 	constraints, err := GetMergedConstraints(ctx, workspaceID, model.NTSCType)
 	if err != nil {
-		return false, err
+		return err
+	}
+
+	if constraints.ResourceConstraints != nil && constraints.ResourceConstraints.MaxSlots != nil {
+		if err = checkSlotsConstraint(*constraints.ResourceConstraints.MaxSlots, workloadConfig.Resources.Slots,
+			workloadConfig.Resources.MaxSlots); err != nil {
+			return err
+		}
 	}
 
 	// For each submitted constraint, check if the workload config is within allowed values.
 	// rm.SmallerValueIsHigherPriority only returns an error if task priority is not implemented for that resource manager.
 	// In that case, there is no need to check if requested priority is within limits.
 	smallerHigher, err := resourceManager.SmallerValueIsHigherPriority()
-	if err == nil && constraints.PriorityLimit != nil && workloadConfig.Resources.Priority != nil {
-		if !priorityWithinLimit(*workloadConfig.Resources.Priority, *constraints.PriorityLimit, smallerHigher) {
-			return false, fmt.Errorf("requested priority [%d] exceeds limit set by admin [%d]: %w",
-				*workloadConfig.Resources.Priority, *constraints.PriorityLimit, errPriorityConstraintFailure)
+	if err == nil {
+		if err = checkPriorityConstraint(smallerHigher, constraints.PriorityLimit,
+			workloadConfig.Resources.Priority); err != nil {
+			return err
 		}
+	}
+
+	return nil
+}
+
+// CheckExperimentConstraints returns an error if the NTSC config fails constraint checks.
+func CheckExperimentConstraints(
+	ctx context.Context,
+	workspaceID int,
+	workloadConfig expconf.ExperimentConfigV0,
+	resourceManager rm.ResourceManager,
+) error {
+	constraints, err := GetMergedConstraints(ctx, workspaceID, model.ExperimentType)
+	if err != nil {
+		return err
 	}
 
 	if constraints.ResourceConstraints != nil && constraints.ResourceConstraints.MaxSlots != nil {
-		if workloadConfig.Resources.MaxSlots != nil {
-			if *constraints.ResourceConstraints.MaxSlots < *workloadConfig.Resources.MaxSlots {
-				return false, fmt.Errorf("requested resources.max_slots [%d] exceeds limit set by admin [%d]: %w",
-					*workloadConfig.Resources.MaxSlots, *constraints.ResourceConstraints.MaxSlots, errResourceConstraintFailure)
-			}
-		}
-		if *constraints.ResourceConstraints.MaxSlots < workloadConfig.Resources.Slots {
-			return false, fmt.Errorf("requested resources.slots [%d] exceeds limit set by admin [%d]: %w",
-				workloadConfig.Resources.Slots, *constraints.ResourceConstraints.MaxSlots, errResourceConstraintFailure)
+		// users cannot specify number of slots for an experiment
+		slotsRequest := 0
+		if err = checkSlotsConstraint(*constraints.ResourceConstraints.MaxSlots, slotsRequest,
+			workloadConfig.Resources().MaxSlots()); err != nil {
+			return err
 		}
 	}
 
-	return true, nil
+	// For each submitted constraint, check if the workload config is within allowed values.
+	// rm.SmallerValueIsHigherPriority only returns an error if task priority is not implemented for that resource manager.
+	// In that case, there is no need to check if requested priority is within limits.
+	smallerHigher, err := resourceManager.SmallerValueIsHigherPriority()
+	if err == nil {
+		if err = checkPriorityConstraint(smallerHigher, constraints.PriorityLimit,
+			workloadConfig.Resources().Priority()); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
+func checkPriorityConstraint(smallerHigher bool, priorityLimit *int, priorityRequest *int) error {
+	if priorityLimit == nil || priorityRequest == nil {
+		return nil
+	}
+
+	if !priorityWithinLimit(*priorityRequest, *priorityLimit, smallerHigher) {
+		return fmt.Errorf("requested priority [%d] exceeds limit set by admin [%d]: %w",
+			*priorityRequest, *priorityLimit, errPriorityConstraintFailure)
+	}
+	return nil
+}
+
+func checkSlotsConstraint(slotsLimit int, slotsRequest int, maxSlotsRequest *int) error {
+	if slotsLimit < slotsRequest {
+		return fmt.Errorf("requested resources.slots [%d] exceeds limit set by admin [%d]: %w",
+			slotsRequest, slotsLimit, errResourceConstraintFailure)
+	}
+
+	if maxSlotsRequest != nil {
+		if slotsLimit < *maxSlotsRequest {
+			return fmt.Errorf("requested resources.max_slots [%d] exceeds limit set by admin [%d]: %w",
+				*maxSlotsRequest, slotsLimit, errResourceConstraintFailure)
+		}
+	}
+
+	return nil
 }
 
 // GetMergedConstraints retrieves Workspace and Global constraints and returns a merged result.

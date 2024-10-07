@@ -30,6 +30,7 @@ import (
 
 	"github.com/determined-ai/determined/master/internal/api"
 	"github.com/determined-ai/determined/master/internal/authz"
+	"github.com/determined-ai/determined/master/internal/configpolicy"
 	"github.com/determined-ai/determined/master/internal/db"
 	"github.com/determined-ai/determined/master/internal/db/bunutils"
 	"github.com/determined-ai/determined/master/internal/experiment"
@@ -1679,6 +1680,18 @@ func (a *apiServer) CreateExperiment(
 
 	if err = experiment.AuthZProvider.Get().CanCreateExperiment(ctx, *user, p); err != nil {
 		return nil, status.Errorf(codes.PermissionDenied, err.Error())
+	}
+
+	wkspIDs, err := workspace.WorkspaceIDsFromNames(ctx, []string{taskSpec.Workspace})
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, err.Error())
+	}
+	if len(wkspIDs) != 1 {
+		return nil, status.Error(codes.InvalidArgument, "expected exactly one workspace")
+	}
+	err = configpolicy.CheckExperimentConstraints(ctx, int(wkspIDs[0]), activeConfig, a.m.rm)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, err.Error())
 	}
 
 	if req.ValidateOnly {

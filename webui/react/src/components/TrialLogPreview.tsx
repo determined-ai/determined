@@ -12,7 +12,6 @@ import { detApi } from 'services/apiConfig';
 import { mapV1LogsResponse } from 'services/decoder';
 import { readStream } from 'services/utils';
 import { LogLevel, RunState, TrialDetails } from 'types';
-import { formatDatetime } from 'utils/datetime';
 
 import css from './TrialLogPreview.module.scss';
 
@@ -55,12 +54,13 @@ const TrialLogPreview: React.FC<Props> = ({
         dayjs(time).toDate(),
         'ORDER_BY_ASC',
         undefined,
+        false,
         { signal: canceler.signal },
       ),
       (event) => {
         const entry = mapV1LogsResponse(event);
         setLogEntry({
-          formattedTime: formatDatetime(entry.time, { format: DATETIME_FORMAT }),
+          formattedTime: dayjs.utc(entry.time).format(DATETIME_FORMAT),
           level: entry.level || LogLevel.Info,
           message: entry.message,
         });
@@ -85,6 +85,7 @@ const TrialLogPreview: React.FC<Props> = ({
           undefined,
           'ORDER_BY_DESC',
           undefined,
+          false,
           { signal: canceler.signal },
         ),
         (event) => {
