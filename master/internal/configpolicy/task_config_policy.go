@@ -231,7 +231,7 @@ func PriorityUpdateAllowed(wkspID int, workloadType string, priority int, smalle
 	// Workspace policies have second precedence.
 	limit, found, err = findAllowedPriority(&wkspID, workloadType)
 	if err != nil {
-		return false, fmt.Errorf("unable to fetch task config policy priority limit")
+		return false, err
 	}
 	if found {
 		return priorityWithinLimit(priority, limit, smallerHigher), nil
