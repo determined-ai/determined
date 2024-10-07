@@ -23,7 +23,7 @@ func TestPriorityAllowed(t *testing.T) {
 	db.MustMigrateTestPostgres(t, pgDB, db.MigrationsFromDB)
 
 	// When no constraints are present, any priority is allowed.
-	ok, err := PriorityAllowed(1, model.NTSCType, 0, true)
+	ok, err := PriorityUpdateAllowed(1, model.NTSCType, 0, true)
 	require.NoError(t, err)
 	require.True(t, ok)
 
@@ -33,7 +33,7 @@ func TestPriorityAllowed(t *testing.T) {
 
 	// Priority is outside workspace limit.
 	smallerValueIsHigherPriority := true
-	ok, err = PriorityAllowed(w.ID, model.NTSCType, wkspLimit-1, smallerValueIsHigherPriority)
+	ok, err = PriorityUpdateAllowed(w.ID, model.NTSCType, wkspLimit-1, smallerValueIsHigherPriority)
 	require.NoError(t, err)
 	require.False(t, ok)
 
@@ -41,14 +41,16 @@ func TestPriorityAllowed(t *testing.T) {
 	addConstraints(t, user, nil, fmt.Sprintf(`{"priority_limit": %d}`, globalLimit), model.NTSCType)
 
 	// Priority is within global limit.
-	ok, err = PriorityAllowed(w.ID, model.NTSCType, wkspLimit-1, true)
+	ok, err = PriorityUpdateAllowed(w.ID, model.NTSCType, wkspLimit-1, true)
 	require.NoError(t, err)
 	require.True(t, ok)
 
 	// Priority is outside global limit.
-	ok, err = PriorityAllowed(w.ID+1, model.NTSCType, globalLimit-1, true)
+	ok, err = PriorityUpdateAllowed(w.ID+1, model.NTSCType, globalLimit-1, true)
 	require.NoError(t, err)
 	require.False(t, ok)
+
+	// Priority cannot be updated if invariant_config.resoruces.priority is set.
 }
 
 func TestCheckNTSCConstraints(t *testing.T) {
