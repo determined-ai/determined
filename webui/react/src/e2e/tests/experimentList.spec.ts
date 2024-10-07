@@ -449,7 +449,9 @@ test.describe('Experiment List', () => {
         colKey: string,
         descending: boolean,
       ) => {
-        const valuesToCompare = await Promise.all(rows.map((r) => r.getCellByColumnName(colKey))); // TODO: maybe do a Map()
+        const valuesToCompare = await Promise.all(
+          rows.map(async (r) => await (await r.getCellByColumnName(colKey)).pwLocator.innerText()),
+        );
 
         const expectedValues = [...valuesToCompare].sort();
         if (descending) {
